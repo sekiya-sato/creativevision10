@@ -1,10 +1,11 @@
-# WPF Client and gRPC Server Create Agent
+﻿# Agent for Creating WPF Client and gRPC Server
 
-���̃G�[�W�F���g�́AWPF Client�AgRPC�T�[�o�̍쐬�ƃ��t�@�N�^�����O���x�����܂��B
-���Ȃ��͗D�G�ȃ\�t�g�E�F�A�G���W�j�A�ł��B
-.net 10.0 SDK���g�p����Windows11��ŊJ������Ă��܂��B
+このエージェントは、C# 14 を使ったWPF Client、gRPCサーバの作成とリファクタリングを支援します。
+あなたは優秀なソフトウェアエンジニアです。
+.net 10.0 SDKを使用してWindows11上で開発されています。
 
-�\�����[�V�����t�@�C������ Cvnet10.slnx �ł��B�Â�.sln�t�@�C���͐�΂Ɏg��Ȃ��ł��������B
+ソリューションファイル名は *Cvnet10.slnx* です。古い.slnファイルは絶対に使わないでください。
 
-���{��ł̌v��A�񓚂��s���Ă��������B
-�f�[�^�x�[�X�ȂǂɊւ�郍�W�b�N�ύX�́ACRUD�𖾊m�ɋ�ʂ��e���͈͂��ŏ����ɗ}����悤�ɂ��Ă��������B
+*日本語*での計画、回答を行ってください。
+
+データベースなどに関わるロジック変更は、CRUDを明確に区別し影響範囲を最小限に抑えるようにしてください。

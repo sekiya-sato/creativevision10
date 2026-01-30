@@ -17,23 +17,82 @@
             <behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
         </behaviors:EventTrigger>
     </behaviors:Interaction.Triggers>
-    <Grid>
+    <Grid Margin="16">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-
-        <Button Grid.Row="4" Grid.Column="4" Content="終了" Margin="0,0,23,10" Command="{Binding ExitCommand}" HorizontalAlignment="Right" Width="132" Height="56" VerticalAlignment="Bottom"/>
-        <Button Content="{Binding TestConnectButtonText}" HorizontalAlignment="Left" Height="36" Margin="22,75,0,0" Grid.Row="4" VerticalAlignment="Top" Width="173" Command="{Binding TestConnectCommand}"/>
+        <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Left">
+            <Button Content="{Binding TestConnectButtonText}" Width="173" Height="36" Margin="0,0,12,0"
+                    Command="{Binding TestConnectCommand}" />
+        </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
+            <GroupBox Header="取得一覧" Grid.Column="0" Margin="0,0,8,0">
+                <ListView ItemsSource="{Binding TestMasters}" SelectedItem="{Binding SelectedTestMaster}" Margin="8"
+                          IsSynchronizedWithCurrentItem="True">
+                    <ListView.View>
+                        <GridView AllowsColumnReorder="False">
+                            <GridViewColumn Header="コード" DisplayMemberBinding="{Binding Code}" Width="80" />
+                            <GridViewColumn Header="名称" DisplayMemberBinding="{Binding Name}" Width="180" />
+                            <GridViewColumn Header="ブランド" DisplayMemberBinding="{Binding Name_Brand}" Width="120" />
+                            <GridViewColumn Header="アイテム" DisplayMemberBinding="{Binding Name_Item}" Width="120" />
+                            <GridViewColumn Header="展示会" DisplayMemberBinding="{Binding Name_Tenji}" Width="120" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </GroupBox>
+            <GroupBox Header="選択詳細" Grid.Column="1" Margin="8,8,8,339">
+                <ScrollViewer Margin="8,4,0,0">
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="208*" />
+                            <ColumnDefinition Width="215*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="コード" FontWeight="Bold" Margin="0,0,12,8" />
+                        <TextBlock Text="{Binding SelectedTestMaster.Code, TargetNullValue='(未選択)'}" Margin="127,0,0,8" Grid.ColumnSpan="3" />
+                        <TextBlock Grid.Row="1" Text="名称" FontWeight="Bold" Margin="0,0,12,8" />
+                        <TextBlock Grid.Row="1" Text="{Binding SelectedTestMaster.Name}" Margin="127,0,0,8" TextWrapping="Wrap" Grid.ColumnSpan="3" />
+                        <TextBlock Grid.Row="2" Text="略称" FontWeight="Bold" Margin="0,0,12,8" />
+                        <TextBlock Grid.Row="2" Text="{Binding SelectedTestMaster.Ryaku}" Margin="127,0,0,8" Grid.ColumnSpan="3" />
+                        <TextBlock Grid.Row="3" Text="カナ" FontWeight="Bold" Margin="0,0,12,8" />
+                        <TextBlock Grid.Row="3" Text="{Binding SelectedTestMaster.Kana}" Margin="127,0,0,8" Grid.ColumnSpan="3" />
+                        <TextBlock Grid.Row="4" Text="ブランド" FontWeight="Bold" Margin="0,0,12,8" />
+                        <TextBlock Grid.Row="4" Text="{Binding SelectedTestMaster.Mei_Brand}" Margin="127,0,0,8" Grid.ColumnSpan="3" />
+                        <TextBlock Grid.Row="5" Text="アイテム" FontWeight="Bold" Margin="0,0,12,8" />
+                        <TextBlock Grid.Row="5" Text="{Binding SelectedTestMaster.Mei_Item}" Margin="127,0,0,8" Grid.ColumnSpan="2" HorizontalAlignment="Left" Width="198" />
+                        <TextBlock Grid.Row="6" Text="展示会" FontWeight="Bold" Margin="0,0,12,8" />
+                        <TextBlock Grid.Row="6" Text="{Binding SelectedTestMaster.Mei_Tenji}" Margin="127,0,0,8" Grid.ColumnSpan="3" />
+                        <TextBlock Grid.Row="7" Text="ID (Brand/Item/Tenji)" FontWeight="Bold" Margin="0,0,12,0" />
+                        <TextBlock Grid.Row="7" Margin="127,0,0,0" TextWrapping="Wrap" Grid.ColumnSpan="3">
+                            <Run Text="{Binding SelectedTestMaster.Id_MeiBrand}" />
+                            <Run Text=" / " />
+                            <Run Text="{Binding SelectedTestMaster.Id_MeiItem}" />
+                            <Run Text=" / " />
+                            <Run Text="{Binding SelectedTestMaster.Id_MeiTenji}" />
+                        </TextBlock>
+                    </Grid>
+                </ScrollViewer>
+            </GroupBox>
+            <DataGrid Grid.Column="1" HorizontalAlignment="Center" Height="162" Margin="0,374,0,0" VerticalAlignment="Top" Width="537" d:ItemsSource="{d:SampleData ItemCount=5}"
+                     ItemsSource="{Binding SelectedTestMaster.Jcolsiz}" />
+        </Grid>
+        <Button Grid.Row="2" Content="終了" Width="132" Height="56" HorizontalAlignment="Right" Margin="0,10,0,0"
+                Command="{Binding ExitCommand}" />
     </Grid>
 </Window>

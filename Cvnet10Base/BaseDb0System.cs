@@ -127,3 +127,26 @@ public partial class MasterMeisho : BaseDbClass {
 	[property: ColumnSizeDml(100)]
 	string? kana;
 }
+/// <summary>
+/// 使用名称区分マッピングマスター
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+public partial class MasterMapMeisho : BaseDbClass {
+	/// <summary>
+	/// 対象テーブル名
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(30)]
+	string tableName = "";
+	/// <summary>
+	/// 並び順
+	/// </summary>
+	[ObservableProperty]
+	int no;
+	/// <summary>
+	/// 区分
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	string kubun = "";
+}

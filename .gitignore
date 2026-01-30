@@ -163,10 +163,16 @@ $RECYCLE.BIN/
 # Additional Folder
 # =========================
 wrk/
+tests/
 *.pdf
 appsettings.DevU*.json
+appsettings.Development.json
+appsettings.Production.json
 appsettings.Local*.json
-sample.db
+s*.db
 *-memo*.md
 *.slnLaunch.user
+.mcp.json
+nlog.config
+
 

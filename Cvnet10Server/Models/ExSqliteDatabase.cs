@@ -142,10 +142,14 @@ public partial class ExSqliteDatabase : ExDatabase {
 					type += _default_varchar;
 					break;
 				default:
-					if (item.PropertyType.Name.StartsWith("List"))
-						continue;
-					type = "TEXT";
-					type += _default_varchar;
+					if (item.PropertyType.Name.StartsWith("List")) {
+						type = "TEXT";
+						type += _default_varchar;
+					}
+					else {
+						type = "TEXT";
+						type += _default_varchar;
+					}
 					break;
 			}
 			if (name == "Id") // 列Idであれば主キー項目 [If it is a column ID, it is a primary key item]

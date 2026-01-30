@@ -56,6 +56,10 @@ public enum CvnetFlag {
 	/// </summary>
 	MSg004_ConvertDb = 4,
 	/// <summary>
+	/// テスト
+	/// </summary>
+	MSg005_Test = 5,
+	/// <summary>
 	/// DBデータを取得する Message=QueryDbDef
 	/// [Get DB data Message=QueryDbDef]
 	/// </summary>

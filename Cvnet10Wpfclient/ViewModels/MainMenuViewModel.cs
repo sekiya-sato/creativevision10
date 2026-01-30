@@ -8,7 +8,9 @@ using Cvnet8client.Views.Sub;
 using Grpc.Core;
 using Grpc.Net.Client;
 using ProtoBuf.Grpc.Client;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Windows;
 
@@ -17,6 +19,19 @@ namespace Cvnet10Wpfclient.ViewModels {
 
 		[ObservableProperty]
 		string testConnectButtonText = "TestConnect";
+ 
+		ObservableCollection<Test202601Master> testMasters = new();
+
+		public ObservableCollection<Test202601Master> TestMasters {
+			get => testMasters;
+			set => SetProperty(ref testMasters, value);
+		}
+
+		Test202601Master? selectedTestMaster;
+		public Test202601Master? SelectedTestMaster {
+			get => selectedTestMaster;
+			set => SetProperty(ref selectedTestMaster, value);
+		}
 
 		[RelayCommand]
 		public void Exit() {

@@ -7,30 +7,6 @@ using Cvnet10Base.Share;
 namespace Cvnet10Base;
 
 /// <summary>
-/// 使用名称区分マッピングマスター
-/// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-public partial class MasterMapMeisho : BaseDbClass {
-	/// <summary>
-	/// 対象テーブル名
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	string tableName = "";
-	/// <summary>
-	/// 並び順
-	/// </summary>
-	[ObservableProperty]
-	int no; 
-	/// <summary>
-	/// 区分
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	string kubun = "";
-}
-
-/// <summary>
 /// 社員マスター
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
@@ -349,7 +325,13 @@ public partial class MasterShohin : BaseDbHasAddress, IBaseCodeName {
 /// <summary>
 /// 商品色サイズJANマスター
 /// </summary>
-public partial class MasterShohinColSiz : ObservableObject {
+[PrimaryKey("Id", AutoIncrement = true)]
+public partial class MasterShohinColSiz : BaseDbClass, IBaseGetListSql {
+	/// <summary>
+	/// 商品
+	/// </summary>
+	[ObservableProperty]
+	long id_Shohin;
 	/// <summary>
 	/// 色
 	/// </summary>
@@ -375,6 +357,31 @@ public partial class MasterShohinColSiz : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	string? jan3;
+
+	/// <summary>
+	/// カラー名
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string? mei_Col;
+	[ObservableProperty]
+	[property: ResultColumn]
+	/// <summary>
+	/// サイズ名
+	/// </summary>
+	string? mei_Siz;
+	readonly static string listSql = """
+select T.*, m1.Name as Mei_Col, m2.Name as  Mei_Siz
+from MasterShohinColSiz T
+left join MasterMeisho m1 on T.id_MeiCol = m1.Id
+left join MasterMeisho m2 on T.id_MeiSiz = m2.Id
+""";
+	public  string GetListSql() {
+		return listSql;
+	}
+
+
+
 }
 /// <summary>
 /// 品質マスター

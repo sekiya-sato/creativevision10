@@ -3,7 +3,9 @@ using Cvnet10AppShared;
 using Cvnet10Base;
 using Grpc.Net.Client;
 using ProtoBuf.Grpc.Client;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Cvnet10Wpfclient.ViewModels {
     public partial class MainMenuViewModel {
@@ -123,10 +125,14 @@ namespace Cvnet10Wpfclient.ViewModels {
 		async Task<string> TestQueryMsg(GrpcChannel channel) {
 			var coreService = channel.CreateGrpcService<ICvnetCoreService>();
 			AppCurrent.LoginJwt = dummyToken;
-			var msg = new CvnetMsg { Flag = CvnetFlag.Msg002_GetVersion };
+			var msg = new CvnetMsg { Flag = CvnetFlag.MSg005_Test };
 			var reply =  await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext());
-			Debug.WriteLine(reply.DataMsg??"---");
-			return await Task.FromResult<string>("TestQueryMsgAsync");
+			var payload = string.IsNullOrWhiteSpace(reply.DataMsg) ? "[]" : reply.DataMsg;
+			var list = Common.DeserializeObject<List<Test202601Master>>(payload) ?? [];
+			TestMasters = new ObservableCollection<Test202601Master>(list);
+			SelectedTestMaster = TestMasters.FirstOrDefault();
+			Debug.WriteLine(payload ?? "---");
+			return await Task.FromResult($"取得件数: {TestMasters.Count}");
 		}
 
 
