@@ -170,69 +170,22 @@ namespace Cvnet10Wpfclient.ViewModels {
 		async Task<string> Test202601Msg4(GrpcChannel channel) {
 			var coreService = channel.CreateGrpcService<ICvnetCoreService>();
 			AppCurrent.LoginJwt = dummyToken;
-			var msg = new CvnetMsg { Code = 13629, Flag = CvnetFlag.Msg101_GetDbQuerySingle };
-			/*
+			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg103_GetDbQueryMulti };
 			msg.DataType = typeof(MasterMeisho);
-			msg.DataMsg = Common.SerializeObject(new ParamQuery {
-				ResultType = typeof(List<MasterMeisho>),
-				TableType = typeof(MasterMeisho),
-				Where = "Id between @0 and @1",
-				Order = "Id",
-				Parameters = new object[] { 13660, 13720 }
-			});
-			msg.Flag = CvnetFlag.Msg103_GetDbQueryMulti;
-			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext());
-			var list = Common.DeserializeObject(reply.DataMsg, reply.DataType);
-			var list0 = list as IEnumerable<MasterMeisho>;
-			var item = list0.FirstOrDefault();
-			item.Ryaku = "test " + DateTime.Now.ToString();
-			var req = new CvnetMsg {
-				Flag = CvnetFlag.Msg102_GetDbExecuteSingle,
-				DataType = typeof(MasterMeisho),
-				DataMsg = Common.SerializeObject(new ParamExecute {
-					TableType = typeof(MasterMeisho),
-					ExecuteType = ParamExecuteType.Update,
-					Id = item.Id,
-					JsonData = Common.SerializeObject(item),
-				})
-			};
-			var reply2 = await coreService.QueryMsgAsync(req, AppCurrent.GetDefaultCallContext());
-			*/
-			msg.DataType = typeof(Test202601Master);
 			msg.DataMsg = Common.SerializeObject(new ParamQuery {
 				ResultType = typeof(List<Test202601Master>),
 				TableType = typeof(Test202601Master),
+				Where = "Id between @0 and @1",
+				Order = "Id",
+				Parameters = new object[] {	1, 9999 }
 			});
-			msg.Flag = CvnetFlag.Msg103_GetDbQueryMulti;
 			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext());
 			var list = Common.DeserializeObject(reply.DataMsg??"[]", reply.DataType);
 			var list0 = list as IList<Test202601Master>;
-			var item = (list as IEnumerable<Test202601Master>)?.FirstOrDefault();
-			if (item.ListMeisho == null){
-				item.ListMeisho =
-					[
-						..Enumerable.Range(1, 10)
-							.Select((Func<int, MasterGeneralMeisho>)(i => new MasterGeneralMeisho { Kubun = $"B{i:D2}" }))
-					];
+			if(list0 != null) {
+				TestMasters = new ObservableCollection<Test202601Master>(list0);
+				SelectedTestMaster = TestMasters.FirstOrDefault();
 			}
-			item.ListMeisho[0].Id_MeiCode = 13823;
-			item.ListMeisho[2].Id_MeiCode = 13824;
-			var req = new CvnetMsg {
-				Flag = CvnetFlag.Msg102_GetDbExecuteSingle,
-				DataType = typeof(Test202601Master),
-				DataMsg = Common.SerializeObject(new ParamExecute {
-					TableType = typeof(Test202601Master),
-					ExecuteType = ParamExecuteType.Update,
-					Id = item.Id,
-					JsonData = Common.SerializeObject(item),
-				})
-			};
-			var reply2 = await coreService.QueryMsgAsync(req, AppCurrent.GetDefaultCallContext());
-			list0[0] = Common.DeserializeObject<Test202601Master>(reply2.DataMsg ?? "") ?? new Test202601Master();
-			TestMasters = new ObservableCollection<Test202601Master>(list0);
-			SelectedTestMaster = TestMasters.FirstOrDefault();
-
-
 			return await Task.FromResult($"Query OK");
 		}
 

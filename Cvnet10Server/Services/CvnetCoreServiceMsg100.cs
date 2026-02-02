@@ -2,6 +2,7 @@
 using Cvnet10AppShared;
 using Cvnet10Base;
 using ProtoBuf.Grpc;
+using System.Collections.Generic;
 using System.ComponentModel;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -21,6 +22,13 @@ public partial class CvnetCoreService {
 		var ret = new CvnetMsg() { Flag = request.Flag };
 		ret.Code = 0;
 		ret.DataType = request.DataType;
+		var firstItem = data.FirstOrDefault();
+		// 特定のテーブル型かどうかで判定
+		if (firstItem?.GetType().Name == "Test202601Master") {
+			var item = (Test202601Master)firstItem;
+			item.LoadJcolsizMeishoNames(_db, true);
+			item.LoadGeneralMeishoNames(_db, true);
+		}
 		ret.DataMsg = Common.SerializeObject(data.FirstOrDefault() ?? "");
 		return ret;
 	}
@@ -63,12 +71,20 @@ public partial class CvnetCoreService {
 			!string.IsNullOrWhiteSpace(param.Where)? $" where {param.Where}" :""
 			+ (!string.IsNullOrWhiteSpace(param.Order)? $" order by {param.Order}" : ""),
 			param.Parameters);
-
-
 		var ret = new CvnetMsg() { Flag = request.Flag };
 		ret.Code = 0;
 		ret.DataType = param.ResultType;
-		ret.DataMsg = Common.SerializeObject(list);
+		// 特定のテーブル型かどうかで判定
+		var firstItem = list.FirstOrDefault();
+		if (firstItem?.GetType().Name == "Test202601Master") {
+			var masterList = list.Cast<Test202601Master>();
+			masterList.LoadAllJcolsizMeishoNames(_db, true);
+			masterList.LoadAllGeneralMeishoNames(_db, true);
+			ret.DataMsg = Common.SerializeObject(masterList);
+		}
+		else {
+			ret.DataMsg = Common.SerializeObject(list);
+		}
 		return ret;
 	}
 
