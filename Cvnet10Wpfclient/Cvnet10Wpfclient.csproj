@@ -38,9 +38,4 @@
 			<DependentUpon>appsettings.json</DependentUpon>
 		</None>
 	</ItemGroup>
-	<ItemGroup>
-	  <Page Update="Resources\UIColors.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Page>
-	</ItemGroup>
 </Project>

@@ -5,10 +5,10 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/UIColors.xaml"/>
-                <ResourceDictionary Source="Resources/UIWindow.xaml"/>
-                <ResourceDictionary Source="/Cvnet10Wpfclient;component/Resources/UIButton2.xaml"/>
-                <ResourceDictionary Source="Resources/UICommon.xaml"/>
+                <ResourceDictionary Source="/Resources/UIColors2.xaml"/>
+                <ResourceDictionary Source="/Resources/UIWindow2.xaml"/>
+                <ResourceDictionary Source="/Resources/UIBottun2.xaml"/>
+                <ResourceDictionary Source="/Resources/UICommon2.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
