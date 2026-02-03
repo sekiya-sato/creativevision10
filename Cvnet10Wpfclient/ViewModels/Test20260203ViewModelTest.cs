@@ -1,4 +1,4 @@
-ï»¿using CodeShare;
+using CodeShare;
 using Cvnet10AppShared;
 using Cvnet10Base;
 using Grpc.Net.Client;
@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 
 namespace Cvnet10Wpfclient.ViewModels {
-    public partial class MainMenuViewModel {
+    public partial class Test20260203ViewModel {
 
 		SysHistJwtSub subTestGetInfo() {
 			var ipAddr = Common.GetIPAddress().FirstOrDefault();
@@ -24,7 +24,7 @@ namespace Cvnet10Wpfclient.ViewModels {
 		}
 
 		/// <summary>
-		/// ã‚µãƒ¼ãƒ“ã‚¹ ILoginService : CreateLogin ã®ãƒ†ã‚¹ãƒˆ
+		/// ƒT[ƒrƒX ILoginService : CreateLogin ‚ÌƒeƒXƒg
 		/// </summary>
 		/// <param name="channel"></param>
 		/// <returns></returns>
@@ -34,7 +34,7 @@ namespace Cvnet10Wpfclient.ViewModels {
 
 			var loginRequest = new LoginRequest {
 				LoginId = "TestUser",
-				Name = "ã¦ã™ã¨ãƒ¦ãƒ¼ã‚¶",
+				Name = "‚Ä‚·‚Æƒ†[ƒU",
 				CryptPassword = Common.EncryptLoginRequest("TestUser", now),
 				LoginDate = now,
 				Info = Common.SerializeObject(subTestGetInfo()),
@@ -44,14 +44,14 @@ namespace Cvnet10Wpfclient.ViewModels {
 			if (reply.Result == 0) {
 				AppCurrent.LoginJwt = reply.JwtMessage;
 				Debug.WriteLine($"{DateTime.Now} AppCurrent.LoginJwt={AppCurrent.LoginJwt}");
-				return await Task.FromResult<string>($"ãƒ­ã‚°ã‚¤ãƒ³æˆåŠŸ: {reply.JwtMessage}");
+				return await Task.FromResult<string>($"ƒƒOƒCƒ“¬Œ÷: {reply.JwtMessage}");
 			}
 			else {
-				return await Task.FromResult<string>("ãƒ­ã‚°ã‚¤ãƒ³å¤±æ•—");
+				return await Task.FromResult<string>("ƒƒOƒCƒ“¸”s");
 			}
 		}
 		/// <summary>
-		/// ã‚µãƒ¼ãƒ“ã‚¹ ILoginService : Login ã®ãƒ†ã‚¹ãƒˆ
+		/// ƒT[ƒrƒX ILoginService : Login ‚ÌƒeƒXƒg
 		/// </summary>
 		/// <param name="channel"></param>
 		/// <returns></returns>
@@ -61,7 +61,7 @@ namespace Cvnet10Wpfclient.ViewModels {
 
 			var loginRequest = new LoginRequest {
 				LoginId = "TestUser",
-				Name = "ã¦ã™ã¨ãƒ¦ãƒ¼ã‚¶",
+				Name = "‚Ä‚·‚Æƒ†[ƒU",
 				CryptPassword = Common.EncryptLoginRequest("TestUser", now),
 				LoginDate = now,
 				Info = Common.SerializeObject(subTestGetInfo()),
@@ -74,16 +74,16 @@ namespace Cvnet10Wpfclient.ViewModels {
 				if (reply.JwtMessage?.Length > 10) {
 					AppCurrent.LoginJwt = reply.JwtMessage;
 				}
-				return await Task.FromResult<string>($"ãƒ­ã‚°ã‚¤ãƒ³æˆåŠŸ: {reply.JwtMessage}");
+				return await Task.FromResult<string>($"ƒƒOƒCƒ“¬Œ÷: {reply.JwtMessage}");
 			}
 			else {
-				return await Task.FromResult<string>("ãƒ­ã‚°ã‚¤ãƒ³å¤±æ•—");
+				return await Task.FromResult<string>("ƒƒOƒCƒ“¸”s");
 			}
 		}
 		string dummyToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoi44Gm44GZ44Go44Om44O844K2IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiMCIsImV4cCI6MTc3ODMxNDEyMSwiaXNzIjoiSXNzdWVyX0RldmVsb3BtZW50In0.2Dj0vQ3ZmE4InY40r5n5420Tv3G-t4RoPAiJT5xJe5s";
 
 		/// <summary>
-		/// ã‚µãƒ¼ãƒ“ã‚¹ ILoginService : LoginRefresh ã®ãƒ†ã‚¹ãƒˆ (æ‰¿èªæƒ…å ±ãªã—ã§ã®ã‚¢ã‚¯ã‚»ã‚¹)
+		/// ƒT[ƒrƒX ILoginService : LoginRefresh ‚ÌƒeƒXƒg (³”Fî•ñ‚È‚µ‚Å‚ÌƒAƒNƒZƒX)
 		/// </summary>
 		/// <param name="channel"></param>
 		/// <returns></returns>
@@ -96,14 +96,14 @@ namespace Cvnet10Wpfclient.ViewModels {
 			if (reply.Result == 0) {
 				AppCurrent.LoginJwt = reply.JwtMessage;
 				Debug.WriteLine($"{DateTime.Now} AppCurrent.LoginJwt={AppCurrent.LoginJwt}");
-				return await Task.FromResult<string>($"ãƒ­ã‚°ã‚¤ãƒ³æˆåŠŸ: {reply.JwtMessage}");
+				return await Task.FromResult<string>($"ƒƒOƒCƒ“¬Œ÷: {reply.JwtMessage}");
 			}
 			else {
-				return await Task.FromResult<string>("ãƒ­ã‚°ã‚¤ãƒ³å¤±æ•—");
+				return await Task.FromResult<string>("ƒƒOƒCƒ“¸”s");
 			}
 		}
 		/// <summary>
-		/// ã‚µãƒ¼ãƒ“ã‚¹ ILoginService : LoginRefresh ã®ãƒ†ã‚¹ãƒˆ (æ‰¿èªæƒ…å ±ã‚ã‚Šã§ã®ã‚¢ã‚¯ã‚»ã‚¹)
+		/// ƒT[ƒrƒX ILoginService : LoginRefresh ‚ÌƒeƒXƒg (³”Fî•ñ‚ ‚è‚Å‚ÌƒAƒNƒZƒX)
 		/// </summary>
 		/// <param name="channel"></param>
 		/// <returns></returns>
@@ -116,10 +116,10 @@ namespace Cvnet10Wpfclient.ViewModels {
 			if (reply.Result == 0) {
 				AppCurrent.LoginJwt = reply.JwtMessage;
 				Debug.WriteLine($"{DateTime.Now} AppCurrent.LoginJwt={AppCurrent.LoginJwt}");
-				return await Task.FromResult<string>($"ãƒ­ã‚°ã‚¤ãƒ³æˆåŠŸ: {reply.JwtMessage}");
+				return await Task.FromResult<string>($"ƒƒOƒCƒ“¬Œ÷: {reply.JwtMessage}");
 			}
 			else {
-				return await Task.FromResult<string>("ãƒ­ã‚°ã‚¤ãƒ³å¤±æ•—");
+				return await Task.FromResult<string>("ƒƒOƒCƒ“¸”s");
 			}
 		}
 		async Task<string> TestQueryMsg(GrpcChannel channel) {
@@ -132,7 +132,7 @@ namespace Cvnet10Wpfclient.ViewModels {
 			TestMasters = new ObservableCollection<Test202601Master>(list);
 			SelectedTestMaster = TestMasters.FirstOrDefault();
 			Debug.WriteLine(payload ?? "---");
-			return await Task.FromResult($"å–å¾—ä»¶æ•°: {TestMasters.Count}");
+			return await Task.FromResult($"æ“¾Œ”: {TestMasters.Count}");
 		}
 		/*
 		async Task<string> Test202601Msg(GrpcChannel channel) {
@@ -145,49 +145,8 @@ namespace Cvnet10Wpfclient.ViewModels {
 			TestMasters = new ObservableCollection<Test202601Master>(list);
 			SelectedTestMaster = TestMasters.FirstOrDefault();
 			Debug.WriteLine(payload ?? "---");
-			return await Task.FromResult($"å–å¾—ä»¶æ•°: {TestMasters.Count}");
+			return await Task.FromResult($"æ“¾Œ”: {TestMasters.Count}");
 		}*/
-		async Task<string> Test202601Msg2(GrpcChannel channel) {
-			var coreService = channel.CreateGrpcService<ICvnetCoreService>();
-			AppCurrent.LoginJwt = dummyToken;
-			var msg = new CvnetMsg { Code =202601, Flag = CvnetFlag.Msg701_TestCase001 };
-			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext());
-			var payload = string.IsNullOrWhiteSpace(reply.DataMsg) ? "[]" : reply.DataMsg;
-			var list = Common.DeserializeObject<List<Test202601Master>>(payload) ?? [];
-			TestMasters = new ObservableCollection<Test202601Master>(list);
-			SelectedTestMaster = TestMasters.FirstOrDefault();
-			Debug.WriteLine(payload ?? "---");
-			return await Task.FromResult($"å–å¾—ä»¶æ•°: {TestMasters.Count}");
-		}
-		async Task<string> Test202601Msg3(GrpcChannel channel) {
-			var coreService = channel.CreateGrpcService<ICvnetCoreService>();
-			AppCurrent.LoginJwt = dummyToken;
-			var msg = new CvnetMsg { Code = 202601, Flag = CvnetFlag.MSg041_ConvertDbInit };
-			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext());
-			return await Task.FromResult($"Convert OK");
-		}
-
-		async Task<string> Test202601Msg4(GrpcChannel channel) {
-			var coreService = channel.CreateGrpcService<ICvnetCoreService>();
-			AppCurrent.LoginJwt = dummyToken;
-			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg103_GetDbQueryMulti };
-			msg.DataType = typeof(MasterMeisho);
-			msg.DataMsg = Common.SerializeObject(new ParamQuery {
-				ResultType = typeof(List<Test202601Master>),
-				TableType = typeof(Test202601Master),
-				Where = "Id between @0 and @1",
-				Order = "Id",
-				Parameters = new object[] {	1, 9999 }
-			});
-			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext());
-			var list = Common.DeserializeObject(reply.DataMsg??"[]", reply.DataType);
-			var list0 = list as IList<Test202601Master>;
-			if(list0 != null) {
-				TestMasters = new ObservableCollection<Test202601Master>(list0);
-				SelectedTestMaster = TestMasters.FirstOrDefault();
-			}
-			return await Task.FromResult($"Query OK");
-		}
 
 	}
 }

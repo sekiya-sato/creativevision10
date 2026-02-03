@@ -5,7 +5,7 @@ namespace Cvnet10Base;
 /// [For table comments]
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-public class CommentAttribute : Attribute {
+public sealed class CommentAttribute : Attribute {
 	/// <summary>
 	/// 日本語コメント
 	/// </summary>
@@ -78,7 +78,7 @@ public enum ColumnType {
 /// [Column size specification on SQL-DB (9999 corresponds to JSON type LONGTEXT 65535 bytes)]
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-public class ColumnSizeDmlAttribute : Attribute {
+public sealed class ColumnSizeDmlAttribute : Attribute {
 	public int Size { get; }
 	public ColumnType ColType { get; }
 	public ColumnSizeDmlAttribute(int size = 40, ColumnType ctype = ColumnType.String) {
@@ -95,7 +95,7 @@ public class ColumnSizeDmlAttribute : Attribute {
 /// [Definition of information related to the table (e.g., Create Table statements)]
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class TableDmlAttribute : Attribute {
+public sealed class TableDmlAttribute : Attribute {
 	/// <summary>
 	/// カスタムCreateSQL文
 	/// [Custom CreateSQL statement]

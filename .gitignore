@@ -164,6 +164,7 @@ $RECYCLE.BIN/
 # =========================
 wrk/
 tests/
+refer/
 *.pdf
 appsettings.DevU*.json
 appsettings.Development.json

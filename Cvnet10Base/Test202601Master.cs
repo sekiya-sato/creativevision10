@@ -92,6 +92,7 @@ left join MasterMeisho m2 on T.Id_MeiItem = m2.Id
 left join MasterMeisho m3 on T.Id_MeiTenji = m3.Id
 order by T.Id
 """;
+	/*
 	readonly static string listSqlForJcolsiz = """
 SELECT
 	m.Id,
@@ -107,6 +108,7 @@ FROM
 	Test202601Master m,
 	json_each(m.Jcolsiz);
 """;
+	*/
 	public string GetViewDefinition() {
 		return viewSql;
 	}
@@ -316,8 +318,15 @@ public static class Test202601MasterExtensions {
 		var allSizIds = masterList.SelectMany(m => m.Jcolsiz!).Select(x => x.Id_MeiSiz).Where(x => x > 0).Distinct();
 		var allIds = allColIds.Union(allSizIds).ToList();
 
-		var kubuns = masterList.SelectMany(m=>m.ListMeisho).Select(x => x.Kubun).Where(x => !string.IsNullOrEmpty(x)).Distinct();
-		var names = masterList.SelectMany(m => m.ListMeisho).Select(x => x.Id_MeiCode).Where(x => x > 0).Distinct();
+		var listMeishoSource = masterList.SelectMany(
+			m => m.ListMeisho ?? Enumerable.Empty<MasterGeneralMeisho>());
+
+		var kubuns = listMeishoSource.Select(x => x.Kubun)
+			.Where(x => !string.IsNullOrEmpty(x))
+			.Distinct();
+		var names = listMeishoSource.Select(x => x.Id_MeiCode)
+			.Where(x => x > 0)
+			.Distinct();
 
 
 		// MasterMeisho を一度だけ取得 (Dictionary でキャッシュ)
@@ -332,6 +341,7 @@ public static class Test202601MasterExtensions {
 
 		// 各マスタの jcolsiz に名称をセット
 		foreach (var master in masterList) {
+			if(master.ListMeisho == null) continue;
 			foreach (var item in master.ListMeisho) {
 				if (!string.IsNullOrEmpty(item.Kubun) && meishoKubuns.TryGetValue(item.Kubun, out var codeKubun))
 					item.KubunName = codeKubun.Name;

@@ -111,7 +111,7 @@ public partial class DetailDbClass : ObservableObject {
 /// <summary>
 /// バージョン情報
 /// </summary>
-public class VersionInfo {
+public sealed class VersionInfo {
 	public string Product { get; set; }= string.Empty;
 	/// <summary>
 	/// バージョン文字列

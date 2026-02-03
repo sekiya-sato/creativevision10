@@ -8,7 +8,7 @@ using System.Configuration;
 namespace Cvnet10Server;
 public class AppInit {
 	private readonly IConfiguration _configuration;
-	readonly string version = "Cvnet10Server 2024/06/10";
+	// ToDo: バージョン番号は手動で更新すること
 	readonly string verStr = "0.0.099";
 	readonly DateTime buildDate = new DateTime(2026,2,1);
 	static VersionInfo? _ver;

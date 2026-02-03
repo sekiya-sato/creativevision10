@@ -28,12 +28,14 @@ public class CvnetMsg {
 	/// メッセージ本体
 	/// </summary>
 	[DataMember(Order = 4)]
-	public string? DataMsg { get; set; }
+	public string DataMsg { get; set; } = string.Empty;
 
 	[DataMember(Order = 5)]
 	public string? Option { get; set; }
-
 }
+
+
+
 /// <summary>
 /// 共通メッセージフラグ
 /// [Common message flag]
@@ -67,35 +69,13 @@ public enum CvnetFlag {
 	/// </summary>
 	MSg050_Test = 50,
 	/// <summary>
-	/// DBデータを取得する Message=QueryDbDef
-	/// [Get DB data Message=QueryDbDef]
+	/// DBデータを取得する
 	/// </summary>
-	Msg101_GetDbQuerySingle = 101,
+	Msg101_Op_Query = 101,
 	/// <summary>
-	/// DBデータを操作する Message=QueryDbDef
-	/// [Operate on DB data Message=QueryDbDef]
+	/// DBデータを操作
 	/// </summary>
-	Msg102_GetDbExecuteSingle = 102,
-	/// <summary>
-	/// DBデータを複数取得する Message=List＜QueryDbHeader＞
-	/// [Retrieve multiple DB data entries. Message = List＜QueryDbHeader＞]
-	/// </summary>
-	Msg103_GetDbQueryMulti = 103,
-	/// <summary>
-	/// DBデータの取得の結果 Message=QueryDbResult
-	/// [Result of retrieving DB data. Message=QueryDbResult]
-	/// </summary>
-	Msg201_RetDbQuerySingle = 201,
-	/// <summary>
-	/// DBデータを操作した結果 Message=QueryDbResult
-	/// [Result of operating on DB data. Message=QueryDbResult]
-	/// </summary>
-	Msg202_RetDbExecuteSingle = 202,
-	/// <summary>
-	/// DBデータの取得の結果 Message=List＜ResponseDbHeader＞
-	/// [Result of retrieving DB data. Message=List＜ResponseDbHeader＞]
-	/// </summary>
-	Msg203_RetDbQueryMulti = 203,
+	Msg201_Op_Execute = 201,
 	/// <summary>
 	/// ファイルダウンロード
 	/// [File download]
