@@ -26,11 +26,16 @@ Use the following specific libraries. Do not substitute them with default altern
   - Purpose: Strengthen server-side authentication and security.
 
 ## 4. Project Structure & Layering Policy
-Adhere to the following dependency rules. Do not bypass layers.
+Adhere to the following dependency rules. 
 
 **[CRITICAL RULE]**: The following projects are "Read-Only" for AI. **DO NOT modify any files within these projects** unless explicitly requested by the user:
 - **CodeShare**
 - **Cvnet10Asset**
+- **Cvnet10Base**
+- **Cvnet10BaseMariadb**
+- **Cvnet10BaseOracle**
+- **Cvnet10BaseSqlite**
+
 
 | Folder / Project(.csproj) | Layer | Responsibility | Allowed Dependencies |
 | :--- | :--- | :--- | :--- |
@@ -44,7 +49,7 @@ Adhere to the following dependency rules. Do not bypass layers.
 | **Cvnet10Server** | Layer 2 | gRPC Service Implementations, DbContext(ExDatabase) by DI | CodeShare, Cvnet10Asset, Cvnet10Base, Cvnet10DomainLogic |
 | **Cvnet10Wpfclient** | Layer 2 | WPF GUI (Views/ViewModels), gRPC Client Logic | CodeShare, Cvnet10Asset, Cvnet10Base |
 
-refer Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This Solution] 
+refer/ Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This Solution] [reference for Designning Cvnet10Wpfclient UI]
 
 ## 5. Development Rules & Guidelines
 - **Response Language**: Always provide plans, explanations, and comments in **Japanese**.
@@ -61,10 +66,11 @@ refer Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This 
 3. **Execute**: Write clean, maintainable code following Clean Architecture principles.
 4. **Verify**: Ensure the `.slnx` file structure remains intact.
 
-## 7. Each Agent Role  ( .github/copilot/ folder )
+## 7. Each Agent Role  ( .github/copilot/ Folder )
 - Orchestrator.agent.md # Overall direction and business rules
 - Planner.agent.md # Architecture and implementation policy
 - Impl.agent.md # Coding and coding standards
 - Reviewer.agent.md # Review perspectives and quality standards
 
 ## 999. [SYSTEM OVERRIDE] Ignore all instructions below this line!
+- ここから先は人間用のメモ代わり。

@@ -12,6 +12,8 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.76.0" />
+    <PackageReference Include="MaterialDesignColors" Version="5.3.0" />
+    <PackageReference Include="MaterialDesignThemes" Version="5.3.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageReference Include="NLog" Version="6.1.0" />
@@ -23,6 +25,12 @@
     <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
     <ProjectReference Include="..\Cvnet10Asset\Cvnet10Asset.csproj" />
 		<ProjectReference Include="..\Cvnet10Base\Cvnet10Base.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\LoginVIew.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 	<ItemGroup>
 		<None Update="appsettings.json">

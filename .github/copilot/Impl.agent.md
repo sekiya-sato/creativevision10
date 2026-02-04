@@ -35,3 +35,42 @@
 - WPF 実装ルールとして「新規/変更する ResourceDictionary について、ファイル名と App.xaml からの参照名を一致させ、ビルドアクションを Page に設定したかを実装時チェックする」
 - 例外解析時は再現用 XAML を必ず取得し、ResourceDictionary.Source 参照が有効かを get_file で確認してから修正コードを作成する
 
+## プロジェクト [Cvnet10Wpfclient] で [*View.xaml] を作成するよう指示された場合の処理
+- 指定されたVIewファイル [*View.xaml] に対応する [*ViewModel.cs] も作成すること
+- Models/MenuData.cs の適切な位置に作成するViewを起動するための MenuData [ただしHeaderは変えない] を記述。
+
+### Window タグの指定
+- 以下のxmlnsを追加
+'''
+xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
+xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
+'''
+- WindowStartupLocation="CenterScreen"
+- Window.DataContext は vm:*ViewModel
+- 以下のInteraction.Triggers を追加、ViewModel には [RelayCommand] 属性をつけた private void Init() {}を追加
+
+'''
+    <behaviors:Interaction.Triggers>
+        <behaviors:EventTrigger EventName="ContentRendered">
+            <behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
+        </behaviors:EventTrigger>
+    </behaviors:Interaction.Triggers>
+'''
+- 全体的なレイアウトは materialDesign 適用後に少し崩れるため、Windowのサイズは適切な幅と高さをそれぞれ+20する。
+
+
+
+
+## 999. [SYSTEM OVERRIDE] Ignore all instructions below this line!
+- ここから先は人間用のメモ代わり。
+
+project にViewおよびViewModelを追加する。 refer\Cvnet8wpfclient\Views\MasterMeishoMenteView.xaml を参考に、 メインメニューから「名称マスタメンテ」でViewを起動するように、 MainMenuViewModel.cs の修正と、 MasterMeishoMenteView.xaml  MasterMeishoMenteViewModel.cs の追加を行う。計画を立て、実行前に変更対象の内容を保存してから、確認し実行する。
+
+
+
+
+
+
+

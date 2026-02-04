@@ -12,7 +12,7 @@ public interface IBaseGetViewDefinition {
 	public string GetViewDefinition();
 }
 public interface IBaseSerializeMeisho {
-	public bool SerializeMeisho { get; set; }
+	public bool Ser { get; set; }
 
 }
 

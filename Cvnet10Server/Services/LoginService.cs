@@ -90,6 +90,8 @@ public partial class LoginService : ILoginService {
 			   // もらったパスワードを復元してみる Decryptのpassが違ってるとException
 			   // [Try to restore the received password; if the pass for Decrypt is incorrect, an exception occurs]
 			var restorePass = Common.DecryptLoginRequest(userRequest.CryptPassword, userRequest.LoginDate);
+
+			var wrk = Common.EncryptLoginRequest("123", loginData.VdateC);
 			var orgPlanePass = (loginData.CryptPassword != null) ? Common.DecryptLoginRequest(loginData.CryptPassword, loginData.VdateC) : "";
 			if (orgPlanePass != restorePass)
 				return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
@@ -218,7 +220,7 @@ public partial class LoginService : ILoginService {
 		var vdate = Common.GetVdate();
 		var initLogin = new SysLogin {
 			LoginId = userRequest.LoginId,
-			CryptPassword = Common.EncryptLoginRequest(restorePass, Common.FromUtcTicks(vdate)),
+			CryptPassword = Common.EncryptLoginRequest(restorePass, new DateTime(vdate).ToLocalTime()),
 			Vdc = vdate,
 			Vdu = vdate,
 			ExpDate = Common.FromUtcTicks(vdate).AddYears(1).ToDtStrDateTimeShort(), // 1年有効 [Valid for 1 year]

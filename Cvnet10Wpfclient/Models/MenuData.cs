@@ -75,24 +75,31 @@ public class MenuData : ObservableObject {
                 },
                 new MenuData {
                     Header = "開始処理：ログイン",
-                    AddInfo = "準備中"
-                },
+                    AddInfo = "gRPC",
+					ViewType = typeof(LoginView),
+					IsDialog = true
+				},
                 new MenuData {
                     Header = "終了処理：データアップロード",
                     AddInfo = "準備中"
                 }
             }
         },
-        new MenuData {
-            Header = "■ マスタ",
-            Color = "CornflowerBlue",
-            IsMainMenu = true,
-            SubItems = new ObservableCollection<MenuData> {
-                new MenuData { Header = "名称マスタメンテ", AddInfo = "準備中" },
-                new MenuData { Header = "得意先マスタメンテ", AddInfo = "準備中" },
-                new MenuData { Header = "社員LOGINマスタ", AddInfo = "準備中" }
-            }
-        },
+		new MenuData {
+			Header = "■ Master",
+			Color = "CornflowerBlue",
+			IsMainMenu = true,
+			SubItems = new ObservableCollection<MenuData> {
+				new MenuData {
+					Header = "名称マスタメンテ",
+					AddInfo = "Generic name setup",
+					ViewType = typeof(MasterMeishoMenteView),
+					IsDialog = true
+				},
+				new MenuData { Header = "得意先マスタメンテ", AddInfo = "準備中" },
+				new MenuData { Header = "社員LOGINマスタ", AddInfo = "準備中" }
+			}
+		},
         new MenuData {
             Header = "■ 管理メニュー",
             Color = "SteelBlue",

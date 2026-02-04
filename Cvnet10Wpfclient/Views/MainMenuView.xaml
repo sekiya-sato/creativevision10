@@ -136,19 +136,13 @@
                                     </HierarchicalDataTemplate>
                                 </TreeView.ItemTemplate>
                                 <behaviors:Interaction.Triggers>
+                                    <behaviors:EventTrigger EventName="MouseDoubleClick">
+                                        <behaviors:InvokeCommandAction Command="{Binding DoMenuCommand}" />
+                                    </behaviors:EventTrigger>
                                     <behaviors:EventTrigger EventName="SelectedItemChanged">
                                         <behaviors:InvokeCommandAction Command="{Binding SelectMenuCommand}"
                                                                       PassEventArgsToCommand="True"
                                                                       EventArgsParameterPath="NewValue" />
-                                    </behaviors:EventTrigger>
-                                    <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
-                                        <behaviors:InvokeCommandAction 
-                                            Command="{Binding SelectMenuCommand}"
-                                            CommandParameter="{Binding}" />
-                                        <!-- 
-                                Command="{Binding SelectMenuCommand}" />
-                                        
-                                        -->
                                     </behaviors:EventTrigger>
                                 </behaviors:Interaction.Triggers>
                             </TreeView>

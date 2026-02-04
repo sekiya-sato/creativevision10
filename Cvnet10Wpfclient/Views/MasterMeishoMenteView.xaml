@@ -1,0 +1,185 @@
+﻿<Window x:Class="Cvnet10Wpfclient.Views.MasterMeishoMenteView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{StaticResource MaterialDesignBody}"
+        Background="{StaticResource MaterialDesignPaper}"        
+        xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Width="1100"
+        Height="720"
+        MinWidth="900"
+        MinHeight="600"
+        FontSize="16"
+        WindowStartupLocation="CenterOwner"
+        Icon="pack://application:,,,/cvnet.ico">
+    <Window.DataContext>
+        <vm:MasterMeishoMenteViewModel />
+    </Window.DataContext>
+
+    <behaviors:Interaction.Triggers>
+        <behaviors:EventTrigger EventName="ContentRendered">
+            <behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
+        </behaviors:EventTrigger>
+    </behaviors:Interaction.Triggers>
+
+    <Window.InputBindings>
+        <KeyBinding Command="{Binding DoUpdateCommand}" Gesture="F2" />
+        <KeyBinding Command="{Binding DoDeleteCommand}" Gesture="F3" />
+        <KeyBinding Command="{Binding DoInsertCommand}" Gesture="F4" />
+        <KeyBinding Command="{Binding DoListCommand}" Gesture="F5" />
+        <KeyBinding Command="{Binding DoSelKubunCommand}" Gesture="F6" />
+    </Window.InputBindings>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Button Width="90"
+                        Height="34"
+                        Margin="0,0,8,0"
+                        Content="Close"
+                        Command="{Binding ExitCommand}" />
+                <Button Width="120"
+                        Height="34"
+                        Margin="0,0,8,0"
+                        Content="Refresh F5"
+                        Command="{Binding DoListCommand}" />
+                <Button Width="110"
+                        Height="34"
+                        Content="Export JSON"
+                        Command="{Binding DoOutputJsonCommand}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Text="Count: " VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Count}" VerticalAlignment="Center" FontWeight="Bold" />
+                <TextBlock Text="  " />
+                <TextBlock Text="{Binding Desc0}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="1.1*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" BorderBrush="#FFC6CBD2" BorderThickness="1" CornerRadius="4">
+                <DataGrid ItemsSource="{Binding ListData}"
+                          SelectedItem="{Binding Current}"
+                          IsReadOnly="True"
+                          AutoGenerateColumns="False"
+                          HeadersVisibility="Column"
+                          SelectionMode="Single"
+                          CanUserAddRows="False"
+                          Margin="0"
+                          AlternationCount="2">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70" />
+                        <DataGridTextColumn Header="Category" Binding="{Binding Kubun}" Width="100" />
+                        <DataGridTextColumn Header="Category Name" Binding="{Binding Disp0}" Width="140" />
+                        <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="110" />
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
+                        <DataGridTextColumn Header="Sort" Binding="{Binding SortNo}" Width="90" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <Border Grid.Column="2" BorderBrush="#FFC6CBD2" BorderThickness="1" CornerRadius="4" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Code" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="0"
+                             Grid.Column="1"
+                             Margin="0,4,0,8"
+                             Text="{Binding CurrentEdit.Code, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Name" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="1"
+                             Grid.Column="1"
+                             Margin="0,4,0,8"
+                             Text="{Binding CurrentEdit.Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Memo" VerticalAlignment="Top" Margin="0,4,0,0" />
+                    <TextBox Grid.Row="2"
+                             Grid.Column="1"
+                             Margin="0,4,0,8"
+                             Height="70"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             Text="{Binding CurrentEdit.Desc0, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Sort" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="3"
+                             Grid.Column="1"
+                             Margin="0,4,0,8"
+                             Width="100"
+                             HorizontalContentAlignment="Right"
+                             Text="{Binding CurrentEdit.SortNo, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Category" VerticalAlignment="Center" />
+                    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,4,0,8">
+                        <TextBox Width="80"
+                                 Margin="0,0,8,0"
+                                 Text="{Binding CurrentEdit.Id_Kubun, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Width="160"
+                                 Margin="0,0,8,0"
+                                 IsReadOnly="True"
+                                 Text="{Binding CurrentEdit.Disp0}" />
+                        <Button Width="80"
+                                Content="Select F6"
+                                Command="{Binding DoSelKubunCommand}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,8,0,8">
+                        <Button Width="90"
+                                Height="36"
+                                Margin="0,0,8,0"
+                                Content="Update F2"
+                                Command="{Binding DoUpdateCommand}" />
+                        <Button Width="90"
+                                Height="36"
+                                Margin="0,0,8,0"
+                                Content="Delete F3"
+                                Command="{Binding DoDeleteCommand}" />
+                        <Button Width="90"
+                                Height="36"
+                                Content="Add F4"
+                                Command="{Binding DoInsertCommand}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="6" Grid.ColumnSpan="2" Orientation="Vertical">
+                        <TextBlock Text="Created" />
+                        <TextBlock Text="{Binding CurrentEdit.VdateC, StringFormat='{}{0:yyyy/MM/dd HH:mm}'}" />
+                        <TextBlock Text="Updated" Margin="0,8,0,0" />
+                        <TextBlock Text="{Binding CurrentEdit.VdateU, StringFormat='{}{0:yyyy/MM/dd HH:mm}'}" />
+                        <TextBlock Text="ID" Margin="0,8,0,0" />
+                        <TextBlock Text="{Binding CurrentEdit.Id}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

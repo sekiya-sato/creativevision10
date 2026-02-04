@@ -1,16 +1,12 @@
 ﻿using Cvnet10Wpfclient.Util;
 using Grpc.Core;
+using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using ProtoBuf.Grpc;
 using ProtoBuf.Grpc.Client;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.Net.Http;
-using System.Text;
+
 
 namespace Cvnet10Wpfclient {
 	/// <summary>
@@ -41,6 +37,7 @@ namespace Cvnet10Wpfclient {
 		/// </summary>
 		public static string? LoginJwt;
 
+		readonly static HttpClient grpcHttpClient = CreateGrpcHttpClient();
 		/// <summary>
 		/// Config読込処理：application startup で一度だけ実行すること
 		/// </summary>
@@ -52,6 +49,8 @@ namespace Cvnet10Wpfclient {
 			_dataDir = ClientLib.GetDataDir();
 			// あれば取得する
 			LoginJwt = _config.GetSection("AppStrings")?["LoginJwt"];
+			// ToDo: ダミーJSONをセット。 実際にはログイン処理で取得すること
+			LoginJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQ3ZuZXRXcGZDbGllbnTjg6bjg7zjgrYgMjAyNi8wMi8wNCAxNjoxNzo0MSIsImV4cCI6MTc3ODgyOTQ2NCwiaXNzIjoiSXNzdWVyX0RldmVsb3BtZW50In0.bm3PHtk85gPMFfMfl92VnRwuKGZlPVzt2-qLl3Alcx4";
 		}
 		/// <summary>
 		/// メタデータを取得する
@@ -68,6 +67,27 @@ namespace Cvnet10Wpfclient {
 							flags: CallContextFlags.CaptureMetadata);
 			return callContext;
 		}
+		static HttpClient CreateGrpcHttpClient() {
+			var client = new HttpClient {
+				Timeout = TimeSpan.FromSeconds(300)
+			};
+			client.DefaultRequestHeaders.TryAddWithoutValidation("grpc-accept-encoding", "gzip");
+			return client;
+		}
+		public static T GetgRPCService<T>() where T : class {
+			GrpcChannel grpcChannel = GrpcChannel.ForAddress(
+				AppCurrent.Url,
+				new GrpcChannelOptions { HttpClient = grpcHttpClient });
+
+			var coreService = grpcChannel.CreateGrpcService<T>();
+			if (coreService == null) {
+				Debug.WriteLine("サービス取得失敗");
+				// 未実装
+				throw new NotImplementedException();
+			}
+			return coreService;
+		}
+
 
 
 

@@ -1,11 +1,11 @@
 ﻿
 
+using Cvnet10Base;
+using Newtonsoft.Json;
 using NPoco;
 using System.Data;
 using System.Data.Common;
 using System.Reflection;
-
-using Cvnet10Base;
 
 namespace Cvnet10DomainLogic;
 
@@ -462,11 +462,24 @@ public partial class ExDatabase : Database {
 	public object[]? RawSQLParam = null;
 	public string RawLastError = "";
 	DbConnection? _conn = null;
+	/*
+	private static readonly JsonSerializerSettings jsonOptions = new() {
+		NullValueHandling = NullValueHandling.Ignore,
+		Formatting = Formatting.None,
+		DefaultValueHandling = DefaultValueHandling.Ignore,
+	};
+	*/
+
+
 	public ExDatabase(DbConnection connection) : base(connection) {
 		_conn = connection;
 		if(_conn.State != ConnectionState.Open)
 			_conn.Open();
+		/* SerializedColumn に対して効果がない!
+			JsonConvert.DefaultSettings = () => jsonOptions;
+		*/
 	}
+
 
 	/// <summary>
 	/// 直接SQLを実行して結果を返す (エラーだったらエラーを返す)

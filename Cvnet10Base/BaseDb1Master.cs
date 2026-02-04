@@ -18,12 +18,22 @@ public partial class MasterGeneralMeisho : ObservableObject, IBaseSerializeMeish
 	[ObservableProperty]
 	long id_MeiCode;
 	[ObservableProperty]
+	string? code;
+	[ObservableProperty]
 	string? name;
-	[JsonIgnore]  // DB には保存しない
-	public bool SerializeMeisho { get; set; } = false;
-	public bool ShouldSerializeKubunName() => SerializeMeisho;
-	public bool ShouldSerializeName() => SerializeMeisho;
-
+	/// <summary>
+	/// JSON シリアライズ時に Mei_Col / Mei_Siz を含めるか (デフォルト: false)
+	/// </summary>
+	[JsonIgnore]
+	public bool Ser { get; set; } = false;
+	public bool ShouldSerializeKubunName() => Ser;
+	public bool ShouldSerializeName() => Ser;
+	public bool ShouldSerializeCode() => Ser;
+	/*
+	[ObservableProperty]
+	[property: JsonProperty("MacA")]
+	 
+	 */
 }
 
 /// <summary>
@@ -377,13 +387,24 @@ public partial class MasterShohinColSiz : BaseDbClass, IBaseGetViewDefinition, I
 	/// </summary>
 	[ObservableProperty]
 	string? jan3;
-
+	/// <summary>
+	/// カラーCD
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string? code_Col;
 	/// <summary>
 	/// カラー名
 	/// </summary>
 	[ObservableProperty]
 	[property: ResultColumn]
 	string? mei_Col;
+	/// <summary>
+	/// サイズCD
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string? code_Siz;
 	/// <summary>
 	/// サイズ名
 	/// </summary>
@@ -393,16 +414,17 @@ public partial class MasterShohinColSiz : BaseDbClass, IBaseGetViewDefinition, I
 
 	/// <summary>
 	/// JSON シリアライズ時に Mei_Col / Mei_Siz を含めるか (デフォルト: false)
-	/// [Whether to include Mei_Col/Mei_Siz in JSON serialization (Default: false)]
 	/// </summary>
-	[JsonIgnore]  // DB には保存しない
-	public bool SerializeMeisho { get; set; } = false;
+	[JsonIgnore]
+	public bool Ser { get; set; } = false;
 
 	// ✅ JSON Serialize時に mei_Col を含めるか制御
-	public bool ShouldSerializeMei_Col() => SerializeMeisho;
+	public bool ShouldSerializeMei_Col() => Ser;
 
 	// ✅ JSON Serialize時に mei_Siz を含めるか制御
-	public bool ShouldSerializeMei_Siz() => SerializeMeisho;
+	public bool ShouldSerializeMei_Siz() => Ser;
+	public bool ShouldSerializeCode_Col() => Ser;
+	public bool ShouldSerializeCode_Siz() => Ser;
 
 	readonly static string viewSql = """
 select T.*, m1.Name as Mei_Col, m2.Name as  Mei_Siz

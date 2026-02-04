@@ -195,13 +195,17 @@ public static class Test202601MasterExtensions {
 
 		// 各 MasterShohinColSiz に名称をセット
 		foreach (var item in master.Jcolsiz) {
-			if (item.Id_MeiCol > 0 && meishoDict.TryGetValue(item.Id_MeiCol, out var colMei))
+			if (item.Id_MeiCol > 0 && meishoDict.TryGetValue(item.Id_MeiCol, out var colMei)) {
+				item.Code_Col = colMei.Code;
 				item.Mei_Col = colMei.Name;
-			if (item.Id_MeiSiz > 0 && meishoDict.TryGetValue(item.Id_MeiSiz, out var sizMei))
+			}
+			if (item.Id_MeiSiz > 0 && meishoDict.TryGetValue(item.Id_MeiSiz, out var sizMei)) {
+				item.Code_Siz = sizMei.Code;
 				item.Mei_Siz = sizMei.Name;
+			}
 
 			// ✅ シリアライズ設定を適用
-			item.SerializeMeisho = serializeMeisho;
+			item.Ser = serializeMeisho;
 		}
 	}
 
@@ -235,13 +239,17 @@ public static class Test202601MasterExtensions {
 		// 各マスタの jcolsiz に名称をセット
 		foreach (var master in masterList) {
 			foreach (var item in master.Jcolsiz!) {
-				if (item.Id_MeiCol > 0 && meishoDict.TryGetValue(item.Id_MeiCol, out var colMei))
+				if (item.Id_MeiCol > 0 && meishoDict.TryGetValue(item.Id_MeiCol, out var colMei)) {
+					item.Code_Col = colMei.Code;
 					item.Mei_Col = colMei.Name;
-				if (item.Id_MeiSiz > 0 && meishoDict.TryGetValue(item.Id_MeiSiz, out var sizMei))
+				}
+				if (item.Id_MeiSiz > 0 && meishoDict.TryGetValue(item.Id_MeiSiz, out var sizMei)) {
+					item.Code_Siz = sizMei.Code;
 					item.Mei_Siz = sizMei.Name;
+				}
 
 				// ✅ シリアライズ設定を適用
-				item.SerializeMeisho = serializeMeisho;
+				item.Ser = serializeMeisho;
 			}
 		}
 	}
@@ -283,9 +291,11 @@ public static class Test202601MasterExtensions {
 		foreach (var item in master.ListMeisho) {
 			if (!string.IsNullOrEmpty(item.Kubun) && meishoKubuns.TryGetValue(item.Kubun, out var codeKubun))
 				item.KubunName = codeKubun.Name;
-			if (item.Id_MeiCode > 0 && meishoNames.TryGetValue(item.Id_MeiCode, out var nameMei))
+			if (item.Id_MeiCode > 0 && meishoNames.TryGetValue(item.Id_MeiCode, out var nameMei)) {
+				item.Code = nameMei.Code;
 				item.Name = nameMei.Name;
-			item.SerializeMeisho = serializeMeisho;
+			}
+			item.Ser = serializeMeisho;
 		}
 	}
 
@@ -345,9 +355,11 @@ public static class Test202601MasterExtensions {
 			foreach (var item in master.ListMeisho) {
 				if (!string.IsNullOrEmpty(item.Kubun) && meishoKubuns.TryGetValue(item.Kubun, out var codeKubun))
 					item.KubunName = codeKubun.Name;
-				if (item.Id_MeiCode > 0 && meishoNames.TryGetValue(item.Id_MeiCode, out var nameMei))
+				if (item.Id_MeiCode > 0 && meishoNames.TryGetValue(item.Id_MeiCode, out var nameMei)) {
+					item.Code = nameMei.Code;
 					item.Name = nameMei.Name;
-				item.SerializeMeisho = serializeMeisho;
+				}
+				item.Ser = serializeMeisho;
 			}
 		}
 	}
