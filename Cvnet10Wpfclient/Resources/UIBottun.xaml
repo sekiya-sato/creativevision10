@@ -29,17 +29,18 @@
     </Style>
 
     <Style x:Key="MinimizeWinBtn" TargetType="Button" BasedOn="{StaticResource WindowButton}">
-        <Setter Property="Content" Value="-"/>
-        <Setter Property="Background" Value="#28AEED"/>
+        <Setter Property="Content" Value="-" />
+        <Setter Property="Background" Value="#28AEED" />
     </Style>
+
     <Style x:Key="MaximizeWinBtn" TargetType="Button" BasedOn="{StaticResource WindowButton}">
-        <Setter Property="Content" Value="M"/>
-        <Setter Property="Background" Value="#28AEED"/>
+        <Setter Property="Content" Value="◻" />
+        <Setter Property="Background" Value="#22DD22" />
     </Style>
 
     <Style x:Key="CloseWinBtn" TargetType="Button" BasedOn="{StaticResource WindowButton}">
-        <Setter Property="Content" Value="X"/>
-        <Setter Property="Background" Value="#28AEED"/>
+        <Setter Property="Content" Value="X" />
+        <Setter Property="Background" Value="#DA34AE" />
     </Style>
 
     <!-- Menu chips -->

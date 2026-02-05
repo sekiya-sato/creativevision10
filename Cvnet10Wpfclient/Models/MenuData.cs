@@ -5,55 +5,31 @@ using System.Collections.ObjectModel;
 
 namespace Cvnet10Wpfclient.Models;
 
-public class MenuData : ObservableObject {
+public partial class MenuData : ObservableObject {
+    [ObservableProperty]
     private string? header;
-    public string? Header {
-        get => header;
-        set => SetProperty(ref header, value);
-    }
 
-    private bool isExpand;
-    public bool IsExpand {
-        get => isExpand;
-        set => SetProperty(ref isExpand, value);
-    }
+	[ObservableProperty]
+	private bool isExpand;
 
-    private bool isSelected;
-    public bool IsSelected {
-        get => isSelected;
-        set => SetProperty(ref isSelected, value);
-    }
+	[ObservableProperty]
+	private bool isSelected;
 
-    private ObservableCollection<MenuData>? subItems;
-    public ObservableCollection<MenuData>? SubItems {
-        get => subItems;
-        set => SetProperty(ref subItems, value);
-    }
+	[ObservableProperty]
+	private ObservableCollection<MenuData>? subItems;
 
-    private string? addInfo;
-    public string? AddInfo {
-        get => addInfo;
-        set => SetProperty(ref addInfo, value);
-    }
+	[ObservableProperty]
+	private string? addInfo;
 
-    private string? icon;
-    public string? Icon {
-        get => icon;
-        set => SetProperty(ref icon, value);
-    }
+	[ObservableProperty]
+	private string? icon;
 
-    private bool isMainMenu;
-    public bool IsMainMenu {
-        get => isMainMenu;
-        set => SetProperty(ref isMainMenu, value);
-    }
+	[ObservableProperty]
+	private bool isMainMenu;
 
-    private string? color;
-    public string? Color {
-        get => color;
-        set => SetProperty(ref color, value);
-    }
-
+	[ObservableProperty]
+	private string? color;
+    
     public Type? ViewType { get; set; }
 
     public bool IsDialog { get; set; } = true;
@@ -71,7 +47,7 @@ public class MenuData : ObservableObject {
                     Header = "開始処理：接続テスト",
                     AddInfo = "gRPC",
                     ViewType = typeof(Test20260203View),
-                    IsDialog = true
+                    IsDialog = false
                 },
                 new MenuData {
                     Header = "開始処理：ログイン",

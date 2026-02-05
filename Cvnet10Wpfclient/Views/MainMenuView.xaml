@@ -16,6 +16,8 @@
         ResizeMode="CanResizeWithGrip"
         Background="Transparent"
         Icon="pack://application:,,,/cvnet.ico"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
         MouseDown="Window_MouseDown">
 
     <Window.Resources>
@@ -64,7 +66,7 @@
                     <StackPanel Orientation="Vertical">
                         <TextBlock Text="{Binding HeaderTitle}"
                                    Foreground="{DynamicResource TitleColor}"
-                                   FontSize="28"
+                                   FontSize="36"
                                    FontWeight="Bold" />
                         <TextBlock Text="{Binding SubTitle}"
                                    Foreground="{DynamicResource SubTitleColor}"
@@ -75,7 +77,7 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
                         <Border Style="{StaticResource StatusChip}" Margin="0,0,8,0">
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Text="JWT Expire" Style="{StaticResource MetricLabel}" Foreground="{DynamicResource SubTitleColor}" />
+                                <TextBlock Text="ログイン期限" Style="{StaticResource MetricLabel}" Foreground="{DynamicResource SubTitleColor}" />
                                 <TextBlock Text="{Binding ExpireDate}" Foreground="{DynamicResource plainTextColor0}" />
                             </StackPanel>
                         </Border>
@@ -117,10 +119,12 @@
                                 </Grid>
                             </Button.Content>
                         </Button>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,12,12,12" >
 
                         <Button Style="{StaticResource MinimizeWinBtn}" Command="{Binding MinimizeCommand}" />
                         <Button Style="{StaticResource MaximizeWinBtn}" Command="{Binding MaximizeCommand}" />
                         <Button Style="{StaticResource CloseWinBtn}" Command="{Binding ExitCommand}" />
+                      </StackPanel>
                     </StackPanel>
                 </Grid>
 

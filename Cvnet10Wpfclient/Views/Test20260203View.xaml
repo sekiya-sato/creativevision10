@@ -11,6 +11,8 @@
         Title="Test20260203View"
         Height="760"
         Width="1024"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
         Background="{DynamicResource AppCommonBackgroundBrush}">
     <Window.DataContext>
         <vm:Test20260203ViewModel />
