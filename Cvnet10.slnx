@@ -1,5 +1,7 @@
 <Solution>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="TestLogin/TestLogin.csproj" Id="118c6650-fde8-4368-b347-4c6766244adb" />
+  </Folder>
   <Folder Name="/ソリューション項目/">
     <File Path="readme.md" />
   </Folder>

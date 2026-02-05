@@ -8,7 +8,7 @@ namespace CodeShare;
 /// Contract:共通メッセージClass
 /// </summary>
 [DataContract]
-public class CvnetMsg {
+public sealed class CvnetMsg {
 	/// <summary>
 	/// メッセージ種別
 	/// </summary>
@@ -18,7 +18,7 @@ public class CvnetMsg {
 	/// コード（リターンコード、その他）
 	/// </summary>
 	[DataMember(Order = 2)]
-	public int Code;
+	public int Code { get; set; }
 	/// <summary>
 	/// メッセージ型
 	/// </summary>
@@ -148,7 +148,7 @@ public enum CvnetFlag {
 /// ファイル送受信メッセージ
 /// </summary>
 [DataContract]
-public class FileOperation {
+public sealed class FileOperation {
 	/// <summary>
 	/// ファイル名
 	/// [File name]

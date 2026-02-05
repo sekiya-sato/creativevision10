@@ -32,9 +32,7 @@ public partial class LoginViewModel : ObservableObject {
 
 	[RelayCommand]
 	private void Exit() {
-		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) == MessageBoxResult.Yes) {
-			WeakReferenceMessenger.Default.Send(new DialogCloseMessage(false));
-		}
+		WeakReferenceMessenger.Default.Send(new DialogCloseMessage(false));
 	}
 	[RelayCommand]
 	private async Task Login() {

@@ -26,6 +26,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 		ArgumentNullException.ThrowIfNull(configuration);
 		ArgumentNullException.ThrowIfNull(env);
 		ArgumentNullException.ThrowIfNull(httpContextAccessor);
+		ArgumentNullException.ThrowIfNull(db);
 		_logger = logger;
 		_configuration = configuration;
 		_env = env;
