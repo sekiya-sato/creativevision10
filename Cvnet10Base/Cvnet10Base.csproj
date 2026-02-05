@@ -5,10 +5,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-	<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-	<PackageReference Include="NLog" Version="6.1.0" />
-	<PackageReference Include="NPoco" Version="6.1.0" />
+	<PackageReference Include="CommunityToolkit.Mvvm" />
+	<PackageReference Include="Newtonsoft.Json" />
+	<PackageReference Include="NLog" />
+	<PackageReference Include="NPoco" />
   </ItemGroup>
 
 </Project>

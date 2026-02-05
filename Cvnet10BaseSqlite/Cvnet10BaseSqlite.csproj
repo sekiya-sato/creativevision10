@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.2" />
-		<PackageReference Include="NPoco" Version="6.1.0" />
+		<PackageReference Include="Microsoft.Data.Sqlite" />
+		<PackageReference Include="NPoco" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Cvnet10Base\Cvnet10Base.csproj" />

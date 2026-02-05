@@ -22,6 +22,7 @@ AIアシスタントはこのファイルではなく .github/copilot-instructio
 契約定義（CodeShare）、共通ドメインロジック（Cvnet10Base, Cvnet10DomainLogic）、gRPC サーバ（Cvnet10Server）、GUI クライアント（Cvnet10Wpfclient）が役割分担し、
 .NET 10 / C# 14 の最新機能と ProtoBuf.Grpc / CommunityToolkit.Mvvm などの NuGet パッケージで構築されています。
 サーバー-クライアント間の通信は共通 DTO と JSON/ProtoBuf シリアライズを併用し、将来的な OSS 販売管理パッケージ公開を見据えたスケーラブルなアーキテクチャになっています。
+ソリューション全体で一括してNugetパッケージのバージョン管理を行い、依存関係の整合性を確保しています。(Directory.Packages.props)
 
 
 # プロジェクト別概要

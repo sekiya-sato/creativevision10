@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="MySqlConnector" Version="2.3.7" />
-		<PackageReference Include="NPoco" Version="6.1.0" />
+		<PackageReference Include="MySqlConnector" />
+		<PackageReference Include="NPoco" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Cvnet10Base\Cvnet10Base.csproj" />

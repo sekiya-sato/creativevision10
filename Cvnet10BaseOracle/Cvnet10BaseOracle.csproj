@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="NPoco" Version="6.1.0" />
-		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.26.0" />
+		<PackageReference Include="NPoco" />
+		<PackageReference Include="Oracle.ManagedDataAccess.Core" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Cvnet10Base\Cvnet10Base.csproj" />
