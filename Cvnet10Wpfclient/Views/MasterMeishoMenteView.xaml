@@ -6,7 +6,7 @@
         xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         TextElement.Foreground="{StaticResource MaterialDesignBody}"
-        Background="{StaticResource MaterialDesignPaper}"        
+        Background="{DynamicResource AppCommonBackgroundBrush}"        
         xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
         mc:Ignorable="d"
         Title="{Binding Title}"

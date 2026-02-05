@@ -5,6 +5,7 @@
              StartupUri="Views/MainMenuView.xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <SolidColorBrush x:Key="AppCommonBackgroundBrush" Color="#FAEBD7" /> <!-- サブダイアログ共通背景色  -->
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Resources/UIColors.xaml"/>
                 <ResourceDictionary Source="/Resources/UIWindow.xaml"/>

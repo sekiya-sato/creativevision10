@@ -53,7 +53,7 @@ namespace Cvnet10Wpfclient {
 			// あれば取得する
 			LoginJwt = _config.GetSection("AppStrings")?["LoginJwt"];
 			// ToDo: ダミーJSONをセット。 実際にはログイン処理で取得すること
-			LoginJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQ3ZuZXRXcGZDbGllbnTjg6bjg7zjgrYgMjAyNi8wMi8wNCAxNjoxNzo0MSIsImV4cCI6MTc3ODgyOTQ2NCwiaXNzIjoiSXNzdWVyX0RldmVsb3BtZW50In0.bm3PHtk85gPMFfMfl92VnRwuKGZlPVzt2-qLl3Alcx4";
+			// LoginJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQ3ZuZXRXcGZDbGllbnTjg6bjg7zjgrYgMjAyNi8wMi8wNCAxNjoxNzo0MSIsImV4cCI6MTc3ODgyOTQ2NCwiaXNzIjoiSXNzdWVyX0RldmVsb3BtZW50In0.bm3PHtk85gPMFfMfl92VnRwuKGZlPVzt2-qLl3Alcx4";
 		}
 		/// <summary>
 		/// メタデータを取得する

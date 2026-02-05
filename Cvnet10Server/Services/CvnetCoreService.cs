@@ -37,6 +37,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 	// ToDo : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
 
 	[AllowAnonymous]
+	//[Authorize]
 	public Task<CvnetMsg> QueryMsgAsync(CvnetMsg request, CallContext context = default) {
 		var result = new CvnetMsg() { Flag = CvnetFlag.Msg800_Error_Start };
 		result.Code = -1;

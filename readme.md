@@ -9,7 +9,7 @@ AIアシスタントはこのファイルではなく .github/copilot-instructio
 - [ソリューション概要](#ソリューション概要)
 - [プロジェクト別概要](#プロジェクト別概要)
   - [CodeShare](#CodeShare)
-  - [Cvnet10AppShared](#Cvnet10AppShared)
+  - [Cvnet10Asset](#Cvnet10Asset)
   - [Cvnet10Base](#Cvnet10Base)
   - [Cvnet10DomainLogic](#Cvnet10DomainLogic)
   - [Cvnet10Server](#Cvnet10Server)
@@ -31,7 +31,7 @@ AIアシスタントはこのファイルではなく .github/copilot-instructio
 - サーバー Cvnet10Server とクライアント Cvnet10Wpfclient の双方が参照し、完全な型安全通信を担保。
 - 変更時はサーバー/クライアント両方の再ビルドが必要なため、契約の互換性管理が重要。
 
-## Cvnet10AppShared
+## Cvnet10Asset
 - 複数プロジェクトに共通して使われるclass定義や処理
 - 極力依存性を減らし軽量にする
 
@@ -39,6 +39,7 @@ AIアシスタントはこのファイルではなく .github/copilot-instructio
 ## Cvnet10Base
 - 共通モデル、NPoco ベースの DB エンティティ、ORマッパー などを提供。
 - CommunityToolkit.Mvvm を活用した `ObservableObject` / `[ObservableProperty]` により、UI/サーバ双方で同一モデルを活用可能。
+- Cvnet10Base[MariaDb|Oracle|Sqlite] として DB 固有の実装を分離。
 
 
 ## Cvnet10DomainLogic

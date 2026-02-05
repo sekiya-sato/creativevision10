@@ -7,8 +7,6 @@ using System.Text;
 
 namespace Cvnet10Asset;
 public sealed class Common {
-	public static string Version { get; } = "1.00.00";
-
     // JsonConvert共通オプション（必要に応じてカスタマイズ／コンバータを追加）
     private static readonly JsonSerializerSettings jsonOptions = new () {
         NullValueHandling = NullValueHandling.Ignore,

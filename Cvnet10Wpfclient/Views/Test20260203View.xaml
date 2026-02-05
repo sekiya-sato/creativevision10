@@ -10,7 +10,8 @@
         WindowStartupLocation="CenterScreen"
         Title="Test20260203View"
         Height="760"
-        Width="1024" >
+        Width="1024"
+        Background="{DynamicResource AppCommonBackgroundBrush}">
     <Window.DataContext>
         <vm:Test20260203ViewModel />
     </Window.DataContext>
@@ -19,7 +20,7 @@
             <behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
         </behaviors:EventTrigger>
     </behaviors:Interaction.Triggers>
-    <Grid Margin="16" Background="#FFCBCEF7" >
+    <Grid Margin="16" Background="{DynamicResource AppCommonBackgroundBrush}" >
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />

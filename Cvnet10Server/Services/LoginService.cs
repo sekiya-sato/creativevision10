@@ -206,7 +206,8 @@ public partial class LoginService : ILoginService {
 	/// <param name="userRequest"></param>
 	/// <param name="context"></param>
 	/// <returns></returns>
-	[AllowAnonymous]
+	//[AllowAnonymous]
+	[Authorize]
 	public Task<LoginReply> CreateLoginAsync(LoginRequest userRequest, ProtoBuf.Grpc.CallContext context = default) {
 		var loginData = _db.Fetch<SysLogin>($"where LoginId=@0", [userRequest.LoginId]).FirstOrDefault();
 		if( loginData != null) {
