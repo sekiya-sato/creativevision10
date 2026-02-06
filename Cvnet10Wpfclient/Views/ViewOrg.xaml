@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Cvnet10Wpfclient.Views"
         mc:Ignorable="d"
-        Title="ViewOrg" Height="450" Width="800">
+        Title="ViewOrg" Height="760" Width="1024">
     <Grid>
         
     </Grid>

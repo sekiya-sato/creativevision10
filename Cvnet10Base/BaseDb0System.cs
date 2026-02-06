@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Cvnet10Base.Share;
 using NPoco;
 
 namespace Cvnet10Base;
@@ -95,7 +96,7 @@ public partial class MasterSysTax: ObservableObject {
 /// 名称テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-public partial class MasterMeisho : BaseDbClass {
+public partial class MasterMeisho : BaseDbClass, IBaseGetViewDefinition {
 	/// <summary>
 	/// 区分
 	/// </summary>
@@ -106,7 +107,7 @@ public partial class MasterMeisho : BaseDbClass {
 	/// 名称コード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[property: ColumnSizeDml(10)]
 	string code = "";
 	/// <summary>
 	/// 名称
@@ -126,4 +127,18 @@ public partial class MasterMeisho : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	string? kana;
+	/// <summary>
+	/// 並び順
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(100)]
+	int odr;
+	readonly static string viewSql = """
+select T.*, m1.Name as Disp0
+from MasterMeisho T
+left join MasterMeisho m1 on m1.Kubun = 'IDX' and T.Kubun = m1.Code 
+""";
+	public string GetViewDefinition() {
+		return viewSql;
+	}
 }

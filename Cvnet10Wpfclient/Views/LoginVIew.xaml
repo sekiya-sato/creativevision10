@@ -12,7 +12,8 @@
         Title="ログイン" Height="370" Width="500"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource AppCommonBackgroundBrush}"
-        TextElement.Foreground="{StaticResource MaterialDesignBody}">
+        TextElement.Foreground="{StaticResource MaterialDesignBody}"
+        FocusManager.FocusedElement="{Binding ElementName=LoginIdTextBox}">
     <Window.DataContext>
         <vm:LoginViewModel />
     </Window.DataContext>
@@ -32,18 +33,16 @@
                Margin="0,0,0,30"
                FontWeight="Bold"
                Foreground="{DynamicResource MaterialDesignBody}"/>
-            <TextBox Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+            <TextBox x:Name="LoginIdTextBox" Style="{StaticResource MaterialDesignFloatingHintTextBox}"
              materialDesign:HintAssist.Hint="ログインIDを入力してください"
              Text="{Binding LoginId, UpdateSourceTrigger=PropertyChanged}"
              materialDesign:TextFieldAssist.HasClearButton="True"
+             helpers:FocusHelper.IsEnterToNext="True"
              FontSize="16"
              Margin="0,0,0,20"
              Foreground="{DynamicResource MaterialDesignBody}" 
              materialDesign:HintAssist.Foreground="{DynamicResource color8}"
              CaretBrush="{DynamicResource MaterialDesignBody}">
-                <TextBox.InputBindings>
-                    <KeyBinding Key="Enter" Command="{Binding LoginCommand}" />
-                </TextBox.InputBindings>
             </TextBox>
 
             <PasswordBox Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
@@ -55,9 +54,6 @@
                  CaretBrush="{DynamicResource color2}"
                  helpers:PasswordBoxAssistant.BindPassword="True"
                  helpers:PasswordBoxAssistant.BoundPassword="{Binding LoginPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                <PasswordBox.InputBindings>
-                    <KeyBinding Key="Enter" Command="{Binding LoginCommand}" />
-                </PasswordBox.InputBindings>
             </PasswordBox>
 
             <Grid>

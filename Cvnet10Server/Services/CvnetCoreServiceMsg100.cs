@@ -1,6 +1,7 @@
 ﻿using CodeShare;
 using Cvnet10Asset;
 using Cvnet10Base;
+using Cvnet10Base.Share;
 using ProtoBuf.Grpc;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,6 +23,11 @@ public partial class CvnetCoreService {
 	void setName(object? item, Type itemType) {
 		if (item == null)
 			return;
+		if(itemType is IBaseGetViewDefinition meisho) {
+			var sql = meisho.GetViewDefinition();
+		}
+
+
 		if (itemType.Name == "Test202601Master") { // 特定のテーブル型かどうかで判定
 			var data0 = (Test202601Master?)item;
 			if (data0 != null) {
@@ -30,6 +36,7 @@ public partial class CvnetCoreService {
 				return;
 			}
 		}
+
 		// throw new InvalidOperationException("Invalid item type for setName");
 	}
 
@@ -83,6 +90,11 @@ public partial class CvnetCoreService {
 				var list0 = list.Cast<Test202601Master>();
 				list0.LoadAllJcolsizMeishoNames(_db, true); // 名称をセット
 				list0.LoadAllGeneralMeishoNames(_db, true);
+			}
+			if (typeof(IBaseGetViewDefinition).IsAssignableFrom(queryList.ItemType)) {
+
+				//var list2 = list1.Cast<IBaseGetViewDefinition>();
+
 			}
 			ret.Code = 0;
 			// ret.DataType = list.GetType(); // これはList<object>になるので正しくない

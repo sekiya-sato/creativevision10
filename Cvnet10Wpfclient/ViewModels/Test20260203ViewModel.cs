@@ -58,6 +58,17 @@ namespace Cvnet10Wpfclient.ViewModels {
 					TestMasters = new ObservableCollection<Test202601Master>(list0);
 					SelectedTestMaster = TestMasters.FirstOrDefault();
 				}
+				var msg2 = new CvnetMsg {
+					Code = 0,
+					Flag = CvnetFlag.Msg101_Op_Query,
+					DataType = typeof(QueryListParam),
+					DataMsg = Common.SerializeObject(new QueryListParam(
+						itemType: typeof(MasterMeisho)
+					))
+				};
+
+
+
 			}
 			catch (RpcException rpcEx) {
 				TestConnectStatusText = $"gRPC: {rpcEx.Status.Detail}";

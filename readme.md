@@ -86,11 +86,10 @@ AIアシスタントはこのファイルではなく .github/copilot-instructio
 		- 改善提案 : 開発フェーズ / リリースフェーズ
 		- 開発フェーズでの検討提案
 			- WPF クライアント改善
-				- 指摘: Views の命名やファイル名の一貫性、DI 利用や ViewModel の初期化戦略が改善余地あり。
-				- WPF で DI コンテナ（Microsoft.Extensions.Hosting + Generic Host）を導入し、ViewModel/サービスの注入とテスト容易性を向上。
-				- UI リソースは既に分割済み (UIColors.xaml 等) だが、テーマ切替やダークモード対応を早期に設計する。
-				- コマンド/非同期処理は CancellationToken を用いてキャンセル可能にする。
-					- 実施例: App.xaml.cs を IHost 起動に切替え、MainWindow の DataContext を DI で解決。
+				- 却下: 指摘: Views の命名やファイル名の一貫性、DI 利用や ViewModel の初期化戦略が改善余地あり。
+				- 却下: WPF で DI コンテナ（Microsoft.Extensions.Hosting + Generic Host）を導入し、ViewModel/サービスの注入とテスト容易性を向上。
+				- 採用済: UI リソースは既に分割済み (UIColors.xaml 等) だが、テーマ切替やダークモード対応を早期に設計する。
+				- 採用済: コマンド/非同期処理は CancellationToken を用いてキャンセル可能にする。
 				- 互換性・互換試験（低優先）
 					- 指摘: JSON と ProtoBuf の両シリアライザを使う設計では、両者で同一意味を保つ検証が必要。
 					- 推奨: DTO のシリアライズ互換テストを自動化（JSON <> ProtoBuf シリアライズ/デシリアライズのラウンドトリップ検証）。
@@ -117,6 +116,9 @@ AIアシスタントはこのファイルではなく .github/copilot-instructio
 				- 推奨: DB スキーマはマイグレーションツール（Flyway / DbUp など）で管理し、マイグレーションを CI に組み込む。ベース側にマイグレーションスクリプトを同梱。
 				- 実施例: Cvnet10Base にマイグレーション定義 + マイグレーション実行コードを追加。
 	- Theme対応とView/ViewModelのDIコンテナ対応
+- 2026/02/06
+
+
 
 # ToDo 残作業
 
