@@ -8,8 +8,12 @@ public interface IBaseCodeName {
 	public string? Kana { get; set; }
 }
 
-public interface IBaseGetViewDefinition {
-	public string GetViewDefinition();
+/// <summary>
+/// テーブルに別途リスト取得用の ViewSql 文字列を定義するためのインターフェース(T.*)
+/// </summary>
+public interface IBaseViewDefine {
+
+	readonly static public string ViewSql="";
 }
 public interface IBaseSerializeMeisho {
 	public bool Ser { get; set; }

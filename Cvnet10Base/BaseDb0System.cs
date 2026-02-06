@@ -96,7 +96,7 @@ public partial class MasterSysTax: ObservableObject {
 /// 名称テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-public partial class MasterMeisho : BaseDbClass, IBaseGetViewDefinition {
+public partial class MasterMeisho : BaseDbClass, IBaseViewDefine {
 	/// <summary>
 	/// 区分
 	/// </summary>
@@ -133,12 +133,9 @@ public partial class MasterMeisho : BaseDbClass, IBaseGetViewDefinition {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	int odr;
-	readonly static string viewSql = """
+	readonly public static string ViewSql = """
 select T.*, m1.Name as Disp0
 from MasterMeisho T
-left join MasterMeisho m1 on m1.Kubun = 'IDX' and T.Kubun = m1.Code 
+left outer join MasterMeisho m1 on m1.Kubun = 'IDX' and T.Kubun = m1.Code 
 """;
-	public string GetViewDefinition() {
-		return viewSql;
-	}
 }

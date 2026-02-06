@@ -73,7 +73,8 @@
                         <DataGridTextColumn Header="区分" Binding="{Binding Kubun}" Width="100" />
                         <DataGridTextColumn Header="コード" Binding="{Binding Code}" Width="110" />
                         <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="*" />
-                        <DataGridTextColumn Header="順序" Binding="{Binding SortNo}" Width="70" />
+                        <DataGridTextColumn Header="区分名" Binding="{Binding Disp0}" Width="*" />
+                        <DataGridTextColumn Header="順序" Binding="{Binding Odr}" Width="70" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>

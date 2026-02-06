@@ -2,6 +2,7 @@
 using Cvnet10Asset;
 using Cvnet10Base;
 using Cvnet10Base.Share;
+using NPoco;
 using ProtoBuf.Grpc;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,32 +14,6 @@ namespace Cvnet10Server.Services;
 
 public partial class CvnetCoreService {
 
-	/// <summary>
-	/// ロジック検証用の一時的なテスト処理
-	/// Todo : 実際の業務ロジックに置き換えることあるいは削除すること
-	/// Note : 特定のテーブル型に依存した名称セット処理を行っている
-	/// </summary>
-	/// <param name="item"></param>
-	/// <param name="itemType"></param>
-	void setName(object? item, Type itemType) {
-		if (item == null)
-			return;
-		if(itemType is IBaseGetViewDefinition meisho) {
-			var sql = meisho.GetViewDefinition();
-		}
-
-
-		if (itemType.Name == "Test202601Master") { // 特定のテーブル型かどうかで判定
-			var data0 = (Test202601Master?)item;
-			if (data0 != null) {
-				data0.LoadJcolsizMeishoNames(_db, true); // 名称をセット
-				data0.LoadGeneralMeishoNames(_db, true);
-				return;
-			}
-		}
-
-		// throw new InvalidOperationException("Invalid item type for setName");
-	}
 
 	/// <summary>
 	/// Query系の処理
@@ -52,13 +27,20 @@ public partial class CvnetCoreService {
 		// パラメータの型で処理を分岐
 		var queryOne = param as QueryOneParam;
 		var ret = new CvnetMsg() { Flag = request.Flag };
+		var sql = "";
+
 		if (queryOne != null) {
-			var data = _db.Fetch(queryOne.ItemType,  queryOne.AddWhere(), queryOne.Parameters).FirstOrDefault();
+			// ViewSqlが定義されている場合はそちらを使用する
+			var sqlmain = Resolver.GetViewSql(queryOne.ItemType);
+			if (sqlmain != null)
+				sql = $"{sqlmain} {queryOne.AddWhere()}";
+			else
+				sql = queryOne.AddWhere();
+			var data = _db.Fetch(queryOne.ItemType, sql, queryOne.Parameters).FirstOrDefault();
 			if(data == null) {
 				ret.Code = -1; // 見つからなかった
 				return ret;
 			}
-			setName(data, queryOne.ItemType);
 			ret.Code = 0;
 			ret.DataType = data.GetType();
 			ret.DataMsg = Common.SerializeObject(data);
@@ -66,12 +48,17 @@ public partial class CvnetCoreService {
 		}
 		var querybyId = param as QuerybyIdParam;
 		if (querybyId != null) {
-			var data = _db.Fetch(querybyId.ItemType, "where Id = @0", querybyId.Id).FirstOrDefault();
+			// ViewSqlが定義されている場合はそちらを使用する
+			var sqlmain = Resolver.GetViewSql(querybyId.ItemType);
+			if (sqlmain != null)
+				sql = $"{sqlmain} where Id = @0";
+			else
+				sql = "where Id = @0";
+			var data = _db.Fetch(querybyId.ItemType, sql, querybyId.Id).FirstOrDefault();
 			if (data == null) {
 				ret.Code = -1; // 見つからなかった
 				return ret;
 			}
-			setName(data, querybyId.ItemType);
 			ret.Code = 0;
 			ret.DataType = data.GetType();
 			ret.DataMsg = Common.SerializeObject(data);
@@ -79,7 +66,13 @@ public partial class CvnetCoreService {
 		}
 		var queryList = param as QueryListParam;
 		if (queryList != null) {
-			var list = _db.Fetch(queryList.ItemType, queryList.AddWhereOrder(), queryList.Parameters);
+			// ViewSqlが定義されている場合はそちらを使用する
+			var sqlmain = Resolver.GetViewSql(queryList.ItemType);
+			if (sqlmain != null)
+				sql = $"{MasterMeisho.ViewSql} {queryList.AddWhereOrder()}";
+			else
+				sql = queryList.AddWhereOrder();
+			var list = _db.Fetch(queryList.ItemType, sql, queryList.Parameters);
 			if (list == null || list.Count==0) {
 				ret.Code = -1; // 見つからなかった
 				ret.DataType = typeof(List<>).MakeGenericType(queryList.ItemType);
@@ -90,11 +83,6 @@ public partial class CvnetCoreService {
 				var list0 = list.Cast<Test202601Master>();
 				list0.LoadAllJcolsizMeishoNames(_db, true); // 名称をセット
 				list0.LoadAllGeneralMeishoNames(_db, true);
-			}
-			if (typeof(IBaseGetViewDefinition).IsAssignableFrom(queryList.ItemType)) {
-
-				//var list2 = list1.Cast<IBaseGetViewDefinition>();
-
 			}
 			ret.Code = 0;
 			// ret.DataType = list.GetType(); // これはList<object>になるので正しくない

@@ -356,7 +356,7 @@ public partial class MasterShohin : BaseDbClass, IBaseCodeName {
 /// 商品色サイズJANマスター
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-public partial class MasterShohinColSiz : BaseDbClass, IBaseGetViewDefinition, IBaseSerializeMeisho {
+public partial class MasterShohinColSiz : BaseDbClass, IBaseViewDefine, IBaseSerializeMeisho {
 	/// <summary>
 	/// 商品
 	/// </summary>
@@ -426,18 +426,12 @@ public partial class MasterShohinColSiz : BaseDbClass, IBaseGetViewDefinition, I
 	public bool ShouldSerializeCode_Col() => Ser;
 	public bool ShouldSerializeCode_Siz() => Ser;
 
-	readonly static string viewSql = """
+	readonly static public string ViewSql = """
 select T.*, m1.Name as Mei_Col, m2.Name as  Mei_Siz
 from MasterShohinColSiz T
 left join MasterMeisho m1 on T.id_MeiCol = m1.Id
 left join MasterMeisho m2 on T.id_MeiSiz = m2.Id
 """;
-	public  string GetViewDefinition() {
-		return viewSql;
-	}
-
-
-
 }
 /// <summary>
 /// 品質マスター

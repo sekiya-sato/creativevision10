@@ -33,12 +33,12 @@
         </behaviors:EventTrigger>
     </behaviors:Interaction.Triggers>
 
-    <Border CornerRadius="40" Padding="9">
+    <Border CornerRadius="40" Padding="2">
         <Border.Background>
             <SolidColorBrush Color="{DynamicResource primaryBackColor1}" />
         </Border.Background>
 
-        <Border CornerRadius="24" BorderThickness="2">
+        <Border CornerRadius="40" BorderThickness="2">
             <Border.Background>
                 <SolidColorBrush Color="{DynamicResource primaryBackColor2}" />
             </Border.Background>
@@ -67,7 +67,14 @@
                         <TextBlock Text="{Binding HeaderTitle}"
                                    Foreground="{DynamicResource TitleColor}"
                                    FontSize="36"
-                                   FontWeight="Bold" />
+                                   FontWeight="Bold" >
+                            <TextBlock.Effect>
+                                <DropShadowEffect Color="Black" 
+                          Direction="315" 
+                          ShadowDepth="1.5" 
+                          Opacity="1" 
+                          BlurRadius="4"/>
+                            </TextBlock.Effect></TextBlock>
                         <TextBlock Text="{Binding SubTitle}"
                                    Foreground="{DynamicResource SubTitleColor}"
                                    FontSize="14" Padding="8,0,0,0"
@@ -77,7 +84,7 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
                         <Border Style="{StaticResource StatusChip}" Margin="0,0,8,0">
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Text="ｱｸｾｽ有効期限" Style="{StaticResource MetricLabel}" Foreground="{DynamicResource SubTitleColor}" /><!-- アクセス有効期限 -->
+                                <TextBlock Text="アクセス有効期限" Style="{StaticResource MetricLabel}" Foreground="{DynamicResource SubTitleColor}" /><!-- アクセス有効期限 -->
                                 <TextBlock Text="{Binding ExpireDate}" Foreground="{DynamicResource plainTextColor0}" />
                             </StackPanel>
                         </Border>

@@ -10,7 +10,7 @@ namespace Cvnet10Base;
 /// テスト用商品マスター
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-public partial class Test202601Master : BaseDbHasAddress, IBaseCodeName, IBaseGetViewDefinition {
+public partial class Test202601Master : BaseDbHasAddress, IBaseCodeName, IBaseViewDefine {
 	/// <summary>
 	/// コード
 	/// </summary>
@@ -84,7 +84,7 @@ public partial class Test202601Master : BaseDbHasAddress, IBaseCodeName, IBaseGe
 	[property: ColumnSizeDml(1000)]
 	List<MasterGeneralMeisho>? listMeisho;
 
-	readonly static string viewSql = """
+	readonly public static string ViewSql = """
 select T.*, m1.Name as Mei_Brand, m2.Name as  Mei_Item, m3.Name as  Mei_Tenji
 from Test202601Master T
 left join MasterMeisho m1 on T.Id_MeiBrand = m1.Id
@@ -109,9 +109,6 @@ FROM
 	json_each(m.Jcolsiz);
 """;
 	*/
-	public string GetViewDefinition() {
-		return viewSql;
-	}
 
 }
 

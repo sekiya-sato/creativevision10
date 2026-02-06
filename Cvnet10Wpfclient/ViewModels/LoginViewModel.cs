@@ -29,6 +29,9 @@ public partial class LoginViewModel : ObservableObject {
 
 	[RelayCommand]
 	private void Init() {
+		var parameters = AppCurrent.Config.GetSection("Parameters");
+		LoginId = parameters?.GetSection("LoginId")?.Value;
+		LoginPassword = parameters?.GetSection("LoginPass")?.Value;
 	}
 
 	[RelayCommand]

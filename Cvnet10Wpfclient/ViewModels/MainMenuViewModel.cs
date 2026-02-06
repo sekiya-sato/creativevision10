@@ -30,9 +30,11 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	private string headerTitle = "Creative Vision.net 10";
 
-	[ObservableProperty]
-	private string subTitle = "gRPC Server and HTTP/2.0 Model";
 
+	string _subTitle = "gRPC and HTTP/2.0 Model";
+	private DateTime _subStartTime = DateTime.Now;
+	[ObservableProperty]
+	private string subTitle=string.Empty;
 
 	[ObservableProperty]
 	private bool isMenuReady;
@@ -58,6 +60,7 @@ public partial class MainMenuViewModel : ObservableObject {
         StatusMessage = "メニューを選択してください。";
         ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
 		StartClock();
+        SubTitle = $"{_subTitle}  接続先: {AppCurrent.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 		IsMenuReady = true;
     }
 
@@ -112,6 +115,9 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (ret == true) {
 			if (view.DataContext is LoginViewModel vm) {
 				ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
+				_subStartTime = DateTime.Now;
+				SubTitle = $"{_subTitle}  接続先: {AppCurrent.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
+
 			}
 		}
 	}
@@ -121,14 +127,21 @@ public partial class MainMenuViewModel : ObservableObject {
 		App.ThemeService.ToggleTheme();
 	}
 
-	private void StartClock() {
+	private async void StartClock() {
+		//UpdateDateTime(); // 初回実行
+		// 2. 「次の秒」までのミリ秒を計算する
+		// 例: 現在 12:00:00.350 なら、残り 650ms 待機する
+		int delayUntilNextSecond = 1000 - DateTime.Now.Millisecond;
+
+		// 3. 次の秒の切り替わりまで非同期で待機
+		await Task.Delay(delayUntilNextSecond);
 		_timer = new DispatcherTimer {
 			Interval = TimeSpan.FromSeconds(1)
 		};
 		_timer.Tick += (s, e) => UpdateDateTime();
 		_timer.Start();
 		culture.DateTimeFormat.Calendar = new System.Globalization.JapaneseCalendar();
-		UpdateDateTime(); // 初回実行
+		UpdateDateTime();
 	}
 
 	private void UpdateDateTime() {

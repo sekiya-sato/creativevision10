@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Cvnet10Wpfclient": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
