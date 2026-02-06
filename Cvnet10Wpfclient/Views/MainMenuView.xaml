@@ -135,38 +135,42 @@
                     </Grid.ColumnDefinitions>
 
                     <Border Grid.Column="0"
-                            CornerRadius="18"
-                            Background="{DynamicResource panelColor}"
-                            Padding="10,4,4,4" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <TreeView x:Name="MenuTree"
-                                      ItemsSource="{Binding MenuItems}"
-                                      ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
-                                      Style="{StaticResource MenuTreeView}"
-                                      Background="Transparent" BorderThickness="0">
-                                <TreeView.ItemTemplate>
-                                    <HierarchicalDataTemplate DataType="{x:Type models:MenuData}"
-                                                              ItemsSource="{Binding SubItems}">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Header}" FontSize="15" Foreground="{DynamicResource plainTextColor0}"/>
-                                            <TextBlock Text="{Binding AddInfo}" FontSize="12" Opacity="0.65" Foreground="{DynamicResource plainTextColor0}"/>
-                                        </StackPanel>
-                                    </HierarchicalDataTemplate>
-                                </TreeView.ItemTemplate>
-                                <behaviors:Interaction.Triggers>
-                                    <behaviors:EventTrigger EventName="MouseDoubleClick">
-                                        <behaviors:InvokeCommandAction Command="{Binding DoMenuCommand}" />
-                                    </behaviors:EventTrigger>
-                                    <behaviors:EventTrigger EventName="SelectedItemChanged">
-                                        <behaviors:InvokeCommandAction Command="{Binding SelectMenuCommand}"
-                                                                      PassEventArgsToCommand="True"
-                                                                      EventArgsParameterPath="NewValue" />
-                                    </behaviors:EventTrigger>
-                                </behaviors:Interaction.Triggers>
-                            </TreeView>
-                        </StackPanel>
-                    </Border>
+        CornerRadius="18"
+        Background="{DynamicResource panelColor}"
+        Padding="10,4,4,4">
+                        <TreeView x:Name="MenuTree"
+              ItemsSource="{Binding MenuItems}"
+              ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
+              Style="{StaticResource MenuTreeView}"
+              Background="Transparent" 
+              BorderThickness="0"
+              ScrollViewer.VerticalScrollBarVisibility="Auto"
+              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate DataType="{x:Type models:MenuData}"
+                                      ItemsSource="{Binding SubItems}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Header}" FontSize="15" Foreground="{DynamicResource plainTextColor0}"/>
+                                        <!--
+                                        <TextBlock Text="{Binding AddInfo}" FontSize="12" Opacity="0.65" Foreground="{DynamicResource plainTextColor0}"/>
+                                        -->
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+
+                            <behaviors:Interaction.Triggers>
+                                <behaviors:EventTrigger EventName="MouseDoubleClick">
+                                    <behaviors:InvokeCommandAction Command="{Binding DoMenuCommand}" />
+                                </behaviors:EventTrigger>
+                                <behaviors:EventTrigger EventName="SelectedItemChanged">
+                                    <behaviors:InvokeCommandAction Command="{Binding SelectMenuCommand}"
+                                                PassEventArgsToCommand="True"
+                                                EventArgsParameterPath="NewValue" />
+                                </behaviors:EventTrigger>
+                            </behaviors:Interaction.Triggers>
+                        </TreeView>
+                    </Border>
                     <Grid Grid.Column="2">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

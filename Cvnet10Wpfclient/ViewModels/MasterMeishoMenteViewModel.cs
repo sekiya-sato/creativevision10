@@ -1,27 +1,32 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Cvnet10Asset;
+using Cvnet10Base; // MasterMeisho クラスに必要
 using Cvnet10Wpfclient.Util;
-using Newtonsoft.Json;
+using Cvnet8client.Views.Sub;
+using Grpc.Core;
 using System;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels;
 
 public partial class MasterMeishoMenteViewModel : ObservableObject {
 	[ObservableProperty]
-	string title = "Name Master Maintenance";
+	string title = "名称マスター保守";
 
 	[ObservableProperty]
-	ObservableCollection<MasterMeishoRow> listData = [];
+	ObservableCollection<MasterMeisho> listData = [];
 
 	[ObservableProperty]
-	MasterMeishoRow? current;
+	MasterMeisho? current;
 
 	[ObservableProperty]
-	MasterMeishoRow currentEdit = new();
+	MasterMeisho currentEdit = new();
 
 	[ObservableProperty]
 	int count;
@@ -29,163 +34,154 @@ public partial class MasterMeishoMenteViewModel : ObservableObject {
 	[ObservableProperty]
 	string? desc0;
 
+	// 初期化
 	[RelayCommand]
-	void Init() {
-		LoadSampleData();
+	async Task Init(CancellationToken ct) {
+		await DoList(ct);
 	}
 
 	[RelayCommand]
 	void Exit() {
-		ClientLib.Exit(this);
-	}
-
-	[RelayCommand]
-	void DoList() {
-		LoadSampleData();
-	}
-
-	[RelayCommand]
-	void DoInsert() {
-		var newItem = CurrentEdit.Clone();
-		if (newItem.Id == 0) {
-			newItem.Id = NextId();
+		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) == MessageBoxResult.Yes) {
+			ClientLib.Exit(this);
 		}
-		newItem.VdateC = DateTime.Now;
-		newItem.VdateU = DateTime.Now;
-		ListData.Add(newItem);
-		Count = ListData.Count;
-		Current = newItem;
 	}
 
-	[RelayCommand]
-	void DoUpdate() {
+	// 検索/一覧取得 (F5)
+	[RelayCommand(IncludeCancelCommand = true)]
+	async Task DoList(CancellationToken ct) {
+		try {
+			var coreService = AppCurrent.GetgRPCService<ICvnetCoreService>();
+			var msg = new CvnetMsg {
+				Code = 0,
+				Flag = CvnetFlag.Msg101_Op_Query,
+				DataType = typeof(QueryListParam),
+				DataMsg = Common.SerializeObject(new QueryListParam(
+					itemType: typeof(MasterMeisho),
+					where: null, order: "Id"
+				))
+			};
+
+			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext(ct));
+			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;
+
+			if (list != null) {
+				ListData = new ObservableCollection<MasterMeisho>(list.Cast<MasterMeisho>());
+				Count = ListData.Count;
+				Current = ListData.FirstOrDefault();
+			}
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"データ取得失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+	}
+
+	// 追加 (F4)
+	[RelayCommand(IncludeCancelCommand = true)]
+	async Task DoInsert(CancellationToken ct) {
+		if (MessageEx.ShowQuestionDialog("新規登録しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) return;
+
+		try {
+			var coreService = AppCurrent.GetgRPCService<ICvnetCoreService>();
+			var msg = new CvnetMsg {
+				Code = 0,
+				Flag = CvnetFlag.Msg201_Op_Execute,
+				DataType = typeof(InsertParam),
+				DataMsg = Common.SerializeObject(new InsertParam(typeof(MasterMeisho), Common.SerializeObject(CurrentEdit)))
+			};
+
+			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext(ct));
+			var item = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as MasterMeisho;
+
+			if (item != null) {
+				ListData.Add(item);
+				Count = ListData.Count;
+				Current = item;
+				MessageEx.ShowInformationDialog("登録しました", owner: ClientLib.GetActiveView(this));
+			}
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"登録失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+	}
+
+	// 更新 (F2)
+	[RelayCommand(IncludeCancelCommand = true)]
+	async Task DoUpdate(CancellationToken ct) {
 		if (Current == null) {
-			MessageBox.Show("Select a record to update.", Title);
+			MessageEx.ShowWarningDialog("更新対象を選択してください", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-		Current.CopyFrom(CurrentEdit);
-		Current.VdateU = DateTime.Now;
+
+		if (MessageEx.ShowQuestionDialog("更新しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) return;
+
+		try {
+			var coreService = AppCurrent.GetgRPCService<ICvnetCoreService>();
+			// Currentの内容をCurrentEditで更新（ID等はCurrentのものを使用）
+			var msg = new CvnetMsg {
+				Code = 0,
+				Flag = CvnetFlag.Msg201_Op_Execute,
+				DataType = typeof(UpdateParam),
+				DataMsg = Common.SerializeObject(new UpdateParam(typeof(MasterMeisho), Common.SerializeObject(CurrentEdit)))
+			};
+
+			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext(ct));
+			var item = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as MasterMeisho;
+
+			if (item != null) {
+				//Current.CopyFrom(item); // サーバーから戻った値でリスト内のオブジェクトを更新
+				MessageEx.ShowInformationDialog("更新しました", owner: ClientLib.GetActiveView(this));
+			}
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"更新失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
 	}
 
-	[RelayCommand]
-	void DoDelete() {
+	// 削除 (F3)
+	[RelayCommand(IncludeCancelCommand = true)]
+	async Task DoDelete(CancellationToken ct) {
 		if (Current == null) {
-			MessageBox.Show("Select a record to delete.", Title);
+			MessageEx.ShowWarningDialog("削除対象を選択してください", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-		var target = Current;
-		var next = ListData.SkipWhile(x => x != target).Skip(1).FirstOrDefault()
-			?? ListData.TakeWhile(x => x != target).LastOrDefault();
-		ListData.Remove(target);
-		Count = ListData.Count;
-		Current = next;
-		if (Current == null) {
-			CurrentEdit = new MasterMeishoRow();
+
+		if (MessageEx.ShowQuestionDialog($"コード「{Current.Code}」を削除しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) return;
+
+		try {
+			var coreService = AppCurrent.GetgRPCService<ICvnetCoreService>();
+			var msg = new CvnetMsg {
+				Code = 0,
+				Flag = CvnetFlag.Msg201_Op_Execute,
+				DataType = typeof(DeleteParam),
+				DataMsg = Common.SerializeObject(new DeleteParam(typeof(MasterMeisho), Common.SerializeObject(Current)))
+			};
+
+			await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext(ct));
+
+			ListData.Remove(Current);
+			Count = ListData.Count;
+			Current = ListData.FirstOrDefault();
+			MessageEx.ShowInformationDialog("削除しました", owner: ClientLib.GetActiveView(this));
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"削除失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
 		}
 	}
 
 	[RelayCommand]
 	void DoSelKubun() {
-		CurrentEdit.Id_Kubun = 100;
-		CurrentEdit.Disp0 = "Demo Category";
+		// 区分選択ダイアログ呼び出し等をここに実装（現状はダミー）
+		CurrentEdit.Kubun = "100";
 	}
 
-	[RelayCommand]
-	void DoOutputJson() {
-		var dir = ClientLib.GetDataDir();
-		var path = Path.Combine(dir, "MasterMeishoSample.json");
-		var json = JsonConvert.SerializeObject(ListData, Formatting.Indented);
-		File.WriteAllText(path, json);
-		MessageBox.Show($"Exported JSON.\n{path}", Title);
-	}
-
-	void LoadSampleData() {
-		var now = DateTime.Now;
-		var items = Enumerable.Range(1, 8).Select(i => new MasterMeishoRow {
-			Id = i,
-			Id_Kubun = 10 + i % 3,
-			Kubun = $"CAT{i % 3 + 1:00}",
-			Code = $"CD{i:0000}",
-			Name = $"Sample Name {i}",
-			Desc0 = $"Note {i}",
-			SortNo = i * 10,
-			Disp0 = $"カテゴリー{i % 3 + 1}",
-			VdateC = now.AddDays(-i),
-			VdateU = now
-		}).ToList();
-
-		ListData = new ObservableCollection<MasterMeishoRow>(items);
-		Count = ListData.Count;
-		Desc0 = $"Sample {Count} items";
-		Current = ListData.FirstOrDefault();
-		if (Current == null) {
-			CurrentEdit = new MasterMeishoRow();
+	partial void OnCurrentChanged(MasterMeisho? value) {
+		if (value != null) {
+			// クローンを作成して編集用プロパティにセット
+			//CurrentEdit = Common.DeserializeObject<MasterMeisho>(Common.SerializeObject(value)) ?? new();
 		}
-	}
-
-	long NextId() => ListData.Count == 0 ? 1 : ListData.Max(x => x.Id) + 1;
-
-	partial void OnCurrentChanged(MasterMeishoRow? value) {
-		CurrentEdit = value?.Clone() ?? new MasterMeishoRow();
-	}
-}
-
-public partial class MasterMeishoRow : ObservableObject {
-	[ObservableProperty]
-	long id;
-
-	[ObservableProperty]
-	long id_Kubun;
-
-	[ObservableProperty]
-	string? kubun;
-
-	[ObservableProperty]
-	string? code;
-
-	[ObservableProperty]
-	string? name;
-
-	[ObservableProperty]
-	string? desc0;
-
-	[ObservableProperty]
-	string? disp0;
-
-	[ObservableProperty]
-	int sortNo;
-
-	[ObservableProperty]
-	DateTime vdateC = DateTime.Now;
-
-	[ObservableProperty]
-	DateTime vdateU = DateTime.Now;
-
-	public MasterMeishoRow Clone() {
-		return new MasterMeishoRow {
-			Id = Id,
-			Id_Kubun = Id_Kubun,
-			Kubun = Kubun,
-			Code = Code,
-			Name = Name,
-			Desc0 = Desc0,
-			Disp0 = Disp0,
-			SortNo = SortNo,
-			VdateC = VdateC,
-			VdateU = VdateU
-		};
-	}
-
-	public void CopyFrom(MasterMeishoRow source) {
-		Id = source.Id;
-		Id_Kubun = source.Id_Kubun;
-		Kubun = source.Kubun;
-		Code = source.Code;
-		Name = source.Name;
-		Desc0 = source.Desc0;
-		Disp0 = source.Disp0;
-		SortNo = source.SortNo;
-		VdateC = source.VdateC;
-		VdateU = source.VdateU;
+		else {
+			CurrentEdit = new();
+		}
 	}
 }

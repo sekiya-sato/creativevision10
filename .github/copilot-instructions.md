@@ -59,6 +59,7 @@ refer/ Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This
     - Encapsulate DB logic within the Server-side (Layer 2) and Base-side (Layer 1).
     - Ensure minimal impact on existing schemas when modifying logic.
 - **Refactoring**: Analyze the impact range before proposing changes. Do not break existing implementations.
+- [Cvnet10Wpfclient] In xaml-file,TextBox,TextBlock need `Foreground="{DynamicResource MaterialDesignBody}"`
 
 ## 6. Interaction Protocol
 1. **Analyze**: Identify which layer the task belongs to.

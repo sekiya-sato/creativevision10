@@ -31,7 +31,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string headerTitle = "Creative Vision.net 10";
 
 	[ObservableProperty]
-	private string subTitle = "Creative Vision gRPC Module";
+	private string subTitle = "gRPC Server and HTTP/2.0 Model";
 
 
 	[ObservableProperty]
