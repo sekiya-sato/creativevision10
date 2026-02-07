@@ -2,16 +2,13 @@
 using Cvnet10Wpfclient.Models;
 using System.Windows;
 
-namespace Cvnet10Wpfclient.Views
-{
-    /// <summary>
-    /// ViewOrg.xaml の相互作用ロジック
-    /// </summary>
-    public partial class LoginView : Window
-    {
-        public LoginView()
-        {
-            InitializeComponent();
+namespace Cvnet10Wpfclient.Views {
+	/// <summary>
+	/// SettingSystemView.xaml の相互作用ロジック
+	/// </summary>
+	public partial class SettingSystemView : Window {
+		public SettingSystemView() {
+			InitializeComponent();
 			// メッセージの受信登録
 			WeakReferenceMessenger.Default.Register<DialogCloseMessage>(this, (r, m) => {
 				// Viewの文脈でDialogResultをセット

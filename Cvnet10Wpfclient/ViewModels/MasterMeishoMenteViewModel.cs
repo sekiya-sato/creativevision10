@@ -4,13 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
 using Cvnet10Base; // MasterMeisho クラスに必要
 using Cvnet10Wpfclient.Util;
-using Cvnet8client.Views.Sub;
-using Grpc.Core;
-using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels;

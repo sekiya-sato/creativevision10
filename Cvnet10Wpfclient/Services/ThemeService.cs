@@ -1,6 +1,4 @@
 using MaterialDesignThemes.Wpf;
-using System;
-using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 

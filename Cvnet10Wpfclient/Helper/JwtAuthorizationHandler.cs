@@ -1,9 +1,7 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Cvnet10Wpfclient.Infrastructure;
+namespace Cvnet10Wpfclient.Helper;
 
 /// <summary>
 /// すべての gRPC 呼び出しに JWT とクライアント ID を付与するハンドラー。

@@ -55,6 +55,12 @@ public partial class MenuData : ObservableObject {
 					ViewType = typeof(LoginView),
 					IsDialog = true
 				},
+			new MenuData {
+				Header = "システム設定",
+				AddInfo = "構成",
+				ViewType = typeof(SettingSystemView),
+				IsDialog = true
+			},
                 new MenuData {
                     Header = "終了処理：データアップロード",
                     AddInfo = "準備中"

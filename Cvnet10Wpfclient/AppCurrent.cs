@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using ProtoBuf.Grpc;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Threading;
 
 
 namespace Cvnet10Wpfclient;
@@ -45,14 +44,16 @@ public static class AppCurrent {
 	public static void Init(IConfigurationRoot config, IServiceProvider serviceProvider) {
 		ArgumentNullException.ThrowIfNull(config);
 		ArgumentNullException.ThrowIfNull(serviceProvider);
-		if (_config != null) return;
 		Debug.WriteLine("GlobalInitialize()実行");
 		_config = config;
 		_serviceProvider = serviceProvider;
 		_url = _config.GetConnectionString("Url");
 		_dataDir = ClientLib.GetDataDir();
+		_grpcServiceCache.Clear();
 		// あれば取得する
-		LoginJwt = _config.GetSection("AppStrings")?["LoginJwt"];
+		if (string.IsNullOrWhiteSpace(LoginJwt)) {
+			LoginJwt = _config.GetSection("AppStrings")?["LoginJwt"];
+		}
 		// ToDo: ダミーJSONをセット。 実際にはログイン処理で取得すること
 		// LoginJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQ3ZuZXRXcGZDbGllbnTjg6bjg7zjgrYgMjAyNi8wMi8wNCAxNjoxNzo0MSIsImV4cCI6MTc3ODgyOTQ2NCwiaXNzIjoiSXNzdWVyX0RldmVsb3BtZW50In0.bm3PHtk85gPMFfMfl92VnRwuKGZlPVzt2-qLl3Alcx4";
 	}
