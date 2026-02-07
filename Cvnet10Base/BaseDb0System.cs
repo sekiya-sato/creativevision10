@@ -134,8 +134,10 @@ public partial class MasterMeisho : BaseDbClass, IBaseViewDefine {
 	[property: ColumnSizeDml(100)]
 	int odr;
 	readonly public static string ViewSql = """
+select * from(
 select T.*, m1.Name as Disp0
 from MasterMeisho T
 left outer join MasterMeisho m1 on m1.Kubun = 'IDX' and T.Kubun = m1.Code 
+) as MasterMeisho
 """;
 }

@@ -58,7 +58,7 @@ public partial class MasterMeishoMenteViewModel : ObservableObject {
 				DataType = typeof(QueryListParam),
 				DataMsg = Common.SerializeObject(new QueryListParam(
 					itemType: typeof(MasterMeisho),
-					where: null, order: "Id"
+					where: null, order: "Kubun,Code"
 				))
 			};
 

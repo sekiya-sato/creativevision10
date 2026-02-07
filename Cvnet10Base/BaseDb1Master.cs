@@ -427,10 +427,12 @@ public partial class MasterShohinColSiz : BaseDbClass, IBaseViewDefine, IBaseSer
 	public bool ShouldSerializeCode_Siz() => Ser;
 
 	readonly static public string ViewSql = """
+select * from (
 select T.*, m1.Name as Mei_Col, m2.Name as  Mei_Siz
 from MasterShohinColSiz T
 left join MasterMeisho m1 on T.id_MeiCol = m1.Id
 left join MasterMeisho m2 on T.id_MeiSiz = m2.Id
+) as Vw_MasterShohinColSiz
 """;
 }
 /// <summary>

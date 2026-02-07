@@ -127,6 +127,9 @@ app.MapControllers();
 // Configure the HTTP request pipeline.
 app.MapGrpcService<LoginService>();
 app.MapGrpcService<CvnetCoreService>();
+var appInit = new AppInit(app.Configuration);
+appInit.Init(Cvnet10Base.Sqlite.ExDatabaseSqlite.GetDbConn(connStr));
+
 var ver = AppInit.Version;
 app.MapGet("/", () =>
 $"""
@@ -135,9 +138,6 @@ Product:{ver.Product}, Build:{ver.BuildDate}, Start:{ver.StartTime}.
 
 """
 );
-
-var appInit = new AppInit(app.Configuration);
-appInit.Init(Cvnet10Base.Sqlite.ExDatabaseSqlite.GetDbConn(connStr));
 
 app.Run();
 

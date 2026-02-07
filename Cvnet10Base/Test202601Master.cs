@@ -86,11 +86,13 @@ public partial class Test202601Master : BaseDbHasAddress, IBaseCodeName , IBaseV
 	/*
 	*/
 	readonly public static string ViewSql = """
+select * from (
 select T.*, m1.Name as Mei_Brand, m2.Name as  Mei_Item, m3.Name as  Mei_Tenji
 from Test202601Master T
 left join MasterMeisho m1 on T.Id_MeiBrand = m1.Id
 left join MasterMeisho m2 on T.Id_MeiItem = m2.Id
 left join MasterMeisho m3 on T.Id_MeiTenji = m3.Id
+) as Test202601Master
 """;
 	/*
 	readonly static string listSqlForJcolsiz = """
