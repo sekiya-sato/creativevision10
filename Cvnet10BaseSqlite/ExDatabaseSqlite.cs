@@ -21,7 +21,9 @@ public partial class ExDatabaseSqlite : ExDatabase {
 		}
 	}
 	public static ExDatabaseSqlite GetDbConn(string dbfile, bool isOpen=true) {
-		var conn = new SqliteConnection($"Data Source={dbfile}");
+		// パフォーマンスと並行性を最大化する構成（WALモード併用）
+		string advancedConnectionString = $"Data Source={dbfile};Mode=ReadWriteCreate;Cache=Shared;Pooling=True;";
+		var conn = new SqliteConnection(advancedConnectionString);
 		if (isOpen) {
 			conn.Open();
 		}

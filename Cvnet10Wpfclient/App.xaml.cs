@@ -114,7 +114,7 @@ public class SubPathHandler : DelegatingHandler {
 
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
 		// デバッグ用: 実行されているか確認 (Visual Studioの出力ウィンドウに表示)
-		System.Diagnostics.Debug.WriteLine($"SubPathHandler: Original URI = {request.RequestUri}");
+		//System.Diagnostics.Debug.WriteLine($"SubPathHandler: Original URI = {request.RequestUri}");
 
 		var uri = request.RequestUri!;
 		var builder = new UriBuilder(uri);
@@ -124,7 +124,7 @@ public class SubPathHandler : DelegatingHandler {
 		builder.Path = _subPath + originalPath;
 		request.RequestUri = builder.Uri;
 
-		System.Diagnostics.Debug.WriteLine($"SubPathHandler: Rewritten URI = {request.RequestUri}");
+		//System.Diagnostics.Debug.WriteLine($"SubPathHandler: Rewritten URI = {request.RequestUri}");
 
 		return await base.SendAsync(request, cancellationToken);
 	}

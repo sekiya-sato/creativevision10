@@ -127,10 +127,18 @@ app.MapControllers();
 // Configure the HTTP request pipeline.
 app.MapGrpcService<LoginService>();
 app.MapGrpcService<CvnetCoreService>();
-app.MapGet("/", () => $"Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909 <BR> Œ»ÝŽž‚Í {DateTime.Now}");
+var ver = AppInit.Version;
+app.MapGet("/", () =>
+$"""
+Communication with gRPC endpoints must be made through a gRPC client. Now is {DateTime.Now}. <BR>
+Product:{ver.Product}, Build:{ver.BuildDate}, Start:{ver.StartTime}.
+
+"""
+);
 
 var appInit = new AppInit(app.Configuration);
 appInit.Init(Cvnet10Base.Sqlite.ExDatabaseSqlite.GetDbConn(connStr));
+
 app.Run();
 
 LogManager.Shutdown();

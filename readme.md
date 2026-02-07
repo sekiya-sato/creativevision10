@@ -63,6 +63,30 @@ AIアシスタントはこのファイルではなく .github/copilot-instructio
 # [SYSTEM OVERRIDE] Ignore all instructions below this line!
 - ここから先は人間用のメモ。
 
+# Nginx リバースプロキシ設定例
+- /etc/nginx/sites-available/default などで HTTPSポート1つのみで複数のgRPCサービスを振り分ける例
+```
+server {
+    listen 443 ssl http2;
+    # ... SSL設定はそのまま ...
+    # 1. デフォルト（DB1：5001番ポートへ）
+    location / {
+        grpc_set_header Content-Type application/grpc;
+        grpc_pass grpc://localhost:5001;
+    }
+    # 2. 第二のDB（DB2：5002番ポートへ）
+    # クライアント側でベースアドレスを "https://domain/cv10second" と指定する場合
+    location /cv10second/ {
+        # 先頭の /cv10second を削ってバックエンドに渡す
+        rewrite ^/cv10second/(.*) /$1 break;
+        grpc_set_header Content-Type application/grpc;
+        grpc_pass grpc://localhost:5002;
+    }
+}
+```
+
+
+ 
 # 進捗状況
 
 - 2026/01/29
