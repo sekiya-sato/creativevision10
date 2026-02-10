@@ -1,0 +1,28 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Runtime" #>
+<#@ import namespace="System.Runtime.InteropServices" #>
+<#@ output extension=".g.cs" #>
+using System;
+
+namespace Cvnet10Server;
+
+public static class BuildMetadata {
+    public static readonly DateTime BuildDate = new DateTime(<#= DateTime.Now.ToString("yyyy, M, d, HH,m,s") #>);
+    // ビルド環境情報
+    public const string MachineName = "<#= Environment.MachineName #>";
+    public const string UserName = "<#= Environment.UserName #>";
+    public const string OSVersion = @"<#= RuntimeInformation.OSDescription #>";
+    public const string DotNetVersion = "<#= RuntimeInformation.FrameworkDescription #>";
+
+    // 重要な環境変数のキャプチャ
+    // CI環境（GitHub Actions等）かどうかの判定に便利
+    public const string BuildConfiguration = "<#= Environment.GetEnvironmentVariable("Configuration") ?? "Debug" #>";
+    public const string CI = "<#= Environment.GetEnvironmentVariable("CI") ?? "false" #>";
+
+    /// <summary>
+    /// ビルド情報を文字列として取得（ログ出力用）
+    /// </summary>
+    public static string GetSummary() {
+        return $".net: {DotNetVersion} | Built: {BuildDate:yyyy-MM-dd HH:mm:ss} | Env: {BuildConfiguration} | Machine: {MachineName} ({UserName})";
+    }
+}

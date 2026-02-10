@@ -5,6 +5,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="BuildInfo.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>BuildInfo.tt</DependentUpon>
+    </None>
+  </ItemGroup>
   <ItemGroup>
 	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
 	<PackageReference Include="NCrontab.Scheduler.AspNetCore" />
@@ -20,6 +28,22 @@
     <ProjectReference Include="..\Cvnet10BaseSqlite\Cvnet10BaseSqlite.csproj" />
     <ProjectReference Include="..\Cvnet10Base\Cvnet10Base.csproj" />
 	  <ProjectReference Include="..\Cvnet10DomainLogic\Cvnet10DomainLogic.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="BuildInfo.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>BuildInfo.g.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="BuildInfo.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>BuildInfo.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>

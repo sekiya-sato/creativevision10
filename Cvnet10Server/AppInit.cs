@@ -4,13 +4,14 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Configuration;
+using System.Diagnostics;
 
 namespace Cvnet10Server;
 public class AppInit {
 	private readonly IConfiguration _configuration;
 	// ToDo: バージョン番号は手動で更新すること
 	readonly string verStr = "0.0.099";
-	readonly DateTime buildDate = new DateTime(2026,2,9);
+	readonly DateTime buildDate = BuildMetadata.BuildDate;
 	static VersionInfo? _ver;
 
 	/// <summary>
@@ -31,6 +32,7 @@ public class AppInit {
 			StartTime = DateTime.Now,
 			BaseDir = AppContext.BaseDirectory
 		};
+		Debug.WriteLine($"BuildMetadata={BuildMetadata.GetSummary()} ");
 	}
 
 	/// <summary>
