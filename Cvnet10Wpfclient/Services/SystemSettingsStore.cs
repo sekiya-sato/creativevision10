@@ -12,12 +12,13 @@ public sealed class SystemSettingsStore {
 
     public string FilePath { get; }
 
-    /// <summary>
-    /// システム設定ファイルの標準パスを取得します。
-    /// </summary>
-    public static string SettingsFilePath => Path.Combine(ClientLib.GetDataDir(), FileName);
+	/// <summary>
+	/// システム設定ファイルの標準パスを取得します。
+	/// ToDo: リリース段階ではClientLib.GetDataDir() に変更する
+	/// </summary>
+	public static string SettingsFilePath => Path.Combine(Directory.GetCurrentDirectory(), FileName); // Path.Combine(ClientLib.GetDataDir(), FileName)
 
-    public SystemSettingsStore(string? filePath = null) {
+	public SystemSettingsStore(string? filePath = null) {
         FilePath = string.IsNullOrWhiteSpace(filePath) ? SettingsFilePath : filePath!;
     }
 

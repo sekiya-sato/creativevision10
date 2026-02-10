@@ -21,6 +21,7 @@
     <PackageVersion Include="NCrontab.Scheduler.AspNetCore" Version="1.2.10" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="NLog" Version="6.1.0" />
+    <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.1" />
     <PackageVersion Include="NLog.Targets.Network" Version="6.0.3" />
     <PackageVersion Include="NLog.Web.AspNetCore" Version="6.1.1" />
     <PackageVersion Include="NPoco" Version="6.1.0" />

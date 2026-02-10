@@ -39,6 +39,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 	[AllowAnonymous]
 	//[Authorize]
 	public Task<CvnetMsg> QueryMsgAsync(CvnetMsg request, CallContext context = default) {
+		_logger.LogInformation($"gRPCリクエストQueryMsgAsync Flag: {request.Flag}, DataType: {request.DataType.ToString()}");
 		var result = new CvnetMsg() { Flag = CvnetFlag.Msg800_Error_Start };
 		result.Code = -1;
 		var start = DateTime.Now;

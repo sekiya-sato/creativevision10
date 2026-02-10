@@ -19,6 +19,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
+    <PackageReference Include="NLog.Extensions.Logging" />
     <PackageReference Include="protobuf-net.Grpc.ClientFactory" />
     <PackageReference Include="NLog" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />

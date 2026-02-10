@@ -32,7 +32,6 @@ builder.Logging.AddConsole();
 builder.Logging.AddNLogWeb();
 
 
-
 builder.Services.AddCodeFirstGrpc((options => {
     // CompressionLevel ‚Í—p“r‚É‰ž‚¶‚Ä’²® (Fastest, Optimal “™)
     options.CompressionProviders.Add(new GzipCompressionProvider(CompressionLevel.Fastest));
@@ -41,6 +40,7 @@ builder.Services.AddCodeFirstGrpc((options => {
     options.EnableDetailedErrors = true;
     options.MaxReceiveMessageSize = 800 * 1024 * 1024; // 800 MB
     options.MaxSendMessageSize = 800 * 1024 * 1024; // 800 MB
+	options.Interceptors.Add<ErrorInterceptor>();
 }));
 
 builder.WebHost.ConfigureKestrel(serverOptions => {
