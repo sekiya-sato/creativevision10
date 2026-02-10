@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Cvnet10Asset;
 using Cvnet10Wpfclient.Models;
 using Cvnet10Wpfclient.Services;
-using Cvnet10Wpfclient.Util;
+using Cvnet10Wpfclient.ViewServices;
 using Microsoft.Extensions.Configuration;
 
 namespace Cvnet10Wpfclient.ViewModels;

@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
 using Cvnet10Base; // MasterMeisho クラスに必要
-using Cvnet10Wpfclient.Util;
+using Cvnet10Wpfclient.ViewServices;
 using System.Collections.ObjectModel;
 using System.Windows;
 

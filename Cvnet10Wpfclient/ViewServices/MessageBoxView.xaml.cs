@@ -14,7 +14,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace Cvnet10Wpfclient.Util;
+namespace Cvnet10Wpfclient.ViewServices;
 
 /// <summary>
 /// 拡張メッセージボックスのView (MessageExを通して表示)

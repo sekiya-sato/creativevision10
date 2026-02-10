@@ -1,4 +1,4 @@
-﻿using Cvnet10Wpfclient.Util;
+﻿using Cvnet10Wpfclient.ViewServices;
 using Grpc.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

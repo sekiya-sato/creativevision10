@@ -13,33 +13,49 @@ public static class PasswordBoxAssistant {
 		DependencyProperty.RegisterAttached("BindPassword", typeof(bool), typeof(PasswordBoxAssistant),
 			new PropertyMetadata(false, OnBindPasswordChanged));
 
+	// 更新中フラグ（無限ループ回避用）
+	private static readonly DependencyProperty IsUpdatingProperty =
+		DependencyProperty.RegisterAttached("IsUpdating", typeof(bool), typeof(PasswordBoxAssistant),
+			new PropertyMetadata(false));
+
 	public static string GetBoundPassword(DependencyObject obj) => (string)obj.GetValue(BoundPasswordProperty);
 	public static void SetBoundPassword(DependencyObject obj, string value) => obj.SetValue(BoundPasswordProperty, value);
 
 	public static bool GetBindPassword(DependencyObject obj) => (bool)obj.GetValue(BindPasswordProperty);
 	public static void SetBindPassword(DependencyObject obj, bool value) => obj.SetValue(BindPasswordProperty, value);
 
+	private static bool GetIsUpdating(DependencyObject obj) => (bool)obj.GetValue(IsUpdatingProperty);
+	private static void SetIsUpdating(DependencyObject obj, bool value) => obj.SetValue(IsUpdatingProperty, value);
+
 	private static void OnBoundPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-		if (d is PasswordBox passwordBox) {
-			// ViewModelからの変更をPasswordBoxに反映（無限ループ防止のためイベントを一時解除）
-			passwordBox.PasswordChanged -= HandlePasswordChanged;
-			if ((string)e.NewValue != passwordBox.Password) {
-				passwordBox.Password = (string)e.NewValue ?? string.Empty;
-			}
-			passwordBox.PasswordChanged += HandlePasswordChanged;
-		}
+		if (d is not PasswordBox passwordBox) return;
+
+		// ViewModel -> PasswordBox の同期（フラグで再帰回避）
+		if (GetIsUpdating(passwordBox)) return;
+
+		var newPassword = (string?)e.NewValue ?? string.Empty;
+		if (passwordBox.Password == newPassword) return;
+
+		SetIsUpdating(passwordBox, true);
+		passwordBox.Password = newPassword;
+		SetIsUpdating(passwordBox, false);
 	}
 
 	private static void OnBindPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-		if (d is PasswordBox passwordBox) {
-			if ((bool)e.NewValue) passwordBox.PasswordChanged += HandlePasswordChanged;
-			else passwordBox.PasswordChanged -= HandlePasswordChanged;
-		}
+		if (d is not PasswordBox passwordBox) return;
+
+		if ((bool)e.NewValue) passwordBox.PasswordChanged += HandlePasswordChanged;
+		else passwordBox.PasswordChanged -= HandlePasswordChanged;
 	}
 
 	private static void HandlePasswordChanged(object sender, RoutedEventArgs e) {
-		PasswordBox passwordBox = (PasswordBox)sender;
-		// PasswordBoxの入力を添付プロパティに反映 -> ViewModelへ
+		if (sender is not PasswordBox passwordBox) return;
+
+		// PasswordBox -> ViewModel の同期（フラグで再帰回避）
+		if (GetIsUpdating(passwordBox)) return;
+
+		SetIsUpdating(passwordBox, true);
 		SetBoundPassword(passwordBox, passwordBox.Password);
+		SetIsUpdating(passwordBox, false);
 	}
 }
