@@ -175,5 +175,7 @@ s*.db
 *.slnLaunch.user
 .mcp.json
 nlog.config
+*.g.cs
+
 
 

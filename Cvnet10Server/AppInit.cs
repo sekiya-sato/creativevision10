@@ -1,10 +1,5 @@
 ﻿using Cvnet10Base;
 using Cvnet10DomainLogic;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Configuration;
-using System.Diagnostics;
 
 namespace Cvnet10Server;
 public class AppInit {
@@ -32,7 +27,6 @@ public class AppInit {
 			StartTime = DateTime.Now,
 			BaseDir = AppContext.BaseDirectory
 		};
-		Debug.WriteLine($"BuildMetadata={BuildMetadata.GetSummary()} ");
 	}
 
 	/// <summary>

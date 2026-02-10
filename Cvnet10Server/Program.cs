@@ -133,9 +133,14 @@ appInit.Init(Cvnet10Base.Sqlite.ExDatabaseSqlite.GetDbConn(connStr));
 var ver = AppInit.Version;
 app.MapGet("/", () =>
 $"""
-Communication with gRPC endpoints must be made through a gRPC client. Now is {DateTime.Now}. <BR>
-Product:{ver.Product} Ver.{ver.Version}, Build:{ver.BuildDate}, Start:{ver.StartTime}, BaseDir={ver.BaseDir}.<BR>
+{ver.Product} Ver.{ver.Version}
+Communication with gRPC endpoints must be made through a gRPC client. 
+Now: {DateTime.Now}, Start:{ver.StartTime}, Build:{ver.BuildDate},
+BaseDir: {ver.BaseDir}
 
+BuildMetadata:
+Machine: {BuildMetadata.MachineName} ,UserName: {BuildMetadata.UserName} 
+OS: {BuildMetadata.OSVersion} ,DotNet: {BuildMetadata.DotNetVersion} ,BuildConfig: {BuildMetadata.BuildConfiguration}
 """
 );
 
