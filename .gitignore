@@ -176,6 +176,6 @@ s*.db
 .mcp.json
 nlog.config
 *.g.cs
-
+systemsettings.json
 
 

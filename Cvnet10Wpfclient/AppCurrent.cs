@@ -2,9 +2,14 @@
 using Grpc.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 using ProtoBuf.Grpc;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 
 
 namespace Cvnet10Wpfclient;
@@ -50,6 +55,8 @@ public static class AppCurrent {
 		_url = _config.GetConnectionString("Url");
 		_dataDir = ClientLib.GetDataDir();
 		_grpcServiceCache.Clear();
+		var logger = LogManager.GetCurrentClassLogger();
+		logger.Debug($"---------------------------------\n AppCurrent.Init() 接続先Url={_url},実行フォルダ={Directory.GetCurrentDirectory()}");
 		// あれば取得する
 		if (string.IsNullOrWhiteSpace(LoginJwt)) {
 			LoginJwt = _config.GetSection("AppStrings")?["LoginJwt"];
@@ -88,7 +95,6 @@ public static class AppCurrent {
 			return service ?? throw new InvalidOperationException($"Service '{typeof(T).Name}' could not be resolved.");
 		});
 	}
-
 
 
 

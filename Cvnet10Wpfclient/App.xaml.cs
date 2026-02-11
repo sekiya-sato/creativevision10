@@ -6,9 +6,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NLog;
+using NLog.Config;
+using NLog.Extensions.Logging;
 using ProtoBuf.Grpc.ClientFactory;
 using System.IO;
 using System.Net.Http;
+using System.Security.Policy;
 using System.Windows;
 using System.Windows.Markup;
 
@@ -59,9 +64,7 @@ public partial class App : Application {
 		var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "_";
 		return Host.CreateDefaultBuilder()
 			.ConfigureAppConfiguration(builder => {
-				builder.SetBasePath(Directory.GetCurrentDirectory());
-				builder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
+				// ユーザー設定ファイルの追加
 				var userSettingsPath = SystemSettingsStore.SettingsFilePath;
 				if (!string.IsNullOrWhiteSpace(userSettingsPath)) {
 					var directory = Path.GetDirectoryName(userSettingsPath);
@@ -75,6 +78,15 @@ public partial class App : Application {
 						});
 					}
 				}
+				builder.SetBasePath(Directory.GetCurrentDirectory());
+				builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
+			})
+			.ConfigureLogging((context, logging) => {
+				logging.ClearProviders(); // 既定のログプロバイダーをクリア
+				logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+				// これにより appsettings.json の "NLog" セクションが読み込まれます
+				LogManager.Configuration = new NLogLoggingConfiguration(context.Configuration.GetSection("NLog"));
 			})
 			.ConfigureServices((context, services) => {
 				// 1. ハンドラーと通信設定の登録
@@ -106,7 +118,6 @@ public partial class App : Application {
 				// 3. サービスの登録
 				ConfigureClient<ILoginService>(services, url, subPath);
 				ConfigureClient<ICvnetCoreService>(services, url, subPath);
-
             });
 	}
 
@@ -130,6 +141,9 @@ public partial class App : Application {
 	private static void InitializeAppCurrent(IHost host) {
 		var configuration = host.Services.GetRequiredService<IConfiguration>() as IConfigurationRoot
 			?? throw new InvalidOperationException("IConfigurationRoot is not available.");
+
+
+
 		AppCurrent.Init(configuration, host.Services);
 	}
 }
@@ -143,8 +157,6 @@ public class SubPathHandler : DelegatingHandler {
 	}
 
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
-		// デバッグ用: 実行されているか確認 (Visual Studioの出力ウィンドウに表示)
-		//System.Diagnostics.Debug.WriteLine($"SubPathHandler: Original URI = {request.RequestUri}");
 
 		var uri = request.RequestUri!;
 		var builder = new UriBuilder(uri);
