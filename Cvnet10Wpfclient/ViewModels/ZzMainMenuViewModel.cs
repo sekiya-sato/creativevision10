@@ -9,7 +9,7 @@ using System.Windows.Threading;
 
 namespace Cvnet10Wpfclient.ViewModels;
 
-public partial class MainMenuViewModel : ObservableObject {
+public partial class ZzMainMenuViewModel : ObservableObject {
 
     [ObservableProperty]
     ObservableCollection<MenuData> menuItems = new();

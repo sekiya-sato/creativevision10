@@ -3,8 +3,8 @@ using System.Windows.Input;
 
 namespace Cvnet10Wpfclient.Views;
 
-public partial class MainMenuView : Window {
-    public MainMenuView() {
+public partial class ZzMainMenuView : Window {
+    public ZzMainMenuView() {
         InitializeComponent();
 	}
 
