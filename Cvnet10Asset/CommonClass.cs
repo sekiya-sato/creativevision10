@@ -6,7 +6,7 @@ using System.Text;
 
 
 namespace Cvnet10Asset;
-public sealed class Common {
+public sealed partial class Common {
     // JsonConvert共通オプション（必要に応じてカスタマイズ／コンバータを追加）
     private static readonly JsonSerializerSettings jsonOptions = new () {
         NullValueHandling = NullValueHandling.Ignore,
