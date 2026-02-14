@@ -23,6 +23,10 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	MasterMeisho current = new();
 	partial void OnCurrentChanged(MasterMeisho? oldValue, MasterMeisho newValue) {
+		if (newValue == null) {
+			CurrentEdit = new();
+			return;
+		}
 		if (oldValue?.Id != newValue.Id) {
 			CurrentEdit = Common.CopyObject<MasterMeisho>(Current);
 		}
@@ -103,7 +107,6 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 			owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) return;
 
 		try {
-			CurrentEdit.Vdc = CurrentEdit.Vdu = Common.GetVdate();
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
 				Code = 0,
@@ -120,6 +123,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 				Count = ListData.Count;
 				Current = item;
 				CurrentEdit = Common.CopyObject<MasterMeisho>(Current);
+
 				MessageEx.ShowInformationDialog($"登録しました (CD={CurrentEdit.Code}, Id={CurrentEdit.Id})", owner: ClientLib.GetActiveView(this));
 			}
 		}
@@ -146,11 +150,19 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 				DataMsg = Common.SerializeObject(new DeleteParam(Tabletype, Common.SerializeObject(Current)))
 			};
 
-			await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 
+			if (reply.Code != 0) {
+				MessageEx.ShowErrorDialog("削除できませんでした", owner: ClientLib.GetActiveView(this));
+				return;
+			}
+			// Currentの次のオブジェクトを取得 [Retrieve the next object of the current one]
+			var currentIndex = ListData.IndexOf(Current);
+			var nextIndex = currentIndex + 1 < ListData.Count ? currentIndex + 1 : 0;
+			var nextItem = ListData.ElementAtOrDefault(nextIndex);
 			ListData.Remove(Current);
+			Current = nextItem ?? ListData.First() ?? new MasterMeisho();
 			Count = ListData.Count;
-			Current = ListData.First() ?? new();
 			MessageEx.ShowInformationDialog($"削除しました (CD={CurrentEdit.Code}, Id={CurrentEdit.Id})", owner: ClientLib.GetActiveView(this));
 		}
 		catch (Exception ex) {
@@ -169,7 +181,6 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 		if (MessageEx.ShowQuestionDialog($"更新しますか？ (CD={CurrentEdit.Code}, Id={CurrentEdit.Id})", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) return;
 
 		try {
-			CurrentEdit.Vdu = Common.GetVdate();
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			// Currentの内容をCurrentEditで更新（ID等はCurrentのものを使用）
 			var msg = new CvnetMsg {
@@ -182,7 +193,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 
 			if (Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) is MasterMeisho item) {
-				Current = item;
+				Common.CopyValue(Tabletype, item, Current);
 				CurrentEdit = Common.CopyObject<MasterMeisho>(Current);
 				MessageEx.ShowInformationDialog($"更新しました (CD={CurrentEdit.Code}, Id={CurrentEdit.Id})", owner: ClientLib.GetActiveView(this));
 			}

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -46,6 +47,30 @@ public sealed partial class Common {
 		var item = JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj))?? new T();
 		return item;
 	}
+	/// <summary>
+	/// srcのプロパティ値をdstにコピーする ShallowCopy
+	/// </summary>
+	/// <param name="type"></param>
+	/// <param name="src"></param>
+	/// <param name="dst"></param>
+	public static void CopyValue(Type type, object? src, object? dst) {
+		if (src == null || dst == null) return;
+		// プロパティ情報を取得 [Retrieve property information]
+		PropertyInfo[] properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+		foreach (var property in properties) {
+			// 読み取り可能かつ書き込み可能なプロパティのみを対象とする [Target only readable and writable properties]
+			if (property.CanRead && property.CanWrite) {
+				// srcのプロパティ値を取得 [Get the property value of src]
+				var value = property.GetValue(src);
+				var valueDst = property.GetValue(dst);
+				if (value != valueDst)
+					property.SetValue(dst, value);
+			}
+		}
+	}
+
+
 
 	static readonly Aes algorithm = Aes.Create();
 	/// <summary>

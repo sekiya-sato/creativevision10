@@ -99,7 +99,8 @@
                 VerticalAlignment="Stretch"
                 Background="DarkGray" />
             <Grid Grid.Row="2" Grid.Column="0">
-                <DataGrid
+                <DataGrid  x:Name="MeishoGrid"
+                    helpers:DataGridScrollAssistant.AutoScrollToSelectedItem="True"
                     d:ItemsSource="{d:SampleData ItemCount=5}"
                     FrozenColumnCount="2"
                     IsReadOnly="True"
