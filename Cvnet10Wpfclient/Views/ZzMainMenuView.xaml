@@ -27,7 +27,7 @@
     </Window.DataContext>
 
     <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="48"
+        <shell:WindowChrome CaptionHeight="120"
                             CornerRadius="60"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="8"
@@ -112,7 +112,9 @@
                         </Border>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right"
+                                Margin="10,0,0,40"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True">
                         <Button Style="{StaticResource WindowButton}" 
         Command="{Binding ToggleThemeCommand}" 
         ToolTip="テーマ切り替え (Light/Dark)" 
@@ -131,8 +133,7 @@
                                 </Grid>
                             </Button.Content>
                         </Button>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,12,12,12" >
-
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,4,0" >
                         <Button Style="{StaticResource MinimizeWinBtn}" Command="{Binding MinimizeCommand}" />
                         <Button Style="{StaticResource MaximizeWinBtn}" Command="{Binding MaximizeCommand}" />
                         <Button Style="{StaticResource CloseWinBtn}" Command="{Binding ExitCommand}" />

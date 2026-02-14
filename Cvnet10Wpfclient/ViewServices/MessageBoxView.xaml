@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:Cvnet10Wpfclient.ViewServices"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="MessageBoxEx"
-    Width="440"
+    Width="600"
     MinHeight="200"
     MaxHeight="320"
     AllowsTransparency="True"

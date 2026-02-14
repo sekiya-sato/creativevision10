@@ -15,7 +15,7 @@ namespace Cvnet10Wpfclient.ViewModels;
 public partial class ZzMainMenuViewModel : ObservableObject {
 
     [ObservableProperty]
-    ObservableCollection<MenuData> menuItems = new();
+    ObservableCollection<MenuData> menuItems = [];
 
     [ObservableProperty]
     private MenuData? selectedMenu;
@@ -76,14 +76,14 @@ public partial class ZzMainMenuViewModel : ObservableObject {
 
     [RelayCommand]
     private void Minimize() {
-        var window = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
+		var window = ClientLib.GetActiveView(this);
         if (window != null) {
             window.WindowState = WindowState.Minimized;
         }
     }
 	[RelayCommand]
 	private void Maximize() {
-		var window = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
+		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
             if(window.WindowState == WindowState.Maximized) 
                 window.WindowState = WindowState.Normal;
@@ -119,12 +119,11 @@ public partial class ZzMainMenuViewModel : ObservableObject {
 			MessageEx.ShowErrorDialog(ex.Message, owner: ClientLib.GetActiveView(this));
 			return;
 		}
-
 	}
 
 	[RelayCommand]
 	private void SelectMenu(object? parameter) {
-		if (parameter is MenuData menu) { 
+		if (parameter is MenuData menu) {
 			SelectedMenu = menu;
 			StatusMessage = menu.Header;
 		}
@@ -132,13 +131,12 @@ public partial class ZzMainMenuViewModel : ObservableObject {
     }
 	[RelayCommand]
 	private void DoMenu() {
-		if (SelectedMenu == null) return;
-		if (SelectedMenu.ViewType == null || !SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
+		if (SelectedMenu?.ViewType == null) return;
+		if (!SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
 			return;
 		if (SelectedMenu.IsDialog)
 			ClientLib.ExitAllWithoutMe(this);
-		var view = Activator.CreateInstance(SelectedMenu.ViewType) as Window;
-		if (view == null) return;
+		if (Activator.CreateInstance(SelectedMenu.ViewType) is not Window view) return;
 		view.Title = SelectedMenu.Header;
 		if (view.DataContext is Helpers.BaseViewModel vm0) {
 			vm0.InitParam = SelectedMenu.InitParam;

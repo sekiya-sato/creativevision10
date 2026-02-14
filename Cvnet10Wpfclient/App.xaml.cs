@@ -2,6 +2,7 @@
 using Cvnet10Asset;
 using Cvnet10Wpfclient.Helpers;
 using Cvnet10Wpfclient.Services;
+using Cvnet10Wpfclient.ViewServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -96,7 +97,10 @@ public partial class App : Application {
 		}
 
 		var message = $"予期しないエラーが発生しました。\n\n{exception.Message}";
-		void Show() => MessageBox.Show(message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+//		void Show() => MessageBox.Show(message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+		void Show() => MessageEx.ShowErrorDialog(message,appendedMessage:exception.StackTrace??"" ,
+			owner: Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive));
+
 
 		if (dispatcher.CheckAccess()) {
 			Show();
