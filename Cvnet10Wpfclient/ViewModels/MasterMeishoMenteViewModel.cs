@@ -17,16 +17,18 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 	ObservableCollection<MasterMeisho> listData = [];
 
 	[ObservableProperty]
-	MasterMeisho? current;
+	MasterMeisho current = new();
+	partial void OnCurrentChanged(MasterMeisho? oldValue, MasterMeisho newValue) {
+		if (oldValue?.Id != newValue.Id) {
+			CurrentEdit = Common.CopyObject<MasterMeisho>(Current);
+		}
+	}
 
 	[ObservableProperty]
 	MasterMeisho currentEdit = new();
 
 	[ObservableProperty]
 	int count;
-
-	[ObservableProperty]
-	string? desc0;
 
 
 	[ObservableProperty]
@@ -68,7 +70,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 			if (list != null) {
 				ListData = new ObservableCollection<MasterMeisho>(list.Cast<MasterMeisho>());
 				Count = ListData.Count;
-				Current = ListData.FirstOrDefault();
+				Current = ListData.First()??new();
 			}
 			GetListTime = DateTime.Now - StartTime;
 		}
@@ -83,6 +85,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 		if (MessageEx.ShowQuestionDialog("新規登録しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) return;
 
 		try {
+			CurrentEdit.Vdc = CurrentEdit.Vdu = Common.GetVdate();
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
 				Code = 0,
@@ -117,6 +120,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 		if (MessageEx.ShowQuestionDialog("更新しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) return;
 
 		try {
+			CurrentEdit.Vdu = Common.GetVdate();
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			// Currentの内容をCurrentEditで更新（ID等はCurrentのものを使用）
 			var msg = new CvnetMsg {
@@ -162,7 +166,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 
 			ListData.Remove(Current);
 			Count = ListData.Count;
-			Current = ListData.FirstOrDefault();
+			Current = ListData.First()??new();
 			MessageEx.ShowInformationDialog("削除しました", owner: ClientLib.GetActiveView(this));
 		}
 		catch (Exception ex) {
@@ -174,15 +178,5 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 	void DoSelKubun() {
 		// 区分選択ダイアログ呼び出し等をここに実装（現状はダミー）
 		CurrentEdit.Kubun = "100";
-	}
-
-	partial void OnCurrentChanged(MasterMeisho? value) {
-		if (value != null) {
-			// クローンを作成して編集用プロパティにセット
-			//CurrentEdit = Common.DeserializeObject<MasterMeisho>(Common.SerializeObject(value)) ?? new();
-		}
-		else {
-			CurrentEdit = new();
-		}
 	}
 }

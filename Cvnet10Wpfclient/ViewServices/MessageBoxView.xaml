@@ -22,8 +22,8 @@
     mc:Ignorable="d">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="120"
-                            CornerRadius="30"
-                            GlassFrameThickness="0"
+                            CornerRadius="40"
+                            GlassFrameThickness="2"
                             ResizeBorderThickness="2"
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>

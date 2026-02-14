@@ -52,4 +52,21 @@
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Opacity" Value="0.85"/>
     </Style>
+    
+    <Style TargetType="{x:Type DataGridColumnHeader}">
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <Binding Path="HorizontalGridLinesBrush" 
+                     RelativeSource="{RelativeSource AncestorType={x:Type DataGrid}}" 
+                     FallbackValue="Transparent" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderThickness">
+            <Setter.Value>
+                <Binding Path="GridLinesVisibility" 
+                     RelativeSource="{RelativeSource AncestorType={x:Type DataGrid}}" 
+                     FallbackValue="0,0,1,0" />
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

@@ -1,4 +1,4 @@
-﻿<Window
+﻿<helpers:BaseWindow
     x:Class="Cvnet10Wpfclient.Views.MasterMeishoMenteView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -12,22 +12,22 @@
     Width="1024"
     Height="740"
     FontSize="19"
+    Foreground="{DynamicResource MaterialDesignBody}"
+    Background="{DynamicResource AppCommonBackgroundBrush}"
+    UseLayoutRounding="True"
+    SnapsToDevicePixels="True"
+    TextOptions.TextFormattingMode="Display"
     mc:Ignorable="d">
-    <Window.DataContext>
+    <helpers:BaseWindow.DataContext>
         <vm:MasterMeishoMenteViewModel />
-    </Window.DataContext>
-    <behaviors:Interaction.Triggers>
-        <behaviors:EventTrigger EventName="ContentRendered">
-            <behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
-        </behaviors:EventTrigger>
-    </behaviors:Interaction.Triggers>
-    <Window.InputBindings>
+    </helpers:BaseWindow.DataContext>
+    <helpers:BaseWindow.InputBindings>
         <KeyBinding Command="{Binding DoUpdateCommand}" Gesture="F2" />
         <KeyBinding Command="{Binding DoDeleteCommand}" Gesture="F3" />
         <KeyBinding Command="{Binding DoInsertCommand}" Gesture="F4" />
         <KeyBinding Command="{Binding DoListCommand}" Gesture="F5" />
         <KeyBinding Command="{Binding DoSelKubunCommand}" Gesture="F6" />
-    </Window.InputBindings>
+    </helpers:BaseWindow.InputBindings>
     <Grid x:Name="grid0">
         <!-- 配置が確定してから
         <Viewbox Stretch="Uniform">
@@ -103,17 +103,32 @@
             <Grid Grid.Row="2" Grid.Column="0">
                 <DataGrid
                     d:ItemsSource="{d:SampleData ItemCount=5}"
-                    FrozenColumnCount="1"
+                    FrozenColumnCount="2"
                     IsReadOnly="True"
+                    VirtualizingPanel.IsVirtualizing="True"
+                    VirtualizingPanel.VirtualizationMode="Recycling"
+                    EnableRowVirtualization="True"
                     IsSynchronizedWithCurrentItem="True"
+                    Style="{StaticResource MaterialDesignDataGrid}"
+                    HorizontalGridLinesBrush="White"
+                    GridLinesVisibility="Horizontal"
                     ItemsSource="{Binding ListData}"
-                    SelectedItem="{Binding Current}">
+                    SelectedItem="{Binding Current}"
+                    AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="区分" Binding="{Binding Kubun}" Width="70" />
+                        <DataGridTextColumn Header="コード" Binding="{Binding Code}" Width="100" />
+                        <DataGridTextColumn Header="名前" Binding="{Binding Name}" Width="200" />
+                        <DataGridTextColumn Header="略称" Binding="{Binding Ryaku}" Width="*" />
+                        <DataGridTextColumn Header="並び順" Binding="{Binding Odr}" Width="*" />
+                        <DataGridTextColumn Header="区分名" Binding="{Binding KubunName}" Width="*" />
+                    </DataGrid.Columns>
                     <DataGrid.ColumnHeaderStyle>
-                        <Style TargetType="DataGridColumnHeader">
+                        <Style TargetType="DataGridColumnHeader" 
+                           BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
                             <Setter Property="Background" Value="Black" />
-                            <Setter Property="BorderBrush" Value="White" />
-                            <Setter Property="BorderThickness" Value="1" />
-                            <Setter Property="Foreground" Value="white" />
+                            <Setter Property="Foreground" Value="White" />
+                            <Setter Property="BorderThickness" Value="0.5" />
                         </Style>
                     </DataGrid.ColumnHeaderStyle>
                 </DataGrid>
@@ -153,15 +168,21 @@
                     d:Content="4567"
                     Content="{Binding Count}"
                     ContentStringFormat="{}件数={0:N0}" />
-                <Label
+                <TextBlock 
                     Height="34"
                     Margin="24,55,0,0"
                     VerticalAlignment="Top"
-                    d:Content="4567"
-                    Content="{Binding Desc0}"
-                    FontSize="14" />
+                    FontSize="16"
+                    TextWrapping="Wrap">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}開始日時={0}, 取得時間={1}">
+                            <Binding Path="StartTime" />
+                            <Binding Path="GetListTime" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
             </Grid>
-            <Grid Grid.Row="2" Grid.Column="2">
+            <Grid  Margin="10" Grid.Row="2" Grid.Column="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="30*" />
                     <ColumnDefinition Width="70*" />
@@ -183,7 +204,7 @@
                     Margin="15,160,0,0"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Content="メモ" />
+                    Content="略称" />
                 <Label
                     Height="40"
                     Margin="15,230,0,0"
@@ -195,7 +216,8 @@
                     Margin="15,370,0,0"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Content="作成日/修正日" />
+                    d:Content="登録日/修正日"
+                    Content="" />
                 <TextBox
                     Grid.Column="1"
                     Height="40"
@@ -221,7 +243,7 @@
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
                     d:Text="メモ：デザイン画面"
-                    Text="{Binding CurrentEdit.Desc0}"
+                    Text="{Binding CurrentEdit.Ryaku}"
                     TextWrapping="Wrap" />
                 <TextBox
                     Grid.Column="1"
@@ -232,11 +254,8 @@
                     VerticalAlignment="Top"
                     HorizontalContentAlignment="Right"
                     d:Text="123"
-                    Text="{Binding CurrentEdit.SortNo}"
+                    Text="{Binding CurrentEdit.Odr}"
                     TextWrapping="Wrap" />
-                <!--
-                <TextBox Grid.Column="1" Height="40" Margin="10,300,10,0" TextWrapping="Wrap" Text="{Binding Current.VdateC,StringFormat={}{0}}" d:Text="作成日/修正日" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
-                -->
                 <TextBox
                     Grid.Column="1"
                     Width="70"
@@ -247,7 +266,7 @@
                     HorizontalContentAlignment="Right"
                     d:Text="123456"
                     IsReadOnly="True"
-                    Text="{Binding CurrentEdit.Id_Kubun}"
+                    Text="{Binding CurrentEdit.Kubun}"
                     TextWrapping="Wrap" />
                 <TextBox
                     Grid.Column="1"
@@ -257,7 +276,7 @@
                     HorizontalContentAlignment="Left"
                     d:Text="区分名"
                     IsReadOnly="True"
-                    Text="{Binding CurrentEdit.Disp0}"
+                    Text="{Binding CurrentEdit.KubunName}"
                     TextWrapping="Wrap" />
                 <Button
                     Width="100"
@@ -267,27 +286,20 @@
                     VerticalAlignment="Top"
                     Command="{Binding DoSelKubunCommand}"
                     Content="区分 F6" />
-                <StackPanel
+                <TextBlock
                     Grid.Column="1"
+                    Height="65"
                     Margin="10,380,10,0"
-                    HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Orientation="Horizontal">
-                    <TextBlock
-                        d:Text="登録日"
-                        FontSize="18"
-                        Text="{Binding CurrentEdit.VdateC}"
-                        TextAlignment="Left" />
-                    <TextBlock
-                        FontSize="18"
-                        Text=" / "
-                        TextAlignment="Left" />
-                    <TextBlock
-                        d:Text="修正日"
-                        FontSize="18"
-                        Text="{Binding CurrentEdit.VdateU}"
-                        TextAlignment="Left" />
-                </StackPanel>
+                    d:Text="登録日&#x0a;修正日"
+                    TextWrapping="Wrap">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}登録日={0} &#x0a;修正日={1}">
+                            <Binding Path="CurrentEdit.VdateC" />
+                            <Binding Path="CurrentEdit.VdateU" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
                 <Label
                     Grid.Column="1"
                     Height="40"
@@ -297,10 +309,6 @@
                     Content="{Binding CurrentEdit.Id}"
                     ContentStringFormat="{}Id={0}" />
             </Grid>
-
-
-
         </Grid>
-
     </Grid>
-</Window>
+</helpers:BaseWindow>
