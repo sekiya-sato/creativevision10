@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
@@ -43,9 +44,14 @@ public sealed partial class Common {
 	/// <typeparam name="T"></typeparam>
 	/// <param name="obj"></param>
 	/// <returns></returns>
-	public static T CopyObject<T>(T obj) where T : new() {
+	public static T CloneObject<T>(T obj) where T : new() {
 		var item = JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj))?? new T();
 		return item;
+	}
+
+	private static object? CloneViaJson(object source) {
+		var json = System.Text.Json.JsonSerializer.Serialize(source);
+		return System.Text.Json.JsonSerializer.Deserialize(json, source.GetType());
 	}
 	/// <summary>
 	/// srcのプロパティ値をdstにコピーする ShallowCopy
@@ -53,24 +59,40 @@ public sealed partial class Common {
 	/// <param name="type"></param>
 	/// <param name="src"></param>
 	/// <param name="dst"></param>
-	public static void CopyValue(Type type, object? src, object? dst) {
+	public static void DeepCopyValue(Type type, object? src, object? dst) {
 		if (src == null || dst == null) return;
-		// プロパティ情報を取得 [Retrieve property information]
+		// プロパティ情報を取得（インスタンス、公開、非公開を含む）
 		PropertyInfo[] properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
 		foreach (var property in properties) {
-			// 読み取り可能かつ書き込み可能なプロパティのみを対象とする [Target only readable and writable properties]
-			if (property.CanRead && property.CanWrite) {
-				// srcのプロパティ値を取得 [Get the property value of src]
-				var value = property.GetValue(src);
-				var valueDst = property.GetValue(dst);
-				if (value != valueDst)
-					property.SetValue(dst, value);
+			if (!property.CanRead || !property.CanWrite) continue;
+
+			var srcValue = property.GetValue(src);
+			if (srcValue == null) {
+				property.SetValue(dst, null);
+				continue;
+			}
+
+			var propertyType = property.PropertyType;
+
+			// 1. 値型、プリミティブ型、または文字列の場合（そのままコピー）
+			if (propertyType.IsValueType || propertyType == typeof(string)) {
+				property.SetValue(dst, srcValue);
+			}
+			// 2. コレクション（リスト、配列）の場合
+			else if (typeof(IEnumerable).IsAssignableFrom(propertyType)) {
+				// コレクション自体のディープコピー
+				property.SetValue(dst, Common.CloneViaJson(srcValue));
+			}
+			// 3. 参照型（クラス）の場合
+			else {
+				// 再帰的にディープコピー
+				var dstValue = Activator.CreateInstance(propertyType);
+				DeepCopyValue(propertyType, srcValue, dstValue);
+				property.SetValue(dst, dstValue);
 			}
 		}
 	}
-
-
 
 	static readonly Aes algorithm = Aes.Create();
 	/// <summary>

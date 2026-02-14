@@ -43,7 +43,7 @@ internal partial class SysLoginViewModel : Helpers.BaseViewModel {
 			return;
 		}
 		if (oldValue?.Id != newValue?.Id) {
-			CurrentEdit = Common.CopyObject<SysLogin>(Current);
+			CurrentEdit = Common.CloneObject<SysLogin>(Current);
 			LastLoginDate = $"{CurrentEdit.LastDate.ToDateStr()}";
 		}
 	}

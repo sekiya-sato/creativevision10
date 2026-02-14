@@ -28,7 +28,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 			return;
 		}
 		if (oldValue?.Id != newValue.Id) {
-			CurrentEdit = Common.CopyObject<MasterMeisho>(Current);
+			CurrentEdit = Common.CloneObject<MasterMeisho>(Current);
 		}
 	}
 
@@ -122,8 +122,6 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 				ListData.Add(item);
 				Count = ListData.Count;
 				Current = item;
-				CurrentEdit = Common.CopyObject<MasterMeisho>(Current);
-
 				MessageEx.ShowInformationDialog($"ìoò^ÇµÇ‹ÇµÇΩ (CD={CurrentEdit.Code}, Id={CurrentEdit.Id})", owner: ClientLib.GetActiveView(this));
 			}
 		}
@@ -193,8 +191,8 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseViewModel {
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 
 			if (Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) is MasterMeisho item) {
-				Common.CopyValue(Tabletype, item, Current);
-				CurrentEdit = Common.CopyObject<MasterMeisho>(Current);
+				Common.DeepCopyValue(Tabletype, item, Current);
+				CurrentEdit = Common.CloneObject<MasterMeisho>(Current);
 				MessageEx.ShowInformationDialog($"çXêVÇµÇ‹ÇµÇΩ (CD={CurrentEdit.Code}, Id={CurrentEdit.Id})", owner: ClientLib.GetActiveView(this));
 			}
 		}
