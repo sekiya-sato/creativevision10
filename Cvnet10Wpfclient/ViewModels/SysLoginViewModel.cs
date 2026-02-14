@@ -6,9 +6,7 @@ using Cvnet10Base;
 using Cvnet10Wpfclient.ViewServices;
 using Newtonsoft.Json;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
-using System.Threading;
 
 
 namespace Cvnet10Wpfclient.ViewModels;
@@ -22,7 +20,7 @@ internal partial class SysLoginViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	TimeSpan getListTime = TimeSpan.Zero;
 
-	Type tabletype = typeof(SysLogin);
+	Type Tabletype = typeof(SysLogin);
 	[RelayCommand]
 	public async Task Init() {
 	}
@@ -61,40 +59,10 @@ internal partial class SysLoginViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
 	public long count = 0;
-	[ObservableProperty]
-	public string desc0 = string.Empty;
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task DoList(CancellationToken ct) {
 		StartTime = DateTime.Now;
-		/*
-		try {
-			var coreService = AppCurrent.GetgRPCService<ICvnetCoreService>();
-			var msg = new CvnetMsg {
-				Code = 0,
-				Flag = CvnetFlag.Msg101_Op_Query,
-				DataType = typeof(QueryListParam),
-				DataMsg = Common.SerializeObject(new QueryListParam(
-					itemType: typeof(MasterMeisho),
-					where: null, order: "Kubun,Code"
-				))
-			};
-
-			var reply = await coreService.QueryMsgAsync(msg, AppCurrent.GetDefaultCallContext(ct));
-			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;
-
-			if (list != null) {
-				ListData = new ObservableCollection<MasterMeisho>(list.Cast<MasterMeisho>());
-				Count = ListData.Count;
-				Current = ListData.FirstOrDefault();
-			}
-			GetListTime = DateTime.Now - StartTime;
-		}
-		catch (Exception ex) {
-			MessageEx.ShowErrorDialog($"データ取得失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
-		}
-		 
-		 */
 		try {
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
@@ -102,7 +70,7 @@ internal partial class SysLoginViewModel : Helpers.BaseViewModel {
 				Flag = CvnetFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListParam),
 				DataMsg = Common.SerializeObject(new QueryListParam(
-					itemType: tabletype
+					itemType: Tabletype
 				))
 			};
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
@@ -121,7 +89,7 @@ internal partial class SysLoginViewModel : Helpers.BaseViewModel {
 	}
 
 	[RelayCommand]
-	public void DoSelShain() {
+	public void DoSelectShain() {
 		var selWin = new Views.Sub.SelectWinView();
 		var vm = selWin.DataContext as Sub.SelectWinViewModel;
 		if (vm == null) return;
@@ -154,7 +122,7 @@ internal partial class SysLoginViewModel : Helpers.BaseViewModel {
 		if (ListData == null) return;
 		var outstr = JsonConvert.SerializeObject(ListData, Formatting.Indented);
 		var dialog = new Microsoft.Win32.SaveFileDialog();
-		dialog.FileName = tabletype.Name + DateTime.Now.ToDtStrDate2(); // Default file name
+		dialog.FileName = Tabletype.Name + DateTime.Now.ToDtStrDate2(); // Default file name
 		dialog.DefaultExt = ".json"; // Default file extension
 		dialog.Filter = "Text documents (.json)|*.json"; // Filter files by extension
 		dialog.DefaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);

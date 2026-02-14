@@ -14,8 +14,6 @@
     FontSize="19"
     Foreground="{DynamicResource MaterialDesignBody}"
     Background="{DynamicResource AppCommonBackgroundBrush}"
-    UseLayoutRounding="True"
-    SnapsToDevicePixels="True"
     TextOptions.TextFormattingMode="Display"
     mc:Ignorable="d">
     <helpers:BaseWindow.DataContext>
@@ -26,7 +24,7 @@
         <KeyBinding Command="{Binding DoDeleteCommand}" Gesture="F3" />
         <KeyBinding Command="{Binding DoInsertCommand}" Gesture="F4" />
         <KeyBinding Command="{Binding DoListCommand}" Gesture="F5" />
-        <KeyBinding Command="{Binding DoSelKubunCommand}" Gesture="F6" />
+        <KeyBinding Command="{Binding DoOutputJsonCommand}" Gesture="F6" />
     </helpers:BaseWindow.InputBindings>
     <Grid x:Name="grid0">
         <!-- 配置が確定してから
@@ -69,7 +67,7 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Command="{Binding DoOutputJsonCommand}"
-                    Content="JSON出力" />
+                    Content="JSON出力 F6" />
                 <Label
                     Height="34"
                     Margin="20,49,99,0"
@@ -175,7 +173,7 @@
                     FontSize="16"
                     TextWrapping="Wrap">
                     <TextBlock.Text>
-                        <MultiBinding StringFormat="{}開始日時={0}, 取得時間={1}">
+                        <MultiBinding StringFormat="{}取得日時={0}, 取得時間={1}">
                             <Binding Path="StartTime" />
                             <Binding Path="GetListTime" />
                         </MultiBinding>
@@ -284,8 +282,8 @@
                     Margin="20,300,0,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    Command="{Binding DoSelKubunCommand}"
-                    Content="区分 F6" />
+                    Command="{Binding DoSelectKubunCommand}"
+                    Content="区分選択" />
                 <TextBlock
                     Grid.Column="1"
                     Height="65"

@@ -12,11 +12,11 @@
         Title="システム設定"
         Height="640"
         Width="520"
-        WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
+        Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource AppCommonBackgroundBrush}"
-        FocusManager.FocusedElement="{Binding ElementName=UrlTextBox}"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}">
+        TextOptions.TextFormattingMode="Display"                    
+        FocusManager.FocusedElement="{Binding ElementName=UrlTextBox}">
 
     <helpers:BaseWindow.DataContext>
         <vm:SettingSystemViewModel />
@@ -35,7 +35,7 @@
                        HorizontalAlignment="Center"
                        Margin="0,0,0,30"
                        FontWeight="Bold"
-                       Foreground="{DynamicResource MaterialDesignBody}" />
+                        />
 
             <TextBox Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                      materialDesign:HintAssist.Hint="接続先 URL"
@@ -44,7 +44,7 @@
                      materialDesign:TextFieldAssist.HasClearButton="True"
                      FontSize="16"
                      Margin="0,0,0,20"
-                     Foreground="{DynamicResource MaterialDesignBody}"
+                     
                      materialDesign:HintAssist.Foreground="{DynamicResource MaterialDesignBody}"
                      CaretBrush="{DynamicResource MaterialDesignBody}" />
 
@@ -54,7 +54,7 @@
                      materialDesign:TextFieldAssist.HasClearButton="True"
                      FontSize="16"
                      Margin="0,0,0,20"
-                     Foreground="{DynamicResource MaterialDesignBody}"
+                     
                      materialDesign:HintAssist.Foreground="{DynamicResource MaterialDesignBody}"
                      CaretBrush="{DynamicResource MaterialDesignBody}" />
 

@@ -12,6 +12,9 @@
         Width="1024"
         Height="740"
         FontSize="18"
+        Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource AppCommonBackgroundBrush}"
+        TextOptions.TextFormattingMode="Display"                    
         mc:Ignorable="d">
     <helpers:BaseWindow.DataContext>
         <vm:MasterSysKanriMenteViewModel />
@@ -28,7 +31,7 @@
         <KeyBinding Command="{Binding DoSelKubunCommand}"
                     Gesture="F6" />
     </helpers:BaseWindow.InputBindings>
-    <Grid x:Name="grid0"  Background="{DynamicResource AppCommonBackgroundBrush}">
+    <Grid x:Name="grid0">
         <!-- 配置が確定してから
         <Viewbox Stretch="Uniform">
         </Viewbox>
@@ -182,7 +185,7 @@
                          VerticalAlignment="Center"
                          d:Text="会社名"
                          Text="{Binding Current.Name}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="1"
                        Grid.Column="0"
                        Height="30"
@@ -196,7 +199,7 @@
                          VerticalAlignment="Center"
                          d:Text="郵便番号"
                          Text="{Binding Current.PostalCode}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <TextBox Grid.Row="1"
                          Grid.Column="4"
                          Grid.ColumnSpan="4"
@@ -205,7 +208,7 @@
                          VerticalAlignment="Center"
                          d:Text="住所1"
                          Text="{Binding Current.Address1}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <TextBox Grid.Row="2"
                          Grid.Column="1"
                          Grid.ColumnSpan="3"
@@ -214,7 +217,7 @@
                          VerticalAlignment="Center"
                          d:Text="住所2"
                          Text="{Binding Current.Address2}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <TextBox Grid.Row="2"
                          Grid.Column="4"
                          Grid.ColumnSpan="4"
@@ -223,7 +226,7 @@
                          VerticalAlignment="Center"
                          d:Text="住所3"
                          Text="{Binding Current.Address3}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="3"
                        Grid.Column="0"
                        Height="30"
@@ -238,7 +241,7 @@
                          VerticalAlignment="Center"
                          d:Text="Tel"
                          Text="{Binding Current.Tel}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <TextBox Grid.Row="3"
                          Grid.Column="4"
                          Grid.ColumnSpan="4"
@@ -247,7 +250,7 @@
                          VerticalAlignment="Center"
                          d:Text="Fax"
                          Text="{Binding Current.Mail}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="4"
                        Grid.Column="0"
                        Height="30"
@@ -262,7 +265,7 @@
                          VerticalAlignment="Center"
                          d:Text="Bank1"
                          Text="{Binding Current.BankAccount1}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <TextBox Grid.Row="4"
                          Grid.Column="4"
                          Grid.ColumnSpan="4"
@@ -271,7 +274,7 @@
                          VerticalAlignment="Center"
                          d:Text="Bank2"
                          Text="{Binding Current.BankAccount2}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <TextBox Grid.Row="5"
                          Grid.Column="1"
                          Grid.ColumnSpan="3"
@@ -280,7 +283,7 @@
                          VerticalAlignment="Center"
                          d:Text="Bank3"
                          Text="{Binding Current.BankAccount3}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="6"
                        Grid.Column="0"
                        Height="30"
@@ -294,7 +297,7 @@
                             FontSize="15"
                             IsTodayHighlighted="False"
                             Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
-                            Foreground="{DynamicResource MaterialDesignBody}"
+                            
                             SelectedDate="{Binding Current.FiscalStartDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <Label Grid.Row="7"
                        Grid.Column="0"
@@ -309,7 +312,7 @@
                          VerticalAlignment="Center"
                          d:Text="締日"
                          Text="{Binding Current.ShimeBi}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="8"
                        Grid.Column="0"
                        Height="30"
@@ -323,7 +326,7 @@
                          VerticalAlignment="Center"
                          d:Text="修正Day"
                          Text="{Binding Current.ModifyDaysEx}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="8"
                        Grid.Column="3"
                        Height="30"
@@ -337,7 +340,7 @@
                          VerticalAlignment="Center"
                          d:Text="先付Day"
                          Text="{Binding Current.ModifyDaysPre}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="10"
                        Grid.Column="0"
                        Height="30"
@@ -351,7 +354,7 @@
                          VerticalAlignment="Center"
                          d:Text="Tax"
                          Text="{Binding Current.Jsub[0].TaxRate}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="10"
                        Grid.Column="3"
                        Height="30"
@@ -365,7 +368,7 @@
                             FontSize="15"
                             IsTodayHighlighted="False"
                             Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
-                            Foreground="{DynamicResource MaterialDesignBody}"
+                            
                             SelectedDate="{Binding Current.Jsub[0].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <Label Grid.Row="10"
                        Grid.Column="6"
@@ -378,7 +381,7 @@
                          Margin="10,0,0,0"
                          VerticalAlignment="Center"
                          d:Text="新Tax"
-                         Text="{Binding Current.Jsub[0].TaxNewRate}" Foreground="{DynamicResource MaterialDesignBody}" />
+                         Text="{Binding Current.Jsub[0].TaxNewRate}"  />
                 <Label Grid.Row="11"
                        Grid.Column="0"
                        Height="30"
@@ -392,7 +395,7 @@
                          VerticalAlignment="Center"
                          d:Text="Tax"
                          Text="{Binding Current.Jsub[1].TaxRate}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="11"
                        Grid.Column="3"
                        Height="30"
@@ -406,7 +409,7 @@
                             FontSize="15"
                             IsTodayHighlighted="False"
                             Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
-                            Foreground="{DynamicResource MaterialDesignBody}"
+                            
                             SelectedDate="{Binding Current.Jsub[1].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <Label Grid.Row="11"
                        Grid.Column="6"
@@ -418,7 +421,7 @@
                          Margin="10,0,0,0"
                          VerticalAlignment="Center"
                          d:Text="新Tax"
-                         Text="{Binding Current.Jsub[1].TaxNewRate}" Foreground="{DynamicResource MaterialDesignBody}" />
+                         Text="{Binding Current.Jsub[1].TaxNewRate}"  />
                 <Label Grid.Row="12"
                        Grid.Column="0"
                        Height="30"
@@ -432,7 +435,7 @@
                          VerticalAlignment="Center"
                          d:Text="Tax"
                          Text="{Binding Current.Jsub[2].TaxRate}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                         TextWrapping="Wrap"  />
                 <Label Grid.Row="12"
                        Grid.Column="3"
                        Height="30"
@@ -446,7 +449,7 @@
                             FontSize="15"
                             IsTodayHighlighted="False"
                             Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
-                            Foreground="{DynamicResource MaterialDesignBody}"
+                            
                             SelectedDate="{Binding Current.Jsub[2].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <Label Grid.Row="12"
                        Grid.Column="6"
@@ -459,7 +462,7 @@
                          Margin="10,0,0,0"
                          VerticalAlignment="Center"
                          d:Text="新Tax"
-                         Text="{Binding Current.Jsub[2].TaxNewRate}" Foreground="{DynamicResource MaterialDesignBody}" />
+                         Text="{Binding Current.Jsub[2].TaxNewRate}"  />
             </Grid>
         </Grid>
     </Grid>

@@ -1,10 +1,8 @@
 ﻿using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using Cvnet10Asset;
 using Cvnet10Base;
-using Cvnet10Wpfclient.Models;
 using Cvnet10Wpfclient.ViewServices;
 using System.Diagnostics;
 
@@ -40,7 +38,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			Name = "CvnetWpfClientユーザ " + DateTime.Now.ToDtStrDateTime(),
 			CryptPassword = Common.EncryptLoginRequest(LoginPassword, now),
 			LoginDate = now,
-			Info = Common.SerializeObject(subGetInfo()),
+			Info = Common.SerializeObject(SubGetInfo()),
 		};
 		try {
 			var reply = await loginService.LoginAsync(loginRequest, AppGlobal.GetDefaultCallContext(cancellationToken));
@@ -62,7 +60,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 		}
 	}
 
-	SysHistJwtSub subGetInfo() {
+	SysHistJwtSub SubGetInfo() {
 		var ipAddr = Common.GetIPAddress().FirstOrDefault();
 
 		var jsub = new SysHistJwtSub {

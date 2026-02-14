@@ -5,6 +5,7 @@
              mc:Ignorable="d"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Border Style="{StaticResource DashboardCard}"
+            d:Width="150" d:Height="100"
             Background="{Binding Background, RelativeSource={RelativeSource AncestorType=UserControl}}">
         <StackPanel>
             <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -13,7 +14,7 @@
                        Foreground="{DynamicResource MaterialDesignBody}" />
             <TextBlock Text="{Binding Value, RelativeSource={RelativeSource AncestorType=UserControl}}"
                        Foreground="{DynamicResource MaterialDesignBody}"
-                       d:Text="ValueSample" d:Foreground="Blue"
+                       d:Text="Value" d:Foreground="Blue"
                        FontSize="32"
                        FontWeight="Bold" />
             <ContentPresenter Content="{Binding CardContent, RelativeSource={RelativeSource AncestorType=UserControl}}" />

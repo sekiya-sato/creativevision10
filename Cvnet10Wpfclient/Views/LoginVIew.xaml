@@ -10,9 +10,9 @@
         mc:Ignorable="d"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="ログイン" Height="370" Width="500"
-        WindowStartupLocation="CenterScreen"
+        Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource AppCommonBackgroundBrush}"
-        TextElement.Foreground="{StaticResource MaterialDesignBody}"
+        TextOptions.TextFormattingMode="Display"                    
         FocusManager.FocusedElement="{Binding ElementName=LoginIdTextBox}">
     <helpers:BaseWindow.DataContext>
         <vm:LoginViewModel />
@@ -25,8 +25,7 @@
                Style="{StaticResource MaterialDesignHeadline4TextBlock}"
                HorizontalAlignment="Center"
                Margin="0,0,0,30"
-               FontWeight="Bold"
-               Foreground="{DynamicResource MaterialDesignBody}"/>
+               FontWeight="Bold"/>
             <TextBox x:Name="LoginIdTextBox" Style="{StaticResource MaterialDesignFloatingHintTextBox}"
              materialDesign:HintAssist.Hint="ログインIDを入力してください"
              Text="{Binding LoginId, UpdateSourceTrigger=PropertyChanged}"
@@ -34,7 +33,6 @@
              helpers:FocusHelper.IsEnterToNext="True"
              FontSize="16"
              Margin="0,0,0,20"
-             Foreground="{DynamicResource MaterialDesignBody}" 
              materialDesign:HintAssist.Foreground="{DynamicResource MaterialDesignBody}"
              CaretBrush="{DynamicResource MaterialDesignBody}">
             </TextBox>
@@ -60,15 +58,13 @@
                 Content="OK (Enter)"
                 Command="{Binding LoginCommand}"
                 IsDefault="True"
-                Margin="0,0,10,0"
-                Style="{StaticResource MaterialDesignRaisedButton}" />
+                Margin="0,0,10,0" />
 
                 <Button Grid.Column="1"
                 Content="キャンセル (ESC)"
                 Command="{Binding ExitCommand}"
                 IsCancel="True"
-                Margin="10,0,0,0"
-                Style="{StaticResource MaterialDesignOutlinedButton}" />
+                Margin="10,0,0,0" />
             </Grid>
 
         </StackPanel>

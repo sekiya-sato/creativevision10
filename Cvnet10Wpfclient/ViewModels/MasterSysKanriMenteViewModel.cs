@@ -25,11 +25,6 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseViewModel {
 
 
 	[ObservableProperty]
-//	[NotifyCanExecuteChangedFor(nameof(DoListCommand))]
-//	[NotifyCanExecuteChangedFor(nameof(DoUpdateCommand))]
-	public bool isInitEnd;
-
-	[ObservableProperty]
 	public long count = 1000;
 	[ObservableProperty]
 	public long getSkip = 0;

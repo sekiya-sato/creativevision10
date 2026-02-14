@@ -12,6 +12,9 @@
     Width="1000"
     Height="740"
     FontSize="19"
+    Foreground="{DynamicResource MaterialDesignBody}"
+    Background="{DynamicResource AppCommonBackgroundBrush}"
+    TextOptions.TextFormattingMode="Display"                    
     mc:Ignorable="d">
     <helpers:BaseWindow.DataContext>
         <vm:SysLoginViewModel />
@@ -21,9 +24,9 @@
         <KeyBinding Command="{Binding DoDeleteCommand}" Gesture="F3" />
         <KeyBinding Command="{Binding DoInsertCommand}" Gesture="F4" />
         <KeyBinding Command="{Binding DoListCommand}" Gesture="F5" />
-        <KeyBinding Command="{Binding DoSelShainCommand}" Gesture="F6" />
+        <KeyBinding Command="{Binding DoOutputJsonCommand}" Gesture="F6" />
     </helpers:BaseWindow.InputBindings>
-    <Grid x:Name="grid0" Background="{DynamicResource AppCommonBackgroundBrush}">
+    <Grid x:Name="grid0">
         <!-- 配置が確定してから
         <Viewbox Stretch="Uniform">
         </Viewbox>
@@ -64,7 +67,7 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Command="{Binding DoOutputJsonCommand}"
-                    Content="JSON出力" />
+                    Content="JSON出力 F6" />
                 <Label
                     Height="34"
                     Margin="20,49,99,0"
@@ -216,7 +219,7 @@
                     VerticalAlignment="Top"
                     d:Text="コード：デザイン画面"
                     Text="{Binding CurrentEdit.LoginId}"
-                    TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                    TextWrapping="Wrap"  />
                 <TextBox
                     Grid.Column="1"
                     Height="40"
@@ -225,7 +228,7 @@
                     VerticalAlignment="Top"
                     d:Text="名前：デザイン画面"
                     Text="{Binding CurrentEdit.CryptPassword}"
-                    TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                    TextWrapping="Wrap"  />
                 <TextBox
                     Grid.Column="1"
                     Height="40"
@@ -234,7 +237,7 @@
                     VerticalAlignment="Top"
                     d:Text="202612311000"
                     Text="{Binding CurrentEdit.ExpDate, Converter={StaticResource DateTimeYmdHmsConverter}}"
-                    TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                    TextWrapping="Wrap"  />
                 <TextBox
                     Grid.Column="1"
                     Width="60"
@@ -246,7 +249,7 @@
                     d:Text="123"
                     IsReadOnly="True"
                     Text="{Binding CurrentEdit.Id_Role}"
-                    TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                    TextWrapping="Wrap"  />
                 <TextBox
                     Grid.Column="1"
                     Height="40"
@@ -256,7 +259,7 @@
                     d:Text="有効期限：デザイン画面"
                     IsReadOnly="True"
                     Text="{Binding LastLoginDate}"
-                    TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                    TextWrapping="Wrap"  />
                 <!--
                 <TextBox Grid.Column="1" Height="40" Margin="10,300,10,0" TextWrapping="Wrap" Text="{Binding Current.VdateC,StringFormat={}{0}}" d:Text="作成日/修正日" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
                 -->
@@ -271,7 +274,7 @@
                     d:Text="123456"
                     IsReadOnly="True"
                     Text="{Binding CurrentEdit.Id_Shain}"
-                    TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" />
+                    TextWrapping="Wrap"  />
                 <TextBox
                     Grid.Column="1"
                     Height="40"
@@ -280,7 +283,7 @@
                     HorizontalContentAlignment="Left"
                     d:Text="区分名"
                     IsReadOnly="True"
-                    TextWrapping="Wrap" Foreground="{DynamicResource MaterialDesignBody}" >
+                    TextWrapping="Wrap"  >
                     <TextBox.Text>
                         <MultiBinding StringFormat="{}{0} {1}">
                             <Binding Path="CurrentEdit.Code_Shain" />
@@ -295,14 +298,14 @@
                     Margin="20,0,0,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
-                    Command="{Binding DoSelShainCommand}"
-                    Content="社員 F6" />
+                    Command="{Binding DoSelectShainCommand}"
+                    Content="社員選択" />
                 <TextBlock
                     Grid.Column="1"
                     Margin="10,440,10,0"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Foreground="{DynamicResource MaterialDesignBody}"
+                    
                     FontSize="16">
                     <TextBlock.Text>
                         <MultiBinding StringFormat="{} {0} - {1}">

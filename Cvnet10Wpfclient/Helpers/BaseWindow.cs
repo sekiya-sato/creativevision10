@@ -22,6 +22,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace Cvnet10Wpfclient.Helpers;
 
@@ -44,6 +45,9 @@ public class BaseWindow : Window {
 			}
 		});
 		*/
+		WindowStartupLocation = WindowStartupLocation.CenterScreen;
+		UseLayoutRounding = true;
+		SnapsToDevicePixels = true;
 	}
 	/// <summary>
 	/// 派生クラスでは必ずbase.OnPreviewKeyDown(e);を呼ぶ(ESCを有効にしたい場合)

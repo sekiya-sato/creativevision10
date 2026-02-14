@@ -9,9 +9,9 @@
         xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
         mc:Ignorable="d"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        WindowStartupLocation="CenterScreen"
+        Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource AppCommonBackgroundBrush}"
-        TextElement.Foreground="{StaticResource MaterialDesignBody}"
+        TextOptions.TextFormattingMode="Display"                    
         Title="ZorgView"  Height="760" Width="1024">
     <helpers:BaseWindow.DataContext>
         <vm:ZorgViewModel />
