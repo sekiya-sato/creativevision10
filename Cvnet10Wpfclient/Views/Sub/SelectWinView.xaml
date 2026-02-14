@@ -98,7 +98,7 @@
                     IsSynchronizedWithCurrentItem="True"
                     ItemsSource="{Binding ListData}"
                     PreviewKeyDown="SelectGrid_PreviewKeyDown"
-                    RowBackground="LightGoldenrodYellow"
+                    Style="{StaticResource MaterialDesignDataGrid}"
                     RowHeight="35"
                     SelectedItem="{Binding Current}"
                     helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"

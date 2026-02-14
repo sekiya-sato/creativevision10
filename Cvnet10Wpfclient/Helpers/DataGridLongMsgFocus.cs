@@ -58,13 +58,13 @@ public static class DataGridLongMsgFocus {
 	}
 
 	private static void Register(DataGrid grid) {
-		WeakReferenceMessenger.Default.Register<LongMsg>(grid, (recipient, message) => {
+		WeakReferenceMessenger.Default.Register<ChangeSelectMsg>(grid, (recipient, message) => {
 			if (recipient is DataGrid dg) FocusById(dg, message.Value);
 		});
 	}
 
 	private static void Unregister(DataGrid grid) {
-		WeakReferenceMessenger.Default.Unregister<LongMsg>(grid);
+		WeakReferenceMessenger.Default.Unregister<ChangeSelectMsg>(grid);
 	}
 
 	private static void FocusById(DataGrid grid, long value) {

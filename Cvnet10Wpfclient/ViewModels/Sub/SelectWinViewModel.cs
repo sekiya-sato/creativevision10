@@ -49,7 +49,7 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 				ListData = new ObservableCollection<dynamic>(list.Cast<dynamic>());
 				Count = ListData.Count;
 				Current = ListData.First() ?? new MasterMeisho();
-				Helpers.LongMsg longMsg = WeakReferenceMessenger.Default.Send(new Helpers.LongMsg(InitParam));
+				Helpers.ChangeSelectMsg changeSelectMsg = WeakReferenceMessenger.Default.Send(new Helpers.ChangeSelectMsg(InitParam));
 			}
 		}
 		catch (Exception ex) {

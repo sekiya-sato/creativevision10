@@ -19,6 +19,7 @@ View側:
     xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
 */
 using CommunityToolkit.Mvvm.Messaging;
+using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
@@ -76,10 +77,24 @@ public class BaseWindow : Window {
 			cmd.Execute(null);
 		}
 	}
-
+	protected override void OnClosing(CancelEventArgs e) {
+		base.OnClosing(e);
+		CancelViewModelCommands();
+	}
 	protected override void OnClosed(EventArgs e) {
 		base.OnClosed(e);
 		// メモリリーク防止のため登録解除
 		WeakReferenceMessenger.Default.UnregisterAll(this);
+	}
+	private void CancelViewModelCommands() {
+		var dc = DataContext;
+		if (dc == null) return;
+
+		foreach (var prop in dc.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)) {
+			if (!prop.Name.EndsWith("CancelCommand")) continue;
+			if (prop.GetValue(dc) is ICommand cmd && cmd.CanExecute(null)) {
+				cmd.Execute(null);
+			}
+		}
 	}
 }

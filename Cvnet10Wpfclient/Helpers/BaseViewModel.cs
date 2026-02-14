@@ -53,8 +53,8 @@ public class ShortMsg : ValueChangedMessage<string> {
 	public ShortMsg(string value) : base(value) {
 	}
 }
-public class LongMsg : ValueChangedMessage<long> {
-	public LongMsg(long value) : base(value) {
+public class ChangeSelectMsg : ValueChangedMessage<long> {
+	public ChangeSelectMsg(long value) : base(value) {
 	}
 }
 
