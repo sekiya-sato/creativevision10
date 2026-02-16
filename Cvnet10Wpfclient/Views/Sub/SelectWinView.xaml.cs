@@ -36,8 +36,8 @@ public partial class SelectWinView : Helpers.BaseWindow {
 		var width = double.IsNaN(Width) ? ActualWidth : Width;
 		var height = double.IsNaN(Height) ? ActualHeight : Height;
 
-		Left = ownerBounds.Left; // 右上合わせなら: ownerBounds.Right - width
-		Top = ownerBounds.Top;
+		Left = ownerBounds.Left - 40; // 右上合わせなら: ownerBounds.Right - width
+		Top = ownerBounds.Top - 20;
 	}
 
 	

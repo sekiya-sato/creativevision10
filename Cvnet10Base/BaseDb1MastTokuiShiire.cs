@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using NPoco;
+using Newtonsoft.Json;
 using Cvnet10Base.Share;
 using System.ComponentModel;
 
@@ -93,11 +94,47 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	long id_Paysaki;
+	/// <summary>
+	/// 取引先詳細
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(1000)]
+	MasterToriDetail? jdetail;
+}
+/// <summary>
+/// 取引先詳細
+/// </summary>
+public sealed partial class MasterToriDetail : ObservableObject {
+	/// <summary>
+	/// 振込先1
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(30)]
+	[property: DefaultValue("")]
+	[property: JsonProperty("Bank1")]
+	string bankAccount1 = string.Empty;
+	/// <summary>
+	/// 振込先2
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(30)]
+	[property: DefaultValue("")]
+	[property: JsonProperty("Bank2")]
+	string bankAccount2 = string.Empty;
+	/// <summary>
+	/// 振込先3
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(30)]
+	[property: DefaultValue("")]
+	[property: JsonProperty("Bank3")]
+	string bankAccount3 = string.Empty;
 }
 /// <summary>
 /// 得意先マスター
 /// </summary>
-public partial class MasterTokui : MasterTorihiki {
+public sealed partial class MasterTokui : MasterTorihiki {
 	/// <summary>
 	/// 得意先種別
 	/// </summary>
@@ -116,13 +153,6 @@ public partial class MasterTokui : MasterTorihiki {
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(1000)]
 	List<MasterGeneralMeisho>? jsub;
-	/// <summary>
-	/// 得意先詳細
-	/// </summary>
-	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	MasterTokuiDetail? jdetail;
 }
 /// <summary>
 /// 得意先種別
@@ -145,32 +175,6 @@ public enum EnumTokui {
 	/// </summary>
 	Tenpo = 6,
 }
-/// <summary>
-/// 得意先詳細
-/// </summary>
-public partial class MasterTokuiDetail : ObservableObject {
-	/// <summary>
-	/// 振込先1
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: DefaultValue("")]
-	string bankAccount1 = string.Empty;
-	/// <summary>
-	/// 振込先2
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: DefaultValue("")]
-	string bankAccount2 = string.Empty;
-	/// <summary>
-	/// 振込先3
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: DefaultValue("")]
-	string bankAccount3 = string.Empty;
-}
 
 /// <summary>
 /// 仕入先マスター
@@ -183,40 +187,4 @@ public partial class MasterShiire : MasterTorihiki {
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(1000)]
 	List<MasterGeneralMeisho>? jsub;
-	/// <summary>
-	/// 仕入先詳細
-	/// </summary>
-	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	MasterShiireDetail? jdetail;
 }
-
-/// <summary>
-/// 仕入先詳細
-/// </summary>
-public partial class MasterShiireDetail : ObservableObject {
-	/// <summary>
-	/// 支払先1
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: DefaultValue("")]
-	string bankAccount1 = string.Empty;
-	/// <summary>
-	/// 支払先2
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: DefaultValue("")]
-	string bankAccount2 = string.Empty;
-	/// <summary>
-	/// 支払先3
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: DefaultValue("")]
-	string bankAccount3 = string.Empty;
-}
-
-

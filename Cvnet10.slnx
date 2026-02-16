@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/ソリューション項目/">
     <File Path="readme.md" />
+    <File Path="readonlyhuman.md" />
     <File Path="sourceheader.txt" />
   </Folder>
   <Project Path="CodeShare/CodeShare.csproj" />

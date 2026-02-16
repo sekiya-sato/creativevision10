@@ -15,7 +15,7 @@ namespace Cvnet10Base;
 [KeyDml("SysLogin_uq1",true, "LoginId")]
 [KeyDml("SysLogin_nk2", false, "Id_Shain")]
 [KeyDml("SysLogin_nk3", false, "Id_Role")]
-public partial class SysLogin : BaseDbClass {
+public sealed partial class SysLogin : BaseDbClass {
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
@@ -77,7 +77,7 @@ public partial class SysLogin : BaseDbClass {
 [Comment("システム：ログイン履歴テーブル")]
 [KeyDml("SysHistJwt_nk1", false, "Id_Login")]
 [KeyDml("SysHistJwt_nk2", false, "JwtUnixTime")]
-public partial class SysHistJwt : BaseDbClass {
+public sealed partial class SysHistJwt : BaseDbClass {
 	/// <summary>
 	/// ログインユニークキー
 	/// </summary>
@@ -121,7 +121,7 @@ public partial class SysHistJwt : BaseDbClass {
 /// ログイン履歴サブテーブル Jsubプロパティ用
 /// </summary>
 [NoCreate]
-public partial class SysHistJwtSub : ObservableObject {
+public sealed partial class SysHistJwtSub : ObservableObject {
 	[ObservableProperty]
 	[property: DefaultValue("")]
 	string machine = string.Empty;
@@ -155,7 +155,7 @@ public partial class SysHistJwtSub : ObservableObject {
 [Comment("システム：マスター系操作履歴テーブル")]
 [KeyDml("SysHistryMaster_nk1", false, "Vdc")]
 [KeyDml("SysHistryMaster_nk2", false, "TableName")]
-public partial class SysHistryMaster : BaseDbClass {
+public sealed partial class SysHistryMaster : BaseDbClass {
 	/// <summary>
 	/// TableName (テーブル名)
 	/// [TableName (Table Name)]

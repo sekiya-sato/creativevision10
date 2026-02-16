@@ -442,7 +442,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				PayDay = getDataInt(rec, "入金予定日"),
 				TenType = (EnumTokui)getDataInt(rec, "店種区分"),
 				IsZaiko = getDataInt(rec, "在庫管理FLG"),
-				Jdetail = new MasterTokuiDetail() {
+				Jdetail = new MasterToriDetail() {
 					BankAccount1 = getString(rec, "振込先1"),
 					BankAccount2 = getString(rec, "振込先2"),
 					BankAccount3 = getString(rec, "振込先3"),
@@ -479,7 +479,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				PayMonth = getDataInt(rec, "支払予定月"),
 				PayDay = getDataInt(rec, "支払予定日"),
 				IsPay = getDataInt(rec, "支払印刷"),
-				Jdetail = new MasterShiireDetail() {
+				Jdetail = new MasterToriDetail() {
 					BankAccount1 = $"{getString(rec, "振込銀行")} {getString(rec, "振込支店")} {getString(rec, "振込種別")} {getString(rec, "振込口座")}"
 				},
 			};

@@ -3,7 +3,7 @@
 namespace Cvnet10Base.Share;
 
 
-public static class Resolver {
+public static class ResolverBaseViewDefine {
 	/// <summary>
 	/// 指定された型から ViewSql 文字列を取得します。
 	/// 型が IBaseViewDefine を実装しており、ViewSql フィールドを持つ必要があります。

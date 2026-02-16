@@ -63,21 +63,21 @@ public partial class BaseDbHasAddress : BaseDbClass {
 	[property: DefaultValue("")]
 	string postalCode = string.Empty;
 	/// <summary>
-	/// 住所1
+	/// 住所1 都道府県
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(60)]
 	[property: DefaultValue("")]
 	string address1 = string.Empty;
 	/// <summary>
-	/// 住所2
+	/// 住所2 市区町村
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(60)]
 	[property: DefaultValue("")]
 	string address2 = string.Empty;
 	/// <summary>
-	/// 住所3
+	/// 住所3 番地
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(60)]
@@ -120,7 +120,7 @@ public partial class DetailDbClass : ObservableObject {
 /// 汎用カテゴリ名称マスター
 /// </summary>
 [NoCreate]
-public partial class MasterGeneralMeisho : ObservableObject {
+public sealed partial class MasterGeneralMeisho : ObservableObject {
 	/// <summary>
 	/// 名称区分
 	/// </summary>

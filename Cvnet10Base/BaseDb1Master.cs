@@ -11,7 +11,7 @@ namespace Cvnet10Base;
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("MasterShain_uq1", false, "Code")]
-public partial class MasterShain : BaseDbClass, IBaseCodeName {
+public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	/// <summary>
 	/// コード
 	/// </summary>
@@ -112,7 +112,7 @@ public partial class MasterShain : BaseDbClass, IBaseCodeName {
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("MasterEndCustomer_uq1", false, "Code")]
-public partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName {
+public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName {
 	/// <summary>
 	/// コード
 	/// </summary>
@@ -229,7 +229,7 @@ public partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName {
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("MasterShohin_uq1", false, "Code")]
-public partial class MasterShohin : BaseDbClass, IBaseCodeName {
+public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName {
 	/// <summary>
 	/// コード
 	/// </summary>
@@ -273,6 +273,7 @@ public partial class MasterShohin : BaseDbClass, IBaseCodeName {
 	/// ブランド名
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(100)]
 	[property: DefaultValue("")]
 	string mei_Brand = string.Empty;
 	/// <summary>
@@ -453,6 +454,7 @@ public partial class MasterShohin : BaseDbClass, IBaseCodeName {
 	/// 商品サイズ区分
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
 	string sizeKu = "SIZ";
 	/// <summary>
 	/// 基準倉庫
@@ -522,7 +524,7 @@ public partial class MasterShohin : BaseDbClass, IBaseCodeName {
 /// 商品色サイズJANマスター
 /// </summary>
 [NoCreate]
-public partial class MasterShohinColSiz : BaseDbClass {
+public sealed partial class MasterShohinColSiz : BaseDbClass {
 	/// <summary>
 	/// 色
 	/// </summary>
@@ -532,12 +534,14 @@ public partial class MasterShohinColSiz : BaseDbClass {
 	/// カラーCD
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
 	[property: DefaultValue("")]
 	string code_Col = string.Empty;
 	/// <summary>
 	/// カラー名
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(100)]
 	[property: DefaultValue("")]
 	string mei_Col = string.Empty;
 	/// <summary>
@@ -549,30 +553,35 @@ public partial class MasterShohinColSiz : BaseDbClass {
 	/// サイズCD
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
 	[property: DefaultValue("")]
 	string code_Siz = string.Empty;
 	/// <summary>
 	/// サイズ名
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(100)]
 	[property: DefaultValue("")]
 	string mei_Siz = string.Empty;
 	/// <summary>
 	/// JANコード1
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
 	[property: DefaultValue("")]
 	string jan1 = string.Empty;
 	/// <summary>
 	/// JANコード2
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
 	[property: DefaultValue("")]
 	string jan2 = string.Empty;
 	/// <summary>
 	/// JANコード3
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
 	[property: DefaultValue("")]
 	string jan3 = string.Empty;
 	/*
@@ -600,7 +609,7 @@ left join MasterMeisho m2 on T.id_MeiSiz = m2.Id
 /// 品質マスター
 /// </summary>
 [NoCreate]
-public partial class MasterShohinGrade : ObservableObject {
+public sealed partial class MasterShohinGrade : ObservableObject {
 	/// <summary>
 	/// 行No
 	/// </summary>
@@ -610,6 +619,7 @@ public partial class MasterShohinGrade : ObservableObject {
 	/// 品質
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(40)]
 	[property: DefaultValue("")]
 	string hinshitu = string.Empty;
 	/// <summary>
@@ -622,7 +632,7 @@ public partial class MasterShohinGrade : ObservableObject {
 /// 原価マスター
 /// </summary>
 [NoCreate]
-public partial class MasterShohinGenka: ObservableObject {
+public sealed partial class MasterShohinGenka: ObservableObject {
 	/// <summary>
 	/// 行No
 	/// </summary>

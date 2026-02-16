@@ -10,7 +10,7 @@ namespace Cvnet10Base;
 /// システム：システム管理テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-public partial class MasterSysman : BaseDbHasAddress {
+public sealed partial class MasterSysman : BaseDbHasAddress {
 	/// <summary>
 	/// 自社名
 	/// </summary>
@@ -80,7 +80,7 @@ public partial class MasterSysman : BaseDbHasAddress {
 /// 消費税率テーブル
 /// </summary>
 [NoCreate]
-public partial class MasterSysTax: ObservableObject {
+public sealed partial class MasterSysTax: ObservableObject {
 	[ObservableProperty]
 	long id;
 	/// <summary>
@@ -107,7 +107,7 @@ public partial class MasterSysTax: ObservableObject {
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("MasterMeisho_uq1", false, ["Kubun","Code"])]
 [KeyDml("MasterMeisho_nk2", false, ["Kubun","Odr" , "Code"])]
-public partial class MasterMeisho : BaseDbClass {
+public sealed partial class MasterMeisho : BaseDbClass {
 	/// <summary>
 	/// 区分
 	/// </summary>
@@ -119,13 +119,15 @@ public partial class MasterMeisho : BaseDbClass {
 	/// 区分名
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(40)]
 	[property: DefaultValue("")]
 	string kubunName = string.Empty;
 	/// <summary>
 	/// 名称コード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(10)]
+	[property: ColumnSizeDml(20)]
+	[property: DefaultValue("")]
 	string code = "";
 	/// <summary>
 	/// 名称
@@ -152,21 +154,7 @@ public partial class MasterMeisho : BaseDbClass {
 	/// 並び順
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
 	int odr;
-}
-
-/*
-/// <summary>
-/// 名称テーブルView
-/// </summary>
-[NoCreate]
-public partial class MasterMeishoView : MasterMeisho, IBaseViewDefine {
-	/// <summary>
-	/// 区分名
-	/// </summary>
-	[ObservableProperty]
-	string kubunName = "";
 	readonly public static string ViewSql = """
 SELECT * FROM (
     SELECT 
@@ -178,5 +166,5 @@ SELECT * FROM (
         AND T.Kubun = m1.Code
 ) MasterMeishoView
 """;
+
 }
-*/

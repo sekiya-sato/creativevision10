@@ -5,9 +5,6 @@ namespace Cvnet10Base;
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class CommentAttribute : Attribute {
-	/// <summary>
-	/// 日本語コメント
-	/// </summary>
 	public string Content { get; } =string.Empty;
 	public CommentAttribute(string content) {
 		Content = content;
