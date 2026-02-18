@@ -11,7 +11,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Cvnet10Wpfclient.Resources {
+namespace Cvnet10Wpfclient.Helpers {
 	/// <summary>
 	/// SearchTextBox.xaml の相互作用ロジック
 	/// </summary>

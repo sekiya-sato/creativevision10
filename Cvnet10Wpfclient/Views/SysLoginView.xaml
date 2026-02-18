@@ -4,7 +4,6 @@
     xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:local="clr-namespace:Cvnet10Wpfclient.Views"
     xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
-    xmlns:rs="clr-namespace:Cvnet10Wpfclient.Resources"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -312,7 +311,7 @@
                     VerticalAlignment="Top"
                     Command="{Binding DoSetPassCommand}"
                     Content="パス暗号化" />
-                <rs:SearchTextBox
+                <helpers:SearchTextBox
                     Width="135"
                     Height="30"
                     Margin="0,310,0,0"
@@ -322,14 +321,14 @@
                     BorderThickness="0,0,0,1"
                     TextHorizontalContentAlignment="Right" 
                     Command="{Binding DoSelectShainCommand}">
-                    <rs:SearchTextBox.Style>
-                        <Style TargetType="{x:Type rs:SearchTextBox}">
+                    <helpers:SearchTextBox.Style>
+                        <Style TargetType="{x:Type helpers:SearchTextBox}">
                             <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
                             <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}" />
-                            <Setter Property="ButtonBackground" Value="LightGray"/>
+                            <Setter Property="ButtonBackground" Value="{DynamicResource HeaderBackgroundBrush}"/>
                         </Style>
-                    </rs:SearchTextBox.Style>
-                </rs:SearchTextBox>
+                    </helpers:SearchTextBox.Style>
+                </helpers:SearchTextBox>
             </Grid>
 
 

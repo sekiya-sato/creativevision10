@@ -271,14 +271,24 @@
                     IsReadOnly="True"
                     Text="{Binding CurrentEdit.KubunName}"
                     TextWrapping="Wrap" />
-                <Button
-                    Width="100"
+                <helpers:SearchTextBox
+                    Width="135"
                     Height="30"
-                    Margin="20,300,0,0"
-                    HorizontalAlignment="Left"
+                    Margin="0,310,0,0"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Top"
-                    Command="{Binding DoSelectKubunCommand}"
-                    Content="区分選択" />
+                    Text="{Binding CurrentEdit.Kubun, UpdateSourceTrigger=PropertyChanged}"
+                    BorderThickness="0,0,0,1"
+                    TextHorizontalContentAlignment="Left" 
+                    Command="{Binding DoSelectKubunCommand}">
+                    <helpers:SearchTextBox.Style>
+                        <Style TargetType="{x:Type helpers:SearchTextBox}">
+                            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <Setter Property="ButtonBackground" Value="{DynamicResource HeaderBackgroundBrush}"/>
+                        </Style>
+                    </helpers:SearchTextBox.Style>
+                </helpers:SearchTextBox>
                 <TextBlock
                     Grid.Column="1"
                     Height="65"
