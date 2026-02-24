@@ -65,20 +65,20 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 締日1
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ctype: ColumnType.Enum)]
-	EnumShime shime1;
+	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	int shime1;
 	/// <summary>
 	/// 締日2
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ctype: ColumnType.Enum)]
-	EnumShime shime2;
+	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	int shime2;
 	/// <summary>
 	/// 締日3
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ctype: ColumnType.Enum)]
-	EnumShime shime3;
+	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	int shime3;
 	/// <summary>
 	/// 入金/支払月
 	/// </summary>
@@ -88,8 +88,8 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 入金/支払日
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ctype: ColumnType.Enum)]
-	EnumShime payDay;
+	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	int payDay;
 	/// <summary>
 	/// 入金/支払方法
 	/// </summary>
@@ -106,8 +106,8 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 請求/支払フラグ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ctype: ColumnType.Enum)]
-	EnumYesNo isPay;
+	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	int isPay;
 	/// <summary>
 	/// 請求/支払先
 	/// </summary>
@@ -167,14 +167,16 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	/// 得意先種別
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ColumnType.Enum)]
-	EnumTokui tenType;
+	//[property: ColumnSizeDml(ColumnType.Enum)]
+	//[property: ColumnType(typeof(int))]
+	int tenType;
 	/// <summary>
 	/// 在庫管理フラグ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ctype: ColumnType.Enum)]
-	EnumYesNo isZaiko = EnumYesNo.Yes;
+	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	//[property: ColumnType(typeof(int))]
+	int isZaiko = 1;
 	/// <summary>
 	/// 名称リスト
 	/// </summary>

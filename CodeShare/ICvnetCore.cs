@@ -245,8 +245,6 @@ public interface ICvnetCoreService {
 	IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvnetMsg request, CallContext context = default);
 
 	/*
-	[OperationContract]
-	Task<CvnetMsg> QueryJsonAsync(CvnetMsg request, CallContext context = default);
 	/// <summary>
 	/// ファイル操作リクエストを送信する
 	/// [Send file operation request]

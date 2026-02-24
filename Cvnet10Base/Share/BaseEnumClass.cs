@@ -7,7 +7,7 @@ namespace Cvnet10Base.Share;
 /// <summary>
 /// 性別 [property: ColumnSizeDml(ctype:ColumnType.Enum)]
 /// </summary>
-public enum EnumGenger {
+public enum EnumGenger:int {
 	_0_Unknown = 0,
 	_1_Woman = 1,
 	_2_Man = 2
@@ -16,14 +16,14 @@ public enum EnumGenger {
 /// <summary>
 /// する,しない [property: ColumnSizeDml(ctype:ColumnType.Enum)]
 /// </summary>
-public enum EnumYesNo {
+public enum EnumYesNo:int {
 	No = 0,
 	Yes = 1
 }
 /// <summary>
 /// 締め日
 /// </summary>
-public enum EnumShime {
+public enum EnumShime:int {
 	Day01 = 1,
 	Day02 = 2,
 	Day03 = 3,
@@ -58,7 +58,7 @@ public enum EnumShime {
 /// <summary>
 /// 得意先種別
 /// </summary>
-public enum EnumTokui {
+public enum EnumTokui:int {
 	/// <summary>
 	/// 倉庫
 	/// </summary>

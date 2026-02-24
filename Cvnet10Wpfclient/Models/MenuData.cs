@@ -74,6 +74,11 @@ public partial class MenuData : ObservableObject {
 					ViewType = typeof(MasterMeishoMenteView),
 					IsDialog = false
 				},
+				new MenuData{
+					Header="社員マスタ",
+					ViewType = typeof(MasterShainMenteView),
+					IsDialog = false,
+				},
 				new MenuData { Header = "得意先マスタメンテ", AddInfo = "準備中" },
 				new MenuData { Header = "社員LOGINマスタ", AddInfo = "準備中" }
 			}

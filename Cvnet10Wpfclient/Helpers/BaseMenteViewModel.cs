@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
+using System.Net.Http;
 
 namespace Cvnet10Wpfclient.Helpers;
 
@@ -148,6 +149,15 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			};
 
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+			if (reply.Code < 0) {
+				if (reply.Code < -9000) {
+					MessageEx.ShowErrorDialog($"追加エラー: {reply.Option} ({reply.Code})", owner: ClientLib.GetActiveView(this));
+				}
+				else {
+					MessageEx.ShowErrorDialog($"追加エラー: {reply.DataMsg} ({reply.Code})", owner: ClientLib.GetActiveView(this));
+				}
+				return;
+			}
 			var item = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as T;
 
 			if (item != null) {
@@ -188,6 +198,15 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			};
 
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+			if(reply.Code < 0) {
+				if (reply.Code < -9000) {
+					MessageEx.ShowErrorDialog($"修正エラー: {reply.Option} ({reply.Code})", owner: ClientLib.GetActiveView(this));
+				}
+				else {
+					MessageEx.ShowErrorDialog($"修正エラー: {reply.DataMsg} ({reply.Code})", owner: ClientLib.GetActiveView(this));
+				}
+				return;
+			}
 
 			if (Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) is T item) {
 				Common.DeepCopyValue(Tabletype, item, Current);
@@ -230,8 +249,13 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			};
 
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-			if (reply.Code != 0) {
-				MessageEx.ShowErrorDialog("削除できませんでした", owner: ClientLib.GetActiveView(this));
+			if (reply.Code < 0) {
+				if(reply.Code < -9000) {
+					MessageEx.ShowErrorDialog($"削除エラー: {reply.Option} ({reply.Code})", owner: ClientLib.GetActiveView(this));
+				}
+				else {
+					MessageEx.ShowErrorDialog($"削除エラー: {reply.DataMsg} ({reply.Code})", owner: ClientLib.GetActiveView(this));
+				}
 				return;
 			}
 

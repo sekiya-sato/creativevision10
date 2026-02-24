@@ -166,8 +166,8 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	/// 性別 0=不明 1=男性 2=女性
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ctype:ColumnType.Enum)]
-	EnumGenger gendar = EnumGenger._0_Unknown;
+	//[property: ColumnSizeDml(ctype:ColumnType.Enum)]
+	int gendar = 0;
 	/// <summary>
 	/// ポイント
 	/// </summary>
@@ -363,8 +363,8 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName {
 	/// 在庫管理フラグ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(ctype: ColumnType.Enum)]
-	EnumYesNo isZaiko = EnumYesNo.Yes;
+	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	int isZaiko = 1;
 		/// <summary>
 	/// メーカー品番
 	/// </summary>

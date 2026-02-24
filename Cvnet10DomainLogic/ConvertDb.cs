@@ -26,10 +26,10 @@ public class ConvertDb {
 		CnvMasterMeisho(isInit);
 		CnvMasterShain(isInit);
 		CnvMasterEndCustomer(isInit);
-		 */
 		CnvMasterShohin(isInit);
 		CnvMasterTokui(isInit);
 		CnvMasterShiire(isInit);
+		 */
 		/*
 		 */
 		logger.Info("変換処理終了");
@@ -371,7 +371,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				DayNohin = getString(rec, "納品日", "19010101"),
 				DayTento = getString(rec, "店頭投入日", "19010101"),
 				Id_Tax = getDataInt(rec, "消費税CD"),
-				IsZaiko = (EnumYesNo)getDataInt(rec, "在庫管理FLG"),
+				IsZaiko = getDataInt(rec, "在庫管理FLG"),
 				MakerHin = getString(rec, "メーカー品番"),
 				SizeKu = getString(rec, "商品サイズ区分", "SIZ"),
 				VSoko = new() {
@@ -434,14 +434,20 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				VShain = new(shain?.Id ?? 0, shain?.Code ?? string.Empty, shain?.Name ?? string.Empty),
 				RateProper = getDataInt(rec, "掛率"),
 				RateSale = getDataInt(rec, "セール掛率"),
-				Shime1 = (EnumShime)getDataInt(rec, "締日"),
-				Shime2 = (EnumShime)getDataInt(rec, "締日2"),
-				Shime3 = (EnumShime)getDataInt(rec, "締日3"),
+				//Shime1 = (EnumShime)getDataInt(rec, "締日"),
+				//Shime2 = (EnumShime)getDataInt(rec, "締日2"),
+				//Shime3 = (EnumShime)getDataInt(rec, "締日3"),
+				Shime1 = getDataInt(rec, "締日"),
+				Shime2 = getDataInt(rec, "締日2"),
+				Shime3 = getDataInt(rec, "締日3"),
 				PayMonth = getDataInt(rec, "入金予定月"),
-				PayDay = (EnumShime)getDataInt(rec, "入金予定日"),
-				TenType = (EnumTokui)getDataInt(rec, "店種区分"),
-				IsZaiko = (EnumYesNo)getDataInt(rec, "在庫管理FLG"),
-				IsPay = (EnumYesNo)getDataInt(rec, "請求印刷"),
+				PayDay = getDataInt(rec, "入金予定日"),
+				//PayDay = (EnumShime)getDataInt(rec, "入金予定日"),
+				//TenType = (EnumTokui)getDataInt(rec, "店種区分"),
+				//IsZaiko = (EnumYesNo)getDataInt(rec, "在庫管理FLG"),
+				TenType = getDataInt(rec, "店種区分"),
+				IsZaiko = getDataInt(rec, "在庫管理FLG"),
+				IsPay = getDataInt(rec, "請求印刷"),
 				Jdetail = new MasterToriDetail() {
 					BankAccount1 = getString(rec, "振込先1"),
 					BankAccount2 = getString(rec, "振込先2"),
@@ -474,12 +480,12 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				VShain = new(shain?.Id ?? 0, shain?.Code ?? string.Empty, shain?.Name ?? string.Empty),
 				RateProper = getDataInt(rec, "掛率"),
 				RateSale = getDataInt(rec, "掛率2"),
-				Shime1 = (EnumShime)getDataInt(rec, "締日"),
-				Shime2 = (EnumShime)getDataInt(rec, "締日2"),
-				Shime3 = (EnumShime)getDataInt(rec, "締日3"),
+				Shime1 = getDataInt(rec, "締日"),
+				Shime2 = getDataInt(rec, "締日2"),
+				Shime3 = getDataInt(rec, "締日3"),
 				PayMonth = getDataInt(rec, "入金予定月"),
-				PayDay = (EnumShime)getDataInt(rec, "入金予定日"),
-				IsPay = (EnumYesNo)getDataInt(rec, "支払印刷"),
+				PayDay = getDataInt(rec, "入金予定日"),
+				IsPay = getDataInt(rec, "支払印刷"),
 				Jdetail = new MasterToriDetail() {
 					BankAccount1 = $"{getString(rec, "振込銀行")} {getString(rec, "振込支店")} {getString(rec, "振込種別")} {getString(rec, "振込口座")}"
 				},
