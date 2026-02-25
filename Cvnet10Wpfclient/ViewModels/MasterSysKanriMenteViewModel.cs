@@ -3,6 +3,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
 using Cvnet10Base; // MasterMeisho クラスに必要
+using Cvnet10Base.Share;
+using System;
+using System.Collections.Generic;
 using Cvnet10Wpfclient.ViewServices;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -22,6 +25,8 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
 	MasterSysman current = new();
+
+	public IReadOnlyList<EnumShime> ShimeBiItems { get; } = Enum.GetValues<EnumShime>();
 
 
 	[ObservableProperty]

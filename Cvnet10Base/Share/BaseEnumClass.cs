@@ -8,9 +8,9 @@ namespace Cvnet10Base.Share;
 /// 性別 [property: ColumnSizeDml(ctype:ColumnType.Enum)]
 /// </summary>
 public enum EnumGenger:int {
-	_0_Unknown = 0,
-	_1_Woman = 1,
-	_2_Man = 2
+	Unknown = 0,
+	Woman = 1,
+	Man = 2
 }
 
 /// <summary>

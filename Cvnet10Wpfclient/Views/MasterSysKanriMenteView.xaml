@@ -305,14 +305,23 @@
                        Margin="15,0,0,0"
                        VerticalAlignment="Center"
                        Content="締日" />
-                <TextBox Grid.Row="7"
-                         Grid.Column="1"
-                         Height="30"
-                         Margin="10,0,10,0"
-                         VerticalAlignment="Center"
-                         d:Text="締日"
-                         Text="{Binding Current.ShimeBi}"
-                         TextWrapping="Wrap"  />
+                <ComboBox Grid.Row="7"
+                          Grid.Column="1"
+                          d:SelectedIndex="0"
+                          FontSize="14"
+                          Height="30"
+                          Margin="10,0,10,0"
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding ShimeBiItems}"
+                          SelectedItem="{Binding Current.EnShimeBi, Mode=TwoWay}"
+                          d:Text="締日">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+                                       Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
                 <Label Grid.Row="8"
                        Grid.Column="0"
                        Height="30"

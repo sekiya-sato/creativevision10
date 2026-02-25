@@ -37,32 +37,51 @@ public partial class MenuData : ObservableObject {
     public int InitParam { get; set; }
 
     public static ObservableCollection<MenuData> CreateDefault() => new([
-        new MenuData {
-            Header = "■ 開始処理 / 終了処理",
-            Color = "MediumPurple",
-            IsMainMenu = true,
-            IsExpand = true,
-            SubItems = new ObservableCollection<MenuData> {
+		new MenuData {
+			Header = "■ 管理メニュー / 接続テスト",
+			// Color = "SteelBlue",
+			IsMainMenu = true,
+			SubItems = new ObservableCollection<MenuData> {
 				new MenuData {
-					Header = "開始処理：接続テスト ---------------",
-					AddInfo = "gRPC",
-					ViewType = typeof(Test20260203View),
-					IsDialog = false
-				},
-				new MenuData {
-					Header = "開始処理：ログイン",
+					Header = "ログイン",
 					AddInfo = "gRPC",
 					ViewType = typeof(LoginView),
 					IsDialog = true
 				},
 			new MenuData {
-				Header = "開始処理：システム設定",
+				Header = "環境設定",
 				AddInfo = "構成",
 				ViewType = typeof(SysSetConfigView),
 				IsDialog = true
-				}
+				},
+				new MenuData {
+					Header = "テスト Test20260203View ---",
+					AddInfo = "gRPC",
+					ViewType = typeof(Test20260203View),
+					IsDialog = false
+				},
+				new MenuData {
+					Header = "サンプル画面 ---",
+					AddInfo = "gRPC",
+					ViewType = typeof(ZorgView),
+					IsDialog = false
+				},
+				new MenuData {
+					Header = "システム管理マスタ",
+					AddInfo = "準備中",
+					ViewType = typeof(MasterSysKanriMenteView),
+					IsDialog = false
+				},
+				new MenuData {
+					Header = "ログイン管理マスタ",
+					AddInfo = "View作成中",
+					ViewType = typeof(SysLoginView),
+					IsDialog = false
+				},
+				new MenuData { Header = "処理履歴情報", AddInfo = "準備中" },
+				new MenuData { Header = "LOGIN履歴情報", AddInfo = "準備中" }
 			}
-        },
+		},
 		new MenuData {
 			Header = "■ Master",
 			Color = "CornflowerBlue",
@@ -79,35 +98,19 @@ public partial class MenuData : ObservableObject {
 					ViewType = typeof(MasterShainMenteView),
 					IsDialog = false,
 				},
-				new MenuData { Header = "得意先マスタメンテ", AddInfo = "準備中" },
+				new MenuData {
+					Header = "顧客マスタメンテ",
+					AddInfo = "準備中",
+					ViewType = typeof(MasterEndCustomerMenteView),
+					IsDialog = false
+				},
 				new MenuData { Header = "社員LOGINマスタ", AddInfo = "準備中" }
 			}
 		},
-        new MenuData {
-            Header = "■ 管理メニュー",
-            Color = "SteelBlue",
-            IsMainMenu = true,
-            SubItems = new ObservableCollection<MenuData> {
-				new MenuData {
-					Header = "システム管理マスタ",
-					AddInfo = "準備中",
-					ViewType = typeof(MasterSysKanriMenteView),
-					IsDialog = false
-				},
-				new MenuData {
-					Header = "ログイン管理マスタ",
-					AddInfo = "View作成中",
-					ViewType = typeof(SysLoginView),
-					IsDialog = false
-				},
-				new MenuData { Header = "処理履歴情報", AddInfo = "準備中" },
-                new MenuData { Header = "LOGIN履歴情報", AddInfo = "準備中" }
-            }
-        },
         /* ================================ */
 		new MenuData
 				{
-					Header = "開始処理/終了処理 ---- backupdata",
+					Header = "ここから下はバックアップのメニューデータ----- backupdata",
 					Icon = "/Images/menu_icon/download_icon.png",
 					IsExpand = true,
 					IsMainMenu = true,

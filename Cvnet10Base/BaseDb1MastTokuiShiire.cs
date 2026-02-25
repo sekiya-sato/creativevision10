@@ -65,20 +65,41 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 締日1
 	/// </summary>
 	[ObservableProperty]
-	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	[NotifyPropertyChangedFor(nameof(EnShime1))]
 	int shime1;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumShime EnShime1 {
+		get => (EnumShime)Shime1;
+		set => Shime1 = (int)value;
+	}
 	/// <summary>
 	/// 締日2
 	/// </summary>
 	[ObservableProperty]
-	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	[NotifyPropertyChangedFor(nameof(EnShime2))]
 	int shime2;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumShime EnShime2 {
+		get => (EnumShime)Shime2;
+		set => Shime2 = (int)value;
+	}
 	/// <summary>
 	/// 締日3
 	/// </summary>
 	[ObservableProperty]
-	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	[NotifyPropertyChangedFor(nameof(EnShime3))]
 	int shime3;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumShime EnShime3 {
+		get => (EnumShime)Shime3;
+		set => Shime3 = (int)value;
+	}
 	/// <summary>
 	/// 入金/支払月
 	/// </summary>
@@ -88,8 +109,16 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 入金/支払日
 	/// </summary>
 	[ObservableProperty]
-	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	[NotifyPropertyChangedFor(nameof(EnPayDay))]
 	int payDay;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumShime EnPayDay {
+		get => (EnumShime)PayDay;
+		set => PayDay = (int)value;
+	}
+
 	/// <summary>
 	/// 入金/支払方法
 	/// </summary>
@@ -106,8 +135,16 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 請求/支払フラグ
 	/// </summary>
 	[ObservableProperty]
-	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
+	[NotifyPropertyChangedFor(nameof(EnIsPay))]
 	int isPay;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsPay {
+		get => (EnumYesNo)IsPay;
+		set => IsPay = (int)value;
+	}
+
 	/// <summary>
 	/// 請求/支払先
 	/// </summary>
@@ -167,16 +204,28 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	/// 得意先種別
 	/// </summary>
 	[ObservableProperty]
-	//[property: ColumnSizeDml(ColumnType.Enum)]
-	//[property: ColumnType(typeof(int))]
+	[NotifyPropertyChangedFor(nameof(EnTenType))]
 	int tenType;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumTokui EnTenType {
+		get => (EnumTokui)TenType;
+		set => TenType = (int)value;
+	}
 	/// <summary>
 	/// 在庫管理フラグ
 	/// </summary>
 	[ObservableProperty]
-	//[property: ColumnSizeDml(ctype: ColumnType.Enum)]
-	//[property: ColumnType(typeof(int))]
+	[NotifyPropertyChangedFor(nameof(EnIsZaiko))]
 	int isZaiko = 1;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsZaiko {
+		get => (EnumYesNo)IsZaiko;
+		set => IsZaiko = (int)value;
+	}
 	/// <summary>
 	/// 名称リスト
 	/// </summary>

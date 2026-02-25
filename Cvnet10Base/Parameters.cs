@@ -62,6 +62,20 @@ public sealed class QueryListParam {
 	}
 
 }
+public sealed class QueryListSqlParam {
+	public string? Sql { get; }
+	public string[] Parameters { get; }
+	public Type ItemType { get; }
+	public QueryListSqlParam(Type itemType, string? sql = null, string[]? parameters = null) {
+		Sql = sql;
+		if (parameters != null)
+			Parameters = parameters;
+		else
+			Parameters = Array.Empty<string>();
+		ItemType = itemType;
+	}
+}
+
 /// <summary>
 /// クエリI/F : Item指定挿入パラメータ
 /// </summary>

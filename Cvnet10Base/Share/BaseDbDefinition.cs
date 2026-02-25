@@ -19,6 +19,7 @@ public partial class BaseDbClass : ObservableObject {
 	/// 作成日UTC.Ticks
 	/// </summary>
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(VdateC))]
 	[property: Comment("V作成日UTC.Ticks")]
 	long vdc = DateTime.Now.ToUniversalTime().Ticks;
 	/// <summary>
@@ -26,6 +27,7 @@ public partial class BaseDbClass : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[property: Comment("V修正日UTC.Ticks")]
+	[NotifyPropertyChangedFor(nameof(VdateU))]
 	long vdu = DateTime.Now.ToUniversalTime().Ticks;
 	/// <summary>
 	/// 作成日(参照のみ)書式 yyyy/MM/dd HH:mm:ss.ffff DateTime(Vdc).ToLocalTime)

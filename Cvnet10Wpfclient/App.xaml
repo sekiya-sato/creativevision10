@@ -9,6 +9,7 @@
             <!-- ConverterがあればApp.xamlで定義する  -->
             <helpers:DateYmd8Converter x:Key="DateYmd8Converter" />
             <helpers:DateTimeYmdHmsConverter x:Key="DateTimeYmdHmsConverter" />
+            <helpers:EnumShimeDisplayConverter x:Key="EnumShimeDisplayConverter" />
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Resources/UIColors.xaml"/>
                 <ResourceDictionary Source="/Resources/UIWindow.xaml"/>

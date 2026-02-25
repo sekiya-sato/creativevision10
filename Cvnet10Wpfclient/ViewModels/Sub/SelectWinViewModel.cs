@@ -42,6 +42,14 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 					order: Order,
 					parameters: Parameters
 				))
+				/*
+				DataType = typeof(QueryListSqlParam),
+				DataMsg = Common.SerializeObject(new QueryListSqlParam(
+					itemType: MyType,
+					sql: $"SELECT Code,Name FROM {type.Name} order by Code LIMIT {limit}",
+					parameters: Parameters
+				))
+				*/
 			};
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;

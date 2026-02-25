@@ -104,6 +104,33 @@ public partial class CvnetCoreService {
 				return error;
 			}
 		}
+		var querySql = param as QueryListSqlParam;
+		if (querySql != null) {
+			_logger.LogInformation($"パラメータ QueryListSqlParam.ItemType={querySql.ItemType} 内容{Common.SerializeObject(querySql)}");
+			sql = querySql.Sql?? "";
+			try {
+				var list = _db.Fetch(querySql.ItemType, sql, querySql.Parameters);
+				if (list == null || list.Count == 0) {
+					ret.Code = -1; // 見つからなかった
+					ret.DataType = typeof(List<>).MakeGenericType(querySql.ItemType);
+					ret.DataMsg = "[]";
+					return ret;
+				}
+				ret.Code = 0;
+				// ret.DataType = list.GetType(); // これはList<object>になるので正しくない
+				ret.DataType = typeof(List<>).MakeGenericType(querySql.ItemType);
+				ret.DataMsg = Common.SerializeObject(list);
+				return ret;
+			}
+			catch (Exception ex) {
+				var error = new CvnetMsg() { Flag = request.Flag };
+				error.Code = -9902;
+				error.Option = ex.Message;
+				error.DataType = typeof(string);
+				error.DataMsg = ex.Message;
+				return error;
+			}
+		}
 
 		// 未実装
 		throw new NotImplementedException();

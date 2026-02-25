@@ -2,6 +2,7 @@
 using Cvnet10Base.Share;
 using NPoco;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace Cvnet10Base;
 
@@ -29,7 +30,17 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	/// 自社締め日 1-31,99
 	/// </summary>
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnShimeBi))]
 	int shimeBi;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumShime EnShimeBi {
+			get => (EnumShime)ShimeBi;
+		set => ShimeBi = (int)value;
+
+	}
+
 	/// <summary>
 	/// 修正有効日数
 	/// </summary>
