@@ -9,35 +9,33 @@ using System.Text;
 
 
 namespace Cvnet10Asset;
+
 public sealed partial class Common {
-    // JsonConvert共通オプション（必要に応じてカスタマイズ／コンバータを追加）
-    private static readonly JsonSerializerSettings jsonOptions = new () {
-        NullValueHandling = NullValueHandling.Ignore,
-        Formatting = Formatting.None,
-        DefaultValueHandling = DefaultValueHandling.Ignore,
-    };
-    /// <summary>
-    /// 共通オプションを使ってオブジェクトをシリアライズ
-    /// </summary>
-    /// <param name="obj"></param>
-    /// <returns></returns>
-    public static string SerializeObject(object obj){
-        var ret = JsonConvert.SerializeObject(obj, jsonOptions);
-        return ret;
-    }
-    /// <summary>
-    /// 共通オプションを使ってオブジェクトをデシリアライズ
-    /// </summary>
-    /// <param name="obj"></param>
-    /// <param name="t"></param>
-    /// <returns></returns>
-    public static object? DeserializeObject(string obj, Type t) {
-        var ret = JsonConvert.DeserializeObject(obj, t, jsonOptions);
-        return ret;
-    }
+	// JsonConvert共通オプション（必要に応じてカスタマイズ／コンバータを追加）
+	private static readonly JsonSerializerSettings jsonOptions = new() {
+		NullValueHandling = NullValueHandling.Ignore,
+		Formatting = Formatting.None,
+		DefaultValueHandling = DefaultValueHandling.Ignore,
+	};
+	/// <summary>
+	/// 共通オプションを使ってオブジェクトをシリアライズ
+	/// </summary>
+	/// <param name="obj"></param>
+	/// <returns></returns>
+	public static string SerializeObject(object obj) {
+		return JsonConvert.SerializeObject(obj, jsonOptions);
+	}
+	/// <summary>
+	/// 共通オプションを使ってオブジェクトをデシリアライズ
+	/// </summary>
+	/// <param name="obj"></param>
+	/// <param name="t"></param>
+	/// <returns></returns>
+	public static object? DeserializeObject(string obj, Type t) {
+		return JsonConvert.DeserializeObject(obj, t, jsonOptions);
+	}
 	public static T? DeserializeObject<T>(string obj) {
-		var ret = JsonConvert.DeserializeObject<T>(obj, jsonOptions);
-		return ret;
+		return JsonConvert.DeserializeObject<T>(obj, jsonOptions);
 	}
 	/// <summary>
 	/// 内容が同じ別オブジェクトを返す
@@ -46,13 +44,14 @@ public sealed partial class Common {
 	/// <param name="obj"></param>
 	/// <returns></returns>
 	public static T CloneObject<T>(T obj) where T : new() {
-		var item = JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj))?? new T();
-		return item;
+		var json = JsonConvert.SerializeObject(obj, jsonOptions);
+		return JsonConvert.DeserializeObject<T>(json, jsonOptions) ?? new T();
 	}
 
 	private static object? CloneObject(object source) {
-		var json = System.Text.Json.JsonSerializer.Serialize(source);
-		return System.Text.Json.JsonSerializer.Deserialize(json, source.GetType());
+		ArgumentNullException.ThrowIfNull(source);
+		var json = JsonConvert.SerializeObject(source, jsonOptions);
+		return JsonConvert.DeserializeObject(json, source.GetType(), jsonOptions);
 	}
 	/// <summary>
 	/// srcのプロパティ値をdstにコピーする ShallowCopy

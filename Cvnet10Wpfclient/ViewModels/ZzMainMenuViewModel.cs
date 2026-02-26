@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
 using Cvnet10Wpfclient.Models;
 using Cvnet10Wpfclient.ViewServices;
-using NPoco.Linq;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
@@ -14,11 +13,11 @@ namespace Cvnet10Wpfclient.ViewModels;
 
 public partial class ZzMainMenuViewModel : ObservableObject {
 
-    [ObservableProperty]
-    ObservableCollection<MenuData> menuItems = [];
+	[ObservableProperty]
+	ObservableCollection<MenuData> menuItems = [];
 
-    [ObservableProperty]
-    private MenuData? selectedMenu;
+	[ObservableProperty]
+	private MenuData? selectedMenu;
 
 	[ObservableProperty]
 	private string? statusMessage;
@@ -33,7 +32,7 @@ public partial class ZzMainMenuViewModel : ObservableObject {
 	string _subTitle = ".net10, gRPC, HTTP/2.0 Model";
 	private DateTime _subStartTime = DateTime.Now;
 	[ObservableProperty]
-	private string subTitle=string.Empty;
+	private string subTitle = string.Empty;
 
 	[ObservableProperty]
 	private bool isMenuReady;
@@ -50,45 +49,77 @@ public partial class ZzMainMenuViewModel : ObservableObject {
 
 
 	[RelayCommand]
-    private void Init() {
-        if (IsMenuReady) {
-            return;
-        }
+	private void Init() {
+		if (IsMenuReady) {
+			return;
+		}
 
-        MenuItems = MenuData.CreateDefault();
-        StatusMessage = "メニューを選択してください。";
-        ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
+		MenuItems = MenuData.CreateDefault();
+		StatusMessage = "メニューを選択してください。";
+		ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
 		StartClock();
 		SetSubTitle();
 		IsMenuReady = true;
-    }
+		var window = ClientLib.GetActiveView(this);
+		if (window != null) {
+			startRect = window.RestoreBounds;
+			miniRect = new Rect() {
+				X = startRect.X + startRect.Width - 270,
+				Y = startRect.Y,
+				Width = 270,
+				Height = 700
+			};
+		}
+	}
 
 	void SetSubTitle() {
 		SubTitle = $"{_subTitle}  接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 	}
 
 	[RelayCommand]
-    private void Exit() {
-        if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) == MessageBoxResult.Yes) {
-            ClientLib.Exit(this);
-        }
-    }
+	private void Exit() {
+		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) == MessageBoxResult.Yes) {
+			ClientLib.Exit(this);
+		}
+	}
 
-    [RelayCommand]
-    private void Minimize() {
+	[RelayCommand]
+	private void Minimize() {
 		var window = ClientLib.GetActiveView(this);
-        if (window != null) {
-            window.WindowState = WindowState.Minimized;
-        }
-    }
+		if (window != null) {
+			window.WindowState = WindowState.Minimized;
+		}
+	}
 	[RelayCommand]
 	private void Maximize() {
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
-            if(window.WindowState == WindowState.Maximized) 
-                window.WindowState = WindowState.Normal;
-            else 
-                window.WindowState = WindowState.Maximized;
+			if (window.WindowState == WindowState.Maximized)
+				window.WindowState = WindowState.Normal;
+			else
+				window.WindowState = WindowState.Maximized;
+		}
+	}
+	Rect startRect = new Rect();
+	Rect miniRect = new Rect();
+
+
+	[RelayCommand]
+	private void MenuOnly() {
+		var window = ClientLib.GetActiveView(this);
+		if (window != null && window.WindowState == WindowState.Normal) {
+			if (window.Width <= miniRect.Width) {
+				window.Left = startRect.X;
+				window.Top = startRect.Y;
+				window.Width = startRect.Width;
+				window.Height = startRect.Height;
+			}
+			else {
+				window.Left = miniRect.X;
+				window.Top = miniRect.Y;
+				window.Width = miniRect.Width;
+				window.Height = miniRect.Height;
+			}
 		}
 	}
 	[RelayCommand]
@@ -99,7 +130,7 @@ public partial class ZzMainMenuViewModel : ObservableObject {
 		var loginRefresh = new LoginRefresh() { Token = AppGlobal.LoginJwt };
 		cancellationToken.ThrowIfCancellationRequested();
 		try {
-			LoginReply reply = new() { JwtMessage=string.Empty };
+			LoginReply reply = new() { JwtMessage = string.Empty };
 			var refreshToken = string.Empty;
 			reply = await loginService.LoginRefleshAsync(loginRefresh, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply.Result == 0) {
@@ -110,7 +141,7 @@ public partial class ZzMainMenuViewModel : ObservableObject {
 					ExpireDate = reply.Expire.ToDtStrDateTime2();
 				}
 			}
-			if(string.IsNullOrEmpty(reply.JwtMessage)) {
+			if (string.IsNullOrEmpty(reply.JwtMessage)) {
 				AppGlobal.LoginJwt = string.Empty;
 				MessageEx.ShowErrorDialog("ログインRefreshができませんでした", owner: ClientLib.GetActiveView(this));
 			}
@@ -128,7 +159,7 @@ public partial class ZzMainMenuViewModel : ObservableObject {
 			StatusMessage = menu.Header;
 		}
 
-    }
+	}
 	[RelayCommand]
 	private void DoMenu() {
 		if (SelectedMenu?.ViewType == null) return;

@@ -6,9 +6,7 @@ using Cvnet10Asset;
 using Cvnet10Base;
 using Cvnet10Wpfclient.Models;
 using Cvnet10Wpfclient.ViewServices;
-using System.CodeDom;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 
 namespace Cvnet10Wpfclient.ViewModels.Sub;
 
@@ -31,6 +29,8 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 
 	async Task InitList(CancellationToken ct, Type type, string kubun = "", long limit = 999999) {
 		try {
+			ct.ThrowIfCancellationRequested();
+			MyType = type;
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
 				Code = 0,
@@ -52,12 +52,13 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 				*/
 			};
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+			ct.ThrowIfCancellationRequested();
 			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;
 			if (list != null) {
 				ListData = new ObservableCollection<dynamic>(list.Cast<dynamic>());
 				Count = ListData.Count;
-				Current = ListData.First() ?? new MasterMeisho();
-				Helpers.ChangeSelectMsg changeSelectMsg = WeakReferenceMessenger.Default.Send(new Helpers.ChangeSelectMsg(InitParam));
+				Current = ListData.FirstOrDefault() ?? new MasterMeisho();
+				WeakReferenceMessenger.Default.Send(new Helpers.ChangeSelectMsg(InitParam));
 			}
 		}
 		catch (Exception ex) {

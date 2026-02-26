@@ -87,4 +87,11 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <LinearGradientBrush x:Key="CvnetMainBackgroundBrush" 
+                         StartPoint="0,0" 
+                         EndPoint="1,1">
+        <GradientStop Color="#FF001F3F" Offset="0.0" />
+        <GradientStop Color="#FF003366" Offset="0.4" />
+        <GradientStop Color="#FF0074D9" Offset="1.0" />
+    </LinearGradientBrush>
 </ResourceDictionary>

@@ -60,16 +60,16 @@ refer/ Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This
     - Encapsulate DB logic within the Server-side (Layer 2) and Base-side (Layer 1).
     - Ensure minimal impact on existing schemas when modifying logic.
 - **Refactoring**: Analyze the impact range before proposing changes. Do not break existing implementations.
-- [Cvnet10Wpfclient] In xaml-file,TextBox,TextBlock need `Foreground="{DynamicResource MaterialDesignBody}"`
 
 ## 6. Interaction Protocol
 1. **Analyze**: Identify which layer the task belongs to.
 2. **Plan**: Present a step-by-step execution plan in Japanese.
 3. **Execute**: Write clean, maintainable code following Clean Architecture principles.
-4. **Verify**: Ensure the `.slnx` file structure remains intact.
+4. **Verify**: Ensure the `.slnx` file structure remains intact. Build and test the code to confirm no regressions.
 
 ## 7. Each Agent Role
 - .github/copilot/Orchestrator.agent.md # Overall direction and business rules
 - .github/copilot/Planner.agent.md # Architecture and implementation policy
 - .github/copilot/Impl.agent.md # Coding and coding standards
 - .github/copilot/Reviewer.agent.md # Review perspectives and quality standards
+- .github/copilot/wpf_skill.md # For Cvnet10Wpfclient Project, UI design and implementation guidelines

@@ -1,5 +1,4 @@
 ﻿using ProtoBuf.Grpc;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 
@@ -80,7 +79,7 @@ public sealed record class StreamMsg {
 
 
 /// <summary>
-/// 共通メッセージフラグ
+/// メッセージ種別
 /// [Common message flag]
 /// </summary>
 public enum CvnetFlag {
@@ -121,42 +120,11 @@ public enum CvnetFlag {
 	/// </summary>
 	Msg201_Op_Execute = 201,
 	/// <summary>
-	/// ファイルダウンロード
-	/// [File download]
-	/// </summary>
-	Msg301_FileDownload = 301,
-	/// <summary>
-	/// ファイルアップロード
-	/// [File upload]
-	/// </summary>
-	Msg302_FileUpload = 302,
-	/// <summary>
-	/// JSONベースのクエリリクエスト
-	/// [JSON-based query request]
-	/// </summary>
-	Msg401_JsonRequest = 401,
-	/// <summary>
-	/// JSONベースのレスポンス
-	/// [JSON-based response]
-	/// </summary>
-	Msg402_JsonResponse = 402,
-	/// <summary>
-	/// JSONベースのクエリリクエスト
-	/// [JSON-based query request]
-	/// </summary>
-	Msg403_JsonQuery = 403,
-	/// <summary>
-	/// JSONベースのレスポンス
-	/// [JSON-based response]
-	/// </summary>
-	Msg404_JsonQueryResponse = 403,
-
-	/// <summary>
 	/// テスト用メッセージ開始値
 	/// </summary>
 	Msg700_Test_Start = 7700,
-	Msg701_TestCase001 =7701,
-	Msg702_TestCase002 =7702,
+	Msg701_TestCase001 = 7701,
+	Msg702_TestCase002 = 7702,
 	/// <summary>
 	/// Abs()がこの値より大きいものはエラー
 	/// [Values where Abs() exceeds this value are errors]
@@ -189,37 +157,6 @@ public enum CvnetFlag {
 	Msg999_Zetc = 9999
 }
 /// <summary>
-/// ファイル送受信メッセージ
-/// </summary>
-[DataContract]
-public sealed class FileOperation {
-	/// <summary>
-	/// ファイル名
-	/// [File name]
-	/// </summary>
-	[DataMember(Order = 1)]
-	public required string FileName { get; set; }
-	/// <summary>
-	/// ファイルデータ(100MBまで)
-	/// [File data (up to 100MB)]
-	/// </summary>
-	[DataMember(Order = 2)]
-	public byte[] FileData { get; set; } = Array.Empty<byte>();
-	/// <summary>
-	/// ファイルサイズ
-	/// [File size]
-	/// </summary>
-	[DataMember(Order = 3)]
-	public long FileSize { get; set; }
-	/// <summary>
-	/// 処理ステータス -1 はエラー
-	/// [Processing status, -1 indicates an error]
-	/// </summary>
-	[DataMember(Order = 4)]
-	public int Status { get; set; }
-}
-
-/// <summary>
 /// Contract:gRPC公開サービス
 /// [Contract: gRPC Public Service]
 /// </summary>
@@ -243,16 +180,4 @@ public interface ICvnetCoreService {
 	/// <returns></returns>
 	[OperationContract]
 	IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvnetMsg request, CallContext context = default);
-
-	/*
-	/// <summary>
-	/// ファイル操作リクエストを送信する
-	/// [Send file operation request]
-	/// </summary>
-	/// <param name="request"></param>
-	/// <param name="context"></param>
-	/// <returns></returns>
-	[OperationContract]
-	Task<BinaryMsg> FileOperationAsync(BinaryMsg request, CallContext context = default);
-	*/
 }
