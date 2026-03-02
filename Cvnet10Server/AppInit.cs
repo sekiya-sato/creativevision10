@@ -33,20 +33,33 @@ public class AppInit {
 
 	/// <summary>
 	/// 初期化 Asp.net Core の Run()の前に呼び出される
+	/// テーブルはすべて存在する前提で、存在しないテーブルがあれば作成する
 	/// </summary>
 	public void Init(ExDatabase db) {
-
+		var ret = false;
 		// システムテーブル
-		db.CreateTable<SysLogin>();
-		db.CreateTable<SysHistJwt>();
+		ret = db.CreateTable<SysLogin>();
+		ret = db.CreateTable<SysHistJwt>();
 		// マスタテーブル1
-		db.CreateTable<MasterSysman>();
-		db.CreateTable<MasterMeisho>();
-		db.CreateTable<MasterShain>();
-		db.CreateTable<MasterEndCustomer>();
-		db.CreateTable<MasterShohin>();
-
-
+		ret = db.CreateTable<MasterSysman>();
+		ret = db.CreateTable<MasterMeisho>();
+		// マスタテーブル2
+		ret = db.CreateTable<MasterShain>();
+		ret = db.CreateTable<MasterEndCustomer>();
+		ret = db.CreateTable<MasterShohin>();
+		// マスタテーブル3
+		ret = db.CreateTable<MasterTokui>();
+		ret = db.CreateTable<MasterShiire>();
+		// トランザクションテーブル
+		ret = db.CreateTable<Tran06Nyukin>();
+		ret = db.CreateTable<Tran07Shiharai>();
+		ret = db.CreateTable<Tran60Tana>();
+		ret = db.CreateTable<Tran00Uriage>();
+		ret = db.CreateTable<Tran01Tenuri>();
+		ret = db.CreateTable<Tran03Shiire>();
+		ret = db.CreateTable<Tran05Ido>();
+		ret = db.CreateTable<Tran10IdoOut>();
+		ret = db.CreateTable<Tran11IdoIn>();
 	}
 
 }

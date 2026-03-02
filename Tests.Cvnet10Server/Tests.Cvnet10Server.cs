@@ -1,6 +1,7 @@
 using CodeShare;
 using Cvnet10Base.Share;
 using Cvnet10Base.Sqlite;
+using Cvnet10Server;
 using Cvnet10Server.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -41,7 +42,8 @@ public class CvnetCoreServiceTests {
 		var config = new ConfigurationBuilder().AddInMemoryCollection([]).Build();
 		var env = new FakeWebHostEnvironment();
 		var httpAccessor = new HttpContextAccessor();
-
+		var appInit = new AppInit(config);
+		appInit.Init(_db);
 		// サービスを作成
 		_service = new CvnetCoreService(logger, config, env, httpAccessor, _db);
 	}

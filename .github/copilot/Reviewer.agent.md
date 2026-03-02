@@ -15,3 +15,4 @@
 
 ## Add Mission
 - 「App.xaml や MergedDictionaries の参照先ファイルが存在し、ビルドアクションが正しいか」「命名揺らぎがないか」
+- Verify read-only projects list has not been modified and confirm the repository's read-only projects: CodeShare, Cvnet10Asset, Cvnet10Base, Cvnet10BaseMariadb, Cvnet10BaseOracle, Cvnet10BaseSqlite, Cvnet10DomainLogic.

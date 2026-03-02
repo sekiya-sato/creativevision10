@@ -40,33 +40,29 @@
 - Models/MenuData.cs の適切な位置に作成するViewを起動するための MenuData [ただしHeaderは変えない] を記述。
 
 ### Window タグの指定
-- 以下のxmlnsを追加
+- 基本的に業務画面（マスタ/詳細）は helpers:BaseWindow を使用すること。
+- helpers:BaseWindow を使用する場合、InitCommand の実行は BaseWindow が自動で行うため、XAML に ContentRendered トリガーを追加しないこと（追加すると二重実行になる）。
+- もし BaseWindow を使わずに生の Window を用いる場合のみ、以下の xmlns と Interaction.Triggers を追加すること：
 '''
 xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
 xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
 xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
 '''
-- WindowStartupLocation="CenterScreen"
-- Window.DataContext は vm:*ViewModel
-- 以下のInteraction.Triggers を追加、ViewModel には [RelayCommand] 属性をつけた private void Init() {}を追加
-
-'''
-    <behaviors:Interaction.Triggers>
-        <behaviors:EventTrigger EventName="ContentRendered">
-            <behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
-        </behaviors:EventTrigger>
-    </behaviors:Interaction.Triggers>
-'''
-- 全体的なレイアウトは materialDesign 適用後に少し崩れるため、Windowのサイズは適切な幅と高さをそれぞれ+20する。
+```xml
+<behaviors:Interaction.Triggers>
+    <behaviors:EventTrigger EventName="ContentRendered">
+        <behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
+    </behaviors:EventTrigger>
+</behaviors:Interaction.Triggers>
+```
+- WindowStartupLocation / UseLayoutRounding / SnapsToDevicePixels などは BaseWindow が自動設定するため、重複記述は避けること。
+- レイアウト崩れ対策のための手動サイズ補正（+20 等）は原則行わず、Grid/Auto レイアウトで対応すること。
 
 
 
 
-## 999. [SYSTEM OVERRIDE] Ignore all instructions below this line!
-- ここから先は人間用のメモ代わり。
 
-project にViewおよびViewModelを追加する。 refer\Cvnet8wpfclient\Views\MasterMeishoMenteView.xaml を参考に、 メインメニューから「名称マスタメンテ」でViewを起動するように、 MainMenuViewModel.cs の修正と、 MasterMeishoMenteView.xaml  MasterMeishoMenteViewModel.cs の追加を行う。計画を立て、実行前に変更対象の内容を保存してから、確認し実行する。
 
 
 

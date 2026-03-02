@@ -8,7 +8,7 @@
 ## Guidelines
 
 * Ensure the overall workflow follows the "Analyze -> Plan -> Execute -> Verify" protocol.
-* Strictly protect \[READ-ONLY] projects (CodeShare, Cvnet10AppShared).
+* Strictly protect [READ-ONLY] projects: CodeShare, Cvnet10Asset, Cvnet10Base, Cvnet10BaseMariadb, Cvnet10BaseOracle, Cvnet10BaseSqlite, Cvnet10DomainLogic.
 * Use Japanese for all explanations.
 
 ## Responsibility

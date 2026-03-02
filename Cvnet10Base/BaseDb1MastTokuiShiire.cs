@@ -1,8 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using NPoco;
-using Newtonsoft.Json;
 using Cvnet10Base.Share;
-using System.ComponentModel;
+using Newtonsoft.Json;
+using NPoco;
 
 
 namespace Cvnet10Base;
@@ -240,7 +239,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Code")]
-public partial class MasterShiire : MasterTorihiki {
+public sealed partial class MasterShiire : MasterTorihiki {
 	/// <summary>
 	/// 名称リスト
 	/// </summary>

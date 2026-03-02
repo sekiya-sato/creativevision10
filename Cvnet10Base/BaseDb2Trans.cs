@@ -1,27 +1,20 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using NPoco;
 using Cvnet10Base.Share;
 using Newtonsoft.Json;
-using System.ComponentModel;
+using NPoco;
 
 namespace Cvnet10Base;
 
 /// <summary>
 /// 共通トランザクション（ヘッダ）
 /// </summary>
-public partial class Tran99All : BaseDbClass {
+public partial class TranAllHeader : BaseDbClass {
 	/// <summary>
 	/// 計上日（yyyyMMdd）
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
 	string denDay = "19010101";
-	/// <summary>
-	/// 区分（2桁 10-19,20-29,30,99）
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	string kubun = "10";
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
@@ -107,7 +100,7 @@ public partial class Tran99All : BaseDbClass {
 /// <summary>
 /// 共通トランザクション（明細）
 /// </summary>
-public partial class Tran99Meisai : ObservableObject {
+public sealed partial class Tran99Meisai : ObservableObject {
 	/// <summary>
 	/// 行No
 	/// </summary>
@@ -117,8 +110,7 @@ public partial class Tran99Meisai : ObservableObject {
 	/// 区分（2桁 10-19,20-29,30,99）
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	string kubun = "10";
+	int kubun = 10;
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>
@@ -246,12 +238,135 @@ public partial class Tran99Meisai : ObservableObject {
 	[property: System.ComponentModel.DefaultValue("")]
 	string memo = string.Empty;
 }
+
+/// <summary>
+/// 共通トランザクション（入金/支払ヘッダ）
+/// </summary>
+public partial class TranKinHeader : BaseDbClass {
+	/// <summary>
+	/// 計上日（yyyyMMdd）
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	string denDay = "19010101";
+	/// <summary>
+	/// 社員ユニークキー
+	/// </summary>
+	[ObservableProperty]
+	long id_Shain;
+	/// <summary>
+	/// 社員データ
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vShain = new();
+	/// <summary>
+	/// 取引先キー
+	/// </summary>
+	[ObservableProperty]
+	long id_Torisaki;
+	/// <summary>
+	/// 倉庫データ
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vTori = new();
+	/// <summary>
+	/// 金額合計
+	/// </summary>
+	[ObservableProperty]
+	int kingakuTotal;
+	/// <summary>
+	/// ヘッダメモ
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(200)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string memo = string.Empty;
+	/// <summary>
+	/// 明細リスト
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(4000)]
+	List<TranKinMeisai>? jmeisai;
+}
+
+/// <summary>
+/// 入金・支払トランザクション（明細）
+/// </summary>
+public sealed partial class TranKinMeisai : ObservableObject {
+	/// <summary>
+	/// 行No
+	/// </summary>
+	[ObservableProperty]
+	int no;
+	/// <summary>
+	/// 商品ユニークキー
+	/// </summary>
+	[ObservableProperty]
+	long id_Kin;
+	/// <summary>
+	/// 入金・支払CD
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string code_Kin = string.Empty;
+	/// <summary>
+	/// 品名
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(100)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string mei_Kin = string.Empty;
+	/// <summary>
+	/// 金額
+	/// </summary>
+	[ObservableProperty]
+	int kingaku;
+	/// <summary>
+	/// 明細メモ
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(200)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string memo = string.Empty;
+}
+
+/// <summary>
+/// 入金 06 (取引先 売掛-)
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk2", false, ["Id_Soko"])]
+public sealed partial class Tran06Nyukin : TranKinHeader {
+}
+/// <summary>
+/// 支払 07 (取引先 買掛-)
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk2", false, ["Id_Soko"])]
+public sealed partial class Tran07Shiharai : TranKinHeader {
+}
+
 /// <summary>
 /// 棚卸 60 (倉庫 現在値)
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("nk1", false, "DenDay")]
-public partial class Tran60Tana : Tran99All {
+[KeyDml("nk2", false, ["Id_Soko"])]
+public sealed partial class Tran60Tana : TranAllHeader {
+	/// <summary>
+	/// 棚番
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string tanaNo = string.Empty;
 }
 
 /// <summary>
@@ -260,7 +375,9 @@ public partial class Tran60Tana : Tran99All {
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("nk1", false, "DenDay")]
 [KeyDml("nk2", false, "KakeDay")]
-public partial class Tran00Uriage: Tran99All {
+[KeyDml("nk3", false, ["Id_Soko"])]
+[KeyDml("nk4", false, ["Id_Tokui"])]
+public sealed partial class Tran00Uriage : TranAllHeader {
 	/// <summary>
 	/// 掛計上日（yyyyMMdd）
 	/// </summary>
@@ -273,113 +390,233 @@ public partial class Tran00Uriage: Tran99All {
 	[ObservableProperty]
 	long id_Tokui;
 	/// <summary>
-	/// 得意先CD
+	/// 得意先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Tokui = string.Empty;
-	/// <summary>
-	/// 得意先名
-	/// </summary>
-	[ObservableProperty]
+	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Tokui = string.Empty;
+	CodeNameView vTokui = new();
+	/// <summary>
+	/// 請求フラグ
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsPay))]
+	int isPay;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsPay {
+		get => (EnumYesNo)IsPay;
+		set => IsPay = (int)value;
+	}
+	/// <summary>
+	/// 区分（2桁 10-19,20-29,30,99）
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	int kubun = 10;
+	[Ignore]
+	[JsonIgnore]
+	public EnumUri00 EnKubun {
+		get => (EnumUri00)Kubun;
+		set => Kubun = (int)value;
+	}
 }
+
+public enum EnumUri00 : int {
+	Uriage = 10,
+	UriSale = 11,
+	Henpin = 20,
+	HenSale = 21,
+	Nebiki = 30,
+	Other = 99
+}
+
+
 /// <summary>
 /// 店舗売上 01 (倉庫 出)
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-public partial class Tran01Tenuri : Tran99All {
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk2", false, ["Id_Soko"])]
+[KeyDml("nk3", false, ["Id_Tenpo"])]
+[KeyDml("nk4", false, "Id_Customer")]
+public sealed partial class Tran01Tenuri : TranAllHeader {
 	/// <summary>
 	/// 店舗キー
 	/// </summary>
 	[ObservableProperty]
 	long id_Tenpo;
 	/// <summary>
-	/// 店舗CD
+	/// 店舗データ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Tenpo = string.Empty;
-	/// <summary>
-	/// 店舗名
-	/// </summary>
-	[ObservableProperty]
+	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Tenpo = string.Empty;
+	CodeNameView vTenpo = new();
 	/// <summary>
 	/// 顧客キー
 	/// </summary>
 	[ObservableProperty]
 	int id_Customer;
 	/// <summary>
-	/// 顧客CD
+	/// 顧客データ
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vCustomer = new();
+	/// <summary>
+	/// オフライン用顧客CD
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
 	string code_Customer = string.Empty;
 	/// <summary>
-	/// 顧客名
+	/// 区分（2桁 10-19,20-29,30,99）
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Customer = string.Empty;
+	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	int kubun = 10;
+	[Ignore]
+	[JsonIgnore]
+	public EnumUri01 EnKubun {
+		get => (EnumUri01)Kubun;
+		set => Kubun = (int)value;
+	}
 }
+public enum EnumUri01 : int {
+	Uriage = 10,
+	UriSale = 11,
+	Henpin = 20,
+	HenSale = 21,
+	Other = 99
+}
+
 
 /// <summary>
 /// 仕入 03 (倉庫 入)
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-public partial class Tran03Shiire : Tran99All {
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk2", false, "KakeDay")]
+[KeyDml("nk3", false, ["Id_Soko"])]
+[KeyDml("nk4", false, ["Id_Shiire"])]
+public sealed partial class Tran03Shiire : TranAllHeader {
+	/// <summary>
+	/// 掛計上日（yyyyMMdd）
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	string kakeDay = "19010101";
 	/// <summary>
 	/// 仕入先キー
 	/// </summary>
 	[ObservableProperty]
 	long id_Shiire;
 	/// <summary>
-	/// 仕入先CD
+	/// 仕入先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Shiire = string.Empty;
-	/// <summary>
-	/// 仕入先名
-	/// </summary>
-	[ObservableProperty]
+	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Shiire = string.Empty;
+	CodeNameView vShiire = new();
+	/// <summary>
+	/// 支払フラグ
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsPay))]
+	int isPay;
+
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsPay {
+		get => (EnumYesNo)IsPay;
+		set => IsPay = (int)value;
+	}
+	/// <summary>
+	/// 区分（2桁 10-19,20-29,30,99）
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	int kubun = 10;
+	[Ignore]
+	[JsonIgnore]
+	public EnumShiire EnKubun {
+		get => (EnumShiire)Kubun;
+		set => Kubun = (int)value;
+	}
+}
+public enum EnumShiire : int {
+	Shiire = 10,
+	Henpin = 20,
+	Nebiki = 30,
+	Other = 99
 }
 
+
 /// <summary>
-/// 移動 05 (倉庫 出)
+/// 移動 05 (倉庫 出, 移動先 入)
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-public partial class Tran05Ido : Tran99All {
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk2", false, ["Id_Soko"])]
+[KeyDml("nk3", false, ["Id_Ido"])]
+public sealed partial class Tran05Ido : TranAllHeader {
 	/// <summary>
 	/// 移動先キー
 	/// </summary>
 	[ObservableProperty]
 	long id_Ido;
 	/// <summary>
-	/// 移動先CD
+	/// 移動先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Ido = string.Empty;
-	/// <summary>
-	/// 移動先名
-	/// </summary>
-	[ObservableProperty]
+	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Ido = string.Empty;
+	CodeNameView vIdo = new();
+}
+
+/// <summary>
+/// 積送移動 10 (倉庫 出, 移動先 入) 仮
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk2", false, ["Id_Soko"])]
+[KeyDml("nk3", false, ["Id_Ido"])]
+public sealed partial class Tran10IdoOut : TranAllHeader {
+	/// <summary>
+	/// 移動先キー
+	/// </summary>
+	[ObservableProperty]
+	long id_Ido;
+	/// <summary>
+	/// 移動先データ
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vIdo = new();
+}
+/// <summary>
+/// 積送移動 11 (倉庫 出, 移動先 入) 実
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk2", false, ["Id_Soko"])]
+[KeyDml("nk3", false, ["Id_Ido"])]
+public sealed partial class Tran11IdoIn : TranAllHeader {
+	/// <summary>
+	/// 移動先キー
+	/// </summary>
+	[ObservableProperty]
+	long id_Ido;
+	/// <summary>
+	/// 移動先データ
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vIdo = new();
 }
