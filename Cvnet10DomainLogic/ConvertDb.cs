@@ -9,16 +9,28 @@ namespace Cvnet10DomainLogic;
 public class ConvertDb {
 	ExDatabase _fromDb;
 	ExDatabase _toDb;
-	Logger logger;
+	Logger _logger;
 
 	public ConvertDb(ExDatabase fromDb, ExDatabase toDb) {
 		_fromDb = fromDb;
 		_toDb = toDb;
-		logger = LogManager.GetCurrentClassLogger();
+		_logger = LogManager.GetCurrentClassLogger();
 	}
+
+	/// <summary>
+	/// 変換ステップの進捗情報
+	/// [Conversion step progress information]
+	/// </summary>
+	public record ConvertStepProgress(string StepName, int Count, int Progress, bool IsCompleted = false, bool IsError = false, string? ErrorMessage = null);
+
+	/// <summary>
+	/// 全マスタ変換を実行（同期版、従来の呼び出し用）
+	/// [Execute all master conversion synchronously]
+	/// </summary>
 	public void ConvertAll(bool isInit = true) {
-		logger.Info("変換処理開始");
-		/* ToDo : リリース段階で最後にコメントを外す ※ただしうっかり実行した場合、元データを消してしまう可能性があるため、慎重に扱うこと
+		_logger.Info("変換処理開始");
+		var start = DateTime.Now;
+		/*
 		CnvMasterSys(isInit);
 		CnvMasterMeisho(isInit);
 		CnvMasterShain(isInit);
@@ -26,12 +38,77 @@ public class ConvertDb {
 		CnvMasterShohin(isInit);
 		CnvMasterTokui(isInit);
 		CnvMasterShiire(isInit);
-		CnvAfterMaster(); // マスタ変換後の追加処理（例：関連テーブルの更新など）
+		CnvAfterMaster();
 		 */
-		/*
-		 */
-		logger.Info("変換処理終了");
-		return;
+
+		var elapsed = DateTime.Now - start;
+		_logger.Info($"変換処理終了 ({elapsed.TotalSeconds:0.0}s)");
+	}
+
+	/// <summary>
+	/// ストリーミングで全マスタ変換を実行
+	/// [Execute all master conversion for streaming]
+	/// </summary>
+	public async IAsyncEnumerable<ConvertStepProgress> ConvertAllAsyncStream(bool isInit = true) {
+		_logger.Info("変換処理開始");
+		var start = DateTime.Now;
+
+		var steps = new (string Name, Func<bool, int> Action)[] {
+			("MasterSys", CnvMasterSys),
+			("MasterMeisho", CnvMasterMeisho),
+			("MasterShain", CnvMasterShain),
+			("MasterEndCustomer", CnvMasterEndCustomer),
+			("MasterShohin", CnvMasterShohin),
+			("MasterTokui", CnvMasterTokui),
+			("MasterShiire", CnvMasterShiire),
+		};
+
+		for (var index = 0; index < steps.Length; index++) {
+			var (name, action) = steps[index];
+			var startProgress = index * 100 / steps.Length;
+
+			// ステップ開始通知
+			yield return new ConvertStepProgress(name, 0, startProgress, false, false);
+
+			// 処理実行
+			int count = 0;
+			string? errorMsg = null;
+			bool isError = false;
+			try {
+				count = action(isInit);
+			}
+			catch (Exception ex) {
+				_logger.Error(ex, $"変換処理エラー: {name}");
+				isError = true;
+				errorMsg = ex.Message;
+			}
+
+			var endProgress = (int)Math.Round((index + 1) * 100d / steps.Length, MidpointRounding.AwayFromZero);
+
+			// ステップ完了通知
+			yield return new ConvertStepProgress(name, count, endProgress, false, isError, errorMsg);
+		}
+
+		// AfterMaster 処理
+		yield return new ConvertStepProgress("AfterMaster", 0, 85, false, false);
+		int afterCount = 0;
+		string? afterErrorMsg = null;
+		bool afterIsError = false;
+		try {
+			afterCount = CnvAfterMaster();
+		}
+		catch (Exception ex) {
+			_logger.Error(ex, "AfterMaster処理エラー");
+			afterIsError = true;
+			afterErrorMsg = ex.Message;
+		}
+
+		yield return new ConvertStepProgress("AfterMaster", afterCount, 95, false, afterIsError, afterErrorMsg);
+
+		var elapsed = DateTime.Now - start;
+		_logger.Info("変換処理終了");
+
+		yield return new ConvertStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
 	}
 
 	#region 文字列変換サブロジック
@@ -515,12 +592,12 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 							_toDb.Update(shain);
 						}
 						catch (Exception updEx) {
-							logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterShain Id={0}", shain.Id);
+							_logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterShain Id={0}", shain.Id);
 						}
 					}
 				}
 				catch (Exception ex) {
-					logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterShain Code={0}", shain?.Code);
+					_logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterShain Code={0}", shain?.Code);
 				}
 			}
 			cnt += shainList.Count;
@@ -543,12 +620,12 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 							_toDb.Update(customer);
 						}
 						catch (Exception updEx) {
-							logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterEndCustomer Id={0}", customer.Id);
+							_logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterEndCustomer Id={0}", customer.Id);
 						}
 					}
 				}
 				catch (Exception ex) {
-					logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterEndCustomer Code={0}", customer?.Code);
+					_logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterEndCustomer Code={0}", customer?.Code);
 				}
 			}
 			cnt += customerList.Count;
@@ -571,12 +648,12 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 							_toDb.Update(shohin);
 						}
 						catch (Exception updEx) {
-							logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterShohin Id={0}", shohin.Id);
+							_logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterShohin Id={0}", shohin.Id);
 						}
 					}
 				}
 				catch (Exception ex) {
-					logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterShohin Code={0}", shohin?.Code);
+					_logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterShohin Code={0}", shohin?.Code);
 				}
 			}
 			cnt += shohinList.Count;

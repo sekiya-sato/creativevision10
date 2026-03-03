@@ -42,7 +42,7 @@ public class CvnetCoreServiceTests {
 		var config = new ConfigurationBuilder().AddInMemoryCollection([]).Build();
 		var env = new FakeWebHostEnvironment();
 		var httpAccessor = new HttpContextAccessor();
-		var appInit = new AppInit(config);
+		var appInit = new AppGlobal(config);
 		appInit.Init(_db);
 		// サービスを作成
 		_service = new CvnetCoreService(logger, config, env, httpAccessor, _db);

@@ -4,7 +4,7 @@ using Cvnet10DomainLogic;
 
 namespace Cvnet10Server;
 
-public class AppInit {
+public class AppGlobal {
 	private readonly IConfiguration _configuration;
 	// ToDo: バージョン番号は手動で更新すること
 	readonly string verStr = "0.0.099";
@@ -19,7 +19,7 @@ public class AppInit {
 			return _ver ?? throw new ArgumentNullException(nameof(VersionInfo));
 		}
 	}
-	public AppInit(IConfiguration configuration) {
+	public AppGlobal(IConfiguration configuration) {
 		_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 		_ver = new VersionInfo {
 			Product = "Cvnet10Server",

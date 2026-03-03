@@ -1,300 +1,307 @@
 ﻿<Window x:Class="Cvnet10Wpfclient.Views.ZzMainMenuView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:controls="clr-namespace:Cvnet10Wpfclient.Views.Controls"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:models="clr-namespace:Cvnet10Wpfclient.Models"
-        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
-        Title="{Binding HeaderTitle}"
-        Width="1200"
-        Height="780"
-        Background="Transparent"
-        Icon="pack://application:,,,/cvnet.ico"
-        ResizeMode="CanResizeWithGrip"
-        SnapsToDevicePixels="True"
-        UseLayoutRounding="True"
-        WindowStartupLocation="CenterScreen"
-        WindowStyle="SingleBorderWindow"
-        mc:Ignorable="d">
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+	xmlns:controls="clr-namespace:Cvnet10Wpfclient.Views.Controls"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:models="clr-namespace:Cvnet10Wpfclient.Models"
+	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
+	Title="{Binding HeaderTitle}"
+	Width="1200"
+	Height="780"
+	Background="Transparent"
+	Icon="pack://application:,,,/cvnet.ico"
+	ResizeMode="CanResizeWithGrip"
+	SnapsToDevicePixels="True"
+	UseLayoutRounding="True"
+	WindowStartupLocation="CenterScreen"
+	WindowStyle="SingleBorderWindow"
+	mc:Ignorable="d">
 
-    <Window.DataContext>
-        <vm:ZzMainMenuViewModel />
-    </Window.DataContext>
+	<Window.DataContext>
+		<vm:ZzMainMenuViewModel />
+	</Window.DataContext>
 
-    <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="120"
-                            CornerRadius="80"
-                            GlassFrameThickness="0"
-                            ResizeBorderThickness="8"
-                            UseAeroCaptionButtons="False" />
-    </shell:WindowChrome.WindowChrome>
+	<shell:WindowChrome.WindowChrome>
+		<shell:WindowChrome CaptionHeight="120"
+			CornerRadius="80"
+			GlassFrameThickness="0"
+			ResizeBorderThickness="8"
+			UseAeroCaptionButtons="False" />
+	</shell:WindowChrome.WindowChrome>
 
-    <behaviors:Interaction.Triggers>
-        <behaviors:EventTrigger EventName="ContentRendered">
-            <behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
-        </behaviors:EventTrigger>
-    </behaviors:Interaction.Triggers>
+	<behaviors:Interaction.Triggers>
+		<behaviors:EventTrigger EventName="ContentRendered">
+			<behaviors:InvokeCommandAction Command="{Binding InitCommand}" />
+		</behaviors:EventTrigger>
+	</behaviors:Interaction.Triggers>
 
-    <Border Padding="2"
-            CornerRadius="40">
-        <Border.Background>
-            <SolidColorBrush Color="{DynamicResource primaryBackColor1}" />
-        </Border.Background>
+	<Border Padding="2"
+		CornerRadius="40">
+		<Border.Background>
+			<SolidColorBrush Color="{DynamicResource primaryBackColor1}" />
+		</Border.Background>
 
-        <Border Background="{StaticResource CvnetMainBackgroundBrush}"
-                BorderThickness="2"
-                CornerRadius="40">
-            <Border.BorderBrush>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Offset="0" Color="{DynamicResource winBorderColor1}" />
-                    <GradientStop Offset="0.6" Color="{DynamicResource winBorderColor2}" />
-                    <GradientStop Offset="1" Color="{DynamicResource winBorderColor3}" />
-                </LinearGradientBrush>
-            </Border.BorderBrush>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+		<Border Background="{StaticResource CvnetMainBackgroundBrush}"
+			BorderThickness="2"
+			CornerRadius="40">
+			<Border.BorderBrush>
+				<LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+					<GradientStop Offset="0" Color="{DynamicResource winBorderColor1}" />
+					<GradientStop Offset="0.6" Color="{DynamicResource winBorderColor2}" />
+					<GradientStop Offset="1" Color="{DynamicResource winBorderColor3}" />
+				</LinearGradientBrush>
+			</Border.BorderBrush>
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
 
-                <Grid Grid.Row="0"
-                      Margin="24,16,24,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+				<Grid Grid.Row="0"
+					Margin="24,16,24,8">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Vertical">
-                        <TextBlock FontSize="36"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource TitleColor}"
-                                   Text="{Binding HeaderTitle}">
-                            <TextBlock.Effect>
-                                <DropShadowEffect BlurRadius="4"
-                                                  Direction="315"
-                                                  Opacity="1"
-                                                  ShadowDepth="1.5"
-                                                  Color="Black" />
-                            </TextBlock.Effect>
-                        </TextBlock>
-                        <TextBlock Padding="8,0,0,0"
-                                   FontSize="14"
-                                   Foreground="{DynamicResource SubTitleColor}"
-                                   Opacity="0.6"
-                                   Text="{Binding SubTitle}" />
-                    </StackPanel>
+					<StackPanel Orientation="Vertical">
+						<TextBlock FontSize="36"
+							FontWeight="Bold"
+							Foreground="{DynamicResource TitleColor}"
+							Text="{Binding HeaderTitle}">
+							<TextBlock.Effect>
+								<DropShadowEffect BlurRadius="4"
+									Direction="315"
+									Opacity="1"
+									ShadowDepth="1.5"
+									Color="Black" />
+							</TextBlock.Effect>
+						</TextBlock>
+						<TextBlock Padding="8,0,0,0"
+							FontSize="14"
+							Foreground="{DynamicResource SubTitleColor}"
+							Opacity="0.6"
+							Text="{Binding SubTitle}" />
+					</StackPanel>
 
-                    <StackPanel Grid.Column="1"
-                                Margin="0,0,12,0"
-                                VerticalAlignment="Center"
-                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
-                                Orientation="Horizontal">
-                        <Border Margin="0,0,8,0"
-                                Style="{StaticResource StatusChip}">
-                            <StackPanel Orientation="Vertical">
-                                <TextBlock Foreground="{DynamicResource SubTitleColor}"
-                                           Style="{StaticResource MetricLabel}"
-                                           Text="アクセス有効期限" />
-                                <!--  アクセス有効期限  -->
-                                <TextBlock Foreground="{DynamicResource plainTextColor0}"
-                                           Text="{Binding ExpireDate}" />
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Margin="0,0,8,0"
-                                            Command="{Binding ToggleThemeCommand}"
-                                            Style="{StaticResource WindowButton}"
-                                            ToolTip="テーマ切り替え (Light/Dark)">
-                                        <Button.Content>
-                                            <Grid>
-                                                <Ellipse Width="28"
-                                                         Height="28"
-                                                         Fill="Black" />
+					<StackPanel Grid.Column="1"
+						Margin="0,0,12,0"
+						VerticalAlignment="Center"
+						shell:WindowChrome.IsHitTestVisibleInChrome="True"
+						Orientation="Horizontal">
+						<Border Margin="0,0,8,0"
+							Style="{StaticResource StatusChip}">
+							<StackPanel Orientation="Vertical">
+								<TextBlock Foreground="{DynamicResource SubTitleColor}"
+									Style="{StaticResource MetricLabel}"
+									Text="アクセス有効期限" />
+								<!--  アクセス有効期限  -->
+								<TextBlock HorizontalAlignment="Center"
+									d:Text="2024/12/31 23:59:59"
+									Foreground="{DynamicResource plainTextColor0}"
+									Text="{Binding ExpireDate}" />
+								<StackPanel Orientation="Horizontal">
+									<Button Margin="0,4,8,0"
+										Command="{Binding ToggleThemeCommand}"
+										Style="{StaticResource WindowButton}"
+										ToolTip="テーマ切り替え (Light/Dark)">
+										<Button.Content>
+											<Grid>
+												<Ellipse Width="28"
+													Height="28"
+													Fill="Black" />
 
-                                                <Path Width="14"
-                                                      Height="14"
-                                                      HorizontalAlignment="Center"
-                                                      VerticalAlignment="Center"
-                                                      Data="M12,2L14,5H10L12,2M12,22L10,19H14L12,22M22,12L19,10V14L22,12M2,12L5,14V10L2,12M19.07,4.93L17,7.07L16.31,6.38L18.38,4.31L19.07,4.93M4.93,19.07L7.07,17L7.76,17.69L5.69,19.76L4.93,19.07M19.07,19.07L17,16.93L16.31,17.62L18.38,19.69L19.07,19.07M4.93,4.93L7.07,7.07L7.76,6.38L5.69,4.31L4.93,4.93M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"
-                                                      Fill="{DynamicResource TitleColor}"
-                                                      Stretch="Uniform" />
-                                            </Grid>
-                                        </Button.Content>
-                                    </Button>
+												<Path Width="14"
+													Height="14"
+													HorizontalAlignment="Center"
+													VerticalAlignment="Center"
+													Data="M12,2L14,5H10L12,2M12,22L10,19H14L12,22M22,12L19,10V14L22,12M2,12L5,14V10L2,12M19.07,4.93L17,7.07L16.31,6.38L18.38,4.31L19.07,4.93M4.93,19.07L7.07,17L7.76,17.69L5.69,19.76L4.93,19.07M19.07,19.07L17,16.93L16.31,17.62L18.38,19.69L19.07,19.07M4.93,4.93L7.07,7.07L7.76,6.38L5.69,4.31L4.93,4.93M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"
+													Fill="{DynamicResource TitleColor}"
+													Stretch="Uniform" />
+											</Grid>
+										</Button.Content>
+									</Button>
 
 
-                                    <Button Command="{Binding MinimizeCommand}"
-                                            Opacity="0.6"
-                                            Style="{StaticResource MinimizeWinBtn}" />
-                                    <Button Command="{Binding MenuOnlyCommand}"
-                                            Opacity="0.6"
-                                            Style="{StaticResource MenuonlyWinBtn}" />
-                                    <Button Command="{Binding ExitCommand}"
-                                            Opacity="0.6"
-                                            Style="{StaticResource CloseWinBtn}" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-                        <Border HorizontalAlignment="Center"
-                                Style="{StaticResource StatusChip}">
-                            <StackPanel Orientation="Vertical">
-                                <TextBlock Width="100"
-                                           HorizontalAlignment="Center"
-                                           Foreground="{DynamicResource SubTitleColor}"
-                                           Style="{StaticResource MetricLabel}"
-                                           Text="{Binding CurrentDate, FallbackValue='00/00/00'}" />
+									<Button Command="{Binding MinimizeCommand}"
+                                            ToolTip="最小化"
+										Opacity="0.6"
+										Style="{StaticResource MinimizeWinBtn}" />
+									<Button Command="{Binding MenuOnlyCommand}"
+										Opacity="0.6"
+                                            ToolTip="メニューのみ/通常"
+										Style="{StaticResource MenuonlyWinBtn}" />
+									<Button Command="{Binding ExitCommand}"
+										Opacity="0.6"
+                                            ToolTip="終了"
+										Style="{StaticResource CloseWinBtn}" />
+								</StackPanel>
+							</StackPanel>
+						</Border>
+						<Border HorizontalAlignment="Center"
+							Style="{StaticResource StatusChip}">
+							<StackPanel Orientation="Vertical">
+								<TextBlock Width="100"
+									HorizontalAlignment="Center"
+									Foreground="{DynamicResource SubTitleColor}"
+									Style="{StaticResource MetricLabel}"
+                                           d:Text="99/12/31"
+									Text="{Binding CurrentDate, FallbackValue='00/00/00'}" />
 
-                                <TextBlock Width="90"
-                                           HorizontalAlignment="Center"
-                                           FontSize="18"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TitleColor}"
-                                           Text="{Binding CurrentTime, FallbackValue='00:00:00'}" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+								<TextBlock Width="90"
+									HorizontalAlignment="Center"
+									FontSize="18"
+									FontWeight="Bold"
+									Foreground="{DynamicResource TitleColor}"
+                                           d:Text="00:00:00"
+									Text="{Binding CurrentTime, FallbackValue='00:00:00'}" />
+							</StackPanel>
+						</Border>
+					</StackPanel>
 
-                </Grid>
+				</Grid>
 
-                <Grid Grid.Row="1"
-                      Margin="24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="300" />
-                        <ColumnDefinition Width="20" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+				<Grid Grid.Row="1"
+					Margin="24">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="300" />
+						<ColumnDefinition Width="20" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0"
-                            Padding="10,4,4,4"
-                            Background="{DynamicResource panelColor}"
-                            CornerRadius="6">
-                        <TreeView x:Name="MenuTree"
-                                  Background="Transparent"
-                                  BorderThickness="0"
-                                  ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
-                                  ItemsSource="{Binding MenuItems}"
-                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                  Style="{StaticResource MenuTreeView}">
+					<Border Grid.Column="0"
+						Padding="10,4,4,4"
+						Background="{DynamicResource panelColor}"
+						CornerRadius="6">
+						<TreeView x:Name="MenuTree"
+							Background="Transparent"
+							BorderThickness="0"
+							ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
+							ItemsSource="{Binding MenuItems}"
+							ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+							ScrollViewer.VerticalScrollBarVisibility="Auto"
+							Style="{StaticResource MenuTreeView}">
 
-                            <TreeView.ItemTemplate>
-                                <HierarchicalDataTemplate DataType="{x:Type models:MenuData}"
-                                                          ItemsSource="{Binding SubItems}">
-                                    <StackPanel>
-                                        <TextBlock FontSize="15"
-                                                   Foreground="{DynamicResource plainTextColor0}"
-                                                   Text="{Binding Header}" />
-                                        <!--
+							<TreeView.ItemTemplate>
+								<HierarchicalDataTemplate DataType="{x:Type models:MenuData}"
+									ItemsSource="{Binding SubItems}">
+									<StackPanel>
+										<TextBlock FontSize="15"
+											Foreground="{DynamicResource plainTextColor0}"
+											Text="{Binding Header}" />
+										<!--
                                         <TextBlock Text="{Binding AddInfo}" FontSize="12" Opacity="0.65" Foreground="{DynamicResource plainTextColor0}"/>
-                                        -->
-                                    </StackPanel>
-                                </HierarchicalDataTemplate>
-                            </TreeView.ItemTemplate>
+										-->
+									</StackPanel>
+								</HierarchicalDataTemplate>
+							</TreeView.ItemTemplate>
 
-                            <behaviors:Interaction.Triggers>
-                                <behaviors:EventTrigger EventName="MouseDoubleClick">
-                                    <behaviors:InvokeCommandAction Command="{Binding DoMenuCommand}" />
-                                </behaviors:EventTrigger>
-                                <behaviors:EventTrigger EventName="SelectedItemChanged">
-                                    <behaviors:InvokeCommandAction Command="{Binding SelectMenuCommand}"
-                                                                   CommandParameter="{Binding SelectedItem, ElementName=MenuTree}" />
-                                </behaviors:EventTrigger>
-                            </behaviors:Interaction.Triggers>
-                        </TreeView>
-                    </Border>
-                    <Grid Grid.Column="2">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+							<behaviors:Interaction.Triggers>
+								<behaviors:EventTrigger EventName="MouseDoubleClick">
+									<behaviors:InvokeCommandAction Command="{Binding DoMenuCommand}" />
+								</behaviors:EventTrigger>
+								<behaviors:EventTrigger EventName="SelectedItemChanged">
+									<behaviors:InvokeCommandAction Command="{Binding SelectMenuCommand}"
+										CommandParameter="{Binding SelectedItem, ElementName=MenuTree}" />
+								</behaviors:EventTrigger>
+							</behaviors:Interaction.Triggers>
+						</TreeView>
+					</Border>
+					<Grid Grid.Column="2">
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
 
-                        <StackPanel Grid.Row="0"
-                                    HorizontalAlignment="Stretch"
-                                    Orientation="Horizontal">
-                            <controls:DashboardCardView Title="Online Users"
-                                                        Width="220"
-                                                        Background="{DynamicResource panelColor}"
-                                                        Value="128" />
-                            <controls:DashboardCardView Title="Sync Jobs"
-                                                        Width="220"
-                                                        Margin="16,0,0,0"
-                                                        Background="{DynamicResource panelColor}"
-                                                        Value="42" />
-                            <controls:DashboardCardView Title="Alerts"
-                                                        Width="220"
-                                                        Margin="16,0,0,0"
-                                                        Background="{DynamicResource panelColor}"
-                                                        Value="3">
-                                <controls:DashboardCardView.CardContent>
-                                    <Button Command="{Binding RefreshCommand}"
-                                            Content="Refresh Token" />
-                                </controls:DashboardCardView.CardContent>
-                            </controls:DashboardCardView>
-                        </StackPanel>
+						<StackPanel Grid.Row="0"
+							HorizontalAlignment="Stretch"
+							Orientation="Horizontal">
+							<controls:DashboardCardView Title="Online Users"
+								Width="220"
+								Background="{DynamicResource panelColor}"
+								Value="128" />
+							<controls:DashboardCardView Title="Sync Jobs"
+								Width="220"
+								Margin="16,0,0,0"
+								Background="{DynamicResource panelColor}"
+								Value="42" />
+							<controls:DashboardCardView Title="Alerts"
+								Width="220"
+								Margin="16,0,0,0"
+								Background="{DynamicResource panelColor}"
+								Value="3">
+								<controls:DashboardCardView.CardContent>
+									<Button Command="{Binding RefreshCommand}"
+										Content="Refresh Token" />
+								</controls:DashboardCardView.CardContent>
+							</controls:DashboardCardView>
+						</StackPanel>
 
-                        <Border Grid.Row="1"
-                                Margin="0,16,0,0"
-                                Padding="20"
-                                Background="{DynamicResource panelColor}"
-                                Style="{StaticResource DashboardCard}">
-                            <StackPanel>
-                                <TextBlock Foreground="{DynamicResource color9}"
-                                           Style="{StaticResource SectionTitleText}"
-                                           Text="選択中メニュー  (DoubleClick)" />
-                                <TextBlock FontSize="22"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource plainTextColor0}"
-                                           Text="{Binding SelectedMenu.Header}" />
-                                <TextBlock Margin="0,8,0,0"
-                                           Foreground="{DynamicResource plainTextColor0}"
-                                           Opacity="0.8"
-                                           Text="{Binding SelectedMenu.AddInfo}" />
-                                <TextBlock Margin="0,2,0,2"
-                                           Foreground="{DynamicResource plainTextColor0}"
-                                           Opacity="0.7"
-                                           Text="メニューをダブルクリックすると画面が起動します。"
-                                           TextWrapping="Wrap" />
-                                <TextBlock Margin="0,2,0,2"
-                                           d:Text="マルチウィンドウ画面"
-                                           Foreground="{DynamicResource plainTextColor0}"
-                                           Opacity="0.7"
-                                           TextWrapping="Wrap">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="マルチウィンドウ画面" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedMenu.IsDialog}"
-                                                             Value="True">
-                                                    <Setter Property="Text" Value="ダイアログ画面" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
-                        </Border>
+						<Border Grid.Row="1"
+							Margin="0,16,0,0"
+							Padding="20"
+							Background="{DynamicResource panelColor}"
+							Style="{StaticResource DashboardCard}">
+							<StackPanel>
+								<TextBlock Foreground="{DynamicResource color9}"
+									Style="{StaticResource SectionTitleText}"
+									Text="選択中メニュー  (DoubleClick)" />
+								<TextBlock FontSize="22"
+									FontWeight="Bold"
+									Foreground="{DynamicResource plainTextColor0}"
+									Text="{Binding SelectedMenu.Header}" />
+								<TextBlock Margin="0,8,0,0"
+									Foreground="{DynamicResource plainTextColor0}"
+									Opacity="0.8"
+									Text="{Binding SelectedMenu.AddInfo}" />
+								<TextBlock Margin="0,2,0,2"
+									Foreground="{DynamicResource plainTextColor0}"
+									Opacity="0.7"
+									Text="メニューをダブルクリックすると画面が起動します。"
+									TextWrapping="Wrap" />
+								<TextBlock Margin="0,2,0,2"
+									d:Text="マルチウィンドウ画面"
+									Foreground="{DynamicResource plainTextColor0}"
+									Opacity="0.7"
+									TextWrapping="Wrap">
+									<TextBlock.Style>
+										<Style TargetType="TextBlock">
+											<Setter Property="Text" Value="マルチウィンドウ画面" />
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding SelectedMenu.IsDialog}"
+													Value="True">
+													<Setter Property="Text" Value="ダイアログ画面" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</TextBlock.Style>
+								</TextBlock>
+							</StackPanel>
+						</Border>
 
-                        <Border Grid.Row="2"
-                                Margin="0,16,0,0"
-                                Padding="20"
-                                Background="{DynamicResource panelColor}"
-                                Style="{StaticResource DashboardCard}">
-                            <StackPanel>
-                                <TextBlock Foreground="{DynamicResource color6}"
-                                           Style="{StaticResource SectionTitleText}"
-                                           Text="ステータスログ" />
-                                <TextBlock FontSize="16"
-                                           Foreground="{DynamicResource plainTextColor0}"
-                                           Text="{Binding StatusMessage}"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Grid>
-            </Grid>
-        </Border>
-    </Border>
+						<Border Grid.Row="2"
+							Margin="0,16,0,0"
+							Padding="20"
+							Background="{DynamicResource panelColor}"
+							Style="{StaticResource DashboardCard}">
+							<StackPanel>
+								<TextBlock Foreground="{DynamicResource color6}"
+									Style="{StaticResource SectionTitleText}"
+									Text="ステータスログ" />
+								<TextBlock FontSize="16"
+									Foreground="{DynamicResource plainTextColor0}"
+									Text="{Binding StatusMessage}"
+									TextWrapping="Wrap" />
+							</StackPanel>
+						</Border>
+					</Grid>
+				</Grid>
+			</Grid>
+		</Border>
+	</Border>
 </Window>

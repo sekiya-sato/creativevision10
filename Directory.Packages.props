@@ -20,10 +20,10 @@
     <PackageVersion Include="MySqlConnector" Version="2.5.0" />
     <PackageVersion Include="NCrontab.Scheduler.AspNetCore" Version="1.2.10" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageVersion Include="NLog" Version="6.1.0" />
-    <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.1" />
+    <PackageVersion Include="NLog" Version="6.1.1" />
+    <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.2" />
     <PackageVersion Include="NLog.Targets.Network" Version="6.0.4" />
-    <PackageVersion Include="NLog.Web.AspNetCore" Version="6.1.1" />
+    <PackageVersion Include="NLog.Web.AspNetCore" Version="6.1.2" />
     <PackageVersion Include="NPoco" Version="6.2.0" />
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.100" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.2.2" />

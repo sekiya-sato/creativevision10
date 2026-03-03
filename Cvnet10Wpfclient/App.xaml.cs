@@ -13,8 +13,6 @@ using NLog.Extensions.Logging;
 using ProtoBuf.Grpc.ClientFactory;
 using System.IO;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
@@ -26,7 +24,7 @@ namespace Cvnet10Wpfclient;
 public partial class App : Application {
 	public static IHost? AppHost { get; private set; }
 	public static ThemeService ThemeService { get; } = new();
-	private static readonly Logger AppLogger = LogManager.GetCurrentClassLogger();
+	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
 	public App() {
 		InitializeLanguage();
@@ -81,12 +79,12 @@ public partial class App : Application {
 			return;
 		}
 
-		AppLogger.Error("Unhandled exception (AppDomain.UnhandledException): {ExceptionObject}", e.ExceptionObject);
+		_logger.Error("Unhandled exception (AppDomain.UnhandledException): {ExceptionObject}", e.ExceptionObject);
 		ShowUnhandledExceptionMessage(new Exception("予期しないエラーが発生しました。"));
 	}
 
 	private static void HandleUnhandledException(Exception exception, string source) {
-		AppLogger.Error(exception, "Unhandled exception: {Source}", source);
+		_logger.Error(exception, "Unhandled exception: {Source}", source);
 		ShowUnhandledExceptionMessage(exception);
 	}
 
@@ -97,14 +95,15 @@ public partial class App : Application {
 		}
 
 		var message = $"予期しないエラーが発生しました。\n\n{exception.Message}";
-//		void Show() => MessageBox.Show(message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-		void Show() => MessageEx.ShowErrorDialog(message,appendedMessage:exception.StackTrace??"" ,
+		//		void Show() => MessageBox.Show(message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+		void Show() => MessageEx.ShowErrorDialog(message, appendedMessage: exception.StackTrace ?? "",
 			owner: Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive));
 
 
 		if (dispatcher.CheckAccess()) {
 			Show();
-		} else {
+		}
+		else {
 			dispatcher.Invoke(Show);
 		}
 	}
@@ -151,16 +150,16 @@ public partial class App : Application {
 				var url = context.Configuration.GetConnectionString("Url")
 					?? throw new InvalidOperationException("Connection string 'Url' is missing.");
 				var subPath = Common.ExtractSubPath(url);
-				if(!string.IsNullOrEmpty(subPath))
+				if (!string.IsNullOrEmpty(subPath))
 					services.AddTransient<SubPathHandler>(_ => new SubPathHandler(subPath));
 
 				services.AddSingleton<SocketsHttpHandler>(_ => new SocketsHttpHandler {
 					PooledConnectionIdleTimeout = TimeSpan.FromHours(6),
 					KeepAlivePingDelay = TimeSpan.FromSeconds(120),
-                    KeepAlivePingTimeout = TimeSpan.FromSeconds(15), // タイムアウト時間
+					KeepAlivePingTimeout = TimeSpan.FromSeconds(15), // タイムアウト時間
 					KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always, // 通信がない時でもPingを送る
 					EnableMultipleHttp2Connections = true
-                });
+				});
 				// 2. 統合されたクライアント構成ロジック
 				void ConfigureClient<TService>(IServiceCollection srvs, string targetUrl, string path) where TService : class {
 					var builder = srvs.AddCodeFirstGrpcClient<TService>((sp, options) => options.Address = new Uri(targetUrl))
@@ -174,7 +173,7 @@ public partial class App : Application {
 				// 3. サービスの登録
 				ConfigureClient<ILoginService>(services, url, subPath);
 				ConfigureClient<ICvnetCoreService>(services, url, subPath);
-            });
+			});
 	}
 
 	/// <summary>

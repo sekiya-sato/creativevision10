@@ -1,11 +1,5 @@
-﻿using System.Linq;
-using NLog;
-using NPoco.Expressions;
-using CommunityToolkit.Mvvm.ComponentModel;
-using Cvnet10Base.Share;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using NPoco;
-using System.ComponentModel;
-using System.IO;
 
 
 namespace Cvnet10Base;
@@ -19,8 +13,7 @@ public record InnerVersion(string Version, string Sql, string Memo);
 /// POSデータのバージョン管理テーブル(主にテーブル変換用,テーブル追加については変更SQLは使用しない)
 /// </summary>
 [PrimaryKey("DbVersion", AutoIncrement = false)]
-public partial class VersionTable : ObservableObject
-{
+public partial class VersionTable : ObservableObject {
 	/// <summary>
 	/// 各バージョン用変換SQL (ver, 次のバージョンに対応させるためのSQL(;区切り), memo
 	/// </summary>
@@ -75,23 +68,20 @@ public partial class VersionTable : ObservableObject
 	/// <summary>
 	/// バージョン情報を書き込む＆バージョンアップされた場合にテーブルの整合性を保つ
 	/// </summary>
-	static public async Task WriteVersionInfoAsync(IDatabase db, InnerVersion[] verupSql, string dbFile, CancellationToken cancellationToken = default)
-	{
+	static public async Task WriteVersionInfoAsync(IDatabase db, InnerVersion[] verupSql, string dbFile, CancellationToken cancellationToken = default) {
 		var versions = await db.FetchAsync<VersionTable>(cancellationToken);
 		var sortedVersions = versions.OrderByDescending(x => x.DbVersion).ToList();
-		var log = NLog.LogManager.GetCurrentClassLogger();
+		var loggger = NLog.LogManager.GetCurrentClassLogger();
 
-		if (sortedVersions.Count == 0)
-		{
+		if (sortedVersions.Count == 0) {
 			var latestVersion = verupSql[^1];
-			var verNow = new VersionTable
-			{
+			var verNow = new VersionTable {
 				DbVersion = latestVersion.Version,
 				DateStart = DateTime.Now,
 				Memo = latestVersion.Memo
 			};
 			await db.InsertAsync(verNow, cancellationToken);
-			log.Debug($"DBバージョン新規書込({verNow.DbVersion})");
+			loggger.Debug($"DBバージョン新規書込({verNow.DbVersion})");
 			return;
 		}
 
@@ -99,14 +89,12 @@ public partial class VersionTable : ObservableObject
 		var verLast = verupSql[^1].Version;
 		if (verStart == verLast) return;
 
-		foreach (var record in verupSql)
-		{
+		foreach (var record in verupSql) {
 			cancellationToken.ThrowIfCancellationRequested();
-			if (string.Compare(record.Version, verStart) >= 0)
-			{
+			if (string.Compare(record.Version, verStart) >= 0) {
 				var item = string.Compare(record.Version, verStart) == 0 ? sortedVersions[0] : null;
 				var errorMsg = await SubInsertRecordAsync(db, record, item, verLast, cancellationToken);
-				log.Debug($"DBバージョンアップ({record.Version} -> {verLast}) SQL={record.Sql.Replace("\n", " ").Replace("\r", "")} err={errorMsg} db={Path.GetFileName(dbFile)}");
+				loggger.Debug($"DBバージョンアップ({record.Version} -> {verLast}) SQL={record.Sql.Replace("\n", " ").Replace("\r", "")} err={errorMsg} db={Path.GetFileName(dbFile)}");
 			}
 		}
 	}
@@ -114,27 +102,22 @@ public partial class VersionTable : ObservableObject
 	/// <summary>
 	/// 個別のバージョンアップレコードの処理をSQLテーブル
 	/// </summary>
-	static async Task<string> SubInsertRecordAsync(IDatabase db, InnerVersion verInfo, VersionTable? item, string orgVersion, CancellationToken cancellationToken)
-	{
+	static async Task<string> SubInsertRecordAsync(IDatabase db, InnerVersion verInfo, VersionTable? item, string orgVersion, CancellationToken cancellationToken) {
 		var errorMsg = "";
 		var sqls = verInfo.Sql.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-		foreach (var oneSql in sqls)
-		{
-			try
-			{
+		foreach (var oneSql in sqls) {
+			try {
 				await db.ExecuteAsync(oneSql, cancellationToken);
 			}
-			catch (Exception ex)
-			{
+			catch (Exception ex) {
 				errorMsg += $"{ex.Message};";
 			}
 		}
 
 		var isInsert = item is null;
 		item ??= new VersionTable();
-		if (isInsert)
-		{
+		if (isInsert) {
 			item.DbVersion = verInfo.Version;
 			item.DateStart = DateTime.Now;
 		}
@@ -143,12 +126,10 @@ public partial class VersionTable : ObservableObject
 		item.NewVersion = orgVersion;
 		item.DateEnd = DateTime.Now;
 
-		if (isInsert)
-		{
+		if (isInsert) {
 			await db.InsertAsync(item, cancellationToken);
 		}
-		else
-		{
+		else {
 			await db.ExecuteAsync(item.DoSql, cancellationToken);
 		}
 		return errorMsg;

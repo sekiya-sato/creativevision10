@@ -143,10 +143,10 @@ app.UseAuthorization();
 app.MapGrpcService<LoginService>();
 app.MapGrpcService<CvnetCoreService>();
 app.MapGrpcService<SchedulerService>();
-var appInit = new AppInit(app.Configuration);
+var appInit = new AppGlobal(app.Configuration);
 appInit.Init(Cvnet10Base.Sqlite.ExDatabaseSqlite.GetDbConn(connStr));
 
-var ver = AppInit.Version;
+var ver = AppGlobal.Version;
 app.MapGet("/", () =>
 $"""
 {ver.Product} Ver.{ver.Version}

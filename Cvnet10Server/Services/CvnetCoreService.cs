@@ -89,8 +89,18 @@ public partial class CvnetCoreService : ICvnetCoreService {
 		_logger.LogInformation("gRPCストリーミングリクエスト QueryMsgStreamAsync Flag: {Flag}, DataType: {DataType}", request.Flag, request.DataType);
 		await Task.Yield();
 
-		// 順番にメッセージを返す
-		// Note: 初期化処理,dbの前処理など
+		// ConvertDb関連フラグの処理
+		if (request.Flag is CvnetFlag.MSg040_ConvertDb or CvnetFlag.MSg041_ConvertDbInit) {
+			var isInit = request.Flag == CvnetFlag.MSg041_ConvertDbInit;
+
+			// HandleConvertDbStreamAsyncの結果をそのまま返す
+			await foreach (var msg in HandleConvertDbStreamAsync(isInit, ct, request.Flag)) {
+				yield return msg;
+			}
+			yield break;
+		}
+
+		// テストストリーミング処理（既存）
 		if (request.Flag is not CvnetFlag.MSg060_StreamingTest) {
 			yield return new StreamMsg {
 				Flag = request.Flag,
@@ -148,6 +158,29 @@ public partial class CvnetCoreService : ICvnetCoreService {
 			Progress = 100,
 			IsCompleted = true
 		};
+	}
+
+	/// <summary>
+	/// ConvertDbのストリーミング処理ハンドラ
+	/// </summary>
+	private async IAsyncEnumerable<StreamMsg> HandleConvertDbStreamAsync(bool isInit, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvnetFlag flag) {
+		var convertDb = new ConvertDb(_db, _db);
+
+		// ストリーミングをメッセージに変換
+		// ConvertAllAsyncStream()が既にエラーハンドリングしているため、try-catchは不要
+		await foreach (var progress in convertDb.ConvertAllAsyncStream(isInit).WithCancellation(ct)) {
+			yield return new StreamMsg {
+				Flag = flag,
+				Code = progress.IsError ? -1 : 0,
+				DataType = typeof(string),
+				DataMsg = progress.IsError
+					? $"エラー: {progress.StepName} - {progress.ErrorMessage}"
+					: $"{(progress.IsCompleted ? "完了" : "処理中")}: {progress.StepName} 件数={progress.Count}",
+				Progress = progress.Progress,
+				IsCompleted = progress.IsCompleted,
+				IsError = progress.IsError
+			};
+		}
 	}
 	/// <summary>
 	/// ダミーのタスク(時間がかかる処理のシミュレート)

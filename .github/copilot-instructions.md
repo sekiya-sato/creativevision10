@@ -8,9 +8,12 @@ You are a Senior Software Engineer and Solution Architect. Your goal is to suppo
 - **Server OS**: Ubuntu 24.04
 - **SDK**: .NET 10.0 (Latest)
 - **Language**: C# 14
-- **Solution File**: `Cvnet10.slnx` (Strictly prohibited to use or generate old `.sln` files)
 - **Communication**: gRPC (Code-first, not use Proto-first)
 - **UI Framework**: WPF with MVVM pattern
+- **Solution File**: `Cvnet10.slnx` (Strictly prohibited to use or generate old `.sln` files)
+- **Build Server Project**: dotnet build Cvnet10Server/Cvnet10Server.csproj
+- **Build Client Project**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj
+- **[CRITICAL]**: Do not start ".net upgrade experience"
 
 ## 3. Frameworks & Libraries
 Use the following specific libraries. Do not substitute them with default alternatives.
@@ -46,7 +49,7 @@ Adhere to the following dependency rules.
 | **Cvnet10BaseMariadb** | Layer 1.2 | [READ-ONLY] Database Connection for MariaDB (Enhanced NPoco Database Class) | Cvnet10Base |
 | **Cvnet10BaseOracle** | Layer 1.2 | [READ-ONLY] Database Connection for Oracle (Enhanced NPoco Database Class) | Cvnet10Base |
 | **Cvnet10BaseSqlite** | Layer 1.2 | [READ-ONLY] Database Connection for Sqlite (Enhanced NPoco Database Class) | Cvnet10Base |
-| **Cvnet10DomainLogic** | Layer 1.5 | [READ-ONLY] Business Logic, Domain Services, Calculations | Cvnet10Base |
+| **Cvnet10DomainLogic** | Layer 1.5 | Business Logic, Domain Services, Calculations | Cvnet10Base |
 | **Cvnet10Server** | Layer 2 | gRPC Service Implementations, DbContext(ExDatabase) by DI | CodeShare, Cvnet10Asset, Cvnet10Base, Cvnet10DomainLogic |
 | **Cvnet10Wpfclient** | Layer 2 | WPF GUI (Views/ViewModels), gRPC Client Logic | CodeShare, Cvnet10Asset, Cvnet10Base |
 
@@ -55,9 +58,10 @@ refer/ Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This
 ## 5. Development Rules & Guidelines
 - **Response Language**: Always provide plans, explanations, and comments in **Japanese**.
 - **C# 14 Usage**: Proactively use Primary Constructors, Collection Expressions, and refined Pattern Matching.
+- 不明な内容があればユーザに確認してください。
 - **Database Operations**:
     - Strictly separate **CRUD** operations.
-    - Encapsulate DB logic within the Server-side (Layer 2) and Base-side (Layer 1).
+    - Encapsulate DB main-logic within the DomainLogic-side (Layer 1.5).
     - Ensure minimal impact on existing schemas when modifying logic.
 - **Refactoring**: Analyze the impact range before proposing changes. Do not break existing implementations.
 

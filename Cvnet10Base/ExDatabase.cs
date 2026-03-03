@@ -1,7 +1,5 @@
-﻿
-
-using Cvnet10Base;
-using Newtonsoft.Json;
+﻿using Cvnet10Base;
+using NLog;
 using NPoco;
 using System.Data;
 using System.Data.Common;
@@ -18,6 +16,11 @@ public partial class ExDatabase : Database {
 	const int _default_varchar2_length = 255; // Use for GetSqlColumns()
 	const int _default_list_length = 1000; // Use for GetSqlColumns()
 	const string _default_varchar = " default ''";// Use for GetSqlColumns()
+
+	/// <summary>
+	/// ロガーインスタンス [Logger instance]
+	/// </summary>
+	private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
 	public virtual void Open() {
 		Connection?.Open();
@@ -72,14 +75,14 @@ public partial class ExDatabase : Database {
 		var columnUpdated = infoArray2.FirstOrDefault(c => c.Name == "Vdu");
 		if (columnUpdated != null)
 			infoArray.Add(columnUpdated);
-		foreach(var item in infoArray2) {
+		foreach (var item in infoArray2) {
 			if (item.Name != "Id" && item.Name != "Vdc" && item.Name != "Vdu")
 				infoArray.Add(item);
 		}
 		foreach (var item in infoArray) {
 			var name = item.Name;
 			var type = ""; // NUMBER,TEXT,REAL
-			// 無視するカラムかどうか [Whether it is an ignored column]
+						   // 無視するカラムかどうか [Whether it is an ignored column]
 			if (item.GetCustomAttribute<IgnoreAttribute>() != null)
 				continue; // 無視する項目だった場合 [If it is an ignored item]
 			if (item.GetCustomAttribute<ComputedColumnAttribute>() != null)
@@ -234,7 +237,7 @@ public partial class ExDatabase : Database {
 				ret = true;
 		}
 		catch (Exception ex) {
-			NLog.LogManager.GetCurrentClassLogger()?.Error(ex, string.Format("SQL実行エラー {0}", checkSql));
+			_logger.Error(ex, string.Format("SQL実行エラー {0}", checkSql));
 			return false;
 		}
 		return ret;
@@ -250,7 +253,7 @@ public partial class ExDatabase : Database {
 		bool ret = false;
 		if (Connection == null)
 			return ret;
-		if(classT.GetCustomAttribute<NoCreateAttribute>() != null)
+		if (classT.GetCustomAttribute<NoCreateAttribute>() != null)
 			return true;
 
 		try {
@@ -271,7 +274,7 @@ public partial class ExDatabase : Database {
 
 		}
 		catch (Exception ex) {
-			NLog.LogManager.GetCurrentClassLogger()?.Error(ex, string.Format("SQL実行エラー テーブル作成({0})", GetTableName(classT)));
+			_logger.Error(ex, string.Format("SQL実行エラー テーブル作成({0})", GetTableName(classT)));
 			return false;
 		}
 		return ret;
@@ -292,7 +295,7 @@ public partial class ExDatabase : Database {
 	void CreateIndex(Type classT, bool isForce = false) {
 		var tableName = GetTableName(classT);
 		var attrs = classT.GetCustomAttributes<KeyDmlAttribute>();
-		foreach(var attrKey in attrs) {
+		foreach (var attrKey in attrs) {
 			var indexName = attrKey.KeyName;
 			var colNames = string.Join(",", attrKey.ColNames);
 			CreateIndex(tableName, indexName, colNames, attrKey.IsUnique, isForce);
@@ -309,7 +312,7 @@ public partial class ExDatabase : Database {
 	/// <returns></returns>
 	int CreateIndex(string tbName, string indexSubName, string dbColumn, bool isUnique = false, bool isForce = false) {
 		var indexName = $"{tbName}_{indexSubName}"; // 必ずテーブル名をつけUniqueになるように
-		// インデックスがあるかどうかの確認 [Check if the index exists]
+													// インデックスがあるかどうかの確認 [Check if the index exists]
 		var checkSql = string.Format("select COLUMN_NAME, INDEX_NAME from INFORMATION_SCHEMA.STATISTICS where TABLE_SCHEMA='{0}' and INDEX_NAME='{1}'"
 			, GetCurrentDatabase(), indexName);
 		if (DatabaseType == NPoco.DatabaseType.SQLite)
@@ -453,7 +456,7 @@ public partial class ExDatabase : Database {
 
 	public ExDatabase(DbConnection connection) : base(connection) {
 		_conn = connection;
-		if(_conn.State != ConnectionState.Open)
+		if (_conn.State != ConnectionState.Open)
 			_conn.Open();
 		/* SerializedColumn に対して効果がない!
 			JsonConvert.DefaultSettings = () => jsonOptions;

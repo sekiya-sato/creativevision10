@@ -1,34 +1,34 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers">
-    <LinearGradientBrush x:Key="OuterWindowBackground" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Offset="0" Color="#40000000" />
-        <GradientStop Offset="1" Color="#15000000" />
-    </LinearGradientBrush>
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers">
+	<LinearGradientBrush x:Key="OuterWindowBackground" StartPoint="0,0" EndPoint="1,1">
+		<GradientStop Offset="0" Color="#40000000" />
+		<GradientStop Offset="1" Color="#15000000" />
+	</LinearGradientBrush>
 
-    <LinearGradientBrush x:Key="InnerWindowBackground" StartPoint="0,1" EndPoint="1,0">
-        <GradientStop Offset="0" Color="#FF210F55" />
-        <GradientStop Offset="0.4" Color="#FF3B0D52" />
-        <GradientStop Offset="1" Color="#FFFB539B" />
-    </LinearGradientBrush>
+	<LinearGradientBrush x:Key="InnerWindowBackground" StartPoint="0,1" EndPoint="1,0">
+		<GradientStop Offset="0" Color="#FF210F55" />
+		<GradientStop Offset="0.4" Color="#FF3B0D52" />
+		<GradientStop Offset="1" Color="#FFFB539B" />
+	</LinearGradientBrush>
 
-    <LinearGradientBrush x:Key="HeaderBackgroundBrush" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Offset="0" Color="#66210F55" />
-        <GradientStop Offset="1" Color="#80FB539B" />
-    </LinearGradientBrush>
+	<LinearGradientBrush x:Key="HeaderBackgroundBrush" StartPoint="0,0" EndPoint="1,0">
+		<GradientStop Offset="0" Color="#66210F55" />
+		<GradientStop Offset="1" Color="#80FB539B" />
+	</LinearGradientBrush>
 
-    <SolidColorBrush x:Key="CardBackgroundBrush"
-                     Color="#1AFFFFFF" />
-    <SolidColorBrush x:Key="CardBorderBrush"
-                     Color="#30FFFFFF" />
+	<SolidColorBrush x:Key="CardBackgroundBrush"
+		Color="#1AFFFFFF" />
+	<SolidColorBrush x:Key="CardBorderBrush"
+		Color="#30FFFFFF" />
 
-    <Style x:Key="DashboardCard"
-           TargetType="Border">
-        <Setter Property="Padding" Value="16" />
-        <Setter Property="CornerRadius" Value="14" />
-        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Margin" Value="8" />
-    </Style>
+	<Style x:Key="DashboardCard"
+		TargetType="Border">
+		<Setter Property="Padding" Value="16" />
+		<Setter Property="CornerRadius" Value="14" />
+		<Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
+		<Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="Margin" Value="8" />
+	</Style>
 </ResourceDictionary>

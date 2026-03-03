@@ -64,8 +64,7 @@ public static class AppGlobal {
 		_url = _config.GetConnectionString("Url");
 		_dataDir = ClientLib.GetDataDir();
 		_grpcServiceCache.Clear();
-		var logger = LogManager.GetCurrentClassLogger();
-		logger.Debug($"---------------------------------\n AppCurrent.Init() 接続先Url={_url},実行フォルダ={Directory.GetCurrentDirectory()}");
+		LogManager.GetCurrentClassLogger()?.Info($"---------------------------------\n AppCurrent.Init() 接続先Url={_url},実行フォルダ={Directory.GetCurrentDirectory()}");
 		// あれば取得する
 		if (string.IsNullOrWhiteSpace(LoginJwt)) {
 			LoginJwt = _config.GetSection("Parameters")?["LoginJwt"];

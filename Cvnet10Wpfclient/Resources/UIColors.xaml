@@ -1,71 +1,71 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!--  Background Colors  -->
-    <Color x:Key="primaryBackColor1">#FB539B</Color>
-    <Color x:Key="primaryBackColor2">#210F55</Color>
-    <Color x:Key="secondaryBackColor1">#24105F</Color>
-    <Color x:Key="secondaryBackColor2">#210F55</Color>
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<!--  Background Colors  -->
+	<Color x:Key="primaryBackColor1">#FB539B</Color>
+	<Color x:Key="primaryBackColor2">#210F55</Color>
+	<Color x:Key="secondaryBackColor1">#24105F</Color>
+	<Color x:Key="secondaryBackColor2">#210F55</Color>
 
-    <!--  Window Border Colors  -->
-    <Color x:Key="winBorderColor1">#6D2FFF</Color>
-    <Color x:Key="winBorderColor2">#FB539B</Color>
-    <Color x:Key="winBorderColor3">#836EFB</Color>
+	<!--  Window Border Colors  -->
+	<Color x:Key="winBorderColor1">#6D2FFF</Color>
+	<Color x:Key="winBorderColor2">#FB539B</Color>
+	<Color x:Key="winBorderColor3">#836EFB</Color>
 
-    <!--  Color Palette  -->
-    <SolidColorBrush x:Key="color1"
-                     Color="#E285DE" />
-    <SolidColorBrush x:Key="color2"
-                     Color="#784DFD" />
-    <SolidColorBrush x:Key="color3"
-                     Color="#4ADAEC" />
-    <SolidColorBrush x:Key="color4"
-                     Color="#FB539B" />
-    <SolidColorBrush x:Key="color5"
-                     Color="#7E82FC" />
-    <SolidColorBrush x:Key="color6"
-                     Color="#FFC047" />
-    <SolidColorBrush x:Key="color7"
-                     Color="#EF6C96" />
-    <SolidColorBrush x:Key="color8"
-                     Color="#78A3FC" />
-    <SolidColorBrush x:Key="color9"
-                     Color="#07F3C0" />
-    <SolidColorBrush x:Key="color10"
-                     Color="#FBA1AA" />
-    <SolidColorBrush x:Key="color11"
-                     Color="#4CD038" />
-    <SolidColorBrush x:Key="color12"
-                     Color="#0077B6" />
-    <SolidColorBrush x:Key="color13"
-                     Color="#023E8A" />
+	<!--  Color Palette  -->
+	<SolidColorBrush x:Key="color1"
+		Color="#E285DE" />
+	<SolidColorBrush x:Key="color2"
+		Color="#784DFD" />
+	<SolidColorBrush x:Key="color3"
+		Color="#4ADAEC" />
+	<SolidColorBrush x:Key="color4"
+		Color="#FB539B" />
+	<SolidColorBrush x:Key="color5"
+		Color="#7E82FC" />
+	<SolidColorBrush x:Key="color6"
+		Color="#FFC047" />
+	<SolidColorBrush x:Key="color7"
+		Color="#EF6C96" />
+	<SolidColorBrush x:Key="color8"
+		Color="#78A3FC" />
+	<SolidColorBrush x:Key="color9"
+		Color="#07F3C0" />
+	<SolidColorBrush x:Key="color10"
+		Color="#FBA1AA" />
+	<SolidColorBrush x:Key="color11"
+		Color="#4CD038" />
+	<SolidColorBrush x:Key="color12"
+		Color="#0077B6" />
+	<SolidColorBrush x:Key="color13"
+		Color="#023E8A" />
 
-    <!--  Font Colors  -->
-    <SolidColorBrush x:Key="TitleColor"
-                     Color="White" />
-    <SolidColorBrush x:Key="SubTitleColor"
-                     Color="White" />
-    <SolidColorBrush x:Key="TitleLabelColor"
-                     Color="White" />
-    <SolidColorBrush x:Key="plainTextColor0"
-                     Color="White" />
+	<!--  Font Colors  -->
+	<SolidColorBrush x:Key="TitleColor"
+		Color="White" />
+	<SolidColorBrush x:Key="SubTitleColor"
+		Color="White" />
+	<SolidColorBrush x:Key="TitleLabelColor"
+		Color="White" />
+	<SolidColorBrush x:Key="plainTextColor0"
+		Color="White" />
 
-    <!--  Panel Colors  -->
-    <SolidColorBrush x:Key="panelColor"
-                     Color="#7E82FC" />
-    <SolidColorBrush x:Key="panelOverColor"
-                     Color="#7E82FC" />
-    <SolidColorBrush x:Key="panelActiveColor"
-                     Color="#6D2FFF" />
+	<!--  Panel Colors  -->
+	<SolidColorBrush x:Key="panelColor"
+		Color="#7E82FC" />
+	<SolidColorBrush x:Key="panelOverColor"
+		Color="#7E82FC" />
+	<SolidColorBrush x:Key="panelActiveColor"
+		Color="#6D2FFF" />
 
-    <!--  Common Background  -->
-    <SolidColorBrush x:Key="AppCommonBackgroundBrush"
-                     Color="#FAEBD7" />
+	<!--  Common Background  -->
+	<SolidColorBrush x:Key="AppCommonBackgroundBrush"
+		Color="#FAEBD7" />
 
-    <!--  Button Colors  -->
-    <SolidColorBrush x:Key="buttonColor1"
-                     Color="#6D2FFF" />
+	<!--  Button Colors  -->
+	<SolidColorBrush x:Key="buttonColor1"
+		Color="#6D2FFF" />
 
-    <!--  Border Color  -->
-    <SolidColorBrush x:Key="borderColor"
-                     Color="White" />
+	<!--  Border Color  -->
+	<SolidColorBrush x:Key="borderColor"
+		Color="White" />
 </ResourceDictionary>

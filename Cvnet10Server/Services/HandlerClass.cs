@@ -32,7 +32,7 @@ public partial class CvnetCoreService {
 		result.Code = 0;
 		result.Flag = request.Flag;
 		result.DataType = typeof(VersionInfo);
-		result.DataMsg = Common.SerializeObject(AppInit.Version);
+		result.DataMsg = Common.SerializeObject(AppGlobal.Version);
 		return result;
 	}
 
