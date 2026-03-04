@@ -143,20 +143,19 @@ app.UseAuthorization();
 app.MapGrpcService<LoginService>();
 app.MapGrpcService<CvnetCoreService>();
 app.MapGrpcService<SchedulerService>();
-var appInit = new AppGlobal(app.Configuration);
+var appInit = new AppGlobal();
 appInit.Init(Cvnet10Base.Sqlite.ExDatabaseSqlite.GetDbConn(connStr));
 
-var ver = AppGlobal.Version;
 app.MapGet("/", () =>
 $"""
-{ver.Product} Ver.{ver.Version}
+{appInit.VerInfo.Product} Ver.{appInit.VerInfo.Version}
 Communication with gRPC endpoints must be made through a gRPC client. 
-Now: {DateTime.Now}, Start:{ver.StartTime}, Build:{ver.BuildDate},
-BaseDir: {ver.BaseDir}
+Now: {DateTime.Now}, Start:{appInit.VerInfo.StartTime},
+BaseDir: {appInit.VerInfo.BaseDir}
 
 BuildMetadata:
-Machine: {BuildMetadata.MachineName} ,UserName: {BuildMetadata.UserName} 
-OS: {BuildMetadata.OSVersion} ,DotNet: {BuildMetadata.DotNetVersion} ,BuildConfig: {BuildMetadata.BuildConfiguration}
+Machine: {appInit.MachineName} ,UserName: {appInit.UserName} 
+OS: {appInit.OSVersion} ,DotNet: {appInit.DotNetVersion}, Build:{appInit.VerInfo.BuildDate}
 """
 );
 

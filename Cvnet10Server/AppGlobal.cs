@@ -5,29 +5,35 @@ using Cvnet10DomainLogic;
 namespace Cvnet10Server;
 
 public class AppGlobal {
-	private readonly IConfiguration _configuration;
+	readonly string appName = "Cvnet10Server";
 	// ToDo: バージョン番号は手動で更新すること
-	readonly string verStr = "0.0.099";
-	readonly DateTime buildDate = BuildMetadata.BuildDate;
+	readonly string appVer = "0.0.099";
 	static VersionInfo? _ver;
 	public static int Counter = 0;
 	/// <summary>
 	/// アプリケーションのバージョン情報を取得します。
 	/// </summary>
-	public static VersionInfo Version {
+	public VersionInfo VerInfo {
 		get {
-			return _ver ?? throw new ArgumentNullException(nameof(VersionInfo));
+			if (_ver == null) {
+				_ver = new VersionInfo {
+					Product = appName,
+					Version = appVer,
+					BuildDate = BuildMetadata.BuildDate,
+					StartTime = DateTime.Now,
+					BaseDir = AppContext.BaseDirectory
+				};
+			}
+			return _ver;
 		}
 	}
-	public AppGlobal(IConfiguration configuration) {
-		_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-		_ver = new VersionInfo {
-			Product = "Cvnet10Server",
-			Version = verStr,
-			BuildDate = buildDate,
-			StartTime = DateTime.Now,
-			BaseDir = AppContext.BaseDirectory
-		};
+	public string MachineName => BuildMetadata.MachineName ?? string.Empty;
+	public string UserName => BuildMetadata.UserName ?? string.Empty;
+	public string OSVersion => BuildMetadata.OSVersion ?? string.Empty;
+	public string DotNetVersion => BuildMetadata.DotNetVersion ?? string.Empty;
+
+
+	public AppGlobal() {
 		Counter++;
 	}
 

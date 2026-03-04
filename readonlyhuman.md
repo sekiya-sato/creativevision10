@@ -220,7 +220,7 @@ GitHub Actions のワークフロー定義ファイル(.yml): .github\workflows\
 		- 後日検討: テスト戦略(単体/統合/契約テストの戦略) 実施例: GitHub Actions でテスト実行とカバレッジ報告。
 		- 後日検討: 実施例: Cvnet10Base にマイグレーション定義 + マイグレーション実行コードを追加。
 - 2026/02/06-02/11
-	- ショートカットメモ:  ctl+E,D ドキュメントフォーマット  ctl+E,F 選択範囲フォーマット ctl+R,G Usingの整理
+	- ショートカットメモ:  ctl+E,D ドキュメントフォーマット  ctl+E,F 選択範囲フォーマット ctl+R,G Usingの整理 -> コードのクリーンアップで解決
 	- プロンプトメモ:
 	- 現在ファイルのみ、 string? [項目名]; のすべてに対し、 string [項目名] =string.Empty; さらに属性 [property: System.ComponentModel.DefaultValue("")] をつける。また、string 型で初期値が="19010101"; の場合、属性 [property: System.ComponentModel.DefaultValue("19010101")] をつける。
 	- 1) ソースコードを説明し、具体的な使用例を見せて 2) upgrade assesment for .NET 10 / C# 14 for only this sourcecode. 3) 全て説明は日本語で。4) 出力はマークダウン形式。
@@ -229,9 +229,12 @@ GitHub Actions のワークフロー定義ファイル(.yml): .github\workflows\
 	- サーバ側：PrintロジックはIKVMパッケージ、FtpはFluentFTP、スケジューラはNCrontab.Scheduler.AspNetCoreを使う。
 	- Geminiのgemプロンプトの整理、Copilotのmdファイルの整理
 	- Cvnet10Base: テーブル整理
-- 2026/02/23-03/02
+- 2026/02/23-03/06
 	- .editorconfigの追加、xmstylerの修正、コード整理、設定Option(テキストエディタ - コードのクリーンアップ Profile1)
     - マスターテーブル、トランザクションテーブルの作成
+    - BuildMetadata をT4ファイルからソースジェネレータへ実装変更
+- 2026/03/16-03/31
+    - 
 
 # ToDo 残作業 VSタスク一覧(TODO: 実装予定の処理 // HACK:問題がある可能性のあるコード、バグ回避のため仕方なくした実装など // UNDONE:未完了の処理 )
 

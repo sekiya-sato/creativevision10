@@ -12,6 +12,7 @@
     <FrameworkDescription>$([System.Runtime.InteropServices.RuntimeInformation]::FrameworkDescription)</FrameworkDescription>
     <BuildConfiguration>$(Configuration)</BuildConfiguration>
     <CI>$(CI)</CI>
+    <CompilerVisibleProperty>BuildDate;MachineName;UserName;OSDescription;FrameworkDescription;BuildConfiguration;CI</CompilerVisibleProperty>
   </PropertyGroup>
   <ItemGroup>
 	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
