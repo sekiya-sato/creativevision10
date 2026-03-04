@@ -8,8 +8,9 @@ using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Windows;
 using System.Net.Http;
+using System.Threading.Tasks;
+using System.Windows;
 
 namespace Cvnet10Wpfclient.Helpers;
 
@@ -91,9 +92,15 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	/// </summary>
 	/// <param name="ct"></param>
 	/// <returns></returns>
-	[RelayCommand(IncludeCancelCommand = true)]
-	protected async Task DoList(CancellationToken ct) {
-		StartTime = DateTime.Now;
+    protected virtual ValueTask<bool> BeforeListAsync(CancellationToken ct) => new ValueTask<bool>(true);
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    protected async Task DoList(CancellationToken ct) {
+        if (!await BeforeListAsync(ct)) {
+            Message = "一覧表示の処理を中断しました";
+            return;
+        }
+        StartTime = DateTime.Now;
 		try {
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {

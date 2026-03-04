@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Base;
+using Cvnet10Wpfclient.ViewModels.Sub;
+using Cvnet10Wpfclient.Views.Sub;
 using Cvnet10Wpfclient.ViewServices;
 
 namespace Cvnet10Wpfclient.ViewModels;
@@ -9,7 +11,11 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 	[ObservableProperty]
 	string title = "社員マスターメンテ";
 
+	protected override string? ListWhere => BuildRangeWhere();
 	protected override string? ListOrder => "Code";
+
+	string? rangeFromCode;
+	string? rangeToCode;
 
 	[RelayCommand]
 	async Task Init() {
@@ -36,6 +42,22 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 	protected override void AfterDelete(MasterShain removedItem) {
 		Message = $"削除しました (CD={removedItem.Code}, Id={removedItem.Id})";
 	}
+	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		var selWin = new SelectShainView();
+		if (selWin.DataContext is not SelectShainViewModel vm) {
+			return new ValueTask<bool>(true);
+		}
+		vm.Initialize(rangeFromCode, rangeToCode);
+		var dialogResult = ClientLib.ShowDialogView(selWin, this, true);
+		if (dialogResult != true) {
+			return new ValueTask<bool>(false);
+		}
+		rangeFromCode = string.IsNullOrWhiteSpace(vm.FromCode) ? null : vm.FromCode;
+		rangeToCode = string.IsNullOrWhiteSpace(vm.ToCode) ? null : vm.ToCode;
+		return new ValueTask<bool>(true);
+	}
+
 	[RelayCommand]
 	void DoSelectTenpo() {
 		var selWin = new Views.Sub.SelectWinView();
@@ -58,4 +80,17 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 		CurrentEdit.Id_Bumon = meisho?.Id ?? 0;
 		CurrentEdit.VBumon = new() { Sid = meisho?.Id ?? 0, Cd = meisho?.Code ?? "", Mei = meisho?.Name ?? "" };
 	}
+
+	string? BuildRangeWhere() {
+		var clauses = new List<string>();
+		if (!string.IsNullOrWhiteSpace(rangeFromCode)) {
+			clauses.Add($"Code >= '{Escape(rangeFromCode)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(rangeToCode)) {
+			clauses.Add($"Code <= '{Escape(rangeToCode)}'");
+		}
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	static string Escape(string value) => value.Replace("'", "''");
 }

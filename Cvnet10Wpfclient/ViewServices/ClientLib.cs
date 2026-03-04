@@ -13,9 +13,12 @@ public class ClientLib {
 	public static void Exit(object vm) {
 		var win = GetActiveView(vm);
 		if (win != null) {
-			win.Close();
-			if (win.Owner != null)
-				win.Owner.Activate();
+			try {
+				win.Close();
+				if (win.Owner != null)
+					win.Owner.Activate();
+			}
+			catch (Exception) { }
 		}
 	}
 	/// <summary>
@@ -79,12 +82,12 @@ public class ClientLib {
 		if (win != null) {
 			try {
 				win.DialogResult = result;
+				win.Close();
 			}
 			catch (Exception) {
 				/* ShowかShowDialogか自分でわかってない*/
 				//[Whether to use Show or ShowDialog is not determined by this code]
 			}
-			Exit(vm);
 		}
 	}
 

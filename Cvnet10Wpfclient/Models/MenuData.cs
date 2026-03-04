@@ -1,13 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Cvnet10Wpfclient.Views;
-using System;
 using System.Collections.ObjectModel;
 
 namespace Cvnet10Wpfclient.Models;
 
 public partial class MenuData : ObservableObject {
-    [ObservableProperty]
-    private string? header;
+	[ObservableProperty]
+	private string? header;
 
 	[ObservableProperty]
 	private bool isExpand;
@@ -29,14 +28,14 @@ public partial class MenuData : ObservableObject {
 
 	[ObservableProperty]
 	private string? color;
-    
-    public Type? ViewType { get; set; }
 
-    public bool IsDialog { get; set; } = true;
+	public Type? ViewType { get; set; }
 
-    public int InitParam { get; set; }
+	public bool IsDialog { get; set; } = true;
 
-    public static ObservableCollection<MenuData> CreateDefault() => new([
+	public int InitParam { get; set; }
+
+	public static ObservableCollection<MenuData> CreateDefault() => new([
 		new MenuData {
 			Header = "■ 管理メニュー / 接続テスト",
 			// Color = "SteelBlue",
@@ -78,7 +77,9 @@ public partial class MenuData : ObservableObject {
 					ViewType = typeof(SysLoginView),
 					IsDialog = false
 				},
-				new MenuData { Header = "処理履歴情報", AddInfo = "準備中" },
+				new MenuData { Header = "テスト：社員マスタ", AddInfo = "準備中"
+					,ViewType = typeof(Views._01Master.MasterShainView),
+				},
 				new MenuData { Header = "LOGIN履歴情報", AddInfo = "準備中" }
 			}
 		},
@@ -1162,5 +1163,5 @@ public partial class MenuData : ObservableObject {
 					}
 		}
 
-    ]);
+	]);
 }
