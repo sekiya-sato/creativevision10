@@ -177,12 +177,12 @@
 						Padding="10,4,4,4"
 						Background="{DynamicResource panelColor}"
 						CornerRadius="6">
-				<TreeView x:Name="MenuTree"
-					PreviewKeyDown="MenuTree_PreviewKeyDown"
+						<TreeView x:Name="MenuTree"
 							Background="Transparent"
 							BorderThickness="0"
 							ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
 							ItemsSource="{Binding MenuItems}"
+							PreviewKeyDown="MenuTree_PreviewKeyDown"
 							ScrollViewer.HorizontalScrollBarVisibility="Disabled"
 							ScrollViewer.VerticalScrollBarVisibility="Auto"
 							Style="{StaticResource MenuTreeView}">

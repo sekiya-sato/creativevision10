@@ -1,14 +1,11 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Text;
 
 namespace Cvnet10Base;
 
 public interface IJsonPayload {
-	Type ItemType { get;  }
-	string Item { get;  }
+	Type ItemType { get; }
+	string Item { get; }
 	object GetItemObject();
 }
 
@@ -24,9 +21,9 @@ public sealed class QueryOneParam {
 	}
 	public QueryOneParam(Type itemType, string? where = null, string[]? parameters = null) {
 		Where = where;
-		if(parameters != null) 
+		if (parameters != null)
 			Parameters = parameters;
-		 else 
+		else
 			Parameters = Array.Empty<string>();
 		ItemType = itemType;
 	}
@@ -48,10 +45,10 @@ public sealed class QueryListParam {
 	public string AddWhereOrder() {
 		var retstr =
 			(!string.IsNullOrWhiteSpace(Where) ? $" where {Where}" : string.Empty) +
-        (!string.IsNullOrWhiteSpace(Order) ? $" order by {Order}" : string.Empty);
+		(!string.IsNullOrWhiteSpace(Order) ? $" order by {Order}" : string.Empty);
 		return retstr;
 	}
-	public QueryListParam(Type itemType, string? where = null, string? order=null, string[]? parameters = null) {
+	public QueryListParam(Type itemType, string? where = null, string? order = null, string[]? parameters = null) {
 		Where = where;
 		Order = order;
 		if (parameters != null)

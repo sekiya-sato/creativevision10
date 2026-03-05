@@ -23,7 +23,6 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace Cvnet10Wpfclient.Helpers;
 
@@ -60,7 +59,7 @@ public class BaseWindow : Window {
 		if (e.Key == Key.Escape) {
 			e.Handled = true;
 			Close();
-			if(Owner is Window owner)
+			if (Owner is Window owner)
 				owner.Activate();
 		}
 	}

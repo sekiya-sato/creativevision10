@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace Cvnet10Wpfclient.ViewModels;
+
 public partial class Test20260203ViewModel {
 
 	SysHistJwtSub subTestGetInfo() {
@@ -107,7 +108,7 @@ public partial class Test20260203ViewModel {
 	async Task<string> TestLoginRefresh() {
 		var loginService = AppGlobal.GetgRPCService<ILoginService>();
 		var now = DateTime.UtcNow;
-		var loginRequest = new LoginRefresh { Token = dummyToken,Info = Common.SerializeObject(subTestGetInfo()) };
+		var loginRequest = new LoginRefresh { Token = dummyToken, Info = Common.SerializeObject(subTestGetInfo()) };
 		AppGlobal.LoginJwt = dummyToken;
 		var reply = await loginService.LoginRefleshAsync(loginRequest, AppGlobal.GetDefaultCallContext());
 		if (reply.Result == 0) {
@@ -123,7 +124,7 @@ public partial class Test20260203ViewModel {
 		var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 		AppGlobal.LoginJwt = dummyToken;
 		var msg = new CvnetMsg { Flag = CvnetFlag.MSg050_Test };
-		var reply =  await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
+		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
 		var payload = string.IsNullOrWhiteSpace(reply.DataMsg) ? "[]" : reply.DataMsg;
 		var list = Common.DeserializeObject<List<Test202601Master>>(payload) ?? [];
 		TestMasters = new ObservableCollection<Test202601Master>(list);

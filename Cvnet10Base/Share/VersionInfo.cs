@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Cvnet10Base.Share;
+﻿namespace Cvnet10Base.Share;
 
 /// <summary>
 /// バージョン情報
@@ -16,7 +12,7 @@ public sealed class VersionInfo {
 	/// <summary>
 	/// ビルド日
 	/// </summary>
-	public DateTime BuildDate { get; set; }= DateTime.MinValue;
+	public DateTime BuildDate { get; set; } = DateTime.MinValue;
 	/// <summary>
 	/// サーバー起動時間
 	/// </summary>

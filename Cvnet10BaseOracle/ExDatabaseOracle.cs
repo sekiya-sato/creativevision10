@@ -1,10 +1,9 @@
-﻿using Cvnet10Base;
+﻿using Cvnet10DomainLogic;
 using NPoco;
+using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Data.Common;
 using System.Reflection;
-using Cvnet10DomainLogic;
-using Oracle.ManagedDataAccess.Client;
 
 
 namespace Cvnet10Base.Oracle;
@@ -21,7 +20,7 @@ public partial class ExDatabaseOracle : ExDatabase {
 				conn.Open();
 		}
 	}
-	public static ExDatabaseOracle GetDbConn(string connectionString, bool isOpen=true) {
+	public static ExDatabaseOracle GetDbConn(string connectionString, bool isOpen = true) {
 		var conn = new OracleConnection(connectionString);
 		if (isOpen) {
 			conn.Open();
@@ -32,7 +31,7 @@ public partial class ExDatabaseOracle : ExDatabase {
 	public override void Open() {
 		if (Connection is OracleConnection) {
 			var connInner = (OracleConnection)Connection;
-			if(connInner.State == ConnectionState.Closed)
+			if (connInner.State == ConnectionState.Closed)
 				connInner.Open();
 		}
 	}
@@ -75,11 +74,11 @@ public partial class ExDatabaseOracle : ExDatabase {
 		foreach (var item in infoArray) {
 			var name = item.Name;
 			var type = ""; // NUMBER,TEXT,REAL
-                            // 無視するカラムかどうか [Whether to ignore the column]
-            var attrIgnore = (IgnoreAttribute?)Attribute.GetCustomAttribute(item, typeof(IgnoreAttribute));
+						   // 無視するカラムかどうか [Whether to ignore the column]
+			var attrIgnore = (IgnoreAttribute?)Attribute.GetCustomAttribute(item, typeof(IgnoreAttribute));
 			if (attrIgnore != null)
 				continue; // 無視する項目だった場合 [If it was an item to ignore]
-            var attrComputed = (ComputedColumnAttribute?)Attribute.GetCustomAttribute(item, typeof(ComputedColumnAttribute));
+			var attrComputed = (ComputedColumnAttribute?)Attribute.GetCustomAttribute(item, typeof(ComputedColumnAttribute));
 			if (attrComputed != null)
 				continue;
 			var attrResult = (ResultColumnAttribute?)Attribute.GetCustomAttribute(item, typeof(ResultColumnAttribute));
@@ -154,7 +153,7 @@ public partial class ExDatabaseOracle : ExDatabase {
 					break;
 			}
 			if (name == "Id") // 列Idであれば主キー項目 [If it is a column ID, it is a primary key item]
-                /*
+				/*
 					*	自動採番は、 INTEGER PRIMARY KEY AUTOINCREMENT で定義される bigintやNumberはNG
 					*	また AUTOINCREMENTであっても値をセットすればそれが優先される
 					*	C#のInt32= 2,147,483,647 : 20億レコードまで SqliteのINTEGER型は 2,147,483,647を超えても登録可
@@ -163,7 +162,7 @@ public partial class ExDatabaseOracle : ExDatabase {
 					*	 Also, even if it is AUTOINCREMENT, setting a value will take precedence
 					*	 C#’s Int32 = 2,147,483,647: up to 2 billion records; SQLite’s INTEGER type can be registered even beyond 2,147,483,647]
 					*/
-                type = "INTEGER not null default 0 PRIMARY KEY AUTOINCREMENT";
+				type = "INTEGER not null default 0 PRIMARY KEY AUTOINCREMENT";
 			ret.Add((name + " " + type).Trim());
 		}
 		return ret;

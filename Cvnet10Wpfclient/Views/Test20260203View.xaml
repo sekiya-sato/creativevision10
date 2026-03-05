@@ -1,136 +1,267 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <helpers:BaseWindow x:Class="Cvnet10Wpfclient.Views.Test20260203View"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
-        xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
-        mc:Ignorable="d"
-        Title="Test20260203View"
-        Height="760"
-        Width="1024"
-        Foreground="{DynamicResource MaterialDesignBody}"
-        Background="{DynamicResource AppCommonBackgroundBrush}"
-        TextOptions.TextFormattingMode="Display"                    
-        >
-    <helpers:BaseWindow.DataContext>
-        <vm:Test20260203ViewModel />
-    </helpers:BaseWindow.DataContext>
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
+	Title="Test20260203View"
+	Width="1024"
+	Height="760"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:Test20260203ViewModel />
+	</helpers:BaseWindow.DataContext>
 
-    <Grid Margin="16" Background="Transparent" >
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Left">
-            <Button Content="{Binding TestConnectStatusText}" Width="173" Height="36" Margin="0,0,12,0"
-                    Command="{Binding TestConnectCommand}" />
-        </StackPanel>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="3*" />
-            </Grid.ColumnDefinitions>
-            <GroupBox Header="&#x53D6;&#x5F97;&#x4E00;&#x89A7;" Grid.Column="0" Margin="0,0,8,231">
-                <ListView ItemsSource="{Binding TestMasters}" SelectedItem="{Binding SelectedTestMaster}" Margin="8"
-                          IsSynchronizedWithCurrentItem="True">
-                    <ListView.View>
-                        <GridView AllowsColumnReorder="False">
-                            <GridViewColumn Header="&#x30B3;&#x30FC;&#x30C9;" DisplayMemberBinding="{Binding Code}" Width="80" />
-                            <GridViewColumn Header="&#x540D;&#x79F0;" DisplayMemberBinding="{Binding Name}" Width="180" />
-                            <GridViewColumn Header="&#x30D6;&#x30E9;&#x30F3;&#x30C9;" DisplayMemberBinding="{Binding Name_Brand}" Width="120" />
-                            <GridViewColumn Header="&#x30A2;&#x30A4;&#x30C6;&#x30E0;" DisplayMemberBinding="{Binding Name_Item}" Width="120" />
-                            <GridViewColumn Header="&#x5C55;&#x793A;&#x4F1A;" DisplayMemberBinding="{Binding Name_Tenji}" Width="120" />
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </GroupBox>
-            <GroupBox Grid.Column="0" Header="&#x30B9;&#x30C8;&#x30EA;&#x30FC;&#x30DF;&#x30F3;&#x30B0;&#x30ED;&#x30B0;" Margin="0,370,0,0" VerticalAlignment="Top">
-                <ListBox ItemsSource="{Binding StreamMessages}" Margin="8" Height="160">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" Foreground="{DynamicResource MaterialDesignBody}" TextWrapping="Wrap" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </GroupBox>
+	<Grid Margin="16"
+		Background="Transparent">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<StackPanel Grid.Row="0"
+			HorizontalAlignment="Left"
+			Orientation="Horizontal">
+			<Button Width="173"
+				Height="36"
+				Margin="0,0,12,0"
+				Command="{Binding TestConnectCommand}"
+				Content="{Binding TestConnectStatusText}" />
+		</StackPanel>
+		<Grid Grid.Row="1">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="2*" />
+				<ColumnDefinition Width="3*" />
+			</Grid.ColumnDefinitions>
+			<GroupBox Grid.Column="0"
+				Margin="0,0,8,231"
+				Header="&#x53D6;&#x5F97;&#x4E00;&#x89A7;">
+				<ListView Margin="8"
+					IsSynchronizedWithCurrentItem="True"
+					ItemsSource="{Binding TestMasters}"
+					SelectedItem="{Binding SelectedTestMaster}">
+					<ListView.View>
+						<GridView AllowsColumnReorder="False">
+							<GridViewColumn Width="80"
+								DisplayMemberBinding="{Binding Code}"
+								Header="&#x30B3;&#x30FC;&#x30C9;" />
+							<GridViewColumn Width="180"
+								DisplayMemberBinding="{Binding Name}"
+								Header="&#x540D;&#x79F0;" />
+							<GridViewColumn Width="120"
+								DisplayMemberBinding="{Binding Name_Brand}"
+								Header="&#x30D6;&#x30E9;&#x30F3;&#x30C9;" />
+							<GridViewColumn Width="120"
+								DisplayMemberBinding="{Binding Name_Item}"
+								Header="&#x30A2;&#x30A4;&#x30C6;&#x30E0;" />
+							<GridViewColumn Width="120"
+								DisplayMemberBinding="{Binding Name_Tenji}"
+								Header="&#x5C55;&#x793A;&#x4F1A;" />
+						</GridView>
+					</ListView.View>
+				</ListView>
+			</GroupBox>
+			<GroupBox Grid.Column="0"
+				Margin="0,370,0,0"
+				VerticalAlignment="Top"
+				Header="&#x30B9;&#x30C8;&#x30EA;&#x30FC;&#x30DF;&#x30F3;&#x30B0;&#x30ED;&#x30B0;">
+				<ListBox Height="160"
+					Margin="8"
+					ItemsSource="{Binding StreamMessages}">
+					<ListBox.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+								Text="{Binding}"
+								TextWrapping="Wrap" />
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+			</GroupBox>
 
 
-            <GroupBox Header="&#x9078;&#x629E;&#x8A73;&#x7D30;" Grid.Column="1" Margin="8,8,8,308">
-                <ScrollViewer Margin="8,4,0,0">
-                    <Grid Margin="0,4,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="208*" />
-                            <ColumnDefinition Width="215*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="&#x30B3;&#x30FC;&#x30C9;" FontWeight="Bold" Margin="0,0,12,8"  />
-                        <TextBox Text="{Binding CurrentEdit.Code, UpdateSourceTrigger=PropertyChanged}" Margin="127,0,0,8" Grid.ColumnSpan="3"  />
-                        <TextBlock Grid.Row="1" Text="&#x540D;&#x79F0;" FontWeight="Bold" Margin="0,0,12,8"  />
-                        <TextBox Grid.Row="1" Text="{Binding CurrentEdit.Name, UpdateSourceTrigger=PropertyChanged}" Margin="127,0,0,8" TextWrapping="Wrap" Grid.ColumnSpan="3"  />
-                        <TextBlock Grid.Row="2" Text="&#x7565;&#x79F0;" FontWeight="Bold" Margin="0,0,12,8"  />
-                        <TextBox Grid.Row="2" Text="{Binding CurrentEdit.Ryaku, UpdateSourceTrigger=PropertyChanged}" Margin="127,0,0,8" Grid.ColumnSpan="3"  />
-                        <TextBlock Grid.Row="3" Text="&#x30AB;&#x30CA;" FontWeight="Bold" Margin="0,0,12,8"  />
-                        <TextBox Grid.Row="3" Text="{Binding CurrentEdit.Kana, UpdateSourceTrigger=PropertyChanged}" Margin="127,0,0,8" Grid.ColumnSpan="3"  />
-                        <TextBlock Grid.Row="4" Text="&#x30D6;&#x30E9;&#x30F3;&#x30C9;" FontWeight="Bold" Margin="0,0,12,8"  />
-                        <TextBlock Grid.Row="4" Text="{Binding CurrentEdit.Mei_Brand}" Margin="127,0,0,8" Grid.ColumnSpan="3"  />
-                        <TextBlock Grid.Row="5" Text="&#x30A2;&#x30A4;&#x30C6;&#x30E0;" FontWeight="Bold" Margin="0,0,12,8"  />
-                        <TextBlock Grid.Row="5" Text="{Binding CurrentEdit.Mei_Item}" Margin="127,0,0,8" Grid.ColumnSpan="2" HorizontalAlignment="Left" Width="198"  />
-                        <TextBlock Grid.Row="6" Text="&#x5C55;&#x793A;&#x4F1A;" FontWeight="Bold" Margin="0,0,12,8"  />
-                        <TextBlock Grid.Row="6" Text="{Binding CurrentEdit.Mei_Tenji}" Margin="127,0,0,8" Grid.ColumnSpan="3"  />
-                        <TextBlock Grid.Row="7" Text="ID (Brand/Item/Tenji)" FontWeight="Bold" Margin="0,0,12,0"  />
-                        <TextBlock Grid.Row="7" Margin="127,0,0,0" TextWrapping="Wrap" Grid.ColumnSpan="3" >
-                            <Run Text="{Binding CurrentEdit.Id_MeiBrand}" />
-                            <Run Text=" / " />
-                            <Run Text="{Binding CurrentEdit.Id_MeiItem}" />
-                            <Run Text=" / " />
-                            <Run Text="{Binding CurrentEdit.Id_MeiTenji}" />
-                        </TextBlock>
-                    </Grid>
-                </ScrollViewer>
-            </GroupBox>
-            <DataGrid Grid.Column="1" HorizontalAlignment="Center" Height="146" Margin="0,307,0,0" VerticalAlignment="Top" Width="575" d:ItemsSource="{d:SampleData ItemCount=5}"
-                      ItemsSource="{Binding CurrentEdit.Jcolsiz}" Style="{StaticResource MaterialDesignDataGrid}"
-                      />
-            <DataGrid Grid.Column="1" HorizontalAlignment="Center" Height="126" Margin="0,474,0,0" VerticalAlignment="Top" Width="575" d:ItemsSource="{d:SampleData ItemCount=5}"
-                      ItemsSource="{Binding CurrentEdit.ListMeisho}"  Style="{StaticResource MaterialDesignDataGrid}" />
-        </Grid>
-        <Button Grid.Row="2" Content="&#x7D42;&#x4E86;" Width="132" Height="56" HorizontalAlignment="Right" Margin="0,10,0,0"
-                Command="{Binding ExitCommand}" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="271,0,0,0">
-            <Button Content="Convert" Command="{Binding TestMsgCnvCommand}" Height="26" Width="102" Margin="0,0,8,0" />
-            <Button Content="&#x30AF;&#x30A8;&#x30EA; test" Command="{Binding TestMsg000Command}" Height="26" Width="102" Margin="0,0,8,0" />
-            <Button Content="&#x8FFD;&#x52A0;" Command="{Binding AddRecordCommand}" Height="26" Width="80" Margin="0,0,8,0" />
-            <Button Content="&#x4FEE;&#x6B63;" Command="{Binding UpdateRecordCommand}" Height="26" Width="80" Margin="0,0,8,0" />
-            <Button Content="&#x524A;&#x9664;" Command="{Binding DeleteRecordCommand}" Height="26" Width="80" />
-            <Button Content="&#x30C6;&#x30B9;&#x30C8;" Command="{Binding XxxRecordCommand}" Height="26" Width="80" />
-        </StackPanel>
-        <Button Content="テスト" Command="{Binding StreamingCommand}" Margin="30,5,882,29" Grid.Row="2" />
-        <ProgressBar Value="{Binding ProgressValue}" HorizontalAlignment="Left" Height="28" d:Visibility="Visible"
-                     Margin="153,10,0,0" Grid.Row="2" VerticalAlignment="Top" Width="179">
-            <ProgressBar.Style>
-                <Style TargetType="ProgressBar" BasedOn="{StaticResource MaterialDesignLinearProgressBar}">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsProgressVisible}" Value="true">
-                            <Setter Property="Visibility" Value="Visible" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ProgressBar.Style>
-        </ProgressBar>
-    </Grid>
+			<GroupBox Grid.Column="1"
+				Margin="8,8,8,308"
+				Header="&#x9078;&#x629E;&#x8A73;&#x7D30;">
+				<ScrollViewer Margin="8,4,0,0">
+					<Grid Margin="0,4,0,0">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="208*" />
+							<ColumnDefinition Width="215*" />
+						</Grid.ColumnDefinitions>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+						</Grid.RowDefinitions>
+						<TextBlock Margin="0,0,12,8"
+							FontWeight="Bold"
+							Text="&#x30B3;&#x30FC;&#x30C9;" />
+						<TextBox Grid.ColumnSpan="3"
+							Margin="127,0,0,8"
+							Text="{Binding CurrentEdit.Code, UpdateSourceTrigger=PropertyChanged}" />
+						<TextBlock Grid.Row="1"
+							Margin="0,0,12,8"
+							FontWeight="Bold"
+							Text="&#x540D;&#x79F0;" />
+						<TextBox Grid.Row="1"
+							Grid.ColumnSpan="3"
+							Margin="127,0,0,8"
+							Text="{Binding CurrentEdit.Name, UpdateSourceTrigger=PropertyChanged}"
+							TextWrapping="Wrap" />
+						<TextBlock Grid.Row="2"
+							Margin="0,0,12,8"
+							FontWeight="Bold"
+							Text="&#x7565;&#x79F0;" />
+						<TextBox Grid.Row="2"
+							Grid.ColumnSpan="3"
+							Margin="127,0,0,8"
+							Text="{Binding CurrentEdit.Ryaku, UpdateSourceTrigger=PropertyChanged}" />
+						<TextBlock Grid.Row="3"
+							Margin="0,0,12,8"
+							FontWeight="Bold"
+							Text="&#x30AB;&#x30CA;" />
+						<TextBox Grid.Row="3"
+							Grid.ColumnSpan="3"
+							Margin="127,0,0,8"
+							Text="{Binding CurrentEdit.Kana, UpdateSourceTrigger=PropertyChanged}" />
+						<TextBlock Grid.Row="4"
+							Margin="0,0,12,8"
+							FontWeight="Bold"
+							Text="&#x30D6;&#x30E9;&#x30F3;&#x30C9;" />
+						<TextBlock Grid.Row="4"
+							Grid.ColumnSpan="3"
+							Margin="127,0,0,8"
+							Text="{Binding CurrentEdit.Mei_Brand}" />
+						<TextBlock Grid.Row="5"
+							Margin="0,0,12,8"
+							FontWeight="Bold"
+							Text="&#x30A2;&#x30A4;&#x30C6;&#x30E0;" />
+						<TextBlock Grid.Row="5"
+							Grid.ColumnSpan="2"
+							Width="198"
+							Margin="127,0,0,8"
+							HorizontalAlignment="Left"
+							Text="{Binding CurrentEdit.Mei_Item}" />
+						<TextBlock Grid.Row="6"
+							Margin="0,0,12,8"
+							FontWeight="Bold"
+							Text="&#x5C55;&#x793A;&#x4F1A;" />
+						<TextBlock Grid.Row="6"
+							Grid.ColumnSpan="3"
+							Margin="127,0,0,8"
+							Text="{Binding CurrentEdit.Mei_Tenji}" />
+						<TextBlock Grid.Row="7"
+							Margin="0,0,12,0"
+							FontWeight="Bold"
+							Text="ID (Brand/Item/Tenji)" />
+						<TextBlock Grid.Row="7"
+							Grid.ColumnSpan="3"
+							Margin="127,0,0,0"
+							TextWrapping="Wrap">
+							<Run Text="{Binding CurrentEdit.Id_MeiBrand}" />
+							<Run Text=" / " />
+							<Run Text="{Binding CurrentEdit.Id_MeiItem}" />
+							<Run Text=" / " />
+							<Run Text="{Binding CurrentEdit.Id_MeiTenji}" />
+						</TextBlock>
+					</Grid>
+				</ScrollViewer>
+			</GroupBox>
+			<DataGrid Grid.Column="1"
+				Width="575"
+				Height="146"
+				Margin="0,307,0,0"
+				HorizontalAlignment="Center"
+				VerticalAlignment="Top"
+				d:ItemsSource="{d:SampleData ItemCount=5}"
+				ItemsSource="{Binding CurrentEdit.Jcolsiz}"
+				Style="{StaticResource MaterialDesignDataGrid}" />
+			<DataGrid Grid.Column="1"
+				Width="575"
+				Height="126"
+				Margin="0,474,0,0"
+				HorizontalAlignment="Center"
+				VerticalAlignment="Top"
+				d:ItemsSource="{d:SampleData ItemCount=5}"
+				ItemsSource="{Binding CurrentEdit.ListMeisho}"
+				Style="{StaticResource MaterialDesignDataGrid}" />
+		</Grid>
+		<Button Grid.Row="2"
+			Width="132"
+			Height="56"
+			Margin="0,10,0,0"
+			HorizontalAlignment="Right"
+			Command="{Binding ExitCommand}"
+			Content="&#x7D42;&#x4E86;" />
+		<StackPanel Margin="271,0,0,0"
+			HorizontalAlignment="Left"
+			VerticalAlignment="Top"
+			Orientation="Horizontal">
+			<Button Width="102"
+				Height="26"
+				Margin="0,0,8,0"
+				Command="{Binding TestMsgCnvCommand}"
+				Content="Convert" />
+			<Button Width="102"
+				Height="26"
+				Margin="0,0,8,0"
+				Command="{Binding TestMsg000Command}"
+				Content="&#x30AF;&#x30A8;&#x30EA; test" />
+			<Button Width="80"
+				Height="26"
+				Margin="0,0,8,0"
+				Command="{Binding AddRecordCommand}"
+				Content="&#x8FFD;&#x52A0;" />
+			<Button Width="80"
+				Height="26"
+				Margin="0,0,8,0"
+				Command="{Binding UpdateRecordCommand}"
+				Content="&#x4FEE;&#x6B63;" />
+			<Button Width="80"
+				Height="26"
+				Command="{Binding DeleteRecordCommand}"
+				Content="&#x524A;&#x9664;" />
+			<Button Width="80"
+				Height="26"
+				Command="{Binding XxxRecordCommand}"
+				Content="&#x30C6;&#x30B9;&#x30C8;" />
+		</StackPanel>
+		<Button Grid.Row="2"
+			Margin="30,5,882,29"
+			Command="{Binding StreamingCommand}"
+			Content="テスト" />
+		<ProgressBar Grid.Row="2"
+			Width="179"
+			Height="28"
+			Margin="153,10,0,0"
+			HorizontalAlignment="Left"
+			VerticalAlignment="Top"
+			d:Visibility="Visible"
+			Value="{Binding ProgressValue}">
+			<ProgressBar.Style>
+				<Style BasedOn="{StaticResource MaterialDesignLinearProgressBar}"
+					TargetType="ProgressBar">
+					<Setter Property="Visibility" Value="Collapsed" />
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding IsProgressVisible}"
+							Value="true">
+							<Setter Property="Visibility" Value="Visible" />
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</ProgressBar.Style>
+		</ProgressBar>
+	</Grid>
 </helpers:BaseWindow>

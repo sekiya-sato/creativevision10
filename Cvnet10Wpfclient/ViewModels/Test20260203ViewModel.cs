@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels;
+
 public partial class Test20260203ViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
@@ -54,13 +55,16 @@ public partial class Test20260203ViewModel : Helpers.BaseViewModel {
 		try {
 			cancellationToken.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
-			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg101_Op_Query,
+			var msg = new CvnetMsg {
+				Code = 0,
+				Flag = CvnetFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListParam),
 				DataMsg = Common.SerializeObject(new QueryListParam(
 					itemType: typeof(Test202601Master),
 					where: "Id between @0 and @1", order: "Code asc",
-					parameters: ["1" ,"9999" ]
-		))};
+					parameters: ["1", "9999"]
+		))
+			};
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType);
 			var list0 = list as IList<Test202601Master>;
@@ -91,7 +95,7 @@ public partial class Test20260203ViewModel : Helpers.BaseViewModel {
 		}
 	}
 	[RelayCommand(IncludeCancelCommand = true)]
-	public async Task TestMsgCnv(CancellationToken cancellationToken){
+	public async Task TestMsgCnv(CancellationToken cancellationToken) {
 		TestConnectStatusText = "ê⁄ë±íÜ...ïœä∑é¿çs";
 		try {
 			cancellationToken.ThrowIfCancellationRequested();
@@ -149,7 +153,7 @@ public partial class Test20260203ViewModel : Helpers.BaseViewModel {
 				msg.DataMsg = Common.SerializeObject(new InsertParam(typeof(Test202601Master), Common.SerializeObject(CurrentEdit!)));
 				var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 				var item = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType);
-				if(item != null) {
+				if (item != null) {
 					var item0 = item as Test202601Master;
 					TestMasters.Add(item0!);
 					SelectedTestMaster = item0;

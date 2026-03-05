@@ -5,7 +5,7 @@ namespace Cvnet10Base;
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class CommentAttribute : Attribute {
-	public string Content { get; } =string.Empty;
+	public string Content { get; } = string.Empty;
 	public CommentAttribute(string content) {
 		Content = content;
 	}
@@ -84,7 +84,7 @@ public sealed class ColumnSizeDmlAttribute : Attribute {
 /// <summary>
 /// 実テーブル不要
 /// </summary>
-[AttributeUsage(AttributeTargets.All, AllowMultiple = false)] 
+[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 public sealed class NoCreateAttribute : Attribute {
 }
 

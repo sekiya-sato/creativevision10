@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Cvnet10Asset;
 using Cvnet10Base;
-using Cvnet10Wpfclient.Models;
 using Cvnet10Wpfclient.ViewServices;
 using System.Collections.ObjectModel;
 
@@ -92,7 +91,7 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 		Parameters = parameters ?? [];
 	}
 	[RelayCommand]
-	public  void Exit() {
+	public void Exit() {
 		ClientLib.ExitDialogResult(this, false);
 	}
 }

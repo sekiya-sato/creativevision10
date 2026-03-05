@@ -21,7 +21,7 @@ public static class ResolverBaseViewDefine {
 			return string.Empty;
 			// throw new ArgumentException($"{type.Name} は IBaseViewDefine を実装していません。");
 		}
-		
+
 		// 2. staticフィールド "ViewSql" を検索
 		// public かつ static なフィールドを対象とする
 		var field = type.GetField("ViewSql", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);

@@ -1,12 +1,12 @@
-﻿using System.Windows;
+﻿using Cvnet10Wpfclient.ViewModels;
+using System.Windows;
 using System.Windows.Input;
-using Cvnet10Wpfclient.ViewModels;
 
 namespace Cvnet10Wpfclient.Views;
 
 public partial class ZzMainMenuView : Window {
-    public ZzMainMenuView() {
-        InitializeComponent();
+	public ZzMainMenuView() {
+		InitializeComponent();
 	}
 
 	private void MenuTree_PreviewKeyDown(object sender, KeyEventArgs e) {

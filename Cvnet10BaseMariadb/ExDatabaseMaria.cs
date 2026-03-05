@@ -1,9 +1,7 @@
 ﻿using Cvnet10DomainLogic;
 using MySqlConnector;
-using NPoco;
 using System.Data;
 using System.Data.Common;
-using System.Reflection;
 
 
 namespace Cvnet10Base.Sqlite;
@@ -21,7 +19,7 @@ public partial class ExDatabaseMaria : ExDatabase {
 				conn.Open();
 		}
 	}
-	public static ExDatabaseMaria GetDbConn(string connectionString, bool isOpen=true) {
+	public static ExDatabaseMaria GetDbConn(string connectionString, bool isOpen = true) {
 		// "Server=localhost;Port=3306;Database=apparel_db;Uid=user;Pwd=password;"
 		// "Pooling=true;ConnectionIdleTimeout=30;MinimumPoolSize=10;MaximumPoolSize=100;"AllowUserVariables=true;"
 		var conn = new MySqlConnection(connectionString);
@@ -34,7 +32,7 @@ public partial class ExDatabaseMaria : ExDatabase {
 	public override void Open() {
 		if (Connection is MySqlConnection) {
 			var connInner = (MySqlConnection)Connection;
-			if(connInner.State == ConnectionState.Closed)
+			if (connInner.State == ConnectionState.Closed)
 				connInner.Open();
 		}
 	}

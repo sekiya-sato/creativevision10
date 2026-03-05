@@ -1,8 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Cvnet10Base.Share;
-using NPoco;
-using System.ComponentModel;
 using Newtonsoft.Json;
+using NPoco;
 
 namespace Cvnet10Base;
 
@@ -18,14 +17,14 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string name =string.Empty;
+	string name = string.Empty;
 	/// <summary>
 	/// ホームページ
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(30)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string hp =string.Empty;
+	string hp = string.Empty;
 	/// <summary>
 	/// 自社締め日 1-31,99
 	/// </summary>
@@ -36,7 +35,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[Ignore]
 	[JsonIgnore]
 	public EnumShime EnShimeBi {
-			get => (EnumShime)ShimeBi;
+		get => (EnumShime)ShimeBi;
 		set => ShimeBi = (int)value;
 
 	}
@@ -57,28 +56,28 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[property: ColumnSizeDml(30)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string bankAccount1 =string.Empty;
+	string bankAccount1 = string.Empty;
 	/// <summary>
 	/// 振込先2
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(30)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string bankAccount2 =string.Empty;
+	string bankAccount2 = string.Empty;
 	/// <summary>
 	/// 振込先3
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(30)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string bankAccount3 =string.Empty;
+	string bankAccount3 = string.Empty;
 	/// <summary>
 	/// 期首年月日
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
 	[property: System.ComponentModel.DefaultValue("19010101")]
-	string fiscalStartDate="19010101";
+	string fiscalStartDate = "19010101";
 	/// <summary>
 	/// 消費税率リスト
 	/// </summary>
@@ -91,7 +90,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 /// 消費税率テーブル
 /// </summary>
 [NoCreate]
-public sealed partial class MasterSysTax: ObservableObject {
+public sealed partial class MasterSysTax : ObservableObject {
 	[ObservableProperty]
 	long id;
 	/// <summary>
@@ -116,8 +115,8 @@ public sealed partial class MasterSysTax: ObservableObject {
 /// 名称テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uq1", true, ["Kubun","Code"])]
-[KeyDml("nk2", false, ["Kubun","Odr" , "Code"])]
+[KeyDml("uq1", true, ["Kubun", "Code"])]
+[KeyDml("nk2", false, ["Kubun", "Odr", "Code"])]
 public sealed partial class MasterMeisho : BaseDbClass {
 	/// <summary>
 	/// 区分
@@ -146,21 +145,21 @@ public sealed partial class MasterMeisho : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string name =string.Empty;
+	string name = string.Empty;
 	/// <summary>
 	/// 略称
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string ryaku =string.Empty;
+	string ryaku = string.Empty;
 	/// <summary>
 	/// よみがな
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string kana =string.Empty;
+	string kana = string.Empty;
 	/// <summary>
 	/// 並び順
 	/// </summary>

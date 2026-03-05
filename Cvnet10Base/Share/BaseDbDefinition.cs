@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using NPoco;
 using Newtonsoft.Json;
-using System.ComponentModel;
+using NPoco;
 
 namespace Cvnet10Base;
 
@@ -146,7 +145,7 @@ public partial class CodeNameView : ObservableObject {
 	[property: System.ComponentModel.DefaultValue("")]
 	string mei = string.Empty;
 
-	public CodeNameView() :base() {
+	public CodeNameView() : base() {
 	}
 	public CodeNameView(MasterMeisho meisho) {
 		Sid = meisho.Id;

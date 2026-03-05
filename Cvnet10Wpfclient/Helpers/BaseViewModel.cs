@@ -13,7 +13,6 @@ public partial class NewTargetViewModel : Helpers.BaseViewModel {
 */
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using Cvnet10Wpfclient.ViewServices;
 using System.Windows.Input;

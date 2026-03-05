@@ -113,20 +113,20 @@
 					FontWeight="Bold"
 					Style="{StaticResource MaterialDesignHeadline4TextBlock}"
 					Text="LOGIN Refresh" />
-                <TextBlock Margin="20"
+				<TextBlock Margin="20"
 					HorizontalAlignment="Center"
 					FontWeight="Bold"
 					Style="{StaticResource MaterialDesignBody1TextBlock}"
 					Text="現在の接続トークンを使ってリフレッシュを行います" />
-                <Button Margin="40,0,40,0"
+				<Button Margin="40,0,40,0"
 					Command="{Binding RefreshCommand}"
 					Content="リフレッシュ"
 					IsDefault="True" />
-                <Button Margin="50,20,50,0"
+				<Button Margin="50,20,50,0"
 					Command="{Binding ExitCommand}"
 					Content="キャンセル(ESC)"
 					IsDefault="True" />
-            </StackPanel>
+			</StackPanel>
 
 		</TabItem>
 	</TabControl>

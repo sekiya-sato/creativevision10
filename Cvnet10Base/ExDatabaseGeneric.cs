@@ -1,6 +1,4 @@
-﻿using Cvnet10Base;
-
-namespace Cvnet10DomainLogic;
+﻿namespace Cvnet10DomainLogic;
 
 public partial class ExDatabase {
 	public string GetSqlCreateTable<T>() {

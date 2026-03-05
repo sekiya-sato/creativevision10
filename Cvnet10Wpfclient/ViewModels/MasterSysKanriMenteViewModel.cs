@@ -4,11 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
 using Cvnet10Base; // MasterMeisho クラスに必要
 using Cvnet10Base.Share;
-using System;
-using System.Collections.Generic;
 using Cvnet10Wpfclient.ViewServices;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels;
 
@@ -60,7 +57,7 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseViewModel {
 				Desc0 = $"開始{timeStart} 取得、画面展開{timespan2.ToStrSpan()}";
 				var list0 = new ObservableCollection<MasterSysman>(list.Cast<MasterSysman>());
 				Count = list0.Count;
-				Current = list0?.FirstOrDefault()?? new();
+				Current = list0?.FirstOrDefault() ?? new();
 			}
 			var timespan = DateTime.Now - timeStart;
 		}

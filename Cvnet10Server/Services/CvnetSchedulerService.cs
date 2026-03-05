@@ -1,16 +1,7 @@
 ﻿using CodeShare;
-using Cvnet10Asset;
-using Cvnet10Base.Oracle;
-using Cvnet10Base.Share;
-using Cvnet10DomainLogic;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Data.Sqlite;
 using NCrontab;
 using NCrontab.Scheduler;
-using Oracle.ManagedDataAccess.Client;
 using ProtoBuf.Grpc;
-using System.Collections;
-using System.Collections.Generic;
 
 
 namespace Cvnet10Server.Services;

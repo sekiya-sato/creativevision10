@@ -1,9 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using NPoco;
 using Cvnet10Base.Share;
 using Newtonsoft.Json;
-using System.ComponentModel;
-using System.Globalization;
+using NPoco;
 
 namespace Cvnet10Base;
 
@@ -542,7 +540,7 @@ public sealed partial class MasterShohinGrade : ObservableObject {
 /// 原価マスター
 /// </summary>
 [NoCreate]
-public sealed partial class MasterShohinGenka: ObservableObject {
+public sealed partial class MasterShohinGenka : ObservableObject {
 	/// <summary>
 	/// 行No
 	/// </summary>

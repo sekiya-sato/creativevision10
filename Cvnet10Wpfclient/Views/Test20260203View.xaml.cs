@@ -3,8 +3,8 @@ namespace Cvnet10Wpfclient.Views;
 /// Test20260203View.xaml の相互作用ロジック
 /// </summary>
 public partial class Test20260203View : Helpers.BaseWindow {
-    public Test20260203View() {
-        InitializeComponent();
-    }
+	public Test20260203View() {
+		InitializeComponent();
+	}
 }
 

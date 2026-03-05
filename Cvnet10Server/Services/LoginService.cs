@@ -1,11 +1,11 @@
 ﻿using CodeShare;
 using Cvnet10Asset;
 using Cvnet10Base;
+using Cvnet10DomainLogic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Cvnet10DomainLogic;
 
 
 namespace Cvnet10Server.Services;
@@ -71,12 +71,12 @@ public partial class LoginService : ILoginService {
 					JwtUnixTime = jwt.ValidTo.ToUnixTime(),
 					ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
 					Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-					Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info)??new(), 
+					Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info) ?? new(),
 					Op = "LoginAsync First"
 				};
-				if(userRequest.Info!=null)
+				if (userRequest.Info != null)
 
-				_db.Insert<SysHistJwt>(loginHist);
+					_db.Insert<SysHistJwt>(loginHist);
 				return Task.FromResult(ret);
 			}
 
@@ -125,7 +125,7 @@ public partial class LoginService : ILoginService {
 				JwtUnixTime = jwt.ValidTo.ToUnixTime(),
 				ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
 				Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-				Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info)??new(),
+				Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info) ?? new(),
 				Op = "LoginAsync"
 			};
 			_db.Insert<SysHistJwt>(loginHist);
@@ -211,11 +211,11 @@ public partial class LoginService : ILoginService {
 	[Authorize]
 	public Task<LoginReply> CreateLoginAsync(LoginRequest userRequest, ProtoBuf.Grpc.CallContext context = default) {
 		var loginData = _db.Fetch<SysLogin>($"where LoginId=@0", [userRequest.LoginId]).FirstOrDefault();
-		if( loginData != null) {
+		if (loginData != null) {
 			// すでに同IDが存在する場合はエラー
 			return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
 		}
-		var claims = new List<Claim> { 
+		var claims = new List<Claim> {
 			new Claim(ClaimTypes.Name, userRequest.Name),
 			};
 		var restorePass = Common.DecryptLoginRequest(userRequest.CryptPassword, userRequest.LoginDate);

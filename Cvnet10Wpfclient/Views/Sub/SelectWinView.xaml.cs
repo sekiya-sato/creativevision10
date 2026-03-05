@@ -1,7 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Messaging;
-using Cvnet10Wpfclient.Helpers;
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows;
 using System.Windows.Input;
 
 
@@ -20,8 +17,8 @@ public partial class SelectWinView : Helpers.BaseWindow {
 		if (e.Key == Key.Enter) {
 			e.Handled = true; // Enterキーのデフォルト動作を無効にする [Disable the default behavior of the Enter key]
 			DefaultButton?.Command?.Execute(null); // デフォルトボタンのコマンドを実行 [Execute the command of the default button]
-        }
-    }
+		}
+	}
 	protected override void OnSourceInitialized(EventArgs e) {
 		base.OnSourceInitialized(e);
 
@@ -40,5 +37,5 @@ public partial class SelectWinView : Helpers.BaseWindow {
 		Top = ownerBounds.Top - 20;
 	}
 
-	
+
 }

@@ -1,6 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CodeShare;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CodeShare;
 using Cvnet10Asset;
 using Cvnet10Base;
 using Cvnet10Wpfclient.ViewServices;
@@ -8,8 +8,6 @@ using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace Cvnet10Wpfclient.Helpers;
@@ -32,7 +30,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			CurrentEdit = new();
 			return;
 		}
-		if (oldValue?.Id != newValue.Id && newValue.Id>0) {
+		if (oldValue?.Id != newValue.Id && newValue.Id > 0) {
 			CurrentEdit = Common.CloneObject(newValue);
 		}
 		Message = string.Empty;
@@ -92,15 +90,15 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	/// </summary>
 	/// <param name="ct"></param>
 	/// <returns></returns>
-    protected virtual ValueTask<bool> BeforeListAsync(CancellationToken ct) => new ValueTask<bool>(true);
+	protected virtual ValueTask<bool> BeforeListAsync(CancellationToken ct) => new ValueTask<bool>(true);
 
-    [RelayCommand(IncludeCancelCommand = true)]
-    protected async Task DoList(CancellationToken ct) {
-        if (!await BeforeListAsync(ct)) {
-            Message = "一覧表示の処理を中断しました";
-            return;
-        }
-        StartTime = DateTime.Now;
+	[RelayCommand(IncludeCancelCommand = true)]
+	protected async Task DoList(CancellationToken ct) {
+		if (!await BeforeListAsync(ct)) {
+			Message = "一覧表示の処理を中断しました";
+			return;
+		}
+		StartTime = DateTime.Now;
 		try {
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
@@ -205,7 +203,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			};
 
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-			if(reply.Code < 0) {
+			if (reply.Code < 0) {
 				if (reply.Code < -9000) {
 					MessageEx.ShowErrorDialog($"修正エラー: {reply.Option} ({reply.Code})", owner: ClientLib.GetActiveView(this));
 				}
@@ -257,7 +255,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 			if (reply.Code < 0) {
-				if(reply.Code < -9000) {
+				if (reply.Code < -9000) {
 					MessageEx.ShowErrorDialog($"削除エラー: {reply.Option} ({reply.Code})", owner: ClientLib.GetActiveView(this));
 				}
 				else {

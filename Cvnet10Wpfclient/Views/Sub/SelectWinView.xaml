@@ -1,152 +1,147 @@
 ﻿<helpers:BaseWindow x:Class="Cvnet10Wpfclient.Views.Sub.SelectWinView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:local="clr-namespace:Cvnet10Wpfclient.Views"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels.Sub"
-        xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
-        Title="{Binding Title}"
-        Width="480"
-        Height="520"
-        FontSize="18"
-        WindowStartupLocation="Manual"
-        BorderBrush="DarkSlateGray"
-        BorderThickness="0.5,0,1.5,1.5"
-    mc:Ignorable="d">
-    <helpers:BaseWindow.DataContext>
-        <vm:SelectWinViewModel />
-    </helpers:BaseWindow.DataContext>
-    <Grid x:Name="grid0" Background="{DynamicResource AppCommonBackgroundBrush}">
-        <!-- 配置が確定してから
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
+	xmlns:local="clr-namespace:Cvnet10Wpfclient.Views"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels.Sub"
+	Title="{Binding Title}"
+	Width="480"
+	Height="520"
+	BorderBrush="DarkSlateGray"
+	BorderThickness="0.5,0,1.5,1.5"
+	FontSize="18"
+	WindowStartupLocation="Manual"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:SelectWinViewModel />
+	</helpers:BaseWindow.DataContext>
+	<Grid x:Name="grid0"
+		Background="{DynamicResource AppCommonBackgroundBrush}">
+		<!-- 配置が確定してから
         <Viewbox Stretch="Uniform">
         </Viewbox>
-        -->
-        <Grid Width="{Binding ActualWidth, ElementName=grid0, Mode=OneWay}" Height="{Binding ActualHeight, ElementName=grid0, Mode=OneWay}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="15*" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="85*" />
-            </Grid.RowDefinitions>
-            <Grid Grid.Row="0" Grid.Column="0">
-                <Button
-                    Width="70"
-                    Height="30"
-                    Margin="10,10,0,0"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Background="Gray"
-                    Command="{Binding ExitCommand}"
-                    Content="閉じる"
-                    IsCancel="True" />
-                <Button
-                    x:Name="DefaultButton"
-                    Width="100"
-                    Height="30"
-                    Margin="120,10,0,0"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Command="{Binding DoSelectCommand}"
-                    Content="選択"
-                    IsDefault="True" />
-                <StackPanel
-                    Grid.Column="1"
-                    Margin="240,15,10,0"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Top"
-                    Orientation="Horizontal">
-                    <TextBlock
-                        d:Text="Code"
-                        Text="{Binding Current.Code}"
-                        TextAlignment="Left" />
-                    <TextBlock Text="  " TextAlignment="Left" />
-                    <TextBlock
-                        d:Text="Name"
-                        Text="{Binding Current.Name}"
-                        TextAlignment="Left" />
-                </StackPanel>
-                <TextBlock
-                    Margin="240,48,10,0"
-                    d:Text="Id Desc000"
-                    TextAlignment="Left" >
-                    <TextBlock.Text>
-                        <MultiBinding StringFormat="{}{0} {1}">
-                            <Binding Path="Current.Id" />
-                            <Binding Path="Current.Desc0" />
-                        </MultiBinding>
-                    </TextBlock.Text>
-                </TextBlock>
-            </Grid>
-            <GridSplitter
-                Grid.Row="1"
-                Height="3"
-                Margin="0,0,0,0"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Center" IsTabStop="False"
-                Background="DarkGray" />
-            <Grid Grid.Row="2" Grid.Column="0">
-                <DataGrid
-                    x:Name="SelectGrid"
-                    helpers:DataGridLongMsgFocus.IsEnabled="True"
-                    d:ItemsSource="{d:SampleData ItemCount=5}"
-                    AutoGenerateColumns="False"
-                    FrozenColumnCount="2"
-                    HorizontalScrollBarVisibility="Hidden"
-                    IsReadOnly="True"
-                    IsSynchronizedWithCurrentItem="True"
-                    ItemsSource="{Binding ListData}"
-                    PreviewKeyDown="SelectGrid_PreviewKeyDown"
-                    Style="{StaticResource MaterialDesignDataGrid}"
-                    RowHeight="35"
-                    SelectedItem="{Binding Current}"
-                    helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
-                    SelectionMode="Single"
-                    VerticalScrollBarVisibility="Visible">
-                    <DataGrid.Resources>
-                        <LinearGradientBrush x:Key="HogeHeaderBrush" Opacity="0.2" StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Offset="0" Color="Bisque" />
-                            <GradientStop Offset="0.2" Color="Aquamarine" />
-                            <GradientStop Offset="1" Color="Aqua" />
-                        </LinearGradientBrush>
-                    </DataGrid.Resources>
-                    <DataGrid.ColumnHeaderStyle>
-                        <Style TargetType="{x:Type DataGridColumnHeader}">
-                            <Setter Property="Background" Value="{StaticResource HogeHeaderBrush}" />
-                            <Setter Property="BorderBrush" Value="DarkGray" />
-                            <Setter Property="BorderThickness" Value="1" />
-                        </Style>
-                    </DataGrid.ColumnHeaderStyle>
-                    <DataGrid.Columns>
-                        <DataGridTextColumn
-                            x:Name="Col01"
-                            Width="140"
-                            Binding="{Binding Path=Code}"
-                            CanUserReorder="True"
-                            CanUserResize="True"
-                            CanUserSort="True"
-                            Header=" Code" />
-                        <DataGridTextColumn
-                            x:Name="Col02"
-                            Width="300"
-                            Binding="{Binding Path=Name}"
-                            CanUserReorder="True"
-                            CanUserResize="True"
-                            CanUserSort="True"
-                            Header=" 名前" />
-                        <DataGridTextColumn
-                            x:Name="Col03"
-                            Width="400"
-                            Binding="{Binding Path=Ryaku}"
-                            CanUserReorder="True"
-                            CanUserResize="True"
-                            CanUserSort="True"
-                            Header=" 略称" />
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
-        </Grid>
+		-->
+		<Grid Width="{Binding ActualWidth, ElementName=grid0, Mode=OneWay}"
+			Height="{Binding ActualHeight, ElementName=grid0, Mode=OneWay}">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="15*" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="85*" />
+			</Grid.RowDefinitions>
+			<Grid Grid.Row="0"
+				Grid.Column="0">
+				<Button Width="70"
+					Height="30"
+					Margin="10,10,0,0"
+					HorizontalAlignment="Left"
+					VerticalAlignment="Top"
+					Background="Gray"
+					Command="{Binding ExitCommand}"
+					Content="閉じる"
+					IsCancel="True" />
+				<Button x:Name="DefaultButton"
+					Width="100"
+					Height="30"
+					Margin="120,10,0,0"
+					HorizontalAlignment="Left"
+					VerticalAlignment="Top"
+					Command="{Binding DoSelectCommand}"
+					Content="選択"
+					IsDefault="True" />
+				<StackPanel Grid.Column="1"
+					Margin="240,15,10,0"
+					HorizontalAlignment="Stretch"
+					VerticalAlignment="Top"
+					Orientation="Horizontal">
+					<TextBlock d:Text="Code"
+						Text="{Binding Current.Code}"
+						TextAlignment="Left" />
+					<TextBlock Text="  "
+						TextAlignment="Left" />
+					<TextBlock d:Text="Name"
+						Text="{Binding Current.Name}"
+						TextAlignment="Left" />
+				</StackPanel>
+				<TextBlock Margin="240,48,10,0"
+					d:Text="Id Desc000"
+					TextAlignment="Left">
+					<TextBlock.Text>
+						<MultiBinding StringFormat="{}{0} {1}">
+							<Binding Path="Current.Id" />
+							<Binding Path="Current.Desc0" />
+						</MultiBinding>
+					</TextBlock.Text>
+				</TextBlock>
+			</Grid>
+			<GridSplitter Grid.Row="1"
+				Height="3"
+				Margin="0,0,0,0"
+				HorizontalAlignment="Stretch"
+				VerticalAlignment="Center"
+				Background="DarkGray"
+				IsTabStop="False" />
+			<Grid Grid.Row="2"
+				Grid.Column="0">
+				<DataGrid x:Name="SelectGrid"
+					d:ItemsSource="{d:SampleData ItemCount=5}"
+					helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
+					helpers:DataGridLongMsgFocus.IsEnabled="True"
+					AutoGenerateColumns="False"
+					FrozenColumnCount="2"
+					HorizontalScrollBarVisibility="Hidden"
+					IsReadOnly="True"
+					IsSynchronizedWithCurrentItem="True"
+					ItemsSource="{Binding ListData}"
+					PreviewKeyDown="SelectGrid_PreviewKeyDown"
+					RowHeight="35"
+					SelectedItem="{Binding Current}"
+					SelectionMode="Single"
+					Style="{StaticResource MaterialDesignDataGrid}"
+					VerticalScrollBarVisibility="Visible">
+					<DataGrid.Resources>
+						<LinearGradientBrush x:Key="HogeHeaderBrush" Opacity="0.2" StartPoint="0,0" EndPoint="0,1">
+							<GradientStop Offset="0" Color="Bisque" />
+							<GradientStop Offset="0.2" Color="Aquamarine" />
+							<GradientStop Offset="1" Color="Aqua" />
+						</LinearGradientBrush>
+					</DataGrid.Resources>
+					<DataGrid.ColumnHeaderStyle>
+						<Style TargetType="{x:Type DataGridColumnHeader}">
+							<Setter Property="Background" Value="{StaticResource HogeHeaderBrush}" />
+							<Setter Property="BorderBrush" Value="DarkGray" />
+							<Setter Property="BorderThickness" Value="1" />
+						</Style>
+					</DataGrid.ColumnHeaderStyle>
+					<DataGrid.Columns>
+						<DataGridTextColumn x:Name="Col01"
+							Width="140"
+							Binding="{Binding Path=Code}"
+							CanUserReorder="True"
+							CanUserResize="True"
+							CanUserSort="True"
+							Header=" Code" />
+						<DataGridTextColumn x:Name="Col02"
+							Width="300"
+							Binding="{Binding Path=Name}"
+							CanUserReorder="True"
+							CanUserResize="True"
+							CanUserSort="True"
+							Header=" 名前" />
+						<DataGridTextColumn x:Name="Col03"
+							Width="400"
+							Binding="{Binding Path=Ryaku}"
+							CanUserReorder="True"
+							CanUserResize="True"
+							CanUserSort="True"
+							Header=" 略称" />
+					</DataGrid.Columns>
+				</DataGrid>
+			</Grid>
+		</Grid>
 
-    </Grid>
+	</Grid>
 </helpers:BaseWindow>

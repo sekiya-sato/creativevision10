@@ -9,8 +9,8 @@ namespace Cvnet10Wpfclient.ViewModels;
 
 public partial class SettingSystemViewModel {
 
-    [RelayCommand(IncludeCancelCommand = true)]
-    private async Task Test01Async(CancellationToken cancellationToken) {
+	[RelayCommand(IncludeCancelCommand = true)]
+	private async Task Test01Async(CancellationToken cancellationToken) {
 		try {
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
@@ -34,11 +34,11 @@ public partial class SettingSystemViewModel {
 			MessageEx.ShowErrorDialog($"ÉfÅ[É^éÊìæé∏îs: {ex.Message}", owner: ClientLib.GetActiveView(this));
 		}
 
-    }
+	}
 
-    [RelayCommand(IncludeCancelCommand = true)]
-    private async Task Test02Async(CancellationToken cancellationToken) {
+	[RelayCommand(IncludeCancelCommand = true)]
+	private async Task Test02Async(CancellationToken cancellationToken) {
 
 
-    }
+	}
 }

@@ -16,7 +16,7 @@ public interface IBaseCodeName {
 /// </summary>
 public interface IBaseViewDefine {
 
-	readonly static public string ViewSql="";
+	readonly static public string ViewSql = "";
 }
 /// <summary>
 /// シリアライズ制御用のインターフェース

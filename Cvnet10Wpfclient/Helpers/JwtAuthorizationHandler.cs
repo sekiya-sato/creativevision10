@@ -7,16 +7,16 @@ namespace Cvnet10Wpfclient.Helpers;
 /// すべての gRPC 呼び出しに JWT とクライアント ID を付与するハンドラー。
 /// </summary>
 internal sealed class JwtAuthorizationHandler : DelegatingHandler {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
-        var token = AppGlobal.LoginJwt;
-        if (!string.IsNullOrWhiteSpace(token)) {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
+	protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+		var token = AppGlobal.LoginJwt;
+		if (!string.IsNullOrWhiteSpace(token)) {
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+		}
 
-        if (!request.Headers.Contains("X-ClientId")) {
-            request.Headers.Add("X-ClientId", AppGlobal.ClientId.ToString());
-        }
+		if (!request.Headers.Contains("X-ClientId")) {
+			request.Headers.Add("X-ClientId", AppGlobal.ClientId.ToString());
+		}
 
-        return base.SendAsync(request, cancellationToken);
-    }
+		return base.SendAsync(request, cancellationToken);
+	}
 }

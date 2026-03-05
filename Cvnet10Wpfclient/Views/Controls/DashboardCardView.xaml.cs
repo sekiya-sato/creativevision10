@@ -3,8 +3,7 @@ using System.Windows.Controls;
 
 namespace Cvnet10Wpfclient.Views.Controls;
 
-public partial class DashboardCardView : UserControl
-{
+public partial class DashboardCardView : UserControl {
 	public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
 		nameof(Title),
 		typeof(string),
@@ -23,16 +22,14 @@ public partial class DashboardCardView : UserControl
 		typeof(DashboardCardView),
 		new PropertyMetadata(null));
 
-	public DashboardCardView()
-	{
+	public DashboardCardView() {
 		InitializeComponent();
 	}
 
 	/// <summary>
 	/// カードのタイトル。
 	/// </summary>
-	public string Title
-	{
+	public string Title {
 		get => (string)GetValue(TitleProperty);
 		set => SetValue(TitleProperty, value);
 	}
@@ -40,8 +37,7 @@ public partial class DashboardCardView : UserControl
 	/// <summary>
 	/// カードの値。
 	/// </summary>
-	public string Value
-	{
+	public string Value {
 		get => (string)GetValue(ValueProperty);
 		set => SetValue(ValueProperty, value);
 	}
@@ -49,8 +45,7 @@ public partial class DashboardCardView : UserControl
 	/// <summary>
 	/// カード内に配置する追加コンテンツ。
 	/// </summary>
-	public object? CardContent
-	{
+	public object? CardContent {
 		get => GetValue(CardContentProperty);
 		set => SetValue(CardContentProperty, value);
 	}
