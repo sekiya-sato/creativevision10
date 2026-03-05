@@ -1,0 +1,501 @@
+﻿<helpers:BaseWindow x:Class="Cvnet10Wpfclient.Views.SampleView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
+	xmlns:local="clr-namespace:Cvnet10Wpfclient.Views"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
+	Title="ZorgView"
+	Width="1024"
+	Height="1050"
+	TextOptions.TextFormattingMode="Display"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:SampleViewModel />
+	</helpers:BaseWindow.DataContext>
+	<Grid>
+		<TabControl>
+			<TabItem Header="MaterialDesignサンプル">
+				<Grid>
+
+
+					<ScrollViewer VerticalScrollBarVisibility="Auto">
+						<StackPanel Margin="10"
+							HorizontalAlignment="Stretch"
+							Orientation="Vertical">
+							<TextBlock Width="400"
+								HorizontalAlignment="Left"
+								FontSize="22"
+								FontWeight="Bold"
+								Foreground="{DynamicResource MaterialDesignBody}"
+								Text="MaterialDesign サンプル一覧" />
+
+							<TextBlock Width="400"
+								Margin="0,10,0,20"
+								HorizontalAlignment="Left"
+								Foreground="{DynamicResource MaterialDesignBody}"
+								Text="テーマカラー / コントロール / リソースのサンプル表示" />
+							<TextBlock Width="400"
+								HorizontalAlignment="Left"
+								FontSize="18"
+								FontWeight="SemiBold"
+								Foreground="{DynamicResource MaterialDesignBody}"
+								Text="テーマブラシ" />
+
+							<UniformGrid Margin="0,5,0,5"
+								Columns="4">
+								<Border Margin="6"
+									Padding="10"
+									Background="{DynamicResource PrimaryHueMidBrush}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="PrimaryHueMidBrush" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{DynamicResource PrimaryHueLightBrush}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="PrimaryHueLightBrush" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{DynamicResource PrimaryHueDarkBrush}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="PrimaryHueDarkBrush" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{DynamicResource SecondaryHueMidBrush}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="SecondaryHueMidBrush" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{DynamicResource MaterialDesignPaper}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="MaterialDesignPaper" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{DynamicResource MaterialDesignCardBackground}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="MaterialDesignCardBackground" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{DynamicResource MaterialDesignToolForeground}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="MaterialDesignToolForeground" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{DynamicResource MaterialDesignSelection}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="MaterialDesignSelection" />
+								</Border>
+							</UniformGrid>
+
+							<TextBlock FontSize="18"
+								FontWeight="SemiBold"
+								Foreground="{DynamicResource MaterialDesignBody}"
+								Text="カスタムカラー" />
+							<UniformGrid Margin="0,10,0,10"
+								Columns="4">
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color1}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color1" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color2}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color2" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color3}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color3" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color4}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color4" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color5}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color5" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color6}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color6" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color7}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color7" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color8}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color8" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color9}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color9" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color10}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color10" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color11}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color11" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color12}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color12" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource color13}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="color13" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource panelColor}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="panelColor" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource panelOverColor}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="panelOverColor" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource panelActiveColor}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="panelActiveColor" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource buttonColor1}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="buttonColor1" />
+								</Border>
+								<Border Margin="6"
+									Padding="10"
+									Background="{StaticResource AppCommonBackgroundBrush}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1">
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="AppCommonBackgroundBrush" />
+								</Border>
+							</UniformGrid>
+
+							<TextBlock FontSize="18"
+								FontWeight="SemiBold"
+								Foreground="{DynamicResource MaterialDesignBody}"
+								Text="コントロール" />
+							<WrapPanel Margin="0,10,0,10"
+								HorizontalAlignment="Left">
+								<Button Margin="6"
+									Padding="16,8"
+									Content="Primary"
+									Style="{StaticResource MaterialDesignRaisedButton}" />
+								<Button Margin="6"
+									Padding="16,8"
+									Content="Flat"
+									Style="{StaticResource MaterialDesignFlatButton}" />
+								<Button Margin="6"
+									Padding="16,8"
+									Content="Outlined"
+									Style="{StaticResource MaterialDesignOutlinedButton}" />
+								<ToggleButton Margin="6"
+									Content="Toggle"
+									Style="{StaticResource MaterialDesignSwitchToggleButton}" />
+								<CheckBox Margin="6"
+									Content="CheckBox" />
+								<RadioButton Margin="6"
+									Content="Radio" />
+								<Slider Width="160"
+									Margin="6"
+									Maximum="100"
+									Minimum="0"
+									Value="60" />
+								<ProgressBar Width="160"
+									Height="10"
+									Margin="6"
+									Value="60" />
+							</WrapPanel>
+
+							<StackPanel Margin="0,0,0,2"
+								Orientation="Horizontal">
+								<TextBox Width="240"
+									Margin="0,0,12,0"
+									materialDesign:HintAssist.Hint="TextBox"
+									Foreground="{DynamicResource MaterialDesignBody}" />
+								<ComboBox Width="200"
+									SelectedIndex="0">
+									<ComboBoxItem Content="Item 1" />
+									<ComboBoxItem Content="Item 2" />
+									<ComboBoxItem Content="Item 3" />
+								</ComboBox>
+							</StackPanel>
+
+							<materialDesign:Card Margin="0,0,0,2"
+								Padding="16">
+								<StackPanel>
+									<TextBlock FontSize="16"
+										FontWeight="SemiBold"
+										Foreground="{DynamicResource MaterialDesignBody}"
+										Text="Card" />
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="MaterialDesign の Card サンプル" />
+								</StackPanel>
+							</materialDesign:Card>
+							<ListBox x:Name="SampleList"
+								Width="760"
+								Height="240"
+								HorizontalContentAlignment="Stretch"
+								ItemsSource="{Binding ColorItems}"
+								ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+								<ListBox.ItemTemplate>
+									<DataTemplate>
+										<Grid Margin="0,5">
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="*" />
+												<ColumnDefinition Width="*" />
+												<ColumnDefinition Width="*" />
+												<ColumnDefinition Width="*" />
+											</Grid.ColumnDefinitions>
+
+											<StackPanel Grid.Column="0"
+												Margin="2">
+												<Border Height="40"
+													Background="{Binding Color1}"
+													CornerRadius="2" />
+												<TextBlock FontSize="10"
+													Text="{Binding Color1}"
+													TextAlignment="Center" />
+											</StackPanel>
+
+											<StackPanel Grid.Column="1"
+												Margin="2">
+												<Border Height="40"
+													Background="{Binding Color2}"
+													CornerRadius="2" />
+												<TextBlock FontSize="10"
+													Text="{Binding Color2}"
+													TextAlignment="Center" />
+											</StackPanel>
+
+											<StackPanel Grid.Column="2"
+												Margin="2">
+												<Border Height="40"
+													Background="{Binding Color3}"
+													CornerRadius="2" />
+												<TextBlock FontSize="10"
+													Text="{Binding Color3}"
+													TextAlignment="Center" />
+											</StackPanel>
+											<StackPanel Grid.Column="3"
+												Margin="2">
+												<Border Height="40"
+													Background="{Binding Color4}"
+													CornerRadius="2" />
+												<TextBlock FontSize="10"
+													Text="{Binding Color4}"
+													TextAlignment="Center" />
+											</StackPanel>
+										</Grid>
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+						</StackPanel>
+					</ScrollViewer>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Testボタン">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="*" />
+						<RowDefinition Height="*" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<Grid Grid.Row="0"
+						Grid.Column="0"
+						Margin="10">
+						<Button x:Name="BtStream"
+							Width="160"
+							Height="40"
+							Margin="10,10,10,40"
+							HorizontalAlignment="Left"
+							VerticalAlignment="Bottom"
+							d:Content="ストリーム開始"
+							Command="{Binding StreamingCommand}"
+							Content="{Binding StreamStatusText}" />
+						<ProgressBar Grid.Row="2"
+							Width="260"
+							Height="28"
+							Margin="0,10,0,0"
+							HorizontalAlignment="Left"
+							VerticalAlignment="Bottom"
+							d:Visibility="Visible"
+							Value="{Binding ProgressValue}">
+							<ProgressBar.Style>
+								<Style BasedOn="{StaticResource MaterialDesignLinearProgressBar}"
+									TargetType="ProgressBar">
+									<Setter Property="Visibility" Value="Collapsed" />
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding IsProgressVisible}"
+											Value="true">
+											<Setter Property="Visibility" Value="Visible" />
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</ProgressBar.Style>
+						</ProgressBar>
+						<Button Width="160"
+							Height="40"
+							Margin="10,0,0,259"
+							HorizontalAlignment="Left"
+							VerticalAlignment="Bottom"
+							Command="{Binding TestMsg001Command}"
+							Content="テストMsgCopy" />
+						<TextBox Width="301"
+							Height="40"
+							Margin="0,57,0,0"
+							HorizontalAlignment="Center"
+							VerticalAlignment="Top"
+							Text="{Binding TestMsg001Text}"
+							TextWrapping="Wrap" />
+						<Label Width="301"
+							Height="35"
+							Margin="0,102,0,0"
+							HorizontalAlignment="Center"
+							VerticalAlignment="Top"
+							d:Content="Label"
+							Content="{Binding TestMsg001Result}" />
+					</Grid>
+					<StackPanel Grid.Row="1"
+						Grid.Column="0"
+						Margin="0,0,0,0">
+						<GroupBox Header="ストリーミングログ">
+							<ListBox Height="260"
+								Margin="8"
+								ItemsSource="{Binding StreamMessages}">
+								<ListBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+											Text="{Binding}"
+											TextWrapping="Wrap" />
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+						</GroupBox>
+
+					</StackPanel>
+					<Grid Grid.Row="0"
+						Grid.Column="1">
+						<Button Width="160"
+							Height="40"
+							Margin="11,0,0,279"
+							HorizontalAlignment="Left"
+							VerticalAlignment="Bottom"
+							Command="{Binding TestMsg002Command}"
+							Content="テスト Version" />
+						<TextBlock Width="320"
+							Height="80"
+							Margin="11,55,0,0"
+							HorizontalAlignment="Left"
+							VerticalAlignment="Top"
+							Text="{Binding TestMsg002Result}"
+							TextWrapping="Wrap" />
+
+					</Grid>
+				</Grid>
+
+
+			</TabItem>
+		</TabControl>
+	</Grid>
+</helpers:BaseWindow>

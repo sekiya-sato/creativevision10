@@ -4,10 +4,15 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d">
-	<Border d:Height="100"
+	<Border Margin="8"
+		Padding="16"
+		d:Background="Gray"
+		d:Height="100"
 		d:Width="150"
 		Background="{Binding Background, RelativeSource={RelativeSource AncestorType=UserControl}}"
-		Style="{StaticResource DashboardCard}">
+		BorderBrush="#30FFFF"
+		BorderThickness="1"
+		CornerRadius="14">
 		<StackPanel>
 			<TextBlock d:Foreground="White"
 				d:Text="TitleSample"

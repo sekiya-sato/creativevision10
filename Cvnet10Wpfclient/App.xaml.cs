@@ -151,7 +151,7 @@ public partial class App : Application {
 					?? throw new InvalidOperationException("Connection string 'Url' is missing.");
 				var subPath = Common.ExtractSubPath(url);
 				if (!string.IsNullOrEmpty(subPath))
-					services.AddTransient<SubPathHandler>(_ => new SubPathHandler(subPath));
+					services.AddTransient<SubPatGrpchHandler>(_ => new SubPatGrpchHandler(subPath));
 
 				services.AddSingleton<SocketsHttpHandler>(_ => new SocketsHttpHandler {
 					PooledConnectionIdleTimeout = TimeSpan.FromHours(6),
@@ -167,7 +167,7 @@ public partial class App : Application {
 						.AddHttpMessageHandler<JwtAuthorizationHandler>();
 					// サブパスが定義されている時だけパイプラインに追加
 					if (!string.IsNullOrEmpty(path))
-						builder.AddHttpMessageHandler<SubPathHandler>();
+						builder.AddHttpMessageHandler<SubPatGrpchHandler>();
 					builder.ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
 				}
 				// 3. サービスの登録
