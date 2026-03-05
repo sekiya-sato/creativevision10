@@ -177,7 +177,8 @@
 						Padding="10,4,4,4"
 						Background="{DynamicResource panelColor}"
 						CornerRadius="6">
-						<TreeView x:Name="MenuTree"
+				<TreeView x:Name="MenuTree"
+					PreviewKeyDown="MenuTree_PreviewKeyDown"
 							Background="Transparent"
 							BorderThickness="0"
 							ItemContainerStyle="{StaticResource MenuTreeItemStyle}"

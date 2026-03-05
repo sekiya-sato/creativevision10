@@ -45,13 +45,21 @@ public partial class MenuData : ObservableObject {
 					Header = "ログイン",
 					AddInfo = "gRPC",
 					ViewType = typeof(LoginView),
-					IsDialog = true
+					IsDialog = true,
+					InitParam = 0
 				},
-			new MenuData {
-				Header = "環境設定",
-				AddInfo = "構成",
-				ViewType = typeof(SysSetConfigView),
-				IsDialog = true
+				new MenuData {
+					Header = "リフレッシュ",
+					AddInfo = "gRPC",
+					ViewType = typeof(LoginView),
+					IsDialog = true,
+					InitParam = 1
+				},
+				new MenuData {
+					Header = "環境設定",
+					AddInfo = "構成",
+					ViewType = typeof(SysSetConfigView),
+					IsDialog = true
 				},
 				new MenuData {
 					Header = "テスト Test20260203View ---",

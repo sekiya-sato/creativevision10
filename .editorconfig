@@ -3,7 +3,7 @@ root = true
 
 charset = utf-8
 
-# C# ファイル
+# C-sharp ファイル
 [*.cs]
 
 # 未使用の using を削除してほしくない場合(きかなかったので一旦なし 2026/02/27)
@@ -257,3 +257,10 @@ dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix = 
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+
+# XAMLファイル
+[*.xaml]
+indent_size = 4
+indent_style = tab
+tab_width = 4
