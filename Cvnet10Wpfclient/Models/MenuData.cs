@@ -35,88 +35,92 @@ public partial class MenuData : ObservableObject {
 
 	public int InitParam { get; set; }
 
-	public static ObservableCollection<MenuData> CreateDefault() => new([
-		new MenuData {
+	public static ObservableCollection<MenuData> CreateDefault() {
+		return new([
+		new () {
 			Header = "■ 管理メニュー / 接続テスト",
 			// Color = "SteelBlue",
 			IsMainMenu = true,
-			SubItems = new ObservableCollection<MenuData> {
-				new MenuData {
+			SubItems = new () {
+				new () {
 					Header = "ログイン",
 					AddInfo = "gRPC",
 					ViewType = typeof(Views._00System.LoginView),
 					IsDialog = true,
 					InitParam = 0
 				},
-				new MenuData {
+				new () {
 					Header = "リフレッシュ",
 					AddInfo = "gRPC",
 					ViewType = typeof(Views._00System.LoginView),
 					IsDialog = true,
 					InitParam = 1
 				},
-				new MenuData {
+				new () {
 					Header = "環境設定",
 					AddInfo = "構成",
 					ViewType = typeof(Views._00System.SysSetConfigView),
 					IsDialog = true
 				},
-				new MenuData {
+				new () {
 					Header = "テスト Test20260203View ---",
 					AddInfo = "gRPC",
 					ViewType = typeof(Test20260203View),
 					IsDialog = false
 				},
-				new MenuData {
+				new () {
 					Header = "サンプル画面 ---",
 					AddInfo = "gRPC",
 					ViewType = typeof(SampleView),
 					IsDialog = false
 				},
-				new MenuData {
+				new () {
 					Header = "システム管理マスタ",
 					AddInfo = "準備中",
 					ViewType = typeof(Views._01Master.MasterSysKanriMenteView),
 					IsDialog = false
 				},
-				new MenuData {
+				new () {
 					Header = "ログイン管理マスタ",
 					AddInfo = "View作成中",
 					ViewType = typeof(Views._00System.SysLoginView),
 					IsDialog = false
 				},
-				new MenuData { Header = "LOGIN履歴情報", AddInfo = "準備中" }
+				new () { Header = "LOGIN履歴情報", AddInfo = "準備中" }
 			}
 		},
-		new MenuData {
+		new () {
 			Header = "■ Master",
 			Color = "CornflowerBlue",
 			IsMainMenu = true,
-			SubItems = new ObservableCollection<MenuData> {
-				new MenuData {
+			SubItems = new () {
+				new() {
 					Header = "名称マスタメンテ",
 					AddInfo = "Generic name setup",
 					ViewType = typeof(Views._01Master.MasterMeishoMenteView),
 					IsDialog = false
 				},
-				new MenuData{
+				new() {
 					Header="社員マスタ",
 					ViewType = typeof(Views._01Master.MasterShainMenteView),
 					IsDialog = false,
 				},
-				new MenuData {
+				new() {
 					Header = "顧客マスタメンテ",
 					AddInfo = "準備中",
 					ViewType = typeof(Views._01Master.MasterEndCustomerMenteView),
 					IsDialog = false
 				},
-				new MenuData { Header = "社員LOGINマスタ", AddInfo = "準備中" }
+				new() {
+					Header="商品マスタ",
+					ViewType = typeof(Views._01Master.MasterShohinMenteView),
+					IsDialog = false,
+				},
 			}
 		},
         /* ================================ */
-		new MenuData
-				{
-					Header = "ここから下はバックアップのメニューデータ----- backupdata",
+		new() {
+			Header = "ここから下はバックアップのメニューデータ----- backupdata",
 					Icon = "/Images/menu_icon/download_icon.png",
 					IsExpand = true,
 					IsMainMenu = true,
@@ -1169,4 +1173,5 @@ public partial class MenuData : ObservableObject {
 		}
 
 	]);
+	}
 }
