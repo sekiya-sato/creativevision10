@@ -235,6 +235,7 @@ server {
     - マスターテーブル、トランザクションテーブルの作成
     - BuildMetadata をT4ファイルからソースジェネレータへ実装変更
     - 名前空間の整理、リソースの整理
+    - 3/6より、opencodeを使用。(npm i -g opencode-ai) model=Big Pikkle , LSP Serverがいい感じに効いている。
 - 2026/03/16-03/31
     - 
 
