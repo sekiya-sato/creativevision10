@@ -3,7 +3,7 @@
 ## 1. Build & Test Commands
 
 ### Build
-```bash
+```cmd /c 
 # Build entire solution
 dotnet build Cvnet10.slnx
 
@@ -13,7 +13,7 @@ dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj
 ```
 
 ### Test
-```bash
+```cmd /c 
 # Run all tests
 dotnet test
 
@@ -118,6 +118,7 @@ dotnet test --verbosity detailed
 - Do NOT start ".NET Upgrade Experience"
 - Maintain `.slnx` file structure
 - Analyze impact range before proposing refactoring
+- Must Use Windows line endings style (CR+LF) `*.cs`  `*.xaml`
 
 ---
 
@@ -126,6 +127,6 @@ dotnet test --verbosity detailed
 - **Framework:** MSTest
 - **Test Location:** `Tests.Cvnet10Server/` directory
 - **Run single test:**
-  ```bash
+  ```cmd /c
   dotnet test --filter "FullyQualifiedName~TestClassName.TestMethodName"
   ```
