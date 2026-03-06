@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Base;
+using Cvnet10Wpfclient.ViewModels.Sub;
+using Cvnet10Wpfclient.Views.Sub;
 using Cvnet10Wpfclient.ViewServices;
 
 namespace Cvnet10Wpfclient.ViewModels._01Master;
@@ -9,11 +11,18 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseMenteViewMode
 	[ObservableProperty]
 	string title = "顧客マスターメンテ";
 
+	protected override string? ListWhere => BuildRangeWhere();
 	protected override string? ListOrder => "Code";
+
+	string? rangeFromId;
+	string? rangeToId;
+	string? rangeFromCode;
+	string? rangeToCode;
+	string? rangeName;
 
 	[RelayCommand]
 	async Task Init() {
-		await DoList(CancellationToken.None);
+		// await DoList(CancellationToken.None);
 	}
 
 	protected override string GetInsertConfirmMessage() =>
@@ -37,6 +46,25 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseMenteViewMode
 		Message = $"削除しました (CD={removedItem.Code}, Id={removedItem.Id})";
 	}
 
+	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		var selWin = new SelectCodeView();
+		if (selWin.DataContext is not SelectCodeViewModel vm) {
+			return new ValueTask<bool>(true);
+		}
+		vm.Initialize(rangeFromId, rangeToId, rangeFromCode, rangeToCode, "顧客", rangeName);
+		var dialogResult = ClientLib.ShowDialogView(selWin, this, true);
+		if (dialogResult != true) {
+			return new ValueTask<bool>(false);
+		}
+		rangeFromId = string.IsNullOrWhiteSpace(vm.FromId) ? null : vm.FromId;
+		rangeToId = string.IsNullOrWhiteSpace(vm.ToId) ? null : vm.ToId;
+		rangeFromCode = string.IsNullOrWhiteSpace(vm.FromCode) ? null : vm.FromCode;
+		rangeToCode = string.IsNullOrWhiteSpace(vm.ToCode) ? null : vm.ToCode;
+		rangeName = string.IsNullOrWhiteSpace(vm.Name) ? null : vm.Name;
+		return new ValueTask<bool>(true);
+	}
+
 	[RelayCommand]
 	void DoSelectTenpo() {
 		var selWin = new Views.Sub.SelectWinView();
@@ -48,4 +76,30 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseMenteViewMode
 		CurrentEdit.Id_Tenpo = meisho?.Id ?? 0;
 		CurrentEdit.VTenpo = new() { Sid = meisho?.Id ?? 0, Cd = meisho?.Code ?? "", Mei = meisho?.Name ?? "" };
 	}
+
+	string? BuildRangeWhere() {
+		var clauses = new List<string>();
+		if (!string.IsNullOrWhiteSpace(rangeFromId)) {
+			if (long.TryParse(rangeFromId, out var fromIdVal)) {
+				clauses.Add($"Id >= {fromIdVal}");
+			}
+		}
+		if (!string.IsNullOrWhiteSpace(rangeToId)) {
+			if (long.TryParse(rangeToId, out var toIdVal)) {
+				clauses.Add($"Id <= {toIdVal}");
+			}
+		}
+		if (!string.IsNullOrWhiteSpace(rangeFromCode)) {
+			clauses.Add($"Code >= '{Escape(rangeFromCode)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(rangeToCode)) {
+			clauses.Add($"Code <= '{Escape(rangeToCode)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(rangeName)) {
+			clauses.Add($"Name LIKE '%{Escape(rangeName)}%'");
+		}
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	static string Escape(string value) => value.Replace("'", "''");
 }

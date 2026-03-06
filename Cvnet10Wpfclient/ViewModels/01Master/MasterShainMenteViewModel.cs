@@ -18,6 +18,7 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 	string? rangeToId;
 	string? rangeFromCode;
 	string? rangeToCode;
+	string? rangeName;
 
 	[RelayCommand]
 	async Task Init() {
@@ -46,11 +47,11 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 	}
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
-		var selWin = new SelectShainView();
-		if (selWin.DataContext is not SelectShainViewModel vm) {
+		var selWin = new SelectCodeView();
+		if (selWin.DataContext is not SelectCodeViewModel vm) {
 			return new ValueTask<bool>(true);
 		}
-		vm.Initialize(rangeFromId, rangeToId, rangeFromCode, rangeToCode);
+		vm.Initialize(rangeFromId, rangeToId, rangeFromCode, rangeToCode, "社員", rangeName);
 		var dialogResult = ClientLib.ShowDialogView(selWin, this, true);
 		if (dialogResult != true) {
 			return new ValueTask<bool>(false);
@@ -59,6 +60,7 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 		rangeToId = string.IsNullOrWhiteSpace(vm.ToId) ? null : vm.ToId;
 		rangeFromCode = string.IsNullOrWhiteSpace(vm.FromCode) ? null : vm.FromCode;
 		rangeToCode = string.IsNullOrWhiteSpace(vm.ToCode) ? null : vm.ToCode;
+		rangeName = string.IsNullOrWhiteSpace(vm.Name) ? null : vm.Name;
 		return new ValueTask<bool>(true);
 	}
 
@@ -102,6 +104,9 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 		}
 		if (!string.IsNullOrWhiteSpace(rangeToCode)) {
 			clauses.Add($"Code <= '{Escape(rangeToCode)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(rangeName)) {
+			clauses.Add($"Name LIKE '%{Escape(rangeName)}%'");
 		}
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
