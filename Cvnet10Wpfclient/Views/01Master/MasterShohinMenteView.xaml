@@ -51,7 +51,7 @@
 					Margin="120,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
 					Command="{Binding DoListCommand}"
 					Content="一覧取得 F5" />
-				<Button Width="110" Height="30"
+				<Button Width="130" Height="30"
 					Margin="240,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
 					Command="{Binding DoOutputJsonCommand}"
 					Content="JSON出力 F6" />
@@ -83,10 +83,10 @@
 					Style="{StaticResource MaterialDesignDataGrid}"
 					VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 					<DataGrid.Columns>
-						<DataGridTextColumn Width="100"
+						<DataGridTextColumn Width="140"
 							Binding="{Binding Code}"
 							Header="コード" />
-						<DataGridTextColumn Width="200"
+						<DataGridTextColumn Width="240"
 							Binding="{Binding Name}"
 							Header="名前" />
 						<DataGridTextColumn Width="150"

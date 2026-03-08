@@ -42,13 +42,15 @@ public sealed class QueryListParam {
 	public string? Order { get; }
 	public string[] Parameters { get; }
 	public Type ItemType { get; }
+	public int? MaxCount { get; }
 	public string AddWhereOrder() {
 		var retstr =
 			(!string.IsNullOrWhiteSpace(Where) ? $" where {Where}" : string.Empty) +
-		(!string.IsNullOrWhiteSpace(Order) ? $" order by {Order}" : string.Empty);
+		(!string.IsNullOrWhiteSpace(Order) ? $" order by {Order}" : string.Empty) +
+		(MaxCount.HasValue && MaxCount.Value > 0 ? $" limit {MaxCount.Value}" : string.Empty);
 		return retstr;
 	}
-	public QueryListParam(Type itemType, string? where = null, string? order = null, string[]? parameters = null) {
+	public QueryListParam(Type itemType, string? where = null, string? order = null, string[]? parameters = null, int? maxCount = null) {
 		Where = where;
 		Order = order;
 		if (parameters != null)
@@ -56,6 +58,7 @@ public sealed class QueryListParam {
 		else
 			Parameters = Array.Empty<string>();
 		ItemType = itemType;
+		MaxCount = maxCount;
 	}
 
 }

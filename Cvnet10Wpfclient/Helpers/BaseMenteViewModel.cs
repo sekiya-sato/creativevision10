@@ -54,6 +54,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected virtual Type Tabletype => typeof(T);
 	protected virtual string? ListWhere => null;
 	protected virtual string? ListOrder => null;
+	protected virtual int? ListMaxCount => null;
 
 	protected virtual string[]? ListParams => null;
 
@@ -110,7 +111,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 					itemType: Tabletype,
 					where: ListWhere,
 					order: ListOrder,
-					parameters: ListParams
+					parameters: ListParams,
+					maxCount: ListMaxCount
 				))
 			};
 

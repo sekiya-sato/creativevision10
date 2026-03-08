@@ -19,6 +19,9 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 	string? rangeFromCode;
 	string? rangeToCode;
 	string? rangeName;
+	string? rangeMaxCount;
+
+	protected override int? ListMaxCount => string.IsNullOrWhiteSpace(rangeMaxCount) ? null : int.TryParse(rangeMaxCount, out var mc) ? mc : null;
 
 	[RelayCommand]
 	async Task Init() {
@@ -61,6 +64,7 @@ public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<Mast
 		rangeFromCode = string.IsNullOrWhiteSpace(vm.FromCode) ? null : vm.FromCode;
 		rangeToCode = string.IsNullOrWhiteSpace(vm.ToCode) ? null : vm.ToCode;
 		rangeName = string.IsNullOrWhiteSpace(vm.Name) ? null : vm.Name;
+		rangeMaxCount = string.IsNullOrWhiteSpace(vm.MaxCount) ? null : vm.MaxCount;
 		return new ValueTask<bool>(true);
 	}
 

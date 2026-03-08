@@ -23,13 +23,17 @@ public partial class SelectCodeViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	string name = string.Empty;
 
-	public void Initialize(string? fromId, string? toId, string? fromCode, string? toCode, string? cdName, string? name) {
+	[ObservableProperty]
+	string maxCount = string.Empty;
+
+	public void Initialize(string? fromId, string? toId, string? fromCode, string? toCode, string? cdName, string? name, string? maxCount = null) {
 		FromId = fromId?.Trim() ?? string.Empty;
 		ToId = toId?.Trim() ?? string.Empty;
 		FromCode = fromCode?.Trim() ?? string.Empty;
 		ToCode = toCode?.Trim() ?? "99999999";
 		CdName = cdName?.Trim() ?? "社員";
 		Name = name?.Trim() ?? string.Empty;
+		MaxCount = maxCount?.Trim() ?? string.Empty;
 	}
 
 	[RelayCommand]

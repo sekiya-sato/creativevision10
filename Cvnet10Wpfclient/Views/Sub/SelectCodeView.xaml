@@ -27,12 +27,13 @@
 			Background="{DynamicResource MaterialDesignPaper}"
 			CornerRadius="6">
 			<Grid Margin="8">
-				<Grid.RowDefinitions>
-					<RowDefinition Height="Auto" />
-					<RowDefinition Height="Auto" />
-					<RowDefinition Height="Auto" />
-					<RowDefinition Height="Auto" />
-				</Grid.RowDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="150" />
 					<ColumnDefinition Width="160" />
@@ -88,11 +89,24 @@
 					FontSize="16"
 					Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
-				<TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6"
-					Margin="0,12,0,0"
-					Foreground="Gray"
-					Text="{Binding CdName, StringFormat={}範囲を指定しない場合、すべての{0}が対象になります。}"
-					TextWrapping="Wrap" />
+			<TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6"
+				Margin="0,12,0,0"
+				Foreground="Gray"
+				Text="{Binding CdName, StringFormat={}範囲を指定しない場合、すべての{0}が対象になります。}"
+				TextWrapping="Wrap" />
+
+			<TextBlock Grid.Row="4" Grid.Column="0"
+				VerticalAlignment="Center"
+				FontWeight="SemiBold"><Run Language="ja-jp" Text="件数" /></TextBlock>
+			<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
+				Height="36"
+				Margin="4,4,4,4" VerticalContentAlignment="Center"
+				FontSize="16"
+				Text="{Binding MaxCount, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="3"
+				VerticalAlignment="Center"
+				Foreground="Gray"
+				Text="(空白:全件取得)" />
 
 			</Grid>
 		</Border>
