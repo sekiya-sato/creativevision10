@@ -48,8 +48,7 @@
 					FontWeight="SemiBold"><Run Language="ja-jp" Text="Id" /></TextBlock>
 				<TextBox Grid.Row="0" Grid.Column="1"
 					Height="36"
-					Margin="4,4,4,4" VerticalContentAlignment="Center"
-					HorizontalContentAlignment="Right"
+					Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 					FontSize="16"
 					Text="{Binding Parameter.FromId, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -58,8 +57,7 @@
 					FontWeight="SemiBold"><Run Language="ja-jp" Text="-" /></TextBlock>
 				<TextBox Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2"
 					Height="36"
-					Margin="4,4,0,4" VerticalContentAlignment="Center"
-					HorizontalContentAlignment="Right"
+					Margin="4,4,0,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 					FontSize="16"
 					Text="{Binding Parameter.ToId, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -102,8 +100,7 @@
 					FontWeight="SemiBold"><Run Language="ja-jp" Text="件数" /></TextBlock>
 				<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
 					Height="36"
-					Margin="4,4,4,4" VerticalContentAlignment="Center"
-					HorizontalContentAlignment="Right"
+					Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 					FontSize="16"
 					Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
 				<TextBlock Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="3"
