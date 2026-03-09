@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Cvnet10Asset;
 using Cvnet10Base;
+using Cvnet10Wpfclient.Helpers;
 using Cvnet10Wpfclient.ViewServices;
 using System.Collections.ObjectModel;
 
@@ -21,17 +22,17 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 	string Where = string.Empty;
 	string Order = string.Empty;
 	string[] Parameters = [];
+	long StartPos = 0;
 
 
 	[RelayCommand]
 	async Task Init(CancellationToken ct) {
-		await InitList(ct, MyType, Kubun);
+		await InitList(ct);
 	}
 
-	async Task InitList(CancellationToken ct, Type type, string kubun = "", long limit = 999999) {
+	async Task InitList(CancellationToken ct) {
 		try {
 			ct.ThrowIfCancellationRequested();
-			MyType = type;
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
 				Code = 0,
@@ -50,8 +51,10 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 			if (list != null) {
 				ListData = new ObservableCollection<dynamic>(list.Cast<dynamic>());
 				Count = ListData.Count;
-				Current = ListData.FirstOrDefault() ?? new MasterMeisho();
-				WeakReferenceMessenger.Default.Send(new Helpers.SelectItemMessage(InitParam));
+				Current = StartPos != 0
+					? ListData.FirstOrDefault(x => x.Id == StartPos) ?? ListData.FirstOrDefault() ?? new MasterMeisho()
+					: ListData.FirstOrDefault() ?? new MasterMeisho();
+				WeakReferenceMessenger.Default.Send(new SelectItemMessage(StartPos));
 			}
 		}
 		catch (Exception ex) {
@@ -78,11 +81,12 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 			MessageEx.ShowWarningDialog(message: "選択されていません", owner: ClientLib.GetActiveView(this));
 	}
 
-	public void SetParam(Type? type0 = null, string where = "", string order = "", string[]? parameters = null) {
+	public void SetParam(Type? type0 = null, string where = "", string order = "", string[]? parameters = null, long startPos = 0, long id = 0) {
 		MyType = type0 ?? typeof(string);
 		Where = where;
 		Order = order;
 		Parameters = parameters ?? [];
+		StartPos = id != 0 ? id : startPos;
 	}
 	[RelayCommand]
 	public void Exit() {
