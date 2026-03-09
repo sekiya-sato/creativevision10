@@ -77,7 +77,7 @@
 			<Grid Grid.Row="2" Grid.Column="0">
 				<DataGrid x:Name="ShainGrid"
 					d:ItemsSource="{d:SampleData ItemCount=5}"
-					helpers:DataGridScrollAssistant.AutoScrollToSelectedItem="True" AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
 					HorizontalGridLinesBrush="White" IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
 					ItemsSource="{Binding ListData}"
 					SelectedItem="{Binding Current}"

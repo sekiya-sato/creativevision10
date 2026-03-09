@@ -108,7 +108,7 @@
 				Grid.Column="0">
 				<DataGrid x:Name="MeishoGrid"
 					d:ItemsSource="{d:SampleData ItemCount=5}"
-					helpers:DataGridScrollAssistant.AutoScrollToSelectedItem="True"
+					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True"
 					AutoGenerateColumns="False"
 					EnableRowVirtualization="True"
 					FrozenColumnCount="2"

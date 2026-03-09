@@ -51,7 +51,7 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 				ListData = new ObservableCollection<dynamic>(list.Cast<dynamic>());
 				Count = ListData.Count;
 				Current = ListData.FirstOrDefault() ?? new MasterMeisho();
-				WeakReferenceMessenger.Default.Send(new Helpers.ChangeSelectMsg(InitParam));
+				WeakReferenceMessenger.Default.Send(new Helpers.SelectItemMessage(InitParam));
 			}
 		}
 		catch (Exception ex) {

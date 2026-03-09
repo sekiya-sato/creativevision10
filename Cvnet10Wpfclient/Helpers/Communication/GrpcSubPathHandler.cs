@@ -5,10 +5,10 @@ namespace Cvnet10Wpfclient.Helpers;
 /// <summary>
 /// gRPCサーバ側でサブパスが必要な場合に、クライアント側のリクエストURIを適切に書き換えるためのハンドラー
 /// </summary>
-public class SubPatGrpchHandler : DelegatingHandler {
+public sealed class GrpcSubPathHandler : DelegatingHandler {
 	private readonly string _subPath;
 
-	public SubPatGrpchHandler(string subPath) {
+	public GrpcSubPathHandler(string subPath) {
 		_subPath = "/" + subPath.Trim('/');
 	}
 

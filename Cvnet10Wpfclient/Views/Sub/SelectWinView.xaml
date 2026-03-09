@@ -65,7 +65,7 @@
 					d:ItemsSource="{d:SampleData ItemCount=5}"
 					helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
 					helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=DefaultButton}"
-					helpers:DataGridLongMsgFocus.IsEnabled="True" AutoGenerateColumns="False" FrozenColumnCount="2" HorizontalScrollBarVisibility="Hidden" IsReadOnly="True"
+					helpers:DataGridSelectionBehavior.FocusOnSelectionMessage="True" AutoGenerateColumns="False" FrozenColumnCount="2" HorizontalScrollBarVisibility="Hidden" IsReadOnly="True"
 					IsSynchronizedWithCurrentItem="True"
 					ItemsSource="{Binding ListData}"
 					RowHeight="35"
