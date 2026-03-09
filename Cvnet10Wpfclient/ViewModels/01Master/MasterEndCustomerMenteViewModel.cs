@@ -11,7 +11,7 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseMenteViewMode
 	[ObservableProperty]
 	string title = "顧客マスターメンテ";
 
-	protected override string? ListWhere => BuildRangeWhere();
+	protected override string? ListWhere => BuildSelectCodeWhere(selectCodeParam);
 	protected override string? ListOrder => "Code";
 
 	SelectCodeParameter? selectCodeParam;
@@ -46,25 +46,10 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseMenteViewMode
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
-		var selWin = new SelectCodeView();
-		if (selWin.DataContext is not SelectCodeViewModel vm) {
-			return new ValueTask<bool>(true);
-		}
-		selectCodeParam ??= new SelectCodeParameter { DisplayName = "顧客" };
-		vm.Initialize(selectCodeParam);
-		var dialogResult = ClientLib.ShowDialogView(selWin, this, true);
-		if (dialogResult != true) {
+		if (!TryShowSelectCodeDialog(selectCodeParam, "顧客", out var parameter)) {
 			return new ValueTask<bool>(false);
 		}
-		selectCodeParam = new SelectCodeParameter {
-			FromId = vm.Parameter.FromId,
-			ToId = vm.Parameter.ToId,
-			FromCode = string.IsNullOrWhiteSpace(vm.Parameter.FromCode) ? null : vm.Parameter.FromCode,
-			ToCode = string.IsNullOrWhiteSpace(vm.Parameter.ToCode) ? null : vm.Parameter.ToCode,
-			Name = string.IsNullOrWhiteSpace(vm.Parameter.Name) ? null : vm.Parameter.Name,
-			MaxCount = vm.Parameter.MaxCount,
-			DisplayName = vm.Parameter.DisplayName
-		};
+		selectCodeParam = parameter;
 		return new ValueTask<bool>(true);
 	}
 
@@ -80,26 +65,4 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseMenteViewMode
 		CurrentEdit.VTenpo = new() { Sid = meisho?.Id ?? 0, Cd = meisho?.Code ?? "", Mei = meisho?.Name ?? "" };
 	}
 
-	string? BuildRangeWhere() {
-		if (selectCodeParam == null) return null;
-		var clauses = new List<string>();
-		if (selectCodeParam.FromId.HasValue) {
-			clauses.Add($"Id >= {selectCodeParam.FromId.Value}");
-		}
-		if (selectCodeParam.ToId.HasValue) {
-			clauses.Add($"Id <= {selectCodeParam.ToId.Value}");
-		}
-		if (!string.IsNullOrWhiteSpace(selectCodeParam.FromCode)) {
-			clauses.Add($"Code >= '{Escape(selectCodeParam.FromCode)}'");
-		}
-		if (!string.IsNullOrWhiteSpace(selectCodeParam.ToCode)) {
-			clauses.Add($"Code <= '{Escape(selectCodeParam.ToCode)}'");
-		}
-		if (!string.IsNullOrWhiteSpace(selectCodeParam.Name)) {
-			clauses.Add($"Name LIKE '%{Escape(selectCodeParam.Name)}%'");
-		}
-		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
-	}
-
-	static string Escape(string value) => value.Replace("'", "''");
 }

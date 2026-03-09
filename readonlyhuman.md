@@ -238,7 +238,11 @@ server {
     - 3/6より、opencodeを使用。 model=Big Pikkle , LSP Serverがいい感じに効いている。ローカルLLMのollamaは重すぎる。
         winget install npm; npm i -g opencode-ai; winget install ollama; ollama list => qwen2.5-coder:latest,gemma3:1b              
 - 2026/03/16-03/31
-    - 
+    - SelectWinView, SelectCodeViewのコードのクリーンアップ、軽微なバグ修正 同じGPT-5.4 でVSのGitHubCopilot と OpenCodeの両方を併用、OpenCodeのほうが早く理解度が高い。
+
+
+
+
 
 # ToDo 残作業 VSタスク一覧(TODO: 実装予定の処理 // HACK:問題がある可能性のあるコード、バグ回避のため仕方なくした実装など // UNDONE:未完了の処理 )
 

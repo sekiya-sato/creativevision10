@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
+using Cvnet10Wpfclient.ViewModels.Sub;
 
 namespace Cvnet10Wpfclient.Helpers;
 
@@ -57,9 +58,10 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected virtual int? ListMaxCount => null;
 
 	protected virtual string[]? ListParams => null;
+	protected virtual Window? ActiveWindow => ClientLib.GetActiveView(this);
 
 	protected virtual bool ConfirmAction(string message) =>
-		MessageEx.ShowQuestionDialog(message, owner: ClientLib.GetActiveView(this)) == MessageBoxResult.Yes;
+		MessageEx.ShowQuestionDialog(message, owner: ActiveWindow) == MessageBoxResult.Yes;
 
 	protected virtual string GetInsertConfirmMessage() => "追加しますか？";
 	protected virtual string GetUpdateConfirmMessage() => "修正しますか？";
@@ -86,6 +88,96 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected virtual void AfterUpdate(T item) { }
 	protected virtual void AfterDelete(T removedItem) { }
 
+	protected virtual QueryListParam CreateListQueryParam() =>
+		new(
+			itemType: Tabletype,
+			where: ListWhere,
+			order: ListOrder,
+			parameters: ListParams,
+			maxCount: ListMaxCount
+		);
+
+	protected virtual CvnetMsg CreateExecuteMessage(object parameter, Type dataType) =>
+		new() {
+			Code = 0,
+			Flag = CvnetFlag.Msg201_Op_Execute,
+			DataType = dataType,
+			DataMsg = Common.SerializeObject(parameter)
+		};
+
+	protected virtual ValueTask<CvnetMsg> SendMessageAsync(CvnetMsg message, CancellationToken ct) {
+		var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+		return new ValueTask<CvnetMsg>(coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct)));
+	}
+
+	protected virtual bool HasExecuteError(CvnetMsg reply, string actionName) {
+		if (reply.Code >= 0) {
+			return false;
+		}
+
+		var detail = reply.Code < -9000 ? reply.Option : reply.DataMsg;
+		MessageEx.ShowErrorDialog($"{actionName}エラー: {detail} ({reply.Code})", owner: ActiveWindow);
+		return true;
+	}
+
+	protected virtual bool TryShowSelectCodeDialog(SelectCodeParameter? currentParameter, string displayName, out SelectCodeParameter parameter) {
+		var selWin = new Views.Sub.SelectCodeView();
+		if (selWin.DataContext is not SelectCodeViewModel vm) {
+			parameter = currentParameter ?? new SelectCodeParameter { DisplayName = displayName };
+			return true;
+		}
+
+		vm.Initialize(currentParameter ?? new SelectCodeParameter { DisplayName = displayName });
+		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
+			parameter = vm.Parameter;
+			return false;
+		}
+
+		parameter = NormalizeSelectCodeParameter(vm.Parameter, displayName);
+		return true;
+	}
+
+	protected virtual SelectCodeParameter NormalizeSelectCodeParameter(SelectCodeParameter? parameter, string? displayName = null) =>
+		new() {
+			FromId = parameter?.FromId,
+			ToId = parameter?.ToId,
+			FromCode = NormalizeNullableText(parameter?.FromCode),
+			ToCode = NormalizeNullableText(parameter?.ToCode),
+			Name = NormalizeNullableText(parameter?.Name),
+			MaxCount = parameter?.MaxCount,
+			DisplayName = NormalizeNullableText(parameter?.DisplayName) ?? displayName
+		};
+
+	protected virtual string? BuildSelectCodeWhere(SelectCodeParameter? parameter) {
+		if (parameter == null) {
+			return null;
+		}
+
+		List<string> clauses = [];
+		if (parameter.FromId.HasValue) {
+			clauses.Add($"Id >= {parameter.FromId.Value}");
+		}
+		if (parameter.ToId.HasValue) {
+			clauses.Add($"Id <= {parameter.ToId.Value}");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.FromCode)) {
+			clauses.Add($"Code >= '{EscapeSqlLiteral(parameter.FromCode)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.ToCode)) {
+			clauses.Add($"Code <= '{EscapeSqlLiteral(parameter.ToCode)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
+			clauses.Add($"Name LIKE '%{EscapeSqlLiteral(parameter.Name)}%'");
+		}
+
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	protected static string? NormalizeNullableText(string? value) =>
+		string.IsNullOrWhiteSpace(value) ? null : value;
+
+	protected static string EscapeSqlLiteral(string value) => value.Replace("'", "''");
+
 	/// <summary>
 	/// 一覧取得
 	/// </summary>
@@ -102,21 +194,14 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		StartTime = DateTime.Now;
 		try {
 			ClientLib.Cursor2Wait();
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
 				Code = 0,
 				Flag = CvnetFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListParam),
-				DataMsg = Common.SerializeObject(new QueryListParam(
-					itemType: Tabletype,
-					where: ListWhere,
-					order: ListOrder,
-					parameters: ListParams,
-					maxCount: ListMaxCount
-				))
+				DataMsg = Common.SerializeObject(CreateListQueryParam())
 			};
 
-			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+			var reply = await SendMessageAsync(msg, ct);
 
 			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
 				ListData = new ObservableCollection<T>(list.Cast<T>());
@@ -133,7 +218,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 		catch (Exception ex) {
 			Message = $"データ取得失敗: {ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
 		finally {
 			ClientLib.Cursor2Normal();
@@ -151,22 +236,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		try {
 			ct.ThrowIfCancellationRequested();
 
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
-			var msg = new CvnetMsg {
-				Code = 0,
-				Flag = CvnetFlag.Msg201_Op_Execute,
-				DataType = typeof(InsertParam),
-				DataMsg = Common.SerializeObject(CreateInsertParam())
-			};
-
-			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-			if (reply.Code < 0) {
-				if (reply.Code < -9000) {
-					MessageEx.ShowErrorDialog($"追加エラー: {reply.Option} ({reply.Code})", owner: ClientLib.GetActiveView(this));
-				}
-				else {
-					MessageEx.ShowErrorDialog($"追加エラー: {reply.DataMsg} ({reply.Code})", owner: ClientLib.GetActiveView(this));
-				}
+			var reply = await SendMessageAsync(CreateExecuteMessage(CreateInsertParam(), typeof(InsertParam)), ct);
+			if (HasExecuteError(reply, "追加")) {
 				return;
 			}
 			var item = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as T;
@@ -184,7 +255,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 		catch (Exception ex) {
 			Message = $"追加失敗: {ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
 	}
 	/// <summary>
@@ -200,22 +271,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		try {
 			ct.ThrowIfCancellationRequested();
 
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
-			var msg = new CvnetMsg {
-				Code = 0,
-				Flag = CvnetFlag.Msg201_Op_Execute,
-				DataType = typeof(UpdateParam),
-				DataMsg = Common.SerializeObject(CreateUpdateParam())
-			};
-
-			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-			if (reply.Code < 0) {
-				if (reply.Code < -9000) {
-					MessageEx.ShowErrorDialog($"修正エラー: {reply.Option} ({reply.Code})", owner: ClientLib.GetActiveView(this));
-				}
-				else {
-					MessageEx.ShowErrorDialog($"修正エラー: {reply.DataMsg} ({reply.Code})", owner: ClientLib.GetActiveView(this));
-				}
+			var reply = await SendMessageAsync(CreateExecuteMessage(CreateUpdateParam(), typeof(UpdateParam)), ct);
+			if (HasExecuteError(reply, "修正")) {
 				return;
 			}
 
@@ -231,7 +288,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 		catch (Exception ex) {
 			Message = $"修正失敗: {ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
 	}
 	/// <summary>
@@ -242,7 +299,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	[RelayCommand(IncludeCancelCommand = true)]
 	protected async Task DoDelete(CancellationToken ct) {
 		if (!CanDelete()) {
-			MessageEx.ShowWarningDialog("削除対象を選択してください", owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowWarningDialog("削除対象を選択してください", owner: ActiveWindow);
 			return;
 		}
 
@@ -251,22 +308,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		try {
 			ct.ThrowIfCancellationRequested();
 
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
-			var msg = new CvnetMsg {
-				Code = 0,
-				Flag = CvnetFlag.Msg201_Op_Execute,
-				DataType = typeof(DeleteParam),
-				DataMsg = Common.SerializeObject(CreateDeleteParam())
-			};
-
-			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-			if (reply.Code < 0) {
-				if (reply.Code < -9000) {
-					MessageEx.ShowErrorDialog($"削除エラー: {reply.Option} ({reply.Code})", owner: ClientLib.GetActiveView(this));
-				}
-				else {
-					MessageEx.ShowErrorDialog($"削除エラー: {reply.DataMsg} ({reply.Code})", owner: ClientLib.GetActiveView(this));
-				}
+			var reply = await SendMessageAsync(CreateExecuteMessage(CreateDeleteParam(), typeof(DeleteParam)), ct);
+			if (HasExecuteError(reply, "削除")) {
 				return;
 			}
 
@@ -287,7 +330,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 		catch (Exception ex) {
 			Message = $"削除失敗：{ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
 	}
 
@@ -303,7 +346,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			DefaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
 		};
 
-		if (dialog.ShowDialog(ClientLib.GetActiveView(this)) != true) return;
+		if (dialog.ShowDialog(ActiveWindow) != true) return;
 
 		ct.ThrowIfCancellationRequested();
 		await File.WriteAllTextAsync(dialog.FileName, outstr, ct);
