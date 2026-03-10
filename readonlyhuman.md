@@ -156,6 +156,7 @@ GitHub Actions のワークフロー定義ファイル(.yml): .github\workflows\
 
 Enterでプロンプト実行、ctr+Enterで改行
 /sessions でセッション一覧 ctrl+Dで削除マーク、再度ctrl+Dで削除
+(MVVM tool ctl+E,Q で切り替え)
 
 
 

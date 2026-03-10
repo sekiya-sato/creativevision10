@@ -120,37 +120,33 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 	}
 
 	[RelayCommand]
-	void DoSelectCol(MasterShohinColSiz? target) {
-		target ??= SelectedJcolsiz;
-		if (target == null) return;
+	void DoSelectCol(long? id) {
 
 		var selWin = new Views.Sub.SelectWinView();
 		var vm = selWin.DataContext as Sub.SelectWinViewModel;
 		if (vm == null) return;
-		vm.SetParam(typeof(MasterMeisho), "Kubun='COL'", "Code", startPos: target.Id_Col);
+		vm.SetParam(typeof(MasterMeisho), "Kubun='COL'", "Code", startPos: SelectedJcolsiz?.Id_Col ?? 0);
 		if (ClientLib.ShowDialogView(selWin, this) != true) return;
 		var meisho = vm.Current as MasterMeisho;
-		if (meisho == null) return;
-		target.Id_Col = meisho.Id;
-		target.Code_Col = meisho.Code ?? "";
-		target.Mei_Col = meisho.Name ?? "";
+		if (meisho == null || SelectedJcolsiz == null) return;
+		SelectedJcolsiz.Id_Col = meisho.Id;
+		SelectedJcolsiz.Code_Col = meisho.Code ?? "";
+		SelectedJcolsiz.Mei_Col = meisho.Name ?? "";
 	}
 
 	[RelayCommand]
-	void DoSelectSiz(MasterShohinColSiz? target) {
-		target ??= SelectedJcolsiz;
-		if (target == null) return;
+	void DoSelectSiz(long? id) {
 
 		var sizeKu = (CurrentEdit.SizeKu ?? string.Empty).Replace("'", "''");
 		var selWin = new Views.Sub.SelectWinView();
 		var vm = selWin.DataContext as Sub.SelectWinViewModel;
 		if (vm == null) return;
-		vm.SetParam(typeof(MasterMeisho), $"Kubun='{sizeKu}'", "Code", startPos: target.Id_Siz);
+		vm.SetParam(typeof(MasterMeisho), $"Kubun='{sizeKu}'", "Code", startPos: SelectedJcolsiz?.Id_Siz ?? 0);
 		if (ClientLib.ShowDialogView(selWin, this) != true) return;
 		var meisho = vm.Current as MasterMeisho;
-		if (meisho == null) return;
-		target.Id_Siz = meisho.Id;
-		target.Code_Siz = meisho.Code ?? "";
-		target.Mei_Siz = meisho.Name ?? "";
+		if (meisho == null || SelectedJcolsiz == null) return;
+		SelectedJcolsiz.Id_Siz = meisho.Id;
+		SelectedJcolsiz.Code_Siz = meisho.Code ?? "";
+		SelectedJcolsiz.Mei_Siz = meisho.Name ?? "";
 	}
 }
