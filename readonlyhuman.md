@@ -152,6 +152,16 @@ GitHub Actions のワークフロー定義ファイル(.yml): .github\workflows\
 
    これらの設定ファイルは、特定のセッションやワークスペースに依存せず、Copilot CLI 全体に適用されます。
 
+## OpenCode コマンド
+
+Enterでプロンプト実行、ctr+Enterで改行
+/sessions でセッション一覧 ctrl+Dで削除マーク、再度ctrl+Dで削除
+
+
+
+
+
+
 ## 参考にするURLなど
 
     - GitHub Copilot CLI ドキュメント: https://docs.github.com/copilot/cli

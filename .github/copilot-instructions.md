@@ -13,7 +13,7 @@ You are a Senior Software Engineer and Solution Architect. Your goal is to suppo
 - **Solution File**: `Cvnet10.slnx` (Strictly prohibited to use or generate old `.sln` files)
 - **Build Server Project**: dotnet build Cvnet10Server/Cvnet10Server.csproj
 - **Build Client Project (Windows OS)**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj
-- **Build Client Project (Linux OS)**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true
+- **Build Client Project (Linux OS/WSL2)**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false
 - **[CRITICAL]**: Do not start ".net upgrade experience"
 
 ## 3. Frameworks & Libraries

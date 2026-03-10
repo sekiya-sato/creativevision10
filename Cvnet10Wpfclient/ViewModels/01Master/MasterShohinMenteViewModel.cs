@@ -15,6 +15,9 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 
 	SelectParameter? selectCodeParam;
 
+	[ObservableProperty]
+	MasterShohinColSiz? selectedJcolsiz;
+
 	protected override int? ListMaxCount => selectCodeParam?.MaxCount;
 
 	[RelayCommand]
@@ -114,5 +117,40 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 		if (tokui == null) return;
 		CurrentEdit.Id_Soko = tokui?.Id ?? 0;
 		CurrentEdit.VSoko = new() { Sid = tokui?.Id ?? 0, Cd = tokui?.Code ?? "", Mei = tokui?.Name ?? "" };
+	}
+
+	[RelayCommand]
+	void DoSelectCol(MasterShohinColSiz? target) {
+		target ??= SelectedJcolsiz;
+		if (target == null) return;
+
+		var selWin = new Views.Sub.SelectWinView();
+		var vm = selWin.DataContext as Sub.SelectWinViewModel;
+		if (vm == null) return;
+		vm.SetParam(typeof(MasterMeisho), "Kubun='COL'", "Code", startPos: target.Id_Col);
+		if (ClientLib.ShowDialogView(selWin, this) != true) return;
+		var meisho = vm.Current as MasterMeisho;
+		if (meisho == null) return;
+		target.Id_Col = meisho.Id;
+		target.Code_Col = meisho.Code ?? "";
+		target.Mei_Col = meisho.Name ?? "";
+	}
+
+	[RelayCommand]
+	void DoSelectSiz(MasterShohinColSiz? target) {
+		target ??= SelectedJcolsiz;
+		if (target == null) return;
+
+		var sizeKu = (CurrentEdit.SizeKu ?? string.Empty).Replace("'", "''");
+		var selWin = new Views.Sub.SelectWinView();
+		var vm = selWin.DataContext as Sub.SelectWinViewModel;
+		if (vm == null) return;
+		vm.SetParam(typeof(MasterMeisho), $"Kubun='{sizeKu}'", "Code", startPos: target.Id_Siz);
+		if (ClientLib.ShowDialogView(selWin, this) != true) return;
+		var meisho = vm.Current as MasterMeisho;
+		if (meisho == null) return;
+		target.Id_Siz = meisho.Id;
+		target.Code_Siz = meisho.Code ?? "";
+		target.Mei_Siz = meisho.Name ?? "";
 	}
 }
