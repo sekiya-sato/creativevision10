@@ -70,17 +70,22 @@ public partial class MenuData : ObservableObject {
 				},
 				new () {
 					Header = "システム管理マスタ",
-					AddInfo = "準備中",
+					AddInfo = "gRPC",
 					ViewType = typeof(Views._01Master.MasterSysKanriMenteView),
 					IsDialog = false
 				},
 				new () {
 					Header = "ログイン管理マスタ",
-					AddInfo = "View作成中",
+					AddInfo = "gRPC",
 					ViewType = typeof(Views._00System.SysLoginView),
 					IsDialog = false
 				},
-				new () { Header = "LOGIN履歴情報", AddInfo = "準備中" }
+				new () {
+					Header = "LOGIN履歴情報",
+					AddInfo = "gRPC",
+					ViewType = typeof(Views._00System.SysLoginHistoryView),
+					IsDialog = false
+				},
 			}
 		},
 		new () {

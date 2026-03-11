@@ -1,9 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CodeShare;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Wpfclient.Services;
 using Cvnet10Wpfclient.ViewServices;
 using Microsoft.Extensions.Configuration;
-using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels._00System;
 
@@ -26,11 +26,12 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private void Init() {
 		LoadSettings();
 	}
+	/*
 	protected override void OnExit() {
 		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) == MessageBoxResult.Yes) {
 			ExitWithResultFalse();
 		}
-	}
+	}*/
 
 
 	[RelayCommand(IncludeCancelCommand = true)]
@@ -75,4 +76,23 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		LoginPassword = _currentSettings.Parameters.LoginPass ?? AppGlobal.Config.GetSection("Parameters")?["LoginPass"] ?? string.Empty;
 		_originalUrl = Url;
 	}
+
+	[ObservableProperty]
+	string testMessage = string.Empty;
+
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task Test01(CancellationToken ct) {
+		var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg001_CopyReply };
+		msg.DataType = typeof(string);
+		msg.DataMsg = $"{DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}";
+		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+		TestMessage = reply.DataMsg;
+	}
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task Test02(CancellationToken ct) {
+		throw new NotImplementedException("テスト未実装例外");
+	}
+
+
 }

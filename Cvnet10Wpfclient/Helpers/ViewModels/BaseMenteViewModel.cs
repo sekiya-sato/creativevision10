@@ -209,8 +209,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 				Current = ListData.FirstOrDefault() ?? new T();
 				AfterList(list);
 			}
-
 			GetListTime = DateTime.Now - StartTime;
+			Message = $"{StartTime.ToDtStrDateTime().Substring(5)} 取得、画面展開{GetListTime.ToStrSpan()}";
 		}
 		catch (OperationCanceledException cancel) {
 			Message = $"Cancelエラー：{cancel.Message}";

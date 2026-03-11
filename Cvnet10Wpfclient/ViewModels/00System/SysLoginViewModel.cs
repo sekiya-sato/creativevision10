@@ -17,6 +17,7 @@ internal partial class SysLoginViewModel : Helpers.BaseMenteViewModel<SysLogin> 
 
 	[RelayCommand]
 	public async Task Init() {
+		await DoList(CancellationToken.None);
 	}
 
 	protected override bool ConfirmAction(string message) =>

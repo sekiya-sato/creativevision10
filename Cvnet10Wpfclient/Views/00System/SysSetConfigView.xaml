@@ -68,17 +68,24 @@
 							Content="キャンセル" IsCancel="True"
 							Style="{StaticResource MaterialDesignOutlinedButton}" />
 					</Grid>
-					<Button Width="100" Height="43"
-						Margin="20,60,20,0"
-						Command="{Binding Test01Command}"
-						Content="Test01" />
-					<Button Width="100" Height="43"
-						Margin="20,10,20,30"
-						Command="{Binding Test02Command}"
-						Content="Test02" />
 				</StackPanel>
 			</Border>
 		</TabItem>
-		<TabItem Header="その他" />
+		<TabItem Header="その他">
+			<Grid>
+				<StackPanel>
+					<Button Width="100" Height="43"
+						Margin="20"
+						Command="{Binding Test01Command}"
+						Content="Test01" />
+					<TextBlock Margin="100"
+						Text="{Binding TestMessage}" />
+					<Button Width="100" Height="43"
+						Margin="20"
+						Command="{Binding Test02Command}"
+						Content="Test02" />
+				</StackPanel>
+			</Grid>
+		</TabItem>
 	</TabControl>
 </helpers:BaseWindow>
