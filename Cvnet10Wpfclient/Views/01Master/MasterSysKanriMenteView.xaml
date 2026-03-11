@@ -322,7 +322,7 @@
 					Margin="10,0,0,0" VerticalAlignment="Center"
 					d:Text="新Tax"
 					Text="{Binding Current.Jsub[2].TaxNewRate}" />
-				<TextBlock Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="4" Grid.RowSpan="2"
+				<TextBlock Grid.Row="13" Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="4"
 					Height="65"
 					Margin="10,10,0,0" VerticalAlignment="Top"
 					d:Text="登録日&#x0a;修正日" TextWrapping="Wrap">
