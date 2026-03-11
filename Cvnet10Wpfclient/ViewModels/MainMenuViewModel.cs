@@ -180,7 +180,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				_subStartTime = DateTime.Now;
 				SetSubTitle();
 			}
-			else if (view.DataContext is _00System.SettingSystemViewModel) {
+			else if (view.DataContext is _00System.SysSetConfigViewModel) {
 				SetSubTitle();
 			}
 		}

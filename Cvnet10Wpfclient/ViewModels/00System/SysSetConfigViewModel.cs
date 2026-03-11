@@ -7,7 +7,7 @@ using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels._00System;
 
-public partial class SettingSystemViewModel : Helpers.BaseViewModel {
+public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private SystemSettingsStore _store = new();
 	private SystemSettingsDocument _currentSettings = new();
 	private string _originalUrl = string.Empty;

@@ -7,7 +7,7 @@ using System.Collections.ObjectModel;
 
 namespace Cvnet10Wpfclient.ViewModels._00System;
 
-public partial class SettingSystemViewModel {
+public partial class SysSetConfigViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task Test01Async(CancellationToken cancellationToken) {
