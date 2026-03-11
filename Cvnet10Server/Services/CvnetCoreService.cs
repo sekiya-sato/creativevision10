@@ -1,4 +1,5 @@
 ﻿using CodeShare;
+using Cvnet10Base.Oracle;
 using Cvnet10DomainLogic;
 using Microsoft.AspNetCore.Authorization;
 using ProtoBuf.Grpc;
@@ -164,7 +165,10 @@ public partial class CvnetCoreService : ICvnetCoreService {
 	/// ConvertDbのストリーミング処理ハンドラ
 	/// </summary>
 	private async IAsyncEnumerable<StreamMsg> HandleConvertDbStreamAsync(bool isInit, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvnetFlag flag) {
-		var convertDb = new ConvertDb(_db, _db);
+		var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
+		var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
+
+		var convertDb = new ConvertDb(fromDb, _db);
 
 		// ストリーミングをメッセージに変換
 		// ConvertAllAsyncStream()が既にエラーハンドリングしているため、try-catchは不要

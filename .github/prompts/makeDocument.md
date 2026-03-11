@@ -4,7 +4,7 @@ name: makeDocument
 
 description: 作業ドキュメントを作成します
 
-argument-hint: doc/aicording_log.md に作業ログを記録
+argument-hint: Doc/aicording_log.md に作業ログを記録
 
 ---
 
@@ -23,4 +23,6 @@ argument-hint: doc/aicording_log.md に作業ログを記録
 - [例: ProtobufのOrder欠番を避けるため、既存のFlag定義を維持しつつ新機能を追加した]
 ### 確認
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
+
+---
 '''

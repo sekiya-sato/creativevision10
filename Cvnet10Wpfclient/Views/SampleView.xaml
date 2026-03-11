@@ -392,6 +392,10 @@
 							Margin="0,102,0,0" HorizontalAlignment="Center" VerticalAlignment="Top"
 							d:Content="Label"
 							Content="{Binding TestMsg001Result}" />
+						<Button Width="160" Height="40"
+							Margin="130,0,0,102" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+							Command="{Binding TestConvertCommand}"
+							Content="テストConvert" />
 					</Grid>
 					<StackPanel Grid.Row="1" Grid.Column="0"
 						Margin="0,0,0,0">

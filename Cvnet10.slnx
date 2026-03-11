@@ -4,9 +4,9 @@
     <Project Path="Tests.Cvnet10Server/Tests.Cvnet10Server.csproj" />
   </Folder>
   <Folder Name="/ソリューション項目/">
+    <File Path="Doc/aicording_log.md" />
     <File Path="readme.md" />
     <File Path="readonlyhuman.md" />
-    <File Path="sourceheader.txt" />
   </Folder>
   <Project Path="CodeShare/CodeShare.csproj" />
   <Project Path="Cvnet10Asset/Cvnet10Asset.csproj" />

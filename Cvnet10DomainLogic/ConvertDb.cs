@@ -30,6 +30,7 @@ public partial class ConvertDb {
 	public void ConvertAll(bool isInit = true) {
 		_logger.Info("変換処理開始");
 		var start = DateTime.Now;
+		// ToDo: 最終的に実行させる処理を整理
 		/*
 		CnvMasterSys(isInit);
 		CnvMasterMeisho(isInit);
@@ -53,14 +54,10 @@ public partial class ConvertDb {
 		_logger.Info("変換処理開始");
 		var start = DateTime.Now;
 
+		// ToDo: 最終的に実行させる処理を整理
 		var steps = new (string Name, Func<bool, int> Action)[] {
-			("MasterSys", CnvMasterSys),
-			("MasterMeisho", CnvMasterMeisho),
-			("MasterShain", CnvMasterShain),
-			("MasterEndCustomer", CnvMasterEndCustomer),
-			("MasterShohin", CnvMasterShohin),
-			("MasterTokui", CnvMasterTokui),
-			("MasterShiire", CnvMasterShiire),
+			("CnvTran00Uri", CnvTran00Uri),
+			("CnvTran01Uri", CnvTran01Uri),
 		};
 
 		for (var index = 0; index < steps.Length; index++) {
@@ -88,22 +85,6 @@ public partial class ConvertDb {
 			// ステップ完了通知
 			yield return new ConvertStepProgress(name, count, endProgress, false, isError, errorMsg);
 		}
-
-		// AfterMaster 処理
-		yield return new ConvertStepProgress("AfterMaster", 0, 85, false, false);
-		int afterCount = 0;
-		string? afterErrorMsg = null;
-		bool afterIsError = false;
-		try {
-			afterCount = CnvAfterMaster();
-		}
-		catch (Exception ex) {
-			_logger.Error(ex, "AfterMaster処理エラー");
-			afterIsError = true;
-			afterErrorMsg = ex.Message;
-		}
-
-		yield return new ConvertStepProgress("AfterMaster", afterCount, 95, false, afterIsError, afterErrorMsg);
 
 		var elapsed = DateTime.Now - start;
 		_logger.Info("変換処理終了");

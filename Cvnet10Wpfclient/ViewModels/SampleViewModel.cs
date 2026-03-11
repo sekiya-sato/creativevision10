@@ -3,10 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
 using Grpc.Core;
-using ProtoBuf.Grpc;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace Cvnet10Wpfclient.ViewModels;
 
@@ -157,6 +154,34 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			TestMsg003Items = [.. envItems
 				.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
 				.Select(x => new EnvDisplayItem(x.Key, x.Value))];
+		}
+	}
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task TestConvert(CancellationToken cancellationToken) {
+		try {
+			ProgressValue = 0;
+			IsProgressVisible = true;
+			StreamMessages.Clear();
+			cancellationToken.ThrowIfCancellationRequested();
+			// 処理を実行
+			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.MSg041_ConvertDbInit };
+			msg.DataType = typeof(string);
+			msg.DataMsg = "コンバートストリーミング DBConvert";
+			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
+				StreamMessages.Insert(0, streamMsg.DataMsg);
+				ProgressValue = streamMsg.Progress;
+				if (streamMsg.IsCompleted) break;
+			}
+			IsProgressVisible = false;
+		}
+		catch (OperationCanceledException) {
+			IsProgressVisible = false;
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			IsProgressVisible = false;
+			return;
 		}
 	}
 	#endregion
