@@ -1,11 +1,9 @@
-﻿using CodeShare;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
 using Cvnet10Wpfclient.Models;
 using Cvnet10Wpfclient.ViewServices;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -55,7 +53,6 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 
 		MenuItems = MenuData.CreateDefault();
-		StatusMessage = "メニューを選択してください。";
 		ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
 		StartClock();
 		SetSubTitle();
@@ -73,7 +70,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	void SetSubTitle() {
-		SubTitle = $"{_subTitle}  接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
+		var renewstr = $"接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
+		SubTitle = $"{_subTitle} {renewstr}";
+		StatusMessage = $"メニューを選択してください。 {renewstr}\nF12でログイン画面、F11でトークンリフレッシュ画面";
 	}
 
 	[RelayCommand]
@@ -84,14 +83,14 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	[RelayCommand]
-	private void Minimize() {
+	private void WinMinimize() {
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
 			window.WindowState = WindowState.Minimized;
 		}
 	}
 	[RelayCommand]
-	private void Maximize() {
+	private void WinMaximize() {
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
 			if (window.WindowState == WindowState.Maximized)
@@ -105,7 +104,7 @@ public partial class MainMenuViewModel : ObservableObject {
 
 
 	[RelayCommand]
-	private void MenuOnly() {
+	private void WinMenuOnly() {
 		var window = ClientLib.GetActiveView(this);
 		if (window != null && window.WindowState == WindowState.Normal) {
 			if (window.Width <= miniRect.Width) {
@@ -122,41 +121,11 @@ public partial class MainMenuViewModel : ObservableObject {
 			}
 		}
 	}
-	[RelayCommand]
-	private async Task Refresh(CancellationToken cancellationToken) {
-		if (string.IsNullOrEmpty(AppGlobal.LoginJwt))
-			return;
-		var loginService = AppGlobal.GetgRPCService<ILoginService>();
-		var loginRefresh = new LoginRefresh() { Token = AppGlobal.LoginJwt };
-		cancellationToken.ThrowIfCancellationRequested();
-		try {
-			LoginReply reply = new() { JwtMessage = string.Empty };
-			var refreshToken = string.Empty;
-			reply = await loginService.LoginRefleshAsync(loginRefresh, AppGlobal.GetDefaultCallContext(cancellationToken));
-			if (reply.Result == 0) {
-				AppGlobal.LoginJwt = reply.JwtMessage;
-				Debug.WriteLine($"{DateTime.Now} AppCurrent.LoginJwt={AppGlobal.LoginJwt}");
-				if (reply.JwtMessage?.Length > 10) {
-					AppGlobal.LoginJwt = reply.JwtMessage;
-					ExpireDate = reply.Expire.ToDtStrDateTime2();
-				}
-			}
-			if (string.IsNullOrEmpty(reply.JwtMessage)) {
-				AppGlobal.LoginJwt = string.Empty;
-				MessageEx.ShowErrorDialog("ログインRefreshができませんでした", owner: ClientLib.GetActiveView(this));
-			}
-		}
-		catch (Exception ex) {
-			MessageEx.ShowErrorDialog(ex.Message, owner: ClientLib.GetActiveView(this));
-			return;
-		}
-	}
 
 	[RelayCommand]
 	private void SelectMenu(object? parameter) {
 		if (parameter is MenuData menu) {
 			SelectedMenu = menu;
-			StatusMessage = menu.Header;
 		}
 
 	}
@@ -183,6 +152,34 @@ public partial class MainMenuViewModel : ObservableObject {
 			else if (view.DataContext is _00System.SysSetConfigViewModel) {
 				SetSubTitle();
 			}
+		}
+	}
+	void afterLogin(_00System.LoginViewModel vm) {
+		ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
+		_subStartTime = DateTime.Now;
+		SetSubTitle();
+	}
+
+
+
+	/// <summary>ショートカットでログイン画面を呼び出す</summary>
+	[RelayCommand]
+	private void ShowLogin() {
+		ClientLib.ExitAllWithoutMe(this);
+		var view = new Views._00System.LoginView { Title = "ログイン" };
+		if (ClientLib.ShowDialogView(view, this, IsDialog: true) == true
+			&& view.DataContext is _00System.LoginViewModel vm)
+			afterLogin(vm);
+	}
+	/// <summary>ショートカットでリフレッシュ画面を呼び出す</summary>
+	[RelayCommand]
+	private void ShowRefresh() {
+		ClientLib.ExitAllWithoutMe(this);
+		var view = new Views._00System.LoginView { Title = "ログイントークンリフレッシュ" };
+		if (view.DataContext is _00System.LoginViewModel vm) {
+			vm.InitParam = 1;
+			if (ClientLib.ShowDialogView(view, this, IsDialog: true) == true)
+				afterLogin(vm);
 		}
 	}
 

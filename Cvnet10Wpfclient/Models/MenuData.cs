@@ -8,11 +8,9 @@ public partial class MenuData : ObservableObject {
 	[ObservableProperty]
 	private string? header;
 
+	[Obsolete]
 	[ObservableProperty]
 	private bool isExpand;
-
-	[ObservableProperty]
-	private bool isSelected;
 
 	[ObservableProperty]
 	private ObservableCollection<MenuData>? subItems;
@@ -23,24 +21,15 @@ public partial class MenuData : ObservableObject {
 	[ObservableProperty]
 	private string? icon;
 
-	[ObservableProperty]
-	private bool isMainMenu;
-
-	[ObservableProperty]
-	private string? color;
-
+	/* --- after this line, only use for ViewModel --- */
 	public Type? ViewType { get; set; }
-
 	public bool IsDialog { get; set; } = true;
-
 	public int InitParam { get; set; }
 
 	public static ObservableCollection<MenuData> CreateDefault() {
 		return new([
 		new () {
 			Header = "■ 管理メニュー / 接続テスト",
-			// Color = "SteelBlue",
-			IsMainMenu = true,
 			SubItems = new () {
 				new () {
 					Header = "ログイン",
@@ -90,8 +79,6 @@ public partial class MenuData : ObservableObject {
 		},
 		new () {
 			Header = "■ Master",
-			Color = "CornflowerBlue",
-			IsMainMenu = true,
 			SubItems = new () {
 				new() {
 					Header = "名称マスタメンテ",
@@ -122,7 +109,7 @@ public partial class MenuData : ObservableObject {
 			Header = "ここから下はバックアップのメニューデータ----- backupdata",
 					Icon = "/Images/menu_icon/download_icon.png",
 					IsExpand = true,
-					IsMainMenu = true,
+					// IsMainMenu = true,
 					IsDialog = true,
 					SubItems = new ()
 					{
@@ -152,9 +139,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "マスタ",
 					Icon = "/Images/menu_icon/master_icon.png",
-					Color = "Blue",
-					IsExpand = true,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -230,9 +214,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "マスタ補助",
 					Icon = "/Images/menu_icon/master_support.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -283,9 +264,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "管理メニュー",
 					Icon = "/Images/menu_icon/manage_icon.png",
-					Color = "Blue",
-					IsExpand = true,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -352,9 +330,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "予算",
 					Icon = "/Images/menu_icon/budget_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -393,9 +368,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "発注",
 					Icon = "/Images/menu_icon/order_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -460,9 +432,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "受注 / 展示会",
 					Icon = "/Images/menu_icon/order_manage_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -519,9 +488,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "仕入",
 					Icon = "/Images/menu_icon/pay_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -577,9 +543,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "売上",
 					Icon = "/Images/menu_icon/sales_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -654,9 +617,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "配分",
 					Icon = "/Images/menu_icon/distribute_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -719,9 +679,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "在庫管理",
 					Icon = "/Images/menu_icon/stock_manage_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -790,9 +747,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "売上分析",
 					Icon = "/Images/menu_icon/sales_manage_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -843,9 +797,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "卸・販売員・経営分析",
 					Icon = "/Images/menu_icon/salesperson_manage_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -881,9 +832,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "C.P.A",
 					Icon = "/Images/menu_icon/cpa_analysia_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -934,9 +882,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "HHT / POS連携",
 					Icon = "/Images/menu_icon/scanner_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -990,9 +935,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "月次 / 更新処理",
 					Icon = "/Images/menu_icon/update_process_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -1055,9 +997,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "Loyal Customer",
 					Icon = "/Images/menu_icon/loyal_customer_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -1122,9 +1061,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "店舗",
 					Icon = "/Images/menu_icon/store_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){
@@ -1151,9 +1087,6 @@ public partial class MenuData : ObservableObject {
 				{
 					Header = "物流",
 					Icon = "/Images/menu_icon/warehouse_icon.png",
-					Color = "Blue",
-					IsExpand = false,
-					IsMainMenu = true,
 					SubItems = new ()
 					{
 						new (){

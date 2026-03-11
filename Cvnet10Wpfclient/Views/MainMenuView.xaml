@@ -1,36 +1,27 @@
 ﻿<Window x:Class="Cvnet10Wpfclient.Views.MainMenuView"
-	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
-	xmlns:controls="clr-namespace:Cvnet10Wpfclient.Views.Controls"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:models="clr-namespace:Cvnet10Wpfclient.Models"
-	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:controls="clr-namespace:Cvnet10Wpfclient.Views.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:models="clr-namespace:Cvnet10Wpfclient.Models" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
 	Title="{Binding HeaderTitle}"
-	Width="1200"
-	Height="780"
-	Background="Transparent"
-	Icon="pack://application:,,,/cvnet.ico"
-	ResizeMode="CanResizeWithGrip"
-	SnapsToDevicePixels="True"
-	UseLayoutRounding="True"
-	WindowStartupLocation="CenterScreen"
-	WindowStyle="SingleBorderWindow"
+	Width="1200" Height="780"
+	Background="Transparent" Icon="pack://application:,,,/cvnet.ico" ResizeMode="CanResizeWithGrip" SnapsToDevicePixels="True" UseLayoutRounding="True"
+	WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow"
 	mc:Ignorable="d">
 
 	<Window.DataContext>
 		<vm:MainMenuViewModel />
 	</Window.DataContext>
 
+	<Window.InputBindings>
+		<KeyBinding Key="F12"
+			Command="{Binding ShowLoginCommand}" />
+		<KeyBinding Key="F11"
+			Command="{Binding ShowRefreshCommand}" />
+	</Window.InputBindings>
+
 	<shell:WindowChrome.WindowChrome>
-		<shell:WindowChrome CaptionHeight="120"
-			CornerRadius="80"
-			GlassFrameThickness="0"
-			ResizeBorderThickness="8"
-			UseAeroCaptionButtons="False" />
+		<shell:WindowChrome CaptionHeight="120" CornerRadius="80" GlassFrameThickness="0" ResizeBorderThickness="8" UseAeroCaptionButtons="False" />
 	</shell:WindowChrome.WindowChrome>
 
 	<behaviors:Interaction.Triggers>
@@ -43,8 +34,7 @@
 		Background="{StaticResource OuterWindowBackground}"
 		CornerRadius="40">
 		<Border Background="{StaticResource CvnetMainBackgroundBrush}"
-			BorderThickness="2"
-			CornerRadius="40">
+			BorderThickness="2" CornerRadius="40">
 			<Border.BorderBrush>
 				<LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
 					<GradientStop Offset="0" Color="{DynamicResource winBorderColor1}" />
@@ -67,15 +57,11 @@
 					</Grid.ColumnDefinitions>
 
 					<StackPanel Orientation="Vertical">
-						<TextBlock FontSize="36"
-							FontWeight="Bold"
+						<TextBlock FontSize="36" FontWeight="Bold"
 							Foreground="{DynamicResource TitleColor}"
 							Text="{Binding HeaderTitle}">
 							<TextBlock.Effect>
-								<DropShadowEffect BlurRadius="4"
-									Direction="315"
-									Opacity="1"
-									ShadowDepth="3"
+								<DropShadowEffect BlurRadius="4" Direction="315" Opacity="1" ShadowDepth="3"
 									Color="Black" />
 							</TextBlock.Effect>
 						</TextBlock>
@@ -87,10 +73,8 @@
 					</StackPanel>
 
 					<StackPanel Grid.Column="1"
-						Margin="0,0,12,0"
-						VerticalAlignment="Center"
-						shell:WindowChrome.IsHitTestVisibleInChrome="True"
-						Orientation="Horizontal">
+						Margin="0,0,12,0" VerticalAlignment="Center"
+						shell:WindowChrome.IsHitTestVisibleInChrome="True" Orientation="Horizontal">
 						<Border Margin="0,0,8,0"
 							Style="{StaticResource StatusChip}">
 							<StackPanel Orientation="Vertical">
@@ -109,14 +93,11 @@
 										ToolTip="テーマ切り替え (Light/Dark)">
 										<Button.Content>
 											<Grid>
-												<Ellipse Width="28"
-													Height="28"
+												<Ellipse Width="28" Height="28"
 													Fill="Black" />
 
-												<Path Width="14"
-													Height="14"
-													HorizontalAlignment="Center"
-													VerticalAlignment="Center"
+												<Path Width="14" Height="14"
+													HorizontalAlignment="Center" VerticalAlignment="Center"
 													Data="M12,2L14,5H10L12,2M12,22L10,19H14L12,22M22,12L19,10V14L22,12M2,12L5,14V10L2,12M19.07,4.93L17,7.07L16.31,6.38L18.38,4.31L19.07,4.93M4.93,19.07L7.07,17L7.76,17.69L5.69,19.76L4.93,19.07M19.07,19.07L17,16.93L16.31,17.62L18.38,19.69L19.07,19.07M4.93,4.93L7.07,7.07L7.76,6.38L5.69,4.31L4.93,4.93M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"
 													Fill="{DynamicResource TitleColor}"
 													Stretch="Uniform" />
@@ -125,11 +106,11 @@
 									</Button>
 
 
-									<Button Command="{Binding MinimizeCommand}"
+									<Button Command="{Binding WinMinimizeCommand}"
 										Opacity="0.6"
 										Style="{StaticResource MinimizeWinBtn}"
 										ToolTip="最小化" />
-									<Button Command="{Binding MenuOnlyCommand}"
+									<Button Command="{Binding WinMenuOnlyCommand}"
 										Opacity="0.6"
 										Style="{StaticResource MenuonlyWinBtn}"
 										ToolTip="メニューのみ/通常" />
@@ -152,9 +133,7 @@
 
 								<TextBlock Width="90"
 									HorizontalAlignment="Center"
-									d:Text="00:00:00"
-									FontSize="18"
-									FontWeight="Bold"
+									d:Text="00:00:00" FontSize="18" FontWeight="Bold"
 									Foreground="{DynamicResource TitleColor}"
 									Text="{Binding CurrentTime, FallbackValue='00:00:00'}" />
 							</StackPanel>
@@ -176,13 +155,10 @@
 						Background="{DynamicResource panelColor}"
 						CornerRadius="6">
 						<TreeView x:Name="MenuTree"
-							Background="Transparent"
-							BorderThickness="0"
+							Background="Transparent" BorderThickness="0"
 							ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
 							ItemsSource="{Binding MenuItems}"
-							PreviewKeyDown="MenuTree_PreviewKeyDown"
-							ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-							ScrollViewer.VerticalScrollBarVisibility="Auto"
+							PreviewKeyDown="MenuTree_PreviewKeyDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
 							Style="{StaticResource MenuTreeView}">
 
 							<TreeView.ItemTemplate>
@@ -244,16 +220,14 @@
 						</StackPanel>
 
 						<Border Grid.Row="1"
-							Margin="0,16,0,0"
-							Padding="20"
+							Margin="0,16,0,0" Padding="20"
 							Background="{DynamicResource panelColor}"
 							Style="{StaticResource MainMenuDashboardCard}">
 							<StackPanel>
 								<TextBlock Foreground="{DynamicResource MenuTitleColor}"
 									Style="{StaticResource SectionTitleText}"
 									Text="選択中メニュー  (DoubleClick)" />
-								<TextBlock FontSize="22"
-									FontWeight="Bold"
+								<TextBlock FontSize="22" FontWeight="Bold"
 									Foreground="{DynamicResource plainTextColor0}"
 									Text="{Binding SelectedMenu.Header}" />
 								<TextBlock Margin="0,8,0,0"
@@ -262,14 +236,11 @@
 									Text="{Binding SelectedMenu.AddInfo}" />
 								<TextBlock Margin="0,2,0,2"
 									Foreground="{DynamicResource plainTextColor0}"
-									Opacity="0.7"
-									Text="メニューをダブルクリックすると画面が起動します。"
-									TextWrapping="Wrap" />
+									Opacity="0.7" Text="メニューをダブルクリックすると画面が起動します。" TextWrapping="Wrap" />
 								<TextBlock Margin="0,2,0,2"
 									d:Text="マルチウィンドウ画面"
 									Foreground="{DynamicResource plainTextColor0}"
-									Opacity="0.7"
-									TextWrapping="Wrap">
+									Opacity="0.7" TextWrapping="Wrap">
 									<TextBlock.Style>
 										<Style TargetType="TextBlock">
 											<Setter Property="Text" Value="マルチウィンドウ画面" />
@@ -286,8 +257,7 @@
 						</Border>
 
 						<Border Grid.Row="2"
-							Margin="0,16,0,0"
-							Padding="20"
+							Margin="0,16,0,0" Padding="20"
 							Background="{DynamicResource panelColor}"
 							Style="{StaticResource MainMenuDashboardCard}">
 							<StackPanel>
