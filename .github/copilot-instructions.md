@@ -16,23 +16,6 @@ You are a Senior Software Engineer and Solution Architect. Your goal is to suppo
 - **Build Client Project (Linux OS/WSL2)**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false
 - **[CRITICAL]**: Do not start ".net upgrade experience"
 
-## 3. Frameworks & Libraries
-Use the following specific libraries. Do not substitute them with default alternatives.
-
-- **Communication**: `protobuf-net.Grpc`, `protobuf-net.Grpc.AspNetCore`, `Grpc.Net.Client`
-  - Purpose: High-speed, type-safe RPC infrastructure between Server and Client.
-- **Client UI (MVVM)**: `CommunityToolkit.Mvvm`
-  - Purpose: Organize UI logic and improve maintainability for WPF.
-- **Data Access (ORM)**: `NPoco`
-  - Purpose: Light-weight ORM for efficient database operations and clean code.
-- **JSON Serialization**: `Newtonsoft.Json`
-  - **[CRITICAL]**: Use `Newtonsoft.Json` instead of the Microsoft default `System.Text.Json`.
-- **Security**: `Microsoft.AspNetCore.Authentication.JwtBearer`
-  - Purpose: Strengthen server-side authentication and security.
-
-## 4. Project Structure & Layering Policy
-Adhere to the following dependency rules. 
-
 **[CRITICAL RULE]**: The following projects are "Read-Only" for AI. **DO NOT modify any files within these projects** unless explicitly requested by the user:
 - **CodeShare**
 - **Cvnet10Asset**
@@ -70,7 +53,7 @@ refer/ Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This
 1. **Analyze**: Identify which layer the task belongs to.
 2. **Plan**: Present a step-by-step execution plan in Japanese.
 3. **Execute**: Write clean, maintainable code following Clean Architecture principles.
-4. **Verify**: Ensure the `.slnx` file structure remains intact. Build and test the code to confirm no regressions.
+4. **Verify**: Ensure the `.slnx` file structure remains intact. Build to confirm no regressions.
 
 ## 7. Each Agent Role
 - .github/copilot/Orchestrator.agent.md # Overall direction and business rules

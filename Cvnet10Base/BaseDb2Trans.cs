@@ -279,6 +279,13 @@ public partial class TranKinHeader : BaseDbClass {
 	[ObservableProperty]
 	int kingakuTotal;
 	/// <summary>
+	/// 手入力No
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string manualNo = string.Empty;
+	/// <summary>
 	/// ヘッダメモ
 	/// </summary>
 	[ObservableProperty]
@@ -304,7 +311,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	[ObservableProperty]
 	int no;
 	/// <summary>
-	/// 商品ユニークキー
+	/// 区分ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	long id_Kin;
@@ -438,6 +445,11 @@ public sealed partial class Tran00Uriage : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	int relateNo2;
+	/// <summary>
+	/// 掛率
+	/// </summary>
+	[ObservableProperty]
+	int rate;
 }
 
 public enum EnumUri00 : int {
@@ -475,7 +487,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader {
 	/// 顧客キー
 	/// </summary>
 	[ObservableProperty]
-	int id_Customer;
+	long id_Customer;
 	/// <summary>
 	/// 顧客データ
 	/// </summary>
@@ -507,6 +519,12 @@ public sealed partial class Tran01Tenuri : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	int relateNo1;
+	/// <summary>
+	/// 掛率
+	/// </summary>
+	[ObservableProperty]
+	int rate;
+
 }
 public enum EnumUri01 : int {
 	Uriage = 10,
@@ -569,6 +587,23 @@ public sealed partial class Tran03Shiire : TranAllHeader {
 		get => (EnumShiire)Kubun;
 		set => Kubun = (int)value;
 	}
+	/// <summary>
+	/// 手入力No
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string manualNo = string.Empty;
+	/// <summary>
+	///	関連No1
+	/// </summary>
+	[ObservableProperty]
+	int relateNo1;
+	/// <summary>
+	/// 掛率
+	/// </summary>
+	[ObservableProperty]
+	int rate;
 }
 public enum EnumShiire : int {
 	Shiire = 10,
@@ -598,6 +633,18 @@ public sealed partial class Tran05Ido : TranAllHeader {
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
 	CodeNameView vIdo = new();
+	/// <summary>
+	///	関連No1
+	/// </summary>
+	[ObservableProperty]
+	int relateNo1;
+	/// <summary>
+	/// 手入力No
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string manualNo = string.Empty;
 }
 
 /// <summary>
@@ -620,6 +667,18 @@ public sealed partial class Tran10IdoOut : TranAllHeader {
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
 	CodeNameView vIdo = new();
+	/// <summary>
+	///	関連No1
+	/// </summary>
+	[ObservableProperty]
+	int relateNo1;
+	/// <summary>
+	/// 手入力No
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string manualNo = string.Empty;
 }
 /// <summary>
 /// 積送移動 11 (倉庫 出, 移動先 入) 実
@@ -641,4 +700,103 @@ public sealed partial class Tran11IdoIn : TranAllHeader {
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
 	CodeNameView vIdo = new();
+	/// <summary>
+	///	関連No1
+	/// </summary>
+	[ObservableProperty]
+	int relateNo1;
+	/// <summary>
+	/// 手入力No
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string manualNo = string.Empty;
+}
+/// <summary>
+/// 受注 12
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk3", false, ["Id_Soko"])]
+[KeyDml("nk4", false, ["Id_Tokui"])]
+public sealed partial class Tran12Jyuchu : TranAllHeader {
+	/// <summary>
+	/// 得意先キー
+	/// </summary>
+	[ObservableProperty]
+	long id_Tokui;
+	/// <summary>
+	/// 得意先データ
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vTokui = new();
+	/// <summary>
+	/// 区分（2桁 10-19,20-29,30,99）
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	int kubun = 10;
+	[Ignore]
+	[JsonIgnore]
+	public EnumUri01 EnKubun {
+		get => (EnumUri01)Kubun;
+		set => Kubun = (int)value;
+	}
+	/// <summary>
+	///	関連No1
+	/// </summary>
+	[ObservableProperty]
+	int relateNo1;
+	/// <summary>
+	/// 掛率
+	/// </summary>
+	[ObservableProperty]
+	int rate;
+}
+
+/// <summary>
+/// 発注 13
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk3", false, ["Id_Soko"])]
+[KeyDml("nk4", false, ["Id_Tokui"])]
+public sealed partial class Tran13Hachu : TranAllHeader {
+	/// <summary>
+	/// 仕入先キー
+	/// </summary>
+	[ObservableProperty]
+	long id_Shiire;
+	/// <summary>
+	/// 仕入先データ
+	/// </summary>
+	[ObservableProperty]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vShiire = new();
+	/// <summary>
+	/// 区分（2桁 10-19,20-29,30,99）
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	int kubun = 10;
+	[Ignore]
+	[JsonIgnore]
+	public EnumShiire EnKubun {
+		get => (EnumShiire)Kubun;
+		set => Kubun = (int)value;
+	}
+	/// <summary>
+	///	関連No1
+	/// </summary>
+	[ObservableProperty]
+	int relateNo1;
+	/// <summary>
+	/// 掛率
+	/// </summary>
+	[ObservableProperty]
+	int rate;
 }

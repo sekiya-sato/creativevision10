@@ -123,9 +123,6 @@
 						<Trigger Property="IsSelected" Value="True">
 							<Setter TargetName="border" Property="Background" Value="#33FFFFFF" />
 						</Trigger>
-						<Trigger Property="IsExpanded" Value="True">
-							<Setter TargetName="border" Property="Background" Value="#22FFFFFF" />
-						</Trigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
 			</Setter.Value>

@@ -165,7 +165,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
-			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.MSg041_ConvertDbInit };
+			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.MSg040_ConvertDb };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "コンバートストリーミング DBConvert";
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
