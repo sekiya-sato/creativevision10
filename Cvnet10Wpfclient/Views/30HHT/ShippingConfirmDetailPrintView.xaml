@@ -1,0 +1,16 @@
+<helpers:BaseWindow x:Class="Cvnet10Wpfclient.Views._30HHT.ShippingConfirmDetailPrintView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
+	xmlns:local="clr-namespace:Cvnet10Wpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels._30HHT"
+	Title="出荷指示明細書印刷"
+	Width="1244" Height="900"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:ShippingConfirmDetailPrintViewModel />
+	</helpers:BaseWindow.DataContext>
+	<Grid></Grid>
+</helpers:BaseWindow>

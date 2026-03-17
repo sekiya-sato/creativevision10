@@ -2,6 +2,46 @@
 
 ---
 
+## [2026-03-17] vmcreate指示に基づくView/ViewModel一括生成とメニュー接続
+### Agent
+- gpt-5.3-codex : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc/instruction_20260317_10_vmcreate.md` に従って View/XAML・code-behind・ViewModel を作成し、`MenuData.cs` を接続し、最後にドキュメント更新する
+### 実施内容
+- `Cvnet10Wpfclient/Views/`: 指示リスト（`00System`〜`41Logistics`）に対応する初期 `*.xaml` / `*.xaml.cs` を一括作成
+- `Cvnet10Wpfclient/ViewModels/`: 指示リストに対応する初期 `*ViewModel.cs`（`Helpers.BaseViewModel` 継承）を一括作成
+- `Cvnet10Wpfclient/Models/MenuData.cs`: `CreateDefault()` 内の対象 `typeof(object)` を生成した View 型へ置換し、各行末に `// [View名]` コメントを追加
+- `Doc/instruction_20260317_10_vmcreate.md`: 実体と齟齬が出ないよう `03Hatchu` 表記、`売上週報･月報`、`ポイントマスタ（ベース）（管理者用)` を追記・修正
+- `Cvnet10Wpfclient/Views/32LoyalCustomer/PointMasterBaseView.xaml`: 指示修正に伴い不要となった旧名称ファイルを削除
+- `Cvnet10Wpfclient/Views/32LoyalCustomer/PointMasterBaseView.xaml.cs`: 指示修正に伴い不要となった旧名称ファイルを削除
+- `Cvnet10Wpfclient/ViewModels/32LoyalCustomer/PointMasterBaseViewModel.cs`: 指示修正に伴い不要となった旧名称ファイルを削除
+### 技術決定 Why
+- 大量の雛形作成は手作業より生成スクリプトの方が命名・namespace・DataContext の表記揺れを防ぎ、差分品質を一定化できるため
+- 既存プロジェクト構成に合わせ、`03Hachu` は実フォルダ名の `03Hatchu` に統一して参照不整合を防止した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行し、Build OK（0 warning / 0 error）を確認
+
+---
+
+## [2026-03-17] vmcreate手順書の作成対象リスト未完成部補完
+### Agent
+- gpt-5.3-codex : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc/instruction_20260317_10_vmcreate.md` の作成対象リスト未完成部分を `Cvnet10Wpfclient/Models/plan-name.txt` を元に第一候補で完成させる
+### 実施内容
+- `Doc/instruction_20260317_10_vmcreate.md`: `03Hachu` の不足3項目を追加し、`04Juchu` / `05Shiire` / `06Uriage` / `07Haibun` / `08Zaiko` を第一候補名で新規補完
+- `Doc/instruction_20260317_10_vmcreate.md`: 空フォルダ名・空項目（``）のプレースホルダをすべて解消
+### 技術決定 Why
+- 命名の揺れを避けるため、`plan-name.txt` の各メニューに対して先頭（第一候補）の View 名を採用して一覧を確定した
+### 確認
+- ドキュメント更新のみのため Build は未実施
+
+---
+
 ## [2026-03-11] 商品メンテ画面 - 日付フィールドを DatePicker に変更
 
 ### Agent
@@ -82,3 +122,44 @@
 
 ### 確認
 - `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行し、Build OK（0 warning / 0 error）を確認
+
+---
+
+## [2026-03-17] Views/ViewModels 業務カテゴリフォルダの追加と文書化
+### Agent
+- gpt-5.3-codex : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient.csproj` 配下の `Views` / `ViewModels` に業務カテゴリフォルダ案を作成し、ローマ字綴り（`Hatchu` / `Juchu` / `Butsuryu`）を反映した案を文書化する
+### 実施内容
+- `Cvnet10Wpfclient/Views/`: `02Yosan` から `41Butsuryu` までの 15 フォルダを新規追加し、各フォルダに `.gitkeep` を配置
+- `Cvnet10Wpfclient/ViewModels/`: `Views` 側と同名の 15 フォルダを新規追加し、各フォルダに `.gitkeep` を配置
+- `doc/Cvnet10Wpfclient_View_ViewModel_FolderPlan.md`: 命名ルール、ローマ字統一方針、追加フォルダ一覧を新規作成
+### 技術決定 Why
+- `Views` と `ViewModels` を同名フォルダで対にすることで、画面と ViewModel の対応関係を探索しやすくし、運用時の迷いを減らすため
+- 空フォルダは Git 管理対象外のため、初期構成を確実に共有できるよう `.gitkeep` を配置した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行し、Build OK（0 warning / 0 error）を確認
+### 最終フォルダ構成 (Views / ViewModels)
+```
+- 00System - システム関連
+- 01Master - マスタ関連
+- 02Yosan - 予算関連
+- 03Hatchu - 発注関連
+- 04Juchu - 受注/展示会関連
+- 05Shiire - 仕入関連
+- 06Uriage - 売上関連
+- 07Haibun - 配分関連
+- 08Zaiko - 在庫管理関連
+- 20UriageAnalysis - 売上分析関連
+- 21OroshiAnalysis - 卸・販売員・経営分析関連
+- 22CPA - C.P.A関連
+- 30HHT - HHT/POS連携関連
+- 31Getsuji - 月次/更新処理関連
+- 32LoyalCustomer - Loyal Customer関連
+- 40Tenpo - 店舗関連
+- 41Butsuryu - 物流関連
+```
+
+---
