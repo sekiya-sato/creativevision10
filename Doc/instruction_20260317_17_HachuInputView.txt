@@ -1,0 +1,119 @@
+---
+name: CreateInputView
+description: 指定された入力画面[View名]のViewおよびViewModelの作成(中身がほぼ空の既存ファイルあり)
+---
+
+# Create Input View and ViewModel for Cvnet10Wpfclient
+
+作成対象ファイル: [View名].xaml, [View名].xaml.cs, [ViewModel名(View名から推論)].cs
+
+この指示は「受注入力」「売上入力」などの複雑な入力画面を作成させるための Markdown 仕様である。
+以下の要件を満たすように [View名] / [ViewModel名] を作成し、詳細な UI 設計と MVVM 実装を行うこと。
+
+## 目的
+- 複数セクションを持つ入力画面を WPF + MVVM で構築し、業務画面として実用的な操作性と拡張性を確保する。
+- 受注入力・売上入力のように、ヘッダー情報と明細情報が混在する画面を想定する。
+
+## 前提
+- 対象プロジェクト: `Cvnet10Wpfclient`
+- .NET 10 / C# 14
+- MVVM: CommunityToolkit.Mvvm
+- WPF は既存の ResourceDictionary に準拠し、`DynamicResource` を使う。
+- Viewは、`helpers:BaseWindow` を継承、`InitCommand` を ContentRendered で呼ばない。
+- ViewModelは、`Helpers.BaseMenteViewModel<[テーブル]>` を継承
+
+
+## 画面構成
+### レイアウト方針
+- 画面全体に`TabFrame`を使用し、"ヘッダ一覧画面","明細画面" の`TabItem`を配置。
+- `TabItem`"ヘッダ一覧画面" には、`DataGrid`(readonly) に伝票/取引ヘッダの一覧表示。上部に"閉じる"Button "一覧"Button を配置。
+	- "閉じる"Button : `Command="{Binding ExitCommand}"`
+	- "一覧"Button : 
+
+
+- 画面全体は「ヘッダー入力」「明細入力」「フッター/サマリ」「操作ボタン」の 4 ブロックを持つ。
+- 左右 2 列構成の情報入力を想定し、項目数が多い場合も視認性を確保する。
+- 明細は DataGrid で表示し、行の追加/削除/複製、行内編集を可能にする。
+- サマリは合計金額、税、件数など計算結果を表示する。
+
+### 必須 UI 要素
+- 伝票/取引ヘッダー:
+  - 伝票番号、日付、取引先コード、取引先名、担当者、部門
+- 受注/売上固有情報:
+  - 受注: 納期、出荷区分、支払条件
+  - 売上: 請求締日、売上区分、請求先
+- 明細 DataGrid:
+  - 行番号、品番、品名、数量、単価、金額、税区分、備考
+  - 行追加/削除/複製/行移動ボタン
+- フッター/サマリ:
+  - 小計、消費税、合計、明細件数
+- 操作ボタン:
+  - 新規/保存/削除/印刷/キャンセル/閉じる
+
+## 画面操作
+- 伝票番号の確定・採番・再読込を想定したコマンドを用意する。
+- 取引先コード入力時に名称や担当者など関連情報を自動反映する設計にする。
+- 明細行の編集に応じて金額・税・合計を再計算する。
+- 入力検証を行い、必須項目の未入力はエラー表示する。
+
+## ViewModel 設計
+### クラス
+- [ViewModel名] : `ObservableObject` を継承
+- ヘッダー入力用のプロパティ群
+- 明細行コレクション: `ObservableCollection<明細行ViewModel>`
+- サマリ表示用のプロパティ
+- コマンド群
+
+### コマンド例
+- `InitCommand` : 初期化
+- `NewCommand` : 新規作成
+- `SaveCommand` : 保存
+- `DeleteCommand` : 削除
+- `PrintCommand` : 印刷
+- `CancelCommand` : キャンセル
+- `CloseCommand` : 閉じる
+- 明細行操作: `AddRowCommand`, `RemoveRowCommand`, `DuplicateRowCommand`, `MoveRowUpCommand`, `MoveRowDownCommand`
+- 伝票操作: `LoadDocumentCommand`, `RenumberCommand`
+
+### バリデーション
+- 必須項目は空入力を禁止し、`IDataErrorInfo` または既存のバリデーション機構を利用する。
+- 数量・単価・金額の数値は 0 以上。
+- 日付は範囲チェック可能にする。
+
+## XAML 実装指針
+- `Grid` と `DockPanel` を併用し、ヘッダー/明細/フッター/ボタンを明確に分割する。
+- `DataGrid` は `IsReadOnly` ではなくセル編集可能にし、数値は右寄せ。
+- `TextBox`/`ComboBox`/`DatePicker` に `TabIndex` を付与し入力導線を最適化する。
+- `AutomationProperties.Name` を必要に応じて設定し、テスト容易性を担保する。
+- 既存リソースの `DynamicResource` を使用し、テーマ切替で崩れないようにする。
+
+## 明細行 ViewModel
+- `LineNo`, `ItemCode`, `ItemName`, `Quantity`, `UnitPrice`, `Amount`, `TaxType`, `Note`
+- `Amount` は `Quantity * UnitPrice` に連動し、変更時に通知する。
+
+## 例: 画面フロー
+1. 新規作成
+2. 取引先コード入力 → 取引先名/担当者自動反映
+3. 明細追加 → 品番入力 → 品名/単価自動反映
+4. 数量入力 → 金額再計算 → サマリ再計算
+5. 保存
+
+## 実装の注意
+- 画面内ロジックは ViewModel に置き、コードビハインドは最小限にする。
+- 既存の `BaseWindow` とメニュー遷移ルールに従う。
+- 画面全体でタブ移動順序を意識する。
+- 既存デザインを壊さず、UI 共通部品を活用する。
+
+## 出力物
+- [View名].xaml
+- [View名].xaml.cs
+- [ViewModel名].cs
+- 必要なら明細行用 ViewModel を同一ファイル内に定義してよい。
+
+
+
+
+
+
+
+## 最後にBuildしエラーがなければdocument作成し、未commitのものを全てcommitしpushする

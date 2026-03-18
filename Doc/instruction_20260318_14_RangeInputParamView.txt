@@ -1,0 +1,43 @@
+---
+name: RangeInputParamView
+description: 受注入力、売上入力などの入力画面のヘッダ一覧を取得するための範囲選択画面をつくる
+---
+
+# Create Input View and ViewModel for Cvnet10Wpfclient
+
+作成対象ファイル: Views/Sub/RangeInputParamView.xaml, Views/Sub/RangeInputParamView.xaml.cs, ViewModels/Sub/RangeInputParamViewModel.cs, ViewModels/Sub/SelectInputParameter.cs
+
+この指示は入力画面のヘッダ一覧を取得する条件を入力する、範囲選択画面を作成させるための Markdown 仕様である。
+以下の要件を満たすように RangeInputParamView / RangeInputParamViewModel を作成し、詳細な UI 設計と MVVM 実装を行うこと。
+
+## 目的
+- 入力画面のヘッダ一覧を取得するための範囲選択画面をつくる。作成対象ファイル、およびログ以外のファイルは変更しない。
+
+## 前提
+- 対象プロジェクト: `Cvnet10Wpfclient`
+- .NET 10 / C# 14
+- MVVM: CommunityToolkit.Mvvm
+- WPF は既存の ResourceDictionary に準拠し、`DynamicResource` を使う。
+- Viewは、`helpers:BaseWindow` を継承、`InitCommand` を ContentRendered で呼ばない。
+- ViewModelは、`Helpers.BaseMenteViewModel<[テーブル]>` を継承
+
+## 参考にする既存画面
+- マスタ用範囲選択画面: `Views/Sub/RangeParamView.xaml` `ViewModels/Sub/RangeParamViewModel.cs`
+- 選択項目用class : `ViewModels/Sub/SelectParameter.cs`
+
+
+## 画面構成
+### レイアウト方針
+- 一つの項目[表示名:内部Property名]に対し、"from to" で表されるような範囲選択と最下行に 件数 の入力エリア。
+- "from to" の各項目は [伝票No:Id] [日付:Date] [仕入先CD:ToriCd] [入庫先CD:SokoCd] [商品CD:ShohinCd]
+- 右下に "選択確定"Button(`Command="{Binding OkCommand}"`)  "戻る"Button(`Command="{Binding ExitCommand}"`) を配置。
+
+
+## 実装の注意
+- 画面内ロジックは ViewModel に置き、コードビハインドは最小限にする。
+- 既存画面とメニュー遷移ルールに従う。
+- 画面全体でタブ移動順序を意識する。
+- 既存デザインを壊さず、UI 共通部品を活用する。
+
+
+## 最後にBuildしエラーがなければdocument作成し、未commitのものを全てcommitしpushする

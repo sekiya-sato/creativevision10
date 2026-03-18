@@ -2,6 +2,67 @@
 
 ---
 
+## [2026-03-18] Views/ViewModels の .gitkeep 削除
+### Agent
+- gpt-5.2-codex : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：各 folder 内の不要な `.gitkeep` を削除する
+### 実施内容
+- `Cvnet10Wpfclient/Views/02Yosan/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/03Hatchu/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/04Juchu/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/05Shiire/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/06Uriage/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/07Haibun/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/08Zaiko/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/20UriageAnalysis/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/21OroshiAnalysis/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/22CPA/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/30HHT/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/31Monthly/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/32LoyalCustomer/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/40Shop/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/Views/41Logistics/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/02Yosan/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/03Hatchu/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/04Juchu/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/05Shiire/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/06Uriage/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/07Haibun/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/08Zaiko/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/20UriageAnalysis/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/21OroshiAnalysis/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/22CPA/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/30HHT/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/31Monthly/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/32LoyalCustomer/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/40Shop/.gitkeep`: 不要ファイルの削除
+- `Cvnet10Wpfclient/ViewModels/41Logistics/.gitkeep`: 不要ファイルの削除
+### 技術決定 Why
+- 空フォルダ維持の目的がなくなったため、不要な管理ファイルを削除してツリーを簡素化した
+### 確認
+- 変更はファイル削除のみのため Build は未実施
+
+---
+
+## [2026-03-18] 受注/売上入力向け指示書のMarkdown完成
+### Agent
+- gpt-5.2-codex : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc/instruction_20260317_17_HachuInputView.txt` を受注入力・売上入力のような複雑画面作成のための Markdown 仕様で完成させる
+### 実施内容
+- `Doc/instruction_20260317_17_HachuInputView.txt`: 画面構成、UI要素、操作、ViewModel設計、XAML方針、明細行VM、画面フロー、注意点を追加し複雑画面向け仕様として整備
+### 技術決定 Why
+- 受注/売上のようにヘッダー・明細・サマリが同居する画面は UI/VM 仕様を明確に分けて記述した方が再利用性と実装一貫性が高いため
+### 確認
+- ドキュメント更新のみのため Build は未実施
+
+---
+
 ## [2026-03-17] vmcreate指示に基づくView/ViewModel一括生成とメニュー接続
 ### Agent
 - gpt-5.3-codex : OpenAI

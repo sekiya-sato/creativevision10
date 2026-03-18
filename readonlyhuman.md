@@ -250,7 +250,8 @@ server {
         winget install npm; npm i -g opencode-ai; winget install ollama; ollama list => qwen2.5-coder:latest,gemma3:1b              
 - 2026/03/16-03/31
     - SelectWinView, SelectCodeViewのコードのクリーンアップ、軽微なバグ修正 同じGPT-5.4 でVSのGitHubCopilot と OpenCodeの両方を併用、OpenCodeのほうが早く理解度が高い。
-    - OpenCode(opencode upgrade 1.2.20 , 1.2.22はTUTでスクロールできない、画面表示がおかしい) https://github.com/anomalyco/opencode/releases
+    - OpenCode https://github.com/anomalyco/opencode/releases
+    - MenuDataの整理
 
 
 
