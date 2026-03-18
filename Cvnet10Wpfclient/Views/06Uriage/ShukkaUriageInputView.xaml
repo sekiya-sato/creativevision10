@@ -12,5 +12,393 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:ShukkaUriageInputViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid></Grid>
+	<Grid>
+		<Grid.Resources>
+			<Style x:Key="RightAlignedCellText"
+				TargetType="TextBlock">
+				<Setter Property="TextAlignment" Value="Right" />
+			</Style>
+			<Style x:Key="RightAlignedEditingText"
+				TargetType="TextBox">
+				<Setter Property="TextAlignment" Value="Right" />
+			</Style>
+		</Grid.Resources>
+
+		<TabControl Style="{StaticResource MaterialDesignTabControl}">
+			<TabItem Header="ヘッダ一覧画面">
+				<Grid Margin="10">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<DockPanel Grid.Row="0"
+						Margin="0,0,0,8"
+						LastChildFill="True">
+						<StackPanel DockPanel.Dock="Left"
+							Orientation="Horizontal">
+							<Button Width="90" Height="30"
+								Margin="0,0,8,0"
+								AutomationProperties.Name="閉じる"
+								Command="{Binding ExitCommand}"
+								Content="閉じる" />
+							<Button Width="90" Height="30"
+								AutomationProperties.Name="一覧"
+								Command="{Binding ShowHeaderListCommand}"
+								Content="一覧" />
+						</StackPanel>
+						<TextBlock Margin="12,2,0,0" VerticalAlignment="Center"
+							Foreground="{DynamicResource MaterialDesignBody}"
+							Text="{Binding Message}" TextWrapping="Wrap" />
+					</DockPanel>
+
+					<DataGrid Grid.Row="1"
+						d:ItemsSource="{d:SampleData ItemCount=12}"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="White" IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding ListData}"
+						SelectedItem="{Binding Current}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+						AutomationProperties.Name="売上一覧">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Id}"
+								Header="伝票番号" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding DenDay}"
+								Header="売上日" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding VTokui.Cd}"
+								Header="取引先CD" />
+							<DataGridTextColumn Width="200"
+								Binding="{Binding VTokui.Mei}"
+								Header="取引先名" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding EnKubun}"
+								Header="取引区分" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding SuTotal}"
+								ElementStyle="{StaticResource RightAlignedCellText}"
+								Header="数量合計" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding KingakuTotal}"
+								ElementStyle="{StaticResource RightAlignedCellText}"
+								Header="金額合計" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding JodaiTotal}"
+								ElementStyle="{StaticResource RightAlignedCellText}"
+								Header="上代合計" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader">
+								<Setter Property="Background" Value="Black" />
+								<Setter Property="Foreground" Value="White" />
+								<Setter Property="BorderThickness" Value="0.5" />
+							</Style>
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</TabItem>
+
+			<TabItem Header="明細画面">
+				<Grid Margin="10">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
+
+					<Border Grid.Row="0"
+						Padding="12" Margin="0,0,0,10"
+						Background="{DynamicResource AppCommonBackgroundBrush}"
+						BorderBrush="{DynamicResource MaterialDesignDivider}"
+						BorderThickness="1">
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="110" />
+								<ColumnDefinition Width="220" />
+								<ColumnDefinition Width="110" />
+								<ColumnDefinition Width="220" />
+								<ColumnDefinition Width="110" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+
+							<Label Grid.Row="0" Grid.Column="0"
+								Height="30" Content="伝票番号" />
+							<StackPanel Grid.Row="0" Grid.Column="1"
+								Orientation="Horizontal">
+								<TextBox Width="130" Height="30"
+									Margin="0,0,6,0"
+									AutomationProperties.Name="伝票番号"
+									Text="{Binding CurrentEdit.ManualNo}"
+									TabIndex="0" />
+								<Button Width="70" Height="30"
+									Margin="0,0,6,0"
+									Command="{Binding FixSlipNoCommand}"
+									Content="確定" />
+								<Button Width="70" Height="30"
+									Margin="0,0,6,0"
+									Command="{Binding IssueSlipNoCommand}"
+									Content="採番" />
+								<Button Width="80" Height="30"
+									Command="{Binding ReloadSlipCommand}"
+									Content="再読込" />
+							</StackPanel>
+
+							<Label Grid.Row="0" Grid.Column="2"
+								Height="30" Content="売上日" />
+							<DatePicker Grid.Row="0" Grid.Column="3"
+								Height="30"
+								AutomationProperties.Name="売上日"
+								SelectedDate="{Binding UriageDate}"
+								TabIndex="1" />
+
+							<Label Grid.Row="0" Grid.Column="4"
+								Height="30" Content="取引区分" />
+							<ComboBox Grid.Row="0" Grid.Column="5"
+								Height="30"
+								ItemsSource="{Binding KubunItems}"
+								SelectedItem="{Binding CurrentEdit.EnKubun}"
+								TabIndex="2" />
+
+							<Label Grid.Row="1" Grid.Column="0"
+								Height="30" Content="取引先コード" />
+							<StackPanel Grid.Row="1" Grid.Column="1"
+								Orientation="Horizontal">
+								<TextBox Width="140" Height="30"
+									AutomationProperties.Name="取引先コード"
+									Text="{Binding CurrentEdit.VTokui.Cd}"
+									TabIndex="3">
+									<behaviors:Interaction.Triggers>
+										<behaviors:EventTrigger EventName="LostFocus">
+											<behaviors:InvokeCommandAction Command="{Binding LookupTokuiByCodeCommand}" />
+										</behaviors:EventTrigger>
+									</behaviors:Interaction.Triggers>
+								</TextBox>
+								<Button Width="60" Height="30"
+									Margin="6,0,0,0"
+									Command="{Binding SelectTokuiCommand}"
+									Content="検索" />
+							</StackPanel>
+							<TextBox Grid.Row="1" Grid.Column="3"
+								Height="30"
+								AutomationProperties.Name="取引先名"
+								IsReadOnly="True"
+								Text="{Binding CurrentEdit.VTokui.Mei}" />
+
+							<Label Grid.Row="2" Grid.Column="0"
+								Height="30" Content="担当者" />
+							<StackPanel Grid.Row="2" Grid.Column="1"
+								Orientation="Horizontal">
+								<TextBox Width="140" Height="30"
+									AutomationProperties.Name="担当者コード"
+									Text="{Binding CurrentEdit.VShain.Cd}"
+									TabIndex="4" />
+								<Button Width="60" Height="30"
+									Margin="6,0,0,0"
+									Command="{Binding SelectShainCommand}"
+									Content="検索" />
+							</StackPanel>
+							<TextBox Grid.Row="2" Grid.Column="3"
+								Height="30"
+								IsReadOnly="True"
+								Text="{Binding CurrentEdit.VShain.Mei}" />
+
+							<Label Grid.Row="3" Grid.Column="0"
+								Height="30" Content="倉庫" />
+							<StackPanel Grid.Row="3" Grid.Column="1"
+								Orientation="Horizontal">
+								<TextBox Width="140" Height="30"
+									AutomationProperties.Name="倉庫コード"
+									Text="{Binding CurrentEdit.VSoko.Cd}"
+									TabIndex="5" />
+								<Button Width="60" Height="30"
+									Margin="6,0,0,0"
+									Command="{Binding SelectSokoCommand}"
+									Content="検索" />
+							</StackPanel>
+							<TextBox Grid.Row="3" Grid.Column="3"
+								Height="30"
+								IsReadOnly="True"
+								Text="{Binding CurrentEdit.VSoko.Mei}" />
+
+							<Label Grid.Row="4" Grid.Column="0"
+								Height="30" Content="備考" />
+							<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="5"
+								Height="30"
+								Text="{Binding CurrentEdit.Memo}"
+								TabIndex="6" />
+						</Grid>
+					</Border>
+
+					<DataGrid Grid.Row="1"
+						d:ItemsSource="{d:SampleData ItemCount=8}"
+						AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="White" IsReadOnly="False" IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding DetailItems}"
+						SelectedItem="{Binding SelectedDetail}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+						AutomationProperties.Name="売上明細">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="50"
+								Binding="{Binding No}"
+								Header="行"
+								IsReadOnly="True"
+								ElementStyle="{StaticResource RightAlignedCellText}" />
+							<DataGridTemplateColumn Width="160" Header="品番">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<StackPanel Orientation="Horizontal">
+											<TextBox Width="90" Height="26"
+												Text="{Binding Code_Shohin}" />
+											<Button Width="48" Height="26"
+												Margin="6,0,0,0"
+												Command="{Binding DataContext.SelectShohinCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+												CommandParameter="{Binding}"
+												Content="検索" />
+										</StackPanel>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="180"
+								Binding="{Binding Mei_Shohin}"
+								Header="品名" IsReadOnly="True" />
+							<DataGridTemplateColumn Width="140" Header="色">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<StackPanel Orientation="Horizontal">
+											<TextBox Width="70" Height="26"
+												Text="{Binding Code_Col}" />
+											<Button Width="48" Height="26"
+												Margin="6,0,0,0"
+												Command="{Binding DataContext.SelectColorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+												CommandParameter="{Binding}"
+												Content="検索" />
+										</StackPanel>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="120"
+								Binding="{Binding Mei_Col}"
+								Header="色名" IsReadOnly="True" />
+							<DataGridTemplateColumn Width="140" Header="サイズ">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<StackPanel Orientation="Horizontal">
+											<TextBox Width="70" Height="26"
+												Text="{Binding Code_Siz}" />
+											<Button Width="48" Height="26"
+												Margin="6,0,0,0"
+												Command="{Binding DataContext.SelectSizeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+												CommandParameter="{Binding}"
+												Content="検索" />
+										</StackPanel>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="120"
+								Binding="{Binding Mei_Siz}"
+								Header="サイズ名" IsReadOnly="True" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Su}"
+								Header="数量"
+								ElementStyle="{StaticResource RightAlignedCellText}"
+								EditingElementStyle="{StaticResource RightAlignedEditingText}" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Tanka}"
+								Header="単価"
+								ElementStyle="{StaticResource RightAlignedCellText}"
+								EditingElementStyle="{StaticResource RightAlignedEditingText}" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding Kingaku}"
+								Header="金額"
+								IsReadOnly="True"
+								ElementStyle="{StaticResource RightAlignedCellText}" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding Jodai}"
+								Header="上代"
+								ElementStyle="{StaticResource RightAlignedCellText}"
+								EditingElementStyle="{StaticResource RightAlignedEditingText}" />
+							<DataGridTextColumn Width="160"
+								Binding="{Binding Memo}"
+								Header="備考" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader">
+								<Setter Property="Background" Value="Black" />
+								<Setter Property="Foreground" Value="White" />
+								<Setter Property="BorderThickness" Value="0.5" />
+							</Style>
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+
+					<DockPanel Grid.Row="2"
+						Margin="0,10,0,0"
+						LastChildFill="False">
+						<StackPanel DockPanel.Dock="Left"
+							Orientation="Horizontal">
+							<Label Content="数量合計" />
+							<TextBox Width="90" Height="26"
+								Margin="6,0,12,0"
+								IsReadOnly="True"
+								Text="{Binding CurrentEdit.SuTotal}" />
+							<Label Content="金額合計" />
+							<TextBox Width="120" Height="26"
+								Margin="6,0,12,0"
+								IsReadOnly="True"
+								Text="{Binding CurrentEdit.KingakuTotal}" />
+							<Label Content="上代合計" />
+							<TextBox Width="120" Height="26"
+								Margin="6,0,12,0"
+								IsReadOnly="True"
+								Text="{Binding CurrentEdit.JodaiTotal}" />
+							<Label Content="値引合計" />
+							<TextBox Width="120" Height="26"
+								Margin="6,0,12,0"
+								IsReadOnly="True"
+								Text="{Binding CurrentEdit.Nebiki00Total}" />
+						</StackPanel>
+						<StackPanel DockPanel.Dock="Right"
+							Orientation="Horizontal">
+							<Button Width="110" Height="30"
+								Margin="0,0,8,0"
+								Command="{Binding AddDetailRowCommand}"
+								Content="明細追加" />
+							<Button Width="110" Height="30"
+								Margin="0,0,8,0"
+								Command="{Binding RemoveDetailRowCommand}"
+								Content="明細削除" />
+							<Button Width="110" Height="30"
+								Margin="0,0,8,0"
+								Command="{Binding RecalculateSummaryCommand}"
+								Content="再計算" />
+							<Button Width="100" Height="30"
+								Margin="0,0,8,0"
+								Command="{Binding DoInsertCommand}"
+								Content="追加" />
+							<Button Width="100" Height="30"
+								Margin="0,0,8,0"
+								Command="{Binding DoUpdateCommand}"
+								Content="保存" />
+							<Button Width="100" Height="30"
+								Command="{Binding DoDeleteCommand}"
+								Content="削除" />
+						</StackPanel>
+					</DockPanel>
+				</Grid>
+			</TabItem>
+		</TabControl>
+	</Grid>
 </helpers:BaseWindow>

@@ -1,6 +1,22 @@
 # AI Coding Log
 
 ---
+## [2026-03-18] 16:18 出荷売上入力画面作成
+### Agent
+- [使用した AI Model 名 : OpenAI gpt-5.2-codex]
+### Editor
+- [使用したエディタ: OpenCode]
+### 目的
+- ユーザーからの要望：指示書に従い出荷・売上入力画面を作成し、売上日表示に対応
+### 実施内容
+- Cvnet10Wpfclient/Views/06Uriage/ShukkaUriageInputView.xaml: ヘッダ一覧/明細タブのUI構成と検索・サマリ領域を追加
+- Cvnet10Wpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs: BaseMenteViewModel化と明細再計算/検索/一覧コマンドを実装
+### 技術決定 Why
+- 明細編集による合計値更新を確実にするため、明細コレクションの変更イベントで再計算と同期を実施
+### 確認
+- 未実施（未ビルド）
+
+---
 
 ## [2026-03-11] 商品メンテ画面 - 日付フィールドを DatePicker に変更
 
