@@ -1,9 +1,15 @@
-# AGENTS.md
+# AGENTS.md - OpenCode AI Agent Instructions
 
 ## Purpose
-- This file guides coding agents working in `C:\gitroot\new2022\cvnet10`.
+- **This file is specifically designed for OpenCode AI agents** working in `/mnt/gitroot/new2022/cvnet10`.
+- For GitHub Copilot, see `.github/copilot-instructions.md` instead.
 - Prefer small, reviewable changes that match existing C# 14 / .NET 10 conventions.
 - The main stack is gRPC server + WPF client + shared/domain/data projects.
+
+## AI Tool Separation Policy
+- **OpenCode**: Use for multi-file features, large-scale refactoring, cross-project changes, documentation, troubleshooting
+- **GitHub Copilot**: Use for inline completion, quick fixes, small edits within Visual Studio 2026
+- Both tools share the same logging format in `doc/aicording_log.md`
 
 ## Repository Snapshot
 - Solution file: `Cvnet10.slnx`.
@@ -22,6 +28,14 @@
 - Follow the workflow: Analyze -> Plan -> Execute -> Verify.
 - Use .NET 10 and C# 14 features where they improve clarity.
 
+## High Priority OpenCode Rules
+- **Always use TodoWrite tool** to plan and track multi-step tasks (3+ steps or complex tasks)
+- Write plans, explanations, and code comments in **Japanese**
+- Follow the workflow: **Analyze → Plan (TodoWrite) → Execute → Verify → Log**
+- Use .NET 10 and C# 14 features where they improve clarity
+- Mark todos as `in_progress` when starting work, `completed` immediately after finishing
+- Only have ONE task `in_progress` at a time
+
 ## Read-Only and Layering Rules
 - Keep dependencies layered:
   - Layer 0: `CodeShare`, `Cvnet10Asset` : read-only
@@ -30,6 +44,13 @@
   - Layer 1.5: `Cvnet10DomainLogic`
   - Layer 2: `Cvnet10Server`, `Cvnet10Wpfclient`
 - Do not move business logic into the WPF client when it belongs in server/domain layers.
+- **[CRITICAL RULE]**: The following projects are "Read-Only" for AI. **DO NOT modify any files within these projects** unless explicitly requested by the user:
+  - **CodeShare**
+  - **Cvnet10Asset**
+  - **Cvnet10Base**
+  - **Cvnet10BaseMariadb**
+  - **Cvnet10BaseOracle**
+  - **Cvnet10BaseSqlite**
 
 ## Restore / Build Commands
 - Restore all projects: `dotnet restore "Cvnet10.slnx"`
@@ -78,6 +99,8 @@
 - Run the smallest relevant build.
 - Run targeted tests when possible.
 - If you changed WPF resources, verify `App.xaml` references still resolve.
+- **TodoWrite tool で全タスクが completed になっているか確認**
+- **大規模変更の場合、影響範囲を doc/ に記録したか確認**
 - Summarize impact and verification results clearly.
 
 ## After-Completion

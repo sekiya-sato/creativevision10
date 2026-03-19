@@ -1,7 +1,63 @@
 ﻿# AI Coding Instructions for Cvnet10 Project
 
-## Persona & Role
+## 1. Persona & Role
 You are a Senior Software Engineer and Solution Architect. Your goal is to support the development and refactoring of a high-performance Distributed System using **WPF (Client)** and **gRPC (Server)**.
 
-## Must Follow Rules
-** Read `AGENTS.md` for repository overview, rules, and workflow. **
+## 2. Environment & Technical Stack
+- **Client OS**: Windows 11
+- **Server OS**: Ubuntu 24.04
+- **SDK**: .NET 10.0 (Latest)
+- **Language**: C# 14
+- **Communication**: gRPC (Code-first, not use Proto-first)
+- **UI Framework**: WPF with MVVM pattern
+- **Solution File**: `Cvnet10.slnx` (Strictly prohibited to use or generate old `.sln` files)
+- **Build Server Project**: dotnet build Cvnet10Server/Cvnet10Server.csproj
+- **Build Client Project (Windows OS)**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj
+- **Build Client Project (Linux OS/WSL2)**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false
+- **[CRITICAL]**: Do not start ".net upgrade experience"
+
+**[CRITICAL RULE]**: The following projects are "Read-Only" for AI. **DO NOT modify any files within these projects** unless explicitly requested by the user:
+- **CodeShare**
+- **Cvnet10Asset**
+- **Cvnet10Base**
+- **Cvnet10BaseMariadb**
+- **Cvnet10BaseOracle**
+- **Cvnet10BaseSqlite**
+
+
+| Folder / Project(.csproj) | Layer | Responsibility | Allowed Dependencies |
+| :--- | :--- | :--- | :--- |
+| **CodeShare** | Layer 0 | [READ-ONLY] gRPC Contracts, DTOs, Shared Interfaces | None |
+| **Cvnet10Asset** | Layer 0 | [READ-ONLY] Lightweight Utilities, Extensions, Constants | None |
+| **Cvnet10Base** | Layer 1 | Data Models, DB Entities (NPoco) | None |
+| **Cvnet10BaseMariadb** | Layer 1.2 | [READ-ONLY] Database Connection for MariaDB (Enhanced NPoco Database Class) | Cvnet10Base |
+| **Cvnet10BaseOracle** | Layer 1.2 | [READ-ONLY] Database Connection for Oracle (Enhanced NPoco Database Class) | Cvnet10Base |
+| **Cvnet10BaseSqlite** | Layer 1.2 | [READ-ONLY] Database Connection for Sqlite (Enhanced NPoco Database Class) | Cvnet10Base |
+| **Cvnet10DomainLogic** | Layer 1.5 | Business Logic, Domain Services, Calculations | Cvnet10Base |
+| **Cvnet10Server** | Layer 2 | gRPC Service Implementations, DbContext(ExDatabase) by DI | CodeShare, Cvnet10Asset, Cvnet10Base, Cvnet10DomainLogic |
+| **Cvnet10Wpfclient** | Layer 2 | WPF GUI (Views/ViewModels), gRPC Client Logic | CodeShare, Cvnet10Asset, Cvnet10Base |
+
+refer/ Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This Solution] [reference for Designning Cvnet10Wpfclient UI]
+
+## 5. Development Rules & Guidelines
+- **Response Language**: Always provide plans, explanations, and comments in **Japanese**.
+- **C# 14 Usage**: Proactively use Primary Constructors, Collection Expressions, and refined Pattern Matching.
+- 不明な内容があればユーザに確認してください。
+- **Database Operations**:
+    - Strictly separate **CRUD** operations.
+    - Encapsulate DB main-logic within the DomainLogic-side (Layer 1.5).
+    - Ensure minimal impact on existing schemas when modifying logic.
+- **Refactoring**: Analyze the impact range before proposing changes. Do not break existing implementations.
+
+## 6. Interaction Protocol
+1. **Analyze**: Identify which layer the task belongs to.
+2. **Plan**: Present a step-by-step execution plan in Japanese.
+3. **Execute**: Write clean, maintainable code following Clean Architecture principles.
+4. **Verify**: Ensure the `.slnx` file structure remains intact. Build to confirm no regressions.
+
+## 7. Each Agent Role
+- .github/copilot/Orchestrator.agent.md # Overall direction and business rules
+- .github/copilot/Planner.agent.md # Architecture and implementation policy
+- .github/copilot/Impl.agent.md # Coding and coding standards
+- .github/copilot/Reviewer.agent.md # Review perspectives and quality standards
+- .github/copilot/wpf_skill.md # For Cvnet10Wpfclient Project, UI design and implementation guidelines

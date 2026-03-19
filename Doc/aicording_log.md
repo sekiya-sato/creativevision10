@@ -1,6 +1,37 @@
 # AI Coding Log
 
+このファイルは、Cvnet10プロジェクトにおけるAI支援開発の作業履歴を記録します。
+
+## 使用するAIツール
+- **GitHub Copilot**: インライン補完、クイックフィックス、小規模編集（VS2026統合）
+- **OpenCode**: 大規模機能実装、複数ファイル編集、ドキュメント作成（CLI）
+
+## 記録フォーマット
+```markdown
+## [YYYY-MM-DD] hh:mm 作業タイトル
+### Agent
+- [使用した AI Model 名 : AI Provider 名]
+  例: claude-sonnet-4.5 : GitHub-Copilot
+      gpt-5.4 : OpenAI
+### Editor
+- [使用したエディタ]
+  例: OpenCode, VS2026, VSCode, GitHubCopilot-Cli
+### 目的
+- ユーザーからの要望：[内容]
+### 実施内容
+- [プロジェクト名]/[ファイル名]: [変更内容の要約]
+### 技術決定 Why
+- [技術的判断の理由]
+### 確認
+- [Build結果やテスト結果]
+```
+
+## アーカイブルール
+- 400行を超える場合、既存履歴を `aicording_log_[001-999].md` として連番保存
+- 新規に `aicording_log.md` を作成して記録を継続
+
 ---
+
 ## [2026-03-18] 16:18 出荷売上入力画面作成
 ### Agent
 - [使用した AI Model 名 : OpenAI gpt-5.2-codex]
@@ -268,5 +299,45 @@
 - 受注/売上のようにヘッダー・明細・サマリが同居する画面は UI/VM 仕様を明確に分けて記述した方が再利用性と実装一貫性が高いため
 ### 確認
 - ドキュメント更新のみのため Build は未実施
+
+---
+
+## [2026-03-19] 08:50 Microsoft Learn MCP サーバ追加
+### Agent
+- [使用した AI Model 名 : openai/gpt-5.4 : OpenAI]
+### Editor
+- [使用したエディタ: OpenCode]
+### 目的
+- ユーザーからの要望：`https://learn.microsoft.com/api/mcp` を利用する MCP サーバ設定を追加する
+### 実施内容
+- `/.mcp.json`: `microsoft-learn` の remote MCP サーバ定義を追加
+### 技術決定 Why
+- 認証不要で公式 Microsoft Learn ドキュメントへ接続できる標準的な workspace 設定として、ルートの `.mcp.json` を採用した
+### 確認
+- 設定ファイル追加のみのため Build は未実施
+
+---
+
+## [2026-03-19] 09:54 OpenCode導入計画の実施（標準構成）
+### Agent
+- [claude-sonnet-4.5 : GitHub-Copilot]
+### Editor
+- [OpenCode]
+### 目的
+- ユーザーからの要望：OpenCodeの導入計画を策定し、標準構成で実施する。GitHub Copilotと併用する形で、使い分けルールとドキュメントを整備する。
+### 実施内容
+- `AGENTS.md`: OpenCode専用に改訂。Purpose/AI Tool Separation Policy/High Priority OpenCode Rules/Read-Only強化/Pre-Completion Checklistを更新
+- `doc/opencode_usage_guide.md`: 新規作成。OpenCodeの起動方法、基本的な使い方、プロンプト例、FAQ、トラブルシューティングを記載
+- `doc/ai_tool_selection_guide.md`: 新規作成。GitHub CopilotとOpenCodeの使い分け基準、シーン別推奨ツール一覧、判断フローチャート、実践シナリオを記載
+- `doc/aicording_log.md`: ヘッダにフォーマット説明とアーカイブルールを追加。使用するAIツール（GitHub Copilot/OpenCode）の記載方法を明確化
+- `doc/opencode_prompts.md`: 新規作成。頻出タスク向けプロンプト集（新規画面作成/リファクタリング/ドキュメント/コードレビュー/トラブルシューティング/テスト/DB/gRPC）を整備
+### 技術決定 Why
+- AGENTS.mdをOpenCode専用とすることで、GitHub Copilotの`.github/copilot-instructions.md`と明確に分離し、各ツールに最適化されたルールセットを提供
+- 使い分けガイドを作成することで、開発者が状況に応じて適切なツールを選択でき、開発効率を最大化できる
+- プロンプトライブラリを整備することで、OpenCode利用時のベストプラクティスを共有し、品質の均一化を図る
+- 作業履歴フォーマットを統一することで、どちらのツールを使用したかを明確に追跡可能にした
+### 確認
+- ドキュメント追加のみのため、コード起因のBuildエラーは発生せず（NuGetパス問題は環境起因で既知の問題）
+- 作成ファイル: AGENTS.md（改訂）、doc/opencode_usage_guide.md、doc/ai_tool_selection_guide.md、doc/aicording_log.md（ヘッダ追加）、doc/opencode_prompts.md
 
 ---
