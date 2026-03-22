@@ -7,7 +7,6 @@
     <File Path="AGENTS.md" />
     <File Path="Doc/aicording_log.md" />
     <File Path="readme.md" />
-    <File Path="readonlyhuman.md" />
   </Folder>
   <Project Path="CodeShare/CodeShare.csproj" />
   <Project Path="Cvnet10Asset/Cvnet10Asset.csproj" />
