@@ -34,3 +34,21 @@
 - check-xamlにて構文、名前空間、リソース参照を検証し、全3ファイル正常確認済
 
 ---
+
+## [2026-03-22] 20:03 GitHub Copilotレート一覧の整理と保存
+### Agent
+- [openai/gpt-5.4 : OpenAI]
+### Editor
+- [OpenCode]
+### 目的
+- ユーザーからの要望：GitHub Copilot のモデルレート一覧について、Freeプラン版、倍率順の有料プラン版、OpenCode向け推奨付き版をそれぞれ Markdown で整理し、`/home/user2010/workspace/opencode` に日付入りファイル名で保存する
+### 実施内容
+- opencode/2026-03-22_github-copilot-free-plan-rate-list.md: Freeプランで利用可能なモデルと倍率を Markdown 表で整理して保存
+- opencode/2026-03-22_github-copilot-paid-plan-rate-list-sorted.md: 有料プランの倍率一覧を低倍率順に並べ替えて保存
+- opencode/2026-03-22_github-copilot-opencode-recommended-models.md: OpenCodeでの用途を意識した推奨モデル一覧を保存
+### 技術決定 Why
+- 公開ドキュメントでは厳密な req/min ではなく Premium request 倍率が主に案内されているため、その表現に合わせて一覧化した。あわせて用途別の推奨を分けることで、単なる表より実運用で参照しやすい形にした。
+### 確認
+- 各 Markdown ファイルの保存と内容確認を実施済み
+
+---
