@@ -19,17 +19,7 @@
 - Code style baseline: `.editorconfig`.
 - Xaml style baseline: `Settings.XamlStyler`.
 
-## Rule Sources
-- Copilot instructions exist in `.github/copilot-instructions.md` and must be followed.
-- Additional agent guidance exists in `.github/copilot/Orchestrator.agent.md`, `.github/copilot/Planner.agent.md`, `.github/copilot/Impl.agent.md`, `.github/copilot/Reviewer.agent.md`, and `.github/copilot/wpf_skill.md`.
-
-## High Priority Copilot Rules
-- Write plans, explanations, and code comments in Japanese.
-- Follow the workflow: Analyze -> Plan -> Execute -> Verify.
-- Use .NET 10 and C# 14 features where they improve clarity.
-
 ## High Priority OpenCode Rules
-- **Always use TodoWrite tool** to plan and track multi-step tasks (3+ steps or complex tasks)
 - Write plans, explanations, and code comments in **Japanese**
 - Follow the workflow: **Analyze → Plan (TodoWrite) → Execute → Verify → Log**
 - Use .NET 10 and C# 14 features where they improve clarity
@@ -47,7 +37,6 @@
 - **[CRITICAL RULE]**: The following projects are "Read-Only" for AI. **DO NOT modify any files within these projects** unless explicitly requested by the user:
   - **CodeShare**
   - **Cvnet10Asset**
-  - **Cvnet10Base**
   - **Cvnet10BaseMariadb**
   - **Cvnet10BaseOracle**
   - **Cvnet10BaseSqlite**
@@ -56,8 +45,7 @@
 - Restore all projects: `dotnet restore "Cvnet10.slnx"`
 - Build solution: `dotnet build "Cvnet10.slnx"`
 - Build server only: `dotnet build "Cvnet10Server/Cvnet10Server.csproj"`
-- Build WPF client on Windows: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"`
-- Build WPF client on Linux/WSL2: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
+- Build WPF client: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
 
 ## Lint / Format Commands
 - Full repo format check: `dotnet format "Cvnet10.slnx" --verify-no-changes`
@@ -95,11 +83,7 @@
 
 ## Pre-Completion Checklist
 - Confirm you did not modify read-only projects unintentionally.
-- Confirm `Cvnet10.slnx` still exists and was not replaced with `.sln`.
 - Run the smallest relevant build.
-- Run targeted tests when possible.
-- If you changed WPF resources, verify `App.xaml` references still resolve.
-- **TodoWrite tool で全タスクが completed になっているか確認**
 - **大規模変更の場合、影響範囲を Doc/ に記録したか確認**
 - Summarize impact and verification results clearly.
 

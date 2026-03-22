@@ -19,7 +19,6 @@ You are a Senior Software Engineer and Solution Architect. Your goal is to suppo
 **[CRITICAL RULE]**: The following projects are "Read-Only" for AI. **DO NOT modify any files within these projects** unless explicitly requested by the user:
 - **CodeShare**
 - **Cvnet10Asset**
-- **Cvnet10Base**
 - **Cvnet10BaseMariadb**
 - **Cvnet10BaseOracle**
 - **Cvnet10BaseSqlite**
@@ -54,6 +53,7 @@ refer/ Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This
 2. **Plan**: Present a step-by-step execution plan in Japanese.
 3. **Execute**: Write clean, maintainable code following Clean Architecture principles.
 4. **Verify**: Ensure the `.slnx` file structure remains intact. Build to confirm no regressions.
+5. **Log**: Write log file. follow `.github/prompts/makeDocument.md` 
 
 ## 7. Each Agent Role
 - .github/copilot/Orchestrator.agent.md # Overall direction and business rules

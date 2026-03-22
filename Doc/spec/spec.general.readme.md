@@ -60,32 +60,37 @@ Cvnet10は、gRPCベースの分散アーキテクチャを採用した販売管
 本プロジェクトは厳格なレイヤードアーキテクチャを採用しています。
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Layer 2                                 │
-│   ┌─────────────────┐    ┌─────────────────────────────┐    │
-│   │  Cvnet10Server  │    │    Cvnet10Wpfclient         │    │
-│   │  (gRPCサーバ)    │    │    (WPFクライアント)         │    │
-│   └─────────────────┘    └─────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────┤
-│                    Layer 1.5                                 │
-│   ┌─────────────────────────────────────────────────────┐  │
-│   │              Cvnet10DomainLogic                      │  │
-│   │              (ビジネスロジック・ドメインサービス)      │  │
-│   └─────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────┤
-│                      Layer 1                                 │
-│   ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
-│   │Cvnet10Base│ │Cvnet10Base│ │Cvnet10Base│ │Cvnet10Base│    │
-│   │  (共通)   │ │  (Sqlite) │ │  (MariaDB)│ │  (Oracle) │    │
-│   └──────────┘ └──────────┘ └──────────┘ └──────────┘    │
-├─────────────────────────────────────────────────────────────┤
-│                      Layer 0                                 │
-│   ┌──────────────┐    ┌──────────────────────┐             │
-│   │  CodeShare   │    │   Cvnet10Asset       │             │
-│   │ (gRPC契約)   │    │   (共通ユーティリティ) │             │
-│   └──────────────┘    └──────────────────────┘             │
-└─────────────────────────────────────────────────────────────┘
-```
+mermaid
+graph TD
+    subgraph Layer2 [Layer 2]
+        A[Cvnet10Server<br/>(gRPCサーバ)]
+        B[Cvnet10Wpfclient<br/>(WPFクライアント)]
+    end
+    subgraph Layer15 [Layer 1.5]
+        C[Cvnet10DomainLogic<br/>(ビジネスロジック)]
+    end
+    subgraph Layer12 [Layer 1.2 - Read-Only]
+        E[(Cvnet10BaseSqlite)]
+        F[(Cvnet10BaseMariadb)]
+        G[(Cvnet10BaseOracle)]
+    end
+    subgraph Layer1 [Layer 1]
+        D[(Cvnet10Base<br/>(共通モデル))]
+    end
+    subgraph Layer0 [Layer 0 - Read-Only]
+        H[CodeShare<br/>(gRPC契約)]
+        I[Cvnet10Asset<br/>(ユーティリティ)]
+    end
+
+    A --> C
+    B --> C
+    C --> D
+    C --> E
+    C --> F
+    C --> G
+    D --> H
+    D --> I
+    ```
 
 ## レイヤー別責任
 
@@ -191,73 +196,6 @@ dotnet build Cvnet10.slnx
 # サーバビルド
 dotnet build Cvnet10Server/Cvnet10Server.csproj
 
-# WPFクライアントビルド（Windows）
-dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj
-
-# WPFクライアントビルド（Linux/WSL2）
+# WPFクライアントビルド
 dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false
-```
 
-## テストコマンド
-
-```bash
-# 全テスト実行
-dotnet test
-
-# 特定プロジェクトのみ
-dotnet test Tests.Cvnet10Server/Tests.Cvnet10Server.csproj
-
-# 単一テストクラス
-dotnet test --filter "FullyQualifiedName~CvnetCoreServiceTests"
-
-# カバレッジ付き
-dotnet test /p:CollectCoverage=true
-```
-
-## フォーマットコマンド
-
-```bash
-# コードフォーマット適用
-dotnet format Cvnet10.slnx
-
-# スタイルチェック
-dotnet format --verify-no-changes Cvnet10.slnx
-```
-
-
-# フォルダ構成
-
-```
-Cvnet10/
-├── .editorconfig           # コードスタイル設定
-├── .github/
-│   ├── copilot/            # Copilot Agent定義
-│   ├── copilot-instructions.md
-│   └── prompts/            # プロンプトテンプレート
-├── .vscode/                # VS Code設定
-├── AGENTS.md               # AI開発ガイドライン
-├── Cvnet10.slnx            # ソリューションファイル
-├── Directory.Packages.props # NuGet集中管理
-├── Doc/                    # ドキュメント
-│   ├── aicording_log.md
-│   └── spec/               # 仕様書
-│       └── spec.general.readme.md
-├── readme.md               # プロジェクト概要
-├── sourceheader.txt        # ファイルヘッダー
-├── CodeShare/              # Layer 0: gRPC契約
-├── Cvnet10Asset/           # Layer 0: 共通ユーティリティ
-├── Cvnet10Base/             # Layer 1: 共通モデル
-├── Cvnet10BaseSqlite/       # Layer 1: SQLite対応
-├── Cvnet10BaseMariadb/      # Layer 1: MariaDB対応
-├── Cvnet10BaseOracle/       # Layer 1: Oracle対応
-├── Cvnet10DomainLogic/      # Layer 1.5: ビジネスロジック
-├── Cvnet10Server/          # Layer 2: gRPCサーバ
-├── Cvnet10Wpfclient/       # Layer 2: WPFクライアント
-├── Tests.Cvnet10Server/    # サーバテスト
-└── TestLogin/              # 認証テスト
-```
-
-
----
-
-*最終更新日: 2026-03-20*
