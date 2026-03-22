@@ -1,0 +1,14 @@
+[1mdiff --git a/Cvnet10.slnx b/Cvnet10.slnx[m
+[1mindex c7d413c..6e2d00e 100644[m
+[1m--- a/Cvnet10.slnx[m
+[1m+++ b/Cvnet10.slnx[m
+[36m@@ -1,7 +1,7 @@[m
+ <Solution>[m
+   <Folder Name="/tests/">[m
+[31m-    <Project Path="TestLogin/TestLogin.csproj" Id="118c6650-fde8-4368-b347-4c6766244adb" />[m
+[31m-    <Project Path="Tests.Cvnet10Server/Tests.Cvnet10Server.csproj" />[m
+[32m+[m[32m    <Project Path="tests/TestCvnet10Server/TestCvnet10Server.csproj" />[m
+[32m+[m[32m    <Project Path="tests/TestLogin/TestLogin.csproj" />[m
+   </Folder>[m
+   <Folder Name="/ソリューション項目/">[m
+     <File Path="AGENTS.md" />[m
