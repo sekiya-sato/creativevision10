@@ -189,3 +189,20 @@
 - dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false 成功
 
 ---
+
+## [2026-03-23] 19:05 update-design-menteスキル登録
+### Agent
+- gpt-5.5-soccer: OpenCode
+### Editor
+- OpenCode
+### 目的
+- 以前のマスタ画面デザイン統一経験を整理して再利用可能なスキルとして記録し、今後の作業効率を高める
+### 実施内容
+- `.agents/skills/update-design-mente/SKILL.md`: MasterShohinMenteViewをテンプレートにしたColorZone/Card/DataGridアプローチと支払情報/詳細タブの改善手順を記述
+- Doc/aicording_log.md: スキル追加の履歴と文脈を新規エントリとして追記
+### 技術決定 Why
+- デザイン統一を何度も繰り返す作業をナレッジ化し、ColorZone+Card+Outlined入力の再利用を推奨することで他メンテ画面への展開を簡略化
+### 確認
+- dotnet build は該当作業外のため未実行
+
+---
