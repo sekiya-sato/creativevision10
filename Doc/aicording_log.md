@@ -16,6 +16,22 @@
 
 ---
 
+## [2026-03-23] 13:39 RangeParamMiniViewのUI統一
+### Agent
+- [gpt-5.4-mini : OpenAI]
+### Editor
+- [OpenCode]
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient/Views/Sub/RangeParamView.xaml` を参考に、`Cvnet10Wpfclient/Views/Sub/RangeParamMiniView.xaml` の見た目を整える。修正対象はこの1ファイルに限定する。
+### 実施内容
+- `Cvnet10Wpfclient/Views/Sub/RangeParamMiniView.xaml`: `RangeParamView.xaml` に合わせて `ColorZone` ヘッダー、`Card` レイアウト、`FormTextBox` スタイル、MaterialDesign系ボタンへ変更し、既存のバインディングは維持した。
+### 技術決定 Why
+- ミニ版でも通常版と同じUIパターンを使うことで画面間の一貫性を保ちつつ、入力項目数はそのまま維持して操作性を落とさないため。
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功
+
+---
+
 ## [2026-03-23] 12:13 MasterShohinMenteViewのSearchTextBox背景統一
 ### Agent
 - [gpt-5.4-mini : OpenAI]
