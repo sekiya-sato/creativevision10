@@ -135,16 +135,9 @@
 						Margin="16,4"
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
 						Opacity="0.3" />
-					<Button Command="{Binding DoListCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
-						ToolTip="一覧取得 (F5)">
-						<StackPanel Orientation="Horizontal">
-							<materialDesign:PackIcon VerticalAlignment="Center"
-								Kind="DatabaseSearch" />
-							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="一覧取得" />
-						</StackPanel>
-					</Button>
+					<Label Margin="0,0,8,0" VerticalAlignment="Center"
+						FontSize="13" Foreground="{DynamicResource TitleColor}"
+						Content="区分選択" />
 					<ComboBox Width="280"
 						Margin="10,0,0,0"
 						VerticalAlignment="Center"
@@ -328,20 +321,12 @@
 									</TextBlock>
 								</DockPanel>
 
-								<TextBlock Grid.Row="5"
-									Style="{StaticResource FormLabel}"
-									Text="区分名" />
-								<TextBox Grid.Row="5" Grid.Column="1"
-									materialDesign:HintAssist.Hint="区分名"
-									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
-									Text="{Binding CurrentEdit.KubunName}" />
 
 								<TextBlock Grid.Row="6"
 									Style="{StaticResource FormLabel}"
-									Text="登録日/修正日" />
+									Text="" d:Text="登録日/修正日" />
 								<TextBlock Grid.Row="6" Grid.Column="1"
-									Margin="0,8,0,0"
+									Margin="20"
 									Foreground="{DynamicResource MaterialDesignBody}"
 									TextWrapping="Wrap">
 									<TextBlock.Text>
@@ -352,18 +337,6 @@
 									</TextBlock.Text>
 								</TextBlock>
 
-								<TextBlock Grid.Row="7"
-									Style="{StaticResource FormLabel}"
-									Text="ID" />
-					<TextBox Grid.Row="7" Grid.Column="1"
-						materialDesign:HintAssist.Hint="ID"
-						Style="{StaticResource FormTextBox}"
-						IsReadOnly="True">
-						<TextBox.Text>
-							<Binding Path="CurrentEdit.Id"
-								StringFormat="Id={0}" />
-						</TextBox.Text>
-					</TextBox>
 							</Grid>
 						</ScrollViewer>
 					</TabItem>
