@@ -16,6 +16,22 @@
 
 ---
 
+## [2026-03-23] 12:13 MasterShohinMenteViewのSearchTextBox背景統一
+### Agent
+- [gpt-5.4-mini : OpenAI]
+### Editor
+- [OpenCode]
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient/Views/01Master/MasterShohinMenteView.xaml` の `helpers:SearchTextBox` 共通スタイルを修正し、全ての SearchTextBox の背景を他の `FormTextBox` と揃える
+### 実施内容
+- `Cvnet10Wpfclient/Views/01Master/MasterShohinMenteView.xaml`: `MenteSearchTextBox` の `Background` を `Window.Background` 参照から `MaterialDesignPaper` に変更し、同一ビュー内の全 SearchTextBox に反映
+### 技術決定 Why
+- `helpers:SearchTextBox` は共通スタイルで背景を配っているため、個別要素ではなくスタイル側を修正して見た目の統一を維持した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功
+
+---
+
 ## [2026-03-22] 15:20 MasterShohinMente関連画面のUIデザイン刷新（RangeParamView / SelectWinView / SelectKubunView）
 ### Agent
 - claude-opus-4.6 : OpenCode

@@ -22,13 +22,14 @@
 					Margin="0,0,2,0" Padding="6,0"
 					HorizontalContentAlignment="{Binding TextHorizontalContentAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"
 					VerticalContentAlignment="Center"
-					d:Background="White" d:Text="入力エリア" Background="Transparent"
+					d:Background="White" d:Text="入力エリア" 
 					BorderBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"
 					BorderThickness="0,0,0,1"
 					CaretBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"
 					FontFamily="{Binding FontFamily, RelativeSource={RelativeSource AncestorType=UserControl}}"
 					FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
 					Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+					Background="{Binding Background, RelativeSource={RelativeSource AncestorType=UserControl}}"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}">
 					<TextBox.InputBindings>

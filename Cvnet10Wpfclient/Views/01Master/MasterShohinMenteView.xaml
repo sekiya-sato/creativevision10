@@ -33,7 +33,7 @@
 		<Style x:Key="MenteSearchTextBox"
 			TargetType="{x:Type helpers:SearchTextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
-			<Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}" />
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
 			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
 
@@ -75,12 +75,10 @@
 		<!--  ===== ヘッダー: ColorZone ツールバー =====  -->
 		<materialDesign:ColorZone Grid.Row="0"
 			Padding="12,8"
-			materialDesign:ElevationAssist.Elevation="Dp4"
-			Mode="PrimaryMid">
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
 				<!--  右側: CRUD ボタン群  -->
-				<StackPanel DockPanel.Dock="Right"
-					Orientation="Horizontal">
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button Margin="4,0"
 						Command="{Binding DoUpdateCommand}"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
@@ -88,8 +86,7 @@
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Pencil" />
-							<TextBlock Margin="6,0,0,0"
-								VerticalAlignment="Center"
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
 								Text="修正" />
 						</StackPanel>
 					</Button>
@@ -100,8 +97,7 @@
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Delete" />
-							<TextBlock Margin="6,0,0,0"
-								VerticalAlignment="Center"
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
 								Text="削除" />
 						</StackPanel>
 					</Button>
@@ -112,8 +108,7 @@
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Plus" />
-							<TextBlock Margin="6,0,0,0"
-								VerticalAlignment="Center"
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
 								Text="追加" />
 						</StackPanel>
 					</Button>
@@ -140,8 +135,7 @@
 					<materialDesign:PackIcon Width="28" Height="28"
 						VerticalAlignment="Center"
 						Kind="Package" />
-					<TextBlock Margin="10,0,0,0"
-						VerticalAlignment="Center"
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 						FontSize="20" FontWeight="SemiBold"
 						Text="{Binding Title}" />
 					<Rectangle Width="1"
@@ -154,8 +148,7 @@
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="DatabaseSearch" />
-							<TextBlock Margin="6,0,0,0"
-								VerticalAlignment="Center"
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
 								Text="一覧取得" />
 						</StackPanel>
 					</Button>
@@ -175,8 +168,7 @@
 			<!--  ===== 左パネル: 一覧グリッド (Card) =====  -->
 			<materialDesign:Card Grid.Column="0"
 				Padding="0"
-				materialDesign:ElevationAssist.Elevation="Dp2"
-				UniformCornerRadius="8">
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
@@ -189,9 +181,8 @@
 						Background="{DynamicResource MaterialDesignToolBarBackground}"
 						CornerRadius="8,8,0,0">
 						<DockPanel>
-							<TextBlock DockPanel.Dock="Right"
-								VerticalAlignment="Center"
-								FontSize="13"
+							<TextBlock VerticalAlignment="Center"
+								DockPanel.Dock="Right" FontSize="13"
 								Foreground="{DynamicResource MaterialDesignBodyLight}"
 								Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
 							<TextBlock VerticalAlignment="Center"
@@ -203,15 +194,14 @@
 					</Border>
 
 					<!--  DataGrid 一覧  -->
-					<DataGrid x:Name="ShohinGrid" Grid.Row="1"
+					<DataGrid x:Name="ShohinGrid"
+						Grid.Row="1"
 						d:ItemsSource="{d:SampleData ItemCount=5}"
-						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False"
-						EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
-						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}" IsReadOnly="True"
-						IsSynchronizedWithCurrentItem="True"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
 						ItemsSource="{Binding ListData}"
-						materialDesign:DataGridAssist.CellPadding="12,6"
-						materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 						SelectedItem="{Binding Current}"
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
@@ -243,28 +233,25 @@
 			<!--  スプリッタ  -->
 			<GridSplitter Grid.Column="1"
 				Width="6"
-				Margin="3,0"
-				HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
 				Background="Transparent" />
 
 			<!--  ===== 右パネル: 編集エリア (Card + TabControl) =====  -->
 			<materialDesign:Card Grid.Column="2"
 				Padding="0"
-				materialDesign:ElevationAssist.Elevation="Dp2"
-				UniformCornerRadius="8">
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<TabControl Style="{StaticResource MaterialDesignTabControl}">
 
 					<!--  タブ1: 基本情報  -->
 					<TabItem>
 						<TabItem.Header>
 							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0"
-									VerticalAlignment="Center"
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="InformationOutline" />
 								<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}Id:{0}}" />
 							</StackPanel>
 						</TabItem.Header>
-						<ScrollViewer Padding="16,8"
+						<ScrollViewer Padding="10,10,20,20"
 							VerticalScrollBarVisibility="Auto">
 							<Grid>
 								<Grid.ColumnDefinitions>
@@ -336,14 +323,13 @@
 								<DockPanel Grid.Row="4" Grid.Column="1"
 									Margin="0,4">
 									<helpers:SearchTextBox Width="120" Height="36"
-										DockPanel.Dock="Left"
 										BorderThickness="0,0,0,1"
 										Command="{Binding DoSelectBrandCommand}"
+										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Brand, UpdateSourceTrigger=PropertyChanged}"
 										TextHorizontalContentAlignment="Left" />
-									<TextBlock Margin="10,0,0,0"
-										VerticalAlignment="Center"
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
 											<MultiBinding StringFormat="{}{0} {1}">
@@ -361,14 +347,13 @@
 								<DockPanel Grid.Row="5" Grid.Column="1"
 									Margin="0,4">
 									<helpers:SearchTextBox Width="120" Height="36"
-										DockPanel.Dock="Left"
 										BorderThickness="0,0,0,1"
 										Command="{Binding DoSelectItemCommand}"
+										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Item, UpdateSourceTrigger=PropertyChanged}"
 										TextHorizontalContentAlignment="Left" />
-									<TextBlock Margin="10,0,0,0"
-										VerticalAlignment="Center"
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
 											<MultiBinding StringFormat="{}{0} {1}">
@@ -386,14 +371,13 @@
 								<DockPanel Grid.Row="6" Grid.Column="1"
 									Margin="0,4">
 									<helpers:SearchTextBox Width="120" Height="36"
-										DockPanel.Dock="Left"
 										BorderThickness="0,0,0,1"
 										Command="{Binding DoSelectMakerCommand}"
+										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Maker, UpdateSourceTrigger=PropertyChanged}"
 										TextHorizontalContentAlignment="Left" />
-									<TextBlock Margin="10,0,0,0"
-										VerticalAlignment="Center"
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
 											<MultiBinding StringFormat="{}{0} {1}">
@@ -512,14 +496,13 @@
 								<DockPanel Grid.Row="17" Grid.Column="1"
 									Margin="0,4">
 									<helpers:SearchTextBox Width="120" Height="36"
-										DockPanel.Dock="Left"
 										BorderThickness="0,0,0,1"
 										Command="{Binding DoSelectSokoCommand}"
+										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}"
 										TextHorizontalContentAlignment="Left" />
-									<TextBlock Margin="10,0,0,0"
-										VerticalAlignment="Center"
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
 											<MultiBinding StringFormat="{}{0} {1}">
@@ -536,12 +519,10 @@
 									Text="メモ" />
 								<TextBox Grid.Row="18" Grid.Column="1"
 									MinHeight="60"
-									materialDesign:HintAssist.Hint="メモ"
-									AcceptsReturn="True"
+									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Memo}"
-									TextWrapping="Wrap"
-									VerticalScrollBarVisibility="Auto" />
+									TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
 							</Grid>
 						</ScrollViewer>
 					</TabItem>
@@ -550,8 +531,7 @@
 					<TabItem>
 						<TabItem.Header>
 							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0"
-									VerticalAlignment="Center"
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="CurrencyJpy" />
 								<TextBlock Text="原価リスト" />
 							</StackPanel>
@@ -559,12 +539,11 @@
 						<DataGrid x:Name="JgenkaGrid"
 							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=3}"
-							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False"
-							EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
-							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}" IsSynchronizedWithCurrentItem="True"
+							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+							IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jgenka}"
-							materialDesign:DataGridAssist.CellPadding="12,6"
-							materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 							Style="{StaticResource MaterialDesignDataGrid}"
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
@@ -589,8 +568,7 @@
 					<TabItem>
 						<TabItem.Header>
 							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0"
-									VerticalAlignment="Center"
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="Palette" />
 								<TextBlock Text="色サイズリスト" />
 							</StackPanel>
@@ -598,12 +576,11 @@
 						<DataGrid x:Name="JcolsizGrid"
 							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=5}"
-							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False"
-							EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
-							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}" IsSynchronizedWithCurrentItem="True"
+							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
+							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+							IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jcolsiz}"
-							materialDesign:DataGridAssist.CellPadding="8,4"
-							materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
 							SelectedItem="{Binding SelectedJcolsiz, Mode=TwoWay}"
 							Style="{StaticResource MaterialDesignDataGrid}"
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
@@ -707,8 +684,7 @@
 					<TabItem>
 						<TabItem.Header>
 							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0"
-									VerticalAlignment="Center"
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="CheckDecagram" />
 								<TextBlock Text="品質リスト" />
 							</StackPanel>
@@ -716,12 +692,11 @@
 						<DataGrid x:Name="JgradeGrid"
 							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=3}"
-							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False"
-							EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
-							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}" IsSynchronizedWithCurrentItem="True"
+							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+							IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jgrade}"
-							materialDesign:DataGridAssist.CellPadding="12,6"
-							materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 							Style="{StaticResource MaterialDesignDataGrid}"
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
@@ -746,8 +721,7 @@
 					<TabItem>
 						<TabItem.Header>
 							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0"
-									VerticalAlignment="Center"
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="FormatListBulleted" />
 								<TextBlock Text="名称リスト" />
 							</StackPanel>
@@ -755,13 +729,11 @@
 						<DataGrid x:Name="JsubGrid"
 							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=3}"
-							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False"
-							EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
-							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}" IsReadOnly="True"
-							IsSynchronizedWithCurrentItem="True"
+							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+							IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jsub}"
-							materialDesign:DataGridAssist.CellPadding="12,6"
-							materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 							Style="{StaticResource MaterialDesignDataGrid}"
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
@@ -789,8 +761,7 @@
 					<TabItem>
 						<TabItem.Header>
 							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0"
-									VerticalAlignment="Center"
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="TextBoxMultiple" />
 								<TextBlock Text="詳細内容" />
 							</StackPanel>

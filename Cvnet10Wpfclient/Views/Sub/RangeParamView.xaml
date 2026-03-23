@@ -19,7 +19,7 @@
 
 		<!--  Header: ColorZone Toolbar  -->
 		<materialDesign:ColorZone Grid.Row="0"
-			Padding="12,8"
+			Padding="12,8" ClipToBounds="True"
 			materialDesign:ElevationAssist.Elevation="Dp4"
 			Mode="PrimaryMid">
 			<StackPanel Orientation="Horizontal">
@@ -48,10 +48,10 @@
 				Text="{Binding Parameter.DisplayName, StringFormat={}{0}一覧の対象範囲を指定してください}" />
 
 			<materialDesign:Card Grid.Row="1"
-				Padding="12"
+				Padding="12,12,12,0"
 				materialDesign:ElevationAssist.Elevation="Dp2"
 				UniformCornerRadius="8">
-				<Grid Margin="4">
+				<Grid Margin="2">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
