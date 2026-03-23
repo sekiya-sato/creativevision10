@@ -57,6 +57,7 @@ public partial class MenuData : ObservableObject {
 			new("ログイン管理マスタ", typeof(Views._00System.SysLoginView), false, addInfo:"gRPC"),
 			new("ログイン履歴情報", typeof(Views._00System.SysLoginHistoryView), false, addInfo:"gRPC"),
 			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), false, addInfo:"準備中"), // SysAutoExecHistoryView
+			new("Test画面--", typeof(Views.Sub.RangeInputParamView), false, addInfo:"一時的なテストで使用"),
 			/*
 		new("", new([
 			new("", typeof(object), false, addInfo:"準備中"),
