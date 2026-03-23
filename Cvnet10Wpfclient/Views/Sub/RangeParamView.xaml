@@ -10,6 +10,16 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:RangeParamViewModel />
 	</helpers:BaseWindow.DataContext>
+	<helpers:BaseWindow.Resources>
+	<!--  編集フォームの TextBox スタイル  -->
+	<Style x:Key="FormTextBox"
+			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
+			TargetType="TextBox">
+		<Setter Property="Margin" Value="0,4" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+		<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+	</Style>
+	</helpers:BaseWindow.Resources>
 
 	<Grid>
 		<Grid.RowDefinitions>
@@ -74,8 +84,12 @@
 					<TextBox Grid.Row="0" Grid.Column="1"
 						Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="ID (開始)"
-						Style="{StaticResource MaterialDesignOutlinedTextBox}"
+						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.FromId, UpdateSourceTrigger=PropertyChanged}" />
+					
+					
+					
+					
 
 					<TextBlock Grid.Row="0" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -83,7 +97,7 @@
 					<TextBox Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="ID (終了)"
-						Style="{StaticResource MaterialDesignOutlinedTextBox}"
+						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.ToId, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="1" Grid.Column="0"
@@ -93,7 +107,7 @@
 					<TextBox Grid.Row="1" Grid.Column="1"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="CD (開始)"
-						Style="{StaticResource MaterialDesignOutlinedTextBox}"
+						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.FromCode, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="1" Grid.Column="3"
@@ -102,7 +116,7 @@
 					<TextBox Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="CD (終了)"
-						Style="{StaticResource MaterialDesignOutlinedTextBox}"
+						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.ToCode, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="2" Grid.Column="0"
@@ -111,7 +125,7 @@
 					<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="5"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="名前"
-						Style="{StaticResource MaterialDesignOutlinedTextBox}"
+						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.Name, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6"
@@ -126,7 +140,7 @@
 					<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
 						Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="件数"
-						Style="{StaticResource MaterialDesignOutlinedTextBox}"
+						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
 					<TextBlock Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="3"
 						VerticalAlignment="Center"

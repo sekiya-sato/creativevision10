@@ -88,6 +88,7 @@
 						helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
 						helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=DefaultButton}"
 						GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+					  FrozenColumnCount="1" 
 						IsSynchronizedWithCurrentItem="True"
 						ItemsSource="{Binding ListData}"
 						materialDesign:DataGridAssist.CellPadding="12,6"

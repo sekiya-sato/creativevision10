@@ -23,11 +23,9 @@
 		<!--  ヘッダー  -->
 		<materialDesign:ColorZone Grid.Row="0"
 			Padding="12,8"
-			materialDesign:ElevationAssist.Elevation="Dp4"
-			Mode="PrimaryMid">
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
-				<StackPanel DockPanel.Dock="Right"
-					Orientation="Horizontal">
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button x:Name="DefaultButton"
 						Command="{Binding DoSelectCommand}"
 						IsDefault="True"
@@ -35,8 +33,7 @@
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Check" />
-							<TextBlock Margin="6,0,0,0"
-								VerticalAlignment="Center"
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
 								Text="選択" />
 						</StackPanel>
 					</Button>
@@ -60,8 +57,7 @@
 			Padding="12,6"
 			Background="{DynamicResource MaterialDesignToolBarBackground}">
 			<DockPanel>
-				<StackPanel DockPanel.Dock="Left"
-					Orientation="Horizontal">
+				<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
 					<TextBlock Text="{Binding Current.Code}" />
 					<TextBlock Margin="8,0,0,0"
 						Text="{Binding Current.Name}" />
@@ -81,13 +77,12 @@
 		<!--  メインコンテンツ  -->
 		<materialDesign:Card Grid.Row="2"
 			Margin="12"
-			materialDesign:ElevationAssist.Elevation="Dp2"
-			UniformCornerRadius="8">
+			materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 			<DataGrid x:Name="SelectGrid"
 				d:ItemsSource="{d:SampleData ItemCount=5}"
 				helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
 				helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=DefaultButton}"
-				GridLinesVisibility="Horizontal"
+				materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
 				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 				IsSynchronizedWithCurrentItem="True"
 				ItemsSource="{Binding ListData}"
@@ -95,9 +90,7 @@
 				SelectedItem="{Binding Current}"
 				SelectionMode="Single"
 				Style="{StaticResource MaterialDesignDataGrid}"
-				VerticalScrollBarVisibility="Visible"
-				materialDesign:DataGridAssist.CellPadding="12,6"
-				materialDesign:DataGridAssist.ColumnHeaderPadding="12,8">
+				VerticalScrollBarVisibility="Visible">
 				<DataGrid.ColumnHeaderStyle>
 					<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
 						TargetType="{x:Type DataGridColumnHeader}">
