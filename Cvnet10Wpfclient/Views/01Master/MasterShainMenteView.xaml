@@ -267,12 +267,10 @@
 									Style="{StaticResource FormLabel}"
 									Text="ID" />
 								<TextBox Grid.Row="0" Grid.Column="1"
-									materialDesign:HintAssist.Hint="ID"
-									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True">
+									materialDesign:HintAssist.Hint="ID" IsReadOnly="True"
+									Style="{StaticResource FormTextBox}">
 									<TextBox.Text>
-										<Binding Path="CurrentEdit.Id"
-											StringFormat="Id={0}" />
+										<Binding Path="CurrentEdit.Id" StringFormat="Id={0}" />
 									</TextBox.Text>
 								</TextBox>
 
@@ -339,21 +337,6 @@
 									</TextBlock>
 								</DockPanel>
 
-								<TextBlock Grid.Row="7"
-									Style="{StaticResource FormLabel}"
-									Text="店舗名" />
-								<TextBox Grid.Row="7" Grid.Column="1"
-									materialDesign:HintAssist.Hint="店舗名"
-									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True">
-									<TextBox.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VTenpo.Cd" />
-											<Binding Path="CurrentEdit.VTenpo.Mei" />
-										</MultiBinding>
-									</TextBox.Text>
-								</TextBox>
-
 								<TextBlock Grid.Row="8"
 									Style="{StaticResource FormLabel}"
 									Text="部門" />
@@ -376,27 +359,8 @@
 										</TextBlock.Text>
 									</TextBlock>
 								</DockPanel>
-
-								<TextBlock Grid.Row="9"
-									Style="{StaticResource FormLabel}"
-									Text="部門名" />
-								<TextBox Grid.Row="9" Grid.Column="1"
-									materialDesign:HintAssist.Hint="部門名"
-									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True">
-									<TextBox.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VBumon.Cd" />
-											<Binding Path="CurrentEdit.VBumon.Mei" />
-										</MultiBinding>
-									</TextBox.Text>
-								</TextBox>
-
-								<TextBlock Grid.Row="10"
-									Style="{StaticResource FormLabel}"
-									Text="登録日/修正日" />
 								<TextBlock Grid.Row="10" Grid.Column="1"
-									Margin="0,8,0,0"
+									Margin="20"
 									Foreground="{DynamicResource MaterialDesignBody}"
 									TextWrapping="Wrap">
 									<TextBlock.Text>
