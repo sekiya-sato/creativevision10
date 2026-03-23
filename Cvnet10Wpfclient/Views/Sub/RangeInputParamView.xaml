@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels.Sub"
 	Title="{Binding Parameter.DisplayName, TargetNullValue=入力, StringFormat={}{0}一覧条件}"
-	Width="620" Height="560"
+	Width="620" Height="640"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="18" WindowStartupLocation="CenterOwner"
 	mc:Ignorable="d">
@@ -41,7 +41,7 @@
 			</StackPanel>
 		</materialDesign:ColorZone>
 
-		<Grid Grid.Row="1" Margin="16">
+		<Grid Grid.Row="1" Margin="16,12,16,12">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
@@ -193,7 +193,7 @@
 		</Grid>
 
 		<StackPanel Grid.Row="2"
-			Margin="0,16,0,0" HorizontalAlignment="Right"
+			Margin="0,12,0,0" HorizontalAlignment="Right"
 			Orientation="Horizontal">
 			<Button Width="120" Height="38"
 				Margin="0,0,8,0"

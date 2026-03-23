@@ -16,6 +16,22 @@
 
 ---
 
+## [2026-03-23] 14:14 RangeInputParamViewのレイアウト再調整
+### Agent
+- [gpt-5.4-mini : OpenAI]
+### Editor
+- [OpenCode]
+### 目的
+- ユーザーからの要望：`refer/size_error.png` を参照して `Cvnet10Wpfclient/Views/Sub/RangeInputParamView.xaml` のレイアウトを調整し、履歴を書いた後に commit と push まで行う。
+### 実施内容
+- `Cvnet10Wpfclient/Views/Sub/RangeInputParamView.xaml`: ウィンドウ高さを拡張し、メイン領域とボタン領域の上下余白を微調整して下部の入力行が切れないようにした。
+### 技術決定 Why
+- 画面全体の縦寸法不足が原因のため、個別要素の縮小よりもダイアログ高さと余白の再配分で崩れを解消する方が既存の見た目を保ちやすい。
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功
+
+---
+
 ## [2026-03-23] 13:50 RangeInputParamViewのUI統一
 ### Agent
 - [gpt-5.4-mini : OpenAI]
