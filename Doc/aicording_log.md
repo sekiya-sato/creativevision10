@@ -16,6 +16,22 @@
 
 ---
 
+## [2026-03-23] 13:50 RangeInputParamViewのUI統一
+### Agent
+- [gpt-5.4-mini : OpenAI]
+### Editor
+- [OpenCode]
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient/Views/Sub/RangeInputParamView.xaml` を `RangeParamView.xaml` 風のスタイルへ変更し、最後に commit と push まで行う。
+### 実施内容
+- `Cvnet10Wpfclient/Views/Sub/RangeInputParamView.xaml`: `ColorZone` ヘッダー、`Card` レイアウト、`FormTextBox` スタイル、MaterialDesign系のボタンに変更し、既存の入力バインディングと TabIndex を維持した。
+### 技術決定 Why
+- 他の範囲指定画面と同じ視覚構成に揃えることで、入力項目が多い画面でも操作体系を統一しやすくするため。
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功
+
+---
+
 ## [2026-03-23] 13:39 RangeParamMiniViewのUI統一
 ### Agent
 - [gpt-5.4-mini : OpenAI]
