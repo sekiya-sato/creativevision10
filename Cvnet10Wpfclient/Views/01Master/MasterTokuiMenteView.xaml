@@ -1,12 +1,13 @@
 <helpers:BaseWindow x:Class="Cvnet10Wpfclient.Views._01Master.MasterTokuiMenteView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels._01Master"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels._01Master"
 	Title="{Binding Title}"
-	Width="1244" Height="900"
+	Width="1280" Height="920"
 	d:Height="1200"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
-	FontSize="18"
+	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
@@ -27,135 +28,235 @@
 			Gesture="F6" />
 	</helpers:BaseWindow.InputBindings>
 
-	<Grid x:Name="grid0">
-		<Grid Width="{Binding ActualWidth, ElementName=grid0, Mode=OneWay}"
-			Height="{Binding ActualHeight, ElementName=grid0, Mode=OneWay}">
-			<Grid.RowDefinitions>
-				<RowDefinition Height="12*" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="88*" />
-			</Grid.RowDefinitions>
+	<!--  SearchTextBox 共通スタイル  -->
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="MenteSearchTextBox"
+			TargetType="{x:Type helpers:SearchTextBox}">
+			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+		</Style>
+
+		<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->
+		<Style x:Key="MenteDataGridColumnHeader"
+			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+			TargetType="DataGridColumnHeader">
+			<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+			<Setter Property="Padding" Value="12,8" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+
+		<!--  編集フォームのラベルスタイル  -->
+		<Style x:Key="FormLabel"
+			TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="Medium" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+			<Setter Property="Margin" Value="4,0,8,0" />
+		</Style>
+
+		<!--  編集フォームの TextBox スタイル  -->
+		<Style x:Key="FormTextBox"
+			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
+			TargetType="TextBox">
+			<Setter Property="Margin" Value="0,4" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+		</Style>
+	</helpers:BaseWindow.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<!--  ===== ヘッダー: ColorZone ツールバー =====  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<!--  右側: CRUD ボタン群  -->
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding DoUpdateCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="修正 (F2)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Pencil" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="修正" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoDeleteCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="削除 (F3)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Delete" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="削除" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoInsertCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="追加 (F4)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Plus" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="追加" />
+						</StackPanel>
+					</Button>
+					<Rectangle Width="1"
+						Margin="8,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Margin="4,0"
+						Command="{Binding DoOutputJsonCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="JSON出力 (F6)">
+						<materialDesign:PackIcon Kind="FileExport" />
+					</Button>
+				</StackPanel>
+
+				<!--  左側: タイトル + 操作  -->
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="AccountGroup" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoListCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="一覧取得" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<!--  ===== メインコンテンツ =====  -->
+		<Grid Grid.Row="1"
+			Margin="12">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="45*" />
 				<ColumnDefinition Width="Auto" />
 				<ColumnDefinition Width="55*" />
 			</Grid.ColumnDefinitions>
 
-			<!--  左上: 操作ボタン / タイトル  -->
-			<Grid Grid.Row="0" Grid.Column="0">
-				<Button Width="70" Height="30"
-					Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Background="Gray"
-					Command="{Binding ExitCommand}"
-					Content="閉じる" />
-				<Button Width="110" Height="30"
-					Margin="120,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Command="{Binding DoListCommand}"
-					Content="一覧取得 F5" />
-				<Button Width="130" Height="30"
-					Margin="240,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Command="{Binding DoOutputJsonCommand}"
-					Content="JSON出力 F6" />
-				<Label Height="34"
-					Margin="20,49,99,0" VerticalAlignment="Top"
-					Content="{Binding Title, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-					FontSize="14" />
-				<materialDesign:PackIcon Width="62" Height="70"
-					Margin="370,10,0,0"
-					Foreground="Blue" Kind="AccountGroup" />
-			</Grid>
+			<!--  ===== 左パネル: 一覧グリッド (Card) =====  -->
+			<materialDesign:Card Grid.Column="0"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
 
-			<GridSplitter Grid.Row="1" Grid.ColumnSpan="3"
-				Height="3"
-				HorizontalAlignment="Stretch" VerticalAlignment="Center"
-				Background="DarkGray" />
-			<GridSplitter Grid.RowSpan="3" Grid.Column="1"
-				Width="3"
-				HorizontalAlignment="Center" VerticalAlignment="Stretch"
-				Background="DarkGray" />
+					<!--  カードヘッダー: 件数 + メッセージ  -->
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel>
+							<TextBlock VerticalAlignment="Center"
+								DockPanel.Dock="Right" FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+							<TextBlock VerticalAlignment="Center"
+								FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Message}"
+								TextTrimming="CharacterEllipsis" />
+						</DockPanel>
+					</Border>
 
-			<!--  左下: 一覧グリッド  -->
-			<Grid Grid.Row="2" Grid.Column="0">
-				<DataGrid x:Name="TokuiGrid"
-					d:ItemsSource="{d:SampleData ItemCount=5}"
-					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
-					HorizontalGridLinesBrush="White" IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
-					ItemsSource="{Binding ListData}"
-					SelectedItem="{Binding Current}"
-					Style="{StaticResource MaterialDesignDataGrid}"
-					VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
-					<DataGrid.Columns>
-						<DataGridTextColumn Width="140"
-							Binding="{Binding Code}"
-							Header="コード" />
-						<DataGridTextColumn Width="240"
-							Binding="{Binding Name}"
-							Header="名前" />
-						<DataGridTextColumn Width="150"
-							Binding="{Binding Ryaku}"
-							Header="略称" />
-						<DataGridTextColumn Width="150"
-							Binding="{Binding Kana}"
-							Header="カナ" />
-						<DataGridTextColumn Width="100"
-							Binding="{Binding TenType}"
-							Header="種別" />
-					</DataGrid.Columns>
-					<DataGrid.ColumnHeaderStyle>
-						<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
-							TargetType="DataGridColumnHeader">
-							<Setter Property="Background" Value="Black" />
-							<Setter Property="Foreground" Value="White" />
-							<Setter Property="BorderThickness" Value="0.5" />
-						</Style>
-					</DataGrid.ColumnHeaderStyle>
-				</DataGrid>
-			</Grid>
+					<!--  DataGrid 一覧  -->
+					<DataGrid x:Name="TokuiGrid"
+						Grid.Row="1"
+						d:ItemsSource="{d:SampleData ItemCount=5}"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding ListData}"
+						SelectedItem="{Binding Current}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="140"
+								Binding="{Binding Code}"
+								Header="コード" />
+							<DataGridTextColumn Width="240"
+								Binding="{Binding Name}"
+								Header="名前" />
+							<DataGridTextColumn Width="150"
+								Binding="{Binding Ryaku}"
+								Header="略称" />
+							<DataGridTextColumn Width="150"
+								Binding="{Binding Kana}"
+								Header="カナ" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding TenType}"
+								Header="種別" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
 
-			<!--  右上: CRUD ボタン / メッセージ  -->
-			<Grid Grid.Row="0" Grid.Column="2">
-				<Button Width="100" Height="30"
-					Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Background="Purple"
-					Command="{Binding DoUpdateCommand}"
-					Content="修正 F2" />
-				<Button Width="100" Height="30"
-					Margin="130,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Background="Purple"
-					Command="{Binding DoDeleteCommand}"
-					Content="削除 F3" />
-				<Button Width="100" Height="30"
-					Margin="250,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Background="Purple"
-					Command="{Binding DoInsertCommand}"
-					Content="追加 F4" />
-				<Label Height="40"
-					Margin="383,10,0,0" VerticalAlignment="Top"
-					Content="{Binding Count}"
-					ContentStringFormat="{}件数={0:N0}" />
-				<TextBlock Height="34"
-					Margin="24,55,0,0" VerticalAlignment="Top"
-					FontSize="16"
-					Foreground="{DynamicResource MaterialDesignBody}"
-					Text="{Binding Message}"
-					TextWrapping="Wrap" />
-			</Grid>
+			<!--  スプリッタ  -->
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="Transparent" />
 
-			<!--  右下: 編集エリア (TabControl)  -->
-			<Grid Grid.Row="2" Grid.Column="2"
-				Margin="10">
+			<!--  ===== 右パネル: 編集エリア (Card + TabControl) =====  -->
+			<materialDesign:Card Grid.Column="2"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<TabControl Style="{StaticResource MaterialDesignTabControl}">
 
 					<!--  タブ1: 基本情報  -->
 					<TabItem>
 						<TabItem.Header>
-							<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}Id:{0}}" />
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="InformationOutline" />
+								<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}Id:{0}}" />
+							</StackPanel>
 						</TabItem.Header>
-						<ScrollViewer VerticalScrollBarVisibility="Auto">
+						<ScrollViewer Padding="10,10,20,20"
+							VerticalScrollBarVisibility="Auto">
 							<Grid>
 								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="30*" />
-									<ColumnDefinition Width="70*" />
+									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="*" />
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
@@ -174,196 +275,176 @@
 									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
-								<Label Grid.Row="0"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="コード" />
+								<!--  コード  -->
+								<TextBlock Grid.Row="0"
+									Style="{StaticResource FormLabel}"
+									Text="コード" />
 								<TextBox Grid.Row="0" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Code}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="コード"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Code}" />
 
-								<Label Grid.Row="1"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="名前" />
+								<!--  名前  -->
+								<TextBlock Grid.Row="1"
+									Style="{StaticResource FormLabel}"
+									Text="名前" />
 								<TextBox Grid.Row="1" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Name}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="名前"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Name}" />
 
-								<Label Grid.Row="2"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="略称" />
+								<!--  略称  -->
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="略称" />
 								<TextBox Grid.Row="2" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Ryaku}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="略称"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Ryaku}" />
 
-								<Label Grid.Row="3"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="カナ" />
+								<!--  カナ  -->
+								<TextBlock Grid.Row="3"
+									Style="{StaticResource FormLabel}"
+									Text="カナ" />
 								<TextBox Grid.Row="3" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Kana}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="カナ"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Kana}" />
 
-								<Label Grid.Row="4"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="得意先種別" />
+								<!--  得意先種別  -->
+								<TextBlock Grid.Row="4"
+									Style="{StaticResource FormLabel}"
+									Text="得意先種別" />
 								<ComboBox Grid.Row="4" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="得意先種別"
 									SelectedValue="{Binding CurrentEdit.TenType, Mode=TwoWay}"
-									SelectedValuePath="Tag">
+									SelectedValuePath="Tag"
+									Style="{StaticResource MaterialDesignOutlinedComboBox}">
 									<ComboBoxItem Content="倉庫" Tag="0" />
 									<ComboBoxItem Content="卸先" Tag="1" />
 									<ComboBoxItem Content="売仕店" Tag="3" />
 									<ComboBoxItem Content="直営店" Tag="6" />
 								</ComboBox>
 
-								<Label Grid.Row="5"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="在庫管理" />
+								<!--  在庫管理  -->
+								<TextBlock Grid.Row="5"
+									Style="{StaticResource FormLabel}"
+									Text="在庫管理" />
 								<ComboBox Grid.Row="5" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									SelectedIndex="{Binding CurrentEdit.IsZaiko, Mode=TwoWay}">
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="在庫管理"
+									SelectedIndex="{Binding CurrentEdit.IsZaiko, Mode=TwoWay}"
+									Style="{StaticResource MaterialDesignOutlinedComboBox}">
 									<ComboBoxItem Content="しない" />
 									<ComboBoxItem Content="する" />
 								</ComboBox>
 
-								<Label Grid.Row="6"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="担当者" />
-								<helpers:SearchTextBox Grid.Row="6" Grid.Column="1"
-									Width="120" Height="40"
-									Margin="5" HorizontalAlignment="Left" VerticalAlignment="Top"
-									BorderThickness="0,0,0,1"
-									Command="{Binding DoSelectShainCommand}"
-									Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}"
-									TextHorizontalContentAlignment="Left">
-									<helpers:SearchTextBox.Style>
-										<Style TargetType="{x:Type helpers:SearchTextBox}">
-											<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
-											<Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}" />
-											<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
-										</Style>
-									</helpers:SearchTextBox.Style>
-								</helpers:SearchTextBox>
-								<TextBlock Grid.Row="6" Grid.Column="1"
-									Height="36"
-									Margin="150,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									TextWrapping="Wrap">
-									<TextBlock.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VShain.Cd" />
-											<Binding Path="CurrentEdit.VShain.Mei" />
-										</MultiBinding>
-									</TextBlock.Text>
-								</TextBlock>
+								<!--  担当者  -->
+								<TextBlock Grid.Row="6"
+									Style="{StaticResource FormLabel}"
+									Text="担当者" />
+								<DockPanel Grid.Row="6" Grid.Column="1"
+									Margin="0,4">
+									<helpers:SearchTextBox Width="120" Height="36"
+										BorderThickness="0,0,0,1"
+										Command="{Binding DoSelectShainCommand}"
+										DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}"
+										TextHorizontalContentAlignment="Left" />
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBody}">
+										<TextBlock.Text>
+											<MultiBinding StringFormat="{}{0} {1}">
+												<Binding Path="CurrentEdit.VShain.Cd" />
+												<Binding Path="CurrentEdit.VShain.Mei" />
+											</MultiBinding>
+										</TextBlock.Text>
+									</TextBlock>
+								</DockPanel>
 
-								<Label Grid.Row="7"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="掛率" />
+								<!--  掛率  -->
+								<TextBlock Grid.Row="7"
+									Style="{StaticResource FormLabel}"
+									Text="掛率" />
 								<TextBox Grid.Row="7" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.RateProper}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="掛率"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.RateProper}" />
 
-								<Label Grid.Row="8"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="セール掛率" />
+								<!--  セール掛率  -->
+								<TextBlock Grid.Row="8"
+									Style="{StaticResource FormLabel}"
+									Text="セール掛率" />
 								<TextBox Grid.Row="8" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.RateSale}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="セール掛率"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.RateSale}" />
 
-								<Label Grid.Row="9"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="郵便番号" />
+								<!--  郵便番号  -->
+								<TextBlock Grid.Row="9"
+									Style="{StaticResource FormLabel}"
+									Text="郵便番号" />
 								<TextBox Grid.Row="9" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.PostalCode}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="郵便番号"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.PostalCode}" />
 
-								<Label Grid.Row="10"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="住所1" />
+								<!--  住所1  -->
+								<TextBlock Grid.Row="10"
+									Style="{StaticResource FormLabel}"
+									Text="住所1" />
 								<TextBox Grid.Row="10" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Address1}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="住所1"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Address1}" />
 
-								<Label Grid.Row="11"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="住所2" />
+								<!--  住所2  -->
+								<TextBlock Grid.Row="11"
+									Style="{StaticResource FormLabel}"
+									Text="住所2" />
 								<TextBox Grid.Row="11" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Address2}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="住所2"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Address2}" />
 
-								<Label Grid.Row="12"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="住所3" />
+								<!--  住所3  -->
+								<TextBlock Grid.Row="12"
+									Style="{StaticResource FormLabel}"
+									Text="住所3" />
 								<TextBox Grid.Row="12" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Address3}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="住所3"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Address3}" />
 
-								<Label Grid.Row="13"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="電話番号" />
+								<!--  電話番号  -->
+								<TextBlock Grid.Row="13"
+									Style="{StaticResource FormLabel}"
+									Text="電話番号" />
 								<TextBox Grid.Row="13" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Tel}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="電話番号"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Tel}" />
 							</Grid>
 						</ScrollViewer>
 					</TabItem>
 
 					<!--  タブ2: 支払情報  -->
-					<TabItem Header="支払情報">
-						<ScrollViewer VerticalScrollBarVisibility="Auto">
-							<Grid Margin="10">
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="CreditCard" />
+								<TextBlock Text="支払情報" />
+							</StackPanel>
+						</TabItem.Header>
+						<ScrollViewer Padding="10,10,20,20"
+							VerticalScrollBarVisibility="Auto">
+							<Grid>
 								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="30*" />
-									<ColumnDefinition Width="70*" />
+									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="*" />
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
@@ -377,158 +458,140 @@
 									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
-								<Label Grid.Row="0"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="メールアドレス" />
+								<!--  メールアドレス  -->
+								<TextBlock Grid.Row="0"
+									Style="{StaticResource FormLabel}"
+									Text="メールアドレス" />
 								<TextBox Grid.Row="0" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Mail}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="メールアドレス"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Mail}" />
 
-								<Label Grid.Row="1"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="締日1" />
+								<!--  締日1  -->
+								<TextBlock Grid.Row="1"
+									Style="{StaticResource FormLabel}"
+									Text="締日1" />
 								<TextBox Grid.Row="1" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Shime1}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="締日1"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Shime1}" />
 
-								<Label Grid.Row="2"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="締日2" />
+								<!--  締日2  -->
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="締日2" />
 								<TextBox Grid.Row="2" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Shime2}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="締日2"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Shime2}" />
 
-								<Label Grid.Row="3"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="締日3" />
+								<!--  締日3  -->
+								<TextBlock Grid.Row="3"
+									Style="{StaticResource FormLabel}"
+									Text="締日3" />
 								<TextBox Grid.Row="3" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.Shime3}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="締日3"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Shime3}" />
 
-								<Label Grid.Row="4"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="入金月" />
+								<!--  入金月  -->
+								<TextBlock Grid.Row="4"
+									Style="{StaticResource FormLabel}"
+									Text="入金月" />
 								<TextBox Grid.Row="4" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.PayMonth}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="入金月"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.PayMonth}" />
 
-								<Label Grid.Row="5"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="入金日" />
+								<!--  入金日  -->
+								<TextBlock Grid.Row="5"
+									Style="{StaticResource FormLabel}"
+									Text="入金日" />
 								<TextBox Grid.Row="5" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									Text="{Binding CurrentEdit.PayDay}"
-									TextWrapping="Wrap" />
+									materialDesign:HintAssist.Hint="入金日"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.PayDay}" />
 
-								<Label Grid.Row="6"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="入金方法" />
-								<helpers:SearchTextBox Grid.Row="6" Grid.Column="1"
-									Width="120" Height="40"
-									Margin="5" HorizontalAlignment="Left" VerticalAlignment="Top"
-									BorderThickness="0,0,0,1"
-									Command="{Binding DoSelectPayMethodCommand}"
-									Text="{Binding CurrentEdit.Id_PayMethod, UpdateSourceTrigger=PropertyChanged}"
-									TextHorizontalContentAlignment="Left">
-									<helpers:SearchTextBox.Style>
-										<Style TargetType="{x:Type helpers:SearchTextBox}">
-											<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
-											<Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}" />
-											<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
-										</Style>
-									</helpers:SearchTextBox.Style>
-								</helpers:SearchTextBox>
-								<TextBlock Grid.Row="6" Grid.Column="1"
-									Height="36"
-									Margin="150,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									TextWrapping="Wrap">
-									<TextBlock.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VPayMethod.Cd" />
-											<Binding Path="CurrentEdit.VPayMethod.Mei" />
-										</MultiBinding>
-									</TextBlock.Text>
-								</TextBlock>
+								<!--  入金方法  -->
+								<TextBlock Grid.Row="6"
+									Style="{StaticResource FormLabel}"
+									Text="入金方法" />
+								<DockPanel Grid.Row="6" Grid.Column="1"
+									Margin="0,4">
+									<helpers:SearchTextBox Width="120" Height="36"
+										BorderThickness="0,0,0,1"
+										Command="{Binding DoSelectPayMethodCommand}"
+										DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_PayMethod, UpdateSourceTrigger=PropertyChanged}"
+										TextHorizontalContentAlignment="Left" />
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBody}">
+										<TextBlock.Text>
+											<MultiBinding StringFormat="{}{0} {1}">
+												<Binding Path="CurrentEdit.VPayMethod.Cd" />
+												<Binding Path="CurrentEdit.VPayMethod.Mei" />
+											</MultiBinding>
+										</TextBlock.Text>
+									</TextBlock>
+								</DockPanel>
 
-								<Label Grid.Row="7"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="請求フラグ" />
+								<!--  請求フラグ  -->
+								<TextBlock Grid.Row="7"
+									Style="{StaticResource FormLabel}"
+									Text="請求フラグ" />
 								<ComboBox Grid.Row="7" Grid.Column="1"
-									Height="36"
-									Margin="10,10,10,0" VerticalAlignment="Top"
-									SelectedIndex="{Binding CurrentEdit.IsPay, Mode=TwoWay}">
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="請求フラグ"
+									SelectedIndex="{Binding CurrentEdit.IsPay, Mode=TwoWay}"
+									Style="{StaticResource MaterialDesignOutlinedComboBox}">
 									<ComboBoxItem Content="しない" />
 									<ComboBoxItem Content="する" />
 								</ComboBox>
 
-								<Label Grid.Row="8"
-									Height="36"
-									Margin="15,10,0,0" VerticalAlignment="Top"
-									Content="請求先" />
-								<helpers:SearchTextBox Grid.Row="8" Grid.Column="1"
-									Width="120" Height="40"
-									Margin="5" HorizontalAlignment="Left" VerticalAlignment="Top"
-									BorderThickness="0,0,0,1"
-									Command="{Binding DoSelectPaysakiCommand}"
-									Text="{Binding CurrentEdit.Id_Paysaki, UpdateSourceTrigger=PropertyChanged}"
-									TextHorizontalContentAlignment="Left">
-									<helpers:SearchTextBox.Style>
-										<Style TargetType="{x:Type helpers:SearchTextBox}">
-											<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
-											<Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}" />
-											<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
-										</Style>
-									</helpers:SearchTextBox.Style>
-								</helpers:SearchTextBox>
-								<TextBlock Grid.Row="8" Grid.Column="1"
-									Height="36"
-									Margin="150,10,10,0" VerticalAlignment="Top"
-									Foreground="{DynamicResource MaterialDesignBody}"
-									TextWrapping="Wrap">
-									<TextBlock.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VPaysaki.Cd" />
-											<Binding Path="CurrentEdit.VPaysaki.Mei" />
-										</MultiBinding>
-									</TextBlock.Text>
-								</TextBlock>
+								<!--  請求先  -->
+								<TextBlock Grid.Row="8"
+									Style="{StaticResource FormLabel}"
+									Text="請求先" />
+								<DockPanel Grid.Row="8" Grid.Column="1"
+									Margin="0,4">
+									<helpers:SearchTextBox Width="120" Height="36"
+										BorderThickness="0,0,0,1"
+										Command="{Binding DoSelectPaysakiCommand}"
+										DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_Paysaki, UpdateSourceTrigger=PropertyChanged}"
+										TextHorizontalContentAlignment="Left" />
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBody}">
+										<TextBlock.Text>
+											<MultiBinding StringFormat="{}{0} {1}">
+												<Binding Path="CurrentEdit.VPaysaki.Cd" />
+												<Binding Path="CurrentEdit.VPaysaki.Mei" />
+											</MultiBinding>
+										</TextBlock.Text>
+									</TextBlock>
+								</DockPanel>
 							</Grid>
 						</ScrollViewer>
 					</TabItem>
 
 					<!--  タブ3: 名称リスト  -->
-					<TabItem Header="名称リスト">
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="FormatListBulleted" />
+								<TextBlock Text="名称リスト" />
+							</StackPanel>
+						</TabItem.Header>
 						<DataGrid x:Name="JsubGrid"
-							Margin="10"
+							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=3}"
-							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
-							HorizontalGridLinesBrush="White" IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+							IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jsub}"
 							Style="{StaticResource MaterialDesignDataGrid}"
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
@@ -547,22 +610,25 @@
 									Header="区分名" />
 							</DataGrid.Columns>
 							<DataGrid.ColumnHeaderStyle>
-								<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
-									TargetType="DataGridColumnHeader">
-									<Setter Property="Background" Value="Black" />
-									<Setter Property="Foreground" Value="White" />
-									<Setter Property="BorderThickness" Value="0.5" />
-								</Style>
+								<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+									TargetType="DataGridColumnHeader" />
 							</DataGrid.ColumnHeaderStyle>
 						</DataGrid>
 					</TabItem>
 
 					<!--  タブ4: 詳細内容 (振込先)  -->
-					<TabItem Header="詳細内容">
-						<Grid Margin="10">
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="TextBoxMultiple" />
+								<TextBlock Text="詳細内容" />
+							</StackPanel>
+						</TabItem.Header>
+						<Grid Margin="16">
 							<Grid.ColumnDefinitions>
-								<ColumnDefinition Width="30*" />
-								<ColumnDefinition Width="70*" />
+								<ColumnDefinition Width="110" />
+								<ColumnDefinition Width="*" />
 							</Grid.ColumnDefinitions>
 							<Grid.RowDefinitions>
 								<RowDefinition Height="Auto" />
@@ -570,43 +636,34 @@
 								<RowDefinition Height="Auto" />
 							</Grid.RowDefinitions>
 
-							<Label Grid.Row="0"
-								Height="36"
-								Margin="5,5,0,0" VerticalAlignment="Top"
-								Content="振込先1" />
+							<TextBlock Grid.Row="0"
+								Style="{StaticResource FormLabel}"
+								Text="振込先1" />
 							<TextBox Grid.Row="0" Grid.Column="1"
-								Height="36"
-								Margin="10,5,10,0" VerticalAlignment="Top"
-								Foreground="{DynamicResource MaterialDesignBody}"
-								Text="{Binding CurrentEdit.Jdetail.BankAccount1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-								TextWrapping="Wrap" />
+								materialDesign:HintAssist.Hint="振込先1"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.Jdetail.BankAccount1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-							<Label Grid.Row="1"
-								Height="36"
-								Margin="5,10,0,0" VerticalAlignment="Top"
-								Content="振込先2" />
+							<TextBlock Grid.Row="1"
+								Style="{StaticResource FormLabel}"
+								Text="振込先2" />
 							<TextBox Grid.Row="1" Grid.Column="1"
-								Height="36"
-								Margin="10,10,10,0" VerticalAlignment="Top"
-								Foreground="{DynamicResource MaterialDesignBody}"
-								Text="{Binding CurrentEdit.Jdetail.BankAccount2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-								TextWrapping="Wrap" />
+								materialDesign:HintAssist.Hint="振込先2"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.Jdetail.BankAccount2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-							<Label Grid.Row="2"
-								Height="36"
-								Margin="5,10,0,0" VerticalAlignment="Top"
-								Content="振込先3" />
+							<TextBlock Grid.Row="2"
+								Style="{StaticResource FormLabel}"
+								Text="振込先3" />
 							<TextBox Grid.Row="2" Grid.Column="1"
-								Height="36"
-								Margin="10,10,10,0" VerticalAlignment="Top"
-								Foreground="{DynamicResource MaterialDesignBody}"
-								Text="{Binding CurrentEdit.Jdetail.BankAccount3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-								TextWrapping="Wrap" />
+								materialDesign:HintAssist.Hint="振込先3"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.Jdetail.BankAccount3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 						</Grid>
 					</TabItem>
 
 				</TabControl>
-			</Grid>
+			</materialDesign:Card>
 		</Grid>
 	</Grid>
 </helpers:BaseWindow>

@@ -351,6 +351,23 @@
 
 ---
 
+## [2026-03-24] 23:45 得意先マスタ画面のMaterialDesignデザイン統一
+### Agent
+- claude-opus-4.6 : github-copilot/claude-opus-4.6
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MasterTokuiMenteView.xaml を MasterShohinMenteView.xaml のデザインパターンに統一する（XAMLのみの修正）
+### 実施内容
+- Cvnet10Wpfclient/Views/01Master/MasterTokuiMenteView.xaml: 旧スタイル（GridSplitter上下分割、Margin直指定ボタン、ハードコード色 Black/Gray/Purple/Blue）を全面刷新。ColorZone ツールバー（Mode=PrimaryMid）、Card レイアウト（ElevationAssist.Elevation=Dp2、UniformCornerRadius=8）、テーマベース DataGrid（MenteDataGridColumnHeader、DataGridAssist.CellPadding）、FormTextBox/FormLabel スタイル、MenteSearchTextBox 共通スタイル、MaterialDesignOutlinedComboBox を適用。4タブ（基本情報・支払情報・名称リスト・詳細内容）すべてのバインディングを100%維持
+### 技術決定 Why
+- MasterShohinMenteView で確立したデザインパターン（ColorZone + Card + MaterialDesignOutlined 系スタイル + テーマブラシ）を得意先マスタに適用し、マスタ画面群の一貫性を確保。ハードコード色（"Black","Gray","Purple","Blue"）をすべて DynamicResource テーマブラシに置き換え、ダーク/ライトテーマ切り替えに対応
+### 確認
+- check-xaml にて構文、名前空間（7個）、リソース参照（60個以上）、バインディング（70個以上）を検証し正常確認済
+- dotnet build: コンパイルエラー 0、警告 0（MSB3021 DLLロックは環境依存の既知問題）
+
+---
+
 ## [2026-03-24] 22:00 Master系ViewModelのリファクタリング — BaseMenteViewModelへの共通ロジック集約
 ### Agent
 - claude-opus-4.6 : github-copilot
