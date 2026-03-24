@@ -263,18 +263,7 @@
 									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
-								<TextBlock Grid.Row="0"
-									Style="{StaticResource FormLabel}"
-									Text="ID" />
-								<TextBox Grid.Row="0" Grid.Column="1"
-									materialDesign:HintAssist.Hint="ID" IsReadOnly="True"
-									Style="{StaticResource FormTextBox}">
-									<TextBox.Text>
-										<Binding Path="CurrentEdit.Id" StringFormat="Id={0}" />
-									</TextBox.Text>
-								</TextBox>
-
-								<TextBlock Grid.Row="1"
+                                <TextBlock Grid.Row="1"
 									Style="{StaticResource FormLabel}"
 									Text="コード" />
 								<TextBox Grid.Row="1" Grid.Column="1"

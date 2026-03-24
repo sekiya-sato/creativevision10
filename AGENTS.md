@@ -59,9 +59,9 @@
 - Then present a short Japanese plan.
 - Implement with minimal diffs.
 - If WPF resources or exceptions are involved, inspect `Cvnet10Wpfclient/App.xaml` and referenced `ResourceDictionary` files first.
-
+s
 ## Formatting Conventions
-- Use UTF-8.
+- Use UTF-8 with BOM.
 - Use CRLF line endings.
 - Use tabs for indentation in `.cs` and `.xaml` files; tab width is 4.
 - Insert a final newline at EOF.

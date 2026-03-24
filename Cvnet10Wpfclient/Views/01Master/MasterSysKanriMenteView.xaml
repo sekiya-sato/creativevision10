@@ -25,6 +25,8 @@
 		<KeyBinding Command="{Binding DoSelKubunCommand}"
 			Gesture="F6" />
 	</helpers:BaseWindow.InputBindings>
+	<helpers:BaseWindow.Resources>
+	</helpers:BaseWindow.Resources>
 	<Grid x:Name="grid0">
 		<!-- 配置が確定してから
         <Viewbox Stretch="Uniform">
@@ -126,6 +128,7 @@
 					Margin="10,0,0,0" VerticalAlignment="Center"
 					d:Text="会社名"
 					Text="{Binding Current.Name}"
+					 Style="{DynamicResource MaterialDesignBody*}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="1" Grid.Column="0"
 					Height="30"
@@ -135,24 +138,28 @@
 					Height="30"
 					Margin="10,0,10,0" VerticalAlignment="Center"
 					d:Text="郵便番号"
+					 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.PostalCode}"
 					TextWrapping="Wrap" />
 				<TextBox Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="4"
 					Height="30"
 					Margin="10,0,-17,0" VerticalAlignment="Center"
 					d:Text="住所1"
+					 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Address1}"
 					TextWrapping="Wrap" />
 				<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
 					Height="30"
 					Margin="10,0,10,0" VerticalAlignment="Center"
 					d:Text="住所2"
+						 					 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Address2}"
 					TextWrapping="Wrap" />
 				<TextBox Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="4"
 					Height="30"
 					Margin="10,0,-17,0" VerticalAlignment="Center"
 					d:Text="住所3"
+						 					 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Address3}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="3" Grid.Column="0"
@@ -162,13 +169,13 @@
 				<TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="Tel"
+					d:Text="Tel"					 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Tel}"
 					TextWrapping="Wrap" />
 				<TextBox Grid.Row="3" Grid.Column="4" Grid.ColumnSpan="4"
 					Height="30"
 					Margin="14,0,-17,0" VerticalAlignment="Center"
-					d:Text="Fax"
+					d:Text="Fax"					 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Mail}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="4" Grid.Column="0"
@@ -178,19 +185,19 @@
 				<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="5"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="Bank1"
+					d:Text="Bank1"					 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.BankAccount1}"
 					TextWrapping="Wrap" />
 				<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="5"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="Bank2"
+					d:Text="Bank2"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.BankAccount2}"
 					TextWrapping="Wrap" />
 				<TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="5"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="Bank3"
+					d:Text="Bank3"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.BankAccount3}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="7" Grid.Column="0"
@@ -226,7 +233,7 @@
 				<TextBox Grid.Row="8" Grid.Column="1"
 					Height="30"
 					Margin="10,0,95,0" VerticalAlignment="Center"
-					d:Text="修正Day"
+					d:Text="修正Day"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.ModifyDaysEx}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="8" Grid.Column="3"
@@ -236,7 +243,7 @@
 				<TextBox Grid.Row="8" Grid.Column="4"
 					Height="30"
 					Margin="0,0,10,0" VerticalAlignment="Center"
-					d:Text="先付Day"
+					d:Text="先付Day"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.ModifyDaysPre}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="10" Grid.Column="0"
@@ -246,7 +253,7 @@
 				<TextBox Grid.Row="10" Grid.Column="1"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="Tax"
+					d:Text="Tax"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Jsub[0].TaxRate}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="10" Grid.Column="3"
@@ -265,7 +272,7 @@
 				<TextBox Grid.Row="10" Grid.Column="7"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="新Tax"
+					d:Text="新Tax"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Jsub[0].TaxNewRate}" />
 				<Label Grid.Row="11" Grid.Column="0"
 					Height="30"
@@ -274,7 +281,7 @@
 				<TextBox Grid.Row="11" Grid.Column="1"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="Tax"
+					d:Text="Tax"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Jsub[1].TaxRate}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="11" Grid.Column="3"
@@ -292,7 +299,7 @@
 				<TextBox Grid.Row="11" Grid.Column="7"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="新Tax"
+					d:Text="新Tax"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Jsub[1].TaxNewRate}" />
 				<Label Grid.Row="12" Grid.Column="0"
 					Height="30"
@@ -301,7 +308,7 @@
 				<TextBox Grid.Row="12" Grid.Column="1"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="Tax"
+					d:Text="Tax"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Jsub[2].TaxRate}"
 					TextWrapping="Wrap" />
 				<Label Grid.Row="12" Grid.Column="3"
@@ -320,7 +327,7 @@
 				<TextBox Grid.Row="12" Grid.Column="7"
 					Height="30"
 					Margin="10,0,0,0" VerticalAlignment="Center"
-					d:Text="新Tax"
+					d:Text="新Tax"		 Style="{DynamicResource MaterialDesignBody*}"
 					Text="{Binding Current.Jsub[2].TaxNewRate}" />
 				<TextBlock Grid.Row="13" Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="4"
 					Height="65"
