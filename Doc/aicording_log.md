@@ -258,3 +258,19 @@
 - dotnet build 成功（0 警告、0 エラー）
 
 ---
+
+## [2026-03-24] 18:00 名称リスト OnKubunChanged が動作しない問題の修正
+### Agent
+- claude-opus-4.6 : GitHub Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：名称リストタブの ComboBox「区分」変更時に区分名が正しく更新されない問題を修正する
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: DoGetKubun() 内の KubunList 再代入（`KubunList = new ObservableCollection<MasterMeisho>(...)`）を Clear+Add パターンに変更し、フィールド参照切れを防止。OnKubunChanged() に KubunList が空の場合の早期リターンガードを追加し、ComboBox 初期化時の誤動作を防止
+### 技術決定 Why
+- KubunList はフィールド（ObservablePropertyではない）のため、`new` で再代入すると OnKubunChanged 内の参照先が切り替わらないタイミング問題が発生していた。Clear+Add パターンで同一インスタンスを維持することで確実にデータが反映されるようにした
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功（0 warnings, 0 errors）
+
+---

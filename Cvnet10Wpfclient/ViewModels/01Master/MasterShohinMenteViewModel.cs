@@ -57,8 +57,9 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 				DataMsg = Common.SerializeObject(param)
 			};
 			var reply = await SendMessageAsync(msg, ct);
-			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
-				KubunList = new ObservableCollection<MasterMeisho>(list.Cast<MasterMeisho>());
+		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
+				KubunList.Clear();
+				foreach (var item in list.Cast<MasterMeisho>()) KubunList.Add(item);
 			}
 		}
 		catch (OperationCanceledException cancel) {
@@ -300,9 +301,8 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 	[RelayCommand]
 	void OnKubunChanged(MasterGeneralMeisho? item) {
 		if (item == null || string.IsNullOrEmpty(item.Kb)) return;
+		if (KubunList.Count == 0) return;
 		var meisho = KubunList.FirstOrDefault(x => x.Code == item.Kb);
-		if (meisho != null) {
-			item.Kbname = meisho.Name ?? "";
-		}
+		item.Kbname = meisho?.Name ?? "";
 	}
 }
