@@ -34,6 +34,18 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 	[ObservableProperty]
 	int interactionTriggersCount;
 
+	[ObservableProperty]
+	ObservableCollection<MasterShohinGenka> editJgenka = [];
+
+	[ObservableProperty]
+	ObservableCollection<MasterShohinColSiz> editJcolsiz = [];
+
+	[ObservableProperty]
+	ObservableCollection<MasterShohinGrade> editJgrade = [];
+
+	[ObservableProperty]
+	ObservableCollection<MasterGeneralMeisho> editJsub = [];
+
 	public ObservableCollection<string> KubunOptions { get; } = new([
 		"B01", "B02", "B03", "B04", "B05",
 		"B06", "B07", "B08", "B09", "B10"
@@ -45,9 +57,39 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 
 	protected override void OnCurrentEditChangedCore(MasterShohin? oldValue, MasterShohin newValue) {
 		if (newValue == null) return;
-		if (newValue.Jsub != null) {
-			foreach (var item in newValue.Jsub) item.BaseList = KubunList;
-		}
+		ApplySubListsFromCurrentEdit();
+	}
+
+	void ApplySubListsFromCurrentEdit() {
+		EditJgenka = new ObservableCollection<MasterShohinGenka>(
+			CurrentEdit.Jgenka?.Select(Common.CloneObject) ?? []);
+
+		EditJcolsiz = new ObservableCollection<MasterShohinColSiz>(
+			CurrentEdit.Jcolsiz?.Select(Common.CloneObject) ?? []);
+
+		EditJgrade = new ObservableCollection<MasterShohinGrade>(
+			CurrentEdit.Jgrade?.Select(Common.CloneObject) ?? []);
+
+		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
+		foreach (var item in jsubClones) item.BaseList = KubunList;
+		EditJsub = new ObservableCollection<MasterGeneralMeisho>(jsubClones);
+	}
+
+	void SyncSubListsToCurrentEdit() {
+		CurrentEdit.Jgenka = [.. EditJgenka];
+		CurrentEdit.Jcolsiz = [.. EditJcolsiz];
+		CurrentEdit.Jgrade = [.. EditJgrade];
+		CurrentEdit.Jsub = [.. EditJsub];
+	}
+
+	protected override object CreateInsertParam() {
+		SyncSubListsToCurrentEdit();
+		return base.CreateInsertParam();
+	}
+
+	protected override object CreateUpdateParam() {
+		SyncSubListsToCurrentEdit();
+		return base.CreateUpdateParam();
 	}
 
 	[RelayCommand]
@@ -215,42 +257,39 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 
 	[RelayCommand]
 	void AddJgenka() {
-		CurrentEdit.Jgenka ??= [];
-		var nextNo = CurrentEdit.Jgenka.Count > 0 ? CurrentEdit.Jgenka.Max(x => x.No) + 1 : 1;
-		CurrentEdit.Jgenka.Add(new MasterShohinGenka { No = nextNo });
+		var nextNo = EditJgenka.Count > 0 ? EditJgenka.Max(x => x.No) + 1 : 1;
+		EditJgenka.Add(new MasterShohinGenka { No = nextNo });
 	}
 
 	[RelayCommand]
 	void DeleteJgenka() {
-		if (SelectedJgenka == null || CurrentEdit.Jgenka == null) return;
-		CurrentEdit.Jgenka.Remove(SelectedJgenka);
+		if (SelectedJgenka == null) return;
+		EditJgenka.Remove(SelectedJgenka);
 		SelectedJgenka = null;
 	}
 
 	[RelayCommand]
 	void AddJcolsiz() {
-		CurrentEdit.Jcolsiz ??= [];
-		CurrentEdit.Jcolsiz.Add(new MasterShohinColSiz());
+		EditJcolsiz.Add(new MasterShohinColSiz());
 	}
 
 	[RelayCommand]
 	void DeleteJcolsiz() {
-		if (SelectedJcolsiz == null || CurrentEdit.Jcolsiz == null) return;
-		CurrentEdit.Jcolsiz.Remove(SelectedJcolsiz);
+		if (SelectedJcolsiz == null) return;
+		EditJcolsiz.Remove(SelectedJcolsiz);
 		SelectedJcolsiz = null;
 	}
 
 	[RelayCommand]
 	void AddJgrade() {
-		CurrentEdit.Jgrade ??= [];
-		var nextNo = CurrentEdit.Jgrade.Count > 0 ? CurrentEdit.Jgrade.Max(x => x.No) + 1 : 1;
-		CurrentEdit.Jgrade.Add(new MasterShohinGrade { No = nextNo });
+		var nextNo = EditJgrade.Count > 0 ? EditJgrade.Max(x => x.No) + 1 : 1;
+		EditJgrade.Add(new MasterShohinGrade { No = nextNo });
 	}
 
 	[RelayCommand]
 	void DeleteJgrade() {
-		if (SelectedJgrade == null || CurrentEdit.Jgrade == null) return;
-		CurrentEdit.Jgrade.Remove(SelectedJgrade);
+		if (SelectedJgrade == null) return;
+		EditJgrade.Remove(SelectedJgrade);
 		SelectedJgrade = null;
 	}
 
@@ -269,16 +308,15 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 
 	[RelayCommand]
 	void AddJsub() {
-		CurrentEdit.Jsub ??= [];
-		var newItem = new MasterGeneralMeisho();
-		CurrentEdit.Jsub.Add(newItem);
+		var newItem = new MasterGeneralMeisho { BaseList = KubunList };
+		EditJsub.Add(newItem);
 		SortJsub();
 	}
 
 	[RelayCommand]
 	void DeleteJsub() {
-		if (SelectedJsub == null || CurrentEdit.Jsub == null) return;
-		CurrentEdit.Jsub.Remove(SelectedJsub);
+		if (SelectedJsub == null) return;
+		EditJsub.Remove(SelectedJsub);
 		SelectedJsub = null;
 	}
 
@@ -299,10 +337,9 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 	}
 
 	void SortJsub() {
-		if (CurrentEdit.Jsub == null) return;
-		var sorted = CurrentEdit.Jsub.OrderBy(x => x.Kb).ToList();
-		CurrentEdit.Jsub.Clear();
-		foreach (var item in sorted) CurrentEdit.Jsub.Add(item);
+		var sorted = EditJsub.OrderBy(x => x.Kb).ToList();
+		EditJsub.Clear();
+		foreach (var item in sorted) EditJsub.Add(item);
 	}
 
 }

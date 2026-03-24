@@ -274,3 +274,21 @@
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功（0 warnings, 0 errors）
 
 ---
+
+## [2026-03-24] 19:30 MasterShohinMente サブリストの ObservableCollection 化
+### Agent
+- claude-opus-4.6 : github-copilot/claude-opus-4.6
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：instruction-20260324-3-updateshohinmente.txt に従い、商品メンテ画面の CurrentEdit のサブリスト（Jgenka, Jcolsiz, Jgrade, Jsub）を ViewModel 側で ObservableCollection<T> に変換し、DataGrid の行数変更通知を正しく動作させる
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 4つの [ObservableProperty] フィールド（editJgenka, editJcolsiz, editJgrade, editJsub）を ObservableCollection<T> として追加。ApplySubListsFromCurrentEdit()（CurrentEdit→ObservableCollection クローン）と SyncSubListsToCurrentEdit()（ObservableCollection→CurrentEdit 書き戻し）を実装。CreateInsertParam/CreateUpdateParam をオーバーライドして Sync を呼出。全 Add/Delete コマンドを EditXxx 操作に変更
+- Cvnet10Wpfclient/Views/01Master/MasterShohinMenteView.xaml: 4つの DataGrid の ItemsSource バインディングを CurrentEdit.Jgenka→EditJgenka、CurrentEdit.Jcolsiz→EditJcolsiz、CurrentEdit.Jgrade→EditJgrade、CurrentEdit.Jsub→EditJsub に変更
+- .agents/skills/change-sublist-to-observablecollection/SKILL.md: 同パターンを他画面にも適用するためのスキルを新規作成
+### 技術決定 Why
+- Cvnet10Base の MasterShohin エンティティは Read-Only 層のため List<T>? を変更できない。ViewModel 側で ObservableCollection<T> を保持し、Apply（レコード選択時にクローン）/ Sync（保存前に書き戻し）パターンで分離することで、DataGrid の行追加・削除が即座に反映されるようにした。ShukkaUriageInputViewModel の ApplyDetailFromCurrent/SyncDetailToCurrent パターンを踏襲
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功（0 warnings, 0 errors）
+
+---

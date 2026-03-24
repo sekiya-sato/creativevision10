@@ -578,7 +578,7 @@
 								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 								IsSynchronizedWithCurrentItem="True"
-								ItemsSource="{Binding CurrentEdit.Jgenka}"
+								ItemsSource="{Binding EditJgenka}"
 								SelectedItem="{Binding SelectedJgenka, Mode=TwoWay}"
 								Style="{StaticResource MaterialDesignDataGrid}"
 								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
@@ -647,7 +647,7 @@
 								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 								IsSynchronizedWithCurrentItem="True"
-								ItemsSource="{Binding CurrentEdit.Jcolsiz}"
+								ItemsSource="{Binding EditJcolsiz}"
 								SelectedItem="{Binding SelectedJcolsiz, Mode=TwoWay}"
 								Style="{StaticResource MaterialDesignDataGrid}"
 								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
@@ -812,7 +812,7 @@
 								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 								IsSynchronizedWithCurrentItem="True"
-								ItemsSource="{Binding CurrentEdit.Jgrade}"
+								ItemsSource="{Binding EditJgrade}"
 								SelectedItem="{Binding SelectedJgrade, Mode=TwoWay}"
 								Style="{StaticResource MaterialDesignDataGrid}"
 								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
@@ -910,7 +910,7 @@
 								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 								IsSynchronizedWithCurrentItem="True"
-								ItemsSource="{Binding CurrentEdit.Jsub}"
+								ItemsSource="{Binding EditJsub}"
 								SelectedItem="{Binding SelectedJsub, Mode=TwoWay}"
 								Style="{StaticResource MaterialDesignDataGrid}"
 								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
