@@ -40,6 +40,12 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	[ObservableProperty]
 	T currentEdit = new();
 
+	// Source generator will declare a partial method `OnCurrentEditChanged(T? oldValue, T newValue)`
+	// Implement it here to forward to a virtual core method that derived viewmodels can override.
+	partial void OnCurrentEditChanged(T? oldValue, T newValue) => OnCurrentEditChangedCore(oldValue, newValue);
+
+	protected virtual void OnCurrentEditChangedCore(T? oldValue, T newValue) { }
+
 	[ObservableProperty]
 	int count;
 

@@ -177,5 +177,14 @@ public sealed partial class MasterGeneralMeisho : CodeNameView {
 	[property: ColumnSizeDml(40)]
 	[property: System.ComponentModel.DefaultValue("")]
 	string kbname = string.Empty;
+
+	public List<MasterMeisho> BaseList = [];
+	// Kb が変更されたら自動的に呼ばれる (XAML側のトリガー不要)
+	partial void OnKbChanged(string value) {
+		if (BaseList.Count == 0) return;
+		var item = BaseList.First(x => x.Code == value);
+		if (item == null) return;
+		Kbname = item.Name;
+	}
 }
 

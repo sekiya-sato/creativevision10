@@ -31,16 +31,28 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 	[ObservableProperty]
 	MasterGeneralMeisho? selectedJsub;
 
+	[ObservableProperty]
+	int interactionTriggersCount;
+
 	public ObservableCollection<string> KubunOptions { get; } = new([
 		"B01", "B02", "B03", "B04", "B05",
 		"B06", "B07", "B08", "B09", "B10"
 	]);
-	public ObservableCollection<MasterMeisho> KubunList = [];
+	public List<MasterMeisho> KubunList = [];
 
 	protected override int? ListMaxCount => selectCodeParam?.MaxCount;
 
+
+	protected override void OnCurrentEditChangedCore(MasterShohin? oldValue, MasterShohin newValue) {
+		if (newValue == null) return;
+		if (newValue.Jsub != null) {
+			foreach (var item in newValue.Jsub) item.BaseList = KubunList;
+		}
+	}
+
 	[RelayCommand]
 	async Task Init() {
+
 		await DoGetKubun(CancellationToken.None);
 		await DoList(CancellationToken.None);
 	}
@@ -57,7 +69,7 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 				DataMsg = Common.SerializeObject(param)
 			};
 			var reply = await SendMessageAsync(msg, ct);
-		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
+			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
 				KubunList.Clear();
 				foreach (var item in list.Cast<MasterMeisho>()) KubunList.Add(item);
 			}
@@ -293,16 +305,4 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 		foreach (var item in sorted) CurrentEdit.Jsub.Add(item);
 	}
 
-	public bool ValidateJsubKubun(string newKubun, MasterGeneralMeisho? editingItem) {
-		if (CurrentEdit.Jsub == null) return true;
-		return !CurrentEdit.Jsub.Any(x => x != editingItem && x.Kb == newKubun);
-	}
-
-	[RelayCommand]
-	void OnKubunChanged(MasterGeneralMeisho? item) {
-		if (item == null || string.IsNullOrEmpty(item.Kb)) return;
-		if (KubunList.Count == 0) return;
-		var meisho = KubunList.FirstOrDefault(x => x.Code == item.Kb);
-		item.Kbname = meisho?.Name ?? "";
-	}
 }
