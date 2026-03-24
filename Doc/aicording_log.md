@@ -16,19 +16,22 @@
 
 ---
 
-## [2026-03-23] 15:17 社員マスタ画面のデザイン統一
+## [2026-03-24] 10:15 DataGrid選択行の点滅問題修正（Dispatcher優先度調整）
 ### Agent
-- [gpt-5.4-mini : OpenAI]
+- claude-haiku-4.5 : OpenCode
 ### Editor
-- [OpenCode]
+- OpenCode
 ### 目的
-- ユーザーからの要望：`MasterShainMenteView.xaml` を商品マスタ風に統一し、履歴記録後に commit と push まで実行する
+- ユーザーからの要望：MasterShainMenteView および全マスター画面の DataGrid で、矢印キーまたはマウスクリックで選択行を連続移動させると、選択行が点滅・チラつく問題を調査・修正
 ### 実施内容
-- `Cvnet10Wpfclient/Views/01Master/MasterShainMenteView.xaml`: `MasterShohinMenteView.xaml` を参考に ColorZone ヘッダー、Card レイアウト、テーマベース DataGrid、Outlined フォームへ刷新
+- Cvnet10Wpfclient/Helpers/Behaviors/DataGridSelectionBehavior.cs: `BringSelectionIntoView()` メソッド内の `Dispatcher.BeginInvoke()` の優先度を `DispatcherPriority.Background` から `DispatcherPriority.Render` に変更（行135）
 ### 技術決定 Why
-- 社員マスタを商品マスタと同じレイアウト構成に揃え、操作系の位置と編集UIを統一することで、マスタ群全体の学習コストを下げた
+- 問題の根本原因は、複数の `SelectionChanged` イベント発火時に、低優先度の `Background` で複数の非同期フォーカス制御が同時実行されて、UI レンダリング フレーム間での競合が発生していたこと。`Render` 優先度へ引き上げることで、フレーム直前にフォーカスと選択状態の同期が確実に実行され、点滅が改善される。
 ### 確認
-- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功
+- dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false 成功（0 警告、0 エラー）
+
+---
+
 
 ---
 

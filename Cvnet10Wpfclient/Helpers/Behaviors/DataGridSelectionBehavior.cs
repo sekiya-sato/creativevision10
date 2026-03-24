@@ -124,15 +124,6 @@ public static class DataGridSelectionBehavior {
 			grid.UpdateLayout();
 			grid.SelectedItem = item;
 			grid.ScrollIntoView(item);
-			grid.CurrentItem = item;
-
-			if (!focusCell || grid.Columns.Count == 0) {
-				if (focusCell) {
-					grid.Focus();
-				}
-				return;
-			}
-
 			grid.CurrentCell = new DataGridCellInfo(item, grid.Columns[0]);
 			var cell = GetCell(grid, grid.CurrentCell);
 			if (cell != null) {
@@ -141,7 +132,7 @@ public static class DataGridSelectionBehavior {
 			else {
 				grid.Focus();
 			}
-		}, DispatcherPriority.Background);
+		}, DispatcherPriority.Render);
 	}
 
 	private static DataGridCell? GetCell(DataGrid grid, DataGridCellInfo cellInfo) {
