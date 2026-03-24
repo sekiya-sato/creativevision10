@@ -225,3 +225,20 @@
 - `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功
 
 ---
+
+## [2026-03-24] 17:00 MasterShohinMenteView 4タブの操作機能追加
+### Agent
+- claude-opus-4.6 : GitHub Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：instruction-20260324-updateshohinmente.txt に従い、商品メンテ画面の4つの詳細タブ（原価リスト・色サイズリスト・品質リスト・名称リスト）にボタン操作・カラム統合・検索機能を追加する
+### 実施内容
+- Cvnet10Wpfclient/Views/01Master/MasterShohinMenteView.xaml: 4タブ全てにDelete/Addボタン追加、DataGrid内の行追加・削除を禁止。色サイズリストのカラーCD+カラー名・サイズCD+サイズ名を各1列に統合（MultiBinding）。品質リストに検索ボタン付きカラム追加。名称リストの区分をComboBox化、コードに検索ボタン付きカラム追加、名称をReadOnly化
+- Cvnet10Wpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: SelectedJgenka/SelectedJgrade/SelectedJsub ObservableProperty追加、KubunOptions（B01-B10）追加、各タブのAdd/Delete/検索コマンド追加（AddJgenkaCommand, DeleteJgenkaCommand, AddJcolsizCommand, DeleteJcolsizCommand, AddJgradeCommand, DeleteJgradeCommand, DoSelectHinshituCommand, AddJsubCommand, DeleteJsubCommand, DoSelectJsubCodeCommand）、SortJsub/ValidateJsubKubunメソッド追加
+### 技術決定 Why
+- DataGrid内での直接行操作を禁止し、外部ボタン経由で追加・削除を行うことで誤操作を防止。MultiBindingによるカラム統合で表示を簡潔化。SelectWinViewを利用した検索は既存パターン（サイズ検索・カラー検索）を踏襲
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功（0 warnings, 0 errors）
+
+---

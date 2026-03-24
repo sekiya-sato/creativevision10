@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Cvnet10Base;
 using Cvnet10Wpfclient.ViewModels.Sub;
 using Cvnet10Wpfclient.ViewServices;
+using System.Collections.ObjectModel;
 
 namespace Cvnet10Wpfclient.ViewModels._01Master;
 
@@ -17,6 +18,20 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 
 	[ObservableProperty]
 	MasterShohinColSiz? selectedJcolsiz;
+
+	[ObservableProperty]
+	MasterShohinGenka? selectedJgenka;
+
+	[ObservableProperty]
+	MasterShohinGrade? selectedJgrade;
+
+	[ObservableProperty]
+	MasterGeneralMeisho? selectedJsub;
+
+	public ObservableCollection<string> KubunOptions { get; } = new([
+		"B01", "B02", "B03", "B04", "B05",
+		"B06", "B07", "B08", "B09", "B10"
+	]);
 
 	protected override int? ListMaxCount => selectCodeParam?.MaxCount;
 
@@ -148,5 +163,102 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 		SelectedJcolsiz.Id_Siz = meisho.Id;
 		SelectedJcolsiz.Code_Siz = meisho.Code ?? "";
 		SelectedJcolsiz.Mei_Siz = meisho.Name ?? "";
+	}
+
+	[RelayCommand]
+	void AddJgenka() {
+		CurrentEdit.Jgenka ??= [];
+		var nextNo = CurrentEdit.Jgenka.Count > 0 ? CurrentEdit.Jgenka.Max(x => x.No) + 1 : 1;
+		CurrentEdit.Jgenka.Add(new MasterShohinGenka { No = nextNo });
+	}
+
+	[RelayCommand]
+	void DeleteJgenka() {
+		if (SelectedJgenka == null || CurrentEdit.Jgenka == null) return;
+		CurrentEdit.Jgenka.Remove(SelectedJgenka);
+		SelectedJgenka = null;
+	}
+
+	[RelayCommand]
+	void AddJcolsiz() {
+		CurrentEdit.Jcolsiz ??= [];
+		CurrentEdit.Jcolsiz.Add(new MasterShohinColSiz());
+	}
+
+	[RelayCommand]
+	void DeleteJcolsiz() {
+		if (SelectedJcolsiz == null || CurrentEdit.Jcolsiz == null) return;
+		CurrentEdit.Jcolsiz.Remove(SelectedJcolsiz);
+		SelectedJcolsiz = null;
+	}
+
+	[RelayCommand]
+	void AddJgrade() {
+		CurrentEdit.Jgrade ??= [];
+		var nextNo = CurrentEdit.Jgrade.Count > 0 ? CurrentEdit.Jgrade.Max(x => x.No) + 1 : 1;
+		CurrentEdit.Jgrade.Add(new MasterShohinGrade { No = nextNo });
+	}
+
+	[RelayCommand]
+	void DeleteJgrade() {
+		if (SelectedJgrade == null || CurrentEdit.Jgrade == null) return;
+		CurrentEdit.Jgrade.Remove(SelectedJgrade);
+		SelectedJgrade = null;
+	}
+
+	[RelayCommand]
+	void DoSelectHinshitu() {
+		if (SelectedJgrade == null) return;
+		var selWin = new Views.Sub.SelectWinView();
+		var vm = selWin.DataContext as Sub.SelectWinViewModel;
+		if (vm == null) return;
+		vm.SetParam(typeof(MasterMeisho), "Kubun='HIN'", "Code", startPos: 0);
+		if (ClientLib.ShowDialogView(selWin, this) != true) return;
+		var meisho = vm.Current as MasterMeisho;
+		if (meisho == null) return;
+		SelectedJgrade.Hinshitu = meisho.Name ?? "";
+	}
+
+	[RelayCommand]
+	void AddJsub() {
+		CurrentEdit.Jsub ??= [];
+		var newItem = new MasterGeneralMeisho();
+		CurrentEdit.Jsub.Add(newItem);
+		SortJsub();
+	}
+
+	[RelayCommand]
+	void DeleteJsub() {
+		if (SelectedJsub == null || CurrentEdit.Jsub == null) return;
+		CurrentEdit.Jsub.Remove(SelectedJsub);
+		SelectedJsub = null;
+	}
+
+	[RelayCommand]
+	void DoSelectJsubCode() {
+		if (SelectedJsub == null) return;
+		var kb = (SelectedJsub.Kb ?? string.Empty).Replace("'", "''");
+		if (string.IsNullOrEmpty(kb)) return;
+		var selWin = new Views.Sub.SelectWinView();
+		var vm = selWin.DataContext as Sub.SelectWinViewModel;
+		if (vm == null) return;
+		vm.SetParam(typeof(MasterMeisho), $"Kubun='{kb}'", "Code", startPos: SelectedJsub.Sid);
+		if (ClientLib.ShowDialogView(selWin, this) != true) return;
+		var meisho = vm.Current as MasterMeisho;
+		if (meisho == null) return;
+		SelectedJsub.Cd = meisho.Code ?? "";
+		SelectedJsub.Mei = meisho.Name ?? "";
+	}
+
+	void SortJsub() {
+		if (CurrentEdit.Jsub == null) return;
+		var sorted = CurrentEdit.Jsub.OrderBy(x => x.Kb).ToList();
+		CurrentEdit.Jsub.Clear();
+		foreach (var item in sorted) CurrentEdit.Jsub.Add(item);
+	}
+
+	public bool ValidateJsubKubun(string newKubun, MasterGeneralMeisho? editingItem) {
+		if (CurrentEdit.Jsub == null) return true;
+		return !CurrentEdit.Jsub.Any(x => x != editingItem && x.Kb == newKubun);
 	}
 }

@@ -527,23 +527,55 @@
 						</ScrollViewer>
 					</TabItem>
 
-					<!--  タブ2: 原価リスト  -->
-					<TabItem>
-						<TabItem.Header>
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-									Kind="CurrencyJpy" />
-								<TextBlock Text="原価リスト" />
-							</StackPanel>
-						</TabItem.Header>
+				<!--  タブ2: 原価リスト  -->
+				<TabItem>
+					<TabItem.Header>
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+								Kind="CurrencyJpy" />
+							<TextBlock Text="原価リスト" />
+						</StackPanel>
+					</TabItem.Header>
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
+						<StackPanel Grid.Row="0"
+							Margin="8,8,8,0" HorizontalAlignment="Center"
+							Orientation="Horizontal">
+							<Button Margin="8,0"
+								Command="{Binding DeleteJgenkaCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Delete" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="削除" />
+								</StackPanel>
+							</Button>
+							<Button Margin="8,0"
+								Command="{Binding AddJgenkaCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Plus" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="追加" />
+								</StackPanel>
+							</Button>
+						</StackPanel>
 						<DataGrid x:Name="JgenkaGrid"
+							Grid.Row="1"
 							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=3}"
 							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True"
+							GridLinesVisibility="Horizontal"
 							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 							IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jgenka}"
+							SelectedItem="{Binding SelectedJgenka, Mode=TwoWay}"
 							Style="{StaticResource MaterialDesignDataGrid}"
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
@@ -562,22 +594,54 @@
 									TargetType="DataGridColumnHeader" />
 							</DataGrid.ColumnHeaderStyle>
 						</DataGrid>
-					</TabItem>
+					</Grid>
+				</TabItem>
 
-					<!--  タブ3: 色サイズリスト  -->
-					<TabItem>
-						<TabItem.Header>
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-									Kind="Palette" />
-								<TextBlock Text="色サイズリスト" />
-							</StackPanel>
-						</TabItem.Header>
+				<!--  タブ3: 色サイズリスト  -->
+				<TabItem>
+					<TabItem.Header>
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+								Kind="Palette" />
+							<TextBlock Text="色サイズリスト" />
+						</StackPanel>
+					</TabItem.Header>
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
+						<StackPanel Grid.Row="0"
+							Margin="8,8,8,0" HorizontalAlignment="Center"
+							Orientation="Horizontal">
+							<Button Margin="8,0"
+								Command="{Binding DeleteJcolsizCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Delete" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="削除" />
+								</StackPanel>
+							</Button>
+							<Button Margin="8,0"
+								Command="{Binding AddJcolsizCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Plus" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="追加" />
+								</StackPanel>
+							</Button>
+						</StackPanel>
 						<DataGrid x:Name="JcolsizGrid"
+							Grid.Row="1"
 							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=5}"
 							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
-							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True"
+							GridLinesVisibility="Horizontal"
 							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 							IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jcolsiz}"
@@ -586,7 +650,7 @@
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
 								<DataGridTemplateColumn Width="130"
-									Header="色検索">
+									Header="カラー検索">
 									<DataGridTemplateColumn.CellTemplate>
 										<DataTemplate>
 											<Grid Margin="2,1">
@@ -618,12 +682,21 @@
 										</DataTemplate>
 									</DataGridTemplateColumn.CellTemplate>
 								</DataGridTemplateColumn>
-								<DataGridTextColumn Width="100"
-									Binding="{Binding Code_Col}"
-									Header="カラーCD" IsReadOnly="True" />
-								<DataGridTextColumn Width="60"
-									Binding="{Binding Mei_Col}"
-									Header="カラー名" IsReadOnly="True" />
+							<DataGridTemplateColumn Width="140"
+								Header="カラー" IsReadOnly="True">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<TextBlock VerticalAlignment="Center">
+											<TextBlock.Text>
+												<MultiBinding StringFormat="{}{0} {1}">
+													<Binding Path="Code_Col" />
+													<Binding Path="Mei_Col" />
+												</MultiBinding>
+											</TextBlock.Text>
+										</TextBlock>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
 								<DataGridTemplateColumn Width="120"
 									Header="サイズ検索">
 									<DataGridTemplateColumn.CellTemplate>
@@ -657,12 +730,21 @@
 										</DataTemplate>
 									</DataGridTemplateColumn.CellTemplate>
 								</DataGridTemplateColumn>
-								<DataGridTextColumn Width="60"
-									Binding="{Binding Code_Siz}"
-									Header="サイズCD" IsReadOnly="True" />
-								<DataGridTextColumn Width="120"
-									Binding="{Binding Mei_Siz}"
-									Header="サイズ名" IsReadOnly="True" />
+							<DataGridTemplateColumn Width="140"
+								Header="サイズ" IsReadOnly="True">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<TextBlock VerticalAlignment="Center">
+											<TextBlock.Text>
+												<MultiBinding StringFormat="{}{0} {1}">
+													<Binding Path="Code_Siz" />
+													<Binding Path="Mei_Siz" />
+												</MultiBinding>
+											</TextBlock.Text>
+										</TextBlock>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
 								<DataGridTextColumn Width="150"
 									Binding="{Binding Jan1}"
 									Header="JANコード1" />
@@ -678,34 +760,96 @@
 									TargetType="DataGridColumnHeader" />
 							</DataGrid.ColumnHeaderStyle>
 						</DataGrid>
-					</TabItem>
+					</Grid>
+				</TabItem>
 
-					<!--  タブ4: 品質リスト  -->
-					<TabItem>
-						<TabItem.Header>
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-									Kind="CheckDecagram" />
-								<TextBlock Text="品質リスト" />
-							</StackPanel>
-						</TabItem.Header>
+				<!--  タブ4: 品質リスト  -->
+				<TabItem>
+					<TabItem.Header>
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+								Kind="CheckDecagram" />
+							<TextBlock Text="品質リスト" />
+						</StackPanel>
+					</TabItem.Header>
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
+						<StackPanel Grid.Row="0"
+							Margin="8,8,8,0" HorizontalAlignment="Center"
+							Orientation="Horizontal">
+							<Button Margin="8,0"
+								Command="{Binding DeleteJgradeCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Delete" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="削除" />
+								</StackPanel>
+							</Button>
+							<Button Margin="8,0"
+								Command="{Binding AddJgradeCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Plus" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="追加" />
+								</StackPanel>
+							</Button>
+						</StackPanel>
 						<DataGrid x:Name="JgradeGrid"
+							Grid.Row="1"
 							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=3}"
 							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True"
+							GridLinesVisibility="Horizontal"
 							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 							IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jgrade}"
+							SelectedItem="{Binding SelectedJgrade, Mode=TwoWay}"
 							Style="{StaticResource MaterialDesignDataGrid}"
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
 								<DataGridTextColumn Width="100"
 									Binding="{Binding No}"
 									Header="No" />
-								<DataGridTextColumn Width="200"
-									Binding="{Binding Hinshitu}"
-									Header="品質" />
+								<DataGridTemplateColumn Width="250"
+									Header="品質">
+									<DataGridTemplateColumn.CellTemplate>
+										<DataTemplate>
+											<Grid Margin="2,1">
+												<Grid.ColumnDefinitions>
+													<ColumnDefinition Width="*" />
+													<ColumnDefinition Width="30" />
+												</Grid.ColumnDefinitions>
+												<TextBox Grid.Column="0"
+													Height="28"
+													VerticalAlignment="Center"
+													Foreground="{DynamicResource MaterialDesignBody}"
+													IsReadOnly="True"
+													Text="{Binding Hinshitu, UpdateSourceTrigger=PropertyChanged}" />
+												<Button Grid.Column="1"
+													Width="26" Height="26"
+													Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
+													Background="{DynamicResource PrimaryButtonColor}"
+													BorderThickness="0"
+													Command="{Binding DataContext.DoSelectHinshituCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+													Cursor="Hand" Foreground="White">
+													<Button.Content>
+														<materialDesign:PackIcon Width="16" Height="16"
+															HorizontalAlignment="Center" VerticalAlignment="Center"
+															Foreground="White" Kind="Magnify" />
+													</Button.Content>
+												</Button>
+											</Grid>
+										</DataTemplate>
+									</DataGridTemplateColumn.CellTemplate>
+								</DataGridTemplateColumn>
 								<DataGridTextColumn Width="100"
 									Binding="{Binding Percent}"
 									Header="%" />
@@ -715,37 +859,108 @@
 									TargetType="DataGridColumnHeader" />
 							</DataGrid.ColumnHeaderStyle>
 						</DataGrid>
-					</TabItem>
+					</Grid>
+				</TabItem>
 
-					<!--  タブ5: 名称リスト  -->
-					<TabItem>
-						<TabItem.Header>
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-									Kind="FormatListBulleted" />
-								<TextBlock Text="名称リスト" />
-							</StackPanel>
-						</TabItem.Header>
+				<!--  タブ5: 名称リスト  -->
+				<TabItem>
+					<TabItem.Header>
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+								Kind="FormatListBulleted" />
+							<TextBlock Text="名称リスト" />
+						</StackPanel>
+					</TabItem.Header>
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
+						<StackPanel Grid.Row="0"
+							Margin="8,8,8,0" HorizontalAlignment="Center"
+							Orientation="Horizontal">
+							<Button Margin="8,0"
+								Command="{Binding DeleteJsubCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Delete" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="削除" />
+								</StackPanel>
+							</Button>
+							<Button Margin="8,0"
+								Command="{Binding AddJsubCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Plus" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="追加" />
+								</StackPanel>
+							</Button>
+						</StackPanel>
 						<DataGrid x:Name="JsubGrid"
+							Grid.Row="1"
 							Margin="8"
 							d:ItemsSource="{d:SampleData ItemCount=3}"
 							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-							AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+							AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True"
+							GridLinesVisibility="Horizontal"
 							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-							IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+							IsSynchronizedWithCurrentItem="True"
 							ItemsSource="{Binding CurrentEdit.Jsub}"
+							SelectedItem="{Binding SelectedJsub, Mode=TwoWay}"
 							Style="{StaticResource MaterialDesignDataGrid}"
 							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
-								<DataGridTextColumn Width="100"
-									Binding="{Binding Kb}"
-									Header="区分" />
-								<DataGridTextColumn Width="120"
-									Binding="{Binding Cd}"
-									Header="コード" />
+								<DataGridTemplateColumn Width="100"
+									Header="区分">
+									<DataGridTemplateColumn.CellTemplate>
+										<DataTemplate>
+											<ComboBox Margin="2"
+												ItemsSource="{Binding DataContext.KubunOptions, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+												SelectedItem="{Binding Kb, UpdateSourceTrigger=PropertyChanged}"
+												Style="{StaticResource MaterialDesignComboBox}" />
+										</DataTemplate>
+									</DataGridTemplateColumn.CellTemplate>
+								</DataGridTemplateColumn>
+								<DataGridTemplateColumn Width="150"
+									Header="コード">
+									<DataGridTemplateColumn.CellTemplate>
+										<DataTemplate>
+											<Grid Margin="2,1">
+												<Grid.ColumnDefinitions>
+													<ColumnDefinition Width="*" />
+													<ColumnDefinition Width="30" />
+												</Grid.ColumnDefinitions>
+												<TextBox Grid.Column="0"
+													Height="28"
+													VerticalAlignment="Center"
+													Foreground="{DynamicResource MaterialDesignBody}"
+													IsReadOnly="True"
+													Text="{Binding Cd, UpdateSourceTrigger=PropertyChanged}" />
+												<Button Grid.Column="1"
+													Width="26" Height="26"
+													Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
+													Background="{DynamicResource PrimaryButtonColor}"
+													BorderThickness="0"
+													Command="{Binding DataContext.DoSelectJsubCodeCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+													Cursor="Hand" Foreground="White">
+													<Button.Content>
+														<materialDesign:PackIcon Width="16" Height="16"
+															HorizontalAlignment="Center" VerticalAlignment="Center"
+															Foreground="White" Kind="Magnify" />
+													</Button.Content>
+												</Button>
+											</Grid>
+										</DataTemplate>
+									</DataGridTemplateColumn.CellTemplate>
+								</DataGridTemplateColumn>
 								<DataGridTextColumn Width="200"
 									Binding="{Binding Mei}"
-									Header="名称" />
+									Header="名称"
+									IsReadOnly="True" />
 								<DataGridTextColumn Width="*"
 									Binding="{Binding Kbname}"
 									Header="区分名" />
@@ -755,7 +970,8 @@
 									TargetType="DataGridColumnHeader" />
 							</DataGrid.ColumnHeaderStyle>
 						</DataGrid>
-					</TabItem>
+					</Grid>
+				</TabItem>
 
 					<!--  タブ6: 詳細内容  -->
 					<TabItem>
