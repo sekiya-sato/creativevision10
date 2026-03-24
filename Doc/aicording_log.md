@@ -16,7 +16,24 @@
 
 ---
 
-## [2026-03-24] 10:15 DataGrid選択行の点滅問題修正（Dispatcher優先度調整）
+## [2026-03-24] 15:30 MainMenuView.xaml MaterialDesignスタイルへの変更
+### Agent
+- big-pickle : OpenCode
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：メインメニュー(MainMenuView.xaml)をマスター画面と調和したMaterialDesignスタイルに変更する
+### 実施内容
+- Cvnet10Wpfclient/Views/MainMenuView.xaml: ヘッダー部分をGridからmaterialDesign:ColorZone(Mode="PrimaryMid")に変更
+- ダッシュボードカードをカスタムDashboardCardViewからmaterialDesign:Card(ElevationAssist.Elevation="Dp2")に変更
+- 選択中メニュー・ステータスログのパネルもmaterialDesign:Cardで囲み統一
+- メニューパネル(Border + TreeView)をmaterialDesign:Cardに変更
+- テーマカラーとリソースをマスター画面と調和させ、PrimaryHueMidBrush/MaterialDesignBodyなどを使用
+### 技術決定 Why
+- マスター画面(MasterMeishoMenteView等)と同じColorZone + Cardのパターンを適用し、プロジェクト全体のUI統一を図る
+### 確認
+- dotnet build Cvnet10Wpfclient.csproj 成功
+
 ### Agent
 - claude-haiku-4.5 : OpenCode
 ### Editor
