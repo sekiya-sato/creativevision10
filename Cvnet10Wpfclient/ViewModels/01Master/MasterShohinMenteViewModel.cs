@@ -1,8 +1,11 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Cvnet10Asset;
 using Cvnet10Base;
 using Cvnet10Wpfclient.ViewModels.Sub;
 using Cvnet10Wpfclient.ViewServices;
+using System.Collections;
 using System.Collections.ObjectModel;
 
 namespace Cvnet10Wpfclient.ViewModels._01Master;
@@ -32,13 +35,45 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 		"B01", "B02", "B03", "B04", "B05",
 		"B06", "B07", "B08", "B09", "B10"
 	]);
+	public ObservableCollection<MasterMeisho> KubunList = [];
 
 	protected override int? ListMaxCount => selectCodeParam?.MaxCount;
 
 	[RelayCommand]
 	async Task Init() {
+		await DoGetKubun(CancellationToken.None);
 		await DoList(CancellationToken.None);
 	}
+
+	async Task DoGetKubun(CancellationToken ct) {
+		if (KubunList.Count > 0) return;
+		try {
+			ClientLib.Cursor2Wait();
+			var param = new QueryListParam(typeof(MasterMeisho), "Kubun='IDX' and Code between 'B01' and 'B10'", "Code");
+			var msg = new CvnetMsg {
+				Code = 0,
+				Flag = CvnetFlag.Msg101_Op_Query,
+				DataType = typeof(QueryListParam),
+				DataMsg = Common.SerializeObject(param)
+			};
+			var reply = await SendMessageAsync(msg, ct);
+			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
+				KubunList = new ObservableCollection<MasterMeisho>(list.Cast<MasterMeisho>());
+			}
+		}
+		catch (OperationCanceledException cancel) {
+			Message = $"Cancelエラー：{cancel.Message}";
+			return;
+		}
+		catch (Exception ex) {
+			Message = $"データ取得失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+	}
+
 
 	protected override string GetInsertConfirmMessage() =>
 		$"追加しますか？ (CD={CurrentEdit.Code})";
@@ -260,5 +295,14 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<Mas
 	public bool ValidateJsubKubun(string newKubun, MasterGeneralMeisho? editingItem) {
 		if (CurrentEdit.Jsub == null) return true;
 		return !CurrentEdit.Jsub.Any(x => x != editingItem && x.Kb == newKubun);
+	}
+
+	[RelayCommand]
+	void OnKubunChanged(MasterGeneralMeisho? item) {
+		if (item == null || string.IsNullOrEmpty(item.Kb)) return;
+		var meisho = KubunList.FirstOrDefault(x => x.Code == item.Kb);
+		if (meisho != null) {
+			item.Kbname = meisho.Name ?? "";
+		}
 	}
 }

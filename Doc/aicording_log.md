@@ -242,3 +242,19 @@
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功（0 warnings, 0 errors）
 
 ---
+## [2026-03-24] 16:35 名称リスト ComboBox「区分」変更時に区分名を自動セット
+### Agent
+- GitHub Copilot : Microsoft : Copilot
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：タブ「名称リスト」で ComboBox「区分」が変更された場合、KubunList から該当する Code を検索して Name を「区分名」にセットする
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: \OnKubunChanged\ RelayCommand メソッドを追加。Kb の値から KubunList を検索し、一致する MasterMeisho の Name を Kbname にセット
+- Cvnet10Wpfclient/Views/01Master/MasterShohinMenteView.xaml: ComboBox「区分」に \SelectionChanged\ イベントをバインド。\InvokeCommandAction\ で \OnKubunChangedCommand\ へ接続し、DataGrid 行アイテムをコマンドパラメータで渡す
+### 技術決定 Why
+- WPF DataGrid セル内の ComboBox イベント処理は Behaviors:EventTrigger + InvokeCommandAction パターンが標準。ViewModel の RelayCommand で統一管理することで、バインディング側の責務を明確にしつつ、MasterGeneralMeisho オブジェクトの Kbname を直接更新する簡潔な実装が実現できた
+### 確認
+- dotnet build 成功（0 警告、0 エラー）
+
+---
