@@ -307,7 +307,29 @@
 ### 技術決定 Why
 - KubunList はフィールド（ObservablePropertyではない）のため、`new` で再代入すると OnKubunChanged 内の参照先が切り替わらないタイミング問題が発生していた。Clear+Add パターンで同一インスタンスを維持することで確実にデータが反映されるようにした
 ### 確認
-- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功（0 warnings, 0 errors）
+- dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false 成功 (0 warnings, 0 errors)
+
+---
+
+## [2026-03-24] 13:00 SysLoginHistoryView の MaterialDesign 風デザイン統一
+
+### Agent
+- grok-code-fast-1 : github-copilot/grok-code-fast-1
+
+### Editor
+- OpenCode
+
+### 目的
+- ユーザーからの要望：SysLoginHistoryView を update-design-mente スキルを使って画面を修正。ただしこの画面は履歴表示のみなので、修正 削除 追加のボタンはない。
+
+### 実施内容
+- Cvnet10Wpfclient/Views/00System/SysLoginHistoryView.xaml: MaterialDesign風レイアウトに統一。ColorZoneヘッダー、Cardレイアウト、TabControl、MaterialDesignOutlinedスタイル適用。CRUDボタンなし。
+
+### 技術決定 Why
+- マスターメンテ画面のデザイン統一のため、MasterShohinMenteViewをテンプレートとして適用し、スキル update-design-mente を利用。履歴表示専用なので操作ボタンを最小限に。
+
+### 確認
+- dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false 成功 (0 警告、0 エラー)
 
 ---
 

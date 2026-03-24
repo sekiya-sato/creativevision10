@@ -13,207 +13,323 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:SysLoginHistoryViewModel />
 	</helpers:BaseWindow.DataContext>
+
+	<!--  SearchTextBox 共通スタイル  -->
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="MenteSearchTextBox"
+			TargetType="{x:Type helpers:SearchTextBox}">
+			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+		</Style>
+
+		<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->
+		<Style x:Key="MenteDataGridColumnHeader"
+			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+			TargetType="DataGridColumnHeader">
+			<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+			<Setter Property="Padding" Value="12,8" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+
+		<!--  編集フォームのラベルスタイル  -->
+		<Style x:Key="FormLabel"
+			TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="Medium" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+			<Setter Property="Margin" Value="4,0,8,0" />
+		</Style>
+
+		<!--  編集フォームの TextBox スタイル  -->
+		<Style x:Key="FormTextBox"
+			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
+			TargetType="TextBox">
+			<Setter Property="Margin" Value="0,4" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+		</Style>
+	</helpers:BaseWindow.Resources>
 	<helpers:BaseWindow.InputBindings>
 		<KeyBinding Command="{Binding DoListCommand}"
 			Gesture="F5" />
 		<KeyBinding Command="{Binding DoOutputJsonCommand}"
 			Gesture="F6" />
 	</helpers:BaseWindow.InputBindings>
-	<Grid x:Name="grid0">
-		<Grid Width="{Binding ActualWidth, ElementName=grid0, Mode=OneWay}"
-			Height="{Binding ActualHeight, ElementName=grid0, Mode=OneWay}">
-			<Grid.RowDefinitions>
-				<RowDefinition Height="12*" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="88*" />
-			</Grid.RowDefinitions>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<!--  ===== ヘッダー: ColorZone ツールバー =====  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<!--  右側: 操作ボタン群  -->
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding DoOutputJsonCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="JSON出力 (F6)">
+						<materialDesign:PackIcon Kind="FileExport" />
+					</Button>
+				</StackPanel>
+
+				<!--  左側: タイトル + 操作  -->
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="History" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoListCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="一覧取得" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<!--  ===== メインコンテンツ =====  -->
+		<Grid Grid.Row="1"
+			Margin="12">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="45*" />
 				<ColumnDefinition Width="Auto" />
 				<ColumnDefinition Width="55*" />
 			</Grid.ColumnDefinitions>
-			<Grid Grid.Row="0" Grid.Column="0">
-				<Button Width="70" Height="30"
-					Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Background="Gray"
-					Command="{Binding ExitCommand}"
-					Content="閉じる" />
-				<Button Width="110" Height="30"
-					Margin="106,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Command="{Binding DoListCommand}"
-					Content="一覧取得 F5" />
-				<Button Width="100" Height="30"
-					Margin="242,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-					Command="{Binding DoOutputJsonCommand}"
-					Content="JSON出力 F6" />
-				<Label Height="34"
-					Margin="20,49,99,0" VerticalAlignment="Top"
-					d:Content="Title"
-					Content="{Binding Title, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-					FontSize="14" />
-				<materialDesign:PackIcon Width="62" Height="70"
-					Margin="362,10,0,0"
-					Foreground="Blue" Kind="History" />
-			</Grid>
-			<GridSplitter Grid.Row="1" Grid.ColumnSpan="3"
-				Height="3"
-				Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-				Background="DarkGray" />
 			<GridSplitter Grid.RowSpan="3" Grid.Column="1"
 				Width="3"
 				Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
 				Background="DarkGray" />
-			<Grid Grid.Row="2" Grid.Column="0">
-				<DataGrid d:ItemsSource="{d:SampleData ItemCount=5}"
-					AutoGenerateColumns="False"
-					Background="{DynamicResource AppCommonBackgroundBrush}"
-					FrozenColumnCount="1" IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
-					ItemsSource="{Binding ListData}"
-					SelectedItem="{Binding Current}">
-					<DataGrid.ColumnHeaderStyle>
-						<Style TargetType="DataGridColumnHeader">
-							<Setter Property="Background" Value="Black" />
-							<Setter Property="BorderBrush" Value="White" />
-							<Setter Property="BorderThickness" Value="1" />
-							<Setter Property="Foreground" Value="white" />
-						</Style>
-					</DataGrid.ColumnHeaderStyle>
-					<DataGrid.Columns>
-						<!--  Id,Id_Login,ExpDate,Ip,Op,VdateC  -->
-						<DataGridTextColumn Binding="{Binding Id}"
-							Header="Id" />
-						<DataGridTextColumn Binding="{Binding Id_Login}"
-							Header="ログインId" />
-						<DataGridTextColumn Binding="{Binding ExpDate, Converter={StaticResource DateTimeYmdHmsConverter}}"
-							Header="有効期限" />
-						<DataGridTextColumn Binding="{Binding Ip}"
-							Header="IP" />
-						<DataGridTextColumn Binding="{Binding Op}"
-							Header="操作" />
-						<DataGridTextColumn Binding="{Binding VdateC, Converter={StaticResource DateTimeYmdHmsConverter}}"
-							Header="登録日" />
-					</DataGrid.Columns>
-				</DataGrid>
-			</Grid>
-			<Grid Grid.Row="0" Grid.Column="2">
-				<Label Height="40"
-					Margin="10,10,0,0" VerticalAlignment="Top"
-					d:Content="4567"
-					Content="{Binding Count}"
-					ContentStringFormat="{}件数={0:N0}" />
-				<Label Height="34"
-					Margin="24,55,0,0" VerticalAlignment="Top"
-					d:Content="メッセージ"
-					Content="{Binding Message}"
-					FontSize="14" />
-			</Grid>
-			<Grid x:Name="Detail"
-				Grid.Row="2" Grid.Column="2">
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="30*" />
-					<ColumnDefinition Width="70*" />
-				</Grid.ColumnDefinitions>
-				<Label Height="40"
-					Margin="15,20,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="ログインId" />
-				<Label Height="40"
-					Margin="15,80,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="有効期限" />
-				<Label Height="40"
-					Margin="15,140,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="IP" />
-				<Label Height="40"
-					Margin="15,200,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="操作" />
-				<Label Height="40"
-					Margin="15,260,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="マシン名" />
-				<Label Height="40"
-					Margin="15,320,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="ユーザー" />
-				<Label Height="40"
-					Margin="15,380,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="OS" />
-				<Label Height="40"
-					Margin="15,440,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="IPアドレス" />
-				<Label Height="40"
-					Margin="15,500,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="MACアドレス" />
-				<Label Height="40"
-					Margin="15,560,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					Content="登録日" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,20,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="123" IsReadOnly="True"
-					Text="{Binding CurrentEdit.Id_Login}"
-					TextWrapping="Wrap" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,80,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="202612311000" IsReadOnly="True"
-					Text="{Binding CurrentEdit.ExpDate, Converter={StaticResource DateTimeYmdHmsConverter}}"
-					TextWrapping="Wrap" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,140,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="192.168.1.1" IsReadOnly="True"
-					Text="{Binding CurrentEdit.Ip}"
-					TextWrapping="Wrap" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,200,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="Login" IsReadOnly="True"
-					Text="{Binding CurrentEdit.Op}"
-					TextWrapping="Wrap" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,260,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="PC-001" IsReadOnly="True"
-					Text="{Binding CurrentEdit.Jsub.Machine}"
-					TextWrapping="Wrap" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,320,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="user01" IsReadOnly="True"
-					Text="{Binding CurrentEdit.Jsub.User}"
-					TextWrapping="Wrap" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,380,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="Windows 11" IsReadOnly="True"
-					Text="{Binding CurrentEdit.Jsub.OsVer}"
-					TextWrapping="Wrap" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,440,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="192.168.1.1" IsReadOnly="True"
-					Text="{Binding CurrentEdit.Jsub.IpAddress}"
-					TextWrapping="Wrap" />
-				<TextBox Grid.Column="1"
-					Height="40"
-					Margin="10,500,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					d:Text="AA:BB:CC:DD:EE:FF" IsReadOnly="True"
-					Text="{Binding CurrentEdit.Jsub.MacAddress}"
-					TextWrapping="Wrap" />
-				<TextBlock Grid.Column="1"
-					Margin="10,566,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-					FontSize="16">
-					<TextBlock.Text>
-						<MultiBinding StringFormat="{}{0}">
-							<Binding Path="CurrentEdit.VdateC" />
-						</MultiBinding>
-					</TextBlock.Text>
-					<d:TextBlock.Text>2026/01/01 00:00:00</d:TextBlock.Text>
-				</TextBlock>
-				<Label Grid.Column="1"
-					Height="40"
-					Margin="141,20,0,0" VerticalAlignment="Top"
-					d:Content="ID"
-					Content="{Binding CurrentEdit.Id}"
-					ContentStringFormat="{}Id={0}" />
-			</Grid>
+			<!--  ===== 左パネル: 一覧グリッド (Card) =====  -->
+			<materialDesign:Card Grid.Column="0"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<!--  カードヘッダー: 件数 + メッセージ  -->
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel>
+							<TextBlock VerticalAlignment="Center"
+								DockPanel.Dock="Right" FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+							<TextBlock VerticalAlignment="Center"
+								FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Message}"
+								TextTrimming="CharacterEllipsis" />
+						</DockPanel>
+					</Border>
+
+					<!--  DataGrid 一覧  -->
+					<DataGrid x:Name="HistoryGrid"
+						Grid.Row="1"
+						d:ItemsSource="{d:SampleData ItemCount=5}"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding ListData}"
+						SelectedItem="{Binding Current}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<!--  Id,Id_Login,ExpDate,Ip,Op,VdateC  -->
+							<DataGridTextColumn Binding="{Binding Id}"
+								Header="Id" />
+							<DataGridTextColumn Binding="{Binding Id_Login}"
+								Header="ログインId" />
+							<DataGridTextColumn Binding="{Binding ExpDate, Converter={StaticResource DateTimeYmdHmsConverter}}"
+								Header="有効期限" />
+							<DataGridTextColumn Binding="{Binding Ip}"
+								Header="IP" />
+							<DataGridTextColumn Binding="{Binding Op}"
+								Header="操作" />
+							<DataGridTextColumn Binding="{Binding VdateC, Converter={StaticResource DateTimeYmdHmsConverter}}"
+								Header="登録日" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+
+			<!--  スプリッタ  -->
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="Transparent" />
+			<!--  ===== 右パネル: 詳細エリア (Card + TabControl) =====  -->
+			<materialDesign:Card Grid.Column="2"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<TabControl Style="{StaticResource MaterialDesignTabControl}">
+
+					<!--  タブ1: 詳細情報  -->
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="InformationOutline" />
+								<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}Id:{0}}" />
+							</StackPanel>
+						</TabItem.Header>
+						<ScrollViewer Padding="10,10,20,20"
+							VerticalScrollBarVisibility="Auto">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+
+								<!--  ログインId  -->
+								<TextBlock Grid.Row="0"
+									Style="{StaticResource FormLabel}"
+									Text="ログインId" />
+								<TextBox Grid.Row="0" Grid.Column="1"
+									materialDesign:HintAssist.Hint="ログインId"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Id_Login}" />
+
+								<!--  有効期限  -->
+								<TextBlock Grid.Row="1"
+									Style="{StaticResource FormLabel}"
+									Text="有効期限" />
+								<TextBox Grid.Row="1" Grid.Column="1"
+									materialDesign:HintAssist.Hint="有効期限"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.ExpDate, Converter={StaticResource DateTimeYmdHmsConverter}}" />
+
+								<!--  IP  -->
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="IP" />
+								<TextBox Grid.Row="2" Grid.Column="1"
+									materialDesign:HintAssist.Hint="IP"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Ip}" />
+
+								<!--  操作  -->
+								<TextBlock Grid.Row="3"
+									Style="{StaticResource FormLabel}"
+									Text="操作" />
+								<TextBox Grid.Row="3" Grid.Column="1"
+									materialDesign:HintAssist.Hint="操作"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Op}" />
+
+								<!--  マシン名  -->
+								<TextBlock Grid.Row="4"
+									Style="{StaticResource FormLabel}"
+									Text="マシン名" />
+								<TextBox Grid.Row="4" Grid.Column="1"
+									materialDesign:HintAssist.Hint="マシン名"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Jsub.Machine}" />
+
+								<!--  ユーザー  -->
+								<TextBlock Grid.Row="5"
+									Style="{StaticResource FormLabel}"
+									Text="ユーザー" />
+								<TextBox Grid.Row="5" Grid.Column="1"
+									materialDesign:HintAssist.Hint="ユーザー"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Jsub.User}" />
+
+								<!--  OS  -->
+								<TextBlock Grid.Row="6"
+									Style="{StaticResource FormLabel}"
+									Text="OS" />
+								<TextBox Grid.Row="6" Grid.Column="1"
+									materialDesign:HintAssist.Hint="OS"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Jsub.OsVer}" />
+
+								<!--  IPアドレス  -->
+								<TextBlock Grid.Row="7"
+									Style="{StaticResource FormLabel}"
+									Text="IPアドレス" />
+								<TextBox Grid.Row="7" Grid.Column="1"
+									materialDesign:HintAssist.Hint="IPアドレス"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Jsub.IpAddress}" />
+
+								<!--  MACアドレス  -->
+								<TextBlock Grid.Row="8"
+									Style="{StaticResource FormLabel}"
+									Text="MACアドレス" />
+								<TextBox Grid.Row="8" Grid.Column="1"
+									materialDesign:HintAssist.Hint="MACアドレス"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Jsub.MacAddress}" />
+
+								<!--  登録日  -->
+								<TextBlock Grid.Row="9"
+									Style="{StaticResource FormLabel}"
+									Text="登録日" />
+								<TextBlock Grid.Row="9" Grid.Column="1"
+									Margin="0,4" VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBody}"
+									FontSize="14"
+									Text="{Binding CurrentEdit.VdateC}" />
+							</Grid>
+						</ScrollViewer>
+					</TabItem>
+
+				</TabControl>
+			</materialDesign:Card>
 		</Grid>
 	</Grid>
 </helpers:BaseWindow>
