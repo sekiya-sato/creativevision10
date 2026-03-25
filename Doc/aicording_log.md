@@ -32,6 +32,28 @@
 
 ---
 
+## [2026-03-25] 14:49 keep-mcp の OpenCode グローバル追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`https://github.com/feuerdev/keep-mcp` を確認し、OpenCode のグローバル環境に Google Keep 用 MCP サーバーを追加する
+### 実施内容
+- `~/.config/opencode/opencode.jsonc`: `keep-mcp` をローカル MCP サーバーとして追加し、専用ラッパースクリプト経由で起動する構成にした
+- `~/.config/opencode/bin/keep-mcp-opencode`: `~/.config/opencode/keep-mcp.env` を読み込み、必須資格情報を検証したうえで `~/.local/share/keep-mcp/.venv/bin/python -m server` を起動するスクリプトを追加した
+- `~/.config/opencode/keep-mcp.env.example`: `GOOGLE_EMAIL` / `GOOGLE_MASTER_TOKEN` / `UNSAFE_MODE` の設定ひな形を追加した
+- `~/.local/share/keep-mcp/.venv`: Python 仮想環境を作成し、`keep-mcp==0.3.1` をインストールした
+### 技術決定 Why
+- `pipx` と `uv` が未導入だったため、システム Python を汚さないようユーザー配下の仮想環境で `keep-mcp` を隔離インストールした
+- Google Keep の資格情報を OpenCode 設定本体へ直書きしないため、外部 env ファイルを読むラッパースクリプト方式を採用した
+### 確認
+- `~/.local/share/keep-mcp/.venv/bin/python -m server --help` でモジュール起動が可能なことを確認
+- `~/.config/opencode/bin/keep-mcp-opencode` 実行時に、資格情報未設定の場合は案内付きエラーで停止することを確認
+- `opencode mcp list` で `keep-mcp` エントリが認識されることを確認（現時点では資格情報未設定のため `failed` 表示）
+
+---
+
 ## [2026-03-25] 13:31 ViewServices参照の削除とHelpers統一
 ### Agent
 - gpt-5.4 : OpenAI

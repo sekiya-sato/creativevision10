@@ -164,12 +164,14 @@ $RECYCLE.BIN/
 # =========================
 wrk/
 refer/
+printdata/
+printdll/
+server-dev.db
 *.pdf
 appsettings.DevU*.json
 appsettings.Development.json
 appsettings.Production.json
 appsettings.Local*.json
-s*.db
 *-memo*.md
 *.slnLaunch.user
 .mcp.json
@@ -177,6 +179,4 @@ nlog.config
 systemsettings.json
 printstream.jar
 printstream.dll
-server-dev.db
-.gitkeep
 

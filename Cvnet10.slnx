@@ -15,6 +15,8 @@
   <Project Path="Cvnet10BaseOracle/Cvnet10BaseOracle.csproj" Id="a1720deb-e16e-48be-813f-0dd623ea5529" />
   <Project Path="Cvnet10BaseSqlite/Cvnet10BaseSqlite.csproj" Id="cff9100c-6a9d-491e-9158-bd01bac046bf" />
   <Project Path="Cvnet10DomainLogic/Cvnet10DomainLogic.csproj" Id="6b3eedbb-f868-4463-b817-9dbcc71252eb" />
+  <Project Path="Cvnet10prints/Cvnet10prints.csproj" />
   <Project Path="Cvnet10Server/Cvnet10Server.csproj" />
   <Project Path="Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" Id="38e8b89d-788f-4ceb-86b8-ddc7a748cd3e" />
+  <Project Path="TestPrint/TestPrint.csproj" />
 </Solution>
