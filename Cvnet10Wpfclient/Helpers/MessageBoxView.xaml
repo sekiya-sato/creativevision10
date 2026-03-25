@@ -1,0 +1,170 @@
+<Window x:Class="Cvnet10Wpfclient.Helpers.MessageBoxView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+	Title="MessageBoxEx"
+	Width="600" MinHeight="200" MaxHeight="320"
+	Background="Black" FontSize="15" Foreground="#201f1e" Loaded="Window_Loaded" PreviewKeyDown="Window_PreviewKeyDown" ResizeMode="NoResize" SizeToContent="Height"
+	WindowStartupLocation="CenterOwner" WindowStyle="SingleBorderWindow"
+	mc:Ignorable="d">
+	<shell:WindowChrome.WindowChrome>
+		<shell:WindowChrome CaptionHeight="120" CornerRadius="40" GlassFrameThickness="2" ResizeBorderThickness="2" UseAeroCaptionButtons="False" />
+	</shell:WindowChrome.WindowChrome>
+
+	<Window.Resources>
+		<Style x:Key="MessageBoxButtonStyle"
+			TargetType="Button">
+			<Setter Property="Background" Value="White" />
+			<Setter Property="BorderBrush" Value="#8a8886" />
+			<Setter Property="Foreground" Value="#201f1e" />
+		</Style>
+	</Window.Resources>
+	<Border Margin="4"
+		Background="FloralWhite" BorderBrush="#a19f9d" BorderThickness="1" CornerRadius="10">
+		<Border.Style>
+			<Style TargetType="Border">
+				<Style.Triggers>
+					<DataTrigger Binding="{Binding IsEnabledEffect}"
+						Value="true">
+						<Setter Property="Effect">
+							<Setter.Value>
+								<DropShadowEffect BlurRadius="6" Opacity="0.4" ShadowDepth="0" />
+							</Setter.Value>
+						</Setter>
+					</DataTrigger>
+				</Style.Triggers>
+			</Style>
+		</Border.Style>
+		<DockPanel>
+			<!--#region Buttons-->
+			<Grid DockPanel.Dock="Bottom">
+				<StackPanel Name="ButtonsArea"
+					Margin="0,15,20,15" HorizontalAlignment="Right"
+					Orientation="Horizontal">
+					<Button Name="LeftButton"
+						Height="30" MinWidth="80"
+						d:Content="Left" Click="Button_Click"
+						Style="{StaticResource MessageBoxButtonStyle}">
+						<Button.Resources>
+							<Style TargetType="Border">
+								<Setter Property="CornerRadius" Value="4" />
+							</Style>
+						</Button.Resources>
+					</Button>
+					<Button Name="MiddleButton"
+						Height="30" MinWidth="80"
+						Margin="4,0,0,0"
+						d:Content="Middle" Click="Button_Click"
+						Style="{StaticResource MessageBoxButtonStyle}">
+						<Button.Resources>
+							<Style TargetType="Border">
+								<Setter Property="CornerRadius" Value="4" />
+							</Style>
+						</Button.Resources>
+					</Button>
+					<Button Name="RightButton"
+						Height="30" MinWidth="80"
+						Margin="4,0,0,0"
+						d:Content="Right" Click="Button_Click"
+						Style="{StaticResource MessageBoxButtonStyle}">
+						<Button.Resources>
+							<Style TargetType="Border">
+								<Setter Property="CornerRadius" Value="4" />
+							</Style>
+						</Button.Resources>
+					</Button>
+				</StackPanel>
+			</Grid>
+			<!--#endregion-->
+			<!--#region Icon, Message-->
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition />
+				</Grid.ColumnDefinitions>
+
+				<StackPanel Margin="0,0,0,0"
+					Orientation="Horizontal">
+					<!--  Margin="0,0,0,0"  -->
+					<!--  dismiss-circle-20-filled  -->
+					<Viewbox Width="48" Height="48"
+						Margin="18,10,20,0" VerticalAlignment="Top">
+						<Grid>
+							<!--  fluent:dismiss-circle-20-filled  -->
+							<Path Name="ErrorIcon"
+								d:Visibility="Visible"
+								Data="M10 2a8 8 0 1 1 0 16a8 8 0 0 1 0-16zM7.81 7.114a.5.5 0 0 0-.638.058l-.058.069a.5.5 0 0 0 .058.638L9.292 10l-2.12 2.121l-.058.07a.5.5 0 0 0 .058.637l.069.058a.5.5 0 0 0 .638-.058L10 10.708l2.121 2.12l.07.058a.5.5 0 0 0 .637-.058l.058-.069a.5.5 0 0 0-.058-.638L10.708 10l2.12-2.121l.058-.07a.5.5 0 0 0-.058-.637l-.069-.058a.5.5 0 0 0-.638.058L10 9.292l-2.121-2.12l-.07-.058z"
+								Fill="#E81123" Visibility="Collapsed" />
+							<!--  fluent:info-20-filled  -->
+							<Path Name="InfomationIcon"
+								d:Visibility="Visible"
+								Data="M18 10a8 8 0 1 0-16 0a8 8 0 0 0 16 0zM9.508 8.91a.5.5 0 0 1 .984 0L10.5 9v4.502l-.008.09a.5.5 0 0 1-.984 0l-.008-.09V9l.008-.09zM9.25 6.75a.75.75 0 1 1 1.5 0a.75.75 0 0 1-1.5 0z"
+								Fill="SteelBlue" Visibility="Collapsed" />
+							<!--  fluent:question-circle-20-filled  -->
+							<Path Name="QuestionIcon"
+								d:Visibility="Visible"
+								Data="M10 2a8 8 0 1 1 0 16a8 8 0 0 1 0-16zm0 11.5a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5zm0-8A2.5 2.5 0 0 0 7.5 8a.5.5 0 0 0 1 0a1.5 1.5 0 1 1 2.632.984l-.106.11l-.118.1l-.247.185a3.11 3.11 0 0 0-.356.323C9.793 10.248 9.5 10.988 9.5 12a.5.5 0 0 0 1 0c0-.758.196-1.254.535-1.614l.075-.076l.08-.073l.088-.072l.219-.163l.154-.125A2.5 2.5 0 0 0 10 5.5z"
+								Fill="DarkCyan" Visibility="Collapsed" />
+							<!--  warning-20-filled  -->
+							<Path Name="WarningIcon"
+								d:Visibility="Visible"
+								Data="M8.686 2.852L2.127 14.777A1.5 1.5 0 0 0 3.441 17H16.56a1.5 1.5 0 0 0 1.314-2.223L11.314 2.852a1.5 1.5 0 0 0-2.628 0zM10 6.75a.75.75 0 0 1 .75.75v4a.75.75 0 0 1-1.5 0v-4a.75.75 0 0 1 .75-.75zm.75 7a.75.75 0 1 1-1.5 0a.75.75 0 0 1 1.5 0z"
+								Fill="DarkOrange" Visibility="Collapsed" />
+						</Grid>
+					</Viewbox>
+				</StackPanel>
+				<Grid Grid.Column="1">
+					<ScrollViewer Margin="10,20,0,0"
+						VerticalScrollBarVisibility="Auto">
+						<StackPanel Orientation="Vertical">
+							<RichTextBox x:Name="MessageRichTextBox"
+								Height="Auto"
+								Margin="0,0,20,10"
+								Background="Transparent" Block.LineHeight="20" BorderThickness="0" FontSize="16"
+								Foreground="{Binding Color}"
+								IsReadOnly="True" IsTabStop="False" IsUndoEnabled="False">
+								<!--  Set PagePadding in CodeBehind  -->
+								<RichTextBox.Resources>
+									<Style TargetType="{x:Type Paragraph}">
+										<Setter Property="Margin" Value="3" />
+										<!--  Setter Property="Margin" Value="0"  -->
+									</Style>
+								</RichTextBox.Resources>
+								<d:FlowDocument>
+									<Paragraph>
+										<Run Text="{Binding Message}" />
+									</Paragraph>
+								</d:FlowDocument>
+							</RichTextBox>
+							<Expander x:Name="ApendExpand"
+								Margin="0,-6,20,0" HorizontalAlignment="Stretch"
+								d:IsExpanded="True" d:Visibility="Visible" Background="Transparent" FlowDirection="RightToLeft">
+								<TextBlock Margin="0,0,0,0"
+									d:Text="Appended Message" FlowDirection="LeftToRight" FontSize="14" Foreground="#3b3a39"
+									Text="{Binding AppendedMessage}"
+									TextWrapping="Wrap" />
+								<Expander.Style>
+									<Style TargetType="Expander">
+										<Setter Property="Visibility" Value="Collapsed" />
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding HasAppendedMessage}"
+												Value="true">
+												<Setter Property="Visibility" Value="Visible" />
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</Expander.Style>
+							</Expander>
+							<StackPanel.ContextMenu>
+								<ContextMenu>
+									<MenuItem Click="CopyMenuItem_Click" Header="Copy" />
+								</ContextMenu>
+							</StackPanel.ContextMenu>
+						</StackPanel>
+					</ScrollViewer>
+				</Grid>
+			</Grid>
+			<!--#endregion-->
+		</DockPanel>
+	</Border>
+</Window>

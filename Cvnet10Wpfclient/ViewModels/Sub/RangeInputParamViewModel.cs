@@ -1,7 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Base;
-using Cvnet10Wpfclient.ViewServices;
+using Cvnet10Wpfclient.Helpers;
 
 namespace Cvnet10Wpfclient.ViewModels.Sub;
 
