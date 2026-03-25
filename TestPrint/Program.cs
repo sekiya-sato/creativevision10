@@ -1,6 +1,9 @@
 using Cvnet10Prints;
 
 // See https://aka.ms/new-console-template for more information
+
+// dotnet run --project TestPrint/TestPrint.csproj
+
 Console.WriteLine("Hello, World!");
 string currentDirectory = AppContext.BaseDirectory;
 string baseDirectory = Directory.GetParent(currentDirectory)?.Parent?.Parent?.Parent?.FullName ?? string.Empty;
