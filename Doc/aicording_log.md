@@ -49,6 +49,24 @@
 
 ---
 
+## [2026-03-25] 09:41 dotnet skillsのインストール
+### Agent
+- GPT-5.4-mini : OpenAI : OpenCode
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`dotnet/skills` の `run-tests` と `analyzing-dotnet-performance` をインストールする
+### 実施内容
+- `npx skills add dotnet/skills@run-tests -g -y` を実行して `run-tests` skill をインストール
+- `npx skills add dotnet/skills@analyzing-dotnet-performance -g -y` を実行して `analyzing-dotnet-performance` skill をインストール
+- `~/.agents/skills` を確認し、両 skill の配置を検証
+### 技術決定 Why
+- dotnet/skills は個別 skill 単位で導入する方式のため、各 skill を明示的に追加した
+### 確認
+- `ls ~/.agents/skills` で `run-tests` と `analyzing-dotnet-performance` の存在を確認済
+
+---
+
 
 ---
 

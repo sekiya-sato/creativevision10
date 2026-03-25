@@ -1,0 +1,12 @@
+# デフォルトは自動判定
+* text=auto
+
+# C#ソースやXAMLはテキストとして扱う
+*.cs text
+*.xaml text
+*.sln text
+
+# 画像や実行ファイルはバイナリとして扱う
+*.png binary
+*.jpg binary
+*.dll binary
