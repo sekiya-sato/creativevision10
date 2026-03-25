@@ -1,4 +1,4 @@
-﻿
+
 /*
 # file name
 AppCurrent.cs
@@ -8,9 +8,7 @@ AppCurrent.cs
 
 */
 global using MsgBoxResult = System.Windows.MessageBoxResult;
-
-
-using Cvnet10Wpfclient.ViewServices;
+using Cvnet10Wpfclient.Helpers;
 using Grpc.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,8 +1,7 @@
-﻿using CodeShare;
+using CodeShare;
 using Cvnet10Asset;
 using Cvnet10Wpfclient.Helpers;
 using Cvnet10Wpfclient.Services;
-using Cvnet10Wpfclient.ViewServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;

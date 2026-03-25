@@ -1,6 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Cvnet10Wpfclient.ViewServices;
 using System.Windows.Input;
 
 namespace Cvnet10Wpfclient.Helpers;

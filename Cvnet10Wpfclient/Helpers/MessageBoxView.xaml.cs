@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MessageBoxWPF
  * Alternative MessageBox for WPF.
  * https://github.com/mikihiro-t/MessageBoxWPF/
@@ -14,7 +14,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace Cvnet10Wpfclient.ViewServices;
+namespace Cvnet10Wpfclient.Helpers;
 
 /// <summary>
 /// 拡張メッセージボックスのView (MessageExを通して表示)

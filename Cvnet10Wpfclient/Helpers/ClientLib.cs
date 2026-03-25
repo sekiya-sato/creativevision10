@@ -1,6 +1,6 @@
-﻿using System.Windows;
+using System.Windows;
 
-namespace Cvnet10Wpfclient.ViewServices;
+namespace Cvnet10Wpfclient.Helpers;
 /// <summary>
 /// 主にViewModel側からViewを操作するためのクラス
 /// [Class mainly for manipulating the View from the ViewModel]
