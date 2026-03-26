@@ -1,18 +1,12 @@
 # AGENTS.md - OpenCode AI Agent Instructions
 
-## Purpose
-- **This file is specifically designed for OpenCode AI agents** .
-- For GitHub Copilot, see `.github/copilot-instructions.md` instead.
-- Prefer small, reviewable changes that match existing C# 14 / .NET 10 conventions.
-- The main stack is gRPC server + WPF client + shared/domain/data projects.
-
 ## AI Tool Separation Policy
 - **OpenCode**: Use for multi-file features, large-scale refactoring, cross-project changes, documentation, troubleshooting
 - **GitHub Copilot**: Use for inline completion, quick fixes, small edits within Visual Studio 2026
 - Both tools share the same logging format in `Doc/aicording_log.md`
 
 ## Repository Snapshot
-- Solution file: `Cvnet10.slnx`.
+- Solution file: `Cvnet10.slnx` (The main stack is gRPC server + WPF client (MVVM pattern) + shared/domain/data projects).
 - Server: `Cvnet10Server` (`net10.0`, ASP.NET Core, protobuf-net.Grpc).
 - Client: `Cvnet10Wpfclient` (`net10.0-windows`, WPF, CommunityToolkit.Mvvm, MaterialDesignThemes).
 - Central package versions: `Directory.Packages.props`.
@@ -21,8 +15,8 @@
 
 ## High Priority OpenCode Rules
 - Write plans, explanations, and code comments in **Japanese**
-- **IMPORTANT!** Follow the workflow: **Analyze → Plan (TodoWrite) → Execute → Verify → Write-Log → Git-Commit** 
-- Plan 段階では、**必ず Todo リストを作成し**、 Execute 段階では、**Todo を一つずつ完了させていく**こと
+- **IMPORTANT!** FOLLOW THE WORKFLOW: **Analyze → Plan (Todo-List) → Execute → Verify → Write-Log → Git-Commit** 
+- In Plan, make sure to create TODO-LIST.
 - Use .NET 10 and C# 14 features where they improve clarity
 - Mark todos as `in_progress` when starting work, `completed` immediately after finishing
 - Only have ONE task `in_progress` at a time
@@ -31,16 +25,10 @@
 - Keep dependencies layered:
   - Layer 0: `CodeShare`, `Cvnet10Asset` : read-only
   - Layer 1: `Cvnet10Base` : read-only (if need, write)
-  - Layer 1.2: DB provider projects : read-only
+  - Layer 1.2: DB provider projects `Cvnet10BaseMariadb`(`Cvnet10Base.Mariadb` Folder), `Cvnet10BaseOracle`(`Cvnet10Base.Oracle` Folder), `Cvnet10BaseSqlite`(`Cvnet10Base.Sqlite` Folder) : read-only
+  - Layer 1.4: `Cvnet10Prints` : read-only
   - Layer 1.5: `Cvnet10DomainLogic`
   - Layer 2: `Cvnet10Server`, `Cvnet10Wpfclient`
-- Do not move business logic into the WPF client when it belongs in server/domain layers.
-- **[CRITICAL RULE]**: The following projects are "Read-Only" for AI. **DO NOT modify any files within these projects** unless explicitly requested by the user:
-  - **CodeShare**
-  - **Cvnet10Asset**
-  - **Cvnet10BaseMariadb**
-  - **Cvnet10BaseOracle**
-  - **Cvnet10BaseSqlite**
 
 ## Restore / Build Commands
 - Restore all projects: `dotnet restore "Cvnet10.slnx"`
@@ -61,14 +49,11 @@
 - If WPF resources or exceptions are involved, inspect `Cvnet10Wpfclient/App.xaml` and referenced `ResourceDictionary` files first.
 s
 ## Formatting Conventions
-- Use UTF-8 with BOM.
-- Use CRLF line endings.
-- Use tabs for indentation in `.cs` and `.xaml` files; tab width is 4.
-- Insert a final newline at EOF.
+- `.cs` follow `.editorconfig`.
+- `.xaml` follow `Settings.XamlStyler`.
 - Use file-scoped namespaces.
 - Put `using` directives outside the namespace.
 - Do not sort `System` usings first; keep the existing local ordering style.
-- Opening braces stay on the same line as declarations/control statements.
 
 ## WPF / MVVM Conventions
 - ViewModels should use `ObservableObject`, `ObservableRecipient`, or the existing base ViewModel types.
