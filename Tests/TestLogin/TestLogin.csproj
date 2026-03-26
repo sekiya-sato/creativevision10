@@ -16,6 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Cvnet10Base.Sqlite\Cvnet10BaseSqlite.csproj" />
+    <ProjectReference Include="..\..\Cvnet10ExdbSqlite\Cvnet10ExdbSqlite.csproj" />
     <ProjectReference Include="..\..\Cvnet10Server\Cvnet10Server.csproj" />
   </ItemGroup>
 

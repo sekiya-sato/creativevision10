@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Tests/">
+    <Project Path="TestPrint/TestPrint.csproj" />
     <Project Path="Tests/TestCvnet10Server/TestCvnet10Server.csproj" />
     <Project Path="Tests/TestLogin/TestLogin.csproj" />
   </Folder>
@@ -10,13 +11,12 @@
   </Folder>
   <Project Path="CodeShare/CodeShare.csproj" />
   <Project Path="Cvnet10Asset/Cvnet10Asset.csproj" />
+  <Project Path="Cvnet10Base.Mariadb/Cvnet10BaseMariadb.csproj" />
+  <Project Path="Cvnet10Base.Oracle/Cvnet10BaseOracle.csproj" />
+  <Project Path="Cvnet10Base.Sqlite/Cvnet10BaseSqlite.csproj" />
   <Project Path="Cvnet10Base/Cvnet10Base.csproj" />
-  <Project Path="Cvnet10BaseMariadb/Cvnet10BaseMariadb.csproj" Id="5f51f846-1ab9-4792-a71e-d1c48c64cab1" />
-  <Project Path="Cvnet10BaseOracle/Cvnet10BaseOracle.csproj" Id="a1720deb-e16e-48be-813f-0dd623ea5529" />
-  <Project Path="Cvnet10BaseSqlite/Cvnet10BaseSqlite.csproj" Id="cff9100c-6a9d-491e-9158-bd01bac046bf" />
   <Project Path="Cvnet10DomainLogic/Cvnet10DomainLogic.csproj" Id="6b3eedbb-f868-4463-b817-9dbcc71252eb" />
-  <Project Path="Cvnet10prints/Cvnet10prints.csproj" />
+  <Project Path="Cvnet10Prints/Cvnet10Prints.csproj" />
   <Project Path="Cvnet10Server/Cvnet10Server.csproj" />
   <Project Path="Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" Id="38e8b89d-788f-4ceb-86b8-ddc7a748cd3e" />
-  <Project Path="TestPrint/TestPrint.csproj" />
 </Solution>

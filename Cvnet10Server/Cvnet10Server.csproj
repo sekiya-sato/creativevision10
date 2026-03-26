@@ -27,10 +27,12 @@
   <ItemGroup>
     <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
     <ProjectReference Include="..\Cvnet10Asset\Cvnet10Asset.csproj" />
-    <ProjectReference Include="..\Cvnet10BaseOracle\Cvnet10BaseOracle.csproj" />
-    <ProjectReference Include="..\Cvnet10BaseSqlite\Cvnet10BaseSqlite.csproj" />
+    <ProjectReference Include="..\Cvnet10Base.Oracle\Cvnet10BaseOracle.csproj" />
+    <ProjectReference Include="..\Cvnet10Base.Sqlite\Cvnet10BaseSqlite.csproj" />
     <ProjectReference Include="..\Cvnet10Base\Cvnet10Base.csproj" />
 	  <ProjectReference Include="..\Cvnet10DomainLogic\Cvnet10DomainLogic.csproj" />
+	  <ProjectReference Include="..\Cvnet10ExdbOracle\Cvnet10ExdbOracle.csproj" />
+	  <ProjectReference Include="..\Cvnet10ExdbSqlite\Cvnet10ExdbSqlite.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />

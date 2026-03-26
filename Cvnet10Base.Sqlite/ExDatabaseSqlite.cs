@@ -1,4 +1,4 @@
-﻿using Cvnet10DomainLogic;
+using Cvnet10DomainLogic;
 using Microsoft.Data.Sqlite;
 using NPoco;
 using System.Data;

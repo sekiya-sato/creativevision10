@@ -1,4 +1,4 @@
-﻿using Cvnet10DomainLogic;
+using Cvnet10DomainLogic;
 using NPoco;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;

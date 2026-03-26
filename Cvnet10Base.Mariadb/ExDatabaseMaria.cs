@@ -1,4 +1,4 @@
-﻿using Cvnet10DomainLogic;
+using Cvnet10DomainLogic;
 using MySqlConnector;
 using System.Data;
 using System.Data.Common;
