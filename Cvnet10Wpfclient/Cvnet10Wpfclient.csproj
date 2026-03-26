@@ -18,6 +18,7 @@
     <PackageReference Include="MaterialDesignThemes" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Web.WebView2" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
     <PackageReference Include="NLog.Extensions.Logging" />
     <PackageReference Include="protobuf-net.Grpc.ClientFactory" />

@@ -1,8 +1,11 @@
-﻿using jp.axissoft.printstream;
+using jp.axissoft.printstream;
 
 
 namespace Cvnet10Prints;
 
+/// <summary>
+/// PrintStreamのAPIを.NETから呼び出すためのアダプタークラス
+/// </summary>
 public class PrintAdapter : IPrintService {
 	/// <summary>
 	/// PrintStreamの実行(PDF)

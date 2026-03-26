@@ -1,7 +1,8 @@
-﻿using CodeShare;
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
+using Cvnet10Wpfclient.Helpers;
 using Grpc.Core;
 using System.Collections.ObjectModel;
 
@@ -139,7 +140,9 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			TestMsg002Result = $"{versionInfo?.Product}-{versionInfo?.BuildDate} Ver.{versionInfo?.Version} Base:{versionInfo?.BaseDir}";
 		}
 	}
+	#endregion
 
+	#region Convertテスト、Printテスト
 	[ObservableProperty]
 	ObservableCollection<EnvDisplayItem> testMsg003Items = [];
 
@@ -184,6 +187,53 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			return;
 		}
 	}
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task TestPrint(CancellationToken cancellationToken) {
+		try {
+			ClientLib.Cursor2Wait();
+			ProgressValue = 0;
+			IsProgressVisible = true;
+			StreamMessages.Clear();
+			cancellationToken.ThrowIfCancellationRequested();
+			// 処理を実行
+			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+			var msg = new PrintOperation {
+				DataType = typeof(string),
+				DataMsg = "コンバートストリーミング Printのテスト",
+			};
+			var pdfdata = "";
+			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
+				StreamMessages.Insert(0, streamMsg.DataMsg);
+				ProgressValue = streamMsg.Progress;
+				if (streamMsg.IsCompleted) {
+					pdfdata = streamMsg.DataMsg;
+					break;
+				}
+			}
+			IsProgressVisible = false;
+			var view = new Views.Sub.WebpdfView { Title = "Print Test - PDF表示" };
+			var vm = view.DataContext as Sub.WebpdfViewModel;
+			if (vm != null) {
+				var url = $"{AppGlobal.Url}/wrk/{pdfdata}";
+				vm.Pdfdata = url;
+				ClientLib.ShowDialogView(view, this, IsDialog: false);
+				view.Owner = null;
+			}
+
+		}
+		catch (OperationCanceledException) {
+			IsProgressVisible = false;
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			IsProgressVisible = false;
+			return;
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+	}
+
 	#endregion
 }
 

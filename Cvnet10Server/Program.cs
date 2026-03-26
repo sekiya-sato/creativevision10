@@ -15,6 +15,7 @@ using Grpc.Net.Compression;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
@@ -158,6 +159,23 @@ Machine: {appInit.MachineName} ,UserName: {appInit.UserName}
 OS: {appInit.OSVersion} ,DotNet: {appInit.DotNetVersion}, Build:{appInit.VerInfo.BuildDate}
 """
 );
+
+// 静的ファイルの提供を設定、`wrk` フォルダはあらかじめ作るか、作成権限を持たせておく必要がある
+var staticFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "wrk");
+if (!Directory.Exists(staticFilesPath)) {
+	Directory.CreateDirectory(staticFilesPath); // フォルダが存在しない場合は作成
+}
+
+app.UseStaticFiles(new StaticFileOptions {
+	FileProvider = new PhysicalFileProvider(staticFilesPath),
+	RequestPath = "/wrk", // クライアントからアクセスする際のURLパス
+	OnPrepareResponse = ctx => {
+		// セキュリティ設定: キャッシュ制御やヘッダーの設定
+		ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+		ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+		ctx.Context.Response.Headers.Append("Expires", "0");
+	}
+});
 
 app.Run();
 

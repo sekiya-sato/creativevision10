@@ -21,10 +21,8 @@
   <ItemGroup>
     <!-- プロジェクト参照はリポジトリ内の相対パスに合わせて必要に応じて調整してください -->
     <ProjectReference Include="..\..\Cvnet10Base.Sqlite\Cvnet10BaseSqlite.csproj" />
-    <ProjectReference Include="..\..\Cvnet10ExdbSqlite\Cvnet10ExdbSqlite.csproj" />
     <ProjectReference Include="..\..\Cvnet10Server\Cvnet10Server.csproj" />
     <ProjectReference Include="..\..\Cvnet10Base\Cvnet10Base.csproj" />
-    <ProjectReference Include="..\..\Cvnet10BaseSqlite\Cvnet10BaseSqlite.csproj" />
     <ProjectReference Include="..\..\Cvnet10Asset\Cvnet10Asset.csproj" />
     <ProjectReference Include="..\..\CodeShare\CodeShare.csproj" />
     <ProjectReference Include="..\..\Cvnet10DomainLogic\Cvnet10DomainLogic.csproj" />

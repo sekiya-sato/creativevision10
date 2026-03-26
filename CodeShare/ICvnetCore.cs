@@ -1,4 +1,4 @@
-﻿using ProtoBuf.Grpc;
+using ProtoBuf.Grpc;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 
@@ -180,4 +180,12 @@ public interface ICvnetCoreService {
 	/// <returns></returns>
 	[OperationContract]
 	IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvnetMsg request, CallContext context = default);
+	/// <summary>
+	/// ストリーミングで印刷操作リクエストを送信する
+	/// </summary>
+	/// <param name="request"></param>
+	/// <param name="context"></param>
+	/// <returns></returns>
+	[OperationContract]
+	IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default);
 }

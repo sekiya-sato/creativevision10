@@ -1,4 +1,4 @@
-﻿using CodeShare;
+using CodeShare;
 using Cvnet10Base.Oracle;
 using Cvnet10DomainLogic;
 using Microsoft.AspNetCore.Authorization;
@@ -190,9 +190,9 @@ public partial class CvnetCoreService : ICvnetCoreService {
 	/// ダミーのタスク(時間がかかる処理のシミュレート)
 	/// </summary>
 	/// <returns></returns>
-	static int SleepTask() {
+	static int SleepTask(int miliSeconds = 1000) {
 		for (int i = 0; i < 3; i++) {
-			Thread.Sleep(1000); // await Task.Delay(1000);
+			Thread.Sleep(miliSeconds); // await Task.Delay(miliSeconds);
 		}
 		return 0;
 	}
