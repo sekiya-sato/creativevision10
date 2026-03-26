@@ -45,6 +45,12 @@ public partial class MainMenuViewModel : ObservableObject {
 
 	private System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("ja-JP");
 
+	[ObservableProperty]
+	private string serverStatus = string.Empty;
+
+	[ObservableProperty]
+	private string clientStatus = string.Empty;
+
 
 	[RelayCommand]
 	private void Init() {
@@ -61,9 +67,9 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (window != null) {
 			startRect = window.RestoreBounds;
 			miniRect = new Rect() {
-				X = startRect.X + startRect.Width - 270,
+				X = startRect.X + startRect.Width - 280,
 				Y = startRect.Y,
-				Width = 270,
+				Width = 280,
 				Height = 700
 			};
 		}
@@ -72,7 +78,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	void SetSubTitle() {
 		var renewstr = $"接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 		SubTitle = $"{_subTitle} {renewstr}";
-		StatusMessage = $"メニューを選択してください。 {renewstr}\nF12でログイン画面、F11でトークンリフレッシュ画面";
+		StatusMessage = $"メニューを選択してください。 \nF12でログイン画面、F11でトークンリフレッシュ画面";
+		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \nサーバ開始時間(継続時間)\nOS-version\nDOTNET-Version";
+		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("MM/dd HH:mm")}\nOS-version\nDOTNET-Version\nユーザ名 ABC\nLogin時間\nExpire時間";
 	}
 
 	[RelayCommand]
