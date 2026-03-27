@@ -32,6 +32,47 @@
 
 ---
 
+## [2026-03-27] 13:18 AppGlobal低リスク整理
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient` の `AppGlobal.cs` を読み込み、低リスクな範囲に限定して具体計画を確認したうえで step by step で実装し、Git-Commit は行わずユーザー確認待ちにする
+### 実施内容
+- `Cvnet10Wpfclient/AppGlobal.cs`: `LoginJwt` をプロパティ化し、`SetLoginJwt` / `ClearLoginJwt` を追加して更新経路を明示した
+- `Cvnet10Wpfclient/AppGlobal.cs`: `GetgRPCService<T>` を `GetGrpcService<T>` に改名し、初期化前例外文言とログ内の `AppCurrent` 表記を `AppGlobal` に統一した
+- `Cvnet10Wpfclient/AppGlobal.cs`: `CallContext` 用メタデータ生成を `CreateDefaultMetadata` に分離して見通しを改善した
+- `Cvnet10Wpfclient/ViewModels/00System/LoginViewModel.cs`: JWT 代入の重複を解消し、新しい API を使うよう追従した
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/00System/SysSetConfigViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/SampleViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/Sub/SelectWinViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/Sub/SelectKubunViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/04Juchu/JuchuInputViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+### 技術決定 Why
+- `AppGlobal` の責務分割や DI 注入への移行は影響範囲が大きいため今回は見送り、公開 API の整理と内部ヘルパー化だけに絞ってコンパイル影響を最小化した
+- `LoginViewModel` の JWT 更新は同一値の二重代入になっていたため、成功確定時のみ設定する形へ寄せて意図を明確化した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 13:35 CallContext正規化と懸念コメント追記
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`CallContext` を正とする方針を固定し、`JwtAuthorizationHandler` との重複を整理したうえで、実害候補の懸念点をコメントとして残す。コミットは行わない
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/Communication/JwtAuthorizationHandler.cs`: 認証系ヘッダー付与を廃止し、`AppGlobal.GetDefaultCallContext()` を正とする方針コメントへ更新した
+- `Cvnet10Wpfclient/AppGlobal.cs`: `CreateDefaultMetadata()` に、匿名呼び出し時でも `Authorization: Bearer ` を送る現状挙動と、将来見直し時の起点にする旨のコメントを追記した
+### 技術決定 Why
+- 既存の gRPC 呼び出しは `GetDefaultCallContext(...)` 利用で概ね統一されており、`CancellationToken` も同じ経路で扱っているため、`DelegatingHandler` 側を削るほうが影響範囲を最小化できる
+- 重複責務を外したうえで匿名 API まわりの挙動差だけをコメントで残し、次回調査や仕様変更時に判断しやすくした
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
 ## [2026-03-27] 12:41 MasterSysKanriMenteView上部レイアウト統一
 ### Agent
 - gpt-5.4 : OpenAI

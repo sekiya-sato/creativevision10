@@ -89,7 +89,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			StreamMessages.Clear();
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.MSg060_StreamingTest };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "ストリーミングテスト";
@@ -119,7 +119,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestMsg001(CancellationToken ct) {
-		var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg001_CopyReply };
 		msg.DataType = typeof(string);
 		msg.DataMsg = TestMsg001Text;
@@ -132,7 +132,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestMsg002(CancellationToken ct) {
-		var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg002_GetVersion };
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 		if (reply?.DataMsg != null && reply?.DataType != null) {
@@ -148,7 +148,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestMsg003(CancellationToken ct) {
-		var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg003_GetEnv };
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 		if (reply?.DataMsg != null && reply?.DataType != null) {
@@ -167,7 +167,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			StreamMessages.Clear();
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.MSg040_ConvertDb };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "コンバートストリーミング DBConvert";
@@ -196,7 +196,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			StreamMessages.Clear();
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new PrintOperation {
 				DataType = typeof(string),
 				DataMsg = "コンバートストリーミング Printのテスト",
@@ -244,4 +244,3 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 public record ColorBalanceItem(string Color1, string Color2, string Color3, string Color4);
 
 public record EnvDisplayItem(string Key, string Value);
-

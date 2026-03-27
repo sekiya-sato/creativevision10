@@ -305,7 +305,7 @@ public partial class JuchuInputViewModel : Helpers.BaseMenteViewModel<Tran12Jyuc
 
 	static async Task<MasterTokui?> FindTokuiByCodeAsync(string code, CancellationToken ct) {
 		try {
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
 				Code = 0,
 				Flag = CvnetFlag.Msg101_Op_Query,

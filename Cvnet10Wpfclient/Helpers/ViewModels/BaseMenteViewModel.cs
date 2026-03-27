@@ -127,7 +127,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		};
 
 	protected virtual ValueTask<CvnetMsg> SendMessageAsync(CvnetMsg message, CancellationToken ct) {
-		var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 		return new ValueTask<CvnetMsg>(coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct)));
 	}
 

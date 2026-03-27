@@ -26,7 +26,7 @@ public partial class SelectKubunViewModel : Helpers.BaseViewModel {
 	async Task InitList(CancellationToken ct) {
 		try {
 			ct.ThrowIfCancellationRequested();
-			var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new CvnetMsg {
 				Code = 0,
 				Flag = CvnetFlag.Msg101_Op_Query,

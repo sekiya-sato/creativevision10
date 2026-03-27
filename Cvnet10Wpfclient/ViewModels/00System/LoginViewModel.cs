@@ -33,7 +33,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task Login(CancellationToken cancellationToken) {
-		var loginService = AppGlobal.GetgRPCService<ILoginService>();
+		var loginService = AppGlobal.GetGrpcService<ILoginService>();
 		var now = DateTime.Now;
 		if (string.IsNullOrEmpty(LoginId) || string.IsNullOrEmpty(LoginPassword)) {
 			MessageEx.ShowErrorDialog("ログインID、パスワードを入力してください。", owner: ClientLib.GetActiveView(this));
@@ -50,10 +50,9 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 		try {
 			var reply = await loginService.LoginAsync(loginRequest, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply.Result == 0) {
-				AppGlobal.LoginJwt = reply.JwtMessage;
-				Debug.WriteLine($"{DateTime.Now} AppCurrent.LoginJwt={AppGlobal.LoginJwt}");
 				if (reply.JwtMessage?.Length > 10) {
-					AppGlobal.LoginJwt = reply.JwtMessage;
+					AppGlobal.SetLoginJwt(reply.JwtMessage);
+					Debug.WriteLine($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
 					LoginData = reply;
 					ExitWithResultTrue();
 					return;
@@ -85,7 +84,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 	private async Task Refresh(CancellationToken cancellationToken) {
 		if (string.IsNullOrEmpty(AppGlobal.LoginJwt))
 			return;
-		var loginService = AppGlobal.GetgRPCService<ILoginService>();
+		var loginService = AppGlobal.GetGrpcService<ILoginService>();
 		var loginRefresh = new LoginRefresh() { Token = AppGlobal.LoginJwt };
 		cancellationToken.ThrowIfCancellationRequested();
 		try {
@@ -93,17 +92,16 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			var refreshToken = string.Empty;
 			reply = await loginService.LoginRefleshAsync(loginRefresh, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply.Result == 0) {
-				AppGlobal.LoginJwt = reply.JwtMessage;
-				Debug.WriteLine($"{DateTime.Now} AppCurrent.LoginJwt={AppGlobal.LoginJwt}");
 				if (reply.JwtMessage?.Length > 10) {
-					AppGlobal.LoginJwt = reply.JwtMessage;
+					AppGlobal.SetLoginJwt(reply.JwtMessage);
+					Debug.WriteLine($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
 					LoginData = reply;
 					ExitWithResultTrue();
 					return;
 				}
 			}
 			if (string.IsNullOrEmpty(reply.JwtMessage)) {
-				AppGlobal.LoginJwt = string.Empty;
+				AppGlobal.ClearLoginJwt();
 				MessageEx.ShowErrorDialog("ログインRefreshができませんでした", owner: ClientLib.GetActiveView(this));
 			}
 		}
@@ -113,4 +111,3 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 		}
 	}
 }
-

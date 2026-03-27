@@ -82,7 +82,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task Test01(CancellationToken ct) {
-		var coreService = AppGlobal.GetgRPCService<ICvnetCoreService>();
+		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg001_CopyReply };
 		msg.DataType = typeof(string);
 		msg.DataMsg = $"{DateTime.Now.ToLongDateString()} {DateTime.Now.ToLongTimeString()}";
