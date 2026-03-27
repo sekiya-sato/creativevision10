@@ -22,6 +22,8 @@ description: Validates XAML files for syntax errors, resource references, namesp
 - リファクタリング後の整合性確認
 - ユーザーが明示的に「XAMLをチェックして」「XAMLエラーを確認して」と依頼した場合
 
+Cvnet10 では、WPF作業の共通規約は `wpf-project-guide`、画面単位の追加・改修手順は `wpf-view-workflow` が担当します。本スキルはその後段の検証専用スキルです。
+
 ## 使用方法
 
 ### 基本的な使い方

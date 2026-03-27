@@ -5,7 +5,7 @@ description: Guides the agent through unifying the material-design inspired layo
 
 # Update Design Mente
 
-このスキルは、Cvnet10Wpfclient のマスターメンテ画面を `MasterShohinMenteView` ベースの ColorZone + Card + MaterialDesignOutlined のデザインに揃えるためのワークフローとチェックリストを提供します。
+このスキルは、Cvnet10Wpfclient のマスターメンテ画面を `MasterShohinMenteView` ベースの ColorZone + Card + MaterialDesignOutlined のデザインに揃えるためのワークフローとチェックリストを提供します。WPF全体の共通規約は `wpf-project-guide`、個別画面の基本手順は `wpf-view-workflow` を前提とし、本スキルはそのうえでデザイン統一に特化します。
 
 ## 目的
 

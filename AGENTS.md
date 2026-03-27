@@ -3,7 +3,6 @@
 ## AI Tool Separation Policy
 - **OpenCode**: Use for multi-file features, large-scale refactoring, cross-project changes, documentation, troubleshooting
 - **GitHub Copilot**: Use for inline completion, quick fixes, small edits within Visual Studio 2026
-- Both tools share the same logging format in `Doc/aicording_log.md`
 
 ## Repository Snapshot
 - Solution file: `Cvnet10.slnx` (The main stack is gRPC server + WPF client (MVVM pattern) + shared/domain/data projects).
@@ -46,8 +45,9 @@
 - First inspect the target layer and related files.
 - Then present a short Japanese plan.
 - Implement with minimal diffs.
+- If the work targets `Cvnet10Wpfclient`, always load `wpf-project-guide` first.
 - If WPF resources or exceptions are involved, inspect `Cvnet10Wpfclient/App.xaml` and referenced `ResourceDictionary` files first.
-s
+
 ## Formatting Conventions
 - `.cs` follow `.editorconfig`.
 - `.xaml` follow `Settings.XamlStyler`.
@@ -56,27 +56,21 @@ s
 - Do not sort `System` usings first; keep the existing local ordering style.
 
 ## WPF / MVVM Conventions
-- ViewModels should use `ObservableObject`, `ObservableRecipient`, or the existing base ViewModel types.
-- Use `[ObservableProperty]` for state and `[RelayCommand]` / async relay commands for commands.
-- Keep code-behind minimal: initialization and UI-specific event delegation only.
-- For business/master windows, use `Cvnet10Wpfclient.Helpers.BaseWindow` rather than raw `Window`.
-- `BaseWindow` already triggers `InitCommand`, handles Escape close behavior, and runs `*CancelCommand` on close.
-- Therefore, do not add a `ContentRendered` trigger for `InitCommand` when the view derives from `BaseWindow`.
-- Check `Cvnet10Wpfclient/App.xaml` merged dictionaries before editing resources.
-- Existing merged dictionaries include `Resources/UIColors.xaml`, `Resources/UICommon.xaml`, and `Resources/UIMainWindow.xaml`.
-- Use `DynamicResource` for theme-aware WPF colors and shared brushes.
-- When asked to add a new `*View.xaml`, also add the corresponding `*ViewModel.cs` and wire menu entry changes in `Cvnet10Wpfclient/Models/MenuData.cs` if the feature should be launchable.
-- **CAUTION** xaml画面は下方と右側が見切れていることがある。特に下方の見切れは注意して調整する
+- For any `Cvnet10Wpfclient` work, always load `wpf-project-guide` and follow it as the source of truth for shared WPF conventions.
+- For creating or updating an individual WPF screen, also load `wpf-view-workflow`.
+- Use `check-xaml` when validating XAML syntax, resources, converters, or binding paths.
+- Use `update-design-mente` when aligning master maintenance screens to the shared MaterialDesign-based layout.
+- Use `change-sublist-to-observablecollection` when a master maintenance sub-list uses `List<T>` and row add/delete changes are not reflected in the UI.
 
 ## Pre-Completion Checklist
 - Confirm you did not modify read-only projects unintentionally.
 - Run the smallest relevant build.
-- **大規模変更の場合、影響範囲を Doc/ に記録したか確認**
 - Summarize impact and verification results clearly.
 
 ## Write-Log
-- 作業完了時には、必ず以下のフォーマットで Doc/aicording_log.md の**最後**に履歴を記録する
-- 履歴を追加すると400行をこえる場合、既存の履歴ファイルをaicoding_log_[001-999].mdとして連番でリネーム保存し、新規に同様の書式で aicording_log.md を作成し履歴を記録する。
+- Upon completion of the task, be sure to record the history at the **end** of `Doc/aicording_log.md` using the following format.
+- If adding the history results in more than 800 lines, rename the existing history file to aicoding_log_[001-999].md with sequential numbers, and create a new `aicording_log.md` with the same format to record the history.
+- - The following `記録フォーマット` and `アーカイブルール` are included at the beginning of `aicording_log.md`.
 '''
 ## [YYYY-MM-DD] hh:mm 作業タイトル
 ### Agent
@@ -89,6 +83,8 @@ s
 - [プロジェクト名]/[ファイル名]: [変更内容の要約]
 ### 技術決定 Why
 - [例: ProtobufのOrder欠番を避けるため、既存のFlag定義を維持しつつ新機能を追加した]
+### 影響範囲 (省略可)
+- 大規模変更の場合は影響範囲を明記。修正したファイルのみの場合は省略
 ### 確認
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
 
@@ -96,7 +92,7 @@ s
 '''
 
 ## Git-Commit
-- コミット時には以下の内容を記述
+- When committing, include the following
 '''
 [作業内容]
 [使用した AI Model 名 : AI Provider 名 : エージェント名]

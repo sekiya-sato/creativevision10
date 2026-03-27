@@ -27,10 +27,31 @@
 ```
 
 ## アーカイブルール
-- 400行を超える場合、既存履歴を `aicording_log_[001-999].md` として連番保存
+- 800行を超える場合、既存履歴を `aicording_log_[001-999].md` として連番保存
 - 新規に `aicording_log.md` を作成して記録を継続
 
 ---
+
+## [2026-03-27] 10:05 WPFスキル分離と参照整理
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`AGENTS.md` からWPF作成・改修ルールを分離し、Cvnet10Wpfclient全体向けスキルと個別View/ViewModel向けスキルに整理したうえで、`AGENTS.md` から必須参照させる
+### 実施内容
+- `.agents/skills/wpf-project-guide/SKILL.md`: `Cvnet10Wpfclient` 全体の共通規約、ResourceDictionary確認、`BaseWindow` 運用、検証方針を新規追加した
+- `.agents/skills/wpf-view-workflow/SKILL.md`: 個別画面の新規作成・既存改修・`MenuData.cs` 連携・検証手順を新規追加した
+- `AGENTS.md`: WPF詳細規約を縮約し、`wpf-project-guide` と `wpf-view-workflow` の必須参照、および既存WPF系スキルの使い分けに更新した
+- `.agents/skills/check-xaml/SKILL.md`: 検証専用スキルである位置付けを追記した
+- `.agents/skills/update-design-mente/SKILL.md`: 新しいWPF共通スキル群を前提とする説明を追記した
+- `.agents/skills/change-sublist-to-observablecollection/SKILL.md`: 新しいWPF共通スキル群を前提とする説明を追記した
+### 技術決定 Why
+- `Cvnet10Wpfclient` 全体の前提知識と、個別画面の作成・改修手順は責務が異なるため、共通ガイドと画面ワークフローへ分離した
+- 既存のWPF系スキルは用途特化のまま残し、新規2スキルを上位ガイドとして位置付けることで重複と参照迷いを減らした
+### 確認
+- 変更後ファイルを読み返し、`AGENTS.md` から `wpf-project-guide` / `wpf-view-workflow` の必須参照になっていることを確認
+- ドキュメントとスキル定義のみの変更のため、ビルドは未実行
 
 ## [2026-03-25] 14:49 keep-mcp の OpenCode グローバル追加
 ### Agent

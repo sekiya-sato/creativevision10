@@ -5,7 +5,7 @@ description: Converts List<T> sub-list properties in a master mente ViewModel to
 
 # Change SubList to ObservableCollection
 
-このスキルは、BaseMenteViewModel<T> を継承したマスターメンテ ViewModel で、CurrentEdit 内の `List<T>?` サブリストプロパティを ViewModel 側の `ObservableCollection<T>` に展開し、行の追加・削除がUIに正しく通知されるようにするパターンを提供します。
+このスキルは、BaseMenteViewModel<T> を継承したマスターメンテ ViewModel で、CurrentEdit 内の `List<T>?` サブリストプロパティを ViewModel 側の `ObservableCollection<T>` に展開し、行の追加・削除がUIに正しく通知されるようにするパターンを提供します。WPF全体の共通規約は `wpf-project-guide`、画面単位の基本手順は `wpf-view-workflow` を前提とし、本スキルはサブリスト通知問題の解決に特化します。
 
 ## いつ使うか
 
