@@ -7,9 +7,11 @@ namespace Cvnet10Wpfclient.ViewModels._01Master;
 /// <summary>
 /// 得意先マスターメンテ ViewModel
 /// </summary>
-public partial class MasterTokuiMenteViewModel : Helpers.BaseMenteViewModel<MasterTokui> {
+public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterTokui> {
 	[ObservableProperty]
 	string title = "得意先マスターメンテ";
+
+	protected override string[] AdditionalLightweightColumns => ["TenType"];
 
 	protected override string? SelectCodeDisplayName => "得意先";
 

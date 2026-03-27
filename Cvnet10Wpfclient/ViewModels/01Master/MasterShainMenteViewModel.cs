@@ -4,9 +4,11 @@ using Cvnet10Base;
 
 namespace Cvnet10Wpfclient.ViewModels._01Master;
 
-public partial class MasterShainMenteViewModel : Helpers.BaseMenteViewModel<MasterShain> {
+public partial class MasterShainMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShain> {
 	[ObservableProperty]
 	string title = "社員マスターメンテ";
+
+	protected override string[] AdditionalLightweightColumns => ["Mail", "VTenpo", "VBumon"];
 
 	protected override string? SelectCodeDisplayName => "社員";
 

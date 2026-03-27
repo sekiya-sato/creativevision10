@@ -4,9 +4,11 @@ using Cvnet10Base;
 
 namespace Cvnet10Wpfclient.ViewModels._01Master;
 
-public partial class MasterEndCustomerMenteViewModel : Helpers.BaseMenteViewModel<MasterEndCustomer> {
+public partial class MasterEndCustomerMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterEndCustomer> {
 	[ObservableProperty]
 	string title = "顧客マスターメンテ";
+
+	protected override string[] AdditionalLightweightColumns => ["Rank", "VTenpo"];
 
 	protected override string? SelectCodeDisplayName => "顧客";
 

@@ -79,6 +79,25 @@
 ### 確認
 - `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行したが、起動中プロセスが `Cvnet10Wpfclient/bin/Debug/net10.0-windows/*.dll` をロックしておりコピー失敗で確認不能
 
+## [2026-03-27] 12:30 全マスターメンテへの軽量一覧展開
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：中間コミット後、軽量一覧と詳細遅延取得の仕組みを全マスターへ展開し、作業ログ記録とGitコミットまで実施する
+### 実施内容
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterMeishoMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、一覧列に `Kubun` / `Odr` / `KubunName` を追加した
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、一覧列に `Rank` / `VTenpo` を追加した
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterShainMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、一覧列に `Mail` / `VTenpo` / `VBumon` を追加した
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替えた
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、一覧列に `TenType` を追加した
+### 技術決定 Why
+- 一覧DataGridに表示している列だけを軽量取得対象へ追加し、それ以外の詳細情報は既存の詳細取得とキャッシュへ委ねることで、既存XAMLを変えずに全マスターメンテへ横展開した
+- `MasterSysKanriMenteViewModel` は一覧を持たず `Current.*` へ直接バインドする単一レコード画面のため、今回の一覧最適化対象から除外した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
 ## [2026-03-27] 10:05 WPFスキル分離と参照整理
 ### Agent
 - gpt-5.4 : OpenAI

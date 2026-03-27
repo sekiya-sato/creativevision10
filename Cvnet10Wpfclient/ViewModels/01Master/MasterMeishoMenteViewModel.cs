@@ -8,9 +8,11 @@ using System.Collections.ObjectModel;
 
 namespace Cvnet10Wpfclient.ViewModels._01Master;
 
-public partial class MasterMeishoMenteViewModel : Helpers.BaseMenteViewModel<MasterMeisho> {
+public partial class MasterMeishoMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterMeisho> {
 	[ObservableProperty]
 	string title = "名称マスターメンテ";
+
+	protected override string[] AdditionalLightweightColumns => ["Kubun", "Odr", "KubunName"];
 
 	[ObservableProperty]
 	ObservableCollection<MasterMeisho> kubunList = new();

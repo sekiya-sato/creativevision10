@@ -7,7 +7,7 @@ namespace Cvnet10Wpfclient.ViewModels._01Master;
 /// <summary>
 /// 仕入先マスターメンテ ViewModel
 /// </summary>
-public partial class MasterShiireMenteViewModel : Helpers.BaseMenteViewModel<MasterShiire> {
+public partial class MasterShiireMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShiire> {
 	[ObservableProperty]
 	string title = "仕入先マスターメンテ";
 
