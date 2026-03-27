@@ -32,6 +32,53 @@
 
 ---
 
+## [2026-03-27] 12:09 軽量一覧と詳細遅延取得の共通基底実装
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Cvnet10Wpfclient のマスタメンテ等で、100,000件規模でも扱いやすいように「一覧は軽量、詳細は非同期取得＆キャッシュ」を共通基底まで含めて設計し、`IBaseCodeName` あり/なしの2系統で段階実装する
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: 一覧取得メッセージ生成を `CreateListMessage` に分離し、軽量一覧基底から差し替え可能にした
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: 200msデバウンス、`QuerybyIdParam` による詳細非同期取得、`Id`/`Vdu` キャッシュ、一覧行の詳細差し替えを行う共通基底と、`IBaseCodeName` あり/なしの派生基底を新規追加した
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、軽量一覧に `VBrand` を含めた商品マスタの代表実装へ変更した
+- `Cvnet10Wpfclient/ViewModels/00System/SysLoginViewModel.cs`: `BasePlainLightMenteViewModel` 継承へ切り替え、ログイン一覧の軽量取得列を ViewModel 側で定義する代表実装へ変更した
+### 技術決定 Why
+- 既存XAMLの `ListData` / `Current` / `CurrentEdit` バインディングを崩さず段階導入するため、一覧DTOを別コレクションへ分離せず、`ListData<T>` 自体を軽量行→詳細行へ差し替える方式を採用した
+- `IBaseCodeName` 実装テーブルは共通列が明確なため基底で既定化し、非実装テーブルは画面ごとに必要列が異なるため ViewModel 側で選択列を定義する分離設計にした
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 12:17 軽量一覧詳細反映時のDataGridフリーズ修正
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`MasterShohinMenteViewModel` と `SysLoginViewModel` で、一覧から詳細取得した時に画面が固まる原因を調査し、正常動作するよう修正する
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: 詳細取得後に `ListData[index] = 新規インスタンス` で一覧行を差し替えていた処理をやめ、既存選択行へ `Common.DeepCopyValue` で詳細を上書きする方式へ変更した
+### 技術決定 Why
+- 既存画面は `DataGrid.ItemsSource=ListData` と `SelectedItem=Current` を併用しており、選択中行を別インスタンスへ置換すると WPF の現在行同期が不安定になり、詳細取得直後にUIが固まる原因になるため、参照を維持したまま中身だけ更新する方式へ切り替えた
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 12:22 詳細取得キャンセル時の破棄例外抑止
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：商品マスタ終了時に `CancellationTokenSource has been disposed` の未観測例外が出るため、終了時も正常に閉じられるよう修正する
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: 進行中詳細取得のキャンセル時に `CancellationTokenSource` を即時 `Dispose` しないよう変更し、待機タスク側の `finally` でのみ破棄する構成へ修正した
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: `Task.Delay`/`Dispose` 周辺に `ObjectDisposedException` の保護を追加し、未観測例外が finalizer thread へ流れないようにした
+### 技術決定 Why
+- デバウンス待機タスクが `CancellationTokenSource` を参照中のまま別経路で `Dispose` すると、終了時に未観測の `ObjectDisposedException` が発生するため、キャンセルと破棄の責務を分離した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行したが、起動中プロセスが `Cvnet10Wpfclient/bin/Debug/net10.0-windows/*.dll` をロックしておりコピー失敗で確認不能
+
 ## [2026-03-27] 10:05 WPFスキル分離と参照整理
 ### Agent
 - gpt-5.4 : OpenAI

@@ -9,11 +9,13 @@ using System.Collections;
 
 namespace Cvnet10Wpfclient.ViewModels._00System;
 
-internal partial class SysLoginViewModel : Helpers.BaseMenteViewModel<SysLogin> {
+internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<SysLogin> {
 	[ObservableProperty]
 	string title = "ログインマスターメンテ画面";
 
 	SelectParameter? selectMiniParam;
+
+	protected override string LightweightSelectColumns => "Id,Vdc,Vdu,LoginId,CryptPassword,ExpDate,LastDate,Id_Shain,Id_Role";
 
 	protected override string? ListWhere => BuildSelectCodeWhere(selectMiniParam);
 

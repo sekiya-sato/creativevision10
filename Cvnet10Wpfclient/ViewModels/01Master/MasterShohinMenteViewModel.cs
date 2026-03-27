@@ -10,9 +10,11 @@ using System.Collections.ObjectModel;
 
 namespace Cvnet10Wpfclient.ViewModels._01Master;
 
-public partial class MasterShohinMenteViewModel : Helpers.BaseMenteViewModel<MasterShohin> {
+public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShohin> {
 	[ObservableProperty]
 	string title = "商品マスターメンテ";
+
+	protected override string[] AdditionalLightweightColumns => ["VBrand"];
 
 	protected override string? SelectCodeDisplayName => "商品";
 

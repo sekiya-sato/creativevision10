@@ -110,6 +110,14 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			maxCount: ListMaxCount
 		);
 
+	protected virtual CvnetMsg CreateListMessage() =>
+		new() {
+			Code = 0,
+			Flag = CvnetFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListParam),
+			DataMsg = Common.SerializeObject(CreateListQueryParam())
+		};
+
 	protected virtual CvnetMsg CreateExecuteMessage(object parameter, Type dataType) =>
 		new() {
 			Code = 0,
@@ -219,14 +227,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		StartTime = DateTime.Now;
 		try {
 			ClientLib.Cursor2Wait();
-			var msg = new CvnetMsg {
-				Code = 0,
-				Flag = CvnetFlag.Msg101_Op_Query,
-				DataType = typeof(QueryListParam),
-				DataMsg = Common.SerializeObject(CreateListQueryParam())
-			};
 
-			var reply = await SendMessageAsync(msg, ct);
+			var reply = await SendMessageAsync(CreateListMessage(), ct);
 
 			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
 				ListData = new ObservableCollection<T>(list.Cast<T>());
