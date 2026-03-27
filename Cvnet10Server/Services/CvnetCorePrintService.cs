@@ -53,8 +53,15 @@ public partial class CvnetCoreService {
 		string currentDirectory = new AppGlobal().VerInfo.BaseDir;
 		string baseDirectory = Directory.GetParent(currentDirectory)?.Parent?.Parent?.Parent?.FullName ?? string.Empty;
 		string baseParent = Directory.GetParent(baseDirectory)?.FullName ?? string.Empty;
+		if (currentDirectory.StartsWith("var")) { // linux環境
+			baseDirectory = currentDirectory;
+			baseParent = Directory.GetParent(baseDirectory)?.FullName ?? string.Empty;
+		}
 		string dataPath = "printdata";
-
+		_logger.LogWarning($"Print処理開始: current={currentDirectory}, BaseDirectory={baseDirectory}, BaseParent={baseParent}");
+		_logger.LogWarning($"    FormPath={Path.Combine(baseParent, dataPath, "data.txt")}");
+		_logger.LogWarning($"    DataPath={Path.Combine(baseParent, dataPath, "data.txt")}");
+		_logger.LogWarning($"    OutputDir={Path.Combine(baseParent, "Cvnet10Server", "wrk")}");
 		var context = new PrintContext {
 			BasePath = "",
 			FormPath = Path.Combine(baseParent, dataPath, "cvnet57prnhinShouka.qfm"),
