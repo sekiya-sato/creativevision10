@@ -27,21 +27,20 @@
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 		<materialDesign:ColorZone Grid.Row="0"
-			Padding="12,8" ClipToBounds="True"
-			materialDesign:ElevationAssist.Elevation="Dp4"
-			Mode="PrimaryMid">
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" ClipToBounds="True" Mode="PrimaryMid">
 			<StackPanel Orientation="Horizontal">
 				<materialDesign:PackIcon Width="28" Height="28"
 					VerticalAlignment="Center"
 					Kind="DatabaseSearch" />
-				<TextBlock Margin="10,0,0,0"
-					VerticalAlignment="Center"
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 					FontSize="20" FontWeight="SemiBold"
 					Text="{Binding Parameter.DisplayName, TargetNullValue=入力, StringFormat={}{0}選択}" />
 			</StackPanel>
 		</materialDesign:ColorZone>
 
-		<Grid Grid.Row="1" Margin="16,12,16,12">
+		<Grid Grid.Row="1"
+			Margin="16,12,16,12">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
@@ -55,8 +54,7 @@
 
 			<materialDesign:Card Grid.Row="1"
 				Padding="12,12,12,0"
-				materialDesign:ElevationAssist.Elevation="Dp2"
-				UniformCornerRadius="8">
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid Margin="2">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
@@ -77,7 +75,8 @@
 
 					<TextBlock Grid.Row="0" Grid.Column="0"
 						VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="伝票No" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="伝票No" /></TextBlock>
 					<TextBox Grid.Row="0" Grid.Column="1"
 						Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="伝票No (開始)"
@@ -87,7 +86,8 @@
 
 					<TextBlock Grid.Row="0" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<TextBox Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="伝票No (終了)"
@@ -97,7 +97,8 @@
 
 					<TextBlock Grid.Row="1" Grid.Column="0"
 						VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="日付" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="日付" /></TextBlock>
 					<DatePicker Grid.Row="1" Grid.Column="1"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						FontSize="16" IsTodayHighlighted="False"
@@ -107,7 +108,8 @@
 
 					<TextBlock Grid.Row="1" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<DatePicker Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" VerticalContentAlignment="Center"
 						FontSize="16" IsTodayHighlighted="False"
@@ -117,7 +119,8 @@
 
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="仕入先CD" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="仕入先CD" /></TextBlock>
 					<TextBox Grid.Row="2" Grid.Column="1"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="仕入先CD (開始)"
@@ -127,7 +130,8 @@
 
 					<TextBlock Grid.Row="2" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<TextBox Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="仕入先CD (終了)"
@@ -137,7 +141,8 @@
 
 					<TextBlock Grid.Row="3" Grid.Column="0"
 						VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="入庫先CD" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="入庫先CD" /></TextBlock>
 					<TextBox Grid.Row="3" Grid.Column="1"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="入庫先CD (開始)"
@@ -147,7 +152,8 @@
 
 					<TextBlock Grid.Row="3" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<TextBox Grid.Row="3" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="入庫先CD (終了)"
@@ -157,7 +163,8 @@
 
 					<TextBlock Grid.Row="4" Grid.Column="0"
 						VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="商品CD" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="商品CD" /></TextBlock>
 					<TextBox Grid.Row="4" Grid.Column="1"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="商品CD (開始)"
@@ -167,7 +174,8 @@
 
 					<TextBlock Grid.Row="4" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<TextBox Grid.Row="4" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="商品CD (終了)"
@@ -177,7 +185,8 @@
 
 					<TextBlock Grid.Row="5" Grid.Column="0"
 						VerticalAlignment="Center"
-						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="件数" /></TextBlock>
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="件数" /></TextBlock>
 					<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"
 						Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="件数"
@@ -186,7 +195,8 @@
 						Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
 					<TextBlock Grid.Row="5" Grid.Column="3" Grid.ColumnSpan="3"
 						VerticalAlignment="Center"
-						Foreground="{DynamicResource MaterialDesignBodyLight}" Text="(空白:全件取得)" />
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="(空白:全件取得)" />
 
 				</Grid>
 			</materialDesign:Card>
@@ -203,10 +213,8 @@
 				<StackPanel Orientation="Horizontal">
 					<materialDesign:PackIcon VerticalAlignment="Center"
 						Kind="CheckCircle" />
-					<TextBlock Margin="6,0,0,0"
-						VerticalAlignment="Center"
-						FontSize="16"
-						Text="選択確定" />
+					<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+						FontSize="16" Text="選択確定" />
 				</StackPanel>
 			</Button>
 			<Button Width="140" Height="38"
@@ -216,10 +224,8 @@
 				<StackPanel Orientation="Horizontal">
 					<materialDesign:PackIcon VerticalAlignment="Center"
 						Kind="ArrowLeft" />
-					<TextBlock Margin="6,0,0,0"
-						VerticalAlignment="Center"
-						FontSize="16"
-						Text="戻る" />
+					<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+						FontSize="16" Text="戻る" />
 				</StackPanel>
 			</Button>
 		</StackPanel>

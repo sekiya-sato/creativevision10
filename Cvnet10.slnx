@@ -5,9 +5,7 @@
     <Project Path="Tests/TestPrint/TestPrint.csproj" />
   </Folder>
   <Folder Name="/ソリューション項目/">
-    <File Path=".github/copilot-instructions.md" />
     <File Path="AGENTS.md" />
-    <File Path="Doc/aicording_log.md" />
     <File Path="readme.md" />
   </Folder>
   <Project Path="CodeShare/CodeShare.csproj" />
