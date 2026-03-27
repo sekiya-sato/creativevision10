@@ -1,4 +1,4 @@
-﻿using Cvnet10Asset;
+using Cvnet10Asset;
 using Cvnet10Base;
 using NLog;
 
@@ -56,17 +56,25 @@ public partial class ConvertDb {
 
 		// ToDo: 最終的に実行させる処理を整理
 		var steps = new (string Name, Func<bool, int> Action)[] {
-		//	("CnvTran00HonUri", CnvTran00HonUri),
-		//	("CnvTran01TenUri", CnvTran01TenUri),
-		//	("CnvTran03Shiire", CnvTran03Shiire),
-		//	("CnvTran05Ido", CnvTran05Ido),
-		//	("CnvTran06Nyukin", CnvTran06Nyukin),
+			("CnvMasterSys", CnvMasterSys),
+			("CnvMasterMeisho", CnvMasterMeisho),
+			("CnvMasterShain", CnvMasterShain),
+			("CnvMasterEndCustomer", CnvMasterEndCustomer),
+			("CnvMasterShohin", CnvMasterShohin),
+			("CnvMasterTokui", CnvMasterTokui),
+			("CnvMasterShiire", CnvMasterShiire),
+			("CnvAfterMaster", CnvAfterMaster),
+			("CnvTran00HonUri", CnvTran00HonUri),
+			("CnvTran01TenUri", CnvTran01TenUri),
+			("CnvTran03Shiire", CnvTran03Shiire),
+			("CnvTran05Ido", CnvTran05Ido),
+			("CnvTran06Nyukin", CnvTran06Nyukin),
 			("CnvTran07Shiharai", CnvTran07Shiharai),
-		//	("CnvTran60Tana", CnvTran60Tana),
-		//	("CnvTran10Ido", CnvTran10Ido),
-		//	("CnvTran11IdoIn", CnvTran11IdoIn),
-		//	("CnvTran12Jyuchu", CnvTran12Jyuchu),
-		//	("CnvTran13Hachu", CnvTran13Hachu),
+			("CnvTran60Tana", CnvTran60Tana),
+			("CnvTran10Ido", CnvTran10Ido),
+			("CnvTran11IdoIn", CnvTran11IdoIn),
+			("CnvTran12Jyuchu", CnvTran12Jyuchu),
+			("CnvTran13Hachu", CnvTran13Hachu),
 		};
 
 		for (var index = 0; index < steps.Length; index++) {
@@ -561,7 +569,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 			return item;
 		});
 	}
-	public int CnvAfterMaster() {
+	public int CnvAfterMaster(bool isInit = true) {
 		int cnt = 0;
 		// MasterShain の VTenpo.Cd をキーに MasterTokui を検索し、該当する場合は MasterShain の VTenpo と Id_Tenpo を更新する
 		var shainList = _toDb.Fetch<MasterShain>("where json_extract(VTenpo, '$.Cd') IS NOT NULL AND json_extract(VTenpo, '$.Cd') <> ''");

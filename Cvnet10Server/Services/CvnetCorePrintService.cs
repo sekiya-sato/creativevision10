@@ -50,6 +50,8 @@ public partial class CvnetCoreService {
 	/// <returns></returns>
 	private PrintResult printPdf() {
 		var start = DateTime.Now;
+		// ToDo: フォルダの位置決定のロジックを考慮 debug実行時 / windows実行時  / linux実行時
+		// 環境変数を見て切り分け？
 		string currentDirectory = new AppGlobal().VerInfo.BaseDir;
 		string baseDirectory = Directory.GetParent(currentDirectory)?.Parent?.Parent?.Parent?.FullName ?? string.Empty;
 		string baseParent = Directory.GetParent(baseDirectory)?.FullName ?? string.Empty;
