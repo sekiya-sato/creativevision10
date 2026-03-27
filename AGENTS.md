@@ -3,21 +3,21 @@
 ## AI Tool Separation Policy
 - **OpenCode**: Use for multi-file features, large-scale refactoring, cross-project changes, documentation, troubleshooting
 - **GitHub Copilot**: Use for inline completion, quick fixes, small edits within Visual Studio 2026
-- When `AGENTS.md` is updated, `copilot-instructions.md` will also be updated accordingly.
-- If an AI Tool wants to use Python, please use Python 3.
+- When `AGENTS.md` is updated, `copilot-instructions.md` will also be updated accordingly
+- If an AI Tool wants to use Python, please use Python 3
 
 ## Repository Snapshot
-- Solution file: `Cvnet10.slnx` (The main stack is gRPC server + WPF client (MVVM pattern) + shared/domain/data projects).
-- Server: `Cvnet10Server` (`net10.0`, ASP.NET Core, protobuf-net.Grpc).
-- Client: `Cvnet10Wpfclient` (`net10.0-windows`, WPF, CommunityToolkit.Mvvm, MaterialDesignThemes).
-- Central package versions: `Directory.Packages.props`.
-- Code style baseline: `.editorconfig`.
-- Xaml style baseline: `Settings.XamlStyler`.
+- Solution file: `Cvnet10.slnx` (The main stack is gRPC server + WPF client (MVVM pattern) + shared/domain/data projects)
+- Server: `Cvnet10Server` (`net10.0`, ASP.NET Core, protobuf-net.Grpc)
+- Client: `Cvnet10Wpfclient` (`net10.0-windows`, WPF, CommunityToolkit.Mvvm, MaterialDesignThemes)
+- Central package versions: `Directory.Packages.props`
+- Code style baseline: `.editorconfig`
+- Xaml style baseline: `Settings.XamlStyler`
 
 ## High Priority OpenCode Rules
-- Write plans, explanations, and code comments in **Japanese**
+- Write plans, explanations, and code comments in **JAPANESE**
 - **IMPORTANT!** FOLLOW THE WORKFLOW: **Analyze → Plan (Todo-List) → Execute → Verify → Write-Log → Git-Commit** 
-- In Plan, make sure to create TODO-LIST.
+- In Plan, make sure to create **TODO-LIST**
 - Use .NET 10 and C# 14 features where they improve clarity
 - Mark todos as `in_progress` when starting work, `completed` immediately after finishing
 - Only have ONE task `in_progress` at a time
@@ -52,8 +52,6 @@ Otherwise, always use `### Build Rule2`.
 ## Lint / Format Commands
 - Full repo format check: `dotnet format "Cvnet10.slnx" --verify-no-changes`
 - Full repo format fix: `dotnet format "Cvnet10.slnx"`
-- Project format check: `dotnet format "Cvnet10Server/Cvnet10Server.csproj" --verify-no-changes`
-- WPF format check: `dotnet format "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" --verify-no-changes`
 
 ## Expected Development Workflow
 - First inspect the target layer and related files.
