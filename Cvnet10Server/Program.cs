@@ -49,6 +49,9 @@ builder.WebHost.ConfigureKestrel(serverOptions => {
 	serverOptions.Limits.MaxRequestBodySize = 838_860_800; // 800 MB
 	serverOptions.Limits.MaxConcurrentConnections = 100; // 最大同時接続数 [Maximum number of simultaneous connections]
 	serverOptions.Limits.Http2.MaxStreamsPerConnection = 100; // 最大ストリーム数 [Maximum number of streams]
+															  // Timeout設定
+	serverOptions.Limits.Http2.KeepAlivePingDelay = TimeSpan.FromSeconds(30);
+	serverOptions.Limits.Http2.KeepAlivePingTimeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddHttpContextAccessor(); // HttpContextを取得可能にする [Make HttpContext accessible]
 

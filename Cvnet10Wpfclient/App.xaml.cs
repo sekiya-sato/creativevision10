@@ -153,11 +153,11 @@ public partial class App : Application {
 					services.AddTransient<GrpcSubPathHandler>(_ => new GrpcSubPathHandler(subPath));
 
 				services.AddSingleton<SocketsHttpHandler>(_ => new SocketsHttpHandler {
-					PooledConnectionIdleTimeout = TimeSpan.FromHours(6),
-					KeepAlivePingDelay = TimeSpan.FromSeconds(120),
-					KeepAlivePingTimeout = TimeSpan.FromSeconds(15), // タイムアウト時間
+					PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+					KeepAlivePingDelay = TimeSpan.FromSeconds(60), // サーバーの設定より長くするのが一般的
+					KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+					EnableMultipleHttp2Connections = true,
 					KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always, // 通信がない時でもPingを送る
-					EnableMultipleHttp2Connections = true
 				});
 				// 2. 統合されたクライアント構成ロジック
 				void ConfigureClient<TService>(IServiceCollection srvs, string targetUrl, string path) where TService : class {

@@ -37,6 +37,7 @@ appsettings.*.json
 systemsettings.json
 # Repository-specific generated or local files
 server-dev.db
+server-wrk.dd
 printstream.jar
 printdata/
 printdll/
