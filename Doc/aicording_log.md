@@ -32,6 +32,21 @@
 
 ---
 
+## [2026-03-27] 12:41 MasterSysKanriMenteView上部レイアウト統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`MasterSysKanriMenteView.xaml` の画面上部を、名称マスタや商品マスタのようなレイアウトに合わせる。ただし単一レコード画面のため、現在の入力項目配置部分は変更しない
+### 実施内容
+- `Cvnet10Wpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: 旧来の上部ボタン帯を `ColorZone` ベースの共通ヘッダーへ置き換え、閉じる・再読込・修正の操作を名称マスタ系の見た目に統一した
+- `Cvnet10Wpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: 詳細入力部は既存の行列配置を維持したまま `Card` とステータス帯で囲み、`Desc0` と `Current.Id` を上部情報として表示する構成へ整理した
+### 技術決定 Why
+- 単一レコード画面のため一覧ペインは追加せず、共通化対象をヘッダーと情報帯に限定することで、ユーザー指定どおり入力フォームの並びやバインディングを変えずにデザインだけを寄せた
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
 ## [2026-03-27] 12:09 軽量一覧と詳細遅延取得の共通基底実装
 ### Agent
 - gpt-5.4 : OpenAI
