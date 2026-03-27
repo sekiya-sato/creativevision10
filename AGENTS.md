@@ -68,7 +68,7 @@
 - Summarize impact and verification results clearly.
 
 ## Write-Log
-- Upon completion of the task, be sure to record the history at the **end** of `Doc/aicording_log.md` using the following format.
+- Upon completion of the task, be sure to record the history at `Doc/aicording_log.md` using the following format.
 - If adding the history results in more than 800 lines, rename the existing history file to aicoding_log_[001-999].md with sequential numbers, and create a new `aicording_log.md` with the same format to record the history.
 - - The following `記録フォーマット` and `アーカイブルール` are included at the beginning of `aicording_log.md`.
 '''

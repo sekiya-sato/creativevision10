@@ -75,6 +75,36 @@
 
 ---
 
+## [2026-03-27] 10:26 copilot-instructions整合
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`AGENTS.md` の内容に合わせて `copilot-instructions.md` を最小限で修正する
+### 実施内容
+- `.github/copilot-instructions.md`: リポジトリ情報、復元・ビルド・フォーマット確認コマンド、レイヤー/読み取り専用ルール、最小差分方針、WPF参照ルール、Write-Log/Git-Commit 記述を `AGENTS.md` に合わせて最小限で補正した
+### 技術決定 Why
+- 既存の英語ベース構成は維持しつつ、`AGENTS.md` と不整合だった閾値、手順、参照先、運用ルールのみを補正して差分を最小化した
+### 確認
+- 変更後の `.github/copilot-instructions.md` を読み返し、`AGENTS.md` との差分が主に不足事項の補完に留まっていることを確認
+- ドキュメント変更のみのため、ビルドは未実行
+
+## [2026-03-27] 10:32 copilot-instructions英語統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`.github/copilot-instructions.md` の記述を英語に統一し、作業後に変更全体をコミットする
+### 実施内容
+- `.github/copilot-instructions.md`: コードブロック外の日本語記述を英語へ置換し、英語化の過程で残っていた日本語見出しを解消した
+### 技術決定 Why
+- ユーザー指定どおりコードブロックは変更対象にせず、通常本文だけを英語化して既存テンプレート構造への影響を抑えた
+### 確認
+- `grep` により `.github/copilot-instructions.md` のコードブロック外に日本語が残っていないことを確認
+- ドキュメント変更のみのため、ビルドは未実行
+
 ## [2026-03-25] 13:31 ViewServices参照の削除とHelpers統一
 ### Agent
 - gpt-5.4 : OpenAI

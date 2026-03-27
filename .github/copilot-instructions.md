@@ -11,14 +11,20 @@ You are a Senior Software Engineer and Solution Architect. Your goal is to suppo
 - **Communication**: gRPC (Code-first, not use Proto-first)
 - **UI Framework**: WPF with MVVM pattern
 - **Solution File**: `Cvnet10.slnx` (Strictly prohibited to use or generate old `.sln` files)
-- **Build Server Project**: dotnet build Cvnet10Server/Cvnet10Server.csproj
-- **Build Client Project (Windows OS)**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj
-- **Build Client Project (Linux OS/WSL2)**: dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false
+- **Central package versions**: `Directory.Packages.props`
+- **Code style baseline**: `.editorconfig`
+- **XAML style baseline**: `Settings.XamlStyler`
+- **Restore All Projects**: `dotnet restore "Cvnet10.slnx"`
+- **Build Solution**: `dotnet build "Cvnet10.slnx"`
+- **Build Server Project**: `dotnet build "Cvnet10Server/Cvnet10Server.csproj"`
+- **Build Client Project (Linux OS/WSL2)**: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
+- **Format Check (Solution)**: `dotnet format "Cvnet10.slnx" --verify-no-changes`
 - **[CRITICAL]**: Do not start ".net upgrade experience"
 
-**[CRITICAL RULE]**: The following projects are "Read-Only" for AI. **DO NOT modify any files within these projects** unless explicitly requested by the user:
+**[CRITICAL RULE]**: Keep dependencies layered and treat the following projects as read-only unless explicitly required:
 - **CodeShare**
 - **Cvnet10Asset**
+- **Cvnet10Base** (read-only by default; modify only when clearly necessary)
 - **Cvnet10BaseMariadb**
 - **Cvnet10BaseOracle**
 - **Cvnet10BaseSqlite**
@@ -43,59 +49,64 @@ refer/ Foloder and exist-Project : [READ-ONLY] [reference-Only] [No-Include This
 ## Development Rules & Guidelines
 - **Response Language**: Always provide plans, explanations, and comments in **Japanese**.
 - **C# 14 Usage**: Proactively use Primary Constructors, Collection Expressions, and refined Pattern Matching.
-- 不明な内容があればユーザに確認してください。
+- **Implementation Style**: First inspect the target layer and related files, then implement with minimal diffs.
+- **Formatting**: `.cs` follow `.editorconfig`, `.xaml` follow `Settings.XamlStyler`, use file-scoped namespaces, keep `using` directives outside namespaces, and do not sort `System` usings first if the local style differs.
+- Ask the user only when required information is genuinely missing or ambiguous.
 - **Database Operations**:
     - Strictly separate **CRUD** operations.
     - Encapsulate DB main-logic within the DomainLogic-side (Layer 1.5).
     - Ensure minimal impact on existing schemas when modifying logic.
 - **Refactoring**: Analyze the impact range before proposing changes. Do not break existing implementations.
-- **CAUTION** xaml画面は下方と右側が見切れていることがある。特に下方の見切れは注意して調整する
+- **CAUTION**: WPF screens can be clipped on the bottom and right edges. Pay special attention to bottom-edge clipping.
 - `.github/copilot/wpf_skill.md` is For Cvnet10Wpfclient Project, UI design and implementation guidelines
+- When working on `Cvnet10Wpfclient`, first review `.github/copilot/wpf_skill.md`. If WPF resources or exceptions are involved, inspect `Cvnet10Wpfclient/App.xaml` and the referenced `ResourceDictionary` files first.
 
 
 ## Interaction Protocol
 - **IMPORTANT!** Follow the workflow: **Analyze → Plan (TodoWrite) → Execute → Verify → Write-Log → Git-Commit** 
 
 1. **Analyze**: Identify which layer the task belongs to.
-2. **Plan (TodoWrite)**: Present a step-by-step execution plan-Todo in Japanese.
+2. **Plan (TodoWrite)**: Present a short Japanese plan and create a Todo list. Keep only one task `in_progress` at a time.
 3. **Execute**: Write clean, maintainable code following Clean Architecture principles.
-4. **Verify**: Ensure the `.slnx` file structure remains intact. Build to confirm no regressions.
+4. **Verify**: Ensure the `.slnx` file structure remains intact. Run the smallest relevant build and summarize impact and verification results clearly.
 5. **Write-Log**: Write log file. follow Write-Log section.
-6. **Git-Commit**: Do `git commit`. follow Git-Commit section.
+6. **Git-Commit**: When committing, follow Git-Commit section.
 
 ## Write-Log
-- 作業完了時には、必ず以下のフォーマットで Doc/aicording_log.md の**最後**に履歴を記録する
-- 履歴を追加すると400行をこえる場合、既存の履歴ファイルをaicoding_log_[001-999].mdとして連番でリネーム保存し、新規に同様の書式で aicording_log.md を作成し履歴を記録する。
+- When work is complete, always append an entry to the **end** of `Doc/aicording_log.md` using the format below.
+- If adding a new entry would exceed 800 lines, rename the existing history file to `aicoding_log_[001-999].md` with the next sequential number, then create a new `aicording_log.md` and continue recording with the same format.
 '''
-## [YYYY-MM-DD] hh:mm 作業タイトル
+## [YYYY-MM-DD] hh:mm Work Title
 ### Agent
-- [使用した AI Model 名 : AI Provider 名]
+- [AI Model Name Used : AI Provider Name]
 ### Editor
-- [使用したエディタ: 不明な場合は"VS2026", 例 "VS2026", "VSCode", "OpenCode", "GitHubCopilot-Cli"] 
-### 目的
-- ユーザーからの要望：[内容]
-### 実施内容
-- [プロジェクト名]/[ファイル名]: [変更内容の要約]
-### 技術決定 Why
-- [例: ProtobufのOrder欠番を避けるため、既存のFlag定義を維持しつつ新機能を追加した]
-### 確認
-- [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
+- [Editor used: if unknown, use "VS2026"; examples: "VS2026", "VSCode", "OpenCode", "GitHubCopilot-Cli"] 
+### Objective
+- User request: [details]
+### Work Performed
+- [Project Name]/[File Name]: [summary of changes]
+### Technical Decision Why
+- [Example: Added the new feature while preserving the existing flag definitions to avoid gaps in Protobuf Order values]
+### Impact Scope (Optional)
+- For large changes, describe the impact scope. Omit this section when only the modified files are affected.
+### Verification
+- [Record the build result. For cross-platform cases, this may be omitted if build errors are expected]
 
 ---
 '''
 
 ## Git-Commit
-- コミット時には以下の内容を記述
+- When committing, include the following:
 '''
-[作業内容]
-[使用した AI Model 名 : AI Provider 名 : エージェント名]
-作業時間 [開始時間] - [終了時間] : [作業時間] (JST)
-[ユーザ指示の概略]
+[Work summary]
+[AI Model Name Used : AI Provider Name : Agent Name]
+Work time [Start Time] - [End Time] : [Duration] (**record in JST**)
+[Brief summary of the user request]
 '''
-例)
+Example)
 '''
-SelectKubunView.xamlのMaterialDesignスタイルへの変更
+Update SelectKubunView.xaml to the MaterialDesign style
 GPT-5.4-mini : OpenAI : Build
-16:00 - 17:30 : 1時間30分 (JSTで記録)
-SelectKubunView のデザインをMasterMeishoのデザインに統一する
+16:00 - 17:30 : 1 hour 30 minutes
+Unify the SelectKubunView design with the MasterMeisho design
 '''
