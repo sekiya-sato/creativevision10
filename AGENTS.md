@@ -4,6 +4,7 @@
 - **OpenCode**: Use for multi-file features, large-scale refactoring, cross-project changes, documentation, troubleshooting
 - **GitHub Copilot**: Use for inline completion, quick fixes, small edits within Visual Studio 2026
 - When `AGENTS.md` is updated, `copilot-instructions.md` will also be updated accordingly.
+- If an AI Tool wants to use Python, please use Python 3.
 
 ## Repository Snapshot
 - Solution file: `Cvnet10.slnx` (The main stack is gRPC server + WPF client (MVVM pattern) + shared/domain/data projects).
