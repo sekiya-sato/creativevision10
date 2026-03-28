@@ -32,6 +32,21 @@
 
 ---
 
+## [2026-03-28] 22:03 ConvertTranHeadersByRangeへの統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10DomainLogic/ConvertDbTran.cs` で `ConvertTranHeaders<T>` を呼んでいる処理を `ConvertTranHeadersByRange<T>` に変更し、不要になった `ConvertTranHeaders<T>` を削除して Write-Log と Git-Commit まで行う
+### 実施内容
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: `CnvTran00HonUri`、`CnvTran03Shiire`、`CnvTran05Ido`、`CnvTran06Nyukin`、`CnvTran07Shiharai`、`CnvTran60Tana`、`CnvTran10Ido`、`CnvTran11IdoIn`、`CnvTran12Jyuchu`、`CnvTran13Hachu` の呼び出し先を `ConvertTranHeadersByRange` に統一した
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: 未使用になった `ConvertTranHeaders<T>` を削除し、範囲分割変換メソッドの要約コメントを現状に合わせて更新した
+### 技術決定 Why
+- 伝票変換処理の呼び出し経路を範囲分割版へ統一することで、大量データ時のメモリ負荷を抑える実装に揃えつつ、20000件未満でも同じ経路で動作させて保守対象を一本化した
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` でビルド成功
+
 ## [2026-03-28] 10:10 ConvertDbTran範囲変換の整理
 ### Agent
 - gpt-5.4 : OpenAI

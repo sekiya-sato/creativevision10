@@ -8,7 +8,7 @@ public partial class ConvertDb {
 	/// 本部売上変換
 	/// </summary>
 	public int CnvTran00HonUri(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			0,
 			isInit,
 			rec => {
@@ -99,7 +99,7 @@ public partial class ConvertDb {
 	/// 仕入変換
 	/// </summary>
 	public int CnvTran03Shiire(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			3,
 			isInit,
 			rec => {
@@ -143,7 +143,7 @@ public partial class ConvertDb {
 	/// 移動変換
 	/// </summary>
 	public int CnvTran05Ido(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			5,
 			isInit,
 			rec => {
@@ -182,7 +182,7 @@ public partial class ConvertDb {
 	/// 入金変換
 	/// </summary>
 	public int CnvTran06Nyukin(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			6,
 			isInit,
 			rec => {
@@ -206,7 +206,7 @@ public partial class ConvertDb {
 	/// 支払変換
 	/// </summary>
 	public int CnvTran07Shiharai(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			7,
 			isInit,
 			rec => {
@@ -230,7 +230,7 @@ public partial class ConvertDb {
 	/// 棚卸変換
 	/// </summary>
 	public int CnvTran60Tana(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			60,
 			isInit,
 			rec => {
@@ -261,7 +261,7 @@ public partial class ConvertDb {
 	/// 積送移動変換
 	/// </summary>
 	public int CnvTran10Ido(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			10,
 			isInit,
 			rec => {
@@ -300,7 +300,7 @@ public partial class ConvertDb {
 	/// 移動受変換
 	/// </summary>
 	public int CnvTran11IdoIn(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			11,
 			isInit,
 			rec => {
@@ -339,7 +339,7 @@ public partial class ConvertDb {
 	/// 受注変換
 	/// </summary>
 	public int CnvTran12Jyuchu(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			12,
 			isInit,
 			rec => {
@@ -380,7 +380,7 @@ public partial class ConvertDb {
 	/// 発注変換
 	/// </summary>
 	public int CnvTran13Hachu(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			13,
 			isInit,
 			rec => {
@@ -512,17 +512,8 @@ public partial class ConvertDb {
 		return meisaiList;
 	}
 
-	int ConvertTranHeaders<T>(int denpyoShoriKubun, bool isInit, Func<Dictionary<string, object>, T> converter) where T : class {
-		var tranHeader = _fromDb.Fetch<Dictionary<string, object>>(BuildTranHeaderSelectSql(denpyoShoriKubun));
-		_toDb.CreateTable(typeof(T), isInit);
-
-		if (tranHeader.Count == 0)
-			return 0;
-
-		return InsertConvertedHeaders(tranHeader, converter);
-	}
 	/// <summary>
-	/// ConvertTranHeaders と同じ引数で、SEQ_NO 範囲ごとに分割して変換する。
+	/// 伝票ヘッダを SEQ_NO 範囲ごとに分割して変換する。
 	/// </summary>
 	public int ConvertTranHeadersByRange<T>(
 		int denpyoShoriKubun,
