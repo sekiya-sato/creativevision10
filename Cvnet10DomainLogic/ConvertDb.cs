@@ -65,16 +65,16 @@ public partial class ConvertDb {
 //			("CnvMasterShiire", CnvMasterShiire),
 //			("CnvAfterMaster", CnvAfterMaster),
 //			("CnvTran00HonUri", CnvTran00HonUri),
-			("CnvTran01TenUri", CnvTran01TenUri),
+//			("CnvTran01TenUri", CnvTran01TenUri),
 //			("CnvTran03Shiire", CnvTran03Shiire),
 //			("CnvTran05Ido", CnvTran05Ido),
 //			("CnvTran06Nyukin", CnvTran06Nyukin),
-//			("CnvTran07Shiharai", CnvTran07Shiharai),
-//			("CnvTran60Tana", CnvTran60Tana),
-			("CnvTran10Ido", CnvTran10Ido),
-			("CnvTran11IdoIn", CnvTran11IdoIn),
-			("CnvTran12Jyuchu", CnvTran12Jyuchu),
-			("CnvTran13Hachu", CnvTran13Hachu),
+			("CnvTran07Shiharai", CnvTran07Shiharai),
+			("CnvTran60Tana", CnvTran60Tana),
+//			("CnvTran10Ido", CnvTran10Ido),
+//			("CnvTran11IdoIn", CnvTran11IdoIn),
+//			("CnvTran12Jyuchu", CnvTran12Jyuchu),
+//			("CnvTran13Hachu", CnvTran13Hachu),
 		};
 
 		for (var index = 0; index < steps.Length; index++) {
