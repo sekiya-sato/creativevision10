@@ -513,29 +513,16 @@ public partial class ConvertDb {
 	}
 
 	int ConvertTranHeaders<T>(int denpyoShoriKubun, bool isInit, Func<Dictionary<string, object>, T> converter) where T : class {
-		var sql = $"select * from HC$tran_tori0 where 伝票処理区分={denpyoShoriKubun} order by SEQ_NO";
-		if (denpyoShoriKubun == 60) { // 棚卸は別テーブル
-			sql = $"select * from HC$tran_tana0 order by SEQ_NO";
-		}
-		var tranHeader = _fromDb.Fetch<Dictionary<string, object>>(sql);
+		var tranHeader = _fromDb.Fetch<Dictionary<string, object>>(BuildTranHeaderSelectSql(denpyoShoriKubun));
 		_toDb.CreateTable(typeof(T), isInit);
 
 		if (tranHeader.Count == 0)
 			return 0;
 
-		List<T> list = new(tranHeader.Count);
-		foreach (var rec in tranHeader) {
-			list.Add(converter(rec));
-		}
-
-		_toDb.BeginTransaction();
-		_toDb.InsertBulk<T>(list);
-		_toDb.CompleteTransaction();
-		return list.Count;
+		return InsertConvertedHeaders(tranHeader, converter);
 	}
 	/// <summary>
-	/// Create by `Sakana Chat` at 2026/03/28
-	/// ConvertTranHeaders と同じ引数で、シーケンス番号を分割しながら SubConvertTranHeadersRange を呼び出すバージョン
+	/// ConvertTranHeaders と同じ引数で、SEQ_NO 範囲ごとに分割して変換する。
 	/// </summary>
 	public int ConvertTranHeadersByRange<T>(
 		int denpyoShoriKubun,
@@ -543,115 +530,86 @@ public partial class ConvertDb {
 		Func<Dictionary<string, object>, T> converter,
 		int chunkSize = 20000
 	) where T : class {
-		// まずは件数とシーケンス範囲を取得するんや
-		string tableName = denpyoShoriKubun == 60 ? "HC$tran_tana0" : "HC$tran_tori0";
-		string baseWhere = denpyoShoriKubun == 60
-			? ""
-			: $"伝票処理区分 = {denpyoShoriKubun}";
+		var rangeInfo = GetTranHeaderRangeInfo(denpyoShoriKubun);
 
-		string whereClause = string.IsNullOrEmpty(baseWhere)
-			? ""
-			: $"where {baseWhere}";
-
-		string sql = $@"
-        select
-            count(*) as cnt,
-            min(SEQ_NO) as seqMin,
-            max(SEQ_NO) as seqMax
-        from {tableName}
-        {whereClause}
-    ";
-
-		var seqdata = _fromDb.Fetch<Dictionary<string, object>>(sql);
-
-		if (seqdata.Count == 0)
+		if (rangeInfo.Count == 0)
 			return 0;
 
-		var row = seqdata[0];
-		long cnt = Convert.ToInt64(row["cnt"]);
-		long seqMin = Convert.ToInt64(row["seqMin"]);
-		long seqMax = Convert.ToInt64(row["seqMax"]);
-
-		if (cnt == 0)
-			return 0;
-
-		// テーブル作成は最初に1回だけや
 		_toDb.CreateTable(typeof(T), isInit);
 
-		// シーケンス番号を分割して SubConvertTranHeadersRange を回す
-		var ranges = SubSplitRange(seqMin, seqMax, chunkSize);
-
 		int totalCount = 0;
-
-		foreach (var (rangeStartSeq, rangeEndSeq) in ranges) {
-			string additionalWhere = $"SEQ_NO between {rangeStartSeq} and {rangeEndSeq}";
-
-			int count = SubConvertTranHeadersRange<T>(
-				denpyoShoriKubun,
-				converter,
-				additionalWhere
+		foreach (var (rangeStartSeq, rangeEndSeq) in SplitRange(rangeInfo.SeqMin, rangeInfo.SeqMax, chunkSize)) {
+			var tranHeader = _fromDb.Fetch<Dictionary<string, object>>(
+				BuildTranHeaderSelectSql(denpyoShoriKubun, $"SEQ_NO between {rangeStartSeq} and {rangeEndSeq}")
 			);
+			if (tranHeader.Count == 0)
+				continue;
 
-			totalCount += count;
+			totalCount += InsertConvertedHeaders(tranHeader, converter);
 		}
 
 		return totalCount;
 	}
 	#region ConvertTranHeadersByRange のヘルパーメソッド
-	/// <summary>
-	/// Create by `Sakana Chat` at 2026/03/28
-	/// 共通の変換処理をまとめたメソッドや。
-	/// テーブル作成はせえへんから、isInit は要らんわ。
-	/// _toDb.CreateTable(typeof(T), isInit) は呼び出し元でやってな。
-	/// </summary>
-	private int SubConvertTranHeadersRange<T>(
-		int denpyoShoriKubun,
-		Func<Dictionary<string, object>, T> converter,
-		string additionalWhere
-	) where T : class {
-		if (string.IsNullOrEmpty(additionalWhere)) {
-			throw new ArgumentException("additionalWhere は必須やで！", nameof(additionalWhere));
-		}
-
-		// テーブル名と基本WHEREを決めるんや
-		string tableName = denpyoShoriKubun == 60 ? "HC$tran_tana0" : "HC$tran_tori0";
-		string baseWhere = denpyoShoriKubun == 60
-			? ""
-			: $"伝票処理区分 = {denpyoShoriKubun}";
-
-		// 基本WHEREと追加WHEREを結合するで
-		string whereClause = string.IsNullOrEmpty(baseWhere)
-			? additionalWhere
-			: $"{baseWhere} AND {additionalWhere}";
-
-		string sql = $"select * from {tableName} where {whereClause} order by SEQ_NO";
-
-		var tranHeader = _fromDb.Fetch<Dictionary<string, object>>(sql);
-
-		if (tranHeader.Count == 0)
-			return 0;
-
+	private int InsertConvertedHeaders<T>(List<Dictionary<string, object>> tranHeader, Func<Dictionary<string, object>, T> converter) where T : class {
 		List<T> list = new(tranHeader.Count);
 		foreach (var rec in tranHeader) {
 			list.Add(converter(rec));
 		}
 
-		// ここでトランザクションを毎回 Begin/Complete するのがポイントやな
 		_toDb.BeginTransaction();
 		_toDb.InsertBulk<T>(list);
 		_toDb.CompleteTransaction();
 
 		return list.Count;
 	}
-	/// <summary>
-	/// Create by `Sakana Chat` at 2026/03/28
-	/// シーケンス番号の範囲を、指定サイズごとに分割する
-	/// </summary>
-	/// <param name="seqMin">最小シーケンス番号</param>
-	/// <param name="seqMax">最大シーケンス番号</param>
-	/// <param name="chunkSize">1チャンクあたりの件数（デフォルト 20000）</param>
-	/// <returns>(rangeStartSeq, rangeEndSeq) のリスト</returns>
-	private List<(long rangeStartSeq, long rangeEndSeq)> SubSplitRange(long seqMin, long seqMax, int chunkSize = 20000) {
+
+	private (string TableName, string? BaseWhere) GetTranHeaderQueryParts(int denpyoShoriKubun) {
+		return denpyoShoriKubun == 60
+			? ("HC$tran_tana0", null)
+			: ("HC$tran_tori0", $"伝票処理区分 = {denpyoShoriKubun}");
+	}
+
+	private string BuildTranHeaderSelectSql(int denpyoShoriKubun, string? additionalWhere = null) {
+		var (tableName, baseWhere) = GetTranHeaderQueryParts(denpyoShoriKubun);
+		var whereClause = BuildWhereClause(baseWhere, additionalWhere);
+		return string.IsNullOrEmpty(whereClause)
+			? $"select * from {tableName} order by SEQ_NO"
+			: $"select * from {tableName} where {whereClause} order by SEQ_NO";
+	}
+
+	private (long Count, long SeqMin, long SeqMax) GetTranHeaderRangeInfo(int denpyoShoriKubun) {
+		var (tableName, baseWhere) = GetTranHeaderQueryParts(denpyoShoriKubun);
+		var whereClause = string.IsNullOrEmpty(baseWhere) ? string.Empty : $" where {baseWhere}";
+		var sql = $@"
+			select
+				count(*) as cnt,
+				min(SEQ_NO) as seqMin,
+				max(SEQ_NO) as seqMax
+			from {tableName}{whereClause}";
+		var seqData = _fromDb.Fetch<Dictionary<string, object>>(sql);
+		if (seqData.Count == 0)
+			return (0, 0, 0);
+
+		var row = seqData[0];
+		return (
+			Convert.ToInt64(row["cnt"]),
+			Convert.ToInt64(row["seqMin"]),
+			Convert.ToInt64(row["seqMax"])
+		);
+	}
+
+	private static string? BuildWhereClause(string? baseWhere, string? additionalWhere) {
+		if (string.IsNullOrWhiteSpace(baseWhere))
+			return string.IsNullOrWhiteSpace(additionalWhere) ? null : additionalWhere;
+
+		if (string.IsNullOrWhiteSpace(additionalWhere))
+			return baseWhere;
+
+		return $"{baseWhere} AND {additionalWhere}";
+	}
+
+	private List<(long rangeStartSeq, long rangeEndSeq)> SplitRange(long seqMin, long seqMax, int chunkSize = 20000) {
 		if (seqMin > seqMax)
 			throw new ArgumentException("seqMin must be <= seqMax");
 

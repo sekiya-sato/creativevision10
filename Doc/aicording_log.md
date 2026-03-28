@@ -32,6 +32,23 @@
 
 ---
 
+## [2026-03-28] 10:10 ConvertDbTran範囲変換の整理
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`ConvertDbTran.cs` の中の `ConvertTranHeadersByRange` と関連する処理をリファクタリングして
+### 実施内容
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: `ConvertTranHeaders` と `ConvertTranHeadersByRange` で共通だったヘッダ取得 SQL と一括 insert 処理を共通ヘルパーへ集約した
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: 範囲分割処理を `SplitRange` と `GetTranHeaderRangeInfo` に整理し、範囲変換の責務を読みやすく分離した
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: 生成AI由来の作成者コメントや補助メソッド名を整理し、既存挙動を保ったまま意図が伝わる命名へ更新した
+### 技術決定 Why
+- 通常変換と範囲分割変換で SQL 組み立てと insert 処理が重複していたため、クエリ組み立てと bulk insert を共通化して保守時の差分発生を防ぎやすくした
+- `ConvertTranHeadersByRange` は範囲取得・分割・読込・insert の流れだけに絞ることで、処理本体の見通しを優先した
+### 確認
+- `dotnet build "Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` でビルド成功
+
 ## [2026-03-27] 14:15 改行コードのCRLF統一
 ### Agent
 - gpt-5.4 : OpenAI
