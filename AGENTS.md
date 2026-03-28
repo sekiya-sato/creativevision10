@@ -21,6 +21,7 @@
 - Use .NET 10 and C# 14 features where they improve clarity
 - Mark todos as `in_progress` when starting work, `completed` immediately after finishing
 - Only have ONE task `in_progress` at a time
+- Line endings: CRLF only
 
 ## Read-Only and Layering Rules
 - Keep dependencies layered:
