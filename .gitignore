@@ -36,8 +36,8 @@ $RECYCLE.BIN/
 appsettings.*.json
 systemsettings.json
 # Repository-specific generated or local files
-server-dev.db
-server-wrk.dd
+server-*.db
+test-*.db
 printstream.jar
 printdata/
 printdll/

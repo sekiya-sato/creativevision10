@@ -32,16 +32,15 @@
   - Layer 2: `Cvnet10Server`, `Cvnet10Wpfclient`
 
 ## Build Commands **IMPORTANT**
-Use `### Build Rule1` only when both are true:
-- `NAME=DESKTOP-LV37IKB`
-- `SHELL=/bin/bash`
-Otherwise, always use `### Build Rule2`.
+Condition:
+- If `NAME=DESKTOP-LV37IKB` or `NAME=HOME20230223` -> Use ### Build Rule1
+- Else -> Use ### Build Rule2
 
 ### Build Rule1
-- Restore all projects: `/mnt/c/Windows/System32/cmd.exe /d /c "call C:\PROGRA~1\MIB055~1\18\COMMUN~1\Common7\Tools\VsDevCmd.bat && cd /d C:\gitroot\new2022\cvnet10 && dotnet restore "Cvnet10.slnx"`
-- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "call C:\PROGRA~1\MIB055~1\18\COMMUN~1\Common7\Tools\VsDevCmd.bat && cd /d C:\gitroot\new2022\cvnet10 && dotnet build Cvnet10.slnx"`
-- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "call C:\PROGRA~1\MIB055~1\18\COMMUN~1\Common7\Tools\VsDevCmd.bat && cd /d C:\gitroot\new2022\cvnet10 && dotnet build Cvnet10Server/Cvnet10Server.csproj`
-- Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "call C:\PROGRA~1\MIB055~1\18\COMMUN~1\Common7\Tools\VsDevCmd.bat && cd /d C:\gitroot\new2022\cvnet10 && dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj`
+- Restore all projects: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore Cvnet10.slnx"`
+- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10.slnx"`
+- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"`
+- Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"`
 
 ### Build Rule2
 - Restore all projects: `dotnet restore "Cvnet10.slnx"`
