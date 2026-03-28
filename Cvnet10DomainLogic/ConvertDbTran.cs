@@ -53,7 +53,7 @@ public partial class ConvertDb {
 	/// 店舗売上変換
 	/// </summary>
 	public int CnvTran01TenUri(bool isInit = true) {
-		return ConvertTranHeaders(
+		return ConvertTranHeadersByRange(
 			1,
 			isInit,
 			rec => {
@@ -533,6 +533,150 @@ public partial class ConvertDb {
 		_toDb.CompleteTransaction();
 		return list.Count;
 	}
+	/// <summary>
+	/// Create by `Sakana Chat` at 2026/03/28
+	/// ConvertTranHeaders と同じ引数で、シーケンス番号を分割しながら SubConvertTranHeadersRange を呼び出すバージョン
+	/// </summary>
+	public int ConvertTranHeadersByRange<T>(
+		int denpyoShoriKubun,
+		bool isInit,
+		Func<Dictionary<string, object>, T> converter,
+		int chunkSize = 20000
+	) where T : class {
+		// まずは件数とシーケンス範囲を取得するんや
+		string tableName = denpyoShoriKubun == 60 ? "HC$tran_tana0" : "HC$tran_tori0";
+		string baseWhere = denpyoShoriKubun == 60
+			? ""
+			: $"伝票処理区分 = {denpyoShoriKubun}";
+
+		string whereClause = string.IsNullOrEmpty(baseWhere)
+			? ""
+			: $"where {baseWhere}";
+
+		string sql = $@"
+        select
+            count(*) as cnt,
+            min(SEQ_NO) as seqMin,
+            max(SEQ_NO) as seqMax
+        from {tableName}
+        {whereClause}
+    ";
+
+		var seqdata = _fromDb.Fetch<Dictionary<string, object>>(sql);
+
+		if (seqdata.Count == 0)
+			return 0;
+
+		var row = seqdata[0];
+		long cnt = Convert.ToInt64(row["cnt"]);
+		long seqMin = Convert.ToInt64(row["seqMin"]);
+		long seqMax = Convert.ToInt64(row["seqMax"]);
+
+		if (cnt == 0)
+			return 0;
+
+		// テーブル作成は最初に1回だけや
+		_toDb.CreateTable(typeof(T), isInit);
+
+		// シーケンス番号を分割して SubConvertTranHeadersRange を回す
+		var ranges = SubSplitRange(seqMin, seqMax, chunkSize);
+
+		int totalCount = 0;
+
+		foreach (var (rangeStartSeq, rangeEndSeq) in ranges) {
+			string additionalWhere = $"SEQ_NO between {rangeStartSeq} and {rangeEndSeq}";
+
+			int count = SubConvertTranHeadersRange<T>(
+				denpyoShoriKubun,
+				converter,
+				additionalWhere
+			);
+
+			totalCount += count;
+		}
+
+		return totalCount;
+	}
+	#region ConvertTranHeadersByRange のヘルパーメソッド
+	/// <summary>
+	/// Create by `Sakana Chat` at 2026/03/28
+	/// 共通の変換処理をまとめたメソッドや。
+	/// テーブル作成はせえへんから、isInit は要らんわ。
+	/// _toDb.CreateTable(typeof(T), isInit) は呼び出し元でやってな。
+	/// </summary>
+	private int SubConvertTranHeadersRange<T>(
+		int denpyoShoriKubun,
+		Func<Dictionary<string, object>, T> converter,
+		string additionalWhere
+	) where T : class {
+		if (string.IsNullOrEmpty(additionalWhere)) {
+			throw new ArgumentException("additionalWhere は必須やで！", nameof(additionalWhere));
+		}
+
+		// テーブル名と基本WHEREを決めるんや
+		string tableName = denpyoShoriKubun == 60 ? "HC$tran_tana0" : "HC$tran_tori0";
+		string baseWhere = denpyoShoriKubun == 60
+			? ""
+			: $"伝票処理区分 = {denpyoShoriKubun}";
+
+		// 基本WHEREと追加WHEREを結合するで
+		string whereClause = string.IsNullOrEmpty(baseWhere)
+			? additionalWhere
+			: $"{baseWhere} AND {additionalWhere}";
+
+		string sql = $"select * from {tableName} where {whereClause} order by SEQ_NO";
+
+		var tranHeader = _fromDb.Fetch<Dictionary<string, object>>(sql);
+
+		if (tranHeader.Count == 0)
+			return 0;
+
+		List<T> list = new(tranHeader.Count);
+		foreach (var rec in tranHeader) {
+			list.Add(converter(rec));
+		}
+
+		// ここでトランザクションを毎回 Begin/Complete するのがポイントやな
+		_toDb.BeginTransaction();
+		_toDb.InsertBulk<T>(list);
+		_toDb.CompleteTransaction();
+
+		return list.Count;
+	}
+	/// <summary>
+	/// Create by `Sakana Chat` at 2026/03/28
+	/// シーケンス番号の範囲を、指定サイズごとに分割する
+	/// </summary>
+	/// <param name="seqMin">最小シーケンス番号</param>
+	/// <param name="seqMax">最大シーケンス番号</param>
+	/// <param name="chunkSize">1チャンクあたりの件数（デフォルト 20000）</param>
+	/// <returns>(rangeStartSeq, rangeEndSeq) のリスト</returns>
+	private List<(long rangeStartSeq, long rangeEndSeq)> SubSplitRange(long seqMin, long seqMax, int chunkSize = 20000) {
+		if (seqMin > seqMax)
+			throw new ArgumentException("seqMin must be <= seqMax");
+
+		if (chunkSize <= 0)
+			throw new ArgumentException("chunkSize must be positive");
+
+		var ranges = new List<(long, long)>();
+
+		long currentStart = seqMin;
+
+		while (currentStart <= seqMax) {
+			long currentEnd = currentStart + chunkSize - 1;
+			if (currentEnd > seqMax)
+				currentEnd = seqMax;
+
+			ranges.Add((currentStart, currentEnd));
+
+			if (currentEnd == seqMax)
+				break;
+
+			currentStart = currentEnd + 1;
+		}
+		return ranges;
+	}
+	#endregion
 	CodeNameView? getCodeNameView<T>(string code) where T : BaseDbClass, IBaseCodeName, new() {
 		if (string.IsNullOrWhiteSpace(code))
 			return null;

@@ -65,7 +65,7 @@ public partial class ConvertDb {
 //			("CnvMasterShiire", CnvMasterShiire),
 //			("CnvAfterMaster", CnvAfterMaster),
 //			("CnvTran00HonUri", CnvTran00HonUri),
-//	//		("CnvTran01TenUri", CnvTran01TenUri),
+			("CnvTran01TenUri", CnvTran01TenUri),
 //			("CnvTran03Shiire", CnvTran03Shiire),
 //			("CnvTran05Ido", CnvTran05Ido),
 //			("CnvTran06Nyukin", CnvTran06Nyukin),
