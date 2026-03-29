@@ -49,26 +49,33 @@ public partial class CvnetCoreService {
 	/// </summary>
 	/// <returns></returns>
 	private PrintResult printPdf() {
-		var start = DateTime.Now;
-		// ToDo: フォルダの位置決定のロジックを考慮 debug実行時 / windows実行時  / linux実行時
-		// 環境変数を見て切り分け？
-		string currentDirectory = new AppGlobal().VerInfo.BaseDir;
-		string baseDirectory = Directory.GetParent(currentDirectory)?.Parent?.Parent?.Parent?.FullName ?? string.Empty;
-		string baseParent = Directory.GetParent(baseDirectory)?.FullName ?? string.Empty;
-		if (currentDirectory.StartsWith("var")) { // linux環境
-			baseDirectory = currentDirectory;
-			baseParent = Directory.GetParent(baseDirectory)?.FullName ?? string.Empty;
-		}
-		string dataPath = "printdata";
-		_logger.LogWarning($"Print処理開始: current={currentDirectory}, BaseDirectory={baseDirectory}, BaseParent={baseParent}");
-		_logger.LogWarning($"    FormPath={Path.Combine(baseParent, dataPath, "data.txt")}");
-		_logger.LogWarning($"    DataPath={Path.Combine(baseParent, dataPath, "data.txt")}");
-		_logger.LogWarning($"    OutputDir={Path.Combine(baseParent, "Cvnet10Server", "wrk")}");
+		var printServer = _configuration.GetSection("PrintServer");
+		string contentRootPath = _env.ContentRootPath;
+		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
+		string configuredFormDir = printServer.GetValue<string>("PrintFormDir") ?? "printdata";
+		string configuredDataDir = printServer.GetValue<string>("PrintDataDir") ?? "printdata";
+		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? Path.Combine("Cvnet10Server", "wrk");
+
+		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
+			? configuredBaseDir
+			: Path.Combine(contentRootPath, configuredBaseDir));
+		string resolvedFormDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredFormDir));
+		string resolvedDataDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredDataDir));
+		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
+
+		Directory.CreateDirectory(resolvedOutputDir);
+
+		string formPath = Path.Combine(resolvedFormDir, "cvnet57prnhinShouka.qfm");
+		string dataPath = Path.Combine(resolvedDataDir, "data.txt");
+		_logger.LogWarning("Print処理開始: ContentRoot={ContentRoot}, PrintBaseDir={PrintBaseDir}, ResolvedBaseDir={ResolvedBaseDir}", contentRootPath, configuredBaseDir, resolvedBaseDir);
+		_logger.LogWarning("    FormPath={FormPath}", formPath);
+		_logger.LogWarning("    DataPath={DataPath}", dataPath);
+		_logger.LogWarning("    OutputDir={OutputDir}", resolvedOutputDir);
 		var context = new PrintContext {
-			BasePath = "",
-			FormPath = Path.Combine(baseParent, dataPath, "cvnet57prnhinShouka.qfm"),
-			DataPath = Path.Combine(baseParent, dataPath, "data.txt"),
-			OutputDir = Path.Combine(baseParent, "Cvnet10Server", "wrk"),
+			BasePath = string.Empty,
+			FormPath = formPath,
+			DataPath = dataPath,
+			OutputDir = resolvedOutputDir,
 			OutputFileName = "test_server.pdf",
 		};
 		var printService = new PrintAdapter();

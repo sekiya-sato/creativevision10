@@ -32,6 +32,24 @@
 
 ---
 
+## [2026-03-29] 17:52 PrintServer設定で印刷フォルダを切替
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Server.csproj` で読み込まれる `appsettings.json` の `PrintServer` セクションを使い、`CvnetCorePrintService.cs` の `printPdf()` 内で印刷フォルダ設定を切り替える。Write-Log と Git-Commit まで実行する
+### 実施内容
+- `Cvnet10Server/Services/CvnetCorePrintService.cs`: `printPdf()` の手書きディレクトリ探索を廃止し、`IConfiguration` の `PrintServer` から `PrintBaseDir`、`PrintFormDir`、`PrintDataDir`、`PrintOutputDir` を読んで `PrintContext` を構築するよう変更した
+- `Cvnet10Server/Services/CvnetCorePrintService.cs`: 相対パスを `ContentRootPath` 基準で絶対化し、出力先フォルダを `Directory.CreateDirectory` で事前生成するようにした
+- `Cvnet10Server/appsettings.json`: 実際のテンプレート配置に合わせ、既定の `PrintServer` を `.. / printdata / printdata / Cvnet10Server/wrk` に更新した
+- `Cvnet10Server/Cvnet10Server.csproj`: ASP.NET Core の既定動作で `appsettings*.json` が読み込まれるため変更不要と判断した
+### 技術決定 Why
+- 実行環境ごとの親ディレクトリ探索や Linux 分岐に依存すると保守しづらいため、サーバー設定から一貫して印刷入出力パスを決める構成へ寄せた
+- `PrintBaseDir` を基点に相対パスを解決することで、フォーム名とデータ名を固定のままでも配置変更を設定だけで吸収できるようにした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"` でビルド成功
+
 ## [2026-03-28] 22:03 ConvertTranHeadersByRangeへの統一
 ### Agent
 - gpt-5.4 : OpenAI
