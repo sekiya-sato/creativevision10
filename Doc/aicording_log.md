@@ -32,6 +32,24 @@
 
 ---
 
+## [2026-03-29] 18:31 opentmux 3ペイン集中作業向け設定
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`opentmux` プラグインの設定ファイルを README に沿って確認し、基本 3 ペイン運用向けの案から集中作業向け設定を適用する
+### 実施内容
+- `~/.config/opencode/opencode.json`: `plugin` に `opentmux` が設定済みであることを確認した
+- `~/.config/opencode/opentmux.json`: 3 ペイン時に作業ペインを広く確保するため、`layout` は `main-vertical` のまま `main_pane_size` を `60` から `72` に変更した
+- `tmux` と `opentmux` のインストール状態を確認し、セットアップ済みであることを確認した
+### 技術決定 Why
+- 3 ペイン運用ではメインペインを広めに取る方がコード編集やコマンド実行を継続しやすいため、監視用サブペインを細めにする `main-vertical` + `72` を採用した
+### 確認
+- `~/.config/opencode/opencode.json` に `opentmux` プラグイン設定が存在することを確認
+- `~/.config/opencode/opentmux.json` の更新内容を確認
+- `which tmux` と `which opentmux`、`npm list -g opentmux --depth=0` で利用可能な状態を確認
+
 ## [2026-03-29] 17:52 PrintServer設定で印刷フォルダを切替
 ### Agent
 - gpt-5.4 : OpenAI
