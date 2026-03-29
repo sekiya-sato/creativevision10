@@ -297,3 +297,40 @@
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功（0 warnings, 0 errors）
 
 ---
+
+## [2026-03-29] 12:10 clipimg の opencode 連携改善
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：既存の `~/bin/clipimg` を `opencode` で使いやすいように改善し、`--last` `--open` などの補助オプションも含めて実装する
+### 実施内容
+- `~/bin/clipimg`: 保存時に `wslpath -w` で Windows パスへ変換して PowerShell に渡すよう修正し、成功時は `opencode` に貼りやすい WSL パスのみを標準出力するよう変更した
+- `~/bin/clipimg`: `--help` `--last` `--open` を追加し、保存済み画像の再利用や既定アプリ起動に対応した
+- `~/bin/clipimg`: 画像なし・保存失敗・パス変換失敗時に日本語エラーメッセージと非 0 終了コードを返すよう整理した
+### 技術決定 Why
+- `opencode` 連携では説明文より画像パスそのものが扱いやすいため、成功時の標準出力を WSL パス 1 行に固定した
+- PowerShell で Linux パスを直接保存先に使うと環境依存で失敗しやすいため、保存処理だけは Windows パスへ明示変換して安定性を優先した
+### 確認
+- `bash -n "$HOME/bin/clipimg"` で構文確認
+- PowerShell でテスト画像をクリップボードに設定後、`$HOME/bin/clipimg` で PNG 保存と WSL パス出力を確認
+- `"$HOME/bin/clipimg" --last --open` で直近画像の取得とオープン動作を確認
+- PowerShell でクリップボードをクリア後、`$HOME/bin/clipimg` が終了コード `4` で失敗することを確認
+
+## [2026-03-29] 12:18 clipimg 用 Skill の追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Windows クリップボード画像を `opencode` へ渡す `clipimg` 運用を、MCP ではなく Skill として登録する
+### 実施内容
+- `.agents/skills/clipboard-image-wsl/SKILL.md`: `clipimg` を使って Windows のクリップボード画像を WSL2 上へ保存し、`opencode` に渡すための専用 Skill を新規追加した
+- `.agents/skills/clipboard-image-wsl/SKILL.md`: 基本ワークフロー、推奨コマンド、定型プロンプト、トラブルシュート、将来の MCP 化方針を記載した
+### 技術決定 Why
+- 今回は新しい外部ツールサーバーを増やすよりも、既存の `clipimg` を前提に運用手順を標準化する方が軽量で保守しやすいため、Skill を先行採用した
+- `opencode` に渡す際の定型コマンドと失敗時対応を Skill に集約することで、毎回の説明なしに同じ流れを再利用しやすくした
+### 確認
+- `.agents/skills` 配下に `clipboard-image-wsl/SKILL.md` が追加されたことを確認
+- 追加した Skill ファイルを読み、front matter と本文構成が既存 Skill と同様であることを確認
