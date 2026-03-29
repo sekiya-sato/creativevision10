@@ -52,9 +52,9 @@ public partial class CvnetCoreService {
 		var printServer = _configuration.GetSection("PrintServer");
 		string contentRootPath = _env.ContentRootPath;
 		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
-		string configuredFormDir = printServer.GetValue<string>("PrintFormDir") ?? "printdata";
-		string configuredDataDir = printServer.GetValue<string>("PrintDataDir") ?? "printdata";
-		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? Path.Combine("Cvnet10Server", "wrk");
+		string configuredFormDir = printServer.GetValue<string>("PrintFormDir") ?? ".";
+		string configuredDataDir = printServer.GetValue<string>("PrintDataDir") ?? ".";
+		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
 
 		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
 			? configuredBaseDir
@@ -64,19 +64,20 @@ public partial class CvnetCoreService {
 		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
 
 		Directory.CreateDirectory(resolvedOutputDir);
-
+		// ToDo: 現在はテスト的に固定で設定、あとで引数などで設定できるようにする
 		string formPath = Path.Combine(resolvedFormDir, "cvnet57prnhinShouka.qfm");
 		string dataPath = Path.Combine(resolvedDataDir, "data.txt");
-		_logger.LogWarning("Print処理開始: ContentRoot={ContentRoot}, PrintBaseDir={PrintBaseDir}, ResolvedBaseDir={ResolvedBaseDir}", contentRootPath, configuredBaseDir, resolvedBaseDir);
-		_logger.LogWarning("    FormPath={FormPath}", formPath);
-		_logger.LogWarning("    DataPath={DataPath}", dataPath);
-		_logger.LogWarning("    OutputDir={OutputDir}", resolvedOutputDir);
+		string outfileName = "test_server.pdf";
+		_logger.LogWarning($"Print処理開始: ContentRoot={contentRootPath}, PrintBaseDir={configuredBaseDir}, ResolvedBaseDir={resolvedBaseDir}");
+		_logger.LogWarning($"    FormPath={formPath}");
+		_logger.LogWarning($"    DataPath={formPath}");
+		_logger.LogWarning($"    OutputDir={resolvedOutputDir}, File={outfileName}");
 		var context = new PrintContext {
 			BasePath = string.Empty,
 			FormPath = formPath,
 			DataPath = dataPath,
 			OutputDir = resolvedOutputDir,
-			OutputFileName = "test_server.pdf",
+			OutputFileName = outfileName,
 		};
 		var printService = new PrintAdapter();
 		var ret = printService.ExecutePrintAsync(context);

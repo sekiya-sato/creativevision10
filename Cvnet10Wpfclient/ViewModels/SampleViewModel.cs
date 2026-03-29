@@ -5,6 +5,7 @@ using Cvnet10Asset;
 using Cvnet10Wpfclient.Helpers;
 using Grpc.Core;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels;
 
@@ -161,6 +162,9 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 	}
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestConvert(CancellationToken cancellationToken) {
+		if (MessageEx.ShowQuestionDialog("	実行しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+			return;
+		}
 		try {
 			ProgressValue = 0;
 			IsProgressVisible = true;
