@@ -43,6 +43,7 @@ printdata/
 printdll/
 refer/
 Doc/wrk/
+wrk/
 # Optional local notes
 *localmemo*.md
 
