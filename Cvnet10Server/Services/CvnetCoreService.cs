@@ -169,7 +169,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 				Flag = flag,
 				Code = 0,
 				DataType = typeof(string),
-				DataMsg = $"開始: {name} ------------ {DateTime.Now: MM/dd HH:mm:ss.fff}",
+				DataMsg = $"開始: {name} ---- {DateTime.Now: MM/dd HH:mm:ss.fff}",
 				Progress = startProgress
 			};
 
