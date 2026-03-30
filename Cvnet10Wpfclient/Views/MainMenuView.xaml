@@ -207,7 +207,7 @@
 										Foreground="{DynamicResource MenuTitleColor}"
 										Style="{StaticResource SectionTitleText}"
 										Text="Server Status" />
-									<TextBlock FontSize="14"
+									<TextBlock FontSize="14" Margin="10,0,10,0"
 										Foreground="{DynamicResource plainTextColor0}"
 										Text="{Binding ServerStatus}" />
 								</StackPanel>
@@ -222,7 +222,7 @@
 										Foreground="{DynamicResource MenuTitleColor}"
 										Style="{StaticResource SectionTitleText}"
 										Text="User Status" />
-									<TextBlock FontSize="14"
+									<TextBlock FontSize="14" Margin="10,0,10,0"
 										Foreground="{DynamicResource plainTextColor0}"
 										Text="{Binding ClientStatus}" />
 								</StackPanel>

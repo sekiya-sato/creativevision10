@@ -1,4 +1,5 @@
 using CodeShare;
+using Cvnet10Asset;
 using Cvnet10Base.Oracle;
 using Cvnet10DomainLogic;
 using Microsoft.AspNetCore.Authorization;
@@ -44,8 +45,16 @@ public partial class CvnetCoreService : ICvnetCoreService {
 			[CvnetFlag.Msg702_TestCase002] = (req, ctx) => HandleTestLogicMsg702(req, ctx),
 		};
 	}
+	[AllowAnonymous]
+	public Task<CvnetMsg> QueryGetSimpleMsgAsync(CvnetFlag flag, CallContext context) {
+		if (flag == CvnetFlag.Msg002_GetVersion) {
+			var msg = CreateSuccessResponse(flag, typeof(Cvnet10Base.Share.VersionInfo), Common.SerializeObject(new AppGlobal().VerInfo));
+			return Task.FromResult(msg);
+		}
+		var err = CreateNotFoundResponse(flag, typeof(string), Common.SerializeObject("Invalid flag for simple message."));
+		return Task.FromResult(err);
+	}
 	// ToDo : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
-
 	[AllowAnonymous]
 	//[Authorize]
 	public Task<CvnetMsg> QueryMsgAsync(CvnetMsg request, CallContext context = default) {

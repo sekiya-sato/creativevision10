@@ -1,3 +1,4 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
@@ -27,10 +28,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string headerTitle = "Creative Vision 10";
 
 
-	string _subTitle = ".net10, gRPC, HTTP/2.0 Model";
 	private DateTime _subStartTime = DateTime.Now;
 	[ObservableProperty]
-	private string subTitle = string.Empty;
+	private string subTitle = ".net10, gRPC, HTTP/2.0 Model";
 
 	[ObservableProperty]
 	private bool isMenuReady;
@@ -52,6 +52,28 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string clientStatus = string.Empty;
 
 
+	record struct InfoUser {
+		public string? OsVer = null;
+		public string? DotnetVer = null;
+		public string? ComputerName = null;
+		public string? UserName = null;
+		public string? LoginTime = null;
+		public string? ExpireTime = null;
+		public InfoUser() {
+		}
+	}
+	record struct InfoServer {
+		public string? ProductVer = null;
+		public string? BuildDate = null;
+		public string? StartTime = null;
+		public InfoServer() {
+		}
+	}
+
+	InfoUser infoUser = new InfoUser();
+	InfoServer infoServer = new InfoServer();
+
+
 	[RelayCommand]
 	private void Init() {
 		if (IsMenuReady) {
@@ -61,7 +83,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		MenuItems = MenuData.CreateDefault();
 		ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
 		StartClock();
-		SetSubTitle();
+		SetSubMessage();
 		IsMenuReady = true;
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
@@ -73,14 +95,18 @@ public partial class MainMenuViewModel : ObservableObject {
 				Height = 700
 			};
 		}
+		infoUser.OsVer = Environment.OSVersion.ToString();
+		infoUser.DotnetVer = Environment.Version.ToString();
+		infoUser.ComputerName = Environment.MachineName;
+		infoUser.UserName = Environment.UserName;
+		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("MM/dd HH:mm")}\n{infoUser.OsVer ?? "OS-version"}\nDOTNET {infoUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {infoUser.ComputerName} {infoUser.UserName}\nLogin時間 {infoUser.LoginTime ?? "??:??:??"}\nExpire時間 {infoUser.ExpireTime ?? "??:??:??"}";
 	}
 
-	void SetSubTitle() {
+	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
-		SubTitle = $"{_subTitle} {renewstr}";
 		StatusMessage = $"メニューを選択してください。 \nF12でログイン画面、F11でトークンリフレッシュ画面";
-		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \nサーバ開始時間(継続時間)\nOS-version\nDOTNET-Version";
-		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("MM/dd HH:mm")}\nOS-version\nDOTNET-Version\nユーザ名 ABC\nLogin時間\nExpire時間";
+		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \nサーバ開始時間{infoServer.StartTime ?? "??:??:??"}\n{infoServer.ProductVer ?? "Product Version"}\nBuildDate {infoServer.BuildDate ?? "??:??:??"}";
+		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("MM/dd HH:mm")}\n{infoUser.OsVer ?? "OS-version"}\nDOTNET {infoUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {infoUser.ComputerName} {infoUser.UserName}\nLogin時間 {infoUser.LoginTime ?? "??:??:??"}\nExpire時間 {infoUser.ExpireTime ?? "??:??:??"}";
 	}
 
 	[RelayCommand]
@@ -138,7 +164,7 @@ public partial class MainMenuViewModel : ObservableObject {
 
 	}
 	[RelayCommand]
-	private void DoMenu() {
+	async private Task DoMenu() {
 		if (SelectedMenu?.ViewType == null) return;
 		if (!SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
 			return;
@@ -155,39 +181,50 @@ public partial class MainMenuViewModel : ObservableObject {
 			if (view.DataContext is _00System.LoginViewModel vm) {
 				ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
 				_subStartTime = DateTime.Now;
-				SetSubTitle();
+				await afterLogin(vm);
 			}
 			else if (view.DataContext is _00System.SysSetConfigViewModel) {
-				SetSubTitle();
+				SetSubMessage();
 			}
 		}
 	}
-	void afterLogin(_00System.LoginViewModel vm) {
+	async Task afterLogin(_00System.LoginViewModel vm) {
 		ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
 		_subStartTime = DateTime.Now;
-		SetSubTitle();
+		infoUser.LoginTime = DateTime.Now.ToString("MM/dd HH:mm:ss");
+		infoUser.ExpireTime = ExpireDate;
+		try {
+			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
+			var reply = await coreService.QueryGetSimpleMsgAsync(CvnetFlag.Msg002_GetVersion, AppGlobal.GetDefaultCallContext());
+			var version = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as Cvnet10Base.Share.VersionInfo;
+			infoServer.ProductVer = $"{version?.Product} {version?.Version}";
+			infoServer.BuildDate = version?.BuildDate.ToString("yyyy/MM/dd HH:mm:ss");
+		}
+		catch (Exception ex) {
+		}
+		SetSubMessage();
 	}
 
 
 
 	/// <summary>ショートカットでログイン画面を呼び出す</summary>
 	[RelayCommand]
-	private void ShowLogin() {
+	async private Task ShowLogin() {
 		ClientLib.ExitAllWithoutMe(this);
 		var view = new Views._00System.LoginView { Title = "ログイン" };
 		if (ClientLib.ShowDialogView(view, this, IsDialog: true) == true
 			&& view.DataContext is _00System.LoginViewModel vm)
-			afterLogin(vm);
+			await afterLogin(vm);
 	}
 	/// <summary>ショートカットでリフレッシュ画面を呼び出す</summary>
 	[RelayCommand]
-	private void ShowRefresh() {
+	async private Task ShowRefresh() {
 		ClientLib.ExitAllWithoutMe(this);
 		var view = new Views._00System.LoginView { Title = "ログイントークンリフレッシュ" };
 		if (view.DataContext is _00System.LoginViewModel vm) {
 			vm.InitParam = 1;
 			if (ClientLib.ShowDialogView(view, this, IsDialog: true) == true)
-				afterLogin(vm);
+				await afterLogin(vm);
 		}
 	}
 
