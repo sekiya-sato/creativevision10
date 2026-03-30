@@ -369,4 +369,26 @@
 - `opencode` に渡す際の定型コマンドと失敗時対応を Skill に集約することで、毎回の説明なしに同じ流れを再利用しやすくした
 ### 確認
 - `.agents/skills` 配下に `clipboard-image-wsl/SKILL.md` が追加されたことを確認
-- 追加した Skill ファイルを読み、front matter と本文構成が既存 Skill と同様であることを確認
+
+---
+
+## [2026-03-30] 10:00 ESCキーでメインメニューに戻る際の実行中処理確認ダイアログ追加
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ESCでメインメニューに戻る際、何か実行中の場合はYes/Noダイアログを出し、Yesで戻る・Noでそのままにする共通処理を追加したい
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/Windows/BaseWindow.cs`: `using CommunityToolkit.Mvvm.Input;` を追加
+- `Cvnet10Wpfclient/Helpers/Windows/BaseWindow.cs`: `OnPreviewKeyDown` に `HasRunningCommand()` チェックを追加し、実行中コマンドがある場合は「処理を実行中です。メインメニューに戻りますか？」確認ダイアログを表示
+- `Cvnet10Wpfclient/Helpers/Windows/BaseWindow.cs`: `HasRunningCommand()` メソッドを追加。DataContext の全プロパティを走査し `IAsyncRelayCommand.IsRunning == true` を検出
+### 技術決定 Why
+- ESCのインターセプト箇所は `BaseWindow.OnPreviewKeyDown` が唯一の共通Entry Pointであり、全画面に一括適用できる
+- `IAsyncRelayCommand.IsRunning` は CommunityToolkit.Mvvm が提供する標準インターフェースで、`[RelayCommand(IncludeCancelCommand = true)]` 付き全コマンドが対象になる
+- ViewModelは汚染せずView層（BaseWindow）で完結させた（MVVM原則を維持）
+- NoをクリックすればClose自体が実行されないため、実行中の処理は継続されるアーキテクチャ上安全
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0）
+
+---

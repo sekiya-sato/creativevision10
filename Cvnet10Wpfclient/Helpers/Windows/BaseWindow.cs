@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
@@ -40,10 +41,32 @@ public class BaseWindow : Window {
 
 		if (e.Key == Key.Escape) {
 			e.Handled = true;
+
+			// 非同期コマンドが実行中の場合は確認ダイアログを表示
+			if (HasRunningCommand()) {
+				var result = MessageEx.ShowQuestionDialog("処理を実行中です。\nメインメニューに戻りますか？", owner: this);
+				if (result != MessageBoxResult.Yes)
+					return;
+			}
+
 			Close();
 			if (Owner is Window owner)
 				owner.Activate();
 		}
+	}
+
+	/// <summary>
+	/// DataContext に実行中の非同期コマンド（IAsyncRelayCommand.IsRunning == true）があるか判定
+	/// </summary>
+	private bool HasRunningCommand() {
+		var dc = DataContext;
+		if (dc == null) return false;
+
+		foreach (var prop in dc.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)) {
+			if (prop.GetValue(dc) is IAsyncRelayCommand cmd && cmd.IsRunning)
+				return true;
+		}
+		return false;
 	}
 
 	protected override void OnContentRendered(EventArgs e) {
