@@ -107,6 +107,10 @@ public enum CvnetFlag {
 	/// </summary>
 	MSg041_ConvertDbInit = 41,
 	/// <summary>
+	/// テーブル一覧と検収の取得
+	/// </summary>
+	Msg042_GetTableCounts = 44,
+	/// <summary>
 	/// テスト
 	/// </summary>
 	MSg050_Test = 50,

@@ -237,6 +237,36 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			ClientLib.Cursor2Normal();
 		}
 	}
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task TestGetTableCounts(CancellationToken cancellationToken) {
+		try {
+			ClientLib.Cursor2Wait();
+			cancellationToken.ThrowIfCancellationRequested();
+			// 処理を実行
+			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
+			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg042_GetTableCounts };
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
+			if (reply?.DataMsg != null && reply?.DataType != null) {
+				var wrk = Common.DeserializeObject(reply.DataMsg, reply.DataType);
+				var tableCounts = Common.DeserializeObject<List<Tuple<string, long>>>(reply.DataMsg)
+					?? new List<Tuple<string, long>>();
+				// 表示用に変換
+				StreamMessages.Clear();
+				foreach (var streamMsg in tableCounts) {
+					StreamMessages.Insert(0, $"Table={streamMsg.Item1}, Count={streamMsg.Item2}");
+				}
+			}
+		}
+		catch (OperationCanceledException) {
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			return;
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+	}
 
 	#endregion
 }

@@ -386,11 +386,14 @@ public partial class ConvertDb {
 
 			var gradeRows = _fromDb.Fetch<Dictionary<string, object>>(
 				"select * from HC$MASTER_SHOHIN_GRADE where 商品CD=@0", code);
-
+			var sizeKubun = getString(rec, "商品サイズ区分");
+			if (string.IsNullOrEmpty(sizeKubun) || sizeKubun == ".") {
+				sizeKubun = "SIZ";
+			}
 			var colsiz = janRows
 				.Select(r => {
 					var col = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["COL", getString(r, "色CD")]);
-					var siz = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["SIZ", getString(r, "サイズCD")]);
+					var siz = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [sizeKubun, getString(r, "サイズCD")]);
 					return new MasterShohinColSiz() {
 						Code_Col = getString(r, "色CD"),
 						Id_Col = col?.Id ?? 0,

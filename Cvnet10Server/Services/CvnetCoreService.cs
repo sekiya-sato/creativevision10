@@ -38,6 +38,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 			[CvnetFlag.Msg003_GetEnv] = HandleGetEnv,
 			[CvnetFlag.MSg040_ConvertDb] = HandleConvertDb,
 			[CvnetFlag.MSg041_ConvertDbInit] = HandleConvertDb,
+			[CvnetFlag.Msg042_GetTableCounts] = HandlerGetTableCounts,
 			[CvnetFlag.Msg101_Op_Query] = (req, ctx) => HandleOpQuery(req, ctx),
 			[CvnetFlag.Msg201_Op_Execute] = (req, ctx) => HandleOpExecute(req, ctx),
 			[CvnetFlag.Msg700_Test_Start] = (req, ctx) => HandleTestLogicMsg700(req, ctx),

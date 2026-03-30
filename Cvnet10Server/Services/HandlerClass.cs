@@ -65,6 +65,19 @@ public partial class CvnetCoreService {
 
 		return CreateSuccessResponse(request.Flag, typeof(Dictionary<string, string>), Common.SerializeObject(resultData));
 	}
+	private CvnetMsg HandlerGetTableCounts(CvnetMsg request, CallContext context) {
+		ArgumentNullException.ThrowIfNull(request);
+		_logger.LogInformation("HandleGetTableCounts invoked Flag:{Flag}", request.Flag);
+		var resultData = new List<Tuple<string, long>>();
+		try {
+			resultData = _db.GetTableCounts();
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "HandleGetTableCounts error");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+		return CreateSuccessResponse(request.Flag, typeof(List<Tuple<string, long>>), Common.SerializeObject(resultData));
+	}
 
 	/// <summary>
 	/// Query系の処理
@@ -255,9 +268,9 @@ public partial class CvnetCoreService {
 	}
 
 	private static Dictionary<string, string> GetEnvironmentVariables() {
-		#pragma warning disable RS1035
+#pragma warning disable RS1035
 		var envVars = Environment.GetEnvironmentVariables();
-		#pragma warning restore RS1035
+#pragma warning restore RS1035
 
 		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		foreach (DictionaryEntry entry in envVars) {

@@ -1,4 +1,4 @@
-﻿using Cvnet10Base;
+using Cvnet10Base;
 using NLog;
 using NPoco;
 using System.Data;
@@ -500,6 +500,29 @@ public partial class ExDatabase : Database {
 			}
 		}
 		return ret;
+	}
+
+	/// <summary>
+	/// テーブル一覧と件数の取得 (データベース依存)
+	/// </summary>
+	/// <returns></returns>
+	public virtual List<Tuple<string, long>> GetTableCounts() {
+		const string sql = """
+SELECT type, name,  
+'select "'||name|| '"  name,  count(*) cnt from ' || name || '' AS sqlstr
+FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+""";
+		var rows = RawExecCmd(sql);
+		var result = new List<Tuple<string, long>>();
+		foreach (var row in rows) {
+			var sql2 = row["sqlstr"]?.ToString() ?? "";
+			if (!string.IsNullOrEmpty(sql2)) {
+				var retQuery = RawExecCmd(sql2);
+				var cnt = retQuery.FirstOrDefault()?["cnt"] ?? 0;
+				result.Add(new Tuple<string, long>(row["name"]?.ToString() ?? "", Convert.ToInt64(cnt)));
+			}
+		}
+		return result;
 	}
 
 }
