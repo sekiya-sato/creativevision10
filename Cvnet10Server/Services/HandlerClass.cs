@@ -1,9 +1,7 @@
 using CodeShare;
 using Cvnet10Asset;
 using Cvnet10Base;
-using Cvnet10Base.Oracle;
 using Cvnet10Base.Share;
-using Cvnet10DomainLogic;
 using ProtoBuf.Grpc;
 using System.Collections;
 
@@ -36,35 +34,6 @@ public partial class CvnetCoreService {
 		return CreateSuccessResponse(request.Flag, typeof(Dictionary<string, string>), Common.SerializeObject(GetEnvironmentVariables()));
 	}
 
-	private CvnetMsg HandleConvertDb(CvnetMsg request, CallContext context) {
-		ArgumentNullException.ThrowIfNull(request);
-		_logger.LogInformation("HandleConvertDb invoked Flag:{Flag}", request.Flag);
-
-		var start = DateTime.Now;
-		var resultData = new Dictionary<string, string>();
-
-		var oracleConnectionString = _configuration.GetConnectionString("oracle");
-		if (string.IsNullOrWhiteSpace(oracleConnectionString)) {
-			throw new InvalidOperationException("Connection string 'oracle' is missing. Configure it in appsettings.json under ConnectionStrings.");
-		}
-
-		var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
-		var cnvDb = new ConvertDb(fromDb, _db);
-		try {
-			var initFlg = request.Flag == CvnetFlag.MSg041_ConvertDbInit;
-			cnvDb.ConvertAll(initFlg);
-			resultData["Status"] = "Success";
-			var timespan = DateTime.Now - start;
-			resultData["Timesec"] = timespan.TotalSeconds.ToString();
-		}
-		catch (Exception ex) {
-			_logger.LogError(ex, "HandleConvertDb error");
-			resultData["Status"] = "Error";
-			resultData["Message"] = ex.Message;
-		}
-
-		return CreateSuccessResponse(request.Flag, typeof(Dictionary<string, string>), Common.SerializeObject(resultData));
-	}
 	private CvnetMsg HandlerGetTableCounts(CvnetMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogInformation("HandleGetTableCounts invoked Flag:{Flag}", request.Flag);

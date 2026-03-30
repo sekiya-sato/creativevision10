@@ -22,30 +22,6 @@ public partial class ConvertDb {
 	/// [Conversion step progress information]
 	/// </summary>
 	public record ConvertStepProgress(string StepName, int Count, int Progress, bool IsCompleted = false, bool IsError = false, string? ErrorMessage = null);
-
-	/// <summary>
-	/// 全マスタ変換を実行（同期版、従来の呼び出し用）
-	/// [Execute all master conversion synchronously]
-	/// </summary>
-	public void ConvertAll(bool isInit = true) {
-		_logger.Info("変換処理開始");
-		var start = DateTime.Now;
-		// ToDo: 最終的に実行させる処理を整理
-		/*
-		CnvMasterSys(isInit);
-		CnvMasterMeisho(isInit);
-		CnvMasterShain(isInit);
-		CnvMasterEndCustomer(isInit);
-		CnvMasterShohin(isInit);
-		CnvMasterTokui(isInit);
-		CnvMasterShiire(isInit);
-		CnvAfterMaster();
-		 */
-
-		var elapsed = DateTime.Now - start;
-		_logger.Info($"変換処理終了 ({elapsed.TotalSeconds:0.0}s)");
-	}
-
 	/// <summary>
 	/// ストリーミングで全マスタ変換を実行
 	/// [Execute all master conversion for streaming]
@@ -104,7 +80,7 @@ public partial class ConvertDb {
 		}
 
 		var elapsed = DateTime.Now - start;
-		_logger.Info("変換処理終了");
+		_logger.Info($"変換処理終了 {elapsed.TotalSeconds:0.0}s");
 
 		yield return new ConvertStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
 	}
@@ -661,6 +637,49 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 		}
 		return cnt;
 	}
-
+	/*
+	public int CnvAfterMaster2(bool isInit = true) {
+		int cnt = 0;
+		var shohinList = _toDb.Fetch<MasterShohin>();
+		if (shohinList != null && shohinList.Count > 0) {
+			foreach (var shohin in shohinList) {
+				if (shohin.Jcolsiz == null)
+					continue;
+				try {
+					var sizeKubun = shohin.SizeKu;
+					if (string.IsNullOrEmpty(sizeKubun) || sizeKubun == ".") {
+						sizeKubun = "SIZ";
+					}
+					foreach (var colsiz in shohin.Jcolsiz) {
+						bool isUpdate = false;
+						if (colsiz.Id_Col == 0 && !string.IsNullOrEmpty(colsiz.Code_Col)) {
+							var col = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["COL", colsiz.Code_Col]);
+							if (col != null) {
+								colsiz.Id_Col = col.Id;
+								colsiz.Mei_Col = col.Name;
+								isUpdate = true;
+							}
+						}
+						if (colsiz.Id_Siz == 0 && !string.IsNullOrEmpty(colsiz.Code_Siz)) {
+							var siz = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [sizeKubun, colsiz.Code_Siz]);
+							if (siz != null) {
+								colsiz.Id_Siz = siz.Id;
+								colsiz.Mei_Siz = siz.Name;
+								isUpdate = true;
+							}
+						}
+						if (isUpdate) {
+							_toDb.Update(shohin);
+							cnt++;
+						}
+					}
+				}
+				catch (Exception ex) {
+					_logger?.Warn(ex, "CnvAfterMaster2: Failed to resolve ColSize for MasterShohin Code={0}", shohin?.Code);
+				}
+			}
+		}
+		return cnt;
+	}*/
 
 }

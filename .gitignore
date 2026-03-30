@@ -38,6 +38,7 @@ systemsettings.json
 # Repository-specific generated or local files
 server-*.db
 test-*.db
+*.db-journal
 printstream.jar
 printdata/
 printdll/

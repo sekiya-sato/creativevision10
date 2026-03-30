@@ -36,8 +36,6 @@ public partial class CvnetCoreService : ICvnetCoreService {
 			[CvnetFlag.Msg001_CopyReply] = HandleCopyReply,
 			[CvnetFlag.Msg002_GetVersion] = HandleGetVersion,
 			[CvnetFlag.Msg003_GetEnv] = HandleGetEnv,
-			[CvnetFlag.MSg040_ConvertDb] = HandleConvertDb,
-			[CvnetFlag.MSg041_ConvertDbInit] = HandleConvertDb,
 			[CvnetFlag.Msg042_GetTableCounts] = HandlerGetTableCounts,
 			[CvnetFlag.Msg101_Op_Query] = (req, ctx) => HandleOpQuery(req, ctx),
 			[CvnetFlag.Msg201_Op_Execute] = (req, ctx) => HandleOpExecute(req, ctx),
@@ -103,63 +101,13 @@ public partial class CvnetCoreService : ICvnetCoreService {
 		}
 
 		// テストストリーミング処理（既存）
-		if (request.Flag is not CvnetFlag.MSg060_StreamingTest) {
-			yield return new StreamMsg {
-				Flag = request.Flag,
-				Code = -1,
-				DataType = typeof(string),
-				DataMsg = "Unimplemented function.",
-				Progress = 0,
-				IsCompleted = true,
-				IsError = true
-			};
+		if (request.Flag is CvnetFlag.MSg060_StreamingTest) {
+			// 追加：HandleConvertTestStreamAsync を呼ぶ
+			await foreach (var msg in HandleConvertTestStreamAsync(ct, request.Flag)) {
+				yield return msg;
+			}
 			yield break;
 		}
-		var start = DateTime.Now;
-		// 処理のステップと対応するアクションを定義
-		var steps = new (string Name, Func<int> Action)[] {
-			("This is First Step", () => SleepTask()),
-			("This is Second Step", () => SleepTask()),
-			("This is Third Step", () => SleepTask()),
-			("This is 4th Step", () => SleepTask()),
-			("This is 5th Step", () => SleepTask()),
-			("This is 6th Step", () => SleepTask()),
-			("This is 7th Step", () => SleepTask()),
-			("This is 8th Step", () => SleepTask()),
-		};
-
-		for (var index = 0; index < steps.Length; index++) {
-			ct.ThrowIfCancellationRequested();
-			var (name, action) = steps[index];
-			var startProgress = index * 100 / steps.Length;
-			yield return new StreamMsg {
-				Flag = request.Flag,
-				Code = 0,
-				DataType = typeof(string),
-				DataMsg = $"開始: {name} ------------",
-				Progress = startProgress
-			};
-
-			var count = action();
-			var endProgress = (int)Math.Round((index + 1) * 100d / steps.Length, MidpointRounding.AwayFromZero);
-			yield return new StreamMsg {
-				Flag = request.Flag,
-				Code = 0,
-				DataType = typeof(string),
-				DataMsg = $"完了: {name} 件数={count}",
-				Progress = endProgress
-			};
-		}
-
-		var elapsed = DateTime.Now - start;
-		yield return new StreamMsg {
-			Flag = request.Flag,
-			Code = 0,
-			DataType = typeof(string),
-			DataMsg = $"完了: {elapsed.TotalSeconds:0.0}s",
-			Progress = 100,
-			IsCompleted = true
-		};
 	}
 
 	/// <summary>
@@ -179,8 +127,8 @@ public partial class CvnetCoreService : ICvnetCoreService {
 				Code = progress.IsError ? -1 : 0,
 				DataType = typeof(string),
 				DataMsg = progress.IsError
-					? $"エラー: {progress.StepName} - {progress.ErrorMessage}"
-					: $"{(progress.IsCompleted ? "完了" : "処理中")}: {progress.StepName} 件数={progress.Count}",
+					? $"エラー: {progress.StepName} - {progress.ErrorMessage} ----{DateTime.Now: MM/dd HH:mm:ss.fff}"
+					: $"{(progress.IsCompleted ? "完了" : "処理中")}: {progress.StepName} 件数={progress.Count} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
 				Progress = progress.Progress,
 				IsCompleted = progress.IsCompleted,
 				IsError = progress.IsError
@@ -188,13 +136,62 @@ public partial class CvnetCoreService : ICvnetCoreService {
 		}
 	}
 	/// <summary>
-	/// ダミーのタスク(時間がかかる処理のシミュレート)
+	/// ダミーのタスク(時間がかかる処理のシミュレート) — 非同期＆キャンセル対応
 	/// </summary>
 	/// <returns></returns>
-	static int SleepTask(int miliSeconds = 1000) {
+	static async Task<int> SleepTaskAsync(int miliSeconds = 1000, CancellationToken ct = default) {
 		for (int i = 0; i < 3; i++) {
-			Thread.Sleep(miliSeconds); // await Task.Delay(miliSeconds);
+			await Task.Delay(miliSeconds, ct);
 		}
 		return 0;
+	}
+
+	private async IAsyncEnumerable<StreamMsg> HandleConvertTestStreamAsync(
+		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct,
+		CvnetFlag flag) {
+		var start = DateTime.Now;
+		var stepNames = new[] {
+			"This is First Step",
+			"This is Second Step",
+			"This is Third Step",
+			"This is 4th Step",
+			"This is 5th Step",
+			"This is 6th Step",
+			"This is 7th Step",
+			"This is 8th Step",
+		};
+
+		for (var index = 0; index < stepNames.Length; index++) {
+			ct.ThrowIfCancellationRequested();
+			var name = stepNames[index];
+			var startProgress = index * 100 / stepNames.Length;
+			yield return new StreamMsg {
+				Flag = flag,
+				Code = 0,
+				DataType = typeof(string),
+				DataMsg = $"開始: {name} ------------ {DateTime.Now: MM/dd HH:mm:ss.fff}",
+				Progress = startProgress
+			};
+
+			var count = await SleepTaskAsync(1000, ct);
+			var endProgress = (int)Math.Round((index + 1) * 100d / stepNames.Length, MidpointRounding.AwayFromZero);
+			yield return new StreamMsg {
+				Flag = flag,
+				Code = 0,
+				DataType = typeof(string),
+				DataMsg = $"完了: {name} 件数={count} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+				Progress = endProgress
+			};
+		}
+
+		var elapsed = DateTime.Now - start;
+		yield return new StreamMsg {
+			Flag = flag,
+			Code = 0,
+			DataType = typeof(string),
+			DataMsg = $"完了: {elapsed.TotalSeconds:0.0}s  ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+			Progress = 100,
+			IsCompleted = true
+		};
 	}
 }

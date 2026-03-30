@@ -7,13 +7,12 @@ using ProtoBuf.Grpc;
 namespace Cvnet10Server.Services;
 
 public partial class CvnetCoreService {
-
 	[AllowAnonymous]
 	public async IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default) {
 		// 処理のステップと対応するアクションを定義
-		var steps = new (string Name, Func<PrintResult> Action)[] {
-			("プリント前処理", () => printPre()),
-			("プリント本処理", () => printPdf()),
+		var steps = new (string Name, Func<PrintOperation, PrintResult> Action)[] {
+			("プリント前処理", (req) => printPre(req)),
+			("プリント本処理", (req) => printPdf(req)),
 		};
 		// ステップ数を取得
 		int totalSteps = steps.Length;
@@ -23,7 +22,7 @@ public partial class CvnetCoreService {
 			var (Name, Action) = steps[i];
 
 			// 現在のステップを実行
-			var result = await Task.Run(Action, context.CancellationToken);
+			var result = await Task.Run(() => Action(request), context.CancellationToken);
 
 			// Progress を計算 (現在のステップ数 / 総ステップ数 * 100)
 			int progress = (int)((i + 1) / (double)totalSteps * 100);
@@ -48,7 +47,8 @@ public partial class CvnetCoreService {
 	/// Print処理本体
 	/// </summary>
 	/// <returns></returns>
-	private PrintResult printPdf() {
+	private PrintResult printPdf(PrintOperation request) {
+
 		var printServer = _configuration.GetSection("PrintServer");
 		string contentRootPath = _env.ContentRootPath;
 		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
@@ -63,11 +63,17 @@ public partial class CvnetCoreService {
 		string resolvedDataDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredDataDir));
 		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
 
+		// ToDo: 現在はテスト的に固定で設定、request から受け取るようにする
+		string form = string.Empty;
+		string data = "data.txt";
+		string outFile = string.Empty;
+		form = "cvnet57prnhinShouka.qfm";
+		outFile = "test_server.pdf";
+		// --------------------------------
 		Directory.CreateDirectory(resolvedOutputDir);
-		// ToDo: 現在はテスト的に固定で設定、あとで引数などで設定できるようにする
-		string formPath = Path.Combine(resolvedFormDir, "cvnet57prnhinShouka.qfm");
-		string dataPath = Path.Combine(resolvedDataDir, "data.txt");
-		string outfileName = "test_server.pdf";
+		string formPath = Path.Combine(resolvedFormDir, form);
+		string dataPath = Path.Combine(resolvedDataDir, data);
+		string outfileName = outFile;
 		_logger.LogWarning($"Print処理開始: ContentRoot={contentRootPath}, PrintBaseDir={configuredBaseDir}, ResolvedBaseDir={resolvedBaseDir}");
 		_logger.LogWarning($"    FormPath={formPath}");
 		_logger.LogWarning($"    DataPath={formPath}");
@@ -86,9 +92,9 @@ public partial class CvnetCoreService {
 	/// <summary>
 	/// Print前処理(SQLでデータ取得など)
 	/// </summary>
-	private PrintResult printPre() {
+	private PrintResult printPre(PrintOperation request) {
 		var start = DateTime.Now;
-		SleepTask(10);
+		var count = SleepTaskAsync(10);
 		var timespan = DateTime.Now - start;
 		var ret = new PrintResult(true, $"Print前処理(ダミーSQL処理): {timespan}");
 		return ret;
