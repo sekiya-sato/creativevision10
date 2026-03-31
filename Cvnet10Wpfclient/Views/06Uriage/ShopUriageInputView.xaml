@@ -221,9 +221,9 @@
 									<DataGridTextColumn Width="100"
 										Binding="{Binding Id}"
 										Header="伝票No" />
-									<DataGridTextColumn Width="120"
-										Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}}"
-										Header="計上日" />
+								<DataGridTextColumn Width="120"
+									Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+									Header="計上日" />
 									<DataGridTextColumn Width="100"
 										Binding="{Binding VTenpo.Cd}"
 										Header="店舗CD" />

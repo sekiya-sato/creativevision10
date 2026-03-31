@@ -504,3 +504,19 @@
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、警告0）
 
 ---
+
+## [2026-03-31] 22:30 ShopUriageInputView 計上日の表示フォーマット修正
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ShopUriageInputViewの一覧DataGridで計上日が「YYYY/MM/DD hh:mm:ss」と時刻まで表示されているのを「YYYY/MM/DD」のみに変更
+### 実施内容
+- Cvnet10Wpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧DataGridの計上日カラムのBindingに `StringFormat=yyyy/MM/dd` を追加
+### 技術決定 Why
+- DateYmd8Converterは "yyyyMMdd" stringをDateTime?に変換するため、DataGridTextColumnはDateTimeのデフォルトToString()で時刻まで表示されてしまう。StringFormatで表示形式を明示的に指定することで日付のみの表示とした
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、既存警告のみ）
+
+---
