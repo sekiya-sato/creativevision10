@@ -32,6 +32,23 @@
 
 ---
 
+## [2026-03-31] 17:30 SysLoginHistoryView に社員名表示を追加
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SysLoginHistoryView の右側詳細パネルで、ログインIDに対応したユーザ名（MasterShain の Code, Name）も表示する。ログインIDと有効期限の間に1行で配置。
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/00System/SysLoginHistoryViewModel.cs: AfterList で SysLogin を一括取得し loginId → 社員表示文字列のマッピングを構築。OnCurrentEditChangedCore で選択変更時に ShainDisplay を更新。
+- Cvnet10Wpfclient/Views/00System/SysLoginHistoryView.xaml: 右パネル詳細の Grid に Row を1行追加（Row 1: 社員）。ログインId(Row 0) と有効期限(Row 2) の間に ShainDisplay をバインド表示。既存行を Row+1 にシフト。
+### 技術決定 Why
+- SysHistJwt には社員情報が直接保持されていないため、Id_Login → SysLogin → VShain (CodeNameView) の間接参照で解決。AfterList での一括取得により N+1 問題を回避。
+### 確認
+- WPFクライアントビルド成功（0 エラー、既存警告のみ）
+
+---
+
 ## [2026-03-29] 18:31 opentmux 3ペイン集中作業向け設定
 ### Agent
 - gpt-5.4 : OpenAI

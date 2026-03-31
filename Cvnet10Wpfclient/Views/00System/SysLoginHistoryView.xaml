@@ -223,6 +223,7 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<!--  ログインId  -->
@@ -235,91 +236,101 @@
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Id_Login}" />
 
-								<!--  有効期限  -->
+								<!--  社員 (Code Name)  -->
 								<TextBlock Grid.Row="1"
 									Style="{StaticResource FormLabel}"
-									Text="有効期限" />
+									Text="社員" />
 								<TextBox Grid.Row="1" Grid.Column="1"
+									materialDesign:HintAssist.Hint="社員"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding ShainDisplay, Mode=OneWay}" />
+
+								<!--  有効期限  -->
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="有効期限" />
+								<TextBox Grid.Row="2" Grid.Column="1"
 									materialDesign:HintAssist.Hint="有効期限"
 									Style="{StaticResource FormTextBox}"
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.ExpDate, Converter={StaticResource DateTimeYmdHmsConverter}}" />
 
 								<!--  IP  -->
-								<TextBlock Grid.Row="2"
+								<TextBlock Grid.Row="3"
 									Style="{StaticResource FormLabel}"
 									Text="IP" />
-								<TextBox Grid.Row="2" Grid.Column="1"
+								<TextBox Grid.Row="3" Grid.Column="1"
 									materialDesign:HintAssist.Hint="IP"
 									Style="{StaticResource FormTextBox}"
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Ip}" />
 
 								<!--  操作  -->
-								<TextBlock Grid.Row="3"
+								<TextBlock Grid.Row="4"
 									Style="{StaticResource FormLabel}"
 									Text="操作" />
-								<TextBox Grid.Row="3" Grid.Column="1"
+								<TextBox Grid.Row="4" Grid.Column="1"
 									materialDesign:HintAssist.Hint="操作"
 									Style="{StaticResource FormTextBox}"
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Op}" />
 
 								<!--  マシン名  -->
-								<TextBlock Grid.Row="4"
+								<TextBlock Grid.Row="5"
 									Style="{StaticResource FormLabel}"
 									Text="マシン名" />
-								<TextBox Grid.Row="4" Grid.Column="1"
+								<TextBox Grid.Row="5" Grid.Column="1"
 									materialDesign:HintAssist.Hint="マシン名"
 									Style="{StaticResource FormTextBox}"
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.Machine}" />
 
 								<!--  ユーザー  -->
-								<TextBlock Grid.Row="5"
+								<TextBlock Grid.Row="6"
 									Style="{StaticResource FormLabel}"
 									Text="ユーザー" />
-								<TextBox Grid.Row="5" Grid.Column="1"
+								<TextBox Grid.Row="6" Grid.Column="1"
 									materialDesign:HintAssist.Hint="ユーザー"
 									Style="{StaticResource FormTextBox}"
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.User}" />
 
 								<!--  OS  -->
-								<TextBlock Grid.Row="6"
+								<TextBlock Grid.Row="7"
 									Style="{StaticResource FormLabel}"
 									Text="OS" />
-								<TextBox Grid.Row="6" Grid.Column="1"
+								<TextBox Grid.Row="7" Grid.Column="1"
 									materialDesign:HintAssist.Hint="OS"
 									Style="{StaticResource FormTextBox}"
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.OsVer}" />
 
 								<!--  IPアドレス  -->
-								<TextBlock Grid.Row="7"
+								<TextBlock Grid.Row="8"
 									Style="{StaticResource FormLabel}"
 									Text="IPアドレス" />
-								<TextBox Grid.Row="7" Grid.Column="1"
+								<TextBox Grid.Row="8" Grid.Column="1"
 									materialDesign:HintAssist.Hint="IPアドレス"
 									Style="{StaticResource FormTextBox}"
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.IpAddress}" />
 
 								<!--  MACアドレス  -->
-								<TextBlock Grid.Row="8"
+								<TextBlock Grid.Row="9"
 									Style="{StaticResource FormLabel}"
 									Text="MACアドレス" />
-								<TextBox Grid.Row="8" Grid.Column="1"
+								<TextBox Grid.Row="9" Grid.Column="1"
 									materialDesign:HintAssist.Hint="MACアドレス"
 									Style="{StaticResource FormTextBox}"
 									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.MacAddress}" />
 
 								<!--  登録日  -->
-								<TextBlock Grid.Row="9"
+								<TextBlock Grid.Row="10"
 									Style="{StaticResource FormLabel}"
 									Text="登録日" />
-								<TextBlock Grid.Row="9" Grid.Column="1"
+								<TextBlock Grid.Row="10" Grid.Column="1"
 									Margin="0,4" VerticalAlignment="Center"
 									Foreground="{DynamicResource MaterialDesignBody}"
 									FontSize="14"
