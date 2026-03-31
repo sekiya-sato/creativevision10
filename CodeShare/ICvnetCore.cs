@@ -167,7 +167,7 @@ public enum CvnetFlag {
 [ServiceContract]
 public interface ICvnetCoreService {
 	/// <summary>
-	/// 一般リクエストを送信する
+	/// MSG種別に応じたリクエストを送信する
 	/// [Send general request]
 	/// </summary>
 	/// <param name="request">パラメータは1つのみ</param>
@@ -175,18 +175,8 @@ public interface ICvnetCoreService {
 	/// <returns></returns>
 	[OperationContract]
 	Task<CvnetMsg> QueryMsgAsync(CvnetMsg request, CallContext context = default);
-
 	/// <summary>
-	/// 単純メッセージ送受信（FlagのみでDataMsgは空のまま）
-	/// </summary>
-	/// <param name="flag"></param>
-	/// <param name="context"></param>
-	/// <returns></returns>
-	[OperationContract]
-	Task<CvnetMsg> QueryGetSimpleMsgAsync(CvnetFlag flag, CallContext context = default);
-
-	/// <summary>
-	/// ストリーミングで一般リクエストを送信する
+	/// ストリーミングでMSG種別に応じたリクエストを送信する
 	/// </summary>
 	/// <param name="request">パラメータは1つのみ</param>
 	/// <param name="context"></param>

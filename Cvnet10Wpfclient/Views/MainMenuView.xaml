@@ -18,6 +18,8 @@
 			Command="{Binding ShowLoginCommand}" />
 		<KeyBinding Key="F11"
 			Command="{Binding ShowRefreshCommand}" />
+		<KeyBinding Key="F10"
+			Command="{Binding ShowSettingCommand}" />
 	</Window.InputBindings>
 
 	<shell:WindowChrome.WindowChrome>
@@ -207,9 +209,11 @@
 										Foreground="{DynamicResource MenuTitleColor}"
 										Style="{StaticResource SectionTitleText}"
 										Text="Server Status" />
-									<TextBlock FontSize="14" Margin="10,0,10,0"
+									<TextBlock Margin="10,0,10,0"
+										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
-										Text="{Binding ServerStatus}" />
+										Text="{Binding ServerStatus}"
+										TextWrapping="Wrap" />
 								</StackPanel>
 							</Border>
 							<Border Grid.Column="1"
@@ -222,9 +226,11 @@
 										Foreground="{DynamicResource MenuTitleColor}"
 										Style="{StaticResource SectionTitleText}"
 										Text="User Status" />
-									<TextBlock FontSize="14" Margin="10,0,10,0"
+									<TextBlock Margin="10,0,10,0"
+										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
-										Text="{Binding ClientStatus}" />
+										Text="{Binding ClientStatus}"
+										TextWrapping="Wrap" />
 								</StackPanel>
 							</Border>
 						</Grid>
@@ -233,9 +239,14 @@
 							Background="{DynamicResource panelColor}"
 							Style="{StaticResource MainMenuDashboardCard}">
 							<StackPanel>
-								<TextBlock Foreground="{DynamicResource MenuTitleColor}"
-									Style="{StaticResource SectionTitleText}"
-									Text="選択中メニュー  (DoubleClick)" />
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Foreground="{DynamicResource MenuTitleColor}"
+										Style="{StaticResource SectionTitleText}"
+										Text="選択中メニュー" />
+									<TextBlock Margin="10"
+										Foreground="{DynamicResource plainTextColor0}"
+										Opacity="0.6" Text="    メニューをダブルクリックすると画面が起動します。" TextWrapping="Wrap" />
+								</StackPanel>
 								<TextBlock FontSize="22" FontWeight="Bold"
 									Foreground="{DynamicResource plainTextColor0}"
 									Text="{Binding SelectedMenu.Header}" />
@@ -243,9 +254,6 @@
 									Foreground="{DynamicResource plainTextColor0}"
 									Opacity="0.8"
 									Text="{Binding SelectedMenu.AddInfo}" />
-								<TextBlock Margin="0,2,0,2"
-									Foreground="{DynamicResource plainTextColor0}"
-									Opacity="0.7" Text="メニューをダブルクリックすると画面が起動します。" TextWrapping="Wrap" />
 								<TextBlock Margin="0,2,0,2"
 									d:Text="マルチウィンドウ画面"
 									Foreground="{DynamicResource plainTextColor0}"

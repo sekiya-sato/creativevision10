@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Cvnet10Wpfclient.Views;
 using System.Collections.ObjectModel;
 
@@ -48,22 +48,23 @@ public partial class MenuData : ObservableObject {
 
 	public static ObservableCollection<MenuData> CreateDefault() {
 		return new([
-		new("■ 管理メニュー / 接続テスト", new([
+		new("■ 管理メニュー / テスト画面", new([
+			/*
 			new("ログイン", typeof(Views._00System.LoginView), true, 0, "gPRC"),
 			new("リフレッシュ", typeof(Views._00System.LoginView), true, 1, "gRPC"),
 			new("環境設定", typeof(Views._00System.SysSetConfigView), true),
-			new("サンプル画面 ---", typeof(SampleView), false, addInfo:"gRPC"),
+			new("", new([
+				new("", typeof(object), false, addInfo:"準備中"),
+				new("", typeof(object), false, addInfo:"準備中"),
+			])),
+			*/
 			new("システム管理マスタ", typeof(Views._01Master.MasterSysKanriMenteView), false, addInfo:"gRPC"),
 			new("ログイン管理マスタ", typeof(Views._00System.SysLoginView), false, addInfo:"gRPC"),
 			new("ログイン履歴情報", typeof(Views._00System.SysLoginHistoryView), false, addInfo:"gRPC"),
 			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), false, addInfo:"準備中"), // SysAutoExecHistoryView
+	        /* ================================ */
+			new("サンプル画面 ---", typeof(SampleView), false, addInfo:"gRPC"),
 			new("Test画面--", typeof(Views.Sub.RangeInputParamView), false, addInfo:"一時的なテストで使用"),
-			/*
-		new("", new([
-			new("", typeof(object), false, addInfo:"準備中"),
-			new("", typeof(object), false, addInfo:"準備中"),
-		])),
-			*/
 		])),
 		new("■ マスター", new([
 			new("名称マスタメンテ", typeof(Views._01Master.MasterMeishoMenteView), false, addInfo:"Generic name setup"),

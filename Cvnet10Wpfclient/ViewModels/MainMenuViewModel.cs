@@ -66,6 +66,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		public string? ProductVer = null;
 		public string? BuildDate = null;
 		public string? StartTime = null;
+		public string? BaseDir = null;
 		public InfoServer() {
 		}
 	}
@@ -99,14 +100,14 @@ public partial class MainMenuViewModel : ObservableObject {
 		infoUser.DotnetVer = Environment.Version.ToString();
 		infoUser.ComputerName = Environment.MachineName;
 		infoUser.UserName = Environment.UserName;
-		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("MM/dd HH:mm")}\n{infoUser.OsVer ?? "OS-version"}\nDOTNET {infoUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {infoUser.ComputerName} {infoUser.UserName}\nLogin時間 {infoUser.LoginTime ?? "??:??:??"}\nExpire時間 {infoUser.ExpireTime ?? "??:??:??"}";
+		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{infoUser.OsVer ?? "OS-version"}\nDOTNET {infoUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {infoUser.ComputerName} {infoUser.UserName}\nLogin時間 {infoUser.LoginTime ?? "??:??:??"}\nExpire時間 {infoUser.ExpireTime ?? "??:??:??"}";
 	}
 
 	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
-		StatusMessage = $"メニューを選択してください。 \nF12でログイン画面、F11でトークンリフレッシュ画面";
-		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \nサーバ開始時間{infoServer.StartTime ?? "??:??:??"}\n{infoServer.ProductVer ?? "Product Version"}\nBuildDate {infoServer.BuildDate ?? "??:??:??"}";
-		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("MM/dd HH:mm")}\n{infoUser.OsVer ?? "OS-version"}\nDOTNET {infoUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {infoUser.ComputerName} {infoUser.UserName}\nLogin時間 {infoUser.LoginTime ?? "??:??:??"}\nExpire時間 {infoUser.ExpireTime ?? "??:??:??"}";
+		StatusMessage = $"メニューを選択してください。 \nF10: 環境設定,  F11: トークンリフレッシュ画面, F12: ログイン画面";
+		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {infoServer.ProductVer ?? "Product Version"}\nサーバ開始時間 {infoServer.StartTime ?? "??:??:??"}\nビルド日付 {infoServer.BuildDate ?? "??:??:??"}\nベースDir {infoServer.BaseDir}";
+		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{infoUser.OsVer ?? "OS-version"}\nDOTNET {infoUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {infoUser.ComputerName} {infoUser.UserName}\nLogin 時間 {infoUser.LoginTime ?? "??:??:??"}\nExpire時間 {infoUser.ExpireTime ?? "??:??:??"}";
 	}
 
 	[RelayCommand]
@@ -191,21 +192,22 @@ public partial class MainMenuViewModel : ObservableObject {
 	async Task afterLogin(_00System.LoginViewModel vm) {
 		ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
 		_subStartTime = DateTime.Now;
-		infoUser.LoginTime = DateTime.Now.ToString("MM/dd HH:mm:ss");
+		infoUser.LoginTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		infoUser.ExpireTime = ExpireDate;
 		try {
 			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-			var reply = await coreService.QueryGetSimpleMsgAsync(CvnetFlag.Msg002_GetVersion, AppGlobal.GetDefaultCallContext());
+			var msg = new CvnetMsg { Flag = CvnetFlag.Msg002_GetVersion };
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
 			var version = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as Cvnet10Base.Share.VersionInfo;
 			infoServer.ProductVer = $"{version?.Product} {version?.Version}";
+			infoServer.StartTime = version?.StartTime.ToString("yyyy/MM/dd HH:mm:ss");
 			infoServer.BuildDate = version?.BuildDate.ToString("yyyy/MM/dd HH:mm:ss");
+			infoServer.BaseDir = version?.BaseDir ?? "";
 		}
 		catch (Exception ex) {
 		}
 		SetSubMessage();
 	}
-
-
 
 	/// <summary>ショートカットでログイン画面を呼び出す</summary>
 	[RelayCommand]
@@ -227,6 +229,16 @@ public partial class MainMenuViewModel : ObservableObject {
 				await afterLogin(vm);
 		}
 	}
+	[RelayCommand]
+	async private Task ShowSetting() {
+		ClientLib.ExitAllWithoutMe(this);
+		var view = new Views._00System.SysSetConfigView { Title = "環境設定" };
+		if (view.DataContext is _00System.SysSetConfigViewModel vm) {
+			if (ClientLib.ShowDialogView(view, this, IsDialog: true) == true)
+				SetSubMessage();
+		}
+	}
+
 
 	[RelayCommand]
 	private void ToggleTheme() {
