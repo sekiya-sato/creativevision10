@@ -5,12 +5,18 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PrintEnable Condition="'$(PrintEnable)' == ''">$(printenable)</PrintEnable>
+    <PrintEnable Condition="'$(PrintEnable)' == ''">false</PrintEnable>
   </PropertyGroup>
 
-  <ItemGroup>
+  <PropertyGroup Condition="'$(PrintEnable)' == 'true'">
+    <DefineConstants>$(DefineConstants);PRINT_ENABLE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(PrintEnable)' == 'true'">
     <PackageReference Include="IKVM" />
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(PrintEnable)' == 'true'">
     <IkvmReference Include="printstream.jar">
       <AssemblyName>printstream</AssemblyName>
       <AssemblyVersion>1.0.0.0</AssemblyVersion>

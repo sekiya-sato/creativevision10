@@ -32,6 +32,26 @@
 
 ---
 
+## [2026-04-01] 08:55 Cvnet10Prints の printenable 切替対応
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：VS2026のソリューションで、環境変数 `printenable` を使って `Cvnet10Prints.csproj` の `printstream.jar` / IKVM 参照を内部実装だけ切り替えたい
+### 実施内容
+- Cvnet10Prints/Cvnet10Prints.csproj: 環境変数 `printenable` を `PrintEnable` プロパティとして受け取り、`true` 時のみ `PRINT_ENABLE` 定義、`IKVM` の `PackageReference`、`printstream.jar` の `IkvmReference` を有効化
+- Cvnet10Prints/PrintAdapter.cs: `jp.axissoft.printstream` の using と PrintStream 利用処理を `#if PRINT_ENABLE` で分岐し、無効時はダミー結果を返す実装に変更
+### 技術決定 Why
+- `Cvnet10Prints` の公開APIを維持したまま内部実装だけを切り替えることで、`Cvnet10Server` やテストプロジェクトの `ProjectReference` を変更せずにビルド構成だけで印刷機能の有効/無効を切り替えられるため
+### 確認
+- `set printenable=false&& C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Prints/Cvnet10Prints.csproj` → ビルド成功
+- `set printenable=true&& C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Prints/Cvnet10Prints.csproj` → ビルド成功
+- `set printenable=false&& C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj` → ビルド成功
+- `set printenable=true&& C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj` → ビルド成功
+
+---
+
 ## [2026-03-31] 22:15 マスターメンテ系「詳細を読み込みました」メッセージ非表示化
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot

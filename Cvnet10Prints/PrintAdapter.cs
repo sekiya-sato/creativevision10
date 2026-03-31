@@ -1,4 +1,6 @@
+#if PRINT_ENABLE
 using jp.axissoft.printstream;
+#endif
 
 
 namespace Cvnet10Prints;
@@ -13,6 +15,7 @@ public class PrintAdapter : IPrintService {
 	/// <param name="context"></param>
 	/// <returns></returns>
 	public async Task<PrintResult> ExecutePrintAsync(PrintContext context) {
+		#if PRINT_ENABLE
 		// レガシーなJava同期処理を別スレッドで実行
 		return await Task.Run(() => {
 			// メソッド内でインスタンス化し、スレッドセーフを確保
@@ -41,6 +44,10 @@ public class PrintAdapter : IPrintService {
 				return new PrintResult(false, ex.Message);
 			}
 		});
+		#else
+		await Task.CompletedTask;
+		return new PrintResult(false, "Print機能は無効です。環境変数 printenable=true を設定してください。");
+		#endif
 	}
 	/// <summary>
 	/// ライセンスの登録
@@ -50,6 +57,7 @@ public class PrintAdapter : IPrintService {
 	/// <param name="key"></param>
 	/// <returns></returns>
 	public async Task<bool> RegisterLicenseAsync(string product, string serial, string key) {
+		#if PRINT_ENABLE
 		return await Task.Run(() => {
 			try {
 				var writer = new FormWriter();
@@ -62,12 +70,17 @@ public class PrintAdapter : IPrintService {
 				return false;
 			}
 		});
+		#else
+		await Task.CompletedTask;
+		return false;
+		#endif
 	}
 	/// <summary>
 	/// ライセンス状態の確認
 	/// </summary>
 	/// <returns></returns>
 	public async Task<List<PrintProduct>> CheckLicenseAsync() {
+		#if PRINT_ENABLE
 		return await Task.Run(() => {
 			List<PrintProduct> ret = [];
 			try {
@@ -87,6 +100,10 @@ public class PrintAdapter : IPrintService {
 				return ret;
 			}
 		});
+		#else
+		await Task.CompletedTask;
+		return [];
+		#endif
 	}
 
 }
