@@ -181,15 +181,14 @@
 						Background="{DynamicResource MaterialDesignToolBarBackground}"
 						CornerRadius="8,8,0,0">
 						<DockPanel>
-               <TextBlock VerticalAlignment="Center"
+							<TextBlock VerticalAlignment="Center"
 								DockPanel.Dock="Right" FontSize="13"
 								Foreground="{DynamicResource MaterialDesignBodyLight}"
-                    Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
-				<TextBlock VerticalAlignment="Center"
-					DockPanel.Dock="Right" FontSize="13"
-					Foreground="{DynamicResource MaterialDesignBodyLight}"
-					Margin="12,0,0,0"
-					Text="{Binding InteractionTriggersCount, StringFormat={}Triggers: {0}}" />
+								Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+							<TextBlock Margin="12,0,0,0" VerticalAlignment="Center"
+								DockPanel.Dock="Right" FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding InteractionTriggersCount, StringFormat={}Triggers: {0}}" />
 							<TextBlock VerticalAlignment="Center"
 								FontSize="13"
 								Foreground="{DynamicResource MaterialDesignBodyLight}"
@@ -922,8 +921,7 @@
 												<ComboBox Margin="2"
 													ItemsSource="{Binding DataContext.KubunOptions, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
 													SelectedItem="{Binding Kb, UpdateSourceTrigger=PropertyChanged}"
-													Style="{StaticResource MaterialDesignComboBox}">
-												</ComboBox>
+													Style="{StaticResource MaterialDesignComboBox}" />
 											</DataTemplate>
 										</DataGridTemplateColumn.CellTemplate>
 									</DataGridTemplateColumn>
@@ -964,7 +962,7 @@
 										Header="名称" IsReadOnly="True" />
 									<DataGridTextColumn Width="*"
 										Binding="{Binding Kbname}"
-										Header="区分名"  />
+										Header="区分名" />
 								</DataGrid.Columns>
 								<DataGrid.ColumnHeaderStyle>
 									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"

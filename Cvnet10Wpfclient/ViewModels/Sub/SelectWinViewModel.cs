@@ -24,8 +24,25 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 	long StartPos = 0;
 
 
+	bool isLocalData;
+
+	/// <summary>
+	/// ローカルデータをセットし、サーバー問い合わせをスキップする
+	/// </summary>
+	public void SetLocalData<T>(IEnumerable<T> items, string title = "選択画面", long startPos = 0) where T : BaseDbClass {
+		isLocalData = true;
+		Title = title;
+		StartPos = startPos;
+		ListData = new ObservableCollection<dynamic>(items.Cast<dynamic>());
+		Count = ListData.Count;
+		Current = StartPos != 0
+			? ListData.FirstOrDefault(x => x.Id == StartPos) ?? ListData.FirstOrDefault()
+			: ListData.FirstOrDefault();
+	}
+
 	[RelayCommand]
 	async Task Init(CancellationToken ct) {
+		if (isLocalData) return;
 		await InitList(ct);
 	}
 

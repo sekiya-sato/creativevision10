@@ -454,3 +454,36 @@
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` → ビルド成功（エラー0、警告0）
 
 ---
+
+## [2026-03-31] 17:00 ShopUriageInputView UIレイアウト変更 & Jcolsizベースのカラー/サイズ検索実装
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：指示書 `Doc/wrk/instruction-20260331-modify-traninput.txt` に従い、ShopUriageInputViewのUI改善とカラーCD/サイズCD検索をMasterShohin.Jcolsizベースに変更する
+### 実施内容
+- Cvnet10Wpfclient/Views/06Uriage/ShopUriageInputView.xaml:
+  - ボタンテキスト変更: '行追加'→'明細行追加', '行削除'→'明細行削除'
+  - 明細フォームから伝票No行を削除（タブヘッダーで既に表示済みのため）
+  - 計上日・区分・合計数量・合計金額をWrapPanelで横並びレイアウトに変更
+  - 店舗・倉庫・メモは従来通り縦並びGridで維持
+- Cvnet10Wpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs:
+  - `currentShohinJcolsiz`フィールド追加: 選択商品のJcolsizを保持
+  - `DoSelectShohin`強化: 商品選択時にJcolsizを保存し、カラー/サイズ/JANコードをクリア
+  - `DoSelectCol`修正: Jcolsiz存在時はローカルデータから重複なしカラー候補を表示
+  - `DoSelectSiz`修正: Jcolsiz存在時はローカルデータからサイズ候補を表示（選択済みカラーCDでフィルタ）、サイズ選択時にJan1をJanCodeに自動適用
+  - `ShowLocalSelectDialog`ヘルパー追加: MasterMeisho形式のローカルデータでSelectWinViewを表示
+  - `ApplyJanCodeFromJcolsiz`ヘルパー追加: カラー/サイズ両方選択時にJcolsizからJanCodeを自動適用
+- Cvnet10Wpfclient/ViewModels/Sub/SelectWinViewModel.cs:
+  - `SetLocalData<T>`メソッド追加: ローカルデータをサーバークエリなしで選択ダイアログに設定
+  - `isLocalData`フラグ追加: Init時のサーバークエリをスキップ制御
+### 技術決定 Why
+- MasterShohinColSizは独立テーブルではなく、MasterShohin.Jcolsiz列にJSON格納されているため、サーバークエリではなくローカルデータとして選択ダイアログに渡す方式を採用
+- SelectWinViewModelにSetLocalDataを追加することで、既存のSelectWinView UIを再利用しつつローカルデータ選択に対応
+- BaseWindow.OnContentRenderedがInitCommandを自動実行するため、isLocalDataフラグでサーバークエリスキップを制御
+- カラー選択時はDistinctByで重複除去、サイズ選択時は選択済みカラーCDでフィルタリングし、商品に紐づく適切な候補のみ表示
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、警告0）
+
+---

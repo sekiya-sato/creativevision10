@@ -74,6 +74,17 @@
 			<DockPanel>
 				<!--  右側: CRUD ボタン群  -->
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<StackPanel.Style>
+						<Style	TargetType="StackPanel">
+							<Setter Property="Visibility" Value="Visible" />
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding SelectedTabIndex}"
+											Value="0">
+									<Setter Property="Visibility" Value="Collapsed" />
+								</DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</StackPanel.Style>
 					<Button Margin="4,0"
 						Command="{Binding DoUpdateCommand}"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
@@ -126,15 +137,28 @@
 					<Rectangle Width="1"
 						Margin="16,4"
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
-						Opacity="0.3" />
+						Opacity="0.3" >
+					</Rectangle>
 					<Button Command="{Binding DoListCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
 						ToolTip="一覧取得 (F5)">
+						<Button.Style>
+							<Style BasedOn="{StaticResource MaterialDesignToolForegroundButton}"
+								TargetType="Button">
+								<Setter Property="Visibility" Value="Visible" />
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding SelectedTabIndex}"
+											Value="1">
+										<Setter Property="Visibility" Value="Collapsed" />
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</Button.Style>
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="DatabaseSearch" />
 							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="一覧取得" />
+								Text="一覧取得" >
+							</TextBlock>
 						</StackPanel>
 					</Button>
 				</StackPanel>
@@ -240,7 +264,7 @@
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 							Kind="FileDocumentEdit" />
-						<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}Id:{0}}" />
+						<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}伝票番号:{0}}" />
 					</StackPanel>
 				</TabItem.Header>
 				<Grid Margin="12">
@@ -260,7 +284,7 @@
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="Plus" />
 								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="行追加" />
+									Text="明細行追加" />
 							</StackPanel>
 						</Button>
 						<Button Margin="8,0"
@@ -270,7 +294,7 @@
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="Delete" />
 								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="行削除" />
+									Text="明細行削除" />
 							</StackPanel>
 						</Button>
 					</StackPanel>
@@ -279,133 +303,120 @@
 						MaxHeight="300"
 						Padding="10,10,20,20"
 						VerticalScrollBarVisibility="Auto">
-						<Grid>
-							<Grid.ColumnDefinitions>
-								<ColumnDefinition Width="110" />
-								<ColumnDefinition Width="*" />
-							</Grid.ColumnDefinitions>
-							<Grid.RowDefinitions>
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-							</Grid.RowDefinitions>
+						<StackPanel>
+							<!--  横並び: 計上日・区分・合計数量・合計金額  -->
+							<WrapPanel Margin="0,4"
+								Orientation="Horizontal">
+								<StackPanel Margin="0,0,16,0"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="計上日" />
+									<DatePicker Width="150" Margin="0,4"
+										materialDesign:HintAssist.Hint="計上日" IsTodayHighlighted="False"
+										SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+										Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+								</StackPanel>
+								<StackPanel Margin="0,0,16,0"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="区分" />
+									<ComboBox Width="150" Margin="0,4"
+										materialDesign:HintAssist.Hint="区分"
+										ItemsSource="{Binding KubunOptions}"
+										SelectedItem="{Binding CurrentEdit.EnKubun}"
+										Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+								</StackPanel>
+								<StackPanel Margin="0,0,16,0"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="合計数量" />
+									<TextBox Width="120" Margin="0,4"
+										materialDesign:HintAssist.Hint="合計数量" IsReadOnly="True"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding CurrentEdit.SuTotal}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="合計金額" />
+									<TextBox Width="120" Margin="0,4"
+										materialDesign:HintAssist.Hint="合計金額" IsReadOnly="True"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding CurrentEdit.KingakuTotal}" />
+								</StackPanel>
+							</WrapPanel>
 
-							<!--  伝票No  -->
-							<TextBlock Grid.Row="0"
-								Style="{StaticResource FormLabel}"
-								Text="伝票No" />
-							<TextBox Grid.Row="0" Grid.Column="1"
-								Width="150" HorizontalAlignment="Left"
-								materialDesign:HintAssist.Hint="伝票No" IsReadOnly="True"
-								Style="{StaticResource FormTextBox}"
-								Text="{Binding CurrentEdit.Id}" />
+							<!--  縦並び: 店舗・倉庫・メモ  -->
+							<Grid Margin="0,4,0,0">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
 
-							<!--  計上日  -->
-							<TextBlock Grid.Row="1"
-								Style="{StaticResource FormLabel}"
-								Text="計上日" />
-							<DatePicker Grid.Row="1" Grid.Column="1"
-								Width="150" Margin="0,4" HorizontalAlignment="Left"
-								materialDesign:HintAssist.Hint="計上日" IsTodayHighlighted="False"
-								SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-								Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+								<!--  店舗  -->
+								<TextBlock Grid.Row="0"
+									Style="{StaticResource FormLabel}"
+									Text="店舗" />
+								<DockPanel Grid.Row="0" Grid.Column="1"
+									Margin="0,4">
+									<helpers:SearchTextBox Width="120" Height="36"
+										BorderThickness="0,0,0,1"
+										Command="{Binding DoSelectTenpoCommand}"
+										DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}"
+										TextHorizontalContentAlignment="Left" />
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBody}">
+										<TextBlock.Text>
+											<MultiBinding StringFormat="{}{0} {1}">
+												<Binding Path="CurrentEdit.VTenpo.Cd" />
+												<Binding Path="CurrentEdit.VTenpo.Mei" />
+											</MultiBinding>
+										</TextBlock.Text>
+									</TextBlock>
+								</DockPanel>
 
-							<!--  区分  -->
-							<TextBlock Grid.Row="2"
-								Style="{StaticResource FormLabel}"
-								Text="区分" />
-							<ComboBox Grid.Row="2" Grid.Column="1"
-								Width="150" Margin="0,4" HorizontalAlignment="Left"
-								materialDesign:HintAssist.Hint="区分"
-								ItemsSource="{Binding KubunOptions}"
-								SelectedItem="{Binding CurrentEdit.EnKubun}"
-								Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+								<!--  倉庫  -->
+								<TextBlock Grid.Row="1"
+									Style="{StaticResource FormLabel}"
+									Text="倉庫" />
+								<DockPanel Grid.Row="1" Grid.Column="1"
+									Margin="0,4">
+									<helpers:SearchTextBox Width="120" Height="36"
+										BorderThickness="0,0,0,1"
+										Command="{Binding DoSelectSokoCommand}"
+										DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}"
+										TextHorizontalContentAlignment="Left" />
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBody}">
+										<TextBlock.Text>
+											<MultiBinding StringFormat="{}{0} {1}">
+												<Binding Path="CurrentEdit.VSoko.Cd" />
+												<Binding Path="CurrentEdit.VSoko.Mei" />
+											</MultiBinding>
+										</TextBlock.Text>
+									</TextBlock>
+								</DockPanel>
 
-							<!--  店舗  -->
-							<TextBlock Grid.Row="3"
-								Style="{StaticResource FormLabel}"
-								Text="店舗" />
-							<DockPanel Grid.Row="3" Grid.Column="1"
-								Margin="0,4">
-								<helpers:SearchTextBox Width="120" Height="36"
-									BorderThickness="0,0,0,1"
-									Command="{Binding DoSelectTenpoCommand}"
-									DockPanel.Dock="Left"
-									Style="{StaticResource MenteSearchTextBox}"
-									Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}"
-									TextHorizontalContentAlignment="Left" />
-								<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}">
-									<TextBlock.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VTenpo.Cd" />
-											<Binding Path="CurrentEdit.VTenpo.Mei" />
-										</MultiBinding>
-									</TextBlock.Text>
-								</TextBlock>
-							</DockPanel>
-
-							<!--  倉庫  -->
-							<TextBlock Grid.Row="4"
-								Style="{StaticResource FormLabel}"
-								Text="倉庫" />
-							<DockPanel Grid.Row="4" Grid.Column="1"
-								Margin="0,4">
-								<helpers:SearchTextBox Width="120" Height="36"
-									BorderThickness="0,0,0,1"
-									Command="{Binding DoSelectSokoCommand}"
-									DockPanel.Dock="Left"
-									Style="{StaticResource MenteSearchTextBox}"
-									Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}"
-									TextHorizontalContentAlignment="Left" />
-								<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}">
-									<TextBlock.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VSoko.Cd" />
-											<Binding Path="CurrentEdit.VSoko.Mei" />
-										</MultiBinding>
-									</TextBlock.Text>
-								</TextBlock>
-							</DockPanel>
-
-							<!--  メモ  -->
-							<TextBlock Grid.Row="5"
-								Style="{StaticResource FormLabel}"
-								Text="メモ" />
-							<TextBox Grid.Row="5" Grid.Column="1"
-								MinHeight="50"
-								materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
-								Style="{StaticResource FormTextBox}"
-								Text="{Binding CurrentEdit.Memo}"
-								TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
-
-							<!--  合計数量  -->
-							<TextBlock Grid.Row="6"
-								Style="{StaticResource FormLabel}"
-								Text="合計数量" />
-							<TextBox Grid.Row="6" Grid.Column="1"
-								Width="150" HorizontalAlignment="Left"
-								materialDesign:HintAssist.Hint="合計数量" IsReadOnly="True"
-								Style="{StaticResource FormTextBox}"
-								Text="{Binding CurrentEdit.SuTotal}" />
-
-							<!--  合計金額  -->
-							<TextBlock Grid.Row="7"
-								Style="{StaticResource FormLabel}"
-								Text="合計金額" />
-							<TextBox Grid.Row="7" Grid.Column="1"
-								Width="150" HorizontalAlignment="Left"
-								materialDesign:HintAssist.Hint="合計金額" IsReadOnly="True"
-								Style="{StaticResource FormTextBox}"
-								Text="{Binding CurrentEdit.KingakuTotal}" />
-
-						</Grid>
+								<!--  メモ  -->
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="メモ" />
+								<TextBox Grid.Row="2" Grid.Column="1"
+									MinHeight="50"
+									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Memo}"
+									TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+							</Grid>
+						</StackPanel>
 					</ScrollViewer>
 
 					<!--  DataGrid 明細  -->
