@@ -23,6 +23,8 @@
 - Only have ONE task `in_progress` at a time
 - Line endings: CRLF only
 - Encoding: UTF-8 without BOM
+- For Japanese searches, Use `grep -r`.
+- Before starting work, use `git stash` to back up any irrelevant changes.
 
 ## Read-Only and Layering Rules
 - Keep dependencies layered:
