@@ -169,6 +169,10 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (SelectedMenu?.ViewType == null) return;
 		if (!SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
 			return;
+		// ToDo : ログインしてないときはログイン画面を出す etc リリース時にはちゃんと実装する
+		if (infoServer.ProductVer == null) {
+			await afterLogin(new _00System.LoginViewModel());
+		}
 		if (SelectedMenu.IsDialog)
 			ClientLib.ExitAllWithoutMe(this);
 		if (Activator.CreateInstance(SelectedMenu.ViewType) is not Window view) return;
@@ -190,10 +194,12 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 	}
 	async Task afterLogin(_00System.LoginViewModel vm) {
-		ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
+		if (vm?.LoginData != null) {
+			ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
+			infoUser.LoginTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+			infoUser.ExpireTime = ExpireDate;
+		}
 		_subStartTime = DateTime.Now;
-		infoUser.LoginTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-		infoUser.ExpireTime = ExpireDate;
 		try {
 			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new CvnetMsg { Flag = CvnetFlag.Msg002_GetVersion };
