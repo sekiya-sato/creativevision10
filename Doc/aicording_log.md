@@ -32,6 +32,22 @@
 
 ---
 
+## [2026-03-31] 22:15 マスターメンテ系「詳細を読み込みました」メッセージ非表示化
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：マスターメンテ系画面で「詳細を読み込みました」メッセージが不要なので表示しないようにする
+### 実施内容
+- Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs: `ApplyLoadedDetail` メソッド内の `Message = $"詳細を読み込みました (Id={detail.Id})"` 行を削除
+### 技術決定 Why
+- BaseLightMenteViewModelは全マスターメンテ画面の基底クラスであり、ここで1行削除するだけで全画面に反映される
+### 確認
+- Cvnet10Wpfclient ビルド成功（エラー0、既存warning4件のみ）
+
+---
+
 ## [2026-03-31] 17:30 SysLoginHistoryView に社員名表示を追加
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot

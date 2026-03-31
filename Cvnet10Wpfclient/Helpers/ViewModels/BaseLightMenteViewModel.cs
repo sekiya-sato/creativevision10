@@ -188,7 +188,6 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 			}
 
 			CurrentEdit = Common.CloneObject(Current);
-			Message = $"詳細を読み込みました (Id={detail.Id})";
 		}
 		finally {
 			suppressCurrentChanged = false;
