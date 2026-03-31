@@ -12,5 +12,551 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:ShopUriageInputViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoUpdateCommand}"
+			Gesture="F2" />
+		<KeyBinding Command="{Binding DoDeleteCommand}"
+			Gesture="F3" />
+		<KeyBinding Command="{Binding DoInsertCommand}"
+			Gesture="F4" />
+		<KeyBinding Command="{Binding DoListCommand}"
+			Gesture="F5" />
+	</helpers:BaseWindow.InputBindings>
+
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="MenteSearchTextBox"
+			TargetType="{x:Type helpers:SearchTextBox}">
+			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+		</Style>
+
+		<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->
+		<Style x:Key="MenteDataGridColumnHeader"
+			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+			TargetType="DataGridColumnHeader">
+			<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+			<Setter Property="Padding" Value="12,8" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+
+		<!--  編集フォームのラベルスタイル  -->
+		<Style x:Key="FormLabel"
+			TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="Medium" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+			<Setter Property="Margin" Value="4,0,8,0" />
+		</Style>
+
+		<!--  編集フォームの TextBox スタイル  -->
+		<Style x:Key="FormTextBox"
+			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
+			TargetType="TextBox">
+			<Setter Property="Margin" Value="0,4" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+		</Style>
+	</helpers:BaseWindow.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<!--  ===== ヘッダー: ColorZone ツールバー =====  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<!--  右側: CRUD ボタン群  -->
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding DoUpdateCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="修正 (F2)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Pencil" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="修正" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoDeleteCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="削除 (F3)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Delete" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="削除" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoInsertCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="追加 (F4)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Plus" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="追加" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+
+				<!--  左側: タイトル + 操作  -->
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="ShoppingBasket" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="店舗売上入力" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoListCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="一覧取得" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<!--  ===== メインコンテンツ =====  -->
+		<TabControl Grid.Row="1"
+			SelectedIndex="{Binding SelectedTabIndex}"
+			Style="{StaticResource MaterialDesignTabControl}">
+
+			<!--  タブ1: 一覧画面  -->
+			<TabItem>
+				<TabItem.Header>
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+							Kind="FormatListBulleted" />
+						<TextBlock Text="一覧画面" />
+					</StackPanel>
+				</TabItem.Header>
+				<Grid Margin="12">
+					<materialDesign:Card Padding="0"
+						materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+						<Grid>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="*" />
+							</Grid.RowDefinitions>
+
+							<!--  カードヘッダー: 件数 + メッセージ  -->
+							<Border Grid.Row="0"
+								Padding="12,8"
+								Background="{DynamicResource MaterialDesignToolBarBackground}"
+								CornerRadius="8,8,0,0">
+								<DockPanel>
+									<TextBlock VerticalAlignment="Center"
+										DockPanel.Dock="Right" FontSize="13"
+										Foreground="{DynamicResource MaterialDesignBodyLight}"
+										Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+									<TextBlock VerticalAlignment="Center"
+										FontSize="13"
+										Foreground="{DynamicResource MaterialDesignBodyLight}"
+										Text="{Binding Message}"
+										TextTrimming="CharacterEllipsis" />
+								</DockPanel>
+							</Border>
+
+							<!--  DataGrid 一覧  -->
+							<DataGrid x:Name="ListGrid"
+								Grid.Row="1"
+								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+								AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
+								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+								IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+								ItemsSource="{Binding ListData}"
+								SelectedItem="{Binding Current}"
+								Style="{StaticResource MaterialDesignDataGrid}"
+								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+								<DataGrid.Columns>
+									<DataGridTextColumn Width="100"
+										Binding="{Binding Id}"
+										Header="伝票No" />
+									<DataGridTextColumn Width="120"
+										Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}}"
+										Header="計上日" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding VTenpo.Cd}"
+										Header="店舗CD" />
+									<DataGridTextColumn Width="150"
+										Binding="{Binding VTenpo.Mei}"
+										Header="店舗名" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding VSoko.Cd}"
+										Header="倉庫CD" />
+									<DataGridTextColumn Width="150"
+										Binding="{Binding VSoko.Mei}"
+										Header="倉庫名" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding SuTotal}"
+										Header="合計数量" />
+									<DataGridTextColumn Width="120"
+										Binding="{Binding KingakuTotal}"
+										Header="合計金額" />
+								</DataGrid.Columns>
+								<DataGrid.ColumnHeaderStyle>
+									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+										TargetType="DataGridColumnHeader" />
+								</DataGrid.ColumnHeaderStyle>
+								<behaviors:Interaction.Triggers>
+									<behaviors:EventTrigger EventName="MouseDoubleClick">
+										<behaviors:InvokeCommandAction Command="{Binding GoToDetailCommand}" />
+									</behaviors:EventTrigger>
+								</behaviors:Interaction.Triggers>
+							</DataGrid>
+						</Grid>
+					</materialDesign:Card>
+				</Grid>
+			</TabItem>
+
+			<!--  タブ2: 詳細画面  -->
+			<TabItem>
+				<TabItem.Header>
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+							Kind="FileDocumentEdit" />
+						<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}Id:{0}}" />
+					</StackPanel>
+				</TabItem.Header>
+				<Grid Margin="12">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<StackPanel Grid.Row="0"
+						Margin="8,8,8,0" HorizontalAlignment="Center"
+						Orientation="Horizontal">
+						<Button Margin="8,0"
+							Command="{Binding AddMeisaiCommand}"
+							Style="{StaticResource MaterialDesignOutlinedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="Plus" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="行追加" />
+							</StackPanel>
+						</Button>
+						<Button Margin="8,0"
+							Command="{Binding DeleteMeisaiCommand}"
+							Style="{StaticResource MaterialDesignOutlinedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="Delete" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="行削除" />
+							</StackPanel>
+						</Button>
+					</StackPanel>
+
+					<ScrollViewer Grid.Row="1"
+						MaxHeight="300"
+						Padding="10,10,20,20"
+						VerticalScrollBarVisibility="Auto">
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="110" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+
+							<!--  伝票No  -->
+							<TextBlock Grid.Row="0"
+								Style="{StaticResource FormLabel}"
+								Text="伝票No" />
+							<TextBox Grid.Row="0" Grid.Column="1"
+								Width="150" HorizontalAlignment="Left"
+								materialDesign:HintAssist.Hint="伝票No" IsReadOnly="True"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.Id}" />
+
+							<!--  計上日  -->
+							<TextBlock Grid.Row="1"
+								Style="{StaticResource FormLabel}"
+								Text="計上日" />
+							<DatePicker Grid.Row="1" Grid.Column="1"
+								Width="150" Margin="0,4" HorizontalAlignment="Left"
+								materialDesign:HintAssist.Hint="計上日" IsTodayHighlighted="False"
+								SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+
+							<!--  区分  -->
+							<TextBlock Grid.Row="2"
+								Style="{StaticResource FormLabel}"
+								Text="区分" />
+							<ComboBox Grid.Row="2" Grid.Column="1"
+								Width="150" Margin="0,4" HorizontalAlignment="Left"
+								materialDesign:HintAssist.Hint="区分"
+								ItemsSource="{Binding KubunOptions}"
+								SelectedItem="{Binding CurrentEdit.EnKubun}"
+								Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+
+							<!--  店舗  -->
+							<TextBlock Grid.Row="3"
+								Style="{StaticResource FormLabel}"
+								Text="店舗" />
+							<DockPanel Grid.Row="3" Grid.Column="1"
+								Margin="0,4">
+								<helpers:SearchTextBox Width="120" Height="36"
+									BorderThickness="0,0,0,1"
+									Command="{Binding DoSelectTenpoCommand}"
+									DockPanel.Dock="Left"
+									Style="{StaticResource MenteSearchTextBox}"
+									Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}"
+									TextHorizontalContentAlignment="Left" />
+								<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBody}">
+									<TextBlock.Text>
+										<MultiBinding StringFormat="{}{0} {1}">
+											<Binding Path="CurrentEdit.VTenpo.Cd" />
+											<Binding Path="CurrentEdit.VTenpo.Mei" />
+										</MultiBinding>
+									</TextBlock.Text>
+								</TextBlock>
+							</DockPanel>
+
+							<!--  倉庫  -->
+							<TextBlock Grid.Row="4"
+								Style="{StaticResource FormLabel}"
+								Text="倉庫" />
+							<DockPanel Grid.Row="4" Grid.Column="1"
+								Margin="0,4">
+								<helpers:SearchTextBox Width="120" Height="36"
+									BorderThickness="0,0,0,1"
+									Command="{Binding DoSelectSokoCommand}"
+									DockPanel.Dock="Left"
+									Style="{StaticResource MenteSearchTextBox}"
+									Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}"
+									TextHorizontalContentAlignment="Left" />
+								<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBody}">
+									<TextBlock.Text>
+										<MultiBinding StringFormat="{}{0} {1}">
+											<Binding Path="CurrentEdit.VSoko.Cd" />
+											<Binding Path="CurrentEdit.VSoko.Mei" />
+										</MultiBinding>
+									</TextBlock.Text>
+								</TextBlock>
+							</DockPanel>
+
+							<!--  メモ  -->
+							<TextBlock Grid.Row="5"
+								Style="{StaticResource FormLabel}"
+								Text="メモ" />
+							<TextBox Grid.Row="5" Grid.Column="1"
+								MinHeight="50"
+								materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.Memo}"
+								TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+
+							<!--  合計数量  -->
+							<TextBlock Grid.Row="6"
+								Style="{StaticResource FormLabel}"
+								Text="合計数量" />
+							<TextBox Grid.Row="6" Grid.Column="1"
+								Width="150" HorizontalAlignment="Left"
+								materialDesign:HintAssist.Hint="合計数量" IsReadOnly="True"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.SuTotal}" />
+
+							<!--  合計金額  -->
+							<TextBlock Grid.Row="7"
+								Style="{StaticResource FormLabel}"
+								Text="合計金額" />
+							<TextBox Grid.Row="7" Grid.Column="1"
+								Width="150" HorizontalAlignment="Left"
+								materialDesign:HintAssist.Hint="合計金額" IsReadOnly="True"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.KingakuTotal}" />
+
+						</Grid>
+					</ScrollViewer>
+
+					<!--  DataGrid 明細  -->
+					<DataGrid x:Name="MeisaiGrid"
+						Grid.Row="2"
+						Margin="0,8,0,0"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding EditMeisai}"
+						SelectedItem="{Binding SelectedMeisai, Mode=TwoWay}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="60"
+								Binding="{Binding No}"
+								Header="No" IsReadOnly="True" />
+							<DataGridTemplateColumn Width="130"
+								Header="商品CD">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<Grid Margin="2,1">
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="*" />
+												<ColumnDefinition Width="30" />
+											</Grid.ColumnDefinitions>
+											<TextBox Grid.Column="0"
+												Height="28"
+												VerticalAlignment="Center"
+												Foreground="{DynamicResource MaterialDesignBody}"
+												IsReadOnly="True"
+												Text="{Binding Id_Shohin, UpdateSourceTrigger=PropertyChanged}" />
+											<Button Grid.Column="1"
+												Width="26" Height="26"
+												Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
+												Background="{DynamicResource PrimaryButtonColor}"
+												BorderThickness="0"
+												Command="{Binding DataContext.DoSelectShohinCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+												Cursor="Hand" Foreground="White">
+												<Button.Content>
+													<materialDesign:PackIcon Width="16" Height="16"
+														HorizontalAlignment="Center" VerticalAlignment="Center"
+														Foreground="White" Kind="Magnify" />
+												</Button.Content>
+											</Button>
+										</Grid>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="150"
+								Binding="{Binding Mei_Shohin}"
+								Header="商品名" IsReadOnly="True" />
+							<DataGridTextColumn Width="120"
+								Binding="{Binding JanCode}"
+								Header="JAN" />
+							<DataGridTemplateColumn Width="120"
+								Header="カラーCD">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<Grid Margin="2,1">
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="*" />
+												<ColumnDefinition Width="30" />
+											</Grid.ColumnDefinitions>
+											<TextBox Grid.Column="0"
+												Height="28"
+												VerticalAlignment="Center"
+												Foreground="{DynamicResource MaterialDesignBody}"
+												IsReadOnly="True"
+												Text="{Binding Id_Col, UpdateSourceTrigger=PropertyChanged}" />
+											<Button Grid.Column="1"
+												Width="26" Height="26"
+												Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
+												Background="{DynamicResource PrimaryButtonColor}"
+												BorderThickness="0"
+												Command="{Binding DataContext.DoSelectColCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+												Cursor="Hand" Foreground="White">
+												<Button.Content>
+													<materialDesign:PackIcon Width="16" Height="16"
+														HorizontalAlignment="Center" VerticalAlignment="Center"
+														Foreground="White" Kind="Magnify" />
+												</Button.Content>
+											</Button>
+										</Grid>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="100"
+								Binding="{Binding Mei_Col}"
+								Header="カラー名" IsReadOnly="True" />
+							<DataGridTemplateColumn Width="110"
+								Header="サイズCD">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<Grid Margin="2,1">
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="*" />
+												<ColumnDefinition Width="30" />
+											</Grid.ColumnDefinitions>
+											<TextBox Grid.Column="0"
+												Height="28"
+												VerticalAlignment="Center"
+												Foreground="{DynamicResource MaterialDesignBody}"
+												IsReadOnly="True"
+												Text="{Binding Id_Siz, UpdateSourceTrigger=PropertyChanged}" />
+											<Button Grid.Column="1"
+												Width="26" Height="26"
+												Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
+												Background="{DynamicResource PrimaryButtonColor}"
+												BorderThickness="0"
+												Command="{Binding DataContext.DoSelectSizCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+												Cursor="Hand" Foreground="White">
+												<Button.Content>
+													<materialDesign:PackIcon Width="16" Height="16"
+														HorizontalAlignment="Center" VerticalAlignment="Center"
+														Foreground="White" Kind="Magnify" />
+												</Button.Content>
+											</Button>
+										</Grid>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="100"
+								Binding="{Binding Mei_Siz}"
+								Header="サイズ名" IsReadOnly="True" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding Su}"
+								Header="数量" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Tanka}"
+								Header="単価" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding Kingaku}"
+								Header="金額" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Jodai}"
+								Header="上代" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Gedai}"
+								Header="下代" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+
+				</Grid>
+			</TabItem>
+
+		</TabControl>
+	</Grid>
 </helpers:BaseWindow>

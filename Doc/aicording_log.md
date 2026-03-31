@@ -392,3 +392,65 @@
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0）
 
 ---
+
+## [2026-03-31] 14:00 RangeInputParamView/ViewModel の店舗・倉庫・商品CD検索対応改修
+### Agent
+- claude-sonnet-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：RangeInputParamView.xaml と RangeInputParamViewModel.cs を指示書に従って改修する（店舗CD検索ボタン・倉庫CD検索ボタン・商品CD部分一致入力への変更）
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/Sub/RangeInputParamViewModel.cs: DoSelectFromToriCommand・DoSelectToToriCommand・DoSelectFromSokoCommand・DoSelectToSokoCommand の4つの RelayCommand を追加
+- Cvnet10Wpfclient/Views/Sub/RangeInputParamView.xaml: Row2（店舗CD）をラベル動的バインド・Visibility制御・SearchTextBox+名称 DockPanel パターンに変更、Row3（倉庫CD）同様に SearchTextBox+名称パターンに変更、Row4（商品CD）を from-to 2入力から単一部分一致 TextBox に変更、Width を 620→780 に拡大、MenteSearchTextBox スタイルと BooleanToVisibilityConverter をリソースに追加
+### 技術決定 Why
+- SearchTextBox（helpers:SearchTextBox）+ DockPanel パターンは MasterTokuiMenteView の既存実装に合わせた
+- BooleanToVisibilityConverter は WPF標準の System.Windows.Controls.BooleanToVisibilityConverter を採用
+- ToriLabel・IsToriVisible は SelectInputParameter 既改修済みプロパティを活用（動的ラベル変更・行表示制御）
+- MenteSearchTextBox スタイルは SearchButtonBackgroundBrush（UICommon.xaml で定義済み）を ButtonBackground として参照
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、警告4件はすべて既存）
+
+---
+
+## [2026-03-31] 10:00 ShopUriageInputViewModel.cs の実装
+### Agent
+- claude-sonnet-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：店舗売上入力ViewModel（ShopUriageInputViewModel.cs）を指示書に従って作成する
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 空スケルトン(6行)から完全実装に変更。BasePlainLightMenteViewModel<Tran01Tenuri> を継承し、一覧表示・詳細表示・修正・削除・追加・明細行追加/削除・合計計算を実装
+### 技術決定 Why
+- BasePlainLightMenteViewModel を継承し LightweightSelectColumns をオーバーライドすることで、一覧取得は軽量列のみ、詳細は行選択時に遅延ロードする設計を採用
+- BaseMenteViewModel が partial void OnCurrentChanged を既に宣言済みのため、派生クラスでの再定義は不可。代わりに GoToDetail コマンドで明示的にタブ遷移する方式を採用
+- 明細行の PropertyChanged を監視して Su/Kingaku 変更時に UpdateTotals を呼ぶことで、リアルタイム合計計算を実現
+- SyncMeisaiToCurrentEdit で区分(Kubun)を全明細に伝播させ、Insert/Update 前に呼ぶことで整合性を保つ
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` → ビルド成功（エラー0、警告2件はすべて既存 MainMenuViewModel.cs）
+
+---
+
+## [2026-03-31] 18:00 ShopUriageInputView.xaml の完全実装
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：指示書 `Doc/wrk/instruction-20260331-make-traninput.txt` に従い、店舗売上入力画面（ShopUriageInputView.xaml）のXAMLを完全実装する
+### 実施内容
+- Cvnet10Wpfclient/Views/06Uriage/ShopUriageInputView.xaml: 空スケルトン(16行)から完全実装(562行)に変更。TabControl で「一覧画面」「詳細画面」の2タブ構成を実装
+  - InputBindings: F2=修正, F3=削除, F4=追加, F5=一覧取得
+  - Window.Resources: MenteSearchTextBox, MenteDataGridColumnHeader, FormLabel, FormTextBox スタイル定義
+  - ColorZone ヘッダー: 戻る/一覧取得/修正/削除/追加ボタン
+  - 一覧タブ: Card内にメッセージ+件数表示 + DataGrid(伝票No, 計上日, 店舗CD, 店舗名, 倉庫CD, 倉庫名, 合計数量, 合計金額), FrozenColumnCount=3, ダブルクリックで詳細遷移
+  - 詳細タブ: 行追加/行削除ボタン + ヘッダフォーム(伝票No, 計上日, 区分ComboBox, 店舗SearchTextBox+名称, 倉庫SearchTextBox+名称, メモ, 合計数量, 合計金額) + 明細DataGrid(No, 商品CD+検索ボタン+商品名, JAN, カラーCD+検索ボタン+カラー名, サイズCD+検索ボタン+サイズ名, 数量, 単価, 金額, 上代, 下代)
+### 技術決定 Why
+- MasterShohinMenteView.xaml のデザインパターン（ColorZone, Card, DataGrid, SearchTextBox, DataGridTemplateColumn検索ボタン）を踏襲し、プロジェクト全体のUI一貫性を維持
+- 一覧画面と詳細画面をTabControlで分離し、SelectedTabIndex バインディングでViewModelからタブ遷移を制御可能にした
+- 明細DataGridの検索ボタンは RelativeSource AncestorType=helpers:BaseWindow パターンで DataContext のコマンドにアクセス（既存パターン踏襲）
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` → ビルド成功（エラー0、警告0）
+
+---

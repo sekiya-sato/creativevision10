@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels.Sub"
 	Title="{Binding Parameter.DisplayName, TargetNullValue=入力, StringFormat={}{0}一覧条件}"
-	Width="620" Height="640"
+	Width="780" Height="640"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="18" WindowStartupLocation="CenterOwner"
 	mc:Ignorable="d">
@@ -11,6 +11,13 @@
 		<vm:RangeInputParamViewModel />
 	</helpers:BaseWindow.DataContext>
 	<helpers:BaseWindow.Resources>
+		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+		<Style x:Key="MenteSearchTextBox"
+			TargetType="{x:Type helpers:SearchTextBox}">
+			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+		</Style>
 		<Style x:Key="FormTextBox"
 			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
 			TargetType="TextBox">
@@ -120,68 +127,90 @@
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="仕入先CD" /></TextBlock>
-					<TextBox Grid.Row="2" Grid.Column="1"
-						Margin="4,4,4,4" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="仕入先CD (開始)"
-						Style="{StaticResource FormTextBox}"
-						TabIndex="4"
-						Text="{Binding Parameter.FromToriCd, UpdateSourceTrigger=PropertyChanged}" />
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="{Binding Parameter.ToriLabel}"
+						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+					<DockPanel Grid.Row="2" Grid.Column="1"
+						Margin="0,4"
+						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+						<helpers:SearchTextBox Width="120" Height="36"
+							BorderThickness="0,0,0,1"
+							Command="{Binding DoSelectFromToriCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MenteSearchTextBox}"
+							Text="{Binding Parameter.FromToriCd, UpdateSourceTrigger=PropertyChanged}"
+							TextHorizontalContentAlignment="Left" />
+						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							Foreground="{DynamicResource MaterialDesignBody}"
+							Text="{Binding Parameter.FromToriName}" />
+					</DockPanel>
 
 					<TextBlock Grid.Row="2" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
 						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
-					<TextBox Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2"
-						Margin="4,4,0,4" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="仕入先CD (終了)"
-						Style="{StaticResource FormTextBox}"
-						TabIndex="5"
-						Text="{Binding Parameter.ToToriCd, UpdateSourceTrigger=PropertyChanged}" />
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}"><Run Language="ja-jp" Text="-" /></TextBlock>
+					<DockPanel Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2"
+						Margin="0,4"
+						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+						<helpers:SearchTextBox Width="120" Height="36"
+							BorderThickness="0,0,0,1"
+							Command="{Binding DoSelectToToriCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MenteSearchTextBox}"
+							Text="{Binding Parameter.ToToriCd, UpdateSourceTrigger=PropertyChanged}"
+							TextHorizontalContentAlignment="Left" />
+						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							Foreground="{DynamicResource MaterialDesignBody}"
+							Text="{Binding Parameter.ToToriName}" />
+					</DockPanel>
 
 					<TextBlock Grid.Row="3" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="入庫先CD" /></TextBlock>
-					<TextBox Grid.Row="3" Grid.Column="1"
-						Margin="4,4,4,4" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="入庫先CD (開始)"
-						Style="{StaticResource FormTextBox}"
-						TabIndex="6"
-						Text="{Binding Parameter.FromSokoCd, UpdateSourceTrigger=PropertyChanged}" />
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="倉庫CD" /></TextBlock>
+					<DockPanel Grid.Row="3" Grid.Column="1"
+						Margin="0,4">
+						<helpers:SearchTextBox Width="120" Height="36"
+							BorderThickness="0,0,0,1"
+							Command="{Binding DoSelectFromSokoCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MenteSearchTextBox}"
+							Text="{Binding Parameter.FromSokoCd, UpdateSourceTrigger=PropertyChanged}"
+							TextHorizontalContentAlignment="Left" />
+						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							Foreground="{DynamicResource MaterialDesignBody}"
+							Text="{Binding Parameter.FromSokoName}" />
+					</DockPanel>
 
 					<TextBlock Grid.Row="3" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
-					<TextBox Grid.Row="3" Grid.Column="4" Grid.ColumnSpan="2"
-						Margin="4,4,0,4" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="入庫先CD (終了)"
-						Style="{StaticResource FormTextBox}"
-						TabIndex="7"
-						Text="{Binding Parameter.ToSokoCd, UpdateSourceTrigger=PropertyChanged}" />
+					<DockPanel Grid.Row="3" Grid.Column="4" Grid.ColumnSpan="2"
+						Margin="0,4">
+						<helpers:SearchTextBox Width="120" Height="36"
+							BorderThickness="0,0,0,1"
+							Command="{Binding DoSelectToSokoCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MenteSearchTextBox}"
+							Text="{Binding Parameter.ToSokoCd, UpdateSourceTrigger=PropertyChanged}"
+							TextHorizontalContentAlignment="Left" />
+						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							Foreground="{DynamicResource MaterialDesignBody}"
+							Text="{Binding Parameter.ToSokoName}" />
+					</DockPanel>
 
 					<TextBlock Grid.Row="4" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="商品CD" /></TextBlock>
-					<TextBox Grid.Row="4" Grid.Column="1"
-						Margin="4,4,4,4" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="商品CD (開始)"
+					<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="5"
+						Margin="4,4,0,4" VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="商品CD (部分一致)"
 						Style="{StaticResource FormTextBox}"
 						TabIndex="8"
-						Text="{Binding Parameter.FromShohinCd, UpdateSourceTrigger=PropertyChanged}" />
-
-					<TextBlock Grid.Row="4" Grid.Column="3"
-						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
-					<TextBox Grid.Row="4" Grid.Column="4" Grid.ColumnSpan="2"
-						Margin="4,4,0,4" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="商品CD (終了)"
-						Style="{StaticResource FormTextBox}"
-						TabIndex="9"
-						Text="{Binding Parameter.ToShohinCd, UpdateSourceTrigger=PropertyChanged}" />
+						Text="{Binding Parameter.ShohinCdLike, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="5" Grid.Column="0"
 						VerticalAlignment="Center"
