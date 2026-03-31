@@ -13,6 +13,8 @@ GitHub Copilotのインライン補完と組み合わせることで、開発効
 ```bash
 # OpenCodeのインタラクティブモードで起動
 opencode
+opentmux
+
 
 # もしくは短縮形
 oc

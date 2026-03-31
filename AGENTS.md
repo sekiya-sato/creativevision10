@@ -22,6 +22,7 @@
 - Mark todos as `in_progress` when starting work, `completed` immediately after finishing
 - Only have ONE task `in_progress` at a time
 - Line endings: CRLF only
+- Encoding: UTF-8 without BOM
 
 ## Read-Only and Layering Rules
 - Keep dependencies layered:
