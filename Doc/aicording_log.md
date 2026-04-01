@@ -32,6 +32,23 @@
 
 ---
 
+## [2026-04-01] 16:17 HHT手動データ受信画面の実装
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc/wrk/instruction-20260401-hhtmasterin.txt` に従い、`HhtManualDataReceiveView` と `HhtManualDataReceiveViewModel` を実装し、HHT受信ファイルを `Msg302_Op_HhtDataRecv` で取り込めるようにする
+### 実施内容
+- Cvnet10Wpfclient/Views/30HHT/HhtManualDataReceiveView.xaml: 600x400想定の固定サイズ画面へ変更し、入力ファイル名規則表示、入力先TextBox、`データ受信` / `戻る` ボタンを持つMaterialDesignベースの入力レイアウトを実装
+- Cvnet10Wpfclient/ViewModels/30HHT/HhtManualDataReceiveViewModel.cs: 初期入力先 `C:\hht\`、対象ファイル名判定、Shift_JIS読み込み、CSV解析、`TranHhtdata` への変換、ファイル名/行No付きエラー、`Msg302_Op_HhtDataRecv` 呼び出し、完了ダイアログ表示を実装
+- Cvnet10Wpfclient/Models/MenuData.cs: `HHT手動データ受信` の `addInfo` を `準備中` から機能説明へ更新
+### 技術決定 Why
+- サーバ側 `HandleOpHhtReceive` は `List<TranHhtdata>` をそのまま受ける設計のため、クライアント側で入力ファイルを厳密に検証してから一括送信することで、取込失敗時にファイル名・行番号・項目名を即時に特定できるようにした
+- HHT連携ファイルと既存マスタ出力が Shift_JIS 前提のため、受信側も同じ文字コードで読み込んで文字化けや桁解釈の不整合を避けた
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告16、エラー0。DLLコピー時の一時ロック警告のみ）
+
 ## [2026-04-01] 14:31 HhtProcess.CreateMaster のSJIS固定長対応
 ### Agent
 - gpt-5.4 : OpenAI

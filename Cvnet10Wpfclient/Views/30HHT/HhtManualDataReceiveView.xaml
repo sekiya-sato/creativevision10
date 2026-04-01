@@ -4,13 +4,85 @@
 	xmlns:local="clr-namespace:Cvnet10Wpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels._30HHT"
 	Title="HHT手動データ受信"
-	Width="1244" Height="900"
+	Width="600" Height="400"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FocusManager.FocusedElement="{Binding ElementName=InputDirectoryTextBox}"
 	Foreground="{DynamicResource MaterialDesignBody}"
+	ResizeMode="NoResize"
 	TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:HhtManualDataReceiveViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid></Grid>
+	<Grid Margin="24">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<TextBlock Margin="0,0,0,20"
+			FontWeight="SemiBold"
+			Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+			Text="HHTデータを手動受信します" />
+
+		<materialDesign:Card Grid.Row="1" Padding="24">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="24" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="130" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+
+				<TextBlock Grid.Row="0"
+					Grid.Column="0"
+					VerticalAlignment="Center"
+					FontSize="15"
+					FontWeight="SemiBold"
+					Text="入力ファイル名規則" />
+				<TextBlock Grid.Row="0"
+					Grid.Column="1"
+					VerticalAlignment="Center"
+					Text="yyyymmdd...." />
+
+				<TextBlock Grid.Row="2"
+					Grid.Column="0"
+					VerticalAlignment="Center"
+					FontSize="15"
+					FontWeight="SemiBold"
+					Text="入力先" />
+				<TextBox x:Name="InputDirectoryTextBox"
+					Grid.Row="2"
+					Grid.Column="1"
+					materialDesign:HintAssist.Hint="例: C:\hht\"
+					materialDesign:TextFieldAssist.HasClearButton="True"
+					Text="{Binding InputDirectory, UpdateSourceTrigger=PropertyChanged}" />
+			</Grid>
+		</materialDesign:Card>
+
+		<Grid Grid.Row="2" Margin="0,20,0,0">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="12" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+
+			<Button Grid.Column="1"
+				MinWidth="120"
+				Command="{Binding ReceiveDataCommand}"
+				Content="データ受信"
+				Style="{StaticResource MaterialDesignRaisedButton}" />
+			<Button Grid.Column="3"
+				MinWidth="100"
+				Command="{Binding ExitCommand}"
+				Content="戻る"
+				IsCancel="True"
+				Style="{StaticResource MaterialDesignOutlinedButton}" />
+		</Grid>
+	</Grid>
 </helpers:BaseWindow>
