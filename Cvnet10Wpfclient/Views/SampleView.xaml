@@ -467,6 +467,11 @@
 							</ListView>
 						</Grid>
 					</Grid>
+					<Button Grid.Row="1" Grid.Column="1"
+						Width="160" Height="40"
+						Margin="5,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+						Command="{Binding TestMsg301Command}"
+						Content="HHTマスタ出力" />
 				</Grid>
 
 

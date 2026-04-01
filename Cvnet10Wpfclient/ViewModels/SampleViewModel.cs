@@ -269,6 +269,44 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 		}
 	}
 
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task TestMsg301(CancellationToken ct) {
+		try {
+			ClientLib.Cursor2Wait();
+			ct.ThrowIfCancellationRequested();
+			// 処理を実行
+			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
+			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg301_Op_HhtMaster };
+			var param = Tuple.Create<bool, int>(true, 0);
+			msg.DataMsg = Common.SerializeObject(param);
+			msg.DataType = typeof(Tuple<bool, int>);
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+			if (reply?.DataMsg != null && reply?.DataType != null) {
+				var wrk = Common.DeserializeObject(reply.DataMsg, reply.DataType);
+				var tableCounts = Common.DeserializeObject<List<string>>(reply.DataMsg)
+					?? new List<string>();
+				// 表示用に変換
+				StreamMessages.Clear();
+				int i = 0;
+				foreach (var streamMsg in tableCounts) {
+					i++;
+					StreamMessages.Insert(0, $"{streamMsg}");
+					if (i > 20) break;
+				}
+			}
+		}
+		catch (OperationCanceledException) {
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			return;
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+
+	}
+
 	#endregion
 }
 
