@@ -108,6 +108,24 @@ public partial class CvnetCoreService {
 		}
 	}
 
+	CvnetMsg HandleOpHhtReceive(CvnetMsg request, CallContext context = default) {
+		ArgumentNullException.ThrowIfNull(request);
+
+		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+		if (param is not List<TranHhtdata> createMasterParam) {
+			throw new NotImplementedException();
+		}
+		try {
+			var hhtdata = param as List<TranHhtdata> ?? new List<TranHhtdata>();
+
+			var cnt = new HhtProcess(_db).ReceiveHhtdata(hhtdata);
+			return CreateSuccessResponse(request.Flag, typeof(int), Common.SerializeObject(cnt));
+		}
+		catch (Exception ex) {
+			return CreateExceptionResponse(request.Flag, ex, typeof(List<string>), request.DataMsg);
+		}
+	}
+
 	private CvnetMsg HandleQueryOne(CvnetFlag flag, QueryOneParam queryOne) {
 		_logger.LogInformation("パラメータ QueryOneParam.ItemType={ItemType} 内容={Payload}", queryOne.ItemType, Common.SerializeObject(queryOne));
 

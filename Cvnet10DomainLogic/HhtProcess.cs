@@ -1,7 +1,6 @@
-using System.Text;
-
 using Cvnet10Base;
 using NLog;
+using System.Text;
 
 namespace Cvnet10DomainLogic;
 
@@ -181,5 +180,24 @@ public partial class HhtProcess {
 	private static Encoding CreateSjisEncoding() {
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		return Encoding.GetEncoding("shift_jis");
+	}
+	/// <summary>
+	/// ハンディデータの受信と保存
+	/// </summary>
+	/// <param name="hhtdata"></param>
+	public int ReceiveHhtdata(List<TranHhtdata> hhtdata) {
+		if (hhtdata == null || hhtdata.Count == 0) {
+			return 0;
+		}
+		try {
+			_db.BeginTransaction();
+			_db.InsertBulk<TranHhtdata>(hhtdata);
+			_db.CompleteTransaction();
+			return hhtdata.Count;
+		}
+		catch (Exception ex) {
+			_logger.Error(ex, "HHTデータの受信に失敗");
+			throw;
+		}
 	}
 }

@@ -40,6 +40,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 			[CvnetFlag.Msg101_Op_Query] = (req, ctx) => HandleOpQuery(req, ctx),
 			[CvnetFlag.Msg201_Op_Execute] = (req, ctx) => HandleOpExecute(req, ctx),
 			[CvnetFlag.Msg301_Op_HhtMaster] = (req, ctx) => HandleOpHhtMaster(req, ctx),
+			[CvnetFlag.Msg302_Op_HhtDataRecv] = (req, ctx) => HandleOpHhtReceive(req, ctx),
 			[CvnetFlag.Msg700_Test_Start] = (req, ctx) => HandleTestLogicMsg700(req, ctx),
 			[CvnetFlag.Msg701_TestCase001] = (req, ctx) => HandleTestLogicMsg701(req, ctx),
 			[CvnetFlag.Msg702_TestCase002] = (req, ctx) => HandleTestLogicMsg702(req, ctx),

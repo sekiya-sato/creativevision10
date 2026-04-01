@@ -127,6 +127,10 @@ public enum CvnetFlag {
 	/// HHTマスタ出力
 	/// </summary>
 	Msg301_Op_HhtMaster = 301,
+	/// <summary>
+	/// HHTデータ受信
+	/// </summary>
+	Msg302_Op_HhtDataRecv = 302,
 
 
 	/// <summary>

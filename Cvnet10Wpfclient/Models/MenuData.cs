@@ -242,7 +242,7 @@ public partial class MenuData : ObservableObject {
 			new("ベストレポート", typeof(Views._22CPA.BestSalesReportView), false, addInfo:"準備中"),
 		])),
 		new("HHT / POS連携", new([
-			new("HHT用マスタデータ作成(cvnetcom)", typeof(Views._30HHT.HhtMasterDataCreateView), false, addInfo:"CSV または固定長で HHT マスタを出力"),
+			new("HHT用マスタデータ作成", typeof(Views._30HHT.HhtMasterDataCreateView), false, addInfo:"CSV または固定長で HHT マスタを出力"),
 			new("HHT手動データ受信", typeof(Views._30HHT.HhtManualDataReceiveView), false, addInfo:"準備中"),
 			new("HHTエラーデータ修正入力", typeof(Views._30HHT.HhtErrorDataInputView), false, addInfo:"準備中"),
 			new("HHTデータ更新", typeof(Views._30HHT.HhtDataUpdateView), false, addInfo:"準備中"),

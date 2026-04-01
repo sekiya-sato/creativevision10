@@ -995,4 +995,16 @@ public sealed partial class TranHhtdata : BaseDbClass {
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
 	string yobi12 = string.Empty;
+	/// <summary>
+	/// 入力ファイル名
+	/// </summary>
+	[ObservableProperty]
+	string fileName = string.Empty;
+	/// <summary>
+	/// 行No
+	/// </summary>
+	[ObservableProperty]
+	int lineNo;
+
+
 }
