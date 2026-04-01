@@ -800,3 +800,199 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	[ObservableProperty]
 	int rate;
 }
+
+
+/// <summary>
+/// ハンディターミナル用のデータ
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("nk1", false, "DenDay")]
+public sealed partial class TranHhtdata : BaseDbClass {
+	/// <summary>
+	/// 店舗 文字  8
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string store = string.Empty;
+	/// <summary>
+	/// 日付 文字  8
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	string denDay = "19010101";
+	/// <summary>
+	/// 処理区分 文字  2
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(2)]
+	string kubun = string.Empty;
+	/// <summary>
+	/// 伝票NO	数値	8
+	/// </summary>
+	[ObservableProperty]
+	long denNo;
+	/// <summary>
+	/// 担当者	文字	6
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(6)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string tanto = string.Empty;
+	/// <summary>
+	/// 取引先	文字	8
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string tori = string.Empty;
+	/// <summary>
+	/// 品番	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string hinban = string.Empty;
+	/// <summary>
+	/// カラー	文字	8
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string color = string.Empty;
+	/// <summary>
+	/// サイズ	文字	8
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string size = string.Empty;
+	/// <summary>
+	/// 元上代	数値	8
+	/// </summary>
+	[ObservableProperty]
+	int motoJodai;
+	/// <summary>
+	/// 上代	数値	8
+	/// </summary>
+	[ObservableProperty]
+	int jodai;
+	/// <summary>
+	/// 下代	数値	8
+	/// </summary>
+	[ObservableProperty]
+	int gedai;
+	/// <summary>
+	/// 数量	数値	5
+	/// </summary>
+	[ObservableProperty]
+	int su;
+	/// <summary>
+	/// 店舗2	文字	8
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string store2 = string.Empty;
+	/// <summary>
+	/// セールFLG	文字	1
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(1)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string saleFlg = string.Empty;
+	/// <summary>
+	/// 棚番	文字	10
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(10)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string tanaNo = string.Empty;
+	/// <summary>
+	/// 関連伝票NO	数値	8
+	/// </summary>
+	[ObservableProperty]
+	long relateDenNo;
+	/// <summary>
+	/// 掛率	数値	6.3
+	/// </summary>
+	[ObservableProperty]
+	decimal kakeritsu;
+	/// <summary>
+	/// 納品日	文字	8
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string nouhinDay = string.Empty;
+	/// <summary>
+	/// 予備03	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi03 = string.Empty;
+	/// <summary>
+	/// 予備04	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi04 = string.Empty;
+	/// <summary>
+	/// 予備05	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi05 = string.Empty;
+	/// <summary>
+	/// 予備06	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi06 = string.Empty;
+	/// <summary>
+	/// 予備07	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi07 = string.Empty;
+	/// <summary>
+	/// 予備08	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi08 = string.Empty;
+	/// <summary>
+	/// 予備09	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi09 = string.Empty;
+	/// <summary>
+	/// 予備10	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi10 = string.Empty;
+	/// <summary>
+	/// 予備11	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi11 = string.Empty;
+	/// <summary>
+	/// 予備12	文字	20
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(20)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string yobi12 = string.Empty;
+}

@@ -575,4 +575,34 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[ObservableProperty]
 	string memo = string.Empty;
 }
-
+/// <summary>
+/// ハンディターミナル用のマスタークラス、HHTマスター作成時のみ必要
+/// </summary>
+[NoCreate]
+public sealed partial class MasterHht : ObservableObject {
+	/// <summary>
+	/// 1 - 3	識別フラグ	SIR, SOK, TAN, TOK のいずれか
+	/// </summary>
+	[ObservableProperty]
+	string kubun = string.Empty;
+	/// <summary>
+	/// 4 - 11	コード	8桁（社員は6桁+スペース2桁）のゼロ埋めコード
+	/// </summary>
+	[ObservableProperty]
+	string code = string.Empty;
+	/// <summary>
+	/// 12 - 51	名称1	40桁の名称（略称/カナ/名称、TRANSLATE済み）
+	/// </summary>
+	[ObservableProperty]
+	string name = string.Empty;
+	/// <summary>
+	/// 52 - 91	名称2	40桁の名称（略称、またはスペース）
+	/// </summary>
+	[ObservableProperty]
+	string nameOpt = string.Empty;
+	/// <summary>
+	/// 92	終端符号	アスタリスク * 
+	/// </summary>
+	[ObservableProperty]
+	string eol = string.Empty;
+}
