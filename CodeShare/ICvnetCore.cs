@@ -124,6 +124,12 @@ public enum CvnetFlag {
 	/// </summary>
 	Msg201_Op_Execute = 201,
 	/// <summary>
+	/// HHTマスタ出力
+	/// </summary>
+	Msg301_Op_HhtMaster = 301,
+
+
+	/// <summary>
 	/// テスト用メッセージ開始値
 	/// </summary>
 	Msg700_Test_Start = 7700,

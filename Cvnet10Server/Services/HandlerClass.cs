@@ -2,6 +2,7 @@ using CodeShare;
 using Cvnet10Asset;
 using Cvnet10Base;
 using Cvnet10Base.Share;
+using Cvnet10DomainLogic;
 using ProtoBuf.Grpc;
 using System.Collections;
 
@@ -86,6 +87,25 @@ public partial class CvnetCoreService {
 			DeleteByIdParam deleteById => HandleDeleteById(request.Flag, deleteById),
 			_ => throw new NotImplementedException(),
 		};
+	}
+
+	CvnetMsg HandleOpHhtMaster(CvnetMsg request, CallContext context = default) {
+		ArgumentNullException.ThrowIfNull(request);
+
+		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+		if (param is not Tuple<bool, int> createMasterParam) {
+			throw new NotImplementedException();
+		}
+
+		_logger.LogInformation("パラメータ HhtMaster isFix={IsFix} outMasterMei={OutMasterMei} 内容={Payload}", createMasterParam.Item1, createMasterParam.Item2, Common.SerializeObject(createMasterParam));
+
+		try {
+			var list = new HhtProcess(_db).CreateMaster(createMasterParam.Item1, createMasterParam.Item2);
+			return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(list));
+		}
+		catch (Exception ex) {
+			return CreateExceptionResponse(request.Flag, ex, typeof(List<string>), request.DataMsg);
+		}
 	}
 
 	private CvnetMsg HandleQueryOne(CvnetFlag flag, QueryOneParam queryOne) {

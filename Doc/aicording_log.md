@@ -61,6 +61,21 @@
 ### 確認
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` → ビルド成功（警告0、エラー0）
 
+## [2026-04-01] 14:43 HHTマスタ生成のgRPCハンドラ追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10DomainLogic.csproj` の `HhtProcess.cs` にある `CreateMaster` を `Cvnet10Server` 経由で呼び出せるようにし、`CvnetCoreService` にハンドラを追加登録して `Msg301_Op_HhtMaster` で呼べるようにする。引数は `Tuple<bool,int>` で渡す
+### 実施内容
+- Cvnet10Server/Services/CvnetCoreService.cs: `Msg301_Op_HhtMaster` をハンドラ辞書へ登録し、共通 `QueryMsgAsync` から `HandleOpHhtMaster` を呼び出せるように変更
+- Cvnet10Server/Services/HandlerClass.cs: `Tuple<bool,int>` を逆シリアライズして `HhtProcess.CreateMaster(bool isFix, int outMasterMei)` を実行し、`List<string>` を成功応答として返すハンドラを追加
+### 技術決定 Why
+- 既存の `CvnetCoreService` は `CvnetFlag` ごとの辞書ディスパッチで機能追加する構成のため、専用メソッドを 1 本追加して `Tuple<bool,int>` をそのまま受ける形に揃えるのが最小差分で既存呼び出し規約とも整合するため
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"` → ビルド成功（警告0、エラー0）
+
 ---
 
 ## [2026-04-01] 08:55 Cvnet10Prints の printenable 切替対応
