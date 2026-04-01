@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Cvnet10Base.Share;
 using Newtonsoft.Json;
 using NPoco;
+using System.ComponentModel.DataAnnotations;
 
 namespace Cvnet10Base;
 
@@ -807,7 +808,7 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("nk1", false, "DenDay")]
-public sealed partial class TranHhtdata : BaseDbClass {
+public sealed partial class Tran_old_Hhtdata : BaseDbClass {
 	/// <summary>
 	/// 店舗 文字  8
 	/// </summary>
@@ -999,12 +1000,88 @@ public sealed partial class TranHhtdata : BaseDbClass {
 	/// 入力ファイル名
 	/// </summary>
 	[ObservableProperty]
+	[property: ColumnSizeDml(100)]
 	string fileName = string.Empty;
 	/// <summary>
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
 	int lineNo;
+	/// <summary>
+	/// HhtdataからTran系各テーブルへの変換日時(vdu相当の日時データ)
+	/// </summary>
+	[ObservableProperty]
+	long vdCnvDate;
 
+}
 
+/// <summary>
+/// VULCAN データレイアウト 一次取込用ワークテーブル
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+//[KeyDml("nk1", false, "DenDay")]
+public sealed partial class TranHhtdata : BaseDbClass {
+	[Column("KBN_NAME")]
+	[MaxLength(20)]
+	public string? KbnName { get; set; } // 売上, 返品, 入庫, 出庫, 仕入, 棚卸, 移動, 卸売等 
+
+	[Column("SERIAL_NO")]
+	[MaxLength(20)]
+	public string? SerialNo { get; set; } // シリアルNO 
+
+	[Column("HTNO")]
+	[MaxLength(20)]
+	public string? HtNo { get; set; } // HTNO 
+
+	[Column("HIZUKE")]
+	[MaxLength(10)]
+	public string? Hizuke { get; set; } // 日付 
+
+	[Column("TENPO_CD")]
+	[MaxLength(10)]
+	public string? TenpoCd { get; set; } // 自店舗コード 
+
+	[Column("TANTO_CD")]
+	[MaxLength(10)]
+	public string? TantoCd { get; set; } // 担当者コード 
+
+	[Column("KBN_VAL")]
+	[MaxLength(5)]
+	public string? KbnVal { get; set; } // 区分（数値） 
+
+	[Column("HANBAI_ITAKU_KBN")]
+	[MaxLength(5)]
+	public string? HanbaiItakuKbn { get; set; } // 販売区分 / 委託区分 / 9 
+
+	[Column("B_TO")]
+	[MaxLength(20)]
+	public string? BTo { get; set; } // ビート / 客数 
+
+	[Column("JODAN_STR")]
+	[MaxLength(100)]
+	public string? JodanStr { get; set; } // 上段（前詰め後ろスペース） 
+
+	[Column("GEDAN_VAL")]
+	public decimal? GedanVal { get; set; } // 下段（プラス/マイナス編集5桁） 
+
+	[Column("BAIKA_AITE_CD")]
+	[MaxLength(20)]
+	public string? BaikaAiteCd { get; set; } // 売価 / 相手先コード / 卸先コード 
+
+	[Column("WARIBIKI_HACHU_NO")]
+	[MaxLength(20)]
+	public string? WaribikiHachuNo { get; set; } // ALL 0 / 発注NO / 納品日 
+
+	[Column("KAKURITSU_VAL")]
+	public decimal? KakuritsuVal { get; set; } // 整数3+小数1(999.9) / 掛率 
+
+	[Column("DATA_KENSU")]
+	public int? DataKensu { get; set; } // データ件数 
+
+	[Column("FILLER")]
+	[MaxLength(50)]
+	public string? Filler { get; set; } // FILLER 
+
+	[Column("CREATED_AT")]
+	public DateTime CreatedAt { get; set; } = DateTime.Now; // 取込日時
 }
