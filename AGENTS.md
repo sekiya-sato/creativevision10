@@ -21,8 +21,8 @@
 - Use .NET 10 and C# 14 features where they improve clarity
 - Mark todos as `in_progress` when starting work, `completed` immediately after finishing
 - Only have ONE task `in_progress` at a time
-- Line endings: CRLF only
-- Encoding: UTF-8 without BOM
+- Use **UTF-8 (No BOM)** and **CRLF** for all text-based files.
+- Ensure no "LF to CRLF" warnings occur during Git operations.
 - For Japanese searches, Use `grep -r`.
 - Before starting work, use `git stash` to back up any irrelevant changes.
 
@@ -42,14 +42,14 @@ Condition:
 
 ### Build Rule1
 - Restore all projects: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore Cvnet10.slnx"`
-- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10.slnx"`
-- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"`
+- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10.slnx /p:printenable=true"`
+- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj /p:printenable=true"`
 - Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"`
 
 ### Build Rule2
 - Restore all projects: `dotnet restore "Cvnet10.slnx"`
-- Build solution: `dotnet build "Cvnet10.slnx"`
-- Build server only: `dotnet build "Cvnet10Server/Cvnet10Server.csproj"`
+- Build solution: `dotnet build "Cvnet10.slnx /p:printenable=true"`
+- Build server only: `dotnet build "Cvnet10Server/Cvnet10Server.csproj /p:printenable=true"`
 - Build WPF client: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
 
 ## Lint / Format Commands
@@ -78,7 +78,6 @@ Condition:
 - Use `change-sublist-to-observablecollection` when a master maintenance sub-list uses `List<T>` and row add/delete changes are not reflected in the UI.
 
 ## Pre-Completion Checklist
-- Confirm you did not modify read-only projects unintentionally.
 - Run the smallest relevant build.
 - Summarize impact and verification results clearly.
 

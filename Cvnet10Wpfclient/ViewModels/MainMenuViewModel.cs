@@ -211,6 +211,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			infoServer.BaseDir = version?.BaseDir ?? "";
 		}
 		catch (Exception ex) {
+			Console.WriteLine($"サーバ情報の取得に失敗: {ex.Message}");
 		}
 		SetSubMessage();
 	}

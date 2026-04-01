@@ -5,8 +5,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PrintEnable Condition="'$(PrintEnable)' == ''">$(printenable)</PrintEnable>
-    <PrintEnable Condition="'$(PrintEnable)' == ''">false</PrintEnable>
+    <!-- PrintEnable の既定を true にする/印刷機能を使わない場合には false に設定 -->
+    <PrintEnable>true</PrintEnable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PrintEnable)' == 'true'">
