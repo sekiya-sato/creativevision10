@@ -591,12 +591,12 @@ public sealed partial class MasterHht : ObservableObject {
 	[ObservableProperty]
 	string code = string.Empty;
 	/// <summary>
-	/// 12 - 51	名称1	40桁の名称（略称/カナ/名称、TRANSLATE済み）
+	/// 12 - 51	名称1	SJIS 40byteの名称（略称/カナ/名称、TRANSLATE済み）
 	/// </summary>
 	[ObservableProperty]
 	string name = string.Empty;
 	/// <summary>
-	/// 52 - 91	名称2	40桁の名称（略称、またはスペース）
+	/// 52 - 91	名称2	SJIS 40byteの名称（略称、またはスペース）
 	/// </summary>
 	[ObservableProperty]
 	string nameOpt = string.Empty;

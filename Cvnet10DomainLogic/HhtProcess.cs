@@ -1,9 +1,13 @@
+using System.Text;
+
 using Cvnet10Base;
 using NLog;
 
 namespace Cvnet10DomainLogic;
 
 public partial class HhtProcess {
+	private static readonly Encoding SjisEncoding = CreateSjisEncoding();
+
 	ExDatabase _db;
 	Logger _logger;
 
@@ -15,10 +19,12 @@ public partial class HhtProcess {
 	/// マスタを変換して、固定長またはカンマ区切りの文字として返す。
 	/// 
 	/// </summary>
-	/// <param name="isFix">isFix=trueの場合、コードはゼロ埋め8桁、名前はスペース埋め40桁で固定長に変換する。isFix=falseの場合は元の値をそのまま使用する。</param>
+	/// <param name="isFix">isFix=trueの場合、コードはゼロ埋め8桁、名前はSJIS 40byte固定長で変換する。isFix=falseの場合は元の値をそのまま使用する。</param>
 	/// <param name="outMasterMei">1=略称, 2=カナ, その他=正式名称</param>
 	/// <returns></returns>
 	public List<string> CreateMaster(bool isFix = false, int outMasterMei = 0) {
+		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
 		List<MasterHht> masters = new();
 		var sir = _db.Fetch<MasterShiire>();
 		var sok = _db.Fetch<MasterTokui>("where IsZaiko=1 and TenType in (0,6)");
@@ -76,8 +82,8 @@ public partial class HhtProcess {
 	private static string ToFixedLength(MasterHht master) {
 		return PadRightSpaces(master.Kubun, 3)
 			+ PadLeftZeros(master.Code, 8)
-			+ PadRightSpaces(master.Name, 40)
-			+ PadRightSpaces(master.NameOpt, 40)
+			+ PadRightSjis(master.Name, 40)
+			+ PadRightSjis(master.NameOpt, 40)
 			+ (master.Eol ?? "*");
 	}
 
@@ -147,5 +153,33 @@ public partial class HhtProcess {
 	private static string PadRightSpaces(string s, int width) {
 		s ??= string.Empty;
 		return s.Length >= width ? s[..width] : s.PadRight(width, ' ');
+	}
+
+	private static string PadRightSjis(string s, int byteWidth) {
+		s ??= string.Empty;
+
+		var builder = new StringBuilder(s.Length);
+		var currentBytes = 0;
+		foreach (var ch in s) {
+			var next = ch.ToString();
+			var charByteCount = SjisEncoding.GetByteCount(next);
+			if (currentBytes + charByteCount > byteWidth) {
+				break;
+			}
+
+			builder.Append(ch);
+			currentBytes += charByteCount;
+		}
+
+		if (currentBytes >= byteWidth) {
+			return builder.ToString();
+		}
+
+		return builder.Append(' ', byteWidth - currentBytes).ToString();
+	}
+
+	private static Encoding CreateSjisEncoding() {
+		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+		return Encoding.GetEncoding("shift_jis");
 	}
 }

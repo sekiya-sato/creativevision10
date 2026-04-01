@@ -32,6 +32,21 @@
 
 ---
 
+## [2026-04-01] 14:31 HhtProcess.CreateMaster のSJIS固定長対応
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10DomainLogic.csproj` の `HhtProcess.cs` にある `CreateMaster()` で 2byte 文字(SJIS)を扱えるようにし、`Name` と `NameOpt` の固定長出力を SJIS 40byte 基準に変更する
+### 実施内容
+- Cvnet10DomainLogic/HhtProcess.cs: `Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);` を利用するSJISエンコーディング初期化を追加し、固定長出力時の `Name` / `NameOpt` を文字数基準から SJIS byte 基準の切り詰め・右スペース埋めへ変更
+- Cvnet10Base/BaseDb1Master.cs: `MasterHht` の `Name` / `NameOpt` コメントを 40桁表現から SJIS 40byte 表現へ更新
+### 技術決定 Why
+- HHT向け固定長フォーマットは出力バイト数が重要であり、全角文字を含む名称項目を `string.Length` で処理すると項目境界が崩れるため、SJIS の実バイト長を使って安全に切り詰める必要があるため
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` → ビルド成功（警告0、エラー0）
+
 ## [2026-04-01] 14:15 HhtProcess.CreateMaster の簡素化
 ### Agent
 - gpt-5.4 : OpenAI
