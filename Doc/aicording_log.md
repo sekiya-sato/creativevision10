@@ -78,6 +78,33 @@
 
 ---
 
+## [2026-04-01] 15:26 HHT用マスタデータ作成画面の実装
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc/wrk/instruction-20260401-hhtmasterout.txt` に従い、`HhtMasterDataCreateView` と `HhtMasterDataCreateViewModel` を実装し、HHTマスタ出力処理を実行可能にする
+### 実施内容
+- Cvnet10Wpfclient/Views/30HHT/HhtMasterDataCreateView.xaml:
+  - 600x400 想定の固定サイズ画面に変更
+  - 説明文、出力フォーマットの RadioButton、出力先 TextBox、`データ作成` / `戻る` ボタンを配置
+  - MaterialDesign の Card を使ったシンプルな入力レイアウトに整理
+- Cvnet10Wpfclient/ViewModels/30HHT/HhtMasterDataCreateViewModel.cs:
+  - 初期表示時に既定出力先 `C:\hht\hksnds1` を設定
+  - CSV / 固定長の排他選択プロパティを追加
+  - `Msg301_Op_HhtMaster` を呼び出して `List<string>` を取得し、Shift_JIS でファイル出力する `CreateDataAsync` を実装
+  - サーバエラー、出力エラー、完了メッセージのダイアログ表示を実装
+- Cvnet10Wpfclient/Models/MenuData.cs:
+  - 対象メニューの `addInfo` を `準備中` から実際の機能説明へ更新
+### 技術決定 Why
+- サーバ側 `HhtProcess.CreateMaster` が固定長 40byte/SJIS 前提の処理を持つため、クライアント出力も Shift_JIS に統一して HHT 側との互換性を維持
+- 出力形式の選択は新しいConverterを増やさず、ViewModel の単純な排他 bool で最小構成にした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
+
+---
+
 ## [2026-04-01] 08:55 Cvnet10Prints の printenable 切替対応
 ### Agent
 - gpt-5.4 : OpenAI
