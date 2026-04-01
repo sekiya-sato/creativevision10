@@ -1,4 +1,4 @@
-﻿namespace Cvnet10Base.Share;
+namespace Cvnet10Base.Share;
 
 /// <summary>
 /// バージョン情報
@@ -21,4 +21,21 @@ public sealed class VersionInfo {
 	/// ベースフォルダ
 	/// </summary>
 	public string BaseDir { get; set; } = string.Empty;
+	/// <summary>
+	/// コンピュータ名
+	/// </summary>
+	public string MachineName { get; set; } = string.Empty;
+	/// <summary>
+	/// ユーザ名
+	/// </summary>
+	public string UserName { get; set; } = string.Empty;
+	/// <summary>
+	/// OSバージョン
+	/// </summary>
+	public string OsVersion { get; set; } = string.Empty;
+	/// <summary>
+	/// .NETバージョン
+	/// </summary>
+	public string DotNetVersion { get; set; } = string.Empty;
+
 }

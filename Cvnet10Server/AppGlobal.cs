@@ -1,4 +1,4 @@
-﻿using Cvnet10Base;
+using Cvnet10Base;
 using Cvnet10Base.Share;
 using Cvnet10DomainLogic;
 
@@ -23,18 +23,16 @@ public class AppGlobal {
 					StartTime = DateTime.Now,
 					BaseDir = AppContext.BaseDirectory
 				};
+#pragma warning disable RS1035 // アナライザーに対して禁止された API を使用しない
+				_ver.MachineName = Environment.MachineName ?? string.Empty;
+				_ver.UserName = Environment.UserName ?? string.Empty;
+				_ver.OsVersion = BuildMetadata.OSVersion ?? string.Empty;
+				_ver.DotNetVersion = BuildMetadata.DotNetVersion ?? string.Empty;
+#pragma warning restore RS1035 // アナライザーに対して禁止された API を使用しない
 			}
 			return _ver;
 		}
 	}
-#pragma warning disable RS1035 // アナライザーに対して禁止された API を使用しない
-	public string MachineName => Environment.MachineName ?? string.Empty;
-	public string UserName => Environment.UserName ?? string.Empty;
-#pragma warning restore RS1035 // アナライザーに対して禁止された API を使用しない
-	public string OSVersion => BuildMetadata.OSVersion ?? string.Empty;
-	public string DotNetVersion => BuildMetadata.DotNetVersion ?? string.Empty;
-
-
 	public AppGlobal() {
 		Counter++;
 	}
@@ -44,6 +42,7 @@ public class AppGlobal {
 	/// テーブルはすべて存在する前提で、存在しないテーブルがあれば作成する
 	/// </summary>
 	public void Init(ExDatabase db) {
+		// ToDo: テーブルの存在チェックと作成は、テーブルごとに行うのではなく、まとめて行うようにすること
 		var ret = false;
 		// システムテーブル
 		ret = db.CreateTable<SysLogin>();
@@ -58,16 +57,19 @@ public class AppGlobal {
 		// マスタテーブル3
 		ret = db.CreateTable<MasterTokui>();
 		ret = db.CreateTable<MasterShiire>();
+		ret = db.CreateTable<MasterConfig>();
 		// トランザクションテーブル
-		ret = db.CreateTable<Tran06Nyukin>();
-		ret = db.CreateTable<Tran07Shiharai>();
-		ret = db.CreateTable<Tran60Tana>();
 		ret = db.CreateTable<Tran00Uriage>();
 		ret = db.CreateTable<Tran01Tenuri>();
 		ret = db.CreateTable<Tran03Shiire>();
 		ret = db.CreateTable<Tran05Ido>();
+		ret = db.CreateTable<Tran06Nyukin>();
+		ret = db.CreateTable<Tran07Shiharai>();
+		ret = db.CreateTable<Tran60Tana>();
 		ret = db.CreateTable<Tran10IdoOut>();
 		ret = db.CreateTable<Tran11IdoIn>();
+		ret = db.CreateTable<Tran12Jyuchu>();
+		ret = db.CreateTable<Tran13Hachu>();
 	}
 
 }

@@ -32,6 +32,8 @@ public partial class ConvertDb {
 
 		// ToDo: 最終的に実行させる処理を整理
 		var steps = new (string Name, Func<bool, int> Action)[] {
+			("CnvMasterConfig", CnvMasterConfig),
+			/*
 			("CnvMasterSys", CnvMasterSys),
 			("CnvMasterMeisho", CnvMasterMeisho),
 			("CnvMasterShain", CnvMasterShain),
@@ -39,6 +41,7 @@ public partial class ConvertDb {
 			("CnvMasterShohin", CnvMasterShohin),
 			("CnvMasterTokui", CnvMasterTokui),
 			("CnvMasterShiire", CnvMasterShiire),
+			("CnvMasterConfig", CnvMasterConfig),
 			("CnvAfterMaster", CnvAfterMaster),
 			("CnvTran00HonUri", CnvTran00HonUri),
 			("CnvTran01TenUri", CnvTran01TenUri),
@@ -51,6 +54,7 @@ public partial class ConvertDb {
 			("CnvTran11IdoIn", CnvTran11IdoIn),
 			("CnvTran12Jyuchu", CnvTran12Jyuchu),
 			("CnvTran13Hachu", CnvTran13Hachu),
+			*/
 		};
 
 		for (var index = 0; index < steps.Length; index++) {
@@ -545,6 +549,19 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 			var meiList = ConverterGeneralMeisho(10, "S", rec);
 			if (meiList.Count > 0)
 				item.Jsub = meiList;
+			return item;
+		});
+	}
+	public int CnvMasterConfig(bool isInit = true) {
+		const string sql = "select * from HC$MASTER_Config where フラグ名>'.' order by カテゴリ,フラグ名";
+		return ConvertMaster(sql, isInit, rec => {
+			var item = new MasterConfig() {
+				Category = getString(rec, "カテゴリ"),
+				Name = getString(rec, "フラグ名"),
+				Val = getString(rec, "値"),
+				Example = getString(rec, "リスト"),
+				Memo = getString(rec, "MEMO")
+			};
 			return item;
 		});
 	}

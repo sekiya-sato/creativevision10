@@ -42,14 +42,14 @@ Condition:
 
 ### Build Rule1
 - Restore all projects: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore Cvnet10.slnx"`
-- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10.slnx /p:printenable=true"`
-- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj /p:printenable=true"`
+- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10.slnx"`
+- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"`
 - Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"`
 
 ### Build Rule2
 - Restore all projects: `dotnet restore "Cvnet10.slnx"`
-- Build solution: `dotnet build "Cvnet10.slnx /p:printenable=true"`
-- Build server only: `dotnet build "Cvnet10Server/Cvnet10Server.csproj /p:printenable=true"`
+- Build solution: `dotnet build "Cvnet10.slnx"`
+- Build server only: `dotnet build "Cvnet10Server/Cvnet10Server.csproj"`
 - Build WPF client: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
 
 ## Lint / Format Commands

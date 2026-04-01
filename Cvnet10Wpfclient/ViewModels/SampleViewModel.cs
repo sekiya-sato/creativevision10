@@ -138,7 +138,8 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 		if (reply?.DataMsg != null && reply?.DataType != null) {
 			var versionInfo = Common.DeserializeObject<Cvnet10Base.Share.VersionInfo>(reply.DataMsg);
-			TestMsg002Result = $"{versionInfo?.Product}-{versionInfo?.BuildDate} Ver.{versionInfo?.Version} Base:{versionInfo?.BaseDir}";
+			// 表示用に整形、取得した情報をすべて出す
+			TestMsg002Result = $"{versionInfo?.Product}-{versionInfo?.BuildDate} Ver.{versionInfo?.Version} Base:{versionInfo?.BaseDir} Machine:{versionInfo?.MachineName} User:{versionInfo?.UserName} OS:{versionInfo?.OsVersion} DotNet:{versionInfo?.DotNetVersion}";
 		}
 	}
 	#endregion

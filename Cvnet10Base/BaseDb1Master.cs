@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Cvnet10Base.Share;
 using Newtonsoft.Json;
 using NPoco;
@@ -556,5 +556,23 @@ public sealed partial class MasterShohinGenka : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	int tankaShiire;
+}
+
+/// <summary>
+/// 設定フラグマスター
+/// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("uq1", true, "Name")]
+public sealed partial class MasterConfig : BaseDbClass {
+	[ObservableProperty]
+	string category = string.Empty;
+	[ObservableProperty]
+	string name = string.Empty;
+	[ObservableProperty]
+	string val = string.Empty;
+	[ObservableProperty]
+	string example = string.Empty;
+	[ObservableProperty]
+	string memo = string.Empty;
 }
 

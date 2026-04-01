@@ -158,8 +158,8 @@ Now: {DateTime.Now}, Start:{appInit.VerInfo.StartTime},
 BaseDir: {appInit.VerInfo.BaseDir}
 
 BuildMetadata:
-Machine: {appInit.MachineName} ,UserName: {appInit.UserName} 
-OS: {appInit.OSVersion} ,DotNet: {appInit.DotNetVersion}, Build:{appInit.VerInfo.BuildDate}
+Machine: {appInit.VerInfo.MachineName} ,UserName: {appInit.VerInfo.UserName} 
+OS: {appInit.VerInfo.OsVersion} ,DotNet: {appInit.VerInfo.DotNetVersion}, Build:{appInit.VerInfo.BuildDate}
 """
 );
 
