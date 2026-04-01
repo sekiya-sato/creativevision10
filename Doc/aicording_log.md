@@ -32,6 +32,22 @@
 
 ---
 
+## [2026-04-01] 14:15 HhtProcess.CreateMaster の簡素化
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10DomainLogic.csproj` の `HhtProcess.cs` にある `CreateMaster()` が冗長なので、途中段階を `List<MasterHht>` で保持しつつリファクタリングしたい
+### 実施内容
+- Cvnet10DomainLogic/HhtProcess.cs: `CreateMaster()` を「マスター生成」と「最終出力文字列化」に分離し、`SIR/SOK/TOK` の共通処理を helper 化、`TAN` は社員コードの既存規則を維持したまま `List<MasterHht>` に追加する構成へ整理
+### 技術決定 Why
+- 中間表現を `MasterHht` に統一することで、データ収集ロジックと固定長・CSV 出力ロジックの責務を分離でき、`isFix` の分岐を最終出力段に限定して重複実装を減らせるため
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` → ビルド成功（警告0、エラー0）
+
+---
+
 ## [2026-04-01] 08:55 Cvnet10Prints の printenable 切替対応
 ### Agent
 - gpt-5.4 : OpenAI
