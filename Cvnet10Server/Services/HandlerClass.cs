@@ -5,7 +5,6 @@ using Cvnet10Base.Share;
 using Cvnet10DomainLogic;
 using ProtoBuf.Grpc;
 using System.Collections;
-using System.Reflection;
 
 namespace Cvnet10Server.Services;
 
@@ -214,21 +213,12 @@ public partial class CvnetCoreService {
 		if (items is not IList list || list.Count == 0) {
 			return CreateNotFoundResponse(flag, listType, "[]");
 		}
-
-		// 各要素に監査値(Vdc/Vdu)を設定
-		foreach (var item in list) {
-			SetCreatedAuditValues(insertBulk.ItemType, item);
-		}
-
 		try {
 			_db.BeginTransaction();
-
-			// リフレクションで _db.InsertBulk<T>(list) を呼び出す
-			var method = _db.GetType().GetMethod("InsertBulk")
-				?? throw new InvalidOperationException("InsertBulk method not found");
-			var generic = method.MakeGenericMethod(insertBulk.ItemType);
-			generic.Invoke(_db, [list]);
-
+			foreach (var item in list) {
+				SetCreatedAuditValues(insertBulk.ItemType, item);
+				_db.Insert(item);
+			}
 			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, listType, Common.SerializeObject(list));
 		}

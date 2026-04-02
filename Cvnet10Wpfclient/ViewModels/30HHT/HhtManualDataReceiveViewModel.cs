@@ -5,6 +5,7 @@ using Cvnet10Asset;
 using Cvnet10Base;
 using Cvnet10Wpfclient.Helpers;
 using Grpc.Core;
+using System.Collections;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -57,11 +58,19 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 			}
 
 			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
+			/*
 			var msg = new CvnetMsg {
 				Code = 0,
 				Flag = CvnetFlag.Msg302_Op_HhtDataRecv,
 				DataMsg = Common.SerializeObject(records),
 				DataType = typeof(List<TranHhtdata>)
+			};
+			*/
+			var msg = new CvnetMsg {
+				Code = 0,
+				Flag = CvnetFlag.Msg201_Op_Execute,
+				DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranHhtdata), Common.SerializeObject(records))),
+				DataType = typeof(InsertBulkParam),
 			};
 
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
@@ -70,8 +79,12 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 				MessageEx.ShowErrorDialog($"HHTデータ受信エラー: {detail} ({reply.Code})", owner: ClientLib.GetActiveView(this));
 				return;
 			}
-
-			var count = Common.DeserializeObject<int>(reply.DataMsg);
+			var retData = Common.DeserializeObject(reply.DataMsg, reply.DataType);
+			int count = 0;
+			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
+				// ListData = new ObservableCollection<T>(list.Cast<T>());
+				count = list.Count;
+			}
 			var fileNames = string.Join(",", filePaths.Select(Path.GetFileName));
 			MessageEx.ShowInformationDialog($"完了しました({count}件,{fileNames})", owner: ClientLib.GetActiveView(this));
 		}
