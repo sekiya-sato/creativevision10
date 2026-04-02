@@ -275,6 +275,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			ClientLib.Cursor2Wait();
 			ct.ThrowIfCancellationRequested();
 			// 処理を実行
+			/*
 			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg301_Op_HhtMaster };
 			var param = Tuple.Create<bool, int>(true, 0);
@@ -294,6 +295,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 					if (i > 20) break;
 				}
 			}
+			*/
 		}
 		catch (OperationCanceledException) {
 			return;

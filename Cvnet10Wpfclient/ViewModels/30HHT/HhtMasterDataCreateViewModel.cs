@@ -56,11 +56,12 @@ public partial class HhtMasterDataCreateViewModel : Helpers.BaseViewModel {
 			ct.ThrowIfCancellationRequested();
 
 			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg301_Op_HhtMaster };
-			var param = Tuple.Create(IsFixedLengthFormat, 0);
-			msg.DataMsg = Common.SerializeObject(param);
-			msg.DataType = typeof(Tuple<bool, int>);
-
+			var msg = new CvnetMsg {
+				Code = 0,
+				Flag = CvnetFlag.Msg300_Op_OutData,
+				DataMsg = Common.SerializeObject(new OutDataHhtMasterParam(IsFixedLengthFormat, 0)),
+				DataType = typeof(OutDataHhtMasterParam)
+			};
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 			if (reply.Code < 0) {
 				var detail = reply.Code < -9000 ? reply.Option : reply.DataMsg;

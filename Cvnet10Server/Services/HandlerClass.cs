@@ -90,43 +90,6 @@ public partial class CvnetCoreService {
 		};
 	}
 
-	CvnetMsg HandleOpHhtMaster(CvnetMsg request, CallContext context = default) {
-		ArgumentNullException.ThrowIfNull(request);
-
-		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
-		if (param is not Tuple<bool, int> createMasterParam) {
-			throw new NotImplementedException();
-		}
-
-		_logger.LogInformation("パラメータ HhtMaster isFix={IsFix} outMasterMei={OutMasterMei} 内容={Payload}", createMasterParam.Item1, createMasterParam.Item2, Common.SerializeObject(createMasterParam));
-
-		try {
-			var list = new HhtProcess(_db).CreateMaster(createMasterParam.Item1, createMasterParam.Item2);
-			return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(list));
-		}
-		catch (Exception ex) {
-			return CreateExceptionResponse(request.Flag, ex, typeof(List<string>), request.DataMsg);
-		}
-	}
-
-	CvnetMsg HandleOpHhtReceive(CvnetMsg request, CallContext context = default) {
-		ArgumentNullException.ThrowIfNull(request);
-
-		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
-		if (param is not List<TranHhtdata> createMasterParam) {
-			throw new NotImplementedException();
-		}
-		try {
-			var hhtdata = param as List<TranHhtdata> ?? new List<TranHhtdata>();
-
-			var cnt = new HhtProcess(_db).ReceiveHhtdata(hhtdata);
-			return CreateSuccessResponse(request.Flag, typeof(int), Common.SerializeObject(cnt));
-		}
-		catch (Exception ex) {
-			return CreateExceptionResponse(request.Flag, ex, typeof(List<string>), request.DataMsg);
-		}
-	}
-
 	private CvnetMsg HandleQueryOne(CvnetFlag flag, QueryOneParam queryOne) {
 		_logger.LogInformation("パラメータ QueryOneParam.ItemType={ItemType} 内容={Payload}", queryOne.ItemType, Common.SerializeObject(queryOne));
 
@@ -296,11 +259,53 @@ public partial class CvnetCoreService {
 		_db.Delete(item);
 		return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 	}
+	/// <summary>
+	/// ToDo: 出力系の処理を集約して、マスタ以外も対応できるようにする
+	/// </summary>
+	/// <param name="request"></param>
+	/// <param name="context"></param>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
+	CvnetMsg HandleOutData(CvnetMsg request, CallContext context = default) {
+		ArgumentNullException.ThrowIfNull(request);
+
+		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+		try {
+			if (param is OutDataHhtMasterParam outDataParam) {
+				_logger.LogInformation("パラメータ HhtMaster isFix={IsFix} outMasterMei={OutMasterMei} 内容={Payload}", outDataParam.IsFixedLengthFormat, outDataParam.ParamIntNoUse, Common.SerializeObject(outDataParam));
+
+				var list = new HhtProcess(_db).CreateMaster(outDataParam.IsFixedLengthFormat, outDataParam.ParamIntNoUse);
+				return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(list));
+			}
+			throw new NotImplementedException();
+		}
+		catch (Exception ex) {
+			return CreateExceptionResponse(request.Flag, ex, typeof(List<string>), request.DataMsg);
+		}
+	}
+
+	// ToDo : ロジックを集約 BulkInsert
+	[Obsolete("HHTデータ受信は廃止予定のため、使用しないでください。")]
+	CvnetMsg HandleOpHhtReceive(CvnetMsg request, CallContext context = default) {
+		ArgumentNullException.ThrowIfNull(request);
+
+		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+		if (param is not List<TranHhtdata> createMasterParam) {
+			throw new NotImplementedException();
+		}
+		try {
+			var hhtdata = param as List<TranHhtdata> ?? new List<TranHhtdata>();
+
+			var cnt = new HhtProcess(_db).ReceiveHhtdata(hhtdata);
+			return CreateSuccessResponse(request.Flag, typeof(int), Common.SerializeObject(cnt));
+		}
+		catch (Exception ex) {
+			return CreateExceptionResponse(request.Flag, ex, typeof(List<string>), request.DataMsg);
+		}
+	}
 
 	private static Dictionary<string, string> GetEnvironmentVariables() {
-#pragma warning disable RS1035
 		var envVars = Environment.GetEnvironmentVariables();
-#pragma warning restore RS1035
 
 		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		foreach (DictionaryEntry entry in envVars) {

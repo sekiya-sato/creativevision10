@@ -165,3 +165,15 @@ public sealed class DeleteByIdParam {
 		OriginalVdu = originalVdu;
 	}
 }
+/// <summary>
+/// データ出力I/F : HHTマスタデータ作成パラメータ
+/// </summary>
+public sealed class OutDataHhtMasterParam {
+	public bool IsFixedLengthFormat { get; set; }
+	public int ParamIntNoUse { get; set; }
+	public OutDataHhtMasterParam(bool isFixedLengthFormat, int paramIntNoUse) {
+		IsFixedLengthFormat = isFixedLengthFormat;
+		ParamIntNoUse = paramIntNoUse;
+	}
+}
+

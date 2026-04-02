@@ -124,15 +124,9 @@ public enum CvnetFlag {
 	/// </summary>
 	Msg201_Op_Execute = 201,
 	/// <summary>
-	/// HHTマスタ出力
+	/// データ出力: DataTypeにより処理分岐
 	/// </summary>
-	Msg301_Op_HhtMaster = 301,
-	/// <summary>
-	/// HHTデータ受信
-	/// </summary>
-	Msg302_Op_HhtDataRecv = 302,
-
-
+	Msg300_Op_OutData = 300,
 	/// <summary>
 	/// テスト用メッセージ開始値
 	/// </summary>
