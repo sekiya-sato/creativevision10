@@ -5,6 +5,7 @@ using Cvnet10Base.Share;
 using Cvnet10DomainLogic;
 using ProtoBuf.Grpc;
 using System.Collections;
+using System.Reflection;
 
 namespace Cvnet10Server.Services;
 
@@ -82,6 +83,7 @@ public partial class CvnetCoreService {
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
 		return param switch {
 			InsertParam insert => HandleInsert(request.Flag, insert),
+			InsertBulkParam insertBulk => HandleBulkInsert(request.Flag, insertBulk),
 			UpdateParam update => HandleUpdate(request.Flag, update),
 			DeleteParam delete => HandleDelete(request.Flag, delete),
 			DeleteByIdParam deleteById => HandleDeleteById(request.Flag, deleteById),
@@ -201,6 +203,37 @@ public partial class CvnetCoreService {
 		}
 		catch (Exception ex) {
 			return CreateExceptionResponse(flag, ex, item.GetType(), Common.SerializeObject(item));
+		}
+	}
+	private CvnetMsg HandleBulkInsert(CvnetFlag flag, InsertBulkParam insertBulk) {
+		_logger.LogInformation("パラメータ InsertBulkParam.ItemType={ItemType} 内容={Payload}", insertBulk.ItemType, Common.SerializeObject(insertBulk));
+
+		// JSON配列 → List<ItemType> にデシリアライズ
+		var listType = typeof(List<>).MakeGenericType(insertBulk.ItemType);
+		var items = Common.DeserializeObject(insertBulk.Item, listType);
+		if (items is not IList list || list.Count == 0) {
+			return CreateNotFoundResponse(flag, listType, "[]");
+		}
+
+		// 各要素に監査値(Vdc/Vdu)を設定
+		foreach (var item in list) {
+			SetCreatedAuditValues(insertBulk.ItemType, item);
+		}
+
+		try {
+			_db.BeginTransaction();
+
+			// リフレクションで _db.InsertBulk<T>(list) を呼び出す
+			var method = _db.GetType().GetMethod("InsertBulk")
+				?? throw new InvalidOperationException("InsertBulk method not found");
+			var generic = method.MakeGenericMethod(insertBulk.ItemType);
+			generic.Invoke(_db, [list]);
+
+			_db.CompleteTransaction();
+			return CreateSuccessResponse(flag, listType, Common.SerializeObject(list));
+		}
+		catch (Exception ex) {
+			return CreateExceptionResponse(flag, ex, listType, Common.SerializeObject(list));
 		}
 	}
 

@@ -32,6 +32,28 @@
 
 ---
 
+## [2026-04-02] 09:10 opencode の更新と重複インストール整理
+### Agent
+- [openai/gpt-5.4 : OpenAI]
+### Editor
+- [OpenCode]
+### 目的
+- ユーザーからの要望：opencode を package manager 経由で upgrade し、未使用の重複インストールを削除したうえで、現在使用中の正確なパスと今後の upgrade 手順を明示する
+### 実施内容
+- ユーザー環境/opencode: `~/.npm-global` 配下の `opencode-ai` を `1.3.9` から `1.3.13` へ更新
+- ユーザー環境/opencode: `/usr/local` 配下の旧版 `opencode-ai@1.2.24` を削除
+- ユーザー環境/opencode: Windows 側 `AppData/Roaming/npm` に残っていた `opencode` 関連実体を削除
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `npm config get prefix` と実際の優先 PATH が一致しておらず、prefix 指定なしの `npm install -g` では別の場所に新規導入される恐れがあったため、現在実際に使用されている `~/.npm-global` を更新先として固定した
+- `which -a opencode` で複数実体が確認できたため、将来の混乱を避ける目的で未使用の重複実体を整理した
+### 確認
+- `which opencode` → `/home/user2010/.npm-global/bin/opencode`
+- `opencode --version` → `1.3.13`
+- `which -a opencode` → `/home/user2010/.npm-global/bin/opencode` のみを確認
+
+---
+
 ## [2026-04-01] 16:17 HHT手動データ受信画面の実装
 ### Agent
 - gpt-5.4 : OpenAI
@@ -644,5 +666,22 @@
 - DateYmd8Converterは "yyyyMMdd" stringをDateTime?に変換するため、DataGridTextColumnはDateTimeのデフォルトToString()で時刻まで表示されてしまう。StringFormatで表示形式を明示的に指定することで日付のみの表示とした
 ### 確認
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、既存警告のみ）
+
+---
+
+## [2026-04-02] 22:00 HandleBulkInsert() の実装完成
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：HandlerClass.cs の HandleBulkInsert() が未完成。JSON配列からデシリアライズした IEnumerable/List 型データを _db.InsertBulk() で一括挿入できるよう実装を完成させる
+### 実施内容
+- Cvnet10Base/Parameters.cs: InsertBulkParam クラスの追加（前回作業分のstashから復元）
+- Cvnet10Server/Services/HandlerClass.cs: HandleBulkInsert() を完成実装。using System.Reflection 追加、JSON配列→List<T>デシリアライズ、各要素への監査値設定、リフレクション経由で _db.InsertBulk<T>() 呼び出し
+### 技術決定 Why
+- InsertBulkParam.ItemType はランタイム Type のため、ジェネリックメソッド InsertBulk<T> を直接呼べない。MakeGenericMethod によるリフレクション呼び出しを採用（ConvertDb.cs 等の既存パターンに合わせた BeginTransaction/CompleteTransaction のトランザクション管理も踏襲）
+### 確認
+- `dotnet build Cvnet10Server/Cvnet10Server.csproj` → ビルド成功（エラー0、警告0）
 
 ---

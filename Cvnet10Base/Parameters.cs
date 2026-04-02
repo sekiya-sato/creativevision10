@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.Runtime.Serialization;
 
 namespace Cvnet10Base;
@@ -90,6 +90,24 @@ public sealed class InsertParam : IJsonPayload {
 	public string Item { get; }
 	public Type ItemType { get; }
 	public InsertParam(Type itemType, string item) {
+		Item = item;
+		ItemType = itemType;
+	}
+	public object GetItemObject() {
+		var item = JsonConvert.DeserializeObject(Item, ItemType);
+		if (item == null)
+			throw new SerializationException();
+		return item;
+	}
+}
+/// <summary>
+/// クエリI/F : Item指定挿入パラメータ
+/// </summary>
+
+public sealed class InsertBulkParam : IJsonPayload {
+	public string Item { get; }
+	public Type ItemType { get; }
+	public InsertBulkParam(Type itemType, string item) {
 		Item = item;
 		ItemType = itemType;
 	}
