@@ -685,3 +685,20 @@
 - `dotnet build Cvnet10Server/Cvnet10Server.csproj` → ビルド成功（エラー0、警告0）
 
 ---
+
+## [2026-04-02] 18:15 DataGrid Enter キーセルナビゲーション Behavior を XAML に適用
+### Agent
+- claude-haiku-4.5 : GitHub Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ShopUriageInputView の明細行で、各項目の修正が終わり Enter を押したら次の項目に移動するようにする。汎用的な Behavior として実装。Task 1 (DataGridCellEnterNavigation.cs 新規作成) の後続タスク
+### 実施内容
+- Cvnet10Wpfclient/Views/06Uriage/ShopUriageInputView.xaml: MeisaiGrid DataGrid 行426に `helpers:DataGridCellEnterNavigation.IsEnabled="True"` を追加
+### 技術決定 Why
+- `helpers:` プレフィックスはファイル先頭で既に宣言されているため、新規 XAML 名前空間追加は不要
+- DataGridCellEnterNavigation.cs は Task 1 で作成済みの既存 Behavior をアタッチするのみ
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` (Build Rule1: Windows cmd 経由) → ビルド成功（エラー0、警告あり）
+
+---

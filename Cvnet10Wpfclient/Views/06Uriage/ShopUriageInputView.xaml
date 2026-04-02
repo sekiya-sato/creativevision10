@@ -423,7 +423,7 @@
 					<DataGrid x:Name="MeisaiGrid"
 						Grid.Row="2"
 						Margin="0,8,0,0"
-						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" helpers:DataGridCellEnterNavigation.IsEnabled="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
 						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 						IsSynchronizedWithCurrentItem="True"
