@@ -2,7 +2,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Cvnet10Base.Share;
 using Newtonsoft.Json;
 using NPoco;
-using System.ComponentModel.DataAnnotations;
 
 namespace Cvnet10Base;
 
@@ -1019,69 +1018,142 @@ public sealed partial class Tran_old_Hhtdata : BaseDbClass {
 /// VULCAN データレイアウト 一次取込用ワークテーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-//[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk1", false, "BackupFileName")]
+[KeyDml("nk2", false, "VdCnvDate")]
 public sealed partial class TranHhtdata : BaseDbClass {
-	[Column("KBN_NAME")]
-	[MaxLength(20)]
-	public string? KbnName { get; set; } // 売上, 返品, 入庫, 出庫, 仕入, 棚卸, 移動, 卸売等 
-
-	[Column("SERIAL_NO")]
-	[MaxLength(20)]
-	public string? SerialNo { get; set; } // シリアルNO 
-
-	[Column("HTNO")]
-	[MaxLength(20)]
-	public string? HtNo { get; set; } // HTNO 
-
-	[Column("HIZUKE")]
-	[MaxLength(10)]
-	public string? Hizuke { get; set; } // 日付 
-
-	[Column("TENPO_CD")]
-	[MaxLength(10)]
-	public string? TenpoCd { get; set; } // 自店舗コード 
-
-	[Column("TANTO_CD")]
-	[MaxLength(10)]
-	public string? TantoCd { get; set; } // 担当者コード 
-
-	[Column("KBN_VAL")]
-	[MaxLength(5)]
-	public string? KbnVal { get; set; } // 区分（数値） 
-
-	[Column("HANBAI_ITAKU_KBN")]
-	[MaxLength(5)]
-	public string? HanbaiItakuKbn { get; set; } // 販売区分 / 委託区分 / 9 
-
-	[Column("B_TO")]
-	[MaxLength(20)]
-	public string? BTo { get; set; } // ビート / 客数 
-
-	[Column("JODAN_STR")]
-	[MaxLength(100)]
-	public string? JodanStr { get; set; } // 上段（前詰め後ろスペース） 
-
-	[Column("GEDAN_VAL")]
-	public decimal? GedanVal { get; set; } // 下段（プラス/マイナス編集5桁） 
-
-	[Column("BAIKA_AITE_CD")]
-	[MaxLength(20)]
-	public string? BaikaAiteCd { get; set; } // 売価 / 相手先コード / 卸先コード 
-
-	[Column("WARIBIKI_HACHU_NO")]
-	[MaxLength(20)]
-	public string? WaribikiHachuNo { get; set; } // ALL 0 / 発注NO / 納品日 
-
-	[Column("KAKURITSU_VAL")]
-	public decimal? KakuritsuVal { get; set; } // 整数3+小数1(999.9) / 掛率 
-
-	[Column("DATA_KENSU")]
-	public int? DataKensu { get; set; } // データ件数 
-
-	[Column("FILLER")]
-	[MaxLength(50)]
-	public string? Filler { get; set; } // FILLER 
-
-	[Column("CREATED_AT")]
-	public DateTime CreatedAt { get; set; } = DateTime.Now; // 取込日時
+	/// <summary>
+	/// VULCANタイプ  1:売上, 2:返品, 3:入庫, 4:出庫, 5:仕入, 6:仕入返品, 7:棚卸, 8:発注, 9:卸売, 10:卸返品, 11:移動, 12:客数
+	/// ファイルレイアウト 1桁:1-9,A-Cで表現されているが、数値に変換して格納する
+	/// </summary>
+	[ObservableProperty]
+	int type0 = 0;
+	/// <summary>
+	/// HT No  1-999の数値を格納する。VULCANのファイルレイアウトでは3桁の文字列で表現されているが、数値に変換して格納する
+	/// </summary>
+	[ObservableProperty]
+	int hhtNo = 0;
+	/// <summary>
+	/// SerialNo 1-9999の数値を格納する。VULCANのファイルレイアウトでは5桁の文字列で表現されているが、数値に変換して格納する
+	/// </summary>
+	[ObservableProperty]
+	int serial = 0;
+	/// <summary>
+	/// 日付 yyyyMMdd 8桁の文字列で表現
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	string denDay = "19010101";
+	/// <summary>
+	/// 店舗 文字  8 前'0'埋め
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string store = string.Empty;
+	/// <summary>
+	/// 担当者	文字	6 前'0'埋め
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(6)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string tanto = string.Empty;
+	/// <summary>
+	/// 販売区分 1桁 0:プロパー,1:セール, 9:未使用 (入庫と出庫の場合は 0:買取, 1:委託)
+	/// </summary>
+	[ObservableProperty]
+	int hanKubun = 9;
+	/// <summary>
+	/// 伝票番号 13桁 先頭8桁に0埋で数値を格納する。(売上と返品の場合は顧客CD 13桁、客数の場合は先頭8桁0埋で客数)
+	/// </summary>
+	[property: ColumnSizeDml(13)]
+	[property: System.ComponentModel.DefaultValue("")]
+	[ObservableProperty]
+	string denNo = string.Empty;
+	/// <summary>
+	/// JAN 1段目
+	/// </summary>
+	[property: ColumnSizeDml(13)]
+	[property: System.ComponentModel.DefaultValue("")]
+	[ObservableProperty]
+	string jan1 = string.Empty;
+	/// <summary>
+	/// JAN 2段目
+	/// </summary>
+	[property: ColumnSizeDml(13)]
+	[property: System.ComponentModel.DefaultValue("")]
+	[ObservableProperty]
+	string jan2 = string.Empty;
+	/// <summary>
+	/// 数量 6桁 先頭に'0'か'-'、5桁数値を格納する。
+	/// </summary>
+	[ObservableProperty]
+	int su = 9;
+	/// <summary>
+	/// 単価 9桁数値を格納する。
+	/// </summary>
+	[ObservableProperty]
+	int tanka = 9;
+	/// <summary>
+	/// 取引先 文字 8 前'0'埋め
+	/// </summary>
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	[ObservableProperty]
+	string toriSaki = string.Empty;
+	/// <summary>
+	/// 掛率 文字 5桁 前'0'埋めで 999.9 を格納する。仕入の場合は発注番号8桁、発注の場合は納品日8桁を格納する。
+	/// </summary>
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	[ObservableProperty]
+	string kakeRitsu = string.Empty;
+	/// <summary>
+	/// 1取込ファイルの総件数 5桁数値
+	/// </summary>
+	[ObservableProperty]
+	int totalCnt = 9;
+	/// <summary>
+	/// 予備空白	文字	6
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(6)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string filler = string.Empty;
+	/// <summary>
+	/// バックアップファイル名
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(100)]
+	string backupFileName = string.Empty;
+	/// <summary>
+	/// 行No
+	/// </summary>
+	[ObservableProperty]
+	int lineNo;
+	/// <summary>
+	/// Local PCのコンピュータ名
+	/// </summary>
+	[ObservableProperty]
+	string? computerName = null;
+	/// <summary>
+	/// Local PCのユーザ名
+	/// </summary>
+	[ObservableProperty]
+	string? userName = null;
+	/// <summary>
+	/// HhtdataからTran系各テーブルへの変換日時(vdu相当の日時データ)
+	/// </summary>
+	[ObservableProperty]
+	long vdCnvDate;
+	/// <summary>
+	/// 対象テーブル名
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(30)]
+	string targetTableName = string.Empty;
+	/// <summary>
+	/// 対象テーブルの対象レコードID
+	/// </summary>
+	[ObservableProperty]
+	long targetId;
 }

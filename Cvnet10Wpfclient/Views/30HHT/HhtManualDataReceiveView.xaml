@@ -8,8 +8,7 @@
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FocusManager.FocusedElement="{Binding ElementName=InputDirectoryTextBox}"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	ResizeMode="NoResize"
-	TextOptions.TextFormattingMode="Display"
+	ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:HhtManualDataReceiveViewModel />
@@ -26,7 +25,8 @@
 			Style="{StaticResource MaterialDesignHeadline6TextBlock}"
 			Text="HHTデータを手動受信します" />
 
-		<materialDesign:Card Grid.Row="1" Padding="24">
+		<materialDesign:Card Grid.Row="1"
+			Padding="24">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
@@ -38,33 +38,25 @@
 					<ColumnDefinition Width="*" />
 				</Grid.ColumnDefinitions>
 
-				<TextBlock Grid.Row="0"
-					Grid.Column="0"
+				<TextBlock Grid.Row="0" Grid.Column="0"
 					VerticalAlignment="Center"
-					FontSize="15"
-					FontWeight="SemiBold"
-					Text="入力ファイル名規則" />
-				<TextBlock Grid.Row="0"
-					Grid.Column="1"
+					FontSize="15" FontWeight="SemiBold" Text="入力ファイル名規則" />
+				<TextBlock Grid.Row="0" Grid.Column="1"
 					VerticalAlignment="Center"
-					Text="yyyymmdd...." />
+					Text="HKALLS...." />
 
-				<TextBlock Grid.Row="2"
-					Grid.Column="0"
+				<TextBlock Grid.Row="2" Grid.Column="0"
 					VerticalAlignment="Center"
-					FontSize="15"
-					FontWeight="SemiBold"
-					Text="入力先" />
+					FontSize="15" FontWeight="SemiBold" Text="入力先" />
 				<TextBox x:Name="InputDirectoryTextBox"
-					Grid.Row="2"
-					Grid.Column="1"
-					materialDesign:HintAssist.Hint="例: C:\hht\"
-					materialDesign:TextFieldAssist.HasClearButton="True"
+					Grid.Row="2" Grid.Column="1"
+					materialDesign:HintAssist.Hint="例: C:\hht\" materialDesign:TextFieldAssist.HasClearButton="True"
 					Text="{Binding InputDirectory, UpdateSourceTrigger=PropertyChanged}" />
 			</Grid>
 		</materialDesign:Card>
 
-		<Grid Grid.Row="2" Margin="0,20,0,0">
+		<Grid Grid.Row="2"
+			Margin="0,20,0,0">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*" />
 				<ColumnDefinition Width="Auto" />
@@ -80,8 +72,7 @@
 			<Button Grid.Column="3"
 				MinWidth="100"
 				Command="{Binding ExitCommand}"
-				Content="戻る"
-				IsCancel="True"
+				Content="戻る" IsCancel="True"
 				Style="{StaticResource MaterialDesignOutlinedButton}" />
 		</Grid>
 	</Grid>

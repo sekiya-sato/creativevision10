@@ -54,6 +54,10 @@ public static class AppGlobal {
 		set => _loginJwt = value;
 	}
 
+	public static Models.InfoUser StaticInfoUser = new();
+	public static Models.InfoServer StaticInfoServer = new();
+
+
 	/// <summary>
 	/// Config読込処理：application startup で一度だけ実行すること
 	/// </summary>

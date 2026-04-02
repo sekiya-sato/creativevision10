@@ -52,29 +52,17 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string clientStatus = string.Empty;
 
 
-	record struct InfoUser {
-		public string? OsVer = null;
-		public string? DotnetVer = null;
-		public string? ComputerName = null;
-		public string? UserName = null;
-		public string? LoginTime = null;
-		public string? ExpireTime = null;
-		public InfoUser() {
-		}
+	[ObservableProperty]
+	InfoUser infolocalUser = new InfoUser();
+	[ObservableProperty]
+	InfoServer infolocalServer = new InfoServer();
+	partial void OnInfolocalUserChanged(InfoUser value) {
+		AppGlobal.StaticInfoUser = value;
+		// ここに追加処理を書く
 	}
-	record struct InfoServer {
-		public string? ProductVer = null;
-		public string? BuildDate = null;
-		public string? StartTime = null;
-		public string? BaseDir = null;
-		public InfoServer() {
-		}
+	partial void OnInfolocalServerChanged(InfoServer value) {
+		AppGlobal.StaticInfoServer = value;
 	}
-
-	InfoUser infoUser = new InfoUser();
-	InfoServer infoServer = new InfoServer();
-
-
 	[RelayCommand]
 	private void Init() {
 		if (IsMenuReady) {
@@ -96,18 +84,18 @@ public partial class MainMenuViewModel : ObservableObject {
 				Height = 700
 			};
 		}
-		infoUser.OsVer = Environment.OSVersion.ToString();
-		infoUser.DotnetVer = Environment.Version.ToString();
-		infoUser.ComputerName = Environment.MachineName;
-		infoUser.UserName = Environment.UserName;
-		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{infoUser.OsVer ?? "OS-version"}\nDOTNET {infoUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {infoUser.ComputerName} {infoUser.UserName}\nLogin時間 {infoUser.LoginTime ?? "??:??:??"}\nExpire時間 {infoUser.ExpireTime ?? "??:??:??"}";
+		InfolocalUser.OsVer = Environment.OSVersion.ToString();
+		InfolocalUser.DotnetVer = Environment.Version.ToString();
+		InfolocalUser.ComputerName = Environment.MachineName;
+		InfolocalUser.UserName = Environment.UserName;
+		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
 
 	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 		StatusMessage = $"メニューを選択してください。 \nF10: 環境設定,  F11: トークンリフレッシュ画面, F12: ログイン画面";
-		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {infoServer.ProductVer ?? "Product Version"}\nサーバ開始時間 {infoServer.StartTime ?? "??:??:??"}\nビルド日付 {infoServer.BuildDate ?? "??:??:??"}\nベースDir {infoServer.BaseDir}";
-		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{infoUser.OsVer ?? "OS-version"}\nDOTNET {infoUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {infoUser.ComputerName} {infoUser.UserName}\nLogin 時間 {infoUser.LoginTime ?? "??:??:??"}\nExpire時間 {infoUser.ExpireTime ?? "??:??:??"}";
+		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {InfolocalServer.ProductVer ?? "Product Version"}\nサーバ開始時間 {InfolocalServer.StartTime ?? "??:??:??"}\nビルド日付 {InfolocalServer.BuildDate ?? "??:??:??"}\nベースDir {InfolocalServer.BaseDir}";
+		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
 
 	[RelayCommand]
@@ -170,7 +158,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (!SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
 			return;
 		// ToDo : ログインしてないときはログイン画面を出す etc リリース時にはちゃんと実装する
-		if (infoServer.ProductVer == null) {
+		if (InfolocalServer.ProductVer == null) {
 			await afterLogin(new _00System.LoginViewModel());
 		}
 		if (SelectedMenu.IsDialog)
@@ -196,8 +184,8 @@ public partial class MainMenuViewModel : ObservableObject {
 	async Task afterLogin(_00System.LoginViewModel vm) {
 		if (vm?.LoginData != null) {
 			ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
-			infoUser.LoginTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-			infoUser.ExpireTime = ExpireDate;
+			InfolocalUser.LoginTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+			InfolocalUser.ExpireTime = ExpireDate;
 		}
 		_subStartTime = DateTime.Now;
 		try {
@@ -205,10 +193,10 @@ public partial class MainMenuViewModel : ObservableObject {
 			var msg = new CvnetMsg { Flag = CvnetFlag.Msg002_GetVersion };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
 			var version = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as Cvnet10Base.Share.VersionInfo;
-			infoServer.ProductVer = $"{version?.Product} {version?.Version}";
-			infoServer.StartTime = version?.StartTime.ToString("yyyy/MM/dd HH:mm:ss");
-			infoServer.BuildDate = version?.BuildDate.ToString("yyyy/MM/dd HH:mm:ss");
-			infoServer.BaseDir = version?.BaseDir ?? "";
+			InfolocalServer.ProductVer = $"{version?.Product} {version?.Version}";
+			InfolocalServer.StartTime = version?.StartTime.ToString("yyyy/MM/dd HH:mm:ss");
+			InfolocalServer.BuildDate = version?.BuildDate.ToString("yyyy/MM/dd HH:mm:ss");
+			InfolocalServer.BaseDir = version?.BaseDir ?? "";
 		}
 		catch (Exception ex) {
 			Console.WriteLine($"サーバ情報の取得に失敗: {ex.Message}");
