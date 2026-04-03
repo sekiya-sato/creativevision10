@@ -216,10 +216,20 @@
 								FontSize="18"
 								FontWeight="SemiBold"
 								Text="{Binding SelectedRow.Title, TargetNullValue=レコード未選択}" />
-							<TextBlock DockPanel.Dock="Right"
-								VerticalAlignment="Center"
-								Foreground="{DynamicResource MaterialDesignBodyLight}"
-								Text="{Binding SelectedRow.OriginalType.Name, StringFormat={}対象型: {0}, TargetNullValue=対象型: -}" />
+<TextBlock DockPanel.Dock="Right"
+										VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBodyLight}"
+										Text="{Binding SelectedRow.OriginalType.Name, StringFormat={}対象型: {0}, TargetNullValue=対象型: -}" />
+					<TextBlock DockPanel.Dock="Right"
+										Margin="10,0,0,0"
+										VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBodyLight}"
+										Text="{Binding SelectedRow.Vdc, StringFormat={}Vdc: {0:yyyy/MM/dd HH:mm}, TargetNullValue=Vdc: -}" />
+					<TextBlock DockPanel.Dock="Right"
+										Margin="10,0,0,0"
+										VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBodyLight}"
+										Text="{Binding SelectedRow.Vdu, StringFormat={}Vdu: {0:yyyy/MM/dd HH:mm}, TargetNullValue=Vdu: -}" />
 						</DockPanel>
 					</Border>
 
@@ -256,7 +266,6 @@
 												Text="{Binding Header}" />
 
 											<TextBox Grid.Column="1" Style="{StaticResource FormTextBox}" IsReadOnly="True" Text="{Binding EditText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-<TextBlock Grid.Column="2" Style="{StaticResource FormLabel}" Text="{Binding DateTimeValue, StringFormat=\'yyyy/MM/dd HH:mm\'}" />
 										</Grid>
 									</DataTemplate>
 								</ItemsControl.ItemTemplate>
