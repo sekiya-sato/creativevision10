@@ -9,6 +9,7 @@
 			<helpers:DateTimeYmdHmsConverter x:Key="DateTimeYmdHmsConverter" />
 			<helpers:EnumShimeDisplayConverter x:Key="EnumShimeDisplayConverter" />
 			<helpers:IntToBoolConverter x:Key="IntToBoolConverter" />
+			<helpers:LongToLocalDateTimeStringConverter x:Key="LongToLocalDateTimeStringConverter" />
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Resources/UIColors.xaml" />
 				<ResourceDictionary Source="/Resources/UICommon.xaml" />
