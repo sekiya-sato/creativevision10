@@ -185,6 +185,8 @@ public partial class HhtProcess {
 	/// ハンディデータの受信と保存
 	/// </summary>
 	/// <param name="hhtdata"></param>
+	// ToDo : ロジックを集約 ReceiveHhtdata は廃止予定
+	[Obsolete("廃止予定のため、使用しないでください。")]
 	public int ReceiveHhtdata(List<TranHhtdata> hhtdata) {
 		if (hhtdata == null || hhtdata.Count == 0) {
 			return 0;

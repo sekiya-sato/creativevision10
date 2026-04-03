@@ -284,7 +284,7 @@ public partial class CvnetCoreService {
 		}
 	}
 
-	// ToDo : ロジックを集約 BulkInsert
+	// ToDo : ロジックを集約 HandleOpHhtReceive は廃止予定
 	[Obsolete("HHTデータ受信は廃止予定のため、使用しないでください。")]
 	CvnetMsg HandleOpHhtReceive(CvnetMsg request, CallContext context = default) {
 		ArgumentNullException.ThrowIfNull(request);

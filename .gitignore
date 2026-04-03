@@ -45,6 +45,7 @@ printdll/
 refer/
 Doc/wrk/
 wrk/
+.sisyphus/
 # Optional local notes
 *localmemo*.md
 
