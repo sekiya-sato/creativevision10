@@ -15,8 +15,9 @@ using System.Windows;
 namespace Cvnet10Wpfclient.ViewModels._00System;
 
 public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
-	Type targetType = typeof(MasterMeisho);
-	string targetName = nameof(MasterMeisho);
+	Type? targetType;
+	string targetName = string.Empty;
+	int? maxCount;
 
 	[ObservableProperty]
 	string title = "汎用マスタメンテ";
@@ -50,12 +51,12 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand]
 	void DoAdd() {
-		if (!TryCreateNewItem(out var item)) {
+		if (targetType == null) {
 			return;
 		}
 
-		if (SelectedRow?.TryGetCell("Kubun", out var kubunCell) == true) {
-			TrySetProperty(item, "Kubun", kubunCell.EditText);
+		if (!TryCreateNewItem(out var item)) {
+			return;
 		}
 
 		var row = SysGeneralEditMapper.CreateRow(item, targetType, isNew: true);
@@ -72,7 +73,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoSave(CancellationToken ct) {
-		if (SelectedRow == null) {
+		if (SelectedRow == null || targetType == null) {
 			return;
 		}
 
@@ -122,7 +123,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoDelete(CancellationToken ct) {
-		if (SelectedRow == null) {
+		if (SelectedRow == null || targetType == null) {
 			return;
 		}
 
@@ -168,6 +169,10 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	}
 
 	async Task ReloadAsync(CancellationToken ct, long? selectedId = null) {
+		if (targetType == null) {
+			return;
+		}
+
 		try {
 			ClientLib.Cursor2Wait();
 			var reply = await SendMessageAsync(CreateListMessage(), ct);
@@ -214,7 +219,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 		Code = 0,
 		Flag = CvnetFlag.Msg101_Op_Query,
 		DataType = typeof(QueryListParam),
-		DataMsg = Common.SerializeObject(new QueryListParam(targetType, order: "Kubun,Code"))
+		DataMsg = Common.SerializeObject(new QueryListParam(targetType!, maxCount: maxCount))
 	};
 
 	CvnetMsg CreateExecuteMessage(object parameter, Type dataType) => new() {
@@ -241,7 +246,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	bool TryBuildItem(SysGeneralEditRow row, out BaseDbClass? item, out string errorMessage) {
 		try {
-			if (SysGeneralEditMapper.ToItem(row, targetType) is not BaseDbClass dbItem) {
+			if (SysGeneralEditMapper.ToItem(row, targetType!) is not BaseDbClass dbItem) {
 				item = null;
 				errorMessage = $"{targetName} の型変換に失敗しました。";
 				return false;
@@ -261,12 +266,23 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	Window? ActiveWindow => ClientLib.GetActiveView(this);
 
 	bool ResolveTargetType() {
-		var tableName = AddInfo?.Trim();
+		var raw = AddInfo?.Trim() ?? string.Empty;
+		string tableName;
+
+		if (raw.Contains('|')) {
+			var parts = raw.Split('|', 2);
+			tableName = parts[0].Trim();
+			if (parts.Length > 1 && int.TryParse(parts[1].Trim(), out var mc) && mc > 0) {
+				maxCount = mc;
+			}
+		} else {
+			tableName = raw;
+		}
+
 		if (string.IsNullOrWhiteSpace(tableName)) {
-			targetType = typeof(MasterMeisho);
-			targetName = nameof(MasterMeisho);
-			Title = "汎用マスタメンテ";
-			return true;
+			MessageEx.ShowErrorDialog("テーブル名が指定されていません。", owner: ActiveWindow);
+			ClientLib.Exit(this);
+			return false;
 		}
 
 		var resolved = AppDomain.CurrentDomain.GetAssemblies()
@@ -300,12 +316,12 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	}
 
 	bool TryCreateNewItem(out BaseDbClass item) {
-		if (Activator.CreateInstance(targetType) is BaseDbClass newItem) {
+		if (Activator.CreateInstance(targetType!) is BaseDbClass newItem) {
 			item = newItem;
 			return true;
 		}
 
-		item = new MasterMeisho();
+		item = null!;
 		MessageEx.ShowErrorDialog($"{targetName} の新規作成に失敗しました。", owner: ActiveWindow);
 		return false;
 	}
@@ -354,11 +370,14 @@ public partial class SysGeneralEditRow : ObservableObject {
 	}
 
 	public void RefreshTitle() {
-		var kubun = GetCellText("Kubun");
-		var code = GetCellText("Code");
-		var name = GetCellText("Name");
+		var editableCells = Cells
+			.Where(c => c.Key is not ("Id" or "Vdc" or "Vdu"))
+			.Take(3)
+			.Select(c => c.EditText?.Trim() ?? string.Empty)
+			.Where(t => t.Length > 0);
 		var prefix = IsNew ? "[新規] " : string.Empty;
-		Title = $"{prefix}{kubun} {code} {name}".Trim();
+		var body = string.Join(" ", editableCells);
+		Title = $"{prefix}{body}".Trim();
 		if (string.IsNullOrWhiteSpace(Title)) {
 			Title = IsNew ? "[新規] 未入力" : "未入力";
 		}
