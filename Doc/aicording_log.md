@@ -32,6 +32,25 @@
 
 ---
 
+## [2026-04-03] 12:58 汎用マスタメンテ画面の追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`00System` 配下に `SysGeneralMenteView` を追加し、まずは `MasterMeisho` を直接対象にした汎用マスタメンテ画面を実装してメニューへ組み込む
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs: `MasterMeisho` を対象に一覧取得、追加、更新、削除を行う汎用編集ViewModelと中間行・中間セルモデルを追加
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml: 左一覧・右詳細編集の2ペイン構成で汎用編集UIを追加
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml.cs: 画面のコードビハインドを追加
+- Cvnet10Wpfclient/Models/MenuData.cs: 管理メニューの「自動実行履歴」の下に「汎用マスタメンテ」を追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `DataTable` ではなく中間の行・セルモデルへ変換して編集することで、`DBNull` や列型崩れを避けつつ将来 `MasterShohin` や `MasterTokui` へ対象型を差し替えやすい構造にした
+- 画面側で直接DB操作を持ち込まず、既存のgRPCメッセージによる `Query` / `Insert` / `Update` / `Delete` フローへ合わせることで、既存メンテ画面と整合する実装にした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告0、エラー0）
+
 ## [2026-04-03] 12:01 BaseDbClass汎用のDataTable変換メソッド追加
 ### Agent
 - gpt-5.4 : OpenAI
