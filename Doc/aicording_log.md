@@ -32,6 +32,24 @@
 
 ---
 
+## [2026-04-03] 12:01 BaseDbClass汎用のDataTable変換メソッド追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`BaseDbClass` を継承したクラスを対象に、DB実カラムのみを `DataTable` へ変換する共通メソッドを `CommonClass.cs` へ追加する
+### 実施内容
+- Cvnet10Asset/CommonClass.cs: `Common.ToDataTable<T>` を追加し、`Ignore` / `JsonIgnore` / `ComputedColumn` / `ResultColumn` 属性の付いたプロパティを除外して `DataTable` 列を生成するよう実装
+- Cvnet10Asset/CommonClass.cs: 単純型はそのまま列値へ設定し、複合型やコレクションは `Common.SerializeObject` で JSON 文字列へ変換する helper を追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `Cvnet10Asset` から `Cvnet10Base` や `NPoco` への静的参照を増やすとレイヤ境界を崩すため、基底型名と属性名をリフレクションで判定して `CommonClass.cs` 単独で完結する形にした
+- 既存の `ExDatabase.GetSqlColumns` と同じ除外基準に揃えることで、`ResultColumn` などDB非実カラムを `DataTable` に含めないようにした
+### 確認
+- `dotnet build "Cvnet10Asset/Cvnet10Asset.csproj"` → ビルド成功（警告0、エラー0）
+
+
 ## [2026-04-02] 09:10 opencode の更新と重複インストール整理
 ### Agent
 - [openai/gpt-5.4 : OpenAI]

@@ -1,5 +1,6 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.Collections;
+using System.Data;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
@@ -91,6 +92,114 @@ public sealed partial class Common {
 				property.SetValue(dst, dstValue);
 			}
 		}
+	}
+
+	/// <summary>
+	/// BaseDbClass継承型の一覧をDataTableへ変換する
+	/// </summary>
+	public static DataTable ToDataTable<T>(IEnumerable<T> items) where T : class {
+		ArgumentNullException.ThrowIfNull(items);
+		if (!IsBaseDbClassType(typeof(T))) {
+			throw new ArgumentException($"{typeof(T).FullName} は BaseDbClass 継承型ではありません。");
+		}
+
+		var table = new DataTable(typeof(T).Name);
+		var properties = GetDbTableProperties(typeof(T));
+
+		foreach (var property in properties) {
+			table.Columns.Add(property.Name, GetDataTableColumnType(property.PropertyType));
+		}
+
+		foreach (var item in items) {
+			var row = table.NewRow();
+			foreach (var property in properties) {
+				row[property.Name] = ConvertToDataTableValue(property.GetValue(item), property.PropertyType);
+			}
+			table.Rows.Add(row);
+		}
+
+		return table;
+	}
+
+	static PropertyInfo[] GetDbTableProperties(Type type) {
+		var properties = type
+			.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+			.Where(property => property.CanRead)
+			.Where(property => property.GetIndexParameters().Length == 0)
+			.Where(IsDbTableProperty)
+			.ToList();
+
+		return [
+			.. properties.Where(property => property.Name == "Id"),
+			.. properties.Where(property => property.Name == "Vdc"),
+			.. properties.Where(property => property.Name == "Vdu"),
+			.. properties.Where(property => property.Name != "Id" && property.Name != "Vdc" && property.Name != "Vdu")
+		];
+	}
+
+	static bool IsDbTableProperty(PropertyInfo property) {
+		return !HasAttribute(property, "IgnoreAttribute")
+			&& !HasAttribute(property, "JsonIgnoreAttribute")
+			&& !HasAttribute(property, "ComputedColumnAttribute")
+			&& !HasAttribute(property, "ResultColumnAttribute");
+	}
+
+	static Type GetDataTableColumnType(Type propertyType) {
+		var actualType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+
+		if (actualType.IsEnum) {
+			return typeof(int);
+		}
+
+		if (IsSimpleDbValueType(actualType)) {
+			return actualType;
+		}
+
+		return typeof(string);
+	}
+
+	static object ConvertToDataTableValue(object? value, Type propertyType) {
+		if (value == null) {
+			return DBNull.Value;
+		}
+
+		var actualType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+
+		if (actualType.IsEnum) {
+			return (int)value;
+		}
+
+		if (IsSimpleDbValueType(actualType)) {
+			return value;
+		}
+
+		return SerializeObject(value);
+	}
+
+	static bool IsSimpleDbValueType(Type type) {
+		return type.IsPrimitive
+			|| type == typeof(string)
+			|| type == typeof(decimal)
+			|| type == typeof(DateTime)
+			|| type == typeof(DateTimeOffset)
+			|| type == typeof(Guid)
+			|| type == typeof(TimeSpan);
+	}
+
+	static bool IsBaseDbClassType(Type type) {
+		for (var current = type; current != null; current = current.BaseType) {
+			if (current.FullName == "Cvnet10Base.BaseDbClass") {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	static bool HasAttribute(MemberInfo member, string attributeTypeName) {
+		return member
+			.GetCustomAttributes(inherit: true)
+			.Any(attribute => attribute.GetType().Name == attributeTypeName);
 	}
 
 	static readonly Aes algorithm = Aes.Create();
