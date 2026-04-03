@@ -32,6 +32,23 @@
 
 ---
 
+## [2026-04-03] 13:46 SysGeneralMenteView 右側編集画面の入力可否修正
+### Agent
+- gpt-5.3-codex : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml` の右側編集画面が入力できない問題を修正する
+### 実施内容
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml: 編集用TextBoxの `IsReadOnly` を固定 `True` からセル単位の `IsReadOnly` バインドへ変更し、編集可能項目を入力できるよう修正
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- ViewModel側で `SysGeneralEditCell.IsReadOnly` により `Id/Vdc/Vdu` のみ読み取り専用制御を実装済みのため、View側も同プロパティに追従させるのが最小差分かつ既存設計と整合する
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
+
+---
+
 ## [2026-04-03] 12:58 汎用マスタメンテ画面の追加
 ### Agent
 - gpt-5.4 : OpenAI
