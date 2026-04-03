@@ -207,29 +207,41 @@
 						Padding="16,10"
 						Background="{DynamicResource MaterialDesignToolBarBackground}"
 						CornerRadius="8,8,0,0">
-						<DockPanel x:Name="HeaderDockPanel">
-							<TextBlock VerticalAlignment="Center"
-								DockPanel.Dock="Left" FontSize="18" FontWeight="SemiBold"
-								Text="{Binding SelectedRow.Title, TargetNullValue=レコード未選択}" />
-							<TextBlock VerticalAlignment="Center"
-								DockPanel.Dock="Left"
-								Foreground="{DynamicResource MaterialDesignBodyLight}"
-								Text="{Binding SelectedRow.OriginalType.Name, StringFormat={}対象型: {0}, TargetNullValue=対象型: -}" />
-							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								Foreground="{DynamicResource MaterialDesignBodyLight}"
-								Text="vdc:" />
-							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								d:Text="2024/01/23 12:34:56.7890"
-								Foreground="{DynamicResource MaterialDesignBodyLight}"
-								Text="{Binding SelectedRow.Cells[1].EditText, Converter={StaticResource LongToLocalDateTimeStringConverter}, ConverterParameter='yyyy/MM/dd HH:mm:ss.ffff'}" />
-							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								Foreground="{DynamicResource MaterialDesignBodyLight}"
-								Text="vdu:" />
-							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								d:Text="2024/01/23 12:34:56.7890"
-								Foreground="{DynamicResource MaterialDesignBodyLight}"
-								Text="{Binding SelectedRow.Cells[2].EditText, Converter={StaticResource LongToLocalDateTimeStringConverter}, ConverterParameter='yyyy/MM/dd HH:mm:ss.ffff'}" />
-						</DockPanel>
+						<Grid x:Name="HeaderDockPanel">
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+
+							<DockPanel Grid.Row="0" LastChildFill="False">
+								<TextBlock VerticalAlignment="Center"
+									DockPanel.Dock="Left" FontSize="18" FontWeight="SemiBold"
+									Text="{Binding SelectedRow.Title, TargetNullValue=レコード未選択}" />
+								<TextBlock Margin="14,0,0,0" VerticalAlignment="Center"
+									DockPanel.Dock="Left"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="{Binding SelectedRow.OriginalType.Name, StringFormat={}対象型: {0}, TargetNullValue=対象型: -}" />
+							</DockPanel>
+
+							<WrapPanel Grid.Row="1"
+								Margin="0,6,0,0"
+								Orientation="Horizontal">
+								<TextBlock VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="vdc:" />
+								<TextBlock Margin="8,0,18,0" VerticalAlignment="Center"
+									d:Text="2024/01/23 12:34:56.7890"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="{Binding SelectedRow.Cells[1].EditText, Converter={StaticResource LongToLocalDateTimeStringConverter}, ConverterParameter='yyyy/MM/dd HH:mm:ss.ffff'}" />
+								<TextBlock VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="vdu:" />
+								<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+									d:Text="2024/01/23 12:34:56.7890"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="{Binding SelectedRow.Cells[2].EditText, Converter={StaticResource LongToLocalDateTimeStringConverter}, ConverterParameter='yyyy/MM/dd HH:mm:ss.ffff'}" />
+							</WrapPanel>
+						</Grid>
 					</Border>
 
 					<Grid Grid.Row="1">

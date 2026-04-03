@@ -32,6 +32,24 @@
 
 ---
 
+## [2026-04-03] 13:55 SysGeneralMenteView ヘッダー2行化と日時表示再配置
+### Agent
+- gpt-5.3-codex : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml` の `HeaderDockPanel` を2行にし、下段に `SelectedRow.Cells[1].EditText` / `SelectedRow.Cells[2].EditText` を表示してレイアウトバランスを調整する
+### 実施内容
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml: `HeaderDockPanel` を `DockPanel` から2行 `Grid` に変更し、1行目へタイトル・対象型、2行目へ `vdc` / `vdu` の日時表示を `WrapPanel` で再配置
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml: 余白を見直し（`対象型` 左マージン、2行目上マージン、日時ラベル間スペース）ヘッダーの視認性と詰まり感を改善
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 既存の `DockPanel` 1行配置では情報量増加時に横詰まりしやすいため、意味単位（識別情報/更新日時）で2段分離し、可読性を維持できる `Grid + WrapPanel` 構成を採用した
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
+
+---
+
 ## [2026-04-03] 13:46 SysGeneralMenteView 右側編集画面の入力可否修正
 ### Agent
 - gpt-5.3-codex : GitHub-Copilot
