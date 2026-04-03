@@ -32,6 +32,26 @@
 
 ---
 
+## [2026-04-03] 14:24 SelectServerTableView 追加
+### Agent
+- gpt-5.3-codex : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient.csproj` の Sub に共通 `SelectServerTableView` を追加し、テーブル名と件数の一覧から選択できる View / ViewModel を作成する（今回は画面作成まで）
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/Sub/SelectServerTableViewModel.cs: `Msg042_GetTableCounts` を使ってサーバーのテーブル件数一覧を取得し、`TableName` / `RowCount` を表示・選択する ViewModel を追加
+- Cvnet10Wpfclient/Views/Sub/SelectServerTableView.xaml: ヘッダー、選択状態、テーブル名・件数DataGridを持つ選択画面を追加
+- Cvnet10Wpfclient/Views/Sub/SelectServerTableView.xaml.cs: 画面コードビハインドを追加
+- Cvnet10Wpfclient/Cvnet10Wpfclient.csproj: `Views\Sub\SelectServerTableView.xaml.cs` の `SubType` を追加
+### 技術決定 Why
+- 既存の選択サブ画面（`SelectWinView` / `SelectKubunView`）と同じ操作感を維持するため、`BaseWindow + DataGrid + DoSelectCommand` の既存パターンを踏襲した
+- 件数取得は既存gRPCフラグ `Msg042_GetTableCounts` を利用し、サーバー実装追加なしで要件を満たした
+### 確認
+- WPFクライアントのビルドで新規View / ViewModelのコンパイル確認を実施
+
+---
+
 ## [2026-04-03] 13:55 SysGeneralMenteView ヘッダー2行化と日時表示再配置
 ### Agent
 - gpt-5.3-codex : GitHub-Copilot

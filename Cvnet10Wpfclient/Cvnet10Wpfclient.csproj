@@ -43,6 +43,9 @@
     <Compile Update="Views\OrgView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\Sub\SelectServerTableView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 	<ItemGroup>
 		<None Update="appsettings.json">

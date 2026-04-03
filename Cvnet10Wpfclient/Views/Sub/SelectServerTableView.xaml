@@ -1,0 +1,109 @@
+<helpers:BaseWindow x:Class="Cvnet10Wpfclient.Views.Sub.SelectServerTableView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels.Sub"
+	Title="{Binding Title}"
+	Width="640" Height="620"
+	helpers:OwnerWindowPlacement.IsEnabled="True" helpers:OwnerWindowPlacement.LeftOffset="-40" helpers:OwnerWindowPlacement.TopOffset="-20" BorderBrush="DarkSlateGray"
+	BorderThickness="0.5,0,1.5,1.5" FontSize="18" WindowStartupLocation="Manual"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:SelectServerTableViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<Grid Background="{DynamicResource AppCommonBackgroundBrush}">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button x:Name="DefaultButton"
+						Command="{Binding DoSelectCommand}"
+						IsDefault="True"
+						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Check" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="選択" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						IsCancel="True"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="閉じる">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<TextBlock VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<Border Grid.Row="1"
+			Padding="12,6"
+			Background="{DynamicResource MaterialDesignToolBarBackground}">
+			<DockPanel>
+				<TextBlock DockPanel.Dock="Right"
+					Foreground="{DynamicResource MaterialDesignBodyLight}"
+					Text="{Binding Count, StringFormat={}テーブル数: {0:N0}}" />
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="選択: " />
+					<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
+						FontWeight="SemiBold"
+						Text="{Binding SelectedTableName}" />
+				</StackPanel>
+			</DockPanel>
+		</Border>
+
+		<materialDesign:Card Grid.Row="2"
+			Margin="12"
+			materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+			<DataGrid x:Name="SelectGrid"
+				d:ItemsSource="{d:SampleData ItemCount=5}"
+				helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
+				helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=DefaultButton}"
+				materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				IsSynchronizedWithCurrentItem="True"
+				ItemsSource="{Binding ListData}"
+				RowHeight="35"
+				SelectedItem="{Binding Current}"
+				SelectionMode="Single"
+				Style="{StaticResource MaterialDesignDataGrid}"
+				VerticalScrollBarVisibility="Visible">
+				<DataGrid.ColumnHeaderStyle>
+					<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+						TargetType="{x:Type DataGridColumnHeader}">
+						<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+						<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+						<Setter Property="Padding" Value="12,8" />
+						<Setter Property="FontWeight" Value="SemiBold" />
+					</Style>
+				</DataGrid.ColumnHeaderStyle>
+				<DataGrid.Columns>
+					<DataGridTextColumn x:Name="Col01"
+						Width="360"
+						Binding="{Binding Path=TableName}"
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" テーブル名" />
+					<DataGridTextColumn x:Name="Col02"
+						Width="180"
+						Binding="{Binding Path=RowCount, StringFormat={}{0:N0}}"
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 件数" />
+				</DataGrid.Columns>
+			</DataGrid>
+		</materialDesign:Card>
+	</Grid>
+</helpers:BaseWindow>
