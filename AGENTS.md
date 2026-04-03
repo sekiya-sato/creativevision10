@@ -1,39 +1,22 @@
 # AGENTS.md - OpenCode AI Agent Instructions
 
-## AI Tool Separation Policy
-- **OpenCode**: Use for multi-file features, large-scale refactoring, cross-project changes, documentation, troubleshooting
-- **GitHub Copilot**: Use for inline completion, quick fixes, small edits within Visual Studio 2026
-- When `AGENTS.md` is updated, `copilot-instructions.md` will also be updated accordingly
-- If an AI Tool wants to use Python, please use Python 3
+## Tooling & Environment
+- **Roles**: OpenCode (Complex/Multi-file/Docs), Copilot (Inline/Small edits).
+- **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
+- **Files**: Solution `Cvnet10.slnx`. Use UTF-8 (No BOM) & CRLF.
+- **Python**: Use Python 3 if needed.
 
-## Repository Snapshot
-- Solution file: `Cvnet10.slnx` (The main stack is gRPC server + WPF client (MVVM pattern) + shared/domain/data projects)
-- Server: `Cvnet10Server` (`net10.0`, ASP.NET Core, protobuf-net.Grpc)
-- Client: `Cvnet10Wpfclient` (`net10.0-windows`, WPF, CommunityToolkit.Mvvm, MaterialDesignThemes)
-- Central package versions: `Directory.Packages.props`
-- Code style baseline: `.editorconfig`
-- Xaml style baseline: `Settings.XamlStyler`
+## Priority Workflow (IMPORTANT)
+**Analyze → Plan (TODO-LIST) → Execute → Verify → Write-Log → Git-Commit**
+- Language: Plans, explanations, and comments must be in **JAPANESE**.
+- Task Mgmt: Only ONE `in_progress` task at a time.
+- Preparation: Use `git stash` before work; create a memo in `.sisyphus/` for complex tasks.
+- Search: Use `grep -r` for Japanese terms.
 
-## High Priority OpenCode Rules
-- Write plans, explanations, and code comments in **JAPANESE**
-- **IMPORTANT!** FOLLOW THE WORKFLOW: **Analyze → Plan (Todo-List) → Execute → Verify → Write-Log → Git-Commit** 
-- In Plan, make sure to create **TODO-LIST**
-- Use .NET 10 and C# 14 features where they improve clarity
-- Mark todos as `in_progress` when starting work, `completed` immediately after finishing
-- Only have ONE task `in_progress` at a time
-- Use **UTF-8 (No BOM)** and **CRLF** for all text-based files.
-- Ensure no "LF to CRLF" warnings occur during Git operations.
-- For Japanese searches, Use `grep -r`.
-- Before starting work, use `git stash` to back up any irrelevant changes.
-
-## Read-Only and Layering Rules
-- Keep dependencies layered:
-  - Layer 0: `CodeShare`, `Cvnet10Asset` : read-only
-  - Layer 1: `Cvnet10Base` : read-only (if need, write)
-  - Layer 1.2: DB provider projects `Cvnet10BaseMariadb`(`Cvnet10Base.Mariadb` Folder), `Cvnet10BaseOracle`(`Cvnet10Base.Oracle` Folder), `Cvnet10BaseSqlite`(`Cvnet10Base.Sqlite` Folder) : read-only
-  - Layer 1.4: `Cvnet10Prints` : read-only
-  - Layer 1.5: `Cvnet10DomainLogic`
-  - Layer 2: `Cvnet10Server`, `Cvnet10Wpfclient`
+## Architecture
+- **Read-Only**: Layer 0 (`CodeShare`/`Cvnet10Asset`), Layer 1 (`Cvnet10Base`), Layer 1.2 (DB), Layer 1.4 (Prints)  Write if necessary.
+- **Server Layering**: (0) -> (1-1.4) -> `Cvnet10DomainLogic` (1.5) -> `Cvnet10Server` (2).
+- **Client Layering**: (0) -> (1) -> `Cvnet10Wpfclient`(2).
 
 ## Build Commands **IMPORTANT**
 Condition:
@@ -52,39 +35,20 @@ Condition:
 - Build server only: `dotnet build "Cvnet10Server/Cvnet10Server.csproj"`
 - Build WPF client: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
 
-## Lint / Format Commands
-- Full repo format check: `dotnet format "Cvnet10.slnx" --verify-no-changes`
-- Full repo format fix: `dotnet format "Cvnet10.slnx"`
+## Coding & WPF Standards
+- **Style**: `.editorconfig` (CS), `Settings.XamlStyler` (XAML). File-scoped namespaces.
+- Use **UTF-8**
+- **WPF Work**: Load `wpf-project-guide`. Inspect `App.xaml` & `ResourceDictionary` first for UI issues.
+- **Tools**: Use `check-xaml`, `update-design-mente`, `change-sublist-to-observablecollection` appropriately.
 
-## Expected Development Workflow
-- First inspect the target layer and related files.
-- Then present a short Japanese plan.
-- Implement with minimal diffs.
-- If the work targets `Cvnet10Wpfclient`, always load `wpf-project-guide` first.
-- If WPF resources or exceptions are involved, inspect `Cvnet10Wpfclient/App.xaml` and referenced `ResourceDictionary` files first.
+## Post-Task Requirements (Log & Commit)
+- **Log**: Append to `Doc/aicording_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
+- **Log Format**: `## [Date] Time Title`, `Agent`, `Editor`, `Purpose`, `Details`, `Reasoning(Why)`, `Verification`.
+- **Commit Message**:
 
-## Formatting Conventions
-- `.cs` follow `.editorconfig`.
-- `.xaml` follow `Settings.XamlStyler`.
-- Use file-scoped namespaces.
-- Put `using` directives outside the namespace.
-- Do not sort `System` usings first; keep the existing local ordering style.
-
-## WPF / MVVM Conventions
-- For any `Cvnet10Wpfclient` work, always load `wpf-project-guide` and follow it as the source of truth for shared WPF conventions.
-- For creating or updating an individual WPF screen, also load `wpf-view-workflow`.
-- Use `check-xaml` when validating XAML syntax, resources, converters, or binding paths.
-- Use `update-design-mente` when aligning master maintenance screens to the shared MaterialDesign-based layout.
-- Use `change-sublist-to-observablecollection` when a master maintenance sub-list uses `List<T>` and row add/delete changes are not reflected in the UI.
-
-## Pre-Completion Checklist
-- Run the smallest relevant build.
-- Summarize impact and verification results clearly.
-
-## Write-Log
-- Upon completion of the task, be sure to record the history at `Doc/aicording_log.md` using the following format.
-- If adding the history results in more than 800 lines, rename the existing history file to aicoding_log_[001-999].md with sequential numbers, and create a new `aicording_log.md` with the same format to record the history.
-- - The following `記録フォーマット` and `アーカイブルール` are included at the beginning of `aicording_log.md`.
+### Write-Log
+- **Log**: Append to `Doc/aicording_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
+- **Log Format** and **Archiving Rule**:
 '''
 ## [YYYY-MM-DD] hh:mm 作業タイトル
 ### Agent
@@ -105,8 +69,8 @@ Condition:
 ---
 '''
 
-## Git-Commit
-- When committing, include the following
+### Git-Commit
+- **Commit Message Format**:
 '''
 [作業内容]
 [使用した AI Model 名 : AI Provider 名 : エージェント名]
@@ -121,4 +85,3 @@ GPT-5.4-mini : OpenAI : Build
 SelectKubunView のデザインをMasterMeishoのデザインに統一する
 '''
 
- 
