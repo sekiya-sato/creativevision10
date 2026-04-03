@@ -172,7 +172,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				return;
 			}
 
-			if (selectTableView.DataContext is not Sub.SelectServerTableViewModel selectVm
+		if (selectTableView.DataContext is not Sub.SelectServerTableViewModel selectVm
 				|| string.IsNullOrWhiteSpace(selectVm.SelectedTableName)) {
 				MessageEx.ShowWarningDialog("テーブルが選択されていません。", owner: ClientLib.GetActiveView(this));
 				return;
@@ -185,7 +185,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			targetView.Title = SelectedMenu.Header;
 			if (targetView.DataContext is Helpers.BaseViewModel targetVm) {
 				targetVm.InitParam = SelectedMenu.InitParam;
-				targetVm.AddInfo = selectVm.SelectedTableName;
+				targetVm.AddInfo = $"{selectVm.SelectedTableName}|{selectVm.SelectedRowCount}";
 			}
 
 			var targetRet = ClientLib.ShowDialogView(targetView, this, IsDialog: SelectedMenu.IsDialog);
