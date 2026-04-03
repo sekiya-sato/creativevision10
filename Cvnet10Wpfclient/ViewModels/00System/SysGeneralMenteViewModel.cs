@@ -15,8 +15,8 @@ using System.Windows;
 namespace Cvnet10Wpfclient.ViewModels._00System;
 
 public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
-	readonly Type targetType = typeof(MasterMeisho);
-	readonly string targetName = nameof(MasterMeisho);
+	Type targetType = typeof(MasterMeisho);
+	string targetName = nameof(MasterMeisho);
 
 	[ObservableProperty]
 	string title = "汎用マスタメンテ";
@@ -41,15 +41,23 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task Init(CancellationToken ct) {
+		if (!ResolveTargetType()) {
+			return;
+		}
+
 		await ReloadAsync(ct);
 	}
 
 	[RelayCommand]
 	void DoAdd() {
-		var item = new MasterMeisho();
-		if (SelectedRow?.TryGetCell("Kubun", out var kubunCell) == true) {
-			item.Kubun = kubunCell.EditText;
+		if (!TryCreateNewItem(out var item)) {
+			return;
 		}
+
+		if (SelectedRow?.TryGetCell("Kubun", out var kubunCell) == true) {
+			TrySetProperty(item, "Kubun", kubunCell.EditText);
+		}
+
 		var row = SysGeneralEditMapper.CreateRow(item, targetType, isNew: true);
 		Rows.Add(row);
 		Count = Rows.Count;
@@ -68,16 +76,17 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 			return;
 		}
 
-		if (!TryBuildItem(SelectedRow, out MasterMeisho? item, out var errorMessage) || item == null) {
+		if (!TryBuildItem(SelectedRow, out var item, out var errorMessage) || item == null) {
 			Message = errorMessage;
 			MessageEx.ShowErrorDialog(errorMessage, owner: ActiveWindow);
 			return;
 		}
 
+		var codeValue = GetPropertyText(item, "Code");
 		var actionName = SelectedRow.IsNew ? "追加" : "修正";
 		var confirmMessage = SelectedRow.IsNew
-			? $"追加しますか？ ({targetName} / CD={item.Code})"
-			: $"修正しますか？ ({targetName} / CD={item.Code}, Id={item.Id})";
+			? $"追加しますか？ ({targetName} / CD={codeValue})"
+			: $"修正しますか？ ({targetName} / CD={codeValue}, Id={item.Id})";
 
 		if (MessageEx.ShowQuestionDialog(confirmMessage, owner: ActiveWindow) != MessageBoxResult.Yes) {
 			return;
@@ -95,7 +104,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 			}
 
 			var selectedId = item.Id;
-			if (Common.DeserializeObject(reply.DataMsg ?? string.Empty, reply.DataType) is MasterMeisho savedItem) {
+			if (Common.DeserializeObject(reply.DataMsg ?? string.Empty, reply.DataType) is BaseDbClass savedItem) {
 				selectedId = savedItem.Id;
 			}
 
@@ -125,13 +134,13 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 			return;
 		}
 
-		if (!TryBuildItem(SelectedRow, out MasterMeisho? item, out var errorMessage) || item == null) {
+		if (!TryBuildItem(SelectedRow, out var item, out var errorMessage) || item == null) {
 			Message = errorMessage;
 			MessageEx.ShowErrorDialog(errorMessage, owner: ActiveWindow);
 			return;
 		}
 
-		var confirmMessage = $"削除しますか？ ({targetName} / CD={item.Code}, Id={item.Id})";
+		var confirmMessage = $"削除しますか？ ({targetName} / CD={GetPropertyText(item, "Code")}, Id={item.Id})";
 		if (MessageEx.ShowQuestionDialog(confirmMessage, owner: ActiveWindow) != MessageBoxResult.Yes) {
 			return;
 		}
@@ -171,7 +180,9 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 			}
 
 			Rows = new ObservableCollection<SysGeneralEditRow>(
-				list.Cast<MasterMeisho>().Select(item => SysGeneralEditMapper.CreateRow(item, targetType, isNew: false)));
+				list.Cast<object>()
+					.OfType<BaseDbClass>()
+					.Select(item => SysGeneralEditMapper.CreateRow(item, targetType, isNew: false)));
 			Count = Rows.Count;
 			SelectedRow = SelectRow(selectedId);
 			Message = $"{targetName} を {Count:N0} 件取得しました。";
@@ -228,9 +239,15 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 		return true;
 	}
 
-	bool TryBuildItem(SysGeneralEditRow row, out MasterMeisho? item, out string errorMessage) {
+	bool TryBuildItem(SysGeneralEditRow row, out BaseDbClass? item, out string errorMessage) {
 		try {
-			item = SysGeneralEditMapper.ToItem<MasterMeisho>(row);
+			if (SysGeneralEditMapper.ToItem(row, targetType) is not BaseDbClass dbItem) {
+				item = null;
+				errorMessage = $"{targetName} の型変換に失敗しました。";
+				return false;
+			}
+
+			item = dbItem;
 			errorMessage = string.Empty;
 			return true;
 		}
@@ -242,6 +259,70 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	}
 
 	Window? ActiveWindow => ClientLib.GetActiveView(this);
+
+	bool ResolveTargetType() {
+		var tableName = AddInfo?.Trim();
+		if (string.IsNullOrWhiteSpace(tableName)) {
+			targetType = typeof(MasterMeisho);
+			targetName = nameof(MasterMeisho);
+			Title = "汎用マスタメンテ";
+			return true;
+		}
+
+		var resolved = AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(x => {
+				try {
+					return x.GetTypes();
+				}
+				catch (ReflectionTypeLoadException ex) {
+					return ex.Types.Where(t => t != null).Cast<Type>();
+				}
+			})
+			.Where(x => typeof(BaseDbClass).IsAssignableFrom(x) && !x.IsAbstract)
+			.FirstOrDefault(x => string.Equals(GetTableName(x), tableName, StringComparison.OrdinalIgnoreCase));
+
+		if (resolved == null) {
+			MessageEx.ShowErrorDialog($"指定テーブルに対応する型が見つかりません: {tableName}", owner: ActiveWindow);
+			ClientLib.Exit(this);
+			return false;
+		}
+
+		targetType = resolved;
+		targetName = GetTableName(resolved);
+		Title = $"汎用マスタメンテ ({targetName})";
+		return true;
+	}
+
+	static string GetTableName(Type type) {
+		return type.GetCustomAttributes(typeof(TableNameAttribute), true).FirstOrDefault() is TableNameAttribute attr
+			? attr.Value
+			: type.Name;
+	}
+
+	bool TryCreateNewItem(out BaseDbClass item) {
+		if (Activator.CreateInstance(targetType) is BaseDbClass newItem) {
+			item = newItem;
+			return true;
+		}
+
+		item = new MasterMeisho();
+		MessageEx.ShowErrorDialog($"{targetName} の新規作成に失敗しました。", owner: ActiveWindow);
+		return false;
+	}
+
+	static void TrySetProperty(object target, string propertyName, string value) {
+		var property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
+		if (property == null || !property.CanWrite || property.PropertyType != typeof(string)) {
+			return;
+		}
+
+		property.SetValue(target, value);
+	}
+
+	static string GetPropertyText(object target, string propertyName) {
+		var property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
+		return property?.GetValue(target)?.ToString() ?? "-";
+	}
 }
 
 public partial class SysGeneralEditRow : ObservableObject {
@@ -303,7 +384,7 @@ public partial class SysGeneralEditCell : ObservableObject {
 }
 
 static class SysGeneralEditMapper {
-	public static SysGeneralEditRow CreateRow<T>(T item, Type originalType, bool isNew) where T : BaseDbClass {
+	public static SysGeneralEditRow CreateRow(BaseDbClass item, Type originalType, bool isNew) {
 		var row = new SysGeneralEditRow {
 			IsNew = isNew,
 			OriginalType = originalType
@@ -324,9 +405,12 @@ static class SysGeneralEditMapper {
 		return row;
 	}
 
-	public static T ToItem<T>(SysGeneralEditRow row) where T : BaseDbClass, new() {
-		var item = new T();
-		foreach (var property in GetEditableProperties(typeof(T))) {
+	public static object ToItem(SysGeneralEditRow row, Type type) {
+		if (Activator.CreateInstance(type) is not object item) {
+			throw new InvalidOperationException($"{type.Name} の生成に失敗しました。");
+		}
+
+		foreach (var property in GetEditableProperties(type)) {
 			if (!row.TryGetCell(property.Name, out var cell)) {
 				continue;
 			}

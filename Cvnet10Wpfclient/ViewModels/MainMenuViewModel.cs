@@ -163,6 +163,45 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 		if (SelectedMenu.IsDialog)
 			ClientLib.ExitAllWithoutMe(this);
+
+		if (SelectedMenu.ViewType == typeof(Views._00System.SysGeneralMenteView)) {
+			var selectTableView = new Views.Sub.SelectServerTableView {
+				Title = "テーブル選択"
+			};
+			if (ClientLib.ShowDialogView(selectTableView, this, IsDialog: true) != true) {
+				return;
+			}
+
+			if (selectTableView.DataContext is not Sub.SelectServerTableViewModel selectVm
+				|| string.IsNullOrWhiteSpace(selectVm.SelectedTableName)) {
+				MessageEx.ShowWarningDialog("テーブルが選択されていません。", owner: ClientLib.GetActiveView(this));
+				return;
+			}
+
+			if (Activator.CreateInstance(SelectedMenu.ViewType) is not Window targetView) {
+				return;
+			}
+
+			targetView.Title = SelectedMenu.Header;
+			if (targetView.DataContext is Helpers.BaseViewModel targetVm) {
+				targetVm.InitParam = SelectedMenu.InitParam;
+				targetVm.AddInfo = selectVm.SelectedTableName;
+			}
+
+			var targetRet = ClientLib.ShowDialogView(targetView, this, IsDialog: SelectedMenu.IsDialog);
+			if (targetRet == true) {
+				if (targetView.DataContext is _00System.LoginViewModel vm) {
+					ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
+					_subStartTime = DateTime.Now;
+					await afterLogin(vm);
+				}
+				else if (targetView.DataContext is _00System.SysSetConfigViewModel) {
+					SetSubMessage();
+				}
+			}
+			return;
+		}
+
 		if (Activator.CreateInstance(SelectedMenu.ViewType) is not Window view) return;
 		view.Title = SelectedMenu.Header;
 		if (view.DataContext is Helpers.BaseViewModel vm0) {
