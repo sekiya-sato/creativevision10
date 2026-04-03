@@ -207,23 +207,27 @@
 						Padding="16,10"
 						Background="{DynamicResource MaterialDesignToolBarBackground}"
 						CornerRadius="8,8,0,0">
-						<DockPanel>
-							<TextBlock VerticalAlignment="Center" DockPanel.Dock="Left"
-								FontSize="18" FontWeight="SemiBold"
+						<DockPanel x:Name="HeaderDockPanel">
+							<TextBlock VerticalAlignment="Center"
+								DockPanel.Dock="Left" FontSize="18" FontWeight="SemiBold"
 								Text="{Binding SelectedRow.Title, TargetNullValue=レコード未選択}" />
 							<TextBlock VerticalAlignment="Center"
 								DockPanel.Dock="Left"
 								Foreground="{DynamicResource MaterialDesignBodyLight}"
 								Text="{Binding SelectedRow.OriginalType.Name, StringFormat={}対象型: {0}, TargetNullValue=対象型: -}" />
 							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								Foreground="{DynamicResource MaterialDesignBodyLight}" Text="vdc:"/>
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="vdc:" />
 							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								Foreground="{DynamicResource MaterialDesignBodyLight}" d:Text="2024/01/23 12:34:56.7890"
+								d:Text="2024/01/23 12:34:56.7890"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
 								Text="{Binding SelectedRow.Cells[1].EditText, Converter={StaticResource LongToLocalDateTimeStringConverter}, ConverterParameter='yyyy/MM/dd HH:mm:ss.ffff'}" />
 							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								Foreground="{DynamicResource MaterialDesignBodyLight}" Text="vdu:"/>
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="vdu:" />
 							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								Foreground="{DynamicResource MaterialDesignBodyLight}" d:Text="2024/01/23 12:34:56.7890"
+								d:Text="2024/01/23 12:34:56.7890"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
 								Text="{Binding SelectedRow.Cells[2].EditText, Converter={StaticResource LongToLocalDateTimeStringConverter}, ConverterParameter='yyyy/MM/dd HH:mm:ss.ffff'}" />
 						</DockPanel>
 					</Border>
