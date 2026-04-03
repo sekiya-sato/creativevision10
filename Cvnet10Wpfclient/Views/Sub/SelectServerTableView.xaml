@@ -56,14 +56,18 @@
 			Background="{DynamicResource MaterialDesignToolBarBackground}">
 			<DockPanel>
 				<TextBlock DockPanel.Dock="Right"
+					VerticalAlignment="Center"
 					Foreground="{DynamicResource MaterialDesignBodyLight}"
 					Text="{Binding Count, StringFormat={}テーブル数: {0:N0}}" />
 				<StackPanel Orientation="Horizontal">
-					<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
-						Text="選択: " />
-					<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
-						FontWeight="SemiBold"
-						Text="{Binding SelectedTableName}" />
+					<TextBlock VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="取得件数: " />
+					<TextBox Width="80"
+						VerticalAlignment="Center"
+						FontSize="16"
+						Text="{Binding SelectedRowCount, UpdateSourceTrigger=PropertyChanged}"
+						ToolTip="取得する最大件数 (0=無制限)" />
 				</StackPanel>
 			</DockPanel>
 		</Border>
@@ -77,6 +81,7 @@
 				helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=DefaultButton}"
 				materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
 				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				IsReadOnly="True"
 				IsSynchronizedWithCurrentItem="True"
 				ItemsSource="{Binding ListData}"
 				RowHeight="35"
