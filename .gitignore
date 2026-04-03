@@ -46,7 +46,7 @@ refer/
 Doc/wrk/
 wrk/
 .sisyphus/
+.playwright-mcp/
 # Optional local notes
-*localmemo*.md
 
 

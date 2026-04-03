@@ -5,6 +5,9 @@ using Cvnet10Asset;
 using Cvnet10Wpfclient.Helpers;
 using Grpc.Core;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Data;
+using System.Runtime.CompilerServices;
 using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels;
@@ -310,8 +313,51 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 	}
 
 	#endregion
-}
+	#region Tab3:DataTableのテスト
 
+	[RelayCommand]
+	private void Init() {
+		InitDataTable();
+	}
+
+	[ObservableProperty]
+	private DataRowView? selectedRow;
+	[ObservableProperty]
+	public DataView? tableView;
+	[ObservableProperty]
+	public ObservableCollection<RowCellItem> editableCells = new();
+
+
+	partial void OnSelectedRowChanged(DataRowView? value) {
+		LoadEditableCells();
+	}
+	public void InitDataTable() {
+		var table = new DataTable();
+		table.Columns.Add("Id", typeof(int));
+		table.Columns.Add("Name", typeof(string));
+		table.Columns.Add("Department", typeof(string));
+		table.Columns.Add("Memo", typeof(string));
+		table.Columns.Add("Test1", typeof(string));
+		table.Columns.Add("Test2", typeof(long));
+		table.Rows.Add(1, "田中", "営業", "サンプル1");
+		table.Rows.Add(2, "佐藤", "開発", "サンプル2");
+		table.Rows.Add(3, "鈴木", "総務", "サンプル3");
+		TableView = table.DefaultView;
+		if (TableView.Count > 0) {
+			SelectedRow = TableView[0];
+		}
+	}
+	private void LoadEditableCells() {
+		EditableCells.Clear();
+		if (SelectedRow == null) {
+			return;
+		}
+		foreach (DataColumn column in SelectedRow.Row.Table.Columns) {
+			EditableCells.Add(new RowCellItem(SelectedRow, column.ColumnName));
+		}
+	}
+	#endregion
+}
 
 /// <summary>
 /// カラーバランス確認用アイテムモデル
@@ -319,3 +365,30 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 public record ColorBalanceItem(string Color1, string Color2, string Color3, string Color4);
 
 public record EnvDisplayItem(string Key, string Value);
+
+
+#region Tab3:DataTableのテスト
+public class RowCellItem : INotifyPropertyChanged {
+	private readonly DataRowView rowView;
+	private readonly string columnName;
+	public string ColumnName => columnName;
+	public string? Value {
+		get => rowView[columnName]?.ToString();
+		set {
+			if (rowView[columnName]?.ToString() == value) {
+				return;
+			}
+			rowView[columnName] = value ?? string.Empty;
+			OnPropertyChanged();
+		}
+	}
+	public RowCellItem(DataRowView rowView, string columnName) {
+		this.rowView = rowView;
+		this.columnName = columnName;
+	}
+	public event PropertyChangedEventHandler? PropertyChanged;
+	private void OnPropertyChanged([CallerMemberName] string? propertyName = null) {
+		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+	}
+}
+#endregion
