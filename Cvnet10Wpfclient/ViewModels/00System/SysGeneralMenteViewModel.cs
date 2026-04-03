@@ -400,6 +400,8 @@ public partial class SysGeneralEditCell : ObservableObject {
 	bool isReadOnly;
 
 	public Type ValueType { get; init; } = typeof(string);
+
+	public bool IsJsonColumn { get; init; }
 }
 
 static class SysGeneralEditMapper {
@@ -410,13 +412,15 @@ static class SysGeneralEditMapper {
 		};
 
 		foreach (var property in GetEditableProperties(originalType)) {
+			var isJson = IsJsonSerializedProperty(property);
 			var value = property.GetValue(item);
 			row.AddCell(new SysGeneralEditCell {
 				Key = property.Name,
 				Header = property.Name,
-				EditText = ToText(value),
+				EditText = isJson ? ToJsonText(value) : ToText(value),
 				IsReadOnly = property.Name is "Id" or "Vdc" or "Vdu",
-				ValueType = property.PropertyType
+				ValueType = property.PropertyType,
+				IsJsonColumn = isJson
 			});
 		}
 
@@ -434,7 +438,9 @@ static class SysGeneralEditMapper {
 				continue;
 			}
 
-			var value = ConvertFromText(cell.EditText, property.PropertyType, property.Name);
+			var value = IsJsonSerializedProperty(property)
+				? ConvertFromJsonText(cell.EditText, property.PropertyType, property.Name)
+				: ConvertFromText(cell.EditText, property.PropertyType, property.Name);
 			property.SetValue(item, value);
 		}
 
@@ -465,8 +471,15 @@ static class SysGeneralEditMapper {
 			return false;
 		}
 
+		if (HasAttribute<SerializedColumnAttribute>(property)) {
+			return true;
+		}
+
 		return IsSupportedType(property.PropertyType);
 	}
+
+	static bool IsJsonSerializedProperty(PropertyInfo property) =>
+		HasAttribute<SerializedColumnAttribute>(property) && !IsSupportedType(property.PropertyType);
 
 	static bool HasAttribute<T>(MemberInfo member) where T : Attribute =>
 		member.GetCustomAttribute<T>() != null;
@@ -531,5 +544,30 @@ static class SysGeneralEditMapper {
 		}
 
 		throw new InvalidOperationException($"{propertyName} の型 {actualType.Name} には未対応です。");
+	}
+
+	static string ToJsonText(object? value) {
+		if (value == null) {
+			return string.Empty;
+		}
+
+		return JsonConvert.SerializeObject(value, Formatting.Indented);
+	}
+
+	static object? ConvertFromJsonText(string text, Type targetType, string propertyName) {
+		if (string.IsNullOrWhiteSpace(text)) {
+			if (Nullable.GetUnderlyingType(targetType) != null) {
+				return null;
+			}
+
+			return Activator.CreateInstance(targetType);
+		}
+
+		try {
+			return JsonConvert.DeserializeObject(text.Trim(), targetType);
+		}
+		catch (Exception ex) {
+			throw new InvalidOperationException($"{propertyName} の JSON 変換に失敗しました: {ex.Message}", ex);
+		}
 	}
 }

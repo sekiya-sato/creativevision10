@@ -71,3 +71,28 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
 
 ---
+
+## [2026-04-03] 15:30 SysGeneralMenteViewModel で SerializedColumn 付き項目を JSON 編集可能にする
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SysGeneralMenteViewModel の `GetEditableProperties()` で読み飛ばしている `List<MasterGeneralMeisho>` や `BaseDetailClass` を JSON serialize して修正可能な項目にする
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs:
+  - `SysGeneralEditCell` に `IsJsonColumn` プロパティを追加
+  - `IsSupportedProperty()` に `[SerializedColumn]` 属性チェックを追加し、JSON 格納型も編集対象に含める
+  - `IsJsonSerializedProperty()` ヘルパーを追加（`[SerializedColumn]` かつ非 primitive 型を判定）
+  - `CreateRow()` で JSON 列には `ToJsonText()` を使用し `IsJsonColumn` フラグを設定
+  - `ToItem()` で JSON 列には `ConvertFromJsonText()` で逆変換
+  - `ToJsonText()`: `JsonConvert.SerializeObject` で整形済み JSON 文字列を生成
+  - `ConvertFromJsonText()`: `JsonConvert.DeserializeObject` で JSON 文字列から型復元
+### 技術決定 Why
+- `IsSupportedType` の primitive ホワイトリストは変更せず、`IsSupportedProperty` のレベルで `[SerializedColumn]` を先にチェックすることで既存の primitive 列への影響をゼロにした
+- NPoco の `[SerializedColumn]` 属性は DB に JSON 格納されることを意味するため、同じ JSON 形式でユーザーに編集させるのが自然
+- `Newtonsoft.Json` は既に using 済みで `JsonConvert` が使えるため新規依存なし
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、警告0）
+
+---
