@@ -255,10 +255,8 @@
 												Style="{StaticResource FormLabel}"
 												Text="{Binding Header}" />
 
-											<TextBox Grid.Column="1"
-												Style="{StaticResource FormTextBox}"
-												IsReadOnly="{Binding IsReadOnly}"
-												Text="{Binding EditText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+											<TextBox Grid.Column="1" Style="{StaticResource FormTextBox}" IsReadOnly="True" Text="{Binding EditText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+<TextBlock Grid.Column="2" Style="{StaticResource FormLabel}" Text="{Binding DateTimeValue, StringFormat=\'yyyy/MM/dd HH:mm\'}" />
 										</Grid>
 									</DataTemplate>
 								</ItemsControl.ItemTemplate>
