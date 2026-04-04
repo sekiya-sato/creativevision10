@@ -63,7 +63,7 @@ public partial class App : Application {
 		}
 		// 現在のスレッドのカルチャを取得し、WPFの言語設定に適用
 		var culture = Thread.CurrentThread.CurrentCulture;
-		XmlLanguage language = XmlLanguage.GetLanguage(culture.IetfLanguageTag);
+		var language = XmlLanguage.GetLanguage(culture.IetfLanguageTag);
 		FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(language));
 	}
 

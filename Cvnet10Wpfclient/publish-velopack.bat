@@ -5,7 +5,7 @@ set "PROJECT_DIR=%~dp0"
 set "PUBLISH_DIR=%PROJECT_DIR%bin\publish-velopack"
 set "VELOPACK_VERSION=0.0.1298"
 
-for /f "usebackq delims=" %%i in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%publish-velopack.version.ps1" -AppSettingsPath "%PROJECT_DIR%appsettings.json" -Increment`) do set "APP_VERSION=%%i"
+for /f "usebackq delims=" %%i in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%publish-velopack.version.ps1" -AppSettingsPath "%PROJECT_DIR%appsettings.Production.json" -Increment`) do set "APP_VERSION=%%i"
 
 if "%APP_VERSION%"=="" (
 	echo [ERROR] Failed to update Application.Version in appsettings.json.
