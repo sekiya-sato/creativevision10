@@ -475,13 +475,13 @@
 					<Button Grid.Row="1" Grid.Column="1"
 						Width="160" Height="40"
 						Margin="5,70,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-						Command="{Binding TestClickOnceCommand}"
-						Content="ClickOnceテスト" />
+						Command="{Binding ShowVelopackConfigCommand}"
+						Content="Velopack設定表示" />
 					<Button Grid.Row="1" Grid.Column="1"
 						Width="160" Height="40"
 						Margin="5,130,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-						Command="{Binding TestClickOnce2Command}"
-						Content="ClickOnceテスト2" />
+						Command="{Binding ShowVelopackRuntimeCommand}"
+						Content="Velopack実行情報" />
 				</Grid>
 			</TabItem>
 			<TabItem Header="DataTable">

@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Cvnet10Wpfclient.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 
 namespace Cvnet10Wpfclient.ViewModels._00System;
@@ -17,16 +19,18 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 
 	public SysUpgradeViewModel() {
 		_logger = LogManager.GetCurrentClassLogger();
-		_updateService = new UpdateService(_logger);
+		var configuration = App.AppHost?.Services.GetRequiredService<IConfiguration>()
+			?? throw new InvalidOperationException("IConfiguration を取得できません。");
+		_updateService = new UpdateService(_logger, configuration);
 	}
 
 	[RelayCommand]
 	private async Task CheckUpdateAsync() {
-		UpdateStatus = "チェック中...";
+		UpdateStatus = "更新を確認中...";
 		IsUpdateAvailable = await _updateService.CheckForUpdateAsync();
 
 		UpdateStatus = IsUpdateAvailable
-			? "新しいバージョンが利用可能です。"
+			? $"新しいバージョンが利用可能です。 現在={_updateService.GetCurrentVersion()} 設定={_updateService.GetConfiguredVersion()}"
 			: "現在のバージョンは最新です。";
 	}
 
@@ -36,7 +40,7 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 		bool success = await _updateService.PerformUpdateAsync();
 
 		if (success) {
-			UpdateStatus = "更新が完了しました。アプリケーションを再起動してください。";
+			UpdateStatus = "更新を適用して再起動します。";
 			// 必要に応じてメッセージボックスを表示し、再起動を促す
 		}
 	}

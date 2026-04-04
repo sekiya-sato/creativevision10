@@ -36,5 +36,6 @@
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
     <PackageVersion Include="protobuf-net.Grpc.ClientFactory" Version="1.2.2" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
+    <PackageVersion Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 </Project>

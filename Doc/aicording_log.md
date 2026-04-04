@@ -32,6 +32,35 @@
 
 ---
 
+## [2026-04-04] 18:08 Cvnet10WpfclientのVelopack導入と配布手順整備
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient` に Velopack を導入し、ClickOnce 相当の更新処理と配布手順へ置き換える
+### 実施内容
+- Directory.Packages.props: `Velopack` の中央管理パッケージを追加
+- Cvnet10Wpfclient/Cvnet10Wpfclient.csproj: `Velopack` 参照、WPF の `Main` 起動設定、ClickOnce 発行ターゲット削除を反映
+- Cvnet10Wpfclient/App.xaml.cs: `VelopackApp.Build().Run()` を先頭で実行する `Main` エントリーポイントを追加
+- Cvnet10Wpfclient/Services/UpdateService.cs: ClickOnce 風の更新処理を `UpdateManager` ベースへ置換
+- Cvnet10Wpfclient/ViewModels/00System/SysUpgradeViewModel.cs: Velopack 更新確認文言へ調整し、設定から `FeedUrl` を読む形へ変更
+- Cvnet10Wpfclient/ViewModels/SampleViewModel.cs: ClickOnce テスト表示を Velopack 設定表示/実行情報表示へ置換
+- Cvnet10Wpfclient/Views/SampleView.xaml: サンプル画面のボタン文言とバインディングを Velopack 用に変更
+- Cvnet10Wpfclient/appsettings.json: `Application.Version` を追加
+- Cvnet10Wpfclient/appsettings.Production.json: `Update:FeedUrl` と `Channel` の本番設定雛形を追加
+- Cvnet10Wpfclient/pre-publish-backup.bat: 廃止のため削除
+- Cvnet10Wpfclient/publish-velopack.bat: `appsettings.json` の版数を読み取って `dotnet publish` と `vpk pack` を実行する配布バッチを追加
+- Doc/velopack_release_manual.md: 版数更新から Velopack 配布までの手順書を追加
+### 技術決定 Why
+- WPF の `Main` を明示して `VelopackApp.Build().Run()` を最初に実行することで、更新適用時の起動経路を Velopack 推奨形へ寄せた
+- 版数源を `appsettings.json` に一本化し、実行表示と配布版数の不整合を減らした
+- 配布先URLは `appsettings.Production.json` に分離し、環境ごとの差し替えをしやすくした
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` → ビルド成功（警告0、エラー0）
+
+---
+
 ## [2026-04-03] 16:44 SelectServerTableViewの取得件数対応と汎用メンテ強化
 ### Agent
 - gpt-5.4-mini : OpenAI

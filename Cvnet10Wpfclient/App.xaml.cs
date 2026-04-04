@@ -15,6 +15,7 @@ using System.Net.Http;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
+using Velopack;
 
 namespace Cvnet10Wpfclient;
 /// <summary>
@@ -24,6 +25,15 @@ public partial class App : Application {
 	public static IHost? AppHost { get; private set; }
 	public static ThemeService ThemeService { get; } = new();
 	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+	[STAThread]
+	public static void Main(string[] args) {
+		VelopackApp.Build().Run();
+
+		var app = new App();
+		app.InitializeComponent();
+		app.Run();
+	}
 
 	public App() {
 		InitializeLanguage();

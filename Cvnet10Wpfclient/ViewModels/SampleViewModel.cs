@@ -4,12 +4,15 @@ using CommunityToolkit.Mvvm.Input;
 using Cvnet10Asset;
 using Cvnet10Wpfclient.Helpers;
 using Grpc.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Web;
 using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels;
@@ -314,40 +317,29 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 
 	}
 	[RelayCommand(IncludeCancelCommand = true)]
-	public async Task TestClickOnce(CancellationToken ct) {
-		var nameValueTable = new NameValueCollection();
-		if (ApplicationDeployment.IsNetworkDeployed) {
-			ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
-			if (ad.ActivationUri != null) {
-				nameValueTable = HttpUtility.ParseQueryString(ad.ActivationUri.Query);
-			}
-			// 表示用に変換
-			StreamMessages.Clear();
-			int i = 0;
-			foreach (var key in nameValueTable.AllKeys) {
-				i++;
-				StreamMessages.Insert(0, $"{key}={nameValueTable[key]}");
-				if (i > 100) break;
-			}
-		}
+	public Task ShowVelopackConfig(CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		var configuration = App.AppHost?.Services.GetService<IConfiguration>();
+		StreamMessages.Clear();
+		StreamMessages.Insert(0, $"FeedUrl={configuration?["Update:FeedUrl"] ?? string.Empty}");
+		StreamMessages.Insert(0, $"ConfiguredVersion={configuration?["Application:Version"] ?? string.Empty}");
+		StreamMessages.Insert(0, "PackId=creativevision10");
+		StreamMessages.Insert(0, $"DataDir={AppGlobal.DataDir}");
+		return Task.CompletedTask;
 	}
 	[RelayCommand(IncludeCancelCommand = true)]
-	public async Task TestClickOnce2(CancellationToken ct) {
-		var nameValueTable = new NameValueCollection();
-		if (ApplicationDeployment.IsNetworkDeployed) {
-			ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
-			// 表示用に変換
-			StreamMessages.Clear();
-			StreamMessages.Insert(0, $"ActivationUri={ad.ActivationUri.ToString()}");
-			StreamMessages.Insert(0, $"CurrentVersion={ad.CurrentVersion.ToString()}");
-			StreamMessages.Insert(0, $"DataDirectory={ad.DataDirectory}");
-			StreamMessages.Insert(0, $"IsFirstRun={ad.IsFirstRun}");
-			StreamMessages.Insert(0, $"TimeOfLastUpdateCheck={ad.TimeOfLastUpdateCheck.ToLocalTime()}");
-			StreamMessages.Insert(0, $"UpdatedApplicationFullName={ad.UpdatedApplicationFullName}");
-			StreamMessages.Insert(0, $"UpdatedVersion={ad.UpdatedVersion.ToString()}");
-			StreamMessages.Insert(0, $"UpdateLocation={ad.UpdateLocation.ToString()}");
-			StreamMessages.Insert(0, $"LauncherVersion={ad.LauncherVersion.ToString()}");
-		}
+	public Task ShowVelopackRuntime(CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		var entryAssembly = Assembly.GetEntryAssembly();
+		var informationalVersion = entryAssembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
+		var fileVersion = FileVersionInfo.GetVersionInfo(entryAssembly?.Location ?? string.Empty).FileVersion ?? string.Empty;
+		StreamMessages.Clear();
+		StreamMessages.Insert(0, $"ExecutablePath={entryAssembly?.Location ?? string.Empty}");
+		StreamMessages.Insert(0, $"EntryAssemblyVersion={entryAssembly?.GetName().Version?.ToString() ?? string.Empty}");
+		StreamMessages.Insert(0, $"InformationalVersion={informationalVersion}");
+		StreamMessages.Insert(0, $"FileVersion={fileVersion}");
+		StreamMessages.Insert(0, $"CurrentDirectory={Directory.GetCurrentDirectory()}");
+		return Task.CompletedTask;
 	}
 
 	#endregion
