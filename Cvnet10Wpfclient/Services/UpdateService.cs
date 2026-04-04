@@ -18,7 +18,7 @@ public interface IUpdateService {
 	Task<UpdateCheckResult> CheckForUpdateAsync();
 	Task<UpdateExecutionResult> PerformUpdateAsync();
 	string GetCurrentVersion();
-	string GetConfiguredVersion();
+	string GetFileVersion();
 	string GetFeedUrl();
 }
 
@@ -34,9 +34,7 @@ public class UpdateService : IUpdateService {
 
 	public async Task<UpdateCheckResult> CheckForUpdateAsync() {
 		var feedUrl = GetFeedUrl();
-		var currentVersion = GetConfiguredVersion();
-		//	var currentVersion = GetCurrentVersion();
-		//	var configuredVersion = GetConfiguredVersion();
+		var currentVersion = GetCurrentVersion();
 		if (string.IsNullOrWhiteSpace(feedUrl)) {
 			_logger.Info("Update:FeedUrl が未設定のため、更新チェックをスキップします。");
 			_pendingUpdate = null;
@@ -57,8 +55,7 @@ public class UpdateService : IUpdateService {
 					string.Empty,
 					feedUrl);
 			}
-			;
-			var newVersion = _pendingUpdate.BaseRelease?.Version?.ToString() ?? string.Empty;
+			var newVersion = _pendingUpdate.TargetFullRelease.Version?.ToString() ?? string.Empty;
 			return new UpdateCheckResult(true,
 				$"新しいバージョンが利用可能です。 現在={currentVersion} 最新={newVersion}",
 				currentVersion,
@@ -96,11 +93,11 @@ public class UpdateService : IUpdateService {
 		}
 	}
 
-	public string GetCurrentVersion() { // x.x.x.x
+	public string GetFileVersion() { // x.x.x.x
 		return System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? string.Empty;
 	}
 
-	public string GetConfiguredVersion() { // x.x.x
+	public string GetCurrentVersion() { // x.x.x
 		return _configuration["Application:Version"] ?? string.Empty;
 	}
 

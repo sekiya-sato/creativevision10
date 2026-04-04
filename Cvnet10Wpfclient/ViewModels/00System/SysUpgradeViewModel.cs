@@ -69,12 +69,10 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 		if (!string.IsNullOrEmpty(newVersion)) {
 			OptionMessage = $"新しいバージョン {newVersion} が利用可能です！\n" +
 				$"FeedUrl={_updateService.GetFeedUrl()}\n" +
-				$"ConfiguredVersion={_updateService.GetConfiguredVersion()}\n" +
 				$"CurrentVersion={_updateService.GetCurrentVersion()}";
 			return;
 		}
 		OptionMessage = $"FeedUrl={_updateService.GetFeedUrl()}\n" +
-			$"ConfiguredVersion={_updateService.GetConfiguredVersion()}\n" +
 			$"CurrentVersion={_updateService.GetCurrentVersion()}";
 	}
 }
