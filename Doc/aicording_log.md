@@ -74,6 +74,27 @@
 
 ---
 
+## [2026-04-04] 22:55 Wpfclient の Velopack 自動更新確認と SysUpgrade 改修
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient` で Velopack の自動更新確認が動いていない原因を解消し、起動時の自動更新確認と `SysUpgradeViewModel` の手動更新処理に例外処理を入れて、最後に git commit まで完了する
+### 実施内容
+- Cvnet10Wpfclient/App.xaml.cs: `appsettings.Production.json` を既定読込に追加し、`IUpdateService` を DI 登録、起動後に自動更新確認して更新があれば確認ダイアログから適用できる処理を追加
+- Cvnet10Wpfclient/Services/UpdateService.cs: 更新確認結果と更新適用結果を返す record を追加し、`FeedUrl` 未設定時や通信失敗時を含むメッセージ生成と `try/catch` によるエラーハンドリングを整理
+- Cvnet10Wpfclient/ViewModels/00System/SysUpgradeViewModel.cs: `IUpdateService` を DI から取得するよう変更し、手動更新確認/適用の `try/catch`、状態文言更新、`ExecuteUpdateCommand` の `CanExecute` 再評価、表示情報更新を追加
+- Cvnet10Wpfclient/ViewModels/SampleViewModel.cs: Velopack 診断表示の `PackId` 表記を実際の配布スクリプトに合わせて統一
+- Doc/velopack_release_manual.md: `packId` の記載を実運用値へ統一
+### 技術決定 Why
+- 自動更新が動かなかった主因は `Update:FeedUrl` が `appsettings.Production.json` にしかない一方で、通常起動時にその設定を読まない構成だったため、既定読込へ追加して更新先 URL を常に解決できるようにした
+- 起動時の自動更新確認と手動更新画面で別ロジックを持つと挙動差が出やすいため、`UpdateService` の結果オブジェクトに状態文言を集約して同一経路で扱うようにした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告0、エラー0）
+
+---
+
 ## [2026-04-04] 18:08 Cvnet10WpfclientのVelopack導入と配布手順整備
 ### Agent
 - gpt-5.4 : OpenAI

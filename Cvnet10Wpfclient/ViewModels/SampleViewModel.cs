@@ -323,7 +323,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 		StreamMessages.Clear();
 		StreamMessages.Insert(0, $"FeedUrl={configuration?["Update:FeedUrl"] ?? string.Empty}");
 		StreamMessages.Insert(0, $"ConfiguredVersion={configuration?["Application:Version"] ?? string.Empty}");
-		StreamMessages.Insert(0, "PackId=creativevision10");
+		StreamMessages.Insert(0, "PackId=CreativeVision10");
 		StreamMessages.Insert(0, $"DataDir={AppGlobal.DataDir}");
 		return Task.CompletedTask;
 	}

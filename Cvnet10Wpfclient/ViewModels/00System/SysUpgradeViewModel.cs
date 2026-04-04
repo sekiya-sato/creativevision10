@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Cvnet10Wpfclient.Helpers;
 using Cvnet10Wpfclient.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 
@@ -15,6 +15,7 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 	private string _updateStatus = "最新バージョンを確認できます";
 
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(ExecuteUpdateCommand))]
 	private bool _isUpdateAvailable;
 
 	[ObservableProperty]
@@ -22,32 +23,50 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 
 	public SysUpgradeViewModel() {
 		_logger = LogManager.GetCurrentClassLogger();
-		var configuration = App.AppHost?.Services.GetRequiredService<IConfiguration>()
-			?? throw new InvalidOperationException("IConfiguration を取得できません。");
-		_updateService = new UpdateService(_logger, configuration);
-		optionMessage = $"FeedUrl={configuration["Update:FeedUrl"] ?? string.Empty}\n" +
-						$"ConfiguredVersion={configuration["Application:Version"] ?? string.Empty}\n";
+		_updateService = App.AppHost?.Services.GetRequiredService<IUpdateService>()
+			?? throw new InvalidOperationException("IUpdateService を取得できません。");
+		RefreshOptionMessage();
 	}
 
 	[RelayCommand]
 	private async Task CheckUpdateAsync() {
-		UpdateStatus = "更新を確認中...";
-		IsUpdateAvailable = await _updateService.CheckForUpdateAsync();
-
-		UpdateStatus = IsUpdateAvailable
-			? $"新しいバージョンが利用可能です。 現在={_updateService.GetCurrentVersion()} 設定={_updateService.GetConfiguredVersion()}"
-			: "現在のバージョンは最新です。";
+		try {
+			UpdateStatus = "更新を確認中...";
+			var result = await _updateService.CheckForUpdateAsync();
+			IsUpdateAvailable = result.IsUpdateAvailable;
+			UpdateStatus = result.Message;
+			RefreshOptionMessage();
+		}
+		catch (Exception ex) {
+			_logger.Error(ex, "手動の更新確認でエラーが発生しました。");
+			IsUpdateAvailable = false;
+			UpdateStatus = $"更新チェックに失敗しました: {ex.Message}";
+			MessageEx.ShowErrorDialog(UpdateStatus, owner: ClientLib.GetActiveView(this));
+		}
 	}
 
 	[RelayCommand(CanExecute = nameof(IsUpdateAvailable))]
 	private async Task ExecuteUpdateAsync() {
-		UpdateStatus = "更新プログラムをダウンロード中...";
-		bool success = await _updateService.PerformUpdateAsync();
+		try {
+			UpdateStatus = "更新プログラムをダウンロード中...";
+			var result = await _updateService.PerformUpdateAsync();
+			UpdateStatus = result.Message;
 
-		if (success) {
-			UpdateStatus = "更新を適用して再起動します。";
-			// 必要に応じてメッセージボックスを表示し、再起動を促す
+			if (!result.IsSuccess) {
+				MessageEx.ShowErrorDialog(result.Message, owner: ClientLib.GetActiveView(this));
+			}
 		}
+		catch (Exception ex) {
+			_logger.Error(ex, "手動の更新適用でエラーが発生しました。");
+			UpdateStatus = $"更新の適用に失敗しました: {ex.Message}";
+			MessageEx.ShowErrorDialog(UpdateStatus, owner: ClientLib.GetActiveView(this));
+		}
+	}
+
+	private void RefreshOptionMessage() {
+		OptionMessage = $"FeedUrl={_updateService.GetFeedUrl()}\n" +
+			$"ConfiguredVersion={_updateService.GetConfiguredVersion()}\n" +
+			$"CurrentVersion={_updateService.GetCurrentVersion()}";
 	}
 }
 

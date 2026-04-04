@@ -46,6 +46,7 @@ public partial class App : Application {
 			await StartHostAsync(AppHost);
 		}
 		base.OnStartup(e);
+		_ = CheckForUpdatesOnStartupAsync();
 	}
 
 	protected override async void OnExit(ExitEventArgs e) {
@@ -130,6 +131,7 @@ public partial class App : Application {
 				// 各設定ファイルの読み込み
 				builder.SetBasePath(Directory.GetCurrentDirectory());
 				builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+				builder.AddJsonFile("appsettings.Production.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
 				// ユーザー設定ファイルの追加 (最後に適用したほうが優先順位が高い)
 				var userSettingsPath = SystemSettingsStore.SettingsFilePath;
@@ -180,9 +182,48 @@ public partial class App : Application {
 					builder.ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
 				}
 				// 3. サービスの登録
+				services.AddSingleton<IUpdateService>(_ => new UpdateService(LogManager.GetLogger(nameof(UpdateService)), context.Configuration));
 				ConfigureClient<ILoginService>(services, url, subPath);
 				ConfigureClient<ICvnetCoreService>(services, url, subPath);
 			});
+	}
+
+	private async Task CheckForUpdatesOnStartupAsync() {
+		try {
+			if (AppHost == null) {
+				return;
+			}
+
+			await Task.Delay(1500);
+			var updateService = AppHost.Services.GetService<IUpdateService>();
+			if (updateService == null) {
+				return;
+			}
+
+			var checkResult = await updateService.CheckForUpdateAsync().ConfigureAwait(false);
+			if (!checkResult.IsUpdateAvailable) {
+				_logger.Info("起動時更新確認: {Message}", checkResult.Message);
+				return;
+			}
+
+			var owner = await Dispatcher.InvokeAsync(() =>
+				Current?.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive) ?? Current?.MainWindow);
+			var answer = await Dispatcher.InvokeAsync(() =>
+				MessageEx.ShowQuestionDialog($"{checkResult.Message}\n\n今すぐ更新しますか？", owner: owner));
+
+			if (answer != MessageBoxResult.Yes) {
+				_logger.Info("起動時更新確認: 更新を見つけましたが、ユーザーが延期しました。");
+				return;
+			}
+
+			var executeResult = await updateService.PerformUpdateAsync().ConfigureAwait(false);
+			if (!executeResult.IsSuccess) {
+				await Dispatcher.InvokeAsync(() => MessageEx.ShowErrorDialog(executeResult.Message, owner: owner));
+			}
+		}
+		catch (Exception ex) {
+			_logger.Error(ex, "起動時の更新確認でエラーが発生しました。");
+		}
 	}
 
 	/// <summary>

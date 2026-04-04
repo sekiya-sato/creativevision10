@@ -7,7 +7,7 @@
 ## 前提
 
 - 配布対象は `win-x64`
-- `packId` は `creativevision10`
+- `packId` は `CreativeVision10`
 - アプリ版数は `Cvnet10Wpfclient/appsettings.json` の `Application.Version` を正とする
 - 更新フィードURLは `Cvnet10Wpfclient/appsettings.Production.json` の `Update:FeedUrl` を使う
 - `vpk` は事前にインストールしておく
@@ -34,7 +34,7 @@ publish-velopack.bat
 3. スクリプトは以下を順に実行する
 - `appsettings.json` から `Application.Version` を取得
 - `dotnet publish` を `win-x64` / self-contained で実行
-- `vpk pack --packId creativevision10 --packVersion <Version>` を実行
+- `vpk pack --packId CreativeVision10 --packVersion <Version>` を実行
 
 ## 生成物
 
