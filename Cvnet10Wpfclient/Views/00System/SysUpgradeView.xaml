@@ -5,7 +5,7 @@
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels._00System"
 	Title="システムアップデート"
-	Width="520" Height="200"
+	Width="520" Height="240"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
@@ -67,6 +67,7 @@
 					Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
 				-->
 			</Border>
+			<TextBlock Margin="0,0,0,10" Text="{Binding OptionMessage}" />
 		</StackPanel>
 	</Grid>
 </helpers:BaseWindow>

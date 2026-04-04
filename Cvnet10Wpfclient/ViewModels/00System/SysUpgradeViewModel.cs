@@ -17,11 +17,16 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	private bool _isUpdateAvailable;
 
+	[ObservableProperty]
+	string optionMessage = string.Empty;
+
 	public SysUpgradeViewModel() {
 		_logger = LogManager.GetCurrentClassLogger();
 		var configuration = App.AppHost?.Services.GetRequiredService<IConfiguration>()
 			?? throw new InvalidOperationException("IConfiguration を取得できません。");
 		_updateService = new UpdateService(_logger, configuration);
+		optionMessage = $"FeedUrl={configuration["Update:FeedUrl"] ?? string.Empty}\n" +
+						$"ConfiguredVersion={configuration["Application:Version"] ?? string.Empty}\n";
 	}
 
 	[RelayCommand]

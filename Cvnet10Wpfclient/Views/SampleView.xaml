@@ -406,7 +406,7 @@
 							Command="{Binding TestGetTableCountsCommand}"
 							Content="テーブル件数取得" Cursor="Hand" />
 					</Grid>
-					<StackPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="2"
+					<StackPanel Grid.Row="1" Grid.RowSpan="2" Grid.Column="0"
 						Margin="0,0,0,0">
 						<GroupBox Header="ストリーミングログ">
 							<ListBox Height="500"
@@ -492,14 +492,12 @@
 						<ColumnDefinition Width="*" />
 					</Grid.ColumnDefinitions>
 					<DataGrid Grid.Column="0"
-                  ItemsSource="{Binding TableView}"
-                  SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
-                  AutoGenerateColumns="True"
-                  IsReadOnly="False" />
+						AutoGenerateColumns="True" IsReadOnly="False"
+						ItemsSource="{Binding TableView}"
+						SelectedItem="{Binding SelectedRow, Mode=TwoWay}" />
 					<Border Grid.Column="2"
-                Padding="12"
-                BorderBrush="LightGray"
-                BorderThickness="1">
+						Padding="12"
+						BorderBrush="LightGray" BorderThickness="1">
 						<ScrollViewer VerticalScrollBarVisibility="Auto">
 							<ItemsControl ItemsSource="{Binding EditableCells}">
 								<ItemsControl.ItemTemplate>
@@ -510,11 +508,11 @@
 												<ColumnDefinition Width="*" />
 											</Grid.ColumnDefinitions>
 											<TextBlock Grid.Column="0"
-                                           VerticalAlignment="Center"
-                                           Text="{Binding ColumnName}" />
+												VerticalAlignment="Center"
+												Text="{Binding ColumnName}" />
 											<TextBox Grid.Column="1"
-                                         Margin="8,0,0,0"
-                                         Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+												Margin="8,0,0,0"
+												Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 										</Grid>
 									</DataTemplate>
 								</ItemsControl.ItemTemplate>
