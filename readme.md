@@ -1,10 +1,10 @@
 # プロジェクトの目的
 
-このプロジェクト`cvnet10`は、正式名称 `Creative Vision 10`として、アパレル会社向け販売管理ドメインを対象としたオープンソースパッケージの開発を目的としています。
+このプロジェクト`Creative Vision 10`は、アパレル会社向け販売管理ドメインを対象としたオープンソースパッケージの開発を目的としています。
 アパレル業界では、販売管理システムの導入が遅れているケースが多く、特に中小企業ではコストや技術的なハードルが高いことが課題となっています。
 `Creative Vision 10`は、これらの企業が安心して導入できる本格的な基幹業務ソリューションを提供することを目指しています。
 3Tier-System アーキテクチャを採用し、サーバ、クライアント間はHTTP2.0/gRPCで接続、プレゼンテーション層にはWPF MVVMを採用しています。
-https://github.com/sekiya-sato/cvnet10
+https://github.com/sekiya-sato/creativevision10
 AIアシスタントは `AGENTS.md` を参照してください。
 インストールガイドは別途 `INSTALL.md` を用意する予定です。
 
@@ -27,7 +27,7 @@ AIアシスタントは `AGENTS.md` を参照してください。
   - [Tests.*](#Tests.*)
 
 
-# ソリューション概要 Cvnet10.slnx
+# ソリューション概要
 
 本ソリューションは、販売管理ドメインを gRPC ベースで分散実装するための統合環境です。  
 契約定義（CodeShare）、共通ロジック（Cvnet10Base / Cvnet10DomainLogic）、gRPC サーバ（Cvnet10Server）、WPF クライアント（Cvnet10Wpfclient）、テスト（Tests.*）で構成されています。  

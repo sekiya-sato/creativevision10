@@ -7,6 +7,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>cvnet.ico</ApplicationIcon>
+    <AssemblyName>creativevision10</AssemblyName>
+    <AssemblyTitle>creativevision10</AssemblyTitle>
   </PropertyGroup>
 
   <ItemGroup>

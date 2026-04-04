@@ -3,7 +3,7 @@
 ## Tooling & Environment
 - **Roles**: OpenCode (Complex/Multi-file/Docs), Copilot (Inline/Small edits).
 - **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
-- **Files**: Solution `Cvnet10.slnx`. Use UTF-8 (No BOM) & CRLF.
+- **Files**: Solution `creativevision10.slnx.slnx`. Use UTF-8 (No BOM) & CRLF.
 - **Python**: Use Python 3 if needed.
 
 ## Priority Workflow (IMPORTANT)
@@ -24,14 +24,14 @@ Condition:
 - Else -> Use ### Build Rule2
 
 ### Build Rule1
-- Restore all projects: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore Cvnet10.slnx"`
-- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10.slnx"`
+- Restore all projects: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore creativevision10.slnx"`
+- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"`
 - Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"`
 - Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"`
 
 ### Build Rule2
-- Restore all projects: `dotnet restore "Cvnet10.slnx"`
-- Build solution: `dotnet build "Cvnet10.slnx"`
+- Restore all projects: `dotnet restore "creativevision10.slnx"`
+- Build solution: `dotnet build "creativevision10.slnx"`
 - Build server only: `dotnet build "Cvnet10Server/Cvnet10Server.csproj"`
 - Build WPF client: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
 
