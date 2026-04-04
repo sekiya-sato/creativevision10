@@ -6,7 +6,7 @@
 3Tier-System アーキテクチャを採用し、サーバ、クライアント間はHTTP2.0/gRPCで接続、プレゼンテーション層にはWPF MVVMを採用しています。
 https://github.com/sekiya-sato/creativevision10
 AIアシスタントは `AGENTS.md` を参照してください。
-インストールガイドは別途 `INSTALL.md` を用意する予定です。
+セットアップガイドは別途 `setup.md` を用意する予定です。
 
 
 # 目次
