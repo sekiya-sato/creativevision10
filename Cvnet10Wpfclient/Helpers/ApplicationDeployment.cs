@@ -110,7 +110,36 @@ public class ApplicationDeployment {
 		}
 	}
 
+	public UpdateCheckInfo CheckForDetailedUpdate() {
+		bool updateAvailable = bool.TryParse(Environment.GetEnvironmentVariable("ClickOnce_UpdateAvailable") ?? "false", out bool val) ? val : false;
+		long updateSize = long.TryParse(Environment.GetEnvironmentVariable("ClickOnce_UpdateSizeBytes") ?? "0", out long size) ? size : 0;
+		bool isRequired = bool.TryParse(Environment.GetEnvironmentVariable("ClickOnce_IsUpdateRequired") ?? "false", out bool req) ? req : false;
+		Version minVersion = Version.TryParse(Environment.GetEnvironmentVariable("ClickOnce_MinimumRequiredVersion") ?? "", out Version? min) ? min ?? new Version() : new Version();
+		Version updVersion = Version.TryParse(Environment.GetEnvironmentVariable("ClickOnce_UpdateVersion") ?? "", out Version? upd) ? upd ?? new Version() : new Version();
+
+		return new UpdateCheckInfo {
+			UpdateAvailable = updateAvailable,
+			UpdateSizeBytes = updateSize,
+			IsUpdateRequired = isRequired,
+			MinimumRequiredVersion = minVersion,
+			UpdateVersion = updVersion
+		};
+	}
+
+	public void Update() {
+		// 更新実行のシミュレーション（実際の更新は環境変数で制御）
+		// 必要に応じてログや例外を追加可能
+	}
+
 	private ApplicationDeployment() {
 		// As an alternative solution, we could initialize all properties here
 	}
+}
+
+public class UpdateCheckInfo {
+	public bool UpdateAvailable { get; set; }
+	public long UpdateSizeBytes { get; set; }
+	public bool IsUpdateRequired { get; set; }
+	public Version MinimumRequiredVersion { get; set; } = new Version();
+	public Version UpdateVersion { get; set; } = new Version();
 }
