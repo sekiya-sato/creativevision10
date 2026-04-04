@@ -1,6 +1,5 @@
 using Cvnet10Wpfclient.Helpers;
-using Microsoft.Extensions.Logging;
-
+using NLog;
 namespace Cvnet10Wpfclient.Services;
 
 public interface IUpdateService {
@@ -9,16 +8,16 @@ public interface IUpdateService {
 }
 
 public class UpdateService : IUpdateService {
-	private readonly ILogger<UpdateService> _logger;
+	private readonly ILogger _logger;
 
-	public UpdateService(ILogger<UpdateService> logger) {
+	public UpdateService(ILogger logger) {
 		_logger = logger;
 	}
 
 	public async Task<bool> CheckForUpdateAsync() {
 		// ClickOnceで実行されているか確認
 		if (!ApplicationDeployment.IsNetworkDeployed) {
-			_logger.LogInformation("ClickOnce環境ではないため、更新チェックをスキップします。");
+			_logger.Info("ClickOnce環境ではないため、更新チェックをスキップします。");
 			return false;
 		}
 
@@ -28,7 +27,7 @@ public class UpdateService : IUpdateService {
 			return info.UpdateAvailable;
 		}
 		catch (Exception ex) {
-			_logger.LogError(ex, "更新チェック中にエラーが発生しました。");
+			_logger.Error(ex, "更新チェック中にエラーが発生しました。");
 			return false;
 		}
 	}
@@ -37,11 +36,11 @@ public class UpdateService : IUpdateService {
 		var ad = ApplicationDeployment.CurrentDeployment;
 		try {
 			await Task.Run(() => ad.Update());
-			_logger.LogInformation("アップデートが完了しました。再起動が必要です。");
+			_logger.Info("アップデートが完了しました。再起動が必要です。");
 			return true;
 		}
 		catch (Exception ex) {
-			_logger.LogError(ex, "アップデートの実行中にエラーが発生しました。");
+			_logger.Error(ex, "アップデートの実行中にエラーが発生しました。");
 			return false;
 		}
 	}

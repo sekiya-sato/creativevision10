@@ -172,8 +172,8 @@ public partial class MainMenuViewModel : ObservableObject {
 				return;
 			}
 
-		if (selectTableView.DataContext is not Sub.SelectServerTableViewModel selectVm
-				|| string.IsNullOrWhiteSpace(selectVm.SelectedTableName)) {
+			if (selectTableView.DataContext is not Sub.SelectServerTableViewModel selectVm
+					|| string.IsNullOrWhiteSpace(selectVm.SelectedTableName)) {
 				MessageEx.ShowWarningDialog("テーブルが選択されていません。", owner: ClientLib.GetActiveView(this));
 				return;
 			}
@@ -272,7 +272,12 @@ public partial class MainMenuViewModel : ObservableObject {
 				SetSubMessage();
 		}
 	}
-
+	[RelayCommand]
+	async private Task ShowUpgrade() {
+		ClientLib.ExitAllWithoutMe(this);
+		var view = new Views._00System.SysUpgradeView { Title = "システムアップデート" };
+		ClientLib.ShowDialogView(view, this, IsDialog: true);
+	}
 
 	[RelayCommand]
 	private void ToggleTheme() {

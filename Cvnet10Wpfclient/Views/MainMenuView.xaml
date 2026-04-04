@@ -20,6 +20,8 @@
 			Command="{Binding ShowRefreshCommand}" />
 		<KeyBinding Key="F10"
 			Command="{Binding ShowSettingCommand}" />
+		<KeyBinding Key="F9"
+			Command="{Binding ShowUpgradeCommand}" />
 	</Window.InputBindings>
 
 	<shell:WindowChrome.WindowChrome>

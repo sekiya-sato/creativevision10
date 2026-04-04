@@ -69,4 +69,10 @@
 			<DependentUpon>appsettings.json</DependentUpon>
 		</None>
 	</ItemGroup>
+	<Target Name="ExecuteBackupBeforePublish" BeforeTargets="Publish">
+	<Message Importance="high" Text="[ClickOnce] 発行前のバックアップバッチを実行しています..." />
+
+	<Exec Command="call pre-publish-backup.bat"
+		  WorkingDirectory="$(ProjectDir)" />
+	</Target>
 </Project>
