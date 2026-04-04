@@ -35,7 +35,9 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 			var result = await _updateService.CheckForUpdateAsync();
 			IsUpdateAvailable = result.IsUpdateAvailable;
 			UpdateStatus = result.Message;
-			RefreshOptionMessage();
+			var newVersion = result.NewVersion ?? string.Empty;
+
+			RefreshOptionMessage(newVersion);
 		}
 		catch (Exception ex) {
 			_logger.Error(ex, "手動の更新確認でエラーが発生しました。");
@@ -63,7 +65,14 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 		}
 	}
 
-	private void RefreshOptionMessage() {
+	private void RefreshOptionMessage(string newVersion = "") {
+		if (!string.IsNullOrEmpty(newVersion)) {
+			OptionMessage = $"新しいバージョン {newVersion} が利用可能です！\n" +
+				$"FeedUrl={_updateService.GetFeedUrl()}\n" +
+				$"ConfiguredVersion={_updateService.GetConfiguredVersion()}\n" +
+				$"CurrentVersion={_updateService.GetCurrentVersion()}";
+			return;
+		}
 		OptionMessage = $"FeedUrl={_updateService.GetFeedUrl()}\n" +
 			$"ConfiguredVersion={_updateService.GetConfiguredVersion()}\n" +
 			$"CurrentVersion={_updateService.GetCurrentVersion()}";

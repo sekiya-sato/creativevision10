@@ -1,4 +1,3 @@
-using Cvnet10Wpfclient.Helpers;
 using Microsoft.Extensions.Configuration;
 using NLog;
 using Velopack;
@@ -8,7 +7,7 @@ public sealed record UpdateCheckResult(
 	bool IsUpdateAvailable,
 	string Message,
 	string CurrentVersion,
-	string ConfiguredVersion,
+	string NewVersion,
 	string FeedUrl);
 
 public sealed record UpdateExecutionResult(
@@ -35,15 +34,16 @@ public class UpdateService : IUpdateService {
 
 	public async Task<UpdateCheckResult> CheckForUpdateAsync() {
 		var feedUrl = GetFeedUrl();
-		var currentVersion = GetCurrentVersion();
-		var configuredVersion = GetConfiguredVersion();
+		var currentVersion = GetConfiguredVersion();
+		//	var currentVersion = GetCurrentVersion();
+		//	var configuredVersion = GetConfiguredVersion();
 		if (string.IsNullOrWhiteSpace(feedUrl)) {
 			_logger.Info("Update:FeedUrl が未設定のため、更新チェックをスキップします。");
 			_pendingUpdate = null;
 			return new UpdateCheckResult(false,
 				"更新先 URL が未設定のため、更新確認を実行できません。",
 				currentVersion,
-				configuredVersion,
+				string.Empty,
 				feedUrl);
 		}
 
@@ -52,16 +52,17 @@ public class UpdateService : IUpdateService {
 			_pendingUpdate = await updateManager.CheckForUpdatesAsync();
 			if (_pendingUpdate == null) {
 				return new UpdateCheckResult(false,
-					$"現在のバージョンは最新です。 現在={currentVersion} 設定={configuredVersion}",
+					$"現在のバージョンは最新です。 現在={currentVersion}",
 					currentVersion,
-					configuredVersion,
+					string.Empty,
 					feedUrl);
 			}
-
+			;
+			var newVersion = _pendingUpdate.BaseRelease?.Version?.ToString() ?? string.Empty;
 			return new UpdateCheckResult(true,
-				$"新しいバージョンが利用可能です。 現在={currentVersion} 設定={configuredVersion}",
+				$"新しいバージョンが利用可能です。 現在={currentVersion} 最新={newVersion}",
 				currentVersion,
-				configuredVersion,
+				newVersion,
 				feedUrl);
 		}
 		catch (Exception ex) {
@@ -70,7 +71,7 @@ public class UpdateService : IUpdateService {
 			return new UpdateCheckResult(false,
 				$"更新チェックに失敗しました: {ex.Message}",
 				currentVersion,
-				configuredVersion,
+				string.Empty,
 				feedUrl);
 		}
 	}
@@ -95,11 +96,11 @@ public class UpdateService : IUpdateService {
 		}
 	}
 
-	public string GetCurrentVersion() {
+	public string GetCurrentVersion() { // x.x.x.x
 		return System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? string.Empty;
 	}
 
-	public string GetConfiguredVersion() {
+	public string GetConfiguredVersion() { // x.x.x
 		return _configuration["Application:Version"] ?? string.Empty;
 	}
 
