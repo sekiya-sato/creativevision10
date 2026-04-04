@@ -5,9 +5,11 @@ using Cvnet10Asset;
 using Cvnet10Wpfclient.Helpers;
 using Grpc.Core;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Data;
 using System.Runtime.CompilerServices;
+using System.Web;
 using System.Windows;
 
 namespace Cvnet10Wpfclient.ViewModels;
@@ -310,6 +312,42 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			ClientLib.Cursor2Normal();
 		}
 
+	}
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task TestClickOnce(CancellationToken ct) {
+		var nameValueTable = new NameValueCollection();
+		if (ApplicationDeployment.IsNetworkDeployed) {
+			ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
+			if (ad.ActivationUri != null) {
+				nameValueTable = HttpUtility.ParseQueryString(ad.ActivationUri.Query);
+			}
+			// 表示用に変換
+			StreamMessages.Clear();
+			int i = 0;
+			foreach (var key in nameValueTable.AllKeys) {
+				i++;
+				StreamMessages.Insert(0, $"{key}={nameValueTable[key]}");
+				if (i > 100) break;
+			}
+		}
+	}
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task TestClickOnce2(CancellationToken ct) {
+		var nameValueTable = new NameValueCollection();
+		if (ApplicationDeployment.IsNetworkDeployed) {
+			ApplicationDeployment ad = ApplicationDeployment.CurrentDeployment;
+			// 表示用に変換
+			StreamMessages.Clear();
+			StreamMessages.Insert(0, $"ActivationUri={ad.ActivationUri.ToString()}");
+			StreamMessages.Insert(0, $"CurrentVersion={ad.CurrentVersion.ToString()}");
+			StreamMessages.Insert(0, $"DataDirectory={ad.DataDirectory}");
+			StreamMessages.Insert(0, $"IsFirstRun={ad.IsFirstRun}");
+			StreamMessages.Insert(0, $"TimeOfLastUpdateCheck={ad.TimeOfLastUpdateCheck.ToLocalTime()}");
+			StreamMessages.Insert(0, $"UpdatedApplicationFullName={ad.UpdatedApplicationFullName}");
+			StreamMessages.Insert(0, $"UpdatedVersion={ad.UpdatedVersion.ToString()}");
+			StreamMessages.Insert(0, $"UpdateLocation={ad.UpdateLocation.ToString()}");
+			StreamMessages.Insert(0, $"LauncherVersion={ad.LauncherVersion.ToString()}");
+		}
 	}
 
 	#endregion

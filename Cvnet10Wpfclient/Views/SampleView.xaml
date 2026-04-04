@@ -406,10 +406,10 @@
 							Command="{Binding TestGetTableCountsCommand}"
 							Content="テーブル件数取得" Cursor="Hand" />
 					</Grid>
-					<StackPanel Grid.Row="1" Grid.Column="0"
+					<StackPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="2"
 						Margin="0,0,0,0">
 						<GroupBox Header="ストリーミングログ">
-							<ListBox Height="260"
+							<ListBox Height="500"
 								Margin="8"
 								ItemsSource="{Binding StreamMessages}">
 								<ListBox.ItemTemplate>
@@ -472,6 +472,16 @@
 						Margin="5,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
 						Command="{Binding TestMsg301Command}"
 						Content="HHTマスタ出力" />
+					<Button Grid.Row="1" Grid.Column="1"
+						Width="160" Height="40"
+						Margin="5,70,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+						Command="{Binding TestClickOnceCommand}"
+						Content="ClickOnceテスト" />
+					<Button Grid.Row="1" Grid.Column="1"
+						Width="160" Height="40"
+						Margin="5,130,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+						Command="{Binding TestClickOnce2Command}"
+						Content="ClickOnceテスト2" />
 				</Grid>
 			</TabItem>
 			<TabItem Header="DataTable">
