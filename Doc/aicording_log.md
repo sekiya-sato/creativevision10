@@ -32,6 +32,26 @@
 
 ---
 
+## [2026-04-04] 18:39 publish-velopack.bat を Windows 11 の cmd.exe で実行可能に修正
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient` 配下の `publish-velopack.bat` が Windows 11 の `cmd.exe` で正常動作するよう修正する
+### 実施内容
+- Cvnet10Wpfclient/publish-velopack.bat: `for /f` 内のインライン PowerShell を廃止し、補助スクリプト呼び出しへ変更
+- Cvnet10Wpfclient/publish-velopack.bat: エラーメッセージと TODO コメントを ASCII ベースへ変更し、`cmd.exe` の文字コード解釈で構文が壊れにくい形へ整理
+- Cvnet10Wpfclient/publish-velopack.version.ps1: `appsettings.json` から `Application.Version` を正規表現で抽出する補助スクリプトを追加
+### 技術決定 Why
+- `for /f (...) do` の中で PowerShell の丸括弧を含むインライン式を使うと `cmd.exe` 側で `FOR` 構文が壊れるため、`-File` 呼び出しへ分離して解釈系を分けた
+- `appsettings.json` に `/* ... */` コメントが含まれており `ConvertFrom-Json` が安定しないため、コメント付きでも取得できる文字列抽出に切り替えた
+- 実バッチだけ失敗して最小テストが通る状態だったため、非 ASCII 文字列も除去して `cmd.exe` 依存の文字コード要因を避けた
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\documents\new2022\cv10\Cvnet10Wpfclient\publish-velopack.bat"` → `dotnet publish` と `vpk pack` が完走し、`[INFO] Velopack finished task for creating package. Version=1.0.0` を確認
+
+---
+
 ## [2026-04-04] 18:08 Cvnet10WpfclientのVelopack導入と配布手順整備
 ### Agent
 - gpt-5.4 : OpenAI

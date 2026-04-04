@@ -7,8 +7,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>cvnet.ico</ApplicationIcon>
-    <AssemblyName>creativevision10</AssemblyName>
-    <AssemblyTitle>creativevision10</AssemblyTitle>
+    <AssemblyName>CreativeVision10</AssemblyName>
+    <AssemblyTitle>CreativeVision10</AssemblyTitle>
     <StartupObject>Cvnet10Wpfclient.App</StartupObject>
   </PropertyGroup>
 
