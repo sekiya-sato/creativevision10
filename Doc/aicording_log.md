@@ -32,6 +32,28 @@
 
 ---
 
+## [2026-04-04] 22:32 publish-velopack 実行時に appsettings.json の Version を自動加算
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient/publish-velopack.bat` 実行時に `appsettings.json` の `Application.Version` を読み取り、末尾の数値をカウントアップしてから publish 処理を続行したい
+### 実施内容
+- Cvnet10Wpfclient/publish-velopack.version.ps1: `-Increment` スイッチを追加し、`x.y.z` 形式の `Version` の第3要素を `+1` して `appsettings.json` へ書き戻す処理を実装
+- Cvnet10Wpfclient/publish-velopack.version.ps1: Windows PowerShell 5.x でも UTF-8(BOMなし) の日本語コメントが壊れないように `ReadAllText` / `WriteAllText` を UTF-8 指定で統一
+- Cvnet10Wpfclient/publish-velopack.version.ps1: 置換文字列の `$11` 誤解釈を避けるため、正規表現置換を MatchEvaluator 方式に変更
+- Cvnet10Wpfclient/publish-velopack.bat: `publish-velopack.version.ps1 -Increment` を呼ぶように変更し、更新後の `APP_VERSION` を publish / pack に渡すよう調整
+- Cvnet10Wpfclient/appsettings.json: 検証と `publish-velopack.bat` 本実行により `Application.Version` が `1.0.1` から `1.0.4` へ更新された状態を確認
+### 技術決定 Why
+- 既存の PowerShell スクリプトを拡張することで、バッチ側の変更を最小限に抑えつつ既存のバージョン取得フローを維持した
+- Windows 11 上の `powershell.exe` 実行を前提にすると、UTF-8(BOMなし) の既存 JSON は明示的に UTF-8 指定しないと文字化けするため、I/O を .NET API に統一した
+### 確認
+- `powershell.exe -File publish-velopack.version.ps1 -AppSettingsPath ... -Increment` を 2 回実行し、`1.0.1 -> 1.0.2 -> 1.0.3` と更新されることを確認
+- `cmd.exe /d /c "C:\gitroot\documents\new2022\cv10\Cvnet10Wpfclient\publish-velopack.bat"` → publish / vpk pack / `bash ~/bin/publish.sh` まで成功し、`Version=1.0.4` で完了することを確認
+
+---
+
 ## [2026-04-04] 18:39 publish-velopack.bat を Windows 11 の cmd.exe で実行可能に修正
 ### Agent
 - gpt-5.4 : OpenAI
