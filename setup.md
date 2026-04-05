@@ -44,12 +44,14 @@
 	dotnet publish "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" -c Release -r win-x64 --self-contained true
 
 - Velopackによる配布ファイル作成 (dotnet tool install -g vpk で事前にインストール)
-	vpk pack --packId CreativeVision10 --packVersion %APP_VERSION% --packDir "%PUBLISH_DIR%" --mainExe CreativeVision10.exe
+	VS2026の開発者コマンドプロンプトから、publish-velopack.bat を実行
 	事前に、appsettings.Production.json を作成しておく
+	"Version" は publish-velopack.bat 実行時にリビジョン(パッチ番号)が+1される (major.minor.patch)
+	major.minorのほうは手動で変更する、リビジョンを0にしたければ-1を設定しておく
 ```
 {
 	"Update": {
-		"FeedUrl": "https://....  クライアントソフトのダウンロード先 配布URL",
+		"FeedUrl": "https://....  クライアントソフトのダウンロード先 配布先URL",
 		"Channel": "stable"
 	},
 	"Application": {
@@ -59,7 +61,8 @@
 }
 ```
 
-- Velopackで作成されたファイルをすべて配布URLへ配置、ダウンロード用 index.html を配置
+- Velopackで作成されたファイル+index.html をすべて配布先URLへ配置
+	bash ~/bin/publish.sh  : WSL2にpublish.shを作成し、scpやftpで配布先URLへコピーする
 
 
 
