@@ -32,6 +32,30 @@
 
 ---
 
+## [2026-04-05] 09:45 Scheduler gRPC契約をEnumベースへ整理
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：NuGetパッケージ `NCrontab.Scheduler` の使い方調査に続き、`TaskType` を Enum で扱うパターン2の契約整理を実装し、チェックリスト作成からコミットまで実行する
+### 実施内容
+- CodeShare/IScheduler.cs: `SchedulerTaskType` enum、`AddSchedulerTaskRequest`、`RemoveSchedulerTaskRequest` を追加し、`ICvnetScheduler` の要求DTOを追加用・削除用に分離。`SchedulerResult` に `TaskId` を追加
+- Cvnet10Server/Services/CvnetSchedulerService.cs: 新DTOへ追従し、cron式検証、`TaskType` の入力検証、結果コード返却、`TaskId` ベース削除、`LogOnly` 実行分岐、運用ログ出力を追加
+- Cvnet10Server/Program.cs: `NCrontab.Scheduler` セクションを `appsettings` から読み込む構成へ変更
+- Cvnet10Server/appsettings.json: `NCrontab.Scheduler:DateTimeKind=Local` を追加
+- Cvnet10Server/appsettings.Development.json: `NCrontab.Scheduler:DateTimeKind=Local` を追加
+- Cvnet10Server/appsettings.Production.json: `NCrontab.Scheduler:DateTimeKind=Local` を追加
+- .sisyphus/2026-04-05_scheduler-contract-note.md: 今回の契約整理メモを追加
+### 技術決定 Why
+- `Type` を DTO に載せると gRPC 境界で不安定なため、`SchedulerTaskType` enum に置き換えて契約を明確化した
+- 追加要求と削除要求を分離し、`CronExpression` と `TaskId` の責務混在を解消した
+- scheduler の時刻解釈をコード固定値から設定ファイルへ移し、環境差分に追従しやすくした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore creativevision10.slnx && dotnet build Cvnet10Server/Cvnet10Server.csproj"` → ビルド成功（警告0、エラー0）
+
+---
+
 ## [2026-04-04] 22:32 publish-velopack 実行時に appsettings.json の Version を自動加算
 ### Agent
 - gpt-5.4 : OpenAI

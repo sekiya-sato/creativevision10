@@ -86,7 +86,8 @@ if (builder.Configuration.GetSection("WebAuthJwt") != null) {
 #endregion
 
 #region スケジューラの処理 ================================================== [Processing of the scheduler]
-builder.Services.AddHostedScheduler(o => o.DateTimeKind = DateTimeKind.Local);
+var schedulerSection = builder.Configuration.GetSection("NCrontab.Scheduler");
+builder.Services.AddHostedScheduler(schedulerSection);
 /* 
 builder.Services.AddSingleton<IScheduledTask, NightlyTask>();
 builder.Services.AddSingleton<IAsyncScheduledTask, NightlyAsyncTask>();
