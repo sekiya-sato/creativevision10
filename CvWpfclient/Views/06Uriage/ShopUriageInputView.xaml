@@ -4,7 +4,7 @@
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._06Uriage"
 	Title="店舗売上入力"
-	Width="1244" Height="900"
+	Width="1360" Height="900"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display"
@@ -75,11 +75,11 @@
 				<!--  右側: CRUD ボタン群  -->
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<StackPanel.Style>
-						<Style	TargetType="StackPanel">
+						<Style TargetType="StackPanel">
 							<Setter Property="Visibility" Value="Visible" />
 							<Style.Triggers>
 								<DataTrigger Binding="{Binding SelectedTabIndex}"
-											Value="0">
+									Value="0">
 									<Setter Property="Visibility" Value="Collapsed" />
 								</DataTrigger>
 							</Style.Triggers>
@@ -132,13 +132,11 @@
 						VerticalAlignment="Center"
 						Kind="ShoppingBasket" />
 					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-						FontSize="20" FontWeight="SemiBold"
-						Text="店舗売上入力" />
+						FontSize="20" FontWeight="SemiBold" Text="店舗売上入力" />
 					<Rectangle Width="1"
 						Margin="16,4"
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
-						Opacity="0.3" >
-					</Rectangle>
+						Opacity="0.3" />
 					<Button Command="{Binding DoListCommand}"
 						ToolTip="一覧取得 (F5)">
 						<Button.Style>
@@ -147,7 +145,7 @@
 								<Setter Property="Visibility" Value="Visible" />
 								<Style.Triggers>
 									<DataTrigger Binding="{Binding SelectedTabIndex}"
-											Value="1">
+										Value="1">
 										<Setter Property="Visibility" Value="Collapsed" />
 									</DataTrigger>
 								</Style.Triggers>
@@ -157,8 +155,7 @@
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="DatabaseSearch" />
 							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="一覧取得" >
-							</TextBlock>
+								Text="一覧取得" />
 						</StackPanel>
 					</Button>
 				</StackPanel>
@@ -221,9 +218,9 @@
 									<DataGridTextColumn Width="100"
 										Binding="{Binding Id}"
 										Header="伝票No" />
-								<DataGridTextColumn Width="120"
-									Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
-									Header="計上日" />
+									<DataGridTextColumn Width="120"
+										Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+										Header="計上日" />
 									<DataGridTextColumn Width="100"
 										Binding="{Binding VTenpo.Cd}"
 										Header="店舗CD" />
@@ -311,8 +308,9 @@
 									Orientation="Horizontal">
 									<TextBlock Style="{StaticResource FormLabel}"
 										Text="計上日" />
-									<DatePicker Width="150" Margin="0,4"
-										materialDesign:HintAssist.Hint="計上日" IsTodayHighlighted="False"
+									<DatePicker Width="150"
+										Margin="0,4"
+										materialDesign:HintAssist.Hint="計上日" FontSize="20" IsTodayHighlighted="False"
 										SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 										Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 								</StackPanel>
@@ -320,7 +318,8 @@
 									Orientation="Horizontal">
 									<TextBlock Style="{StaticResource FormLabel}"
 										Text="区分" />
-									<ComboBox Width="150" Margin="0,4"
+									<ComboBox Width="150"
+										Margin="0,4"
 										materialDesign:HintAssist.Hint="区分"
 										ItemsSource="{Binding KubunOptions}"
 										SelectedItem="{Binding CurrentEdit.EnKubun}"
@@ -330,7 +329,8 @@
 									Orientation="Horizontal">
 									<TextBlock Style="{StaticResource FormLabel}"
 										Text="合計数量" />
-									<TextBox Width="120" Margin="0,4"
+									<TextBox Width="120"
+										Margin="0,4"
 										materialDesign:HintAssist.Hint="合計数量" IsReadOnly="True"
 										Style="{StaticResource FormTextBox}"
 										Text="{Binding CurrentEdit.SuTotal}" />
@@ -338,7 +338,8 @@
 								<StackPanel Orientation="Horizontal">
 									<TextBlock Style="{StaticResource FormLabel}"
 										Text="合計金額" />
-									<TextBox Width="120" Margin="0,4"
+									<TextBox Width="120"
+										Margin="0,4"
 										materialDesign:HintAssist.Hint="合計金額" IsReadOnly="True"
 										Style="{StaticResource FormTextBox}"
 										Text="{Binding CurrentEdit.KingakuTotal}" />
@@ -423,8 +424,9 @@
 					<DataGrid x:Name="MeisaiGrid"
 						Grid.Row="2"
 						Margin="0,8,0,0"
-						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" helpers:DataGridCellEnterNavigation.IsEnabled="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+						helpers:DataGridCellEnterNavigation.IsEnabled="True" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6"
+						materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True"
+						GridLinesVisibility="Horizontal"
 						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 						IsSynchronizedWithCurrentItem="True"
 						ItemsSource="{Binding EditMeisai}"
