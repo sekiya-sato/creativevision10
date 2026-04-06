@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Creative Vision 10 クライアントダウンロード</title>
     <style>
         :root {
-            --primary-color: #0078d4; /* WPF標準のブルー */
+            --primary-color: #0078d4;
             --primary-hover: #005a9e;
             --bg-color: #f3f2f1;
             --text-color: #323130;
@@ -15,7 +15,8 @@
         }
 
         body {
-            font-family: "Segoe UI", "Meiryo", sans-serif;
+            /* iOSシステムフォントを優先的に指定 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -23,99 +24,106 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            /* iPhoneのホームバー等のセーフエリアを考慮 */
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
             line-height: 1.6;
+            -webkit-text-size-adjust: 100%; /* iOSでの文字サイズ自動調整を防止 */
         }
 
         .container {
             max-width: 800px;
-            width: 90%;
-            padding: 40px;
+            width: 92%; /* スマホ時の左右余白を少し確保 */
+            padding: 30px 20px; /* モバイル向けにパディングを微調整 */
             background: var(--card-bg);
-            border-radius: 8px;
+            border-radius: 12px; /* 少し角を丸くしてモダンに */
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
+            margin: 20px auto;
         }
 
         header {
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         h1 {
             color: var(--primary-color);
-            font-size: 1.8rem;
+            font-size: 1.5rem; /* スマホで見やすいサイズに調整 */
             margin-bottom: 10px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .subtitle {
             color: var(--accent-color);
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
         .download-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
         }
 
         .card {
             border: 1px solid #edebe9;
-            border-radius: 6px;
-            padding: 25px;
+            border-radius: 8px;
+            padding: 20px;
             transition: transform 0.2s, box-shadow 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
+            background-color: #fff;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        /* PCでのみホバーエフェクトを有効化（スマホでの誤作動防止） */
+        @media (hover: hover) {
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            }
         }
 
         .card-icon {
             font-size: 2.5rem;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .card h2 {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
         }
 
         .download-btn {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
-            padding: 12px 0;
+            min-height: 50px; /* タップしやすい高さ(Apple推奨44px以上) */
             background-color: var(--primary-color);
-            color: white;
+            color: white !important;
             text-decoration: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-weight: bold;
-            transition: background-color 0.2s;
+            transition: opacity 0.2s;
+            -webkit-tap-highlight-color: transparent; /* タップ時の青い枠を消す */
         }
 
-        .download-btn:hover {
-            background-color: var(--primary-hover);
-        }
+            .download-btn:active {
+                opacity: 0.7; /* タップした瞬間のフィードバック */
+            }
 
         .btn-outline {
             background-color: transparent;
-            color: var(--primary-color);
+            color: var(--primary-color) !important;
             border: 2px solid var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background-color: var(--primary-color);
-            color: white;
+            box-sizing: border-box;
         }
 
         footer {
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid #edebe9;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--accent-color);
             text-align: left;
         }
@@ -123,56 +131,72 @@
         .info-tag {
             display: inline-block;
             background: #fff4ce;
-            padding: 2px 8px;
-            border-radius: 3px;
+            padding: 2px 10px;
+            border-radius: 4px;
             font-weight: bold;
             margin-bottom: 10px;
             color: #444;
+        }
+
+        /* 画面幅が狭い時（iPhone SEなど）の調整 */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.3rem;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Creative Vision 10 販売管理システム</h1>
-            <p class="subtitle">最新バージョンのダウンロードページです</p>
+            <h1>Creative Vision 10<br>販売管理システム</h1>
+            <p class="subtitle">最新バージョンのダウンロード</p>
         </header>
-        
-        <p class="subtitle">最新バージョン: <span id="ver-label">Loading...</span></p>
+
+        <p class="subtitle" style="margin-bottom: 25px;">
+            最新バージョン: <span id="ver-label" style="font-weight: bold; color: var(--text-color);">Loading...</span>
+        </p>
 
         <div class="download-grid">
             <div class="card">
                 <div class="card-icon">💻</div>
                 <h2>インストーラー版</h2>
-                <p style="font-size: 0.9em; margin-bottom: 20px;">標準的なインストール方法です。<br>自動更新機能が利用可能です。</p>
+                <p style="font-size: 0.85em; margin-bottom: 20px; color: var(--accent-color);">標準的なインストール方法です。<br>自動更新機能が利用可能です。</p>
                 <a href="CreativeVision10-win-Setup.exe" class="download-btn">Windows版をダウンロード</a>
             </div>
 
             <div class="card">
                 <div class="card-icon">📁</div>
                 <h2>ポータブル版 (ZIP)</h2>
-                <p style="font-size: 0.9em; margin-bottom: 20px;">インストールが不要な形式です。<br>USBメモリ等での持ち運びに適しています。</p>
+                <p style="font-size: 0.85em; margin-bottom: 20px; color: var(--accent-color);">インストールが不要な形式です。<br>USBメモリ等での利用に適しています。</p>
                 <a href="CreativeVision10-win-Portable.zip" class="download-btn btn-outline">ポータブル版をダウンロード</a>
             </div>
         </div>
 
         <footer>
             <div class="info-tag">Update Information</div>
-            <p>※ 既にインストール済みの場合は、アプリケーションを起動するだけで自動的に最新の .NET 10 環境へ更新されます。</p>
-            <p>※ ダウンロード後にWindowsによって保護のメッセージが表示された場合は、「詳細情報」から「実行」を選択してください。</p>
+            <p>※ 既にインストール済みの場合は、アプリ起動時に最新環境へ自動更新されます。</p>
+            <p>※ Windowsにより保護メッセージが表示された場合は、「詳細情報」→「実行」を選択してください。</p>
+            <p style="margin-top:10px; font-size: 0.75rem;">※ 本ソフトはWindows専用です。iPhone/iPadからはダウンロードのみ可能です。</p>
         </footer>
     </div>
+
     <script>
-    fetch('releases.win.json')
-        .then(response => response.json())
-        .then(data => {
-            const version = data.Assets[0].Version;
-            document.getElementById('ver-label').textContent = 'v' + version;
-        })
-        .catch(err => {
-            document.getElementById('ver-label').textContent = '---';
-            console.error('バージョン情報の取得に失敗しました', err);
-        });
+        fetch('releases.win.json')
+            .then(response => response.json())
+            .then(data => {
+                // 安全なプロパティアクセスのため、オプショナルチェイニング等を利用
+                const version = data?.Assets?.[0]?.Version || data?.Version || 'Unknown';
+                document.getElementById('ver-label').textContent = 'v' + version;
+            })
+            .catch(err => {
+                document.getElementById('ver-label').textContent = '取得できませんでした';
+                console.error('バージョン情報の取得に失敗しました', err);
+            });
     </script>
 </body>
 </html>
