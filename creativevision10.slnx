@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/ソリューション項目/">
     <File Path="AGENTS.md" />
+    <File Path="changelog.md" />
     <File Path="readme.md" />
     <File Path="setup.md" />
   </Folder>

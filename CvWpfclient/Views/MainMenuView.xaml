@@ -280,25 +280,28 @@
 							Background="{DynamicResource panelColor}"
 							Style="{StaticResource MainMenuDashboardCard}">
 							<StackPanel>
-								<StackPanel Margin="0,0,0,8"
-									HorizontalAlignment="Left"
+								<StackPanel Margin="0,0,0,8" HorizontalAlignment="Left"
 									Orientation="Horizontal">
-									<Button Background="{DynamicResource PrimaryButtonColor}" Margin="10,0,10,0"
+									<Button Margin="10,0,10,0"
+										Background="{DynamicResource PrimaryButtonColor}"
 										Command="{Binding ShowUpgradeCommand}"
 										Content="バージョンアップ"
 										Style="{StaticResource MainMenuActionButton}"
 										ToolTip="システムアップデート" />
-									<Button Background="{DynamicResource PrimaryButtonColor}" Margin="10,0,10,0"
+									<Button Margin="10,0,10,0"
+										Background="{DynamicResource PrimaryButtonColor}"
 										Command="{Binding ShowSettingCommand}"
 										Content="環境設定"
 										Style="{StaticResource MainMenuActionButton}"
 										ToolTip="環境設定" />
-									<Button Background="{DynamicResource PrimaryButtonColor}" Margin="10,0,10,0"
+									<Button Margin="10,0,10,0"
+										Background="{DynamicResource PrimaryButtonColor}"
 										Command="{Binding ShowRefreshCommand}"
 										Content="リフレッシュトークン"
 										Style="{StaticResource MainMenuActionButton}"
 										ToolTip="トークンリフレッシュ" />
-									<Button Background="{DynamicResource PrimaryButtonColor}" Margin="10,0,10,0"
+									<Button Margin="10,0,10,0"
+										Background="{DynamicResource PrimaryButtonColor}"
 										Command="{Binding ShowLoginCommand}"
 										Content="ログイン"
 										Style="{StaticResource MainMenuActionButton}"
