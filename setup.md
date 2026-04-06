@@ -53,6 +53,8 @@
 - ビルド(Windows環境)
 
 	dotnet publish "CvWpfclient/CvWpfclient.csproj" -c Release -r win-x64 --self-contained true
+	
+	Linux環境の場合: dotnet publish "CvWpfclient/CvWpfclient.csproj" -c Release -r win-x64 --self-contained true /p:EnableWindowsTargeting=true
 
 - Velopackによる配布ファイル作成 (dotnet tool install -g vpk で事前にインストール)
 	<pre>
