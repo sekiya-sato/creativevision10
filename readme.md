@@ -11,7 +11,7 @@
 
 AIアシスタントは [AGENTS.md](AGENTS.md) を参照してください。
 
-セットアップガイドは別途 [setup.md](setup.md) を参照してください。
+セットアップガイドは [setup.md](setup.md) 、変更履歴は [CHANGE.md](CHANGE.md) 。
 
 
 # 目次
