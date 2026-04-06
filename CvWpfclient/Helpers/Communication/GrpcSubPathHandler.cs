@@ -22,8 +22,6 @@ public sealed class GrpcSubPathHandler : DelegatingHandler {
 		builder.Path = _subPath + originalPath;
 		request.RequestUri = builder.Uri;
 
-		//System.Diagnostics.Debug.WriteLine($"SubPathHandler: Rewritten URI = {request.RequestUri}");
-
 		return await base.SendAsync(request, cancellationToken);
 	}
 }

@@ -6,6 +6,7 @@ namespace CvWpfclient.Helpers;
 /// [Class mainly for manipulating the View from the ViewModel]
 /// </summary>
 public class ClientLib {
+	private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 	/// <summary>
 	/// アクティブなWindowを閉じる
 	/// [Close the active Window]
@@ -148,7 +149,6 @@ public class ClientLib {
 			return folder;
 		}
 		catch (Exception ex) {
-			var _logger = NLog.LogManager.GetCurrentClassLogger();
 			_logger.Error(ex, "GetDataDirエラー");
 			return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData); // AppData/Roaming
 		}

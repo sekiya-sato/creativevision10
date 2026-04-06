@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Configuration;
-using NLog;
+using Microsoft.Extensions.Logging;
 using Velopack;
 namespace CvWpfclient.Services;
 
@@ -23,11 +23,11 @@ public interface IUpdateService {
 }
 
 public class UpdateService : IUpdateService {
-	private readonly ILogger _logger;
+	private readonly ILogger<UpdateService> _logger;
 	private readonly IConfiguration _configuration;
 	private UpdateInfo? _pendingUpdate;
 
-	public UpdateService(ILogger logger, IConfiguration configuration) {
+	public UpdateService(ILogger<UpdateService> logger, IConfiguration configuration) {
 		_logger = logger;
 		_configuration = configuration;
 	}
@@ -36,7 +36,7 @@ public class UpdateService : IUpdateService {
 		var feedUrl = GetFeedUrl();
 		var currentVersion = GetCurrentVersion();
 		if (string.IsNullOrWhiteSpace(feedUrl)) {
-			_logger.Info("Update:FeedUrl が未設定のため、更新チェックをスキップします。");
+			_logger.LogInformation("Update:FeedUrl が未設定のため、更新チェックをスキップします。");
 			_pendingUpdate = null;
 			return new UpdateCheckResult(false,
 				"更新先 URL が未設定のため、更新確認を実行できません。",
@@ -63,8 +63,8 @@ public class UpdateService : IUpdateService {
 				feedUrl);
 		}
 		catch (Exception ex) {
-			_logger.Error(ex, "更新チェック中にエラーが発生しました。");
-			_pendingUpdate = null;
+		_logger.LogError(ex, "更新チェック中にエラーが発生しました。");
+		_pendingUpdate = null;
 			return new UpdateCheckResult(false,
 				$"更新チェックに失敗しました: {ex.Message}",
 				currentVersion,
@@ -76,7 +76,7 @@ public class UpdateService : IUpdateService {
 	public async Task<UpdateExecutionResult> PerformUpdateAsync() {
 		var feedUrl = GetFeedUrl();
 		if (_pendingUpdate == null) {
-			_logger.Info("適用可能な更新が見つかっていないため、更新処理をスキップします。");
+			_logger.LogInformation("適用可能な更新が見つかっていないため、更新処理をスキップします。");
 			return new UpdateExecutionResult(false, "適用可能な更新が見つかっていません。先に更新確認を実行してください。");
 		}
 
@@ -84,11 +84,11 @@ public class UpdateService : IUpdateService {
 			var updateManager = new UpdateManager(feedUrl);
 			await updateManager.DownloadUpdatesAsync(_pendingUpdate);
 			updateManager.ApplyUpdatesAndRestart(_pendingUpdate);
-			_logger.Info("アップデートを適用し、再起動を開始します。");
+			_logger.LogInformation("アップデートを適用し、再起動を開始します。");
 			return new UpdateExecutionResult(true, "更新を適用して再起動します。");
 		}
 		catch (Exception ex) {
-			_logger.Error(ex, "アップデートの実行中にエラーが発生しました。");
+			_logger.LogError(ex, "アップデートの実行中にエラーが発生しました。");
 			return new UpdateExecutionResult(false, $"更新の適用に失敗しました: {ex.Message}");
 		}
 	}

@@ -13,6 +13,7 @@ using System.Windows.Threading;
 namespace CvWpfclient.ViewModels;
 
 public partial class MainMenuViewModel : ObservableObject {
+	private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
 	[ObservableProperty]
 	ObservableCollection<MenuData> menuItems = [];
@@ -242,7 +243,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			InfolocalServer.BaseDir = version?.BaseDir ?? "";
 		}
 		catch (Exception ex) {
-			Console.WriteLine($"サーバ情報の取得に失敗: {ex.Message}");
+			_logger.Warn($"サーバ情報の取得に失敗: {ex.Message}");
 		}
 		SetSubMessage();
 	}

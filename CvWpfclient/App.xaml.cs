@@ -134,12 +134,11 @@ public partial class App : Application {
 				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile(SystemSettingsStore.SettingsFilePath, optional: true, reloadOnChange: true);
 			})
-			.ConfigureLogging((context, logging) => {
-				logging.ClearProviders(); // 既定のログプロバイダーをクリア
-				logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
-				// これにより appsettings.json の "NLog" セクションが読み込まれます
-				LogManager.Configuration = new NLogLoggingConfiguration(context.Configuration.GetSection("NLog"));
-			})
+		.ConfigureLogging((context, logging) => {
+			logging.ClearProviders(); // 既定のログプロバイダーをクリア
+			logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+			logging.AddNLog(context.Configuration); // ILogger<T> → NLog へルーティング
+		})
 			.ConfigureServices((context, services) => {
 				// 1. ハンドラーと通信設定の登録
 				services.AddTransient<JwtAuthorizationHandler>();
@@ -168,7 +167,7 @@ public partial class App : Application {
 					builder.ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
 				}
 				// 3. サービスの登録
-				services.AddSingleton<IUpdateService>(_ => new UpdateService(LogManager.GetLogger(nameof(UpdateService)), context.Configuration));
+				services.AddSingleton<IUpdateService, UpdateService>();
 				ConfigureClient<ILoginService>(services, url, subPath);
 				ConfigureClient<ICvnetCoreService>(services, url, subPath);
 			});

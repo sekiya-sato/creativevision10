@@ -32,6 +32,31 @@
 
 ---
 
+## [2026-04-06] 15:30 CvWpfclient のログ使用方法を統一
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient プロジェクト内のログの使い方を統一する。CvServer と同じ ILogger<T> + NLog provider パターンに統一
+### 実施内容
+- CvWpfclient/App.xaml.cs: ConfigureLogging 内で `logging.AddNLog(context.Configuration)` に変更、UpdateService の DI 登録を `services.AddSingleton<IUpdateService, UpdateService>()` に変更
+- CvWpfclient/Services/UpdateService.cs: NLog 直接利用 → `ILogger<UpdateService>` (Microsoft.Extensions.Logging) に完全移行。`_logger.Info` → `_logger.LogInformation`、`_logger.Error` → `_logger.LogError`
+- CvWpfclient/AppGlobal.cs: `private static readonly NLog.Logger _logger` を追加、`Debug.WriteLine` → `_logger.Info` に変更、インライン `LogManager.GetCurrentClassLogger()` → static フィールド利用に統一
+- CvWpfclient/ViewModels/00System/SysUpgradeViewModel.cs: `using NLog` → `using Microsoft.Extensions.Logging`、`ILogger` → `ILogger<SysUpgradeViewModel>`、`LogManager.GetCurrentClassLogger()` → `ILoggerFactory` DI 経由取得、`_logger.Error` → `_logger.LogError`
+- CvWpfclient/ViewModels/00System/LoginViewModel.cs: `using System.Diagnostics` 削除、`private static readonly NLog.Logger _logger` 追加、`Debug.WriteLine` → `_logger.Debug` に変更（2箇所）
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `private static readonly NLog.Logger _logger` 追加、`Console.WriteLine` → `_logger.Warn` に変更
+- CvWpfclient/Helpers/ClientLib.cs: クラスレベルに `private static readonly NLog.Logger _logger` 追加、catch 内のローカル `LogManager.GetCurrentClassLogger()` を static フィールド利用に統一
+- CvWpfclient/Helpers/Communication/GrpcSubPathHandler.cs: コメント化された `Debug.WriteLine` 行を削除
+### 技術決定 Why
+- DI で解決されるクラス（Service, ViewModel）は `Microsoft.Extensions.Logging.ILogger<T>` に統一し、NLog provider 経由で出力することで CvServer と同じパターンにした
+- Static クラスや DI 外のクラス（AppGlobal, ClientLib, MainMenuViewModel, LoginViewModel）は NLog 直接利用のまま `private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger()` に書き方を統一した
+- Debug.WriteLine / Console.WriteLine は本番環境でログが残らないため、全て NLog 経由に置換した
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj` → ビルド成功（警告0、エラー0）
+
+---
+
 ## [2026-04-05] 09:45 Scheduler gRPC契約をEnumベースへ整理
 ### Agent
 - gpt-5.4 : OpenAI

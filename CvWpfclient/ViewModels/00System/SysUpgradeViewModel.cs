@@ -3,13 +3,13 @@ using CommunityToolkit.Mvvm.Input;
 using CvWpfclient.Helpers;
 using CvWpfclient.Services;
 using Microsoft.Extensions.DependencyInjection;
-using NLog;
+using Microsoft.Extensions.Logging;
 
 namespace CvWpfclient.ViewModels._00System;
 
 public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 	private readonly IUpdateService _updateService;
-	private readonly ILogger _logger;
+	private readonly ILogger<SysUpgradeViewModel> _logger;
 
 	[ObservableProperty]
 	private string _updateStatus = "最新バージョンを確認できます";
@@ -22,7 +22,7 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 	string optionMessage = string.Empty;
 
 	public SysUpgradeViewModel() {
-		_logger = LogManager.GetCurrentClassLogger();
+		_logger = App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger<SysUpgradeViewModel>();
 		_updateService = App.AppHost?.Services.GetRequiredService<IUpdateService>()
 			?? throw new InvalidOperationException("IUpdateService を取得できません。");
 		RefreshOptionMessage();
@@ -40,7 +40,7 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 			RefreshOptionMessage(newVersion);
 		}
 		catch (Exception ex) {
-			_logger.Error(ex, "手動の更新確認でエラーが発生しました。");
+			_logger.LogError(ex, "手動の更新確認でエラーが発生しました。");
 			IsUpdateAvailable = false;
 			UpdateStatus = $"更新チェックに失敗しました: {ex.Message}";
 			MessageEx.ShowErrorDialog(UpdateStatus, owner: ClientLib.GetActiveView(this));
@@ -59,7 +59,7 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 			}
 		}
 		catch (Exception ex) {
-			_logger.Error(ex, "手動の更新適用でエラーが発生しました。");
+			_logger.LogError(ex, "手動の更新適用でエラーが発生しました。");
 			UpdateStatus = $"更新の適用に失敗しました: {ex.Message}";
 			MessageEx.ShowErrorDialog(UpdateStatus, owner: ClientLib.GetActiveView(this));
 		}

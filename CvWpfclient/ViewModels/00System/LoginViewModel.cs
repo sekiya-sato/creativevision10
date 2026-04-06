@@ -4,11 +4,11 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
-using System.Diagnostics;
 
 namespace CvWpfclient.ViewModels._00System;
 
 public partial class LoginViewModel : Helpers.BaseViewModel {
+	private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 	[ObservableProperty]
 	private string? loginId;
 
@@ -52,7 +52,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage);
-					Debug.WriteLine($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
+					_logger.Debug($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
 					LoginData = reply;
 					ExitWithResultTrue();
 					return;
@@ -94,7 +94,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage);
-					Debug.WriteLine($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
+					_logger.Debug($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
 					LoginData = reply;
 					ExitWithResultTrue();
 					return;

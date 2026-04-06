@@ -15,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using ProtoBuf.Grpc;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO;
 
 
@@ -24,6 +23,7 @@ namespace CvWpfclient;
 /// グローバル変数
 /// </summary>
 public static class AppGlobal {
+	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 	// Backing field: 内部でのみ null 許容
 	private static IConfigurationRoot? _config;
 	private static string? _url;
@@ -64,13 +64,13 @@ public static class AppGlobal {
 	public static void Init(IConfigurationRoot config, IServiceProvider serviceProvider) {
 		ArgumentNullException.ThrowIfNull(config);
 		ArgumentNullException.ThrowIfNull(serviceProvider);
-		Debug.WriteLine("GlobalInitialize()実行");
+		_logger.Info("GlobalInitialize()実行");
 		_config = config;
 		_serviceProvider = serviceProvider;
 		_url = _config.GetConnectionString("Url");
 		_dataDir = ClientLib.GetDataDir();
 		_grpcServiceCache.Clear();
-		LogManager.GetCurrentClassLogger()?.Info($"---------------------------------\n AppGlobal.Init() 接続先Url={_url},実行フォルダ={Directory.GetCurrentDirectory()}");
+		_logger.Info($"---------------------------------\n AppGlobal.Init() 接続先Url={_url},実行フォルダ={Directory.GetCurrentDirectory()}");
 		// あれば取得する
 		if (string.IsNullOrWhiteSpace(LoginJwt)) {
 			SetLoginJwt(_config.GetSection("Parameters")?["LoginJwt"]);
