@@ -10,9 +10,9 @@
   </Folder>
   <Project Path="CodeShare/CodeShare.csproj" />
   <Project Path="CvAsset/CvAsset.csproj" />
-  <Project Path="CvBase.Mariadb/CvBaseMariadb.csproj" />
-  <Project Path="CvBase.Oracle/CvBaseOracle.csproj" />
-  <Project Path="CvBase.Sqlite/CvBaseSqlite.csproj" />
+  <Project Path="CvBaseMariadb/CvBaseMariadb.csproj" />
+  <Project Path="CvBaseOracle/CvBaseOracle.csproj" />
+  <Project Path="CvBaseSqlite/CvBaseSqlite.csproj" />
   <Project Path="CvBase/CvBase.csproj" />
   <Project Path="CvDomainLogic/CvDomainLogic.csproj" />
   <Project Path="CvPrints/CvPrints.csproj" />

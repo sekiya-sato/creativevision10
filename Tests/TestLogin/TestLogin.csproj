@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\CvBase.Sqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
     <ProjectReference Include="..\..\CvBase\CvBase.csproj" />
     <ProjectReference Include="..\..\CvServer\CvServer.csproj" />
   </ItemGroup>

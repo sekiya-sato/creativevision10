@@ -27,8 +27,8 @@
   <ItemGroup>
     <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
     <ProjectReference Include="..\CvAsset\CvAsset.csproj" />
-    <ProjectReference Include="..\CvBase.Oracle\CvBaseOracle.csproj" />
-    <ProjectReference Include="..\CvBase.Sqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\CvBaseOracle\CvBaseOracle.csproj" />
+    <ProjectReference Include="..\CvBaseSqlite\CvBaseSqlite.csproj" />
     <ProjectReference Include="..\CvBase\CvBase.csproj" />
     <ProjectReference Include="..\CvDomainLogic\CvDomainLogic.csproj" />
     <ProjectReference Include="..\CvPrints\CvPrints.csproj" />
