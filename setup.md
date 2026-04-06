@@ -61,6 +61,7 @@
 	"Version" は publish-velopack.bat 実行時にリビジョン(パッチ番号)が+1される (major.minor.patch)
 	major.minorのほうは手動で変更する、リビジョンを0にしたければ-1を設定しておく
 	"appsettings.Production.json"
+	</pre>
 ```
 {
 	"Update": {
@@ -73,7 +74,6 @@
 
 }
 ```
-	</pre>
 
 - Velopackで作成されたファイル+index.html をすべて配布先URLへ配置
 
