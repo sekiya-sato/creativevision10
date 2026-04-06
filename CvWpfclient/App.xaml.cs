@@ -4,7 +4,6 @@ using CvWpfclient.Helpers;
 using CvWpfclient.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog;
@@ -133,20 +132,7 @@ public partial class App : Application {
 				builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile("appsettings.Production.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
-				// ユーザー設定ファイルの追加 (最後に適用したほうが優先順位が高い)
-				var userSettingsPath = SystemSettingsStore.SettingsFilePath;
-				if (!string.IsNullOrWhiteSpace(userSettingsPath)) {
-					var directory = Path.GetDirectoryName(userSettingsPath);
-					var fileName = Path.GetFileName(userSettingsPath);
-					if (!string.IsNullOrWhiteSpace(directory) && !string.IsNullOrWhiteSpace(fileName)) {
-						builder.AddJsonFile(options => {
-							options.Path = fileName;
-							options.Optional = true;
-							options.ReloadOnChange = true;
-							options.FileProvider = new PhysicalFileProvider(directory);
-						});
-					}
-				}
+				builder.AddJsonFile(SystemSettingsStore.SettingsFilePath, optional: true, reloadOnChange: true);
 			})
 			.ConfigureLogging((context, logging) => {
 				logging.ClearProviders(); // 既定のログプロバイダーをクリア

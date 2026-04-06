@@ -137,11 +137,11 @@ public class ClientLib {
 	/// <returns>データフォルダ</returns> [Data folder]
 	public static string GetDataDir() {
 		try {
-			string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-			//string folder = appData + "\\" + System.Windows.Forms.Application.CompanyName + "\\" + System.Windows.Forms.Application.ProductName;
-			// 固定で返す(バージョンを大きく変える場合には変更する)
-			// [Return a fixed value (change if a major version update is made)]
-			string folder = appData + @"\Cv";
+			string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData); // AppData/Local
+																										//string folder = appData + "\\" + System.Windows.Forms.Application.CompanyName + "\\" + System.Windows.Forms.Application.ProductName;
+																										// 固定で返す(バージョンを大きく変える場合には変更する)
+																										// [Return a fixed value (change if a major version update is made)]
+			string folder = System.IO.Path.Combine(appData, "CreativeVision10");
 			if (!System.IO.Directory.Exists(folder)) {
 				System.IO.Directory.CreateDirectory(folder);
 			}
@@ -150,7 +150,7 @@ public class ClientLib {
 		catch (Exception ex) {
 			var _logger = NLog.LogManager.GetCurrentClassLogger();
 			_logger.Error(ex, "GetDataDirエラー");
-			return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+			return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData); // AppData/Roaming
 		}
 	}
 	/// <summary>
