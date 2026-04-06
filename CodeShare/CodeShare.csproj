@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EditorConfigFiles Remove="C:\gitroot\new2022\Cvnet10\CodeShare\.editorconfig" />
+    <EditorConfigFiles Remove="C:\gitroot\new2022\Cv\CodeShare\.editorconfig" />
   </ItemGroup>
 
 </Project>

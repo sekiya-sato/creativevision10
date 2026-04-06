@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.KeyPerFile" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- プロジェクト参照はリポジトリ内の相対パスに合わせて必要に応じて調整してください -->
+    <ProjectReference Include="..\..\CodeShare\CodeShare.csproj" />
+    <ProjectReference Include="..\..\CvBase.Sqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\CvServer\CvServer.csproj" />
+  </ItemGroup>
+
+</Project>

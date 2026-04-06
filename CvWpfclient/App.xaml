@@ -1,0 +1,22 @@
+<Application x:Class="CvWpfclient.App"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	StartupUri="Views/MainMenuView.xaml">
+	<Application.Resources>
+		<ResourceDictionary>
+			<!--  ConverterがあればApp.xamlで定義する  -->
+			<helpers:DateYmd8Converter x:Key="DateYmd8Converter" />
+			<helpers:DateTimeYmdHmsConverter x:Key="DateTimeYmdHmsConverter" />
+			<helpers:EnumShimeDisplayConverter x:Key="EnumShimeDisplayConverter" />
+			<helpers:IntToBoolConverter x:Key="IntToBoolConverter" />
+			<helpers:LongToLocalDateTimeStringConverter x:Key="LongToLocalDateTimeStringConverter" />
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source="/Resources/UIColors.xaml" />
+				<ResourceDictionary Source="/Resources/UICommon.xaml" />
+				<ResourceDictionary Source="/Resources/UIMainWindow.xaml" />
+				<materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Green" />
+				<ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</Application.Resources>
+</Application>

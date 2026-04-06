@@ -1,7 +1,6 @@
-﻿using Cvnet10Base;
-using Cvnet10Base.Sqlite;
-using Cvnet10DomainLogic;
-using Cvnet10Server.Services;
+using CvBase;
+using CvBaseSqlite;
+using CvServer.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;

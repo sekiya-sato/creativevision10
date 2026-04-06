@@ -1,21 +1,22 @@
 <Solution>
   <Folder Name="/Tests/">
-    <Project Path="Tests/TestCvnet10Server/TestCvnet10Server.csproj" />
     <Project Path="Tests/TestLogin/TestLogin.csproj" />
     <Project Path="Tests/TestPrint/TestPrint.csproj" />
+    <Project Path="Tests/TestServer/TestServer.csproj" />
   </Folder>
   <Folder Name="/ソリューション項目/">
     <File Path="AGENTS.md" />
+    <File Path="CvBase/CvBase.csproj" />
     <File Path="readme.md" />
   </Folder>
   <Project Path="CodeShare/CodeShare.csproj" />
-  <Project Path="Cvnet10Asset/Cvnet10Asset.csproj" />
-  <Project Path="Cvnet10Base.Mariadb/Cvnet10BaseMariadb.csproj" />
-  <Project Path="Cvnet10Base.Oracle/Cvnet10BaseOracle.csproj" />
-  <Project Path="Cvnet10Base.Sqlite/Cvnet10BaseSqlite.csproj" />
-  <Project Path="Cvnet10Base/Cvnet10Base.csproj" />
-  <Project Path="Cvnet10DomainLogic/Cvnet10DomainLogic.csproj" Id="6b3eedbb-f868-4463-b817-9dbcc71252eb" />
-  <Project Path="Cvnet10Prints/Cvnet10Prints.csproj" />
-  <Project Path="Cvnet10Server/Cvnet10Server.csproj" />
-  <Project Path="Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" Id="38e8b89d-788f-4ceb-86b8-ddc7a748cd3e" />
+  <Project Path="CvAsset/CvAsset.csproj" />
+  <Project Path="CvBase.Mariadb/CvBaseMariadb.csproj" />
+  <Project Path="CvBase.Oracle/CvBaseOracle.csproj" />
+  <Project Path="CvBase.Sqlite/CvBaseSqlite.csproj" />
+  <Project Path="CvBase/CvBase.csproj" />
+  <Project Path="CvDomainLogic/CvDomainLogic.csproj" />
+  <Project Path="CvPrints/CvPrints.csproj" />
+  <Project Path="CvServer/CvServer.csproj" />
+  <Project Path="CvWpfclient/CvWpfclient.csproj" />
 </Solution>

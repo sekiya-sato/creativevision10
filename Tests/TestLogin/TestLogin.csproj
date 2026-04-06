@@ -16,12 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Cvnet10Base.Sqlite\Cvnet10BaseSqlite.csproj" />
-    <ProjectReference Include="..\..\Cvnet10Server\Cvnet10Server.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\CvBase.Sqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\CvServer\CvServer.csproj" />
   </ItemGroup>
 
 </Project>

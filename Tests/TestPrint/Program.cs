@@ -1,4 +1,4 @@
-using Cvnet10Prints;
+using CvPrints;
 
 // See https://aka.ms/new-console-template for more information
 

@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <BuildDate>$([System.DateTime]::Now.ToString("yyyy,M,d,H,m,s"))</BuildDate>
+    <OSDescription>$([System.Runtime.InteropServices.RuntimeInformation]::OSDescription)</OSDescription>
+    <FrameworkDescription>$([System.Runtime.InteropServices.RuntimeInformation]::FrameworkDescription)</FrameworkDescription>
+    <BuildConfiguration>$(Configuration)</BuildConfiguration>
+	  <SourceGeneratorTimestamp>$([System.DateTime]::Now.ToString("yyyyMMddHHmmss"))</SourceGeneratorTimestamp>
+	  <CI>$(CI)</CI>
+    <CompilerVisibleProperty>BuildDate;OSDescription;FrameworkDescription;BuildConfiguration;CI;SourceGeneratorTimestamp</CompilerVisibleProperty>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="BuildDate" Value="$(BuildDate)" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+	<PackageReference Include="NCrontab.Scheduler.AspNetCore" />
+	<PackageReference Include="NLog.Web.AspNetCore" />
+	<PackageReference Include="protobuf-net.Grpc.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
+    <ProjectReference Include="..\CvAsset\CvAsset.csproj" />
+    <ProjectReference Include="..\CvBase.Oracle\CvBaseOracle.csproj" />
+    <ProjectReference Include="..\CvBase.Sqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\CvDomainLogic\CvDomainLogic.csproj" />
+    <ProjectReference Include="..\CvPrints\CvPrints.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+</Project>

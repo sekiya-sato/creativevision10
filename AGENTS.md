@@ -14,9 +14,9 @@
 - Search: Use `grep -r` for Japanese terms.
 
 ## Architecture
-- **Read-Only**: Layer 0 (`CodeShare`/`Cvnet10Asset`), Layer 1 (`Cvnet10Base`), Layer 1.2 (DB), Layer 1.4 (Prints)  Write if necessary.
-- **Server Layering**: (0) -> (1-1.4) -> `Cvnet10DomainLogic` (1.5) -> `Cvnet10Server` (2).
-- **Client Layering**: (0) -> (1) -> `Cvnet10Wpfclient`(2).
+- **Read-Only**: Layer 0 (`CodeShare`/`CvAsset`), Layer 1 (`CvBase`), Layer 1.2 (DB), Layer 1.4 (Prints)  Write if necessary.
+- **Server Layering**: (0) -> (1-1.4) -> `CvDomainLogic` (1.5) -> `CvServer` (2).
+- **Client Layering**: (0) -> (1) -> `CvWpfclient`(2).
 
 ## Build Commands **IMPORTANT**
 Condition:
@@ -26,14 +26,14 @@ Condition:
 ### Build Rule1
 - Restore all projects: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore creativevision10.slnx"`
 - Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"`
-- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"`
-- Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"`
+- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"`
+- Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"`
 
 ### Build Rule2
 - Restore all projects: `dotnet restore "creativevision10.slnx"`
 - Build solution: `dotnet build "creativevision10.slnx"`
-- Build server only: `dotnet build "Cvnet10Server/Cvnet10Server.csproj"`
-- Build WPF client: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
+- Build server only: `dotnet build "CvServer/CvServer.csproj"`
+- Build WPF client: `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
 
 ## Coding & WPF Standards
 - **Style**: `.editorconfig` (CS), `Settings.XamlStyler` (XAML). File-scoped namespaces.

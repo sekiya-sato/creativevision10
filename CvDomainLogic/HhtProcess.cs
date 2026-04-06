@@ -1,0 +1,205 @@
+using CvBase;
+using NLog;
+using System.Text;
+
+namespace CvDomainLogic;
+
+public partial class HhtProcess {
+	private static readonly Encoding SjisEncoding = CreateSjisEncoding();
+
+	ExDatabase _db;
+	Logger _logger;
+
+	public HhtProcess(ExDatabase db) {
+		_db = db;
+		_logger = LogManager.GetCurrentClassLogger();
+	}
+	/// <summary>
+	/// マスタを変換して、固定長またはカンマ区切りの文字として返す。
+	/// 
+	/// </summary>
+	/// <param name="isFix">isFix=trueの場合、コードはゼロ埋め8桁、名前はSJIS 40byte固定長で変換する。isFix=falseの場合は元の値をそのまま使用する。</param>
+	/// <param name="outMasterMei">1=略称, 2=カナ, その他=正式名称</param>
+	/// <returns></returns>
+	public List<string> CreateMaster(bool isFix = false, int outMasterMei = 0) {
+		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+		List<MasterHht> masters = new();
+		var sir = _db.Fetch<MasterShiire>();
+		var sok = _db.Fetch<MasterTokui>("where IsZaiko=1 and TenType in (0,6)");
+		var tan = _db.Fetch<MasterShain>();
+		var tok = _db.Fetch<MasterTokui>("where TenType not in (6)");
+
+		AddTorihikiMasters(masters, sir, "SIR", outMasterMei);
+		AddTorihikiMasters(masters, sok, "SOK", outMasterMei);
+		AddShainMasters(masters, tan, outMasterMei);
+		AddTorihikiMasters(masters, tok, "TOK", outMasterMei);
+
+		return CreateOutputLines(masters, isFix);
+	}
+
+	private static void AddTorihikiMasters<T>(List<MasterHht> masters, IEnumerable<T> source, string kubun, int outMasterMei)
+		where T : MasterTorihiki {
+		foreach (var item in source) {
+			masters.Add(CreateMasterHht(
+				kubun,
+				item.Code ?? string.Empty,
+				Sanitize(SelectName(null, item, outMasterMei)),
+				Sanitize(item.Ryaku ?? string.Empty)));
+		}
+	}
+
+	private static void AddShainMasters(List<MasterHht> masters, IEnumerable<MasterShain> source, int outMasterMei) {
+		foreach (var item in source) {
+			masters.Add(CreateMasterHht(
+				"TAN",
+				(item.Code ?? string.Empty).PadLeft(6, '0') + "  ",
+				Sanitize(SelectName(item, null, outMasterMei)),
+				string.Empty));
+		}
+	}
+
+	private static MasterHht CreateMasterHht(string kubun, string code, string name, string nameOpt) {
+		return new MasterHht {
+			Kubun = kubun,
+			Code = code,
+			Name = name,
+			NameOpt = nameOpt,
+			Eol = "*",
+		};
+	}
+
+	private static List<string> CreateOutputLines(IEnumerable<MasterHht> masters, bool isFix) {
+		List<string> outList = new();
+		foreach (var master in masters) {
+			outList.Add(isFix ? ToFixedLength(master) : ToCsv(master));
+		}
+
+		return outList;
+	}
+
+	private static string ToFixedLength(MasterHht master) {
+		return PadRightSpaces(master.Kubun, 3)
+			+ PadLeftZeros(master.Code, 8)
+			+ PadRightSjis(master.Name, 40)
+			+ PadRightSjis(master.NameOpt, 40)
+			+ (master.Eol ?? "*");
+	}
+
+	private static string ToCsv(MasterHht master) {
+		return string.Join(",",
+			EscapeCsv(master.Kubun ?? string.Empty),
+			EscapeCsv(master.Code ?? string.Empty),
+			EscapeCsv(master.Name ?? string.Empty),
+			EscapeCsv(master.NameOpt ?? string.Empty),
+			EscapeCsv(master.Eol ?? string.Empty));
+	}
+
+	private static string EscapeCsv(string s) {
+		if (s == null) {
+			return string.Empty;
+		}
+
+		return '"' + s.Replace("\"", "\"\"") + '"';
+	}
+
+	private static string SelectName(MasterShain? shain, MasterTorihiki? torihiki, int outMasterMei) {
+		return outMasterMei switch {
+			1 => !string.IsNullOrWhiteSpace(shain?.Ryaku) ? shain.Ryaku : !string.IsNullOrWhiteSpace(torihiki?.Ryaku) ? torihiki.Ryaku : torihiki?.Name ?? string.Empty,
+			2 => !string.IsNullOrWhiteSpace(shain?.Kana) ? shain.Kana : !string.IsNullOrWhiteSpace(torihiki?.Kana) ? torihiki.Kana : torihiki?.Name ?? string.Empty,
+			_ => torihiki?.Name ?? shain?.Name ?? string.Empty,
+		};
+	}
+
+	private static string Sanitize(string s) {
+		if (string.IsNullOrEmpty(s)) {
+			return string.Empty;
+		}
+
+		var sb = new System.Text.StringBuilder(s.Length);
+		foreach (var ch in s) {
+			if (char.IsControl(ch)) {
+				sb.Append(' ');
+				continue;
+			}
+
+			switch (ch) {
+				case '|':
+				case '/':
+				case '\\':
+				case '"':
+				case '\'':
+				case '<':
+				case '>':
+				case '*':
+					sb.Append(' ');
+					break;
+				default:
+					sb.Append(ch);
+					break;
+			}
+		}
+
+		return sb.ToString();
+	}
+
+	private static string PadLeftZeros(string code, int width) {
+		code ??= string.Empty;
+		code = code.Trim();
+		return code.Length >= width ? code[..width] : code.PadLeft(width, '0');
+	}
+
+	private static string PadRightSpaces(string s, int width) {
+		s ??= string.Empty;
+		return s.Length >= width ? s[..width] : s.PadRight(width, ' ');
+	}
+
+	private static string PadRightSjis(string s, int byteWidth) {
+		s ??= string.Empty;
+
+		var builder = new StringBuilder(s.Length);
+		var currentBytes = 0;
+		foreach (var ch in s) {
+			var next = ch.ToString();
+			var charByteCount = SjisEncoding.GetByteCount(next);
+			if (currentBytes + charByteCount > byteWidth) {
+				break;
+			}
+
+			builder.Append(ch);
+			currentBytes += charByteCount;
+		}
+
+		if (currentBytes >= byteWidth) {
+			return builder.ToString();
+		}
+
+		return builder.Append(' ', byteWidth - currentBytes).ToString();
+	}
+
+	private static Encoding CreateSjisEncoding() {
+		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+		return Encoding.GetEncoding("shift_jis");
+	}
+	/// <summary>
+	/// ハンディデータの受信と保存
+	/// </summary>
+	/// <param name="hhtdata"></param>
+	// ToDo : ロジックを集約 ReceiveHhtdata は廃止予定
+	[Obsolete("廃止予定のため、使用しないでください。")]
+	public int ReceiveHhtdata(List<TranHhtdata> hhtdata) {
+		if (hhtdata == null || hhtdata.Count == 0) {
+			return 0;
+		}
+		try {
+			_db.BeginTransaction();
+			_db.InsertBulk<TranHhtdata>(hhtdata);
+			_db.CompleteTransaction();
+			return hhtdata.Count;
+		}
+		catch (Exception ex) {
+			_logger.Error(ex, "HHTデータの受信に失敗");
+			throw;
+		}
+	}
+}
