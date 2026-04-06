@@ -4,6 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvWpfclient.Helpers;
 using CvWpfclient.Models;
+using CvWpfclient.Services;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
@@ -89,11 +91,13 @@ public partial class MainMenuViewModel : ObservableObject {
 		InfolocalUser.ComputerName = Environment.MachineName;
 		InfolocalUser.UserName = Environment.UserName;
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
+		// Velopack のバージョンを表示する
+		SubTitle += $"  Ver={App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetCurrentVersion()}";
 	}
 
 	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
-		StatusMessage = $"メニューを選択してください。 \nF10: 環境設定,  F11: トークンリフレッシュ画面, F12: ログイン画面";
+		StatusMessage = $"メニューを選択してください。 \nF9: バージョンアップ  F10: 環境設定,  F11: リフレッシュトークン, F12: ログイン画面";
 		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {InfolocalServer.ProductVer ?? "Product Version"}\nサーバ開始時間 {InfolocalServer.StartTime ?? "??:??:??"}\nビルド日付 {InfolocalServer.BuildDate ?? "??:??:??"}\nベースDir {InfolocalServer.BaseDir}";
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
