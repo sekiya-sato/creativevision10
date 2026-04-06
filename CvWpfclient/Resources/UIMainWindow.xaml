@@ -135,4 +135,41 @@
 		<Setter Property="Foreground" Value="{DynamicResource TitleColor}" />
 		<Setter Property="Margin" Value="0,0,0,8" />
 	</Style>
+
+	<!--  MainMenu action buttons (バージョンアップ, 環境設定, ログイン, リフレッシュトークン)  -->
+	<Style x:Key="MainMenuActionButton"
+		TargetType="Button">
+		<Setter Property="MinWidth" Value="100" />
+		<Setter Property="Height" Value="32" />
+		<Setter Property="Margin" Value="4,0" />
+		<Setter Property="Padding" Value="12,4" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="BorderBrush" Value="#60FFFFFF" />
+		<Setter Property="Foreground" Value="White" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="Button">
+					<Border x:Name="border"
+						Padding="{TemplateBinding Padding}"
+						Background="{TemplateBinding Background}"
+						BorderBrush="{TemplateBinding BorderBrush}"
+						BorderThickness="{TemplateBinding BorderThickness}"
+						CornerRadius="6">
+						<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+					</Border>
+					<ControlTemplate.Triggers>
+						<Trigger Property="IsMouseOver" Value="True">
+							<Setter TargetName="border" Property="Background" Value="#40FFFFFF" />
+						</Trigger>
+						<Trigger Property="IsPressed" Value="True">
+							<Setter TargetName="border" Property="Background" Value="#60FFFFFF" />
+						</Trigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
 </ResourceDictionary>
