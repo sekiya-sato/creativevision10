@@ -1,11 +1,11 @@
 ---
 name: wpf-view-workflow
-description: Defines the standard workflow for creating or updating individual WPF Views and ViewModels in Cvnet10Wpfclient, including menu wiring and validation steps.
+description: Defines the standard workflow for creating or updating individual WPF Views and ViewModels in CvWpfclient, including menu wiring and validation steps.
 ---
 
 # WPF View Workflow
 
-このスキルは、`Cvnet10Wpfclient` の個別画面に対する新規作成・既存改修の実務手順を定義します。利用時は、先に `wpf-project-guide` の共通規約に従っている前提で進めます。
+このスキルは、`CvWpfclient` の個別画面に対する新規作成・既存改修の実務手順を定義します。利用時は、先に `wpf-project-guide` の共通規約に従っている前提で進めます。
 
 ## 前提
 
@@ -17,7 +17,7 @@ description: Defines the standard workflow for creating or updating individual W
 - 新しい `*View.xaml` を追加するとき
 - 対応する `*ViewModel.cs` を追加または更新するとき
 - 既存のView / ViewModel を改修するとき
-- 機能をメニューから起動可能にするため `Cvnet10Wpfclient/Models/MenuData.cs` を調整するとき
+- 機能をメニューから起動可能にするため `CvWpfclient/Models/MenuData.cs` を調整するとき
 
 ## 新規画面作成の基本手順
 
@@ -53,7 +53,7 @@ description: Defines the standard workflow for creating or updating individual W
 
 ## MenuData.cs を触る条件
 
-- ユーザーが新規画面を起動可能にしたい場合は `Cvnet10Wpfclient/Models/MenuData.cs` の追加・更新を行う
+- ユーザーが新規画面を起動可能にしたい場合は `CvWpfclient/Models/MenuData.cs` の追加・更新を行う
 - 内部利用のみの画面や既存導線から開かれる画面なら、不要なメニュー追加はしない
 
 ## よくある確認ポイント
@@ -66,8 +66,8 @@ description: Defines the standard workflow for creating or updating individual W
 ## 検証手順
 
 1. XAML変更がある場合、必要に応じて `check-xaml` を使う
-2. 可能なら `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行する
-3. 形式確認が必要なら `dotnet format "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" --verify-no-changes` を使う
+2. 可能なら `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行する
+3. 形式確認が必要なら `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` を使う
 
 ## 関連スキル
 

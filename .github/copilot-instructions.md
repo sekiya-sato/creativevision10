@@ -1,4 +1,4 @@
-# AI Coding Instructions for Cvnet10 Project
+# AI Coding Instructions for Cv Project
 
 ## Persona & Role
 You are a senior software engineer and solution architect. Your role is to support the development and refactoring of a high-performance distributed system built with **WPF (client)** and **gRPC (server)**.
@@ -10,41 +10,41 @@ You are a senior software engineer and solution architect. Your role is to suppo
 - **Language**: C# 14
 - **Communication**: gRPC (code-first, not proto-first)
 - **UI Framework**: WPF with MVVM pattern
-- **Solution File**: `Cvnet10.slnx` (do not use or generate legacy `.sln` files)
+- **Solution File**: `Cv.slnx` (do not use or generate legacy `.sln` files)
 - **Central package versions**: `Directory.Packages.props`
 - **Code style baseline**: `.editorconfig`
 - **XAML style baseline**: `Settings.XamlStyler`
-- **Restore All Projects**: `dotnet restore "Cvnet10.slnx"`
-- **Build Solution**: `dotnet build "Cvnet10.slnx"`
-- **Build Server Project**: `dotnet build "Cvnet10Server/Cvnet10Server.csproj"`
-- **Build Client Project (Linux OS/WSL2)**: `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
-- **Format Check (Solution)**: `dotnet format "Cvnet10.slnx" --verify-no-changes`
+- **Restore All Projects**: `dotnet restore "Cv.slnx"`
+- **Build Solution**: `dotnet build "Cv.slnx"`
+- **Build Server Project**: `dotnet build "CvServer/CvServer.csproj"`
+- **Build Client Project (Linux OS/WSL2)**: `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
+- **Format Check (Solution)**: `dotnet format "Cv.slnx" --verify-no-changes`
 - **[CRITICAL]**: Do not start ".net upgrade experience"
 
 **[CRITICAL RULE]**: Keep dependencies layered and treat the following projects as read-only unless explicitly required:
 - **CodeShare**
-- **Cvnet10Asset**
-- **Cvnet10Base** (read-only by default; modify only when clearly necessary)
-- **Cvnet10BaseMariadb**
-- **Cvnet10BaseOracle**
-- **Cvnet10BaseSqlite**
-- **Cvnet10Prints**
+- **CvAsset**
+- **CvBase** (read-only by default; modify only when clearly necessary)
+- **CvBaseMariadb**
+- **CvBaseOracle**
+- **CvBaseSqlite**
+- **CvPrints**
 
 
 | Folder / Project(.csproj) | Layer | Responsibility | Allowed Dependencies |
 | :--- | :--- | :--- | :--- |
 | **CodeShare** | Layer 0 | [READ-ONLY] gRPC Contracts, DTOs, Shared Interfaces | None |
-| **Cvnet10Asset** | Layer 0 | [READ-ONLY] Lightweight Utilities, Extensions, Constants | None |
-| **Cvnet10Base** | Layer 1 | Data Models, DB Entities (NPoco) | None |
-| **Cvnet10BaseMariadb** | Layer 1.2 | [READ-ONLY] Database Connection for MariaDB (Enhanced NPoco Database Class) | Cvnet10Base |
-| **Cvnet10BaseOracle** | Layer 1.2 | [READ-ONLY] Database Connection for Oracle (Enhanced NPoco Database Class) | Cvnet10Base |
-| **Cvnet10BaseSqlite** | Layer 1.2 | [READ-ONLY] Database Connection for Sqlite (Enhanced NPoco Database Class) | Cvnet10Base |
-| **Cvnet10Prints** | Layer 1.4 | Print Logic | None |
-| **Cvnet10DomainLogic** | Layer 1.5 | Business Logic, Domain Services, Calculations | Cvnet10Base |
-| **Cvnet10Server** | Layer 2 | gRPC Service Implementations, DbContext(ExDatabase) by DI | CodeShare, Cvnet10Asset, Cvnet10Base, Cvnet10DomainLogic |
-| **Cvnet10Wpfclient** | Layer 2 | WPF GUI (Views/ViewModels), gRPC Client Logic | CodeShare, Cvnet10Asset, Cvnet10Base |
+| **CvAsset** | Layer 0 | [READ-ONLY] Lightweight Utilities, Extensions, Constants | None |
+| **CvBase** | Layer 1 | Data Models, DB Entities (NPoco) | None |
+| **CvBaseMariadb** | Layer 1.2 | [READ-ONLY] Database Connection for MariaDB (Enhanced NPoco Database Class) | CvBase |
+| **CvBaseOracle** | Layer 1.2 | [READ-ONLY] Database Connection for Oracle (Enhanced NPoco Database Class) | CvBase |
+| **CvBaseSqlite** | Layer 1.2 | [READ-ONLY] Database Connection for Sqlite (Enhanced NPoco Database Class) | CvBase |
+| **CvPrints** | Layer 1.4 | Print Logic | None |
+| **CvDomainLogic** | Layer 1.5 | Business Logic, Domain Services, Calculations | CvBase |
+| **CvServer** | Layer 2 | gRPC Service Implementations, DbContext(ExDatabase) by DI | CodeShare, CvAsset, CvBase, CvDomainLogic |
+| **CvWpfclient** | Layer 2 | WPF GUI (Views/ViewModels), gRPC Client Logic | CodeShare, CvAsset, CvBase |
 
-Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLUDED IN THIS SOLUTION] [used as design references for `Cvnet10Wpfclient` UI work]
+Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLUDED IN THIS SOLUTION] [used as design references for `CvWpfclient` UI work]
 
 ## Development Rules & Guidelines
 - **Response Language**: Always provide plans, explanations, and comments in **Japanese**.
@@ -58,8 +58,8 @@ Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLU
     - Minimize impact on existing schemas when changing logic.
 - **Refactoring**: Analyze the impact range before proposing changes. Do not break existing implementations.
 - **CAUTION**: WPF screens can be clipped on the bottom and right edges. Pay special attention to bottom-edge clipping.
-- `.github/copilot/wpf_skill.md` contains the UI design and implementation guidelines for `Cvnet10Wpfclient`.
-- When working on `Cvnet10Wpfclient`, first review `.github/copilot/wpf_skill.md`. If WPF resources or exceptions are involved, inspect `Cvnet10Wpfclient/App.xaml` and the referenced `ResourceDictionary` files first.
+- `.github/copilot/wpf_skill.md` contains the UI design and implementation guidelines for `CvWpfclient`.
+- When working on `CvWpfclient`, first review `.github/copilot/wpf_skill.md`. If WPF resources or exceptions are involved, inspect `CvWpfclient/App.xaml` and the referenced `ResourceDictionary` files first.
 
 
 ## Interaction Protocol

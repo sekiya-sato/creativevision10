@@ -6,7 +6,6 @@
   </Folder>
   <Folder Name="/ソリューション項目/">
     <File Path="AGENTS.md" />
-    <File Path="CvBase/CvBase.csproj" />
     <File Path="readme.md" />
   </Folder>
   <Project Path="CodeShare/CodeShare.csproj" />

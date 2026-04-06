@@ -1,11 +1,11 @@
 ---
 name: update-design-mente
-description: Guides the agent through unifying the material-design inspired layout across master maintenance windows in Cvnet10Wpfclient.
+description: Guides the agent through unifying the material-design inspired layout across master maintenance windows in CvWpfclient.
 ---
 
 # Update Design Mente
 
-このスキルは、Cvnet10Wpfclient のマスターメンテ画面を `MasterShohinMenteView` ベースの ColorZone + Card + MaterialDesignOutlined のデザインに揃えるためのワークフローとチェックリストを提供します。WPF全体の共通規約は `wpf-project-guide`、個別画面の基本手順は `wpf-view-workflow` を前提とし、本スキルはそのうえでデザイン統一に特化します。
+このスキルは、CvWpfclient のマスターメンテ画面を `MasterShohinMenteView` ベースの ColorZone + Card + MaterialDesignOutlined のデザインに揃えるためのワークフローとチェックリストを提供します。WPF全体の共通規約は `wpf-project-guide`、個別画面の基本手順は `wpf-view-workflow` を前提とし、本スキルはそのうえでデザイン統一に特化します。
 
 ## 目的
 
@@ -24,7 +24,7 @@ description: Guides the agent through unifying the material-design inspired layo
 1. 既存の対象ビュー（例: `MasterShiireMenteView.xaml`）を読み込み、`MasterShohinMenteView.xaml` の構成を参照しながらColorZoneヘッダー、Cardレイアウト、MaterialDesignOutlined 入力をマッピングする
 2. 支払情報タブでは `RowDefinitions` を再計算し、支払フラグ／支払方法／仕入先ブロックを1つずつ明確な行へ移動。仕入先検索は DockPanel や SearchTextBox を使い文言を統一する
 3. 詳細内容タブの下部に `登録日/修正日` 表示を追加するには `MultiBinding` などで `InfoLabel` を構成し、`Row3` あたりに新しい `TextBlock` を配置してタイムスタンプを `FormTextBox` 風に見せる
-4. 更新後は `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド確認（可能な限り）
+4. 更新後は `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド確認（可能な限り）
 5. `Doc/aicording_log.md` に作業履歴とスキル利用の説明を記録する
 
 ## 設計のポイント

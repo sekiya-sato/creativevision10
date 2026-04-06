@@ -10,7 +10,7 @@ description: Converts List<T> sub-list properties in a master mente ViewModel to
 ## いつ使うか
 
 - マスタメンテ画面のサブリスト（原価リスト、色サイズリスト、品質リスト、名称リストなど）で、行を追加・削除しても DataGrid に反映されない問題を修正するとき
-- CurrentEdit のエンティティ型（Cvnet10Base 側）が `List<T>?` を持ち、Read-Only のため変更できないとき
+- CurrentEdit のエンティティ型（CvBase 側）が `List<T>?` を持ち、Read-Only のため変更できないとき
 - ShukkaUriageInputViewModel / JuchuInputViewModel と同様のパターンを適用したいとき
 
 ## パターン概要
@@ -94,14 +94,14 @@ void DeleteSubItem() {
 
 ## 参照ファイル
 
-- パターン元: `Cvnet10Wpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs`（ApplyDetailFromCurrent / SyncDetailToCurrent）
-- パターン元: `Cvnet10Wpfclient/ViewModels/04Juchu/JuchuInputViewModel.cs`
-- 基底クラス: `Cvnet10Wpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`
-- 適用例: `Cvnet10Wpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`
+- パターン元: `CvWpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs`（ApplyDetailFromCurrent / SyncDetailToCurrent）
+- パターン元: `CvWpfclient/ViewModels/04Juchu/JuchuInputViewModel.cs`
+- 基底クラス: `CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`
+- 適用例: `CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`
 
 ## 注意事項
 
-- Cvnet10Base のエンティティ型は Read-Only のため、`List<T>?` プロパティ自体を `ObservableCollection<T>` に変えることはできない
+- CvBase のエンティティ型は Read-Only のため、`List<T>?` プロパティ自体を `ObservableCollection<T>` に変えることはできない
 - BaseList など UI 専用プロパティがある場合は、Apply 時に設定し、Sync 時には含めないよう注意
 - CollectionChanged / PropertyChanged ハンドラが必要な場合（合計再計算など）は ShukkaUriageInputViewModel のパターンを参考に追加
 

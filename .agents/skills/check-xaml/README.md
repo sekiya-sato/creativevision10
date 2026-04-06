@@ -23,25 +23,25 @@ OpenCodeが自動的に認識します。
 ### 基本的な使い方
 
 ```
-XAMLファイル Cvnet10Wpfclient/Views/04Juchu/JuchuInputView.xaml をチェックしてください
+XAMLファイル CvWpfclient/Views/04Juchu/JuchuInputView.xaml をチェックしてください
 ```
 
 または
 
 ```
-check-xaml Cvnet10Wpfclient/Views/04Juchu/JuchuInputView.xaml
+check-xaml CvWpfclient/Views/04Juchu/JuchuInputView.xaml
 ```
 
 ### バインディング検証をスキップする場合
 
 ```
-XAMLファイル Cvnet10Wpfclient/Views/MainWindow.xaml をチェックしてください（バインディング検証は不要）
+XAMLファイル CvWpfclient/Views/MainWindow.xaml をチェックしてください（バインディング検証は不要）
 ```
 
 ## 出力例
 
 ```
-## XAML検証結果: Cvnet10Wpfclient/Views/04Juchu/JuchuInputView.xaml
+## XAML検証結果: CvWpfclient/Views/04Juchu/JuchuInputView.xaml
 
 ### ✅ 合格項目
 - 構文エラー: なし
@@ -91,11 +91,11 @@ XAMLファイル Cvnet10Wpfclient/Views/MainWindow.xaml をチェックしてく
 
 ## プロジェクト固有の設定
 
-このスキルは **Cvnet10** プロジェクトに最適化されています：
+このスキルは **Cv** プロジェクトに最適化されています：
 
 ### ディレクトリ構造
 ```
-Cvnet10Wpfclient/
+CvWpfclient/
 ├── Views/
 │   └── 04Juchu/
 │       └── JuchuInputView.xaml
@@ -122,7 +122,7 @@ Cvnet10Wpfclient/
 
 ## ライセンス
 
-このスキルは Cvnet10 プロジェクト専用です。
+このスキルは Cv プロジェクト専用です。
 
 ## 更新履歴
 

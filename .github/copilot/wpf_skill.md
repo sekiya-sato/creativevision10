@@ -1,13 +1,13 @@
 ---
 name: wpf-design
 description: >
-  Cvnet10WpfclientプロジェクトにおけるWPF/XAMLの高品質UIデザインを生成するためのスキル定義。
+  CvWpfclientプロジェクトにおけるWPF/XAMLの高品質UIデザインを生成するためのスキル定義。
   業務マスタ画面（BaseWindow）とダッシュボード画面（ZzMainMenuView）の2種類のウィンドウパターンを使い分け、
   MaterialDesignThemes とカスタム ResourceDictionary を組み合わせた「プロダクションレベルの業務UI」を実装する。
   汎用的なAI生成UIの陳腐さを避け、テーマ整合性と業務効率を両立したデザインを実現する。
 ---
 
-このスキルは Cvnet10Wpfclient における WPF/XAML UI の設計・実装ガイドである。
+このスキルは CvWpfclient における WPF/XAML UI の設計・実装ガイドである。
 ユーザーが「画面を作ってほしい」「XAMLを改善してほしい」「新しいコントロールが必要」などと要求したとき、
 このスキルに従い、プロジェクトの既存デザインシステムと調和しながら高品質な実装を行う。
 
@@ -124,15 +124,15 @@ SnapsToDevicePixels = true             // 自動
 
 ```xml
 <helpers:BaseWindow
-    x:Class="Cvnet10Wpfclient.Views.XxxView"
+    x:Class="CvWpfclient.Views.XxxView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:helpers="clr-namespace:Cvnet10Wpfclient.Helpers"
-    xmlns:vm="clr-namespace:Cvnet10Wpfclient.ViewModels"
+    xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
+    xmlns:vm="clr-namespace:CvWpfclient.ViewModels"
     Title="{Binding Title}"
     Width="1044"
     Height="760"

@@ -22,7 +22,7 @@ description: Validates XAML files for syntax errors, resource references, namesp
 - リファクタリング後の整合性確認
 - ユーザーが明示的に「XAMLをチェックして」「XAMLエラーを確認して」と依頼した場合
 
-Cvnet10 では、WPF作業の共通規約は `wpf-project-guide`、画面単位の追加・改修手順は `wpf-view-workflow` が担当します。本スキルはその後段の検証専用スキルです。
+Cv では、WPF作業の共通規約は `wpf-project-guide`、画面単位の追加・改修手順は `wpf-view-workflow` が担当します。本スキルはその後段の検証専用スキルです。
 
 ## 使用方法
 
@@ -281,11 +281,11 @@ public\s+\w+(?:<[^>]+>)?\s+([a-zA-Z0-9_]+)\s*\{
 
 ## プロジェクト固有の設定
 
-このプロジェクト（Cvnet10）では、以下の命名規則とディレクトリ構造を前提とします：
+このプロジェクト（Cv）では、以下の命名規則とディレクトリ構造を前提とします：
 
 ### ディレクトリ構造
 ```
-Cvnet10Wpfclient/
+CvWpfclient/
 ├── Views/
 │   └── 04Juchu/
 │       └── JuchuInputView.xaml
