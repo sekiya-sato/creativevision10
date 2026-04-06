@@ -30,7 +30,6 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		EnumUri01.UriSale,
 		EnumUri01.Henpin,
 		EnumUri01.HenSale,
-		EnumUri01.Other
 	];
 
 	protected override Type Tabletype => typeof(Tran01Tenuri);
@@ -91,7 +90,10 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Kingaku)) {
+		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
+			m.Kingaku = m.Su * m.Tanka;
+			UpdateTotals();
+		} else if (e.PropertyName is nameof(Tran99Meisai.Kingaku)) {
 			UpdateTotals();
 		}
 	}
@@ -170,6 +172,9 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		SelectedMeisai.Code_Siz = "";
 		SelectedMeisai.Mei_Siz = "";
 		SelectedMeisai.JanCode = "";
+		SelectedMeisai.Tanka = shohin.TankaJodai;
+		SelectedMeisai.Jodai = shohin.TankaJodai;
+		SelectedMeisai.Gedai = shohin.TankaGenka;
 	}
 
 	[RelayCommand]

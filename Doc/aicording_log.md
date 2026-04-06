@@ -32,6 +32,28 @@
 
 ---
 
+## [2026-04-06] 17:48 ShopUriageInputView の数値表示改善・区分日本語化・金額自動計算
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ShopUriageInputView（店舗売上入力画面）の一覧画面・詳細画面の数値表示改善、区分の日本語表示化、金額自動計算、商品選択時の単価自動設定を実装する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧画面の合計数量・合計金額を3桁区切り右詰めに変更、詳細画面の明細行（数量/単価/金額/上代/下代）を3桁区切り右詰めに変更、上部の合計数量・合計金額を右詰め+3桁区切りに変更、金額列をIsReadOnly=Trueに変更、区分ComboBoxにEnumUri01DisplayConverter適用のItemTemplate追加、Window.ResourcesにDataGridRightTextBlockスタイル追加
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: KubunOptionsからOther(99)を除外、OnMeisaiPropertyChangedでSu/Tanka変更時に金額自動計算(数量*単価=金額)を追加、DoSelectShohinでMasterShohinのTankaJodai→単価/上代、TankaGenka→下代を自動設定
+- CvWpfclient/Helpers/Converters/EnumUri01DisplayConverter.cs: 新規作成。EnumUri01→日本語表示名（売上/セール売上/返品/セール返品/その他）変換用IValueConverter
+- CvWpfclient/App.xaml: EnumUri01DisplayConverterをアプリケーションリソースに登録
+### 技術決定 Why
+- 数値フォーマットは既存プロジェクトの標準パターン（StringFormat={}{0:N0}）に統一し、IValueConverterではなくXAMLのStringFormatを使用
+- DataGridの右詰めはElementStyleでTextBlock.TextAlignment=Rightを設定する既存パターンに従った
+- EnumUri01DisplayConverterは既存のEnumShimeDisplayConverterと同じパターン（Dictionary<Enum,string>マッピング）で実装
+- KubunOptionsからOtherを除外する際、Enum定義（CvBase）は変更せずViewModel側で対応することでREAD-ONLYルールを遵守
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告0、エラー0）
+
+---
+
 ## [2026-04-06] 15:30 CvWpfclient のログ使用方法を統一
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot
