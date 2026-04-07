@@ -31,6 +31,25 @@
 - 新規に `aicording_log.md` を作成して記録を継続
 
 ---
+## [2026-04-07] 10:45 Git履歴からの不要バイナリ削除
+### Agent
+- gemini-3.1-flash : Google : (wsl2への手動コピペ)
+### Editor
+- OpenCode / Terminal
+### 目的
+- ユーザーからの要望：Git履歴に含まれる過去の不要なPDFファイル（test_server.pdf, test.pdf）を完全に削除し、リポジトリを軽量化・クリーンアップする。
+### 実施内容
+- `git filter-branch`（または filter-repo）を使用して、全履歴から対象ファイルを削除。
+- 参照のクリーンアップ、リフレグの期限切れ処理、およびガベージコレクション（`git gc`）を実行。
+- `git push origin master --force` によりリモートリポジトリへ変更を強制反映。
+### 技術決定 Why
+- 不要なバイナリファイルが履歴に残っているとリポジトリサイズが増大し続けるため、過去の全コミットを書き換えて完全に抹消した。
+### 確認
+- リモートへの強制プッシュ成功を確認。
+- ローカルにて `git rev-list --all | xargs git ls-tree -r --name-only | grep .pdf` で対象ファイルが存在しないことを確認。
+
+---
+
 
 ## [2026-04-06] 17:48 ShopUriageInputView の数値表示改善・区分日本語化・金額自動計算
 ### Agent
