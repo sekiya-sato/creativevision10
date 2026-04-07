@@ -1,3 +1,4 @@
+using System.Reflection;
 
 namespace CvBase;
 /// <summary>
@@ -10,6 +11,21 @@ public sealed class CommentAttribute : Attribute {
 		Content = content;
 	}
 }
+
+public sealed class CommentAttr {
+	public static string GetComment(string tableName) {
+		var assembly = Assembly.GetExecutingAssembly(); // CvBase.dll 自身
+		var type = assembly.GetTypes().FirstOrDefault(t => t.Name == tableName);
+
+		if (type == null) {
+			return "";
+		}
+		var commentAttr = Attribute.GetCustomAttribute(type, typeof(CommentAttribute)) as CommentAttribute;
+		return commentAttr?.Content ?? "";
+	}
+}
+
+
 
 public enum ColumnType {
 	/// <summary>

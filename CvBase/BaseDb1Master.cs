@@ -6,10 +6,11 @@ using NPoco;
 namespace CvBase;
 
 /// <summary>
-/// 社員マスター
+/// 社員テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Code")]
+[Comment("マスター：社員テーブル")]
 public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	/// <summary>
 	/// コード
@@ -87,10 +88,11 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 }
 
 /// <summary>
-/// 顧客マスター
+/// 顧客テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Code")]
+[Comment("マスター：顧客テーブル 店頭顧客あるいはEC顧客")]
 public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName {
 	/// <summary>
 	/// コード
@@ -205,10 +207,11 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 }
 
 /// <summary>
-/// 商品マスター
+/// 商品テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Code")]
+[Comment("マスター：商品テーブル 商品CD,色CD,サイズCD")]
 public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName {
 	/// <summary>
 	/// コード
@@ -449,7 +452,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName {
 
 
 /// <summary>
-/// 商品色サイズJANマスター
+/// 商品色サイズJANテーブル
 /// </summary>
 [NoCreate]
 public sealed partial class MasterShohinColSiz : BaseDbClass {
@@ -514,7 +517,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	string jan3 = string.Empty;
 }
 /// <summary>
-/// 品質マスター
+/// 品質テーブル
 /// </summary>
 [NoCreate]
 public sealed partial class MasterShohinGrade : ObservableObject {
@@ -537,7 +540,7 @@ public sealed partial class MasterShohinGrade : ObservableObject {
 	int percent;
 }
 /// <summary>
-/// 原価マスター
+/// 原価テーブル
 /// </summary>
 [NoCreate]
 public sealed partial class MasterShohinGenka : ObservableObject {
@@ -559,10 +562,11 @@ public sealed partial class MasterShohinGenka : ObservableObject {
 }
 
 /// <summary>
-/// 設定フラグマスター
+/// 設定フラグテーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Name")]
+[Comment("マスター：設定フラグテーブル name と val の組で設定情報を表す")]
 public sealed partial class MasterConfig : BaseDbClass {
 	[ObservableProperty]
 	string category = string.Empty;
@@ -576,7 +580,7 @@ public sealed partial class MasterConfig : BaseDbClass {
 	string memo = string.Empty;
 }
 /// <summary>
-/// ハンディターミナル用のマスタークラス、HHTマスター作成時のみ必要
+/// ハンディターミナル用のテーブル、HHTマスター作成時のみ必要
 /// </summary>
 [NoCreate]
 public sealed partial class MasterHht : ObservableObject {

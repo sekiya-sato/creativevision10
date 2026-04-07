@@ -7,9 +7,9 @@
 			<!--  ConverterがあればApp.xamlで定義する  -->
 			<helpers:DateYmd8Converter x:Key="DateYmd8Converter" />
 			<helpers:DateTimeYmdHmsConverter x:Key="DateTimeYmdHmsConverter" />
-		<helpers:EnumShimeDisplayConverter x:Key="EnumShimeDisplayConverter" />
-		<helpers:EnumUri01DisplayConverter x:Key="EnumUri01DisplayConverter" />
-		<helpers:IntToBoolConverter x:Key="IntToBoolConverter" />
+			<helpers:EnumShimeDisplayConverter x:Key="EnumShimeDisplayConverter" />
+			<helpers:EnumUri01DisplayConverter x:Key="EnumUri01DisplayConverter" />
+			<helpers:IntToBoolConverter x:Key="IntToBoolConverter" />
 			<helpers:LongToLocalDateTimeStringConverter x:Key="LongToLocalDateTimeStringConverter" />
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Resources/UIColors.xaml" />

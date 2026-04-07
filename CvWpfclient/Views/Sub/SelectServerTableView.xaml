@@ -55,8 +55,8 @@
 			Padding="12,6"
 			Background="{DynamicResource MaterialDesignToolBarBackground}">
 			<DockPanel>
-				<TextBlock DockPanel.Dock="Right"
-					VerticalAlignment="Center"
+				<TextBlock VerticalAlignment="Center"
+					DockPanel.Dock="Right"
 					Foreground="{DynamicResource MaterialDesignBodyLight}"
 					Text="{Binding Count, StringFormat={}テーブル数: {0:N0}}" />
 				<StackPanel Orientation="Horizontal">
@@ -79,10 +79,10 @@
 				d:ItemsSource="{d:SampleData ItemCount=5}"
 				helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
 				helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=DefaultButton}"
-				materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+				materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" FrozenColumnCount="1"
+				GridLinesVisibility="Horizontal"
 				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-				IsReadOnly="True"
-				IsSynchronizedWithCurrentItem="True"
+				IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
 				ItemsSource="{Binding ListData}"
 				RowHeight="35"
 				SelectedItem="{Binding Current}"
@@ -100,13 +100,24 @@
 				</DataGrid.ColumnHeaderStyle>
 				<DataGrid.Columns>
 					<DataGridTextColumn x:Name="Col01"
-						Width="360"
+						Width="200"
 						Binding="{Binding Path=TableName}"
 						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" テーブル名" />
 					<DataGridTextColumn x:Name="Col02"
-						Width="180"
+						Width="100"
 						Binding="{Binding Path=RowCount, StringFormat={}{0:N0}}"
-						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 件数" />
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 件数">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+								<Setter Property="TextAlignment" Value="Right" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn x:Name="Col03"
+						Width="400"
+						Binding="{Binding Path=Comment}"
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" コメント" />
 				</DataGrid.Columns>
 			</DataGrid>
 		</materialDesign:Card>

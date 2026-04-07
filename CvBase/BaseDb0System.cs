@@ -7,9 +7,10 @@ namespace CvBase;
 
 
 /// <summary>
-/// システム：システム管理テーブル(1レコードのみ)
+/// マスター：システム管理テーブル(1レコードのみ)
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
+[Comment("マスター：システム管理テーブル 会社名、消費税設定など")]
 public sealed partial class MasterSysman : BaseDbHasAddress {
 	/// <summary>
 	/// 自社名
@@ -117,6 +118,7 @@ public sealed partial class MasterSysTax : ObservableObject {
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, ["Kubun", "Code"])]
 [KeyDml("nk2", false, ["Kubun", "Odr", "Code"])]
+[Comment("マスター：名称テーブル 汎用 区分+名称コード")]
 public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// <summary>
 	/// 区分
@@ -165,37 +167,4 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	int odr;
-	/*
-	readonly public static string ViewSql = """
-SELECT * FROM (
-    SELECT 
-        T.*, 
-        m1.Name AS KubunName
-    FROM MasterMeisho T
-    LEFT OUTER JOIN MasterMeisho m1 
-        ON m1.Kubun = 'IDX' 
-        AND T.Kubun = m1.Code
-) MasterMeishoView
-""";
-	*/
-	/*
-	/// <summary>
-	/// JSON シリアライズ時に Mei_Col / Mei_Siz を含めるか (デフォルト: false)
-	/// </summary>
-	[JsonIgnore]
-	public bool Ser { get; set; } = false;
-	public bool ShouldSerializeCode_Col() => Ser;
-	public bool ShouldSerializeMei_Col() => Ser;
-	public bool ShouldSerializeCode_Siz() => Ser;
-	public bool ShouldSerializeMei_Siz() => Ser;
-
-	readonly static public string ViewSql = """
-select * from (
-select T.*, m1.Name as Mei_Col, m2.Name as  Mei_Siz
-from MasterShohinColSiz T
-left join MasterMeisho m1 on T.id_MeiCol = m1.Id
-left join MasterMeisho m2 on T.id_MeiSiz = m2.Id
-) as Vw_MasterShohinColSiz
-""";
-	 */
 }

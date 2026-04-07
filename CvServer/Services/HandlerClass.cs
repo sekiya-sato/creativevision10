@@ -38,7 +38,7 @@ public partial class CvnetCoreService {
 	private CvnetMsg HandlerGetTableCounts(CvnetMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogInformation("HandleGetTableCounts invoked Flag:{Flag}", request.Flag);
-		var resultData = new List<Tuple<string, long>>();
+		var resultData = new List<Tuple<string, string, long>>();
 		try {
 			resultData = _db.GetTableCounts();
 		}
@@ -46,7 +46,7 @@ public partial class CvnetCoreService {
 			_logger.LogError(ex, "HandleGetTableCounts error");
 			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
 		}
-		return CreateSuccessResponse(request.Flag, typeof(List<Tuple<string, long>>), Common.SerializeObject(resultData));
+		return CreateSuccessResponse(request.Flag, typeof(List<Tuple<string, string, long>>), Common.SerializeObject(resultData));
 	}
 
 	/// <summary>

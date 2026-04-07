@@ -2,7 +2,6 @@ using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
-using CvBase;
 using CvWpfclient.Helpers;
 using System.Collections.ObjectModel;
 
@@ -49,7 +48,7 @@ public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 			}
 
 			if (reply?.DataMsg != null && reply?.DataType != null) {
-				var tableCounts = Common.DeserializeObject<List<Tuple<string, long>>>(reply.DataMsg)
+				var tableCounts = Common.DeserializeObject<List<Tuple<string, string, long>>>(reply.DataMsg)
 					?? [];
 
 				ListData = new ObservableCollection<ServerTableCountRow>(
@@ -57,7 +56,8 @@ public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 						.OrderBy(x => x.Item1, StringComparer.OrdinalIgnoreCase)
 						.Select(x => new ServerTableCountRow {
 							TableName = x.Item1,
-							RowCount = x.Item2
+							Comment = x.Item2,
+							RowCount = x.Item3
 						}));
 
 				Count = ListData.Count;
@@ -85,5 +85,6 @@ public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 
 public sealed class ServerTableCountRow {
 	public string TableName { get; init; } = string.Empty;
+	public string Comment { get; init; } = string.Empty;
 	public long RowCount { get; init; }
 }
