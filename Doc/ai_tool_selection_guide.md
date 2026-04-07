@@ -2,7 +2,7 @@
 
 ## 目的
 
-Cvnet10プロジェクトでは、**GitHub Copilot** と **OpenCode** の2つのAIツールを併用します。
+Creative Vsion 10プロジェクトでは、**GitHub Copilot** と **OpenCode** の2つのAIツールを併用します。
 このガイドは、各ツールの特性を理解し、適切に使い分けるための指針を提供します。
 
 ---
@@ -271,9 +271,9 @@ CS1061: 'MasterTokuiMenteViewModel' does not contain a definition for 'InitComma
 ### 4. Read-Onlyルールの厳守
 どちらのツールを使う場合でも、以下のプロジェクトは編集禁止：
 - `CodeShare`
-- `Cvnet10Asset`
-- `Cvnet10Base`
-- `Cvnet10BaseMariadb` / `Cvnet10BaseOracle` / `Cvnet10BaseSqlite`
+- `CvAsset`
+- `CvBase`
+- `CvBaseMariadb` / `CvBaseOracle` / `CvBaseSqlite`
 
 ### 5. Layer構造の理解
 両ツールとも Layer 構造を理解しているが、最終確認は開発者が実施。

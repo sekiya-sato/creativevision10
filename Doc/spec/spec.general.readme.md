@@ -1,4 +1,4 @@
-# Cvnet10 プロジェクト仕様書
+# Creative Vision 10 プロジェクト仕様書
 
 ## 目次
 
@@ -12,7 +12,7 @@
 
 # プロジェクト概要
 
-Cvnet10は、gRPCベースの分散アーキテクチャを採用した販売管理パッケージです。
+Creative Vision 10は、gRPCベースの分散アーキテクチャを採用した販売管理パッケージです。
 
 | 項目 | 内容 |
 |------|------|
@@ -63,23 +63,23 @@ Cvnet10は、gRPCベースの分散アーキテクチャを採用した販売管
 mermaid
 graph TD
     subgraph Layer2 [Layer 2]
-        A[Cvnet10Server<br/>(gRPCサーバ)]
-        B[Cvnet10Wpfclient<br/>(WPFクライアント)]
+        A[CvServer<br/>(gRPCサーバ)]
+        B[CvWpfclient<br/>(WPFクライアント)]
     end
     subgraph Layer15 [Layer 1.5]
-        C[Cvnet10DomainLogic<br/>(ビジネスロジック)]
+        C[CvDomainLogic<br/>(ビジネスロジック)]
     end
     subgraph Layer12 [Layer 1.2 - Read-Only]
-        E[(Cvnet10BaseSqlite)]
-        F[(Cvnet10BaseMariadb)]
-        G[(Cvnet10BaseOracle)]
+        E[(CvBaseSqlite)]
+        F[(CvBaseMariadb)]
+        G[(CvBaseOracle)]
     end
     subgraph Layer1 [Layer 1]
-        D[(Cvnet10Base<br/>(共通モデル))]
+        D[(CvBase<br/>(共通モデル))]
     end
     subgraph Layer0 [Layer 0 - Read-Only]
         H[CodeShare<br/>(gRPC契約)]
-        I[Cvnet10Asset<br/>(ユーティリティ)]
+        I[CvAsset<br/>(ユーティリティ)]
     end
 
     A --> C
@@ -97,23 +97,23 @@ graph TD
 | Layer | プロジェクト | 責任 | 依存関係 |
 |-------|-------------|------|----------|
 | 0 | CodeShare | gRPCコントラクト（サービス/メッセージ）の定義 | なし |
-| 0 | Cvnet10Asset | 共通ユーティリティ、定数、補助クラス | なし |
-| 1 | Cvnet10Base | 共通モデル、DBエンティティ、基底インフラ | なし |
-| 1 | Cvnet10BaseSqlite | SQLite向けDB接続（拡張NPoco） | Cvnet10Base |
-| 1 | Cvnet10BaseMariadb | MariaDB向けDB接続 | Cvnet10Base |
-| 1 | Cvnet10BaseOracle | Oracle向けDB接続 | Cvnet10Base |
-| 1.5 | Cvnet10DomainLogic | ビジネスロジック、ドメインサービス | Cvnet10Base |
-| 2 | Cvnet10Server | gRPCサービス実装、API公開 | CodeShare, Cvnet10Asset, Cvnet10Base, Cvnet10DomainLogic |
-| 2 | Cvnet10Wpfclient | WPF GUI（Views/ViewModels） | CodeShare, Cvnet10Asset, Cvnet10Base |
+| 0 | CvAsset | 共通ユーティリティ、定数、補助クラス | なし |
+| 1 | CvBase | 共通モデル、DBエンティティ、基底インフラ | なし |
+| 1 | CvBaseSqlite | SQLite向けDB接続（拡張NPoco） | CvBase |
+| 1 | CvBaseMariadb | MariaDB向けDB接続 | CvBase |
+| 1 | CvBaseOracle | Oracle向けDB接続 | CvBase |
+| 1.5 | CvDomainLogic | ビジネスロジック、ドメインサービス | CvBase |
+| 2 | CvServer | gRPCサービス実装、API公開 | CodeShare, CvAsset, CvBase, CvDomainLogic |
+| 2 | CvWpfclient | WPF GUI（Views/ViewModels） | CodeShare, CvAsset, CvBase |
 
 **読み取り専用プロジェクト**
 以下のプロジェクトはAIによる変更禁止（明示的な依頼がある場合のみ）：
 - CodeShare
-- Cvnet10Asset
-- Cvnet10Base
-- Cvnet10BaseSqlite
-- Cvnet10BaseMariadb
-- Cvnet10BaseOracle
+- CvAsset
+- CvBase
+- CvBaseSqlite
+- CvBaseMariadb
+- CvBaseOracle
 
 
 # プロジェクト一覧
@@ -122,57 +122,57 @@ graph TD
 
 ### CodeShare
 - gRPCコントラクト（サービス/メッセージ）をコードファーストで定義
-- サーバ`Cvnet10Server`とクライアント`Cvnet10Wpfclient`が参照
+- サーバ`CvServer`とクライアント`CvWpfclient`が参照
 - 型安全通信を担保
 
-### Cvnet10Asset
+### CvAsset
 - 複数プロジェクトで共有される軽量ユーティリティ
 - 定数、拡張メソッド、補助クラス
 - 依存性を最小限に抑え、基盤層として安定性を重視
 
 ## Layer 1
 
-### Cvnet10Base
+### CvBase
 - 共通モデル、NPocoベースのDBエンティティ
 - 基底インフラ，提供
 - `CommunityToolkit.Mvvm`を利用した共通モデルの再利用
 
-### Cvnet10BaseSqlite
+### CvBaseSqlite
 - SQLite向けのDB接続
 - 拡張NPoco実装
 
-### Cvnet10BaseMariadb
+### CvBaseMariadb
 - MariaDB向けのDB接続
 - 拡張NPoco実装
 
-### Cvnet10BaseOracle
+### CvBaseOracle
 - Oracle向けのDB接続
 - 拡張NPoco実装
 
 ## Layer 1.5
 
-### Cvnet10DomainLogic
+### CvDomainLogic
 - `ExDatabase`（汎用DB I/F）による抽象化
 - ドメインロジック、変換バッチなど
 - ビジネスロジックの実装を集約
 
 ## Layer 2
 
-### Cvnet10Server
+### CvServer
 - gRPCサーバアプリケーション
 - `CvnetCoreService`が`ICvnetCore`を実装してAPIを公開
 - JSONシリアライズ設定の共通化
 - JWT Bearer認証基盤
 
-### Cvnet10Wpfclient
+### CvWpfclient
 - WPFクライアントアプリケーション
 - `CommunityToolkit.Mvvm`によるMVVMパターン
 - Material Designテーマ
 
 ## Tests
 
-### Tests.Cvnet10Server
-- Cvnet10Serverのユニット/結合テスト
+### Tests.CvServer
+- CvServerのユニット/結合テスト
 
 ### TestLogin
 - 認証関連のテスト
@@ -191,11 +191,11 @@ graph TD
 
 ```bash
 # ソリューション全体ビルド
-dotnet build Cvnet10.slnx
+dotnet build Cv.slnx
 
 # サーバビルド
-dotnet build Cvnet10Server/Cvnet10Server.csproj
+dotnet build CvServer/CvServer.csproj
 
 # WPFクライアントビルド
-dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false
+dotnet build CvWpfclient/CvWpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false
 

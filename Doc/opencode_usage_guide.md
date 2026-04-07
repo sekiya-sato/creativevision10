@@ -25,7 +25,7 @@ oc
 
 ---
 
-## Cvnet10プロジェクトでの基本的な使い方
+## Cvプロジェクトでの基本的な使い方
 
 ### 1. 新規画面（View/ViewModel）の作成
 
@@ -51,7 +51,7 @@ MasterShohinMenteView.xaml を参考にしてください。
 
 **プロンプト例：**
 ```
-Cvnet10Wpfclient/ViewModels/01Master/ 配下の全ViewModelで、
+CvWpfclient/ViewModels/01Master/ 配下の全ViewModelで、
 重複している初期化ロジックを BaseMenteViewModel に移動してください。
 影響範囲をDoc/に記録してください。
 ```
@@ -68,7 +68,7 @@ Cvnet10Wpfclient/ViewModels/01Master/ 配下の全ViewModelで、
 
 **プロンプト例：**
 ```
-Cvnet10DomainLogic プロジェクトの主要クラスについて、
+CvDomainLogic プロジェクトの主要クラスについて、
 アーキテクチャ設計書を Doc/ に作成してください。
 クラス図とシーケンス図をMermaid形式で含めてください。
 ```
@@ -128,7 +128,7 @@ OpenCode：
 
 OpenCode：
 [Task: explore] コードベース探索を開始します...
-- Cvnet10Server/Services/ 配下を検索
+- CvServer/Services/ 配下を検索
 - ICvnetCore の実装を解析
 - パターンをドキュメント化
 ```
@@ -148,8 +148,8 @@ MasterShiireMenteView.xaml を作成してください。
 
 **明確な制約を指定：**
 ```
-Cvnet10Base プロジェクトは Read-Only なので編集せず、
-Cvnet10DomainLogic 側に新しいロジックを追加してください。
+CvBase プロジェクトは Read-Only なので編集せず、
+CvDomainLogic 側に新しいロジックを追加してください。
 ```
 
 **作業範囲を明示：**
@@ -229,9 +229,9 @@ CodeShare プロジェクトに新しいメソッドを追加して  # Read-Only
 **A:** 以下のプロジェクトは原則として編集禁止です：
 
 - `CodeShare`
-- `Cvnet10Asset`
-- `Cvnet10Base`
-- `Cvnet10BaseMariadb` / `Cvnet10BaseOracle` / `Cvnet10BaseSqlite`
+- `CvAsset`
+- `CvBase`
+- `CvBaseMariadb` / `CvBaseOracle` / `CvBaseSqlite`
 
 どうしても編集が必要な場合は、プロンプトで **明示的に許可を指定** してください：
 
@@ -255,10 +255,10 @@ ICvnetCore インターフェースに新しいメソッドを追加してくだ
 2. **手動で確認する場合：**
    ```bash
    # プロジェクト全体
-   dotnet build "Cvnet10.slnx"
+   dotnet build "Cv.slnx"
    
    # WPF Client (WSL2/Linux環境)
-   dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" \
+   dotnet build "CvWpfclient/CvWpfclient.csproj" \
      /p:EnableWindowsTargeting=true /p:UseAppHost=false
    ```
 
@@ -307,7 +307,7 @@ echo "*.cs text eol=crlf" >> .gitattributes
 echo "*.xaml text eol=crlf" >> .gitattributes
 
 # または dotnet format で修正
-dotnet format "Cvnet10.slnx"
+dotnet format "Cv.slnx"
 ```
 
 ---
