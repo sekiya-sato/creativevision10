@@ -4,7 +4,7 @@
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
 	Title="{Binding Title}"
-	Width="1280" Height="920"
+	Width="984" Height="816"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
