@@ -278,3 +278,17 @@
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、警告0）
 
 ---
+
+## [2024-06-07] 11:43 MainMenuウィンドウ右上ボタンのMaterialDesignアイコン化
+### Agent
+- GitHub Copilot : OpenAI
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：MainMenuウィンドウ右上のテーマ切替・最小化・メニューのみ・終了ボタンのアイコンをMaterialDesignのPackIconに差し替え、より洗練されたデザインにする。
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 各ボタンのContentをPackIcon(ThemeLightDark, WindowMinimize, ViewList, Close)に変更。
+### 技術決定 Why
+- MaterialDesignInXamlToolkitのPackIconを利用することで、統一感のある最新UI/UXを実現。
+### 確認
+- ビルド成功、エラーなし
