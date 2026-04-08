@@ -292,3 +292,26 @@
 - MaterialDesignInXamlToolkitのPackIconを利用することで、統一感のある最新UI/UXを実現。
 ### 確認
 - ビルド成功、エラーなし
+
+---
+
+## [2026-04-08] 21:30 VersionTable.csのリファクタリング（POCO化・バグ修正・VersionSql外部化）
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvBase/VersionTable.csのバージョン管理ロジックをリファクタリングし、より洗練された内容にする。現在未使用のためI/Fや名前は変更可能。
+### 実施内容
+- CvBase/VersionTable.cs: ObservableObject継承を除去しPOCO化（partialキーワード・ObservableProperty属性・CommunityToolkit.Mvvm using削除）
+- CvBase/VersionTable.cs: 6つのprivateフィールドをpublic auto-propertyに変換（デフォルト値維持）
+- CvBase/VersionTable.cs: VersionSql静的配列をコメントアウト（参考として残置、外部から引数で受け取る設計に移行）
+- CvBase/VersionTable.cs: SubInsertRecordAsync内のバグ修正（既存レコード時にDDLを再実行→db.UpdateAsyncでレコード更新に修正）
+- CvBase/VersionTable.cs: logggerタイポをloggerに修正
+### 技術決定 Why
+- ObservableObjectはUI通知用のMVVM基盤であり、DB操作ユーティリティクラスには不要。POCOにすることで依存を削減し責務を明確化
+- line 133のdb.ExecuteAsync(item.DoSql)は、前段のループ(line 109-115)で実行済みのDDLを再実行するバグ。catch-and-continueにより表面化しなかったが、db.UpdateAsyncでレコードのメタ情報更新が正しい動作
+- VersionSql配列は既にWriteVersionInfoAsyncが引数としてInnerVersion[]を受け取る設計になっており、静的配列は冗長。コメントアウトして参考として残す
+### 確認
+- CvBaseプロジェクトビルド成功（0警告・0エラー）
+- 構造検証パス: ObservableObject関連除去確認、NPoco属性保持確認、バグ修正確認、プロパティ変換確認

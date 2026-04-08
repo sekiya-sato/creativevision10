@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using NPoco;
 
 
@@ -13,7 +12,9 @@ public record InnerVersion(string Version, string Sql, string Memo);
 /// POSデータのバージョン管理テーブル(主にテーブル変換用,テーブル追加については変更SQLは使用しない)
 /// </summary>
 [PrimaryKey("DbVersion", AutoIncrement = false)]
-public partial class VersionTable : ObservableObject {
+public class VersionTable {
+
+	/*
 	/// <summary>
 	/// 各バージョン用変換SQL (ver, 次のバージョンに対応させるためのSQL(;区切り), memo
 	/// </summary>
@@ -46,24 +47,19 @@ public partial class VersionTable : ObservableObject {
 		new("3.2.230201", "alter table PosDetail add column Yobi10 TEXT;alter table PosToriokiDetail add column Yobi10 TEXT", "2023/03/28定義"),
 		new("3.2.230328", "", "現行バージョン"),
 	];
+	*/
 
-	[ObservableProperty]
-	private string _dbVersion = string.Empty;
+	public string DbVersion { get; set; } = string.Empty;
 
-	[ObservableProperty]
-	private DateTime _dateStart;
+	public DateTime DateStart { get; set; }
 
-	[ObservableProperty]
-	private DateTime _dateEnd;
+	public DateTime DateEnd { get; set; }
 
-	[ObservableProperty]
-	private string _newVersion = string.Empty;
+	public string NewVersion { get; set; } = string.Empty;
 
-	[ObservableProperty]
-	private string _doSql = string.Empty;
+	public string DoSql { get; set; } = string.Empty;
 
-	[ObservableProperty]
-	private string _memo = string.Empty;
+	public string Memo { get; set; } = string.Empty;
 
 	/// <summary>
 	/// バージョン情報を書き込む＆バージョンアップされた場合にテーブルの整合性を保つ
@@ -71,7 +67,7 @@ public partial class VersionTable : ObservableObject {
 	static public async Task WriteVersionInfoAsync(IDatabase db, InnerVersion[] verupSql, string dbFile, CancellationToken cancellationToken = default) {
 		var versions = await db.FetchAsync<VersionTable>(cancellationToken);
 		var sortedVersions = versions.OrderByDescending(x => x.DbVersion).ToList();
-		var loggger = NLog.LogManager.GetCurrentClassLogger();
+		var logger = NLog.LogManager.GetCurrentClassLogger();
 
 		if (sortedVersions.Count == 0) {
 			var latestVersion = verupSql[^1];
@@ -81,7 +77,7 @@ public partial class VersionTable : ObservableObject {
 				Memo = latestVersion.Memo
 			};
 			await db.InsertAsync(verNow, cancellationToken);
-			loggger.Debug($"DBバージョン新規書込({verNow.DbVersion})");
+			logger.Debug($"DBバージョン新規書込({verNow.DbVersion})");
 			return;
 		}
 
@@ -94,13 +90,13 @@ public partial class VersionTable : ObservableObject {
 			if (string.Compare(record.Version, verStart) >= 0) {
 				var item = string.Compare(record.Version, verStart) == 0 ? sortedVersions[0] : null;
 				var errorMsg = await SubInsertRecordAsync(db, record, item, verLast, cancellationToken);
-				loggger.Debug($"DBバージョンアップ({record.Version} -> {verLast}) SQL={record.Sql.Replace("\n", " ").Replace("\r", "")} err={errorMsg} db={Path.GetFileName(dbFile)}");
+				logger.Debug($"DBバージョンアップ({record.Version} -> {verLast}) SQL={record.Sql.Replace("\n", " ").Replace("\r", "")} err={errorMsg} db={Path.GetFileName(dbFile)}");
 			}
 		}
 	}
 
 	/// <summary>
-	/// 個別のバージョンアップレコードの処理をSQLテーブル
+	/// 個別のバージョンアップレコードの処理
 	/// </summary>
 	static async Task<string> SubInsertRecordAsync(IDatabase db, InnerVersion verInfo, VersionTable? item, string orgVersion, CancellationToken cancellationToken) {
 		var errorMsg = "";
@@ -130,7 +126,7 @@ public partial class VersionTable : ObservableObject {
 			await db.InsertAsync(item, cancellationToken);
 		}
 		else {
-			await db.ExecuteAsync(item.DoSql, cancellationToken);
+			await db.UpdateAsync(item, cancellationToken);
 		}
 		return errorMsg;
 	}
