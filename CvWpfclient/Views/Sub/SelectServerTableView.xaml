@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Title}"
-	Width="640" Height="620"
+	Width="700" Height="620"
 	helpers:OwnerWindowPlacement.IsEnabled="True" helpers:OwnerWindowPlacement.LeftOffset="-40" helpers:OwnerWindowPlacement.TopOffset="-20" BorderBrush="DarkSlateGray"
 	BorderThickness="0.5,0,1.5,1.5" FontSize="18" WindowStartupLocation="Manual"
 	mc:Ignorable="d">
@@ -115,7 +115,7 @@
 						</DataGridTextColumn.ElementStyle>
 					</DataGridTextColumn>
 					<DataGridTextColumn x:Name="Col03"
-						Width="400"
+						Width="700"
 						Binding="{Binding Path=Comment}"
 						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" コメント" />
 				</DataGrid.Columns>

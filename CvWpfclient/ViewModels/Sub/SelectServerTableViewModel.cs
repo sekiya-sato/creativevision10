@@ -37,6 +37,7 @@ public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 
 	async Task InitList(CancellationToken cancellationToken) {
 		try {
+			ClientLib.Cursor2Wait();
 			cancellationToken.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg042_GetTableCounts };
@@ -68,6 +69,9 @@ public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 		}
 		catch (Exception ex) {
 			MessageEx.ShowErrorDialog($"テーブル一覧取得失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+		finally {
+			ClientLib.Cursor2Normal();
 		}
 	}
 
