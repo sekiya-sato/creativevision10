@@ -773,7 +773,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("nk1", false, "DenDay")]
 [KeyDml("nk3", false, ["Id_Soko"])]
-[KeyDml("nk4", false, ["Id_Tokui"])]
+[KeyDml("nk4", false, ["Id_Shiire"])]
 [Comment("トランザクション：発注データ 仕入先に対する発注、仕入になる場合は、仕入データのRelateNo1に発注データのIdをセット")]
 public sealed partial class Tran13Hachu : TranAllHeader {
 	/// <summary>
@@ -838,6 +838,7 @@ public sealed partial class TranHhtData : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(2)]
+	[property: System.ComponentModel.DefaultValue("")]
 	string kubun = string.Empty;
 	/// <summary>
 	/// 伝票NO	数値	8
@@ -1169,4 +1170,10 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	long targetId;
+	/// <summary>
+	/// 変換エラー内容
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(1000)]
+	string errorMsg = string.Empty;
 }

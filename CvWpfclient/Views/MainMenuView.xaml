@@ -263,7 +263,8 @@
 								<TextBlock x:Name="SelectedParent"
 									Margin="0"
 									Foreground="{DynamicResource plainTextColor0}"
-									Opacity="0.8"  Text="{Binding SelectedMenuParentHeader, FallbackValue=''}" />
+									Opacity="0.8"
+									Text="{Binding SelectedMenuParentHeader, FallbackValue=''}" />
 								<TextBlock x:Name="SelectedHeader"
 									FontSize="22" FontWeight="Bold"
 									Foreground="{DynamicResource plainTextColor0}"
@@ -280,10 +281,12 @@
 										<Style TargetType="TextBlock">
 											<Setter Property="Text" Value="" />
 											<Style.Triggers>
-												<DataTrigger Binding="{Binding SelectedMenu.IsDialog}" Value="True">
+												<DataTrigger Binding="{Binding SelectedMenu.IsDialog}"
+													Value="True">
 													<Setter Property="Text" Value="ダイアログ画面" />
 												</DataTrigger>
-												<DataTrigger Binding="{Binding SelectedMenu.IsDialog}" Value="False">
+												<DataTrigger Binding="{Binding SelectedMenu.IsDialog}"
+													Value="False">
 													<Setter Property="Text" Value="マルチウィンドウ画面" />
 												</DataTrigger>
 											</Style.Triggers>
@@ -325,8 +328,9 @@
 										Style="{StaticResource MainMenuActionButton}"
 										ToolTip="ログイン画面" />
 								</StackPanel>
-								<TextBlock FontSize="16" Opacity="0.7"
+								<TextBlock FontSize="16"
 									Foreground="{DynamicResource plainTextColor0}"
+									Opacity="0.7"
 									Text="{Binding StatusMessage}"
 									TextWrapping="Wrap" />
 							</StackPanel>

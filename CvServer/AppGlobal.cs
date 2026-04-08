@@ -44,6 +44,8 @@ public class AppGlobal {
 		// ToDo: テーブルの存在チェックと作成は、テーブルごとに行うのではなく、まとめて行うようにすること
 		var ret = false;
 		// システムテーブル
+		ret = db.CreateTable<SysUpdateDb>();
+		// システムテーブル
 		ret = db.CreateTable<SysLogin>();
 		ret = db.CreateTable<SysHistJwt>();
 		// マスタテーブル1
@@ -71,6 +73,9 @@ public class AppGlobal {
 		ret = db.CreateTable<Tran13Hachu>();
 		ret = db.CreateTable<TranHhtData>();
 		ret = db.CreateTable<TranVulcanHht>();
+		// DBの整合性を管理
+		UpdateDb.WriteVersionInfoAsync(db).Wait();
+
 	}
 
 }
