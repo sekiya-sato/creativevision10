@@ -509,7 +509,7 @@ public partial class ExDatabase : Database {
 		const string sql = """
 SELECT type, name,  
 'select "'||name|| '"  name,  count(*) cnt from ' || name || '' AS sqlstr
-FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+FROM sqlite_master WHERE type = 'table' AND ( name NOT LIKE 'sqlite_%' AND name NOT LIKE 'Sys%' )
 """;
 		var rows = RawExecCmd(sql);
 		var result = new List<Tuple<string, string, long>>();

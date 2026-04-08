@@ -27,7 +27,7 @@ public class UpdateDb {
 	static public async Task WriteVersionInfoAsync(IDatabase db, InnerVersion[] verupSql, CancellationToken ct = default) {
 		if (verupSql.Length == 0) return;
 
-		var latestDb = await db.FirstOrDefaultAsync<SysUpdateDb>("order by DbVersion desc", ct);
+		var latestDb = await db.FirstOrDefaultAsync<SysUpdateDb>("order by Id desc", ct);
 		var logger = NLog.LogManager.GetCurrentClassLogger();
 		// vreupSqlがあり、DBにバージョンレコードがない場合は、プログラム最新かつDBも新規の場合なので、verupSqlの最新バージョンをDBに書き込む
 		var latestVersion = verupSql[^1]; // verupSqlの最新バージョンは、DBの最新バージョンとする
@@ -49,7 +49,7 @@ public class UpdateDb {
 		}
 		foreach (var record in verupSql) { // 配列はforeachで必ず順番に処理される
 			ct.ThrowIfCancellationRequested();
-			if (string.Compare(latestDb.DbVersion, record.DbVersion) > 0) { // verupSqlのバージョンがDBのバージョンより新しい場合は、DBをverupSqlのバージョンに合わせるためのSQLを実行する
+			if (string.Compare(latestVersion.DbVersion, record.DbVersion) > 0) { // verupSqlのバージョンがDBのバージョンより新しい場合は、DBをverupSqlのバージョンに合わせるためのSQLを実行する
 				var errorMsg = await SubInsertRecordAsync(db, record, latestVersion.DbVersion, logger, ct);
 			}
 		}
