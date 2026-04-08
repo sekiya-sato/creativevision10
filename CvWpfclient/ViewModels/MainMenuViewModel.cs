@@ -22,6 +22,13 @@ public partial class MainMenuViewModel : ObservableObject {
 	private MenuData? selectedMenu;
 
 	[ObservableProperty]
+	private string? selectedMenuParentHeader;
+
+	partial void OnSelectedMenuChanged(MenuData? value) {
+		SelectedMenuParentHeader = FindParentHeader(MenuItems, value);
+	}
+
+	[ObservableProperty]
 	private string? statusMessage;
 
 	[ObservableProperty]
@@ -290,14 +297,13 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	private async void StartClock() {
-		//UpdateDateTime(); // 初回実行
-		// 2. 「次の秒」までのミリ秒を計算する
-		// 例: 現在 12:00:00.350 なら、残り 650ms 待機する
+		UpdateDateTime(); // 初回実行
+						  // 2. 「次の秒」までのミリ秒を計算する
+						  // 例: 現在 12:00:00.350 なら、残り 650ms 待機する
 		int delayUntilNextSecond = 1000 - DateTime.Now.Millisecond;
 
 		// 3. 次の秒の切り替わりまで非同期で待機
 		await Task.Delay(delayUntilNextSecond);
-		UpdateDateTime();
 		_timer = new DispatcherTimer {
 			Interval = TimeSpan.FromSeconds(1)
 		};
@@ -310,6 +316,21 @@ public partial class MainMenuViewModel : ObservableObject {
 		var now = DateTime.Now;
 		CurrentDate = $"{now:yy/MM/dd} {now.ToString("gy", culture)}";
 		CurrentTime = now.ToString("ddd HH:mm:ss");
+	}
+	/// <summary>
+	/// 指定したMenuDataの親のHeaderを再帰的に探索して返す
+	/// </summary>
+	private string? FindParentHeader(IEnumerable<MenuData> nodes, MenuData? target) {
+		if (target == null) return null;
+		foreach (var node in nodes) {
+			if (node.SubItems != null && node.SubItems.Contains(target))
+				return node.Header;
+			if (node.SubItems != null) {
+				var found = FindParentHeader(node.SubItems, target);
+				if (found != null) return found;
+			}
+		}
+		return null;
 	}
 
 }

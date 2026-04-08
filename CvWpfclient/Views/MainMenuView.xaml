@@ -61,7 +61,8 @@
 					</Grid.ColumnDefinitions>
 
 					<StackPanel Orientation="Vertical">
-						<TextBlock FontSize="36" FontWeight="Bold"
+						<TextBlock Padding="20,0,0,0"
+							FontSize="40" FontWeight="Bold"
 							Foreground="{DynamicResource TitleColor}"
 							Text="{Binding HeaderTitle}">
 							<TextBlock.Effect>
@@ -69,7 +70,7 @@
 									Color="Black" />
 							</TextBlock.Effect>
 						</TextBlock>
-						<TextBlock Padding="8,0,0,0"
+						<TextBlock Padding="25,0,0,0"
 							FontSize="14"
 							Foreground="{DynamicResource SubTitleColor}"
 							Opacity="0.6"
@@ -203,8 +204,8 @@
 					<Grid Grid.Column="2">
 						<Grid.RowDefinitions>
 							<RowDefinition Height="Auto" />
-							<RowDefinition Height="Auto" />
 							<RowDefinition Height="*" />
+							<RowDefinition Height="Auto" />
 						</Grid.RowDefinitions>
 						<Grid>
 							<Grid.ColumnDefinitions>
@@ -257,9 +258,14 @@
 										Text="選択中メニュー" />
 									<TextBlock Margin="10"
 										Foreground="{DynamicResource plainTextColor0}"
-										Opacity="0.6" Text="    メニューをダブルクリックすると画面が起動します。" TextWrapping="Wrap" />
+										Opacity="0.6" Text="    メニューをダブルクリックまたはEnterキーで画面が起動します。" TextWrapping="Wrap" />
 								</StackPanel>
-								<TextBlock FontSize="22" FontWeight="Bold"
+								<TextBlock x:Name="SelectedParent"
+									Margin="0"
+									Foreground="{DynamicResource plainTextColor0}"
+									Opacity="0.8"  Text="{Binding SelectedMenuParentHeader, FallbackValue=''}" />
+								<TextBlock x:Name="SelectedHeader"
+									FontSize="22" FontWeight="Bold"
 									Foreground="{DynamicResource plainTextColor0}"
 									Text="{Binding SelectedMenu.Header}" />
 								<TextBlock Margin="0,8,0,0"
@@ -272,11 +278,13 @@
 									Opacity="0.7" TextWrapping="Wrap">
 									<TextBlock.Style>
 										<Style TargetType="TextBlock">
-											<Setter Property="Text" Value="マルチウィンドウ画面" />
+											<Setter Property="Text" Value="" />
 											<Style.Triggers>
-												<DataTrigger Binding="{Binding SelectedMenu.IsDialog}"
-													Value="True">
+												<DataTrigger Binding="{Binding SelectedMenu.IsDialog}" Value="True">
 													<Setter Property="Text" Value="ダイアログ画面" />
+												</DataTrigger>
+												<DataTrigger Binding="{Binding SelectedMenu.IsDialog}" Value="False">
+													<Setter Property="Text" Value="マルチウィンドウ画面" />
 												</DataTrigger>
 											</Style.Triggers>
 										</Style>
@@ -317,10 +325,7 @@
 										Style="{StaticResource MainMenuActionButton}"
 										ToolTip="ログイン画面" />
 								</StackPanel>
-								<TextBlock Foreground="{DynamicResource StatusTitleColor}"
-									Style="{StaticResource SectionTitleText}"
-									Text="ステータスログ" />
-								<TextBlock FontSize="16"
+								<TextBlock FontSize="16" Opacity="0.7"
 									Foreground="{DynamicResource plainTextColor0}"
 									Text="{Binding StatusMessage}"
 									TextWrapping="Wrap" />
