@@ -14,7 +14,7 @@ public class UpdateDb {
 	private static InnerVersion[] versions = [
 		new ("2026.04.08 01","","SysUpdateDbテーブル 2026.04.08定義"),
 		new ("2020.04.08 02","ALTER TABLE TranVulcanHht ADD COLUMN ErrorMsg TEXT;","2026.04.08定義")
-];
+	];
 
 
 
@@ -47,10 +47,10 @@ public class UpdateDb {
 			logger.Debug($"DBバージョンは最新({latestVersion.DbVersion})");
 			return;
 		}
-		foreach (var record in verupSql) {
+		foreach (var record in verupSql) { // 配列はforeachで必ず順番に処理される
 			ct.ThrowIfCancellationRequested();
 			if (string.Compare(latestDb.DbVersion, record.DbVersion) > 0) { // verupSqlのバージョンがDBのバージョンより新しい場合は、DBをverupSqlのバージョンに合わせるためのSQLを実行する
-				var errorMsg = await SubInsertRecordAsync(db, record, latestDb.DbVersion, logger, ct);
+				var errorMsg = await SubInsertRecordAsync(db, record, latestVersion.DbVersion, logger, ct);
 			}
 		}
 		logger.Debug($"DBバージョンアップ({latestDb.DbVersion} -> {latestVersion.DbVersion})");
