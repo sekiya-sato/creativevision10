@@ -45,6 +45,7 @@ printdll/
 refer/
 Releases/
 Doc/wrk/
+CvServer/wrk
 wrk/
 .sisyphus/
 .playwright-mcp/
