@@ -290,11 +290,11 @@ public partial class CvnetCoreService {
 		ArgumentNullException.ThrowIfNull(request);
 
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
-		if (param is not List<TranHhtdata> createMasterParam) {
+		if (param is not List<TranVulcanHht> createMasterParam) {
 			throw new NotImplementedException();
 		}
 		try {
-			var hhtdata = param as List<TranHhtdata> ?? new List<TranHhtdata>();
+			var hhtdata = param as List<TranVulcanHht> ?? new List<TranVulcanHht>();
 
 			var cnt = new HhtProcess(_db).ReceiveHhtdata(hhtdata);
 			return CreateSuccessResponse(request.Flag, typeof(int), Common.SerializeObject(cnt));

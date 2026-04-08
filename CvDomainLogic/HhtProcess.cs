@@ -187,13 +187,13 @@ public partial class HhtProcess {
 	/// <param name="hhtdata"></param>
 	// ToDo : ロジックを集約 ReceiveHhtdata は廃止予定
 	[Obsolete("廃止予定のため、使用しないでください。")]
-	public int ReceiveHhtdata(List<TranHhtdata> hhtdata) {
+	public int ReceiveHhtdata(List<TranVulcanHht> hhtdata) {
 		if (hhtdata == null || hhtdata.Count == 0) {
 			return 0;
 		}
 		try {
 			_db.BeginTransaction();
-			_db.InsertBulk<TranHhtdata>(hhtdata);
+			_db.InsertBulk<TranVulcanHht>(hhtdata);
 			_db.CompleteTransaction();
 			return hhtdata.Count;
 		}

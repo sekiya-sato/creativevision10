@@ -69,7 +69,7 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 			var msg = new CvnetMsg {
 				Code = 0,
 				Flag = CvnetFlag.Msg201_Op_Execute,
-				DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranHhtdata), Common.SerializeObject(records))),
+				DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranVulcanHht), Common.SerializeObject(records))),
 				DataType = typeof(InsertBulkParam),
 			};
 
@@ -102,10 +102,10 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		}
 	}
 
-	private static async Task<List<TranHhtdata>> LoadRecordsAsync(IEnumerable<string> filePaths, CancellationToken ct) {
+	private static async Task<List<TranVulcanHht>> LoadRecordsAsync(IEnumerable<string> filePaths, CancellationToken ct) {
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		var encoding = Encoding.GetEncoding("shift_jis");
-		List<TranHhtdata> records = [];
+		List<TranVulcanHht> records = [];
 		var backupPaths = new Dictionary<string, string>();
 		var fileCnt = 1;
 		foreach (var filePath in filePaths) {
@@ -142,7 +142,7 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		return records;
 	}
 
-	private static TranHhtdata ParseRecord(string line, string fileName, int lineNo, string backupName) {
+	private static TranVulcanHht ParseRecord(string line, string fileName, int lineNo, string backupName) {
 		List<string> fields;
 		try {
 			fields = ParseCsvLine(line);
@@ -154,7 +154,7 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		if (fields.Count < ExpectedFieldCount) {
 			throw new InvalidDataException($"{fileName} {lineNo}行目: 項目数が不足しています。期待値={ExpectedFieldCount} 実際={fields.Count}");
 		}
-		var newRec = new TranHhtdata {
+		var newRec = new TranVulcanHht {
 			// field名は、VULCAN定義に従う
 			Type0 = GetInt(fields, 0, 1, "区分", fileName, lineNo),
 			HhtNo = GetInt(fields, 1, 3, "HTNO", fileName, lineNo),

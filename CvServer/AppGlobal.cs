@@ -69,7 +69,7 @@ public class AppGlobal {
 		ret = db.CreateTable<Tran11IdoIn>();
 		ret = db.CreateTable<Tran12Jyuchu>();
 		ret = db.CreateTable<Tran13Hachu>();
-		ret = db.CreateTable<TranHhtdata>();
+		ret = db.CreateTable<TranVulcanHht>();
 	}
 
 }
