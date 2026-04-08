@@ -174,7 +174,7 @@ public partial class MenuData : ObservableObject {
 			new("自動発注・補充対象除外品設定", typeof(Views._07Haibun.AutoHachuHojunExcludeSettingView), addInfo:"準備中"),
 			new("在庫基準自動補充メンテナンス", typeof(Views._07Haibun.ZaikoAutoHojunMenteView), addInfo:"準備中"),
 		])),
-		new("在庫管理", new([
+		new("■ 在庫管理", new([
 			new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"準備中"),
 			new("移動入力(即時)", typeof(Views._08Zaiko.IdoInputSokuView), addInfo:"準備中"),
 			new("移動入力(積送)", typeof(Views._08Zaiko.IdoInputOutView), addInfo:"準備中"),
@@ -196,7 +196,7 @@ public partial class MenuData : ObservableObject {
 			new("品番別移動チェックリスト", typeof(Views._08Zaiko.HinbanIdoCheckListView), addInfo:"準備中"),
 			new("移動未受リスト", typeof(Views._08Zaiko.IdoUnreceivedListView), addInfo:"準備中"),
 		])),
-		new("売上分析", new([
+		new("■ 売上分析", new([
 			new("販売動向表", typeof(Views._20UriageAnalysis.SalesTrendReportView), addInfo:"準備中"),
 			new("品番別販売動向表", typeof(Views._20UriageAnalysis.HinbanSalesTrendReportView), addInfo:"準備中"),
 			new("投入売上在庫表", typeof(Views._20UriageAnalysis.InputSalesStockReportView), addInfo:"準備中"),
@@ -212,7 +212,7 @@ public partial class MenuData : ObservableObject {
 			new("分類別店別売上報告", typeof(Views._20UriageAnalysis.CategoryShopSalesReportView), addInfo:"準備中"),
 			new("店舗売上ランキング表", typeof(Views._20UriageAnalysis.ShopSalesRankingReportView), addInfo:"準備中"),
 		])),
-		new("卸・販売員・経営分析", new([
+		new("■ 卸・販売員・経営分析", new([
 			new("得意先別売上日報", typeof(Views._21OroshiAnalysis.TokuiSalesDailyReportView), addInfo:"準備中"),
 			new("得意先別売上月報", typeof(Views._21OroshiAnalysis.TokuiSalesMonthlyReportView), addInfo:"準備中"),
 			new("担当別売上実績半期報", typeof(Views._21OroshiAnalysis.TantoSalesHalfYearReportView), addInfo:"準備中"),
@@ -223,7 +223,7 @@ public partial class MenuData : ObservableObject {
 			new("全社受払表", typeof(Views._21OroshiAnalysis.CorporateInOutReportView), addInfo:"準備中"),
 			new("卸・店舗売上実績表", typeof(Views._21OroshiAnalysis.OroshiShopSalesActualReportView), addInfo:"準備中"),
 		])),
-		new("C.P.A", new([
+		new("■ C.P.A", new([
 			new("★T.L - アナライザー★", typeof(Views._22CPA.TimelineAnalyzerView), addInfo:"準備中"),
 			new("★C.G - アナライザー★", typeof(Views._22CPA.CategoryGroupAnalyzerView), addInfo:"準備中"),
 			new("ナンでも？CSV", typeof(Views._22CPA.AnyCsvView), addInfo:"準備中"),
@@ -239,7 +239,7 @@ public partial class MenuData : ObservableObject {
 			new("売上・在庫問合せ", typeof(Views._22CPA.SalesStockQueryView), addInfo:"準備中"),
 			new("ベストレポート", typeof(Views._22CPA.BestSalesReportView), addInfo:"準備中"),
 		])),
-		new("HHT / POS連携", new([
+		new("■ HHT / POS連携", new([
 			new("HHT用マスタデータ作成", typeof(Views._30HHT.HhtMasterDataCreateView), addInfo:"CSV または固定長で HHT マスタを出力"),
 			new("HHT手動データ受信", typeof(Views._30HHT.HhtManualDataReceiveView), addInfo:"受信フォルダ内の HHT データを手動取込"),
 			new("HHTエラーデータ修正入力", typeof(Views._30HHT.HhtErrorDataInputView), addInfo:"準備中"),
@@ -252,7 +252,7 @@ public partial class MenuData : ObservableObject {
 			new("HHT手動データ受信(ﾃﾞｰﾀ送信後)", typeof(Views._30HHT.HhtManualDataReceive2View), addInfo:"準備中"),
 			new("HHT用マスタバーコード印刷", typeof(Views._30HHT.HhtMasterBarcodePrintView), addInfo:"準備中"),
 		])),
-		new("月次 / 更新処理", new([
+		new("■ 月次 / 更新処理", new([
 			new("請求計算", typeof(Views._31Monthly.BillingCalculationView), addInfo:"準備中"),
 			new("支払計算", typeof(Views._31Monthly.PaymentCalculationView), addInfo:"準備中"),
 			new("棚卸開始処理", typeof(Views._31Monthly.StockTakeInitiationView), addInfo:"準備中"),
@@ -272,7 +272,7 @@ public partial class MenuData : ObservableObject {
 			new("月間データ集計", typeof(Views._31Monthly.MonthlyDataSummaryView), addInfo:"準備中"),
 			new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteVie), addInfo:"準備中"),
 		])),
-		new("Loyal Customer", new([
+		new("■ Loyal Customer", new([
 			new("顧客マスタ", typeof(Views._32LoyalCustomer.CustomerMasterView), addInfo:"準備中"),
 			new("ポイントマスタ（ベース）（管理者用)", typeof(Views._32LoyalCustomer.PointMasterBaseAdminView), addInfo:"準備中"),
 			new("ポイントマスタ（キャンペーン）", typeof(Views._32LoyalCustomer.PointMasterCampaignView), addInfo:"準備中"),
@@ -283,7 +283,7 @@ public partial class MenuData : ObservableObject {
 			new("顧客カルテ", typeof(Views._32LoyalCustomer.EndCustomerProfileView), addInfo:"準備中"),
 			new("RFMクロス分析表", typeof(Views._32LoyalCustomer.RfmCrossAnalysisTableView), addInfo:"準備中"),
 		])),
-		new("店舗", new([
+		new("■ 店舗", new([
 			new("店舗売上入力", typeof(Views._06Uriage.ShopUriageInputView), false),
 			new("棚卸明細表(原価無)", typeof(Views._40Shop.StockTakeDetailReportCostlessView), addInfo:"準備中"),
 			new("汎用在庫表(原価無)", typeof(Views._40Shop.GeneralInventoryTableCostlessView), addInfo:"準備中"),
@@ -291,7 +291,7 @@ public partial class MenuData : ObservableObject {
 			new("売上週報･月報(原価無)", typeof(Views._40Shop.SalesWeeklyMonthlyReportCostlessView), addInfo:"準備中"),
 			new("分類別店別売上報告(原価無)", typeof(Views._40Shop.CategoryStoreSalesReportCostlessView), addInfo:"準備中"),
 		])),
-		new("物流", new([
+		new("■ 物流", new([
 			new("マスタデータ作成", typeof(Views._41Logistics.LogisticsMasterDataCreateView), addInfo:"準備中"),
 			new("連携データ手動送信", typeof(Views._41Logistics.IntegrationDataManualTransmitView), addInfo:"準備中"),
 			new("連携データ手動受信", typeof(Views._41Logistics.IntegrationDataManualReceiveView), addInfo:"準備中"),

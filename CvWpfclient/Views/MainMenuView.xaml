@@ -91,31 +91,46 @@
 									Foreground="{DynamicResource plainTextColor0}"
 									Text="{Binding ExpireDate}" />
 								<StackPanel Orientation="Horizontal">
-									<Button Margin="0,4,8,0"
+									<Button Margin="0,0,8,0"
 										Command="{Binding ToggleThemeCommand}"
 										Style="{StaticResource MainMenuWindowButton}"
 										ToolTip="テーマ切り替え (Light/Dark)">
-										<materialDesign:PackIcon Kind="ThemeLightDark" Width="24" Height="24" Foreground="{DynamicResource TitleColor}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+										<Button.Content>
+											<Grid>
+												<Ellipse Width="20" Height="20"
+													Fill="Black" />
+												<Path Width="14" Height="14"
+													HorizontalAlignment="Center" VerticalAlignment="Center"
+													Data="M12,2L14,5H10L12,2M12,22L10,19H14L12,22M22,12L19,10V14L22,12M2,12L5,14V10L2,12M19.07,4.93L17,7.07L16.31,6.38L18.38,4.31L19.07,4.93M4.93,19.07L7.07,17L7.76,17.69L5.69,19.76L4.93,19.07M19.07,19.07L17,16.93L16.31,17.62L18.38,19.69L19.07,19.07M4.93,4.93L7.07,7.07L7.76,6.38L5.69,4.31L4.93,4.93M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"
+													Fill="{DynamicResource TitleColor}"
+													Stretch="Uniform" />
+											</Grid>
+										</Button.Content>
 									</Button>
-
 
 									<Button Command="{Binding WinMinimizeCommand}"
 										Opacity="0.6"
 										Style="{StaticResource MinimizeWinBtn}"
 										ToolTip="最小化">
-										<materialDesign:PackIcon Kind="WindowMinimize" Width="24" Height="24" VerticalAlignment="Center" HorizontalAlignment="Center" />
+										<materialDesign:PackIcon Width="24" Height="24"
+											HorizontalAlignment="Center" VerticalAlignment="Center"
+											Kind="WindowMinimize" />
 									</Button>
 									<Button Command="{Binding WinMenuOnlyCommand}"
 										Opacity="0.6"
 										Style="{StaticResource MenuonlyWinBtn}"
 										ToolTip="メニューのみ/通常">
-										<materialDesign:PackIcon Kind="ViewList" Width="24" Height="24" VerticalAlignment="Center" HorizontalAlignment="Center" />
+										<materialDesign:PackIcon Width="19" Height="20"
+											HorizontalAlignment="Center" VerticalAlignment="Center"
+											Kind="ViewList" />
 									</Button>
 									<Button Command="{Binding ExitCommand}"
 										Opacity="0.6"
 										Style="{StaticResource CloseWinBtn}"
 										ToolTip="終了">
-										<materialDesign:PackIcon Kind="Close" Width="24" Height="24" VerticalAlignment="Center" HorizontalAlignment="Center" />
+										<materialDesign:PackIcon Width="24" Height="24"
+											HorizontalAlignment="Center" VerticalAlignment="Center"
+											Kind="Close" />
 									</Button>
 								</StackPanel>
 							</StackPanel>
