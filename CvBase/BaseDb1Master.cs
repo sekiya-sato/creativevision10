@@ -211,7 +211,7 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Code")]
-[Comment("マスター：商品テーブル 商品CD,色CD,サイズCD")]
+[Comment("マスター：商品テーブル Jcolsiz列に'色CD,サイズCD,JAN1,JAN2,JAN3'の情報を格納")]
 public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName {
 	/// <summary>
 	/// コード
