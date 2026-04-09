@@ -169,12 +169,26 @@ var staticFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "wrk");
 if (!Directory.Exists(staticFilesPath)) {
 	Directory.CreateDirectory(staticFilesPath); // フォルダが存在しない場合は作成
 }
+var imageFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "img");
+if (!Directory.Exists(imageFilesPath)) {
+	Directory.CreateDirectory(imageFilesPath); // フォルダが存在しない場合は作成
+}
 
 app.UseStaticFiles(new StaticFileOptions {
 	FileProvider = new PhysicalFileProvider(staticFilesPath),
 	RequestPath = "/wrk", // クライアントからアクセスする際のURLパス
 	OnPrepareResponse = ctx => {
 		// セキュリティ設定: キャッシュ制御やヘッダーの設定
+		ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+		ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+		ctx.Context.Response.Headers.Append("Expires", "0");
+	}
+});
+// 画像ファイル専用の静的ファイル公開（/images でアクセス可能にする）
+app.UseStaticFiles(new StaticFileOptions {
+	FileProvider = new PhysicalFileProvider(imageFilesPath),
+	RequestPath = "/img",
+	OnPrepareResponse = ctx => {
 		ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
 		ctx.Context.Response.Headers.Append("Pragma", "no-cache");
 		ctx.Context.Response.Headers.Append("Expires", "0");

@@ -121,16 +121,21 @@ public static class DataGridSelectionBehavior {
 		if (item == null) return;
 
 		grid.Dispatcher.BeginInvoke(() => {
-			grid.UpdateLayout();
-			grid.SelectedItem = item;
-			grid.ScrollIntoView(item);
-			grid.CurrentCell = new DataGridCellInfo(item, grid.Columns[0]);
-			var cell = GetCell(grid, grid.CurrentCell);
-			if (cell != null) {
-				cell.Focus();
+			try {
+				grid.UpdateLayout();
+				grid.SelectedItem = item;
+				grid.ScrollIntoView(item);
+				grid.CurrentCell = new DataGridCellInfo(item, grid.Columns[0]);
+				var cell = GetCell(grid, grid.CurrentCell);
+				if (cell != null) {
+					cell.Focus();
+				}
+				else {
+					grid.Focus();
+				}
 			}
-			else {
-				grid.Focus();
+			catch (Exception ex) {
+				NLog.LogManager.GetCurrentClassLogger().Error(ex, "Error in BringSelectionIntoView");
 			}
 		}, DispatcherPriority.Render);
 	}
