@@ -7,27 +7,16 @@ using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Windows.Media.Imaging;
 
 namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShohin> {
-	static HttpClient? _imageHttpClient;
-	static HttpClient ImageHttpClient => _imageHttpClient ??= CreateImageHttpClient();
-	CancellationTokenSource? shohinImageLoadCts;
 
 	[ObservableProperty]
 	string title = "商品マスターメンテ";
 
 	[ObservableProperty]
-	BitmapImage? shohinImage;
-
-	[ObservableProperty]
-	bool isShohinImageLoading;
+	Uri? shohinImageUri;
 
 	[ObservableProperty]
 	string shohinImageStatusText = "画像なし";
@@ -72,123 +61,22 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 
 	protected override void OnCurrentEditChangedCore(MasterShohin? oldValue, MasterShohin newValue) {
 		if (newValue == null) {
-			CancelShohinImageLoad();
-			ShohinImage = null;
+			ShohinImageUri = null;
 			ShohinImageStatusText = "画像なし";
 			return;
 		}
 
 		ApplySubListsFromCurrentEdit();
-		_ = LoadShohinImageAsync(newValue.Code);
-	}
 
-	async Task LoadShohinImageAsync(string? code) {
-		CancelShohinImageLoad();
-
-		var normalizedCode = code?.Trim();
-		if (string.IsNullOrWhiteSpace(normalizedCode)) {
-			ShohinImage = null;
+		var code = newValue.Code?.Trim();
+		if (string.IsNullOrWhiteSpace(code)) {
+			ShohinImageUri = null;
 			ShohinImageStatusText = "画像なし";
-			IsShohinImageLoading = false;
-			return;
 		}
-
-		var cts = new CancellationTokenSource();
-		shohinImageLoadCts = cts;
-		var imageName = $"{normalizedCode}.img";
-		var imageUrl = BuildShohinImageUrl(normalizedCode);
-
-		try {
-			IsShohinImageLoading = true;
-			ShohinImage = null;
-			ShohinImageStatusText = $"画像読込中({imageName})";
-
-			using var request = new HttpRequestMessage(HttpMethod.Get, imageUrl);
-			if (!string.IsNullOrEmpty(AppGlobal.LoginJwt)) {
-				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppGlobal.LoginJwt);
-			}
-			using var response = await ImageHttpClient.SendAsync(request, cts.Token);
-			if (!response.IsSuccessStatusCode) {
-				if (!IsActiveShohinImageRequest(normalizedCode, cts)) {
-					return;
-				}
-
-				ShohinImage = null;
-				ShohinImageStatusText = $"画像なし({imageName})";
-				return;
-			}
-
-			await using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
-			using var memoryStream = new MemoryStream();
-			await responseStream.CopyToAsync(memoryStream, cts.Token);
-			memoryStream.Position = 0;
-
-			var bitmap = new BitmapImage();
-			bitmap.BeginInit();
-			bitmap.CacheOption = BitmapCacheOption.OnLoad;
-			bitmap.StreamSource = memoryStream;
-			bitmap.EndInit();
-			bitmap.Freeze();
-
-			if (!IsActiveShohinImageRequest(normalizedCode, cts)) {
-				return;
-			}
-
-			ShohinImage = bitmap;
+		else {
+			ShohinImageUri = new Uri($"{AppGlobal.Url.TrimEnd('/')}/img/{Uri.EscapeDataString(code)}.jpg");
 			ShohinImageStatusText = string.Empty;
 		}
-		catch (OperationCanceledException) {
-		}
-	catch (Exception ex) {
-			Debug.WriteLine($"商品画像読込失敗: {imageUrl} - {ex.Message}");
-			if (!IsActiveShohinImageRequest(normalizedCode, cts)) {
-				return;
-			}
-
-			ShohinImage = null;
-			ShohinImageStatusText = $"画像なし({imageName})";
-		}
-		finally {
-			if (ReferenceEquals(shohinImageLoadCts, cts)) {
-				shohinImageLoadCts = null;
-				IsShohinImageLoading = false;
-			}
-
-			cts.Dispose();
-		}
-	}
-
-	static string BuildShohinImageUrl(string code) =>
-		$"{AppGlobal.Url.TrimEnd('/')}/img/{Uri.EscapeDataString(code)}.jpg";
-
-	static HttpClient CreateImageHttpClient() {
-		var handler = new HttpClientHandler();
-		// 開発環境のlocalhostの自己署名証明書を許容する
-		if (AppGlobal.Url.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase)) {
-			handler.ServerCertificateCustomValidationCallback =
-				HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-		}
-		return new HttpClient(handler);
-	}
-
-	bool IsActiveShohinImageRequest(string code, CancellationTokenSource cts) =>
-		ReferenceEquals(shohinImageLoadCts, cts)
-		&& !cts.IsCancellationRequested
-		&& string.Equals(CurrentEdit.Code?.Trim(), code, StringComparison.OrdinalIgnoreCase);
-
-	void CancelShohinImageLoad() {
-		if (shohinImageLoadCts == null) {
-			return;
-		}
-
-		try {
-			shohinImageLoadCts.Cancel();
-		}
-		catch (ObjectDisposedException) {
-		}
-
-		shohinImageLoadCts = null;
-		IsShohinImageLoading = false;
 	}
 
 	void ApplySubListsFromCurrentEdit() {

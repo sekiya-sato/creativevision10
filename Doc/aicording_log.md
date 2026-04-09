@@ -354,3 +354,24 @@
 - 遅延初期化 (`??=`) にした理由は、static フィールド初期化子の時点では `AppGlobal.Url` が未初期化のため
 ### 確認
 - CvWpfclientビルド成功（0警告・0エラー）
+
+---
+
+## [2026-04-10] 02:41 商品マスターメンテ画像表示をImage→WebView2に変更
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：商品マスターメンテ画面のImage表示をWebView2に変更し、URLの画像を直接表示する方式にする
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: HttpClientによる画像ダウンロード処理を全削除（約100行）、BitmapImage/IsShohinImageLoading/CancellationTokenSourceを削除し、Uri?型のShohinImageUriプロパティに置換。OnCurrentEditChangedCoreを簡素化
+- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: ImageコントロールをWebView2に置換、xmlns:Wpf名前空間を追加、ローディングオーバーレイ（ProgressBar）を削除、DataTriggerでUri==nullの時はWebView2をCollapsed
+### 技術決定 Why
+- HttpClientでの画像ダウンロード→BitmapImage生成→Freeze処理は複雑であり、キャンセル管理・エラーハンドリングのコードが大量だった。WebView2でURLを直接表示することで、ViewModel側のHTTP通信処理を全廃し大幅に簡素化
+- JWT認証は画像エンドポイントに不要のためWebView2のデフォルト動作で対応可能
+- Microsoft.Web.WebView2パッケージはcsproj・WebpdfViewで参照済みのため追加不要
+### 確認
+- CvWpfclientビルド成功（0警告・0エラー）
+
+---
