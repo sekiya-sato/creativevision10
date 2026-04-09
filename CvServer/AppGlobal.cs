@@ -45,6 +45,7 @@ public class AppGlobal {
 		var ret = false;
 		// システムテーブル
 		ret = db.CreateTable<SysUpdateDb>();
+		ret = db.CreateTable<SysSequence>();
 		// システムテーブル
 		ret = db.CreateTable<SysLogin>();
 		ret = db.CreateTable<SysHistJwt>();

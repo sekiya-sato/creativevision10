@@ -46,9 +46,11 @@ refer/
 Releases/
 Doc/wrk/
 CvServer/wrk
+CvServer/img
 wrk/
 .sisyphus/
 .playwright-mcp/
+tmp-*
 # Optional local notes
 
 
