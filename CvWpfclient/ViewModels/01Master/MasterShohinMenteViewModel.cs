@@ -8,13 +8,16 @@ using CvWpfclient.ViewModels.Sub;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Diagnostics;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Windows.Media.Imaging;
 
 namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShohin> {
-	static readonly HttpClient imageHttpClient = new();
+	static HttpClient? _imageHttpClient;
+	static HttpClient ImageHttpClient => _imageHttpClient ??= CreateImageHttpClient();
 	CancellationTokenSource? shohinImageLoadCts;
 
 	[ObservableProperty]
@@ -100,7 +103,11 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 			ShohinImage = null;
 			ShohinImageStatusText = $"画像読込中({imageName})";
 
-			using var response = await imageHttpClient.GetAsync(imageUrl, cts.Token);
+			using var request = new HttpRequestMessage(HttpMethod.Get, imageUrl);
+			if (!string.IsNullOrEmpty(AppGlobal.LoginJwt)) {
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AppGlobal.LoginJwt);
+			}
+			using var response = await ImageHttpClient.SendAsync(request, cts.Token);
 			if (!response.IsSuccessStatusCode) {
 				if (!IsActiveShohinImageRequest(normalizedCode, cts)) {
 					return;
@@ -132,7 +139,8 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 		}
 		catch (OperationCanceledException) {
 		}
-		catch (Exception) {
+	catch (Exception ex) {
+			Debug.WriteLine($"商品画像読込失敗: {imageUrl} - {ex.Message}");
 			if (!IsActiveShohinImageRequest(normalizedCode, cts)) {
 				return;
 			}
@@ -152,6 +160,16 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 
 	static string BuildShohinImageUrl(string code) =>
 		$"{AppGlobal.Url.TrimEnd('/')}/img/{Uri.EscapeDataString(code)}.jpg";
+
+	static HttpClient CreateImageHttpClient() {
+		var handler = new HttpClientHandler();
+		// 開発環境のlocalhostの自己署名証明書を許容する
+		if (AppGlobal.Url.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase)) {
+			handler.ServerCertificateCustomValidationCallback =
+				HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+		}
+		return new HttpClient(handler);
+	}
 
 	bool IsActiveShohinImageRequest(string code, CancellationTokenSource cts) =>
 		ReferenceEquals(shohinImageLoadCts, cts)

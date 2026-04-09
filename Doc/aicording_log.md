@@ -333,3 +333,24 @@
 ### 確認
 - CvBaseプロジェクトビルド成功（0警告・0エラー）
 - 構造検証パス: ObservableObject関連除去確認、NPoco属性保持確認、バグ修正確認、プロパティ変換確認
+
+---
+
+## [2026-04-09] 13:30 LoadShohinImageAsync 商品画像読込バグ修正
+### Agent
+- claude-opus-4.6 : GitHub-Copilot : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：商品マスターメンテの画像読込が失敗する問題の修正。ブラウザでは表示できるURLがアプリ内では読み込めない
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 商品画像読込の3点修正
+  - HttpClient を遅延初期化に変更し、localhost自己署名証明書のSSL検証をスキップするよう対応
+  - HTTPリクエストにJWT認証ヘッダー（Authorization: Bearer）を付与するよう修正
+  - catch(Exception)の握り潰しをやめ、Debug.WriteLineでエラー内容を出力するよう改善
+### 技術決定 Why
+- `new HttpClient()` はデフォルトのSSL証明書検証を使用するため、開発環境のlocalhostの自己署名証明書を拒否する。ブラウザは手動で信頼できるが、HttpClientはできないため `DangerousAcceptAnyServerCertificateValidator` で対応。localhost限定の条件分岐で本番環境への影響を防止
+- gRPC呼び出しでは `GetDefaultCallContext()` で認証ヘッダーを付与しているが、画像取得用の素のHttpClientには認証情報が未設定だった。HttpRequestMessageを使い毎回最新のLoginJwtを付与する方式に変更
+- 遅延初期化 (`??=`) にした理由は、static フィールド初期化子の時点では `AppGlobal.Url` が未初期化のため
+### 確認
+- CvWpfclientビルド成功（0警告・0エラー）
