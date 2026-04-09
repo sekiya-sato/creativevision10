@@ -257,6 +257,7 @@
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="110" />
 									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="320" />
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
@@ -393,6 +394,7 @@
 									Style="{StaticResource FormLabel}"
 									Text="元上代" />
 								<TextBox Grid.Row="7" Grid.Column="1"
+									Width="170" HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="元上代"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TankaJodaiOrg}" />
@@ -402,6 +404,7 @@
 									Style="{StaticResource FormLabel}"
 									Text="上代" />
 								<TextBox Grid.Row="8" Grid.Column="1"
+									Width="170" HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="上代"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TankaJodai}" />
@@ -411,6 +414,7 @@
 									Style="{StaticResource FormLabel}"
 									Text="原価" />
 								<TextBox Grid.Row="9" Grid.Column="1"
+									Width="170" HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="原価"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TankaGenka}" />
@@ -420,9 +424,55 @@
 									Style="{StaticResource FormLabel}"
 									Text="仕入単価" />
 								<TextBox Grid.Row="10" Grid.Column="1"
+									Width="170" HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="仕入単価"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TankaShiire}" />
+
+								<Border Grid.Row="7" Grid.Column="2" Grid.RowSpan="8"
+									Margin="20,4,0,4" Padding="12"
+									Background="{DynamicResource MaterialDesignPaper}"
+									BorderBrush="{DynamicResource MaterialDesignDivider}"
+									BorderThickness="1" CornerRadius="8">
+									<Grid>
+										<Image Stretch="Uniform"
+											Source="{Binding ShohinImage}" />
+										<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+											Foreground="{DynamicResource MaterialDesignBodyLight}"
+											Text="{Binding ShohinImageStatusText}"
+											TextAlignment="Center" TextWrapping="Wrap">
+											<TextBlock.Style>
+												<Style TargetType="TextBlock">
+													<Setter Property="Visibility" Value="Visible" />
+													<Style.Triggers>
+														<DataTrigger Binding="{Binding ShohinImageStatusText}" Value="">
+															<Setter Property="Visibility" Value="Collapsed" />
+														</DataTrigger>
+													</Style.Triggers>
+												</Style>
+											</TextBlock.Style>
+										</TextBlock>
+										<Border Background="#66FFFFFF">
+											<Border.Style>
+												<Style TargetType="Border">
+													<Setter Property="Visibility" Value="Collapsed" />
+													<Style.Triggers>
+														<DataTrigger Binding="{Binding IsShohinImageLoading}" Value="True">
+															<Setter Property="Visibility" Value="Visible" />
+														</DataTrigger>
+													</Style.Triggers>
+												</Style>
+											</Border.Style>
+											<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+												<ProgressBar Width="140" Height="4"
+													IsIndeterminate="True" />
+												<TextBlock Margin="0,12,0,0" HorizontalAlignment="Center"
+													Foreground="{DynamicResource MaterialDesignBody}"
+													Text="画像を読み込み中..." />
+											</StackPanel>
+										</Border>
+									</Grid>
+								</Border>
 
 								<!--  メーカー品番  -->
 								<TextBlock Grid.Row="11"

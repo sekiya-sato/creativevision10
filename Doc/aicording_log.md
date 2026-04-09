@@ -31,6 +31,24 @@
 - 新規に `aicording_log.md` を作成して記録を継続
 
 ---
+
+## [2026-04-09] 16:59 MasterShohinMenteView に商品画像表示を追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`MasterShohinMenteView.xaml` でサーバURL + `/img/[MasterShohinのCode].jpg` の画像を表示し、価格欄を縮小して右側に画像エリアを追加する。current変更中の画像読込はキャンセルし、画像が無い場合は `画像なし([Code].img)` を表示する。
+### 実施内容
+- `CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`: `ShohinImage`、`IsShohinImageLoading`、`ShohinImageStatusText` を追加し、`CurrentEdit` 切替時にサーバ画像を非同期読込する処理を実装。新しい選択へ切り替わった場合は `CancellationTokenSource` で前回の読込をキャンセルするようにした。
+- `CvWpfclient/Views/01Master/MasterShohinMenteView.xaml`: 基本情報タブを3列構成に変更し、`元上代`、`上代`、`原価`、`仕入単価` の `TextBox` 幅を縮小。右側に画像表示カードを追加し、読込中オーバーレイと `画像なし([Code].img)` 表示をバインドした。
+### 技術決定 Why
+- 画像取得はViewModel側の非同期処理に寄せることで、選択変更時のキャンセル制御と表示状態の一元管理を行いやすくした。
+- 画像は `BitmapImage` を `OnLoad` で生成して `Freeze()` し、ストリーム寿命やUIスレッド境界の問題を避けた。
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告0、エラー0）
+
+---
 ## [2026-04-07] 10:45 Git履歴からの不要バイナリ削除
 ### Agent
 - gemini-3.1-flash : Google : (wsl2への手動コピペ)
