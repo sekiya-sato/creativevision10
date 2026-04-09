@@ -13,11 +13,10 @@ namespace CvBase;
 [KeyDml("uq1", true, "DbVersion")]
 public sealed partial class SysUpdateDb : BaseDbClass {
 	/// <summary>
-	/// レコード識別のためのシリアル yyyy.mm.dd 連番 例:2020.01.01 01
+	/// レコード識別のためのシリアル8桁 yymmddnn 年月日連番 例)26040101
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	string dbVersion = string.Empty;
+	int dbVersion;
 	/// <summary>
 	/// SQL実行日 date0.ToString("yyyyMMddHHmmss");
 	/// </summary>
@@ -28,8 +27,7 @@ public sealed partial class SysUpdateDb : BaseDbClass {
 	/// SQLを実行したDbVersion
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	string newVersion = string.Empty;
+	int newVersion;
 	/// <summary>
 	/// 実行したDDL文(複数ある場合は;区切り)
 	/// </summary>
@@ -37,7 +35,7 @@ public sealed partial class SysUpdateDb : BaseDbClass {
 	[property: ColumnSizeDml(1000)]
 	string sql = string.Empty;
 	/// <summary>
-	/// メモ
+	/// メモ / 実行エラー
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(1000)]

@@ -3,20 +3,18 @@ using NPoco;
 namespace CvBase;
 
 /// <summary>
-/// DBバージョン情報クラス
+/// DBバージョン情報クラス (SysUpdateDb を使用)
 /// </summary>
-public record InnerVersion(string DbVersion, string Sql, string Memo);
+public record InnerVersion(int DbVersion, string Sql, string Memo);
 
 /// <summary>
 /// DBのテーブル変更を管理する
 /// </summary>
 public class UpdateDb {
 	private static InnerVersion[] versions = [
-		new ("2026.04.08 01","","SysUpdateDbテーブル 2026.04.08定義"),
-		new ("2020.04.08 02","ALTER TABLE TranVulcanHht ADD COLUMN ErrorMsg TEXT;","2026.04.08定義")
+		new (26040101,"ALTER TABLE TranVulcanHht ADD COLUMN ErrorMsg TEXT;","SysUpdateDbテーブル 2026.04.08定義"),
+		//new (26040102,"","2026.04.08定義")
 	];
-
-
 
 	static public async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);
@@ -27,7 +25,7 @@ public class UpdateDb {
 	static public async Task WriteVersionInfoAsync(IDatabase db, InnerVersion[] verupSql, CancellationToken ct = default) {
 		if (verupSql.Length == 0) return;
 
-		var latestDb = await db.FirstOrDefaultAsync<SysUpdateDb>("order by Id desc", ct);
+		var latestDb = await db.FirstOrDefaultAsync<SysUpdateDb>("order by DbVersion desc", ct); // DB上の最新バージョン情報を取得
 		var logger = NLog.LogManager.GetCurrentClassLogger();
 		// vreupSqlがあり、DBにバージョンレコードがない場合は、プログラム最新かつDBも新規の場合なので、verupSqlの最新バージョンをDBに書き込む
 		var latestVersion = verupSql[^1]; // verupSqlの最新バージョンは、DBの最新バージョンとする
@@ -43,14 +41,17 @@ public class UpdateDb {
 			logger.Debug($"DBバージョン新規書込({latestVersion.DbVersion})");
 			return;
 		}
-		if (string.Compare(latestDb.DbVersion, latestVersion.DbVersion) <= 0) { // DBに最新までレコードがある
+		if (latestDb.DbVersion >= latestVersion.DbVersion) { // DBに最新までレコードがある
 			logger.Debug($"DBバージョンは最新({latestVersion.DbVersion})");
 			return;
 		}
 		foreach (var record in verupSql) { // 配列はforeachで必ず順番に処理される
 			ct.ThrowIfCancellationRequested();
-			if (string.Compare(latestVersion.DbVersion, record.DbVersion) > 0) { // verupSqlのバージョンがDBのバージョンより新しい場合は、DBをverupSqlのバージョンに合わせるためのSQLを実行する
-				var errorMsg = await SubInsertRecordAsync(db, record, latestVersion.DbVersion, logger, ct);
+			if (record.DbVersion > latestDb.DbVersion) { // verupSqlのバージョンがDBのバージョンより新しい場合は、DBをverupSqlのバージョンに合わせるためのSQLを実行する
+				var errorMsg = await SubInsertRecordAsync(db, record, latestDb.DbVersion, logger, ct);
+				if (!string.IsNullOrEmpty(errorMsg)) {
+					logger.Error($"DBバージョンアップ時エラー rec={record.DbVersion}: {errorMsg} : SQL={record.Sql}");
+				}
 			}
 		}
 		logger.Debug($"DBバージョンアップ({latestDb.DbVersion} -> {latestVersion.DbVersion})");
@@ -59,7 +60,7 @@ public class UpdateDb {
 	/// <summary>
 	/// 個別のバージョンアップレコードの処理
 	/// </summary>
-	static async Task<string> SubInsertRecordAsync(IDatabase db, InnerVersion verInfo, string orgVersion, NLog.Logger logger, CancellationToken ct) {
+	static async Task<string> SubInsertRecordAsync(IDatabase db, InnerVersion verInfo, int orgVersion, NLog.Logger logger, CancellationToken ct) {
 		string? errorMsg = null;
 		var sqls = verInfo.Sql.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
