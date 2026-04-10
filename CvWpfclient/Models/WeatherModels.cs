@@ -27,6 +27,10 @@ public sealed class WeatherInfo {
 
 	/// <summary>MaterialDesign PackIcon Kind 名</summary>
 	public string IconKind { get; init; } = "WeatherSunny";
+
+	public DateTime SunRize { get; init; } = DateTime.MinValue;
+	public DateTime SunSet { get; init; } = DateTime.MinValue;
+
 }
 
 /// <summary>
