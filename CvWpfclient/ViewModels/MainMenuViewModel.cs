@@ -163,8 +163,27 @@ public partial class MainMenuViewModel : ObservableObject {
 				window.Height = startRect.Height;
 			}
 			else {
-				window.Left = miniRect.X;
-				window.Top = miniRect.Y;
+				string fitPosition = AppGlobal.Config.GetSection("Application")?["FitPosition"] ?? "";
+				if (fitPosition.Contains("Left") && fitPosition.Contains("Top")) {
+					window.Left = 0;
+					window.Top = 0;
+				}
+				else if (fitPosition.Contains("Left") && fitPosition.Contains("Bottom")) {
+					window.Left = 0;
+					window.Top = SystemParameters.WorkArea.Height - miniRect.Height;
+				}
+				else if (fitPosition.Contains("Right") && fitPosition.Contains("Top")) {
+					window.Left = SystemParameters.WorkArea.Width - miniRect.Width;
+					window.Top = 0;
+				}
+				else if (fitPosition.Contains("Right") && fitPosition.Contains("Bottom")) {
+					window.Left = SystemParameters.WorkArea.Width - miniRect.Width;
+					window.Top = SystemParameters.WorkArea.Height - miniRect.Height;
+				}
+				else {
+					window.Left = miniRect.X;
+					window.Top = miniRect.Y;
+				}
 				window.Width = miniRect.Width;
 				window.Height = miniRect.Height;
 			}
