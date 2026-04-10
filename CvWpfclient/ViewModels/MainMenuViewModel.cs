@@ -2,6 +2,7 @@ using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.Models;
 using CvWpfclient.Services;
@@ -65,12 +66,12 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	InfoUser infolocalUser = new InfoUser();
 	[ObservableProperty]
-	InfoServerTemp infolocalServer = new InfoServerTemp();
+	InfoServer infolocalServer = new InfoServer();
 	partial void OnInfolocalUserChanged(InfoUser value) {
 		AppGlobal.StaticInfoUser = value;
 		// ここに追加処理を書く
 	}
-	partial void OnInfolocalServerChanged(InfoServerTemp value) {
+	partial void OnInfolocalServerChanged(InfoServer value) {
 		AppGlobal.StaticInfoServer = value;
 	}
 	[RelayCommand]
@@ -80,9 +81,6 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 
 		MenuItems = MenuData.CreateDefault();
-		ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
-		StartClock();
-		SetSubMessage();
 		IsMenuReady = true;
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
@@ -94,19 +92,23 @@ public partial class MainMenuViewModel : ObservableObject {
 				Height = 700
 			};
 		}
+		StartClock();
+		ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
 		InfolocalUser.OsVer = Environment.OSVersion.ToString();
 		InfolocalUser.DotnetVer = Environment.Version.ToString();
 		InfolocalUser.ComputerName = Environment.MachineName;
 		InfolocalUser.UserName = Environment.UserName;
+		InfolocalServer.Url = AppGlobal.Config.GetSection("ConnectionStrings")?["Url"] ?? "";
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 		// Velopack のバージョンを表示する
-		SubTitle += $"  Client Ver={App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetCurrentVersion()}";
+		SubTitle += $"  Client Ver {App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetCurrentVersion()}";
+		SetSubMessage();
 	}
 
 	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 		StatusMessage = $"左側のメニューリストから選択し、ダブルクリックまたはEnterで実行してください。 \nF9: バージョンアップ  F10: 環境設定,  F11: リフレッシュトークン, F12: ログイン画面";
-		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {InfolocalServer.ProductVer ?? "Product Version"}\nサーバ開始時間 {InfolocalServer.StartTime ?? "??:??:??"}\nビルド日付 {InfolocalServer.BuildDate ?? "??:??:??"}\nベースDir {InfolocalServer.BaseDir}";
+		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}";
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
 
@@ -170,7 +172,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (!SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
 			return;
 		// ToDo : ログインしてないときはログイン画面を出す etc リリース時にはちゃんと実装する
-		if (InfolocalServer.ProductVer == null) {
+		if (InfolocalServer == null) {
 			await afterLogin(new _00System.LoginViewModel());
 		}
 		if (SelectedMenu.IsDialog)
@@ -244,10 +246,10 @@ public partial class MainMenuViewModel : ObservableObject {
 			var msg = new CvnetMsg { Flag = CvnetFlag.Msg002_GetVersion };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
 			var version = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as CvBase.Share.InfoServer;
-			InfolocalServer.ProductVer = $"{version?.Product} {version?.Version}";
-			InfolocalServer.StartTime = version?.StartTime.ToString("yyyy/MM/dd HH:mm:ss");
-			InfolocalServer.BuildDate = version?.BuildDate.ToString("yyyy/MM/dd HH:mm:ss");
-			InfolocalServer.BaseDir = version?.BaseDir ?? "";
+			if (version != null) {
+				InfolocalServer = version;
+				version.Url = AppGlobal.Config.GetSection("ConnectionStrings")?["Url"] ?? "";
+			}
 		}
 		catch (Exception ex) {
 			_logger.Warn($"サーバ情報の取得に失敗: {ex.Message}");

@@ -55,7 +55,7 @@ public static class AppGlobal {
 	}
 
 	public static Models.InfoUser StaticInfoUser = new();
-	public static Models.InfoServerTemp StaticInfoServer = new();
+	public static CvBase.Share.InfoServer StaticInfoServer = new();
 
 
 	/// <summary>

@@ -16,13 +16,3 @@ public partial class InfoUser : ObservableObject {
 	[ObservableProperty]
 	string? expireTime = null;
 }
-public partial class InfoServerTemp : ObservableObject {
-	[ObservableProperty]
-	string? productVer = null;
-	[ObservableProperty]
-	string? buildDate = null;
-	[ObservableProperty]
-	string? startTime = null;
-	[ObservableProperty]
-	string? baseDir = null;
-}
