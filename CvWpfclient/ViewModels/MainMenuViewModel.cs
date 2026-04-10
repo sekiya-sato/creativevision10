@@ -113,7 +113,7 @@ public partial class MainMenuViewModel : ObservableObject {
 
 	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
-		StatusMessage = $"左側のメニューリストから選択し、ダブルクリックまたはEnterで実行してください。 \nF9: バージョンアップ  F10: 環境設定,  F11: リフレッシュトークン, F12: ログイン画面";
+		StatusMessage = $"左側のメニューリストから選択し、ダブルクリックまたはEnterで実行してください。";
 		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}";
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
@@ -328,7 +328,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	private Axis[] forecastXAxes = [new Axis { Labels = [], TextSize = 11 }];
 
 	[ObservableProperty]
-	private Axis[] forecastYAxes = [new Axis { Name = "℃", TextSize = 11, MinLimit = null, MaxLimit = null }];
+	private Axis[] forecastYAxes = [new Axis { Name = "", TextSize = 11, MinLimit = null, MaxLimit = null }]; // ℃
 
 	private DispatcherTimer? _weatherTimer;
 
@@ -381,7 +381,7 @@ public partial class MainMenuViewModel : ObservableObject {
 					LabelsRotation = 0
 				}];
 				ForecastYAxes = [new Axis {
-					Name = "℃",
+					Name = "", // ℃
 					TextSize = 11
 				}];
 			}
