@@ -314,14 +314,14 @@
 
 								<!--  天気アイコン＋気温  -->
 								<materialDesign:Card Grid.Column="0"
-									Margin="0,0,8,0" Padding="16"
+									Margin="0,0,8,0" Padding="1"
 									Background="{DynamicResource panelColor}">
 									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon Width="60" Height="60"
+										<materialDesign:PackIcon Width="90" Height="90"
 											VerticalAlignment="Center"
 											Foreground="{DynamicResource color6}"
 											Kind="{Binding WeatherIconKind}" />
-										<StackPanel Margin="12,0,0,0" VerticalAlignment="Center"
+										<StackPanel Margin="4,0,4,0" VerticalAlignment="Center"
 											Opacity="0.8">
 											<TextBlock FontSize="14"
 												Foreground="{DynamicResource plainTextColor0}"

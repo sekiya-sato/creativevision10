@@ -46,10 +46,11 @@
 
 - CvWpfclient/appsettings.json の調整
 	<pre>
-	appsettings.json "ConnectionStrings" の "Url" に、サーバのURLを記述
-	appsettings.json "Application" の "Version" にバージョン番号を記述
-	appsettings.json "Application" の "OpenWeatherApiKey" openweathermapのAPIキーを記述 https://openweathermap.org/
-	appsettings.json "Application" の "WeatherRegion" openweathermapの地域を記述
+	"ConnectionStrings", "Url": サーバのURLを記述
+	"Application", "Version": バージョン番号を記述
+	"Application", "OpenWeatherApiKey": openweathermapのAPIキーを記述 https://openweathermap.org/
+	"Application", "WeatherRegion": openweathermapの地域を記述
+	"Application", "FitPosition": メニューのみの場合のWindow位置 Left/Right と Top/Bottom の組み合わせを指定
 	</pre>
 
 - ビルド(Windows環境)
