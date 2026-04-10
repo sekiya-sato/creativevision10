@@ -65,12 +65,12 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	InfoUser infolocalUser = new InfoUser();
 	[ObservableProperty]
-	InfoServer infolocalServer = new InfoServer();
+	InfoServerTemp infolocalServer = new InfoServerTemp();
 	partial void OnInfolocalUserChanged(InfoUser value) {
 		AppGlobal.StaticInfoUser = value;
 		// ここに追加処理を書く
 	}
-	partial void OnInfolocalServerChanged(InfoServer value) {
+	partial void OnInfolocalServerChanged(InfoServerTemp value) {
 		AppGlobal.StaticInfoServer = value;
 	}
 	[RelayCommand]
@@ -243,7 +243,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
 			var msg = new CvnetMsg { Flag = CvnetFlag.Msg002_GetVersion };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
-			var version = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as CvBase.Share.VersionInfo;
+			var version = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as CvBase.Share.InfoServer;
 			InfolocalServer.ProductVer = $"{version?.Product} {version?.Version}";
 			InfolocalServer.StartTime = version?.StartTime.ToString("yyyy/MM/dd HH:mm:ss");
 			InfolocalServer.BuildDate = version?.BuildDate.ToString("yyyy/MM/dd HH:mm:ss");

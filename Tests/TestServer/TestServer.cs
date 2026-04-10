@@ -93,7 +93,7 @@ public class CvnetCoreServiceTests {
 		Assert.IsNotNull(result);
 		Assert.AreEqual(0, result.Code);
 		Assert.AreEqual(request.Flag, result.Flag);
-		Assert.AreEqual(typeof(VersionInfo), result.DataType);
+		Assert.AreEqual(typeof(InfoServer), result.DataType);
 		Assert.IsFalse(string.IsNullOrWhiteSpace(result.DataMsg ?? ""));
 		// JSON 解析は不要だが、空でないことを確認
 	}

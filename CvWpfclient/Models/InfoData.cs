@@ -16,7 +16,7 @@ public partial class InfoUser : ObservableObject {
 	[ObservableProperty]
 	string? expireTime = null;
 }
-public partial class InfoServer : ObservableObject {
+public partial class InfoServerTemp : ObservableObject {
 	[ObservableProperty]
 	string? productVer = null;
 	[ObservableProperty]

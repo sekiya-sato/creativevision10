@@ -145,7 +145,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg002_GetVersion };
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 		if (reply?.DataMsg != null && reply?.DataType != null) {
-			var versionInfo = Common.DeserializeObject<CvBase.Share.VersionInfo>(reply.DataMsg);
+			var versionInfo = Common.DeserializeObject<CvBase.Share.InfoServer>(reply.DataMsg);
 			// 表示用に整形、取得した情報をすべて出す
 			TestMsg002Result = $"{versionInfo?.Product}-{versionInfo?.BuildDate} Ver.{versionInfo?.Version} Base:{versionInfo?.BaseDir} Machine:{versionInfo?.MachineName} User:{versionInfo?.UserName} OS:{versionInfo?.OsVersion} DotNet:{versionInfo?.DotNetVersion}";
 		}

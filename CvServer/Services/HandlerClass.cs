@@ -25,7 +25,7 @@ public partial class CvnetCoreService {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogDebug("HandleGetVersion invoked Flag:{Flag}", request.Flag);
 
-		return CreateSuccessResponse(request.Flag, typeof(VersionInfo), Common.SerializeObject(new AppGlobal().VerInfo));
+		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(new AppGlobal().VerInfo));
 	}
 
 	private CvnetMsg HandleGetEnv(CvnetMsg request, CallContext context) {

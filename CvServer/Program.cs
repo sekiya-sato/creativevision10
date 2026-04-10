@@ -45,13 +45,11 @@ builder.Services.AddCodeFirstGrpc((options => {
 
 builder.WebHost.ConfigureKestrel(serverOptions => {
 	// TODO: Kestrel デフォルトのオプションは必要に応じて追加する(2024/08/15)
-	// [TODO: Add default options for Kestrel as needed]
 	serverOptions.Limits.MaxRequestBodySize = 838_860_800; // 800 MB
 	serverOptions.Limits.MaxConcurrentConnections = 100; // 最大同時接続数 [Maximum number of simultaneous connections]
 	serverOptions.Limits.Http2.MaxStreamsPerConnection = 100; // 最大ストリーム数 [Maximum number of streams]
-															  // Timeout設定
 	serverOptions.Limits.Http2.KeepAlivePingDelay = TimeSpan.FromSeconds(30);
-	serverOptions.Limits.Http2.KeepAlivePingTimeout = TimeSpan.FromSeconds(20);
+	serverOptions.Limits.Http2.KeepAlivePingTimeout = TimeSpan.FromSeconds(20); // Timeout設定
 });
 builder.Services.AddHttpContextAccessor(); // HttpContextを取得可能にする [Make HttpContext accessible]
 
@@ -116,7 +114,7 @@ builder.Services.AddSingleton<ExDatabase>(sp => {
 	// ファクトリメソッドを使用してインスタンスを生成
 	return CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr);
 });
-
+var serverVersion = builder.Configuration.GetSection("ServerVersion").Value ?? "0.0.0";
 var app = builder.Build();
 var logger = app.Logger;
 logger.LogDebug("Application Start ------------------------------------");
@@ -149,51 +147,43 @@ app.MapGrpcService<LoginService>();
 app.MapGrpcService<CvnetCoreService>();
 app.MapGrpcService<SchedulerService>();
 var appInit = new AppGlobal();
-appInit.Init(CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr));
+// DIコンテナから登録済みの ExDatabase を取得してサーバ起動時に必要な初期化を実行
+appInit.Init(app.Services.GetRequiredService<ExDatabase>(), app.Environment.ApplicationName, serverVersion);
+var appStartTime = DateTime.Now;
 
 app.MapGet("/", () =>
 $"""
-{appInit.VerInfo.Product} Ver.{appInit.VerInfo.Version}
+CvServer Ver.{serverVersion} is running. ({appStartTime} - {DateTime.Now})
 Communication with gRPC endpoints must be made through a gRPC client. 
-Now: {DateTime.Now}, Start:{appInit.VerInfo.StartTime},
-BaseDir: {appInit.VerInfo.BaseDir}
 
-BuildMetadata:
-Machine: {appInit.VerInfo.MachineName} ,UserName: {appInit.VerInfo.UserName} 
-OS: {appInit.VerInfo.OsVersion} ,DotNet: {appInit.VerInfo.DotNetVersion}, Build:{appInit.VerInfo.BuildDate}
 """
 );
 
-// 静的ファイルの提供を設定、`wrk` フォルダはあらかじめ作るか、作成権限を持たせておく必要がある
-var staticFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "wrk");
-if (!Directory.Exists(staticFilesPath)) {
-	Directory.CreateDirectory(staticFilesPath); // フォルダが存在しない場合は作成
-}
-var imageFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "img");
-if (!Directory.Exists(imageFilesPath)) {
-	Directory.CreateDirectory(imageFilesPath); // フォルダが存在しない場合は作成
+// 公開するディレクトリとリクエストパスの定義
+(string Directory, string RequestPath)[] staticPaths = [
+	("wrk", "/wrk"),
+	("img", "/img")
+];
+
+// 共通の準備処理（ディレクトリ作成とStaticFileOptionsの生成）
+foreach (var pathInfo in staticPaths) {
+	var fullPath = Path.Combine(Directory.GetCurrentDirectory(), pathInfo.Directory);
+	if (!Directory.Exists(fullPath)) {
+		Directory.CreateDirectory(fullPath);
+	}
+	app.UseStaticFiles(new StaticFileOptions {
+		FileProvider = new PhysicalFileProvider(fullPath),
+		RequestPath = pathInfo.RequestPath,
+		OnPrepareResponse = ctx => {
+			// セキュリティ・キャッシュ制御ヘッダーの共通設定
+			var headers = ctx.Context.Response.Headers;
+			headers.CacheControl = "no-cache, no-store, must-revalidate";
+			headers.Pragma = "no-cache";
+			headers.Expires = "0";
+		}
+	});
 }
 
-app.UseStaticFiles(new StaticFileOptions {
-	FileProvider = new PhysicalFileProvider(staticFilesPath),
-	RequestPath = "/wrk", // クライアントからアクセスする際のURLパス
-	OnPrepareResponse = ctx => {
-		// セキュリティ設定: キャッシュ制御やヘッダーの設定
-		ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
-		ctx.Context.Response.Headers.Append("Pragma", "no-cache");
-		ctx.Context.Response.Headers.Append("Expires", "0");
-	}
-});
-// 画像ファイル専用の静的ファイル公開（/images でアクセス可能にする）
-app.UseStaticFiles(new StaticFileOptions {
-	FileProvider = new PhysicalFileProvider(imageFilesPath),
-	RequestPath = "/img",
-	OnPrepareResponse = ctx => {
-		ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
-		ctx.Context.Response.Headers.Append("Pragma", "no-cache");
-		ctx.Context.Response.Headers.Append("Expires", "0");
-	}
-});
 
 app.Run();
 

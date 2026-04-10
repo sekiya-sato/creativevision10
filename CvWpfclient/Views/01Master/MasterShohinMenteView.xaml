@@ -1,9 +1,8 @@
 <helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterShohinMenteView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
-	xmlns:Wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+	xmlns:Wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf" xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
 	Title="{Binding Title}"
 	Width="1280" Height="920"
 	d:Height="1200"
@@ -395,7 +394,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="元上代" />
 								<TextBox Grid.Row="7" Grid.Column="1"
-									Width="170" HorizontalAlignment="Left"
+									Width="170"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="元上代"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TankaJodaiOrg}" />
@@ -405,7 +405,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="上代" />
 								<TextBox Grid.Row="8" Grid.Column="1"
-									Width="170" HorizontalAlignment="Left"
+									Width="170"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="上代"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TankaJodai}" />
@@ -415,7 +416,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="原価" />
 								<TextBox Grid.Row="9" Grid.Column="1"
-									Width="170" HorizontalAlignment="Left"
+									Width="170"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="原価"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TankaGenka}" />
@@ -425,26 +427,26 @@
 									Style="{StaticResource FormLabel}"
 									Text="仕入単価" />
 								<TextBox Grid.Row="10" Grid.Column="1"
-									Width="170" HorizontalAlignment="Left"
+									Width="170"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="仕入単価"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TankaShiire}" />
 
-								<Border Grid.Row="7" Grid.Column="2" Grid.RowSpan="8"
+								<Border Grid.Row="7" Grid.RowSpan="8" Grid.Column="2"
 									Margin="20,4,0,4" Padding="0"
 									Background="{DynamicResource MaterialDesignPaper}"
 									BorderBrush="{DynamicResource MaterialDesignDivider}"
-									BorderThickness="1" CornerRadius="8"
-									ClipToBounds="True">
+									BorderThickness="1" ClipToBounds="True" CornerRadius="8">
 									<Grid>
 										<!--  WebView2 で商品画像をURL表示  -->
-										<Wpf:WebView2
-											Source="{Binding ShohinImageUri}">
+										<Wpf:WebView2 Source="{Binding ShohinImageUri}">
 											<Wpf:WebView2.Style>
 												<Style TargetType="Wpf:WebView2">
 													<Setter Property="Visibility" Value="Visible" />
 													<Style.Triggers>
-														<DataTrigger Binding="{Binding ShohinImageUri}" Value="{x:Null}">
+														<DataTrigger Binding="{Binding ShohinImageUri}"
+															Value="{x:Null}">
 															<Setter Property="Visibility" Value="Collapsed" />
 														</DataTrigger>
 													</Style.Triggers>
@@ -460,7 +462,8 @@
 												<Style TargetType="TextBlock">
 													<Setter Property="Visibility" Value="Visible" />
 													<Style.Triggers>
-														<DataTrigger Binding="{Binding ShohinImageStatusText}" Value="">
+														<DataTrigger Binding="{Binding ShohinImageStatusText}"
+															Value="">
 															<Setter Property="Visibility" Value="Collapsed" />
 														</DataTrigger>
 													</Style.Triggers>
