@@ -304,7 +304,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		App.ThemeService.ToggleTheme();
 	}
 
-	// ── 天気・カレンダー ダッシュボード ──────────────────────
+	// ── 天気ダッシュボード ──────────────────────
 
 	[ObservableProperty]
 	private WeatherInfo? currentWeather;
@@ -330,17 +330,10 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	private Axis[] forecastYAxes = [new Axis { Name = "℃", TextSize = 11, MinLimit = null, MaxLimit = null }];
 
-	[ObservableProperty]
-	private ObservableCollection<CalendarEventItem> calendarEvents = [];
-
-	[ObservableProperty]
-	private string calendarStatus = "カレンダー読込中...";
-
 	private DispatcherTimer? _weatherTimer;
 
 	private async void StartWeatherAndCalendar() {
 		await RefreshWeatherAsync();
-		await RefreshCalendarAsync();
 
 		// 天気は30分おきに更新
 		_weatherTimer = new DispatcherTimer {
@@ -395,24 +388,6 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 		catch (Exception ex) {
 			_logger.Warn(ex, "天気ダッシュボードの更新に失敗");
-		}
-	}
-
-	private async Task RefreshCalendarAsync() {
-		try {
-			var calService = App.AppHost?.Services.GetService<IGoogleCalendarService>();
-			if (calService == null) {
-				CalendarStatus = "カレンダーサービス未設定";
-				return;
-			}
-
-			var events = await calService.GetUpcomingEventsAsync();
-			CalendarEvents = new ObservableCollection<CalendarEventItem>(events);
-			CalendarStatus = events.Count == 0 ? "予定はありません" : $"{events.Count}件の予定";
-		}
-		catch (Exception ex) {
-			_logger.Warn(ex, "カレンダーの更新に失敗");
-			CalendarStatus = "カレンダーの取得に失敗";
 		}
 	}
 

@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
-    <PackageReference Include="Google.Apis.Calendar.v3" />
+
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Grpc.Net.ClientFactory" />
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" />

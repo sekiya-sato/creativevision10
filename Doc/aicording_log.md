@@ -442,3 +442,24 @@
 - dotnet build: 0警告、0エラー
 
 ---
+
+## [2026-04-10] 17:30 GoogleCalendarService および関連コードの削除
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient から GoogleCalendarService とそのインターフェースを削除し、MainMenuView のカレンダー表示エリアを削除する（天気情報はそのまま残す）
+### 実施内容
+- CvWpfclient/CvWpfclient.csproj: Google.Apis.Calendar.v3 パッケージ参照を削除
+- CvWpfclient/Services/GoogleCalendarService.cs: ファイルごと削除（IGoogleCalendarService インターフェースと GoogleCalendarService クラス）
+- CvWpfclient/Models/WeatherModels.cs: CalendarEventItem クラスを削除（天気関連モデルは残存）
+- CvWpfclient/App.xaml.cs: IGoogleCalendarService の DI 登録行を削除
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: CalendarEvents / CalendarStatus プロパティ、RefreshCalendarAsync メソッド、StartWeatherAndCalendar 内のカレンダー呼び出しを削除
+- CvWpfclient/Views/MainMenuView.xaml: カレンダーアジェンダ表示エリア（materialDesign:Card）を削除、StackPanel 名を WeatherPanel に変更
+### 技術決定 Why
+- Google Calendar 機能が不要となったため、NuGetパッケージ依存を含めて完全にクリーンアップした。天気情報機能は独立しているためそのまま残した
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: 0警告、0エラー
+
+---

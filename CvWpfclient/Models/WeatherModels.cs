@@ -43,26 +43,3 @@ public sealed class HourlyForecast {
 	public string TimeLabel { get; init; } = string.Empty;
 }
 
-/// <summary>
-/// Googleカレンダーのイベント情報
-/// </summary>
-public sealed class CalendarEventItem {
-	/// <summary>イベントタイトル</summary>
-	public string Summary { get; init; } = string.Empty;
-
-	/// <summary>開始日時</summary>
-	public DateTime StartTime { get; init; }
-
-	/// <summary>終了日時</summary>
-	public DateTime EndTime { get; init; }
-
-	/// <summary>場所</summary>
-	public string Location { get; init; } = string.Empty;
-
-	/// <summary>終日イベントかどうか</summary>
-	public bool IsAllDay { get; init; }
-
-	/// <summary>表示用の時刻文字列</summary>
-	public string TimeDisplay =>
-		IsAllDay ? "終日" : $"{StartTime:HH:mm} - {EndTime:HH:mm}";
-}

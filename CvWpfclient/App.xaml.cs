@@ -169,8 +169,7 @@ public partial class App : Application {
 				// 3. サービスの登録
 				services.AddSingleton<IUpdateService, UpdateService>();
 				services.AddHttpClient<IWeatherService, WeatherService>();
-				services.AddSingleton<IGoogleCalendarService, GoogleCalendarService>();
-				ConfigureClient<ILoginService>(services, url, subPath);
+					ConfigureClient<ILoginService>(services, url, subPath);
 				ConfigureClient<ICvnetCoreService>(services, url, subPath);
 			});
 	}

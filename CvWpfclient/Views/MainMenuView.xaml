@@ -297,7 +297,7 @@
 							</StackPanel>
 						</Border>
 						<!--    -->
-						<StackPanel x:Name="WeatherAndSchedulePanel"
+						<StackPanel x:Name="WeatherPanel"
 							Grid.Row="2"
 							Margin="0,16,0,0">
 							<Grid>
@@ -342,65 +342,6 @@
 										YAxes="{Binding ForecastYAxes}" />
 								</materialDesign:Card>
 							</Grid>
-
-							<!--  下半分: カレンダーアジェンダ  -->
-							<materialDesign:Card Margin="0,8,0,0" Padding="12"
-								Background="{DynamicResource panelColor}">
-								<StackPanel>
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon Width="20" Height="20"
-											VerticalAlignment="Center"
-											Foreground="{DynamicResource MenuTitleColor}"
-											Kind="CalendarMonth" />
-										<TextBlock Margin="8,0,0,0"
-											VerticalAlignment="Center"
-											FontSize="14"
-											Foreground="{DynamicResource MenuTitleColor}"
-											Style="{StaticResource SectionTitleText}"
-											Text="今後の予定" />
-										<TextBlock Margin="12,0,0,0"
-											VerticalAlignment="Center"
-											FontSize="12"
-											Foreground="{DynamicResource plainTextColor0}"
-											Opacity="0.6"
-											Text="{Binding CalendarStatus}" />
-									</StackPanel>
-									<ItemsControl Margin="0,8,0,0"
-										ItemsSource="{Binding CalendarEvents}">
-										<ItemsControl.ItemTemplate>
-											<DataTemplate DataType="{x:Type models:CalendarEventItem}">
-												<Border Margin="0,2" Padding="8,4"
-													Background="{DynamicResource panelColor}"
-													BorderBrush="{DynamicResource plainTextColor0}"
-													BorderThickness="0,0,0,0.5"
-													Opacity="0.9">
-													<Grid>
-														<Grid.ColumnDefinitions>
-															<ColumnDefinition Width="80" />
-															<ColumnDefinition Width="*" />
-															<ColumnDefinition Width="Auto" />
-														</Grid.ColumnDefinitions>
-														<TextBlock FontSize="13" FontWeight="SemiBold"
-															Foreground="{DynamicResource color6}"
-															Text="{Binding TimeDisplay}" />
-														<TextBlock Grid.Column="1"
-															Margin="8,0,0,0"
-															FontSize="13"
-															Foreground="{DynamicResource plainTextColor0}"
-															Text="{Binding Summary}"
-															TextTrimming="CharacterEllipsis" />
-														<TextBlock Grid.Column="2"
-															FontSize="11"
-															Foreground="{DynamicResource plainTextColor0}"
-															Opacity="0.6"
-															Text="{Binding Location}" />
-													</Grid>
-												</Border>
-											</DataTemplate>
-										</ItemsControl.ItemTemplate>
-									</ItemsControl>
-								</StackPanel>
-							</materialDesign:Card>
 						</StackPanel>
 						<!--    -->
 						<Border Grid.Row="3"
