@@ -29,8 +29,10 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Google.Apis.Calendar.v3" />
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Grpc.Net.ClientFactory" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" />
     <PackageReference Include="MaterialDesignColors" />
     <PackageReference Include="MaterialDesignThemes" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
@@ -40,6 +42,7 @@
     <PackageReference Include="NLog.Extensions.Logging" />
     <PackageReference Include="protobuf-net.Grpc.ClientFactory" />
     <PackageReference Include="NLog" />
+    <PackageReference Include="SkiaSharp.Views.WPF" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="Velopack" />
   </ItemGroup>

@@ -6,7 +6,12 @@ using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.Models;
 using CvWpfclient.Services;
+using LiveChartsCore;
+using LiveChartsCore.Defaults;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Extensions.DependencyInjection;
+using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
@@ -93,6 +98,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			};
 		}
 		StartClock();
+		StartWeatherAndCalendar();
 		ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
 		InfolocalUser.OsVer = Environment.OSVersion.ToString();
 		InfolocalUser.DotnetVer = Environment.Version.ToString();
@@ -296,6 +302,118 @@ public partial class MainMenuViewModel : ObservableObject {
 	[RelayCommand]
 	private void ToggleTheme() {
 		App.ThemeService.ToggleTheme();
+	}
+
+	// ── 天気・カレンダー ダッシュボード ──────────────────────
+
+	[ObservableProperty]
+	private WeatherInfo? currentWeather;
+
+	[ObservableProperty]
+	private string weatherIconKind = "WeatherSunny";
+
+	[ObservableProperty]
+	private string weatherTemperature = "--℃";
+
+	[ObservableProperty]
+	private string weatherDescription = "取得中...";
+
+	[ObservableProperty]
+	private string weatherLocation = "";
+
+	[ObservableProperty]
+	private ISeries[] forecastSeries = [];
+
+	[ObservableProperty]
+	private Axis[] forecastXAxes = [new Axis { Labels = [], TextSize = 11 }];
+
+	[ObservableProperty]
+	private Axis[] forecastYAxes = [new Axis { Name = "℃", TextSize = 11, MinLimit = null, MaxLimit = null }];
+
+	[ObservableProperty]
+	private ObservableCollection<CalendarEventItem> calendarEvents = [];
+
+	[ObservableProperty]
+	private string calendarStatus = "カレンダー読込中...";
+
+	private DispatcherTimer? _weatherTimer;
+
+	private async void StartWeatherAndCalendar() {
+		await RefreshWeatherAsync();
+		await RefreshCalendarAsync();
+
+		// 天気は30分おきに更新
+		_weatherTimer = new DispatcherTimer {
+			Interval = TimeSpan.FromMinutes(30)
+		};
+		_weatherTimer.Tick += async (s, e) => await RefreshWeatherAsync();
+		_weatherTimer.Start();
+	}
+
+	private async Task RefreshWeatherAsync() {
+		try {
+			var weatherService = App.AppHost?.Services.GetService<IWeatherService>();
+			if (weatherService == null) return;
+
+			var weather = await weatherService.GetCurrentWeatherAsync();
+			if (weather != null) {
+				CurrentWeather = weather;
+				WeatherIconKind = weather.IconKind;
+				WeatherTemperature = $"{weather.Temperature:F0}℃";
+				WeatherDescription = weather.Description;
+				WeatherLocation = weather.Location;
+			}
+
+			var forecasts = await weatherService.GetHourlyForecastAsync();
+			if (forecasts.Count > 0) {
+				var values = forecasts.Select(f => new ObservablePoint(0, f.Temperature)).ToArray();
+				for (int i = 0; i < values.Length; i++) {
+					values[i] = new ObservablePoint(i, forecasts[i].Temperature);
+				}
+
+				ForecastSeries = [
+					new LineSeries<ObservablePoint> {
+						Values = values,
+						Fill = new SolidColorPaint(new SKColor(33, 150, 243, 80)),
+						Stroke = new SolidColorPaint(new SKColor(33, 150, 243)) { StrokeThickness = 2 },
+						GeometryFill = new SolidColorPaint(new SKColor(33, 150, 243)),
+						GeometryStroke = new SolidColorPaint(new SKColor(33, 150, 243)),
+						GeometrySize = 6,
+						LineSmoothness = 0.3
+					}
+				];
+				ForecastXAxes = [new Axis {
+					Labels = forecasts.Select(f => f.TimeLabel).ToArray(),
+					TextSize = 11,
+					LabelsRotation = 0
+				}];
+				ForecastYAxes = [new Axis {
+					Name = "℃",
+					TextSize = 11
+				}];
+			}
+		}
+		catch (Exception ex) {
+			_logger.Warn(ex, "天気ダッシュボードの更新に失敗");
+		}
+	}
+
+	private async Task RefreshCalendarAsync() {
+		try {
+			var calService = App.AppHost?.Services.GetService<IGoogleCalendarService>();
+			if (calService == null) {
+				CalendarStatus = "カレンダーサービス未設定";
+				return;
+			}
+
+			var events = await calService.GetUpcomingEventsAsync();
+			CalendarEvents = new ObservableCollection<CalendarEventItem>(events);
+			CalendarStatus = events.Count == 0 ? "予定はありません" : $"{events.Count}件の予定";
+		}
+		catch (Exception ex) {
+			_logger.Warn(ex, "カレンダーの更新に失敗");
+			CalendarStatus = "カレンダーの取得に失敗";
+		}
 	}
 
 	private async void StartClock() {

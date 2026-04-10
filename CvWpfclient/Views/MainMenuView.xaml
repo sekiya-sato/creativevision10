@@ -2,7 +2,7 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:models="clr-namespace:CvWpfclient.Models" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" xmlns:vm="clr-namespace:CvWpfclient.ViewModels"
+	xmlns:models="clr-namespace:CvWpfclient.Models" xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" xmlns:vm="clr-namespace:CvWpfclient.ViewModels"
 	Title="{Binding HeaderTitle}"
 	Width="1200" Height="780"
 	Background="Transparent" Icon="pack://application:,,,/cvnet.ico" ResizeMode="CanResizeWithGrip" SnapsToDevicePixels="True" UseLayoutRounding="True"
@@ -298,43 +298,109 @@
 						</Border>
 						<!--    -->
 						<StackPanel x:Name="WeatherAndSchedulePanel"
-							Grid.Row="2">
-							<UniformGrid Columns="0">
-								<materialDesign:Card Margin="4" Padding="12"
+							Grid.Row="2"
+							Margin="0,16,0,0">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+
+								<!--  左上: 天気アイコン＋気温  -->
+								<materialDesign:Card Grid.Column="0"
+									Margin="0,0,8,0" Padding="16"
 									Background="{DynamicResource panelColor}">
 									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon Width="32" Height="32"
+										<materialDesign:PackIcon Width="48" Height="48"
+											VerticalAlignment="Center"
 											Foreground="{DynamicResource color6}"
-											Kind="WeatherSunny" />
-										<StackPanel Margin="10,0,0,0">
-											<TextBlock FontSize="14" Opacity="0.8" Text="Tokyo" />
-											<TextBlock FontSize="20" FontWeight="Bold" Text="22℃" />
+											Kind="{Binding WeatherIconKind}" />
+										<StackPanel Margin="12,0,0,0"
+											VerticalAlignment="Center">
+											<TextBlock FontSize="14"
+												Foreground="{DynamicResource plainTextColor0}"
+												Opacity="0.8"
+												Text="{Binding WeatherLocation, FallbackValue='Tokyo'}" />
+											<TextBlock FontSize="28" FontWeight="Bold"
+												Foreground="{DynamicResource plainTextColor0}"
+												Text="{Binding WeatherTemperature, FallbackValue='--℃'}" />
+											<TextBlock FontSize="12"
+												Foreground="{DynamicResource plainTextColor0}"
+												Opacity="0.7"
+												Text="{Binding WeatherDescription, FallbackValue='取得中...'}" />
 										</StackPanel>
 									</StackPanel>
 								</materialDesign:Card>
 
-								<materialDesign:Card Margin="4" Padding="12"
+								<!--  右上: 気温推移チャート  -->
+								<materialDesign:Card Grid.Column="1"
+									Padding="8"
 									Background="{DynamicResource panelColor}">
-									<StackPanel>
-										<TextBlock Style="{StaticResource MetricLabel}"
-											Text="次回の予定" />
-										<TextBlock FontWeight="SemiBold" Text="14:00 商品撮影" />
-									</StackPanel>
+									<lvc:CartesianChart Height="120"
+										Series="{Binding ForecastSeries}"
+										XAxes="{Binding ForecastXAxes}"
+										YAxes="{Binding ForecastYAxes}" />
 								</materialDesign:Card>
+							</Grid>
 
-								<materialDesign:Card Margin="4" Padding="12"
-									Background="{DynamicResource panelColor}">
+							<!--  下半分: カレンダーアジェンダ  -->
+							<materialDesign:Card Margin="0,8,0,0" Padding="12"
+								Background="{DynamicResource panelColor}">
+								<StackPanel>
 									<StackPanel Orientation="Horizontal">
-										<Button Width="30" Height="30"
-											Style="{StaticResource MaterialDesignFloatingActionMiniButton}">
-											<materialDesign:PackIcon Kind="Play" />
-										</Button>
-										<TextBlock Margin="8,0" VerticalAlignment="Center"
-											FontSize="12" Text="BGM: Cafe Jazz" />
+										<materialDesign:PackIcon Width="20" Height="20"
+											VerticalAlignment="Center"
+											Foreground="{DynamicResource MenuTitleColor}"
+											Kind="CalendarMonth" />
+										<TextBlock Margin="8,0,0,0"
+											VerticalAlignment="Center"
+											FontSize="14"
+											Foreground="{DynamicResource MenuTitleColor}"
+											Style="{StaticResource SectionTitleText}"
+											Text="今後の予定" />
+										<TextBlock Margin="12,0,0,0"
+											VerticalAlignment="Center"
+											FontSize="12"
+											Foreground="{DynamicResource plainTextColor0}"
+											Opacity="0.6"
+											Text="{Binding CalendarStatus}" />
 									</StackPanel>
-								</materialDesign:Card>
-							</UniformGrid>
-
+									<ItemsControl Margin="0,8,0,0"
+										ItemsSource="{Binding CalendarEvents}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate DataType="{x:Type models:CalendarEventItem}">
+												<Border Margin="0,2" Padding="8,4"
+													Background="{DynamicResource panelColor}"
+													BorderBrush="{DynamicResource plainTextColor0}"
+													BorderThickness="0,0,0,0.5"
+													Opacity="0.9">
+													<Grid>
+														<Grid.ColumnDefinitions>
+															<ColumnDefinition Width="80" />
+															<ColumnDefinition Width="*" />
+															<ColumnDefinition Width="Auto" />
+														</Grid.ColumnDefinitions>
+														<TextBlock FontSize="13" FontWeight="SemiBold"
+															Foreground="{DynamicResource color6}"
+															Text="{Binding TimeDisplay}" />
+														<TextBlock Grid.Column="1"
+															Margin="8,0,0,0"
+															FontSize="13"
+															Foreground="{DynamicResource plainTextColor0}"
+															Text="{Binding Summary}"
+															TextTrimming="CharacterEllipsis" />
+														<TextBlock Grid.Column="2"
+															FontSize="11"
+															Foreground="{DynamicResource plainTextColor0}"
+															Opacity="0.6"
+															Text="{Binding Location}" />
+													</Grid>
+												</Border>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</StackPanel>
+							</materialDesign:Card>
 						</StackPanel>
 						<!--    -->
 						<Border Grid.Row="3"

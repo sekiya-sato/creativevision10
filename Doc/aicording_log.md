@@ -357,7 +357,32 @@
 
 ---
 
-## [2026-04-10] 02:41 商品マスターメンテ画像表示をImage→WebView2に変更
+## [2026-04-10] 14:30 MainMenuViewに天気・カレンダーダッシュボードを実装
+### Agent
+- claude-opus-4.6 : GitHub-Copilot : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuViewに天気情報（OpenWeatherMap API）と今日の予定（Google Calendar API）を表示するダッシュボードを実装する
+### 実施内容
+- Directory.Packages.props: Google.Apis.Calendar.v3、LiveChartsCore.SkiaSharpView.WPF、SkiaSharp.Views.WPFのバージョンを中央管理に追加
+- CvWpfclient/CvWpfclient.csproj: 上記3パッケージのPackageReferenceを追加
+- CvWpfclient/Models/WeatherModels.cs: WeatherInfo、HourlyForecast、CalendarEventItemモデルクラスを新規作成
+- CvWpfclient/Services/WeatherService.cs: IWeatherService + WeatherService（OpenWeatherMap API呼び出し、MaterialDesignアイコンマッピング）を新規作成
+- CvWpfclient/Services/GoogleCalendarService.cs: IGoogleCalendarService + GoogleCalendarService（OAuth2認証、イベント取得）を新規作成
+- CvWpfclient/App.xaml.cs: WeatherService（AddHttpClient）とGoogleCalendarService（AddSingleton）のDI登録を追加
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 天気情報プロパティ（WeatherIconKind, WeatherTemperature等）、LiveCharts2のISeries[]/Axis[]バインディング、カレンダーイベントObservableCollection、30分間隔更新タイマーを追加
+- CvWpfclient/Views/MainMenuView.xaml: WeatherAndSchedulePanelの内容を削除し、左:天気カード＋右:気温推移チャート（LiveCharts2 CartesianChart）＋下:カレンダーアジェンダ（ItemsControl）に置換。lvc名前空間を追加
+- CvWpfclient/appsettings.json: OpenWeatherApiKeyとGoogleOAuthSecretの設定キーを追加
+### 技術決定 Why
+- MainMenuViewModelはXAMLで直接インスタンス化（DI外）のため、App.AppHost.Services.GetService<T>()パターンでサービスを取得。既存のAppGlobal.GetGrpcServiceパターンと同様のアプローチ
+- LiveCharts2のLineSeries with Fillでエリアチャートを表現し、SKColorでMaterialDesign風の配色を適用
+- Google OAuth未設定時（clientId=="dummy"）はカレンダー機能を自動スキップし、APIキー未設定でも天気取得失敗をcatchして画面が壊れないように設計
+- EventDateTime.DateTimeの非推奨警告をDateTimeDateTimeOffsetに修正
+### 確認
+- CvWpfclientビルド成功（0エラー、警告はNU1701のみ：既存のOpenTK/SkiaSharp互換性警告）
+
+---
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot
 ### Editor
