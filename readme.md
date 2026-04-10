@@ -6,8 +6,7 @@
 
 [Creative Vision 10](https://github.com/sekiya-sato/creativevision10)は、これらの企業が安心して導入できる本格的な基幹業務ソリューションを提供することを目指しています。
 
-3Tier-System アーキテクチャを採用し、サーバ、クライアント間はHTTP2.0/gRPCで接続、プレゼンテーション層にはWPF MVVMを採用しています。
-
+3Tier-System アーキテクチャを採用し、データベース層はSqlite/mariaDB、アプリケーションサーバはHTTP2.0/gRPCで構築、プレゼンテーション層にはWPF MVVMを採用しています。
 
 AIアシスタントは [AGENTS.md](AGENTS.md) を参照してください。
 
