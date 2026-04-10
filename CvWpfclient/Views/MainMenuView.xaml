@@ -206,6 +206,7 @@
 							<RowDefinition Height="Auto" />
 							<RowDefinition Height="*" />
 							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
 						</Grid.RowDefinitions>
 						<Grid>
 							<Grid.ColumnDefinitions>
@@ -295,8 +296,48 @@
 								</TextBlock>
 							</StackPanel>
 						</Border>
+						<!--    -->
+						<StackPanel x:Name="WeatherAndSchedulePanel"
+							Grid.Row="2">
+							<UniformGrid Columns="0">
+								<materialDesign:Card Margin="4" Padding="12"
+									Background="{DynamicResource panelColor}">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon Width="32" Height="32"
+											Foreground="{DynamicResource color6}"
+											Kind="WeatherSunny" />
+										<StackPanel Margin="10,0,0,0">
+											<TextBlock FontSize="14" Opacity="0.8" Text="Tokyo" />
+											<TextBlock FontSize="20" FontWeight="Bold" Text="22℃" />
+										</StackPanel>
+									</StackPanel>
+								</materialDesign:Card>
 
-						<Border Grid.Row="2"
+								<materialDesign:Card Margin="4" Padding="12"
+									Background="{DynamicResource panelColor}">
+									<StackPanel>
+										<TextBlock Style="{StaticResource MetricLabel}"
+											Text="次回の予定" />
+										<TextBlock FontWeight="SemiBold" Text="14:00 商品撮影" />
+									</StackPanel>
+								</materialDesign:Card>
+
+								<materialDesign:Card Margin="4" Padding="12"
+									Background="{DynamicResource panelColor}">
+									<StackPanel Orientation="Horizontal">
+										<Button Width="30" Height="30"
+											Style="{StaticResource MaterialDesignFloatingActionMiniButton}">
+											<materialDesign:PackIcon Kind="Play" />
+										</Button>
+										<TextBlock Margin="8,0" VerticalAlignment="Center"
+											FontSize="12" Text="BGM: Cafe Jazz" />
+									</StackPanel>
+								</materialDesign:Card>
+							</UniformGrid>
+
+						</StackPanel>
+						<!--    -->
+						<Border Grid.Row="3"
 							Margin="0,16,0,0" Padding="20"
 							Background="{DynamicResource panelColor}"
 							Style="{StaticResource MainMenuDashboardCard}">
