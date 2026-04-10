@@ -32,6 +32,23 @@
 
 ---
 
+## [2026-04-10] 23:54 MainMenuView に Sunrise/Sunset 表示を追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`MainMenuView` の「天気アイコン＋気温」領域の下側に、ViewModel 側で用意済みの `Sunrise` と `Sunset` を1行横並びで表示する。
+### 実施内容
+- `CvWpfclient/Views/MainMenuView.xaml`: 天気情報カード内の `WeatherDescription` の下に、`Sunrise` と `Sunset` を横並びで表示する `StackPanel` を追加した。既存デザインに合わせて補足情報として小さめ文字・半透明で表示するようにした。
+### 技術決定 Why
+- ViewModel 側のプロパティと値設定は既に実装済みだったため、責務を増やさず View のバインディング追加だけで要件を満たす最小差分にした。
+- `Sunrise` と `Sunset` は同一粒度の情報なので、1行横並びにしてカード高さの増加を抑えつつ視認性を確保した。
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告0、エラー0）
+
+---
+
 ## [2026-04-09] 16:59 MasterShohinMenteView に商品画像表示を追加
 ### Agent
 - gpt-5.4 : OpenAI

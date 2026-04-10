@@ -333,9 +333,20 @@
 												Foreground="{DynamicResource plainTextColor0}"
 												Opacity="0.7"
 												Text="{Binding WeatherDescription, FallbackValue='取得中...'}" />
-										</StackPanel>
+											<StackPanel Margin="0,6,0,0"
+												Orientation="Horizontal"
+												Opacity="0.7">
+												<TextBlock FontSize="11"
+													Foreground="{DynamicResource plainTextColor0}"
+													Text="{Binding Sunrise}" />
+												<TextBlock Margin="12,0,0,0"
+													FontSize="11"
+													Foreground="{DynamicResource plainTextColor0}"
+													Text="{Binding Sunset}" />
+											</StackPanel>
 									</StackPanel>
-								</materialDesign:Card>
+								</StackPanel>
+							</materialDesign:Card>
 
 								<!--  気温推移チャート  -->
 								<materialDesign:Card Grid.Column="1"
