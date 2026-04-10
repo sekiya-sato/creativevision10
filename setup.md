@@ -46,8 +46,10 @@
 
 - CvWpfclient/appsettings.json の調整
 	<pre>
-	appsettings.json "ConnectionStrings" セクション "Url" に、サーバのURLを記述
-	appsettings.json "Application" セクション "Version" にバージョン番号を記述
+	appsettings.json "ConnectionStrings" の "Url" に、サーバのURLを記述
+	appsettings.json "Application" の "Version" にバージョン番号を記述
+	appsettings.json "Application" の "OpenWeatherApiKey" openweathermapのAPIキーを記述 https://openweathermap.org/
+	appsettings.json "Application" の "WeatherRegion" openweathermapの地域を記述
 	</pre>
 
 - ビルド(Windows環境)

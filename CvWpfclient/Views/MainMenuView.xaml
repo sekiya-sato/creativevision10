@@ -316,7 +316,8 @@
 											VerticalAlignment="Center"
 											Foreground="{DynamicResource color6}"
 											Kind="{Binding WeatherIconKind}" />
-										<StackPanel Margin="12,0,0,0" VerticalAlignment="Center" Opacity="0.8">
+										<StackPanel Margin="12,0,0,0" VerticalAlignment="Center"
+											Opacity="0.8">
 											<TextBlock FontSize="14"
 												Foreground="{DynamicResource plainTextColor0}"
 												Text="{Binding WeatherLocation, FallbackValue='Tokyo'}" />
@@ -343,8 +344,7 @@
 										<!--  "℃" ラベル(ForecastYAxesを使うと横に寝てしまうため)  -->
 										<TextBlock Grid.Column="0"
 											Margin="0,0,4,0" HorizontalAlignment="Center" VerticalAlignment="Center"
-											FontSize="11" Text="℃">
-										</TextBlock>
+											FontSize="11" Text="℃" />
 										<!--  チャート  -->
 										<lvc:CartesianChart Grid.Column="1"
 											Height="120"
