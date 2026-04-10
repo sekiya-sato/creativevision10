@@ -352,6 +352,12 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string sunset = "";
 
 	[ObservableProperty]
+	private string humidity = "";
+	[ObservableProperty]
+	private string windSpeed = "";
+
+
+	[ObservableProperty]
 	private ISeries[] forecastSeries = [];
 
 	[ObservableProperty]
@@ -387,6 +393,8 @@ public partial class MainMenuViewModel : ObservableObject {
 				WeatherLocation = weather.Location;
 				Sunrise = $"日の出 {weather.SunRize:HH:mm}";
 				Sunset = $"日の入 {weather.SunSet:HH:mm}";
+				Humidity = $"湿度 {weather.Humidity}%";
+				WindSpeed = $"風速 {weather.WindSpeed}m/s";
 			}
 
 			var forecasts = await weatherService.GetHourlyForecastAsync();

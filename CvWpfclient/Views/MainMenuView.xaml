@@ -326,7 +326,7 @@
 											<TextBlock FontSize="14"
 												Foreground="{DynamicResource plainTextColor0}"
 												Text="{Binding WeatherLocation, FallbackValue='Tokyo'}" />
-											<TextBlock FontSize="28" FontWeight="Bold"
+											<TextBlock FontSize="30" FontWeight="Bold"
 												Foreground="{DynamicResource plainTextColor0}"
 												Text="{Binding WeatherTemperature, FallbackValue='--℃'}" />
 											<TextBlock FontSize="12"
@@ -334,18 +334,26 @@
 												Opacity="0.7"
 												Text="{Binding WeatherDescription, FallbackValue='取得中...'}" />
 											<StackPanel Margin="1"
-												Orientation="Vertical"
-												Opacity="0.7">
-												<TextBlock FontSize="11"
+												Opacity="0.7" Orientation="Vertical">
+												<TextBlock d:Text="日の出 06:00" FontSize="10"
 													Foreground="{DynamicResource plainTextColor0}"
-													Text="{Binding Sunrise}" d:Text="日の出 06:00" />
-												<TextBlock FontSize="11"
+													Text="{Binding Sunrise}" />
+												<TextBlock d:Text="日の入 18:00" FontSize="10"
 													Foreground="{DynamicResource plainTextColor0}"
-													Text="{Binding Sunset}" d:Text="日の入 18:00" />
+													Text="{Binding Sunset}" />
 											</StackPanel>
+											<StackPanel Margin="1"
+												Opacity="0.7" Orientation="Vertical">
+												<TextBlock d:Text="湿度 30%" FontSize="10"
+													Foreground="{DynamicResource plainTextColor0}"
+													Text="{Binding Humidity}" />
+												<TextBlock d:Text="風速 10m/s" FontSize="10"
+													Foreground="{DynamicResource plainTextColor0}"
+													Text="{Binding WindSpeed}" />
+											</StackPanel>
+										</StackPanel>
 									</StackPanel>
-								</StackPanel>
-							</materialDesign:Card>
+								</materialDesign:Card>
 
 								<!--  気温推移チャート  -->
 								<materialDesign:Card Grid.Column="1"
@@ -375,7 +383,8 @@
 							Margin="0,10,0,0" Padding="20"
 							Background="{DynamicResource panelColor}"
 							Style="{StaticResource MainMenuDashboardCard}">
-							<StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<StackPanel>
 								<StackPanel Margin="0,0,0,8" HorizontalAlignment="Left"
 									Orientation="Horizontal">
 									<Button Margin="10,0,10,0"
@@ -408,6 +417,25 @@
 									Opacity="0.7"
 									Text="{Binding StatusMessage}"
 									TextWrapping="Wrap" />
+							</StackPanel>
+								<!--
+								<StackPanel Orientation="Vertical" Margin="10,0,0,0">
+									<Button
+										Background="{DynamicResource PrimaryButtonColor}"
+										Command="{Binding UserCmd1Command}"
+										Content="UserButton1" Opacity="0.6"
+										Style="{StaticResource MainMenuActionButton}"
+										ToolTip="">
+									</Button>
+									<Button
+										Background="{DynamicResource PrimaryButtonColor}"
+										Command="{Binding UserCmd2Command}"
+										Content="UserButton2" Opacity="0.6"
+										Style="{StaticResource MainMenuActionButton}"
+										ToolTip="">
+									</Button>
+								</StackPanel>
+								-->
 							</StackPanel>
 						</Border>
 					</Grid>
