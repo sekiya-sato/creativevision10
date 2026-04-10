@@ -418,3 +418,27 @@
 - CvWpfclientビルド成功（0エラー、既存NU1701警告のみ）
 
 ---
+
+## [2026-04-10] 18:30 CvWpfclient TFM変更によるOpenTK/.NET Framework依存の解消
+### Agent
+- claude-opus-4.6 : GitHub-Copilot : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclientで使用しているOpenTK NuGetパッケージを.NET 10用のOpenTK.Coreに変更。他のNuGetも.NET Framework用になっていないかチェック
+### 実施内容
+- CvWpfclient/CvWpfclient.csproj: TargetFrameworkを `net10.0-windows` → `net10.0-windows10.0.19041` に変更
+### 技術決定 Why
+- OpenTK 3.3.1（.NET Framework用）はCvWpfclientの直接参照ではなく、SkiaSharp.Views.WPF 3.119.2 経由の推移的依存だった
+- SkiaSharp.Views.WPFは `net8.0-windows10.0.19041` と `.NETFramework 4.6.2` の2つのTFMアセットを持つ。TFMが `net10.0-windows`（Windows SDKバージョン未指定）の場合、NuGetが正しいアセットグループにマッチできず `.NETFramework` にフォールバックしていた
+- TFMにWindows SDKバージョン `10.0.19041` を指定することで、SkiaSharp.Views.WPFが `net8.0-windows10.0.19041` アセット（OpenTK 4.3.0 + OpenTK.GLWpfControl 4.2.3依存）を正しく選択するようになった
+- OpenTK.Coreへの直接パッケージ差し替えではなく、TFM修正が根本解決となる
+### 影響範囲
+- CvWpfclient出力パスが `net10.0-windows10.0.19041` に変更
+- 推移的依存: OpenTK 3.3.1→4.3.0、OpenTK.GLWpfControl 3.3.0→4.2.3、OpenTK.Core 4.3.0追加
+- 他の全NuGetパッケージに.NET Framework専用パッケージは無いことを確認済み
+### 確認
+- dotnet restore: NU1701警告ゼロ（変更前は3件のNU1701警告あり）
+- dotnet build: 0警告、0エラー
+
+---
