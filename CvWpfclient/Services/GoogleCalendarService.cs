@@ -1,12 +1,9 @@
 using CvWpfclient.Models;
-using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
-using Google.Apis.Util.Store;
 using Microsoft.Extensions.Configuration;
 using NLog;
-using System.IO;
 
 namespace CvWpfclient.Services;
 
@@ -17,14 +14,13 @@ public interface IGoogleCalendarService {
 
 public sealed class GoogleCalendarService(IConfiguration config) : IGoogleCalendarService, IDisposable {
 	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-	private static readonly string[] Scopes = [CalendarService.Scope.CalendarReadonly];
 	private CalendarService? _calendarService;
 
 	public bool IsAuthenticated => _calendarService != null;
 
 	public async Task<List<CalendarEventItem>> GetUpcomingEventsAsync(int maxResults = 10, CancellationToken ct = default) {
 		try {
-			await EnsureAuthenticatedAsync(ct);
+			EnsureInitialized();
 			if (_calendarService == null) return [];
 
 			var request = _calendarService.Events.List("primary");
@@ -44,29 +40,17 @@ public sealed class GoogleCalendarService(IConfiguration config) : IGoogleCalend
 		}
 	}
 
-	private async Task EnsureAuthenticatedAsync(CancellationToken ct) {
+	private void EnsureInitialized() {
 		if (_calendarService != null) return;
 
-		var clientId = config["Application:GoogleOAuthId"];
-		var clientSecret = config["Application:GoogleOAuthSecret"];
-		if (string.IsNullOrWhiteSpace(clientId) || clientId == "dummy") {
-			_logger.Info("Google OAuth未設定のためカレンダー機能をスキップ");
+		var apiKey = config["Application:GoogleApiKey"];
+		if (string.IsNullOrWhiteSpace(apiKey) || apiKey == "dummy") {
+			_logger.Info("Google API Key未設定のためカレンダー機能をスキップ");
 			return;
 		}
 
-		var tokenDir = Path.Combine(
-			Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-			"CreativeVision10", "google-tokens");
-
-		var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-			new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret ?? "" },
-			Scopes,
-			"user",
-			ct,
-			new FileDataStore(tokenDir, true));
-
 		_calendarService = new CalendarService(new BaseClientService.Initializer {
-			HttpClientInitializer = credential,
+			ApiKey = apiKey,
 			ApplicationName = "Creative Vision 10"
 		});
 	}

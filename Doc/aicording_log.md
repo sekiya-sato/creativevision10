@@ -400,3 +400,21 @@
 - CvWpfclientビルド成功（0警告・0エラー）
 
 ---
+
+## [2026-04-10] 17:15 GoogleカレンダーのOAuth2.0認証をAPI Key認証に変更
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuViewModelで使用しているGoogleカレンダー連携を、Google OAuth2.0 ではなく Google API Key を使うよう変更する
+### 実施内容
+- CvWpfclient/Services/GoogleCalendarService.cs: OAuth2.0フロー（GoogleWebAuthorizationBroker.AuthorizeAsync、FileDataStore、ClientSecrets）を全て削除し、API Key によるCalendarService初期化に置換。EnsureAuthenticatedAsync(async)をEnsureInitialized(sync)に変更。不要なusing (Google.Apis.Auth.OAuth2, Google.Apis.Util.Store, System.IO) を削除
+- CvWpfclient/appsettings.json: GoogleOAuthId、GoogleOAuthSecret設定キーを削除。GoogleApiKeyのみ残存
+### 技術決定 Why
+- OAuth2.0はブラウザベースの認証フローが必要でユーザー体験が煩雑。API Keyはサーバーレスで公開カレンダーデータの取得に十分であり、トークン管理やリフレッシュの複雑さを排除できる
+- API Key方式はCalendarService.Initializer.ApiKeyを設定するだけで初期化でき、非同期処理も不要になるためコードが大幅に簡素化
+### 確認
+- CvWpfclientビルド成功（0エラー、既存NU1701警告のみ）
+
+---
