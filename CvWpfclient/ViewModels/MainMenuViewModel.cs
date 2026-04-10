@@ -57,6 +57,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	private string? currentTime; // HH:mm:ss 用
 
+	[ObservableProperty]
+	private string? kyureki; // 旧暦表示用
+
 	private DispatcherTimer? _timer;
 
 	private System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("ja-JP");
@@ -100,6 +103,8 @@ public partial class MainMenuViewModel : ObservableObject {
 		StartClock();
 		StartWeatherAndCalendar();
 		ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
+		Kyureki = $"旧暦 {DateTime.Now.ToSimpleLunisolarStr()}";
+
 		InfolocalUser.OsVer = Environment.OSVersion.ToString();
 		InfolocalUser.DotnetVer = Environment.Version.ToString();
 		InfolocalUser.ComputerName = Environment.MachineName;
@@ -109,6 +114,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		// Velopack のバージョンを表示する
 		SubTitle += $"  Client Ver {App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetCurrentVersion()}";
 		SetSubMessage();
+
 	}
 
 	void SetSubMessage() {

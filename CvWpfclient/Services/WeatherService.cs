@@ -32,7 +32,7 @@ public sealed class WeatherService(HttpClient httpClient, IConfiguration config)
 
 	public async Task<List<HourlyForecast>> GetHourlyForecastAsync(CancellationToken ct = default) {
 		try {
-			var url = $"https://api.openweathermap.org/data/2.5/forecast?q={Region}&appid={GetApiKey()}&units=metric&lang=ja&cnt=8";
+			var url = $"https://api.openweathermap.org/data/2.5/forecast?q={Region}&appid={GetApiKey()}&units=metric&lang=ja&cnt=16";
 			var json = await httpClient.GetFromJsonAsync<JsonElement>(url, _jsonOptions, ct);
 			return ParseForecast(json);
 		}
@@ -72,7 +72,7 @@ public sealed class WeatherService(HttpClient httpClient, IConfiguration config)
 			forecasts.Add(new HourlyForecast {
 				DateTime = dt,
 				Temperature = item.GetProperty("main").GetProperty("temp").GetDouble(),
-				TimeLabel = dt.ToString("HH:mm")
+				TimeLabel = dt.ToString("d日H時")
 			});
 		}
 		return forecasts;

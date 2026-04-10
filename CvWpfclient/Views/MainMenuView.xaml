@@ -152,6 +152,11 @@
 									d:Text="00:00:00" FontSize="18" FontWeight="Bold"
 									Foreground="{DynamicResource TitleColor}"
 									Text="{Binding CurrentTime, FallbackValue='00:00:00'}" />
+								<TextBlock Margin="10,0,0,0"
+									d:Text="旧暦xx月xx日" FontSize="12"
+									Foreground="{DynamicResource TitleColor}"
+									Opacity="0.8"
+									Text="{Binding Kyureki}" />
 							</StackPanel>
 						</Border>
 					</StackPanel>
@@ -307,7 +312,7 @@
 									<ColumnDefinition Width="*" />
 								</Grid.ColumnDefinitions>
 
-								<!--  左上: 天気アイコン＋気温  -->
+								<!--  天気アイコン＋気温  -->
 								<materialDesign:Card Grid.Column="0"
 									Margin="0,0,8,0" Padding="16"
 									Background="{DynamicResource panelColor}">
@@ -332,7 +337,7 @@
 									</StackPanel>
 								</materialDesign:Card>
 
-								<!--  右上: 気温推移チャート  -->
+								<!--  気温推移チャート  -->
 								<materialDesign:Card Grid.Column="1"
 									Padding="8"
 									Background="{DynamicResource panelColor}">
@@ -353,12 +358,6 @@
 											XAxes="{Binding ForecastXAxes}"
 											YAxes="{Binding ForecastYAxes}" />
 									</Grid>
-									<!--
-									<lvc:CartesianChart Height="120" Background="LightGray"
-										Series="{Binding ForecastSeries}"
-										XAxes="{Binding ForecastXAxes}"
-										YAxes="{Binding ForecastYAxes}" />
-									-->
 								</materialDesign:Card>
 							</Grid>
 						</StackPanel>

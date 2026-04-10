@@ -128,6 +128,24 @@ public static class CommonExtentions {
 		public long ToUnixTime() {
 			return (long)(date0.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalSeconds;
 		}
+		/// <summary>
+		/// (閏)xx月xx日 形式の旧暦文字列へ変換
+		/// </summary>
+		/// <returns></returns>
+		public string ToSimpleLunisolarStr() {
+			var cal = new System.Globalization.JapaneseLunisolarCalendar();
+			int year = cal.GetYear(date0);
+			int month = cal.GetMonth(date0);
+			int day = cal.GetDayOfMonth(date0);
+			int leapMonth = cal.GetLeapMonth(year); // その年の閏月（なければ0）
+													// 閏月の判定ロジック
+													// このカレンダーでは閏月が独立した番号になるため調整が必要
+			bool isLeap = (leapMonth > 0 && month == leapMonth);
+			int displayMonth = (leapMonth > 0 && month >= leapMonth) ? month - 1 : month;
+
+			string leapStr = isLeap ? "閏" : "";
+			return $"{leapStr}{displayMonth}月{day}日";
+		}
 	}
 	/// <summary>
 	/// TimeSpanの拡張メソッド
