@@ -245,7 +245,7 @@
 										FontSize="14"
 										Foreground="{DynamicResource MenuTitleColor}"
 										Style="{StaticResource SectionTitleText}"
-										Text="User Status" />
+										Text="Client Status" />
 									<TextBlock Margin="10,0,10,0"
 										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
@@ -353,7 +353,7 @@
 										<!--  チャート  -->
 										<lvc:CartesianChart Grid.Column="1"
 											Height="120"
-											Background="LightGray"
+											Background="LightGray" Opacity="0.9"
 											Series="{Binding ForecastSeries}"
 											XAxes="{Binding ForecastXAxes}"
 											YAxes="{Binding ForecastYAxes}" />
