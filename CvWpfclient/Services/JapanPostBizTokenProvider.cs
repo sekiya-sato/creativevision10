@@ -19,22 +19,20 @@ public sealed class JapanPostBizTokenProvider(
 	private readonly JapanPostBizOptions _options = configuration.GetSection("JapanPostBiz").Get<JapanPostBizOptions>() ?? new();
 	private readonly SemaphoreSlim _lock = new(1, 1);
 	private string? _cachedToken;
-	private string _cachedTokenType = "Bearer";
 	private DateTimeOffset _expiresAtUtc = DateTimeOffset.MinValue;
 
 	public async Task<AuthenticationHeaderValue> GetAuthorizationAsync(CancellationToken cancellationToken = default) {
 		await _lock.WaitAsync(cancellationToken).ConfigureAwait(false);
 		try {
 			if (IsTokenValid()) {
-				return new AuthenticationHeaderValue(_cachedTokenType, _cachedToken);
+				return new AuthenticationHeaderValue("Bearer", _cachedToken);
 			}
 
 			var tokenResponse = await RequestTokenAsync(cancellationToken).ConfigureAwait(false);
 			_cachedToken = tokenResponse.Token;
-			_cachedTokenType = string.IsNullOrWhiteSpace(tokenResponse.TokenType) ? "Bearer" : tokenResponse.TokenType;
 			_expiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(Math.Max(0, tokenResponse.ExpiresIn - _options.TokenRefreshMarginSeconds));
 
-			return new AuthenticationHeaderValue(_cachedTokenType, _cachedToken);
+			return new AuthenticationHeaderValue("Bearer", _cachedToken);
 		}
 		finally {
 			_lock.Release();
@@ -43,7 +41,6 @@ public sealed class JapanPostBizTokenProvider(
 
 	public void Invalidate() {
 		_cachedToken = null;
-		_cachedTokenType = "Bearer";
 		_expiresAtUtc = DateTimeOffset.MinValue;
 	}
 

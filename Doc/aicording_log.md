@@ -32,6 +32,40 @@
 
 ---
 
+## [2026-04-11] 18:14 郵便番号検索のAuthorizationスキームをBearer固定に修正
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：日本郵便APIのAuthorization仕様が `Bearer {トークン}` 固定である前提に合わせ、トークン応答の `token_type` に依存しないよう修正する
+### 実施内容
+- `CvWpfclient/Services/JapanPostBizTokenProvider.cs`: キャッシュ済みトークン返却時と新規取得時の両方で、Authorizationヘッダを常に `Bearer` スキームで返すよう変更した。内部の `token_type` キャッシュは削除した。
+### 技術決定 Why
+- token APIレスポンスの `token_type` が `jwt` でも、検索API側のAuthorization仕様は `HTTP Authorization Scheme: bearer` で固定のため、応答値をそのままHTTPスキームへ使うと不正ヘッダになる。送信スキームを `Bearer` 固定にするのが正しい。
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"` → ビルド成功（0警告、0エラー）
+
+---
+
+## [2026-04-11] 18:05 郵便番号検索URL組み立ての見直し
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：日本郵便APIの検索時に400が返るため、`BuildSearchUrl` 周辺を再検討し、`/api/v2/searchcode/{search_code}` の7桁郵便番号検索向けにURL生成を見直す
+### 実施内容
+- `CvWpfclient/Services/PostalAddressService.cs`: `BuildSearchUrl` を見直し、通常の7桁郵便番号検索では `page` と `limit` の必須クエリのみを付与するよう変更した。`ec_uid` は設定時のみ付与するようにした。`DefaultLimit` はAPI既定に合わせて `1000` に変更した。
+- `CvWpfclient/appsettings.json`: `JapanPostBiz:EcUid` を追加し、`DefaultLimit` を `1000` に更新した。
+### 技術決定 Why
+- API仕様上、`page` と `limit` は必須だが、`choikitype` と `searchtype` は任意であるため、まず通常運用の7桁郵便番号検索で必要な最小パラメータに絞って400要因を減らした。
+- `ec_uid` はプロバイダー固有の追加条件になりうるため、コード固定ではなく設定で付与できる形にした。
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"` → ビルド成功（0警告、0エラー）
+
+---
+
 ## [2026-04-11] 17:51 顧客マスターメンテに郵便番号検索を追加
 ### Agent
 - gpt-5.4 : OpenAI

@@ -45,9 +45,10 @@ public sealed class JapanPostBizOptions {
 	public string SearchCodePath { get; set; } = "/api/v2/searchcode";
 	public string ClientId { get; set; } = string.Empty;
 	public string SecretKey { get; set; } = string.Empty;
+	public string EcUid { get; set; } = string.Empty;
 	public string UserAgent { get; set; } = "CvWpfclient/1.0";
 	public int TimeoutSeconds { get; set; } = 10;
-	public int DefaultLimit { get; set; } = 100;
+	public int DefaultLimit { get; set; } = 1000;
 	public int DefaultChoikiType { get; set; } = 1;
 	public int DefaultSearchType { get; set; } = 2;
 	public int TokenRefreshMarginSeconds { get; set; } = 60;
@@ -138,12 +139,17 @@ public sealed class JapanPostBizPostalAddressService(
 
 	private string BuildSearchUrl(string normalizedPostalCode) {
 		var path = _options.SearchCodePath.TrimEnd('/');
+		var limit = Math.Clamp(_options.DefaultLimit, 1, 1000);
 		var query = new List<string> {
-			$"page=1",
-			$"limit={_options.DefaultLimit}",
-			$"choikitype={_options.DefaultChoikiType}",
-			$"searchtype={_options.DefaultSearchType}",
+			"page=1",
+			$"limit={limit}",
 		};
+
+		// 7桁郵便番号の通常検索では必須パラメータを優先し、任意パラメータは最小限に抑える。
+		if (!string.IsNullOrWhiteSpace(_options.EcUid)) {
+			query.Add($"ec_uid={Uri.EscapeDataString(_options.EcUid)}");
+		}
+
 		return $"{path}/{Uri.EscapeDataString(normalizedPostalCode)}?{string.Join("&", query)}";
 	}
 
