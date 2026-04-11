@@ -83,8 +83,10 @@ public static class AppGlobal {
 
 	public static void SetLoginJwt(string? loginJwt, string? info = null) {
 		_loginJwt = loginJwt;
-		if (!string.IsNullOrWhiteSpace(info))
+		if (!string.IsNullOrWhiteSpace(info)) {
 			_infoApiKey = Common.DeserializeObject<InfoApiKey>(info) ?? new InfoApiKey();
+			_infoApiKey.Decrypt((src, key) => Common.DecryptString(src, key));
+		}
 	}
 
 	public static void ClearLoginJwt() {

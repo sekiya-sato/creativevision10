@@ -262,9 +262,11 @@ public partial class LoginService : ILoginService {
 	/// <returns></returns>
 	private string GetInfoApiKey() {
 		var infoApiKey = new CvBase.Share.InfoApiKey();
+		string orgKey = DateTime.Now.ToUniversalTime().ToString("ff.yyyyMMddHHmmss");
 		infoApiKey.Application.OpenWeatherApiKey = _configuration.GetSection("Application")?["OpenWeatherApiKey"] ?? "";
 		infoApiKey.JapanPostBiz.ClientId = _configuration.GetSection("JapanPostBiz")?["ClientId"] ?? "";
 		infoApiKey.JapanPostBiz.SecretKey = _configuration.GetSection("JapanPostBiz")?["SecretKey"] ?? "";
+		infoApiKey.Encrypt(orgKey, (src, key) => Common.EncryptString(src, key));
 		return Common.SerializeObject(infoApiKey);
 	}
 }
