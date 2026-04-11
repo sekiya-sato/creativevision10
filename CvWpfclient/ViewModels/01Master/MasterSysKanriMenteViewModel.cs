@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvBase.Share;
+using CvWpfclient.Helpers;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -37,4 +38,12 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 		new UpdateParam(Tabletype, Common.SerializeObject(Current));
 
 	protected override bool CanDelete() => false;
+
+	[RelayCommand]
+	async Task SearchPostalCode() => await PostalAddressSearchHelper.SearchAndApplyAsync(this, Current.PostalCode ?? string.Empty, item => {
+		Current.PostalCode = item.PostalCode;
+		Current.Address1 = item.Address1;
+		Current.Address2 = item.Address2;
+		Current.Address3 = item.Address3;
+	});
 }

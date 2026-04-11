@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
+using CvWpfclient.Helpers;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -44,4 +45,12 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 		CurrentEdit.Id_Paysaki = tokui.Id;
 		CurrentEdit.VPaysaki = new() { Sid = tokui.Id, Cd = tokui.Code ?? "", Mei = tokui.Name ?? "" };
 	}
+
+	[RelayCommand]
+	async Task SearchPostalCode() => await PostalAddressSearchHelper.SearchAndApplyAsync(this, CurrentEdit.PostalCode ?? string.Empty, item => {
+		CurrentEdit.PostalCode = item.PostalCode;
+		CurrentEdit.Address1 = item.Address1;
+		CurrentEdit.Address2 = item.Address2;
+		CurrentEdit.Address3 = item.Address3;
+	});
 }

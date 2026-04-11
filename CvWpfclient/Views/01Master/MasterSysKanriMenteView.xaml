@@ -32,6 +32,14 @@
 			<Setter Property="FontSize" Value="13" />
 			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
 		</Style>
+		<Style x:Key="PostalSearchButton"
+			BasedOn="{StaticResource MaterialDesignOutlinedButton}"
+			TargetType="Button">
+			<Setter Property="Margin" Value="8,0,0,0" />
+			<Setter Property="Padding" Value="12,4" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Height" Value="30" />
+		</Style>
 	</helpers:BaseWindow.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
@@ -159,13 +167,32 @@
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"
 							Content="〒 住所" />
-						<TextBox Grid.Row="1" Grid.Column="1"
-							Height="30"
-							Margin="10,0,10,0" VerticalAlignment="Center"
-							d:Text="郵便番号"
-							Style="{DynamicResource MaterialDesignBody*}"
-							Text="{Binding Current.PostalCode}"
-							TextWrapping="Wrap" />
+						<Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="120" />
+								<ColumnDefinition Width="Auto" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<TextBox Grid.Column="0"
+								Height="30"
+								Margin="10,0,10,0" VerticalAlignment="Center"
+								d:Text="郵便番号"
+								Style="{DynamicResource MaterialDesignBody*}"
+								Text="{Binding Current.PostalCode, UpdateSourceTrigger=PropertyChanged}"
+								TextWrapping="Wrap" />
+							<Button Grid.Column="1"
+								Command="{Binding SearchPostalCodeCommand}"
+								Style="{StaticResource PostalSearchButton}"
+								ToolTip="郵便番号から住所を検索">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon Margin="0,0,6,0"
+										VerticalAlignment="Center"
+										Kind="Magnify" />
+									<TextBlock VerticalAlignment="Center"
+										Text="〒API検索" />
+								</StackPanel>
+							</Button>
+						</Grid>
 						<TextBox Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="4"
 							Height="30"
 							Margin="10,0,-17,0" VerticalAlignment="Center"

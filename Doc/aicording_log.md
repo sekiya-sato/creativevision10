@@ -32,6 +32,33 @@
 
 ---
 
+## [2026-04-11] 18:30 マスタメンテ住所入力画面へ〒API検索を横展開
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：顧客マスタの検索ボタン表示を `〒API検索` に変更し、同様に住所1,2,3を持つマスタメンテ系画面すべてへ `〒API検索` ボタンを追加する。さらに、この手順を再利用できるskillとしてまとめる
+### 実施内容
+- `CvWpfclient/Helpers/PostalAddressSearchHelper.cs`: 郵便番号検索サービス呼び出し、1件ヒット時の適用、メッセージ表示を共通化するHelperを追加した。
+- `CvWpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs`: 既存の郵便番号検索処理を共通Helper呼び出しへ置き換えた。
+- `CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs`: `SearchPostalCodeCommand` を追加し、検索結果を `CurrentEdit.PostalCode` と `Address1-3` へ反映するようにした。
+- `CvWpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs`: `SearchPostalCodeCommand` を追加し、検索結果を `CurrentEdit.PostalCode` と `Address1-3` へ反映するようにした。
+- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs`: `Current.*` 直バインド画面向けに `SearchPostalCodeCommand` を追加し、検索結果を `Current.PostalCode` と `Address1-3` へ反映するようにした。
+- `CvWpfclient/Views/01Master/MasterEndCustomerMenteView.xaml`: 検索ボタン文言を `〒API検索` に変更した。
+- `CvWpfclient/Views/01Master/MasterTokuiMenteView.xaml`: 郵便番号欄を短縮し、`〒API検索` ボタンを追加した。
+- `CvWpfclient/Views/01Master/MasterShiireMenteView.xaml`: 郵便番号欄を短縮し、`〒API検索` ボタンを追加した。
+- `CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: `〒 住所` 行の郵便番号欄の横に `〒API検索` ボタンを追加した。
+- `.agents/skills/add-postal-api-search-master-mente/SKILL.md`: マスタメンテ画面へ郵便番号API検索を追加する手順をskillとして追加した。
+### 技術決定 Why
+- 住所反映ロジックを各ViewModelへ都度複製すると保守点が増えるため、共通の `PostalAddressSearchHelper` に寄せて横展開しやすい形にした。
+- `SysKanri` は `Current.*` 直バインドで他のマスタと構造が異なるため、共通Helperは再利用しつつ、反映先だけ `Current` に切り替える最小差分にした。
+- skillには対象画面、認証前提、URL生成前提、View/ViewModelの変更パターンをまとめ、次回以降の横展開を定型化した。
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"` → ビルド成功（0警告、0エラー）
+
+---
+
 ## [2026-04-11] 18:14 郵便番号検索のAuthorizationスキームをBearer固定に修正
 ### Agent
 - gpt-5.4 : OpenAI

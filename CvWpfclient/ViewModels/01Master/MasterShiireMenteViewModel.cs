@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
+using CvWpfclient.Helpers;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -39,4 +40,12 @@ public partial class MasterShiireMenteViewModel : Helpers.BaseCodeNameLightMente
 		CurrentEdit.Id_Paysaki = shiire.Id;
 		CurrentEdit.VPaysaki = new() { Sid = shiire.Id, Cd = shiire.Code ?? "", Mei = shiire.Name ?? "" };
 	}
+
+	[RelayCommand]
+	async Task SearchPostalCode() => await PostalAddressSearchHelper.SearchAndApplyAsync(this, CurrentEdit.PostalCode ?? string.Empty, item => {
+		CurrentEdit.PostalCode = item.PostalCode;
+		CurrentEdit.Address1 = item.Address1;
+		CurrentEdit.Address2 = item.Address2;
+		CurrentEdit.Address3 = item.Address3;
+	});
 }

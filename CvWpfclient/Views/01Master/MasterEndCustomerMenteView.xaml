@@ -352,7 +352,7 @@
 											VerticalAlignment="Center"
 											Kind="Magnify" />
 										<TextBlock VerticalAlignment="Center"
-											Text="検索" />
+											Text="〒API検索" />
 									</StackPanel>
 								</Button>
 							</Grid>
