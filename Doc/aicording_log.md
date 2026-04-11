@@ -32,6 +32,30 @@
 
 ---
 
+## [2026-04-11] 20:31 EffectiveSettings導入とログイン後ホスト再構築
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`AppGlobal.InfoApiKey` を優先する設定解決クラスを追加し、`SetLoginJwt(reply.JwtMessage, reply.InfoPayload)` 実行後に `RestartHostAsync()` でDIサービスへ再反映する
+### 実施内容
+- CvWpfclient/Models/EffectiveSettings.cs: `AppGlobal.InfoApiKey > IConfiguration > 既定値` の優先順位で設定を解決するクラスを追加
+- CvWpfclient/Models/JapanPostBizOptions.cs: JapanPostBiz設定クラスをModels配下へ分離
+- CvWpfclient/App.xaml.cs: `EffectiveSettings` をDI登録し、JapanPostBiz用 `HttpClient` 構成でも同クラスを利用するよう変更
+- CvWpfclient/Services/WeatherService.cs: OpenWeather APIキーと地域設定の参照先を `EffectiveSettings` に統一
+- CvWpfclient/Services/JapanPostBizTokenProvider.cs: ClientId/SecretKey/TokenPath/RefreshMargin の参照を `EffectiveSettings` 経由へ変更
+- CvWpfclient/Services/PostalAddressService.cs: JapanPostBiz設定クラスの定義を分離し、検索URL生成時の設定参照を `EffectiveSettings` 経由へ変更
+- CvWpfclient/ViewModels/00System/LoginViewModel.cs: Login/Refresh 成功時に `SetLoginJwt(...)` の直後で `App.RestartHostAsync()` を await するよう変更
+- CvBase/Share/InfoApiKey.cs: ビルドを阻害していたプロパティ末尾の余分なセミコロンを除去
+### 技術決定 Why
+- APIキーはログイン応答の `InfoPayload` が最新になり得るため、クライアント側設定より優先する形に統一した
+- JapanPostBiz系サービスはコンストラクタ時に設定を固定すると更新を拾えないため、ログイン直後にホストを再構築して新しいDIサービスへ切り替える形を採用した
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj` でビルド成功
+
+---
+
 ## [2026-04-11] 18:30 マスタメンテ住所入力画面へ〒API検索を横展開
 ### Agent
 - gpt-5.4 : OpenAI

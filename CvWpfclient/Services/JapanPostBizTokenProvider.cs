@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+using CvWpfclient.Models;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -14,9 +14,8 @@ public interface IJapanPostBizTokenProvider {
 
 public sealed class JapanPostBizTokenProvider(
 	HttpClient httpClient,
-	IConfiguration configuration,
+	EffectiveSettings settings,
 	ILogger<JapanPostBizTokenProvider> logger) : IJapanPostBizTokenProvider, IDisposable {
-	private readonly JapanPostBizOptions _options = configuration.GetSection("JapanPostBiz").Get<JapanPostBizOptions>() ?? new();
 	private readonly SemaphoreSlim _lock = new(1, 1);
 	private string? _cachedToken;
 	private DateTimeOffset _expiresAtUtc = DateTimeOffset.MinValue;
@@ -28,9 +27,10 @@ public sealed class JapanPostBizTokenProvider(
 				return new AuthenticationHeaderValue("Bearer", _cachedToken);
 			}
 
-			var tokenResponse = await RequestTokenAsync(cancellationToken).ConfigureAwait(false);
+			var options = settings.GetJapanPostBizOptions();
+			var tokenResponse = await RequestTokenAsync(options, cancellationToken).ConfigureAwait(false);
 			_cachedToken = tokenResponse.Token;
-			_expiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(Math.Max(0, tokenResponse.ExpiresIn - _options.TokenRefreshMarginSeconds));
+			_expiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(Math.Max(0, tokenResponse.ExpiresIn - options.TokenRefreshMarginSeconds));
 
 			return new AuthenticationHeaderValue("Bearer", _cachedToken);
 		}
@@ -48,13 +48,13 @@ public sealed class JapanPostBizTokenProvider(
 		return !string.IsNullOrWhiteSpace(_cachedToken) && DateTimeOffset.UtcNow < _expiresAtUtc;
 	}
 
-	private async Task<JapanPostTokenResponse> RequestTokenAsync(CancellationToken cancellationToken) {
-		if (string.IsNullOrWhiteSpace(_options.ClientId) || string.IsNullOrWhiteSpace(_options.SecretKey)) {
+	private async Task<JapanPostTokenResponse> RequestTokenAsync(JapanPostBizOptions options, CancellationToken cancellationToken) {
+		if (string.IsNullOrWhiteSpace(options.ClientId) || string.IsNullOrWhiteSpace(options.SecretKey)) {
 			throw new InvalidOperationException("JapanPostBiz の ClientId または SecretKey が設定されていません。");
 		}
 
-		var request = new JapanPostTokenRequest("client_credentials", _options.ClientId, _options.SecretKey);
-		using var response = await httpClient.PostAsJsonAsync(_options.TokenPath, request, cancellationToken).ConfigureAwait(false);
+		var request = new JapanPostTokenRequest("client_credentials", options.ClientId, options.SecretKey);
+		using var response = await httpClient.PostAsJsonAsync(options.TokenPath, request, cancellationToken).ConfigureAwait(false);
 		if (!response.IsSuccessStatusCode) {
 			var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 			logger.LogWarning("日本郵便 token API エラー。 status={StatusCode} body={Body}", (int)response.StatusCode, body);

@@ -1,5 +1,4 @@
 using CvWpfclient.Models;
-using Microsoft.Extensions.Configuration;
 using NLog;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -12,11 +11,11 @@ public interface IWeatherService {
 	Task<List<HourlyForecast>> GetHourlyForecastAsync(CancellationToken ct = default);
 }
 
-public sealed class WeatherService(HttpClient httpClient, IConfiguration config) : IWeatherService {
+public sealed class WeatherService(HttpClient httpClient, EffectiveSettings settings) : IWeatherService {
 	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 	private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-	private string Region => config["Application:WeatherRegion"] ?? "Tokyo";
+	private string Region => settings.WeatherRegion;
 
 	public async Task<WeatherInfo?> GetCurrentWeatherAsync(CancellationToken ct = default) {
 		try {
@@ -43,7 +42,7 @@ public sealed class WeatherService(HttpClient httpClient, IConfiguration config)
 	}
 
 	private string GetApiKey() {
-		return config["Application:OpenWeatherApiKey"] ?? "";
+		return settings.OpenWeatherApiKey;
 	}
 
 	private static WeatherInfo ParseCurrentWeather(JsonElement json) {

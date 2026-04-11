@@ -1,6 +1,7 @@
 using CodeShare;
 using CvAsset;
 using CvWpfclient.Helpers;
+using CvWpfclient.Models;
 using CvWpfclient.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -141,6 +142,7 @@ public partial class App : Application {
 		})
 			.ConfigureServices((context, services) => {
 				// 1. ハンドラーと通信設定の登録
+				services.AddSingleton<EffectiveSettings>();
 				services.AddTransient<JwtAuthorizationHandler>();
 
 				var url = context.Configuration.GetConnectionString("Url")
@@ -168,7 +170,8 @@ public partial class App : Application {
 				}
 
 				void ConfigureJapanPostBizClient(IServiceProvider serviceProvider, HttpClient client) {
-					var options = context.Configuration.GetSection("JapanPostBiz").Get<JapanPostBizOptions>() ?? new();
+					var settings = serviceProvider.GetRequiredService<EffectiveSettings>();
+					var options = settings.GetJapanPostBizOptions();
 					client.BaseAddress = new Uri(options.BaseUrl);
 					client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds > 0 ? options.TimeoutSeconds : 10);
 					client.DefaultRequestHeaders.UserAgent.Clear();

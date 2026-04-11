@@ -5,7 +5,7 @@ namespace CvBase.Share;
 /// </summary>
 public sealed class InfoApiKey {
 
-	public string? DecriptKey { get; set; };
+	public string? DecriptKey { get; set; }
 	public ApplicationSettings Application { get; set; } = new();
 
 	public JapanPostBizSettings JapanPostBiz { get; set; } = new();

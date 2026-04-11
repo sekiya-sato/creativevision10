@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+using CvWpfclient.Models;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http;
@@ -39,28 +39,11 @@ public enum PostalAddressErrorType {
 	ServiceError,
 }
 
-public sealed class JapanPostBizOptions {
-	public string BaseUrl { get; set; } = "https://api.da.pf.japanpost.jp";
-	public string TokenPath { get; set; } = "/api/v2/j/token";
-	public string SearchCodePath { get; set; } = "/api/v2/searchcode";
-	public string ClientId { get; set; } = string.Empty;
-	public string SecretKey { get; set; } = string.Empty;
-	public string EcUid { get; set; } = string.Empty;
-	public string UserAgent { get; set; } = "CvWpfclient/1.0";
-	public int TimeoutSeconds { get; set; } = 10;
-	public int DefaultLimit { get; set; } = 1000;
-	public int DefaultChoikiType { get; set; } = 1;
-	public int DefaultSearchType { get; set; } = 2;
-	public int TokenRefreshMarginSeconds { get; set; } = 60;
-}
-
 public sealed class JapanPostBizPostalAddressService(
 	HttpClient httpClient,
 	IJapanPostBizTokenProvider tokenProvider,
-	IConfiguration configuration,
+	EffectiveSettings settings,
 	ILogger<JapanPostBizPostalAddressService> logger) : IPostalAddressService {
-	private readonly JapanPostBizOptions _options = configuration.GetSection("JapanPostBiz").Get<JapanPostBizOptions>() ?? new();
-
 	public async Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CancellationToken cancellationToken = default) {
 		var normalizedPostalCode = NormalizePostalCode(postalCode);
 		if (normalizedPostalCode == null) {
@@ -138,16 +121,17 @@ public sealed class JapanPostBizPostalAddressService(
 	}
 
 	private string BuildSearchUrl(string normalizedPostalCode) {
-		var path = _options.SearchCodePath.TrimEnd('/');
-		var limit = Math.Clamp(_options.DefaultLimit, 1, 1000);
+		var options = settings.GetJapanPostBizOptions();
+		var path = options.SearchCodePath.TrimEnd('/');
+		var limit = Math.Clamp(options.DefaultLimit, 1, 1000);
 		var query = new List<string> {
 			"page=1",
 			$"limit={limit}",
 		};
 
 		// 7桁郵便番号の通常検索では必須パラメータを優先し、任意パラメータは最小限に抑える。
-		if (!string.IsNullOrWhiteSpace(_options.EcUid)) {
-			query.Add($"ec_uid={Uri.EscapeDataString(_options.EcUid)}");
+		if (!string.IsNullOrWhiteSpace(options.EcUid)) {
+			query.Add($"ec_uid={Uri.EscapeDataString(options.EcUid)}");
 		}
 
 		return $"{path}/{Uri.EscapeDataString(normalizedPostalCode)}?{string.Join("&", query)}";

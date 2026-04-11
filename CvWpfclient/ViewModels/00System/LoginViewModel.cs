@@ -52,6 +52,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage, reply.InfoPayload);
+					await App.RestartHostAsync(cancellationToken);
 					_logger.Debug($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
 					LoginData = reply;
 					ExitWithResultTrue();
@@ -64,6 +65,9 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 		}
 		catch (OperationCanceledException) {
 			return;
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog(ex.Message, owner: ClientLib.GetActiveView(this));
 		}
 	}
 
@@ -94,6 +98,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage, reply.InfoPayload);
+					await App.RestartHostAsync(cancellationToken);
 					_logger.Debug($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
 					LoginData = reply;
 					ExitWithResultTrue();
