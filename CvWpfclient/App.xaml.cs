@@ -166,9 +166,19 @@ public partial class App : Application {
 						builder.AddHttpMessageHandler<GrpcSubPathHandler>();
 					builder.ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
 				}
+
+				void ConfigureJapanPostBizClient(IServiceProvider serviceProvider, HttpClient client) {
+					var options = context.Configuration.GetSection("JapanPostBiz").Get<JapanPostBizOptions>() ?? new();
+					client.BaseAddress = new Uri(options.BaseUrl);
+					client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds > 0 ? options.TimeoutSeconds : 10);
+					client.DefaultRequestHeaders.UserAgent.Clear();
+					client.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);
+				}
 				// 3. サービスの登録
 				services.AddSingleton<IUpdateService, UpdateService>();
 				services.AddHttpClient<IWeatherService, WeatherService>();
+				services.AddHttpClient<IJapanPostBizTokenProvider, JapanPostBizTokenProvider>(ConfigureJapanPostBizClient);
+				services.AddHttpClient<IPostalAddressService, JapanPostBizPostalAddressService>(ConfigureJapanPostBizClient);
 					ConfigureClient<ILoginService>(services, url, subPath);
 				ConfigureClient<ICvnetCoreService>(services, url, subPath);
 			});

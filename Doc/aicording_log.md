@@ -32,6 +32,31 @@
 
 ---
 
+## [2026-04-11] 17:51 顧客マスターメンテに郵便番号検索を追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient から日本郵便APIを呼び、顧客マスターメンテ画面の `〒` 欄の横幅を半分程度にして検索ボタンを追加し、郵便番号から住所1,2,3を自動設定する
+### 実施内容
+- `CvWpfclient/Services/PostalAddressService.cs`: 郵便番号7桁専用の `IPostalAddressService`、検索結果DTO、JapanPostBiz設定、検索サービス実装を追加した。検索前にトークンProviderから認証ヘッダを取得し、検索結果を `Address1/2/3` へマッピングできる形に正規化した。
+- `CvWpfclient/Services/JapanPostBizTokenProvider.cs`: `expires_in` を見て有効期限を管理するトークンProviderを追加した。期限切れ前に再取得し、認証失敗時は無効化して再取得できるようにした。
+- `CvWpfclient/App.xaml.cs`: 日本郵便API向け `HttpClient` を設定し、`IPostalAddressService` と `IJapanPostBizTokenProvider` をDI登録した。
+- `CvWpfclient/appsettings.json`: `JapanPostBiz` セクションを追加し、BaseUrl、TokenPath、SearchCodePath、UserAgent などの設定キーを追加した。ClientId と SecretKey は空欄のままにした。
+- `CvWpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs`: `SearchPostalCodeCommand` を追加し、検索結果1件時に `CurrentEdit.PostalCode`、`Address1`、`Address2`、`Address3` を更新するようにした。
+- `CvWpfclient/Views/01Master/MasterEndCustomerMenteView.xaml`: `〒` 行を内側Grid化し、郵便番号欄を短くしたうえで検索ボタンを追加した。
+- `.sisyphus/20260411_postal_address_customer_master.md`: 作業メモを追加した。
+### 技術決定 Why
+- 日本郵便APIのトークンは `expires_in` で失効管理できるため、ViewModel側ではなくサービス内部でトークン再取得を閉じ込めて画面側の責務を増やさない設計にした。
+- 住所自動入力の通常利用は7桁郵便番号固定のため、初版は前方一致検索や候補選択UIを持たせず、1件ヒット時のみ反映する最小構成にした。
+- API資格情報は秘密情報に当たるため、設定キーのみコミットし、値は空欄で管理する形にした。
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → 実行中 `CreativeVision10` によるDLLロックで失敗
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"` → ビルド成功（0警告、0エラー）
+
+---
+
 ## [2026-04-10] 23:54 MainMenuView に Sunrise/Sunset 表示を追加
 ### Agent
 - gpt-5.4 : OpenAI
