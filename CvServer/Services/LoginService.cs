@@ -64,7 +64,7 @@ public partial class LoginService : ILoginService {
 					lifetime: lifetime,
 					seckey: webauthjwt.GetSection("SecretKey")?.Value ?? "veryveryhardsecurity-keys.needtoolong");
 				var retJwtData = new JwtSecurityTokenHandler().WriteToken(jwt);
-				var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime() };
+				var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetInfoApiKey() };
 				var loginHist = new SysHistJwt {
 					Id_Login = -9, // 初回ログインは-9固定
 					JwtUnixTime = jwt.ValidTo.ToUnixTime(),
@@ -118,7 +118,7 @@ public partial class LoginService : ILoginService {
 			//var expire = new DateTime(jwt.ValidTo.ToLocalTime().Ticks, DateTimeKind.Local); // ここで設定してもgRPCシリアライザでKindが落ちる
 			// [Even if set here, the Kind crashes in the gRPC serializer]
 			// UNIX_EPOCH はUTC 1970/01/01 00:00 からの経過秒数
-			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime() };
+			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetInfoApiKey() };
 			var loginHist = new SysHistJwt {
 				Id_Login = loginData.Id,
 				JwtUnixTime = jwt.ValidTo.ToUnixTime(),
@@ -240,7 +240,7 @@ public partial class LoginService : ILoginService {
 				lifetime: lifetime,
 				seckey: webauthjwt.GetSection("SecretKey")?.Value ?? "veryveryhardsecurity-keys.needtoolong");
 			var retJwtData = new JwtSecurityTokenHandler().WriteToken(jwt);
-			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime() };
+			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetInfoApiKey() };
 			var loginHist = new SysHistJwt {
 				Id_Login = initLogin.Id,
 				JwtUnixTime = jwt.ValidTo.ToUnixTime(),
@@ -256,5 +256,15 @@ public partial class LoginService : ILoginService {
 		else
 			return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
 	}
-
+	/// <summary>
+	/// InfoPayload用のAPIキーを取得する処理
+	/// </summary>
+	/// <returns></returns>
+	private string GetInfoApiKey() {
+		var infoApiKey = new CvBase.Share.InfoApiKey();
+		infoApiKey.Application.OpenWeatherApiKey = _configuration.GetSection("Application")?["OpenWeatherApiKey"] ?? "";
+		infoApiKey.JapanPostBiz.ClientId = _configuration.GetSection("JapanPostBiz")?["ClientId"] ?? "";
+		infoApiKey.JapanPostBiz.SecretKey = _configuration.GetSection("JapanPostBiz")?["SecretKey"] ?? "";
+		return Common.SerializeObject(infoApiKey);
+	}
 }

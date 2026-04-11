@@ -385,39 +385,39 @@
 							Style="{StaticResource MainMenuDashboardCard}">
 							<StackPanel Orientation="Horizontal">
 								<StackPanel>
-								<StackPanel Margin="0,0,0,8" HorizontalAlignment="Left"
-									Orientation="Horizontal">
-									<Button Margin="10,0,10,0"
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding ShowUpgradeCommand}"
-										Content="バージョンアップ (F9)" Opacity="0.8"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="システムアップデート" />
-									<Button Margin="10,0,10,0"
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding ShowSettingCommand}"
-										Content="環境設定 (F10)" Opacity="0.8"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="環境設定" />
-									<Button Margin="10,0,10,0"
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding ShowRefreshCommand}"
-										Content="リフレッシュトークン (F11)" Opacity="0.8"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="トークンリフレッシュ" />
-									<Button Margin="10,0,10,0"
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding ShowLoginCommand}"
-										Content="ログイン (F12)" Opacity="0.8"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="ログイン画面" />
+									<StackPanel Margin="0,0,0,8" HorizontalAlignment="Left"
+										Orientation="Horizontal">
+										<Button Margin="10,0,10,0"
+											Background="{DynamicResource PrimaryButtonColor}"
+											Command="{Binding ShowUpgradeCommand}"
+											Content="バージョンアップ (F9)" Opacity="0.8"
+											Style="{StaticResource MainMenuActionButton}"
+											ToolTip="システムアップデート" />
+										<Button Margin="10,0,10,0"
+											Background="{DynamicResource PrimaryButtonColor}"
+											Command="{Binding ShowSettingCommand}"
+											Content="環境設定 (F10)" Opacity="0.8"
+											Style="{StaticResource MainMenuActionButton}"
+											ToolTip="環境設定" />
+										<Button Margin="10,0,10,0"
+											Background="{DynamicResource PrimaryButtonColor}"
+											Command="{Binding ShowRefreshCommand}"
+											Content="リフレッシュトークン (F11)" Opacity="0.8"
+											Style="{StaticResource MainMenuActionButton}"
+											ToolTip="トークンリフレッシュ" />
+										<Button Margin="10,0,10,0"
+											Background="{DynamicResource PrimaryButtonColor}"
+											Command="{Binding ShowLoginCommand}"
+											Content="ログイン (F12)" Opacity="0.8"
+											Style="{StaticResource MainMenuActionButton}"
+											ToolTip="ログイン画面" />
+									</StackPanel>
+									<TextBlock FontSize="16"
+										Foreground="{DynamicResource plainTextColor0}"
+										Opacity="0.7"
+										Text="{Binding StatusMessage}"
+										TextWrapping="Wrap" />
 								</StackPanel>
-								<TextBlock FontSize="16"
-									Foreground="{DynamicResource plainTextColor0}"
-									Opacity="0.7"
-									Text="{Binding StatusMessage}"
-									TextWrapping="Wrap" />
-							</StackPanel>
 								<!--
 								<StackPanel Orientation="Vertical" Margin="10,0,0,0">
 									<Button

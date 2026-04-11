@@ -1,4 +1,4 @@
-﻿using ProtoBuf.Grpc;
+using ProtoBuf.Grpc;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 
@@ -42,6 +42,11 @@ public sealed class LoginReply {
 	/// </summary>
 	[DataMember(Order = 3)]
 	public DateTime Expire { get; set; }
+	/// <summary>
+	/// クライアントに付与するInfoApiKey情報
+	/// </summary>
+	[DataMember(Order = 4)]
+	public string InfoPayload { get; set; } = string.Empty;
 }
 /// <summary>
 /// ログインリフレッシュ

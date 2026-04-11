@@ -8,6 +8,8 @@ AppGlobal.cs
 
 */
 global using MsgBoxResult = System.Windows.MessageBoxResult;
+using CvAsset;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using Grpc.Core;
 using Microsoft.Extensions.Configuration;
@@ -32,6 +34,7 @@ public static class AppGlobal {
 	private static string? _loginJwt;
 	private static IServiceProvider? _serviceProvider;
 	private static readonly ConcurrentDictionary<Type, object> _grpcServiceCache = new();
+	private static InfoApiKey _infoApiKey = new();
 	/// <summary>
 	/// サーバーのURL
 	/// </summary>
@@ -45,6 +48,7 @@ public static class AppGlobal {
 	/// </summary>
 	public static IConfigurationRoot Config => _config
 		?? throw new InvalidOperationException("AppGlobal has not been initialized. Call Init() at application startup.");
+	public static InfoApiKey InfoApiKey => _infoApiKey;
 	/// <summary>
 	/// ログイン認証後のJWT
 	/// [JWT after login authentication]
@@ -77,12 +81,15 @@ public static class AppGlobal {
 		}
 	}
 
-	public static void SetLoginJwt(string? loginJwt) {
+	public static void SetLoginJwt(string? loginJwt, string? info = null) {
 		_loginJwt = loginJwt;
+		if (!string.IsNullOrWhiteSpace(info))
+			_infoApiKey = Common.DeserializeObject<InfoApiKey>(info) ?? new InfoApiKey();
 	}
 
 	public static void ClearLoginJwt() {
 		_loginJwt = string.Empty;
+		_infoApiKey = new InfoApiKey();
 	}
 	/// <summary>
 	/// メタデータを取得する
