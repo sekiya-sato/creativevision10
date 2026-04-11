@@ -182,7 +182,7 @@ public partial class App : Application {
 				services.AddHttpClient<IWeatherService, WeatherService>();
 				services.AddHttpClient<IJapanPostBizTokenProvider, JapanPostBizTokenProvider>(ConfigureJapanPostBizClient);
 				services.AddHttpClient<IPostalAddressService, JapanPostBizPostalAddressService>(ConfigureJapanPostBizClient);
-					ConfigureClient<ILoginService>(services, url, subPath);
+				ConfigureClient<ILoginService>(services, url, subPath);
 				ConfigureClient<ICvnetCoreService>(services, url, subPath);
 			});
 	}

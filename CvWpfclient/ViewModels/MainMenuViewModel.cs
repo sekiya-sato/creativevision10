@@ -281,6 +281,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				InfolocalServer = version;
 				version.Url = AppGlobal.Config.GetSection("ConnectionStrings")?["Url"] ?? "";
 			}
+			await RefreshWeatherAsync();
 		}
 		catch (Exception ex) {
 			_logger.Warn($"サーバ情報の取得に失敗: {ex.Message}");
