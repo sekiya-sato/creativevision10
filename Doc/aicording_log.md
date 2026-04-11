@@ -32,6 +32,24 @@
 
 ---
 
+## [2026-04-11] 21:52 MessageBoxExのメッセージをコピー可能に修正
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`CvWpfclient` の `MessageBoxEx` で、本文の `RichTextBox` と追記メッセージ表示部をユーザーが選択してコピーできるようにする
+### 実施内容
+- `CvWpfclient/Helpers/MessageBoxView.xaml`: 本文 `RichTextBox` に `IsReadOnlyCaretVisible` を追加し、追記メッセージ表示を `TextBlock` から読み取り専用 `TextBox` へ変更して選択コピー可能にした
+- `CvWpfclient/Helpers/MessageBoxView.xaml.cs`: ウィンドウ全体の `DragMove()` が `RichTextBox` / `TextBox` / ボタン操作を妨げないように、クリック元の親要素を辿ってドラッグ移動を抑制する条件を追加した
+### 技術決定 Why
+- `RichTextBox` 自体は読み取り専用でも選択可能だが、ウィンドウ全体のドラッグ移動処理がマウスドラッグ選択を潰していたため、移動処理側を最小差分で絞り込んだ
+- `TextBlock` は標準では選択コピーできないため、見た目を維持しやすい読み取り専用 `TextBox` へ置き換えてコピー可能化した
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（`CodeShare.dll` の一時ロックによる再試行警告 1件、エラー 0件）
+
+---
+
 ## [2026-04-11] 20:31 EffectiveSettings導入とログイン後ホスト再構築
 ### Agent
 - gpt-5.4 : OpenAI

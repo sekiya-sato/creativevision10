@@ -10,6 +10,7 @@
 */
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -162,8 +163,24 @@ public partial class MessageBoxView : Window {
 	}
 	protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) {
 		base.OnMouseLeftButtonDown(e);
-		DragMove();
+		if (e.OriginalSource is DependencyObject source && FindAncestor<TextBoxBase>(source) is null && FindAncestor<ButtonBase>(source) is null)
+			DragMove();
 	}
+
+	private static T? FindAncestor<T>(DependencyObject current) where T : DependencyObject {
+		while (current is not null) {
+			if (current is T target)
+				return target;
+
+			current = current switch {
+				FrameworkContentElement frameworkContentElement => frameworkContentElement.Parent,
+				_ => VisualTreeHelper.GetParent(current)
+			};
+		}
+
+		return null;
+	}
+
 	private void SetupIconVisibility() {
 		switch (Image) {
 			case MessageBoxImage.None:

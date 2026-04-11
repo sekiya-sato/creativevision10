@@ -122,7 +122,7 @@
 								Margin="0,0,20,10"
 								Background="Transparent" Block.LineHeight="20" BorderThickness="0" FontSize="16"
 								Foreground="{Binding Color}"
-								IsReadOnly="True" IsTabStop="False" IsUndoEnabled="False">
+								IsReadOnly="True" IsReadOnlyCaretVisible="True" IsTabStop="False" IsUndoEnabled="False">
 								<!--  Set PagePadding in CodeBehind  -->
 								<RichTextBox.Resources>
 									<Style TargetType="{x:Type Paragraph}">
@@ -139,8 +139,10 @@
 							<Expander x:Name="ApendExpand"
 								Margin="0,-6,20,0" HorizontalAlignment="Stretch"
 								d:IsExpanded="True" d:Visibility="Visible" Background="Transparent" FlowDirection="RightToLeft">
-								<TextBlock Margin="0,0,0,0"
+								<TextBox Margin="0,0,0,0"
+									Background="Transparent" BorderThickness="0"
 									d:Text="Appended Message" FlowDirection="LeftToRight" FontSize="14" Foreground="#3b3a39"
+									IsReadOnly="True" IsReadOnlyCaretVisible="True"
 									Text="{Binding AppendedMessage}"
 									TextWrapping="Wrap" />
 								<Expander.Style>
