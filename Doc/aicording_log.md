@@ -609,6 +609,24 @@
 
 ---
 
+## [2026-04-12] 15:08 App.xaml.csの起動後ログをILoggerへ移行
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`App.xaml.cs` 内でも、起動前例外用の bootstrap logger を残しつつ、起動後に動くログ出力をできるだけ `Microsoft.Extensions.Logging.ILogger` へ揃える
+### 実施内容
+- `CvWpfclient/App.xaml.cs`: 起動前例外ハンドラ用の NLog フィールドを `_bootstrapLogger` として明示し、更新確認処理の `Info/Error` を `TryGetAppLogger()` 経由の `ILogger<App>` へ変更した
+- `CvWpfclient/App.xaml.cs`: `AppHost` から安全に `ILoggerFactory` を取得する `TryGetAppLogger()` を追加し、起動後ログだけを `Microsoft.Extensions.Logging` 側へ寄せた
+### 技術決定 Why
+- `App.xaml.cs` はホスト構築前に例外が起きる可能性があるため、起動前クラッシュログを失わないよう bootstrap 用 NLog は維持した
+- 一方で `OnStartup` 後の更新確認ログは `ILogger` に統一できるため、通常運用時のフィルタ設定と出力経路を `Microsoft.Extensions.Logging` 側へ寄せた
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
+
+---
+
 ## [2026-04-10] 17:30 GoogleCalendarService および関連コードの削除
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot

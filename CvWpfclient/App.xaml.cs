@@ -24,7 +24,7 @@ namespace CvWpfclient;
 public partial class App : Application {
 	public static IHost? AppHost { get; private set; }
 	public static ThemeService ThemeService { get; } = new();
-	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+	private static readonly Logger _bootstrapLogger = LogManager.GetCurrentClassLogger();
 
 	[STAThread]
 	public static void Main(string[] args) {
@@ -89,13 +89,22 @@ public partial class App : Application {
 			return;
 		}
 
-		_logger.Error("Unhandled exception (AppDomain.UnhandledException): {ExceptionObject}", e.ExceptionObject);
+		_bootstrapLogger.Error("Unhandled exception (AppDomain.UnhandledException): {ExceptionObject}", e.ExceptionObject);
 		ShowUnhandledExceptionMessage(new Exception("予期しないエラーが発生しました。"));
 	}
 
 	private static void HandleUnhandledException(Exception exception, string source) {
-		_logger.Error(exception, "Unhandled exception: {Source}", source);
+		_bootstrapLogger.Error(exception, "Unhandled exception: {Source}", source);
 		ShowUnhandledExceptionMessage(exception);
+	}
+
+	private static Microsoft.Extensions.Logging.ILogger? TryGetAppLogger() {
+		var host = AppHost;
+		if (host == null) {
+			return null;
+		}
+
+		return host.Services.GetService<ILoggerFactory>()?.CreateLogger<App>();
 	}
 
 	private static void ShowUnhandledExceptionMessage(Exception exception) {
@@ -187,6 +196,7 @@ public partial class App : Application {
 	}
 
 	private async Task CheckForUpdatesOnStartupAsync() {
+		var logger = TryGetAppLogger();
 		try {
 			if (AppHost == null) {
 				return;
@@ -200,7 +210,7 @@ public partial class App : Application {
 
 			var checkResult = await updateService.CheckForUpdateAsync().ConfigureAwait(false);
 			if (!checkResult.IsUpdateAvailable) {
-				_logger.Info("起動時更新確認: {Message}", checkResult.Message);
+				logger?.LogInformation("起動時更新確認: {Message}", checkResult.Message);
 				return;
 			}
 
@@ -210,7 +220,7 @@ public partial class App : Application {
 				MessageEx.ShowQuestionDialog($"{checkResult.Message}\n\n今すぐ更新しますか？", owner: owner));
 
 			if (answer != MessageBoxResult.Yes) {
-				_logger.Info("起動時更新確認: 更新を見つけましたが、ユーザーが延期しました。");
+				logger?.LogInformation("起動時更新確認: 更新を見つけましたが、ユーザーが延期しました。");
 				return;
 			}
 
@@ -220,7 +230,7 @@ public partial class App : Application {
 			}
 		}
 		catch (Exception ex) {
-			_logger.Error(ex, "起動時の更新確認でエラーが発生しました。");
+			logger?.LogError(ex, "起動時の更新確認でエラーが発生しました。");
 		}
 	}
 
