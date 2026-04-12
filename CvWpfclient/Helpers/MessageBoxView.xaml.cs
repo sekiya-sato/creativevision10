@@ -8,6 +8,7 @@
  *	ShowInformationDialog / ShowQuestionDialog / ShowWarningDialog / ShowErrorDialog
  *	class名,Font,mergin調整、ownerの扱い等を修正
 */
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -269,7 +270,28 @@ public partial class MessageBoxView : Window {
 			if (Owner != null)
 				Owner.Activate();
 		}
+		if (e.Key == Key.C && Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) {
+			var text = Message + (HasAppendedMessage ? "\r\n" + AppendedMessage : "");
+			if (!string.IsNullOrEmpty(text)) {
+				_ = TrySetClipboardTextAsync(text);
+				e.Handled = true;
+				return;
+			}
+		}
 	}
+	private static async Task<bool> TrySetClipboardTextAsync(string text, int retryCount = 5, int delayMs = 50) {
+		for (int i = 0; i < retryCount; i++) {
+			try {
+				Clipboard.SetText(text);
+				return true;
+			}
+			catch (COMException ex) when ((uint)ex.HResult == 0x800401D0) {
+				await Task.Delay(delayMs);
+			}
+		}
+		return false;
+	}
+
 }
 
 /// <summary>
