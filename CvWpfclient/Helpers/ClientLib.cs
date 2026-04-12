@@ -6,7 +6,6 @@ namespace CvWpfclient.Helpers;
 /// [Class mainly for manipulating the View from the ViewModel]
 /// </summary>
 public class ClientLib {
-	private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 	/// <summary>
 	/// アクティブなWindowを閉じる
 	/// [Close the active Window]
@@ -139,17 +138,13 @@ public class ClientLib {
 	public static string GetDataDir() {
 		try {
 			string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData); // AppData/Local
-																										//string folder = appData + "\\" + System.Windows.Forms.Application.CompanyName + "\\" + System.Windows.Forms.Application.ProductName;
-																										// 固定で返す(バージョンを大きく変える場合には変更する)
-																										// [Return a fixed value (change if a major version update is made)]
 			string folder = System.IO.Path.Combine(appData, "CreativeVision10");
 			if (!System.IO.Directory.Exists(folder)) {
 				System.IO.Directory.CreateDirectory(folder);
 			}
 			return folder;
 		}
-		catch (Exception ex) {
-			_logger.Error(ex, "GetDataDirエラー");
+		catch (Exception) {
 			return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData); // AppData/Roaming
 		}
 	}

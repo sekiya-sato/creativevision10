@@ -1,12 +1,3 @@
-
-/*
-# file name
-AppGlobal.cs
-
-# description
-グローバル変数を管理するクラス
-
-*/
 global using MsgBoxResult = System.Windows.MessageBoxResult;
 using CvAsset;
 using CvBase.Share;
@@ -14,7 +5,7 @@ using CvWpfclient.Helpers;
 using Grpc.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NLog;
+using Microsoft.Extensions.Logging;
 using ProtoBuf.Grpc;
 using System.Collections.Concurrent;
 using System.IO;
@@ -25,7 +16,7 @@ namespace CvWpfclient;
 /// グローバル変数
 /// </summary>
 public static class AppGlobal {
-	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+	private static ILogger? _logger;
 	// Backing field: 内部でのみ null 許容
 	private static IConfigurationRoot? _config;
 	private static string? _url;
@@ -65,16 +56,17 @@ public static class AppGlobal {
 	/// <summary>
 	/// Config読込処理：application startup で一度だけ実行すること
 	/// </summary>
-	public static void Init(IConfigurationRoot config, IServiceProvider serviceProvider) {
+	public static void Init(IConfigurationRoot config, IServiceProvider serviceProvider, ILogger logger) {
 		ArgumentNullException.ThrowIfNull(config);
 		ArgumentNullException.ThrowIfNull(serviceProvider);
-		_logger.Info("GlobalInitialize()実行");
+		_logger = logger;
+		_logger.LogInformation("GlobalInitialize()実行");
 		_config = config;
 		_serviceProvider = serviceProvider;
 		_url = _config.GetConnectionString("Url");
 		_dataDir = ClientLib.GetDataDir();
 		_grpcServiceCache.Clear();
-		_logger.Info($"---------------------------------\n AppGlobal.Init() 接続先Url={_url},実行フォルダ={Directory.GetCurrentDirectory()}");
+		_logger.LogWarning($"---------------------------------\n AppGlobal.Init() 接続先Url={_url},実行フォルダ={Directory.GetCurrentDirectory()}");
 		// あれば取得する
 		if (string.IsNullOrWhiteSpace(LoginJwt)) {
 			SetLoginJwt(_config.GetSection("Parameters")?["LoginJwt"]);

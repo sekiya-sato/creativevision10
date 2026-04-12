@@ -137,7 +137,6 @@ public partial class App : Application {
 			})
 		.ConfigureLogging((context, logging) => {
 			logging.ClearProviders(); // 既定のログプロバイダーをクリア
-			logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
 			logging.AddNLog(context.Configuration); // ILogger<T> → NLog へルーティング
 		})
 			.ConfigureServices((context, services) => {
@@ -245,8 +244,9 @@ public partial class App : Application {
 	private static void InitializeAppCurrent(IHost host) {
 		var configuration = host.Services.GetRequiredService<IConfiguration>() as IConfigurationRoot
 			?? throw new InvalidOperationException("IConfigurationRoot is not available.");
+		var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(AppGlobal));
 
-		AppGlobal.Init(configuration, host.Services);
+		AppGlobal.Init(configuration, host.Services, logger);
 	}
 }
 
