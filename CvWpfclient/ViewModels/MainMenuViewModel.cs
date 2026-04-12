@@ -11,6 +11,7 @@ using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -19,7 +20,7 @@ using System.Windows.Threading;
 namespace CvWpfclient.ViewModels;
 
 public partial class MainMenuViewModel : ObservableObject {
-	private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+	private readonly ILogger<MainMenuViewModel> _logger;
 
 	[ObservableProperty]
 	ObservableCollection<MenuData> menuItems = [];
@@ -75,6 +76,11 @@ public partial class MainMenuViewModel : ObservableObject {
 	InfoUser infolocalUser = new InfoUser();
 	[ObservableProperty]
 	InfoServer infolocalServer = new InfoServer();
+
+	public MainMenuViewModel() {
+		_logger = App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger<MainMenuViewModel>();
+	}
+
 	partial void OnInfolocalUserChanged(InfoUser value) {
 		AppGlobal.StaticInfoUser = value;
 		// ここに追加処理を書く
@@ -284,7 +290,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			await RefreshWeatherAsync();
 		}
 		catch (Exception ex) {
-			_logger.Warn($"サーバ情報の取得に失敗: {ex.Message}");
+			_logger.LogWarning(ex, "サーバ情報の取得に失敗しました。");
 		}
 		SetSubMessage();
 	}
@@ -428,7 +434,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			}
 		}
 		catch (Exception ex) {
-			_logger.Warn(ex, "天気ダッシュボードの更新に失敗");
+			_logger.LogWarning(ex, "天気ダッシュボードの更新に失敗");
 		}
 	}
 

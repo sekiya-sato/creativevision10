@@ -1,5 +1,5 @@
 using CvWpfclient.Models;
-using NLog;
+using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -11,8 +11,7 @@ public interface IWeatherService {
 	Task<List<HourlyForecast>> GetHourlyForecastAsync(CancellationToken ct = default);
 }
 
-public sealed class WeatherService(HttpClient httpClient, EffectiveSettings settings) : IWeatherService {
-	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+public sealed class WeatherService(HttpClient httpClient, EffectiveSettings settings, ILogger<WeatherService> logger) : IWeatherService {
 	private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
 	private string Region => settings.WeatherRegion;
@@ -24,7 +23,7 @@ public sealed class WeatherService(HttpClient httpClient, EffectiveSettings sett
 			return ParseCurrentWeather(json);
 		}
 		catch (Exception ex) {
-			_logger.Warn(ex, "天気情報の取得に失敗");
+			logger.LogWarning(ex, "天気情報の取得に失敗");
 			return null;
 		}
 	}
@@ -36,7 +35,7 @@ public sealed class WeatherService(HttpClient httpClient, EffectiveSettings sett
 			return ParseForecast(json);
 		}
 		catch (Exception ex) {
-			_logger.Warn(ex, "天気予報の取得に失敗");
+			logger.LogWarning(ex, "天気予報の取得に失敗");
 			return [];
 		}
 	}

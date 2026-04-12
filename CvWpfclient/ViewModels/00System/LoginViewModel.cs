@@ -4,11 +4,13 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace CvWpfclient.ViewModels._00System;
 
 public partial class LoginViewModel : Helpers.BaseViewModel {
-	private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+	private readonly ILogger<LoginViewModel> _logger;
 	[ObservableProperty]
 	private string? loginId;
 
@@ -20,6 +22,10 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
 	bool isVisibleLoginTab = true; // true:ログインタブ、false:ログインリフレッシュのタブ
+
+	public LoginViewModel() {
+		_logger = App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger<LoginViewModel>();
+	}
 
 	[RelayCommand]
 	private void Init() {
@@ -53,7 +59,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage, reply.InfoPayload);
 					await App.RestartHostAsync(cancellationToken);
-					_logger.Debug($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
+					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, AppGlobal.LoginJwt);
 					LoginData = reply;
 					ExitWithResultTrue();
 					return;
@@ -99,7 +105,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage, reply.InfoPayload);
 					await App.RestartHostAsync(cancellationToken);
-					_logger.Debug($"{DateTime.Now} AppGlobal.LoginJwt={AppGlobal.LoginJwt}");
+					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, AppGlobal.LoginJwt);
 					LoginData = reply;
 					ExitWithResultTrue();
 					return;

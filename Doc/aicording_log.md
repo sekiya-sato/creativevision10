@@ -588,6 +588,27 @@
 
 ---
 
+## [2026-04-12] 14:58 CvWpfclientのNLog直利用をILoggerへ統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`CvWpfclient` の `App.xaml.cs` を除く NLog 直接利用箇所を `Microsoft.Extensions.Logging.ILogger` 経由へ揃え、コミットまで実施する
+### 実施内容
+- `CvWpfclient/ViewModels/00System/LoginViewModel.cs`: `NLog.LogManager.GetCurrentClassLogger()` を廃止し、`ILoggerFactory` から `ILogger<LoginViewModel>` を生成する形へ変更した
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `ILogger<MainMenuViewModel>` を使う形へ変更し、警告ログ呼び出しを `LogWarning` へ統一した
+- `CvWpfclient/Services/WeatherService.cs`: `ILogger<WeatherService>` を DI で受ける形へ変更し、天気取得失敗ログを `ILogger` 経由へ統一した
+- `CvWpfclient/Services/SystemSettingsStore.cs`: `ILoggerFactory` から生成した `ILogger` を使う形へ変更し、JSON読込失敗時の警告ログを `LogWarning` へ統一した
+- `CvWpfclient/Helpers/Behaviors/DataGridSelectionBehavior.cs`: static な振る舞いを保ったまま `ILoggerFactory` から取得した `ILogger` で例外ログを出す形へ変更した
+### 技術決定 Why
+- 出力先は既存の `AddNLog(...)` を維持しつつ、呼び出し側を `Microsoft.Extensions.Logging` に揃えることで、今後のフィルタ設定・DI・テスト差し替えを一元化しやすくした
+- `WeatherService` のような DI 管理クラスは `ILogger<T>` を直接注入し、ViewModel や static 補助クラスは `ILoggerFactory` から取得することで、最小差分で統一した
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
+
+---
+
 ## [2026-04-10] 17:30 GoogleCalendarService および関連コードの削除
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot

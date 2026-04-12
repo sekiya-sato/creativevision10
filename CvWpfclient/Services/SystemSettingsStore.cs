@@ -6,15 +6,16 @@ SystemSettingsStore.cs
 システム設定ファイル (systemsettings.json) の読み書きを行うクラスを提供します。
 
 */
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using NLog;
 using System.IO;
 
 namespace CvWpfclient.Services;
 
 public sealed class SystemSettingsStore {
 	private const string FileName = "systemsettings.json";
-	private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+	private readonly ILogger _logger;
 	private readonly object _sync = new();
 
 	public string FilePath { get; }
@@ -26,6 +27,7 @@ public sealed class SystemSettingsStore {
 	public static string SettingsFilePath => Path.Combine(Helpers.ClientLib.GetDataDir(), FileName);
 
 	public SystemSettingsStore(string? filePath = null) {
+		_logger = App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(SystemSettingsStore));
 		FilePath = string.IsNullOrWhiteSpace(filePath) ? SettingsFilePath : filePath!;
 	}
 
@@ -47,7 +49,7 @@ public sealed class SystemSettingsStore {
 				return JsonConvert.DeserializeObject<SystemSettingsDocument>(content) ?? new SystemSettingsDocument();
 			}
 			catch (JsonException ex) {
-				_logger.Warn(ex, "systemsettings.json の読み込みに失敗したため初期値を使用します。");
+				_logger.LogWarning(ex, "systemsettings.json の読み込みに失敗したため初期値を使用します。");
 				return new SystemSettingsDocument();
 			}
 		}

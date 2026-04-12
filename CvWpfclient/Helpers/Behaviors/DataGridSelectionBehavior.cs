@@ -1,4 +1,6 @@
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,6 +11,8 @@ using System.Windows.Threading;
 namespace CvWpfclient.Helpers;
 
 public static class DataGridSelectionBehavior {
+	private static ILogger Logger => App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(DataGridSelectionBehavior));
+
 	public static readonly DependencyProperty AutoScrollToSelectedItemProperty =
 		DependencyProperty.RegisterAttached(
 			"AutoScrollToSelectedItem",
@@ -135,7 +139,7 @@ public static class DataGridSelectionBehavior {
 				}
 			}
 			catch (Exception ex) {
-				NLog.LogManager.GetCurrentClassLogger().Error(ex, "Error in BringSelectionIntoView");
+				Logger.LogError(ex, "Error in BringSelectionIntoView");
 			}
 		}, DispatcherPriority.Render);
 	}
