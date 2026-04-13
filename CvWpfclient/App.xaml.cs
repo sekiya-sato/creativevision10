@@ -135,7 +135,7 @@ public partial class App : Application {
 	/// </summary>
 	/// <returns></returns>
 	/// <exception cref="InvalidOperationException"></exception>
-	static IHostBuilder CreateHostBuilder() {
+	static IHostBuilder CreateHostBuilder(Dictionary<string, string?>? setting = null) {
 		var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "_";
 		return Host.CreateDefaultBuilder()
 			.ConfigureAppConfiguration(builder => {
@@ -145,6 +145,8 @@ public partial class App : Application {
 				builder.AddJsonFile("appsettings.Production.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile(SystemSettingsStore.SettingsFilePath, optional: true, reloadOnChange: true);
+				if (setting is not null)
+					builder.AddInMemoryCollection(setting);
 			})
 		.ConfigureLogging((context, logging) => {
 			logging.ClearProviders(); // 既定のログプロバイダーをクリア
@@ -239,12 +241,12 @@ public partial class App : Application {
 	/// <summary>
 	/// 設定変更を反映するためにホストを再構築します。
 	/// </summary>
-	public static async Task RestartHostAsync(CancellationToken cancellationToken = default) {
+	public static async Task RestartHostAsync(CancellationToken cancellationToken = default, Dictionary<string, string?>? setting = null) {
 		if (AppHost is not null) {
 			await AppHost.StopAsync(cancellationToken).ConfigureAwait(false);
 			AppHost.Dispose();
 		}
-		AppHost = CreateHostBuilder().Build();
+		AppHost = CreateHostBuilder(setting).Build();
 		await StartHostAsync(AppHost, cancellationToken).ConfigureAwait(false);
 	}
 

@@ -19,8 +19,6 @@ public static class AppGlobal {
 	private static ILogger? _logger;
 	// Backing field: 内部でのみ null 許容
 	private static IConfigurationRoot? _config;
-	private static string? _url;
-	private static string? _dataDir;
 	private static Guid? _clientId;
 	private static string? _loginJwt;
 	private static IServiceProvider? _serviceProvider;
@@ -29,11 +27,17 @@ public static class AppGlobal {
 	/// <summary>
 	/// サーバーのURL
 	/// </summary>
-	public static string Url => _url
+	public static string Url => _config?.GetConnectionString("Url")
 		?? throw new InvalidOperationException("AppGlobal has not been initialized. Call Init() at application startup.");
-	public static string DataDir => _dataDir
+	public static string DataDir => ClientLib.GetDataDir()
 		?? throw new InvalidOperationException("AppGlobal has not been initialized. Call Init() at application startup.");
-	public static Guid ClientId => _clientId ??= Guid.NewGuid();
+	public static Guid ClientId {
+		get {
+			if (_clientId == null)
+				_clientId = Guid.NewGuid();
+			return (Guid)_clientId;
+		}
+	}
 	/// <summary>
 	/// app.config内容
 	/// </summary>
@@ -50,7 +54,7 @@ public static class AppGlobal {
 	}
 
 	public static Models.InfoUser StaticInfoUser = new();
-	public static CvBase.Share.InfoServer StaticInfoServer = new();
+	public static InfoServer StaticInfoServer = new();
 
 
 	/// <summary>
@@ -63,10 +67,8 @@ public static class AppGlobal {
 		_logger.LogInformation("GlobalInitialize()実行");
 		_config = config;
 		_serviceProvider = serviceProvider;
-		_url = _config.GetConnectionString("Url");
-		_dataDir = ClientLib.GetDataDir();
 		_grpcServiceCache.Clear();
-		_logger.LogWarning($"---------------------------------\n AppGlobal.Init() 接続先Url={_url},実行フォルダ={Directory.GetCurrentDirectory()}");
+		_logger.LogWarning($"---------------------------------\n AppGlobal.Init() 接続先Url={Url},実行フォルダ={Directory.GetCurrentDirectory()}");
 		// あれば取得する
 		if (string.IsNullOrWhiteSpace(LoginJwt)) {
 			SetLoginJwt(_config.GetSection("Parameters")?["LoginJwt"]);
@@ -123,7 +125,28 @@ public static class AppGlobal {
 			return service ?? throw new InvalidOperationException($"Service '{typeof(T).Name}' could not be resolved.");
 		});
 	}
-
+	/// <summary>
+	/// メモリ上の設定値を更新する。呼び出し後、必要に応じて gRPC サービスの再構築などを行うこと。
+	/// </summary>
+	/// <param name="url"></param>
+	/// <param name="loginId"></param>
+	/// <param name="loginPass"></param>
+	/// <exception cref="InvalidOperationException"></exception>
+	public static void UpdateConfigValues(string? url = null, string? loginId = null, string? loginPass = null) {
+		if (_config == null) {
+			throw new InvalidOperationException("AppGlobal has not been initialized. Call Init() at application startup.");
+		}
+		if (url != null) {
+			_config["ConnectionStrings:Url"] = url;
+			_grpcServiceCache.Clear();
+		}
+		if (loginId != null) {
+			_config["Parameters:LoginId"] = loginId;
+		}
+		if (loginPass != null) {
+			_config["Parameters:LoginPass"] = loginPass;
+		}
+	}
 
 
 }
