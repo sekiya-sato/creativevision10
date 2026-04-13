@@ -1,5 +1,12 @@
 # インストールの手引
 
+目次
+
+- [サーバインストール](#-サーバインストール)
+- [クライアントインストール](#-クライアントインストール)
+- [公開APIキー設定](#-公開apikey設定)
+
+
 # サーバインストール
 
 - リポジトリのクローン 
@@ -84,5 +91,21 @@
 
 	bash ~/bin/publish.sh  : WSL2にpublish.shを作成し、scpやftpで配布先URLへコピーする
 
+
+# 公開APIキー設定
+
+	クライアント側で設定する場合は、CvWpfclient/appsettings.json などに記述する
+
+	サーバ側で設定する場合は、CvServer/appsettings.json などに記述する
+
+- 現在地の天気情報の表示がしたい: OpenWeatherMapのAPIキーを取得 https://openweathermap.org/
+
+	"Application", "OpenWeatherApiKey" " にAPIキーを記述
+
+- 住所入力で郵便番号から住所を取得したい: 郵便番号・デジタルアドレスのAPIキーを取得 https://guide-biz.da.pf.japanpost.jp/
+
+	"JapanPostBiz", "ClientId" にClientIdを記述
+
+	"JapanPostBiz", "SecretKey" にSecretKeyを記述
 
 
