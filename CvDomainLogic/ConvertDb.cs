@@ -1,6 +1,7 @@
 using CvAsset;
 using CvBase;
 using NLog;
+using System.Text.RegularExpressions;
 
 namespace CvDomainLogic;
 /// <summary>
@@ -689,6 +690,8 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 
 	public int CnvAfterMasterAddress(bool isInit = true) {
 		int cnt = 0;
+		var prefRegex = new Regex(@"^(東京都|北海道|京都府|大阪府|.{2,3}県)", RegexOptions.Compiled);
+		var cityRegex = new Regex(@"^(.+?郡.+?[町村]|.+?市.+?区|.+?[市区町村])", RegexOptions.Compiled);
 		var tokuiList = _toDb.Fetch<MasterTokui>("where PostalCode>''");
 		if (tokuiList != null && tokuiList.Count > 0) {
 			foreach (var tokui in tokuiList) {
@@ -696,17 +699,40 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				try {
 					// 住所をまとめたものから、都道府県をAddress1 に、市区町村をAddress2に、残りをAddress3に分割して保存する
 					var all = $"{tokui.Address1?.Trim()}{tokui.Address2?.Trim()}{tokui.Address3?.Trim()}".Trim();
-					// ここから実装する
+					if (string.IsNullOrWhiteSpace(all))
+						continue;
 
+					var normalizedAddress = all
+						.Replace(" ", string.Empty)
+						.Replace("　", string.Empty)
+						.Trim();
+					if (string.IsNullOrWhiteSpace(normalizedAddress))
+						continue;
 
-					// 結果を tokui.Address1-3 に再セットしたあと、更新
-					_toDb.UpdateAsync(tokui);
+					var prefMatch = prefRegex.Match(normalizedAddress);
+					if (!prefMatch.Success)
+						continue;
+
+					var newAddress1 = prefMatch.Value;
+					var restAfterPref = normalizedAddress[newAddress1.Length..];
+
+					var cityMatch = cityRegex.Match(restAfterPref);
+					var newAddress2 = cityMatch.Success ? cityMatch.Value : string.Empty;
+					var newAddress3 = cityMatch.Success ? restAfterPref[newAddress2.Length..] : restAfterPref;
+
+					if (tokui.Address1 == newAddress1 && tokui.Address2 == newAddress2 && tokui.Address3 == newAddress3)
+						continue;
+
+					tokui.Address1 = newAddress1;
+					tokui.Address2 = newAddress2;
+					tokui.Address3 = newAddress3;
+					_toDb.Update(tokui);
+					cnt++;
 				}
 				catch (Exception ex) {
-					_logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterEndCustomer Code={0}", tokui?.Code);
+					_logger?.Warn(ex, "CnvAfterMasterAddress: Failed to split address for MasterTokui Code={0}", tokui?.Code);
 				}
 			}
-			cnt += tokuiList.Count;
 		}
 
 		return cnt;

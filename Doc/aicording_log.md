@@ -627,6 +627,24 @@
 
 ---
 
+## [2026-04-13] 17:31 得意先住所の再分割処理を実装
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`ConvertDb.cs` の `CnvAfterMasterAddress()` で、連結済み住所から `Address1=都道府県` `Address2=市区町村` `Address3=残り` に再分割したい
+### 実施内容
+- `CvDomainLogic/ConvertDb.cs`: `CnvAfterMasterAddress()` に都道府県・市区町村を正規表現で抽出する処理を追加し、空白正規化、更新差分チェック、更新件数カウント、例外ログ文言修正を実施
+- `.sisyphus/notepads/20260413_cnv_after_master_address_regex.md`: 今回採用した正規表現方針と安全策をメモとして記録
+### 技術決定 Why
+- この関数のみで完結させる条件に合わせ、外部マスタや郵便番号APIには依存せず、先頭一致の正規表現だけで都道府県と市区町村を段階的に切り出す方針を採用した
+- 判定不能データを壊さないため、都道府県が取れない住所は更新せず、市区町村が取れない場合のみ残り全体を `Address3` に退避する安全側の挙動にした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic/CvDomainLogic.csproj"` → ビルド成功（0警告、0エラー）
+
+---
+
 ## [2026-04-10] 17:30 GoogleCalendarService および関連コードの削除
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot
