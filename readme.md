@@ -16,7 +16,7 @@ AIアシスタントは [AGENTS.md](AGENTS.md) を参照してください。
 # 目次
 
 - [ソリューション概要](#ソリューション概要)
-- [特徴・メリット](#特徴・メリット-creative-vision-10-の十のメリット)
+- [特徴・メリット](#特徴メリット-creative-vision-10-の十のメリット)
 - [プロジェクト別概要](#プロジェクト別概要)
   - [CodeShare](#codeshare)
   - [CvAsset](#cvasset)
