@@ -142,7 +142,6 @@ public partial class App : Application {
 				// 各設定ファイルの読み込み
 				builder.SetBasePath(Directory.GetCurrentDirectory());
 				builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-				builder.AddJsonFile("appsettings.Production.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile(ClientSettingsStore.SettingsFilePath, optional: true, reloadOnChange: true);
 				if (setting is not null)

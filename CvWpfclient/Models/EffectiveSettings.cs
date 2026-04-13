@@ -5,9 +5,7 @@ namespace CvWpfclient.Models;
 public sealed class EffectiveSettings(IConfiguration configuration) {
 	public string WeatherRegion => configuration["Application:WeatherRegion"] ?? "Tokyo";
 
-	public string OpenWeatherApiKey => FirstNonEmpty(
-		global::CvWpfclient.AppGlobal.InfoApiKey.Application.OpenWeatherApiKey,
-		configuration["Application:OpenWeatherApiKey"]);
+	public string OpenWeatherApiKey => configuration["Application:OpenWeatherApiKey"] ?? "...";
 
 	public JapanPostBizOptions GetJapanPostBizOptions() {
 		return new JapanPostBizOptions {

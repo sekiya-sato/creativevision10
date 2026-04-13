@@ -654,6 +654,64 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 		}
 		return cnt;
 	}
+	public int CnvAfterMasterOption__NoUse() {
+		int cnt = 0;
+		// MasterEndCustomer の Memo をキーに MasterTokui を検索し、該当する場合は MasterEndCustomer の Memo を更新する
+		var customerList = _toDb.Fetch<MasterEndCustomer>("where Memo IS NOT NULL AND Memo <> ''");
+		if (customerList != null && customerList.Count > 0) {
+			foreach (var customer in customerList) {
+				try {
+					var memo = customer?.Memo ?? string.Empty;
+					if (customer == null || string.IsNullOrWhiteSpace(memo))
+						continue;
+					// 該当Memoを持つ MasterTokui を取得し、存在すれば customer.Memo を更新する
+					var tokui = _toDb.FirstOrDefault<MasterTokui>("where Code=@0", memo);
+					if (tokui != null) {
+						customer.Memo = $"【{tokui.Code}】{tokui.Name}";
+						// 必要ならデータベース上の customer レコードを更新
+						try {
+							_toDb.Update(customer);
+						}
+						catch (Exception updEx) {
+							_logger?.Warn(updEx, "CnvAfterMasterOption: Failed to update MasterEndCustomer Id={0}", customer.Id);
+						}
+					}
+				}
+				catch (Exception ex) {
+					_logger?.Warn(ex, "CnvAfterMasterOption: Failed to resolve Memo for MasterEndCustomer Code={0}", customer?.Code);
+				}
+			}
+			cnt += customerList.Count;
+		}
+		return cnt;
+	}
+
+
+	public int CnvAfterMasterAddress(bool isInit = true) {
+		int cnt = 0;
+		var tokuiList = _toDb.Fetch<MasterTokui>("where PostalCode>''");
+		if (tokuiList != null && tokuiList.Count > 0) {
+			foreach (var tokui in tokuiList) {
+				if (tokui == null) continue;
+				try {
+					// 住所をまとめたものから、都道府県をAddress1 に、市区町村をAddress2に、残りをAddress3に分割して保存する
+					var all = $"{tokui.Address1?.Trim()}{tokui.Address2?.Trim()}{tokui.Address3?.Trim()}".Trim();
+					// ここから実装する
+
+
+					// 結果を tokui.Address1-3 に再セットしたあと、更新
+					_toDb.UpdateAsync(tokui);
+				}
+				catch (Exception ex) {
+					_logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterEndCustomer Code={0}", tokui?.Code);
+				}
+			}
+			cnt += tokuiList.Count;
+		}
+
+		return cnt;
+	}
+
 	/*
 	public int CnvAfterMaster2(bool isInit = true) {
 		int cnt = 0;
