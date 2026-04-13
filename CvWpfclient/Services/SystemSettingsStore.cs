@@ -75,6 +75,8 @@ public sealed class ClientSettingsStore {
 public sealed class ClientSettingsDocument {
 	public ClientConnectionString ConnectionStrings { get; set; } = new();
 	public ClientParameters Parameters { get; set; } = new();
+	public ClientApplication Application { get; set; } = new();
+	public ClientJapanPos JapanPostBiz { get; set; } = new();
 }
 
 public sealed class ClientConnectionString {
@@ -93,15 +95,13 @@ public sealed class ClientParameters {
 	public string LoginJwt { get; set; } = string.Empty;
 
 }
+public sealed class ClientApplication {
+	public string OpenWeatherApiKey { get; set; } = string.Empty;
+	public string WeatherRegion { get; set; } = string.Empty;
+	public string FitPosition { get; set; } = string.Empty;
+}
 
-
-	"Application": {
-		"Version": "0.7.5",
-		"wrkOpenWeatherApiKey": "1a09a2677b34e20d2ebb253f2ef32fc6", // サーバから取得するよう変更
-		"WeatherRegion": "Tokyo",
-		"FitPosition": "Left-Bottom"
-	},
-	"JapanPostBiz": {
-	"wrkClientId": "ca702e407aed47e3b6f4c8acc6236b06", // サーバから取得するよう変更
-		"wrkSecretKey": "366e80d13fae4fdf9d5d2a2239eb7d17" // サーバから取得するよう変更
-	},
+public sealed class ClientJapanPos {
+	public string ClientId { get; set; } = string.Empty;
+	public string SecretKey { get; set; } = string.Empty;
+}

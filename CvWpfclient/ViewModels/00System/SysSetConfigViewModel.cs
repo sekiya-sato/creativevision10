@@ -24,12 +24,6 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private void Init() {
 		LoadSettings();
 	}
-	/*
-	protected override void OnExit() {
-		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) == MessageBoxResult.Yes) {
-			ExitWithResultFalse();
-		}
-	}*/
 
 
 	[RelayCommand(IncludeCancelCommand = true)]
