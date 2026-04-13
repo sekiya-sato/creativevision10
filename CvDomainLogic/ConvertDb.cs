@@ -690,9 +690,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 
 	public int CnvAfterMasterAddress(bool isInit = true) {
 		int cnt = 0;
-		var prefRegex = new Regex(@"^(東京都|北海道|京都府|大阪府|.{2,3}県)", RegexOptions.Compiled);
-		var cityRegex = new Regex(@"^(.+?郡.+?[町村]|.+?市.+?区|.+?[市区町村])", RegexOptions.Compiled);
-		var tokuiList = _toDb.Fetch<MasterTokui>("where PostalCode>''");
+		var tokuiList = _toDb.Fetch<MasterTokui>();
 		if (tokuiList != null && tokuiList.Count > 0) {
 			foreach (var tokui in tokuiList) {
 				if (tokui == null) continue;
@@ -701,31 +699,10 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 					var all = $"{tokui.Address1?.Trim()}{tokui.Address2?.Trim()}{tokui.Address3?.Trim()}".Trim();
 					if (string.IsNullOrWhiteSpace(all))
 						continue;
-
-					var normalizedAddress = all
-						.Replace(" ", string.Empty)
-						.Replace("　", string.Empty)
-						.Trim();
-					if (string.IsNullOrWhiteSpace(normalizedAddress))
-						continue;
-
-					var prefMatch = prefRegex.Match(normalizedAddress);
-					if (!prefMatch.Success)
-						continue;
-
-					var newAddress1 = prefMatch.Value;
-					var restAfterPref = normalizedAddress[newAddress1.Length..];
-
-					var cityMatch = cityRegex.Match(restAfterPref);
-					var newAddress2 = cityMatch.Success ? cityMatch.Value : string.Empty;
-					var newAddress3 = cityMatch.Success ? restAfterPref[newAddress2.Length..] : restAfterPref;
-
-					if (tokui.Address1 == newAddress1 && tokui.Address2 == newAddress2 && tokui.Address3 == newAddress3)
-						continue;
-
-					tokui.Address1 = newAddress1;
-					tokui.Address2 = newAddress2;
-					tokui.Address3 = newAddress3;
+					var retAddress = ConvertAddress(all);
+					tokui.Address1 = retAddress.Item1;
+					tokui.Address2 = retAddress.Item2;
+					tokui.Address3 = retAddress.Item3;
 					_toDb.Update(tokui);
 					cnt++;
 				}
@@ -737,6 +714,31 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 
 		return cnt;
 	}
+
+	static Regex? prefRegex;
+	static Regex? cityRegex;
+	Tuple<string, string, string> ConvertAddress(string address) {
+		if (prefRegex == null)
+			prefRegex = new Regex(@"^(東京都|北海道|京都府|大阪府|.{2,3}県)", RegexOptions.Compiled);
+		if (cityRegex == null)
+			cityRegex = new Regex(@"^(.+?郡.+?[町村]|.+?市.+?区|.+?[市区町村])", RegexOptions.Compiled);
+		var normalizedAddress = address
+			.Replace(" ", string.Empty)
+			.Replace("　", string.Empty)
+			.Trim();
+		if (string.IsNullOrWhiteSpace(normalizedAddress))
+			return new Tuple<string, string, string>(string.Empty, string.Empty, string.Empty);
+		var prefMatch = prefRegex.Match(normalizedAddress);
+		if (!prefMatch.Success)
+			return new Tuple<string, string, string>(string.Empty, string.Empty, address);
+		var newAddress1 = prefMatch.Value;
+		var restAfterPref = normalizedAddress[newAddress1.Length..];
+		var cityMatch = cityRegex.Match(restAfterPref);
+		var newAddress2 = cityMatch.Success ? cityMatch.Value : string.Empty;
+		var newAddress3 = cityMatch.Success ? restAfterPref[newAddress2.Length..] : restAfterPref;
+		return new Tuple<string, string, string>(newAddress1, newAddress2, newAddress3);
+	}
+
 
 	/*
 	public int CnvAfterMaster2(bool isInit = true) {
