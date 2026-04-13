@@ -184,7 +184,15 @@ foreach (var pathInfo in staticPaths) {
 	});
 }
 
-
-app.Run();
-
-LogManager.Shutdown();
+try {
+	app.Run();
+}
+catch (Exception ex) {
+	// 起動失敗時のログ記録
+	LogManager.GetCurrentClassLogger().Fatal(ex, "Stopped program because of exception");
+	throw;
+}
+finally {
+	// 全ての非同期ログをフラッシュし、リソースを解放する
+	NLog.LogManager.Shutdown();
+}

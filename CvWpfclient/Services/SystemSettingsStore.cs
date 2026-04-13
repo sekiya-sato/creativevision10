@@ -14,7 +14,7 @@ using System.IO;
 namespace CvWpfclient.Services;
 
 public sealed class SystemSettingsStore {
-	private const string FileName = "systemsettings.json";
+	private const string FileName = "clientsettings.json";
 	private readonly ILogger _logger;
 	private readonly object _sync = new();
 
@@ -49,7 +49,7 @@ public sealed class SystemSettingsStore {
 				return JsonConvert.DeserializeObject<SystemSettingsDocument>(content) ?? new SystemSettingsDocument();
 			}
 			catch (JsonException ex) {
-				_logger.LogWarning(ex, "systemsettings.json の読み込みに失敗したため初期値を使用します。");
+				_logger.LogWarning(ex, "clientsettings.json の読み込みに失敗したため初期値を使用します。");
 				return new SystemSettingsDocument();
 			}
 		}

@@ -54,6 +54,8 @@ public partial class App : Application {
 			await AppHost.StopAsync();
 			AppHost.Dispose();
 		}
+		// NLog の非同期書き出しを確実に完了させてから終了する
+		LogManager.Shutdown();
 		base.OnExit(e);
 	}
 

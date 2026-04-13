@@ -185,8 +185,7 @@
 								Style="{StaticResource PostalSearchButton}"
 								ToolTip="郵便番号から住所を検索">
 								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0"
-										VerticalAlignment="Center"
+									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 										Kind="Magnify" />
 									<TextBlock VerticalAlignment="Center"
 										Text="〒API検索" />
