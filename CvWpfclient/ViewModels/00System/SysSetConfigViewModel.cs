@@ -6,8 +6,8 @@ using CvWpfclient.Services;
 namespace CvWpfclient.ViewModels._00System;
 
 public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
-	private SystemSettingsStore _store = new();
-	private SystemSettingsDocument _currentSettings = new();
+	private ClientSettingsStore _store = new();
+	private ClientSettingsDocument _currentSettings = new();
 	private string _originalUrl = string.Empty;
 
 

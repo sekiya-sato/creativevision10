@@ -144,7 +144,7 @@ public partial class App : Application {
 				builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile("appsettings.Production.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
-				builder.AddJsonFile(SystemSettingsStore.SettingsFilePath, optional: true, reloadOnChange: true);
+				builder.AddJsonFile(ClientSettingsStore.SettingsFilePath, optional: true, reloadOnChange: true);
 				if (setting is not null)
 					builder.AddInMemoryCollection(setting);
 			})
