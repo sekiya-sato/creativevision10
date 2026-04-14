@@ -7,9 +7,9 @@ namespace CodeShare;
 [ServiceContract]
 public interface IWeatherService {
 	[OperationContract]
-	Task<WeatherInfo?> GetCurrentWeatherAsync(CancellationToken ct = default);
+	Task<WeatherInfo?> GetCurrentWeatherAsync(string region, CancellationToken ct = default);
 	[OperationContract]
-	Task<List<HourlyForecast>> GetHourlyForecastAsync(CancellationToken ct = default);
+	Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CancellationToken ct = default);
 }
 
 

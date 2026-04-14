@@ -13,7 +13,7 @@ public sealed class WeatherService(HttpClient httpClient, EffectiveSettings sett
 
 	private string Region => settings.WeatherRegion;
 
-	public async Task<WeatherInfo?> GetCurrentWeatherAsync(CancellationToken ct = default) {
+	public async Task<WeatherInfo?> GetCurrentWeatherAsync(string region, CancellationToken ct = default) {
 		try {
 			var url = $"https://api.openweathermap.org/data/2.5/weather?q={Region}&appid={GetApiKey()}&units=metric&lang=ja";
 			var json = await httpClient.GetFromJsonAsync<JsonElement>(url, _jsonOptions, ct);
@@ -25,7 +25,7 @@ public sealed class WeatherService(HttpClient httpClient, EffectiveSettings sett
 		}
 	}
 
-	public async Task<List<HourlyForecast>> GetHourlyForecastAsync(CancellationToken ct = default) {
+	public async Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CancellationToken ct = default) {
 		try {
 			var url = $"https://api.openweathermap.org/data/2.5/forecast?q={Region}&appid={GetApiKey()}&units=metric&lang=ja&cnt=16";
 			var json = await httpClient.GetFromJsonAsync<JsonElement>(url, _jsonOptions, ct);

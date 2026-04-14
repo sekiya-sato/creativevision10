@@ -28,7 +28,7 @@ sealed class LoginServiceTestContext : IDisposable {
 		InitializeSchema();
 		Configuration = BuildConfiguration();
 		HttpContextAccessor = CreateAccessor();
-		Service = new LoginService(NullLogger<CoreService>.Instance, BuildConfiguration(), new TestWebHostEnvironment(), CreateAccessor(), Database);
+		Service = new LoginService(NullLogger<LoginService>.Instance, BuildConfiguration(), new TestWebHostEnvironment(), CreateAccessor(), Database);
 	}
 	/// <summary>
 	/// IWebHostEnvironment を模擬するためのクラス。

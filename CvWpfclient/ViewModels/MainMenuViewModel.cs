@@ -289,7 +289,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				InfolocalServer = version;
 				version.Url = AppGlobal.Config.GetSection("ConnectionStrings")?["Url"] ?? "";
 			}
-			await RefreshWeatherAsync();
+			await RefreshWeatherServerAsync();
 		}
 		catch (Exception ex) {
 			_logger.LogWarning(ex, "サーバ情報の取得に失敗しました。");
@@ -378,22 +378,65 @@ public partial class MainMenuViewModel : ObservableObject {
 	private DispatcherTimer? _weatherTimer;
 
 	private async void StartWeatherAndCalendar() {
-		await RefreshWeatherAsync();
+		await RefreshWeatherServerAsync();
 
 		// 天気は30分おきに更新
 		_weatherTimer = new DispatcherTimer {
 			Interval = TimeSpan.FromMinutes(30)
 		};
-		_weatherTimer.Tick += async (s, e) => await RefreshWeatherAsync();
+		_weatherTimer.Tick += async (s, e) => await RefreshWeatherServerAsync();
 		_weatherTimer.Start();
 	}
+	private async Task RefreshWeatherServerAsync() {
+		var weatherService = AppGlobal.GetGrpcService<IWeatherService>();
+		var weather = await weatherService.GetCurrentWeatherAsync("Tokyo");
+		if (weather != null) {
+			CurrentWeather = weather;
+			WeatherIconKind = weather.IconKind;
+			WeatherTemperature = $"{weather.Temperature:F0}℃";
+			WeatherDescription = weather.Description;
+			WeatherLocation = weather.Location;
+			Sunrise = $"日の出 {weather.SunRize:HH:mm}";
+			Sunset = $"日の入 {weather.SunSet:HH:mm}";
+			Humidity = $"湿度 {weather.Humidity}%";
+			WindSpeed = $"風速 {weather.WindSpeed}m/s";
+		}
+		var forecasts = await weatherService.GetHourlyForecastAsync("Tokyo");
+		if (forecasts.Count > 0) {
+			var values = forecasts.Select(f => new ObservablePoint(0, f.Temperature)).ToArray();
+			for (int i = 0; i < values.Length; i++) {
+				values[i] = new ObservablePoint(i, forecasts[i].Temperature);
+			}
 
-	private async Task RefreshWeatherAsync() {
+			ForecastSeries = [
+				new LineSeries<ObservablePoint> {
+						Values = values,
+						Fill = new SolidColorPaint(new SKColor(33, 150, 243, 80)),
+						Stroke = new SolidColorPaint(new SKColor(33, 150, 243)) { StrokeThickness = 2 },
+						GeometryFill = new SolidColorPaint(new SKColor(33, 150, 243)),
+						GeometryStroke = new SolidColorPaint(new SKColor(33, 150, 243)),
+						GeometrySize = 6,
+						LineSmoothness = 0.3
+					}
+			];
+			ForecastXAxes = [new Axis {
+					Labels = forecasts.Select(f => f.TimeLabel).ToArray(),
+					TextSize = 11,
+					LabelsRotation = 0
+				}];
+			ForecastYAxes = [new Axis {
+					Name = "", // ℃
+					TextSize = 11
+				}];
+		}
+	}
+
+	private async Task RefreshWeatherLocalAsync() {
 		try {
 			var weatherService = App.AppHost?.Services.GetService<IWeatherService>();
 			if (weatherService == null) return;
 
-			var weather = await weatherService.GetCurrentWeatherAsync();
+			var weather = await weatherService.GetCurrentWeatherAsync("Tokyo");
 			if (weather != null) {
 				CurrentWeather = weather;
 				WeatherIconKind = weather.IconKind;
@@ -406,7 +449,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				WindSpeed = $"風速 {weather.WindSpeed}m/s";
 			}
 
-			var forecasts = await weatherService.GetHourlyForecastAsync();
+			var forecasts = await weatherService.GetHourlyForecastAsync("Tokyo");
 			if (forecasts.Count > 0) {
 				var values = forecasts.Select(f => new ObservablePoint(0, f.Temperature)).ToArray();
 				for (int i = 0; i < values.Length; i++) {

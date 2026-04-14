@@ -190,7 +190,8 @@ public partial class App : Application {
 				}
 				// 3. サービスの登録
 				services.AddSingleton<IUpdateService, UpdateService>();
-				services.AddHttpClient<IWeatherService, WeatherService>();
+				ConfigureClient<IWeatherService>(services, url, subPath);
+				//				services.AddHttpClient<IWeatherService, WeatherService>();
 				services.AddHttpClient<IJapanPostBizTokenProvider, JapanPostBizTokenProvider>(ConfigureJapanPostBizClient);
 				services.AddHttpClient<IPostalAddressService, JapanPostBizPostalAddressService>(ConfigureJapanPostBizClient);
 				ConfigureClient<ILoginService>(services, url, subPath);
