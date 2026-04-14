@@ -389,7 +389,8 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 	private async Task RefreshWeatherServerAsync() {
 		var weatherService = AppGlobal.GetGrpcService<IWeatherService>();
-		var weather = await weatherService.GetCurrentWeatherAsync("Tokyo");
+		var reagion = AppGlobal.Config["Application:WeatherRegion"] ?? "Tokyo";
+		var weather = await weatherService.GetCurrentWeatherAsync(reagion);
 		if (weather != null) {
 			CurrentWeather = weather;
 			WeatherIconKind = weather.IconKind;
@@ -401,7 +402,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			Humidity = $"湿度 {weather.Humidity}%";
 			WindSpeed = $"風速 {weather.WindSpeed}m/s";
 		}
-		var forecasts = await weatherService.GetHourlyForecastAsync("Tokyo");
+		var forecasts = await weatherService.GetHourlyForecastAsync(reagion);
 		if (forecasts.Count > 0) {
 			var values = forecasts.Select(f => new ObservablePoint(0, f.Temperature)).ToArray();
 			for (int i = 0; i < values.Length; i++) {

@@ -1,7 +1,6 @@
 using CodeShare;
 using CvAsset;
 using CvWpfclient.Helpers;
-using CvWpfclient.Models;
 using CvWpfclient.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -143,7 +142,9 @@ public partial class App : Application {
 				builder.SetBasePath(Directory.GetCurrentDirectory());
 				builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
-				builder.AddJsonFile(ClientSettingsStore.SettingsFilePath, optional: true, reloadOnChange: true);
+				var clientSettings = new ClientSettingsStore().Load();
+				var overrides = new ClientSettingsStore().ToConfigurationOverrides(clientSettings);
+				builder.AddInMemoryCollection(overrides);
 				if (setting is not null)
 					builder.AddInMemoryCollection(setting);
 			})
@@ -153,7 +154,6 @@ public partial class App : Application {
 		})
 			.ConfigureServices((context, services) => {
 				// 1. ハンドラーと通信設定の登録
-				services.AddSingleton<EffectiveSettings>();
 				services.AddTransient<JwtAuthorizationHandler>();
 
 				var url = context.Configuration.GetConnectionString("Url")
