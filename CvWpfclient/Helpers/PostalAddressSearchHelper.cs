@@ -1,12 +1,11 @@
 using CodeShare;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace CvWpfclient.Helpers;
 
 public static class PostalAddressSearchHelper {
 	public static async Task SearchAndApplyAsync(object viewModel, string postalCode, Action<PostalAddressItem> applyAddress) {
 		var owner = ClientLib.GetActiveView(viewModel);
-		var postalAddressService = App.AppHost?.Services.GetService<IPostalAddressService>();
+		var postalAddressService = AppGlobal.GetGrpcService<IPostalAddressService>();
 		if (postalAddressService == null) {
 			MessageEx.ShowErrorDialog("郵便番号検索サービスを取得できません。", owner: owner);
 			return;

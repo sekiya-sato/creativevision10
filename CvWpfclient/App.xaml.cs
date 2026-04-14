@@ -180,22 +180,12 @@ public partial class App : Application {
 					builder.ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
 				}
 
-				void ConfigureJapanPostBizClient(IServiceProvider serviceProvider, HttpClient client) {
-					var settings = serviceProvider.GetRequiredService<EffectiveSettings>();
-					var options = settings.GetJapanPostBizOptions();
-					client.BaseAddress = new Uri(options.BaseUrl);
-					client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds > 0 ? options.TimeoutSeconds : 10);
-					client.DefaultRequestHeaders.UserAgent.Clear();
-					client.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);
-				}
 				// 3. サービスの登録
 				services.AddSingleton<IUpdateService, UpdateService>();
-				ConfigureClient<IWeatherService>(services, url, subPath);
-				//				services.AddHttpClient<IWeatherService, WeatherService>();
-				services.AddHttpClient<IJapanPostBizTokenProvider, JapanPostBizTokenProvider>(ConfigureJapanPostBizClient);
-				services.AddHttpClient<IPostalAddressService, JapanPostBizPostalAddressService>(ConfigureJapanPostBizClient);
 				ConfigureClient<ILoginService>(services, url, subPath);
 				ConfigureClient<ICoreService>(services, url, subPath);
+				ConfigureClient<IWeatherService>(services, url, subPath);
+				ConfigureClient<IPostalAddressService>(services, url, subPath);
 			});
 	}
 

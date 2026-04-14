@@ -1,5 +1,6 @@
 using CodeShare;
 using Microsoft.AspNetCore.Authorization;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 
@@ -10,6 +11,8 @@ public partial class WeatherService : IWeatherService {
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private readonly IHttpContextAccessor _httpContextAccessor;
+	private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+	private static readonly HttpClient httpClient = new();
 	public WeatherService(ILogger<WeatherService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
@@ -19,11 +22,9 @@ public partial class WeatherService : IWeatherService {
 		_configuration = configuration;
 		_env = env;
 		_httpContextAccessor = httpContextAccessor;
+		var verInfo = new AppGlobal().VerInfo;
+		httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(verInfo.Product, verInfo.Version));
 	}
-
-	private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
-	private readonly HttpClient httpClient = new();
-
 
 
 	[AllowAnonymous]
