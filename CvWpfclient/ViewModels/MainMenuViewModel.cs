@@ -278,22 +278,14 @@ public partial class MainMenuViewModel : ObservableObject {
 			ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
 			InfolocalUser.LoginTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 			InfolocalUser.ExpireTime = ExpireDate;
-		}
-		_subStartTime = DateTime.Now;
-		try {
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Flag = CvFlag.Msg002_GetVersion };
-			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
-			var version = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as CvBase.Share.InfoServer;
-			if (version != null) {
-				InfolocalServer = version;
-				version.Url = AppGlobal.Config.GetSection("ConnectionStrings")?["Url"] ?? "";
+			var serverVer = Common.DeserializeObject<InfoServer>(vm.LoginData?.InfoPayload ?? "");
+			if (serverVer != null && !string.IsNullOrEmpty(serverVer.Product)) {
+				InfolocalServer = serverVer;
+				InfolocalServer.Url = AppGlobal.Config.GetSection("ConnectionStrings")?["Url"] ?? "";
 			}
 			await RefreshWeatherServerAsync();
 		}
-		catch (Exception ex) {
-			_logger.LogWarning(ex, "サーバ情報の取得に失敗しました。");
-		}
+		_subStartTime = DateTime.Now;
 		SetSubMessage();
 	}
 
