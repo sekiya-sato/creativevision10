@@ -146,6 +146,8 @@ app.UseAuthorization();
 app.MapGrpcService<LoginService>();
 app.MapGrpcService<CoreService>();
 app.MapGrpcService<SchedulerService>();
+app.MapGrpcService<SearchByPostalCodeService>();
+app.MapGrpcService<WeatherService>();
 var appInit = new AppGlobal();
 // DIコンテナから登録済みの ExDatabase を取得してサーバ起動時に必要な初期化を実行
 appInit.Init(app.Services.GetRequiredService<ExDatabase>(), app.Environment.ApplicationName, serverVersion);
