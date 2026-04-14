@@ -7,7 +7,7 @@ using ProtoBuf.Grpc;
 namespace CvServer.Services;
 
 
-public class SchedulerService : ICvnetScheduler {
+public class SchedulerService : CodeShare.IScheduler {
 	private const int Success = 0;
 	private const int InvalidRequest = 1;
 	private const int InvalidCronExpression = 2;
@@ -16,9 +16,9 @@ public class SchedulerService : ICvnetScheduler {
 	private const int InternalError = 9;
 
 	private readonly ILogger<SchedulerService> _logger;
-	private readonly IScheduler _scheduler;
+	private readonly NCrontab.Scheduler.IScheduler _scheduler;
 
-	public SchedulerService(ILogger<SchedulerService> logger, IScheduler scheduler) {
+	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler) {
 		_logger = logger;
 		_scheduler = scheduler;
 	}

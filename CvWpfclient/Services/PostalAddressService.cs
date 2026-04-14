@@ -1,3 +1,4 @@
+using CodeShare;
 using CvWpfclient.Models;
 using Microsoft.Extensions.Logging;
 using System.Net;
@@ -7,37 +8,6 @@ using System.Text.Json.Serialization;
 
 namespace CvWpfclient.Services;
 
-public interface IPostalAddressService {
-	Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CancellationToken cancellationToken = default);
-}
-
-public sealed record PostalAddressSearchResult(
-	bool IsSuccess,
-	string NormalizedPostalCode,
-	IReadOnlyList<PostalAddressItem> Items,
-	string Message,
-	PostalAddressErrorType ErrorType);
-
-public sealed record PostalAddressItem(
-	string PostalCode,
-	string Address1,
-	string Address2,
-	string Address3,
-	string FullAddress,
-	string? Address1Kana,
-	string? Address2Kana,
-	string? Address3Kana);
-
-public enum PostalAddressErrorType {
-	None,
-	InvalidInput,
-	Unauthorized,
-	Forbidden,
-	NotFound,
-	RateLimited,
-	NetworkError,
-	ServiceError,
-}
 
 public sealed class JapanPostBizPostalAddressService(
 	HttpClient httpClient,

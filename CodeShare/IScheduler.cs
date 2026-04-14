@@ -50,7 +50,7 @@ public sealed class SchedulerResult {
 
 
 [ServiceContract]
-public interface ICvnetScheduler {
+public interface IScheduler {
 	[OperationContract]
 	Task<SchedulerResult> AddOneTaskAsync(AddSchedulerTaskRequest request, CallContext context = default);
 

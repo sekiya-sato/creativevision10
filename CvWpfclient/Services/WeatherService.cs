@@ -1,3 +1,4 @@
+using CodeShare;
 using CvWpfclient.Models;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
@@ -6,10 +7,6 @@ using System.Text.Json;
 
 namespace CvWpfclient.Services;
 
-public interface IWeatherService {
-	Task<WeatherInfo?> GetCurrentWeatherAsync(CancellationToken ct = default);
-	Task<List<HourlyForecast>> GetHourlyForecastAsync(CancellationToken ct = default);
-}
 
 public sealed class WeatherService(HttpClient httpClient, EffectiveSettings settings, ILogger<WeatherService> logger) : IWeatherService {
 	private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
