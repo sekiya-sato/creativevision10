@@ -3,7 +3,7 @@
 ## Tooling & Environment
 - **Roles**: OpenCode (Complex/Multi-file/Docs), Copilot (Inline/Small edits).
 - **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
-- **Files**: Solution `creativevision10.slnx.slnx`. Use UTF-8 (No BOM) & CRLF.
+- **Files**: Solution `creativevision10.slnx`. Use UTF-8 (No BOM) & CRLF.
 - **Python**: Use Python 3 if needed.
 
 ## Priority Workflow (IMPORTANT)

@@ -94,8 +94,7 @@ void DeleteSubItem() {
 
 ## 参照ファイル
 
-- パターン元: `CvWpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs`（ApplyDetailFromCurrent / SyncDetailToCurrent）
-- パターン元: `CvWpfclient/ViewModels/04Juchu/JuchuInputViewModel.cs`
+- パターン元: `CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`（ApplySubListsFromCurrentEdit / SyncSubListsToCurrentEdit）
 - 基底クラス: `CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`
 - 適用例: `CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`
 
