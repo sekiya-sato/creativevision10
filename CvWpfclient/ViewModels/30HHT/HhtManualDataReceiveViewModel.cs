@@ -57,7 +57,7 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 				return;
 			}
 
-			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			/*
 			var msg = new CvnetMsg {
 				Code = 0,
@@ -66,9 +66,9 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 				DataType = typeof(List<TranHhtdata>)
 			};
 			*/
-			var msg = new CvnetMsg {
+			var msg = new CvMsg {
 				Code = 0,
-				Flag = CvnetFlag.Msg201_Op_Execute,
+				Flag = CvFlag.Msg201_Op_Execute,
 				DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranVulcanHht), Common.SerializeObject(records))),
 				DataType = typeof(InsertBulkParam),
 			};

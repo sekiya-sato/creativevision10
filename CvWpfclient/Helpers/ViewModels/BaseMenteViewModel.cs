@@ -110,28 +110,28 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			maxCount: ListMaxCount
 		);
 
-	protected virtual CvnetMsg CreateListMessage() =>
+	protected virtual CvMsg CreateListMessage() =>
 		new() {
 			Code = 0,
-			Flag = CvnetFlag.Msg101_Op_Query,
+			Flag = CvFlag.Msg101_Op_Query,
 			DataType = typeof(QueryListParam),
 			DataMsg = Common.SerializeObject(CreateListQueryParam())
 		};
 
-	protected virtual CvnetMsg CreateExecuteMessage(object parameter, Type dataType) =>
+	protected virtual CvMsg CreateExecuteMessage(object parameter, Type dataType) =>
 		new() {
 			Code = 0,
-			Flag = CvnetFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg201_Op_Execute,
 			DataType = dataType,
 			DataMsg = Common.SerializeObject(parameter)
 		};
 
-	protected virtual ValueTask<CvnetMsg> SendMessageAsync(CvnetMsg message, CancellationToken ct) {
-		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-		return new ValueTask<CvnetMsg>(coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct)));
+	protected virtual ValueTask<CvMsg> SendMessageAsync(CvMsg message, CancellationToken ct) {
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		return new ValueTask<CvMsg>(coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct)));
 	}
 
-	protected virtual bool HasExecuteError(CvnetMsg reply, string actionName) {
+	protected virtual bool HasExecuteError(CvMsg reply, string actionName) {
 		if (reply.Code >= 0) {
 			return false;
 		}

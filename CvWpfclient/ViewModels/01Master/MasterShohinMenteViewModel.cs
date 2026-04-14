@@ -122,9 +122,9 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 		try {
 			ClientLib.Cursor2Wait();
 			var param = new QueryListParam(typeof(MasterMeisho), "Kubun='IDX' and Code between 'B01' and 'B10'", "Code");
-			var msg = new CvnetMsg {
+			var msg = new CvMsg {
 				Code = 0,
-				Flag = CvnetFlag.Msg101_Op_Query,
+				Flag = CvFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListParam),
 				DataMsg = Common.SerializeObject(param)
 			};

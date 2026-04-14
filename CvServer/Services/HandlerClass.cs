@@ -8,34 +8,34 @@ using System.Collections;
 
 namespace CvServer.Services;
 
-public partial class CvnetCoreService {
+public partial class CoreService {
 	private const int NotFoundCode = -1;
 	private const int ConcurrentUpdateCode = -9901;
 	private const int UnexpectedErrorCode = -9902;
 	private const string ConcurrentUpdateMessage = "他で更新されています";
 
-	private CvnetMsg HandleCopyReply(CvnetMsg request, CallContext context) {
+	private CvMsg HandleCopyReply(CvMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogDebug("HandleCopyReply invoked Flag:{Flag}", request.Flag);
 
 		return CreateSuccessResponse(request.Flag, request.DataType, request.DataMsg);
 	}
 
-	private CvnetMsg HandleGetVersion(CvnetMsg request, CallContext context) {
+	private CvMsg HandleGetVersion(CvMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogDebug("HandleGetVersion invoked Flag:{Flag}", request.Flag);
 
 		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(new AppGlobal().VerInfo));
 	}
 
-	private CvnetMsg HandleGetEnv(CvnetMsg request, CallContext context) {
+	private CvMsg HandleGetEnv(CvMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogDebug("HandleGetEnv invoked Flag:{Flag}", request.Flag);
 
 		return CreateSuccessResponse(request.Flag, typeof(Dictionary<string, string>), Common.SerializeObject(GetEnvironmentVariables()));
 	}
 
-	private CvnetMsg HandlerGetTableCounts(CvnetMsg request, CallContext context) {
+	private CvMsg HandlerGetTableCounts(CvMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogInformation("HandleGetTableCounts invoked Flag:{Flag}", request.Flag);
 		var resultData = new List<Tuple<string, string, long>>();
@@ -56,7 +56,7 @@ public partial class CvnetCoreService {
 	/// <param name="context"></param>
 	/// <returns></returns>
 	/// <exception cref="NotImplementedException"></exception>
-	CvnetMsg HandleOpQuery(CvnetMsg request, CallContext context = default) {
+	CvMsg HandleOpQuery(CvMsg request, CallContext context = default) {
 		ArgumentNullException.ThrowIfNull(request);
 
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
@@ -76,7 +76,7 @@ public partial class CvnetCoreService {
 	/// <param name="context"></param>
 	/// <returns></returns>
 	/// <exception cref="NotImplementedException"></exception>
-	CvnetMsg HandleOpExecute(CvnetMsg request, CallContext context = default) {
+	CvMsg HandleOpExecute(CvMsg request, CallContext context = default) {
 		ArgumentNullException.ThrowIfNull(request);
 
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
@@ -90,7 +90,7 @@ public partial class CvnetCoreService {
 		};
 	}
 
-	private CvnetMsg HandleQueryOne(CvnetFlag flag, QueryOneParam queryOne) {
+	private CvMsg HandleQueryOne(CvFlag flag, QueryOneParam queryOne) {
 		_logger.LogInformation("パラメータ QueryOneParam.ItemType={ItemType} 内容={Payload}", queryOne.ItemType, Common.SerializeObject(queryOne));
 
 		var sql = queryOne.AddWhere();
@@ -105,7 +105,7 @@ public partial class CvnetCoreService {
 		}
 	}
 
-	private CvnetMsg HandleQueryById(CvnetFlag flag, QuerybyIdParam queryById) {
+	private CvMsg HandleQueryById(CvFlag flag, QuerybyIdParam queryById) {
 		_logger.LogInformation("パラメータ QuerybyIdParam.ItemType={ItemType} 内容={Payload}", queryById.ItemType, Common.SerializeObject(queryById));
 
 		try {
@@ -119,7 +119,7 @@ public partial class CvnetCoreService {
 		}
 	}
 
-	private CvnetMsg HandleQueryList(CvnetFlag flag, QueryListParam queryList) {
+	private CvMsg HandleQueryList(CvFlag flag, QueryListParam queryList) {
 		var sql = BuildQueryListSql(queryList);
 		var listType = typeof(List<>).MakeGenericType(queryList.ItemType);
 
@@ -136,7 +136,7 @@ public partial class CvnetCoreService {
 		}
 	}
 
-	private CvnetMsg HandleQueryListSql(CvnetFlag flag, QueryListSqlParam querySql) {
+	private CvMsg HandleQueryListSql(CvFlag flag, QueryListSqlParam querySql) {
 		var sql = querySql.Sql ?? string.Empty;
 		var listType = typeof(List<>).MakeGenericType(querySql.ItemType);
 
@@ -153,7 +153,7 @@ public partial class CvnetCoreService {
 		}
 	}
 
-	private CvnetMsg HandleInsert(CvnetFlag flag, InsertParam insert) {
+	private CvMsg HandleInsert(CvFlag flag, InsertParam insert) {
 		_logger.LogInformation("パラメータ InsertParam.ItemType={ItemType} 内容={Payload}", insert.ItemType, Common.SerializeObject(insert));
 
 		var item = insert.GetItemObject();
@@ -167,7 +167,7 @@ public partial class CvnetCoreService {
 			return CreateExceptionResponse(flag, ex, item.GetType(), Common.SerializeObject(item));
 		}
 	}
-	private CvnetMsg HandleBulkInsert(CvnetFlag flag, InsertBulkParam insertBulk) {
+	private CvMsg HandleBulkInsert(CvFlag flag, InsertBulkParam insertBulk) {
 		_logger.LogInformation("パラメータ InsertBulkParam.ItemType={ItemType} 内容={Payload}", insertBulk.ItemType, Common.SerializeObject(insertBulk));
 
 		// JSON配列 → List<ItemType> にデシリアライズ
@@ -190,7 +190,7 @@ public partial class CvnetCoreService {
 		}
 	}
 
-	private CvnetMsg HandleUpdate(CvnetFlag flag, UpdateParam update) {
+	private CvMsg HandleUpdate(CvFlag flag, UpdateParam update) {
 		_logger.LogInformation("パラメータ UpdateParam.ItemType={ItemType} 内容={Payload}", update.ItemType, Common.SerializeObject(update));
 
 		var item = update.GetItemObject();
@@ -218,7 +218,7 @@ public partial class CvnetCoreService {
 		}
 	}
 
-	private CvnetMsg HandleDelete(CvnetFlag flag, DeleteParam delete) {
+	private CvMsg HandleDelete(CvFlag flag, DeleteParam delete) {
 		_logger.LogInformation("パラメータ DeleteParam.ItemType={ItemType} 内容={Payload}", delete.ItemType, Common.SerializeObject(delete));
 
 		var item = delete.GetItemObject();
@@ -239,7 +239,7 @@ public partial class CvnetCoreService {
 		return CreateSuccessResponse(flag, delete.ItemType, Common.SerializeObject(item));
 	}
 
-	private CvnetMsg HandleDeleteById(CvnetFlag flag, DeleteByIdParam deleteById) {
+	private CvMsg HandleDeleteById(CvFlag flag, DeleteByIdParam deleteById) {
 		_logger.LogInformation("パラメータ DeleteByIdParam.ItemType={ItemType} Id={Id} 内容={Payload}", deleteById.ItemType, deleteById.Id, Common.SerializeObject(deleteById));
 
 		var item = FetchExistingBaseDbItem(deleteById.ItemType, deleteById.Id);
@@ -266,7 +266,7 @@ public partial class CvnetCoreService {
 	/// <param name="context"></param>
 	/// <returns></returns>
 	/// <exception cref="NotImplementedException"></exception>
-	CvnetMsg HandleOutData(CvnetMsg request, CallContext context = default) {
+	CvMsg HandleOutData(CvMsg request, CallContext context = default) {
 		ArgumentNullException.ThrowIfNull(request);
 
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
@@ -286,7 +286,7 @@ public partial class CvnetCoreService {
 
 	// ToDo : ロジックを集約 HandleOpHhtReceive は廃止予定
 	[Obsolete("HHTデータ受信は廃止予定のため、使用しないでください。")]
-	CvnetMsg HandleOpHhtReceive(CvnetMsg request, CallContext context = default) {
+	CvMsg HandleOpHhtReceive(CvMsg request, CallContext context = default) {
 		ArgumentNullException.ThrowIfNull(request);
 
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
@@ -339,8 +339,8 @@ public partial class CvnetCoreService {
 		return _db.Fetch(itemType, "where Id=@0", id)?.First() ?? new();
 	}
 
-	private static CvnetMsg CreateSuccessResponse(CvnetFlag flag, Type? dataType, string? dataMsg) {
-		return new CvnetMsg {
+	private static CvMsg CreateSuccessResponse(CvFlag flag, Type? dataType, string? dataMsg) {
+		return new CvMsg {
 			Flag = flag,
 			Code = 0,
 			DataType = dataType ?? typeof(string),
@@ -348,8 +348,8 @@ public partial class CvnetCoreService {
 		};
 	}
 
-	private static CvnetMsg CreateNotFoundResponse(CvnetFlag flag, Type? dataType = null, string? dataMsg = null) {
-		return new CvnetMsg {
+	private static CvMsg CreateNotFoundResponse(CvFlag flag, Type? dataType = null, string? dataMsg = null) {
+		return new CvMsg {
 			Flag = flag,
 			Code = NotFoundCode,
 			DataType = dataType ?? typeof(string),
@@ -357,12 +357,12 @@ public partial class CvnetCoreService {
 		};
 	}
 
-	private static CvnetMsg CreateExceptionResponse(CvnetFlag flag, Exception ex, Type? dataType, string? dataMsg) {
+	private static CvMsg CreateExceptionResponse(CvFlag flag, Exception ex, Type? dataType, string? dataMsg) {
 		return CreateErrorResponse(flag, UnexpectedErrorCode, ex.Message, dataType, dataMsg);
 	}
 
-	private static CvnetMsg CreateErrorResponse(CvnetFlag flag, int code, string? option, Type? dataType, string? dataMsg) {
-		return new CvnetMsg {
+	private static CvMsg CreateErrorResponse(CvFlag flag, int code, string? option, Type? dataType, string? dataMsg) {
+		return new CvMsg {
 			Flag = flag,
 			Code = code,
 			Option = option ?? string.Empty,

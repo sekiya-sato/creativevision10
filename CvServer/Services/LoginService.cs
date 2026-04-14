@@ -10,13 +10,13 @@ using System.Security.Claims;
 namespace CvServer.Services;
 
 public partial class LoginService : ILoginService {
-	private readonly ILogger<CvnetCoreService> _logger;
+	private readonly ILogger<CoreService> _logger;
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private readonly ExDatabase _db;
 	// private readonly IScheduler _scheduler;
 	private readonly IHttpContextAccessor _httpContextAccessor;
-	public LoginService(ILogger<CvnetCoreService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, ExDatabase db) {
+	public LoginService(ILogger<CoreService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, ExDatabase db) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
 		ArgumentNullException.ThrowIfNull(env);

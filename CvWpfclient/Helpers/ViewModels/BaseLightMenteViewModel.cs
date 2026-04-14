@@ -17,9 +17,9 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 
 	protected virtual int DetailLoadDebounceMilliseconds => 200;
 
-	protected override CvnetMsg CreateListMessage() => CreateLightListMessage();
+	protected override CvMsg CreateListMessage() => CreateLightListMessage();
 
-	protected abstract CvnetMsg CreateLightListMessage();
+	protected abstract CvMsg CreateLightListMessage();
 
 	protected override void OnCurrentChangedCore(T? oldValue, T newValue) {
 		if (suppressCurrentChanged) {
@@ -88,12 +88,12 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 			maxCount: ListMaxCount
 		);
 
-	protected CvnetMsg CreateSqlListMessage(string selectColumns) {
+	protected CvMsg CreateSqlListMessage(string selectColumns) {
 		var query = CreateLightListQueryParam();
 		var sql = $"select {selectColumns} From {ResolveTableName(Tabletype)} {query.AddWhereOrder()}";
-		return new CvnetMsg {
+		return new CvMsg {
 			Code = 0,
-			Flag = CvnetFlag.Msg101_Op_Query,
+			Flag = CvFlag.Msg101_Op_Query,
 			DataType = typeof(QueryListSqlParam),
 			DataMsg = Common.SerializeObject(new QueryListSqlParam(Tabletype, sql, query.Parameters))
 		};
@@ -142,9 +142,9 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 
 		try {
 			IsDetailLoading = true;
-			var reply = await SendMessageAsync(new CvnetMsg {
+			var reply = await SendMessageAsync(new CvMsg {
 				Code = 0,
-				Flag = CvnetFlag.Msg101_Op_Query,
+				Flag = CvFlag.Msg101_Op_Query,
 				DataType = typeof(QuerybyIdParam),
 				DataMsg = Common.SerializeObject(new QuerybyIdParam(Tabletype, id))
 			}, ct);
@@ -212,11 +212,11 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 public abstract partial class BaseCodeNameLightMenteViewModel<T> : BaseLightMenteViewModel<T> where T : BaseDbClass, IBaseCodeName, new() {
 	protected virtual string[] AdditionalLightweightColumns => [];
 
-	protected override CvnetMsg CreateLightListMessage() {
+	protected override CvMsg CreateLightListMessage() {
 		if (AdditionalLightweightColumns.Length == 0) {
-			return new CvnetMsg {
+			return new CvMsg {
 				Code = 0,
-				Flag = CvnetFlag.Msg101_Op_Query,
+				Flag = CvFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListSimpleParam),
 				DataMsg = Common.SerializeObject(new QueryListSimpleParam(
 					itemType: Tabletype,
@@ -236,5 +236,5 @@ public abstract partial class BaseCodeNameLightMenteViewModel<T> : BaseLightMent
 public abstract partial class BasePlainLightMenteViewModel<T> : BaseLightMenteViewModel<T> where T : BaseDbClass, new() {
 	protected abstract string LightweightSelectColumns { get; }
 
-	protected override CvnetMsg CreateLightListMessage() => CreateSqlListMessage(LightweightSelectColumns);
+	protected override CvMsg CreateLightListMessage() => CreateSqlListMessage(LightweightSelectColumns);
 }

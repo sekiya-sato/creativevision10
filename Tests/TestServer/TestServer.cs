@@ -28,7 +28,7 @@ public class FakeWebHostEnvironment : IWebHostEnvironment {
 [TestClass]
 public class CvnetCoreServiceTests {
 	private ExDatabaseSqlite? _db;
-	private CvnetCoreService? _service;
+	private CoreService? _service;
 
 	[TestInitialize]
 	public void Initialize() {
@@ -38,14 +38,14 @@ public class CvnetCoreServiceTests {
 		_db = new ExDatabaseSqlite(conn);
 
 		// 必要な依存をダミーで作成
-		var logger = NullLogger<CvnetCoreService>.Instance;
+		var logger = NullLogger<CoreService>.Instance;
 		var config = new ConfigurationBuilder().AddInMemoryCollection([]).Build();
 		var env = new FakeWebHostEnvironment();
 		var httpAccessor = new HttpContextAccessor();
 		var appInit = new AppGlobal();
 		appInit.Init(_db);
 		// サービスを作成
-		_service = new CvnetCoreService(logger, config, env, httpAccessor, _db);
+		_service = new CoreService(logger, config, env, httpAccessor, _db);
 	}
 
 	[TestCleanup]
@@ -59,8 +59,8 @@ public class CvnetCoreServiceTests {
 
 	[TestMethod]
 	public async Task CopyReply_ReturnsSamePayload() {
-		var request = new CvnetMsg {
-			Flag = CvnetFlag.Msg001_CopyReply,
+		var request = new CvMsg {
+			Flag = CvFlag.Msg001_CopyReply,
 			Code = 0,
 			DataType = typeof(string),
 			DataMsg = "hello-copy"
@@ -80,8 +80,8 @@ public class CvnetCoreServiceTests {
 
 	[TestMethod]
 	public async Task GetVersion_ReturnsVersionInfoSerialized() {
-		var request = new CvnetMsg {
-			Flag = CvnetFlag.Msg002_GetVersion,
+		var request = new CvMsg {
+			Flag = CvFlag.Msg002_GetVersion,
 		};
 		if (_service == null) {
 			Assert.Fail("Service not initialized");
@@ -100,8 +100,8 @@ public class CvnetCoreServiceTests {
 
 	[TestMethod]
 	public async Task GetEnv_ReturnsDictionarySerialized() {
-		var request = new CvnetMsg {
-			Flag = CvnetFlag.Msg003_GetEnv,
+		var request = new CvMsg {
+			Flag = CvFlag.Msg003_GetEnv,
 		};
 		if (_service == null) {
 			Assert.Fail("Service not initialized");

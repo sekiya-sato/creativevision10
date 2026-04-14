@@ -8,12 +8,12 @@ namespace CodeShare;
 /// Contract:共通メッセージClass
 /// </summary>
 [DataContract]
-public sealed class CvnetMsg {
+public sealed class CvMsg {
 	/// <summary>
 	/// メッセージ種別
 	/// </summary>
 	[DataMember(Order = 1)]
-	public required CvnetFlag Flag { get; set; }
+	public required CvFlag Flag { get; set; }
 	/// <summary>
 	/// コード（リターンコード、その他）
 	/// </summary>
@@ -43,7 +43,7 @@ public sealed record class StreamMsg {
 	/// メッセージ種別
 	/// </summary>
 	[DataMember(Order = 1)]
-	public required CvnetFlag Flag { get; init; }
+	public required CvFlag Flag { get; init; }
 	/// <summary>
 	/// コード（リターンコード、その他）
 	/// </summary>
@@ -82,7 +82,7 @@ public sealed record class StreamMsg {
 /// メッセージ種別
 /// [Common message flag]
 /// </summary>
-public enum CvnetFlag {
+public enum CvFlag {
 	/// <summary>
 	/// サーバーに送信されたメッセージをそのまま返す Message=送信メッセージ
 	/// [Return the message sent to the server as it is. Message=Sent message]
@@ -169,7 +169,7 @@ public enum CvnetFlag {
 /// [Contract: gRPC Public Service]
 /// </summary>
 [ServiceContract]
-public interface ICvnetCoreService {
+public interface ICoreService {
 	/// <summary>
 	/// MSG種別に応じたリクエストを送信する
 	/// [Send general request]
@@ -178,7 +178,7 @@ public interface ICvnetCoreService {
 	/// <param name="context"></param>
 	/// <returns></returns>
 	[OperationContract]
-	Task<CvnetMsg> QueryMsgAsync(CvnetMsg request, CallContext context = default);
+	Task<CvMsg> QueryMsgAsync(CvMsg request, CallContext context = default);
 	/// <summary>
 	/// ストリーミングでMSG種別に応じたリクエストを送信する
 	/// </summary>
@@ -186,7 +186,7 @@ public interface ICvnetCoreService {
 	/// <param name="context"></param>
 	/// <returns></returns>
 	[OperationContract]
-	IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvnetMsg request, CallContext context = default);
+	IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvMsg request, CallContext context = default);
 	/// <summary>
 	/// ストリーミングで印刷操作リクエストを送信する
 	/// </summary>

@@ -6,7 +6,7 @@ using ProtoBuf.Grpc;
 
 namespace CvServer.Services;
 
-public partial class CvnetCoreService {
+public partial class CoreService {
 	[AllowAnonymous]
 	public async IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default) {
 		// 処理のステップと対応するアクションを定義

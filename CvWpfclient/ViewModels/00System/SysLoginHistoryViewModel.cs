@@ -59,9 +59,9 @@ internal partial class SysLoginHistoryViewModel : Helpers.BaseMenteViewModel<Sys
 				itemType: typeof(SysLogin),
 				where: $"Id IN ({string.Join(",", loginIds)})",
 				order: "Id");
-			var msg = new CvnetMsg {
+			var msg = new CvMsg {
 				Code = 0,
-				Flag = CvnetFlag.Msg101_Op_Query,
+				Flag = CvFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListParam),
 				DataMsg = Common.SerializeObject(query)
 			};

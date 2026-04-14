@@ -144,7 +144,7 @@ app.UseAuthorization();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<LoginService>();
-app.MapGrpcService<CvnetCoreService>();
+app.MapGrpcService<CoreService>();
 app.MapGrpcService<SchedulerService>();
 var appInit = new AppGlobal();
 // DIコンテナから登録済みの ExDatabase を取得してサーバ起動時に必要な初期化を実行

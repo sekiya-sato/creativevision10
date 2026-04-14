@@ -215,26 +215,26 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 		return Rows.FirstOrDefault();
 	}
 
-	CvnetMsg CreateListMessage() => new() {
+	CvMsg CreateListMessage() => new() {
 		Code = 0,
-		Flag = CvnetFlag.Msg101_Op_Query,
+		Flag = CvFlag.Msg101_Op_Query,
 		DataType = typeof(QueryListParam),
 		DataMsg = Common.SerializeObject(new QueryListParam(targetType!, maxCount: maxCount))
 	};
 
-	CvnetMsg CreateExecuteMessage(object parameter, Type dataType) => new() {
+	CvMsg CreateExecuteMessage(object parameter, Type dataType) => new() {
 		Code = 0,
-		Flag = CvnetFlag.Msg201_Op_Execute,
+		Flag = CvFlag.Msg201_Op_Execute,
 		DataType = dataType,
 		DataMsg = Common.SerializeObject(parameter)
 	};
 
-	ValueTask<CvnetMsg> SendMessageAsync(CvnetMsg message, CancellationToken ct) {
-		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-		return new ValueTask<CvnetMsg>(coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct)));
+	ValueTask<CvMsg> SendMessageAsync(CvMsg message, CancellationToken ct) {
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		return new ValueTask<CvMsg>(coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct)));
 	}
 
-	bool HasExecuteError(CvnetMsg reply, string actionName) {
+	bool HasExecuteError(CvMsg reply, string actionName) {
 		if (reply.Code >= 0) {
 			return false;
 		}

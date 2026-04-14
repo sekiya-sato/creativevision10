@@ -53,9 +53,9 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseCodeNameLightMente
 	async Task LoadKubunListAsync(CancellationToken ct) {
 		try {
 			ClientLib.Cursor2Wait();
-			var msg = new CodeShare.CvnetMsg {
+			var msg = new CodeShare.CvMsg {
 				Code = 0,
-				Flag = CodeShare.CvnetFlag.Msg101_Op_Query,
+				Flag = CodeShare.CvFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListParam),
 				DataMsg = Common.SerializeObject(new QueryListParam(
 					itemType: typeof(MasterMeisho),

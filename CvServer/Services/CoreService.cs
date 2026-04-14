@@ -8,8 +8,8 @@ using ProtoBuf.Grpc;
 
 namespace CvServer.Services;
 
-public partial class CvnetCoreService : ICvnetCoreService {
-	private readonly ILogger<CvnetCoreService> _logger;
+public partial class CoreService : ICoreService {
+	private readonly ILogger<CoreService> _logger;
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private readonly ExDatabase _db;
@@ -17,9 +17,9 @@ public partial class CvnetCoreService : ICvnetCoreService {
 	private readonly IHttpContextAccessor _httpContextAccessor;
 
 	// フラグ -> ハンドラマップ
-	private readonly Dictionary<CvnetFlag, Func<CvnetMsg, CallContext, CvnetMsg>> _handlers;
+	private readonly Dictionary<CvFlag, Func<CvMsg, CallContext, CvMsg>> _handlers;
 
-	public CvnetCoreService(ILogger<CvnetCoreService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, ExDatabase db) {
+	public CoreService(ILogger<CoreService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, ExDatabase db) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
 		ArgumentNullException.ThrowIfNull(env);
@@ -33,41 +33,41 @@ public partial class CvnetCoreService : ICvnetCoreService {
 		_httpContextAccessor = httpContextAccessor;
 
 		// ハンドラ登録
-		_handlers = new Dictionary<CvnetFlag, Func<CvnetMsg, CallContext, CvnetMsg>> {
-			[CvnetFlag.Msg001_CopyReply] = HandleCopyReply,
-			[CvnetFlag.Msg002_GetVersion] = HandleGetVersion,
-			[CvnetFlag.Msg003_GetEnv] = HandleGetEnv,
-			[CvnetFlag.Msg042_GetTableCounts] = HandlerGetTableCounts,
-			[CvnetFlag.Msg101_Op_Query] = (req, ctx) => HandleOpQuery(req, ctx),
-			[CvnetFlag.Msg201_Op_Execute] = (req, ctx) => HandleOpExecute(req, ctx),
-			[CvnetFlag.Msg300_Op_OutData] = (req, ctx) => HandleOutData(req, ctx),
-			[CvnetFlag.Msg700_Test_Start] = (req, ctx) => HandleTestLogicMsg700(req, ctx),
-			[CvnetFlag.Msg701_TestCase001] = (req, ctx) => HandleTestLogicMsg701(req, ctx),
-			[CvnetFlag.Msg702_TestCase002] = (req, ctx) => HandleTestLogicMsg702(req, ctx),
+		_handlers = new Dictionary<CvFlag, Func<CvMsg, CallContext, CvMsg>> {
+			[CvFlag.Msg001_CopyReply] = HandleCopyReply,
+			[CvFlag.Msg002_GetVersion] = HandleGetVersion,
+			[CvFlag.Msg003_GetEnv] = HandleGetEnv,
+			[CvFlag.Msg042_GetTableCounts] = HandlerGetTableCounts,
+			[CvFlag.Msg101_Op_Query] = (req, ctx) => HandleOpQuery(req, ctx),
+			[CvFlag.Msg201_Op_Execute] = (req, ctx) => HandleOpExecute(req, ctx),
+			[CvFlag.Msg300_Op_OutData] = (req, ctx) => HandleOutData(req, ctx),
+			[CvFlag.Msg700_Test_Start] = (req, ctx) => HandleTestLogicMsg700(req, ctx),
+			[CvFlag.Msg701_TestCase001] = (req, ctx) => HandleTestLogicMsg701(req, ctx),
+			[CvFlag.Msg702_TestCase002] = (req, ctx) => HandleTestLogicMsg702(req, ctx),
 		};
 	}
 	// ToDo : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
 	[AllowAnonymous]
 	//[Authorize]
-	public Task<CvnetMsg> QueryMsgAsync(CvnetMsg request, CallContext context = default) {
+	public Task<CvMsg> QueryMsgAsync(CvMsg request, CallContext context = default) {
 		_logger.LogInformation($"gRPCリクエストQueryMsgAsync Flag: {request.Flag}, DataType: {request.DataType.ToString()}");
 		ArgumentNullException.ThrowIfNull(request);
 
 		if (_handlers.TryGetValue(request.Flag, out var handler)) {
 			try {
-				var result = handler(request, context) ?? new CvnetMsg() { Flag = CvnetFlag.Msg800_Error_Start, Code = -1, DataType = typeof(string), DataMsg = "Handler returned null." };
+				var result = handler(request, context) ?? new CvMsg() { Flag = CvFlag.Msg800_Error_Start, Code = -1, DataType = typeof(string), DataMsg = "Handler returned null." };
 				return Task.FromResult(result);
 			}
 			catch (Exception ex) {
 				_logger.LogError(ex, "QueryMsgAsync handler error Flag:{Flag}", request.Flag);
-				var err = new CvnetMsg() { Flag = request.Flag, Code = -9902, Option = ex.Message, DataType = typeof(string), DataMsg = ex.Message };
+				var err = new CvMsg() { Flag = request.Flag, Code = -9902, Option = ex.Message, DataType = typeof(string), DataMsg = ex.Message };
 				return Task.FromResult(err);
 			}
 		}
 
 		// 未実装フラグ
-		var defaultErr = new CvnetMsg {
-			Flag = CvnetFlag.Msg800_Error_Start,
+		var defaultErr = new CvMsg {
+			Flag = CvFlag.Msg800_Error_Start,
 			Code = -1,
 			DataType = typeof(string),
 			DataMsg = "Unimplemented function."
@@ -84,15 +84,15 @@ public partial class CvnetCoreService : ICvnetCoreService {
 	/// <returns></returns>
 	[AllowAnonymous]
 	//[Authorize]
-	public async IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvnetMsg request, CallContext context = default) {
+	public async IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvMsg request, CallContext context = default) {
 		ArgumentNullException.ThrowIfNull(request);
 		var ct = context.CancellationToken;
 		_logger.LogInformation("gRPCストリーミングリクエスト QueryMsgStreamAsync Flag: {Flag}, DataType: {DataType}", request.Flag, request.DataType);
 		await Task.Yield();
 
 		// ConvertDb関連フラグの処理
-		if (request.Flag is CvnetFlag.MSg040_ConvertDb or CvnetFlag.MSg041_ConvertDbInit) {
-			var isInit = request.Flag == CvnetFlag.MSg041_ConvertDbInit;
+		if (request.Flag is CvFlag.MSg040_ConvertDb or CvFlag.MSg041_ConvertDbInit) {
+			var isInit = request.Flag == CvFlag.MSg041_ConvertDbInit;
 
 			// HandleConvertDbStreamAsyncの結果をそのまま返す
 			await foreach (var msg in HandleConvertDbStreamAsync(isInit, ct, request.Flag)) {
@@ -102,7 +102,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 		}
 
 		// テストストリーミング処理（既存）
-		if (request.Flag is CvnetFlag.MSg060_StreamingTest) {
+		if (request.Flag is CvFlag.MSg060_StreamingTest) {
 			// 追加：HandleConvertTestStreamAsync を呼ぶ
 			await foreach (var msg in HandleConvertTestStreamAsync(ct, request.Flag)) {
 				yield return msg;
@@ -114,7 +114,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 	/// <summary>
 	/// ConvertDbのストリーミング処理ハンドラ
 	/// </summary>
-	private async IAsyncEnumerable<StreamMsg> HandleConvertDbStreamAsync(bool isInit, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvnetFlag flag) {
+	private async IAsyncEnumerable<StreamMsg> HandleConvertDbStreamAsync(bool isInit, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvFlag flag) {
 		var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
 		var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
 
@@ -149,7 +149,7 @@ public partial class CvnetCoreService : ICvnetCoreService {
 
 	private async IAsyncEnumerable<StreamMsg> HandleConvertTestStreamAsync(
 		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct,
-		CvnetFlag flag) {
+		CvFlag flag) {
 		var start = DateTime.Now;
 		var stepNames = new[] {
 			"This is First Step",

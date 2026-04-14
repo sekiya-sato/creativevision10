@@ -98,8 +98,8 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			StreamMessages.Clear();
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
-			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.MSg060_StreamingTest };
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg060_StreamingTest };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "ストリーミングテスト";
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
@@ -128,8 +128,8 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestMsg001(CancellationToken ct) {
-		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg001_CopyReply };
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg001_CopyReply };
 		msg.DataType = typeof(string);
 		msg.DataMsg = TestMsg001Text;
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
@@ -141,8 +141,8 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestMsg002(CancellationToken ct) {
-		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg002_GetVersion };
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg002_GetVersion };
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 		if (reply?.DataMsg != null && reply?.DataType != null) {
 			var versionInfo = Common.DeserializeObject<CvBase.Share.InfoServer>(reply.DataMsg);
@@ -158,8 +158,8 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestMsg003(CancellationToken ct) {
-		var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-		var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg003_GetEnv };
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg003_GetEnv };
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 		if (reply?.DataMsg != null && reply?.DataType != null) {
 			var envItems = Common.DeserializeObject<Dictionary<string, string>>(reply.DataMsg)
@@ -180,8 +180,8 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			StreamMessages.Clear();
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
-			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.MSg040_ConvertDb };
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg040_ConvertDb };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "コンバートストリーミング DBConvert";
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
@@ -209,7 +209,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			StreamMessages.Clear();
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
-			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new PrintOperation {
 				DataType = typeof(string),
 				DataMsg = "コンバートストリーミング Printのテスト",
@@ -252,8 +252,8 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			ClientLib.Cursor2Wait();
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
-			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg042_GetTableCounts };
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg042_GetTableCounts };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply?.DataMsg != null && reply?.DataType != null) {
 				var wrk = Common.DeserializeObject(reply.DataMsg, reply.DataType);

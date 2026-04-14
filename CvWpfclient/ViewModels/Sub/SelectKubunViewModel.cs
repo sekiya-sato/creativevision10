@@ -26,10 +26,10 @@ public partial class SelectKubunViewModel : Helpers.BaseViewModel {
 	async Task InitList(CancellationToken ct) {
 		try {
 			ct.ThrowIfCancellationRequested();
-			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-			var msg = new CvnetMsg {
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg {
 				Code = 0,
-				Flag = CvnetFlag.Msg101_Op_Query,
+				Flag = CvFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListSimpleParam),
 				DataMsg = Common.SerializeObject(new QueryListParam(
 					itemType: typeof(MasterMeisho),

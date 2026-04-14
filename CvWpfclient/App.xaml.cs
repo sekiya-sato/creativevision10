@@ -194,7 +194,7 @@ public partial class App : Application {
 				services.AddHttpClient<IJapanPostBizTokenProvider, JapanPostBizTokenProvider>(ConfigureJapanPostBizClient);
 				services.AddHttpClient<IPostalAddressService, JapanPostBizPostalAddressService>(ConfigureJapanPostBizClient);
 				ConfigureClient<ILoginService>(services, url, subPath);
-				ConfigureClient<ICvnetCoreService>(services, url, subPath);
+				ConfigureClient<ICoreService>(services, url, subPath);
 			});
 	}
 

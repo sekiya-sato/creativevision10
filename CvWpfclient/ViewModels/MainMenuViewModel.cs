@@ -281,8 +281,8 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 		_subStartTime = DateTime.Now;
 		try {
-			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-			var msg = new CvnetMsg { Flag = CvnetFlag.Msg002_GetVersion };
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg { Flag = CvFlag.Msg002_GetVersion };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
 			var version = Common.DeserializeObject(reply.DataMsg ?? "", reply.DataType) as CvBase.Share.InfoServer;
 			if (version != null) {
