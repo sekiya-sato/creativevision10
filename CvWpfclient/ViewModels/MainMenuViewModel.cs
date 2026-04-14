@@ -63,6 +63,8 @@ public partial class MainMenuViewModel : ObservableObject {
 
 	private DispatcherTimer? _timer;
 
+	private DateTime checkDate = DateTime.MinValue;
+
 	private System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("ja-JP");
 
 	[ObservableProperty]
@@ -439,9 +441,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	private async void StartClock() {
-		UpdateDateTime(); // 初回実行
-						  // 2. 「次の秒」までのミリ秒を計算する
-						  // 例: 現在 12:00:00.350 なら、残り 650ms 待機する
+		// 1. 初回実行
+		UpdateDateTime();
+		// 2. 「次の秒」までのミリ秒を計算する  例: 現在 12:00:00.350 なら、残り 650ms 待機する
 		int delayUntilNextSecond = 1000 - DateTime.Now.Millisecond;
 
 		// 3. 次の秒の切り替わりまで非同期で待機
@@ -451,12 +453,16 @@ public partial class MainMenuViewModel : ObservableObject {
 		};
 		_timer.Tick += (s, e) => UpdateDateTime();
 		_timer.Start();
-		culture.DateTimeFormat.Calendar = new System.Globalization.JapaneseCalendar();
 	}
 
 	private void UpdateDateTime() {
 		var now = DateTime.Now;
-		CurrentDate = $"{now:yy/MM/dd} {now.ToString("gy", culture)}";
+		if (now.Date != checkDate) {
+			culture.DateTimeFormat.Calendar = new System.Globalization.JapaneseCalendar();
+			CurrentDate = $"{now:yy/MM/dd} {now.ToString("gy", culture)}";
+			Kyureki = $"旧暦 {now.ToSimpleLunisolarStr()}";
+			checkDate = now.Date;
+		}
 		CurrentTime = now.ToString("ddd HH:mm:ss");
 	}
 	/// <summary>

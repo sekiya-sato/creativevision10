@@ -24,10 +24,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private void Init() {
 		LoadSettings();
 	}
-
-
-	[RelayCommand(IncludeCancelCommand = true)]
-	private async Task SaveAsync(CancellationToken cancellationToken) {
+	async Task saveLocalSetting(bool isSavel, CancellationToken cancellationToken) {
 		if (string.IsNullOrWhiteSpace(Url)) {
 			MessageEx.ShowErrorDialog("接続先 URL を入力してください。", owner: ClientLib.GetActiveView(this));
 			return;
@@ -35,37 +32,15 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 
 		cancellationToken.ThrowIfCancellationRequested();
 		AppGlobal.UpdateConfigValues(Url, LoginId, LoginPassword);
-
-		try {
-			_store.Save(_currentSettings);
-		}
-		catch (Exception ex) {
-			MessageEx.ShowErrorDialog($"設定の保存に失敗しました: {ex.Message}", owner: ClientLib.GetActiveView(this));
-			return;
-		}
-
-		var urlChanged = !string.Equals(_originalUrl, Url, StringComparison.OrdinalIgnoreCase);
-		if (urlChanged) {
+		if (isSavel) {
 			try {
-				await App.RestartHostAsync(cancellationToken);
+				_store.Save(_currentSettings);
 			}
 			catch (Exception ex) {
-				MessageEx.ShowErrorDialog($"接続先の再構築に失敗しました: {ex.Message}", owner: ClientLib.GetActiveView(this));
+				MessageEx.ShowErrorDialog($"設定の保存に失敗しました: {ex.Message}", owner: ClientLib.GetActiveView(this));
 				return;
 			}
 		}
-
-		_originalUrl = Url;
-		ExitWithResultTrue();
-	}
-	[RelayCommand(IncludeCancelCommand = true)]
-	private async Task NoSaveAsync(CancellationToken cancellationToken) {
-		if (string.IsNullOrWhiteSpace(Url)) {
-			MessageEx.ShowErrorDialog("接続先 URL を入力してください。", owner: ClientLib.GetActiveView(this));
-			return;
-		}
-		cancellationToken.ThrowIfCancellationRequested();
-		AppGlobal.UpdateConfigValues(Url, LoginId, LoginPassword);
 		var urlChanged = !string.Equals(_originalUrl, Url, StringComparison.OrdinalIgnoreCase);
 		if (urlChanged) {
 			try {
@@ -75,13 +50,26 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 					["Parameters:LoginPass"] = LoginPassword,
 				};
 				await App.RestartHostAsync(cancellationToken, setting);
+				_originalUrl = Url;
 			}
 			catch (Exception ex) {
 				MessageEx.ShowErrorDialog($"接続先の再構築に失敗しました: {ex.Message}", owner: ClientLib.GetActiveView(this));
 				return;
 			}
 		}
-		_originalUrl = Url;
+	}
+
+
+
+
+	[RelayCommand(IncludeCancelCommand = true)]
+	private async Task SaveAsync(CancellationToken cancellationToken) {
+		await saveLocalSetting(true, cancellationToken);
+		ExitWithResultTrue();
+	}
+	[RelayCommand(IncludeCancelCommand = true)]
+	private async Task NoSaveAsync(CancellationToken cancellationToken) {
+		await saveLocalSetting(false, cancellationToken);
 		ExitWithResultTrue();
 	}
 
