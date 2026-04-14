@@ -11,6 +11,8 @@ using NLog.Extensions.Logging;
 using ProtoBuf.Grpc.ClientFactory;
 using System.IO;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
@@ -24,6 +26,9 @@ public partial class App : Application {
 	public static IHost? AppHost { get; private set; }
 	public static ThemeService ThemeService { get; } = new();
 	private static readonly Logger _bootstrapLogger = LogManager.GetCurrentClassLogger();
+	private static readonly SemaphoreSlim _hostRestartGate = new(1, 1);
+	private static readonly object _hostLifetimeSync = new();
+	private static CancellationTokenSource _hostLifetimeCts = new();
 
 	[STAThread]
 	public static void Main(string[] args) {
@@ -45,10 +50,11 @@ public partial class App : Application {
 			await StartHostAsync(AppHost);
 		}
 		base.OnStartup(e);
-		_ = CheckForUpdatesOnStartupAsync();
+		RunBackgroundTask(CheckForUpdatesOnStartupAsync, "起動時更新確認");
 	}
 
 	protected override async void OnExit(ExitEventArgs e) {
+		CancelHostLifetimeOperations();
 		if (AppHost != null) {
 			await AppHost.StopAsync();
 			AppHost.Dispose();
@@ -128,6 +134,45 @@ public partial class App : Application {
 		}
 	}
 
+	public static CancellationToken GetHostLifetimeToken() {
+		lock (_hostLifetimeSync) {
+			return _hostLifetimeCts.Token;
+		}
+	}
+
+	private static void RunBackgroundTask(Func<CancellationToken, Task> taskFactory, string operationName) {
+		var token = GetHostLifetimeToken();
+		_ = Task.Run(async () => {
+			try {
+				await taskFactory(token).ConfigureAwait(false);
+			}
+			catch (OperationCanceledException) when (token.IsCancellationRequested) {
+				_bootstrapLogger.Debug("バックグラウンド処理をキャンセルしました: {OperationName}", operationName);
+			}
+			catch (Exception ex) {
+				_bootstrapLogger.Error(ex, "バックグラウンド処理でエラーが発生しました: {OperationName}", operationName);
+			}
+		}, CancellationToken.None);
+	}
+
+	private static void CancelHostLifetimeOperations() {
+		lock (_hostLifetimeSync) {
+			if (_hostLifetimeCts.IsCancellationRequested) {
+				return;
+			}
+
+			_hostLifetimeCts.Cancel();
+		}
+	}
+
+	private static void ResetHostLifetimeOperations() {
+		lock (_hostLifetimeSync) {
+			var previous = _hostLifetimeCts;
+			_hostLifetimeCts = new CancellationTokenSource();
+			previous.Dispose();
+		}
+	}
+
 	/// <summary>
 	/// Caution: This Logic does not rewrite !
 	/// サービスはここで追加、タイムアウト指定、認証ハンドラ追加などを行う
@@ -189,20 +234,22 @@ public partial class App : Application {
 			});
 	}
 
-	private async Task CheckForUpdatesOnStartupAsync() {
+	private async Task CheckForUpdatesOnStartupAsync(CancellationToken cancellationToken) {
 		var logger = TryGetAppLogger();
 		try {
 			if (AppHost == null) {
 				return;
 			}
 
-			await Task.Delay(1500);
+			await Task.Delay(1500, cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
 			var updateService = AppHost.Services.GetService<IUpdateService>();
 			if (updateService == null) {
 				return;
 			}
 
 			var checkResult = await updateService.CheckForUpdateAsync().ConfigureAwait(false);
+			cancellationToken.ThrowIfCancellationRequested();
 			if (!checkResult.IsUpdateAvailable) {
 				logger?.LogInformation("起動時更新確認: {Message}", checkResult.Message);
 				return;
@@ -219,9 +266,13 @@ public partial class App : Application {
 			}
 
 			var executeResult = await updateService.PerformUpdateAsync().ConfigureAwait(false);
+			cancellationToken.ThrowIfCancellationRequested();
 			if (!executeResult.IsSuccess) {
 				await Dispatcher.InvokeAsync(() => MessageEx.ShowErrorDialog(executeResult.Message, owner: owner));
 			}
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			logger?.LogInformation("起動時の更新確認をキャンセルしました。");
 		}
 		catch (Exception ex) {
 			logger?.LogError(ex, "起動時の更新確認でエラーが発生しました。");
@@ -232,12 +283,26 @@ public partial class App : Application {
 	/// 設定変更を反映するためにホストを再構築します。
 	/// </summary>
 	public static async Task RestartHostAsync(CancellationToken cancellationToken = default, Dictionary<string, string?>? setting = null) {
-		if (AppHost is not null) {
-			await AppHost.StopAsync(cancellationToken).ConfigureAwait(false);
-			AppHost.Dispose();
+		await _hostRestartGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+		try {
+			CancelHostLifetimeOperations();
+			if (AppHost is not null) {
+				await AppHost.StopAsync(cancellationToken).ConfigureAwait(false);
+				AppHost.Dispose();
+			}
+			AppHost = CreateHostBuilder(setting).Build();
+			ResetHostLifetimeOperations();
+			await StartHostAsync(AppHost, cancellationToken).ConfigureAwait(false);
 		}
-		AppHost = CreateHostBuilder(setting).Build();
-		await StartHostAsync(AppHost, cancellationToken).ConfigureAwait(false);
+		catch {
+			if (AppHost is not null) {
+				ResetHostLifetimeOperations();
+			}
+			throw;
+		}
+		finally {
+			_hostRestartGate.Release();
+		}
 	}
 
 	private static async Task StartHostAsync(IHost host, CancellationToken cancellationToken = default) {

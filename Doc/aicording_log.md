@@ -627,6 +627,25 @@
 
 ---
 
+## [2026-04-14] 17:56 サーバURL変更時のNLog Flush Timeout抑止
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：実行時に環境設定でサーバURLを変更した際に発生する `TaskScheduler.UnobservedTaskException` と `NLog LogFactory Flush Timeout` の原因に対応し、実装修正とコミットまで行う
+### 実施内容
+- `CvWpfclient/App.xaml.cs`: Host再起動の排他制御と Host ライフサイクル用 `CancellationTokenSource` を追加し、起動時更新確認をキャンセル可能な安全なバックグラウンド実行へ変更
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 天気更新処理に Host ライフサイクルトークンを渡し、再起動中の未観測例外を抑止するよう変更
+- `CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs`: 画面入力値を保存オブジェクトへ反映してから保存するよう修正し、再構築失敗時に画面を閉じないよう戻り値判定を追加
+### 技術決定 Why
+- URL変更時は既存 Host の Dispose とバックグラウンド通信が競合しやすいため、再起動前に関連処理をキャンセルしてから新しい Host へ切り替える構成にした
+- fire-and-forget のまま例外を放置すると finalizer thread で未観測例外化するため、起動時更新確認は内部で例外を完結させる実装へ変更した
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告 0、エラー 0）
+
+---
+
 ## [2026-04-13] 17:31 得意先住所の再分割処理を実装
 ### Agent
 - gpt-5.4 : OpenAI

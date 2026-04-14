@@ -2,6 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvWpfclient.Helpers;
 using CvWpfclient.Services;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CvWpfclient.ViewModels._00System;
 
@@ -24,13 +26,16 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private void Init() {
 		LoadSettings();
 	}
-	async Task saveLocalSetting(bool isSavel, CancellationToken cancellationToken) {
+	async Task<bool> saveLocalSetting(bool isSavel, CancellationToken cancellationToken) {
 		if (string.IsNullOrWhiteSpace(Url)) {
 			MessageEx.ShowErrorDialog("接続先 URL を入力してください。", owner: ClientLib.GetActiveView(this));
-			return;
+			return false;
 		}
 
 		cancellationToken.ThrowIfCancellationRequested();
+		_currentSettings.ConnectionStrings.Url = Url;
+		_currentSettings.Parameters.LoginId = LoginId;
+		_currentSettings.Parameters.LoginPass = LoginPassword;
 		AppGlobal.UpdateConfigValues(Url, LoginId, LoginPassword);
 		if (isSavel) {
 			try {
@@ -38,7 +43,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 			}
 			catch (Exception ex) {
 				MessageEx.ShowErrorDialog($"設定の保存に失敗しました: {ex.Message}", owner: ClientLib.GetActiveView(this));
-				return;
+				return false;
 			}
 		}
 		var urlChanged = !string.Equals(_originalUrl, Url, StringComparison.OrdinalIgnoreCase);
@@ -54,9 +59,10 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 			}
 			catch (Exception ex) {
 				MessageEx.ShowErrorDialog($"接続先の再構築に失敗しました: {ex.Message}", owner: ClientLib.GetActiveView(this));
-				return;
+				return false;
 			}
 		}
+		return true;
 	}
 
 
@@ -64,13 +70,15 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task SaveAsync(CancellationToken cancellationToken) {
-		await saveLocalSetting(true, cancellationToken);
-		ExitWithResultTrue();
+		if (await saveLocalSetting(true, cancellationToken)) {
+			ExitWithResultTrue();
+		}
 	}
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task NoSaveAsync(CancellationToken cancellationToken) {
-		await saveLocalSetting(false, cancellationToken);
-		ExitWithResultTrue();
+		if (await saveLocalSetting(false, cancellationToken)) {
+			ExitWithResultTrue();
+		}
 	}
 
 	private void LoadSettings() {

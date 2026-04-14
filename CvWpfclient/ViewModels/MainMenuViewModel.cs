@@ -11,17 +11,16 @@ using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using System.Collections.ObjectModel;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
 namespace CvWpfclient.ViewModels;
 
 public partial class MainMenuViewModel : ObservableObject {
-	private readonly ILogger<MainMenuViewModel> _logger;
-
 	[ObservableProperty]
 	ObservableCollection<MenuData> menuItems = [];
 
@@ -80,7 +79,6 @@ public partial class MainMenuViewModel : ObservableObject {
 	InfoServer infolocalServer = new InfoServer();
 
 	public MainMenuViewModel() {
-		_logger = App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger<MainMenuViewModel>();
 	}
 
 	partial void OnInfolocalUserChanged(InfoUser value) {
@@ -283,7 +281,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				InfolocalServer = serverVer;
 				InfolocalServer.Url = AppGlobal.Config.GetSection("ConnectionStrings")?["Url"] ?? "";
 			}
-			await RefreshWeatherServerAsync();
+			await RefreshWeatherServerAsync(App.GetHostLifetimeToken());
 		}
 		_subStartTime = DateTime.Now;
 		SetSubMessage();
@@ -370,57 +368,68 @@ public partial class MainMenuViewModel : ObservableObject {
 	private DispatcherTimer? _weatherTimer;
 
 	private async void StartWeatherAndCalendar() {
-		await RefreshWeatherServerAsync();
+		await RefreshWeatherServerAsync(App.GetHostLifetimeToken());
 
 		// 天気は30分おきに更新
 		_weatherTimer = new DispatcherTimer {
 			Interval = TimeSpan.FromMinutes(30)
 		};
-		_weatherTimer.Tick += async (s, e) => await RefreshWeatherServerAsync();
+		_weatherTimer.Tick += async (s, e) => await RefreshWeatherServerAsync(App.GetHostLifetimeToken());
 		_weatherTimer.Start();
 	}
-	private async Task RefreshWeatherServerAsync() {
-		var weatherService = AppGlobal.GetGrpcService<IWeatherService>();
-		var reagion = AppGlobal.Config["Application:WeatherRegion"] ?? "Tokyo";
-		var weather = await weatherService.GetCurrentWeatherAsync(reagion);
-		if (weather != null) {
-			CurrentWeather = weather;
-			WeatherIconKind = weather.IconKind;
-			WeatherTemperature = $"{weather.Temperature:F0}℃";
-			WeatherDescription = weather.Description;
-			WeatherLocation = weather.Location;
-			Sunrise = $"日の出 {weather.SunRize:HH:mm}";
-			Sunset = $"日の入 {weather.SunSet:HH:mm}";
-			Humidity = $"湿度 {weather.Humidity}%";
-			WindSpeed = $"風速 {weather.WindSpeed}m/s";
-		}
-		var forecasts = await weatherService.GetHourlyForecastAsync(reagion);
-		if (forecasts.Count > 0) {
-			var values = forecasts.Select(f => new ObservablePoint(0, f.Temperature)).ToArray();
-			for (int i = 0; i < values.Length; i++) {
-				values[i] = new ObservablePoint(i, forecasts[i].Temperature);
+	private async Task RefreshWeatherServerAsync(CancellationToken cancellationToken) {
+		try {
+			cancellationToken.ThrowIfCancellationRequested();
+			var weatherService = AppGlobal.GetGrpcService<IWeatherService>();
+			var reagion = AppGlobal.Config["Application:WeatherRegion"] ?? "Tokyo";
+			var weather = await weatherService.GetCurrentWeatherAsync(reagion);
+			cancellationToken.ThrowIfCancellationRequested();
+			if (weather != null) {
+				CurrentWeather = weather;
+				WeatherIconKind = weather.IconKind;
+				WeatherTemperature = $"{weather.Temperature:F0}℃";
+				WeatherDescription = weather.Description;
+				WeatherLocation = weather.Location;
+				Sunrise = $"日の出 {weather.SunRize:HH:mm}";
+				Sunset = $"日の入 {weather.SunSet:HH:mm}";
+				Humidity = $"湿度 {weather.Humidity}%";
+				WindSpeed = $"風速 {weather.WindSpeed}m/s";
 			}
+			var forecasts = await weatherService.GetHourlyForecastAsync(reagion);
+			cancellationToken.ThrowIfCancellationRequested();
+			if (forecasts.Count > 0) {
+				var values = forecasts.Select(f => new ObservablePoint(0, f.Temperature)).ToArray();
+				for (int i = 0; i < values.Length; i++) {
+					values[i] = new ObservablePoint(i, forecasts[i].Temperature);
+				}
 
-			ForecastSeries = [
-				new LineSeries<ObservablePoint> {
-						Values = values,
-						Fill = new SolidColorPaint(new SKColor(33, 150, 243, 80)),
-						Stroke = new SolidColorPaint(new SKColor(33, 150, 243)) { StrokeThickness = 2 },
-						GeometryFill = new SolidColorPaint(new SKColor(33, 150, 243)),
-						GeometryStroke = new SolidColorPaint(new SKColor(33, 150, 243)),
-						GeometrySize = 6,
-						LineSmoothness = 0.3
-					}
-			];
-			ForecastXAxes = [new Axis {
-					Labels = forecasts.Select(f => f.TimeLabel).ToArray(),
-					TextSize = 11,
-					LabelsRotation = 0
-				}];
-			ForecastYAxes = [new Axis {
-					Name = "", // ℃
-					TextSize = 11
-				}];
+				ForecastSeries = [
+					new LineSeries<ObservablePoint> {
+							Values = values,
+							Fill = new SolidColorPaint(new SKColor(33, 150, 243, 80)),
+							Stroke = new SolidColorPaint(new SKColor(33, 150, 243)) { StrokeThickness = 2 },
+							GeometryFill = new SolidColorPaint(new SKColor(33, 150, 243)),
+							GeometryStroke = new SolidColorPaint(new SKColor(33, 150, 243)),
+							GeometrySize = 6,
+							LineSmoothness = 0.3
+						}
+				];
+				ForecastXAxes = [new Axis {
+						Labels = forecasts.Select(f => f.TimeLabel).ToArray(),
+						TextSize = 11,
+						LabelsRotation = 0
+					}];
+				ForecastYAxes = [new Axis {
+						Name = "", // ℃
+						TextSize = 11
+					}];
+			}
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			return;
+		}
+		catch {
+			WeatherDescription = "天気情報を取得できませんでした";
 		}
 	}
 	private async void StartClock() {
