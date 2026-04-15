@@ -13,8 +13,6 @@ using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Extensions.DependencyInjection;
 using SkiaSharp;
 using System.Collections.ObjectModel;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -99,11 +97,13 @@ public partial class MainMenuViewModel : ObservableObject {
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
 			startRect = window.RestoreBounds;
+			var width = 290;
+			var height = 590;
 			miniRect = new Rect() {
-				X = startRect.X + startRect.Width - 280,
-				Y = startRect.Y,
-				Width = 280,
-				Height = 700
+				Width = width,
+				Height = height,
+				X = startRect.X + startRect.Width - width,
+				Y = startRect.Y
 			};
 		}
 		StartClock();
@@ -126,7 +126,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Config["ConnectionStrings:Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 		StatusMessage = $"左側のメニューリストから選択し、ダブルクリックまたはEnterで実行してください。";
-		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}";
+		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}\n{InfolocalServer.OsVersion ?? "OS-version"}\nDOTNET {InfolocalServer.DotNetVersion ?? "DOTNET-Version"}\nローカル名 {InfolocalServer.MachineName} {InfolocalServer.UserName}";
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
 
