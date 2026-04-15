@@ -55,7 +55,6 @@ public partial class MenuData : ObservableObject {
 				new("", typeof(object), false, addInfo:"準備中"),
 			])),
 			*/
-			new("システム管理マスタ", typeof(Views._01Master.MasterSysKanriMenteView),  addInfo:"会社情報、締日、税率などを設定"),
 			new("ログイン管理マスタ", typeof(Views._00System.SysLoginView),  addInfo:"ログインIDの管理とユーザ割当、有効期限の設定"),
 			new("ログイン履歴情報", typeof(Views._00System.SysLoginHistoryView),  addInfo:"ログイン履歴の確認"),
 			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), addInfo:"準備中"),
@@ -65,6 +64,7 @@ public partial class MenuData : ObservableObject {
 			new("Test画面--", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"一時的なテストで使用"),
 		])),
 		new("■ マスター", new([
+			new("システム管理マスタ", typeof(Views._01Master.MasterSysKanriMenteView),  addInfo:"会社情報、締日、税率などを設定"),
 			new("名称マスタメンテ", typeof(Views._01Master.MasterMeishoMenteView), addInfo:"区分別の名称マスタメンテ画面"),
 			new("社員マスタ", typeof(Views._01Master.MasterShainMenteView), addInfo:"社員マスタメンテ画面"),
 			new("商品マスタ", typeof(Views._01Master.MasterShohinMenteView), addInfo:"商品マスタメンテ画面"),
