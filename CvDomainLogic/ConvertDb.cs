@@ -33,8 +33,9 @@ public partial class ConvertDb {
 
 		// ToDo: 最終的に実行させる処理を整理
 		var steps = new (string Name, Func<bool, int> Action)[] {
-			("CnvMasterConfig", CnvMasterConfig),
+			("CnvAfterMasterAddress", CnvAfterMasterAddress),
 			/*
+			("CnvMasterConfig", CnvMasterConfig),
 			("CnvMasterSys", CnvMasterSys),
 			("CnvMasterMeisho", CnvMasterMeisho),
 			("CnvMasterShain", CnvMasterShain),
@@ -690,34 +691,41 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 
 	public int CnvAfterMasterAddress(bool isInit = true) {
 		int cnt = 0;
-		var tokuiList = _toDb.Fetch<MasterTokui>();
-		if (tokuiList != null && tokuiList.Count > 0) {
-			foreach (var tokui in tokuiList) {
-				if (tokui == null) continue;
-				try {
+		cnt += ConvertItemAddress<MasterSysman>();
+		cnt += ConvertItemAddress<MasterTokui>();
+		cnt += ConvertItemAddress<MasterShiire>();
+		return cnt;
+	}
+	public int ConvertItemAddress<T>() where T : BaseDbHasAddress {
+		int cnt = 0;
+		var list = _toDb.Fetch<T>();
+		long nowId = 0;
+		try {
+			if (list != null && list.Count > 0) {
+				foreach (var item in list) {
+					if (item == null) continue;
+					nowId = item.Id;
 					// 住所をまとめたものから、都道府県をAddress1 に、市区町村をAddress2に、残りをAddress3に分割して保存する
-					var all = $"{tokui.Address1?.Trim()}{tokui.Address2?.Trim()}{tokui.Address3?.Trim()}".Trim();
+					var all = $"{item.Address1?.Trim()}{item.Address2?.Trim()}{item.Address3?.Trim()}".Trim();
 					if (string.IsNullOrWhiteSpace(all))
 						continue;
-					var retAddress = ConvertAddress(all);
-					tokui.Address1 = retAddress.Item1;
-					tokui.Address2 = retAddress.Item2;
-					tokui.Address3 = retAddress.Item3;
-					_toDb.Update(tokui);
+					var retAddress = ConvertAddressString(all);
+					item.Address1 = retAddress.Item1;
+					item.Address2 = retAddress.Item2;
+					item.Address3 = retAddress.Item3;
+					_toDb.Update(item);
 					cnt++;
-				}
-				catch (Exception ex) {
-					_logger?.Warn(ex, "CnvAfterMasterAddress: Failed to split address for MasterTokui Code={0}", tokui?.Code);
 				}
 			}
 		}
-
+		catch (Exception ex) {
+			_logger?.Warn(ex, $"ConvertItemAddress: Failed to convert address for {typeof(T).Name} Id={nowId}");
+		}
 		return cnt;
 	}
-
 	static Regex? prefRegex;
 	static Regex? cityRegex;
-	Tuple<string, string, string> ConvertAddress(string address) {
+	Tuple<string, string, string> ConvertAddressString(string address) {
 		if (prefRegex == null)
 			prefRegex = new Regex(@"^(東京都|北海道|京都府|大阪府|.{2,3}県)", RegexOptions.Compiled);
 		if (cityRegex == null)

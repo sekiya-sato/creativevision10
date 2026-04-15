@@ -76,7 +76,7 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 
 		var body = await response.Content.ReadFromJsonAsync<JapanPostSearchCodeResponse>(cancellationToken: cancellationToken).ConfigureAwait(false);
 		var items = body?.Addresses?.Select(address => new PostalAddressItem(
-			address.ZipCode ?? string.Empty,
+			HumanReadPostalCode(address.ZipCode) ?? string.Empty,
 			address.PrefName ?? string.Empty,
 			address.CityName ?? string.Empty,
 			address.TownName ?? string.Empty,
@@ -125,6 +125,15 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 	private static string? NormalizePostalCode(string postalCode) {
 		var normalized = new string((postalCode ?? string.Empty).Where(char.IsDigit).ToArray());
 		return normalized.Length == 7 ? normalized : null;
+	}
+	private static string HumanReadPostalCode(string? postalCode) {
+		if (string.IsNullOrWhiteSpace(postalCode)) {
+			return string.Empty;
+		}
+		if (postalCode.Length == 7) {
+			return $"{postalCode.Substring(0, 3)}-{postalCode.Substring(3, 4)}";
+		}
+		return postalCode;
 	}
 
 	private sealed record JapanPostSearchCodeResponse(

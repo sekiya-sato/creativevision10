@@ -42,7 +42,7 @@ public class UpdateDb {
 			return;
 		}
 		if (latestDb.DbVersion >= latestVersion.DbVersion) { // DBに最新までレコードがある
-			logger.Debug($"DBバージョンは最新({latestVersion.DbVersion})");
+			logger.Info($"DBバージョンは最新({latestVersion.DbVersion})");
 			return;
 		}
 		foreach (var record in verupSql) { // 配列はforeachで必ず順番に処理される
