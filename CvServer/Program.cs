@@ -28,8 +28,7 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddNLogWeb();
+builder.Logging.AddNLogWeb(); // Nlog側で Consoleログの出力をコントロール
 
 
 builder.Services.AddCodeFirstGrpc((options => {
