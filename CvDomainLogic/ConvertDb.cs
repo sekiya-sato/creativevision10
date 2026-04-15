@@ -4,6 +4,13 @@ using NLog;
 using System.Text.RegularExpressions;
 
 namespace CvDomainLogic;
+
+/// <summary>
+/// 変換ステップの進捗情報
+/// [Conversion step progress information]
+/// </summary>
+public record ConvertStepProgress(string StepName, int Count, int Progress, bool IsCompleted = false, bool IsError = false, string? ErrorMessage = null);
+
 /// <summary>
 /// データベースを変換するクラス
 /// </summary>
@@ -18,11 +25,6 @@ public partial class ConvertDb {
 		_logger = LogManager.GetCurrentClassLogger();
 	}
 
-	/// <summary>
-	/// 変換ステップの進捗情報
-	/// [Conversion step progress information]
-	/// </summary>
-	public record ConvertStepProgress(string StepName, int Count, int Progress, bool IsCompleted = false, bool IsError = false, string? ErrorMessage = null);
 	/// <summary>
 	/// ストリーミングで全マスタ変換を実行
 	/// [Execute all master conversion for streaming]

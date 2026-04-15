@@ -111,10 +111,9 @@ public enum CvFlag {
 	/// </summary>
 	Msg042_GetTableCounts = 44,
 	/// <summary>
-	/// テスト
+	/// 集計処理
 	/// </summary>
-	MSg050_Test = 50,
-	MSg060_StreamingTest = 60,
+	MSg050_Summary = 50,
 	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
@@ -133,6 +132,10 @@ public enum CvFlag {
 	Msg700_Test_Start = 7700,
 	Msg701_TestCase001 = 7701,
 	Msg702_TestCase002 = 7702,
+	/// <summary>
+	/// ストリーミングテスト
+	/// </summary>
+	MSg710_StreamingTest = 7710,
 	/// <summary>
 	/// Abs()がこの値より大きいものはエラー
 	/// [Values where Abs() exceeds this value are errors]

@@ -99,7 +99,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg060_StreamingTest };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg710_StreamingTest };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "ストリーミングテスト";
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {

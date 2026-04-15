@@ -100,9 +100,15 @@ public partial class CoreService : ICoreService {
 			}
 			yield break;
 		}
-
+		// 	集計処理
+		else if (request.Flag is CvFlag.MSg050_Summary) {
+			await foreach (var msg in HandleConvertTestStreamAsync(ct, request.Flag)) {
+				yield return msg;
+			}
+			yield break;
+		}
 		// テストストリーミング処理（既存）
-		if (request.Flag is CvFlag.MSg060_StreamingTest) {
+		else if (request.Flag is CvFlag.MSg710_StreamingTest) {
 			// 追加：HandleConvertTestStreamAsync を呼ぶ
 			await foreach (var msg in HandleConvertTestStreamAsync(ct, request.Flag)) {
 				yield return msg;
@@ -136,6 +142,30 @@ public partial class CoreService : ICoreService {
 			};
 		}
 	}
+	/// <summary>
+	/// MSg050_Summaryのストリーミング処理ハンドラ
+	/// </summary>
+	private async IAsyncEnumerable<StreamMsg> HandleSummaryStreamAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvFlag flag) {
+		var summaryDb = new SummaryDb(_db);
+
+		// ストリーミングをメッセージに変換
+		// ConvertAllAsyncStream()が既にエラーハンドリングしているため、try-catchは不要
+		await foreach (var progress in summaryDb.SummaryAllAsyncStream().WithCancellation(ct)) {
+			yield return new StreamMsg {
+				Flag = flag,
+				Code = progress.IsError ? -1 : 0,
+				DataType = typeof(string),
+				DataMsg = progress.IsError
+					? $"エラー: {progress.StepName} - {progress.ErrorMessage} ----{DateTime.Now: MM/dd HH:mm:ss.fff}"
+					: $"{(progress.IsCompleted ? "完了" : "処理中")}: {progress.StepName} 件数={progress.Count} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+				Progress = progress.Progress,
+				IsCompleted = progress.IsCompleted,
+				IsError = progress.IsError
+			};
+		}
+	}
+
+	#region テストストリーミング処理
 	/// <summary>
 	/// ダミーのタスク(時間がかかる処理のシミュレート) — 非同期＆キャンセル対応
 	/// </summary>
@@ -195,4 +225,5 @@ public partial class CoreService : ICoreService {
 			IsCompleted = true
 		};
 	}
+	#endregion
 }
