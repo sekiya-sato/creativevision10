@@ -48,9 +48,12 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 
 	[RelayCommand]
 	async Task SearchPostalCode() => await PostalAddressSearchHelper.SearchAndApplyAsync(this, CurrentEdit.PostalCode ?? string.Empty, item => {
+		var currentAddress1 = CurrentEdit.Address1;
+		var currentAddress2 = CurrentEdit.Address2;
+		var currentAddress3 = CurrentEdit.Address3;
 		CurrentEdit.PostalCode = item.PostalCode;
 		CurrentEdit.Address1 = item.Address1;
 		CurrentEdit.Address2 = item.Address2;
-		CurrentEdit.Address3 = item.Address3;
+		CurrentEdit.Address3 = PostalAddressSearchHelper.MergeAddress3(currentAddress1, currentAddress2, currentAddress3, item);
 	});
 }

@@ -33,7 +33,6 @@ public partial class ConvertDb {
 
 		// ToDo: 最終的に実行させる処理を整理
 		var steps = new (string Name, Func<bool, int> Action)[] {
-			("CnvAfterMasterAddress", CnvAfterMasterAddress),
 			/*
 			("CnvMasterConfig", CnvMasterConfig),
 			("CnvMasterSys", CnvMasterSys),
@@ -45,6 +44,7 @@ public partial class ConvertDb {
 			("CnvMasterShiire", CnvMasterShiire),
 			("CnvMasterConfig", CnvMasterConfig),
 			("CnvAfterMaster", CnvAfterMaster),
+			("CnvAfterMasterAddress", CnvAfterMasterAddress),
 			("CnvTran00HonUri", CnvTran00HonUri),
 			("CnvTran01TenUri", CnvTran01TenUri),
 			("CnvTran03Shiire", CnvTran03Shiire),
@@ -694,6 +694,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 		cnt += ConvertItemAddress<MasterSysman>();
 		cnt += ConvertItemAddress<MasterTokui>();
 		cnt += ConvertItemAddress<MasterShiire>();
+		cnt += ConvertItemAddress<MasterEndCustomer>();
 		return cnt;
 	}
 	public int ConvertItemAddress<T>() where T : BaseDbHasAddress {
@@ -705,6 +706,9 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				foreach (var item in list) {
 					if (item == null) continue;
 					nowId = item.Id;
+					// 特殊ケースはスキップさせる(個人情報のため***化)
+					if (string.IsNullOrEmpty(item.Address1) || item.Address1.Contains("**"))
+						continue;
 					// 住所をまとめたものから、都道府県をAddress1 に、市区町村をAddress2に、残りをAddress3に分割して保存する
 					var all = $"{item.Address1?.Trim()}{item.Address2?.Trim()}{item.Address3?.Trim()}".Trim();
 					if (string.IsNullOrWhiteSpace(all))

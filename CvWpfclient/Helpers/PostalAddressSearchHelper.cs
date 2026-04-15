@@ -29,4 +29,28 @@ public static class PostalAddressSearchHelper {
 			MessageEx.ShowErrorDialog($"郵便番号検索に失敗しました: {ex.Message}", owner: owner);
 		}
 	}
+
+	public static string MergeAddress3(string? currentAddress1, string? currentAddress2, string? currentAddress3, PostalAddressItem item) {
+		var currentAddress12 = $"{currentAddress1 ?? string.Empty}{currentAddress2 ?? string.Empty}";
+		var currentAddress3Value = currentAddress3 ?? string.Empty;
+		var currentFullAddress = $"{currentAddress12}{currentAddress3Value}";
+		var itemAddress12 = $"{item.Address1}{item.Address2}";
+		var address3Modify = currentFullAddress.StartsWith(itemAddress12, StringComparison.Ordinal)
+			? currentFullAddress[itemAddress12.Length..]
+			: currentAddress3Value;
+
+		if (!string.IsNullOrEmpty(item.Address3) && address3Modify.Contains(item.Address3, StringComparison.Ordinal)) {
+			return currentAddress3Value;
+		}
+
+		if (string.IsNullOrWhiteSpace(address3Modify)) {
+			return item.Address3;
+		}
+
+		if (string.IsNullOrWhiteSpace(item.Address3)) {
+			return address3Modify;
+		}
+
+		return $"{item.Address3} {address3Modify}";
+	}
 }

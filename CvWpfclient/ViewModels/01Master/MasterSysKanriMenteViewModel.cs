@@ -41,9 +41,12 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 
 	[RelayCommand]
 	async Task SearchPostalCode() => await PostalAddressSearchHelper.SearchAndApplyAsync(this, Current.PostalCode ?? string.Empty, item => {
+		var currentAddress1 = Current.Address1;
+		var currentAddress2 = Current.Address2;
+		var currentAddress3 = Current.Address3;
 		Current.PostalCode = item.PostalCode;
 		Current.Address1 = item.Address1;
 		Current.Address2 = item.Address2;
-		Current.Address3 = item.Address3;
+		Current.Address3 = PostalAddressSearchHelper.MergeAddress3(currentAddress1, currentAddress2, currentAddress3, item);
 	});
 }
