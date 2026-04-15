@@ -627,6 +627,28 @@
 
 ---
 
+## [2026-04-15] 16:57 git履歴の統合
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：今日の変更履歴のうち `在庫更新処理の準備` から `集計処理を仮追加` までを 1 commit にまとめたい
+### 実施内容
+- `.sisyphus/rebase_master_20260415.txt`: 公開履歴書き換えの対象 commit と実施方針をメモとして記録
+- `.sisyphus/git_sequence_editor_20260415.py`: `01c9398` `d304750` `0eb9e15` を squash する interactive rebase 用スクリプトを作成
+- `.sisyphus/git_sequence_editor_reword_20260415.py`: 修正後の commit message を再調整するための rebase 用スクリプトを作成
+- `.sisyphus/git_reword_editor_20260415.py`: reword 実行時の commit message を自動設定するための editor スクリプトを作成
+- `git history`: `在庫更新処理の準備` と 2 件の `集計処理を仮追加` を 1 件の `在庫更新処理の準備と集計処理を仮追加` に統合し、後続の `NLOG系の設定を見直し` と `商品マスタメンテのタブ名称を変更` を維持したまま `origin/master` へ `--force-with-lease` で反映
+### 技術決定 Why
+- 公開済みの `master` 履歴を書き換える要件だったため、復旧可能性を残すために backup branch を先に作成し、そのうえで対象範囲だけを interactive rebase で最小限に組み替えた
+- 単純な `reset` では後続 commit の再適用管理が雑になりやすいため、対象 3 件のみを squash し、後続 2 件をそのまま積み直す手順を採用した
+### 確認
+- `git log --oneline --decorate --graph -n 6` で履歴を確認し、`f24d3f8 在庫更新処理の準備と集計処理を仮追加` の上に `9d8068e NLOG系の設定を見直し`、`f0b86b2 商品マスタメンテのタブ名称を変更` が並ぶことを確認
+- `git push --force-with-lease origin master` 実行済み
+
+---
+
 ## [2026-04-14] 17:56 サーバURL変更時のNLog Flush Timeout抑止
 ### Agent
 - gpt-5.4 : OpenAI
