@@ -582,7 +582,7 @@
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="CurrencyJpy" />
-								<TextBlock Text="原価リスト" />
+								<TextBlock Text="原価" />
 							</StackPanel>
 						</TabItem.Header>
 						<Grid>
@@ -651,7 +651,7 @@
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="Palette" />
-								<TextBlock Text="色サイズリスト" />
+								<TextBlock Text="色サイズ" />
 							</StackPanel>
 						</TabItem.Header>
 						<Grid>
@@ -816,7 +816,7 @@
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="CheckDecagram" />
-								<TextBlock Text="品質リスト" />
+								<TextBlock Text="品質" />
 							</StackPanel>
 						</TabItem.Header>
 						<Grid>
@@ -914,7 +914,7 @@
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="FormatListBulleted" />
-								<TextBlock Text="名称リスト" />
+								<TextBlock Text="名称" />
 							</StackPanel>
 						</TabItem.Header>
 						<Grid>
@@ -1023,7 +1023,7 @@
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="TextBoxMultiple" />
-								<TextBlock Text="詳細内容" />
+								<TextBlock Text="詳細" />
 							</StackPanel>
 						</TabItem.Header>
 						<Grid Margin="16">
