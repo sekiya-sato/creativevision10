@@ -11,8 +11,6 @@
 		<GradientStop Offset="0.45" Color="#F97316" />
 		<GradientStop Offset="1.0" Color="#FDBA74" />
 	</LinearGradientBrush>
-	<SolidColorBrush x:Key="MainMenuMenuBackgroundBrush"
-		Color="#EA580C" />
 	<SolidColorBrush x:Key="MainMenuDashboardCardBackgroundBrush"
 		Color="#1EFFF1E8" />
 	<SolidColorBrush x:Key="MainMenuDashboardCardBorderBrush"

@@ -173,7 +173,7 @@
 
 					<Border Grid.Column="0"
 						Padding="10,4,4,4"
-						Background="{DynamicResource MainMenuMenuBackgroundBrush}"
+						Background="{DynamicResource panelColor}"
 						CornerRadius="6">
 						<TreeView x:Name="MenuTree"
 							Background="Transparent" BorderThickness="0"
@@ -413,7 +413,7 @@
 									<Button Margin="10,0,10,0"
 										Background="{DynamicResource PrimaryButtonColor}"
 										Command="{Binding ToggleMainThemeCommand}"
-										Content="メインテーマ切替" Opacity="0.8"
+										Content="{Binding MainThemeButtonLabel}" Opacity="0.8"
 										Style="{StaticResource MainMenuActionButton}"
 										ToolTip="メインメニュー配色切替" />
 								</StackPanel>
