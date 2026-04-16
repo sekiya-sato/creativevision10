@@ -1,9 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvWpfclient.Helpers;
+using CvWpfclient.Models;
 using CvWpfclient.Services;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace CvWpfclient.ViewModels._00System;
 
@@ -84,8 +83,8 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private void LoadSettings() {
 		_currentSettings = _store.Load();
 		Url = AppGlobal.Url ?? string.Empty;
-		LoginId = AppGlobal.Config.GetSection("Parameters")?["LoginId"] ?? string.Empty;
-		LoginPassword = AppGlobal.Config.GetSection("Parameters")?["LoginPass"] ?? string.Empty;
+		LoginId = AppGlobal.Parameters.LoginId;
+		LoginPassword = AppGlobal.Parameters.LoginPass;
 		_originalUrl = Url;
 	}
 

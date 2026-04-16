@@ -1,7 +1,7 @@
 global using MsgBoxResult = System.Windows.MessageBoxResult;
-using CvAsset;
 using CvBase.Share;
 using CvWpfclient.Helpers;
+using CvWpfclient.Models;
 using Grpc.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +23,6 @@ public static class AppGlobal {
 	private static string? _loginJwt;
 	private static IServiceProvider? _serviceProvider;
 	private static readonly ConcurrentDictionary<Type, object> _grpcServiceCache = new();
-	private static InfoApiKey _infoApiKey = new();
 	/// <summary>
 	/// サーバーのURL
 	/// </summary>
@@ -38,19 +37,20 @@ public static class AppGlobal {
 			return (Guid)_clientId;
 		}
 	}
-	/// <summary>
-	/// app.config内容
-	/// </summary>
-	public static IConfigurationRoot Config => _config
-		?? throw new InvalidOperationException("AppGlobal has not been initialized. Call Init() at application startup.");
-	public static InfoApiKey InfoApiKey => _infoApiKey;
+	public static string FitPosition => _config?["Parameters:FitPosition"] ?? "Center";
+	public static string WeatherRegion => _config?["Parameters:WeatherRegion"] ?? "Tokyo";
+	public static ClientParameters Parameters => new ClientParameters {
+		LoginId = _config?["Parameters:LoginId"] ?? string.Empty,
+		LoginPass = _config?["Parameters:LoginPass"] ?? string.Empty,
+		LoginJwt = _config?["Parameters:LoginJwt"] ?? string.Empty
+	};
 	/// <summary>
 	/// ログイン認証後のJWT
 	/// [JWT after login authentication]
 	/// </summary>
 	public static string? LoginJwt {
-		get => _loginJwt;
-		set => _loginJwt = value;
+		get => _config?["Parameters:LoginJwt"] ?? string.Empty;
+		set => _config?["Parameters:LoginJwt"] = value;
 	}
 
 	public static Models.InfoUser StaticInfoUser = new();
@@ -75,26 +75,15 @@ public static class AppGlobal {
 		}
 	}
 
-	public static void SetLoginJwt(string? loginJwt, string? info = null) {
-		_loginJwt = loginJwt;
-		if (!string.IsNullOrWhiteSpace(info)) {
-			_infoApiKey = Common.DeserializeObject<InfoApiKey>(info) ?? new InfoApiKey();
-			_infoApiKey.Decrypt((src, key) => Common.DecryptString(src, key));
-		}
-	}
+	public static void SetLoginJwt(string? loginJwt) => _loginJwt = loginJwt;
 
-	public static void ClearLoginJwt() {
-		_loginJwt = string.Empty;
-		_infoApiKey = new InfoApiKey();
-	}
+	public static void ClearLoginJwt() => _loginJwt = string.Empty;
 	/// <summary>
 	/// メタデータを取得する
 	/// [Retrieve metadata]
 	/// </summary>
 	/// <returns></returns>
-	public static CallContext GetDefaultCallContext() {
-		return GetDefaultCallContext(CancellationToken.None);
-	}
+	public static CallContext GetDefaultCallContext() => GetDefaultCallContext(CancellationToken.None);
 	public static CallContext GetDefaultCallContext(CancellationToken cancellationToken) {
 		var callOptions = new CallOptions(headers: CreateDefaultMetadata(), cancellationToken: cancellationToken);
 		return new CallContext(

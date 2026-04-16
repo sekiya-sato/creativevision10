@@ -29,9 +29,9 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand]
 	private void Init() {
-		var parameters = AppGlobal.Config.GetSection("Parameters");
-		LoginId = parameters?.GetSection("LoginId")?.Value;
-		LoginPassword = parameters?.GetSection("LoginPass")?.Value;
+		var parameters = AppGlobal.Parameters;
+		LoginId = parameters.LoginId;
+		LoginPassword = parameters.LoginPass;
 		if (InitParam == 1) {
 			IsVisibleLoginTab = false;
 		}
@@ -57,7 +57,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			var reply = await loginService.LoginAsync(loginRequest, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
-					AppGlobal.SetLoginJwt(reply.JwtMessage, reply.InfoPayload);
+					AppGlobal.SetLoginJwt(reply.JwtMessage);
 					await App.RestartHostAsync(cancellationToken);
 					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, AppGlobal.LoginJwt);
 					LoginData = reply;
@@ -103,7 +103,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			reply = await loginService.LoginRefleshAsync(loginRefresh, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
-					AppGlobal.SetLoginJwt(reply.JwtMessage, reply.InfoPayload);
+					AppGlobal.SetLoginJwt(reply.JwtMessage);
 					await App.RestartHostAsync(cancellationToken);
 					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, AppGlobal.LoginJwt);
 					LoginData = reply;

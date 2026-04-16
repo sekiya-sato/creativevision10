@@ -169,7 +169,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				window.Height = startRect.Height;
 			}
 			else {
-				string fitPosition = AppGlobal.Config["Application:FitPosition"] ?? "";
+				string fitPosition = AppGlobal.FitPosition;
 				if (fitPosition.Contains("Left") && fitPosition.Contains("Top")) {
 					window.Left = 0;
 					window.Top = 0;
@@ -381,7 +381,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		try {
 			cancellationToken.ThrowIfCancellationRequested();
 			var weatherService = AppGlobal.GetGrpcService<IWeatherService>();
-			var reagion = AppGlobal.Config["Application:WeatherRegion"] ?? "Tokyo";
+			var reagion = AppGlobal.WeatherRegion;
 			var weather = await weatherService.GetCurrentWeatherAsync(reagion);
 			cancellationToken.ThrowIfCancellationRequested();
 			if (weather != null) {
