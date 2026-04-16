@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace CvWpfclient.ViewModels;
@@ -59,6 +60,8 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string? kyureki; // 旧暦表示用
 
 	private DispatcherTimer? _timer;
+	private string[] _forecastLabels = [];
+	private double[] _forecastTemperatures = [];
 
 	private DateTime checkDate = DateTime.MinValue;
 
@@ -77,6 +80,12 @@ public partial class MainMenuViewModel : ObservableObject {
 	InfoServer infolocalServer = new InfoServer();
 
 	public MainMenuViewModel() {
+		App.ThemeService.ThemeChanged += OnThemeChanged;
+		ApplyForecastTheme();
+	}
+
+	private void OnThemeChanged(object? sender, AppTheme theme) {
+		ApplyForecastTheme();
 	}
 
 	partial void OnInfolocalUserChanged(InfoUser value) {
@@ -326,6 +335,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	[RelayCommand]
 	private void ToggleTheme() {
 		App.ThemeService.ToggleTheme();
+		App.SaveThemePreference(App.ThemeService.CurrentTheme);
 	}
 
 	// ── 天気ダッシュボード ──────────────────────
@@ -398,31 +408,9 @@ public partial class MainMenuViewModel : ObservableObject {
 			var forecasts = await weatherService.GetHourlyForecastAsync(reagion);
 			cancellationToken.ThrowIfCancellationRequested();
 			if (forecasts.Count > 0) {
-				var values = forecasts.Select(f => new ObservablePoint(0, f.Temperature)).ToArray();
-				for (int i = 0; i < values.Length; i++) {
-					values[i] = new ObservablePoint(i, forecasts[i].Temperature);
-				}
-
-				ForecastSeries = [
-					new LineSeries<ObservablePoint> {
-							Values = values,
-							Fill = new SolidColorPaint(new SKColor(33, 150, 243, 80)),
-							Stroke = new SolidColorPaint(new SKColor(33, 150, 243)) { StrokeThickness = 2 },
-							GeometryFill = new SolidColorPaint(new SKColor(33, 150, 243)),
-							GeometryStroke = new SolidColorPaint(new SKColor(33, 150, 243)),
-							GeometrySize = 6,
-							LineSmoothness = 0.3
-						}
-				];
-				ForecastXAxes = [new Axis {
-						Labels = forecasts.Select(f => f.TimeLabel).ToArray(),
-						TextSize = 11,
-						LabelsRotation = 0
-					}];
-				ForecastYAxes = [new Axis {
-						Name = "", // ℃
-						TextSize = 11
-					}];
+				_forecastLabels = forecasts.Select(f => f.TimeLabel).ToArray();
+				_forecastTemperatures = forecasts.Select(f => f.Temperature).ToArray();
+				ApplyForecastTheme();
 			}
 		}
 		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
@@ -457,6 +445,75 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 		CurrentTime = now.ToString("ddd HH:mm:ss");
 	}
+
+	private void ApplyForecastTheme() {
+		var axisColor = ToSkColor(GetResourceColor("plainTextColor0", Colors.White));
+		ForecastXAxes = [new Axis {
+				Labels = _forecastLabels,
+				TextSize = 11,
+				LabelsRotation = 0,
+				LabelsPaint = new SolidColorPaint(axisColor)
+			}];
+		ForecastYAxes = [new Axis {
+				Name = string.Empty,
+				TextSize = 11,
+				LabelsPaint = new SolidColorPaint(axisColor)
+			}];
+
+		if (_forecastTemperatures.Length == 0) {
+			ForecastSeries = [];
+			return;
+		}
+
+		var lineColor = ToSkColor(GetResourceColor("MainMenuChartLineColor", Color.FromRgb(33, 150, 243)));
+		var fillColor = ToSkColor(GetResourceColor("MainMenuChartFillColor", Color.FromArgb(80, 33, 150, 243)));
+		var values = _forecastTemperatures
+			.Select((temperature, index) => new ObservablePoint(index, temperature))
+			.ToArray();
+
+		ForecastSeries = [
+			new LineSeries<ObservablePoint> {
+					Values = values,
+					Fill = new SolidColorPaint(fillColor),
+					Stroke = new SolidColorPaint(lineColor) { StrokeThickness = 2 },
+					GeometryFill = new SolidColorPaint(lineColor),
+					GeometryStroke = new SolidColorPaint(lineColor),
+					GeometrySize = 6,
+					LineSmoothness = 0.3
+				}
+		];
+	}
+
+	private static Color GetResourceColor(string key, Color fallback) {
+		var resource = FindResource(key);
+		return resource switch {
+			SolidColorBrush brush => brush.Color,
+			Color color => color,
+			_ => fallback,
+		};
+	}
+
+	private static object? FindResource(string key) {
+		var resources = Application.Current?.Resources;
+		if (resources == null) {
+			return null;
+		}
+
+		if (resources.Contains(key)) {
+			return resources[key];
+		}
+
+		for (int i = resources.MergedDictionaries.Count - 1; i >= 0; i--) {
+			var dictionary = resources.MergedDictionaries[i];
+			if (dictionary.Contains(key)) {
+				return dictionary[key];
+			}
+		}
+
+		return null;
+	}
+
+	private static SKColor ToSkColor(Color color) => new(color.R, color.G, color.B, color.A);
 	/// <summary>
 	/// 指定したMenuDataの親のHeaderを再帰的に探索して返す
 	/// </summary>

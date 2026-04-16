@@ -49,8 +49,31 @@ public partial class App : Application {
 		if (AppHost != null) {
 			await StartHostAsync(AppHost);
 		}
+		ApplySavedTheme();
 		base.OnStartup(e);
 		RunBackgroundTask(CheckForUpdatesOnStartupAsync, "起動時更新確認");
+	}
+
+	private static void ApplySavedTheme() {
+		var settings = new ClientSettingsStore().Load();
+		if (Enum.TryParse<AppTheme>(settings.Application.Theme, ignoreCase: true, out var theme)) {
+			ThemeService.ApplyTheme(theme);
+			return;
+		}
+
+		ThemeService.ApplyTheme(AppTheme.Light);
+	}
+
+	public static void SaveThemePreference(AppTheme theme) {
+		try {
+			var store = new ClientSettingsStore();
+			var settings = store.Load();
+			settings.Application.Theme = theme.ToString();
+			store.Save(settings);
+		}
+		catch (Exception ex) {
+			_bootstrapLogger.Warn(ex, "テーマ設定の保存に失敗しました。");
+		}
 	}
 
 	protected override async void OnExit(ExitEventArgs e) {

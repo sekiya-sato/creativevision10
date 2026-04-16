@@ -24,6 +24,7 @@ public sealed class ThemeService {
 	private readonly PaletteHelper _paletteHelper = new();
 
 	public AppTheme CurrentTheme { get; private set; } = AppTheme.Light;
+	public event EventHandler<AppTheme>? ThemeChanged;
 
 	public void ApplyTheme(AppTheme theme) {
 		var resources = Application.Current?.Resources
@@ -45,6 +46,7 @@ public sealed class ThemeService {
 		_paletteHelper.SetTheme(materialTheme);
 
 		CurrentTheme = theme;
+		ThemeChanged?.Invoke(this, theme);
 	}
 
 	public void ToggleTheme() {
