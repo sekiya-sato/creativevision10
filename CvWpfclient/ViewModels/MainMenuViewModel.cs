@@ -115,7 +115,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		InfolocalUser.DotnetVer = Environment.Version.ToString();
 		InfolocalUser.ComputerName = Environment.MachineName;
 		InfolocalUser.UserName = Environment.UserName;
-		InfolocalServer.Url = AppGlobal.Config["ConnectionStrings:Url"] ?? "";
+		InfolocalServer.Url = AppGlobal.Url;
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 		// Velopack のバージョンを表示する
 		SubTitle += $"  Client Ver {App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetCurrentVersion()}";
@@ -124,9 +124,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	void SetSubMessage() {
-		var renewstr = $"接続先: {AppGlobal.Config["ConnectionStrings:Url"]} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
+		var renewstr = $"接続先: {AppGlobal.Url} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 		StatusMessage = $"左側のメニューリストから選択し、ダブルクリックまたはEnterで実行してください。";
-		ServerStatus = $"接続先 {AppGlobal.Config.GetSection("ConnectionStrings")?["Url"]} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}\n{InfolocalServer.OsVersion ?? "OS-version"}\nDOTNET {InfolocalServer.DotNetVersion ?? "DOTNET-Version"}\nローカル名 {InfolocalServer.MachineName} {InfolocalServer.UserName}";
+		ServerStatus = $"接続先 {AppGlobal.Url} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}\n{InfolocalServer.OsVersion ?? "OS-version"}\nDOTNET {InfolocalServer.DotNetVersion ?? "DOTNET-Version"}\nローカル名 {InfolocalServer.MachineName} {InfolocalServer.UserName}";
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
 
@@ -279,7 +279,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			var serverVer = Common.DeserializeObject<InfoServer>(vm.LoginData?.InfoPayload ?? "");
 			if (serverVer != null && !string.IsNullOrEmpty(serverVer.Product)) {
 				InfolocalServer = serverVer;
-				InfolocalServer.Url = AppGlobal.Config.GetSection("ConnectionStrings")?["Url"] ?? "";
+				InfolocalServer.Url = AppGlobal.Url;
 			}
 			await RefreshWeatherServerAsync(App.GetHostLifetimeToken());
 		}

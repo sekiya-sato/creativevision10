@@ -54,8 +54,14 @@ public sealed class ClientSettingsStore {
 		if (!string.IsNullOrWhiteSpace(directory)) {
 			Directory.CreateDirectory(directory);
 		}
+		var jsonOptions = new JsonSerializerSettings() {
+			NullValueHandling = NullValueHandling.Ignore,
+			DefaultValueHandling = DefaultValueHandling.Ignore,
+			MissingMemberHandling = MissingMemberHandling.Ignore,
+			Formatting = Formatting.Indented,
+		};
 
-		var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
+		var json = JsonConvert.SerializeObject(settings, jsonOptions);
 		lock (_sync) {
 			File.WriteAllText(FilePath, json);
 		}
