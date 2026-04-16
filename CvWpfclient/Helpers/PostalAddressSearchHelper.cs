@@ -1,8 +1,18 @@
 using CodeShare;
+using CvWpfclient.ViewModels.Sub;
+using CvWpfclient.Views.Sub;
 
 namespace CvWpfclient.Helpers;
 
 public static class PostalAddressSearchHelper {
+	// 選択ウィンドウ表示用ラッパー（Code/Name/Ryaku をマッピング）
+	private sealed class PostalAddressDisplayItem(PostalAddressItem source) {
+		public PostalAddressItem Source => source;
+		public string Code => source.PostalCode;
+		public string Name => source.FullAddress;
+		public string Ryaku => source.Address3;
+	}
+
 	public static async Task SearchAndApplyAsync(object viewModel, string postalCode, Action<PostalAddressItem> applyAddress) {
 		var owner = ClientLib.GetActiveView(viewModel);
 		var postalAddressService = AppGlobal.GetGrpcService<IPostalAddressService>();
@@ -18,16 +28,35 @@ public static class PostalAddressSearchHelper {
 				return;
 			}
 
-			if (result.Items.Count != 1) {
-				MessageEx.ShowWarningDialog("該当住所が複数見つかりました。郵便番号を確認してください。", owner: owner);
+			if (result.Items.Count == 0) {
+				MessageEx.ShowWarningDialog("該当住所が見つかりませんでした。郵便番号を確認してください。", owner: owner);
 				return;
 			}
 
-			applyAddress(result.Items[0]);
+			PostalAddressItem selected;
+			if (result.Items.Count == 1) {
+				selected = result.Items[0];
+			}
+			else {
+				var item = ShowPostalAddressSelectDialog(result.Items, viewModel);
+				if (item == null) return;
+				selected = item;
+			}
+
+			applyAddress(selected);
 		}
 		catch (Exception ex) {
 			MessageEx.ShowErrorDialog($"郵便番号検索に失敗しました: {ex.Message}", owner: owner);
 		}
+	}
+
+	private static PostalAddressItem? ShowPostalAddressSelectDialog(IEnumerable<PostalAddressItem> items, object ownerViewModel) {
+		var selWin = new SelectWinView();
+		if (selWin.DataContext is not SelectWinViewModel vm) return null;
+		var displayItems = items.Select(x => (dynamic)new PostalAddressDisplayItem(x)).ToList();
+		vm.SetLocalData(displayItems, "住所選択");
+		if (ClientLib.ShowDialogView(selWin, ownerViewModel) != true) return null;
+		return (vm.Current as PostalAddressDisplayItem)?.Source;
 	}
 
 	public static string MergeAddress3(string? currentAddress1, string? currentAddress2, string? currentAddress3, PostalAddressItem item) {
