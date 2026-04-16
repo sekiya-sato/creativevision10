@@ -3,6 +3,14 @@
 	<Color x:Key="winBorderColor1">#6D2FFF</Color>
 	<Color x:Key="winBorderColor2">#FB539B</Color>
 	<Color x:Key="winBorderColor3">#836EFB</Color>
+	<Color x:Key="OuterWindowBackgroundStartColor">#40000000</Color>
+	<Color x:Key="OuterWindowBackgroundEndColor">#15000000</Color>
+	<Color x:Key="CvnetMainBackgroundStartColor">#FF003366</Color>
+	<Color x:Key="CvnetMainBackgroundMiddleColor">#2C62A0</Color>
+	<Color x:Key="CvnetMainBackgroundEndColor">#FF0074D9</Color>
+	<Color x:Key="MainMenuHeaderShadowColor">#55000000</Color>
+	<Color x:Key="MainMenuChartLineColor">#2196F3</Color>
+	<Color x:Key="MainMenuChartFillColor">#502196F3</Color>
 
 	<!--  Color Palette  -->
 	<SolidColorBrush x:Key="PalettePink1"
@@ -39,6 +47,8 @@
 		Color="White" />
 	<SolidColorBrush x:Key="plainTextColor0"
 		Color="White" />
+	<SolidColorBrush x:Key="MainMenuWindowButtonHoverForegroundBrush"
+		Color="#101010" />
 
 	<!--  Panel Colors  -->
 	<SolidColorBrush x:Key="panelColor"
@@ -47,6 +57,34 @@
 		Color="#7E82FC" />
 	<SolidColorBrush x:Key="panelActiveColor"
 		Color="#6D2FFF" />
+	<SolidColorBrush x:Key="MainMenuDashboardCardBackgroundBrush"
+		Color="#1AFFFFFF" />
+	<SolidColorBrush x:Key="MainMenuDashboardCardBorderBrush"
+		Color="#30FFFFFF" />
+	<SolidColorBrush x:Key="MainMenuWindowButtonHoverBackgroundBrush"
+		Color="#FFE0FFFF" />
+	<SolidColorBrush x:Key="MinimizeWindowButtonBackgroundBrush"
+		Color="#28AEED" />
+	<SolidColorBrush x:Key="MenuonlyWindowButtonBackgroundBrush"
+		Color="#22DD22" />
+	<SolidColorBrush x:Key="CloseWindowButtonBackgroundBrush"
+		Color="#DA34AE" />
+	<SolidColorBrush x:Key="StatusChipBorderBrush"
+		Color="#40FFFFFF" />
+	<SolidColorBrush x:Key="MainMenuTreeItemSelectedBackgroundBrush"
+		Color="#33FFFFFF" />
+	<SolidColorBrush x:Key="MainMenuActionButtonBorderBrush"
+		Color="#60FFFFFF" />
+	<SolidColorBrush x:Key="MainMenuActionButtonHoverBackgroundBrush"
+		Color="#40FFFFFF" />
+	<SolidColorBrush x:Key="MainMenuActionButtonPressedBackgroundBrush"
+		Color="#60FFFFFF" />
+	<SolidColorBrush x:Key="MainMenuThemeTogglePreviewBrush"
+		Color="#171717" />
+	<SolidColorBrush x:Key="MainMenuChartBackgroundBrush"
+		Color="#F1F4F8" />
+	<SolidColorBrush x:Key="MainMenuWeatherIconBrush"
+		Color="#4ADAEC" />
 
 	<!--  Common Background  -->
 	<SolidColorBrush x:Key="AppCommonBackgroundBrush"

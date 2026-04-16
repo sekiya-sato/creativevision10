@@ -68,7 +68,7 @@
 							Text="{Binding HeaderTitle}">
 							<TextBlock.Effect>
 								<DropShadowEffect BlurRadius="4" Direction="315" Opacity="1" ShadowDepth="3"
-									Color="Black" />
+									Color="{DynamicResource MainMenuHeaderShadowColor}" />
 							</TextBlock.Effect>
 						</TextBlock>
 						<TextBlock Padding="25,0,0,0"
@@ -100,7 +100,7 @@
 										<Button.Content>
 											<Grid>
 												<Ellipse Width="20" Height="20"
-													Fill="Black" />
+													Fill="{DynamicResource MainMenuThemeTogglePreviewBrush}" />
 												<Path Width="14" Height="14"
 													HorizontalAlignment="Center" VerticalAlignment="Center"
 													Data="M12,2L14,5H10L12,2M12,22L10,19H14L12,22M22,12L19,10V14L22,12M2,12L5,14V10L2,12M19.07,4.93L17,7.07L16.31,6.38L18.38,4.31L19.07,4.93M4.93,19.07L7.07,17L7.76,17.69L5.69,19.76L4.93,19.07M19.07,19.07L17,16.93L16.31,17.62L18.38,19.69L19.07,19.07M4.93,4.93L7.07,7.07L7.76,6.38L5.69,4.31L4.93,4.93M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"
@@ -319,7 +319,7 @@
 									<StackPanel Orientation="Horizontal">
 										<materialDesign:PackIcon Width="90" Height="90"
 											VerticalAlignment="Center"
-											Foreground="{DynamicResource color6}"
+											Foreground="{DynamicResource MainMenuWeatherIconBrush}"
 											Kind="{Binding WeatherIconKind}" />
 										<StackPanel Margin="4,0,4,0" VerticalAlignment="Center"
 											Opacity="0.8">
@@ -367,11 +367,11 @@
 										<!--  "℃" ラベル(ForecastYAxesを使うと横に寝てしまうため)  -->
 										<TextBlock Grid.Column="0"
 											Margin="0,0,4,0" HorizontalAlignment="Center" VerticalAlignment="Center"
-											FontSize="11" Text="℃" />
+											FontSize="11" Foreground="{DynamicResource plainTextColor0}" Text="℃" />
 										<!--  チャート  -->
 										<lvc:CartesianChart Grid.Column="1"
 											Height="120"
-											Background="LightGray" Opacity="0.9"
+											Background="{DynamicResource MainMenuChartBackgroundBrush}" Opacity="0.9"
 											Series="{Binding ForecastSeries}"
 											XAxes="{Binding ForecastXAxes}"
 											YAxes="{Binding ForecastYAxes}" />

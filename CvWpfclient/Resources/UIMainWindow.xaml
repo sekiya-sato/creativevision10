@@ -3,20 +3,20 @@
 		未使用
 	-->
 	<LinearGradientBrush x:Key="OuterWindowBackground" StartPoint="0,0" EndPoint="1,1">
-		<GradientStop Offset="0" Color="#40000000" />
-		<GradientStop Offset="1" Color="#15000000" />
+		<GradientStop Offset="0" Color="{DynamicResource OuterWindowBackgroundStartColor}" />
+		<GradientStop Offset="1" Color="{DynamicResource OuterWindowBackgroundEndColor}" />
 	</LinearGradientBrush>
 	<LinearGradientBrush x:Key="CvnetMainBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
-		<GradientStop Offset="0.0" Color="#FF003366" />
-		<GradientStop Offset="0.4" Color="#2C62A0" />
-		<GradientStop Offset="1.0" Color="#FF0074D9" />
+		<GradientStop Offset="0.0" Color="{DynamicResource CvnetMainBackgroundStartColor}" />
+		<GradientStop Offset="0.4" Color="{DynamicResource CvnetMainBackgroundMiddleColor}" />
+		<GradientStop Offset="1.0" Color="{DynamicResource CvnetMainBackgroundEndColor}" />
 	</LinearGradientBrush>
 	<Style x:Key="MainMenuDashboardCard"
 		TargetType="Border">
 		<Setter Property="Padding" Value="16" />
 		<Setter Property="CornerRadius" Value="14" />
-		<Setter Property="Background" Value="#1AFFFFFF" />
-		<Setter Property="BorderBrush" Value="#30FFFFFF" />
+		<Setter Property="Background" Value="{DynamicResource MainMenuDashboardCardBackgroundBrush}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource MainMenuDashboardCardBorderBrush}" />
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="Margin" Value="8" />
 	</Style>
@@ -34,7 +34,7 @@
 		<Setter Property="Height" Value="20" />
 		<Setter Property="Margin" Value="2" />
 		<Setter Property="BorderThickness" Value="0" />
-		<Setter Property="Foreground" Value="White" />
+		<Setter Property="Foreground" Value="{DynamicResource TitleColor}" />
 		<Setter Property="FontSize" Value="14" />
 		<Setter Property="Cursor" Value="Hand" />
 		<Setter Property="Template">
@@ -47,8 +47,8 @@
 					</Border>
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsMouseOver" Value="True">
-							<Setter TargetName="border" Property="Background" Value="#FFE0FFFF" />
-							<Setter Property="Foreground" Value="Black" />
+							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuWindowButtonHoverBackgroundBrush}" />
+							<Setter Property="Foreground" Value="{DynamicResource MainMenuWindowButtonHoverForegroundBrush}" />
 						</Trigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
@@ -60,27 +60,27 @@
 		BasedOn="{StaticResource MainMenuWindowButton}"
 		TargetType="Button">
 		<Setter Property="Content" Value="-" />
-		<Setter Property="Background" Value="#28AEED" />
+		<Setter Property="Background" Value="{DynamicResource MinimizeWindowButtonBackgroundBrush}" />
 	</Style>
 
 	<Style x:Key="MaximizeWinBtn"
 		BasedOn="{StaticResource MainMenuWindowButton}"
 		TargetType="Button">
 		<Setter Property="Content" Value="◻" />
-		<Setter Property="Background" Value="#22DD22" />
+		<Setter Property="Background" Value="{DynamicResource MenuonlyWindowButtonBackgroundBrush}" />
 	</Style>
 	<Style x:Key="MenuonlyWinBtn"
 		BasedOn="{StaticResource MainMenuWindowButton}"
 		TargetType="Button">
 		<Setter Property="Content" Value="△" />
-		<Setter Property="Background" Value="#22DD22" />
+		<Setter Property="Background" Value="{DynamicResource MenuonlyWindowButtonBackgroundBrush}" />
 	</Style>
 
 	<Style x:Key="CloseWinBtn"
 		BasedOn="{StaticResource MainMenuWindowButton}"
 		TargetType="Button">
 		<Setter Property="Content" Value="X" />
-		<Setter Property="Background" Value="#DA34AE" />
+		<Setter Property="Background" Value="{DynamicResource CloseWindowButtonBackgroundBrush}" />
 	</Style>
 
 	<!--  MainMenu chips  -->
@@ -89,7 +89,7 @@
 		<Setter Property="Padding" Value="6,4" />
 		<Setter Property="CornerRadius" Value="12" />
 		<Setter Property="Background" Value="Transparent" />
-		<Setter Property="BorderBrush" Value="#40FFFFFF" />
+		<Setter Property="BorderBrush" Value="{DynamicResource StatusChipBorderBrush}" />
 		<Setter Property="BorderThickness" Value="1" />
 	</Style>
 	<Style x:Key="MenuTreeView"
@@ -121,7 +121,7 @@
 					</StackPanel>
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsSelected" Value="True">
-							<Setter TargetName="border" Property="Background" Value="#33FFFFFF" />
+							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuTreeItemSelectedBackgroundBrush}" />
 						</Trigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
@@ -144,8 +144,8 @@
 		<Setter Property="Margin" Value="4,0" />
 		<Setter Property="Padding" Value="12,4" />
 		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="BorderBrush" Value="#60FFFFFF" />
-		<Setter Property="Foreground" Value="White" />
+		<Setter Property="BorderBrush" Value="{DynamicResource MainMenuActionButtonBorderBrush}" />
+		<Setter Property="Foreground" Value="{DynamicResource TitleColor}" />
 		<Setter Property="FontSize" Value="13" />
 		<Setter Property="FontWeight" Value="SemiBold" />
 		<Setter Property="Cursor" Value="Hand" />
@@ -162,10 +162,10 @@
 					</Border>
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsMouseOver" Value="True">
-							<Setter TargetName="border" Property="Background" Value="#40FFFFFF" />
+							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuActionButtonHoverBackgroundBrush}" />
 						</Trigger>
 						<Trigger Property="IsPressed" Value="True">
-							<Setter TargetName="border" Property="Background" Value="#60FFFFFF" />
+							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuActionButtonPressedBackgroundBrush}" />
 						</Trigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
