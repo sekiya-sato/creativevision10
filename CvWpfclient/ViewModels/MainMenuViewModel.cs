@@ -490,6 +490,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		ForecastYAxes = [new Axis {
 			TextSize = 10,
 			MinStep = 5,                              // ← 5刻みに
+			ForceStepToMin = true,                    // ← 自動調整ではなく5刻みを強制
 			MinLimit = Math.Floor(minTemp / 5) * 5,  // ← 下限を5の倍数に揃える
 			MaxLimit = Math.Ceiling(maxTemp / 5) * 5, // ← 上限を5の倍数に揃える
 		}];

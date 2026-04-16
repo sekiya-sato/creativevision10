@@ -15,6 +15,22 @@
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
 
 ---
+## [2026-04-17] 00:08 MainMenuの気温チャート縦軸目盛り表示修正
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuViewModel.cs の縦軸設定が効いていないように見えるため、気温チャートの縦軸表示を 5,10,15,20 のような 5 刻みにしたい
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 気温チャートの `ForecastYAxes` に `ForceStepToMin = true` を追加し、`MinStep = 5` を自動調整ではなく固定の 5 刻みとして扱うよう修正
+### 技術決定 Why
+- LiveChartsCore の `MinStep` は最小間隔の指定だけでは自動目盛り計算に吸収されるため、5 刻み表示を確実に反映するには `ForceStepToMin = true` を併用する必要があるため
+### 確認
+- `lsp_diagnostics` で `CvWpfclient/ViewModels/MainMenuViewModel.cs` にエラーがないことを確認。
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
+
+---
 ## [2026-04-16] 12:00 専用の郵便番号検索結果選択ダイアログの実装
 ### Agent
 - gemini-3.1-pro-preview : github-copilot
