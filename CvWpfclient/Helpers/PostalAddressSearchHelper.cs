@@ -5,13 +5,6 @@ using CvWpfclient.Views.Sub;
 namespace CvWpfclient.Helpers;
 
 public static class PostalAddressSearchHelper {
-	// 選択ウィンドウ表示用ラッパー（Code/Name/Ryaku をマッピング）
-	private sealed class PostalAddressDisplayItem(PostalAddressItem source) {
-		public PostalAddressItem Source => source;
-		public string Code => source.PostalCode;
-		public string Name => source.FullAddress;
-		public string Ryaku => source.Address3;
-	}
 
 	public static async Task SearchAndApplyAsync(object viewModel, string postalCode, Action<PostalAddressItem> applyAddress) {
 		var owner = ClientLib.GetActiveView(viewModel);
@@ -51,12 +44,11 @@ public static class PostalAddressSearchHelper {
 	}
 
 	private static PostalAddressItem? ShowPostalAddressSelectDialog(IEnumerable<PostalAddressItem> items, object ownerViewModel) {
-		var selWin = new SelectWinView();
-		if (selWin.DataContext is not SelectWinViewModel vm) return null;
-		var displayItems = items.Select(x => (dynamic)new PostalAddressDisplayItem(x)).ToList();
-		vm.SetLocalData(displayItems, "住所選択");
+		var selWin = new SelectPostalAddressView();
+		if (selWin.DataContext is not SelectPostalAddressViewModel vm) return null;
+		vm.SetLocalData(items, "住所選択");
 		if (ClientLib.ShowDialogView(selWin, ownerViewModel) != true) return null;
-		return (vm.Current as PostalAddressDisplayItem)?.Source;
+		return vm.Current;
 	}
 
 	public static string MergeAddress3(string? currentAddress1, string? currentAddress2, string? currentAddress3, PostalAddressItem item) {
