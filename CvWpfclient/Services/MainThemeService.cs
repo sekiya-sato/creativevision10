@@ -19,7 +19,7 @@ public sealed class MainThemeService {
 	private static readonly MainTheme[] ToggleOrder = [MainTheme.Default, MainTheme.Green, MainTheme.Orange, MainTheme.Red, MainTheme.Purple];
 
 	public MainTheme CurrentTheme { get; private set; } = MainTheme.Default;
-    public event EventHandler<MainTheme>? MainThemeChanged;
+	public event EventHandler<MainTheme>? MainThemeChanged;
 
 	public void ApplyMainTheme(MainTheme theme) {
 		var resources = Application.Current?.Resources

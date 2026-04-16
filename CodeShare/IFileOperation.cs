@@ -1,4 +1,4 @@
-﻿using ProtoBuf.Grpc;
+using ProtoBuf.Grpc;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 

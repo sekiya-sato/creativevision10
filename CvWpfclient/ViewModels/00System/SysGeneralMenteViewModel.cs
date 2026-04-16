@@ -4,8 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
-using NPoco;
 using Newtonsoft.Json;
+using NPoco;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -275,7 +275,8 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 			if (parts.Length > 1 && int.TryParse(parts[1].Trim(), out var mc) && mc > 0) {
 				maxCount = mc;
 			}
-		} else {
+		}
+		else {
 			tableName = raw;
 		}
 

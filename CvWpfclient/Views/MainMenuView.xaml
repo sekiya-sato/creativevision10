@@ -398,25 +398,26 @@
 											Content="環境設定 (F10)" Opacity="0.8"
 											Style="{StaticResource MainMenuActionButton}"
 											ToolTip="環境設定" />
-									<Button Margin="10,0,10,0"
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding ShowRefreshCommand}"
-										Content="リフレッシュトークン (F11)" Opacity="0.8"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="トークンリフレッシュ" />
-									<Button Margin="10,0,10,0"
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding ShowLoginCommand}"
-										Content="ログイン (F12)" Opacity="0.8"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="ログイン画面" />
-									<Button Margin="10,0,10,0"
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding ToggleMainThemeCommand}"
-										Content="{Binding MainThemeButtonLabel}" Opacity="0.8"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="メインメニュー配色切替" />
-								</StackPanel>
+										<Button Margin="10,0,10,0"
+											Background="{DynamicResource PrimaryButtonColor}"
+											Command="{Binding ShowRefreshCommand}"
+											Content="リフレッシュトークン (F11)" Opacity="0.8"
+											Style="{StaticResource MainMenuActionButton}"
+											ToolTip="トークンリフレッシュ" />
+										<Button Margin="10,0,10,0"
+											Background="{DynamicResource PrimaryButtonColor}"
+											Command="{Binding ShowLoginCommand}"
+											Content="ログイン (F12)" Opacity="0.8"
+											Style="{StaticResource MainMenuActionButton}"
+											ToolTip="ログイン画面" />
+										<Button Margin="10,0,10,0"
+											Background="{DynamicResource PrimaryButtonColor}"
+											Command="{Binding ToggleMainThemeCommand}"
+											Content="{Binding MainThemeButtonLabel}"
+											Opacity="0.8"
+											Style="{StaticResource MainMenuActionButton}"
+											ToolTip="メインメニュー配色切替" />
+									</StackPanel>
 									<TextBlock FontSize="16"
 										Foreground="{DynamicResource plainTextColor0}"
 										Opacity="0.7"

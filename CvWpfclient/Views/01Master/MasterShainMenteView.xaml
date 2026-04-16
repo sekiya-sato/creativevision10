@@ -263,7 +263,7 @@
 									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="1"
+								<TextBlock Grid.Row="1"
 									Style="{StaticResource FormLabel}"
 									Text="コード" />
 								<TextBox Grid.Row="1" Grid.Column="1"

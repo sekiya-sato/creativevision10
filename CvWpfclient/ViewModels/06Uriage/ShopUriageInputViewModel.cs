@@ -93,7 +93,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
 			m.Kingaku = m.Su * m.Tanka;
 			UpdateTotals();
-		} else if (e.PropertyName is nameof(Tran99Meisai.Kingaku)) {
+		}
+		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku)) {
 			UpdateTotals();
 		}
 	}

@@ -1,4 +1,4 @@
-﻿[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
+[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
 /*
  MSTestSettings.cs はアセンブリ単位で Parallelize(Scope = ExecutionScope.MethodLevel) 属性を付与し、
 MSTest ランナーがテスト メソッドを並列実行できるようにするためのフラグです。

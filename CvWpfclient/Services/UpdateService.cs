@@ -63,8 +63,8 @@ public class UpdateService : IUpdateService {
 				feedUrl);
 		}
 		catch (Exception ex) {
-		_logger.LogError(ex, "更新チェック中にエラーが発生しました。");
-		_pendingUpdate = null;
+			_logger.LogError(ex, "更新チェック中にエラーが発生しました。");
+			_pendingUpdate = null;
 			return new UpdateCheckResult(false,
 				$"更新チェックに失敗しました: {ex.Message}",
 				currentVersion,

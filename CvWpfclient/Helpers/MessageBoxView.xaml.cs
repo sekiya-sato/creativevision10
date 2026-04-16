@@ -149,7 +149,7 @@ public partial class MessageBoxView : Window {
 		//RichTextBox
 		FlowDocument document = MessageRichTextBox.Document;
 		document.PagePadding = new Thickness(0); //Paragraph spacing
-		TextRange range = new TextRange(document.ContentStart, document.ContentEnd);
+		var range = new TextRange(document.ContentStart, document.ContentEnd);
 		range.Text = Message;
 		//
 		SetupIconVisibility();
