@@ -81,11 +81,17 @@ public partial class MainMenuViewModel : ObservableObject {
 
 	public MainMenuViewModel() {
 		App.ThemeService.ThemeChanged += OnThemeChanged;
+		App.MainThemeService.MainThemeChanged += OnMainThemeChanged;
 		ApplyForecastTheme();
+		UpdateMainThemeButtonLabel(App.MainThemeService.CurrentTheme);
 	}
 
 	private void OnThemeChanged(object? sender, AppTheme theme) {
 		ApplyForecastTheme();
+	}
+
+	private void OnMainThemeChanged(object? sender, MainTheme theme) {
+		UpdateMainThemeButtonLabel(theme);
 	}
 
 	partial void OnInfolocalUserChanged(InfoUser value) {
@@ -342,6 +348,13 @@ public partial class MainMenuViewModel : ObservableObject {
 	private void ToggleMainTheme() {
 		App.MainThemeService.ToggleMainTheme();
 		App.SaveMainThemePreference(App.MainThemeService.CurrentTheme);
+	}
+
+	[ObservableProperty]
+	private string mainThemeButtonLabel = "メインテーマ切替 (Default)";
+
+	private void UpdateMainThemeButtonLabel(MainTheme theme) {
+		MainThemeButtonLabel = $"メインテーマ切替 ({theme})";
 	}
 
 	// ── 天気ダッシュボード ──────────────────────
