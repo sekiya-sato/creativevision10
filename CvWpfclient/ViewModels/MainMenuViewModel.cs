@@ -466,18 +466,12 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	private void ApplyForecastTheme() {
-		var axisColor = ToSkColor(GetResourceColor("plainTextColor0", Colors.White));
 		ForecastXAxes = [new Axis {
 				Labels = _forecastLabels,
-				TextSize = 11,
+				TextSize = 10,
 				LabelsRotation = 0,
-				LabelsPaint = new SolidColorPaint(axisColor)
 			}];
-		ForecastYAxes = [new Axis {
-				Name = string.Empty,
-				TextSize = 11,
-				LabelsPaint = new SolidColorPaint(axisColor)
-			}];
+		// ForecastYAxes = [new Axis { Name = "℃", TextSize = 10,	}];
 
 		if (_forecastTemperatures.Length == 0) {
 			ForecastSeries = [];
@@ -490,6 +484,15 @@ public partial class MainMenuViewModel : ObservableObject {
 			.Select((temperature, index) => new ObservablePoint(index, temperature))
 			.ToArray();
 
+		// 縦軸: 5℃刻み、最小・最大をデータに合わせて少しパディング
+		var minTemp = _forecastTemperatures.Min();
+		var maxTemp = _forecastTemperatures.Max();
+		ForecastYAxes = [new Axis {
+			TextSize = 10,
+			MinStep = 5,                              // ← 5刻みに
+			MinLimit = Math.Floor(minTemp / 5) * 5,  // ← 下限を5の倍数に揃える
+			MaxLimit = Math.Ceiling(maxTemp / 5) * 5, // ← 上限を5の倍数に揃える
+		}];
 		ForecastSeries = [
 			new LineSeries<ObservablePoint> {
 					Values = values,
