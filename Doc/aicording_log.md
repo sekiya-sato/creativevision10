@@ -32,6 +32,31 @@
 
 ---
 
+## [2026-04-16] 18:46 MainTheme表示名追加と左メニュー背景の対象外化
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：メインテーマ切替ボタンを `メインテーマ切替 (Green)` のように現在値付き表示へ変更し、MainTheme 切替対象からメニューリスト背景を除外する
+### 実施内容
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `MainThemeButtonLabel` を追加し、起動時の `CurrentTheme` と `MainThemeChanged` の両方からボタン表示名を更新するようにした。
+- `CvWpfclient/Views/MainMenuView.xaml`: メインテーマ切替ボタンの `Content` を `MainThemeButtonLabel` バインドへ変更し、左メニュー背景を `MainMenuMenuBackgroundBrush` から `panelColor` へ戻した。
+- `CvWpfclient/Resources/UIMainTheme.Green.xaml`: 左メニュー背景用 `MainMenuMenuBackgroundBrush` 上書きを削除した。
+- `CvWpfclient/Resources/UIMainTheme.Orange.xaml`: 左メニュー背景用 `MainMenuMenuBackgroundBrush` 上書きを削除した。
+- `CvWpfclient/Resources/UIMainTheme.Red.xaml`: 左メニュー背景用 `MainMenuMenuBackgroundBrush` 上書きを削除した。
+- `CvWpfclient/Resources/UIMainTheme.Purple.xaml`: 左メニュー背景用 `MainMenuMenuBackgroundBrush` 上書きを削除した。
+### 技術決定 Why
+- `MainThemeService` は `INotifyPropertyChanged` ではないため、ボタン表示は ViewModel 側プロパティで持ち、サービスイベント購読で更新する形にした。
+- 起動時は `App.ApplySavedThemes()` が先に MainTheme を適用するため、イベント購読だけでなく `CurrentTheme` からの初期同期も入れて初回表示のズレを防いだ。
+- 左メニュー背景は MainTheme とは切り離し、既存の `panelColor` を使うことで Light/Dark には追従しつつ MainTheme では変化しない構成に戻した。
+### 確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` → ビルド成功（0警告、0エラー）
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
+- Oracle レビューで、ラベルは ViewModel プロパティ + `MainThemeChanged` 購読 + 初期値同期が妥当であり、`UIMainTheme.*` から左メニュー背景キーを外す方針に問題がないことを確認した
+
+---
+
 ## [2026-04-16] 18:32 MainTheme配色をOrange/Red/Purpleへ拡張
 ### Agent
 - gpt-5.4 : OpenAI
