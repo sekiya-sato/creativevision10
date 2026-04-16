@@ -32,6 +32,32 @@
 
 ---
 
+## [2026-04-16] 16:57 MainMenuView配色整理とテーマ切替反映改善
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuView で使っている色を整理し、切替えて使えるようにする
+### 実施内容
+- `CvWpfclient/Resources/UIColors.xaml`: MainMenu 用の背景・カード・ウィンドウボタン・影・天気アイコン・チャート関連の色キーを追加し、ライトテーマ側の色定義を集約した。
+- `CvWpfclient/Resources/UIColors.Dark.xaml`: 追加した MainMenu 用色キーのダークテーマ値を定義した。
+- `CvWpfclient/Resources/UIMainWindow.xaml`: MainMenu 系スタイル内のハードコード色を DynamicResource 参照へ置き換え、テーマ切替時に追従するよう変更した。
+- `CvWpfclient/Views/MainMenuView.xaml`: ヘッダー影、テーマ切替ボタン、天気アイコン、チャート背景、温度ラベルを共通リソース参照へ置き換えた。
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 天気チャートの線色・塗り色・軸文字色をテーマリソースから再生成する処理を追加し、テーマ切替時にチャート見た目も更新されるようにした。テーマ切替後に設定保存も行うよう変更した。
+- `CvWpfclient/Services/ThemeService.cs`: テーマ変更通知イベントを追加した。
+- `CvWpfclient/Models/ClientSettingsDocument.cs`: クライアント設定へテーマ保存項目を追加した。
+- `CvWpfclient/App.xaml.cs`: 起動時に保存済みテーマを適用し、テーマ設定を clientsettings.json へ保存する処理を追加した。
+### 技術決定 Why
+- MainMenuView 自体には既にテーマ切替コマンドと ThemeService が存在していたため、新しい切替機構は増やさず、色の分散とハードコードを UIColors / UIColors.Dark に寄せる最小差分を優先した。
+- LiveCharts の描画色は XAML DynamicResource だけでは追従しないため、テーマ変更通知を起点に Series / Axis を再生成する方式で Light/Dark の反映漏れを防いだ。
+- ユーザーが再起動後も同じ見た目を使えるよう、既存の ClientSettingsStore に Theme を保存する形で永続化した。
+### 確認
+- MainMenu 関連 XAML を `check-xaml` 相当で確認し、構文エラー・未定義リソースなしを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
+
+---
+
 ## [2026-04-11] 21:52 MessageBoxExのメッセージをコピー可能に修正
 ### Agent
 - gpt-5.4 : OpenAI
