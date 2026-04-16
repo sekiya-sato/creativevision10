@@ -1,0 +1,20 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<LinearGradientBrush x:Key="OuterWindowBackground"
+		StartPoint="0,0" EndPoint="1,1">
+		<GradientStop Offset="0" Color="#403B0764" />
+		<GradientStop Offset="1" Color="#15240A42" />
+	</LinearGradientBrush>
+	<LinearGradientBrush x:Key="CvnetMainBackgroundBrush"
+		StartPoint="0,0" EndPoint="1,1">
+		<GradientStop Offset="0.0" Color="#FF581C87" />
+		<GradientStop Offset="0.45" Color="#9333EA" />
+		<GradientStop Offset="1.0" Color="#C084FC" />
+	</LinearGradientBrush>
+	<SolidColorBrush x:Key="MainMenuMenuBackgroundBrush"
+		Color="#7E22CE" />
+	<SolidColorBrush x:Key="MainMenuDashboardCardBackgroundBrush"
+		Color="#1EF5E8FF" />
+	<SolidColorBrush x:Key="MainMenuDashboardCardBorderBrush"
+		Color="#55C084FC" />
+</ResourceDictionary>

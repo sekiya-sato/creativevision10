@@ -32,6 +32,30 @@
 
 ---
 
+## [2026-04-16] 18:32 MainTheme配色をOrange/Red/Purpleへ拡張
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainTheme に Orange / Red / Purple を追加し、Toggle で順番に切り替わるようにする。あわせて `MainMenuViewModel.cs` の using は削除しない
+### 実施内容
+- `CvWpfclient/Services/MainThemeService.cs`: `MainTheme` 列挙へ `Orange` / `Red` / `Purple` を追加し、`ToggleMainTheme()` が `Default → Green → Orange → Red → Purple → Default` の順で巡回するよう変更した。
+- `CvWpfclient/Resources/UIMainTheme.Orange.xaml`: オレンジ基調のグラデーション背景・メニュー背景・カード背景/枠線を上書きする辞書を追加した。
+- `CvWpfclient/Resources/UIMainTheme.Red.xaml`: 赤基調のグラデーション背景・メニュー背景・カード背景/枠線を上書きする辞書を追加した。
+- `CvWpfclient/Resources/UIMainTheme.Purple.xaml`: 紫基調のグラデーション背景・メニュー背景・カード背景/枠線を上書きする辞書を追加した。
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `using` を含め既存構成はそのままとし、追加修正は行っていないことを確認した。
+### 技術決定 Why
+- 既存の保存形式は enum 名文字列なので、`Default` / `Green` を残したまま新色を追加する形にして、既存設定との互換性を壊さないようにした。
+- 切替ボタンの操作感を単純化するため、2状態トグルではなく固定順巡回に変更し、ユーザーが連打で全配色を確認できるようにした。
+- MainTheme 辞書は引き続き MainMenu 背景系だけを上書きし、Light/Dark と独立したアクセント配色として扱う方針を維持した。
+### 確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` → ビルド成功（0警告、0エラー）
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
+- Oracle レビューで enum 拡張・保存互換・辞書優先順位にブロッカーがないことを確認し、MainTheme が Light/Dark より優先して見た目を上書きする現行設計で問題ないと判断した
+
+---
+
 ## [2026-04-16] 18:09 MainMenuViewへMainTheme切替を追加
 ### Agent
 - gpt-5.4 : OpenAI
