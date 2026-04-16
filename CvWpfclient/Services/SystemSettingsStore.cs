@@ -78,12 +78,9 @@ public sealed class ClientSettingsStore {
 		AddIfNotWhiteSpace(overrides, "Parameters:LoginId", settings.Parameters.LoginId);
 		AddIfNotWhiteSpace(overrides, "Parameters:LoginPass", settings.Parameters.LoginPass);
 		AddIfNotWhiteSpace(overrides, "Parameters:LoginJwt", settings.Parameters.LoginJwt);
-		AddIfNotWhiteSpace(overrides, "Application:OpenWeatherApiKey", settings.Application.OpenWeatherApiKey);
 		AddIfNotWhiteSpace(overrides, "Application:WeatherRegion", settings.Application.WeatherRegion);
 		AddIfNotWhiteSpace(overrides, "Application:FitPosition", settings.Application.FitPosition);
 		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);
-		AddIfNotWhiteSpace(overrides, "JapanPostBiz:ClientId", settings.JapanPostBiz.ClientId);
-		AddIfNotWhiteSpace(overrides, "JapanPostBiz:SecretKey", settings.JapanPostBiz.SecretKey);
 		return overrides;
 	}
 	static void AddIfNotWhiteSpace(IDictionary<string, string?> map, string key, string? value) {

@@ -37,8 +37,8 @@ public static class AppGlobal {
 			return (Guid)_clientId;
 		}
 	}
-	public static string FitPosition => _config?["Parameters:FitPosition"] ?? "Center";
-	public static string WeatherRegion => _config?["Parameters:WeatherRegion"] ?? "Tokyo";
+	public static string FitPosition => _config?["Application:FitPosition"] ?? "Center";
+	public static string WeatherRegion => _config?["Application:WeatherRegion"] ?? "Tokyo";
 	public static ClientParameters Parameters => new ClientParameters {
 		LoginId = _config?["Parameters:LoginId"] ?? string.Empty,
 		LoginPass = _config?["Parameters:LoginPass"] ?? string.Empty,

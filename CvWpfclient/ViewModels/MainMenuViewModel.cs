@@ -341,13 +341,13 @@ public partial class MainMenuViewModel : ObservableObject {
 	[RelayCommand]
 	private void ToggleTheme() {
 		App.ThemeService.ToggleTheme();
-		App.SaveThemePreference(App.ThemeService.CurrentTheme);
+		//App.SaveThemePreference(App.ThemeService.CurrentTheme);
 	}
 
 	[RelayCommand]
 	private void ToggleMainTheme() {
 		App.MainThemeService.ToggleMainTheme();
-		App.SaveMainThemePreference(App.MainThemeService.CurrentTheme);
+		//App.SaveMainThemePreference(App.MainThemeService.CurrentTheme);
 	}
 
 	[ObservableProperty]

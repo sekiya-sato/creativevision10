@@ -4,7 +4,6 @@ public sealed class ClientSettingsDocument {
 	public ClientConnectionString ConnectionStrings { get; set; } = new();
 	public ClientParameters Parameters { get; set; } = new();
 	public ClientApplication Application { get; set; } = new();
-	public ClientJapanPos JapanPostBiz { get; set; } = new();
 }
 
 public sealed class ClientConnectionString {
@@ -24,14 +23,8 @@ public sealed class ClientParameters {
 
 }
 public sealed class ClientApplication {
-	public string OpenWeatherApiKey { get; set; } = string.Empty;
 	public string WeatherRegion { get; set; } = string.Empty;
 	public string FitPosition { get; set; } = string.Empty;
 	public string Theme { get; set; } = string.Empty;
 	public string MainTheme { get; set; } = string.Empty;
-}
-
-public sealed class ClientJapanPos {
-	public string ClientId { get; set; } = string.Empty;
-	public string SecretKey { get; set; } = string.Empty;
 }

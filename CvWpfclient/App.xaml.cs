@@ -11,8 +11,6 @@ using NLog.Extensions.Logging;
 using ProtoBuf.Grpc.ClientFactory;
 using System.IO;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
@@ -72,6 +70,7 @@ public partial class App : Application {
 		MainThemeService.ApplyMainTheme(MainTheme.Default);
 	}
 
+	[Obsolete("設定の保存方法は後で検討")]
 	public static void SaveThemePreference(AppTheme theme) {
 		try {
 			var store = new ClientSettingsStore();
@@ -84,6 +83,7 @@ public partial class App : Application {
 		}
 	}
 
+	[Obsolete("設定の保存方法は後で検討")]
 	public static void SaveMainThemePreference(MainTheme theme) {
 		try {
 			var store = new ClientSettingsStore();
