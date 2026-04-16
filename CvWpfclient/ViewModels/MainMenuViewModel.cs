@@ -338,6 +338,12 @@ public partial class MainMenuViewModel : ObservableObject {
 		App.SaveThemePreference(App.ThemeService.CurrentTheme);
 	}
 
+	[RelayCommand]
+	private void ToggleMainTheme() {
+		App.MainThemeService.ToggleMainTheme();
+		App.SaveMainThemePreference(App.MainThemeService.CurrentTheme);
+	}
+
 	// ── 天気ダッシュボード ──────────────────────
 
 	[ObservableProperty]

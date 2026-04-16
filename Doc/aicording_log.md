@@ -32,6 +32,35 @@
 
 ---
 
+## [2026-04-16] 18:09 MainMenuViewへMainTheme切替を追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuView のグラデーション背景・メニュー背景・カード型背景だけを切り替える MainTheme を追加し、"ログイン(F12)" の隣に "メインテーマ切替" ボタンを追加する
+### 実施内容
+- `CvWpfclient/Services/MainThemeService.cs`: MainTheme 切替専用サービスを新設し、`UIMainTheme.Default.xaml` / `UIMainTheme.Green.xaml` の差し替えと現在値管理を追加した。
+- `CvWpfclient/App.xaml.cs`: 起動時に保存済み MainTheme を既存 Theme 適用後に読み込む処理と、MainTheme 保存処理を追加した。
+- `CvWpfclient/Models/ClientSettingsDocument.cs`: `Application.MainTheme` を追加し、MainTheme の永続化先を追加した。
+- `CvWpfclient/Services/SystemSettingsStore.cs`: MainTheme を設定オーバーライドへ流せるようにした。
+- `CvWpfclient/Resources/UIMainTheme.Default.xaml`: 既定 MainTheme 用の空オーバーレイ辞書を追加した。
+- `CvWpfclient/Resources/UIMainTheme.Green.xaml`: 緑基調 MainTheme 用に、外枠グラデーション・メイン背景グラデーション・メニュー背景・カード背景/枠線の上書き辞書を追加した。
+- `CvWpfclient/Resources/UIColors.xaml`: MainMenu 左メニュー専用の `MainMenuMenuBackgroundBrush` を追加した。
+- `CvWpfclient/Resources/UIColors.Dark.xaml`: ダークテーマ側にも `MainMenuMenuBackgroundBrush` を追加した。
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `ToggleMainThemeCommand` を追加し、切替後の設定保存を実装した。
+- `CvWpfclient/Views/MainMenuView.xaml`: 左メニュー背景を MainTheme 対応キーへ変更し、カード型背景のローカル上書きを外し、`ログイン (F12)` の隣へ `メインテーマ切替` ボタンを追加した。
+### 技術決定 Why
+- 既存の Light/Dark テーマと MainMenu の配色切替を混ぜないため、`ThemeService` とは別に `MainThemeService` を追加し、MainMenu 背景系だけを別辞書で上書きする構成にした。
+- Weather / Chart は対象外という要件に合わせ、MainTheme の上書き対象を MainMenu の背景3系統に限定し、既存の天気/チャート色キーには手を入れないようにした。
+- MainMenu のカード背景は `Style` 側の `MainMenuDashboardCardBackgroundBrush` を効かせる必要があるため、View 側の `Background="{DynamicResource panelColor}"` 上書きを除去して辞書差し替えが反映される形に統一した。
+### 確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` → ビルド成功（0警告、0エラー）
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（`CvBase.dll` の一時ロックによる再試行警告 2件、エラー 0件）
+- Oracle レビューで MainTheme 切替時の外枠グラデーション即時反映漏れを指摘されたため、`MainMenuView.xaml` の `OuterWindowBackground` / `CvnetMainBackgroundBrush` を `DynamicResource` に修正し、再ビルド成功を確認
+
+---
+
 ## [2026-04-16] 16:57 MainMenuView配色整理とテーマ切替反映改善
 ### Agent
 - gpt-5.4 : OpenAI

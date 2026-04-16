@@ -25,6 +25,7 @@ namespace CvWpfclient;
 public partial class App : Application {
 	public static IHost? AppHost { get; private set; }
 	public static ThemeService ThemeService { get; } = new();
+	public static MainThemeService MainThemeService { get; } = new();
 	private static readonly Logger _bootstrapLogger = LogManager.GetCurrentClassLogger();
 	private static readonly SemaphoreSlim _hostRestartGate = new(1, 1);
 	private static readonly object _hostLifetimeSync = new();
@@ -49,19 +50,26 @@ public partial class App : Application {
 		if (AppHost != null) {
 			await StartHostAsync(AppHost);
 		}
-		ApplySavedTheme();
+		ApplySavedThemes();
 		base.OnStartup(e);
 		RunBackgroundTask(CheckForUpdatesOnStartupAsync, "起動時更新確認");
 	}
 
-	private static void ApplySavedTheme() {
+	private static void ApplySavedThemes() {
 		var settings = new ClientSettingsStore().Load();
 		if (Enum.TryParse<AppTheme>(settings.Application.Theme, ignoreCase: true, out var theme)) {
 			ThemeService.ApplyTheme(theme);
+		}
+		else {
+			ThemeService.ApplyTheme(AppTheme.Light);
+		}
+
+		if (Enum.TryParse<MainTheme>(settings.Application.MainTheme, ignoreCase: true, out var mainTheme)) {
+			MainThemeService.ApplyMainTheme(mainTheme);
 			return;
 		}
 
-		ThemeService.ApplyTheme(AppTheme.Light);
+		MainThemeService.ApplyMainTheme(MainTheme.Default);
 	}
 
 	public static void SaveThemePreference(AppTheme theme) {
@@ -73,6 +81,18 @@ public partial class App : Application {
 		}
 		catch (Exception ex) {
 			_bootstrapLogger.Warn(ex, "テーマ設定の保存に失敗しました。");
+		}
+	}
+
+	public static void SaveMainThemePreference(MainTheme theme) {
+		try {
+			var store = new ClientSettingsStore();
+			var settings = store.Load();
+			settings.Application.MainTheme = theme.ToString();
+			store.Save(settings);
+		}
+		catch (Exception ex) {
+			_bootstrapLogger.Warn(ex, "メインテーマ設定の保存に失敗しました。");
 		}
 	}
 

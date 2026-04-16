@@ -54,6 +54,8 @@
 	<!--  Panel Colors  -->
 	<SolidColorBrush x:Key="panelColor"
 		Color="#2B2B2B" />
+	<SolidColorBrush x:Key="MainMenuMenuBackgroundBrush"
+		Color="#2B2B2B" />
 	<SolidColorBrush x:Key="panelOverColor"
 		Color="#343434" />
 	<SolidColorBrush x:Key="panelActiveColor"

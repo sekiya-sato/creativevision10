@@ -53,6 +53,8 @@
 	<!--  Panel Colors  -->
 	<SolidColorBrush x:Key="panelColor"
 		Color="#7E82FC" />
+	<SolidColorBrush x:Key="MainMenuMenuBackgroundBrush"
+		Color="#7E82FC" />
 	<SolidColorBrush x:Key="panelOverColor"
 		Color="#7E82FC" />
 	<SolidColorBrush x:Key="panelActiveColor"

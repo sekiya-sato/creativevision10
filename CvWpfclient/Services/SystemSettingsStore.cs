@@ -81,6 +81,7 @@ public sealed class ClientSettingsStore {
 		AddIfNotWhiteSpace(overrides, "Application:OpenWeatherApiKey", settings.Application.OpenWeatherApiKey);
 		AddIfNotWhiteSpace(overrides, "Application:WeatherRegion", settings.Application.WeatherRegion);
 		AddIfNotWhiteSpace(overrides, "Application:FitPosition", settings.Application.FitPosition);
+		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);
 		AddIfNotWhiteSpace(overrides, "JapanPostBiz:ClientId", settings.JapanPostBiz.ClientId);
 		AddIfNotWhiteSpace(overrides, "JapanPostBiz:SecretKey", settings.JapanPostBiz.SecretKey);
 		return overrides;

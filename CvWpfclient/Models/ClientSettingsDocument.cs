@@ -28,6 +28,7 @@ public sealed class ClientApplication {
 	public string WeatherRegion { get; set; } = string.Empty;
 	public string FitPosition { get; set; } = string.Empty;
 	public string Theme { get; set; } = string.Empty;
+	public string MainTheme { get; set; } = string.Empty;
 }
 
 public sealed class ClientJapanPos {
