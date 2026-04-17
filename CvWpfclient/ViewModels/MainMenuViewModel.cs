@@ -466,11 +466,6 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	private void ApplyForecastTheme() {
-		ForecastXAxes = [new Axis {
-				Labels = _forecastLabels,
-				TextSize = 10,
-				LabelsRotation = 0,
-			}];
 		// ForecastYAxes = [new Axis { Name = "℃", TextSize = 10,	}];
 
 		if (_forecastTemperatures.Length == 0) {
@@ -483,7 +478,11 @@ public partial class MainMenuViewModel : ObservableObject {
 		var values = _forecastTemperatures
 			.Select((temperature, index) => new ObservablePoint(index, temperature))
 			.ToArray();
-
+		ForecastXAxes = [new Axis {
+				Labels = _forecastLabels,
+				TextSize = 10,
+				LabelsRotation = 0,
+			}];
 		// 縦軸: 5℃刻み、最小・最大をデータに合わせて少しパディング
 		var minTemp = _forecastTemperatures.Min();
 		var maxTemp = _forecastTemperatures.Max();

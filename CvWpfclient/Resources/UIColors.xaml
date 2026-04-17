@@ -49,6 +49,8 @@
 		Color="White" />
 	<SolidColorBrush x:Key="MainMenuWindowButtonHoverForegroundBrush"
 		Color="#101010" />
+	<SolidColorBrush x:Key="MainMenuChartTextColor"
+		Color="Black" />
 
 	<!--  Panel Colors  -->
 	<SolidColorBrush x:Key="panelColor"

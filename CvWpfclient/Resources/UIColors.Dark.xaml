@@ -50,6 +50,8 @@
 		Color="#E0E0E0" />
 	<SolidColorBrush x:Key="MainMenuWindowButtonHoverForegroundBrush"
 		Color="#111827" />
+	<SolidColorBrush x:Key="MainMenuChartTextColor"
+		Color="White" />
 
 	<!--  Panel Colors  -->
 	<SolidColorBrush x:Key="panelColor"
@@ -83,7 +85,7 @@
 	<SolidColorBrush x:Key="MainMenuActionButtonPressedBackgroundBrush"
 		Color="#3DFFFFFF" />
 	<SolidColorBrush x:Key="MainMenuThemeTogglePreviewBrush"
-		Color="#F3F4F6" />
+		Color="#171717" />
 	<SolidColorBrush x:Key="MainMenuChartBackgroundBrush"
 		Color="#1F2937" />
 	<SolidColorBrush x:Key="MainMenuWeatherIconBrush"
