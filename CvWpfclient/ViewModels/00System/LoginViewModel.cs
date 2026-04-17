@@ -58,7 +58,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage);
-					await App.RestartHostAsync(cancellationToken);
+					//await App.RestartHostAsync(cancellationToken);
 					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, AppGlobal.LoginJwt);
 					LoginData = reply;
 					ExitWithResultTrue();
@@ -104,7 +104,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage);
-					await App.RestartHostAsync(cancellationToken);
+					// await App.RestartHostAsync(cancellationToken);
 					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, AppGlobal.LoginJwt);
 					LoginData = reply;
 					ExitWithResultTrue();

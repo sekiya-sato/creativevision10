@@ -224,57 +224,65 @@ public partial class App : Application {
 	/// <exception cref="InvalidOperationException"></exception>
 	static IHostBuilder CreateHostBuilder(Dictionary<string, string?>? setting = null) {
 		var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "_";
-		return Host.CreateDefaultBuilder()
-			.ConfigureAppConfiguration(builder => {
-				// 各設定ファイルの読み込み
-				builder.SetBasePath(Directory.GetCurrentDirectory());
-				builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-				builder.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
-				var clientSettings = new ClientSettingsStore().Load();
-				var overrides = new ClientSettingsStore().ToConfigurationOverrides(clientSettings);
-				builder.AddInMemoryCollection(overrides);
-				if (setting is not null)
-					builder.AddInMemoryCollection(setting);
-			})
-		.ConfigureLogging((context, logging) => {
-			logging.ClearProviders(); // 既定のログプロバイダーをクリア
-			logging.AddNLog(context.Configuration); // ILogger<T> → NLog へルーティング
-		})
-			.ConfigureServices((context, services) => {
-				// 1. ハンドラーと通信設定の登録
-				services.AddTransient<JwtAuthorizationHandler>();
+		var builder = Host.CreateDefaultBuilder();
 
-				var url = context.Configuration.GetConnectionString("Url")
-					?? throw new InvalidOperationException("Connection string 'Url' is missing.");
-				var subPath = Common.ExtractSubPath(url);
-				if (!string.IsNullOrEmpty(subPath))
-					services.AddTransient<GrpcSubPathHandler>(_ => new GrpcSubPathHandler(subPath));
-
-				services.AddSingleton<SocketsHttpHandler>(_ => new SocketsHttpHandler {
-					PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-					KeepAlivePingDelay = TimeSpan.FromSeconds(60), // サーバーの設定より長くするのが一般的
-					KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-					EnableMultipleHttp2Connections = true,
-					KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always, // 通信がない時でもPingを送る
+		if (setting is null) { // 通常起動時は設定ファイルとクライアント設定ストアから構成を読み込む
+			builder
+				.ConfigureAppConfiguration(cfg => {
+					// 各設定ファイルの読み込み
+					cfg.SetBasePath(Directory.GetCurrentDirectory());
+					cfg.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+					cfg.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
+					var clientSettings = new ClientSettingsStore().Load();
+					var overrides = new ClientSettingsStore().ToConfigurationOverrides(clientSettings);
+					cfg.AddInMemoryCollection(overrides);
+				})
+				.ConfigureLogging((context, logging) => {
+					logging.ClearProviders(); // 既定のログプロバイダーをクリア
+					logging.AddNLog(context.Configuration); // ILogger<T> → NLog へルーティング
 				});
-				// 2. 統合されたクライアント構成ロジック
-				void ConfigureClient<TService>(IServiceCollection srvs, string targetUrl, string path) where TService : class {
-					var builder = srvs.AddCodeFirstGrpcClient<TService>((sp, options) => options.Address = new Uri(targetUrl))
-						.ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<SocketsHttpHandler>())
-						.AddHttpMessageHandler<JwtAuthorizationHandler>();
-					// サブパスが定義されている時だけパイプラインに追加
-					if (!string.IsNullOrEmpty(path))
-						builder.AddHttpMessageHandler<GrpcSubPathHandler>();
-					builder.ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
-				}
-
-				// 3. サービスの登録
-				services.AddSingleton<IUpdateService, UpdateService>();
-				ConfigureClient<ILoginService>(services, url, subPath);
-				ConfigureClient<ICoreService>(services, url, subPath);
-				ConfigureClient<IWeatherService>(services, url, subPath);
-				ConfigureClient<IPostalAddressService>(services, url, subPath);
+		}
+		else {
+			builder.ConfigureAppConfiguration(cfg => {
+				cfg.AddInMemoryCollection(setting);
 			});
+		}
+
+		return builder.ConfigureServices((context, services) => {
+			// 1. ハンドラーと通信設定の登録
+			services.AddTransient<JwtAuthorizationHandler>();
+
+			var url = context.Configuration.GetConnectionString("Url")
+				?? throw new InvalidOperationException("Connection string 'Url' is missing.");
+			var subPath = Common.ExtractSubPath(url);
+			if (!string.IsNullOrEmpty(subPath))
+				services.AddTransient<GrpcSubPathHandler>(_ => new GrpcSubPathHandler(subPath));
+
+			services.AddSingleton<SocketsHttpHandler>(_ => new SocketsHttpHandler {
+				PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+				KeepAlivePingDelay = TimeSpan.FromSeconds(60), // サーバーの設定より長くするのが一般的
+				KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+				EnableMultipleHttp2Connections = true,
+				KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always, // 通信がない時でもPingを送る
+			});
+			// 2. 統合されたクライアント構成ロジック
+			void ConfigureClient<TService>(IServiceCollection srvs, string targetUrl, string path) where TService : class {
+				var b = srvs.AddCodeFirstGrpcClient<TService>((sp, options) => options.Address = new Uri(targetUrl))
+					.ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<SocketsHttpHandler>())
+					.AddHttpMessageHandler<JwtAuthorizationHandler>();
+				// サブパスが定義されている時だけパイプラインに追加
+				if (!string.IsNullOrEmpty(path))
+					b.AddHttpMessageHandler<GrpcSubPathHandler>();
+				b.ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
+			}
+
+			// 3. サービスの登録
+			services.AddSingleton<IUpdateService, UpdateService>();
+			ConfigureClient<ILoginService>(services, url, subPath);
+			ConfigureClient<ICoreService>(services, url, subPath);
+			ConfigureClient<IWeatherService>(services, url, subPath);
+			ConfigureClient<IPostalAddressService>(services, url, subPath);
+		});
 	}
 
 	private async Task CheckForUpdatesOnStartupAsync(CancellationToken cancellationToken) {
