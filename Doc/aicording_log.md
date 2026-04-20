@@ -15,6 +15,21 @@
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
 
 ---
+## [2026-04-20] 15:55 MasterShohinMenteView の商品画像表示エリアのはみ出し改善
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MasterShohinMenteView で `Wpf:WebView2` の商品画像表示エリアが下スクロール時に上側へはみ出して見える表示崩れを改善したい
+### 実施内容
+- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: 商品画像表示コントロールを `Wpf:WebView2` から `Wpf:WebView2CompositionControl` へ置換し、`HorizontalAlignment` と `VerticalAlignment` を `Stretch` にして親 `Border` 内へ収まる構成へ修正
+### 技術決定 Why
+- WPF の通常の `WebView2` は `HwndHost` ベースのため `ScrollViewer` 配下で airspace 問題によるクリップずれが起きやすく、スクロール時のはみ出し対策としては `WebView2CompositionControl` への置換が最小変更で効果的なため
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
+
+---
 ## [2026-04-20] 14:21 MainMenuViewModel のログ出力元クラス名修正
 ### Agent
 - gpt-5.4 : OpenAI
