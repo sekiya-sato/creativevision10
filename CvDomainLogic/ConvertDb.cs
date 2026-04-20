@@ -1,6 +1,6 @@
 using CvAsset;
 using CvBase;
-using NLog;
+using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 
 namespace CvDomainLogic;
@@ -17,12 +17,12 @@ public record ConvertStepProgress(string StepName, int Count, int Progress, bool
 public partial class ConvertDb {
 	ExDatabase _fromDb;
 	ExDatabase _toDb;
-	Logger _logger;
+	ILogger<ConvertDb> _logger;
 
 	public ConvertDb(ExDatabase fromDb, ExDatabase toDb) {
 		_fromDb = fromDb;
 		_toDb = toDb;
-		_logger = LogManager.GetCurrentClassLogger();
+		_logger = new NLogExtender<ConvertDb>();
 	}
 
 	/// <summary>
@@ -30,7 +30,7 @@ public partial class ConvertDb {
 	/// [Execute all master conversion for streaming]
 	/// </summary>
 	public async IAsyncEnumerable<ConvertStepProgress> ConvertAllAsyncStream(bool isInit = true) {
-		_logger.Info("変換処理開始");
+		_logger.LogInformation("変換処理開始");
 		var start = DateTime.Now;
 
 		// ToDo: 最終的に実行させる処理を整理
@@ -76,7 +76,7 @@ public partial class ConvertDb {
 				count = action(isInit);
 			}
 			catch (Exception ex) {
-				_logger.Error(ex, $"変換処理エラー: {name}");
+				_logger.LogError(ex, $"変換処理エラー: {name}");
 				isError = true;
 				errorMsg = ex.Message;
 			}
@@ -88,7 +88,7 @@ public partial class ConvertDb {
 		}
 
 		var elapsed = DateTime.Now - start;
-		_logger.Info($"変換処理終了 {elapsed.TotalSeconds:0.0}s");
+		_logger.LogInformation($"変換処理終了 {elapsed.TotalSeconds:0.0}s");
 
 		yield return new ConvertStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
 	}
@@ -590,12 +590,12 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 							_toDb.Update(shain);
 						}
 						catch (Exception updEx) {
-							_logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterShain Id={0}", shain.Id);
+							_logger?.LogWarning(updEx, "CnvAfterMaster: Failed to update MasterShain Id={0}", shain.Id);
 						}
 					}
 				}
 				catch (Exception ex) {
-					_logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterShain Code={0}", shain?.Code);
+					_logger?.LogWarning(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterShain Code={0}", shain?.Code);
 				}
 			}
 			cnt += shainList.Count;
@@ -618,12 +618,12 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 							_toDb.Update(customer);
 						}
 						catch (Exception updEx) {
-							_logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterEndCustomer Id={0}", customer.Id);
+							_logger?.LogWarning(updEx, "CnvAfterMaster: Failed to update MasterEndCustomer Id={0}", customer.Id);
 						}
 					}
 				}
 				catch (Exception ex) {
-					_logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterEndCustomer Code={0}", customer?.Code);
+					_logger?.LogWarning(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterEndCustomer Code={0}", customer?.Code);
 				}
 			}
 			cnt += customerList.Count;
@@ -646,12 +646,12 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 							_toDb.Update(shohin);
 						}
 						catch (Exception updEx) {
-							_logger?.Warn(updEx, "CnvAfterMaster: Failed to update MasterShohin Id={0}", shohin.Id);
+							_logger?.LogWarning(updEx, "CnvAfterMaster: Failed to update MasterShohin Id={0}", shohin.Id);
 						}
 					}
 				}
 				catch (Exception ex) {
-					_logger?.Warn(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterShohin Code={0}", shohin?.Code);
+					_logger?.LogWarning(ex, "CnvAfterMaster: Failed to resolve VTenpo for MasterShohin Code={0}", shohin?.Code);
 				}
 			}
 			cnt += shohinList.Count;
@@ -677,12 +677,12 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 							_toDb.Update(customer);
 						}
 						catch (Exception updEx) {
-							_logger?.Warn(updEx, "CnvAfterMasterOption: Failed to update MasterEndCustomer Id={0}", customer.Id);
+							_logger?.LogWarning(updEx, "CnvAfterMasterOption: Failed to update MasterEndCustomer Id={0}", customer.Id);
 						}
 					}
 				}
 				catch (Exception ex) {
-					_logger?.Warn(ex, "CnvAfterMasterOption: Failed to resolve Memo for MasterEndCustomer Code={0}", customer?.Code);
+					_logger?.LogWarning(ex, "CnvAfterMasterOption: Failed to resolve Memo for MasterEndCustomer Code={0}", customer?.Code);
 				}
 			}
 			cnt += customerList.Count;
@@ -725,7 +725,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 			}
 		}
 		catch (Exception ex) {
-			_logger?.Warn(ex, $"ConvertItemAddress: Failed to convert address for {typeof(T).Name} Id={nowId}");
+			_logger?.LogWarning(ex, $"ConvertItemAddress: Failed to convert address for {typeof(T).Name} Id={nowId}");
 		}
 		return cnt;
 	}

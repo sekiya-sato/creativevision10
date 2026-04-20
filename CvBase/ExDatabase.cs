@@ -1,4 +1,4 @@
-using NLog;
+using Microsoft.Extensions.Logging;
 using NPoco;
 using System.Data;
 using System.Data.Common;
@@ -19,7 +19,7 @@ public partial class ExDatabase : Database {
 	/// <summary>
 	/// ロガーインスタンス [Logger instance]
 	/// </summary>
-	private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
+	private static readonly ILogger<ExDatabase> _logger = new NLogExtender<ExDatabase>();
 
 	public virtual void Open() {
 		Connection?.Open();
@@ -236,7 +236,7 @@ public partial class ExDatabase : Database {
 				ret = true;
 		}
 		catch (Exception ex) {
-			_logger.Error(ex, string.Format("SQL実行エラー {0}", checkSql));
+			_logger.LogError(ex, string.Format("SQL実行エラー {0}", checkSql));
 			return false;
 		}
 		return ret;
@@ -273,7 +273,7 @@ public partial class ExDatabase : Database {
 
 		}
 		catch (Exception ex) {
-			_logger.Error(ex, string.Format("SQL実行エラー テーブル作成({0})", GetTableName(classT)));
+			_logger.LogError(ex, string.Format("SQL実行エラー テーブル作成({0})", GetTableName(classT)));
 			return false;
 		}
 		return ret;

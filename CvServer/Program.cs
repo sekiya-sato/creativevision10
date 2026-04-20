@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using NLog;
 using NLog.Web;
 using ProtoBuf.Grpc.Server;
 using System.IO.Compression;
@@ -190,7 +189,7 @@ try {
 }
 catch (Exception ex) {
 	// 起動失敗時のログ記録
-	LogManager.GetCurrentClassLogger().Fatal(ex, "Stopped program because of exception");
+	NLog.LogManager.GetCurrentClassLogger().Fatal(ex, "Stopped program because of exception");
 	throw;
 }
 finally {

@@ -1,5 +1,5 @@
 using CvBase;
-using NLog;
+using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace CvDomainLogic;
@@ -8,11 +8,11 @@ public partial class HhtProcess {
 	private static readonly Encoding SjisEncoding = CreateSjisEncoding();
 
 	ExDatabase _db;
-	Logger _logger;
+	ILogger<HhtProcess> _logger;
 
 	public HhtProcess(ExDatabase db) {
 		_db = db;
-		_logger = LogManager.GetCurrentClassLogger();
+		_logger = new NLogExtender<HhtProcess>();
 	}
 	/// <summary>
 	/// マスタを変換して、固定長またはカンマ区切りの文字として返す。
@@ -198,7 +198,7 @@ public partial class HhtProcess {
 			return hhtdata.Count;
 		}
 		catch (Exception ex) {
-			_logger.Error(ex, "HHTデータの受信に失敗");
+			_logger.LogError(ex, "HHTデータの受信に失敗");
 			throw;
 		}
 	}

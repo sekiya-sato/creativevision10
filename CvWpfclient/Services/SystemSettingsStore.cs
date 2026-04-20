@@ -1,13 +1,14 @@
+using CvBase;
 using CvWpfclient.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using NLog;
 using System.IO;
 
 namespace CvWpfclient.Services;
 
 public sealed class ClientSettingsStore {
 	private const string FileName = "clientsettings.json";
-	private static readonly Logger _bootstrapLogger = LogManager.GetCurrentClassLogger();
+	private static readonly ILogger<ClientSettingsStore> _bootstrapLogger = new NLogExtender<ClientSettingsStore>();
 	private readonly object _sync = new();
 
 	public string FilePath { get; }
@@ -40,7 +41,7 @@ public sealed class ClientSettingsStore {
 				return JsonConvert.DeserializeObject<ClientSettingsDocument>(content) ?? new ClientSettingsDocument();
 			}
 			catch (JsonException ex) {
-				_bootstrapLogger.Warn(ex, "clientsettings.json の読み込みに失敗したため初期値を使用します。");
+				_bootstrapLogger.LogWarning(ex, "clientsettings.json の読み込みに失敗したため初期値を使用します。");
 				return new ClientSettingsDocument();
 			}
 		}

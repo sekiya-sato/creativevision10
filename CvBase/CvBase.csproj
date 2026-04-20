@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
 	<PackageReference Include="CommunityToolkit.Mvvm" />
+	<PackageReference Include="Microsoft.Extensions.Logging" />
 	<PackageReference Include="Newtonsoft.Json" />
 	<PackageReference Include="NLog" />
 	<PackageReference Include="NPoco" />

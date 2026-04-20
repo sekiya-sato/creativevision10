@@ -1,17 +1,17 @@
 using CvBase;
-using NLog;
+using Microsoft.Extensions.Logging;
 
 namespace CvDomainLogic;
 
 public class SummaryDb {
 	ExDatabase _db;
-	Logger _logger;
+	ILogger<SummaryDb> _logger;
 	public SummaryDb(ExDatabase db) {
 		_db = db;
-		_logger = LogManager.GetCurrentClassLogger();
+		_logger = new NLogExtender<SummaryDb>();
 	}
 	public async IAsyncEnumerable<ConvertStepProgress> SummaryAllAsyncStream(bool isInit = true) {
-		_logger.Info("処理開始");
+		_logger.LogInformation("処理開始");
 		var start = DateTime.Now;
 
 		// ToDo: 最終的に実行させる処理を整理
@@ -35,7 +35,7 @@ public class SummaryDb {
 				count = action(isInit);
 			}
 			catch (Exception ex) {
-				_logger.Error(ex, $"処理エラー: {name}");
+				_logger.LogError(ex, $"処理エラー: {name}");
 				isError = true;
 				errorMsg = ex.Message;
 			}
@@ -47,7 +47,7 @@ public class SummaryDb {
 		}
 
 		var elapsed = DateTime.Now - start;
-		_logger.Info($"処理終了 {elapsed.TotalSeconds:0.0}s");
+		_logger.LogInformation($"処理終了 {elapsed.TotalSeconds:0.0}s");
 
 		yield return new ConvertStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
 	}

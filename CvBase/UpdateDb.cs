@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NPoco;
 
 namespace CvBase;
@@ -26,7 +27,7 @@ public class UpdateDb {
 		if (verupSql.Length == 0) return;
 
 		var latestDb = await db.FirstOrDefaultAsync<SysUpdateDb>("order by DbVersion desc", ct); // DB上の最新バージョン情報を取得
-		var logger = NLog.LogManager.GetCurrentClassLogger();
+		var logger = new NLogExtender<UpdateDb>();
 		// vreupSqlがあり、DBにバージョンレコードがない場合は、プログラム最新かつDBも新規の場合なので、verupSqlの最新バージョンをDBに書き込む
 		var latestVersion = verupSql[^1]; // verupSqlの最新バージョンは、DBの最新バージョンとする
 		if (latestDb == null) {
@@ -38,11 +39,11 @@ public class UpdateDb {
 				Memo = "新規レコード作成"
 			};
 			await db.InsertAsync(verNow, ct);
-			logger.Debug($"DBバージョン新規書込({latestVersion.DbVersion})");
+			logger.LogDebug($"DBバージョン新規書込({latestVersion.DbVersion})");
 			return;
 		}
 		if (latestDb.DbVersion >= latestVersion.DbVersion) { // DBに最新までレコードがある
-			logger.Info($"DBバージョンは最新({latestVersion.DbVersion})");
+			logger.LogInformation($"DBバージョンは最新({latestVersion.DbVersion})");
 			return;
 		}
 		foreach (var record in verupSql) { // 配列はforeachで必ず順番に処理される
@@ -50,17 +51,17 @@ public class UpdateDb {
 			if (record.DbVersion > latestDb.DbVersion) { // verupSqlのバージョンがDBのバージョンより新しい場合は、DBをverupSqlのバージョンに合わせるためのSQLを実行する
 				var errorMsg = await SubInsertRecordAsync(db, record, latestDb.DbVersion, logger, ct);
 				if (!string.IsNullOrEmpty(errorMsg)) {
-					logger.Error($"DBバージョンアップ時エラー rec={record.DbVersion}: {errorMsg} : SQL={record.Sql}");
+					logger.LogError($"DBバージョンアップ時エラー rec={record.DbVersion}: {errorMsg} : SQL={record.Sql}");
 				}
 			}
 		}
-		logger.Debug($"DBバージョンアップ({latestDb.DbVersion} -> {latestVersion.DbVersion})");
+		logger.LogDebug($"DBバージョンアップ({latestDb.DbVersion} -> {latestVersion.DbVersion})");
 	}
 
 	/// <summary>
 	/// 個別のバージョンアップレコードの処理
 	/// </summary>
-	static async Task<string> SubInsertRecordAsync(IDatabase db, InnerVersion verInfo, int orgVersion, NLog.Logger logger, CancellationToken ct) {
+	static async Task<string> SubInsertRecordAsync(IDatabase db, InnerVersion verInfo, int orgVersion, NLogExtender<UpdateDb> logger, CancellationToken ct) {
 		string? errorMsg = null;
 		var sqls = verInfo.Sql.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
