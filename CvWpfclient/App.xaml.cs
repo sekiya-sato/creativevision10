@@ -1,5 +1,6 @@
 using CodeShare;
 using CvAsset;
+using CvBase;
 using CvWpfclient.Helpers;
 using CvWpfclient.Services;
 using Microsoft.Extensions.Configuration;
@@ -148,15 +149,6 @@ public partial class App : Application {
 		ShowUnhandledExceptionMessage(exception);
 	}
 
-	private static Microsoft.Extensions.Logging.ILogger? TryGetAppLogger() {
-		var host = AppHost;
-		if (host == null) {
-			return null;
-		}
-
-		return host.Services.GetService<ILoggerFactory>()?.CreateLogger<App>();
-	}
-
 	private static void ShowUnhandledExceptionMessage(Exception exception) {
 		var dispatcher = Current?.Dispatcher;
 		if (dispatcher == null || dispatcher.HasShutdownStarted || dispatcher.HasShutdownFinished) {
@@ -164,7 +156,6 @@ public partial class App : Application {
 		}
 
 		var message = $"予期しないエラーが発生しました。\n\n{exception.Message}";
-		//		void Show() => MessageBox.Show(message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
 		void Show() => MessageEx.ShowErrorDialog(message, appendedMessage: exception.StackTrace ?? "",
 			owner: Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive));
 
@@ -286,7 +277,7 @@ public partial class App : Application {
 	}
 
 	private async Task CheckForUpdatesOnStartupAsync(CancellationToken cancellationToken) {
-		var logger = TryGetAppLogger();
+		var logger = new NLogExtender<App>();
 		try {
 			if (AppHost == null) {
 				return;
@@ -364,7 +355,7 @@ public partial class App : Application {
 	private static void InitializeAppCurrent(IHost host) {
 		var configuration = host.Services.GetRequiredService<IConfiguration>() as IConfigurationRoot
 			?? throw new InvalidOperationException("IConfigurationRoot is not available.");
-		var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(AppGlobal));
+		var logger = new NLogExtender<object>(nameof(AppGlobal));
 
 		AppGlobal.Init(configuration, host.Services, logger);
 	}

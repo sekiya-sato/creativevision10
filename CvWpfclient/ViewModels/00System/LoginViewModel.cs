@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace CvWpfclient.ViewModels._00System;
@@ -24,7 +23,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 	bool isVisibleLoginTab = true; // true:ログインタブ、false:ログインリフレッシュのタブ
 
 	public LoginViewModel() {
-		_logger = App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger<LoginViewModel>();
+		_logger = new NLogExtender<LoginViewModel>();
 	}
 
 	[RelayCommand]

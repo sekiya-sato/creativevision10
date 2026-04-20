@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CvBase;
 using CvWpfclient.Helpers;
 using CvWpfclient.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +23,7 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 	string optionMessage = string.Empty;
 
 	public SysUpgradeViewModel() {
-		_logger = App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger<SysUpgradeViewModel>();
+		_logger = new NLogExtender<SysUpgradeViewModel>();
 		_updateService = App.AppHost?.Services.GetRequiredService<IUpdateService>()
 			?? throw new InvalidOperationException("IUpdateService を取得できません。");
 		RefreshOptionMessage();
