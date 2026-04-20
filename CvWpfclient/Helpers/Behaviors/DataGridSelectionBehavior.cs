@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.Extensions.DependencyInjection;
+using CvBase;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Windows;
@@ -11,7 +11,7 @@ using System.Windows.Threading;
 namespace CvWpfclient.Helpers;
 
 public static class DataGridSelectionBehavior {
-	private static ILogger Logger => App.AppHost!.Services.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(DataGridSelectionBehavior));
+	private static ILogger Logger => new NLogExtender<object>(nameof(DataGridSelectionBehavior));
 
 	public static readonly DependencyProperty AutoScrollToSelectedItemProperty =
 		DependencyProperty.RegisterAttached(
