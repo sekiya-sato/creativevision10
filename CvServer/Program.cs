@@ -189,10 +189,10 @@ try {
 }
 catch (Exception ex) {
 	// 起動失敗時のログ記録
-	NLog.LogManager.GetCurrentClassLogger().Fatal(ex, "Stopped program because of exception");
+	new NLogExtender<Program>().LogCritical(ex, "Stopped program because of exception");
 	throw;
 }
 finally {
 	// 全ての非同期ログをフラッシュし、リソースを解放する
-	NLog.LogManager.Shutdown();
+	new NLogExtender<Program>().Shutdown();
 }

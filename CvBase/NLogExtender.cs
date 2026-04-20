@@ -59,6 +59,10 @@ public class NLogExtender<T> : ILogger<T> {
 		};
 	}
 
+	public void Shutdown() {
+		LogManager.Shutdown();
+	}
+
 	private sealed class NullScope : IDisposable {
 		public static readonly NullScope Instance = new();
 		private NullScope() { }
