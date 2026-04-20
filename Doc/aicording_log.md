@@ -15,6 +15,21 @@
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
 
 ---
+## [2026-04-20] 14:21 MainMenuViewModel のログ出力元クラス名修正
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`MainMenuViewModel.cs` のログ出力で `CvBase.NLogExtender\`1` ではなく元のクラス `MainMenuViewModel` が残るようにしたい
+### 実施内容
+- CvBase/NLogExtender.cs: `LogManager.GetCurrentClassLogger()` をやめ、ジェネリック型 `T` の完全名を `LogManager.GetLogger(...)` に渡すよう修正
+### 技術決定 Why
+- `GetCurrentClassLogger()` は実行位置である `NLogExtender<T>` 自身をロガー名にするため、呼び出し元の型名を維持するには `typeof(T)` ベースで明示的にロガー名を作る必要があるため
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
+
+---
 ## [2026-04-17] 00:08 MainMenuの気温チャート縦軸目盛り表示修正
 ### Agent
 - gpt-5.4 : OpenAI

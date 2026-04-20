@@ -11,9 +11,7 @@ public class NLogExtender<T> : ILogger<T> {
 	private readonly Logger _nlogLogger;
 
 	public NLogExtender() {
-		//var name = typeof(T).FullName;
-		//_nlogLogger = LogManager.GetLogger(name) ?? NLog.LogManager.GetCurrentClassLogger();
-		_nlogLogger = LogManager.GetCurrentClassLogger();
+		_nlogLogger = LogManager.GetLogger(typeof(T).Name);
 	}
 
 	public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance; // Null許容性制約を追加

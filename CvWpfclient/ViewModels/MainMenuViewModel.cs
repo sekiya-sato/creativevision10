@@ -2,7 +2,6 @@ using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
-using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.Models;
@@ -12,7 +11,6 @@ using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -137,12 +135,6 @@ public partial class MainMenuViewModel : ObservableObject {
 		// Velopack のバージョンを表示する
 		SubTitle += $"  Client Ver {App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetCurrentVersion()}";
 		SetSubMessage();
-		var _logger = new NLogExtender<MainMenuViewModel>();
-		_logger.LogInformation("MainMenuViewModel initialized");
-		_logger.LogWarning("this is warning");
-		_logger.LogError("this is error");
-
-
 	}
 
 	void SetSubMessage() {
