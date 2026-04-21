@@ -391,7 +391,14 @@ public sealed partial class Common {
 		}
 		return string.Empty;
 	}
-
+	/// <summary>
+	/// 和名の月名を返す
+	/// </summary>
+	/// <returns></returns>
+	/// example: 標準の月名を和風月名で上書きする場合 culture.DateTimeFormat.MonthNames = Common.MonthNames(); DateTime.Now.ToString("MMMM", culture);
+	public static string[] MonthNames() => new[]{
+			"睦月", "如月", "弥生", "卯月", "皐月", "水無月",
+			"文月", "葉月", "長月", "神無月", "霜月", "師走", ""};
 	/// <summary>
 	/// Dictonaryのインスタンスを元に型を生成
 	/// [Generate a type based on a Dictionary instance]
