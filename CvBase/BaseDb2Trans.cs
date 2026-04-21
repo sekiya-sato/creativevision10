@@ -5,10 +5,17 @@ using NPoco;
 
 namespace CvBase;
 
+
+public interface ITranDetail {
+	public string DenDay { get; set; }
+	public long Id_Soko { get; set; }
+	public List<Tran99Meisai>? Jmeisai { get; set; }
+}
+
 /// <summary>
 /// 共通トランザクション（ヘッダ）
 /// </summary>
-public partial class TranAllHeader : BaseDbClass {
+public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// <summary>
 	/// 計上日（yyyyMMdd）
 	/// </summary>

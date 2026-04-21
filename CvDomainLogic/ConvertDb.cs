@@ -9,7 +9,7 @@ namespace CvDomainLogic;
 /// 変換ステップの進捗情報
 /// [Conversion step progress information]
 /// </summary>
-public record ConvertStepProgress(string StepName, int Count, int Progress, bool IsCompleted = false, bool IsError = false, string? ErrorMessage = null);
+public record StreamStepProgress(string StepName, int Count, int Progress, bool IsCompleted = false, bool IsError = false, string? ErrorMessage = null);
 
 /// <summary>
 /// データベースを変換するクラス
@@ -29,7 +29,7 @@ public partial class ConvertDb {
 	/// ストリーミングで全マスタ変換を実行
 	/// [Execute all master conversion for streaming]
 	/// </summary>
-	public async IAsyncEnumerable<ConvertStepProgress> ConvertAllAsyncStream(bool isInit = true) {
+	public async IAsyncEnumerable<StreamStepProgress> ConvertAllAsyncStream(bool isInit = true) {
 		_logger.LogInformation("変換処理開始");
 		var start = DateTime.Now;
 
@@ -66,7 +66,7 @@ public partial class ConvertDb {
 			var startProgress = index * 100 / steps.Length;
 
 			// ステップ開始通知
-			yield return new ConvertStepProgress(name, 0, startProgress, false, false);
+			yield return new StreamStepProgress(name, 0, startProgress, false, false);
 
 			// 処理実行
 			int count = 0;
@@ -84,13 +84,13 @@ public partial class ConvertDb {
 			var endProgress = (int)Math.Round((index + 1) * 100d / steps.Length, MidpointRounding.AwayFromZero);
 
 			// ステップ完了通知
-			yield return new ConvertStepProgress(name, count, endProgress, false, isError, errorMsg);
+			yield return new StreamStepProgress(name, count, endProgress, false, isError, errorMsg);
 		}
 
 		var elapsed = DateTime.Now - start;
 		_logger.LogInformation($"変換処理終了 {elapsed.TotalSeconds:0.0}s");
 
-		yield return new ConvertStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
+		yield return new StreamStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
 	}
 
 	#region 文字列変換サブロジック

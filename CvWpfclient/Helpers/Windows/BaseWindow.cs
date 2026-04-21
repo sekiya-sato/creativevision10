@@ -72,6 +72,10 @@ public class BaseWindow : Window {
 	protected override void OnContentRendered(EventArgs e) {
 		base.OnContentRendered(e);
 
+		// デザイン時は実行しない
+		if (DesignerProperties.GetIsInDesignMode(this))
+			return;
+
 		// ViewModel に ICommand プロパティ "InitCommand" があれば実行する（XAML でのトリガーを共通化）
 		var dc = DataContext;
 		if (dc == null) return;

@@ -417,6 +417,54 @@ public partial class ConvertDb {
 				};
 			});
 	}
+	public int CnvTranSize(bool isInit = true) {
+		var cnt = 0;
+		cnt += subCnvTranHeaderSize<Tran00Uriage>();
+		cnt += subCnvTranHeaderSize<Tran01Tenuri>();
+		cnt += subCnvTranHeaderSize<Tran03Shiire>();
+		cnt += subCnvTranHeaderSize<Tran05Ido>();
+		cnt += subCnvTranHeaderSize<Tran10IdoOut>();
+		return cnt;
+	}
+
+
+	/// <summary>
+	/// 明細サイズコード変換
+	/// </summary>
+	public int subCnvTranHeaderSize<T>(bool isInit = true) where T : ITranDetail {
+		var list = _toDb.Fetch<T>();
+		var cnt = 0;
+		var meisaicnt = 0;
+		foreach (var item in list) {
+			if (item.Jmeisai == null)
+				continue;
+			meisaicnt = subCnvTranMeisaiSize(item.Jmeisai);
+			if (meisaicnt > 0) {
+				cnt++;
+				_toDb.Update(item);
+			}
+		}
+		return cnt;
+	}
+	int subCnvTranMeisaiSize(List<Tran99Meisai> meisaiList) {
+		var meisaicnt = 0;
+		foreach (var meisai in meisaiList) {
+			if (meisai.Id_Siz > 0)
+				continue;
+			var sizCode = meisai.Code_Siz;
+			var shohin = _toDb.FirstOrDefault<MasterShohin>("where Id=@0", meisai.Id_Shohin);
+			if (shohin?.Id == 0 || shohin?.SizeKu == null) continue;
+			var siz = getMeisho(shohin.SizeKu, sizCode);
+			if (siz != null) {
+				meisai.Id_Siz = siz.Id;
+				meisai.Code_Siz = siz.Code;
+				meisai.Mei_Siz = siz.Name;
+				meisaicnt++;
+			}
+		}
+		return meisaicnt;
+	}
+
 	T? getMaster<T>(string code) where T : class, IBaseCodeName, new() {
 		if (string.IsNullOrWhiteSpace(code))
 			return null;

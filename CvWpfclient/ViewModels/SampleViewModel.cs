@@ -35,6 +35,15 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 		}
 	}
 	*/
+	// コンストラクタ内でデザイン時を判定して回避
+	public SampleViewModel() {
+		// デザイン時はここで終了
+		if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+			return;
+
+		// 実行時のみの初期化処理...
+	}
+
 	/// <summary>
 	/// カラーバランスの見本
 	/// </summary>
@@ -43,17 +52,17 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 	{
 		new("#212025", "#E74545", "#742424","#FFFFFF"),
 		new("#4B3A42", "#F38884", "#A45055","#FFFFFF"),
-		new("#180A14", "#91242C", "#501919","#"),
-		new("#FFFBF2", "#876931", "#E7DECB","#"),
-		new("#FFF4E1", "#C6A260", "#F0E1CC","#"),
-		new("#72563B", "#392F28", "#866E5A","#"),
-		new("#65D0C4", "#FF4F84", "#B4EC38","#"),
-		new("#FFCA3E", "#FF8D89", "#C9E9E5","#"),
-		new("#C8F0EB", "#F2E073", "#FF90BE","#"),
-		new("#46938A", "#BA8C27", "#B7255A","#"),
+		new("#180A14", "#91242C", "#501919","Transparent"),
+		new("#FFFBF2", "#876931", "#E7DECB","Transparent"),
+		new("#FFF4E1", "#C6A260", "#F0E1CC","Transparent"),
+		new("#72563B", "#392F28", "#866E5A","Transparent"),
+		new("#65D0C4", "#FF4F84", "#B4EC38","Transparent"),
+		new("#FFCA3E", "#FF8D89", "#C9E9E5","Transparent"),
+		new("#C8F0EB", "#F2E073", "#FF90BE","Transparent"),
+		new("#46938A", "#BA8C27", "#B7255A","Transparent"),
 		new("#AF949B", "#E95774", "#9C6372","#FFFFFF"),
-		new("#EEE9E4", "#D75A00", "#FAD61B","#"),
-		new("#F8B97E", "#FBFBF8", "#C5BEB6","#"),
+		new("#EEE9E4", "#D75A00", "#FAD61B","Transparent"),
+		new("#F8B97E", "#FBFBF8", "#C5BEB6","Transparent"),
 		new("#58C6F1", "#EBD6BC", "#F2B134","#227190"),
 		new("#FFE4E4", "#E22B26", "#FFCBBD","#EF593C"),
 		new("#F1F2EF", "#EFEC49", "#33933A","#D2D6C1"),
@@ -64,11 +73,11 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 		new("#DEF1EF", "#BAE6DF", "#FFDED5","#EBA295"),
 		new("#FDFEE1", "#C9E3B4", "#F7C8B1","#EEEE89"),
 		new("#D3E4F4", "#424F7A", "#DCD4E6","#E9DCED"),
-		new("#019AA7", "#F5BBB9", "#F5D235","#"),
-		new("#5449EA", "#FE4A87", "#FE4137","#"),
-		new("#E5C1CC", "#FC6B91", "#BC8496",""),
-		new("#725661", "#93344A", "#4C1E2D",""),
-		new("#", "#", "#","#"),
+		new("#019AA7", "#F5BBB9", "#F5D235","Transparent"),
+		new("#5449EA", "#FE4A87", "#FE4137","Transparent"),
+		new("#E5C1CC", "#FC6B91", "#BC8496","Transparent"),
+		new("#725661", "#93344A", "#4C1E2D","Transparent"),
+		new("Transparent", "Transparent", "Transparent","Transparent"),
 	};
 
 	#region ストリーミングテスト
@@ -181,9 +190,14 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			/*
 			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg040_ConvertDb };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "コンバートストリーミング DBConvert";
+			*/
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg050_Summary };
+			msg.DataType = typeof(string);
+			msg.DataMsg = "集計処理ストリーミング DBConvert";
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
 				StreamMessages.Insert(0, streamMsg.DataMsg);
 				ProgressValue = streamMsg.Progress;
