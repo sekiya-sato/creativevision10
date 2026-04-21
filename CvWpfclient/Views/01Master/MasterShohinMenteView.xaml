@@ -440,20 +440,20 @@
 									BorderThickness="1" ClipToBounds="True" CornerRadius="8">
 									<Grid>
 										<!--  WebView2 で商品画像をURL表示  -->
-									<Wpf:WebView2CompositionControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-										Source="{Binding ShohinImageUri}">
-										<Wpf:WebView2CompositionControl.Style>
-											<Style TargetType="Wpf:WebView2CompositionControl">
-												<Setter Property="Visibility" Value="Visible" />
-												<Style.Triggers>
-													<DataTrigger Binding="{Binding ShohinImageUri}"
-														Value="{x:Null}">
-														<Setter Property="Visibility" Value="Collapsed" />
-													</DataTrigger>
-												</Style.Triggers>
-											</Style>
-										</Wpf:WebView2CompositionControl.Style>
-									</Wpf:WebView2CompositionControl>
+										<Wpf:WebView2CompositionControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+											Source="{Binding ShohinImageUri}">
+											<Wpf:WebView2CompositionControl.Style>
+												<Style TargetType="Wpf:WebView2CompositionControl">
+													<Setter Property="Visibility" Value="Visible" />
+													<Style.Triggers>
+														<DataTrigger Binding="{Binding ShohinImageUri}"
+															Value="{x:Null}">
+															<Setter Property="Visibility" Value="Collapsed" />
+														</DataTrigger>
+													</Style.Triggers>
+												</Style>
+											</Wpf:WebView2CompositionControl.Style>
+										</Wpf:WebView2CompositionControl>
 										<!--  画像なし表示  -->
 										<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
 											Foreground="{DynamicResource MaterialDesignBodyLight}"

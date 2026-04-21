@@ -146,6 +146,14 @@ public static class CommonExtentions {
 			string leapStr = isLeap ? "閏" : "";
 			return $"{leapStr}{displayMonth}月{day}日";
 		}
+		/// <summary>
+		/// CRONの書式に合わせて、秒とミリ秒を切り捨てたDateTimeを返す
+		/// </summary>
+		/// <returns></returns>
+		public DateTime ToAdjustCronDateTIme() {
+			return new DateTime(date0.Year, date0.Month, date0.Day, date0.Hour, date0.Minute, 0);
+		}
+
 	}
 	/// <summary>
 	/// TimeSpanの拡張メソッド
