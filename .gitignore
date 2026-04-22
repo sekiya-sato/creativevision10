@@ -51,6 +51,7 @@ wrk/
 .sisyphus/
 .playwright-mcp/
 tmp-*
+graphify-out/
 # Optional local notes
 
 
