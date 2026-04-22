@@ -195,7 +195,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			msg.DataType = typeof(string);
 			msg.DataMsg = "コンバートストリーミング DBConvert";
 			*/
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg050_Summary };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg040_ConvertDb };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "集計処理ストリーミング DBConvert";
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {

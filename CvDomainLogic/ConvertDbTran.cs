@@ -417,22 +417,36 @@ public partial class ConvertDb {
 				};
 			});
 	}
-	public int CnvTranSize(bool isInit = true) {
+	public int CnvTranSize1(bool isInit = true) {
 		var cnt = 0;
 		cnt += subCnvTranHeaderSize<Tran00Uriage>();
+		return cnt;
+	}
+	public int CnvTranSize2(bool isInit = true) {
+		var cnt = 0;
 		cnt += subCnvTranHeaderSize<Tran01Tenuri>();
+		return cnt;
+	}
+	public int CnvTranSize3(bool isInit = true) {
+		var cnt = 0;
 		cnt += subCnvTranHeaderSize<Tran03Shiire>();
+		return cnt;
+	}
+	public int CnvTranSize4(bool isInit = true) {
+		var cnt = 0;
 		cnt += subCnvTranHeaderSize<Tran05Ido>();
+		return cnt;
+	}
+	public int CnvTranSize5(bool isInit = true) {
+		var cnt = 0;
 		cnt += subCnvTranHeaderSize<Tran10IdoOut>();
 		return cnt;
 	}
-
-
 	/// <summary>
 	/// 明細サイズコード変換
 	/// </summary>
 	public int subCnvTranHeaderSize<T>(bool isInit = true) where T : ITranDetail {
-		var list = _toDb.Fetch<T>();
+		var list = _toDb.Fetch<T>("where json_type(Jmeisai) = 'array'");
 		var cnt = 0;
 		var meisaicnt = 0;
 		foreach (var item in list) {
