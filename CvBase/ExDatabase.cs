@@ -347,7 +347,7 @@ public partial class ExDatabase : Database {
 		if (isForce) {
 			DropTable(typeof(T));
 			ret = CreateTable<T>(isForce);
-			var createSql = new T().CreateSql;
+			var createSql = T.CreateSql;
 			BeginTransaction();
 			var cnt = Execute(createSql);
 			CompleteTransaction();

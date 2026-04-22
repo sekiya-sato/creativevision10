@@ -7,10 +7,9 @@ public interface IViewClass {
 	public string CreateSql { get; }
 }
 public interface IDerivedClass {
-	public string CreateSql { get; }
-	public string InsertSql { get; }
-	public string DeleteSql { get; }
-	public Type Origin { get; }
+	static abstract string CreateSql { get; }
+	static abstract string InsertSql { get; }
+	static abstract string DeleteSql { get; }
 }
 
 /*
@@ -256,7 +255,7 @@ public partial class DerivedShohinColSiz : ObservableObject, IDerivedClass {
 	/// <summary>
 	/// SqlDepends: View作成のSQL
 	/// </summary>
-	public string CreateSql => @$"
+	public static string CreateSql => @$"
 Insert into {nameof(DerivedShohinColSiz)}
 SELECT
   (M.Id * 100 + ROW_NUMBER() OVER (PARTITION BY M.Id)) Id,
@@ -275,9 +274,7 @@ SELECT
 FROM MasterShohin M, json_each(M.Jcolsiz) J
 "; //   M.Name, M.Ryaku,
 	[Ignore]
-	public string InsertSql => CreateSql + " where M.Id = @0";
+	public static string InsertSql => CreateSql + " where M.Id = @0";
 	[Ignore]
-	public string DeleteSql => $"Delete from {nameof(DerivedShohinColSiz)} where Id_Shohin = @0";
-	[Ignore]
-	public Type Origin => typeof(MasterShohin);
+	public static string DeleteSql => $"Delete from {nameof(DerivedShohinColSiz)} where Id_Shohin = @0";
 }

@@ -161,8 +161,8 @@ public partial class CoreService {
 
 		try {
 			var newItem = _db.Insert(item);
-			if (insert.ItemType is IDerivedOrigin) {
-				new HandleDerived().Insert(insert.ItemType, item);
+			if (typeof(IDerivedOrigin).IsAssignableFrom(insert.ItemType)) {
+				new HandleDerived(_db).Insert(insert.ItemType, item);
 			}
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
@@ -184,8 +184,8 @@ public partial class CoreService {
 			foreach (var item in list) {
 				SetCreatedAuditValues(insertBulk.ItemType, item);
 				_db.Insert(item);
-				if (insertBulk.ItemType is IDerivedOrigin) {
-					new HandleDerived().Insert(insertBulk.ItemType, item);
+				if (typeof(IDerivedOrigin).IsAssignableFrom(insertBulk.ItemType)) {
+					new HandleDerived(_db).Insert(insertBulk.ItemType, item);
 				}
 			}
 			_db.CompleteTransaction();
@@ -217,8 +217,8 @@ public partial class CoreService {
 
 			db.Vdu = vdate;
 			_db.Update(item);
-			if (update.ItemType is IDerivedOrigin) {
-				new HandleDerived().Update(update.ItemType, item);
+			if (typeof(IDerivedOrigin).IsAssignableFrom(update.ItemType)) {
+				new HandleDerived(_db).Update(update.ItemType, item);
 			}
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
@@ -245,8 +245,8 @@ public partial class CoreService {
 		}
 
 		_db.Delete(item);
-		if (delete.ItemType is IDerivedOrigin) {
-			new HandleDerived().Delete(delete.ItemType, item);
+		if (typeof(IDerivedOrigin).IsAssignableFrom(delete.ItemType)) {
+			new HandleDerived(_db).Delete(delete.ItemType, item);
 		}
 		return CreateSuccessResponse(flag, delete.ItemType, Common.SerializeObject(item));
 	}
@@ -269,8 +269,8 @@ public partial class CoreService {
 		}
 
 		_db.Delete(item);
-		if (deleteById.ItemType is IDerivedOrigin) {
-			new HandleDerived().Delete(deleteById.ItemType, item);
+		if (typeof(IDerivedOrigin).IsAssignableFrom(deleteById.ItemType)) {
+			new HandleDerived(_db).Delete(deleteById.ItemType, item);
 		}
 		return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 	}
