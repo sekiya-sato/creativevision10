@@ -73,8 +73,8 @@ public class AppGlobal {
 		ret = db.CreateTable<TranVulcanHht>();
 		// DBの整合性を管理
 		UpdateDb.WriteVersionInfoAsync(db).Wait();
-		// Viewの作成
-		ret = db.CreateDerivedTable<DerivedShohinColSiz>(true);
+		// DerivedClassの作成
+		ret = db.CreateDerivedTable<DerivedShohinColSiz>();
 
 
 
