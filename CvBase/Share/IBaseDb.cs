@@ -26,3 +26,9 @@ public interface IBaseSerializeMeisho {
 
 }
 
+/// <summary>
+/// 派生テーブルの元テーブルを示すインターフェース
+/// </summary>
+public interface IDerivedOrigin {
+	public Type DerivedClass { get; }
+}

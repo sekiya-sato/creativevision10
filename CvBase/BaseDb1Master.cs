@@ -204,6 +204,7 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(1000)]
 	BaseDetailClass? jdetail;
+
 }
 
 /// <summary>
@@ -211,8 +212,11 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Code")]
+//[KeyDml("njan1", false, "json_extract(Jcolsiz, '$.Jan1')")]
+//[KeyDml("njan2", false, "json_extract(Jcolsiz, '$.Jan2')")]
+//[KeyDml("njan3", false, "json_extract(Jcolsiz, '$.Jan3')")]
 [Comment("マスター：商品テーブル Jcolsiz列に'色CD,サイズCD,JAN1,JAN2,JAN3'の情報を格納")]
-public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName {
+public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedOrigin {
 	/// <summary>
 	/// コード
 	/// </summary>
@@ -448,6 +452,9 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName {
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(1000)]
 	BaseDetailClass? jdetail;
+
+	[Ignore]
+	public Type DerivedClass => typeof(DerivedShohinColSiz);
 }
 
 

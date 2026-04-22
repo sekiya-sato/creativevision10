@@ -160,7 +160,10 @@ public partial class CoreService {
 		SetCreatedAuditValues(insert.ItemType, item);
 
 		try {
-			_ = _db.Insert(item);
+			var newItem = _db.Insert(item);
+			if (insert.ItemType is IDerivedOrigin) {
+				new HandleDerived().Insert(insert.ItemType, item);
+			}
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
 		catch (Exception ex) {
@@ -181,6 +184,9 @@ public partial class CoreService {
 			foreach (var item in list) {
 				SetCreatedAuditValues(insertBulk.ItemType, item);
 				_db.Insert(item);
+				if (insertBulk.ItemType is IDerivedOrigin) {
+					new HandleDerived().Insert(insertBulk.ItemType, item);
+				}
 			}
 			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, listType, Common.SerializeObject(list));
@@ -211,6 +217,9 @@ public partial class CoreService {
 
 			db.Vdu = vdate;
 			_db.Update(item);
+			if (update.ItemType is IDerivedOrigin) {
+				new HandleDerived().Update(update.ItemType, item);
+			}
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
 		catch (Exception ex) when (ex is not NotImplementedException) {
@@ -236,6 +245,9 @@ public partial class CoreService {
 		}
 
 		_db.Delete(item);
+		if (delete.ItemType is IDerivedOrigin) {
+			new HandleDerived().Delete(delete.ItemType, item);
+		}
 		return CreateSuccessResponse(flag, delete.ItemType, Common.SerializeObject(item));
 	}
 
@@ -257,6 +269,9 @@ public partial class CoreService {
 		}
 
 		_db.Delete(item);
+		if (deleteById.ItemType is IDerivedOrigin) {
+			new HandleDerived().Delete(deleteById.ItemType, item);
+		}
 		return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 	}
 	/// <summary>
