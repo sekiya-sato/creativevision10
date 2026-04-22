@@ -6,6 +6,9 @@ namespace CvBase;
 public interface IViewClass {
 	public string CreateSql { get; }
 }
+/// <summary>
+/// 派生型テーブルI/F (派生元のI/Fは IDerivedOrigin )
+/// </summary>
 public interface IDerivedClass {
 	static abstract string CreateSql { get; }
 	static abstract string InsertSql { get; }

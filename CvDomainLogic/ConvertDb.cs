@@ -35,6 +35,7 @@ public partial class ConvertDb {
 
 		// ToDo: 最終的に実行させる処理を整理
 		var steps = new (string Name, Func<bool, int> Action)[] {
+			("CnvTranSize",CnvTranSize)
 			/*
 			("CnvMasterConfig", CnvMasterConfig),
 			("CnvMasterSys", CnvMasterSys),

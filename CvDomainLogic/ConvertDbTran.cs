@@ -451,14 +451,15 @@ public partial class ConvertDb {
 		foreach (var meisai in meisaiList) {
 			if (meisai.Id_Siz > 0)
 				continue;
-			var sizCode = meisai.Code_Siz;
-			var shohin = _toDb.FirstOrDefault<MasterShohin>("where Id=@0", meisai.Id_Shohin);
-			if (shohin?.Id == 0 || shohin?.SizeKu == null) continue;
-			var siz = getMeisho(shohin.SizeKu, sizCode);
-			if (siz != null) {
-				meisai.Id_Siz = siz.Id;
-				meisai.Code_Siz = siz.Code;
-				meisai.Mei_Siz = siz.Name;
+			//var sizCode = meisai.Code_Siz;
+			//var shohin = _toDb.FirstOrDefault<MasterShohin>("where Id=@0", meisai.Id_Shohin);
+			//if (shohin?.Id == 0 || shohin?.SizeKu == null) continue;
+			var colsiz = _toDb.FirstOrDefault<DerivedShohinColSiz>("where Id_Shohin=@0 and Code_Siz=@1", meisai.Id_Shohin, meisai.Code_Siz);
+			if (colsiz?.Id == 0) continue;
+			if (colsiz != null) {
+				meisai.Id_Siz = colsiz.Id_Siz;
+				meisai.Code_Siz = colsiz.Code_Siz;
+				meisai.Mei_Siz = colsiz.Mei_Siz;
 				meisaicnt++;
 			}
 		}
