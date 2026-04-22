@@ -28,6 +28,8 @@ public partial class LoginService : ILoginService {
 		// _scheduler = scheduler;
 		_httpContextAccessor = httpContextAccessor;
 	}
+	private readonly string _longkey = "veryveryhardsecurity-keys.needtoolong";
+
 	/// <summary>
 	/// Login処理を行いJWTを返す
 	/// [Performs login processing and returns a JWT]
@@ -62,7 +64,7 @@ public partial class LoginService : ILoginService {
 					issuer: webauthjwt.GetSection("Issuer")?.Value ?? "issuer",
 					claims: claims,
 					lifetime: lifetime,
-					seckey: webauthjwt.GetSection("SecretKey")?.Value ?? "veryveryhardsecurity-keys.needtoolong");
+					seckey: webauthjwt.GetSection("SecretKey")?.Value ?? _longkey);
 				var retJwtData = new JwtSecurityTokenHandler().WriteToken(jwt);
 				var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetAddInfo() };
 				var loginHist = new SysHistJwt {
@@ -113,7 +115,7 @@ public partial class LoginService : ILoginService {
 				issuer: webauthjwt.GetSection("Issuer")?.Value ?? "issuer",
 				claims: claims,
 				lifetime: lifetime,
-				seckey: webauthjwt.GetSection("SecretKey")?.Value ?? "veryveryhardsecurity-keys.needtoolong");
+				seckey: webauthjwt.GetSection("SecretKey")?.Value ?? _longkey);
 			var retJwtData = new JwtSecurityTokenHandler().WriteToken(jwt);
 			//var expire = new DateTime(jwt.ValidTo.ToLocalTime().Ticks, DateTimeKind.Local); // ここで設定してもgRPCシリアライザでKindが落ちる
 			// [Even if set here, the Kind crashes in the gRPC serializer]
@@ -185,7 +187,7 @@ public partial class LoginService : ILoginService {
 			issuer: jsonToken.Issuer,
 			claims: jsonToken.Claims,
 			lifetime: lifetime,
-			seckey: webauthjwt.GetSection("SecretKey")?.Value ?? "veryveryhardsecurity-keys.needtoolong");
+			seckey: webauthjwt.GetSection("SecretKey")?.Value ?? _longkey);
 		var newToken = new JwtSecurityTokenHandler().WriteToken(jwt);
 		var loginHist = new SysHistJwt {
 			JwtUnixTime = jwt.ValidTo.ToUnixTime(),
@@ -238,7 +240,7 @@ public partial class LoginService : ILoginService {
 				issuer: webauthjwt.GetSection("Issuer")?.Value ?? "issuer",
 				claims: claims,
 				lifetime: lifetime,
-				seckey: webauthjwt.GetSection("SecretKey")?.Value ?? "veryveryhardsecurity-keys.needtoolong");
+				seckey: webauthjwt.GetSection("SecretKey")?.Value ?? _longkey);
 			var retJwtData = new JwtSecurityTokenHandler().WriteToken(jwt);
 			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetAddInfo() };
 			var loginHist = new SysHistJwt {

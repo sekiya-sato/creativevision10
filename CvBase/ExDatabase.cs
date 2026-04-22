@@ -54,8 +54,7 @@ public partial class ExDatabase : Database {
 
 
 	/// <summary>
-	/// クラスの中に含まれるプロパティの配列を"Name database型"で返す
-	/// [Return an array of properties contained within the class as "Name database type"]
+	/// SqlDepends: クラスの中に含まれるプロパティの配列を"Name database型"で返す
 	/// </summary>
 	/// <param name="classT"></param>
 	/// <returns></returns>
@@ -186,8 +185,7 @@ public partial class ExDatabase : Database {
 		return dbname;
 	}
 	/// <summary>
-	/// 使用データベースの変更
-	/// [Change in the database being used]
+	/// SqlDepends: 使用データベースの変更
 	/// </summary>
 	/// <param name="dbname"></param>
 	/// <returns></returns>
@@ -202,7 +200,6 @@ public partial class ExDatabase : Database {
 
 	/// <summary>
 	/// テーブルが存在するかどうか
-	/// [Check if the table exists]
 	/// </summary>
 	/// <param name="tablename"></param>
 	/// <returns></returns>
@@ -212,7 +209,6 @@ public partial class ExDatabase : Database {
 	}
 	/// <summary>
 	/// テーブルが存在するかどうか
-	/// [Check if the table exists]
 	/// </summary>
 	/// <param name="tablename"></param>
 	/// <returns></returns>
@@ -502,7 +498,7 @@ public partial class ExDatabase : Database {
 	}
 
 	/// <summary>
-	/// テーブル一覧と件数の取得 (データベース依存)
+	/// SqlDepends: テーブル一覧と件数の取得
 	/// </summary>
 	/// <returns></returns>
 	public virtual List<Tuple<string, string, long>> GetTableCounts() {

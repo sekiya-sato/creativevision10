@@ -4,7 +4,7 @@ using NLog;
 namespace CvBase;
 
 /// <summary>
-/// DIが使えない/使わないクラスでNLogを利用するためのILogger<T>実装
+/// DIが使えない/使わないクラスでNLogを利用するためのILogger<T>実装、Nlog依存を集約
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class NLogExtender<T> : ILogger<T> {

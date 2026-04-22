@@ -9,7 +9,7 @@ namespace CvBase;
 public record InnerVersion(int DbVersion, string Sql, string Memo);
 
 /// <summary>
-/// DBのテーブル変更を管理する
+/// SqlDepends: DBのテーブル変更を管理する versions配列を定義し、実稼働DBとプログラムの整合性をとる
 /// </summary>
 public class UpdateDb {
 	private static InnerVersion[] versions = [
