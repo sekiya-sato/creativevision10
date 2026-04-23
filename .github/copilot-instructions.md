@@ -17,7 +17,6 @@ You are a senior software engineer and solution architect. Your role is to suppo
 - **Restore All Projects**: `dotnet restore "Cv.slnx"`
 - **Build Solution**: `dotnet build "Cv.slnx"`
 - **Build Server Project**: `dotnet build "CvServer/CvServer.csproj"`
-- **Build Client Project (Linux OS/WSL2)**: `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false`
 - **Format Check (Solution)**: `dotnet format "Cv.slnx" --verify-no-changes`
 - **[CRITICAL]**: Do not start ".net upgrade experience"
 
@@ -52,10 +51,6 @@ Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLU
 - **Implementation Style**: First inspect the target layer and related files, then implement with minimal diffs.
 - **Formatting**: Follow `.editorconfig` for `.cs` files and `Settings.XamlStyler` for `.xaml` files. Use file-scoped namespaces, keep `using` directives outside the namespace, and do not move `System` usings to the top if the local style differs.
 - Ask the user only when required information is genuinely missing or ambiguous.
-- **Database Operations**:
-    - Keep **CRUD** operations clearly separated.
-    - Encapsulate core database logic on the DomainLogic side (Layer 1.5).
-    - Minimize impact on existing schemas when changing logic.
 - **Refactoring**: Analyze the impact range before proposing changes. Do not break existing implementations.
 - **CAUTION**: WPF screens can be clipped on the bottom and right edges. Pay special attention to bottom-edge clipping.
 - `.github/copilot/wpf_skill.md` contains the UI design and implementation guidelines for `CvWpfclient`.
@@ -112,4 +107,12 @@ GPT-5.4-mini : OpenAI : Build
 SelectKubunView のデザインをMasterMeishoのデザインに統一する
 '''
 
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
 
