@@ -1,10 +1,17 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using NPoco;
 
 namespace CvBase;
 
 /// <summary>
 /// 年月集計ファイル: 在庫
 /// </summary>
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("unq1", true, ["SumMonth", "Id_Soko", "Id_Shohin", "Id_Col", "Id_Siz"])]
+[KeyDml("nk1", false, "DenDay")]
+[KeyDml("nk3", false, ["Id_Soko"])]
+[KeyDml("nk4", false, ["Id_Shiire"])]
+[Comment("年月、倉庫、商品、色、サイズで集計した在庫データ Suは当月のみ、CumulativeSuは累計")]
 public partial class SummaryStock : BaseDbClass {
 	/// <summary>
 	/// 倉庫ID
@@ -20,8 +27,8 @@ public partial class SummaryStock : BaseDbClass {
 	/// 年月
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	string sumMonth = "19010101";
+	[property: ColumnSizeDml(6)]
+	string sumMonth = "190101";
 	/// <summary>
 	/// 色
 	/// </summary>

@@ -3,9 +3,6 @@ using NPoco;
 
 namespace CvBase;
 
-public interface IViewClass {
-	public string CreateSql { get; }
-}
 /// <summary>
 /// 派生型テーブルI/F (派生元のI/Fは IDerivedOrigin )
 /// </summary>
@@ -16,6 +13,9 @@ public interface IDerivedClass {
 }
 
 /*
+public interface IViewClass {
+	public string CreateSql { get; }
+}
 public partial class ViewShohinColSiz : ObservableObject, IViewClass {
 	/// <summary>
 	/// ユニークキー
@@ -150,6 +150,7 @@ FROM Flattened
 
 
 [PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("unq1", true, ["Id_Shohin", "Id_Col", "Id_Siz"])]
 [KeyDml("n1", false, "Id_Shohin")]
 [KeyDml("n2", false, "Code")]
 [KeyDml("njan1", false, "Jan1")]
