@@ -15,6 +15,26 @@
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
 
 ---
+## [2026-04-23] 17:52 ClientSettingsStore の部分更新保存対応
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の ClientSettingsStore で設定ファイルを空白や初期値で上書きしないようにし、定義外の JSON 内容も削除せず、確認後に commit まで行いたい
+### 実施内容
+- CvWpfclient/Services/SystemSettingsStore.cs: `clientsettings.json` の全文再シリアライズをやめ、既存 JSON を `JObject` として読み込んで指定キーだけを部分更新する `SaveConfigurationOverrides` を追加。中間ノードが非オブジェクトの場合は保存失敗にし、temp file + `File.Replace` / `File.Move` による原子的保存へ変更
+- CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs: 環境設定保存時に URL / LoginId / LoginPass の変更有無を判定し、空欄入力では既存ログイン値を保持したまま、明示変更分だけ永続化するよう修正。URL変更時のホスト再起動には実効値をまとめて渡し、失敗時は `AppGlobal` を元値へ戻すよう調整
+- CvWpfclient/App.xaml.cs: テーマ保存処理を `SaveConfigurationOverrides` 経由の単一キー更新へ変更し、テーマ変更で `clientsettings.json` 全体を書き換えないよう修正
+### 技術決定 Why
+- `ClientSettingsDocument` の全文保存では未知 JSON や未入力項目を安全に保持できないため、既存ファイルをベースに必要キーだけをパッチ更新する方式へ切り替えるのが要件に最も近く、かつ既存コードへの影響を最小化できるため
+### 確認
+- `lsp_diagnostics` で `CvWpfclient/Services/SystemSettingsStore.cs`、`CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs`、`CvWpfclient/App.xaml.cs` に問題がないことを確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` でビルド成功を確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功を確認
+- Oracle / QA 再レビューで、未知 JSON 保持、非オブジェクト中間ノードでの fail-fast、空欄ログイン値の非上書き、URL変更時の再起動設定保持を確認
+
+---
 ## [2026-04-23] 16:44 MainMenuView の下段ボタン横スクロール不具合修正
 ### Agent
 - GitHub Copilot : OpenAI
