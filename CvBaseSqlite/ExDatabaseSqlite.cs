@@ -9,7 +9,7 @@ using System.Reflection;
 namespace CvBaseSqlite;
 
 /// <summary>
-/// SqliteDB用のデータベースクラス
+/// SqliteDB用のデータベースクラス : ON CONFLICT ... DO UPDATE はSQLite 3.24.0 以降 / json_each() は SQLite 3.38 以降
 /// [Database class for SqliteDB]
 /// </summary>
 public partial class ExDatabaseSqlite : ExDatabase {

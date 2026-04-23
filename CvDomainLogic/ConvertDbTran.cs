@@ -421,26 +421,30 @@ public partial class ConvertDb {
 	public int CnvTranSize1(bool isInit = true) {
 		var cnt = 0;
 		cnt += subCnvTranHeaderSize<Tran00Uriage>();
+		cnt += subCnvTranHeaderSize<Tran01Tenuri>();
+		cnt += subCnvTranHeaderSize<Tran03Shiire>();
+		cnt += subCnvTranHeaderSize<Tran05Ido>();
 		return cnt;
 	}
 	public int CnvTranSize2(bool isInit = true) {
 		var cnt = 0;
-		cnt += subCnvTranHeaderSize<Tran01Tenuri>();
+		cnt += subCnvTranHeaderSize<Tran10IdoOut>();
+		cnt += subCnvTranHeaderSize<Tran11IdoIn>();
+		cnt += subCnvTranHeaderSize<Tran12Jyuchu>();
+		cnt += subCnvTranHeaderSize<Tran13Hachu>();
 		return cnt;
 	}
 	public int CnvTranSize3(bool isInit = true) {
 		var cnt = 0;
-		cnt += subCnvTranHeaderSize<Tran03Shiire>();
+		cnt += subCnvTranHeaderSize<Tran60Tana>();
 		return cnt;
 	}
 	public int CnvTranSize4(bool isInit = true) {
 		var cnt = 0;
-		cnt += subCnvTranHeaderSize<Tran05Ido>();
 		return cnt;
 	}
 	public int CnvTranSize5(bool isInit = true) {
 		var cnt = 0;
-		cnt += subCnvTranHeaderSize<Tran10IdoOut>();
 		return cnt;
 	}
 	/// <summary>
@@ -451,27 +455,34 @@ public partial class ConvertDb {
 		var tname = typeof(T).Name;
 		var sql = @$"
 UPDATE {tname}
-SET Jmeisai = json_replace(
-    Jmeisai,
-    '$.Id_Siz',
-    (
-        SELECT m.Id_Siz
-        FROM DerivedShohinColSiz m
-        WHERE m.Id_Shohin = json_extract({tname}.Jmeisai, '$.Id_Shohin')
-          AND m.Id_Col   = json_extract({tname}.Jmeisai, '$.Id_Col')
-          AND m.Code_Siz = json_extract({tname}.Jmeisai, '$.Code_Siz')
-    )
+SET Jmeisai = (
+  SELECT json_group_array(
+           json_set(
+             j.value,
+             '$.Id_Siz',
+             m.Id_Siz
+           )
+         )
+  FROM json_each({tname}.Jmeisai) AS j
+  JOIN DerivedShohinColSiz AS m
+    ON json_extract(j.value, '$.Id_Shohin') = m.Id_Shohin
+   AND json_extract(j.value, '$.Id_Col')    = m.Id_Col
+   AND json_extract(j.value, '$.Code_Siz')  = m.Code_Siz
+   AND json_extract(j.value, '$.Id_Siz')   = 0
 )
 WHERE EXISTS (
-    SELECT 1
-    FROM DerivedShohinColSiz m
-    WHERE m.Id_Shohin = json_extract({tname}.Jmeisai, '$.Id_Shohin')
-      AND m.Id_Col   = json_extract({tname}.Jmeisai, '$.Id_Col')
-      AND m.Code_Siz = json_extract({tname}.Jmeisai, '$.Code_Siz')
+  SELECT 1
+  FROM json_each({tname}.Jmeisai) AS j
+  JOIN DerivedShohinColSiz AS m
+    ON json_extract(j.value, '$.Id_Shohin') = m.Id_Shohin
+   AND json_extract(j.value, '$.Id_Col')    = m.Id_Col
+   AND json_extract(j.value, '$.Code_Siz')  = m.Code_Siz
+   AND json_extract(j.value, '$.Id_Siz')   = 0
 )
-AND json_extract({tname}.Jmeisai, '$.Id_Siz') = 0;
 ";
 		cnt = _toDb.Execute(sql);
+		var sql2 = $"SELECT changes() AS updated_count";
+		cnt = _toDb.FirstOrDefault<int>(sql2);
 		return cnt;
 		// SQLite の JSON 関数を使用して、Jmeisai 内のサイズコードを一括で更新する SQL クエリを実行する。
 		// このクエリは、Jmeisai 内の Id_Siz が 0 のレコードに対して、DerivedShohinColSiz テーブルから対応するサイズコードを取得して更新します。
