@@ -1,4 +1,4 @@
-# Visual Studio / user-specific
+# .graphifyignore : graphify update .
 .vs/
 *.suo
 *.sln.docstates
@@ -52,6 +52,9 @@ wrk/
 .playwright-mcp/
 tmp-*
 graphify-out/
+.graphify*
+*.md
+*.doc
 # Optional local notes
 
 
