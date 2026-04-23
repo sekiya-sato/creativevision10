@@ -2,6 +2,7 @@ using CvBase;
 using CvWpfclient.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.IO;
 
 namespace CvWpfclient.Services;
@@ -52,20 +53,39 @@ public sealed class ClientSettingsStore {
 	/// </summary>
 	public void Save(ClientSettingsDocument settings) {
 		ArgumentNullException.ThrowIfNull(settings);
-		var directory = Path.GetDirectoryName(FilePath);
-		if (!string.IsNullOrWhiteSpace(directory)) {
-			Directory.CreateDirectory(directory);
-		}
-		var jsonOptions = new JsonSerializerSettings() {
-			NullValueHandling = NullValueHandling.Ignore,
-			DefaultValueHandling = DefaultValueHandling.Ignore,
-			MissingMemberHandling = MissingMemberHandling.Ignore,
-			Formatting = Formatting.Indented,
-		};
+		var overrides = ToConfigurationOverrides(settings);
+		AddIfNotWhiteSpace(overrides, "Application:Theme", settings.Application.Theme);
+		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);
+		SaveConfigurationOverrides(overrides);
+	}
 
-		var json = JsonConvert.SerializeObject(settings, jsonOptions);
+	/// <summary>
+	/// 指定された構成キーのみを既存の設定ファイルへ反映します。
+	/// </summary>
+	public void SaveConfigurationOverrides(IReadOnlyDictionary<string, string?> overrides) {
+		ArgumentNullException.ThrowIfNull(overrides);
+		if (overrides.Count == 0) {
+			return;
+		}
+
 		lock (_sync) {
-			File.WriteAllText(FilePath, json);
+			var root = LoadWritableRoot();
+			var hasChanges = false;
+			foreach (var pair in overrides) {
+				if (string.IsNullOrWhiteSpace(pair.Key) || pair.Value is null) {
+					continue;
+				}
+
+				SetValue(root, pair.Key, pair.Value);
+				hasChanges = true;
+			}
+
+			if (!hasChanges) {
+				return;
+			}
+
+			EnsureDirectoryExists();
+			WriteJsonAtomically(root.ToString(Formatting.Indented));
 		}
 	}
 	/// <summary>
@@ -87,6 +107,82 @@ public sealed class ClientSettingsStore {
 	static void AddIfNotWhiteSpace(IDictionary<string, string?> map, string key, string? value) {
 		if (!string.IsNullOrWhiteSpace(value)) {
 			map[key] = value;
+		}
+	}
+
+	JObject LoadWritableRoot() {
+		if (!File.Exists(FilePath)) {
+			return new JObject();
+		}
+
+		var content = File.ReadAllText(FilePath);
+		if (string.IsNullOrWhiteSpace(content)) {
+			return new JObject();
+		}
+
+		try {
+			var token = JToken.Parse(content);
+			if (token is JObject root) {
+				return root;
+			}
+
+			throw new JsonException("clientsettings.json のルート要素がオブジェクトではありません。");
+		}
+		catch (JsonException ex) {
+			_bootstrapLogger.LogWarning(ex, "clientsettings.json の形式が不正なため保存を中止します。");
+			throw new InvalidOperationException("clientsettings.json の形式が不正なため保存できません。内容を確認してください。", ex);
+		}
+	}
+
+	void SetValue(JObject root, string keyPath, string value) {
+		var segments = keyPath.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		if (segments.Length == 0) {
+			return;
+		}
+
+		JObject current = root;
+		for (var i = 0; i < segments.Length - 1; i++) {
+			var segment = segments[i];
+			if (current[segment] is null) {
+				var created = new JObject();
+				current[segment] = created;
+				current = created;
+				continue;
+			}
+
+			if (current[segment] is not JObject child) {
+				throw new InvalidOperationException($"clientsettings.json の '{segment}' にオブジェクト以外の値があるため保存できません。");
+			}
+
+			current = child;
+		}
+
+		current[segments[^1]] = value;
+	}
+
+	void EnsureDirectoryExists() {
+		var directory = Path.GetDirectoryName(FilePath);
+		if (!string.IsNullOrWhiteSpace(directory)) {
+			Directory.CreateDirectory(directory);
+		}
+	}
+
+	void WriteJsonAtomically(string json) {
+		var directory = Path.GetDirectoryName(FilePath) ?? Directory.GetCurrentDirectory();
+		var tempFilePath = Path.Combine(directory, $"{Path.GetFileName(FilePath)}.{Guid.NewGuid():N}.tmp");
+		try {
+			File.WriteAllText(tempFilePath, json);
+			if (File.Exists(FilePath)) {
+				File.Replace(tempFilePath, FilePath, destinationBackupFileName: null, ignoreMetadataErrors: true);
+			}
+			else {
+				File.Move(tempFilePath, FilePath);
+			}
+		}
+		finally {
+			if (File.Exists(tempFilePath)) {
+				File.Delete(tempFilePath);
+			}
 		}
 	}
 }

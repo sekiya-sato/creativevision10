@@ -75,9 +75,9 @@ public partial class App : Application {
 	public static void SaveThemePreference(AppTheme theme) {
 		try {
 			var store = new ClientSettingsStore();
-			var settings = store.Load();
-			settings.Application.Theme = theme.ToString();
-			store.Save(settings);
+			store.SaveConfigurationOverrides(new Dictionary<string, string?> {
+				["Application:Theme"] = theme.ToString(),
+			});
 		}
 		catch (Exception ex) {
 			_bootstrapLogger.Warn(ex, "テーマ設定の保存に失敗しました。");
@@ -88,9 +88,9 @@ public partial class App : Application {
 	public static void SaveMainThemePreference(MainTheme theme) {
 		try {
 			var store = new ClientSettingsStore();
-			var settings = store.Load();
-			settings.Application.MainTheme = theme.ToString();
-			store.Save(settings);
+			store.SaveConfigurationOverrides(new Dictionary<string, string?> {
+				["Application:MainTheme"] = theme.ToString(),
+			});
 		}
 		catch (Exception ex) {
 			_bootstrapLogger.Warn(ex, "メインテーマ設定の保存に失敗しました。");
