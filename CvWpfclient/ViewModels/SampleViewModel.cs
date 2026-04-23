@@ -190,14 +190,15 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg001_CopyReply, DataType = typeof(string) };
 			/*
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg040_ConvertDb };
-			msg.DataType = typeof(string);
+			msg.Flag = CvFlag.MSg040_ConvertDb;
 			msg.DataMsg = "コンバートストリーミング DBConvert";
 			*/
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg040_ConvertDb };
-			msg.DataType = typeof(string);
+			msg.Flag = CvFlag.MSg050_Summary;
 			msg.DataMsg = "集計処理ストリーミング DBConvert";
+			/*
+			*/
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
 				StreamMessages.Insert(0, streamMsg.DataMsg);
 				ProgressValue = streamMsg.Progress;

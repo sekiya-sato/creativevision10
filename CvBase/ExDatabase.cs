@@ -327,6 +327,7 @@ public partial class ExDatabase : Database {
 		}
 		return 0;
 	}
+	/*
 	public bool CreateView<T>(bool isForce = false) where T : IViewClass, new() {
 		var ret = 0;
 		var viewsql = new T().CreateSql;
@@ -341,7 +342,7 @@ public partial class ExDatabase : Database {
 			ret = command.ExecuteNonQuery();
 		}
 		return (ret == 0);
-	}
+	}*/
 	public bool CreateDerivedTable<T>(bool isForce = false) where T : IDerivedClass, new() {
 		var ret = true;
 		if (isForce) {

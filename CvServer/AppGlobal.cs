@@ -75,8 +75,8 @@ public class AppGlobal {
 		UpdateDb.WriteVersionInfoAsync(db).Wait();
 		// DerivedClassの作成
 		ret = db.CreateDerivedTable<DerivedShohinColSiz>();
-
-
+		// 集計テーブル
+		ret = db.CreateTable<SummaryStock>();
 
 	}
 

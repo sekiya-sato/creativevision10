@@ -9,7 +9,84 @@ namespace CvBase;
 public interface ITranDetail {
 	public string DenDay { get; set; }
 	public long Id_Soko { get; set; }
+	public int CalcFlag { get; set; }
 	public List<Tran99Meisai>? Jmeisai { get; set; }
+}
+public interface ITranIdo {
+	public long Id_Ido { get; set; }
+}
+
+/// <summary>
+/// Tran系ファイルの出庫・入庫の区分、売上・仕入の区分などの共通的なコードを定義するクラス
+/// </summary>
+public class TranCalcBase {
+	/// <summary>
+	/// 倉庫基準で在庫計算のためのフラグを取得する。
+	/// </summary>
+	/// <param name="tableName"></param>
+	/// <returns></returns>
+	public static int GetCalcSoko(string tableName) {
+		var ret = 0;
+		if (tableName == nameof(Tran00Uriage)) {
+			ret = -1;
+		}
+		else if (tableName == nameof(Tran01Tenuri)) {
+			ret = -1;
+		}
+		else if (tableName == nameof(Tran03Shiire)) {
+			ret = 1;
+		}
+		else if (tableName == nameof(Tran05Ido)) {
+			ret = -1;
+		}
+		else if (tableName == nameof(Tran10IdoOut)) {
+			ret = -1;
+		}
+		else if (tableName == nameof(Tran11IdoIn)) {
+			ret = 0;
+		}
+		else if (tableName == nameof(Tran12Jyuchu)) {
+			ret = 0;
+		}
+		else if (tableName == nameof(Tran60Tana)) {
+			ret = 1;
+		}
+		return ret;
+	}
+	/// <summary>
+	/// 移動先基準で在庫計算のためのフラグを取得する。
+	/// </summary>
+	/// <param name="tableName"></param>
+	/// <returns></returns>
+	public static int GetCalcIdosaki(string tableName) {
+		var ret = 0;
+		if (tableName == nameof(Tran00Uriage)) {
+			ret = 0;
+		}
+		else if (tableName == nameof(Tran01Tenuri)) {
+			ret = 0;
+		}
+		else if (tableName == nameof(Tran03Shiire)) {
+			ret = 0;
+		}
+		else if (tableName == nameof(Tran05Ido)) {
+			ret = 1;
+		}
+		else if (tableName == nameof(Tran10IdoOut)) {
+			ret = 0;
+		}
+		else if (tableName == nameof(Tran11IdoIn)) {
+			ret = 1;
+		}
+		else if (tableName == nameof(Tran12Jyuchu)) {
+			ret = 0;
+		}
+		else if (tableName == nameof(Tran60Tana)) {
+			ret = 0;
+		}
+		return ret;
+	}
+
 }
 
 /// <summary>
@@ -634,7 +711,7 @@ public enum EnumShiire : int {
 [KeyDml("nk2", false, ["Id_Soko"])]
 [KeyDml("nk3", false, ["Id_Ido"])]
 [Comment("トランザクション：移動データ(即時) 倉庫からの出庫と移動先への入庫")]
-public sealed partial class Tran05Ido : TranAllHeader {
+public sealed partial class Tran05Ido : TranAllHeader, ITranIdo {
 	/// <summary>
 	/// 移動先キー
 	/// </summary>
@@ -669,7 +746,7 @@ public sealed partial class Tran05Ido : TranAllHeader {
 [KeyDml("nk2", false, ["Id_Soko"])]
 [KeyDml("nk3", false, ["Id_Ido"])]
 [Comment("トランザクション：移動データ(積送出庫) 倉庫からの出庫、積送中在庫へ(移動先への入庫予定)")]
-public sealed partial class Tran10IdoOut : TranAllHeader {
+public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo {
 	/// <summary>
 	/// 移動先キー
 	/// </summary>
@@ -703,7 +780,7 @@ public sealed partial class Tran10IdoOut : TranAllHeader {
 [KeyDml("nk2", false, ["Id_Soko"])]
 [KeyDml("nk3", false, ["Id_Ido"])]
 [Comment("トランザクション：移動データ(積送入庫) 積送中在庫(倉庫からの出庫)から移動先への入庫")]
-public sealed partial class Tran11IdoIn : TranAllHeader {
+public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo {
 	/// <summary>
 	/// 移動先キー
 	/// </summary>
