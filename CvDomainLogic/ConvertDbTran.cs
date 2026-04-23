@@ -3,6 +3,7 @@ using CvBase.Share;
 
 namespace CvDomainLogic;
 
+// SqlDepends: HC$tran_tori0, HC$tran_tori1, HC$tran_tana0, HC$tran_tana1, MasterShain, MasterTokui, MasterEndCustomer, MasterShohin, MasterMeisho, DerivedShohinColSiz
 public partial class ConvertDb {
 	/// <summary>
 	/// 本部売上変換
@@ -446,40 +447,37 @@ public partial class ConvertDb {
 	/// 明細サイズコード変換
 	/// </summary>
 	public int subCnvTranHeaderSize<T>(bool isInit = true) where T : ITranDetail {
-		var list = _toDb.Fetch<T>("where json_type(Jmeisai) = 'array'");
 		var cnt = 0;
-		var meisaicnt = 0;
-		foreach (var item in list) {
-			if (item.Jmeisai == null)
-				continue;
-			meisaicnt = subCnvTranMeisaiSize(item.Jmeisai);
-			if (meisaicnt > 0) {
-				cnt++;
-				_toDb.Update(item);
-			}
-		}
+		var tname = typeof(T).Name;
+		var sql = @$"
+UPDATE {tname}
+SET Jmeisai = json_replace(
+    Jmeisai,
+    '$.Id_Siz',
+    (
+        SELECT m.Id_Siz
+        FROM DerivedShohinColSiz m
+        WHERE m.Id_Shohin = json_extract({tname}.Jmeisai, '$.Id_Shohin')
+          AND m.Id_Col   = json_extract({tname}.Jmeisai, '$.Id_Col')
+          AND m.Code_Siz = json_extract({tname}.Jmeisai, '$.Code_Siz')
+    )
+)
+WHERE EXISTS (
+    SELECT 1
+    FROM DerivedShohinColSiz m
+    WHERE m.Id_Shohin = json_extract({tname}.Jmeisai, '$.Id_Shohin')
+      AND m.Id_Col   = json_extract({tname}.Jmeisai, '$.Id_Col')
+      AND m.Code_Siz = json_extract({tname}.Jmeisai, '$.Code_Siz')
+)
+AND json_extract({tname}.Jmeisai, '$.Id_Siz') = 0;
+";
+		cnt = _toDb.Execute(sql);
 		return cnt;
+		// SQLite の JSON 関数を使用して、Jmeisai 内のサイズコードを一括で更新する SQL クエリを実行する。
+		// このクエリは、Jmeisai 内の Id_Siz が 0 のレコードに対して、DerivedShohinColSiz テーブルから対応するサイズコードを取得して更新します。
+		// Executeメソッドの仕様で、正常終了は0を返すため、更新件数を正確に取得することはできませんが、クエリの実行自体は効率的に行われます。
+		// アプリ側でレコード1件づつの処理をした場合、実データ5万件程度で数10分、300万件で4時間以上かかって途中リタイア。
 	}
-	int subCnvTranMeisaiSize(List<Tran99Meisai> meisaiList) {
-		var meisaicnt = 0;
-		foreach (var meisai in meisaiList) {
-			if (meisai.Id_Siz > 0)
-				continue;
-			//var sizCode = meisai.Code_Siz;
-			//var shohin = _toDb.FirstOrDefault<MasterShohin>("where Id=@0", meisai.Id_Shohin);
-			//if (shohin?.Id == 0 || shohin?.SizeKu == null) continue;
-			var colsiz = _toDb.FirstOrDefault<DerivedShohinColSiz>("where Id_Shohin=@0 and Code_Siz=@1", meisai.Id_Shohin, meisai.Code_Siz);
-			if (colsiz?.Id == 0) continue;
-			if (colsiz != null) {
-				meisai.Id_Siz = colsiz.Id_Siz;
-				meisai.Code_Siz = colsiz.Code_Siz;
-				meisai.Mei_Siz = colsiz.Mei_Siz;
-				meisaicnt++;
-			}
-		}
-		return meisaicnt;
-	}
-
 	T? getMaster<T>(string code) where T : class, IBaseCodeName, new() {
 		if (string.IsNullOrWhiteSpace(code))
 			return null;

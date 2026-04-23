@@ -12,7 +12,7 @@ namespace CvDomainLogic;
 public record StreamStepProgress(string StepName, int Count, int Progress, bool IsCompleted = false, bool IsError = false, string? ErrorMessage = null);
 
 /// <summary>
-/// データベースを変換するクラス
+/// SqlDepends: データベースを変換するクラス
 /// </summary>
 public partial class ConvertDb {
 	ExDatabase _fromDb;
