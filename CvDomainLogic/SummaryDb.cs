@@ -107,6 +107,38 @@ GROUP BY
 ON CONFLICT(SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
 SET Su = Su + excluded.Su, vdu = {vdate};
 ";
+
+	public int CalcSummaryRealStock(string DateYyyymm) {
+		// DateTime.Now.ToDtStrDate2().Substring(0, 6)
+		var cnt = 0;
+		var deleteSql = "DELETE FROM SummaryRealStock";
+		var sql = @$"
+Insert Into SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su)
+SELECT
+  Id_Soko,
+  Id_Shohin,
+  Id_Col,
+  Id_Siz,
+  SUM(Su) AS TotalSu
+FROM SummaryStock
+WHERE SumMonth <= @0
+GROUP BY
+  Id_Soko,
+  Id_Shohin,
+  Id_Col,
+  Id_Siz;
+";
+		var sql2 = $"SELECT changes() AS updated_count";
+		_db.BeginTransaction();
+		var ret = _db.Execute(deleteSql);
+		ret = _db.Execute(sql, DateYyyymm);
+		cnt += _db.FirstOrDefault<int>(sql2);
+		_db.CompleteTransaction();
+		return cnt;
+	}
+
+
+
 }
 
 public record SummaryParameter(string DateYymmFrom, string DateYymmTo);

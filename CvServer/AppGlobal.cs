@@ -77,6 +77,10 @@ public class AppGlobal {
 		ret = db.CreateDerivedTable<DerivedShohinColSiz>();
 		// 集計テーブル
 		ret = db.CreateTable<SummaryStock>();
+		ret = db.CreateTable<SummaryRealStock>();
+		// 他、追加処理
+		//var summaryDb = new CvDomainLogic.SummaryDb(db);
+		//summaryDb.CalcSummaryRealStock(DateTime.Now.ToString("yyyyMM"));
 
 	}
 
