@@ -384,8 +384,9 @@
 							Style="{StaticResource MainMenuDashboardCard}">
 							<StackPanel Orientation="Horizontal">
 								<StackPanel>
-									<StackPanel Margin="0,0,0,8" HorizontalAlignment="Left"
-										Orientation="Horizontal">
+									<ScrollViewer Margin="0,0,0,8" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+										<StackPanel HorizontalAlignment="Left"
+											Orientation="Horizontal">
 										<Button Margin="10,0,10,0"
 											Background="{DynamicResource PrimaryButtonColor}"
 											Command="{Binding ShowUpgradeCommand}"
@@ -417,7 +418,8 @@
 											Opacity="0.8"
 											Style="{StaticResource MainMenuActionButton}"
 											ToolTip="メインメニュー配色切替" />
-									</StackPanel>
+										</StackPanel>
+									</ScrollViewer>
 									<TextBlock FontSize="16"
 										Foreground="{DynamicResource plainTextColor0}"
 										Opacity="0.7"

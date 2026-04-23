@@ -15,6 +15,22 @@
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
 
 ---
+## [2026-04-23] 16:16 MainMenuView の下段操作ボタン横スクロール対応
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuView.xaml line 385 付近のバージョンアップ、環境設定など5つのボタンを、ウィンドウ縮小時に右側が隠れても横スクロールで表示できるようにしたい
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 下段カード内の5ボタン行を `ScrollViewer` でラップし、`HorizontalScrollBarVisibility="Auto"` と `VerticalScrollBarVisibility="Disabled"` を設定して、通常時の配置を維持したまま縮小時だけ横スクロールできるよう修正
+### 技術決定 Why
+- 既存のボタンスタイルは `MinWidth` を持ち、左側固定カラムの影響でメイン領域が縮むと右端が見切れるため、ボタン定義やスタイルを変えずに対象行だけ `ScrollViewer` で包むのが最小差分で安全なため
+### 確認
+- Python の XML パースで `CvWpfclient/Views/MainMenuView.xaml` の構文が崩れていないことを確認。
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
+
+---
 ## [2026-04-20] 15:55 MasterShohinMenteView の商品画像表示エリアのはみ出し改善
 ### Agent
 - gpt-5.4 : OpenAI
