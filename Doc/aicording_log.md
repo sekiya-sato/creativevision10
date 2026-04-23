@@ -15,6 +15,23 @@
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
 
 ---
+## [2026-04-23] 16:44 MainMenuView の下段ボタン横スクロール不具合修正
+### Agent
+- GitHub Copilot : OpenAI
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：Window の横幅を縮めたときに下段の5つのボタン右側が隠れ、スクロールバーが役に立たない原因を解消したい。あわせて人間が修正した AGENTS.md も含めて commit したい
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 下段アクション領域の親を `StackPanel` から `Grid` に変更し、`ScrollViewer` に有限幅が渡るよう調整して横スクロールが有効に働く構成へ修正
+- AGENTS.md: ユーザー作業済みの変更を今回のコミット対象として同梱
+### 技術決定 Why
+- `ScrollViewer` の親が `StackPanel` だと横方向の測定が無制限になりやすく、スクロール対象の viewport が成立しないため、ボタン定義を崩さず親レイアウトだけを `Grid` に替えるのが最小差分で安全なため
+### 確認
+- `CvWpfclient/Views/MainMenuView.xaml` のエラー確認で問題が出ていないことを確認。
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` でビルド成功を確認。
+
+---
 ## [2026-04-23] 16:16 MainMenuView の下段操作ボタン横スクロール対応
 ### Agent
 - gpt-5.4 : OpenAI
