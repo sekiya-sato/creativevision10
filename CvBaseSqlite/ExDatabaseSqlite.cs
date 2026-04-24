@@ -13,7 +13,7 @@ namespace CvBaseSqlite;
 /// [Database class for SqliteDB]
 /// </summary>
 public partial class ExDatabaseSqlite : ExDatabase {
-
+	public static string Version { get; internal set; } = "";
 	public ExDatabaseSqlite(DbConnection conn) : base(conn) {
 		if (conn != null) {
 			if (conn.State == ConnectionState.Closed)
@@ -58,7 +58,9 @@ public partial class ExDatabaseSqlite : ExDatabase {
 PRAGMA journal_mode = WAL;
 PRAGMA synchronous = NORMAL;
 ";
-			var ret = cmd.ExecuteNonQuery();
+			cmd.ExecuteNonQuery();
+			cmd.CommandText = "SELECT sqlite_version();";
+			Version = cmd.ExecuteScalar()?.ToString() ?? "";
 		}
 	}
 
