@@ -136,9 +136,18 @@ GROUP BY
 		_db.CompleteTransaction();
 		return cnt;
 	}
-
-
-
+	public int CalcSummaryStockCumulative(string DateYyyymm) {
+		var cnt = 0;
+		/// 前月までの累計数量を更新 SummaryStock のCumulativeSuを更新
+		var sql = @$"
+";
+		var sql2 = $"SELECT changes() AS updated_count";
+		_db.BeginTransaction();
+		var ret = _db.Execute(sql, DateYyyymm);
+		cnt += _db.FirstOrDefault<int>(sql2);
+		_db.CompleteTransaction();
+		return cnt;
+	}
 }
 
 public record SummaryParameter(string DateYymmFrom, string DateYymmTo);
