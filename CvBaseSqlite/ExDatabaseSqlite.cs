@@ -21,11 +21,12 @@ public partial class ExDatabaseSqlite : ExDatabase {
 		}
 	}
 	public static ExDatabaseSqlite GetDbConn(string dbfile, bool isOpen = true) {
-		// パフォーマンスと並行性を最大化する構成（WALモード併用）
+		// パフォーマンスと並行性を最大化する構成（WALモード併用）// Microsoft.Data.Sqliteでは、journal mode=WAL; は使えない
 		string advancedConnectionString = $"Data Source={dbfile};Mode=ReadWriteCreate;Cache=Shared;Pooling=True;";
 		var conn = new SqliteConnection(advancedConnectionString);
 		if (isOpen) {
 			conn.Open();
+			EnableWalMode(conn);
 		}
 		var db = new ExDatabaseSqlite(conn);
 		return db;
@@ -35,6 +36,7 @@ public partial class ExDatabaseSqlite : ExDatabase {
 			var connInner = (SqliteConnection)Connection;
 			if (connInner.State == ConnectionState.Closed)
 				connInner.Open();
+			EnableWalMode(connInner);
 		}
 	}
 	public override void Close() {
@@ -46,6 +48,21 @@ public partial class ExDatabaseSqlite : ExDatabase {
 			}
 		}
 	}
+	/// <summary>
+	/// WALモードを有効にする : WALモードは、複数のプロセスが同時にデータベースにアクセスできるようにするためのSQLiteの機能で、パフォーマンスと並行性を向上させることができます。
+	/// </summary>
+	/// <param name="conn"></param>
+	static void EnableWalMode(SqliteConnection conn) {
+		using (var cmd = conn.CreateCommand()) {
+			cmd.CommandText = @"
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+";
+			var ret = cmd.ExecuteNonQuery();
+		}
+	}
+
+
 	static readonly string _default_varchar = " NOT NULL DEFAULT ''"; // not null ではない varchar型のデフォルト定義
 
 	/// <summary>

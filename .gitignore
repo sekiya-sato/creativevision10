@@ -52,6 +52,8 @@ wrk/
 .playwright-mcp/
 tmp-*
 graphify-out/
+*-shm
+*-wal
 # Optional local notes
 
 
