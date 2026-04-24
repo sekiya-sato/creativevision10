@@ -140,6 +140,17 @@ GROUP BY
 		var cnt = 0;
 		/// 前月までの累計数量を更新 SummaryStock のCumulativeSuを更新
 		var sql = @$"
+UPDATE SummaryStock s1
+SET s1.CumulativeSu = (
+  SELECT SUM(s0.Su)
+  FROM SummaryStock AS s0
+  WHERE s0.Id_Soko = s1.Id_Soko
+    AND s0.Id_Shohin = s1.Id_Shohin
+    AND s0.Id_Col = s1.Id_Col
+    AND s0.Id_Siz = s1.Id_Siz
+    AND s0.SumMonth < s1.SumMonth
+)
+WHERE s1.SumMonth <= @0;
 ";
 		var sql2 = $"SELECT changes() AS updated_count";
 		_db.BeginTransaction();
