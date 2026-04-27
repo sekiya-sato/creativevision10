@@ -82,7 +82,7 @@ public partial class CoreService {
 
 		// ストリーミングをメッセージに変換
 		// ConvertAllAsyncStream()が既にエラーハンドリングしているため、try-catchは不要
-		await foreach (var progress in summaryDb.SummaryAllAsyncStream(new SummaryParameter("201905", "201906")).WithCancellation(ct)) {
+		await foreach (var progress in summaryDb.SummaryAllAsyncStream(new SummaryParameter("201001", "202612")).WithCancellation(ct)) { // "201905", "201906"
 			yield return new StreamMsg {
 				Flag = request.Flag,
 				Code = progress.IsError ? -1 : 0,

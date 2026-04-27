@@ -25,7 +25,7 @@ public class TranCalcBase {
 	/// </summary>
 	/// <param name="tableName"></param>
 	/// <returns></returns>
-	public static int GetCalcSoko(string tableName) {
+	public static int GetCalcSoko_old(string tableName) {
 		var ret = 0;
 		if (tableName == nameof(Tran00Uriage)) {
 			ret = -1;
@@ -54,35 +54,49 @@ public class TranCalcBase {
 		return ret;
 	}
 	/// <summary>
-	/// 移動先基準で在庫計算のためのフラグを取得する。
+	/// 在庫、入庫、出庫、移動中のフラグを取得する
 	/// </summary>
 	/// <param name="tableName"></param>
 	/// <returns></returns>
-	public static int GetCalcIdosaki(string tableName) {
-		var ret = 0;
+	public static Tuple<int, int, int, int> GetCalcSoko(string tableName) {
+		var ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
 		if (tableName == nameof(Tran00Uriage)) {
-			ret = 0;
+			ret = new Tuple<int, int, int, int>(-1, 0, 1, 0);
 		}
 		else if (tableName == nameof(Tran01Tenuri)) {
-			ret = 0;
+			ret = new Tuple<int, int, int, int>(-1, 0, 1, 0);
 		}
 		else if (tableName == nameof(Tran03Shiire)) {
-			ret = 0;
+			ret = new Tuple<int, int, int, int>(1, 1, 0, 0);
 		}
 		else if (tableName == nameof(Tran05Ido)) {
-			ret = 1;
+			ret = new Tuple<int, int, int, int>(-1, 0, 1, 0);
 		}
 		else if (tableName == nameof(Tran10IdoOut)) {
-			ret = 0;
+			ret = new Tuple<int, int, int, int>(-1, 0, 1, 0);
 		}
 		else if (tableName == nameof(Tran11IdoIn)) {
-			ret = 1;
+			ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
 		}
-		else if (tableName == nameof(Tran12Jyuchu)) {
-			ret = 0;
+		// Tran12Jyuchu Tran13Hachu Tran60Tana
+		return ret;
+	}
+
+	/// <summary>
+	/// 移動先基準で在庫計算のためのフラグを取得する。移動中は移動先の在庫に予定として割り当てる
+	/// </summary>
+	/// <param name="tableName"></param>
+	/// <returns></returns>
+	public static Tuple<int, int, int, int> GetCalcIdosaki(string tableName) {
+		var ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
+		if (tableName == nameof(Tran05Ido)) {
+			ret = new Tuple<int, int, int, int>(1, 1, 0, 0);
 		}
-		else if (tableName == nameof(Tran60Tana)) {
-			ret = 0;
+		else if (tableName == nameof(Tran10IdoOut)) {
+			ret = new Tuple<int, int, int, int>(0, 0, 0, 1);
+		}
+		else if (tableName == nameof(Tran11IdoIn)) {
+			ret = new Tuple<int, int, int, int>(1, 1, 0, -1);
 		}
 		return ret;
 	}

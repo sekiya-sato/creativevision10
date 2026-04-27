@@ -66,7 +66,7 @@ public class SummaryDb {
 		var calcFlg = TranCalcBase.GetCalcSoko(tableName);
 		var sql = CreateSummaryStockSql(tableName, "Id_Soko", calcFlg, Common.GetVdate());
 		var sql2 = $"SELECT changes() AS updated_count";
-		if (calcFlg != 0) {
+		if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
 			_db.BeginTransaction();
 			var ret = _db.Execute(sql, param.DateYymmFrom, param.DateYymmTo + "99");
 			cnt += _db.FirstOrDefault<int>(sql2);
@@ -74,8 +74,8 @@ public class SummaryDb {
 		}
 		if (typeof(ITranIdo).IsAssignableFrom(typeof(T))) {
 			var calcFlg2 = TranCalcBase.GetCalcIdosaki(tableName);
-			if (calcFlg2 != 0) {
-				sql = CreateSummaryStockSql(tableName, "Id_Ido", calcFlg, Common.GetVdate());
+			if (calcFlg2.Item1 != 0 || calcFlg2.Item2 != 0 || calcFlg2.Item3 != 0 || calcFlg2.Item4 != 0) {
+				sql = CreateSummaryStockSql(tableName, "Id_Ido", calcFlg2, Common.GetVdate());
 				_db.BeginTransaction();
 				var ret = _db.Execute(sql, param.DateYymmFrom, param.DateYymmTo + "99");
 				cnt += _db.FirstOrDefault<int>(sql2);
@@ -84,17 +84,51 @@ public class SummaryDb {
 		}
 		return cnt;
 	}
-	private string CreateSummaryStockSql(string tableName, string idSoko, int calcFlg, long vdate) => $@"
-INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
+	/*
+	[ObservableProperty]
+	int inQty;
+	/// <summary>
+	/// 出庫数
+	/// </summary>
+	[ObservableProperty]
+	int outQty;
+	/// <summary>
+	/// 移動中(入庫予定)
+	/// </summary>
+	[ObservableProperty]
+	int transitQty;
+	/// <summary>
+	/// 調整数
+	/// </summary>
+	[ObservableProperty]
+	int adjustQty;
+	/// <summary>
+	/// 棚卸日
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	string stocktakeDdate = "19010101";
+	/// <summary>
+	/// 棚卸数
+	/// </summary>
+	[ObservableProperty]
+	int actualQty;
+}	 
+	 */
+	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlg, long vdate) => $@"
+INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, InQty, OutQty, TransitQty)
 SELECT
   substr(t.DenDay, 1, 6) AS SumMonth,
   t.{idSoko} AS Id_Soko,
   json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
   json_extract(j.value, '$.Id_Col')    AS Id_Col,
   json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg})   AS Su,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item1})   AS Su,
   {vdate} vdc,
-  {vdate} vdu
+  {vdate} vdu,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item2})   AS InQty,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item3})   AS OutQty,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item4})   AS TransitQty
 FROM {tableName} AS t,
      json_each(t.Jmeisai) AS j
 WHERE t.DenDay BETWEEN @0 AND @1
@@ -105,7 +139,11 @@ GROUP BY
   Id_Col,
   Id_Siz
 ON CONFLICT(SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
-SET Su = Su + excluded.Su, vdu = {vdate};
+SET Su = Su + excluded.Su, vdu = {vdate},
+    InQty = InQty + excluded.InQty,
+    OutQty = OutQty + excluded.OutQty,
+    TransitQty = TransitQty + excluded.TransitQty
+;
 ";
 
 	public int CalcSummaryRealStock(string DateYyyymm) {
@@ -138,19 +176,35 @@ GROUP BY
 	}
 	public int CalcSummaryStockCumulative(string DateYyyymm) {
 		var cnt = 0;
-		/// 前月までの累計数量を更新 SummaryStock のCumulativeSuを更新
+		/// 当月までの累計数量を更新 SummaryStock のCumulativeSuを更新
 		var sql = @$"
-UPDATE SummaryStock s1
-SET s1.CumulativeSu = (
-  SELECT SUM(s0.Su)
-  FROM SummaryStock AS s0
-  WHERE s0.Id_Soko = s1.Id_Soko
-    AND s0.Id_Shohin = s1.Id_Shohin
-    AND s0.Id_Col = s1.Id_Col
-    AND s0.Id_Siz = s1.Id_Siz
-    AND s0.SumMonth < s1.SumMonth
+WITH MonthlySum AS (
+  SELECT 
+    Id_Soko, 
+    Id_Shohin, 
+    Id_Col, 
+    Id_Siz, 
+    SumMonth,
+    SUM(Su) OVER (
+      PARTITION BY Id_Soko, Id_Shohin, Id_Col, Id_Siz 
+      ORDER BY SumMonth
+    -- 前月までの合計を計算（現在行を含まない）
+    -- ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+    ) as CalcCumulative
+  FROM SummaryStock
+  WHERE SumMonth <= @0
 )
-WHERE s1.SumMonth <= @0;
+UPDATE SummaryStock
+SET CumulativeSu = (
+  SELECT IFNULL(CalcCumulative, 0)
+  FROM MonthlySum
+  WHERE MonthlySum.Id_Soko   = SummaryStock.Id_Soko
+    AND MonthlySum.Id_Shohin = SummaryStock.Id_Shohin
+    AND MonthlySum.Id_Col    = SummaryStock.Id_Col
+    AND MonthlySum.Id_Siz    = SummaryStock.Id_Siz
+    AND MonthlySum.SumMonth  = SummaryStock.SumMonth
+)
+WHERE SumMonth <= @0;
 ";
 		var sql2 = $"SELECT changes() AS updated_count";
 		_db.BeginTransaction();
