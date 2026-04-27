@@ -214,5 +214,3 @@ WHERE SumMonth <= @0;
 		return cnt;
 	}
 }
-
-public record SummaryParameter(string DateYymmFrom, string DateYymmTo);

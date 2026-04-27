@@ -2,6 +2,7 @@ using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
+using CvBase;
 using CvWpfclient.Helpers;
 using Grpc.Core;
 using Microsoft.Extensions.Configuration;
@@ -195,8 +196,10 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			msg.Flag = CvFlag.MSg040_ConvertDb;
 			msg.DataMsg = "コンバートストリーミング DBConvert";
 			*/
-			msg.Flag = CvFlag.MSg050_Summary;
-			msg.DataMsg = "集計処理ストリーミング DBConvert";
+			var summaryParam = new SummaryParameter("202001", "202602");
+
+			//msg.DataMsg = "集計処理ストリーミング DBConvert";
+			msg = new CvMsg { Flag = CvFlag.MSg050_Summary, Code = 0, DataType = typeof(SummaryParameter), DataMsg = Common.SerializeObject(summaryParam) };
 			/*
 			*/
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {

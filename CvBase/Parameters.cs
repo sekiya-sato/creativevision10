@@ -177,3 +177,6 @@ public sealed class OutDataHhtMasterParam {
 	}
 }
 
+public record SummaryParameter(string DateYymmFrom, string DateYymmTo);
+
+

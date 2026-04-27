@@ -1,4 +1,6 @@
 using CodeShare;
+using CvAsset;
+using CvBase;
 using CvBaseOracle;
 using CvDomainLogic;
 using Microsoft.AspNetCore.Authorization;
@@ -80,9 +82,23 @@ public partial class CoreService {
 	private async IAsyncEnumerable<StreamMsg> HandleSummaryStreamAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvMsg request) {
 		var summaryDb = new SummaryDb(_db);
 
+		var param = Common.DeserializeObject(request.DataMsg, request.DataType);
+		if (param is not SummaryParameter summaryParam) {
+			yield return new StreamMsg {
+				Flag = request.Flag,
+				Code = -1,
+				DataType = typeof(string),
+				DataMsg = $"エラー: パラメータのデシリアライズに失敗 ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+				Progress = 0,
+				IsCompleted = true,
+				IsError = true
+			};
+			yield break;
+		}
+
 		// ストリーミングをメッセージに変換
 		// ConvertAllAsyncStream()が既にエラーハンドリングしているため、try-catchは不要
-		await foreach (var progress in summaryDb.SummaryAllAsyncStream(new SummaryParameter("201001", "202612")).WithCancellation(ct)) { // "201905", "201906"
+		await foreach (var progress in summaryDb.SummaryAllAsyncStream(summaryParam).WithCancellation(ct)) { // "201905", "201906"
 			yield return new StreamMsg {
 				Flag = request.Flag,
 				Code = progress.IsError ? -1 : 0,
