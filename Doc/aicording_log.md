@@ -15,6 +15,25 @@
 - [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
 
 ---
+
+## [2026-04-27] 16:50 MasterMeishoMenteViewのコード/並び順入力幅調整
+### Agent
+- gpt-5.4 : github-copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MasterMeishoMenteView.xaml でコードの TextBox 幅を 1/3 程度にし、並び順は数値なので右寄せで 1/5 程度に縮めたい
+### 実施内容
+- CvWpfclient/Views/01Master/MasterMeishoMenteView.xaml: `CurrentEdit.Code` の TextBox に `Width="200"` と `HorizontalAlignment="Left"` を追加し、詳細フォーム内でフル幅に広がらないよう調整
+- CvWpfclient/Views/01Master/MasterMeishoMenteView.xaml: `CurrentEdit.Odr` の TextBox に `Width="120"`、`HorizontalAlignment="Left"`、`TextAlignment="Right"` を追加し、数値入力向けの幅と右寄せ表示に調整
+### 技術決定 Why
+- 親列が `*` 幅のままでも対象 2 項目だけを局所的に短くでき、他の入力欄や全体レイアウトへ波及しにくい最小差分にするため固定幅 + 左寄せを採用した
+- 並び順は数値項目のため、`TextAlignment="Right"` を付けて視認性と入力時の整列性を優先した
+### 確認
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse(r'CvWpfclient/Views/01Master/MasterMeishoMenteView.xaml'); print('XML_OK')"` で XML 整形式を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認
+
+---
 ## [2026-04-23] 17:52 ClientSettingsStore の部分更新保存対応
 ### Agent
 - gpt-5.4 : OpenAI

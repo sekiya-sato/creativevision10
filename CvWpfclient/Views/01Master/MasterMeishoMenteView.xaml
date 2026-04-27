@@ -270,6 +270,7 @@
 									Style="{StaticResource FormLabel}"
 									Text="コード" />
 								<TextBox Grid.Row="0" Grid.Column="1"
+									Width="200" HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="コード"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Code}" />
@@ -294,9 +295,10 @@
 									Style="{StaticResource FormLabel}"
 									Text="並び順" />
 								<TextBox Grid.Row="3" Grid.Column="1"
+									Width="120" HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="並び順"
 									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Odr}" />
+									Text="{Binding CurrentEdit.Odr}" TextAlignment="Right" />
 
 								<TextBlock Grid.Row="4"
 									Style="{StaticResource FormLabel}"
