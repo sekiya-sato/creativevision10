@@ -192,23 +192,23 @@
 								</StackPanel>
 							</Button>
 						</Grid>
-						<TextBox Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="4"
+						<TextBox Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2"
 							Height="30"
-							Margin="10,0,-17,0" VerticalAlignment="Center"
+							Margin="10,0,10,0" VerticalAlignment="Center"
 							d:Text="住所1"
 							Style="{DynamicResource MaterialDesignBody*}"
 							Text="{Binding Current.Address1}"
 							TextWrapping="Wrap" />
-						<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+						<TextBox Grid.Row="1" Grid.Column="5" Grid.ColumnSpan="2"
 							Height="30"
-							Margin="10,0,10,0" VerticalAlignment="Center"
+							Margin="0,0,0,0" VerticalAlignment="Center"
 							d:Text="住所2"
 							Style="{DynamicResource MaterialDesignBody*}"
 							Text="{Binding Current.Address2}"
 							TextWrapping="Wrap" />
-						<TextBox Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="4"
+						<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="6"
 							Height="30"
-							Margin="10,0,-17,0" VerticalAlignment="Center"
+							Margin="10,0,0,0" VerticalAlignment="Center"
 							d:Text="住所3"
 							Style="{DynamicResource MaterialDesignBody*}"
 							Text="{Binding Current.Address3}"
