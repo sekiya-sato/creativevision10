@@ -34,7 +34,7 @@ Condition:
 - Restore all projects: `dotnet restore "creativevision10.slnx"`
 - Build solution: `dotnet build "creativevision10.slnx"`
 - Build server only: `dotnet build "CvServer/CvServer.csproj"`
-- Build WPF client: `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true`
+- Build WPF client: `dotnet build "CvWpfclient/CvWpfclient.csproj"`
 
 ## Coding & WPF Standards
 - **Style**: `.editorconfig` (CS), `Settings.XamlStyler` (XAML). File-scoped namespaces.
