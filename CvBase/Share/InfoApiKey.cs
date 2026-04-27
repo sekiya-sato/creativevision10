@@ -3,6 +3,7 @@ namespace CvBase.Share;
 /// <summary>
 /// クライアントアプリケーションで使用するAPIキーや設定情報のルートオブジェクト
 /// </summary>
+[Obsolete("このクラスは現在使用していません。APIキーはサーバのみで保持します。")]
 public sealed class InfoApiKey {
 
 	public string? DecriptKey { get; set; }
