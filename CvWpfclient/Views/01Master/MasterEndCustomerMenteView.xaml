@@ -281,6 +281,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="コード" />
 								<TextBox Grid.Row="0" Grid.Column="1"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="コード"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Code}" />
@@ -330,93 +332,103 @@
 									<ComboBoxItem Content="男性" />
 								</ComboBox>
 
-							<TextBlock Grid.Row="6"
-								Style="{StaticResource FormLabel}"
-								Text="〒" />
-							<Grid Grid.Row="6" Grid.Column="1">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="170" />
-									<ColumnDefinition Width="Auto" />
-									<ColumnDefinition Width="*" />
-								</Grid.ColumnDefinitions>
-								<TextBox Grid.Column="0"
-									materialDesign:HintAssist.Hint="郵便番号"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.PostalCode, UpdateSourceTrigger=PropertyChanged}" />
-								<Button Grid.Column="1"
-									Command="{Binding SearchPostalCodeCommand}"
-									Style="{StaticResource PostalSearchButton}"
-									ToolTip="郵便番号から住所を検索">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon Margin="0,0,6,0"
-											VerticalAlignment="Center"
-											Kind="Magnify" />
-										<TextBlock VerticalAlignment="Center"
-											Text="〒API検索" />
-									</StackPanel>
-								</Button>
-							</Grid>
-
-								<TextBlock Grid.Row="7"
+								<TextBlock Grid.Row="6"
 									Style="{StaticResource FormLabel}"
-									Text="住所1" />
+									Text="〒" />
+								<Grid Grid.Row="6" Grid.Column="1">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="170" />
+										<ColumnDefinition Width="Auto" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<TextBox Grid.Column="0"
+										materialDesign:HintAssist.Hint="郵便番号"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding CurrentEdit.PostalCode, UpdateSourceTrigger=PropertyChanged}" />
+									<Button Grid.Column="1"
+										Command="{Binding SearchPostalCodeCommand}"
+										Style="{StaticResource PostalSearchButton}"
+										ToolTip="郵便番号から住所を検索">
+										<StackPanel Orientation="Horizontal">
+											<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+												Kind="Magnify" />
+											<TextBlock VerticalAlignment="Center"
+												Text="〒API検索" />
+										</StackPanel>
+									</Button>
+								</Grid>
+								<StackPanel Grid.Row="7"
+									Orientation="Vertical">
+									<TextBlock Margin="0,5,0,0"
+										Style="{StaticResource FormLabel}"
+										Text="都道府県" />
+									<TextBlock Margin="0,5,0,0"
+										Style="{StaticResource FormLabel}"
+										Text="市区町村" />
+								</StackPanel>
 								<TextBox Grid.Row="7" Grid.Column="1"
-									materialDesign:HintAssist.Hint="住所1"
+									Width="200"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="都道府県"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Address1}" />
-
-								<TextBlock Grid.Row="8"
-									Style="{StaticResource FormLabel}"
-									Text="住所2" />
-								<TextBox Grid.Row="8" Grid.Column="1"
-									materialDesign:HintAssist.Hint="住所2"
+								<TextBox Grid.Row="7" Grid.Column="1"
+									Width="200"
+									Margin="210,0,0,0" HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="市区町村"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Address2}" />
 
-								<TextBlock Grid.Row="9"
+								<TextBlock Grid.Row="8"
 									Style="{StaticResource FormLabel}"
 									Text="住所3" />
-								<TextBox Grid.Row="9" Grid.Column="1"
+								<TextBox Grid.Row="8" Grid.Column="1"
 									materialDesign:HintAssist.Hint="住所3"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Address3}" />
 
-								<TextBlock Grid.Row="10"
+								<TextBlock Grid.Row="9"
 									Style="{StaticResource FormLabel}"
 									Text="TEL" />
-								<TextBox Grid.Row="10" Grid.Column="1"
+								<TextBox Grid.Row="9" Grid.Column="1"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="TEL"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Tel}" />
 
-								<TextBlock Grid.Row="11"
+								<TextBlock Grid.Row="10"
 									Style="{StaticResource FormLabel}"
 									Text="Mail" />
-								<TextBox Grid.Row="11" Grid.Column="1"
+								<TextBox Grid.Row="10" Grid.Column="1"
 									materialDesign:HintAssist.Hint="Mail"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Mail}" />
 
-								<TextBlock Grid.Row="12"
+								<TextBlock Grid.Row="11"
 									Style="{StaticResource FormLabel}"
 									Text="誕生日(yyyyMMdd)" />
-								<TextBox Grid.Row="12" Grid.Column="1"
+								<TextBox Grid.Row="11" Grid.Column="1"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="誕生日(yyyyMMdd)"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Birthday}" />
 
-								<TextBlock Grid.Row="13"
+								<TextBlock Grid.Row="12"
 									Style="{StaticResource FormLabel}"
 									Text="誕生日(MMdd)" />
-								<TextBox Grid.Row="13" Grid.Column="1"
+								<TextBox Grid.Row="12" Grid.Column="1"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="誕生日(MMdd)"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.BirthNoyear}" />
 
-								<TextBlock Grid.Row="14"
+								<TextBlock Grid.Row="13"
 									Style="{StaticResource FormLabel}"
 									Text="店舗" />
-								<DockPanel Grid.Row="14" Grid.Column="1"
+								<DockPanel Grid.Row="13" Grid.Column="1"
 									Margin="0,4">
 									<helpers:SearchTextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
@@ -436,13 +448,12 @@
 									</TextBlock>
 								</DockPanel>
 
-								<TextBlock Grid.Row="15"
+								<TextBlock Grid.Row="14"
 									Style="{StaticResource FormLabel}"
 									Text="店舗名" />
-								<TextBox Grid.Row="15" Grid.Column="1"
-									materialDesign:HintAssist.Hint="店舗名"
-									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True">
+								<TextBox Grid.Row="14" Grid.Column="1"
+									materialDesign:HintAssist.Hint="店舗名" IsReadOnly="True"
+									Style="{StaticResource FormTextBox}">
 									<TextBox.Text>
 										<MultiBinding StringFormat="{}[{0}] {1}">
 											<Binding Path="CurrentEdit.VTenpo.Cd" />
@@ -451,41 +462,45 @@
 									</TextBox.Text>
 								</TextBox>
 
-								<TextBlock Grid.Row="16"
+								<TextBlock Grid.Row="15"
 									Style="{StaticResource FormLabel}"
 									Text="ポイント" />
-								<TextBox Grid.Row="16" Grid.Column="1"
+								<TextBox Grid.Row="15" Grid.Column="1"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="ポイント"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Point}" />
 
-								<TextBlock Grid.Row="17"
+								<TextBlock Grid.Row="16"
 									Style="{StaticResource FormLabel}"
 									Text="累計購買回数" />
-								<TextBox Grid.Row="17" Grid.Column="1"
+								<TextBox Grid.Row="16" Grid.Column="1"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="累計購買回数"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.SalesCount}" />
 
-								<TextBlock Grid.Row="18"
+								<TextBlock Grid.Row="17"
 									Style="{StaticResource FormLabel}"
 									Text="累計購買金額" />
-								<TextBox Grid.Row="18" Grid.Column="1"
+								<TextBox Grid.Row="17" Grid.Column="1"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="累計購買金額"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.SalesKingaku}" />
 
-								<TextBlock Grid.Row="19"
+								<TextBlock Grid.Row="18"
 									Style="{StaticResource FormLabel}"
 									Text="メモ" />
-								<TextBox Grid.Row="19" Grid.Column="1"
+								<TextBox Grid.Row="18" Grid.Column="1"
 									MinHeight="60"
-									materialDesign:HintAssist.Hint="メモ"
-									AcceptsReturn="True"
+									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Memo}"
-									TextWrapping="Wrap"
-									VerticalScrollBarVisibility="Auto" />
+									TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
 							</Grid>
 						</ScrollViewer>
 					</TabItem>
@@ -515,7 +530,8 @@
 								d:ItemsSource="{d:SampleData ItemCount=3}"
 								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 								AutoGenerateColumns="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
-								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}" IsReadOnly="True"
+								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+								IsReadOnly="True"
 								ItemsSource="{Binding CurrentEdit.Jsub}"
 								Style="{StaticResource MaterialDesignDataGrid}"
 								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
