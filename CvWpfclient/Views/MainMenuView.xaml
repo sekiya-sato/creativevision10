@@ -362,7 +362,7 @@
 											Margin="4,4,0,0" Panel.ZIndex="1"
 											FontSize="11"
 											Foreground="{DynamicResource MainMenuChartTextColor}"
-											Text="℃" />
+											Text="&#x0a;℃" />
 										<!--  チャート  -->
 										<lvc:CartesianChart
 											Height="130"

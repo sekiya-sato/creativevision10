@@ -43,7 +43,7 @@ public partial class WeatherService : IWeatherService {
 	[AllowAnonymous]
 	public async Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CancellationToken ct = default) {
 		try {
-			var url = $"https://api.openweathermap.org/data/2.5/forecast?q={region}&appid={GetApiKey()}&units=metric&lang=ja&cnt=16";
+			var url = $"https://api.openweathermap.org/data/2.5/forecast?q={region}&appid={GetApiKey()}&units=metric&lang=ja&cnt=24";
 			var json = await httpClient.GetFromJsonAsync<JsonElement>(url, _jsonOptions, ct);
 			return ParseForecast(json);
 		}

@@ -502,7 +502,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			LabelsPaint = new SolidColorPaint(textColor),
 			SeparatorsPaint = new SolidColorPaint(separatorColor)
 		}];
-		ForecastMargin = new LiveChartsCore.Measure.Margin(0, 0, 0, 0);
+		ForecastMargin = new LiveChartsCore.Measure.Margin(4, 8, 4, 8);
 		ForecastSeries = [
 			new LineSeries<ObservablePoint> {
 					Values = values,
