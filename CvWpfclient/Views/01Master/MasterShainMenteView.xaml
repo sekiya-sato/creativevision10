@@ -267,6 +267,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="コード" />
 								<TextBox Grid.Row="1" Grid.Column="1"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="コード"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Code}" />
