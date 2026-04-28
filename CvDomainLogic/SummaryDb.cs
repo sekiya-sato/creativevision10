@@ -11,12 +11,12 @@ public class SummaryDb {
 		_db = db;
 		_logger = new NLogExtender<SummaryDb>();
 	}
-	public async IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(SummaryParameter param) {
+	public async IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(SummaryDateParameter param) {
 		_logger.LogInformation("処理開始");
 		var start = DateTime.Now;
 
 		// ToDo: 最終的に実行させる処理を整理
-		var steps = new (string Name, Func<SummaryParameter, int> Action)[] {
+		var steps = new (string Name, Func<SummaryDateParameter, int> Action)[] {
 			/*
 			*/
 			("Summary : Tran00Uriage", CalcSummaryStock<Tran00Uriage>),
@@ -60,7 +60,7 @@ public class SummaryDb {
 		yield return new StreamStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
 	}
 
-	private int CalcSummaryStock<T>(SummaryParameter param) where T : ITranDetail {
+	private int CalcSummaryStock<T>(SummaryDateParameter param) where T : ITranDetail {
 		var cnt = 0;
 		var tableName = typeof(T).Name;
 		var calcFlg = TranCalcBase.GetCalcSoko(tableName);

@@ -177,6 +177,18 @@ public sealed class OutDataHhtMasterParam {
 	}
 }
 
-public record SummaryParameter(string DateYymmFrom, string DateYymmTo);
+/// <summary>
+/// 在庫集計テーブルを計算する際の期間指定パラメータ
+/// </summary>
+/// <param name="DateYymmFrom"></param>
+/// <param name="DateYymmTo"></param>
+public record SummaryDateParameter(string DateYymmFrom, string DateYymmTo);
 
+/// <summary>
+/// 在庫集計テーブルを計算する際のトランID指定パラメータ
+/// </summary>
+/// <param name="tableName"></param>
+/// <param name="tranId"></param>
+/// <param name="calcFlag">登録+1, 修正-1,+1, 削除-1</param>
+public record SummaryTranIdParameter(string tableName, long tranId, int calcFlag);
 

@@ -83,7 +83,7 @@ public partial class CoreService {
 		var summaryDb = new SummaryDb(_db);
 
 		var param = Common.DeserializeObject(request.DataMsg, request.DataType);
-		if (param is not SummaryParameter summaryParam) {
+		if (param is not SummaryDateParameter summaryParam) {
 			yield return new StreamMsg {
 				Flag = request.Flag,
 				Code = -1,
