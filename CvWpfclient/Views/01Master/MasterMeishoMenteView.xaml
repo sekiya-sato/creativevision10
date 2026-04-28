@@ -136,11 +136,10 @@
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
 						Opacity="0.3" />
 					<Label Margin="0,0,8,0" VerticalAlignment="Center"
-						FontSize="13" Foreground="{DynamicResource TitleColor}"
-						Content="区分選択" />
+						Content="区分選択" FontSize="13"
+						Foreground="{DynamicResource TitleColor}" />
 					<ComboBox Width="280"
-						Margin="10,0,0,0"
-						VerticalAlignment="Center"
+						Margin="10,0,0,0" VerticalAlignment="Center"
 						ItemsSource="{Binding KubunList}"
 						SelectedItem="{Binding SelectedKubun}"
 						Style="{StaticResource MaterialDesignOutlinedComboBox}">
@@ -270,7 +269,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="コード" />
 								<TextBox Grid.Row="0" Grid.Column="1"
-									Width="200" HorizontalAlignment="Left"
+									Width="200"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="コード"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Code}" />
@@ -295,10 +295,12 @@
 									Style="{StaticResource FormLabel}"
 									Text="並び順" />
 								<TextBox Grid.Row="3" Grid.Column="1"
-									Width="120" HorizontalAlignment="Left"
+									Width="120"
+									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="並び順"
 									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Odr}" TextAlignment="Right" />
+									Text="{Binding CurrentEdit.Odr}"
+									TextAlignment="Right" />
 
 								<TextBlock Grid.Row="4"
 									Style="{StaticResource FormLabel}"
@@ -325,8 +327,9 @@
 
 
 								<TextBlock Grid.Row="6"
+									d:Text="登録日/修正日"
 									Style="{StaticResource FormLabel}"
-									Text="" d:Text="登録日/修正日" />
+									Text="" />
 								<TextBlock Grid.Row="6" Grid.Column="1"
 									Margin="20"
 									Foreground="{DynamicResource MaterialDesignBody}"

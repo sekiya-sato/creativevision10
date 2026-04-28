@@ -26,8 +26,8 @@
 				<StackPanel VerticalAlignment="Center">
 					<TextBlock Margin="0,0,0,30" HorizontalAlignment="Center"
 						FontWeight="Bold"
-						Style="{StaticResource MaterialDesignHeadline4TextBlock}"
-						Text="環境設定" />
+						Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+						Text="環境設定を行います。&#x0a;(一時保存はShift+F12)" />
 
 					<TextBox x:Name="UrlTextBox"
 						Margin="0,0,0,20"
@@ -76,21 +76,11 @@
 				</StackPanel>
 			</Border>
 		</TabItem>
+		<!-- 
 		<TabItem Header="その他">
 			<Grid>
-				<StackPanel>
-					<Button Width="100" Height="43"
-						Margin="20"
-						Command="{Binding Test01Command}"
-						Content="Test01" />
-					<TextBlock Margin="100"
-						Text="{Binding TestMessage}" />
-					<Button Width="100" Height="43"
-						Margin="20"
-						Command="{Binding Test02Command}"
-						Content="Test02" />
-				</StackPanel>
 			</Grid>
 		</TabItem>
+		-->
 	</TabControl>
 </helpers:BaseWindow>
