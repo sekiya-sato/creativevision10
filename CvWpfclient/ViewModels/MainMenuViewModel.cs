@@ -478,6 +478,8 @@ public partial class MainMenuViewModel : ObservableObject {
 		var lineColor = ToSkColor(GetResourceColor("MainMenuChartLineColor", Color.FromRgb(33, 150, 243)));
 		var fillColor = ToSkColor(GetResourceColor("MainMenuChartFillColor", Color.FromArgb(80, 33, 150, 243)));
 		var textColor = ToSkColor(GetResourceColor("MainMenuChartTextColor", Color.FromRgb(0, 0, 0)));
+		var separatorColor = textColor.WithAlpha(51); // 20% opacity
+
 		var values = _forecastTemperatures
 			.Select((temperature, index) => new ObservablePoint(index, temperature))
 			.ToArray();
@@ -486,7 +488,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				TextSize = 10,
 				LabelsRotation = 0,
 				LabelsPaint = new SolidColorPaint(textColor),
-				SeparatorsPaint = new SolidColorPaint(textColor)
+				SeparatorsPaint = new SolidColorPaint(separatorColor)
 			}];
 		// 縦軸: 5℃刻み、最小・最大をデータに合わせて少しパディング
 		var minTemp = _forecastTemperatures.Min();
@@ -498,7 +500,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			MinLimit = Math.Floor(minTemp / 5) * 5,  // ← 下限を5の倍数に揃える
 			MaxLimit = Math.Ceiling(maxTemp / 5) * 5, // ← 上限を5の倍数に揃える
 			LabelsPaint = new SolidColorPaint(textColor),
-			SeparatorsPaint = new SolidColorPaint(textColor)
+			SeparatorsPaint = new SolidColorPaint(separatorColor)
 		}];
 		ForecastMargin = new LiveChartsCore.Measure.Margin(0, 0, 0, 0);
 		ForecastSeries = [

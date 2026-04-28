@@ -171,3 +171,21 @@
 - `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功を確認。
 
 ---
+
+## [2026-04-28] 16:42 メインメニュー温度チャートの軸線透明度調整
+### Agent
+- gemini-3.1-pro-preview : github-copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenu の気温グラフで、X/Y軸の線を transparent 80% まで薄くし、確認・ログ・commit まで完了したい
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `ApplyForecastTheme` でテーマ連動の `textColor` から `separatorColor = textColor.WithAlpha(51)` を生成し、`ForecastXAxes` / `ForecastYAxes` の `SeparatorsPaint` に適用して軸線だけを 20% 不透明度（80%透明）へ調整
+### 技術決定 Why
+- `LiveChartsCore` の仕様に従い、ラベル用（`LabelsPaint`）とグリッド用（`SeparatorsPaint`）でペイントオブジェクトを分け、既存テーマカラーの透過度（Alpha）のみを変更する最小限の修正とした
+### 影響範囲
+- メインメニューの天気予報チャート表示のみ
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認
+
+---
