@@ -1275,3 +1275,82 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 	[property: ColumnSizeDml(1000)]
 	string errorMsg = string.Empty;
 }
+
+
+/* ToDo: 未作成テーブル(上代、原価)
+
+// 上代一括変更の伝票データ
+[Comment("トランザクション：上代一括変更、伝票No、登録日、日付Frm-To、セールCD(区分'S01')、タイトル、[店舗CD] [商品CD、色サイズ、掛率、上代]")]
+public sealed partial class TranJodai : BaseDbClass {
+}
+
+[Comment("派生テーブル：商品上代テーブル：商品Id、店舗Id、日付Fm-To、上代、元TranId")
+public sealed partial class DerivedJodai : BaseDbClass {
+}
+			派生上代テーブルとマスタから上代を決定する
+			   SELECT COALESCE(d.Jodai, m.Jodai) AS FinalJodai
+				FROM MasterShohin m
+				LEFT JOIN DerivedShohin d ON m.Id = d.Id_Shohin 
+				    AND d.Id_Tenpo = 10
+				    AND 20260415 BETWEEN d.DayFrom AND d.DayTo
+				WHERE m.Id = 1;
+
+// 原価変更の伝票データ
+[Comment("トランザクション：原価変更、伝票No、登録日、評価区分(評価替、その他)、[商品CD、OFF率、(上代、掛率、原価)、新原価]")]
+public sealed partial class TranGenka : BaseDbClass {
+}
+*/
+
+/* ToDo: 未作成テーブル(予算)
+
+// 予算マスタ
+[Comment("マスタ：店舗ブランド予算：年月(日)、ブランド、売上予算、粗利予算")]
+public sealed partial class MasterYosanBrand : BaseDbClass {
+}
+[Comment("マスタ：販売員予算：年月(日)、販売員Id、店舗、売上予算、粗利予算")]
+public sealed partial class MasterYosanHanbai : BaseDbClass {
+}
+[Comment("マスタ：営業担当別予算：年月(日)、営業担当Id、店舗、売上予算、粗利予算")]
+public sealed partial class MasterYosanEigyoTanto : BaseDbClass {
+}
+*/
+
+/* ToDo: 未作成テーブル(配分)
+[Comment("トランザクション：配分データ：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
+public sealed partial class TranHaibun : BaseDbClass {
+}
+[Comment("派生テーブル：配分明細：日付、倉庫Id、商品Id、色サイズ、予定数量、実数量、完了FLG、元伝票Id")]
+public sealed partial class DerivedHaibun : BaseDbClass {
+}
+ */
+
+/* ToDo: 未作成テーブル(補充)
+[Comment("トランザクション：補充データ：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
+public sealed partial class TranHojyu : BaseDbClass {
+}
+ */
+
+/* ToDo: 未作成テーブル(集計)
+[Comment("集計テーブル：売掛データ：年月、得意先Id、前月残、当月残、売上、入金")]
+public sealed partial class SummaryUrikake : BaseDbClass {
+}
+[Comment("集計テーブル：請求データ：年月+締日、得意先Id、前月残、当月残、売上、入金")]
+public sealed partial class SummaryUriSei : BaseDbClass {
+}
+[Comment("集計テーブル：買掛データ：年月、仕入先Id、前月残、当月残、売上、入金")]
+public sealed partial class SummaryKaikake : BaseDbClass {
+}
+[Comment("集計テーブル：支払データ：年月、仕入先Id、前月残、当月残、売上、入金")]
+public sealed partial class SummaryKaiShi : BaseDbClass {
+}
+ */
+
+/* ToDo: 未作成テーブル(顧客)
+[Comment("ベースポイントトランク別ポイント、ボーナスポイント")]
+public sealed partial class MasterPointRank : BaseDbClass {
+}
+[Comment("ポイント履歴テーブル：日付、顧客Id、取得ポイント、使用ポイント、残")]
+public sealed partial class TranPointRireki : BaseDbClass {
+}
+ */
+
