@@ -354,24 +354,21 @@
 
 								<!--  気温推移チャート  -->
 								<materialDesign:Card Grid.Column="1"
-									Padding="8"
+									Padding="4"
 									Background="{DynamicResource panelColor}">
 									<Grid>
-										<Grid.ColumnDefinitions>
-											<ColumnDefinition Width="Auto" />
-											<ColumnDefinition Width="*" />
-										</Grid.ColumnDefinitions>
 										<!--  "℃" ラベル(ForecastYAxesを使うと横に寝てしまうため)  -->
-										<TextBlock Grid.Column="0"
-											Margin="0,0,4,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+										<TextBlock HorizontalAlignment="Left" VerticalAlignment="Top"
+											Margin="4,4,0,0" Panel.ZIndex="1"
 											FontSize="11"
 											Foreground="{DynamicResource MainMenuChartTextColor}"
 											Text="℃" />
 										<!--  チャート  -->
-										<lvc:CartesianChart Grid.Column="1"
-											Height="120"
+										<lvc:CartesianChart
+											Height="130"
 											Background="{DynamicResource MainMenuChartBackgroundBrush}"
 											Opacity="0.9"
+											DrawMargin="{Binding ForecastMargin}"
 											Series="{Binding ForecastSeries}"
 											XAxes="{Binding ForecastXAxes}"
 											YAxes="{Binding ForecastYAxes}" />

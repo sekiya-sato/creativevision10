@@ -16,6 +16,26 @@
 
 ---
 
+## [2026-04-28] 16:20 MainMenuViewの気温グラフ表示調整
+### Agent
+- gpt-5.4 : github-copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuView.xaml の気温グラフを枠内でできるだけ大きく見やすく表示し、軸と区切り線を Light 時は黒、Dark 時は白で見えるようにしたい
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 気温チャートカードの Padding を 8 から 4 に縮小し、℃ラベル用の専用列をやめて左上オーバーレイ表示へ変更。`CartesianChart` に `DrawMargin` バインドを追加し、高さを 130 へ調整してカード内の表示領域を広げた
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `ForecastMargin` を追加し、`ApplyForecastTheme` で `MainMenuChartTextColor` を軸ラベル色・区切り線色へ反映するよう変更。Light/Dark テーマ切替時に軸表示色も追従するようにした
+### 技術決定 Why
+- グラフの見やすさ改善はデータ処理を変えずにチャート周辺の余白を削るのが最小差分で安全なため、専用列削減・カード内余白圧縮・DrawMargin 調整で表示領域を拡大した
+- 軸と区切り線の色は ViewModel で LiveCharts の Axis を組み立てているため、XAML の固定色ではなく `MainMenuChartTextColor` リソースへ寄せてテーマ切替と一貫性を保った
+### 確認
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse(r'CvWpfclient/Views/MainMenuView.xaml'); print('XML_OK')"` で XAML の XML 整形式を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認
+- Oracle レビューで、今回の変更範囲が要件適合かつ低リスクであることを確認
+
+---
+
 ## [2026-04-27] 16:50 MasterMeishoMenteViewのコード/並び順入力幅調整
 ### Agent
 - gpt-5.4 : github-copilot

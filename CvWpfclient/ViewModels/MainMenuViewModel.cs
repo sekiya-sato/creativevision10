@@ -388,6 +388,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	private ISeries[] forecastSeries = [];
 
 	[ObservableProperty]
+	private LiveChartsCore.Measure.Margin? forecastMargin = new LiveChartsCore.Measure.Margin(0, 0, 0, 0);
+
+	[ObservableProperty]
 	private Axis[] forecastXAxes = [new Axis { Labels = [], TextSize = 11 }];
 
 	[ObservableProperty]
@@ -474,6 +477,7 @@ public partial class MainMenuViewModel : ObservableObject {
 
 		var lineColor = ToSkColor(GetResourceColor("MainMenuChartLineColor", Color.FromRgb(33, 150, 243)));
 		var fillColor = ToSkColor(GetResourceColor("MainMenuChartFillColor", Color.FromArgb(80, 33, 150, 243)));
+		var textColor = ToSkColor(GetResourceColor("MainMenuChartTextColor", Color.FromRgb(0, 0, 0)));
 		var values = _forecastTemperatures
 			.Select((temperature, index) => new ObservablePoint(index, temperature))
 			.ToArray();
@@ -481,6 +485,8 @@ public partial class MainMenuViewModel : ObservableObject {
 				Labels = _forecastLabels,
 				TextSize = 10,
 				LabelsRotation = 0,
+				LabelsPaint = new SolidColorPaint(textColor),
+				SeparatorsPaint = new SolidColorPaint(textColor)
 			}];
 		// 縦軸: 5℃刻み、最小・最大をデータに合わせて少しパディング
 		var minTemp = _forecastTemperatures.Min();
@@ -491,7 +497,10 @@ public partial class MainMenuViewModel : ObservableObject {
 			ForceStepToMin = true,                    // ← 自動調整ではなく5刻みを強制
 			MinLimit = Math.Floor(minTemp / 5) * 5,  // ← 下限を5の倍数に揃える
 			MaxLimit = Math.Ceiling(maxTemp / 5) * 5, // ← 上限を5の倍数に揃える
+			LabelsPaint = new SolidColorPaint(textColor),
+			SeparatorsPaint = new SolidColorPaint(textColor)
 		}];
+		ForecastMargin = new LiveChartsCore.Measure.Margin(0, 0, 0, 0);
 		ForecastSeries = [
 			new LineSeries<ObservablePoint> {
 					Values = values,
