@@ -170,12 +170,12 @@
 		</materialDesign:ColorZone>
 
 		<!--  ===== メインコンテンツ =====  -->
-		<TabControl Grid.Row="1"
+		<TabControl Grid.Row="1" x:Name="TabControlMain"
 			SelectedIndex="{Binding SelectedTabIndex}"
 			Style="{StaticResource MaterialDesignTabControl}">
 
 			<!--  タブ1: 一覧画面  -->
-			<TabItem>
+			<TabItem x:Name="tabList">
 				<TabItem.Header>
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
@@ -213,7 +213,7 @@
 							<!--  DataGrid 一覧  -->
 							<DataGrid x:Name="ListGrid"
 								Grid.Row="1"
-								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+                             helpers:DataGridDoubleClick.Command="{Binding GoToDetailCommand}" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 								AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 								IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
@@ -253,11 +253,6 @@
 									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
 										TargetType="DataGridColumnHeader" />
 								</DataGrid.ColumnHeaderStyle>
-								<behaviors:Interaction.Triggers>
-									<behaviors:EventTrigger EventName="MouseDoubleClick">
-										<behaviors:InvokeCommandAction Command="{Binding GoToDetailCommand}" />
-									</behaviors:EventTrigger>
-								</behaviors:Interaction.Triggers>
 							</DataGrid>
 						</Grid>
 					</materialDesign:Card>
@@ -265,7 +260,7 @@
 			</TabItem>
 
 			<!--  タブ2: 詳細画面  -->
-			<TabItem>
+			<TabItem  x:Name="tabDetail">
 				<TabItem.Header>
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"

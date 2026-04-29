@@ -12,6 +12,5 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:ShukkaUriageInputViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid>
-	</Grid>
+	<Grid />
 </helpers:BaseWindow>

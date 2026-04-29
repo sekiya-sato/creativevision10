@@ -1,9 +1,7 @@
-using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
-using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections.ObjectModel;
@@ -117,6 +115,13 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	[RelayCommand]
 	void GoToDetail() {
 		if (Current.Id > 0) SelectedTabIndex = 1;
+		/*
+		var view = ClientLib.GetActiveView(this) as Views._06Uriage.ShopUriageInputView;
+		if (view != null) {
+			view.TabControlMain.SelectedIndex = 1;
+			//			view.TabDetail
+		}
+		*/
 	}
 
 	[RelayCommand]

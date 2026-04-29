@@ -40,19 +40,26 @@ public static class DataGridDoubleClick {
 		if (d is not DataGrid dg) return;
 
 		if (e.OldValue is not null) {
-			dg.MouseDoubleClick -= Dg_MouseDoubleClick;
+         dg.PreviewMouseDoubleClick -= Dg_MouseDoubleClick;
 		}
 
 		if (e.NewValue is not null) {
-			dg.MouseDoubleClick += Dg_MouseDoubleClick;
+         dg.PreviewMouseDoubleClick += Dg_MouseDoubleClick;
 		}
 	}
 
 	private static void Dg_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
 		if (sender is not DataGrid dg) return;
+		if (e.OriginalSource is not DependencyObject originalSource) return;
+
+		var row = ItemsControl.ContainerFromElement(dg, originalSource) as DataGridRow;
+		if (row?.Item == null) return;
 
 		var command = GetCommand(dg);
-		var selectedItem = dg.SelectedItem;
+     var selectedItem = row.Item;
+		if (!ReferenceEquals(dg.SelectedItem, selectedItem)) {
+			dg.SelectedItem = selectedItem;
+		}
 
 		if (command != null && selectedItem != null && command.CanExecute(selectedItem)) {
 			command.Execute(selectedItem);
