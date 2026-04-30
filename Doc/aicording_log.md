@@ -267,3 +267,22 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認
 
 ---
+## [2026-04-30] 15:06 Creative Vision 10 全体仕様書のGoogle Document作成
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：プロジェクトの全体仕様書を Google Document に作成する
+### 実施内容
+- Google Drive/Creative Vision 10 全体仕様書: `readme.md`、`setup.md`、`creativevision10.slnx`、`Directory.Packages.props`、`graphify-out/GRAPH_REPORT.md`、主要な `CodeShare` / `CvServer` / `CvWpfclient` / `CvBase` / `CvDomainLogic` / `Tests` を確認し、全体仕様書を新規 Google Document として作成
+- .sisyphus/20260430_google_doc_project_spec.md: 参照情報と作成方針の作業メモを作成
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 全体仕様書は実装の詳細を単一画面・単一モジュールから推測せず、既存 README、graphify の中核ノード、ソリューション構成、契約定義、サーバ起動設定、WPF メニュー構成、DB 定義、ドメインロジック、テストから横断的に根拠を集める必要があるため
+### 確認
+- Google Docs connector の `get_document_text` で、作成先 documentId `1ilMF9Zr7RsTe6gidqexQrHqqzt7_UEHszybAYksQY2s`、タイトル `Creative Vision 10 全体仕様書`、tabId `t.0`、本文 17 章の `HEADING_1` 見出しを確認
+- Google Drive の `text/html` エクスポートで、タイトル、h1 見出し、本文フォント、章順が HTML 構造として出力されることを確認
+- コード変更はないため、dotnet build は未実行
+
+---
