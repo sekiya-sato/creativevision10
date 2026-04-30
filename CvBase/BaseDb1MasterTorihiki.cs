@@ -250,3 +250,15 @@ public sealed partial class MasterShiire : MasterTorihiki {
 	[property: ColumnSizeDml(1000)]
 	List<MasterGeneralMeisho>? jsub;
 }
+
+/* VShain などが物理DBに存在せず、Class定義上で存在している場合の、SQLでの結合例
+ SELECT
+    si.Id,
+    si.Code,
+    si.Name,
+    si.Id_Shain,
+    json_object('Sid', s.Id, 'Cd', s.Code, 'Mei', s.Name) AS Vshaindata
+FROM MasterShiire si
+LEFT OUTER JOIN MasterShain s ON s.Id = si.Id_Shain
+LIMIT 20;
+ */

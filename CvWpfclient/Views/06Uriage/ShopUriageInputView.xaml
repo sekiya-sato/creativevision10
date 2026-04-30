@@ -170,7 +170,8 @@
 		</materialDesign:ColorZone>
 
 		<!--  ===== メインコンテンツ =====  -->
-		<TabControl Grid.Row="1" x:Name="TabControlMain"
+		<TabControl x:Name="TabControlMain"
+			Grid.Row="1"
 			SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
 			Style="{StaticResource MaterialDesignTabControl}">
 
@@ -213,7 +214,8 @@
 							<!--  DataGrid 一覧  -->
 							<DataGrid x:Name="ListGrid"
 								Grid.Row="1"
-                             helpers:DataGridDoubleClick.Command="{Binding GoToDetailCommand}" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+								helpers:DataGridDoubleClick.Command="{Binding GoToDetailCommand}"
+								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 								AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 								IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
@@ -240,14 +242,14 @@
 									<DataGridTextColumn Width="150"
 										Binding="{Binding VSoko.Mei}"
 										Header="倉庫名" />
-								<DataGridTextColumn Width="100"
-									Binding="{Binding SuTotal, StringFormat={}{0:N0}}"
-									ElementStyle="{StaticResource DataGridRightTextBlock}"
-									Header="合計数量" />
-								<DataGridTextColumn Width="120"
-									Binding="{Binding KingakuTotal, StringFormat={}{0:N0}}"
-									ElementStyle="{StaticResource DataGridRightTextBlock}"
-									Header="合計金額" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding SuTotal, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="合計数量" />
+									<DataGridTextColumn Width="120"
+										Binding="{Binding KingakuTotal, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="合計金額" />
 								</DataGrid.Columns>
 								<DataGrid.ColumnHeaderStyle>
 									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
@@ -260,7 +262,7 @@
 			</TabItem>
 
 			<!--  タブ2: 詳細画面  -->
-			<TabItem  x:Name="tabDetail">
+			<TabItem x:Name="tabDetail">
 				<TabItem.Header>
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
@@ -322,40 +324,38 @@
 									Orientation="Horizontal">
 									<TextBlock Style="{StaticResource FormLabel}"
 										Text="区分" />
-								<ComboBox Width="150"
-									Margin="0,4"
-									materialDesign:HintAssist.Hint="区分"
-									ItemsSource="{Binding KubunOptions}"
-									SelectedItem="{Binding CurrentEdit.EnKubun}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
-									<ComboBox.ItemTemplate>
-										<DataTemplate>
-											<TextBlock Text="{Binding Converter={StaticResource EnumUri01DisplayConverter}}" />
-										</DataTemplate>
-									</ComboBox.ItemTemplate>
-								</ComboBox>
+									<ComboBox Width="150"
+										Margin="0,4"
+										materialDesign:HintAssist.Hint="区分"
+										ItemsSource="{Binding KubunOptions}"
+										SelectedItem="{Binding CurrentEdit.EnKubun}"
+										Style="{StaticResource MaterialDesignOutlinedComboBox}">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Text="{Binding Converter={StaticResource EnumUri01DisplayConverter}}" />
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
 								</StackPanel>
-							<StackPanel Margin="0,0,16,0"
-								Orientation="Horizontal">
-								<TextBlock Style="{StaticResource FormLabel}"
-									Text="合計数量" />
-								<TextBox Width="120"
-									Margin="0,4"
-									HorizontalContentAlignment="Right"
-									materialDesign:HintAssist.Hint="合計数量" IsReadOnly="True"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.SuTotal, StringFormat={}{0:N0}}" />
-							</StackPanel>
-							<StackPanel Orientation="Horizontal">
-								<TextBlock Style="{StaticResource FormLabel}"
-									Text="合計金額" />
-								<TextBox Width="120"
-									Margin="0,4"
-									HorizontalContentAlignment="Right"
-									materialDesign:HintAssist.Hint="合計金額" IsReadOnly="True"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.KingakuTotal, StringFormat={}{0:N0}}" />
-							</StackPanel>
+								<StackPanel Margin="0,0,16,0"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="合計数量" />
+									<TextBox Width="120"
+										Margin="0,4" HorizontalContentAlignment="Right"
+										materialDesign:HintAssist.Hint="合計数量" IsReadOnly="True"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding CurrentEdit.SuTotal, StringFormat={}{0:N0}}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="合計金額" />
+									<TextBox Width="120"
+										Margin="0,4" HorizontalContentAlignment="Right"
+										materialDesign:HintAssist.Hint="合計金額" IsReadOnly="True"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding CurrentEdit.KingakuTotal, StringFormat={}{0:N0}}" />
+								</StackPanel>
 							</WrapPanel>
 
 							<!--  縦並び: 店舗・倉庫・メモ  -->
@@ -557,26 +557,26 @@
 							<DataGridTextColumn Width="100"
 								Binding="{Binding Mei_Siz}"
 								Header="サイズ名" IsReadOnly="True" />
-						<DataGridTextColumn Width="80"
-							Binding="{Binding Su, StringFormat={}{0:N0}}"
-							ElementStyle="{StaticResource DataGridRightTextBlock}"
-							Header="数量" />
-						<DataGridTextColumn Width="90"
-							Binding="{Binding Tanka, StringFormat={}{0:N0}}"
-							ElementStyle="{StaticResource DataGridRightTextBlock}"
-							Header="単価" />
-						<DataGridTextColumn Width="100"
-							Binding="{Binding Kingaku, StringFormat={}{0:N0}}"
-							ElementStyle="{StaticResource DataGridRightTextBlock}"
-							Header="金額" IsReadOnly="True" />
-						<DataGridTextColumn Width="90"
-							Binding="{Binding Jodai, StringFormat={}{0:N0}}"
-							ElementStyle="{StaticResource DataGridRightTextBlock}"
-							Header="上代" />
-						<DataGridTextColumn Width="90"
-							Binding="{Binding Gedai, StringFormat={}{0:N0}}"
-							ElementStyle="{StaticResource DataGridRightTextBlock}"
-							Header="下代" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding Su, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="数量" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Tanka, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="単価" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding Kingaku, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="金額" IsReadOnly="True" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Jodai, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="上代" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Gedai, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="下代" />
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>
 							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
