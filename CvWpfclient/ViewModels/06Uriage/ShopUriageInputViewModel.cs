@@ -21,7 +21,6 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	Tran99Meisai? selectedMeisai;
 
 	SelectInputParameter? selectParam;
-	List<MasterShohinColSiz>? currentShohinJcolsiz;
 
 	public List<EnumUri01> KubunOptions { get; } = [
 		EnumUri01.Uriage,
@@ -171,7 +170,6 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		SelectedMeisai.Id_Shohin = shohin.Id;
 		SelectedMeisai.Code_Shohin = shohin.Code ?? "";
 		SelectedMeisai.Mei_Shohin = shohin.Name ?? "";
-		currentShohinJcolsiz = shohin.Jcolsiz;
 		SelectedMeisai.Id_Col = 0;
 		SelectedMeisai.Code_Col = "";
 		SelectedMeisai.Mei_Col = "";
@@ -187,69 +185,53 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	[RelayCommand]
 	void DoSelectCol() {
 		if (SelectedMeisai == null) return;
-		if (currentShohinJcolsiz == null || currentShohinJcolsiz.Count == 0) {
-			var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='COL'", "Code", startPos: SelectedMeisai.Id_Col);
-			if (meisho == null) return;
-			SelectedMeisai.Id_Col = meisho.Id;
-			SelectedMeisai.Code_Col = meisho.Code ?? "";
-			SelectedMeisai.Mei_Col = meisho.Name ?? "";
+		if (SelectedMeisai.Id_Shohin <= 0) {
+			MessageEx.ShowWarningDialog("商品を選択してください", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-		var colList = currentShohinJcolsiz
-			.GroupBy(x => x.Code_Col)
-			.Select(g => g.First())
-			.Select(x => new MasterMeisho { Id = x.Id_Col, Code = x.Code_Col, Name = x.Mei_Col })
-			.OrderBy(x => x.Code)
-			.ToList();
-		var selected = ShowLocalSelectDialog(colList, "カラー選択", SelectedMeisai.Id_Col);
+		var selected = ShowShohinColSizSelectDialog(filterByColor: false);
 		if (selected == null) return;
-		SelectedMeisai.Id_Col = selected.Id;
-		SelectedMeisai.Code_Col = selected.Code ?? "";
-		SelectedMeisai.Mei_Col = selected.Name ?? "";
+		ApplyShohinColSiz(selected);
 	}
 
 	[RelayCommand]
 	void DoSelectSiz() {
 		if (SelectedMeisai == null) return;
-		if (currentShohinJcolsiz == null || currentShohinJcolsiz.Count == 0) {
-			var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='SIZ'", "Code", startPos: SelectedMeisai.Id_Siz);
-			if (meisho == null) return;
-			SelectedMeisai.Id_Siz = meisho.Id;
-			SelectedMeisai.Code_Siz = meisho.Code ?? "";
-			SelectedMeisai.Mei_Siz = meisho.Name ?? "";
+		if (SelectedMeisai.Id_Shohin <= 0) {
+			MessageEx.ShowWarningDialog("商品を選択してください", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-		var candidates = SelectedMeisai.Id_Col > 0
-			? currentShohinJcolsiz.Where(x => x.Id_Col == SelectedMeisai.Id_Col)
-			: currentShohinJcolsiz.AsEnumerable();
-		var sizList = candidates
-			.GroupBy(x => x.Code_Siz)
-			.Select(g => g.First())
-			.Select(x => new MasterMeisho { Id = x.Id_Siz, Code = x.Code_Siz, Name = x.Mei_Siz })
-			.OrderBy(x => x.Code)
-			.ToList();
-		var selected = ShowLocalSelectDialog(sizList, "サイズ選択", SelectedMeisai.Id_Siz);
+		if (SelectedMeisai.Id_Col <= 0) {
+			MessageEx.ShowWarningDialog("カラーを選択してください", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		var selected = ShowShohinColSizSelectDialog(filterByColor: true);
 		if (selected == null) return;
-		SelectedMeisai.Id_Siz = selected.Id;
-		SelectedMeisai.Code_Siz = selected.Code ?? "";
-		SelectedMeisai.Mei_Siz = selected.Name ?? "";
-		ApplyJanCodeFromJcolsiz();
+		ApplyShohinColSiz(selected);
 	}
 
-	void ApplyJanCodeFromJcolsiz() {
-		if (SelectedMeisai == null || currentShohinJcolsiz == null) return;
-		var match = currentShohinJcolsiz.FirstOrDefault(x =>
-			x.Id_Col == SelectedMeisai.Id_Col && x.Id_Siz == SelectedMeisai.Id_Siz);
-		if (match != null && !string.IsNullOrEmpty(match.Jan1))
-			SelectedMeisai.JanCode = match.Jan1;
-	}
-
-	MasterMeisho? ShowLocalSelectDialog(List<MasterMeisho> items, string title, long startPos) {
-		var selWin = new Views.Sub.SelectWinView();
-		if (selWin.DataContext is not SelectWinViewModel vm) return null;
-		vm.SetLocalData(items, title, startPos);
+	DerivedShohinColSiz? ShowShohinColSizSelectDialog(bool filterByColor) {
+		if (SelectedMeisai == null) return null;
+		var selWin = new Views.Sub.SelectShohinColSizView();
+		if (selWin.DataContext is not SelectShohinColSizViewModel vm) return null;
+		vm.SetParam(
+			idShohin: SelectedMeisai.Id_Shohin,
+			idCol: SelectedMeisai.Id_Col,
+			idSiz: SelectedMeisai.Id_Siz,
+			filterByColor: filterByColor);
 		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
-		return vm.Current as MasterMeisho;
+		return vm.Current;
+	}
+
+	void ApplyShohinColSiz(DerivedShohinColSiz selected) {
+		if (SelectedMeisai == null) return;
+		SelectedMeisai.Id_Col = selected.Id_Col;
+		SelectedMeisai.Code_Col = selected.Code_Col;
+		SelectedMeisai.Mei_Col = selected.Mei_Col;
+		SelectedMeisai.Id_Siz = selected.Id_Siz;
+		SelectedMeisai.Code_Siz = selected.Code_Siz;
+		SelectedMeisai.Mei_Siz = selected.Mei_Siz;
+		SelectedMeisai.JanCode = selected.Jan1;
 	}
 
 	protected override string GetInsertConfirmMessage() => $"追加しますか？ (伝票No={CurrentEdit.Id})";

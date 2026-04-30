@@ -16,6 +16,26 @@
 
 ---
 
+## [2026-04-30] 11:42 店舗売上入力の色サイズ選択画面追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ShopUriageInputView の明細入力で、商品Idに紐づく DerivedShohinColSiz の色サイズを選択する専用画面を追加し、Id_Col と Id_Siz を同時に確定したい
+### 実施内容
+- CvWpfclient/Views/Sub/SelectShohinColSizView.xaml: DerivedShohinColSiz の色CD・色名・サイズCD・サイズ名・JAN1 を表示して選択する専用ダイアログを追加
+- CvWpfclient/Views/Sub/SelectShohinColSizView.xaml.cs: 専用選択画面の初期化 code-behind を追加
+- CvWpfclient/ViewModels/Sub/SelectShohinColSizViewModel.cs: Id_Shohin 必須、サイズ選択時は Id_Col でも絞り込む DerivedShohinColSiz 照会処理を追加
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: カラー選択・サイズ選択を新しい専用画面へ差し替え、選択行から Id_Col / Code_Col / Mei_Col / Id_Siz / Code_Siz / Mei_Siz / JanCode を同時反映するよう変更
+### 技術決定 Why
+- 商品選択ダイアログは軽量取得のため MasterShohin.Jcolsiz を常に取得できない。DerivedShohinColSiz を直接照会することで、既存伝票の再編集時でも商品Idを基準に正しい色サイズ候補を取得できるようにした。
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
+- `SelectShohinColSizView.xaml` の XML 構文解析が成功することを確認。
+
+---
+
 ## [2026-04-30] 11:22 店舗売上一覧ダブルクリック時の明細タブ遷移修正
 ### Agent
 - GPT-5 : OpenAI
