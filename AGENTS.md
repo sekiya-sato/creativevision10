@@ -1,7 +1,7 @@
 # AGENTS.md - OpenCode AI Agent Instructions
 
 ## Tooling & Environment
-- **Roles**: OpenCode (Complex/Multi-file/Docs), Copilot (Inline/Small edits).
+- **Roles**: OpenCode (Complex/Multi-file/Docs), Copilot (Inline/Small edits), Codex(General).
 - **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
 - **Files**: Solution `creativevision10.slnx`. Use UTF-8 (No BOM) & CRLF.
 - **Python**: Use Python 3 if needed.
@@ -19,8 +19,7 @@
 - **Server Layering**: (0) -> (1-1.4) -> `CvDomainLogic` (1.5) -> `CvServer` (2).
 - **Client Layering**: (0) -> (1) -> `CvWpfclient`(2).
 
-### Build Rule (WSL2) **IMPORTANT**
-- Restore all projects: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore creativevision10.slnx"`
+## Build Rule (WSL2) **IMPORTANT**
 - Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"`
 - Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"`
 - Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"`
