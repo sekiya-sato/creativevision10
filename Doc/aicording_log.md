@@ -16,6 +16,23 @@
 
 ---
 
+## [2026-04-30] 11:51 色サイズ選択画面のDataGridキー操作ループ対策
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SelectShohinColSizView の一覧で上下キーを素早く動かすとループするような動きになるため、過去ログの DataGrid 選択行点滅修正を確認し、同様の観点でこの画面のみ修正したい
+### 実施内容
+- CvWpfclient/Views/Sub/SelectShohinColSizView.xaml: DataGrid の `helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem` を削除し、連続 SelectionChanged 時にフォーカス・スクロール制御を再投入しないよう修正
+### 技術決定 Why
+- 過去ログでは DataGrid の連続選択移動時に `DataGridSelectionBehavior` の非同期フォーカス制御が競合して点滅する問題が記録されていた。選択ダイアログでは DataGrid 標準のキー移動で十分なため、初期選択位置への一度だけのフォーカス制御は残し、SelectionChanged ごとの自動スクロールだけを外す最小修正とした。
+### 確認
+- `SelectShohinColSizView.xaml` の XML 構文解析が成功することを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
+
+---
+
 ## [2026-04-30] 11:42 店舗売上入力の色サイズ選択画面追加
 ### Agent
 - GPT-5 : OpenAI : Codex

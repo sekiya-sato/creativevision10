@@ -82,7 +82,6 @@
 				d:ItemsSource="{d:SampleData ItemCount=5}"
 				helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
 				helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=DefaultButton}"
-				helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True"
 				helpers:DataGridSelectionBehavior.FocusOnSelectionMessage="True"
 				helpers:DataGridSelectionBehavior.SelectionIdPropertyName="Id"
 				materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" FrozenColumnCount="2"
