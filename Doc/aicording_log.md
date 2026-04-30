@@ -286,3 +286,19 @@
 - コード変更はないため、dotnet build は未実行
 
 ---
+
+## [2026-04-30] 16:01 MessageBoxViewの初期フォーカスを最も左側の表示ボタンに変更
+### Agent
+- gpt-5.4 / gemini-3.1-pro-preview : github-copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MessageBoxViewの表示時、初期フォーカスを最も左側に表示されているボタンへ設定する。
+### 実施内容
+- CvWpfclient/Helpers/MessageBoxView.xaml.cs: SetupButton内の個別のFocus指定を削除し、一括で左から順(LeftButton -> MiddleButton -> RightButton)に表示・有効・フォーカス可能状態を確認してフォーカスを当てる処理をDispatcher.InvokeAsync(DispatcherPriority.Loaded)にて追加。
+### 技術決定 Why
+- 画面描画後の適切なタイミング(Loaded時)で、左端から順に表示・操作可能なボタンへ確実にフォーカスを当てるため。以前のDefaultResultに依存するフォーカス制御を排除。
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を再実行し、warning 0 / error 0 でビルド成功を確認。
+
+---

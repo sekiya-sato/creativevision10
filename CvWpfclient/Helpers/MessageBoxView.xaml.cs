@@ -209,7 +209,6 @@ public partial class MessageBoxView : Window {
 				MiddleButton.Visibility = Visibility.Collapsed;
 				RightButton.Content = OKCaption;
 				RightButton.Tag = MessageBoxResult.OK; //Set MessageBoxResult to Tag
-				Keyboard.Focus(RightButton);
 				break;
 			case MessageBoxButton.OKCancel:
 				LeftButton.Visibility = Visibility.Collapsed;
@@ -217,10 +216,6 @@ public partial class MessageBoxView : Window {
 				RightButton.Content = CancelCaption;
 				MiddleButton.Tag = MessageBoxResult.OK;
 				RightButton.Tag = MessageBoxResult.Cancel;
-				if (DefaultResult == MessageBoxResult.OK)
-					Keyboard.Focus(MiddleButton);
-				else
-					Keyboard.Focus(RightButton);
 				break;
 			case MessageBoxButton.YesNoCancel:
 				LeftButton.Content = YesCaption;
@@ -229,12 +224,6 @@ public partial class MessageBoxView : Window {
 				LeftButton.Tag = MessageBoxResult.Yes;
 				MiddleButton.Tag = MessageBoxResult.No;
 				RightButton.Tag = MessageBoxResult.Cancel;
-				if (DefaultResult == MessageBoxResult.Yes)
-					Keyboard.Focus(LeftButton);
-				else if (DefaultResult == MessageBoxResult.No)
-					Keyboard.Focus(MiddleButton);
-				else
-					Keyboard.Focus(RightButton);
 				break;
 			case MessageBoxButton.YesNo:
 				LeftButton.Visibility = Visibility.Collapsed;
@@ -242,15 +231,26 @@ public partial class MessageBoxView : Window {
 				RightButton.Content = NoCaption;
 				MiddleButton.Tag = MessageBoxResult.Yes;
 				RightButton.Tag = MessageBoxResult.No;
-				if (DefaultResult == MessageBoxResult.Yes)
-					Keyboard.Focus(MiddleButton);
-				else
-					Keyboard.Focus(RightButton);
 				break;
 			default:
 				break;
 		}
+
+		// 最も左側の表示されているボタンにフォーカスを設定する
+		Dispatcher.InvokeAsync(() => {
+			if (CanReceiveInitialFocus(LeftButton)) {
+				Keyboard.Focus(LeftButton);
+			} else if (CanReceiveInitialFocus(MiddleButton)) {
+				Keyboard.Focus(MiddleButton);
+			} else if (CanReceiveInitialFocus(RightButton)) {
+				Keyboard.Focus(RightButton);
+			}
+		}, System.Windows.Threading.DispatcherPriority.Loaded);
 	}
+
+	private static bool CanReceiveInitialFocus(Button button)
+		=> button.Visibility == Visibility.Visible && button.IsVisible && button.IsEnabled && button.Focusable;
+
 	/// <summary>
 	/// Left, Middle, Right Button Click
 	/// </summary>
