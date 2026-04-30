@@ -16,6 +16,28 @@
 
 ---
 
+## [2026-04-30] 11:22 店舗売上一覧ダブルクリック時の明細タブ遷移修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ShopUriageInputView.xaml の一覧DataGridで、ViewModel側の GoToDetail() は実行されているが明細Tabへ移動しない原因を調査し、DataGridRowが確定できる場合はクリック位置がDataGridCell上でなくても明細TABをGUI表示したい
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DataGridDoubleClick.cs: ダブルクリック位置から DataGridRow を解決する処理を強化し、行選択と SelectedItem バインディング更新をコマンド実行前に明示化
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: GoToDetailCommand の行アイテム引数を受け取り、確定した行を Current に反映してから明細Tabへ遷移するよう修正
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: TabControl.SelectedIndex と一覧DataGrid.SelectedItem のバインディングを Mode=TwoWay と明示
+### 技術決定 Why
+- 従来はダブルクリックされた行が特定できても、ViewModelの GoToDetail() がコマンド引数を使わず Current の更新完了に依存していたため、クリック位置やイベント順によって明細Tabへの表示反映が不安定になっていた。行アイテムをコマンド引数として扱い、選択行を確定してから SelectedTabIndex を変更することで、DataGridCell外の行クリックでも明細Tabへ遷移できるようにした。
+### 影響範囲
+- DataGridDoubleClick 添付ビヘイビアを使用する一覧ダブルクリック処理
+- 店舗売上入力画面の一覧DataGridから明細Tabへの遷移
+### 確認
+- `git diff --check` で空白エラーなしを確認（CRLF変換の通常警告のみ）
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、警告0・エラー0を確認
+
+---
+
 ## [2026-04-28] 16:20 MainMenuViewの気温グラフ表示調整
 ### Agent
 - gpt-5.4 : github-copilot

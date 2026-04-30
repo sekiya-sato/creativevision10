@@ -171,7 +171,7 @@
 
 		<!--  ===== メインコンテンツ =====  -->
 		<TabControl Grid.Row="1" x:Name="TabControlMain"
-			SelectedIndex="{Binding SelectedTabIndex}"
+			SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
 			Style="{StaticResource MaterialDesignTabControl}">
 
 			<!--  タブ1: 一覧画面  -->
@@ -218,7 +218,7 @@
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 								IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
 								ItemsSource="{Binding ListData}"
-								SelectedItem="{Binding Current}"
+								SelectedItem="{Binding Current, Mode=TwoWay}"
 								Style="{StaticResource MaterialDesignDataGrid}"
 								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 								<DataGrid.Columns>

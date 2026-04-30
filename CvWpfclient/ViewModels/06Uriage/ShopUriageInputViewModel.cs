@@ -113,7 +113,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	[RelayCommand]
-	void GoToDetail() {
+	void GoToDetail(Tran01Tenuri? item) {
+		if (item != null && item.Id > 0 && !ReferenceEquals(Current, item)) Current = item;
 		if (Current.Id > 0) SelectedTabIndex = 1;
 		/*
 		var view = ClientLib.GetActiveView(this) as Views._06Uriage.ShopUriageInputView;
