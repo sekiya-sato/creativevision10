@@ -83,7 +83,7 @@ public static class DataGridSelectionBehavior {
 
 	private static void Grid_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 		if (sender is not DataGrid grid) return;
-		BringSelectionIntoView(grid, grid.SelectedItem, focusCell: false);
+		ScrollSelectionIntoView(grid, grid.SelectedItem);
 	}
 
 	private static void Grid_Loaded(object sender, RoutedEventArgs e) {
@@ -119,6 +119,20 @@ public static class DataGridSelectionBehavior {
 			.FirstOrDefault(item => TryGetItemId(item, idPropertyName, out var id) && id == targetId);
 
 		BringSelectionIntoView(grid, targetItem, focusCell: true);
+	}
+
+	private static void ScrollSelectionIntoView(DataGrid grid, object? item) {
+		if (item == null) return;
+
+		grid.Dispatcher.BeginInvoke(() => {
+			try {
+				if (!grid.Items.Contains(item)) return;
+				grid.ScrollIntoView(item);
+			}
+			catch (Exception ex) {
+				Logger.LogError(ex, "Error in ScrollSelectionIntoView");
+			}
+		}, DispatcherPriority.Render);
 	}
 
 	private static void BringSelectionIntoView(DataGrid grid, object? item, bool focusCell) {

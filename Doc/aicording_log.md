@@ -16,6 +16,25 @@
 
 ---
 
+## [2026-04-30] 11:56 DataGrid自動スクロール処理の再フォーカス抑止
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem` がソリューション全体で使われているか確認し、未使用なら削除して今回の DataGrid キー操作ループが再発しないようにしたい
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DataGridSelectionBehavior.cs: `AutoScrollToSelectedItem` は 17 箇所で使用中だったため削除せず、SelectionChanged 時の処理を再選択・CurrentCell設定・フォーカス移動から、選択行への `ScrollIntoView` のみに変更
+### 技術決定 Why
+- `AutoScrollToSelectedItem` はマスター画面や売上入力画面で使用中のため削除すると既存XAMLがビルド不能になる。今回のループ原因は、連続キー操作中に SelectionChanged ごとに非同期で選択・セル・フォーカスを再設定する点にあるため、プロパティは維持しつつ副作用をスクロールだけに限定した。
+### 影響範囲
+- `helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem` を使用する DataGrid の選択行自動スクロール
+### 確認
+- `rg -n "helpers:DataGridSelectionBehavior\.AutoScrollToSelectedItem" CvWpfclient\Views` で 17 箇所の使用を確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
+
+---
+
 ## [2026-04-30] 11:51 色サイズ選択画面のDataGridキー操作ループ対策
 ### Agent
 - GPT-5 : OpenAI : Codex
