@@ -16,6 +16,25 @@
 
 ---
 
+## [2026-04-30] 12:30 SchedulerService を使った毎日AM2:00のMSg050_Summary集計スケジュール実装
+### Agent
+- big-pickle : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SchedulerService を使って毎日 AM2:00 に CvFlag.MSg050_Summary の集計処理を実行するにはどうすればよいか、実装を含めて回答が欲しい
+### 実施内容
+- CodeShare/IScheduler.cs: SchedulerTaskType enum に RunSummary = 2 を追加
+- CvServer/Services/SchedulerService.cs: ExDatabase をコンストラクタで受け取り、ExecuteTaskAsync メソッドで RunSummary 分岐を実装。Payload から yyyymm を取得（空なら当月）、内部で SummaryDb を生成して SummaryAllAsyncStream を呼び出し
+### 技術決定 Why
+- 既存の NCrontab.Scheduler 基盤を活用し、新たな DI 登録を追加せずに ExDatabase から SummaryDb を内部生成することで、既存の依存関係を維持しつつ集計処理をスケジュール実行できるようにした。cron 式 "0 2 * * *" を使用して毎日 AM2:00 に実行。
+### 影響範囲
+- CvServer プロジェクト内の 2 ファイル（IScheduler.cs, SchedulerService.cs）の変更
+### 確認
+- CvServer プロジェクトのビルドが 0 警告・0 エラーで成功（dotnet build CvServer/CvServer.csproj）
+
+---
+
 ## [2026-04-30] 11:56 DataGrid自動スクロール処理の再フォーカス抑止
 ### Agent
 - GPT-5 : OpenAI : Codex

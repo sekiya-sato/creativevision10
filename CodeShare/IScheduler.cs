@@ -10,6 +10,8 @@ public enum SchedulerTaskType {
 	Unknown = 0,
 	[EnumMember]
 	LogOnly = 1,
+	[EnumMember]
+	RunSummary = 2,
 }
 
 /// <summary>

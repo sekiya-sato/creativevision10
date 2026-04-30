@@ -1,4 +1,6 @@
 using CodeShare;
+using CvBase;
+using CvDomainLogic;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
@@ -17,10 +19,12 @@ public class SchedulerService : CodeShare.IScheduler {
 
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;
+	private readonly ExDatabase _db;
 
-	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler) {
+	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler, ExDatabase db) {
 		_logger = logger;
 		_scheduler = scheduler;
+		_db = db;
 	}
 	/// <summary>
 	/// 追加されたタスクを追加する
@@ -52,7 +56,7 @@ public class SchedulerService : CodeShare.IScheduler {
 		try {
 			var guid = _scheduler.AddTask(
 				crontabSchedule: schedule,
-				action: ct => ExecuteTask(request, ct));
+				action: ct => ExecuteTaskAsync(request, ct).GetAwaiter().GetResult());
 
 			_logger.LogInformation(
 				"スケジュール登録: TaskId={TaskId}, TaskType={TaskType}, TaskName={TaskName}, Cron={Cron}",
@@ -119,7 +123,7 @@ public class SchedulerService : CodeShare.IScheduler {
 		return Task.FromResult(new SchedulerResult { Result = Success, Detail = "正常終了" });
 	}
 
-	private void ExecuteTask(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
+	private async Task ExecuteTaskAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
 		switch (request.TaskType) {
 			case SchedulerTaskType.LogOnly:
 				_logger.LogInformation(
@@ -129,6 +133,41 @@ public class SchedulerService : CodeShare.IScheduler {
 					request.Payload,
 					cancellationToken.IsCancellationRequested);
 				break;
+
+			case SchedulerTaskType.RunSummary:
+				try {
+					string yyyymm = string.IsNullOrWhiteSpace(request.Payload)
+						? DateTime.Now.ToString("yyyyMM")
+						: request.Payload.Trim();
+
+					_logger.LogInformation(
+						"集計開始: TaskName={TaskName}, yyyymm={yyyymm}, Canceled={Canceled}",
+						request.TaskName,
+						yyyymm,
+						cancellationToken.IsCancellationRequested);
+
+					var summaryDb = new SummaryDb(_db);
+					var param = new SummaryDateParameter(yyyymm, yyyymm);
+					await foreach (var step in summaryDb.SummaryAllAsyncStream(param).WithCancellation(cancellationToken)) {
+						if (step.IsCompleted) {
+							_logger.LogInformation("集計完了: TaskName={TaskName}, Duration={Duration}",
+								request.TaskName, step.ErrorMessage);
+						}
+						else if (step.IsError) {
+							_logger.LogError("集計エラー: Step={Step}, Error={Error}",
+								step.StepName, step.ErrorMessage);
+						}
+						else {
+							_logger.LogInformation("集計進捗: Step={Step}, Progress={Progress}, Count={Count}",
+								step.StepName, step.Progress, step.Count);
+						}
+					}
+				}
+				catch (Exception ex) {
+					_logger.LogError(ex, "集計実行中にエラーが発生しました: TaskName={TaskName}", request.TaskName);
+				}
+				break;
+
 			default:
 				_logger.LogWarning("未対応の TaskType です: {TaskType}", request.TaskType);
 				break;
