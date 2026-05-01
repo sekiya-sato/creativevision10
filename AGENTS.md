@@ -29,15 +29,14 @@
 - Use **UTF-8**
 - **WPF Work**: Load `wpf-project-guide`. Inspect `App.xaml` & `ResourceDictionary` first for UI issues.
 - **Tools**: Use `check-xaml`, `update-design-mente`, `change-sublist-to-observablecollection` appropriately.
+- Avoid excessive dependency injection.
 
 ## Post-Task Requirements (Log & Commit)
 - **Log**: Append to `Doc/aicording_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
-- **Log Format**: `## [Date] Time Title`, `Agent`, `Editor`, `Purpose`, `Details`, `Reasoning(Why)`, `Verification`.
-- **Commit Message**:
+- **Log Format**: Folow "Log-Format" section below.
+- **Commit Format**: Folow "Commit-Format" section below.
 
-### Write-Log
-- **Log**: Append to `Doc/aicording_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
-- **Log Format** and **Archiving Rule**:
+### Log-Format
 '''
 ## [YYYY-MM-DD] hh:mm 作業タイトル
 ### Agent
@@ -58,8 +57,7 @@
 ---
 '''
 
-### Git-Commit
-- **Commit Message Format**:
+### Commit-Format
 '''
 [作業内容]
 [使用した AI Model 名 : AI Provider 名 : エージェント名]
