@@ -321,3 +321,23 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を再実行し、warning 0 / error 0 でビルド成功を確認。
 
 ---
+
+## [2026-05-01] 12:28 SelectWinViewヘッダー右側への合計件数表示追加
+### Agent
+- gpt-5.4 / gemini-3.1-pro-preview : github-copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`SelectWinView` のヘッダ部分で、現在の「選択画面」テキストエリアの右側に `合計件数{0}` を3桁区切り表示したい。View および ViewModel を修正し、write-log と commit まで行いたい
+### 実施内容
+- CvWpfclient/Views/Sub/SelectWinView.xaml: 上段 `ColorZone` ヘッダの `Title` 右側へ `Count` バインドの件数表示を追加し、表示書式を `合計件数{0:N0}` に変更。内側カードヘッダは既存の選択中項目表示だけを維持する構成へ戻した
+- CvWpfclient/ViewModels/Sub/SelectWinViewModel.cs: `ListData` 差し替え時に `CollectionChanged` の購読を張り替え、コレクション件数の増減に応じて `Count` が自動更新されるよう修正。初期化経路の重複 `Count` 代入は削除した
+### 技術決定 Why
+- ユーザー指定の「選択画面」テキストエリア右側という位置に合わせるため、件数表示は内側カード見出しではなく上段 `ColorZone` タイトル行へ置くのが最も素直で差分も小さいため
+- ViewModel 側は単なる表示用プロパティ追加ではなく、既存 `Count` を `ListData` の差し替え・増減に追従させることで、将来のコレクション変更でも表示件数がずれないようにしたため
+### 確認
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse(r'CvWpfclient/Views/Sub/SelectWinView.xaml'); print('XML_OK')"` で XAML の XML 整形式を確認
+- `lsp_diagnostics` で `CvWpfclient/ViewModels/Sub/SelectWinViewModel.cs` に問題がないことを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認（CodeShare.dll の一時ロック警告は再試行後に解消）
+
+---

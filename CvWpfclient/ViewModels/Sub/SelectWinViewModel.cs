@@ -5,11 +5,14 @@ using CommunityToolkit.Mvvm.Messaging;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
+using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 
 namespace CvWpfclient.ViewModels.Sub;
 
 public partial class SelectWinViewModel : Helpers.BaseViewModel {
+
+	ObservableCollection<dynamic>? _observedListData;
 
 	[ObservableProperty]
 	string title = "選択画面";
@@ -34,7 +37,6 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 		Title = title;
 		StartPos = startPos;
 		ListData = new ObservableCollection<dynamic>(items.Cast<dynamic>());
-		Count = ListData.Count;
 		Current = StartPos != 0
 			? ListData.FirstOrDefault(x => x.Id == StartPos) ?? ListData.FirstOrDefault()
 			: ListData.FirstOrDefault();
@@ -66,7 +68,6 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;
 			if (list != null) {
 				ListData = new ObservableCollection<dynamic>(list.Cast<dynamic>());
-				Count = ListData.Count;
 				Current = StartPos != 0
 					? ListData.FirstOrDefault(x => x.Id == StartPos) ?? ListData.FirstOrDefault() ?? new MasterMeisho()
 					: ListData.FirstOrDefault() ?? new MasterMeisho();
@@ -81,6 +82,24 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
 	public ObservableCollection<dynamic>? listData;
+
+	partial void OnListDataChanged(ObservableCollection<dynamic>? value) {
+		if (_observedListData != null) {
+			_observedListData.CollectionChanged -= OnListDataCollectionChanged;
+		}
+
+		_observedListData = value;
+
+		if (_observedListData != null) {
+			_observedListData.CollectionChanged += OnListDataCollectionChanged;
+		}
+
+		Count = value?.Count ?? 0;
+	}
+
+	void OnListDataCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+		Count = ListData?.Count ?? 0;
+	}
 
 	[ObservableProperty]
 	public object? current;

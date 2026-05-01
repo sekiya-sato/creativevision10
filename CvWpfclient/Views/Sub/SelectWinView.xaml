@@ -44,6 +44,9 @@
 					<TextBlock VerticalAlignment="Center"
 						FontSize="20" FontWeight="SemiBold"
 						Text="{Binding Title}" />
+					<TextBlock Margin="12,0,0,0" VerticalAlignment="Center"
+						Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Text="{Binding Count, StringFormat={}合計件数{0:N0}}" />
 				</StackPanel>
 			</DockPanel>
 		</materialDesign:ColorZone>
