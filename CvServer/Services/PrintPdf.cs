@@ -81,6 +81,12 @@ public partial class CoreService {
 		string outFile = string.Empty;
 		form = "cvnet57prnhinShouka.qfm";
 		outFile = "test_server.pdf";
+		Directory.CreateDirectory(resolvedDataDir);
+		// 基本的にはすぐ閉じられる
+		if (File.Exists(Path.Combine(resolvedDataDir, data)))
+			File.Delete(Path.Combine(resolvedDataDir, data));
+		File.WriteAllText(Path.Combine(resolvedDataDir, data), "データ1,データ2,データ3,データ4\nデータB1,データB2,データB3,データB4\nデータC1,データC2,データC3,データC4\n", Sjis);
+
 
 
 
@@ -102,6 +108,9 @@ public partial class CoreService {
 			OutputFileName = outfileName,
 		};
 		var printService = new PrintAdapter();
+		var licenseTask = printService.CheckLicenseAsync().Result;
+
+
 		var ret = printService.ExecutePrintAsync(context);
 		return ret.Result;
 	}
