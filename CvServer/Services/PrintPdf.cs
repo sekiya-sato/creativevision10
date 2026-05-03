@@ -2,7 +2,7 @@ using CodeShare;
 using CvPrints;
 using Microsoft.AspNetCore.Authorization;
 using ProtoBuf.Grpc;
-
+using System.Text;
 
 namespace CvServer.Services;
 
@@ -43,6 +43,18 @@ public partial class CoreService {
 		//throw new NotImplementedException();
 	}
 
+	Encoding? sjis_internal = null;
+	Encoding Sjis {
+		get {
+			if (sjis_internal == null) {
+				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+				sjis_internal = Encoding.GetEncoding("Shift_JIS");
+			}
+			return sjis_internal;
+		}
+	}
+
+
 	/// <summary>
 	/// Print処理本体
 	/// </summary>
@@ -69,6 +81,10 @@ public partial class CoreService {
 		string outFile = string.Empty;
 		form = "cvnet57prnhinShouka.qfm";
 		outFile = "test_server.pdf";
+
+
+
+
 		// --------------------------------
 		Directory.CreateDirectory(resolvedOutputDir);
 		string formPath = Path.Combine(resolvedFormDir, form);
