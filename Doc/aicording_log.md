@@ -35,6 +35,24 @@
 
 ---
 
+## [2026-05-04] 16:06 CvServer の不要な System.Text.Encoding.CodePages 参照削除
+### Agent
+- GitHub Copilot : OpenAI
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：CvServer で不要になっている `System.Text.Encoding.CodePages` 参照を削除し、write-log と commit まで実施する
+### 実施内容
+- CvServer/CvServer.csproj: `net10.0` で不要となった `System.Text.Encoding.CodePages` の `PackageReference` を削除
+- Directory.Packages.props: 上記参照削除に伴い未使用となった `System.Text.Encoding.CodePages` の中央管理バージョン定義を削除
+- Doc/aicording_log.md: 今回の作業記録を追記
+### 技術決定 Why
+- .NET 10 ではフレームワーク提供ライブラリに対する不要な直接 `PackageReference` が `NU1510` の対象となるため、SJIS 利用コードは維持したまま不要参照だけを削除して依存関係を簡素化した
+### 確認
+- `dotnet build "C:\gitroot\documents\new2022\cv10\CvServer\CvServer.csproj"` でビルド成功を確認
+
+---
+
 ## [2026-04-30] 11:56 DataGrid自動スクロール処理の再フォーカス抑止
 ### Agent
 - GPT-5 : OpenAI : Codex

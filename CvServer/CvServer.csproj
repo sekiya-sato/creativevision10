@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -23,7 +23,6 @@
 	<PackageReference Include="NCrontab.Scheduler.AspNetCore" />
 	<PackageReference Include="NLog.Web.AspNetCore" />
 	<PackageReference Include="protobuf-net.Grpc.AspNetCore" />
-	<PackageReference Include="System.Text.Encoding.CodePages" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
