@@ -1,4 +1,6 @@
 using CodeShare;
+using CvAsset;
+using CvBase;
 using CvPrints;
 using Microsoft.AspNetCore.Authorization;
 using ProtoBuf.Grpc;
@@ -67,7 +69,7 @@ public partial class CoreService {
 		string configuredFormDir = printServer.GetValue<string>("PrintFormDir") ?? ".";
 		string configuredDataDir = printServer.GetValue<string>("PrintDataDir") ?? ".";
 		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
-
+		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
 		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
 			? configuredBaseDir
 			: Path.Combine(contentRootPath, configuredBaseDir));
@@ -81,15 +83,19 @@ public partial class CoreService {
 		string outFile = string.Empty;
 		form = "cvnet57prnhinShouka.qfm";
 		outFile = "test_server.pdf";
-		Directory.CreateDirectory(resolvedDataDir);
-		// 基本的にはすぐ閉じられる
-		if (File.Exists(Path.Combine(resolvedDataDir, data)))
-			File.Delete(Path.Combine(resolvedDataDir, data));
-		File.WriteAllText(Path.Combine(resolvedDataDir, data), "データ1,データ2,データ3,データ4\nデータB1,データB2,データB3,データB4\nデータC1,データC2,データC3,データC4\n", Sjis);
+		/*
+		 * 		Directory.CreateDirectory(resolvedDataDir);
+				// 基本的にはすぐ閉じられる
+				if (File.Exists(Path.Combine(resolvedDataDir, data)))
+					File.Delete(Path.Combine(resolvedDataDir, data));
+				File.WriteAllText(Path.Combine(resolvedDataDir, data), "データ1,データ2,データ3,データ4\nデータB1,データB2,データB3,データB4\nデータC1,データC2,データC3,データC4\n", Sjis);
 
 
-
-
+		 */
+		if (param is PrintByCsvParam printParam) {
+			form = printParam.PdfFormFile;
+			File.WriteAllText(Path.Combine(resolvedDataDir, data), printParam.CsvData, Sjis);
+		}
 
 		// --------------------------------
 		Directory.CreateDirectory(resolvedOutputDir);
