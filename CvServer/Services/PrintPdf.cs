@@ -93,8 +93,13 @@ public partial class CoreService {
 
 		 */
 		if (param is PrintByCsvParam printParam) {
-			form = printParam.PdfFormFile;
+			form = request.FormFile;
 			File.WriteAllText(Path.Combine(resolvedDataDir, data), printParam.CsvData, Sjis);
+		}
+		else if (param is QueryListSqlParam listParam) {
+			form = request.FormFile;
+			var dataList = _db.Fetch<dynamic>(listParam.Sql ?? string.Empty, listParam.Parameters);
+			// dataList を CSV 形式に変換して保存
 		}
 
 		// --------------------------------

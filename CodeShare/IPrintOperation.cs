@@ -38,4 +38,7 @@ public sealed class PrintOperation {
 	/// </summary>
 	[DataMember(Order = 6)]
 	public bool IsCompleted { get; init; }
+
+	[DataMember(Order = 7)]
+	public string FormFile { get; init; } = string.Empty;
 }

@@ -233,7 +233,15 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			var msg = new PrintOperation {
 				DataType = typeof(PrintByCsvParam),
 				DataMsg = Common.SerializeObject(param),
+				FormFile = "cvnet_meisho.qfm",
 			};
+			var msg2 = new PrintOperation {
+				DataType = typeof(QueryListSqlParam),
+				DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(MasterMeisho), "SELECT TOP 10 * FROM MasterMeisho")),
+				FormFile = "cvnet_meisho.qfm",
+			};
+
+
 			var pdfdata = "";
 			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
 				StreamMessages.Insert(0, streamMsg.DataMsg);
