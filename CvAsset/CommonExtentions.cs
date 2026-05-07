@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace CvAsset;
@@ -216,10 +215,7 @@ public static class CommonExtentions {
 }
 
 public static class DynamicCsvExtensions {
-	public static void WriteDynamicCsv<T>(
-		this IEnumerable<T> records,
-		TextWriter writer,
-		Encoding encoding = null)
+	public static void WriteDynamicCsv<T>(this IEnumerable<T> records, TextWriter writer)
 		where T : IDictionary<string, object> {
 		if (!records.Any())
 			return;
@@ -234,7 +230,7 @@ public static class DynamicCsvExtensions {
 		}
 	}
 
-	private static string EscapeCsvField(string field) {
+	private static string EscapeCsvField(string? field) {
 		if (string.IsNullOrEmpty(field))
 			return "";
 

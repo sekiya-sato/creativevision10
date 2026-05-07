@@ -98,6 +98,7 @@ public partial class CoreService {
 		}
 		else {
 			// エラー: パラメータの型が不正
+			return new PrintResult(false, "不正なパラメータの型");
 		}
 
 		// --------------------------------
