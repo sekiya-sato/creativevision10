@@ -228,7 +228,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var param = new PrintByCsvParam("項目1,項目2,項目3\nデータ1,データ2,データ3\nデータ4,データ5,データ6", "cvnet_meisho.qfm");
+			var param = new PrintByCsvParam("項目1,項目2,項目3\nデータ1,データ2,データ3\nデータ4,データ5,データ6");
 
 			var msg = new PrintOperation {
 				DataType = typeof(PrintByCsvParam),

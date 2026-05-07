@@ -1,11 +1,9 @@
 using CodeShare;
-using CsvHelper;
 using CvAsset;
 using CvBase;
 using CvPrints;
 using Microsoft.AspNetCore.Authorization;
 using ProtoBuf.Grpc;
-using System.Globalization;
 using System.Text;
 
 namespace CvServer.Services;
@@ -92,11 +90,10 @@ public partial class CoreService {
 		else if (param is QueryListSqlParam listParam) {
 			form = request.FormFile;
 			var sql = (listParam.Sql ?? string.Empty).ReplaceServerDate();
-			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters);
+			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
 			// dataList を CSV 形式に変換して保存
-			using (var writer = new StreamWriter(Path.Combine(resolvedDataDir, data), false, Sjis))
-			using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture)) {
-				csv.WriteRecords(dataList);
+			using (var writer = new StreamWriter(Path.Combine(resolvedDataDir, data), false, Sjis)) {
+				dataList.WriteDynamicCsv(writer);
 			}
 		}
 		else {

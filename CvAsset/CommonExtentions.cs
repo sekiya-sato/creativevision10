@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace CvAsset;
@@ -212,4 +213,36 @@ public static class CommonExtentions {
 		}
 	}
 	private static readonly Regex ServerDateRegex = new Regex(@"__serverdate__\(([^)]+)\)", RegexOptions.Compiled);
+}
+
+public static class DynamicCsvExtensions {
+	public static void WriteDynamicCsv<T>(
+		this IEnumerable<T> records,
+		TextWriter writer,
+		Encoding encoding = null)
+		where T : IDictionary<string, object> {
+		if (!records.Any())
+			return;
+
+		var first = records.First();
+		var header = string.Join(",", first.Keys.Select(EscapeCsvField));
+		writer.WriteLine(header);
+
+		foreach (var record in records) {
+			var line = string.Join(",", record.Values.Select(v => EscapeCsvField(v?.ToString())));
+			writer.WriteLine(line);
+		}
+	}
+
+	private static string EscapeCsvField(string field) {
+		if (string.IsNullOrEmpty(field))
+			return "";
+
+		if (field.Contains(",") || field.Contains("\"") || field.Contains("\n") || field.Contains("\r")) {
+			field = field.Replace("\"", "\"\"");
+			return $"\"{field}\"";
+		}
+
+		return field;
+	}
 }

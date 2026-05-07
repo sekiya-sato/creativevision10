@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="CsvHelper" />
 	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
 	<PackageReference Include="NCrontab.Scheduler.AspNetCore" />
 	<PackageReference Include="NLog.Web.AspNetCore" />
