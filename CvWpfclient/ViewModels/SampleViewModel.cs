@@ -240,7 +240,18 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 				DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(MasterMeisho), "SELECT TOP 10 * FROM MasterMeisho")),
 				FormFile = "cvnet_meisho.qfm",
 			};
+			/*
+		var sql_query= "select A.SEQ_NO";
+		sql_query+= ",SUBSTR(GET_VDATE(a.VDATE_CREATE),0,8)||SUBSTR(GET_VDATE(a.VDATE_CREATE),10,6) 作成日時";
+			sql_query += ",SUBSTR(GET_VDATE(a.VDATE_UPDATE),0,8)||SUBSTR(GET_VDATE(a.VDATE_UPDATE),10,6) 更新日時";
+			sql_query += ",A.名称区分 ||' '|| (SELECT m.名称 FROM HC$Master_MEISHO m WHERE m.名称区分='IDX' AND m.名称CD=A.名称区分) 名称区分";
+			sql_query += ",A.名称CD,A.名称,A.略称,A.ランク,A.連番,A.カナ";
+			sql_query += ",CASE WHEN (A.POS区分=0) THEN '0 出力する' WHEN (A.POS区分=9) THEN '9 削除指示' WHEN (A.POS区分=10) THEN '10 出力しない' ELSE '.' END POS区分";
+			sql_query += ",(A.入力社員CD ||' '|| (select B.名前 from HC$MASTER_SHAIN B where B.社員CD=A.入力社員CD)) 最終修正者";
+			sql_query += " from HC$Master_MEISHO A ";
+			sql_query += " where A.名称区分 =:1 ";
 
+			*/
 
 			var pdfdata = "";
 			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {

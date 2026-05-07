@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="Google.Apis.Calendar.v3" Version="1.73.0.4073" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.80.0" />
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.80.0" />

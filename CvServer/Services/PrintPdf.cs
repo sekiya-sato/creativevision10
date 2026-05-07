@@ -1,9 +1,11 @@
 using CodeShare;
+using CsvHelper;
 using CvAsset;
 using CvBase;
 using CvPrints;
 using Microsoft.AspNetCore.Authorization;
 using ProtoBuf.Grpc;
+using System.Globalization;
 using System.Text;
 
 namespace CvServer.Services;
@@ -100,6 +102,10 @@ public partial class CoreService {
 			form = request.FormFile;
 			var dataList = _db.Fetch<dynamic>(listParam.Sql ?? string.Empty, listParam.Parameters);
 			// dataList を CSV 形式に変換して保存
+			using (var writer = new StreamWriter(Path.Combine(resolvedDataDir, data), false, Sjis))
+			using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture)) {
+				csv.WriteRecords(dataList);
+			}
 		}
 
 		// --------------------------------
