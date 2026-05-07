@@ -58,7 +58,6 @@ public partial class CoreService {
 		}
 	}
 
-
 	/// <summary>
 	/// Print処理本体
 	/// </summary>
@@ -85,27 +84,23 @@ public partial class CoreService {
 		string outFile = string.Empty;
 		form = "cvnet57prnhinShouka.qfm";
 		outFile = "test_server.pdf";
-		/*
-		 * 		Directory.CreateDirectory(resolvedDataDir);
-				// 基本的にはすぐ閉じられる
-				if (File.Exists(Path.Combine(resolvedDataDir, data)))
-					File.Delete(Path.Combine(resolvedDataDir, data));
-				File.WriteAllText(Path.Combine(resolvedDataDir, data), "データ1,データ2,データ3,データ4\nデータB1,データB2,データB3,データB4\nデータC1,データC2,データC3,データC4\n", Sjis);
-
-
-		 */
+		// フォルダを clientId+timestamp PDF名をclientId+timestamp.pdf とかにしてもいいかも
 		if (param is PrintByCsvParam printParam) {
 			form = request.FormFile;
 			File.WriteAllText(Path.Combine(resolvedDataDir, data), printParam.CsvData, Sjis);
 		}
 		else if (param is QueryListSqlParam listParam) {
 			form = request.FormFile;
-			var dataList = _db.Fetch<dynamic>(listParam.Sql ?? string.Empty, listParam.Parameters);
+			var sql = (listParam.Sql ?? string.Empty).ReplaceServerDate();
+			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters);
 			// dataList を CSV 形式に変換して保存
 			using (var writer = new StreamWriter(Path.Combine(resolvedDataDir, data), false, Sjis))
 			using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture)) {
 				csv.WriteRecords(dataList);
 			}
+		}
+		else {
+			// エラー: パラメータの型が不正
 		}
 
 		// --------------------------------

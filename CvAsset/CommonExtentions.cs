@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace CvAsset;
 
 /*
@@ -199,5 +201,15 @@ public static class CommonExtentions {
 		public string DefaultIfEmpty(string defaultValue)
 			=> string.IsNullOrEmpty(str) ? defaultValue : str;
 
+		/// <summary>
+		/// SqlDepends: __serverdate__()で記述されたSQL文の部分を、UnixTimeからSQLiteのdatetime関数を使用して日付に変換する
+		/// </summary>
+		/// <param name="sql"></param>
+		/// <returns></returns>
+		public string ReplaceServerDate() {
+			return ServerDateRegex.Replace(str,
+				match => $"strftime('%Y%m%d%H%M%S',datetime(({match.Groups[1].Value} - 621355968000000000) / 10000000, 'unixepoch','localtime'))");
+		}
 	}
+	private static readonly Regex ServerDateRegex = new Regex(@"__serverdate__\(([^)]+)\)", RegexOptions.Compiled);
 }
