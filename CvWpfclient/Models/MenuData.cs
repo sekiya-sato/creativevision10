@@ -180,7 +180,7 @@ public partial class MenuData : ObservableObject {
 			new("移動入力(積送)", typeof(Views._08Zaiko.IdoInputOutView), addInfo:"準備中"),
 			new("移動受入力", typeof(Views._08Zaiko.IdoInputUkeView), addInfo:"準備中"),
 			new("棚卸差異問合せ", typeof(Views._08Zaiko.StockDifferenceQueryView), addInfo:"準備中"),
-			new("在庫問合せ", typeof(Views._08Zaiko.ZaikoQueryView), addInfo:"準備中"),
+			new("在庫問合せ", typeof(Views._08Zaiko.ZaikoQueryView), addInfo:"商品・色・倉庫条件から現在庫を照会"),
 			new("商品履歴問合せ", typeof(Views._08Zaiko.ShohinHistoryQueryView), addInfo:"準備中"),
 			new("棚卸入力(一覧方式)", typeof(Views._08Zaiko.StockInputListView), addInfo:"準備中"),
 			new("在庫強制調整入力", typeof(Views._08Zaiko.StockForceInputView), addInfo:"準備中"),

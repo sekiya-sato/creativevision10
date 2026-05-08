@@ -12,5 +12,342 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:ZaikoQueryViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid></Grid>
+
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="MenteDataGridColumnHeader"
+			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+			TargetType="DataGridColumnHeader">
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignToolBarBackground}" />
+		</Style>
+
+		<Style x:Key="DataGridRightTextBlock"
+			TargetType="TextBlock">
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="TextAlignment" Value="Right" />
+		</Style>
+
+		<Style x:Key="ConditionLabel"
+			TargetType="TextBlock">
+			<Setter Property="Margin" Value="0,0,0,4" />
+			<Setter Property="FontSize" Value="12" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+		</Style>
+
+		<Style x:Key="ConditionSearchTextBox"
+			TargetType="{x:Type helpers:SearchTextBox}">
+			<Setter Property="Width" Value="130" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="Margin" Value="0" />
+			<Setter Property="Background" Value="White" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+		</Style>
+
+		<DataTemplate DataType="{x:Type vm:ZaikoQuerySearchTab}">
+			<Grid Margin="12">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
+
+				<materialDesign:Card Grid.Row="0"
+					Padding="16"
+					materialDesign:ElevationAssist.Elevation="Dp2"
+					UniformCornerRadius="8">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+						</Grid.RowDefinitions>
+
+						<UniformGrid Grid.Row="0"
+							Columns="3"
+							Rows="2">
+							<StackPanel Margin="0,0,16,12">
+								<TextBlock Style="{StaticResource ConditionLabel}"
+									Text="商品CD" />
+								<DockPanel>
+									<helpers:SearchTextBox Command="{Binding Owner.SelectShohinCodeFromCommand}"
+										Style="{StaticResource ConditionSearchTextBox}"
+										Text="{Binding Owner.ShohinCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Width="22"
+										HorizontalAlignment="Center" VerticalAlignment="Center"
+										Text="-" TextAlignment="Center" />
+									<helpers:SearchTextBox Command="{Binding Owner.SelectShohinCodeToCommand}"
+										Style="{StaticResource ConditionSearchTextBox}"
+										Text="{Binding Owner.ShohinCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								</DockPanel>
+							</StackPanel>
+
+							<StackPanel Margin="0,0,16,12">
+								<TextBlock Style="{StaticResource ConditionLabel}"
+									Text="色CD" />
+								<DockPanel>
+									<helpers:SearchTextBox Command="{Binding Owner.SelectColCodeFromCommand}"
+										Style="{StaticResource ConditionSearchTextBox}"
+										Text="{Binding Owner.ColCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Width="22"
+										HorizontalAlignment="Center" VerticalAlignment="Center"
+										Text="-" TextAlignment="Center" />
+									<helpers:SearchTextBox Command="{Binding Owner.SelectColCodeToCommand}"
+										Style="{StaticResource ConditionSearchTextBox}"
+										Text="{Binding Owner.ColCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								</DockPanel>
+							</StackPanel>
+
+							<StackPanel Margin="0,0,0,12">
+								<TextBlock Style="{StaticResource ConditionLabel}"
+									Text="商品名" />
+								<TextBox Height="32"
+									Padding="8,0"
+									VerticalContentAlignment="Center"
+									Background="White"
+									Style="{StaticResource MaterialDesignTextBox}"
+									Text="{Binding Owner.ShohinName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+							</StackPanel>
+
+							<StackPanel Margin="0,0,16,0">
+								<TextBlock Style="{StaticResource ConditionLabel}"
+									Text="倉庫CD" />
+								<DockPanel>
+									<helpers:SearchTextBox Command="{Binding Owner.SelectSokoCodeFromCommand}"
+										Style="{StaticResource ConditionSearchTextBox}"
+										Text="{Binding Owner.SokoCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Width="22"
+										HorizontalAlignment="Center" VerticalAlignment="Center"
+										Text="-" TextAlignment="Center" />
+									<helpers:SearchTextBox Command="{Binding Owner.SelectSokoCodeToCommand}"
+										Style="{StaticResource ConditionSearchTextBox}"
+										Text="{Binding Owner.SokoCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								</DockPanel>
+							</StackPanel>
+
+							<StackPanel Margin="0,0,16,0">
+								<TextBlock Style="{StaticResource ConditionLabel}"
+									Text="ブランドCD" />
+								<DockPanel>
+									<helpers:SearchTextBox Command="{Binding Owner.SelectBrandCodeFromCommand}"
+										Style="{StaticResource ConditionSearchTextBox}"
+										Text="{Binding Owner.BrandCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Width="22"
+										HorizontalAlignment="Center" VerticalAlignment="Center"
+										Text="-" TextAlignment="Center" />
+									<helpers:SearchTextBox Command="{Binding Owner.SelectBrandCodeToCommand}"
+										Style="{StaticResource ConditionSearchTextBox}"
+										Text="{Binding Owner.BrandCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								</DockPanel>
+							</StackPanel>
+
+							<Grid Margin="0">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="96" />
+								</Grid.ColumnDefinitions>
+								<StackPanel Grid.Column="0"
+									Margin="0,0,16,0">
+									<TextBlock Style="{StaticResource ConditionLabel}"
+										Text="アイテムCD" />
+									<DockPanel>
+										<helpers:SearchTextBox Command="{Binding Owner.SelectItemCodeFromCommand}"
+											Style="{StaticResource ConditionSearchTextBox}"
+											Text="{Binding Owner.ItemCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+										<TextBlock Width="22"
+											HorizontalAlignment="Center" VerticalAlignment="Center"
+											Text="-" TextAlignment="Center" />
+										<helpers:SearchTextBox Command="{Binding Owner.SelectItemCodeToCommand}"
+											Style="{StaticResource ConditionSearchTextBox}"
+											Text="{Binding Owner.ItemCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+									</DockPanel>
+								</StackPanel>
+								<StackPanel Grid.Column="1">
+									<TextBlock Style="{StaticResource ConditionLabel}"
+										Text="最大件数" />
+									<TextBox Height="32"
+										Padding="8,0"
+										HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+										Background="White"
+										Style="{StaticResource MaterialDesignTextBox}"
+										Text="{Binding Owner.MaxCountText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								</StackPanel>
+							</Grid>
+						</UniformGrid>
+
+						<DockPanel Grid.Row="1"
+							Margin="0,10,0,0">
+							<StackPanel DockPanel.Dock="Right"
+								Orientation="Horizontal">
+								<Button MinWidth="104"
+									Margin="0,0,8,0"
+									Command="{Binding Owner.ClearConditionsCommand}"
+									Style="{StaticResource MaterialDesignOutlinedButton}">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon Margin="0,0,6,0"
+											VerticalAlignment="Center"
+											Kind="Eraser" />
+										<TextBlock Text="クリア" />
+									</StackPanel>
+								</Button>
+								<Button MinWidth="128"
+									Command="{Binding Owner.SearchCommand}"
+									Style="{StaticResource MaterialDesignRaisedButton}">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon Margin="0,0,6,0"
+											VerticalAlignment="Center"
+											Kind="Magnify" />
+										<TextBlock Text="検索実行" />
+									</StackPanel>
+								</Button>
+							</StackPanel>
+							<TextBlock VerticalAlignment="Center"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Owner.Message}"
+								TextTrimming="CharacterEllipsis" />
+						</DockPanel>
+					</Grid>
+				</materialDesign:Card>
+
+				<materialDesign:Card Grid.Row="1"
+					Margin="0,12,0,0" Padding="0"
+					materialDesign:ElevationAssist.Elevation="Dp2"
+					UniformCornerRadius="8">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
+
+						<Border Grid.Row="0"
+							Padding="12,8"
+							Background="{DynamicResource MaterialDesignToolBarBackground}"
+							CornerRadius="8,8,0,0">
+							<DockPanel>
+								<TextBlock VerticalAlignment="Center"
+									DockPanel.Dock="Right"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="{Binding Owner.ProductCount, StringFormat={}件数: {0:N0}}" />
+								<TextBlock VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="対象商品マスタ一覧" />
+							</DockPanel>
+						</Border>
+
+						<DataGrid Grid.Row="1"
+							helpers:DataGridDoubleClick.Command="{Binding Owner.OpenStockTabCommand}"
+							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True"
+							materialDesign:DataGridAssist.CellPadding="12,6"
+							materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+							AutoGenerateColumns="False"
+							EnableRowVirtualization="True"
+							FrozenColumnCount="2"
+							GridLinesVisibility="Horizontal"
+							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+							IsReadOnly="True"
+							ItemsSource="{Binding Owner.ProductRows}"
+							SelectedItem="{Binding Owner.SelectedProduct, Mode=TwoWay}"
+							Style="{StaticResource MaterialDesignDataGrid}"
+							VirtualizingPanel.IsVirtualizing="True"
+							VirtualizingPanel.VirtualizationMode="Recycling">
+							<DataGrid.Columns>
+								<DataGridTextColumn Width="110"
+									Binding="{Binding Code}"
+									Header="商品CD" />
+								<DataGridTextColumn Width="220"
+									Binding="{Binding Name}"
+									Header="商品名" />
+								<DataGridTextColumn Width="90"
+									Binding="{Binding TankaJodai, StringFormat={}{0:N0}}"
+									ElementStyle="{StaticResource DataGridRightTextBlock}"
+									Header="上代" />
+								<DataGridTextColumn Width="150"
+									Binding="{Binding TenjiDisplay}"
+									Header="展示会" />
+								<DataGridTextColumn Width="150"
+									Binding="{Binding BrandDisplay}"
+									Header="ブランド" />
+								<DataGridTextColumn Width="150"
+									Binding="{Binding MaterialDisplay}"
+									Header="素材" />
+								<DataGridTextColumn Width="150"
+									Binding="{Binding ItemDisplay}"
+									Header="アイテム" />
+								<DataGridTextColumn Width="150"
+									Binding="{Binding SeasonDisplay}"
+									Header="シーズン" />
+								<DataGridTextColumn Width="90"
+									Binding="{Binding StockSu, StringFormat={}{0:N0}}"
+									ElementStyle="{StaticResource DataGridRightTextBlock}"
+									Header="在庫数" />
+								<DataGridTextColumn Width="90"
+									Binding="{Binding TransitQty, StringFormat={}{0:N0}}"
+									ElementStyle="{StaticResource DataGridRightTextBlock}"
+									Header="移動中" />
+							</DataGrid.Columns>
+							<DataGrid.ColumnHeaderStyle>
+								<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+									TargetType="DataGridColumnHeader" />
+							</DataGrid.ColumnHeaderStyle>
+						</DataGrid>
+					</Grid>
+				</materialDesign:Card>
+			</Grid>
+		</DataTemplate>
+
+		<DataTemplate DataType="{x:Type vm:ZaikoQueryStockTab}">
+			<Grid Margin="12">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
+
+				<Border Grid.Row="0"
+					Padding="12"
+					Background="{DynamicResource MaterialDesignToolBarBackground}"
+					CornerRadius="8">
+					<DockPanel>
+						<TextBlock DockPanel.Dock="Right"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding Message}" />
+						<StackPanel Orientation="Horizontal">
+							<TextBlock FontWeight="SemiBold"
+								Text="{Binding ProductCode}" />
+							<TextBlock Margin="8,0,0,0"
+								Text="{Binding ProductName}" />
+						</StackPanel>
+					</DockPanel>
+				</Border>
+
+				<DataGrid Grid.Row="1"
+					Margin="0,12,0,0"
+					materialDesign:DataGridAssist.CellPadding="12,6"
+					materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+					AutoGenerateColumns="True"
+					CanUserAddRows="False"
+					CanUserDeleteRows="False"
+					GridLinesVisibility="Horizontal"
+					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+					IsReadOnly="True"
+					ItemsSource="{Binding StockTable.DefaultView}"
+					Style="{StaticResource MaterialDesignDataGrid}">
+					<DataGrid.ColumnHeaderStyle>
+						<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+							TargetType="DataGridColumnHeader" />
+					</DataGrid.ColumnHeaderStyle>
+				</DataGrid>
+			</Grid>
+		</DataTemplate>
+	</helpers:BaseWindow.Resources>
+
+	<Grid>
+		<TabControl ItemsSource="{Binding Tabs}"
+			SelectedItem="{Binding SelectedTab, Mode=TwoWay}"
+			Style="{StaticResource MaterialDesignTabControl}">
+			<TabControl.ItemTemplate>
+				<DataTemplate>
+					<TextBlock Text="{Binding Header}" />
+				</DataTemplate>
+			</TabControl.ItemTemplate>
+		</TabControl>
+	</Grid>
 </helpers:BaseWindow>

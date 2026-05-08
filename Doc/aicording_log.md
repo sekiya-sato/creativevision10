@@ -16,6 +16,28 @@
 
 ---
 
+## [2026-05-08] 09:51 在庫問い合わせ画面の検索・在庫明細タブ実装
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`Doc/wrk/instruction-20260507-Desktop-SearchZaiko.txt` に従い、`CvWpfclient.Views._08Zaiko.ZaikoQueryView` の在庫問い合わせ画面を作成し、Write-Log と Git-Commit まで行う。
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/ZaikoQueryViewModel.cs: 商品CD、色CD、商品名、倉庫CD、ブランドCD、アイテムCD、最大件数の検索条件を追加し、`CvFlag.Msg101_Op_Query` と `QueryListSqlParam` による商品一覧・在庫数・移動中数量・商品別在庫明細取得を実装。
+- CvWpfclient/ViewModels/08Zaiko/ZaikoQueryViewModel.cs: 商品一覧行のダブルクリックで商品別の在庫明細タブを生成し、倉庫別Totalと色サイズ別在庫数を `DataTable` で表示する処理を追加。
+- CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml: 検索条件入力、検索実行ボタン、対象商品マスタ一覧、商品別在庫明細タブ表示用DataGridをMaterialDesignベースで作成。
+- CvWpfclient/Models/MenuData.cs: 在庫問合せメニューの説明を準備中から実機能説明へ変更。
+### 技術決定 Why
+- サーバ側のQuery I/Fを拡張せず、既存の `QueryListSqlParam` によるSQL取得へ寄せることで、在庫問い合わせ専用の集計表示をWPF側で組み立てつつ既存通信経路を維持した。
+- 色サイズ列は商品ごとに可変になるため、固定DTOではなく `DataTable` を使い、TabItemごとに倉庫行とSKU列を動的生成する構成にした。
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、warning 0 / error 0 でビルド成功を確認。
+- `git diff --check` で空白エラーなしを確認。
+- `CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml` をXMLとして読み込み、構文エラーなしを確認。
+
+---
+
 ## [2026-04-30] 12:30 SchedulerService を使った毎日AM2:00のMSg050_Summary集計スケジュール実装
 ### Agent
 - big-pickle : OpenCode : Sisyphus
