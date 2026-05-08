@@ -74,6 +74,9 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	string maxCountText = "500";
 
+	[ObservableProperty]
+	bool includeZeroStock = true;
+
 	public ZaikoQueryViewModel() {
 		searchTab = new ZaikoQuerySearchTab(this);
 		Tabs.Add(searchTab);
@@ -130,6 +133,7 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 		ItemCodeFrom = string.Empty;
 		ItemCodeTo = string.Empty;
 		MaxCountText = "500";
+		IncludeZeroStock = true;
 		Message = "検索条件をクリアしました";
 	}
 
@@ -388,6 +392,28 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 		AddCodeRange(clauses, parameters, JsonCd("M.VBrand"), BrandCodeFrom, BrandCodeTo);
 		AddCodeRange(clauses, parameters, JsonCd("M.VItem"), ItemCodeFrom, ItemCodeTo);
 
+		if (!IncludeZeroStock) {
+			// 在庫0除外は商品単位の SummaryStock 集計で判定する
+			List<string> stockClauses = ["T.Id_Shohin = M.Id"];
+			AddCodeRange(stockClauses, parameters, "Soko.Code", SokoCodeFrom, SokoCodeTo);
+			AddCodeRange(stockClauses, parameters, "D.Code_Col", ColCodeFrom, ColCodeTo);
+
+			clauses.Add($"""
+				EXISTS (
+					SELECT 1
+					FROM SummaryStock T
+						LEFT JOIN DerivedShohinColSiz D
+							ON D.Id_Shohin = T.Id_Shohin
+							AND D.Id_Col = T.Id_Col
+							AND D.Id_Siz = T.Id_Siz
+						LEFT JOIN MasterTokui Soko ON Soko.Id = T.Id_Soko
+					WHERE {string.Join(" AND ", stockClauses)}
+					GROUP BY T.Id_Shohin
+					HAVING IFNULL(SUM(T.Su), 0) <> 0
+				)
+				""");
+		}
+
 		List<string> colClauses = [];
 		AddCodeRange(colClauses, parameters, "D.Code_Col", ColCodeFrom, ColCodeTo);
 		if (colClauses.Count > 0) {
@@ -397,20 +423,6 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 					FROM DerivedShohinColSiz D
 					WHERE D.Id_Shohin = M.Id
 						AND {string.Join(" AND ", colClauses)}
-				)
-				""");
-		}
-
-		List<string> sokoClauses = [];
-		AddCodeRange(sokoClauses, parameters, "Soko.Code", SokoCodeFrom, SokoCodeTo);
-		if (sokoClauses.Count > 0) {
-			clauses.Add($"""
-				EXISTS (
-					SELECT 1
-					FROM SummaryRealStock R
-						INNER JOIN MasterTokui Soko ON Soko.Id = R.Id_Soko
-					WHERE R.Id_Shohin = M.Id
-						AND {string.Join(" AND ", sokoClauses)}
 				)
 				""");
 		}

@@ -16,6 +16,28 @@
 
 ---
 
+## [2026-05-08] 11:29 ZaikoQueryの在庫0条件と結果タブ操作改善
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ZaikoQueryView / ZaikoQueryViewModel に在庫0含有チェック条件を追加し、一覧の素材・シーズン列を半幅化し、追加結果タブに閉じるボタンを追加したい
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/ZaikoQueryViewModel.cs: `IncludeZeroStock` 条件を追加し、`ClearConditions` で初期化するよう修正。`BuildShohinClauses` に `SummaryStock` の商品単位集計 `SUM(Su)` による在庫0除外条件を追加した
+- CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml: 検索条件エリアに「在庫0を含める」CheckBox を追加し、一覧の素材・シーズン列幅を半分へ調整。結果タブのヘッダ領域に閉じるボタンを追加して既存 `CloseStockTabCommand` に接続した
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- ユーザー指定の在庫0判定が `SummaryStock` の `Sum(Su)` 基準だったため、checkbox OFF 時のみ商品単位集計で除外する最小差分に留めつつ、結果タブ削除は既存 `CloseStockTab` ロジックを再利用して画面挙動の一貫性を保った
+### 影響範囲
+- CvWpfclient の在庫問い合わせ画面（ZaikoQueryView / ZaikoQueryViewModel）の検索条件・一覧表示・結果タブ操作
+### 確認
+- `lsp_diagnostics` で `CvWpfclient/ViewModels/08Zaiko/ZaikoQueryViewModel.cs` に問題がないことを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+- goal / QA / code quality / security / context mining の再レビューで blocking issue 解消を確認
+
+---
+
 ## [2026-05-08] 09:51 在庫問い合わせ画面の検索・在庫明細タブ実装
 ### Agent
 - GPT-5 : OpenAI

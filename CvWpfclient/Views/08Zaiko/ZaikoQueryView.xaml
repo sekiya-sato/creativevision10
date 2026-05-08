@@ -178,6 +178,11 @@
 							Margin="0,10,0,0">
 							<StackPanel DockPanel.Dock="Right"
 								Orientation="Horizontal">
+								<CheckBox Content="在庫0を含める"
+									Margin="0,0,16,0"
+									VerticalAlignment="Center"
+									IsChecked="{Binding Owner.IncludeZeroStock}"
+									Style="{StaticResource MaterialDesignCheckBox}" />
 								<Button MinWidth="104"
 									Margin="0,0,8,0"
 									Command="{Binding Owner.ClearConditionsCommand}"
@@ -266,13 +271,13 @@
 								<DataGridTextColumn Width="150"
 									Binding="{Binding BrandDisplay}"
 									Header="ブランド" />
-								<DataGridTextColumn Width="150"
+								<DataGridTextColumn Width="75"
 									Binding="{Binding MaterialDisplay}"
 									Header="素材" />
 								<DataGridTextColumn Width="150"
 									Binding="{Binding ItemDisplay}"
 									Header="アイテム" />
-								<DataGridTextColumn Width="150"
+								<DataGridTextColumn Width="75"
 									Binding="{Binding SeasonDisplay}"
 									Header="シーズン" />
 								<DataGridTextColumn Width="90"
@@ -309,11 +314,21 @@
 						<TextBlock DockPanel.Dock="Right"
 							Foreground="{DynamicResource MaterialDesignBodyLight}"
 							Text="{Binding Message}" />
-						<StackPanel Orientation="Horizontal">
-							<TextBlock FontWeight="SemiBold"
-								Text="{Binding ProductCode}" />
-							<TextBlock Margin="8,0,0,0"
-								Text="{Binding ProductName}" />
+						<StackPanel Orientation="Vertical">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock FontWeight="SemiBold"
+									Text="{Binding ProductCode}" />
+								<TextBlock Margin="8,0,0,0"
+									Text="{Binding ProductName}" />
+							</StackPanel>
+							<Button Content="閉じる"
+								HorizontalAlignment="Left"
+								Margin="0,8,0,0"
+								Padding="16,0"
+								Height="24"
+								Command="{Binding DataContext.CloseStockTabCommand, RelativeSource={RelativeSource AncestorType={x:Type helpers:BaseWindow}}}"
+								CommandParameter="{Binding}"
+								Style="{StaticResource MaterialDesignOutlinedButton}" />
 						</StackPanel>
 					</DockPanel>
 				</Border>
