@@ -105,5 +105,35 @@ public class PrintAdapter : IPrintService {
 		return [];
 #endif
 	}
+	/// <summary>
+	/// ライセンスの登録
+	/// </summary>
+	/// <param name="product"></param>
+	/// <param name="serial"></param>
+	/// <param name="key"></param>
+	/// <returns></returns>
+	public async Task<bool> RegisterLicenseAsync(string product, string serialkey) {
+#if PRINT_ENABLE
+		return await Task.Run(() => {
+			try {
+				var writer = new FormWriter();
+				var reg1 = serialkey.Split(',');
+				if (reg1.Length >= 2) {
+					return writer.registerLicense(product, reg1[0], reg1[1]);
+				}
+				return false;
+			}
+			catch (FormWriterException) {
+				return false;
+			}
+			catch (Exception) {
+				return false;
+			}
+		});
+#else
+		await Task.CompletedTask;
+		return false;
+#endif
+	}
 
 }

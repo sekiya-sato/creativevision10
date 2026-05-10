@@ -119,6 +119,9 @@ public partial class CoreService {
 		};
 		var printService = new PrintAdapter();
 		var licenseTask = printService.CheckLicenseAsync().Result;
+		foreach (var lic in licenseTask)
+			if (!lic.Status)
+				printService.RegisterLicenseAsync(lic.Product, printServer.GetValue<string>(lic.Product) ?? "").Wait();
 
 
 		var ret = printService.ExecutePrintAsync(context);
