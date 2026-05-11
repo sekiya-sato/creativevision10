@@ -181,7 +181,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 	}
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestConvert(CancellationToken cancellationToken) {
-		if (MessageEx.ShowQuestionDialog("	実行しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+		if (MessageEx.ShowQuestionDialog("	変換実行しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
 		}
 		try {
@@ -195,11 +195,13 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			/*
 			msg.Flag = CvFlag.MSg040_ConvertDb;
 			msg.DataMsg = "コンバートストリーミング DBConvert";
-			*/
 			var summaryParam = new SummaryDateParameter("202001", "202602");
+			msg = new CvMsg { Flag = CvFlag.MSg050_Summary, Code = 0, DataType = typeof(SummaryDateParameter), DataMsg = Common.SerializeObject(summaryParam) };
+			*/
 
 			//msg.DataMsg = "集計処理ストリーミング DBConvert";
-			msg = new CvMsg { Flag = CvFlag.MSg050_Summary, Code = 0, DataType = typeof(SummaryDateParameter), DataMsg = Common.SerializeObject(summaryParam) };
+			var summaryParam = new SummaryRealDateParameter(DateTime.Now.ToDtStrDate2().Substring(0, 6));
+			msg = new CvMsg { Flag = CvFlag.Msg051_SummaryRealStock, Code = 0, DataType = typeof(SummaryRealDateParameter), DataMsg = Common.SerializeObject(summaryParam) };
 			/*
 			*/
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {

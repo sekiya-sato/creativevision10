@@ -41,6 +41,12 @@ public partial class CoreService {
 			}
 			yield break;
 		}
+		else if (request.Flag is CvFlag.Msg051_SummaryRealStock) {
+			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
+				yield return msg;
+			}
+			yield break;
+		}
 		// テストストリーミング処理（既存）
 		else if (request.Flag is CvFlag.MSg710_StreamingTest) {
 			// 追加：HandleConvertTestStreamAsync を呼ぶ
@@ -83,7 +89,39 @@ public partial class CoreService {
 		var summaryDb = new SummaryDb(_db);
 
 		var param = Common.DeserializeObject(request.DataMsg, request.DataType);
-		if (param is not SummaryDateParameter summaryParam) {
+		if (param is SummaryDateParameter summaryParam) {
+			// ストリーミングをメッセージに変換
+			await foreach (var progress in summaryDb.SummaryAllAsyncStream(summaryParam).WithCancellation(ct)) { // "201905", "201906"
+				yield return new StreamMsg {
+					Flag = request.Flag,
+					Code = progress.IsError ? -1 : 0,
+					DataType = typeof(string),
+					DataMsg = progress.IsError
+						? $"エラー: {progress.StepName} - {progress.ErrorMessage} ----{DateTime.Now: MM/dd HH:mm:ss.fff}"
+						: $"{(progress.IsCompleted ? "完了" : "処理中")}: {progress.StepName} 件数={progress.Count} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+					Progress = progress.Progress,
+					IsCompleted = progress.IsCompleted,
+					IsError = progress.IsError
+				};
+			}
+		}
+		else if (param is SummaryRealDateParameter summaryReal) {
+			// ストリーミングをメッセージに変換
+			await foreach (var progress in summaryDb.SummaryRealAsyncStream(summaryReal).WithCancellation(ct)) {
+				yield return new StreamMsg {
+					Flag = request.Flag,
+					Code = progress.IsError ? -1 : 0,
+					DataType = typeof(string),
+					DataMsg = progress.IsError
+						? $"エラー: {progress.StepName} - {progress.ErrorMessage} ----{DateTime.Now: MM/dd HH:mm:ss.fff}"
+						: $"{(progress.IsCompleted ? "完了" : "処理中")}: {progress.StepName} 件数={progress.Count} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+					Progress = progress.Progress,
+					IsCompleted = progress.IsCompleted,
+					IsError = progress.IsError
+				};
+			}
+		}
+		else {
 			yield return new StreamMsg {
 				Flag = request.Flag,
 				Code = -1,
@@ -94,22 +132,6 @@ public partial class CoreService {
 				IsError = true
 			};
 			yield break;
-		}
-
-		// ストリーミングをメッセージに変換
-		// ConvertAllAsyncStream()が既にエラーハンドリングしているため、try-catchは不要
-		await foreach (var progress in summaryDb.SummaryAllAsyncStream(summaryParam).WithCancellation(ct)) { // "201905", "201906"
-			yield return new StreamMsg {
-				Flag = request.Flag,
-				Code = progress.IsError ? -1 : 0,
-				DataType = typeof(string),
-				DataMsg = progress.IsError
-					? $"エラー: {progress.StepName} - {progress.ErrorMessage} ----{DateTime.Now: MM/dd HH:mm:ss.fff}"
-					: $"{(progress.IsCompleted ? "完了" : "処理中")}: {progress.StepName} 件数={progress.Count} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
-				Progress = progress.Progress,
-				IsCompleted = progress.IsCompleted,
-				IsError = progress.IsError
-			};
 		}
 	}
 

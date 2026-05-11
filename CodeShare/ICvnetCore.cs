@@ -115,6 +115,10 @@ public enum CvFlag {
 	/// </summary>
 	MSg050_Summary = 50,
 	/// <summary>
+	/// リアル在庫集計処理
+	/// </summary>
+	Msg051_SummaryRealStock = 51,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	Msg101_Op_Query = 101,

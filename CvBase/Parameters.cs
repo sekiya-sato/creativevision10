@@ -184,6 +184,8 @@ public sealed class OutDataHhtMasterParam {
 /// <param name="DateYymmTo"></param>
 public record SummaryDateParameter(string DateYymmFrom, string DateYymmTo);
 
+public record SummaryRealDateParameter(string DateYymm);
+
 /// <summary>
 /// 在庫集計テーブルを計算する際のトランID指定パラメータ
 /// </summary>
