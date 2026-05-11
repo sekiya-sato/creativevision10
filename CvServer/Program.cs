@@ -36,8 +36,8 @@ builder.Services.AddCodeFirstGrpc((options => {
 	// サーバーから圧縮済みレスポンスを返す際に使うアルゴリズム名
 	options.ResponseCompressionAlgorithm = "gzip";
 	options.EnableDetailedErrors = true;
-	options.MaxReceiveMessageSize = 800 * 1024 * 1024; // 800 MB
-	options.MaxSendMessageSize = 800 * 1024 * 1024; // 800 MB
+	options.MaxReceiveMessageSize = 1024 * 1024 * 1024; // 1 GB
+	options.MaxSendMessageSize = 1024 * 1024 * 1024; // 1 GB
 	options.Interceptors.Add<ErrorInterceptor>();
 }));
 
