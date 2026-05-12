@@ -472,3 +472,22 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認（CodeShare.dll の一時ロック警告は再試行後に解消）
 
 ---
+
+## [2026-05-12] 18:05 SelectShohinView検索条件領域のScrollViewer対応
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclient/Views/Sub/SelectShohinView.xaml の ScrollViewer 対応を行い、検索条件領域をスクロール可能にする。修正、確認、log、1-commitまで一連で実行する
+### 実施内容
+- CvWpfclient/Views/Sub/SelectShohinView.xaml: 検索モードカード内の検索条件 `UniformGrid` と補足文を `ScrollViewer` 配下へ移し、下部の戻る・一覧表示ボタンは固定行として維持するよう行構成を整理
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 画面高さが不足した場合でも検索条件を縦スクロールでき、確定操作ボタンは常にカード下部に残すため。既存のバインディングや検索処理には手を入れず、Viewのレイアウト変更だけに限定した
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- PowerShell の `[xml](Get-Content -Raw)` で `SelectShohinView.xaml` のXML整形式を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認（warning 0 / error 0）
+
+---
