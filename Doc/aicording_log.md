@@ -16,6 +16,31 @@
 
 ---
 
+## [2026-05-12] 13:20 商品検索選択画面 SelectShohinView の新規作成
+### Agent
+- gpt-5.5 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc/wrk/instruction-20260512-Desktop-SearchShohin.txt` に従い、CvWpfclient の商品検索画面 `Sub/SelectShohinView` を新規作成し、Write-Log と Git-Commit まで行う
+### 実施内容
+- CvWpfclient/Views/Sub/SelectShohinView.xaml: 商品CD・商品名・ブランドCD・アイテムCD・JANの検索条件画面と、商品一覧選択画面を1つのBaseWindow内で切り替える2画面構成を追加
+- CvWpfclient/Views/Sub/SelectShohinView.xaml.cs: 新規Viewの初期化 code-behind を追加
+- CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs: `QueryListSqlParam` による商品検索、`DerivedShohinColSiz` のJAN部分一致 `EXISTS` 条件、`SearchTextBox + SelectWinView` による商品/ブランド/アイテムCD範囲選択、選択確定時に `MasterShohin` を返す処理を追加
+- .sisyphus/2026-05-12_desktop_search_shohin.md: 指示内容、要求整理、実装方針、確認予定の作業メモを追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 既存の `SelectShohinColSizView` / `SelectWinView` / `ZaikoQueryViewModel` のパターンに合わせ、サーバ側契約を変更せずに `CvFlag.Msg101_Op_Query` と `QueryListSqlParam` で検索を実装することで、既存通信経路と選択ダイアログの戻り値契約を維持した
+- 一覧DataGridは `Grid` の `*` 行に配置し、下部操作ボタンを `Auto` 行に分離することで、右端・下端の見切れを避ける構成にした
+### 影響範囲
+- CvWpfclient のサブ選択画面（新規 `SelectShohinView` / `SelectShohinViewModel`）
+### 確認
+- `lsp_diagnostics` で `CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs` と `CvWpfclient/Views/Sub/SelectShohinView.xaml.cs` に問題がないことを確認
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse('CvWpfclient/Views/Sub/SelectShohinView.xaml'); print('XAML XML parse OK')"` で XAML のXML整形式を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-08] 11:29 ZaikoQueryの在庫0条件と結果タブ操作改善
 ### Agent
 - GPT-5.4 : OpenAI
