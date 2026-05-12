@@ -131,9 +131,10 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 		string where = clauses.Count == 0 ? string.Empty : $"WHERE {string.Join(" AND ", clauses)}";
 		string sql = $"""
 			SELECT
-				M.Id, M.Vdc, M.Vdu, M.Code, M.Name,
-				M.TankaJodai, M.VBrand, M.VItem
+				M.*
 			FROM MasterShohin M
+				LEFT JOIN MasterMeisho Brd ON Brd.Id = M.Id_Brand
+				LEFT JOIN MasterMeisho Item ON Item.Id = M.Id_Item
 			{where}
 			ORDER BY M.Code
 			LIMIT {MaxCount}
@@ -146,8 +147,8 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 		List<string> clauses = [];
 		AddCodeRange(clauses, parameters, "M.Code", ShohinCodeFrom, ShohinCodeTo);
 		AddLike(clauses, parameters, "M.Name", ShohinName);
-		AddCodeRange(clauses, parameters, JsonCd("M.VBrand"), BrandCodeFrom, BrandCodeTo);
-		AddCodeRange(clauses, parameters, JsonCd("M.VItem"), ItemCodeFrom, ItemCodeTo);
+		AddCodeRange(clauses, parameters, "IFNULL(Brd.Code, '')", BrandCodeFrom, BrandCodeTo);
+		AddCodeRange(clauses, parameters, "IFNULL(Item.Code, '')", ItemCodeFrom, ItemCodeTo);
 
 		string normalizedJan = Normalize(Jan);
 		if (!string.IsNullOrEmpty(normalizedJan)) {
@@ -230,8 +231,6 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 
 	static string Normalize(string? value) => value?.Trim() ?? string.Empty;
 
-	static string JsonCd(string column) =>
-		$"IFNULL(json_extract(CASE WHEN json_valid({column}) THEN {column} ELSE '{{}}' END, '$.Cd'), '')";
 }
 
 public sealed class SelectShohinRow(MasterShohin shohin) {

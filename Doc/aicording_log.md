@@ -16,6 +16,26 @@
 
 ---
 
+## [2026-05-12] 13:39 商品検索選択画面のSQL取得内容修正
+### Agent
+- gpt-5.5 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Oracleレビューで指摘された `SelectShohinViewModel` の商品検索SQLを、選択時に完全な `MasterShohin` を返せる形へ修正する
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs: 商品検索SQLを `SELECT M.*` に変更し、選択結果が部分ロードの `MasterShohin` にならないよう修正
+- CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs: ブランドCD・アイテムCDの範囲条件を `M.VBrand` / `M.VItem` のJSON抽出から、`MasterMeisho` への left join と `Brd.Code` / `Item.Code` 判定へ変更
+- Doc/aicording_log.md: Oracleレビュー後の修正内容を追記
+### 技術決定 Why
+- 指示ファイルが商品マスタとブランド/アイテム名称マスタの結合条件を明示していたため、検索条件は `Id_Brand` / `Id_Item` の参照先コードで判定し、選択結果は後続処理で完全な商品マスタとして扱えるよう `M.*` を取得する構成にした
+### 確認
+- `lsp_diagnostics` で `CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs` に問題がないことを確認
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse('CvWpfclient/Views/Sub/SelectShohinView.xaml'); print('XAML XML parse OK')"` で XAML のXML整形式を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-12] 13:20 商品検索選択画面 SelectShohinView の新規作成
 ### Agent
 - gpt-5.5 : OpenAI
