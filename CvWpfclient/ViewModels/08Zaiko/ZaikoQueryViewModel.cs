@@ -232,8 +232,9 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 		List<string> clauses = BuildStockClauses("R", "D", "Soko", parameters, ids);
 		string sql = $"""
 			SELECT
-				0 as Id, 0 as Vdc, 0 as Vdu,
-				R.Id_Shohin, R.Id_Col, R.Id_Siz,R.Id_Soko,
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				R.Id_Shohin,
+				0 AS Id_Soko, 0 AS Id_Col, 0 AS Id_Siz,
 				IFNULL(SUM(R.Su), 0) AS Su
 			FROM SummaryRealStock R
 				LEFT JOIN DerivedShohinColSiz D
@@ -241,8 +242,8 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 					AND D.Id_Col = R.Id_Col
 					AND D.Id_Siz = R.Id_Siz
 				LEFT JOIN MasterTokui Soko ON Soko.Id = R.Id_Soko
-			GROUP BY R.Id_Shohin, R.Id_Col, R.Id_Siz,R.Id_Soko
-			Having Su<>0
+			WHERE {string.Join(" AND ", clauses)}
+			GROUP BY R.Id_Shohin
 			""";
 
 		List<SummaryRealStock> rows = await QuerySqlListAsync<SummaryRealStock>(sql, parameters, ct);
