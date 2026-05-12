@@ -16,6 +16,27 @@
 
 ---
 
+## [2026-05-12] 13:44 SelectShohinView の既存画面からの呼び出し対応
+### Agent
+- gpt-5.5 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：新規作成した商品検索選択画面を既存の商品選択導線で利用できるようにする
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 店舗売上入力の明細商品選択を汎用SelectWinから `SelectShohinView` 呼び出しへ変更し、選択した `MasterShohin` を明細へ反映するよう修正
+- CvWpfclient/ViewModels/08Zaiko/ZaikoQueryViewModel.cs: 在庫問い合わせ画面の商品CD From/To の検索ボタンを `SelectShohinView` 呼び出しへ変更し、既存検索条件を引き継いだ商品選択ができるよう修正
+- Doc/aicording_log.md: 既存画面からの呼び出し対応を追記
+### 技術決定 Why
+- 新規 `SelectShohinView` は商品名・ブランド・アイテム・JANを条件に使えるため、従来の汎用コード選択より商品検索の要件に合う。既存の `ClientLib.ShowDialogView` と `SelectedShohin` 取得に寄せることで、選択ダイアログの戻り値契約を維持した
+### 影響範囲
+- 店舗売上入力の商品選択
+- 在庫問い合わせの商品CD範囲選択
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-12] 13:39 商品検索選択画面のSQL取得内容修正
 ### Agent
 - gpt-5.5 : OpenAI

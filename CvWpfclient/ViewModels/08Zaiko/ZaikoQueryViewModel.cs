@@ -178,10 +178,10 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 	}
 
 	[RelayCommand]
-	void SelectShohinCodeFrom() => SelectCode<MasterShohin>(string.Empty, "Code", x => ShohinCodeFrom = x);
+	void SelectShohinCodeFrom() => SelectShohinCode(x => ShohinCodeFrom = x);
 
 	[RelayCommand]
-	void SelectShohinCodeTo() => SelectCode<MasterShohin>(string.Empty, "Code", x => ShohinCodeTo = x);
+	void SelectShohinCodeTo() => SelectShohinCode(x => ShohinCodeTo = x);
 
 	[RelayCommand]
 	void SelectColCodeFrom() => SelectCode<MasterMeisho>("Kubun='COL'", "Code", x => ColCodeFrom = x);
@@ -465,6 +465,25 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 		vm.SetParam(typeof(T), where, order);
 		if (ClientLib.ShowDialogView(view, this) != true) return;
 		if (vm.Current is not T selected) return;
+
+		setCode(selected.Code ?? string.Empty);
+	}
+
+	void SelectShohinCode(Action<string> setCode) {
+		var view = new Views.Sub.SelectShohinView();
+		if (view.DataContext is not SelectShohinViewModel vm) return;
+
+		vm.ShohinCodeFrom = ShohinCodeFrom;
+		vm.ShohinCodeTo = ShohinCodeTo;
+		vm.ShohinName = ShohinName;
+		vm.BrandCodeFrom = BrandCodeFrom;
+		vm.BrandCodeTo = BrandCodeTo;
+		vm.ItemCodeFrom = ItemCodeFrom;
+		vm.ItemCodeTo = ItemCodeTo;
+
+		if (ClientLib.ShowDialogView(view, this) != true) return;
+		MasterShohin? selected = vm.SelectedShohin;
+		if (selected == null) return;
 
 		setCode(selected.Code ?? string.Empty);
 	}

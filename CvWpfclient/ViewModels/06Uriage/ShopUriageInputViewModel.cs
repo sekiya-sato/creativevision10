@@ -165,7 +165,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	[RelayCommand]
 	void DoSelectShohin() {
 		if (SelectedMeisai == null) return;
-		var shohin = ShowSelectDialog<MasterShohin>(typeof(MasterShohin), "", "Code", startPos: SelectedMeisai.Id_Shohin);
+		var shohin = ShowShohinSelectDialog();
 		if (shohin == null) return;
 		SelectedMeisai.Id_Shohin = shohin.Id;
 		SelectedMeisai.Code_Shohin = shohin.Code ?? "";
@@ -180,6 +180,14 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		SelectedMeisai.Tanka = shohin.TankaJodai;
 		SelectedMeisai.Jodai = shohin.TankaJodai;
 		SelectedMeisai.Gedai = shohin.TankaGenka;
+	}
+
+	MasterShohin? ShowShohinSelectDialog() {
+		var selWin = new Views.Sub.SelectShohinView();
+		if (selWin.DataContext is not SelectShohinViewModel vm) return null;
+		vm.ShohinCodeFrom = SelectedMeisai?.Code_Shohin ?? string.Empty;
+		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
+		return vm.SelectedShohin;
 	}
 
 	[RelayCommand]
