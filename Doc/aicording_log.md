@@ -16,6 +16,31 @@
 
 ---
 
+## [2026-05-13] 13:02 MainMenuViewのテーマ別ウィンドウアイコン切替
+### Agent
+- gpt-5.5 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の MainMenuView でテーマ切り替えをしたときに ICO ファイルも切り替え、default と purple 以外は `cv10purple.ico` を使う。修正、確認、log、commit まで行う
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 固定の `cv10.ico` 指定を `DynamicResource WindowIcon` に変更し、メインテーマの ResourceDictionary 差し替えに合わせてウィンドウアイコンが更新されるよう修正
+- CvWpfclient/Resources/UIMainTheme.Default.xaml: default テーマ用の `WindowIcon` に `cv10.ico` を追加
+- CvWpfclient/Resources/UIMainTheme.Green.xaml: green テーマ用の `WindowIcon` に `cv10purple.ico` を追加
+- CvWpfclient/Resources/UIMainTheme.Orange.xaml: orange テーマ用の `WindowIcon` に `cv10purple.ico` を追加
+- CvWpfclient/Resources/UIMainTheme.Red.xaml: red テーマ用の `WindowIcon` に `cv10purple.ico` を追加
+- CvWpfclient/Resources/UIMainTheme.Purple.xaml: purple テーマ用の `WindowIcon` に `cv10purple.ico` を追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 既存の `MainThemeService` が `UIMainTheme.*.xaml` を差し替えているため、code-behind や ViewModel から Window を直接操作せず、テーマリソースとして `WindowIcon` を定義して `DynamicResource` で追従させる構成にした
+### 影響範囲
+- CvWpfclient の MainMenuView ウィンドウアイコン表示
+### 確認
+- `python3 -c "import xml.etree.ElementTree as ET; files=['CvWpfclient/Views/MainMenuView.xaml','CvWpfclient/Resources/UIMainTheme.Default.xaml','CvWpfclient/Resources/UIMainTheme.Green.xaml','CvWpfclient/Resources/UIMainTheme.Orange.xaml','CvWpfclient/Resources/UIMainTheme.Red.xaml','CvWpfclient/Resources/UIMainTheme.Purple.xaml']; [ET.parse(f) for f in files]; print('XAML XML parse OK')"` で変更XAMLのXML整形式を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-12] 13:44 MasterShohin選択のSelectShohinView差し替え
 ### Agent
 - gpt-5.5 : OpenAI
