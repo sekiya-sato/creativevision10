@@ -54,8 +54,7 @@
 
 				<materialDesign:Card Grid.Row="0"
 					Padding="16"
-					materialDesign:ElevationAssist.Elevation="Dp2"
-					UniformCornerRadius="8">
+					materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 					<Grid>
 						<Grid.RowDefinitions>
 							<RowDefinition Height="Auto" />
@@ -63,8 +62,7 @@
 						</Grid.RowDefinitions>
 
 						<UniformGrid Grid.Row="0"
-							Columns="3"
-							Rows="2">
+							Columns="3" Rows="2">
 							<StackPanel Margin="0,0,16,12">
 								<TextBlock Style="{StaticResource ConditionLabel}"
 									Text="商品CD" />
@@ -101,8 +99,7 @@
 								<TextBlock Style="{StaticResource ConditionLabel}"
 									Text="商品名" />
 								<TextBox Height="32"
-									Padding="8,0"
-									VerticalContentAlignment="Center"
+									Padding="8,0" VerticalContentAlignment="Center"
 									Background="White"
 									Style="{StaticResource MaterialDesignTextBox}"
 									Text="{Binding Owner.ShohinName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -165,8 +162,7 @@
 									<TextBlock Style="{StaticResource ConditionLabel}"
 										Text="最大件数" />
 									<TextBox Height="32"
-										Padding="8,0"
-										HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+										Padding="8,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 										Background="White"
 										Style="{StaticResource MaterialDesignTextBox}"
 										Text="{Binding Owner.MaxCountText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -176,11 +172,9 @@
 
 						<DockPanel Grid.Row="1"
 							Margin="0,10,0,0">
-							<StackPanel DockPanel.Dock="Right"
-								Orientation="Horizontal">
-								<CheckBox Content="在庫0を含める"
-									Margin="0,0,16,0"
-									VerticalAlignment="Center"
+							<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+								<CheckBox Margin="0,0,16,0" VerticalAlignment="Center"
+									Content="在庫0を含める"
 									IsChecked="{Binding Owner.IncludeZeroStock}"
 									Style="{StaticResource MaterialDesignCheckBox}" />
 								<Button MinWidth="104"
@@ -188,8 +182,7 @@
 									Command="{Binding Owner.ClearConditionsCommand}"
 									Style="{StaticResource MaterialDesignOutlinedButton}">
 									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon Margin="0,0,6,0"
-											VerticalAlignment="Center"
+										<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 											Kind="Eraser" />
 										<TextBlock Text="クリア" />
 									</StackPanel>
@@ -198,8 +191,7 @@
 									Command="{Binding Owner.SearchCommand}"
 									Style="{StaticResource MaterialDesignRaisedButton}">
 									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon Margin="0,0,6,0"
-											VerticalAlignment="Center"
+										<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 											Kind="Magnify" />
 										<TextBlock Text="検索実行" />
 									</StackPanel>
@@ -215,8 +207,7 @@
 
 				<materialDesign:Card Grid.Row="1"
 					Margin="0,12,0,0" Padding="0"
-					materialDesign:ElevationAssist.Elevation="Dp2"
-					UniformCornerRadius="8">
+					materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 					<Grid>
 						<Grid.RowDefinitions>
 							<RowDefinition Height="Auto" />
@@ -240,20 +231,14 @@
 
 						<DataGrid Grid.Row="1"
 							helpers:DataGridDoubleClick.Command="{Binding Owner.OpenStockTabCommand}"
-							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True"
-							materialDesign:DataGridAssist.CellPadding="12,6"
-							materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-							AutoGenerateColumns="False"
-							EnableRowVirtualization="True"
-							FrozenColumnCount="2"
-							GridLinesVisibility="Horizontal"
+							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+							AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
 							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 							IsReadOnly="True"
 							ItemsSource="{Binding Owner.ProductRows}"
 							SelectedItem="{Binding Owner.SelectedProduct, Mode=TwoWay}"
 							Style="{StaticResource MaterialDesignDataGrid}"
-							VirtualizingPanel.IsVirtualizing="True"
-							VirtualizingPanel.VirtualizationMode="Recycling">
+							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
 								<DataGridTextColumn Width="110"
 									Binding="{Binding Code}"
@@ -321,13 +306,11 @@
 								<TextBlock Margin="8,0,0,0"
 									Text="{Binding ProductName}" />
 							</StackPanel>
-							<Button Content="閉じる"
-								HorizontalAlignment="Left"
-								Margin="0,8,0,0"
-								Padding="16,0"
-								Height="24"
+							<Button Height="24"
+								Margin="0,8,0,0" Padding="16,0" HorizontalAlignment="Left"
 								Command="{Binding DataContext.CloseStockTabCommand, RelativeSource={RelativeSource AncestorType={x:Type helpers:BaseWindow}}}"
 								CommandParameter="{Binding}"
+								Content="閉じる"
 								Style="{StaticResource MaterialDesignOutlinedButton}" />
 						</StackPanel>
 					</DockPanel>
@@ -335,12 +318,8 @@
 
 				<DataGrid Grid.Row="1"
 					Margin="0,12,0,0"
-					materialDesign:DataGridAssist.CellPadding="12,6"
-					materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-					AutoGenerateColumns="True"
-					CanUserAddRows="False"
-					CanUserDeleteRows="False"
-					GridLinesVisibility="Horizontal"
+					materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="True" CanUserAddRows="False"
+					CanUserDeleteRows="False" GridLinesVisibility="Horizontal"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 					IsReadOnly="True"
 					ItemsSource="{Binding StockTable.DefaultView}"

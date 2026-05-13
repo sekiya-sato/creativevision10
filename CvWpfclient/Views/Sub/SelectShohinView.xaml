@@ -59,15 +59,13 @@
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
-				<StackPanel DockPanel.Dock="Right"
-					Orientation="Horizontal">
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button MinWidth="110"
 						Command="{Binding SearchCommand}"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
 						Visibility="{Binding IsSearchMode, Converter={StaticResource BoolToVisibilityConverter}}">
 						<StackPanel Orientation="Horizontal">
-							<materialDesign:PackIcon Margin="0,0,6,0"
-								VerticalAlignment="Center"
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="FormatListBulleted" />
 							<TextBlock Text="一覧表示" />
 						</StackPanel>
@@ -79,8 +77,7 @@
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
 						Visibility="{Binding IsResultMode, Converter={StaticResource BoolToVisibilityConverter}}">
 						<StackPanel Orientation="Horizontal">
-							<materialDesign:PackIcon Margin="0,0,6,0"
-								VerticalAlignment="Center"
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="Check" />
 							<TextBlock Text="選択" />
 						</StackPanel>
@@ -109,8 +106,8 @@
 			Padding="12,6"
 			Background="{DynamicResource MaterialDesignToolBarBackground}">
 			<DockPanel>
-				<TextBlock DockPanel.Dock="Right"
-					VerticalAlignment="Center"
+				<TextBlock VerticalAlignment="Center"
+					DockPanel.Dock="Right"
 					Foreground="{DynamicResource MaterialDesignBodyLight}"
 					Text="{Binding Count, StringFormat={}候補: {0:N0}}"
 					Visibility="{Binding IsResultMode, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -153,9 +150,9 @@
 										<helpers:SearchTextBox Command="{Binding SelectShohinCodeFromCommand}"
 											Style="{StaticResource ConditionSearchTextBox}"
 											Text="{Binding ShohinCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-										<TextBlock Width="46" FontSize="16"
+										<TextBlock Width="46"
 											HorizontalAlignment="Center" VerticalAlignment="Center"
-											Text="　～" TextAlignment="Center" />
+											FontSize="16" Text="　～" TextAlignment="Center" />
 										<helpers:SearchTextBox Command="{Binding SelectShohinCodeToCommand}"
 											Style="{StaticResource ConditionSearchTextBox}"
 											Text="{Binding ShohinCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -176,9 +173,9 @@
 										<helpers:SearchTextBox Command="{Binding SelectBrandCodeFromCommand}"
 											Style="{StaticResource ConditionSearchTextBox}"
 											Text="{Binding BrandCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-										<TextBlock Width="46" FontSize="16"
+										<TextBlock Width="46"
 											HorizontalAlignment="Center" VerticalAlignment="Center"
-											Text="　～" TextAlignment="Center" />
+											FontSize="16" Text="　～" TextAlignment="Center" />
 										<helpers:SearchTextBox Command="{Binding SelectBrandCodeToCommand}"
 											Style="{StaticResource ConditionSearchTextBox}"
 											Text="{Binding BrandCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -192,9 +189,9 @@
 										<helpers:SearchTextBox Command="{Binding SelectItemCodeFromCommand}"
 											Style="{StaticResource ConditionSearchTextBox}"
 											Text="{Binding ItemCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-										<TextBlock Width="46" FontSize="16"
+										<TextBlock Width="46"
 											HorizontalAlignment="Center" VerticalAlignment="Center"
-											Text="　～" TextAlignment="Center" />
+											FontSize="16" Text="　～" TextAlignment="Center" />
 										<helpers:SearchTextBox Command="{Binding SelectItemCodeToCommand}"
 											Style="{StaticResource ConditionSearchTextBox}"
 											Text="{Binding ItemCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -217,15 +214,13 @@
 
 					<DockPanel Grid.Row="2"
 						Margin="0,18,0,0">
-						<StackPanel DockPanel.Dock="Right"
-							Orientation="Horizontal">
+						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 							<Button MinWidth="104"
 								Margin="0,0,8,0"
 								Command="{Binding ExitCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}">
 								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0"
-										VerticalAlignment="Center"
+									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 										Kind="ArrowLeft" />
 									<TextBlock Text="戻る" />
 								</StackPanel>
@@ -234,8 +229,7 @@
 								Command="{Binding SearchCommand}"
 								Style="{StaticResource MaterialDesignRaisedButton}">
 								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0"
-										VerticalAlignment="Center"
+									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 										Kind="FormatListBulleted" />
 									<TextBlock Text="一覧表示" />
 								</StackPanel>
@@ -260,8 +254,8 @@
 						Background="{DynamicResource MaterialDesignToolBarBackground}"
 						CornerRadius="8,8,0,0">
 						<DockPanel>
-							<TextBlock DockPanel.Dock="Right"
-								VerticalAlignment="Center"
+							<TextBlock VerticalAlignment="Center"
+								DockPanel.Dock="Right"
 								Foreground="{DynamicResource MaterialDesignBodyLight}"
 								Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
 							<TextBlock VerticalAlignment="Center"
@@ -275,18 +269,15 @@
 						d:ItemsSource="{d:SampleData ItemCount=5}"
 						helpers:DataGridDoubleClick.Command="{Binding DoSelectCommand}"
 						helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=DefaultButton}"
-						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True"
-						materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" EnableRowVirtualization="True"
-						FrozenColumnCount="2"
-						GridLinesVisibility="Horizontal"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
 						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 						IsReadOnly="True"
 						ItemsSource="{Binding ListData}"
 						SelectedItem="{Binding Current, Mode=TwoWay}"
 						SelectionMode="Single"
 						Style="{StaticResource MaterialDesignDataGrid}"
-						VirtualizingPanel.IsVirtualizing="True"
-						VirtualizingPanel.VirtualizationMode="Recycling">
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.ColumnHeaderStyle>
 							<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
 								TargetType="DataGridColumnHeader">
@@ -321,15 +312,13 @@
 					<DockPanel Grid.Row="2"
 						Margin="12"
 						LastChildFill="False">
-						<StackPanel DockPanel.Dock="Right"
-							Orientation="Horizontal">
+						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 							<Button MinWidth="104"
 								Margin="0,0,8,0"
 								Command="{Binding BackCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}">
 								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0"
-										VerticalAlignment="Center"
+									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 										Kind="ArrowLeft" />
 									<TextBlock Text="戻る" />
 								</StackPanel>
@@ -338,8 +327,7 @@
 								Command="{Binding DoSelectCommand}"
 								Style="{StaticResource MaterialDesignRaisedButton}">
 								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0"
-										VerticalAlignment="Center"
+									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 										Kind="Check" />
 									<TextBlock Text="選択" />
 								</StackPanel>
