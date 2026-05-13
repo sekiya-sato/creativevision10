@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>cvnet.ico</ApplicationIcon>
+    <ApplicationIcon>cv10.ico</ApplicationIcon>
     <AssemblyName>CreativeVision10</AssemblyName>
     <AssemblyTitle>CreativeVision10</AssemblyTitle>
     <StartupObject>CvWpfclient.App</StartupObject>
@@ -49,8 +49,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="cvnet.ico" />
-    <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
+	  <Resource Include="cv10.ico" />
+	  <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
     <ProjectReference Include="..\CvAsset\CvAsset.csproj" />
     <ProjectReference Include="..\CvBase\CvBase.csproj" />
   </ItemGroup>

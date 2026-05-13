@@ -6,7 +6,7 @@
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" xmlns:vm="clr-namespace:CvWpfclient.ViewModels"
 	Title="{Binding HeaderTitle}"
 	Width="1200" Height="780"
-	Background="Transparent" Icon="pack://application:,,,/cvnet.ico" ResizeMode="CanResizeWithGrip" SnapsToDevicePixels="True" UseLayoutRounding="True"
+	Background="Transparent" Icon="pack://application:,,,/cv10.ico" ResizeMode="CanResizeWithGrip" SnapsToDevicePixels="True" UseLayoutRounding="True"
 	WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow"
 	mc:Ignorable="d">
 
