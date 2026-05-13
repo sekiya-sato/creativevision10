@@ -60,7 +60,6 @@
 	  <Resource Include="cv10-orange.ico" />
 	  <Resource Include="cv10-purple.ico" />
 	  <Resource Include="cv10-red.ico" />
-	  <Resource Include="cv10-silver.ico" />
 	  <Resource Include="cv10.ico" />
 	  <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
     <ProjectReference Include="..\CvAsset\CvAsset.csproj" />
