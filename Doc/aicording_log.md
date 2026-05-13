@@ -16,6 +16,32 @@
 
 ---
 
+## [2026-05-13] 16:00 郵便番号API検索の3〜7桁対応
+### Agent
+- gpt-5.5 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvServer側 SearchByPostalCodeService および CvWpfclient側 PostalAddressSearchHelper を修正し、3桁から7桁までの郵便番号検索に対応する。確認、ログ、commit まで行う
+### 実施内容
+- CvServer/Services/SearchByPostalCodeService.cs: 郵便番号正規化を7桁固定から3〜7桁許可へ変更し、半角数字・全角数字をASCII数字へそろえて日本郵便APIへ渡すよう修正
+- CvServer/Services/SearchByPostalCodeService.cs: 入力不正メッセージを「3桁から7桁」に更新し、3〜6桁は前方一致、7桁は完全一致として扱うコメントへ変更
+- CvWpfclient/Helpers/PostalAddressSearchHelper.cs: gRPC呼び出し前に3〜7桁の郵便番号へ正規化し、不正入力は警告ダイアログで返すよう修正
+- CvWpfclient/Helpers/PostalAddressSearchHelper.cs: サーバーから InvalidInput が返った場合はエラーではなく警告として表示するよう修正
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 日本郵便Biz API仕様では郵便番号の `search_code` は3桁以上の数値を受け付け、7桁未満は入力値から始まるデータのパターン検索になるため、サーバー側の7桁固定バリデーションを3〜7桁へ緩和した
+- 呼び出し元ViewModelを個別修正せず `PostalAddressSearchHelper` に入力正規化を集約することで、既存の4画面すべてに同じUXと入力ルールを適用できるようにした
+### 影響範囲
+- CvServer の郵便番号API検索サービス
+- CvWpfclient のマスターメンテ系郵便番号検索ボタンからの住所検索
+### 確認
+- `lsp_diagnostics` で `CvServer/Services/SearchByPostalCodeService.cs` と `CvWpfclient/Helpers/PostalAddressSearchHelper.cs` に問題がないことを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（warning 0 / error 0）を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` は並列復元時に一度 `NuGet.targets` の既存ファイルエラーが出たが、単独再実行でビルド成功（warning 0 / error 0）を確認
+
+---
+
 ## [2026-05-13] 13:02 MainMenuViewのテーマ別ウィンドウアイコン切替
 ### Agent
 - gpt-5.5 : OpenAI

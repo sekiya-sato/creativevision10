@@ -5,6 +5,8 @@ using CvWpfclient.Views.Sub;
 namespace CvWpfclient.Helpers;
 
 public static class PostalAddressSearchHelper {
+	private const int MinPostalCodeSearchLength = 3;
+	private const int MaxPostalCodeSearchLength = 7;
 
 	public static async Task SearchAndApplyAsync(object viewModel, string postalCode, Action<PostalAddressItem> applyAddress) {
 		var owner = ClientLib.GetActiveView(viewModel);
@@ -14,10 +16,21 @@ public static class PostalAddressSearchHelper {
 			return;
 		}
 
+		var normalizedPostalCode = NormalizePostalCode(postalCode);
+		if (normalizedPostalCode == null) {
+			MessageEx.ShowWarningDialog("郵便番号は3桁から7桁の数字で入力してください。", owner: owner);
+			return;
+		}
+
 		try {
-			var result = await postalAddressService.SearchByPostalCodeAsync(postalCode ?? string.Empty);
+			var result = await postalAddressService.SearchByPostalCodeAsync(normalizedPostalCode);
 			if (!result.IsSuccess) {
-				MessageEx.ShowErrorDialog(result.Message, owner: owner);
+				if (result.ErrorType == PostalAddressErrorType.InvalidInput) {
+					MessageEx.ShowWarningDialog(result.Message, owner: owner);
+				}
+				else {
+					MessageEx.ShowErrorDialog(result.Message, owner: owner);
+				}
 				return;
 			}
 
@@ -41,6 +54,27 @@ public static class PostalAddressSearchHelper {
 		catch (Exception ex) {
 			MessageEx.ShowErrorDialog($"郵便番号検索に失敗しました: {ex.Message}", owner: owner);
 		}
+	}
+
+	private static string? NormalizePostalCode(string postalCode) {
+		var normalized = new string((postalCode ?? string.Empty)
+			.Select(ToAsciiDigit)
+			.Where(digit => digit.HasValue)
+			.Select(digit => digit.GetValueOrDefault())
+			.ToArray());
+		return normalized.Length is >= MinPostalCodeSearchLength and <= MaxPostalCodeSearchLength ? normalized : null;
+	}
+
+	private static char? ToAsciiDigit(char value) {
+		if (value is >= '0' and <= '9') {
+			return value;
+		}
+
+		if (value is >= '０' and <= '９') {
+			return (char)('0' + value - '０');
+		}
+
+		return null;
 	}
 
 	private static PostalAddressItem? ShowPostalAddressSelectDialog(IEnumerable<PostalAddressItem> items, object ownerViewModel) {

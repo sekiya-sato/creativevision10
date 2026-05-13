@@ -8,6 +8,8 @@ using System.Text.Json.Serialization;
 namespace CvServer.Services;
 
 public partial class SearchByPostalCodeService : IPostalAddressService, IDisposable {
+	private const int MinPostalCodeSearchLength = 3;
+	private const int MaxPostalCodeSearchLength = 7;
 	private readonly ILogger<SearchByPostalCodeService> _logger;
 	private readonly IConfiguration _configuration;
 	private static readonly HttpClient httpClient = new();
@@ -33,7 +35,7 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 	public async Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CancellationToken cancellationToken = default) {
 		var normalizedPostalCode = NormalizePostalCode(postalCode);
 		if (normalizedPostalCode == null) {
-			return new PostalAddressSearchResult(false, string.Empty, [], "郵便番号は7桁の数字で入力してください。", PostalAddressErrorType.InvalidInput);
+			return new PostalAddressSearchResult(false, string.Empty, [], "郵便番号は3桁から7桁の数字で入力してください。", PostalAddressErrorType.InvalidInput);
 		}
 
 		try {
@@ -114,7 +116,7 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 			$"limit={limit}",
 		};
 
-		// 7桁郵便番号の通常検索では必須パラメータを優先し、任意パラメータは最小限に抑える。
+		// 3〜6桁は前方一致、7桁は完全一致の検索としてAPIへ渡す。
 		if (!string.IsNullOrWhiteSpace(_japanPostBizOptions?.EcUid)) {
 			query.Add($"ec_uid={Uri.EscapeDataString(_japanPostBizOptions.EcUid)}");
 		}
@@ -123,9 +125,26 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 	}
 
 	private static string? NormalizePostalCode(string postalCode) {
-		var normalized = new string((postalCode ?? string.Empty).Where(char.IsDigit).ToArray());
-		return normalized.Length == 7 ? normalized : null;
+		var normalized = new string((postalCode ?? string.Empty)
+			.Select(ToAsciiDigit)
+			.Where(digit => digit.HasValue)
+			.Select(digit => digit.GetValueOrDefault())
+			.ToArray());
+		return normalized.Length is >= MinPostalCodeSearchLength and <= MaxPostalCodeSearchLength ? normalized : null;
 	}
+
+	private static char? ToAsciiDigit(char value) {
+		if (value is >= '0' and <= '9') {
+			return value;
+		}
+
+		if (value is >= '０' and <= '９') {
+			return (char)('0' + value - '０');
+		}
+
+		return null;
+	}
+
 	private static string HumanReadPostalCode(string? postalCode) {
 		if (string.IsNullOrWhiteSpace(postalCode)) {
 			return string.Empty;
