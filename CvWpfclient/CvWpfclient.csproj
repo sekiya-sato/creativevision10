@@ -20,7 +20,12 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
-    <None Remove="cv10purple.ico" />
+    <None Remove="cv10-default.ico" />
+    <None Remove="cv10-green.ico" />
+    <None Remove="cv10-orange.ico" />
+    <None Remove="cv10-purple.ico" />
+    <None Remove="cv10-red.ico" />
+    <None Remove="cv10-silver.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,8 +55,13 @@
   </ItemGroup>
 
   <ItemGroup>
+	  <Resource Include="cv10-default.ico" />
+	  <Resource Include="cv10-green.ico" />
+	  <Resource Include="cv10-orange.ico" />
+	  <Resource Include="cv10-purple.ico" />
+	  <Resource Include="cv10-red.ico" />
+	  <Resource Include="cv10-silver.ico" />
 	  <Resource Include="cv10.ico" />
-	  <Resource Include="cv10purple.ico" />
 	  <ProjectReference Include="..\CodeShare\CodeShare.csproj" />
     <ProjectReference Include="..\CvAsset\CvAsset.csproj" />
     <ProjectReference Include="..\CvBase\CvBase.csproj" />
