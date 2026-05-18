@@ -11,12 +11,8 @@ public class SummaryDb {
 		_db = db;
 		_logger = new NLogExtender<SummaryDb>();
 	}
-	public async IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(SummaryDateParameter param) {
-		_logger.LogInformation("処理開始");
-		var start = DateTime.Now;
-
-		// ToDo: 最終的に実行させる処理を整理
-		var steps = new (string Name, Func<SummaryDateParameter, int> Action)[] {
+	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(SummaryDateParameter param) {
+		(string Name, Func<SummaryDateParameter, int> Action)[] steps = [
 			/*
 			*/
 			("Summary : Tran00Uriage", CalcSummaryStock<Tran00Uriage>),
@@ -25,39 +21,16 @@ public class SummaryDb {
 			("Summary : Tran05Ido", CalcSummaryStock<Tran05Ido>),
 			("Summary : Tran10IdoOut", CalcSummaryStock<Tran10IdoOut>),
 			("Summary : Tran11IdoIn", CalcSummaryStock<Tran11IdoIn>)
-		};
+		];
 		//("Summary : Tran60Tana", CalcSummaryStock<Tran60Tana>),
 
-		for (var index = 0; index < steps.Length; index++) {
-			var (name, action) = steps[index];
-			var startProgress = index * 100 / steps.Length;
-
-			// ステップ開始通知
-			yield return new StreamStepProgress(name, 0, startProgress, false, false);
-
-			// 処理実行
-			int count = 0;
-			string? errorMsg = null;
-			bool isError = false;
-			try {
-				count = action(param);
-			}
-			catch (Exception ex) {
-				_logger.LogError(ex, $"処理エラー: {name}");
-				isError = true;
-				errorMsg = ex.Message;
-			}
-
-			var endProgress = (int)Math.Round((index + 1) * 100d / steps.Length, MidpointRounding.AwayFromZero);
-
-			// ステップ完了通知
-			yield return new StreamStepProgress(name, count, endProgress, false, isError, errorMsg);
-		}
-
-		var elapsed = DateTime.Now - start;
-		_logger.LogInformation($"処理終了 {elapsed.TotalSeconds:0.0}s");
-
-		yield return new StreamStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
+		return StreamStepProgressRunner.Run(
+			steps,
+			param,
+			_logger,
+			"処理開始",
+			"処理エラー: {StepName}",
+			"処理終了");
 	}
 
 	private int CalcSummaryStock<T>(SummaryDateParameter param) where T : ITranDetail {
@@ -214,47 +187,20 @@ WHERE SumMonth <= @0;
 		return cnt;
 	}
 
-	public async IAsyncEnumerable<StreamStepProgress> SummaryRealAsyncStream(SummaryRealDateParameter param) {
-		_logger.LogInformation("処理開始");
-		var start = DateTime.Now;
-
-		// ToDo: 最終的に実行させる処理を整理
-		var steps = new (string Name, Func<string, int> Action)[] {
+	public IAsyncEnumerable<StreamStepProgress> SummaryRealAsyncStream(SummaryRealDateParameter param) {
+		(string Name, Func<string, int> Action)[] steps = [
 			/*
 			*/
 			("Summary : CalcSummaryRealStock", CalcSummaryRealStock),
-		};
+		];
 
-		for (var index = 0; index < steps.Length; index++) {
-			var (name, action) = steps[index];
-			var startProgress = index * 100 / steps.Length;
-
-			// ステップ開始通知
-			yield return new StreamStepProgress(name, 0, startProgress, false, false);
-
-			// 処理実行
-			int count = 0;
-			string? errorMsg = null;
-			bool isError = false;
-			try {
-				count = action(param.DateYymm);
-			}
-			catch (Exception ex) {
-				_logger.LogError(ex, $"処理エラー: {name}");
-				isError = true;
-				errorMsg = ex.Message;
-			}
-
-			var endProgress = (int)Math.Round((index + 1) * 100d / steps.Length, MidpointRounding.AwayFromZero);
-
-			// ステップ完了通知
-			yield return new StreamStepProgress(name, count, endProgress, false, isError, errorMsg);
-		}
-
-		var elapsed = DateTime.Now - start;
-		_logger.LogInformation($"処理終了 {elapsed.TotalSeconds:0.0}s");
-
-		yield return new StreamStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
+		return StreamStepProgressRunner.Run(
+			steps,
+			param.DateYymm,
+			_logger,
+			"処理開始",
+			"処理エラー: {StepName}",
+			"処理終了");
 	}
 
 

@@ -16,6 +16,30 @@
 
 ---
 
+## [2026-05-18] 17:00 ストリーミング進捗処理の重複統合
+### Agent
+- GitHub Copilot : OpenAI
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：添付した処理の重複部分を統合して簡易化し、write-log と commit まで実行する
+### 実施内容
+- CvServer/Services/CoreServiceStreaming.cs: StreamStepProgress から StreamMsg への変換と進捗ストリーム転送を共通メソッドへ抽出し、Convert/Summary ハンドラの重複を削減
+- CvDomainLogic/ConvertDb.cs: 変換ステップの進捗ループを共通ランナー呼び出しへ置き換え、ステップ定義中心の実装へ整理
+- CvDomainLogic/SummaryDb.cs: 月次集計と実在庫集計の進捗ループを共通ランナー呼び出しへ置き換え、重複ロジックを削減
+- CvDomainLogic/StreamStepProgressRunner.cs: ステップ開始・完了・例外処理・進捗率計算をまとめる共通ランナーを追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- StreamStepProgress の逐次通知パターンが CvServer と CvDomainLogic に分散して重複していたため、メッセージ変換とステップ実行をそれぞれ1箇所へ集約し、今後のステップ追加や表示文言変更の修正点を最小化した
+### 影響範囲
+- CvServer の gRPC ストリーミング進捗通知
+- CvDomainLogic の変換処理・集計処理の進捗列挙
+### 確認
+- Visual Studio コンテキストの `run_build` でワークスペースのビルド成功を確認
+- `dotnet build "Cv.slnx"` は実行環境からソリューションファイルを直接解決できず MSB1009 となったため、観測を記録したうえで Visual Studio コンテキストのビルド結果を採用
+
+---
+
 ## [2026-05-13] 16:00 郵便番号API検索の3〜7桁対応
 ### Agent
 - gpt-5.5 : OpenAI

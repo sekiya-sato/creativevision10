@@ -29,17 +29,13 @@ public partial class ConvertDb {
 	/// ストリーミングで全マスタ変換を実行
 	/// [Execute all master conversion for streaming]
 	/// </summary>
-	public async IAsyncEnumerable<StreamStepProgress> ConvertAllAsyncStream(bool isInit = true) {
-		_logger.LogInformation("変換処理開始");
-		var start = DateTime.Now;
-
-		// ToDo: 最終的に実行させる処理を整理
-		var steps = new (string Name, Func<bool, int> Action)[] {
-			("CnvTranSize1",CnvTranSize1),
-			("CnvTranSize2",CnvTranSize2),
-			("CnvTranSize3",CnvTranSize3),
-			("CnvTranSize4",CnvTranSize4),
-			("CnvTranSize5",CnvTranSize5),
+	public IAsyncEnumerable<StreamStepProgress> ConvertAllAsyncStream(bool isInit = true) {
+		(string Name, Func<bool, int> Action)[] steps = [
+			("CnvTranSize1", CnvTranSize1),
+			("CnvTranSize2", CnvTranSize2),
+			("CnvTranSize3", CnvTranSize3),
+			("CnvTranSize4", CnvTranSize4),
+			("CnvTranSize5", CnvTranSize5),
 			/*
 			("CnvMasterConfig", CnvMasterConfig),
 			("CnvMasterSys", CnvMasterSys),
@@ -64,38 +60,15 @@ public partial class ConvertDb {
 			("CnvTran12Jyuchu", CnvTran12Jyuchu),
 			("CnvTran13Hachu", CnvTran13Hachu),
 			*/
-		};
+		];
 
-		for (var index = 0; index < steps.Length; index++) {
-			var (name, action) = steps[index];
-			var startProgress = index * 100 / steps.Length;
-
-			// ステップ開始通知
-			yield return new StreamStepProgress(name, 0, startProgress, false, false);
-
-			// 処理実行
-			int count = 0;
-			string? errorMsg = null;
-			bool isError = false;
-			try {
-				count = action(isInit);
-			}
-			catch (Exception ex) {
-				_logger.LogError(ex, $"変換処理エラー: {name}");
-				isError = true;
-				errorMsg = ex.Message;
-			}
-
-			var endProgress = (int)Math.Round((index + 1) * 100d / steps.Length, MidpointRounding.AwayFromZero);
-
-			// ステップ完了通知
-			yield return new StreamStepProgress(name, count, endProgress, false, isError, errorMsg);
-		}
-
-		var elapsed = DateTime.Now - start;
-		_logger.LogInformation($"変換処理終了 {elapsed.TotalSeconds:0.0}s");
-
-		yield return new StreamStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s");
+		return StreamStepProgressRunner.Run(
+			steps,
+			isInit,
+			_logger,
+			"変換処理開始",
+			"変換処理エラー: {StepName}",
+			"変換処理終了");
 	}
 
 	#region 文字列変換サブロジック
