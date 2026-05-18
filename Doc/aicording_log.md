@@ -542,3 +542,21 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認（warning 0 / error 0）
 
 ---
+
+## [2026-05-18] 15:34 SysLoginViewのレイアウト調整
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の SysLoginView で、ID のTextBox枠を半分幅にし、"パス暗号化"ボタンをパスワードTextBoxの下へ移動し、作成日と修正日を1行表示からそれぞれ別行表示へ変更する。write-log と commit まで実行する
+### 実施内容
+- CvWpfclient/Views/00System/SysLoginView.xaml: ID表示TextBoxを幅150の左寄せに変更し、パス暗号化ボタンをパスワード直下へ移動、作成日・修正日をそれぞれ独立した行へ分割して日時Converter付きで表示するよう修正
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 既存の2列GridとMaterialDesignスタイルを崩さず最小差分で要望を反映するため、既存項目のGrid.Rowだけを後方へシフトしてボタン位置を入れ替え、日付表示は単一MultiBindingから個別Bindingへ分離した
+### 確認
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse(r'CvWpfclient/Views/00System/SysLoginView.xaml'); print('XAML XML parse OK')"` で XAML の XML 整形式を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
