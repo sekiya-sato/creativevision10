@@ -584,3 +584,25 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-05-18] 17:21 メインテーマ切替時のウィンドウアイコン反映修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：インストールした実環境でメインテーマ切替時にウィンドウアイコンが切り替わらない件を修正し、`CvWpfclient/CvWpfclient.csproj` と `MainMenuView` / テーマリソースのアイコン反映経路を確認して、Velopack 配布後も切り替わる形にする
+### 実施内容
+- CvWpfclient/CvWpfclient.csproj: `cv10-*.ico` が WPF Resource として定義され、`CreativeVision10.g.resources` に埋め込まれることを確認。配布後の loose file 依存を避けるため既存の Resource 指定を維持
+- CvWpfclient/Resources/UIMainTheme.*.xaml: `WindowIcon` の `UriSource` を `/cv10-*.ico` から `pack://application:,,,/cv10-*.ico` へ変更し、EXE 内 WPF Resource を明示参照するよう修正
+- CvWpfclient/Services/MainThemeService.cs: メインテーマ適用時に `WindowIcon` リソースへ対象テーマの `BitmapFrame` を明示設定し、既存 Window が参照するアイコンリソースを更新する処理を追加
+- CvWpfclient/Views/MainMenuView.xaml.cs: `MainThemeChanged` を購読し、テーマ切替時に `Window.Icon` を明示再設定する処理を追加
+### 技術決定 Why
+- 原因は、テーマ辞書内の相対的なアイコン URI と `DynamicResource` のみでは、Velopack 配布後の実環境で既存 Window の shell アイコン更新まで確実に伝播しない可能性があるため。アイコンは `csproj` の WPF Resource として EXE に埋め込まれているため、`pack://application:,,,/` で明示参照し、テーマ変更イベントで `Window.Icon` を再設定する構成にした
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- PowerShell の `[xml](Get-Content -Raw)` で `MainMenuView.xaml` と `UIMainTheme.*.xaml` の XML 整形式を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+- `CreativeVision10.g.resources` に `cv10-default.ico` / `cv10-green.ico` / `cv10-orange.ico` / `cv10-red.ico` / `cv10-purple.ico` / `cv10.ico` が含まれることを確認
+
+---

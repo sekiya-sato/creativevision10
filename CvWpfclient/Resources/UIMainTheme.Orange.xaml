@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 	<BitmapImage x:Key="WindowIcon"
-		UriSource="/cv10-orange.ico" />
+		UriSource="pack://application:,,,/cv10-orange.ico" />
 	<LinearGradientBrush x:Key="OuterWindowBackground"
 		StartPoint="0,0" EndPoint="1,1">
 		<GradientStop Offset="0" Color="#40FF7A18" />
