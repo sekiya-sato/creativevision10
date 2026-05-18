@@ -278,10 +278,10 @@
 									Style="{StaticResource FormLabel}"
 									Text="ID" />
 								<TextBox Grid.Row="0" Grid.Column="1"
-									Width="150" HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="ID"
+									Width="150"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="ID" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Id}" />
 
 								<!--  Login ID  -->
@@ -332,9 +332,8 @@
 								<TextBox Grid.Row="5" Grid.Column="1"
 									Width="120" Height="36"
 									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="Group"
+									materialDesign:HintAssist.Hint="Group" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Id_Role}" />
 
 								<!--  社員選択  -->
@@ -366,9 +365,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="最終ログイン" />
 								<TextBox Grid.Row="7" Grid.Column="1"
-									materialDesign:HintAssist.Hint="最終ログイン"
+									materialDesign:HintAssist.Hint="最終ログイン" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding LastLoginDate}" />
 
 								<!--  作成日  -->
@@ -377,8 +375,8 @@
 									Text="作成日" />
 								<TextBlock Grid.Row="8" Grid.Column="1"
 									Margin="0,4" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}"
 									FontSize="14"
+									Foreground="{DynamicResource MaterialDesignBody}"
 									Text="{Binding CurrentEdit.VdateC, Converter={StaticResource DateTimeYmdHmsConverter}}" />
 
 								<!--  修正日  -->
@@ -387,8 +385,8 @@
 									Text="修正日" />
 								<TextBlock Grid.Row="9" Grid.Column="1"
 									Margin="0,4" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}"
 									FontSize="14"
+									Foreground="{DynamicResource MaterialDesignBody}"
 									Text="{Binding CurrentEdit.VdateU, Converter={StaticResource DateTimeYmdHmsConverter}}" />
 							</Grid>
 						</ScrollViewer>

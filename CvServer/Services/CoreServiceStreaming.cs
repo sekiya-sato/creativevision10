@@ -35,13 +35,7 @@ public partial class CoreService {
 			yield break;
 		}
 		// 	集計処理
-		else if (request.Flag is CvFlag.MSg050_Summary) {
-			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
-				yield return msg;
-			}
-			yield break;
-		}
-		else if (request.Flag is CvFlag.Msg051_SummaryRealStock) {
+		else if (request.Flag is CvFlag.MSg050_Summary or CvFlag.Msg051_SummaryRealStock) {
 			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
 				yield return msg;
 			}
@@ -83,7 +77,7 @@ public partial class CoreService {
 		}
 	}
 	/// <summary>
-	/// MSg050_Summaryのストリーミング処理ハンドラ
+	/// 集計処理のストリーミング処理ハンドラ
 	/// </summary>
 	private async IAsyncEnumerable<StreamMsg> HandleSummaryStreamAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvMsg request) {
 		var summaryDb = new SummaryDb(_db);
