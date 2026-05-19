@@ -16,6 +16,29 @@
 
 ---
 
+## [2026-05-19] 13:38 DatePickerTodayButtonBehavior の MaterialDesign 継承化
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の DatePickerTodayButtonBehavior の AttachCalendarStyle で、できるだけソースコードを減らし、MaterialDesign の Style を引き継ぐようにする。各部品に対する SetValue() をなくし、全体で MaterialDesign の Style 適用を行う
+### 実施内容
+- CvWpfclient/Resources/UICalendar.xaml: 今日ボタン付き Calendar 用 ControlTemplate を新規 ResourceDictionary へ移し、MaterialDesign のリソースを使う共有テンプレートへ整理
+- CvWpfclient/App.xaml: MaterialDesign3.Defaults.xaml の後に UICalendar.xaml を MergedDictionaries へ追加し、共有テンプレートをアプリ全体から参照可能にした
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: FrameworkElementFactory による部品ごとの SetValue 実装を削除し、MaterialDesign ベース Style + 共有 ControlTemplate を適用する最小構成へ整理
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: CalendarOpened 時に Today ボタンの Click と有効状態だけを設定する形へ縮小し、disable 時のハンドラ解除とテンプレート未解決時の安全な early return を追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- MaterialDesign の見た目を維持したまま独自差分を最小化するには、Behavior 内で各 UI 部品へ値を流し込むより、共有 ControlTemplate を ResourceDictionary へ分離して CalendarStyle から差し替える構成のほうが保守しやすく、今後の MaterialDesign 更新にも追従しやすいため
+- Today ボタンの押下処理だけを Behavior 側に残すことで、見た目は XAML リソース、振る舞いは C# に分離し、ユーザー要望どおり AttachCalendarStyle のソース量を減らした
+### 確認
+- `python3` の `xml.etree.ElementTree` で `CvWpfclient/App.xaml` と `CvWpfclient/Resources/UICalendar.xaml` の XML 整形式を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+- Oracle レビューで disable 時の Today ボタン配線解除とテンプレート取得の安全化が必要と確認し、該当最小修正を反映した
+
+---
+
 ## [2026-05-19] 12:58 DatePicker前景色リソース型不一致の修正
 ### Agent
 - GPT-5 : OpenAI
