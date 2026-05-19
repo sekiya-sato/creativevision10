@@ -82,6 +82,8 @@ public static class DatePickerTodayButtonBehavior {
 		// ② CalendarItem (PART_CalendarItem) — MDIX の Card ビジュアルを維持するためスタイルを継承
 		var calItemFactory = new FrameworkElementFactory(typeof(CalendarItem)) { Name = "PART_CalendarItem" };
 		calItemFactory.SetResourceReference(FrameworkElement.StyleProperty, "MaterialDesignCalendarItemPortrait");
+		calItemFactory.SetResourceReference(Control.BackgroundProperty, "MaterialDesignPaper");
+		calItemFactory.SetResourceReference(Control.ForegroundProperty, "MaterialDesignCalendarPortraitForeground");
 
 		// ③ フッター Border
 		var footerFactory = new FrameworkElementFactory(typeof(Border));
@@ -96,6 +98,7 @@ public static class DatePickerTodayButtonBehavior {
 		buttonFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Right);
 		buttonFactory.SetValue(FrameworkElement.MinWidthProperty, 72.0);
 		buttonFactory.SetValue(UIElement.IsEnabledProperty, CanSelectDate(picker, DateTime.Today));
+		buttonFactory.SetResourceReference(Control.ForegroundProperty, "PrimaryHueMidBrush");
 		buttonFactory.SetResourceReference(FrameworkElement.StyleProperty, "MaterialDesignOutlinedButton");
 		buttonFactory.AddHandler(Button.ClickEvent, new RoutedEventHandler((_, _) => {
 			var today = DateTime.Today;
@@ -115,8 +118,10 @@ public static class DatePickerTodayButtonBehavior {
 		// MDIX の CalendarStyle をベースとして ControlTemplate のみ差し替える
 		// → DayButtonStyle, CalendarButtonStyle 等の MDIX セッターを継承しつつ
 		//   テンプレートだけ追加ボタン付きのものに置き換える
-		var baseStyle = picker.CalendarStyle ?? picker.TryFindResource("MaterialDesignDatePickerCalendarPortrait") as Style;
+		var baseStyle = picker.CalendarStyle ?? picker.TryFindResource("MaterialDesignCalendarPortrait") as Style;
 		var style = new Style(typeof(Calendar), baseStyle);
+		style.Setters.Add(new Setter(Control.BackgroundProperty, new DynamicResourceExtension("MaterialDesignPaper")));
+		style.Setters.Add(new Setter(Control.ForegroundProperty, new DynamicResourceExtension("MaterialDesignCalendarPortraitForeground")));
 		style.Setters.Add(new Setter(Control.TemplateProperty, template));
 
 		picker.CalendarStyle = style;

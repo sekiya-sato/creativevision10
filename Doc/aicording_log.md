@@ -16,6 +16,28 @@
 
 ---
 
+## [2026-05-19] 12:51 DatePicker今日ボタンの文字表示修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：DatePicker の背景は直ったが、DatePicker の上側の表示文字が透明で見えないため、他の文字やボタンも含めて見えなくなっていないか確認し修正する
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: MDIX の Calendar ベーススタイル参照キーを `MaterialDesignDatePickerCalendarPortrait` から実在する `MaterialDesignCalendarPortrait` へ修正
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: Calendar と CalendarItem に `MaterialDesignPaper` / `MaterialDesignCalendarPortraitForeground` を明示し、カレンダー上部ヘッダーや日付表示の前景色が透明継承にならないよう修正
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: フッターの「今日」ボタンへ `PrimaryHueMidBrush` の前景色を明示し、背景とのコントラストを確保
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `MaterialDesignDatePickerCalendarPortrait` は MaterialDesignThemes 5.3.1 の DLL 内に存在せず、`MaterialDesignCalendarPortrait` が Calendar 用の実在スタイルキーだったため、ベーススタイルを正しく継承して CalendarButton / CalendarDayButton 等の MDIX 表示設定を維持する構成にした
+- 独自 ControlTemplate に置き換えると CalendarStyle の背景・前景 Setter がテンプレート内の `CalendarItem` へ渡らないため、CalendarItem 側にも MaterialDesign の背景色・前景色リソースを明示した
+### 確認
+- `git diff --check` で空白エラーがないことを確認
+- `[xml](Get-Content -Raw CvWpfclient\Views\06Uriage\ShopUriageInputView.xaml)` で対象 XAML の XML 構文が有効であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で WPF クライアントのビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-19] 12:22 DatePicker今日ボタンの背景スタイル修正
 ### Agent
 - GPT-5 : OpenAI
