@@ -83,7 +83,7 @@ public static class DatePickerTodayButtonBehavior {
 		var calItemFactory = new FrameworkElementFactory(typeof(CalendarItem)) { Name = "PART_CalendarItem" };
 		calItemFactory.SetResourceReference(FrameworkElement.StyleProperty, "MaterialDesignCalendarItemPortrait");
 		calItemFactory.SetResourceReference(Control.BackgroundProperty, "MaterialDesignPaper");
-		calItemFactory.SetResourceReference(Control.ForegroundProperty, "MaterialDesignCalendarPortraitForeground");
+		calItemFactory.SetResourceReference(Control.ForegroundProperty, "MaterialDesignBody");
 
 		// ③ フッター Border
 		var footerFactory = new FrameworkElementFactory(typeof(Border));
@@ -121,7 +121,7 @@ public static class DatePickerTodayButtonBehavior {
 		var baseStyle = picker.CalendarStyle ?? picker.TryFindResource("MaterialDesignCalendarPortrait") as Style;
 		var style = new Style(typeof(Calendar), baseStyle);
 		style.Setters.Add(new Setter(Control.BackgroundProperty, new DynamicResourceExtension("MaterialDesignPaper")));
-		style.Setters.Add(new Setter(Control.ForegroundProperty, new DynamicResourceExtension("MaterialDesignCalendarPortraitForeground")));
+		style.Setters.Add(new Setter(Control.ForegroundProperty, new DynamicResourceExtension("MaterialDesignBody")));
 		style.Setters.Add(new Setter(Control.TemplateProperty, template));
 
 		picker.CalendarStyle = style;

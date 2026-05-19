@@ -16,6 +16,26 @@
 
 ---
 
+## [2026-05-19] 12:58 DatePicker前景色リソース型不一致の修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：DatePicker 表示修正後に `Foreground` へ `System.Windows.Style` が設定される実行時エラーが発生したため、原因を確認して修正する
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: `Foreground` に指定していた `MaterialDesignCalendarPortraitForeground` を、既存画面でも前景 Brush として使っている `MaterialDesignBody` へ置き換え
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `MaterialDesignCalendarPortraitForeground` は実行時に `Style` として解決され、Brush を要求する `Control.Foreground` に適用すると `XamlParseException` / `InvalidOperationException` になるため、型が合う Brush リソースへ戻した
+- 今日ボタンの `PrimaryHueMidBrush` は既存画面で Brush として使用されているため維持し、透明文字対策と型安全性の両立を優先した
+### 確認
+- `git diff --check` で空白エラーがないことを確認
+- `[xml](Get-Content -Raw CvWpfclient\Views\06Uriage\ShopUriageInputView.xaml)` で対象 XAML の XML 構文が有効であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で WPF クライアントのビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-19] 12:51 DatePicker今日ボタンの文字表示修正
 ### Agent
 - GPT-5 : OpenAI
