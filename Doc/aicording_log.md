@@ -16,6 +16,28 @@
 
 ---
 
+## [2026-05-19] 12:02 ShopUriageInputView用DatePicker今日ボタン対応
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の DatePickerTodayButtonBehavior を改変し、ShopUriageInputView から使用できる今日ボタン（今日の日付をセット）付きの DatePicker を実装する。修正、確認、log、commit まで実行する
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: Popup の visual tree を直接差し替える方式から、DatePicker の CalendarStyle に今日ボタン付き ControlTemplate を適用する方式へ変更
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: Loaded 後に CalendarStyle を差し替えるようにし、`IsEnabled` が false に戻った場合は元の CalendarStyle を復元する処理を追加
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: 今日ボタン押下時に `SelectedDate` / `DisplayDate` を当日へ設定してドロップダウンを閉じる既存契約を維持しつつ、`DisplayDateStart` / `DisplayDateEnd` / `BlackoutDates` に反する日はボタンを無効化するように変更
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `ShopUriageInputView.xaml` 側にはすでに `helpers:DatePickerTodayButtonBehavior.IsEnabled="True"` が設定済みだったため、画面側ではなく behavior 本体を安定化するのが最小差分だった
+- WPF の `Popup` は DatePicker 本体と別 visual tree になりやすく、直接差し替え方式はテンプレート再適用で壊れやすいため、Calendar の ControlTemplate 差し替えへ寄せて今日ボタンを安定表示できる構成にした
+### 確認
+- `lsp_diagnostics` で `CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs` に diagnostics がないことを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet clean CvWpfclient/CvWpfclient.csproj && dotnet build CvWpfclient/CvWpfclient.csproj"` でクリーン後のビルド成功（0 warnings / 0 errors）を確認
+- `ShopUriageInputView.xaml` の計上日 DatePicker に `helpers:DatePickerTodayButtonBehavior.IsEnabled="True"` が既存設定済みであることを確認し、追加の XAML 変更なしで対象画面から利用されることを確認
+
+---
+
 ## [2026-05-18] 17:00 ストリーミング進捗処理の重複統合
 ### Agent
 - GitHub Copilot : OpenAI
