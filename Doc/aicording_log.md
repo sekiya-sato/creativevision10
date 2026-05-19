@@ -714,3 +714,23 @@
 - `CreativeVision10.g.resources` に `cv10-default.ico` / `cv10-green.ico` / `cv10-orange.ico` / `cv10-red.ico` / `cv10-purple.ico` / `cv10.ico` が含まれることを確認
 
 ---
+
+## [2026-05-19] 14:00 DatePickerTodayButtonBehaviorのMaterialDesign表示修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclient で DatePickerTodayButtonBehavior を使うとカレンダーポップアップ上部の表示部分が見えないため、標準の MaterialDesign DatePicker のように正常表示される形へ修正し、commit まで進める
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: CalendarStyle の ControlTemplate 差し替えを廃止し、DatePicker が生成した標準 Calendar を維持したまま Popup 下部に「今日」ボタンを追加する方式へ変更。ポップアップを閉じた時点で標準 Calendar を Popup 直下へ戻し、再オープン時に改めてフッターを差し込むよう整理
+- CvWpfclient/Resources/UICalendar.xaml: Calendar 全体テンプレートを削除し、「今日」ボタン用フッターの Border スタイルだけを残す構成へ変更
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 上部表示欠けの原因は、MaterialDesign の Calendar テンプレート全体を独自テンプレートで置き換えていたため、標準 DatePicker の選択日ヘッダー表示が崩れていたこと。テンプレートを再定義せず、標準 Calendar をそのまま使うことで MaterialDesign の表示仕様を維持しつつ、「今日」ボタンだけを追加できるようにした
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- PowerShell の `[xml](Get-Content -Raw)` で `UICalendar.xaml` と `ShopUriageInputView.xaml` の XML 整形式を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は起動中の `CreativeVision10.exe` が出力 EXE をロックしてコピー工程で失敗したため、`/p:UseAppHost=false` 付きで再実行しビルド成功（0 warnings / 0 errors）を確認
+
+---

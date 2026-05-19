@@ -7,20 +7,26 @@ namespace CvWpfclient.Helpers;
 
 /// <summary>
 /// DatePicker のカレンダーポップアップに「今日」ボタンを追加するアタッチドビヘイビア。
-/// CalendarStyle の ControlTemplate を上書きしてボタンを埋め込むことで、
-/// DatePicker.OnApplyTemplate の再実行に対して安定して動作する（Approach A）。
+/// Calendar の ControlTemplate は差し替えず、MaterialDesign 標準の上部表示を維持する。
 /// </summary>
 public static class DatePickerTodayButtonBehavior {
-	static readonly DependencyProperty OriginalCalendarStyleProperty =
+	static readonly DependencyProperty IsCalendarOpenedHookedProperty =
 		DependencyProperty.RegisterAttached(
-			"OriginalCalendarStyle",
-			typeof(Style),
+			"IsCalendarOpenedHooked",
+			typeof(bool),
 			typeof(DatePickerTodayButtonBehavior),
-			new PropertyMetadata(null));
+			new PropertyMetadata(false));
 
-	static readonly DependencyProperty IsCalendarStyleAppliedProperty =
+	static readonly DependencyProperty IsTodayButtonHostProperty =
 		DependencyProperty.RegisterAttached(
-			"IsCalendarStyleApplied",
+			"IsTodayButtonHost",
+			typeof(bool),
+			typeof(DatePickerTodayButtonBehavior),
+			new PropertyMetadata(false));
+
+	static readonly DependencyProperty IsTodayButtonProperty =
+		DependencyProperty.RegisterAttached(
+			"IsTodayButton",
 			typeof(bool),
 			typeof(DatePickerTodayButtonBehavior),
 			new PropertyMetadata(false));
@@ -40,85 +46,117 @@ public static class DatePickerTodayButtonBehavior {
 		if (d is not DatePicker picker) return;
 
 		if ((bool)e.NewValue) {
-			// リソースが使えるようになってから適用する
+			// テンプレートが使えるようになってから Popup を拡張する。
 			if (picker.IsLoaded)
-				AttachCalendarStyle(picker);
+				AttachCalendarHandlers(picker);
 			else
 				picker.Loaded += OnPickerLoaded;
 		}
 		else {
 			picker.Loaded -= OnPickerLoaded;
-			RestoreCalendarStyle(picker);
+			DetachCalendarHandlers(picker);
 		}
 	}
 
 	static void OnPickerLoaded(object sender, RoutedEventArgs e) {
 		if (sender is not DatePicker picker) return;
 		picker.Loaded -= OnPickerLoaded;
-		AttachCalendarStyle(picker);
+		AttachCalendarHandlers(picker);
 	}
 
-	/// <summary>
-	/// Calendar の ControlTemplate を差し替え、CalendarItem の下に「今日」ボタンのフッターを追加する。
-	/// popup.Child の直接操作（Approach B）は DatePicker.OnApplyTemplate() による
-	/// _popUp.Child = this._calendar のリセットで破棄されるため使用しない。
-	/// </summary>
-	static void AttachCalendarStyle(DatePicker picker) {
-		if ((bool)picker.GetValue(IsCalendarStyleAppliedProperty)) return;
+	static void AttachCalendarHandlers(DatePicker picker) {
+		if ((bool)picker.GetValue(IsCalendarOpenedHookedProperty)) return;
 
-		if (picker.TryFindResource("CvDatePickerCalendarTemplate") is not ControlTemplate template) return;
-
-		picker.SetValue(OriginalCalendarStyleProperty, picker.CalendarStyle);
-
-		// MDIX の CalendarStyle をベースとして ControlTemplate のみ差し替える
-		// → DayButtonStyle, CalendarButtonStyle 等の MDIX セッターを継承しつつ
-		//   テンプレートだけ追加ボタン付きのものに置き換える
-		var baseStyle = picker.CalendarStyle ?? picker.TryFindResource("MaterialDesignDatePickerCalendarPortrait") as Style ?? picker.TryFindResource("MaterialDesignCalendarPortrait") as Style;
-		var style = new Style(typeof(Calendar), baseStyle);
-		style.Setters.Add(new Setter(Control.BackgroundProperty, new DynamicResourceExtension("MaterialDesignPaper")));
-		style.Setters.Add(new Setter(Control.BorderBrushProperty, new DynamicResourceExtension("MaterialDesignDivider")));
-		style.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(1)));
-		style.Setters.Add(new Setter(Control.ForegroundProperty, new DynamicResourceExtension("MaterialDesignBody")));
-		style.Setters.Add(new Setter(Control.TemplateProperty, template));
-
-		picker.CalendarStyle = style;
 		picker.CalendarOpened += OnCalendarOpened;
-		picker.SetValue(IsCalendarStyleAppliedProperty, true);
+		picker.CalendarClosed += OnCalendarClosed;
+		picker.SetValue(IsCalendarOpenedHookedProperty, true);
 	}
 
-	static void RestoreCalendarStyle(DatePicker picker) {
-		if (!(bool)picker.GetValue(IsCalendarStyleAppliedProperty)) return;
+	static void DetachCalendarHandlers(DatePicker picker) {
+		if (!(bool)picker.GetValue(IsCalendarOpenedHookedProperty)) return;
 
 		picker.CalendarOpened -= OnCalendarOpened;
-		DetachTodayButtonHandler(picker);
-		picker.CalendarStyle = picker.GetValue(OriginalCalendarStyleProperty) as Style;
-		picker.ClearValue(OriginalCalendarStyleProperty);
-		picker.SetValue(IsCalendarStyleAppliedProperty, false);
+		picker.CalendarClosed -= OnCalendarClosed;
+		UnwrapTodayButtonHost(picker);
+		picker.SetValue(IsCalendarOpenedHookedProperty, false);
 	}
 
 	static void OnCalendarOpened(object sender, RoutedEventArgs e) {
 		if (sender is not DatePicker picker) return;
 
-		if (picker.Template.FindName("PART_Popup", picker) is Popup popup && popup.Child is Calendar calendar) {
-			calendar.ApplyTemplate();
-			if (calendar.Template.FindName("PART_TodayButton", calendar) is Button todayButton) {
-				todayButton.Tag = picker;
-				todayButton.Click -= OnTodayButtonClick;
-				todayButton.Click += OnTodayButtonClick;
-				todayButton.IsEnabled = CanSelectDate(picker, DateTime.Today);
-			}
-		}
+		if (picker.Template.FindName("PART_Popup", picker) is not Popup popup) return;
+		if (!TryFindCalendar(popup.Child, out var calendar)) return;
+
+		WrapPopupWithTodayButton(picker, popup, calendar);
 	}
 
-	static void DetachTodayButtonHandler(DatePicker picker) {
-		if (picker.Template.FindName("PART_Popup", picker) is not Popup popup || popup.Child is not Calendar calendar) return;
+	static void OnCalendarClosed(object? sender, RoutedEventArgs e) {
+		if (sender is DatePicker picker)
+			UnwrapTodayButtonHost(picker);
+	}
 
-		calendar.ApplyTemplate();
-		if (calendar.Template.FindName("PART_TodayButton", calendar) is not Button todayButton) return;
+	static void WrapPopupWithTodayButton(DatePicker picker, Popup popup, Calendar calendar) {
+		if (popup.Child is DependencyObject currentChild && IsTodayButtonHost(currentChild)) {
+			UpdateTodayButton(currentChild, picker);
+			return;
+		}
 
+		popup.Child = null;
+
+		var root = new StackPanel();
+		root.SetValue(IsTodayButtonHostProperty, true);
+		root.Children.Add(calendar);
+
+		var footer = new Border();
+		if (picker.TryFindResource("CvDatePickerTodayFooterStyle") is Style footerStyle)
+			footer.Style = footerStyle;
+		else {
+			footer.Padding = new Thickness(8);
+			footer.BorderThickness = new Thickness(0, 1, 0, 0);
+		}
+
+		var todayButton = new Button();
+		todayButton.SetValue(IsTodayButtonProperty, true);
+		todayButton.Content = "今日";
+		todayButton.HorizontalAlignment = HorizontalAlignment.Right;
+		todayButton.MinWidth = 72;
+		if (picker.TryFindResource("MaterialDesignOutlinedButton") is Style buttonStyle)
+			todayButton.Style = buttonStyle;
+		todayButton.SetResourceReference(Control.ForegroundProperty, "PrimaryHueMidBrush");
+
+		footer.Child = todayButton;
+		root.Children.Add(footer);
+		popup.Child = root;
+
+		UpdateTodayButton(root, picker);
+	}
+
+	static void UpdateTodayButton(DependencyObject host, DatePicker picker) {
+		if (FindDescendant<Button>(host, button => IsTodayButton(button)) is not Button todayButton) return;
+
+		todayButton.Tag = picker;
 		todayButton.Click -= OnTodayButtonClick;
-		todayButton.Tag = null;
-		todayButton.IsEnabled = false;
+		todayButton.Click += OnTodayButtonClick;
+		todayButton.IsEnabled = CanSelectDate(picker, DateTime.Today);
+	}
+
+	static void UnwrapTodayButtonHost(DatePicker picker) {
+		if (picker.Template.FindName("PART_Popup", picker) is not Popup popup) return;
+		if (popup.Child is not DependencyObject currentChild || !IsTodayButtonHost(currentChild)) return;
+		if (!TryFindCalendar(currentChild, out var calendar)) return;
+
+		if (FindDescendant<Button>(currentChild, button => IsTodayButton(button)) is Button todayButton) {
+			todayButton.Click -= OnTodayButtonClick;
+			todayButton.Tag = null;
+		}
+
+		if (calendar.Parent is Panel parentPanel)
+			parentPanel.Children.Remove(calendar);
+		else if (calendar.Parent is Decorator parentDecorator)
+			parentDecorator.Child = null;
+
+		popup.Child = null;
+		popup.Child = calendar;
 	}
 
 	static void OnTodayButtonClick(object sender, RoutedEventArgs e) {
@@ -141,4 +179,38 @@ public static class DatePickerTodayButtonBehavior {
 
 		return true;
 	}
+
+	static bool TryFindCalendar(object? popupChild, out Calendar calendar) {
+		if (popupChild is Calendar directCalendar) {
+			calendar = directCalendar;
+			return true;
+		}
+
+		if (popupChild is DependencyObject root && FindDescendant<Calendar>(root) is Calendar descendantCalendar) {
+			calendar = descendantCalendar;
+			return true;
+		}
+
+		calendar = null!;
+		return false;
+	}
+
+	static T? FindDescendant<T>(DependencyObject root, Predicate<T>? predicate = null) where T : DependencyObject {
+		foreach (var child in LogicalTreeHelper.GetChildren(root)) {
+			if (child is not DependencyObject childObject) continue;
+
+			if (childObject is T typedChild && (predicate?.Invoke(typedChild) ?? true))
+				return typedChild;
+
+			var descendant = FindDescendant(childObject, predicate);
+			if (descendant is not null)
+				return descendant;
+		}
+
+		return null;
+	}
+
+	static bool IsTodayButtonHost(DependencyObject obj) => (bool)obj.GetValue(IsTodayButtonHostProperty);
+
+	static bool IsTodayButton(DependencyObject obj) => (bool)obj.GetValue(IsTodayButtonProperty);
 }
