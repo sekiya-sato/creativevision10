@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -104,6 +103,7 @@ public static class DatePickerTodayButtonBehavior {
 		popup.Child = null;
 
 		var root = new StackPanel();
+		root.SetResourceReference(Panel.BackgroundProperty, "MaterialDesignPaper");
 		root.SetValue(IsTodayButtonHostProperty, true);
 		root.Children.Add(calendar);
 
