@@ -17,6 +17,7 @@
 				<ResourceDictionary Source="/Resources/UIMainWindow.xaml" />
 				<materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Green" />
 				<ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+				<ResourceDictionary Source="/Resources/UICalendar.xaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</Application.Resources>

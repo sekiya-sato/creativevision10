@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -65,75 +66,71 @@ public static class DatePickerTodayButtonBehavior {
 	static void AttachCalendarStyle(DatePicker picker) {
 		if ((bool)picker.GetValue(IsCalendarStyleAppliedProperty)) return;
 
+		if (picker.TryFindResource("CvDatePickerCalendarTemplate") is not ControlTemplate template) return;
+
 		picker.SetValue(OriginalCalendarStyleProperty, picker.CalendarStyle);
-
-		// ① Calendar ControlTemplate のルート: Border (PART_Root)
-		// CalendarStyle の背景 Setters はテンプレート側で描画しないと反映されないため、
-		// MDIX の Paper/Divider を使ってポップアップ全体の背景と枠線を明示する。
-		var rootFactory = new FrameworkElementFactory(typeof(Border)) { Name = "PART_Root" };
-		rootFactory.SetValue(Border.BorderThicknessProperty, new Thickness(1));
-		rootFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
-		rootFactory.SetValue(UIElement.SnapsToDevicePixelsProperty, true);
-		rootFactory.SetResourceReference(Border.BackgroundProperty, "MaterialDesignPaper");
-		rootFactory.SetResourceReference(Border.BorderBrushProperty, "MaterialDesignDivider");
-
-		var contentFactory = new FrameworkElementFactory(typeof(StackPanel));
-
-		// ② CalendarItem (PART_CalendarItem) — MDIX の Card ビジュアルを維持するためスタイルを継承
-		var calItemFactory = new FrameworkElementFactory(typeof(CalendarItem)) { Name = "PART_CalendarItem" };
-		calItemFactory.SetResourceReference(FrameworkElement.StyleProperty, "MaterialDesignCalendarItemPortrait");
-		calItemFactory.SetResourceReference(Control.BackgroundProperty, "MaterialDesignPaper");
-		calItemFactory.SetResourceReference(Control.ForegroundProperty, "MaterialDesignBody");
-
-		// ③ フッター Border
-		var footerFactory = new FrameworkElementFactory(typeof(Border));
-		footerFactory.SetValue(Border.PaddingProperty, new Thickness(8));
-		footerFactory.SetValue(Border.BorderThicknessProperty, new Thickness(0, 1, 0, 0));
-		footerFactory.SetResourceReference(Border.BorderBrushProperty, "MaterialDesignDivider");
-		footerFactory.SetResourceReference(Border.BackgroundProperty, "MaterialDesignPaper");
-
-		// ④ 「今日」ボタン
-		var buttonFactory = new FrameworkElementFactory(typeof(Button));
-		buttonFactory.SetValue(ContentControl.ContentProperty, "今日");
-		buttonFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Right);
-		buttonFactory.SetValue(FrameworkElement.MinWidthProperty, 72.0);
-		buttonFactory.SetValue(UIElement.IsEnabledProperty, CanSelectDate(picker, DateTime.Today));
-		buttonFactory.SetResourceReference(Control.ForegroundProperty, "PrimaryHueMidBrush");
-		buttonFactory.SetResourceReference(FrameworkElement.StyleProperty, "MaterialDesignOutlinedButton");
-		buttonFactory.AddHandler(Button.ClickEvent, new RoutedEventHandler((_, _) => {
-			var today = DateTime.Today;
-			if (!CanSelectDate(picker, today)) return;
-			picker.SelectedDate = today;
-			picker.DisplayDate = today;
-			picker.IsDropDownOpen = false;
-		}));
-
-		footerFactory.AppendChild(buttonFactory);
-		contentFactory.AppendChild(calItemFactory);
-		contentFactory.AppendChild(footerFactory);
-		rootFactory.AppendChild(contentFactory);
-
-		var template = new ControlTemplate(typeof(Calendar)) { VisualTree = rootFactory };
 
 		// MDIX の CalendarStyle をベースとして ControlTemplate のみ差し替える
 		// → DayButtonStyle, CalendarButtonStyle 等の MDIX セッターを継承しつつ
 		//   テンプレートだけ追加ボタン付きのものに置き換える
-		var baseStyle = picker.CalendarStyle ?? picker.TryFindResource("MaterialDesignCalendarPortrait") as Style;
+		var baseStyle = picker.CalendarStyle ?? picker.TryFindResource("MaterialDesignDatePickerCalendarPortrait") as Style ?? picker.TryFindResource("MaterialDesignCalendarPortrait") as Style;
 		var style = new Style(typeof(Calendar), baseStyle);
 		style.Setters.Add(new Setter(Control.BackgroundProperty, new DynamicResourceExtension("MaterialDesignPaper")));
+		style.Setters.Add(new Setter(Control.BorderBrushProperty, new DynamicResourceExtension("MaterialDesignDivider")));
+		style.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(1)));
 		style.Setters.Add(new Setter(Control.ForegroundProperty, new DynamicResourceExtension("MaterialDesignBody")));
 		style.Setters.Add(new Setter(Control.TemplateProperty, template));
 
 		picker.CalendarStyle = style;
+		picker.CalendarOpened += OnCalendarOpened;
 		picker.SetValue(IsCalendarStyleAppliedProperty, true);
 	}
 
 	static void RestoreCalendarStyle(DatePicker picker) {
 		if (!(bool)picker.GetValue(IsCalendarStyleAppliedProperty)) return;
 
+		picker.CalendarOpened -= OnCalendarOpened;
+		DetachTodayButtonHandler(picker);
 		picker.CalendarStyle = picker.GetValue(OriginalCalendarStyleProperty) as Style;
 		picker.ClearValue(OriginalCalendarStyleProperty);
 		picker.SetValue(IsCalendarStyleAppliedProperty, false);
+	}
+
+	static void OnCalendarOpened(object sender, RoutedEventArgs e) {
+		if (sender is not DatePicker picker) return;
+
+		if (picker.Template.FindName("PART_Popup", picker) is Popup popup && popup.Child is Calendar calendar) {
+			calendar.ApplyTemplate();
+			if (calendar.Template.FindName("PART_TodayButton", calendar) is Button todayButton) {
+				todayButton.Tag = picker;
+				todayButton.Click -= OnTodayButtonClick;
+				todayButton.Click += OnTodayButtonClick;
+				todayButton.IsEnabled = CanSelectDate(picker, DateTime.Today);
+			}
+		}
+	}
+
+	static void DetachTodayButtonHandler(DatePicker picker) {
+		if (picker.Template.FindName("PART_Popup", picker) is not Popup popup || popup.Child is not Calendar calendar) return;
+
+		calendar.ApplyTemplate();
+		if (calendar.Template.FindName("PART_TodayButton", calendar) is not Button todayButton) return;
+
+		todayButton.Click -= OnTodayButtonClick;
+		todayButton.Tag = null;
+		todayButton.IsEnabled = false;
+	}
+
+	static void OnTodayButtonClick(object sender, RoutedEventArgs e) {
+		if (sender is Button btn && btn.Tag is DatePicker picker) {
+			if (!GetIsEnabled(picker)) return;
+
+			var today = DateTime.Today;
+			if (!CanSelectDate(picker, today)) return;
+			picker.SelectedDate = today;
+			picker.DisplayDate = today;
+			picker.IsDropDownOpen = false;
+		}
 	}
 
 	static bool CanSelectDate(DatePicker picker, DateTime date) {
