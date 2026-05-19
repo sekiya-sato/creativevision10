@@ -16,6 +16,27 @@
 
 ---
 
+## [2026-05-19] 12:22 DatePicker今日ボタンの背景スタイル修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclient の DatePickerTodayButtonBehavior を ShopUriageInputView から使用できる実装にした後、DatePicker の背景が透明になっているため、MaterialDesign に合わせた見やすいスタイルへ変更する。修正、確認、log、commit まで実行する
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: 今日ボタン付き Calendar ControlTemplate の `PART_Root` を StackPanel から Border へ変更し、`MaterialDesignPaper` の背景と `MaterialDesignDivider` の枠線を描画するよう修正
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: CalendarItem と今日ボタンの縦並び構造は維持しつつ、背景付き Border 配下の StackPanel に格納して透明表示を防止
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `CalendarStyle` の背景系 Setter はテンプレート内で描画要素に反映しないと見た目に現れないため、ControlTemplate のルートで MaterialDesign の Paper/Divider リソースを明示的に使用した
+- `ShopUriageInputView.xaml` 側の DatePicker 利用方法は既に `helpers:DatePickerTodayButtonBehavior.IsEnabled="True"` で確立済みのため、画面側ではなく Behavior のテンプレート定義に修正を閉じた
+### 確認
+- `git diff --check` で空白エラーがないことを確認
+- `[xml](Get-Content -Raw CvWpfclient\Views\06Uriage\ShopUriageInputView.xaml)` で対象 XAML の XML 構文が有効であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で WPF クライアントのビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-19] 12:02 ShopUriageInputView用DatePicker今日ボタン対応
 ### Agent
 - GPT-5.4 : OpenAI

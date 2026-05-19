@@ -67,8 +67,17 @@ public static class DatePickerTodayButtonBehavior {
 
 		picker.SetValue(OriginalCalendarStyleProperty, picker.CalendarStyle);
 
-		// ① Calendar ControlTemplate のルート: StackPanel (PART_Root)
-		var rootFactory = new FrameworkElementFactory(typeof(StackPanel)) { Name = "PART_Root" };
+		// ① Calendar ControlTemplate のルート: Border (PART_Root)
+		// CalendarStyle の背景 Setters はテンプレート側で描画しないと反映されないため、
+		// MDIX の Paper/Divider を使ってポップアップ全体の背景と枠線を明示する。
+		var rootFactory = new FrameworkElementFactory(typeof(Border)) { Name = "PART_Root" };
+		rootFactory.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+		rootFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+		rootFactory.SetValue(UIElement.SnapsToDevicePixelsProperty, true);
+		rootFactory.SetResourceReference(Border.BackgroundProperty, "MaterialDesignPaper");
+		rootFactory.SetResourceReference(Border.BorderBrushProperty, "MaterialDesignDivider");
+
+		var contentFactory = new FrameworkElementFactory(typeof(StackPanel));
 
 		// ② CalendarItem (PART_CalendarItem) — MDIX の Card ビジュアルを維持するためスタイルを継承
 		var calItemFactory = new FrameworkElementFactory(typeof(CalendarItem)) { Name = "PART_CalendarItem" };
@@ -97,8 +106,9 @@ public static class DatePickerTodayButtonBehavior {
 		}));
 
 		footerFactory.AppendChild(buttonFactory);
-		rootFactory.AppendChild(calItemFactory);
-		rootFactory.AppendChild(footerFactory);
+		contentFactory.AppendChild(calItemFactory);
+		contentFactory.AppendChild(footerFactory);
+		rootFactory.AppendChild(contentFactory);
 
 		var template = new ControlTemplate(typeof(Calendar)) { VisualTree = rootFactory };
 
