@@ -26,17 +26,16 @@ public partial class ConvertDb {
 	}
 
 	/// <summary>
-	/// ストリーミングで全マスタ変換を実行
+	/// ストリーミングで全マスタおよびトランザクション変換を実行
 	/// [Execute all master conversion for streaming]
 	/// </summary>
 	public IAsyncEnumerable<StreamStepProgress> ConvertAllAsyncStream(bool isInit = true) {
 		(string Name, Func<bool, int> Action)[] steps = [
+			/* // Tranテーブルに対するサイズマスタコードの変換
 			("CnvTranSize1", CnvTranSize1),
 			("CnvTranSize2", CnvTranSize2),
 			("CnvTranSize3", CnvTranSize3),
-			("CnvTranSize4", CnvTranSize4),
-			("CnvTranSize5", CnvTranSize5),
-			/*
+			*/
 			("CnvMasterConfig", CnvMasterConfig),
 			("CnvMasterSys", CnvMasterSys),
 			("CnvMasterMeisho", CnvMasterMeisho),
@@ -59,7 +58,6 @@ public partial class ConvertDb {
 			("CnvTran11IdoIn", CnvTran11IdoIn),
 			("CnvTran12Jyuchu", CnvTran12Jyuchu),
 			("CnvTran13Hachu", CnvTran13Hachu),
-			*/
 		];
 
 		return StreamStepProgressRunner.Run(

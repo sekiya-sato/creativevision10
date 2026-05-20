@@ -439,14 +439,6 @@ public partial class ConvertDb {
 		cnt += subCnvTranHeaderSize<Tran60Tana>();
 		return cnt;
 	}
-	public int CnvTranSize4(bool isInit = true) {
-		var cnt = 0;
-		return cnt;
-	}
-	public int CnvTranSize5(bool isInit = true) {
-		var cnt = 0;
-		return cnt;
-	}
 	/// <summary>
 	/// 明細サイズコード変換
 	/// </summary>
