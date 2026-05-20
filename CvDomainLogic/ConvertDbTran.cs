@@ -516,7 +516,7 @@ WHERE EXISTS (
 			var sizCode = getString(detailRec, "サイズCD");
 			var shohin = getMaster<MasterShohin>(shohinCode);
 			var col = getMeisho("COL", colCode);
-			var siz = getMeisho("SIZ", sizCode);
+			var siz = getMeisho(shohin?.SizeKu ?? string.Empty, sizCode);
 			int kubun = 0, jodai = 0, gedai = 0, nebiki00 = 0, nebiki01 = 0, nebiki02 = 0;
 			if (table == "HC$tran_tori1") {
 				kubun = getDataInt(detailRec, "明細取引区分");
