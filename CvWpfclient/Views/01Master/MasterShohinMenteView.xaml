@@ -577,76 +577,7 @@
 						</ScrollViewer>
 					</TabItem>
 
-					<!--  タブ2: 原価リスト  -->
-					<TabItem>
-						<TabItem.Header>
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-									Kind="CurrencyJpy" />
-								<TextBlock Text="原価" />
-							</StackPanel>
-						</TabItem.Header>
-						<Grid>
-							<Grid.RowDefinitions>
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="*" />
-							</Grid.RowDefinitions>
-							<StackPanel Grid.Row="0"
-								Margin="8,8,8,0" HorizontalAlignment="Center"
-								Orientation="Horizontal">
-								<Button Margin="8,0"
-									Command="{Binding DeleteJgenkaCommand}"
-									Style="{StaticResource MaterialDesignOutlinedButton}">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon VerticalAlignment="Center"
-											Kind="Delete" />
-										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-											Text="削除" />
-									</StackPanel>
-								</Button>
-								<Button Margin="8,0"
-									Command="{Binding AddJgenkaCommand}"
-									Style="{StaticResource MaterialDesignOutlinedButton}">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon VerticalAlignment="Center"
-											Kind="Plus" />
-										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-											Text="追加" />
-									</StackPanel>
-								</Button>
-							</StackPanel>
-							<DataGrid x:Name="JgenkaGrid"
-								Grid.Row="1"
-								Margin="8"
-								d:ItemsSource="{d:SampleData ItemCount=3}"
-								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
-								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-								IsSynchronizedWithCurrentItem="True"
-								ItemsSource="{Binding EditJgenka}"
-								SelectedItem="{Binding SelectedJgenka, Mode=TwoWay}"
-								Style="{StaticResource MaterialDesignDataGrid}"
-								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
-								<DataGrid.Columns>
-									<DataGridTextColumn Width="100"
-										Binding="{Binding No}"
-										Header="No" />
-									<DataGridTextColumn Width="150"
-										Binding="{Binding TankaGenka}"
-										Header="原価" />
-									<DataGridTextColumn Width="150"
-										Binding="{Binding TankaShiire}"
-										Header="仕入単価" />
-								</DataGrid.Columns>
-								<DataGrid.ColumnHeaderStyle>
-									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
-										TargetType="DataGridColumnHeader" />
-								</DataGrid.ColumnHeaderStyle>
-							</DataGrid>
-						</Grid>
-					</TabItem>
-
-					<!--  タブ3: 色サイズリスト  -->
+					<!--  タブ2: 色サイズリスト  -->
 					<TabItem>
 						<TabItem.Header>
 							<StackPanel Orientation="Horizontal">
@@ -802,6 +733,74 @@
 									<DataGridTextColumn Width="150"
 										Binding="{Binding Jan3}"
 										Header="JANコード3" />
+								</DataGrid.Columns>
+								<DataGrid.ColumnHeaderStyle>
+									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+										TargetType="DataGridColumnHeader" />
+								</DataGrid.ColumnHeaderStyle>
+							</DataGrid>
+						</Grid>
+					</TabItem>
+					<!--  タブ3: 原価リスト  -->
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="CurrencyJpy" />
+								<TextBlock Text="原価" />
+							</StackPanel>
+						</TabItem.Header>
+						<Grid>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="*" />
+							</Grid.RowDefinitions>
+							<StackPanel Grid.Row="0"
+								Margin="8,8,8,0" HorizontalAlignment="Center"
+								Orientation="Horizontal">
+								<Button Margin="8,0"
+									Command="{Binding DeleteJgenkaCommand}"
+									Style="{StaticResource MaterialDesignOutlinedButton}">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon VerticalAlignment="Center"
+											Kind="Delete" />
+										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+											Text="削除" />
+									</StackPanel>
+								</Button>
+								<Button Margin="8,0"
+									Command="{Binding AddJgenkaCommand}"
+									Style="{StaticResource MaterialDesignOutlinedButton}">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon VerticalAlignment="Center"
+											Kind="Plus" />
+										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+											Text="追加" />
+									</StackPanel>
+								</Button>
+							</StackPanel>
+							<DataGrid x:Name="JgenkaGrid"
+								Grid.Row="1"
+								Margin="8"
+								d:ItemsSource="{d:SampleData ItemCount=3}"
+								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+								IsSynchronizedWithCurrentItem="True"
+								ItemsSource="{Binding EditJgenka}"
+								SelectedItem="{Binding SelectedJgenka, Mode=TwoWay}"
+								Style="{StaticResource MaterialDesignDataGrid}"
+								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+								<DataGrid.Columns>
+									<DataGridTextColumn Width="100"
+										Binding="{Binding No}"
+										Header="No" />
+									<DataGridTextColumn Width="150"
+										Binding="{Binding TankaGenka}"
+										Header="原価" />
+									<DataGridTextColumn Width="150"
+										Binding="{Binding TankaShiire}"
+										Header="仕入単価" />
 								</DataGrid.Columns>
 								<DataGrid.ColumnHeaderStyle>
 									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
