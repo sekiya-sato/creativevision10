@@ -11,7 +11,7 @@ namespace CvBase;
 [KeyDml("unq1", true, ["Id_Soko", "Id_Shohin", "Id_Col", "Id_Siz"])]
 [KeyDml("nk1", false, ["Id_Soko"])]
 [KeyDml("nk2", false, ["Id_Shohin"])]
-[Comment("倉庫、商品、色、サイズで集計した在庫データ")]
+[Comment("集計データ：倉庫、商品、色、サイズで集計した在庫データ")]
 public partial class SummaryRealStock : BaseDbClass {
 	/// <summary>
 	/// 倉庫ID
@@ -46,7 +46,7 @@ public partial class SummaryRealStock : BaseDbClass {
 [KeyDml("unq1", true, ["SumMonth", "Id_Soko", "Id_Shohin", "Id_Col", "Id_Siz"])]
 [KeyDml("nk1", false, ["Id_Soko"])]
 [KeyDml("nk2", false, ["Id_Shohin"])]
-[Comment("年月、倉庫、商品、色、サイズで集計した在庫データ Suは当月のみ、CumulativeSuは累計")]
+[Comment("集計データ：年月、倉庫、商品、色、サイズで集計した在庫データ Suは当月のみ、CumulativeSuは累計")]
 public partial class SummaryStock : SummaryRealStock {
 	/// <summary>
 	/// 年月

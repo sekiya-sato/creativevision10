@@ -156,7 +156,7 @@ FROM Flattened
 [KeyDml("njan1", false, "Jan1")]
 [KeyDml("njan2", false, "Jan2")]
 [KeyDml("njan3", false, "Jan3")]
-[Comment("商品マスタMasterShohinから商品、色、サイズに展開したマスタ")]
+[Comment("派生マスタ：商品マスタMasterShohinから商品、色、サイズに展開したマスタ")]
 public partial class DerivedShohinColSiz : ObservableObject, IDerivedClass {
 	/// <summary>
 	/// ユニークキー
