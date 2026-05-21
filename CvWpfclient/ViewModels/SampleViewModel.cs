@@ -291,12 +291,12 @@ from MasterMeisho where Kubun=@0
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply?.DataMsg != null && reply?.DataType != null) {
 				var wrk = Common.DeserializeObject(reply.DataMsg, reply.DataType);
-				var tableCounts = Common.DeserializeObject<List<Tuple<string, long>>>(reply.DataMsg)
-					?? new List<Tuple<string, long>>();
+				var tableCounts = Common.DeserializeObject<List<Tuple<string, string, long>>>(reply.DataMsg)
+					?? new List<Tuple<string, string, long>>();
 				// 表示用に変換
 				StreamMessages.Clear();
 				foreach (var streamMsg in tableCounts) {
-					StreamMessages.Insert(0, $"Table={streamMsg.Item1}, Count={streamMsg.Item2}");
+					StreamMessages.Insert(0, $"Table={streamMsg.Item1}, Count={streamMsg.Item3}, Description={streamMsg.Item2}");
 				}
 			}
 		}
