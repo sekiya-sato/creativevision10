@@ -170,6 +170,12 @@ public partial class CoreService {
 			return CreateExceptionResponse(flag, ex, item.GetType(), Common.SerializeObject(item));
 		}
 	}
+	/// <summary>
+	/// 追加処理 ( ToDo: 付随する処理も同時に実行する)
+	/// </summary>
+	/// <param name="flag"></param>
+	/// <param name="insertBulk"></param>
+	/// <returns></returns>
 	private CvMsg HandleBulkInsert(CvFlag flag, InsertBulkParam insertBulk) {
 		_logger.LogInformation("パラメータ InsertBulkParam.ItemType={ItemType} 内容={Payload}", insertBulk.ItemType, Common.SerializeObject(insertBulk));
 
@@ -195,7 +201,13 @@ public partial class CoreService {
 			return CreateExceptionResponse(flag, ex, listType, Common.SerializeObject(list));
 		}
 	}
-
+	/// <summary>
+	/// 更新処理 ( ToDo: 付随する処理も同時に実行する)
+	/// </summary>
+	/// <param name="flag"></param>
+	/// <param name="update"></param>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
 	private CvMsg HandleUpdate(CvFlag flag, UpdateParam update) {
 		_logger.LogInformation("パラメータ UpdateParam.ItemType={ItemType} 内容={Payload}", update.ItemType, Common.SerializeObject(update));
 
@@ -226,7 +238,13 @@ public partial class CoreService {
 			return CreateExceptionResponse(flag, ex, update.ItemType, Common.SerializeObject(item));
 		}
 	}
-
+	/// <summary>
+	/// 削除処理 ( ToDo: 付随する処理も同時に実行する)
+	/// </summary>
+	/// <param name="flag"></param>
+	/// <param name="delete"></param>
+	/// <returns></returns>
+	/// <exception cref="NotImplementedException"></exception>
 	private CvMsg HandleDelete(CvFlag flag, DeleteParam delete) {
 		_logger.LogInformation("パラメータ DeleteParam.ItemType={ItemType} 内容={Payload}", delete.ItemType, Common.SerializeObject(delete));
 
