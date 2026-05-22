@@ -317,25 +317,6 @@ public partial class CoreService {
 		}
 	}
 
-	// ToDo : ロジックを集約 HandleOpHhtReceive は廃止予定
-	[Obsolete("HHTデータ受信は廃止予定のため、使用しないでください。")]
-	CvMsg HandleOpHhtReceive(CvMsg request, CallContext context = default) {
-		ArgumentNullException.ThrowIfNull(request);
-
-		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
-		if (param is not List<TranVulcanHht> createMasterParam) {
-			throw new NotImplementedException();
-		}
-		try {
-			var hhtdata = param as List<TranVulcanHht> ?? new List<TranVulcanHht>();
-
-			var cnt = new HhtProcess(_db).ReceiveHhtdata(hhtdata);
-			return CreateSuccessResponse(request.Flag, typeof(int), Common.SerializeObject(cnt));
-		}
-		catch (Exception ex) {
-			return CreateExceptionResponse(request.Flag, ex, typeof(List<string>), request.DataMsg);
-		}
-	}
 
 	private static Dictionary<string, string> GetEnvironmentVariables() {
 		var envVars = Environment.GetEnvironmentVariables();
