@@ -1,7 +1,6 @@
 using CodeShare;
 using CvBase;
 using CvDomainLogic;
-using Microsoft.Data.Sqlite;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
@@ -244,27 +243,11 @@ public class SchedulerService : CodeShare.IScheduler {
 	}
 
 	public static Dictionary<string, object> ExecuteSqliteWalCheckpoint(ExDatabase db) {
-		var connectionString = db.Connection.ConnectionString;
-		if (string.IsNullOrWhiteSpace(connectionString)) {
-			throw new InvalidOperationException("SQLite 接続文字列を取得できません。");
+		var result = db.RawExecCmd(SqliteWalCheckpointSql);
+		if (result.Count == 0) {
+			return new Dictionary<string, object>();
 		}
-
-		using var connection = new SqliteConnection(connectionString);
-		connection.Open();
-		using var command = connection.CreateCommand();
-		command.CommandText = SqliteWalCheckpointSql;
-		using var reader = command.ExecuteReader();
-
-		if (!reader.Read()) {
-			return [];
-		}
-
-		var result = new Dictionary<string, object>(reader.FieldCount, StringComparer.OrdinalIgnoreCase);
-		for (var i = 0; i < reader.FieldCount; i++) {
-			result[reader.GetName(i)] = reader.GetValue(i);
-		}
-
-		return result;
+		return result.First();
 	}
 
 	private static object? GetCheckpointValue(Dictionary<string, object> checkpointResult, string key) {
