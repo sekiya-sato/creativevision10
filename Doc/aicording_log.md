@@ -38,6 +38,24 @@
 
 ---
 
+## [2026-05-23] 18:23 WAL checkpoint busy判定ログ調整
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvServer SchedulerService を使った SQLite WAL checkpoint 追加について、Oracle レビューで指摘された busy 状態の扱いを反映し、commit まで完了する
+### 実施内容
+- CvServer/Services/SchedulerService.cs: `wal_checkpoint(TRUNCATE)` の戻り値から `busy/log/checkpointed` を long として取り出す helper を追加し、`busy > 0` の場合は成功ログではなく警告ログを出すよう調整
+- Doc/aicording_log.md: Oracle レビュー反映の追補ログを追記
+### 技術決定 Why
+- SQLite の `wal_checkpoint(TRUNCATE)` は例外なく戻っても `busy > 0` なら未反映フレームが残り得るため、完了ログと同一扱いにすると運用時の解釈が甘くなる。成功と一部保留をログレベルで分けることで、定期メンテナンス結果を正しく観測できるようにした
+### 確認
+- `dotnet run --project "Tests/TestServer/TestServer.csproj"` で TestServer のテスト 5 件成功を再確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を再確認
+
+---
+
 ## [2026-05-19] 13:38 DatePickerTodayButtonBehavior の MaterialDesign 継承化
 ### Agent
 - GPT-5.4 : OpenAI

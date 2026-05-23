@@ -214,12 +214,26 @@ public class SchedulerService : CodeShare.IScheduler {
 
 		try {
 			var checkpointResult = ExecuteSqliteWalCheckpoint(_db);
-			_logger.LogInformation(
-				"WALチェックポイント完了: TaskName={TaskName}, Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
-				taskName,
-				GetCheckpointValue(checkpointResult, "busy"),
-				GetCheckpointValue(checkpointResult, "log"),
-				GetCheckpointValue(checkpointResult, "checkpointed"));
+			var busy = GetCheckpointLongValue(checkpointResult, "busy");
+			var logCount = GetCheckpointLongValue(checkpointResult, "log");
+			var checkpointed = GetCheckpointLongValue(checkpointResult, "checkpointed");
+
+			if (busy > 0) {
+				_logger.LogWarning(
+					"WALチェックポイントは一部保留されました: TaskName={TaskName}, Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
+					taskName,
+					busy,
+					logCount,
+					checkpointed);
+			}
+			else {
+				_logger.LogInformation(
+					"WALチェックポイント完了: TaskName={TaskName}, Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
+					taskName,
+					busy,
+					logCount,
+					checkpointed);
+			}
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "WALチェックポイント実行中にエラーが発生しました: TaskName={TaskName}", taskName);
@@ -255,5 +269,17 @@ public class SchedulerService : CodeShare.IScheduler {
 
 	private static object? GetCheckpointValue(Dictionary<string, object> checkpointResult, string key) {
 		return checkpointResult.TryGetValue(key, out var value) ? value : null;
+	}
+
+	private static long GetCheckpointLongValue(Dictionary<string, object> checkpointResult, string key) {
+		var value = GetCheckpointValue(checkpointResult, key);
+		return value switch {
+			byte number => number,
+			short number => number,
+			int number => number,
+			long number => number,
+			string text when long.TryParse(text, out var parsed) => parsed,
+			_ => 0,
+		};
 	}
 }
