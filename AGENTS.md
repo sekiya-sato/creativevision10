@@ -30,6 +30,7 @@
 - **WPF Work**: Load `wpf-project-guide`. Inspect `App.xaml` & `ResourceDictionary` first for UI issues.
 - **Tools**: Use `check-xaml`, `update-design-mente`, `change-sublist-to-observablecollection` appropriately.
 - Avoid excessive dependency injection.
+- Don’t add test programs unless explicitly asked.
 
 ## Post-Task Requirements (Log & Commit)
 - **Log**: Append to `Doc/aicording_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
