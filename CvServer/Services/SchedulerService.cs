@@ -1,6 +1,7 @@
 using CodeShare;
 using CvBase;
 using CvDomainLogic;
+using Microsoft.Data.Sqlite;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
@@ -16,6 +17,9 @@ public class SchedulerService : CodeShare.IScheduler {
 	private const int InvalidTaskId = 3;
 	private const int TaskNotFound = 4;
 	private const int InternalError = 9;
+	private const string SqliteWalCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
+	public const string DailyWalCheckpointCronExpression = "0 2 * * *";
+	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint";
 
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;
@@ -26,6 +30,7 @@ public class SchedulerService : CodeShare.IScheduler {
 		_scheduler = scheduler;
 		_db = db;
 	}
+
 	/// <summary>
 	/// 追加されたタスクを追加する
 	/// </summary>
@@ -79,6 +84,7 @@ public class SchedulerService : CodeShare.IScheduler {
 			});
 		}
 	}
+
 	/// <summary>
 	/// 追加されたタスクを削除する
 	/// [Remove the added task]
@@ -111,6 +117,7 @@ public class SchedulerService : CodeShare.IScheduler {
 			TaskId = guid.ToString(),
 		});
 	}
+
 	/// <summary>
 	/// すべてのタスクを削除する
 	/// [Remove all tasks]
@@ -121,6 +128,34 @@ public class SchedulerService : CodeShare.IScheduler {
 		_scheduler.RemoveAllTasks();
 		_logger.LogInformation("スケジュール全削除を実行しました。");
 		return Task.FromResult(new SchedulerResult { Result = Success, Detail = "正常終了" });
+	}
+
+	public SchedulerResult RegisterDailySqliteWalCheckpointTask() {
+		try {
+			var schedule = CrontabSchedule.Parse(DailyWalCheckpointCronExpression);
+			var guid = _scheduler.AddTask(
+				crontabSchedule: schedule,
+				action: ct => ExecuteSqliteWalCheckpointTaskAsync(DailyWalCheckpointTaskName, ct).GetAwaiter().GetResult());
+
+			_logger.LogInformation(
+				"SQLite WAL checkpoint の定期実行を登録しました。 TaskId={TaskId}, TaskName={TaskName}, Cron={Cron}",
+				guid,
+				DailyWalCheckpointTaskName,
+				DailyWalCheckpointCronExpression);
+
+			return new SchedulerResult {
+				Result = Success,
+				Detail = "正常終了",
+				TaskId = guid.ToString(),
+			};
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "SQLite WAL checkpoint の定期実行登録に失敗しました。");
+			return new SchedulerResult {
+				Result = InternalError,
+				Detail = "SQLite WAL checkpoint の定期実行登録に失敗しました。",
+			};
+		}
 	}
 
 	private async Task ExecuteTaskAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
@@ -172,5 +207,53 @@ public class SchedulerService : CodeShare.IScheduler {
 				_logger.LogWarning("未対応の TaskType です: {TaskType}", request.TaskType);
 				break;
 		}
+	}
+
+	private Task ExecuteSqliteWalCheckpointTaskAsync(string taskName, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+
+		try {
+			var checkpointResult = ExecuteSqliteWalCheckpoint(_db);
+			_logger.LogInformation(
+				"WALチェックポイント完了: TaskName={TaskName}, Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
+				taskName,
+				GetCheckpointValue(checkpointResult, "busy"),
+				GetCheckpointValue(checkpointResult, "log"),
+				GetCheckpointValue(checkpointResult, "checkpointed"));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "WALチェックポイント実行中にエラーが発生しました: TaskName={TaskName}", taskName);
+			throw;
+		}
+
+		return Task.CompletedTask;
+	}
+
+	public static Dictionary<string, object> ExecuteSqliteWalCheckpoint(ExDatabase db) {
+		var connectionString = db.Connection.ConnectionString;
+		if (string.IsNullOrWhiteSpace(connectionString)) {
+			throw new InvalidOperationException("SQLite 接続文字列を取得できません。");
+		}
+
+		using var connection = new SqliteConnection(connectionString);
+		connection.Open();
+		using var command = connection.CreateCommand();
+		command.CommandText = SqliteWalCheckpointSql;
+		using var reader = command.ExecuteReader();
+
+		if (!reader.Read()) {
+			return [];
+		}
+
+		var result = new Dictionary<string, object>(reader.FieldCount, StringComparer.OrdinalIgnoreCase);
+		for (var i = 0; i < reader.FieldCount; i++) {
+			result[reader.GetName(i)] = reader.GetValue(i);
+		}
+
+		return result;
+	}
+
+	private static object? GetCheckpointValue(Dictionary<string, object> checkpointResult, string key) {
+		return checkpointResult.TryGetValue(key, out var value) ? value : null;
 	}
 }

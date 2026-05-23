@@ -16,6 +16,28 @@
 
 ---
 
+## [2026-05-23] 18:12 SQLite WAL checkpointの定期実行追加
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvServer SchedulerService を使って、毎日 2:00 に、sqlite の `PRAGMA wal_checkpoint(TRUNCATE);` を実行するようにする。修正、commitまで
+### 実施内容
+- CvServer/Services/SchedulerService.cs: 毎日 02:00 実行用の定数と起動時登録メソッドを追加し、SQLite WAL checkpoint を専用 `SqliteConnection` で実行して結果をログ出力する処理を実装
+- CvServer/Program.cs: `ApplicationStarted` で `SchedulerService.RegisterDailySqliteWalCheckpointTask()` を呼び、サーバ起動時に定期ジョブを自動登録するよう変更
+- Tests/TestServer/TestServer.cs: 02:00 cron でジョブ登録されること、および `PRAGMA wal_checkpoint(TRUNCATE);` 実行結果が取得できることを確認するテストを追加
+- Tests/TestServer/TestServer.csproj: .NET 10 の MSTest Runner を直接実行できるよう `OutputType` と `TestingPlatformDotnetTestSupport` を追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- WAL checkpoint は共有中の `ExDatabase` 接続へ直接流すより、同じ接続文字列から開いた短命の `SqliteConnection` で実行するほうが、既存の NPoco トランザクションや常駐接続状態に影響しにくく、定期メンテナンス処理として安全なため
+- スケジューラ登録は gRPC コントラクト拡張ではなく `SchedulerService` 内の起動時登録メソッドに閉じることで、`CodeShare` など下位レイヤーを変更せず、サーバ側だけの最小差分で毎日 02:00 のジョブを追加できるため
+### 確認
+- `dotnet run --project "Tests/TestServer/TestServer.csproj"` で TestServer のテスト 5 件成功を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-19] 13:38 DatePickerTodayButtonBehavior の MaterialDesign 継承化
 ### Agent
 - GPT-5.4 : OpenAI
