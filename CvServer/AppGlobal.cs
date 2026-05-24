@@ -37,51 +37,9 @@ public class AppGlobal {
 	public void Init(ExDatabase db, string appName = "", string serverVersion = "0.0.0") {
 		VerInfo.Product = appName;
 		VerInfo.Version = serverVersion;
-		// ToDo: テーブルの存在チェックと作成は、テーブルごとに行うのではなく、まとめて行うようにすること
-		// ToDo: テーブルが追加された場合、事前作成が必要なものはここに追加すること
 		var ret = false;
-		// システムテーブル
-		ret = db.CreateTable<SysUpdateDb>();
-		ret = db.CreateTable<SysSequence>();
-		// システムテーブル
-		ret = db.CreateTable<SysLogin>();
-		ret = db.CreateTable<SysHistJwt>();
-		// マスタテーブル1
-		ret = db.CreateTable<MasterSysman>();
-		ret = db.CreateTable<MasterMeisho>();
-		// マスタテーブル2
-		ret = db.CreateTable<MasterShain>();
-		ret = db.CreateTable<MasterEndCustomer>();
-		ret = db.CreateTable<MasterShohin>();
-		// マスタテーブル3
-		ret = db.CreateTable<MasterTokui>();
-		ret = db.CreateTable<MasterShiire>();
-		ret = db.CreateTable<MasterConfig>();
-		// トランザクションテーブル
-		ret = db.CreateTable<Tran00Uriage>();
-		ret = db.CreateTable<Tran01Tenuri>();
-		ret = db.CreateTable<Tran03Shiire>();
-		ret = db.CreateTable<Tran05Ido>();
-		ret = db.CreateTable<Tran06Nyukin>();
-		ret = db.CreateTable<Tran07Shiharai>();
-		ret = db.CreateTable<Tran60Tana>();
-		ret = db.CreateTable<Tran10IdoOut>();
-		ret = db.CreateTable<Tran11IdoIn>();
-		ret = db.CreateTable<Tran12Jyuchu>();
-		ret = db.CreateTable<Tran13Hachu>();
-		ret = db.CreateTable<TranHhtData>();
-		ret = db.CreateTable<TranVulcanHht>();
-		// DBの整合性を管理
-		UpdateDb.WriteVersionInfoAsync(db).Wait();
-		// DerivedClassの作成
-		ret = db.CreateDerivedTable<DerivedShohinColSiz>();
-		// 集計テーブル
-		ret = db.CreateTable<SummaryStock>();
-		ret = db.CreateTable<SummaryRealStock>();
-		// 他、追加処理
-		//var summaryDb = new CvDomainLogic.SummaryDb(db);
-		//summaryDb.CalcSummaryRealStock(DateTime.Now.ToString("yyyyMM"));
-
+		var defTable = new DefineDataTable();
+		ret = defTable.Initialize(db, false);
 	}
 
 }

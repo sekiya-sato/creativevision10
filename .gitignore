@@ -50,6 +50,7 @@ CvServer/img
 wrk/
 .sisyphus/
 .playwright-mcp/
+.omo/
 tmp-*
 graphify-out/
 *-shm
