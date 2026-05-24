@@ -1,6 +1,14 @@
+using Microsoft.Extensions.Logging;
+
 namespace CvBase;
 
 public class DefineDataTable {
+
+
+	/// <summary>
+	/// ロガーインスタンス [Logger instance]
+	/// </summary>
+	private static readonly ILogger<DefineDataTable> _logger = new NLogExtender<DefineDataTable>();
 
 	public bool Initialize(ExDatabase db, bool isForce) {
 		var ret = false;
@@ -49,6 +57,7 @@ public class DefineDataTable {
 		};
 		foreach (var tableType in tableTypes) {
 			if (!db.CreateTable(tableType, isForce)) {
+				_logger.LogError("テーブルの作成に失敗しました。テーブル名: {TableName}", tableType.Name);
 				return false;
 			}
 		}
