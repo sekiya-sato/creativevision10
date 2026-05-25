@@ -16,7 +16,7 @@ public class SchedulerService : CodeShare.IScheduler {
 	private const int InvalidTaskId = 3;
 	private const int TaskNotFound = 4;
 	private const int InternalError = 9;
-	private const string SqliteWalCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
+	private const string SqliteWalCheckpointSql = "PRAGMA optimize; PRAGMA wal_checkpoint(TRUNCATE);"; // ANALYZE 処理追加 2026/05/25
 	public const string DailyWalCheckpointCronExpression = "0 2 * * *";
 	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint";
 
