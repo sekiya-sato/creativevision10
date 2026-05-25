@@ -774,3 +774,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は起動中の `CreativeVision10.exe` が出力 EXE をロックしてコピー工程で失敗したため、`/p:UseAppHost=false` 付きで再実行しビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-05-25] 16:13 CvBaseデータベース定義ドキュメント作成
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvBase プロジェクトで定義されている `[PrimaryKey]` や `[Comment]` 属性付きテーブル群を整理し、データベースのドキュメントを作成する
+### 実施内容
+- Doc/spec/spec.database.cvbase.md: CvBase の属性付きテーブル 29 件を、システム・マスター・トランザクション・集計・派生に分類し、共通基底列、作成状態、主キー、KeyDml、主要固有列、定義元を整理
+- .sisyphus/2026-05-25_cvbase_database_doc.md: 調査方針と抽出結果の作業メモを作成
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `DefineDataTable.Initialize()` の `CreateTable` 対象と `CreateDerivedTable<T>()` 対象を分けることで、属性上のテーブル候補と実際の初期作成対象の差分を確認しやすくするため
+### 確認
+- `Doc/spec/spec.database.cvbase.md` 内の対象テーブル行が 29 件であることを確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvBase/CvBase.csproj"` でビルド成功を確認（warning 0 / error 0）
+
+---
