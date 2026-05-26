@@ -1,6 +1,6 @@
 # AI Coding Log
 
-このファイルは、Creative Vision 10プロジェクトにおけるAI支援開発の作業履歴を記録します。
+このファイルは、Cvnet10プロジェクトにおけるAI支援開発の作業履歴を記録します。
 
 ## 使用するAIツール
 - **GitHub Copilot**: インライン補完、クイックフィックス、小規模編集（VS2026統合）
@@ -32,781 +32,765 @@
 
 ---
 
-## [2026-04-16] 18:46 MainTheme表示名追加と左メニュー背景の対象外化
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：メインテーマ切替ボタンを `メインテーマ切替 (Green)` のように現在値付き表示へ変更し、MainTheme 切替対象からメニューリスト背景を除外する
-### 実施内容
-- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `MainThemeButtonLabel` を追加し、起動時の `CurrentTheme` と `MainThemeChanged` の両方からボタン表示名を更新するようにした。
-- `CvWpfclient/Views/MainMenuView.xaml`: メインテーマ切替ボタンの `Content` を `MainThemeButtonLabel` バインドへ変更し、左メニュー背景を `MainMenuMenuBackgroundBrush` から `panelColor` へ戻した。
-- `CvWpfclient/Resources/UIMainTheme.Green.xaml`: 左メニュー背景用 `MainMenuMenuBackgroundBrush` 上書きを削除した。
-- `CvWpfclient/Resources/UIMainTheme.Orange.xaml`: 左メニュー背景用 `MainMenuMenuBackgroundBrush` 上書きを削除した。
-- `CvWpfclient/Resources/UIMainTheme.Red.xaml`: 左メニュー背景用 `MainMenuMenuBackgroundBrush` 上書きを削除した。
-- `CvWpfclient/Resources/UIMainTheme.Purple.xaml`: 左メニュー背景用 `MainMenuMenuBackgroundBrush` 上書きを削除した。
-### 技術決定 Why
-- `MainThemeService` は `INotifyPropertyChanged` ではないため、ボタン表示は ViewModel 側プロパティで持ち、サービスイベント購読で更新する形にした。
-- 起動時は `App.ApplySavedThemes()` が先に MainTheme を適用するため、イベント購読だけでなく `CurrentTheme` からの初期同期も入れて初回表示のズレを防いだ。
-- 左メニュー背景は MainTheme とは切り離し、既存の `panelColor` を使うことで Light/Dark には追従しつつ MainTheme では変化しない構成に戻した。
-### 確認
-- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` → ビルド成功（0警告、0エラー）
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
-- Oracle レビューで、ラベルは ViewModel プロパティ + `MainThemeChanged` 購読 + 初期値同期が妥当であり、`UIMainTheme.*` から左メニュー背景キーを外す方針に問題がないことを確認した
-
----
-
-## [2026-04-16] 18:32 MainTheme配色をOrange/Red/Purpleへ拡張
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：MainTheme に Orange / Red / Purple を追加し、Toggle で順番に切り替わるようにする。あわせて `MainMenuViewModel.cs` の using は削除しない
-### 実施内容
-- `CvWpfclient/Services/MainThemeService.cs`: `MainTheme` 列挙へ `Orange` / `Red` / `Purple` を追加し、`ToggleMainTheme()` が `Default → Green → Orange → Red → Purple → Default` の順で巡回するよう変更した。
-- `CvWpfclient/Resources/UIMainTheme.Orange.xaml`: オレンジ基調のグラデーション背景・メニュー背景・カード背景/枠線を上書きする辞書を追加した。
-- `CvWpfclient/Resources/UIMainTheme.Red.xaml`: 赤基調のグラデーション背景・メニュー背景・カード背景/枠線を上書きする辞書を追加した。
-- `CvWpfclient/Resources/UIMainTheme.Purple.xaml`: 紫基調のグラデーション背景・メニュー背景・カード背景/枠線を上書きする辞書を追加した。
-- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `using` を含め既存構成はそのままとし、追加修正は行っていないことを確認した。
-### 技術決定 Why
-- 既存の保存形式は enum 名文字列なので、`Default` / `Green` を残したまま新色を追加する形にして、既存設定との互換性を壊さないようにした。
-- 切替ボタンの操作感を単純化するため、2状態トグルではなく固定順巡回に変更し、ユーザーが連打で全配色を確認できるようにした。
-- MainTheme 辞書は引き続き MainMenu 背景系だけを上書きし、Light/Dark と独立したアクセント配色として扱う方針を維持した。
-### 確認
-- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` → ビルド成功（0警告、0エラー）
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
-- Oracle レビューで enum 拡張・保存互換・辞書優先順位にブロッカーがないことを確認し、MainTheme が Light/Dark より優先して見た目を上書きする現行設計で問題ないと判断した
-
----
-
-## [2026-04-16] 18:09 MainMenuViewへMainTheme切替を追加
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：MainMenuView のグラデーション背景・メニュー背景・カード型背景だけを切り替える MainTheme を追加し、"ログイン(F12)" の隣に "メインテーマ切替" ボタンを追加する
-### 実施内容
-- `CvWpfclient/Services/MainThemeService.cs`: MainTheme 切替専用サービスを新設し、`UIMainTheme.Default.xaml` / `UIMainTheme.Green.xaml` の差し替えと現在値管理を追加した。
-- `CvWpfclient/App.xaml.cs`: 起動時に保存済み MainTheme を既存 Theme 適用後に読み込む処理と、MainTheme 保存処理を追加した。
-- `CvWpfclient/Models/ClientSettingsDocument.cs`: `Application.MainTheme` を追加し、MainTheme の永続化先を追加した。
-- `CvWpfclient/Services/SystemSettingsStore.cs`: MainTheme を設定オーバーライドへ流せるようにした。
-- `CvWpfclient/Resources/UIMainTheme.Default.xaml`: 既定 MainTheme 用の空オーバーレイ辞書を追加した。
-- `CvWpfclient/Resources/UIMainTheme.Green.xaml`: 緑基調 MainTheme 用に、外枠グラデーション・メイン背景グラデーション・メニュー背景・カード背景/枠線の上書き辞書を追加した。
-- `CvWpfclient/Resources/UIColors.xaml`: MainMenu 左メニュー専用の `MainMenuMenuBackgroundBrush` を追加した。
-- `CvWpfclient/Resources/UIColors.Dark.xaml`: ダークテーマ側にも `MainMenuMenuBackgroundBrush` を追加した。
-- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `ToggleMainThemeCommand` を追加し、切替後の設定保存を実装した。
-- `CvWpfclient/Views/MainMenuView.xaml`: 左メニュー背景を MainTheme 対応キーへ変更し、カード型背景のローカル上書きを外し、`ログイン (F12)` の隣へ `メインテーマ切替` ボタンを追加した。
-### 技術決定 Why
-- 既存の Light/Dark テーマと MainMenu の配色切替を混ぜないため、`ThemeService` とは別に `MainThemeService` を追加し、MainMenu 背景系だけを別辞書で上書きする構成にした。
-- Weather / Chart は対象外という要件に合わせ、MainTheme の上書き対象を MainMenu の背景3系統に限定し、既存の天気/チャート色キーには手を入れないようにした。
-- MainMenu のカード背景は `Style` 側の `MainMenuDashboardCardBackgroundBrush` を効かせる必要があるため、View 側の `Background="{DynamicResource panelColor}"` 上書きを除去して辞書差し替えが反映される形に統一した。
-### 確認
-- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` → ビルド成功（0警告、0エラー）
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（`CvBase.dll` の一時ロックによる再試行警告 2件、エラー 0件）
-- Oracle レビューで MainTheme 切替時の外枠グラデーション即時反映漏れを指摘されたため、`MainMenuView.xaml` の `OuterWindowBackground` / `CvnetMainBackgroundBrush` を `DynamicResource` に修正し、再ビルド成功を確認
-
----
-
-## [2026-04-16] 16:57 MainMenuView配色整理とテーマ切替反映改善
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：MainMenuView で使っている色を整理し、切替えて使えるようにする
-### 実施内容
-- `CvWpfclient/Resources/UIColors.xaml`: MainMenu 用の背景・カード・ウィンドウボタン・影・天気アイコン・チャート関連の色キーを追加し、ライトテーマ側の色定義を集約した。
-- `CvWpfclient/Resources/UIColors.Dark.xaml`: 追加した MainMenu 用色キーのダークテーマ値を定義した。
-- `CvWpfclient/Resources/UIMainWindow.xaml`: MainMenu 系スタイル内のハードコード色を DynamicResource 参照へ置き換え、テーマ切替時に追従するよう変更した。
-- `CvWpfclient/Views/MainMenuView.xaml`: ヘッダー影、テーマ切替ボタン、天気アイコン、チャート背景、温度ラベルを共通リソース参照へ置き換えた。
-- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 天気チャートの線色・塗り色・軸文字色をテーマリソースから再生成する処理を追加し、テーマ切替時にチャート見た目も更新されるようにした。テーマ切替後に設定保存も行うよう変更した。
-- `CvWpfclient/Services/ThemeService.cs`: テーマ変更通知イベントを追加した。
-- `CvWpfclient/Models/ClientSettingsDocument.cs`: クライアント設定へテーマ保存項目を追加した。
-- `CvWpfclient/App.xaml.cs`: 起動時に保存済みテーマを適用し、テーマ設定を clientsettings.json へ保存する処理を追加した。
-### 技術決定 Why
-- MainMenuView 自体には既にテーマ切替コマンドと ThemeService が存在していたため、新しい切替機構は増やさず、色の分散とハードコードを UIColors / UIColors.Dark に寄せる最小差分を優先した。
-- LiveCharts の描画色は XAML DynamicResource だけでは追従しないため、テーマ変更通知を起点に Series / Axis を再生成する方式で Light/Dark の反映漏れを防いだ。
-- ユーザーが再起動後も同じ見た目を使えるよう、既存の ClientSettingsStore に Theme を保存する形で永続化した。
-### 確認
-- MainMenu 関連 XAML を `check-xaml` 相当で確認し、構文エラー・未定義リソースなしを確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-11] 21:52 MessageBoxExのメッセージをコピー可能に修正
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`CvWpfclient` の `MessageBoxEx` で、本文の `RichTextBox` と追記メッセージ表示部をユーザーが選択してコピーできるようにする
-### 実施内容
-- `CvWpfclient/Helpers/MessageBoxView.xaml`: 本文 `RichTextBox` に `IsReadOnlyCaretVisible` を追加し、追記メッセージ表示を `TextBlock` から読み取り専用 `TextBox` へ変更して選択コピー可能にした
-- `CvWpfclient/Helpers/MessageBoxView.xaml.cs`: ウィンドウ全体の `DragMove()` が `RichTextBox` / `TextBox` / ボタン操作を妨げないように、クリック元の親要素を辿ってドラッグ移動を抑制する条件を追加した
-### 技術決定 Why
-- `RichTextBox` 自体は読み取り専用でも選択可能だが、ウィンドウ全体のドラッグ移動処理がマウスドラッグ選択を潰していたため、移動処理側を最小差分で絞り込んだ
-- `TextBlock` は標準では選択コピーできないため、見た目を維持しやすい読み取り専用 `TextBox` へ置き換えてコピー可能化した
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（`CodeShare.dll` の一時ロックによる再試行警告 1件、エラー 0件）
-
----
-
-## [2026-04-11] 20:31 EffectiveSettings導入とログイン後ホスト再構築
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`AppGlobal.InfoApiKey` を優先する設定解決クラスを追加し、`SetLoginJwt(reply.JwtMessage, reply.InfoPayload)` 実行後に `RestartHostAsync()` でDIサービスへ再反映する
-### 実施内容
-- CvWpfclient/Models/EffectiveSettings.cs: `AppGlobal.InfoApiKey > IConfiguration > 既定値` の優先順位で設定を解決するクラスを追加
-- CvWpfclient/Models/JapanPostBizOptions.cs: JapanPostBiz設定クラスをModels配下へ分離
-- CvWpfclient/App.xaml.cs: `EffectiveSettings` をDI登録し、JapanPostBiz用 `HttpClient` 構成でも同クラスを利用するよう変更
-- CvWpfclient/Services/WeatherService.cs: OpenWeather APIキーと地域設定の参照先を `EffectiveSettings` に統一
-- CvWpfclient/Services/JapanPostBizTokenProvider.cs: ClientId/SecretKey/TokenPath/RefreshMargin の参照を `EffectiveSettings` 経由へ変更
-- CvWpfclient/Services/PostalAddressService.cs: JapanPostBiz設定クラスの定義を分離し、検索URL生成時の設定参照を `EffectiveSettings` 経由へ変更
-- CvWpfclient/ViewModels/00System/LoginViewModel.cs: Login/Refresh 成功時に `SetLoginJwt(...)` の直後で `App.RestartHostAsync()` を await するよう変更
-- CvBase/Share/InfoApiKey.cs: ビルドを阻害していたプロパティ末尾の余分なセミコロンを除去
-### 技術決定 Why
-- APIキーはログイン応答の `InfoPayload` が最新になり得るため、クライアント側設定より優先する形に統一した
-- JapanPostBiz系サービスはコンストラクタ時に設定を固定すると更新を拾えないため、ログイン直後にホストを再構築して新しいDIサービスへ切り替える形を採用した
-### 確認
-- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj` でビルド成功
-
----
-
-## [2026-04-11] 18:30 マスタメンテ住所入力画面へ〒API検索を横展開
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：顧客マスタの検索ボタン表示を `〒API検索` に変更し、同様に住所1,2,3を持つマスタメンテ系画面すべてへ `〒API検索` ボタンを追加する。さらに、この手順を再利用できるskillとしてまとめる
-### 実施内容
-- `CvWpfclient/Helpers/PostalAddressSearchHelper.cs`: 郵便番号検索サービス呼び出し、1件ヒット時の適用、メッセージ表示を共通化するHelperを追加した。
-- `CvWpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs`: 既存の郵便番号検索処理を共通Helper呼び出しへ置き換えた。
-- `CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs`: `SearchPostalCodeCommand` を追加し、検索結果を `CurrentEdit.PostalCode` と `Address1-3` へ反映するようにした。
-- `CvWpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs`: `SearchPostalCodeCommand` を追加し、検索結果を `CurrentEdit.PostalCode` と `Address1-3` へ反映するようにした。
-- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs`: `Current.*` 直バインド画面向けに `SearchPostalCodeCommand` を追加し、検索結果を `Current.PostalCode` と `Address1-3` へ反映するようにした。
-- `CvWpfclient/Views/01Master/MasterEndCustomerMenteView.xaml`: 検索ボタン文言を `〒API検索` に変更した。
-- `CvWpfclient/Views/01Master/MasterTokuiMenteView.xaml`: 郵便番号欄を短縮し、`〒API検索` ボタンを追加した。
-- `CvWpfclient/Views/01Master/MasterShiireMenteView.xaml`: 郵便番号欄を短縮し、`〒API検索` ボタンを追加した。
-- `CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: `〒 住所` 行の郵便番号欄の横に `〒API検索` ボタンを追加した。
-- `.agents/skills/add-postal-api-search-master-mente/SKILL.md`: マスタメンテ画面へ郵便番号API検索を追加する手順をskillとして追加した。
-### 技術決定 Why
-- 住所反映ロジックを各ViewModelへ都度複製すると保守点が増えるため、共通の `PostalAddressSearchHelper` に寄せて横展開しやすい形にした。
-- `SysKanri` は `Current.*` 直バインドで他のマスタと構造が異なるため、共通Helperは再利用しつつ、反映先だけ `Current` に切り替える最小差分にした。
-- skillには対象画面、認証前提、URL生成前提、View/ViewModelの変更パターンをまとめ、次回以降の横展開を定型化した。
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-11] 18:14 郵便番号検索のAuthorizationスキームをBearer固定に修正
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：日本郵便APIのAuthorization仕様が `Bearer {トークン}` 固定である前提に合わせ、トークン応答の `token_type` に依存しないよう修正する
-### 実施内容
-- `CvWpfclient/Services/JapanPostBizTokenProvider.cs`: キャッシュ済みトークン返却時と新規取得時の両方で、Authorizationヘッダを常に `Bearer` スキームで返すよう変更した。内部の `token_type` キャッシュは削除した。
-### 技術決定 Why
-- token APIレスポンスの `token_type` が `jwt` でも、検索API側のAuthorization仕様は `HTTP Authorization Scheme: bearer` で固定のため、応答値をそのままHTTPスキームへ使うと不正ヘッダになる。送信スキームを `Bearer` 固定にするのが正しい。
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-11] 18:05 郵便番号検索URL組み立ての見直し
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：日本郵便APIの検索時に400が返るため、`BuildSearchUrl` 周辺を再検討し、`/api/v2/searchcode/{search_code}` の7桁郵便番号検索向けにURL生成を見直す
-### 実施内容
-- `CvWpfclient/Services/PostalAddressService.cs`: `BuildSearchUrl` を見直し、通常の7桁郵便番号検索では `page` と `limit` の必須クエリのみを付与するよう変更した。`ec_uid` は設定時のみ付与するようにした。`DefaultLimit` はAPI既定に合わせて `1000` に変更した。
-- `CvWpfclient/appsettings.json`: `JapanPostBiz:EcUid` を追加し、`DefaultLimit` を `1000` に更新した。
-### 技術決定 Why
-- API仕様上、`page` と `limit` は必須だが、`choikitype` と `searchtype` は任意であるため、まず通常運用の7桁郵便番号検索で必要な最小パラメータに絞って400要因を減らした。
-- `ec_uid` はプロバイダー固有の追加条件になりうるため、コード固定ではなく設定で付与できる形にした。
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-11] 17:51 顧客マスターメンテに郵便番号検索を追加
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvWpfclient から日本郵便APIを呼び、顧客マスターメンテ画面の `〒` 欄の横幅を半分程度にして検索ボタンを追加し、郵便番号から住所1,2,3を自動設定する
-### 実施内容
-- `CvWpfclient/Services/PostalAddressService.cs`: 郵便番号7桁専用の `IPostalAddressService`、検索結果DTO、JapanPostBiz設定、検索サービス実装を追加した。検索前にトークンProviderから認証ヘッダを取得し、検索結果を `Address1/2/3` へマッピングできる形に正規化した。
-- `CvWpfclient/Services/JapanPostBizTokenProvider.cs`: `expires_in` を見て有効期限を管理するトークンProviderを追加した。期限切れ前に再取得し、認証失敗時は無効化して再取得できるようにした。
-- `CvWpfclient/App.xaml.cs`: 日本郵便API向け `HttpClient` を設定し、`IPostalAddressService` と `IJapanPostBizTokenProvider` をDI登録した。
-- `CvWpfclient/appsettings.json`: `JapanPostBiz` セクションを追加し、BaseUrl、TokenPath、SearchCodePath、UserAgent などの設定キーを追加した。ClientId と SecretKey は空欄のままにした。
-- `CvWpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs`: `SearchPostalCodeCommand` を追加し、検索結果1件時に `CurrentEdit.PostalCode`、`Address1`、`Address2`、`Address3` を更新するようにした。
-- `CvWpfclient/Views/01Master/MasterEndCustomerMenteView.xaml`: `〒` 行を内側Grid化し、郵便番号欄を短くしたうえで検索ボタンを追加した。
-- `.sisyphus/20260411_postal_address_customer_master.md`: 作業メモを追加した。
-### 技術決定 Why
-- 日本郵便APIのトークンは `expires_in` で失効管理できるため、ViewModel側ではなくサービス内部でトークン再取得を閉じ込めて画面側の責務を増やさない設計にした。
-- 住所自動入力の通常利用は7桁郵便番号固定のため、初版は前方一致検索や候補選択UIを持たせず、1件ヒット時のみ反映する最小構成にした。
-- API資格情報は秘密情報に当たるため、設定キーのみコミットし、値は空欄で管理する形にした。
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → 実行中 `CreativeVision10` によるDLLロックで失敗
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-10] 23:54 MainMenuView に Sunrise/Sunset 表示を追加
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`MainMenuView` の「天気アイコン＋気温」領域の下側に、ViewModel 側で用意済みの `Sunrise` と `Sunset` を1行横並びで表示する。
-### 実施内容
-- `CvWpfclient/Views/MainMenuView.xaml`: 天気情報カード内の `WeatherDescription` の下に、`Sunrise` と `Sunset` を横並びで表示する `StackPanel` を追加した。既存デザインに合わせて補足情報として小さめ文字・半透明で表示するようにした。
-### 技術決定 Why
-- ViewModel 側のプロパティと値設定は既に実装済みだったため、責務を増やさず View のバインディング追加だけで要件を満たす最小差分にした。
-- `Sunrise` と `Sunset` は同一粒度の情報なので、1行横並びにしてカード高さの増加を抑えつつ視認性を確保した。
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告0、エラー0）
-
----
-
-## [2026-04-09] 16:59 MasterShohinMenteView に商品画像表示を追加
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`MasterShohinMenteView.xaml` でサーバURL + `/img/[MasterShohinのCode].jpg` の画像を表示し、価格欄を縮小して右側に画像エリアを追加する。current変更中の画像読込はキャンセルし、画像が無い場合は `画像なし([Code].img)` を表示する。
-### 実施内容
-- `CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`: `ShohinImage`、`IsShohinImageLoading`、`ShohinImageStatusText` を追加し、`CurrentEdit` 切替時にサーバ画像を非同期読込する処理を実装。新しい選択へ切り替わった場合は `CancellationTokenSource` で前回の読込をキャンセルするようにした。
-- `CvWpfclient/Views/01Master/MasterShohinMenteView.xaml`: 基本情報タブを3列構成に変更し、`元上代`、`上代`、`原価`、`仕入単価` の `TextBox` 幅を縮小。右側に画像表示カードを追加し、読込中オーバーレイと `画像なし([Code].img)` 表示をバインドした。
-### 技術決定 Why
-- 画像取得はViewModel側の非同期処理に寄せることで、選択変更時のキャンセル制御と表示状態の一元管理を行いやすくした。
-- 画像は `BitmapImage` を `OnLoad` で生成して `Freeze()` し、ストリーム寿命やUIスレッド境界の問題を避けた。
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告0、エラー0）
-
----
-## [2026-04-07] 10:45 Git履歴からの不要バイナリ削除
-### Agent
-- gemini-3.1-flash : Google : (wsl2への手動コピペ)
-### Editor
-- OpenCode / Terminal
-### 目的
-- ユーザーからの要望：Git履歴に含まれる過去の不要なPDFファイル（test_server.pdf, test.pdf）を完全に削除し、リポジトリを軽量化・クリーンアップする。
-### 実施内容
-- `git filter-branch`（または filter-repo）を使用して、全履歴から対象ファイルを削除。
-- 参照のクリーンアップ、リフレグの期限切れ処理、およびガベージコレクション（`git gc`）を実行。
-- `git push origin master --force` によりリモートリポジトリへ変更を強制反映。
-### 技術決定 Why
-- 不要なバイナリファイルが履歴に残っているとリポジトリサイズが増大し続けるため、過去の全コミットを書き換えて完全に抹消した。
-### 確認
-- リモートへの強制プッシュ成功を確認。
-- ローカルにて `git rev-list --all | xargs git ls-tree -r --name-only | grep .pdf` で対象ファイルが存在しないことを確認。
-
----
-
-
-## [2026-04-06] 17:48 ShopUriageInputView の数値表示改善・区分日本語化・金額自動計算
-### Agent
-- claude-opus-4.6 : GitHub-Copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：ShopUriageInputView（店舗売上入力画面）の一覧画面・詳細画面の数値表示改善、区分の日本語表示化、金額自動計算、商品選択時の単価自動設定を実装する
-### 実施内容
-- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧画面の合計数量・合計金額を3桁区切り右詰めに変更、詳細画面の明細行（数量/単価/金額/上代/下代）を3桁区切り右詰めに変更、上部の合計数量・合計金額を右詰め+3桁区切りに変更、金額列をIsReadOnly=Trueに変更、区分ComboBoxにEnumUri01DisplayConverter適用のItemTemplate追加、Window.ResourcesにDataGridRightTextBlockスタイル追加
-- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: KubunOptionsからOther(99)を除外、OnMeisaiPropertyChangedでSu/Tanka変更時に金額自動計算(数量*単価=金額)を追加、DoSelectShohinでMasterShohinのTankaJodai→単価/上代、TankaGenka→下代を自動設定
-- CvWpfclient/Helpers/Converters/EnumUri01DisplayConverter.cs: 新規作成。EnumUri01→日本語表示名（売上/セール売上/返品/セール返品/その他）変換用IValueConverter
-- CvWpfclient/App.xaml: EnumUri01DisplayConverterをアプリケーションリソースに登録
-### 技術決定 Why
-- 数値フォーマットは既存プロジェクトの標準パターン（StringFormat={}{0:N0}）に統一し、IValueConverterではなくXAMLのStringFormatを使用
-- DataGridの右詰めはElementStyleでTextBlock.TextAlignment=Rightを設定する既存パターンに従った
-- EnumUri01DisplayConverterは既存のEnumShimeDisplayConverterと同じパターン（Dictionary<Enum,string>マッピング）で実装
-- KubunOptionsからOtherを除外する際、Enum定義（CvBase）は変更せずViewModel側で対応することでREAD-ONLYルールを遵守
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告0、エラー0）
-
----
-
-## [2026-04-06] 15:30 CvWpfclient のログ使用方法を統一
-### Agent
-- claude-opus-4.6 : GitHub-Copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvWpfclient プロジェクト内のログの使い方を統一する。CvServer と同じ ILogger<T> + NLog provider パターンに統一
-### 実施内容
-- CvWpfclient/App.xaml.cs: ConfigureLogging 内で `logging.AddNLog(context.Configuration)` に変更、UpdateService の DI 登録を `services.AddSingleton<IUpdateService, UpdateService>()` に変更
-- CvWpfclient/Services/UpdateService.cs: NLog 直接利用 → `ILogger<UpdateService>` (Microsoft.Extensions.Logging) に完全移行。`_logger.Info` → `_logger.LogInformation`、`_logger.Error` → `_logger.LogError`
-- CvWpfclient/AppGlobal.cs: `private static readonly NLog.Logger _logger` を追加、`Debug.WriteLine` → `_logger.Info` に変更、インライン `LogManager.GetCurrentClassLogger()` → static フィールド利用に統一
-- CvWpfclient/ViewModels/00System/SysUpgradeViewModel.cs: `using NLog` → `using Microsoft.Extensions.Logging`、`ILogger` → `ILogger<SysUpgradeViewModel>`、`LogManager.GetCurrentClassLogger()` → `ILoggerFactory` DI 経由取得、`_logger.Error` → `_logger.LogError`
-- CvWpfclient/ViewModels/00System/LoginViewModel.cs: `using System.Diagnostics` 削除、`private static readonly NLog.Logger _logger` 追加、`Debug.WriteLine` → `_logger.Debug` に変更（2箇所）
-- CvWpfclient/ViewModels/MainMenuViewModel.cs: `private static readonly NLog.Logger _logger` 追加、`Console.WriteLine` → `_logger.Warn` に変更
-- CvWpfclient/Helpers/ClientLib.cs: クラスレベルに `private static readonly NLog.Logger _logger` 追加、catch 内のローカル `LogManager.GetCurrentClassLogger()` を static フィールド利用に統一
-- CvWpfclient/Helpers/Communication/GrpcSubPathHandler.cs: コメント化された `Debug.WriteLine` 行を削除
-### 技術決定 Why
-- DI で解決されるクラス（Service, ViewModel）は `Microsoft.Extensions.Logging.ILogger<T>` に統一し、NLog provider 経由で出力することで CvServer と同じパターンにした
-- Static クラスや DI 外のクラス（AppGlobal, ClientLib, MainMenuViewModel, LoginViewModel）は NLog 直接利用のまま `private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger()` に書き方を統一した
-- Debug.WriteLine / Console.WriteLine は本番環境でログが残らないため、全て NLog 経由に置換した
-### 確認
-- `dotnet build CvWpfclient/CvWpfclient.csproj` → ビルド成功（警告0、エラー0）
-
----
-
-## [2026-04-05] 09:45 Scheduler gRPC契約をEnumベースへ整理
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：NuGetパッケージ `NCrontab.Scheduler` の使い方調査に続き、`TaskType` を Enum で扱うパターン2の契約整理を実装し、チェックリスト作成からコミットまで実行する
-### 実施内容
-- CodeShare/IScheduler.cs: `SchedulerTaskType` enum、`AddSchedulerTaskRequest`、`RemoveSchedulerTaskRequest` を追加し、`ICvnetScheduler` の要求DTOを追加用・削除用に分離。`SchedulerResult` に `TaskId` を追加
-- Cvnet10Server/Services/CvnetSchedulerService.cs: 新DTOへ追従し、cron式検証、`TaskType` の入力検証、結果コード返却、`TaskId` ベース削除、`LogOnly` 実行分岐、運用ログ出力を追加
-- Cvnet10Server/Program.cs: `NCrontab.Scheduler` セクションを `appsettings` から読み込む構成へ変更
-- Cvnet10Server/appsettings.json: `NCrontab.Scheduler:DateTimeKind=Local` を追加
-- Cvnet10Server/appsettings.Development.json: `NCrontab.Scheduler:DateTimeKind=Local` を追加
-- Cvnet10Server/appsettings.Production.json: `NCrontab.Scheduler:DateTimeKind=Local` を追加
-- .sisyphus/2026-04-05_scheduler-contract-note.md: 今回の契約整理メモを追加
-### 技術決定 Why
-- `Type` を DTO に載せると gRPC 境界で不安定なため、`SchedulerTaskType` enum に置き換えて契約を明確化した
-- 追加要求と削除要求を分離し、`CronExpression` と `TaskId` の責務混在を解消した
-- scheduler の時刻解釈をコード固定値から設定ファイルへ移し、環境差分に追従しやすくした
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet restore creativevision10.slnx && dotnet build Cvnet10Server/Cvnet10Server.csproj"` → ビルド成功（警告0、エラー0）
-
----
-
-## [2026-04-04] 22:32 publish-velopack 実行時に appsettings.json の Version を自動加算
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`Cvnet10Wpfclient/publish-velopack.bat` 実行時に `appsettings.json` の `Application.Version` を読み取り、末尾の数値をカウントアップしてから publish 処理を続行したい
-### 実施内容
-- Cvnet10Wpfclient/publish-velopack.version.ps1: `-Increment` スイッチを追加し、`x.y.z` 形式の `Version` の第3要素を `+1` して `appsettings.json` へ書き戻す処理を実装
-- Cvnet10Wpfclient/publish-velopack.version.ps1: Windows PowerShell 5.x でも UTF-8(BOMなし) の日本語コメントが壊れないように `ReadAllText` / `WriteAllText` を UTF-8 指定で統一
-- Cvnet10Wpfclient/publish-velopack.version.ps1: 置換文字列の `$11` 誤解釈を避けるため、正規表現置換を MatchEvaluator 方式に変更
-- Cvnet10Wpfclient/publish-velopack.bat: `publish-velopack.version.ps1 -Increment` を呼ぶように変更し、更新後の `APP_VERSION` を publish / pack に渡すよう調整
-- Cvnet10Wpfclient/appsettings.json: 検証と `publish-velopack.bat` 本実行により `Application.Version` が `1.0.1` から `1.0.4` へ更新された状態を確認
-### 技術決定 Why
-- 既存の PowerShell スクリプトを拡張することで、バッチ側の変更を最小限に抑えつつ既存のバージョン取得フローを維持した
-- Windows 11 上の `powershell.exe` 実行を前提にすると、UTF-8(BOMなし) の既存 JSON は明示的に UTF-8 指定しないと文字化けするため、I/O を .NET API に統一した
-### 確認
-- `powershell.exe -File publish-velopack.version.ps1 -AppSettingsPath ... -Increment` を 2 回実行し、`1.0.1 -> 1.0.2 -> 1.0.3` と更新されることを確認
-- `cmd.exe /d /c "C:\gitroot\documents\new2022\cv10\Cvnet10Wpfclient\publish-velopack.bat"` → publish / vpk pack / `bash ~/bin/publish.sh` まで成功し、`Version=1.0.4` で完了することを確認
-
----
-
-## [2026-04-04] 18:39 publish-velopack.bat を Windows 11 の cmd.exe で実行可能に修正
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`Cvnet10Wpfclient` 配下の `publish-velopack.bat` が Windows 11 の `cmd.exe` で正常動作するよう修正する
-### 実施内容
-- Cvnet10Wpfclient/publish-velopack.bat: `for /f` 内のインライン PowerShell を廃止し、補助スクリプト呼び出しへ変更
-- Cvnet10Wpfclient/publish-velopack.bat: エラーメッセージと TODO コメントを ASCII ベースへ変更し、`cmd.exe` の文字コード解釈で構文が壊れにくい形へ整理
-- Cvnet10Wpfclient/publish-velopack.version.ps1: `appsettings.json` から `Application.Version` を正規表現で抽出する補助スクリプトを追加
-### 技術決定 Why
-- `for /f (...) do` の中で PowerShell の丸括弧を含むインライン式を使うと `cmd.exe` 側で `FOR` 構文が壊れるため、`-File` 呼び出しへ分離して解釈系を分けた
-- `appsettings.json` に `/* ... */` コメントが含まれており `ConvertFrom-Json` が安定しないため、コメント付きでも取得できる文字列抽出に切り替えた
-- 実バッチだけ失敗して最小テストが通る状態だったため、非 ASCII 文字列も除去して `cmd.exe` 依存の文字コード要因を避けた
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\documents\new2022\cv10\Cvnet10Wpfclient\publish-velopack.bat"` → `dotnet publish` と `vpk pack` が完走し、`[INFO] Velopack finished task for creating package. Version=1.0.0` を確認
-
----
-
-## [2026-04-04] 22:55 Wpfclient の Velopack 自動更新確認と SysUpgrade 改修
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`Cvnet10Wpfclient` で Velopack の自動更新確認が動いていない原因を解消し、起動時の自動更新確認と `SysUpgradeViewModel` の手動更新処理に例外処理を入れて、最後に git commit まで完了する
-### 実施内容
-- Cvnet10Wpfclient/App.xaml.cs: `appsettings.Production.json` を既定読込に追加し、`IUpdateService` を DI 登録、起動後に自動更新確認して更新があれば確認ダイアログから適用できる処理を追加
-- Cvnet10Wpfclient/Services/UpdateService.cs: 更新確認結果と更新適用結果を返す record を追加し、`FeedUrl` 未設定時や通信失敗時を含むメッセージ生成と `try/catch` によるエラーハンドリングを整理
-- Cvnet10Wpfclient/ViewModels/00System/SysUpgradeViewModel.cs: `IUpdateService` を DI から取得するよう変更し、手動更新確認/適用の `try/catch`、状態文言更新、`ExecuteUpdateCommand` の `CanExecute` 再評価、表示情報更新を追加
-- Cvnet10Wpfclient/ViewModels/SampleViewModel.cs: Velopack 診断表示の `PackId` 表記を実際の配布スクリプトに合わせて統一
-- Doc/velopack_release_manual.md: `packId` の記載を実運用値へ統一
-### 技術決定 Why
-- 自動更新が動かなかった主因は `Update:FeedUrl` が `appsettings.Production.json` にしかない一方で、通常起動時にその設定を読まない構成だったため、既定読込へ追加して更新先 URL を常に解決できるようにした
-- 起動時の自動更新確認と手動更新画面で別ロジックを持つと挙動差が出やすいため、`UpdateService` の結果オブジェクトに状態文言を集約して同一経路で扱うようにした
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告0、エラー0）
-
----
-
-## [2026-04-04] 18:08 Cvnet10WpfclientのVelopack導入と配布手順整備
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`Cvnet10Wpfclient` に Velopack を導入し、ClickOnce 相当の更新処理と配布手順へ置き換える
-### 実施内容
-- Directory.Packages.props: `Velopack` の中央管理パッケージを追加
-- Cvnet10Wpfclient/Cvnet10Wpfclient.csproj: `Velopack` 参照、WPF の `Main` 起動設定、ClickOnce 発行ターゲット削除を反映
-- Cvnet10Wpfclient/App.xaml.cs: `VelopackApp.Build().Run()` を先頭で実行する `Main` エントリーポイントを追加
-- Cvnet10Wpfclient/Services/UpdateService.cs: ClickOnce 風の更新処理を `UpdateManager` ベースへ置換
-- Cvnet10Wpfclient/ViewModels/00System/SysUpgradeViewModel.cs: Velopack 更新確認文言へ調整し、設定から `FeedUrl` を読む形へ変更
-- Cvnet10Wpfclient/ViewModels/SampleViewModel.cs: ClickOnce テスト表示を Velopack 設定表示/実行情報表示へ置換
-- Cvnet10Wpfclient/Views/SampleView.xaml: サンプル画面のボタン文言とバインディングを Velopack 用に変更
-- Cvnet10Wpfclient/appsettings.json: `Application.Version` を追加
-- Cvnet10Wpfclient/appsettings.Production.json: `Update:FeedUrl` と `Channel` の本番設定雛形を追加
-- Cvnet10Wpfclient/pre-publish-backup.bat: 廃止のため削除
-- Cvnet10Wpfclient/publish-velopack.bat: `appsettings.json` の版数を読み取って `dotnet publish` と `vpk pack` を実行する配布バッチを追加
-- Doc/velopack_release_manual.md: 版数更新から Velopack 配布までの手順書を追加
-### 技術決定 Why
-- WPF の `Main` を明示して `VelopackApp.Build().Run()` を最初に実行することで、更新適用時の起動経路を Velopack 推奨形へ寄せた
-- 版数源を `appsettings.json` に一本化し、実行表示と配布版数の不整合を減らした
-- 配布先URLは `appsettings.Production.json` に分離し、環境ごとの差し替えをしやすくした
-### 確認
-- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` → ビルド成功（警告0、エラー0）
-
----
-
-## [2026-04-03] 16:44 SelectServerTableViewの取得件数対応と汎用メンテ強化
-### Agent
-- gpt-5.4-mini : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`SelectServerTableView` を readonly 化し、取得件数を指定して `SysGeneralMenteView` を起動できるようにする
-### 実施内容
-- Cvnet10Wpfclient/Views/Sub/SelectServerTableView.xaml: 一覧を readonly 化し、取得件数入力欄を追加
-- Cvnet10Wpfclient/ViewModels/Sub/SelectServerTableViewModel.cs: `SelectedRowCount` を追加して既定値を 200 に設定
-- Cvnet10Wpfclient/ViewModels/MainMenuViewModel.cs: 選択テーブル名と取得件数を `AddInfo` で `SysGeneralMenteViewModel` に引き渡すよう調整
-- Cvnet10Wpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs: `AddInfo` の `テーブル名|取得件数` 形式を解釈し、`MasterMeisho` 依存を除去して汎用一覧に対応
-### 技術決定 Why
-- 既存の画面遷移と `AddInfo` を活用して連携点を最小化しつつ、取得件数は `QueryListParam.MaxCount` を使うことで既存の検索基盤に自然に統合した
-- 編集行のタイトル生成を固定項目依存から外し、任意テーブルでも破綻しないようにした
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告0、エラー0）
-
----
-
-## [2026-04-03] 14:45 SysGeneralMenteView起動前のテーブル選択導線追加
+## [2026-04-03] 14:24 SelectServerTableView 追加
 ### Agent
 - gpt-5.3-codex : GitHub-Copilot
 ### Editor
 - OpenCode
 ### 目的
-- ユーザーからの要望：`SysGeneralMenteView` の前に `SelectServerTableView` を呼び出し、選択したテーブル名を元に `SysGeneralMenteView` を実行できるようにする
+- ユーザーからの要望：`Cvnet10Wpfclient.csproj` の Sub に共通 `SelectServerTableView` を追加し、テーブル名と件数の一覧から選択できる View / ViewModel を作成する（今回は画面作成まで）
 ### 実施内容
-- Cvnet10Wpfclient/ViewModels/MainMenuViewModel.cs: `SysGeneralMenteView` 起動時のみ `SelectServerTableView` を先に表示し、選択テーブル名を `AddInfo` で引き渡す処理を追加
-- Cvnet10Wpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs: `AddInfo` のテーブル名から `BaseDbClass` 派生型を解決し、対象型を動的に切り替えて一覧取得/追加/更新/削除が動くよう汎用化
-- Doc/aicording_log_001.md: 既存ログを800行超過ルールに従ってアーカイブ
-- Doc/aicording_log.md: 新規ログファイルを作成し本作業を記録
+- Cvnet10Wpfclient/ViewModels/Sub/SelectServerTableViewModel.cs: `Msg042_GetTableCounts` を使ってサーバーのテーブル件数一覧を取得し、`TableName` / `RowCount` を表示・選択する ViewModel を追加
+- Cvnet10Wpfclient/Views/Sub/SelectServerTableView.xaml: ヘッダー、選択状態、テーブル名・件数DataGridを持つ選択画面を追加
+- Cvnet10Wpfclient/Views/Sub/SelectServerTableView.xaml.cs: 画面コードビハインドを追加
+- Cvnet10Wpfclient/Cvnet10Wpfclient.csproj: `Views\Sub\SelectServerTableView.xaml.cs` の `SubType` を追加
 ### 技術決定 Why
-- 既存メニュー基盤（`MenuData` + `MainMenuViewModel.DoMenu`）を保ちつつ、`SysGeneralMenteView` だけに前段ダイアログを差し込むことで他画面への影響を最小化した
-- 汎用メンテ対象はテーブル名から `TableNameAttribute` を逆引きして型解決し、既存の編集UI構造を維持したまま対象テーブルを切り替えられる設計にした
+- 既存の選択サブ画面（`SelectWinView` / `SelectKubunView`）と同じ操作感を維持するため、`BaseWindow + DataGrid + DoSelectCommand` の既存パターンを踏襲した
+- 件数取得は既存gRPCフラグ `Msg042_GetTableCounts` を利用し、サーバー実装追加なしで要件を満たした
+### 確認
+- WPFクライアントのビルドで新規View / ViewModelのコンパイル確認を実施
+
+---
+
+## [2026-04-03] 13:55 SysGeneralMenteView ヘッダー2行化と日時表示再配置
+### Agent
+- gpt-5.3-codex : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml` の `HeaderDockPanel` を2行にし、下段に `SelectedRow.Cells[1].EditText` / `SelectedRow.Cells[2].EditText` を表示してレイアウトバランスを調整する
+### 実施内容
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml: `HeaderDockPanel` を `DockPanel` から2行 `Grid` に変更し、1行目へタイトル・対象型、2行目へ `vdc` / `vdu` の日時表示を `WrapPanel` で再配置
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml: 余白を見直し（`対象型` 左マージン、2行目上マージン、日時ラベル間スペース）ヘッダーの視認性と詰まり感を改善
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 既存の `DockPanel` 1行配置では情報量増加時に横詰まりしやすいため、意味単位（識別情報/更新日時）で2段分離し、可読性を維持できる `Grid + WrapPanel` 構成を採用した
 ### 確認
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
 
 ---
 
-## [2026-04-03] 15:30 SysGeneralMenteViewModel で SerializedColumn 付き項目を JSON 編集可能にする
+## [2026-04-03] 13:46 SysGeneralMenteView 右側編集画面の入力可否修正
+### Agent
+- gpt-5.3-codex : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml` の右側編集画面が入力できない問題を修正する
+### 実施内容
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml: 編集用TextBoxの `IsReadOnly` を固定 `True` からセル単位の `IsReadOnly` バインドへ変更し、編集可能項目を入力できるよう修正
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- ViewModel側で `SysGeneralEditCell.IsReadOnly` により `Id/Vdc/Vdu` のみ読み取り専用制御を実装済みのため、View側も同プロパティに追従させるのが最小差分かつ既存設計と整合する
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
+
+---
+
+## [2026-04-03] 12:58 汎用マスタメンテ画面の追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`00System` 配下に `SysGeneralMenteView` を追加し、まずは `MasterMeisho` を直接対象にした汎用マスタメンテ画面を実装してメニューへ組み込む
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs: `MasterMeisho` を対象に一覧取得、追加、更新、削除を行う汎用編集ViewModelと中間行・中間セルモデルを追加
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml: 左一覧・右詳細編集の2ペイン構成で汎用編集UIを追加
+- Cvnet10Wpfclient/Views/00System/SysGeneralMenteView.xaml.cs: 画面のコードビハインドを追加
+- Cvnet10Wpfclient/Models/MenuData.cs: 管理メニューの「自動実行履歴」の下に「汎用マスタメンテ」を追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `DataTable` ではなく中間の行・セルモデルへ変換して編集することで、`DBNull` や列型崩れを避けつつ将来 `MasterShohin` や `MasterTokui` へ対象型を差し替えやすい構造にした
+- 画面側で直接DB操作を持ち込まず、既存のgRPCメッセージによる `Query` / `Insert` / `Update` / `Delete` フローへ合わせることで、既存メンテ画面と整合する実装にした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告0、エラー0）
+
+## [2026-04-03] 12:01 BaseDbClass汎用のDataTable変換メソッド追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`BaseDbClass` を継承したクラスを対象に、DB実カラムのみを `DataTable` へ変換する共通メソッドを `CommonClass.cs` へ追加する
+### 実施内容
+- Cvnet10Asset/CommonClass.cs: `Common.ToDataTable<T>` を追加し、`Ignore` / `JsonIgnore` / `ComputedColumn` / `ResultColumn` 属性の付いたプロパティを除外して `DataTable` 列を生成するよう実装
+- Cvnet10Asset/CommonClass.cs: 単純型はそのまま列値へ設定し、複合型やコレクションは `Common.SerializeObject` で JSON 文字列へ変換する helper を追加
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `Cvnet10Asset` から `Cvnet10Base` や `NPoco` への静的参照を増やすとレイヤ境界を崩すため、基底型名と属性名をリフレクションで判定して `CommonClass.cs` 単独で完結する形にした
+- 既存の `ExDatabase.GetSqlColumns` と同じ除外基準に揃えることで、`ResultColumn` などDB非実カラムを `DataTable` に含めないようにした
+### 確認
+- `dotnet build "Cvnet10Asset/Cvnet10Asset.csproj"` → ビルド成功（警告0、エラー0）
+
+
+## [2026-04-02] 09:10 opencode の更新と重複インストール整理
+### Agent
+- [openai/gpt-5.4 : OpenAI]
+### Editor
+- [OpenCode]
+### 目的
+- ユーザーからの要望：opencode を package manager 経由で upgrade し、未使用の重複インストールを削除したうえで、現在使用中の正確なパスと今後の upgrade 手順を明示する
+### 実施内容
+- ユーザー環境/opencode: `~/.npm-global` 配下の `opencode-ai` を `1.3.9` から `1.3.13` へ更新
+- ユーザー環境/opencode: `/usr/local` 配下の旧版 `opencode-ai@1.2.24` を削除
+- ユーザー環境/opencode: Windows 側 `AppData/Roaming/npm` に残っていた `opencode` 関連実体を削除
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- `npm config get prefix` と実際の優先 PATH が一致しておらず、prefix 指定なしの `npm install -g` では別の場所に新規導入される恐れがあったため、現在実際に使用されている `~/.npm-global` を更新先として固定した
+- `which -a opencode` で複数実体が確認できたため、将来の混乱を避ける目的で未使用の重複実体を整理した
+### 確認
+- `which opencode` → `/home/user2010/.npm-global/bin/opencode`
+- `opencode --version` → `1.3.13`
+- `which -a opencode` → `/home/user2010/.npm-global/bin/opencode` のみを確認
+
+---
+
+## [2026-04-01] 16:17 HHT手動データ受信画面の実装
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc/wrk/instruction-20260401-hhtmasterin.txt` に従い、`HhtManualDataReceiveView` と `HhtManualDataReceiveViewModel` を実装し、HHT受信ファイルを `Msg302_Op_HhtDataRecv` で取り込めるようにする
+### 実施内容
+- Cvnet10Wpfclient/Views/30HHT/HhtManualDataReceiveView.xaml: 600x400想定の固定サイズ画面へ変更し、入力ファイル名規則表示、入力先TextBox、`データ受信` / `戻る` ボタンを持つMaterialDesignベースの入力レイアウトを実装
+- Cvnet10Wpfclient/ViewModels/30HHT/HhtManualDataReceiveViewModel.cs: 初期入力先 `C:\hht\`、対象ファイル名判定、Shift_JIS読み込み、CSV解析、`TranHhtdata` への変換、ファイル名/行No付きエラー、`Msg302_Op_HhtDataRecv` 呼び出し、完了ダイアログ表示を実装
+- Cvnet10Wpfclient/Models/MenuData.cs: `HHT手動データ受信` の `addInfo` を `準備中` から機能説明へ更新
+### 技術決定 Why
+- サーバ側 `HandleOpHhtReceive` は `List<TranHhtdata>` をそのまま受ける設計のため、クライアント側で入力ファイルを厳密に検証してから一括送信することで、取込失敗時にファイル名・行番号・項目名を即時に特定できるようにした
+- HHT連携ファイルと既存マスタ出力が Shift_JIS 前提のため、受信側も同じ文字コードで読み込んで文字化けや桁解釈の不整合を避けた
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告16、エラー0。DLLコピー時の一時ロック警告のみ）
+
+## [2026-04-01] 14:31 HhtProcess.CreateMaster のSJIS固定長対応
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10DomainLogic.csproj` の `HhtProcess.cs` にある `CreateMaster()` で 2byte 文字(SJIS)を扱えるようにし、`Name` と `NameOpt` の固定長出力を SJIS 40byte 基準に変更する
+### 実施内容
+- Cvnet10DomainLogic/HhtProcess.cs: `Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);` を利用するSJISエンコーディング初期化を追加し、固定長出力時の `Name` / `NameOpt` を文字数基準から SJIS byte 基準の切り詰め・右スペース埋めへ変更
+- Cvnet10Base/BaseDb1Master.cs: `MasterHht` の `Name` / `NameOpt` コメントを 40桁表現から SJIS 40byte 表現へ更新
+### 技術決定 Why
+- HHT向け固定長フォーマットは出力バイト数が重要であり、全角文字を含む名称項目を `string.Length` で処理すると項目境界が崩れるため、SJIS の実バイト長を使って安全に切り詰める必要があるため
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` → ビルド成功（警告0、エラー0）
+
+## [2026-04-01] 14:15 HhtProcess.CreateMaster の簡素化
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10DomainLogic.csproj` の `HhtProcess.cs` にある `CreateMaster()` が冗長なので、途中段階を `List<MasterHht>` で保持しつつリファクタリングしたい
+### 実施内容
+- Cvnet10DomainLogic/HhtProcess.cs: `CreateMaster()` を「マスター生成」と「最終出力文字列化」に分離し、`SIR/SOK/TOK` の共通処理を helper 化、`TAN` は社員コードの既存規則を維持したまま `List<MasterHht>` に追加する構成へ整理
+### 技術決定 Why
+- 中間表現を `MasterHht` に統一することで、データ収集ロジックと固定長・CSV 出力ロジックの責務を分離でき、`isFix` の分岐を最終出力段に限定して重複実装を減らせるため
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` → ビルド成功（警告0、エラー0）
+
+## [2026-04-01] 14:43 HHTマスタ生成のgRPCハンドラ追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10DomainLogic.csproj` の `HhtProcess.cs` にある `CreateMaster` を `Cvnet10Server` 経由で呼び出せるようにし、`CvnetCoreService` にハンドラを追加登録して `Msg301_Op_HhtMaster` で呼べるようにする。引数は `Tuple<bool,int>` で渡す
+### 実施内容
+- Cvnet10Server/Services/CvnetCoreService.cs: `Msg301_Op_HhtMaster` をハンドラ辞書へ登録し、共通 `QueryMsgAsync` から `HandleOpHhtMaster` を呼び出せるように変更
+- Cvnet10Server/Services/HandlerClass.cs: `Tuple<bool,int>` を逆シリアライズして `HhtProcess.CreateMaster(bool isFix, int outMasterMei)` を実行し、`List<string>` を成功応答として返すハンドラを追加
+### 技術決定 Why
+- 既存の `CvnetCoreService` は `CvnetFlag` ごとの辞書ディスパッチで機能追加する構成のため、専用メソッドを 1 本追加して `Tuple<bool,int>` をそのまま受ける形に揃えるのが最小差分で既存呼び出し規約とも整合するため
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"` → ビルド成功（警告0、エラー0）
+
+---
+
+## [2026-04-01] 15:26 HHT用マスタデータ作成画面の実装
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc/wrk/instruction-20260401-hhtmasterout.txt` に従い、`HhtMasterDataCreateView` と `HhtMasterDataCreateViewModel` を実装し、HHTマスタ出力処理を実行可能にする
+### 実施内容
+- Cvnet10Wpfclient/Views/30HHT/HhtMasterDataCreateView.xaml:
+  - 600x400 想定の固定サイズ画面に変更
+  - 説明文、出力フォーマットの RadioButton、出力先 TextBox、`データ作成` / `戻る` ボタンを配置
+  - MaterialDesign の Card を使ったシンプルな入力レイアウトに整理
+- Cvnet10Wpfclient/ViewModels/30HHT/HhtMasterDataCreateViewModel.cs:
+  - 初期表示時に既定出力先 `C:\hht\hksnds1` を設定
+  - CSV / 固定長の排他選択プロパティを追加
+  - `Msg301_Op_HhtMaster` を呼び出して `List<string>` を取得し、Shift_JIS でファイル出力する `CreateDataAsync` を実装
+  - サーバエラー、出力エラー、完了メッセージのダイアログ表示を実装
+- Cvnet10Wpfclient/Models/MenuData.cs:
+  - 対象メニューの `addInfo` を `準備中` から実際の機能説明へ更新
+### 技術決定 Why
+- サーバ側 `HhtProcess.CreateMaster` が固定長 40byte/SJIS 前提の処理を持つため、クライアント出力も Shift_JIS に統一して HHT 側との互換性を維持
+- 出力形式の選択は新しいConverterを増やさず、ViewModel の単純な排他 bool で最小構成にした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
+
+---
+
+## [2026-04-01] 08:55 Cvnet10Prints の printenable 切替対応
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：VS2026のソリューションで、環境変数 `printenable` を使って `Cvnet10Prints.csproj` の `printstream.jar` / IKVM 参照を内部実装だけ切り替えたい
+### 実施内容
+- Cvnet10Prints/Cvnet10Prints.csproj: 環境変数 `printenable` を `PrintEnable` プロパティとして受け取り、`true` 時のみ `PRINT_ENABLE` 定義、`IKVM` の `PackageReference`、`printstream.jar` の `IkvmReference` を有効化
+- Cvnet10Prints/PrintAdapter.cs: `jp.axissoft.printstream` の using と PrintStream 利用処理を `#if PRINT_ENABLE` で分岐し、無効時はダミー結果を返す実装に変更
+### 技術決定 Why
+- `Cvnet10Prints` の公開APIを維持したまま内部実装だけを切り替えることで、`Cvnet10Server` やテストプロジェクトの `ProjectReference` を変更せずにビルド構成だけで印刷機能の有効/無効を切り替えられるため
+### 確認
+- `set printenable=false&& C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Prints/Cvnet10Prints.csproj` → ビルド成功
+- `set printenable=true&& C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Prints/Cvnet10Prints.csproj` → ビルド成功
+- `set printenable=false&& C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj` → ビルド成功
+- `set printenable=true&& C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj` → ビルド成功
+
+---
+
+## [2026-03-31] 22:15 マスターメンテ系「詳細を読み込みました」メッセージ非表示化
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot
 ### Editor
 - OpenCode
 ### 目的
-- ユーザーからの要望：SysGeneralMenteViewModel の `GetEditableProperties()` で読み飛ばしている `List<MasterGeneralMeisho>` や `BaseDetailClass` を JSON serialize して修正可能な項目にする
+- ユーザーからの要望：マスターメンテ系画面で「詳細を読み込みました」メッセージが不要なので表示しないようにする
 ### 実施内容
-- Cvnet10Wpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs:
-  - `SysGeneralEditCell` に `IsJsonColumn` プロパティを追加
-  - `IsSupportedProperty()` に `[SerializedColumn]` 属性チェックを追加し、JSON 格納型も編集対象に含める
-  - `IsJsonSerializedProperty()` ヘルパーを追加（`[SerializedColumn]` かつ非 primitive 型を判定）
-  - `CreateRow()` で JSON 列には `ToJsonText()` を使用し `IsJsonColumn` フラグを設定
-  - `ToItem()` で JSON 列には `ConvertFromJsonText()` で逆変換
-  - `ToJsonText()`: `JsonConvert.SerializeObject` で整形済み JSON 文字列を生成
-  - `ConvertFromJsonText()`: `JsonConvert.DeserializeObject` で JSON 文字列から型復元
+- Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs: `ApplyLoadedDetail` メソッド内の `Message = $"詳細を読み込みました (Id={detail.Id})"` 行を削除
 ### 技術決定 Why
-- `IsSupportedType` の primitive ホワイトリストは変更せず、`IsSupportedProperty` のレベルで `[SerializedColumn]` を先にチェックすることで既存の primitive 列への影響をゼロにした
-- NPoco の `[SerializedColumn]` 属性は DB に JSON 格納されることを意味するため、同じ JSON 形式でユーザーに編集させるのが自然
-- `Newtonsoft.Json` は既に using 済みで `JsonConvert` が使えるため新規依存なし
+- BaseLightMenteViewModelは全マスターメンテ画面の基底クラスであり、ここで1行削除するだけで全画面に反映される
+### 確認
+- Cvnet10Wpfclient ビルド成功（エラー0、既存warning4件のみ）
+
+---
+
+## [2026-03-31] 17:30 SysLoginHistoryView に社員名表示を追加
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SysLoginHistoryView の右側詳細パネルで、ログインIDに対応したユーザ名（MasterShain の Code, Name）も表示する。ログインIDと有効期限の間に1行で配置。
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/00System/SysLoginHistoryViewModel.cs: AfterList で SysLogin を一括取得し loginId → 社員表示文字列のマッピングを構築。OnCurrentEditChangedCore で選択変更時に ShainDisplay を更新。
+- Cvnet10Wpfclient/Views/00System/SysLoginHistoryView.xaml: 右パネル詳細の Grid に Row を1行追加（Row 1: 社員）。ログインId(Row 0) と有効期限(Row 2) の間に ShainDisplay をバインド表示。既存行を Row+1 にシフト。
+### 技術決定 Why
+- SysHistJwt には社員情報が直接保持されていないため、Id_Login → SysLogin → VShain (CodeNameView) の間接参照で解決。AfterList での一括取得により N+1 問題を回避。
+### 確認
+- WPFクライアントビルド成功（0 エラー、既存警告のみ）
+
+---
+
+## [2026-03-29] 18:31 opentmux 3ペイン集中作業向け設定
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`opentmux` プラグインの設定ファイルを README に沿って確認し、基本 3 ペイン運用向けの案から集中作業向け設定を適用する
+### 実施内容
+- `~/.config/opencode/opencode.json`: `plugin` に `opentmux` が設定済みであることを確認した
+- `~/.config/opencode/opentmux.json`: 3 ペイン時に作業ペインを広く確保するため、`layout` は `main-vertical` のまま `main_pane_size` を `60` から `72` に変更した
+- `tmux` と `opentmux` のインストール状態を確認し、セットアップ済みであることを確認した
+### 技術決定 Why
+- 3 ペイン運用ではメインペインを広めに取る方がコード編集やコマンド実行を継続しやすいため、監視用サブペインを細めにする `main-vertical` + `72` を採用した
+### 確認
+- `~/.config/opencode/opencode.json` に `opentmux` プラグイン設定が存在することを確認
+- `~/.config/opencode/opentmux.json` の更新内容を確認
+- `which tmux` と `which opentmux`、`npm list -g opentmux --depth=0` で利用可能な状態を確認
+
+## [2026-03-29] 17:52 PrintServer設定で印刷フォルダを切替
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Server.csproj` で読み込まれる `appsettings.json` の `PrintServer` セクションを使い、`CvnetCorePrintService.cs` の `printPdf()` 内で印刷フォルダ設定を切り替える。Write-Log と Git-Commit まで実行する
+### 実施内容
+- `Cvnet10Server/Services/CvnetCorePrintService.cs`: `printPdf()` の手書きディレクトリ探索を廃止し、`IConfiguration` の `PrintServer` から `PrintBaseDir`、`PrintFormDir`、`PrintDataDir`、`PrintOutputDir` を読んで `PrintContext` を構築するよう変更した
+- `Cvnet10Server/Services/CvnetCorePrintService.cs`: 相対パスを `ContentRootPath` 基準で絶対化し、出力先フォルダを `Directory.CreateDirectory` で事前生成するようにした
+- `Cvnet10Server/appsettings.json`: 実際のテンプレート配置に合わせ、既定の `PrintServer` を `.. / printdata / printdata / Cvnet10Server/wrk` に更新した
+- `Cvnet10Server/Cvnet10Server.csproj`: ASP.NET Core の既定動作で `appsettings*.json` が読み込まれるため変更不要と判断した
+### 技術決定 Why
+- 実行環境ごとの親ディレクトリ探索や Linux 分岐に依存すると保守しづらいため、サーバー設定から一貫して印刷入出力パスを決める構成へ寄せた
+- `PrintBaseDir` を基点に相対パスを解決することで、フォーム名とデータ名を固定のままでも配置変更を設定だけで吸収できるようにした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Server/Cvnet10Server.csproj"` でビルド成功
+
+## [2026-03-28] 22:03 ConvertTranHeadersByRangeへの統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10DomainLogic/ConvertDbTran.cs` で `ConvertTranHeaders<T>` を呼んでいる処理を `ConvertTranHeadersByRange<T>` に変更し、不要になった `ConvertTranHeaders<T>` を削除して Write-Log と Git-Commit まで行う
+### 実施内容
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: `CnvTran00HonUri`、`CnvTran03Shiire`、`CnvTran05Ido`、`CnvTran06Nyukin`、`CnvTran07Shiharai`、`CnvTran60Tana`、`CnvTran10Ido`、`CnvTran11IdoIn`、`CnvTran12Jyuchu`、`CnvTran13Hachu` の呼び出し先を `ConvertTranHeadersByRange` に統一した
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: 未使用になった `ConvertTranHeaders<T>` を削除し、範囲分割変換メソッドの要約コメントを現状に合わせて更新した
+### 技術決定 Why
+- 伝票変換処理の呼び出し経路を範囲分割版へ統一することで、大量データ時のメモリ負荷を抑える実装に揃えつつ、20000件未満でも同じ経路で動作させて保守対象を一本化した
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` でビルド成功
+
+## [2026-03-28] 10:10 ConvertDbTran範囲変換の整理
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`ConvertDbTran.cs` の中の `ConvertTranHeadersByRange` と関連する処理をリファクタリングして
+### 実施内容
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: `ConvertTranHeaders` と `ConvertTranHeadersByRange` で共通だったヘッダ取得 SQL と一括 insert 処理を共通ヘルパーへ集約した
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: 範囲分割処理を `SplitRange` と `GetTranHeaderRangeInfo` に整理し、範囲変換の責務を読みやすく分離した
+- `Cvnet10DomainLogic/ConvertDbTran.cs`: 生成AI由来の作成者コメントや補助メソッド名を整理し、既存挙動を保ったまま意図が伝わる命名へ更新した
+### 技術決定 Why
+- 通常変換と範囲分割変換で SQL 組み立てと insert 処理が重複していたため、クエリ組み立てと bulk insert を共通化して保守時の差分発生を防ぎやすくした
+- `ConvertTranHeadersByRange` は範囲取得・分割・読込・insert の流れだけに絞ることで、処理本体の見通しを優先した
+### 確認
+- `dotnet build "Cvnet10DomainLogic/Cvnet10DomainLogic.csproj"` でビルド成功
+
+## [2026-03-27] 14:15 改行コードのCRLF統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：プロジェクト内のテキストファイルの改行コードが CRLF で統一されているか確認し、CRLF でないものは改行コードのみ変更して統一する。git commit は行わない
+### 実施内容
+- `git ls-files` で取得した追跡済みファイルを対象に、バイナリ判定後のテキストファイルだけを走査し、CRLF でないファイルを CRLF に統一した
+- リポジトリ全体を再走査し、追跡済みテキストファイルで CRLF でないものが 0 件であることを確認した
+### 技術決定 Why
+- 既存内容を変更しないため、改行コード以外の文字列・空白・構文には触れず、バイト列の改行表現のみを `CRLF` へ正規化した
+- バイナリファイルや改行を持たないファイルを除外し、テキストファイルの改行コード統一だけに作用範囲を限定した
+### 確認
+- 再スキャン結果: 追跡済みテキストファイルの非 `CRLF` 件数は 0
+- 内容変更を伴う作業ではないため、ビルドは未実行
+
+---
+
+## [2026-03-27] 13:18 AppGlobal低リスク整理
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient` の `AppGlobal.cs` を読み込み、低リスクな範囲に限定して具体計画を確認したうえで step by step で実装し、Git-Commit は行わずユーザー確認待ちにする
+### 実施内容
+- `Cvnet10Wpfclient/AppGlobal.cs`: `LoginJwt` をプロパティ化し、`SetLoginJwt` / `ClearLoginJwt` を追加して更新経路を明示した
+- `Cvnet10Wpfclient/AppGlobal.cs`: `GetgRPCService<T>` を `GetGrpcService<T>` に改名し、初期化前例外文言とログ内の `AppCurrent` 表記を `AppGlobal` に統一した
+- `Cvnet10Wpfclient/AppGlobal.cs`: `CallContext` 用メタデータ生成を `CreateDefaultMetadata` に分離して見通しを改善した
+- `Cvnet10Wpfclient/ViewModels/00System/LoginViewModel.cs`: JWT 代入の重複を解消し、新しい API を使うよう追従した
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/00System/SysSetConfigViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/SampleViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/Sub/SelectWinViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/Sub/SelectKubunViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/04Juchu/JuchuInputViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+- `Cvnet10Wpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs`: gRPC サービス取得呼び出しを新メソッド名へ追従した
+### 技術決定 Why
+- `AppGlobal` の責務分割や DI 注入への移行は影響範囲が大きいため今回は見送り、公開 API の整理と内部ヘルパー化だけに絞ってコンパイル影響を最小化した
+- `LoginViewModel` の JWT 更新は同一値の二重代入になっていたため、成功確定時のみ設定する形へ寄せて意図を明確化した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 13:35 CallContext正規化と懸念コメント追記
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`CallContext` を正とする方針を固定し、`JwtAuthorizationHandler` との重複を整理したうえで、実害候補の懸念点をコメントとして残す。コミットは行わない
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/Communication/JwtAuthorizationHandler.cs`: 認証系ヘッダー付与を廃止し、`AppGlobal.GetDefaultCallContext()` を正とする方針コメントへ更新した
+- `Cvnet10Wpfclient/AppGlobal.cs`: `CreateDefaultMetadata()` に、匿名呼び出し時でも `Authorization: Bearer ` を送る現状挙動と、将来見直し時の起点にする旨のコメントを追記した
+### 技術決定 Why
+- 既存の gRPC 呼び出しは `GetDefaultCallContext(...)` 利用で概ね統一されており、`CancellationToken` も同じ経路で扱っているため、`DelegatingHandler` 側を削るほうが影響範囲を最小化できる
+- 重複責務を外したうえで匿名 API まわりの挙動差だけをコメントで残し、次回調査や仕様変更時に判断しやすくした
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 12:41 MasterSysKanriMenteView上部レイアウト統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`MasterSysKanriMenteView.xaml` の画面上部を、名称マスタや商品マスタのようなレイアウトに合わせる。ただし単一レコード画面のため、現在の入力項目配置部分は変更しない
+### 実施内容
+- `Cvnet10Wpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: 旧来の上部ボタン帯を `ColorZone` ベースの共通ヘッダーへ置き換え、閉じる・再読込・修正の操作を名称マスタ系の見た目に統一した
+- `Cvnet10Wpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: 詳細入力部は既存の行列配置を維持したまま `Card` とステータス帯で囲み、`Desc0` と `Current.Id` を上部情報として表示する構成へ整理した
+### 技術決定 Why
+- 単一レコード画面のため一覧ペインは追加せず、共通化対象をヘッダーと情報帯に限定することで、ユーザー指定どおり入力フォームの並びやバインディングを変えずにデザインだけを寄せた
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 12:09 軽量一覧と詳細遅延取得の共通基底実装
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Cvnet10Wpfclient のマスタメンテ等で、100,000件規模でも扱いやすいように「一覧は軽量、詳細は非同期取得＆キャッシュ」を共通基底まで含めて設計し、`IBaseCodeName` あり/なしの2系統で段階実装する
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: 一覧取得メッセージ生成を `CreateListMessage` に分離し、軽量一覧基底から差し替え可能にした
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: 200msデバウンス、`QuerybyIdParam` による詳細非同期取得、`Id`/`Vdu` キャッシュ、一覧行の詳細差し替えを行う共通基底と、`IBaseCodeName` あり/なしの派生基底を新規追加した
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、軽量一覧に `VBrand` を含めた商品マスタの代表実装へ変更した
+- `Cvnet10Wpfclient/ViewModels/00System/SysLoginViewModel.cs`: `BasePlainLightMenteViewModel` 継承へ切り替え、ログイン一覧の軽量取得列を ViewModel 側で定義する代表実装へ変更した
+### 技術決定 Why
+- 既存XAMLの `ListData` / `Current` / `CurrentEdit` バインディングを崩さず段階導入するため、一覧DTOを別コレクションへ分離せず、`ListData<T>` 自体を軽量行→詳細行へ差し替える方式を採用した
+- `IBaseCodeName` 実装テーブルは共通列が明確なため基底で既定化し、非実装テーブルは画面ごとに必要列が異なるため ViewModel 側で選択列を定義する分離設計にした
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 12:17 軽量一覧詳細反映時のDataGridフリーズ修正
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`MasterShohinMenteViewModel` と `SysLoginViewModel` で、一覧から詳細取得した時に画面が固まる原因を調査し、正常動作するよう修正する
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: 詳細取得後に `ListData[index] = 新規インスタンス` で一覧行を差し替えていた処理をやめ、既存選択行へ `Common.DeepCopyValue` で詳細を上書きする方式へ変更した
+### 技術決定 Why
+- 既存画面は `DataGrid.ItemsSource=ListData` と `SelectedItem=Current` を併用しており、選択中行を別インスタンスへ置換すると WPF の現在行同期が不安定になり、詳細取得直後にUIが固まる原因になるため、参照を維持したまま中身だけ更新する方式へ切り替えた
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 12:22 詳細取得キャンセル時の破棄例外抑止
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：商品マスタ終了時に `CancellationTokenSource has been disposed` の未観測例外が出るため、終了時も正常に閉じられるよう修正する
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: 進行中詳細取得のキャンセル時に `CancellationTokenSource` を即時 `Dispose` しないよう変更し、待機タスク側の `finally` でのみ破棄する構成へ修正した
+- `Cvnet10Wpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: `Task.Delay`/`Dispose` 周辺に `ObjectDisposedException` の保護を追加し、未観測例外が finalizer thread へ流れないようにした
+### 技術決定 Why
+- デバウンス待機タスクが `CancellationTokenSource` を参照中のまま別経路で `Dispose` すると、終了時に未観測の `ObjectDisposedException` が発生するため、キャンセルと破棄の責務を分離した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行したが、起動中プロセスが `Cvnet10Wpfclient/bin/Debug/net10.0-windows/*.dll` をロックしておりコピー失敗で確認不能
+
+## [2026-03-27] 12:30 全マスターメンテへの軽量一覧展開
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：中間コミット後、軽量一覧と詳細遅延取得の仕組みを全マスターへ展開し、作業ログ記録とGitコミットまで実施する
+### 実施内容
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterMeishoMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、一覧列に `Kubun` / `Odr` / `KubunName` を追加した
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、一覧列に `Rank` / `VTenpo` を追加した
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterShainMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、一覧列に `Mail` / `VTenpo` / `VBumon` を追加した
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替えた
+- `Cvnet10Wpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs`: `BaseCodeNameLightMenteViewModel` 継承へ切り替え、一覧列に `TenType` を追加した
+### 技術決定 Why
+- 一覧DataGridに表示している列だけを軽量取得対象へ追加し、それ以外の詳細情報は既存の詳細取得とキャッシュへ委ねることで、既存XAMLを変えずに全マスターメンテへ横展開した
+- `MasterSysKanriMenteViewModel` は一覧を持たず `Current.*` へ直接バインドする単一レコード画面のため、今回の一覧最適化対象から除外した
+### 確認
+- `dotnet build "Cvnet10Wpfclient/Cvnet10Wpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功
+
+## [2026-03-27] 10:05 WPFスキル分離と参照整理
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`AGENTS.md` からWPF作成・改修ルールを分離し、Cvnet10Wpfclient全体向けスキルと個別View/ViewModel向けスキルに整理したうえで、`AGENTS.md` から必須参照させる
+### 実施内容
+- `.agents/skills/wpf-project-guide/SKILL.md`: `Cvnet10Wpfclient` 全体の共通規約、ResourceDictionary確認、`BaseWindow` 運用、検証方針を新規追加した
+- `.agents/skills/wpf-view-workflow/SKILL.md`: 個別画面の新規作成・既存改修・`MenuData.cs` 連携・検証手順を新規追加した
+- `AGENTS.md`: WPF詳細規約を縮約し、`wpf-project-guide` と `wpf-view-workflow` の必須参照、および既存WPF系スキルの使い分けに更新した
+- `.agents/skills/check-xaml/SKILL.md`: 検証専用スキルである位置付けを追記した
+- `.agents/skills/update-design-mente/SKILL.md`: 新しいWPF共通スキル群を前提とする説明を追記した
+- `.agents/skills/change-sublist-to-observablecollection/SKILL.md`: 新しいWPF共通スキル群を前提とする説明を追記した
+### 技術決定 Why
+- `Cvnet10Wpfclient` 全体の前提知識と、個別画面の作成・改修手順は責務が異なるため、共通ガイドと画面ワークフローへ分離した
+- 既存のWPF系スキルは用途特化のまま残し、新規2スキルを上位ガイドとして位置付けることで重複と参照迷いを減らした
+### 確認
+- 変更後ファイルを読み返し、`AGENTS.md` から `wpf-project-guide` / `wpf-view-workflow` の必須参照になっていることを確認
+- ドキュメントとスキル定義のみの変更のため、ビルドは未実行
+
+## [2026-03-25] 14:49 keep-mcp の OpenCode グローバル追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`https://github.com/feuerdev/keep-mcp` を確認し、OpenCode のグローバル環境に Google Keep 用 MCP サーバーを追加する
+### 実施内容
+- `~/.config/opencode/opencode.jsonc`: `keep-mcp` をローカル MCP サーバーとして追加し、専用ラッパースクリプト経由で起動する構成にした
+- `~/.config/opencode/bin/keep-mcp-opencode`: `~/.config/opencode/keep-mcp.env` を読み込み、必須資格情報を検証したうえで `~/.local/share/keep-mcp/.venv/bin/python -m server` を起動するスクリプトを追加した
+- `~/.config/opencode/keep-mcp.env.example`: `GOOGLE_EMAIL` / `GOOGLE_MASTER_TOKEN` / `UNSAFE_MODE` の設定ひな形を追加した
+- `~/.local/share/keep-mcp/.venv`: Python 仮想環境を作成し、`keep-mcp==0.3.1` をインストールした
+### 技術決定 Why
+- `pipx` と `uv` が未導入だったため、システム Python を汚さないようユーザー配下の仮想環境で `keep-mcp` を隔離インストールした
+- Google Keep の資格情報を OpenCode 設定本体へ直書きしないため、外部 env ファイルを読むラッパースクリプト方式を採用した
+### 確認
+- `~/.local/share/keep-mcp/.venv/bin/python -m server --help` でモジュール起動が可能なことを確認
+- `~/.config/opencode/bin/keep-mcp-opencode` 実行時に、資格情報未設定の場合は案内付きエラーで停止することを確認
+- `opencode mcp list` で `keep-mcp` エントリが認識されることを確認（現時点では資格情報未設定のため `failed` 表示）
+
+---
+
+## [2026-03-27] 10:26 copilot-instructions整合
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`AGENTS.md` の内容に合わせて `copilot-instructions.md` を最小限で修正する
+### 実施内容
+- `.github/copilot-instructions.md`: リポジトリ情報、復元・ビルド・フォーマット確認コマンド、レイヤー/読み取り専用ルール、最小差分方針、WPF参照ルール、Write-Log/Git-Commit 記述を `AGENTS.md` に合わせて最小限で補正した
+### 技術決定 Why
+- 既存の英語ベース構成は維持しつつ、`AGENTS.md` と不整合だった閾値、手順、参照先、運用ルールのみを補正して差分を最小化した
+### 確認
+- 変更後の `.github/copilot-instructions.md` を読み返し、`AGENTS.md` との差分が主に不足事項の補完に留まっていることを確認
+- ドキュメント変更のみのため、ビルドは未実行
+
+## [2026-03-27] 10:32 copilot-instructions英語統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`.github/copilot-instructions.md` の記述を英語に統一し、作業後に変更全体をコミットする
+### 実施内容
+- `.github/copilot-instructions.md`: コードブロック外の日本語記述を英語へ置換し、英語化の過程で残っていた日本語見出しを解消した
+### 技術決定 Why
+- ユーザー指定どおりコードブロックは変更対象にせず、通常本文だけを英語化して既存テンプレート構造への影響を抑えた
+### 確認
+- `grep` により `.github/copilot-instructions.md` のコードブロック外に日本語が残っていないことを確認
+- ドキュメント変更のみのため、ビルドは未実行
+
+## [2026-03-25] 13:31 ViewServices参照の削除とHelpers統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient` 配下の `using Cvnet10Wpfclient.ViewServices;` を削除し、XAML内の `ViewServices` 参照は不要なら削除、使用中なら `Cvnet10Wpfclient.Helpers` へ切り替える
+### 実施内容
+- Cvnet10Wpfclient/ViewModels 配下の各ViewModel: 未使用になっていた `using Cvnet10Wpfclient.ViewServices;` を一括削除
+- Cvnet10Wpfclient/Helpers/MessageBoxView.xaml: `clr-namespace:Cvnet10Wpfclient.ViewServices` の `xmlns:local` 宣言を削除
+- Cvnet10Wpfclient/Cvnet10Wpfclient.csproj: 残存していた `ViewServices\` フォルダー定義を削除
+### 技術決定 Why
+- `Cvnet10Wpfclient.ViewServices` 名前空間の実体が既に存在せず、XAML側でも当該名前空間の型利用がなかったため、要素参照の置換ではなく不要宣言の削除を優先した
+- ユーザー指定の `CvcnetWpfclinet.Helpers` は実在せず、既存コードベースで一貫して使われている `Cvnet10Wpfclient.Helpers` を正とみなして整合性を維持した
+### 確認
+- `grep` にて `Cvnet10Wpfclient` 配下の `ViewServices` 参照が解消されたことを確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功（0 warnings, 0 errors）
+
+---
+
+## [2026-03-29] 12:10 clipimg の opencode 連携改善
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：既存の `~/bin/clipimg` を `opencode` で使いやすいように改善し、`--last` `--open` などの補助オプションも含めて実装する
+### 実施内容
+- `~/bin/clipimg`: 保存時に `wslpath -w` で Windows パスへ変換して PowerShell に渡すよう修正し、成功時は `opencode` に貼りやすい WSL パスのみを標準出力するよう変更した
+- `~/bin/clipimg`: `--help` `--last` `--open` を追加し、保存済み画像の再利用や既定アプリ起動に対応した
+- `~/bin/clipimg`: 画像なし・保存失敗・パス変換失敗時に日本語エラーメッセージと非 0 終了コードを返すよう整理した
+### 技術決定 Why
+- `opencode` 連携では説明文より画像パスそのものが扱いやすいため、成功時の標準出力を WSL パス 1 行に固定した
+- PowerShell で Linux パスを直接保存先に使うと環境依存で失敗しやすいため、保存処理だけは Windows パスへ明示変換して安定性を優先した
+### 確認
+- `bash -n "$HOME/bin/clipimg"` で構文確認
+- PowerShell でテスト画像をクリップボードに設定後、`$HOME/bin/clipimg` で PNG 保存と WSL パス出力を確認
+- `"$HOME/bin/clipimg" --last --open` で直近画像の取得とオープン動作を確認
+- PowerShell でクリップボードをクリア後、`$HOME/bin/clipimg` が終了コード `4` で失敗することを確認
+
+## [2026-03-29] 12:18 clipimg 用 Skill の追加
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Windows クリップボード画像を `opencode` へ渡す `clipimg` 運用を、MCP ではなく Skill として登録する
+### 実施内容
+- `.agents/skills/clipboard-image-wsl/SKILL.md`: `clipimg` を使って Windows のクリップボード画像を WSL2 上へ保存し、`opencode` に渡すための専用 Skill を新規追加した
+- `.agents/skills/clipboard-image-wsl/SKILL.md`: 基本ワークフロー、推奨コマンド、定型プロンプト、トラブルシュート、将来の MCP 化方針を記載した
+### 技術決定 Why
+- 今回は新しい外部ツールサーバーを増やすよりも、既存の `clipimg` を前提に運用手順を標準化する方が軽量で保守しやすいため、Skill を先行採用した
+- `opencode` に渡す際の定型コマンドと失敗時対応を Skill に集約することで、毎回の説明なしに同じ流れを再利用しやすくした
+### 確認
+- `.agents/skills` 配下に `clipboard-image-wsl/SKILL.md` が追加されたことを確認
+
+---
+
+## [2026-03-30] 10:00 ESCキーでメインメニューに戻る際の実行中処理確認ダイアログ追加
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ESCでメインメニューに戻る際、何か実行中の場合はYes/Noダイアログを出し、Yesで戻る・Noでそのままにする共通処理を追加したい
+### 実施内容
+- `Cvnet10Wpfclient/Helpers/Windows/BaseWindow.cs`: `using CommunityToolkit.Mvvm.Input;` を追加
+- `Cvnet10Wpfclient/Helpers/Windows/BaseWindow.cs`: `OnPreviewKeyDown` に `HasRunningCommand()` チェックを追加し、実行中コマンドがある場合は「処理を実行中です。メインメニューに戻りますか？」確認ダイアログを表示
+- `Cvnet10Wpfclient/Helpers/Windows/BaseWindow.cs`: `HasRunningCommand()` メソッドを追加。DataContext の全プロパティを走査し `IAsyncRelayCommand.IsRunning == true` を検出
+### 技術決定 Why
+- ESCのインターセプト箇所は `BaseWindow.OnPreviewKeyDown` が唯一の共通Entry Pointであり、全画面に一括適用できる
+- `IAsyncRelayCommand.IsRunning` は CommunityToolkit.Mvvm が提供する標準インターフェースで、`[RelayCommand(IncludeCancelCommand = true)]` 付き全コマンドが対象になる
+- ViewModelは汚染せずView層（BaseWindow）で完結させた（MVVM原則を維持）
+- NoをクリックすればClose自体が実行されないため、実行中の処理は継続されるアーキテクチャ上安全
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0）
+
+---
+
+## [2026-03-31] 14:00 RangeInputParamView/ViewModel の店舗・倉庫・商品CD検索対応改修
+### Agent
+- claude-sonnet-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：RangeInputParamView.xaml と RangeInputParamViewModel.cs を指示書に従って改修する（店舗CD検索ボタン・倉庫CD検索ボタン・商品CD部分一致入力への変更）
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/Sub/RangeInputParamViewModel.cs: DoSelectFromToriCommand・DoSelectToToriCommand・DoSelectFromSokoCommand・DoSelectToSokoCommand の4つの RelayCommand を追加
+- Cvnet10Wpfclient/Views/Sub/RangeInputParamView.xaml: Row2（店舗CD）をラベル動的バインド・Visibility制御・SearchTextBox+名称 DockPanel パターンに変更、Row3（倉庫CD）同様に SearchTextBox+名称パターンに変更、Row4（商品CD）を from-to 2入力から単一部分一致 TextBox に変更、Width を 620→780 に拡大、MenteSearchTextBox スタイルと BooleanToVisibilityConverter をリソースに追加
+### 技術決定 Why
+- SearchTextBox（helpers:SearchTextBox）+ DockPanel パターンは MasterTokuiMenteView の既存実装に合わせた
+- BooleanToVisibilityConverter は WPF標準の System.Windows.Controls.BooleanToVisibilityConverter を採用
+- ToriLabel・IsToriVisible は SelectInputParameter 既改修済みプロパティを活用（動的ラベル変更・行表示制御）
+- MenteSearchTextBox スタイルは SearchButtonBackgroundBrush（UICommon.xaml で定義済み）を ButtonBackground として参照
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、警告4件はすべて既存）
+
+---
+
+## [2026-03-31] 10:00 ShopUriageInputViewModel.cs の実装
+### Agent
+- claude-sonnet-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：店舗売上入力ViewModel（ShopUriageInputViewModel.cs）を指示書に従って作成する
+### 実施内容
+- Cvnet10Wpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 空スケルトン(6行)から完全実装に変更。BasePlainLightMenteViewModel<Tran01Tenuri> を継承し、一覧表示・詳細表示・修正・削除・追加・明細行追加/削除・合計計算を実装
+### 技術決定 Why
+- BasePlainLightMenteViewModel を継承し LightweightSelectColumns をオーバーライドすることで、一覧取得は軽量列のみ、詳細は行選択時に遅延ロードする設計を採用
+- BaseMenteViewModel が partial void OnCurrentChanged を既に宣言済みのため、派生クラスでの再定義は不可。代わりに GoToDetail コマンドで明示的にタブ遷移する方式を採用
+- 明細行の PropertyChanged を監視して Su/Kingaku 変更時に UpdateTotals を呼ぶことで、リアルタイム合計計算を実現
+- SyncMeisaiToCurrentEdit で区分(Kubun)を全明細に伝播させ、Insert/Update 前に呼ぶことで整合性を保つ
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` → ビルド成功（エラー0、警告2件はすべて既存 MainMenuViewModel.cs）
+
+---
+
+## [2026-03-31] 18:00 ShopUriageInputView.xaml の完全実装
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：指示書 `Doc/wrk/instruction-20260331-make-traninput.txt` に従い、店舗売上入力画面（ShopUriageInputView.xaml）のXAMLを完全実装する
+### 実施内容
+- Cvnet10Wpfclient/Views/06Uriage/ShopUriageInputView.xaml: 空スケルトン(16行)から完全実装(562行)に変更。TabControl で「一覧画面」「詳細画面」の2タブ構成を実装
+  - InputBindings: F2=修正, F3=削除, F4=追加, F5=一覧取得
+  - Window.Resources: MenteSearchTextBox, MenteDataGridColumnHeader, FormLabel, FormTextBox スタイル定義
+  - ColorZone ヘッダー: 戻る/一覧取得/修正/削除/追加ボタン
+  - 一覧タブ: Card内にメッセージ+件数表示 + DataGrid(伝票No, 計上日, 店舗CD, 店舗名, 倉庫CD, 倉庫名, 合計数量, 合計金額), FrozenColumnCount=3, ダブルクリックで詳細遷移
+  - 詳細タブ: 行追加/行削除ボタン + ヘッダフォーム(伝票No, 計上日, 区分ComboBox, 店舗SearchTextBox+名称, 倉庫SearchTextBox+名称, メモ, 合計数量, 合計金額) + 明細DataGrid(No, 商品CD+検索ボタン+商品名, JAN, カラーCD+検索ボタン+カラー名, サイズCD+検索ボタン+サイズ名, 数量, 単価, 金額, 上代, 下代)
+### 技術決定 Why
+- MasterShohinMenteView.xaml のデザインパターン（ColorZone, Card, DataGrid, SearchTextBox, DataGridTemplateColumn検索ボタン）を踏襲し、プロジェクト全体のUI一貫性を維持
+- 一覧画面と詳細画面をTabControlで分離し、SelectedTabIndex バインディングでViewModelからタブ遷移を制御可能にした
+- 明細DataGridの検索ボタンは RelativeSource AncestorType=helpers:BaseWindow パターンで DataContext のコマンドにアクセス（既存パターン踏襲）
+### 確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false` → ビルド成功（エラー0、警告0）
+
+---
+
+## [2026-03-31] 17:00 ShopUriageInputView UIレイアウト変更 & Jcolsizベースのカラー/サイズ検索実装
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：指示書 `Doc/wrk/instruction-20260331-modify-traninput.txt` に従い、ShopUriageInputViewのUI改善とカラーCD/サイズCD検索をMasterShohin.Jcolsizベースに変更する
+### 実施内容
+- Cvnet10Wpfclient/Views/06Uriage/ShopUriageInputView.xaml:
+  - ボタンテキスト変更: '行追加'→'明細行追加', '行削除'→'明細行削除'
+  - 明細フォームから伝票No行を削除（タブヘッダーで既に表示済みのため）
+  - 計上日・区分・合計数量・合計金額をWrapPanelで横並びレイアウトに変更
+  - 店舗・倉庫・メモは従来通り縦並びGridで維持
+- Cvnet10Wpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs:
+  - `currentShohinJcolsiz`フィールド追加: 選択商品のJcolsizを保持
+  - `DoSelectShohin`強化: 商品選択時にJcolsizを保存し、カラー/サイズ/JANコードをクリア
+  - `DoSelectCol`修正: Jcolsiz存在時はローカルデータから重複なしカラー候補を表示
+  - `DoSelectSiz`修正: Jcolsiz存在時はローカルデータからサイズ候補を表示（選択済みカラーCDでフィルタ）、サイズ選択時にJan1をJanCodeに自動適用
+  - `ShowLocalSelectDialog`ヘルパー追加: MasterMeisho形式のローカルデータでSelectWinViewを表示
+  - `ApplyJanCodeFromJcolsiz`ヘルパー追加: カラー/サイズ両方選択時にJcolsizからJanCodeを自動適用
+- Cvnet10Wpfclient/ViewModels/Sub/SelectWinViewModel.cs:
+  - `SetLocalData<T>`メソッド追加: ローカルデータをサーバークエリなしで選択ダイアログに設定
+  - `isLocalData`フラグ追加: Init時のサーバークエリをスキップ制御
+### 技術決定 Why
+- MasterShohinColSizは独立テーブルではなく、MasterShohin.Jcolsiz列にJSON格納されているため、サーバークエリではなくローカルデータとして選択ダイアログに渡す方式を採用
+- SelectWinViewModelにSetLocalDataを追加することで、既存のSelectWinView UIを再利用しつつローカルデータ選択に対応
+- BaseWindow.OnContentRenderedがInitCommandを自動実行するため、isLocalDataフラグでサーバークエリスキップを制御
+- カラー選択時はDistinctByで重複除去、サイズ選択時は選択済みカラーCDでフィルタリングし、商品に紐づく適切な候補のみ表示
 ### 確認
 - `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、警告0）
 
 ---
 
-## [2024-06-07] 11:43 MainMenuウィンドウ右上ボタンのMaterialDesignアイコン化
-### Agent
-- GitHub Copilot : OpenAI
-### Editor
-- VS2026
-### 目的
-- ユーザーからの要望：MainMenuウィンドウ右上のテーマ切替・最小化・メニューのみ・終了ボタンのアイコンをMaterialDesignのPackIconに差し替え、より洗練されたデザインにする。
-### 実施内容
-- CvWpfclient/Views/MainMenuView.xaml: 各ボタンのContentをPackIcon(ThemeLightDark, WindowMinimize, ViewList, Close)に変更。
-### 技術決定 Why
-- MaterialDesignInXamlToolkitのPackIconを利用することで、統一感のある最新UI/UXを実現。
-### 確認
-- ビルド成功、エラーなし
-
----
-
-## [2026-04-08] 21:30 VersionTable.csのリファクタリング（POCO化・バグ修正・VersionSql外部化）
+## [2026-03-31] 22:30 ShopUriageInputView 計上日の表示フォーマット修正
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot
 ### Editor
 - OpenCode
 ### 目的
-- ユーザーからの要望：CvBase/VersionTable.csのバージョン管理ロジックをリファクタリングし、より洗練された内容にする。現在未使用のためI/Fや名前は変更可能。
+- ユーザーからの要望：ShopUriageInputViewの一覧DataGridで計上日が「YYYY/MM/DD hh:mm:ss」と時刻まで表示されているのを「YYYY/MM/DD」のみに変更
 ### 実施内容
-- CvBase/VersionTable.cs: ObservableObject継承を除去しPOCO化（partialキーワード・ObservableProperty属性・CommunityToolkit.Mvvm using削除）
-- CvBase/VersionTable.cs: 6つのprivateフィールドをpublic auto-propertyに変換（デフォルト値維持）
-- CvBase/VersionTable.cs: VersionSql静的配列をコメントアウト（参考として残置、外部から引数で受け取る設計に移行）
-- CvBase/VersionTable.cs: SubInsertRecordAsync内のバグ修正（既存レコード時にDDLを再実行→db.UpdateAsyncでレコード更新に修正）
-- CvBase/VersionTable.cs: logggerタイポをloggerに修正
+- Cvnet10Wpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧DataGridの計上日カラムのBindingに `StringFormat=yyyy/MM/dd` を追加
 ### 技術決定 Why
-- ObservableObjectはUI通知用のMVVM基盤であり、DB操作ユーティリティクラスには不要。POCOにすることで依存を削減し責務を明確化
-- line 133のdb.ExecuteAsync(item.DoSql)は、前段のループ(line 109-115)で実行済みのDDLを再実行するバグ。catch-and-continueにより表面化しなかったが、db.UpdateAsyncでレコードのメタ情報更新が正しい動作
-- VersionSql配列は既にWriteVersionInfoAsyncが引数としてInnerVersion[]を受け取る設計になっており、静的配列は冗長。コメントアウトして参考として残す
+- DateYmd8Converterは "yyyyMMdd" stringをDateTime?に変換するため、DataGridTextColumnはDateTimeのデフォルトToString()で時刻まで表示されてしまう。StringFormatで表示形式を明示的に指定することで日付のみの表示とした
 ### 確認
-- CvBaseプロジェクトビルド成功（0警告・0エラー）
-- 構造検証パス: ObservableObject関連除去確認、NPoco属性保持確認、バグ修正確認、プロパティ変換確認
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` → ビルド成功（エラー0、既存警告のみ）
 
 ---
 
-## [2026-04-09] 13:30 LoadShohinImageAsync 商品画像読込バグ修正
-### Agent
-- claude-opus-4.6 : GitHub-Copilot : Build
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：商品マスターメンテの画像読込が失敗する問題の修正。ブラウザでは表示できるURLがアプリ内では読み込めない
-### 実施内容
-- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 商品画像読込の3点修正
-  - HttpClient を遅延初期化に変更し、localhost自己署名証明書のSSL検証をスキップするよう対応
-  - HTTPリクエストにJWT認証ヘッダー（Authorization: Bearer）を付与するよう修正
-  - catch(Exception)の握り潰しをやめ、Debug.WriteLineでエラー内容を出力するよう改善
-### 技術決定 Why
-- `new HttpClient()` はデフォルトのSSL証明書検証を使用するため、開発環境のlocalhostの自己署名証明書を拒否する。ブラウザは手動で信頼できるが、HttpClientはできないため `DangerousAcceptAnyServerCertificateValidator` で対応。localhost限定の条件分岐で本番環境への影響を防止
-- gRPC呼び出しでは `GetDefaultCallContext()` で認証ヘッダーを付与しているが、画像取得用の素のHttpClientには認証情報が未設定だった。HttpRequestMessageを使い毎回最新のLoginJwtを付与する方式に変更
-- 遅延初期化 (`??=`) にした理由は、static フィールド初期化子の時点では `AppGlobal.Url` が未初期化のため
-### 確認
-- CvWpfclientビルド成功（0警告・0エラー）
-
----
-
-## [2026-04-10] 14:30 MainMenuViewに天気・カレンダーダッシュボードを実装
-### Agent
-- claude-opus-4.6 : GitHub-Copilot : Build
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：MainMenuViewに天気情報（OpenWeatherMap API）と今日の予定（Google Calendar API）を表示するダッシュボードを実装する
-### 実施内容
-- Directory.Packages.props: Google.Apis.Calendar.v3、LiveChartsCore.SkiaSharpView.WPF、SkiaSharp.Views.WPFのバージョンを中央管理に追加
-- CvWpfclient/CvWpfclient.csproj: 上記3パッケージのPackageReferenceを追加
-- CvWpfclient/Models/WeatherModels.cs: WeatherInfo、HourlyForecast、CalendarEventItemモデルクラスを新規作成
-- CvWpfclient/Services/WeatherService.cs: IWeatherService + WeatherService（OpenWeatherMap API呼び出し、MaterialDesignアイコンマッピング）を新規作成
-- CvWpfclient/Services/GoogleCalendarService.cs: IGoogleCalendarService + GoogleCalendarService（OAuth2認証、イベント取得）を新規作成
-- CvWpfclient/App.xaml.cs: WeatherService（AddHttpClient）とGoogleCalendarService（AddSingleton）のDI登録を追加
-- CvWpfclient/ViewModels/MainMenuViewModel.cs: 天気情報プロパティ（WeatherIconKind, WeatherTemperature等）、LiveCharts2のISeries[]/Axis[]バインディング、カレンダーイベントObservableCollection、30分間隔更新タイマーを追加
-- CvWpfclient/Views/MainMenuView.xaml: WeatherAndSchedulePanelの内容を削除し、左:天気カード＋右:気温推移チャート（LiveCharts2 CartesianChart）＋下:カレンダーアジェンダ（ItemsControl）に置換。lvc名前空間を追加
-- CvWpfclient/appsettings.json: OpenWeatherApiKeyとGoogleOAuthSecretの設定キーを追加
-### 技術決定 Why
-- MainMenuViewModelはXAMLで直接インスタンス化（DI外）のため、App.AppHost.Services.GetService<T>()パターンでサービスを取得。既存のAppGlobal.GetGrpcServiceパターンと同様のアプローチ
-- LiveCharts2のLineSeries with Fillでエリアチャートを表現し、SKColorでMaterialDesign風の配色を適用
-- Google OAuth未設定時（clientId=="dummy"）はカレンダー機能を自動スキップし、APIキー未設定でも天気取得失敗をcatchして画面が壊れないように設計
-- EventDateTime.DateTimeの非推奨警告をDateTimeDateTimeOffsetに修正
-### 確認
-- CvWpfclientビルド成功（0エラー、警告はNU1701のみ：既存のOpenTK/SkiaSharp互換性警告）
-
----
+## [2026-04-02] 22:00 HandleBulkInsert() の実装完成
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot
 ### Editor
 - OpenCode
 ### 目的
-- ユーザーからの要望：商品マスターメンテ画面のImage表示をWebView2に変更し、URLの画像を直接表示する方式にする
+- ユーザーからの要望：HandlerClass.cs の HandleBulkInsert() が未完成。JSON配列からデシリアライズした IEnumerable/List 型データを _db.InsertBulk() で一括挿入できるよう実装を完成させる
 ### 実施内容
-- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: HttpClientによる画像ダウンロード処理を全削除（約100行）、BitmapImage/IsShohinImageLoading/CancellationTokenSourceを削除し、Uri?型のShohinImageUriプロパティに置換。OnCurrentEditChangedCoreを簡素化
-- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: ImageコントロールをWebView2に置換、xmlns:Wpf名前空間を追加、ローディングオーバーレイ（ProgressBar）を削除、DataTriggerでUri==nullの時はWebView2をCollapsed
+- Cvnet10Base/Parameters.cs: InsertBulkParam クラスの追加（前回作業分のstashから復元）
+- Cvnet10Server/Services/HandlerClass.cs: HandleBulkInsert() を完成実装。using System.Reflection 追加、JSON配列→List<T>デシリアライズ、各要素への監査値設定、リフレクション経由で _db.InsertBulk<T>() 呼び出し
 ### 技術決定 Why
-- HttpClientでの画像ダウンロード→BitmapImage生成→Freeze処理は複雑であり、キャンセル管理・エラーハンドリングのコードが大量だった。WebView2でURLを直接表示することで、ViewModel側のHTTP通信処理を全廃し大幅に簡素化
-- JWT認証は画像エンドポイントに不要のためWebView2のデフォルト動作で対応可能
-- Microsoft.Web.WebView2パッケージはcsproj・WebpdfViewで参照済みのため追加不要
+- InsertBulkParam.ItemType はランタイム Type のため、ジェネリックメソッド InsertBulk<T> を直接呼べない。MakeGenericMethod によるリフレクション呼び出しを採用（ConvertDb.cs 等の既存パターンに合わせた BeginTransaction/CompleteTransaction のトランザクション管理も踏襲）
 ### 確認
-- CvWpfclientビルド成功（0警告・0エラー）
+- `dotnet build Cvnet10Server/Cvnet10Server.csproj` → ビルド成功（エラー0、警告0）
 
 ---
 
-## [2026-04-10] 17:15 GoogleカレンダーのOAuth2.0認証をAPI Key認証に変更
+## [2026-04-02] 18:15 DataGrid Enter キーセルナビゲーション Behavior を XAML に適用
 ### Agent
-- claude-opus-4.6 : GitHub-Copilot
+- claude-haiku-4.5 : GitHub Copilot
 ### Editor
 - OpenCode
 ### 目的
-- ユーザーからの要望：MainMenuViewModelで使用しているGoogleカレンダー連携を、Google OAuth2.0 ではなく Google API Key を使うよう変更する
+- ユーザーからの要望：ShopUriageInputView の明細行で、各項目の修正が終わり Enter を押したら次の項目に移動するようにする。汎用的な Behavior として実装。Task 1 (DataGridCellEnterNavigation.cs 新規作成) の後続タスク
 ### 実施内容
-- CvWpfclient/Services/GoogleCalendarService.cs: OAuth2.0フロー（GoogleWebAuthorizationBroker.AuthorizeAsync、FileDataStore、ClientSecrets）を全て削除し、API Key によるCalendarService初期化に置換。EnsureAuthenticatedAsync(async)をEnsureInitialized(sync)に変更。不要なusing (Google.Apis.Auth.OAuth2, Google.Apis.Util.Store, System.IO) を削除
-- CvWpfclient/appsettings.json: GoogleOAuthId、GoogleOAuthSecret設定キーを削除。GoogleApiKeyのみ残存
+- Cvnet10Wpfclient/Views/06Uriage/ShopUriageInputView.xaml: MeisaiGrid DataGrid 行426に `helpers:DataGridCellEnterNavigation.IsEnabled="True"` を追加
 ### 技術決定 Why
-- OAuth2.0はブラウザベースの認証フローが必要でユーザー体験が煩雑。API Keyはサーバーレスで公開カレンダーデータの取得に十分であり、トークン管理やリフレッシュの複雑さを排除できる
-- API Key方式はCalendarService.Initializer.ApiKeyを設定するだけで初期化でき、非同期処理も不要になるためコードが大幅に簡素化
+- `helpers:` プレフィックスはファイル先頭で既に宣言されているため、新規 XAML 名前空間追加は不要
+- DataGridCellEnterNavigation.cs は Task 1 で作成済みの既存 Behavior をアタッチするのみ
 ### 確認
-- CvWpfclientビルド成功（0エラー、既存NU1701警告のみ）
-
----
-
-## [2026-04-10] 18:30 CvWpfclient TFM変更によるOpenTK/.NET Framework依存の解消
-### Agent
-- claude-opus-4.6 : GitHub-Copilot : Build
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvWpfclientで使用しているOpenTK NuGetパッケージを.NET 10用のOpenTK.Coreに変更。他のNuGetも.NET Framework用になっていないかチェック
-### 実施内容
-- CvWpfclient/CvWpfclient.csproj: TargetFrameworkを `net10.0-windows` → `net10.0-windows10.0.19041` に変更
-### 技術決定 Why
-- OpenTK 3.3.1（.NET Framework用）はCvWpfclientの直接参照ではなく、SkiaSharp.Views.WPF 3.119.2 経由の推移的依存だった
-- SkiaSharp.Views.WPFは `net8.0-windows10.0.19041` と `.NETFramework 4.6.2` の2つのTFMアセットを持つ。TFMが `net10.0-windows`（Windows SDKバージョン未指定）の場合、NuGetが正しいアセットグループにマッチできず `.NETFramework` にフォールバックしていた
-- TFMにWindows SDKバージョン `10.0.19041` を指定することで、SkiaSharp.Views.WPFが `net8.0-windows10.0.19041` アセット（OpenTK 4.3.0 + OpenTK.GLWpfControl 4.2.3依存）を正しく選択するようになった
-- OpenTK.Coreへの直接パッケージ差し替えではなく、TFM修正が根本解決となる
-### 影響範囲
-- CvWpfclient出力パスが `net10.0-windows10.0.19041` に変更
-- 推移的依存: OpenTK 3.3.1→4.3.0、OpenTK.GLWpfControl 3.3.0→4.2.3、OpenTK.Core 4.3.0追加
-- 他の全NuGetパッケージに.NET Framework専用パッケージは無いことを確認済み
-### 確認
-- dotnet restore: NU1701警告ゼロ（変更前は3件のNU1701警告あり）
-- dotnet build: 0警告、0エラー
-
----
-
-## [2026-04-12] 14:58 CvWpfclientのNLog直利用をILoggerへ統一
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`CvWpfclient` の `App.xaml.cs` を除く NLog 直接利用箇所を `Microsoft.Extensions.Logging.ILogger` 経由へ揃え、コミットまで実施する
-### 実施内容
-- `CvWpfclient/ViewModels/00System/LoginViewModel.cs`: `NLog.LogManager.GetCurrentClassLogger()` を廃止し、`ILoggerFactory` から `ILogger<LoginViewModel>` を生成する形へ変更した
-- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `ILogger<MainMenuViewModel>` を使う形へ変更し、警告ログ呼び出しを `LogWarning` へ統一した
-- `CvWpfclient/Services/WeatherService.cs`: `ILogger<WeatherService>` を DI で受ける形へ変更し、天気取得失敗ログを `ILogger` 経由へ統一した
-- `CvWpfclient/Services/SystemSettingsStore.cs`: `ILoggerFactory` から生成した `ILogger` を使う形へ変更し、JSON読込失敗時の警告ログを `LogWarning` へ統一した
-- `CvWpfclient/Helpers/Behaviors/DataGridSelectionBehavior.cs`: static な振る舞いを保ったまま `ILoggerFactory` から取得した `ILogger` で例外ログを出す形へ変更した
-### 技術決定 Why
-- 出力先は既存の `AddNLog(...)` を維持しつつ、呼び出し側を `Microsoft.Extensions.Logging` に揃えることで、今後のフィルタ設定・DI・テスト差し替えを一元化しやすくした
-- `WeatherService` のような DI 管理クラスは `ILogger<T>` を直接注入し、ViewModel や static 補助クラスは `ILoggerFactory` から取得することで、最小差分で統一した
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-12] 15:08 App.xaml.csの起動後ログをILoggerへ移行
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`App.xaml.cs` 内でも、起動前例外用の bootstrap logger を残しつつ、起動後に動くログ出力をできるだけ `Microsoft.Extensions.Logging.ILogger` へ揃える
-### 実施内容
-- `CvWpfclient/App.xaml.cs`: 起動前例外ハンドラ用の NLog フィールドを `_bootstrapLogger` として明示し、更新確認処理の `Info/Error` を `TryGetAppLogger()` 経由の `ILogger<App>` へ変更した
-- `CvWpfclient/App.xaml.cs`: `AppHost` から安全に `ILoggerFactory` を取得する `TryGetAppLogger()` を追加し、起動後ログだけを `Microsoft.Extensions.Logging` 側へ寄せた
-### 技術決定 Why
-- `App.xaml.cs` はホスト構築前に例外が起きる可能性があるため、起動前クラッシュログを失わないよう bootstrap 用 NLog は維持した
-- 一方で `OnStartup` 後の更新確認ログは `ILogger` に統一できるため、通常運用時のフィルタ設定と出力経路を `Microsoft.Extensions.Logging` 側へ寄せた
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-15] 16:57 git履歴の統合
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：今日の変更履歴のうち `在庫更新処理の準備` から `集計処理を仮追加` までを 1 commit にまとめたい
-### 実施内容
-- `.sisyphus/rebase_master_20260415.txt`: 公開履歴書き換えの対象 commit と実施方針をメモとして記録
-- `.sisyphus/git_sequence_editor_20260415.py`: `01c9398` `d304750` `0eb9e15` を squash する interactive rebase 用スクリプトを作成
-- `.sisyphus/git_sequence_editor_reword_20260415.py`: 修正後の commit message を再調整するための rebase 用スクリプトを作成
-- `.sisyphus/git_reword_editor_20260415.py`: reword 実行時の commit message を自動設定するための editor スクリプトを作成
-- `git history`: `在庫更新処理の準備` と 2 件の `集計処理を仮追加` を 1 件の `在庫更新処理の準備と集計処理を仮追加` に統合し、後続の `NLOG系の設定を見直し` と `商品マスタメンテのタブ名称を変更` を維持したまま `origin/master` へ `--force-with-lease` で反映
-### 技術決定 Why
-- 公開済みの `master` 履歴を書き換える要件だったため、復旧可能性を残すために backup branch を先に作成し、そのうえで対象範囲だけを interactive rebase で最小限に組み替えた
-- 単純な `reset` では後続 commit の再適用管理が雑になりやすいため、対象 3 件のみを squash し、後続 2 件をそのまま積み直す手順を採用した
-### 確認
-- `git log --oneline --decorate --graph -n 6` で履歴を確認し、`f24d3f8 在庫更新処理の準備と集計処理を仮追加` の上に `9d8068e NLOG系の設定を見直し`、`f0b86b2 商品マスタメンテのタブ名称を変更` が並ぶことを確認
-- `git push --force-with-lease origin master` 実行済み
-
----
-
-## [2026-04-14] 17:56 サーバURL変更時のNLog Flush Timeout抑止
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：実行時に環境設定でサーバURLを変更した際に発生する `TaskScheduler.UnobservedTaskException` と `NLog LogFactory Flush Timeout` の原因に対応し、実装修正とコミットまで行う
-### 実施内容
-- `CvWpfclient/App.xaml.cs`: Host再起動の排他制御と Host ライフサイクル用 `CancellationTokenSource` を追加し、起動時更新確認をキャンセル可能な安全なバックグラウンド実行へ変更
-- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 天気更新処理に Host ライフサイクルトークンを渡し、再起動中の未観測例外を抑止するよう変更
-- `CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs`: 画面入力値を保存オブジェクトへ反映してから保存するよう修正し、再構築失敗時に画面を閉じないよう戻り値判定を追加
-### 技術決定 Why
-- URL変更時は既存 Host の Dispose とバックグラウンド通信が競合しやすいため、再起動前に関連処理をキャンセルしてから新しい Host へ切り替える構成にした
-- fire-and-forget のまま例外を放置すると finalizer thread で未観測例外化するため、起動時更新確認は内部で例外を完結させる実装へ変更した
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告 0、エラー 0）
-
----
-
-## [2026-04-13] 17:31 得意先住所の再分割処理を実装
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`ConvertDb.cs` の `CnvAfterMasterAddress()` で、連結済み住所から `Address1=都道府県` `Address2=市区町村` `Address3=残り` に再分割したい
-### 実施内容
-- `CvDomainLogic/ConvertDb.cs`: `CnvAfterMasterAddress()` に都道府県・市区町村を正規表現で抽出する処理を追加し、空白正規化、更新差分チェック、更新件数カウント、例外ログ文言修正を実施
-- `.sisyphus/notepads/20260413_cnv_after_master_address_regex.md`: 今回採用した正規表現方針と安全策をメモとして記録
-### 技術決定 Why
-- この関数のみで完結させる条件に合わせ、外部マスタや郵便番号APIには依存せず、先頭一致の正規表現だけで都道府県と市区町村を段階的に切り出す方針を採用した
-- 判定不能データを壊さないため、都道府県が取れない住所は更新せず、市区町村が取れない場合のみ残り全体を `Address3` に退避する安全側の挙動にした
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic/CvDomainLogic.csproj"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-10] 17:30 GoogleCalendarService および関連コードの削除
-### Agent
-- claude-opus-4.6 : GitHub-Copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvWpfclient から GoogleCalendarService とそのインターフェースを削除し、MainMenuView のカレンダー表示エリアを削除する（天気情報はそのまま残す）
-### 実施内容
-- CvWpfclient/CvWpfclient.csproj: Google.Apis.Calendar.v3 パッケージ参照を削除
-- CvWpfclient/Services/GoogleCalendarService.cs: ファイルごと削除（IGoogleCalendarService インターフェースと GoogleCalendarService クラス）
-- CvWpfclient/Models/WeatherModels.cs: CalendarEventItem クラスを削除（天気関連モデルは残存）
-- CvWpfclient/App.xaml.cs: IGoogleCalendarService の DI 登録行を削除
-- CvWpfclient/ViewModels/MainMenuViewModel.cs: CalendarEvents / CalendarStatus プロパティ、RefreshCalendarAsync メソッド、StartWeatherAndCalendar 内のカレンダー呼び出しを削除
-- CvWpfclient/Views/MainMenuView.xaml: カレンダーアジェンダ表示エリア（materialDesign:Card）を削除、StackPanel 名を WeatherPanel に変更
-### 技術決定 Why
-- Google Calendar 機能が不要となったため、NuGetパッケージ依存を含めて完全にクリーンアップした。天気情報機能は独立しているためそのまま残した
-### 確認
-- dotnet build CvWpfclient/CvWpfclient.csproj: 0警告、0エラー
+- `dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj` (Build Rule1: Windows cmd 経由) → ビルド成功（エラー0、警告あり）
 
 ---

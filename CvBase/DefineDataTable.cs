@@ -10,6 +10,12 @@ public class DefineDataTable {
 	/// </summary>
 	private static readonly ILogger<DefineDataTable> _logger = new NLogExtender<DefineDataTable>();
 
+	/// <summary>
+	/// データベースの初期化処理を行う。テーブルの存在チェックと作成を行う。
+	/// </summary>
+	/// <param name="db">データベースインスタンス</param>
+	/// <param name="isForce">強制的に作成するかどうか</param>
+	/// <returns>初期化が成功したかどうか</returns>
 	public bool Initialize(ExDatabase db, bool isForce) {
 		var ret = false;
 		// ToDo: テーブルの存在チェックと作成は、テーブルごとに行うのではなく、まとめて行うようにすること
@@ -71,5 +77,23 @@ public class DefineDataTable {
 
 		return ret;
 	}
+
+	/* 全データベースファイルの構造
+	 * システム系：Sys
+	 * マスター系：Master
+	 * トランザクション系：Tran
+	 * 集計系：Summary
+	 * 派生系：
+	 * | システム | 5 | DB 更新履歴、連番、ログイン、ログイン履歴、マスター操作履歴 |
+| マスター | 8 | システム管理、名称、社員、顧客、商品、設定、得意先、仕入先 |
+| トランザクション | 13 | 売上、仕入、移動、入金、支払、棚卸、受発注、HHT 取込 |
+| 集計 | 2 | 現在庫、年月在庫 |
+| 派生 | 1 | 商品マスタの色サイズ展開 |
+
+	 * 
+	 * 
+	 * 
+	 * 
+	 */
 
 }

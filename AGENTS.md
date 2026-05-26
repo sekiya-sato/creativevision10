@@ -33,7 +33,7 @@
 - Don’t add test programs unless explicitly asked.
 
 ## Post-Task Requirements (Log & Commit)
-- **Log**: Append to `Doc/aicording_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
+- **Log**: Append to `Doc/aicoding_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
 - **Log Format**: Folow "Log-Format" section below.
 - **Commit Format**: Folow "Commit-Format" section below.
 
