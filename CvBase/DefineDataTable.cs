@@ -18,6 +18,8 @@ public class DefineDataTable {
 	/// <returns>初期化が成功したかどうか</returns>
 	public bool Initialize(ExDatabase db, bool isForce) {
 		var ret = false;
+		// SQLiteのバージョンは 3.49.1 以降 (2025/05/27) select sqlite_version();
+
 		// ToDo: テーブルの存在チェックと作成は、テーブルごとに行うのではなく、まとめて行うようにすること
 		// ToDo: テーブルが追加された場合、事前作成が必要なものはここに追加すること
 
