@@ -161,6 +161,8 @@ app.Lifetime.ApplicationStarted.Register(() => {
 	}
 });
 
+
+
 app.MapGet("/", () =>
 $"""
 CvServer Ver.{serverVersion} is running. ({appStartTime} - {DateTime.Now})
@@ -204,5 +206,7 @@ catch (Exception ex) {
 }
 finally {
 	// 全ての非同期ログをフラッシュし、リソースを解放する
-	new NLogExtender<Program>().Shutdown();
+	var log = new NLogExtender<Program>();
+	log.LogInformation("Application is shutting down...");
+	log.Shutdown();
 }
