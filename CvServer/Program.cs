@@ -15,6 +15,7 @@ using Grpc.Net.Compression;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using NLog.Web;
@@ -147,9 +148,11 @@ app.MapGrpcService<SchedulerService>();
 app.MapGrpcService<SearchByPostalCodeService>();
 app.MapGrpcService<WeatherService>();
 var appInit = new AppGlobal();
+var database = app.Services.GetRequiredService<ExDatabase>();
 // DIコンテナから登録済みの ExDatabase を取得してサーバ起動時に必要な初期化を実行
-appInit.Init(app.Services.GetRequiredService<ExDatabase>(), app.Environment.ApplicationName, serverVersion);
+appInit.Init(database, app.Environment.ApplicationName, serverVersion);
 var appStartTime = DateTime.Now;
+const string sqliteShutdownCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
 
 app.Lifetime.ApplicationStarted.Register(() => {
 	try {
@@ -158,6 +161,40 @@ app.Lifetime.ApplicationStarted.Register(() => {
 	}
 	catch (Exception ex) {
 		logger.LogError(ex, "SQLite WAL checkpoint の定期実行登録中に例外が発生しました。");
+	}
+});
+
+app.Lifetime.ApplicationStopping.Register(() => {
+	try {
+		var checkpointResult = database.RawExecCmd(sqliteShutdownCheckpointSql).FirstOrDefault();
+		if (checkpointResult?.TryGetValue("Error", out var checkpointError) == true) {
+			logger.LogWarning("SQLite shutdown checkpoint でエラーが返されました: {Error}", checkpointError);
+		}
+		else if (checkpointResult != null) {
+			logger.LogInformation(
+				"SQLite shutdown checkpoint が完了しました。 Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
+				checkpointResult.TryGetValue("busy", out var busy) ? busy : 0,
+				checkpointResult.TryGetValue("log", out var log) ? log : 0,
+				checkpointResult.TryGetValue("checkpointed", out var checkpointed) ? checkpointed : 0);
+		}
+	}
+	catch (Exception ex) {
+		logger.LogWarning(ex, "SQLite shutdown checkpoint の実行に失敗しました。");
+	}
+	finally {
+		try {
+			database.Close();
+		}
+		catch (Exception ex) {
+			logger.LogWarning(ex, "SQLite 接続の shutdown close に失敗しました。");
+		}
+
+		try {
+			SqliteConnection.ClearAllPools();
+		}
+		catch (Exception ex) {
+			logger.LogWarning(ex, "SQLite pool cleanup の shutdown 実行に失敗しました。");
+		}
 	}
 });
 
