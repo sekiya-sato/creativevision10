@@ -43,6 +43,7 @@ public partial class ExDatabaseSqlite : ExDatabase {
 		if (Connection is SqliteConnection) {
 			var connInner = (SqliteConnection)Connection;
 			if (connInner.State == ConnectionState.Open) {
+				// DisableWalMode(connInner);
 				this.KeepConnectionAlive = false;
 				connInner.Close();
 			}
@@ -62,6 +63,15 @@ PRAGMA synchronous = NORMAL;
 			cmd.CommandText = "SELECT sqlite_version();";
 			Version = cmd.ExecuteScalar()?.ToString() ?? "";
 		}
+	}
+	static void DisableWalMode(SqliteConnection conn) {
+		using (var cmd = conn.CreateCommand()) {
+			cmd.CommandText = @"
+PRAGMA journal_mode=delete;
+";
+			cmd.ExecuteNonQuery();
+		}
+
 	}
 
 

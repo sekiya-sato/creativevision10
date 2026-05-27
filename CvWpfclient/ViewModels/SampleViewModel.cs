@@ -421,6 +421,55 @@ from MasterMeisho where Kubun=@0
 		}
 	}
 	#endregion
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task TestDatabaseClose(CancellationToken cancellationToken) {
+		try {
+			ClientLib.Cursor2Wait();
+			cancellationToken.ThrowIfCancellationRequested();
+			// 処理を実行
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg799_DatabaseClose };
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
+			if (reply?.DataMsg != null && reply?.DataType != null) {
+				TestMsg002Result = reply.DataMsg;
+			}
+		}
+		catch (OperationCanceledException) {
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			return;
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+	}
+	[RelayCommand(IncludeCancelCommand = true)]
+	public async Task TestDatabaseReOpen(CancellationToken cancellationToken) {
+		try {
+			ClientLib.Cursor2Wait();
+			cancellationToken.ThrowIfCancellationRequested();
+			// 処理を実行
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg799_DatabaseReOpen };
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
+			if (reply?.DataMsg != null && reply?.DataType != null) {
+				TestMsg002Result = reply.DataMsg;
+			}
+		}
+		catch (OperationCanceledException) {
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			return;
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+	}
+
+
+
 }
 
 /// <summary>
