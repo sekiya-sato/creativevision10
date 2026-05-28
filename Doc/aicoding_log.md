@@ -198,3 +198,28 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-05-28] 17:43 マスターメンテ印刷追加skill作成
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShainMente と MasterMeishoMente の印刷処理追加パターンを抽出し、その他の View / ViewModel へ JSON出力に代えて印刷処理を追加できる skill を作成する。qfm ファイルは A4 縦を基本とし、SJISコードで保存する
+### 実施内容
+- .agents/skills/add-print-process-master-mente/SKILL.md: `DoOutputJsonCommand` から `DoOutputPdfCommand` への置換、`FormFile` / `PrintBySqlParam` / `PrintByCsvParam` の選定、qfm の A4 縦・Shift_JIS 保存、検証手順をまとめた skill を追加
+- .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py: qfm が Shift_JIS(cp932) で読み込めること、XML宣言が Shift_JIS であること、`data.txt` CSV 入力と A4縦基本サイズであることを検証するスクリプトを追加
+- Doc/aicoding_log.md: 実施内容と確認結果を追記
+### 技術決定 Why
+- 既存の `BaseMenteViewModel` に PDF印刷コマンドと印刷パラメータ受け口があるため、横展開 skill では基底クラス変更ではなく各 View / ViewModel / qfm の追加手順に絞った
+- `MasterShainMente` の一覧SQL印刷、`MasterMeishoMente` の選択条件付き一覧SQL印刷、`MasterSysKanriMente` の単票CSV印刷を分けて記載し、対象画面ごとのデータ供給方式を選べるようにした
+- qfm の文字コード・用紙向きは手作業で崩れやすいため、Shift_JIS(cp932) と A4縦基本設定を確認する補助スクリプトを skill に同梱した
+### 確認
+- `python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterShainMente.qfm printform\MasterMeishoMente.qfm printform\MasterSysKanriMente.qfm` で既存 qfm の Shift_JIS / A4縦設定確認成功
+- `python C:\Users\user2010\.codex\skills\.system\skill-creator\scripts\quick_validate.py .agents\skills\add-print-process-master-mente` は Python 環境に `yaml` モジュールが無く実行不可
+- 代替として frontmatter の `name` / `description` / 命名規則 / TODO 残存なしを Python スクリプトで確認
+- 新規 skill ファイルが UTF-8 BOMなし・CRLF であることを確認
+- `git diff --check -- .agents\skills\add-print-process-master-mente` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+
+---
