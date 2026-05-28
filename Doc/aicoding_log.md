@@ -92,3 +92,21 @@
 - `dotnet test Tests/TestServer/TestServer.csproj` は .NET 10 / Microsoft.Testing.Platform の既存設定により `Testing with VSTest target is no longer supported...` で失敗し、今回変更起因ではないことを確認
 
 ---
+
+## 2026-05-28 12:00 MasterSysKanriMenteViewの印刷ボタン追加
+### Agent
+- gemini-3.1-pro-preview : Google
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml に MasterMeishoMenteView.xaml と同様の印刷UI（F6ボタン）を追加する
+### 実施内容
+- CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml: F6ショートカットをDoSelKubunCommandからDoOutputPdfCommandへ変更し、ヘッダーツールバーに印刷ボタンを追加
+### 技術決定 Why
+- MasterMeishoMenteViewの印刷ボタン実装（MaterialDesign）に合わせて、レイアウトの統一性を保ちながら機能を追加した。
+### 影響範囲
+- CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml のみ
+### 確認
+- WPFクライアントのビルド成功を確認。
+
+---

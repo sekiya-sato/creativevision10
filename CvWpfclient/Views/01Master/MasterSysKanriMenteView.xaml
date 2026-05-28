@@ -22,7 +22,7 @@
 			Gesture="F4" />
 		<KeyBinding Command="{Binding DoListCommand}"
 			Gesture="F5" />
-		<KeyBinding Command="{Binding DoSelKubunCommand}"
+		<KeyBinding Command="{Binding DoOutputPdfCommand}"
 			Gesture="F6" />
 	</helpers:BaseWindow.InputBindings>
 	<helpers:BaseWindow.Resources>
@@ -61,6 +61,21 @@
 								Kind="Pencil" />
 							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
 								Text="修正" />
+						</StackPanel>
+					</Button>
+					<Rectangle Width="1"
+						Margin="8,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Margin="4,0"
+						Command="{Binding DoOutputPdfCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="印刷 (F6)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Printer" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="印刷" />
 						</StackPanel>
 					</Button>
 				</StackPanel>
