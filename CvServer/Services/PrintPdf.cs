@@ -80,9 +80,7 @@ public partial class CoreService {
 		string form = string.Empty;
 		string data = "data.txt";
 		string outFile = string.Empty;
-		form = "cvnet57prnhinShouka.qfm";
-		outFile = "test_server.pdf";
-		// フォルダを clientId+timestamp PDF名をclientId+timestamp.pdf とかにしてもいいかも
+		outFile = $"outfile{DateTime.Now:yyyyMMddHHmmssfff}.pdf";
 		if (param is PrintByCsvParam printParam) {
 			form = request.FormFile;
 			File.WriteAllText(Path.Combine(resolvedDataDir, data), printParam.CsvData, Sjis);
