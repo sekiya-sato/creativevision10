@@ -174,3 +174,27 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Tests/TestServer/TestServer.csproj"` で TestServer のビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-05-28] 17:28 MasterShainMenteのSQL印刷対応
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShainMenteView に、MasterMeishoMente同様の印刷処理を追加し、印刷パラメータはSQLとする
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShainMenteViewModel.cs: `FormFile` と `PrintBySqlParam` を追加し、社員一覧の現在の検索条件に沿った `QueryListSqlParam` を印刷データとして渡すよう実装
+- CvWpfclient/Views/01Master/MasterShainMenteView.xaml: F6ショートカットとヘッダーボタンをJSON出力からPDF印刷へ変更
+- printform/MasterShainMente.qfm: 社員マスタ一覧用の印刷フォームを追加し、SQL出力列と帳票項目を対応付け
+- Doc/aicoding_log.md: 実施内容と確認結果を追記
+### 技術決定 Why
+- `BaseMenteViewModel` の `DoOutputPdfCommand` は `QueryListSqlParam` をそのまま印刷前処理へ渡せるため、MasterMeishoMenteと同じ SQL パラメータ方式に揃えた
+- 店舗・部門はシリアライズ列のため、帳票側では扱いやすい文字列になるよう SQL 内で `json_extract` と `ifnull` を使ってコードと名称を展開した
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- `CvWpfclient/Views/01Master/MasterShainMenteView.xaml` の XML 構文解析成功を確認
+- `printform/MasterShainMente.qfm` の Shift_JIS 読み込みと XML 構文解析成功を確認
+- `CvServer/server-cv00.db` に対して社員印刷SQLの SELECT を実行し、11列取得できることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+
+---

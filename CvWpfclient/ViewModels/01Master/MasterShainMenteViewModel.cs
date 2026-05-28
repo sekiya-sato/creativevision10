@@ -11,6 +11,21 @@ public partial class MasterShainMenteViewModel : Helpers.BaseCodeNameLightMenteV
 	protected override string[] AdditionalLightweightColumns => ["Mail", "VTenpo", "VBumon"];
 
 	protected override string? SelectCodeDisplayName => "社員";
+	protected override string? FormFile => "MasterShainMente.qfm";
+	protected override QueryListSqlParam? PrintBySqlParam {
+		get {
+			var query = CreateListQueryParam();
+			var sql = @$"
+select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
+Code, Name, Ryaku, Kana, Mail,
+'' Spare,
+trim(ifnull(json_extract(VTenpo,'$.Cd'),'') || ' ' || ifnull(json_extract(VTenpo,'$.Mei'),'')) Tenpo,
+trim(ifnull(json_extract(VBumon,'$.Cd'),'') || ' ' || ifnull(json_extract(VBumon,'$.Mei'),'')) Bumon
+from MasterShain {query.AddWhereOrder()}
+";
+			return new QueryListSqlParam(typeof(MasterShain), sql, query.Parameters);
+		}
+	}
 
 	[RelayCommand]
 	async Task Init() => await DoList(CancellationToken.None);
