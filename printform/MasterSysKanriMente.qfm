@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1"><position offset="0" length="10"/></item>
+			<item id="item2"><position offset="0" length="100"/></item>
+			<item id="item3"><position offset="0" length="20"/></item>
+			<item id="item4"><position offset="0" length="60"/></item>
+			<item id="item5"><position offset="0" length="60"/></item>
+			<item id="item6"><position offset="0" length="120"/></item>
+			<item id="item7"><position offset="0" length="30"/></item>
+			<item id="item8"><position offset="0" length="60"/></item>
+			<item id="item9"><position offset="0" length="60"/></item>
+			<item id="item10"><position offset="0" length="60"/></item>
+			<item id="item11"><position offset="0" length="60"/></item>
+			<item id="item12"><position offset="0" length="10"/></item>
+			<item id="item13"><position offset="0" length="10"/></item>
+			<item id="item14"><position offset="0" length="10"/></item>
+			<item id="item15"><position offset="0" length="10"/></item>
+			<item id="item16"><position offset="0" length="10"/></item>
+			<item id="item17"><position offset="0" length="12"/></item>
+			<item id="item18"><position offset="0" length="10"/></item>
+			<item id="item19"><position offset="0" length="10"/></item>
+			<item id="item20"><position offset="0" length="12"/></item>
+			<item id="item21"><position offset="0" length="10"/></item>
+			<item id="item22"><position offset="0" length="10"/></item>
+			<item id="item23"><position offset="0" length="12"/></item>
+			<item id="item24"><position offset="0" length="10"/></item>
+			<item id="item25"><position offset="0" length="20"/></item>
+			<item id="item26"><position offset="0" length="20"/></item>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+		</file>
+	</datadesc>
+	<page orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="Form1" tree="1">
+		<position x="8" y="8" width="190" height="277"/>
+		<text id="Title" valign="middle" halign="center">
+			<position x="48" y="0" width="92" height="6"/>
+			<color base="d8f0ff" transparent="0"/>
+			<border bottom="10"/>
+			<data calctype="static">システム管理マスター</data>
+			<decode datatype="string" format=""/>
+			<font size="120" style="1"/>
+		</text>
+		<text id="PrintDate" valign="middle">
+			<position x="118" y="1" width="60" height="4"/>
+			<color transparent="1"/>
+			<data calctype="date"/>
+			<decode datatype="date" format="&quot;出力日時: &quot;YYYY/MM/DD HH24:MI:SS"/>
+			<font size="80"/>
+		</text>
+		<region id="Rgn01" direction="0" tree="1">
+			<position x="0" y="10" width="180" height="252"/>
+			<color transparent="1"/>
+			<record id="Rec01" tree="1">
+				<position x="0" y="0" width="180" height="208"/>
+				<color transparent="1"/>
+				<border left="1" right="1" top="1" bottom="1"/>
+				<text id="Lbl01" valign="middle"><position x="2" y="2" width="50" height="4"/><color transparent="1"/><data calctype="static">ID</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val01"><position x="54" y="2" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item1"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl02" valign="middle"><position x="2" y="10" width="50" height="4"/><color transparent="1"/><data calctype="static">会社名</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val02"><position x="54" y="10" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item2"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl03" valign="middle"><position x="2" y="18" width="50" height="4"/><color transparent="1"/><data calctype="static">郵便番号</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val03"><position x="54" y="18" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item3"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl04" valign="middle"><position x="2" y="26" width="50" height="4"/><color transparent="1"/><data calctype="static">住所1</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val04"><position x="54" y="26" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item4"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl05" valign="middle"><position x="2" y="34" width="50" height="4"/><color transparent="1"/><data calctype="static">住所2</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val05"><position x="54" y="34" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item5"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl06" valign="middle"><position x="2" y="42" width="50" height="4"/><color transparent="1"/><data calctype="static">住所3</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val06"><position x="54" y="42" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item6"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl07" valign="middle"><position x="2" y="50" width="50" height="4"/><color transparent="1"/><data calctype="static">TEL</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val07"><position x="54" y="50" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item7"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl08" valign="middle"><position x="2" y="58" width="50" height="4"/><color transparent="1"/><data calctype="static">Mail</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val08"><position x="54" y="58" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item8"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl09" valign="middle"><position x="2" y="66" width="50" height="4"/><color transparent="1"/><data calctype="static">振込先1</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val09"><position x="54" y="66" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item9"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl10" valign="middle"><position x="2" y="74" width="50" height="4"/><color transparent="1"/><data calctype="static">振込先2</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val10"><position x="54" y="74" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item10"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl11" valign="middle"><position x="2" y="82" width="50" height="4"/><color transparent="1"/><data calctype="static">振込先3</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val11"><position x="54" y="82" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item11"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl12" valign="middle"><position x="2" y="90" width="50" height="4"/><color transparent="1"/><data calctype="static">期首年月日</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val12"><position x="54" y="90" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item12"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl13" valign="middle"><position x="2" y="98" width="50" height="4"/><color transparent="1"/><data calctype="static">締日</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val13"><position x="54" y="98" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item13"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl14" valign="middle"><position x="2" y="106" width="50" height="4"/><color transparent="1"/><data calctype="static">修正有効日数</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val14"><position x="54" y="106" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item14"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl15" valign="middle"><position x="2" y="114" width="50" height="4"/><color transparent="1"/><data calctype="static">先付有効日数</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val15"><position x="54" y="114" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item15"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl16" valign="middle"><position x="2" y="122" width="50" height="4"/><color transparent="1"/><data calctype="static">税率1</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val16"><position x="54" y="122" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item16"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl17" valign="middle"><position x="2" y="130" width="50" height="4"/><color transparent="1"/><data calctype="static">新税率切替日1</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val17"><position x="54" y="130" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item17"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl18" valign="middle"><position x="2" y="138" width="50" height="4"/><color transparent="1"/><data calctype="static">新税率1</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val18"><position x="54" y="138" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item18"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl19" valign="middle"><position x="2" y="146" width="50" height="4"/><color transparent="1"/><data calctype="static">税率2</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val19"><position x="54" y="146" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item19"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl20" valign="middle"><position x="2" y="154" width="50" height="4"/><color transparent="1"/><data calctype="static">新税率切替日2</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val20"><position x="54" y="154" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item20"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl21" valign="middle"><position x="2" y="162" width="50" height="4"/><color transparent="1"/><data calctype="static">新税率2</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val21"><position x="54" y="162" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item21"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl22" valign="middle"><position x="2" y="170" width="50" height="4"/><color transparent="1"/><data calctype="static">税率3</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val22"><position x="54" y="170" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item22"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl23" valign="middle"><position x="2" y="178" width="50" height="4"/><color transparent="1"/><data calctype="static">新税率切替日3</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val23"><position x="54" y="178" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item23"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl24" valign="middle"><position x="2" y="186" width="50" height="4"/><color transparent="1"/><data calctype="static">新税率3</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val24"><position x="54" y="186" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item24"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl25" valign="middle"><position x="2" y="194" width="50" height="4"/><color transparent="1"/><data calctype="static">登録日</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val25"><position x="54" y="194" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item25"/><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Lbl26" valign="middle"><position x="2" y="202" width="50" height="4"/><color transparent="1"/><data calctype="static">修正日</data><decode datatype="string" format=""/><font size="75"/></text>
+				<text id="Val26"><position x="54" y="202" width="122" height="4"/><color transparent="1"/><border bottom="1"/><data calctype="item" datasrc="item26"/><decode datatype="string" format=""/><font size="75"/></text>
+			</record>
+		</region>
+	</page>
+</printstream>

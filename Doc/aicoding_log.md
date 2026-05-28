@@ -115,7 +115,7 @@
 
 ---
 
-## 2026-05-28 12:00 MasterSysKanriMenteViewの印刷ボタン追加
+## [2026-05-28] 12:00 MasterSysKanriMenteViewの印刷ボタン追加
 ### Agent
 - gemini-3.1-pro-preview : Google
 ### Editor
@@ -130,5 +130,27 @@
 - CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml のみ
 ### 確認
 - WPFクライアントのビルド成功を確認。
+
+---
+
+## [2026-05-28] 16:25 MasterSysKanriMenteの印刷帳票対応
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：printform フォルダの MasterMeishoMente.qfm MasterShohinMente.qfm を参考にし、MasterSysKanriMenteView からの印刷フォーマットを作成する。また、MasterSysKanriMenteViewModel の印刷処理を MasterMeishoMenteViewModel を参考にして組み込む。修正対象は、MasterSysKanriMenteView.xaml MasterSysKanriMenteViewModel.cs MasterSysKanriMente.qfm の3ファイル。計画を立て、修正、ログ、commitまで
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs: `FormFile` と `PrintByCsvParam` を追加し、`Current` と `Jsub` 3件分を1レコードCSVへ安全に展開する印刷データ生成を実装
+- printform/MasterSysKanriMente.qfm: システム管理マスタの単票帳票を新規作成し、CSV 26 項目と表示フィールドを対応付け
+- Doc/aicoding_log.md: 印刷帳票対応の実施内容と確認結果を追記
+### 技術決定 Why
+- `MasterSysman.Jsub` は `List<MasterSysTax>` のシリアライズ列で、画面も `Current.*` に直接バインドしているため、SQL 再構成より `Current` のスナップショットを `PrintByCsvParam` で出力する方が画面表示とのズレを避けやすい
+- `DoOutputPdfCommand` は `BaseMenteViewModel` に共通化済みのため、帳票差分を ViewModel と QFM に閉じ込める最小差分を選んだ
+### 確認
+- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs` の LSP diagnostics が 0 件であることを確認
+- `python3` による `printform/MasterSysKanriMente.qfm` の XML 構文解析成功を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+- Oracle レビューで `Current` からの `PrintByCsvParam` 方針が MasterSysKanriMente では最も安全と確認
 
 ---
