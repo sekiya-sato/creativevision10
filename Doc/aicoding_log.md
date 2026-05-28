@@ -16,6 +16,26 @@
 
 ---
 
+## [2026-05-28] 16:45 MasterSysKanriMente帳票のA4縦レイアウト調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：printform/MasterSysKanriMente.qfm を、printform/MasterMeishoMente.qfm を参考に、A4縦におさまるようレイアウトを修正する。上部タイトル、日付、ページ番号、Rgn01 の位置とサイズは MasterMeishoMente.qfm に合わせる
+### 実施内容
+- printform/MasterSysKanriMente.qfm: page サイズを MasterMeishoMente.qfm と同じ A4縦向けの幅・高さへ変更
+- printform/MasterSysKanriMente.qfm: タイトル、出力日付、ページ番号の位置・サイズ・フォントを MasterMeishoMente.qfm のヘッダー構成に合わせ、ページ番号を追加
+- printform/MasterSysKanriMente.qfm: Rgn01 を MasterMeishoMente.qfm と同じ `x=0, y=10, width=150, height=248` に変更し、明細内のラベル・値欄も横幅内に収まるよう調整
+### 技術決定 Why
+- 帳票の外枠とリージョンを既存の MasterMeishoMente.qfm に合わせることで、印刷時の用紙幅超過を避けつつ、既存帳票との見た目の一貫性を保つ
+### 確認
+- `git diff --check -- printform/MasterSysKanriMente.qfm` で空白エラーがないことを確認
+- PowerShell の XML 読み込みで `printform/MasterSysKanriMente.qfm` の XML 構文解析成功を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功を確認。CreativeVision10 実行中の DLL ロックによりコピー再試行 warning は発生したが、0 error で完了
+
+---
+
 ## [2026-05-28] 15:08 MasterMeishoMenteViewModelのselectedKubun空振り時エラー回避
 ### Agent
 - GPT-5.4 : OpenAI
