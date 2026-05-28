@@ -87,10 +87,20 @@ qfm は UTF-8 ではなく Shift_JIS(cp932) で保存する。変更後は付属
 python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterXxxMente.qfm
 ```
 
+`validate_qfm.py` は Python 3 で実行できる。WSL / Linux / macOS など `python` が未設定の環境では `python3` を使う。
+
+```bash
+python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py printform/MasterXxxMente.qfm
+```
+
 複数ファイルもまとめて確認できる。
 
 ```powershell
 python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterShainMente.qfm printform\MasterMeishoMente.qfm
+```
+
+```bash
+python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py printform/MasterShainMente.qfm printform/MasterMeishoMente.qfm
 ```
 
 ## 確認手順

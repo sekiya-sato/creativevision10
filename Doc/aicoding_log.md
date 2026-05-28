@@ -36,6 +36,23 @@
 
 ---
 
+## [2026-05-28] 17:54 add-print-process-master-menteのpython3使用法追記
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`.agents/skills/add-print-process-master-mente/scripts/validate_qfm.py` が python3 で使えるか確認し、使えれば skill.md に使用法を追記する
+### 実施内容
+- .agents/skills/add-print-process-master-mente/SKILL.md: `validate_qfm.py` が Python 3 で実行可能である旨と、`python3` を使う単一ファイル・複数ファイルの実行例を追記
+- Doc/aicoding_log.md: 実施内容と確認結果を追記
+### 技術決定 Why
+- `validate_qfm.py` は shebang が `python3` で、標準ライブラリのみを使う CLI スクリプトのため、WSL / Linux / macOS では `python3` を明示した使用例を併記した方が環境差異で迷いにくい
+### 確認
+- `python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py printform/MasterShainMente.qfm printform/MasterMeishoMente.qfm printform/MasterSysKanriMente.qfm` で既存 qfm 3 件の検証成功
+
+---
+
 ## [2026-05-28] 15:08 MasterMeishoMenteViewModelのselectedKubun空振り時エラー回避
 ### Agent
 - GPT-5.4 : OpenAI
