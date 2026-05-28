@@ -16,6 +16,24 @@
 
 ---
 
+## [2026-05-28] 14:38 PrintPdfのCSV保存処理前処理移設
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`PrintPdfAsync` の `printPdf()` 内にある CSV 保存処理および SQL からの CSV 保存処理を `printPre()` へ移し、`PrintPdf.cs` のみを修正して log, commit まで行う
+### 実施内容
+- CvServer/Services/PrintPdf.cs: `PrintByCsvParam` と `QueryListSqlParam` の CSV 保存処理を `printPdf()` から `printPre()` へ移設し、`printPdf()` は既存の `data.txt` を使う印刷実行に専念する構成へ整理
+- Doc/aicoding_log.md: 今回の `PrintPdf.cs` 修正内容と確認結果を追記
+### 技術決定 Why
+- ユーザー要望どおり変更対象を `PrintPdf.cs` のみに限定しつつ、CSV 準備を `PrintPdfAsync` の前処理ステップへ寄せることで、印刷本処理では既に生成済みの `data.txt` を消費する責務分離に揃えた
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
+- `CvServer/Services/PrintPdf.cs` の LSP diagnostics が 0 件であることを確認
+
+---
+
 ## [2026-05-28] 11:57 BaseMenteViewModelのPDF出力共通化とMasterMeisho印刷対応
 ### Agent
 - GPT-5.4 : OpenAI

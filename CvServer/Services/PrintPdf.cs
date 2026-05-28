@@ -83,16 +83,9 @@ public partial class CoreService {
 		outFile = $"outfile{DateTime.Now:yyyyMMddHHmmssfff}.pdf";
 		if (param is PrintByCsvParam printParam) {
 			form = request.FormFile;
-			File.WriteAllText(Path.Combine(resolvedDataDir, data), printParam.CsvData, Sjis);
 		}
 		else if (param is QueryListSqlParam listParam) {
 			form = request.FormFile;
-			var sql = (listParam.Sql ?? string.Empty).ReplaceServerDate();
-			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
-			// dataList を CSV 形式に変換して保存
-			using (var writer = new StreamWriter(Path.Combine(resolvedDataDir, data), false, Sjis)) {
-				dataList.WriteDynamicCsv(writer);
-			}
 		}
 		else {
 			// エラー: パラメータの型が不正
@@ -130,9 +123,31 @@ public partial class CoreService {
 	/// </summary>
 	private PrintResult printPre(PrintOperation request) {
 		var start = DateTime.Now;
-		var count = SleepTaskAsync(1);
+		var printServer = _configuration.GetSection("PrintServer");
+		string contentRootPath = _env.ContentRootPath;
+		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
+		string configuredDataDir = printServer.GetValue<string>("PrintDataDir") ?? ".";
+		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
+			? configuredBaseDir
+			: Path.Combine(contentRootPath, configuredBaseDir));
+		string resolvedDataDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredDataDir));
+		string data = "data.txt";
+		if (param is PrintByCsvParam printParam) {
+			File.WriteAllText(Path.Combine(resolvedDataDir, data), printParam.CsvData, Sjis);
+		}
+		else if (param is QueryListSqlParam listParam) {
+			var sql = (listParam.Sql ?? string.Empty).ReplaceServerDate();
+			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
+			using (var writer = new StreamWriter(Path.Combine(resolvedDataDir, data), false, Sjis)) {
+				dataList.WriteDynamicCsv(writer);
+			}
+		}
+		else {
+			return new PrintResult(false, "不正なパラメータの型");
+		}
 		var timespan = DateTime.Now - start;
-		var ret = new PrintResult(true, $"Print前処理(ダミー処理): {timespan}");
+		var ret = new PrintResult(true, $"Print前処理(CSV準備): {timespan}");
 		return ret;
 	}
 
