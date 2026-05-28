@@ -16,6 +16,28 @@
 
 ---
 
+## [2026-05-28] 16:15 printform qfm作成用skill追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：printform フォルダの qfm ファイルをつくるための skill を作成する
+### 実施内容
+- .agents/skills/create-printform-qfm/SKILL.md: printform 配下の Shift_JIS qfm 作成、CSV item mapping、ViewModel の `FormFile` / 印刷データ配線、実行時配置確認を扱う skill 本体を追加
+- .agents/skills/create-printform-qfm/references/qfm-print-flow.md: `PrintPdf` から qfm / `data.txt` / ViewModel override までの印刷フローとレビュー観点を整理
+- .agents/skills/create-printform-qfm/scripts/validate_qfm.py: qfm の Shift_JIS、XML、`data.txt` 参照、item 定義、`datasrc` 整合を確認する検証スクリプトを追加
+- .agents/skills/create-printform-qfm/agents/openai.yaml: skill 一覧用の表示メタデータを追加
+### 技術決定 Why
+- qfm は独自帳票XMLと Shift_JIS CSV の位置項目が密接に結びつくため、作成手順だけでなく `datasrc` と `datarecord` の最低限の機械検証を同梱し、印刷ボタンだけ追加して帳票データ配線が欠ける事故を防ぐ構成にした
+### 確認
+- `python .agents\skills\create-printform-qfm\scripts\validate_qfm.py printform\MasterMeishoMente.qfm` で既存 qfm の XML / item 参照整合を確認（未使用 item の警告のみ）
+- `validate_qfm.py` を `compile()` で構文確認し、`SKILL.md` の frontmatter を独自チェックで確認
+- `git diff --check -- .agents\skills\create-printform-qfm` で今回追加した skill 配下の whitespace 問題がないことを確認
+- `quick_validate.py` は実行環境に `PyYAML` が無く `ModuleNotFoundError: No module named 'yaml'` で実行不可だったため、上記の代替確認を実施
+
+---
+
 ## [2026-05-28] 15:08 MasterMeishoMenteViewModelのselectedKubun空振り時エラー回避
 ### Agent
 - GPT-5.4 : OpenAI

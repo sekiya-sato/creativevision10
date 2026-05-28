@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create PrintForm QFM"
+  short_description: "printform qfm files for PDF output"
+  default_prompt: "Use $create-printform-qfm to create a new printform qfm file and wire it to the print PDF flow."
