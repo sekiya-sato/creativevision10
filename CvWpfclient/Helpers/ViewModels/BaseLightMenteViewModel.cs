@@ -26,7 +26,10 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 			ApplyCurrentToEditor(newValue);
 			return;
 		}
-
+		if (newValue == null) {
+			//CancelPendingDetailLoad();
+			return;
+		}
 		ApplyCurrentToEditor(newValue);
 		if (newValue.Id <= 0) {
 			CancelPendingDetailLoad();
