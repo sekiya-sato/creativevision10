@@ -23,6 +23,23 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseCodeNameLightMente
 	bool suppressSelectedKubunChanged;
 
 	protected override string? ListOrder => "Kubun,Code";
+	protected override string? FormFile => "cvnet_meisho.qfm";
+	protected override CvBase.QueryListSqlParam? QueryListSqlParam {
+		get {
+			var kubunCode = SelectedKubun?.Code;
+			if (string.IsNullOrWhiteSpace(kubunCode)) {
+				return null;
+			}
+
+			var sql = @"
+select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
+Kubun||' '||KubunName kubunstr,
+Code,Name,Ryaku,'' rank,Odr,Kana
+from MasterMeisho where Kubun=@0
+";
+			return new CvBase.QueryListSqlParam(typeof(MasterMeisho), sql, [kubunCode]);
+		}
+	}
 
 	protected override string? ListWhere {
 		get {

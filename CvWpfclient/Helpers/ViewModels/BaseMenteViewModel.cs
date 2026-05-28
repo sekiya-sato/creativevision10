@@ -5,6 +5,7 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvWpfclient.ViewModels.Sub;
+using Grpc.Core;
 using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.ObjectModel;
@@ -72,6 +73,9 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 
 	protected virtual string[]? ListParams => null;
 	protected virtual Window? ActiveWindow => ClientLib.GetActiveView(this);
+	protected virtual string? FormFile => null;
+	protected virtual CvBase.PrintByCsvParam? PrintByCsvParam => null;
+	protected virtual CvBase.QueryListSqlParam? QueryListSqlParam => null;
 
 	protected virtual bool ConfirmAction(string message) =>
 		MessageEx.ShowQuestionDialog(message, owner: ActiveWindow) == MessageBoxResult.Yes;
@@ -385,6 +389,97 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 
 		ct.ThrowIfCancellationRequested();
 		await File.WriteAllTextAsync(dialog.FileName, outstr, ct);
+	}
+
+	[RelayCommand(IncludeCancelCommand = true)]
+	protected async Task DoOutputPdf(CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+
+		var formFile = FormFile;
+		var csvParam = PrintByCsvParam;
+		var sqlParam = QueryListSqlParam;
+		if (string.IsNullOrWhiteSpace(formFile)) {
+			Message = "印刷フォームファイルが設定されていません";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
+
+		if (csvParam is null && sqlParam is null) {
+			Message = "印刷データが設定されていません";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
+
+		if (csvParam is not null && sqlParam is not null) {
+			Message = "印刷データは CSV と SQL のどちらか一方だけ設定してください";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
+
+		try {
+			ClientLib.Cursor2Wait();
+			var param = (object?)csvParam ?? sqlParam!;
+			var dataType = csvParam is not null ? typeof(CvBase.PrintByCsvParam) : typeof(CvBase.QueryListSqlParam);
+			var msg = new PrintOperation {
+				DataType = dataType,
+				DataMsg = Common.SerializeObject(param),
+				FormFile = formFile,
+			};
+
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			string? pdfdata = null;
+			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
+				ct.ThrowIfCancellationRequested();
+				Message = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
+				if (streamMsg.Status < 0) {
+					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
+					Message = $"PDF出力失敗: {errorDetail}";
+					MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+					return;
+				}
+
+				if (streamMsg.IsCompleted) {
+					pdfdata = streamMsg.DataMsg;
+					break;
+				}
+			}
+
+			if (string.IsNullOrWhiteSpace(pdfdata)) {
+				Message = "PDF出力結果が取得できませんでした";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+				return;
+			}
+
+			var viewTitle = string.IsNullOrWhiteSpace(ActiveWindow?.Title)
+				? "PDF表示"
+				: $"{ActiveWindow.Title} - PDF表示";
+			var view = new Views.Sub.WebpdfView { Title = viewTitle };
+			if (view.DataContext is not WebpdfViewModel vm) {
+				Message = "PDF表示画面の初期化に失敗しました";
+				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+				return;
+			}
+
+			vm.Pdfdata = $"{AppGlobal.Url}/wrk/{pdfdata}";
+			ClientLib.ShowDialogView(view, this, IsDialog: false);
+			view.Owner = null;
+			Message = $"PDFを表示しました: {pdfdata}";
+		}
+		catch (OperationCanceledException cancel) {
+			Message = $"Cancelエラー：{cancel.Message}";
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			Message = "PDF出力をキャンセルしました";
+			return;
+		}
+		catch (Exception ex) {
+			Message = $"PDF出力失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
 	}
 
 }
