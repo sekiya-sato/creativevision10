@@ -26,7 +26,7 @@
 
 ## Coding & WPF Standards
 - **Style**: `.editorconfig` (CS), `Settings.XamlStyler` (XAML). File-scoped namespaces.
-- Use **UTF-8**
+- Use **UTF-8** (qfm files is SJIS)
 - **WPF Work**: Load `wpf-project-guide`. Inspect `App.xaml` & `ResourceDictionary` first for UI issues.
 - **Tools**: Use `check-xaml`, `update-design-mente`, `change-sublist-to-observablecollection` appropriately.
 - Avoid excessive dependency injection.
