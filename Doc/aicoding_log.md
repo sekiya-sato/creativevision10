@@ -16,6 +16,25 @@
 
 ---
 
+## [2026-05-28] 15:08 MasterMeishoMenteViewModelのselectedKubun空振り時エラー回避
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MasterMeishoMenteViewModel で、selectedKubun を変更したときに、該当データが1件もない場合でも実行時エラーが出ないよう修正する。ViewModelのみの変更。log,commitまで
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterMeishoMenteViewModel.cs: 初期選択区分設定で `KubunList.First(...)` を `FirstOrDefault(...)` に置換し、`BRD` 区分未存在時でも先頭要素へ安全にフォールバックするよう修正
+- Doc/aicoding_log.md: 今回の ViewModel 修正内容と確認結果を追記
+### 技術決定 Why
+- `KubunList.Count == 0` の既存ガードは維持しつつ、`BRD` 区分が0件のときだけ `First(...)` の例外を避ける最小差分に留めることで、ViewModel以外へ影響を広げずに実行時エラーを解消した
+### 確認
+- `CvWpfclient/ViewModels/01Master/MasterMeishoMenteViewModel.cs` の LSP diagnostics が 0 件であることを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+- Oracle レビューで今回の1行修正が報告事象に対する正しい最小修正であることを確認
+
+---
+
 ## [2026-05-28] 14:38 PrintPdfのCSV保存処理前処理移設
 ### Agent
 - GPT-5.4 : OpenAI

@@ -59,7 +59,7 @@ from MasterMeisho where Kubun=@0
 			return;
 		}
 		suppressSelectedKubunChanged = true;
-		SelectedKubun = KubunList.First(c => c.Code == "BRD") ?? KubunList.FirstOrDefault();
+		SelectedKubun = KubunList.FirstOrDefault(c => c.Code == "BRD") ?? KubunList.FirstOrDefault();
 		suppressSelectedKubunChanged = false;
 		if (SelectedKubun != null) {
 			await RefreshListForSelectedKubunAsync(ct);
