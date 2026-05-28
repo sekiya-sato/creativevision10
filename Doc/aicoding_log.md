@@ -152,3 +152,25 @@
 - Oracle レビューで `Current` からの `PrintByCsvParam` 方針が MasterSysKanriMente では最も安全と確認
 
 ---
+
+## [2026-05-28] 17:05 CvServerワークファイル定期削除タスク追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：CvServer の SchedulerService に、appsettings.*.json の PrintServer:PrintOutputDir を対象として10分毎に2時間以上古いワークファイルを削除するタスクを追加し、ログ、コミットまで行う
+### 実施内容
+- CvServer/Services/SchedulerService.cs: 10分毎の `RegisterWorkFileCleanupTask()` を追加し、PrintServer の `PrintBaseDir` / `PrintOutputDir` を印刷処理と同じ基準で解決して古いファイルを削除する処理を実装
+- CvServer/Program.cs: サーバ起動時に既存の SQLite WAL checkpoint と合わせてワークファイル削除タスクを登録するよう変更
+- Tests/TestServer/TestServer.cs: SchedulerService の DI 依存追加に合わせて既存テストの生成処理を更新
+### 技術決定 Why
+- 削除対象の古さは `WorkFileCleanupTargetAgeHours` として内部定義し、後から時間だけを修正しやすくした
+- 作成日時と更新日時のうち新しい方を基準にすることで、作成は古いが直近更新されたワークファイルを誤って削除しないようにした
+- 印刷処理の出力先解決とずれないよう、`PrintBaseDir` を考慮したうえで `PrintOutputDir` を絶対パス化する構成にした
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Tests/TestServer/TestServer.csproj"` で TestServer のビルド成功（0 warnings / 0 errors）を確認
+
+---

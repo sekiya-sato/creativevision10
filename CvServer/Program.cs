@@ -158,9 +158,10 @@ app.Lifetime.ApplicationStarted.Register(() => {
 	try {
 		var schedulerService = ActivatorUtilities.CreateInstance<SchedulerService>(app.Services);
 		schedulerService.RegisterDailySqliteWalCheckpointTask();
+		schedulerService.RegisterWorkFileCleanupTask();
 	}
 	catch (Exception ex) {
-		logger.LogError(ex, "SQLite WAL checkpoint の定期実行登録中に例外が発生しました。");
+		logger.LogError(ex, "スケジューラ定期実行登録中に例外が発生しました。");
 	}
 });
 

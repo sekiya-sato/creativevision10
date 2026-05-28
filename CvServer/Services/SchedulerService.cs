@@ -1,6 +1,8 @@
 using CodeShare;
 using CvBase;
 using CvDomainLogic;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
@@ -17,17 +19,25 @@ public class SchedulerService : CodeShare.IScheduler {
 	private const int TaskNotFound = 4;
 	private const int InternalError = 9;
 	private const string SqliteWalCheckpointSql = "PRAGMA optimize; PRAGMA wal_checkpoint(TRUNCATE); vacuum;"; // ANALYZE 処理追加 2026/05/25 // sqlite3 org.db ".backup backup.db"
+	private const int WorkFileCleanupTargetAgeHours = 2;
 	public const string DailyWalCheckpointCronExpression = "0 2 * * *";
 	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint";
+	public const string WorkFileCleanupCronExpression = "*/10 * * * *";
+	public const string WorkFileCleanupTaskName = "Work file cleanup";
 
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;
 	private readonly ExDatabase _db;
+	private readonly IConfiguration _configuration;
+	private readonly IWebHostEnvironment _env;
+	private static readonly TimeSpan WorkFileCleanupTargetAge = TimeSpan.FromHours(WorkFileCleanupTargetAgeHours);
 
-	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler, ExDatabase db) {
+	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler, ExDatabase db, IConfiguration configuration, IWebHostEnvironment env) {
 		_logger = logger;
 		_scheduler = scheduler;
 		_db = db;
+		_configuration = configuration;
+		_env = env;
 	}
 
 	/// <summary>
@@ -157,6 +167,35 @@ public class SchedulerService : CodeShare.IScheduler {
 		}
 	}
 
+	public SchedulerResult RegisterWorkFileCleanupTask() {
+		try {
+			var schedule = CrontabSchedule.Parse(WorkFileCleanupCronExpression);
+			var guid = _scheduler.AddTask(
+				crontabSchedule: schedule,
+				action: ct => ExecuteWorkFileCleanupTaskAsync(WorkFileCleanupTaskName, ct).GetAwaiter().GetResult());
+
+			_logger.LogInformation(
+				"ワークファイル削除の定期実行を登録しました。 TaskId={TaskId}, TaskName={TaskName}, Cron={Cron}, TargetAge={TargetAge}",
+				guid,
+				WorkFileCleanupTaskName,
+				WorkFileCleanupCronExpression,
+				WorkFileCleanupTargetAge);
+
+			return new SchedulerResult {
+				Result = Success,
+				Detail = "正常終了",
+				TaskId = guid.ToString(),
+			};
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "ワークファイル削除の定期実行登録に失敗しました。");
+			return new SchedulerResult {
+				Result = InternalError,
+				Detail = "ワークファイル削除の定期実行登録に失敗しました。",
+			};
+		}
+	}
+
 	private async Task ExecuteTaskAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
 		switch (request.TaskType) {
 			case SchedulerTaskType.LogOnly:
@@ -240,6 +279,78 @@ public class SchedulerService : CodeShare.IScheduler {
 		}
 
 		return Task.CompletedTask;
+	}
+
+	private Task ExecuteWorkFileCleanupTaskAsync(string taskName, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+
+		var outputDir = ResolvePrintOutputDir();
+		if (!Directory.Exists(outputDir)) {
+			_logger.LogInformation("ワークファイル削除をスキップしました。 TaskName={TaskName}, OutputDir={OutputDir}, Reason=DirectoryNotFound", taskName, outputDir);
+			return Task.CompletedTask;
+		}
+
+		var threshold = DateTime.Now - WorkFileCleanupTargetAge;
+		var deletedCount = 0;
+		var skippedCount = 0;
+		var failedCount = 0;
+
+		try {
+			foreach (var filePath in Directory.EnumerateFiles(outputDir, "*", SearchOption.TopDirectoryOnly)) {
+				cancellationToken.ThrowIfCancellationRequested();
+
+				try {
+					var fileInfo = new FileInfo(filePath);
+					var latestFileTime = fileInfo.LastWriteTime > fileInfo.CreationTime
+						? fileInfo.LastWriteTime
+						: fileInfo.CreationTime;
+
+					if (latestFileTime > threshold) {
+						skippedCount++;
+						continue;
+					}
+
+					fileInfo.Delete();
+					deletedCount++;
+				}
+				catch (Exception ex) {
+					failedCount++;
+					_logger.LogWarning(ex, "ワークファイル削除に失敗しました。 TaskName={TaskName}, FilePath={FilePath}", taskName, filePath);
+				}
+			}
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			_logger.LogInformation("ワークファイル削除をキャンセルしました。 TaskName={TaskName}, OutputDir={OutputDir}", taskName, outputDir);
+			throw;
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "ワークフォルダの走査に失敗しました。 TaskName={TaskName}, OutputDir={OutputDir}", taskName, outputDir);
+		}
+
+		_logger.LogInformation(
+			"ワークファイル削除完了: TaskName={TaskName}, OutputDir={OutputDir}, Threshold={Threshold}, Deleted={Deleted}, Skipped={Skipped}, Failed={Failed}",
+			taskName,
+			outputDir,
+			threshold,
+			deletedCount,
+			skippedCount,
+			failedCount);
+
+		return Task.CompletedTask;
+	}
+
+	private string ResolvePrintOutputDir() {
+		var printServer = _configuration.GetSection("PrintServer");
+		var contentRootPath = _env.ContentRootPath;
+		var configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
+		var configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
+		var resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
+			? configuredBaseDir
+			: Path.Combine(contentRootPath, configuredBaseDir));
+
+		return Path.GetFullPath(Path.IsPathRooted(configuredOutputDir)
+			? configuredOutputDir
+			: Path.Combine(resolvedBaseDir, configuredOutputDir));
 	}
 
 	public static Dictionary<string, object> ExecuteSqliteWalCheckpoint(ExDatabase db) {

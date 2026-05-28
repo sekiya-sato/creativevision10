@@ -51,7 +51,7 @@ public class CvnetCoreServiceTests {
 		// サービスを作成
 		_service = new CoreService(logger, config, env, httpAccessor, _db);
 		_scheduler = new NCrontab.Scheduler.Scheduler(NullLogger<NCrontab.Scheduler.Scheduler>.Instance);
-		_schedulerService = new SchedulerService(schedulerLogger, _scheduler, _db);
+		_schedulerService = new SchedulerService(schedulerLogger, _scheduler, _db, config, env);
 	}
 
 	[TestCleanup]
