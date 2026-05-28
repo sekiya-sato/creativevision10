@@ -235,7 +235,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			var msg = new PrintOperation {
 				DataType = typeof(PrintByCsvParam),
 				DataMsg = Common.SerializeObject(param),
-				FormFile = "cvnet_meisho.qfm",
+				FormFile = "MasterMeishoMente.qfm",
 			};
 			var sql = @"
 select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
@@ -246,7 +246,7 @@ from MasterMeisho where Kubun=@0
 			var msg2 = new PrintOperation {
 				DataType = typeof(QueryListSqlParam),
 				DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(MasterMeisho), sql, ["BRD"])),
-				FormFile = "cvnet_meisho.qfm",
+				FormFile = "MasterMeishoMente.qfm",
 			};
 			var pdfdata = "";
 			await foreach (var streamMsg in coreService.PrintPdfAsync(msg2, AppGlobal.GetDefaultCallContext(cancellationToken))) {

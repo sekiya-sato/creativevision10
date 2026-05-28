@@ -23,7 +23,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseCodeNameLightMente
 	bool suppressSelectedKubunChanged;
 
 	protected override string? ListOrder => "Kubun,Code";
-	protected override string? FormFile => "cvnet_meisho.qfm";
+	protected override string? FormFile => "MasterMeishoMente.qfm";
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {
 			var kubunCode = SelectedKubun?.Code;
