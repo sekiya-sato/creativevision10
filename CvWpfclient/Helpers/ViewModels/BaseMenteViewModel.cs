@@ -74,8 +74,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected virtual string[]? ListParams => null;
 	protected virtual Window? ActiveWindow => ClientLib.GetActiveView(this);
 	protected virtual string? FormFile => null;
-	protected virtual CvBase.PrintByCsvParam? PrintByCsvParam => null;
-	protected virtual CvBase.QueryListSqlParam? QueryListSqlParam => null;
+	protected virtual PrintByCsvParam? PrintByCsvParam => null;
+	protected virtual QueryListSqlParam? PrintBySqlParam => null;
 
 	protected virtual bool ConfirmAction(string message) =>
 		MessageEx.ShowQuestionDialog(message, owner: ActiveWindow) == MessageBoxResult.Yes;
@@ -397,7 +397,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 
 		var formFile = FormFile;
 		var csvParam = PrintByCsvParam;
-		var sqlParam = QueryListSqlParam;
+		var sqlParam = PrintBySqlParam;
 		if (string.IsNullOrWhiteSpace(formFile)) {
 			Message = "印刷フォームファイルが設定されていません";
 			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
@@ -419,7 +419,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		try {
 			ClientLib.Cursor2Wait();
 			var param = (object?)csvParam ?? sqlParam!;
-			var dataType = csvParam is not null ? typeof(CvBase.PrintByCsvParam) : typeof(CvBase.QueryListSqlParam);
+			var dataType = csvParam is not null ? typeof(PrintByCsvParam) : typeof(QueryListSqlParam);
 			var msg = new PrintOperation {
 				DataType = dataType,
 				DataMsg = Common.SerializeObject(param),
