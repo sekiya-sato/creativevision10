@@ -108,7 +108,7 @@ public partial class CoreService {
 		string outfileName = outFile;
 		_logger.LogWarning($"Print処理開始: ContentRoot={contentRootPath}, PrintBaseDir={configuredBaseDir}, ResolvedBaseDir={resolvedBaseDir}");
 		_logger.LogWarning($"    FormPath={formPath}");
-		_logger.LogWarning($"    DataPath={formPath}");
+		_logger.LogWarning($"    DataPath={dataPath}");
 		_logger.LogWarning($"    OutputDir={resolvedOutputDir}, File={outfileName}");
 		var context = new PrintContext {
 			BasePath = string.Empty,
@@ -132,9 +132,9 @@ public partial class CoreService {
 	/// </summary>
 	private PrintResult printPre(PrintOperation request) {
 		var start = DateTime.Now;
-		var count = SleepTaskAsync(10);
+		var count = SleepTaskAsync(1);
 		var timespan = DateTime.Now - start;
-		var ret = new PrintResult(true, $"Print前処理(ダミーSQL処理): {timespan}");
+		var ret = new PrintResult(true, $"Print前処理(ダミー処理): {timespan}");
 		return ret;
 	}
 

@@ -215,14 +215,16 @@ public static class CommonExtentions {
 }
 
 public static class DynamicCsvExtensions {
-	public static void WriteDynamicCsv<T>(this IEnumerable<T> records, TextWriter writer)
+	public static void WriteDynamicCsv<T>(this IEnumerable<T> records, TextWriter writer, bool includeHeader = false)
 		where T : IDictionary<string, object> {
 		if (!records.Any())
 			return;
 
 		var first = records.First();
-		var header = string.Join(",", first.Keys.Select(EscapeCsvField));
-		writer.WriteLine(header);
+		if (includeHeader) {
+			var header = string.Join(",", first.Keys.Select(EscapeCsvField));
+			writer.WriteLine(header);
+		}
 
 		foreach (var record in records) {
 			var line = string.Join(",", record.Values.Select(v => EscapeCsvField(v?.ToString())));
