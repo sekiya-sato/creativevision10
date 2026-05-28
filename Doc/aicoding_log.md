@@ -16,6 +16,26 @@
 
 ---
 
+## [2026-05-28] 11:57 BaseMenteViewModelのPDF出力共通化とMasterMeisho印刷対応
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Doc\wrk\instruction-20260528-Update-BaseMenteViewModel.txt` の内容を実行し、BaseMenteViewModel へ PDF 出力共通処理を追加して MasterMeishoMenteView の F6 を印刷へ切り替え、log, commit まで行う
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: `FormFile` / `PrintByCsvParam` / `QueryListSqlParam` の共通パラメータと `DoOutputPdfCommand` を追加し、`PrintPdfAsync` のストリーム結果を `WebpdfView` で開く共通印刷処理を実装
+- CvWpfclient/ViewModels/01Master/MasterMeishoMenteViewModel.cs: `FormFile` に `cvnet_meisho.qfm` を設定し、`SelectedKubun?.Code` を使う指定 SQL の `QueryListSqlParam` override を追加
+- CvWpfclient/Views/01Master/MasterMeishoMenteView.xaml: F6 とツールバーを `DoOutputPdfCommand` / 印刷表示 / `Printer` アイコンへ変更
+### 技術決定 Why
+- 指示書どおり PDF 出力の共通化対象を `BaseMenteViewModel` に限定し、帳票ごとの差分は各 ViewModel の override で差し込める形にすることで、他のメンテ画面へ横展開しやすい最小差分に留めた
+- サーバ側 `PrintPdf` の固定ファイル名問題は既存実装由来のため今回は範囲を広げず、クライアント側の共通化と MasterMeisho 画面配線の更新に集中した
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+- XAML 更新箇所について `DoOutputPdfCommand` の F6 バインド、印刷ボタン表示、既存 Resource 参照に問題がないことを確認
+
+---
+
 ## [2026-05-27] 14:56 CvServer shutdown時のSQLiteクリーンアップ追加
 ### Agent
 - GPT-5.4 : OpenAI
