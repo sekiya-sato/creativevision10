@@ -16,6 +16,25 @@
 
 ---
 
+## [2026-05-29] 10:25 MasterSysKanriMente印刷フォームの項目間隔調整
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`printform/MasterSysKanriMente.qfm` の印刷結果をもとに、項目名と項目データの間を適切に縮め、全体を見やすく調整する。対象は MasterSysKanriMente.qfm の1ファイルのみとし、修正、ログ、コミットまで行う
+### 実施内容
+- printform/MasterSysKanriMente.qfm: 単票明細のラベル列を `x=4,width=30`、データ列を `x=36,width=110` に統一し、右端位置を維持しながら項目名とデータ開始位置の間隔を縮小
+### 技術決定 Why
+- 既存の行間・用紙設定・データ項目順は印刷内容と対応済みのため変更せず、視認性に直接効く左右座標だけを調整した
+- データ列の右端を既存と同じ `x=146` に保ち、住所や会社名など長い値の表示幅を狭めないようにした
+### 確認
+- `python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterSysKanriMente.qfm` で qfm の Shift_JIS / A4縦設定確認成功
+- `git diff --check -- printform\MasterSysKanriMente.qfm` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-28] 16:45 MasterSysKanriMente帳票のA4縦レイアウト調整
 ### Agent
 - GPT-5 : OpenAI : Codex
