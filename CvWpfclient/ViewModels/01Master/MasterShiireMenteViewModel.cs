@@ -13,6 +13,32 @@ public partial class MasterShiireMenteViewModel : Helpers.BaseCodeNameLightMente
 	string title = "仕入先マスターメンテ";
 
 	protected override string? SelectCodeDisplayName => "仕入先";
+	protected override string? FormFile => "MasterShiireMente.qfm";
+	protected override QueryListSqlParam? PrintBySqlParam {
+		get {
+			var query = CreateListQueryParam();
+			var sql = @$"
+select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
+Code, Name, Ryaku, Kana,
+trim(ifnull(json_extract(VShain,'$.Cd'),'') || ' ' || ifnull(json_extract(VShain,'$.Mei'),'')) Shain,
+RateProper, RateSale,
+PostalCode, Address1, Address2, Address3, Tel,
+case when Shime1 = 99 then '末日' when Shime1 > 0 then cast(Shime1 as text) else '' end Shime1Text,
+case when Shime2 = 99 then '末日' when Shime2 > 0 then cast(Shime2 as text) else '' end Shime2Text,
+case when Shime3 = 99 then '末日' when Shime3 > 0 then cast(Shime3 as text) else '' end Shime3Text,
+case when PayMonth > 0 then cast(PayMonth as text) else '' end PayMonthText,
+case when PayDay = 99 then '末日' when PayDay > 0 then cast(PayDay as text) else '' end PayDayText,
+case IsPay when 1 then 'する' else 'しない' end IsPayText,
+trim(ifnull(json_extract(VPayMethod,'$.Cd'),'') || ' ' || ifnull(json_extract(VPayMethod,'$.Mei'),'')) PayMethod,
+trim(ifnull(json_extract(VPaysaki,'$.Cd'),'') || ' ' || ifnull(json_extract(VPaysaki,'$.Mei'),'')) Paysaki,
+ifnull(json_extract(Jdetail,'$.Bank1'),'') BankAccount1,
+ifnull(json_extract(Jdetail,'$.Bank2'),'') BankAccount2,
+ifnull(json_extract(Jdetail,'$.Bank3'),'') BankAccount3
+from MasterShiire {query.AddWhereOrder()}
+";
+			return new QueryListSqlParam(typeof(MasterShiire), sql, query.Parameters);
+		}
+	}
 
 	[RelayCommand]
 	async Task Init() => await DoList(CancellationToken.None);

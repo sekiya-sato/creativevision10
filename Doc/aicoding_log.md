@@ -259,3 +259,30 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-05-29] 10:42 MasterShiireMenteのSQL印刷対応
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShiireMenteView および ViewModel に PDF印刷機能を追加し、1レコードを複数行・1行複数項目で配置した qfm を作成して、skill 適用、修正、ログ、コミットまで行う
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs: `FormFile` と `PrintBySqlParam` を追加し、現在の一覧検索条件を反映した `QueryListSqlParam` で仕入先印刷データを渡すよう実装
+- CvWpfclient/Views/01Master/MasterShiireMenteView.xaml: F6ショートカットとヘッダーボタンを JSON出力から PDF印刷へ変更し、アイコンと表示文言を印刷に統一
+- printform/MasterShiireMente.qfm: A4縦・Shift_JIS の仕入先マスタ一覧フォームを追加し、1レコードをコード/名称、更新情報、住所、支払条件、振込先の複数行に分けて26項目を配置
+- Doc/aicoding_log.md: 実施内容と確認結果を追記
+### 技術決定 Why
+- 既存の `BaseMenteViewModel` に `DoOutputPdfCommand` と SQL印刷パラメータ受け口があるため、`add-print-process-master-mente` skill に従い、基底クラスは変更せず対象 View / ViewModel / qfm の差分に閉じた
+- 担当者、支払方法、支払先、振込先はシリアライズ列のため、帳票側で扱いやすい文字列になるよう SQL 内で `json_extract` と `ifnull` を使って展開した
+- qfm の桁数は項目名・既存モデルの桁定義に合わせ、コード12桁、名称80桁、略称/カナ100桁、住所60桁、電話20桁、振込先30桁などの項目長にした
+### 確認
+- `python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterShiireMente.qfm` で Shift_JIS / A4縦設定確認成功
+- `CvWpfclient/Views/01Master/MasterShiireMenteView.xaml` の XML 構文解析成功を確認
+- `printform/MasterShiireMente.qfm` の Shift_JIS 読み込みと XML 構文解析成功を確認
+- qfm の `item1` から `item26` と帳票 `datasrc` の26項目対応を確認
+- `CvServer/server-cv00.db` に対して仕入先印刷SQLの SELECT を実行し、26列取得できることを確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+
+---
