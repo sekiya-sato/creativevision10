@@ -1,5 +1,6 @@
 # プロジェクトの目的
 
+
 このプロジェクト**Creative Vision 10**は、アパレル会社向け販売管理ドメインを対象としたオープンソースパッケージの開発を目的としています。
 
 アパレル業界では、販売管理システムの導入が遅れているケースが多く、特に中小企業ではコストや技術的なハードルが高いことが課題となっています。
@@ -12,6 +13,9 @@ AIアシスタントは [AGENTS.md](AGENTS.md) を参照してください。
 
 セットアップガイドは [setup.md](setup.md) 、変更履歴は [changelog.md](changelog.md) 。
 
+<p style="text-align: right;">
+<img width="100" height="98" alt="cv10-orange100" src="Doc/cv10-orange100.png" />
+</p>
 
 # 目次
 
