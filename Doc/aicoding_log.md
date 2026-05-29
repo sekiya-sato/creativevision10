@@ -286,3 +286,25 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-05-29] 11:16 add-print-process-master-mente skillの印刷SQL注意点追記
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShiireMente の印刷追加作業を踏まえ、`add-print-process-master-mente` skill に SQL の `Vdc` / `Vdu` の扱い、JSON列の扱い、qfm 作成時の注意点を追記する
+### 実施内容
+- .agents/skills/add-print-process-master-mente/SKILL.md: SQL印刷の列設計、`__serverdate__` による `Vdc` / `Vdu` 変換、`SerializedColumn` / JSON列の `json_extract` 展開、qfm の複数行レコード配置と項目長・表示幅の注意点、実DBでの列数確認手順を追記
+- Doc/aicoding_log.md: 実施内容と確認結果を追記
+### 技術決定 Why
+- 今回の `MasterShiireMente` では、ticks値・JSON文字列・多数項目の1行詰め込みが帳票崩れの原因になりやすいため、次回の横展開時に最初から確認できるよう skill の実装手順へ直接追記した
+- skill は別ファイルへ分割するほど長くないため、参照頻度の高い注意点を `SKILL.md` 本体に残した
+### 確認
+- `git diff --check -- .agents\skills\add-print-process-master-mente\SKILL.md` で空白エラーなしを確認
+- Python による frontmatter の `name` / `description`、TODO 残存なし、147行であることを確認
+- `.agents/skills/add-print-process-master-mente/SKILL.md` が CRLF であることを確認
+- `python C:\Users\user2010\.codex\skills\.system\skill-creator\scripts\quick_validate.py .agents\skills\add-print-process-master-mente` は Python 環境に `yaml` モジュールが無く実行不可
+- skill / ログのみの変更のため、CvWpfclient ビルドは省略
+
+---
