@@ -13,8 +13,9 @@ AIアシスタントは [AGENTS.md](AGENTS.md) を参照してください。
 
 セットアップガイドは [setup.md](setup.md) 、変更履歴は [changelog.md](changelog.md) 。
 
-<img width="200" height="200" alt="cv10-logo" src="Doc/cv10-logo202605.png" style="margin-left: 200px;" />
-<img width="100" height="98" alt="cv10-orange100" src="Doc/cv10-orange100.png" style="margin-left: 200px;" />
+<img  alt="cv10-logo" src="Doc/cv10logo01.png" style="margin-left: 30px;width: 10%; height: auto;" />
+<img  alt="cv10-logo" src="Doc/cv10logo02.png" style="margin-left: 30px;width: 25%; height: auto;" />
+<img width="100" height="98" alt="cv10-orange100" src="Doc/cv10-orange100.png" style="margin-left: 30px;" />
 
 # 目次
 
