@@ -8,7 +8,7 @@ namespace CodeShare;
 /// ファイル送受信メッセージ
 /// </summary>
 [DataContract]
-public sealed class FileOperation {
+public sealed record class FileOperation {
 	/// <summary>
 	/// ファイル名
 	/// [File name]

@@ -41,7 +41,7 @@ public sealed class InfoApiKey {
 /// <summary>
 /// アプリケーション基本設定
 /// </summary>
-public sealed class ApplicationSettings {
+public sealed record class ApplicationSettings {
 	public string? OpenWeatherApiKey { get; set; }
 
 }
@@ -49,7 +49,7 @@ public sealed class ApplicationSettings {
 /// <summary>
 /// 日本郵便Biz API設定
 /// </summary>
-public sealed class JapanPostBizSettings {
+public sealed record class JapanPostBizSettings {
 	public string? ClientId { get; set; }
 
 	public string? SecretKey { get; set; }

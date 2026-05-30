@@ -10,7 +10,7 @@ public interface IJsonPayload {
 }
 
 
-public sealed class QueryOneParam {
+public sealed record class QueryOneParam {
 	public string? Where { get; }
 	public string[] Parameters { get; }
 	public Type ItemType { get; }
@@ -28,7 +28,7 @@ public sealed class QueryOneParam {
 		ItemType = itemType;
 	}
 }
-public sealed class QuerybyIdParam {
+public sealed record class QuerybyIdParam {
 	public long Id { get; }
 	public Type ItemType { get; }
 	public QuerybyIdParam(Type itemType, long id) {
@@ -37,7 +37,7 @@ public sealed class QuerybyIdParam {
 	}
 }
 
-public class QueryListParam {
+public record class QueryListParam {
 	public string? Where { get; }
 	public string? Order { get; }
 	public string[] Parameters { get; }
@@ -61,14 +61,14 @@ public class QueryListParam {
 		MaxCount = maxCount;
 	}
 }
-public sealed class QueryListSimpleParam : QueryListParam {
+public sealed record class QueryListSimpleParam : QueryListParam {
 	public QueryListSimpleParam(Type itemType, string? where = null, string? order = null, string[]? parameters = null, int? maxCount = null)
 		: base(itemType, where, order, parameters, maxCount) {
 	}
 }
 
 
-public sealed class QueryListSqlParam {
+public sealed record class QueryListSqlParam {
 	public string? Sql { get; }
 	public string[] Parameters { get; }
 	public Type ItemType { get; }

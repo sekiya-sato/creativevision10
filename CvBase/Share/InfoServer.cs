@@ -3,7 +3,7 @@ namespace CvBase.Share;
 /// <summary>
 /// サーババージョン情報
 /// </summary>
-public sealed class InfoServer {
+public sealed record class InfoServer {
 	public string Product { get; set; } = "CvServer";
 	/// <summary>
 	/// バージョン文字列

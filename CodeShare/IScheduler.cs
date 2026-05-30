@@ -19,7 +19,7 @@ public enum SchedulerTaskType {
 /// [Request for adding a scheduled task]
 /// </summary>
 [DataContract]
-public sealed class AddSchedulerTaskRequest {
+public sealed record class AddSchedulerTaskRequest {
 	[DataMember(Order = 1)]
 	public string CronExpression { get; set; } = "* * * * *";
 	[DataMember(Order = 2)]
@@ -35,13 +35,13 @@ public sealed class AddSchedulerTaskRequest {
 /// [Request for removing a scheduled task]
 /// </summary>
 [DataContract]
-public sealed class RemoveSchedulerTaskRequest {
+public sealed record class RemoveSchedulerTaskRequest {
 	[DataMember(Order = 1)]
 	public string TaskId { get; set; } = string.Empty;
 }
 
 [DataContract]
-public sealed class SchedulerResult {
+public sealed record class SchedulerResult {
 	[DataMember(Order = 1)]
 	public int Result { get; set; }
 	[DataMember(Order = 2)]

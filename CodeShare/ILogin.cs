@@ -8,7 +8,7 @@ namespace CodeShare;
 /// ログインリクエスト
 /// </summary>
 [DataContract]
-public sealed class LoginRequest {
+public sealed record class LoginRequest {
 	[DataMember(Order = 1)]
 	public required string Name { get; set; }
 	[DataMember(Order = 2)]
@@ -24,7 +24,7 @@ public sealed class LoginRequest {
 /// ログインリプライ
 /// </summary>
 [DataContract]
-public sealed class LoginReply {
+public sealed record class LoginReply {
 	/// <summary>
 	/// JSON Web Token Message
 	/// </summary>
@@ -52,7 +52,7 @@ public sealed class LoginReply {
 /// ログインリフレッシュ
 /// </summary>
 [DataContract]
-public sealed class LoginRefresh {
+public sealed record class LoginRefresh {
 	/// <summary>
 	/// 認証済みのトークン
 	/// [Authenticated token]
