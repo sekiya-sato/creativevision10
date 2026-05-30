@@ -35,6 +35,7 @@
 - 実行
 
 	 dotnet exec CvServer.dll
+	 (ASPNETCORE_ENVIRONMENT=Production などを指定すると、環境ごとの設定が適用される)
 
 - 簡易実行環境
 

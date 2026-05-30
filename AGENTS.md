@@ -4,7 +4,6 @@
 - **Roles**: OpenCode (Complex/Multi-file/Docs), Copilot (Inline/Small edits), Codex(General).
 - **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
 - **Files**: Solution `creativevision10.slnx`. Use UTF-8 (No BOM) & CRLF.
-- **Browser Automation**: Use `agent-browser`. Run `agent-browser --help` for all commands.
 
 ## Priority Workflow (IMPORTANT)
 **Analyze → Plan (TODO-LIST) → Execute → Verify → Write-Log → Git-Commit**
