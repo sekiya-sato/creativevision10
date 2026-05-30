@@ -308,3 +308,33 @@
 - skill / ログのみの変更のため、CvWpfclient ビルドは省略
 
 ---
+## [2026-05-30] 17:54 class-to-record監査のA優先候補をrecord化
+### Agent
+- GPT-5.4-mini : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`.omo/drafts/class-to-record-audit.md` を参考に、"A. 高優先で record 化を提案できる型" の class から record 修正を実装し、修正・ログ・commit まで行う
+### 実施内容
+- CodeShare/ILogin.cs: `LoginRequest` / `LoginReply` / `LoginRefresh` を `sealed record class` 化
+- CodeShare/IScheduler.cs: `AddSchedulerTaskRequest` / `RemoveSchedulerTaskRequest` / `SchedulerResult` を `sealed record class` 化
+- CodeShare/IFileOperation.cs: `FileOperation` を `sealed record class` 化
+- CvBase/Parameters.cs: `QueryOneParam` / `QuerybyIdParam` / `QueryListParam` / `QueryListSimpleParam` / `QueryListSqlParam` を `record class` 化
+- CvBase/Share/InfoServer.cs: `InfoServer` を `record class` 化
+- CvBase/Share/InfoApiKey.cs: `ApplicationSettings` / `JapanPostBizSettings` を `record class` 化
+- CvPrints/IPrintService.cs: `PrintContext` / `PrintProduct` を `record class` 化
+- CvWpfclient/ViewModels/Sub/SelectParameter.cs: `SelectParameter` を `sealed record class` 化
+### 技術決定 Why
+- object initializer 互換を壊さないため、positional record ではなく property ベースの record class に統一した
+- `InfoApiKey` 配下の設定型は内部で再代入するため、record 化しつつ setter を残した
+- gRPC / DataContract / JSON / WPF の既存利用を壊さない範囲に限定し、値主体の DTO・parameter bag だけを優先して置換した
+### 影響範囲 (省略可)
+- CodeShare / CvBase / CvPrints / CvWpfclient の DTO・パラメータ型
+### 確認
+- `dotnet build CodeShare/CodeShare.csproj --no-restore` 成功（0 warnings / 0 errors）
+- `dotnet build CvBase/CvBase.csproj --no-restore` 成功（0 warnings / 0 errors）
+- `dotnet build CvPrints/CvPrints.csproj --no-restore` 成功
+- `dotnet build CvWpfclient/CvWpfclient.csproj --no-restore` 成功（0 warnings / 0 errors）
+- `GIT_MASTER=1 git status --short` で作業ツリーが clean であることを確認
+
+---
