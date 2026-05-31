@@ -93,35 +93,35 @@ NuGet のバージョンは `Directory.Packages.props` で集中管理し、依�
 
 # プロジェクト別概要
 
-## CodeShare
+## CodeShare (Layer 0)
 - gRPC コントラクト（サービス/メッセージ）をコードファーストで定義。
 - サーバー `CvServer` とクライアント `CvWpfclient` が参照し、型安全通信を担保。
 
-## CvAsset
+## CvAsset (Layer 0)
 - 複数プロジェクトに共通して使われる軽量ユーティリティ、定数、補助クラスを集約。
 
-## CvBase
+## CvBase (Layer 1)
 - 共通モデル、NPoco ベースの DB エンティティ、基底インフラを提供。サーバー `CvServer` とクライアント `CvWpfclient` が参照。
 
-## CvBase-DB
-- CvBaseMariadb (MariaDB用) / CvBaseOracle (Oracle用) / CvBaseSqlite (SQLite用)
+## CvBase-DB (Layer 1.2)
+- データベースを共通で扱うための汎用DB I/F CvBaseSqlite (SQLite用) / CvBaseMariadb (MariaDB用) / CvBaseOracle (Oracle用)
 
-## CvDomainLogic
-- ExDatabase（汎用 DB I/F）とドメインロジック、変換バッチなどを提供。ビジネスロジックの実装をこの層に集約。
+## CvDomainLogic (Layer 1.5)
+- ExDatabase（汎用DB I/F）とドメインロジック、変換バッチなどを提供。ビジネスロジックの実装をこの層に集約。
 
-## CvPrints
+## CvPrints (Layer 1.4)
 - 印刷関連のロジックやテンプレートを提供するプロジェクト。
 - プロジェクトファイルの`PrintEnable`が`true`の場合は印刷機能が有効、`false`の場合は無効になる。
 
-## CvServer
+## CvServer (Layer 2)
 - gRPC サーバアプリ。`CvnetCoreService` が `ICvnetCore` を実装して API を公開。Tableに対するCRUD操作を提供。
 - JSON シリアライズ設定（`JsonSerializerSettings`）を共通化し、`protobuf-net.Grpc` と併用。
 - `Microsoft.AspNetCore.Authentication.JwtBearer` による認証基盤を利用。
 
-## CvWpfclient
+## CvWpfclient (Layer 2)
 - `CommunityToolkit.Mvvm` を利用した WPF クライアント。
 - `CvServer` の gRPC API を呼び出し、販売管理のマスタメンテ、受発注、仕入、売上、移動、棚卸などの業務機能を提供。
 
-## Tests.*
+## Tests.* (Layer 3)
 - テスト用プロジェクト（ユニット/結合テストの実装場所）。
 
