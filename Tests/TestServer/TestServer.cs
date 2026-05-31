@@ -139,8 +139,9 @@ public class CvnetCoreServiceTests {
 	[TestMethod]
 	public void ExecuteSqliteWalCheckpoint_ReturnsCheckpointRow() {
 		var dbPath = Path.Combine(Path.GetTempPath(), $"sqlite-wal-checkpoint-{Guid.NewGuid():N}.db");
+		ExDatabaseSqlite? db = null;
 		try {
-			using var db = ExDatabaseSqlite.GetDbConn(dbPath);
+			db = ExDatabaseSqlite.GetDbConn(dbPath);
 			db.Execute("CREATE TABLE IF NOT EXISTS Sample(Id INTEGER PRIMARY KEY, Name TEXT NOT NULL);");
 			db.Execute("INSERT INTO Sample(Name) VALUES (@0);", "checkpoint-test");
 
@@ -151,15 +152,34 @@ public class CvnetCoreServiceTests {
 			Assert.IsTrue(result.ContainsKey("checkpointed"));
 		}
 		finally {
-			if (File.Exists(dbPath)) {
-				File.Delete(dbPath);
+			db?.Close();
+			db?.Dispose();
+			(db?.Connection as SqliteConnection)?.Close();
+			SqliteConnection.ClearAllPools();
+			DeleteFileWithRetry(dbPath);
+			DeleteFileWithRetry(dbPath + "-wal");
+			DeleteFileWithRetry(dbPath + "-shm");
+		}
+	}
+
+	static void DeleteFileWithRetry(string path) {
+		for (int i = 0; i < 5; i++) {
+			if (!File.Exists(path)) {
+				return;
 			}
-			if (File.Exists(dbPath + "-wal")) {
-				File.Delete(dbPath + "-wal");
+
+			try {
+				File.Delete(path);
+				return;
 			}
-			if (File.Exists(dbPath + "-shm")) {
-				File.Delete(dbPath + "-shm");
+			catch (IOException) when (i < 4) {
+				SqliteConnection.ClearAllPools();
+				System.Threading.Thread.Sleep(100);
 			}
+		}
+
+		if (File.Exists(path)) {
+			File.Delete(path);
 		}
 	}
 }

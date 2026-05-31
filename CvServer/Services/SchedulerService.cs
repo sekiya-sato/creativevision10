@@ -18,7 +18,9 @@ public class SchedulerService : CodeShare.IScheduler {
 	private const int InvalidTaskId = 3;
 	private const int TaskNotFound = 4;
 	private const int InternalError = 9;
-	private const string SqliteWalCheckpointSql = "PRAGMA optimize; PRAGMA wal_checkpoint(TRUNCATE); vacuum;"; // ANALYZE 処理追加 2026/05/25 // sqlite3 org.db ".backup backup.db"
+	private const string SqliteOptimizeSql = "PRAGMA optimize;";
+	private const string SqliteWalCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
+	private const string SqliteVacuumSql = "VACUUM;";
 	private const int WorkFileCleanupTargetAgeHours = 2;
 	public const string DailyWalCheckpointCronExpression = "0 2 * * *";
 	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint";
@@ -354,11 +356,27 @@ public class SchedulerService : CodeShare.IScheduler {
 	}
 
 	public static Dictionary<string, object> ExecuteSqliteWalCheckpoint(ExDatabase db) {
+		EnsureRawExecSucceeded(db.RawExecCmd(SqliteOptimizeSql), SqliteOptimizeSql);
 		var result = db.RawExecCmd(SqliteWalCheckpointSql);
+		EnsureRawExecSucceeded(result, SqliteWalCheckpointSql);
 		if (result.Count == 0) {
 			return new Dictionary<string, object>();
 		}
-		return result.First();
+		var checkpointResult = result.First();
+		if (GetCheckpointLongValue(checkpointResult, "busy") == 0) {
+			EnsureRawExecSucceeded(db.RawExecCmd(SqliteVacuumSql), SqliteVacuumSql);
+		}
+		return checkpointResult;
+	}
+
+	private static void EnsureRawExecSucceeded(List<Dictionary<string, object>> result, string sql) {
+		if (result.Count == 0) {
+			return;
+		}
+
+		if (result[0].TryGetValue("Error", out var error) && error != null) {
+			throw new InvalidOperationException($"SQLite maintenance SQL failed: {sql} :: {error}");
+		}
 	}
 
 	private static object? GetCheckpointValue(Dictionary<string, object> checkpointResult, string key) {
