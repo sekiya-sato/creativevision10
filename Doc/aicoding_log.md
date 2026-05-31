@@ -16,6 +16,40 @@
 
 ---
 
+## [2026-05-31] 20:24 SQLite 3.38+ SQL監査とメンテナンスSQL見直し
+### Agent
+- GPT-5.4 : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ソリューション全体で SQL(SQLite 3.38以降) 構文を見直し、リストアップを .omo フォルダに保存し、改善提案を行い、必要箇所を修正してログと commit まで行う
+### 実施内容
+- CvDomainLogic/SummaryDb.cs: `json_each` を使う集計SQLの暗黙結合を `CROSS JOIN` に明示化し、SQLite 監査時に読み取りやすい形へ整理
+- CvServer/Services/SchedulerService.cs: `PRAGMA optimize` / `wal_checkpoint(TRUNCATE)` / `VACUUM` を単文実行へ分離し、`RawExecCmd` の Error 行を失敗扱いに変更、checkpoint が busy の場合は `VACUUM` を回避
+- Tests/TestServer/TestServer.cs: SQLite checkpoint テストの temp DB cleanup を安定化し、既存テストがファイルロックで落ちないよう調整
+- Tests/TestServer/SummaryDbTests.cs: `SummaryDb.CalcSummaryStockCumulative()` の CTE + window 関数更新が SQLite で成立することを確認するテストを追加
+- .omo/sqlite-3.38-audit/00-scope.md: 監査対象・除外・SQLite 3.38 基準を整理
+- .omo/sqlite-3.38-audit/01-inventory.md: 棚卸し結果、修正対象、未修正理由を一覧化
+- .omo/sqlite-3.38-audit/02-findings-and-fix-plan.md: 改善提案と修正方針を記録
+- .omo/sqlite-3.38-audit/03-dynamic-sql-risks.md: `QueryListSqlParam` 系の未保証範囲を記録
+- .omo/sqlite-3.38-audit/04-verification.md: 実施した build/test/grep 検証結果と既知制約を記録
+### 技術決定 Why
+- SQLite 3.38 監査では 3.39 専用構文の除去だけでなく、`RawExecCmd` に複文を流した場合の結果集合曖昧さを避ける必要があったため、maintenance SQL を単文分離した
+- `wal_checkpoint(TRUNCATE)` 後に常に `VACUUM` を続行すると busy 時の運用負荷が高いため、checkpoint 結果を見て `busy=0` のときだけ実行する構成へ寄せた
+- `SummaryDb` の変更は構文互換性より監査容易性の改善が主目的のため、意味を変えない `CROSS JOIN` 明示化に留めた
+- 動的SQLは静的監査だけで完全保証できないため、未保証範囲を `.omo` に分離して将来の追加監査前提を明確化した
+### 影響範囲 (省略可)
+- CvDomainLogic / CvServer / Tests/TestServer / .omo 監査記録
+### 確認
+- `grep` で `RIGHT JOIN` / `FULL OUTER JOIN` / `IS DISTINCT FROM` / `IS NOT DISTINCT FROM` が未検出であることを確認
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe` 実行成功（6件成功 / 0失敗）を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Tests/TestServer/TestServer.csproj"` 成功を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj /p:UseAppHost=false"` 成功を確認
+- `dotnet test Tests/TestServer/TestServer.csproj` は .NET 10 / Microsoft.Testing.Platform の既存設定により `VSTest target is no longer supported` で失敗することを確認
+- `dotnet build creativevision10.slnx` は既存の solution-level restore/build 問題で失敗するため、今回は関連プロジェクト直接 build で代替した
+
+---
+
 ## [2026-05-29] 10:25 MasterSysKanriMente印刷フォームの項目間隔調整
 ### Agent
 - GPT-5 : OpenAI
