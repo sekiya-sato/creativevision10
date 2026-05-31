@@ -102,8 +102,8 @@ SELECT
   SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item2})   AS InQty,
   SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item3})   AS OutQty,
   SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item4})   AS TransitQty
-FROM {tableName} AS t,
-     json_each(t.Jmeisai) AS j
+FROM {tableName} AS t
+     CROSS JOIN json_each(t.Jmeisai) AS j
 WHERE t.DenDay BETWEEN @0 AND @1
 GROUP BY
   SumMonth,
