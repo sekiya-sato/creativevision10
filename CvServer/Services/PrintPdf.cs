@@ -137,7 +137,7 @@ public partial class CoreService {
 			File.WriteAllText(Path.Combine(resolvedDataDir, data), printParam.CsvData, Sjis);
 		}
 		else if (param is QueryListSqlParam listParam) {
-			var sql = (listParam.Sql ?? string.Empty).ReplaceServerDate();
+			var sql = (listParam.Sql ?? string.Empty).ReplaceServerSqlQuery();
 			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
 			using (var writer = new StreamWriter(Path.Combine(resolvedDataDir, data), false, Sjis)) {
 				dataList.WriteDynamicCsv(writer);

@@ -206,10 +206,10 @@ public static class CommonExtentions {
 		/// </summary>
 		/// <param name="sql"></param>
 		/// <returns></returns>
-		public string ReplaceServerDate() {
+		public string ReplaceServerSqlQuery() {
 			var replaced = ServerDateRegex.Replace(str,
 				match => $"strftime('%Y%m%d%H%M%S',datetime(({match.Groups[1].Value} - 621355968000000000) / 10000000, 'unixepoch','localtime'))");
-			return ServerImgRegex.Replace(replaced, match => $"img/{match.Groups[1].Value}.img");
+			return ServerImgRegex.Replace(replaced, match => $"'img/{match.Groups[1].Value}.img'");
 		}
 	}
 	private static readonly Regex ServerDateRegex = new Regex(@"__serverdate__\(([^)]+)\)", RegexOptions.Compiled);
