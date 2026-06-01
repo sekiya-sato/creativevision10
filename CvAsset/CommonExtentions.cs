@@ -202,16 +202,18 @@ public static class CommonExtentions {
 			=> string.IsNullOrEmpty(str) ? defaultValue : str;
 
 		/// <summary>
-		/// SqlDepends: __serverdate__()で記述されたSQL文の部分を、UnixTimeからSQLiteのdatetime関数を使用して日付に変換する
+		/// SqlDepends: __serverdate__() と __serverimg__() で記述されたSQL文の部分を、それぞれ日付式と画像パスへ変換する
 		/// </summary>
 		/// <param name="sql"></param>
 		/// <returns></returns>
 		public string ReplaceServerDate() {
-			return ServerDateRegex.Replace(str,
+			var replaced = ServerDateRegex.Replace(str,
 				match => $"strftime('%Y%m%d%H%M%S',datetime(({match.Groups[1].Value} - 621355968000000000) / 10000000, 'unixepoch','localtime'))");
+			return ServerImgRegex.Replace(replaced, match => $"img/{match.Groups[1].Value}.img");
 		}
 	}
 	private static readonly Regex ServerDateRegex = new Regex(@"__serverdate__\(([^)]+)\)", RegexOptions.Compiled);
+	private static readonly Regex ServerImgRegex = new Regex(@"__serverimg__\('([^']+)'\)", RegexOptions.Compiled);
 }
 
 public static class DynamicCsvExtensions {

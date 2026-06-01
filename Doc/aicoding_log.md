@@ -402,3 +402,24 @@
 - `GIT_MASTER=1 git status --short` で作業ツリーが clean であることを確認
 
 ---
+
+## [2026-06-01] 13:56 ReplaceServerDateへ__serverimg__変換追加
+### Agent
+- GPT-5.4 : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvAsset/CommonExtentions.cs line209-214 のように、`"__serverimg__('画像ファイル名')"` を `"img/画像ファイル名.img"` に変換して返すよう `ReplaceServerDate()` 処理へ追加する
+### 実施内容
+- CvAsset/CommonExtentions.cs: `ReplaceServerDate()` で既存の `__serverdate__()` 置換後に `__serverimg__('...')` を `img/... .img` 形式へ置換する `ServerImgRegex` を追加
+- Doc/aicoding_log.md: 本作業の記録を末尾へ追記
+### 技術決定 Why
+- 既存呼び出し側を変えずに `ReplaceServerDate()` の責務の中でプレースホルダ展開を完結させることで、SqlDepends 文字列の後方互換を保ったまま画像参照ルールを追加した
+- 画像変換は日付変換と同じく文字列プレースホルダの展開であるため、同一メソッド内で連続置換する最小差分に留めた
+### 影響範囲 (省略可)
+- CvAsset を参照し `ReplaceServerDate()` を利用する SqlDepends 系処理
+### 確認
+- `lsp_diagnostics` で `CvAsset/CommonExtentions.cs` に診断エラーがないことを確認
+- `dotnet build "CvAsset/CvAsset.csproj"` 成功（0 warnings / 0 errors）を確認
+
+---
