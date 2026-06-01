@@ -1,7 +1,6 @@
 <Solution>
   <Folder Name="/Tests/">
     <Project Path="Tests/TestLogin/TestLogin.csproj" />
-    <Project Path="Tests/TestPrint/TestPrint.csproj" />
     <Project Path="Tests/TestServer/TestServer.csproj" />
   </Folder>
   <Folder Name="/ソリューション項目/">

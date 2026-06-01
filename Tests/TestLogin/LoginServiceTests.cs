@@ -26,7 +26,6 @@ public sealed class LoginServiceTests {
 	public async Task LoginRefleshAsync_WithValidToken_ReturnsExtendedToken() {
 		using var context = new LoginServiceTestContext();
 		var loginDate = DateTime.UtcNow;
-		InsertLoginRecord(context, "user01", "Secret!2", loginDate);
 		var request = CreateLoginRequest("user01", "Secret!2", loginDate);
 
 		var loginReply = await context.Service.LoginAsync(request);
