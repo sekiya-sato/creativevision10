@@ -513,3 +513,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-01] 20:14 PrintPdf 並列出力競合回避
+### Agent
+- GPT-5 : OpenAI : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvServer/Services/PrintPdf.cs の処理で、複数クライアントから同時に PDF 出力が要求された場合の data.txt / outfile.pdf の競合を回避し、クライアントには `{timestamp}/outfile.pdf` を返すよう修正、ログ、コミットまで行う
+### 実施内容
+- CodeShare/IPrintOperation.cs: シリアライズ対象外の `TempFolder` プロパティを追加し、printPre と printPdf のステップ間で一時フォルダ名を共有できるようにした
+- CvServer/Services/PrintPdf.cs(printPre): `DateTime.Now:yyyyMMddHHmmssfff` で一時フォルダ名を生成し、`request.TempFolder` に保存。resolvedDataDir の下に当該フォルダを作成して data.txt を配置するよう変更
+- CvServer/Services/PrintPdf.cs(printPdf): `request.TempFolder` から一時フォルダ名を取得し、resolvedOutputDir の下に同じフォルダを作成。出力ファイル名を `outfile.pdf` に固定し、`PrintContext` の各種パスを一時フォルダ下へ変更
+- CvServer/Services/PrintPdf.cs(printPost): `outputFile` インスタンス変数への依存を排除し、`request.TempFolder` から出力パスを再構築。クライアントへの戻り値を `$"{timestamp}/outfile.pdf"` とした
+### 技術決定 Why
+- ステップ間で状態を共有するため、シリアライズに影響しない `TempFolder` プロパティを `PrintOperation` に追加した。これにより並列実行時にインスタンス変数が上書きされるリスクを回避しつつ、各リクエストごとに独立した一時フォルダを使う設計を実現した
+- クライアントは `{timestamp}/outfile.pdf` の形式でファイルを受け取るため、WebpdfView 側での URL 組み立てと整合する
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
+
+---

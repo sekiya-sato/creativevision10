@@ -84,8 +84,7 @@ public partial class CoreService {
 		// ToDo: 現在はテスト的に固定で設定、request から受け取るようにする
 		string form = string.Empty;
 		string data = "data.txt";
-		string outFile = string.Empty;
-		outFile = $"outfile{DateTime.Now:yyyyMMddHHmmssfff}.pdf";
+		string outFile = "outfile.pdf";
 		if (param is PrintByCsvParam printParam) {
 			form = request.FormFile;
 		}
@@ -97,21 +96,27 @@ public partial class CoreService {
 			return new PrintResult(false, "不正なパラメータの型");
 		}
 
-		// --------------------------------
-		Directory.CreateDirectory(resolvedOutputDir);
+		// printPre で生成した一時フォルダ名を request から取得
+		string timestamp = request.TempFolder;
+		if (string.IsNullOrEmpty(timestamp)) {
+			return new PrintResult(false, "一時フォルダ名が設定されていません");
+		}
+
+		string tempDir = Path.Combine(resolvedOutputDir, timestamp);
+		Directory.CreateDirectory(tempDir);
 		string formPath = Path.Combine(resolvedFormDir, form);
-		string dataPath = Path.Combine(resolvedDataDir, data);
+		string dataPath = Path.Combine(resolvedDataDir, timestamp, data);
 		string outfileName = outFile;
 		_logger.LogWarning($"Print処理開始: ContentRoot={contentRootPath}, PrintBaseDir={configuredBaseDir}, ResolvedBaseDir={resolvedBaseDir}");
 		_logger.LogWarning($"    FormPath={formPath}");
 		_logger.LogWarning($"    DataPath={dataPath}");
-		_logger.LogWarning($"    OutputDir={resolvedOutputDir}, File={outfileName}");
-		outputFile = Path.Combine(resolvedOutputDir, outfileName);
+		_logger.LogWarning($"    OutputDir={tempDir}, File={outfileName}");
+		outputFile = Path.Combine(tempDir, outfileName);
 		var context = new PrintContext {
 			BasePath = string.Empty,
 			FormPath = formPath,
 			DataPath = dataPath,
-			OutputDir = resolvedOutputDir,
+			OutputDir = tempDir,
 			OutputFileName = outfileName,
 		};
 		var printService = new PrintAdapter();
@@ -139,13 +144,20 @@ public partial class CoreService {
 			: Path.Combine(contentRootPath, configuredBaseDir));
 		string resolvedDataDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredDataDir));
 		string data = "data.txt";
+
+		// 一時フォルダ名を生成し、request に保存して printPdf と共有
+		string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+		request.TempFolder = timestamp;
+		string tempDir = Path.Combine(resolvedDataDir, timestamp);
+		Directory.CreateDirectory(tempDir);
+
 		if (param is PrintByCsvParam printParam) {
-			File.WriteAllText(Path.Combine(resolvedDataDir, data), printParam.CsvData, Sjis);
+			File.WriteAllText(Path.Combine(tempDir, data), printParam.CsvData, Sjis);
 		}
 		else if (param is QueryListSqlParam listParam) {
 			var sql = (listParam.Sql ?? string.Empty).ReplaceServerSqlQuery();
 			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
-			using (var writer = new StreamWriter(Path.Combine(resolvedDataDir, data), false, Sjis)) {
+			using (var writer = new StreamWriter(Path.Combine(tempDir, data), false, Sjis)) {
 				dataList.WriteDynamicCsv(writer);
 			}
 		}
@@ -163,7 +175,23 @@ public partial class CoreService {
 	/// </summary>
 	private PrintResult printPost(PrintOperation request) {
 		var start = DateTime.Now;
-		var checkfile = outputFile + "_";
+
+		// request から一時フォルダ名を取得し、出力ファイルパスを再構築
+		string timestamp = request.TempFolder;
+		if (string.IsNullOrEmpty(timestamp)) {
+			return new PrintResult(false, "一時フォルダ名が設定されていません");
+		}
+		var printServer = _configuration.GetSection("PrintServer");
+		string contentRootPath = _env.ContentRootPath;
+		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
+		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
+		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
+			? configuredBaseDir
+			: Path.Combine(contentRootPath, configuredBaseDir));
+		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
+		string tempDir = Path.Combine(resolvedOutputDir, timestamp);
+		string outputFilePath = Path.Combine(tempDir, "outfile.pdf");
+		var checkfile = outputFilePath + "_";
 
 		while (File.Exists(checkfile)) {
 			if (DateTime.Now - start > PrintPostCheckTimeout) {
@@ -175,7 +203,7 @@ public partial class CoreService {
 		// ToDo: 商品マスタが初回のみ正常に出力されない。後ほど原因調査する
 
 		var timespan = DateTime.Now - start;
-		var ret = new PrintResult(true, Path.GetFileName(outputFile));
+		var ret = new PrintResult(true, $"{timestamp}/outfile.pdf");
 		return ret;
 	}
 
