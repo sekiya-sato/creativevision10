@@ -15,6 +15,14 @@ public interface ITranDetail {
 public interface ITranIdo {
 	public long Id_Ido { get; set; }
 }
+public interface ITranSoko {
+	public string DenDay { get; set; }
+	public long Id_Soko { get; set; }
+	public int CalcFlag { get; set; }
+}
+
+
+
 
 /// <summary>
 /// Tran系ファイルの出庫・入庫の区分、売上・仕入の区分などの共通的なコードを定義するクラス
@@ -486,7 +494,7 @@ public sealed partial class Tran60Tana : TranAllHeader {
 [KeyDml("nk3", false, ["Id_Soko"])]
 [KeyDml("nk4", false, ["Id_Tokui"])]
 [Comment("トランザクション：本部売上データ 得意先に対する売掛計上と倉庫からの出庫")]
-public sealed partial class Tran00Uriage : TranAllHeader {
+public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// <summary>
 	/// 掛計上日（yyyyMMdd）
 	/// </summary>
@@ -573,7 +581,7 @@ public enum EnumUri00 : int {
 [KeyDml("nk3", false, ["Id_Tenpo"])]
 [KeyDml("nk4", false, "Id_Customer")]
 [Comment("トランザクション：店舗売上データ 店舗に対する売上と店舗(倉庫)からの出庫")]
-public sealed partial class Tran01Tenuri : TranAllHeader {
+public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	/// <summary>
 	/// 店舗キー
 	/// </summary>
@@ -647,7 +655,7 @@ public enum EnumUri01 : int {
 [KeyDml("nk3", false, ["Id_Soko"])]
 [KeyDml("nk4", false, ["Id_Shiire"])]
 [Comment("トランザクション：仕入データ 仕入先に対する買掛計上と倉庫への入庫")]
-public sealed partial class Tran03Shiire : TranAllHeader {
+public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	/// <summary>
 	/// 掛計上日（yyyyMMdd）
 	/// </summary>
@@ -725,7 +733,7 @@ public enum EnumShiire : int {
 [KeyDml("nk2", false, ["Id_Soko"])]
 [KeyDml("nk3", false, ["Id_Ido"])]
 [Comment("トランザクション：移動データ(即時) 倉庫からの出庫と移動先への入庫")]
-public sealed partial class Tran05Ido : TranAllHeader, ITranIdo {
+public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	/// <summary>
 	/// 移動先キー
 	/// </summary>
@@ -760,7 +768,7 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo {
 [KeyDml("nk2", false, ["Id_Soko"])]
 [KeyDml("nk3", false, ["Id_Ido"])]
 [Comment("トランザクション：移動データ(積送出庫) 倉庫からの出庫、積送中在庫へ(移動先への入庫予定)")]
-public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo {
+public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	/// <summary>
 	/// 移動先キー
 	/// </summary>
@@ -794,7 +802,7 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo {
 [KeyDml("nk2", false, ["Id_Soko"])]
 [KeyDml("nk3", false, ["Id_Ido"])]
 [Comment("トランザクション：移動データ(積送入庫) 積送中在庫(倉庫からの出庫)から移動先への入庫")]
-public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo {
+public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 	/// <summary>
 	/// 移動先キー
 	/// </summary>
