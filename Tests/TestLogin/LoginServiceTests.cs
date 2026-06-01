@@ -86,21 +86,4 @@ public sealed class LoginServiceTests {
 		return JsonConvert.SerializeObject(info);
 	}
 
-	static SysLogin InsertLoginRecord(LoginServiceTestContext context, string loginId, string password, DateTime loginDate) {
-		var ticks = loginDate.ToUniversalTime().Ticks;
-		var storedPassword = Common.EncryptLoginRequest(password, new DateTime(ticks));
-		var entity = new SysLogin {
-			LoginId = loginId,
-			CryptPassword = storedPassword,
-			ExpDate = loginDate.AddDays(1).ToDtStrDateTimeShort(),
-			LastDate = loginDate.ToDtStrDateTimeShort(),
-			Id_Role = 1,
-			Id_Shain = 1,
-			Vdc = ticks,
-			Vdu = ticks,
-		};
-		context.Database.Insert(entity);
-		return entity;
-	}
-
 }
