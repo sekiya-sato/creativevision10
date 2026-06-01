@@ -11,6 +11,7 @@
 - Task Mgmt: Only ONE `in_progress` task at a time.
 - Preparation: Use `git stash` before work; create a memo in `.sisyphus/` for complex tasks.
 - Search: Use `grep -r` for Japanese terms.
+- Database: Use `sqlite3` for `.db` files; avoid direct file edits.
 
 ## Architecture
 - **Read-Only**: Layer 0 (`CodeShare`/`CvAsset`), Layer 1 (`CvBase`), Layer 1.2 (DB), Layer 1.4 (Prints)  Write if necessary.
