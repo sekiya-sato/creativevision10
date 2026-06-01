@@ -16,6 +16,36 @@
 
 ---
 
+## [2026-06-01] 09:00 得意先・顧客マスターのSQL印刷対応
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterTokuiMenteView と MasterEndCustomerMenteView にそれぞれ印刷機能を加え、計画、修正、ログ、コミットまで行う
+### 実施内容
+- .omo/2026-06-01_master-tokui-endcustomer-print.md: 対象画面、既存印刷パターン、qfm作成、検証手順の作業計画を記録
+- CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs: `FormFile` と `PrintBySqlParam` を追加し、得意先一覧の検索条件・並び順を反映した SQL 印刷データを渡すよう実装
+- CvWpfclient/Views/01Master/MasterTokuiMenteView.xaml: F6ショートカットとヘッダーボタンを JSON出力から PDF印刷へ変更し、印刷アイコンと表示文言に統一
+- printform/MasterTokuiMente.qfm: A4縦・Shift_JIS の得意先マスター一覧フォームを追加し、取引先共通項目、入金条件、振込先、得意先種別、在庫管理を28項目で配置
+- CvWpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs: `FormFile` と `PrintBySqlParam` を追加し、顧客一覧の検索条件・並び順を反映した SQL 印刷データを渡すよう実装
+- CvWpfclient/Views/01Master/MasterEndCustomerMenteView.xaml: F6ショートカットとヘッダーボタンを JSON出力から PDF印刷へ変更し、印刷アイコンと表示文言に統一
+- printform/MasterEndCustomerMente.qfm: A4縦・Shift_JIS の顧客マスター一覧フォームを追加し、基本項目、店舗、誕生日、購買集計、住所、連絡先を22項目で配置
+### 技術決定 Why
+- 既存の `BaseMenteViewModel` に `DoOutputPdfCommand`、`FormFile`、`PrintBySqlParam` の受け口があるため、基底クラスは変更せず対象 View / ViewModel / qfm の差分に閉じた
+- 得意先は `MasterShiireMente` と同じ取引先系の複数行一覧帳票を流用し、得意先固有の `TenType` と `IsZaiko` を帳票末尾へ追加した
+- 顧客は画面一覧で参照頻度が高い基本項目に加え、住所・連絡先・購買集計を一覧SQLで出し、店舗は JSON 文字列ではなく `json_extract` でコード＋名称の表示文字列へ展開した
+### 確認
+- `python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterTokuiMente.qfm printform\MasterEndCustomerMente.qfm` で Shift_JIS / A4縦設定確認成功
+- `CvWpfclient/Views/01Master/MasterTokuiMenteView.xaml` と `CvWpfclient/Views/01Master/MasterEndCustomerMenteView.xaml` の XML 構文解析成功を確認
+- `printform/MasterTokuiMente.qfm` と `printform/MasterEndCustomerMente.qfm` の Shift_JIS 読み込みと XML 構文解析成功を確認
+- qfm の `item` と帳票 `datasrc` の対応が、得意先28項目・顧客22項目で一致することを確認
+- `CvServer/server-cv00.db` に対して印刷SQLの SELECT を実行し、得意先28列・顧客22列を取得できることを確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-05-31] 20:24 SQLite 3.38+ SQL監査とメンテナンスSQL見直し
 ### Agent
 - GPT-5.4 : OpenAI : Sisyphus
