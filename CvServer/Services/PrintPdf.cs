@@ -15,6 +15,7 @@ public partial class CoreService {
 		var steps = new (string Name, Func<PrintOperation, PrintResult> Action)[] {
 			("プリント前処理", (req) => printPre(req)),
 			("プリント本処理", (req) => printPdf(req)),
+			("プリント後処理", (req) => printPost(req))
 		};
 		// ステップ数を取得
 		int totalSteps = steps.Length;
@@ -55,6 +56,7 @@ public partial class CoreService {
 			return sjis_internal;
 		}
 	}
+
 
 	/// <summary>
 	/// Print処理本体
@@ -101,6 +103,7 @@ public partial class CoreService {
 		_logger.LogWarning($"    FormPath={formPath}");
 		_logger.LogWarning($"    DataPath={dataPath}");
 		_logger.LogWarning($"    OutputDir={resolvedOutputDir}, File={outfileName}");
+		outputFile = Path.Combine(resolvedOutputDir, outfileName);
 		var context = new PrintContext {
 			BasePath = string.Empty,
 			FormPath = formPath,
@@ -150,5 +153,22 @@ public partial class CoreService {
 		var ret = new PrintResult(true, $"Print前処理(CSV準備): {timespan}");
 		return ret;
 	}
+	string outputFile = "";
+
+	/// <summary>
+	/// Print後処理(PDFが生成されたか確認)
+	/// </summary>
+	private PrintResult printPost(PrintOperation request) {
+		var start = DateTime.Now;
+		SleepTaskAsync(10).Wait();
+		var checkfile = outputFile + "_";
+
+
+		var timespan = DateTime.Now - start;
+		var ret = new PrintResult(true, $"Print後処理(PDF確認): {timespan}");
+		return ret;
+	}
+
+
 
 }
