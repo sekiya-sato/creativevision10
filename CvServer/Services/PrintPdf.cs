@@ -9,6 +9,9 @@ using System.Text;
 namespace CvServer.Services;
 
 public partial class CoreService {
+	private const int PrintPostCheckIntervalMilliseconds = 500;
+	private static readonly TimeSpan PrintPostCheckTimeout = TimeSpan.FromMinutes(30);
+
 	[AllowAnonymous]
 	public async IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default) {
 		// 処理のステップと対応するアクションを定義
@@ -160,12 +163,17 @@ public partial class CoreService {
 	/// </summary>
 	private PrintResult printPost(PrintOperation request) {
 		var start = DateTime.Now;
-		SleepTaskAsync(10).Wait();
 		var checkfile = outputFile + "_";
 
+		while (File.Exists(checkfile)) {
+			if (DateTime.Now - start > PrintPostCheckTimeout) {
+				return new PrintResult(false, $"Print後処理(PDF確認): タイムアウト {checkfile}");
+			}
+			Thread.Sleep(PrintPostCheckIntervalMilliseconds);
+		}
 
 		var timespan = DateTime.Now - start;
-		var ret = new PrintResult(true, $"Print後処理(PDF確認): {timespan}");
+		var ret = new PrintResult(true, Path.GetFileName(outputFile));
 		return ret;
 	}
 
