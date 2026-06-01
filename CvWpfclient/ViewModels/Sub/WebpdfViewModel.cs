@@ -5,7 +5,6 @@ using System.Globalization;
 namespace CvWpfclient.ViewModels.Sub;
 
 public partial class WebpdfViewModel : ObservableObject {
-	const string ReloadPlaceholderUrl = "https://localhost/";
 	const string ReloadQueryKey = "cv_reload";
 
 	[ObservableProperty]
@@ -17,10 +16,8 @@ public partial class WebpdfViewModel : ObservableObject {
 			return;
 		}
 
-		var current = Pdfdata;
-		Pdfdata = ReloadPlaceholderUrl;
 		await Task.Yield();
-		Pdfdata = AddReloadQuery(current);
+		Pdfdata = AddReloadQuery(Pdfdata);
 	}
 
 	static string AddReloadQuery(string source) {
