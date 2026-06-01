@@ -43,7 +43,19 @@ public sealed class PrintOperation {
 	public string FormFile { get; init; } = string.Empty;
 
 	/// <summary>
-	/// シリアライズ対象外の一時フォルダ名（サーバー内部でステップ間の状態共有に使用）
+	/// シリアライズ対象外の一時フォルダ名（サーバー内部でステップ間の状態共有のみに使用）
 	/// </summary>
 	public string TempFolder { get; set; } = string.Empty;
+	/// <summary>
+	/// シリアライズ対象外の一時出力フォルダのフルパス（サーバー内部でステップ間の状態共有のみに使用）
+	/// </summary>
+	public string TempOutputFullPath { get; set; } = string.Empty;
+	/// <summary>
+	/// シリアライズ対象外のフォームファイルのフルパス（サーバー内部でステップ間の状態共有のみに使用）
+	/// </summary>
+	public string TempFormFullPath { get; set; } = string.Empty;
+	/// <summary>
+	/// シリアライズ対象外の一時データファイルのフルパス（サーバー内部でステップ間の状態共有のみに使用）
+	/// </summary>
+	public string TempDataFullPath { get; set; } = string.Empty;
 }

@@ -67,64 +67,25 @@ public partial class CoreService {
 	/// <returns></returns>
 	private PrintResult printPdf(PrintOperation request) {
 
-		var printServer = _configuration.GetSection("PrintServer");
-		string contentRootPath = _env.ContentRootPath;
-		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
-		string configuredFormDir = printServer.GetValue<string>("PrintFormDir") ?? ".";
-		string configuredDataDir = printServer.GetValue<string>("PrintDataDir") ?? ".";
-		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
-		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
-		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
-			? configuredBaseDir
-			: Path.Combine(contentRootPath, configuredBaseDir));
-		string resolvedFormDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredFormDir));
-		string resolvedDataDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredDataDir));
-		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
-
-		// ToDo: 現在はテスト的に固定で設定、request から受け取るようにする
-		string form = string.Empty;
-		string data = "data.txt";
-		string outFile = "outfile.pdf";
-		if (param is PrintByCsvParam printParam) {
-			form = request.FormFile;
-		}
-		else if (param is QueryListSqlParam listParam) {
-			form = request.FormFile;
-		}
-		else {
-			// エラー: パラメータの型が不正
-			return new PrintResult(false, "不正なパラメータの型");
-		}
-
 		// printPre で生成した一時フォルダ名を request から取得
 		string timestamp = request.TempFolder;
 		if (string.IsNullOrEmpty(timestamp)) {
 			return new PrintResult(false, "一時フォルダ名が設定されていません");
 		}
-
-		string tempDir = Path.Combine(resolvedOutputDir, timestamp);
-		Directory.CreateDirectory(tempDir);
-		string formPath = Path.Combine(resolvedFormDir, form);
-		string dataPath = Path.Combine(resolvedDataDir, timestamp, data);
-		string outfileName = outFile;
-		_logger.LogWarning($"Print処理開始: ContentRoot={contentRootPath}, PrintBaseDir={configuredBaseDir}, ResolvedBaseDir={resolvedBaseDir}");
-		_logger.LogWarning($"    FormPath={formPath}");
-		_logger.LogWarning($"    DataPath={dataPath}");
-		_logger.LogWarning($"    OutputDir={tempDir}, File={outfileName}");
-		outputFile = Path.Combine(tempDir, outfileName);
+		_logger.LogWarning($"Print処理開始: Form={request.TempFormFullPath}, Data={request.TempDataFullPath}, Out={request.TempOutputFullPath}");
 		var context = new PrintContext {
 			BasePath = string.Empty,
-			FormPath = formPath,
-			DataPath = dataPath,
-			OutputDir = tempDir,
-			OutputFileName = outfileName,
+			FormPath = request.TempFormFullPath,
+			DataPath = request.TempDataFullPath,
+			OutputDir = Path.GetDirectoryName(request.TempOutputFullPath) ?? "",
+			OutputFileName = Path.GetFileName(request.TempOutputFullPath),
 		};
+		var printServer = _configuration.GetSection("PrintServer");
 		var printService = new PrintAdapter();
 		var licenseTask = printService.CheckLicenseAsync().Result;
 		foreach (var lic in licenseTask)
 			if (!lic.Status)
 				printService.RegisterLicenseAsync(lic.Product, printServer.GetValue<string>(lic.Product) ?? "").Wait();
-
 
 		var ret = printService.ExecutePrintAsync(context);
 		return ret.Result;
@@ -137,27 +98,31 @@ public partial class CoreService {
 		var printServer = _configuration.GetSection("PrintServer");
 		string contentRootPath = _env.ContentRootPath;
 		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
-		string configuredDataDir = printServer.GetValue<string>("PrintDataDir") ?? ".";
+		string configuredFormDir = printServer.GetValue<string>("PrintFormDir") ?? ".";
+		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
 		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
 			? configuredBaseDir
 			: Path.Combine(contentRootPath, configuredBaseDir));
-		string resolvedDataDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredDataDir));
-		string data = "data.txt";
+		string resolvedFormDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredFormDir));
+		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
 
 		// 一時フォルダ名を生成し、request に保存して printPdf と共有
 		string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
 		request.TempFolder = timestamp;
-		string tempDir = Path.Combine(resolvedDataDir, timestamp);
+		string tempDir = Path.Combine(resolvedOutputDir, timestamp);
 		Directory.CreateDirectory(tempDir);
+		request.TempDataFullPath = Path.Combine(tempDir, "data.txt");
+		request.TempOutputFullPath = Path.Combine(tempDir, "outfile.pdf");
+		request.TempFormFullPath = Path.Combine(resolvedFormDir, request.FormFile);
 
 		if (param is PrintByCsvParam printParam) {
-			File.WriteAllText(Path.Combine(tempDir, data), printParam.CsvData, Sjis);
+			File.WriteAllText(request.TempDataFullPath, printParam.CsvData, Sjis);
 		}
 		else if (param is QueryListSqlParam listParam) {
 			var sql = (listParam.Sql ?? string.Empty).ReplaceServerSqlQuery();
 			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
-			using (var writer = new StreamWriter(Path.Combine(tempDir, data), false, Sjis)) {
+			using (var writer = new StreamWriter(request.TempDataFullPath, false, Sjis)) {
 				dataList.WriteDynamicCsv(writer);
 			}
 		}
@@ -168,7 +133,6 @@ public partial class CoreService {
 		var ret = new PrintResult(true, $"Print前処理(CSV準備): {timespan}");
 		return ret;
 	}
-	string outputFile = "";
 
 	/// <summary>
 	/// Print後処理(PDFが生成されたか確認)
@@ -181,17 +145,7 @@ public partial class CoreService {
 		if (string.IsNullOrEmpty(timestamp)) {
 			return new PrintResult(false, "一時フォルダ名が設定されていません");
 		}
-		var printServer = _configuration.GetSection("PrintServer");
-		string contentRootPath = _env.ContentRootPath;
-		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
-		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
-		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
-			? configuredBaseDir
-			: Path.Combine(contentRootPath, configuredBaseDir));
-		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
-		string tempDir = Path.Combine(resolvedOutputDir, timestamp);
-		string outputFilePath = Path.Combine(tempDir, "outfile.pdf");
-		var checkfile = outputFilePath + "_";
+		var checkfile = request.TempOutputFullPath + "_";
 
 		while (File.Exists(checkfile)) {
 			if (DateTime.Now - start > PrintPostCheckTimeout) {
