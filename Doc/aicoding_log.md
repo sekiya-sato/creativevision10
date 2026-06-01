@@ -493,3 +493,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj -p:OutputPath=obj\CodexBuildOutput\"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-01] 16:51 Webpdf再読込キャッシュ回避対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：WebpdfViewModel の ReloadAsync() で `Pdfdata = ""` がエラーになるため `https://localhost/` などの有効URLへ変更し、さらにサーバキャッシュを無効にして再読み込みさせる
+### 実施内容
+- CvWpfclient/ViewModels/Sub/WebpdfViewModel.cs: 再読込時の一時URLを空文字から `https://localhost/` に変更
+- CvWpfclient/ViewModels/Sub/WebpdfViewModel.cs: 再設定するPDF URLへ `cv_reload` クエリを付け替え、同一PDFでもサーバ側へ別URLとして再取得させる処理を追加
+- Doc/aicoding_log.md: 本作業の記録を末尾へ追記
+### 技術決定 Why
+- WebView2 の `Source` に空文字を渡さず、有効なURLへ一度遷移させることで再読込時のバインディングエラーを避けた
+- PDFファイル名自体は変えず、再読込ごとに時刻ベースのクエリだけを更新することで、既存のPDF表示導線を維持しながらHTTPキャッシュを回避した
+### 確認
+- `git diff --check -- CvWpfclient\ViewModels\Sub\WebpdfViewModel.cs` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+
+---
