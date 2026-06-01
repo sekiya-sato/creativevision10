@@ -471,3 +471,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
 
 ---
+## [2026-06-01] 16:10 PrintPdf後処理のPDF完了待機追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`PrintPdf.cs` の `printPost` 処理で `outputFile + "_"` の `checkfile` を存在チェックし、存在しなくなったらPDF出力完了とみなす
+### 実施内容
+- CvServer/Services/PrintPdf.cs: `printPost` で `checkfile` が存在する間は500ms間隔で待機し、存在しなくなった時点で後処理成功とする処理を追加
+- CvServer/Services/PrintPdf.cs: `checkfile` が残り続ける場合に30分でタイムアウトする定数を追加
+- Doc/aicoding_log.md: 本作業の記録を末尾へ追記
+### 技術決定 Why
+- PrintStream がPDF生成中に作成する `outputFile + "_"` を完了判定に使うことで、PDF出力完了前に後処理が完了扱いになることを防ぐ
+- `checkfile` が異常に残り続けた場合の無限待ちを避けるため、待機間隔とタイムアウトを定数化した
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` は稼働中の `CvServer (64216)` によるDLLロックでコピー失敗することを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj -p:OutputPath=obj\CodexBuildOutput\"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
+
+---
