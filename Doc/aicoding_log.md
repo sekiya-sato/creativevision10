@@ -423,3 +423,30 @@
 - `dotnet build "CvAsset/CvAsset.csproj"` 成功（0 warnings / 0 errors）を確認
 
 ---
+## [2026-06-01] 15:14 MasterShohinMenteView印刷機能追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShohinMenteView に印刷機能を追加し、商品画像は `Code` を画像名として SQL 中の `__serverimg__(Code)` から qfm の image タグへ渡す
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: `FormFile` と `PrintBySqlParam` を追加し、一覧条件・並び順を引き継ぐ商品マスタ印刷SQLを定義。画像列は `__serverimg__(Code) ImagePath` とした
+- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: F6 キーバインドとツールバーボタンを JSON 出力から PDF 印刷へ変更
+- printform/MasterShohinMente.qfm: A4縦・Shift_JIS の商品マスタ印刷フォームを追加し、`image` タグで `item26` の画像パスを参照
+- CvAsset/CommonExtentions.cs: 既存の `__serverimg__` フックで、文字列リテラルに加えて `Code` などのSQL式引数を画像パス式へ展開できるよう最小対応
+### 技術決定 Why
+- 既存マスターメンテ印刷と同じ `DoOutputPdfCommand` / `PrintBySqlParam` / qfm の流れへ合わせることで、検索条件・並び順・PDF表示導線を既存画面と統一した
+- 商品画像は ViewModel 側でパスを組み立てず、SQL の `__serverimg__(Code)` を既存のサーバ側 SQL 置換フックへ通すことで、画像パス変換の責務をサーバ側に集約した
+- qfm ではユーザー指定の image タグ形式を使用し、`datasrc` で SQL の画像列に対応する `item26` を参照した
+### 影響範囲 (省略可)
+- MasterShohinMenteView / MasterShohinMenteViewModel の F6 印刷導線、商品マスタ印刷フォーム、`__serverimg__` SQL式引数の置換処理
+### 確認
+- `python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterShohinMente.qfm` で qfm 検証成功
+- `MasterShohinMenteView.xaml` の XML 構文確認成功
+- `MasterShohinMente.qfm` の `item1` から `item26` と帳票 `datasrc` の26項目対応を確認
+- `CvServer/server-user163.db` に対して商品マスタ印刷SQL相当の SELECT を実行し、26列取得できることを確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+
+---

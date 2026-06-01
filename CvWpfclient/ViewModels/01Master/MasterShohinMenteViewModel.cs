@@ -24,6 +24,30 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 	protected override string[] AdditionalLightweightColumns => ["VBrand"];
 
 	protected override string? SelectCodeDisplayName => "商品";
+	protected override string? FormFile => "MasterShohinMente.qfm";
+	protected override QueryListSqlParam? PrintBySqlParam {
+		get {
+			var query = CreateListQueryParam();
+			var sql = @$"
+select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
+Code, Name, Ryaku, Kana,
+trim(ifnull(json_extract(VBrand,'$.Cd'),'') || ' ' || ifnull(json_extract(VBrand,'$.Mei'),'')) Brand,
+trim(ifnull(json_extract(VItem,'$.Cd'),'') || ' ' || ifnull(json_extract(VItem,'$.Mei'),'')) Item,
+trim(ifnull(json_extract(VMaker,'$.Cd'),'') || ' ' || ifnull(json_extract(VMaker,'$.Mei'),'')) Maker,
+trim(ifnull(json_extract(VSeason,'$.Cd'),'') || ' ' || ifnull(json_extract(VSeason,'$.Mei'),'')) Season,
+trim(ifnull(json_extract(VMaterial,'$.Cd'),'') || ' ' || ifnull(json_extract(VMaterial,'$.Mei'),'')) Material,
+trim(ifnull(json_extract(VCountry,'$.Cd'),'') || ' ' || ifnull(json_extract(VCountry,'$.Mei'),'')) Country,
+trim(ifnull(json_extract(VSoko,'$.Cd'),'') || ' ' || ifnull(json_extract(VSoko,'$.Mei'),'')) Soko,
+TankaJodaiOrg, TankaJodai, TankaGenka, TankaShiire,
+MakerHin, DayShukka, DayNohin, DayTento, SizeKu,
+case IsZaiko when 1 then 'する' else 'しない' end IsZaikoText,
+Memo,
+__serverimg__(Code) ImagePath
+from MasterShohin {query.AddWhereOrder()}
+";
+			return new QueryListSqlParam(typeof(MasterShohin), sql, query.Parameters);
+		}
+	}
 
 	[ObservableProperty]
 	MasterShohinColSiz? selectedJcolsiz;

@@ -209,11 +209,16 @@ public static class CommonExtentions {
 		public string ReplaceServerSqlQuery() {
 			var replaced = ServerDateRegex.Replace(str,
 				match => $"strftime('%Y%m%d%H%M%S',datetime(({match.Groups[1].Value} - 621355968000000000) / 10000000, 'unixepoch','localtime'))");
-			return ServerImgRegex.Replace(replaced, match => $"'img/{match.Groups[1].Value}.img'");
+			var literalReplaced = ServerImgLiteralRegex.Replace(replaced, match => $"'img/{match.Groups[1].Value}.img'");
+			return ServerImgExpressionRegex.Replace(literalReplaced, match => {
+				var imageNameExpression = match.Groups[1].Value.Trim();
+				return $"case when ifnull({imageNameExpression}, '') = '' then '' else 'img/' || {imageNameExpression} || '.img' end";
+			});
 		}
 	}
 	private static readonly Regex ServerDateRegex = new Regex(@"__serverdate__\(([^)]+)\)", RegexOptions.Compiled);
-	private static readonly Regex ServerImgRegex = new Regex(@"__serverimg__\('([^']+)'\)", RegexOptions.Compiled);
+	private static readonly Regex ServerImgLiteralRegex = new Regex(@"__serverimg__\('([^']+)'\)", RegexOptions.Compiled);
+	private static readonly Regex ServerImgExpressionRegex = new Regex(@"__serverimg__\(([^)]+)\)", RegexOptions.Compiled);
 }
 
 public static class DynamicCsvExtensions {
