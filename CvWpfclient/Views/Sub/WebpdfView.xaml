@@ -7,6 +7,10 @@
 	<Window.DataContext>
 		<vm:WebpdfViewModel />
 	</Window.DataContext>
+	<Window.InputBindings>
+		<KeyBinding Key="F5"
+			Command="{Binding ReloadCommand}" />
+	</Window.InputBindings>
 	<Grid>
 		<Wpf:WebView2 Margin="2"
 			Source="{Binding Pdfdata}" />

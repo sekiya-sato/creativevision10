@@ -16,6 +16,27 @@
 
 ---
 
+## [2026-06-01] 15:44 WebpdfView F5再読込対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：WebpdfView で F5 キーを押したときに Source を再取得する。修正対象は View と ViewModel のみ。修正、ログ、コミットまで
+### 実施内容
+- CvWpfclient/Views/Sub/WebpdfView.xaml: F5 キーの KeyBinding を追加し、ReloadCommand へ接続
+- CvWpfclient/ViewModels/Sub/WebpdfViewModel.cs: ReloadCommand を追加し、Pdfdata を一度 null にしてから同じ URL を再設定することで WebView2.Source の再取得を発生させるよう修正
+- Doc/aicoding_log.md: 本作業の記録を末尾へ追記
+### 技術決定 Why
+- WebView2.Source は同一 URL の再代入だけでは更新されない可能性があるため、ViewModel 側でバインド元を一度クリアしてから復元し、View 側はキー入力とコマンド接続だけに限定した
+- ユーザー指定に合わせ、修正対象の実装ファイルを WebpdfView と WebpdfViewModel のみに絞った
+### 確認
+- `git diff --check -- CvWpfclient\Views\Sub\WebpdfView.xaml CvWpfclient\ViewModels\Sub\WebpdfViewModel.cs` で空白エラーなしを確認
+- `WebpdfView.xaml` の XML 構文確認成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-01] 09:00 得意先・顧客マスターのSQL印刷対応
 ### Agent
 - GPT-5 : OpenAI
