@@ -14,7 +14,7 @@ public partial class WebpdfViewModel : ObservableObject {
 		}
 
 		var current = Pdfdata;
-		Pdfdata = null;
+		Pdfdata = "";
 		await Task.Yield();
 		Pdfdata = current;
 	}
