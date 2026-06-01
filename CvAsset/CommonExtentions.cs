@@ -209,10 +209,10 @@ public static class CommonExtentions {
 		public string ReplaceServerSqlQuery() {
 			var replaced = ServerDateRegex.Replace(str,
 				match => $"strftime('%Y%m%d%H%M%S',datetime(({match.Groups[1].Value} - 621355968000000000) / 10000000, 'unixepoch','localtime'))");
-			var literalReplaced = ServerImgLiteralRegex.Replace(replaced, match => $"'img/{match.Groups[1].Value}.img'");
+			var literalReplaced = ServerImgLiteralRegex.Replace(replaced, match => $"'img/{match.Groups[1].Value}.jpg'");
 			return ServerImgExpressionRegex.Replace(literalReplaced, match => {
 				var imageNameExpression = match.Groups[1].Value.Trim();
-				return $"case when ifnull({imageNameExpression}, '') = '' then '' else 'img/' || {imageNameExpression} || '.img' end";
+				return $"case when ifnull({imageNameExpression}, '') = '' then '' else 'img/' || {imageNameExpression} || '.jpg' end";
 			});
 		}
 	}
