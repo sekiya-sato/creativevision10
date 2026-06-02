@@ -263,6 +263,7 @@ from MasterMeisho where Kubun=@0
 			if (vm != null) {
 				var url = $"{AppGlobal.Url}/wrk/{pdfdata}";
 				vm.Pdfdata = url;
+				view.Title += " " + url;
 				ClientLib.ShowDialogView(view, this, IsDialog: false);
 				view.Owner = null;
 			}

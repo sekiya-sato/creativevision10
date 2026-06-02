@@ -461,6 +461,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			}
 
 			vm.Pdfdata = $"{AppGlobal.Url}/wrk/{pdfdata}";
+			view.Title += " " + vm.Pdfdata;
 			ClientLib.ShowDialogView(view, this, IsDialog: false);
 			view.Owner = null;
 			Message = $"PDFを表示しました: {pdfdata}";
