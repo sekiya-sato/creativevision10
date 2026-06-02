@@ -1,8 +1,6 @@
 using CodeShare;
 using CvBase;
 using CvDomainLogic;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
@@ -298,31 +296,39 @@ public class SchedulerService : CodeShare.IScheduler {
 		var failedCount = 0;
 
 		try {
-			foreach (var filePath in Directory.EnumerateFiles(outputDir, "*", SearchOption.TopDirectoryOnly)) {
+			foreach (var entryPath in Directory.EnumerateFileSystemEntries(outputDir, "*", SearchOption.TopDirectoryOnly)) {
 				cancellationToken.ThrowIfCancellationRequested();
 
 				try {
-					var fileInfo = new FileInfo(filePath);
-					var latestFileTime = fileInfo.LastWriteTime > fileInfo.CreationTime
-						? fileInfo.LastWriteTime
-						: fileInfo.CreationTime;
+					var entryInfo = File.GetAttributes(entryPath).HasFlag(FileAttributes.Directory)
+						? new DirectoryInfo(entryPath)
+						: new FileInfo(entryPath) as FileSystemInfo;
+					var latestFileTime = entryInfo.LastWriteTime > entryInfo.CreationTime
+						? entryInfo.LastWriteTime
+						: entryInfo.CreationTime;
 
 					if (latestFileTime > threshold) {
 						skippedCount++;
 						continue;
 					}
 
-					fileInfo.Delete();
+					if (entryInfo is DirectoryInfo directoryInfo) {
+						directoryInfo.Delete(true);
+					}
+					else {
+						entryInfo.Delete();
+					}
+
 					deletedCount++;
 				}
 				catch (Exception ex) {
 					failedCount++;
-					_logger.LogWarning(ex, "ワークファイル削除に失敗しました。 TaskName={TaskName}, FilePath={FilePath}", taskName, filePath);
+					_logger.LogWarning(ex, "ワークファイル/フォルダ削除に失敗しました。 TaskName={TaskName}, Path={Path}", taskName, entryPath);
 				}
 			}
 		}
 		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
-			_logger.LogInformation("ワークファイル削除をキャンセルしました。 TaskName={TaskName}, OutputDir={OutputDir}", taskName, outputDir);
+			_logger.LogInformation("ワークファイル/フォルダ削除をキャンセルしました。 TaskName={TaskName}, OutputDir={OutputDir}", taskName, outputDir);
 			throw;
 		}
 		catch (Exception ex) {
@@ -330,7 +336,7 @@ public class SchedulerService : CodeShare.IScheduler {
 		}
 
 		_logger.LogInformation(
-			"ワークファイル削除完了: TaskName={TaskName}, OutputDir={OutputDir}, Threshold={Threshold}, Deleted={Deleted}, Skipped={Skipped}, Failed={Failed}",
+			"ワークファイル/フォルダ削除完了: TaskName={TaskName}, OutputDir={OutputDir}, Threshold={Threshold}, Deleted={Deleted}, Skipped={Skipped}, Failed={Failed}",
 			taskName,
 			outputDir,
 			threshold,

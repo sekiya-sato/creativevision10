@@ -16,6 +16,24 @@
 
 ---
 
+## [2026-06-02] 12:08 SchedulerService ワーク削除対象にフォルダを追加
+### Agent
+- GPT-5 : OpenAI : GitHub Copilot
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：SchedulerService のワーク削除処理でファイルだけでなくフォルダも削除対象とし、その修正内容をログ記録してコミットする
+### 実施内容
+- CvServer/Services/SchedulerService.cs: 出力先直下の列挙対象をファイルからファイルシステム項目へ広げ、フォルダは更新日時判定後に再帰削除するよう修正
+- Doc/aicoding_log.md: 本作業の記録を末尾へ追記
+### 技術決定 Why
+- 既存の経過時間しきい値ロジックを維持しつつフォルダも同条件で扱うため、`FileSystemInfo` ベースで分岐し、フォルダのみ再帰削除を選択した
+- 既存の統計カウントと例外処理の流れを崩さず最小差分で対応するため、列挙部分と削除部分に限定して変更した
+### 確認
+- `dotnet build "Cv.slnx"` 相当のワークスペース ビルド成功を確認
+
+---
+
 ## [2026-06-01] 15:44 WebpdfView F5再読込対応
 ### Agent
 - GPT-5 : OpenAI : Codex
