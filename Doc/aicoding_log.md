@@ -551,3 +551,30 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-02] 12:31 SchedulerService 自動実行履歴記録追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`SchedulerService.cs` の `ExecuteWorkFileCleanupTaskAsync` / `ExecuteSqliteWalCheckpointTaskAsync` / `ExecuteTaskAsync` で、処理直前に `SysHistAutoexec` レコードを作成し、完了時に終了時間・経過秒数・処理内容を記録する
+### 実施内容
+- CvServer/Services/SchedulerService.cs: 3つの実行処理を `SysHistAutoexec` 開始登録・終了更新の共通ラッパー経由に変更
+- CvServer/Services/SchedulerService.cs: 完了時に `EndTime` / `ElapsedTime` / `ReturnCode` / `Count` / `Memo` / `Vdu` を更新する処理を追加
+- CvServer/Services/SchedulerService.cs: WALチェックポイント件数、ワークファイル削除件数、集計進捗件数を履歴の `Count` / `Memo` に反映する処理を追加
+- Doc/aicoding_log.md: 本作業の記録を末尾へ追記
+### 技術決定 Why
+- 3つのスケジューラ処理を共通ラッパーで囲むことで、開始レコード作成と完了更新の漏れを防ぎ、既存のログ出力・例外伝播を維持した
+- `SysHistAutoexec.Memo` は既存DDLの文字列長に収まるよう改行除去と文字数制限を行い、長い出力パスや例外メッセージで更新が失敗しにくい形にした
+- 履歴登録・更新自体の失敗はログへ残し、ワークファイル削除やWALチェックポイントなどの保守処理本体を妨げないようにした
+### 影響範囲 (省略可)
+- CvServer の SchedulerService による任意登録タスク、SQLite WAL checkpoint 定期実行、ワークファイル定期削除
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Tests/TestServer/TestServer.csproj"` で TestServer のビルド成功（0 warnings / 0 errors）を確認
+- `dotnet test Tests/TestServer/TestServer.csproj --no-build` は .NET 10 / Microsoft.Testing.Platform の既存設定により `Testing with VSTest target is no longer supported...` で失敗することを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests/TestServer/TestServer.csproj"` で TestServer のテスト6件成功を確認
+
+---

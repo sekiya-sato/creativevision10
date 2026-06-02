@@ -4,6 +4,8 @@ using CvDomainLogic;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 
 
 namespace CvServer.Services;
@@ -15,10 +17,13 @@ public class SchedulerService : CodeShare.IScheduler {
 	private const int InvalidCronExpression = 2;
 	private const int InvalidTaskId = 3;
 	private const int TaskNotFound = 4;
+	private const int Canceled = 8;
 	private const int InternalError = 9;
 	private const string SqliteOptimizeSql = "PRAGMA optimize;";
 	private const string SqliteWalCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
 	private const string SqliteVacuumSql = "VACUUM;";
+	private const int MaxAutoexecTaskNameLength = 100;
+	private const int MaxAutoexecMemoLength = 250;
 	private const int WorkFileCleanupTargetAgeHours = 2;
 	public const string DailyWalCheckpointCronExpression = "0 2 * * *";
 	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint";
@@ -31,6 +36,8 @@ public class SchedulerService : CodeShare.IScheduler {
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private static readonly TimeSpan WorkFileCleanupTargetAge = TimeSpan.FromHours(WorkFileCleanupTargetAgeHours);
+
+	private sealed record AutoexecTaskResult(int ReturnCode, int Count, string Memo);
 
 	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler, ExDatabase db, IConfiguration configuration, IWebHostEnvironment env) {
 		_logger = logger;
@@ -196,7 +203,14 @@ public class SchedulerService : CodeShare.IScheduler {
 		}
 	}
 
-	private async Task ExecuteTaskAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
+	private Task ExecuteTaskAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
+		var taskName = string.IsNullOrWhiteSpace(request.TaskName)
+			? request.TaskType.ToString()
+			: request.TaskName.Trim();
+		return ExecuteWithAutoexecHistoryAsync(taskName, cancellationToken, ct => ExecuteTaskCoreAsync(request, ct));
+	}
+
+	private async Task<AutoexecTaskResult> ExecuteTaskCoreAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
 		switch (request.TaskType) {
 			case SchedulerTaskType.LogOnly:
 				_logger.LogInformation(
@@ -205,13 +219,17 @@ public class SchedulerService : CodeShare.IScheduler {
 					request.TaskName,
 					request.Payload,
 					cancellationToken.IsCancellationRequested);
-				break;
+				return new AutoexecTaskResult(Success, 0, $"LogOnly実行: Payload={request.Payload}");
 
 			case SchedulerTaskType.RunSummary:
+				var processedCount = 0;
+				var returnCode = Success;
+				var memo = string.Empty;
 				try {
 					string yyyymm = string.IsNullOrWhiteSpace(request.Payload)
 						? DateTime.Now.ToString("yyyyMM")
 						: request.Payload.Trim();
+					memo = $"集計対象={yyyymm}";
 
 					_logger.LogInformation(
 						"集計開始: TaskName={TaskName}, yyyymm={yyyymm}, Canceled={Canceled}",
@@ -223,14 +241,18 @@ public class SchedulerService : CodeShare.IScheduler {
 					var param = new SummaryDateParameter(yyyymm, yyyymm);
 					await foreach (var step in summaryDb.SummaryAllAsyncStream(param).WithCancellation(cancellationToken)) {
 						if (step.IsCompleted) {
+							memo = $"集計完了: yyyymm={yyyymm}, Duration={step.ErrorMessage}";
 							_logger.LogInformation("集計完了: TaskName={TaskName}, Duration={Duration}",
 								request.TaskName, step.ErrorMessage);
 						}
 						else if (step.IsError) {
+							returnCode = InternalError;
+							memo = $"集計エラー: Step={step.StepName}, Error={step.ErrorMessage}";
 							_logger.LogError("集計エラー: Step={Step}, Error={Error}",
 								step.StepName, step.ErrorMessage);
 						}
 						else {
+							processedCount = step.Count;
 							_logger.LogInformation("集計進捗: Step={Step}, Progress={Progress}, Count={Count}",
 								step.StepName, step.Progress, step.Count);
 						}
@@ -238,16 +260,21 @@ public class SchedulerService : CodeShare.IScheduler {
 				}
 				catch (Exception ex) {
 					_logger.LogError(ex, "集計実行中にエラーが発生しました: TaskName={TaskName}", request.TaskName);
+					return new AutoexecTaskResult(InternalError, processedCount, $"集計例外: {ex.Message}");
 				}
-				break;
+				return new AutoexecTaskResult(returnCode, processedCount, memo);
 
 			default:
 				_logger.LogWarning("未対応の TaskType です: {TaskType}", request.TaskType);
-				break;
+				return new AutoexecTaskResult(InvalidRequest, 0, $"未対応のTaskType: {request.TaskType}");
 		}
 	}
 
 	private Task ExecuteSqliteWalCheckpointTaskAsync(string taskName, CancellationToken cancellationToken) {
+		return ExecuteWithAutoexecHistoryAsync(taskName, cancellationToken, ct => ExecuteSqliteWalCheckpointCoreAsync(taskName, ct));
+	}
+
+	private Task<AutoexecTaskResult> ExecuteSqliteWalCheckpointCoreAsync(string taskName, CancellationToken cancellationToken) {
 		cancellationToken.ThrowIfCancellationRequested();
 
 		try {
@@ -255,6 +282,7 @@ public class SchedulerService : CodeShare.IScheduler {
 			var busy = GetCheckpointLongValue(checkpointResult, "busy");
 			var logCount = GetCheckpointLongValue(checkpointResult, "log");
 			var checkpointed = GetCheckpointLongValue(checkpointResult, "checkpointed");
+			var memo = $"WALチェックポイント: Busy={busy}, Log={logCount}, Checkpointed={checkpointed}";
 
 			if (busy > 0) {
 				_logger.LogWarning(
@@ -272,28 +300,32 @@ public class SchedulerService : CodeShare.IScheduler {
 					logCount,
 					checkpointed);
 			}
+			return Task.FromResult(new AutoexecTaskResult(busy > 0 ? InternalError : Success, ToHistoryCount(checkpointed), memo));
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "WALチェックポイント実行中にエラーが発生しました: TaskName={TaskName}", taskName);
 			throw;
 		}
-
-		return Task.CompletedTask;
 	}
 
 	private Task ExecuteWorkFileCleanupTaskAsync(string taskName, CancellationToken cancellationToken) {
+		return ExecuteWithAutoexecHistoryAsync(taskName, cancellationToken, ct => ExecuteWorkFileCleanupCoreAsync(taskName, ct));
+	}
+
+	private Task<AutoexecTaskResult> ExecuteWorkFileCleanupCoreAsync(string taskName, CancellationToken cancellationToken) {
 		cancellationToken.ThrowIfCancellationRequested();
 
 		var outputDir = ResolvePrintOutputDir();
 		if (!Directory.Exists(outputDir)) {
 			_logger.LogInformation("ワークファイル削除をスキップしました。 TaskName={TaskName}, OutputDir={OutputDir}, Reason=DirectoryNotFound", taskName, outputDir);
-			return Task.CompletedTask;
+			return Task.FromResult(new AutoexecTaskResult(Success, 0, $"スキップ: OutputDir={outputDir}, Reason=DirectoryNotFound"));
 		}
 
 		var threshold = DateTime.Now - WorkFileCleanupTargetAge;
 		var deletedCount = 0;
 		var skippedCount = 0;
 		var failedCount = 0;
+		var scanErrorMessage = string.Empty;
 
 		try {
 			foreach (var entryPath in Directory.EnumerateFileSystemEntries(outputDir, "*", SearchOption.TopDirectoryOnly)) {
@@ -332,6 +364,7 @@ public class SchedulerService : CodeShare.IScheduler {
 			throw;
 		}
 		catch (Exception ex) {
+			scanErrorMessage = ex.Message;
 			_logger.LogError(ex, "ワークフォルダの走査に失敗しました。 TaskName={TaskName}, OutputDir={OutputDir}", taskName, outputDir);
 		}
 
@@ -344,7 +377,118 @@ public class SchedulerService : CodeShare.IScheduler {
 			skippedCount,
 			failedCount);
 
-		return Task.CompletedTask;
+		var returnCode = failedCount > 0 || !string.IsNullOrWhiteSpace(scanErrorMessage) ? InternalError : Success;
+		var memo = string.IsNullOrWhiteSpace(scanErrorMessage)
+			? $"ワークファイル削除: OutputDir={outputDir}, Deleted={deletedCount}, Skipped={skippedCount}, Failed={failedCount}"
+			: $"ワークファイル削除走査失敗: OutputDir={outputDir}, Deleted={deletedCount}, Skipped={skippedCount}, Failed={failedCount}, Error={scanErrorMessage}";
+
+		return Task.FromResult(new AutoexecTaskResult(returnCode, deletedCount, memo));
+	}
+
+	private async Task ExecuteWithAutoexecHistoryAsync(string taskName, CancellationToken cancellationToken, Func<CancellationToken, Task<AutoexecTaskResult>> executeAsync) {
+		var startTime = DateTime.Now;
+		var stopwatch = Stopwatch.StartNew();
+		var history = InsertAutoexecHistory(taskName, startTime);
+		var result = new AutoexecTaskResult(Success, 0, "正常終了");
+		Exception? caughtException = null;
+
+		try {
+			result = await executeAsync(cancellationToken);
+		}
+		catch (OperationCanceledException ex) {
+			caughtException = ex;
+			result = new AutoexecTaskResult(Canceled, 0, $"キャンセル: {ex.Message}");
+		}
+		catch (Exception ex) {
+			caughtException = ex;
+			result = new AutoexecTaskResult(InternalError, 0, $"例外: {ex.Message}");
+		}
+		finally {
+			stopwatch.Stop();
+			UpdateAutoexecHistory(history, DateTime.Now, stopwatch.Elapsed, result);
+		}
+
+		if (caughtException != null) {
+			ExceptionDispatchInfo.Capture(caughtException).Throw();
+		}
+	}
+
+	private SysHistAutoexec? InsertAutoexecHistory(string taskName, DateTime startTime) {
+		try {
+			var vdate = DateTime.Now.ToUniversalTime().Ticks;
+			var history = new SysHistAutoexec {
+				TaskName = NormalizeAutoexecText(taskName, MaxAutoexecTaskNameLength, "未設定"),
+				StartTime = ToAutoexecDateTimeString(startTime),
+				ReturnCode = Success,
+				Memo = "処理開始",
+				Vdc = vdate,
+				Vdu = vdate,
+			};
+
+			_db.Insert(history);
+			return history;
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "自動実行履歴の開始登録に失敗しました。 TaskName={TaskName}", taskName);
+			return null;
+		}
+	}
+
+	private void UpdateAutoexecHistory(SysHistAutoexec? history, DateTime endTime, TimeSpan elapsedTime, AutoexecTaskResult result) {
+		if (history == null) {
+			return;
+		}
+
+		try {
+			history.EndTime = ToAutoexecDateTimeString(endTime);
+			history.ElapsedTime = ToHistoryElapsedSeconds(elapsedTime);
+			history.ReturnCode = result.ReturnCode;
+			history.Count = result.Count;
+			history.Memo = NormalizeAutoexecText(result.Memo, MaxAutoexecMemoLength, "処理完了");
+			history.Vdu = DateTime.Now.ToUniversalTime().Ticks;
+
+			_db.Update(history, ["EndTime", "ElapsedTime", "ReturnCode", "Count", "Memo", "Vdu"]);
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "自動実行履歴の終了更新に失敗しました。 Id={Id}, TaskName={TaskName}", history.Id, history.TaskName);
+		}
+	}
+
+	private static string ToAutoexecDateTimeString(DateTime dateTime) {
+		return dateTime.ToString("yyyyMMddHHmmss");
+	}
+
+	private static int ToHistoryElapsedSeconds(TimeSpan elapsedTime) {
+		if (elapsedTime.TotalSeconds <= 0) {
+			return 0;
+		}
+		if (elapsedTime.TotalSeconds >= int.MaxValue) {
+			return int.MaxValue;
+		}
+		return (int)Math.Ceiling(elapsedTime.TotalSeconds);
+	}
+
+	private static int ToHistoryCount(long count) {
+		if (count <= 0) {
+			return 0;
+		}
+		if (count >= int.MaxValue) {
+			return int.MaxValue;
+		}
+		return (int)count;
+	}
+
+	private static string NormalizeAutoexecText(string? value, int maxLength, string defaultValue) {
+		var text = string.IsNullOrWhiteSpace(value)
+			? defaultValue
+			: value.Replace("\r", " ").Replace("\n", " ").Trim();
+		if (text.Length <= maxLength) {
+			return text;
+		}
+		if (maxLength <= 3) {
+			return text[..maxLength];
+		}
+		return text[..(maxLength - 3)] + "...";
 	}
 
 	private string ResolvePrintOutputDir() {
