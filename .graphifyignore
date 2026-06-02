@@ -51,6 +51,8 @@ Doc/wrk/
 CvServer/wrk
 CvServer/img
 wrk/
+.omo/
+.opencode/
 .sisyphus/
 .playwright-mcp/
 tmp-*

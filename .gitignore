@@ -51,6 +51,7 @@ wrk/
 .sisyphus/
 .playwright-mcp/
 .omo/
+.opencode/
 tmp-*
 graphify-out/
 *-shm
