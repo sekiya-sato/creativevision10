@@ -28,6 +28,10 @@
 		appsettings.json "ConnectionStrings" セクション "sqlite" にベースフォルダからみたdbパスを設定
 	</pre>
 
+- DBについて
+
+	基本はSQLiteを使用、元DBからの変換処理が必要な場合は接続先のOracleを指定する
+
 - ビルド(Windows/Linux環境)
 
 	dotnet build "CvServer/CvServer.csproj"
@@ -35,7 +39,8 @@
 - 実行
 
 	 dotnet exec CvServer.dll
-	 (ASPNETCORE_ENVIRONMENT=Production などを指定すると、環境ごとの設定が適用される)
+	 ASPNETCORE_ENVIRONMENT=Production などを指定すると、環境ごとの設定が適用される 例: ASPNETCORE_ENVIRONMENT=Production dotnet exec CvServer.dll &
+	 起動後、数10秒-1分程度でAPIが利用可能になる(DB処理、自動実行開始、初期化処理など)
 
 - 簡易実行環境
 
