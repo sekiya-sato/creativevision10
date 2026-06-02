@@ -29,6 +29,7 @@ public class DefineDataTable {
 			typeof(SysSequence),
 			typeof(SysLogin),
 			typeof(SysHistJwt),
+			typeof(SysHistAutoexec),
 
 			// マスタテーブル1
 			typeof(MasterSysman),

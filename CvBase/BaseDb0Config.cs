@@ -72,6 +72,52 @@ public sealed partial class SysSequence : BaseDbClass {
 	string memo = string.Empty;
 }
 
+[PrimaryKey("Id", AutoIncrement = true)]
+[Comment("システム：自動実行履歴テーブル")]
+public sealed partial class SysHistAutoexec : BaseDbClass {
+	/// <summary>
+	/// タスク名
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(100)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string taskName = string.Empty;
+	/// <summary>
+	/// 開始日時 date0.ToString("yyyyMMddHHmmss");
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(14)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string startTime = string.Empty;
+	/// <summary>
+	/// 終了日時 date0.ToString("yyyyMMddHHmmss");
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(14)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string endTime = string.Empty;
+	/// <summary>
+	/// 経過時間 (秒)
+	/// </summary>
+	[ObservableProperty]
+	int elapsedTime;
+	/// <summary>
+	/// 実行結果コード 0:成功、0以外:エラーコード
+	/// </summary>
+	[ObservableProperty]
+	int returnCode;
+	/// <summary>
+	/// 処理件数
+	/// </summary>
+	[ObservableProperty]
+	int count;
+	/// <summary>
+	/// メモ (エラー内容や処理内容などを記述)
+	/// </summary>
+	[ObservableProperty]
+	string memo = string.Empty;
+}
+
 // ToDo : テーブルの変更履歴を保存するテーブルを作成すること。変更前と変更後のデータをJSON形式で保存すること。変更前と変更後のデータは、テーブル名、テーブルId、操作Type（追加、更新、削除）を含むこと。
 /// <summary>
 /// 削除履歴テーブル
