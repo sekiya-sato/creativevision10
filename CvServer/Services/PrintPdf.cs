@@ -14,9 +14,10 @@ public partial class CoreService {
 
 	[AllowAnonymous]
 	public async IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default) {
+		string? clientId = context.RequestHeaders?.GetValue("x-clientid");
 		// 処理のステップと対応するアクションを定義
 		var steps = new (string Name, Func<PrintOperation, PrintResult> Action)[] {
-			("プリント前処理", (req) => printPre(req)),
+			("プリント前処理", (req) => printPre(req, clientId)),
 			("プリント本処理", (req) => printPdf(req)),
 			("プリント後処理", (req) => printPost(req))
 		};
@@ -60,6 +61,20 @@ public partial class CoreService {
 		}
 	}
 
+	private static string BuildTempFolderName(string? clientId) {
+		string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+		if (string.IsNullOrWhiteSpace(clientId)) {
+			return timestamp;
+		}
+
+		string sanitizedClientId = string.Concat(clientId.Where(ch => !Path.GetInvalidFileNameChars().Contains(ch))).Trim();
+		if (string.IsNullOrWhiteSpace(sanitizedClientId)) {
+			return timestamp;
+		}
+
+		return $"{sanitizedClientId}-{timestamp}";
+	}
+
 
 	/// <summary>
 	/// Print処理本体
@@ -93,7 +108,7 @@ public partial class CoreService {
 	/// <summary>
 	/// Print前処理(SQLでデータ取得など)
 	/// </summary>
-	private PrintResult printPre(PrintOperation request) {
+	private PrintResult printPre(PrintOperation request, string? clientId) {
 		var start = DateTime.Now;
 		var printServer = _configuration.GetSection("PrintServer");
 		string contentRootPath = _env.ContentRootPath;
@@ -108,7 +123,7 @@ public partial class CoreService {
 		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
 
 		// 一時フォルダ名を生成し、request に保存して printPdf と共有
-		string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+		string timestamp = BuildTempFolderName(clientId);
 		request.TempFolder = timestamp;
 		string tempDir = Path.Combine(resolvedOutputDir, timestamp);
 		Directory.CreateDirectory(tempDir);

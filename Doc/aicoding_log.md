@@ -16,6 +16,25 @@
 
 ---
 
+## [2026-06-02] 16:46 PrintPdf 一時フォルダ名へ clientid を付与
+### Agent
+- GPT-5 : OpenAI : GitHub Copilot
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：`CvServer/Services/PrintPdf.cs` の一時フォルダ名生成を `yyyyMMddHHmmssfff` から、リクエストヘッダー `x-clientid` を使った `clientid-yyyyMMddHHmmssfff` 形式へ変更し、clientid が使えない場合はフォールバックする
+### 実施内容
+- CvServer/Services/PrintPdf.cs: `PrintPdfAsync` で `context.RequestHeaders` から `x-clientid` を取得し、printPre へ渡すよう変更
+- CvServer/Services/PrintPdf.cs: clientid の無効文字を除去した上で `clientid-yyyyMMddHHmmssfff` 形式の一時フォルダ名を生成し、空または未送信時は従来どおりタイムスタンプ単独へフォールバックする補助メソッドを追加
+- Doc/aicoding_log.md: 本作業の記録を末尾へ追記
+### 技術決定 Why
+- 既存の PrintOperation / printPost の流れを崩さず最小差分で対応するため、CallContext から取得した clientid を printPre にだけ渡す構成にした
+- フォルダ名生成失敗を避けるため、`Path.GetInvalidFileNameChars()` で clientid をサニタイズし、結果が空なら従来形式へフォールバックするようにした
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-02] 12:08 SchedulerService ワーク削除対象にフォルダを追加
 ### Agent
 - GPT-5 : OpenAI : GitHub Copilot
