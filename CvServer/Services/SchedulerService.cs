@@ -7,9 +7,7 @@ using ProtoBuf.Grpc;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
-
 namespace CvServer.Services;
-
 
 public class SchedulerService : CodeShare.IScheduler {
 	private const int Success = 0;
@@ -50,9 +48,6 @@ public class SchedulerService : CodeShare.IScheduler {
 	/// <summary>
 	/// 追加されたタスクを追加する
 	/// </summary>
-	/// <param name="msg"></param>
-	/// <param name="context"></param>
-	/// <returns></returns>
 	public Task<SchedulerResult> AddOneTaskAsync(AddSchedulerTaskRequest request, CallContext context = default) {
 		if (string.IsNullOrWhiteSpace(request.CronExpression)) {
 			return Task.FromResult(new SchedulerResult { Result = InvalidRequest, Detail = "CronExpression が空です。" });
@@ -62,52 +57,17 @@ public class SchedulerService : CodeShare.IScheduler {
 			return Task.FromResult(new SchedulerResult { Result = InvalidRequest, Detail = "TaskType が未指定です。" });
 		}
 
-		CrontabSchedule schedule;
-		try {
-			schedule = CrontabSchedule.Parse(request.CronExpression);
-		}
-		catch (Exception ex) {
-			_logger.LogWarning(ex, "cron式が不正です。 Cron={CronExpression}", request.CronExpression);
-			return Task.FromResult(new SchedulerResult {
-				Result = InvalidCronExpression,
-				Detail = $"cron式が不正です: {request.CronExpression}",
-			});
-		}
+		var taskName = string.IsNullOrWhiteSpace(request.TaskName)
+			? request.TaskType.ToString()
+			: request.TaskName.Trim();
 
-		try {
-			var guid = _scheduler.AddTask(
-				crontabSchedule: schedule,
-				action: ct => ExecuteTaskAsync(request, ct).GetAwaiter().GetResult());
-
-			_logger.LogInformation(
-				"スケジュール登録: TaskId={TaskId}, TaskType={TaskType}, TaskName={TaskName}, Cron={Cron}",
-				guid,
-				request.TaskType,
-				request.TaskName,
-				request.CronExpression);
-
-			return Task.FromResult(new SchedulerResult {
-				Result = Success,
-				Detail = "正常終了",
-				TaskId = guid.ToString(),
-			});
-		}
-		catch (Exception ex) {
-			_logger.LogError(ex, "スケジュール登録に失敗しました。 TaskType={TaskType}, TaskName={TaskName}", request.TaskType, request.TaskName);
-			return Task.FromResult(new SchedulerResult {
-				Result = InternalError,
-				Detail = "スケジュール登録に失敗しました。",
-			});
-		}
+		var result = RegisterTask(taskName, request.CronExpression, ct => ExecuteTaskCoreAsync(request, ct));
+		return Task.FromResult(result);
 	}
 
 	/// <summary>
 	/// 追加されたタスクを削除する
-	/// [Remove the added task]
 	/// </summary>
-	/// <param name="msg"></param>
-	/// <param name="context"></param>
-	/// <returns></returns>
 	public Task<SchedulerResult> RemoveOneTaskAsync(RemoveSchedulerTaskRequest request, CallContext context = default) {
 		if (!Guid.TryParse(request.TaskId, out var guid)) {
 			return Task.FromResult(new SchedulerResult {
@@ -136,10 +96,7 @@ public class SchedulerService : CodeShare.IScheduler {
 
 	/// <summary>
 	/// すべてのタスクを削除する
-	/// [Remove all tasks]
 	/// </summary>
-	/// <param name="context"></param>
-	/// <returns></returns>
 	public Task<SchedulerResult> RemoveAllTaskAsync(ProtoBuf.Grpc.CallContext context = default) {
 		_scheduler.RemoveAllTasks();
 		_logger.LogInformation("スケジュール全削除を実行しました。");
@@ -147,46 +104,42 @@ public class SchedulerService : CodeShare.IScheduler {
 	}
 
 	public SchedulerResult RegisterDailySqliteWalCheckpointTask() {
-		try {
-			var schedule = CrontabSchedule.Parse(DailyWalCheckpointCronExpression);
-			var guid = _scheduler.AddTask(
-				crontabSchedule: schedule,
-				action: ct => ExecuteSqliteWalCheckpointTaskAsync(DailyWalCheckpointTaskName, ct).GetAwaiter().GetResult());
-
-			_logger.LogInformation(
-				"SQLite WAL checkpoint の定期実行を登録しました。 TaskId={TaskId}, TaskName={TaskName}, Cron={Cron}",
-				guid,
-				DailyWalCheckpointTaskName,
-				DailyWalCheckpointCronExpression);
-
-			return new SchedulerResult {
-				Result = Success,
-				Detail = "正常終了",
-				TaskId = guid.ToString(),
-			};
-		}
-		catch (Exception ex) {
-			_logger.LogError(ex, "SQLite WAL checkpoint の定期実行登録に失敗しました。");
-			return new SchedulerResult {
-				Result = InternalError,
-				Detail = "SQLite WAL checkpoint の定期実行登録に失敗しました。",
-			};
-		}
+		return RegisterTask(
+			DailyWalCheckpointTaskName,
+			DailyWalCheckpointCronExpression,
+			ct => ExecuteSqliteWalCheckpointCoreAsync(DailyWalCheckpointTaskName, ct));
 	}
 
 	public SchedulerResult RegisterWorkFileCleanupTask() {
+		return RegisterTask(
+			WorkFileCleanupTaskName,
+			WorkFileCleanupCronExpression,
+			ct => ExecuteWorkFileCleanupCoreAsync(WorkFileCleanupTaskName, ct));
+	}
+
+	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<CancellationToken, Task<AutoexecTaskResult>> executor) {
+		CrontabSchedule schedule;
 		try {
-			var schedule = CrontabSchedule.Parse(WorkFileCleanupCronExpression);
+			schedule = CrontabSchedule.Parse(cronExpression);
+		}
+		catch (Exception ex) {
+			_logger.LogWarning(ex, "cron式が不正です。 Cron={CronExpression}", cronExpression);
+			return new SchedulerResult {
+				Result = InvalidCronExpression,
+				Detail = $"cron式が不正です: {cronExpression}",
+			};
+		}
+
+		try {
 			var guid = _scheduler.AddTask(
 				crontabSchedule: schedule,
-				action: ct => ExecuteWorkFileCleanupTaskAsync(WorkFileCleanupTaskName, ct).GetAwaiter().GetResult());
+				action: ct => ExecuteWithAutoexecHistoryAsync(taskName, ct, executor).GetAwaiter().GetResult());
 
 			_logger.LogInformation(
-				"ワークファイル削除の定期実行を登録しました。 TaskId={TaskId}, TaskName={TaskName}, Cron={Cron}, TargetAge={TargetAge}",
+				"スケジュール登録: TaskId={TaskId}, TaskName={TaskName}, Cron={Cron}",
 				guid,
-				WorkFileCleanupTaskName,
-				WorkFileCleanupCronExpression,
-				WorkFileCleanupTargetAge);
+				taskName,
+				cronExpression);
 
 			return new SchedulerResult {
 				Result = Success,
@@ -195,121 +148,102 @@ public class SchedulerService : CodeShare.IScheduler {
 			};
 		}
 		catch (Exception ex) {
-			_logger.LogError(ex, "ワークファイル削除の定期実行登録に失敗しました。");
+			_logger.LogError(ex, "スケジュール登録に失敗しました。 TaskName={TaskName}", taskName);
 			return new SchedulerResult {
 				Result = InternalError,
-				Detail = "ワークファイル削除の定期実行登録に失敗しました。",
+				Detail = "スケジュール登録に失敗しました。",
 			};
 		}
 	}
 
-	private Task ExecuteTaskAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
-		var taskName = string.IsNullOrWhiteSpace(request.TaskName)
-			? request.TaskType.ToString()
-			: request.TaskName.Trim();
-		return ExecuteWithAutoexecHistoryAsync(taskName, cancellationToken, ct => ExecuteTaskCoreAsync(request, ct));
-	}
-
 	private async Task<AutoexecTaskResult> ExecuteTaskCoreAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
-		switch (request.TaskType) {
-			case SchedulerTaskType.LogOnly:
-				_logger.LogInformation(
-					"スケジュール実行: TaskType={TaskType}, TaskName={TaskName}, Payload={Payload}, Canceled={Canceled}",
-					request.TaskType,
-					request.TaskName,
-					request.Payload,
-					cancellationToken.IsCancellationRequested);
-				return new AutoexecTaskResult(Success, 0, $"LogOnly実行: Payload={request.Payload}");
-
-			case SchedulerTaskType.RunSummary:
-				var processedCount = 0;
-				var returnCode = Success;
-				var memo = string.Empty;
-				try {
-					string yyyymm = string.IsNullOrWhiteSpace(request.Payload)
-						? DateTime.Now.ToString("yyyyMM")
-						: request.Payload.Trim();
-					memo = $"集計対象={yyyymm}";
-
-					_logger.LogInformation(
-						"集計開始: TaskName={TaskName}, yyyymm={yyyymm}, Canceled={Canceled}",
-						request.TaskName,
-						yyyymm,
-						cancellationToken.IsCancellationRequested);
-
-					var summaryDb = new SummaryDb(_db);
-					var param = new SummaryDateParameter(yyyymm, yyyymm);
-					await foreach (var step in summaryDb.SummaryAllAsyncStream(param).WithCancellation(cancellationToken)) {
-						if (step.IsCompleted) {
-							memo = $"集計完了: yyyymm={yyyymm}, Duration={step.ErrorMessage}";
-							_logger.LogInformation("集計完了: TaskName={TaskName}, Duration={Duration}",
-								request.TaskName, step.ErrorMessage);
-						}
-						else if (step.IsError) {
-							returnCode = InternalError;
-							memo = $"集計エラー: Step={step.StepName}, Error={step.ErrorMessage}";
-							_logger.LogError("集計エラー: Step={Step}, Error={Error}",
-								step.StepName, step.ErrorMessage);
-						}
-						else {
-							processedCount = step.Count;
-							_logger.LogInformation("集計進捗: Step={Step}, Progress={Progress}, Count={Count}",
-								step.StepName, step.Progress, step.Count);
-						}
-					}
-				}
-				catch (Exception ex) {
-					_logger.LogError(ex, "集計実行中にエラーが発生しました: TaskName={TaskName}", request.TaskName);
-					return new AutoexecTaskResult(InternalError, processedCount, $"集計例外: {ex.Message}");
-				}
-				return new AutoexecTaskResult(returnCode, processedCount, memo);
-
-			default:
-				_logger.LogWarning("未対応の TaskType です: {TaskType}", request.TaskType);
-				return new AutoexecTaskResult(InvalidRequest, 0, $"未対応のTaskType: {request.TaskType}");
-		}
+		return request.TaskType switch {
+			SchedulerTaskType.LogOnly => await ExecuteLogOnlyAsync(request, cancellationToken),
+			SchedulerTaskType.RunSummary => await ExecuteRunSummaryAsync(request, cancellationToken),
+			_ => new AutoexecTaskResult(InvalidRequest, 0, $"未対応のTaskType: {request.TaskType}"),
+		};
 	}
 
-	private Task ExecuteSqliteWalCheckpointTaskAsync(string taskName, CancellationToken cancellationToken) {
-		return ExecuteWithAutoexecHistoryAsync(taskName, cancellationToken, ct => ExecuteSqliteWalCheckpointCoreAsync(taskName, ct));
+	private Task<AutoexecTaskResult> ExecuteLogOnlyAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
+		_logger.LogInformation(
+			"スケジュール実行: TaskType={TaskType}, TaskName={TaskName}, Payload={Payload}, Canceled={Canceled}",
+			request.TaskType,
+			request.TaskName,
+			request.Payload,
+			cancellationToken.IsCancellationRequested);
+		return Task.FromResult(new AutoexecTaskResult(Success, 0, $"LogOnly実行: Payload={request.Payload}"));
+	}
+
+	private async Task<AutoexecTaskResult> ExecuteRunSummaryAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
+		var processedCount = 0;
+		var returnCode = Success;
+		var memo = string.Empty;
+		try {
+			string yyyymm = string.IsNullOrWhiteSpace(request.Payload)
+				? DateTime.Now.ToString("yyyyMM")
+				: request.Payload.Trim();
+			memo = $"集計対象={yyyymm}";
+
+			_logger.LogInformation(
+				"集計開始: TaskName={TaskName}, yyyymm={yyyymm}, Canceled={Canceled}",
+				request.TaskName,
+				yyyymm,
+				cancellationToken.IsCancellationRequested);
+
+			var summaryDb = new SummaryDb(_db);
+			var param = new SummaryDateParameter(yyyymm, yyyymm);
+			await foreach (var step in summaryDb.SummaryAllAsyncStream(param).WithCancellation(cancellationToken)) {
+				if (step.IsCompleted) {
+					memo = $"集計完了: yyyymm={yyyymm}, Duration={step.ErrorMessage}";
+					_logger.LogInformation("集計完了: TaskName={TaskName}, Duration={Duration}",
+						request.TaskName, step.ErrorMessage);
+				}
+				else if (step.IsError) {
+					returnCode = InternalError;
+					memo = $"集計エラー: Step={step.StepName}, Error={step.ErrorMessage}";
+					_logger.LogError("集計エラー: Step={Step}, Error={Error}",
+						step.StepName, step.ErrorMessage);
+				}
+				else {
+					processedCount = step.Count;
+					_logger.LogInformation("集計進捗: Step={Step}, Progress={Progress}, Count={Count}",
+						step.StepName, step.Progress, step.Count);
+				}
+			}
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "集計実行中にエラーが発生しました: TaskName={TaskName}", request.TaskName);
+			return new AutoexecTaskResult(InternalError, processedCount, $"集計例外: {ex.Message}");
+		}
+		return new AutoexecTaskResult(returnCode, processedCount, memo);
 	}
 
 	private Task<AutoexecTaskResult> ExecuteSqliteWalCheckpointCoreAsync(string taskName, CancellationToken cancellationToken) {
 		cancellationToken.ThrowIfCancellationRequested();
 
-		try {
-			var checkpointResult = ExecuteSqliteWalCheckpoint(_db);
-			var busy = GetCheckpointLongValue(checkpointResult, "busy");
-			var logCount = GetCheckpointLongValue(checkpointResult, "log");
-			var checkpointed = GetCheckpointLongValue(checkpointResult, "checkpointed");
-			var memo = $"WALチェックポイント: Busy={busy}, Log={logCount}, Checkpointed={checkpointed}";
+		var checkpointResult = ExecuteSqliteWalCheckpoint(_db);
+		var busy = Helpers.GetCheckpointLongValue(checkpointResult, "busy");
+		var logCount = Helpers.GetCheckpointLongValue(checkpointResult, "log");
+		var checkpointed = Helpers.GetCheckpointLongValue(checkpointResult, "checkpointed");
+		var memo = $"WALチェックポイント: Busy={busy}, Log={logCount}, Checkpointed={checkpointed}";
 
-			if (busy > 0) {
-				_logger.LogWarning(
-					"WALチェックポイントは一部保留されました: TaskName={TaskName}, Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
-					taskName,
-					busy,
-					logCount,
-					checkpointed);
-			}
-			else {
-				_logger.LogInformation(
-					"WALチェックポイント完了: TaskName={TaskName}, Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
-					taskName,
-					busy,
-					logCount,
-					checkpointed);
-			}
-			return Task.FromResult(new AutoexecTaskResult(busy > 0 ? InternalError : Success, ToHistoryCount(checkpointed), memo));
+		if (busy > 0) {
+			_logger.LogWarning(
+				"WALチェックポイントは一部保留されました: TaskName={TaskName}, Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
+				taskName,
+				busy,
+				logCount,
+				checkpointed);
 		}
-		catch (Exception ex) {
-			_logger.LogError(ex, "WALチェックポイント実行中にエラーが発生しました: TaskName={TaskName}", taskName);
-			throw;
+		else {
+			_logger.LogInformation(
+				"WALチェックポイント完了: TaskName={TaskName}, Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
+				taskName,
+				busy,
+				logCount,
+				checkpointed);
 		}
-	}
-
-	private Task ExecuteWorkFileCleanupTaskAsync(string taskName, CancellationToken cancellationToken) {
-		return ExecuteWithAutoexecHistoryAsync(taskName, cancellationToken, ct => ExecuteWorkFileCleanupCoreAsync(taskName, ct));
+		return Task.FromResult(new AutoexecTaskResult(busy > 0 ? InternalError : Success, Helpers.ToHistoryCount(checkpointed), memo));
 	}
 
 	private Task<AutoexecTaskResult> ExecuteWorkFileCleanupCoreAsync(string taskName, CancellationToken cancellationToken) {
@@ -417,8 +351,8 @@ public class SchedulerService : CodeShare.IScheduler {
 		try {
 			var vdate = DateTime.Now.ToUniversalTime().Ticks;
 			var history = new SysHistAutoexec {
-				TaskName = NormalizeAutoexecText(taskName, MaxAutoexecTaskNameLength, "未設定"),
-				StartTime = ToAutoexecDateTimeString(startTime),
+				TaskName = Helpers.NormalizeAutoexecText(taskName, MaxAutoexecTaskNameLength, "未設定"),
+				StartTime = Helpers.ToAutoexecDateTimeString(startTime),
 				ReturnCode = Success,
 				Memo = "処理開始",
 				Vdc = vdate,
@@ -440,11 +374,11 @@ public class SchedulerService : CodeShare.IScheduler {
 		}
 
 		try {
-			history.EndTime = ToAutoexecDateTimeString(endTime);
-			history.ElapsedTime = ToHistoryElapsedSeconds(elapsedTime);
+			history.EndTime = Helpers.ToAutoexecDateTimeString(endTime);
+			history.ElapsedTime = Helpers.ToHistoryElapsedSeconds(elapsedTime);
 			history.ReturnCode = result.ReturnCode;
 			history.Count = result.Count;
-			history.Memo = NormalizeAutoexecText(result.Memo, MaxAutoexecMemoLength, "処理完了");
+			history.Memo = Helpers.NormalizeAutoexecText(result.Memo, MaxAutoexecMemoLength, "処理完了");
 			history.Vdu = DateTime.Now.ToUniversalTime().Ticks;
 
 			_db.Update(history, ["EndTime", "ElapsedTime", "ReturnCode", "Count", "Memo", "Vdu"]);
@@ -452,43 +386,6 @@ public class SchedulerService : CodeShare.IScheduler {
 		catch (Exception ex) {
 			_logger.LogError(ex, "自動実行履歴の終了更新に失敗しました。 Id={Id}, TaskName={TaskName}", history.Id, history.TaskName);
 		}
-	}
-
-	private static string ToAutoexecDateTimeString(DateTime dateTime) {
-		return dateTime.ToString("yyyyMMddHHmmss");
-	}
-
-	private static int ToHistoryElapsedSeconds(TimeSpan elapsedTime) {
-		if (elapsedTime.TotalSeconds <= 0) {
-			return 0;
-		}
-		if (elapsedTime.TotalSeconds >= int.MaxValue) {
-			return int.MaxValue;
-		}
-		return (int)Math.Ceiling(elapsedTime.TotalSeconds);
-	}
-
-	private static int ToHistoryCount(long count) {
-		if (count <= 0) {
-			return 0;
-		}
-		if (count >= int.MaxValue) {
-			return int.MaxValue;
-		}
-		return (int)count;
-	}
-
-	private static string NormalizeAutoexecText(string? value, int maxLength, string defaultValue) {
-		var text = string.IsNullOrWhiteSpace(value)
-			? defaultValue
-			: value.Replace("\r", " ").Replace("\n", " ").Trim();
-		if (text.Length <= maxLength) {
-			return text;
-		}
-		if (maxLength <= 3) {
-			return text[..maxLength];
-		}
-		return text[..(maxLength - 3)] + "...";
 	}
 
 	private string ResolvePrintOutputDir() {
@@ -506,42 +403,81 @@ public class SchedulerService : CodeShare.IScheduler {
 	}
 
 	public static Dictionary<string, object> ExecuteSqliteWalCheckpoint(ExDatabase db) {
-		EnsureRawExecSucceeded(db.RawExecCmd(SqliteOptimizeSql), SqliteOptimizeSql);
+		Helpers.EnsureRawExecSucceeded(db.RawExecCmd(SqliteOptimizeSql), SqliteOptimizeSql);
 		var result = db.RawExecCmd(SqliteWalCheckpointSql);
-		EnsureRawExecSucceeded(result, SqliteWalCheckpointSql);
+		Helpers.EnsureRawExecSucceeded(result, SqliteWalCheckpointSql);
 		if (result.Count == 0) {
 			return new Dictionary<string, object>();
 		}
 		var checkpointResult = result.First();
-		if (GetCheckpointLongValue(checkpointResult, "busy") == 0) {
-			EnsureRawExecSucceeded(db.RawExecCmd(SqliteVacuumSql), SqliteVacuumSql);
+		if (Helpers.GetCheckpointLongValue(checkpointResult, "busy") == 0) {
+			Helpers.EnsureRawExecSucceeded(db.RawExecCmd(SqliteVacuumSql), SqliteVacuumSql);
 		}
 		return checkpointResult;
 	}
 
-	private static void EnsureRawExecSucceeded(List<Dictionary<string, object>> result, string sql) {
-		if (result.Count == 0) {
-			return;
+	private static class Helpers {
+		public static string ToAutoexecDateTimeString(DateTime dateTime) {
+			return dateTime.ToString("yyyyMMddHHmmss");
 		}
 
-		if (result[0].TryGetValue("Error", out var error) && error != null) {
-			throw new InvalidOperationException($"SQLite maintenance SQL failed: {sql} :: {error}");
+		public static int ToHistoryElapsedSeconds(TimeSpan elapsedTime) {
+			if (elapsedTime.TotalSeconds <= 0) {
+				return 0;
+			}
+			if (elapsedTime.TotalSeconds >= int.MaxValue) {
+				return int.MaxValue;
+			}
+			return (int)Math.Ceiling(elapsedTime.TotalSeconds);
 		}
-	}
 
-	private static object? GetCheckpointValue(Dictionary<string, object> checkpointResult, string key) {
-		return checkpointResult.TryGetValue(key, out var value) ? value : null;
-	}
+		public static int ToHistoryCount(long count) {
+			if (count <= 0) {
+				return 0;
+			}
+			if (count >= int.MaxValue) {
+				return int.MaxValue;
+			}
+			return (int)count;
+		}
 
-	private static long GetCheckpointLongValue(Dictionary<string, object> checkpointResult, string key) {
-		var value = GetCheckpointValue(checkpointResult, key);
-		return value switch {
-			byte number => number,
-			short number => number,
-			int number => number,
-			long number => number,
-			string text when long.TryParse(text, out var parsed) => parsed,
-			_ => 0,
-		};
+		public static string NormalizeAutoexecText(string? value, int maxLength, string defaultValue) {
+			var text = string.IsNullOrWhiteSpace(value)
+				? defaultValue
+				: value.Replace("\r", " ").Replace("\n", " ").Trim();
+			if (text.Length <= maxLength) {
+				return text;
+			}
+			if (maxLength <= 3) {
+				return text[..maxLength];
+			}
+			return text[..(maxLength - 3)] + "...";
+		}
+
+		public static void EnsureRawExecSucceeded(List<Dictionary<string, object>> result, string sql) {
+			if (result.Count == 0) {
+				return;
+			}
+
+			if (result[0].TryGetValue("Error", out var error) && error != null) {
+				throw new InvalidOperationException($"SQLite maintenance SQL failed: {sql} :: {error}");
+			}
+		}
+
+		public static object? GetCheckpointValue(Dictionary<string, object> checkpointResult, string key) {
+			return checkpointResult.TryGetValue(key, out var value) ? value : null;
+		}
+
+		public static long GetCheckpointLongValue(Dictionary<string, object> checkpointResult, string key) {
+			var value = GetCheckpointValue(checkpointResult, key);
+			return value switch {
+				byte number => number,
+				short number => number,
+				int number => number,
+				long number => number,
+				string text when long.TryParse(text, out var parsed) => parsed,
+				_ => 0,
+			};
+		}
 	}
 }

@@ -594,3 +594,32 @@
 - SysLoginHistoryView と同じく履歴参照画面なので、同じレイアウト・動作パターンを採用。修正不可（CanUpdate/CanDelete=false）で読み取り専用とした。
 ### 確認
 - Build 成功 (0 errors, 0 warnings)
+
+---
+
+## [2026-06-02] 14:04 SchedulerService 内部構造のリファクタリング
+### Agent
+- GPT-5 : OpenAI : Sisyphus
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：SchedulerService の内部構造を整理し統合する。一番外側のI/Fは変更せず、修正・コミットまで
+### 実施内容
+- CvServer/Services/SchedulerService.cs:
+  - タスク登録処理（AddOneTaskAsync / RegisterDailySqliteWalCheckpointTask / RegisterWorkFileCleanupTask）を RegisterTask 共通メソッドに集約し、重複する try-catch・ログ・SchedulerResult 生成を統合
+  - タスク実行ラッパー（ExecuteTaskAsync / ExecuteSqliteWalCheckpointTaskAsync / ExecuteWorkFileCleanupTaskAsync）を削除し、RegisterTask 内で直接 ExecuteWithAutoexecHistoryAsync を呼ぶように変更
+  - ExecuteTaskCoreAsync の switch 文をメソッド抽出（ExecuteLogOnlyAsync / ExecuteRunSummaryAsync）し、各タスク種別の責務を分離
+  - 純粋関数系ユーティリティ（日時変換、カウント変換、テキスト正規化、チェックポイント値取得など）を private static class Helpers に集約
+  - ExecuteSqliteWalCheckpointCoreAsync の不要な try-catch を削除
+### 技術決定 Why
+- 登録・実行・履歴記録の3層に関心を分離し、各メソッドの責務を明確にした
+- 定型的なログ・結果生成を共通メソッドに押し込み、将来のタスク種別追加を容易にした
+- テストから呼ばれる public static ExecuteSqliteWalCheckpoint はI/Fを維持し、内部実装のみ Helpers を参照する形に整理した
+### 影響範囲
+- CvServer/Services/SchedulerService.cs のみ（外部I/F変更なし）
+- Tests/TestServer/TestServer.cs はビルド成功（ExecuteSqliteWalCheckpoint の static I/F を維持）
+### 確認
+- CvServer ビルド成功 (0 errors, 0 warnings)
+- TestServer ビルド成功 (0 errors, 0 warnings)
+
+---
