@@ -578,3 +578,19 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests/TestServer/TestServer.csproj"` で TestServer のテスト6件成功を確認
 
 ---
+
+## [2026-06-02] 18:00 SysAutoExecHistoryView / ViewModel の実装
+### Agent
+- [GPT-5.4-mini : OpenAI]
+### Editor
+- [VS2026]
+### 目的
+- ユーザーからの要望：SysAutoExecHistoryView および SysAutoExecHistoryViewModel を作成し、SysHistAutoexec を降順に参照・表示する。修正はせず、SysLoginHistoryView を参考にする。
+### 実施内容
+- CvWpfclient/ViewModels/00System/SysAutoExecHistoryViewModel.cs: BaseMenteViewModel<SysHistAutoexec> を継承し、Title="自動実行履歴"、ListOrder="Id DESC"、ListMaxCount=6、CanUpdate/CanDelete=false を設定。InitCommand で一覧取得。
+- CvWpfclient/Views/00System/SysAutoExecHistoryView.xaml: SysLoginHistoryView を参考に ColorZone ツールバー、左 DataGrid（Id, TaskName, StartTime, EndTime, ElapsedTime, ReturnCode, Count, Memo, VdateC）、右詳細パネル（IsReadOnly=True）を実装。
+- CvWpfclient/Models/MenuData.cs: 自動実行履歴の addInfo を "準備中" から "自動実行履歴の確認" に更新。
+### 技術決定 Why
+- SysLoginHistoryView と同じく履歴参照画面なので、同じレイアウト・動作パターンを採用。修正不可（CanUpdate/CanDelete=false）で読み取り専用とした。
+### 確認
+- Build 成功 (0 errors, 0 warnings)

@@ -3,14 +3,331 @@
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
-	Title="自動実行履歴"
+	Title="{Binding Title}"
 	Width="1244" Height="900"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="19"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:SysAutoExecHistoryViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid></Grid>
+
+	<!--  SearchTextBox 共通スタイル  -->
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="MenteSearchTextBox"
+			TargetType="{x:Type helpers:SearchTextBox}">
+			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+		</Style>
+
+		<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->
+		<Style x:Key="MenteDataGridColumnHeader"
+			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+			TargetType="DataGridColumnHeader">
+			<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+			<Setter Property="Padding" Value="12,8" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+
+		<!--  編集フォームのラベルスタイル  -->
+		<Style x:Key="FormLabel"
+			TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="Medium" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+			<Setter Property="Margin" Value="4,0,8,0" />
+		</Style>
+
+		<!--  編集フォームの TextBox スタイル  -->
+		<Style x:Key="FormTextBox"
+			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
+			TargetType="TextBox">
+			<Setter Property="Margin" Value="0,4" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+		</Style>
+	</helpers:BaseWindow.Resources>
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoListCommand}"
+			Gesture="F5" />
+		<KeyBinding Command="{Binding DoOutputJsonCommand}"
+			Gesture="F6" />
+	</helpers:BaseWindow.InputBindings>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<!--  ===== ヘッダー: ColorZone ツールバー =====  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<!--  右側: 操作ボタン群  -->
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding DoOutputJsonCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="JSON出力 (F6)">
+						<materialDesign:PackIcon Kind="FileExport" />
+					</Button>
+				</StackPanel>
+
+				<!--  左側: タイトル + 操作  -->
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="History" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoListCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="一覧取得" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<!--  ===== メインコンテンツ =====  -->
+		<Grid Grid.Row="1"
+			Margin="12">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="45*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="55*" />
+			</Grid.ColumnDefinitions>
+			<GridSplitter Grid.RowSpan="3" Grid.Column="1"
+				Width="3"
+				Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="DarkGray" />
+			<!--  ===== 左パネル: 一覧グリッド (Card) =====  -->
+			<materialDesign:Card Grid.Column="0"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<!--  カードヘッダー: 件数 + メッセージ  -->
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel>
+							<TextBlock VerticalAlignment="Center"
+								DockPanel.Dock="Right" FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+							<TextBlock VerticalAlignment="Center"
+								FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Message}"
+								TextTrimming="CharacterEllipsis" />
+						</DockPanel>
+					</Border>
+
+					<!--  DataGrid 一覧  -->
+					<DataGrid x:Name="HistoryGrid"
+						Grid.Row="1"
+						d:ItemsSource="{d:SampleData ItemCount=5}"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding ListData}"
+						SelectedItem="{Binding Current}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Binding="{Binding Id}"
+								Header="Id" />
+							<DataGridTextColumn Binding="{Binding TaskName}"
+								Header="タスク名" />
+							<DataGridTextColumn Binding="{Binding StartTime, Converter={StaticResource DateTimeYmdHmsConverter}}"
+								Header="開始日時" />
+							<DataGridTextColumn Binding="{Binding EndTime, Converter={StaticResource DateTimeYmdHmsConverter}}"
+								Header="終了日時" />
+							<DataGridTextColumn Binding="{Binding ElapsedTime}"
+								Header="経過時間(秒)" />
+							<DataGridTextColumn Binding="{Binding ReturnCode}"
+								Header="結果コード" />
+							<DataGridTextColumn Binding="{Binding Count}"
+								Header="処理件数" />
+							<DataGridTextColumn Binding="{Binding Memo}"
+								Header="メモ" Width="*" />
+							<DataGridTextColumn Binding="{Binding VdateC, Converter={StaticResource DateTimeYmdHmsConverter}}"
+								Header="登録日" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+
+			<!--  スプリッタ  -->
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="Transparent" />
+			<!--  ===== 右パネル: 詳細エリア (Card + TabControl) =====  -->
+			<materialDesign:Card Grid.Column="2"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<TabControl Style="{StaticResource MaterialDesignTabControl}">
+
+					<!--  タブ1: 詳細情報  -->
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="InformationOutline" />
+								<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}Id:{0}}" />
+							</StackPanel>
+						</TabItem.Header>
+						<ScrollViewer Padding="10,10,20,20"
+							VerticalScrollBarVisibility="Auto">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+
+								<!--  Id  -->
+								<TextBlock Grid.Row="0"
+									Style="{StaticResource FormLabel}"
+									Text="Id" />
+								<TextBox Grid.Row="0" Grid.Column="1"
+									materialDesign:HintAssist.Hint="Id"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Id}" />
+
+								<!--  タスク名  -->
+								<TextBlock Grid.Row="1"
+									Style="{StaticResource FormLabel}"
+									Text="タスク名" />
+								<TextBox Grid.Row="1" Grid.Column="1"
+									materialDesign:HintAssist.Hint="タスク名"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.TaskName}" />
+
+								<!--  開始日時  -->
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="開始日時" />
+								<TextBox Grid.Row="2" Grid.Column="1"
+									materialDesign:HintAssist.Hint="開始日時"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.StartTime, Converter={StaticResource DateTimeYmdHmsConverter}}" />
+
+								<!--  終了日時  -->
+								<TextBlock Grid.Row="3"
+									Style="{StaticResource FormLabel}"
+									Text="終了日時" />
+								<TextBox Grid.Row="3" Grid.Column="1"
+									materialDesign:HintAssist.Hint="終了日時"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.EndTime, Converter={StaticResource DateTimeYmdHmsConverter}}" />
+
+								<!--  経過時間  -->
+								<TextBlock Grid.Row="4"
+									Style="{StaticResource FormLabel}"
+									Text="経過時間(秒)" />
+								<TextBox Grid.Row="4" Grid.Column="1"
+									materialDesign:HintAssist.Hint="経過時間(秒)"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.ElapsedTime}" />
+
+								<!--  結果コード  -->
+								<TextBlock Grid.Row="5"
+									Style="{StaticResource FormLabel}"
+									Text="結果コード" />
+								<TextBox Grid.Row="5" Grid.Column="1"
+									materialDesign:HintAssist.Hint="結果コード"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.ReturnCode}" />
+
+								<!--  処理件数  -->
+								<TextBlock Grid.Row="6"
+									Style="{StaticResource FormLabel}"
+									Text="処理件数" />
+								<TextBox Grid.Row="6" Grid.Column="1"
+									materialDesign:HintAssist.Hint="処理件数"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Count}" />
+
+								<!--  メモ  -->
+								<TextBlock Grid.Row="7"
+									Style="{StaticResource FormLabel}"
+									Text="メモ" />
+								<TextBox Grid.Row="7" Grid.Column="1"
+									materialDesign:HintAssist.Hint="メモ"
+									Style="{StaticResource FormTextBox}"
+									IsReadOnly="True"
+									Text="{Binding CurrentEdit.Memo}"
+									TextWrapping="Wrap"
+									AcceptsReturn="True"
+									MinHeight="80" />
+
+								<!--  登録日  -->
+								<TextBlock Grid.Row="8"
+									Style="{StaticResource FormLabel}"
+									Text="登録日" />
+								<TextBlock Grid.Row="8" Grid.Column="1"
+									Margin="0,4" VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBody}"
+									FontSize="14"
+									Text="{Binding CurrentEdit.VdateC, Converter={StaticResource DateTimeYmdHmsConverter}}" />
+							</Grid>
+						</ScrollViewer>
+					</TabItem>
+
+				</TabControl>
+			</materialDesign:Card>
+		</Grid>
+	</Grid>
 </helpers:BaseWindow>

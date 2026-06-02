@@ -57,7 +57,7 @@ public partial class MenuData : ObservableObject {
 			*/
 			new("ログイン管理マスタ", typeof(Views._00System.SysLoginView),  addInfo:"ログインIDの管理とユーザ割当、有効期限の設定"),
 			new("ログイン履歴情報", typeof(Views._00System.SysLoginHistoryView),  addInfo:"ログイン履歴の確認"),
-			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), addInfo:"準備中"),
+			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), addInfo:"自動実行履歴の確認"),
 			new("汎用マスタメンテ", typeof(Views._00System.SysGeneralMenteView), addInfo:"MasterMeisho を汎用編集UIで表示・更新"),
 	        /* ================================ */
 			new("サンプル画面 ---", typeof(SampleView), addInfo:"MaterialDesignサンプルとテストPG"),
