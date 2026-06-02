@@ -32,6 +32,15 @@
 
 	基本はSQLiteを使用、元DBからの変換処理が必要な場合は接続先のOracleを指定する
 
+- フォルダ構成について
+
+	サーバDLLを配置しているフォルダを基準にして
+		log フォルダ: ログファイルを配置(自動で作成される)
+		img フォルダ: 商品画像ファイルを配置 (拡張子は .jpg固定)
+		wrk フォルダ: 一時ファイルを配置 (PDF帳票など)
+		runtimes / ikvm フォルダ: buildで生成されたファイル群
+	基準フォルダには dll, pdb, exe, *.json, *.db などが配置される
+
 - ビルド(Windows/Linux環境)
 
 	dotnet build "CvServer/CvServer.csproj"
