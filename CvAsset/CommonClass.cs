@@ -4,7 +4,6 @@ using System.Data;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -399,122 +398,6 @@ public sealed partial class Common {
 	public static string[] MonthNames() => new[]{
 			"睦月", "如月", "弥生", "卯月", "皐月", "水無月",
 			"文月", "葉月", "長月", "神無月", "霜月", "師走", ""};
-	/// <summary>
-	/// Dictonaryのインスタンスを元に型を生成
-	/// [Generate a type based on a Dictionary instance]
-	/// </summary>
-	/// <param name="item"></param>
-	/// <param name="name"></param>
-	/// <returns></returns>
-	[Obsolete("2026/04/06現在使われてないようです")]
-	public static Type CreateType(Dictionary<string, object> item, string name) {
-		var schema = BuildSchema(item);
-		return CreateTypeInternal(schema, name);
-	}
-
-	/// <summary>
-	/// IEnumerable<Dictionary>からEnumerable<newType>相当のインスタンスを生成
-	/// </summary>
-	/// <param name="items"></param>
-	/// <param name="name"></param>
-	/// <returns></returns>
-	/// <exxample>
-	/// var enumerable = Common.CreateTypeEnumerable(item, "DynamicTypeName");
-	/// ListData = new ObservableCollection<dynamic>(enumerable.Cast<dynamic>());
-	/// </exxample>
-	[Obsolete("2026/04/06現在使われてないようです")]
-	public static IEnumerable CreateTypeEnumerable(IEnumerable<Dictionary<string, object>> items, string name) {
-		var itemList = items?.ToList() ?? [];
-		var schema = BuildSchema(itemList);
-		var type = CreateTypeInternal(schema, name);
-
-		var listType = typeof(List<>).MakeGenericType(type);
-		var list = (IList)Activator.CreateInstance(listType)!;
-
-		foreach (var item in itemList) {
-			var instance = Activator.CreateInstance(type) ?? throw new InvalidOperationException($"CreateType failed: {name}");
-			SetValues(type, instance, item);
-			list.Add(instance);
-		}
-
-		return (IEnumerable)list;
-	}
-	#region CreateTypeEnumerable()用のサブメソッド
-	private static IReadOnlyDictionary<string, Type> BuildSchema(Dictionary<string, object> item) {
-		var schema = new Dictionary<string, Type>(item.Count, StringComparer.Ordinal);
-		foreach (var (key, value) in item) {
-			var valueType = value switch {
-				null => typeof(object),
-				DBNull => typeof(object),
-				_ => value.GetType()
-			};
-			schema[key] = valueType;
-		}
-		return schema;
-	}
-
-	private static IReadOnlyDictionary<string, Type> BuildSchema(IEnumerable<Dictionary<string, object>> items) {
-		var schema = new Dictionary<string, Type>(StringComparer.Ordinal);
-		foreach (var item in items) {
-			foreach (var (key, value) in item) {
-				var valueType = value switch {
-					null => typeof(object),
-					DBNull => typeof(object),
-					_ => value.GetType()
-				};
-
-				if (schema.TryGetValue(key, out var existingType)) {
-					if (existingType != valueType)
-						schema[key] = typeof(object);
-				}
-				else {
-					schema[key] = valueType;
-				}
-			}
-		}
-		return schema;
-	}
-
-	private static void SetValues(Type type, object instance, Dictionary<string, object> item) {
-		foreach (var (key, value) in item) {
-			var prop = type.GetProperty(key, BindingFlags.Public | BindingFlags.Instance);
-			if (prop == null) continue;
-
-			var setValue = value is DBNull ? null : value;
-			prop.SetValue(instance, setValue);
-		}
-	}
-
-	private static Type CreateTypeInternal(IReadOnlyDictionary<string, Type> schema, string name) {
-		var assemblyName = new AssemblyName("DynamicAssembly");
-		var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
-		var moduleBuilder = assemblyBuilder.DefineDynamicModule("DynamicModule");
-		var typeBuilder = moduleBuilder.DefineType(name, TypeAttributes.Public);
-
-		foreach (var (key, valueType) in schema) {
-			var fieldBuilder = typeBuilder.DefineField($"_{key}", valueType, FieldAttributes.Private);
-			var propertyBuilder = typeBuilder.DefineProperty(key, PropertyAttributes.HasDefault, valueType, null);
-
-			var getterMethodBuilder = typeBuilder.DefineMethod($"get_{key}", MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, valueType, Type.EmptyTypes);
-			var getterIL = getterMethodBuilder.GetILGenerator();
-			getterIL.Emit(OpCodes.Ldarg_0);
-			getterIL.Emit(OpCodes.Ldfld, fieldBuilder);
-			getterIL.Emit(OpCodes.Ret);
-
-			var setterMethodBuilder = typeBuilder.DefineMethod($"set_{key}", MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, new[] { valueType });
-			var setterIL = setterMethodBuilder.GetILGenerator();
-			setterIL.Emit(OpCodes.Ldarg_0);
-			setterIL.Emit(OpCodes.Ldarg_1);
-			setterIL.Emit(OpCodes.Stfld, fieldBuilder);
-			setterIL.Emit(OpCodes.Ret);
-
-			propertyBuilder.SetGetMethod(getterMethodBuilder);
-			propertyBuilder.SetSetMethod(setterMethodBuilder);
-		}
-
-		return typeBuilder.CreateType();
-	}
-	#endregion
 
 	/// <summary>
 	/// classTypeのpropertyNameプロパティの値を取得する

@@ -76,9 +76,5 @@ public interface ILoginService {
 	Task<LoginReply> LoginRefreshAsync(LoginRefresh userRequest, CallContext context = default);
 
 	[OperationContract]
-	[Obsolete("Use LoginRefreshAsync instead.")]
-	Task<LoginReply> LoginRefleshAsync(LoginRefresh userRequest, CallContext context = default);
-
-	[OperationContract]
 	Task<LoginReply> CreateLoginAsync(LoginRequest userRequest, CallContext context = default);
 }

@@ -143,7 +143,7 @@ public enum CvFlag {
 	/// <summary>
 	/// データベースのクローズ
 	/// </summary>
-	MSg799_DatabaseClose = 7991,
+	MSg798_DatabaseClose = 7991,
 	/// <summary>
 	/// データベースの再オープン
 	/// </summary>
