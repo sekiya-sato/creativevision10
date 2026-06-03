@@ -233,7 +233,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			var selectTableView = new Views.Sub.SelectServerTableView {
 				Title = "テーブル選択"
 			};
-			if (ClientLib.ShowDialogView(selectTableView, this, IsDialog: true) != true) {
+			if (ClientLib.ShowDialogView(selectTableView, null, IsDialog: true) != true) {
 				return;
 			}
 
@@ -253,7 +253,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				targetVm.AddInfo = $"{selectVm.SelectedTableName}|{selectVm.SelectedRowCount}";
 			}
 
-			var targetRet = ClientLib.ShowDialogView(targetView, this, IsDialog: SelectedMenu.IsDialog);
+			var targetRet = ClientLib.ShowDialogView(targetView, null, IsDialog: SelectedMenu.IsDialog);
 			if (targetRet == true) {
 				if (targetView.DataContext is _00System.LoginViewModel vm) {
 					ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
@@ -273,7 +273,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			vm0.InitParam = SelectedMenu.InitParam;
 			vm0.AddInfo = SelectedMenu.AddInfo;
 		}
-		var ret = ClientLib.ShowDialogView(view, this, IsDialog: SelectedMenu.IsDialog);
+		var ret = ClientLib.ShowDialogView(view, null, IsDialog: SelectedMenu.IsDialog);
 		if (ret == true) {
 			if (view.DataContext is _00System.LoginViewModel vm) {
 				ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();

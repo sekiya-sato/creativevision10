@@ -102,8 +102,9 @@ public class ClientLib {
 	/// <param name="IsShowTaskbar">true=タスクバーに表示 false=表示しない</param>
 	/// [true = Display in the taskbar, false = Do not display]
 	/// IsShowTaskbar
-	public static bool? ShowDialogView(Window childWin, object myVm, bool IsDialog = true) {
-		childWin.Owner = GetActiveView(myVm);
+	public static bool? ShowDialogView(Window childWin, object? myVm, bool IsDialog = true) {
+		if (myVm != null)
+			childWin.Owner = GetActiveView(myVm);
 		// childWin.WindowStartupLocation = loc;
 		// childWin.ShowInTaskbar = IsShowTaskbar;
 		if (IsDialog)
