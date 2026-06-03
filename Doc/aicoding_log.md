@@ -756,3 +756,31 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestLogin\TestLogin.csproj --no-build"` で TestLogin の3件成功を確認。
 
 ---
+
+## [2026-06-03] oh-my-openagent のインストールと設定 (Home)
+### Agent
+- Kimi K2.6 : OpenCode : OpenCode
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：oh-my-openagent (OpenCode Ultimate Edition) を OpenCode Go プロバイダでインストール・設定する
+### 実施内容
+- `~/.config/opencode/opencode.json`: `oh-my-openagent@latest` を plugin 配列に登録
+- `~/.config/opencode/oh-my-openagent.json`: OpenCode Go モデル割り当てを生成（Sisyphus → kimi-k2.6, Oracle → glm-5.1 など）
+- `~/.config/opencode/tui.json`: `oh-my-openagent/tui` を plugin 配列に追加（doctor 警告対応）
+- `~/.cache/opencode`: oh-my-opencode を 3.17.4 → 4.7.5 に更新
+### 技術決定 Why
+- ユーザーが OpenCode Go のみをプロバイダとして指定したため、Claude や OpenAI など他プロバイダを `no` に設定してインストールした
+- `--no-tui --skip-auth` で非対話的にインストールし、認証は手動で案内する構成にした
+- doctor で TUI plugin entry 欠落が検出されたため、tui.json を新規作成して追加した
+### 影響範囲 (省略可)
+- ユーザーの OpenCode グローバル設定のみ（プロジェクトコードへの影響なし）
+### 確認
+- `opencode --version` → 1.15.13（>= 1.0.150 を確認）
+- `bun --version` → 1.3.11（インストールに必要）
+- `bunx oh-my-openagent install ...` 成功
+- `cat ~/.config/opencode/opencode.json` で plugin 配列に `oh-my-openagent@latest` が含まれることを確認
+- `bunx oh-my-openagent doctor` → GitHub CLI 未インストール（オプション）のみ残存、他の警告は解消
+
+---
+
