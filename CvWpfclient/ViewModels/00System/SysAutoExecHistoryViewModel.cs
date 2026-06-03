@@ -1,4 +1,3 @@
-using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
@@ -14,7 +13,7 @@ internal partial class SysAutoExecHistoryViewModel : Helpers.BaseMenteViewModel<
 	/// <summary>最新順に取得</summary>
 	protected override string? ListOrder => "Id DESC";
 
-	protected override int? ListMaxCount => 6;
+	protected override int? ListMaxCount => 400;
 
 	[RelayCommand]
 	public async Task Init() {

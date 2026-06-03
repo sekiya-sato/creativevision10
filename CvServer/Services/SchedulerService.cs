@@ -24,9 +24,9 @@ public class SchedulerService : CodeShare.IScheduler {
 	private const int MaxAutoexecMemoLength = 250;
 	private const int WorkFileCleanupTargetAgeHours = 2;
 	public const string DailyWalCheckpointCronExpression = "0 2 * * *";
-	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint";
+	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint データベースにWAL履歴を反映させるタスク";
 	public const string WorkFileCleanupCronExpression = "*/10 * * * *";
-	public const string WorkFileCleanupTaskName = "Work file cleanup";
+	public const string WorkFileCleanupTaskName = "Work file cleanup ワークフォルダにある古いファイルを削除するタスク";
 
 	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
 	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
