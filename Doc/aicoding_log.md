@@ -756,3 +756,26 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestLogin\TestLogin.csproj --no-build"` で TestLogin の3件成功を確認。
 
 ---
+
+## [2026-06-03] 18:45 CV Patch Mageペット作成
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：提供画像を加工して、ユーザーの作業傾向に合わせたCodex用ペットを作成する。
+### 実施内容
+- output/pets/cv-patch-mage/pet.json: Codexペット定義を追加。
+- output/pets/cv-patch-mage/spritesheet.webp: 9状態のCodexペットspritesheetを作成。
+- output/pets/cv-patch-mage/qa/contact-sheet.png: 全状態のcontact sheetを作成。
+- output/pets/cv-patch-mage/qa/validation.json, review.json, run-summary.json: atlas検証結果と視認QA結果を保存。
+- C:\Users\user2010\.codex\pets\cv-patch-mage: Codex標準ペット配置へpet.jsonとspritesheet.webpをコピー。
+### 技術決定 Why
+- 元画像の紫帽子、オレンジリボン、ピンク髪、青い宝石を維持し、WPF画面確認、SQLite検証、PDF印刷待ちの作業傾向は小物と状態アニメーションで表現した。
+- running-leftはrunning-rightからframewise mirrorで派生し、左右移動のタイミングを保った。
+### 確認
+- hatch-petのinspect_frames.pyでerrorsなし、warningsなしを確認。
+- validate_atlas.pyでWEBP/RGBA、1536x1872、transparent_rgb_residue_pixels=0、errorsなし、warningsなしを確認。
+- contact sheetを視認し、9状態で同一identity、空セルなし、文字や背景残りなしを確認。
+
+---

@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "workspace_package": "C:\\gitroot\\new2022\\cv10\\output\\pets\\cv-patch-mage",
+  "codex_package": "C:\\Users\\user2010\\.codex\\pets\\cv-patch-mage",
+  "spritesheet": "C:\\gitroot\\new2022\\cv10\\output\\pets\\cv-patch-mage\\spritesheet.webp",
+  "validation": "C:\\gitroot\\new2022\\cv10\\output\\pets\\cv-patch-mage\\qa\\validation.json",
+  "contact_sheet": "C:\\gitroot\\new2022\\cv10\\output\\pets\\cv-patch-mage\\qa\\contact-sheet.png",
+  "review": "C:\\gitroot\\new2022\\cv10\\output\\pets\\cv-patch-mage\\qa\\review.json",
+  "visual_qa": "pass",
+  "visual_qa_note": "Contact sheet keeps the same pink-haired coding mage identity across all 9 state rows; no empty used cells, text, scenery, guide marks, or nontransparent background residue were observed."
+}
