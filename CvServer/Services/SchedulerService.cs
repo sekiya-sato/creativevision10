@@ -187,17 +187,18 @@ public class SchedulerService : CodeShare.IScheduler {
 
 		try {
 			Guid guid;
+			var scheduledTask = new AsyncScheduledTask(
+				taskId ?? Guid.NewGuid(),
+				taskName,
+				schedule,
+				ct => ExecuteWithAutoexecHistoryAsync(taskName, ct, executor));
 			if (taskId.HasValue) {
 				guid = taskId.Value;
-				_scheduler.AddTask(
-					guid,
-					schedule,
-					action: ct => ExecuteWithAutoexecHistoryAsync(taskName, ct, executor).GetAwaiter().GetResult());
+				_scheduler.AddTask(scheduledTask);
 			}
 			else {
-				guid = _scheduler.AddTask(
-					crontabSchedule: schedule,
-					action: ct => ExecuteWithAutoexecHistoryAsync(taskName, ct, executor).GetAwaiter().GetResult());
+				guid = scheduledTask.Id;
+				_scheduler.AddTask(scheduledTask);
 			}
 
 			_logger.LogInformation(

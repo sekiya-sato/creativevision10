@@ -16,6 +16,24 @@
 
 ---
 
+## [2026-06-03] 10:40 SchedulerService タスク名登録修正
+### Agent
+- GPT-5 : OpenAI : GitHub Copilot
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：`SchedulerService` で `DailyWalCheckpointTaskName` および `WorkFileCleanupTaskName` が空にならず正しく登録されるよう修正する
+### 実施内容
+- CvServer/Services/SchedulerService.cs: `RegisterTask` を拡張メソッド経由の AddTask から名前付き `AsyncScheduledTask` の明示生成へ変更し、scheduler 側の `ITask.Name` に `taskName` を保持するよう修正
+- Doc/aicoding_log.md: 本作業の記録を末尾へ追記
+### 技術決定 Why
+- `NCrontab.Scheduler` の既存 AddTask 拡張は `Name` を設定しないため、最小差分で `ITask.Name` を保持するには名前付きコンストラクタを使って登録する必要があった
+- 実行履歴とログの既存フローを維持するため、実行 delegate はそのまま `ExecuteWithAutoexecHistoryAsync` を渡す構成にした
+### 確認
+- `dotnet build "C:\gitroot\new2022\cv10\CvServer\CvServer.csproj"` で CvServer のビルド成功を確認
+
+---
+
 ## [2026-06-02] 16:46 PrintPdf 一時フォルダ名へ clientid を付与
 ### Agent
 - GPT-5 : OpenAI : GitHub Copilot
