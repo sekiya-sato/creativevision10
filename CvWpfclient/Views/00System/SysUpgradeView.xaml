@@ -30,7 +30,8 @@
 						VerticalAlignment="Center">
 						<TextBlock FontWeight="Bold" Text="ソフトウェア更新 バージョン情報" />
 						<TextBlock Margin="0,5,0,0"
-							Text="{Binding UpdateStatus}" d:Text="test" />
+							d:Text="test"
+							Text="{Binding UpdateStatus}" />
 					</StackPanel>
 
 				</Grid>
@@ -40,26 +41,29 @@
 				-->
 			</Border>
 			<TextBlock Margin="0,0,0,10"
-				Text="{Binding OptionMessage}" d:Text="オプション 。。。。  ................." />
+				d:Text="オプション 。。。。  ................."
+				Text="{Binding OptionMessage}" />
 
-			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+			<StackPanel HorizontalAlignment="Center"
+				Orientation="Horizontal">
 				<Button Grid.Column="1"
-						Width="120"
-						Margin="10,0"
-						Command="{Binding CheckUpdateCommand}"
-						Content="更新を確認"
-						Style="{StaticResource MaterialDesignRaisedButton}" />
+					Width="120"
+					Margin="10,0"
+					Command="{Binding CheckUpdateCommand}"
+					Content="更新を確認"
+					Style="{StaticResource MaterialDesignRaisedButton}" />
 
 				<Button Grid.Column="2"
-						Width="120" Margin="30,0,0,0"
-						Command="{Binding ExecuteUpdateCommand}"
-						Content="今すぐ更新">
+					Width="120"
+					Margin="30,0,0,0"
+					Command="{Binding ExecuteUpdateCommand}"
+					Content="今すぐ更新">
 					<Button.Style>
 						<Style TargetType="Button">
 							<Setter Property="Visibility" Value="Visible" />
 							<Style.Triggers>
 								<DataTrigger Binding="{Binding IsUpdateAvailable}"
-										Value="False">
+									Value="False">
 									<Setter Property="Visibility" Value="Hidden" />
 								</DataTrigger>
 							</Style.Triggers>
