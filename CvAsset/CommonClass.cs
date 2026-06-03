@@ -515,5 +515,37 @@ public sealed partial class Common {
 		return typeBuilder.CreateType();
 	}
 	#endregion
+
+	/// <summary>
+	/// classTypeのpropertyNameプロパティの値を取得する
+	/// </summary>
+	/// <param name="classType"></param>
+	/// <param name="propertyName"></param>
+	/// <returns></returns>
+	/// <exception cref="InvalidOperationException"></exception>
+	public static string GetRequiredSql(Type classType, string propertyName) {
+		var property = classType.GetProperty(propertyName);
+		if (property?.GetValue(null) is not string sql || string.IsNullOrWhiteSpace(sql)) {
+			throw new InvalidOperationException($"{classType.FullName}.{propertyName} が定義されていません。");
+		}
+		return sql;
+	}
+
+	/// <summary>
+	/// itemのIdプロパティの値を取得する
+	/// </summary>
+	/// <param name="item"></param>
+	/// <returns></returns>
+	/// <exception cref="InvalidOperationException"></exception>
+	public static object GetId(object item) {
+		var idProperty = item.GetType().GetProperty("Id", BindingFlags.Public | BindingFlags.Instance);
+		if (idProperty == null) {
+			throw new InvalidOperationException($"{item.GetType().FullName}.Id が見つかりません。");
+		}
+		return idProperty.GetValue(item)
+			?? throw new InvalidOperationException($"{item.GetType().FullName}.Id が null です。");
+	}
+
+
 }
 

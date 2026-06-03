@@ -171,6 +171,14 @@ public partial class CoreService {
 			if (typeof(IDerivedOrigin).IsAssignableFrom(insert.ItemType)) {
 				new HandleDerived(_db).Insert(insert.ItemType, item);
 			}
+			else if (typeof(ITranSoko).IsAssignableFrom(insert.ItemType)) {
+				var summaryDb = new SummaryDb(_db);
+				var id = ((BaseDbClass)item).Id;
+				summaryDb.CalcTran2SummaryStock(insert.ItemType.Name, "Id_Soko", id, false);
+				if (typeof(ITranIdo).IsAssignableFrom(insert.ItemType)) {
+					summaryDb.CalcTran2SummaryStock(insert.ItemType.Name, "Id_Ido", id, false);
+				}
+			}
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
 		catch (Exception ex) {
@@ -199,6 +207,14 @@ public partial class CoreService {
 				_db.Insert(item);
 				if (typeof(IDerivedOrigin).IsAssignableFrom(insertBulk.ItemType)) {
 					new HandleDerived(_db).Insert(insertBulk.ItemType, item);
+				}
+				else if (typeof(ITranSoko).IsAssignableFrom(insertBulk.ItemType)) {
+					var summaryDb = new SummaryDb(_db);
+					var id = ((BaseDbClass)item).Id;
+					summaryDb.CalcTran2SummaryStock(insertBulk.ItemType.Name, "Id_Soko", id, false);
+					if (typeof(ITranIdo).IsAssignableFrom(insertBulk.ItemType)) {
+						summaryDb.CalcTran2SummaryStock(insertBulk.ItemType.Name, "Id_Ido", id, false);
+					}
 				}
 			}
 			_db.CompleteTransaction();
@@ -233,11 +249,26 @@ public partial class CoreService {
 			if (db.Vdu != org.Vdu) {
 				return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 			}
-
+			if (typeof(ITranSoko).IsAssignableFrom(update.ItemType)) {
+				var summaryDb = new SummaryDb(_db);
+				var id = ((BaseDbClass)item).Id;
+				summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Soko", id, true);
+				if (typeof(ITranIdo).IsAssignableFrom(update.ItemType)) {
+					summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Ido", id, true);
+				}
+			}
 			db.Vdu = vdate;
 			_db.Update(item);
 			if (typeof(IDerivedOrigin).IsAssignableFrom(update.ItemType)) {
 				new HandleDerived(_db).Update(update.ItemType, item);
+			}
+			else if (typeof(ITranSoko).IsAssignableFrom(update.ItemType)) {
+				var summaryDb = new SummaryDb(_db);
+				var id = ((BaseDbClass)item).Id;
+				summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Soko", id, false);
+				if (typeof(ITranIdo).IsAssignableFrom(update.ItemType)) {
+					summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Ido", id, false);
+				}
 			}
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
@@ -268,7 +299,14 @@ public partial class CoreService {
 		if (db.Vdu != org.Vdu) {
 			return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
-
+		if (typeof(ITranSoko).IsAssignableFrom(delete.ItemType)) {
+			var summaryDb = new SummaryDb(_db);
+			var id = ((BaseDbClass)item).Id;
+			summaryDb.CalcTran2SummaryStock(delete.ItemType.Name, "Id_Soko", id, true);
+			if (typeof(ITranIdo).IsAssignableFrom(delete.ItemType)) {
+				summaryDb.CalcTran2SummaryStock(delete.ItemType.Name, "Id_Ido", id, true);
+			}
+		}
 		_db.Delete(item);
 		if (typeof(IDerivedOrigin).IsAssignableFrom(delete.ItemType)) {
 			new HandleDerived(_db).Delete(delete.ItemType, item);
@@ -291,6 +329,14 @@ public partial class CoreService {
 
 		if (deleteById.OriginalVdu != org.Vdu) {
 			return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
+		}
+		if (typeof(ITranSoko).IsAssignableFrom(deleteById.ItemType)) {
+			var summaryDb = new SummaryDb(_db);
+			var id = ((BaseDbClass)item).Id;
+			summaryDb.CalcTran2SummaryStock(deleteById.ItemType.Name, "Id_Soko", id, true);
+			if (typeof(ITranIdo).IsAssignableFrom(deleteById.ItemType)) {
+				summaryDb.CalcTran2SummaryStock(deleteById.ItemType.Name, "Id_Ido", id, true);
+			}
 		}
 
 		_db.Delete(item);

@@ -13,9 +13,13 @@ public interface ITranDetail {
 	public List<Tran99Meisai>? Jmeisai { get; set; }
 }
 public interface ITranIdo {
+	public long Id { get; set; }
+	public string DenDay { get; set; }
 	public long Id_Ido { get; set; }
+	public int CalcFlag { get; set; }
 }
 public interface ITranSoko {
+	public long Id { get; set; }
 	public string DenDay { get; set; }
 	public long Id_Soko { get; set; }
 	public int CalcFlag { get; set; }
@@ -29,44 +33,11 @@ public interface ITranSoko {
 /// </summary>
 public class TranCalcBase {
 	/// <summary>
-	/// 倉庫基準で在庫計算のためのフラグを取得する。
-	/// </summary>
-	/// <param name="tableName"></param>
-	/// <returns></returns>
-	public static int GetCalcSoko_old(string tableName) {
-		var ret = 0;
-		if (tableName == nameof(Tran00Uriage)) {
-			ret = -1;
-		}
-		else if (tableName == nameof(Tran01Tenuri)) {
-			ret = -1;
-		}
-		else if (tableName == nameof(Tran03Shiire)) {
-			ret = 1;
-		}
-		else if (tableName == nameof(Tran05Ido)) {
-			ret = -1;
-		}
-		else if (tableName == nameof(Tran10IdoOut)) {
-			ret = -1;
-		}
-		else if (tableName == nameof(Tran11IdoIn)) {
-			ret = 0;
-		}
-		else if (tableName == nameof(Tran12Jyuchu)) {
-			ret = 0;
-		}
-		else if (tableName == nameof(Tran60Tana)) {
-			ret = 1;
-		}
-		return ret;
-	}
-	/// <summary>
 	/// 在庫、入庫、出庫、移動中のフラグを取得する
 	/// </summary>
 	/// <param name="tableName"></param>
 	/// <returns></returns>
-	public static Tuple<int, int, int, int> GetCalcSoko(string tableName) {
+	public static Tuple<int, int, int, int> GetCalcSoko(string tableName, bool invertFlg = false) {
 		var ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
 		if (tableName == nameof(Tran00Uriage)) {
 			ret = new Tuple<int, int, int, int>(-1, 0, 1, 0);
@@ -87,6 +58,15 @@ public class TranCalcBase {
 			ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
 		}
 		// Tran12Jyuchu Tran13Hachu Tran60Tana
+		if (invertFlg) {
+			var inverted = new Tuple<int, int, int, int>(
+				ret.Item1 * -1,
+				ret.Item2 * -1,
+				ret.Item3 * -1,
+				ret.Item4 * -1
+			);
+			ret = inverted;
+		}
 		return ret;
 	}
 
@@ -95,7 +75,7 @@ public class TranCalcBase {
 	/// </summary>
 	/// <param name="tableName"></param>
 	/// <returns></returns>
-	public static Tuple<int, int, int, int> GetCalcIdosaki(string tableName) {
+	public static Tuple<int, int, int, int> GetCalcIdosaki(string tableName, bool invertFlg = false) {
 		var ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
 		if (tableName == nameof(Tran05Ido)) {
 			ret = new Tuple<int, int, int, int>(1, 1, 0, 0);
@@ -105,6 +85,15 @@ public class TranCalcBase {
 		}
 		else if (tableName == nameof(Tran11IdoIn)) {
 			ret = new Tuple<int, int, int, int>(1, 1, 0, -1);
+		}
+		if (invertFlg) {
+			var inverted = new Tuple<int, int, int, int>(
+				ret.Item1 * -1,
+				ret.Item2 * -1,
+				ret.Item3 * -1,
+				ret.Item4 * -1
+			);
+			ret = inverted;
 		}
 		return ret;
 	}
