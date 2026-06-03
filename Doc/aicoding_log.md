@@ -709,3 +709,24 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests/TestServer/TestServer.csproj"` で TestServer のテスト6件成功を確認。
 
 ---
+
+## [2026-06-03] 14:11 Schedulerジョブ管理画面修正手順のskill化
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- [Codex]
+### 目的
+- ユーザーからの要望：直前の作業内容を `.agents/skills` 配下の skill としてまとめる。作成時は他の skill のフォーマットを確認し、適切な単位で分割する。
+### 実施内容
+- .agents/skills/create-wpf-direct-grpc-client/SKILL.md: `CvWpfclient` の特定 ViewModel で gRPC クライアントをDI登録なしに直接生成するための汎用手順を作成。
+- .agents/skills/fix-scheduler-job-management-wpf/SKILL.md: `SysSchedulerJobMenteView` / `SysSchedulerCronEditView` と `IScheduler` / `SchedulerService` 周辺の不具合調査・修正手順を作成。
+- Doc/aicoding_log.md: skill作成作業を追記。
+### 技術決定 Why
+- Scheduler画面固有の調査手順と、ViewModel直接gRPC生成の汎用手順は再利用単位が異なるため、1つの巨大なskillにせず2つに分割した。
+- 既存の `.agents/skills` は `SKILL.md` の frontmatter と本文を中心にした構成のため、追加ドキュメントやREADMEを作らず同じ形式に合わせた。
+### 確認
+- 既存 skill の `SKILL.md` 形式を確認。
+- 追加した2つの skill に `name` / `description` frontmatter があることを確認。
+- `git diff --check` で空白エラーなしを確認。
+
+---
