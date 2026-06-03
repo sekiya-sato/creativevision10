@@ -52,11 +52,21 @@ public sealed record class WeatherInfo {
 
 	/// <summary>日の出時刻</summary>
 	[DataMember(Order = 9)]
-	public DateTime SunRize { get; init; } = DateTime.MinValue;
+	public DateTime Sunrise { get; init; } = DateTime.MinValue;
 
 	/// <summary>日の入り時刻</summary>
 	[DataMember(Order = 10)]
-	public DateTime SunSet { get; init; } = DateTime.MinValue;
+	public DateTime Sunset { get; init; } = DateTime.MinValue;
+
+	/// <summary>日の出時刻（旧プロパティ名互換）</summary>
+	[Obsolete("Use Sunrise instead.")]
+	[IgnoreDataMember]
+	public DateTime SunRize => Sunrise;
+
+	/// <summary>日の入り時刻（旧プロパティ名互換）</summary>
+	[Obsolete("Use Sunset instead.")]
+	[IgnoreDataMember]
+	public DateTime SunSet => Sunset;
 
 	/// <summary>時間別予報リスト</summary>
 	[DataMember(Order = 11)]

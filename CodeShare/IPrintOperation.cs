@@ -46,18 +46,22 @@ public sealed class PrintOperation {
 	/// <summary>
 	/// 一時フォルダ名
 	/// </summary>
+	[IgnoreDataMember]
 	public string TempFolder { get; set; } = string.Empty;
 	/// <summary>
 	/// 一時出力フォルダのフルパス
 	/// </summary>
+	[IgnoreDataMember]
 	public string TempOutputFullPath { get; set; } = string.Empty;
 	/// <summary>
 	/// フォームファイルのフルパス
 	/// </summary>
+	[IgnoreDataMember]
 	public string TempFormFullPath { get; set; } = string.Empty;
 	/// <summary>
 	/// 一時データファイルのフルパス
 	/// </summary>
+	[IgnoreDataMember]
 	public string TempDataFullPath { get; set; } = string.Empty;
 	#endregion
 }

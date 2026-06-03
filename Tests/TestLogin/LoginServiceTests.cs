@@ -23,7 +23,7 @@ public sealed class LoginServiceTests {
 	}
 
 	[TestMethod]
-	public async Task LoginRefleshAsync_WithValidToken_ReturnsExtendedToken() {
+	public async Task LoginRefreshAsync_WithValidToken_ReturnsExtendedToken() {
 		using var context = new LoginServiceTestContext();
 		var loginDate = DateTime.UtcNow;
 		var request = CreateLoginRequest("user01", "Secret!2", loginDate);
@@ -36,14 +36,14 @@ public sealed class LoginServiceTests {
 			Info = CreateInfoJson(),
 		};
 
-		var refreshReply = await context.Service.LoginRefleshAsync(refreshRequest);
+		var refreshReply = await context.Service.LoginRefreshAsync(refreshRequest);
 
 		Assert.AreEqual(0, refreshReply.Result);
 		Assert.IsFalse(string.IsNullOrWhiteSpace(refreshReply.JwtMessage));
 
 		var history = context.Database.Fetch<SysHistJwt>("SELECT * FROM SysHistJwt ORDER BY Id");
 		Assert.HasCount(2, history);
-		Assert.AreEqual("LoginRefleshAsync", history[1].Op);
+		Assert.AreEqual("LoginRefreshAsync", history[1].Op);
 	}
 
 	[TestMethod]

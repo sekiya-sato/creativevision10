@@ -15,7 +15,7 @@ public interface IPostalAddressService {
 public sealed record PostalAddressSearchResult(
 	[property: ProtoMember(1)] bool IsSuccess,
 	[property: ProtoMember(2)] string NormalizedPostalCode,
-	[property: ProtoMember(3)] List<PostalAddressItem> Items, // IReadOnlyList から List へ変更
+	[property: ProtoMember(3)] List<PostalAddressItem> Items,
 	[property: ProtoMember(4)] string Message,
 	[property: ProtoMember(5)] PostalAddressErrorType ErrorType
 ) {
@@ -39,15 +39,23 @@ public sealed record PostalAddressItem(
 	public PostalAddressItem() : this("", "", "", "", "", null, null, null) { }
 }
 
+[DataContract]
 public enum PostalAddressErrorType {
 	[EnumMember]
 	None,
+	[EnumMember]
 	InvalidInput,
+	[EnumMember]
 	Unauthorized,
+	[EnumMember]
 	Forbidden,
+	[EnumMember]
 	NotFound,
+	[EnumMember]
 	RateLimited,
+	[EnumMember]
 	NetworkError,
+	[EnumMember]
 	ServiceError,
 }
 

@@ -421,8 +421,8 @@ public partial class MainMenuViewModel : ObservableObject {
 				WeatherTemperature = $"{weather.Temperature:F0}℃";
 				WeatherDescription = weather.Description;
 				WeatherLocation = weather.Location;
-				Sunrise = $"日の出 {weather.SunRize:HH:mm}";
-				Sunset = $"日の入 {weather.SunSet:HH:mm}";
+				Sunrise = $"日の出 {weather.Sunrise:HH:mm}";
+				Sunset = $"日の入 {weather.Sunset:HH:mm}";
 				Humidity = $"湿度 {weather.Humidity}%";
 				WindSpeed = $"風速 {weather.WindSpeed}m/s";
 			}

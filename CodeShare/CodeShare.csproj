@@ -9,9 +9,4 @@
   <ItemGroup>
     <PackageReference Include="protobuf-net.Grpc" />
   </ItemGroup>
-
-  <ItemGroup>
-    <EditorConfigFiles Remove="C:\gitroot\new2022\Cv\CodeShare\.editorconfig" />
-  </ItemGroup>
-
 </Project>

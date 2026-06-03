@@ -99,7 +99,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 		try {
 			LoginReply reply = new() { JwtMessage = string.Empty };
 			var refreshToken = string.Empty;
-			reply = await loginService.LoginRefleshAsync(loginRefresh, AppGlobal.GetDefaultCallContext(cancellationToken));
+			reply = await loginService.LoginRefreshAsync(loginRefresh, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply.Result == 0) {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage);

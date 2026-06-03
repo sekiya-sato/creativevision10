@@ -72,8 +72,8 @@ public partial class WeatherService : IWeatherService {
 			Humidity = main.GetProperty("humidity").GetInt32(),
 			WindSpeed = wind.GetProperty("speed").GetDouble(),
 			IconKind = MapToMaterialIcon(iconCode),
-			SunRize = DateTimeOffset.FromUnixTimeSeconds(json.GetProperty("sys").GetProperty("sunrise").GetInt64()).LocalDateTime,
-			SunSet = DateTimeOffset.FromUnixTimeSeconds(json.GetProperty("sys").GetProperty("sunset").GetInt64()).LocalDateTime
+			Sunrise = DateTimeOffset.FromUnixTimeSeconds(json.GetProperty("sys").GetProperty("sunrise").GetInt64()).LocalDateTime,
+			Sunset = DateTimeOffset.FromUnixTimeSeconds(json.GetProperty("sys").GetProperty("sunset").GetInt64()).LocalDateTime
 		};
 	}
 

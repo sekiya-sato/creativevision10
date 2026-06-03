@@ -79,7 +79,7 @@ public sealed record class GetSchedulerTasksResponse {
 	[DataMember(Order = 2)]
 	public string Detail { get; set; } = string.Empty;
 	[DataMember(Order = 3)]
-	public List<SchedulerTaskInfo> Tasks { get; set; } = new();
+	public List<SchedulerTaskInfo> Tasks { get; set; } = [];
 }
 
 /// <summary>

@@ -167,7 +167,23 @@ public partial class LoginService : ILoginService {
 	/// <returns></returns>
 	/// <exception cref="SecurityTokenException"></exception>
 	[Authorize]
+	public Task<LoginReply> LoginRefreshAsync(LoginRefresh userRequest, ProtoBuf.Grpc.CallContext context = default) {
+		return LoginRefreshCoreAsync(userRequest, "LoginRefreshAsync");
+	}
+
+	/// <summary>
+	/// リフレッシュトークンの取得（旧メソッド名互換）
+	/// </summary>
+	/// <param name="userRequest"></param>
+	/// <param name="context"></param>
+	/// <returns></returns>
+	[Authorize]
+	[Obsolete("Use LoginRefreshAsync instead.")]
 	public Task<LoginReply> LoginRefleshAsync(LoginRefresh userRequest, ProtoBuf.Grpc.CallContext context = default) {
+		return LoginRefreshCoreAsync(userRequest, "LoginRefleshAsync");
+	}
+
+	private Task<LoginReply> LoginRefreshCoreAsync(LoginRefresh userRequest, string operationName) {
 		// トークンからexpires を取得して、新しいトークンを作成する [Retrieve expires from the token and create a new token]
 		// トークンを解析 [Parse the token]
 		var handler = new JwtSecurityTokenHandler();
@@ -194,7 +210,7 @@ public partial class LoginService : ILoginService {
 			ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
 			Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
 			Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info) ?? new(),
-			Op = "LoginRefleshAsync"
+			Op = operationName
 		};
 		_db.Insert<SysHistJwt>(loginHist);
 

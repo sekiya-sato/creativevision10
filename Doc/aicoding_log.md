@@ -730,3 +730,29 @@
 - `git diff --check` で空白エラーなしを確認。
 
 ---
+
+## [2026-06-03] 17:03 CodeShare契約命名・記述整合性の確認
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- [Codex]
+### 目的
+- ユーザーからの要望：CodeShareプロジェクトを精査し、記述の整合性、命名規則、コード記述のブレを確認する。
+### 実施内容
+- CodeShare/ILogin.cs, CvServer/Services/LoginService.cs, CvWpfclient/ViewModels/00System/LoginViewModel.cs, Tests/TestLogin/LoginServiceTests.cs: `LoginRefleshAsync` の正規名として `LoginRefreshAsync` を追加し、旧名は互換用に残した上で利用側とテストを正規名へ更新。
+- CodeShare/IApiWeather.cs, CvServer/Services/WeatherService.cs, CvWpfclient/ViewModels/MainMenuViewModel.cs: `SunRize` / `SunSet` を `Sunrise` / `Sunset` に寄せ、旧プロパティは読み取り互換用に残した。
+- CodeShare/IApiPostalAddress.cs: `PostalAddressErrorType` に `DataContract` と不足していた `EnumMember` を明示し、履歴コメント化していたインラインコメントを削除。
+- CodeShare/IPrintOperation.cs: サーバー内部状態共有用プロパティに `IgnoreDataMember` を付与し、シリアライズ対象外コメントと契約を一致させた。
+- CodeShare/CodeShare.csproj: 旧パス `C:\gitroot\new2022\Cv\CodeShare\.editorconfig` を参照する `EditorConfigFiles Remove` を削除。
+- CodeShare/IScheduler.cs: `Tasks` の初期化をコレクション式 `[]` に統一。
+### 技術決定 Why
+- `ILoginService` と `WeatherInfo` は gRPC 公開契約のため、正規名へ寄せつつ旧名を `Obsolete` 互換として残し、既存呼び出しを即時破壊しないようにした。
+- `CvFlag` の `MSg...` と `Msg042_GetTableCounts = 44` は命名上の揺れとして確認したが、既存参照と公開値を持つため今回の自動修正対象外とした。
+- graphify レポートは `33809df2` 生成で現在HEADより古く、CLIもこの環境では未検出だったため、現行ファイルの直接精査を主にした。
+### 確認
+- `git diff --check` で空白エラーなしを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"` でソリューションビルド成功（0 warnings / 0 errors）を確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet test Tests\TestLogin\TestLogin.csproj --no-build"` は .NET 10 の Microsoft.Testing.Platform 設定により VSTest target unsupported で失敗することを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestLogin\TestLogin.csproj --no-build"` で TestLogin の3件成功を確認。
+
+---
