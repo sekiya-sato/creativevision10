@@ -19,7 +19,6 @@ public class SchedulerService : CodeShare.IScheduler {
 	private const int InternalError = 9;
 	private const string SqliteOptimizeSql = "PRAGMA optimize;";
 	private const string SqliteWalCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
-	private const string SqliteVacuumSql = "VACUUM;";
 	private const int MaxAutoexecTaskNameLength = 100;
 	private const int MaxAutoexecMemoLength = 250;
 	private const int WorkFileCleanupTargetAgeHours = 2;
@@ -476,9 +475,6 @@ public class SchedulerService : CodeShare.IScheduler {
 			return new Dictionary<string, object>();
 		}
 		var checkpointResult = result.First();
-		if (Helpers.GetCheckpointLongValue(checkpointResult, "busy") == 0) {
-			Helpers.EnsureRawExecSucceeded(db.RawExecCmd(SqliteVacuumSql), SqliteVacuumSql);
-		}
 		return checkpointResult;
 	}
 
