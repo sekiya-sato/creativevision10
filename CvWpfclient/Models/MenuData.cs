@@ -57,6 +57,7 @@ public partial class MenuData : ObservableObject {
 			*/
 			new("ログイン管理マスタ", typeof(Views._00System.SysLoginView),  addInfo:"ログインIDの管理とユーザ割当、有効期限の設定"),
 			new("ログイン履歴情報", typeof(Views._00System.SysLoginHistoryView),  addInfo:"ログイン履歴の確認"),
+			new("自動実行管理マスタ", typeof(Views._00System.SysSchedulerJobMenteView), addInfo:"自動実行ジョブの一覧・変更・削除"),
 			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), addInfo:"自動実行履歴の確認"),
 			new("汎用マスタメンテ", typeof(Views._00System.SysGeneralMenteView), addInfo:"MasterMeisho を汎用編集UIで表示・更新"),
 	        /* ================================ */
@@ -76,7 +77,6 @@ public partial class MenuData : ObservableObject {
 			new("外部CSVマスタ取込", typeof(Views._01Master.ExternalCsvImportView), addInfo:"準備中"),
 			new("原価変更登録", typeof(Views._01Master.GenkaChangeEntryView), addInfo:"準備中"),
 			new("評価替", typeof(Views._01Master.ProductRatingChangeView), addInfo:"準備中"),
-			new("自動実行管理マスタ", typeof(Views._00System.SysSchedulerJobMenteView), addInfo:"自動実行ジョブの一覧・変更・削除"),
 			new("自動実行スケジュール設定", typeof(Views._01Master.AutoExecScheduleSettingView), addInfo:"準備中"),
 		])),
         /* ================================ */
