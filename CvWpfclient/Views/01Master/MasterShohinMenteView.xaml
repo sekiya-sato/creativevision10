@@ -165,9 +165,9 @@
 		<Grid Grid.Row="1"
 			Margin="12">
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="45*" />
+				<ColumnDefinition Width="35*" />
 				<ColumnDefinition Width="Auto" />
-				<ColumnDefinition Width="55*" />
+				<ColumnDefinition Width="65*" />
 			</Grid.ColumnDefinitions>
 
 			<!--  ===== 左パネル: 一覧グリッド (Card) =====  -->
