@@ -50,6 +50,50 @@ public sealed record class SchedulerResult {
 	public string TaskId { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// スケジュールタスク情報
+/// [Scheduler task information for listing]
+/// </summary>
+[DataContract]
+public sealed record class SchedulerTaskInfo {
+	[DataMember(Order = 1)]
+	public string TaskId { get; set; } = string.Empty;
+	[DataMember(Order = 2)]
+	public string TaskName { get; set; } = string.Empty;
+	[DataMember(Order = 3)]
+	public string CronExpression { get; set; } = string.Empty;
+	[DataMember(Order = 4)]
+	public DateTime? NextOccurrence { get; set; }
+	[DataMember(Order = 5)]
+	public bool IsSystemTask { get; set; }
+}
+
+/// <summary>
+/// スケジュールタスク一覧取得レスポンス
+/// [Response for getting all scheduler tasks]
+/// </summary>
+[DataContract]
+public sealed record class GetSchedulerTasksResponse {
+	[DataMember(Order = 1)]
+	public int Result { get; set; }
+	[DataMember(Order = 2)]
+	public string Detail { get; set; } = string.Empty;
+	[DataMember(Order = 3)]
+	public List<SchedulerTaskInfo> Tasks { get; set; } = new();
+}
+
+/// <summary>
+/// スケジュールタスク更新要求
+/// [Request for updating a scheduler task]
+/// </summary>
+[DataContract]
+public sealed record class UpdateSchedulerTaskRequest {
+	[DataMember(Order = 1)]
+	public string TaskId { get; set; } = string.Empty;
+	[DataMember(Order = 2)]
+	public string CronExpression { get; set; } = string.Empty;
+}
+
 
 [ServiceContract]
 public interface IScheduler {
@@ -61,4 +105,10 @@ public interface IScheduler {
 
 	[OperationContract]
 	Task<SchedulerResult> RemoveAllTaskAsync(CallContext context = default);
+
+	[OperationContract]
+	Task<GetSchedulerTasksResponse> GetAllTasksAsync(CallContext context = default);
+
+	[OperationContract]
+	Task<SchedulerResult> UpdateTaskAsync(UpdateSchedulerTaskRequest request, CallContext context = default);
 }

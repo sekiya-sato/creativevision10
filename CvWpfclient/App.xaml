@@ -11,6 +11,7 @@
 			<helpers:EnumUri01DisplayConverter x:Key="EnumUri01DisplayConverter" />
 			<helpers:IntToBoolConverter x:Key="IntToBoolConverter" />
 			<helpers:LongToLocalDateTimeStringConverter x:Key="LongToLocalDateTimeStringConverter" />
+			<helpers:StringIsNotEmptyToVisibilityConverter x:Key="StringIsNotEmptyToVisibilityConverter" />
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Resources/UIColors.xaml" />
 				<ResourceDictionary Source="/Resources/UICommon.xaml" />

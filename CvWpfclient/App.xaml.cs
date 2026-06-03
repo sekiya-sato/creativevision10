@@ -273,6 +273,7 @@ public partial class App : Application {
 			ConfigureClient<ICoreService>(services, url, subPath);
 			ConfigureClient<IWeatherService>(services, url, subPath);
 			ConfigureClient<IPostalAddressService>(services, url, subPath);
+			ConfigureClient<IScheduler>(services, url, subPath);
 		});
 	}
 

@@ -28,6 +28,9 @@ public class SchedulerService : CodeShare.IScheduler {
 	public const string WorkFileCleanupCronExpression = "*/10 * * * *";
 	public const string WorkFileCleanupTaskName = "Work file cleanup";
 
+	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
+
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;
 	private readonly ExDatabase _db;
@@ -107,17 +110,69 @@ public class SchedulerService : CodeShare.IScheduler {
 		return RegisterTask(
 			DailyWalCheckpointTaskName,
 			DailyWalCheckpointCronExpression,
-			ct => ExecuteSqliteWalCheckpointCoreAsync(DailyWalCheckpointTaskName, ct));
+			ct => ExecuteSqliteWalCheckpointCoreAsync(DailyWalCheckpointTaskName, ct),
+			DailyWalCheckpointTaskId);
 	}
 
 	public SchedulerResult RegisterWorkFileCleanupTask() {
 		return RegisterTask(
 			WorkFileCleanupTaskName,
 			WorkFileCleanupCronExpression,
-			ct => ExecuteWorkFileCleanupCoreAsync(WorkFileCleanupTaskName, ct));
+			ct => ExecuteWorkFileCleanupCoreAsync(WorkFileCleanupTaskName, ct),
+			WorkFileCleanupTaskId);
 	}
 
-	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<CancellationToken, Task<AutoexecTaskResult>> executor) {
+	public Task<GetSchedulerTasksResponse> GetAllTasksAsync(CallContext context = default) {
+		var tasks = _scheduler.GetTasks();
+		var result = new GetSchedulerTasksResponse { Result = Success, Detail = "正常終了" };
+		foreach (var task in tasks) {
+			result.Tasks.Add(new SchedulerTaskInfo {
+				TaskId = task.Id.ToString(),
+				TaskName = task.Name ?? string.Empty,
+				CronExpression = task.CrontabSchedule.ToString(),
+				NextOccurrence = task.CrontabSchedule.GetNextOccurrence(DateTime.Now),
+				IsSystemTask = IsSystemTask(task.Name),
+			});
+		}
+		return Task.FromResult(result);
+	}
+
+	public Task<SchedulerResult> UpdateTaskAsync(UpdateSchedulerTaskRequest request, CallContext context = default) {
+		if (!Guid.TryParse(request.TaskId, out var guid)) {
+			return Task.FromResult(new SchedulerResult { Result = InvalidTaskId, Detail = $"TaskId が不正です: {request.TaskId}", TaskId = request.TaskId });
+		}
+
+		CrontabSchedule schedule;
+		try {
+			schedule = CrontabSchedule.Parse(request.CronExpression);
+		}
+		catch (Exception ex) {
+			_logger.LogWarning(ex, "cron式が不正です。 Cron={CronExpression}", request.CronExpression);
+			return Task.FromResult(new SchedulerResult { Result = InvalidCronExpression, Detail = $"cron式が不正です: {request.CronExpression}", TaskId = request.TaskId });
+		}
+
+		try {
+			_scheduler.UpdateTask(guid, schedule);
+			_logger.LogInformation("スケジュール更新: TaskId={TaskId}, Cron={Cron}", guid, request.CronExpression);
+			return Task.FromResult(new SchedulerResult { Result = Success, Detail = "正常終了", TaskId = guid.ToString() });
+		}
+		catch (InvalidOperationException) {
+			return Task.FromResult(new SchedulerResult { Result = TaskNotFound, Detail = $"対象タスクが存在しません: {request.TaskId}", TaskId = request.TaskId });
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "スケジュール更新に失敗しました。 TaskId={TaskId}", guid);
+			return Task.FromResult(new SchedulerResult { Result = InternalError, Detail = "スケジュール更新に失敗しました。", TaskId = request.TaskId });
+		}
+	}
+
+	private static bool IsSystemTask(string? taskName) {
+		if (string.IsNullOrWhiteSpace(taskName))
+			return false;
+		return taskName.Equals(DailyWalCheckpointTaskName, StringComparison.OrdinalIgnoreCase)
+			|| taskName.Equals(WorkFileCleanupTaskName, StringComparison.OrdinalIgnoreCase);
+	}
+
+	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<CancellationToken, Task<AutoexecTaskResult>> executor, Guid? taskId = null) {
 		CrontabSchedule schedule;
 		try {
 			schedule = CrontabSchedule.Parse(cronExpression);
@@ -131,9 +186,19 @@ public class SchedulerService : CodeShare.IScheduler {
 		}
 
 		try {
-			var guid = _scheduler.AddTask(
-				crontabSchedule: schedule,
-				action: ct => ExecuteWithAutoexecHistoryAsync(taskName, ct, executor).GetAwaiter().GetResult());
+			Guid guid;
+			if (taskId.HasValue) {
+				guid = taskId.Value;
+				_scheduler.AddTask(
+					guid,
+					schedule,
+					action: ct => ExecuteWithAutoexecHistoryAsync(taskName, ct, executor).GetAwaiter().GetResult());
+			}
+			else {
+				guid = _scheduler.AddTask(
+					crontabSchedule: schedule,
+					action: ct => ExecuteWithAutoexecHistoryAsync(taskName, ct, executor).GetAwaiter().GetResult());
+			}
 
 			_logger.LogInformation(
 				"スケジュール登録: TaskId={TaskId}, TaskName={TaskName}, Cron={Cron}",

@@ -642,3 +642,31 @@
 - TestServer ビルド成功 (0 errors, 0 warnings)
 
 ---
+
+## [2026-06-03] 10:00 SchedulerService ジョブ管理機能実装
+### Agent
+- GPT-5.4-mini : OpenAI : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`.omo/scheduler_job_management_design.md` の設計に基づき、サーバー側・クライアント側の自動実行ジョブ管理機能を実装する
+### 実施内容
+- CodeShare/IScheduler.cs: `SchedulerTaskInfo`, `GetSchedulerTasksResponse`, `UpdateSchedulerTaskRequest` 追加、`GetAllTasksAsync` / `UpdateTaskAsync` を `IScheduler` インターフェースに追加
+- CvServer/Services/SchedulerService.cs: `GetAllTasksAsync` / `UpdateTaskAsync` 実装、システムジョブ固定Guid割り当て、`IsSystemTask` 判定追加、`RegisterTask` を固定Guid対応に変更
+- CvWpfclient/App.xaml.cs: `ConfigureClient<IScheduler>` DI登録追加
+- CvWpfclient/CvWpfclient.csproj + Directory.Packages.props: `NCrontab` パッケージ追加
+- CvWpfclient/Helpers/Converters/StringIsNotEmptyToVisibilityConverter.cs + App.xaml: 新規コンバーター追加
+- CvWpfclient/Views/00System/SysSchedulerJobMenteView.xaml / ViewModel: ジョブ一覧表示・Cron変更・削除・新規登録・履歴遷移画面
+- CvWpfclient/Views/00System/SysSchedulerCronEditView.xaml / ViewModel: Cron式編集ダイアログ（入力検証・次回実行プレビュー・プリセット）
+- CvWpfclient/Models/MenuData.cs: 「自動実行管理マスタ」の遷移先を `SysSchedulerJobMenteView` に変更
+- .omo/scheduler_job_management_impl_memo.md: 実装メモを作成
+### 技術決定 Why
+- NCrontab.Scheduler の `AddTask` 拡張メソッド API を調査し、`Guid taskId, CrontabSchedule, Action` の `void` 版を使用して固定Guid登録を実現
+- システムジョブ識別は設計案B（固定Guid登録）+ 名前ベース判定を組み合わせ、クライアント側で警告を出しやすくした
+- WPF側では `BaseWindow` + `ObservableCollection<SchedulerTaskInfo>` + `IScheduler` gRPC直接呼び出しのパターンを採用（`BaseMenteViewModel` はDBテーブルCRUD向けのため）
+### 影響範囲
+- CodeShare（gRPC契約追加）、CvServer（サービス拡張）、CvWpfclient（画面・DI・パッケージ追加）
+### 確認
+- `dotnet build creativevision10.slnx` で全プロジェクトビルド成功（0 warnings / 0 errors）
+
+---
