@@ -15,12 +15,8 @@
 		<vm:SysUpgradeViewModel />
 	</helpers:BaseWindow.DataContext>
 	<Grid>
-		<StackPanel Margin="20">
-			<TextBlock Margin="0,0,0,10"
-				Style="{StaticResource MaterialDesignBody1TextBlock}"
-				Text="ソフトウェア更新" />
-
-			<Border Padding="15"
+		<StackPanel Margin="10,10,2,2">
+			<Border Padding="10"
 				BorderBrush="{StaticResource AppCommonBackgroundBrush}"
 				BorderThickness="1" CornerRadius="4">
 				<Grid>
@@ -32,35 +28,11 @@
 
 					<StackPanel Grid.Column="0"
 						VerticalAlignment="Center">
-						<TextBlock FontWeight="Bold" Text="バージョン情報" />
+						<TextBlock FontWeight="Bold" Text="ソフトウェア更新 バージョン情報" />
 						<TextBlock Margin="0,5,0,0"
-							Foreground="{StaticResource plainTextColor0}"
-							Text="{Binding UpdateStatus}" />
+							Text="{Binding UpdateStatus}" d:Text="test" />
 					</StackPanel>
 
-					<Button Grid.Column="1"
-						Width="120"
-						Margin="10,0"
-						Command="{Binding CheckUpdateCommand}"
-						Content="更新を確認"
-						Style="{StaticResource MaterialDesignRaisedButton}" />
-
-					<Button Grid.Column="2"
-						Width="120"
-						Command="{Binding ExecuteUpdateCommand}"
-						Content="今すぐ更新">
-						<Button.Style>
-							<Style TargetType="Button">
-								<Setter Property="Visibility" Value="Visible" />
-								<Style.Triggers>
-									<DataTrigger Binding="{Binding IsUpdateAvailable}"
-										Value="False">
-										<Setter Property="Visibility" Value="Hidden" />
-									</DataTrigger>
-								</Style.Triggers>
-							</Style>
-						</Button.Style>
-					</Button>
 				</Grid>
 				<!--
 					Style="{StaticResource MaterialDesignRaisedButton}">
@@ -68,7 +40,34 @@
 				-->
 			</Border>
 			<TextBlock Margin="0,0,0,10"
-				Text="{Binding OptionMessage}" />
+				Text="{Binding OptionMessage}" d:Text="オプション 。。。。  ................." />
+
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+				<Button Grid.Column="1"
+						Width="120"
+						Margin="10,0"
+						Command="{Binding CheckUpdateCommand}"
+						Content="更新を確認"
+						Style="{StaticResource MaterialDesignRaisedButton}" />
+
+				<Button Grid.Column="2"
+						Width="120" Margin="30,0,0,0"
+						Command="{Binding ExecuteUpdateCommand}"
+						Content="今すぐ更新">
+					<Button.Style>
+						<Style TargetType="Button">
+							<Setter Property="Visibility" Value="Visible" />
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding IsUpdateAvailable}"
+										Value="False">
+									<Setter Property="Visibility" Value="Hidden" />
+								</DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</Button.Style>
+				</Button>
+
+			</StackPanel>
 		</StackPanel>
 	</Grid>
 </helpers:BaseWindow>
