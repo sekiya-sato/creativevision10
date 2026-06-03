@@ -670,3 +670,24 @@
 - `dotnet build creativevision10.slnx` で全プロジェクトビルド成功（0 warnings / 0 errors）
 
 ---
+
+## [2026-06-03] 10:20 Schedulerジョブ管理画面の直接gRPC呼び出し修正
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- [Codex]
+### 目的
+- ユーザーからの要望：直近commit `4044d578c0f723690da09915eefd9ddf85157bd6` で追加された Scheduler ジョブ管理画面の不具合を調査し、CvWpfclient の `IScheduler` DI登録をやめて ViewModel 側から直接呼ぶよう修正する。添付メモを参考にし、commitまで行う。
+### 実施内容
+- CvWpfclient/App.xaml.cs: `ConfigureClient<IScheduler>` のDI登録を削除。
+- CvWpfclient/ViewModels/00System/SysSchedulerJobMenteViewModel.cs: `GrpcChannel` と `CreateGrpcService<IScheduler>()` で ViewModel 側から直接 `IScheduler` を生成するよう変更。既存DIと同じ通信条件になるよう `Common.ExtractSubPath` と `GrpcSubPathHandler` を使用。
+- CvWpfclient/Views/00System/SysSchedulerJobMenteView.xaml: `IsBusy` 表示で参照していた `BooleanToVisibilityConverter` を画面リソースに追加。
+### 技術決定 Why
+- `SysSchedulerJobMenteViewModel` が `AppGlobal.GetGrpcService<IScheduler>()` に依存しており、画面利用に App.xaml.cs の DI 登録が必要だったため、ユーザー指示に合わせて対象ViewModel内の直接生成へ局所化した。
+- `SysSchedulerJobMenteView.xaml` は未定義の `BooleanToVisibilityConverter` を参照しており、画面生成時の XAML リソース解決エラー原因になり得るため、同様の既存画面パターンに合わせて画面リソースへ定義した。
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` で CvWpfclient のビルド成功（0 warnings / 0 errors）を確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests/TestServer/TestServer.csproj"` で TestServer のテスト6件成功を確認。
+
+---

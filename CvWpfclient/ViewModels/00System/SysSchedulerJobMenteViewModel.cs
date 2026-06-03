@@ -1,13 +1,18 @@
 using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CvAsset;
 using CvWpfclient.Helpers;
+using Grpc.Net.Client;
+using ProtoBuf.Grpc.Client;
 using System.Collections.ObjectModel;
+using System.Net.Http;
 using System.Windows;
 
 namespace CvWpfclient.ViewModels._00System;
 
 public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
+	private readonly GrpcChannel _schedulerChannel;
 	private readonly IScheduler _schedulerClient;
 
 	[ObservableProperty]
@@ -26,7 +31,38 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 	bool isBusy;
 
 	public SysSchedulerJobMenteViewModel() {
-		_schedulerClient = AppGlobal.GetGrpcService<IScheduler>();
+		_schedulerChannel = CreateSchedulerChannel();
+		_schedulerClient = _schedulerChannel.CreateGrpcService<IScheduler>();
+	}
+
+	protected override void OnExit() {
+		_schedulerChannel.Dispose();
+		base.OnExit();
+	}
+
+	private static GrpcChannel CreateSchedulerChannel() {
+		var socketsHandler = new SocketsHttpHandler {
+			PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+			KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+			KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+			EnableMultipleHttp2Connections = true,
+			KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always,
+		};
+
+		HttpMessageHandler handler = socketsHandler;
+		var subPath = Common.ExtractSubPath(AppGlobal.Url);
+		if (!string.IsNullOrEmpty(subPath)) {
+			handler = new GrpcSubPathHandler(subPath) {
+				InnerHandler = handler,
+			};
+		}
+
+		var httpClient = new HttpClient(handler) {
+			Timeout = Timeout.InfiniteTimeSpan,
+		};
+		return GrpcChannel.ForAddress(AppGlobal.Url, new GrpcChannelOptions {
+			HttpClient = httpClient,
+		});
 	}
 
 	[RelayCommand]
