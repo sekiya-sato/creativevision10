@@ -21,7 +21,7 @@ public static void Method(ReadOnlySpan<int> values) { }
 /// <summary>
 /// 拡張メソッド
 /// </summary>
-public static class CommonExtentions {
+public static class CommonExtensions {
 	/// <summary>
 	/// DateTimeの拡張メソッド
 	/// </summary>
