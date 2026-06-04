@@ -113,20 +113,16 @@ public static class CommonExtensions {
 		/// <param name="d2yyyymmdd"></param>
 		/// <returns></returns>
 		public bool IsOkRange(string d1yyyymmdd, string d2yyyymmdd) {
-			var longDate0 = long.Parse(date0.Date.ToDtStrDate2());
-			var longD1 = long.Parse(d1yyyymmdd);
-			if (longDate0 < longD1)
-				return false;
-			var longD2 = long.Parse(d2yyyymmdd);
-			if (longD2 < longDate0)
-				return false;
-			return true;
+			if (!long.TryParse(date0.Date.ToDtStrDate2(), out var longDate0)) return false;
+			if (!long.TryParse(d1yyyymmdd, out var longD1)) return false;
+			if (!long.TryParse(d2yyyymmdd, out var longD2)) return false;
+			return longDate0 >= longD1 && longDate0 <= longD2;
 		}
 		/// <summary>
-		/// UnixTimeを返す (逆は Common.GetUnixTime)
-		/// [Return UnixTime]
+		/// UnixTime（秒）を返す
+		/// [Return UnixTime in seconds]
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>UnixTime（秒） [UnixTime in seconds]</returns>
 		public long ToUnixTime() {
 			return (long)(date0.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalSeconds;
 		}

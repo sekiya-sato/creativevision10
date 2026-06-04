@@ -8,21 +8,21 @@ public sealed partial class Common {
 	/// </summary>
 	/// <param name="targetFile"></param>
 	/// <returns></returns>
-	public static async Task<int> Backup4GeneAsync(string targetFile, CancellationToken cancellationToken = default) {
+	public static async Task Backup4GeneAsync(string targetFile, CancellationToken cancellationToken = default) {
 		if (string.IsNullOrWhiteSpace(targetFile))
-			return 0;
+			return;
 		if (!File.Exists(targetFile))
-			return 0;
+			return;
 		var dir = Path.GetDirectoryName(targetFile) ?? string.Empty;
 		if (string.IsNullOrWhiteSpace(dir))
-			return 0;
+			return;
 		var fname = Path.GetFileName(targetFile);
 		var nowstr = DateTime.Now.ToString("yyyyMMdd");
 		try {
 			cancellationToken.ThrowIfCancellationRequested();
 			var files = Directory.GetFiles(dir, fname + ".2???????.back"); // yyyyMMdd
 			var index = Array.IndexOf(files, targetFile + "." + nowstr + ".back");
-			if (index >= 0) return 0; // 現在日のコピーがあれば何もしない
+			if (index >= 0) return; // 現在日のコピーがあれば何もしない
 			await Task.Run(() => File.Copy(targetFile, targetFile + "." + nowstr + ".back"), cancellationToken);
 			Array.Sort(files);
 			var cnt = 0;
@@ -35,7 +35,6 @@ public sealed partial class Common {
 		catch (Exception ex) {
 			System.Diagnostics.Debug.WriteLine(ex, $"ファイルバックアップエラー fname={fname}:");
 		}
-		return 0;
 	}
 	/// <summary>
 	/// ファイルからの読込
@@ -51,7 +50,7 @@ public sealed partial class Common {
 				return (false, default);
 			cancellationToken.ThrowIfCancellationRequested();
 			var contents = await File.ReadAllTextAsync(fname, cancellationToken).ConfigureAwait(false);
-			var myObj = JsonConvert.DeserializeObject<T>(contents);
+			var myObj = DeserializeObject<T>(contents);
 			if (myObj is null)
 				return (false, default);
 			// 正常に読み込めたらバックアップ処理
@@ -73,9 +72,9 @@ public sealed partial class Common {
 	/// <returns></returns>
 	public static async Task<bool> SaveAsync<T>(T myObj, string fname, bool isFlush = false, CancellationToken cancellationToken = default) where T : new() {
 		try {
-			if (string.IsNullOrWhiteSpace(fname))
+			if (string.IsNullOrWhiteSpace(fname) || myObj is null)
 				return false;
-			var contents = JsonConvert.SerializeObject(myObj); // publicなプロパティが保存される
+			var contents = SerializeObject(myObj); // publicなプロパティが保存される
 			await using var sw = new StreamWriter(fname, false);
 			await sw.WriteAsync(contents.AsMemory(), cancellationToken).ConfigureAwait(false);
 			if (isFlush) await sw.FlushAsync(cancellationToken).ConfigureAwait(false);

@@ -97,3 +97,32 @@
 - `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
 
 ---
+
+## [2026-06-04] 15:21 CvAsset Phase 3 実装改善
+### Agent
+- Kimi-k2.6 : OpenCode : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvAssetプロジェクトの精査で発見した実装改善点をPhase 3として修正
+### 実施内容
+- CvAsset/CommonClass.cs:
+  - `GetVdate()` の `DateTime.Now.ToUniversalTime().Ticks` → `DateTime.UtcNow.Ticks`（冗長な変換を除去）
+  - `GetIPAddress()` の `.ToList()` 重複を collection expression `[.. ]` に変更
+  - `DeepCopyValue` に `<remarks>` で「循環参照時の無限ループ注意」を追加
+- CvAsset/CommonExtensions.cs:
+  - `IsOkRange` の `long.Parse` → `long.TryParse`（不正文字列での例外回避）
+  - `ToUnixTime` のコメントに「秒」を明記
+- CvAsset/CommonFileOperation.cs:
+  - `LoadAsync`/`SaveAsync` を `JsonConvert` 直接呼び出しから `Common.SerializeObject`/`DeserializeObject` に統一
+  - `SaveAsync` に `myObj is null` チェックを追加（`SerializeObject` の null 警告解消）
+  - `Backup4GeneAsync` の戻り値を `Task<int>` → `Task`（常に0を返していたため無意味）
+### 技術決定 Why
+- `DateTime.Now.ToUniversalTime()` は `DateTime.UtcNow` と等価だが冗長なため統一
+- `long.Parse` は不正入力で `FormatException` を投げるため、堅牢性向上のため `TryParse` に変更
+- `SerializeObject`/`DeserializeObject` ラッパー内に共通オプション（NullValueHandling.Ignore 等）があるため、直接 `JsonConvert` を使うと設定が異なる可能性がある
+- `Backup4GeneAsync` の戻り値 `int` は常に0で、呼び出し側でも未使用のためシグネチャを簡潔化
+### 確認
+- `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---

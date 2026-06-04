@@ -54,7 +54,9 @@ public sealed partial class Common {
 	}
 	/// <summary>
 	/// srcのプロパティ値をdstにコピーする DeepCopy
+	/// [Deep copy property values from src to dst]
 	/// </summary>
+	/// <remarks>循環参照を含むオブジェクトでは無限ループの可能性があるため注意 [Caution: may cause infinite loop with circular references]</remarks>
 	/// <param name="type"></param>
 	/// <param name="src"></param>
 	/// <param name="dst"></param>
@@ -343,7 +345,7 @@ public sealed partial class Common {
 	/// </summary>
 	/// <returns></returns>
 	public static long GetVdate() {
-		return DateTime.Now.ToUniversalTime().Ticks;
+		return DateTime.UtcNow.Ticks;
 	}
 	/// <summary>
 	/// UTC TicksからDateTimeを生成する
@@ -390,10 +392,9 @@ public sealed partial class Common {
 		}
 		// 3. 優先順位に基づいたソート
 		// AddressFamilyがInterNetwork(IPv4)を0、InterNetworkV6(IPv6)を1として昇順ソート
-		return retList
+		return [.. retList
 			.OrderBy(x => x.IPAddress.AddressFamily == AddressFamily.InterNetwork ? 0 : 1)
-			.ThenBy(x => x.IPAddress.ToString())
-			.ToList();
+			.ThenBy(x => x.IPAddress.ToString())];
 	}
 	public static string ExtractSubPath(string? url) {
 		if (string.IsNullOrWhiteSpace(url)) return string.Empty;
