@@ -21,6 +21,26 @@
 
 ---
 
+## [2026-06-04] 16:41 SummaryDbトランザクション例外対策
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：transaction中に例外が起きた場合への対処を考慮し、SummaryDbの対象処理へロールバック・ログ・再送出を実装、ログ、commitまで実施する。
+### 実施内容
+- CvDomainLogic/SummaryDb.cs: `ExecuteInTransaction` ヘルパーを追加し、トランザクション開始・更新件数取得・コミットを共通化
+- CvDomainLogic/SummaryDb.cs: `CalcSummaryStock<T>` の倉庫側集計と移動先集計を例外時ロールバックとエラーログ付きの共通ヘルパー呼び出しへ置換
+- CvDomainLogic/SummaryDb.cs: `CalcSummaryRealStock` と `CalcSummaryStockCumulative` を同じ安全化パターンへ統一
+### 技術決定 Why
+- 既存の各ブロック独立トランザクションの粒度は維持しつつ、例外時に `AbortTransaction()` でロールバックして上位へ再送出することで、部分更新の扱いを既存設計から大きく変えずに安全性を上げた
+- `changes()` は直前SQLの影響件数に依存するため、更新件数取得順序を共通ヘルパー内へ固定し、ログ出力は例外時のみに限定した
+### 確認
+- Visual Studio のビルドで成功を確認
+- `SummaryDb` に一致する自動テストは検出されず、テスト実行は未実施
+
+---
+
 ## [2026-06-04] 13:55 CodeShare契約名とDTO整合性の整理
 ### Agent
 - GPT-5 : OpenAI : Codex
