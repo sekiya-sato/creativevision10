@@ -150,14 +150,17 @@ SET Su = Su + excluded.Su, vdu = {vdate}
 		// DateTime.Now.ToDtStrDate2().Substring(0, 6)
 		var cnt = 0;
 		var deleteSql = "DELETE FROM SummaryRealStock";
+		var vdate = Common.GetVdate();
 		var sql = @$"
-Insert Into SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su)
+Insert Into SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
 SELECT
   Id_Soko,
   Id_Shohin,
   Id_Col,
   Id_Siz,
-  SUM(Su) AS TotalSu
+  SUM(Su) AS TotalSu,
+  {vdate} AS Vdc,
+  {vdate} AS Vdu
 FROM SummaryStock
 WHERE SumMonth <= @0
 GROUP BY
@@ -176,6 +179,7 @@ GROUP BY
 	}
 	/// <summary>
 	/// SummaryStockの年月までのデータを集計してSummaryStockのCumulativeSuに更新する(更新)
+	/// Pending: SummaryRealStockがあるので、不要と思われる
 	/// </summary>
 	/// <param name="DateYyyymm"></param>
 	/// <returns></returns>
