@@ -44,7 +44,6 @@ public partial class ConvertDb {
 			("CnvMasterShohin", CnvMasterShohin),
 			("CnvMasterTokui", CnvMasterTokui),
 			("CnvMasterShiire", CnvMasterShiire),
-			("CnvMasterConfig", CnvMasterConfig),
 			("CnvAfterMaster", CnvAfterMaster),
 			("CnvAfterMasterAddress", CnvAfterMasterAddress),
 			("CnvTran00HonUri", CnvTran00HonUri),

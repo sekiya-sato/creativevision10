@@ -64,7 +64,6 @@ public class SummaryDb {
 	/// <returns></returns>
 	public int CalcTran2SummaryStock(string tablename, string idSoko, long id, bool invertFlg) {
 		var cnt = 0;
-		// ToDo: ロジックをこれから作成
 		var calcFlg = TranCalcBase.GetCalcSoko(tablename, invertFlg);
 		var sql = CreateRealStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
 		var sql2 = $"SELECT changes() AS updated_count";

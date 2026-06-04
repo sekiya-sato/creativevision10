@@ -215,7 +215,7 @@ public partial class ConvertDb {
 				var kakesaki = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new(); // 掛先
 				var meisaiList = BuildKinMeisaiList(rec);
 
-				return new Tran06Nyukin() {
+				return new Tran07Shiharai() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
