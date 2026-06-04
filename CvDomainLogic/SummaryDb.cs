@@ -66,7 +66,6 @@ public class SummaryDb {
 		var cnt = 0;
 		var calcFlg = TranCalcBase.GetCalcSoko(tablename, invertFlg);
 		var sql = CreateRealStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
-		var sql2 = $"SELECT changes() AS updated_count";
 		if (calcFlg.Item1 != 0) {
 			cnt += ExecuteInTransaction(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
 			if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
