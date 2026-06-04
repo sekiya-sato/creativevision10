@@ -40,18 +40,18 @@ public class SummaryDb {
 	/// <returns></returns>
 	private int CalcSummaryStock<T>(SummaryDateParameter param) where T : ITranDetail {
 		var cnt = 0;
-		var tableName = typeof(T).Name;
-		var calcFlg = TranCalcBase.GetCalcSoko(tableName);
-		var sql = CreateSummaryStockSql(tableName, "Id_Soko", calcFlg, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
+		var tablename = typeof(T).Name;
+		var calcFlg = TranCalcBase.GetCalcSoko(tablename);
+		var sql = CreateSummaryStockSql(tablename, "Id_Soko", calcFlg, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
 		var period = $"{param.DateYymmFrom}-{param.DateYymmTo}";
 		if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
-			cnt += ExecuteInTransaction(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tableName}:Id_Soko", period);
+			cnt += ExecuteInTransaction(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Soko", period);
 		}
 		if (typeof(ITranIdo).IsAssignableFrom(typeof(T))) {
-			var calcFlg2 = TranCalcBase.GetCalcIdosaki(tableName);
+			var calcFlg2 = TranCalcBase.GetCalcIdosaki(tablename);
 			if (calcFlg2.Item1 != 0 || calcFlg2.Item2 != 0 || calcFlg2.Item3 != 0 || calcFlg2.Item4 != 0) {
-				sql = CreateSummaryStockSql(tableName, "Id_Ido", calcFlg2, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
-				cnt += ExecuteInTransaction(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tableName}:Id_Ido", period);
+				sql = CreateSummaryStockSql(tablename, "Id_Ido", calcFlg2, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
+				cnt += ExecuteInTransaction(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Ido", period);
 			}
 		}
 		return cnt;
@@ -68,16 +68,10 @@ public class SummaryDb {
 		var sql = CreateRealStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
 		var sql2 = $"SELECT changes() AS updated_count";
 		if (calcFlg.Item1 != 0) {
-			var ret = _db.Execute(sql, id);
-			if (ret < 0)
-				_logger.LogWarning("CalcTran2SummaryStock:SummaryRealStock {TableName} Id={Id} updated {Count} records", tablename, id, ret);
-			cnt += _db.FirstOrDefault<int>(sql2);
+			cnt += ExecuteInTransaction(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
 			if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
 				sql = CreateSummaryStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
-				ret = _db.Execute(sql, id);
-				if (ret < 0)
-					_logger.LogWarning("CalcTran2SummaryStock:SummaryStock {TableName} Id={Id} updated {Count} records", tablename, id, ret);
-				cnt += _db.FirstOrDefault<int>(sql2);
+				cnt += ExecuteInTransaction(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
 			}
 		}
 		return cnt;
