@@ -192,12 +192,6 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg001_CopyReply, DataType = typeof(string) };
-			/*
-			msg.Flag = CvFlag.MSg040_ConvertDb;
-			msg.DataMsg = "コンバートストリーミング DBConvert";
-			var summaryParam = new SummaryDateParameter("202001", "202602");
-			msg = new CvMsg { Flag = CvFlag.MSg050_Summary, Code = 0, DataType = typeof(SummaryDateParameter), DataMsg = Common.SerializeObject(summaryParam) };
-			*/
 
 			//msg.DataMsg = "集計処理ストリーミング DBConvert";
 			var summaryParam = new SummaryRealDateParameter(DateTime.Now.ToDtStrDate2().Substring(0, 6));

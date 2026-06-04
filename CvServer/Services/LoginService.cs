@@ -34,24 +34,24 @@ public partial class LoginService : ILoginService {
 	/// Login処理を行いJWTを返す
 	/// [Performs login processing and returns a JWT]
 	/// </summary>
-	/// <param name="userRequest"></param>
+	/// <param name="request"></param>
 	/// <param name="context"></param>
 	/// <returns></returns>
 	[AllowAnonymous]
-	public Task<LoginReply> LoginAsync(LoginRequest userRequest, ProtoBuf.Grpc.CallContext context = default) {
+	public Task<LoginReply> LoginAsync(LoginRequest request, ProtoBuf.Grpc.CallContext context = default) {
 		var claims = new List<Claim> { // Nameだけ入れて256byte程度。EmailやPasswordもいれるとサイズ増える。600byte程度。
 										   // [About 256 bytes with just the name. Including email and password increases the size to about 600 bytes]
-			new Claim(ClaimTypes.Name, userRequest.Name),
+			new Claim(ClaimTypes.Name, request.Name),
 			};
 
 		var cnt = _db.Fetch<long>($"SELECT count(*) cnt FROM SysLogin").FirstOrDefault();
 		if (cnt == 0) {
 			// レコードが0件の場合、初回起動とみなし無条件でログイン成功させる
 			var initLogin = new SysLogin {
-				LoginId = userRequest.LoginId,
-				CryptPassword = userRequest.CryptPassword,
-				Vdc = userRequest.LoginDate.ToUnixTime(),
-				Vdu = userRequest.LoginDate.ToUnixTime(),
+				LoginId = request.LoginId,
+				CryptPassword = request.CryptPassword,
+				Vdc = request.LoginDate.ToUnixTime(),
+				Vdu = request.LoginDate.ToUnixTime(),
 				ExpDate = DateTime.Now.AddYears(1).ToDtStrDateTimeShort(),
 				LastDate = DateTime.Now.ToDtStrDateTimeShort(),
 			};
@@ -72,17 +72,17 @@ public partial class LoginService : ILoginService {
 					JwtUnixTime = jwt.ValidTo.ToUnixTime(),
 					ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
 					Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-					Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info) ?? new(),
+					Jsub = Common.DeserializeObject<SysHistJwtSub>(request.Info) ?? new(),
 					Op = "LoginAsync First"
 				};
-				if (userRequest.Info != null)
+				if (request.Info != null)
 
 					_db.Insert<SysHistJwt>(loginHist);
 				return Task.FromResult(ret);
 			}
 
 		}
-		var loginData = _db.Fetch<SysLogin>($"where LoginId=@0", [userRequest.LoginId]).FirstOrDefault();
+		var loginData = _db.Fetch<SysLogin>($"where LoginId=@0", [request.LoginId]).FirstOrDefault();
 
 		if (loginData == null) {
 			return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
@@ -90,7 +90,7 @@ public partial class LoginService : ILoginService {
 		else { // パスワードと有効期限のチェック [Checks for password and expiration date]
 			   // もらったパスワードを復元してみる Decryptのpassが違ってるとException
 			   // [Try to restore the received password; if the pass for Decrypt is incorrect, an exception occurs]
-			var restorePass = Common.DecryptLoginRequest(userRequest.CryptPassword, userRequest.LoginDate);
+			var restorePass = Common.DecryptLoginRequest(request.CryptPassword, request.LoginDate);
 
 			var wrk = Common.EncryptLoginRequest("123", loginData.VdateC);
 			var orgPlanePass = (loginData.CryptPassword != null) ? Common.DecryptLoginRequest(loginData.CryptPassword, loginData.VdateC) : "";
@@ -126,7 +126,7 @@ public partial class LoginService : ILoginService {
 				JwtUnixTime = jwt.ValidTo.ToUnixTime(),
 				ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
 				Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-				Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info) ?? new(),
+				Jsub = Common.DeserializeObject<SysHistJwtSub>(request.Info) ?? new(),
 				Op = "LoginAsync"
 			};
 			_db.Insert<SysHistJwt>(loginHist);
@@ -162,32 +162,16 @@ public partial class LoginService : ILoginService {
 	/// リフレッシュトークンの取得(app.settings.jsonのRefreshtime 分)
 	/// [Obtaining the refresh token (based on Refreshtime in app.settings.json)]
 	/// </summary>
-	/// <param name="userRequest"></param>
+	/// <param name="request"></param>
 	/// <param name="context"></param>
 	/// <returns></returns>
 	/// <exception cref="SecurityTokenException"></exception>
 	[Authorize]
-	public Task<LoginReply> LoginRefreshAsync(LoginRefresh userRequest, ProtoBuf.Grpc.CallContext context = default) {
-		return LoginRefreshCoreAsync(userRequest, "LoginRefreshAsync");
-	}
-
-	/// <summary>
-	/// リフレッシュトークンの取得（旧メソッド名互換）
-	/// </summary>
-	/// <param name="userRequest"></param>
-	/// <param name="context"></param>
-	/// <returns></returns>
-	[Authorize]
-	[Obsolete("Use LoginRefreshAsync instead.")]
-	public Task<LoginReply> LoginRefleshAsync(LoginRefresh userRequest, ProtoBuf.Grpc.CallContext context = default) {
-		return LoginRefreshCoreAsync(userRequest, "LoginRefleshAsync");
-	}
-
-	private Task<LoginReply> LoginRefreshCoreAsync(LoginRefresh userRequest, string operationName) {
+	public Task<LoginReply> LoginRefreshAsync(LoginRefresh request, ProtoBuf.Grpc.CallContext context = default) {
 		// トークンからexpires を取得して、新しいトークンを作成する [Retrieve expires from the token and create a new token]
 		// トークンを解析 [Parse the token]
 		var handler = new JwtSecurityTokenHandler();
-		var jsonToken = handler.ReadToken(userRequest.Token) as JwtSecurityToken;
+		var jsonToken = handler.ReadToken(request.Token) as JwtSecurityToken;
 		if (jsonToken == null) {
 			throw new SecurityTokenException("Invalid token");
 		}
@@ -209,8 +193,8 @@ public partial class LoginService : ILoginService {
 			JwtUnixTime = jwt.ValidTo.ToUnixTime(),
 			ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
 			Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-			Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info) ?? new(),
-			Op = operationName
+			Jsub = Common.DeserializeObject<SysHistJwtSub>(request.Info) ?? new(),
+			Op = "LoginRefreshAsync"
 		};
 		_db.Insert<SysHistJwt>(loginHist);
 
@@ -218,27 +202,28 @@ public partial class LoginService : ILoginService {
 		// [Even if set here, the Kind crashes in the gRPC serializer]				
 		return Task.FromResult(new LoginReply { JwtMessage = newToken, Result = 0, Expire = jwt.ValidTo.ToLocalTime() });
 	}
+
 	/// <summary>
 	/// SysLoginレコード作成処理を行いJWTを返す
 	/// </summary>
-	/// <param name="userRequest"></param>
+	/// <param name="request"></param>
 	/// <param name="context"></param>
 	/// <returns></returns>
 	//[AllowAnonymous]
 	[Authorize]
-	public Task<LoginReply> CreateLoginAsync(LoginRequest userRequest, ProtoBuf.Grpc.CallContext context = default) {
-		var loginData = _db.Fetch<SysLogin>($"where LoginId=@0", [userRequest.LoginId]).FirstOrDefault();
+	public Task<LoginReply> CreateLoginAsync(LoginRequest request, ProtoBuf.Grpc.CallContext context = default) {
+		var loginData = _db.Fetch<SysLogin>($"where LoginId=@0", [request.LoginId]).FirstOrDefault();
 		if (loginData != null) {
 			// すでに同IDが存在する場合はエラー
 			return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
 		}
 		var claims = new List<Claim> {
-			new Claim(ClaimTypes.Name, userRequest.Name),
+			new Claim(ClaimTypes.Name, request.Name),
 			};
-		var restorePass = Common.DecryptLoginRequest(userRequest.CryptPassword, userRequest.LoginDate);
+		var restorePass = Common.DecryptLoginRequest(request.CryptPassword, request.LoginDate);
 		var vdate = Common.GetVdate();
 		var initLogin = new SysLogin {
-			LoginId = userRequest.LoginId,
+			LoginId = request.LoginId,
 			CryptPassword = Common.EncryptLoginRequest(restorePass, new DateTime(vdate).ToLocalTime()),
 			Vdc = vdate,
 			Vdu = vdate,
@@ -264,7 +249,7 @@ public partial class LoginService : ILoginService {
 				JwtUnixTime = jwt.ValidTo.ToUnixTime(),
 				ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
 				Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-				Jsub = Common.DeserializeObject<SysHistJwtSub>(userRequest.Info) ?? new(),
+				Jsub = Common.DeserializeObject<SysHistJwtSub>(request.Info) ?? new(),
 				Op = "CreateLoginAsync"
 			};
 			_db.Insert<SysHistJwt>(loginHist);

@@ -58,14 +58,6 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 			}
 
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			/*
-			var msg = new CvnetMsg {
-				Code = 0,
-				Flag = CvnetFlag.Msg302_Op_HhtDataRecv,
-				DataMsg = Common.SerializeObject(records),
-				DataType = typeof(List<TranHhtdata>)
-			};
-			*/
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg201_Op_Execute,
