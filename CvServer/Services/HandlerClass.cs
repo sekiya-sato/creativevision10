@@ -69,7 +69,7 @@ public partial class CoreService {
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
 		return param switch {
 			QueryOneParam queryOne => HandleQueryOne(request.Flag, queryOne),
-			QuerybyIdParam queryById => HandleQueryById(request.Flag, queryById),
+			QueryByIdParam queryById => HandleQueryById(request.Flag, queryById),
 			QueryListSqlParam querySql => HandleQueryListSql(request.Flag, querySql),
 			QueryListParam queryList => HandleQueryList(request.Flag, queryList),
 			_ => throw new NotImplementedException(),
@@ -112,8 +112,8 @@ public partial class CoreService {
 		}
 	}
 
-	private CvMsg HandleQueryById(CvFlag flag, QuerybyIdParam queryById) {
-		_logger.LogInformation("パラメータ QuerybyIdParam.ItemType={ItemType} 内容={Payload}", queryById.ItemType, Common.SerializeObject(queryById));
+	private CvMsg HandleQueryById(CvFlag flag, QueryByIdParam queryById) {
+		_logger.LogInformation("パラメータ QueryByIdParam.ItemType={ItemType} 内容={Payload}", queryById.ItemType, Common.SerializeObject(queryById));
 
 		try {
 			var data = _db.Fetch(queryById.ItemType, "where Id = @0", queryById.Id).FirstOrDefault();

@@ -28,10 +28,10 @@ public sealed record class QueryOneParam {
 		ItemType = itemType;
 	}
 }
-public sealed record class QuerybyIdParam {
+public sealed record class QueryByIdParam {
 	public long Id { get; }
 	public Type ItemType { get; }
-	public QuerybyIdParam(Type itemType, long id) {
+	public QueryByIdParam(Type itemType, long id) {
 		Id = id;
 		ItemType = itemType;
 	}

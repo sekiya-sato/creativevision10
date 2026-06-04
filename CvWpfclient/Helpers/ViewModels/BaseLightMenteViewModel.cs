@@ -148,8 +148,8 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 			var reply = await SendMessageAsync(new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
-				DataType = typeof(QuerybyIdParam),
-				DataMsg = Common.SerializeObject(new QuerybyIdParam(Tabletype, id))
+				DataType = typeof(QueryByIdParam),
+				DataMsg = Common.SerializeObject(new QueryByIdParam(Tabletype, id))
 			}, ct);
 
 			if (reply.Code < 0) {
