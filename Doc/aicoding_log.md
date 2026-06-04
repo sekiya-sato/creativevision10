@@ -806,3 +806,22 @@
 - `bunx oh-my-openagent doctor` → GitHub CLI 未インストール（オプション）のみ残存、他の警告は解消
 
 ---
+
+## [2026-06-04] 10:23 WebpdfView 自動リロード対応
+### Agent
+- GPT-5.4Mini : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：WebpdfView で URL のロードが失敗したとき、しばらく待って自動リロードする仕組みを追加する。修正、ログ、コミットまで実施。
+### 実施内容
+- CvWpfclient/Views/Sub/WebpdfView.xaml: WebView2 コントロールに `x:Name="WebView"` を追加し、コードビハインドからアクセス可能にした
+- CvWpfclient/Views/Sub/WebpdfView.xaml.cs: `CoreWebView2InitializationCompleted` で `NavigationCompleted` を購読し、失敗時に最大5回・2秒間隔で `Reload()` する自動リトライ処理を追加
+### 技術決定 Why
+- WebpdfViewModel の手動 F5 リロード（ReloadCommand）を維持しつつ、初回 PDF 生成遅延による読み込み失敗を自動でリカバリするため、View のコードビハインドに閉じた実装とした
+- `Task.Delay` による非同期待機後に `WebView?.CoreWebView2` の null チェックを行い、ウィンドウ閉鎖後の誤動作を防いだ
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj` でビルド成功（0 warnings / 0 errors）を確認
+- `CvWpfclient/Views/Sub/WebpdfView.xaml.cs` の LSP 診断でエラーなしを確認
+
+---

@@ -12,7 +12,7 @@
 			Command="{Binding ReloadCommand}" />
 	</Window.InputBindings>
 	<Grid>
-		<Wpf:WebView2 Margin="2"
+		<Wpf:WebView2 x:Name="WebView" Margin="2"
 			Source="{Binding Pdfdata}" />
 	</Grid>
 </Window>
