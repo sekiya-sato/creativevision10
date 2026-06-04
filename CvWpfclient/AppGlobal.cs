@@ -20,7 +20,6 @@ public static class AppGlobal {
 	// Backing field: 内部でのみ null 許容
 	private static IConfigurationRoot? _config;
 	private static Guid? _clientId;
-	private static string? _loginJwt;
 	private static IServiceProvider? _serviceProvider;
 	private static readonly ConcurrentDictionary<Type, object> _grpcServiceCache = new();
 	/// <summary>
@@ -75,9 +74,9 @@ public static class AppGlobal {
 		}
 	}
 
-	public static void SetLoginJwt(string? loginJwt) => _loginJwt = loginJwt;
+	public static void SetLoginJwt(string? loginJwt) => LoginJwt = loginJwt;
 
-	public static void ClearLoginJwt() => _loginJwt = string.Empty;
+	public static void ClearLoginJwt() => LoginJwt = string.Empty;
 	/// <summary>
 	/// メタデータを取得する
 	/// [Retrieve metadata]
