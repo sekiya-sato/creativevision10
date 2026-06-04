@@ -9,7 +9,7 @@ namespace CodeShare;
 [ServiceContract]
 public interface IPostalAddressService {
 	[OperationContract]
-	Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CancellationToken cancellationToken = default);
+	Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CancellationToken ct = default);
 }
 
 // 検索結果レコード

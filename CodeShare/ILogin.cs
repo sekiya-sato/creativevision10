@@ -70,11 +70,11 @@ public sealed record class LoginRefresh {
 [ServiceContract]
 public interface ILoginService {
 	[OperationContract]
-	Task<LoginReply> LoginAsync(LoginRequest userRequest, CallContext context = default);
+	Task<LoginReply> LoginAsync(LoginRequest request, CallContext context = default);
 
 	[OperationContract]
-	Task<LoginReply> LoginRefreshAsync(LoginRefresh userRequest, CallContext context = default);
+	Task<LoginReply> LoginRefreshAsync(LoginRefresh request, CallContext context = default);
 
 	[OperationContract]
-	Task<LoginReply> CreateLoginAsync(LoginRequest userRequest, CallContext context = default);
+	Task<LoginReply> CreateLoginAsync(LoginRequest request, CallContext context = default);
 }

@@ -107,9 +107,9 @@ public enum CvFlag {
 	/// </summary>
 	Msg041_ConvertDbInit = 41,
 	/// <summary>
-	/// テーブル一覧と検収の取得
+	/// テーブル一覧と件数の取得
 	/// </summary>
-	Msg042_GetTableCounts = 44,
+	Msg042_GetTableList = 44,
 	/// <summary>
 	/// 集計処理
 	/// </summary>
