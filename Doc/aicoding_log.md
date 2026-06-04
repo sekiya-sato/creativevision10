@@ -165,3 +165,19 @@
 - `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
 
 ---
+
+## [2026-06-04] 16:17 Cv10 C#整合性精査スキル追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：今回の洗い出し作業を .agents/skills フォルダに skill 化する
+### 実施内容
+- .agents/skills/cv10-csharp-consistency-audit/SKILL.md: CvBase/CvDomainLogic/CvServer 等のC#サブプロジェクトを、整合性・命名規則・記述ブレ観点で監査し、.omo の人間作業用ドキュメントへ落とす手順を追加
+### 技術決定 Why
+- 同種の精査を再利用できるよう、調査観点、優先度、互換性維持方針、確認コマンドを skill として固定化した
+### 確認
+- SKILL.md の作成と内容確認を実施。ドキュメント追加のみのためビルドは未実施
+
+---
