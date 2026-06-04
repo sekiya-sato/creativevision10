@@ -47,13 +47,13 @@ public sealed partial class Common {
 		return JsonConvert.DeserializeObject<T>(json, jsonOptions) ?? new T();
 	}
 
-	private static object? CloneObject(object source) {
+	private static object? CloneObjectInternal(object source) {
 		ArgumentNullException.ThrowIfNull(source);
 		var json = JsonConvert.SerializeObject(source, jsonOptions);
 		return JsonConvert.DeserializeObject(json, source.GetType(), jsonOptions);
 	}
 	/// <summary>
-	/// srcのプロパティ値をdstにコピーする ShallowCopy
+	/// srcのプロパティ値をdstにコピーする DeepCopy
 	/// </summary>
 	/// <param name="type"></param>
 	/// <param name="src"></param>
@@ -81,7 +81,7 @@ public sealed partial class Common {
 			// 2. コレクション（リスト、配列）の場合
 			else if (typeof(IEnumerable).IsAssignableFrom(propertyType)) {
 				// コレクション自体のディープコピー
-				property.SetValue(dst, Common.CloneObject(srcValue));
+				property.SetValue(dst, CloneObjectInternal(srcValue));
 			}
 			// 3. 参照型（クラス）の場合
 			else {
@@ -324,8 +324,8 @@ public sealed partial class Common {
 	/// [Encrypt the password of LoginRequest]
 	/// </summary>
 	/// <returns></returns>
-	public static string EncryptLoginRequest(string planePass, DateTime dateValue) {
-		var cryptPassword = EncryptString(planePass, dateValue.ToUniversalTime().ToString("ff.yyyyMMddHHmmss"));
+	public static string EncryptLoginRequest(string plainPass, DateTime dateValue) {
+		var cryptPassword = EncryptString(plainPass, dateValue.ToUniversalTime().ToString("ff.yyyyMMddHHmmss"));
 		return cryptPassword;
 	}
 	/// <summary>
@@ -338,12 +338,19 @@ public sealed partial class Common {
 		return orgPassword;
 	}
 	/// <summary>
-	/// VUpdatedにいれる値を取得する
+	/// VUpdatedにいれる値を取得する（UTCのTicks）
+	/// [Get the value for VUpdated (UTC Ticks)]
 	/// </summary>
 	/// <returns></returns>
 	public static long GetVdate() {
 		return DateTime.Now.ToUniversalTime().Ticks;
 	}
+	/// <summary>
+	/// UTC TicksからDateTimeを生成する
+	/// [Generate DateTime from UTC Ticks]
+	/// </summary>
+	/// <param name="ticks"></param>
+	/// <returns></returns>
 	public static DateTime FromUtcTicks(long ticks) {
 		return new DateTime(ticks, DateTimeKind.Utc);
 	}
@@ -356,7 +363,7 @@ public sealed partial class Common {
 	/// 自端末のIPアドレスを取得する
 	/// [Retrieve the IP address of the local device]
 	/// </summary>
-	/// <returns></returns>
+	/// <returns>IPアドレスとMACアドレスのリスト [List of IP and MAC addresses]</returns>
 	public static List<IPData> GetIPAddress() {
 		var nis = NetworkInterface.GetAllNetworkInterfaces();
 		var retList = new List<IPData>();
@@ -399,8 +406,9 @@ public sealed partial class Common {
 	}
 	/// <summary>
 	/// 和名の月名を返す
+	/// [Return Japanese month names]
 	/// </summary>
-	/// <returns></returns>
+	/// <returns>和名の月名配列（1月〜12月＋空文字） [Array of Japanese month names (Jan-Dec + empty)]</returns>
 	/// example: 標準の月名を和風月名で上書きする場合 culture.DateTimeFormat.MonthNames = Common.MonthNames(); DateTime.Now.ToString("MMMM", culture);
 	public static string[] MonthNames() => new[]{
 			"睦月", "如月", "弥生", "卯月", "皐月", "水無月",

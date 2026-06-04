@@ -73,3 +73,27 @@
 - `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
 
 ---
+
+## [2026-06-04] 15:18 CvAsset Phase 2 タイポ・命名・コメント統一
+### Agent
+- Kimi-k2.6 : OpenCode : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvAssetプロジェクトの精査で発見したタイポ・命名・コメント不整合をPhase 2として修正
+### 実施内容
+- CvAsset/CommonExtensions.cs: `ToAdjustCronDateTIme()` → `ToAdjustCronDateTime()`（タイポ修正）
+- CvAsset/CommonClass.cs:
+  - `EncryptLoginRequest` パラメーター `planePass` → `plainPass`（タイポ修正）
+  - `CloneObject` private版 → `CloneObjectInternal`（public版との命名重複解消）
+  - `DeepCopyValue` XMLコメント「ShallowCopy」→「DeepCopy」（実装とコメントの矛盾修正）
+  - `GetVdate`, `FromUtcTicks`, `GetIPAddress`, `MonthNames` に `[英語訳]` と `<returns>` を追加（コメント統一）
+### 技術決定 Why
+- `ToAdjustCronDateTIme` の呼び出し側が存在しないため、安全に改名可能
+- `planePass` はパラメーター名のみの変更で、呼び出し側はnamed parameterを使用していないため安全
+- `CloneObject` private版は `DeepCopyValue` 内でのみ使用されていたため、改名は外部に影響なし
+- `DeepCopyValue` は再帰的にプロパティをコピーする実装なので、コメントを「DeepCopy」に修正して実装と整合化
+### 確認
+- `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---

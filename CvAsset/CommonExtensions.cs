@@ -152,7 +152,7 @@ public static class CommonExtensions {
 		/// CRONの書式に合わせて、秒とミリ秒を切り捨てたDateTimeを返す
 		/// </summary>
 		/// <returns></returns>
-		public DateTime ToAdjustCronDateTIme() {
+		public DateTime ToAdjustCronDateTime() {
 			return new DateTime(date0.Year, date0.Month, date0.Day, date0.Hour, date0.Minute, 0);
 		}
 
