@@ -35,7 +35,7 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg001_CopyReply] = HandleCopyReply,
 			[CvFlag.Msg002_GetVersion] = HandleGetVersion,
 			[CvFlag.Msg003_GetEnv] = HandleGetEnv,
-			[CvFlag.Msg042_GetTableCounts] = HandlerGetTableCounts,
+			[CvFlag.Msg042_GetTableList] = HandlerGetTableList,
 			[CvFlag.Msg101_Op_Query] = (req, ctx) => HandleOpQuery(req, ctx),
 			[CvFlag.Msg201_Op_Execute] = (req, ctx) => HandleOpExecute(req, ctx),
 			[CvFlag.Msg300_Op_OutData] = (req, ctx) => HandleOutData(req, ctx),

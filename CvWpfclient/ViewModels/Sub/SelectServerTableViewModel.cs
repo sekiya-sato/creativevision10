@@ -40,7 +40,7 @@ public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 			ClientLib.Cursor2Wait();
 			cancellationToken.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg042_GetTableCounts };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg042_GetTableList };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 
 			if (reply?.Code < 0) {

@@ -288,7 +288,7 @@ from MasterMeisho where Kubun=@0
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg042_GetTableCounts };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg042_GetTableList };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply?.DataMsg != null && reply?.DataType != null) {
 				var wrk = Common.DeserializeObject(reply.DataMsg, reply.DataType);

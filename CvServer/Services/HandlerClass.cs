@@ -35,15 +35,15 @@ public partial class CoreService {
 		return CreateSuccessResponse(request.Flag, typeof(Dictionary<string, string>), Common.SerializeObject(GetEnvironmentVariables()));
 	}
 
-	private CvMsg HandlerGetTableCounts(CvMsg request, CallContext context) {
+	private CvMsg HandlerGetTableList(CvMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
-		_logger.LogInformation("HandleGetTableCounts invoked Flag:{Flag}", request.Flag);
+		_logger.LogInformation("HandleGetTableList invoked Flag:{Flag}", request.Flag);
 		var resultData = new List<Tuple<string, string, long>>();
 		try {
 			resultData = _db.GetTableCounts();
 		}
 		catch (Exception ex) {
-			_logger.LogError(ex, "HandleGetTableCounts error");
+			_logger.LogError(ex, "HandleGetTableList error");
 			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
 		}
 		return CreateSuccessResponse(request.Flag, typeof(List<Tuple<string, string, long>>), Common.SerializeObject(resultData));
