@@ -20,3 +20,34 @@
 - GUI 上の F5 実操作は未実施
 
 ---
+
+## [2026-06-04] 13:55 CodeShare契約名とDTO整合性の整理
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CodeShareの実装計画1を実施し、`Msg042_GetTableList = 44`は`42`へ変更する。開発段階のためgRPC契約名変更も許容して実装計画2も積極的に整理し、`JapanPostBizOptions`をCvServer側へ移す。ログとcommitまで行う。
+### 実施内容
+- CodeShare/ICoreService.cs: `ICvnetCore.cs`を現行インターフェース名に合わせてリネームし、`CvFlag`へ`DataContract`/`EnumMember`を付与。`Msg042_GetTableList`の値を`42`へ変更
+- CodeShare/PrintOperation.cs: `IPrintOperation.cs`をDTO実体名に合わせてリネーム
+- CodeShare/ISchedulerService.cs: `IScheduler.cs`を`ISchedulerService`へリネームし、`AddTaskAsync`/`RemoveTaskAsync`/`RemoveAllTasksAsync`/`GetTasksAsync`へメソッド名を整理
+- CodeShare/IPostalAddress.cs: 郵便番号検索契約を`CallContext`受けに統一し、検索結果DTOへ`DataMember`を追加。`JapanPostBizOptions`をCodeShareから削除
+- CodeShare/IWeather.cs: 天気サービス契約を`CallContext`受けに統一
+- CvServer/Services/JapanPostBizOptions.cs: 日本郵便API設定型をCvServer側へ移動
+- CvServer/Services/SearchByPostalCodeService.cs, WeatherService.cs, SchedulerService.cs: 変更後のCodeShare契約名と`CallContext`へ追従
+- CvWpfclient/Helpers/PostalAddressSearchHelper.cs, CvWpfclient/ViewModels/MainMenuViewModel.cs, CvWpfclient/ViewModels/00System/SysSchedulerJobMenteViewModel.cs: 変更後のgRPC契約呼び出しへ追従
+- Tests/TestServer/TestServer.cs, readme.md, Doc/spec/spec.general.readme.md, Doc/opencode_usage_guide.md, Doc/opencode_prompts.md: 旧Core契約名の記述を現行名へ整理
+### 技術決定 Why
+- 開発段階で契約名変更が許容されるため、互換aliasを残さず公開契約名と実装名を一致させた
+- `JapanPostBizOptions`はgRPC DTOではなくCvServer固有の外部API設定であるため、CodeShareからCvServerへ移して共有契約面を小さくした
+- `CallContext`へ統一することで、JWTメタデータとキャンセル伝播の扱いを他のCodeShare gRPC契約と揃えた
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CodeShare/CodeShare.csproj"` でビルド成功（0 warnings / 0 errors）
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"` でビルド成功（0 warnings / 0 errors）
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests/TestLogin/TestLogin.csproj --no-build"` で3件成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests/TestServer/TestServer.csproj --no-build"` で6件成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet format CodeShare/CodeShare.csproj --verify-no-changes --no-restore"` で差分なしを確認
+- `git diff --check` で空白エラーなしを確認
+
+---

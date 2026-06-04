@@ -319,8 +319,8 @@ from MasterMeisho where Kubun=@0
 			ct.ThrowIfCancellationRequested();
 			// 処理を実行
 			/*
-			var coreService = AppGlobal.GetGrpcService<ICvnetCoreService>();
-			var msg = new CvnetMsg { Code = 0, Flag = CvnetFlag.Msg301_Op_HhtMaster };
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg300_Op_OutData };
 			var param = Tuple.Create<bool, int>(true, 0);
 			msg.DataMsg = Common.SerializeObject(param);
 			msg.DataType = typeof(Tuple<bool, int>);

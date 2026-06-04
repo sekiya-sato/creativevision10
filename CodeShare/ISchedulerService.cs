@@ -96,18 +96,18 @@ public sealed record class UpdateSchedulerTaskRequest {
 
 
 [ServiceContract]
-public interface IScheduler {
+public interface ISchedulerService {
 	[OperationContract]
-	Task<SchedulerResult> AddOneTaskAsync(AddSchedulerTaskRequest request, CallContext context = default);
+	Task<SchedulerResult> AddTaskAsync(AddSchedulerTaskRequest request, CallContext context = default);
 
 	[OperationContract]
-	Task<SchedulerResult> RemoveOneTaskAsync(RemoveSchedulerTaskRequest request, CallContext context = default);
+	Task<SchedulerResult> RemoveTaskAsync(RemoveSchedulerTaskRequest request, CallContext context = default);
 
 	[OperationContract]
-	Task<SchedulerResult> RemoveAllTaskAsync(CallContext context = default);
+	Task<SchedulerResult> RemoveAllTasksAsync(CallContext context = default);
 
 	[OperationContract]
-	Task<GetSchedulerTasksResponse> GetAllTasksAsync(CallContext context = default);
+	Task<GetSchedulerTasksResponse> GetTasksAsync(CallContext context = default);
 
 	[OperationContract]
 	Task<SchedulerResult> UpdateTaskAsync(UpdateSchedulerTaskRequest request, CallContext context = default);

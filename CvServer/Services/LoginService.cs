@@ -14,7 +14,7 @@ public partial class LoginService : ILoginService {
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private readonly ExDatabase _db;
-	// private readonly IScheduler _scheduler;
+	// private readonly ISchedulerService _scheduler;
 	private readonly IHttpContextAccessor _httpContextAccessor;
 	public LoginService(ILogger<LoginService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, ExDatabase db) {
 		ArgumentNullException.ThrowIfNull(logger);

@@ -1,5 +1,6 @@
 using CodeShare;
 using Microsoft.AspNetCore.Authorization;
+using ProtoBuf.Grpc;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -28,8 +29,9 @@ public partial class WeatherService : IWeatherService {
 
 
 	[AllowAnonymous]
-	public async Task<WeatherInfo?> GetCurrentWeatherAsync(string region, CancellationToken ct = default) {
+	public async Task<WeatherInfo?> GetCurrentWeatherAsync(string region, CallContext context = default) {
 		try {
+			var ct = context.CancellationToken;
 			var url = $"https://api.openweathermap.org/data/2.5/weather?q={region}&appid={GetApiKey()}&units=metric&lang=ja";
 			var json = await httpClient.GetFromJsonAsync<JsonElement>(url, _jsonOptions, ct);
 			return ParseCurrentWeather(json);
@@ -41,8 +43,9 @@ public partial class WeatherService : IWeatherService {
 	}
 
 	[AllowAnonymous]
-	public async Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CancellationToken ct = default) {
+	public async Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CallContext context = default) {
 		try {
+			var ct = context.CancellationToken;
 			var url = $"https://api.openweathermap.org/data/2.5/forecast?q={region}&appid={GetApiKey()}&units=metric&lang=ja&cnt=16"; // 3時間ごと16件（48時間分）取得
 			var json = await httpClient.GetFromJsonAsync<JsonElement>(url, _jsonOptions, ct);
 			return ParseForecast(json);

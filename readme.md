@@ -116,7 +116,7 @@ NuGet のバージョンは `Directory.Packages.props` で集中管理し、依�
 - プロジェクトファイルの`PrintEnable`が`true`の場合は印刷機能が有効、`false`の場合は無効になる。
 
 ## CvServer (Layer 2)
-- gRPC サーバアプリ。`CvnetCoreService` が `ICvnetCore` を実装して API を公開。Tableに対するCRUD操作を提供。
+- gRPC サーバアプリ。`CoreService` が `ICoreService` を実装して API を公開。Tableに対するCRUD操作を提供。
 - JSON シリアライズ設定（`JsonSerializerSettings`）を共通化し、`protobuf-net.Grpc` と併用。
 - `Microsoft.AspNetCore.Authentication.JwtBearer` による認証基盤を利用。
 

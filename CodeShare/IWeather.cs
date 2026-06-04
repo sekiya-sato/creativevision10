@@ -1,3 +1,4 @@
+using ProtoBuf.Grpc;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 
@@ -10,9 +11,9 @@ namespace CodeShare;
 [ServiceContract]
 public interface IWeatherService {
 	[OperationContract]
-	Task<WeatherInfo?> GetCurrentWeatherAsync(string region, CancellationToken ct = default);
+	Task<WeatherInfo?> GetCurrentWeatherAsync(string region, CallContext context = default);
 	[OperationContract]
-	Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CancellationToken ct = default);
+	Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CallContext context = default);
 }
 
 

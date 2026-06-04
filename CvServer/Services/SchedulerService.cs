@@ -9,7 +9,7 @@ using System.Runtime.ExceptionServices;
 
 namespace CvServer.Services;
 
-public class SchedulerService : CodeShare.IScheduler {
+public class SchedulerService : ISchedulerService {
 	private const int Success = 0;
 	private const int InvalidRequest = 1;
 	private const int InvalidCronExpression = 2;
@@ -50,7 +50,7 @@ public class SchedulerService : CodeShare.IScheduler {
 	/// <summary>
 	/// 追加されたタスクを追加する
 	/// </summary>
-	public Task<SchedulerResult> AddOneTaskAsync(AddSchedulerTaskRequest request, CallContext context = default) {
+	public Task<SchedulerResult> AddTaskAsync(AddSchedulerTaskRequest request, CallContext context = default) {
 		if (string.IsNullOrWhiteSpace(request.CronExpression)) {
 			return Task.FromResult(new SchedulerResult { Result = InvalidRequest, Detail = "CronExpression が空です。" });
 		}
@@ -70,7 +70,7 @@ public class SchedulerService : CodeShare.IScheduler {
 	/// <summary>
 	/// 追加されたタスクを削除する
 	/// </summary>
-	public Task<SchedulerResult> RemoveOneTaskAsync(RemoveSchedulerTaskRequest request, CallContext context = default) {
+	public Task<SchedulerResult> RemoveTaskAsync(RemoveSchedulerTaskRequest request, CallContext context = default) {
 		if (!Guid.TryParse(request.TaskId, out var guid)) {
 			return Task.FromResult(new SchedulerResult {
 				Result = InvalidTaskId,
@@ -99,7 +99,7 @@ public class SchedulerService : CodeShare.IScheduler {
 	/// <summary>
 	/// すべてのタスクを削除する
 	/// </summary>
-	public Task<SchedulerResult> RemoveAllTaskAsync(ProtoBuf.Grpc.CallContext context = default) {
+	public Task<SchedulerResult> RemoveAllTasksAsync(CallContext context = default) {
 		_scheduler.RemoveAllTasks();
 		_logger.LogInformation("スケジュール全削除を実行しました。");
 		return Task.FromResult(new SchedulerResult { Result = Success, Detail = "正常終了" });
@@ -121,7 +121,7 @@ public class SchedulerService : CodeShare.IScheduler {
 			WorkFileCleanupTaskId);
 	}
 
-	public Task<GetSchedulerTasksResponse> GetAllTasksAsync(CallContext context = default) {
+	public Task<GetSchedulerTasksResponse> GetTasksAsync(CallContext context = default) {
 		var tasks = _scheduler.GetTasks();
 		var result = new GetSchedulerTasksResponse { Result = Success, Detail = "正常終了" };
 		foreach (var task in tasks) {

@@ -23,7 +23,7 @@ public static class PostalAddressSearchHelper {
 		}
 
 		try {
-			var result = await postalAddressService.SearchByPostalCodeAsync(normalizedPostalCode);
+			var result = await postalAddressService.SearchByPostalCodeAsync(normalizedPostalCode, AppGlobal.GetDefaultCallContext());
 			if (!result.IsSuccess) {
 				if (result.ErrorType == PostalAddressErrorType.InvalidInput) {
 					MessageEx.ShowWarningDialog(result.Message, owner: owner);

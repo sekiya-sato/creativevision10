@@ -129,7 +129,7 @@ OpenCode：
 OpenCode：
 [Task: explore] コードベース探索を開始します...
 - CvServer/Services/ 配下を検索
-- ICvnetCore の実装を解析
+- ICoreService の実装を解析
 - パターンをドキュメント化
 ```
 
@@ -237,7 +237,7 @@ CodeShare プロジェクトに新しいメソッドを追加して  # Read-Only
 
 ```
 [重要] CodeShare プロジェクトの編集を許可します。
-ICvnetCore インターフェースに新しいメソッドを追加してください。
+ICoreService インターフェースに新しいメソッドを追加してください。
 ```
 
 ---

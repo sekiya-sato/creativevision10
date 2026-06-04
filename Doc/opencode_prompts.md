@@ -437,7 +437,7 @@ CvServer プロジェクトに、
 - エラーハンドリング
 - ログ出力
 
-既存の CvnetCoreService を参考にしてください。
+既存の CoreService を参考にしてください。
 作業完了後、Buildして結果を確認してください。
 ```
 

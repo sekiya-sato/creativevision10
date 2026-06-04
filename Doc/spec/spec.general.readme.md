@@ -160,7 +160,7 @@ graph TD
 
 ### CvServer
 - gRPCサーバアプリケーション
-- `CvnetCoreService`が`ICvnetCore`を実装してAPIを公開
+- `CoreService`が`ICoreService`を実装してAPIを公開
 - JSONシリアライズ設定の共通化
 - JWT Bearer認証基盤
 

@@ -13,7 +13,7 @@ namespace CvWpfclient.ViewModels._00System;
 
 public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 	private readonly GrpcChannel _schedulerChannel;
-	private readonly IScheduler _schedulerClient;
+	private readonly ISchedulerService _schedulerClient;
 
 	[ObservableProperty]
 	string title = "自動実行ジョブ管理";
@@ -32,7 +32,7 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 
 	public SysSchedulerJobMenteViewModel() {
 		_schedulerChannel = CreateSchedulerChannel();
-		_schedulerClient = _schedulerChannel.CreateGrpcService<IScheduler>();
+		_schedulerClient = _schedulerChannel.CreateGrpcService<ISchedulerService>();
 	}
 
 	protected override void OnExit() {
@@ -75,7 +75,7 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 		IsBusy = true;
 		Message = "一覧を取得中...";
 		try {
-			var response = await _schedulerClient.GetAllTasksAsync(AppGlobal.GetDefaultCallContext(ct));
+			var response = await _schedulerClient.GetTasksAsync(AppGlobal.GetDefaultCallContext(ct));
 			if (response.Result != 0) {
 				Message = $"取得エラー: {response.Detail}";
 				MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
@@ -161,7 +161,7 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 		IsBusy = true;
 		Message = "ジョブを削除中...";
 		try {
-			var result = await _schedulerClient.RemoveOneTaskAsync(request, AppGlobal.GetDefaultCallContext());
+			var result = await _schedulerClient.RemoveTaskAsync(request, AppGlobal.GetDefaultCallContext());
 			if (result.Result != 0) {
 				Message = $"削除エラー: {result.Detail}";
 				MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
@@ -199,7 +199,7 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 		IsBusy = true;
 		Message = "ジョブを登録中...";
 		try {
-			var result = await _schedulerClient.AddOneTaskAsync(request, AppGlobal.GetDefaultCallContext());
+			var result = await _schedulerClient.AddTaskAsync(request, AppGlobal.GetDefaultCallContext());
 			if (result.Result != 0) {
 				Message = $"登録エラー: {result.Detail}";
 				MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));

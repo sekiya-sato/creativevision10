@@ -11,7 +11,7 @@ public partial class CoreService : ICoreService {
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private readonly ExDatabase _db;
-	// private readonly IScheduler _scheduler;
+	// private readonly ISchedulerService _scheduler;
 	private readonly IHttpContextAccessor _httpContextAccessor;
 
 	// フラグ -> ハンドラマップ

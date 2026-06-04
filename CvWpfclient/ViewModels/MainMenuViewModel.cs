@@ -413,7 +413,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			cancellationToken.ThrowIfCancellationRequested();
 			var weatherService = AppGlobal.GetGrpcService<IWeatherService>();
 			var reagion = AppGlobal.WeatherRegion;
-			var weather = await weatherService.GetCurrentWeatherAsync(reagion);
+			var weather = await weatherService.GetCurrentWeatherAsync(reagion, AppGlobal.GetDefaultCallContext(cancellationToken));
 			cancellationToken.ThrowIfCancellationRequested();
 			if (weather != null) {
 				CurrentWeather = weather;
@@ -426,7 +426,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				Humidity = $"湿度 {weather.Humidity}%";
 				WindSpeed = $"風速 {weather.WindSpeed}m/s";
 			}
-			var forecasts = await weatherService.GetHourlyForecastAsync(reagion);
+			var forecasts = await weatherService.GetHourlyForecastAsync(reagion, AppGlobal.GetDefaultCallContext(cancellationToken));
 			cancellationToken.ThrowIfCancellationRequested();
 			if (forecasts.Count > 0) {
 				_forecastLabels = forecasts.Select(f => f.TimeLabel).ToArray();

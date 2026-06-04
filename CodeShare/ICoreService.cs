@@ -82,101 +82,125 @@ public sealed record class StreamMsg {
 /// メッセージ種別
 /// [Common message flag]
 /// </summary>
+[DataContract]
 public enum CvFlag {
 	/// <summary>
 	/// サーバーに送信されたメッセージをそのまま返す Message=送信メッセージ
 	/// [Return the message sent to the server as it is. Message=Sent message]
 	/// </summary>
+	[EnumMember]
 	Msg001_CopyReply = 1,
 	/// <summary>
 	/// サーバーのバージョン情報を返す Message=CommonEnvのJSON文字列
 	/// [Return the server version information. Message=JSON string of CommonEnv]
 	/// </summary>
+	[EnumMember]
 	Msg002_GetVersion = 2,
 	/// <summary>
 	/// サーバーの環境情報を返す Message=環境変数配列のJSON文字列
 	/// [Return the server environment information. Message=JSON string of environment variable array]
 	/// </summary>
+	[EnumMember]
 	Msg003_GetEnv = 3,
 	/// <summary>
 	/// データベースの変換(テーブル初期化なし)
 	/// </summary>
+	[EnumMember]
 	Msg040_ConvertDb = 40,
 	/// <summary>
 	/// データベースの変換(テーブル初期化あり)
 	/// </summary>
+	[EnumMember]
 	Msg041_ConvertDbInit = 41,
 	/// <summary>
 	/// テーブル一覧と件数の取得
 	/// </summary>
-	Msg042_GetTableList = 44,
+	[EnumMember]
+	Msg042_GetTableList = 42,
 	/// <summary>
 	/// 集計処理
 	/// </summary>
+	[EnumMember]
 	Msg050_Summary = 50,
 	/// <summary>
 	/// リアル在庫集計処理
 	/// </summary>
+	[EnumMember]
 	Msg051_SummaryRealStock = 51,
 	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
+	[EnumMember]
 	Msg101_Op_Query = 101,
 	/// <summary>
 	/// DBデータを操作
 	/// </summary>
+	[EnumMember]
 	Msg201_Op_Execute = 201,
 	/// <summary>
 	/// データ出力: DataTypeにより処理分岐
 	/// </summary>
+	[EnumMember]
 	Msg300_Op_OutData = 300,
 	/// <summary>
 	/// テスト用メッセージ開始値
 	/// </summary>
+	[EnumMember]
 	Msg700_Test_Start = 7700,
+	[EnumMember]
 	Msg701_TestCase001 = 7701,
+	[EnumMember]
 	Msg702_TestCase002 = 7702,
 	/// <summary>
 	/// ストリーミングテスト
 	/// </summary>
+	[EnumMember]
 	Msg710_StreamingTest = 7710,
 	/// <summary>
 	/// データベースのクローズ
 	/// </summary>
+	[EnumMember]
 	Msg798_DatabaseClose = 7991,
 	/// <summary>
 	/// データベースの再オープン
 	/// </summary>
+	[EnumMember]
 	Msg799_DatabaseReOpen = 7992,
 	/// <summary>
 	/// Abs()がこの値より大きいものはエラー
 	/// [Values where Abs() exceeds this value are errors]
 	/// </summary>
+	[EnumMember]
 	Msg800_Error_Start = 9800,
 	/// <summary>
 	/// 未実装エラー QueryDbResult
 	/// [Unimplemented error QueryDbResult]
 	/// </summary>
+	[EnumMember]
 	Msg801_Error_Unimplemented = 9801,
 	/// <summary>
 	/// Exceptionエラー QueryDbResult
 	/// [Exception error QueryDbResult]
 	/// </summary>
+	[EnumMember]
 	Msg802_Error_ExceptionOccured = 9802,
 	/// <summary>
 	/// 未実装エラー
 	/// [Not implemented error]
 	/// </summary>
+	[EnumMember]
 	Msg901_Error_Unimplemented = 9901,
 	/// <summary>
 	/// Exceptionエラー
 	/// [Exception error]
 	/// </summary>
+	[EnumMember]
 	Msg902_Error_ExceptionOccured = 9902,
 	/// <summary>
 	/// 最大値4桁 9000以降はエラー等
 	/// [Maximum value 4 digits 9000 and later are errors etc.]
 	/// </summary>
+	[EnumMember]
 	Msg999_Zetc = 9999
 }
 /// <summary>

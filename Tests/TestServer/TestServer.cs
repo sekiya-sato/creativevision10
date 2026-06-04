@@ -27,7 +27,7 @@ public class FakeWebHostEnvironment : IWebHostEnvironment {
 }
 
 [TestClass]
-public class CvnetCoreServiceTests {
+public class CoreServiceTests {
 	private ExDatabaseSqlite? _db;
 	private CoreService? _service;
 	private NCrontab.Scheduler.Scheduler? _scheduler;

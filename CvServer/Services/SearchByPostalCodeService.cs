@@ -1,5 +1,6 @@
 using CodeShare;
 using Microsoft.AspNetCore.Authorization;
+using ProtoBuf.Grpc;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
@@ -32,7 +33,8 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 	}
 
 	[AllowAnonymous]
-	public async Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CancellationToken cancellationToken = default) {
+	public async Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CallContext context = default) {
+		var cancellationToken = context.CancellationToken;
 		var normalizedPostalCode = NormalizePostalCode(postalCode);
 		if (normalizedPostalCode == null) {
 			return new PostalAddressSearchResult(false, string.Empty, [], "郵便番号は3桁から7桁の数字で入力してください。", PostalAddressErrorType.InvalidInput);
@@ -206,7 +208,7 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 	private bool IsTokenValid() {
 		return !string.IsNullOrWhiteSpace(_cachedToken) && DateTimeOffset.UtcNow < _expiresAtUtc;
 	}
-	public JapanPostBizOptions GetJapanPostBizOptions() {
+	private JapanPostBizOptions GetJapanPostBizOptions() {
 		var verInfo = new AppGlobal().VerInfo;
 		return new JapanPostBizOptions {
 			BaseUrl = _configuration.GetSection("JapanPostBiz")["BaseUrl"] ?? "https://api.da.pf.japanpost.jp",

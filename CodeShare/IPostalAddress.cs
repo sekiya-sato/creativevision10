@@ -1,4 +1,5 @@
 using ProtoBuf;
+using ProtoBuf.Grpc;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 namespace CodeShare;
@@ -9,17 +10,22 @@ namespace CodeShare;
 [ServiceContract]
 public interface IPostalAddressService {
 	[OperationContract]
-	Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CancellationToken ct = default);
+	Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CallContext context = default);
 }
 
 // 検索結果レコード
 [DataContract]
 [ProtoContract]
 public sealed record PostalAddressSearchResult(
+	[property: DataMember(Order = 1)]
 	[property: ProtoMember(1)] bool IsSuccess,
+	[property: DataMember(Order = 2)]
 	[property: ProtoMember(2)] string NormalizedPostalCode,
+	[property: DataMember(Order = 3)]
 	[property: ProtoMember(3)] List<PostalAddressItem> Items,
+	[property: DataMember(Order = 4)]
 	[property: ProtoMember(4)] string Message,
+	[property: DataMember(Order = 5)]
 	[property: ProtoMember(5)] PostalAddressErrorType ErrorType
 ) {
 	// デシリアライザ用のデフォルトコンストラクタを確保するため
@@ -30,13 +36,21 @@ public sealed record PostalAddressSearchResult(
 [DataContract]
 [ProtoContract]
 public sealed record PostalAddressItem(
+	[property: DataMember(Order = 1)]
 	[property: ProtoMember(1)] string PostalCode,
+	[property: DataMember(Order = 2)]
 	[property: ProtoMember(2)] string Address1,
+	[property: DataMember(Order = 3)]
 	[property: ProtoMember(3)] string Address2,
+	[property: DataMember(Order = 4)]
 	[property: ProtoMember(4)] string Address3,
+	[property: DataMember(Order = 5)]
 	[property: ProtoMember(5)] string FullAddress,
+	[property: DataMember(Order = 6)]
 	[property: ProtoMember(6)] string? Address1Kana,
+	[property: DataMember(Order = 7)]
 	[property: ProtoMember(7)] string? Address2Kana,
+	[property: DataMember(Order = 8)]
 	[property: ProtoMember(8)] string? Address3Kana
 ) {
 	public PostalAddressItem() : this("", "", "", "", "", null, null, null) { }
@@ -60,32 +74,4 @@ public enum PostalAddressErrorType {
 	NetworkError,
 	[EnumMember]
 	ServiceError,
-}
-
-[DataContract]
-public sealed class JapanPostBizOptions {
-	[DataMember(Order = 1)]
-	public string BaseUrl { get; set; } = "https://api.da.pf.japanpost.jp";
-	[DataMember(Order = 2)]
-	public string TokenPath { get; set; } = "/api/v2/j/token";
-	[DataMember(Order = 3)]
-	public string SearchCodePath { get; set; } = "/api/v2/searchcode";
-	[DataMember(Order = 4)]
-	public string ClientId { get; set; } = string.Empty;
-	[DataMember(Order = 5)]
-	public string SecretKey { get; set; } = string.Empty;
-	[DataMember(Order = 6)]
-	public string EcUid { get; set; } = string.Empty;
-	[DataMember(Order = 7)]
-	public string UserAgent { get; set; } = "CvServer/1.0";
-	[DataMember(Order = 8)]
-	public int TimeoutSeconds { get; set; } = 10;
-	[DataMember(Order = 9)]
-	public int DefaultLimit { get; set; } = 1000;
-	[DataMember(Order = 10)]
-	public int DefaultChoikiType { get; set; } = 1;
-	[DataMember(Order = 11)]
-	public int DefaultSearchType { get; set; } = 2;
-	[DataMember(Order = 12)]
-	public int TokenRefreshMarginSeconds { get; set; } = 60;
 }
