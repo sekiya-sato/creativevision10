@@ -201,7 +201,6 @@ public sealed partial class Common {
 			.Any(attribute => attribute.GetType().Name == attributeTypeName);
 	}
 
-	static readonly Aes algorithm = Aes.Create();
 	/// <summary>
 	/// パスワードから共有キーと初期化ベクタを生成する
 	/// [Generate a shared key and initialization vector from a password]
@@ -217,10 +216,12 @@ public sealed partial class Common {
 		//[Create shared key and initialization vector from the password]
 		//saltを決める 8byte以上
 		//[Determine the salt (at least 8 bytes)]
-		byte[] salt = Encoding.UTF8.GetBytes("salt-20240801");
+		const string SaltValue = "salt-20240801";
+		byte[] salt = Encoding.UTF8.GetBytes(SaltValue);
 		var keyBytes = keySize / 8;
 		var ivBytes = blockSize / 8;
 		var derivedLength = keyBytes + ivBytes;
+		// TODO: イテレーション回数を現代標準(600,000以上)へ見直す（既存暗号化データ互換性に注意）
 		var derivedBytes = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100, HashAlgorithmName.SHA256, derivedLength);
 
 		//共有キーと初期化ベクタを生成する
@@ -240,6 +241,7 @@ public sealed partial class Common {
 	/// <returns>暗号化された文字列</returns> [Encrypted string]
 	public static string EncryptString(string sourceString, string password) {
 		try {
+			using var algorithm = Aes.Create();
 			//パスワードから共有キーと初期化ベクタを作成
 			//[Create shared key and initialization vector from the password]
 			byte[] key, iv;
@@ -267,7 +269,9 @@ public sealed partial class Common {
 			return Convert.ToBase64String(encBytes);
 
 		}
-		catch (Exception) {
+		catch (Exception ex) {
+			// TODO: 暗号化失敗時の例外処理を見直す（現状は後方互換のため空文字を返す）
+			System.Diagnostics.Debug.WriteLine(ex, "EncryptString failed");
 		}
 		return "";
 	}
@@ -281,6 +285,7 @@ public sealed partial class Common {
 	/// <returns>復号化された文字列</returns> [Decrypted string]
 	public static string DecryptString(string sourceString, string password) {
 		try {
+			using var algorithm = Aes.Create();
 			//パスワードから共有キーと初期化ベクタを作成
 			//[Create shared key and initialization vector from the password]
 			byte[] key, iv;
@@ -308,7 +313,9 @@ public sealed partial class Common {
 			//[Convert byte array to string and return]
 			return Encoding.UTF8.GetString(decBytes);
 		}
-		catch (Exception) {
+		catch (Exception ex) {
+			// TODO: 復号化失敗時の例外処理を見直す（現状は後方互換のため空文字を返す）
+			System.Diagnostics.Debug.WriteLine(ex, "DecryptString failed");
 		}
 		return "";
 	}

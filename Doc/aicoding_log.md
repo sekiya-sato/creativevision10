@@ -51,3 +51,25 @@
 - `git diff --check` で空白エラーなしを確認
 
 ---
+
+## [2026-06-04] 15:15 CvAsset Phase 1 セキュリティ・バグ修正
+### Agent
+- Kimi-k2.6 : OpenCode : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvAssetプロジェクトの精査で発見したセキュリティ・バグをPhase 1として修正し、Build→Log→Commitを実施
+### 実施内容
+- CvAsset/CommonClass.cs: 
+  - `static readonly Aes algorithm = Aes.Create()` を削除し、`EncryptString`/`DecryptString` メソッド内で `using var algorithm = Aes.Create()` に変更（スレッドセーフ化）
+  - salt値をハードコードから `const string SaltValue` 定数化
+  - PBKDF2イテレーション回数に「既存暗号化データ互換性に注意」のTODOコメントを追加
+  - 空catchブロック内に `Debug.WriteLine` と「後方互換のため空文字を返す」TODOコメントを追加
+### 技術決定 Why
+- `Aes` インスタンスはスレッドセーフではなく、`Key`/`IV` のセット・暗号化が競合するとデータ破損の可能性があるため、メソッドスコープに移動
+- saltのハードコードは可読性・保守性が低いため定数化。値の変更は既存暗号化データ互換性を失うため保留
+- 空catchブロックの即座修正は呼び出し側（LoginService, LoginViewModel 等5ファイル）の「空文字＝失敗」前提を壊す破壊的変更となるため、TODOコメントで将来対応を明示
+### 確認
+- `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---
