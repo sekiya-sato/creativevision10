@@ -24,7 +24,7 @@ SELECT * FROM (
 	public bool ShouldSerializeCode_Siz() => Ser;
 	public bool ShouldSerializeMei_Siz() => Ser;
 
-	readonly static public string ViewSql = """
+	readonly public static string ViewSql = """
 select * from (
 select T.*, m1.Name as Mei_Col, m2.Name as  Mei_Siz
 from MasterShohinColSiz T

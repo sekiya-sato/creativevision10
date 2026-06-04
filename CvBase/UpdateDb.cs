@@ -17,13 +17,13 @@ public class UpdateDb {
 		//new (26040102,"","2026.04.08定義")
 	];
 
-	static public async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
+	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);
 	}
 	/// <summary>
 	/// バージョン情報を書き込む＆バージョンアップされた場合にテーブルの整合性を保つ
 	/// </summary>
-	static public async Task WriteVersionInfoAsync(IDatabase db, InnerVersion[] verupSql, CancellationToken ct = default) {
+	public static async Task WriteVersionInfoAsync(IDatabase db, InnerVersion[] verupSql, CancellationToken ct = default) {
 		if (verupSql.Length == 0) return;
 
 		var latestDb = await db.FirstOrDefaultAsync<SysUpdateDb>("order by DbVersion desc", ct); // DB上の最新バージョン情報を取得

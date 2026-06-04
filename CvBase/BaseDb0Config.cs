@@ -124,10 +124,11 @@ public sealed partial class SysHistAutoexec : BaseDbClass {
 /// [Login history table]
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-[Comment("システム：マスター系操作履歴テーブル")]
+[Comment("システム：マスター系操作履歴テーブル 2026/06/04現在、まだ実DBは作成しない。保存仕様を検討中")]
 [KeyDml("nk1", false, "Vdc")]
 [KeyDml("nk2", false, "TableName")]
-public sealed partial class SysHistryMaster : BaseDbClass {
+[NoCreate]
+public sealed partial class SysHistMaster : BaseDbClass {
 	/// <summary>
 	/// TableName (テーブル名)
 	/// [TableName (Table Name)]

@@ -171,8 +171,8 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 
 	[Ignore]
 	[JsonIgnore]
-	public EnumGenger EnGendar {
-		get => (EnumGenger)Gendar;
+	public EnumGendar EnGendar {
+		get => (EnumGendar)Gendar;
 		set => Gendar = (int)value;
 	}
 	/// <summary>
