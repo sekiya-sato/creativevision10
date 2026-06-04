@@ -32,7 +32,12 @@ public class SummaryDb {
 			"処理エラー: {StepName}",
 			"処理終了");
 	}
-
+	/// <summary>
+	/// 年月指定でTranテーブルからSummaryStockを更新する(レコード CUD) SummaryRealStockは後でCalcSummaryRealStock()で一括更新する必要がある
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="param"></param>
+	/// <returns></returns>
 	private int CalcSummaryStock<T>(SummaryDateParameter param) where T : ITranDetail {
 		var cnt = 0;
 		var tableName = typeof(T).Name;
@@ -58,52 +63,32 @@ public class SummaryDb {
 		return cnt;
 	}
 	/// <summary>
-	/// TranテーブルのIdからSummaryStockを集計して更新する(更新)
+	/// Id指定でTranテーブルからSummaryStockおよびSummaryRealStockを更新する(レコード CUD)
 	/// </summary>
 	/// <param name="id"></param>
 	/// <param name="invertFlg">在庫計算のフラグを反転させるかどうか</param>
 	/// <returns></returns>
 	public int CalcTran2SummaryStock(string tablename, string idSoko, long id, bool invertFlg) {
 		var cnt = 0;
-		var calcFlg = TranCalcBase.GetCalcSoko(tablename, invertFlg);
-		var sql = CreateSummaryStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
 		// ToDo: ロジックをこれから作成
+		var calcFlg = TranCalcBase.GetCalcSoko(tablename, invertFlg);
+		var sql = CreateRealStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
+		var sql2 = $"SELECT changes() AS updated_count";
+		if (calcFlg.Item1 != 0) {
+			var ret = _db.Execute(sql, id);
+			if (ret < 0)
+				_logger.LogWarning("CalcTran2SummaryStock:SummaryRealStock {TableName} Id={Id} updated {Count} records", tablename, id, ret);
+			cnt += _db.FirstOrDefault<int>(sql2);
+			if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
+				sql = CreateSummaryStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
+				ret = _db.Execute(sql, id);
+				if (ret < 0)
+					_logger.LogWarning("CalcTran2SummaryStock:SummaryStock {TableName} Id={Id} updated {Count} records", tablename, id, ret);
+				cnt += _db.FirstOrDefault<int>(sql2);
+			}
+		}
 		return cnt;
 	}
-
-
-
-	/*
-	[ObservableProperty]
-	int inQty;
-	/// <summary>
-	/// 出庫数
-	/// </summary>
-	[ObservableProperty]
-	int outQty;
-	/// <summary>
-	/// 移動中(入庫予定)
-	/// </summary>
-	[ObservableProperty]
-	int transitQty;
-	/// <summary>
-	/// 調整数
-	/// </summary>
-	[ObservableProperty]
-	int adjustQty;
-	/// <summary>
-	/// 棚卸日
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	string stocktakeDdate = "19010101";
-	/// <summary>
-	/// 棚卸数
-	/// </summary>
-	[ObservableProperty]
-	int actualQty;
-}	 
-	 */
 	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlg, long vdate, string whereClause) => $@"
 INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, InQty, OutQty, TransitQty)
 SELECT
@@ -132,6 +117,28 @@ SET Su = Su + excluded.Su, vdu = {vdate},
     InQty = InQty + excluded.InQty,
     OutQty = OutQty + excluded.OutQty,
     TransitQty = TransitQty + excluded.TransitQty
+;
+";
+	private string CreateRealStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlg, long vdate, string whereClause) => $@"
+INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
+SELECT
+  t.{idSoko} AS Id_Soko,
+  json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
+  json_extract(j.value, '$.Id_Col')    AS Id_Col,
+  json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item1})   AS Su,
+  {vdate} vdc,
+  {vdate} vdu
+FROM {tableName} AS t
+     CROSS JOIN json_each(t.Jmeisai) AS j
+WHERE {whereClause}
+GROUP BY
+  t.{idSoko},
+  Id_Shohin,
+  Id_Col,
+  Id_Siz
+ON CONFLICT(Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
+SET Su = Su + excluded.Su, vdu = {vdate}
 ;
 ";
 	/// <summary>
