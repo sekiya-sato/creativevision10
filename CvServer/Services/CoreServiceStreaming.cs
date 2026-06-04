@@ -46,8 +46,8 @@ public partial class CoreService {
 		await Task.Yield();
 
 		// ConvertDb関連フラグの処理
-		if (request.Flag is CvFlag.MSg040_ConvertDb or CvFlag.MSg041_ConvertDbInit) {
-			var isInit = request.Flag == CvFlag.MSg041_ConvertDbInit;
+		if (request.Flag is CvFlag.Msg040_ConvertDb or CvFlag.Msg041_ConvertDbInit) {
+			var isInit = request.Flag == CvFlag.Msg041_ConvertDbInit;
 
 			// HandleConvertDbStreamAsyncの結果をそのまま返す
 			await foreach (var msg in HandleConvertDbStreamAsync(isInit, ct, request.Flag)) {
@@ -56,14 +56,14 @@ public partial class CoreService {
 			yield break;
 		}
 		// 	集計処理
-		else if (request.Flag is CvFlag.MSg050_Summary or CvFlag.Msg051_SummaryRealStock) {
+		else if (request.Flag is CvFlag.Msg050_Summary or CvFlag.Msg051_SummaryRealStock) {
 			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
 				yield return msg;
 			}
 			yield break;
 		}
 		// テストストリーミング処理（既存）
-		else if (request.Flag is CvFlag.MSg710_StreamingTest) {
+		else if (request.Flag is CvFlag.Msg710_StreamingTest) {
 			// 追加：HandleConvertTestStreamAsync を呼ぶ
 			await foreach (var msg in HandleConvertTestStreamAsync(ct, request.Flag)) {
 				yield return msg;

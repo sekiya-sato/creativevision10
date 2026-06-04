@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 namespace CodeShare;
 
+/// <summary>
+/// 郵便番号検索サービスインターフェース 日本郵政のAPIを呼び出す
+/// </summary>
 [ServiceContract]
 public interface IPostalAddressService {
 	[OperationContract]

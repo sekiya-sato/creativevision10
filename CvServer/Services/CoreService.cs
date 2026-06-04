@@ -42,8 +42,8 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg700_Test_Start] = (req, ctx) => HandleTestLogicMsg700(req, ctx),
 			[CvFlag.Msg701_TestCase001] = (req, ctx) => HandleTestLogicMsg701(req, ctx),
 			[CvFlag.Msg702_TestCase002] = (req, ctx) => HandleTestLogicMsg702(req, ctx),
-			[CvFlag.MSg798_DatabaseClose] = (req, ctx) => HandlerDatabaseClose(req, ctx),
-			[CvFlag.MSg799_DatabaseReOpen] = (req, ctx) => HandlerDatabaseReOpen(req, ctx),
+			[CvFlag.Msg798_DatabaseClose] = (req, ctx) => HandlerDatabaseClose(req, ctx),
+			[CvFlag.Msg799_DatabaseReOpen] = (req, ctx) => HandlerDatabaseReOpen(req, ctx),
 		};
 	}
 	// ToDo : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更

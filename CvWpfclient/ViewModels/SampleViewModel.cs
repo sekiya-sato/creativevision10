@@ -109,7 +109,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg710_StreamingTest };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg710_StreamingTest };
 			msg.DataType = typeof(string);
 			msg.DataMsg = "ストリーミングテスト";
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
@@ -429,7 +429,7 @@ from MasterMeisho where Kubun=@0
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg798_DatabaseClose };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg798_DatabaseClose };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply?.DataMsg != null && reply?.DataType != null) {
 				TestMsg002Result = reply.DataMsg;
@@ -452,7 +452,7 @@ from MasterMeisho where Kubun=@0
 			cancellationToken.ThrowIfCancellationRequested();
 			// 処理を実行
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.MSg799_DatabaseReOpen };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg799_DatabaseReOpen };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply?.DataMsg != null && reply?.DataType != null) {
 				TestMsg002Result = reply.DataMsg;

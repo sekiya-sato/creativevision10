@@ -4,6 +4,9 @@ using System.ServiceModel;
 namespace CodeShare;
 
 
+/// <summary>
+/// 天気情報サービスインターフェース WebAPI (OpenWeatherMap) を呼び出す
+/// </summary>
 [ServiceContract]
 public interface IWeatherService {
 	[OperationContract]

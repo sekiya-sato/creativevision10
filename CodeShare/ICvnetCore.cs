@@ -101,11 +101,11 @@ public enum CvFlag {
 	/// <summary>
 	/// データベースの変換(テーブル初期化なし)
 	/// </summary>
-	MSg040_ConvertDb = 40,
+	Msg040_ConvertDb = 40,
 	/// <summary>
 	/// データベースの変換(テーブル初期化あり)
 	/// </summary>
-	MSg041_ConvertDbInit = 41,
+	Msg041_ConvertDbInit = 41,
 	/// <summary>
 	/// テーブル一覧と検収の取得
 	/// </summary>
@@ -113,7 +113,7 @@ public enum CvFlag {
 	/// <summary>
 	/// 集計処理
 	/// </summary>
-	MSg050_Summary = 50,
+	Msg050_Summary = 50,
 	/// <summary>
 	/// リアル在庫集計処理
 	/// </summary>
@@ -139,15 +139,15 @@ public enum CvFlag {
 	/// <summary>
 	/// ストリーミングテスト
 	/// </summary>
-	MSg710_StreamingTest = 7710,
+	Msg710_StreamingTest = 7710,
 	/// <summary>
 	/// データベースのクローズ
 	/// </summary>
-	MSg798_DatabaseClose = 7991,
+	Msg798_DatabaseClose = 7991,
 	/// <summary>
 	/// データベースの再オープン
 	/// </summary>
-	MSg799_DatabaseReOpen = 7992,
+	Msg799_DatabaseReOpen = 7992,
 	/// <summary>
 	/// Abs()がこの値より大きいものはエラー
 	/// [Values where Abs() exceeds this value are errors]
