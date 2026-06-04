@@ -53,7 +53,7 @@
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="History" />
 							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="履歴" />
+								Text="自動実行履歴" />
 						</StackPanel>
 					</Button>
 				</StackPanel>
