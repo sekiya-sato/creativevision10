@@ -6,51 +6,48 @@ namespace CvWpfclient.ViewModels.Sub;
 
 public partial class WebpdfViewModel : ObservableObject {
 	const string ReloadQueryKey = "cv_reload";
+	long reloadSequence;
 
 	[ObservableProperty]
 	string? pdfdata;
 
 	[RelayCommand]
-	async Task ReloadAsync() {
+	void Reload() {
 		if (string.IsNullOrWhiteSpace(Pdfdata)) {
 			return;
 		}
 
-		await Task.Yield();
-		Pdfdata = AddReloadQuery(Pdfdata);
+		Pdfdata = AddReloadQuery(Pdfdata, CreateReloadStamp());
 	}
 
-	static string AddReloadQuery(string source) {
+	string CreateReloadStamp() {
 		var stamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
+		var sequence = (++reloadSequence).ToString(CultureInfo.InvariantCulture);
+		return $"{stamp}_{sequence}";
+	}
 
-		if (!Uri.TryCreate(source, UriKind.Absolute, out var uri)) {
-			return AddReloadQueryToRawText(source, stamp);
-		}
+	static string AddReloadQuery(string source, string stamp) {
+		var fragmentIndex = source.IndexOf('#', StringComparison.Ordinal);
+		var body = fragmentIndex < 0 ? source : source[..fragmentIndex];
+		var fragment = fragmentIndex < 0 ? string.Empty : source[fragmentIndex..];
+		var queryIndex = body.IndexOf('?', StringComparison.Ordinal);
+		var path = queryIndex < 0 ? body : body[..queryIndex];
+		var query = queryIndex < 0 ? string.Empty : body[(queryIndex + 1)..];
 
-		var builder = new UriBuilder(uri) {
-			Query = ReplaceReloadQuery(uri.Query, stamp)
-		};
-		return builder.Uri.AbsoluteUri;
+		return $"{path}?{ReplaceReloadQuery(query, stamp)}{fragment}";
 	}
 
 	static string ReplaceReloadQuery(string query, string stamp) {
-		var queryText = query.StartsWith('?') ? query[1..] : query;
-		List<string> values = queryText.Length == 0
+		List<string> values = query.Length == 0
 			? []
-			: queryText
+			: query
 				.Split('&', StringSplitOptions.RemoveEmptyEntries)
-				.Where(value => !value.StartsWith($"{ReloadQueryKey}=", StringComparison.OrdinalIgnoreCase))
+				.Where(value =>
+					!value.Equals(ReloadQueryKey, StringComparison.OrdinalIgnoreCase) &&
+					!value.StartsWith($"{ReloadQueryKey}=", StringComparison.OrdinalIgnoreCase))
 				.ToList();
 
 		values.Add($"{ReloadQueryKey}={stamp}");
 		return string.Join("&", values);
-	}
-
-	static string AddReloadQueryToRawText(string source, string stamp) {
-		var fragmentIndex = source.IndexOf('#', StringComparison.Ordinal);
-		var body = fragmentIndex < 0 ? source : source[..fragmentIndex];
-		var fragment = fragmentIndex < 0 ? string.Empty : source[fragmentIndex..];
-		var separator = body.Contains('?', StringComparison.Ordinal) ? "&" : "?";
-		return $"{body}{separator}{ReloadQueryKey}={stamp}{fragment}";
 	}
 }

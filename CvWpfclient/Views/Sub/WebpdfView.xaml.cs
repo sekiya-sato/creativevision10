@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
+using CvWpfclient.ViewModels.Sub;
 using Microsoft.Web.WebView2.Core;
 
 namespace CvWpfclient.Views.Sub;
@@ -15,7 +17,22 @@ public partial class WebpdfView : Window {
 
 	public WebpdfView() {
 		InitializeComponent();
+		PreviewKeyDown += OnPreviewKeyDown;
+		WebView.PreviewKeyDown += OnPreviewKeyDown;
 		WebView.CoreWebView2InitializationCompleted += OnCoreWebView2InitializationCompleted;
+	}
+
+	private void OnPreviewKeyDown(object sender, KeyEventArgs e) {
+		if (e.Key != Key.F5) {
+			return;
+		}
+
+		e.Handled = true;
+		if (DataContext is not WebpdfViewModel vm || !vm.ReloadCommand.CanExecute(null)) {
+			return;
+		}
+
+		vm.ReloadCommand.Execute(null);
 	}
 
 	private void OnCoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e) {
