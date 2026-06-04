@@ -205,19 +205,20 @@ public static class CommonExtensions {
 public static class DynamicCsvExtensions {
 	public static void WriteDynamicCsv<T>(this IEnumerable<T> records, TextWriter writer, bool includeHeader = false)
 		where T : IDictionary<string, object> {
-		if (!records.Any())
+		using var enumerator = records.GetEnumerator();
+		if (!enumerator.MoveNext())
 			return;
 
-		var first = records.First();
+		var first = enumerator.Current;
 		if (includeHeader) {
 			var header = string.Join(",", first.Keys.Select(EscapeCsvField));
 			writer.WriteLine(header);
 		}
 
-		foreach (var record in records) {
-			var line = string.Join(",", record.Values.Select(v => EscapeCsvField(v?.ToString())));
+		do {
+			var line = string.Join(",", enumerator.Current.Values.Select(v => EscapeCsvField(v?.ToString())));
 			writer.WriteLine(line);
-		}
+		} while (enumerator.MoveNext());
 	}
 
 	private static string EscapeCsvField(string? field) {

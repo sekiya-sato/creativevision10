@@ -144,3 +144,24 @@
 - `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
 
 ---
+
+## [2026-06-04] 15:26 CvAsset パフォーマンス・メモリリーク精査
+### Agent
+- Kimi-k2.6 : OpenCode : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Phase 1〜4終了後、CvAssetプロジェクトのパフォーマンスとメモリリークを精査
+### 実施内容
+- CvAsset/CommonExtensions.cs: `WriteDynamicCsv` の `Any()`/`First()` による2回イテレーションを `GetEnumerator()` による1回イテレーションに最適化
+- CvAsset/CommonClass.cs: `GetIPAddress` に `<remarks>` で「頻繁呼び出し時はキャッシュ検討」を追加
+- CvAsset/CommonClass.cs: `ToDataTable` に `<remarks>` で「リフレクション使用のため大量データ注意」を追加
+### 技術決定 Why
+- `Any()` と `First()` はそれぞれ独立して列挙を開始するため、2回のイテレーションが発生。`GetEnumerator()` を使えば1回の列挙でヘッダー出力とデータ出力を完結できる
+- `GetIPAddress` は `NetworkInterface.GetAllNetworkInterfaces()` を呼び出すため、高頻度呼び出しではオーバーヘッドが大きい
+- `ToDataTable` は `type.GetProperties()` によるリフレクションを多用するため、大量データ変換時のパフォーマンス低下が顕著
+- メモリリーク観点：`Aes` はPhase 1でメソッドスコープに移動済み。`Regex` は `RegexOptions.Compiled` で静的なので問題なし
+### 確認
+- `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---

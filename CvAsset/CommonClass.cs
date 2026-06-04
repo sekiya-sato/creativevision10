@@ -97,7 +97,9 @@ public sealed partial class Common {
 
 	/// <summary>
 	/// BaseDbClass継承型の一覧をDataTableへ変換する
+	/// [Convert a list of BaseDbClass derived types to a DataTable]
 	/// </summary>
+	/// <remarks>リフレクションを使用するため大量データでの呼び出しには注意 [Caution: uses reflection, avoid for large datasets]</remarks>
 	public static DataTable ToDataTable<T>(IEnumerable<T> items) where T : class {
 		ArgumentNullException.ThrowIfNull(items);
 		if (!IsBaseDbClassType(typeof(T))) {
@@ -365,6 +367,7 @@ public sealed partial class Common {
 	/// 自端末のIPアドレスを取得する
 	/// [Retrieve the IP address of the local device]
 	/// </summary>
+	/// <remarks>頻繁に呼び出す場合は結果をキャッシュすることを検討 [Consider caching results if called frequently]</remarks>
 	/// <returns>IPアドレスとMACアドレスのリスト [List of IP and MAC addresses]</returns>
 	public static List<IPData> GetIPAddress() {
 		var nis = NetworkInterface.GetAllNetworkInterfaces();
