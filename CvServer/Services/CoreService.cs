@@ -46,7 +46,7 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg799_DatabaseReOpen] = (req, ctx) => HandlerDatabaseReOpen(req, ctx),
 		};
 	}
-	// ToDo : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
+	// Product : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
 	[AllowAnonymous]
 	//[Authorize]
 	public Task<CvMsg> QueryMsgAsync(CvMsg request, CallContext context = default) {

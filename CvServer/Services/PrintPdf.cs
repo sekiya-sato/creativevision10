@@ -169,7 +169,7 @@ public partial class CoreService {
 			Thread.Sleep(PrintPostCheckIntervalMilliseconds);
 		}
 		// Thread.Sleep(PrintPostCheckIntervalMilliseconds); // 念のため、ファイルが完全に書き込まれるまで少し待つ
-		// ToDo: 商品マスタが初回のみ正常に出力されない。後ほど原因調査する
+		// Pending: 商品マスタが初回のみ正常に出力されない現象。PDF生成が遅すぎる？ 2026/06/04保留
 
 		var timespan = DateTime.Now - start;
 		var ret = new PrintResult(true, $"{timestamp}/outfile.pdf");

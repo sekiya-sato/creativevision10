@@ -43,7 +43,7 @@ builder.Services.AddCodeFirstGrpc((options => {
 }));
 
 builder.WebHost.ConfigureKestrel(serverOptions => {
-	// TODO: Kestrel デフォルトのオプションは必要に応じて追加する(2024/08/15)
+	// Product: Kestrel デフォルトのオプションは必要に応じて追加する(2024/08/15)
 	serverOptions.Limits.MaxRequestBodySize = 838_860_800; // 800 MB
 	serverOptions.Limits.MaxConcurrentConnections = 100; // 最大同時接続数 [Maximum number of simultaneous connections]
 	serverOptions.Limits.Http2.MaxStreamsPerConnection = 100; // 最大ストリーム数 [Maximum number of streams]

@@ -48,7 +48,7 @@ public partial class ExDatabaseOracle : ExDatabase {
 
 	/// <summary>
 	/// クラスの中に含まれるプロパティの配列を"Name database型"で返す
-	/// Todo : Oracle用に修正すること 2026/02/04
+	/// Pending : Oracle用に修正すること 2026/02/04 追記 2026/06/04現在 Oracleは変換元DBのみの使用なので、現段階では不要
 	/// </summary>
 	/// <param name="classT"></param>
 	/// <returns></returns>

@@ -222,7 +222,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (SelectedMenu?.ViewType == null) return;
 		if (!SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
 			return;
-		// ToDo : ログインしてないときはログイン画面を出す etc リリース時にはちゃんと実装する
+		// Product : ログインしてないときはログイン画面を出す etc リリース前に実装
 		if (InfolocalServer == null) {
 			await afterLogin(new _00System.LoginViewModel());
 		}

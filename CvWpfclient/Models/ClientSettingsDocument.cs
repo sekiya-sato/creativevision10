@@ -13,11 +13,11 @@ public sealed class ClientConnectionString {
 public sealed class ClientParameters {
 	public string LoginId { get; set; } = string.Empty;
 	/// <summary>
-	/// ToDo: リリース時には暗号化するか、保存しないようにする
+	/// Product: リリース時には暗号化するか、保存しないようにする
 	/// </summary>
 	public string LoginPass { get; set; } = string.Empty;
 	/// <summary>
-	/// ToDo: リリース時には暗号化するか、保存しないようにする
+	/// Product: リリース時には暗号化するか、保存しないようにする
 	/// </summary>
 	public string LoginJwt { get; set; } = string.Empty;
 
