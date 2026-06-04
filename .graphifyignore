@@ -62,4 +62,5 @@ graphify-out/
 *.doc
 # Optional local notes
 printform/
+output/
 
