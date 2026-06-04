@@ -126,3 +126,21 @@
 - `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
 
 ---
+
+## [2026-06-04] 15:24 CvAsset Phase 4 構成整理
+### Agent
+- Kimi-k2.6 : OpenCode : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvAssetプロジェクトの精査で発見した構成上の問題をPhase 4として修正
+### 実施内容
+- CvAsset/CommonExtensions.cs: コメントアウトされた死コード（ジェネリック拡張メソッドの例、演算子解説、Span優先のサンプル等）を削除
+- CvAsset/CommonExtensions.cs: `CommonExtensions` クラスのXMLコメントに `[Extension methods]` 英語訳を追加
+### 技術決定 Why
+- 死コードは可読性を低下させ、メンテナンスコストを増やすため削除。必要な情報はプロジェクトドキュメントやコードレビューで伝達すべき
+- ファイル命名統一（`CommonClass.cs`/`CommonFileOperation.cs` → `Common.Utils.cs`/`Common.File.cs` 等）は呼び出し側への影響が大きいため、今回は見送り（将来の大規模リファクタリング時に検討）
+### 確認
+- `C:\Windows\System32\cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---

@@ -2,24 +2,9 @@ using System.Text.RegularExpressions;
 
 namespace CvAsset;
 
-/*
-// ジェネリック拡張メソッドの例
-extension<T>(List<T> t) {
-	public T GenericMethod(T value) => value;
-}
-null合体演算子（??）	a ?? b（aがnullならb、非nullならa）
-null結合代入演算子（??=）	a ??= b（aがnullならbを代入、非nullならaのまま）
-null条件メンバーアクセス演算子（?.）	a?.b（aがnullならnull、非nullならbにアクセス）
-null条件要素アクセス演算子?[]	a?[b]（aがnullならnull、非nullならa[b]にアクセス）
-
-ReadOnlySpan Span の優先
-public static void Method(IEnumerable<int> values) { }
-public static void Method(ReadOnlySpan<int> values) { }
-*/
-
-
 /// <summary>
 /// 拡張メソッド
+/// [Extension methods]
 /// </summary>
 public static class CommonExtensions {
 	/// <summary>
