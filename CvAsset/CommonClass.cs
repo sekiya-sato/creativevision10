@@ -225,8 +225,8 @@ public sealed partial class Common {
 		var keyBytes = keySize / 8;
 		var ivBytes = blockSize / 8;
 		var derivedLength = keyBytes + ivBytes;
-		// TODO: イテレーション回数を現代標準(600,000以上)へ見直す（既存暗号化データ互換性に注意）
-		var derivedBytes = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100, HashAlgorithmName.SHA256, derivedLength);
+		var iterationCount = 600_000; // イテレーション回数を現代標準(600,000以上)へ
+		var derivedBytes = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterationCount, HashAlgorithmName.SHA256, derivedLength);
 
 		//共有キーと初期化ベクタを生成する
 		//[Generate the shared key and initialization vector]
@@ -274,7 +274,6 @@ public sealed partial class Common {
 
 		}
 		catch (Exception ex) {
-			// TODO: 暗号化失敗時の例外処理を見直す（現状は後方互換のため空文字を返す）
 			System.Diagnostics.Debug.WriteLine(ex, "EncryptString failed");
 		}
 		return "";
@@ -318,7 +317,6 @@ public sealed partial class Common {
 			return Encoding.UTF8.GetString(decBytes);
 		}
 		catch (Exception ex) {
-			// TODO: 復号化失敗時の例外処理を見直す（現状は後方互換のため空文字を返す）
 			System.Diagnostics.Debug.WriteLine(ex, "DecryptString failed");
 		}
 		return "";

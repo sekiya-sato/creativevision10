@@ -23,7 +23,7 @@ internal partial class SysLoginHistoryViewModel : Helpers.BaseMenteViewModel<Sys
 	/// <summary>最新順に取得</summary>
 	protected override string? ListOrder => "Id DESC";
 
-	protected override int? ListMaxCount => 6;
+	protected override int? ListMaxCount => 200;
 
 
 	[RelayCommand]
