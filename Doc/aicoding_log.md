@@ -222,3 +222,29 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-05] 17:00 社員証カード印刷画面の新規作成
+### Agent
+- Sisyphus : OpenAI : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：社員マスタの社員証カード型印刷画面を新規作成。01Master/PrintMasterShainCard として View と ViewModel を作成し、印刷フォーマットも新規作成する。
+### 実施内容
+- CvWpfclient/ViewModels/01Master/PrintMasterShainCardViewModel.cs: BaseMenteViewModel<MasterShain> を継承し、社員CD範囲・店舗ID範囲・バーコード種類（CODE39/NW7）の印刷条件を管理。FormFile をバーコード種類で切り替え、PrintBySqlParam で印刷用SQLを生成
+- CvWpfclient/Views/01Master/PrintMasterShainCardView.xaml: BaseWindow 継承、範囲指定入力（社員CD From/To、店舗ID From/To）、バーコード選択 RadioButton、印刷ボタン（F6）、戻るボタン（Esc）を配置
+- CvWpfclient/Helpers/Converters/InverseBooleanConverter.cs: RadioButton の排他選択用 Converter を新規作成
+- CvWpfclient/App.xaml: InverseBooleanConverter をリソース登録
+- printform/PrintMasterShainCard.qfm: 参考QFMを基にカード型レイアウト（NW7）を新規作成
+- printform/PrintMasterShainCard39.qfm: 参考QFMを基にカード型レイアウト（CODE39）を新規作成
+- CvWpfclient/Models/MenuData.cs: マスターメニューに「社員証カード印刷」を追加
+### 技術決定 Why
+- BaseMenteViewModel を継承し既存の DoOutputPdfCommand を流用することで、印刷専用画面でも既存の印刷インフラを再利用した
+- カード型レイアウトは参考QFMのページ位置・region配置を踏襲し、社員CD/名前/店舗/自社名/画像/バーコードの構成を維持した
+- 画像パスは MasterShain.jdetail.yobi1 を json_extract で取得し、未設定時は空文字とする方式とした
+- 店舗絞り込みは id_Tenpo の数値範囲で行う（UIラベルは「店舗ID」とした）
+### 確認
+- `python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py` でQFM検証（カード型レイアウトのためページ位置は標準値と異なるが、構造・エンコーディングはOK）
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

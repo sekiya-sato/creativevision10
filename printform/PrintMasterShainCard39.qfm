@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1">
+				<position offset="0" length="12"/>
+			</item>
+			<item id="item2">
+				<position offset="0" length="80"/>
+			</item>
+			<item id="item3">
+				<position offset="0" length="120"/>
+			</item>
+			<item id="item4">
+				<position offset="0" length="20"/>
+			</item>
+			<item id="item5">
+				<position offset="0" length="80"/>
+			</item>
+			<item id="item6">
+				<position offset="0" length="80"/>
+			</item>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+		</file>
+	</datadesc>
+	<page orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="Form1" tree="1">
+		<position x="1" y="2" width="163" height="278"/>
+		<region id="Rgn01" direction="1" link="Rgn02" tree="1">
+			<position x="14" y="19" width="136" height="40"/>
+			<color border="ac5959" transparent="1"/>
+			<record id="Rec01" tree="1">
+				<position x="0" y="0" width="68" height="40"/>
+				<color transparent="1"/>
+				<text id="Txt01" valign="middle" halign="right">
+					<position x="18" y="12" width="14" height="6"/>
+					<color base="dab1b1" border="9e4b4b" transparent="0"/>
+					<border bottom="10"/>
+					<data calctype="static">名前</data>
+					<decode datatype="string" format=""/>
+					<font size="100" style="1"/>
+				</text>
+				<text id="Txt02" valign="middle" halign="center">
+					<position x="32" y="12" width="36" height="6"/>
+					<color base="cd9898" border="9e4b4b" transparent="0"/>
+					<border bottom="10"/>
+					<data calctype="item" datasrc="item2"/>
+					<decode datatype="string" format=""/>
+					<font size="140" style="1"/>
+				</text>
+				<text id="Txt03" valign="middle" halign="center">
+					<position x="32" y="18" width="36" height="5"/>
+					<color base="cd9898" border="9e4b4b" transparent="0"/>
+					<border bottom="10"/>
+					<data calctype="item" datasrc="item1"/>
+					<decode datatype="string" format=""/>
+					<font size="120" style="1"/>
+				</text>
+				<barcode id="Bar01" type="1" sschar="1" check="0" string="1">
+					<position x="40" y="29" width="28" height="10"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item1"/>
+					<decode datatype="string" format=""/>
+				</barcode>
+				<text id="Txt04" valign="middle" halign="center">
+					<position x="8" y="1" width="60" height="9"/>
+					<color font="9b4d4d" base="80ff80" border="c08080" transparent="0"/>
+					<border top="10" bottom="10"/>
+					<data calctype="static">  STAFF ID CARD</data>
+					<decode datatype="string" format=""/>
+					<font face="Lucida Bright" size="160" style="3"/>
+				</text>
+				<text id="Txt05" valign="middle" halign="right">
+					<position x="18" y="18" width="14" height="5"/>
+					<color base="dab1b1" border="9e4b4b" transparent="0"/>
+					<border bottom="10"/>
+					<data calctype="static">社員コード</data>
+					<decode datatype="string" format=""/>
+					<font size="90" style="1"/>
+				</text>
+				<text id="Txt06" valign="bottom">
+					<position x="3" y="34" width="37" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item6"/>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<image id="Img01" relative="0">
+					<position x="3" y="12" width="14" height="20"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item3"/>
+				</image>
+				<text id="Txt07" valign="middle" halign="right">
+					<position x="18" y="23" width="14" height="5"/>
+					<color base="dab1b1" border="9e4b4b" transparent="0"/>
+					<border bottom="10"/>
+					<data calctype="static">店舗</data>
+					<decode datatype="string" format=""/>
+					<font size="90" style="1"/>
+				</text>
+				<text id="Txt08" valign="middle">
+					<position x="32" y="23" width="12" height="5"/>
+					<color base="cd9898" border="9e4b4b" transparent="0"/>
+					<border bottom="10"/>
+					<data calctype="item" datasrc="item4"/>
+					<decode datatype="string" format=""/>
+					<font size="90" style="1"/>
+				</text>
+				<text id="Txt09" valign="middle">
+					<position x="44" y="23" width="24" height="5"/>
+					<color base="cd9898" border="9e4b4b" transparent="0"/>
+					<border bottom="10"/>
+					<data calctype="item" datasrc="item5"/>
+					<decode datatype="string" format=""/>
+					<font size="80" style="1"/>
+				</text>
+			</record>
+		</region>
+		<region id="Rgn02" direction="1" link="Rgn03" tree="1">
+			<position x="14" y="59" width="136" height="40"/>
+			<color border="ac5959" transparent="1"/>
+		</region>
+		<region id="Rgn03" direction="1" link="Rgn04" tree="1">
+			<position x="14" y="99" width="136" height="40"/>
+			<color border="ac5959" transparent="1"/>
+		</region>
+		<region id="Rgn04" direction="1" link="Rgn05" tree="1">
+			<position x="14" y="139" width="136" height="40"/>
+			<color border="ac5959" transparent="1"/>
+		</region>
+		<region id="Rgn05" direction="1" link="Rgn06" tree="1">
+			<position x="14" y="179" width="136" height="40"/>
+			<color border="ac5959" transparent="1"/>
+		</region>
+		<region id="Rgn06" direction="1" tree="1">
+			<position x="14" y="219" width="136" height="40"/>
+			<color border="ac5959" transparent="1"/>
+		</region>
+	</page>
+</printstream>
