@@ -223,28 +223,23 @@
 
 ---
 
-## [2026-06-05] 17:00 社員証カード印刷画面の新規作成
+## [2026-06-05] 18:00 スキル作成: create-print-view-from-crs
 ### Agent
 - Sisyphus : OpenAI : Build
 ### Editor
 - OpenCode
 ### 目的
-- ユーザーからの要望：社員マスタの社員証カード型印刷画面を新規作成。01Master/PrintMasterShainCard として View と ViewModel を作成し、印刷フォーマットも新規作成する。
+- ユーザーからの要望：今回の社員証カード印刷画面の作成作業を元に、`.agents/skills/` にスキルを作成する。CRSスクリプトとQFMファイルを解析して新しいView/ViewModel/QFMを生成する手順をスキル化する。
 ### 実施内容
-- CvWpfclient/ViewModels/01Master/PrintMasterShainCardViewModel.cs: BaseMenteViewModel<MasterShain> を継承し、社員CD範囲・店舗ID範囲・バーコード種類（CODE39/NW7）の印刷条件を管理。FormFile をバーコード種類で切り替え、PrintBySqlParam で印刷用SQLを生成
-- CvWpfclient/Views/01Master/PrintMasterShainCardView.xaml: BaseWindow 継承、範囲指定入力（社員CD From/To、店舗ID From/To）、バーコード選択 RadioButton、印刷ボタン（F6）、戻るボタン（Esc）を配置
-- CvWpfclient/Helpers/Converters/InverseBooleanConverter.cs: RadioButton の排他選択用 Converter を新規作成
-- CvWpfclient/App.xaml: InverseBooleanConverter をリソース登録
-- printform/PrintMasterShainCard.qfm: 参考QFMを基にカード型レイアウト（NW7）を新規作成
-- printform/PrintMasterShainCard39.qfm: 参考QFMを基にカード型レイアウト（CODE39）を新規作成
-- CvWpfclient/Models/MenuData.cs: マスターメニューに「社員証カード印刷」を追加
+- `.agents/skills/create-print-view-from-crs/SKILL.md`: 新規スキル作成。CRSスクリプト解析手順、ViewModel作成手順、View作成手順、QFM作成手順、MenuData追加、確認手順を含む
+- スキルは既存の `wpf-project-guide`, `wpf-view-workflow`, `add-print-process-master-mente`, `author-printstream-qfm` を前提とし、Biz/BrowserからWPFへの移行という特定のユースケースにフォーカス
+- スクリプトは既存の `validate_qfm.py` を流用するため、新規作成は不要と判断
 ### 技術決定 Why
-- BaseMenteViewModel を継承し既存の DoOutputPdfCommand を流用することで、印刷専用画面でも既存の印刷インフラを再利用した
-- カード型レイアウトは参考QFMのページ位置・region配置を踏襲し、社員CD/名前/店舗/自社名/画像/バーコードの構成を維持した
-- 画像パスは MasterShain.jdetail.yobi1 を json_extract で取得し、未設定時は空文字とする方式とした
-- 店舗絞り込みは id_Tenpo の数値範囲で行う（UIラベルは「店舗ID」とした）
+- 既存スキルとの重複を避け、差分となる「CRS解析→WPF移行」というパターンを独立したスキルとして分離した
+- スキル名は `create-print-view-from-crs` とし、機能を明確に表現
+- カード型レイアウトと一覧型レイアウトの両方に対応できるよう、QFMのレイアウト判断基準を記載
 ### 確認
-- `python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py` でQFM検証（カード型レイアウトのためページ位置は標準値と異なるが、構造・エンコーディングはOK）
-- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+- スキル内容の整合性を確認。既存スキルとの重複・矛盾がないことを確認
+- ビルドは未実施（スキルファイルのみの追加のため）
 
 ---
