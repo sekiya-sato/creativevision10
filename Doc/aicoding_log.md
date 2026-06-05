@@ -201,3 +201,24 @@
 - SKILL.md の作成と内容確認を実施。ドキュメント追加のみのためビルドは未実施
 
 ---
+## [2026-06-05] 16:00 SysAutoExecHistoryView に選択画面 RangeParamMiniView を追加
+### Agent
+- Sisyphus : OpenAI : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SysAutoExecHistoryView に一覧表示前の選択画面を追加。選択条件は Id の from-to、開始日時の from-to、件数（デフォルト400）。
+### 実施内容
+- CvWpfclient/ViewModels/Sub/AutoExecHistorySelectParameter.cs: 自動実行履歴選択用パラメータクラスを新規作成（FromId/ToId/FromStartTime/ToStartTime/MaxCount/DisplayName）
+- CvWpfclient/ViewModels/Sub/AutoExecHistoryParamMiniViewModel.cs: 選択画面用 ViewModel を新規作成（Initialize / OkCommand）
+- CvWpfclient/Views/Sub/AutoExecHistoryParamMiniView.xaml: 選択画面 View を新規作成（ID from-to、開始日時 from-to DatePicker、件数、選択確定/戻るボタン）
+- CvWpfclient/Views/Sub/AutoExecHistoryParamMiniView.xaml.cs: コードビハインドを新規作成
+- CvWpfclient/ViewModels/00System/SysAutoExecHistoryViewModel.cs: BeforeListAsync をオーバーライドし選択画面を表示、ListWhere で ID・開始日時範囲の WHERE 句を構築、ListMaxCount を選択値に変更
+### 技術決定 Why
+- RangeParamMiniView は開始日時をサポートしていないため、影響範囲を限定するため専用の AutoExecHistoryParamMiniView / ViewModel を新規作成した
+- 開始日時は DatePicker + DateYmd8Converter を使用し、DB の yyyyMMddHHmmss 形式に合わせて WHERE 句で 000000 / 235959 を付加する方式とした
+- SysLoginViewModel の BeforeListAsync パターンを踏襲し、選択パラメータを保持して再表示時に前回値を復元するようにした
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
