@@ -87,7 +87,7 @@ public partial class CoreService {
 		if (string.IsNullOrEmpty(timestamp)) {
 			return new PrintResult(false, "一時フォルダ名が設定されていません");
 		}
-		_logger.LogWarning($"Print処理開始: Form={request.TempFormFullPath}, Data={request.TempDataFullPath}, Out={request.TempOutputFullPath}");
+		_logger.LogWarning($"Print処理開始: Form={request.TempFormFullPath}, Out={request.TempOutputFullPath}");
 		var context = new PrintContext {
 			BasePath = string.Empty,
 			FormPath = request.TempFormFullPath,
