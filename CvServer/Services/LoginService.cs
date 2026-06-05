@@ -92,7 +92,6 @@ public partial class LoginService : ILoginService {
 			   // [Try to restore the received password; if the pass for Decrypt is incorrect, an exception occurs]
 			var restorePass = Common.DecryptLoginRequest(request.CryptPassword, request.LoginDate);
 
-			var wrk = Common.EncryptLoginRequest("123", loginData.VdateC);
 			var orgPlanePass = (loginData.CryptPassword != null) ? Common.DecryptLoginRequest(loginData.CryptPassword, loginData.VdateC) : "";
 			if (orgPlanePass != restorePass)
 				return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });

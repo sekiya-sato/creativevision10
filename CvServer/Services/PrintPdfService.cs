@@ -34,16 +34,16 @@ public partial class CoreService {
 			// Progress を計算 (現在のステップ数 / 総ステップ数 * 100)
 			int progress = (int)((i + 1) / (double)totalSteps * 100);
 
-		// PrintOperation を返す
-		int status = result.IsSuccess ? 0 : (result.Message == "印刷対象データが0件です" ? -2 : -1);
-		yield return new PrintOperation {
-			DataType = typeof(string),
-			DataMsg = result.Message,
-			Status = status,
-			StatusString = $"{Name} (処理時間: {DateTime.Now - start})",
-			Progress = progress, // 進捗率を設定
-			IsCompleted = i == totalSteps - 1, // 最終ステップで完了フラグを設定
-		};
+			// PrintOperation を返す
+			int status = result.IsSuccess ? 0 : (result.Message == "印刷対象データが0件です" ? -2 : -1);
+			yield return new PrintOperation {
+				DataType = typeof(string),
+				DataMsg = result.Message,
+				Status = status,
+				StatusString = $"{Name} (処理時間: {DateTime.Now - start})",
+				Progress = progress, // 進捗率を設定
+				IsCompleted = i == totalSteps - 1, // 最終ステップで完了フラグを設定
+			};
 			if (!result.IsSuccess) {
 				yield break; // エラーが発生したら以降の処理を中止
 			}
