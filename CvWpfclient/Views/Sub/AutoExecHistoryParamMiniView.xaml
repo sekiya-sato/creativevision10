@@ -97,7 +97,7 @@
 						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="開始日時" /></TextBlock>
 					<DatePicker Grid.Row="1" Grid.Column="1"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
-						FontSize="16" IsTodayHighlighted="False"
+						FontSize="16" IsTodayHighlighted="False" helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 						SelectedDate="{Binding Parameter.FromStartTime, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 
@@ -106,7 +106,7 @@
 						FontWeight="Medium" Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<DatePicker Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" VerticalContentAlignment="Center"
-						FontSize="16" IsTodayHighlighted="False"
+						FontSize="16" IsTodayHighlighted="False" helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 						SelectedDate="{Binding Parameter.ToStartTime, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 
