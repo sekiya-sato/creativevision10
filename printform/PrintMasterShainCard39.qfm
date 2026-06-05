@@ -58,7 +58,7 @@
 					<decode datatype="string" format=""/>
 					<font size="120" style="1"/>
 				</text>
-				<barcode id="Bar01" type="1" sschar="1" check="0" string="1">
+				<barcode id="Bar01" type="0" sschar="1" check="0" string="1">
 					<position x="40" y="29" width="28" height="10"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item1"/>
