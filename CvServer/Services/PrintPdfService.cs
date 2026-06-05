@@ -34,15 +34,16 @@ public partial class CoreService {
 			// Progress を計算 (現在のステップ数 / 総ステップ数 * 100)
 			int progress = (int)((i + 1) / (double)totalSteps * 100);
 
-			// PrintOperation を返す
-			yield return new PrintOperation {
-				DataType = typeof(string),
-				DataMsg = result.Message,
-				Status = result.IsSuccess ? 0 : -1,
-				StatusString = $"{Name} (処理時間: {DateTime.Now - start})",
-				Progress = progress, // 進捗率を設定
-				IsCompleted = i == totalSteps - 1, // 最終ステップで完了フラグを設定
-			};
+		// PrintOperation を返す
+		int status = result.IsSuccess ? 0 : (result.Message == "印刷対象データが0件です" ? -2 : -1);
+		yield return new PrintOperation {
+			DataType = typeof(string),
+			DataMsg = result.Message,
+			Status = status,
+			StatusString = $"{Name} (処理時間: {DateTime.Now - start})",
+			Progress = progress, // 進捗率を設定
+			IsCompleted = i == totalSteps - 1, // 最終ステップで完了フラグを設定
+		};
 			if (!result.IsSuccess) {
 				yield break; // エラーが発生したら以降の処理を中止
 			}
@@ -132,11 +133,17 @@ public partial class CoreService {
 		request.TempFormFullPath = Path.Combine(resolvedFormDir, request.FormFile);
 
 		if (param is PrintByCsvParam printParam) {
+			if (string.IsNullOrWhiteSpace(printParam.CsvData)) {
+				return new PrintResult(false, "印刷対象データが0件です");
+			}
 			File.WriteAllText(request.TempDataFullPath, printParam.CsvData, Sjis);
 		}
 		else if (param is QueryListSqlParam listParam) {
 			var sql = (listParam.Sql ?? string.Empty).ReplaceServerSqlQuery();
 			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
+			if (dataList.Count == 0) {
+				return new PrintResult(false, "印刷対象データが0件です");
+			}
 			using (var writer = new StreamWriter(request.TempDataFullPath, false, Sjis)) {
 				dataList.WriteDynamicCsv(writer);
 			}

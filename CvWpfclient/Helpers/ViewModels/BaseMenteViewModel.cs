@@ -431,6 +431,11 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
 				ct.ThrowIfCancellationRequested();
 				Message = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
+				if (streamMsg.Status == -2) {
+					Message = streamMsg.DataMsg;
+					MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+					return;
+				}
 				if (streamMsg.Status < 0) {
 					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
 					Message = $"PDF出力失敗: {errorDetail}";

@@ -1,3 +1,22 @@
+## [2026-06-05] 19:42 PDF印刷データ0件時のエラー表示分離
+### Agent
+- Kimi-k2.6 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：PrintPdfService.cs の printPre で作成されたCSVファイルが1レコードもない場合には、clientに対しエラーを返し、client側ではPDF表示ではなくエラーメッセージを表示するよう変更。エラー発生とデータ0件はメッセージを分けたい。
+### 実施内容
+- CvServer/Services/PrintPdfService.cs: printPre で PrintByCsvParam の CsvData が空、または QueryListSqlParam の dataList.Count == 0 の場合に `印刷対象データが0件です` を返すよう変更
+- CvServer/Services/PrintPdfService.cs: PrintPdfAsync で結果メッセージが「印刷対象データが0件です」の場合は Status = -2 を返すよう変更（通常エラーは -1）
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: DoOutputPdf で streamMsg.Status == -2 の場合は警告ダイアログで「印刷対象データが0件です」を表示、Status == -1 の場合は従来通りエラーダイアログで「PDF出力失敗: ...」を表示するよう変更
+### 技術決定 Why
+- データ0件とシステムエラーを区別してユーザーに伝えるため、PrintOperation.Status に -2 を新規定義し、クライアント側で警告ダイアログとエラーダイアログを使い分けるようにした
+- CodeShare の DTO 変更を避け、Status フィールドの既存 int 型で -2 を新規定義として利用した
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-04] 10:36 WebpdfView F5リロード安定化
 ### Agent
 - GPT-5 : OpenAI : Codex
