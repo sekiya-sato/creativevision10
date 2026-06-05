@@ -127,7 +127,7 @@ left join MasterTokui T on T.Id = A.id_Tenpo
 
 ```csharp
 [RelayCommand]
-async Task Init() => await DoList(CancellationToken.None);
+async Task Init() => {};
 ```
 
 ## 作成手順（View）
@@ -136,13 +136,14 @@ async Task Init() => await DoList(CancellationToken.None);
    - `CvWpfclient/Views/01Master/PrintXxxView.xaml`
    - `helpers:BaseWindow` を継承
    - `Width="800" Height="600"` 程度の印刷ダイアログサイズ
+   - `CvWpfclient/Views/01Master/PrintXxxView.xaml.cs`
 
 2. **InputBindings**
    - `F6` → `DoOutputPdfCommand`
    - `Esc` → `ExitCommand`
 
 3. **レイアウト構成**
-   - `ColorZone` ツールバーに「印刷」「戻る」ボタン
+   - `ColorZone` ツールバーに「戻る」ボタン
    - `Grid` 内に範囲指定入力（コード From/To、店舗ID From/To）
    - `RadioButton` でバーコード種類選択（CODE39 / NW7）
    - `InverseBooleanConverter` を使う場合は `App.xaml` に登録済みか確認
