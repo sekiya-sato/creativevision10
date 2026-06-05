@@ -108,7 +108,7 @@
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="日付" /></TextBlock>
 					<DatePicker Grid.Row="1" Grid.Column="1"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
-						FontSize="16" IsTodayHighlighted="False" helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+						helpers:DatePickerTodayButtonBehavior.IsEnabled="True" FontSize="16" IsTodayHighlighted="False"
 						SelectedDate="{Binding Parameter.FromDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
 						TabIndex="2" />
@@ -119,7 +119,7 @@
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<DatePicker Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" VerticalContentAlignment="Center"
-						FontSize="16" IsTodayHighlighted="False" helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+						helpers:DatePickerTodayButtonBehavior.IsEnabled="True" FontSize="16" IsTodayHighlighted="False"
 						SelectedDate="{Binding Parameter.ToDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
 						TabIndex="3" />

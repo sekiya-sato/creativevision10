@@ -213,7 +213,8 @@
 								<RowDefinition Height="Auto" />
 							</Grid.RowDefinitions>
 
-							<DockPanel Grid.Row="0" LastChildFill="False">
+							<DockPanel Grid.Row="0"
+								LastChildFill="False">
 								<TextBlock VerticalAlignment="Center"
 									DockPanel.Dock="Left" FontSize="18" FontWeight="SemiBold"
 									Text="{Binding SelectedRow.Title, TargetNullValue=レコード未選択}" />

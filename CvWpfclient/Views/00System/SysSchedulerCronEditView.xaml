@@ -1,8 +1,7 @@
 <helpers:BaseWindow x:Class="CvWpfclient.Views._00System.SysSchedulerCronEditView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
 	Title="Cron式編集"
 	Width="640" Height="480"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
@@ -26,7 +25,7 @@
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 
-		<!-- タスク名 -->
+		<!--  タスク名  -->
 		<TextBlock Grid.Row="0"
 			Margin="0,0,0,4"
 			FontWeight="Medium"
@@ -37,7 +36,7 @@
 			Style="{StaticResource MaterialDesignOutlinedTextBox}"
 			Text="{Binding TaskName}" />
 
-		<!-- Cron式 -->
+		<!--  Cron式  -->
 		<TextBlock Grid.Row="2"
 			Margin="0,16,0,4"
 			FontWeight="Medium"
@@ -48,7 +47,7 @@
 			Style="{StaticResource MaterialDesignOutlinedTextBox}"
 			Text="{Binding CronExpression, UpdateSourceTrigger=PropertyChanged}" />
 
-		<!-- 検証メッセージ -->
+		<!--  検証メッセージ  -->
 		<TextBlock Grid.Row="4"
 			Margin="0,8,0,0"
 			Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
@@ -56,62 +55,54 @@
 			TextWrapping="Wrap"
 			Visibility="{Binding ValidationMessage, Converter={StaticResource StringIsNotEmptyToVisibilityConverter}}" />
 
-		<!-- 次回実行時刻プレビュー -->
+		<!--  次回実行時刻プレビュー  -->
 		<TextBlock Grid.Row="5"
 			Margin="0,8,0,0"
 			Foreground="{DynamicResource MaterialDesignBodyLight}"
 			Text="{Binding PreviewNextOccurrence}" />
 
-		<!-- プリセットボタン -->
+		<!--  プリセットボタン  -->
 		<WrapPanel Grid.Row="6"
 			Margin="0,16,0,107">
 			<Button Margin="0,0,8,8"
 				Command="{Binding ApplyPresetCommand}"
-				CommandParameter="0 2 * * *"
-				Style="{StaticResource MaterialDesignFlatButton}"
-				Content="毎日2:00" />
+				CommandParameter="0 2 * * *" Content="毎日2:00"
+				Style="{StaticResource MaterialDesignFlatButton}" />
 			<Button Margin="0,0,8,8"
 				Command="{Binding ApplyPresetCommand}"
-				CommandParameter="0 * * * *"
-				Style="{StaticResource MaterialDesignFlatButton}"
-				Content="毎時0分" />
+				CommandParameter="0 * * * *" Content="毎時0分"
+				Style="{StaticResource MaterialDesignFlatButton}" />
 			<Button Margin="0,0,8,8"
 				Command="{Binding ApplyPresetCommand}"
-				CommandParameter="0 0 1 * *"
-				Style="{StaticResource MaterialDesignFlatButton}"
-				Content="毎月1日0:00" />
+				CommandParameter="0 0 1 * *" Content="毎月1日0:00"
+				Style="{StaticResource MaterialDesignFlatButton}" />
 			<Button Margin="0,0,8,8"
 				Command="{Binding ApplyPresetCommand}"
-				CommandParameter="*/10 * * * *"
-				Style="{StaticResource MaterialDesignFlatButton}"
-				Content="10分ごと" />
+				CommandParameter="*/10 * * * *" Content="10分ごと"
+				Style="{StaticResource MaterialDesignFlatButton}" />
 			<Button Margin="0,0,8,8"
 				Command="{Binding ApplyPresetCommand}"
-				CommandParameter="0 0 * * 0"
-				Style="{StaticResource MaterialDesignFlatButton}"
-				Content="毎週日曜0:00" />
+				CommandParameter="0 0 * * 0" Content="毎週日曜0:00"
+				Style="{StaticResource MaterialDesignFlatButton}" />
 		</WrapPanel>
 		<TextBlock Grid.Row="6"
 			Margin="10,70,0,4"
 			FontWeight="Medium"
- 		    TextWrapping="Wrap"
 			Foreground="{DynamicResource MaterialDesignBodyLight}"
-			Text="書式の説明： 左から順に、 分、時、日、月、曜日。&#x0a;
-曜日は数字指定で0-7で指定でき、 0,7は日曜日。&#x0a;
-* は全て、複数はカンマ区切り(1,3)やハイフン区切り(1-3)で指定。/数字は間隔指定。"  />
+			Text="書式の説明： 左から順に、 分、時、日、月、曜日。&#x0a; 曜日は数字指定で0-7で指定でき、 0,7は日曜日。&#x0a; * は全て、複数はカンマ区切り(1,3)やハイフン区切り(1-3)で指定。/数字は間隔指定。" TextWrapping="Wrap" />
 
-		<!-- ボタン群 -->
+		<!--  ボタン群  -->
 		<StackPanel Grid.Row="7"
 			HorizontalAlignment="Right"
 			Orientation="Horizontal">
 			<Button Margin="8,0"
 				Command="{Binding ConfirmCommand}"
-				Style="{StaticResource MaterialDesignFlatMidBgButton}"
-				Content="確定" />
+				Content="確定"
+				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
 			<Button Margin="8,0"
 				Command="{Binding ExitCommand}"
-				Style="{StaticResource MaterialDesignFlatButton}"
-				Content="キャンセル" />
+				Content="キャンセル"
+				Style="{StaticResource MaterialDesignFlatButton}" />
 		</StackPanel>
 	</Grid>
 </helpers:BaseWindow>

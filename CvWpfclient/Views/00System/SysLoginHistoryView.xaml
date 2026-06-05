@@ -231,9 +231,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="ログインId" />
 								<TextBox Grid.Row="0" Grid.Column="1"
-									materialDesign:HintAssist.Hint="ログインId"
+									materialDesign:HintAssist.Hint="ログインId" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Id_Login}" />
 
 								<!--  社員 (Code Name)  -->
@@ -241,9 +240,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="社員" />
 								<TextBox Grid.Row="1" Grid.Column="1"
-									materialDesign:HintAssist.Hint="社員"
+									materialDesign:HintAssist.Hint="社員" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding ShainDisplay, Mode=OneWay}" />
 
 								<!--  有効期限  -->
@@ -251,9 +249,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="有効期限" />
 								<TextBox Grid.Row="2" Grid.Column="1"
-									materialDesign:HintAssist.Hint="有効期限"
+									materialDesign:HintAssist.Hint="有効期限" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.ExpDate, Converter={StaticResource DateTimeYmdHmsConverter}}" />
 
 								<!--  IP  -->
@@ -261,9 +258,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="IP" />
 								<TextBox Grid.Row="3" Grid.Column="1"
-									materialDesign:HintAssist.Hint="IP"
+									materialDesign:HintAssist.Hint="IP" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Ip}" />
 
 								<!--  操作  -->
@@ -271,9 +267,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="操作" />
 								<TextBox Grid.Row="4" Grid.Column="1"
-									materialDesign:HintAssist.Hint="操作"
+									materialDesign:HintAssist.Hint="操作" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Op}" />
 
 								<!--  マシン名  -->
@@ -281,9 +276,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="マシン名" />
 								<TextBox Grid.Row="5" Grid.Column="1"
-									materialDesign:HintAssist.Hint="マシン名"
+									materialDesign:HintAssist.Hint="マシン名" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.Machine}" />
 
 								<!--  ユーザー  -->
@@ -291,9 +285,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="ユーザー" />
 								<TextBox Grid.Row="6" Grid.Column="1"
-									materialDesign:HintAssist.Hint="ユーザー"
+									materialDesign:HintAssist.Hint="ユーザー" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.User}" />
 
 								<!--  OS  -->
@@ -301,9 +294,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="OS" />
 								<TextBox Grid.Row="7" Grid.Column="1"
-									materialDesign:HintAssist.Hint="OS"
+									materialDesign:HintAssist.Hint="OS" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.OsVer}" />
 
 								<!--  IPアドレス  -->
@@ -311,9 +303,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="IPアドレス" />
 								<TextBox Grid.Row="8" Grid.Column="1"
-									materialDesign:HintAssist.Hint="IPアドレス"
+									materialDesign:HintAssist.Hint="IPアドレス" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.IpAddress}" />
 
 								<!--  MACアドレス  -->
@@ -321,9 +312,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="MACアドレス" />
 								<TextBox Grid.Row="9" Grid.Column="1"
-									materialDesign:HintAssist.Hint="MACアドレス"
+									materialDesign:HintAssist.Hint="MACアドレス" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Jsub.MacAddress}" />
 
 								<!--  登録日  -->
@@ -332,8 +322,8 @@
 									Text="登録日" />
 								<TextBlock Grid.Row="10" Grid.Column="1"
 									Margin="0,4" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}"
 									FontSize="14"
+									Foreground="{DynamicResource MaterialDesignBody}"
 									Text="{Binding CurrentEdit.VdateC}" />
 							</Grid>
 						</ScrollViewer>

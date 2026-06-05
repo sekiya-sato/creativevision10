@@ -2,7 +2,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
 using CvWpfclient.Helpers;
-using System.Collections.Generic;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -29,6 +28,7 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 
 	protected override string? ListWhere => BuildListWhere();
 
+	protected override string? ListOrder => "A.Code";
 	string? BuildListWhere() {
 		var codeWhere = BuildSelectCodeWhere(SelectCodeParam);
 		var clauses = new List<string>();
@@ -54,7 +54,7 @@ select A.Code, A.Name,
 coalesce(json_extract(A.Jdetail, '$.yobi1'), '') 画像,
 A.id_Tenpo,
 coalesce(T.Name, '') 店舗名,
-coalesce((select S.Name from MasterSysKanri S limit 1), '') 自社名,
+coalesce((select S.Name from MasterSysMan S limit 1), '') 自社名,
 case when coalesce(json_extract(A.Jdetail, '$.yobi1'), '')='' then 0 else 1 end 画像表示判定用
 from MasterShain A
 left join MasterTokui T on T.Id = A.id_Tenpo
@@ -65,5 +65,5 @@ left join MasterTokui T on T.Id = A.id_Tenpo
 	}
 
 	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
+	async Task Init() { }
 }

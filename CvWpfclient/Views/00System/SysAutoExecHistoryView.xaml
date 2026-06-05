@@ -177,8 +177,9 @@
 								Header="結果コード" />
 							<DataGridTextColumn Binding="{Binding Count}"
 								Header="処理件数" />
-							<DataGridTextColumn Binding="{Binding Memo}"
-								Header="メモ" Width="*" />
+							<DataGridTextColumn Width="*"
+								Binding="{Binding Memo}"
+								Header="メモ" />
 							<DataGridTextColumn Binding="{Binding VdateC, Converter={StaticResource DateTimeYmdHmsConverter}}"
 								Header="登録日" />
 						</DataGrid.Columns>
@@ -235,9 +236,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="Id" />
 								<TextBox Grid.Row="0" Grid.Column="1"
-									materialDesign:HintAssist.Hint="Id"
+									materialDesign:HintAssist.Hint="Id" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Id}" />
 
 								<!--  タスク名  -->
@@ -245,9 +245,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="タスク名" />
 								<TextBox Grid.Row="1" Grid.Column="1"
-									materialDesign:HintAssist.Hint="タスク名"
+									materialDesign:HintAssist.Hint="タスク名" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.TaskName}" />
 
 								<!--  開始日時  -->
@@ -255,9 +254,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="開始日時" />
 								<TextBox Grid.Row="2" Grid.Column="1"
-									materialDesign:HintAssist.Hint="開始日時"
+									materialDesign:HintAssist.Hint="開始日時" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.StartTime, Converter={StaticResource DateTimeYmdHmsConverter}}" />
 
 								<!--  終了日時  -->
@@ -265,9 +263,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="終了日時" />
 								<TextBox Grid.Row="3" Grid.Column="1"
-									materialDesign:HintAssist.Hint="終了日時"
+									materialDesign:HintAssist.Hint="終了日時" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.EndTime, Converter={StaticResource DateTimeYmdHmsConverter}}" />
 
 								<!--  経過時間  -->
@@ -275,9 +272,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="経過時間(秒)" />
 								<TextBox Grid.Row="4" Grid.Column="1"
-									materialDesign:HintAssist.Hint="経過時間(秒)"
+									materialDesign:HintAssist.Hint="経過時間(秒)" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.ElapsedTime}" />
 
 								<!--  結果コード  -->
@@ -285,9 +281,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="結果コード" />
 								<TextBox Grid.Row="5" Grid.Column="1"
-									materialDesign:HintAssist.Hint="結果コード"
+									materialDesign:HintAssist.Hint="結果コード" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.ReturnCode}" />
 
 								<!--  処理件数  -->
@@ -295,9 +290,8 @@
 									Style="{StaticResource FormLabel}"
 									Text="処理件数" />
 								<TextBox Grid.Row="6" Grid.Column="1"
-									materialDesign:HintAssist.Hint="処理件数"
+									materialDesign:HintAssist.Hint="処理件数" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Count}" />
 
 								<!--  メモ  -->
@@ -305,13 +299,11 @@
 									Style="{StaticResource FormLabel}"
 									Text="メモ" />
 								<TextBox Grid.Row="7" Grid.Column="1"
-									materialDesign:HintAssist.Hint="メモ"
+									MinHeight="80"
+									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									IsReadOnly="True"
 									Text="{Binding CurrentEdit.Memo}"
-									TextWrapping="Wrap"
-									AcceptsReturn="True"
-									MinHeight="80" />
+									TextWrapping="Wrap" />
 
 								<!--  登録日  -->
 								<TextBlock Grid.Row="8"
@@ -319,8 +311,8 @@
 									Text="登録日" />
 								<TextBlock Grid.Row="8" Grid.Column="1"
 									Margin="0,4" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}"
 									FontSize="14"
+									Foreground="{DynamicResource MaterialDesignBody}"
 									Text="{Binding CurrentEdit.VdateC, Converter={StaticResource DateTimeYmdHmsConverter}}" />
 							</Grid>
 						</ScrollViewer>
