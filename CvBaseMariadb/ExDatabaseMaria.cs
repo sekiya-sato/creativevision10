@@ -19,8 +19,14 @@ public partial class ExDatabaseMaria : ExDatabase {
 				conn.Open();
 		}
 	}
+	/// <summary>
+	/// MariaDB用のデータベース接続を取得します。
+	/// </summary>
+	/// <param name="connectionString">"Server=(サーバIP);Port=(サーバPort);User ID=(ユーザID);Password=(パスワード);Database=(データベース)"</param>
+	/// <param name="isOpen">接続を開くかどうか</param>
+	/// <returns>ExDatabaseMariaのインスタンス</returns>
 	public static ExDatabaseMaria GetDbConn(string connectionString, bool isOpen = true) {
-		// "Server=localhost;Port=3306;Database=apparel_db;Uid=user;Pwd=password;"
+		// "Server=localhost;Port=3306;Database=mariadb;Uid=user;Pwd=password;"
 		// "Pooling=true;ConnectionIdleTimeout=30;MinimumPoolSize=10;MaximumPoolSize=100;"AllowUserVariables=true;"
 		var conn = new MySqlConnection(connectionString);
 		if (isOpen) {

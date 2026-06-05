@@ -20,6 +20,12 @@ public partial class ExDatabaseOracle : ExDatabase {
 				conn.Open();
 		}
 	}
+	/// <summary>
+	/// 接続文字列を指定してOracleDBの接続を取得する
+	/// </summary>
+	/// <param name="connectionString">"Data Source=(簡易接続文字列IP/db名);User Id=(ユーザID);Password=(パスワード);"</param>
+	/// <param name="isOpen">接続を開くかどうか</param>
+	/// <returns>ExDatabaseOracleのインスタンス</returns>
 	public static ExDatabaseOracle GetDbConn(string connectionString, bool isOpen = true) {
 		var conn = new OracleConnection(connectionString);
 		if (isOpen) {

@@ -20,6 +20,12 @@ public partial class ExDatabaseSqlite : ExDatabase {
 				conn.Open();
 		}
 	}
+	/// <summary>
+	/// データベース接続を取得する
+	/// </summary>
+	/// <param name="dbfile">データベースファイルのパス</param>
+	/// <param name="isOpen">接続を開くかどうか</param>
+	/// <returns>ExDatabaseSqliteのインスタンス</returns>
 	public static ExDatabaseSqlite GetDbConn(string dbfile, bool isOpen = true) {
 		// パフォーマンスと並行性を最大化する構成（WALモード併用）// Microsoft.Data.Sqliteでは、journal mode=WAL; は使えない
 		string advancedConnectionString = $"Data Source={dbfile};Mode=ReadWriteCreate;Cache=Shared;Pooling=True;";
