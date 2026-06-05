@@ -38,7 +38,7 @@ internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<
 		var selWin = new Views.Sub.RangeParamMiniView();
 		if (selWin.DataContext is not RangeParamMiniViewModel vm)
 			return new ValueTask<bool>(true);
-		vm.Initialize(selectMiniParam ?? new SelectParameter { DisplayName = "ログインID", MaxCount = 100 });
+		vm.Initialize(selectMiniParam ?? new SelectParameter { DisplayName = "ログインID", MaxCount = 400 });
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			selectMiniParam = vm.Parameter;
 			return new ValueTask<bool>(false);
