@@ -17,46 +17,6 @@
 
 ---
 
-## [2026-06-06] 16:55 旧DB変換対象クラスへのOldTableCommentAttr追加
-### Agent
-- GPT-5.5 : OpenAI : Sisyphus
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvDomainLogic の ConvertDb.cs / ConvertDbTran.cs を確認し、CvBase の変換対象 class 定義で不足している OldTableCommentAttr を追加する。commit はせずレビュー待ちにする。
-### 実施内容
-- CvBase/BaseDb1Master.cs: MasterShohin のサブ明細 class に旧テーブル属性を追加
-- CvBase/BaseDb1MasterTorihiki.cs: MasterTokui / MasterShiire に旧テーブル属性を追加
-- CvBase/BaseDb2Trans.cs: 変換対象の伝票 class と明細 class に旧テーブル属性を追加
-### 技術決定 Why
-- ConvertDb / ConvertDbTran の旧DB SQL で参照しているテーブル名を class レベルに明示し、旧DB変換元との対応を追跡しやすくするため
-- 伝票明細は JSON サブリストとして保持されるが、旧テーブル HC$tran_tori1 / HC$tran_tana1 から生成されるため class 属性として記録した
-### 確認
-- `C:\gitroot\UT\vscmd.bat dotnet build CvBase/CvBase.csproj` でビルド成功（0 warnings / 0 errors）を確認
-- LSP diagnostics は `csharp-ls` 未インストールのため実行不可。ビルドで構文・参照エラーなしを確認
-
----
-
-## [2026-06-06] 17:16 旧DB変換対象プロパティへのOldTableCommentAttr追加
-### Agent
-- GPT-5.5 : OpenAI : Sisyphus
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvBase/BaseDb1Master.cs、CvBase/BaseDb1MasterTorihiki.cs、CvBase/BaseDb2Trans.cs に対し、ConvertDb.cs / ConvertDbTran.cs の変換処理を参考に各 class のプロパティへ OldTableCommentAttr 属性を設定する。変更した cs ファイルは CRLF とし、commit まで行う。
-### 実施内容
-- CvBase/BaseDb1Master.cs: MasterShohinColSiz / MasterShohinGrade / MasterShohinGenka の旧DB由来プロパティへ旧カラム属性を追加
-- CvBase/BaseDb1MasterTorihiki.cs: MasterTorihiki / MasterToriDetail / MasterTokui / MasterShiire の旧DB由来プロパティへ旧カラム属性を追加
-- CvBase/BaseDb2Trans.cs: TranAllHeader / Tran99Meisai / TranKinHeader / TranKinMeisai / 各 Tran 派生 class の旧DB由来プロパティへ旧カラム属性を追加
-### 技術決定 Why
-- 旧DB変換処理の getString/getDataInt 参照元カラムを属性として明示し、旧DB項目と現行プロパティの対応を追跡しやすくするため
-- MasterTorihiki のように得意先/仕入先で旧カラム名が異なる共通プロパティは、属性の第2引数で分岐元を明記してプロパティ重複定義を避けた
-### 確認
-- `C:\gitroot\UT\vscmd.bat dotnet build CvBase/CvBase.csproj` でビルド成功（0 warnings / 0 errors）を確認
-- 変更した cs ファイル 3件（BaseDb1Master.cs / BaseDb1MasterTorihiki.cs / BaseDb2Trans.cs）の行末が CRLF であることを確認
-
----
-
 ## [2026-06-04] 10:36 WebpdfView F5リロード安定化
 ### Agent
 - GPT-5 : OpenAI : Codex
@@ -300,5 +260,45 @@
 ### 確認
 - スキル内容の整合性を確認。既存スキルとの重複・矛盾がないことを確認
 - ビルドは未実施（スキルファイルのみの追加のため）
+
+---
+
+## [2026-06-06] 16:55 旧DB変換対象クラスへのOldTableCommentAttr追加
+### Agent
+- GPT-5.5 : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvDomainLogic の ConvertDb.cs / ConvertDbTran.cs を確認し、CvBase の変換対象 class 定義で不足している OldTableCommentAttr を追加する。commit はせずレビュー待ちにする。
+### 実施内容
+- CvBase/BaseDb1Master.cs: MasterShohin のサブ明細 class に旧テーブル属性を追加
+- CvBase/BaseDb1MasterTorihiki.cs: MasterTokui / MasterShiire に旧テーブル属性を追加
+- CvBase/BaseDb2Trans.cs: 変換対象の伝票 class と明細 class に旧テーブル属性を追加
+### 技術決定 Why
+- ConvertDb / ConvertDbTran の旧DB SQL で参照しているテーブル名を class レベルに明示し、旧DB変換元との対応を追跡しやすくするため
+- 伝票明細は JSON サブリストとして保持されるが、旧テーブル HC$tran_tori1 / HC$tran_tana1 から生成されるため class 属性として記録した
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvBase/CvBase.csproj` でビルド成功（0 warnings / 0 errors）を確認
+- LSP diagnostics は `csharp-ls` 未インストールのため実行不可。ビルドで構文・参照エラーなしを確認
+
+---
+
+## [2026-06-06] 17:16 旧DB変換対象プロパティへのOldTableCommentAttr追加
+### Agent
+- GPT-5.5 : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvBase/BaseDb1Master.cs、CvBase/BaseDb1MasterTorihiki.cs、CvBase/BaseDb2Trans.cs に対し、ConvertDb.cs / ConvertDbTran.cs の変換処理を参考に各 class のプロパティへ OldTableCommentAttr 属性を設定する。変更した cs ファイルは CRLF とし、commit まで行う。
+### 実施内容
+- CvBase/BaseDb1Master.cs: MasterShohinColSiz / MasterShohinGrade / MasterShohinGenka の旧DB由来プロパティへ旧カラム属性を追加
+- CvBase/BaseDb1MasterTorihiki.cs: MasterTorihiki / MasterToriDetail / MasterTokui / MasterShiire の旧DB由来プロパティへ旧カラム属性を追加
+- CvBase/BaseDb2Trans.cs: TranAllHeader / Tran99Meisai / TranKinHeader / TranKinMeisai / 各 Tran 派生 class の旧DB由来プロパティへ旧カラム属性を追加
+### 技術決定 Why
+- 旧DB変換処理の getString/getDataInt 参照元カラムを属性として明示し、旧DB項目と現行プロパティの対応を追跡しやすくするため
+- MasterTorihiki のように得意先/仕入先で旧カラム名が異なる共通プロパティは、属性の第2引数で分岐元を明記してプロパティ重複定義を避けた
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvBase/CvBase.csproj` でビルド成功（0 warnings / 0 errors）を確認
+- 変更した cs ファイル 3件（BaseDb1Master.cs / BaseDb1MasterTorihiki.cs / BaseDb2Trans.cs）の行末が CRLF であることを確認
 
 ---

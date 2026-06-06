@@ -3,7 +3,7 @@
 ## Tooling & Environment
 - **Roles**: OpenCode (Complex/Multi-file/Docs), Copilot (Inline/Small edits), Codex(General).
 - **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
-- **Files**: Solution `creativevision10.slnx`. Use UTF-8 (No BOM) & CRLF.
+- **Files**: Solution `creativevision10.slnx`. **Use UTF-8 (No BOM) & CRLF**.
 
 ## Priority Workflow (IMPORTANT)
 **Analyze → Plan (TODO-LIST) → Execute → Verify → Write-Log → Git-Commit**
@@ -33,7 +33,7 @@
 
 ## Post-Task Requirements (Log & Commit)
 - **Log**: Append to `Doc/aicoding_log.md`. Always append to the end. Archive to `aicoding_log_[NNN].md` if > 800 lines.
-- **Log Format**: Folow "Log-Format" section below.
+- **Log Format**: Folow "Log-Format" section below.**Append to the end, Newest is last.**
 - **Commit Format**: Folow "Commit-Format" section below.
 
 ### Log-Format
