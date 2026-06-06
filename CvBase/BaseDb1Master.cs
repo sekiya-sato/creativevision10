@@ -510,6 +510,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 /// 商品色サイズJANテーブル
 /// </summary>
 [NoCreate]
+[OldTableCommentAttr("HC$MASTER_SHOHIN_JAN")]
 public sealed partial class MasterShohinColSiz : BaseDbClass {
 	/// <summary>
 	/// 色
@@ -575,6 +576,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 /// 品質テーブル
 /// </summary>
 [NoCreate]
+[OldTableCommentAttr("HC$MASTER_SHOHIN_GRADE")]
 public sealed partial class MasterShohinGrade : ObservableObject {
 	/// <summary>
 	/// 行No
@@ -598,6 +600,7 @@ public sealed partial class MasterShohinGrade : ObservableObject {
 /// 原価テーブル
 /// </summary>
 [NoCreate]
+[OldTableCommentAttr("HC$MASTER_SHOHIN_GENKA")]
 public sealed partial class MasterShohinGenka : ObservableObject {
 	/// <summary>
 	/// 行No

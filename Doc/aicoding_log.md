@@ -17,6 +17,26 @@
 
 ---
 
+## [2026-06-06] 16:55 旧DB変換対象クラスへのOldTableCommentAttr追加
+### Agent
+- GPT-5.5 : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvDomainLogic の ConvertDb.cs / ConvertDbTran.cs を確認し、CvBase の変換対象 class 定義で不足している OldTableCommentAttr を追加する。commit はせずレビュー待ちにする。
+### 実施内容
+- CvBase/BaseDb1Master.cs: MasterShohin のサブ明細 class に旧テーブル属性を追加
+- CvBase/BaseDb1MasterTorihiki.cs: MasterTokui / MasterShiire に旧テーブル属性を追加
+- CvBase/BaseDb2Trans.cs: 変換対象の伝票 class と明細 class に旧テーブル属性を追加
+### 技術決定 Why
+- ConvertDb / ConvertDbTran の旧DB SQL で参照しているテーブル名を class レベルに明示し、旧DB変換元との対応を追跡しやすくするため
+- 伝票明細は JSON サブリストとして保持されるが、旧テーブル HC$tran_tori1 / HC$tran_tana1 から生成されるため class 属性として記録した
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvBase/CvBase.csproj` でビルド成功（0 warnings / 0 errors）を確認
+- LSP diagnostics は `csharp-ls` 未インストールのため実行不可。ビルドで構文・参照エラーなしを確認
+
+---
+
 ## [2026-06-04] 10:36 WebpdfView F5リロード安定化
 ### Agent
 - GPT-5 : OpenAI : Codex

@@ -199,6 +199,7 @@ public sealed partial class MasterToriDetail : ObservableObject {
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Code")]
 [Comment("マスター：得意先マスター TenType(0=倉庫, 1=卸先, 3=売仕店, 6=直営店)")]
+[OldTableCommentAttr("HC$MASTER_TOKUI")]
 public sealed partial class MasterTokui : MasterTorihiki {
 	/// <summary>
 	/// 得意先種別
@@ -241,6 +242,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("uq1", true, "Code")]
 [Comment("マスター：仕入先マスター")]
+[OldTableCommentAttr("HC$MASTER_SIIRE")]
 public sealed partial class MasterShiire : MasterTorihiki {
 	/// <summary>
 	/// 名称リスト
