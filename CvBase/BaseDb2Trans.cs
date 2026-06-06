@@ -109,11 +109,13 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
+	[OldTableCommentAttr("在庫計上日")]
 	string denDay = "19010101";
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("入力社員CD")]
 	long id_Shain;
 	/// <summary>
 	/// 社員データ
@@ -126,6 +128,7 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// 倉庫キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("倉庫CD")]
 	long id_Soko;
 	/// <summary>
 	/// 倉庫データ
@@ -138,31 +141,37 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// 計算フラグ（1:+ -1:-, 0:計算除外）
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引区分", "getCalcFlag により算出")]
 	int calcFlag = 1;
 	/// <summary>
 	/// 数量合計
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("数量合計")]
 	int suTotal;
 	/// <summary>
 	/// 金額合計
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("明細金額合計")]
 	int kingakuTotal;
 	/// <summary>
 	/// 上代合計
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("上代合計")]
 	int jodaiTotal;
 	/// <summary>
 	/// 下代合計
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("下代合計")]
 	int gedaiTotal;
 	/// <summary>
 	/// 値引: 合計からの
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("値引1 + 値引2 + 値引3")]
 	int nebiki00Total;
 	/// <summary>
 	/// 値引: 明細積上げ
@@ -175,6 +184,7 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	[ObservableProperty]
 	[property: ColumnSizeDml(200)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("メモ")]
 	string memo = string.Empty;
 	/// <summary>
 	/// 詳細内容
@@ -201,11 +211,13 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("行NO")]
 	int no;
 	/// <summary>
 	/// 区分（2桁 10-19,20-29,30,99）
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("明細取引区分")]
 	int kubun = 10;
 	/// <summary>
 	/// 商品ユニークキー
@@ -218,6 +230,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("商品CD")]
 	string code_Shohin = string.Empty;
 	/// <summary>
 	/// 商品名
@@ -225,6 +238,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("明細名称")]
 	string mei_Shohin = string.Empty;
 	/// <summary>
 	/// 入力JANコード
@@ -232,6 +246,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("JANCODE")]
 	string janCode = string.Empty;
 	/// <summary>
 	/// 色
@@ -243,6 +258,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("色CD")]
 	string code_Col = string.Empty;
 	/// <summary>
 	/// カラー名
@@ -260,6 +276,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("サイズCD")]
 	string code_Siz = string.Empty;
 	/// <summary>
 	/// サイズ名
@@ -271,41 +288,49 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// 数量
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("数量")]
 	int su;
 	/// <summary>
 	/// 単価
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("単価")]
 	int tanka;
 	/// <summary>
 	/// 金額
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("金額")]
 	int kingaku;
 	/// <summary>
 	/// 上代
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("上代金額")]
 	int jodai;
 	/// <summary>
 	/// 下代
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("下代金額")]
 	int gedai;
 	/// <summary>
 	/// 値引: 合計からの
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("明細値引")]
 	int nebiki00;
 	/// <summary>
 	/// 値引: 明細1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("明細値引1")]
 	int nebiki01;
 	/// <summary>
 	/// 値引: 明細2
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("小計値引 + 小計値引1")]
 	int nebiki02;
 	/// <summary>
 	/// 社員ユニークキー
@@ -332,6 +357,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	[ObservableProperty]
 	[property: ColumnSizeDml(200)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("明細メモ")]
 	string memo = string.Empty;
 }
 
@@ -344,11 +370,13 @@ public partial class TranKinHeader : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
+	[OldTableCommentAttr("在庫計上日")]
 	string denDay = "19010101";
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("入力社員CD")]
 	long id_Shain;
 	/// <summary>
 	/// 社員データ
@@ -361,6 +389,7 @@ public partial class TranKinHeader : BaseDbClass {
 	/// 取引先キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Torisaki;
 	/// <summary>
 	/// 取引先データ
@@ -373,6 +402,7 @@ public partial class TranKinHeader : BaseDbClass {
 	/// 金額合計
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("明細金額合計")]
 	int kingakuTotal;
 	/// <summary>
 	/// 手入力No
@@ -380,6 +410,7 @@ public partial class TranKinHeader : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("手入力伝票NO")]
 	string manualNo = string.Empty;
 	/// <summary>
 	/// ヘッダメモ
@@ -387,6 +418,7 @@ public partial class TranKinHeader : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(200)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("メモ")]
 	string memo = string.Empty;
 	/// <summary>
 	/// 明細リスト
@@ -406,6 +438,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("行NO")]
 	int no;
 	/// <summary>
 	/// 区分ユニークキー
@@ -418,6 +451,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("明細取引区分")]
 	string code_Kin = string.Empty;
 	/// <summary>
 	/// 品名
@@ -430,6 +464,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	/// 金額
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("金額")]
 	int kingaku;
 	/// <summary>
 	/// 明細メモ
@@ -437,6 +472,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	[ObservableProperty]
 	[property: ColumnSizeDml(200)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("明細メモ")]
 	string memo = string.Empty;
 }
 
@@ -495,11 +531,13 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
+	[OldTableCommentAttr("掛計上日")]
 	string kakeDay = "19010101";
 	/// <summary>
 	/// 得意先キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Tokui;
 	/// <summary>
 	/// 得意先データ
@@ -513,6 +551,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsPay))]
+	[OldTableCommentAttr("掛計上FLG")]
 	int isPay;
 
 	[Ignore]
@@ -526,6 +565,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
 	[Ignore]
 	[JsonIgnore]
@@ -539,21 +579,25 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("手入力伝票NO")]
 	string manualNo = string.Empty;
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO")]
 	int relateNo1;
 	/// <summary>
 	///	関連No2
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO2")]
 	int relateNo2;
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("掛率1")]
 	int rate;
 }
 
@@ -582,6 +626,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	/// 店舗キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Tenpo;
 	/// <summary>
 	/// 店舗データ
@@ -594,6 +639,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	/// 顧客キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("顧客TEL")]
 	long id_Customer;
 	/// <summary>
 	/// 顧客データ
@@ -608,12 +654,14 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("顧客TEL")]
 	string code_Customer = string.Empty;
 	/// <summary>
 	/// 区分（2桁 10-19,20-29,30,99）
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
 	[Ignore]
 	[JsonIgnore]
@@ -625,11 +673,13 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO")]
 	int relateNo1;
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("掛率1")]
 	int rate;
 
 }
@@ -658,11 +708,13 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
+	[OldTableCommentAttr("掛計上日")]
 	string kakeDay = "19010101";
 	/// <summary>
 	/// 仕入先キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Shiire;
 	/// <summary>
 	/// 仕入先データ
@@ -676,6 +728,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsPay))]
+	[OldTableCommentAttr("掛計上FLG")]
 	int isPay;
 
 	[Ignore]
@@ -689,6 +742,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
 	[Ignore]
 	[JsonIgnore]
@@ -702,16 +756,19 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("手入力伝票NO")]
 	string manualNo = string.Empty;
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO")]
 	int relateNo1;
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("掛率1")]
 	int rate;
 }
 public enum EnumShiire : int {
@@ -736,6 +793,7 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	/// 移動先キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Ido;
 	/// <summary>
 	/// 移動先データ
@@ -748,6 +806,7 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO")]
 	int relateNo1;
 	/// <summary>
 	/// 手入力No
@@ -755,6 +814,7 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("手入力伝票NO")]
 	string manualNo = string.Empty;
 }
 
@@ -772,6 +832,7 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	/// 移動先キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Ido;
 	/// <summary>
 	/// 移動先データ
@@ -784,6 +845,7 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO")]
 	int relateNo1;
 	/// <summary>
 	/// 手入力No
@@ -791,6 +853,7 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("手入力伝票NO")]
 	string manualNo = string.Empty;
 }
 /// <summary>
@@ -807,6 +870,7 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 	/// 移動先キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Ido;
 	/// <summary>
 	/// 移動先データ
@@ -819,6 +883,7 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO")]
 	int relateNo1;
 	/// <summary>
 	/// 手入力No
@@ -826,6 +891,7 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("手入力伝票NO")]
 	string manualNo = string.Empty;
 }
 /// <summary>
@@ -842,6 +908,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	/// 得意先キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Tokui;
 	/// <summary>
 	/// 得意先データ
@@ -855,6 +922,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
 	[Ignore]
 	[JsonIgnore]
@@ -866,11 +934,13 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO")]
 	int relateNo1;
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("掛率1")]
 	int rate;
 }
 
@@ -888,6 +958,7 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	/// 仕入先キー
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("取引先CD1")]
 	long id_Shiire;
 	/// <summary>
 	/// 仕入先データ
@@ -901,6 +972,7 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
 	[Ignore]
 	[JsonIgnore]
@@ -912,11 +984,13 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("関連伝票NO")]
 	int relateNo1;
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("掛率1")]
 	int rate;
 }
 

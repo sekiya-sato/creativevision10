@@ -35,6 +35,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("略称")]
 	string ryaku = string.Empty;
 	/// <summary>
 	/// カナ
@@ -523,6 +524,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("色CD")]
 	string code_Col = string.Empty;
 	/// <summary>
 	/// カラー名
@@ -542,6 +544,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("サイズCD")]
 	string code_Siz = string.Empty;
 	/// <summary>
 	/// サイズ名
@@ -556,6 +559,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("JANコード1")]
 	string jan1 = string.Empty;
 	/// <summary>
 	/// JANコード2
@@ -563,6 +567,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("JANコード2")]
 	string jan2 = string.Empty;
 	/// <summary>
 	/// JANコード3
@@ -570,6 +575,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(20)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("JANコード3")]
 	string jan3 = string.Empty;
 }
 /// <summary>
@@ -582,6 +588,7 @@ public sealed partial class MasterShohinGrade : ObservableObject {
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("行NO")]
 	int no;
 	/// <summary>
 	/// 品質
@@ -589,11 +596,13 @@ public sealed partial class MasterShohinGrade : ObservableObject {
 	[ObservableProperty]
 	[property: ColumnSizeDml(40)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("品質")]
 	string hinshitu = string.Empty;
 	/// <summary>
 	/// ％
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("パーセント")]
 	int percent;
 }
 /// <summary>
@@ -606,16 +615,19 @@ public sealed partial class MasterShohinGenka : ObservableObject {
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("行NO")]
 	int no;
 	/// <summary>
 	/// 原価
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("原価")]
 	int tankaGenka;
 	/// <summary>
 	/// 仕入単価
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("仕入価格")]
 	int tankaShiire;
 }
 

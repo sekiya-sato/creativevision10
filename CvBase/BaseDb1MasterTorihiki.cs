@@ -16,6 +16,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[ObservableProperty]
 	[property: ColumnSizeDml(12)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("得意先CD", "MasterShiire は 仕入先CD")]
 	string code = string.Empty;
 	/// <summary>
 	/// 名前
@@ -23,6 +24,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[ObservableProperty]
 	[property: ColumnSizeDml(80)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("得意先名", "MasterShiire は 仕入先名")]
 	string name = string.Empty;
 	/// <summary>
 	/// 略称
@@ -30,6 +32,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("略称")]
 	string ryaku = string.Empty;
 	/// <summary>
 	/// カナ
@@ -37,11 +40,13 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("カナ")]
 	string kana = string.Empty;
 	/// <summary>
 	/// 担当者
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("営業担当CD", "MasterShiire は 入力社員CD")]
 	long id_Shain;
 	/// <summary>
 	/// 社員データ
@@ -54,17 +59,20 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("掛率")]
 	int rateProper;
 	/// <summary>
 	/// セール掛率
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("セール掛率", "MasterShiire は 掛率2")]
 	int rateSale;
 	/// <summary>
 	/// 締日1
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShime1))]
+	[OldTableCommentAttr("締日")]
 	int shime1;
 
 	[Ignore]
@@ -78,6 +86,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShime2))]
+	[OldTableCommentAttr("締日2")]
 	int shime2;
 
 	[Ignore]
@@ -91,6 +100,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShime3))]
+	[OldTableCommentAttr("締日3")]
 	int shime3;
 
 	[Ignore]
@@ -103,12 +113,14 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 入金/支払月
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("入金予定月")]
 	int payMonth;
 	/// <summary>
 	/// 入金/支払日
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnPayDay))]
+	[OldTableCommentAttr("入金予定日")]
 	int payDay;
 
 	[Ignore]
@@ -135,6 +147,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsPay))]
+	[OldTableCommentAttr("請求印刷", "MasterShiire は 支払印刷")]
 	int isPay;
 
 	[Ignore]
@@ -175,6 +188,7 @@ public sealed partial class MasterToriDetail : ObservableObject {
 	[property: ColumnSizeDml(30)]
 	[property: System.ComponentModel.DefaultValue("")]
 	[property: Newtonsoft.Json.JsonProperty("Bank1")]
+	[OldTableCommentAttr("振込先1", "MasterShiire は 振込銀行/振込支店/振込種別/振込口座 を連結")]
 	string bankAccount1 = string.Empty;
 	/// <summary>
 	/// 振込先2
@@ -183,6 +197,7 @@ public sealed partial class MasterToriDetail : ObservableObject {
 	[property: ColumnSizeDml(30)]
 	[property: System.ComponentModel.DefaultValue("")]
 	[property: Newtonsoft.Json.JsonProperty("Bank2")]
+	[OldTableCommentAttr("振込先2")]
 	string bankAccount2 = string.Empty;
 	/// <summary>
 	/// 振込先3
@@ -191,6 +206,7 @@ public sealed partial class MasterToriDetail : ObservableObject {
 	[property: ColumnSizeDml(30)]
 	[property: System.ComponentModel.DefaultValue("")]
 	[property: Newtonsoft.Json.JsonProperty("Bank3")]
+	[OldTableCommentAttr("振込先3")]
 	string bankAccount3 = string.Empty;
 }
 /// <summary>
@@ -206,6 +222,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnTenType))]
+	[OldTableCommentAttr("店種区分")]
 	int tenType;
 
 	[Ignore]
@@ -219,6 +236,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsZaiko))]
+	[OldTableCommentAttr("在庫管理FLG")]
 	int isZaiko = 1;
 
 	[Ignore]
@@ -233,6 +251,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[ObservableProperty]
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(1000)]
+	[OldTableCommentAttr("名称CD01 - 名称CD10")]
 	List<MasterGeneralMeisho>? jsub;
 }
 
@@ -250,6 +269,7 @@ public sealed partial class MasterShiire : MasterTorihiki {
 	[ObservableProperty]
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(1000)]
+	[OldTableCommentAttr("名称CD01 - 名称CD10")]
 	List<MasterGeneralMeisho>? jsub;
 }
 
