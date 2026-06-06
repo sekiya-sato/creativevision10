@@ -79,7 +79,6 @@ public partial class MenuData : ObservableObject {
 			new("外部CSVマスタ取込", typeof(Views._01Master.ExternalCsvImportView), addInfo:"準備中"),
 			new("原価変更登録", typeof(Views._01Master.GenkaChangeEntryView), addInfo:"準備中"),
 			new("評価替", typeof(Views._01Master.ProductRatingChangeView), addInfo:"準備中"),
-			new("自動実行スケジュール設定", typeof(Views._01Master.AutoExecScheduleSettingView), addInfo:"準備中"),
 		])),
         /* ================================ */
 		new("■ 予算", new([
