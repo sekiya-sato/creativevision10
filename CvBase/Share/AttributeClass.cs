@@ -24,6 +24,18 @@ public sealed class CommentAttr {
 		return commentAttr?.Content ?? "";
 	}
 }
+/// <summary>
+/// 旧テーブルでどの項目を引き継いでいるのかを示すコメント
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+public sealed class OldTableCommentAttr : Attribute {
+	public string Name { get; } = string.Empty;
+	public string Content { get; } = string.Empty;
+	public OldTableCommentAttr(string name, string content = "") {
+		Name = name;
+		Content = content;
+	}
+}
 
 
 

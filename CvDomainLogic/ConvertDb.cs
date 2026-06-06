@@ -398,6 +398,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				Code = code,
 				Name = getString(rec, "商品名"),
 				Ryaku = getString(rec, "略称"),
+				Kana = getString(rec, "旧コード"),
 				TankaJodaiOrg = getDataInt(rec, "元上代"),
 				TankaJodai = getDataInt(rec, "上代"),
 				TankaGenka = getDataInt(rec, "原価"),

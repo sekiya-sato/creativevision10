@@ -73,7 +73,7 @@ public sealed partial class SysSequence : BaseDbClass {
 }
 
 [PrimaryKey("Id", AutoIncrement = true)]
-[Comment("システム：自動実行履歴テーブル")]
+[Comment("システム：自動実行履歴テーブル 定期実行されるタスクの履歴")]
 public sealed partial class SysHistAutoexec : BaseDbClass {
 	/// <summary>
 	/// タスク名
