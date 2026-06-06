@@ -35,7 +35,6 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
 	[property: ColumnSizeDml(100)]
 	[property: System.ComponentModel.DefaultValue("")]
-	[OldTableCommentAttr("略称")]
 	string ryaku = string.Empty;
 	/// <summary>
 	/// カナ
