@@ -19,7 +19,7 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 	string tenpoCodeFrom = string.Empty;
 
 	[ObservableProperty]
-	string tenpoCodeTo = "99999999";
+	string tenpoCodeTo = string.Empty;
 
 	[ObservableProperty]
 	bool isCode39 = true;

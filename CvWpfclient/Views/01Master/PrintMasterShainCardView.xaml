@@ -90,7 +90,7 @@
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
 
-			<!-- 社員CD -->
+			<!--  社員CD  -->
 			<TextBlock Grid.Row="0" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
 				Text="社員CD" />
@@ -103,8 +103,7 @@
 				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}"
 				TextHorizontalContentAlignment="Left" />
 			<TextBlock Grid.Row="0" Grid.Column="2"
-				Margin="8,0"
-				VerticalAlignment="Center"
+				Margin="8,0" VerticalAlignment="Center"
 				Text="～" />
 			<helpers:SearchTextBox Grid.Row="0" Grid.Column="3"
 				Width="200" Height="36"
@@ -115,7 +114,7 @@
 				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}"
 				TextHorizontalContentAlignment="Left" />
 
-			<!-- 店舗CD -->
+			<!--  店舗CD  -->
 			<TextBlock Grid.Row="1" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
 				Text="店舗CD" />
@@ -128,8 +127,7 @@
 				Text="{Binding TenpoCodeFrom, UpdateSourceTrigger=PropertyChanged}"
 				TextHorizontalContentAlignment="Left" />
 			<TextBlock Grid.Row="1" Grid.Column="2"
-				Margin="8,0"
-				VerticalAlignment="Center"
+				Margin="8,0" VerticalAlignment="Center"
 				Text="～" />
 			<helpers:SearchTextBox Grid.Row="1" Grid.Column="3"
 				Width="200" Height="36"
@@ -140,24 +138,25 @@
 				Text="{Binding TenpoCodeTo, UpdateSourceTrigger=PropertyChanged}"
 				TextHorizontalContentAlignment="Left" />
 
-			<!-- バーコード種類 -->
+			<!--  バーコード種類  -->
 			<TextBlock Grid.Row="2" Grid.Column="0"
+				Margin="0,10,0,10"
 				Style="{StaticResource FormLabel}"
-				Text="バーコード" Margin="0,10,0,10" />
+				Text="バーコード" />
 			<StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
-				Orientation="Horizontal" Margin="100,10,0,10">
+				Margin="100,20,0,10"
+				Orientation="Horizontal">
 				<RadioButton Margin="0,4"
-					Content="CODE39"
-					IsChecked="{Binding IsCode39}" />
-				<RadioButton Margin="16,4,0,4"
 					Content="NW7"
 					IsChecked="{Binding IsCode39, Converter={StaticResource InverseBooleanConverter}}" />
+				<RadioButton Margin="16,4,0,4"
+					Content="CODE39"
+					IsChecked="{Binding IsCode39}" />
 			</StackPanel>
 
-			<!-- 実行ボタン -->
+			<!--  実行ボタン  -->
 			<Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4"
-				Margin="0,24"
-				HorizontalAlignment="Center"
+				Margin="0,24" HorizontalAlignment="Center"
 				Command="{Binding DoOutputPdfCommand}"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}"
 				ToolTip="印刷実行 (F6)">
@@ -165,11 +164,11 @@
 					<materialDesign:PackIcon VerticalAlignment="Center"
 						Kind="Printer" />
 					<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-						Text="印刷実行" FontSize="20" />
+						FontSize="20" Text="印刷実行" />
 				</StackPanel>
 			</Button>
 
-			<!-- 対応ラベル情報 -->
+			<!--  対応ラベル情報  -->
 			<TextBlock Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
 				Margin="0,8"
 				Foreground="{DynamicResource MaterialDesignBodyLight}"

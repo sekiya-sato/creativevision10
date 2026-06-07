@@ -68,9 +68,9 @@ public partial class MenuData : ObservableObject {
 		new("■ マスター", new([
 			new("システム管理マスタ", typeof(Views._01Master.MasterSysKanriMenteView),  addInfo:"会社情報、締日、税率などを設定"),
 			new("名称マスタメンテ", typeof(Views._01Master.MasterMeishoMenteView), addInfo:"区分別の名称マスタメンテ画面"),
-		new("社員マスタ", typeof(Views._01Master.MasterShainMenteView), addInfo:"社員マスタメンテ画面"),
-		new("社員証カード印刷", typeof(Views._01Master.PrintMasterShainCardView), addInfo:"社員証カード型印刷"),
-		new("商品マスタ", typeof(Views._01Master.MasterShohinMenteView), addInfo:"商品マスタメンテ画面"),
+			new("社員マスタ", typeof(Views._01Master.MasterShainMenteView), addInfo:"社員マスタメンテ画面"),
+			new("社員証カード印刷", typeof(Views._01Master.PrintMasterShainCardView), addInfo:"社員証カード型印刷"),
+			new("商品マスタ", typeof(Views._01Master.MasterShohinMenteView), addInfo:"商品マスタメンテ画面"),
 			new("仕入先マスタメンテ", typeof(Views._01Master.MasterShiireMenteView), addInfo:"仕入先マスタメンテ画面"),
 			new("得意先マスタメンテ", typeof(Views._01Master.MasterTokuiMenteView), addInfo:"得意先マスタメンテ画面"),
 			new("顧客マスタメンテ", typeof(Views._01Master.MasterEndCustomerMenteView), addInfo:"顧客マスタメンテ画面"),
