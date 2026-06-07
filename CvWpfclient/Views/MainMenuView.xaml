@@ -148,11 +148,16 @@
 									Style="{StaticResource MetricLabel}"
 									Text="{Binding CurrentDate, FallbackValue='00/00/00'}" />
 
-								<TextBlock Width="90"
-									HorizontalAlignment="Center"
+							<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+								<TextBlock HorizontalAlignment="Center"
+									d:Text="Sun " FontSize="18" FontWeight="Bold"
+									Foreground="{Binding CurrentTimeDayForeground}"
+									Text="{Binding CurrentTimeDay, FallbackValue='Sun '}" />
+								<TextBlock HorizontalAlignment="Center"
 									d:Text="00:00:00" FontSize="18" FontWeight="Bold"
 									Foreground="{DynamicResource TitleColor}"
-									Text="{Binding CurrentTime, FallbackValue='00:00:00'}" />
+									Text="{Binding CurrentTimeClock, FallbackValue='00:00:00'}" />
+							</StackPanel>
 								<TextBlock Margin="10,0,0,0"
 									d:Text="旧暦xx月xx日" FontSize="12"
 									Foreground="{DynamicResource TitleColor}"

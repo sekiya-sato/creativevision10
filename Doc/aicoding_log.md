@@ -344,3 +344,20 @@
 - `publish-velopack.bat` と `CvWpfclient/publish-velopack.version.ps1` の行末が CRLF、UTF-8 BOMなしであることを確認
 
 ---
+
+## [2026-06-07] MainMenuView.xaml 曜日表示色の変更
+### Agent
+- kimi-k2.6 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuView.xaml 151-155行目のCurrentTime表示において、曜日の表示色を土曜日は青、日曜日は赤で表示する。
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `CurrentTimeDay`, `CurrentTimeClock`, `CurrentTimeDayForeground` プロパティを追加。`UpdateDateTime()` で曜日と時刻を分離し、`DayOfWeek` に応じて `Brushes.Blue` / `Brushes.Red` / `TitleColor` を設定。
+- CvWpfclient/Views/MainMenuView.xaml: `TextBlock` を2つに分離し、`StackPanel Orientation="Horizontal"` で囲む。曜日部分の `Foreground` を `CurrentTimeDayForeground` にバインド、時刻部分は既存の `TitleColor` DynamicResource を維持。
+### 技術決定 Why
+- WPF の `TextBlock` は1つの `Text` に対して部分的な `Foreground` 変更ができないため、XAML 内で `TextBlock` を2つに分離し、ViewModel で曜日部分専用の `SolidColorBrush` を公開する方式を採用。コードビハインドなしで MVVM に沿った実装となった。
+### 確認
+- Build した結果を確認。0 エラー、0 警告。
+
+---

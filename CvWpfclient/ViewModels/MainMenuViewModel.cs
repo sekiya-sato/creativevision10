@@ -57,6 +57,15 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string? currentTime; // HH:mm:ss 用
 
 	[ObservableProperty]
+	private string? currentTimeDay; // 曜日部分
+
+	[ObservableProperty]
+	private string? currentTimeClock; // 時刻部分
+
+	[ObservableProperty]
+	private SolidColorBrush? currentTimeDayForeground; // 曜日色
+
+	[ObservableProperty]
 	private string? kyureki; // 旧暦表示用
 
 	private DispatcherTimer? _timer;
@@ -469,6 +478,13 @@ public partial class MainMenuViewModel : ObservableObject {
 			checkDate = now.Date;
 		}
 		CurrentTime = now.ToString("ddd HH:mm:ss");
+		CurrentTimeDay = $"{now:ddd} ";
+		CurrentTimeClock = now.ToString("HH:mm:ss");
+		CurrentTimeDayForeground = now.DayOfWeek switch {
+			DayOfWeek.Saturday => Brushes.Blue,
+			DayOfWeek.Sunday => Brushes.Red,
+			_ => FindResource("TitleColor") as SolidColorBrush ?? Brushes.White
+		};
 	}
 
 	private void ApplyForecastTheme() {
