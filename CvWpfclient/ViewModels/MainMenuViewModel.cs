@@ -133,7 +133,11 @@ public partial class MainMenuViewModel : ObservableObject {
 		InfolocalServer.Url = AppGlobal.Url;
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名 {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 		// Velopack のバージョンを表示する
-		SubTitle += $"  Client Ver {App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetFileVersion()}";
+		var version = App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetFileVersion() ?? "Unknown";
+		if (version == "1.0.0.0") { // GetFileVersionで取得できない場合GetCurrentVersionで取得
+			version = App.AppHost?.Services.GetRequiredService<IUpdateService>()?.GetCurrentVersion() ?? "Unknown";
+		}
+		SubTitle += $"  Client Ver {version}";
 		SetSubMessage();
 	}
 
