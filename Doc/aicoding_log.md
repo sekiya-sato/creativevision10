@@ -302,3 +302,22 @@
 - 変更した cs ファイル 3件（BaseDb1Master.cs / BaseDb1MasterTorihiki.cs / BaseDb2Trans.cs）の行末が CRLF であることを確認
 
 ---
+
+## [2026-06-07] 09:05 社員証カード印刷画面に社員CD・店舗CD選択ボタン追加
+### Agent
+- GPT-5.5 : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：PrintMasterShainCardView の社員CD from-to に社員CD選択ボタンを追加し、店舗ID from-to を店舗CD from-to として店舗CD選択ボタンを追加する。変更、log、commit まで実施する。
+### 実施内容
+- CvWpfclient/Views/01Master/PrintMasterShainCardView.xaml: 社員CD From/To と店舗CD From/To を SearchTextBox に変更し、それぞれ選択コマンドを割り当て。店舗ラベルを「店舗ID」から「店舗CD」へ変更
+- CvWpfclient/ViewModels/01Master/PrintMasterShainCardViewModel.cs: 社員CD From/To 用プロパティと社員・店舗選択コマンドを追加。店舗CD条件は MasterTokui.Code に対する範囲条件へ変更
+### 技術決定 Why
+- 既存のマスタ画面と同じ SearchTextBox と ShowSelectDialog<T> パターンを使い、code-behind へ業務ロジックを追加せず ViewModel 側で選択値を反映するため
+- ユーザー指定が店舗「CD」のため、入力値と選択値を店舗IDではなく店舗コードとして扱い、印刷SQLの店舗範囲条件も T.Code 基準にそろえた
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（1 warning / 0 errors、警告は CvBase.dll の一時ファイルロック再試行）を確認
+- LSP diagnostics は csharp-ls 未インストール、XAML LSP 未設定のため実行不可。WPFビルドで構文・参照エラーなしを確認
+
+---

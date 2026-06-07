@@ -10,6 +10,12 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 	string title = "社員証カード印刷";
 
 	[ObservableProperty]
+	string shainCodeFrom = string.Empty;
+
+	[ObservableProperty]
+	string shainCodeTo = string.Empty;
+
+	[ObservableProperty]
 	string tenpoCodeFrom = string.Empty;
 
 	[ObservableProperty]
@@ -18,32 +24,53 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 	[ObservableProperty]
 	bool isCode39 = true;
 
-	public PrintMasterShainCardViewModel() {
-		SelectCodeParam = new() { DisplayName = "社員" };
-	}
-
-	protected override string? SelectCodeDisplayName => "社員";
-
 	protected override string? FormFile => IsCode39 ? "PrintMasterShainCard39.qfm" : "PrintMasterShainCard.qfm";
 
 	protected override string? ListWhere => BuildListWhere();
 
 	protected override string? ListOrder => "A.Code";
 	string? BuildListWhere() {
-		var codeWhere = BuildSelectCodeWhere(SelectCodeParam);
 		var clauses = new List<string>();
 
-		if (!string.IsNullOrEmpty(codeWhere))
-			clauses.Add(codeWhere);
-
-		if (!string.IsNullOrWhiteSpace(TenpoCodeFrom) && long.TryParse(TenpoCodeFrom, out var tenpoFrom)) {
-			clauses.Add($"id_Tenpo >= {tenpoFrom}");
+		if (!string.IsNullOrWhiteSpace(ShainCodeFrom)) {
+			clauses.Add($"A.Code >= '{EscapeSqlLiteral(ShainCodeFrom)}'");
 		}
-		if (!string.IsNullOrWhiteSpace(TenpoCodeTo) && long.TryParse(TenpoCodeTo, out var tenpoTo)) {
-			clauses.Add($"id_Tenpo <= {tenpoTo}");
+		if (!string.IsNullOrWhiteSpace(ShainCodeTo)) {
+			clauses.Add($"A.Code <= '{EscapeSqlLiteral(ShainCodeTo)}'");
+		}
+
+		if (!string.IsNullOrWhiteSpace(TenpoCodeFrom)) {
+			clauses.Add($"T.Code >= '{EscapeSqlLiteral(TenpoCodeFrom)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(TenpoCodeTo)) {
+			clauses.Add($"T.Code <= '{EscapeSqlLiteral(TenpoCodeTo)}'");
 		}
 
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	[RelayCommand]
+	void SelectShainCodeFrom() {
+		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code");
+		ShainCodeFrom = shain?.Code ?? string.Empty;
+	}
+
+	[RelayCommand]
+	void SelectShainCodeTo() {
+		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code");
+		ShainCodeTo = shain?.Code ?? string.Empty;
+	}
+
+	[RelayCommand]
+	void SelectTenpoCodeFrom() {
+		var tenpo = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=6", "Code");
+		TenpoCodeFrom = tenpo?.Code ?? string.Empty;
+	}
+
+	[RelayCommand]
+	void SelectTenpoCodeTo() {
+		var tenpo = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=6", "Code");
+		TenpoCodeTo = tenpo?.Code ?? string.Empty;
 	}
 
 	protected override QueryListSqlParam? PrintBySqlParam {
