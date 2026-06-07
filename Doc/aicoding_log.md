@@ -321,3 +321,26 @@
 - LSP diagnostics は csharp-ls 未インストール、XAML LSP 未設定のため実行不可。WPFビルドで構文・参照エラーなしを確認
 
 ---
+
+## [2026-06-07] 11:39 Velopack配布バッチのvpk 1.2.0対応
+### Agent
+- GPT-5.5 : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：publish-velopack.bat を確認し、vpk が最新の v1.2.0 を使うようにする。CvWpfclient/publish-velopack.version.ps1 で確認するファイルを appsettings.json の Application.Version に変更し、bat / ps1 に各処理コメントを追記する。変更ファイルは CRLF とし、commit まで行う。
+### 実施内容
+- publish-velopack.bat: vpk 固定バージョンを 1.2.0 へ更新し、`vpk -h` の `Velopack CLI 1.2.0` 行から導入済みバージョンを確認する処理を追加
+- publish-velopack.bat: `publish-velopack.version.ps1` の参照先を `appsettings.Production.json` から `appsettings.json` へ変更し、vpk 確認後に Application.Version を増分する順序へ変更
+- publish-velopack.bat: 配布対象設定、vpk 確認、版数更新、publish、pack、公開転送の各処理コメントを追加
+- CvWpfclient/publish-velopack.version.ps1: Application.Version 抽出、patch 増分、置換、UTF-8(BOMなし) 書き戻しの各処理コメントを追加
+### 技術決定 Why
+- `vpk --version` はサポートされないため、実際に確認できる `vpk -h` の先頭行から CLI バージョンを取り出す方式にした
+- vpk 未導入またはバージョン違いの場合に `appsettings.json` のパッチ番号だけが先に増えないよう、vpk 確認を版数増分より前へ移動した
+### 確認
+- `vpk -h` の出力に `Velopack CLI 1.2.0` が含まれることを確認
+- 一時コピーした `CvWpfclient/appsettings.json` に対して `publish-velopack.version.ps1 -Increment` を実行し、`0.7.6` が標準出力されることを確認
+- 一時 bat で `vpk -h` 解析処理を実行し、`1.2.0` が取得できることを確認
+- `publish-velopack.bat` と `CvWpfclient/publish-velopack.version.ps1` の行末が CRLF、UTF-8 BOMなしであることを確認
+
+---
