@@ -1385,19 +1385,6 @@ public sealed partial class TranGenka : BaseDbClass {
 }
 */
 
-/* ToDo: 未作成テーブル(予算)
-
-// 予算マスタ
-[Comment("マスタ：店舗ブランド予算：年月(日)、ブランド、売上予算、粗利予算")]
-public sealed partial class MasterYosanBrand : BaseDbClass {
-}
-[Comment("マスタ：販売員予算：年月(日)、販売員Id、店舗、売上予算、粗利予算")]
-public sealed partial class MasterYosanHanbai : BaseDbClass {
-}
-[Comment("マスタ：営業担当別予算：年月(日)、営業担当Id、店舗、売上予算、粗利予算")]
-public sealed partial class MasterYosanEigyoTanto : BaseDbClass {
-}
-*/
 
 /* ToDo: 未作成テーブル(配分)
 [Comment("トランザクション：配分データ：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
