@@ -381,3 +381,21 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-08] 17:26 MasterShainMenteViewのJdetail詳細タブ追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShainMenteView の詳細画面に、MasterShain の Jdetail を表示するようにする。MasterTokuiMenteView を参考に、タブで詳細タブを表示し、修正、ログ、commitまで行う。
+### 実施内容
+- CvWpfclient/Views/01Master/MasterShainMenteView.xaml: 右側編集エリアの TabControl に「詳細」タブを追加し、CurrentEdit.Jdetail.Yobi1 / Yobi2 を編集できる入力欄を追加
+### 技術決定 Why
+- MasterShain.Jdetail は BaseDetailClass のため、既存の MasterShohinMenteView と同じ Yobi1 / Yobi2 表示にそろえ、ViewModel 変更なしで既存の CurrentEdit バインディングを利用した
+### 確認
+- MasterShainMenteView.xaml の XML 構文チェックでエラーなしを確認
+- MasterShainMenteView.xaml が UTF-8 BOMなし、CRLF であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warning / 0 error）を確認
+
+---

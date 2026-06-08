@@ -369,6 +369,41 @@
 							</Grid>
 						</ScrollViewer>
 					</TabItem>
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="TextBoxMultiple" />
+								<TextBlock Text="詳細" />
+							</StackPanel>
+						</TabItem.Header>
+						<Grid Margin="16">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="110" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+
+							<TextBlock Grid.Row="0"
+								Style="{StaticResource FormLabel}"
+								Text="予備項目1" />
+							<TextBox Grid.Row="0" Grid.Column="1"
+								materialDesign:HintAssist.Hint="予備項目1"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.Jdetail.Yobi1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+							<TextBlock Grid.Row="1"
+								Style="{StaticResource FormLabel}"
+								Text="予備項目2" />
+							<TextBox Grid.Row="1" Grid.Column="1"
+								materialDesign:HintAssist.Hint="予備項目2"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding CurrentEdit.Jdetail.Yobi2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+						</Grid>
+					</TabItem>
 				</TabControl>
 			</materialDesign:Card>
 		</Grid>
