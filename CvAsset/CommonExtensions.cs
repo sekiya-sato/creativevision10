@@ -183,7 +183,7 @@ public static class CommonExtensions {
 			=> string.IsNullOrEmpty(str) ? defaultValue : str;
 
 		/// <summary>
-		/// SqlDepends: __serverdate__() と __serverimg__() で記述されたSQL文の部分を、それぞれ日付式と画像パスへ変換する
+		/// SqlDepends: __serverdate__() と __serverimg__() / __serverimgshain__() で記述されたSQL文の部分を、それぞれ日付式と画像パスへ変換する
 		/// </summary>
 		/// <param name="sql"></param>
 		/// <returns></returns>
@@ -191,15 +191,22 @@ public static class CommonExtensions {
 			var replaced = ServerDateRegex.Replace(str,
 				match => $"strftime('%Y%m%d%H%M%S',datetime(({match.Groups[1].Value} - 621355968000000000) / 10000000, 'unixepoch','localtime'))");
 			var literalReplaced = ServerImgLiteralRegex.Replace(replaced, match => $"'img/{match.Groups[1].Value}.jpg'");
-			return ServerImgExpressionRegex.Replace(literalReplaced, match => {
+			var expressionReplaced = ServerImgExpressionRegex.Replace(literalReplaced, match => {
 				var imageNameExpression = match.Groups[1].Value.Trim();
 				return $"case when ifnull({imageNameExpression}, '') = '' then '' else 'img/' || {imageNameExpression} || '.jpg' end";
+			});
+			var imgshainLiteralReplaced = ServerImgshainLiteralRegex.Replace(expressionReplaced, match => $"'imgshain/{match.Groups[1].Value}.jpg'");
+			return ServerImgshainExpressionRegex.Replace(imgshainLiteralReplaced, match => {
+				var imageNameExpression = match.Groups[1].Value.Trim();
+				return $"case when ifnull({imageNameExpression}, '') = '' then '' else 'imgshain/' || {imageNameExpression} || '.jpg' end";
 			});
 		}
 	}
 	private static readonly Regex ServerDateRegex = new Regex(@"__serverdate__\(([^)]+)\)", RegexOptions.Compiled);
 	private static readonly Regex ServerImgLiteralRegex = new Regex(@"__serverimg__\('([^']+)'\)", RegexOptions.Compiled);
 	private static readonly Regex ServerImgExpressionRegex = new Regex(@"__serverimg__\(([^)]+)\)", RegexOptions.Compiled);
+	private static readonly Regex ServerImgshainLiteralRegex = new Regex(@"__serverimgshain__\('([^']+)'\)", RegexOptions.Compiled);
+	private static readonly Regex ServerImgshainExpressionRegex = new Regex(@"__serverimgshain__\(([^)]+)\)", RegexOptions.Compiled);
 }
 
 public static class DynamicCsvExtensions {
