@@ -138,5 +138,26 @@
 			<position x="14" y="219" width="136" height="40"/>
 			<color border="ac5959" transparent="1"/>
 		</region>
+		<text id="Txt12" valign="middle">
+			<position x="60" y="8" width="45" height="5"/>
+			<color transparent="1"/>
+			<data calctype="static">é–àıèÿ  (Code39)</data>
+			<decode datatype="string" format="@"/>
+			<font size="90"/>
+		</text>
+		<text id="PrintDate" valign="middle">
+			<position x="106" y="8" width="40" height="5"/>
+			<color transparent="1"/>
+			<data calctype="date"/>
+			<decode datatype="date" format="&quot;èoóÕì˙éû: &quot;YYYY/MM/DD HH24:MI:SS"/>
+			<font size="90"/>
+		</text>
+		<text id="PageNo" valign="middle" halign="right">
+			<position x="146" y="8" width="12" height="5"/>
+			<color transparent="1"/>
+			<data calctype="page"/>
+			<decode datatype="number" format="&quot;P.&quot;0999"/>
+			<font size="90"/>
+		</text>
 	</page>
 </printstream>

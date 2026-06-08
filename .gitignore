@@ -58,5 +58,6 @@ graphify-out/
 *-shm
 *-wal
 # Optional local notes
+printform/data.txt
 
 

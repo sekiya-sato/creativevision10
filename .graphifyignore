@@ -68,5 +68,6 @@ printform/
 output/
 *-shm
 *-wal
+printform/data.txt
 
 
