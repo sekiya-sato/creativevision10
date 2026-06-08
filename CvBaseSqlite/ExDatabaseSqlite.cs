@@ -64,7 +64,8 @@ public partial class ExDatabaseSqlite : ExDatabase {
 			cmd.CommandText = @"
 PRAGMA journal_mode = WAL;
 PRAGMA synchronous = NORMAL;
-";
+PRAGMA journal_size_limit = 67108864;
+"; // 64MB
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "SELECT sqlite_version();";
 			Version = cmd.ExecuteScalar()?.ToString() ?? "";
