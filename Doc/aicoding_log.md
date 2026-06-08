@@ -361,3 +361,23 @@
 - Build した結果を確認。0 エラー、0 警告。
 
 ---
+
+## [2026-06-08] 10:10 ReplaceServerSqlQuery()に__serverimgshain__()変換処理を追加
+### Agent
+- GPT-5.4-mini : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvAsset/CommonExtensions.cs 190-204にて、追加の変換処理で、__serverimg__ を同じように imgshain/....jpg に変換する。ReplaceServerSqlQuery()の処理のみ変更、commit。
+### 実施内容
+- CvAsset/CommonExtensions.cs: `ReplaceServerSqlQuery()` に `__serverimgshain__` の変換処理を追加。`__serverimgshain__('literal')` → `'imgshain/{literal}.jpg'`、`__serverimgshain__(expression)` → `'imgshain/' || {expression} || '.jpg'` の変換を実装。
+- `ServerImgshainLiteralRegex`、`ServerImgshainExpressionRegex` の2つの正規表現を追加し、既存の `__serverimg__` 変換の後に適用するようメソッドを更新。
+### 技術決定 Why
+- `__serverimg__` と同じパターンで `imgshain/` フォルダを扱うため、正規表現と変換ロジックを対称的に追加し、既存の `__serverimg__` 処理とは独立して動作するようにした
+### 影響範囲
+- CvAsset/CommonExtensions.cs のみ
+### 確認
+- `CvAsset/CommonExtensions.cs` の LSP 診断でエラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvAsset/CvAsset.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
