@@ -47,6 +47,7 @@ Releases/
 Doc/wrk/
 CvServer/wrk
 CvServer/img
+CvServer/imgshain
 wrk/
 .sisyphus/
 .playwright-mcp/

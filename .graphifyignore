@@ -50,11 +50,14 @@ Releases/
 Doc/wrk/
 CvServer/wrk
 CvServer/img
+CvServer/imgshain
 wrk/
 .omo/
 .opencode/
 .sisyphus/
 .playwright-mcp/
+.omo/
+.opencode/
 tmp-*
 graphify-out/
 .graphify*
@@ -63,4 +66,7 @@ graphify-out/
 # Optional local notes
 printform/
 output/
+*-shm
+*-wal
+
 

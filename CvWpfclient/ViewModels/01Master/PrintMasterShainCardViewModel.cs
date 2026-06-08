@@ -78,7 +78,7 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 			var query = CreateListQueryParam();
 			var sql = $@"
 select A.Code, A.Name,
-coalesce(json_extract(A.Jdetail, '$.yobi1'), '') 画像,
+__serverimgshain__(A.Code) 画像,
 A.id_Tenpo,
 coalesce(T.Name, '') 店舗名,
 coalesce((select S.Name from MasterSysMan S limit 1), '') 自社名,
