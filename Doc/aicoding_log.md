@@ -533,3 +533,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-09] 16:36 店ブランド予算マスタリソース読み込み修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ShopBrandBudgetMasterView の SearchTextBox / StatusTextBlockStyle が正しく読み込まれていない不具合を修正する。
+### 実施内容
+- CvWpfclient/Views/02Yosan/ShopBrandBudgetMasterView.xaml: 画面ローカルの `helpers:BaseWindow.Resources` を追加し、既存画面と同じ `MenteSearchTextBox` と `StatusTextBlockStyle` を定義
+### 技術決定 Why
+- `MenteSearchTextBox` と `StatusTextBlockStyle` は App.xaml の共通Resourceではなく各画面ローカルに定義される既存パターンのため、対象画面内へ最小追加して `StaticResource` 解決失敗を防ぐ
+### 確認
+- `ShopBrandBudgetMasterView.xaml` のXML構文確認でエラーなし
+- `MenteSearchTextBox` と `StatusTextBlockStyle` が同一XAML内で定義済みであることを確認
+- `git diff --check` で whitespace error なし
+- 変更ファイルが UTF-8 BOMなし、CRLF であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
+
+---

@@ -16,6 +16,18 @@
     <helpers:BaseWindow.InputBindings>
         <KeyBinding Command="{Binding ExitCommand}" Gesture="Esc" />
     </helpers:BaseWindow.InputBindings>
+    <helpers:BaseWindow.Resources>
+        <Style x:Key="MenteSearchTextBox" TargetType="{x:Type helpers:SearchTextBox}">
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+            <Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+        </Style>
+        <Style x:Key="StatusTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+        </Style>
+    </helpers:BaseWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
