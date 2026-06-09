@@ -5,35 +5,22 @@ namespace CvBase;
 
 // 予算マスタ
 [PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("uk1", false, "Id_Tenpo", "Id_Brand", "DenDay")]
 [KeyDml("nk1", false, "DenDay")]
-[Comment("マスタ：店舗ブランド予算：年月(日)、ブランド、売上予算、粗利予算")]
+[Comment("マスタ：店舗ブランド予算：Tran00Uriage,Tran01Tenuri を合計した売上に対する予算")]
 public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// <summary>
-	/// 店舗キー
+	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("店舗CD")]
 	long id_Tenpo;
 	/// <summary>
-	/// 店舗データ
-	/// </summary>
-	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTenpo = new();
-	/// <summary>
-	/// ブランド
+	/// ブランドId
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("ブランドCD")]
 	long id_Brand;
-	/// <summary>
-	/// ブランドデータ
-	/// </summary>
-	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vBrand = new();
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
@@ -55,14 +42,74 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	long arariYosan;
 }
 
-/* ToDo: 未作成テーブル(予算)
-[Comment("マスタ：販売員予算：年月(日)、販売員Id、店舗、売上予算、粗利予算")]
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("uk1", false, "Id_Shain", "DenDay")]
+[KeyDml("nk1", false, "DenDay")]
+[Comment("マスタ：販売員予算：Tran01Tenuri を合計した売上に対する予算")]
 public sealed partial class MasterYosanHanbai : BaseDbClass {
+	/// <summary>
+	/// 販売員Id 
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("販売員CD")]
+	long id_Shain;
+	/// <summary>
+	/// 日付 yyyyMMdd 8桁の文字列で表現
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("日付")]
+	[property: ColumnSizeDml(8)]
+	string denDay = "19010101";
+	/// <summary>
+	/// 売上予算
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("予算金額")]
+	long uriYosan;
+	/// <summary>
+	/// 粗利予算
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("粗利予算")]
+	long arariYosan;
 }
-[Comment("マスタ：営業担当別予算：年月(日)、営業担当Id、店舗、売上予算、粗利予算")]
+[PrimaryKey("Id", AutoIncrement = true)]
+[KeyDml("uk1", false, "Id_Tenpo", "Id_Shain", "DenDay")]
+[KeyDml("nk1", false, "DenDay")]
+[Comment("マスタ：営業担当別予算：Tran00Uriage,Tran01Tenuri を合計した売上に対する予算")]
 public sealed partial class MasterYosanEigyoTanto : BaseDbClass {
+	/// <summary>
+	/// 店舗Id
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("得意先CD")]
+	long id_Tenpo;
+	/// <summary>
+	/// 販売員Id 
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("営業担当CD")]
+	long id_Shain;
+	/// <summary>
+	/// 日付 yyyyMMdd 8桁の文字列で表現
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("日付")]
+	[property: ColumnSizeDml(8)]
+	string denDay = "19010101";
+	/// <summary>
+	/// 売上予算
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("予算金額")]
+	long uriYosan;
+	/// <summary>
+	/// 粗利予算
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("粗利予算")]
+	long arariYosan;
 }
-*/
 
 /* ToDo: 未作成テーブル(配分)
 [Comment("トランザクション：配分データ：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
