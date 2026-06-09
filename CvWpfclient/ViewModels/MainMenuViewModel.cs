@@ -68,6 +68,18 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	private string? kyureki; // 旧暦表示用
 
+	[ObservableProperty]
+	private Rect moonLightClipRect = Rect.Empty; // 月アイコンの明るい部分
+
+	[ObservableProperty]
+	private double moonLightOpacity;
+
+	[ObservableProperty]
+	private double moonDarkOpacity = 0.5;
+
+	[ObservableProperty]
+	private string moonPhaseToolTip = "旧暦";
+
 	private DispatcherTimer? _timer;
 	private string[] _forecastLabels = [];
 	private double[] _forecastTemperatures = [];
@@ -132,8 +144,9 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 		StartClock();
 		StartWeatherAndCalendar();
-		ExpireDate = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
-		Kyureki = $"旧暦 {DateTime.Now.ToSimpleLunisolarStr()}";
+		var now = DateTime.Now;
+		ExpireDate = now.ToString("yyyy/MM/dd HH:mm");
+		UpdateKyureki(now);
 
 		InfolocalUser.OsVer = Environment.OSVersion.ToString();
 		InfolocalUser.DotnetVer = Environment.Version.ToString();
@@ -474,7 +487,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (now.Date != checkDate) {
 			culture.DateTimeFormat.Calendar = new System.Globalization.JapaneseCalendar();
 			CurrentDate = $"{now:yy/MM/dd} {now.ToString("gy", culture)}";
-			Kyureki = $"旧暦 {now.ToSimpleLunisolarStr()}";
+			UpdateKyureki(now);
 			checkDate = now.Date;
 		}
 		CurrentTime = now.ToString("ddd HH:mm:ss");
@@ -485,6 +498,48 @@ public partial class MainMenuViewModel : ObservableObject {
 			DayOfWeek.Sunday => Brushes.Red,
 			_ => FindResource("TitleColor") as SolidColorBrush ?? Brushes.White
 		};
+	}
+
+	private void UpdateKyureki(DateTime now) {
+		var kyurekiDay = GetKyurekiDay(now);
+		var moonDay = Math.Clamp(kyurekiDay, 1, 29);
+		var lightRatio = moonDay <= 15
+			? (moonDay - 1) / 14.0
+			: (29 - moonDay) / 14.0;
+		lightRatio = Math.Clamp(lightRatio, 0.0, 1.0);
+
+		var lightWidth = 24.0 * lightRatio;
+		var lightX = moonDay <= 15 ? 24.0 - lightWidth : 0.0;
+
+		Kyureki = $"旧暦 {now.ToSimpleLunisolarStr()}";
+		MoonLightClipRect = new Rect(lightX, 0, lightWidth, 24);
+		MoonLightOpacity = CalculateMoonLightOpacity(moonDay);
+		MoonDarkOpacity = moonDay == 15 ? 0.0 : 0.5;
+		MoonPhaseToolTip = $"旧暦 {kyurekiDay}日";
+	}
+
+	private static int GetKyurekiDay(DateTime date) {
+		try {
+			return new System.Globalization.JapaneseLunisolarCalendar().GetDayOfMonth(date);
+		}
+		catch (ArgumentOutOfRangeException) {
+			return Math.Clamp(date.Day, 1, 29);
+		}
+	}
+
+	private static double CalculateMoonLightOpacity(int moonDay) {
+		return moonDay switch {
+			<= 1 => 0.0,
+			<= 8 => Lerp(0.0, 0.7, (moonDay - 1) / 7.0),
+			<= 15 => Lerp(0.7, 0.95, (moonDay - 8) / 7.0),
+			<= 22 => Lerp(0.95, 0.7, (moonDay - 15) / 7.0),
+			< 29 => Lerp(0.7, 0.0, (moonDay - 22) / 7.0),
+			_ => 0.0
+		};
+	}
+
+	private static double Lerp(double start, double end, double amount) {
+		return start + ((end - start) * amount);
 	}
 
 	private void ApplyForecastTheme() {

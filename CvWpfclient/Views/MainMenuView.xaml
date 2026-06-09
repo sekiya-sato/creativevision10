@@ -60,6 +60,7 @@
 						<ColumnDefinition Width="*" />
 						<ColumnDefinition Width="Auto" />
 						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="Auto" />
 					</Grid.ColumnDefinitions>
 
 					<StackPanel Orientation="Vertical">
@@ -79,7 +80,35 @@
 							Text="{Binding SubTitle}" />
 					</StackPanel>
 
-					<StackPanel Grid.Column="1"
+					<Border Grid.Column="1"
+						Width="44" Height="44"
+						Margin="0,0,8,0" VerticalAlignment="Center"
+						shell:WindowChrome.IsHitTestVisibleInChrome="True"
+						Style="{StaticResource StatusChip}"
+						ToolTip="{Binding MoonPhaseToolTip}">
+						<Viewbox Width="24" Height="24"
+							HorizontalAlignment="Center" VerticalAlignment="Center"
+							Stretch="Uniform">
+							<Grid Width="24" Height="24">
+								<Ellipse Width="24" Height="24"
+									Fill="Black"
+									Opacity="{Binding MoonDarkOpacity}" />
+								<Ellipse Width="24" Height="24"
+									Fill="#FFD84D"
+									Opacity="{Binding MoonLightOpacity}">
+									<Ellipse.Clip>
+										<RectangleGeometry Rect="{Binding MoonLightClipRect}" />
+									</Ellipse.Clip>
+								</Ellipse>
+								<Ellipse Width="24" Height="24"
+									Stroke="{DynamicResource SubTitleColor}"
+									StrokeThickness="1"
+									Opacity="0.35" />
+							</Grid>
+						</Viewbox>
+					</Border>
+
+					<StackPanel Grid.Column="2"
 						Margin="0" VerticalAlignment="Center"
 						shell:WindowChrome.IsHitTestVisibleInChrome="True" Orientation="Horizontal">
 						<Border Margin="0,0,4,0"

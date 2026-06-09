@@ -470,3 +470,24 @@
 - `git diff --check` で whitespace error なしを確認
 
 ---
+
+## [2026-06-09] 14:00 MainMenuView旧暦月アイコン追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuView.xaml のヘッダーに旧暦日付に応じた簡易的な月の満ち欠けアイコンを表示する。
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: ヘッダーGridへ月アイコン用の列を追加し、旧暦1日は黒円、8日は右半分、15日は黄色円になる簡易アイコンを追加
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 旧暦日付から月アイコンの明るい領域、透明度、ToolTipを更新する処理を追加
+### 技術決定 Why
+- 既存の `Kyureki` 表示更新タイミングに合わせて月アイコン用プロパティを更新し、XAML側は `RectangleGeometry` のクリップ幅で簡易的な満ち欠けを表現した
+- 旧暦8日の上弦は右半分を黄色表示し、指定された透明度に合わせて 1日=黒0.5、8日=黄色0.7、15日=黄色0.95 になるようにした
+### 確認
+- `MainMenuView.xaml` のXML構文確認でエラーなし
+- `git diff --check` で whitespace error なし
+- 変更3ファイルが UTF-8 BOMなし、CRLF であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
+
+---
