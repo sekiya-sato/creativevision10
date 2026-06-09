@@ -1,6 +1,6 @@
 ---
 name: change-sublist-to-observablecollection
-description: Converts List<T> sub-list properties in a master mente ViewModel to ObservableCollection<T> so that DataGrid row additions/deletions are properly notified to the View. Applies the ApplyFromCurrentEdit / SyncToCurrentEdit pattern used in ShukkaUriageInputViewModel.
+description: Converts CurrentEdit List<T> sub-list properties in BaseMenteViewModel-based master mente ViewModels to ViewModel-owned ObservableCollection<T> properties, following the MasterShohinMenteViewModel ApplySubListsFromCurrentEdit / SyncSubListsToCurrentEdit pattern so DataGrid row additions and deletions notify the View.
 ---
 
 # Change SubList to ObservableCollection

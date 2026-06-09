@@ -1,6 +1,6 @@
 ---
 name: update-design-mente
-description: Guides the agent through unifying the material-design inspired layout across master maintenance windows in CvWpfclient.
+description: Guides CvWpfclient master maintenance screen design unification using the MasterShohinMenteView-based ColorZone, Card, MaterialDesignOutlined, FormTextBox, SearchTextBox, DataGridAssist, and tab layout patterns.
 ---
 
 # Update Design Mente
@@ -25,7 +25,7 @@ description: Guides the agent through unifying the material-design inspired layo
 2. 支払情報タブでは `RowDefinitions` を再計算し、支払フラグ／支払方法／仕入先ブロックを1つずつ明確な行へ移動。仕入先検索は DockPanel や SearchTextBox を使い文言を統一する
 3. 詳細内容タブの下部に `登録日/修正日` 表示を追加するには `MultiBinding` などで `InfoLabel` を構成し、`Row3` あたりに新しい `TextBlock` を配置してタイムスタンプを `FormTextBox` 風に見せる
 4. 更新後は `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド確認（可能な限り）
-5. `Doc/aicording_log.md` に作業履歴とスキル利用の説明を記録する
+5. `Doc/aicoding_log.md` に作業履歴とスキル利用の説明を記録する
 
 ## 設計のポイント
 
@@ -36,7 +36,7 @@ description: Guides the agent through unifying the material-design inspired layo
 
 ## 報告/ログ
 
-作業完了後は以下の形式で `Doc/aicording_log.md` に記録します：
+作業完了後は以下の形式で `Doc/aicoding_log.md` に記録します：
 
 ```
 ## [YYYY-MM-DD] hh:mm 作業タイトル

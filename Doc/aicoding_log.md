@@ -444,3 +444,29 @@
 - `git diff --check` で whitespace error なしを確認
 
 ---
+
+## [2026-06-09] 12:57 repo-local skill frontmatter整合性修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：既存 skill の `name` と `description` が揃っているか再確認し、合っていなさそうなものを修正する。修正内容は適切に分割して commit する。
+### 実施内容
+- .agents/skills/caveman/SKILL.md: frontmatter 内の不要な空行を削除し、他 skill と同じ形式へ統一
+- .agents/skills/change-sublist-to-observablecollection/SKILL.md: description を本文と実コード証拠に合わせ、MasterShohinMenteViewModel の sub-list 同期パターンとして明確化
+- .agents/skills/update-design-mente/SKILL.md: description を MasterShohinMenteView ベースのデザイン統一手順に合わせて具体化し、`Doc/aicoding_log.md` の表記 typo を修正
+- .agents/skills/wpf-project-guide/SKILL.md: `Doc/aicoding_log.md` の表記 typo を修正
+### 技術決定 Why
+- skill trigger に使われる `description` は本文と実証済み参照元に合わせ、誤った参照元や曖昧な適用範囲を避ける必要があるため
+- WPF build コマンド標準化のような複数 skill にまたがる運用変更は、今回の `name` / `description` 整合性修正から分離して未実施とした
+### 影響範囲
+- repo-local skill の frontmatter と軽微な typo のみ。アプリケーションコードへの変更なし
+### 確認
+- 全 `.agents/skills/*/SKILL.md` でディレクトリ名と frontmatter `name` が一致することを確認
+- 全 `.agents/skills/*/SKILL.md` で `description` が存在することを確認
+- 全 `.agents/skills/*/SKILL.md` が UTF-8 BOMなし、CRLF であることを確認
+- `.agents/skills` 配下に `aicording_log` typo が残っていないことを確認
+- `git diff --check` で whitespace error なしを確認
+
+---

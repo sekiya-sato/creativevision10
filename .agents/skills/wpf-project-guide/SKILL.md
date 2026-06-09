@@ -80,7 +80,7 @@ description: Provides the shared CvWpfclient project conventions, resource usage
 2. XAML変更がある場合は必要に応じて `check-xaml` を使う
 3. 可能なら `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行する
 4. 形式崩れが疑われる場合は `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` を使う
-5. 作業完了後は `Doc/aicording_log.md` に記録する
+5. 作業完了後は `Doc/aicoding_log.md` に記録する
 
 ## 更新履歴
 
