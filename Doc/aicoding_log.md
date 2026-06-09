@@ -491,3 +491,26 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
 
 ---
+
+## [2026-06-09] 14:11 MainMenuView月相表示の左右確認
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuViewModel の UpdateKyureki が実際の月の満ち欠けと同じ向きで、左右が逆になっていないか確認し、commitまで行う。
+### 実施内容
+- CvAsset/CommonExtensions.cs: `ToSimpleLunisolarStr()` が `JapaneseLunisolarCalendar` を使っていることを確認
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 旧暦1日、8日、15日、22日、29日のクリップ計算を確認し、上弦は右側、下弦は左側が明るくなることを確認
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 月アイコンサイズ定数と `isWaxing` を追加し、左右表示の意図を明確化
+### 技術決定 Why
+- 日本では満ちていく月は右側、欠けていく月は左側が明るく見えるため、旧暦8日を右半分、旧暦22日相当を左半分にする現在の分岐は逆ではない
+- 旧暦日付ベースの簡易表示であり、天文計算による厳密な月齢・輝面比ではなく、指定された旧暦1〜29日の代表相に合わせる方針を維持した
+### 確認
+- 旧暦サンプル計算で 1日=明部なし、8日=右半分、15日=全面、22日=左半分、29日=明部なしを確認
+- `MainMenuView.xaml` のXML構文確認でエラーなし
+- `git diff --check` で whitespace error なし
+- 変更2ファイルが UTF-8 BOMなし、CRLF であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
+
+---

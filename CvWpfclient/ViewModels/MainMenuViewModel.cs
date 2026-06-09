@@ -20,6 +20,8 @@ using System.Windows.Threading;
 namespace CvWpfclient.ViewModels;
 
 public partial class MainMenuViewModel : ObservableObject {
+	private const double MoonIconSize = 24.0;
+
 	[ObservableProperty]
 	ObservableCollection<MenuData> menuItems = [];
 
@@ -503,16 +505,18 @@ public partial class MainMenuViewModel : ObservableObject {
 	private void UpdateKyureki(DateTime now) {
 		var kyurekiDay = GetKyurekiDay(now);
 		var moonDay = Math.Clamp(kyurekiDay, 1, 29);
+		var isWaxing = moonDay <= 15;
 		var lightRatio = moonDay <= 15
 			? (moonDay - 1) / 14.0
 			: (29 - moonDay) / 14.0;
 		lightRatio = Math.Clamp(lightRatio, 0.0, 1.0);
 
-		var lightWidth = 24.0 * lightRatio;
-		var lightX = moonDay <= 15 ? 24.0 - lightWidth : 0.0;
+		var lightWidth = MoonIconSize * lightRatio;
+		// 日本では満ちていく月は右側、欠けていく月は左側を明るく表示する。
+		var lightX = isWaxing ? MoonIconSize - lightWidth : 0.0;
 
 		Kyureki = $"旧暦 {now.ToSimpleLunisolarStr()}";
-		MoonLightClipRect = new Rect(lightX, 0, lightWidth, 24);
+		MoonLightClipRect = new Rect(lightX, 0, lightWidth, MoonIconSize);
 		MoonLightOpacity = CalculateMoonLightOpacity(moonDay);
 		MoonDarkOpacity = moonDay == 15 ? 0.0 : 0.5;
 		MoonPhaseToolTip = $"旧暦 {kyurekiDay}日";
