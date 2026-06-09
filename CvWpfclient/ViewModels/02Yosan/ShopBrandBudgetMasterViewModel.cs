@@ -53,6 +53,9 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	long monthlyBudget;
 
 	[ObservableProperty]
+	long monthlyGrossProfitBudget;
+
+	[ObservableProperty]
 	ObservableCollection<DailyBudgetRow> dailyBudgets = [];
 
 	[ObservableProperty]
@@ -60,6 +63,12 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 	[ObservableProperty]
 	long remainingBudget;
+
+	[ObservableProperty]
+	long totalGrossProfitBudget;
+
+	[ObservableProperty]
+	long remainingGrossProfitBudget;
 
 	[ObservableProperty]
 	string message = string.Empty;
@@ -71,12 +80,15 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	DailyBudgetRow? selectedDailyBudgetRow;
 
 	bool isApplyingHolidayDays;
+	bool isApplyingSelectedYearMonthString;
+	bool isRecalculatingTotals;
 
 	public IEnumerable<DailyBudgetRow> FirstHalfDailyBudgets => DailyBudgets.Where(row => row.Day <= 15);
 
 	public IEnumerable<DailyBudgetRow> SecondHalfDailyBudgets => DailyBudgets.Where(row => row.Day > 15);
 
 	partial void OnSelectedYearMonthChanged(DateTime value) {
+		if (isApplyingSelectedYearMonthString) return;
 		SelectedYearMonthString = value.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 	}
 
@@ -91,6 +103,14 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		ApplyHolidayDays();
 	}
 
+	partial void OnMonthlyBudgetChanged(long value) {
+		RecalculateTotals();
+	}
+
+	partial void OnMonthlyGrossProfitBudgetChanged(long value) {
+		RecalculateTotals();
+	}
+
 	partial void OnDailyBudgetsChanged(ObservableCollection<DailyBudgetRow> value) {
 		foreach (var row in value) {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
@@ -100,6 +120,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	}
 
 	void OnDailyBudgetRowPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
+		if (isRecalculatingTotals) return;
 		if (sender is DailyBudgetRow row) {
 			if (e.PropertyName == nameof(DailyBudgetRow.IsHoliday)) {
 				UpdateRowCoefficient(row);
@@ -114,6 +135,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		if (row.IsHoliday) {
 			row.Coefficient = 0;
 			row.SalesBudget = 0;
+			row.GrossProfitBudget = 0;
 		} else if (row.IsSaturday || row.IsSunday) {
 			row.Coefficient = SaturdaySundayCoefficient;
 		} else {
@@ -133,6 +155,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			MessageEx.ShowWarningDialog("店舗とブランドを選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
+		if (!TryApplySelectedYearMonth()) return;
 
 		IsBusy = true;
 		try {
@@ -164,15 +187,19 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 			GenerateDailyRows();
 			long total = 0;
+			long grossProfitTotal = 0;
 			foreach (var item in list) {
 				if (item is not MasterYosanBrand yosan) continue;
 				if (!int.TryParse(yosan.DenDay.Substring(6, 2), out var day)) continue;
 				var row = DailyBudgets.FirstOrDefault(r => r.Day == day);
 				if (row == null) continue;
 				row.SalesBudget = yosan.UriYosan / 1000;
+				row.GrossProfitBudget = yosan.ArariYosan / 1000;
 				total += row.SalesBudget;
+				grossProfitTotal += row.GrossProfitBudget;
 			}
 			MonthlyBudget = total;
+			MonthlyGrossProfitBudget = grossProfitTotal;
 			ApplyHolidayDays();
 			Message = $"{list.Count}件の予算データを読み込みました。";
 		}
@@ -194,6 +221,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			MessageEx.ShowWarningDialog("店舗とブランドを選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
+		if (!TryApplySelectedYearMonth()) return;
 		GenerateDailyRows();
 		AutoAllocateBudget();
 	}
@@ -204,8 +232,13 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			MessageEx.ShowWarningDialog("店舗とブランドを選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
+		if (!TryApplySelectedYearMonth()) return;
 		if (DailyBudgets.Count == 0) {
 			MessageEx.ShowWarningDialog("予算データがありません。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		if (!HasDailyRowsForSelectedMonth()) {
+			MessageEx.ShowWarningDialog("対象年月の日数と予算データが一致しません。予算作成を実行してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		if (MessageEx.ShowQuestionDialog("予算データを登録しますか？", owner: ClientLib.GetActiveView(this)) != MsgBoxResult.Yes) {
@@ -230,7 +263,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 					Id_Brand = SelectedBrandId,
 					DenDay = yearMonthStr + dayStr,
 					UriYosan = row.SalesBudget * 1000,
-					ArariYosan = 0
+					ArariYosan = row.GrossProfitBudget * 1000
 				};
 				newRecords.Add(record);
 			}
@@ -271,6 +304,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			MessageEx.ShowWarningDialog("店舗とブランドを選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
+		if (!TryApplySelectedYearMonth()) return;
 		if (MessageEx.ShowQuestionDialog("予算データを削除しますか？", owner: ClientLib.GetActiveView(this)) != MsgBoxResult.Yes) {
 			return;
 		}
@@ -283,6 +317,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			DailyBudgets.Clear();
 			NotifyDailyBudgetViews();
 			MonthlyBudget = 0;
+			MonthlyGrossProfitBudget = 0;
 			RecalculateTotals();
 			Message = "予算データを削除しました。";
 			MessageEx.ShowInformationDialog("削除完了しました", owner: ClientLib.GetActiveView(this));
@@ -301,11 +336,12 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 	[RelayCommand]
 	void AutoAllocateBudget() {
-		if (MonthlyBudget <= 0) {
-			MessageEx.ShowWarningDialog("店舗月売上予算を入力してください。", owner: ClientLib.GetActiveView(this));
+		if (!TryApplySelectedYearMonth()) return;
+		if (MonthlyBudget <= 0 && MonthlyGrossProfitBudget <= 0) {
+			MessageEx.ShowWarningDialog("店舗月売上予算または店舗月粗利予算を入力してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-		if (DailyBudgets.Count == 0) {
+		if (DailyBudgets.Count == 0 || !HasDailyRowsForSelectedMonth()) {
 			GenerateDailyRows();
 		}
 		var totalCoefficients = DailyBudgets.Sum(r => r.Coefficient);
@@ -315,6 +351,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		}
 		foreach (var row in DailyBudgets) {
 			row.SalesBudget = (long)Math.Round(MonthlyBudget * row.Coefficient / totalCoefficients);
+			row.GrossProfitBudget = (long)Math.Round(MonthlyGrossProfitBudget * row.Coefficient / totalCoefficients);
 		}
 		RecalculateTotals();
 		Message = "予算を自動配分しました。";
@@ -323,12 +360,23 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	[RelayCommand]
 	void RecalculateTotals() {
 		long runningTotal = 0;
-		foreach (var row in DailyBudgets) {
-			runningTotal += row.SalesBudget;
-			row.RunningTotal = runningTotal;
+		long runningGrossProfitTotal = 0;
+		isRecalculatingTotals = true;
+		try {
+			foreach (var row in DailyBudgets) {
+				runningTotal += row.SalesBudget;
+				runningGrossProfitTotal += row.GrossProfitBudget;
+				row.RunningTotal = runningTotal;
+				row.RunningGrossProfitTotal = runningGrossProfitTotal;
+			}
+		}
+		finally {
+			isRecalculatingTotals = false;
 		}
 		TotalBudget = runningTotal;
 		RemainingBudget = MonthlyBudget - TotalBudget;
+		TotalGrossProfitBudget = runningGrossProfitTotal;
+		RemainingGrossProfitBudget = MonthlyGrossProfitBudget - TotalGrossProfitBudget;
 	}
 
 	[RelayCommand]
@@ -354,8 +402,11 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		DailyBudgets.Clear();
 		NotifyDailyBudgetViews();
 		MonthlyBudget = 0;
+		MonthlyGrossProfitBudget = 0;
 		TotalBudget = 0;
 		RemainingBudget = 0;
+		TotalGrossProfitBudget = 0;
+		RemainingGrossProfitBudget = 0;
 		Message = string.Empty;
 	}
 
@@ -414,6 +465,29 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			}
 		}
 		return result;
+	}
+
+	bool TryApplySelectedYearMonth() {
+		var value = SelectedYearMonthString.Trim();
+		var formats = new[] { "yyyy/MM", "yyyy/M", "yyyyMM", "yyyy-MM", "yyyy-M" };
+		if (!DateTime.TryParseExact(value, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)) {
+			MessageEx.ShowWarningDialog("年月は yyyy/MM 形式で入力してください。", owner: ClientLib.GetActiveView(this));
+			return false;
+		}
+		isApplyingSelectedYearMonthString = true;
+		try {
+			SelectedYearMonth = new DateTime(parsed.Year, parsed.Month, 1);
+			SelectedYearMonthString = SelectedYearMonth.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+		}
+		finally {
+			isApplyingSelectedYearMonthString = false;
+		}
+		return true;
+	}
+
+	bool HasDailyRowsForSelectedMonth() {
+		var daysInMonth = DateTime.DaysInMonth(SelectedYearMonth.Year, SelectedYearMonth.Month);
+		return DailyBudgets.Count == daysInMonth && DailyBudgets.All(row => row.Day >= 1 && row.Day <= daysInMonth);
 	}
 
 	async Task DeleteExistingBudgets(CancellationToken ct) {
@@ -497,7 +571,14 @@ public partial class DailyBudgetRow : ObservableObject {
 	long salesBudget;
 
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(RunningGrossProfitTotal))]
+	long grossProfitBudget;
+
+	[ObservableProperty]
 	long runningTotal;
+
+	[ObservableProperty]
+	long runningGrossProfitTotal;
 
 	[ObservableProperty]
 	double coefficient = 1.0;

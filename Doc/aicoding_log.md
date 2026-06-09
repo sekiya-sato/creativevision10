@@ -577,3 +577,28 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
 
 ---
+
+## [2026-06-09] 17:38 店ブランド予算マスタ粗利予算追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ShopBrandBudgetMasterView で対象月の最終日まで予算を作成し、売上予算に加えて粗利予算も千円単位で入力・修正・登録できるようにする。
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: `SelectedYearMonthString` をコマンド実行時に `SelectedYearMonth` へ反映し、`DateTime.DaysInMonth` で対象月の最終日まで日別行を生成
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: 月粗利予算、日別粗利予算、粗利累計、粗利配分残を追加し、売上予算と同様に再計算へ反映
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: DB読込時は `UriYosan` / `ArariYosan` を1000で割って千円単位へ変換し、登録時は `SalesBudget` / `GrossProfitBudget` を1000倍して円単位で保存
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: 対象年月の日数と日別行数が一致しない場合は登録前に警告して中断
+- CvWpfclient/Views/02Yosan/ShopBrandBudgetMasterView.xaml: 店舗月粗利予算入力、日別粗利予算列、粗利累計列、粗利合計/粗利配分残表示を追加
+### 技術決定 Why
+- DBの `MasterYosanBrand` は売上予算 `UriYosan` と粗利予算 `ArariYosan` を円単位で保持しているため、画面の千円単位入力とDBの円単位保存をViewModel内の読込・登録境界で変換した
+- 年月TextBoxの文字列をコマンド実行時に正規化してから `DateTime.DaysInMonth` を使い、6月30日、7月31日、2月28/29日のような月末差を標準APIで処理した
+### 確認
+- `ShopBrandBudgetMasterView.xaml` のXML構文確認でエラーなし
+- `DateTime.DaysInMonth` で 2026/06=30、2026/07=31、2026/02=28、2028/02=29 を確認
+- `git diff --check` で whitespace error なし
+- 変更3ファイルが UTF-8 BOMなし、CRLF であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
+
+---

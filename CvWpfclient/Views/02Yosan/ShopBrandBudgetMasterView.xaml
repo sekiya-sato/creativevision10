@@ -101,7 +101,10 @@
                 <Grid Grid.Row="1" Grid.ColumnSpan="8" Margin="0,8,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="160" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="160" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -109,8 +112,11 @@
                     <TextBlock Grid.Column="0" Margin="8,0,8,0" VerticalAlignment="Center" Text="店舗月売上予算" />
                     <TextBox Grid.Column="1" VerticalAlignment="Center" HorizontalContentAlignment="Right" Text="{Binding MonthlyBudget, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock Grid.Column="2" Margin="16,0,8,0" VerticalAlignment="Center" Text="千円" />
-                    <TextBlock Grid.Column="3" Margin="32,0,8,0" VerticalAlignment="Center" Text="休業日" />
-                    <TextBox Grid.Column="4" VerticalAlignment="Center" materialDesign:HintAssist.Hint="例: 7 8 10 22" Text="{Binding HolidayDaysText, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Column="3" Margin="32,0,8,0" VerticalAlignment="Center" Text="店舗月粗利予算" />
+                    <TextBox Grid.Column="4" VerticalAlignment="Center" HorizontalContentAlignment="Right" Text="{Binding MonthlyGrossProfitBudget, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Column="5" Margin="16,0,8,0" VerticalAlignment="Center" Text="千円" />
+                    <TextBlock Grid.Column="6" Margin="32,0,8,0" VerticalAlignment="Center" Text="休業日" />
+                    <TextBox Grid.Column="7" VerticalAlignment="Center" materialDesign:HintAssist.Hint="例: 7 8 10 22" Text="{Binding HolidayDaysText, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
             </Grid>
         </materialDesign:Card>
@@ -184,7 +190,9 @@
                             <DataGridTextColumn Width="60" Binding="{Binding Day}" Header="日付" IsReadOnly="True" />
                             <DataGridTextColumn Width="60" Binding="{Binding DayOfWeek}" Header="曜日" IsReadOnly="True" />
                             <DataGridTextColumn Width="*" Binding="{Binding SalesBudget, StringFormat={}{0:N0}}" Header="売上予算" />
-                            <DataGridTextColumn Width="*" Binding="{Binding RunningTotal, StringFormat={}{0:N0}}" Header="累計" IsReadOnly="True" />
+                            <DataGridTextColumn Width="*" Binding="{Binding GrossProfitBudget, StringFormat={}{0:N0}}" Header="粗利予算" />
+                            <DataGridTextColumn Width="*" Binding="{Binding RunningTotal, StringFormat={}{0:N0}}" Header="売上累計" IsReadOnly="True" />
+                            <DataGridTextColumn Width="*" Binding="{Binding RunningGrossProfitTotal, StringFormat={}{0:N0}}" Header="粗利累計" IsReadOnly="True" />
                         </DataGrid.Columns>
                     </DataGrid>
                     <DataGrid Grid.Row="1" Grid.Column="2" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" FrozenColumnCount="1" IsReadOnly="False" ItemsSource="{Binding SecondHalfDailyBudgets}" SelectedItem="{Binding SelectedDailyBudgetRow}" Style="{StaticResource MaterialDesignDataGrid}" VirtualizingPanel.IsVirtualizing="True">
@@ -192,7 +200,9 @@
                             <DataGridTextColumn Width="60" Binding="{Binding Day}" Header="日付" IsReadOnly="True" />
                             <DataGridTextColumn Width="60" Binding="{Binding DayOfWeek}" Header="曜日" IsReadOnly="True" />
                             <DataGridTextColumn Width="*" Binding="{Binding SalesBudget, StringFormat={}{0:N0}}" Header="売上予算" />
-                            <DataGridTextColumn Width="*" Binding="{Binding RunningTotal, StringFormat={}{0:N0}}" Header="累計" IsReadOnly="True" />
+                            <DataGridTextColumn Width="*" Binding="{Binding GrossProfitBudget, StringFormat={}{0:N0}}" Header="粗利予算" />
+                            <DataGridTextColumn Width="*" Binding="{Binding RunningTotal, StringFormat={}{0:N0}}" Header="売上累計" IsReadOnly="True" />
+                            <DataGridTextColumn Width="*" Binding="{Binding RunningGrossProfitTotal, StringFormat={}{0:N0}}" Header="粗利累計" IsReadOnly="True" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -203,14 +213,28 @@
             <DockPanel>
                 <TextBlock DockPanel.Dock="Right" Margin="16,0,0,0" VerticalAlignment="Center">
                     <TextBlock.Text>
-                        <MultiBinding StringFormat="配分残: {0:N0} 千円">
+                        <MultiBinding StringFormat="粗利配分残: {0:N0} 千円">
+                            <Binding Path="RemainingGrossProfitBudget" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+                <TextBlock DockPanel.Dock="Right" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="粗利合計: {0:N0} 千円">
+                            <Binding Path="TotalGrossProfitBudget" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+                <TextBlock DockPanel.Dock="Right" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="売上配分残: {0:N0} 千円">
                             <Binding Path="RemainingBudget" />
                         </MultiBinding>
                     </TextBlock.Text>
                 </TextBlock>
                 <TextBlock DockPanel.Dock="Right" Margin="16,0,0,0" VerticalAlignment="Center">
                     <TextBlock.Text>
-                        <MultiBinding StringFormat="合計: {0:N0} 千円">
+                        <MultiBinding StringFormat="売上合計: {0:N0} 千円">
                             <Binding Path="TotalBudget" />
                         </MultiBinding>
                     </TextBlock.Text>
