@@ -27,9 +27,15 @@
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
         </Style>
+        <Style x:Key="BudgetActionButtonStyle" BasedOn="{StaticResource MaterialDesignOutlinedButton}" TargetType="Button">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
     </helpers:BaseWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -38,44 +44,6 @@
 
         <materialDesign:ColorZone Grid.Row="0" Padding="12,8" materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button Margin="4,0" Command="{Binding CreateBudgetCommand}" Style="{StaticResource MaterialDesignToolForegroundButton}" ToolTip="予算作成">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon VerticalAlignment="Center" Kind="Calendar" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="予算作成" />
-                        </StackPanel>
-                    </Button>
-                    <Button Margin="4,0" Command="{Binding LoadBudgetCommand}" Style="{StaticResource MaterialDesignToolForegroundButton}" ToolTip="予算読込">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon VerticalAlignment="Center" Kind="DatabaseRefresh" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="予算読込" />
-                        </StackPanel>
-                    </Button>
-                    <Button Margin="4,0" Command="{Binding SaveBudgetCommand}" Style="{StaticResource MaterialDesignToolForegroundButton}" ToolTip="予算決定">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon VerticalAlignment="Center" Kind="ContentSave" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="予算決定" />
-                        </StackPanel>
-                    </Button>
-                    <Button Margin="4,0" Command="{Binding DeleteBudgetCommand}" Style="{StaticResource MaterialDesignToolForegroundButton}" ToolTip="予算削除">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon VerticalAlignment="Center" Kind="Delete" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="予算削除" />
-                        </StackPanel>
-                    </Button>
-                    <Button Margin="4,0" Command="{Binding AutoAllocateBudgetCommand}" Style="{StaticResource MaterialDesignToolForegroundButton}" ToolTip="自動予算配分">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon VerticalAlignment="Center" Kind="Calculator" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="自動配分" />
-                        </StackPanel>
-                    </Button>
-                    <Button Margin="4,0" Command="{Binding RecalculateTotalsCommand}" Style="{StaticResource MaterialDesignToolForegroundButton}" ToolTip="累計再計算">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon VerticalAlignment="Center" Kind="Sigma" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="累計再計算" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <Button Margin="0,0,8,0" Command="{Binding ExitCommand}" Style="{StaticResource MaterialDesignToolForegroundButton}" ToolTip="戻る (Esc)">
                         <materialDesign:PackIcon Kind="ArrowLeft" />
@@ -86,7 +54,7 @@
             </DockPanel>
         </materialDesign:ColorZone>
 
-        <materialDesign:Card Grid.Row="1" Margin="12,8,12,8" Padding="12" materialDesign:ElevationAssist.Elevation="Dp2">
+        <materialDesign:Card Grid.Row="1" Margin="12,8,12,6" Padding="12" materialDesign:ElevationAssist.Elevation="Dp2">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -104,7 +72,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Margin="8,0,8,0" VerticalAlignment="Center" Text="年月" />
                 <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Text="{Binding SelectedYearMonthString, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Grid.Row="0" Grid.Column="2" Margin="16,0,8,0" VerticalAlignment="Center" Text="店舗" />
+                <TextBlock Grid.Row="0" Grid.Column="2" Margin="16,0,8,0" VerticalAlignment="Center" Text="店舗ID" />
                 <DockPanel Grid.Row="0" Grid.Column="3">
                     <helpers:SearchTextBox Width="120" Height="36" Command="{Binding SelectShopCommand}" DockPanel.Dock="Left" Style="{StaticResource MenteSearchTextBox}" Text="{Binding SelectedShopCode, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
@@ -116,7 +84,7 @@
                         </TextBlock.Text>
                     </TextBlock>
                 </DockPanel>
-                <TextBlock Grid.Row="0" Grid.Column="4" Margin="16,0,8,0" VerticalAlignment="Center" Text="ブランド" />
+                <TextBlock Grid.Row="0" Grid.Column="4" Margin="16,0,8,0" VerticalAlignment="Center" Text="ブランドID" />
                 <DockPanel Grid.Row="0" Grid.Column="5">
                     <helpers:SearchTextBox Width="120" Height="36" Command="{Binding SelectBrandCommand}" DockPanel.Dock="Left" Style="{StaticResource MenteSearchTextBox}" Text="{Binding SelectedBrandCode, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
@@ -130,13 +98,65 @@
                 </DockPanel>
                 <TextBlock Grid.Row="0" Grid.Column="6" Margin="16,0,8,0" VerticalAlignment="Center" Text="土日指数" />
                 <TextBox Grid.Row="0" Grid.Column="7" VerticalAlignment="Center" Text="{Binding SaturdaySundayCoefficient, StringFormat=F1, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Grid.Row="1" Grid.Column="0" Margin="8,8,8,0" VerticalAlignment="Center" Text="店舗月売上予算" />
-                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" VerticalAlignment="Center" HorizontalContentAlignment="Right" Text="{Binding MonthlyBudget, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Grid.Row="1" Grid.Column="2" Margin="16,8,8,0" VerticalAlignment="Center" Text="千円" />
+                <Grid Grid.Row="1" Grid.ColumnSpan="8" Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Margin="8,0,8,0" VerticalAlignment="Center" Text="店舗月売上予算" />
+                    <TextBox Grid.Column="1" VerticalAlignment="Center" HorizontalContentAlignment="Right" Text="{Binding MonthlyBudget, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Column="2" Margin="16,0,8,0" VerticalAlignment="Center" Text="千円" />
+                    <TextBlock Grid.Column="3" Margin="32,0,8,0" VerticalAlignment="Center" Text="休業日" />
+                    <TextBox Grid.Column="4" VerticalAlignment="Center" materialDesign:HintAssist.Hint="例: 7 8 10 22" Text="{Binding HolidayDaysText, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
             </Grid>
         </materialDesign:Card>
 
-        <materialDesign:Card Grid.Row="2" Margin="12,0,12,8" Padding="0" materialDesign:ElevationAssist.Elevation="Dp2">
+        <Border Grid.Row="2" Margin="12,0,12,8" Padding="8,6" Background="{DynamicResource MaterialDesignPaper}">
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Command="{Binding CreateBudgetCommand}" Style="{StaticResource BudgetActionButtonStyle}" ToolTip="予算作成">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="Calendar" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="予算作成" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding LoadBudgetCommand}" Style="{StaticResource BudgetActionButtonStyle}" ToolTip="予算読込">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="DatabaseRefresh" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="予算読込" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding SaveBudgetCommand}" Style="{StaticResource BudgetActionButtonStyle}" ToolTip="予算決定">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="ContentSave" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="予算決定" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding DeleteBudgetCommand}" Style="{StaticResource BudgetActionButtonStyle}" ToolTip="予算削除">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="Delete" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="予算削除" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding AutoAllocateBudgetCommand}" Style="{StaticResource BudgetActionButtonStyle}" ToolTip="自動予算配分">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="Calculator" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="自動配分" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding RecalculateTotalsCommand}" Style="{StaticResource BudgetActionButtonStyle}" ToolTip="累計再計算">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="Sigma" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="累計再計算" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <materialDesign:Card Grid.Row="3" Margin="12,0,12,8" Padding="0" materialDesign:ElevationAssist.Elevation="Dp2">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -147,20 +167,39 @@
                         <TextBlock DockPanel.Dock="Right" Style="{StaticResource StatusTextBlockStyle}" Text="{Binding Message}" />
                     </DockPanel>
                 </Border>
-                <DataGrid Grid.Row="1" Margin="8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" FrozenColumnCount="1" IsReadOnly="False" ItemsSource="{Binding DailyBudgets}" SelectedItem="{Binding SelectedDailyBudgetRow}" Style="{StaticResource MaterialDesignDataGrid}" VirtualizingPanel.IsVirtualizing="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding Day}" Header="日付" IsReadOnly="True" />
-                        <DataGridTextColumn Binding="{Binding DayOfWeek}" Header="曜日" IsReadOnly="True" />
-                        <DataGridTextColumn Binding="{Binding SalesBudget, StringFormat={}{0:N0}}" Header="売上予算" />
-                        <DataGridTextColumn Binding="{Binding RunningTotal, StringFormat={}{0:N0}}" Header="累計" IsReadOnly="True" />
-                        <DataGridTextColumn Binding="{Binding Coefficient, StringFormat=F1}" Header="指数" IsReadOnly="True" />
-                        <DataGridCheckBoxColumn Binding="{Binding IsHoliday}" Header="休業日" />
-                    </DataGrid.Columns>
-                </DataGrid>
+                <Grid Grid.Row="1" Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,0,4" FontWeight="SemiBold" Text="1-15日" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Margin="0,0,0,4" FontWeight="SemiBold" Text="16日以降" />
+                    <DataGrid Grid.Row="1" Grid.Column="0" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" FrozenColumnCount="1" IsReadOnly="False" ItemsSource="{Binding FirstHalfDailyBudgets}" SelectedItem="{Binding SelectedDailyBudgetRow}" Style="{StaticResource MaterialDesignDataGrid}" VirtualizingPanel.IsVirtualizing="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="60" Binding="{Binding Day}" Header="日付" IsReadOnly="True" />
+                            <DataGridTextColumn Width="60" Binding="{Binding DayOfWeek}" Header="曜日" IsReadOnly="True" />
+                            <DataGridTextColumn Width="*" Binding="{Binding SalesBudget, StringFormat={}{0:N0}}" Header="売上予算" />
+                            <DataGridTextColumn Width="*" Binding="{Binding RunningTotal, StringFormat={}{0:N0}}" Header="累計" IsReadOnly="True" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <DataGrid Grid.Row="1" Grid.Column="2" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" FrozenColumnCount="1" IsReadOnly="False" ItemsSource="{Binding SecondHalfDailyBudgets}" SelectedItem="{Binding SelectedDailyBudgetRow}" Style="{StaticResource MaterialDesignDataGrid}" VirtualizingPanel.IsVirtualizing="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="60" Binding="{Binding Day}" Header="日付" IsReadOnly="True" />
+                            <DataGridTextColumn Width="60" Binding="{Binding DayOfWeek}" Header="曜日" IsReadOnly="True" />
+                            <DataGridTextColumn Width="*" Binding="{Binding SalesBudget, StringFormat={}{0:N0}}" Header="売上予算" />
+                            <DataGridTextColumn Width="*" Binding="{Binding RunningTotal, StringFormat={}{0:N0}}" Header="累計" IsReadOnly="True" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </Grid>
         </materialDesign:Card>
 
-        <Border Grid.Row="3" Padding="12,8" Background="{DynamicResource MaterialDesignToolBarBackground}">
+        <Border Grid.Row="4" Padding="12,8" Background="{DynamicResource MaterialDesignToolBarBackground}">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Right" Margin="16,0,0,0" VerticalAlignment="Center">
                     <TextBlock.Text>

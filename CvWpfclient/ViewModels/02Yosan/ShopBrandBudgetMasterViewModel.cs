@@ -47,6 +47,9 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	double saturdaySundayCoefficient = 1.0;
 
 	[ObservableProperty]
+	string holidayDaysText = string.Empty;
+
+	[ObservableProperty]
 	long monthlyBudget;
 
 	[ObservableProperty]
@@ -67,14 +70,32 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	[ObservableProperty]
 	DailyBudgetRow? selectedDailyBudgetRow;
 
+	bool isApplyingHolidayDays;
+
+	public IEnumerable<DailyBudgetRow> FirstHalfDailyBudgets => DailyBudgets.Where(row => row.Day <= 15);
+
+	public IEnumerable<DailyBudgetRow> SecondHalfDailyBudgets => DailyBudgets.Where(row => row.Day > 15);
+
 	partial void OnSelectedYearMonthChanged(DateTime value) {
 		SelectedYearMonthString = value.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+	}
+
+	partial void OnSaturdaySundayCoefficientChanged(double value) {
+		foreach (var row in DailyBudgets) {
+			UpdateRowCoefficient(row);
+		}
+		RecalculateTotals();
+	}
+
+	partial void OnHolidayDaysTextChanged(string value) {
+		ApplyHolidayDays();
 	}
 
 	partial void OnDailyBudgetsChanged(ObservableCollection<DailyBudgetRow> value) {
 		foreach (var row in value) {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 		}
+		NotifyDailyBudgetViews();
 		RecalculateTotals();
 	}
 
@@ -83,16 +104,18 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			if (e.PropertyName == nameof(DailyBudgetRow.IsHoliday)) {
 				UpdateRowCoefficient(row);
 			}
-			RecalculateTotals();
+			if (!isApplyingHolidayDays) {
+				RecalculateTotals();
+			}
 		}
 	}
 
-	static void UpdateRowCoefficient(DailyBudgetRow row) {
+	void UpdateRowCoefficient(DailyBudgetRow row) {
 		if (row.IsHoliday) {
 			row.Coefficient = 0;
 			row.SalesBudget = 0;
 		} else if (row.IsSaturday || row.IsSunday) {
-			row.Coefficient = 1.0;
+			row.Coefficient = SaturdaySundayCoefficient;
 		} else {
 			row.Coefficient = 1.0;
 		}
@@ -150,7 +173,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 				total += row.SalesBudget;
 			}
 			MonthlyBudget = total;
-			RecalculateTotals();
+			ApplyHolidayDays();
 			Message = $"{list.Count}件の予算データを読み込みました。";
 		}
 		catch (OperationCanceledException) {
@@ -258,6 +281,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			await DeleteExistingBudgets(ct);
 			DailyBudgets.Clear();
+			NotifyDailyBudgetViews();
 			MonthlyBudget = 0;
 			RecalculateTotals();
 			Message = "予算データを削除しました。";
@@ -328,6 +352,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	[RelayCommand]
 	void ClearAll() {
 		DailyBudgets.Clear();
+		NotifyDailyBudgetViews();
 		MonthlyBudget = 0;
 		TotalBudget = 0;
 		RemainingBudget = 0;
@@ -355,7 +380,40 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 			DailyBudgets.Add(row);
 		}
+		NotifyDailyBudgetViews();
+		ApplyHolidayDays();
+	}
+
+	void ApplyHolidayDays() {
+		var holidayDays = ParseHolidayDays(HolidayDaysText);
+		isApplyingHolidayDays = true;
+		try {
+			foreach (var row in DailyBudgets) {
+				row.IsHoliday = holidayDays.Contains(row.Day);
+				UpdateRowCoefficient(row);
+			}
+		}
+		finally {
+			isApplyingHolidayDays = false;
+		}
 		RecalculateTotals();
+	}
+
+	void NotifyDailyBudgetViews() {
+		OnPropertyChanged(nameof(FirstHalfDailyBudgets));
+		OnPropertyChanged(nameof(SecondHalfDailyBudgets));
+	}
+
+	static HashSet<int> ParseHolidayDays(string text) {
+		var result = new HashSet<int>();
+		if (string.IsNullOrWhiteSpace(text)) return result;
+		var tokens = text.Split([' ', '　', '\t', '\r', '\n', ',', '、', '，'], StringSplitOptions.RemoveEmptyEntries);
+		foreach (var token in tokens) {
+			if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var day) && day > 0) {
+				result.Add(day);
+			}
+		}
+		return result;
 	}
 
 	async Task DeleteExistingBudgets(CancellationToken ct) {

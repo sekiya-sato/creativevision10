@@ -553,3 +553,27 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
 
 ---
+
+## [2026-06-09] 17:25 店ブランド予算マスタ月一括レイアウト調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ShopBrandBudgetMasterView.xaml のレイアウトを調整し、上部ボタン群、店舗ID/ブランドID表記、休業日入力、日別一覧表示を見直す。
+### 実施内容
+- CvWpfclient/Views/02Yosan/ShopBrandBudgetMasterView.xaml: ColorZone上の操作ボタン群を条件カード下の専用行へ移動し、店舗/ブランドのラベルを店舗ID/ブランドIDへ変更
+- CvWpfclient/Views/02Yosan/ShopBrandBudgetMasterView.xaml: 休業日を上段のTextBox入力へ移し、日別一覧から指数列と休業日チェック列を削除
+- CvWpfclient/Views/02Yosan/ShopBrandBudgetMasterView.xaml: 日別一覧を1-15日と16日以降の2つのDataGridへ分割
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: 休業日TextBox用の `HolidayDaysText` と、前半/後半表示用の `FirstHalfDailyBudgets` / `SecondHalfDailyBudgets` を追加
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: 空白・カンマ区切りの休業日入力を解析し、既存の `DailyBudgetRow.IsHoliday` と係数計算へ反映
+### 技術決定 Why
+- 保存・読込の対象である `DailyBudgets` は既存のまま維持し、画面表示だけを前半/後半に分けることで登録処理への影響を抑えた
+- 休業日は一覧セル編集ではなく上段TextBoxの入力から既存の `IsHoliday` に反映し、休日の売上予算を0にする従来ロジックを継続した
+### 確認
+- `ShopBrandBudgetMasterView.xaml` のXML構文確認でエラーなし
+- `git diff --check` で whitespace error なし
+- 変更3ファイルが UTF-8 BOMなし、CRLF であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
+
+---
