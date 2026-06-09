@@ -9,7 +9,7 @@ using System.Runtime.ExceptionServices;
 
 namespace CvServer.Services;
 
-public class SchedulerService : ISchedulerService {
+public class SchedulerService : ISchedulerService, IDisposable {
 	private const int Success = 0;
 	private const int InvalidRequest = 1;
 	private const int InvalidCronExpression = 2;
@@ -42,7 +42,8 @@ public class SchedulerService : ISchedulerService {
 	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler, ExDatabase db, IConfiguration configuration, IWebHostEnvironment env) {
 		_logger = logger;
 		_scheduler = scheduler;
-		_db = db;
+		// スケジューラではクローンして別接続として使用する
+		_db = db.CloneDb();
 		_configuration = configuration;
 		_env = env;
 	}
@@ -476,6 +477,11 @@ public class SchedulerService : ISchedulerService {
 		}
 		var checkpointResult = result.First();
 		return checkpointResult;
+	}
+
+	public void Dispose() {
+		// クローンした接続を破棄
+		_db.Dispose();
 	}
 
 	private static class Helpers {

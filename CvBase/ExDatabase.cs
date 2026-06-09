@@ -28,6 +28,17 @@ public partial class ExDatabase : Database {
 		Connection?.Close();
 	}
 	/// <summary>
+	/// データベースのクローンを作成する (同じ接続文字列で新しい接続を作成)
+	/// </summary>
+	/// <returns></returns>
+	public virtual ExDatabase CloneDb() {
+		var newDb = new ExDatabase((DbConnection)Activator.CreateInstance(Connection.GetType(), Connection.ConnectionString)!);
+		return newDb;
+	}
+
+
+
+	/// <summary>
 	/// テーブル作成のSQL文の生成
 	/// [Generating SQL statements for table creation]
 	/// </summary>
