@@ -399,3 +399,25 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warning / 0 error）を確認
 
 ---
+
+## [2026-06-09] 12:16 SkillOpt手法のrepo-local skill運用への取り込み
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：https://microsoft.github.io/SkillOpt/ で提示されているSkillOptの手法を取り入れる。修正後はログ、コミットまで行う。
+### 実施内容
+- AGENTS.md: `.agents/skills/*/SKILL.md` を訓練対象として扱い、実タスク証拠、成功/失敗の分離反省、bounded edit、held-out validation gate、rejected edit のscratch管理を行うSkillOptベースの運用ルールを追加
+- .agents/skills/skillopt-skill-improvement/SKILL.md: SkillOpt手法でrepo-local skillを改善するための新規skillを追加し、Evidence / Reflect / Bounded Edit / Validation Gate / Export の手順を定義
+### 技術決定 Why
+- 外部SkillOpt本体を自動導入せず、既存の`.agents/skills`運用へ検証ゲート付きの小さなskill編集手法として取り込むことで、依存追加なしに既存repo運用へ適用できるようにした
+- skill本体には採用済み手順だけを残し、optimizer側の長い反省やrejected editsはscratchに分離する方針にして、deployされる`SKILL.md`を軽量に保つようにした
+### 影響範囲
+- エージェント運用指示とrepo-local skillのみ。アプリケーションコードへの変更なし
+### 確認
+- `skillopt-skill-improvement` のYAML frontmatter確認で `frontmatter ok`
+- `AGENTS.md` と `.agents/skills/skillopt-skill-improvement/SKILL.md` が UTF-8 BOMなし、CRLF であることを確認
+- `git diff --check` で whitespace error なしを確認
+
+---

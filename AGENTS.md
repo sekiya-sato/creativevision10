@@ -13,6 +13,15 @@
 - Search: Use `grep -r` for Japanese terms.
 - Database: Use `sqlite3` for `server-user163.db` files; avoid direct file edits.
 
+## SkillOpt-Based Skill Maintenance
+- Treat `.agents/skills/*/SKILL.md` as the trainable state of the agent, and improve it from actual rollout evidence instead of broad prompt rewrites.
+- For skill updates, collect task evidence first: user request, selected skill, files touched, tool/verification output, final result, and failure mode.
+- Reflect on failure and success evidence separately. Fix recurring failures while preserving procedures that already worked.
+- Apply bounded add/delete/replace edits only. Default to a small edit budget, and split generic workflow and feature-specific troubleshooting into separate skills when reuse boundaries differ.
+- Gate every candidate skill before adoption with held-out validation that was not used to propose the edit. Reject changes that pass the edited case but regress another representative case.
+- Keep rejected-edit reasons, slow-update notes, and optimizer-side observations in `.sisyphus/` scratch memos for complex tasks; deploy only the compact final `SKILL.md` unless the user explicitly asks for research notes.
+- Do not install or run external SkillOpt tooling automatically. This repository adopts the SkillOpt method as a disciplined local skill-improvement workflow.
+
 ## Architecture
 - **Read-Only**: Layer 0 (`CodeShare`/`CvAsset`), Layer 1 (`CvBase`), Layer 1.2 (DB), Layer 1.4 (Prints)  Write if necessary.
 - **Server Layering**: (0) -> (1-1.4) -> `CvDomainLogic` (1.5) -> `CvServer` (2).
