@@ -47,7 +47,6 @@ public class DefineDataTable {
 			// マスタテーブル4
 			typeof(MasterYosanBrand),
 			typeof(MasterYosanHanbai),
-			typeof(MasterYosanEigyoTanto),
 
 			// トランザクションテーブル
 			typeof(Tran00Uriage),
