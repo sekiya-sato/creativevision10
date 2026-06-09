@@ -83,9 +83,9 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	bool isApplyingSelectedYearMonthString;
 	bool isRecalculatingTotals;
 
-	public IEnumerable<DailyBudgetRow> FirstHalfDailyBudgets => DailyBudgets.Where(row => row.Day <= 15);
+	public ObservableCollection<DailyBudgetRow> FirstHalfDailyBudgets { get; } = [];
 
-	public IEnumerable<DailyBudgetRow> SecondHalfDailyBudgets => DailyBudgets.Where(row => row.Day > 15);
+	public ObservableCollection<DailyBudgetRow> SecondHalfDailyBudgets { get; } = [];
 
 	partial void OnSelectedYearMonthChanged(DateTime value) {
 		if (isApplyingSelectedYearMonthString) return;
@@ -115,7 +115,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		foreach (var row in value) {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 		}
-		NotifyDailyBudgetViews();
+		RefreshDailyBudgetViews();
 		RecalculateTotals();
 	}
 
@@ -315,7 +315,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			await DeleteExistingBudgets(ct);
 			DailyBudgets.Clear();
-			NotifyDailyBudgetViews();
+			RefreshDailyBudgetViews();
 			MonthlyBudget = 0;
 			MonthlyGrossProfitBudget = 0;
 			RecalculateTotals();
@@ -400,7 +400,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	[RelayCommand]
 	void ClearAll() {
 		DailyBudgets.Clear();
-		NotifyDailyBudgetViews();
+		RefreshDailyBudgetViews();
 		MonthlyBudget = 0;
 		MonthlyGrossProfitBudget = 0;
 		TotalBudget = 0;
@@ -431,7 +431,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 			DailyBudgets.Add(row);
 		}
-		NotifyDailyBudgetViews();
+		RefreshDailyBudgetViews();
 		ApplyHolidayDays();
 	}
 
@@ -450,9 +450,16 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		RecalculateTotals();
 	}
 
-	void NotifyDailyBudgetViews() {
-		OnPropertyChanged(nameof(FirstHalfDailyBudgets));
-		OnPropertyChanged(nameof(SecondHalfDailyBudgets));
+	void RefreshDailyBudgetViews() {
+		FirstHalfDailyBudgets.Clear();
+		SecondHalfDailyBudgets.Clear();
+		foreach (var row in DailyBudgets) {
+			if (row.Day <= 15) {
+				FirstHalfDailyBudgets.Add(row);
+			} else {
+				SecondHalfDailyBudgets.Add(row);
+			}
+		}
 	}
 
 	static HashSet<int> ParseHolidayDays(string text) {

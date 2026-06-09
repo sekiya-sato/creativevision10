@@ -602,3 +602,25 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
 
 ---
+
+## [2026-06-09] 17:45 店ブランド予算マスタ日別予算編集不可修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ShopBrandBudgetMasterView の日別一覧で売上予算・粗利予算を修正しようとすると `'EditItem' は、このビューに対して許可されていません。` が発生する不具合を修正する。
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: `FirstHalfDailyBudgets` / `SecondHalfDailyBudgets` を `DailyBudgets.Where(...)` の `IEnumerable` から `ObservableCollection<DailyBudgetRow>` へ変更
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: `RefreshDailyBudgetViews()` を追加し、保存対象の `DailyBudgets` と同じ `DailyBudgetRow` オブジェクトを1-15日/16日以降の表示用コレクションへ振り分けるよう修正
+### 技術決定 Why
+- WPF DataGrid は LINQ `Where` の列挙ビューに対して行編集の `EditItem` を開始できないため、編集可能な `ObservableCollection` を `ItemsSource` に渡す必要がある
+- 表示用コレクションにはコピーではなく同じ `DailyBudgetRow` インスタンスを入れ、売上予算・粗利予算のセル編集結果が既存の登録対象 `DailyBudgets` にそのまま反映されるようにした
+### 確認
+- `ShopBrandBudgetMasterView.xaml` のXML構文確認でエラーなし
+- `FirstHalfDailyBudgets` / `SecondHalfDailyBudgets` が `ObservableCollection<DailyBudgetRow>` になり、`DailyBudgets.Where(...)` が残っていないことを確認
+- `git diff --check` で whitespace error なし
+- 変更ファイルが UTF-8 BOMなし、CRLF であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
+
+---
