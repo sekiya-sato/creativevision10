@@ -519,7 +519,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		MoonLightClipRect = new Rect(lightX, 0, lightWidth, MoonIconSize);
 		MoonLightOpacity = CalculateMoonLightOpacity(moonDay);
 		MoonDarkOpacity = moonDay == 15 ? 0.0 : 0.5;
-		MoonPhaseToolTip = $"旧暦 {kyurekiDay}日";
+		MoonPhaseToolTip = $"今夜の月：旧暦 {kyurekiDay}日";
 	}
 
 	private static int GetKyurekiDay(DateTime date) {

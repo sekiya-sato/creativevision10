@@ -101,9 +101,9 @@
 									</Ellipse.Clip>
 								</Ellipse>
 								<Ellipse Width="24" Height="24"
+									Opacity="0.35"
 									Stroke="{DynamicResource SubTitleColor}"
-									StrokeThickness="1"
-									Opacity="0.35" />
+									StrokeThickness="1" />
 							</Grid>
 						</Viewbox>
 					</Border>
@@ -177,16 +177,17 @@
 									Style="{StaticResource MetricLabel}"
 									Text="{Binding CurrentDate, FallbackValue='00/00/00'}" />
 
-							<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-								<TextBlock HorizontalAlignment="Center"
-									d:Text="Sun " FontSize="18" FontWeight="Bold"
-									Foreground="{Binding CurrentTimeDayForeground}"
-									Text="{Binding CurrentTimeDay, FallbackValue='Sun '}" />
-								<TextBlock HorizontalAlignment="Center"
-									d:Text="00:00:00" FontSize="18" FontWeight="Bold"
-									Foreground="{DynamicResource TitleColor}"
-									Text="{Binding CurrentTimeClock, FallbackValue='00:00:00'}" />
-							</StackPanel>
+								<StackPanel HorizontalAlignment="Center"
+									Orientation="Horizontal">
+									<TextBlock HorizontalAlignment="Center"
+										d:Text="Sun " FontSize="18" FontWeight="Bold"
+										Foreground="{Binding CurrentTimeDayForeground}"
+										Text="{Binding CurrentTimeDay, FallbackValue='Sun '}" />
+									<TextBlock HorizontalAlignment="Center"
+										d:Text="00:00:00" FontSize="18" FontWeight="Bold"
+										Foreground="{DynamicResource TitleColor}"
+										Text="{Binding CurrentTimeClock, FallbackValue='00:00:00'}" />
+								</StackPanel>
 								<TextBlock Margin="10,0,0,0"
 									d:Text="旧暦xx月xx日" FontSize="12"
 									Foreground="{DynamicResource TitleColor}"
