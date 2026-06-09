@@ -1,26 +1,26 @@
 # AGENTS.md - OpenCode AI Agent Instructions
 
 ## Tooling & Environment
-- **Roles**: OpenCode (Complex/Multi-file/Docs), Copilot (Inline/Small edits), Codex(General).
+- **Roles**: OpenCode (Complex), Copilot (Inline/Small edits), Codex(General).
 - **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
-- **Files**: Solution `creativevision10.slnx`. **Use UTF-8 (No BOM) & CRLF**.
+- **Files**: Solution `creativevision10.slnx`.
+- - **Line Endings**: Every edited or created file **MUST** use **CR+LF (`\r\n`)** as the line ending. Do not mix or use LF/CR.
 
 ## Priority Workflow (IMPORTANT)
 **Analyze → Plan (TODO-LIST) → Execute → Verify → Write-Log → Git-Commit**
 - Language: Plans, explanations, and comments must be in **JAPANESE**.
 - Task Mgmt: Only ONE `in_progress` task at a time.
-- Preparation: Use `git stash` before work; create a memo in `.sisyphus/` for complex tasks.
+- Preparation: Use `git stash` before work; create a memo in `.omo/` for complex tasks.
 - Search: Use `grep -r` for Japanese terms.
 - Database: Use `sqlite3` for `server-user163.db` files; avoid direct file edits.
 
 ## SkillOpt-Based Skill Maintenance
-- Treat `.agents/skills/*/SKILL.md` as the trainable state of the agent, and improve it from actual rollout evidence instead of broad prompt rewrites.
-- For skill updates, collect task evidence first: user request, selected skill, files touched, tool/verification output, final result, and failure mode.
-- Reflect on failure and success evidence separately. Fix recurring failures while preserving procedures that already worked.
-- Apply bounded add/delete/replace edits only. Default to a small edit budget, and split generic workflow and feature-specific troubleshooting into separate skills when reuse boundaries differ.
-- Gate every candidate skill before adoption with held-out validation that was not used to propose the edit. Reject changes that pass the edited case but regress another representative case.
-- Keep rejected-edit reasons, slow-update notes, and optimizer-side observations in `.sisyphus/` scratch memos for complex tasks; deploy only the compact final `SKILL.md` unless the user explicitly asks for research notes.
-- Do not install or run external SkillOpt tooling automatically. This repository adopts the SkillOpt method as a disciplined local skill-improvement workflow.
+- **Evidence-Driven Updates**: Treat `.agents/skills/*/SKILL.md` as the trainable state. Improve it via actual execution evidence (requests, skills, touched files, tool outputs, results, failure modes) rather than broad prompt rewrites.
+- **Separate Reflection**: Fix recurring failures while strictly preserving successful procedures.
+- **Bounded Edits & Splitting**: Limit changes to minimal add/delete/replace actions. Separate generic workflows from feature-specific troubleshooting based on reuse boundaries.
+- **Held-Out Validation**: Gate all edits using unseen test cases. Reject changes that fix the target case but cause regressions in other representative cases.
+- **Isolate Scratches**: Keep rejection reasons and analysis notes in `.omo/`. Deploy only the compact final `SKILL.md` unless research notes are explicitly requested.
+- **No Auto-Tooling**: Do not automatically install or run external SkillOpt tools. Apply the SkillOpt method as a disciplined, local workflow.
 
 ## Architecture
 - **Read-Only**: Layer 0 (`CodeShare`/`CvAsset`), Layer 1 (`CvBase`), Layer 1.2 (DB), Layer 1.4 (Prints)  Write if necessary.
