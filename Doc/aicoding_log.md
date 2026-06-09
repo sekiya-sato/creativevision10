@@ -421,3 +421,26 @@
 - `git diff --check` で whitespace error なしを確認
 
 ---
+
+## [2026-06-09] 12:50 repo-local skillのSkillOptチェック
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`.agents/skills/skillopt-skill-improvement/SKILL.md` を使って既存 skill をチェックする。大きく skill の内容を変更する場合は必ず確認する。
+### 実施内容
+- .agents/skills/author-printstream-qfm/SKILL.md: 内容変更なしで CRLF / UTF-8 BOMなしへ正規化
+- .agents/skills/cv10-csharp-consistency-audit/SKILL.md: 内容変更なしで CRLF / UTF-8 BOMなしへ正規化
+- .omo/skillopt_skill_check_2026-06-09.md: SkillOpt チェック結果、採用済み小修正、大きな変更候補を scratch memo として整理
+### 技術決定 Why
+- AGENTS.md の行末ルールに反する skill は内容を変えずに機械的に正規化した
+- ビルドコマンド標準化や `git add -A` の置換は複数 skill の運用方針に影響するため、ユーザー確認前には実施しない判断にした
+### 影響範囲
+- repo-local skill の行末形式のみ。アプリケーションコードへの変更なし
+### 確認
+- 全 `.agents/skills/*/SKILL.md` の YAML frontmatter に `name` / `description` があることを確認
+- 全 `.agents/skills/*/SKILL.md` が UTF-8 BOMなし、CRLF であることを確認
+- `git diff --check` で whitespace error なしを確認
+
+---
