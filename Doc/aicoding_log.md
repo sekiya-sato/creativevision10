@@ -514,3 +514,22 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
 
 ---
+
+## [2026-06-09] 14:30 店ブランド予算マスタ画面作成
+### Agent
+- Kimi-k2.6 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：.omo/yosan_master_mente_view_sample.txt を参考に、MasterYosanBrand に対する修正・削除・登録の操作を行う画面を作成する。年月・店舗・ブランドを指定し、店舗月売上予算を元に日別予算を按分（休日・土日を考慮）して登録する。
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs: 予算マスタ画面のViewModelを作成。年月・店舗・ブランド・土日指数・月売上予算の管理、日別予算行の生成と按分計算、予算読込・予算作成・予算決定・予算削除・自動配分・累計再計算のコマンドを実装。SelectWinViewを使用した店舗(MasterTokui)とブランド(MasterMeisho Kubun='BRD')の選択ダイアログを実装。ICoreServiceによるgRPC通信でMasterYosanBrandのCRUD操作を行う。
+- CvWpfclient/Views/02Yosan/ShopBrandBudgetMasterView.xaml: MaterialDesignを使用した画面レイアウトを作成。ColorZoneツールバー、フィルタパネル（年月・店舗・ブランド・土日指数・月売上予算）、日別予算DataGrid（日付・曜日・売上予算・累計・指数・休業日）、ステータスバー（合計・配分残）を配置。
+### 技術決定 Why
+- MasterYosanBrandにCode/NameがないためBaseMenteViewModelを継承せず、BaseViewModelを直接継承してカスタム画面を実装した
+- 予算決定時は、既存データをDeleteByIdParamで削除してからInsertBulkParamで一括登録する方式を採用（サーバ側の既存パターンに合わせた）
+- 千円単位で入力・表示し、サーバ通信時に1000倍して円単位で保存する（旧システムとの互換性）
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
