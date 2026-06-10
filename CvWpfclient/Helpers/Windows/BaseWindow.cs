@@ -48,11 +48,24 @@ public class BaseWindow : Window {
 				if (result != MessageBoxResult.Yes)
 					return;
 			}
-
-			Close();
-			if (Owner is Window owner)
-				owner.Activate();
+			if (!TryExecuteViewModelCommand("ExitCommand")) {
+				Close();
+				if (Owner is Window owner)
+					owner.Activate();
+			}
 		}
+	}
+	private bool TryExecuteViewModelCommand(string commandName) {
+		var dc = DataContext;
+		if (dc == null) return false;
+
+		var prop = dc.GetType().GetProperty(commandName, BindingFlags.Instance | BindingFlags.Public);
+		if (prop?.GetValue(dc) is ICommand cmd && cmd.CanExecute(null)) {
+			cmd.Execute(null);
+			return true;
+		}
+
+		return false;
 	}
 
 	/// <summary>

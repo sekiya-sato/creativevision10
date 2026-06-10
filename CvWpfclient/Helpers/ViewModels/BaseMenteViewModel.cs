@@ -25,6 +25,14 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	[ObservableProperty]
 	T current = new();
 
+	protected override void OnExit() {
+		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ActiveWindow) != MessageBoxResult.Yes) {
+			return;
+		}
+		ClientLib.Exit(this);
+	}
+
+
 	partial void OnCurrentChanged(T? oldValue, T newValue) => OnCurrentChangedCore(oldValue, newValue);
 
 	protected virtual void OnCurrentChangedCore(T? oldValue, T newValue) {
