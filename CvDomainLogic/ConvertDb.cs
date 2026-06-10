@@ -160,6 +160,7 @@ public partial class ConvertDb {
 		var mstSys = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$master_syskanri");
 		var recSys = mstSys[0];
 		var mstTax = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$master_systax order by 消費税CD");
+		var taxregno = _fromDb.Fetch<Dictionary<string, object>>("select 名称 from HC$master_meisho where 名称区分='IBS' and 名称CD='01'");
 		var newSys = new MasterSysman() {
 			Name = getString(recSys, "自社名"),
 			PostalCode = getString(recSys, "郵便番号"),
@@ -187,6 +188,9 @@ public partial class ConvertDb {
 			};
 			newSys.Jsub.Add(tax);
 		}
+		if (taxregno.Count > 0)
+			newSys.TaxRegistrationNumber = getString(taxregno[0], "名称");
+
 		_toDb.CreateTable(typeof(MasterSysman), isInit);
 		_toDb.Insert<MasterSysman>(newSys);
 		return 1;

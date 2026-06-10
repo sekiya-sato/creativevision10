@@ -27,7 +27,7 @@ public sealed partial class SysUpdateDb : BaseDbClass {
 	/// SQLを実行したDbVersion
 	/// </summary>
 	[ObservableProperty]
-	int newVersion;
+	int preVersion;
 	/// <summary>
 	/// 実行したDDL文(複数ある場合は;区切り)
 	/// </summary>

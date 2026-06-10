@@ -14,6 +14,8 @@ public record InnerVersion(int DbVersion, string Sql, string Memo);
 public class UpdateDb {
 	private static InnerVersion[] versions = [
 		new (26040101,"ALTER TABLE TranVulcanHht ADD COLUMN ErrorMsg TEXT;","SysUpdateDbテーブル 2026.04.08定義"),
+		new (26061001,"ALTER TABLE MasterSysman ADD COLUMN TaxRegistrationNumber TEXT;","MasterSysman 列追加 2026.06.10定義"),
+		// new (26061002,"ALTER TABLE SysUpdateDb RENAME COLUMN NewVersion To PreVersion;","SysUpdateDb 列名変更 2026.06.10定義"), SysUpdateDb は直接変更する
 		//new (26040102,"","2026.04.08定義")
 	];
 
@@ -35,7 +37,7 @@ public class UpdateDb {
 				DbVersion = latestVersion.DbVersion,
 				DateStart = DateTime.Now.ToString("yyyyMMddHHmmss"),
 				Sql = "",
-				NewVersion = latestVersion.DbVersion,
+				PreVersion = latestVersion.DbVersion,
 				Memo = "新規レコード作成"
 			};
 			await db.InsertAsync(verNow, ct);
@@ -79,7 +81,7 @@ public class UpdateDb {
 			DateStart = DateTime.Now.ToString("yyyyMMddHHmmss"),
 			Sql = verInfo.Sql,
 			Memo = errorMsg ?? verInfo.Memo,
-			NewVersion = orgVersion,
+			PreVersion = orgVersion,
 		};
 		await db.InsertAsync(item, ct);
 		return errorMsg ?? "";

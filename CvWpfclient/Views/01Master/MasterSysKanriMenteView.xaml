@@ -230,19 +230,23 @@
 							TextWrapping="Wrap" />
 						<Label Grid.Row="3" Grid.Column="0"
 							Height="30"
-							Margin="15,0,0,0" VerticalAlignment="Center"
-							Content="TEL   Mail" />
+							Margin="35,0,0,0" VerticalAlignment="Center"
+							Content="TEL" />
 						<TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
 							Height="30"
 							Margin="10,0,0,0" VerticalAlignment="Center"
-							d:Text="Tel"
+							d:Text="03-1234-5678"
 							Style="{DynamicResource MaterialDesignBody*}"
 							Text="{Binding Current.Tel}"
 							TextWrapping="Wrap" />
+						<Label Grid.Row="3" Grid.Column="3"
+							Height="30"
+							Margin="35,0,0,0" VerticalAlignment="Center"
+							Content="Mail" />
 						<TextBox Grid.Row="3" Grid.Column="4" Grid.ColumnSpan="4"
 							Height="30"
 							Margin="14,0,-17,0" VerticalAlignment="Center"
-							d:Text="Fax"
+							d:Text="mailaddress@domain.com"
 							Style="{DynamicResource MaterialDesignBody*}"
 							Text="{Binding Current.Mail}"
 							TextWrapping="Wrap" />
@@ -408,19 +412,41 @@
 							d:Text="新Tax"
 							Style="{DynamicResource MaterialDesignBody*}"
 							Text="{Binding Current.Jsub[2].TaxNewRate}" />
-						<Label Grid.Row="14"
+						<Label Grid.Row="13" Grid.Column="0"
 							Height="30"
-							VerticalAlignment="Top"
-							Content="登録日" />
+							Margin="15,0,0,0" VerticalAlignment="Center"
+							Content="ホームページ" />
+						<TextBox Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="5"
+							Height="30"
+							Margin="10,0,0,0" VerticalAlignment="Center"
+							d:Text="https://www.example.com"
+							Style="{DynamicResource MaterialDesignBody*}"
+							Text="{Binding Current.Hp}"
+							TextWrapping="Wrap" />
+						<Label Grid.Row="14" Grid.Column="0"
+							Height="30"
+							Margin="15,0,0,0" VerticalAlignment="Center"
+							Content="事業者登録番号" />
+						<TextBox Grid.Row="14" Grid.Column="1" Grid.ColumnSpan="1"
+							Height="30"
+							Margin="10,0,0,0" VerticalAlignment="Center"
+							d:Text="T1234567890123"
+							Style="{DynamicResource MaterialDesignBody*}"
+							Text="{Binding Current.TaxRegistrationNumber}"
+							TextWrapping="Wrap" />
 						<Label Grid.Row="15"
 							Height="30"
 							VerticalAlignment="Top"
+							Content="登録日" />
+						<Label Grid.Row="16"
+							Height="30"
+							VerticalAlignment="Top"
 							Content="修正日" />
-						<Label Grid.Row="14" Grid.Column="1" Grid.ColumnSpan="2"
+						<Label Grid.Row="15" Grid.Column="1" Grid.ColumnSpan="2"
 							Height="30"
 							VerticalAlignment="Top"
 							Content="{Binding Current.VdateC}" />
-						<Label Grid.Row="15" Grid.Column="1"
+						<Label Grid.Row="16" Grid.Column="1"
 							Height="30"
 							VerticalAlignment="Top"
 							Content="{Binding Current.VdateU}" />

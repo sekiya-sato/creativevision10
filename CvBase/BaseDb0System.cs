@@ -96,6 +96,11 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
 	List<MasterSysTax>? jsub;
+
+	[ObservableProperty]
+	[property: ColumnSizeDml(14)]
+	[OldTableCommentAttr("事業者登録番号", "T+13桁 select 名称 from HC$master_meisho where 名称区分='IBS' and 名称CD='01'")]
+	string taxRegistrationNumber = string.Empty;
 }
 /// <summary>
 /// 消費税率テーブル
