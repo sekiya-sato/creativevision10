@@ -4,7 +4,7 @@
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Title}"
-	Width="480" Height="520"
+	Width="600" Height="520"
 	helpers:OwnerWindowPlacement.IsEnabled="True" helpers:OwnerWindowPlacement.LeftOffset="-40" helpers:OwnerWindowPlacement.TopOffset="-20" BorderBrush="DarkSlateGray"
 	BorderThickness="0.5,0,1.5,1.5" FontSize="18" WindowStartupLocation="Manual"
 	mc:Ignorable="d">
