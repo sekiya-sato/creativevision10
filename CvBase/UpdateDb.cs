@@ -16,6 +16,8 @@ public class UpdateDb {
 		new (26040101,"ALTER TABLE TranVulcanHht ADD COLUMN ErrorMsg TEXT;","SysUpdateDbテーブル 2026.04.08定義"),
 		new (26061001,"ALTER TABLE MasterSysman ADD COLUMN TaxRegistrationNumber TEXT;","MasterSysman 列追加 2026.06.10定義"),
 		// new (26061002,"ALTER TABLE SysUpdateDb RENAME COLUMN NewVersion To PreVersion;","SysUpdateDb 列名変更 2026.06.10定義"), SysUpdateDb は直接変更する
+		new (26061002,"ALTER TABLE MasterTokui ADD COLUMN TaxRegistrationNumber TEXT;","MasterTokui 列追加 2026.06.10定義"),
+		new (26061003,"ALTER TABLE MasterShiire ADD COLUMN TaxRegistrationNumber TEXT;","MasterShiire 列追加 2026.06.10定義"),
 		//new (26040102,"","2026.04.08定義")
 	];
 

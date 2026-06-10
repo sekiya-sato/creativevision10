@@ -285,6 +285,8 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<!--  コード  -->
@@ -428,6 +430,13 @@
 									materialDesign:HintAssist.Hint="電話番号"
 									Style="{StaticResource FormTextBox}"
 								Text="{Binding CurrentEdit.Tel}" />
+								<TextBlock Grid.Row="12"
+									Style="{StaticResource FormLabel}"
+									Text="事業者登録番号" />
+								<TextBox Grid.Row="12" Grid.Column="1"
+									materialDesign:HintAssist.Hint="事業者登録番号"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.TaxRegistrationNumber}" />
 							</Grid>
 						</ScrollViewer>
 					</TabItem>

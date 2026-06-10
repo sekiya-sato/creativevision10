@@ -253,6 +253,12 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[property: ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
 	List<MasterGeneralMeisho>? jsub;
+	/// <summary>
+	/// 事業者登録番号
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(14)]
+	string taxRegistrationNumber = string.Empty;
 }
 
 /// <summary>
@@ -271,6 +277,12 @@ public sealed partial class MasterShiire : MasterTorihiki {
 	[property: ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
 	List<MasterGeneralMeisho>? jsub;
+	/// <summary>
+	/// 事業者登録番号
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(14)]
+	string taxRegistrationNumber = string.Empty;
 }
 
 /* VShain などが物理DBに存在せず、Class定義上で存在している場合の、SQLでの結合例
