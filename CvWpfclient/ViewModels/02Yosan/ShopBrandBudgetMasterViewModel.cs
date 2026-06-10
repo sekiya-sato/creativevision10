@@ -3,11 +3,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
-using CvBase.Share;
 using CvWpfclient.Helpers;
 using Newtonsoft.Json;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Windows;
 
 namespace CvWpfclient.ViewModels._02Yosan;
 
@@ -83,6 +83,13 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	bool isApplyingSelectedYearMonthString;
 	bool isRecalculatingTotals;
 
+	protected override void OnExit() {
+		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+			return;
+		}
+		ClientLib.Exit(this);
+	}
+
 	public ObservableCollection<DailyBudgetRow> FirstHalfDailyBudgets { get; } = [];
 
 	public ObservableCollection<DailyBudgetRow> SecondHalfDailyBudgets { get; } = [];
@@ -136,9 +143,11 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			row.Coefficient = 0;
 			row.SalesBudget = 0;
 			row.GrossProfitBudget = 0;
-		} else if (row.IsSaturday || row.IsSunday) {
+		}
+		else if (row.IsSaturday || row.IsSunday) {
 			row.Coefficient = SaturdaySundayCoefficient;
-		} else {
+		}
+		else {
 			row.Coefficient = 1.0;
 		}
 	}
@@ -456,7 +465,8 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		foreach (var row in DailyBudgets) {
 			if (row.Day <= 15) {
 				FirstHalfDailyBudgets.Add(row);
-			} else {
+			}
+			else {
 				SecondHalfDailyBudgets.Add(row);
 			}
 		}
