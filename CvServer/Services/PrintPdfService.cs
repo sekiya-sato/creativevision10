@@ -104,6 +104,7 @@ public partial class CoreService {
 				printService.RegisterLicenseAsync(lic.Product, printServer.GetValue<string>(lic.Product) ?? "").Wait();
 
 		var ret = printService.ExecutePrintAsync(context);
+		ret.Wait();
 		return ret.Result;
 	}
 	/// <summary>
@@ -146,6 +147,8 @@ public partial class CoreService {
 			}
 			using (var writer = new StreamWriter(request.TempDataFullPath, false, Sjis)) {
 				dataList.WriteDynamicCsv(writer);
+				writer.Flush();
+				writer.Close();
 			}
 		}
 		else {
