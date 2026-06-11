@@ -86,33 +86,40 @@
 						</TextBlock>
 					</StackPanel>
 
-					<Border Grid.Column="1"
-						Width="44" Height="44"
+					<StackPanel Grid.Column="1"
 						Margin="0,0,4,0" VerticalAlignment="Center"
-						shell:WindowChrome.IsHitTestVisibleInChrome="True"
-						Style="{StaticResource StatusChip}"
-						ToolTip="{Binding MoonPhaseToolTip}">
-						<Viewbox Width="30" Height="30"
-							HorizontalAlignment="Center" VerticalAlignment="Center"
-							Stretch="Uniform">
-							<Grid Width="30" Height="30">
-								<Ellipse Width="30" Height="30"
-									Fill="Black"
-									Opacity="{Binding MoonDarkOpacity}" />
-								<Ellipse Width="30" Height="30"
-									Fill="#FFD84D"
-									Opacity="{Binding MoonLightOpacity}">
-									<Ellipse.Clip>
-										<RectangleGeometry Rect="{Binding MoonLightClipRect}" />
-									</Ellipse.Clip>
-								</Ellipse>
-								<Ellipse Width="30" Height="30"
-									Opacity="0.35"
-									Stroke="{DynamicResource SubTitleColor}"
-									StrokeThickness="1" />
-							</Grid>
-						</Viewbox>
-					</Border>
+						shell:WindowChrome.IsHitTestVisibleInChrome="True">
+						<Border
+							Width="44" Height="44"
+							Style="{StaticResource StatusChip}"
+							ToolTip="{Binding MoonPhaseToolTip}">
+							<Viewbox Width="30" Height="30"
+								HorizontalAlignment="Center" VerticalAlignment="Center"
+								Stretch="Uniform">
+								<Grid Width="30" Height="30">
+									<Ellipse Width="30" Height="30"
+										Fill="Black"
+										Opacity="{Binding MoonDarkOpacity}" />
+									<Ellipse Width="30" Height="30"
+										Fill="#FFD84D"
+										Opacity="{Binding MoonLightOpacity}">
+										<Ellipse.Clip>
+											<RectangleGeometry Rect="{Binding MoonLightClipRect}" />
+										</Ellipse.Clip>
+									</Ellipse>
+									<Ellipse Width="30" Height="30"
+										Opacity="0.35"
+										Stroke="{DynamicResource SubTitleColor}"
+										StrokeThickness="1" />
+								</Grid>
+							</Viewbox>
+						</Border>
+						<TextBlock Margin="0,2,0,0"
+							HorizontalAlignment="Center"
+							FontSize="10"
+							Foreground="{DynamicResource SubTitleColor}"
+							Text="{Binding SolarTerm}" />
+					</StackPanel>
 
 					<StackPanel Grid.Column="2"
 						Margin="0" VerticalAlignment="Center"

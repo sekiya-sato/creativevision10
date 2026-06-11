@@ -662,3 +662,26 @@
 - `/mnt/c/Windows/System32/cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-11] 15:00 MainMenuViewModel 二十四節気表示対応
+### Agent
+- Kimi-k2.6 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：tyme4net NuGetパッケージを使用して二十四節気を計算し、MainMenuViewの月齢表示円の下に表示する。
+### 実施内容
+- `Directory.Packages.props` と `CvWpfclient.csproj` に `tyme4net` (v1.4.4) を追加
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `using TymeSolarTerm = tyme.solar.SolarTerm; using TymeSolarDay = tyme.solar.SolarDay;` を追加
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `[ObservableProperty] private string solarTerm = "";` を追加
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `GetSolarTermName(DateTime date)` メソッドを追加。`SolarDay.FromYmd(...).Term?.GetName()` で現在の二十四節気を取得
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `UpdateKyureki()` に `SolarTerm = GetSolarTermName(now);` を追加
+- `CvWpfclient/Views/MainMenuView.xaml`: 月齢表示円の外側を `StackPanel` でラップし、円の下に `TextBlock` で `SolarTerm` を表示（FontSize=10, SubTitleColor）
+### 技術決定 Why
+- `tyme4net` の `SolarDay.Term` プロパティを使用して、二十四節気を計算式で取得（オフライン動作、外部API不要）
+- `SolarTerm` プロパティ名が `tyme.solar.SolarTerm` クラス名と衝突したため、型エイリアス `TymeSolarTerm` と `TymeSolarDay` を使用
+- 月齢表示円の下に配置することで、視覚的に関連性を持たせた（月齢と二十四節気は共に伝統的暦関連情報）
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 errors, 2 warnings は他プロセスによるファイルロック）を確認
+
+---

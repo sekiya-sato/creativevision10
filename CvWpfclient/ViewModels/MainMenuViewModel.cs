@@ -18,6 +18,8 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using TymeSolarTerm = tyme.solar.SolarTerm;
+using TymeSolarDay = tyme.solar.SolarDay;
 
 namespace CvWpfclient.ViewModels;
 
@@ -53,6 +55,9 @@ public partial class MainMenuViewModel : ObservableObject {
 
 	[ObservableProperty]
 	private string holidayName = "";
+
+	[ObservableProperty]
+	private string solarTerm = "";
 
 	[ObservableProperty]
 	private bool isMenuReady;
@@ -586,6 +591,18 @@ public partial class MainMenuViewModel : ObservableObject {
 			_ => "今夜の月"
 		};
 		MoonPhaseToolTip = $"{moonPhaseName}：旧暦 {kyurekiDay}日";
+		SolarTerm = GetSolarTermName(now);
+	}
+
+	private static string GetSolarTermName(DateTime date) {
+		try {
+			var solarDay = TymeSolarDay.FromYmd(date.Year, date.Month, date.Day);
+			var term = solarDay.Term;
+			return term?.GetName() ?? "";
+		}
+		catch {
+			return "";
+		}
 	}
 
 	private static int GetKyurekiDay(DateTime date) {
