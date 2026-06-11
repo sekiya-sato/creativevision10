@@ -17,7 +17,7 @@ public class UpdateDb {
 		new (26_06_10_01,"ALTER TABLE MasterSysman ADD COLUMN TaxRegistrationNumber TEXT;","MasterSysman 列追加 2026.06.10定義"),
 		// new (26_06_10_02,"ALTER TABLE SysUpdateDb RENAME COLUMN NewVersion To PreVersion;","SysUpdateDb 列名変更 2026.06.10定義"), SysUpdateDb のみ直接変更する
 		new (26_06_10_02,"ALTER TABLE MasterTokui ADD COLUMN TaxRegistrationNumber TEXT;ALTER TABLE MasterShiire ADD COLUMN TaxRegistrationNumber TEXT;","MasterTokui MasterShiire 列追加 2026.06.10定義"),
-		new (26_06_11_01,"ALTER TABLE DerivedShohinColSiz ADD COLUMN Vdc NUMBER not null default 0;ALTER TABLE DerivedShohinColSiz ADD COLUMN Vdu NUMBER not null default 0;","DerivedShohinColSiz 列追加 2026.06.11定義"),
+		new (26_06_11_01,"ALTER TABLE DerivedShohinColSiz ADD COLUMN Vdc NUMBER not null default 0;ALTER TABLE DerivedShohinColSiz ADD COLUMN Vdu NUMBER not null default 0;update DerivedShohinColSiz set (vdc,vdu)=(select s.vdc,s.vdu from MasterShohin s where s.Id=Id_Shohin);","DerivedShohinColSiz 列追加 2026.06.11定義"),
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
