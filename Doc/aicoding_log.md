@@ -645,3 +645,20 @@
 - `/mnt/c/Windows/System32/cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-11] 14:30 LoadHolidaysAsync エラーハンドリング強化
+### Agent
+- Kimi-k2.6 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：holidays-jp API アクセスで404エラーやJSONでない場合にもエラーにならないようにする。
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `LoadHolidaysAsync` メソッドを修正。`GetStringAsync` から `GetAsync` + `IsSuccessStatusCode` チェックに変更。404/500などのHTTPエラーは早期リターンで例外を発生させないようにした。さらに `string.IsNullOrWhiteSpace(json)` で空レスポンスを防ぎ、JSONパース前にガードを追加。
+### 技術決定 Why
+- `GetStringAsync` は404でも例外を投げるが、それをcatchで握りつぶすのではなく、HTTPステータスコードを明示的に確認して早期リターンすることで、より意図が明確になった
+- 外側のcatchブロックはネットワーク切断やJSON不正などの予期せぬ障害に対する最後の安全装置として保持した
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

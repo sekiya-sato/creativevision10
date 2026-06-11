@@ -512,7 +512,16 @@ public partial class MainMenuViewModel : ObservableObject {
 	private async Task LoadHolidaysAsync() {
 		try {
 			using var client = new HttpClient();
-			var json = await client.GetStringAsync("https://holidays-jp.github.io/api/v1/date.json");
+			using var response = await client.GetAsync("https://holidays-jp.github.io/api/v1/date.json");
+			if (!response.IsSuccessStatusCode) {
+				_holidays = null;
+				return;
+			}
+			var json = await response.Content.ReadAsStringAsync();
+			if (string.IsNullOrWhiteSpace(json)) {
+				_holidays = null;
+				return;
+			}
 			_holidays = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
 			Application.Current?.Dispatcher.Invoke(UpdateDateTime);
 		}
