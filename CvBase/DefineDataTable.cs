@@ -79,6 +79,15 @@ public class DefineDataTable {
 			typeof(SummaryUriSei),
 			typeof(SummaryKaiKake),
 			typeof(SummaryKaiShi)
+			/* Product: 以下のテーブルは、優先順位低いが、いずれ作成する予定
+			上代一括変更
+				TranJodai : 伝票No,日付 (from-to),セールCD(Meisho'S01') タイトル  [店舗CD] [商品CD,(色CD,サイズCD) : 掛率,上代]
+				DerivedJodai : TranJodai-No,日付 (from-to),Id_Shohin,Jodai ??
+			原価変更登録
+				TranGenka : 伝票No,日付(年月+末),セールCD(Meisho'S01') 評価区分(0:通常,1:評価替え) OFF率 [商品CD] :上代 掛率 元原価 新原価
+			自動補充設定 (売上/在庫)
+				MasterAutoSupply
+			 */
 		};
 		foreach (var tableType in tableTypes) {
 			if (!db.CreateTable(tableType, isForce)) {
