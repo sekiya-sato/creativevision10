@@ -13,6 +13,8 @@ using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Extensions.DependencyInjection;
 using SkiaSharp;
 using System.Collections.ObjectModel;
+using System.Net.Http;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -47,7 +49,10 @@ public partial class MainMenuViewModel : ObservableObject {
 
 	private DateTime _subStartTime = DateTime.Now;
 	[ObservableProperty]
-	private string subTitle = ".net10, gRPC, HTTP/2.0 Model";
+	private string subTitle = ".NET10, gRPC, HTTP/2.0";
+
+	[ObservableProperty]
+	private string holidayName = "";
 
 	[ObservableProperty]
 	private bool isMenuReady;
@@ -87,6 +92,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	private double[] _forecastTemperatures = [];
 
 	private DateTime checkDate = DateTime.MinValue;
+	private Dictionary<string, string>? _holidays;
 
 	private System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("ja-JP");
 
@@ -152,6 +158,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 		StartClock();
 		StartWeatherAndCalendar();
+		_ = LoadHolidaysAsync();
 		var now = DateTime.Now;
 		ExpireDate = now.ToString("yyyy/MM/dd HH:mm");
 		UpdateKyureki(now);
@@ -502,6 +509,18 @@ public partial class MainMenuViewModel : ObservableObject {
 		_timer.Start();
 	}
 
+	private async Task LoadHolidaysAsync() {
+		try {
+			using var client = new HttpClient();
+			var json = await client.GetStringAsync("https://holidays-jp.github.io/api/v1/date.json");
+			_holidays = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+			Application.Current?.Dispatcher.Invoke(UpdateDateTime);
+		}
+		catch {
+			_holidays = null;
+		}
+	}
+
 	private void UpdateDateTime() {
 		var now = DateTime.Now;
 		if (now.Date != checkDate) {
@@ -513,11 +532,19 @@ public partial class MainMenuViewModel : ObservableObject {
 		CurrentTime = now.ToString("ddd HH:mm:ss");
 		CurrentTimeDay = $"{now:ddd} ";
 		CurrentTimeClock = now.ToString("HH:mm:ss");
-		CurrentTimeDayForeground = now.DayOfWeek switch {
-			DayOfWeek.Saturday => Brushes.Blue,
-			DayOfWeek.Sunday => Brushes.Red,
-			_ => FindResource("TitleColor") as SolidColorBrush ?? Brushes.White
-		};
+
+		var dateKey = now.ToString("yyyy-MM-dd");
+		if (_holidays?.TryGetValue(dateKey, out var holiday) == true) {
+			CurrentTimeDayForeground = Brushes.Red;
+			HolidayName = $" {holiday}";
+		} else {
+			HolidayName = "";
+			CurrentTimeDayForeground = now.DayOfWeek switch {
+				DayOfWeek.Saturday => Brushes.Blue,
+				DayOfWeek.Sunday => Brushes.Red,
+				_ => FindResource("TitleColor") as SolidColorBrush ?? Brushes.White
+			};
+		}
 	}
 
 	private void UpdateKyureki(DateTime now) {

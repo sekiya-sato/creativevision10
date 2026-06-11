@@ -76,8 +76,14 @@
 						<TextBlock Padding="25,0,0,0"
 							FontSize="14"
 							Foreground="{DynamicResource SubTitleColor}"
-							Opacity="0.6"
-							Text="{Binding SubTitle}" />
+							Opacity="0.6">
+							<TextBlock.Text>
+								<MultiBinding StringFormat="{}{0}{1}">
+									<Binding Path="SubTitle" />
+									<Binding Path="HolidayName" />
+								</MultiBinding>
+							</TextBlock.Text>
+						</TextBlock>
 					</StackPanel>
 
 					<Border Grid.Column="1"

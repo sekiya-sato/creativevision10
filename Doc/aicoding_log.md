@@ -624,3 +624,24 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功、0警告/0エラー
 
 ---
+
+## [2026-06-11] 14:00 MainMenuViewModel 祝日表示対応
+### Agent
+- Kimi-k2.6 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuViewModel.cs で `https://holidays-jp.github.io/api/v1/date.json` にアクセスし、取得した祝日情報を使い、該当すれば土日よりも優先して CurrentTimeDayForeground を赤に設定する。また、Viewの SubTitle 表示を multi binding に変更して「SubTitle 祝日名」を表示する。
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `HttpClient` と `System.Text.Json` を使用して祝日APIを非同期取得する `LoadHolidaysAsync` メソッドを追加。取得した祝日データは `_holidays` 辞書にキャッシュし、取得後に `UpdateDateTime` を再実行
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `[ObservableProperty] private string holidayName = ""` を追加。祝日の場合は `HolidayName = " {祝日名}"` を設定し、非祝日の場合は空文字に戻す
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `UpdateDateTime` メソッドを変更。祝日判定を土日判定より優先し、祝日の場合は `CurrentTimeDayForeground = Brushes.Red` に設定
+- CvWpfclient/Views/MainMenuView.xaml: SubTitle 表示部分を `MultiBinding` + `StringFormat="{}{0}{1}"` に変更。Converter なしで `SubTitle` と `HolidayName` を結合して表示
+### 技術決定 Why
+- Converter クラスを新規作成せず、WPF の `MultiBinding` + `StringFormat` で結合することで、コードを最小限に抑えた
+- 祝日APIの取得は `Init` 時に fire-and-forget (`_ = LoadHolidaysAsync()`) で実行し、UI スレッドのブロックを避けた。取得完了後に `Dispatcher.Invoke` で `UpdateDateTime` を再実行し、祝日判定が即座に反映されるようにした
+- 祝日判定は `yyyy-MM-dd` 形式のキーで辞書を検索し、O(1) で判定できるようにした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
