@@ -18,7 +18,6 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using TymeSolarTerm = tyme.solar.SolarTerm;
 using TymeSolarDay = tyme.solar.SolarDay;
 
 namespace CvWpfclient.ViewModels;
@@ -551,7 +550,8 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (_holidays?.TryGetValue(dateKey, out var holiday) == true) {
 			CurrentTimeDayForeground = Brushes.Red;
 			HolidayName = $" {holiday}";
-		} else {
+		}
+		else {
 			HolidayName = "";
 			CurrentTimeDayForeground = now.DayOfWeek switch {
 				DayOfWeek.Saturday => Brushes.Blue,
@@ -598,12 +598,17 @@ public partial class MainMenuViewModel : ObservableObject {
 		try {
 			var solarDay = TymeSolarDay.FromYmd(date.Year, date.Month, date.Day);
 			var term = solarDay.Term;
-			return term?.GetName() ?? "";
+			var chinaTerm = term?.GetName() ?? "";
+			var japanTerm = japanSolarTerms.TryGetValue(chinaTerm, out var jp) ? jp : chinaTerm;
+			return japanTerm;
 		}
 		catch {
 			return "";
 		}
 	}
+	static Dictionary<string, string> japanSolarTerms = new Dictionary<string, string>
+	{ { "芒种", "芒種" },{ "处暑", "処暑" }, { "惊蛰", "啓蟄" }, { "谷雨", "穀雨" }, { "小满", "小満" } };
+
 
 	private static int GetKyurekiDay(DateTime date) {
 		try {

@@ -116,9 +116,8 @@
 						</Border>
 						<TextBlock Margin="0,2,0,0"
 							HorizontalAlignment="Center"
-							FontSize="10"
-							Foreground="{DynamicResource SubTitleColor}"
-							Text="{Binding SolarTerm}" />
+							Foreground="{DynamicResource plainTextColor0}"
+							Text="{Binding SolarTerm}" d:Text="春分" />
 					</StackPanel>
 
 					<StackPanel Grid.Column="2"
