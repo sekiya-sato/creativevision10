@@ -5,7 +5,7 @@ public interface IPrintService {
 }
 
 
-public sealed record class PrintContext {
+public sealed record PrintContext {
 	public string BasePath { get; set; } = string.Empty;
 	public string FormPath { get; set; } = string.Empty;
 	public string DataPath { get; set; } = string.Empty;
@@ -19,16 +19,12 @@ public sealed record class PrintContext {
 	public string OutputFileName { get; set; } = string.Empty;
 }
 
-public class PrintResult {
-	public bool IsSuccess { get; }
+public sealed record PrintResult {
+	public bool IsSuccess { get; set; }
 	public string Message { get; set; } = string.Empty;
-	public PrintResult(bool isSuccess, string message) {
-		IsSuccess = isSuccess;
-		Message = message;
-	}
 }
 
-public sealed record class PrintProduct {
+public sealed record PrintProduct {
 	public string Product { get; set; } = string.Empty;
 	public bool Status { get; set; } = false;
 }
