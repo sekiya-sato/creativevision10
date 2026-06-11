@@ -48,6 +48,11 @@ public class DefineDataTable {
 			typeof(MasterYosanBrand),
 			typeof(MasterYosanHanbai),
 
+			// ポイント系テーブル
+			typeof(MasterPointRank),
+			typeof(TranPointRireki),
+			typeof(SummaryPoint),
+
 			// トランザクションテーブル
 			typeof(Tran00Uriage),
 			typeof(Tran01Tenuri),
@@ -62,10 +67,18 @@ public class DefineDataTable {
 			typeof(Tran13Hachu),
 			typeof(TranHhtData),
 			typeof(TranVulcanHht),
+			// 配分テーブル
+			typeof(TranHaibun),
+			typeof(TranHoju),
 
 			// 集計テーブル
 			typeof(SummaryStock),
 			typeof(SummaryRealStock),
+			// 掛関係テーブル
+			typeof(SummaryUriKake),
+			typeof(SummaryUriSei),
+			typeof(SummaryKaiKake),
+			typeof(SummaryKaiShi)
 		};
 		foreach (var tableType in tableTypes) {
 			if (!db.CreateTable(tableType, isForce)) {

@@ -89,8 +89,7 @@
 					<StackPanel Grid.Column="1"
 						Margin="0,0,4,0" VerticalAlignment="Center"
 						shell:WindowChrome.IsHitTestVisibleInChrome="True">
-						<Border
-							Width="44" Height="44"
+						<Border Width="44" Height="44"
 							Style="{StaticResource StatusChip}"
 							ToolTip="{Binding MoonPhaseToolTip}">
 							<Viewbox Width="30" Height="30"
@@ -114,10 +113,10 @@
 								</Grid>
 							</Viewbox>
 						</Border>
-						<TextBlock Margin="0,2,0,0"
-							HorizontalAlignment="Center"
+						<TextBlock Margin="0,2,0,0" HorizontalAlignment="Center"
+							d:Text="春分"
 							Foreground="{DynamicResource plainTextColor0}"
-							Text="{Binding SolarTerm}" d:Text="春分" />
+							Text="{Binding SolarTerm}" />
 					</StackPanel>
 
 					<StackPanel Grid.Column="2"
