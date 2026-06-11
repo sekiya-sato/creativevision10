@@ -137,10 +137,16 @@ public partial class MainMenuViewModel : ObservableObject {
 			startRect = window.RestoreBounds;
 			var width = 290;
 			var height = 590;
-			miniRect = new Rect() {
+			menuonlyRect = new Rect() {
 				Width = width,
 				Height = height,
 				X = startRect.X + startRect.Width - width,
+				Y = startRect.Y
+			};
+			smallRect = new Rect() {
+				Width = 685,
+				Height = 640,
+				X = startRect.X + startRect.Width - 685,
 				Y = startRect.Y
 			};
 		}
@@ -168,7 +174,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Url} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 		StatusMessage = $"左側のメニューリストから選択し、ダブルクリックまたはEnterで実行してください。";
-		ServerStatus = $"接続先 {AppGlobal.Url} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}\n{InfolocalServer.OsVersion ?? "OS-version"}\nDOTNET {InfolocalServer.DotNetVersion ?? "DOTNET-Version"}\nローカル名 {InfolocalServer.MachineName} {InfolocalServer.UserName}";
+		ServerStatus = $"接続先 {AppGlobal.Url} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}\n{InfolocalServer.OsVersion ?? "OS-version"}\nDOTNET {InfolocalServer.DotNetVersion ?? "DOTNET-Version"}\nローカル名 {InfolocalServer.MachineName}";
 		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
 
@@ -197,43 +203,55 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 	}
 	Rect startRect = new Rect();
-	Rect miniRect = new Rect();
+	Rect menuonlyRect = new Rect();
+	Rect smallRect = new Rect();
 
 
 	[RelayCommand]
 	private void WinMenuOnly() {
 		var window = ClientLib.GetActiveView(this);
 		if (window != null && window.WindowState == WindowState.Normal) {
-			if (window.Width <= miniRect.Width) {
-				window.Left = startRect.X;
-				window.Top = startRect.Y;
-				window.Width = startRect.Width;
-				window.Height = startRect.Height;
+			if (window.Width <= menuonlyRect.Width) {
+				(window.Left, window.Top, window.Width, window.Height) =
+					(startRect.X, startRect.Y, startRect.Width, startRect.Height);
 			}
 			else {
 				string fitPosition = AppGlobal.FitPosition;
-				if (fitPosition.Contains("Left") && fitPosition.Contains("Top")) {
-					window.Left = 0;
-					window.Top = 0;
-				}
-				else if (fitPosition.Contains("Left") && fitPosition.Contains("Bottom")) {
-					window.Left = 0;
-					window.Top = SystemParameters.WorkArea.Height - miniRect.Height;
-				}
-				else if (fitPosition.Contains("Right") && fitPosition.Contains("Top")) {
-					window.Left = SystemParameters.WorkArea.Width - miniRect.Width;
-					window.Top = 0;
-				}
-				else if (fitPosition.Contains("Right") && fitPosition.Contains("Bottom")) {
-					window.Left = SystemParameters.WorkArea.Width - miniRect.Width;
-					window.Top = SystemParameters.WorkArea.Height - miniRect.Height;
-				}
-				else {
-					window.Left = miniRect.X;
-					window.Top = miniRect.Y;
-				}
-				window.Width = miniRect.Width;
-				window.Height = miniRect.Height;
+
+				window.Left = fitPosition.Contains("Right")
+					? SystemParameters.WorkArea.Width - menuonlyRect.Width
+					: fitPosition.Contains("Left") ? 0 : menuonlyRect.X;
+
+				window.Top = fitPosition.Contains("Bottom")
+					? SystemParameters.WorkArea.Height - menuonlyRect.Height
+					: fitPosition.Contains("Top") ? 0 : menuonlyRect.Y;
+
+				window.Width = menuonlyRect.Width;
+				window.Height = menuonlyRect.Height;
+			}
+		}
+	}
+	[RelayCommand]
+	private void WinSmall() {
+		var window = ClientLib.GetActiveView(this);
+		if (window != null && window.WindowState == WindowState.Normal) {
+			if (window.Width <= smallRect.Width) {
+				(window.Left, window.Top, window.Width, window.Height) =
+					(startRect.X, startRect.Y, startRect.Width, startRect.Height);
+			}
+			else {
+				string fitPosition = AppGlobal.FitPosition;
+
+				window.Left = fitPosition.Contains("Right")
+					? SystemParameters.WorkArea.Width - smallRect.Width
+					: fitPosition.Contains("Left") ? 0 : smallRect.X;
+
+				window.Top = fitPosition.Contains("Bottom")
+					? SystemParameters.WorkArea.Height - smallRect.Height
+					: fitPosition.Contains("Top") ? 0 : smallRect.Y;
+
+				window.Width = smallRect.Width;
+				window.Height = smallRect.Height;
 			}
 		}
 	}

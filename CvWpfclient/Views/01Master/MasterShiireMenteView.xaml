@@ -1,8 +1,7 @@
 <helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterShiireMenteView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
 	Title="{Binding Title}"
 	Width="1244" Height="900"
 	d:Height="1200"
@@ -386,8 +385,7 @@
 										Style="{StaticResource PostalSearchButton}"
 										ToolTip="郵便番号から住所を検索">
 										<StackPanel Orientation="Horizontal">
-											<materialDesign:PackIcon Margin="0,0,6,0"
-												VerticalAlignment="Center"
+											<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 												Kind="Magnify" />
 											<TextBlock VerticalAlignment="Center"
 												Text="〒API検索" />
@@ -429,7 +427,7 @@
 								<TextBox Grid.Row="11" Grid.Column="1"
 									materialDesign:HintAssist.Hint="電話番号"
 									Style="{StaticResource FormTextBox}"
-								Text="{Binding CurrentEdit.Tel}" />
+									Text="{Binding CurrentEdit.Tel}" />
 								<TextBlock Grid.Row="12"
 									Style="{StaticResource FormLabel}"
 									Text="事業者登録番号" />

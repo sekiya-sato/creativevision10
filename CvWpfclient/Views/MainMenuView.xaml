@@ -82,25 +82,25 @@
 
 					<Border Grid.Column="1"
 						Width="44" Height="44"
-						Margin="0,0,8,0" VerticalAlignment="Center"
+						Margin="0,0,4,0" VerticalAlignment="Center"
 						shell:WindowChrome.IsHitTestVisibleInChrome="True"
 						Style="{StaticResource StatusChip}"
 						ToolTip="{Binding MoonPhaseToolTip}">
-						<Viewbox Width="24" Height="24"
+						<Viewbox Width="30" Height="30"
 							HorizontalAlignment="Center" VerticalAlignment="Center"
 							Stretch="Uniform">
-							<Grid Width="24" Height="24">
-								<Ellipse Width="24" Height="24"
+							<Grid Width="30" Height="30">
+								<Ellipse Width="30" Height="30"
 									Fill="Black"
 									Opacity="{Binding MoonDarkOpacity}" />
-								<Ellipse Width="24" Height="24"
+								<Ellipse Width="30" Height="30"
 									Fill="#FFD84D"
 									Opacity="{Binding MoonLightOpacity}">
 									<Ellipse.Clip>
 										<RectangleGeometry Rect="{Binding MoonLightClipRect}" />
 									</Ellipse.Clip>
 								</Ellipse>
-								<Ellipse Width="24" Height="24"
+								<Ellipse Width="30" Height="30"
 									Opacity="0.35"
 									Stroke="{DynamicResource SubTitleColor}"
 									StrokeThickness="1" />
@@ -140,18 +140,18 @@
 										</Button.Content>
 									</Button>
 
-									<Button Command="{Binding WinMinimizeCommand}"
+									<Button Command="{Binding WinMenuOnlyCommand}"
 										Opacity="0.6"
 										Style="{StaticResource MinimizeWinBtn}"
-										ToolTip="最小化">
+										ToolTip="メニュー">
 										<materialDesign:PackIcon Width="24" Height="24"
 											HorizontalAlignment="Center" VerticalAlignment="Center"
 											Kind="WindowMinimize" />
 									</Button>
-									<Button Command="{Binding WinMenuOnlyCommand}"
+									<Button Command="{Binding WinSmallCommand}"
 										Opacity="0.6"
 										Style="{StaticResource MenuonlyWinBtn}"
-										ToolTip="メニューのみ/通常">
+										ToolTip="小窓">
 										<materialDesign:PackIcon Width="19" Height="20"
 											HorizontalAlignment="Center" VerticalAlignment="Center"
 											Kind="ViewList" />
