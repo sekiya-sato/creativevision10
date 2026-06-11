@@ -12,7 +12,6 @@
 - Task Mgmt: Only ONE `in_progress` task at a time.
 - Preparation: Use `git stash` before work; create a memo in `.omo/` for complex tasks.
 - Search: Use `grep -r` for Japanese terms.
-- Database: Use `sqlite3` for `server-user163.db` files; avoid direct file edits.
 
 ## SkillOpt-Based Skill Maintenance
 - **Evidence-Driven Updates**: Treat `.agents/skills/*/SKILL.md` as the trainable state. Improve it via actual execution evidence (requests, skills, touched files, tool outputs, results, failure modes) rather than broad prompt rewrites.

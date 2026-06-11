@@ -12,13 +12,12 @@ public record InnerVersion(int DbVersion, string Sql, string Memo);
 /// SqlDepends: DBのテーブル変更を管理する versions配列を定義し、実稼働DBとプログラムの整合性をとる
 /// </summary>
 public class UpdateDb {
-	private static InnerVersion[] versions = [
-		new (26040101,"ALTER TABLE TranVulcanHht ADD COLUMN ErrorMsg TEXT;","SysUpdateDbテーブル 2026.04.08定義"),
-		new (26061001,"ALTER TABLE MasterSysman ADD COLUMN TaxRegistrationNumber TEXT;","MasterSysman 列追加 2026.06.10定義"),
-		// new (26061002,"ALTER TABLE SysUpdateDb RENAME COLUMN NewVersion To PreVersion;","SysUpdateDb 列名変更 2026.06.10定義"), SysUpdateDb は直接変更する
-		new (26061002,"ALTER TABLE MasterTokui ADD COLUMN TaxRegistrationNumber TEXT;","MasterTokui 列追加 2026.06.10定義"),
-		new (26061003,"ALTER TABLE MasterShiire ADD COLUMN TaxRegistrationNumber TEXT;","MasterShiire 列追加 2026.06.10定義"),
-		//new (26040102,"","2026.04.08定義")
+	private static InnerVersion[] versions = [ // バージョン番号=年月日+連番
+		new (26_04_01_01,"ALTER TABLE TranVulcanHht ADD COLUMN ErrorMsg TEXT;","SysUpdateDbテーブル 2026.04.08定義"),
+		new (26_06_10_01,"ALTER TABLE MasterSysman ADD COLUMN TaxRegistrationNumber TEXT;","MasterSysman 列追加 2026.06.10定義"),
+		// new (26_06_10_02,"ALTER TABLE SysUpdateDb RENAME COLUMN NewVersion To PreVersion;","SysUpdateDb 列名変更 2026.06.10定義"), SysUpdateDb のみ直接変更する
+		new (26_06_10_02,"ALTER TABLE MasterTokui ADD COLUMN TaxRegistrationNumber TEXT;ALTER TABLE MasterShiire ADD COLUMN TaxRegistrationNumber TEXT;","MasterTokui MasterShiire 列追加 2026.06.10定義"),
+		new (26_06_11_01,"ALTER TABLE DerivedShohinColSiz ADD COLUMN Vdc NUMBER not null default 0;ALTER TABLE DerivedShohinColSiz ADD COLUMN Vdu NUMBER not null default 0;","DerivedShohinColSiz 列追加 2026.06.11定義"),
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {

@@ -157,13 +157,15 @@ FROM Flattened
 [KeyDml("njan2", false, "Jan2")]
 [KeyDml("njan3", false, "Jan3")]
 [Comment("派生マスタ：商品マスタMasterShohinから商品、色、サイズに展開したマスタ")]
-public partial class DerivedShohinColSiz : ObservableObject, IDerivedClass {
+public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
+	/*
 	/// <summary>
 	/// ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[property: Comment("仮想ユニークキー")]
 	long id;
+	*/
 	/// <summary>
 	/// 商品Id
 	/// </summary>
