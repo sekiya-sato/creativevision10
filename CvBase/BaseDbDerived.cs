@@ -12,143 +12,6 @@ public interface IDerivedClass {
 	static abstract string DeleteSql { get; }
 }
 
-/*
-public interface IViewClass {
-	public string CreateSql { get; }
-}
-public partial class ViewShohinColSiz : ObservableObject, IViewClass {
-	/// <summary>
-	/// ユニークキー
-	/// </summary>
-	[ObservableProperty]
-	[property: Comment("仮想ユニークキー")]
-	long id;
-	/// <summary>
-	/// 商品Id
-	/// </summary>
-	[ObservableProperty]
-	long id_Shohin;
-	/// <summary>
-	/// 色サイズ行Index
-	/// </summary>
-	[ObservableProperty]
-	int rowIdx;
-	/// <summary>
-	/// コード
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(16)]
-	string code = "";
-	/// <summary>
-	/// 名前
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(80)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string name = string.Empty;
-	/// <summary>
-	/// 略称
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string ryaku = string.Empty;
-	/// <summary>
-	/// 色
-	/// </summary>
-	[ObservableProperty]
-	long id_Col;
-	/// <summary>
-	/// カラーCD
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Col = string.Empty;
-	/// <summary>
-	/// カラー名
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Col = string.Empty;
-	/// <summary>
-	/// サイズ
-	/// </summary>
-	[ObservableProperty]
-	long id_Siz;
-	/// <summary>
-	/// サイズCD
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Siz = string.Empty;
-	/// <summary>
-	/// サイズ名
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Siz = string.Empty;
-	/// <summary>
-	/// JANコード1
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string jan1 = string.Empty;
-	/// <summary>
-	/// JANコード2
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string jan2 = string.Empty;
-	/// <summary>
-	/// JANコード3
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string jan3 = string.Empty;
-
-	[Ignore]
-	// CREATE VIEW IF NOT EXISTS DerivedShohinColSiz AS
-	/// <summary>
-	/// SqlDepends: View作成のSQL
-	/// </summary>
-	public string CreateSql => @"
-WITH Flattened AS (
-    SELECT
-        M.*,
-        J.value AS colsize_json,
-        ROW_NUMBER() OVER (PARTITION BY M.Id) AS RowIdx
-    FROM
-        MasterShohin M,
-        json_each(M.Jcolsiz) J
-)
-SELECT
-    (Id * 100 + RowIdx) Id,
-    ifnull(Id,0) Id_Shohin,
-	RowIdx,
-	Code,
-    Name,
-    Ryaku,
-    json_extract(colsize_json, '$.Id_Col') AS Id_Col,
-    json_extract(colsize_json, '$.Code_Col') AS Code_Col,
-    json_extract(colsize_json, '$.Mei_Col') AS Mei_Col,
-	json_extract(colsize_json, '$.Id_Siz') AS Id_Siz,
-    json_extract(colsize_json, '$.Code_Siz') AS Code_Siz,
-    json_extract(colsize_json, '$.Mei_Siz') AS Mei_Siz,
-    json_extract(colsize_json, '$.Jan1') AS Jan1,
-    json_extract(colsize_json, '$.Jan2') AS Jan2,
-    json_extract(colsize_json, '$.Jan3') AS Jan3
-FROM Flattened
-";
-}*/
-
-
 [PrimaryKey("Id", AutoIncrement = true)]
 [KeyDml("unq1", true, ["Id_Shohin", "Id_Col", "Id_Siz"])]
 [KeyDml("n1", false, "Id_Shohin")]
@@ -158,14 +21,6 @@ FROM Flattened
 [KeyDml("njan3", false, "Jan3")]
 [Comment("派生マスタ：商品マスタMasterShohinから商品、色、サイズに展開したマスタ")]
 public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
-	/*
-	/// <summary>
-	/// ユニークキー
-	/// </summary>
-	[ObservableProperty]
-	[property: Comment("仮想ユニークキー")]
-	long id;
-	*/
 	/// <summary>
 	/// 商品Id
 	/// </summary>
@@ -265,7 +120,7 @@ public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
 	public static string CreateSql => @$"
 Insert into {nameof(DerivedShohinColSiz)}
 SELECT
-  (M.Id * 100 + ROW_NUMBER() OVER (PARTITION BY M.Id)) Id,
+  (M.Id * 100 + ROW_NUMBER() OVER (PARTITION BY M.Id)) Id,M.vdc,M.vdu,
   ifnull(M.Id,0) Id_Shohin,
   ROW_NUMBER() OVER (PARTITION BY M.Id) RowIdx,
   M.Code,
