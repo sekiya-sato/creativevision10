@@ -39,9 +39,9 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg101_Op_Query] = (req, ctx) => HandleOpQuery(req, ctx),
 			[CvFlag.Msg201_Op_Execute] = (req, ctx) => HandleOpExecute(req, ctx),
 			[CvFlag.Msg300_Op_OutData] = (req, ctx) => HandleOutData(req, ctx),
-			[CvFlag.Msg700_Test_Start] = (req, ctx) => HandleTestLogicMsg700(req, ctx),
-			[CvFlag.Msg701_TestCase001] = (req, ctx) => HandleTestLogicMsg701(req, ctx),
-			[CvFlag.Msg702_TestCase002] = (req, ctx) => HandleTestLogicMsg702(req, ctx),
+			[CvFlag.Msg700_Test_Start] = (req, ctx) => NotImplementedTask(req, ctx),
+			[CvFlag.Msg701_TestCase001] = (req, ctx) => NotImplementedTask(req, ctx),
+			[CvFlag.Msg702_TestCase002] = (req, ctx) => NotImplementedTask(req, ctx),
 			[CvFlag.Msg798_DatabaseClose] = (req, ctx) => HandlerDatabaseClose(req, ctx),
 			[CvFlag.Msg799_DatabaseReOpen] = (req, ctx) => HandlerDatabaseReOpen(req, ctx),
 		};
@@ -74,5 +74,21 @@ public partial class CoreService : ICoreService {
 		};
 		return Task.FromResult(defaultErr);
 	}
+	/// <summary>
+	/// 未実装タスクの共通ハンドラ
+	/// </summary>
+	/// <param name="request"></param>
+	/// <param name="context"></param>
+	/// <returns></returns>
+	public CvMsg NotImplementedTask(CvMsg request, CallContext context = default) {
+		var defaultErr = new CvMsg {
+			Flag = CvFlag.Msg800_Error_Start,
+			Code = -1,
+			DataType = typeof(string),
+			DataMsg = $"Unimplemented function. QueryFlag: {request.Flag}"
+		};
+		return defaultErr;
+	}
+
 
 }
