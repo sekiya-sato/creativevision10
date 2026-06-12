@@ -12,21 +12,6 @@ public interface IBaseCodeName {
 }
 
 /// <summary>
-/// テーブルに別途リスト取得用の ViewSql 文字列を定義するためのインターフェース(T.*)
-/// </summary>
-public interface IBaseViewDefine {
-
-	readonly public static string ViewSql = "";
-}
-/// <summary>
-/// シリアライズ制御用のインターフェース
-/// </summary>
-public interface IBaseSerializeMeisho {
-	public bool Ser { get; set; }
-
-}
-
-/// <summary>
 /// 派生テーブルの元テーブルを示すインターフェース
 /// </summary>
 public interface IDerivedOrigin {
