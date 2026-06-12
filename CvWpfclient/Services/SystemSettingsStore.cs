@@ -95,9 +95,9 @@ public sealed class ClientSettingsStore {
 	public Dictionary<string, string?> ToConfigurationOverrides(ClientSettingsDocument settings) {
 		var overrides = new Dictionary<string, string?>();
 		AddIfNotWhiteSpace(overrides, "ConnectionStrings:Url", settings.ConnectionStrings.Url);
-		AddIfNotWhiteSpace(overrides, "Parameters:LoginId", settings.Parameters.LoginId);
-		AddIfNotWhiteSpace(overrides, "Parameters:LoginPass", settings.Parameters.LoginPass);
-		AddIfNotWhiteSpace(overrides, "Parameters:LoginJwt", settings.Parameters.LoginJwt);
+		AddIfNotWhiteSpace(overrides, "Application:LoginId", settings.Application.LoginId);
+		AddIfNotWhiteSpace(overrides, "Application:LoginPass", settings.Application.LoginPass);
+		AddIfNotWhiteSpace(overrides, "Application:LoginJwt", settings.Application.LoginJwt);
 		AddIfNotWhiteSpace(overrides, "Application:WeatherRegion", settings.Application.WeatherRegion);
 		AddIfNotWhiteSpace(overrides, "Application:FitPosition", settings.Application.FitPosition);
 		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);

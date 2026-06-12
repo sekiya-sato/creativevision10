@@ -28,7 +28,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand]
 	private void Init() {
-		var parameters = AppGlobal.Parameters;
+		var parameters = AppGlobal.Application;
 		LoginId = parameters.LoginId;
 		LoginPassword = parameters.LoginPass;
 		if (InitParam == 1) {

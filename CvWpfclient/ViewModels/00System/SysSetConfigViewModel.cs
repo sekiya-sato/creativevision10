@@ -94,8 +94,8 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		}
 
 		_currentSettings.ConnectionStrings.Url = Url;
-		_currentSettings.Parameters.LoginId = persistedLoginId;
-		_currentSettings.Parameters.LoginPass = persistedLoginPassword;
+		_currentSettings.Application.LoginId = persistedLoginId;
+		_currentSettings.Application.LoginPass = persistedLoginPassword;
 		LoginId = persistedLoginId;
 		LoginPassword = persistedLoginPassword;
 		return true;
@@ -120,8 +120,8 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private void LoadSettings() {
 		_currentSettings = _store.Load();
 		Url = AppGlobal.Url ?? string.Empty;
-		LoginId = AppGlobal.Parameters.LoginId;
-		LoginPassword = AppGlobal.Parameters.LoginPass;
+		LoginId = AppGlobal.Application.LoginId;
+		LoginPassword = AppGlobal.Application.LoginPass;
 		_originalUrl = Url;
 		_originalLoginId = LoginId;
 		_originalLoginPassword = LoginPassword;

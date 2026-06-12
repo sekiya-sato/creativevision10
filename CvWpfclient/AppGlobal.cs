@@ -38,18 +38,17 @@ public static class AppGlobal {
 	}
 	public static string FitPosition => _config?["Application:FitPosition"] ?? "Center";
 	public static string WeatherRegion => _config?["Application:WeatherRegion"] ?? "Tokyo";
-	public static ClientParameters Parameters => new ClientParameters {
-		LoginId = _config?["Parameters:LoginId"] ?? string.Empty,
-		LoginPass = _config?["Parameters:LoginPass"] ?? string.Empty,
-		LoginJwt = _config?["Parameters:LoginJwt"] ?? string.Empty
+	public static ClientApplication Application => new ClientApplication {
+		LoginId = _config?["Application:LoginId"] ?? string.Empty,
+		LoginPass = _config?["Application:LoginPass"] ?? string.Empty,
 	};
 	/// <summary>
 	/// ログイン認証後のJWT
 	/// [JWT after login authentication]
 	/// </summary>
 	public static string? LoginJwt {
-		get => _config?["Parameters:LoginJwt"] ?? string.Empty;
-		set => _config?["Parameters:LoginJwt"] = value;
+		get => _config?["Application:LoginJwt"] ?? string.Empty;
+		set => _config?["Application:LoginJwt"] = value;
 	}
 
 	public static Models.InfoUser StaticInfoUser = new();
@@ -70,7 +69,7 @@ public static class AppGlobal {
 		_logger.LogWarning($"---------------------------------\n AppGlobal.Init() 接続先Url={Url},実行フォルダ={Directory.GetCurrentDirectory()}");
 		// あれば取得する
 		if (string.IsNullOrWhiteSpace(LoginJwt)) {
-			SetLoginJwt(_config.GetSection("Parameters")?["LoginJwt"]);
+			SetLoginJwt(_config.GetSection("Application")?["LoginJwt"]);
 		}
 	}
 
@@ -129,10 +128,10 @@ public static class AppGlobal {
 			_grpcServiceCache.Clear();
 		}
 		if (loginId != null) {
-			_config["Parameters:LoginId"] = loginId;
+			_config["Application:LoginId"] = loginId;
 		}
 		if (loginPass != null) {
-			_config["Parameters:LoginPass"] = loginPass;
+			_config["Application:LoginPass"] = loginPass;
 		}
 	}
 
