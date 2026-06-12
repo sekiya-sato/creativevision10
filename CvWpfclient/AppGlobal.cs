@@ -38,9 +38,10 @@ public static class AppGlobal {
 	}
 	public static string FitPosition => _config?["Application:FitPosition"] ?? "Center";
 	public static string WeatherRegion => _config?["Application:WeatherRegion"] ?? "Tokyo";
+	public static int Limit => int.TryParse(_config?["Application:Limit"], out var limit) ? limit : 100; // デフォルトは100件
 	public static ClientApplication Application => new ClientApplication {
 		LoginId = _config?["Application:LoginId"] ?? string.Empty,
-		LoginPass = _config?["Application:LoginPass"] ?? string.Empty,
+		LoginPass = _config?["Application:LoginPass"] ?? string.Empty
 	};
 	/// <summary>
 	/// ログイン認証後のJWT
