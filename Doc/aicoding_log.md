@@ -685,3 +685,25 @@
 - `/mnt/c/Windows/System32/cmd.exe /d/c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 errors, 2 warnings は他プロセスによるファイルロック）を確認
 
 ---
+
+## [2026-06-12] 12:55 SelectMultiWinView 複数選択ダイアログ追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclientプロジェクトの SelectWinView をもとにして、単一レコード選択ではなく、チェックボックスを先頭に付け、複数選択させるサブダイアログを作成する
+### 実施内容
+- CvWpfclient/Views/Sub/SelectMultiWinView.xaml: SelectWinView を基に、先頭チェックボックス列、全選択、解除、選択件数表示を持つ複数選択用サブダイアログを追加
+- CvWpfclient/Views/Sub/SelectMultiWinView.xaml.cs: 表示後に DataGrid へフォーカスする最小限の code-behind を追加
+- CvWpfclient/ViewModels/Sub/SelectMultiWinViewModel.cs: 元レコードを汚さない選択行ラッパー、サーバー検索、ローカルデータ設定、選択済みレコード取得処理を追加
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: `ShowMultiSelectDialog<TResult>` を追加し、マスターメンテ系 ViewModel から複数選択ダイアログを呼び出せるようにした
+### 技術決定 Why
+- 既存 `SelectWinView` の単一選択 API を維持するため、新規 `SelectMultiWinView` として分離した
+- 任意の `BaseDbClass` 派生データに UI 用のチェック状態を追加しないよう、ViewModel 側のラッパーで `IsSelected` を管理した
+### 確認
+- `git diff --check` で whitespace エラーなしを確認
+- 編集ファイルの CRLF を確認
+- `cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

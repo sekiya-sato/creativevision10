@@ -381,6 +381,14 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		return vm.Current as TResult;
 	}
 
+	protected IReadOnlyList<TResult>? ShowMultiSelectDialog<TResult>(Type tableType, string where, string order, IEnumerable<long>? selectedIds = null, long startPos = 0) where TResult : BaseDbClass {
+		var selWin = new Views.Sub.SelectMultiWinView();
+		if (selWin.DataContext is not SelectMultiWinViewModel vm) return null;
+		vm.SetParam(tableType, where, order, startPos: startPos, selectedIds: selectedIds);
+		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
+		return vm.GetSelectedItems<TResult>();
+	}
+
 	[RelayCommand(IncludeCancelCommand = true)]
 	protected async Task DoOutputJson(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
