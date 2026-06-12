@@ -169,7 +169,7 @@ public partial class CoreService {
 		try {
 			var newItem = _db.Insert(item);
 			if (typeof(IDerivedOrigin).IsAssignableFrom(insert.ItemType)) {
-				new HandleDerived(_db).Insert(insert.ItemType, item);
+				new HandlerDerived(_db).Insert(insert.ItemType, item, ((BaseDbClass)item).Id);
 			}
 			else if (typeof(ITranSoko).IsAssignableFrom(insert.ItemType)) {
 				var summaryDb = new SummaryDb(_db);
@@ -206,7 +206,7 @@ public partial class CoreService {
 				SetCreatedAuditValues(insertBulk.ItemType, item);
 				_db.Insert(item);
 				if (typeof(IDerivedOrigin).IsAssignableFrom(insertBulk.ItemType)) {
-					new HandleDerived(_db).Insert(insertBulk.ItemType, item);
+					new HandlerDerived(_db).Insert(insertBulk.ItemType, item, ((BaseDbClass)item).Id);
 				}
 				else if (typeof(ITranSoko).IsAssignableFrom(insertBulk.ItemType)) {
 					var summaryDb = new SummaryDb(_db);
@@ -260,7 +260,7 @@ public partial class CoreService {
 			db.Vdu = vdate;
 			_db.Update(item);
 			if (typeof(IDerivedOrigin).IsAssignableFrom(update.ItemType)) {
-				new HandleDerived(_db).Update(update.ItemType, item);
+				new HandlerDerived(_db).Update(update.ItemType, item, ((BaseDbClass)item).Id);
 			}
 			else if (typeof(ITranSoko).IsAssignableFrom(update.ItemType)) {
 				var summaryDb = new SummaryDb(_db);
@@ -309,7 +309,7 @@ public partial class CoreService {
 		}
 		_db.Delete(item);
 		if (typeof(IDerivedOrigin).IsAssignableFrom(delete.ItemType)) {
-			new HandleDerived(_db).Delete(delete.ItemType, item);
+			new HandlerDerived(_db).Delete(delete.ItemType, item, ((BaseDbClass)item).Id);
 		}
 		return CreateSuccessResponse(flag, delete.ItemType, Common.SerializeObject(item));
 	}
@@ -341,7 +341,7 @@ public partial class CoreService {
 
 		_db.Delete(item);
 		if (typeof(IDerivedOrigin).IsAssignableFrom(deleteById.ItemType)) {
-			new HandleDerived(_db).Delete(deleteById.ItemType, item);
+			new HandlerDerived(_db).Delete(deleteById.ItemType, item, ((BaseDbClass)item).Id);
 		}
 		return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 	}
