@@ -194,3 +194,9 @@ public record SummaryRealDateParameter(string DateYymm);
 /// <param name="calcFlag">登録+1, 修正-1,+1, 削除-1</param>
 public record SummaryTranIdParameter(string tableName, long tranId, int calcFlag);
 
+
+/// <summary>
+/// クエリI/F : CSV出力パラメータ (Sql出力パラメータはQueryListSqlParamを使う)
+/// </summary>
+public sealed record PrintByCsvParam(string CsvData);
+
