@@ -4,7 +4,8 @@
 - **Roles**: OpenCode (Complex), Copilot (Inline/Small edits), Codex(General).
 - **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
 - **Files**: Solution `creativevision10.slnx`.
-- - **Line Endings**: Every edited or created file **MUST** use **CR+LF (`\r\n`)** as the line ending. Do not mix or use LF/CR.
+- **Line Endings**: Every edited or created file **MUST** use **CR+LF (`\r\n`)** as the line ending. Do not mix or use LF/CR.
+- **SQL** : Use SQLite 3.46 or later syntax.
 
 ## Priority Workflow (IMPORTANT)
 **Analyze → Plan (TODO-LIST) → Execute → Verify → Write-Log → Git-Commit**
