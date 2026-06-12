@@ -707,3 +707,21 @@
 - `cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+## [2026-06-12] 13:09 SelectMultiWinView全選択件数制限
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：SelectMultiWinView で「全選択」ボタン押下時、表示件数が100以上の場合は「選択数が多すぎます」エラーを表示する
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectMultiWinViewModel.cs: SelectAllCommand 実行時に ListData.Count が100以上なら MessageEx.ShowErrorDialog を表示して一括選択を中止するガードを追加
+### 技術決定 Why
+- 表示中の件数は ViewModel が保持する ListData.Count と一致するため、既存の一括選択処理直前で判定した
+- 既存のデータ取得失敗や未選択警告と同じく MessageEx と ClientLib.GetActiveView(this) を使い、画面所有者付きのダイアログ表示に統一した
+### 確認
+- 編集ファイルの CRLF を確認
+- WSLディストリビューション未導入のためWSL経由ビルドは実行不可
+- `cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

@@ -153,6 +153,10 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 	[RelayCommand]
 	public void SelectAll() {
 		if (ListData == null) return;
+		if (ListData.Count >= 100) {
+			MessageEx.ShowErrorDialog("選択数が多すぎます", owner: ClientLib.GetActiveView(this));
+			return;
+		}
 		foreach (var row in ListData) {
 			row.IsSelected = true;
 		}
