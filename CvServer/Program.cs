@@ -151,6 +151,7 @@ var appInit = new AppGlobal();
 var database = app.Services.GetRequiredService<ExDatabase>();
 // DIコンテナから登録済みの ExDatabase を取得してサーバ起動時に必要な初期化を実行
 appInit.Init(database, app.Environment.ApplicationName, serverVersion);
+appInit.PdfInit(builder.Configuration.GetSection("PrintServer"));
 var appStartTime = DateTime.Now;
 const string sqliteShutdownCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
 

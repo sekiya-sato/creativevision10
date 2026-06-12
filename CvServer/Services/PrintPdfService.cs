@@ -96,13 +96,7 @@ public partial class CoreService {
 			OutputDir = Path.GetDirectoryName(request.TempOutputFullPath) ?? "",
 			OutputFileName = Path.GetFileName(request.TempOutputFullPath),
 		};
-		var printServer = _configuration.GetSection("PrintServer");
 		var printService = new PrintAdapter();
-		var licenseTask = printService.CheckLicenseAsync().Result;
-		foreach (var lic in licenseTask)
-			if (!lic.Status)
-				printService.RegisterLicenseAsync(lic.Product, printServer.GetValue<string>(lic.Product) ?? "").Wait();
-
 		var ret = printService.ExecutePrintAsync(context);
 		ret.Wait();
 		return ret.Result;
@@ -147,8 +141,6 @@ public partial class CoreService {
 			}
 			using (var writer = new StreamWriter(request.TempDataFullPath, false, Sjis)) {
 				dataList.WriteDynamicCsv(writer);
-				writer.Flush();
-				writer.Close();
 			}
 		}
 		else {
@@ -185,7 +177,5 @@ public partial class CoreService {
 		var ret = new PrintResult(true, $"{timestamp}/outfile.pdf");
 		return ret;
 	}
-
-
 
 }

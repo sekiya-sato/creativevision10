@@ -1,5 +1,6 @@
 using CvBase;
 using CvBase.Share;
+using CvPrints;
 
 namespace CvServer;
 
@@ -41,5 +42,21 @@ public class AppGlobal {
 		var defTable = new DefineDataTable();
 		ret = defTable.Initialize(db, false);
 	}
-
+	/// <summary>
+	/// PDFライブラリの初期化
+	/// </summary>
+	/// <param name="printServerConfig"></param>
+	public void PdfInit(IConfigurationSection printServerConfig) {
+		if (printServerConfig == null) {
+			return;
+		}
+		var printService = new PrintAdapter();
+		var licenseTask = printService.CheckLicenseAsync().Result;
+		foreach (var lic in licenseTask.Where(c => !c.Status)) {
+			var productkey = printServerConfig.GetValue<string>(lic.Product) ?? "";
+			if (!string.IsNullOrEmpty(productkey)) {
+				printService.RegisterLicenseAsync(lic.Product, productkey).Wait();
+			}
+		}
+	}
 }
