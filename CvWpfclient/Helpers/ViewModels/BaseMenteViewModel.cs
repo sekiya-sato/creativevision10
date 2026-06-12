@@ -160,7 +160,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			return true;
 		}
 
-		vm.Initialize(currentParameter ?? new SelectParameter { DisplayName = displayName });
+		vm.Initialize(currentParameter ?? new SelectParameter { DisplayName = displayName, MaxCount = AppGlobal.Limit });
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			parameter = vm.Parameter;
 			return false;

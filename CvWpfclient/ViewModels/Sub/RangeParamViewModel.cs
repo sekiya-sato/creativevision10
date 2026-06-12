@@ -9,8 +9,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 	SelectParameter parameter = new();
 
 	public void Initialize(SelectParameter? param) {
-		Parameter = param ?? new SelectParameter { MaxCount = AppGlobal.Limit };
-		if (Parameter.MaxCount is null or 0) Parameter.MaxCount = AppGlobal.Limit;
+		Parameter = param ?? new SelectParameter();
 	}
 
 	[RelayCommand]

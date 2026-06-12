@@ -10,8 +10,7 @@ public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranA
 	SelectInputParameter parameter = new();
 
 	public void Initialize(SelectInputParameter? param) {
-		Parameter = param ?? new SelectInputParameter { MaxCount = AppGlobal.Limit };
-		if (Parameter.MaxCount is null or 0) Parameter.MaxCount = AppGlobal.Limit;
+		Parameter = param ?? new SelectInputParameter();
 	}
 
 	[RelayCommand]

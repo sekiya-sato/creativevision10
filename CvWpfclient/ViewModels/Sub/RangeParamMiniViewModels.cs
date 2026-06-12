@@ -12,8 +12,7 @@ public partial class RangeParamMiniViewModel : Helpers.BaseViewModel {
 
 	/// <summary>表示前に呼び出す初期化メソッド</summary>
 	public void Initialize(SelectParameter? param) {
-		Parameter = param ?? new SelectParameter { MaxCount = AppGlobal.Limit };
-		if (Parameter.MaxCount is null or 0) Parameter.MaxCount = AppGlobal.Limit;
+		Parameter = param ?? new SelectParameter();
 	}
 
 	[RelayCommand]

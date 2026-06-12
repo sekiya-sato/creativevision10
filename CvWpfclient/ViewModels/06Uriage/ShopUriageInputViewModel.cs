@@ -43,6 +43,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			DisplayName = "店舗売上",
 			ToriLabel = "店舗CD",
 			IsToriVisible = true,
+			MaxCount = AppGlobal.Limit,
 		};
 		vm.Initialize(selectParam);
 		if (ClientLib.ShowDialogView(win, this, true) != true) return new ValueTask<bool>(false);
