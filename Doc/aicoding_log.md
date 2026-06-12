@@ -725,3 +725,24 @@
 - `cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+## [2026-06-12] 14:52 RangeParamView初期件数未表示原因調査
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：RangeParamView などで AppGlobal.Limit を初期件数に設定しているが、MasterShainMenteView などから呼ばれると件数が設定されていない原因を調べる
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: RangeParamView 起動時に MaxCount 未設定の SelectParameter を渡していることを確認
+- CvWpfclient/ViewModels/Sub/RangeParamViewModel.cs: Parameter 差し替え後に MaxCount を代入しており、SelectParameter が通知プロパティではないため初回表示へ反映されないことを確認
+- CvWpfclient/ViewModels/Sub/RangeParamMiniViewModels.cs: 同じ初期化順のため同種の表示問題が起き得ることを確認
+- CvBase/Parameters.cs: MaxCount が設定済みなら QueryListParam.AddWhereOrder() で limit に反映されることを確認
+- .omo/20260612_rangeparam_limit_investigation.md: 原因、影響範囲、最小修正案を記録
+### 技術決定 Why
+- `SelectParameter` は `ObservableObject` ではなく `record class` のため、`Parameter` 通知後に `Parameter.MaxCount` だけを変更しても XAML のネストバインディングが更新されない
+- `SelectInputParameter` は `ObservableObject` なので同じ代入順でも通知されるが、`SelectParameter` を使う RangeParamView / RangeParamMiniView は補完後に `Parameter` へ代入する修正が必要
+### 確認
+- `rg` と関連ファイル確認で呼び出し経路、設定読み込み、SQL生成経路を確認
+- 調査のみのため WPF ビルドは未実行
+
+---
