@@ -33,20 +33,20 @@ public class PrintAdapter : IPrintService {
 				// Java側の同期メソッドを実行
 				writer.submit();
 
-				return new PrintResult { IsSuccess = true, Message = context.OutputFileName };
+				return new PrintResult(true, context.OutputFileName);
 			}
 			catch (FormWriterException e) {
 				// PrintStream固有のエラーハンドリング
-				return new PrintResult { IsSuccess = false, Message = e.getMessage() };
+				return new PrintResult(false, e.getMessage());
 			}
 			catch (Exception ex) {
 				// .NETレイヤーのエラー
-				return new PrintResult { IsSuccess = false, Message = ex.Message };
+				return new PrintResult(false, ex.Message);
 			}
 		});
 #else
 		await Task.CompletedTask;
-		return new PrintResult{ IsSuccess = false, Message = "Print機能は無効です。環境変数 printenable=true を設定してください。" };
+		return new PrintResult(false, "Print機能は無効です。環境変数 printenable=true を設定してください。");
 #endif
 	}
 	/// <summary>

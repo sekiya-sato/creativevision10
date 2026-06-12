@@ -22,6 +22,10 @@ public sealed record PrintContext {
 public sealed record PrintResult {
 	public bool IsSuccess { get; set; }
 	public string Message { get; set; } = string.Empty;
+	public PrintResult(bool isSuccess, string message) {
+		IsSuccess = isSuccess;
+		Message = message;
+	}
 }
 
 public sealed record PrintProduct {
