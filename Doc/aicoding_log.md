@@ -15,8 +15,6 @@
 ### 確認
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"` でビルド成功（0 warnings / 0 errors）を確認
 
----
-
 ## [2026-06-04] 10:36 WebpdfView F5リロード安定化
 ### Agent
 - GPT-5 : OpenAI : Codex
@@ -744,5 +742,28 @@
 ### 確認
 - `rg` と関連ファイル確認で呼び出し経路、設定読み込み、SQL生成経路を確認
 - 調査のみのため WPF ビルドは未実行
+
+---
+## [2026-06-12] 20:12 WPF設定変更後の未監視Task例外対策
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：SysSetConfigView の Shift+F12 で接続先を変更した後に発生する TaskScheduler.UnobservedTaskException / NLog Flush Timeout への対策を実装して commit する
+### 実施内容
+- CvWpfclient/App.xaml.cs: Host 再構築とアプリ終了時に旧 Host を StopAsync 後 IAsyncDisposable.DisposeAsync 優先で破棄する共通処理を追加し、未監視 Task 例外はログ記録と SetObserved のみに変更
+- CvWpfclient/AppGlobal.cs: deadline 付き CallContext を生成する overload を追加
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 起動時/タイマーの天気 gRPC 呼び出しに 15 秒 deadline を指定
+- CvWpfclient/ViewModels/00System/LoginViewModel.cs: LoginJwt の Debug ログをマスク出力に変更
+- .omo/20260612_unobserved_task_nlog_fix.md: 調査結果と対策方針を記録
+### 技術決定 Why
+- ログで接続先変更後も旧 localhost:5012 の gRPC subchannel retry が継続していたため、再現経路である天気取得に限定して deadline を追加し、他の業務 gRPC 呼び出しへの影響を避けた
+- Host Dispose は同期破棄だけでは非同期リソースが残る可能性があるため、IAsyncDisposable を優先して旧チャネル破棄を待つようにした
+- TaskScheduler.UnobservedTaskException は GC 後に遅れて発生する内部例外通知であり、利用者へ予期しないエラーとして表示すると誤解を招くため UI 表示を抑止した
+### 確認
+- `git diff --check` で空白エラーなし
+- 編集ファイルの CRLF を確認
+- 通常権限のビルドは SDK キャッシュ権限で失敗したため、承認付きで `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、ビルド成功（0 warnings / 0 errors）を確認
 
 ---

@@ -89,6 +89,19 @@ public static class AppGlobal {
 					callOptions: callOptions,
 					flags: CallContextFlags.CaptureMetadata);
 	}
+	public static CallContext GetDefaultCallContext(CancellationToken cancellationToken, TimeSpan timeout) {
+		if (timeout <= TimeSpan.Zero) {
+			throw new ArgumentOutOfRangeException(nameof(timeout), "gRPC timeout は 0 より大きい必要があります。");
+		}
+
+		var callOptions = new CallOptions(
+			headers: CreateDefaultMetadata(),
+			deadline: DateTime.UtcNow.Add(timeout),
+			cancellationToken: cancellationToken);
+		return new CallContext(
+					callOptions: callOptions,
+					flags: CallContextFlags.CaptureMetadata);
+	}
 
 	private static Metadata CreateDefaultMetadata() {
 		// 認証ヘッダーは CallContext 側を正とする。

@@ -99,9 +99,10 @@ public partial class App : Application {
 
 	protected override async void OnExit(ExitEventArgs e) {
 		CancelHostLifetimeOperations();
-		if (AppHost != null) {
-			await AppHost.StopAsync();
-			AppHost.Dispose();
+		var host = AppHost;
+		AppHost = null;
+		if (host != null) {
+			await StopAndDisposeHostAsync(host, CancellationToken.None);
 		}
 		// NLog の非同期書き出しを確実に完了させてから終了する
 		LogManager.Shutdown();
@@ -130,7 +131,8 @@ public partial class App : Application {
 	}
 
 	private static void OnTaskSchedulerUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e) {
-		HandleUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
+		_bootstrapLogger.Error(e.Exception,
+			"未監視 Task 例外を検出したためログのみ記録します: {Message}", e.Exception.Message);
 		e.SetObserved();
 	}
 
@@ -328,9 +330,9 @@ public partial class App : Application {
 		await _hostRestartGate.WaitAsync(cancellationToken).ConfigureAwait(false);
 		try {
 			CancelHostLifetimeOperations();
-			if (AppHost is not null) {
-				await AppHost.StopAsync(cancellationToken).ConfigureAwait(false);
-				AppHost.Dispose();
+			var previousHost = AppHost;
+			if (previousHost is not null) {
+				await StopAndDisposeHostAsync(previousHost, cancellationToken).ConfigureAwait(false);
 			}
 			AppHost = CreateHostBuilder(setting).Build();
 			ResetHostLifetimeOperations();
@@ -344,6 +346,29 @@ public partial class App : Application {
 		}
 		finally {
 			_hostRestartGate.Release();
+		}
+	}
+
+	private static async Task StopAndDisposeHostAsync(IHost host, CancellationToken cancellationToken) {
+		try {
+			await host.StopAsync(cancellationToken).ConfigureAwait(false);
+		}
+		finally {
+			await DisposeHostAsync(host).ConfigureAwait(false);
+		}
+	}
+
+	private static async Task DisposeHostAsync(IHost host) {
+		try {
+			if (host is IAsyncDisposable asyncDisposable) {
+				await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+				return;
+			}
+
+			host.Dispose();
+		}
+		catch (Exception ex) {
+			_bootstrapLogger.Warn(ex, "Host の破棄中に例外が発生しました。");
 		}
 	}
 

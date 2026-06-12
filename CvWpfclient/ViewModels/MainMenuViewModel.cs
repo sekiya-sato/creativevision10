@@ -24,6 +24,7 @@ namespace CvWpfclient.ViewModels;
 
 public partial class MainMenuViewModel : ObservableObject {
 	private const double MoonIconSize = 24.0;
+	private static readonly TimeSpan WeatherGrpcTimeout = TimeSpan.FromSeconds(15);
 
 	[ObservableProperty]
 	ObservableCollection<MenuData> menuItems = [];
@@ -470,7 +471,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			cancellationToken.ThrowIfCancellationRequested();
 			var weatherService = AppGlobal.GetGrpcService<IWeatherService>();
 			var reagion = AppGlobal.WeatherRegion;
-			var weather = await weatherService.GetCurrentWeatherAsync(reagion, AppGlobal.GetDefaultCallContext(cancellationToken));
+			var weather = await weatherService.GetCurrentWeatherAsync(reagion, AppGlobal.GetDefaultCallContext(cancellationToken, WeatherGrpcTimeout));
 			cancellationToken.ThrowIfCancellationRequested();
 			if (weather != null) {
 				CurrentWeather = weather;
@@ -483,7 +484,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				Humidity = $"湿度 {weather.Humidity}%";
 				WindSpeed = $"風速 {weather.WindSpeed}m/s";
 			}
-			var forecasts = await weatherService.GetHourlyForecastAsync(reagion, AppGlobal.GetDefaultCallContext(cancellationToken));
+			var forecasts = await weatherService.GetHourlyForecastAsync(reagion, AppGlobal.GetDefaultCallContext(cancellationToken, WeatherGrpcTimeout));
 			cancellationToken.ThrowIfCancellationRequested();
 			if (forecasts.Count > 0) {
 				_forecastLabels = forecasts.Select(f => f.TimeLabel).ToArray();

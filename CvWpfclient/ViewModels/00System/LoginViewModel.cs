@@ -58,7 +58,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage);
 					//await App.RestartHostAsync(cancellationToken);
-					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, AppGlobal.LoginJwt);
+					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, MaskJwt(AppGlobal.LoginJwt));
 					LoginData = reply;
 					ExitWithResultTrue();
 					return;
@@ -104,7 +104,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 				if (reply.JwtMessage?.Length > 10) {
 					AppGlobal.SetLoginJwt(reply.JwtMessage);
 					// await App.RestartHostAsync(cancellationToken);
-					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, AppGlobal.LoginJwt);
+					_logger.LogDebug("{Now} AppGlobal.LoginJwt={LoginJwt}", DateTime.Now, MaskJwt(AppGlobal.LoginJwt));
 					LoginData = reply;
 					ExitWithResultTrue();
 					return;
@@ -119,5 +119,17 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 			MessageEx.ShowErrorDialog(ex.Message, owner: ClientLib.GetActiveView(this));
 			return;
 		}
+	}
+
+	private static string MaskJwt(string? token) {
+		if (string.IsNullOrWhiteSpace(token)) {
+			return string.Empty;
+		}
+
+		if (token.Length <= 16) {
+			return "***";
+		}
+
+		return $"{token[..8]}...{token[^8..]}";
 	}
 }
