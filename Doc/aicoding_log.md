@@ -767,3 +767,24 @@
 - 通常権限のビルドは SDK キャッシュ権限で失敗したため、承認付きで `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、ビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-13] 06:33 SelectWinView.xaml の列表示変更
+### Agent
+- Kimi-k2.7 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SelectWinView.xaml の DataGrid 表示を Code, 名前, 略称 から Id, Code 名前 (multi binding), 略称 へ変更する
+### 実施内容
+- CvWpfclient/Views/Sub/SelectWinView.xaml: DataGrid の列を以下のように変更
+  - 1列目を `Id` 表示の `DataGridTextColumn` に変更
+  - 2列目を `Code` と `Name` を `MultiBinding` で結合した `Code 名前` 列（`DataGridTemplateColumn`）に変更
+  - 3列目を `略称` の `DataGridTextColumn`として維持
+### 技術決定 Why
+- `DataGridTextColumn.Binding` では複数プロパティの結合ができないため、Code と Name を同セルに表示する列は `DataGridTemplateColumn` + `TextBlock.Text` + `MultiBinding` で実現した
+- 既存の `MaterialDesignDataGrid` スタイルや `FrozenColumnCount`、`CellPadding` などの属性はそのまま維持し、見た目の一貫性を保った
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
