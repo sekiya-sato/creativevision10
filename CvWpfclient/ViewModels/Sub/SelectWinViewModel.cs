@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using System.Collections.Specialized;
 using System.Collections.ObjectModel;
@@ -50,19 +51,17 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 
 	async Task InitList(CancellationToken ct) {
 		try {
-			ct.ThrowIfCancellationRequested();
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg {
-				Code = 0,
-				Flag = CvFlag.Msg101_Op_Query,
-				DataType = typeof(QueryListSimpleParam),
-				DataMsg = Common.SerializeObject(new QueryListParam(
-					itemType: MyType,
-					where: Where,
-					order: Order,
-					parameters: Parameters
-				))
-			};
+		ct.ThrowIfCancellationRequested();
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		QueryListParam queryListParam = typeof(IBaseCodeName).IsAssignableFrom(MyType)
+			? new QueryListSimpleParam(itemType: MyType, where: Where, order: Order, parameters: Parameters)
+			: new QueryListParam(itemType: MyType, where: Where, order: Order, parameters: Parameters);
+		var msg = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = queryListParam.GetType(),
+			DataMsg = Common.SerializeObject(queryListParam)
+		};
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 			ct.ThrowIfCancellationRequested();
 			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;

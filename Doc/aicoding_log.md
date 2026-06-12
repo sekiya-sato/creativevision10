@@ -788,3 +788,22 @@
 
 ---
 
+## [2026-06-13] 06:47 SelectWinViewModel の IBaseCodeName 判定による一覧取得限定
+### Agent
+- Kimi-k2.7 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SelectWinViewModel.cs の一覧取得を、対象の型が IBaseCodeName を継承していれば Code, 名前, 略称, カナ に限定する
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectWinViewModel.cs: `InitList` メソッド内で `typeof(IBaseCodeName).IsAssignableFrom(MyType)` を判定し、IBaseCodeName 継承型の場合のみ `QueryListSimpleParam` を使用するように変更
+- 非 IBaseCodeName 型の場合は従来通り `QueryListParam` を使用し、全列を取得する
+- `using CvBase.Share;` を追加して `IBaseCodeName` を参照可能にした
+### 技術決定 Why
+- サーバー側の `BuildQueryListSql` で `QueryListSimpleParam` が指定されている場合、`Id,Vdc,Vdu,Code,Name,Ryaku,Kana` のみを選択する SQL が生成される既存仕様を利用した
+- 選択画面で IBaseCodeName 系マスタ以外の型を扱う場合でも、不要な列を取得せず済むよう条件分岐を設けた
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
