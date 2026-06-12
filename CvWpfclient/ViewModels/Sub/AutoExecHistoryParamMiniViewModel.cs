@@ -9,7 +9,7 @@ public partial class AutoExecHistoryParamMiniViewModel : Helpers.BaseViewModel {
 	AutoExecHistorySelectParameter parameter = new();
 
 	public void Initialize(AutoExecHistorySelectParameter? param) {
-		Parameter = param ?? new AutoExecHistorySelectParameter { DisplayName = "自動実行履歴", MaxCount = 400 };
+		Parameter = param ?? new AutoExecHistorySelectParameter { DisplayName = "自動実行履歴", MaxCount = AppGlobal.Limit };
 	}
 
 	[RelayCommand]

@@ -24,7 +24,7 @@ public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 	string selectedTableName = string.Empty;
 
 	[ObservableProperty]
-	int selectedRowCount = 200;
+	int selectedRowCount = AppGlobal.Limit;
 
 	partial void OnCurrentChanged(ServerTableCountRow? value) {
 		SelectedTableName = value?.TableName ?? string.Empty;

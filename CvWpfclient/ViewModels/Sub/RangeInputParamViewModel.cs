@@ -1,4 +1,3 @@
-using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
@@ -11,7 +10,8 @@ public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranA
 	SelectInputParameter parameter = new();
 
 	public void Initialize(SelectInputParameter? param) {
-		Parameter = param ?? new SelectInputParameter();
+		Parameter = param ?? new SelectInputParameter { MaxCount = AppGlobal.Limit };
+		if (Parameter.MaxCount is null or 0) Parameter.MaxCount = AppGlobal.Limit;
 	}
 
 	[RelayCommand]
