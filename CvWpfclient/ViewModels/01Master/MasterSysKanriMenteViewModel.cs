@@ -56,6 +56,8 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 			FormatTaxValue(tax3?.TaxRate),
 			FormatYmdText(tax3?.DateFrom),
 			FormatTaxValue(tax3?.TaxNewRate),
+			NormalizePrintText(Current.Hp),
+			NormalizePrintText(Current.TaxRegistrationNumber),
 			FormatDateTimeText(Current.VdateC),
 			FormatDateTimeText(Current.VdateU),
 		];
