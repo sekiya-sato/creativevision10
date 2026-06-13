@@ -483,15 +483,17 @@
 						materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True"
 						GridLinesVisibility="Horizontal"
 						HeadersVisibility="Column"
+ 					    AlternatingRowBackground="Beige"
 						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 						IsSynchronizedWithCurrentItem="True"
 						ItemsSource="{Binding EditMeisai}"
 						RowDetailsVisibilityMode="Visible"
 						SelectedItem="{Binding SelectedMeisai, Mode=TwoWay}"
 						Style="{StaticResource MaterialDesignDataGrid}"
+						d:ItemsSource="{d:SampleData ItemCount=5}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
-							<DataGridTemplateColumn Width="480"
+							<DataGridTemplateColumn Width="140"
 								Header="商品Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -511,7 +513,7 @@
 												Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
 												Background="{DynamicResource PrimaryButtonColor}"
 												BorderThickness="0"
-												Command="{Binding DataContext.DoSelectShohinCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+												Command="{Binding DataContext.DoSelectShohinCommand, RelativeSource={RelativeSource AncestorType=Window}}"
 												CommandParameter="{Binding}"
 												Cursor="Hand" Foreground="White">
 												<Button.Content>
@@ -524,7 +526,8 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTemplateColumn Width="212"
+							<DataGridTemplateColumn Width="200"	Header=" "/>
+							<DataGridTemplateColumn Width="140"
 								Header="色Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -544,7 +547,7 @@
 												Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
 												Background="{DynamicResource PrimaryButtonColor}"
 												BorderThickness="0"
-												Command="{Binding DataContext.DoSelectColCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+												Command="{Binding DataContext.DoSelectColCommand, RelativeSource={RelativeSource AncestorType=Window}}"
 												CommandParameter="{Binding}"
 												Cursor="Hand" Foreground="White">
 												<Button.Content>
@@ -557,7 +560,8 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTemplateColumn Width="212"
+							<DataGridTemplateColumn Width="60"	Header=" "/>
+							<DataGridTemplateColumn Width="140"
 								Header="サイズId">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -577,7 +581,7 @@
 												Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
 												Background="{DynamicResource PrimaryButtonColor}"
 												BorderThickness="0"
-												Command="{Binding DataContext.DoSelectSizCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+												Command="{Binding DataContext.DoSelectSizCommand, RelativeSource={RelativeSource AncestorType=Window}}"
 												CommandParameter="{Binding}"
 												Cursor="Hand" Foreground="White">
 												<Button.Content>
@@ -590,6 +594,7 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
+							<DataGridTemplateColumn Width="60"	Header=" "/>
 							<DataGridTextColumn Width="80"
 								Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
@@ -610,7 +615,7 @@
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="下代単価" />
-							<DataGridTemplateColumn Width="212"
+							<DataGridTemplateColumn Width="140"
 								Header="明細担当Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -630,7 +635,7 @@
 												Margin="2,0,0,0" Padding="0" VerticalAlignment="Center"
 												Background="{DynamicResource PrimaryButtonColor}"
 												BorderThickness="0"
-												Command="{Binding DataContext.DoSelectMeisaiShainCommand, RelativeSource={RelativeSource AncestorType=helpers:BaseWindow}}"
+												Command="{Binding DataContext.DoSelectMeisaiShainCommand, RelativeSource={RelativeSource AncestorType=Window}}"
 												CommandParameter="{Binding}"
 												Cursor="Hand" Foreground="White">
 												<Button.Content>
@@ -643,6 +648,7 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
+							<DataGridTemplateColumn Width="40"	Header=" "/>
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>
 							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
@@ -653,17 +659,17 @@
 								<Grid MinHeight="30"
 									Margin="0,0,0,6">
 									<Grid.ColumnDefinitions>
-										<ColumnDefinition Width="120" />
-										<ColumnDefinition Width="360" />
-										<ColumnDefinition Width="48" />
-										<ColumnDefinition Width="164" />
-										<ColumnDefinition Width="48" />
-										<ColumnDefinition Width="164" />
+										<ColumnDefinition Width="140" />
+										<ColumnDefinition Width="200" />
+										<ColumnDefinition Width="50" />
+										<ColumnDefinition Width="160" />
+										<ColumnDefinition Width="50" />
+										<ColumnDefinition Width="160" />
 										<ColumnDefinition Width="80" />
 										<ColumnDefinition Width="90" />
-										<ColumnDefinition Width="100" />
-										<ColumnDefinition Width="100" />
-										<ColumnDefinition Width="212" />
+										<ColumnDefinition Width="90" />
+										<ColumnDefinition Width="90" />
+										<ColumnDefinition Width="140" />
 									</Grid.ColumnDefinitions>
 
 									<TextBlock Grid.Column="0"
