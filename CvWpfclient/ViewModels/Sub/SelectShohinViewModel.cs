@@ -13,7 +13,7 @@ using System.Windows;
 namespace CvWpfclient.ViewModels.Sub;
 
 public partial class SelectShohinViewModel : Helpers.BaseViewModel {
-	const int MaxCount = 500;
+	int MaxCount = AppGlobal.Limit;
 
 	[ObservableProperty]
 	string title = "商品検索";

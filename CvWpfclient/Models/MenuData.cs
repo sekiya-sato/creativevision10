@@ -7,19 +7,15 @@ namespace CvWpfclient.Models;
 public partial class MenuData : ObservableObject {
 	[ObservableProperty]
 	private string header = string.Empty;
-
-	[Obsolete]
-	[ObservableProperty]
+	/* Obsolete
 	private bool isExpand;
-
+	private string? icon;
+	 */
 	[ObservableProperty]
 	private ObservableCollection<MenuData>? subItems;
 
 	[ObservableProperty]
 	private string? addInfo;
-
-	[ObservableProperty]
-	private string? icon;
 
 	/* --- after this line, only use for ViewModel --- */
 	public Type ViewType { get; set; } = typeof(object);
@@ -32,13 +28,12 @@ public partial class MenuData : ObservableObject {
 		Header = header;
 		SubItems = subItems;
 	}
-	public MenuData(string header, Type viewType, bool isDialog = false, int initParam = 0, string? addInfo = null, string? icon = null) {
+	public MenuData(string header, Type viewType, bool isDialog = false, int initParam = 0, string? addInfo = null) {
 		Header = header;
 		ViewType = viewType;
 		IsDialog = isDialog;
 		InitParam = initParam;
 		AddInfo = addInfo;
-		Icon = icon;
 	}
 
 	public static ObservableCollection<MenuData> CreateDefault() {
@@ -62,8 +57,8 @@ public partial class MenuData : ObservableObject {
 			new("汎用マスタメンテ", typeof(Views._00System.SysGeneralMenteView), addInfo:"MasterMeisho を汎用編集UIで表示・更新"),
 	        /* ================================ */
 			new("----------------", typeof(string) , addInfo:"---"),
-			new("サンプル画面 ---", typeof(SampleView), addInfo:"MaterialDesignサンプルとテストPG"),
-			new("Test画面--", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"一時的なテストで使用"),
+			new("サンプル画面 ---", typeof(SampleView), addInfo:"-- MaterialDesignサンプルとテストPG"),
+			new("Test画面--", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"-- 一時的なテストで使用"),
 		])),
 		new("■ マスター", new([
 			new("システム管理マスタ", typeof(Views._01Master.MasterSysKanriMenteView),  addInfo:"会社情報、締日、税率などを設定"),
