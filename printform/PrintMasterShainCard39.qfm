@@ -3,24 +3,16 @@
 <printstream version="3.0">
 	<datadesc src="file">
 		<datarecord>
-			<item id="item1">
-				<position offset="0" length="12"/>
-			</item>
-			<item id="item2">
-				<position offset="0" length="80"/>
-			</item>
-			<item id="item3">
-				<position offset="0" length="120"/>
-			</item>
-			<item id="item4">
-				<position offset="0" length="20"/>
-			</item>
-			<item id="item5">
-				<position offset="0" length="80"/>
-			</item>
-			<item id="item6">
-				<position offset="0" length="80"/>
-			</item>
+			<item id="item1"/>
+			<item id="item2"/>
+			<item id="item3"/>
+			<item id="item4"/>
+			<item id="item5"/>
+			<item id="item6"/>
+			<item id="item7"/>
+			<item id="item8"/>
+			<item id="item9"/>
+			<item id="item10"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>

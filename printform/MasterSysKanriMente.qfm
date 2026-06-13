@@ -23,30 +23,16 @@
 			<item id="item18"/>
 			<item id="item19"/>
 			<item id="item20"/>
-			<item id="item21">
-				<position offset="0" length="10"/>
-			</item>
-			<item id="item22">
-				<position offset="0" length="10"/>
-			</item>
-			<item id="item23">
-				<position offset="0" length="12"/>
-			</item>
-			<item id="item24">
-				<position offset="0" length="10"/>
-			</item>
-			<item id="item25">
-				<position offset="0" length="100"/>
-			</item>
-			<item id="item26">
-				<position offset="0" length="100"/>
-			</item>
-			<item id="item27">
-				<position offset="0" length="20"/>
-			</item>
-			<item id="item28">
-				<position offset="0" length="20"/>
-			</item>
+			<item id="item21"/>
+			<item id="item22"/>
+			<item id="item23"/>
+			<item id="item24"/>
+			<item id="item25"/>
+			<item id="item26"/>
+			<item id="item27"/>
+			<item id="item28"/>
+			<item id="item29"/>
+			<item id="item30"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>

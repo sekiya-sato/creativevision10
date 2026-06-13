@@ -3,39 +3,36 @@
 <printstream version="3.0">
 	<datadesc src="file">
 		<datarecord>
-			<item id="item1">
-				<position offset="0" length="8" />
-			</item>
-			<item id="item2">
-				<position offset="0" length="14" />
-			</item>
-			<item id="item3">
-				<position offset="0" length="14" />
-			</item>
-			<item id="item4">
-				<position offset="0" length="12" />
-			</item>
-			<item id="item5">
-				<position offset="0" length="80" />
-			</item>
-			<item id="item6">
-				<position offset="0" length="100" />
-			</item>
-			<item id="item7"><position offset="0" length="100" /></item>
-			<item id="item8"><position offset="0" length="120" /></item>
-			<item id="item9">
-				<position offset="0" length="1" />
-			</item>
-			<item id="item10"><position offset="0" length="100" /></item>
-			<item id="item11">
-				<position offset="0" length="100" />
-			</item>
-			<item id="item12">
-				<position offset="0" length="1" />
-			</item>
-			<item id="item13">
-				<position offset="0" length="1" />
-			</item>
+			<item id="item1"/>
+			<item id="item2"/>
+			<item id="item3"/>
+			<item id="item4"/>
+			<item id="item5"/>
+			<item id="item6"/>
+			<item id="item7"/>
+			<item id="item8"/>
+			<item id="item9"/>
+			<item id="item10"/>
+			<item id="item11"/>
+			<item id="item12"/>
+			<item id="item13"/>
+			<item id="item14"/>
+			<item id="item15"/>
+			<item id="item16"/>
+			<item id="item17"/>
+			<item id="item18"/>
+			<item id="item19"/>
+			<item id="item20"/>
+			<item id="item21"/>
+			<item id="item22"/>
+			<item id="item23"/>
+			<item id="item24"/>
+			<item id="item25"/>
+			<item id="item26"/>
+			<item id="item27"/>
+			<item id="item28"/>
+			<item id="item29"/>
+			<item id="item30"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt" />

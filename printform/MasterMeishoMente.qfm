@@ -3,39 +3,21 @@
 <printstream version="3.0">
 	<datadesc src="file">
 		<datarecord>
-			<item id="item1">
-				<position offset="0" length="5"/>
-			</item>
-			<item id="item2">
-				<position offset="0" length="14"/>
-			</item>
-			<item id="item3">
-				<position offset="0" length="14"/>
-			</item>
-			<item id="item4">
-				<position offset="0" length="3"/>
-			</item>
-			<item id="item5">
-				<position offset="0" length="8"/>
-			</item>
-			<item id="item6">
-				<position offset="0" length="16"/>
-			</item>
+			<item id="item1"/>
+			<item id="item2"/>
+			<item id="item3"/>
+			<item id="item4"/>
+			<item id="item5"/>
+			<item id="item6"/>
 			<item id="item7"/>
 			<item id="item8"/>
-			<item id="item9">
-				<position offset="0" length="1"/>
-			</item>
+			<item id="item9"/>
 			<item id="item10"/>
-			<item id="item11">
-				<position offset="0" length="1"/>
-			</item>
-			<item id="item12">
-				<position offset="0" length="2"/>
-			</item>
-			<item id="item13">
-				<position offset="0" length="12"/>
-			</item>
+			<item id="item11"/>
+			<item id="item12"/>
+			<item id="item13"/>
+			<item id="item14"/>
+			<item id="item15"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>
