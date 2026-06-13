@@ -69,6 +69,13 @@
 			<Setter Property="Padding" Value="0,0,6,0" />
 		</Style>
 
+		<Style x:Key="DataGridRightTextBox"
+			TargetType="TextBox">
+			<Setter Property="HorizontalContentAlignment" Value="Right" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Padding" Value="0,0,6,0" />
+		</Style>
+
 		<Style x:Key="MeisaiReadOnlyTextBlock"
 			TargetType="TextBlock">
 			<Setter Property="VerticalAlignment" Value="Center" />
@@ -484,7 +491,7 @@
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
-							<DataGridTemplateColumn Width="150"
+							<DataGridTemplateColumn Width="480"
 								Header="商品Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -517,7 +524,7 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTemplateColumn Width="130"
+							<DataGridTemplateColumn Width="212"
 								Header="色Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -550,7 +557,7 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTemplateColumn Width="130"
+							<DataGridTemplateColumn Width="212"
 								Header="サイズId">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -585,21 +592,25 @@
 							</DataGridTemplateColumn>
 							<DataGridTextColumn Width="80"
 								Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
+								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="数量" />
 							<DataGridTextColumn Width="90"
 								Binding="{Binding Tanka, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
+								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="単価" />
 							<DataGridTextColumn Width="100"
 								Binding="{Binding Jodai, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
+								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="上代単価" />
 							<DataGridTextColumn Width="100"
 								Binding="{Binding Gedai, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
+								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="下代単価" />
-							<DataGridTemplateColumn Width="*"
+							<DataGridTemplateColumn Width="212"
 								Header="明細担当Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -642,56 +653,41 @@
 								<Grid MinHeight="30"
 									Margin="0,0,0,6">
 									<Grid.ColumnDefinitions>
-										<ColumnDefinition Width="150" />
-										<ColumnDefinition Width="130" />
-										<ColumnDefinition Width="130" />
+										<ColumnDefinition Width="120" />
+										<ColumnDefinition Width="360" />
+										<ColumnDefinition Width="48" />
+										<ColumnDefinition Width="164" />
+										<ColumnDefinition Width="48" />
+										<ColumnDefinition Width="164" />
 										<ColumnDefinition Width="80" />
 										<ColumnDefinition Width="90" />
 										<ColumnDefinition Width="100" />
 										<ColumnDefinition Width="100" />
-										<ColumnDefinition Width="*" />
+										<ColumnDefinition Width="212" />
 									</Grid.ColumnDefinitions>
 
-									<Grid Grid.Column="0"
-										Margin="2,0">
-										<Grid.ColumnDefinitions>
-											<ColumnDefinition Width="60" />
-											<ColumnDefinition Width="*" />
-										</Grid.ColumnDefinitions>
-										<TextBlock Style="{StaticResource MeisaiReadOnlyTextBlock}"
-											Text="{Binding Code_Shohin}" />
-										<TextBlock Grid.Column="1"
-											Style="{StaticResource MeisaiReadOnlyTextBlock}"
-											Text="{Binding Mei_Shohin}" />
-									</Grid>
+									<TextBlock Grid.Column="0"
+										Style="{StaticResource MeisaiReadOnlyTextBlock}"
+										Text="{Binding Code_Shohin}" />
+									<TextBlock Grid.Column="1"
+										Style="{StaticResource MeisaiReadOnlyTextBlock}"
+										Text="{Binding Mei_Shohin}" />
 
-									<Grid Grid.Column="1"
-										Margin="2,0">
-										<Grid.ColumnDefinitions>
-											<ColumnDefinition Width="48" />
-											<ColumnDefinition Width="*" />
-										</Grid.ColumnDefinitions>
-										<TextBlock Style="{StaticResource MeisaiReadOnlyTextBlock}"
-											Text="{Binding Code_Col}" />
-										<TextBlock Grid.Column="1"
-											Style="{StaticResource MeisaiReadOnlyTextBlock}"
-											Text="{Binding Mei_Col}" />
-									</Grid>
-
-									<Grid Grid.Column="2"
-										Margin="2,0">
-										<Grid.ColumnDefinitions>
-											<ColumnDefinition Width="48" />
-											<ColumnDefinition Width="*" />
-										</Grid.ColumnDefinitions>
-										<TextBlock Style="{StaticResource MeisaiReadOnlyTextBlock}"
-											Text="{Binding Code_Siz}" />
-										<TextBlock Grid.Column="1"
-											Style="{StaticResource MeisaiReadOnlyTextBlock}"
-											Text="{Binding Mei_Siz}" />
-									</Grid>
+									<TextBlock Grid.Column="2"
+										Style="{StaticResource MeisaiReadOnlyTextBlock}"
+										Text="{Binding Code_Col}" />
+									<TextBlock Grid.Column="3"
+										Style="{StaticResource MeisaiReadOnlyTextBlock}"
+										Text="{Binding Mei_Col}" />
 
 									<TextBlock Grid.Column="4"
+										Style="{StaticResource MeisaiReadOnlyTextBlock}"
+										Text="{Binding Code_Siz}" />
+									<TextBlock Grid.Column="5"
+										Style="{StaticResource MeisaiReadOnlyTextBlock}"
+										Text="{Binding Mei_Siz}" />
+
+									<TextBlock Grid.Column="7"
 										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">
 										<TextBlock.Text>
 											<MultiBinding Converter="{StaticResource MultiplyValuesConverter}"
@@ -702,7 +698,7 @@
 										</TextBlock.Text>
 									</TextBlock>
 
-									<TextBlock Grid.Column="5"
+									<TextBlock Grid.Column="8"
 										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">
 										<TextBlock.Text>
 											<MultiBinding Converter="{StaticResource MultiplyValuesConverter}"
@@ -713,7 +709,7 @@
 										</TextBlock.Text>
 									</TextBlock>
 
-									<TextBlock Grid.Column="6"
+									<TextBlock Grid.Column="9"
 										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">
 										<TextBlock.Text>
 											<MultiBinding Converter="{StaticResource MultiplyValuesConverter}"
@@ -723,6 +719,19 @@
 											</MultiBinding>
 										</TextBlock.Text>
 									</TextBlock>
+
+									<Grid Grid.Column="10"
+										Margin="2,0">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="64" />
+											<ColumnDefinition Width="*" />
+										</Grid.ColumnDefinitions>
+										<TextBlock Style="{StaticResource MeisaiReadOnlyTextBlock}"
+											Text="{Binding Code_Shain}" />
+										<TextBlock Grid.Column="1"
+											Style="{StaticResource MeisaiReadOnlyTextBlock}"
+											Text="{Binding Mei_Shain}" />
+									</Grid>
 								</Grid>
 							</DataTemplate>
 						</DataGrid.RowDetailsTemplate>
