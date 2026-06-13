@@ -479,18 +479,16 @@
 					<DataGrid x:Name="MeisaiGrid"
 						Grid.Row="2"
 						Margin="0,8,0,0"
+						d:ItemsSource="{d:SampleData ItemCount=5}"
 						helpers:DataGridCellEnterNavigation.IsEnabled="True" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6"
-						materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True"
-						GridLinesVisibility="Horizontal"
-						HeadersVisibility="Column"
- 					    AlternatingRowBackground="Beige"
+						materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+						EnableRowVirtualization="True" GridLinesVisibility="Horizontal" HeadersVisibility="Column"
 						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 						IsSynchronizedWithCurrentItem="True"
 						ItemsSource="{Binding EditMeisai}"
 						RowDetailsVisibilityMode="Visible"
 						SelectedItem="{Binding SelectedMeisai, Mode=TwoWay}"
 						Style="{StaticResource MaterialDesignDataGrid}"
-						d:ItemsSource="{d:SampleData ItemCount=5}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
 							<DataGridTemplateColumn Width="140"
@@ -526,7 +524,8 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTemplateColumn Width="200"	Header=" "/>
+							<DataGridTemplateColumn Width="200"
+								Header=" " />
 							<DataGridTemplateColumn Width="140"
 								Header="色Id">
 								<DataGridTemplateColumn.CellTemplate>
@@ -560,7 +559,8 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTemplateColumn Width="60"	Header=" "/>
+							<DataGridTemplateColumn Width="60"
+								Header=" " />
 							<DataGridTemplateColumn Width="140"
 								Header="サイズId">
 								<DataGridTemplateColumn.CellTemplate>
@@ -594,7 +594,8 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTemplateColumn Width="60"	Header=" "/>
+							<DataGridTemplateColumn Width="60"
+								Header=" " />
 							<DataGridTextColumn Width="80"
 								Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
@@ -648,7 +649,8 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTemplateColumn Width="40"	Header=" "/>
+							<DataGridTemplateColumn Width="40"
+								Header=" " />
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>
 							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
