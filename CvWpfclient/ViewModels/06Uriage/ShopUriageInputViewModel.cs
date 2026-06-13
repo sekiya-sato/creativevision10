@@ -92,7 +92,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			m.Kingaku = m.Su * m.Tanka;
 			UpdateTotals();
 		}
-		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku)) {
+		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku) or nameof(Tran99Meisai.Jodai) or nameof(Tran99Meisai.Gedai)) {
 			UpdateTotals();
 		}
 	}
@@ -100,6 +100,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	void UpdateTotals() {
 		CurrentEdit.SuTotal = EditMeisai.Sum(m => m.Su);
 		CurrentEdit.KingakuTotal = EditMeisai.Sum(m => m.Kingaku);
+		CurrentEdit.JodaiTotal = EditMeisai.Sum(m => m.Su * m.Jodai);
+		CurrentEdit.GedaiTotal = EditMeisai.Sum(m => m.Su * m.Gedai);
 	}
 
 	protected override object CreateInsertParam() {
@@ -164,7 +166,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	[RelayCommand]
-	void DoSelectShohin() {
+	void DoSelectShohin(Tran99Meisai? meisai) {
+		if (meisai != null) SelectedMeisai = meisai;
 		if (SelectedMeisai == null) return;
 		var shohin = ShowShohinSelectDialog();
 		if (shohin == null) return;
@@ -192,7 +195,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	[RelayCommand]
-	void DoSelectCol() {
+	void DoSelectCol(Tran99Meisai? meisai) {
+		if (meisai != null) SelectedMeisai = meisai;
 		if (SelectedMeisai == null) return;
 		if (SelectedMeisai.Id_Shohin <= 0) {
 			MessageEx.ShowWarningDialog("商品を選択してください", owner: ClientLib.GetActiveView(this));
@@ -204,7 +208,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	[RelayCommand]
-	void DoSelectSiz() {
+	void DoSelectSiz(Tran99Meisai? meisai) {
+		if (meisai != null) SelectedMeisai = meisai;
 		if (SelectedMeisai == null) return;
 		if (SelectedMeisai.Id_Shohin <= 0) {
 			MessageEx.ShowWarningDialog("商品を選択してください", owner: ClientLib.GetActiveView(this));
@@ -241,6 +246,17 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		SelectedMeisai.Code_Siz = selected.Code_Siz;
 		SelectedMeisai.Mei_Siz = selected.Mei_Siz;
 		SelectedMeisai.JanCode = selected.Jan1;
+	}
+
+	[RelayCommand]
+	void DoSelectMeisaiShain(Tran99Meisai? meisai) {
+		if (meisai != null) SelectedMeisai = meisai;
+		if (SelectedMeisai == null) return;
+		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code", startPos: SelectedMeisai.Id_Shain);
+		if (shain == null) return;
+		SelectedMeisai.Id_Shain = shain.Id;
+		SelectedMeisai.Code_Shain = shain.Code ?? "";
+		SelectedMeisai.Mei_Shain = shain.Name ?? "";
 	}
 
 	protected override string GetInsertConfirmMessage() => $"追加しますか？ (伝票No={CurrentEdit.Id})";
