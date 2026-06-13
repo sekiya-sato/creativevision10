@@ -41,3 +41,22 @@
 
 ---
 
+## [2026-06-13] 13:00 検索ボタン虫眼鏡アイコン統一
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclient の検索ボタンアイコンを materialDesign:PackIcon の Magnify に統一し、グラディエーションの虫眼鏡アイコンを不要にする
+### 実施内容
+- CvWpfclient/Resources/UICommon.xaml: SearchButtonBackgroundBrush をグラデーションから単色ブラシへ変更
+- CvWpfclient/Helpers/Controls/SearchTextBox.xaml: 検索ボタン内の materialDesign:PackIcon Kind=Magnify を固定サイズ・白系前景で表示するよう変更
+### 技術決定 Why
+- helpers:SearchTextBox は全画面の検索コード入力で共有されているため、共通コントロールと共通ブラシだけを変更して各画面個別の差分を避けた
+### 確認
+- 編集ファイルの CRLF を確認（LF-only=0）
+- `git diff --check` で空白エラーなし
+- 通常権限のビルドは SDK キャッシュ権限で失敗したため、承認付きで `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、ビルド成功（0 warnings / 0 errors）を確認
+
+---
+

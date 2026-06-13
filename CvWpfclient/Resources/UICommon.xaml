@@ -1,10 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
 
-	<LinearGradientBrush x:Key="SearchButtonBackgroundBrush" StartPoint="0,0" EndPoint="1,0">
-		<GradientStop Offset="0" Color="#66210F55" />
-		<GradientStop Offset="1" Color="#80FB539B" />
-	</LinearGradientBrush>
+	<SolidColorBrush x:Key="SearchButtonBackgroundBrush"
+		Color="#6D2FFF" />
 	<Style TargetType="{x:Type DataGridColumnHeader}">
 		<Setter Property="BorderBrush">
 			<Setter.Value>
