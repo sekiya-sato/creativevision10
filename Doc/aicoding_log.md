@@ -104,3 +104,26 @@
 
 ---
 
+## [2026-06-14] 12:48 RangeParamView ID複数選択対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：RangeParamView のCD範囲選択を、RangeInputParamViewのようにIDの複数選択対応に変更し、呼び出し元も最小修正する
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectParameter.cs: RangeParamView 用の複数選択IDリストと表示テキストを追加
+- CvWpfclient/ViewModels/Sub/RangeParamViewModel.cs: 既存の SelectMultiWinView を使ったID複数選択・解除コマンドを追加
+- CvWpfclient/Views/Sub/RangeParamView.xaml: CD開始/終了行をID複数選択行へ変更
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: RangeParamView 呼び出し時に対象 Tabletype を渡し、選択IDを Id IN 条件へ反映
+### 技術決定 Why
+- RangeInputParamView と同じ既存の SelectMultiWinView を再利用し、個別マスタ画面を変更せず BaseMenteViewModel 側で呼び出し元修正を吸収した
+- ID範囲、名前、件数の既存条件は維持し、CD範囲行だけをID複数選択に置き換えて影響範囲を限定した
+### 確認
+- RangeParamView.xaml の XML 構文チェック成功
+- 編集ファイルの CRLF を確認（LF_without_CR=0）
+- `git diff --check` で空白エラーなし
+- 通常権限のビルドは SDK パス権限で失敗したため、承認付きで `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、ビルド成功（0 warnings / 0 errors）を確認
+
+---
+

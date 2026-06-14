@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Parameter.DisplayName, StringFormat={}{0}選択}"
-	Width="620" Height="520"
+	Width="780" Height="520"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="18" WindowStartupLocation="CenterOwner"
 	mc:Ignorable="d">
@@ -104,22 +104,32 @@
 						VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
-						Text="{Binding Parameter.DisplayName, StringFormat={}{0}CD}" />
-					<TextBox Grid.Row="1" Grid.Column="1"
-						Margin="4,4,4,4" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="CD (開始)"
-						Style="{StaticResource FormTextBox}"
-						Text="{Binding Parameter.FromCode, UpdateSourceTrigger=PropertyChanged}" />
-
-					<TextBlock Grid.Row="1" Grid.Column="3"
-						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
-					<TextBox Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2"
-						Margin="4,4,0,4" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="CD (終了)"
-						Style="{StaticResource FormTextBox}"
-						Text="{Binding Parameter.ToCode, UpdateSourceTrigger=PropertyChanged}" />
+						Text="{Binding Parameter.DisplayName, StringFormat={}{0}Id}" />
+					<DockPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5"
+						Margin="0,4">
+						<Button Width="110" Height="36"
+							Command="{Binding DoSelectIdsCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MaterialDesignRaisedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearIdsCommand}"
+							DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							Content="解除" />
+						<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
+							Foreground="{DynamicResource MaterialDesignBody}"
+							Text="{Binding Parameter.IdsText}"
+							TextTrimming="CharacterEllipsis"
+							ToolTip="{Binding Parameter.IdsText}" />
+					</DockPanel>
 
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						VerticalAlignment="Center"

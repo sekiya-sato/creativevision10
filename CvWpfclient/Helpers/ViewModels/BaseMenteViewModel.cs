@@ -9,6 +9,7 @@ using Grpc.Core;
 using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 
@@ -71,10 +72,10 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected virtual string? ListOrder => "Code";
 	protected virtual int? ListMaxCount => SelectCodeParam?.MaxCount;
 
-	/// <summary>コード範囲ダイアログのパラメータ（nullならBeforeListAsyncでダイアログ非表示）</summary>
+	/// <summary>一覧条件ダイアログのパラメータ（nullならBeforeListAsyncでダイアログ非表示）</summary>
 	protected SelectParameter? SelectCodeParam;
 
-	/// <summary>コード範囲選択ダイアログの表示名称（nullならダイアログをスキップ）</summary>
+	/// <summary>一覧条件ダイアログの表示名称（nullならダイアログをスキップ）</summary>
 	protected virtual string? SelectCodeDisplayName => null;
 
 	protected virtual string? ListWhere => BuildSelectCodeWhere(SelectCodeParam);
@@ -160,7 +161,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			return true;
 		}
 
-		vm.Initialize(currentParameter ?? new SelectParameter { DisplayName = displayName, MaxCount = AppGlobal.Limit });
+		vm.Initialize(currentParameter ?? new SelectParameter { DisplayName = displayName, MaxCount = AppGlobal.Limit }, Tabletype, order: ListOrder ?? "Code");
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			parameter = vm.Parameter;
 			return false;
@@ -174,6 +175,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		new() {
 			FromId = parameter?.FromId,
 			ToId = parameter?.ToId,
+			Ids = NormalizeSelectedIds(parameter?.Ids),
+			IdsText = NormalizeSelectedIdsText(parameter?.Ids, parameter?.IdsText),
 			FromCode = NormalizeNullableText(parameter?.FromCode),
 			ToCode = NormalizeNullableText(parameter?.ToCode),
 			Name = NormalizeNullableText(parameter?.Name),
@@ -187,6 +190,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 
 		List<string> clauses = [];
+		AddSelectedIdInClause(clauses, "Id", parameter.Ids);
 		if (parameter.FromId.HasValue) {
 			clauses.Add($"Id >= {parameter.FromId.Value}");
 		}
@@ -204,6 +208,25 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	protected static List<long> NormalizeSelectedIds(IEnumerable<long>? ids) =>
+		ids?.Where(id => id > 0).Distinct().ToList() ?? [];
+
+	protected static string NormalizeSelectedIdsText(IEnumerable<long>? ids, string? text) {
+		var count = ids?.Where(id => id > 0).Distinct().Count() ?? 0;
+		if (count == 0) return "未選択";
+		return string.IsNullOrWhiteSpace(text) || text == "未選択" ? $"{count}件" : text;
+	}
+
+	protected static void AddSelectedIdInClause(List<string> clauses, string column, IEnumerable<long>? ids) {
+		string[] values = ids?
+			.Where(id => id > 0)
+			.Distinct()
+			.Select(id => id.ToString(CultureInfo.InvariantCulture))
+			.ToArray() ?? [];
+		if (values.Length == 0) return;
+		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
 	protected static string? NormalizeNullableText(string? value) =>
