@@ -30,10 +30,11 @@
 
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type helpers:SearchTextBox}">
+			TargetType="{x:Type TextBox}"
+			BasedOn="{StaticResource SearchTextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
 
 		<Style x:Key="MenteDataGridColumnHeader"
@@ -315,13 +316,13 @@
 									Text="店舗" />
 								<DockPanel Grid.Row="6" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectTenpoCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectTenpoCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
@@ -338,13 +339,13 @@
 									Text="部門" />
 								<DockPanel Grid.Row="8" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectBumonCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectBumonCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Bumon, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>

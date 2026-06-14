@@ -30,10 +30,11 @@
 
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type helpers:SearchTextBox}">
+			TargetType="{x:Type TextBox}"
+			BasedOn="{StaticResource SearchTextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
 
 		<Style x:Key="MenteDataGridColumnHeader"
@@ -312,13 +313,13 @@
 									Text="区分" />
 								<DockPanel Grid.Row="4" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectKubunCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectKubunCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Kubun, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>

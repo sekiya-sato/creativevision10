@@ -17,10 +17,11 @@
 	<!--  SearchTextBox 共通スタイル  -->
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type helpers:SearchTextBox}">
+			TargetType="{x:Type TextBox}"
+			BasedOn="{StaticResource SearchTextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
 
 		<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->

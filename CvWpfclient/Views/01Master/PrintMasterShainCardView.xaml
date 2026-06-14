@@ -23,10 +23,11 @@
 
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type helpers:SearchTextBox}">
+			TargetType="{x:Type TextBox}"
+			BasedOn="{StaticResource SearchTextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
 
 		<Style x:Key="FormLabel"
@@ -94,49 +95,49 @@
 			<TextBlock Grid.Row="0" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
 				Text="社員CD" />
-			<helpers:SearchTextBox Grid.Row="0" Grid.Column="1"
+			<TextBox Grid.Row="0" Grid.Column="1"
 				Width="200" Height="36"
 				HorizontalAlignment="Left"
 				BorderThickness="0,0,0,1"
-				Command="{Binding SelectShainCodeFromCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeFromCommand}"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}"
-				TextHorizontalContentAlignment="Left" />
+				HorizontalContentAlignment="Left" />
 			<TextBlock Grid.Row="0" Grid.Column="2"
 				Margin="8,0" VerticalAlignment="Center"
 				Text="～" />
-			<helpers:SearchTextBox Grid.Row="0" Grid.Column="3"
+			<TextBox Grid.Row="0" Grid.Column="3"
 				Width="200" Height="36"
 				HorizontalAlignment="Left"
 				BorderThickness="0,0,0,1"
-				Command="{Binding SelectShainCodeToCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeToCommand}"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}"
-				TextHorizontalContentAlignment="Left" />
+				HorizontalContentAlignment="Left" />
 
 			<!--  店舗CD  -->
 			<TextBlock Grid.Row="1" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
 				Text="店舗CD" />
-			<helpers:SearchTextBox Grid.Row="1" Grid.Column="1"
+			<TextBox Grid.Row="1" Grid.Column="1"
 				Width="200" Height="36"
 				HorizontalAlignment="Left"
 				BorderThickness="0,0,0,1"
-				Command="{Binding SelectTenpoCodeFromCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectTenpoCodeFromCommand}"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding TenpoCodeFrom, UpdateSourceTrigger=PropertyChanged}"
-				TextHorizontalContentAlignment="Left" />
+				HorizontalContentAlignment="Left" />
 			<TextBlock Grid.Row="1" Grid.Column="2"
 				Margin="8,0" VerticalAlignment="Center"
 				Text="～" />
-			<helpers:SearchTextBox Grid.Row="1" Grid.Column="3"
+			<TextBox Grid.Row="1" Grid.Column="3"
 				Width="200" Height="36"
 				HorizontalAlignment="Left"
 				BorderThickness="0,0,0,1"
-				Command="{Binding SelectTenpoCodeToCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectTenpoCodeToCommand}"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding TenpoCodeTo, UpdateSourceTrigger=PropertyChanged}"
-				TextHorizontalContentAlignment="Left" />
+				HorizontalContentAlignment="Left" />
 
 			<!--  バーコード種類  -->
 			<TextBlock Grid.Row="2" Grid.Column="0"

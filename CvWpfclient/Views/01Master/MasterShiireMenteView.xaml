@@ -30,10 +30,11 @@
 	<!--  SearchTextBox 共通スタイル  -->
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type helpers:SearchTextBox}">
+			TargetType="{x:Type TextBox}"
+			BasedOn="{StaticResource SearchTextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
 
 		<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->
@@ -330,13 +331,13 @@
 									Text="担当者" />
 								<DockPanel Grid.Row="4" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectShainCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
@@ -513,13 +514,13 @@
 									Text="支払方法" />
 								<DockPanel Grid.Row="6" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectPayMethodCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectPayMethodCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_PayMethod, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
@@ -536,13 +537,13 @@
 									Text="仕入先" />
 								<DockPanel Grid.Row="7" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectPaysakiCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectPaysakiCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Paysaki, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>

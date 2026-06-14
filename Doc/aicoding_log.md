@@ -127,3 +127,26 @@
 
 ---
 
+## [2026-06-14] 21:36 SearchTextBox のテンプレート化リファクタリング
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SearchTextBox の構造をリファクタリングして無駄なロジックを省き、XAML のテンプレート定義のみで完結させる
+### 実施内容
+- CvWpfclient/Helpers/Controls/SearchTextBox.xaml: 削除
+- CvWpfclient/Helpers/Controls/SearchTextBox.xaml.cs: 削除
+- CvWpfclient/Helpers/SearchTextBoxAssist.cs: 新規作成（Command / ButtonBackground 添付プロパティを提供）
+- CvWpfclient/Resources/UICommon.xaml: SearchTextBox Style（TextBox 用 ControlTemplate）を追加
+- CvWpfclient/Views/**/*.xaml: `<helpers:SearchTextBox>` を `<TextBox Style="{StaticResource SearchTextBox}" helpers:SearchTextBoxAssist.Command="...">` へ移行（全 16 ファイル）
+### 技術決定 Why
+- UserControl と code-behind を廃止し、ビジュアルは UICommon.xaml の ControlTemplate のみで管理するようにした
+- Command とボタン背景は添付プロパティで提供し、呼び出し側の Width/Height/Margin などのレイアウト属性はそのまま維持した
+### 確認
+- 編集ファイルの CRLF を確認（LF-only=0）
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+

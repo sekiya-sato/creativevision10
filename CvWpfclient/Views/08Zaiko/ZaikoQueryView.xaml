@@ -36,13 +36,14 @@
 		</Style>
 
 		<Style x:Key="ConditionSearchTextBox"
-			TargetType="{x:Type helpers:SearchTextBox}">
+			TargetType="{x:Type TextBox}"
+			BasedOn="{StaticResource SearchTextBox}">
 			<Setter Property="Width" Value="130" />
 			<Setter Property="Height" Value="32" />
 			<Setter Property="Margin" Value="0" />
 			<Setter Property="Background" Value="White" />
 			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
 
 		<DataTemplate DataType="{x:Type vm:ZaikoQuerySearchTab}">
@@ -67,13 +68,13 @@
 								<TextBlock Style="{StaticResource ConditionLabel}"
 									Text="商品CD" />
 								<DockPanel>
-									<helpers:SearchTextBox Command="{Binding Owner.SelectShohinCodeFromCommand}"
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectShohinCodeFromCommand}"
 										Style="{StaticResource ConditionSearchTextBox}"
 										Text="{Binding Owner.ShohinCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Width="22"
 										HorizontalAlignment="Center" VerticalAlignment="Center"
 										Text="-" TextAlignment="Center" />
-									<helpers:SearchTextBox Command="{Binding Owner.SelectShohinCodeToCommand}"
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectShohinCodeToCommand}"
 										Style="{StaticResource ConditionSearchTextBox}"
 										Text="{Binding Owner.ShohinCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 								</DockPanel>
@@ -83,13 +84,13 @@
 								<TextBlock Style="{StaticResource ConditionLabel}"
 									Text="色CD" />
 								<DockPanel>
-									<helpers:SearchTextBox Command="{Binding Owner.SelectColCodeFromCommand}"
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectColCodeFromCommand}"
 										Style="{StaticResource ConditionSearchTextBox}"
 										Text="{Binding Owner.ColCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Width="22"
 										HorizontalAlignment="Center" VerticalAlignment="Center"
 										Text="-" TextAlignment="Center" />
-									<helpers:SearchTextBox Command="{Binding Owner.SelectColCodeToCommand}"
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectColCodeToCommand}"
 										Style="{StaticResource ConditionSearchTextBox}"
 										Text="{Binding Owner.ColCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 								</DockPanel>
@@ -109,13 +110,13 @@
 								<TextBlock Style="{StaticResource ConditionLabel}"
 									Text="倉庫CD" />
 								<DockPanel>
-									<helpers:SearchTextBox Command="{Binding Owner.SelectSokoCodeFromCommand}"
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectSokoCodeFromCommand}"
 										Style="{StaticResource ConditionSearchTextBox}"
 										Text="{Binding Owner.SokoCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Width="22"
 										HorizontalAlignment="Center" VerticalAlignment="Center"
 										Text="-" TextAlignment="Center" />
-									<helpers:SearchTextBox Command="{Binding Owner.SelectSokoCodeToCommand}"
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectSokoCodeToCommand}"
 										Style="{StaticResource ConditionSearchTextBox}"
 										Text="{Binding Owner.SokoCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 								</DockPanel>
@@ -125,13 +126,13 @@
 								<TextBlock Style="{StaticResource ConditionLabel}"
 									Text="ブランドCD" />
 								<DockPanel>
-									<helpers:SearchTextBox Command="{Binding Owner.SelectBrandCodeFromCommand}"
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectBrandCodeFromCommand}"
 										Style="{StaticResource ConditionSearchTextBox}"
 										Text="{Binding Owner.BrandCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Width="22"
 										HorizontalAlignment="Center" VerticalAlignment="Center"
 										Text="-" TextAlignment="Center" />
-									<helpers:SearchTextBox Command="{Binding Owner.SelectBrandCodeToCommand}"
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectBrandCodeToCommand}"
 										Style="{StaticResource ConditionSearchTextBox}"
 										Text="{Binding Owner.BrandCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 								</DockPanel>
@@ -147,13 +148,13 @@
 									<TextBlock Style="{StaticResource ConditionLabel}"
 										Text="アイテムCD" />
 									<DockPanel>
-										<helpers:SearchTextBox Command="{Binding Owner.SelectItemCodeFromCommand}"
+										<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectItemCodeFromCommand}"
 											Style="{StaticResource ConditionSearchTextBox}"
 											Text="{Binding Owner.ItemCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 										<TextBlock Width="22"
 											HorizontalAlignment="Center" VerticalAlignment="Center"
 											Text="-" TextAlignment="Center" />
-										<helpers:SearchTextBox Command="{Binding Owner.SelectItemCodeToCommand}"
+										<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectItemCodeToCommand}"
 											Style="{StaticResource ConditionSearchTextBox}"
 											Text="{Binding Owner.ItemCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 									</DockPanel>

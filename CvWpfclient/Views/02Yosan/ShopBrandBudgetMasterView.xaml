@@ -17,10 +17,11 @@
         <KeyBinding Command="{Binding ExitCommand}" Gesture="Esc" />
     </helpers:BaseWindow.InputBindings>
     <helpers:BaseWindow.Resources>
-        <Style x:Key="MenteSearchTextBox" TargetType="{x:Type helpers:SearchTextBox}">
+        <Style x:Key="MenteSearchTextBox" TargetType="{x:Type TextBox}"
+			BasedOn="{StaticResource SearchTextBox}">
             <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
             <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-            <Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+            <Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
         </Style>
         <Style x:Key="StatusTextBlockStyle" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -74,7 +75,7 @@
                 <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Text="{Binding SelectedYearMonthString, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBlock Grid.Row="0" Grid.Column="2" Margin="16,0,8,0" VerticalAlignment="Center" Text="店舗ID" />
                 <DockPanel Grid.Row="0" Grid.Column="3">
-                    <helpers:SearchTextBox Width="120" Height="36" Command="{Binding SelectShopCommand}" DockPanel.Dock="Left" Style="{StaticResource MenteSearchTextBox}" Text="{Binding SelectedShopCode, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox Width="120" Height="36" helpers:SearchTextBoxAssist.Command="{Binding SelectShopCommand}" DockPanel.Dock="Left" Style="{StaticResource MenteSearchTextBox}" Text="{Binding SelectedShopCode, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock.Text>
                             <MultiBinding StringFormat="{}{0} {1}">
@@ -86,7 +87,7 @@
                 </DockPanel>
                 <TextBlock Grid.Row="0" Grid.Column="4" Margin="16,0,8,0" VerticalAlignment="Center" Text="ブランドID" />
                 <DockPanel Grid.Row="0" Grid.Column="5">
-                    <helpers:SearchTextBox Width="120" Height="36" Command="{Binding SelectBrandCommand}" DockPanel.Dock="Left" Style="{StaticResource MenteSearchTextBox}" Text="{Binding SelectedBrandCode, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox Width="120" Height="36" helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCommand}" DockPanel.Dock="Left" Style="{StaticResource MenteSearchTextBox}" Text="{Binding SelectedBrandCode, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock.Text>
                             <MultiBinding StringFormat="{}{0} {1}">

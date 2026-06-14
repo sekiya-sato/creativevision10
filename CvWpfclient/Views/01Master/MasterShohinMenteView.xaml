@@ -31,10 +31,11 @@
 	<!--  SearchTextBox 共通スタイル  -->
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type helpers:SearchTextBox}">
+			TargetType="{x:Type TextBox}"
+			BasedOn="{StaticResource SearchTextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
+			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
 
 		<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->
@@ -328,13 +329,13 @@
 									Text="ブランド" />
 								<DockPanel Grid.Row="4" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectBrandCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectBrandCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Brand, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
@@ -352,13 +353,13 @@
 									Text="アイテム" />
 								<DockPanel Grid.Row="5" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectItemCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectItemCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Item, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
@@ -376,13 +377,13 @@
 									Text="メーカー" />
 								<DockPanel Grid.Row="6" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectMakerCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectMakerCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Maker, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
@@ -535,14 +536,14 @@
 								<TextBlock Grid.Row="16"
 									Style="{StaticResource FormLabel}"
 									Text="サイズ区分" />
-								<helpers:SearchTextBox Grid.Row="16" Grid.Column="1"
+								<TextBox Grid.Row="16" Grid.Column="1"
 									Width="120" Height="36"
 									Margin="0,4" HorizontalAlignment="Left"
 									BorderThickness="0,0,0,1"
-									Command="{Binding DoSelectSizeKuCommand}"
+									helpers:SearchTextBoxAssist.Command="{Binding DoSelectSizeKuCommand}"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.SizeKu, UpdateSourceTrigger=PropertyChanged}"
-									TextHorizontalContentAlignment="Left" />
+									HorizontalContentAlignment="Left" />
 
 								<!--  基準倉庫  -->
 								<TextBlock Grid.Row="17"
@@ -550,13 +551,13 @@
 									Text="基準倉庫" />
 								<DockPanel Grid.Row="17" Grid.Column="1"
 									Margin="0,4">
-									<helpers:SearchTextBox Width="120" Height="36"
+									<TextBox Width="120" Height="36"
 										BorderThickness="0,0,0,1"
-										Command="{Binding DoSelectSokoCommand}"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectSokoCommand}"
 										DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}"
-										TextHorizontalContentAlignment="Left" />
+										HorizontalContentAlignment="Left" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
