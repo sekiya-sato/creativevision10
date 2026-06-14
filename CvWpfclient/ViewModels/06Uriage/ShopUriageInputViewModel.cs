@@ -6,6 +6,7 @@ using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 
 namespace CvWpfclient.ViewModels._06Uriage;
 
@@ -41,7 +42,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		if (win.DataContext is not RangeInputParamViewModel vm) return new ValueTask<bool>(false);
 		selectParam ??= new SelectInputParameter {
 			DisplayName = "店舗売上",
-			ToriLabel = "店舗CD",
+			ToriLabel = "店舗Id",
 			IsToriVisible = true,
 			MaxCount = AppGlobal.Limit,
 		};
@@ -59,13 +60,21 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			if (selectParam.ToId.HasValue) clauses.Add($"Id <= {selectParam.ToId.Value}");
 			if (!string.IsNullOrWhiteSpace(selectParam.FromDate)) clauses.Add($"DenDay >= '{EscapeSqlLiteral(selectParam.FromDate)}'");
 			if (!string.IsNullOrWhiteSpace(selectParam.ToDate)) clauses.Add($"DenDay <= '{EscapeSqlLiteral(selectParam.ToDate)}'");
-			if (!string.IsNullOrWhiteSpace(selectParam.FromToriCd)) clauses.Add($"json_extract(VTenpo,'$.Cd') >= '{EscapeSqlLiteral(selectParam.FromToriCd)}'");
-			if (!string.IsNullOrWhiteSpace(selectParam.ToToriCd)) clauses.Add($"json_extract(VTenpo,'$.Cd') <= '{EscapeSqlLiteral(selectParam.ToToriCd)}'");
-			if (!string.IsNullOrWhiteSpace(selectParam.FromSokoCd)) clauses.Add($"json_extract(VSoko,'$.Cd') >= '{EscapeSqlLiteral(selectParam.FromSokoCd)}'");
-			if (!string.IsNullOrWhiteSpace(selectParam.ToSokoCd)) clauses.Add($"json_extract(VSoko,'$.Cd') <= '{EscapeSqlLiteral(selectParam.ToSokoCd)}'");
+			AddIdInClause(clauses, "Id_Tenpo", selectParam.ToriIds);
+			AddIdInClause(clauses, "Id_Soko", selectParam.SokoIds);
 			if (!string.IsNullOrWhiteSpace(selectParam.ShohinCdLike)) clauses.Add($"Jmeisai LIKE '%{EscapeSqlLiteral(selectParam.ShohinCdLike)}%'");
 			return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 		}
+	}
+
+	static void AddIdInClause(List<string> clauses, string column, IEnumerable<long>? ids) {
+		string[] values = ids?
+			.Where(id => id > 0)
+			.Distinct()
+			.Select(id => id.ToString(CultureInfo.InvariantCulture))
+			.ToArray() ?? [];
+		if (values.Length == 0) return;
+		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
 	protected override void OnCurrentEditChangedCore(Tran01Tenuri? oldValue, Tran01Tenuri newValue) {

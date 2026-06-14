@@ -17,6 +17,12 @@ public partial class SelectInputParameter : ObservableObject {
 	string? fromToriCd;
 	[ObservableProperty]
 	string? toToriCd;
+	/// <summary>店舗Idの複数選択</summary>
+	[ObservableProperty]
+	List<long> toriIds = [];
+	/// <summary>店舗Id複数選択の表示文字列</summary>
+	[ObservableProperty]
+	string toriIdsText = "未選択";
 	/// <summary>店舗名（from側）</summary>
 	[ObservableProperty]
 	string? fromToriName;
@@ -37,6 +43,12 @@ public partial class SelectInputParameter : ObservableObject {
 	string? fromSokoCd;
 	[ObservableProperty]
 	string? toSokoCd;
+	/// <summary>倉庫Idの複数選択</summary>
+	[ObservableProperty]
+	List<long> sokoIds = [];
+	/// <summary>倉庫Id複数選択の表示文字列</summary>
+	[ObservableProperty]
+	string sokoIdsText = "未選択";
 	/// <summary>倉庫名（from側）</summary>
 	[ObservableProperty]
 	string? fromSokoName;

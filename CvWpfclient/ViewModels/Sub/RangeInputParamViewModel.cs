@@ -19,36 +19,50 @@ public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranA
 	}
 
 	[RelayCommand]
-	void DoSelectFromTori() {
+	void DoSelectToriIds() {
 		var where = Parameter.ToriSearchWhere ?? "TenType>=0";
-		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), where, "Code");
-		if (tokui == null) return;
-		Parameter.FromToriCd = tokui.Code ?? "";
-		Parameter.FromToriName = tokui.Name ?? "";
+		var selected = ShowMultiSelectDialog<MasterTokui>(typeof(MasterTokui), where, "Code", Parameter.ToriIds);
+		if (selected == null) return;
+		Parameter.ToriIds = [.. selected.Select(x => x.Id)];
+		Parameter.ToriIdsText = BuildSelectedText(selected);
 	}
 
 	[RelayCommand]
-	void DoSelectToTori() {
-		var where = Parameter.ToriSearchWhere ?? "TenType>=0";
-		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), where, "Code");
-		if (tokui == null) return;
-		Parameter.ToToriCd = tokui.Code ?? "";
-		Parameter.ToToriName = tokui.Name ?? "";
+	void ClearToriIds() {
+		Parameter.ToriIds = [];
+		Parameter.ToriIdsText = "未選択";
 	}
 
 	[RelayCommand]
-	void DoSelectFromSoko() {
-		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code");
-		if (tokui == null) return;
-		Parameter.FromSokoCd = tokui.Code ?? "";
-		Parameter.FromSokoName = tokui.Name ?? "";
+	void DoSelectSokoIds() {
+		var selected = ShowMultiSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code", Parameter.SokoIds);
+		if (selected == null) return;
+		Parameter.SokoIds = [.. selected.Select(x => x.Id)];
+		Parameter.SokoIdsText = BuildSelectedText(selected);
 	}
 
 	[RelayCommand]
-	void DoSelectToSoko() {
-		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code");
-		if (tokui == null) return;
-		Parameter.ToSokoCd = tokui.Code ?? "";
-		Parameter.ToSokoName = tokui.Name ?? "";
+	void ClearSokoIds() {
+		Parameter.SokoIds = [];
+		Parameter.SokoIdsText = "未選択";
+	}
+
+	static string BuildSelectedText(IReadOnlyList<MasterTokui> selected) {
+		if (selected.Count == 0) return "未選択";
+		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatSelectedItem))}";
+	}
+
+	static string FormatSelectedItem(MasterTokui item) {
+		var label = JoinCodeName(item.Code, item.Name);
+		if (label.Length == 0) return item.Id.ToString();
+		return $"{item.Id} {label}";
+	}
+
+	static string JoinCodeName(string? code, string? name) {
+		var cd = code?.Trim() ?? string.Empty;
+		var mei = name?.Trim() ?? string.Empty;
+		if (cd.Length == 0) return mei;
+		if (mei.Length == 0) return cd;
+		return $"{cd} {mei}";
 	}
 }

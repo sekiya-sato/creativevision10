@@ -130,75 +130,59 @@
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="{Binding Parameter.ToriLabel}"
 						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
-					<DockPanel Grid.Row="2" Grid.Column="1"
+					<DockPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="5"
 						Margin="0,4"
 						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-						<helpers:SearchTextBox Width="120" Height="36"
-							BorderThickness="0,0,0,1"
-							Command="{Binding DoSelectFromToriCommand}"
+						<Button Width="110" Height="36"
+							Command="{Binding DoSelectToriIdsCommand}"
 							DockPanel.Dock="Left"
-							Style="{StaticResource MenteSearchTextBox}"
-							Text="{Binding Parameter.FromToriCd, UpdateSourceTrigger=PropertyChanged}"
-							TextHorizontalContentAlignment="Left" />
-						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							Style="{StaticResource MaterialDesignRaisedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearToriIdsCommand}"
+							DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							Content="解除" />
+						<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
 							Foreground="{DynamicResource MaterialDesignBody}"
-							Text="{Binding Parameter.FromToriName}" />
-					</DockPanel>
-
-					<TextBlock Grid.Row="2" Grid.Column="3"
-						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"
-						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}"><Run Language="ja-jp" Text="-" /></TextBlock>
-					<DockPanel Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2"
-						Margin="0,4"
-						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-						<helpers:SearchTextBox Width="120" Height="36"
-							BorderThickness="0,0,0,1"
-							Command="{Binding DoSelectToToriCommand}"
-							DockPanel.Dock="Left"
-							Style="{StaticResource MenteSearchTextBox}"
-							Text="{Binding Parameter.ToToriCd, UpdateSourceTrigger=PropertyChanged}"
-							TextHorizontalContentAlignment="Left" />
-						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-							Foreground="{DynamicResource MaterialDesignBody}"
-							Text="{Binding Parameter.ToToriName}" />
+							Text="{Binding Parameter.ToriIdsText}"
+							TextTrimming="CharacterEllipsis" />
 					</DockPanel>
 
 					<TextBlock Grid.Row="3" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="倉庫CD" /></TextBlock>
-					<DockPanel Grid.Row="3" Grid.Column="1"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="倉庫Id" /></TextBlock>
+					<DockPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="5"
 						Margin="0,4">
-						<helpers:SearchTextBox Width="120" Height="36"
-							BorderThickness="0,0,0,1"
-							Command="{Binding DoSelectFromSokoCommand}"
+						<Button Width="110" Height="36"
+							Command="{Binding DoSelectSokoIdsCommand}"
 							DockPanel.Dock="Left"
-							Style="{StaticResource MenteSearchTextBox}"
-							Text="{Binding Parameter.FromSokoCd, UpdateSourceTrigger=PropertyChanged}"
-							TextHorizontalContentAlignment="Left" />
-						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							Style="{StaticResource MaterialDesignRaisedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearSokoIdsCommand}"
+							DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							Content="解除" />
+						<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
 							Foreground="{DynamicResource MaterialDesignBody}"
-							Text="{Binding Parameter.FromSokoName}" />
-					</DockPanel>
-
-					<TextBlock Grid.Row="3" Grid.Column="3"
-						HorizontalAlignment="Center" VerticalAlignment="Center"
-						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
-					<DockPanel Grid.Row="3" Grid.Column="4" Grid.ColumnSpan="2"
-						Margin="0,4">
-						<helpers:SearchTextBox Width="120" Height="36"
-							BorderThickness="0,0,0,1"
-							Command="{Binding DoSelectToSokoCommand}"
-							DockPanel.Dock="Left"
-							Style="{StaticResource MenteSearchTextBox}"
-							Text="{Binding Parameter.ToSokoCd, UpdateSourceTrigger=PropertyChanged}"
-							TextHorizontalContentAlignment="Left" />
-						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-							Foreground="{DynamicResource MaterialDesignBody}"
-							Text="{Binding Parameter.ToSokoName}" />
+							Text="{Binding Parameter.SokoIdsText}"
+							TextTrimming="CharacterEllipsis" />
 					</DockPanel>
 
 					<TextBlock Grid.Row="4" Grid.Column="0"

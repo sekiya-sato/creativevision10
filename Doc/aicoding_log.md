@@ -60,3 +60,26 @@
 
 ---
 
+## [2026-06-14] 12:27 RangeInputParamView 店舗/倉庫Id複数選択化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：RangeInputParamView で店舗CDと倉庫CDの範囲選択を、SelectMultiWinView を使った店舗Id/倉庫Idの複数選択に変更し、呼び出し元も最小修正する
+### 実施内容
+- CvWpfclient/Views/Sub/RangeInputParamView.xaml: 店舗・倉庫のFrom/To範囲入力を複数選択ボタン、解除ボタン、選択内容表示へ置換
+- CvWpfclient/ViewModels/Sub/RangeInputParamViewModel.cs: SelectMultiWinView 経由で店舗Id/倉庫Idを複数選択し、選択Idと表示文字列を保持する処理を追加
+- CvWpfclient/ViewModels/Sub/SelectInputParameter.cs: 店舗Id/倉庫Idの複数選択リストと表示文字列を追加
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 店舗売上一覧条件を json_extract によるCD範囲から Id_Tenpo/Id_Soko の IN 条件へ変更
+### 技術決定 Why
+- 既存の SelectMultiWinView と BaseMenteViewModel.ShowMultiSelectDialog を再利用し、新規ダイアログ追加や共有選択画面の挙動変更を避けた
+- Tran01Tenuri には Id_Tenpo/Id_Soko 列があるため、JSON内CDではなく列Idで絞り込むことで店舗Id/倉庫Idの複数選択要件に合わせた
+### 確認
+- RangeInputParamView.xaml の XML 構文チェック成功
+- 編集ファイルの CRLF を確認（bareLF=0）
+- `git diff --check` で空白エラーなし
+- 通常権限のビルドは SDK パス権限で失敗したため、承認付きで `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、ビルド成功（0 warnings / 0 errors）を確認
+
+---
+
