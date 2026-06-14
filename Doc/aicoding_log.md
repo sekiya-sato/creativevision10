@@ -83,3 +83,24 @@
 
 ---
 
+## [2026-06-14] 12:34 SelectMultiWinView 未選択確定と表示ToolTip対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：SelectMultiView で未選択のまま選択ボタンを押してもエラー表示せず、呼び出し元の選択状態を解除し、RangeInputView 側の複数選択表示エリアに全体表示用ToolTipを付ける
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectMultiWinViewModel.cs: 未選択時も選択確定としてダイアログを閉じ、呼び出し元へ空選択を返すよう変更
+- CvWpfclient/Views/Sub/RangeInputParamView.xaml: 店舗Id/倉庫Idの選択内容表示TextBlockにToolTipを追加し、省略時も全体を確認できるよう変更
+### 技術決定 Why
+- 空選択をキャンセルではなく確定結果として返すことで、RangeInputParamViewModel の既存処理で Id リストを空にし、表示も未選択へ戻せる
+- 表示文字列とToolTipを同じバインディングにして、選択解除時も表示エリアとToolTipの状態がずれないようにした
+### 確認
+- RangeInputParamView.xaml の XML 構文チェック成功
+- 編集ファイルの CRLF を確認（bareLF=0）
+- `git diff --check` で空白エラーなし
+- 通常権限のビルドは SDK パス権限で失敗したため、承認付きで `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、ビルド成功（0 warnings / 0 errors）を確認
+
+---
+

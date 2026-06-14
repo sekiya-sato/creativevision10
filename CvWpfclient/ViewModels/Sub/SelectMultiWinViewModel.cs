@@ -171,12 +171,7 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand]
 	public void DoSelect() {
-		if (SelectedCount > 0) {
-			ClientLib.ExitDialogResult(this, true);
-		}
-		else {
-			MessageEx.ShowWarningDialog(message: "選択されていません", owner: ClientLib.GetActiveView(this));
-		}
+		ClientLib.ExitDialogResult(this, true);
 	}
 
 	public void SetParam(Type? type0 = null, string where = "", string order = "", string[]? parameters = null, long startPos = 0, long id = 0, IEnumerable<long>? selectedIds = null) {

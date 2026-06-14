@@ -153,7 +153,8 @@
 						<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
 							Foreground="{DynamicResource MaterialDesignBody}"
 							Text="{Binding Parameter.ToriIdsText}"
-							TextTrimming="CharacterEllipsis" />
+							TextTrimming="CharacterEllipsis"
+							ToolTip="{Binding Parameter.ToriIdsText}" />
 					</DockPanel>
 
 					<TextBlock Grid.Row="3" Grid.Column="0"
@@ -182,7 +183,8 @@
 						<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
 							Foreground="{DynamicResource MaterialDesignBody}"
 							Text="{Binding Parameter.SokoIdsText}"
-							TextTrimming="CharacterEllipsis" />
+							TextTrimming="CharacterEllipsis"
+							ToolTip="{Binding Parameter.SokoIdsText}" />
 					</DockPanel>
 
 					<TextBlock Grid.Row="4" Grid.Column="0"
