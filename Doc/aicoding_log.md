@@ -150,3 +150,23 @@
 
 ---
 
+## [2026-06-14] 21:52 SearchTextBox スタイルのデザイナー読み込み不具合修正
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：VS2026 デザイナーで `Style="{StaticResource MenteSearchTextBox}"` を適用した TextBox が `StaticResourceHolder` 例外で表示できない問題を調査・修正する
+### 実施内容
+- CvWpfclient/Resources/UICommon.xaml: SearchTextBox Style を削除
+- CvWpfclient/Resources/UISearchTextBox.xaml: 新規作成し、SearchTextBox Style を MaterialDesign リソース読み込み後の ResourceDictionary へ移動
+- CvWpfclient/App.xaml: UISearchTextBox.xaml を MaterialDesign3.Defaults.xaml の後にマージ
+### 技術決定 Why
+- UICommon.xaml は App.xaml で MaterialDesign テーマより先にマージされており、SearchTextBox スタイル内部の `MaterialDesignTextBox` / `MaterialDesignFlatButton` StaticResource がデザイナー時に解決できなかったのが原因
+- MaterialDesign リソース読み込み後の UISearchTextBox.xaml に分離し、依存リソースが確実に解決できるようにした
+### 確認
+- 編集ファイルの CRLF を確認（LF-only=0）
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
