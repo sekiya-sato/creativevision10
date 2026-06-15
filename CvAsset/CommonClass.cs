@@ -431,21 +431,5 @@ public sealed partial class Common {
 		return sql;
 	}
 
-	/// <summary>
-	/// itemのIdプロパティの値を取得する
-	/// </summary>
-	/// <param name="item"></param>
-	/// <returns></returns>
-	/// <exception cref="InvalidOperationException"></exception>
-	public static object GetId(object item) {
-		var idProperty = item.GetType().GetProperty("Id", BindingFlags.Public | BindingFlags.Instance);
-		if (idProperty == null) {
-			throw new InvalidOperationException($"{item.GetType().FullName}.Id が見つかりません。");
-		}
-		return idProperty.GetValue(item)
-			?? throw new InvalidOperationException($"{item.GetType().FullName}.Id が null です。");
-	}
-
-
 }
 

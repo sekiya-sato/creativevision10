@@ -170,9 +170,7 @@ public partial class CoreService {
 			}
 			Thread.Sleep(PrintPostCheckIntervalMilliseconds);
 		}
-		// Thread.Sleep(PrintPostCheckIntervalMilliseconds); // 念のため、ファイルが完全に書き込まれるまで少し待つ
-		// Pending: 商品マスタが初回のみ正常に出力されない現象。PDF生成が遅すぎる？ 2026/06/04保留
-
+		// 2026/06/15 commit 09eeecb7a5f5c29d0522be07ed3bdcbe1c72c74e WebpdfView のブラウザコア初期化ロジック追加 によりPDF生成が安定
 		var timespan = DateTime.Now - start;
 		var ret = new PrintResult(true, $"{timestamp}/outfile.pdf");
 		return ret;
