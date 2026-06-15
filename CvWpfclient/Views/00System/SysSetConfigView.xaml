@@ -8,8 +8,9 @@
 	Width="760" Height="740"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FocusManager.FocusedElement="{Binding ElementName=UrlTextBox}"
+	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	FontSize="16" ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
+	ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<Window.InputBindings>
 		<KeyBinding Key="F12"
@@ -50,8 +51,8 @@
 			Padding="14,10"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel LastChildFill="True">
-				<Button DockPanel.Dock="Right"
-					Command="{Binding NoSaveCommand}"
+				<Button Command="{Binding NoSaveCommand}"
+					DockPanel.Dock="Right"
 					Style="{StaticResource MaterialDesignToolForegroundButton}"
 					ToolTip="ファイル保存せず現在の実行設定だけ反映 (Shift+F12)">
 					<StackPanel Orientation="Horizontal">
@@ -67,16 +68,14 @@
 						VerticalAlignment="Center"
 						Kind="DatabaseRefresh" />
 					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-						FontSize="20" FontWeight="SemiBold"
-						Text="環境設定" />
+						FontSize="20" FontWeight="SemiBold" Text="環境設定" />
 				</StackPanel>
 			</DockPanel>
 		</materialDesign:ColorZone>
 
 		<ScrollViewer Grid.Row="1"
 			VerticalScrollBarVisibility="Auto">
-			<materialDesign:Card Margin="18"
-				Padding="24"
+			<materialDesign:Card Margin="18" Padding="24"
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid>
 					<Grid.RowDefinitions>
@@ -102,8 +101,7 @@
 							VerticalAlignment="Center"
 							Kind="DatabaseSearch" />
 						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-							FontSize="17" FontWeight="SemiBold"
-							Text="接続情報" />
+							FontSize="17" FontWeight="SemiBold" Text="接続情報" />
 					</StackPanel>
 
 					<TextBlock Grid.Row="1" Grid.Column="0"
@@ -111,8 +109,7 @@
 						Text="接続先 URL" />
 					<TextBox x:Name="UrlTextBox"
 						Grid.Row="1" Grid.Column="1"
-						materialDesign:HintAssist.Hint="https://localhost:5012"
-						materialDesign:TextFieldAssist.HasClearButton="True"
+						materialDesign:HintAssist.Hint="https://localhost:5012" materialDesign:TextFieldAssist.HasClearButton="True"
 						CaretBrush="{DynamicResource MaterialDesignBody}"
 						Style="{StaticResource SettingTextBox}"
 						Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}" />
@@ -121,8 +118,7 @@
 						Style="{StaticResource SettingLabel}"
 						Text="ログイン ID" />
 					<TextBox Grid.Row="2" Grid.Column="1"
-						materialDesign:HintAssist.Hint="ログイン ID"
-						materialDesign:TextFieldAssist.HasClearButton="True"
+						materialDesign:HintAssist.Hint="ログイン ID" materialDesign:TextFieldAssist.HasClearButton="True"
 						CaretBrush="{DynamicResource MaterialDesignBody}"
 						Style="{StaticResource SettingTextBox}"
 						Text="{Binding LoginId, UpdateSourceTrigger=PropertyChanged}" />
@@ -149,16 +145,14 @@
 							VerticalAlignment="Center"
 							Kind="Calculator" />
 						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-							FontSize="17" FontWeight="SemiBold"
-							Text="アプリ動作" />
+							FontSize="17" FontWeight="SemiBold" Text="アプリ動作" />
 					</StackPanel>
 
 					<TextBlock Grid.Row="6" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
 						Text="天気地域" />
 					<TextBox Grid.Row="6" Grid.Column="1"
-						materialDesign:HintAssist.Hint="例: Tokyo"
-						materialDesign:TextFieldAssist.HasClearButton="True"
+						materialDesign:HintAssist.Hint="例: Tokyo" materialDesign:TextFieldAssist.HasClearButton="True"
 						CaretBrush="{DynamicResource MaterialDesignBody}"
 						Style="{StaticResource SettingTextBox}"
 						Text="{Binding WeatherRegion, UpdateSourceTrigger=PropertyChanged}" />
@@ -187,8 +181,7 @@
 							Style="{StaticResource MaterialDesignOutlinedComboBox}" />
 						<Border Grid.Column="4"
 							MinWidth="110"
-							Padding="10,6"
-							VerticalAlignment="Center"
+							Padding="10,6" VerticalAlignment="Center"
 							Background="{DynamicResource MaterialDesignToolBarBackground}"
 							CornerRadius="4">
 							<TextBlock HorizontalAlignment="Center"
@@ -202,13 +195,12 @@
 						Text="取得件数上限" />
 					<TextBox Grid.Row="8" Grid.Column="1"
 						Width="180"
-						HorizontalAlignment="Left"
-						HorizontalContentAlignment="Right"
-						TextAlignment="Right"
+						HorizontalAlignment="Left" HorizontalContentAlignment="Right"
 						materialDesign:HintAssist.Hint="例: 400"
 						CaretBrush="{DynamicResource MaterialDesignBody}"
 						Style="{StaticResource SettingTextBox}"
-						Text="{Binding Limit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True, NotifyOnValidationError=True}" />
+						Text="{Binding Limit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True, NotifyOnValidationError=True}"
+						TextAlignment="Right" />
 				</Grid>
 			</materialDesign:Card>
 		</ScrollViewer>

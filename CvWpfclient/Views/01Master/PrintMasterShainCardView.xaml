@@ -23,8 +23,8 @@
 
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type TextBox}"
-			BasedOn="{StaticResource SearchTextBox}">
+			BasedOn="{StaticResource SearchTextBox}"
+			TargetType="{x:Type TextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
 			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
@@ -97,23 +97,21 @@
 				Text="Id" />
 			<TextBox Grid.Row="0" Grid.Column="1"
 				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				BorderThickness="0,0,0,1"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainIdFromCommand}"
+				BorderThickness="0,0,0,1"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding ShainIdFrom, UpdateSourceTrigger=PropertyChanged}"
-				HorizontalContentAlignment="Left" />
+				Text="{Binding ShainIdFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="0" Grid.Column="2"
 				Margin="8,0" VerticalAlignment="Center"
 				Text="～" />
 			<TextBox Grid.Row="0" Grid.Column="3"
 				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				BorderThickness="0,0,0,1"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainIdToCommand}"
+				BorderThickness="0,0,0,1"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding ShainIdTo, UpdateSourceTrigger=PropertyChanged}"
-				HorizontalContentAlignment="Left" />
+				Text="{Binding ShainIdTo, UpdateSourceTrigger=PropertyChanged}" />
 
 			<!--  社員Code  -->
 			<TextBlock Grid.Row="1" Grid.Column="0"
@@ -121,23 +119,21 @@
 				Text="社員Code" />
 			<TextBox Grid.Row="1" Grid.Column="1"
 				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				BorderThickness="0,0,0,1"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeFromCommand}"
+				BorderThickness="0,0,0,1"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}"
-				HorizontalContentAlignment="Left" />
+				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="1" Grid.Column="2"
 				Margin="8,0" VerticalAlignment="Center"
 				Text="～" />
 			<TextBox Grid.Row="1" Grid.Column="3"
 				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				BorderThickness="0,0,0,1"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeToCommand}"
+				BorderThickness="0,0,0,1"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}"
-				HorizontalContentAlignment="Left" />
+				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
 			<!--  店舗Id  -->
 			<TextBlock Grid.Row="2" Grid.Column="0"
@@ -159,9 +155,8 @@
 				<Button Width="80" Height="36"
 					Margin="8,0,0,0"
 					Command="{Binding ClearTenpoIdsCommand}"
-					DockPanel.Dock="Right"
-					Style="{StaticResource MaterialDesignFlatButton}"
-					Content="解除" />
+					Content="解除" DockPanel.Dock="Right"
+					Style="{StaticResource MaterialDesignFlatButton}" />
 				<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
 					Foreground="{DynamicResource MaterialDesignBody}"
 					Text="{Binding TenpoIdsText}"

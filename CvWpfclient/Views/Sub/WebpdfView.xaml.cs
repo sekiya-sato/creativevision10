@@ -1,9 +1,8 @@
-using System;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
+using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using Microsoft.Web.WebView2.Core;
+using System.Windows;
+using System.Windows.Input;
 
 namespace CvWpfclient.Views.Sub;
 
@@ -59,5 +58,25 @@ public partial class WebpdfView : Window {
 		}
 
 		WebView.CoreWebView2.Reload();
+	}
+	// 画面構造がレンダリングされるタイミングで事前にWebView2の内部を確定させる(重要!)
+	protected override async void OnContentRendered(EventArgs e) {
+		base.OnContentRendered(e);
+
+		try {
+			// クライアントライブラリから共通のデータディレクトリを安全に解決
+			string userDataFolder = System.IO.Path.Combine(ClientLib.GetDataDir(), "WebView2Profile");
+			var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
+
+			// XAML上のコントロール名 (myWebView2) に対して
+			// ブラウザコアの初期化を明示的に即時完了させる（白画面・チラつき防止）
+			await WebView.EnsureCoreWebView2Async(env);
+
+			// 完了後に背景色を Material Design のテーマ色に合わせ、描画フリーズ感を排除
+			WebView.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Auto;
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"PDFコンポーネントの初期化に失敗しました: {ex.Message}", owner: this);
+		}
 	}
 }
