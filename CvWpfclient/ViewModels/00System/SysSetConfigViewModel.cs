@@ -44,18 +44,18 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		var persistedLoginPassword = string.IsNullOrWhiteSpace(LoginPassword) ? _originalLoginPassword : LoginPassword;
 		var runtimeOverrides = new Dictionary<string, string?> {
 			["ConnectionStrings:Url"] = Url,
-			["Parameters:LoginId"] = persistedLoginId,
-			["Parameters:LoginPass"] = persistedLoginPassword,
+			["Application:LoginId"] = persistedLoginId,
+			["Application:LoginPass"] = persistedLoginPassword,
 		};
 		var overrides = new Dictionary<string, string?>();
 		if (urlChanged) {
 			overrides["ConnectionStrings:Url"] = Url;
 		}
 		if (loginIdChanged && !string.IsNullOrWhiteSpace(LoginId)) {
-			overrides["Parameters:LoginId"] = LoginId;
+			overrides["Application:LoginId"] = LoginId;
 		}
 		if (loginPasswordChanged && !string.IsNullOrWhiteSpace(LoginPassword)) {
-			overrides["Parameters:LoginPass"] = LoginPassword;
+			overrides["Application:LoginPass"] = LoginPassword;
 		}
 
 		if (isSavel) {
