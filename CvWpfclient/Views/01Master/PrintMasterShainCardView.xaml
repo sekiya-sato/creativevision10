@@ -4,7 +4,7 @@
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
 	Title="{Binding Title}"
-	Width="800" Height="500"
+	Width="820" Height="540"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
@@ -91,17 +91,17 @@
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
 
-			<!--  社員CD  -->
+			<!--  社員Id  -->
 			<TextBlock Grid.Row="0" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
-				Text="社員CD" />
+				Text="Id" />
 			<TextBox Grid.Row="0" Grid.Column="1"
 				Width="200" Height="36"
 				HorizontalAlignment="Left"
 				BorderThickness="0,0,0,1"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeFromCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShainIdFromCommand}"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}"
+				Text="{Binding ShainIdFrom, UpdateSourceTrigger=PropertyChanged}"
 				HorizontalContentAlignment="Left" />
 			<TextBlock Grid.Row="0" Grid.Column="2"
 				Margin="8,0" VerticalAlignment="Center"
@@ -110,22 +110,22 @@
 				Width="200" Height="36"
 				HorizontalAlignment="Left"
 				BorderThickness="0,0,0,1"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeToCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShainIdToCommand}"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}"
+				Text="{Binding ShainIdTo, UpdateSourceTrigger=PropertyChanged}"
 				HorizontalContentAlignment="Left" />
 
-			<!--  店舗CD  -->
+			<!--  社員Code  -->
 			<TextBlock Grid.Row="1" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
-				Text="店舗CD" />
+				Text="社員Code" />
 			<TextBox Grid.Row="1" Grid.Column="1"
 				Width="200" Height="36"
 				HorizontalAlignment="Left"
 				BorderThickness="0,0,0,1"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectTenpoCodeFromCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeFromCommand}"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding TenpoCodeFrom, UpdateSourceTrigger=PropertyChanged}"
+				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}"
 				HorizontalContentAlignment="Left" />
 			<TextBlock Grid.Row="1" Grid.Column="2"
 				Margin="8,0" VerticalAlignment="Center"
@@ -134,17 +134,47 @@
 				Width="200" Height="36"
 				HorizontalAlignment="Left"
 				BorderThickness="0,0,0,1"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectTenpoCodeToCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeToCommand}"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding TenpoCodeTo, UpdateSourceTrigger=PropertyChanged}"
+				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}"
 				HorizontalContentAlignment="Left" />
 
-			<!--  バーコード種類  -->
+			<!--  店舗Id  -->
 			<TextBlock Grid.Row="2" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="店舗Id" />
+			<DockPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,4">
+				<Button Width="110" Height="36"
+					Command="{Binding SelectTenpoIdsCommand}"
+					DockPanel.Dock="Left"
+					Style="{StaticResource MaterialDesignRaisedButton}">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="CheckboxMultipleMarkedOutline" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="選択" />
+					</StackPanel>
+				</Button>
+				<Button Width="80" Height="36"
+					Margin="8,0,0,0"
+					Command="{Binding ClearTenpoIdsCommand}"
+					DockPanel.Dock="Right"
+					Style="{StaticResource MaterialDesignFlatButton}"
+					Content="解除" />
+				<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
+					Foreground="{DynamicResource MaterialDesignBody}"
+					Text="{Binding TenpoIdsText}"
+					TextTrimming="CharacterEllipsis"
+					ToolTip="{Binding TenpoIdsText}" />
+			</DockPanel>
+
+			<!--  バーコード種類  -->
+			<TextBlock Grid.Row="3" Grid.Column="0"
 				Margin="0,10,0,10"
 				Style="{StaticResource FormLabel}"
 				Text="バーコード" />
-			<StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+			<StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
 				Margin="100,20,0,10"
 				Orientation="Horizontal">
 				<RadioButton Margin="0,4"
@@ -156,7 +186,7 @@
 			</StackPanel>
 
 			<!--  実行ボタン  -->
-			<Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4"
+			<Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4"
 				Margin="0,24" HorizontalAlignment="Center"
 				Command="{Binding DoOutputPdfCommand}"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}"
@@ -170,7 +200,7 @@
 			</Button>
 
 			<!--  対応ラベル情報  -->
-			<TextBlock Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+			<TextBlock Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
 				Margin="0,8"
 				Foreground="{DynamicResource MaterialDesignBodyLight}"
 				Text="対応ラベル：A-one 品番28919(A4版2列6段)" />

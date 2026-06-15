@@ -10,16 +10,22 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 	string title = "社員証カード印刷";
 
 	[ObservableProperty]
+	long? shainIdFrom;
+
+	[ObservableProperty]
+	long? shainIdTo;
+
+	[ObservableProperty]
 	string shainCodeFrom = string.Empty;
 
 	[ObservableProperty]
 	string shainCodeTo = string.Empty;
 
 	[ObservableProperty]
-	string tenpoCodeFrom = string.Empty;
+	List<long> tenpoIds = [];
 
 	[ObservableProperty]
-	string tenpoCodeTo = string.Empty;
+	string tenpoIdsText = "未選択";
 
 	[ObservableProperty]
 	bool isCode39 = true;
@@ -32,6 +38,13 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 	string? BuildListWhere() {
 		var clauses = new List<string>();
 
+		if (ShainIdFrom.HasValue) {
+			clauses.Add($"A.Id >= {ShainIdFrom.Value}");
+		}
+		if (ShainIdTo.HasValue) {
+			clauses.Add($"A.Id <= {ShainIdTo.Value}");
+		}
+
 		if (!string.IsNullOrWhiteSpace(ShainCodeFrom)) {
 			clauses.Add($"A.Code >= '{EscapeSqlLiteral(ShainCodeFrom)}'");
 		}
@@ -39,14 +52,23 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 			clauses.Add($"A.Code <= '{EscapeSqlLiteral(ShainCodeTo)}'");
 		}
 
-		if (!string.IsNullOrWhiteSpace(TenpoCodeFrom)) {
-			clauses.Add($"T.Code >= '{EscapeSqlLiteral(TenpoCodeFrom)}'");
-		}
-		if (!string.IsNullOrWhiteSpace(TenpoCodeTo)) {
-			clauses.Add($"T.Code <= '{EscapeSqlLiteral(TenpoCodeTo)}'");
-		}
+		AddSelectedIdInClause(clauses, "A.Id_Tenpo", TenpoIds);
 
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	[RelayCommand]
+	void SelectShainIdFrom() {
+		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Id", startPos: ShainIdFrom ?? 0);
+		if (shain == null) return;
+		ShainIdFrom = shain.Id;
+	}
+
+	[RelayCommand]
+	void SelectShainIdTo() {
+		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Id", startPos: ShainIdTo ?? 0);
+		if (shain == null) return;
+		ShainIdTo = shain.Id;
 	}
 
 	[RelayCommand]
@@ -62,15 +84,41 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 	}
 
 	[RelayCommand]
-	void SelectTenpoCodeFrom() {
-		var tenpo = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=6", "Code");
-		TenpoCodeFrom = tenpo?.Code ?? string.Empty;
+	void SelectTenpoIds() {
+		var selected = ShowMultiSelectDialog<MasterTokui>(
+			typeof(MasterTokui),
+			"TenType=6",
+			"Code",
+			TenpoIds,
+			TenpoIds.FirstOrDefault());
+		if (selected == null) return;
+		TenpoIds = [.. selected.Select(x => x.Id)];
+		TenpoIdsText = BuildSelectedText(selected);
 	}
 
 	[RelayCommand]
-	void SelectTenpoCodeTo() {
-		var tenpo = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=6", "Code");
-		TenpoCodeTo = tenpo?.Code ?? string.Empty;
+	void ClearTenpoIds() {
+		TenpoIds = [];
+		TenpoIdsText = "未選択";
+	}
+
+	static string BuildSelectedText(IReadOnlyList<MasterTokui> selected) {
+		if (selected.Count == 0) return "未選択";
+		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatSelectedItem))}";
+	}
+
+	static string FormatSelectedItem(MasterTokui item) {
+		var label = JoinCodeName(item.Code, item.Name);
+		if (label.Length == 0) return item.Id.ToString();
+		return $"{item.Id} {label}";
+	}
+
+	static string JoinCodeName(string? code, string? name) {
+		var cd = code?.Trim() ?? string.Empty;
+		var mei = name?.Trim() ?? string.Empty;
+		if (cd.Length == 0) return mei;
+		if (mei.Length == 0) return cd;
+		return $"{cd} {mei}";
 	}
 
 	protected override QueryListSqlParam? PrintBySqlParam {

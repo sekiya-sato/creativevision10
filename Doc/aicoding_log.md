@@ -20,6 +20,25 @@
 
 ---
 
+## [2026-06-15] 11:51 社員証カード印刷の範囲指定条件変更
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：PrintMasterShainCardView の範囲指定を、社員Id from-to、社員Code from-to、店舗Id複数選択に変更し、ViewModel側も合わせて修正する
+### 実施内容
+- CvWpfclient/Views/01Master/PrintMasterShainCardView.xaml: 範囲指定UIを「Id」「社員Code」「店舗Id」へ変更し、店舗Idは複数選択ボタンと解除ボタン、選択内容表示へ変更
+- CvWpfclient/ViewModels/01Master/PrintMasterShainCardViewModel.cs: 社員Id from-to 条件、社員Code from-to 条件、店舗Id IN 条件を生成するよう修正し、店舗Id複数選択コマンドを追加
+### 技術決定 Why
+- 店舗条件は店舗Code範囲ではなく MasterShain.Id_Tenpo の複数Id指定として扱うため、既存の ShowMultiSelectDialog と AddSelectedIdInClause を使い、SQL条件を `A.Id_Tenpo IN (...)` に統一した
+### 確認
+- PrintMasterShainCardView.xaml の XML 読み込み成功
+- 編集ファイルの UTF-8 BOM なし、CRLF のみを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-13] 12:49 ShopUriageInputView 明細列幅と右詰め調整
 ### Agent
 - GPT-5 : OpenAI : Codex
