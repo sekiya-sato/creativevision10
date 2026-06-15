@@ -3,6 +3,7 @@ using CvWpfclient.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Globalization;
 using System.IO;
 
 namespace CvWpfclient.Services;
@@ -52,16 +53,29 @@ public sealed class ClientSettingsStore {
 	/// </summary>
 	public void Save(ClientSettingsDocument settings) {
 		ArgumentNullException.ThrowIfNull(settings);
-		var overrides = ToConfigurationOverrides(settings);
+		var overrides = ToConfigurationOverrides(settings)
+			.ToDictionary(pair => pair.Key, pair => (object?)pair.Value);
+		if (settings.Application.Limit > 0) {
+			overrides["Application:Limit"] = settings.Application.Limit;
+		}
 		AddIfNotWhiteSpace(overrides, "Application:Theme", settings.Application.Theme);
 		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);
-		SaveConfigurationOverrides(overrides);
+		SaveConfigurationValues(overrides);
 	}
 
 	/// <summary>
 	/// 指定された構成キーのみを既存の設定ファイルへ反映します。
 	/// </summary>
 	public void SaveConfigurationOverrides(IReadOnlyDictionary<string, string?> overrides) {
+		ArgumentNullException.ThrowIfNull(overrides);
+		var values = overrides.ToDictionary(pair => pair.Key, pair => (object?)pair.Value);
+		SaveConfigurationValues(values);
+	}
+
+	/// <summary>
+	/// 指定された構成キーのみを既存の設定ファイルへ反映します。
+	/// </summary>
+	public void SaveConfigurationValues(IReadOnlyDictionary<string, object?> overrides) {
 		ArgumentNullException.ThrowIfNull(overrides);
 		if (overrides.Count == 0) {
 			return;
@@ -100,12 +114,25 @@ public sealed class ClientSettingsStore {
 		AddIfNotWhiteSpace(overrides, "Application:LoginJwt", settings.Application.LoginJwt);
 		AddIfNotWhiteSpace(overrides, "Application:WeatherRegion", settings.Application.WeatherRegion);
 		AddIfNotWhiteSpace(overrides, "Application:FitPosition", settings.Application.FitPosition);
+		AddIfPositiveInt(overrides, "Application:Limit", settings.Application.Limit);
 		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);
 		return overrides;
 	}
 	static void AddIfNotWhiteSpace(IDictionary<string, string?> map, string key, string? value) {
 		if (!string.IsNullOrWhiteSpace(value)) {
 			map[key] = value;
+		}
+	}
+
+	static void AddIfNotWhiteSpace(IDictionary<string, object?> map, string key, string? value) {
+		if (!string.IsNullOrWhiteSpace(value)) {
+			map[key] = value;
+		}
+	}
+
+	static void AddIfPositiveInt(IDictionary<string, string?> map, string key, int value) {
+		if (value > 0) {
+			map[key] = value.ToString(CultureInfo.InvariantCulture);
 		}
 	}
 
@@ -133,7 +160,7 @@ public sealed class ClientSettingsStore {
 		}
 	}
 
-	void SetValue(JObject root, string keyPath, string value) {
+	void SetValue(JObject root, string keyPath, object value) {
 		var segments = keyPath.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 		if (segments.Length == 0) {
 			return;
@@ -156,7 +183,7 @@ public sealed class ClientSettingsStore {
 			current = child;
 		}
 
-		current[segments[^1]] = value;
+		current[segments[^1]] = value is JToken token ? token : JToken.FromObject(value);
 	}
 
 	void EnsureDirectoryExists() {

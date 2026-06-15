@@ -170,3 +170,26 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-15] 11:20 環境設定画面のclientsettings保存項目追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：SysSetConfigViewModel で WeatherRegion / FitPosition / Limit を clientsettings.json に保存できるようにし、FitPosition は左右上下の組み合わせ選択、Limit は数値右詰め、WeatherRegion はテキスト入力にする。環境設定画面全体も改善する
+### 実施内容
+- CvWpfclient/AppGlobal.cs: WeatherRegion / FitPosition / Limit を実行中設定へ反映できるよう UpdateConfigValues を拡張
+- CvWpfclient/Services/SystemSettingsStore.cs: clientsettings.json へ数値型 Limit を保持したまま保存できる SaveConfigurationValues を追加
+- CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs: WeatherRegion / FitPosition / Limit の読込、検証、保存、一時反映を追加
+- CvWpfclient/Views/00System/SysSetConfigView.xaml: 環境設定画面を MaterialDesign のヘッダー、カード、入力フォーム構成へ更新し、FitPosition 選択と Limit 右詰め入力を追加
+### 技術決定 Why
+- App 起動時の既存 AddInMemoryCollection 経路は文字列辞書を維持しつつ、JSON保存時のみ object 値を扱う経路を追加して Limit を数値として保存できるようにした
+- FitPosition は保存値を直接編集させず、Left/Right と Top/Bottom の選択から `Left-Bottom` 形式を組み立てることで既存 MainMenuViewModel の Contains 判定と互換性を保った
+### 確認
+- `git diff --check` で空白エラーなし
+- SysSetConfigView.xaml の XML 読み込み成功
+- 編集ファイルの UTF-8 BOM なし、CRLF のみを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

@@ -5,11 +5,11 @@
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
 	Title="システム設定"
-	Width="520" Height="640"
+	Width="760" Height="640"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FocusManager.FocusedElement="{Binding ElementName=UrlTextBox}"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
+	FontSize="16" ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<Window.InputBindings>
 		<KeyBinding Key="F12"
@@ -20,67 +20,228 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:SysSetConfigViewModel />
 	</helpers:BaseWindow.DataContext>
-	<TabControl>
-		<TabItem Header="環境設定">
-			<Border Padding="40">
-				<StackPanel VerticalAlignment="Center">
-					<TextBlock Margin="0,0,0,30" HorizontalAlignment="Center"
-						FontWeight="Bold"
-						Style="{StaticResource MaterialDesignHeadline5TextBlock}"
-						Text="環境設定を行います。&#x0a;(一時保存はShift+F12)" />
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="SettingLabel"
+			TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="Medium" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+			<Setter Property="Margin" Value="0,0,16,0" />
+		</Style>
 
+		<Style x:Key="SettingTextBox"
+			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
+			TargetType="TextBox">
+			<Setter Property="Margin" Value="0,6" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.72" />
+		</Style>
+	</helpers:BaseWindow.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="14,10"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel LastChildFill="True">
+				<Button DockPanel.Dock="Right"
+					Command="{Binding NoSaveCommand}"
+					Style="{StaticResource MaterialDesignToolForegroundButton}"
+					ToolTip="ファイル保存せず現在の実行設定だけ反映 (Shift+F12)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="DatabaseRefresh" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="一時反映" />
+					</StackPanel>
+				</Button>
+
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon Width="30" Height="30"
+						VerticalAlignment="Center"
+						Kind="DatabaseRefresh" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="環境設定" />
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<ScrollViewer Grid.Row="1"
+			VerticalScrollBarVisibility="Auto">
+			<materialDesign:Card Margin="18"
+				Padding="24"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="170" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+						Margin="0,0,0,12"
+						Orientation="Horizontal">
+						<materialDesign:PackIcon Width="24" Height="24"
+							VerticalAlignment="Center"
+							Kind="DatabaseSearch" />
+						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+							FontSize="17" FontWeight="SemiBold"
+							Text="接続情報" />
+					</StackPanel>
+
+					<TextBlock Grid.Row="1" Grid.Column="0"
+						Style="{StaticResource SettingLabel}"
+						Text="接続先 URL" />
 					<TextBox x:Name="UrlTextBox"
-						Margin="0,0,0,20"
-						materialDesign:HintAssist.Foreground="{DynamicResource MaterialDesignBody}"
-						materialDesign:HintAssist.Hint="接続先 URL" materialDesign:TextFieldAssist.HasClearButton="True"
+						Grid.Row="1" Grid.Column="1"
+						materialDesign:HintAssist.Hint="https://localhost:5012"
+						materialDesign:TextFieldAssist.HasClearButton="True"
 						CaretBrush="{DynamicResource MaterialDesignBody}"
-						FontSize="16"
-						Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+						Style="{StaticResource SettingTextBox}"
 						Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}" />
 
-					<TextBox Margin="0,0,0,20"
-						materialDesign:HintAssist.Foreground="{DynamicResource MaterialDesignBody}"
-						materialDesign:HintAssist.Hint="ログイン ID" materialDesign:TextFieldAssist.HasClearButton="True"
+					<TextBlock Grid.Row="2" Grid.Column="0"
+						Style="{StaticResource SettingLabel}"
+						Text="ログイン ID" />
+					<TextBox Grid.Row="2" Grid.Column="1"
+						materialDesign:HintAssist.Hint="ログイン ID"
+						materialDesign:TextFieldAssist.HasClearButton="True"
 						CaretBrush="{DynamicResource MaterialDesignBody}"
-						FontSize="16"
-						Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+						Style="{StaticResource SettingTextBox}"
 						Text="{Binding LoginId, UpdateSourceTrigger=PropertyChanged}" />
 
-					<PasswordBox Margin="0,0,0,20"
+					<TextBlock Grid.Row="3" Grid.Column="0"
+						Style="{StaticResource SettingLabel}"
+						Text="ログインパスワード" />
+					<PasswordBox Grid.Row="3" Grid.Column="1"
+						Margin="0,6"
 						helpers:PasswordBoxAssistant.BindPassword="True"
 						helpers:PasswordBoxAssistant.BoundPassword="{Binding LoginPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-						materialDesign:HintAssist.Foreground="{DynamicResource MaterialDesignBody}"
 						materialDesign:HintAssist.Hint="ログインパスワード"
 						CaretBrush="{DynamicResource CaretColor}"
-						FontSize="16"
 						Foreground="{DynamicResource MaterialDesignBody2}"
 						Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
-					<Grid>
+
+					<Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+						Margin="0,18,0,18" />
+
+					<StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
+						Margin="0,0,0,12"
+						Orientation="Horizontal">
+						<materialDesign:PackIcon Width="24" Height="24"
+							VerticalAlignment="Center"
+							Kind="Calculator" />
+						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+							FontSize="17" FontWeight="SemiBold"
+							Text="アプリ動作" />
+					</StackPanel>
+
+					<TextBlock Grid.Row="6" Grid.Column="0"
+						Style="{StaticResource SettingLabel}"
+						Text="天気地域" />
+					<TextBox Grid.Row="6" Grid.Column="1"
+						materialDesign:HintAssist.Hint="例: Tokyo"
+						materialDesign:TextFieldAssist.HasClearButton="True"
+						CaretBrush="{DynamicResource MaterialDesignBody}"
+						Style="{StaticResource SettingTextBox}"
+						Text="{Binding WeatherRegion, UpdateSourceTrigger=PropertyChanged}" />
+
+					<TextBlock Grid.Row="7" Grid.Column="0"
+						Style="{StaticResource SettingLabel}"
+						Text="ウィンドウ配置" />
+					<Grid Grid.Row="7" Grid.Column="1"
+						Margin="0,6">
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="12" />
 							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="16" />
+							<ColumnDefinition Width="Auto" />
 						</Grid.ColumnDefinitions>
-
-						<Button Grid.Column="0"
-							Margin="0,0,10,0"
-							Command="{Binding SaveCommand}"
-							Content="保存"
-							Style="{StaticResource MaterialDesignRaisedButton}" />
-
-						<Button Grid.Column="1"
-							Margin="10,0,0,0"
-							Command="{Binding ExitCommand}"
-							Content="キャンセル" IsCancel="True"
-							Style="{StaticResource MaterialDesignOutlinedButton}" />
+						<ComboBox Grid.Column="0"
+							materialDesign:HintAssist.Hint="左右"
+							ItemsSource="{Binding HorizontalFitPositionItems}"
+							SelectedItem="{Binding HorizontalFitPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+						<ComboBox Grid.Column="2"
+							materialDesign:HintAssist.Hint="上下"
+							ItemsSource="{Binding VerticalFitPositionItems}"
+							SelectedItem="{Binding VerticalFitPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+						<Border Grid.Column="4"
+							MinWidth="110"
+							Padding="10,6"
+							VerticalAlignment="Center"
+							Background="{DynamicResource MaterialDesignToolBarBackground}"
+							CornerRadius="4">
+							<TextBlock HorizontalAlignment="Center"
+								FontFamily="Consolas"
+								Text="{Binding FitPosition}" />
+						</Border>
 					</Grid>
-				</StackPanel>
-			</Border>
-		</TabItem>
-		<!--
-		<TabItem Header="その他">
-			<Grid>
-			</Grid>
-		</TabItem>
-		-->
-	</TabControl>
+
+					<TextBlock Grid.Row="8" Grid.Column="0"
+						Style="{StaticResource SettingLabel}"
+						Text="取得件数上限" />
+					<TextBox Grid.Row="8" Grid.Column="1"
+						Width="180"
+						HorizontalAlignment="Left"
+						HorizontalContentAlignment="Right"
+						TextAlignment="Right"
+						materialDesign:HintAssist.Hint="例: 400"
+						CaretBrush="{DynamicResource MaterialDesignBody}"
+						Style="{StaticResource SettingTextBox}"
+						Text="{Binding Limit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True, NotifyOnValidationError=True}" />
+				</Grid>
+			</materialDesign:Card>
+		</ScrollViewer>
+
+		<Border Grid.Row="2"
+			Padding="18,12"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<StackPanel HorizontalAlignment="Right"
+				Orientation="Horizontal">
+				<Button Width="128" Height="38"
+					Margin="0,0,10,0"
+					Command="{Binding SaveCommand}"
+					IsDefault="True"
+					Style="{StaticResource MaterialDesignRaisedButton}">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="ContentSave" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="保存" />
+					</StackPanel>
+				</Button>
+				<Button Width="128" Height="38"
+					Command="{Binding ExitCommand}"
+					IsCancel="True"
+					Style="{StaticResource MaterialDesignOutlinedButton}">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="ArrowLeft" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="キャンセル" />
+					</StackPanel>
+				</Button>
+			</StackPanel>
+		</Border>
+	</Grid>
 </helpers:BaseWindow>

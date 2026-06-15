@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ProtoBuf.Grpc;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.IO;
 
 
@@ -41,7 +42,10 @@ public static class AppGlobal {
 	public static int Limit => int.TryParse(_config?["Application:Limit"], out var limit) ? limit : 100; // デフォルトは100件
 	public static ClientApplication Application => new ClientApplication {
 		LoginId = _config?["Application:LoginId"] ?? string.Empty,
-		LoginPass = _config?["Application:LoginPass"] ?? string.Empty
+		LoginPass = _config?["Application:LoginPass"] ?? string.Empty,
+		WeatherRegion = WeatherRegion,
+		FitPosition = FitPosition,
+		Limit = Limit
 	};
 	/// <summary>
 	/// ログイン認証後のJWT
@@ -133,7 +137,7 @@ public static class AppGlobal {
 	/// <param name="loginId"></param>
 	/// <param name="loginPass"></param>
 	/// <exception cref="InvalidOperationException"></exception>
-	public static void UpdateConfigValues(string? url = null, string? loginId = null, string? loginPass = null) {
+	public static void UpdateConfigValues(string? url = null, string? loginId = null, string? loginPass = null, string? weatherRegion = null, string? fitPosition = null, int? limit = null) {
 		if (_config == null) {
 			throw new InvalidOperationException("AppGlobal has not been initialized. Call Init() at application startup.");
 		}
@@ -146,6 +150,15 @@ public static class AppGlobal {
 		}
 		if (loginPass != null) {
 			_config["Application:LoginPass"] = loginPass;
+		}
+		if (weatherRegion != null) {
+			_config["Application:WeatherRegion"] = weatherRegion;
+		}
+		if (fitPosition != null) {
+			_config["Application:FitPosition"] = fitPosition;
+		}
+		if (limit != null) {
+			_config["Application:Limit"] = limit.Value.ToString(CultureInfo.InvariantCulture);
 		}
 	}
 
