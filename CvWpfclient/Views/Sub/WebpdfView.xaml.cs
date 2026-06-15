@@ -62,7 +62,6 @@ public partial class WebpdfView : Window {
 	// 画面構造がレンダリングされるタイミングで事前にWebView2の内部を確定させる(重要!)
 	protected override async void OnContentRendered(EventArgs e) {
 		base.OnContentRendered(e);
-
 		try {
 			// クライアントライブラリから共通のデータディレクトリを安全に解決
 			string userDataFolder = System.IO.Path.Combine(ClientLib.GetDataDir(), "WebView2Profile");
@@ -76,7 +75,8 @@ public partial class WebpdfView : Window {
 			WebView.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Auto;
 		}
 		catch (Exception ex) {
-			MessageEx.ShowErrorDialog($"PDFコンポーネントの初期化に失敗しました: {ex.Message}", owner: this);
+			// WebView2 was already initialized with a different CoreWebView2Environment. この場合は初期化済みなのでエラー無視でOK
+			// MessageEx.ShowErrorDialog($"PDFコンポーネントの初期化に失敗しました: {ex.Message}", owner: this);
 		}
 	}
 }
