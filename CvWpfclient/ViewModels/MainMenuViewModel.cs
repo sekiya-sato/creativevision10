@@ -147,17 +147,17 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (window != null) {
 			startRect = window.RestoreBounds;
 			var width = 290;
-			var height = 590;
+			var width2 = 740;
 			menuonlyRect = new Rect() {
 				Width = width,
-				Height = height,
+				Height = 590,
 				X = startRect.X + startRect.Width - width,
 				Y = startRect.Y
 			};
 			smallRect = new Rect() {
-				Width = 685,
-				Height = 640,
-				X = startRect.X + startRect.Width - 685,
+				Width = width2,
+				Height = 700,
+				X = startRect.X + startRect.Width - width2,
 				Y = startRect.Y
 			};
 		}
