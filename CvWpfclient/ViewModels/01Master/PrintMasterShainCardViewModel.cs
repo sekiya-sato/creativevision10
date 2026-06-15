@@ -130,7 +130,7 @@ __serverimgshain__(A.Code) 画像,
 A.id_Tenpo,
 coalesce(T.Name, '') 店舗名,
 coalesce((select S.Name from MasterSysMan S limit 1), '') 自社名,
-case when coalesce(json_extract(A.Jdetail, '$.yobi1'), '')='' then 0 else 1 end 画像表示判定用
+A.Id
 from MasterShain A
 left join MasterTokui T on T.Id = A.id_Tenpo
 {query.AddWhereOrder()}

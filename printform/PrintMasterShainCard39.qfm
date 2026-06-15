@@ -57,7 +57,7 @@
 					<decode datatype="string" format=""/>
 				</barcode>
 				<text id="Txt04" valign="middle" halign="center">
-					<position x="8" y="1" width="60" height="9"/>
+					<position x="7" y="1" width="48" height="9"/>
 					<color font="9b4d4d" base="80ff80" border="c08080" transparent="0"/>
 					<border top="10" bottom="10"/>
 					<data calctype="static">  STAFF ID CARD</data>
@@ -107,6 +107,13 @@
 					<data calctype="item" datasrc="item5"/>
 					<decode datatype="string" format=""/>
 					<font size="80" style="1"/>
+				</text>
+				<text id="Txt13" valign="middle" halign="right">
+					<position x="55" y="6" width="12" height="5"/>
+					<color border="9e4b4b" transparent="0"/>
+					<data calctype="item" datasrc="item7"/>
+					<decode datatype="string" format=""/>
+					<font size="90" style="1"/>
 				</text>
 			</record>
 		</region>
