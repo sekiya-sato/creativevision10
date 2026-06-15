@@ -94,7 +94,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 		if (string.IsNullOrEmpty(AppGlobal.LoginJwt))
 			return;
 		var loginService = AppGlobal.GetGrpcService<ILoginService>();
-		var loginRefresh = new LoginRefresh() { Token = AppGlobal.LoginJwt };
+		var loginRefresh = new LoginRefresh() { Token = AppGlobal.LoginJwt, Info = Common.SerializeObject(SubGetInfo()) };
 		cancellationToken.ThrowIfCancellationRequested();
 		try {
 			LoginReply reply = new() { JwtMessage = string.Empty };

@@ -212,3 +212,19 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-15] 12:10 LoginRefreshAsync でもクライアント情報を履歴に送信
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient で LoginRefreshAsync を呼び出したときにも LoginAsync と同様にクライアント情報を履歴ファイルに保存する
+### 実施内容
+- CvWpfclient/ViewModels/00System/LoginViewModel.cs: Refresh コマンドで生成する LoginRefresh に `Info = Common.SerializeObject(SubGetInfo())` を追加し、LoginAsync と同じクライアント情報（IP/MAC/マシン名/ユーザー/OS）をサーバーの SysHistJwt 履歴へ送信する
+### 技術決定 Why
+- LoginRefresh データコントラクトには Info プロパティが既に存在するが、クライアント側で未設定のためサーバーが空の Jsub で履歴を記録していた。LoginAsync と同じ SubGetInfo() を流用し、履歴情報の欠損を防いだ
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 errors、既存の unrelated warnings 2 件）を確認
+
+---
