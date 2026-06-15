@@ -74,7 +74,7 @@ public partial class WebpdfView : Window {
 			// 完了後に背景色を Material Design のテーマ色に合わせ、描画フリーズ感を排除
 			WebView.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Auto;
 		}
-		catch (Exception ex) {
+		catch (Exception) {
 			// WebView2 was already initialized with a different CoreWebView2Environment. この場合は初期化済みなのでエラー無視でOK
 			// MessageEx.ShowErrorDialog($"PDFコンポーネントの初期化に失敗しました: {ex.Message}", owner: this);
 		}

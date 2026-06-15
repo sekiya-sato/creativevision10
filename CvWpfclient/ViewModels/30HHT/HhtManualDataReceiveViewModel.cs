@@ -229,11 +229,16 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		var value = fields[index].Trim();
 		if (string.IsNullOrEmpty(value))
 			return 0;
+		if (value.Length == 1) {
+			var ret = Hex2Digit(value);
+			if (ret >= 0) {
+				return ret;
+			}
+		}
 		ValidateDigits(value, maxDigits, fieldName, fileName, lineNo);
 		if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result)) {
 			throw CreateFieldError(fileName, lineNo, fieldName, "数値に変換できません。");
 		}
-
 		return result;
 	}
 
@@ -285,6 +290,17 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		if (!normalized.All(char.IsAsciiDigit)) {
 			throw CreateFieldError(fileName, lineNo, fieldName, "数値項目に数値以外が含まれています。");
 		}
+	}
+	/// <summary>
+	/// Valucanの区分フィールドは、1桁の16進数で表現されるため、16進数として変換を試みる。変換できない場合は-1を返す。
+	/// </summary>
+	/// <param name="value"></param>
+	/// <returns></returns>
+	private static int Hex2Digit(string value) {
+		if (!int.TryParse(value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var result)) {
+			return -1;
+		}
+		return result;
 	}
 
 	private static InvalidDataException CreateFieldError(string fileName, int lineNo, string fieldName, string detail) {
