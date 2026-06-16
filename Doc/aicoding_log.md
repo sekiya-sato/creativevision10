@@ -332,3 +332,25 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-16] 15:45 管理者用システム処理画面の追加
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：「管理メニュー」の「旧DBからの選択変換処理」の次に「管理者用システム処理」を追加し、SampleViewModel の TestDatabaseClose / TestDatabaseReOpen をボタンで実行できる画面を新規作成する
+### 実施内容
+- CvWpfclient/Models/MenuData.cs: 「旧DBからの選択変換処理」の次に「管理者用システム処理」を追加
+- CvWpfclient/ViewModels/00System/SysExecMiscViewModel.cs: TestDatabaseClose / TestDatabaseReOpen コマンドを SampleViewModel からコピーし、実行前に確認メッセージを表示する ViewModel を追加
+- CvWpfclient/Views/00System/SysExecMiscView.xaml: ConcvertDbView を参考に ColorZone ヘッダー、実行ボタンカード、実行結果 GroupBox、キャンセルボタンを配置
+- CvWpfclient/Views/00System/SysExecMiscView.xaml.cs: BaseWindow を継承する code-behind を追加
+### 技術決定 Why
+- 既存の ConcvertDbView の外枠パターンを踏襲し、今後のボタン追加に備えて WrapPanel でボタンを配置した
+- SampleViewModel の TestDatabaseClose / TestDatabaseReOpen 処理をそのまま ViewModel に移設し、実行前に MessageEx.ShowQuestionDialog で確認するようにした
+- 実行結果は ResultMessage プロパティに TextBox で表示し、処理中は IsProcessing でボタンを無効化して二重実行を防止した
+### 確認
+- lsp_diagnostics で SysExecMiscViewModel.cs / MenuData.cs に診断なしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

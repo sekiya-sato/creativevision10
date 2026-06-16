@@ -57,6 +57,7 @@ public partial class MenuData : ObservableObject {
 		new("汎用マスタメンテ", typeof(Views._00System.SysGeneralMenteView), addInfo:"MasterMeisho を汎用編集UIで表示・更新"),
 		new("旧DBからの変換処理", typeof(Views._00System.ConcvertDbView), addInfo:"旧DBからのデータ変換"),
 		new("旧DBからの選択変換処理", typeof(Views._00System.ConcvertSelectedView), addInfo:"旧DBからの選択変換処理"),
+		new("管理者用システム処理", typeof(Views._00System.SysExecMiscView), addInfo:"管理者用の各種システム処理"),
         /* ================================ */
 			new("----------------", typeof(string) , addInfo:"---"),
 			new("サンプル画面 ---", typeof(SampleView), addInfo:"-- MaterialDesignサンプルとテストPG"),
