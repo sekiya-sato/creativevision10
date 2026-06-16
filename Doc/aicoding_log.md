@@ -288,3 +288,25 @@
 - lsp_diagnostics で ConvertDb.cs に診断なしを確認
 
 ---
+
+## [2026-06-16] 12:52 旧DBからの変換処理画面の追加
+### Agent
+- kimik-k2.7-code : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient に「旧DBからの変換処理」画面を追加し、管理メニューから起動できるようにする
+### 実施内容
+- CvWpfclient/Models/MenuData.cs: 「管理メニュー / テスト画面」の「汎用マスタメンテ」の次に「旧DBからの変換処理」を追加
+- CvWpfclient/ViewModels/00System/ConcvertDbViewModel.cs: テーブル初期化の有無、進捗、ストリーミングログを持ち、QueryMsgStreamAsync で CvFlag.Msg040_ConvertDb / Msg041_ConvertDbInit を呼び出す ViewModel を追加
+- CvWpfclient/Views/00System/ConcvertDbView.xaml: SysSetConfigView を参考にした ColorZone ヘッダー、実行設定カード、ストリーミングログ GroupBox、実行/キャンセルボタンを配置
+- CvWpfclient/Views/00System/ConcvertDbView.xaml.cs: BaseWindow を継承する code-behind を追加
+### 技術決定 Why
+- 既存の SampleViewModel の QueryMsgStreamAsync パターンを踏襲し、CommunityToolkit.Mvvm の [RelayCommand(IncludeCancelCommand = true)] で非同期実行とキャンセルを実装した
+- テーブル初期化の選択は bool プロパティを RadioButton で切り替え、App.xaml の InverseBooleanConverter を再利用した
+- ストリーミングログは ListBox に ObservableCollection<string> をバインドし、新しいメッセージを先頭に表示するよう Insert(0, ...) で更新する SampleViewModel と同じ方式を採用した
+### 確認
+- lsp_diagnostics で ConcvertDbViewModel.cs / ConcvertDbView.xaml.cs に診断なしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
