@@ -481,6 +481,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 
 	public void Dispose() {
 		// クローンした接続を破棄
+		_db.Close();
 		_db.Dispose();
 	}
 
