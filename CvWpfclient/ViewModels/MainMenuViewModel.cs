@@ -585,12 +585,16 @@ public partial class MainMenuViewModel : ObservableObject {
 			8 => "上弦",
 			<= 14 => "上弦後",
 			15 => "満月",
+			16 => "十六夜",
+			17 => "立待月",
+			18 => "居待月",
+			19 => "寝待月",
 			<= 21 => "下弦前",
 			22 => "下弦",
 			< 29 => "下弦後",
 			_ => "今夜の月"
 		};
-		MoonPhaseToolTip = $"{moonPhaseName}：旧暦 {luna.GetMonth(now)}月{kyurekiDay}日";
+		MoonPhaseToolTip = $"{moonPhaseName}：旧暦 {now.ToSimpleLunisolarStrDigit()}";
 		SolarTerm = GetSolarTermName(now);
 	}
 

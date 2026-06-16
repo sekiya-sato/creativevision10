@@ -130,6 +130,22 @@ public static class CommonExtensions {
 			return $"{leapStr}{GetLunaMonthName(displayMonth)}{GetLunaDayName(day)}";
 		}
 		/// <summary>
+		/// (閏)xx月xx日 形式の旧暦文字列へ変換
+		/// </summary>
+		/// <returns></returns>
+		public string ToSimpleLunisolarStrDigit() {
+			var cal = new System.Globalization.JapaneseLunisolarCalendar();
+			int year = cal.GetYear(date0);
+			int month = cal.GetMonth(date0);
+			int day = cal.GetDayOfMonth(date0);
+			int leapMonth = cal.GetLeapMonth(year);
+			bool isLeap = (leapMonth > 0 && month == leapMonth);
+			int displayMonth = (leapMonth > 0 && month >= leapMonth) ? month - 1 : month;
+
+			string leapStr = isLeap ? "閏" : "";
+			return $"{leapStr}{displayMonth}月{day}日";
+		}
+		/// <summary>
 		/// 旧暦の名前を返す
 		/// </summary>
 		/// <param name="month"></param>
