@@ -1,0 +1,692 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<script language="JavaScript">//////////////////////////////////////////////////////////////////////
+// PrintStream FormEditor Generated Script
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// QFM object
+// このオブジェクトがフォームファイルを示します。フォームファイルに定義され
+// る情報は、すべてこのオブジェクトを基点にして取得、設定を行います。
+var qfm	= GetQfm();
+
+//////////////////////////////////////////////////////////////////////
+// Cursor object
+// カーソルはFormEditorで指定した印刷データに対してオープンされ、１件目の
+// レコードに位置付けられています。
+// このカーソルは印刷データの種類や形式によらず、同じように利用できます。
+var cursor	= qfm.GetCursor();
+
+//////////////////////////////////////////////////////////////////////
+// Cursor members
+// カーソルに含まれる列に対応する変数です。この変数はカーソルオブジェクトか
+// らGetValue()メソッドにより印刷データの値を取得する領域として利用
+// されます。
+var dtitem1;
+var dtitem2;
+var dtitem3;
+var dtitem4;
+var dtitem5;
+var dtitem6;
+var dtitem7;
+var dtitem8;
+var dtitem9;
+var dtitem10;
+var dtitem11;
+var dtitem12;
+var dtitem13;
+var dtitem14;
+var dtitem15;
+var dtitem16;
+var dtitem17;
+var dtitem18;
+var dtitem19;
+var dtitem20;
+var dtitem21;
+var dtitem22;
+var dtitem23;
+var dtitem24;
+var dtitem25;
+var dtitem26;
+var dtitem27;
+var dtitem28;
+var dtitem29;
+var dtitem30;
+var dtitem31;
+var dtitem32;
+var dtitem33;
+var dtitem34;
+var dtitem35;
+var dtitem36;
+var dtitem37;
+var dtitem38;
+var dtitem39;
+var dtitem40;
+var dtitem41;
+var dtitem42;
+var dtitem43;
+var dtitem44;
+var dtitem45;
+var dtitem46;
+var dtitem47;
+var dtitem48;
+var dtitem49;
+var dtitem50;
+var dtitem51;
+var dtitem52;
+var dtitem53;
+var dtitem54;
+var dtitem55;
+var dtitem56;
+var dtitem57;
+var dtitem58;
+var dtitem59;
+var dtitem60;
+var dtitem61;
+var dtitem62;
+var dtitem63;
+var dtitem64;
+var dtitem65;
+var dtitem66;
+var dtitem67;
+var dtitem68;
+var dtitem69;
+var dtitem70;
+var dtitem71;
+var dtitem72;
+var dtitem73;
+var dtitem74;
+var dtitem75;
+var dtitem76;
+var dtitem77;
+var dtitem78;
+var dtitem79;
+var dtitem80;
+var dtitem81;
+var dtitem82;
+var dtitem83;
+
+//////////////////////////////////////////////////////////////////////
+// Parameter value
+// 実行パラメータの値が格納されます。この値はFormEditorで設定したデフォルト
+// 値、またはFormWriterのコマンドラインで指定した値となります。
+
+//////////////////////////////////////////////////////////////////////
+// Field object
+// 各フィールドを示すオブジェクトです。オブジェクトのプロパティを操作するこ
+// とによりさまざまな表現を動的に指定する事ができます。
+var page	= qfm.GetPage();
+var fdRgn01	= page.GetField(&quot;Rgn01&quot;);
+var fdRgn02	= page.GetField(&quot;Rgn02&quot;);
+var fdRgn03	= page.GetField(&quot;Rgn03&quot;);
+var fdRgn04	= page.GetField(&quot;Rgn04&quot;);
+var fdRgn05	= page.GetField(&quot;Rgn05&quot;);
+var fdRgn06	= page.GetField(&quot;Rgn06&quot;);
+var fdRec01	= page.GetField(&quot;Rec01&quot;);
+var fdRec02	= page.GetField(&quot;Rec02&quot;);
+var fdTxt012	= page.GetField(&quot;Txt012&quot;);
+var fdTxt013	= page.GetField(&quot;Txt013&quot;);
+var fdBar01	= page.GetField(&quot;Bar01&quot;);
+var fdBar02	= page.GetField(&quot;Bar02&quot;);
+var fdImg01	= page.GetField(&quot;Img01&quot;);
+var fdTxt001	= page.GetField(&quot;Txt001&quot;);
+var fdTxt002	= page.GetField(&quot;Txt002&quot;);
+var fdTxt003	= page.GetField(&quot;Txt003&quot;);
+var fdTxt004	= page.GetField(&quot;Txt004&quot;);
+var fdTxt006	= page.GetField(&quot;Txt006&quot;);
+var fdTxt008	= page.GetField(&quot;Txt008&quot;);
+var fdTxt010	= page.GetField(&quot;Txt010&quot;);
+var fdTxt005	= page.GetField(&quot;Txt005&quot;);
+var fdTxt007	= page.GetField(&quot;Txt007&quot;);
+var fdTxt009	= page.GetField(&quot;Txt009&quot;);
+
+//////////////////////////////////////////////////////////////////////
+// OnFetch()関数は、印刷データを1件読み込むごとに、FormWriterエンジンより
+// 呼び出されます。この関数では、直前に読み取った印刷データが1件含まれる
+// カーソルオブジェクトcursorを受け取ります。cursorの内容を変更すると、変
+// 更後の内容で印刷されキーブレーク判定が行われます。
+// OnFetch()関数は、主に印刷データのフィルタとして利用します。
+function OnFetch() {
+
+	// 印刷データの取得
+	dtitem1	= cursor.GetValue(&quot;item1&quot;);
+	dtitem2	= cursor.GetValue(&quot;item2&quot;);
+	dtitem3	= cursor.GetValue(&quot;item3&quot;);
+	dtitem4	= cursor.GetValue(&quot;item4&quot;);
+	dtitem5	= cursor.GetValue(&quot;item5&quot;);
+	dtitem6	= cursor.GetValue(&quot;item6&quot;);
+	dtitem7	= cursor.GetValue(&quot;item7&quot;);
+	dtitem8	= cursor.GetValue(&quot;item8&quot;);
+	dtitem9	= cursor.GetValue(&quot;item9&quot;);
+	dtitem10	= cursor.GetValue(&quot;item10&quot;);
+	dtitem11	= cursor.GetValue(&quot;item11&quot;);
+	dtitem12	= cursor.GetValue(&quot;item12&quot;);
+	dtitem13	= cursor.GetValue(&quot;item13&quot;);
+	dtitem14	= cursor.GetValue(&quot;item14&quot;);
+	dtitem15	= cursor.GetValue(&quot;item15&quot;);
+	dtitem16	= cursor.GetValue(&quot;item16&quot;);
+	dtitem17	= cursor.GetValue(&quot;item17&quot;);
+	dtitem18	= cursor.GetValue(&quot;item18&quot;);
+	dtitem19	= cursor.GetValue(&quot;item19&quot;);
+	dtitem20	= cursor.GetValue(&quot;item20&quot;);
+	dtitem21	= cursor.GetValue(&quot;item21&quot;);
+	dtitem22	= cursor.GetValue(&quot;item22&quot;);
+	dtitem23	= cursor.GetValue(&quot;item23&quot;);
+	dtitem24	= cursor.GetValue(&quot;item24&quot;);
+	dtitem25	= cursor.GetValue(&quot;item25&quot;);
+	dtitem26	= cursor.GetValue(&quot;item26&quot;);
+	dtitem27	= cursor.GetValue(&quot;item27&quot;);
+	dtitem28	= cursor.GetValue(&quot;item28&quot;);
+	dtitem29	= cursor.GetValue(&quot;item29&quot;);
+	dtitem30	= cursor.GetValue(&quot;item30&quot;);
+	dtitem31	= cursor.GetValue(&quot;item31&quot;);
+	dtitem32	= cursor.GetValue(&quot;item32&quot;);
+	dtitem33	= cursor.GetValue(&quot;item33&quot;);
+	dtitem34	= cursor.GetValue(&quot;item34&quot;);
+	dtitem35	= cursor.GetValue(&quot;item35&quot;);
+	dtitem36	= cursor.GetValue(&quot;item36&quot;);
+	dtitem37	= cursor.GetValue(&quot;item37&quot;);
+	dtitem38	= cursor.GetValue(&quot;item38&quot;);
+	dtitem39	= cursor.GetValue(&quot;item39&quot;);
+	dtitem40	= cursor.GetValue(&quot;item40&quot;);
+	dtitem41	= cursor.GetValue(&quot;item41&quot;);
+	dtitem42	= cursor.GetValue(&quot;item42&quot;);
+	dtitem43	= cursor.GetValue(&quot;item43&quot;);
+	dtitem44	= cursor.GetValue(&quot;item44&quot;);
+	dtitem45	= cursor.GetValue(&quot;item45&quot;);
+	dtitem46	= cursor.GetValue(&quot;item46&quot;);
+	dtitem47	= cursor.GetValue(&quot;item47&quot;);
+	dtitem48	= cursor.GetValue(&quot;item48&quot;);
+	dtitem49	= cursor.GetValue(&quot;item49&quot;);
+	dtitem50	= cursor.GetValue(&quot;item50&quot;);
+	dtitem51	= cursor.GetValue(&quot;item51&quot;);
+	dtitem52	= cursor.GetValue(&quot;item52&quot;);
+	dtitem53	= cursor.GetValue(&quot;item53&quot;);
+	dtitem54	= cursor.GetValue(&quot;item54&quot;);
+	dtitem55	= cursor.GetValue(&quot;item55&quot;);
+	dtitem56	= cursor.GetValue(&quot;item56&quot;);
+	dtitem57	= cursor.GetValue(&quot;item57&quot;);
+	dtitem58	= cursor.GetValue(&quot;item58&quot;);
+	dtitem59	= cursor.GetValue(&quot;item59&quot;);
+	dtitem60	= cursor.GetValue(&quot;item60&quot;);
+	dtitem61	= cursor.GetValue(&quot;item61&quot;);
+	dtitem62	= cursor.GetValue(&quot;item62&quot;);
+	dtitem63	= cursor.GetValue(&quot;item63&quot;);
+	dtitem64	= cursor.GetValue(&quot;item64&quot;);
+	dtitem65	= cursor.GetValue(&quot;item65&quot;);
+	dtitem66	= cursor.GetValue(&quot;item66&quot;);
+	dtitem67	= cursor.GetValue(&quot;item67&quot;);
+	dtitem68	= cursor.GetValue(&quot;item68&quot;);
+	dtitem69	= cursor.GetValue(&quot;item69&quot;);
+	dtitem70	= cursor.GetValue(&quot;item70&quot;);
+	dtitem71	= cursor.GetValue(&quot;item71&quot;);
+	dtitem72	= cursor.GetValue(&quot;item72&quot;);
+	dtitem73	= cursor.GetValue(&quot;item73&quot;);
+	dtitem74	= cursor.GetValue(&quot;item74&quot;);
+	dtitem75	= cursor.GetValue(&quot;item75&quot;);
+	dtitem76	= cursor.GetValue(&quot;item76&quot;);
+	dtitem77	= cursor.GetValue(&quot;item77&quot;);
+	dtitem78	= cursor.GetValue(&quot;item78&quot;);
+	dtitem79	= cursor.GetValue(&quot;item79&quot;);
+	dtitem80	= cursor.GetValue(&quot;item80&quot;);
+	dtitem81	= cursor.GetValue(&quot;item81&quot;);
+	dtitem82	= cursor.GetValue(&quot;item82&quot;);
+	dtitem83	= cursor.GetValue(&quot;item83&quot;);
+
+	if( dtitem21==&quot;&quot; ) {
+		fdBar02.visible = 0;
+	} else {
+		fdBar02.visible = 1;
+	}
+
+// カーソルオブジェクトの操作例
+//	if( dtitem1.length == 0 ) {
+//		cursor.SetValue(&quot;item1&quot;, &quot;(未設定)&quot;);
+//	}
+
+// フィールドプロパティの操作例
+//	if( dtitem18.length &lt; 5 ) {
+//		fdTxt012.font.color = &quot;#ff0000&quot;;
+//	} else {
+//		fdTxt012.font.color = &quot;#000000&quot;;
+//	}
+}
+</script>
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item2">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item3">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item4">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item5">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item6">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item7">
+				<group level="1" pagechange="1"/>
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item8">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item9">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item10">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item11">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item12">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item13">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item14">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item15">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item16">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item17">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item18">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item19">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item20">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item21">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item22">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item23">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item24">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item25">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item26">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item27">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item28">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item29">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item30">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item31">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item32">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item33">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item34">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item35">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item36">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item37">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item38">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item39">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item40">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item41">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item42">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item43">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item44">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item45">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item46">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item47">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item48">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item49">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item50">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item51">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item52">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item53">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item54">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item55">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item56">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item57">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item58">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item59">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item60">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item61">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item62">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item63">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item64">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item65">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item66">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item67">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item68">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item69">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item70">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item71">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item72">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item73">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item74">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item75">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item76">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item77">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item78">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item79">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item80">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item81">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item82">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item83">
+				<position offset="0" length="11"/>
+			</item>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+		</file>
+	</datadesc>
+	<page orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="Form1" tree="1">
+		<position x="12" y="16" width="152" height="264"/>
+		<region id="Rgn01" direction="1" link="Rgn02" tree="1">
+			<position x="0" y="36" width="148" height="36"/>
+			<color transparent="1"/>
+			<record id="Rec01" tree="1">
+				<position x="0" y="0" width="37" height="36"/>
+				<color transparent="1"/>
+				<text id="Txt15">
+					<position x="0" y="0" width="5" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">色</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt16">
+					<position x="16" y="0" width="10" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">サイズ</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt012">
+					<position x="5" y="0" width="11" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item18"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt013">
+					<position x="26" y="0" width="7" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item19"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<barcode id="Bar01" type="0" sschar="0" check="0" string="1">
+					<position x="2" y="8" width="29" height="10"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item20"/>
+					<decode datatype="string" format=""/>
+				</barcode>
+				<barcode id="Bar02" type="0" sschar="0" check="0" string="1">
+					<position x="2" y="23" width="29" height="10"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item21"/>
+					<decode datatype="string" format=""/>
+				</barcode>
+			</record>
+		</region>
+		<region id="Rgn02" direction="1" link="Rgn03" tree="1">
+			<position x="0" y="80" width="148" height="36"/>
+			<color transparent="1"/>
+		</region>
+		<region id="Rgn03" direction="1" link="Rgn04" tree="1">
+			<position x="0" y="124" width="148" height="36"/>
+			<color transparent="1"/>
+		</region>
+		<region id="Rgn04" direction="1" link="Rgn05" tree="1">
+			<position x="0" y="167" width="148" height="36"/>
+			<color transparent="1"/>
+		</region>
+		<region id="Rgn05" direction="1" tree="1">
+			<position x="0" y="211" width="148" height="36"/>
+			<color transparent="1"/>
+		</region>
+		<region id="Rgn06" direction="0" tree="1">
+			<position x="0" y="0" width="148" height="32"/>
+			<color transparent="1"/>
+			<record id="Rec02" recordtype="1" tree="1">
+				<position x="0" y="0" width="148" height="32"/>
+				<color transparent="1"/>
+				<border left="10" right="10" top="10" bottom="10"/>
+				<image id="Img01" relative="0">
+					<position x="4" y="3" width="23" height="26"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item17"/>
+				</image>
+				<text id="Txt01">
+					<position x="30" y="18" width="15" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">商品CD  ：</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt02">
+					<position x="30" y="25" width="15" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">商品名  ：</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt03">
+					<position x="96" y="11" width="18" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">上代      ：</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt04">
+					<position x="96" y="4" width="18" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">展示会    ：</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt05">
+					<position x="30" y="4" width="15" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">ブランド：</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt06">
+					<position x="30" y="11" width="15" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">アイテム：</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt07">
+					<position x="96" y="18" width="18" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">デリバリー：</data>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt001">
+					<position x="45" y="18" width="50" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item7"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt002">
+					<position x="45" y="25" width="75" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item8"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt003">
+					<position x="114" y="11" width="33" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item9"/>
+					<decode datatype="number" format="MI999,999,990"/>
+				</text>
+				<text id="Txt004">
+					<position x="114" y="4" width="10" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item10"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt006">
+					<position x="45" y="4" width="10" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item12"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt008">
+					<position x="45" y="11" width="10" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item14"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt010">
+					<position x="114" y="18" width="33" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item16"/>
+					<decode datatype="string" format="S0.4&quot;/&quot;S4.2&quot;/&quot;S6.2"/>
+				</text>
+				<text id="Txt005">
+					<position x="124" y="4" width="23" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item11"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt007">
+					<position x="55" y="4" width="40" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item13"/>
+					<decode datatype="string" format=""/>
+				</text>
+				<text id="Txt009">
+					<position x="55" y="11" width="40" height="5"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item15"/>
+					<decode datatype="string" format=""/>
+				</text>
+			</record>
+		</region>
+	</page>
+</printstream>
