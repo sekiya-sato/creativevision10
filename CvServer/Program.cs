@@ -113,6 +113,7 @@ builder.Services.AddSingleton<ExDatabase>(sp => {
 	// ファクトリメソッドを使用してインスタンスを生成
 	return CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr);
 });
+builder.Services.AddSingleton<SchedulerService>();
 var serverVersion = builder.Configuration.GetSection("ServerVersion").Value ?? "0.0.0";
 var app = builder.Build();
 var logger = app.Logger;
@@ -157,7 +158,7 @@ const string sqliteShutdownCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
 
 app.Lifetime.ApplicationStarted.Register(() => {
 	try {
-		var schedulerService = ActivatorUtilities.CreateInstance<SchedulerService>(app.Services);
+		var schedulerService = app.Services.GetRequiredService<SchedulerService>();
 		schedulerService.RegisterDailySqliteWalCheckpointTask();
 		schedulerService.RegisterWorkFileCleanupTask();
 	}
@@ -167,6 +168,15 @@ app.Lifetime.ApplicationStarted.Register(() => {
 });
 
 app.Lifetime.ApplicationStopping.Register(() => {
+	try {
+		var schedulerService = app.Services.GetRequiredService<SchedulerService>();
+		schedulerService.Dispose();
+		logger.LogInformation("スケジューラサービスをクローズしました。");
+	}
+	catch (Exception ex) {
+		logger.LogError(ex, "スケジューラサービスのクローズに失敗しました。");
+	}
+
 	try {
 		var checkpointResult = database.RawExecCmd(sqliteShutdownCheckpointSql).FirstOrDefault();
 		if (checkpointResult?.TryGetValue("Error", out var checkpointError) == true) {
