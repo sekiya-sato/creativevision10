@@ -269,3 +269,22 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-16] 11:51 ConvertDb 選択変換メソッド追加
+### Agent
+- kimi-k2.7-code : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvDomainLogic/ConvertDb.cs の 33 行目にあった steps 定義を外出しし、ConvertAllAsyncStream とは別に ConvertSelectAsyncStream(string[] selectedTask, bool isInit = true) を作成して、指定タスク名のみを定義順に実行できるようにする
+### 実施内容
+- CvDomainLogic/ConvertDb.cs: steps 配列をクラスレベルの静的フィールド _stepDefinitions へ外出し、BuildSteps ヘルパーでタスク名から実行用ステップを生成、ConvertSelectAsyncStream を新規追加
+### 技術決定 Why
+- 全実行と選択実行で同じタスク定義を共有するため、Func<ConvertDb, bool, int> 型の静的配列として定義を一元化し、実行時に this を束ねた Func<bool, int> へ変換して StreamStepProgressRunner に渡した
+### 影響範囲
+- CvDomainLogic/ConvertDb.cs のみ
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic/CvDomainLogic.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+- lsp_diagnostics で ConvertDb.cs に診断なしを確認
+
+---

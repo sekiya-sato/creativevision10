@@ -26,38 +26,58 @@ public partial class ConvertDb {
 	}
 
 	/// <summary>
+	/// 変換タスクの定義（順序を維持）
+	/// [Conversion task definitions in execution order]
+	/// </summary>
+	private static readonly (string Name, Func<ConvertDb, bool, int> Action)[] _stepDefinitions = [
+		/* // Tranテーブルに対するサイズマスタコードの変換
+		("CnvTranSize1", static (db, isInit) => db.CnvTranSize1(isInit)),
+		("CnvTranSize2", static (db, isInit) => db.CnvTranSize2(isInit)),
+		("CnvTranSize3", static (db, isInit) => db.CnvTranSize3(isInit)),
+		*/
+		("CnvMasterConfig", static (db, isInit) => db.CnvMasterConfig(isInit)),
+		("CnvMasterSys", static (db, isInit) => db.CnvMasterSys(isInit)),
+		("CnvMasterMeisho", static (db, isInit) => db.CnvMasterMeisho(isInit)),
+		("CnvMasterShain", static (db, isInit) => db.CnvMasterShain(isInit)),
+		("CnvMasterEndCustomer", static (db, isInit) => db.CnvMasterEndCustomer(isInit)),
+		("CnvMasterShohin", static (db, isInit) => db.CnvMasterShohin(isInit)),
+		("CnvMasterTokui", static (db, isInit) => db.CnvMasterTokui(isInit)),
+		("CnvMasterShiire", static (db, isInit) => db.CnvMasterShiire(isInit)),
+		("CnvAfterMaster", static (db, isInit) => db.CnvAfterMaster(isInit)),
+		("CnvAfterMasterAddress", static (db, isInit) => db.CnvAfterMasterAddress(isInit)),
+		("CnvTran00HonUri", static (db, isInit) => db.CnvTran00HonUri(isInit)),
+		("CnvTran01TenUri", static (db, isInit) => db.CnvTran01TenUri(isInit)),
+		("CnvTran03Shiire", static (db, isInit) => db.CnvTran03Shiire(isInit)),
+		("CnvTran05Ido", static (db, isInit) => db.CnvTran05Ido(isInit)),
+		("CnvTran06Nyukin", static (db, isInit) => db.CnvTran06Nyukin(isInit)),
+		("CnvTran07Shiharai", static (db, isInit) => db.CnvTran07Shiharai(isInit)),
+		("CnvTran60Tana", static (db, isInit) => db.CnvTran60Tana(isInit)),
+		("CnvTran10Ido", static (db, isInit) => db.CnvTran10Ido(isInit)),
+		("CnvTran11IdoIn", static (db, isInit) => db.CnvTran11IdoIn(isInit)),
+		("CnvTran12Jyuchu", static (db, isInit) => db.CnvTran12Jyuchu(isInit)),
+		("CnvTran13Hachu", static (db, isInit) => db.CnvTran13Hachu(isInit)),
+	];
+
+	/// <summary>
+	/// 変換タスク名から実行用ステップを生成する
+	/// [Build executable steps from task names]
+	/// </summary>
+	private (string Name, Func<bool, int> Action)[] BuildSteps(IEnumerable<string> selectedTask) {
+		var selectedSet = new HashSet<string>(selectedTask);
+		return _stepDefinitions
+			.Where(s => selectedSet.Contains(s.Name))
+			.Select(s => (s.Name, (Func<bool, int>)(isInit => s.Action(this, isInit))))
+			.ToArray();
+	}
+
+	/// <summary>
 	/// ストリーミングで全マスタおよびトランザクション変換を実行
 	/// [Execute all master conversion for streaming]
 	/// </summary>
 	public IAsyncEnumerable<StreamStepProgress> ConvertAllAsyncStream(bool isInit = true) {
-		(string Name, Func<bool, int> Action)[] steps = [
-			/* // Tranテーブルに対するサイズマスタコードの変換
-			("CnvTranSize1", CnvTranSize1),
-			("CnvTranSize2", CnvTranSize2),
-			("CnvTranSize3", CnvTranSize3),
-			*/
-			("CnvMasterConfig", CnvMasterConfig),
-			("CnvMasterSys", CnvMasterSys),
-			("CnvMasterMeisho", CnvMasterMeisho),
-			("CnvMasterShain", CnvMasterShain),
-			("CnvMasterEndCustomer", CnvMasterEndCustomer),
-			("CnvMasterShohin", CnvMasterShohin),
-			("CnvMasterTokui", CnvMasterTokui),
-			("CnvMasterShiire", CnvMasterShiire),
-			("CnvAfterMaster", CnvAfterMaster),
-			("CnvAfterMasterAddress", CnvAfterMasterAddress),
-			("CnvTran00HonUri", CnvTran00HonUri),
-			("CnvTran01TenUri", CnvTran01TenUri),
-			("CnvTran03Shiire", CnvTran03Shiire),
-			("CnvTran05Ido", CnvTran05Ido),
-			("CnvTran06Nyukin", CnvTran06Nyukin),
-			("CnvTran07Shiharai", CnvTran07Shiharai),
-			("CnvTran60Tana", CnvTran60Tana),
-			("CnvTran10Ido", CnvTran10Ido),
-			("CnvTran11IdoIn", CnvTran11IdoIn),
-			("CnvTran12Jyuchu", CnvTran12Jyuchu),
-			("CnvTran13Hachu", CnvTran13Hachu),
-		];
+		var steps = _stepDefinitions
+			.Select(s => (s.Name, (Func<bool, int>)(isInit => s.Action(this, isInit))))
+			.ToArray();
 
 		return StreamStepProgressRunner.Run(
 			steps,
@@ -66,6 +86,24 @@ public partial class ConvertDb {
 			"変換処理開始",
 			"変換処理エラー: {StepName}",
 			"変換処理終了");
+	}
+
+	/// <summary>
+	/// ストリーミングで指定されたタスクのみを順番通りに変換実行
+	/// [Execute selected conversion tasks in defined order for streaming]
+	/// </summary>
+	/// <param name="selectedTask">実行するタスク名のリスト</param>
+	/// <param name="isInit">初期化フラグ</param>
+	public IAsyncEnumerable<StreamStepProgress> ConvertSelectAsyncStream(string[] selectedTask, bool isInit = true) {
+		var steps = BuildSteps(selectedTask);
+
+		return StreamStepProgressRunner.Run(
+			steps,
+			isInit,
+			_logger,
+			"選択変換処理開始",
+			"選択変換処理エラー: {StepName}",
+			"選択変換処理終了");
 	}
 
 	#region 文字列変換サブロジック
