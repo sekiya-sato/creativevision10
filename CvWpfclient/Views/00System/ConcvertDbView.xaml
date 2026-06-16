@@ -37,7 +37,7 @@
 			<StackPanel Orientation="Horizontal">
 				<materialDesign:PackIcon Width="30" Height="30"
 					VerticalAlignment="Center"
-					Kind="DatabaseConvert" />
+					Kind="DatabaseImport" />
 				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 					FontSize="20" FontWeight="SemiBold" Text="旧DBからの変換処理" />
 			</StackPanel>

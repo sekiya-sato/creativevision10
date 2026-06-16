@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CvWpfclient.Helpers;
 using Grpc.Core;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace CvWpfclient.ViewModels._00System;
 
@@ -22,6 +23,9 @@ public partial class ConcvertDbViewModel : BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task ExecuteAsync(CancellationToken cancellationToken) {
+		if (MessageEx.ShowQuestionDialog("データベースの変換を開始しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+			return;
+		}
 		if (IsRunning) {
 			return;
 		}
