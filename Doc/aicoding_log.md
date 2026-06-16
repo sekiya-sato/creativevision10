@@ -370,3 +370,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-16] 15:55 MasterShohinMenteView の検索ダイアログを Sub.SelectShohinView に変更
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MasterShohinMenteView の検索ダイアログを、Sub.SelectShohinView を使用するよう変更する
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 一覧取得時の検索ダイアログを RangeParamView から Sub.SelectShohinView に変更。BeforeListAsync をオーバーライドし、Sub.SelectShohinView で選択された商品の Id を SelectCodeParam.Ids に設定して一覧表示するよう変更。不要となった SelectCodeDisplayName オーバーライドを削除。
+### 技術決定 Why
+- 既存の Sub.SelectShohinView / SelectShohinViewModel を流用し、新たな View / ViewModel / DI 登録を追加せずに商品検索ダイアログを統一した。
+- 選択された1商品のみを一覧に表示する形に変更（元の RangeParamView は範囲条件で複数件表示していた）。
+### 影響範囲
+- MasterShohinMenteView の「一覧取得」(F5) 動作：商品選択ダイアログが表示され、選択後に該当商品1件が一覧に表示される。
+### 確認
+- lsp_diagnostics で MasterShohinMenteViewModel.cs に診断なしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet clean CvWpfclient/CvWpfclient.csproj"` 後、`C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
