@@ -2,6 +2,7 @@ using CodeShare;
 using CvAsset;
 using CvBase;
 using CvBase.Share;
+using CvBaseOracle;
 using CvDomainLogic;
 using ProtoBuf.Grpc;
 using System.Collections;
@@ -47,6 +48,24 @@ public partial class CoreService {
 			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
 		}
 		return CreateSuccessResponse(request.Flag, typeof(List<Tuple<string, string, long>>), Common.SerializeObject(resultData));
+	}
+	private CvMsg HandlerGetConvertTaskList(CvMsg request, CallContext context) {
+		ArgumentNullException.ThrowIfNull(request);
+		_logger.LogInformation("HandleGetConvertTaskList invoked Flag:{Flag}", request.Flag);
+		var resultData = new List<string>();
+		try {
+			var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
+			var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
+
+			var convertDb = new ConvertDb(fromDb, _db);
+
+			resultData = convertDb.GetAllTaskNames();
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "HandleGetConvertTaskList error");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+		return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(resultData));
 	}
 	private CvMsg HandlerDatabaseClose(CvMsg request, CallContext context) {
 		_db.Close();

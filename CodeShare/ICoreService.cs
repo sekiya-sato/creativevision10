@@ -118,6 +118,18 @@ public enum CvFlag {
 	[EnumMember]
 	Msg042_GetTableList = 42,
 	/// <summary>
+	/// タスクリストの取得
+	/// </summary>
+	[EnumMember]
+	Msg043_ConvertList = 43,
+	/// <summary>
+	/// データベースの変換(選択されたタスクのみ)
+	/// </summary>
+	[EnumMember]
+	Msg044_ConvertSelected = 44,
+	[EnumMember]
+	Msg045_ConvertSelectedInit = 45,
+	/// <summary>
 	/// 集計処理
 	/// </summary>
 	[EnumMember]

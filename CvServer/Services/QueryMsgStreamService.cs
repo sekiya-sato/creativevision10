@@ -55,6 +55,15 @@ public partial class CoreService {
 			}
 			yield break;
 		}
+		if (request.Flag is CvFlag.Msg044_ConvertSelected or CvFlag.Msg045_ConvertSelectedInit) {
+			var isInit = request.Flag == CvFlag.Msg045_ConvertSelectedInit;
+			var list = Common.DeserializeObject(request.DataMsg, request.DataType) as List<string> ?? new List<string>();
+			// HandleConvertSelectedStreamAsyncの結果をそのまま返す
+			await foreach (var msg in HandleConvertSelectedStreamAsync(list, isInit, ct, request.Flag)) {
+				yield return msg;
+			}
+			yield break;
+		}
 		// 	集計処理
 		else if (request.Flag is CvFlag.Msg050_Summary or CvFlag.Msg051_SummaryRealStock) {
 			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
@@ -82,6 +91,19 @@ public partial class CoreService {
 		var convertDb = new ConvertDb(fromDb, _db);
 
 		await foreach (var msg in ForwardProgressStreamAsync(flag, convertDb.ConvertAllAsyncStream(isInit), ct)) {
+			yield return msg;
+		}
+	}
+	/// <summary>
+	/// ConvertDbのストリーミング処理ハンドラ
+	/// </summary>
+	private async IAsyncEnumerable<StreamMsg> HandleConvertSelectedStreamAsync(List<string> selectedTask, bool isInit, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvFlag flag) {
+		var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
+		var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
+
+		var convertDb = new ConvertDb(fromDb, _db);
+
+		await foreach (var msg in ForwardProgressStreamAsync(flag, convertDb.ConvertSelectAsyncStream(selectedTask, isInit), ct)) {
 			yield return msg;
 		}
 	}

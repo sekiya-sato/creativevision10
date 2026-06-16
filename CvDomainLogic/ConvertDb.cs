@@ -59,6 +59,12 @@ public partial class ConvertDb {
 	];
 
 	/// <summary>
+	/// 全ての変換タスク名を取得
+	/// </summary>
+	/// <returns></returns>
+	public List<string> GetAllTaskNames() => _stepDefinitions.Select(s => s.Name).ToList();
+
+	/// <summary>
 	/// 変換タスク名から実行用ステップを生成する
 	/// [Build executable steps from task names]
 	/// </summary>
@@ -94,7 +100,7 @@ public partial class ConvertDb {
 	/// </summary>
 	/// <param name="selectedTask">実行するタスク名のリスト</param>
 	/// <param name="isInit">初期化フラグ</param>
-	public IAsyncEnumerable<StreamStepProgress> ConvertSelectAsyncStream(string[] selectedTask, bool isInit = true) {
+	public IAsyncEnumerable<StreamStepProgress> ConvertSelectAsyncStream(List<string> selectedTask, bool isInit = true) {
 		var steps = BuildSteps(selectedTask);
 
 		return StreamStepProgressRunner.Run(
