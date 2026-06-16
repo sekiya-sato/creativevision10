@@ -12,5 +12,5 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:DeliveryScheduleTableViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid></Grid>
+	<Grid />
 </helpers:BaseWindow>

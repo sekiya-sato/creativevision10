@@ -13,8 +13,8 @@
 	<helpers:BaseWindow.Resources>
 		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type TextBox}"
-			BasedOn="{StaticResource SearchTextBox}">
+			BasedOn="{StaticResource SearchTextBox}"
+			TargetType="{x:Type TextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
 			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
@@ -148,9 +148,8 @@
 						<Button Width="80" Height="36"
 							Margin="8,0,0,0"
 							Command="{Binding ClearToriIdsCommand}"
-							DockPanel.Dock="Right"
-							Style="{StaticResource MaterialDesignFlatButton}"
-							Content="解除" />
+							Content="解除" DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}" />
 						<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
 							Foreground="{DynamicResource MaterialDesignBody}"
 							Text="{Binding Parameter.ToriIdsText}"
@@ -178,9 +177,8 @@
 						<Button Width="80" Height="36"
 							Margin="8,0,0,0"
 							Command="{Binding ClearSokoIdsCommand}"
-							DockPanel.Dock="Right"
-							Style="{StaticResource MaterialDesignFlatButton}"
-							Content="解除" />
+							Content="解除" DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}" />
 						<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
 							Foreground="{DynamicResource MaterialDesignBody}"
 							Text="{Binding Parameter.SokoIdsText}"

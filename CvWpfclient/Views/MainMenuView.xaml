@@ -106,8 +106,7 @@
 										Fill="#FFD84D"
 										Opacity="{Binding MoonLightOpacity}" />
 									<Ellipse Width="24" Height="24"
-										Fill="Black"
-										Opacity="1">
+										Fill="Black" Opacity="1">
 										<Ellipse.RenderTransform>
 											<TranslateTransform X="{Binding MoonShadowOffset}" />
 										</Ellipse.RenderTransform>
@@ -229,9 +228,10 @@
 						Background="{DynamicResource panelColor}"
 						CornerRadius="6">
 						<TreeView x:Name="MenuTree"
+							d:ItemsSource="{d:SampleData ItemCount=5}"
 							Background="Transparent" BorderThickness="0"
 							ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
-							ItemsSource="{Binding MenuItems}" d:ItemsSource="{d:SampleData ItemCount=5}"
+							ItemsSource="{Binding MenuItems}"
 							PreviewKeyDown="MenuTree_PreviewKeyDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
 							Style="{StaticResource MenuTreeView}">
 

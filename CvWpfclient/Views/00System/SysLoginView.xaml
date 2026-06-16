@@ -17,8 +17,8 @@
 	<!--  SearchTextBox 共通スタイル  -->
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type TextBox}"
-			BasedOn="{StaticResource SearchTextBox}">
+			BasedOn="{StaticResource SearchTextBox}"
+			TargetType="{x:Type TextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
 			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
@@ -344,12 +344,11 @@
 								<DockPanel Grid.Row="6" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
-										BorderThickness="0,0,0,1"
+										HorizontalContentAlignment="Left"
 										helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
-										DockPanel.Dock="Left"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
-										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}"
-										HorizontalContentAlignment="Left" />
+										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>

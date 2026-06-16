@@ -12,5 +12,5 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:StockDateBulkMenteViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid></Grid>
+	<Grid />
 </helpers:BaseWindow>

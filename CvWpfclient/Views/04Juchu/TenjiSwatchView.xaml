@@ -12,5 +12,5 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:TenjiSwatchViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid></Grid>
+	<Grid />
 </helpers:BaseWindow>

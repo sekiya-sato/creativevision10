@@ -12,5 +12,5 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:BrandShiireKingakuTableViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid></Grid>
+	<Grid />
 </helpers:BaseWindow>

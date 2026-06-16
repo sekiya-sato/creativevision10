@@ -28,8 +28,8 @@
 		<helpers:MultiplyValuesConverter x:Key="MultiplyValuesConverter" />
 
 		<Style x:Key="MenteSearchTextBox"
-			TargetType="{x:Type TextBox}"
-			BasedOn="{StaticResource SearchTextBox}">
+			BasedOn="{StaticResource SearchTextBox}"
+			TargetType="{x:Type TextBox}">
 			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
 			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
@@ -396,12 +396,11 @@
 								<DockPanel Grid.Row="0" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
-										BorderThickness="0,0,0,1"
+										HorizontalContentAlignment="Left"
 										helpers:SearchTextBoxAssist.Command="{Binding DoSelectTenpoCommand}"
-										DockPanel.Dock="Left"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
-										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}"
-										HorizontalContentAlignment="Left" />
+										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
@@ -420,12 +419,11 @@
 								<DockPanel Grid.Row="1" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
-										BorderThickness="0,0,0,1"
+										HorizontalContentAlignment="Left"
 										helpers:SearchTextBoxAssist.Command="{Binding DoSelectSokoCommand}"
-										DockPanel.Dock="Left"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
-										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}"
-										HorizontalContentAlignment="Left" />
+										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 										Foreground="{DynamicResource MaterialDesignBody}">
 										<TextBlock.Text>
