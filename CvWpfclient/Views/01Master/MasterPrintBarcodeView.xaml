@@ -144,7 +144,7 @@
 					Style="{StaticResource FormLabel}"
 					Text="商品CD" />
 				<TextBox Grid.Row="2" Grid.Column="1"
-					Width="360" Height="44"
+					Width="360" Height="55"
 					HorizontalAlignment="Left"
 					materialDesign:HintAssist.Hint="部分一致"
 					Style="{StaticResource FormTextBox}"
@@ -154,7 +154,7 @@
 					Style="{StaticResource FormLabel}"
 					Text="商品名" />
 				<TextBox Grid.Row="3" Grid.Column="1"
-					Width="520" Height="44"
+					Width="520" Height="55"
 					HorizontalAlignment="Left"
 					materialDesign:HintAssist.Hint="部分一致"
 					Style="{StaticResource FormTextBox}"

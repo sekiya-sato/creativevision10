@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
-using CvWpfclient.ViewModels.Sub;
 using System.Collections;
 using System.Collections.ObjectModel;
 
@@ -22,7 +21,7 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 	string shohinImageStatusText = "画像なし";
 
 	protected override string[] AdditionalLightweightColumns => ["VBrand"];
-
+	protected override string? SelectCodeDisplayName => "商品";
 	protected override string? FormFile => "MasterShohinMente.qfm";
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {
@@ -46,31 +45,6 @@ from MasterShohin {query.AddWhereOrder()}
 ";
 			return new QueryListSqlParam(typeof(MasterShohin), sql, query.Parameters);
 		}
-	}
-
-	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-
-		var view = new Views.Sub.SelectShohinView();
-		if (view.DataContext is not SelectShohinViewModel vm) {
-			return new ValueTask<bool>(false);
-		}
-
-		if (ClientLib.ShowDialogView(view, this) != true) {
-			return new ValueTask<bool>(false);
-		}
-
-		var selected = vm.SelectedShohin;
-		if (selected == null) {
-			return new ValueTask<bool>(false);
-		}
-
-		SelectCodeParam = new SelectParameter {
-			DisplayName = "商品",
-			Ids = [selected.Id],
-			MaxCount = AppGlobal.Limit
-		};
-		return new ValueTask<bool>(true);
 	}
 
 	[ObservableProperty]
