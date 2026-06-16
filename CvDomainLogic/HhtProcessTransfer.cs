@@ -13,8 +13,8 @@ public partial class HhtProcess {
 		//TranVulcanHht
 		//TranHhtData
 		_db.BeginTransaction();
-		var ret = _db.Execute("Update TranHhtData set VdCnvDate=-1 where DenDay between @0 and @1 and VdCnvDate=0", new string[] { dateFrom, dateTo });
-		var vulcanData = _db.Fetch<TranVulcanHht>($"where DenDay between @0 and @1 and VdCnvDate=-1", new string[] { dateFrom, dateTo });
+		var ret = _db.Execute("Update TranHhtData set VdCnvDate=-1 where DenDay between @0 and @1 and VdCnvDate=0", [dateFrom, dateTo]);
+		var vulcanData = _db.Fetch<TranVulcanHht>($"where DenDay between @0 and @1 and VdCnvDate=-1", [dateFrom, dateTo]);
 		// ToDo: VulcanのデータをHhtDataに変換して、VdCnvDateを変換日付に更新する
 		var now = DateTime.Now;
 		foreach (var item in vulcanData) {
@@ -38,13 +38,13 @@ public partial class HhtProcess {
 				},
 			};
 			_db.Insert(hhtData);
-			_db.Execute("Update TranVulcanHht set VdCnvDate=@0 where Id=@1", [now.ToDtStrDate2(), item.Id]);
+			_db.Execute("Update TranVulcanHht set VdCnvDate=@0 where Id=@1", [Common.GetVdate(), item.Id]);
 
 
 
 
-
-			_db.CompleteTransaction();
+			_db.AbortTransaction();
+			//_db.CompleteTransaction();
 		}
 	}
 }

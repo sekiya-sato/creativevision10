@@ -225,7 +225,7 @@
 						<TreeView x:Name="MenuTree"
 							Background="Transparent" BorderThickness="0"
 							ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
-							ItemsSource="{Binding MenuItems}"
+							ItemsSource="{Binding MenuItems}" d:ItemsSource="{d:SampleData ItemCount=5}"
 							PreviewKeyDown="MenuTree_PreviewKeyDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
 							Style="{StaticResource MenuTreeView}">
 

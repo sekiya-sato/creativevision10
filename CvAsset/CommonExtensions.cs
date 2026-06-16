@@ -127,8 +127,65 @@ public static class CommonExtensions {
 			int displayMonth = (leapMonth > 0 && month >= leapMonth) ? month - 1 : month;
 
 			string leapStr = isLeap ? "閏" : "";
-			return $"{leapStr}{displayMonth}月{day}日";
+			return $"{leapStr}{GetLunaMonthName(displayMonth)}{GetLunaDayName(day)}";
 		}
+		/// <summary>
+		/// 旧暦の名前を返す
+		/// </summary>
+		/// <param name="month"></param>
+		private static string GetLunaMonthName(int month) => month switch {
+			1 => "睦月",
+			2 => "如月",
+			3 => "弥生",
+			4 => "卯月",
+			5 => "皐月",
+			6 => "水無月",
+			7 => "文月",
+			8 => "葉月",
+			9 => "長月",
+			10 => "神無月",
+			11 => "霜月",
+			12 => "師走",
+			_ => ""
+		};
+		/// <summary>
+		/// 旧暦の日の名前を返す
+		/// </summary>
+		/// <param name="day"></param>
+		/// <returns></returns>
+		private static string GetLunaDayName(int day) => day switch {
+			1 => "朔日",
+			2 => "二日",
+			3 => "三日",
+			4 => "四日",
+			5 => "五日",
+			6 => "六日",
+			7 => "七日",
+			8 => "八日",
+			9 => "九日",
+			10 => "十日",
+			11 => "十一日",
+			12 => "十二日",
+			13 => "十三日",
+			14 => "十四日",
+			15 => "十五日",
+			16 => "十六日",
+			17 => "十七日",
+			18 => "十八日",
+			19 => "十九日",
+			20 => "二十日",
+			21 => "廿一日",
+			22 => "廿二日",
+			23 => "廿三日",
+			24 => "廿四日",
+			25 => "廿五日",
+			26 => "廿六日",
+			27 => "廿七日",
+			28 => "廿八日",
+			29 => "廿九日",
+			30 => "晦日",
+			_ => ""
+		};
 		/// <summary>
 		/// CRONの書式に合わせて、秒とミリ秒を切り捨てたDateTimeを返す
 		/// </summary>

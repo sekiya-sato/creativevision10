@@ -562,8 +562,9 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 	}
 
+	private static System.Globalization.JapaneseLunisolarCalendar luna = new System.Globalization.JapaneseLunisolarCalendar();
 	private void UpdateKyureki(DateTime now) {
-		var kyurekiDay = GetKyurekiDay(now);
+		int kyurekiDay = luna.GetDayOfMonth(now);
 		var moonDay = Math.Clamp(kyurekiDay, 1, 29);
 		var isWaxing = moonDay <= 15;
 		var lightRatio = moonDay <= 15
@@ -575,7 +576,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		// 日本では満ちていく月は右側、欠けていく月は左側を明るく表示する。
 		var lightX = isWaxing ? MoonIconSize - lightWidth : 0.0;
 
-		Kyureki = $"旧暦 {now.ToSimpleLunisolarStr()}";
+		Kyureki = $"旧: {now.ToSimpleLunisolarStr()}";
 		MoonLightClipRect = new Rect(lightX, 0, lightWidth, MoonIconSize);
 		MoonLightOpacity = CalculateMoonLightOpacity(moonDay);
 		MoonDarkOpacity = moonDay == 15 ? 0.0 : 0.5;
@@ -591,11 +592,14 @@ public partial class MainMenuViewModel : ObservableObject {
 			< 29 => "下弦後",
 			_ => "今夜の月"
 		};
-		MoonPhaseToolTip = $"{moonPhaseName}：旧暦 {kyurekiDay}日";
+		MoonPhaseToolTip = $"{moonPhaseName}：旧暦 {luna.GetMonth(now)}月{kyurekiDay}日";
 		SolarTerm = GetSolarTermName(now);
 	}
 
 	private static string GetSolarTermName(DateTime date) {
+		var japanSolarTerms = new Dictionary<string, string>
+		{ { "芒种", "芒種" },{ "处暑", "処暑" }, { "惊蛰", "啓蟄" }, { "谷雨", "穀雨" }, { "小满", "小満" } };
+
 		try {
 			var solarDay = TymeSolarDay.FromYmd(date.Year, date.Month, date.Day);
 			var term = solarDay.Term;
@@ -607,26 +611,14 @@ public partial class MainMenuViewModel : ObservableObject {
 			return "";
 		}
 	}
-	static Dictionary<string, string> japanSolarTerms = new Dictionary<string, string>
-	{ { "芒种", "芒種" },{ "处暑", "処暑" }, { "惊蛰", "啓蟄" }, { "谷雨", "穀雨" }, { "小满", "小満" } };
-
-
-	private static int GetKyurekiDay(DateTime date) {
-		try {
-			return new System.Globalization.JapaneseLunisolarCalendar().GetDayOfMonth(date);
-		}
-		catch (ArgumentOutOfRangeException) {
-			return Math.Clamp(date.Day, 1, 29);
-		}
-	}
 
 	private static double CalculateMoonLightOpacity(int moonDay) {
 		return moonDay switch {
 			<= 1 => 0.0,
-			<= 8 => Lerp(0.0, 0.7, (moonDay - 1) / 7.0),
+			<= 8 => Lerp(0.3, 0.7, (moonDay - 1) / 7.0),
 			<= 15 => Lerp(0.7, 0.95, (moonDay - 8) / 7.0),
 			<= 22 => Lerp(0.95, 0.7, (moonDay - 15) / 7.0),
-			< 29 => Lerp(0.7, 0.0, (moonDay - 22) / 7.0),
+			< 29 => Lerp(0.7, 0.3, (moonDay - 22) / 7.0),
 			_ => 0.0
 		};
 	}
@@ -729,5 +721,4 @@ public partial class MainMenuViewModel : ObservableObject {
 		}
 		return null;
 	}
-
 }

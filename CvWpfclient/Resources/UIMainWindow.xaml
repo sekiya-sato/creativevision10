@@ -106,14 +106,14 @@
 		TargetType="TreeViewItem">
 		<Setter Property="Foreground" Value="{DynamicResource plainTextColor0}" />
 		<Setter Property="FontSize" Value="15" />
-		<Setter Property="Padding" Value="6" />
-		<Setter Property="Margin" Value="0,2,0,2" />
+		<Setter Property="Padding" Value="2" />
+		<Setter Property="Margin" Value="0,1,0,1" />
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="TreeViewItem">
 					<StackPanel>
 						<Border x:Name="border"
-							Padding="4"
+							Padding="2"
 							Background="Transparent" CornerRadius="8">
 							<ContentPresenter ContentSource="Header" />
 						</Border>
