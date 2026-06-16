@@ -56,6 +56,7 @@ public partial class MenuData : ObservableObject {
 			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), addInfo:"自動実行履歴の確認"),
 		new("汎用マスタメンテ", typeof(Views._00System.SysGeneralMenteView), addInfo:"MasterMeisho を汎用編集UIで表示・更新"),
 		new("旧DBからの変換処理", typeof(Views._00System.ConcvertDbView), addInfo:"旧DBからのデータ変換"),
+		new("旧DBからの選択変換処理", typeof(Views._00System.ConcvertSelectedView), addInfo:"旧DBからの選択変換処理"),
         /* ================================ */
 			new("----------------", typeof(string) , addInfo:"---"),
 			new("サンプル画面 ---", typeof(SampleView), addInfo:"-- MaterialDesignサンプルとテストPG"),

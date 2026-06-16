@@ -310,3 +310,25 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-16] 13:22 旧DBからの選択変換処理画面の追加
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：「管理メニュー」に「旧DBからの選択変換処理」を追加し、変換プログラムをチェックボックス付き一覧で選択して実行できる画面を新規作成する
+### 実施内容
+- CvWpfclient/Models/MenuData.cs: 「旧DBからの変換処理」の次に「旧DBからの選択変換処理」を追加
+- CvWpfclient/ViewModels/00System/ConcvertSelectedViewModel.cs: QueryMsgAsync(CvFlag.Msg043_ConvertList) で変換プログラム一覧を取得し、DataGrid のチェックボックスで選択した項目を QueryMsgStreamAsync(CvFlag.Msg044_ConvertSelected / Msg045_ConvertSelectedInit) で実行する ViewModel を追加
+- CvWpfclient/Views/00System/ConcvertSelectedView.xaml: ConcvertDbView を参考に ColorZone ヘッダー、実行設定カード、チェックボックス付き DataGrid、ストリーミングログ GroupBox、実行/キャンセルボタンを配置
+- CvWpfclient/Views/00System/ConcvertSelectedView.xaml.cs: BaseWindow を継承する code-behind を追加
+### 技術決定 Why
+- 既存の ConcvertDbViewModel のストリーミング進捗表示パターンを踏襲し、選択実行版として QueryMsgAsync と QueryMsgStreamAsync を組み合わせた
+- チェックボックス選択は SelectMultiWinView と同じく DataGridTemplateColumn + ObservableObject の IsSelected プロパティで実装し、全選択/全解除コマンドを追加した
+- テーブル初期化の有無は bool プロパティを RadioButton で切り替え、App.xaml の InverseBooleanConverter を再利用した
+### 確認
+- 編集ファイルの CRLF を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
