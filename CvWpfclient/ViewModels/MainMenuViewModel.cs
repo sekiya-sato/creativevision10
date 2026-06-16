@@ -81,7 +81,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string? kyureki; // 旧暦表示用
 
 	[ObservableProperty]
-	private Rect moonLightClipRect = Rect.Empty; // 月アイコンの明るい部分
+	private double moonShadowOffset; // 月アイコンの暗い部分をずらして三日月形にする
 
 	[ObservableProperty]
 	private double moonLightOpacity;
@@ -574,10 +574,8 @@ public partial class MainMenuViewModel : ObservableObject {
 
 		var lightWidth = MoonIconSize * lightRatio;
 		// 日本では満ちていく月は右側、欠けていく月は左側を明るく表示する。
-		var lightX = isWaxing ? MoonIconSize - lightWidth : 0.0;
-
 		Kyureki = $"旧: {now.ToSimpleLunisolarStr()}";
-		MoonLightClipRect = new Rect(lightX, 0, lightWidth, MoonIconSize);
+		MoonShadowOffset = isWaxing ? -lightWidth : lightWidth;
 		MoonLightOpacity = CalculateMoonLightOpacity(moonDay);
 		MoonDarkOpacity = moonDay == 15 ? 0.0 : 0.5;
 		var moonPhaseName = moonDay switch {

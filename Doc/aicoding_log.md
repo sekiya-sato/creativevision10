@@ -228,3 +228,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 errors、既存の unrelated warnings 2 件）を確認
 
 ---
+
+## [2026-06-16] 09:10 MainMenu月齢アイコンの三日月表示修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuView.xaml 89行目の月の表示で三日月部分を黄色で塗りつぶす
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 月アイコンの黄色表示を矩形クリップから黄色円と黒い遮蔽円の重ね合わせへ変更し、三日月部分が黄色の曲線形状で残るよう修正
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 旧クリップ矩形の Binding を月の暗部移動量 `MoonShadowOffset` に置き換え、満ち欠け方向に応じて遮蔽円を左右へ移動するよう修正
+### 技術決定 Why
+- 矩形クリップでは三日月の内側境界が直線になるため、同サイズの円をずらして重ねることで内側も曲線の三日月形状にした
+### 確認
+- MainMenuView.xaml の XML 読み込み成功
+- 編集ファイルの UTF-8 BOM なし、CRLF のみを確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

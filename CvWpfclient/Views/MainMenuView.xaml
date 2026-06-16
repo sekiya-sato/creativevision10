@@ -95,18 +95,24 @@
 							<Viewbox Width="30" Height="30"
 								HorizontalAlignment="Center" VerticalAlignment="Center"
 								Stretch="Uniform">
-								<Grid Width="30" Height="30">
-									<Ellipse Width="30" Height="30"
+								<Grid Width="24" Height="24">
+									<Grid.Clip>
+										<EllipseGeometry Center="12,12" RadiusX="12" RadiusY="12" />
+									</Grid.Clip>
+									<Ellipse Width="24" Height="24"
 										Fill="Black"
 										Opacity="{Binding MoonDarkOpacity}" />
-									<Ellipse Width="30" Height="30"
+									<Ellipse Width="24" Height="24"
 										Fill="#FFD84D"
-										Opacity="{Binding MoonLightOpacity}">
-										<Ellipse.Clip>
-											<RectangleGeometry Rect="{Binding MoonLightClipRect}" />
-										</Ellipse.Clip>
+										Opacity="{Binding MoonLightOpacity}" />
+									<Ellipse Width="24" Height="24"
+										Fill="Black"
+										Opacity="1">
+										<Ellipse.RenderTransform>
+											<TranslateTransform X="{Binding MoonShadowOffset}" />
+										</Ellipse.RenderTransform>
 									</Ellipse>
-									<Ellipse Width="30" Height="30"
+									<Ellipse Width="24" Height="24"
 										Opacity="0.35"
 										Stroke="{DynamicResource SubTitleColor}"
 										StrokeThickness="1" />
