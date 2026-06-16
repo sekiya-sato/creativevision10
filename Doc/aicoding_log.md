@@ -390,3 +390,29 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet clean CvWpfclient/CvWpfclient.csproj"` 後、`C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-16] 16:45 商品バーコードブック印刷画面追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：MasterPrintBarcodeView.xaml / MasterPrintBarcodeView.xaml.cs / MasterPrintBarcodeViewModel.cs を作成し、MenuData のマスター配下「顧客マスタメンテ」の下に「商品バーコードブック」を追加する。旧画面 `.omo/20260616-barcodebook.txt` の qfm を既存 `printform/MasterPrintBarcode*.qfm` に対応させ、展示会Id/ブランドIdは複数選択、商品CD/商品名は部分一致、最大件数超過時はエラーメッセージで止める。
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterPrintBarcodeViewModel.cs: `MasterShohin` を基点に、SKU出力時は `DerivedShohinColSiz` を left join する印刷SQLを追加。商品/SKU、JAN/CODE39/NW7 の組み合わせで `MasterPrintBarcode002.qfm` / `MasterPrintBarcode0021.qfm` / `MasterPrintBarcode0022.qfm` / `MasterPrintBarcodeSho.qfm` / `MasterPrintBarcodeNw7.qfm` / `MasterPrintBarcodeCode39.qfm` を切り替えるよう実装。
+- CvWpfclient/ViewModels/01Master/MasterPrintBarcodeViewModel.cs: 展示会IdとブランドIdの `MasterMeisho` 複数選択、商品CD `S.Code LIKE`、商品名 `S.Name LIKE` の条件を追加。印刷前に `AppGlobal.Application.Limit` と同条件の出力件数を比較し、超過時はエラーメッセージを表示して印刷を中止するよう実装。
+- CvWpfclient/Views/01Master/MasterPrintBarcodeView.xaml: 既存印刷画面に合わせた BaseWindow / MaterialDesign レイアウトで、条件入力、出力方法、バーコード種類、印刷実行ボタンを追加。
+- CvWpfclient/Views/01Master/MasterPrintBarcodeView.xaml.cs: 画面初期化用 code-behind を追加。
+- CvWpfclient/Models/MenuData.cs: マスター配下の「顧客マスタメンテ」の下に「商品バーコードブック」を追加。
+### 技術決定 Why
+- 旧 `HC$MASTER_SHOHIN` / `HC$MASTER_SHOHIN_JAN` ではなく、現行DBの `MasterShohin` と `DerivedShohinColSiz` を使用し、旧帳票qfmが期待する列順だけを維持した。
+- 「出力区分」は不要条件のためUIとSQL条件から除外し、旧画面の `使用FLG` 条件も追加しなかった。
+- 件数制限は商品件数ではなく帳票出力行数で判定するため、商品出力とSKU出力で同じ FROM/WHERE の `count(*)` を事前実行する方式にした。
+### 確認
+- `python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterPrintBarcode002.qfm printform\MasterPrintBarcode0021.qfm printform\MasterPrintBarcode0022.qfm printform\MasterPrintBarcodeSho.qfm printform\MasterPrintBarcodeNw7.qfm printform\MasterPrintBarcodeCode39.qfm` は既存バーコードqfmの用紙位置が標準A4縦 position ではないため位置チェックでエラーを検出。既存レイアウトqfmのため無変更。
+- `CvWpfclient/Views/01Master/MasterPrintBarcodeView.xaml` をXMLとして読み込み、構文エラーなしを確認。
+- `C:\gitroot\ut\sqlite3.exe -readonly CvServer\server-user163.db` で SKU出力SQLと商品出力SQLの主要列参照、および件数SQLが実DBで通ることを確認。
+- `git diff --check` で空白エラーなしを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+
+---

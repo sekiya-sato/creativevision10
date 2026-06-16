@@ -72,6 +72,7 @@ public partial class MenuData : ObservableObject {
 			new("仕入先マスタメンテ", typeof(Views._01Master.MasterShiireMenteView), addInfo:"仕入先マスタメンテ画面"),
 			new("得意先マスタメンテ", typeof(Views._01Master.MasterTokuiMenteView), addInfo:"得意先マスタメンテ画面"),
 			new("顧客マスタメンテ", typeof(Views._01Master.MasterEndCustomerMenteView), addInfo:"顧客マスタメンテ画面"),
+			new("商品バーコードブック", typeof(Views._01Master.MasterPrintBarcodeView), addInfo:"商品バーコードブック印刷"),
 			new("上代一括変更", typeof(Views._01Master.MasterJouDaiBulkChangeView), addInfo:"準備中"),
 			new("取込レイアウト作成", typeof(Views._01Master.ImportTemplateCreateView), addInfo:"準備中"),
 			new("外部CSVマスタ取込", typeof(Views._01Master.ExternalCsvImportView), addInfo:"準備中"),
