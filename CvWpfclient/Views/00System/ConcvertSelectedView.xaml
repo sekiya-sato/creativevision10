@@ -48,10 +48,13 @@
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
-				<RowDefinition Height="*" />
 			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
 
-			<materialDesign:Card Grid.Row="0"
+			<materialDesign:Card Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
 				Padding="24"
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid>
@@ -118,8 +121,8 @@
 				</Grid>
 			</materialDesign:Card>
 
-			<GroupBox Grid.Row="1"
-				Margin="0,18,0,0"
+			<GroupBox Grid.Row="1" Grid.Column="0"
+				Margin="0,18,9,0"
 				Header="変換プログラム一覧">
 				<DataGrid Margin="8"
 					AutoGenerateColumns="False"
@@ -151,8 +154,8 @@
 				</DataGrid>
 			</GroupBox>
 
-			<GroupBox Grid.Row="2"
-				Margin="0,18,0,0"
+			<GroupBox Grid.Row="1" Grid.Column="1"
+				Margin="9,18,0,0"
 				Header="ストリーミングログ">
 				<ListBox Margin="8"
 					ItemsSource="{Binding StreamMessages}">

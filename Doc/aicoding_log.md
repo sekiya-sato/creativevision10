@@ -354,3 +354,19 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-16] 13:43 ConcvertSelectedView の一覧とログを横並びに変更
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Views/00System/ConcvertSelectedView.xaml の「変換プログラム一覧」と「ストリーミングログ」を縦ではなく横に均等に並べる
+### 実施内容
+- CvWpfclient/Views/00System/ConcvertSelectedView.xaml: 内部 Grid を RowDefinitions Auto/*、ColumnDefinitions */* に変更し、実行設定 Card を 0 行目に跨がせ、変換プログラム一覧を 1 行 0 列、ストリーミングログを 1 行 1 列に配置して幅を均等にした
+### 技術決定 Why
+- 上下分割では表示領域が狭くなるため、実行設定を上に固定し、残り領域を左右で半分ずつ使う Grid レイアウトに変更した
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
