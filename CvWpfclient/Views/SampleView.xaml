@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views.SampleView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views.SampleView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -356,30 +356,6 @@
 
 					<Grid Grid.Row="0" Grid.Column="0"
 						Margin="10">
-						<Button x:Name="BtStream"
-							Width="139" Height="40"
-							Margin="10,0,0,40" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-							d:Content="ストリーム開始"
-							Command="{Binding StreamingCommand}"
-							Content="{Binding StreamStatusText}" />
-						<ProgressBar Grid.Row="2"
-							Width="260" Height="28"
-							Margin="0,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-							d:Visibility="Visible"
-							Value="{Binding ProgressValue}">
-							<ProgressBar.Style>
-								<Style BasedOn="{StaticResource MaterialDesignLinearProgressBar}"
-									TargetType="ProgressBar">
-									<Setter Property="Visibility" Value="Collapsed" />
-									<Style.Triggers>
-										<DataTrigger Binding="{Binding IsProgressVisible}"
-											Value="true">
-											<Setter Property="Visibility" Value="Visible" />
-										</DataTrigger>
-									</Style.Triggers>
-								</Style>
-							</ProgressBar.Style>
-						</ProgressBar>
 						<Button Width="160" Height="40"
 							Margin="10,0,0,259" HorizontalAlignment="Left" VerticalAlignment="Bottom"
 							Command="{Binding TestMsg001Command}"
@@ -392,37 +368,7 @@
 							Margin="0,102,0,0" HorizontalAlignment="Center" VerticalAlignment="Top"
 							d:Content="Label"
 							Content="{Binding TestMsg001Result}" />
-						<Button Width="139" Height="40"
-							Margin="10,0,0,103" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-							Command="{Binding TestConvertCommand}"
-							Content="テストConvert" />
-						<Button Width="139" Height="40"
-							Margin="172,0,0,103" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-							Command="{Binding TestPrintCommand}"
-							Content="テストPrint" />
-						<Button x:Name="BtTableCount"
-							Width="139" Height="40"
-							Margin="172,0,0,40" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-							Command="{Binding TestGetTableCountsCommand}"
-							Content="テーブル件数取得" Cursor="Hand" />
 					</Grid>
-					<StackPanel Grid.Row="1" Grid.RowSpan="2" Grid.Column="0"
-						Margin="0,0,0,0">
-						<GroupBox Header="ストリーミングログ">
-							<ListBox Height="500"
-								Margin="8"
-								ItemsSource="{Binding StreamMessages}">
-								<ListBox.ItemTemplate>
-									<DataTemplate>
-										<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
-											Text="{Binding}"
-											TextWrapping="Wrap" />
-									</DataTemplate>
-								</ListBox.ItemTemplate>
-							</ListBox>
-						</GroupBox>
-
-					</StackPanel>
 					<Grid Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2">
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="320" />
@@ -434,18 +380,10 @@
 								Margin="0,0,0,279" HorizontalAlignment="Left" VerticalAlignment="Bottom"
 								Command="{Binding TestMsg002Command}"
 								Content="テスト Version" />
-							<TextBlock Width="320" Height="80"
-								Margin="0,55,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+							<TextBlock Width="320" Height="173"
+								Margin="0,55,0,0" HorizontalAlignment="Center" VerticalAlignment="Top"
 								Text="{Binding TestMsg002Result}"
 								TextWrapping="Wrap" />
-							<Button Width="102" Height="40"
-								Margin="10,0,0,102" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-								Command="{Binding TestDatabaseCloseCommand}"
-								Content="Dbクローズ" />
-							<Button Width="102" Height="40"
-								Margin="145,0,0,102" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-								Command="{Binding TestDatabaseReOpenCommand}"
-								Content="Dbリオープン" />
 						</Grid>
 						<Grid x:Name="TestEnv"
 							Grid.Column="2">
@@ -453,8 +391,8 @@
 								Margin="5,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
 								Command="{Binding TestMsg003Command}"
 								Content="テスト env" />
-							<ListView Height="220"
-								Margin="0,55,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top"
+							<ListView Height="274"
+								Margin="0,55,0,0" VerticalAlignment="Top"
 								ItemsSource="{Binding TestMsg003Items}">
 								<ListView.View>
 									<GridView>
@@ -475,58 +413,6 @@
 							</ListView>
 						</Grid>
 					</Grid>
-					<Button Grid.Row="1" Grid.Column="1"
-						Width="160" Height="40"
-						Margin="5,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-						Command="{Binding TestMsg301Command}"
-						Content="HHTマスタ出力" />
-					<Button Grid.Row="1" Grid.Column="1"
-						Width="160" Height="40"
-						Margin="5,70,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-						Command="{Binding ShowVelopackConfigCommand}"
-						Content="Velopack設定表示" />
-					<Button Grid.Row="1" Grid.Column="1"
-						Width="160" Height="40"
-						Margin="5,130,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-						Command="{Binding ShowVelopackRuntimeCommand}"
-						Content="Velopack実行情報" />
-				</Grid>
-			</TabItem>
-			<TabItem Header="DataTable">
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="2*" />
-						<ColumnDefinition Width="16" />
-						<ColumnDefinition Width="*" />
-					</Grid.ColumnDefinitions>
-					<DataGrid Grid.Column="0"
-						AutoGenerateColumns="True" IsReadOnly="False"
-						ItemsSource="{Binding TableView}"
-						SelectedItem="{Binding SelectedRow, Mode=TwoWay}" />
-					<Border Grid.Column="2"
-						Padding="12"
-						BorderBrush="LightGray" BorderThickness="1">
-						<ScrollViewer VerticalScrollBarVisibility="Auto">
-							<ItemsControl ItemsSource="{Binding EditableCells}">
-								<ItemsControl.ItemTemplate>
-									<DataTemplate>
-										<Grid Margin="0,0,0,8">
-											<Grid.ColumnDefinitions>
-												<ColumnDefinition Width="120" />
-												<ColumnDefinition Width="*" />
-											</Grid.ColumnDefinitions>
-											<TextBlock Grid.Column="0"
-												VerticalAlignment="Center"
-												Text="{Binding ColumnName}" />
-											<TextBox Grid.Column="1"
-												Margin="8,0,0,0"
-												Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-										</Grid>
-									</DataTemplate>
-								</ItemsControl.ItemTemplate>
-							</ItemsControl>
-						</ScrollViewer>
-					</Border>
 				</Grid>
 			</TabItem>
 		</TabControl>

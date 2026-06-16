@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <helpers:BaseWindow x:Class="CvWpfclient.Views._00System.ConcvertDbView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
 	Title="旧DBからの変換処理"
 	Width="900" Height="800"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
@@ -78,13 +77,12 @@
 						Style="{StaticResource SettingLabel}"
 						Text="テーブル初期化" />
 					<StackPanel Grid.Row="1" Grid.Column="1"
-						Orientation="Horizontal" VerticalAlignment="Center">
-						<RadioButton Content="しない"
-							GroupName="InitDbGroup"
+						VerticalAlignment="Center"
+						Orientation="Horizontal">
+						<RadioButton Content="しない" GroupName="InitDbGroup"
 							IsChecked="{Binding IsInitDb, Converter={StaticResource InverseBooleanConverter}}" />
 						<RadioButton Margin="16,0,0,0"
-							Content="する"
-							GroupName="InitDbGroup"
+							Content="する" GroupName="InitDbGroup"
 							IsChecked="{Binding IsInitDb}" />
 					</StackPanel>
 
