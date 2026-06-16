@@ -81,13 +81,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string? kyureki; // 旧暦表示用
 
 	[ObservableProperty]
-	private double moonShadowOffset; // 月アイコンの暗い部分をずらして三日月形にする
-
-	[ObservableProperty]
-	private double moonLightOpacity;
-
-	[ObservableProperty]
-	private double moonDarkOpacity = 0.5;
+	private double moonShadowOffset; // 月アイコンの暗い円をずらして満ち欠け形状にする
 
 	[ObservableProperty]
 	private string moonPhaseToolTip = "旧暦";
@@ -565,19 +559,18 @@ public partial class MainMenuViewModel : ObservableObject {
 	private static System.Globalization.JapaneseLunisolarCalendar luna = new System.Globalization.JapaneseLunisolarCalendar();
 	private void UpdateKyureki(DateTime now) {
 		int kyurekiDay = luna.GetDayOfMonth(now);
-		var moonDay = Math.Clamp(kyurekiDay, 1, 29);
+		// 添付画像の並びに合わせ、29日と30日は28日と同じ表示にする。
+		var moonDay = Math.Min(Math.Clamp(kyurekiDay, 1, 30), 28);
 		var isWaxing = moonDay <= 15;
 		var lightRatio = moonDay <= 15
 			? (moonDay - 1) / 14.0
-			: (29 - moonDay) / 14.0;
+			: (28 - moonDay) / 13.0;
 		lightRatio = Math.Clamp(lightRatio, 0.0, 1.0);
 
-		var lightWidth = MoonIconSize * lightRatio;
+		var shadowOffset = MoonIconSize * lightRatio;
 		// 日本では満ちていく月は右側、欠けていく月は左側を明るく表示する。
 		Kyureki = $"旧: {now.ToSimpleLunisolarStr()}";
-		MoonShadowOffset = isWaxing ? -lightWidth : lightWidth;
-		MoonLightOpacity = CalculateMoonLightOpacity(moonDay);
-		MoonDarkOpacity = moonDay == 15 ? 0.0 : 0.5;
+		MoonShadowOffset = isWaxing ? -shadowOffset : shadowOffset;
 		var moonPhaseName = moonDay switch {
 			<= 1 => "新月",
 			<= 4 => "三日月",
@@ -612,21 +605,6 @@ public partial class MainMenuViewModel : ObservableObject {
 		catch {
 			return "";
 		}
-	}
-
-	private static double CalculateMoonLightOpacity(int moonDay) {
-		return moonDay switch {
-			<= 1 => 0.0,
-			<= 8 => Lerp(0.3, 0.7, (moonDay - 1) / 7.0),
-			<= 15 => Lerp(0.7, 0.95, (moonDay - 8) / 7.0),
-			<= 22 => Lerp(0.95, 0.7, (moonDay - 15) / 7.0),
-			< 29 => Lerp(0.7, 0.3, (moonDay - 22) / 7.0),
-			_ => 0.0
-		};
-	}
-
-	private static double Lerp(double start, double end, double amount) {
-		return start + ((end - start) * amount);
 	}
 
 	private void ApplyForecastTheme() {

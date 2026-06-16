@@ -100,21 +100,17 @@
 										<EllipseGeometry Center="12,12" RadiusX="12" RadiusY="12" />
 									</Grid.Clip>
 									<Ellipse Width="24" Height="24"
-										Fill="Black"
-										Opacity="{Binding MoonDarkOpacity}" />
+										Fill="#FFD51F" />
 									<Ellipse Width="24" Height="24"
-										Fill="#FFD84D"
-										Opacity="{Binding MoonLightOpacity}" />
-									<Ellipse Width="24" Height="24"
-										Fill="Black" Opacity="1">
+										Fill="#245C88">
 										<Ellipse.RenderTransform>
 											<TranslateTransform X="{Binding MoonShadowOffset}" />
 										</Ellipse.RenderTransform>
 									</Ellipse>
 									<Ellipse Width="24" Height="24"
-										Opacity="0.35"
-										Stroke="{DynamicResource SubTitleColor}"
-										StrokeThickness="1" />
+										Opacity="0.55"
+										Stroke="#4B718C"
+										StrokeThickness="0.8" />
 								</Grid>
 							</Viewbox>
 						</Border>

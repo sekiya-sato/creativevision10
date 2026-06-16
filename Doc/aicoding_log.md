@@ -248,3 +248,24 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-16] 10:43 MainMenu月齢アイコンの画像近似表示修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuView.xaml の月表示イメージを添付画像の 1-28 日表示に近づけ、29日と30日は28日と同じ表示にする
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 月アイコンを黄色円と青い遮蔽円の重ね合わせに整理し、黒表示と不透明度 Binding を廃止して添付画像に近い黄/青表示へ変更
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 月相表示用日付を 1-28 日に丸め、29日と30日を28日相当として扱うように変更
+### 技術決定 Why
+- 既存の同サイズ円をずらす簡易方式を維持することで、複雑な Path 生成を追加せずに三日月の曲線形状と上弦/下弦の左右方向を表現した
+- 添付画像は 1-28 日を4行に分け、29日と30日は28日と同じ扱いのため、旧暦日付の取得元は維持しつつ表示用日付だけを丸めた
+### 確認
+- MainMenuView.xaml の XML 読み込み成功
+- 編集ファイルの UTF-8 BOM なし、CRLF のみを確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
