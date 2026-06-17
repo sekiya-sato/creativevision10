@@ -31,7 +31,7 @@ internal partial class SysAutoExecHistoryViewModel : Helpers.BaseMenteViewModel<
 		var selWin = new Views.Sub.AutoExecHistoryParamMiniView();
 		if (selWin.DataContext is not AutoExecHistoryParamMiniViewModel vm)
 			return new ValueTask<bool>(true);
-		vm.Initialize(selectParam ?? new AutoExecHistorySelectParameter { DisplayName = "自動実行履歴", MaxCount = 400 });
+		vm.Initialize(selectParam ?? new AutoExecHistorySelectParameter { DisplayName = "自動実行履歴", MaxCount = AppGlobal.Limit });
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			selectParam = vm.Parameter;
 			return new ValueTask<bool>(false);
@@ -79,10 +79,6 @@ internal partial class SysAutoExecHistoryViewModel : Helpers.BaseMenteViewModel<
 			MaxCount = param?.MaxCount,
 			DisplayName = string.IsNullOrWhiteSpace(param?.DisplayName) ? "自動実行履歴" : param.DisplayName
 		};
-		// デフォルト件数を400に設定
-		if (!normalized.MaxCount.HasValue) {
-			normalized.MaxCount = 400;
-		}
 		return normalized;
 	}
 }
