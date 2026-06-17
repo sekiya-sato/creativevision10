@@ -13,7 +13,8 @@ namespace CvBaseSqlite;
 /// [Database class for SqliteDB]
 /// </summary>
 public partial class ExDatabaseSqlite : ExDatabase {
-	public static string Version { get; internal set; } = "";
+
+	public override string Version { get; protected set; } = "";
 	public ExDatabaseSqlite(DbConnection conn) : base(conn) {
 		if (conn != null) {
 			if (conn.State == ConnectionState.Closed)
@@ -30,12 +31,13 @@ public partial class ExDatabaseSqlite : ExDatabase {
 		// パフォーマンスと並行性を最大化する構成（WALモード併用）// Microsoft.Data.Sqliteでは、journal mode=WAL; は使えない
 		string advancedConnectionString = $"Data Source={dbfile};Mode=ReadWriteCreate;Cache=Shared;Pooling=True;";
 		var conn = new SqliteConnection(advancedConnectionString);
+		var _db = new ExDatabaseSqlite(conn);
 		if (isOpen) {
 			conn.Open();
-			EnableWalMode(conn);
+			_db.EnableWalMode(conn);
+			return _db;
 		}
-		var db = new ExDatabaseSqlite(conn);
-		return db;
+		return _db;
 	}
 	public override void Open() {
 		if (Connection is SqliteConnection) {
@@ -59,7 +61,7 @@ public partial class ExDatabaseSqlite : ExDatabase {
 	/// WALモードを有効にする : WALモードは、複数のプロセスが同時にデータベースにアクセスできるようにするためのSQLiteの機能で、パフォーマンスと並行性を向上させることができます。
 	/// </summary>
 	/// <param name="conn"></param>
-	static void EnableWalMode(SqliteConnection conn) {
+	void EnableWalMode(SqliteConnection conn) {
 		using (var cmd = conn.CreateCommand()) {
 			cmd.CommandText = @"
 PRAGMA journal_mode = WAL;
@@ -71,10 +73,10 @@ PRAGMA journal_size_limit = 67108864;
 			Version = cmd.ExecuteScalar()?.ToString() ?? "";
 		}
 	}
-	static void DisableWalMode(SqliteConnection conn) {
+	void DisableWalMode(SqliteConnection conn) {
 		using (var cmd = conn.CreateCommand()) {
 			cmd.CommandText = @"
-PRAGMA journal_mode=delete;
+PRAGMA journal_mode=DELETE;
 ";
 			cmd.ExecuteNonQuery();
 		}

@@ -21,6 +21,7 @@ public partial class ExDatabase : Database {
 	/// </summary>
 	private static readonly ILogger<ExDatabase> _logger = new NLogExtender<ExDatabase>();
 
+	public virtual string Version { get; protected set; } = "";
 	public virtual void Open() {
 		Connection?.Open();
 	}
