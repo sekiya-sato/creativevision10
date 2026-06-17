@@ -186,6 +186,7 @@ public partial class CoreService {
 		SetCreatedAuditValues(insert.ItemType, item);
 
 		try {
+			_db.BeginTransaction();
 			var newItem = _db.Insert(item);
 			if (typeof(IDerivedOrigin).IsAssignableFrom(insert.ItemType)) {
 				new HandlerDerived(_db).Insert(insert.ItemType, item, ((BaseDbClass)item).Id);
@@ -198,9 +199,11 @@ public partial class CoreService {
 					summaryDb.CalcTran2SummaryStock(insert.ItemType.Name, "Id_Ido", id, false);
 				}
 			}
+			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
 		catch (Exception ex) {
+			_db.AbortTransaction();
 			return CreateExceptionResponse(flag, ex, item.GetType(), Common.SerializeObject(item));
 		}
 	}
@@ -240,6 +243,7 @@ public partial class CoreService {
 			return CreateSuccessResponse(flag, listType, Common.SerializeObject(list));
 		}
 		catch (Exception ex) {
+			_db.AbortTransaction();
 			return CreateExceptionResponse(flag, ex, listType, Common.SerializeObject(list));
 		}
 	}
@@ -268,6 +272,7 @@ public partial class CoreService {
 			if (db.Vdu != org.Vdu) {
 				return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 			}
+			_db.BeginTransaction();
 			if (typeof(ITranSoko).IsAssignableFrom(update.ItemType)) {
 				var summaryDb = new SummaryDb(_db);
 				var id = ((BaseDbClass)item).Id;
@@ -289,9 +294,11 @@ public partial class CoreService {
 					summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Ido", id, false);
 				}
 			}
+			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
 		catch (Exception ex) when (ex is not NotImplementedException) {
+			_db.AbortTransaction();
 			return CreateExceptionResponse(flag, ex, update.ItemType, Common.SerializeObject(item));
 		}
 	}
@@ -318,6 +325,7 @@ public partial class CoreService {
 		if (db.Vdu != org.Vdu) {
 			return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
+		_db.BeginTransaction();
 		if (typeof(ITranSoko).IsAssignableFrom(delete.ItemType)) {
 			var summaryDb = new SummaryDb(_db);
 			var id = ((BaseDbClass)item).Id;
@@ -330,6 +338,7 @@ public partial class CoreService {
 		if (typeof(IDerivedOrigin).IsAssignableFrom(delete.ItemType)) {
 			new HandlerDerived(_db).Delete(delete.ItemType, item, ((BaseDbClass)item).Id);
 		}
+		_db.CompleteTransaction();
 		return CreateSuccessResponse(flag, delete.ItemType, Common.SerializeObject(item));
 	}
 
@@ -349,6 +358,7 @@ public partial class CoreService {
 		if (deleteById.OriginalVdu != org.Vdu) {
 			return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
+		_db.BeginTransaction();
 		if (typeof(ITranSoko).IsAssignableFrom(deleteById.ItemType)) {
 			var summaryDb = new SummaryDb(_db);
 			var id = ((BaseDbClass)item).Id;
@@ -362,6 +372,7 @@ public partial class CoreService {
 		if (typeof(IDerivedOrigin).IsAssignableFrom(deleteById.ItemType)) {
 			new HandlerDerived(_db).Delete(deleteById.ItemType, item, ((BaseDbClass)item).Id);
 		}
+		_db.CompleteTransaction();
 		return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 	}
 	/// <summary>

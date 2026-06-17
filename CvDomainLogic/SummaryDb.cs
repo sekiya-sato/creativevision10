@@ -15,12 +15,12 @@ public class SummaryDb {
 		(string Name, Func<SummaryDateParameter, int> Action)[] steps = [
 			/*
 			*/
-			("Summary : Tran00Uriage", CalcSummaryStock<Tran00Uriage>),
-			("Summary : Tran01Tenuri", CalcSummaryStock<Tran01Tenuri>),
-			("Summary : Tran03Shiire", CalcSummaryStock<Tran03Shiire>),
-			("Summary : Tran05Ido", CalcSummaryStock<Tran05Ido>),
-			("Summary : Tran10IdoOut", CalcSummaryStock<Tran10IdoOut>),
-			("Summary : Tran11IdoIn", CalcSummaryStock<Tran11IdoIn>)
+			("Summary : Tran00Uriage", CalcSummaryStockTrn<Tran00Uriage>),
+			("Summary : Tran01Tenuri", CalcSummaryStockTrn<Tran01Tenuri>),
+			("Summary : Tran03Shiire", CalcSummaryStockTrn<Tran03Shiire>),
+			("Summary : Tran05Ido", CalcSummaryStockTrn<Tran05Ido>),
+			("Summary : Tran10IdoOut", CalcSummaryStockTrn<Tran10IdoOut>),
+			("Summary : Tran11IdoIn", CalcSummaryStockTrn<Tran11IdoIn>)
 		];
 		//("Summary : Tran60Tana", CalcSummaryStock<Tran60Tana>),
 
@@ -38,22 +38,24 @@ public class SummaryDb {
 	/// <typeparam name="T"></typeparam>
 	/// <param name="param"></param>
 	/// <returns></returns>
-	private int CalcSummaryStock<T>(SummaryDateParameter param) where T : ITranDetail {
+	private int CalcSummaryStockTrn<T>(SummaryDateParameter param) where T : ITranDetail {
 		var cnt = 0;
 		var tablename = typeof(T).Name;
 		var calcFlg = TranCalcBase.GetCalcSoko(tablename);
 		var sql = CreateSummaryStockSql(tablename, "Id_Soko", calcFlg, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
 		var period = $"{param.DateYymmFrom}-{param.DateYymmTo}";
+		_db.BeginTransaction();
 		if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
-			cnt += ExecuteInTransaction(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Soko", period);
+			cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Soko", period);
 		}
 		if (typeof(ITranIdo).IsAssignableFrom(typeof(T))) {
 			var calcFlg2 = TranCalcBase.GetCalcIdosaki(tablename);
 			if (calcFlg2.Item1 != 0 || calcFlg2.Item2 != 0 || calcFlg2.Item3 != 0 || calcFlg2.Item4 != 0) {
 				sql = CreateSummaryStockSql(tablename, "Id_Ido", calcFlg2, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
-				cnt += ExecuteInTransaction(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Ido", period);
+				cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Ido", period);
 			}
 		}
+		_db.CompleteTransaction();
 		return cnt;
 	}
 	/// <summary>
@@ -67,27 +69,18 @@ public class SummaryDb {
 		var calcFlg = TranCalcBase.GetCalcSoko(tablename, invertFlg);
 		var sql = CreateRealStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
 		if (calcFlg.Item1 != 0) {
-			cnt += ExecuteInTransaction(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
+			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
 			if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
 				sql = CreateSummaryStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
-				cnt += ExecuteInTransaction(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
+				cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
 			}
 		}
 		return cnt;
 	}
-	private int ExecuteInTransaction(string sql, object[] args, string operationName, string targetName, string period) {
-		try {
-			_db.BeginTransaction();
-			_ = _db.Execute(sql, args);
-			var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
-			_db.CompleteTransaction();
-			return updatedCount;
-		}
-		catch (Exception ex) {
-			_logger.LogError(ex, "{OperationName} でトランザクション例外 Target={TargetName} Period={Period}", operationName, targetName, period);
-			_db.AbortTransaction();
-			throw;
-		}
+	private int ExecuteAndCounts(string sql, object[] args, string operationName, string targetName, string period) {
+		var updatedCount = _db.Execute(sql, args);
+		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
+		return updatedCount;
 	}
 	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlg, long vdate, string whereClause) => $@"
 INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, InQty, OutQty, TransitQty)
@@ -169,7 +162,7 @@ GROUP BY
   Id_Col,
   Id_Siz;
 ";
-		cnt += ExecuteInTransaction($"{deleteSql}\n{sql}", [DateYyyymm], "CalcSummaryRealStock", "SummaryRealStock", DateYyyymm);
+		cnt += ExecuteAndCounts($"{deleteSql}\n{sql}", [DateYyyymm], "CalcSummaryRealStock", "SummaryRealStock", DateYyyymm);
 		return cnt;
 	}
 	/// <summary>
@@ -210,7 +203,7 @@ SET CumulativeSu = (
 )
 WHERE SumMonth <= @0;
 ";
-		cnt += ExecuteInTransaction(sql, [DateYyyymm], "CalcSummaryStockCumulative", "SummaryStock:CumulativeSu", DateYyyymm);
+		cnt += ExecuteAndCounts(sql, [DateYyyymm], "CalcSummaryStockCumulative", "SummaryStock:CumulativeSu", DateYyyymm);
 		return cnt;
 	}
 
