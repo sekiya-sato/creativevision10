@@ -38,7 +38,8 @@ public class ExDatabaseOption {
 		ClearAllPools();
 
 		// 5. ロックが外れた後に sidecar ファイルを削除
-		DeleteIfExistsWithRetry(normalizedDatabasePath + "-wal");		DeleteIfExistsWithRetry(normalizedDatabasePath + "-shm");
+		// DeleteIfExistsWithRetry(normalizedDatabasePath + "-wal");
+		// DeleteIfExistsWithRetry(normalizedDatabasePath + "-shm");
 	}
 
 	static string GetDatabasePath(string databaseName) {
