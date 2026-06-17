@@ -416,3 +416,22 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
 
 ---
+
+## [2026-06-17] 11:06 BaseWindow ディスプレイ収まり調整
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：BaseWindow の OnContentRendered 時に、ウィンドウの位置・サイズが実際のディスプレイ領域を超えていたらディスプレイに収まるよう調整する
+### 実施内容
+- CvWpfclient/Helpers/Windows/BaseWindow.cs: OnContentRendered 内で EnsureWithinDisplayBounds を呼び出すよう変更。user32.dll の MonitorFromWindow / GetMonitorInfo を使い、ウィンドウが存在するモニターの作業領域を取得。VisualTreeHelper.GetDpi で取得した DPI スケールで物理ピクセルを WPF の DIP に変換し、ウィンドウの Left / Top / Width / Height を作業領域内に制限する処理を追加。NativeMethods クラスを同ファイル内に追加。
+### 技術決定 Why
+- プライマリディスプレイだけでなく、ウィンドウが存在するモニターを特定して補正するため Win32 API を使用した。DPI スケーリング環境でも正しく収まるよう、GetMonitorInfo の物理ピクセルを VisualTreeHelper.GetDpi で変換した。
+### 影響範囲
+- CvWpfclient/Helpers/Windows/BaseWindow.cs のみ。BaseWindow を継承するすべての業務画面に影響。
+### 確認
+- BaseWindow.cs の CRLF を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

@@ -2,8 +2,11 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.ComponentModel;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace CvWpfclient.Helpers;
 
@@ -89,6 +92,8 @@ public class BaseWindow : Window {
 		if (DesignerProperties.GetIsInDesignMode(this))
 			return;
 
+		EnsureWithinDisplayBounds();
+
 		// ViewModel に ICommand プロパティ "InitCommand" があれば実行する（XAML でのトリガーを共通化）
 		var dc = DataContext;
 		if (dc == null) return;
@@ -121,5 +126,74 @@ public class BaseWindow : Window {
 				cmd.Execute(null);
 			}
 		}
+	}
+
+	private void EnsureWithinDisplayBounds() {
+		if (WindowState != WindowState.Normal)
+			return;
+
+		var handle = new WindowInteropHelper(this).Handle;
+		if (handle == IntPtr.Zero)
+			return;
+
+		var monitor = NativeMethods.MonitorFromWindow(handle, NativeMethods.MONITOR_DEFAULTTONEAREST);
+		if (monitor == IntPtr.Zero)
+			return;
+
+		var monitorInfo = new NativeMethods.MONITORINFO { cbSize = Marshal.SizeOf<NativeMethods.MONITORINFO>() };
+		if (!NativeMethods.GetMonitorInfo(monitor, ref monitorInfo))
+			return;
+
+		var dpi = VisualTreeHelper.GetDpi(this);
+		if (dpi.DpiScaleX <= 0 || dpi.DpiScaleY <= 0)
+			return;
+
+		var workArea = new Rect(
+			monitorInfo.rcWork.left / dpi.DpiScaleX,
+			monitorInfo.rcWork.top / dpi.DpiScaleY,
+			(monitorInfo.rcWork.right - monitorInfo.rcWork.left) / dpi.DpiScaleX,
+			(monitorInfo.rcWork.bottom - monitorInfo.rcWork.top) / dpi.DpiScaleY);
+
+		if (Left < workArea.Left)
+			Left = workArea.Left;
+		if (Top < workArea.Top)
+			Top = workArea.Top;
+
+		if (Width > workArea.Width)
+			Width = workArea.Width;
+		if (Height > workArea.Height)
+			Height = workArea.Height;
+
+		if (Left + Width > workArea.Left + workArea.Width)
+			Left = workArea.Left + workArea.Width - Width;
+		if (Top + Height > workArea.Top + workArea.Height)
+			Top = workArea.Top + workArea.Height - Height;
+	}
+}
+
+internal static class NativeMethods {
+	public const uint MONITOR_DEFAULTTONEAREST = 2;
+
+	[DllImport("user32.dll", SetLastError = false)]
+	public static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+	[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = false)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct MONITORINFO {
+		public int cbSize;
+		public RECT rcMonitor;
+		public RECT rcWork;
+		public uint dwFlags;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct RECT {
+		public int left;
+		public int top;
+		public int right;
+		public int bottom;
 	}
 }
