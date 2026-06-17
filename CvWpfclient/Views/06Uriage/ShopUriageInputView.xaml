@@ -437,7 +437,7 @@
 
 								<!--  メモ  -->
 								<TextBlock Grid.Row="2"
-										   InputMethod.IsInputMethodEnabled="True"
+									InputMethod.IsInputMethodEnabled="True"
 									Style="{StaticResource FormLabel}"
 									Text="メモ" />
 								<TextBox Grid.Row="2" Grid.Column="1"

@@ -178,7 +178,7 @@ __serverimg__(S.Code) 絵型名,
 ifnull(D.Mei_Col, '') 色名,
 ifnull(D.Mei_Siz, '') サイズ名,
 ifnull(D.Jan1, '') JANコード1,
-ifnull(D.Jan2, '') JANコード2
+case when D.Jan2='' then D.Jan3 end JANコード2
 from MasterShohin S
 left join DerivedShohinColSiz D on D.Id_Shohin = S.Id
 {where}
@@ -200,9 +200,9 @@ ifnull(json_extract(S.VItem, '$.Mei'), '') アイテム名,
 S.DayShukka デリバリー日,
 __serverimg__(S.Code) 絵型名,
 ifnull((
-	select D.Jan1
+	select ifnull(D.Jan1, ifnull(D.Jan2, ifnull(D.Jan3, '')))
 	from DerivedShohinColSiz D
-	where D.Id_Shohin = S.Id and ifnull(D.Jan1, '') <> ''
+	where D.Id_Shohin = S.Id and ifnull(D.Jan1, ifnull(D.Jan2, ifnull(D.Jan3, ''))) <> ''
 	order by D.Code_Col, D.Code_Siz, D.RowIdx
 	limit 1
 ), '') JANコード
