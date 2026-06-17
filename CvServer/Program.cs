@@ -109,7 +109,7 @@ builder.Services.AddControllers();
  */
 var connStr = builder.Configuration.GetConnectionString("sqlite")
 	?? throw new InvalidOperationException("Connection string 'sqlite' is not configured.");
-builder.Services.AddSingleton<ExDatabase>(sp => {
+builder.Services.AddScoped<ExDatabase>(sp => {
 	// ファクトリメソッドを使用してインスタンスを生成
 	return CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr);
 });
@@ -149,11 +149,13 @@ app.MapGrpcService<SchedulerService>();
 app.MapGrpcService<SearchByPostalCodeService>();
 app.MapGrpcService<WeatherService>();
 var appInit = new AppGlobal();
-var database = app.Services.GetRequiredService<ExDatabase>();
-// DIコンテナから登録済みの ExDatabase を取得してサーバ起動時に必要な初期化を実行
-appInit.Init(database, app.Environment.ApplicationName, serverVersion);
-appInit.PdfInit(builder.Configuration.GetSection("PrintServer"));
-logger.LogDebug($"appInit.Init() Server={serverVersion}, SQLite={database.Version}");
+using (var scope = app.Services.CreateScope()) {
+	var database = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+	// DIスコープから ExDatabase を取得してサーバ起動時に必要な初期化を実行
+	appInit.Init(database, app.Environment.ApplicationName, serverVersion);
+	appInit.PdfInit(builder.Configuration.GetSection("PrintServer"));
+	logger.LogDebug($"appInit.Init() Server={serverVersion}, SQLite={database.Version}");
+}
 var appStartTime = DateTime.Now;
 const string sqliteShutdownCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
 
@@ -170,38 +172,34 @@ app.Lifetime.ApplicationStarted.Register(() => {
 
 app.Lifetime.ApplicationStopping.Register(() => {
 	try {
-		var schedulerService = app.Services.GetRequiredService<SchedulerService>();
-		schedulerService.Dispose();
-		logger.LogInformation("スケジューラサービスをクローズしました。");
-	}
-	catch (Exception ex) {
-		logger.LogError(ex, "スケジューラサービスのクローズに失敗しました。");
-	}
-
-	try {
-		var checkpointResult = database.RawExecCmd(sqliteShutdownCheckpointSql).FirstOrDefault();
-		if (checkpointResult?.TryGetValue("Error", out var checkpointError) == true) {
-			logger.LogWarning("SQLite shutdown checkpoint でエラーが返されました: {Error}", checkpointError);
+		using var scope = app.Services.CreateScope();
+		var database = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+		try {
+			var checkpointResult = database.RawExecCmd(sqliteShutdownCheckpointSql).FirstOrDefault();
+			if (checkpointResult?.TryGetValue("Error", out var checkpointError) == true) {
+				logger.LogWarning("SQLite shutdown checkpoint でエラーが返されました: {Error}", checkpointError);
+			}
+			else if (checkpointResult != null) {
+				logger.LogInformation(
+					"SQLite shutdown checkpoint が完了しました。 Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
+					checkpointResult.TryGetValue("busy", out var busy) ? busy : 0,
+					checkpointResult.TryGetValue("log", out var log) ? log : 0,
+					checkpointResult.TryGetValue("checkpointed", out var checkpointed) ? checkpointed : 0);
+			}
 		}
-		else if (checkpointResult != null) {
-			logger.LogInformation(
-				"SQLite shutdown checkpoint が完了しました。 Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
-				checkpointResult.TryGetValue("busy", out var busy) ? busy : 0,
-				checkpointResult.TryGetValue("log", out var log) ? log : 0,
-				checkpointResult.TryGetValue("checkpointed", out var checkpointed) ? checkpointed : 0);
+		finally {
+			try {
+				database.Close();
+			}
+			catch (Exception ex) {
+				logger.LogWarning(ex, "SQLite 接続の shutdown close に失敗しました。");
+			}
 		}
 	}
 	catch (Exception ex) {
 		logger.LogWarning(ex, "SQLite shutdown checkpoint の実行に失敗しました。");
 	}
 	finally {
-		try {
-			database.Close();
-		}
-		catch (Exception ex) {
-			logger.LogWarning(ex, "SQLite 接続の shutdown close に失敗しました。");
-		}
-
 		try {
 			SqliteConnection.ClearAllPools();
 		}

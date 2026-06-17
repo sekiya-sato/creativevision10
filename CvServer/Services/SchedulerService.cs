@@ -1,6 +1,7 @@
 using CodeShare;
 using CvBase;
 using CvDomainLogic;
+using Microsoft.Extensions.DependencyInjection;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
@@ -9,7 +10,7 @@ using System.Runtime.ExceptionServices;
 
 namespace CvServer.Services;
 
-public class SchedulerService : ISchedulerService, IDisposable {
+public class SchedulerService : ISchedulerService {
 	private const int Success = 0;
 	private const int InvalidRequest = 1;
 	private const int InvalidCronExpression = 2;
@@ -32,18 +33,17 @@ public class SchedulerService : ISchedulerService, IDisposable {
 
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;
-	private readonly ExDatabase _db;
+	private readonly IServiceScopeFactory _scopeFactory;
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private static readonly TimeSpan WorkFileCleanupTargetAge = TimeSpan.FromHours(WorkFileCleanupTargetAgeHours);
 
 	private sealed record AutoexecTaskResult(int ReturnCode, int Count, string Memo);
 
-	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler, ExDatabase db, IConfiguration configuration, IWebHostEnvironment env) {
+	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler, IServiceScopeFactory scopeFactory, IConfiguration configuration, IWebHostEnvironment env) {
 		_logger = logger;
 		_scheduler = scheduler;
-		// スケジューラではクローンして別接続として使用する
-		_db = db.CloneDb();
+		_scopeFactory = scopeFactory;
 		_configuration = configuration;
 		_env = env;
 	}
@@ -64,7 +64,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 			? request.TaskType.ToString()
 			: request.TaskName.Trim();
 
-		var result = RegisterTask(taskName, request.CronExpression, ct => ExecuteTaskCoreAsync(request, ct));
+		var result = RegisterTask(taskName, request.CronExpression, (db, ct) => ExecuteTaskCoreAsync(db, request, ct));
 		return Task.FromResult(result);
 	}
 
@@ -110,7 +110,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		return RegisterTask(
 			DailyWalCheckpointTaskName,
 			DailyWalCheckpointCronExpression,
-			ct => ExecuteSqliteWalCheckpointCoreAsync(DailyWalCheckpointTaskName, ct),
+			(db, ct) => ExecuteSqliteWalCheckpointCoreAsync(db, DailyWalCheckpointTaskName, ct),
 			DailyWalCheckpointTaskId);
 	}
 
@@ -118,7 +118,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		return RegisterTask(
 			WorkFileCleanupTaskName,
 			WorkFileCleanupCronExpression,
-			ct => ExecuteWorkFileCleanupCoreAsync(WorkFileCleanupTaskName, ct),
+			(_, ct) => ExecuteWorkFileCleanupCoreAsync(WorkFileCleanupTaskName, ct),
 			WorkFileCleanupTaskId);
 	}
 
@@ -172,7 +172,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 			|| taskName.Equals(WorkFileCleanupTaskName, StringComparison.OrdinalIgnoreCase);
 	}
 
-	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<CancellationToken, Task<AutoexecTaskResult>> executor, Guid? taskId = null) {
+	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executor, Guid? taskId = null) {
 		CrontabSchedule schedule;
 		try {
 			schedule = CrontabSchedule.Parse(cronExpression);
@@ -191,7 +191,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 				taskId ?? Guid.NewGuid(),
 				taskName,
 				schedule,
-				ct => ExecuteWithAutoexecHistoryAsync(taskName, ct, executor));
+				ct => ExecuteScheduledTaskWithScopeAsync(taskName, ct, executor));
 			if (taskId.HasValue) {
 				guid = taskId.Value;
 				_scheduler.AddTask(scheduledTask);
@@ -222,10 +222,16 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		}
 	}
 
-	private async Task<AutoexecTaskResult> ExecuteTaskCoreAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
+	private async Task ExecuteScheduledTaskWithScopeAsync(string taskName, CancellationToken cancellationToken, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executeAsync) {
+		using var scope = _scopeFactory.CreateScope();
+		var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+		await ExecuteWithAutoexecHistoryAsync(db, taskName, cancellationToken, executeAsync);
+	}
+
+	private async Task<AutoexecTaskResult> ExecuteTaskCoreAsync(ExDatabase db, AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
 		return request.TaskType switch {
 			SchedulerTaskType.LogOnly => await ExecuteLogOnlyAsync(request, cancellationToken),
-			SchedulerTaskType.RunSummary => await ExecuteRunSummaryAsync(request, cancellationToken),
+			SchedulerTaskType.RunSummary => await ExecuteRunSummaryAsync(db, request, cancellationToken),
 			_ => new AutoexecTaskResult(InvalidRequest, 0, $"未対応のTaskType: {request.TaskType}"),
 		};
 	}
@@ -240,7 +246,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		return Task.FromResult(new AutoexecTaskResult(Success, 0, $"LogOnly実行: Payload={request.Payload}"));
 	}
 
-	private async Task<AutoexecTaskResult> ExecuteRunSummaryAsync(AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
+	private async Task<AutoexecTaskResult> ExecuteRunSummaryAsync(ExDatabase db, AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
 		var processedCount = 0;
 		var returnCode = Success;
 		var memo = string.Empty;
@@ -256,7 +262,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 				yyyymm,
 				cancellationToken.IsCancellationRequested);
 
-			var summaryDb = new SummaryDb(_db);
+			var summaryDb = new SummaryDb(db);
 			var param = new SummaryDateParameter(yyyymm, yyyymm);
 			await foreach (var step in summaryDb.SummaryAllAsyncStream(param).WithCancellation(cancellationToken)) {
 				if (step.IsCompleted) {
@@ -284,10 +290,10 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		return new AutoexecTaskResult(returnCode, processedCount, memo);
 	}
 
-	private Task<AutoexecTaskResult> ExecuteSqliteWalCheckpointCoreAsync(string taskName, CancellationToken cancellationToken) {
+	private Task<AutoexecTaskResult> ExecuteSqliteWalCheckpointCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
 		cancellationToken.ThrowIfCancellationRequested();
 
-		var checkpointResult = ExecuteSqliteWalCheckpoint(_db);
+		var checkpointResult = ExecuteSqliteWalCheckpoint(db);
 		var busy = Helpers.GetCheckpointLongValue(checkpointResult, "busy");
 		var logCount = Helpers.GetCheckpointLongValue(checkpointResult, "log");
 		var checkpointed = Helpers.GetCheckpointLongValue(checkpointResult, "checkpointed");
@@ -385,15 +391,15 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		return Task.FromResult(new AutoexecTaskResult(returnCode, deletedCount, memo));
 	}
 
-	private async Task ExecuteWithAutoexecHistoryAsync(string taskName, CancellationToken cancellationToken, Func<CancellationToken, Task<AutoexecTaskResult>> executeAsync) {
+	private async Task ExecuteWithAutoexecHistoryAsync(ExDatabase db, string taskName, CancellationToken cancellationToken, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executeAsync) {
 		var startTime = DateTime.Now;
 		var stopwatch = Stopwatch.StartNew();
-		var history = InsertAutoexecHistory(taskName, startTime);
+		var history = InsertAutoexecHistory(db, taskName, startTime);
 		var result = new AutoexecTaskResult(Success, 0, "正常終了");
 		Exception? caughtException = null;
 
 		try {
-			result = await executeAsync(cancellationToken);
+			result = await executeAsync(db, cancellationToken);
 		}
 		catch (OperationCanceledException ex) {
 			caughtException = ex;
@@ -405,7 +411,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		}
 		finally {
 			stopwatch.Stop();
-			UpdateAutoexecHistory(history, DateTime.Now, stopwatch.Elapsed, result);
+			UpdateAutoexecHistory(db, history, DateTime.Now, stopwatch.Elapsed, result);
 		}
 
 		if (caughtException != null) {
@@ -413,7 +419,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		}
 	}
 
-	private SysHistAutoexec? InsertAutoexecHistory(string taskName, DateTime startTime) {
+	private SysHistAutoexec? InsertAutoexecHistory(ExDatabase db, string taskName, DateTime startTime) {
 		try {
 			var vdate = DateTime.Now.ToUniversalTime().Ticks;
 			var history = new SysHistAutoexec {
@@ -425,7 +431,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 				Vdu = vdate,
 			};
 
-			_db.Insert(history);
+			db.Insert(history);
 			return history;
 		}
 		catch (Exception ex) {
@@ -434,7 +440,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		}
 	}
 
-	private void UpdateAutoexecHistory(SysHistAutoexec? history, DateTime endTime, TimeSpan elapsedTime, AutoexecTaskResult result) {
+	private void UpdateAutoexecHistory(ExDatabase db, SysHistAutoexec? history, DateTime endTime, TimeSpan elapsedTime, AutoexecTaskResult result) {
 		if (history == null) {
 			return;
 		}
@@ -447,7 +453,7 @@ public class SchedulerService : ISchedulerService, IDisposable {
 			history.Memo = Helpers.NormalizeAutoexecText(result.Memo, MaxAutoexecMemoLength, "処理完了");
 			history.Vdu = DateTime.Now.ToUniversalTime().Ticks;
 
-			_db.Update(history, ["EndTime", "ElapsedTime", "ReturnCode", "Count", "Memo", "Vdu"]);
+			db.Update(history, ["EndTime", "ElapsedTime", "ReturnCode", "Count", "Memo", "Vdu"]);
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "自動実行履歴の終了更新に失敗しました。 Id={Id}, TaskName={TaskName}", history.Id, history.TaskName);
@@ -477,12 +483,6 @@ public class SchedulerService : ISchedulerService, IDisposable {
 		}
 		var checkpointResult = result.First();
 		return checkpointResult;
-	}
-
-	public void Dispose() {
-		// クローンした接続を破棄
-		_db.Close();
-		_db.Dispose();
 	}
 
 	private static class Helpers {

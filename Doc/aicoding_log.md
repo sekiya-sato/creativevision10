@@ -458,3 +458,29 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
 
 ---
+
+## [2026-06-17] 15:05 CvServer ExDatabase Scoped化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：CvServer で使っている `ExDatabase` を Singleton から Scoped（リクエストごと）に変更する。影響度調査、実装計画、修正、確認、コミットまで実施する。追加指示として `SchedulerService` での DB clone を廃止する。
+### 実施内容
+- CvServer/Program.cs: `ExDatabase` の DI 登録を `AddSingleton` から `AddScoped` に変更。起動時 `AppGlobal.Init` と shutdown checkpoint は root provider 直取得ではなく明示スコープ内で `ExDatabase` を取得するよう修正。
+- CvServer/Services/SchedulerService.cs: `ExDatabase` コンストラクタ注入と `CloneDb()` を廃止。`SchedulerService` は `IServiceScopeFactory` を保持し、スケジュール実行単位でスコープを作成して履歴登録、集計、SQLite WAL checkpoint を同一スコープ内 DB で処理するよう変更。
+- Tests/TestServer/TestServer.cs: `SchedulerService` のコンストラクタ変更に合わせ、テスト用 `ServiceProvider` から `IServiceScopeFactory` を渡すよう修正。
+### 技術決定 Why
+- `CoreService` / `LoginService` など通常 gRPC リクエストで使用する DB はリクエストスコープで扱い、同一 `ExDatabase` インスタンスの共有を避ける。
+- `SchedulerService` はスケジュール登録を維持するため singleton のまま残し、scoped DB を直接保持しない構成にした。長寿命 singleton から scoped service を保持するとスコープ寿命と矛盾するため、ジョブ実行時だけ `IServiceScopeFactory.CreateScope()` で DB を取得する。
+### 影響範囲
+- CvServer の DB 接続 lifetime。通常 gRPC リクエスト、起動時初期化、停止時 WAL checkpoint、スケジューラ自動実行履歴/集計/checkpoint に影響。
+### 確認
+- `graphify-out/GRAPH_REPORT.md` の freshness が現 HEAD `d5165df4` と一致していることを確認。
+- `rg` で CvServer 内の `CloneDb()` 利用が消えていること、`ExDatabase` 登録が `AddScoped` になっていることを確認。
+- `git diff --check` で空白エラーなしを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` でビルド成功（0 errors、既存の CvPrints/IKVM warning 212 件）を確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Tests/TestServer/TestServer.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests/TestServer/TestServer.csproj --no-build"` で MSTest 6 件成功を確認。
+
+---

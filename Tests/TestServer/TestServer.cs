@@ -1,4 +1,5 @@
 using CodeShare;
+using CvBase;
 using CvBase.Share;
 using CvBaseSqlite;
 using CvServer;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -32,6 +34,7 @@ public class CoreServiceTests {
 	private CoreService? _service;
 	private NCrontab.Scheduler.Scheduler? _scheduler;
 	private SchedulerService? _schedulerService;
+	private ServiceProvider? _serviceProvider;
 
 	[TestInitialize]
 	public void Initialize() {
@@ -51,7 +54,10 @@ public class CoreServiceTests {
 		// サービスを作成
 		_service = new CoreService(logger, config, env, httpAccessor, _db);
 		_scheduler = new NCrontab.Scheduler.Scheduler(NullLogger<NCrontab.Scheduler.Scheduler>.Instance);
-		_schedulerService = new SchedulerService(schedulerLogger, _scheduler, _db, config, env);
+		_serviceProvider = new ServiceCollection()
+			.AddSingleton<ExDatabase>(_db)
+			.BuildServiceProvider();
+		_schedulerService = new SchedulerService(schedulerLogger, _scheduler, _serviceProvider.GetRequiredService<IServiceScopeFactory>(), config, env);
 	}
 
 	[TestCleanup]
@@ -59,6 +65,7 @@ public class CoreServiceTests {
 		_db?.Close();
 		(_db?.Connection as SqliteConnection)?.Close();
 		_scheduler?.Dispose();
+		_serviceProvider?.Dispose();
 	}
 
 	[TestMethod]
