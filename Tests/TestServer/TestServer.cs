@@ -169,6 +169,35 @@ public class CoreServiceTests {
 		}
 	}
 
+	[TestMethod]
+	public void ExDatabaseOptionClearPools_RemovesWalSidecarFiles() {
+		var dbPath = Path.Combine(Path.GetTempPath(), $"sqlite-clear-pools-{Guid.NewGuid():N}.db");
+		ExDatabaseSqlite? db = null;
+		try {
+			db = ExDatabaseSqlite.GetDbConn(dbPath);
+			db.Execute("CREATE TABLE IF NOT EXISTS Sample(Id INTEGER PRIMARY KEY, Name TEXT NOT NULL);");
+			db.Execute("INSERT INTO Sample(Name) VALUES (@0);", "clear-pools-test");
+
+			Assert.IsTrue(File.Exists(dbPath));
+			Assert.IsTrue(
+				File.Exists(dbPath + "-wal") || File.Exists(dbPath + "-shm"),
+				"WAL sidecar file was not created before cleanup.");
+
+			db.Close();
+			db.Dispose();
+			ExDatabaseOption.ClearPools(dbPath);
+
+			Assert.IsFalse(File.Exists(dbPath + "-wal"));
+			Assert.IsFalse(File.Exists(dbPath + "-shm"));
+		}
+		finally {
+			db?.Close();
+			db?.Dispose();
+			ExDatabaseOption.ClearPools(dbPath);
+			DeleteFileWithRetry(dbPath);
+		}
+	}
+
 	static void DeleteFileWithRetry(string path) {
 		for (int i = 0; i < 5; i++) {
 			if (!File.Exists(path)) {
