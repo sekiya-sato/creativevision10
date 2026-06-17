@@ -437,6 +437,7 @@
 
 								<!--  メモ  -->
 								<TextBlock Grid.Row="2"
+										   InputMethod.IsInputMethodEnabled="True"
 									Style="{StaticResource FormLabel}"
 									Text="メモ" />
 								<TextBox Grid.Row="2" Grid.Column="1"
@@ -472,7 +473,7 @@
 									Text="明細行削除" />
 							</StackPanel>
 						</Button>
-						<Button Margin="8,0"
+						<Button Margin="40,0,10,0"
 							Command="{Binding DoInputBarcodeCommand}"
 							Style="{StaticResource MaterialDesignOutlinedButton}">
 							<StackPanel Orientation="Horizontal">

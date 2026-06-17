@@ -5,9 +5,9 @@
 	Title="バーコード入力"
 	Width="1120" Height="680"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="18"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	FontSize="18" TextOptions.TextFormattingMode="Display"
-	WindowStartupLocation="CenterOwner"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterOwner"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:InputBarcodeViewModel />
@@ -76,8 +76,7 @@
 						Margin="0,0,8,0" VerticalAlignment="Center"
 						Kind="BarcodeScan" />
 					<TextBlock VerticalAlignment="Center"
-						FontSize="20" FontWeight="SemiBold"
-						Text="バーコード入力" />
+						FontSize="20" FontWeight="SemiBold" Text="バーコード入力" />
 					<TextBlock Margin="24,0,0,0" VerticalAlignment="Center"
 						FontSize="14" Opacity="0.75"
 						Text="{Binding Message}" />
@@ -102,13 +101,13 @@
 					Text="バーコード読取" />
 				<TextBox x:Name="BarcodeTextBox"
 					Grid.Column="1"
-					Height="44"
-					materialDesign:HintAssist.Hint="バーコード"
+					Height="50"
+					materialDesign:HintAssist.Hint="バーコード" FontSize="14" InputMethod.IsInputMethodEnabled="False"
 					Style="{StaticResource FormTextBox}"
 					Text="{Binding BarcodeText, UpdateSourceTrigger=PropertyChanged}">
 					<TextBox.InputBindings>
-						<KeyBinding Command="{Binding AddBarcodeCommand}"
-							Key="Enter" />
+						<KeyBinding Key="Enter"
+							Command="{Binding AddBarcodeCommand}" />
 					</TextBox.InputBindings>
 				</TextBox>
 				<Button Grid.Column="2"
@@ -121,7 +120,8 @@
 				</Button>
 
 				<StackPanel Grid.Column="4"
-					VerticalAlignment="Center" Orientation="Horizontal">
+					VerticalAlignment="Center"
+					Orientation="Horizontal">
 					<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="{Binding Count, StringFormat={}行数: {0:N0}}" />
 					<TextBlock Margin="18,0,0,0"
@@ -134,8 +134,7 @@
 		<DataGrid Grid.Row="2"
 			Margin="12"
 			d:ItemsSource="{d:SampleData ItemCount=5}"
-			materialDesign:DataGridAssist.CellPadding="12,6"
-			materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="False"
+			materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="False"
 			CanUserAddRows="False" CanUserDeleteRows="False" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
 			HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 			IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
