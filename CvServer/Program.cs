@@ -187,6 +187,7 @@ app.Lifetime.ApplicationStopping.Register(() => {
 					checkpointResult.TryGetValue("checkpointed", out var checkpointed) ? checkpointed : 0);
 			}
 		});
+		CvBaseSqlite.ExDatabaseOption.ClearPools(connStr);
 		RunShutdownStep("SQLite 接続の shutdown close", database.Close);
 	});
 	RunShutdownStep("SQLite pool cleanup の shutdown 実行", CvBaseSqlite.ExDatabaseOption.ClearAllPools);
