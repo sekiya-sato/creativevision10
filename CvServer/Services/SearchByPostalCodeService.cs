@@ -32,6 +32,7 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 		}
 	}
 
+	// Product : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
 	[AllowAnonymous]
 	public async Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CallContext context = default) {
 		var cancellationToken = context.CancellationToken;
