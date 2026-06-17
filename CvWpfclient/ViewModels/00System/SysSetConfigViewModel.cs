@@ -9,6 +9,7 @@ namespace CvWpfclient.ViewModels._00System;
 
 public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private const string DefaultWeatherRegion = "Tokyo";
+	private const string DefaultJmaWeatherAreaCode = "130000";
 	private const string DefaultHorizontalFitPosition = "Left";
 	private const string DefaultVerticalFitPosition = "Bottom";
 	private const int DefaultLimit = 400;
@@ -18,11 +19,70 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private string _originalLoginId = string.Empty;
 	private string _originalLoginPassword = string.Empty;
 	private string _originalWeatherRegion = DefaultWeatherRegion;
+	private string _originalJmaWeatherAreaCode = DefaultJmaWeatherAreaCode;
 	private string _originalFitPosition = $"{DefaultHorizontalFitPosition}-{DefaultVerticalFitPosition}";
 	private int _originalLimit = DefaultLimit;
 
 	public string[] HorizontalFitPositionItems { get; } = [DefaultHorizontalFitPosition, "Right"];
 	public string[] VerticalFitPositionItems { get; } = ["Top", DefaultVerticalFitPosition];
+	public JmaWeatherAreaOption[] JmaWeatherAreaItems { get; } = [
+		new("北海道", "宗谷地方", "011000"),
+		new("北海道", "上川・留萌地方", "012000"),
+		new("北海道", "石狩・空知・後志地方", "016000"),
+		new("北海道", "網走・北見・紋別地方", "013000"),
+		new("北海道", "釧路・根室地方", "014100"),
+		new("北海道", "胆振・日高地方", "015000"),
+		new("北海道", "渡島・檜山地方", "017000"),
+		new("東北", "青森県", "020000"),
+		new("東北", "秋田県", "050000"),
+		new("東北", "岩手県", "030000"),
+		new("東北", "宮城県", "040000"),
+		new("東北", "山形県", "060000"),
+		new("東北", "福島県", "070000"),
+		new("関東甲信", "茨城県", "080000"),
+		new("関東甲信", "栃木県", "090000"),
+		new("関東甲信", "群馬県", "100000"),
+		new("関東甲信", "埼玉県", "110000"),
+		new("関東甲信", "東京都", "130000"),
+		new("関東甲信", "千葉県", "120000"),
+		new("関東甲信", "神奈川県", "140000"),
+		new("関東甲信", "長野県", "200000"),
+		new("関東甲信", "山梨県", "190000"),
+		new("東海", "静岡県", "220000"),
+		new("東海", "愛知県", "230000"),
+		new("東海", "岐阜県", "210000"),
+		new("東海", "三重県", "240000"),
+		new("北陸", "新潟県", "150000"),
+		new("北陸", "富山県", "160000"),
+		new("北陸", "石川県", "170000"),
+		new("北陸", "福井県", "180000"),
+		new("近畿", "滋賀県", "250000"),
+		new("近畿", "京都府", "260000"),
+		new("近畿", "大阪府", "270000"),
+		new("近畿", "兵庫県", "280000"),
+		new("近畿", "奈良県", "290000"),
+		new("近畿", "和歌山県", "300000"),
+		new("中国", "岡山県", "330000"),
+		new("中国", "広島県", "340000"),
+		new("中国", "島根県", "320000"),
+		new("中国", "鳥取県", "310000"),
+		new("四国", "徳島県", "360000"),
+		new("四国", "香川県", "370000"),
+		new("四国", "愛媛県", "380000"),
+		new("四国", "高知県", "390000"),
+		new("九州（山口含む）", "山口県", "350000"),
+		new("九州（山口含む）", "福岡県", "400000"),
+		new("九州（山口含む）", "大分県", "440000"),
+		new("九州（山口含む）", "長崎県", "420000"),
+		new("九州（山口含む）", "佐賀県", "410000"),
+		new("九州（山口含む）", "熊本県", "430000"),
+		new("九州（山口含む）", "宮崎県", "450000"),
+		new("九州（山口含む）", "鹿児島県", "460100"),
+		new("沖縄", "沖縄本島地方", "471000"),
+		new("沖縄", "大東島地方", "472000"),
+		new("沖縄", "宮古島地方", "473000"),
+		new("沖縄", "八重山地方", "474000"),
+	];
 
 	[ObservableProperty]
 	private string url = string.Empty;
@@ -35,6 +95,9 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
 	private string weatherRegion = DefaultWeatherRegion;
+
+	[ObservableProperty]
+	private string jmaWeatherAreaCode = DefaultJmaWeatherAreaCode;
 
 	[ObservableProperty]
 	private string horizontalFitPosition = DefaultHorizontalFitPosition;
@@ -70,6 +133,11 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 			MessageEx.ShowErrorDialog("天気地域を入力してください。", owner: ClientLib.GetActiveView(this));
 			return false;
 		}
+		var normalizedJmaWeatherAreaCode = NormalizeJmaWeatherAreaCode(JmaWeatherAreaCode);
+		if (string.IsNullOrWhiteSpace(normalizedJmaWeatherAreaCode) || !IsKnownJmaWeatherAreaCode(normalizedJmaWeatherAreaCode)) {
+			MessageEx.ShowErrorDialog("気象庁予報区は一覧から選択してください。", owner: ClientLib.GetActiveView(this));
+			return false;
+		}
 		if (Array.IndexOf(HorizontalFitPositionItems, HorizontalFitPosition) < 0
 				|| Array.IndexOf(VerticalFitPositionItems, VerticalFitPosition) < 0) {
 			MessageEx.ShowErrorDialog("ウィンドウ配置は左右と上下の組み合わせから選択してください。", owner: ClientLib.GetActiveView(this));
@@ -85,6 +153,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		var originalRuntimeLoginId = _originalLoginId;
 		var originalRuntimeLoginPassword = _originalLoginPassword;
 		var originalRuntimeWeatherRegion = _originalWeatherRegion;
+		var originalRuntimeJmaWeatherAreaCode = _originalJmaWeatherAreaCode;
 		var originalRuntimeFitPosition = _originalFitPosition;
 		var originalRuntimeLimit = _originalLimit;
 		var urlChanged = !string.Equals(_originalUrl, Url, StringComparison.OrdinalIgnoreCase);
@@ -98,11 +167,13 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 			["Application:LoginId"] = persistedLoginId,
 			["Application:LoginPass"] = persistedLoginPassword,
 			["Application:WeatherRegion"] = normalizedWeatherRegion,
+			["Application:JmaWeatherAreaCode"] = normalizedJmaWeatherAreaCode,
 			["Application:FitPosition"] = fitPosition,
 			["Application:Limit"] = Limit.ToString(CultureInfo.InvariantCulture),
 		};
 		var overrides = new Dictionary<string, object?> {
 			["Application:WeatherRegion"] = normalizedWeatherRegion,
+			["Application:JmaWeatherAreaCode"] = normalizedJmaWeatherAreaCode,
 			["Application:FitPosition"] = fitPosition,
 			["Application:Limit"] = Limit,
 		};
@@ -134,12 +205,12 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 			}
 			catch (Exception ex) {
 				MessageEx.ShowErrorDialog($"接続先の再構築に失敗しました: {ex.Message}", owner: ClientLib.GetActiveView(this));
-				AppGlobal.UpdateConfigValues(originalRuntimeUrl, originalRuntimeLoginId, originalRuntimeLoginPassword, originalRuntimeWeatherRegion, originalRuntimeFitPosition, originalRuntimeLimit);
+				AppGlobal.UpdateConfigValues(originalRuntimeUrl, originalRuntimeLoginId, originalRuntimeLoginPassword, originalRuntimeWeatherRegion, originalRuntimeFitPosition, originalRuntimeLimit, originalRuntimeJmaWeatherAreaCode);
 				return false;
 			}
 		}
 		else {
-			AppGlobal.UpdateConfigValues(Url, persistedLoginId, persistedLoginPassword, normalizedWeatherRegion, fitPosition, Limit);
+			AppGlobal.UpdateConfigValues(Url, persistedLoginId, persistedLoginPassword, normalizedWeatherRegion, fitPosition, Limit, normalizedJmaWeatherAreaCode);
 			if (loginIdChanged) {
 				_originalLoginId = persistedLoginId;
 			}
@@ -155,12 +226,15 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		_currentSettings.Application.LoginId = persistedLoginId;
 		_currentSettings.Application.LoginPass = persistedLoginPassword;
 		_currentSettings.Application.WeatherRegion = normalizedWeatherRegion;
+		_currentSettings.Application.JmaWeatherAreaCode = normalizedJmaWeatherAreaCode;
 		_currentSettings.Application.FitPosition = fitPosition;
 		_currentSettings.Application.Limit = Limit;
 		LoginId = persistedLoginId;
 		LoginPassword = persistedLoginPassword;
 		WeatherRegion = normalizedWeatherRegion;
+		JmaWeatherAreaCode = normalizedJmaWeatherAreaCode;
 		_originalWeatherRegion = normalizedWeatherRegion;
+		_originalJmaWeatherAreaCode = normalizedJmaWeatherAreaCode;
 		_originalFitPosition = fitPosition;
 		_originalLimit = Limit;
 		return true;
@@ -188,12 +262,14 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		LoginId = AppGlobal.Application.LoginId;
 		LoginPassword = AppGlobal.Application.LoginPass;
 		WeatherRegion = string.IsNullOrWhiteSpace(AppGlobal.WeatherRegion) ? DefaultWeatherRegion : AppGlobal.WeatherRegion;
+		JmaWeatherAreaCode = NormalizeKnownJmaWeatherAreaCode(AppGlobal.JmaWeatherAreaCode);
 		ApplyFitPosition(AppGlobal.FitPosition);
 		Limit = AppGlobal.Limit > 0 ? AppGlobal.Limit : DefaultLimit;
 		_originalUrl = Url;
 		_originalLoginId = LoginId;
 		_originalLoginPassword = LoginPassword;
 		_originalWeatherRegion = WeatherRegion;
+		_originalJmaWeatherAreaCode = JmaWeatherAreaCode;
 		_originalFitPosition = FitPosition;
 		_originalLimit = Limit;
 	}
@@ -208,4 +284,21 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 			: DefaultVerticalFitPosition;
 	}
 
+	private string NormalizeJmaWeatherAreaCode(string? areaCode) => string.IsNullOrWhiteSpace(areaCode)
+		? DefaultJmaWeatherAreaCode
+		: areaCode.Trim();
+
+	private string NormalizeKnownJmaWeatherAreaCode(string? areaCode) {
+		var normalized = NormalizeJmaWeatherAreaCode(areaCode);
+		return IsKnownJmaWeatherAreaCode(normalized) ? normalized : DefaultJmaWeatherAreaCode;
+	}
+
+	private bool IsKnownJmaWeatherAreaCode(string areaCode) {
+		return JmaWeatherAreaItems.Any(item => string.Equals(item.Code, areaCode, StringComparison.Ordinal));
+	}
+
+}
+
+public sealed record JmaWeatherAreaOption(string Region, string Name, string Code) {
+	public string DisplayName => $"{Region} / {Name} ({Code})";
 }

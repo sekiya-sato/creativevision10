@@ -15,6 +15,7 @@ using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -24,7 +25,10 @@ namespace CvWpfclient.ViewModels;
 
 public partial class MainMenuViewModel : ObservableObject {
 	private const double MoonIconSize = 24.0;
+	private const string DefaultJmaWeatherAreaCode = "130000";
+	private const string JmaWeatherOverviewBaseUrl = "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/";
 	private static readonly TimeSpan WeatherGrpcTimeout = TimeSpan.FromSeconds(15);
+	private static readonly TimeSpan JmaWeatherTimeout = TimeSpan.FromSeconds(15);
 
 	[ObservableProperty]
 	ObservableCollection<MenuData> menuItems = [];
@@ -314,6 +318,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				}
 				else if (targetView.DataContext is _00System.SysSetConfigViewModel) {
 					SetSubMessage();
+					await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
 				}
 			}
 			return;
@@ -334,6 +339,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			}
 			else if (view.DataContext is _00System.SysSetConfigViewModel) {
 				SetSubMessage();
+				await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
 			}
 		}
 	}
@@ -347,7 +353,7 @@ public partial class MainMenuViewModel : ObservableObject {
 				InfolocalServer = serverVer;
 				InfolocalServer.Url = AppGlobal.Url;
 			}
-			await RefreshWeatherServerAsync(App.GetHostLifetimeToken());
+			await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
 		}
 		_subStartTime = DateTime.Now;
 		SetSubMessage();
@@ -378,8 +384,10 @@ public partial class MainMenuViewModel : ObservableObject {
 		ClientLib.ExitAllWithoutMe(this);
 		var view = new Views._00System.SysSetConfigView { Title = "環境設定" };
 		if (view.DataContext is _00System.SysSetConfigViewModel vm) {
-			if (ClientLib.ShowDialogView(view, this, IsDialog: true) == true)
+			if (ClientLib.ShowDialogView(view, this, IsDialog: true) == true) {
 				SetSubMessage();
+				await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
+			}
 		}
 	}
 	[RelayCommand]
@@ -435,6 +443,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	private string windSpeed = "";
 
+	[ObservableProperty]
+	private string jmaWeatherOverviewToolTip = "気象庁概要予報を取得中...";
+
 
 	[ObservableProperty]
 	private ISeries[] forecastSeries = [];
@@ -451,15 +462,22 @@ public partial class MainMenuViewModel : ObservableObject {
 	private DispatcherTimer? _weatherTimer;
 
 	private async void StartWeatherAndCalendar() {
-		await RefreshWeatherServerAsync(App.GetHostLifetimeToken());
+		await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
 
 		// 天気は30分おきに更新
 		_weatherTimer = new DispatcherTimer {
 			Interval = TimeSpan.FromMinutes(30)
 		};
-		_weatherTimer.Tick += async (s, e) => await RefreshWeatherServerAsync(App.GetHostLifetimeToken());
+		_weatherTimer.Tick += async (s, e) => await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
 		_weatherTimer.Start();
 	}
+
+	private async Task RefreshWeatherDashboardAsync(CancellationToken cancellationToken) {
+		await Task.WhenAll(
+			RefreshWeatherServerAsync(cancellationToken),
+			RefreshJmaWeatherOverviewAsync(cancellationToken));
+	}
+
 	private async Task RefreshWeatherServerAsync(CancellationToken cancellationToken) {
 		try {
 			cancellationToken.ThrowIfCancellationRequested();
@@ -493,6 +511,76 @@ public partial class MainMenuViewModel : ObservableObject {
 			WeatherDescription = "天気情報を取得できませんでした";
 		}
 	}
+
+	private async Task RefreshJmaWeatherOverviewAsync(CancellationToken cancellationToken) {
+		try {
+			cancellationToken.ThrowIfCancellationRequested();
+			var areaCode = NormalizeJmaWeatherAreaCode(AppGlobal.JmaWeatherAreaCode);
+			using var client = new HttpClient { Timeout = JmaWeatherTimeout };
+			using var response = await client.GetAsync($"{JmaWeatherOverviewBaseUrl}{areaCode}.json", cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
+			if (!response.IsSuccessStatusCode) {
+				JmaWeatherOverviewToolTip = $"気象庁概要予報を取得できませんでした ({areaCode})";
+				return;
+			}
+
+			await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+			var overview = await JsonSerializer.DeserializeAsync<JmaOverviewForecast>(stream, cancellationToken: cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
+			JmaWeatherOverviewToolTip = overview == null
+				? $"気象庁概要予報を取得できませんでした ({areaCode})"
+				: FormatJmaWeatherOverview(overview, areaCode);
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			return;
+		}
+		catch {
+			JmaWeatherOverviewToolTip = "気象庁概要予報を取得できませんでした";
+		}
+	}
+
+	private static string NormalizeJmaWeatherAreaCode(string? areaCode) {
+		var normalized = string.IsNullOrWhiteSpace(areaCode) ? DefaultJmaWeatherAreaCode : areaCode.Trim();
+		return normalized.Length == 6 && normalized.All(char.IsDigit)
+			? normalized
+			: DefaultJmaWeatherAreaCode;
+	}
+
+	private static string FormatJmaWeatherOverview(JmaOverviewForecast overview, string areaCode) {
+		var lines = new List<string> {
+			$"{(string.IsNullOrWhiteSpace(overview.PublishingOffice) ? "気象庁" : overview.PublishingOffice)} {FormatJmaReportDateTime(overview.ReportDatetime)}",
+			string.IsNullOrWhiteSpace(overview.TargetArea) ? $"予報区 {areaCode}" : $"{overview.TargetArea} ({areaCode})",
+		};
+
+		var headline = NormalizeJmaText(overview.HeadlineText);
+		if (!string.IsNullOrWhiteSpace(headline)) {
+			lines.Add(string.Empty);
+			lines.Add(headline);
+		}
+
+		var text = NormalizeJmaText(overview.Text);
+		if (!string.IsNullOrWhiteSpace(text)) {
+			lines.Add(string.Empty);
+			lines.Add(text);
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static string FormatJmaReportDateTime(string? reportDatetime) {
+		if (DateTimeOffset.TryParse(reportDatetime, out var parsed)) {
+			return $"{parsed.ToOffset(TimeSpan.FromHours(9)):yyyy/MM/dd HH:mm} 発表";
+		}
+
+		return "発表時刻不明";
+	}
+
+	private static string NormalizeJmaText(string? text) {
+		return string.IsNullOrWhiteSpace(text)
+			? string.Empty
+			: text.Replace("\r\n", "\n").Replace('\r', '\n').Trim();
+	}
+
 	private async void StartClock() {
 		// 1. 初回実行
 		UpdateDateTime();
@@ -700,5 +788,22 @@ public partial class MainMenuViewModel : ObservableObject {
 			}
 		}
 		return null;
+	}
+
+	private sealed class JmaOverviewForecast {
+		[JsonPropertyName("publishingOffice")]
+		public string? PublishingOffice { get; set; }
+
+		[JsonPropertyName("reportDatetime")]
+		public string? ReportDatetime { get; set; }
+
+		[JsonPropertyName("targetArea")]
+		public string? TargetArea { get; set; }
+
+		[JsonPropertyName("headlineText")]
+		public string? HeadlineText { get; set; }
+
+		[JsonPropertyName("text")]
+		public string? Text { get; set; }
 	}
 }

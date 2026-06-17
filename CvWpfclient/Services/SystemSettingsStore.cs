@@ -113,6 +113,7 @@ public sealed class ClientSettingsStore {
 		AddIfNotWhiteSpace(overrides, "Application:LoginPass", settings.Application.LoginPass);
 		AddIfNotWhiteSpace(overrides, "Application:LoginJwt", settings.Application.LoginJwt);
 		AddIfNotWhiteSpace(overrides, "Application:WeatherRegion", settings.Application.WeatherRegion);
+		AddIfNotWhiteSpace(overrides, "Application:JmaWeatherAreaCode", settings.Application.JmaWeatherAreaCode);
 		AddIfNotWhiteSpace(overrides, "Application:FitPosition", settings.Application.FitPosition);
 		AddIfPositiveInt(overrides, "Application:Limit", settings.Application.Limit);
 		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);

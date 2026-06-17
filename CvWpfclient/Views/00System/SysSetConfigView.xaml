@@ -88,6 +88,7 @@
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="170" />
@@ -159,8 +160,19 @@
 
 					<TextBlock Grid.Row="7" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
+						Text="気象庁予報区" />
+					<ComboBox Grid.Row="7" Grid.Column="1"
+						Margin="0,6"
+						DisplayMemberPath="DisplayName"
+						ItemsSource="{Binding JmaWeatherAreaItems}"
+						SelectedValue="{Binding JmaWeatherAreaCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+						SelectedValuePath="Code"
+						Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+
+					<TextBlock Grid.Row="8" Grid.Column="0"
+						Style="{StaticResource SettingLabel}"
 						Text="ウィンドウ配置" />
-					<Grid Grid.Row="7" Grid.Column="1"
+					<Grid Grid.Row="8" Grid.Column="1"
 						Margin="0,6">
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*" />
@@ -190,10 +202,10 @@
 						</Border>
 					</Grid>
 
-					<TextBlock Grid.Row="8" Grid.Column="0"
+					<TextBlock Grid.Row="9" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
 						Text="取得件数上限" />
-					<TextBox Grid.Row="8" Grid.Column="1"
+					<TextBox Grid.Row="9" Grid.Column="1"
 						Width="180"
 						HorizontalAlignment="Left" HorizontalContentAlignment="Right"
 						materialDesign:HintAssist.Hint="例: 400"

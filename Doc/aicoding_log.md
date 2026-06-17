@@ -525,3 +525,27 @@
 - テスト実行は .NET 10 SDK の Microsoft.Testing.Platform 移行により `dotnet test` が未対応のため実施できず（既存の制約）。
 
 ---
+
+## [2026-06-18] 08:37 MainMenu天気表示への気象庁概要予報ToolTip追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：MainMenuView.xaml の天気表示エリアで、気象庁 `overview_forecast/{地域コード}.json` の詳細情報をToolTip表示する。既存 `WeatherRegion` とは別に、環境設定で気象庁の地域コードを固定リストから選択できるようにする。
+### 実施内容
+- CvWpfclient/AppGlobal.cs: `JmaWeatherAreaCode` を追加し、実行時設定更新でも `WeatherRegion` と独立して保持できるように変更。
+- CvWpfclient/Models/ClientSettingsDocument.cs, CvWpfclient/Services/SystemSettingsStore.cs, CvWpfclient/appsettings.json: `Application:JmaWeatherAreaCode` を追加し、デフォルトを東京都 `130000` として `clientsettings.json` へ保存可能にした。
+- CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs, CvWpfclient/Views/00System/SysSetConfigView.xaml: 気象庁予報区の固定コードリストとComboBoxを追加し、一覧外コードは東京へフォールバックするようにした。
+- CvWpfclient/ViewModels/MainMenuViewModel.cs, CvWpfclient/Views/MainMenuView.xaml: 気象庁概要予報JSONを既存天気更新と同じ初回/30分タイマー/設定反映後のタイミングで直接HTTP取得し、天気表示エリアのToolTipへ整形表示するようにした。
+### 技術決定 Why
+- 既存 `WeatherRegion` はOpenWeatherMap/gRPCの現在天気表示で使用されているため、気象庁の府県予報区コードは `JmaWeatherAreaCode` として別設定に分離した。
+- 気象庁概要予報は単純なHTTP JSON取得で足りるため、既存 `IWeatherService` へ混ぜず、MainMenu側で独立して取得する構成にした。
+### 確認
+- `https://anko.education/webapi/jma` の予報区コード表と `https://www.jma.go.jp/bosai/forecast/data/overview_forecast/130000.json` のJSON形式を確認。
+- `MainMenuView.xaml` / `SysSetConfigView.xaml` をXML parseし、構文エラーなしを確認。
+- `git diff --check` で空白エラーなしを確認。
+- 編集ファイルがUTF-8 BOMなし / CRLFであることを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+
+---

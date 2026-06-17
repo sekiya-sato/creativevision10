@@ -39,11 +39,13 @@ public static class AppGlobal {
 	}
 	public static string FitPosition => _config?["Application:FitPosition"] ?? "Center";
 	public static string WeatherRegion => _config?["Application:WeatherRegion"] ?? "Tokyo";
+	public static string JmaWeatherAreaCode => _config?["Application:JmaWeatherAreaCode"] ?? "130000";
 	public static int Limit => int.TryParse(_config?["Application:Limit"], out var limit) ? limit : 100; // デフォルトは100件
 	public static ClientApplication Application => new ClientApplication {
 		LoginId = _config?["Application:LoginId"] ?? string.Empty,
 		LoginPass = _config?["Application:LoginPass"] ?? string.Empty,
 		WeatherRegion = WeatherRegion,
+		JmaWeatherAreaCode = JmaWeatherAreaCode,
 		FitPosition = FitPosition,
 		Limit = Limit
 	};
@@ -137,7 +139,7 @@ public static class AppGlobal {
 	/// <param name="loginId"></param>
 	/// <param name="loginPass"></param>
 	/// <exception cref="InvalidOperationException"></exception>
-	public static void UpdateConfigValues(string? url = null, string? loginId = null, string? loginPass = null, string? weatherRegion = null, string? fitPosition = null, int? limit = null) {
+	public static void UpdateConfigValues(string? url = null, string? loginId = null, string? loginPass = null, string? weatherRegion = null, string? fitPosition = null, int? limit = null, string? jmaWeatherAreaCode = null) {
 		if (_config == null) {
 			throw new InvalidOperationException("AppGlobal has not been initialized. Call Init() at application startup.");
 		}
@@ -153,6 +155,9 @@ public static class AppGlobal {
 		}
 		if (weatherRegion != null) {
 			_config["Application:WeatherRegion"] = weatherRegion;
+		}
+		if (jmaWeatherAreaCode != null) {
+			_config["Application:JmaWeatherAreaCode"] = jmaWeatherAreaCode;
 		}
 		if (fitPosition != null) {
 			_config["Application:FitPosition"] = fitPosition;
