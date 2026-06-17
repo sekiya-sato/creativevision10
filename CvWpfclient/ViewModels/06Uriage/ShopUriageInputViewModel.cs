@@ -159,6 +159,37 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	[RelayCommand]
+	void DoInputBarcode() {
+		var win = new Views.Sub.InputBarcodeView();
+		if (win.DataContext is not InputBarcodeViewModel vm) return;
+		if (ClientLib.ShowDialogView(win, this) != true) return;
+
+		ApplyBarcodeMeisai(vm.CreateMeisaiRows(CurrentEdit.Kubun));
+	}
+
+	void ApplyBarcodeMeisai(IEnumerable<Tran99Meisai> rows) {
+		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;
+		foreach (var row in rows) {
+			var existing = EditMeisai.FirstOrDefault(m =>
+				!string.IsNullOrWhiteSpace(row.JanCode) &&
+				string.Equals(m.JanCode, row.JanCode, StringComparison.OrdinalIgnoreCase));
+			if (existing != null) {
+				existing.Su += row.Su;
+				SelectedMeisai = existing;
+				continue;
+			}
+
+			row.No = nextNo++;
+			row.Kubun = CurrentEdit.Kubun;
+			row.Kingaku = row.Su * row.Tanka;
+			row.PropertyChanged += OnMeisaiPropertyChanged;
+			EditMeisai.Add(row);
+			SelectedMeisai = row;
+		}
+		UpdateTotals();
+	}
+
+	[RelayCommand]
 	void DoSelectTenpo() {
 		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType>=0", "Code", startPos: CurrentEdit.Id_Tenpo);
 		if (tokui == null) return;

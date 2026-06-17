@@ -1,0 +1,200 @@
+<helpers:BaseWindow x:Class="CvWpfclient.Views.Sub.InputBarcodeView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
+	Title="バーコード入力"
+	Width="1120" Height="680"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	FontSize="18" TextOptions.TextFormattingMode="Display"
+	WindowStartupLocation="CenterOwner"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:InputBarcodeViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="FormLabel"
+			TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="Medium" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+			<Setter Property="Margin" Value="4,0,8,0" />
+		</Style>
+		<Style x:Key="FormTextBox"
+			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
+			TargetType="TextBox">
+			<Setter Property="Margin" Value="0,4" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+		</Style>
+		<Style x:Key="GridRightTextBlock"
+			TargetType="TextBlock">
+			<Setter Property="TextAlignment" Value="Right" />
+			<Setter Property="Padding" Value="0,0,6,0" />
+		</Style>
+		<Style x:Key="GridRightTextBox"
+			TargetType="TextBox">
+			<Setter Property="HorizontalContentAlignment" Value="Right" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Padding" Value="0,0,6,0" />
+		</Style>
+	</helpers:BaseWindow.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button MinWidth="96"
+						Command="{Binding DoOkCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+								Kind="Check" />
+							<TextBlock Text="確定" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						IsCancel="True"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="閉じる">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						Margin="0,0,8,0" VerticalAlignment="Center"
+						Kind="BarcodeScan" />
+					<TextBlock VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="バーコード入力" />
+					<TextBlock Margin="24,0,0,0" VerticalAlignment="Center"
+						FontSize="14" Opacity="0.75"
+						Text="{Binding Message}" />
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<Border Grid.Row="1"
+			Padding="16,10"
+			Background="{DynamicResource MaterialDesignToolBarBackground}">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="360" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+
+				<TextBlock Grid.Column="0"
+					Style="{StaticResource FormLabel}"
+					Text="バーコード読取" />
+				<TextBox x:Name="BarcodeTextBox"
+					Grid.Column="1"
+					Height="44"
+					materialDesign:HintAssist.Hint="バーコード"
+					Style="{StaticResource FormTextBox}"
+					Text="{Binding BarcodeText, UpdateSourceTrigger=PropertyChanged}">
+					<TextBox.InputBindings>
+						<KeyBinding Command="{Binding AddBarcodeCommand}"
+							Key="Enter" />
+					</TextBox.InputBindings>
+				</TextBox>
+				<Button Grid.Column="2"
+					Width="44" Height="44"
+					Margin="8,4,0,4" Padding="0"
+					Command="{Binding AddBarcodeCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="読取追加">
+					<materialDesign:PackIcon Kind="Plus" />
+				</Button>
+
+				<StackPanel Grid.Column="4"
+					VerticalAlignment="Center" Orientation="Horizontal">
+					<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="{Binding Count, StringFormat={}行数: {0:N0}}" />
+					<TextBlock Margin="18,0,0,0"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="{Binding TotalSu, StringFormat={}数量: {0:N0}}" />
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<DataGrid Grid.Row="2"
+			Margin="12"
+			d:ItemsSource="{d:SampleData ItemCount=5}"
+			materialDesign:DataGridAssist.CellPadding="12,6"
+			materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="False"
+			CanUserAddRows="False" CanUserDeleteRows="False" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
+			HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+			IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+			ItemsSource="{Binding ListData}"
+			SelectedItem="{Binding Current}"
+			SelectionMode="Single"
+			Style="{StaticResource MaterialDesignDataGrid}">
+			<DataGrid.ColumnHeaderStyle>
+				<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+					TargetType="{x:Type DataGridColumnHeader}">
+					<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+					<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+					<Setter Property="Padding" Value="12,8" />
+					<Setter Property="FontWeight" Value="SemiBold" />
+				</Style>
+			</DataGrid.ColumnHeaderStyle>
+			<DataGrid.Columns>
+				<DataGridTextColumn Width="160"
+					Binding="{Binding Barcode}"
+					Header="バーコード" />
+				<DataGridTextColumn Width="80"
+					Binding="{Binding Su, StringFormat={}{0:N0}}"
+					ElementStyle="{StaticResource GridRightTextBlock}"
+					Header="数量" />
+				<DataGridTextColumn Width="90"
+					Binding="{Binding Tanka, StringFormat={}{0:N0}}"
+					ElementStyle="{StaticResource GridRightTextBlock}"
+					Header="単価" />
+				<DataGridTextColumn Width="100"
+					Binding="{Binding IdShohin}"
+					ElementStyle="{StaticResource GridRightTextBlock}"
+					Header="商品Id" />
+				<DataGridTextColumn Width="110"
+					Binding="{Binding CodeShohin}"
+					Header="商品Cd" />
+				<DataGridTextColumn Width="220"
+					Binding="{Binding MeiShohin}"
+					Header="商品名" />
+				<DataGridTextColumn Width="90"
+					Binding="{Binding IdCol}"
+					ElementStyle="{StaticResource GridRightTextBlock}"
+					Header="色Id" />
+				<DataGridTextColumn Width="90"
+					Binding="{Binding CodeCol}"
+					Header="色CD" />
+				<DataGridTextColumn Width="160"
+					Binding="{Binding MeiCol}"
+					Header="色名" />
+				<DataGridTextColumn Width="100"
+					Binding="{Binding IdSiz}"
+					ElementStyle="{StaticResource GridRightTextBlock}"
+					Header="サイズId" />
+				<DataGridTextColumn Width="100"
+					Binding="{Binding CodeSiz}"
+					Header="サイズCd" />
+				<DataGridTextColumn Width="160"
+					Binding="{Binding MeiSiz}"
+					Header="サイズ名" />
+			</DataGrid.Columns>
+		</DataGrid>
+	</Grid>
+</helpers:BaseWindow>

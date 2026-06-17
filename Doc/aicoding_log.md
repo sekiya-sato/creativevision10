@@ -435,3 +435,26 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-17] 12:14 店舗売上入力バーコード入力追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ShopUriageInputView の「明細削除」ボタンの隣に「バーコード入力」ボタンを追加し、バーコード読取画面で JAN を読み込んだ行を店舗売上明細へ反映する。
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 明細操作ボタン行に「バーコード入力」ボタンを追加。
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: バーコード入力画面の起動、確定行の明細反映、同一 JanCode 明細の数量加算、明細金額と伝票合計の再計算を追加。
+- CvWpfclient/ViewModels/Sub/InputBarcodeViewModel.cs: `DerivedShohinColSiz` の `Jan1` / `Jan2` / `Jan3` 完全一致検索、`MasterShohin` 取得、同一バーコード時の数量加算、確定用 `Tran99Meisai` 変換を実装。
+- CvWpfclient/Views/Sub/InputBarcodeView.xaml: 「バーコード読取」ラベル、バーコード TextBox、読取結果 DataGrid、確定ボタンを持つ BaseWindow 画面を追加。
+- CvWpfclient/Views/Sub/InputBarcodeView.xaml.cs: 初期表示時にバーコード TextBox へフォーカスする code-behind を追加。
+### 技術決定 Why
+- 商品名と単価は `MasterShohin`、色サイズと JAN 判定は `DerivedShohinColSiz` を使い、既存の商品選択・色サイズ選択と同じ現行DB構造に合わせた。
+- 親画面の `EditMeisai` が明細編集と合計計算の責務を持つため、バーコード画面は `Tran99Meisai` 候補を返し、親 ViewModel 側で行No採番、既存 JanCode への数量加算、合計再計算を行う構成にした。
+### 確認
+- `CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml` と `CvWpfclient/Views/Sub/InputBarcodeView.xaml` をXMLとして読み込み、構文エラーなしを確認。
+- `git diff --check` で空白エラーなしを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+
+---
