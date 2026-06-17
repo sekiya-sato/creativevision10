@@ -1,3 +1,4 @@
+using CvWpfclient.Helpers;
 using CvWpfclient.Services;
 using CvWpfclient.ViewModels;
 using System.Windows;
@@ -24,6 +25,7 @@ public partial class MainMenuView : Window {
 
 	private void MainMenuView_Closed(object? sender, EventArgs e) {
 		App.MainThemeService.MainThemeChanged -= OnMainThemeChanged;
+		ClientLib.ExitAllWithoutMe(DataContext);
 		Closed -= MainMenuView_Closed;
 	}
 
