@@ -484,3 +484,20 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run --project Tests/TestServer/TestServer.csproj --no-build"` で MSTest 6 件成功を確認。
 
 ---
+
+## [2026-06-17] 15:35 CvServer shutdown try/catch簡潔化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：CvServer の `Program.cs` 173行目 `app.Lifetime.ApplicationStopping.Register` の冗長な try/catch を簡潔にする。
+### 実施内容
+- CvServer/Program.cs: `ApplicationStopping` の shutdown checkpoint、DB close、SQLite pool cleanup の例外処理を `RunShutdownStep` に集約し、ネストした try/catch を削減。
+### 技術決定 Why
+- checkpoint、DB close、pool cleanup を停止時の独立したステップとして扱い、checkpoint 失敗時も close と pool cleanup が続行できる構成を維持しながら、同じ警告ログ形式で例外を扱うため。
+### 確認
+- `git diff --check` で空白エラーなしを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+
+---

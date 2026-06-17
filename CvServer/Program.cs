@@ -15,7 +15,6 @@ using Grpc.Net.Compression;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using NLog.Web;
@@ -171,10 +170,11 @@ app.Lifetime.ApplicationStarted.Register(() => {
 });
 
 app.Lifetime.ApplicationStopping.Register(() => {
-	try {
+	RunShutdownStep("SQLite shutdown DB 処理", () => {
 		using var scope = app.Services.CreateScope();
 		var database = scope.ServiceProvider.GetRequiredService<ExDatabase>();
-		try {
+
+		RunShutdownStep("SQLite shutdown checkpoint の実行", () => {
 			var checkpointResult = database.RawExecCmd(sqliteShutdownCheckpointSql).FirstOrDefault();
 			if (checkpointResult?.TryGetValue("Error", out var checkpointError) == true) {
 				logger.LogWarning("SQLite shutdown checkpoint でエラーが返されました: {Error}", checkpointError);
@@ -186,28 +186,20 @@ app.Lifetime.ApplicationStopping.Register(() => {
 					checkpointResult.TryGetValue("log", out var log) ? log : 0,
 					checkpointResult.TryGetValue("checkpointed", out var checkpointed) ? checkpointed : 0);
 			}
-		}
-		finally {
-			try {
-				database.Close();
-			}
-			catch (Exception ex) {
-				logger.LogWarning(ex, "SQLite 接続の shutdown close に失敗しました。");
-			}
-		}
+		});
+		RunShutdownStep("SQLite 接続の shutdown close", database.Close);
+	});
+	RunShutdownStep("SQLite pool cleanup の shutdown 実行", CvBaseSqlite.ExDatabaseOption.ClearAllPools);
+});
+
+void RunShutdownStep(string operation, Action action) {
+	try {
+		action();
 	}
 	catch (Exception ex) {
-		logger.LogWarning(ex, "SQLite shutdown checkpoint の実行に失敗しました。");
+		logger.LogWarning(ex, "{Operation} に失敗しました。", operation);
 	}
-	finally {
-		try {
-			SqliteConnection.ClearAllPools();
-		}
-		catch (Exception ex) {
-			logger.LogWarning(ex, "SQLite pool cleanup の shutdown 実行に失敗しました。");
-		}
-	}
-});
+}
 
 
 
