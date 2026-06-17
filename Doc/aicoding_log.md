@@ -501,3 +501,27 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
 
 ---
+
+## [2026-06-17] 16:16 ExDatabaseOption.ClearPools() の WAL/SHM クリーンアップ整理
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SQLite 終了時に db-shm / db-wal が残らないように、CvBaseSqlite の ExDatabaseOption.ClearPools() を改変し、.db のみが残る状態にする。
+### 実施内容
+- CvBaseSqlite/ExDatabaseOption.cs: ClearPools(string) の制御フローを整理。
+  - 接続文字列または DB ファイル名の両方を受け付ける GetDatabasePath() による実 DB パス解決を維持。
+  - PRAGMA optimize を pool クリア前に実行。
+  - SqliteConnection.ClearAllPools() で pooled 接続を解放。
+  - Pooling=False の専用接続で PRAGMA wal_checkpoint(TRUNCATE) → PRAGMA journal_mode=DELETE を実行し WAL を収束。
+  - ロックが外れた後に -wal / -shm をリトライ付きで削除。
+### 技術決定 Why
+- ExDatabaseSqlite.GetDbConn() は Pooling=True / Cache=Shared / WAL 有効化のため、終了時に db のみに戻すには pool クリア後に非 pooled 接続で checkpoint と journal_mode=DELETE を行い、ファイルハンドルが完全に解放されてから sidecar を削除する必要があるため。
+- 既存呼び出し（CvServer/Program.cs の ClearPools(connStr)）に合わせ、文字列引数が接続文字列でもファイル名でも動作する形を維持。
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvBaseSqlite/CvBaseSqlite.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+- テスト実行は .NET 10 SDK の Microsoft.Testing.Platform 移行により `dotnet test` が未対応のため実施できず（既存の制約）。
+
+---
