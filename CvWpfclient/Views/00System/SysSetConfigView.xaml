@@ -5,7 +5,7 @@
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
 	Title="システム設定"
-	Width="760" Height="740"
+	Width="760" Height="790"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FocusManager.FocusedElement="{Binding ElementName=UrlTextBox}"
 	FontSize="16"
@@ -75,7 +75,7 @@
 
 		<ScrollViewer Grid.Row="1"
 			VerticalScrollBarVisibility="Auto">
-			<materialDesign:Card Margin="18" Padding="24"
+			<materialDesign:Card Margin="10" Padding="12"
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid>
 					<Grid.RowDefinitions>
@@ -137,10 +137,10 @@
 						Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
 
 					<Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
-						Margin="0,18,0,18" />
+						Margin="0,18,0,6" />
 
 					<StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
-						Margin="0,0,0,12"
+						Margin="0,0,0,6"
 						Orientation="Horizontal">
 						<materialDesign:PackIcon Width="24" Height="24"
 							VerticalAlignment="Center"
