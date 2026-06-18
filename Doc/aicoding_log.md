@@ -572,3 +572,27 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
 
 ---
+
+## [2026-06-18] 12:03 DB定義書出力画面追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：printform/SysTableSpec.qfm のフォーマットを使い、旧システムからの出力CSVおよび出力例を参考に、00System/SysTableSpecViewModel.cs、00System/SysTableSpecView.xaml、00System/SysTableSpecView.xaml.cs を作成する。PrintMasterShainCardView を参考にし、サーバから取得したテーブル一覧を複数選択Windowで選択して印刷する。MenuData には「汎用マスタメンテ」の下へ追加し、commit まで行う。
+### 実施内容
+- CvWpfclient/ViewModels/00System/SysTableSpecViewModel.cs: サーバの `Msg042_GetTableList` でテーブル一覧を取得し、既存 `SelectMultiWinView` で複数選択したテーブルのモデル定義から `SysTableSpec.qfm` 用の11列CSVを生成するViewModelを追加。
+- CvWpfclient/Views/00System/SysTableSpecView.xaml: `PrintMasterShainCardView` と同じ `BaseWindow` / F6印刷構成で、テーブル複数選択と印刷実行を行う画面を追加。
+- CvWpfclient/Views/00System/SysTableSpecView.xaml.cs: 画面初期化用code-behindを追加。
+- CvWpfclient/Models/MenuData.cs: 「管理メニュー / テスト画面」の「汎用マスタメンテ」直下に「DB定義書出力」を追加。
+- printform/SysTableSpec.qfm: 旧システムのDB定義書フォーマットとして印刷フォームに追加。
+### 技術決定 Why
+- テーブル一覧取得は既存 `Msg042_GetTableList` を利用し、サーバ側APIを増やさずに既存の複数選択Windowへローカルデータとして渡す構成にした。
+- 印刷データは旧CSVの11列構成に合わせ、フィールド定義行とインデックス定義行を `PrintByCsvParam` で qfm に渡すことで、既存の印刷サーバ経路をそのまま使う構成にした。
+### 確認
+- `SysTableSpecView.xaml` をXML parseし、構文エラーなしを確認。
+- `python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\SysTableSpec.qfm` は、旧フォーム由来のページ位置が標準A4縦テンプレートと異なるため position 警告で終了することを確認。
+- `git diff --check` で空白エラーなしを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+
+---

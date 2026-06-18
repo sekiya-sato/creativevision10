@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<script language="JavaScript">//////////////////////////////////////////////////////////////////////
+// PrintStream FormEditor Generated Script
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// QFM object
+// このオブジェクトがフォームファイルを示します。フォームファイルに定義され
+// る情報は、すべてこのオブジェクトを基点にして取得、設定を行います。
+var qfm	= GetQfm();
+
+//////////////////////////////////////////////////////////////////////
+// Cursor object
+// カーソルはFormEditorで指定した印刷データに対してオープンされ、１件目の
+// レコードに位置付けられています。
+// このカーソルは印刷データの種類や形式によらず、同じように利用できます。
+var cursor	= qfm.GetCursor();
+
+//////////////////////////////////////////////////////////////////////
+// Cursor members
+// カーソルに含まれる列に対応する変数です。この変数はカーソルオブジェクトか
+// らGetValue()メソッドにより印刷データの値を取得する領域として利用
+// されます。
+var dtitem1;
+var dtitem2;
+var dtitem3;
+var dtitem4;
+var dtitem5;
+var dtitem6;
+var dtitem7;
+var dtitem8;
+var dtitem9;
+var dtitem10;
+var dtitem11;
+
+//////////////////////////////////////////////////////////////////////
+// Parameter value
+// 実行パラメータの値が格納されます。この値はFormEditorで設定したデフォルト
+// 値、またはFormWriterのコマンドラインで指定した値となります。
+
+//////////////////////////////////////////////////////////////////////
+// Field object
+// 各フィールドを示すオブジェクトです。オブジェクトのプロパティを操作するこ
+// とによりさまざまな表現を動的に指定する事ができます。
+var page	= qfm.GetPage();
+var fdRgn01	= page.GetField(&quot;Rgn01&quot;);
+var fdRec01	= page.GetField(&quot;Rec01&quot;);
+var fdRec02	= page.GetField(&quot;Rec02&quot;);
+var fdRec03	= page.GetField(&quot;Rec03&quot;);
+var fdTxt12	= page.GetField(&quot;Txt12&quot;);
+var fdTxt13	= page.GetField(&quot;Txt13&quot;);
+var fdTxt64	= page.GetField(&quot;Txt64&quot;);
+var fdTxt65	= page.GetField(&quot;Txt65&quot;);
+var fdTxt09	= page.GetField(&quot;Txt09&quot;);
+var fdTxt19	= page.GetField(&quot;Txt19&quot;);
+var fdTxt42	= page.GetField(&quot;Txt42&quot;);
+var fdTxt21	= page.GetField(&quot;Txt21&quot;);
+var fdTxt16	= page.GetField(&quot;Txt16&quot;);
+var fdTxt17	= page.GetField(&quot;Txt17&quot;);
+var fdTxt22	= page.GetField(&quot;Txt22&quot;);
+
+//////////////////////////////////////////////////////////////////////
+// Static Field object
+// 定数フィールドを示すオブジェクトです。
+var fdTxt01	= page.GetField(&quot;Txt01&quot;);
+var fdTxt27	= page.GetField(&quot;Txt27&quot;);
+var fdTxt28	= page.GetField(&quot;Txt28&quot;);
+var fdTxt29	= page.GetField(&quot;Txt29&quot;);
+var fdTxt32	= page.GetField(&quot;Txt32&quot;);
+var fdTxt38	= page.GetField(&quot;Txt38&quot;);
+var fdTxt18	= page.GetField(&quot;Txt18&quot;);
+var fdTxt14	= page.GetField(&quot;Txt14&quot;);
+var fdTxt20	= page.GetField(&quot;Txt20&quot;);
+
+//////////////////////////////////////////////////////////////////////
+// OnFormLoad()関数は、フォームファイルをロードして印刷準備が整ったときに、
+// FormWriterエンジンより1回だけ呼び出されます。この関数には、フォームの初
+// 期値を変更するなど、アプリケーション固有の初期化を記述します。また、独自
+// にcursorをループさせて、すべての印刷処理を記述する事もできます。
+function OnFormLoad() {
+
+// 初期設定例
+//	fdTxt12.value	= &quot;固有の初期値&quot;;
+
+	var recs	= 0;	// レコードカウンタ
+	while( !cursor.IsEod() ) {
+
+		// 印刷データの取得
+		dtitem1	= cursor.GetValue(&quot;item1&quot;);
+		dtitem2	= cursor.GetValue(&quot;item2&quot;);
+		dtitem3	= cursor.GetValue(&quot;item3&quot;);
+		dtitem4	= cursor.GetValue(&quot;item4&quot;);
+		dtitem5	= cursor.GetValue(&quot;item5&quot;);
+		dtitem6	= cursor.GetValue(&quot;item6&quot;);
+		dtitem7	= cursor.GetValue(&quot;item7&quot;);
+		dtitem8	= cursor.GetValue(&quot;item8&quot;);
+		dtitem9	= cursor.GetValue(&quot;item9&quot;);
+		dtitem10	= cursor.GetValue(&quot;item10&quot;);
+		dtitem11	= cursor.GetValue(&quot;item11&quot;);
+
+
+		// キーブレイク処理
+		cursor.PrepareKeyBreak();
+
+		// グループの後に行う処理
+		if( recs &gt; 0 ) {
+			// キーブレイクに改ページ指定がある場合の処理
+			if( cursor.pageBreak ) {
+				page.PageChange();
+			}
+		}
+
+		// 集計処理を行う
+		recs++;
+		cursor.CalculateTotal();
+
+		page.AssignData();
+
+
+		// インデックス定義のとき
+		if(dtitem9 == &quot;1&quot;) {
+			fdTxt27.visible = 0;
+			fdTxt64.visible = 0;
+			fdTxt28.value = &quot;インデックス名&quot;;
+			fdTxt32.value = &quot;プライマリキー&quot;;
+			fdTxt18.value = &quot;ユニークキー&quot;;
+			fdTxt29.value = &quot;対象フィールド&quot;;
+			fdTxt38.visible = 0;
+			fdTxt09.visible = 0;
+			//dtitem6 = dtitem7; //カラム名を入れなおし
+		} else {
+			fdTxt27.visible = 1;
+			fdTxt64.visible = 1;
+			fdTxt28.value = &quot;フィールド名&quot;;
+			fdTxt32.value = &quot;型&quot;;
+			fdTxt18.value = &quot;長さ&quot;;
+			//fdTxt29.value = &quot;デフォルト値&quot;;
+			fdTxt29.value = &quot;&quot;;
+			fdTxt38.visible = 0;
+			fdTxt09.visible = 0;
+		}
+
+
+		fdTxt65.value	= dtitem3;
+		fdTxt19.value	= dtitem7;
+		//fdTxt19.value	= dtitem6;
+		fdTxt42.value	= dtitem4;
+		fdTxt21.value	= dtitem5;
+		fdTxt16.value	= dtitem1;
+		fdTxt17.value	= dtitem2;
+		fdTxt22.value	= dtitem8;
+		fdTxt64.value   = dtitem11;
+
+		fdRec01.Write();
+
+		cursor.MoveNext();
+	}
+
+	if( recs &gt; 0 ) {
+		page.PageChange();
+	}
+	qfm.End();	// End()メソッドにより印刷処理は停止します。
+}
+</script>
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1">
+				<group level="1" pagechange="1"/>
+				<position offset="0" length="14"/>
+			</item>
+			<item id="item2">
+				<position offset="0" length="4"/>
+			</item>
+			<item id="item3">
+				<position offset="0" length="14"/>
+			</item>
+			<item id="item4">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item5">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item6"/>
+			<item id="item7">
+				<position offset="0" length="7"/>
+			</item>
+			<item id="item8">
+				<position offset="0" length="16"/>
+			</item>
+			<item id="item9">
+				<group level="2" pagechange="1"/>
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item10"/>
+			<item id="item11">
+				<position offset="0" length="1"/>
+			</item>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+		</file>
+	</datadesc>
+	<page orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="Form1" tree="1">
+		<position x="12" y="12" width="152" height="268"/>
+		<text id="Txt01" valign="middle" halign="center">
+			<position x="46" y="0" width="48" height="7"/>
+			<color base="97f2ff" transparent="0"/>
+			<border bottom="10"/>
+			<data calctype="static">☆ テーブル定義書 ☆</data>
+			<decode datatype="string" format=""/>
+			<font size="120" style="1"/>
+		</text>
+		<text id="Txt12" valign="middle">
+			<position x="97" y="1" width="40" height="5"/>
+			<color transparent="1"/>
+			<data calctype="date"/>
+			<decode datatype="date" format="&quot;出力日付: &quot;YYYY/MM/DD HH24:MI:SS"/>
+			<font size="90"/>
+		</text>
+		<text id="Txt13" valign="middle" halign="right">
+			<position x="137" y="1" width="12" height="5"/>
+			<color transparent="1"/>
+			<data calctype="page"/>
+			<decode datatype="number" format="&quot;P.&quot;0999"/>
+			<font size="90"/>
+		</text>
+		<region id="Rgn01" direction="0" tree="1">
+			<position x="0" y="18" width="150" height="244"/>
+			<color transparent="1"/>
+			<border left="1" right="1" top="1" bottom="1"/>
+			<record id="Rec01" tree="1">
+				<position x="0" y="4" width="150" height="4"/>
+				<color transparent="1"/>
+				<border left="1" right="1" top="4"/>
+				<text id="Txt64" valign="middle">
+					<position x="0" y="0" width="4" height="4"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" datasrc="item11"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt65" valign="middle">
+					<position x="5" y="0" width="37" height="4"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" suppress="1" datasrc="item3"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt09" valign="middle">
+					<position x="120" y="0" width="30" height="4"/>
+					<color transparent="1"/>
+					<border left="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt19" valign="middle">
+					<position x="93" y="0" width="26" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item7"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt42" valign="middle">
+					<position x="43" y="0" width="24" height="4"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" datasrc="item4"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt21" valign="middle">
+					<position x="68" y="0" width="24" height="4"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" datasrc="item5"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+			</record>
+			<record id="Rec02" recordtype="1" tree="1">
+				<position x="0" y="0" width="150" height="4"/>
+				<color base="c8ffc8" transparent="0"/>
+				<border left="1" right="1" top="1" bottom="10"/>
+				<text id="Txt27" valign="middle">
+					<position x="0" y="0" width="4" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<border right="1"/>
+					<data calctype="static">No</data>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt28" valign="middle">
+					<position x="5" y="0" width="37" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<border right="1"/>
+					<data calctype="static">フィールド名</data>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt29" valign="middle">
+					<position x="93" y="0" width="26" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt32" valign="middle">
+					<position x="43" y="0" width="24" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<border right="1"/>
+					<data calctype="static">型</data>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt38" valign="middle">
+					<position x="120" y="0" width="30" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<border left="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt18" valign="middle">
+					<position x="68" y="0" width="24" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<border right="1"/>
+					<data calctype="static">長さ</data>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+			</record>
+			<record id="Rec03" recordtype="3" adjusttype="5" tree="1">
+				<position x="0" y="8" width="150" height="4"/>
+				<color transparent="1"/>
+				<border top="1"/>
+			</record>
+		</region>
+		<text id="Txt14" valign="middle">
+			<position x="0" y="9" width="17" height="4"/>
+			<color base="c8ffc8" transparent="0"/>
+			<border left="1" right="1" top="1" bottom="1"/>
+			<data calctype="static">オブジェクト名</data>
+			<decode datatype="string" format=""/>
+			<font size="80"/>
+		</text>
+		<text id="Txt16" valign="middle">
+			<position x="17" y="9" width="58" height="4"/>
+			<color transparent="0"/>
+			<border left="1" right="1" top="1" bottom="1"/>
+			<data calctype="item" datasrc="item1"/>
+			<decode datatype="string" format=""/>
+			<font size="80"/>
+		</text>
+		<text id="Txt20" valign="middle">
+			<position x="76" y="9" width="14" height="4"/>
+			<color base="c8ffc8" transparent="0"/>
+			<border left="1" right="1" top="1" bottom="1"/>
+			<data calctype="static">スキーマ名</data>
+			<decode datatype="string" format=""/>
+			<font size="80"/>
+		</text>
+		<text id="Txt17" valign="middle">
+			<position x="90" y="9" width="60" height="4"/>
+			<color transparent="0"/>
+			<border left="1" right="1" top="1" bottom="1"/>
+			<data calctype="item" datasrc="item2"/>
+			<decode datatype="string" format=""/>
+			<font size="80"/>
+		</text>
+		<text id="Txt22" valign="middle">
+			<position x="0" y="14" width="24" height="4"/>
+			<color transparent="0"/>
+			<border left="4" right="4" top="4" bottom="4"/>
+			<data calctype="item" datasrc="item8"/>
+			<decode datatype="string" format=""/>
+			<font size="80" style="1"/>
+		</text>
+	</page>
+</printstream>
