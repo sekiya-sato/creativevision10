@@ -1100,9 +1100,7 @@ public sealed partial class TranHhtData : BaseDbClass {
 	/// 棚番	文字	10
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(10)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string tanaNo = string.Empty;
+	int tanaNo = 0;
 	/// <summary>
 	/// 関連伝票NO	数値	8
 	/// </summary>
@@ -1120,6 +1118,20 @@ public sealed partial class TranHhtData : BaseDbClass {
 	[property: ColumnSizeDml(8)]
 	[property: System.ComponentModel.DefaultValue("")]
 	string nouhinDay = string.Empty;
+	/// <summary>
+	/// JANコード1	文字	13
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(13)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string jan1 = string.Empty;
+	/// <summary>
+	/// JANコード2	文字	13
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(13)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string jan2 = string.Empty;
 	/// <summary>
 	/// 予備03	文字	20
 	/// </summary>

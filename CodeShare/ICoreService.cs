@@ -169,16 +169,6 @@ public enum CvFlag {
 	[EnumMember]
 	Msg710_StreamingTest = 7710,
 	/// <summary>
-	/// データベースのクローズ
-	/// </summary>
-	[EnumMember]
-	Msg798_DatabaseClose = 7991,
-	/// <summary>
-	/// データベースの再オープン
-	/// </summary>
-	[EnumMember]
-	Msg799_DatabaseReOpen = 7992,
-	/// <summary>
 	/// Abs()がこの値より大きいものはエラー
 	/// [Values where Abs() exceeds this value are errors]
 	/// </summary>

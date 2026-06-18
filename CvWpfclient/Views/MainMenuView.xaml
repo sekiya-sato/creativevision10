@@ -352,8 +352,7 @@
 							Margin="0,10,0,0">
 							<StackPanel.ToolTip>
 								<ToolTip MaxWidth="560">
-									<TextBlock
-										Text="{Binding JmaWeatherOverviewToolTip}"
+									<TextBlock Text="{Binding JmaWeatherOverviewToolTip}"
 										TextWrapping="Wrap" />
 								</ToolTip>
 							</StackPanel.ToolTip>

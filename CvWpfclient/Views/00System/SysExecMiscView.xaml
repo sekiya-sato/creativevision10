@@ -57,26 +57,26 @@
 						Orientation="Horizontal">
 						<Button Width="200" Height="42"
 							Margin="0,0,12,12"
-							Command="{Binding TestDatabaseCloseCommand}"
+							Command="{Binding Test01Command}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							Style="{StaticResource MaterialDesignRaisedButton}">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="DatabaseRemove" />
 								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="DB接続切断" />
+									Text="環境変数取得" />
 							</StackPanel>
 						</Button>
 						<Button Width="200" Height="42"
 							Margin="0,0,12,12"
-							Command="{Binding TestDatabaseReOpenCommand}"
+							Command="{Binding Test02Command}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							Style="{StaticResource MaterialDesignRaisedButton}">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="DatabaseRefresh" />
 								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="DB接続再開" />
+									Text="Testケース02" />
 							</StackPanel>
 						</Button>
 					</WrapPanel>

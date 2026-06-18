@@ -67,14 +67,6 @@ public partial class CoreService {
 		}
 		return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(resultData));
 	}
-	private CvMsg HandlerDatabaseClose(CvMsg request, CallContext context) {
-		_db.Close();
-		return CreateSuccessResponse(request.Flag, typeof(string), "Database closed successfully.");
-	}
-	private CvMsg HandlerDatabaseReOpen(CvMsg request, CallContext context) {
-		_db.Open();
-		return CreateSuccessResponse(request.Flag, typeof(string), "Database reopened successfully.");
-	}
 	/// <summary>
 	/// Query系の処理
 	/// </summary>

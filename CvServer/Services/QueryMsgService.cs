@@ -43,8 +43,6 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg700_Test_Start] = (req, ctx) => NotImplementedTask(req, ctx),
 			[CvFlag.Msg701_TestCase001] = (req, ctx) => NotImplementedTask(req, ctx),
 			[CvFlag.Msg702_TestCase002] = (req, ctx) => NotImplementedTask(req, ctx),
-			[CvFlag.Msg798_DatabaseClose] = (req, ctx) => HandlerDatabaseClose(req, ctx),
-			[CvFlag.Msg799_DatabaseReOpen] = (req, ctx) => HandlerDatabaseReOpen(req, ctx),
 		};
 	}
 	// Product : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更

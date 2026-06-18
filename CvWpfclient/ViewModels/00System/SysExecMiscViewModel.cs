@@ -15,8 +15,8 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 	private bool isProcessing;
 
 	[RelayCommand(IncludeCancelCommand = true)]
-	public async Task TestDatabaseClose(CancellationToken cancellationToken) {
-		if (MessageEx.ShowQuestionDialog("データベース接続を切断しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+	public async Task Test01(CancellationToken cancellationToken) {
+		if (MessageEx.ShowQuestionDialog("環境変数取得？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
 		}
 		try {
@@ -24,7 +24,7 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			cancellationToken.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg798_DatabaseClose };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg003_GetEnv };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply?.DataMsg != null && reply?.DataType != null) {
 				ResultMessage = reply.DataMsg;
@@ -43,8 +43,8 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 	}
 
 	[RelayCommand(IncludeCancelCommand = true)]
-	public async Task TestDatabaseReOpen(CancellationToken cancellationToken) {
-		if (MessageEx.ShowQuestionDialog("データベース接続を再開しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+	public async Task Test02(CancellationToken cancellationToken) {
+		if (MessageEx.ShowQuestionDialog("Testケース02？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
 		}
 		try {
@@ -52,7 +52,7 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			cancellationToken.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg799_DatabaseReOpen };
+			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg702_TestCase002 };
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
 			if (reply?.DataMsg != null && reply?.DataType != null) {
 				ResultMessage = reply.DataMsg;
