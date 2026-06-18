@@ -1,21 +1,40 @@
-## [YYYY-MM-DD] hh:mm 作業タイトル
+## [2026-05-25] 16:13 CvBaseデータベース定義ドキュメント作成
 ### Agent
-- [使用した AI Model 名 : AI Provider 名]
+- GPT-5 : OpenAI
 ### Editor
-- [使用したエディタ: 不明な場合は"VS2026", 例 "VS2026", "VSCode", "OpenCode", "GitHubCopilot-Cli"]
+- Codex
 ### 目的
-- ユーザーからの要望：[内容]
+- ユーザーからの要望：CvBase プロジェクトで定義されている `[PrimaryKey]` や `[Comment]` 属性付きテーブル群を整理し、データベースのドキュメントを作成する
 ### 実施内容
-- [プロジェクト名]/[ファイル名]: [変更内容の要約]
+- Doc/spec/spec.database.cvbase.md: CvBase の属性付きテーブル 29 件を、システム・マスター・トランザクション・集計・派生に分類し、共通基底列、作成状態、主キー、KeyDml、主要固有列、定義元を整理
+- .sisyphus/2026-05-25_cvbase_database_doc.md: 調査方針と抽出結果の作業メモを作成
+- Doc/aicording_log.md: 本作業ログを追記
 ### 技術決定 Why
-- [例: ProtobufのOrder欠番を避けるため、既存のFlag定義を維持しつつ新機能を追加した]
-### 影響範囲 (省略可)
-- 大規模変更の場合は影響範囲を明記。修正したファイルのみの場合は省略
+- `DefineDataTable.Initialize()` の `CreateTable` 対象と `CreateDerivedTable<T>()` 対象を分けることで、属性上のテーブル候補と実際の初期作成対象の差分を確認しやすくするため
 ### 確認
-- [Buildした結果を確認。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
+- `Doc/spec/spec.database.cvbase.md` 内の対象テーブル行が 29 件であることを確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvBase/CvBase.csproj"` でビルド成功を確認（warning 0 / error 0）
 
 ---
 
+## [2026-05-23] 18:23 WAL checkpoint busy判定ログ調整
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvServer SchedulerService を使った SQLite WAL checkpoint 追加について、Oracle レビューで指摘された busy 状態の扱いを反映し、commit まで完了する
+### 実施内容
+- CvServer/Services/SchedulerService.cs: `wal_checkpoint(TRUNCATE)` の戻り値から `busy/log/checkpointed` を long として取り出す helper を追加し、`busy > 0` の場合は成功ログではなく警告ログを出すよう調整
+- Doc/aicording_log.md: Oracle レビュー反映の追補ログを追記
+### 技術決定 Why
+- SQLite の `wal_checkpoint(TRUNCATE)` は例外なく戻っても `busy > 0` なら未反映フレームが残り得るため、完了ログと同一扱いにすると運用時の解釈が甘くなる。成功と一部保留をログレベルで分けることで、定期メンテナンス結果を正しく観測できるようにした
+### 確認
+- `dotnet run --project "Tests/TestServer/TestServer.csproj"` で TestServer のテスト 5 件成功を再確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を再確認
+
+---
 
 ## [2026-05-23] 18:12 SQLite WAL checkpointの定期実行追加
 ### Agent
@@ -39,21 +58,23 @@
 
 ---
 
-## [2026-05-23] 18:23 WAL checkpoint busy判定ログ調整
+## [2026-05-19] 14:00 DatePickerTodayButtonBehaviorのMaterialDesign表示修正
 ### Agent
-- GPT-5.4 : OpenAI
+- GPT-5 : OpenAI
 ### Editor
-- OpenCode
+- Codex
 ### 目的
-- ユーザーからの要望：CvServer SchedulerService を使った SQLite WAL checkpoint 追加について、Oracle レビューで指摘された busy 状態の扱いを反映し、commit まで完了する
+- ユーザーからの要望：CvWpfclient で DatePickerTodayButtonBehavior を使うとカレンダーポップアップ上部の表示部分が見えないため、標準の MaterialDesign DatePicker のように正常表示される形へ修正し、commit まで進める
 ### 実施内容
-- CvServer/Services/SchedulerService.cs: `wal_checkpoint(TRUNCATE)` の戻り値から `busy/log/checkpointed` を long として取り出す helper を追加し、`busy > 0` の場合は成功ログではなく警告ログを出すよう調整
-- Doc/aicording_log.md: Oracle レビュー反映の追補ログを追記
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: CalendarStyle の ControlTemplate 差し替えを廃止し、DatePicker が生成した標準 Calendar を維持したまま Popup 下部に「今日」ボタンを追加する方式へ変更。ポップアップを閉じた時点で標準 Calendar を Popup 直下へ戻し、再オープン時に改めてフッターを差し込むよう整理
+- CvWpfclient/Resources/UICalendar.xaml: Calendar 全体テンプレートを削除し、「今日」ボタン用フッターの Border スタイルだけを残す構成へ変更
+- Doc/aicording_log.md: 本作業ログを追記
 ### 技術決定 Why
-- SQLite の `wal_checkpoint(TRUNCATE)` は例外なく戻っても `busy > 0` なら未反映フレームが残り得るため、完了ログと同一扱いにすると運用時の解釈が甘くなる。成功と一部保留をログレベルで分けることで、定期メンテナンス結果を正しく観測できるようにした
+- 上部表示欠けの原因は、MaterialDesign の Calendar テンプレート全体を独自テンプレートで置き換えていたため、標準 DatePicker の選択日ヘッダー表示が崩れていたこと。テンプレートを再定義せず、標準 Calendar をそのまま使うことで MaterialDesign の表示仕様を維持しつつ、「今日」ボタンだけを追加できるようにした
 ### 確認
-- `dotnet run --project "Tests/TestServer/TestServer.csproj"` で TestServer のテスト 5 件成功を再確認
-- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` で CvServer のビルド成功（0 warnings / 0 errors）を再確認
+- `git diff --check` で空白エラーなしを確認
+- PowerShell の `[xml](Get-Content -Raw)` で `UICalendar.xaml` と `ShopUriageInputView.xaml` の XML 整形式を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は起動中の `CreativeVision10.exe` が出力 EXE をロックしてコピー工程で失敗したため、`/p:UseAppHost=false` 付きで再実行しビルド成功（0 warnings / 0 errors）を確認
 
 ---
 
@@ -165,6 +186,28 @@
 
 ---
 
+## [2026-05-18] 17:21 メインテーマ切替時のウィンドウアイコン反映修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：インストールした実環境でメインテーマ切替時にウィンドウアイコンが切り替わらない件を修正し、`CvWpfclient/CvWpfclient.csproj` と `MainMenuView` / テーマリソースのアイコン反映経路を確認して、Velopack 配布後も切り替わる形にする
+### 実施内容
+- CvWpfclient/CvWpfclient.csproj: `cv10-*.ico` が WPF Resource として定義され、`CreativeVision10.g.resources` に埋め込まれることを確認。配布後の loose file 依存を避けるため既存の Resource 指定を維持
+- CvWpfclient/Resources/UIMainTheme.*.xaml: `WindowIcon` の `UriSource` を `/cv10-*.ico` から `pack://application:,,,/cv10-*.ico` へ変更し、EXE 内 WPF Resource を明示参照するよう修正
+- CvWpfclient/Services/MainThemeService.cs: メインテーマ適用時に `WindowIcon` リソースへ対象テーマの `BitmapFrame` を明示設定し、既存 Window が参照するアイコンリソースを更新する処理を追加
+- CvWpfclient/Views/MainMenuView.xaml.cs: `MainThemeChanged` を購読し、テーマ切替時に `Window.Icon` を明示再設定する処理を追加
+### 技術決定 Why
+- 原因は、テーマ辞書内の相対的なアイコン URI と `DynamicResource` のみでは、Velopack 配布後の実環境で既存 Window の shell アイコン更新まで確実に伝播しない可能性があるため。アイコンは `csproj` の WPF Resource として EXE に埋め込まれているため、`pack://application:,,,/` で明示参照し、テーマ変更イベントで `Window.Icon` を再設定する構成にした
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- PowerShell の `[xml](Get-Content -Raw)` で `MainMenuView.xaml` と `UIMainTheme.*.xaml` の XML 整形式を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+- `CreativeVision10.g.resources` に `cv10-default.ico` / `cv10-green.ico` / `cv10-orange.ico` / `cv10-red.ico` / `cv10-purple.ico` / `cv10.ico` が含まれることを確認
+
+---
+
 ## [2026-05-18] 17:00 ストリーミング進捗処理の重複統合
 ### Agent
 - GitHub Copilot : OpenAI
@@ -186,6 +229,24 @@
 ### 確認
 - Visual Studio コンテキストの `run_build` でワークスペースのビルド成功を確認
 - `dotnet build "Cv.slnx"` は実行環境からソリューションファイルを直接解決できず MSB1009 となったため、観測を記録したうえで Visual Studio コンテキストのビルド結果を採用
+
+---
+
+## [2026-05-18] 15:34 SysLoginViewのレイアウト調整
+### Agent
+- GPT-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の SysLoginView で、ID のTextBox枠を半分幅にし、"パス暗号化"ボタンをパスワードTextBoxの下へ移動し、作成日と修正日を1行表示からそれぞれ別行表示へ変更する。write-log と commit まで実行する
+### 実施内容
+- CvWpfclient/Views/00System/SysLoginView.xaml: ID表示TextBoxを幅150の左寄せに変更し、パス暗号化ボタンをパスワード直下へ移動、作成日・修正日をそれぞれ独立した行へ分割して日時Converter付きで表示するよう修正
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 既存の2列GridとMaterialDesignスタイルを崩さず最小差分で要望を反映するため、既存項目のGrid.Rowだけを後方へシフトしてボタン位置を入れ替え、日付表示は単一MultiBindingから個別Bindingへ分離した
+### 確認
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse(r'CvWpfclient/Views/00System/SysLoginView.xaml'); print('XAML XML parse OK')"` で XAML の XML 整形式を確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
 
@@ -237,6 +298,25 @@
 ### 確認
 - `python3 -c "import xml.etree.ElementTree as ET; files=['CvWpfclient/Views/MainMenuView.xaml','CvWpfclient/Resources/UIMainTheme.Default.xaml','CvWpfclient/Resources/UIMainTheme.Green.xaml','CvWpfclient/Resources/UIMainTheme.Orange.xaml','CvWpfclient/Resources/UIMainTheme.Red.xaml','CvWpfclient/Resources/UIMainTheme.Purple.xaml']; [ET.parse(f) for f in files]; print('XAML XML parse OK')"` で変更XAMLのXML整形式を確認
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
+## [2026-05-12] 18:05 SelectShohinView検索条件領域のScrollViewer対応
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclient/Views/Sub/SelectShohinView.xaml の ScrollViewer 対応を行い、検索条件領域をスクロール可能にする。修正、確認、log、1-commitまで一連で実行する
+### 実施内容
+- CvWpfclient/Views/Sub/SelectShohinView.xaml: 検索モードカード内の検索条件 `UniformGrid` と補足文を `ScrollViewer` 配下へ移し、下部の戻る・一覧表示ボタンは固定行として維持するよう行構成を整理
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 画面高さが不足した場合でも検索条件を縦スクロールでき、確定操作ボタンは常にカード下部に残すため。既存のバインディングや検索処理には手を入れず、Viewのレイアウト変更だけに限定した
+### 確認
+- `git diff --check` で空白エラーなしを確認
+- PowerShell の `[xml](Get-Content -Raw)` で `SelectShohinView.xaml` のXML整形式を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認（warning 0 / error 0）
 
 ---
 
@@ -353,6 +433,80 @@
 
 ---
 
+## [2026-05-04] 16:06 CvServer の不要な System.Text.Encoding.CodePages 参照削除
+### Agent
+- GitHub Copilot : OpenAI
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：CvServer で不要になっている `System.Text.Encoding.CodePages` 参照を削除し、write-log と commit まで実施する
+### 実施内容
+- CvServer/CvServer.csproj: `net10.0` で不要となった `System.Text.Encoding.CodePages` の `PackageReference` を削除
+- Directory.Packages.props: 上記参照削除に伴い未使用となった `System.Text.Encoding.CodePages` の中央管理バージョン定義を削除
+- Doc/aicording_log.md: 今回の作業記録を追記
+### 技術決定 Why
+- .NET 10 ではフレームワーク提供ライブラリに対する不要な直接 `PackageReference` が `NU1510` の対象となるため、SJIS 利用コードは維持したまま不要参照だけを削除して依存関係を簡素化した
+### 確認
+- `dotnet build "C:\gitroot\documents\new2022\cv10\CvServer\CvServer.csproj"` でビルド成功を確認
+
+---
+
+## [2026-05-01] 12:28 SelectWinViewヘッダー右側への合計件数表示追加
+### Agent
+- gpt-5.4 / gemini-3.1-pro-preview : github-copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`SelectWinView` のヘッダ部分で、現在の「選択画面」テキストエリアの右側に `合計件数{0}` を3桁区切り表示したい。View および ViewModel を修正し、write-log と commit まで行いたい
+### 実施内容
+- CvWpfclient/Views/Sub/SelectWinView.xaml: 上段 `ColorZone` ヘッダの `Title` 右側へ `Count` バインドの件数表示を追加し、表示書式を `合計件数{0:N0}` に変更。内側カードヘッダは既存の選択中項目表示だけを維持する構成へ戻した
+- CvWpfclient/ViewModels/Sub/SelectWinViewModel.cs: `ListData` 差し替え時に `CollectionChanged` の購読を張り替え、コレクション件数の増減に応じて `Count` が自動更新されるよう修正。初期化経路の重複 `Count` 代入は削除した
+### 技術決定 Why
+- ユーザー指定の「選択画面」テキストエリア右側という位置に合わせるため、件数表示は内側カード見出しではなく上段 `ColorZone` タイトル行へ置くのが最も素直で差分も小さいため
+- ViewModel 側は単なる表示用プロパティ追加ではなく、既存 `Count` を `ListData` の差し替え・増減に追従させることで、将来のコレクション変更でも表示件数がずれないようにしたため
+### 確認
+- `python3 -c "import xml.etree.ElementTree as ET; ET.parse(r'CvWpfclient/Views/Sub/SelectWinView.xaml'); print('XML_OK')"` で XAML の XML 整形式を確認
+- `lsp_diagnostics` で `CvWpfclient/ViewModels/Sub/SelectWinViewModel.cs` に問題がないことを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認（CodeShare.dll の一時ロック警告は再試行後に解消）
+
+---
+
+## [2026-04-30] 16:01 MessageBoxViewの初期フォーカスを最も左側の表示ボタンに変更
+### Agent
+- gpt-5.4 / gemini-3.1-pro-preview : github-copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MessageBoxViewの表示時、初期フォーカスを最も左側に表示されているボタンへ設定する。
+### 実施内容
+- CvWpfclient/Helpers/MessageBoxView.xaml.cs: SetupButton内の個別のFocus指定を削除し、一括で左から順(LeftButton -> MiddleButton -> RightButton)に表示・有効・フォーカス可能状態を確認してフォーカスを当てる処理をDispatcher.InvokeAsync(DispatcherPriority.Loaded)にて追加。
+### 技術決定 Why
+- 画面描画後の適切なタイミング(Loaded時)で、左端から順に表示・操作可能なボタンへ確実にフォーカスを当てるため。以前のDefaultResultに依存するフォーカス制御を排除。
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を再実行し、warning 0 / error 0 でビルド成功を確認。
+
+---
+
+## [2026-04-30] 15:06 Creative Vision 10 全体仕様書のGoogle Document作成
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：プロジェクトの全体仕様書を Google Document に作成する
+### 実施内容
+- Google Drive/Creative Vision 10 全体仕様書: `readme.md`、`setup.md`、`creativevision10.slnx`、`Directory.Packages.props`、`graphify-out/GRAPH_REPORT.md`、主要な `CodeShare` / `CvServer` / `CvWpfclient` / `CvBase` / `CvDomainLogic` / `Tests` を確認し、全体仕様書を新規 Google Document として作成
+- .sisyphus/20260430_google_doc_project_spec.md: 参照情報と作成方針の作業メモを作成
+- Doc/aicording_log.md: 本作業ログを追記
+### 技術決定 Why
+- 全体仕様書は実装の詳細を単一画面・単一モジュールから推測せず、既存 README、graphify の中核ノード、ソリューション構成、契約定義、サーバ起動設定、WPF メニュー構成、DB 定義、ドメインロジック、テストから横断的に根拠を集める必要があるため
+### 確認
+- Google Docs connector の `get_document_text` で、作成先 documentId `1ilMF9Zr7RsTe6gidqexQrHqqzt7_UEHszybAYksQY2s`、タイトル `Creative Vision 10 全体仕様書`、tabId `t.0`、本文 17 章の `HEADING_1` 見出しを確認
+- Google Drive の `text/html` エクスポートで、タイトル、h1 見出し、本文フォント、章順が HTML 構造として出力されることを確認
+- コード変更はないため、dotnet build は未実行
+
+---
+
 ## [2026-04-30] 12:30 SchedulerService を使った毎日AM2:00のMSg050_Summary集計スケジュール実装
 ### Agent
 - big-pickle : OpenCode : Sisyphus
@@ -369,24 +523,6 @@
 - CvServer プロジェクト内の 2 ファイル（IScheduler.cs, SchedulerService.cs）の変更
 ### 確認
 - CvServer プロジェクトのビルドが 0 警告・0 エラーで成功（dotnet build CvServer/CvServer.csproj）
-
----
-
-## [2026-05-04] 16:06 CvServer の不要な System.Text.Encoding.CodePages 参照削除
-### Agent
-- GitHub Copilot : OpenAI
-### Editor
-- VS2026
-### 目的
-- ユーザーからの要望：CvServer で不要になっている `System.Text.Encoding.CodePages` 参照を削除し、write-log と commit まで実施する
-### 実施内容
-- CvServer/CvServer.csproj: `net10.0` で不要となった `System.Text.Encoding.CodePages` の `PackageReference` を削除
-- Directory.Packages.props: 上記参照削除に伴い未使用となった `System.Text.Encoding.CodePages` の中央管理バージョン定義を削除
-- Doc/aicording_log.md: 今回の作業記録を追記
-### 技術決定 Why
-- .NET 10 ではフレームワーク提供ライブラリに対する不要な直接 `PackageReference` が `NU1510` の対象となるため、SJIS 利用コードは維持したまま不要参照だけを削除して依存関係を簡素化した
-### 確認
-- `dotnet build "C:\gitroot\documents\new2022\cv10\CvServer\CvServer.csproj"` でビルド成功を確認
 
 ---
 
@@ -468,6 +604,24 @@
 
 ---
 
+## [2026-04-28] 16:42 メインメニュー温度チャートの軸線透明度調整
+### Agent
+- gemini-3.1-pro-preview : github-copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenu の気温グラフで、X/Y軸の線を transparent 80% まで薄くし、確認・ログ・commit まで完了したい
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `ApplyForecastTheme` でテーマ連動の `textColor` から `separatorColor = textColor.WithAlpha(51)` を生成し、`ForecastXAxes` / `ForecastYAxes` の `SeparatorsPaint` に適用して軸線だけを 20% 不透明度（80%透明）へ調整
+### 技術決定 Why
+- `LiveChartsCore` の仕様に従い、ラベル用（`LabelsPaint`）とグリッド用（`SeparatorsPaint`）でペイントオブジェクトを分け、既存テーマカラーの透過度（Alpha）のみを変更する最小限の修正とした
+### 影響範囲
+- メインメニューの天気予報チャート表示のみ
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認
+
+---
+
 ## [2026-04-28] 16:20 MainMenuViewの気温グラフ表示調整
 ### Agent
 - gpt-5.4 : github-copilot
@@ -506,6 +660,7 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認
 
 ---
+
 ## [2026-04-23] 17:52 ClientSettingsStore の部分更新保存対応
 ### Agent
 - gpt-5.4 : OpenAI
@@ -526,6 +681,7 @@
 - Oracle / QA 再レビューで、未知 JSON 保持、非オブジェクト中間ノードでの fail-fast、空欄ログイン値の非上書き、URL変更時の再起動設定保持を確認
 
 ---
+
 ## [2026-04-23] 16:44 MainMenuView の下段ボタン横スクロール不具合修正
 ### Agent
 - GitHub Copilot : OpenAI
@@ -543,6 +699,7 @@
 - `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true` でビルド成功を確認。
 
 ---
+
 ## [2026-04-23] 16:16 MainMenuView の下段操作ボタン横スクロール対応
 ### Agent
 - gpt-5.4 : OpenAI
@@ -559,6 +716,7 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
 
 ---
+
 ## [2026-04-20] 15:55 MasterShohinMenteView の商品画像表示エリアのはみ出し改善
 ### Agent
 - gpt-5.4 : OpenAI
@@ -574,6 +732,7 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
 
 ---
+
 ## [2026-04-20] 14:21 MainMenuViewModel のログ出力元クラス名修正
 ### Agent
 - gpt-5.4 : OpenAI
@@ -589,6 +748,7 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
 
 ---
+
 ## [2026-04-17] 00:08 MainMenuの気温チャート縦軸目盛り表示修正
 ### Agent
 - gpt-5.4 : OpenAI
@@ -605,6 +765,7 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認。
 
 ---
+
 ## [2026-04-16] 12:00 専用の郵便番号検索結果選択ダイアログの実装
 ### Agent
 - gemini-3.1-pro-preview : github-copilot
@@ -621,177 +782,3 @@
 - 既存のSelectWinViewModelはdynamic型やBaseDbClassに依存しており、API通信用データ(PostalAddressItem)のUI表示で型安全性を失っていたため。専用VMとViewを作成し、直接バインディングすることで型安全を確保しつつUIも2カラムに最適化した。
 ### 確認
 - `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド成功を確認。
-
----
-
-## [2026-04-28] 16:42 メインメニュー温度チャートの軸線透明度調整
-### Agent
-- gemini-3.1-pro-preview : github-copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：MainMenu の気温グラフで、X/Y軸の線を transparent 80% まで薄くし、確認・ログ・commit まで完了したい
-### 実施内容
-- CvWpfclient/ViewModels/MainMenuViewModel.cs: `ApplyForecastTheme` でテーマ連動の `textColor` から `separatorColor = textColor.WithAlpha(51)` を生成し、`ForecastXAxes` / `ForecastYAxes` の `SeparatorsPaint` に適用して軸線だけを 20% 不透明度（80%透明）へ調整
-### 技術決定 Why
-- `LiveChartsCore` の仕様に従い、ラベル用（`LabelsPaint`）とグリッド用（`SeparatorsPaint`）でペイントオブジェクトを分け、既存テーマカラーの透過度（Alpha）のみを変更する最小限の修正とした
-### 影響範囲
-- メインメニューの天気予報チャート表示のみ
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認
-
----
-## [2026-04-30] 15:06 Creative Vision 10 全体仕様書のGoogle Document作成
-### Agent
-- GPT-5 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：プロジェクトの全体仕様書を Google Document に作成する
-### 実施内容
-- Google Drive/Creative Vision 10 全体仕様書: `readme.md`、`setup.md`、`creativevision10.slnx`、`Directory.Packages.props`、`graphify-out/GRAPH_REPORT.md`、主要な `CodeShare` / `CvServer` / `CvWpfclient` / `CvBase` / `CvDomainLogic` / `Tests` を確認し、全体仕様書を新規 Google Document として作成
-- .sisyphus/20260430_google_doc_project_spec.md: 参照情報と作成方針の作業メモを作成
-- Doc/aicording_log.md: 本作業ログを追記
-### 技術決定 Why
-- 全体仕様書は実装の詳細を単一画面・単一モジュールから推測せず、既存 README、graphify の中核ノード、ソリューション構成、契約定義、サーバ起動設定、WPF メニュー構成、DB 定義、ドメインロジック、テストから横断的に根拠を集める必要があるため
-### 確認
-- Google Docs connector の `get_document_text` で、作成先 documentId `1ilMF9Zr7RsTe6gidqexQrHqqzt7_UEHszybAYksQY2s`、タイトル `Creative Vision 10 全体仕様書`、tabId `t.0`、本文 17 章の `HEADING_1` 見出しを確認
-- Google Drive の `text/html` エクスポートで、タイトル、h1 見出し、本文フォント、章順が HTML 構造として出力されることを確認
-- コード変更はないため、dotnet build は未実行
-
----
-
-## [2026-04-30] 16:01 MessageBoxViewの初期フォーカスを最も左側の表示ボタンに変更
-### Agent
-- gpt-5.4 / gemini-3.1-pro-preview : github-copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：MessageBoxViewの表示時、初期フォーカスを最も左側に表示されているボタンへ設定する。
-### 実施内容
-- CvWpfclient/Helpers/MessageBoxView.xaml.cs: SetupButton内の個別のFocus指定を削除し、一括で左から順(LeftButton -> MiddleButton -> RightButton)に表示・有効・フォーカス可能状態を確認してフォーカスを当てる処理をDispatcher.InvokeAsync(DispatcherPriority.Loaded)にて追加。
-### 技術決定 Why
-- 画面描画後の適切なタイミング(Loaded時)で、左端から順に表示・操作可能なボタンへ確実にフォーカスを当てるため。以前のDefaultResultに依存するフォーカス制御を排除。
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を再実行し、warning 0 / error 0 でビルド成功を確認。
-
----
-
-## [2026-05-01] 12:28 SelectWinViewヘッダー右側への合計件数表示追加
-### Agent
-- gpt-5.4 / gemini-3.1-pro-preview : github-copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`SelectWinView` のヘッダ部分で、現在の「選択画面」テキストエリアの右側に `合計件数{0}` を3桁区切り表示したい。View および ViewModel を修正し、write-log と commit まで行いたい
-### 実施内容
-- CvWpfclient/Views/Sub/SelectWinView.xaml: 上段 `ColorZone` ヘッダの `Title` 右側へ `Count` バインドの件数表示を追加し、表示書式を `合計件数{0:N0}` に変更。内側カードヘッダは既存の選択中項目表示だけを維持する構成へ戻した
-- CvWpfclient/ViewModels/Sub/SelectWinViewModel.cs: `ListData` 差し替え時に `CollectionChanged` の購読を張り替え、コレクション件数の増減に応じて `Count` が自動更新されるよう修正。初期化経路の重複 `Count` 代入は削除した
-### 技術決定 Why
-- ユーザー指定の「選択画面」テキストエリア右側という位置に合わせるため、件数表示は内側カード見出しではなく上段 `ColorZone` タイトル行へ置くのが最も素直で差分も小さいため
-- ViewModel 側は単なる表示用プロパティ追加ではなく、既存 `Count` を `ListData` の差し替え・増減に追従させることで、将来のコレクション変更でも表示件数がずれないようにしたため
-### 確認
-- `python3 -c "import xml.etree.ElementTree as ET; ET.parse(r'CvWpfclient/Views/Sub/SelectWinView.xaml'); print('XML_OK')"` で XAML の XML 整形式を確認
-- `lsp_diagnostics` で `CvWpfclient/ViewModels/Sub/SelectWinViewModel.cs` に問題がないことを確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認（CodeShare.dll の一時ロック警告は再試行後に解消）
-
----
-
-## [2026-05-12] 18:05 SelectShohinView検索条件領域のScrollViewer対応
-### Agent
-- GPT-5 : OpenAI
-### Editor
-- Codex
-### 目的
-- ユーザーからの要望：CvWpfclient/Views/Sub/SelectShohinView.xaml の ScrollViewer 対応を行い、検索条件領域をスクロール可能にする。修正、確認、log、1-commitまで一連で実行する
-### 実施内容
-- CvWpfclient/Views/Sub/SelectShohinView.xaml: 検索モードカード内の検索条件 `UniformGrid` と補足文を `ScrollViewer` 配下へ移し、下部の戻る・一覧表示ボタンは固定行として維持するよう行構成を整理
-- Doc/aicording_log.md: 本作業ログを追記
-### 技術決定 Why
-- 画面高さが不足した場合でも検索条件を縦スクロールでき、確定操作ボタンは常にカード下部に残すため。既存のバインディングや検索処理には手を入れず、Viewのレイアウト変更だけに限定した
-### 確認
-- `git diff --check` で空白エラーなしを確認
-- PowerShell の `[xml](Get-Content -Raw)` で `SelectShohinView.xaml` のXML整形式を確認
-- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功を確認（warning 0 / error 0）
-
----
-
-## [2026-05-18] 15:34 SysLoginViewのレイアウト調整
-### Agent
-- GPT-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvWpfclient の SysLoginView で、ID のTextBox枠を半分幅にし、"パス暗号化"ボタンをパスワードTextBoxの下へ移動し、作成日と修正日を1行表示からそれぞれ別行表示へ変更する。write-log と commit まで実行する
-### 実施内容
-- CvWpfclient/Views/00System/SysLoginView.xaml: ID表示TextBoxを幅150の左寄せに変更し、パス暗号化ボタンをパスワード直下へ移動、作成日・修正日をそれぞれ独立した行へ分割して日時Converter付きで表示するよう修正
-- Doc/aicording_log.md: 本作業ログを追記
-### 技術決定 Why
-- 既存の2列GridとMaterialDesignスタイルを崩さず最小差分で要望を反映するため、既存項目のGrid.Rowだけを後方へシフトしてボタン位置を入れ替え、日付表示は単一MultiBindingから個別Bindingへ分離した
-### 確認
-- `python3 -c "import xml.etree.ElementTree as ET; ET.parse(r'CvWpfclient/Views/00System/SysLoginView.xaml'); print('XAML XML parse OK')"` で XAML の XML 整形式を確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
-
----
-
-## [2026-05-18] 17:21 メインテーマ切替時のウィンドウアイコン反映修正
-### Agent
-- GPT-5 : OpenAI
-### Editor
-- Codex
-### 目的
-- ユーザーからの要望：インストールした実環境でメインテーマ切替時にウィンドウアイコンが切り替わらない件を修正し、`CvWpfclient/CvWpfclient.csproj` と `MainMenuView` / テーマリソースのアイコン反映経路を確認して、Velopack 配布後も切り替わる形にする
-### 実施内容
-- CvWpfclient/CvWpfclient.csproj: `cv10-*.ico` が WPF Resource として定義され、`CreativeVision10.g.resources` に埋め込まれることを確認。配布後の loose file 依存を避けるため既存の Resource 指定を維持
-- CvWpfclient/Resources/UIMainTheme.*.xaml: `WindowIcon` の `UriSource` を `/cv10-*.ico` から `pack://application:,,,/cv10-*.ico` へ変更し、EXE 内 WPF Resource を明示参照するよう修正
-- CvWpfclient/Services/MainThemeService.cs: メインテーマ適用時に `WindowIcon` リソースへ対象テーマの `BitmapFrame` を明示設定し、既存 Window が参照するアイコンリソースを更新する処理を追加
-- CvWpfclient/Views/MainMenuView.xaml.cs: `MainThemeChanged` を購読し、テーマ切替時に `Window.Icon` を明示再設定する処理を追加
-### 技術決定 Why
-- 原因は、テーマ辞書内の相対的なアイコン URI と `DynamicResource` のみでは、Velopack 配布後の実環境で既存 Window の shell アイコン更新まで確実に伝播しない可能性があるため。アイコンは `csproj` の WPF Resource として EXE に埋め込まれているため、`pack://application:,,,/` で明示参照し、テーマ変更イベントで `Window.Icon` を再設定する構成にした
-### 確認
-- `git diff --check` で空白エラーなしを確認
-- PowerShell の `[xml](Get-Content -Raw)` で `MainMenuView.xaml` と `UIMainTheme.*.xaml` の XML 整形式を確認
-- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
-- `CreativeVision10.g.resources` に `cv10-default.ico` / `cv10-green.ico` / `cv10-orange.ico` / `cv10-red.ico` / `cv10-purple.ico` / `cv10.ico` が含まれることを確認
-
----
-
-## [2026-05-19] 14:00 DatePickerTodayButtonBehaviorのMaterialDesign表示修正
-### Agent
-- GPT-5 : OpenAI
-### Editor
-- Codex
-### 目的
-- ユーザーからの要望：CvWpfclient で DatePickerTodayButtonBehavior を使うとカレンダーポップアップ上部の表示部分が見えないため、標準の MaterialDesign DatePicker のように正常表示される形へ修正し、commit まで進める
-### 実施内容
-- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: CalendarStyle の ControlTemplate 差し替えを廃止し、DatePicker が生成した標準 Calendar を維持したまま Popup 下部に「今日」ボタンを追加する方式へ変更。ポップアップを閉じた時点で標準 Calendar を Popup 直下へ戻し、再オープン時に改めてフッターを差し込むよう整理
-- CvWpfclient/Resources/UICalendar.xaml: Calendar 全体テンプレートを削除し、「今日」ボタン用フッターの Border スタイルだけを残す構成へ変更
-- Doc/aicording_log.md: 本作業ログを追記
-### 技術決定 Why
-- 上部表示欠けの原因は、MaterialDesign の Calendar テンプレート全体を独自テンプレートで置き換えていたため、標準 DatePicker の選択日ヘッダー表示が崩れていたこと。テンプレートを再定義せず、標準 Calendar をそのまま使うことで MaterialDesign の表示仕様を維持しつつ、「今日」ボタンだけを追加できるようにした
-### 確認
-- `git diff --check` で空白エラーなしを確認
-- PowerShell の `[xml](Get-Content -Raw)` で `UICalendar.xaml` と `ShopUriageInputView.xaml` の XML 整形式を確認
-- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は起動中の `CreativeVision10.exe` が出力 EXE をロックしてコピー工程で失敗したため、`/p:UseAppHost=false` 付きで再実行しビルド成功（0 warnings / 0 errors）を確認
-
----
-
-## [2026-05-25] 16:13 CvBaseデータベース定義ドキュメント作成
-### Agent
-- GPT-5 : OpenAI
-### Editor
-- Codex
-### 目的
-- ユーザーからの要望：CvBase プロジェクトで定義されている `[PrimaryKey]` や `[Comment]` 属性付きテーブル群を整理し、データベースのドキュメントを作成する
-### 実施内容
-- Doc/spec/spec.database.cvbase.md: CvBase の属性付きテーブル 29 件を、システム・マスター・トランザクション・集計・派生に分類し、共通基底列、作成状態、主キー、KeyDml、主要固有列、定義元を整理
-- .sisyphus/2026-05-25_cvbase_database_doc.md: 調査方針と抽出結果の作業メモを作成
-- Doc/aicording_log.md: 本作業ログを追記
-### 技術決定 Why
-- `DefineDataTable.Initialize()` の `CreateTable` 対象と `CreateDerivedTable<T>()` 対象を分けることで、属性上のテーブル候補と実際の初期作成対象の差分を確認しやすくするため
-### 確認
-- `Doc/spec/spec.database.cvbase.md` 内の対象テーブル行が 29 件であることを確認
-- `git diff --check` で空白エラーなしを確認
-- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvBase/CvBase.csproj"` でビルド成功を確認（warning 0 / error 0）
-
----

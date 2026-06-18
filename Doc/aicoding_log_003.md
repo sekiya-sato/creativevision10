@@ -1,37 +1,3 @@
-# AI Coding Log
-
-このファイルは、Creative Vision 10プロジェクトにおけるAI支援開発の作業履歴を記録します。
-
-## 使用するAIツール
-- **GitHub Copilot**: インライン補完、クイックフィックス、小規模編集（VS2026統合）
-- **OpenCode**: 大規模機能実装、複数ファイル編集、ドキュメント作成（CLI）
-
-## 記録フォーマット
-```markdown
-## [YYYY-MM-DD] hh:mm 作業タイトル
-### Agent
-- [使用した AI Model 名 : AI Provider 名]
-  例: claude-sonnet-4.5 : GitHub-Copilot
-      gpt-5.4 : OpenAI
-### Editor
-- [使用したエディタ]
-  例: OpenCode, VS2026, VSCode, GitHubCopilot-Cli
-### 目的
-- ユーザーからの要望：[内容]
-### 実施内容
-- [プロジェクト名]/[ファイル名]: [変更内容の要約]
-### 技術決定 Why
-- [技術的判断の理由]
-### 確認
-- [Build結果やテスト結果]
-```
-
-## アーカイブルール
-- 800行を超える場合、既存履歴を `aicording_log_[001-999].md` として連番保存
-- 新規に `aicording_log.md` を作成して記録を継続
-
----
-
 ## [2026-04-16] 18:46 MainTheme表示名追加と左メニュー背景の対象外化
 ### Agent
 - gpt-5.4 : OpenAI
@@ -132,6 +98,104 @@
 - ユーザーが再起動後も同じ見た目を使えるよう、既存の ClientSettingsStore に Theme を保存する形で永続化した。
 ### 確認
 - MainMenu 関連 XAML を `check-xaml` 相当で確認し、構文エラー・未定義リソースなしを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
+
+---
+
+## [2026-04-15] 16:57 git履歴の統合
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：今日の変更履歴のうち `在庫更新処理の準備` から `集計処理を仮追加` までを 1 commit にまとめたい
+### 実施内容
+- `.sisyphus/rebase_master_20260415.txt`: 公開履歴書き換えの対象 commit と実施方針をメモとして記録
+- `.sisyphus/git_sequence_editor_20260415.py`: `01c9398` `d304750` `0eb9e15` を squash する interactive rebase 用スクリプトを作成
+- `.sisyphus/git_sequence_editor_reword_20260415.py`: 修正後の commit message を再調整するための rebase 用スクリプトを作成
+- `.sisyphus/git_reword_editor_20260415.py`: reword 実行時の commit message を自動設定するための editor スクリプトを作成
+- `git history`: `在庫更新処理の準備` と 2 件の `集計処理を仮追加` を 1 件の `在庫更新処理の準備と集計処理を仮追加` に統合し、後続の `NLOG系の設定を見直し` と `商品マスタメンテのタブ名称を変更` を維持したまま `origin/master` へ `--force-with-lease` で反映
+### 技術決定 Why
+- 公開済みの `master` 履歴を書き換える要件だったため、復旧可能性を残すために backup branch を先に作成し、そのうえで対象範囲だけを interactive rebase で最小限に組み替えた
+- 単純な `reset` では後続 commit の再適用管理が雑になりやすいため、対象 3 件のみを squash し、後続 2 件をそのまま積み直す手順を採用した
+### 確認
+- `git log --oneline --decorate --graph -n 6` で履歴を確認し、`f24d3f8 在庫更新処理の準備と集計処理を仮追加` の上に `9d8068e NLOG系の設定を見直し`、`f0b86b2 商品マスタメンテのタブ名称を変更` が並ぶことを確認
+- `git push --force-with-lease origin master` 実行済み
+
+---
+
+## [2026-04-14] 17:56 サーバURL変更時のNLog Flush Timeout抑止
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：実行時に環境設定でサーバURLを変更した際に発生する `TaskScheduler.UnobservedTaskException` と `NLog LogFactory Flush Timeout` の原因に対応し、実装修正とコミットまで行う
+### 実施内容
+- `CvWpfclient/App.xaml.cs`: Host再起動の排他制御と Host ライフサイクル用 `CancellationTokenSource` を追加し、起動時更新確認をキャンセル可能な安全なバックグラウンド実行へ変更
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 天気更新処理に Host ライフサイクルトークンを渡し、再起動中の未観測例外を抑止するよう変更
+- `CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs`: 画面入力値を保存オブジェクトへ反映してから保存するよう修正し、再構築失敗時に画面を閉じないよう戻り値判定を追加
+### 技術決定 Why
+- URL変更時は既存 Host の Dispose とバックグラウンド通信が競合しやすいため、再起動前に関連処理をキャンセルしてから新しい Host へ切り替える構成にした
+- fire-and-forget のまま例外を放置すると finalizer thread で未観測例外化するため、起動時更新確認は内部で例外を完結させる実装へ変更した
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告 0、エラー 0）
+
+---
+
+## [2026-04-13] 17:31 得意先住所の再分割処理を実装
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`ConvertDb.cs` の `CnvAfterMasterAddress()` で、連結済み住所から `Address1=都道府県` `Address2=市区町村` `Address3=残り` に再分割したい
+### 実施内容
+- `CvDomainLogic/ConvertDb.cs`: `CnvAfterMasterAddress()` に都道府県・市区町村を正規表現で抽出する処理を追加し、空白正規化、更新差分チェック、更新件数カウント、例外ログ文言修正を実施
+- `.sisyphus/notepads/20260413_cnv_after_master_address_regex.md`: 今回採用した正規表現方針と安全策をメモとして記録
+### 技術決定 Why
+- この関数のみで完結させる条件に合わせ、外部マスタや郵便番号APIには依存せず、先頭一致の正規表現だけで都道府県と市区町村を段階的に切り出す方針を採用した
+- 判定不能データを壊さないため、都道府県が取れない住所は更新せず、市区町村が取れない場合のみ残り全体を `Address3` に退避する安全側の挙動にした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic/CvDomainLogic.csproj"` → ビルド成功（0警告、0エラー）
+
+---
+
+## [2026-04-12] 15:08 App.xaml.csの起動後ログをILoggerへ移行
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`App.xaml.cs` 内でも、起動前例外用の bootstrap logger を残しつつ、起動後に動くログ出力をできるだけ `Microsoft.Extensions.Logging.ILogger` へ揃える
+### 実施内容
+- `CvWpfclient/App.xaml.cs`: 起動前例外ハンドラ用の NLog フィールドを `_bootstrapLogger` として明示し、更新確認処理の `Info/Error` を `TryGetAppLogger()` 経由の `ILogger<App>` へ変更した
+- `CvWpfclient/App.xaml.cs`: `AppHost` から安全に `ILoggerFactory` を取得する `TryGetAppLogger()` を追加し、起動後ログだけを `Microsoft.Extensions.Logging` 側へ寄せた
+### 技術決定 Why
+- `App.xaml.cs` はホスト構築前に例外が起きる可能性があるため、起動前クラッシュログを失わないよう bootstrap 用 NLog は維持した
+- 一方で `OnStartup` 後の更新確認ログは `ILogger` に統一できるため、通常運用時のフィルタ設定と出力経路を `Microsoft.Extensions.Logging` 側へ寄せた
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
+
+---
+
+## [2026-04-12] 14:58 CvWpfclientのNLog直利用をILoggerへ統一
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`CvWpfclient` の `App.xaml.cs` を除く NLog 直接利用箇所を `Microsoft.Extensions.Logging.ILogger` 経由へ揃え、コミットまで実施する
+### 実施内容
+- `CvWpfclient/ViewModels/00System/LoginViewModel.cs`: `NLog.LogManager.GetCurrentClassLogger()` を廃止し、`ILoggerFactory` から `ILogger<LoginViewModel>` を生成する形へ変更した
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `ILogger<MainMenuViewModel>` を使う形へ変更し、警告ログ呼び出しを `LogWarning` へ統一した
+- `CvWpfclient/Services/WeatherService.cs`: `ILogger<WeatherService>` を DI で受ける形へ変更し、天気取得失敗ログを `ILogger` 経由へ統一した
+- `CvWpfclient/Services/SystemSettingsStore.cs`: `ILoggerFactory` から生成した `ILogger` を使う形へ変更し、JSON読込失敗時の警告ログを `LogWarning` へ統一した
+- `CvWpfclient/Helpers/Behaviors/DataGridSelectionBehavior.cs`: static な振る舞いを保ったまま `ILoggerFactory` から取得した `ILogger` で例外ログを出す形へ変更した
+### 技術決定 Why
+- 出力先は既存の `AddNLog(...)` を維持しつつ、呼び出し側を `Microsoft.Extensions.Logging` に揃えることで、今後のフィルタ設定・DI・テスト差し替えを一元化しやすくした
+- `WeatherService` のような DI 管理クラスは `ILogger<T>` を直接注入し、ViewModel や static 補助クラスは `ILoggerFactory` から取得することで、最小差分で統一した
+### 確認
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
 
 ---
@@ -281,6 +345,113 @@
 
 ---
 
+## [2026-04-10] 18:30 CvWpfclient TFM変更によるOpenTK/.NET Framework依存の解消
+### Agent
+- claude-opus-4.6 : GitHub-Copilot : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclientで使用しているOpenTK NuGetパッケージを.NET 10用のOpenTK.Coreに変更。他のNuGetも.NET Framework用になっていないかチェック
+### 実施内容
+- CvWpfclient/CvWpfclient.csproj: TargetFrameworkを `net10.0-windows` → `net10.0-windows10.0.19041` に変更
+### 技術決定 Why
+- OpenTK 3.3.1（.NET Framework用）はCvWpfclientの直接参照ではなく、SkiaSharp.Views.WPF 3.119.2 経由の推移的依存だった
+- SkiaSharp.Views.WPFは `net8.0-windows10.0.19041` と `.NETFramework 4.6.2` の2つのTFMアセットを持つ。TFMが `net10.0-windows`（Windows SDKバージョン未指定）の場合、NuGetが正しいアセットグループにマッチできず `.NETFramework` にフォールバックしていた
+- TFMにWindows SDKバージョン `10.0.19041` を指定することで、SkiaSharp.Views.WPFが `net8.0-windows10.0.19041` アセット（OpenTK 4.3.0 + OpenTK.GLWpfControl 4.2.3依存）を正しく選択するようになった
+- OpenTK.Coreへの直接パッケージ差し替えではなく、TFM修正が根本解決となる
+### 影響範囲
+- CvWpfclient出力パスが `net10.0-windows10.0.19041` に変更
+- 推移的依存: OpenTK 3.3.1→4.3.0、OpenTK.GLWpfControl 3.3.0→4.2.3、OpenTK.Core 4.3.0追加
+- 他の全NuGetパッケージに.NET Framework専用パッケージは無いことを確認済み
+### 確認
+- dotnet restore: NU1701警告ゼロ（変更前は3件のNU1701警告あり）
+- dotnet build: 0警告、0エラー
+
+---
+
+## [2026-04-10] 17:30 GoogleCalendarService および関連コードの削除
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient から GoogleCalendarService とそのインターフェースを削除し、MainMenuView のカレンダー表示エリアを削除する（天気情報はそのまま残す）
+### 実施内容
+- CvWpfclient/CvWpfclient.csproj: Google.Apis.Calendar.v3 パッケージ参照を削除
+- CvWpfclient/Services/GoogleCalendarService.cs: ファイルごと削除（IGoogleCalendarService インターフェースと GoogleCalendarService クラス）
+- CvWpfclient/Models/WeatherModels.cs: CalendarEventItem クラスを削除（天気関連モデルは残存）
+- CvWpfclient/App.xaml.cs: IGoogleCalendarService の DI 登録行を削除
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: CalendarEvents / CalendarStatus プロパティ、RefreshCalendarAsync メソッド、StartWeatherAndCalendar 内のカレンダー呼び出しを削除
+- CvWpfclient/Views/MainMenuView.xaml: カレンダーアジェンダ表示エリア（materialDesign:Card）を削除、StackPanel 名を WeatherPanel に変更
+### 技術決定 Why
+- Google Calendar 機能が不要となったため、NuGetパッケージ依存を含めて完全にクリーンアップした。天気情報機能は独立しているためそのまま残した
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: 0警告、0エラー
+
+---
+
+## [2026-04-10] 17:15 GoogleカレンダーのOAuth2.0認証をAPI Key認証に変更
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuViewModelで使用しているGoogleカレンダー連携を、Google OAuth2.0 ではなく Google API Key を使うよう変更する
+### 実施内容
+- CvWpfclient/Services/GoogleCalendarService.cs: OAuth2.0フロー（GoogleWebAuthorizationBroker.AuthorizeAsync、FileDataStore、ClientSecrets）を全て削除し、API Key によるCalendarService初期化に置換。EnsureAuthenticatedAsync(async)をEnsureInitialized(sync)に変更。不要なusing (Google.Apis.Auth.OAuth2, Google.Apis.Util.Store, System.IO) を削除
+- CvWpfclient/appsettings.json: GoogleOAuthId、GoogleOAuthSecret設定キーを削除。GoogleApiKeyのみ残存
+### 技術決定 Why
+- OAuth2.0はブラウザベースの認証フローが必要でユーザー体験が煩雑。API Keyはサーバーレスで公開カレンダーデータの取得に十分であり、トークン管理やリフレッシュの複雑さを排除できる
+- API Key方式はCalendarService.Initializer.ApiKeyを設定するだけで初期化でき、非同期処理も不要になるためコードが大幅に簡素化
+### 確認
+- CvWpfclientビルド成功（0エラー、既存NU1701警告のみ）
+
+---
+
+## [2026-04-10] 14:30 MainMenuViewに天気・カレンダーダッシュボードを実装
+### Agent
+- claude-opus-4.6 : GitHub-Copilot : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：MainMenuViewに天気情報（OpenWeatherMap API）と今日の予定（Google Calendar API）を表示するダッシュボードを実装する
+### 実施内容
+- Directory.Packages.props: Google.Apis.Calendar.v3、LiveChartsCore.SkiaSharpView.WPF、SkiaSharp.Views.WPFのバージョンを中央管理に追加
+- CvWpfclient/CvWpfclient.csproj: 上記3パッケージのPackageReferenceを追加
+- CvWpfclient/Models/WeatherModels.cs: WeatherInfo、HourlyForecast、CalendarEventItemモデルクラスを新規作成
+- CvWpfclient/Services/WeatherService.cs: IWeatherService + WeatherService（OpenWeatherMap API呼び出し、MaterialDesignアイコンマッピング）を新規作成
+- CvWpfclient/Services/GoogleCalendarService.cs: IGoogleCalendarService + GoogleCalendarService（OAuth2認証、イベント取得）を新規作成
+- CvWpfclient/App.xaml.cs: WeatherService（AddHttpClient）とGoogleCalendarService（AddSingleton）のDI登録を追加
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 天気情報プロパティ（WeatherIconKind, WeatherTemperature等）、LiveCharts2のISeries[]/Axis[]バインディング、カレンダーイベントObservableCollection、30分間隔更新タイマーを追加
+- CvWpfclient/Views/MainMenuView.xaml: WeatherAndSchedulePanelの内容を削除し、左:天気カード＋右:気温推移チャート（LiveCharts2 CartesianChart）＋下:カレンダーアジェンダ（ItemsControl）に置換。lvc名前空間を追加
+- CvWpfclient/appsettings.json: OpenWeatherApiKeyとGoogleOAuthSecretの設定キーを追加
+### 技術決定 Why
+- MainMenuViewModelはXAMLで直接インスタンス化（DI外）のため、App.AppHost.Services.GetService<T>()パターンでサービスを取得。既存のAppGlobal.GetGrpcServiceパターンと同様のアプローチ
+- LiveCharts2のLineSeries with Fillでエリアチャートを表現し、SKColorでMaterialDesign風の配色を適用
+- Google OAuth未設定時（clientId=="dummy"）はカレンダー機能を自動スキップし、APIキー未設定でも天気取得失敗をcatchして画面が壊れないように設計
+- EventDateTime.DateTimeの非推奨警告をDateTimeDateTimeOffsetに修正
+### 確認
+- CvWpfclientビルド成功（0エラー、警告はNU1701のみ：既存のOpenTK/SkiaSharp互換性警告）
+
+---
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：商品マスターメンテ画面のImage表示をWebView2に変更し、URLの画像を直接表示する方式にする
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: HttpClientによる画像ダウンロード処理を全削除（約100行）、BitmapImage/IsShohinImageLoading/CancellationTokenSourceを削除し、Uri?型のShohinImageUriプロパティに置換。OnCurrentEditChangedCoreを簡素化
+- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: ImageコントロールをWebView2に置換、xmlns:Wpf名前空間を追加、ローディングオーバーレイ（ProgressBar）を削除、DataTriggerでUri==nullの時はWebView2をCollapsed
+### 技術決定 Why
+- HttpClientでの画像ダウンロード→BitmapImage生成→Freeze処理は複雑であり、キャンセル管理・エラーハンドリングのコードが大量だった。WebView2でURLを直接表示することで、ViewModel側のHTTP通信処理を全廃し大幅に簡素化
+- JWT認証は画像エンドポイントに不要のためWebView2のデフォルト動作で対応可能
+- Microsoft.Web.WebView2パッケージはcsproj・WebpdfViewで参照済みのため追加不要
+### 確認
+- CvWpfclientビルド成功（0警告・0エラー）
+
+---
+
 ## [2026-04-09] 16:59 MasterShohinMenteView に商品画像表示を追加
 ### Agent
 - gpt-5.4 : OpenAI
@@ -298,6 +469,67 @@
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告0、エラー0）
 
 ---
+
+## [2026-04-09] 13:30 LoadShohinImageAsync 商品画像読込バグ修正
+### Agent
+- claude-opus-4.6 : GitHub-Copilot : Build
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：商品マスターメンテの画像読込が失敗する問題の修正。ブラウザでは表示できるURLがアプリ内では読み込めない
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 商品画像読込の3点修正
+  - HttpClient を遅延初期化に変更し、localhost自己署名証明書のSSL検証をスキップするよう対応
+  - HTTPリクエストにJWT認証ヘッダー（Authorization: Bearer）を付与するよう修正
+  - catch(Exception)の握り潰しをやめ、Debug.WriteLineでエラー内容を出力するよう改善
+### 技術決定 Why
+- `new HttpClient()` はデフォルトのSSL証明書検証を使用するため、開発環境のlocalhostの自己署名証明書を拒否する。ブラウザは手動で信頼できるが、HttpClientはできないため `DangerousAcceptAnyServerCertificateValidator` で対応。localhost限定の条件分岐で本番環境への影響を防止
+- gRPC呼び出しでは `GetDefaultCallContext()` で認証ヘッダーを付与しているが、画像取得用の素のHttpClientには認証情報が未設定だった。HttpRequestMessageを使い毎回最新のLoginJwtを付与する方式に変更
+- 遅延初期化 (`??=`) にした理由は、static フィールド初期化子の時点では `AppGlobal.Url` が未初期化のため
+### 確認
+- CvWpfclientビルド成功（0警告・0エラー）
+
+---
+
+## [2026-04-08] 21:30 VersionTable.csのリファクタリング（POCO化・バグ修正・VersionSql外部化）
+### Agent
+- claude-opus-4.6 : GitHub-Copilot
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvBase/VersionTable.csのバージョン管理ロジックをリファクタリングし、より洗練された内容にする。現在未使用のためI/Fや名前は変更可能。
+### 実施内容
+- CvBase/VersionTable.cs: ObservableObject継承を除去しPOCO化（partialキーワード・ObservableProperty属性・CommunityToolkit.Mvvm using削除）
+- CvBase/VersionTable.cs: 6つのprivateフィールドをpublic auto-propertyに変換（デフォルト値維持）
+- CvBase/VersionTable.cs: VersionSql静的配列をコメントアウト（参考として残置、外部から引数で受け取る設計に移行）
+- CvBase/VersionTable.cs: SubInsertRecordAsync内のバグ修正（既存レコード時にDDLを再実行→db.UpdateAsyncでレコード更新に修正）
+- CvBase/VersionTable.cs: logggerタイポをloggerに修正
+### 技術決定 Why
+- ObservableObjectはUI通知用のMVVM基盤であり、DB操作ユーティリティクラスには不要。POCOにすることで依存を削減し責務を明確化
+- line 133のdb.ExecuteAsync(item.DoSql)は、前段のループ(line 109-115)で実行済みのDDLを再実行するバグ。catch-and-continueにより表面化しなかったが、db.UpdateAsyncでレコードのメタ情報更新が正しい動作
+- VersionSql配列は既にWriteVersionInfoAsyncが引数としてInnerVersion[]を受け取る設計になっており、静的配列は冗長。コメントアウトして参考として残す
+### 確認
+- CvBaseプロジェクトビルド成功（0警告・0エラー）
+- 構造検証パス: ObservableObject関連除去確認、NPoco属性保持確認、バグ修正確認、プロパティ変換確認
+
+---
+
+## [2026-04-08] 11:43 MainMenuウィンドウ右上ボタンのMaterialDesignアイコン化
+### Agent
+- GitHub Copilot : OpenAI
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：MainMenuウィンドウ右上のテーマ切替・最小化・メニューのみ・終了ボタンのアイコンをMaterialDesignのPackIconに差し替え、より洗練されたデザインにする。
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 各ボタンのContentをPackIcon(ThemeLightDark, WindowMinimize, ViewList, Close)に変更。
+### 技術決定 Why
+- MaterialDesignInXamlToolkitのPackIconを利用することで、統一感のある最新UI/UXを実現。
+### 確認
+- ビルド成功、エラーなし
+
+---
+
 ## [2026-04-07] 10:45 Git履歴からの不要バイナリ削除
 ### Agent
 - gemini-3.1-flash : Google : (wsl2への手動コピペ)
@@ -316,7 +548,6 @@
 - ローカルにて `git rev-list --all | xargs git ls-tree -r --name-only | grep .pdf` で対象ファイルが存在しないことを確認。
 
 ---
-
 
 ## [2026-04-06] 17:48 ShopUriageInputView の数値表示改善・区分日本語化・金額自動計算
 ### Agent
@@ -389,6 +620,27 @@
 
 ---
 
+## [2026-04-04] 22:55 Wpfclient の Velopack 自動更新確認と SysUpgrade 改修
+### Agent
+- gpt-5.4 : OpenAI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`Cvnet10Wpfclient` で Velopack の自動更新確認が動いていない原因を解消し、起動時の自動更新確認と `SysUpgradeViewModel` の手動更新処理に例外処理を入れて、最後に git commit まで完了する
+### 実施内容
+- Cvnet10Wpfclient/App.xaml.cs: `appsettings.Production.json` を既定読込に追加し、`IUpdateService` を DI 登録、起動後に自動更新確認して更新があれば確認ダイアログから適用できる処理を追加
+- Cvnet10Wpfclient/Services/UpdateService.cs: 更新確認結果と更新適用結果を返す record を追加し、`FeedUrl` 未設定時や通信失敗時を含むメッセージ生成と `try/catch` によるエラーハンドリングを整理
+- Cvnet10Wpfclient/ViewModels/00System/SysUpgradeViewModel.cs: `IUpdateService` を DI から取得するよう変更し、手動更新確認/適用の `try/catch`、状態文言更新、`ExecuteUpdateCommand` の `CanExecute` 再評価、表示情報更新を追加
+- Cvnet10Wpfclient/ViewModels/SampleViewModel.cs: Velopack 診断表示の `PackId` 表記を実際の配布スクリプトに合わせて統一
+- Doc/velopack_release_manual.md: `packId` の記載を実運用値へ統一
+### 技術決定 Why
+- 自動更新が動かなかった主因は `Update:FeedUrl` が `appsettings.Production.json` にしかない一方で、通常起動時にその設定を読まない構成だったため、既定読込へ追加して更新先 URL を常に解決できるようにした
+- 起動時の自動更新確認と手動更新画面で別ロジックを持つと挙動差が出やすいため、`UpdateService` の結果オブジェクトに状態文言を集約して同一経路で扱うようにした
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告0、エラー0）
+
+---
+
 ## [2026-04-04] 22:32 publish-velopack 実行時に appsettings.json の Version を自動加算
 ### Agent
 - gpt-5.4 : OpenAI
@@ -428,27 +680,6 @@
 - 実バッチだけ失敗して最小テストが通る状態だったため、非 ASCII 文字列も除去して `cmd.exe` 依存の文字コード要因を避けた
 ### 確認
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\documents\new2022\cv10\Cvnet10Wpfclient\publish-velopack.bat"` → `dotnet publish` と `vpk pack` が完走し、`[INFO] Velopack finished task for creating package. Version=1.0.0` を確認
-
----
-
-## [2026-04-04] 22:55 Wpfclient の Velopack 自動更新確認と SysUpgrade 改修
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`Cvnet10Wpfclient` で Velopack の自動更新確認が動いていない原因を解消し、起動時の自動更新確認と `SysUpgradeViewModel` の手動更新処理に例外処理を入れて、最後に git commit まで完了する
-### 実施内容
-- Cvnet10Wpfclient/App.xaml.cs: `appsettings.Production.json` を既定読込に追加し、`IUpdateService` を DI 登録、起動後に自動更新確認して更新があれば確認ダイアログから適用できる処理を追加
-- Cvnet10Wpfclient/Services/UpdateService.cs: 更新確認結果と更新適用結果を返す record を追加し、`FeedUrl` 未設定時や通信失敗時を含むメッセージ生成と `try/catch` によるエラーハンドリングを整理
-- Cvnet10Wpfclient/ViewModels/00System/SysUpgradeViewModel.cs: `IUpdateService` を DI から取得するよう変更し、手動更新確認/適用の `try/catch`、状態文言更新、`ExecuteUpdateCommand` の `CanExecute` 再評価、表示情報更新を追加
-- Cvnet10Wpfclient/ViewModels/SampleViewModel.cs: Velopack 診断表示の `PackId` 表記を実際の配布スクリプトに合わせて統一
-- Doc/velopack_release_manual.md: `packId` の記載を実運用値へ統一
-### 技術決定 Why
-- 自動更新が動かなかった主因は `Update:FeedUrl` が `appsettings.Production.json` にしかない一方で、通常起動時にその設定を読まない構成だったため、既定読込へ追加して更新先 URL を常に解決できるようにした
-- 起動時の自動更新確認と手動更新画面で別ロジックを持つと挙動差が出やすいため、`UpdateService` の結果オブジェクトに状態文言を集約して同一経路で扱うようにした
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（警告0、エラー0）
 
 ---
 
@@ -501,26 +732,6 @@
 
 ---
 
-## [2026-04-03] 14:45 SysGeneralMenteView起動前のテーブル選択導線追加
-### Agent
-- gpt-5.3-codex : GitHub-Copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`SysGeneralMenteView` の前に `SelectServerTableView` を呼び出し、選択したテーブル名を元に `SysGeneralMenteView` を実行できるようにする
-### 実施内容
-- Cvnet10Wpfclient/ViewModels/MainMenuViewModel.cs: `SysGeneralMenteView` 起動時のみ `SelectServerTableView` を先に表示し、選択テーブル名を `AddInfo` で引き渡す処理を追加
-- Cvnet10Wpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs: `AddInfo` のテーブル名から `BaseDbClass` 派生型を解決し、対象型を動的に切り替えて一覧取得/追加/更新/削除が動くよう汎用化
-- Doc/aicording_log_001.md: 既存ログを800行超過ルールに従ってアーカイブ
-- Doc/aicording_log.md: 新規ログファイルを作成し本作業を記録
-### 技術決定 Why
-- 既存メニュー基盤（`MenuData` + `MainMenuViewModel.DoMenu`）を保ちつつ、`SysGeneralMenteView` だけに前段ダイアログを差し込むことで他画面への影響を最小化した
-- 汎用メンテ対象はテーブル名から `TableNameAttribute` を逆引きして型解決し、既存の編集UI構造を維持したまま対象テーブルを切り替えられる設計にした
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
-
----
-
 ## [2026-04-03] 15:30 SysGeneralMenteViewModel で SerializedColumn 付き項目を JSON 編集可能にする
 ### Agent
 - claude-opus-4.6 : GitHub-Copilot
@@ -546,267 +757,20 @@
 
 ---
 
-## [2024-06-07] 11:43 MainMenuウィンドウ右上ボタンのMaterialDesignアイコン化
+## [2026-04-03] 14:45 SysGeneralMenteView起動前のテーブル選択導線追加
 ### Agent
-- GitHub Copilot : OpenAI
-### Editor
-- VS2026
-### 目的
-- ユーザーからの要望：MainMenuウィンドウ右上のテーマ切替・最小化・メニューのみ・終了ボタンのアイコンをMaterialDesignのPackIconに差し替え、より洗練されたデザインにする。
-### 実施内容
-- CvWpfclient/Views/MainMenuView.xaml: 各ボタンのContentをPackIcon(ThemeLightDark, WindowMinimize, ViewList, Close)に変更。
-### 技術決定 Why
-- MaterialDesignInXamlToolkitのPackIconを利用することで、統一感のある最新UI/UXを実現。
-### 確認
-- ビルド成功、エラーなし
-
----
-
-## [2026-04-08] 21:30 VersionTable.csのリファクタリング（POCO化・バグ修正・VersionSql外部化）
-### Agent
-- claude-opus-4.6 : GitHub-Copilot
+- gpt-5.3-codex : GitHub-Copilot
 ### Editor
 - OpenCode
 ### 目的
-- ユーザーからの要望：CvBase/VersionTable.csのバージョン管理ロジックをリファクタリングし、より洗練された内容にする。現在未使用のためI/Fや名前は変更可能。
+- ユーザーからの要望：`SysGeneralMenteView` の前に `SelectServerTableView` を呼び出し、選択したテーブル名を元に `SysGeneralMenteView` を実行できるようにする
 ### 実施内容
-- CvBase/VersionTable.cs: ObservableObject継承を除去しPOCO化（partialキーワード・ObservableProperty属性・CommunityToolkit.Mvvm using削除）
-- CvBase/VersionTable.cs: 6つのprivateフィールドをpublic auto-propertyに変換（デフォルト値維持）
-- CvBase/VersionTable.cs: VersionSql静的配列をコメントアウト（参考として残置、外部から引数で受け取る設計に移行）
-- CvBase/VersionTable.cs: SubInsertRecordAsync内のバグ修正（既存レコード時にDDLを再実行→db.UpdateAsyncでレコード更新に修正）
-- CvBase/VersionTable.cs: logggerタイポをloggerに修正
+- Cvnet10Wpfclient/ViewModels/MainMenuViewModel.cs: `SysGeneralMenteView` 起動時のみ `SelectServerTableView` を先に表示し、選択テーブル名を `AddInfo` で引き渡す処理を追加
+- Cvnet10Wpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs: `AddInfo` のテーブル名から `BaseDbClass` 派生型を解決し、対象型を動的に切り替えて一覧取得/追加/更新/削除が動くよう汎用化
+- Doc/aicording_log_001.md: 既存ログを800行超過ルールに従ってアーカイブ
+- Doc/aicording_log.md: 新規ログファイルを作成し本作業を記録
 ### 技術決定 Why
-- ObservableObjectはUI通知用のMVVM基盤であり、DB操作ユーティリティクラスには不要。POCOにすることで依存を削減し責務を明確化
-- line 133のdb.ExecuteAsync(item.DoSql)は、前段のループ(line 109-115)で実行済みのDDLを再実行するバグ。catch-and-continueにより表面化しなかったが、db.UpdateAsyncでレコードのメタ情報更新が正しい動作
-- VersionSql配列は既にWriteVersionInfoAsyncが引数としてInnerVersion[]を受け取る設計になっており、静的配列は冗長。コメントアウトして参考として残す
+- 既存メニュー基盤（`MenuData` + `MainMenuViewModel.DoMenu`）を保ちつつ、`SysGeneralMenteView` だけに前段ダイアログを差し込むことで他画面への影響を最小化した
+- 汎用メンテ対象はテーブル名から `TableNameAttribute` を逆引きして型解決し、既存の編集UI構造を維持したまま対象テーブルを切り替えられる設計にした
 ### 確認
-- CvBaseプロジェクトビルド成功（0警告・0エラー）
-- 構造検証パス: ObservableObject関連除去確認、NPoco属性保持確認、バグ修正確認、プロパティ変換確認
-
----
-
-## [2026-04-09] 13:30 LoadShohinImageAsync 商品画像読込バグ修正
-### Agent
-- claude-opus-4.6 : GitHub-Copilot : Build
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：商品マスターメンテの画像読込が失敗する問題の修正。ブラウザでは表示できるURLがアプリ内では読み込めない
-### 実施内容
-- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 商品画像読込の3点修正
-  - HttpClient を遅延初期化に変更し、localhost自己署名証明書のSSL検証をスキップするよう対応
-  - HTTPリクエストにJWT認証ヘッダー（Authorization: Bearer）を付与するよう修正
-  - catch(Exception)の握り潰しをやめ、Debug.WriteLineでエラー内容を出力するよう改善
-### 技術決定 Why
-- `new HttpClient()` はデフォルトのSSL証明書検証を使用するため、開発環境のlocalhostの自己署名証明書を拒否する。ブラウザは手動で信頼できるが、HttpClientはできないため `DangerousAcceptAnyServerCertificateValidator` で対応。localhost限定の条件分岐で本番環境への影響を防止
-- gRPC呼び出しでは `GetDefaultCallContext()` で認証ヘッダーを付与しているが、画像取得用の素のHttpClientには認証情報が未設定だった。HttpRequestMessageを使い毎回最新のLoginJwtを付与する方式に変更
-- 遅延初期化 (`??=`) にした理由は、static フィールド初期化子の時点では `AppGlobal.Url` が未初期化のため
-### 確認
-- CvWpfclientビルド成功（0警告・0エラー）
-
----
-
-## [2026-04-10] 14:30 MainMenuViewに天気・カレンダーダッシュボードを実装
-### Agent
-- claude-opus-4.6 : GitHub-Copilot : Build
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：MainMenuViewに天気情報（OpenWeatherMap API）と今日の予定（Google Calendar API）を表示するダッシュボードを実装する
-### 実施内容
-- Directory.Packages.props: Google.Apis.Calendar.v3、LiveChartsCore.SkiaSharpView.WPF、SkiaSharp.Views.WPFのバージョンを中央管理に追加
-- CvWpfclient/CvWpfclient.csproj: 上記3パッケージのPackageReferenceを追加
-- CvWpfclient/Models/WeatherModels.cs: WeatherInfo、HourlyForecast、CalendarEventItemモデルクラスを新規作成
-- CvWpfclient/Services/WeatherService.cs: IWeatherService + WeatherService（OpenWeatherMap API呼び出し、MaterialDesignアイコンマッピング）を新規作成
-- CvWpfclient/Services/GoogleCalendarService.cs: IGoogleCalendarService + GoogleCalendarService（OAuth2認証、イベント取得）を新規作成
-- CvWpfclient/App.xaml.cs: WeatherService（AddHttpClient）とGoogleCalendarService（AddSingleton）のDI登録を追加
-- CvWpfclient/ViewModels/MainMenuViewModel.cs: 天気情報プロパティ（WeatherIconKind, WeatherTemperature等）、LiveCharts2のISeries[]/Axis[]バインディング、カレンダーイベントObservableCollection、30分間隔更新タイマーを追加
-- CvWpfclient/Views/MainMenuView.xaml: WeatherAndSchedulePanelの内容を削除し、左:天気カード＋右:気温推移チャート（LiveCharts2 CartesianChart）＋下:カレンダーアジェンダ（ItemsControl）に置換。lvc名前空間を追加
-- CvWpfclient/appsettings.json: OpenWeatherApiKeyとGoogleOAuthSecretの設定キーを追加
-### 技術決定 Why
-- MainMenuViewModelはXAMLで直接インスタンス化（DI外）のため、App.AppHost.Services.GetService<T>()パターンでサービスを取得。既存のAppGlobal.GetGrpcServiceパターンと同様のアプローチ
-- LiveCharts2のLineSeries with Fillでエリアチャートを表現し、SKColorでMaterialDesign風の配色を適用
-- Google OAuth未設定時（clientId=="dummy"）はカレンダー機能を自動スキップし、APIキー未設定でも天気取得失敗をcatchして画面が壊れないように設計
-- EventDateTime.DateTimeの非推奨警告をDateTimeDateTimeOffsetに修正
-### 確認
-- CvWpfclientビルド成功（0エラー、警告はNU1701のみ：既存のOpenTK/SkiaSharp互換性警告）
-
----
-### Agent
-- claude-opus-4.6 : GitHub-Copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：商品マスターメンテ画面のImage表示をWebView2に変更し、URLの画像を直接表示する方式にする
-### 実施内容
-- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: HttpClientによる画像ダウンロード処理を全削除（約100行）、BitmapImage/IsShohinImageLoading/CancellationTokenSourceを削除し、Uri?型のShohinImageUriプロパティに置換。OnCurrentEditChangedCoreを簡素化
-- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: ImageコントロールをWebView2に置換、xmlns:Wpf名前空間を追加、ローディングオーバーレイ（ProgressBar）を削除、DataTriggerでUri==nullの時はWebView2をCollapsed
-### 技術決定 Why
-- HttpClientでの画像ダウンロード→BitmapImage生成→Freeze処理は複雑であり、キャンセル管理・エラーハンドリングのコードが大量だった。WebView2でURLを直接表示することで、ViewModel側のHTTP通信処理を全廃し大幅に簡素化
-- JWT認証は画像エンドポイントに不要のためWebView2のデフォルト動作で対応可能
-- Microsoft.Web.WebView2パッケージはcsproj・WebpdfViewで参照済みのため追加不要
-### 確認
-- CvWpfclientビルド成功（0警告・0エラー）
-
----
-
-## [2026-04-10] 17:15 GoogleカレンダーのOAuth2.0認証をAPI Key認証に変更
-### Agent
-- claude-opus-4.6 : GitHub-Copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：MainMenuViewModelで使用しているGoogleカレンダー連携を、Google OAuth2.0 ではなく Google API Key を使うよう変更する
-### 実施内容
-- CvWpfclient/Services/GoogleCalendarService.cs: OAuth2.0フロー（GoogleWebAuthorizationBroker.AuthorizeAsync、FileDataStore、ClientSecrets）を全て削除し、API Key によるCalendarService初期化に置換。EnsureAuthenticatedAsync(async)をEnsureInitialized(sync)に変更。不要なusing (Google.Apis.Auth.OAuth2, Google.Apis.Util.Store, System.IO) を削除
-- CvWpfclient/appsettings.json: GoogleOAuthId、GoogleOAuthSecret設定キーを削除。GoogleApiKeyのみ残存
-### 技術決定 Why
-- OAuth2.0はブラウザベースの認証フローが必要でユーザー体験が煩雑。API Keyはサーバーレスで公開カレンダーデータの取得に十分であり、トークン管理やリフレッシュの複雑さを排除できる
-- API Key方式はCalendarService.Initializer.ApiKeyを設定するだけで初期化でき、非同期処理も不要になるためコードが大幅に簡素化
-### 確認
-- CvWpfclientビルド成功（0エラー、既存NU1701警告のみ）
-
----
-
-## [2026-04-10] 18:30 CvWpfclient TFM変更によるOpenTK/.NET Framework依存の解消
-### Agent
-- claude-opus-4.6 : GitHub-Copilot : Build
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvWpfclientで使用しているOpenTK NuGetパッケージを.NET 10用のOpenTK.Coreに変更。他のNuGetも.NET Framework用になっていないかチェック
-### 実施内容
-- CvWpfclient/CvWpfclient.csproj: TargetFrameworkを `net10.0-windows` → `net10.0-windows10.0.19041` に変更
-### 技術決定 Why
-- OpenTK 3.3.1（.NET Framework用）はCvWpfclientの直接参照ではなく、SkiaSharp.Views.WPF 3.119.2 経由の推移的依存だった
-- SkiaSharp.Views.WPFは `net8.0-windows10.0.19041` と `.NETFramework 4.6.2` の2つのTFMアセットを持つ。TFMが `net10.0-windows`（Windows SDKバージョン未指定）の場合、NuGetが正しいアセットグループにマッチできず `.NETFramework` にフォールバックしていた
-- TFMにWindows SDKバージョン `10.0.19041` を指定することで、SkiaSharp.Views.WPFが `net8.0-windows10.0.19041` アセット（OpenTK 4.3.0 + OpenTK.GLWpfControl 4.2.3依存）を正しく選択するようになった
-- OpenTK.Coreへの直接パッケージ差し替えではなく、TFM修正が根本解決となる
-### 影響範囲
-- CvWpfclient出力パスが `net10.0-windows10.0.19041` に変更
-- 推移的依存: OpenTK 3.3.1→4.3.0、OpenTK.GLWpfControl 3.3.0→4.2.3、OpenTK.Core 4.3.0追加
-- 他の全NuGetパッケージに.NET Framework専用パッケージは無いことを確認済み
-### 確認
-- dotnet restore: NU1701警告ゼロ（変更前は3件のNU1701警告あり）
-- dotnet build: 0警告、0エラー
-
----
-
-## [2026-04-12] 14:58 CvWpfclientのNLog直利用をILoggerへ統一
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`CvWpfclient` の `App.xaml.cs` を除く NLog 直接利用箇所を `Microsoft.Extensions.Logging.ILogger` 経由へ揃え、コミットまで実施する
-### 実施内容
-- `CvWpfclient/ViewModels/00System/LoginViewModel.cs`: `NLog.LogManager.GetCurrentClassLogger()` を廃止し、`ILoggerFactory` から `ILogger<LoginViewModel>` を生成する形へ変更した
-- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: `ILogger<MainMenuViewModel>` を使う形へ変更し、警告ログ呼び出しを `LogWarning` へ統一した
-- `CvWpfclient/Services/WeatherService.cs`: `ILogger<WeatherService>` を DI で受ける形へ変更し、天気取得失敗ログを `ILogger` 経由へ統一した
-- `CvWpfclient/Services/SystemSettingsStore.cs`: `ILoggerFactory` から生成した `ILogger` を使う形へ変更し、JSON読込失敗時の警告ログを `LogWarning` へ統一した
-- `CvWpfclient/Helpers/Behaviors/DataGridSelectionBehavior.cs`: static な振る舞いを保ったまま `ILoggerFactory` から取得した `ILogger` で例外ログを出す形へ変更した
-### 技術決定 Why
-- 出力先は既存の `AddNLog(...)` を維持しつつ、呼び出し側を `Microsoft.Extensions.Logging` に揃えることで、今後のフィルタ設定・DI・テスト差し替えを一元化しやすくした
-- `WeatherService` のような DI 管理クラスは `ILogger<T>` を直接注入し、ViewModel や static 補助クラスは `ILoggerFactory` から取得することで、最小差分で統一した
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-12] 15:08 App.xaml.csの起動後ログをILoggerへ移行
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`App.xaml.cs` 内でも、起動前例外用の bootstrap logger を残しつつ、起動後に動くログ出力をできるだけ `Microsoft.Extensions.Logging.ILogger` へ揃える
-### 実施内容
-- `CvWpfclient/App.xaml.cs`: 起動前例外ハンドラ用の NLog フィールドを `_bootstrapLogger` として明示し、更新確認処理の `Info/Error` を `TryGetAppLogger()` 経由の `ILogger<App>` へ変更した
-- `CvWpfclient/App.xaml.cs`: `AppHost` から安全に `ILoggerFactory` を取得する `TryGetAppLogger()` を追加し、起動後ログだけを `Microsoft.Extensions.Logging` 側へ寄せた
-### 技術決定 Why
-- `App.xaml.cs` はホスト構築前に例外が起きる可能性があるため、起動前クラッシュログを失わないよう bootstrap 用 NLog は維持した
-- 一方で `OnStartup` 後の更新確認ログは `ILogger` に統一できるため、通常運用時のフィルタ設定と出力経路を `Microsoft.Extensions.Logging` 側へ寄せた
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-15] 16:57 git履歴の統合
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：今日の変更履歴のうち `在庫更新処理の準備` から `集計処理を仮追加` までを 1 commit にまとめたい
-### 実施内容
-- `.sisyphus/rebase_master_20260415.txt`: 公開履歴書き換えの対象 commit と実施方針をメモとして記録
-- `.sisyphus/git_sequence_editor_20260415.py`: `01c9398` `d304750` `0eb9e15` を squash する interactive rebase 用スクリプトを作成
-- `.sisyphus/git_sequence_editor_reword_20260415.py`: 修正後の commit message を再調整するための rebase 用スクリプトを作成
-- `.sisyphus/git_reword_editor_20260415.py`: reword 実行時の commit message を自動設定するための editor スクリプトを作成
-- `git history`: `在庫更新処理の準備` と 2 件の `集計処理を仮追加` を 1 件の `在庫更新処理の準備と集計処理を仮追加` に統合し、後続の `NLOG系の設定を見直し` と `商品マスタメンテのタブ名称を変更` を維持したまま `origin/master` へ `--force-with-lease` で反映
-### 技術決定 Why
-- 公開済みの `master` 履歴を書き換える要件だったため、復旧可能性を残すために backup branch を先に作成し、そのうえで対象範囲だけを interactive rebase で最小限に組み替えた
-- 単純な `reset` では後続 commit の再適用管理が雑になりやすいため、対象 3 件のみを squash し、後続 2 件をそのまま積み直す手順を採用した
-### 確認
-- `git log --oneline --decorate --graph -n 6` で履歴を確認し、`f24d3f8 在庫更新処理の準備と集計処理を仮追加` の上に `9d8068e NLOG系の設定を見直し`、`f0b86b2 商品マスタメンテのタブ名称を変更` が並ぶことを確認
-- `git push --force-with-lease origin master` 実行済み
-
----
-
-## [2026-04-14] 17:56 サーバURL変更時のNLog Flush Timeout抑止
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：実行時に環境設定でサーバURLを変更した際に発生する `TaskScheduler.UnobservedTaskException` と `NLog LogFactory Flush Timeout` の原因に対応し、実装修正とコミットまで行う
-### 実施内容
-- `CvWpfclient/App.xaml.cs`: Host再起動の排他制御と Host ライフサイクル用 `CancellationTokenSource` を追加し、起動時更新確認をキャンセル可能な安全なバックグラウンド実行へ変更
-- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 天気更新処理に Host ライフサイクルトークンを渡し、再起動中の未観測例外を抑止するよう変更
-- `CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs`: 画面入力値を保存オブジェクトへ反映してから保存するよう修正し、再構築失敗時に画面を閉じないよう戻り値判定を追加
-### 技術決定 Why
-- URL変更時は既存 Host の Dispose とバックグラウンド通信が競合しやすいため、再起動前に関連処理をキャンセルしてから新しい Host へ切り替える構成にした
-- fire-and-forget のまま例外を放置すると finalizer thread で未観測例外化するため、起動時更新確認は内部で例外を完結させる実装へ変更した
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` → ビルド成功（警告 0、エラー 0）
-
----
-
-## [2026-04-13] 17:31 得意先住所の再分割処理を実装
-### Agent
-- gpt-5.4 : OpenAI
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：`ConvertDb.cs` の `CnvAfterMasterAddress()` で、連結済み住所から `Address1=都道府県` `Address2=市区町村` `Address3=残り` に再分割したい
-### 実施内容
-- `CvDomainLogic/ConvertDb.cs`: `CnvAfterMasterAddress()` に都道府県・市区町村を正規表現で抽出する処理を追加し、空白正規化、更新差分チェック、更新件数カウント、例外ログ文言修正を実施
-- `.sisyphus/notepads/20260413_cnv_after_master_address_regex.md`: 今回採用した正規表現方針と安全策をメモとして記録
-### 技術決定 Why
-- この関数のみで完結させる条件に合わせ、外部マスタや郵便番号APIには依存せず、先頭一致の正規表現だけで都道府県と市区町村を段階的に切り出す方針を採用した
-- 判定不能データを壊さないため、都道府県が取れない住所は更新せず、市区町村が取れない場合のみ残り全体を `Address3` に退避する安全側の挙動にした
-### 確認
-- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic/CvDomainLogic.csproj"` → ビルド成功（0警告、0エラー）
-
----
-
-## [2026-04-10] 17:30 GoogleCalendarService および関連コードの削除
-### Agent
-- claude-opus-4.6 : GitHub-Copilot
-### Editor
-- OpenCode
-### 目的
-- ユーザーからの要望：CvWpfclient から GoogleCalendarService とそのインターフェースを削除し、MainMenuView のカレンダー表示エリアを削除する（天気情報はそのまま残す）
-### 実施内容
-- CvWpfclient/CvWpfclient.csproj: Google.Apis.Calendar.v3 パッケージ参照を削除
-- CvWpfclient/Services/GoogleCalendarService.cs: ファイルごと削除（IGoogleCalendarService インターフェースと GoogleCalendarService クラス）
-- CvWpfclient/Models/WeatherModels.cs: CalendarEventItem クラスを削除（天気関連モデルは残存）
-- CvWpfclient/App.xaml.cs: IGoogleCalendarService の DI 登録行を削除
-- CvWpfclient/ViewModels/MainMenuViewModel.cs: CalendarEvents / CalendarStatus プロパティ、RefreshCalendarAsync メソッド、StartWeatherAndCalendar 内のカレンダー呼び出しを削除
-- CvWpfclient/Views/MainMenuView.xaml: カレンダーアジェンダ表示エリア（materialDesign:Card）を削除、StackPanel 名を WeatherPanel に変更
-### 技術決定 Why
-- Google Calendar 機能が不要となったため、NuGetパッケージ依存を含めて完全にクリーンアップした。天気情報機能は独立しているためそのまま残した
-### 確認
-- dotnet build CvWpfclient/CvWpfclient.csproj: 0警告、0エラー
-
----
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Cvnet10Wpfclient/Cvnet10Wpfclient.csproj"` → ビルド成功（エラー0、警告0）
