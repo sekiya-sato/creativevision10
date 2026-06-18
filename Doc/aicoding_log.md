@@ -613,3 +613,35 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-18] 13:52 ExDatabaseOption.ClearPools の専用接続タイムアウトを 500ms に設定
+### Agent
+- kimi-k2.7-code : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvBaseSqlite\ExDatabaseOption.cs の ClearPools() 処理で、DB の専用接続オープンのタイムアウトを 500ms に設定する
+### 実施内容
+- CvBaseSqlite/ExDatabaseOption.cs: `FinalizeWalFiles` メソッドの `Pooling=False` 専用接続オープン後に `PRAGMA busy_timeout=500;` を実行するよう追加
+### 技術決定 Why
+- `SqliteConnectionStringBuilder.DefaultTimeout` は秒単位の int 型であり 500ms を直接指定できないため、SQLite の `busy_timeout` プラグマを接続オープン直後に発行して 500ms の待ちロックタイムアウトを設定した
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvBaseSqlite/CvBaseSqlite.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
+## [2026-06-18] 13:59 ExDatabaseOption.ClearPools の専用接続タイムアウトを 1 秒に統一
+### Agent
+- kimi-k2.7-code : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvBaseSqlite\ExDatabaseOption.cs の ClearPools() 処理で、他プロセスが WAL を開いている場合に FinalizeWalFiles で発生する待ちへの対応。専用接続のタイムアウトを 1 秒に設定する
+### 実施内容
+- CvBaseSqlite/ExDatabaseOption.cs: `BuildConnectionString` に `defaultTimeout` パラメータを追加し、`FinalizeWalFiles` の `Pooling=False` 専用接続で `DefaultTimeout=1` を指定。以前追加した `PRAGMA busy_timeout=500;` は削除
+### 技術決定 Why
+- `SqliteConnectionStringBuilder.DefaultTimeout` は秒単位の int 型で 500ms を直接指定できないこと、かつ他プロセスによる WAL ロック待ちを接続オープン段階から制限したいことから、接続文字列で `DefaultTimeout=1` を指定し、コマンド実行時の待ちロックタイムアウトを 1 秒に統一した
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvBaseSqlite/CvBaseSqlite.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---

@@ -67,18 +67,19 @@ public class ExDatabaseOption {
 	}
 
 	static void FinalizeWalFiles(string databasePath) {
-		using var conn = new SqliteConnection(BuildConnectionString(databasePath, pooling: false));
+		using var conn = new SqliteConnection(BuildConnectionString(databasePath, pooling: false, defaultTimeout: 1));
 		conn.Open();
 		ExecuteNonQuery(conn, "PRAGMA wal_checkpoint(TRUNCATE);");
 		ExecuteNonQuery(conn, "PRAGMA journal_mode=DELETE;");
 	}
 
-	static string BuildConnectionString(string databasePath, bool pooling) {
+	static string BuildConnectionString(string databasePath, bool pooling, int defaultTimeout = 30) {
 		var builder = new SqliteConnectionStringBuilder {
 			DataSource = databasePath,
 			Mode = SqliteOpenMode.ReadWrite,
 			Cache = SqliteCacheMode.Shared,
-			Pooling = pooling
+			Pooling = pooling,
+			DefaultTimeout = defaultTimeout
 		};
 		return builder.ConnectionString;
 	}
