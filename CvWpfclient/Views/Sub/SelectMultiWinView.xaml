@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views.Sub.SelectMultiWinView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views.Sub.SelectMultiWinView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -155,7 +155,8 @@
 								</DataGridTextColumn.ElementStyle>
 							</DataGridTextColumn>
 							<DataGridTextColumn x:Name="Col01"
-								Width="{Binding DisplayWidthCode}" d:Width="80"
+								Width="{Binding DisplayWidthCode}"
+								d:Width="80"
 								Binding="{Binding Path=Code}"
 								CanUserReorder="True" CanUserResize="True" CanUserSort="True" IsReadOnly="True">
 								<DataGridTextColumn.HeaderTemplate>
@@ -164,8 +165,9 @@
 									</DataTemplate>
 								</DataGridTextColumn.HeaderTemplate>
 							</DataGridTextColumn>
-							<DataGridTextColumn x:Name="Col02" d:Width="280"
+							<DataGridTextColumn x:Name="Col02"
 								Width="{Binding DisplayWidthName}"
+								d:Width="280"
 								Binding="{Binding Path=Name}"
 								CanUserReorder="True" CanUserResize="True" CanUserSort="True" IsReadOnly="True">
 								<DataGridTextColumn.HeaderTemplate>
@@ -175,7 +177,8 @@
 								</DataGridTextColumn.HeaderTemplate>
 							</DataGridTextColumn>
 							<DataGridTextColumn x:Name="Col03"
-								Width="{Binding DisplayWidthRyaku}" d:Width="120"
+								Width="{Binding DisplayWidthRyaku}"
+								d:Width="120"
 								Binding="{Binding Path=Ryaku}"
 								CanUserReorder="True" CanUserResize="True" CanUserSort="True" IsReadOnly="True">
 								<DataGridTextColumn.HeaderTemplate>

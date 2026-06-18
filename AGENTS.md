@@ -42,7 +42,7 @@
 
 ## Post-Task Requirements (Log & Commit)
 - **Log**: Append to `Doc/aicoding_log.md`. Always append to the end. Archive to `aicoding_log_[NNN].md` if > 800 lines.
-- **Log Format**: Folow "Log-Format" section below.**Append to the end, Newest is last.**
+- **Log Format**: Folow "Log-Format" section below.**Insert at the top.**
 - **Commit Format**: Folow "Commit-Format" section below.
 
 ### Log-Format

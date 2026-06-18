@@ -1,8 +1,7 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterPrintBarcodeView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterPrintBarcodeView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
 	Title="{Binding Title}"
 	Width="880" Height="620"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
@@ -168,12 +167,10 @@
 					Margin="0,14,0,4"
 					Orientation="Horizontal">
 					<RadioButton Margin="0,4"
-						Content="SKU"
-						GroupName="OutputMethod"
+						Content="SKU" GroupName="OutputMethod"
 						IsChecked="{Binding IsSkuOutput}" />
 					<RadioButton Margin="24,4,0,4"
-						Content="商品"
-						GroupName="OutputMethod"
+						Content="商品" GroupName="OutputMethod"
 						IsChecked="{Binding IsSkuOutput, Converter={StaticResource InverseBooleanConverter}}" />
 				</StackPanel>
 
@@ -185,16 +182,13 @@
 					Margin="0,12,0,4"
 					Orientation="Horizontal">
 					<RadioButton Margin="0,4"
-						Content="JAN"
-						GroupName="BarcodeKind"
+						Content="JAN" GroupName="BarcodeKind"
 						IsChecked="{Binding IsJanBarcode}" />
 					<RadioButton Margin="24,4,0,4"
-						Content="CODE39"
-						GroupName="BarcodeKind"
+						Content="CODE39" GroupName="BarcodeKind"
 						IsChecked="{Binding IsCode39Barcode}" />
 					<RadioButton Margin="24,4,0,4"
-						Content="NW7"
-						GroupName="BarcodeKind"
+						Content="NW7" GroupName="BarcodeKind"
 						IsChecked="{Binding IsNw7Barcode}" />
 				</StackPanel>
 
