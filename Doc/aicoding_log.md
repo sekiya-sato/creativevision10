@@ -549,3 +549,26 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
 
 ---
+
+## [2026-06-18] 12:02 MasterConfigメンテ画面追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：MasterConfig のメンテ画面を作成し、MenuData の「マスター」配下で「システム管理マスタ」の下に追加して commit まで行う。
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterConfigMenteViewModel.cs: `BaseMenteViewModel<MasterConfig>` を使った一覧取得、追加、修正、削除用ViewModelを追加し、`Category,Name` 並びとカテゴリ/フラグ名の必須チェックを実装。
+- CvWpfclient/Views/01Master/MasterConfigMenteView.xaml: `MasterConfig` の一覧DataGridと詳細編集欄を持つMaterialDesign系メンテ画面を追加。
+- CvWpfclient/Views/01Master/MasterConfigMenteView.xaml.cs: 画面初期化用code-behindを追加。
+- CvWpfclient/Models/MenuData.cs: 「■ マスター」配下の「システム管理マスタ」直下に「MasterConfigメンテ」を追加。
+### 技術決定 Why
+- `MasterConfig` は `Code` を持たないため、既定の `ListOrder=Code` を使わず `Category,Name` に上書きした。
+- 既存のマスターメンテ画面と操作感を合わせるため、`MasterMeishoMenteView` 系の左右分割、ColorZone、Card、DataGrid、TabControl の構成を流用した。
+### 確認
+- `MasterConfigMenteView.xaml` をXML parseし、構文エラーなしを確認。
+- `git diff --check` で空白エラーなしを確認。
+- 編集ファイルがUTF-8 BOMなし / CRLFであることを確認。
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
+
+---
