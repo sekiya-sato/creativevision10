@@ -645,3 +645,21 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvBaseSqlite/CvBaseSqlite.csproj"` でビルド成功（0 warnings / 0 errors）を確認
 
 ---
+
+## [2026-06-18] 15:55 在庫・掛再更新画面（StockKakeUpdateView）の実装
+### Agent
+- kimi-k2.7-code : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Views._31Monthly.StockKakeUpdateView の View / ViewModel を作成し、サーバ API CvFlag.Msg051_SummaryRealStock を呼び出す。画面は年月 yyyy/MM - yyyy/MM、実行/キャンセルボタン、実行時確認メッセージ、サーバ返答メッセージ表示エリアのシンプル構成とする
+### 実施内容
+- CvWpfclient/ViewModels/31Monthly/StockKakeUpdateViewModel.cs: Helpers.BaseViewModel を継承し、年月 From/To、処理メッセージ、進捗、処理中フラグの ObservableProperty を追加。実行コマンドで入力検証、確認ダイアログ、対象年月分の Msg051_SummaryRealStock ストリーミング呼び出し、進捗とサーバメッセージの更新を実装
+- CvWpfclient/Views/31Monthly/StockKakeUpdateView.xaml: MaterialDesign を使ったシンプルレイアウト（ColorZone ヘッダー、年月入力 Card、進捗 ProgressBar、処理メッセージ GroupBox、実行/キャンセル Button）を追加。既存の StockKakeUpdateView.xaml.cs は変更なし
+### 技術決定 Why
+- Msg051_SummaryRealStock は QueryMsgStreamAsync でのストリーミング応答であること、リクエスト型 SummaryRealDateParameter が単一月度しか受け取らないことを確認。画面の From-To 範囲に対して対象月をループし、各月をストリーミングで処理してメッセージと進捗を反映させた。キャンセルボタンは BaseViewModel.ExitCommand にバインドし、処理中は入力欄を無効化する
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+- 編集ファイルの CRLF 化と `git diff --check` での空白エラーなしを確認
+
+---
