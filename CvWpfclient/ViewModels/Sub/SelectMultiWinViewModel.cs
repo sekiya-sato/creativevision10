@@ -183,8 +183,7 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 		SetInitialSelectedIds(selectedIds);
 	}
 
-	[RelayCommand]
-	public void Exit() {
+	protected override void OnExit() {
 		ClientLib.ExitDialogResult(this, false);
 	}
 
