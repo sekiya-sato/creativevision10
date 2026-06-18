@@ -154,7 +154,12 @@ public partial class MessageBoxView : Window {
 		//
 		SetupIconVisibility();
 		SetupButton();
+		isWaitCursor = ClientLib.IsCursorWait();
+		if (isWaitCursor) {
+			ClientLib.Cursor2Normal();
+		}
 	}
+	private bool isWaitCursor = false;
 	private void CopyMenuItem_Click(object sender, RoutedEventArgs e) {
 		var ctrl = (MenuItem)sender;
 		if (ctrl is not null) {
@@ -240,9 +245,11 @@ public partial class MessageBoxView : Window {
 		Dispatcher.InvokeAsync(() => {
 			if (CanReceiveInitialFocus(LeftButton)) {
 				Keyboard.Focus(LeftButton);
-			} else if (CanReceiveInitialFocus(MiddleButton)) {
+			}
+			else if (CanReceiveInitialFocus(MiddleButton)) {
 				Keyboard.Focus(MiddleButton);
-			} else if (CanReceiveInitialFocus(RightButton)) {
+			}
+			else if (CanReceiveInitialFocus(RightButton)) {
 				Keyboard.Focus(RightButton);
 			}
 		}, System.Windows.Threading.DispatcherPriority.Loaded);
@@ -259,6 +266,9 @@ public partial class MessageBoxView : Window {
 	private void Button_Click(object sender, RoutedEventArgs e) {
 		var button = (Button)sender;
 		Result = (MessageBoxResult)button.Tag; //Get MessageBoxResult from Tag
+		if (isWaitCursor) {
+			ClientLib.Cursor2Wait();
+		}
 		Close();
 		if (Owner != null)
 			Owner.Activate();
@@ -266,6 +276,9 @@ public partial class MessageBoxView : Window {
 
 	private void Window_PreviewKeyDown(object sender, KeyEventArgs e) {
 		if (e.Key == Key.Escape) {
+			if (isWaitCursor) {
+				ClientLib.Cursor2Wait();
+			}
 			Close();
 			if (Owner != null)
 				Owner.Activate();

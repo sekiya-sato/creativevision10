@@ -161,6 +161,9 @@ public class ClientLib {
 	public static void Cursor2Normal() {
 		System.Windows.Input.Mouse.OverrideCursor = null;
 	}
+	public static bool IsCursorWait() {
+		return System.Windows.Input.Mouse.OverrideCursor == System.Windows.Input.Cursors.Wait;
+	}
 
 }
 

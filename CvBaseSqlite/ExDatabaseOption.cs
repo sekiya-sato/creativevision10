@@ -3,9 +3,6 @@ using Microsoft.Data.Sqlite;
 namespace CvBaseSqlite;
 
 public class ExDatabaseOption {
-	public static void ClearAllPools() {
-		SqliteConnection.ClearAllPools();
-	}
 
 	/// <summary>
 	/// SQLite のプールをクリーンアップし、終了時に .db ファイルのみが残るように
@@ -15,13 +12,13 @@ public class ExDatabaseOption {
 	public static void ClearPools(string databaseName) {
 		var databasePath = GetDatabasePath(databaseName);
 		if (string.IsNullOrWhiteSpace(databasePath) || IsMemoryDatabase(databasePath)) {
-			ClearAllPools();
+			SqliteConnection.ClearAllPools();
 			return;
 		}
 
 		var normalizedDatabasePath = Path.GetFullPath(databasePath);
 		if (!File.Exists(normalizedDatabasePath)) {
-			ClearAllPools();
+			SqliteConnection.ClearAllPools();
 			return;
 		}
 
@@ -29,17 +26,13 @@ public class ExDatabaseOption {
 		ExecuteOptimizeBeforePoolClear(normalizedDatabasePath);
 
 		// 2. pooled 接続をすべて解放し、WAL/SHM ファイルのロックを外す
-		ClearAllPools();
+		SqliteConnection.ClearAllPools();
 
 		// 3. Pooling=False の専用接続で WAL を収束し、journal_mode を DELETE に戻す
 		FinalizeWalFiles(normalizedDatabasePath);
 
 		// 4. 専用接続が解放された後、残った pool を再クリア
-		ClearAllPools();
-
-		// 5. ロックが外れた後に sidecar ファイルを削除
-		// DeleteIfExistsWithRetry(normalizedDatabasePath + "-wal");
-		// DeleteIfExistsWithRetry(normalizedDatabasePath + "-shm");
+		SqliteConnection.ClearAllPools();
 	}
 
 	static string GetDatabasePath(string databaseName) {
@@ -73,7 +66,7 @@ public class ExDatabaseOption {
 		ExecuteNonQuery(conn, "PRAGMA journal_mode=DELETE;");
 	}
 
-	static string BuildConnectionString(string databasePath, bool pooling, int defaultTimeout = 30) {
+	static string BuildConnectionString(string databasePath, bool pooling, int defaultTimeout = 5) {
 		var builder = new SqliteConnectionStringBuilder {
 			DataSource = databasePath,
 			Mode = SqliteOpenMode.ReadWrite,
@@ -87,30 +80,5 @@ public class ExDatabaseOption {
 	static void ExecuteNonQuery(SqliteConnection conn, string sql) {
 		using var cmd = conn.CreateCommand();		cmd.CommandText = sql;
 		cmd.ExecuteNonQuery();
-	}
-
-	static void DeleteIfExistsWithRetry(string path) {
-		for (var i = 0; i < 5; i++) {
-			if (!File.Exists(path)) {
-				return;
-			}
-
-			try {
-				File.Delete(path);
-				return;
-			}
-			catch (IOException) when (i < 4) {
-				ClearAllPools();
-				Thread.Sleep(100);
-			}
-			catch (UnauthorizedAccessException) when (i < 4) {
-				ClearAllPools();
-				Thread.Sleep(100);
-			}
-		}
-
-		if (File.Exists(path)) {
-			File.Delete(path);
-		}
 	}
 }
