@@ -596,3 +596,20 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認。
 
 ---
+
+## [2026-06-18] 12:44 SelectMultiWindow Esc 押下時の Ambiguous match エラー対応
+### Agent
+- kimi-k2.7-code : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：BaseWindow.TryExecuteViewModelCommand で SelectMultiWindow の Esc 押下時に「Ambiguous match found for ExitCommand」エラーが発生する原因調査と対応
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectMultiWinViewModel.cs: `[RelayCommand] public void Exit()` を削除し、基底 `BaseViewModel.OnExit()` を override して `ClientLib.ExitDialogResult(this, false)` を呼ぶように変更。これにより `BaseViewModel` で定義済みの `ExitCommand` と Source Generator 生成の `ExitCommand` の重複を解消
+### 技術決定 Why
+- `BaseViewModel` に `ICommand ExitCommand` が既に存在するため、派生クラスで `[RelayCommand] void Exit()` とすると Source Generator が同名の `IRelayCommand ExitCommand` を生成し、`Type.GetProperty("ExitCommand")` で AmbiguousMatchException が発生していた。継承元のコマンドを再利用しつつ、閉じる動作だけを override することで最小差分で解決した
+### 確認
+- 変更ファイルの LSP 診断でエラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
