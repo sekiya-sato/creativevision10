@@ -41,26 +41,17 @@ public partial class MenuData : ObservableObject {
 			// ToDo: MenuDataの"準備中"メッセ終わったところ書き換え
 			// `addInfo:"準備中"` のものは、基本的に空のViewおよびViewModel
 		new("■ 管理メニュー / テスト画面", new([
-			/*
-			new("ログイン", typeof(Views._00System.LoginView), true, 0, "gPRC"),
-			new("リフレッシュ", typeof(Views._00System.LoginView), true, 1, "gRPC"),
-			new("環境設定", typeof(Views._00System.SysSetConfigView), true),
-			new("", new([
-				new("", typeof(object), false, addInfo:"準備中"),
-				new("", typeof(object), false, addInfo:"準備中"),
-			])),
-			*/
 			new("ログイン管理マスタ", typeof(Views._00System.SysLoginView),  addInfo:"ログインIDの管理とユーザ割当、有効期限の設定"),
 			new("ログイン履歴情報", typeof(Views._00System.SysLoginHistoryView),  addInfo:"ログイン履歴の確認"),
-			new("自動実行管理マスタ", typeof(Views._00System.SysSchedulerJobMenteView), addInfo:"自動実行ジョブの一覧・変更・削除"),
-			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), addInfo:"自動実行履歴の確認"),
+			new("自動実行管理マスタ", typeof(Views._00System.SysSchedulerJobMenteView), addInfo:"自動実行ジョブの一覧・変更"),
+			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), addInfo:"自動実行ジョブの履歴"),
 		new("汎用マスタメンテ", typeof(Views._00System.SysGeneralMenteView), addInfo:"MasterMeisho を汎用編集UIで表示・更新"),
-		new("旧DBからの変換処理", typeof(Views._00System.ConcvertDbView), addInfo:"旧DBからのデータ変換"),
-		new("旧DBからの選択変換処理", typeof(Views._00System.ConcvertSelectedView), addInfo:"旧DBからの選択変換処理"),
+		new("旧DBからの変換処理", typeof(Views._00System.ConcvertDbView), addInfo:"旧OracleDBからのデータ変換"),
+		new("旧DBからの選択変換処理", typeof(Views._00System.ConcvertSelectedView), addInfo:"旧OracleDBからの選択変換処理"),
 		new("管理者用システム処理", typeof(Views._00System.SysExecMiscView), addInfo:"管理者用の各種システム処理"),
         /* ================================ */
 			new("----------------", typeof(string) , addInfo:"---"),
-			new("サンプル画面 ---", typeof(SampleView), addInfo:"-- MaterialDesignサンプルとテストPG"),
+			new("サンプル画面 ---", typeof(SampleView), addInfo:"-- MaterialDesignサンプル"),
 			new("Test画面--", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"-- 一時的なテストで使用"),
 		])),
 		new("■ マスター", new([
@@ -250,7 +241,6 @@ public partial class MenuData : ObservableObject {
 			new("移動明細書印刷", typeof(Views._30HHT.IdoDetailBookPrintView), addInfo:"準備中"),
 			new("即時移動明細書", typeof(Views._30HHT.IdoSokuDetailBookPrintView), addInfo:"準備中"),
 			new("HHT手動データ受信(ﾃﾞｰﾀ送信後)", typeof(Views._30HHT.HhtManualDataReceive2View), addInfo:"準備中"),
-			new("HHT用マスタバーコード印刷", typeof(Views._30HHT.HhtMasterBarcodePrintView), addInfo:"準備中"),
 		])),
 		new("■ 月次 / 更新処理", new([
 			new("請求計算", typeof(Views._31Monthly.BillingCalculationView), addInfo:"準備中"),
