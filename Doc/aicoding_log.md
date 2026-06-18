@@ -663,3 +663,19 @@
 - 編集ファイルの CRLF 化と `git diff --check` での空白エラーなしを確認
 
 ---
+
+## [2026-06-19] 07:50 RangeParamView Id複数選択レイアウト調整とToolTip折り返し対応
+### Agent
+- kimi-k2.7-code : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の Sub/RangeParamView で、Id の複数選択件数が多い場合に表示が長くなり他の部品のレイアウトが崩れるため、grid.columnspan を増やしつつ元のwindowsサイズを超えず、他の部品のレイアウトを崩さないよう調整する。またTooltipが長くなった場合は折り返して見やすくする
+### 実施内容
+- CvWpfclient/Views/Sub/RangeParamView.xaml: 親 Grid の最右列を Auto から 90 に固定し、Id 選択行を DockPanel で ColumnSpan="6" に展開。選択結果 TextBlock は TextTrimming で切り、ToolTip は MaxWidth=600, TextWrapping=Wrap で折り返し表示
+### 技術決定 Why
+- Auto 列が選択結果テキストの DesiredWidth に引きずられて Grid 全体が広がっていたため、最右列を固定幅にして DockPanel の残りスペースで TextTrimming を確実に機能させた。ToolTip は Popup として親サイズ制約を受けないため、内部 TextBlock に MaxWidth と TextWrapping を与えて折り返し表示にした
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
