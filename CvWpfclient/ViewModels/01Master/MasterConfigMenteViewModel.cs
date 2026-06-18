@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
 
@@ -8,7 +7,7 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterConfigMenteViewModel : Helpers.BaseMenteViewModel<MasterConfig> {
 	[ObservableProperty]
-	string title = "MasterConfig メンテ";
+	string title = "設定フラグマスタメンテ";
 
 	protected override string? ListOrder => "Category,Name";
 

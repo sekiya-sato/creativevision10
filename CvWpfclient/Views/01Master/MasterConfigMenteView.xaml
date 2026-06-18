@@ -175,10 +175,10 @@
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
-							<DataGridTextColumn Width="160"
+							<DataGridTextColumn Width="100"
 								Binding="{Binding Category}"
 								Header="カテゴリ" />
-							<DataGridTextColumn Width="220"
+							<DataGridTextColumn Width="200"
 								Binding="{Binding Name}"
 								Header="フラグ名" />
 							<DataGridTextColumn Width="180"
