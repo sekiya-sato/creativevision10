@@ -29,7 +29,13 @@ public partial class ExDatabaseSqlite : ExDatabase {
 	/// <returns>ExDatabaseSqliteのインスタンス</returns>
 	public static ExDatabaseSqlite GetDbConn(string dbfile, bool isOpen = true) {
 		// パフォーマンスと並行性を最大化する構成（WALモード併用）// Microsoft.Data.Sqliteでは、journal mode=WAL; は使えない
-		string advancedConnectionString = $"Data Source={dbfile};Mode=ReadWriteCreate;Cache=Shared;Pooling=True;";
+		var advancedConnectionString = new SqliteConnectionStringBuilder {
+			DataSource = dbfile,
+			Mode = SqliteOpenMode.ReadWriteCreate,
+			Pooling = true,                       // .NET側のコネクションプーリングを有効化
+			Cache = SqliteCacheMode.Shared,       // プロセス内でのキャッシュ共有
+			DefaultTimeout = 5                    // busy_timeout の初期値（秒単位、ここでは5秒）
+		}.ToString();
 		var conn = new SqliteConnection(advancedConnectionString);
 		var _db = new ExDatabaseSqlite(conn);
 		if (isOpen) {
@@ -64,10 +70,15 @@ public partial class ExDatabaseSqlite : ExDatabase {
 	void EnableWalMode(SqliteConnection conn) {
 		using (var cmd = conn.CreateCommand()) {
 			cmd.CommandText = @"
-PRAGMA journal_mode = WAL;
-PRAGMA synchronous = NORMAL;
-PRAGMA journal_size_limit = 67108864;
-"; // 64MB
+    PRAGMA journal_mode = WAL;
+    PRAGMA synchronous = NORMAL;
+    PRAGMA page_size = 4096;
+    PRAGMA cache_size = -64000;  -- 約64MBのキャッシュ
+    PRAGMA temp_store = MEMORY;
+    PRAGMA mmap_size = 268435456; -- 256MBまでのメモリマップドI/O
+    PRAGMA foreign_keys = ON;
+	PRAGMA journal_size_limit = 67108864;　-- 64MBのジャーナルサイズ制限
+";
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "SELECT sqlite_version();";
 			Version = cmd.ExecuteScalar()?.ToString() ?? "";
