@@ -22,6 +22,21 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	string title = "複数選択画面";
 
+	[ObservableProperty]
+	string displayNameCode = " Code";
+	[ObservableProperty]
+	string displayNameName = " 名前";
+	[ObservableProperty]
+	string displayNameRyaku = " 略称";
+	[ObservableProperty]
+	int displayWidthCode = 80;
+	[ObservableProperty]
+	int displayWidthName = 280;
+	[ObservableProperty]
+	int displayWidthRyaku = 120;
+
+
+
 	Type MyType = typeof(string);
 
 	string Where = string.Empty;

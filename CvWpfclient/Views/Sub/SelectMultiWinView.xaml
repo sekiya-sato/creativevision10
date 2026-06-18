@@ -155,17 +155,35 @@
 								</DataGridTextColumn.ElementStyle>
 							</DataGridTextColumn>
 							<DataGridTextColumn x:Name="Col01"
-								Width="80"
+								Width="{Binding DisplayWidthCode}" d:Width="80"
 								Binding="{Binding Path=Code}"
-								CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" Code" IsReadOnly="True" />
-							<DataGridTextColumn x:Name="Col02"
-								Width="300"
+								CanUserReorder="True" CanUserResize="True" CanUserSort="True" IsReadOnly="True">
+								<DataGridTextColumn.HeaderTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding DataContext.DisplayNameCode, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+									</DataTemplate>
+								</DataGridTextColumn.HeaderTemplate>
+							</DataGridTextColumn>
+							<DataGridTextColumn x:Name="Col02" d:Width="280"
+								Width="{Binding DisplayWidthName}"
 								Binding="{Binding Path=Name}"
-								CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 名前" IsReadOnly="True" />
+								CanUserReorder="True" CanUserResize="True" CanUserSort="True" IsReadOnly="True">
+								<DataGridTextColumn.HeaderTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding DataContext.DisplayNameName, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+									</DataTemplate>
+								</DataGridTextColumn.HeaderTemplate>
+							</DataGridTextColumn>
 							<DataGridTextColumn x:Name="Col03"
-								Width="120"
+								Width="{Binding DisplayWidthRyaku}" d:Width="120"
 								Binding="{Binding Path=Ryaku}"
-								CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 略称" IsReadOnly="True" />
+								CanUserReorder="True" CanUserResize="True" CanUserSort="True" IsReadOnly="True">
+								<DataGridTextColumn.HeaderTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding DataContext.DisplayNameRyaku, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+									</DataTemplate>
+								</DataGridTextColumn.HeaderTemplate>
+							</DataGridTextColumn>
 						</DataGrid.Columns>
 					</DataGrid>
 				</Grid>

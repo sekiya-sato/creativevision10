@@ -62,6 +62,12 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 		if (selectView.DataContext is not SelectMultiWinViewModel vm) {
 			return;
 		}
+		vm.DisplayNameCode = " テーブル名";
+		vm.DisplayNameName = " 説明";
+		vm.DisplayNameRyaku = " 件数";
+		vm.DisplayWidthCode = 200;
+		vm.DisplayWidthName = 300;
+		vm.DisplayWidthRyaku = 100;
 
 		vm.SetLocalData(TableList, "DB定義書出力 テーブル選択", selectedIds: SelectedTableIds);
 		if (ClientLib.ShowDialogView(selectView, this) != true) {
