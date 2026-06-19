@@ -59,6 +59,7 @@ var fdTxt42	= page.GetField(&quot;Txt42&quot;);
 var fdTxt21	= page.GetField(&quot;Txt21&quot;);
 var fdTxt16	= page.GetField(&quot;Txt16&quot;);
 var fdTxt17	= page.GetField(&quot;Txt17&quot;);
+var fdTxt67	= page.GetField(&quot;Txt67&quot;);
 var fdTxt22	= page.GetField(&quot;Txt22&quot;);
 
 //////////////////////////////////////////////////////////////////////
@@ -73,6 +74,7 @@ var fdTxt38	= page.GetField(&quot;Txt38&quot;);
 var fdTxt18	= page.GetField(&quot;Txt18&quot;);
 var fdTxt14	= page.GetField(&quot;Txt14&quot;);
 var fdTxt20	= page.GetField(&quot;Txt20&quot;);
+var fdTxt66	= page.GetField(&quot;Txt66&quot;);
 
 //////////////////////////////////////////////////////////////////////
 // OnFormLoad()関数は、フォームファイルをロードして印刷準備が整ったときに、
@@ -128,7 +130,7 @@ function OnFormLoad() {
 			fdTxt18.value = &quot;ユニークキー&quot;;
 			fdTxt29.value = &quot;対象フィールド&quot;;
 			fdTxt38.visible = 0;
-			fdTxt09.visible = 0;
+			fdTxt09.visible = 1;
 			//dtitem6 = dtitem7; //カラム名を入れなおし
 		} else {
 			fdTxt27.visible = 1;
@@ -138,8 +140,9 @@ function OnFormLoad() {
 			fdTxt18.value = &quot;長さ&quot;;
 			//fdTxt29.value = &quot;デフォルト値&quot;;
 			fdTxt29.value = &quot;&quot;;
-			fdTxt38.visible = 0;
-			fdTxt09.visible = 0;
+			fdTxt38.visible = 1;
+			fdTxt38.value = &quot;説明&quot;;
+			fdTxt09.visible = 1;
 		}
 
 
@@ -182,7 +185,9 @@ function OnFormLoad() {
 			<item id="item5">
 				<position offset="0" length="5"/>
 			</item>
-			<item id="item6"/>
+			<item id="item6">
+				<position offset="0" length="100"/>
+			</item>
 			<item id="item7">
 				<position offset="0" length="7"/>
 			</item>
@@ -193,7 +198,9 @@ function OnFormLoad() {
 				<group level="2" pagechange="1"/>
 				<position offset="0" length="1"/>
 			</item>
-			<item id="item10"/>
+			<item id="item10">
+				<position offset="0" length="30"/>
+			</item>
 			<item id="item11">
 				<position offset="0" length="1"/>
 			</item>
@@ -227,7 +234,7 @@ function OnFormLoad() {
 			<font size="90"/>
 		</text>
 		<region id="Rgn01" direction="0" tree="1">
-			<position x="0" y="18" width="150" height="244"/>
+			<position x="0" y="24" width="150" height="238"/>
 			<color transparent="1"/>
 			<border left="1" right="1" top="1" bottom="1"/>
 			<record id="Rec01" tree="1">
@@ -254,7 +261,7 @@ function OnFormLoad() {
 					<position x="120" y="0" width="30" height="4"/>
 					<color transparent="1"/>
 					<border left="1"/>
-					<data calctype="static"/>
+					<data calctype="item" datasrc="item6"/>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
@@ -321,7 +328,7 @@ function OnFormLoad() {
 					<position x="120" y="0" width="30" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<border left="1"/>
-					<data calctype="static"/>
+					<data calctype="static">説明</data>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
@@ -372,8 +379,24 @@ function OnFormLoad() {
 			<decode datatype="string" format=""/>
 			<font size="80"/>
 		</text>
+		<text id="Txt66" valign="middle">
+			<position x="0" y="14" width="17" height="4"/>
+			<color base="c8ffc8" transparent="0"/>
+			<border left="1" right="1" top="1" bottom="1"/>
+			<data calctype="static">旧テーブル名</data>
+			<decode datatype="string" format=""/>
+			<font size="80"/>
+		</text>
+		<text id="Txt67" valign="middle">
+			<position x="17" y="14" width="58" height="4"/>
+			<color transparent="0"/>
+			<border left="1" right="1" top="1" bottom="1"/>
+			<data calctype="item" datasrc="item10"/>
+			<decode datatype="string" format=""/>
+			<font size="80"/>
+		</text>
 		<text id="Txt22" valign="middle">
-			<position x="0" y="14" width="24" height="4"/>
+			<position x="90" y="14" width="60" height="4"/>
 			<color transparent="0"/>
 			<border left="4" right="4" top="4" bottom="4"/>
 			<data calctype="item" datasrc="item8"/>

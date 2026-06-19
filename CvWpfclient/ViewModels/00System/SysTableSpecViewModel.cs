@@ -15,7 +15,6 @@ using System.Reflection;
 namespace CvWpfclient.ViewModels._00System;
 
 public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTableRow> {
-	const string SchemaName = "main";
 
 	[ObservableProperty]
 	string title = "DB定義書出力";
@@ -153,7 +152,9 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 				continue;
 			}
 
-			lines.AddRange(BuildTableCsvLines(row.Code, type));
+			var tableComment = GetClassComment(type);
+			var oldTableName = GetOldTableName(type);
+			lines.AddRange(BuildTableCsvLines(row.Code, tableComment, oldTableName, type));
 		}
 
 		if (lines.Count == 0) {
@@ -169,7 +170,7 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 		return string.Join("\r\n", lines) + "\r\n";
 	}
 
-	static IEnumerable<string> BuildTableCsvLines(string tableName, Type tableType) {
+	static IEnumerable<string> BuildTableCsvLines(string tableName, string tableComment, string oldTableName, Type tableType) {
 		var fieldNo = 1;
 		foreach (var property in GetDbProperties(tableType)) {
 			if (!TryGetColumnSpec(property, out var dataType, out var length)) {
@@ -178,15 +179,15 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 
 			yield return BuildCsvLine([
 				tableName,
-				SchemaName,
+				tableComment,
 				property.Name,
 				dataType,
 				length,
-				string.Empty,
+				GetPropertyOldComment(property),
 				string.Empty,
 				"フィールド定義",
 				"0",
-				string.Empty,
+				oldTableName,
 				fieldNo.ToString(CultureInfo.InvariantCulture)
 			]);
 			fieldNo++;
@@ -197,6 +198,8 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 		if (primaryKey != null) {
 			yield return BuildIndexCsvLine(
 				tableName,
+				tableComment,
+				oldTableName,
 				$"{tableName}_PK",
 				isPrimary: true,
 				isUnique: true,
@@ -207,6 +210,8 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 		foreach (var key in tableType.GetCustomAttributes<KeyDmlAttribute>()) {
 			yield return BuildIndexCsvLine(
 				tableName,
+				tableComment,
+				oldTableName,
 				$"{tableName}_{key.KeyName}",
 				isPrimary: false,
 				isUnique: key.IsUnique,
@@ -215,10 +220,10 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 		}
 	}
 
-	static string BuildIndexCsvLine(string tableName, string indexName, bool isPrimary, bool isUnique, string columns, int no) =>
+	static string BuildIndexCsvLine(string tableName, string tableComment, string oldTableName, string indexName, bool isPrimary, bool isUnique, string columns, int no) =>
 		BuildCsvLine([
 			tableName,
-			SchemaName,
+			tableComment,
 			indexName,
 			FormatBool(isPrimary),
 			FormatBool(isUnique),
@@ -226,7 +231,7 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 			columns,
 			"インデックス定義",
 			"1",
-			string.Empty,
+			oldTableName,
 			no.ToString(CultureInfo.InvariantCulture)
 		]);
 
@@ -370,6 +375,33 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 		return text.IndexOfAny([',', '"', '\r', '\n']) >= 0
 			? $"\"{text}\""
 			: text;
+	}
+
+	static string GetClassComment(Type type) =>
+		type.GetCustomAttribute<CommentAttribute>()?.Content?.Replace(",", string.Empty) ?? string.Empty;
+
+	static string GetOldTableName(Type type) =>
+		type.GetCustomAttribute<OldTableCommentAttr>()?.Name ?? string.Empty;
+
+	static string GetPropertyOldComment(PropertyInfo property) {
+		var attr = property.GetCustomAttribute<OldTableCommentAttr>();
+		if (attr != null) {
+			return attr.Content ?? string.Empty;
+		}
+
+		var declaringType = property.DeclaringType;
+		if (declaringType == null) {
+			return string.Empty;
+		}
+
+		// ObservableProperty attributes are emitted on the generated backing field.
+		var fieldName = property.Name.Length == 0
+			? string.Empty
+			: char.ToLowerInvariant(property.Name[0]) + property.Name[1..];
+		var field = declaringType.GetField(
+			fieldName,
+			BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+		return field?.GetCustomAttribute<OldTableCommentAttr>()?.Content ?? string.Empty;
 	}
 
 	static string FormatBool(bool value) => value ? "TRUE" : "FALSE";

@@ -1,3 +1,23 @@
+## [2026-06-19] 22:06 SysTableSpecView 印刷レイアウトにテーブルComment/旧テーブル名/フィールド説明を出力
+### Agent
+- kimi-k2.7-code : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SysTableSpecView で印刷レイアウトの"スキーマ名"部分に Table.Comment 属性を出力し、追加のテーブル情報として旧テーブル名を、各プロパティの長さの次の列に OldTableCommentAttr の説明を出力する
+### 実施内容
+- CvWpfclient/ViewModels/00System/SysTableSpecViewModel.cs: SchemaName 定数を削除。テーブル型から CommentAttribute.Content / OldTableCommentAttr.Name を取得し CSV の item2 / item10 に出力。各プロパティの OldTableCommentAttr.Content を取得し CSV の item6 に出力（ObservableProperty の生成フィールドにも対応）
+- printform/SysTableSpec.qfm: item6 / item10 に position length を追加。明細の空欄列を item6 表示に、ヘッダを「説明」に変更。ページヘッダに「旧テーブル名」ラベルと item10 表示を追加。定義種別を同じ行の右側に移動
+### 技術決定 Why
+- Table.Comment はカンマを削除してから出力。OldTableCommentAttr は [ObservableProperty] 対応でプロパティに直接付かない場合は生成されたキャメルケースの backing field から読み取る
+### 影響範囲
+- 修正したファイルのみ
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj` でビルド成功（0 warnings / 0 errors）
+- qfm validator で Shift_JIS / 構造ともに OK
+
+---
+
 ## [2026-06-19] 15:51 CvBase プロジェクトの KeyDml / PrimaryKey 文字列リテラルを nameof() に変更
 ### Agent
 - kimi-k2.7-code : opencode-go : Sisyphus
