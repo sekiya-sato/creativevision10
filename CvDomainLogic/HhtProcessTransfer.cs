@@ -12,7 +12,7 @@ public partial class HhtProcess {
 	public void TransferValcan2Hhtdata(string dateFrom, string dateTo) {
 		//TranVulcanHht
 		//TranHhtData
-		_db.BeginTransaction();
+		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		var ret = _db.Execute("Update TranHhtData set VdCnvDate=-1 where DenDay between @0 and @1 and VdCnvDate=0", [dateFrom, dateTo]);
 		// 一旦TranHhtDataのVdCnvDateを-1にして、変換対象を明示する
 		var vulcanData = _db.Fetch<TranVulcanHht>($"where DenDay between @0 and @1 and VdCnvDate=-1", [dateFrom, dateTo]);

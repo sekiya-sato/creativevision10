@@ -178,7 +178,7 @@ public partial class CoreService {
 		SetCreatedAuditValues(insert.ItemType, item);
 
 		try {
-			_db.BeginTransaction();
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			var newItem = _db.Insert(item);
 			if (typeof(IDerivedOrigin).IsAssignableFrom(insert.ItemType)) {
 				new HandlerDerived(_db).Insert(insert.ItemType, item, ((BaseDbClass)item).Id);
@@ -215,7 +215,7 @@ public partial class CoreService {
 			return CreateNotFoundResponse(flag, listType, "[]");
 		}
 		try {
-			_db.BeginTransaction();
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			foreach (var item in list) {
 				SetCreatedAuditValues(insertBulk.ItemType, item);
 				_db.Insert(item);
@@ -264,7 +264,7 @@ public partial class CoreService {
 			if (db.Vdu != org.Vdu) {
 				return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 			}
-			_db.BeginTransaction();
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			if (typeof(ITranSoko).IsAssignableFrom(update.ItemType)) {
 				var summaryDb = new SummaryDb(_db);
 				var id = ((BaseDbClass)item).Id;
@@ -317,7 +317,7 @@ public partial class CoreService {
 		if (db.Vdu != org.Vdu) {
 			return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
-		_db.BeginTransaction();
+		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		if (typeof(ITranSoko).IsAssignableFrom(delete.ItemType)) {
 			var summaryDb = new SummaryDb(_db);
 			var id = ((BaseDbClass)item).Id;
@@ -350,7 +350,7 @@ public partial class CoreService {
 		if (deleteById.OriginalVdu != org.Vdu) {
 			return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
-		_db.BeginTransaction();
+		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		if (typeof(ITranSoko).IsAssignableFrom(deleteById.ItemType)) {
 			var summaryDb = new SummaryDb(_db);
 			var id = ((BaseDbClass)item).Id;

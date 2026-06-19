@@ -158,7 +158,7 @@ public partial class ConvertDb {
 			list.Add(createItem(rec));
 		}
 
-		_toDb.BeginTransaction();
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		_toDb.InsertBulk<T>(list);
 		_toDb.CompleteTransaction();
 
@@ -355,7 +355,7 @@ public partial class ConvertDb {
 		*/
 		// 3) 更新のみ逐次実行
 		#endregion
-		_toDb.BeginTransaction();
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		foreach (var rec in rows) {
 			var code = getString(rec, "顧客CD");
 			var memo = getString(rec, "拡張メモ");
@@ -489,7 +489,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 			list.Add(item);
 		}
 
-		_toDb.BeginTransaction();
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		_toDb.InsertBulk<MasterShohin>(list);
 		_toDb.CompleteTransaction();
 

@@ -44,7 +44,7 @@ public class SummaryDb {
 		var calcFlg = TranCalcBase.GetCalcSoko(tablename);
 		var sql = CreateSummaryStockSql(tablename, "Id_Soko", calcFlg, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
 		var period = $"{param.DateYymmFrom}-{param.DateYymmTo}";
-		_db.BeginTransaction();
+		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
 			cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Soko", period);
 		}

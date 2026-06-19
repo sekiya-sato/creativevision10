@@ -612,7 +612,7 @@ WHERE EXISTS (
 			list.Add(converter(rec));
 		}
 
-		_toDb.BeginTransaction();
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		_toDb.InsertBulk<T>(list);
 		_toDb.CompleteTransaction();
 
