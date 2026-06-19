@@ -348,7 +348,7 @@ public class SchedulerService : ISchedulerService {
 						skippedCount++;
 						continue;
 					}
-					if (entryInfo is FileInfo fileInfo && (latestFileTime < threshold.AddDays(-1))) {
+					if (entryInfo is FileInfo fileInfo && (latestFileTime > threshold.AddDays(-1))) {
 						skippedCount++;// ファイルは1日以上前のものだけ削除する
 						continue;
 					}
@@ -476,8 +476,9 @@ public class SchedulerService : ISchedulerService {
 	}
 
 	public static Dictionary<string, object> ExecuteSqliteWalCheckpoint(ExDatabase db) {
+		var result = db.RawExecCmd(SqliteOptimizeSql);
 		Helpers.EnsureRawExecSucceeded(db.RawExecCmd(SqliteOptimizeSql), SqliteOptimizeSql);
-		var result = db.RawExecCmd(SqliteWalCheckpointSql);
+		result = db.RawExecCmd(SqliteWalCheckpointSql);
 		Helpers.EnsureRawExecSucceeded(result, SqliteWalCheckpointSql);
 		if (result.Count == 0) {
 			return new Dictionary<string, object>();
