@@ -971,6 +971,9 @@
 											</DataTemplate>
 										</DataGridTemplateColumn.CellTemplate>
 									</DataGridTemplateColumn>
+									<DataGridTextColumn Width="180"
+										Binding="{Binding Kbname}"
+										Header="区分名" />
 									<DataGridTemplateColumn Width="150"
 										Header="コード">
 										<DataGridTemplateColumn.CellTemplate>
@@ -1003,12 +1006,9 @@
 											</DataTemplate>
 										</DataGridTemplateColumn.CellTemplate>
 									</DataGridTemplateColumn>
-									<DataGridTextColumn Width="200"
+									<DataGridTextColumn Width="*"
 										Binding="{Binding Mei}"
 										Header="名称" IsReadOnly="True" />
-									<DataGridTextColumn Width="*"
-										Binding="{Binding Kbname}"
-										Header="区分名" />
 								</DataGrid.Columns>
 								<DataGrid.ColumnHeaderStyle>
 									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"

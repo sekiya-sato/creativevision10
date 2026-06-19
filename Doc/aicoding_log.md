@@ -1,3 +1,22 @@
+## [2026-06-20] 06:48 MasterShohinMenteView 名称タブ区分名配置変更
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShohinMenteView.xaml の詳細画面・名称で、区分とコードの間に区分名を表示する
+### 実施内容
+- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: 名称タブの JsubGrid で区分名列を区分列の直後へ移動し、名称列を残り幅表示へ変更
+- Doc/aicoding_log.md: 作業内容を先頭へ追記
+### 技術決定 Why
+- 既存の MasterGeneralMeisho.Kbname バインディングを再利用し、ViewModel や保存処理を変更せず列配置だけで要望を満たした
+### 確認
+- 対象 XAML の CRLF を確認（Mixed=False）
+- `git diff --check` で空白エラーなし
+- 通常権限のビルドは SDK 参照権限で失敗したため、権限付きで `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、ビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-19] 22:06 SysTableSpecView 印刷レイアウトにテーブルComment/旧テーブル名/フィールド説明を出力
 ### Agent
 - kimi-k2.7-code : opencode-go : Sisyphus
