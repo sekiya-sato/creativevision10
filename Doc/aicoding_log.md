@@ -1,3 +1,21 @@
+## [2026-06-20] 07:09 .github/copilot-instructions.mdをAGENTS.mdと整合
+### Agent
+- kimi-k2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：AGENTS.md と .github/copilot-instructions.md を比較し、違っている部分を合わせる
+### 実施内容
+- .github/copilot-instructions.md: ソリューション名を `creativevision10.slnx` に修正、ビルドコマンドを WSL2 cmd.exe 形式に統一、CR+LF / SQLite 3.46 / protobuf-net.Grpc / CommunityToolkit を追記、Architecture / Priority Workflow / SkillOpt-Based Skill Maintenance セクションを追加、Coding & WPF Standards を AGENTS.md と整合
+### 技術決定 Why
+- GitHub Copilot 向けの指示ファイルでありつつ、AGENTS.md（OpenCode 用）と矛盾しないよう統合。Copilot 特有の有用な項目（Client/Server OS、C# 14 Usage、WPF clipping 注意）は維持
+### 確認
+- `file` で .github/copilot-instructions.md の CRLF 改行を確認
+- `git diff --check` で空白エラーなし
+- git commit 完了
+
+---
+
 ## [2026-06-20] 07:00 MasterShiireMenteView 支払情報の締日選択方式変更
 ### Agent
 - GPT-5 : OpenAI : Codex
