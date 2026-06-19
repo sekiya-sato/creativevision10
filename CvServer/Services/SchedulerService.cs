@@ -348,17 +348,17 @@ public class SchedulerService : ISchedulerService {
 						skippedCount++;
 						continue;
 					}
+					if (entryInfo is FileInfo fileInfo && (latestFileTime < threshold.AddDays(-1))) {
+						skippedCount++;// ファイルは1日以上前のものだけ削除する
+						continue;
+					}
 
-					if (entryInfo is DirectoryInfo directoryInfo) {
+					if (entryInfo is DirectoryInfo directoryInfo)
 						directoryInfo.Delete(true);
-					}
-					else {
-						if (latestFileTime < threshold.AddDays(-1)) { // ファイルは1日以上前のものだけ削除する
-							entryInfo.Delete();
-						}
+					else
+						entryInfo.Delete();
 
-						deletedCount++;
-					}
+					deletedCount++;
 				}
 				catch (Exception ex) {
 					failedCount++;
