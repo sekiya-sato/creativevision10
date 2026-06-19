@@ -15,12 +15,12 @@ public class SummaryDb {
 		(string Name, Func<SummaryDateParameter, int> Action)[] steps = [
 			/*
 			*/
-			("Summary : Tran00Uriage", CalcSummaryStockTrn<Tran00Uriage>),
-			("Summary : Tran01Tenuri", CalcSummaryStockTrn<Tran01Tenuri>),
-			("Summary : Tran03Shiire", CalcSummaryStockTrn<Tran03Shiire>),
-			("Summary : Tran05Ido", CalcSummaryStockTrn<Tran05Ido>),
-			("Summary : Tran10IdoOut", CalcSummaryStockTrn<Tran10IdoOut>),
-			("Summary : Tran11IdoIn", CalcSummaryStockTrn<Tran11IdoIn>)
+			($"Summary : {nameof(Tran00Uriage)}", CalcSummaryStockTrn<Tran00Uriage>),
+			($"Summary : {nameof(Tran01Tenuri)}", CalcSummaryStockTrn<Tran01Tenuri>),
+			($"Summary : {nameof(Tran03Shiire)}", CalcSummaryStockTrn<Tran03Shiire>),
+			($"Summary : {nameof(Tran05Ido)}", CalcSummaryStockTrn<Tran05Ido>),
+			($"Summary : {nameof(Tran10IdoOut)}", CalcSummaryStockTrn<Tran10IdoOut>),
+			($"Summary : {nameof(Tran11IdoIn)}", CalcSummaryStockTrn<Tran11IdoIn>)
 		];
 		//("Summary : Tran60Tana", CalcSummaryStock<Tran60Tana>),
 
