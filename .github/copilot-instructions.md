@@ -8,16 +8,14 @@ You are a senior software engineer and solution architect. Your role is to suppo
 - **Server OS**: Ubuntu 24.04
 - **SDK**: .NET 10.0 (Latest)
 - **Language**: C# 14
-- **Communication**: gRPC (code-first, not proto-first)
-- **UI Framework**: WPF with MVVM pattern
-- **Solution File**: `Cv.slnx` (do not use or generate legacy `.sln` files)
+- **Communication**: gRPC (protobuf-net.Grpc, code-first, not proto-first)
+- **UI Framework**: WPF with MVVM pattern (CommunityToolkit)
+- **Solution File**: `creativevision10.slnx` (do not use or generate legacy `.sln` files)
 - **Central package versions**: `Directory.Packages.props`
 - **Code style baseline**: `.editorconfig`
 - **XAML style baseline**: `Settings.XamlStyler`
-- **Restore All Projects**: `dotnet restore "Cv.slnx"`
-- **Build Solution**: `dotnet build "Cv.slnx"`
-- **Build Server Project**: `dotnet build "CvServer/CvServer.csproj"`
-- **Format Check (Solution)**: `dotnet format "Cv.slnx" --verify-no-changes`
+- **Line Endings**: Every edited or created file **MUST** use **CR+LF (`\r\n`)** as the line ending. Do not mix or use LF/CR.
+- **SQL**: Use SQLite 3.46 or later syntax.
 - **[CRITICAL]**: Do not start ".net upgrade experience"
 
 **[CRITICAL RULE]**: Keep dependencies layered and treat the following projects as read-only unless explicitly required:
@@ -29,6 +27,11 @@ You are a senior software engineer and solution architect. Your role is to suppo
 - **CvBaseSqlite**
 - **CvPrints**
 
+## Build Rule (WSL2) **IMPORTANT**
+- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"`
+- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"`
+- Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"`
+- **Format Check (Solution)**: `dotnet format "creativevision10.slnx" --verify-no-changes`
 
 | Folder / Project(.csproj) | Layer | Responsibility | Allowed Dependencies |
 | :--- | :--- | :--- | :--- |
@@ -45,6 +48,11 @@ You are a senior software engineer and solution architect. Your role is to suppo
 
 Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLUDED IN THIS SOLUTION] [used as design references for `CvWpfclient` UI work]
 
+## Architecture
+- **Read-Only**: Layer 0 (`CodeShare`/`CvAsset`), Layer 1 (`CvBase`), Layer 1.2 (DB), Layer 1.4 (`CvPrints`). Write if necessary.
+- **Server Layering**: (0) -> (1-1.4) -> `CvDomainLogic` (1.5) -> `CvServer` (2).
+- **Client Layering**: (0) -> (1) -> `CvWpfclient` (2).
+
 ## Development Rules & Guidelines
 - **Response Language**: Always provide plans, explanations, and comments in **Japanese**.
 - **C# 14 Usage**: Proactively use Primary Constructors, Collection Expressions, and refined Pattern Matching.
@@ -55,7 +63,25 @@ Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLU
 - **CAUTION**: WPF screens can be clipped on the bottom and right edges. Pay special attention to bottom-edge clipping.
 - `.github/copilot/wpf_skill.md` contains the UI design and implementation guidelines for `CvWpfclient`.
 - When working on `CvWpfclient`, first review `.github/copilot/wpf_skill.md`. If WPF resources or exceptions are involved, inspect `CvWpfclient/App.xaml` and the referenced `ResourceDictionary` files first.
+- Use **UTF-8** (`qfm` files are Shift_JIS).
+- Load `wpf-project-guide` and use `check-xaml`, `update-design-mente`, `change-sublist-to-observablecollection` appropriately.
+- Avoid excessive dependency injection.
+- Don’t add test programs unless explicitly asked.
 
+## Priority Workflow (IMPORTANT)
+**Analyze → Plan (TODO-LIST) → Execute → Verify → Write-Log → Git-Commit**
+- Language: Plans, explanations, and comments must be in **JAPANESE**.
+- Task Mgmt: Only ONE `in_progress` task at a time.
+- Preparation: Use `git stash` before work; create a memo in `.omo/` for complex tasks.
+- Search: Use `grep -r` for Japanese terms.
+
+## SkillOpt-Based Skill Maintenance
+- **Evidence-Driven Updates**: Treat `.agents/skills/*/SKILL.md` as the trainable state. Improve it via actual execution evidence (requests, skills, touched files, tool outputs, results, failure modes) rather than broad prompt rewrites.
+- **Separate Reflection**: Fix recurring failures while strictly preserving successful procedures.
+- **Bounded Edits & Splitting**: Limit changes to minimal add/delete/replace actions. Separate generic workflows from feature-specific troubleshooting based on reuse boundaries.
+- **Held-Out Validation**: Gate all edits using unseen test cases. Reject changes that fix the target case but cause regressions in other representative cases.
+- **Isolate Scratches**: Keep rejection reasons and analysis notes in `.omo/`. Deploy only the compact final `SKILL.md` unless research notes are explicitly requested.
+- **No Auto-Tooling**: Do not automatically install or run external SkillOpt tools. Apply the SkillOpt method as a disciplined, local workflow.
 
 ## Interaction Protocol
 - **IMPORTANT!** Follow this workflow: **Analyze → Plan (TodoWrite) → Execute → Verify → Write-Log → Git-Commit**
@@ -63,14 +89,13 @@ Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLU
 1. **Analyze**: Identify which layer the task belongs to.
 2. **Plan (TodoWrite)**: Present a short plan in Japanese and create a todo list. Keep only one task `in_progress` at a time.
 3. **Execute**: Write clean, maintainable code following Clean Architecture principles.
-4. **Verify**: Ensure the `.slnx` file structure remains intact. Run the smallest relevant build and summarize impact and verification results clearly.
+4. **Verify**: Ensure the `.slnx` file structure remains intact. Run the smallest relevant build (prefer the WSL2 build commands in **Build Rule**) and summarize impact and verification results clearly.
 5. **Write-Log**: Update the log file by following the Write-Log section.
 6. **Git-Commit**: When committing, follow the Git-Commit section.
 
 ## Write-Log
-- Upon completion of the task, be sure to record the history at `Doc/aicoding_log.md` using the following format.Insert at the top of the file.
-- If adding the history results in more than 800 lines, rename the existing history file to aicoding_log_[001-999].md with sequential numbers, and create a new `aicoding_log.md` with the same format to record the history.
-- - The following `記録フォーマット` and `アーカイブルール` .
+- **Log**: Append to `Doc/aicoding_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
+- **Log Format**: Folow "Log-Format" section below.**Insert at the top.**
 '''
 ## [YYYY-MM-DD] hh:mm 作業タイトル
 ### Agent
@@ -92,7 +117,7 @@ Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLU
 '''
 
 ## Git-Commit
-- When committing, include the following
+- **Commit Format**: Folow "Commit-Format" section below.
 '''
 [作業内容]
 [使用した AI Model 名 : AI Provider 名 : エージェント名]
