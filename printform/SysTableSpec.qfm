@@ -127,15 +127,15 @@ function OnFormLoad() {
 			fdTxt64.visible = 0;
 			fdTxt28.value = &quot;インデックス名&quot;;
 			fdTxt32.value = &quot;プライマリキー&quot;;
-			fdTxt18.value = &quot;ユニークキー&quot;;
-			fdTxt29.value = &quot;対象フィールド&quot;;
+			fdTxt18.value = &quot;ユニーク?&quot;;
+			fdTxt29.value = &quot;対象プロパティ&quot;;
 			fdTxt38.visible = 0;
 			fdTxt09.visible = 1;
 			//dtitem6 = dtitem7; //カラム名を入れなおし
 		} else {
 			fdTxt27.visible = 1;
 			fdTxt64.visible = 1;
-			fdTxt28.value = &quot;フィールド名&quot;;
+			fdTxt28.value = &quot;プロパティ名&quot;;
 			fdTxt32.value = &quot;型&quot;;
 			fdTxt18.value = &quot;長さ&quot;;
 			//fdTxt29.value = &quot;デフォルト値&quot;;
@@ -145,7 +145,7 @@ function OnFormLoad() {
 			fdTxt09.visible = 1;
 		}
 
-
+/*
 		fdTxt65.value	= dtitem3;
 		fdTxt19.value	= dtitem7;
 		//fdTxt19.value	= dtitem6;
@@ -153,9 +153,9 @@ function OnFormLoad() {
 		fdTxt21.value	= dtitem5;
 		fdTxt16.value	= dtitem1;
 		fdTxt17.value	= dtitem2;
-		fdTxt22.value	= dtitem8;
+		//fdTxt22.value	= dtitem8;
 		fdTxt64.value   = dtitem11;
-
+*/
 		fdRec01.Write();
 
 		cursor.MoveNext();
@@ -258,7 +258,7 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt09" valign="middle">
-					<position x="120" y="0" width="30" height="4"/>
+					<position x="101" y="0" width="49" height="4"/>
 					<color transparent="1"/>
 					<border left="1"/>
 					<data calctype="item" datasrc="item6"/>
@@ -266,14 +266,14 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt19" valign="middle">
-					<position x="93" y="0" width="26" height="4"/>
+					<position x="79" y="0" width="21" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item7"/>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
 				<text id="Txt42" valign="middle">
-					<position x="43" y="0" width="24" height="4"/>
+					<position x="43" y="0" width="20" height="4"/>
 					<color transparent="1"/>
 					<border right="1"/>
 					<data calctype="item" datasrc="item4"/>
@@ -281,7 +281,7 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt21" valign="middle">
-					<position x="68" y="0" width="24" height="4"/>
+					<position x="64" y="0" width="15" height="4"/>
 					<color transparent="1"/>
 					<border right="1"/>
 					<data calctype="item" datasrc="item5"/>
@@ -310,14 +310,14 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt29" valign="middle">
-					<position x="93" y="0" width="26" height="4"/>
+					<position x="79" y="0" width="21" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static"/>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
 				<text id="Txt32" valign="middle">
-					<position x="43" y="0" width="24" height="4"/>
+					<position x="43" y="0" width="20" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<border right="1"/>
 					<data calctype="static">型</data>
@@ -325,7 +325,7 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt38" valign="middle">
-					<position x="120" y="0" width="30" height="4"/>
+					<position x="101" y="0" width="49" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<border left="1"/>
 					<data calctype="static">説明</data>
@@ -333,7 +333,7 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt18" valign="middle">
-					<position x="68" y="0" width="24" height="4"/>
+					<position x="64" y="0" width="15" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<border right="1"/>
 					<data calctype="static">長さ</data>
@@ -364,18 +364,18 @@ function OnFormLoad() {
 			<font size="80"/>
 		</text>
 		<text id="Txt20" valign="middle">
-			<position x="76" y="9" width="14" height="4"/>
+			<position x="76" y="9" width="16" height="4"/>
 			<color base="c8ffc8" transparent="0"/>
 			<border left="1" right="1" top="1" bottom="1"/>
-			<data calctype="static">スキーマ名</data>
+			<data calctype="static">旧テーブル名</data>
 			<decode datatype="string" format=""/>
 			<font size="80"/>
 		</text>
 		<text id="Txt17" valign="middle">
-			<position x="90" y="9" width="60" height="4"/>
+			<position x="92" y="9" width="58" height="4"/>
 			<color transparent="0"/>
 			<border left="1" right="1" top="1" bottom="1"/>
-			<data calctype="item" datasrc="item2"/>
+			<data calctype="item" datasrc="item10"/>
 			<decode datatype="string" format=""/>
 			<font size="80"/>
 		</text>
@@ -383,25 +383,17 @@ function OnFormLoad() {
 			<position x="0" y="14" width="17" height="4"/>
 			<color base="c8ffc8" transparent="0"/>
 			<border left="1" right="1" top="1" bottom="1"/>
-			<data calctype="static">旧テーブル名</data>
+			<data calctype="static">説明</data>
 			<decode datatype="string" format=""/>
 			<font size="80"/>
 		</text>
 		<text id="Txt67" valign="middle">
-			<position x="17" y="14" width="58" height="4"/>
+			<position x="17" y="14" width="133" height="4"/>
 			<color transparent="0"/>
 			<border left="1" right="1" top="1" bottom="1"/>
-			<data calctype="item" datasrc="item10"/>
+			<data calctype="item" datasrc="item2"/>
 			<decode datatype="string" format=""/>
 			<font size="80"/>
-		</text>
-		<text id="Txt22" valign="middle">
-			<position x="90" y="14" width="60" height="4"/>
-			<color transparent="0"/>
-			<border left="4" right="4" top="4" bottom="4"/>
-			<data calctype="item" datasrc="item8"/>
-			<decode datatype="string" format=""/>
-			<font size="80" style="1"/>
 		</text>
 	</page>
 </printstream>
