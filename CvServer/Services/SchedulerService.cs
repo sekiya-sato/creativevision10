@@ -1,7 +1,6 @@
 using CodeShare;
 using CvBase;
 using CvDomainLogic;
-using Microsoft.Extensions.DependencyInjection;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
@@ -354,10 +353,12 @@ public class SchedulerService : ISchedulerService {
 						directoryInfo.Delete(true);
 					}
 					else {
-						entryInfo.Delete();
-					}
+						if (latestFileTime < threshold.AddDays(-1)) { // ファイルは1日以上前のものだけ削除する
+							entryInfo.Delete();
+						}
 
-					deletedCount++;
+						deletedCount++;
+					}
 				}
 				catch (Exception ex) {
 					failedCount++;

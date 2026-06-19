@@ -155,7 +155,7 @@ public partial class CoreService {
 		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct,
 		CvFlag flag) {
 		var start = DateTime.Now;
-		var stepNames = new[] {
+		string[] stepNames = new[] {
 			"This is First Step",
 			"This is Second Step",
 			"This is Third Step",
