@@ -4,8 +4,8 @@ using NPoco;
 namespace CvBase;
 
 // 配分トランザクション
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
 [Comment("トランザクション：配分データ 倉庫からの移動指示：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
 public sealed partial class TranHaibun : BaseDbClass {
 	/// <summary>
@@ -144,8 +144,8 @@ public sealed partial class TranHaibun : BaseDbClass {
 }
 
 // 補充トランザクション
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
 [Comment("トランザクション：補充データ 仕入先への補充発注依頼：日付、補充CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
 public sealed partial class TranHoju : BaseDbClass {
 	/// <summary>

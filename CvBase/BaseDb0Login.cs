@@ -8,7 +8,7 @@ namespace CvBase;
 /// ログイン管理テーブル
 /// [Login management table]
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("システム：ログインID管理テーブル")]
 [KeyDml("uq1", true, nameof(LoginId))]
 [KeyDml("nk2", false, nameof(Id_Shain))]
@@ -66,7 +66,7 @@ public sealed partial class SysLogin : BaseDbClass {
 /// ログイン履歴テーブル
 /// [Login history table]
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("システム：ログイン履歴テーブル")]
 [KeyDml("nk1", false, nameof(Id_Login))]
 [KeyDml("nk2", false, nameof(JwtUnixTime))]

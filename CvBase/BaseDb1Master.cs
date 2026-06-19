@@ -8,7 +8,7 @@ namespace CvBase;
 /// <summary>
 /// 社員テーブル
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uq1", true, nameof(Code))]
 [Comment("マスター：社員テーブル 店舗、部門などのマスタと紐づく社員情報")]
 [OldTableCommentAttr("HC$MASTER_SHAIN")]
@@ -100,7 +100,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 /// <summary>
 /// 顧客テーブル
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uq1", true, nameof(Code))]
 [Comment("マスター：顧客テーブル 店頭顧客あるいはEC顧客")]
 [OldTableCommentAttr("HC$MASTER_KOKYAKU")]
@@ -231,8 +231,8 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 /// <summary>
 /// 商品テーブル
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uq1", true, "Code")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uq1", true, nameof(Code))]
 //[KeyDml("njan1", false, "json_extract(Jcolsiz, '$.Jan1')")]
 //[KeyDml("njan2", false, "json_extract(Jcolsiz, '$.Jan2')")]
 //[KeyDml("njan3", false, "json_extract(Jcolsiz, '$.Jan3')")]
@@ -635,8 +635,8 @@ public sealed partial class MasterShohinGenka : ObservableObject {
 /// <summary>
 /// 設定フラグテーブル
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uq1", true, "Name")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uq1", true, nameof(Name))]
 [Comment("マスター：設定フラグテーブル name と val の組で設定情報を表す")]
 [OldTableCommentAttr("HC$MASTER_CONFIG")]
 public sealed partial class MasterConfig : BaseDbClass {

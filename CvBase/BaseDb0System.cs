@@ -9,7 +9,7 @@ namespace CvBase;
 /// <summary>
 /// マスター：システム管理テーブル(1レコードのみ)
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("マスター：システム管理テーブル 会社名、消費税設定など")]
 [OldTableCommentAttr("HC$MASTER_SYSKANRI", "HC$MASTER_SYSTAX を含むシステム設定項目")]
 public sealed partial class MasterSysman : BaseDbHasAddress {
@@ -134,7 +134,7 @@ public sealed partial class MasterSysTax : ObservableObject {
 /// <summary>
 /// 名称テーブル
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uq1", true, [nameof(Kubun), nameof(Code)])]
 [KeyDml("nk2", false, [nameof(Kubun), nameof(Odr), nameof(Code)])]
 [Comment("マスター：名称テーブル 汎用 区分+名称コード")]

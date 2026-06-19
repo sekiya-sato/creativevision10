@@ -3,9 +3,9 @@ using NPoco;
 
 namespace CvBase;
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", true, "Id_Tokui", "DenMonth")]
-[KeyDml("nk1", false, "DenMonth")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_Tokui), nameof(DenMonth))]
+[KeyDml("nk1", false, nameof(DenMonth))]
 [Comment("集計データ：年月別売掛 自社締日に従った売掛")]
 [OldTableCommentAttr("HC$MANAGE_KAKEURI")]
 public sealed partial class SummaryUriKake : BaseDbClass {
@@ -95,9 +95,9 @@ public sealed partial class SummaryUriKake : BaseDbClass {
 	long other;
 }
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", true, "Id_Tokui", "DenDay")]
-[KeyDml("nk1", false, "DenDay")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_Tokui), nameof(DenDay))]
+[KeyDml("nk1", false, nameof(DenDay))]
 [Comment("集計データ：年月別請求 相手先締日に合わせた請求データ")]
 [OldTableCommentAttr("HC$MANAGE_KAKESKY")]
 public sealed partial class SummaryUriSei : BaseDbClass {
@@ -204,9 +204,9 @@ public sealed partial class SummaryUriSei : BaseDbClass {
 }
 
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", true, "Id_Shiire", "DenMonth")]
-[KeyDml("nk1", false, "DenMonth")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_Shiire), nameof(DenMonth))]
+[KeyDml("nk1", false, nameof(DenMonth))]
 [Comment("集計データ：年月別買掛 自社締日に従った買掛")]
 [OldTableCommentAttr("HC$MANAGE_KAKEKAI")]
 public sealed partial class SummaryKaiKake : BaseDbClass {
@@ -296,9 +296,9 @@ public sealed partial class SummaryKaiKake : BaseDbClass {
 	long other;
 }
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", true, "Id_Shiire", "DenDay")]
-[KeyDml("nk1", false, "DenDay")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_Shiire), nameof(DenDay))]
+[KeyDml("nk1", false, nameof(DenDay))]
 [Comment("集計データ：年月別支払 相手先締日に合わせた支払データ")]
 [OldTableCommentAttr("HC$MANAGE_KAIKESHY")]
 public sealed partial class SummaryKaiShi : BaseDbClass {

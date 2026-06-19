@@ -3,8 +3,8 @@ using NPoco;
 
 namespace CvBase;
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", true, "Kubun")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Kubun))]
 [Comment("ベースポイント、ランク別ポイント")]
 public sealed partial class MasterPointRank : BaseDbClass {
 	/// <summary>
@@ -36,8 +36,8 @@ public sealed partial class MasterPointRank : BaseDbClass {
 	int pointAmountSale = 1;
 }
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", true, "Id_Customer", "DenDay")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_Customer), nameof(DenDay))]
 [Comment("ポイント履歴テーブル")]
 public sealed partial class TranPointRireki : BaseDbClass {
 	/// <summary>
@@ -72,8 +72,8 @@ public sealed partial class TranPointRireki : BaseDbClass {
 	string memo = string.Empty;
 }
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", true, "Id_Customer")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_Customer))]
 [Comment("ポイント残高テーブル")]
 public sealed partial class SummaryPoint : BaseDbClass {
 	/// <summary>

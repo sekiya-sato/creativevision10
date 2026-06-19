@@ -8,7 +8,7 @@ namespace CvBase;
 /// バージョン管理テーブル
 /// [Login management table]
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("システム：DB定義更新管理テーブル")]
 [KeyDml("uq1", true, nameof(DbVersion))]
 public sealed partial class SysUpdateDb : BaseDbClass {
@@ -44,7 +44,7 @@ public sealed partial class SysUpdateDb : BaseDbClass {
 /// <summary>
 /// 連番管理テーブル
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("システム：連番管理テーブル BaseDbClass.Id以外の項目で連番を発行し管理する")]
 public sealed partial class SysSequence : BaseDbClass {
 	/// <summary>
@@ -72,7 +72,7 @@ public sealed partial class SysSequence : BaseDbClass {
 	string memo = string.Empty;
 }
 
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("システム：自動実行履歴テーブル 定期実行されるタスクの履歴")]
 public sealed partial class SysHistAutoexec : BaseDbClass {
 	/// <summary>
@@ -123,7 +123,7 @@ public sealed partial class SysHistAutoexec : BaseDbClass {
 /// 削除履歴テーブル
 /// [Login history table]
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("システム：マスター系操作履歴テーブル 2026/06/04現在、まだ実DBは作成しない。保存仕様を検討中")]
 [KeyDml("nk1", false, nameof(Vdc))]
 [KeyDml("nk2", false, nameof(TableName))]

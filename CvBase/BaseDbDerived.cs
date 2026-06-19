@@ -12,13 +12,13 @@ public interface IDerivedClass {
 	static abstract string DeleteSql { get; }
 }
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("unq1", true, ["Id_Shohin", "Id_Col", "Id_Siz"])]
-[KeyDml("n1", false, "Id_Shohin")]
-[KeyDml("n2", false, "Code")]
-[KeyDml("njan1", false, "Jan1")]
-[KeyDml("njan2", false, "Jan2")]
-[KeyDml("njan3", false, "Jan3")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("unq1", true, [nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
+[KeyDml("n1", false, nameof(Id_Shohin))]
+[KeyDml("n2", false, nameof(Code))]
+[KeyDml("njan1", false, nameof(Jan1))]
+[KeyDml("njan2", false, nameof(Jan2))]
+[KeyDml("njan3", false, nameof(Jan3))]
 [Comment("派生マスタ：商品マスタMasterShohinから商品、色、サイズに展開したマスタ")]
 public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
 	/// <summary>

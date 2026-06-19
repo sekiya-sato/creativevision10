@@ -479,9 +479,9 @@ public sealed partial class TranKinMeisai : ObservableObject {
 /// <summary>
 /// 入金 06 (取引先 売掛-)
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, ["Id_Torisaki"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, [nameof(Id_Torisaki)])]
 [Comment("トランザクション：入金データ 売掛に対する入金")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran06Nyukin : TranKinHeader {
@@ -489,9 +489,9 @@ public sealed partial class Tran06Nyukin : TranKinHeader {
 /// <summary>
 /// 支払 07 (取引先 買掛-)
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, ["Id_Torisaki"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, [nameof(Id_Torisaki)])]
 [Comment("トランザクション：支払データ 買掛に対する支払")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran07Shiharai : TranKinHeader {
@@ -500,9 +500,9 @@ public sealed partial class Tran07Shiharai : TranKinHeader {
 /// <summary>
 /// 棚卸 60 (倉庫 現在値)
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, ["Id_Soko"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, [nameof(Id_Soko)])]
 [Comment("トランザクション：棚卸データ 月末あるいは特定日の倉庫現在値")]
 [OldTableCommentAttr("HC$tran_tana0")]
 public sealed partial class Tran60Tana : TranAllHeader {
@@ -518,11 +518,11 @@ public sealed partial class Tran60Tana : TranAllHeader {
 /// <summary>
 /// 本部売上 00 (倉庫 出)
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, "KakeDay")]
-[KeyDml("nk3", false, ["Id_Soko"])]
-[KeyDml("nk4", false, ["Id_Tokui"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, nameof(KakeDay))]
+[KeyDml("nk3", false, [nameof(Id_Soko)])]
+[KeyDml("nk4", false, [nameof(Id_Tokui)])]
 [Comment("トランザクション：本部売上データ 得意先に対する売掛計上と倉庫からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
@@ -614,11 +614,11 @@ public enum EnumUri00 : int {
 /// <summary>
 /// 店舗売上 01 (倉庫 出)
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, ["Id_Soko"])]
-[KeyDml("nk3", false, ["Id_Tenpo"])]
-[KeyDml("nk4", false, "Id_Customer")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, [nameof(Id_Soko)])]
+[KeyDml("nk3", false, [nameof(Id_Tenpo)])]
+[KeyDml("nk4", false, nameof(Id_Customer))]
 [Comment("トランザクション：店舗売上データ 店舗に対する売上と店舗(倉庫)からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
@@ -695,11 +695,11 @@ public enum EnumUri01 : int {
 /// <summary>
 /// 仕入 03 (倉庫 入)
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, "KakeDay")]
-[KeyDml("nk3", false, ["Id_Soko"])]
-[KeyDml("nk4", false, ["Id_Shiire"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, nameof(KakeDay))]
+[KeyDml("nk3", false, [nameof(Id_Soko)])]
+[KeyDml("nk4", false, [nameof(Id_Shiire)])]
 [Comment("トランザクション：仕入データ 仕入先に対する買掛計上と倉庫への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
@@ -782,10 +782,10 @@ public enum EnumShiire : int {
 /// <summary>
 /// 移動 05 (倉庫 出, 移動先 入)
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, ["Id_Soko"])]
-[KeyDml("nk3", false, ["Id_Ido"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, [nameof(Id_Soko)])]
+[KeyDml("nk3", false, [nameof(Id_Ido)])]
 [Comment("トランザクション：移動データ(即時) 倉庫からの出庫と移動先への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
@@ -821,10 +821,10 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 /// <summary>
 /// 積送移動 10 (倉庫 出, 移動先 入) 仮
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, ["Id_Soko"])]
-[KeyDml("nk3", false, ["Id_Ido"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, [nameof(Id_Soko)])]
+[KeyDml("nk3", false, [nameof(Id_Ido)])]
 [Comment("トランザクション：移動データ(積送出庫) 倉庫からの出庫、積送中在庫へ(移動先への入庫予定)")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
@@ -859,10 +859,10 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 /// <summary>
 /// 積送移動 11 (倉庫 出, 移動先 入) 実
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk2", false, ["Id_Soko"])]
-[KeyDml("nk3", false, ["Id_Ido"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, [nameof(Id_Soko)])]
+[KeyDml("nk3", false, [nameof(Id_Ido)])]
 [Comment("トランザクション：移動データ(積送入庫) 積送中在庫(倉庫からの出庫)から移動先への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
@@ -897,10 +897,10 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 /// <summary>
 /// 受注 12
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk3", false, ["Id_Soko"])]
-[KeyDml("nk4", false, ["Id_Tokui"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk3", false, [nameof(Id_Soko)])]
+[KeyDml("nk4", false, [nameof(Id_Tokui)])]
 [Comment("トランザクション：受注データ 得意先に対する受注、本部売上になる場合は、本部売上データのRelateNo1に受注データのIdをセット")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran12Jyuchu : TranAllHeader {
@@ -947,10 +947,10 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 /// <summary>
 /// 発注 13
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
-[KeyDml("nk3", false, ["Id_Soko"])]
-[KeyDml("nk4", false, ["Id_Shiire"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk3", false, [nameof(Id_Soko)])]
+[KeyDml("nk4", false, [nameof(Id_Shiire)])]
 [Comment("トランザクション：発注データ 仕入先に対する発注、仕入になる場合は、仕入データのRelateNo1に発注データのIdをセット")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran13Hachu : TranAllHeader {
@@ -998,8 +998,8 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 /// <summary>
 /// ハンディターミナルのデータ
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "DenDay")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
 [Comment("トランザクション：ハンディターミナルのデータ")]
 public sealed partial class TranHhtData : BaseDbClass {
 	/// <summary>
@@ -1224,9 +1224,9 @@ public sealed partial class TranHhtData : BaseDbClass {
 /// <summary>
 /// VULCANデータレイアウト 一次取込用テーブル
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("nk1", false, "BackupFileName")]
-[KeyDml("nk2", false, "VdCnvDate")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(BackupFileName))]
+[KeyDml("nk2", false, nameof(VdCnvDate))]
 [Comment("トランザクション：VULCANデータレイアウトハンディのデータ")]
 public sealed partial class TranVulcanHht : BaseDbClass {
 	/// <summary>

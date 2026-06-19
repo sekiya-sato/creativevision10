@@ -1,3 +1,24 @@
+## [2026-06-19] 15:51 CvBase プロジェクトの KeyDml / PrimaryKey 文字列リテラルを nameof() に変更
+### Agent
+- kimi-k2.7-code : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvBase プロジェクト内の KeyDml 属性など、プロパティ名を文字列リテラルで記述している部分を nameof() に変更し、リネーム時の安全性を高める
+### 実施内容
+- CvBase/BaseDb*.cs 各ファイル: [KeyDml(..., "PropName")] を [KeyDml(..., nameof(PropName))] に変更
+- CvBase/BaseDb*.cs 各ファイル: [PrimaryKey("Id", AutoIncrement = true)] を [PrimaryKey(nameof(Id), AutoIncrement = true)] に変更
+- コメントアウトされた SQL 式（json_extract(...)）はプロパティ名ではないため文字列リテラルのまま残す
+### 技術決定 Why
+- nameof() を使うことで、対象プロパティをリネームした際にコンパイルエラーで検知でき、属性とプロパティの不一致を防ぐ。KeyDml のカラムリスト、PrimaryKey の Id ともに該当プロパティが存在するため nameof() に置き換え可能
+### 影響範囲
+- CvBase プロジェクト全 .cs ファイルの KeyDml / PrimaryKey 属性（コメントアウト部を除く）
+### 確認
+- `dotnet build CvBase/CvBase.csproj` でビルド成功（0 warnings / 0 errors）を確認
+- grep で [PrimaryKey("Id"] および KeyDml 内のプロパティ名文字列リテラルが残存していないことを確認
+
+---
+
 ## [2026-06-19] 08:17 aicoding_log ファイルの並べ替えと日付修正
 ### Agent
 - kimi-k2.7-code : OpenCode : Sisyphus

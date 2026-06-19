@@ -4,9 +4,9 @@ using NPoco;
 namespace CvBase;
 
 // 予算マスタ
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", false, "Id_Tenpo", "Id_Brand", "DenDay")]
-[KeyDml("nk1", false, "DenDay")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", false, nameof(Id_Tenpo), nameof(Id_Brand), nameof(DenDay))]
+[KeyDml("nk1", false, nameof(DenDay))]
 [Comment("マスタ：店舗ブランド予算：Tran00Uriage,Tran01Tenuri を合計した売上に対する予算")]
 public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// <summary>
@@ -42,9 +42,9 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	long arariYosan;
 }
 
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uk1", false, "Id_Shain", "DenDay")]
-[KeyDml("nk1", false, "DenDay")]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", false, nameof(Id_Shain), nameof(DenDay))]
+[KeyDml("nk1", false, nameof(DenDay))]
 [Comment("マスタ：販売員予算：Tran01Tenuri を合計した売上に対する予算")]
 public sealed partial class MasterYosanHanbai : BaseDbClass {
 	/// <summary>

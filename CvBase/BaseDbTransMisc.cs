@@ -3,7 +3,7 @@ using NPoco;
 
 namespace CvBase;
 
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uk1", true, [nameof(Id_Tokui), nameof(DenDay)])]
 [KeyDml("nk1", false, nameof(DenDay))]
 [Comment("トランザクション：得意先イベントデータ 得意先、日別のイベントデータ")]
@@ -35,7 +35,7 @@ public sealed partial class TranTokuiPromotion : BaseDbClass {
 	int rank;
 }
 
-[PrimaryKey("Id", AutoIncrement = true)]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uk1", true, [nameof(Id_Store), nameof(DenDay)])]
 [KeyDml("nk1", false, nameof(DenDay))]
 [Comment("トランザクション：店舗イベントデータ 店舗、日別のイベントデータ")]

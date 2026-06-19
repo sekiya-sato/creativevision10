@@ -7,10 +7,10 @@ namespace CvBase;
 /// <summary>
 /// 現在庫集計ファイル: 在庫
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("unq1", true, ["Id_Soko", "Id_Shohin", "Id_Col", "Id_Siz"])]
-[KeyDml("nk1", false, ["Id_Soko"])]
-[KeyDml("nk2", false, ["Id_Shohin"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("unq1", true, [nameof(Id_Soko), nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
+[KeyDml("nk1", false, [nameof(Id_Soko)])]
+[KeyDml("nk2", false, [nameof(Id_Shohin)])]
 [Comment("集計データ：倉庫、商品、色、サイズで集計した在庫データ")]
 public partial class SummaryRealStock : BaseDbClass {
 	/// <summary>
@@ -42,10 +42,10 @@ public partial class SummaryRealStock : BaseDbClass {
 /// <summary>
 /// 年月集計ファイル: 在庫
 /// </summary>
-[PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("unq1", true, ["SumMonth", "Id_Soko", "Id_Shohin", "Id_Col", "Id_Siz"])]
-[KeyDml("nk1", false, ["Id_Soko"])]
-[KeyDml("nk2", false, ["Id_Shohin"])]
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("unq1", true, [nameof(SumMonth), nameof(Id_Soko), nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
+[KeyDml("nk1", false, [nameof(Id_Soko)])]
+[KeyDml("nk2", false, [nameof(Id_Shohin)])]
 [Comment("集計データ：年月、倉庫、商品、色、サイズで集計した在庫データ Suは当月のみ、CumulativeSuは累計")]
 public partial class SummaryStock : SummaryRealStock {
 	/// <summary>
