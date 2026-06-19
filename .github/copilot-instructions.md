@@ -68,9 +68,9 @@ Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLU
 6. **Git-Commit**: When committing, follow the Git-Commit section.
 
 ## Write-Log
-- Upon completion of the task, be sure to record the history at `Doc/aicoding_log.md` using the following format.
+- Upon completion of the task, be sure to record the history at `Doc/aicoding_log.md` using the following format.Insert at the top of the file.
 - If adding the history results in more than 800 lines, rename the existing history file to aicoding_log_[001-999].md with sequential numbers, and create a new `aicoding_log.md` with the same format to record the history.
-- - The following `記録フォーマット` and `アーカイブルール` are included at the beginning of `aicoding_log.md`.
+- - The following `記録フォーマット` and `アーカイブルール` .
 '''
 ## [YYYY-MM-DD] hh:mm 作業タイトル
 ### Agent
