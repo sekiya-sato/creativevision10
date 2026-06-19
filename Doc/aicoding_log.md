@@ -1,3 +1,24 @@
+## [2026-06-20] 07:00 MasterShiireMenteView 支払情報の締日選択方式変更
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShiireMenteView の締日1,2,3 を MasterSysKanriMenteView の締日の選択方式に合わせ、支払月を「当月、翌月、翌々月、3ヶ月後、4ヶ月後」の選択で 0-4 に割り当て、支払日も締日の選択方式に合わせる
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs: 締日選択用の ShimeBiItems と支払月選択用の PayMonthItems を追加
+- CvWpfclient/Views/01Master/MasterShiireMenteView.xaml: 支払情報タブの締日1/2/3・支払日を EnumShime 選択 ComboBox に変更し、支払月を 0-4 の選択 ComboBox に変更
+- Doc/aicoding_log.md: 作業内容を先頭へ追記
+### 技術決定 Why
+- MasterTorihiki に既存の EnShime1/EnShime2/EnShime3/EnPayDay ラッパーがあるため、保存値の int は維持したまま MasterSysKanriMenteView と同じ EnumShime 選択方式へ揃えた
+### 確認
+- 対象 XAML の XML 構文チェックでエラーなし
+- 対象ファイルの CRLF を確認（LFOnly=0）
+- `git diff --check` で空白エラーなし
+- 通常権限のビルドは SDK 参照権限で失敗したため、権限付きで `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` を実行し、ビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-20] 06:48 MasterShohinMenteView 名称タブ区分名配置変更
 ### Agent
 - GPT-5 : OpenAI : Codex
