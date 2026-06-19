@@ -10,7 +10,7 @@ namespace CvBase;
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [Comment("システム：DB定義更新管理テーブル")]
-[KeyDml("uq1", true, "DbVersion")]
+[KeyDml("uq1", true, nameof(DbVersion))]
 public sealed partial class SysUpdateDb : BaseDbClass {
 	/// <summary>
 	/// レコード識別のためのシリアル8桁 yymmddnn 年月日連番 例)26040101
@@ -125,8 +125,8 @@ public sealed partial class SysHistAutoexec : BaseDbClass {
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [Comment("システム：マスター系操作履歴テーブル 2026/06/04現在、まだ実DBは作成しない。保存仕様を検討中")]
-[KeyDml("nk1", false, "Vdc")]
-[KeyDml("nk2", false, "TableName")]
+[KeyDml("nk1", false, nameof(Vdc))]
+[KeyDml("nk2", false, nameof(TableName))]
 [NoCreate]
 public sealed partial class SysHistMaster : BaseDbClass {
 	/// <summary>

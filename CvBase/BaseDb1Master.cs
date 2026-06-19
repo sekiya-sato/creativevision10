@@ -9,7 +9,7 @@ namespace CvBase;
 /// 社員テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uq1", true, "Code")]
+[KeyDml("uq1", true, nameof(Code))]
 [Comment("マスター：社員テーブル 店舗、部門などのマスタと紐づく社員情報")]
 [OldTableCommentAttr("HC$MASTER_SHAIN")]
 public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
@@ -57,6 +57,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("店舗CD")]
+	[ForeignKey(nameof(MasterTokui))]
 	long id_Tenpo;
 	/// <summary>
 	/// 店舗データ
@@ -70,6 +71,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("部門")]
+	[ForeignKey(nameof(MasterMeisho))]
 	long id_Bumon;
 	/// <summary>
 	/// 部門データ
@@ -99,7 +101,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 /// 顧客テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uq1", true, "Code")]
+[KeyDml("uq1", true, nameof(Code))]
 [Comment("マスター：顧客テーブル 店頭顧客あるいはEC顧客")]
 [OldTableCommentAttr("HC$MASTER_KOKYAKU")]
 public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName {

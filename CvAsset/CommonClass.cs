@@ -407,16 +407,6 @@ public sealed partial class Common {
 		return string.Empty;
 	}
 	/// <summary>
-	/// 和名の月名を返す
-	/// [Return Japanese month names]
-	/// </summary>
-	/// <returns>和名の月名配列（1月〜12月＋空文字） [Array of Japanese month names (Jan-Dec + empty)]</returns>
-	/// example: 標準の月名を和風月名で上書きする場合 culture.DateTimeFormat.MonthNames = Common.MonthNames(); DateTime.Now.ToString("MMMM", culture);
-	public static string[] MonthNames() => new[]{
-			"睦月", "如月", "弥生", "卯月", "皐月", "水無月",
-			"文月", "葉月", "長月", "神無月", "霜月", "師走", ""};
-
-	/// <summary>
 	/// classTypeのpropertyNameプロパティの値を取得する
 	/// </summary>
 	/// <param name="classType"></param>

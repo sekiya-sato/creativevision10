@@ -135,8 +135,8 @@ public sealed partial class MasterSysTax : ObservableObject {
 /// 名称テーブル
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
-[KeyDml("uq1", true, ["Kubun", "Code"])]
-[KeyDml("nk2", false, ["Kubun", "Odr", "Code"])]
+[KeyDml("uq1", true, [nameof(Kubun), nameof(Code)])]
+[KeyDml("nk2", false, [nameof(Kubun), nameof(Odr), nameof(Code)])]
 [Comment("マスター：名称テーブル 汎用 区分+名称コード")]
 [OldTableCommentAttr("HC$MASTER_MEISHO")]
 public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {

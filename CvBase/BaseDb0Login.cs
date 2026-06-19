@@ -10,19 +10,21 @@ namespace CvBase;
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [Comment("システム：ログインID管理テーブル")]
-[KeyDml("uq1", true, "LoginId")]
-[KeyDml("nk2", false, "Id_Shain")]
-[KeyDml("nk3", false, "Id_Role")]
+[KeyDml("uq1", true, nameof(LoginId))]
+[KeyDml("nk2", false, nameof(Id_Shain))]
+[KeyDml("nk3", false, nameof(Id_Role))]
 public sealed partial class SysLogin : BaseDbClass {
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
 	long id_Shain;
 	/// <summary>
 	/// グループロールユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(SysLogin), nameof(Id))]
 	long id_Role;
 	/// <summary>
 	/// ログインID
@@ -66,8 +68,8 @@ public sealed partial class SysLogin : BaseDbClass {
 /// </summary>
 [PrimaryKey("Id", AutoIncrement = true)]
 [Comment("システム：ログイン履歴テーブル")]
-[KeyDml("nk1", false, "Id_Login")]
-[KeyDml("nk2", false, "JwtUnixTime")]
+[KeyDml("nk1", false, nameof(Id_Login))]
+[KeyDml("nk2", false, nameof(JwtUnixTime))]
 public sealed partial class SysHistJwt : BaseDbClass {
 	/// <summary>
 	/// ログインユニークキー

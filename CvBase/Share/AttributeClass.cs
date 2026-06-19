@@ -98,6 +98,7 @@ public enum ColumnType {
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class ColumnSizeDmlAttribute : Attribute {
+
 	const int DefaultSize = 40;
 	public int Size { get; }
 	public ColumnType ColType { get; }
@@ -117,7 +118,7 @@ public sealed class NoCreateAttribute : Attribute {
 }
 
 /// <summary>
-/// データベースキー定義
+/// キー定義 キー名, カラムリスト, ユニークキーか否か
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)] // Multipleをtrueに
 public sealed class KeyDmlAttribute : Attribute {
@@ -140,4 +141,15 @@ public sealed class KeyDmlAttribute : Attribute {
 		ColNames = colNames;
 	}
 }
-
+/// <summary>
+/// 外部キー定義 参照元テーブル, 参照元カラム(デフォルト Id)
+/// </summary>
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+public sealed class ForeignKeyAttribute : Attribute {
+	public string TableName { get; }
+	public string KeyName { get; }
+	public ForeignKeyAttribute(string tableName, string keyName = "Id") {
+		TableName = tableName;
+		KeyName = keyName;
+	}
+}
