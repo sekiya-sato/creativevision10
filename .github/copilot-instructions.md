@@ -61,8 +61,7 @@ Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLU
 - Ask the user only when required information is genuinely missing or ambiguous.
 - **Refactoring**: Analyze the impact range before proposing changes. Do not break existing implementations.
 - **CAUTION**: WPF screens can be clipped on the bottom and right edges. Pay special attention to bottom-edge clipping.
-- `.github/copilot/wpf_skill.md` contains the UI design and implementation guidelines for `CvWpfclient`.
-- When working on `CvWpfclient`, first review `.github/copilot/wpf_skill.md`. If WPF resources or exceptions are involved, inspect `CvWpfclient/App.xaml` and the referenced `ResourceDictionary` files first.
+- When working on `CvWpfclient`, first review `.agents/skills/wpf-project-guide/SKILL.md`, `wpf-view-workflow`. If WPF resources or exceptions are involved, inspect `CvWpfclient/App.xaml` and the referenced `ResourceDictionary` files first.
 - Use **UTF-8** (`qfm` files are Shift_JIS).
 - Load `wpf-project-guide` and use `check-xaml`, `update-design-mente`, `change-sublist-to-observablecollection` appropriately.
 - Avoid excessive dependency injection.
