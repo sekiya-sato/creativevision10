@@ -121,14 +121,16 @@ logger.LogDebug("Application Start ------------------------------------");
 app.Use(async (context, next) => {
 	var logger = app.Logger;
 	logger.LogInformation("Incoming request path: {Path}", context.Request.Path);
-	foreach (var h in context.Request.Headers)
-		logger.LogInformation("REQ HDR: {Key} = {Value}", h.Key, h.Value.ToString());
-
+	foreach (var h in context.Request.Headers) {
+		if (h.Key != "Authorization") {
+			logger.LogInformation("REQ HDR: {Key} = {Value}", h.Key, h.Value.ToString());
+		}
+	}
 	await next();
 
 	// レスポンスヘッダ（トレーラはここで見えない場合あり）
 	foreach (var h in context.Response.Headers)
-		logger.LogInformation("RES HDR: {Key} = {Value}", h.Key, h.Value.ToString());
+		logger.LogInformation("_RES HDR: {Key} = {Value}", h.Key, h.Value.ToString());
 });
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions {

@@ -637,7 +637,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		else {
 			HolidayName = "";
 			CurrentTimeDayForeground = now.DayOfWeek switch {
-				DayOfWeek.Saturday => Brushes.Blue,
+				DayOfWeek.Saturday => Brushes.LightBlue,
 				DayOfWeek.Sunday => Brushes.Red,
 				_ => FindResource("TitleColor") as SolidColorBrush ?? Brushes.White
 			};
