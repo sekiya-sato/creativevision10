@@ -54,8 +54,8 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 			ct.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			QueryListParam queryListParam = typeof(IBaseCodeName).IsAssignableFrom(MyType)
-				? new QueryListSimpleParam(itemType: MyType, where: Where, order: Order, parameters: Parameters)
-				: new QueryListParam(itemType: MyType, where: Where, order: Order, parameters: Parameters);
+				? new QueryListSimpleParam(itemType: MyType, where: Where, order: Order, parameters: Parameters, maxCount: AppGlobal.Application.Limit)
+				: new QueryListParam(itemType: MyType, where: Where, order: Order, parameters: Parameters, maxCount: AppGlobal.Application.Limit);
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,

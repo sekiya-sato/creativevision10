@@ -72,8 +72,8 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 			ct.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			QueryListParam queryListParam = typeof(IBaseCodeName).IsAssignableFrom(MyType)
-				? new QueryListSimpleParam(itemType: MyType, where: Where, order: Order, parameters: Parameters)
-				: new QueryListParam(itemType: MyType, where: Where, order: Order, parameters: Parameters);
+				? new QueryListSimpleParam(itemType: MyType, where: Where, order: Order, parameters: Parameters, maxCount: AppGlobal.Application.Limit)
+				: new QueryListParam(itemType: MyType, where: Where, order: Order, parameters: Parameters, maxCount: AppGlobal.Application.Limit);
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
@@ -167,8 +167,9 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 	[RelayCommand]
 	public void SelectAll() {
 		if (ListData == null) return;
-		if (ListData.Count >= 100) {
-			MessageEx.ShowErrorDialog("選択数が多すぎます", owner: ClientLib.GetActiveView(this));
+		var limit = AppGlobal.Application.Limit;
+		if (limit > 0 && ListData.Count >= limit) {
+			MessageEx.ShowErrorDialog($"選択数が多すぎます（最大 {limit:N0} 件）", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		foreach (var row in ListData) {
