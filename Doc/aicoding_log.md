@@ -1,3 +1,25 @@
+## [2026-06-20] 18:15 SQLitePCLRaw.lib.e_sqlite3 脆弱性対応: v3.0.3 移行
+### Agent
+- kimi-k2.6 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SQLitePCLRaw.lib.e_sqlite3 (GHSA-2m69-gcr7-jv3q) の高重大度脆弱性を除去し、同等機能の SQLitePCLRaw.bundle_e_sqlite3 v3.0.3 へ移行する
+### 実施内容
+- Directory.Packages.props: `SQLitePCLRaw.bundle_e_sqlite3` v3.0.3 の PackageVersion を追加
+- CvBaseSqlite/CvBaseSqlite.csproj: `SQLitePCLRaw.bundle_e_sqlite3` の PackageReference を追加
+- Tests/TestServer/TestServer.csproj: `SQLitePCLRaw.bundle_e_sqlite3` の PackageReference を追加
+- Tests/TestLogin/TestLogin.csproj: `SQLitePCLRaw.bundle_e_sqlite3` の PackageReference を追加
+### 技術決定 Why
+- `Microsoft.Data.Sqlite` v10.0.9 は Transitive 依存として `SQLitePCLRaw.bundle_e_sqlite3` v2.1.11 を引き込み、これが脆弱性のある `SQLitePCLRaw.lib.e_sqlite3` v2.1.11 を依存していた。直接参照により v3.0.3（SourceGear.sqlite3 ベース）に上書きし、脆弱性を除去した
+### 影響範囲
+- CvBaseSqlite を参照する CvServer, CvWpfclient, 全テストプロジェクトが間接的に v3.0.3 を使用するようになる
+### 確認
+- `dotnet list package --vulnerable --include-transitive` で全プロジェクトの脆弱性警告が消滅したことを確認
+- `dotnet build creativevision10.slnx` で 0 warnings / 0 errors でビルド成功
+
+---
+
 ## [2026-06-20] 17:33 MasterTokuiMenteView の請求情報タブ選択リスト化
 ### Agent
 - GPT-5 : OpenAI : Codex
