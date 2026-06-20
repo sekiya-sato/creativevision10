@@ -62,9 +62,27 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			if (!string.IsNullOrWhiteSpace(selectParam.ToDate)) clauses.Add($"DenDay <= '{EscapeSqlLiteral(selectParam.ToDate)}'");
 			AddIdInClause(clauses, "Id_Tenpo", selectParam.ToriIds);
 			AddIdInClause(clauses, "Id_Soko", selectParam.SokoIds);
-			if (!string.IsNullOrWhiteSpace(selectParam.ShohinCdLike)) clauses.Add($"Jmeisai LIKE '%{EscapeSqlLiteral(selectParam.ShohinCdLike)}%'");
+			if (!string.IsNullOrWhiteSpace(selectParam.ShohinCdLike)) clauses.Add(BuildShohinMeisaiWhere(selectParam.ShohinCdLike));
 			return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 		}
+	}
+
+	static string BuildShohinMeisaiWhere(string shohinText) {
+		string like = EscapeSqlLiteral(shohinText);
+		return $"""
+			EXISTS (
+				SELECT 1
+				FROM json_each(Jmeisai) AS meisai
+				WHERE IFNULL(json_extract(meisai.value, '$.Code_Shohin'), '') LIKE '%{like}%'
+					OR IFNULL(json_extract(meisai.value, '$.Mei_Shohin'), '') LIKE '%{like}%'
+					OR json_extract(meisai.value, '$.Id_Shohin') IN (
+						SELECT Id
+						FROM MasterShohin
+						WHERE Code LIKE '%{like}%'
+							OR Name LIKE '%{like}%'
+					)
+			)
+			""";
 	}
 
 	static void AddIdInClause(List<string> clauses, string column, IEnumerable<long>? ids) {

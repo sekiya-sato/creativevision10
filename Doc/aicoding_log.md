@@ -1,3 +1,21 @@
+## [2026-06-20] 16:41 ShopUriageInputViewModel の商品検索SQLをJSON関数化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：Tran01Tenuri.Jmeisai の実データ構造を踏まえ、ShopUriageInputViewModel.cs の ListWhere で selectParam.ShohinCdLike による商品検索を JSON 関数で正しく行う
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `Jmeisai LIKE` の単純検索を廃止し、`json_each(Jmeisai)` で明細を展開して `Code_Shohin` / `Mei_Shohin` の部分一致、または `MasterShohin` の `Code` / `Name` 部分一致から得た `Id` と明細 `Id_Shohin` の一致で検索するSQLに変更
+### 技術決定 Why
+- `Jmeisai` は JSON 配列で、商品名や商品IDは各明細オブジェクト内の `Mei_Shohin` / `Id_Shohin` に格納されるため、文字列全体への `LIKE` ではなく SQLite JSON 関数で明細単位に判定する必要がある
+### 確認
+- `git diff --check` で空白エラーなし
+- `CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs` の CRLF を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-20] 16:18 SelectWinViewModel / SelectMultiWinViewModel の最大件数制限を AppGlobal.Application.Limit に統一
 ### Agent
 - kimi-k2.6 : OpenCode : Sisyphus
