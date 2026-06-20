@@ -77,7 +77,7 @@ public partial class ExDatabaseSqlite : ExDatabase {
     PRAGMA temp_store = MEMORY;
     PRAGMA mmap_size = 268435456; -- 256MBまでのメモリマップドI/O
     PRAGMA foreign_keys = ON;
-	PRAGMA journal_size_limit = 67108864;　-- 64MBのジャーナルサイズ制限
+	PRAGMA journal_size_limit = 67108864; -- 64MBのジャーナルサイズ制限
 ";
 			cmd.ExecuteNonQuery();
 			cmd.CommandText = "SELECT sqlite_version();";
