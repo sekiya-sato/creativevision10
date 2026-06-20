@@ -5,7 +5,7 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:models="clr-namespace:CvWpfclient.Models"
 	xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" xmlns:vm="clr-namespace:CvWpfclient.ViewModels"
 	Title="{Binding HeaderTitle}"
-	Width="1200" Height="780"
+	Width="1024" Height="760"
 	Background="Transparent"
 	Icon="{DynamicResource WindowIcon}"
 	ResizeMode="CanResizeWithGrip" SnapsToDevicePixels="True" UseLayoutRounding="True" WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow"
@@ -428,7 +428,7 @@
 							</Grid>
 						</StackPanel>
 						<Border Grid.Row="3"
-							Margin="0,10,0,0" Padding="20"
+							Margin="0,10,0,0" Padding="10"
 							Style="{StaticResource MainMenuDashboardCard}">
 							<Grid>
 								<Grid.ColumnDefinitions>
@@ -440,31 +440,31 @@
 										HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
 										<StackPanel HorizontalAlignment="Left"
 											Orientation="Horizontal">
-											<Button Margin="10,0,10,0"
+											<Button Margin="4,0"
 												Background="{DynamicResource PrimaryButtonColor}"
 												Command="{Binding ShowUpgradeCommand}"
-												Content="バージョンアップ (F9)" Opacity="0.8"
+												Content="VersionUp(F9)" Opacity="0.8"
 												Style="{StaticResource MainMenuActionButton}"
 												ToolTip="システムアップデート" />
-											<Button Margin="10,0,10,0"
+											<Button Margin="4,0"
 												Background="{DynamicResource PrimaryButtonColor}"
 												Command="{Binding ShowSettingCommand}"
-												Content="環境設定 (F10)" Opacity="0.8"
+												Content="環境設定(F10)" Opacity="0.8"
 												Style="{StaticResource MainMenuActionButton}"
 												ToolTip="環境設定" />
-											<Button Margin="10,0,10,0"
+											<Button Margin="4,0"
 												Background="{DynamicResource PrimaryButtonColor}"
 												Command="{Binding ShowRefreshCommand}"
-												Content="リフレッシュトークン (F11)" Opacity="0.8"
+												Content="RefreshToken(F11)" Opacity="0.8"
 												Style="{StaticResource MainMenuActionButton}"
 												ToolTip="トークンリフレッシュ" />
-											<Button Margin="10,0,10,0"
+											<Button Margin="4,0"
 												Background="{DynamicResource PrimaryButtonColor}"
 												Command="{Binding ShowLoginCommand}"
-												Content="ログイン (F12)" Opacity="0.8"
+												Content="ログイン(F12)" Opacity="0.8"
 												Style="{StaticResource MainMenuActionButton}"
 												ToolTip="ログイン画面" />
-											<Button Margin="10,0,10,0"
+											<Button Margin="4,0"
 												Background="{DynamicResource PrimaryButtonColor}"
 												Command="{Binding ToggleMainThemeCommand}"
 												Content="{Binding MainThemeButtonLabel}"
@@ -479,24 +479,6 @@
 										Text="{Binding StatusMessage}"
 										TextWrapping="Wrap" />
 								</StackPanel>
-								<!--
-                                <StackPanel Grid.Column="1" Orientation="Vertical" Margin="10,0,0,0">
-									<Button
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding UserCmd1Command}"
-										Content="UserButton1" Opacity="0.6"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="">
-									</Button>
-									<Button
-										Background="{DynamicResource PrimaryButtonColor}"
-										Command="{Binding UserCmd2Command}"
-										Content="UserButton2" Opacity="0.6"
-										Style="{StaticResource MainMenuActionButton}"
-										ToolTip="">
-									</Button>
-								</StackPanel>
-								-->
 							</Grid>
 						</Border>
 					</Grid>

@@ -410,10 +410,10 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	[ObservableProperty]
-	private string mainThemeButtonLabel = "メインテーマ切替 (Default)";
+	private string mainThemeButtonLabel = "テーマ切替(Default)";
 
 	private void UpdateMainThemeButtonLabel(MainTheme theme) {
-		MainThemeButtonLabel = $"メインテーマ切替 ({theme})";
+		MainThemeButtonLabel = $"テーマ切替({theme})";
 	}
 
 	// ── 天気ダッシュボード ──────────────────────
