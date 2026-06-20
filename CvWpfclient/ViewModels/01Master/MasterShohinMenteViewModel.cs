@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using System.Collections;
 using System.Collections.ObjectModel;
 
@@ -45,6 +46,55 @@ from MasterShohin {query.AddWhereOrder()}
 ";
 			return new QueryListSqlParam(typeof(MasterShohin), sql, query.Parameters);
 		}
+	}
+
+	protected override bool TryShowSelectCodeDialog(SelectParameter? currentParameter, string displayName, out SelectParameter parameter) {
+		var selWin = new Views.Sub.RangeParamView();
+		if (selWin.DataContext is not RangeParamViewModel vm) {
+			parameter = currentParameter ?? new SelectParameter { DisplayName = displayName, IdsDisplayName = "ブランド" };
+			return true;
+		}
+
+		var initialParameter = (currentParameter ?? new SelectParameter { MaxCount = AppGlobal.Limit }) with {
+			DisplayName = displayName,
+			IdsDisplayName = "ブランド"
+		};
+		vm.Initialize(initialParameter, typeof(MasterMeisho), "Kubun='BRD'", "Code");
+		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
+			parameter = vm.Parameter;
+			return false;
+		}
+
+		parameter = NormalizeSelectParameter(vm.Parameter, displayName) with {
+			IdsDisplayName = "ブランド"
+		};
+		return true;
+	}
+
+	protected override string? BuildSelectCodeWhere(SelectParameter? parameter) {
+		if (parameter == null) {
+			return null;
+		}
+
+		List<string> clauses = [];
+		AddSelectedIdInClause(clauses, "Id_Brand", parameter.Ids);
+		if (parameter.FromId.HasValue) {
+			clauses.Add($"Id >= {parameter.FromId.Value}");
+		}
+		if (parameter.ToId.HasValue) {
+			clauses.Add($"Id <= {parameter.ToId.Value}");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.FromCode)) {
+			clauses.Add($"Code >= '{EscapeSqlLiteral(parameter.FromCode)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.ToCode)) {
+			clauses.Add($"Code <= '{EscapeSqlLiteral(parameter.ToCode)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
+			clauses.Add($"Name LIKE '%{EscapeSqlLiteral(parameter.Name)}%'");
+		}
+
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
 
 	[ObservableProperty]

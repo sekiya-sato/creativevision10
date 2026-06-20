@@ -16,7 +16,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		selectType = tableType;
 		selectWhere = where;
 		selectOrder = order;
-		Parameter = EnsureIdsText(param ?? new SelectParameter());
+		Parameter = EnsureParameter(param ?? new SelectParameter());
 	}
 
 	[RelayCommand]
@@ -48,7 +48,11 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		};
 	}
 
-	static SelectParameter EnsureIdsText(SelectParameter parameter) {
+	static SelectParameter EnsureParameter(SelectParameter parameter) {
+		if (string.IsNullOrWhiteSpace(parameter.IdsDisplayName)) {
+			parameter.IdsDisplayName = parameter.DisplayName;
+		}
+
 		if (parameter.Ids.Count == 0) {
 			parameter.IdsText = "未選択";
 		}

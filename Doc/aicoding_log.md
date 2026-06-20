@@ -1,3 +1,25 @@
+## [2026-06-20] 17:14 MasterShohinMenteView の商品選択条件と価格レイアウト調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShohinMenteView から呼び出される商品選択画面で、商品Idの複数選択ではなくブランドIdの複数選択に変更し、ID from/to の幅固定、画像幅縮小、価格4項目の横並びと右詰め3桁区切り表示を行う
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 一覧取得前の RangeParamView 呼び出しを商品マスタ専用に override し、複数ID選択対象を `MasterMeisho` の `Kubun='BRD'` に変更。選択IDは `Id_Brand IN (...)` として商品一覧条件へ反映
+- CvWpfclient/ViewModels/Sub/SelectParameter.cs, RangeParamViewModel.cs, BaseMenteViewModel.cs: 複数ID選択の表示名 `IdsDisplayName` を追加し、通常画面は従来表示、商品マスタでは「ブランドId」と表示できるよう変更
+- CvWpfclient/Views/Sub/RangeParamView.xaml: ID (終了) TextBox の幅を ID (開始) と同じ固定幅に変更
+- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: 画像列幅を 320 から 220 に縮小し、元上代/上代、原価/仕入単価を横一列に配置。価格4項目を右詰め、`N0` 形式で表示
+### 技術決定 Why
+- `RangeParamView` は商品マスタ以外でも使われるため、共通Viewは表示名拡張に留め、商品マスタ側だけ選択対象テーブルとWHERE列を差し替えて既存のID from/to・名前検索を維持した
+### 確認
+- `git diff --check` で空白エラーなし
+- `CvWpfclient/Views/Sub/RangeParamView.xaml` と `CvWpfclient/Views/01Master/MasterShohinMenteView.xaml` の XML 構文チェック成功
+- 編集ファイルの CRLF を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は通常実行で Microsoft SDKs 権限エラーになったため、承認付きで再実行しビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-20] 16:41 ShopUriageInputViewModel の商品検索SQLをJSON関数化
 ### Agent
 - GPT-5 : OpenAI : Codex
