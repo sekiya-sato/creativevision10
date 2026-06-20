@@ -59,6 +59,11 @@ internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<
 
 	protected override bool CanDelete() =>
 		ListData.Count > 0 && Current.Id > 0;
+
+	protected override string GetInsertConfirmMessage() => $"追加しますか？ (Login={CurrentEdit.LoginId}, Id={CurrentEdit.Id})";
+	protected override string GetUpdateConfirmMessage() => $"修正しますか？ (Login={CurrentEdit.LoginId}, Id={CurrentEdit.Id})";
+	protected override string GetDeleteConfirmMessage() => $"削除しますか？ (Login={CurrentEdit.LoginId}, Id={CurrentEdit.Id})";
+
 	protected override void AfterList(IList list) {
 		Message = $"リスト取得しました (件数={list.Count}, 取得時間 {StartTime.ToDtStrTime()} // {GetListTime.ToStrSpan()})";
 	}
