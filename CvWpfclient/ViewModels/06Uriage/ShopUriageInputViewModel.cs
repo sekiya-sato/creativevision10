@@ -73,16 +73,16 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			EXISTS (
 				SELECT 1
 				FROM json_each(Jmeisai) AS meisai
-				WHERE IFNULL(json_extract(meisai.value, '$.Code_Shohin'), '') LIKE '%{like}%'
-					OR IFNULL(json_extract(meisai.value, '$.Mei_Shohin'), '') LIKE '%{like}%'
+				WHERE json_extract(meisai.value, '$.Mei_Shohin') LIKE '%{like}%'
+			)
+			""";
+		/*
 					OR json_extract(meisai.value, '$.Id_Shohin') IN (
 						SELECT Id
 						FROM MasterShohin
-						WHERE Code LIKE '%{like}%'
-							OR Name LIKE '%{like}%'
+						WHERE Name LIKE '%{like}%'
 					)
-			)
-			""";
+		 */
 	}
 
 	static void AddIdInClause(List<string> clauses, string column, IEnumerable<long>? ids) {
