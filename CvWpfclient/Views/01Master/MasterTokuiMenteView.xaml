@@ -468,13 +468,13 @@
 						</ScrollViewer>
 					</TabItem>
 
-					<!--  タブ2: 支払情報  -->
+					<!--  タブ2: 請求情報  -->
 					<TabItem>
 						<TabItem.Header>
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="CreditCard" />
-								<TextBlock Text="支払情報" />
+								<TextBlock Text="請求情報" />
 							</StackPanel>
 						</TabItem.Header>
 						<ScrollViewer Padding="10,10,20,20"
@@ -509,46 +509,86 @@
 								<TextBlock Grid.Row="1"
 									Style="{StaticResource FormLabel}"
 									Text="締日1" />
-								<TextBox Grid.Row="1" Grid.Column="1"
+								<ComboBox Grid.Row="1" Grid.Column="1"
 									materialDesign:HintAssist.Hint="締日1"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Shime1}" />
+									ItemsSource="{Binding ShimeBiItems}"
+									Margin="0,4"
+									SelectedItem="{Binding CurrentEdit.EnShime1, Mode=TwoWay}"
+									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
 
 								<!--  締日2  -->
 								<TextBlock Grid.Row="2"
 									Style="{StaticResource FormLabel}"
 									Text="締日2" />
-								<TextBox Grid.Row="2" Grid.Column="1"
+								<ComboBox Grid.Row="2" Grid.Column="1"
 									materialDesign:HintAssist.Hint="締日2"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Shime2}" />
+									ItemsSource="{Binding ShimeBiItems}"
+									Margin="0,4"
+									SelectedItem="{Binding CurrentEdit.EnShime2, Mode=TwoWay}"
+									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
 
 								<!--  締日3  -->
 								<TextBlock Grid.Row="3"
 									Style="{StaticResource FormLabel}"
 									Text="締日3" />
-								<TextBox Grid.Row="3" Grid.Column="1"
+								<ComboBox Grid.Row="3" Grid.Column="1"
 									materialDesign:HintAssist.Hint="締日3"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Shime3}" />
+									ItemsSource="{Binding ShimeBiItems}"
+									Margin="0,4"
+									SelectedItem="{Binding CurrentEdit.EnShime3, Mode=TwoWay}"
+									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
 
 								<!--  入金月  -->
 								<TextBlock Grid.Row="4"
 									Style="{StaticResource FormLabel}"
 									Text="入金月" />
-								<TextBox Grid.Row="4" Grid.Column="1"
+								<ComboBox Grid.Row="4" Grid.Column="1"
+									DisplayMemberPath="Text"
+									ItemsSource="{Binding PayMonthItems}"
 									materialDesign:HintAssist.Hint="入金月"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.PayMonth}" />
+									Margin="0,4"
+									SelectedValue="{Binding CurrentEdit.PayMonth, Mode=TwoWay}"
+									SelectedValuePath="Value"
+									Style="{StaticResource MaterialDesignOutlinedComboBox}" />
 
 								<!--  入金日  -->
 								<TextBlock Grid.Row="5"
 									Style="{StaticResource FormLabel}"
 									Text="入金日" />
-								<TextBox Grid.Row="5" Grid.Column="1"
+								<ComboBox Grid.Row="5" Grid.Column="1"
 									materialDesign:HintAssist.Hint="入金日"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.PayDay}" />
+									ItemsSource="{Binding ShimeBiItems}"
+									Margin="0,4"
+									SelectedItem="{Binding CurrentEdit.EnPayDay, Mode=TwoWay}"
+									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
 
 								<!--  入金方法  -->
 								<TextBlock Grid.Row="6"

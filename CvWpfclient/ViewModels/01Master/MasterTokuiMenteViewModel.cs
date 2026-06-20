@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 
 namespace CvWpfclient.ViewModels._01Master;
@@ -16,6 +17,15 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 
 	protected override string? SelectCodeDisplayName => "得意先";
 	protected override string? FormFile => "MasterTokuiMente.qfm";
+	public IReadOnlyList<EnumShime> ShimeBiItems { get; } = Enum.GetValues<EnumShime>();
+	public IReadOnlyList<PayMonthItem> PayMonthItems { get; } = [
+		new(0, "当月"),
+		new(1, "翌月"),
+		new(2, "翌々月"),
+		new(3, "3ヶ月後"),
+		new(4, "4ヶ月後"),
+	];
+
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {
 			var query = CreateListQueryParam();

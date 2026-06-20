@@ -1,3 +1,23 @@
+## [2026-06-20] 17:33 MasterTokuiMenteView の請求情報タブ選択リスト化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterTokuiMenteView の「支払情報」タブ表示を「請求情報」に変更し、締日1,2,3 入金月、入金日 を MasterShiireMenteView を参考に選択リストへ変更する
+### 実施内容
+- CvWpfclient/Views/01Master/MasterTokuiMenteView.xaml: タブ見出しを「請求情報」に変更し、締日1/2/3、入金月、入金日を `MaterialDesignOutlinedComboBox` に置換
+- CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs: `ShimeBiItems` と `PayMonthItems` を追加し、仕入先マスターメンテと同じ候補リストを利用できるよう変更
+### 技術決定 Why
+- 締日と入金日は取引先共通基底の `EnShime1` / `EnShime2` / `EnShime3` / `EnPayDay` にバインドし、既存の int 保存値を維持したまま選択リスト化した
+### 確認
+- `git diff --check` で空白エラーなし
+- 編集ファイルの CRLF を確認
+- 通常の `CvWpfclient/CvWpfclient.csproj` ビルドは起動中の `CreativeVision10 (11992)` と Visual Studio による DLL ロックで失敗
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -p:OutDir=C:\gitroot\documents\new2022\cv10\.omo\build\CvWpfclient\"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-20] 17:14 MasterShohinMenteView の商品選択条件と価格レイアウト調整
 ### Agent
 - GPT-5 : OpenAI : Codex
