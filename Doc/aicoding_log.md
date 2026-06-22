@@ -1,3 +1,23 @@
+## [2026-06-22] 15:10 RangeInputParamView のレイアウト崩れ防止
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：RangeInputParamView を PrintMasterShainCardView を参考に修正し、ToolTip 表示も参考にしてレイアウトが崩れないよう調整する
+### 実施内容
+- CvWpfclient/Views/Sub/RangeInputParamView.xaml: 画面幅・フォント・フォームラベルを PrintMasterShainCardView に寄せ、固定幅の細分列を 4 列グリッドへ変更
+- CvWpfclient/Views/Sub/RangeInputParamView.xaml: 伝票No・日付・件数の入力幅を明示し、店舗Id/倉庫Idの選択結果は省略表示と折り返し ToolTip で確認できるよう変更
+### 技術決定 Why
+- MaterialDesignOutlinedTextBox / DatePicker の既定最小幅と Auto 列の組み合わせで終了側入力や長い選択結果が押し出されるため、入力幅と可変列を明示して選択結果を有限幅内に収めた
+### 確認
+- `RangeInputParamView.xaml` の XML 構文チェック成功
+- `git diff --check` で空白エラーなし
+- 編集ファイルの CRLF を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-20] 18:15 SQLitePCLRaw.lib.e_sqlite3 脆弱性対応: v3.0.3 移行
 ### Agent
 - kimi-k2.6 : OpenCode : Sisyphus
