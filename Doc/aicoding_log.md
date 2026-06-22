@@ -1,3 +1,24 @@
+## [2026-06-22] 16:30 商品メンテ用 SelectShohinView の条件確定モード追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterShohinMenteView から呼び出される SelectShohinView では「一覧表示」を「決定」に変更し、ボタン押下時に商品一覧選択を表示せず条件だけを渡す
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs: 商品メンテ用の条件確定モードを追加し、該当モードでは検索一覧へ遷移せず DialogResult=true で閉じるよう変更
+- CvWpfclient/Views/Sub/SelectShohinView.xaml: 検索実行ボタンを条件確定対応コマンドへ差し替え、表示文字列を ViewModel から切り替えるよう変更
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: SelectShohinView 呼び出し時に条件確定モードを有効化
+### 技術決定 Why
+- SelectShohinView は通常の商品選択ダイアログとしても使われるため、既存の一覧表示動作は残し、MasterShohinMenteView からの呼び出しだけ条件確定モードで分岐させた
+### 確認
+- `SelectShohinView.xaml` の XML 構文チェック成功
+- 編集ファイルの CRLF を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-22] 16:20 SelectShohinView の検索条件と商品メンテ一覧選択修正
 ### Agent
 - GPT-5 : OpenAI : Codex

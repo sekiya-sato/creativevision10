@@ -60,6 +60,7 @@ from MasterShohin {query.AddWhereOrder()}
 			DisplayName = displayName,
 			IdsDisplayName = "ブランド"
 		};
+		vm.IsConditionOnlyMode = true;
 		vm.ApplySelectParameter(initialParameter);
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			parameter = currentParameter ?? initialParameter;

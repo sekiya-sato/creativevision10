@@ -62,13 +62,13 @@
 			<DockPanel>
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button MinWidth="110"
-						Command="{Binding SearchCommand}"
+						Command="{Binding SearchOrCommitCommand}"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
 						Visibility="{Binding IsSearchMode, Converter={StaticResource BoolToVisibilityConverter}}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="FormatListBulleted" />
-							<TextBlock Text="一覧表示" />
+							<TextBlock Text="{Binding SearchActionText}" />
 						</StackPanel>
 					</Button>
 					<Button x:Name="DefaultButton"
@@ -297,12 +297,12 @@
 								</StackPanel>
 							</Button>
 							<Button MinWidth="128"
-								Command="{Binding SearchCommand}"
+								Command="{Binding SearchOrCommitCommand}"
 								Style="{StaticResource MaterialDesignRaisedButton}">
 								<StackPanel Orientation="Horizontal">
 									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 										Kind="FormatListBulleted" />
-									<TextBlock Text="一覧表示" />
+									<TextBlock Text="{Binding SearchActionText}" />
 								</StackPanel>
 							</Button>
 						</StackPanel>

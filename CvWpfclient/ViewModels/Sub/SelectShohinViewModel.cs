@@ -62,6 +62,12 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	bool isSearchMode = true;
 
 	[ObservableProperty]
+	string searchActionText = "一覧表示";
+
+	[ObservableProperty]
+	bool isConditionOnlyMode;
+
+	[ObservableProperty]
 	string message = "条件を入力して一覧表示してください";
 
 	public MasterShohin? SelectedShohin => Current?.Shohin;
@@ -71,6 +77,21 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	partial void OnIsSearchModeChanged(bool value) {
 		OnPropertyChanged(nameof(IsResultMode));
 		Title = value ? "商品検索" : "商品一覧選択";
+	}
+
+	partial void OnIsConditionOnlyModeChanged(bool value) {
+		SearchActionText = value ? "決定" : "一覧表示";
+		Message = value ? "条件を入力して決定してください" : "条件を入力して一覧表示してください";
+	}
+
+	[RelayCommand(IncludeCancelCommand = true)]
+	async Task SearchOrCommit(CancellationToken ct) {
+		if (IsConditionOnlyMode) {
+			ClientLib.ExitDialogResult(this, true);
+			return;
+		}
+
+		await Search(ct);
 	}
 
 	[RelayCommand(IncludeCancelCommand = true)]
