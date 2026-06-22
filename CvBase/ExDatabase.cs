@@ -36,7 +36,13 @@ public partial class ExDatabase : Database {
 		var newDb = new ExDatabase((DbConnection)Activator.CreateInstance(Connection.GetType(), Connection.ConnectionString)!);
 		return newDb;
 	}
-
+	/// <summary>
+	/// データベースのタイムアウトを変更する (秒単位)
+	/// </summary>
+	/// <param name="timeoutSec"></param>
+	public virtual void ChangeTimeout(int timeoutSec) {
+		RawExecCmd($"PRAGMA busy_timeout = {timeoutSec * 1000};");
+	}
 
 
 	/// <summary>
