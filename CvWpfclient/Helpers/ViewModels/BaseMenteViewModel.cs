@@ -178,9 +178,12 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			Ids = NormalizeSelectedIds(parameter?.Ids),
 			IdsText = NormalizeSelectedIdsText(parameter?.Ids, parameter?.IdsText),
 			IdsDisplayName = NormalizeNullableText(parameter?.IdsDisplayName) ?? displayName,
+			ItemIds = NormalizeSelectedIds(parameter?.ItemIds),
+			ItemIdsText = NormalizeSelectedIdsText(parameter?.ItemIds, parameter?.ItemIdsText),
 			FromCode = NormalizeNullableText(parameter?.FromCode),
 			ToCode = NormalizeNullableText(parameter?.ToCode),
 			Name = NormalizeNullableText(parameter?.Name),
+			Jan = NormalizeNullableText(parameter?.Jan),
 			MaxCount = parameter?.MaxCount,
 			DisplayName = NormalizeNullableText(parameter?.DisplayName) ?? displayName
 		};

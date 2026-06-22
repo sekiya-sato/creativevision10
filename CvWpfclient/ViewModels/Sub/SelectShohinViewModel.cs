@@ -19,6 +19,12 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	string title = "商品検索";
 
 	[ObservableProperty]
+	long? shohinIdFrom;
+
+	[ObservableProperty]
+	long? shohinIdTo;
+
+	[ObservableProperty]
 	string shohinCodeFrom = string.Empty;
 
 	[ObservableProperty]
@@ -28,16 +34,16 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	string shohinName = string.Empty;
 
 	[ObservableProperty]
-	string brandCodeFrom = string.Empty;
+	List<long> brandIds = [];
 
 	[ObservableProperty]
-	string brandCodeTo = string.Empty;
+	string brandIdsText = "未選択";
 
 	[ObservableProperty]
-	string itemCodeFrom = string.Empty;
+	List<long> itemIds = [];
 
 	[ObservableProperty]
-	string itemCodeTo = string.Empty;
+	string itemIdsText = "未選択";
 
 	[ObservableProperty]
 	string jan = string.Empty;
@@ -108,22 +114,66 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	bool CanSelect() => Current != null;
 
 	[RelayCommand]
-	void SelectShohinCodeFrom() => SelectShohinCode(x => ShohinCodeFrom = x);
+	void SelectBrandIds() {
+		var selected = ShowMultiSelectDialog("ブランド選択", "Kubun='BRD'", BrandIds, BrandIds.FirstOrDefault());
+		if (selected == null) return;
+		BrandIds = [.. selected.Select(x => x.Id)];
+		BrandIdsText = BuildSelectedText(selected);
+	}
 
 	[RelayCommand]
-	void SelectShohinCodeTo() => SelectShohinCode(x => ShohinCodeTo = x);
+	void ClearBrandIds() {
+		BrandIds = [];
+		BrandIdsText = "未選択";
+	}
 
 	[RelayCommand]
-	void SelectBrandCodeFrom() => SelectCode<MasterMeisho>("Kubun='BRD'", "Code", x => BrandCodeFrom = x);
+	void SelectItemIds() {
+		var selected = ShowMultiSelectDialog("アイテム選択", "Kubun='ITM'", ItemIds, ItemIds.FirstOrDefault());
+		if (selected == null) return;
+		ItemIds = [.. selected.Select(x => x.Id)];
+		ItemIdsText = BuildSelectedText(selected);
+	}
 
 	[RelayCommand]
-	void SelectBrandCodeTo() => SelectCode<MasterMeisho>("Kubun='BRD'", "Code", x => BrandCodeTo = x);
+	void ClearItemIds() {
+		ItemIds = [];
+		ItemIdsText = "未選択";
+	}
 
-	[RelayCommand]
-	void SelectItemCodeFrom() => SelectCode<MasterMeisho>("Kubun='ITM'", "Code", x => ItemCodeFrom = x);
+	public void ApplySelectParameter(SelectParameter? parameter) {
+		if (parameter?.MaxCount.HasValue == true) {
+			MaxCount = parameter.MaxCount.Value;
+		}
 
-	[RelayCommand]
-	void SelectItemCodeTo() => SelectCode<MasterMeisho>("Kubun='ITM'", "Code", x => ItemCodeTo = x);
+		ShohinIdFrom = parameter?.FromId;
+		ShohinIdTo = parameter?.ToId;
+		ShohinCodeFrom = parameter?.FromCode ?? string.Empty;
+		ShohinCodeTo = parameter?.ToCode ?? string.Empty;
+		ShohinName = parameter?.Name ?? string.Empty;
+		BrandIds = NormalizeIds(parameter?.Ids);
+		BrandIdsText = NormalizeSelectedText(BrandIds, parameter?.IdsText);
+		ItemIds = NormalizeIds(parameter?.ItemIds);
+		ItemIdsText = NormalizeSelectedText(ItemIds, parameter?.ItemIdsText);
+		Jan = parameter?.Jan ?? string.Empty;
+	}
+
+	public SelectParameter CreateSelectParameter(string? displayName = null) =>
+		new() {
+			FromId = ShohinIdFrom,
+			ToId = ShohinIdTo,
+			Ids = NormalizeIds(BrandIds),
+			IdsText = NormalizeSelectedText(BrandIds, BrandIdsText),
+			IdsDisplayName = "ブランド",
+			ItemIds = NormalizeIds(ItemIds),
+			ItemIdsText = NormalizeSelectedText(ItemIds, ItemIdsText),
+			FromCode = NormalizeNullableText(ShohinCodeFrom),
+			ToCode = NormalizeNullableText(ShohinCodeTo),
+			DisplayName = displayName,
+			Name = NormalizeNullableText(ShohinName),
+			Jan = NormalizeNullableText(Jan),
+			MaxCount = MaxCount
+		};
 
 	async Task<List<MasterShohin>> LoadShohinListAsync(CancellationToken ct) {
 		List<string> parameters = [];
@@ -145,10 +195,11 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 
 	List<string> BuildShohinClauses(List<string> parameters) {
 		List<string> clauses = [];
+		AddIdRange(clauses, "M.Id", ShohinIdFrom, ShohinIdTo);
 		AddCodeRange(clauses, parameters, "M.Code", ShohinCodeFrom, ShohinCodeTo);
 		AddLike(clauses, parameters, "M.Name", ShohinName);
-		AddCodeRange(clauses, parameters, "IFNULL(Brd.Code, '')", BrandCodeFrom, BrandCodeTo);
-		AddCodeRange(clauses, parameters, "IFNULL(Item.Code, '')", ItemCodeFrom, ItemCodeTo);
+		AddSelectedIdInClause(clauses, "M.Id_Brand", BrandIds);
+		AddSelectedIdInClause(clauses, "M.Id_Item", ItemIds);
 
 		string normalizedJan = Normalize(Jan);
 		if (!string.IsNullOrEmpty(normalizedJan)) {
@@ -186,43 +237,58 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 		return list.Cast<T>().ToList();
 	}
 
-	void SelectCode<T>(string where, string order, Action<string> setCode)
-		where T : BaseDbClass, IBaseCodeName {
-		var view = new Views.Sub.SelectWinView();
-		if (view.DataContext is not SelectWinViewModel vm) return;
-
-		vm.SetParam(typeof(T), where, order);
-		if (ClientLib.ShowDialogView(view, this) != true) return;
-		if (vm.Current is not T selected) return;
-
-		setCode(selected.Code ?? string.Empty);
-	}
-
-	void SelectShohinCode(Action<string> setCode) {
-		var view = new Views.Sub.SelectShohinView();
-		if (view.DataContext is not SelectShohinViewModel vm) return;
-
-		vm.ShohinCodeFrom = ShohinCodeFrom;
-		vm.ShohinCodeTo = ShohinCodeTo;
-		vm.ShohinName = ShohinName;
-		vm.BrandCodeFrom = BrandCodeFrom;
-		vm.BrandCodeTo = BrandCodeTo;
-		vm.ItemCodeFrom = ItemCodeFrom;
-		vm.ItemCodeTo = ItemCodeTo;
-		vm.Jan = Jan;
-
-		if (ClientLib.ShowDialogView(view, this) != true) return;
-		MasterShohin? selected = vm.SelectedShohin;
-		if (selected == null) return;
-
-		setCode(selected.Code ?? string.Empty);
-	}
-
 	protected override void OnExit() {
 		ClientLib.ExitDialogResult(this, false);
 	}
 
 	Window? ActiveWindow => ClientLib.GetActiveView(this);
+
+	IReadOnlyList<MasterMeisho>? ShowMultiSelectDialog(string title, string where, IEnumerable<long>? selectedIds, long startPos) {
+		var selWin = new Views.Sub.SelectMultiWinView();
+		if (selWin.DataContext is not SelectMultiWinViewModel vm) return null;
+		vm.Title = title;
+		vm.SetParam(typeof(MasterMeisho), where, "Code", startPos: startPos, selectedIds: selectedIds);
+		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
+		return vm.GetSelectedItems<MasterMeisho>();
+	}
+
+	static string BuildSelectedText(IReadOnlyList<MasterMeisho> selected) {
+		if (selected.Count == 0) return "未選択";
+		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatSelectedItem))}";
+	}
+
+	static string FormatSelectedItem(MasterMeisho item) {
+		string label = JoinCodeName(item.Code, item.Name);
+		if (label.Length == 0) return item.Id.ToString(CultureInfo.InvariantCulture);
+		return $"{item.Id} {label}";
+	}
+
+	static string JoinCodeName(string? code, string? name) {
+		string cd = code?.Trim() ?? string.Empty;
+		string mei = name?.Trim() ?? string.Empty;
+		if (cd.Length == 0) return mei;
+		if (mei.Length == 0) return cd;
+		return $"{cd} {mei}";
+	}
+
+	static void AddIdRange(List<string> clauses, string column, long? from, long? to) {
+		if (from.HasValue) {
+			clauses.Add($"{column} >= {from.Value.ToString(CultureInfo.InvariantCulture)}");
+		}
+
+		if (to.HasValue) {
+			clauses.Add($"{column} <= {to.Value.ToString(CultureInfo.InvariantCulture)}");
+		}
+	}
+
+	static void AddSelectedIdInClause(List<string> clauses, string column, IEnumerable<long>? ids) {
+		string[] values = NormalizeIds(ids)
+			.Select(id => id.ToString(CultureInfo.InvariantCulture))
+			.ToArray();
+		if (values.Length == 0) return;
+
+		clauses.Add($"{column} IN ({string.Join(",", values)})");
+	}
 
 	static void AddCodeRange(List<string> clauses, List<string> parameters, string column, string? from, string? to) {
 		string normalizedFrom = Normalize(from);
@@ -250,6 +316,18 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	}
 
 	static string Normalize(string? value) => value?.Trim() ?? string.Empty;
+
+	static string? NormalizeNullableText(string? value) =>
+		string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+	static List<long> NormalizeIds(IEnumerable<long>? ids) =>
+		ids?.Where(id => id > 0).Distinct().ToList() ?? [];
+
+	static string NormalizeSelectedText(IEnumerable<long>? ids, string? text) {
+		int count = NormalizeIds(ids).Count;
+		if (count == 0) return "未選択";
+		return string.IsNullOrWhiteSpace(text) || text == "未選択" ? $"{count}件" : text;
+	}
 
 }
 

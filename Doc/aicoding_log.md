@@ -1,3 +1,27 @@
+## [2026-06-22] 16:20 SelectShohinView の検索条件と商品メンテ一覧選択修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：SelectShohinView の検索条件を商品Id/商品CD/ブランドID複数選択/アイテムID複数選択/商品名/JANの順に変更し、MasterShohinMenteView の最初の一覧選択表示でも SelectShohinView を使うようにする
+### 実施内容
+- CvWpfclient/Views/Sub/SelectShohinView.xaml: 検索条件を6行固定のGrid構成へ変更し、商品Id/商品CDは選択アイコンなし、ブランドID/アイテムIDは複数選択アイコン付きの固定幅操作に変更
+- CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs: 商品Id範囲、ブランドID/アイテムID複数選択、JAN部分一致を検索条件へ追加
+- CvWpfclient/ViewModels/Sub/SelectParameter.cs, CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: 商品一覧条件としてアイテムID複数選択とJANを保持・正規化できるよう拡張
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 一覧取得前の条件入力を SelectShohinView に変更し、選択商品を一覧取得後の現在行に反映
+- CvWpfclient/ViewModels/08Zaiko/ZaikoQueryViewModel.cs: SelectShohinView に非表示の旧ブランドCD/アイテムCD条件を渡さないよう調整
+### 技術決定 Why
+- ブランド/アイテム条件はコード範囲ではなくIDの複数選択へ変更する要件のため、既存の SelectMultiWinView を使い、選択結果テキストは省略表示とToolTipで確認できる固定レイアウトにした
+- MasterShohinMenteView の一覧取得条件も同じ SelectShohinViewModel から SelectParameter へ変換し、検索画面とメンテ一覧の条件差異を減らした
+### 確認
+- `SelectShohinView.xaml` の XML 構文チェック成功
+- 編集ファイルの CRLF を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-22] 15:10 RangeInputParamView のレイアウト崩れ防止
 ### Agent
 - GPT-5 : OpenAI : Codex

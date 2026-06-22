@@ -476,10 +476,6 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 		vm.ShohinCodeFrom = ShohinCodeFrom;
 		vm.ShohinCodeTo = ShohinCodeTo;
 		vm.ShohinName = ShohinName;
-		vm.BrandCodeFrom = BrandCodeFrom;
-		vm.BrandCodeTo = BrandCodeTo;
-		vm.ItemCodeFrom = ItemCodeFrom;
-		vm.ItemCodeTo = ItemCodeTo;
 
 		if (ClientLib.ShowDialogView(view, this) != true) return;
 		MasterShohin? selected = vm.SelectedShohin;

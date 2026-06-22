@@ -11,6 +11,7 @@ using System.Collections.ObjectModel;
 namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShohin> {
+	long selectedShohinIdAfterList;
 
 	[ObservableProperty]
 	string title = "商品マスターメンテ";
@@ -49,8 +50,8 @@ from MasterShohin {query.AddWhereOrder()}
 	}
 
 	protected override bool TryShowSelectCodeDialog(SelectParameter? currentParameter, string displayName, out SelectParameter parameter) {
-		var selWin = new Views.Sub.RangeParamView();
-		if (selWin.DataContext is not RangeParamViewModel vm) {
+		var selWin = new Views.Sub.SelectShohinView();
+		if (selWin.DataContext is not SelectShohinViewModel vm) {
 			parameter = currentParameter ?? new SelectParameter { DisplayName = displayName, IdsDisplayName = "ブランド" };
 			return true;
 		}
@@ -59,13 +60,14 @@ from MasterShohin {query.AddWhereOrder()}
 			DisplayName = displayName,
 			IdsDisplayName = "ブランド"
 		};
-		vm.Initialize(initialParameter, typeof(MasterMeisho), "Kubun='BRD'", "Code");
+		vm.ApplySelectParameter(initialParameter);
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
-			parameter = vm.Parameter;
+			parameter = currentParameter ?? initialParameter;
 			return false;
 		}
 
-		parameter = NormalizeSelectParameter(vm.Parameter, displayName) with {
+		selectedShohinIdAfterList = vm.SelectedShohin?.Id ?? 0;
+		parameter = NormalizeSelectParameter(vm.CreateSelectParameter(displayName), displayName) with {
 			IdsDisplayName = "ブランド"
 		};
 		return true;
@@ -78,6 +80,7 @@ from MasterShohin {query.AddWhereOrder()}
 
 		List<string> clauses = [];
 		AddSelectedIdInClause(clauses, "Id_Brand", parameter.Ids);
+		AddSelectedIdInClause(clauses, "Id_Item", parameter.ItemIds);
 		if (parameter.FromId.HasValue) {
 			clauses.Add($"Id >= {parameter.FromId.Value}");
 		}
@@ -93,8 +96,29 @@ from MasterShohin {query.AddWhereOrder()}
 		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
 			clauses.Add($"Name LIKE '%{EscapeSqlLiteral(parameter.Name)}%'");
 		}
+		if (!string.IsNullOrWhiteSpace(parameter.Jan)) {
+			string jan = EscapeSqlLiteral(parameter.Jan.Trim());
+			clauses.Add($"""
+				EXISTS (
+					SELECT 1
+					FROM DerivedShohinColSiz D
+					WHERE D.Id_Shohin = MasterShohin.Id
+						AND (D.Jan1 LIKE '%{jan}%' OR D.Jan2 LIKE '%{jan}%' OR D.Jan3 LIKE '%{jan}%')
+				)
+				""");
+		}
 
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	protected override void AfterList(IList list) {
+		if (selectedShohinIdAfterList <= 0) return;
+
+		var selected = ListData.FirstOrDefault(x => x.Id == selectedShohinIdAfterList);
+		selectedShohinIdAfterList = 0;
+		if (selected != null) {
+			Current = selected;
+		}
 	}
 
 	[ObservableProperty]
