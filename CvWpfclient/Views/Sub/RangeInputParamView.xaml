@@ -99,7 +99,8 @@
 					<TextBlock Grid.Row="0" Grid.Column="0"
 						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="伝票No" /></TextBlock>
 					<TextBox Grid.Row="0" Grid.Column="1"
-						Width="220" HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+						Width="220"
+						HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="伝票No (開始)"
 						Style="{StaticResource FormTextBox}"
 						TabIndex="0"
@@ -109,7 +110,8 @@
 						Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
 						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<TextBox Grid.Row="0" Grid.Column="3"
-						Width="220" HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+						Width="220"
+						HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="伝票No (終了)"
 						Style="{StaticResource FormTextBox}"
 						TabIndex="1"
@@ -118,7 +120,8 @@
 					<TextBlock Grid.Row="1" Grid.Column="0"
 						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="日付" /></TextBlock>
 					<DatePicker Grid.Row="1" Grid.Column="1"
-						Width="220" Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
+						Width="220"
+						Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
 						helpers:DatePickerTodayButtonBehavior.IsEnabled="True" FontSize="16" IsTodayHighlighted="False"
 						SelectedDate="{Binding Parameter.FromDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
@@ -128,7 +131,8 @@
 						Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
 						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<DatePicker Grid.Row="1" Grid.Column="3"
-						Width="220" Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
+						Width="220"
+						Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
 						helpers:DatePickerTodayButtonBehavior.IsEnabled="True" FontSize="16" IsTodayHighlighted="False"
 						SelectedDate="{Binding Parameter.ToDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
@@ -215,14 +219,14 @@
 					<TextBlock Grid.Row="5" Grid.Column="0"
 						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="件数" /></TextBlock>
 					<TextBox Grid.Row="5" Grid.Column="1"
-						Width="220" HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+						Width="220"
+						HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="件数"
 						Style="{StaticResource FormTextBox}"
 						TabIndex="10"
 						Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
 					<TextBlock Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2"
-						Margin="12,0,0,0"
-						VerticalAlignment="Center"
+						Margin="12,0,0,0" VerticalAlignment="Center"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="(空白:全件取得)" />
 

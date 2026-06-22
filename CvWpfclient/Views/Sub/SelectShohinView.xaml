@@ -161,8 +161,7 @@
 								Style="{StaticResource ConditionLabel}"
 								Text="商品Id" />
 							<Grid Grid.Row="0" Grid.Column="1"
-								Margin="0,0,0,12"
-								HorizontalAlignment="Left">
+								Margin="0,0,0,12" HorizontalAlignment="Left">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="140" />
 									<ColumnDefinition Width="46" />
@@ -186,8 +185,7 @@
 								Style="{StaticResource ConditionLabel}"
 								Text="商品CD" />
 							<Grid Grid.Row="1" Grid.Column="1"
-								Margin="0,0,0,12"
-								HorizontalAlignment="Left">
+								Margin="0,0,0,12" HorizontalAlignment="Left">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="180" />
 									<ColumnDefinition Width="46" />

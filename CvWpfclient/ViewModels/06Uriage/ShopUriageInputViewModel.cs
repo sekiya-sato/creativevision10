@@ -172,7 +172,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		if (SelectedMeisai == null) return;
 		SelectedMeisai.PropertyChanged -= OnMeisaiPropertyChanged;
 		EditMeisai.Remove(SelectedMeisai);
-		SelectedMeisai = null;
+		SelectedMeisai = EditMeisai.LastOrDefault() ?? null;
 		UpdateTotals();
 	}
 
