@@ -144,7 +144,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
 			startRect = window.RestoreBounds;
-			var width = 290;
+			var width = 360;
 			var width2 = 740;
 			menuonlyRect = new Rect() {
 				Width = width,
