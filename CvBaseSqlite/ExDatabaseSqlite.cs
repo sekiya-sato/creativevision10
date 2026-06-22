@@ -34,7 +34,7 @@ public partial class ExDatabaseSqlite : ExDatabase {
 			Mode = SqliteOpenMode.ReadWriteCreate,
 			Pooling = true,                       // .NET側のコネクションプーリングを有効化
 			Cache = SqliteCacheMode.Shared,       // プロセス内でのキャッシュ共有
-			DefaultTimeout = 5                    // busy_timeout の初期値（秒単位、ここでは5秒）
+			DefaultTimeout = 30                    // busy_timeout の初期値（秒単位）
 		}.ToString();
 		var conn = new SqliteConnection(advancedConnectionString);
 		var _db = new ExDatabaseSqlite(conn);
@@ -84,16 +84,6 @@ public partial class ExDatabaseSqlite : ExDatabase {
 			Version = cmd.ExecuteScalar()?.ToString() ?? "";
 		}
 	}
-	void DisableWalMode(SqliteConnection conn) {
-		using (var cmd = conn.CreateCommand()) {
-			cmd.CommandText = @"
-PRAGMA journal_mode=DELETE;
-";
-			cmd.ExecuteNonQuery();
-		}
-
-	}
-
 
 	static readonly string _default_varchar = " NOT NULL DEFAULT ''"; // not null ではない varchar型のデフォルト定義
 
