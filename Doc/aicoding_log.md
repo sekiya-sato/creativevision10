@@ -1,3 +1,24 @@
+## [2026-06-22] 16:40 メモリ整理と cv10 skill 反映
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：メモリを整理し、skill に移動できるものは移動する
+### 実施内容
+- .agents/skills/wpf-view-workflow/SKILL.md: WPF 画面作業の配置厳守、既存画面優先、CRLF/diff/build/log/commit の完了手順をメモリから反映
+- .agents/skills/add-print-process-master-mente/SKILL.md: DB 定義書・商品バーコード系の印刷実績から、既存テーブル一覧取得、CSV印刷、件数上限、qfm warning 判断を追記
+- .agents/skills/author-printstream-qfm/SKILL.md: qfm の Shift_JIS 維持、バーコード帳票の pagechange 前例、ユーザー中止時の rollback 手順を追記
+- .agents/skills/fix-cvserver-sqlite-lifetime/SKILL.md: CvServer / CvBaseSqlite の DB lifetime と SQLite shutdown cleanup 用 skill を新規追加
+### 技術決定 Why
+- 個別の作業履歴や commit 情報はメモリ側に残し、将来の作業で再利用する判断ルールと検証手順だけを repo-local skill に移すことで、メモリ依存を減らしつつ既存成功手順を壊さないようにした
+### 確認
+- `quick_validate.py` は PyYAML 不足で実行不可だったため、skill frontmatter と TODO 残りを手動確認
+- 編集ファイルの CRLF を確認
+- `git diff --check` で空白エラーなし
+
+---
+
 ## [2026-06-22] 16:30 商品メンテ用 SelectShohinView の条件確定モード追加
 ### Agent
 - GPT-5 : OpenAI : Codex

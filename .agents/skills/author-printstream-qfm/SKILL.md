@@ -36,6 +36,7 @@ description: Documents the repo-proven safe subset for authoring PrintStream qfm
 - 現在の repo 標準は **`printform/` 配下・A4縦・CSV `data.txt` 入力**。
 - `itemN` の定義順、CSV/SQL の列順、`datasrc="itemN"` の対応を必ず一致させる。
 - 既存帳票をコピーして必要箇所だけ変える。ゼロから独自構造を発明しない。
+- ユーザーが生成結果を否定して中止や差し戻しを指示した場合は、追加検討を止め、触った qfm と一時出力だけを即時に戻す。
 
 ## 最小骨格
 
@@ -207,6 +208,8 @@ CHM の `FormEditor/part4_7.html` では CODE39 / JAN / NW-7 / ITF / 郵便 / CO
 
 ただし、この repo の qfm 実例ではバーコード帳票の蓄積が少ないため、**このスキルではバーコードを主題にしません**。必要になった場合は CHM と既存前例を確認してから追加してください。
 
+cv10 の商品バーコード帳票を触る場合は、まず同系統の既存 qfm を比較してください。`MasterPrintBarcode002.qfm` は `group level="1" pagechange="1"` により 1 商品 1 ページの挙動になり、複数商品を 1 ページへ詰める系統では `MasterPrintBarcodeSho.qfm`、`MasterPrintBarcodeCode39.qfm`、`MasterPrintBarcodeNw7.qfm` の `pagechange="0"` 構造が近い前例です。
+
 ## 帳票パターンの選び方
 
 ### 一覧帳票
@@ -364,6 +367,14 @@ python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py pr
 - `datarecord/item` が存在するか
 
 この validator は**現在の repo 運用ルール**を確認するもので、ベンダー仕様の完全検証ではありません。
+
+legacy qfm の position warning は、それだけで失敗扱いにしない。Shift_JIS(cp932) で読めること、XML と `itemN` / `datasrc` 対応が壊れていないこと、PDF 出力結果が要求形状に合うことを分けて確認する。
+
+## ロールバック
+
+- ユーザーが「中止」「想定と違う」「すぐに戻す」と指示したら、追加編集や再提案を挟まず rollback を先に行う。
+- Git 操作が `.git/index.lock` などで失敗する場合は、`git cat-file blob HEAD:<path>` や `git checkout-index -f -- <path>` で対象 qfm を HEAD から復元する。
+- `tmp/pdfs/`、`printform/data.txt`、preview PDF など、検証で作った一時成果物も合わせて片付ける。
 
 ## このスキルがカバーしないこと
 

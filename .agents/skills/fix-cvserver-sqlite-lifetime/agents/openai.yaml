@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fix CvServer SQLite Lifetime"
+  short_description: "CvServer SQLite lifetime and shutdown cleanup"
+  default_prompt: "Use $fix-cvserver-sqlite-lifetime to investigate and fix CvServer ExDatabase lifetime or SQLite WAL cleanup issues."

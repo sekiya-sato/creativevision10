@@ -28,6 +28,14 @@ description: Defines the standard workflow for creating or updating individual W
 5. 共有リソースや共通スタイルを流用し、独自実装を最小化する
 6. XAML / ビルド確認を行う
 
+## cv10 実績からの優先ルール
+
+- ユーザーが参照画面や配置を指定した場合は、最初にその画面を読み、ボタン位置・列順・メニュー位置を文字通りに維持する。
+- `PrintMasterShainCardView`、`MasterShohinMenteView`、`SelectMultiWinView` など具体名が出た場合は、同じ flow / command / layout 構造から始める。
+- `MenuData.cs` は、`システム管理マスタの下`、`汎用マスタメンテの下` など指定された親項目と並び順を変えない。
+- `BaseMenteViewModel<T>` の既定動作を使う前に対象 model を確認する。`Code` / `Name` 前提でない table は `ListOrder` や検索・印刷 hook を個別に合わせる。
+- 一覧選択やバーコード取込で明細・合計を更新する場合は、既存 ViewModel の中央経路を使う。例: `ShopUriageInputViewModel` では `EditMeisai`、`OnMeisaiPropertyChanged`、`UpdateTotals()` 経由で反映する。
+
 ## 既存画面改修の基本手順
 
 1. 対象Viewと対応ViewModelを両方確認する
@@ -66,8 +74,21 @@ description: Defines the standard workflow for creating or updating individual W
 ## 検証手順
 
 1. XAML変更がある場合、必要に応じて `check-xaml` を使う
-2. 可能なら `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行する
-3. 形式確認が必要なら `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` を使う
+2. 変更ファイルの CRLF を確認する
+3. `git diff --check` を実行する
+4. WPF クライアントをビルドする
+
+```powershell
+C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"
+```
+
+5. 形式確認が必要なら `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` を使う
+
+## ログとコミット
+
+- `commitまで` または AGENTS.md の通常 workflow で commit が必要な作業は、ビルド成功だけで完了扱いにしない。
+- `Doc/aicoding_log.md` は先頭へ追記し、追記位置が既存ログの途中でないことを確認する。
+- `.omo` と `.sisyphus` は scratch として扱い、ユーザーが明示しない限り commit 対象に含めない。
 
 ## 関連スキル
 
@@ -78,4 +99,5 @@ description: Defines the standard workflow for creating or updating individual W
 
 ## 更新履歴
 
+- **v0.1.1 (2026-06-22)**: cv10 実績メモから配置厳守、検証、ログ・コミット規則を補強
 - **v0.1.0 (2026-03-27)**: 画面単位の新規作成・改修手順を分離して初版作成

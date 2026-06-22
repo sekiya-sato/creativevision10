@@ -25,6 +25,13 @@ description: Adds PDF print support to CvWpfclient master maintenance screens by
   - 画面上の単一レコードや加工済み値を出す場合は `PrintByCsvParam` を使う。
   - `EscapeCsvField`、`CultureInfo.InvariantCulture`、`\r\n` 終端を守る。
 
+## cv10 実績パターン
+
+- テーブル一覧や DB 定義書のようにサーバー側の一覧を選ばせる印刷画面では、既存の `CvFlag.Msg042_GetTableList` と `SelectMultiWinViewModel.SetLocalData(...)` を優先する。新規 endpoint は、既存 flag で不足する場合だけ検討する。
+- legacy qfm が固定の CSV 形を期待する場合は、SQL印刷へ寄せず `PrintByCsvParam` で `data.txt` の列順を明示する。
+- 商品バーコード系の印刷では、`MasterShohin` と `DerivedShohinColSiz` の組み合わせを先に確認する。JAN 判定は `Jan1` / `Jan2` / `Jan3` を使い、印刷件数上限は `AppGlobal.Application.Limit` を明示的に確認してから出力する。
+- `__serverimg__` を含む帳票 SQL は、サーバー側の `ReplaceServerSqlQuery()` 経路を確認してから qfm 側の画像項目と対応させる。
+
 ## 実装手順
 
 1. 対象 ViewModel に `FormFile` を追加する。
@@ -126,6 +133,8 @@ python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py pri
 ```bash
 python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py printform/MasterShainMente.qfm printform/MasterMeishoMente.qfm
 ```
+
+validator の position warning は、legacy 帳票との差分を示すだけの場合がある。文字コード、XML構造、`itemN` と `datasrc`、SELECT/CSV列数が正しいかを分けて判断する。
 
 ## 確認手順
 
