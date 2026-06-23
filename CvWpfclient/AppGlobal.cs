@@ -41,6 +41,7 @@ public static class AppGlobal {
 	public static string WeatherRegion => _config?["Application:WeatherRegion"] ?? "Tokyo";
 	public static string JmaWeatherAreaCode => _config?["Application:JmaWeatherAreaCode"] ?? "130000";
 	public static int Limit => int.TryParse(_config?["Application:Limit"], out var limit) ? limit : 100; // デフォルトは100件
+	public static bool DebugMode => _config?["Application:DebugMode"]?.ToLower() == "true";
 	public static ClientApplication Application => new ClientApplication {
 		LoginId = _config?["Application:LoginId"] ?? string.Empty,
 		LoginPass = _config?["Application:LoginPass"] ?? string.Empty,

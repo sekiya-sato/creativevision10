@@ -105,6 +105,8 @@ public class ClientLib {
 	public static bool? ShowDialogView(Window childWin, object? myVm, bool IsDialog = true) {
 		if (myVm != null)
 			childWin.Owner = GetActiveView(myVm);
+		if (AppGlobal.DebugMode)
+			childWin.ToolTip = $"{childWin.GetType().Name}";
 		// childWin.WindowStartupLocation = loc;
 		// childWin.ShowInTaskbar = IsShowTaskbar;
 		if (IsDialog)

@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterShiireMenteView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterShiireMenteView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
@@ -461,9 +461,9 @@
 									Style="{StaticResource FormLabel}"
 									Text="締日1" />
 								<ComboBox Grid.Row="0" Grid.Column="1"
+									Margin="0,4"
 									materialDesign:HintAssist.Hint="締日1"
 									ItemsSource="{Binding ShimeBiItems}"
-									Margin="0,4"
 									SelectedItem="{Binding CurrentEdit.EnShime1, Mode=TwoWay}"
 									Style="{StaticResource MaterialDesignOutlinedComboBox}">
 									<ComboBox.ItemTemplate>
@@ -478,9 +478,9 @@
 									Style="{StaticResource FormLabel}"
 									Text="締日2" />
 								<ComboBox Grid.Row="1" Grid.Column="1"
+									Margin="0,4"
 									materialDesign:HintAssist.Hint="締日2"
 									ItemsSource="{Binding ShimeBiItems}"
-									Margin="0,4"
 									SelectedItem="{Binding CurrentEdit.EnShime2, Mode=TwoWay}"
 									Style="{StaticResource MaterialDesignOutlinedComboBox}">
 									<ComboBox.ItemTemplate>
@@ -495,9 +495,9 @@
 									Style="{StaticResource FormLabel}"
 									Text="締日3" />
 								<ComboBox Grid.Row="2" Grid.Column="1"
+									Margin="0,4"
 									materialDesign:HintAssist.Hint="締日3"
 									ItemsSource="{Binding ShimeBiItems}"
-									Margin="0,4"
 									SelectedItem="{Binding CurrentEdit.EnShime3, Mode=TwoWay}"
 									Style="{StaticResource MaterialDesignOutlinedComboBox}">
 									<ComboBox.ItemTemplate>
@@ -512,10 +512,9 @@
 									Style="{StaticResource FormLabel}"
 									Text="支払月" />
 								<ComboBox Grid.Row="3" Grid.Column="1"
-									DisplayMemberPath="Text"
-									ItemsSource="{Binding PayMonthItems}"
-									materialDesign:HintAssist.Hint="支払月"
 									Margin="0,4"
+									materialDesign:HintAssist.Hint="支払月" DisplayMemberPath="Text"
+									ItemsSource="{Binding PayMonthItems}"
 									SelectedValue="{Binding CurrentEdit.PayMonth, Mode=TwoWay}"
 									SelectedValuePath="Value"
 									Style="{StaticResource MaterialDesignOutlinedComboBox}" />
@@ -524,9 +523,9 @@
 									Style="{StaticResource FormLabel}"
 									Text="支払日" />
 								<ComboBox Grid.Row="4" Grid.Column="1"
+									Margin="0,4"
 									materialDesign:HintAssist.Hint="支払日"
 									ItemsSource="{Binding ShimeBiItems}"
-									Margin="0,4"
 									SelectedItem="{Binding CurrentEdit.EnPayDay, Mode=TwoWay}"
 									Style="{StaticResource MaterialDesignOutlinedComboBox}">
 									<ComboBox.ItemTemplate>
