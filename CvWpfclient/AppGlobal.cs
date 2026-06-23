@@ -48,7 +48,8 @@ public static class AppGlobal {
 		WeatherRegion = WeatherRegion,
 		JmaWeatherAreaCode = JmaWeatherAreaCode,
 		FitPosition = FitPosition,
-		Limit = Limit
+		Limit = Limit,
+		DebugMode = DebugMode
 	};
 	/// <summary>
 	/// ログイン認証後のJWT
@@ -140,7 +141,7 @@ public static class AppGlobal {
 	/// <param name="loginId"></param>
 	/// <param name="loginPass"></param>
 	/// <exception cref="InvalidOperationException"></exception>
-	public static void UpdateConfigValues(string? url = null, string? loginId = null, string? loginPass = null, string? weatherRegion = null, string? fitPosition = null, int? limit = null, string? jmaWeatherAreaCode = null) {
+	public static void UpdateConfigValues(string? url = null, string? loginId = null, string? loginPass = null, string? weatherRegion = null, string? fitPosition = null, int? limit = null, string? jmaWeatherAreaCode = null, bool? debugMode = null) {
 		if (_config == null) {
 			throw new InvalidOperationException("AppGlobal has not been initialized. Call Init() at application startup.");
 		}
@@ -165,6 +166,9 @@ public static class AppGlobal {
 		}
 		if (limit != null) {
 			_config["Application:Limit"] = limit.Value.ToString(CultureInfo.InvariantCulture);
+		}
+		if (debugMode != null) {
+			_config["Application:DebugMode"] = debugMode.Value ? "true" : "false";
 		}
 	}
 

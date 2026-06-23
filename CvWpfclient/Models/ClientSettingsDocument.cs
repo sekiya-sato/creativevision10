@@ -16,6 +16,7 @@ public sealed class ClientApplication {
 	public string MainTheme { get; set; } = string.Empty;
 
 	public int Limit { get; set; } = 0;
+	public bool? DebugMode { get; set; } = null;
 	public string LoginId { get; set; } = string.Empty;
 	/// <summary>
 	/// Product: リリース時には暗号化するか、保存しないようにする

@@ -22,6 +22,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	private string _originalJmaWeatherAreaCode = DefaultJmaWeatherAreaCode;
 	private string _originalFitPosition = $"{DefaultHorizontalFitPosition}-{DefaultVerticalFitPosition}";
 	private int _originalLimit = DefaultLimit;
+	private bool _originalDebugMode = false;
 
 	public string[] HorizontalFitPositionItems { get; } = [DefaultHorizontalFitPosition, "Right"];
 	public string[] VerticalFitPositionItems { get; } = ["Top", DefaultVerticalFitPosition];
@@ -108,6 +109,11 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	private int limit = DefaultLimit;
 
+	[ObservableProperty]
+	private bool debugMode = false;
+
+	public string DebugModeDisplayText => DebugMode ? "有効" : "無効";
+
 	public string FitPosition => $"{HorizontalFitPosition}-{VerticalFitPosition}";
 
 	partial void OnHorizontalFitPositionChanged(string value) {
@@ -116,6 +122,10 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 
 	partial void OnVerticalFitPositionChanged(string value) {
 		OnPropertyChanged(nameof(FitPosition));
+	}
+
+	partial void OnDebugModeChanged(bool value) {
+		OnPropertyChanged(nameof(DebugModeDisplayText));
 	}
 
 	[RelayCommand]
@@ -156,6 +166,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		var originalRuntimeJmaWeatherAreaCode = _originalJmaWeatherAreaCode;
 		var originalRuntimeFitPosition = _originalFitPosition;
 		var originalRuntimeLimit = _originalLimit;
+		var originalRuntimeDebugMode = _originalDebugMode;
 		var urlChanged = !string.Equals(_originalUrl, Url, StringComparison.OrdinalIgnoreCase);
 		var loginIdChanged = !string.Equals(_originalLoginId, LoginId, StringComparison.Ordinal);
 		var loginPasswordChanged = !string.Equals(_originalLoginPassword, LoginPassword, StringComparison.Ordinal);
@@ -170,12 +181,14 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 			["Application:JmaWeatherAreaCode"] = normalizedJmaWeatherAreaCode,
 			["Application:FitPosition"] = fitPosition,
 			["Application:Limit"] = Limit.ToString(CultureInfo.InvariantCulture),
+			["Application:DebugMode"] = DebugMode ? "true" : "false",
 		};
 		var overrides = new Dictionary<string, object?> {
 			["Application:WeatherRegion"] = normalizedWeatherRegion,
 			["Application:JmaWeatherAreaCode"] = normalizedJmaWeatherAreaCode,
 			["Application:FitPosition"] = fitPosition,
 			["Application:Limit"] = Limit,
+			["Application:DebugMode"] = DebugMode,
 		};
 		if (urlChanged) {
 			overrides["ConnectionStrings:Url"] = Url;
@@ -205,12 +218,12 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 			}
 			catch (Exception ex) {
 				MessageEx.ShowErrorDialog($"接続先の再構築に失敗しました: {ex.Message}", owner: ClientLib.GetActiveView(this));
-				AppGlobal.UpdateConfigValues(originalRuntimeUrl, originalRuntimeLoginId, originalRuntimeLoginPassword, originalRuntimeWeatherRegion, originalRuntimeFitPosition, originalRuntimeLimit, originalRuntimeJmaWeatherAreaCode);
+				AppGlobal.UpdateConfigValues(originalRuntimeUrl, originalRuntimeLoginId, originalRuntimeLoginPassword, originalRuntimeWeatherRegion, originalRuntimeFitPosition, originalRuntimeLimit, originalRuntimeJmaWeatherAreaCode, originalRuntimeDebugMode);
 				return false;
 			}
 		}
 		else {
-			AppGlobal.UpdateConfigValues(Url, persistedLoginId, persistedLoginPassword, normalizedWeatherRegion, fitPosition, Limit, normalizedJmaWeatherAreaCode);
+			AppGlobal.UpdateConfigValues(Url, persistedLoginId, persistedLoginPassword, normalizedWeatherRegion, fitPosition, Limit, normalizedJmaWeatherAreaCode, DebugMode);
 			if (loginIdChanged) {
 				_originalLoginId = persistedLoginId;
 			}
@@ -229,6 +242,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		_currentSettings.Application.JmaWeatherAreaCode = normalizedJmaWeatherAreaCode;
 		_currentSettings.Application.FitPosition = fitPosition;
 		_currentSettings.Application.Limit = Limit;
+		_currentSettings.Application.DebugMode = DebugMode;
 		LoginId = persistedLoginId;
 		LoginPassword = persistedLoginPassword;
 		WeatherRegion = normalizedWeatherRegion;
@@ -237,6 +251,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		_originalJmaWeatherAreaCode = normalizedJmaWeatherAreaCode;
 		_originalFitPosition = fitPosition;
 		_originalLimit = Limit;
+		_originalDebugMode = DebugMode;
 		return true;
 	}
 
@@ -265,6 +280,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		JmaWeatherAreaCode = NormalizeKnownJmaWeatherAreaCode(AppGlobal.JmaWeatherAreaCode);
 		ApplyFitPosition(AppGlobal.FitPosition);
 		Limit = AppGlobal.Limit > 0 ? AppGlobal.Limit : DefaultLimit;
+		DebugMode = AppGlobal.DebugMode;
 		_originalUrl = Url;
 		_originalLoginId = LoginId;
 		_originalLoginPassword = LoginPassword;
@@ -272,6 +288,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 		_originalJmaWeatherAreaCode = JmaWeatherAreaCode;
 		_originalFitPosition = FitPosition;
 		_originalLimit = Limit;
+		_originalDebugMode = DebugMode;
 	}
 
 	private void ApplyFitPosition(string? fitPosition) {

@@ -1,3 +1,25 @@
+## [2026-06-23] 16:07 SysSetConfigView DebugMode 切替追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：SetSysConfigView で「取得件数上限」のとなりに DebugMode の有効・無効を切り替えられるようにする
+### 実施内容
+- CvWpfclient/Views/00System/SysSetConfigView.xaml: 取得件数上限の右隣に DebugMode のスイッチと有効/無効表示を追加
+- CvWpfclient/ViewModels/00System/SysSetConfigViewModel.cs: DebugMode の読み込み、表示文言、保存、一時反映、再構築失敗時の復元に対応
+- CvWpfclient/AppGlobal.cs: DebugMode を ClientApplication と UpdateConfigValues の実行時更新へ追加
+- CvWpfclient/Models/ClientSettingsDocument.cs, CvWpfclient/Services/SystemSettingsStore.cs: clientsettings.json の DebugMode 読み書きに対応し、未保存時は appsettings の値を維持
+### 技術決定 Why
+- 既存の WeatherRegion / FitPosition / Limit と同じ設定保存経路へ統合し、未保存の DebugMode が既定 appsettings を false で上書きしないよう nullable として扱った
+### 確認
+- `CvWpfclient/Views/00System/SysSetConfigView.xaml` の XML 構文チェック成功
+- 編集ファイルの CRLF 維持を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 15:37 Wpfclient リソースとコンバーター重複整理
 ### Agent
 - GPT-5 : OpenAI : Codex

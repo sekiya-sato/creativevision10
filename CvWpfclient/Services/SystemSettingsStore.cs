@@ -58,6 +58,9 @@ public sealed class ClientSettingsStore {
 		if (settings.Application.Limit > 0) {
 			overrides["Application:Limit"] = settings.Application.Limit;
 		}
+		if (settings.Application.DebugMode.HasValue) {
+			overrides["Application:DebugMode"] = settings.Application.DebugMode.Value;
+		}
 		AddIfNotWhiteSpace(overrides, "Application:Theme", settings.Application.Theme);
 		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);
 		SaveConfigurationValues(overrides);
@@ -116,6 +119,7 @@ public sealed class ClientSettingsStore {
 		AddIfNotWhiteSpace(overrides, "Application:JmaWeatherAreaCode", settings.Application.JmaWeatherAreaCode);
 		AddIfNotWhiteSpace(overrides, "Application:FitPosition", settings.Application.FitPosition);
 		AddIfPositiveInt(overrides, "Application:Limit", settings.Application.Limit);
+		AddIfHasValue(overrides, "Application:DebugMode", settings.Application.DebugMode);
 		AddIfNotWhiteSpace(overrides, "Application:MainTheme", settings.Application.MainTheme);
 		return overrides;
 	}
@@ -134,6 +138,12 @@ public sealed class ClientSettingsStore {
 	static void AddIfPositiveInt(IDictionary<string, string?> map, string key, int value) {
 		if (value > 0) {
 			map[key] = value.ToString(CultureInfo.InvariantCulture);
+		}
+	}
+
+	static void AddIfHasValue(IDictionary<string, string?> map, string key, bool? value) {
+		if (value.HasValue) {
+			map[key] = value.Value ? "true" : "false";
 		}
 	}
 

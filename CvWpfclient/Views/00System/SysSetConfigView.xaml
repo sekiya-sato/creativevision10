@@ -205,14 +205,38 @@
 					<TextBlock Grid.Row="9" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
 						Text="取得件数上限" />
-					<TextBox Grid.Row="9" Grid.Column="1"
-						Width="180"
-						HorizontalAlignment="Left" HorizontalContentAlignment="Right"
-						materialDesign:HintAssist.Hint="例: 400"
-						CaretBrush="{DynamicResource MaterialDesignBody}"
-						Style="{StaticResource SettingTextBox}"
-						Text="{Binding Limit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True, NotifyOnValidationError=True}"
-						TextAlignment="Right" />
+					<Grid Grid.Row="9" Grid.Column="1"
+						Margin="0,6">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="180" />
+							<ColumnDefinition Width="28" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="12" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="8" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<TextBox Grid.Column="0"
+							HorizontalContentAlignment="Right"
+							materialDesign:HintAssist.Hint="例: 400"
+							CaretBrush="{DynamicResource MaterialDesignBody}"
+							Style="{StaticResource SettingTextBox}"
+							Text="{Binding Limit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True, NotifyOnValidationError=True}"
+							TextAlignment="Right" />
+						<TextBlock Grid.Column="2"
+							VerticalAlignment="Center"
+							FontWeight="SemiBold"
+							Text="DebugMode" />
+						<ToggleButton Grid.Column="4"
+							VerticalAlignment="Center"
+							IsChecked="{Binding DebugMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource MaterialDesignSwitchToggleButton}" />
+						<TextBlock Grid.Column="6"
+							MinWidth="32"
+							VerticalAlignment="Center"
+							FontWeight="SemiBold"
+							Text="{Binding DebugModeDisplayText}" />
+					</Grid>
 				</Grid>
 			</materialDesign:Card>
 		</ScrollViewer>
