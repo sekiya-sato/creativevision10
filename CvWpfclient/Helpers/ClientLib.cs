@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 
 namespace CvWpfclient.Helpers;
 /// <summary>
@@ -105,8 +106,12 @@ public class ClientLib {
 	public static bool? ShowDialogView(Window childWin, object? myVm, bool IsDialog = true) {
 		if (myVm != null)
 			childWin.Owner = GetActiveView(myVm);
-		if (AppGlobal.DebugMode)
-			childWin.ToolTip = $"{childWin.GetType().FullName}";
+		if (AppGlobal.DebugMode) {
+			var name = $"{childWin.GetType().FullName}";
+			childWin.ToolTip = name;
+			if ((Keyboard.Modifiers & (ModifierKeys.Shift | ModifierKeys.Control)) != 0)
+				try { Clipboard.SetText(name); } catch { }
+		}
 		// childWin.WindowStartupLocation = loc;
 		// childWin.ShowInTaskbar = IsShowTaskbar;
 		if (IsDialog)
