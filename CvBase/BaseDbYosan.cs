@@ -45,7 +45,7 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// 店舗データ
 	/// </summary>
 	[ObservableProperty]
-	[property: Ignore]
+	[property: ComputedColumn]
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
 	CodeNameView vTenpo = new();
@@ -54,7 +54,7 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// ブランドデータ
 	/// </summary>
 	[ObservableProperty]
-	[property: Ignore]
+	[property: ComputedColumn]
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(100)]
 	CodeNameView vBrand = new();

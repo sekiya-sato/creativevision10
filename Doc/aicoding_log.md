@@ -1,3 +1,23 @@
+## [2026-06-23] 13:59 MasterYosanBrand 一覧SQLのJSON表示列修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MasterYosanBrandMenteViewModel の CreateListMessage のSQL文をJSON関数を使い正しいものに変更し、VTenpo と VBrand をセットする
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/MasterYosanBrandMenteViewModel.cs: 一覧SQLで店舗・ブランドの表示情報を `json_object` により VTenpo/VBrand として返すよう修正
+- CvWpfclient/Views/02Yosan/MasterYosanBrandMenteView.xaml: 一覧表示と詳細表示のバインドを VTenpo/VBrand のプロパティ参照へ修正。人間側の確認修正として入力欄サイズも調整
+- CvBase/BaseDbYosan.cs: 人間側の確認修正として MasterYosanBrand の VTenpo/VBrand を ComputedColumn に変更し、SQL取得値を表示用に受け取れるよう調整
+### 技術決定 Why
+- JOINしたコード・名称を一時的な別名列ではなく MasterYosanBrand の VTenpo/VBrand にJSONとして復元することで、詳細フォームと一覧で同じ CodeNameView 表示プロパティを使えるようにした
+### 確認
+- `CvWpfclient/Views/02Yosan/MasterYosanBrandMenteView.xaml` の XML 構文チェック成功
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 13:28 MasterYosanBrand メンテ画面の一覧条件と名称表示追加
 ### Agent
 - GPT-5 : OpenAI : Codex

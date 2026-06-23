@@ -198,19 +198,19 @@
 								Binding="{Binding Id_Tenpo}"
 								Header="店舗Id" />
 							<DataGridTextColumn Width="90"
-								Binding="{Binding TenpoCode}"
+								Binding="{Binding VTenpo.Cd}"
 								Header="店舗CD" />
 							<DataGridTextColumn Width="150"
-								Binding="{Binding TenpoName}"
+								Binding="{Binding VTenpo.Mei}"
 								Header="店舗名" />
 							<DataGridTextColumn Width="100"
 								Binding="{Binding Id_Brand}"
 								Header="ブランドId" />
 							<DataGridTextColumn Width="100"
-								Binding="{Binding BrandCode}"
+								Binding="{Binding VBrand.Cd}"
 								Header="ブランドCD" />
 							<DataGridTextColumn Width="150"
-								Binding="{Binding BrandName}"
+								Binding="{Binding VBrand.Mei}"
 								Header="ブランド名" />
 							<DataGridTextColumn Width="130"
 								Binding="{Binding UriYosan, StringFormat={}{0:N0}}"
@@ -276,6 +276,7 @@
 									Text="店舗Id" />
 								<TextBox Grid.Row="1" Grid.Column="1"
 									Width="180"
+									Height="40" Margin="2"
 									HorizontalAlignment="Left"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectShopCommand}"
 									materialDesign:HintAssist.Hint="店舗Id"
@@ -286,8 +287,8 @@
 									Foreground="{DynamicResource MaterialDesignBody}">
 									<TextBlock.Text>
 										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.vTenpo.Cd" />
-											<Binding Path="CurrentEdit.vTenpo.Mei" />
+											<Binding Path="CurrentEdit.VTenpo.Cd" />
+											<Binding Path="CurrentEdit.VTenpo.Mei" />
 										</MultiBinding>
 									</TextBlock.Text>
 								</TextBlock>
@@ -297,6 +298,7 @@
 									Text="ブランドId" />
 								<TextBox Grid.Row="2" Grid.Column="1"
 									Width="180"
+									Height="40" Margin="2"
 									HorizontalAlignment="Left"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectBrandCommand}"
 									materialDesign:HintAssist.Hint="ブランドId"
@@ -307,8 +309,8 @@
 									Foreground="{DynamicResource MaterialDesignBody}">
 									<TextBlock.Text>
 										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.vBrand.Cd" />
-											<Binding Path="CurrentEdit.vBrand.Mei" />
+											<Binding Path="CurrentEdit.VBrand.Cd" />
+											<Binding Path="CurrentEdit.VBrand.Mei" />
 										</MultiBinding>
 									</TextBlock.Text>
 								</TextBlock>

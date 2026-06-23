@@ -71,10 +71,8 @@ select
 	Y.DenDay,
 	Y.UriYosan,
 	Y.ArariYosan,
-	ifnull(T.Code, '') TenpoCode,
-	ifnull(T.Name, '') TenpoName,
-	ifnull(B.Code, '') BrandCode,
-	ifnull(B.Name, '') BrandName
+	json_object('Sid', ifnull(T.Id, 0), 'Cd', ifnull(T.Code, ''), 'Mei', ifnull(T.Name, '')) VTenpo,
+	json_object('Sid', ifnull(B.Id, 0), 'Cd', ifnull(B.Code, ''), 'Mei', ifnull(B.Name, '')) VBrand
 from MasterYosanBrand Y
 left join MasterTokui T on T.Id = Y.Id_Tenpo
 left join MasterMeisho B on B.Id = Y.Id_Brand
