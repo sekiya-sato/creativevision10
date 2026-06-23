@@ -1,3 +1,22 @@
+## [2026-06-23] 10:33 店舗売上入力のESCタブ戻り対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：06Uriage/ShopUriageInputView の伝票入力画面で ESC キーを押したときは、一覧画面タブ表示にする
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml.cs: OnPreviewKeyDown を override し、伝票入力タブ表示中の ESC で SelectedTabIndex を 0 に戻す処理を追加
+- Doc/aicoding_log.md: 作業ログを追記
+### 技術決定 Why
+- BaseWindow の既定 ESC は ExitCommand 実行による終了動作のため、ShopUriageInputView だけで先に ESC を処理し、一覧タブ表示中は従来の BaseWindow 処理へ委譲する構成にした
+### 確認
+- 編集ファイルの CRLF 維持を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 10:28 店舗売上入力タブ内ボタン配置と明細2行列幅同期
 ### Agent
 - GPT-5 : OpenAI : Codex
