@@ -313,8 +313,19 @@
 
 								<TextBlock Grid.Row="6"
 									Style="{StaticResource FormLabel}"
+									Text="有効期限" />
+								<DatePicker Grid.Row="6" Grid.Column="1"
+									Width="180"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="有効期限"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
+									SelectedDate="{Binding CurrentEdit.ExpireDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+
+								<TextBlock Grid.Row="7"
+									Style="{StaticResource FormLabel}"
 									Text="店舗" />
-								<DockPanel Grid.Row="6" Grid.Column="1"
+								<DockPanel Grid.Row="7" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
 										HorizontalContentAlignment="Left"

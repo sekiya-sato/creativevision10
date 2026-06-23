@@ -1,3 +1,22 @@
+## [2026-06-23] 17:33 MasterShainMenteView 有効期限編集項目追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MasterShainMenteView で、追加された ExpireDate 有効期限を編集項目に追加し、日付として修正可能にする
+### 実施内容
+- CvWpfclient/Views/01Master/MasterShainMenteView.xaml: 右側の基本情報タブに `CurrentEdit.ExpireDate` の有効期限入力を追加し、`DatePicker` と `DateYmd8Converter` で yyyyMMdd 文字列を日付として編集できるようにした
+### 技術決定 Why
+- `MasterShain.ExpireDate` は yyyyMMdd 文字列で保持されるため、既存の `DateYmd8Converter` と `MaterialDesignFloatingHintDatePicker` を使い、DB保持形式を変えずに画面上は日付入力として扱う
+### 確認
+- `CvWpfclient/Views/01Master/MasterShainMenteView.xaml` の XML 構文解析成功
+- `CvWpfclient/Views/01Master/MasterShainMenteView.xaml` が UTF-8 BOMなし、CRLF であることを確認
+- `git diff --check` で空白エラーなしを確認（既存の別ファイルに LF→CRLF 警告あり）
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---
+
 ## [2026-06-23] 17:27 LoginService ユーザ有効期限チェック追加
 ### Agent
 - kimi-k2.7-code : opencode-go : Sisyphus
