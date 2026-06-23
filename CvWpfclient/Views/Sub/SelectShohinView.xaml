@@ -47,6 +47,15 @@
 			<Setter Property="HorizontalAlignment" Value="Stretch" />
 			<Setter Property="TextAlignment" Value="Right" />
 		</Style>
+
+		<Style x:Key="SelectionResultText"
+			TargetType="TextBlock">
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="Margin" Value="12,0,8,0" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+		</Style>
 	</helpers:BaseWindow.Resources>
 
 	<Grid Background="{DynamicResource AppCommonBackgroundBrush}">
@@ -225,11 +234,15 @@
 									Command="{Binding ClearBrandIdsCommand}"
 									Content="解除" DockPanel.Dock="Right"
 									Style="{StaticResource MaterialDesignFlatButton}" />
-								<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}"
+								<TextBlock Style="{StaticResource SelectionResultText}"
 									Text="{Binding BrandIdsText}"
-									TextTrimming="CharacterEllipsis"
-									ToolTip="{Binding BrandIdsText}" />
+									ToolTipService.InitialShowDelay="300">
+									<TextBlock.ToolTip>
+										<TextBlock MaxWidth="600"
+											Text="{Binding BrandIdsText}"
+											TextWrapping="Wrap" />
+									</TextBlock.ToolTip>
+								</TextBlock>
 							</DockPanel>
 
 							<TextBlock Grid.Row="3" Grid.Column="0"
@@ -255,11 +268,15 @@
 									Command="{Binding ClearItemIdsCommand}"
 									Content="解除" DockPanel.Dock="Right"
 									Style="{StaticResource MaterialDesignFlatButton}" />
-								<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}"
+								<TextBlock Style="{StaticResource SelectionResultText}"
 									Text="{Binding ItemIdsText}"
-									TextTrimming="CharacterEllipsis"
-									ToolTip="{Binding ItemIdsText}" />
+									ToolTipService.InitialShowDelay="300">
+									<TextBlock.ToolTip>
+										<TextBlock MaxWidth="600"
+											Text="{Binding ItemIdsText}"
+											TextWrapping="Wrap" />
+									</TextBlock.ToolTip>
+								</TextBlock>
 							</DockPanel>
 
 							<TextBlock Grid.Row="4" Grid.Column="0"

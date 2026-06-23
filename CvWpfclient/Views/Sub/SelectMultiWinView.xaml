@@ -19,7 +19,7 @@
 		<materialDesign:ColorZone Grid.Row="0"
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
-			<DockPanel>
+			<DockPanel LastChildFill="True">
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button Command="{Binding SelectAllCommand}"
 						Style="{StaticResource MaterialDesignToolForegroundButton}">
@@ -53,24 +53,35 @@
 						</StackPanel>
 					</Button>
 				</StackPanel>
-				<StackPanel Orientation="Horizontal">
+				<Grid MinWidth="0">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
 					<Button Margin="0,0,8,0"
 						Command="{Binding ExitCommand}"
+						Grid.Column="0"
 						IsCancel="True"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
 						ToolTip="閉じる">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>
-					<TextBlock VerticalAlignment="Center"
+					<TextBlock Grid.Column="1"
+						MinWidth="0" VerticalAlignment="Center"
 						FontSize="20" FontWeight="SemiBold"
-						Text="{Binding Title}" />
-					<TextBlock Margin="32,0,0,0" VerticalAlignment="Center"
+						Text="{Binding Title}"
+						TextTrimming="CharacterEllipsis" />
+					<TextBlock Grid.Column="2"
+						Margin="32,0,0,0" VerticalAlignment="Center"
 						FontSize="14" Opacity="0.75"
 						Text="{Binding Count, StringFormat={}件数 {0:N0}}" />
-					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+					<TextBlock Grid.Column="3"
+						Margin="16,0,12,0" VerticalAlignment="Center"
 						FontSize="14" Opacity="0.75"
 						Text="{Binding SelectedCount, StringFormat={}選択 {0:N0}}" />
-				</StackPanel>
+				</Grid>
 			</DockPanel>
 		</materialDesign:ColorZone>
 		<Grid Grid.Row="1"
@@ -87,15 +98,26 @@
 						Background="{DynamicResource MaterialDesignToolBarBackground}"
 						CornerRadius="8,8,0,0">
 						<StackPanel Orientation="Vertical">
-							<StackPanel Orientation="Horizontal">
-								<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<TextBlock Grid.Column="0"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
 									Text="{Binding Current.Code}" />
-								<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
+								<TextBlock Grid.Column="1"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
 									Text="  " />
-								<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
-									Text="{Binding Current.Name}" />
-							</StackPanel>
-							<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}">
+								<TextBlock Grid.Column="2"
+									MinWidth="0"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="{Binding Current.Name}"
+									TextTrimming="CharacterEllipsis" />
+							</Grid>
+							<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
+								TextTrimming="CharacterEllipsis">
 								<TextBlock.Text>
 									<MultiBinding StringFormat="{}{0} {1}">
 										<Binding Path="Current.Id" />

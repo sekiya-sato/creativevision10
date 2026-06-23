@@ -123,6 +123,7 @@
 							Content="解除" DockPanel.Dock="Right"
 							Style="{StaticResource MaterialDesignFlatButton}" />
 						<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
+							MinWidth="0"
 							Foreground="{DynamicResource MaterialDesignBody}"
 							Text="{Binding Parameter.IdsText}"
 							TextTrimming="CharacterEllipsis">
