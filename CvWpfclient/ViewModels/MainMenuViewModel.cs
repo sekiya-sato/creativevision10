@@ -313,7 +313,6 @@ public partial class MainMenuViewModel : ObservableObject {
 			if (targetRet == true) {
 				if (targetView.DataContext is _00System.LoginViewModel vm) {
 					ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
-					_subStartTime = DateTime.Now;
 					await afterLogin(vm);
 				}
 				else if (targetView.DataContext is _00System.SysSetConfigViewModel) {
@@ -334,7 +333,6 @@ public partial class MainMenuViewModel : ObservableObject {
 		if (ret == true) {
 			if (view.DataContext is _00System.LoginViewModel vm) {
 				ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
-				_subStartTime = DateTime.Now;
 				await afterLogin(vm);
 			}
 			else if (view.DataContext is _00System.SysSetConfigViewModel) {
@@ -355,7 +353,6 @@ public partial class MainMenuViewModel : ObservableObject {
 			}
 			await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
 		}
-		_subStartTime = DateTime.Now;
 		SetSubMessage();
 	}
 
