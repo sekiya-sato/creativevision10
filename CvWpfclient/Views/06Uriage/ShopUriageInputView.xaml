@@ -134,13 +134,11 @@
 					</Grid.RowDefinitions>
 					<DockPanel Grid.Row="0"
 						Margin="8,0,8,8">
-						<StackPanel DockPanel.Dock="Left"
-							Orientation="Horizontal">
+						<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
 							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="FormatListBulleted" />
 							<TextBlock Margin="0,0,16,0" VerticalAlignment="Center"
-								FontSize="16" FontWeight="SemiBold"
-								Text="一覧画面" />
+								FontSize="16" FontWeight="SemiBold" Text="一覧画面" />
 							<Button Command="{Binding GoToDetailCommand}"
 								CommandParameter="{Binding Current}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
@@ -154,8 +152,8 @@
 							</Button>
 						</StackPanel>
 					</DockPanel>
-					<materialDesign:Card Padding="0"
-						Grid.Row="1"
+					<materialDesign:Card Grid.Row="1"
+						Padding="0"
 						materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 						<Grid>
 							<Grid.RowDefinitions>
@@ -169,8 +167,7 @@
 								Background="{DynamicResource MaterialDesignToolBarBackground}"
 								CornerRadius="8,8,0,0">
 								<DockPanel>
-									<StackPanel DockPanel.Dock="Right"
-										Orientation="Horizontal">
+									<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 										<TextBlock Margin="0,0,12,0" VerticalAlignment="Center"
 											FontSize="13"
 											Foreground="{DynamicResource MaterialDesignBodyLight}"
@@ -257,8 +254,7 @@
 
 					<DockPanel Grid.Row="0"
 						Margin="8,0,8,8">
-						<StackPanel DockPanel.Dock="Right"
-							Orientation="Horizontal">
+						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 							<Button Margin="4,0"
 								Command="{Binding DoUpdateOnDetailTabCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
