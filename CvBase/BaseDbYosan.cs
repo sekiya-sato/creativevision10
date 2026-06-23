@@ -40,6 +40,22 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("粗利予算")]
 	long arariYosan;
+
+	[ObservableProperty]
+	[property: ResultColumn]
+	string tenpoCode = string.Empty;
+
+	[ObservableProperty]
+	[property: ResultColumn]
+	string tenpoName = string.Empty;
+
+	[ObservableProperty]
+	[property: ResultColumn]
+	string brandCode = string.Empty;
+
+	[ObservableProperty]
+	[property: ResultColumn]
+	string brandName = string.Empty;
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]

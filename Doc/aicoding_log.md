@@ -1,3 +1,25 @@
+## [2026-06-23] 13:28 MasterYosanBrand メンテ画面の一覧条件と名称表示追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterYosanBrand メンテ画面の一覧選択で店舗Id・ブランドIdを選択可能にし、表示で店舗IdにID/店舗CD/店舗名、ブランドIdにID/ブランドCD/ブランド名を表示する
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/MasterYosanBrandMenteViewModel.cs: 一覧取得前に条件ダイアログを表示し、店舗IdとブランドIdの複数選択条件を WHERE に反映する処理を追加。SQL取得時に店舗CD/店舗名/ブランドCD/ブランド名を JOIN して取得
+- CvWpfclient/Views/02Yosan/MasterYosanBrandMenteView.xaml: 一覧列と詳細フォームに店舗CD/店舗名/ブランドCD/ブランド名の表示を追加
+- CvBase/BaseDbYosan.cs: MasterYosanBrand に表示専用 ResultColumn プロパティを追加
+- CvWpfclient/ViewModels/Sub/SelectParameter.cs, CvWpfclient/ViewModels/Sub/RangeParamViewModel.cs, CvWpfclient/Views/Sub/RangeParamView.xaml, CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: 汎用一覧条件ダイアログへ任意表示の取引先複数選択行を追加
+### 技術決定 Why
+- 既存の RangeParamView を拡張して通常画面では非表示の店舗選択行を追加し、今回の画面だけ店舗IdとブランドIdを同時に絞り込めるようにした。表示名は保存データに混ぜず ResultColumn と JOIN で一覧取得時に補完する構成にした
+### 確認
+- `CvWpfclient/Views/02Yosan/MasterYosanBrandMenteView.xaml` と `CvWpfclient/Views/Sub/RangeParamView.xaml` の XML 構文チェック成功
+- 編集ファイルの CRLF 維持を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 13:15 MasterYosanBrand メンテ画面追加
 ### Agent
 - GPT-5 : OpenAI : Codex

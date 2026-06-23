@@ -6,16 +6,22 @@ namespace CvWpfclient.ViewModels.Sub;
 
 public partial class RangeParamViewModel : Helpers.BaseViewModel {
 	Type? selectType;
+	Type? toriSelectType;
 	string selectWhere = string.Empty;
 	string selectOrder = "Code";
+	string toriSelectWhere = string.Empty;
+	string toriSelectOrder = "Code";
 
 	[ObservableProperty]
 	SelectParameter parameter = new();
 
-	public void Initialize(SelectParameter? param, Type? tableType = null, string where = "", string order = "Code") {
+	public void Initialize(SelectParameter? param, Type? tableType = null, string where = "", string order = "Code", Type? toriTableType = null, string toriWhere = "", string toriOrder = "Code") {
 		selectType = tableType;
 		selectWhere = where;
 		selectOrder = order;
+		toriSelectType = toriTableType;
+		toriSelectWhere = toriWhere;
+		toriSelectOrder = toriOrder;
 		Parameter = EnsureParameter(param ?? new SelectParameter());
 	}
 
@@ -48,6 +54,30 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		};
 	}
 
+	[RelayCommand]
+	void DoSelectToriIds() {
+		if (toriSelectType == null) return;
+
+		var selWin = new Views.Sub.SelectMultiWinView();
+		if (selWin.DataContext is not SelectMultiWinViewModel vm) return;
+		vm.SetParam(toriSelectType, toriSelectWhere, toriSelectOrder, selectedIds: Parameter.ToriIds, startPos: Parameter.ToriIds.FirstOrDefault());
+		if (ClientLib.ShowDialogView(selWin, this) != true) return;
+
+		var selectedRows = vm.ListData?.Where(row => row.IsSelected).ToList() ?? [];
+		Parameter = Parameter with {
+			ToriIds = [.. selectedRows.Select(row => row.Id).Where(id => id > 0).Distinct()],
+			ToriIdsText = BuildSelectedText(selectedRows)
+		};
+	}
+
+	[RelayCommand]
+	void ClearToriIds() {
+		Parameter = Parameter with {
+			ToriIds = [],
+			ToriIdsText = "未選択"
+		};
+	}
+
 	static SelectParameter EnsureParameter(SelectParameter parameter) {
 		if (string.IsNullOrWhiteSpace(parameter.IdsDisplayName)) {
 			parameter.IdsDisplayName = parameter.DisplayName;
@@ -58,6 +88,12 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		}
 		else if (string.IsNullOrWhiteSpace(parameter.IdsText) || parameter.IdsText == "未選択") {
 			parameter.IdsText = $"{parameter.Ids.Count}件";
+		}
+		if (parameter.ToriIds.Count == 0) {
+			parameter.ToriIdsText = "未選択";
+		}
+		else if (string.IsNullOrWhiteSpace(parameter.ToriIdsText) || parameter.ToriIdsText == "未選択") {
+			parameter.ToriIdsText = $"{parameter.ToriIds.Count}件";
 		}
 		return parameter;
 	}

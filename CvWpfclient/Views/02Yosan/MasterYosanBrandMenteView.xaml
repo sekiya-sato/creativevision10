@@ -194,12 +194,24 @@
 							<DataGridTextColumn Width="120"
 								Binding="{Binding DenDay}"
 								Header="日付" />
-							<DataGridTextColumn Width="100"
+							<DataGridTextColumn Width="90"
 								Binding="{Binding Id_Tenpo}"
 								Header="店舗Id" />
-							<DataGridTextColumn Width="110"
+							<DataGridTextColumn Width="90"
+								Binding="{Binding TenpoCode}"
+								Header="店舗CD" />
+							<DataGridTextColumn Width="150"
+								Binding="{Binding TenpoName}"
+								Header="店舗名" />
+							<DataGridTextColumn Width="100"
 								Binding="{Binding Id_Brand}"
 								Header="ブランドId" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding BrandCode}"
+								Header="ブランドCD" />
+							<DataGridTextColumn Width="150"
+								Binding="{Binding BrandName}"
+								Header="ブランド名" />
 							<DataGridTextColumn Width="130"
 								Binding="{Binding UriYosan, StringFormat={}{0:N0}}"
 								Header="売上予算" />
@@ -269,6 +281,16 @@
 									materialDesign:HintAssist.Hint="店舗Id"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Grid.Row="1" Grid.Column="1"
+									Margin="196,0,0,0" VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBody}">
+									<TextBlock.Text>
+										<MultiBinding StringFormat="{}{0} {1}">
+											<Binding Path="CurrentEdit.TenpoCode" />
+											<Binding Path="CurrentEdit.TenpoName" />
+										</MultiBinding>
+									</TextBlock.Text>
+								</TextBlock>
 
 								<TextBlock Grid.Row="2"
 									Style="{StaticResource FormLabel}"
@@ -280,6 +302,16 @@
 									materialDesign:HintAssist.Hint="ブランドId"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Brand, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Grid.Row="2" Grid.Column="1"
+									Margin="196,0,0,0" VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBody}">
+									<TextBlock.Text>
+										<MultiBinding StringFormat="{}{0} {1}">
+											<Binding Path="CurrentEdit.BrandCode" />
+											<Binding Path="CurrentEdit.BrandName" />
+										</MultiBinding>
+									</TextBlock.Text>
+								</TextBlock>
 
 								<TextBlock Grid.Row="3"
 									Style="{StaticResource FormLabel}"

@@ -11,6 +11,7 @@
 		<vm:RangeParamViewModel />
 	</helpers:BaseWindow.DataContext>
 	<helpers:BaseWindow.Resources>
+		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 		<!--  編集フォームの TextBox スタイル  -->
 		<Style x:Key="FormTextBox"
 			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -61,6 +62,7 @@
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid Margin="2">
 					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
@@ -138,29 +140,67 @@
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="{Binding Parameter.ToriLabel}"
+						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+					<DockPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="5"
+						Margin="0,4"
+						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+						<Button Width="110" Height="36"
+							Command="{Binding DoSelectToriIdsCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MaterialDesignRaisedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearToriIdsCommand}"
+							Content="解除" DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}" />
+						<TextBlock MinWidth="0"
+							Margin="12,0,8,0" VerticalAlignment="Center"
+							Foreground="{DynamicResource MaterialDesignBody}"
+							Text="{Binding Parameter.ToriIdsText}"
+							TextTrimming="CharacterEllipsis">
+							<TextBlock.ToolTip>
+								<TextBlock MaxWidth="600"
+									Text="{Binding Parameter.ToriIdsText}"
+									TextWrapping="Wrap" />
+							</TextBlock.ToolTip>
+						</TextBlock>
+					</DockPanel>
+
+					<TextBlock Grid.Row="3" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="名前(部分一致)" /></TextBlock>
-					<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="5"
+					<TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="5"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="名前"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.Name, UpdateSourceTrigger=PropertyChanged}" />
 
-					<TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6"
+					<TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="6"
 						Margin="0,8,0,0"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="{Binding Parameter.DisplayName, StringFormat={}範囲を指定しない場合、すべての{0}が対象になります。}"
 						TextWrapping="Wrap" />
 
-					<TextBlock Grid.Row="4" Grid.Column="0"
+					<TextBlock Grid.Row="5" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="件数" /></TextBlock>
-					<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
+					<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"
 						Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="件数"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
-					<TextBlock Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="3"
+					<TextBlock Grid.Row="5" Grid.Column="3" Grid.ColumnSpan="3"
 						VerticalAlignment="Center"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="(空白:全件取得)" />

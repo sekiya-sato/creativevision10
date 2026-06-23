@@ -1,7 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CodeShare;
+using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using System.Globalization;
 
 namespace CvWpfclient.ViewModels._02Yosan;
@@ -12,6 +15,78 @@ public partial class MasterYosanBrandMenteViewModel : Helpers.BaseMenteViewModel
 
 	protected override string? ListOrder => "DenDay DESC, Id_Tenpo, Id_Brand";
 	protected override int? ListMaxCount => AppGlobal.Limit;
+	protected override string? SelectCodeDisplayName => "店ブランド予算";
+
+	protected override SelectParameter NormalizeSelectParameter(SelectParameter? parameter, string? displayName = null) =>
+		base.NormalizeSelectParameter(parameter, displayName) with {
+			IdsDisplayName = "ブランド",
+			IsToriVisible = true,
+			ToriLabel = "店舗Id",
+			ToriSearchWhere = "TenType in (1,3,6)"
+		};
+
+	protected override bool TryShowSelectCodeDialog(SelectParameter? currentParameter, string displayName, out SelectParameter parameter) {
+		var selWin = new Views.Sub.RangeParamView();
+		if (selWin.DataContext is not Sub.RangeParamViewModel vm) {
+			parameter = currentParameter ?? new SelectParameter { DisplayName = displayName, IdsDisplayName = "ブランド", IsToriVisible = true, ToriLabel = "店舗Id" };
+			return true;
+		}
+
+		var initialParameter = NormalizeSelectParameter(currentParameter ?? new SelectParameter { MaxCount = AppGlobal.Limit }, displayName);
+		vm.Initialize(initialParameter, typeof(MasterMeisho), "Kubun='BRD'", "Code", typeof(MasterTokui), "TenType in (1,3,6)", "Code");
+		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
+			parameter = initialParameter;
+			return false;
+		}
+
+		parameter = NormalizeSelectParameter(vm.Parameter, displayName);
+		return true;
+	}
+
+	protected override string? BuildSelectCodeWhere(SelectParameter? parameter) {
+		if (parameter == null) return null;
+
+		List<string> clauses = [];
+		AddSelectedIdInClause(clauses, "Y.Id_Tenpo", parameter.ToriIds);
+		AddSelectedIdInClause(clauses, "Y.Id_Brand", parameter.Ids);
+		if (parameter.FromId.HasValue) {
+			clauses.Add($"Y.Id >= {parameter.FromId.Value}");
+		}
+		if (parameter.ToId.HasValue) {
+			clauses.Add($"Y.Id <= {parameter.ToId.Value}");
+		}
+
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	protected override CvMsg CreateListMessage() {
+		var query = CreateListQueryParam();
+		var sql = @$"
+select
+	Y.Id,
+	Y.Vdc,
+	Y.Vdu,
+	Y.Id_Tenpo,
+	Y.Id_Brand,
+	Y.DenDay,
+	Y.UriYosan,
+	Y.ArariYosan,
+	ifnull(T.Code, '') TenpoCode,
+	ifnull(T.Name, '') TenpoName,
+	ifnull(B.Code, '') BrandCode,
+	ifnull(B.Name, '') BrandName
+from MasterYosanBrand Y
+left join MasterTokui T on T.Id = Y.Id_Tenpo
+left join MasterMeisho B on B.Id = Y.Id_Brand
+{query.AddWhereOrder()}
+";
+		return new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(MasterYosanBrand), sql, query.Parameters))
+		};
+	}
 
 	[RelayCommand]
 	async Task Init() => await DoList(CancellationToken.None);
@@ -47,6 +122,8 @@ public partial class MasterYosanBrandMenteViewModel : Helpers.BaseMenteViewModel
 		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType in (1,3,6)", "Code", startPos: CurrentEdit.Id_Tenpo);
 		if (tokui == null) return;
 		CurrentEdit.Id_Tenpo = tokui.Id;
+		CurrentEdit.TenpoCode = tokui.Code ?? string.Empty;
+		CurrentEdit.TenpoName = tokui.Name ?? string.Empty;
 	}
 
 	[RelayCommand]
@@ -54,6 +131,8 @@ public partial class MasterYosanBrandMenteViewModel : Helpers.BaseMenteViewModel
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code", startPos: CurrentEdit.Id_Brand);
 		if (meisho == null) return;
 		CurrentEdit.Id_Brand = meisho.Id;
+		CurrentEdit.BrandCode = meisho.Code ?? string.Empty;
+		CurrentEdit.BrandName = meisho.Name ?? string.Empty;
 	}
 
 	bool ValidateCurrentEdit() {

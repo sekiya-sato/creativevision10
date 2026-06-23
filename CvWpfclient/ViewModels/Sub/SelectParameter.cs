@@ -6,6 +6,11 @@ public sealed record class SelectParameter {
 	public List<long> Ids { get; set; } = [];
 	public string IdsText { get; set; } = "未選択";
 	public string? IdsDisplayName { get; set; }
+	public bool IsToriVisible { get; set; }
+	public string ToriLabel { get; set; } = "取引先Id";
+	public string? ToriSearchWhere { get; set; }
+	public List<long> ToriIds { get; set; } = [];
+	public string ToriIdsText { get; set; } = "未選択";
 	public string? FromCode { get; set; }
 	public string? ToCode { get; set; }
 	public List<long> ItemIds { get; set; } = [];
