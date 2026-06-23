@@ -1,3 +1,22 @@
+## [2026-06-23] 15:27 ShopUriageInputView 明細単価列の右端揃え
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：ShopUriageInputView の入力画面で、単価、上代単価、下代単価とそれぞれの合計の列について、5,900 と 59,000 のように右端がそろう表示にする
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 明細 DataGrid の数値表示 TextBlock を列幅いっぱいで右寄せし、RowDetails 側の単価・上代単価・下代単価合計表示の右余白を通常行の数値表示とそろえるよう修正
+### 技術決定 Why
+- 通常行は DataGridTextColumn、合計行は RowDetailsTemplate で別スタイルの TextBlock を使っているため、同じ右端基準になるよう HorizontalAlignment と Padding を明示した
+### 確認
+- `CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml` の XML 構文チェック成功
+- 編集ファイルの CRLF 維持を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 15:06 MasterShohin サブリスト追加削除後の選択行調整
 ### Agent
 - GPT-5 : OpenAI : Codex

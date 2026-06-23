@@ -67,6 +67,8 @@
 		<!--  DataGrid 数値列用 右詰めスタイル  -->
 		<Style x:Key="DataGridRightTextBlock"
 			TargetType="TextBlock">
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="VerticalAlignment" Value="Center" />
 			<Setter Property="TextAlignment" Value="Right" />
 			<Setter Property="Padding" Value="0,0,6,0" />
 		</Style>
@@ -89,7 +91,9 @@
 		<Style x:Key="MeisaiRightReadOnlyTextBlock"
 			BasedOn="{StaticResource MeisaiReadOnlyTextBlock}"
 			TargetType="TextBlock">
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
 			<Setter Property="TextAlignment" Value="Right" />
+			<Setter Property="Padding" Value="0,0,18,0" />
 		</Style>
 	</helpers:BaseWindow.Resources>
 
