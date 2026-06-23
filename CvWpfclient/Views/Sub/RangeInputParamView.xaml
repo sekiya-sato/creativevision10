@@ -214,7 +214,7 @@
 						materialDesign:HintAssist.Hint="商品名 (部分一致)"
 						Style="{StaticResource FormTextBox}"
 						TabIndex="8"
-						Text="{Binding Parameter.ShohinCdLike, UpdateSourceTrigger=PropertyChanged}" />
+						Text="{Binding Parameter.ShohinNameLike, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="5" Grid.Column="0"
 						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="件数" /></TextBlock>

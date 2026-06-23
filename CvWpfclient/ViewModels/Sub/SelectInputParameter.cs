@@ -56,9 +56,9 @@ public partial class SelectInputParameter : ObservableObject {
 	[ObservableProperty]
 	string? toSokoName;
 
-	/// <summary>商品CD（部分一致検索用）</summary>
+	/// <summary>商品名（部分一致検索用）</summary>
 	[ObservableProperty]
-	string? shohinCdLike;
+	string? shohinNameLike;
 
 	[ObservableProperty]
 	int? maxCount;

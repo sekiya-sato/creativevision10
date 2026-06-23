@@ -62,7 +62,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			if (!string.IsNullOrWhiteSpace(selectParam.ToDate)) clauses.Add($"DenDay <= '{EscapeSqlLiteral(selectParam.ToDate)}'");
 			AddIdInClause(clauses, "Id_Tenpo", selectParam.ToriIds);
 			AddIdInClause(clauses, "Id_Soko", selectParam.SokoIds);
-			if (!string.IsNullOrWhiteSpace(selectParam.ShohinCdLike)) clauses.Add(BuildShohinMeisaiWhere(selectParam.ShohinCdLike));
+			if (!string.IsNullOrWhiteSpace(selectParam.ShohinNameLike)) clauses.Add(BuildShohinMeisaiWhere(selectParam.ShohinNameLike));
 			return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 		}
 	}
