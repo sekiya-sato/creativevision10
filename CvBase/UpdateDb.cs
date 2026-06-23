@@ -18,7 +18,8 @@ public class UpdateDb {
 		// new (26_06_10_02,"ALTER TABLE SysUpdateDb RENAME COLUMN NewVersion To PreVersion;","SysUpdateDb 列名変更 2026.06.10定義"), SysUpdateDb のみ直接変更する
 		new (26_06_10_02,"ALTER TABLE MasterTokui ADD COLUMN TaxRegistrationNumber TEXT;ALTER TABLE MasterShiire ADD COLUMN TaxRegistrationNumber TEXT;","MasterTokui MasterShiire 列追加 2026.06.10定義"),
 		new (26_06_11_01,"ALTER TABLE DerivedShohinColSiz ADD COLUMN Vdc NUMBER not null default 0;ALTER TABLE DerivedShohinColSiz ADD COLUMN Vdu NUMBER not null default 0;update DerivedShohinColSiz set (vdc,vdu)=(select s.vdc,s.vdu from MasterShohin s where s.Id=Id_Shohin);","DerivedShohinColSiz 列追加 2026.06.11定義"),
-		new (26_06_18_01,"ALTER TABLE TranHhtData ADD COLUMN Jan1 TEXT NOT NULL DEFAULT '';ALTER TABLE TranHhtData ADD COLUMN Jan2 TEXT NOT NULL DEFAULT '';ALTER TABLE TranHhtData DROP COLUMN TanaNo;ALTER TABLE TranHhtData ADD COLUMN TanaNo NUMBER not null default 0;","2026.06.18定義")
+		new (26_06_18_01,"ALTER TABLE TranHhtData ADD COLUMN Jan1 TEXT NOT NULL DEFAULT '';ALTER TABLE TranHhtData ADD COLUMN Jan2 TEXT NOT NULL DEFAULT '';ALTER TABLE TranHhtData DROP COLUMN TanaNo;ALTER TABLE TranHhtData ADD COLUMN TanaNo NUMBER not null default 0;","2026.06.18定義"),
+		new (26_06_23_01,"ALTER TABLE MasterShain ADD COLUMN ExpireDate TEXT NOT NULL DEFAULT '';","2026.06.23定義")
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {

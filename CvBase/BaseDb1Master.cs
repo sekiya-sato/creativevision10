@@ -95,6 +95,15 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[property: SerializedColumn]
 	[property: ColumnSizeDml(1000)]
 	BaseDetailClass? jdetail;
+
+	/// <summary>
+	/// 有効期限 yyyyMMdd (この期限を過ぎた場合はログイン無効)
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	[OldTableCommentAttr("有効期限")]
+	string expireDate = string.Empty;
 }
 
 /// <summary>
