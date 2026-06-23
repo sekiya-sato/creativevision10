@@ -1,3 +1,25 @@
+## [2026-06-23] 13:15 MasterYosanBrand メンテ画面追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterYosanBrand のメンテ画面を作成し、MenuData の「予算」カテゴリで「店ブランド予算マスタ」の下に追加する
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/MasterYosanBrandMenteViewModel.cs: MasterYosanBrand を BaseMenteViewModel で一覧・追加・修正・削除できる ViewModel を追加し、日付・店舗Id・ブランドId・予算金額の検証と店舗/ブランド選択コマンドを実装
+- CvWpfclient/Views/02Yosan/MasterYosanBrandMenteView.xaml: 既存マスタメンテ画面と同じ ColorZone/Card/DataGrid 構成で MasterYosanBrand 直接編集画面を追加
+- CvWpfclient/Views/02Yosan/MasterYosanBrandMenteView.xaml.cs: 新規 View の初期化コードを追加
+- CvWpfclient/Models/MenuData.cs: 「■ 予算」の「店ブランド予算マスタ」直下に「店ブランド予算マスタメンテ」を追加
+### 技術決定 Why
+- 既存の一括予算画面は月次配分用の業務画面のため、MasterYosanBrand の直接メンテは BaseMenteViewModel の既存 CRUD 経路を再利用し、複合キーに必要な入力検証だけを個別実装した
+### 確認
+- 新規 XAML の XML 構文チェック成功
+- 編集ファイルの CRLF 維持を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 12:05 RangeInputParamView に商品Id複数選択と入力バーコードを追加
 ### Agent
 - Kimi K2.7-code : OpenCode : Sisyphus

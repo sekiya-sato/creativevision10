@@ -75,6 +75,7 @@ public partial class MenuData : ObservableObject {
         /* ================================ */
 		new("■ 予算", new([
 			new("店ブランド予算マスタ", typeof(Views._02Yosan.ShopBrandBudgetMasterView), addInfo:"準備中"),
+			new("店ブランド予算マスタメンテ", typeof(Views._02Yosan.MasterYosanBrandMenteView), addInfo:"MasterYosanBrand の日別予算レコードを直接編集"),
 			new("販売員別予算マスタ", typeof(Views._02Yosan.SalesStaffBudgetMasterView), addInfo:"準備中"),
 			new("営業担当別予算マスタ", typeof(Views._02Yosan.SalesRepBudgetMasterView), addInfo:"準備中"),
 			new("店舗予算表", typeof(Views._02Yosan.ShopBudgetReportView), addInfo:"準備中"),
