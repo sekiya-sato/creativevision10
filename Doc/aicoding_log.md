@@ -1,3 +1,28 @@
+## [2026-06-23] 10:28 店舗売上入力タブ内ボタン配置と明細2行列幅同期
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：06Uriage/ShopUriageInputView で一覧取得ボタンを一覧画面タブへ、修正/削除/追加ボタンを伝票入力タブへ移動し、表示タブ時のみキーボード実行可能にする。明細DataGridの2行レイアウトで単価/上代単価/下代単価と各合計列の見た目を同じ列並びに整える
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: ヘッダーツールバーから一覧取得/修正/削除/追加ボタンを外し、一覧取得を一覧画面タブのカードヘッダー、修正/削除/追加を伝票入力タブ内へ配置
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: F2/F3/F4/F5 の KeyBinding をタブ表示状態を判定する専用コマンドへ変更
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 明細DataGridの上段列へ名前を付け、RowDetailsTemplate の列幅を上段列の ActualWidth に追随させる構成へ変更
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 選択タブ別の一覧取得/修正/削除/追加ラッパーコマンドを追加し、SelectedTabIndex 変更時に CanExecute を更新
+- CvWpfclient/Helpers/Converters/DoubleToGridLengthConverter.cs: DataGrid列の ActualWidth を RowDetails の GridLength に変換する converter を追加
+- Doc/aicoding_log.md: 作業ログを追記
+### 技術決定 Why
+- WPF の Window InputBindings はボタンの Visibility だけでは抑止できないため、タブ表示状態を ViewModel の CanExecute に集約して、画面ボタンとキーボード操作の可否を同じ条件にした
+- RowDetailsTemplate は DataGridColumn と別レイアウトのため、固定幅では列幅変更時にずれる。上段列の ActualWidth を GridLength へ変換して同期することで、単価/上代単価/下代単価と合計/上代合計/下代合計の位置を揃える
+### 確認
+- 対象 XAML の XML 構文チェック成功
+- 編集ファイルの CRLF 維持を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 09:50 Views/Sub 複数選択表示の省略レイアウト修正
 ### Agent
 - GPT-5 : OpenAI : Codex

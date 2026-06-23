@@ -13,6 +13,10 @@ namespace CvWpfclient.ViewModels._06Uriage;
 public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran01Tenuri> {
 
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(DoListOnListTabCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoUpdateOnDetailTabCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoDeleteOnDetailTabCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoInsertOnDetailTabCommand))]
 	int selectedTabIndex;
 
 	[ObservableProperty]
@@ -29,6 +33,9 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		EnumUri01.Henpin,
 		EnumUri01.HenSale,
 	];
+
+	bool IsListTabSelected() => SelectedTabIndex == 0;
+	bool IsDetailTabSelected() => SelectedTabIndex == 1;
 
 	protected override Type Tabletype => typeof(Tran01Tenuri);
 	protected override string? ListOrder => "DenDay desc, Id desc";
@@ -157,6 +164,26 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	[RelayCommand]
 	async Task Init() {
 		await DoList(CancellationToken.None);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
+	async Task DoListOnListTab(CancellationToken ct) {
+		await DoList(ct);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
+	async Task DoUpdateOnDetailTab(CancellationToken ct) {
+		await DoUpdate(ct);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
+	async Task DoDeleteOnDetailTab(CancellationToken ct) {
+		await DoDelete(ct);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
+	async Task DoInsertOnDetailTab(CancellationToken ct) {
+		await DoInsert(ct);
 	}
 
 	[RelayCommand]
