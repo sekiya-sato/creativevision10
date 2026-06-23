@@ -11,6 +11,8 @@
 
   <PropertyGroup Condition="'$(PrintEnable)' == 'true'">
     <DefineConstants>$(DefineConstants);PRINT_ENABLE</DefineConstants>
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);IKVM0100;IKVM0103;IKVM0109</MSBuildWarningsAsMessages>
+	  <!-- 古いjava XML標準形クラスとの重複エラー、SecuritySupport12エラー、xml見つからないエラー -->
   </PropertyGroup>
 
   <ItemGroup Condition="'$(PrintEnable)' == 'true'">

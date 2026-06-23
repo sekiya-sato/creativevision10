@@ -226,6 +226,7 @@
 						<TextBlock Grid.Column="2"
 							VerticalAlignment="Center"
 							FontWeight="SemiBold"
+							Style="{StaticResource SettingLabel}"
 							Text="DebugMode" />
 						<ToggleButton Grid.Column="4"
 							VerticalAlignment="Center"
@@ -235,6 +236,7 @@
 							MinWidth="32"
 							VerticalAlignment="Center"
 							FontWeight="SemiBold"
+							Style="{StaticResource SettingLabel}"
 							Text="{Binding DebugModeDisplayText}" />
 					</Grid>
 				</Grid>
