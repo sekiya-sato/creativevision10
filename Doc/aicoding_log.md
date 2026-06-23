@@ -1,3 +1,21 @@
+## [2026-06-23] 15:06 MasterShohin サブリスト追加削除後の選択行調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MasterShohinMenteView の「色サイズ」「原価」「品質」「名称」など、行の「削除」「追加」ボタンがあるものについて、追加後は追加行、削除後は最終行へカレント行を移動する
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 色サイズ、原価、品質、名称の各サブリスト追加後に追加行を選択し、削除後に残行の最終行を選択するよう修正
+### 技術決定 Why
+- 各サブリストは ViewModel 側の ObservableCollection と Selected プロパティで DataGrid 選択を制御しているため、行操作直後に該当 Selected プロパティへ明示的に反映した
+### 確認
+- `git diff --check` で空白エラーなし
+- 編集ファイルの CRLF 維持を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 13:59 MasterYosanBrand 一覧SQLのJSON表示列修正
 ### Agent
 - GPT-5 : OpenAI : Codex

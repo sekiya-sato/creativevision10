@@ -310,39 +310,45 @@ from MasterShohin {query.AddWhereOrder()}
 	[RelayCommand]
 	void AddJgenka() {
 		var nextNo = EditJgenka.Count > 0 ? EditJgenka.Max(x => x.No) + 1 : 1;
-		EditJgenka.Add(new MasterShohinGenka { No = nextNo });
+		var newItem = new MasterShohinGenka { No = nextNo };
+		EditJgenka.Add(newItem);
+		SelectedJgenka = newItem;
 	}
 
 	[RelayCommand]
 	void DeleteJgenka() {
 		if (SelectedJgenka == null) return;
 		EditJgenka.Remove(SelectedJgenka);
-		SelectedJgenka = null;
+		SelectedJgenka = EditJgenka.LastOrDefault();
 	}
 
 	[RelayCommand]
 	void AddJcolsiz() {
-		EditJcolsiz.Add(new MasterShohinColSiz());
+		var newItem = new MasterShohinColSiz();
+		EditJcolsiz.Add(newItem);
+		SelectedJcolsiz = newItem;
 	}
 
 	[RelayCommand]
 	void DeleteJcolsiz() {
 		if (SelectedJcolsiz == null) return;
 		EditJcolsiz.Remove(SelectedJcolsiz);
-		SelectedJcolsiz = null;
+		SelectedJcolsiz = EditJcolsiz.LastOrDefault();
 	}
 
 	[RelayCommand]
 	void AddJgrade() {
 		var nextNo = EditJgrade.Count > 0 ? EditJgrade.Max(x => x.No) + 1 : 1;
-		EditJgrade.Add(new MasterShohinGrade { No = nextNo });
+		var newItem = new MasterShohinGrade { No = nextNo };
+		EditJgrade.Add(newItem);
+		SelectedJgrade = newItem;
 	}
 
 	[RelayCommand]
 	void DeleteJgrade() {
 		if (SelectedJgrade == null) return;
 		EditJgrade.Remove(SelectedJgrade);
-		SelectedJgrade = null;
+		SelectedJgrade = EditJgrade.LastOrDefault();
 	}
 
 	[RelayCommand]
@@ -358,13 +364,14 @@ from MasterShohin {query.AddWhereOrder()}
 		var newItem = new MasterGeneralMeisho { BaseList = KubunList };
 		EditJsub.Add(newItem);
 		SortJsub();
+		SelectedJsub = newItem;
 	}
 
 	[RelayCommand]
 	void DeleteJsub() {
 		if (SelectedJsub == null) return;
 		EditJsub.Remove(SelectedJsub);
-		SelectedJsub = null;
+		SelectedJsub = EditJsub.LastOrDefault();
 	}
 
 	[RelayCommand]
