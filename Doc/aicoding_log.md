@@ -1,3 +1,27 @@
+## [2026-06-23] 17:27 LoginService ユーザ有効期限チェック追加
+### Agent
+- kimi-k2.7-code : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvServer LoginService.cs にて、Login および Refresh のときにユーザId（社員マスタ）を参照し、ユーザIdがない場合、またはユーザIdのExpireDate（yyyyMMdd）がログイン時点の日付を過ぎている場合にエラーを返す
+### 実施内容
+- CvServer/Services/LoginService.cs: `ValidateUserExpiration` ヘルパーを追加し、`Id_Shain` が 0、社員マスタが存在しない、または `MasterShain.ExpireDate` が当日より過去の場合に `Result = -2` を返す
+- CvServer/Services/LoginService.cs: `LoginAsync` の既存の `ExpDate` チェック後に社員有効期限チェックを追加
+- CvServer/Services/LoginService.cs: `LoginRefreshAsync` でトークンの `SerialNumber` クレームから `SysLogin` を特定し、社員有効期限チェックを追加（初回起動トークンは `SerialNumber` がないためスキップ）
+- Tests/TestLogin/MockLoginService.cs: `MasterShain` テーブル作成と、テスト用社員・ログイン作成ヘルパーを追加
+- Tests/TestLogin/LoginServiceTests.cs: 有効社員でのログイン成功、期限切れ社員でのログイン失敗、社員未紐付けでのログイン失敗、リフレッシュ時の期限切れ失敗のテストを追加
+### 技術決定 Why
+- 既存の `SysLogin.ExpDate`（yyyyMMddHHmmss）チェックと分離し、社員マスタ `MasterShain.ExpireDate`（yyyyMMdd）を独立した判定軸として追加した
+- 初回起動（SysLogin 0件時）は既存の無条件成功動作を維持し、通常ログイン・リフレッシュのみ社員有効期限を検証することで、ブートストラップ時の運用を損なわないようにした
+- エラーコードは既存の有効期限切れ `Result = -2` を再利用し、クライアント側 `LoginViewModel` の既存判定と整合させた
+### 確認
+- `dotnet run --project Tests/TestLogin/TestLogin.csproj` でテスト 7件すべて成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` でビルド成功（0 warnings / 0 errors）
+- `dotnet format CvServer/CvServer.csproj --verify-no-changes` で書式問題なし
+
+---
+
 ## [2026-06-23] 16:07 SysSetConfigView DebugMode 切替追加
 ### Agent
 - GPT-5 : OpenAI : Codex

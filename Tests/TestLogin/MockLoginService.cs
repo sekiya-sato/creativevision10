@@ -1,3 +1,4 @@
+using CvAsset;
 using CvBase;
 using CvBaseSqlite;
 using CvServer.Services;
@@ -68,6 +69,32 @@ sealed class LoginServiceTestContext : IDisposable {
 	void InitializeSchema() {
 		Database.CreateTable<SysLogin>();
 		Database.CreateTable<SysHistJwt>();
+		Database.CreateTable<MasterShain>();
+	}
+
+	public MasterShain CreateShain(string code, string name, string expireDate) {
+		var shain = new MasterShain {
+			Code = code,
+			Name = name,
+			ExpireDate = expireDate,
+		};
+		Database.Insert(shain);
+		return shain;
+	}
+
+	public SysLogin CreateLogin(string loginId, long idShain, string password, DateTime loginDate) {
+		var vdate = Common.GetVdate();
+		var login = new SysLogin {
+			LoginId = loginId,
+			Id_Shain = idShain,
+			CryptPassword = Common.EncryptLoginRequest(password, new DateTime(vdate).ToLocalTime()),
+			Vdc = vdate,
+			Vdu = vdate,
+			ExpDate = Common.FromUtcTicks(vdate).AddYears(1).ToDtStrDateTimeShort(),
+			LastDate = Common.FromUtcTicks(vdate).ToDtStrDateTimeShort(),
+		};
+		Database.Insert(login);
+		return login;
 	}
 
 	public void Dispose() {

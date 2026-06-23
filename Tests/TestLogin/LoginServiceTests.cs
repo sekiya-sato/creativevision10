@@ -47,6 +47,66 @@ public sealed class LoginServiceTests {
 	}
 
 	[TestMethod]
+	public async Task LoginAsync_WithValidShain_ReturnsToken() {
+		using var context = new LoginServiceTestContext();
+		var shain = context.CreateShain("S001", "有効社員", DateTime.Now.AddYears(1).ToDtStrDate2());
+		context.CreateLogin("user01", shain.Id, "Secret!2", DateTime.UtcNow);
+		var request = CreateLoginRequest("user01", "Secret!2", DateTime.UtcNow);
+
+		var reply = await context.Service.LoginAsync(request);
+
+		Assert.AreEqual(0, reply.Result);
+		Assert.IsFalse(string.IsNullOrWhiteSpace(reply.JwtMessage));
+	}
+
+	[TestMethod]
+	public async Task LoginAsync_WithExpiredShain_ReturnsError() {
+		using var context = new LoginServiceTestContext();
+		var shain = context.CreateShain("S001", "期限切れ社員", DateTime.Now.AddDays(-1).ToDtStrDate2());
+		context.CreateLogin("user01", shain.Id, "Secret!2", DateTime.UtcNow);
+		var request = CreateLoginRequest("user01", "Secret!2", DateTime.UtcNow);
+
+		var reply = await context.Service.LoginAsync(request);
+
+		Assert.AreEqual(-2, reply.Result);
+	}
+
+	[TestMethod]
+	public async Task LoginAsync_WithNoShain_ReturnsError() {
+		using var context = new LoginServiceTestContext();
+		context.CreateLogin("user01", 0, "Secret!2", DateTime.UtcNow);
+		var request = CreateLoginRequest("user01", "Secret!2", DateTime.UtcNow);
+
+		var reply = await context.Service.LoginAsync(request);
+
+		Assert.AreEqual(-2, reply.Result);
+	}
+
+	[TestMethod]
+	public async Task LoginRefreshAsync_WithExpiredShain_ReturnsError() {
+		using var context = new LoginServiceTestContext();
+		var shain = context.CreateShain("S001", "期限切れ社員", DateTime.Now.AddYears(1).ToDtStrDate2());
+		context.CreateLogin("user01", shain.Id, "Secret!2", DateTime.UtcNow);
+		var loginRequest = CreateLoginRequest("user01", "Secret!2", DateTime.UtcNow);
+
+		var loginReply = await context.Service.LoginAsync(loginRequest);
+		Assert.AreEqual(0, loginReply.Result);
+
+		// ログイン後に社員の有効期限を切らせてリフレッシュを検証
+		// [After login, expire the employee and verify refresh fails]
+		shain.ExpireDate = DateTime.Now.AddDays(-1).ToDtStrDate2();
+		context.Database.Update(shain, [nameof(MasterShain.ExpireDate)]);
+
+		var refreshRequest = new LoginRefresh {
+			Token = loginReply.JwtMessage,
+			Info = CreateInfoJson(),
+		};
+		var refreshReply = await context.Service.LoginRefreshAsync(refreshRequest);
+
+		Assert.AreEqual(-2, refreshReply.Result);
+	}
+
+	[TestMethod]
 	public async Task CreateLoginAsync_WithUniqueLoginId_PersistsUserAndHistory() {
 		using var context = new LoginServiceTestContext();
 		var request = CreateLoginRequest("new-user", "Create!3", DateTime.UtcNow);

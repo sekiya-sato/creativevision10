@@ -97,6 +97,9 @@ public partial class LoginService : ILoginService {
 				return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
 			if (DateTime.Now.ToDtStrDateTimeShort().CompareTo(loginData.ExpDate) > 0) // Nowのほうが大きければエラー [If "Now" is greater, an error occurs]
 				return Task.FromResult(new LoginReply { JwtMessage = "", Result = -2 });
+			var userCheck = ValidateUserExpiration(loginData.Id_Shain);
+			if (userCheck != null)
+				return Task.FromResult(userCheck);
 			loginData.Vdu = Common.GetVdate();
 			loginData.LastDate = loginData.VdateU.ToDtStrDateTimeShort();
 			_db.Update(loginData, ["Vdu", "LastDate"]);
@@ -178,6 +181,17 @@ public partial class LoginService : ILoginService {
 		var expires = jsonToken.ValidTo;
 		if (_configuration.GetSection("WebAuthJwt") == null)
 			throw new SecurityTokenException("Invalid configuration");
+		// トークンに紐づくSysLoginの社員有効期限をチェック（初回起動トークンはSerialNumberが無いためスキップ）
+		// [Check the employee expiration of the SysLogin associated with the token; skip for first-launch tokens without SerialNumber]
+		var serialNumberClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.SerialNumber);
+		if (serialNumberClaim != null && long.TryParse(serialNumberClaim.Value, out var loginId)) {
+			var loginDataRefresh = _db.Fetch<SysLogin>($"where Id=@0", [loginId]).FirstOrDefault();
+			if (loginDataRefresh == null)
+				return Task.FromResult(new LoginReply { JwtMessage = "", Result = -2 });
+			var userCheck = ValidateUserExpiration(loginDataRefresh.Id_Shain);
+			if (userCheck != null)
+				return Task.FromResult(userCheck);
+		}
 		var webauthjwt = _configuration.GetSection("WebAuthJwt");
 		var lifetime = TimeSpan.FromMinutes(1);
 		if (int.TryParse(webauthjwt.GetSection("Refreshtime")?.Value, out int minutes))
@@ -258,6 +272,23 @@ public partial class LoginService : ILoginService {
 		else
 			return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
 	}
+	/// <summary>
+	/// 社員マスタの有効期限をチェックする
+	/// [Check the employee master expiration date]
+	/// </summary>
+	/// <param name="idShain"></param>
+	/// <returns>OKの場合null、エラーの場合エラー用LoginReply</returns>
+	LoginReply? ValidateUserExpiration(long idShain) {
+		if (idShain == 0)
+			return new LoginReply { JwtMessage = "", Result = -2 };
+		var shain = _db.Fetch<MasterShain>($"where Id=@0", [idShain]).FirstOrDefault();
+		if (shain == null)
+			return new LoginReply { JwtMessage = "", Result = -2 };
+		if (!string.IsNullOrEmpty(shain.ExpireDate) && shain.ExpireDate.CompareTo(DateTime.Now.ToDtStrDate2()) < 0)
+			return new LoginReply { JwtMessage = "", Result = -2 };
+		return null;
+	}
+
 	/// <summary>
 	/// 追加情報をセットする
 	/// </summary>
