@@ -1,6 +1,6 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CodeShare;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
@@ -122,8 +122,7 @@ left join MasterMeisho B on B.Id = Y.Id_Brand
 		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType in (1,3,6)", "Code", startPos: CurrentEdit.Id_Tenpo);
 		if (tokui == null) return;
 		CurrentEdit.Id_Tenpo = tokui.Id;
-		CurrentEdit.TenpoCode = tokui.Code ?? string.Empty;
-		CurrentEdit.TenpoName = tokui.Name ?? string.Empty;
+		CurrentEdit.VTenpo = new CodeNameView { Sid = tokui.Id, Cd = tokui.Code ?? string.Empty, Mei = tokui.Name ?? string.Empty };
 	}
 
 	[RelayCommand]
@@ -131,8 +130,7 @@ left join MasterMeisho B on B.Id = Y.Id_Brand
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code", startPos: CurrentEdit.Id_Brand);
 		if (meisho == null) return;
 		CurrentEdit.Id_Brand = meisho.Id;
-		CurrentEdit.BrandCode = meisho.Code ?? string.Empty;
-		CurrentEdit.BrandName = meisho.Name ?? string.Empty;
+		CurrentEdit.VBrand = new CodeNameView { Sid = meisho.Id, Cd = meisho.Code ?? string.Empty, Mei = meisho.Name ?? string.Empty };
 	}
 
 	bool ValidateCurrentEdit() {

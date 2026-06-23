@@ -286,8 +286,8 @@
 									Foreground="{DynamicResource MaterialDesignBody}">
 									<TextBlock.Text>
 										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.TenpoCode" />
-											<Binding Path="CurrentEdit.TenpoName" />
+											<Binding Path="CurrentEdit.vTenpo.Cd" />
+											<Binding Path="CurrentEdit.vTenpo.Mei" />
 										</MultiBinding>
 									</TextBlock.Text>
 								</TextBlock>
@@ -307,8 +307,8 @@
 									Foreground="{DynamicResource MaterialDesignBody}">
 									<TextBlock.Text>
 										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.BrandCode" />
-											<Binding Path="CurrentEdit.BrandName" />
+											<Binding Path="CurrentEdit.vBrand.Cd" />
+											<Binding Path="CurrentEdit.vBrand.Mei" />
 										</MultiBinding>
 									</TextBlock.Text>
 								</TextBlock>

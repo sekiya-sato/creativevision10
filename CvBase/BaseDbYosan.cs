@@ -41,21 +41,23 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	[OldTableCommentAttr("粗利予算")]
 	long arariYosan;
 
+	/// <summary>
+	/// 店舗データ
+	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	string tenpoCode = string.Empty;
+	[property: Ignore]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vTenpo = new();
 
+	/// <summary>
+	/// ブランドデータ
+	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	string tenpoName = string.Empty;
-
-	[ObservableProperty]
-	[property: ResultColumn]
-	string brandCode = string.Empty;
-
-	[ObservableProperty]
-	[property: ResultColumn]
-	string brandName = string.Empty;
+	[property: Ignore]
+	[property: SerializedColumn]
+	[property: ColumnSizeDml(100)]
+	CodeNameView vBrand = new();
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
