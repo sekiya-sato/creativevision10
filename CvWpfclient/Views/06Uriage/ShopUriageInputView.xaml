@@ -125,16 +125,37 @@
 			Style="{StaticResource MaterialDesignTabControl}">
 
 			<!--  タブ1: 一覧画面  -->
-			<TabItem x:Name="tabList">
-				<TabItem.Header>
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-							Kind="FormatListBulleted" />
-						<TextBlock Text="一覧画面" />
-					</StackPanel>
-				</TabItem.Header>
+			<TabItem x:Name="tabList"
+				Header="">
 				<Grid Margin="12">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<DockPanel Grid.Row="0"
+						Margin="8,0,8,8">
+						<StackPanel DockPanel.Dock="Left"
+							Orientation="Horizontal">
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+								Kind="FormatListBulleted" />
+							<TextBlock Margin="0,0,16,0" VerticalAlignment="Center"
+								FontSize="16" FontWeight="SemiBold"
+								Text="一覧画面" />
+							<Button Command="{Binding GoToDetailCommand}"
+								CommandParameter="{Binding Current}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="選択中の伝票を表示">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="FileDocumentEdit" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="伝票詳細" />
+								</StackPanel>
+							</Button>
+						</StackPanel>
+					</DockPanel>
 					<materialDesign:Card Padding="0"
+						Grid.Row="1"
 						materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 						<Grid>
 							<Grid.RowDefinitions>
@@ -224,14 +245,8 @@
 			</TabItem>
 
 			<!--  タブ2: 詳細画面  -->
-			<TabItem x:Name="tabDetail">
-				<TabItem.Header>
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-							Kind="FileDocumentEdit" />
-						<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}伝票番号:{0}}" />
-					</StackPanel>
-				</TabItem.Header>
+			<TabItem x:Name="tabDetail"
+				Header="">
 				<Grid Margin="12">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
@@ -240,43 +255,62 @@
 						<RowDefinition Height="*" />
 					</Grid.RowDefinitions>
 
-					<StackPanel Grid.Row="0"
-						Margin="8,0,8,8" HorizontalAlignment="Right"
-						Orientation="Horizontal">
-						<Button Margin="4,0"
-							Command="{Binding DoUpdateOnDetailTabCommand}"
-							Style="{StaticResource MaterialDesignOutlinedButton}"
-							ToolTip="修正 (F2)">
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon VerticalAlignment="Center"
-									Kind="Pencil" />
-								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="修正" />
-							</StackPanel>
-						</Button>
-						<Button Margin="4,0"
-							Command="{Binding DoDeleteOnDetailTabCommand}"
-							Style="{StaticResource MaterialDesignOutlinedButton}"
-							ToolTip="削除 (F3)">
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon VerticalAlignment="Center"
-									Kind="Delete" />
-								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="削除" />
-							</StackPanel>
-						</Button>
-						<Button Margin="4,0"
-							Command="{Binding DoInsertOnDetailTabCommand}"
-							Style="{StaticResource MaterialDesignOutlinedButton}"
-							ToolTip="追加 (F4)">
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon VerticalAlignment="Center"
-									Kind="Plus" />
-								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="追加" />
-							</StackPanel>
-						</Button>
-					</StackPanel>
+					<DockPanel Grid.Row="0"
+						Margin="8,0,8,8">
+						<StackPanel DockPanel.Dock="Right"
+							Orientation="Horizontal">
+							<Button Margin="4,0"
+								Command="{Binding DoUpdateOnDetailTabCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="修正 (F2)">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Pencil" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="修正" />
+								</StackPanel>
+							</Button>
+							<Button Margin="4,0"
+								Command="{Binding DoInsertOnDetailTabCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="追加 (F4)">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Plus" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="追加" />
+								</StackPanel>
+							</Button>
+							<Button Margin="4,0"
+								Command="{Binding DoDeleteOnDetailTabCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="削除 (F3)">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Delete" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="削除" />
+								</StackPanel>
+							</Button>
+						</StackPanel>
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+								Kind="FileDocumentEdit" />
+							<TextBlock Margin="0,0,16,0" VerticalAlignment="Center"
+								FontSize="16" FontWeight="SemiBold"
+								Text="{Binding CurrentEdit.Id, StringFormat={}伝票番号:{0}}" />
+							<Button Command="{Binding GoToListCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="一覧画面へ戻る">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="FormatListBulleted" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="一覧に戻る" />
+								</StackPanel>
+							</Button>
+						</StackPanel>
+					</DockPanel>
 
 					<ScrollViewer Grid.Row="1"
 						MaxHeight="300"

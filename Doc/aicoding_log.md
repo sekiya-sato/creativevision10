@@ -1,3 +1,26 @@
+## [2026-06-23] 10:41 店舗売上入力のタブ内見出しと遷移ボタン配置
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：一覧画面/伝票入力画面のタブTitleを空にし、タブ内上部行の左側へアイコン付き見出しと伝票詳細/一覧に戻るボタンを配置する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧画面タブと伝票入力タブの Header を空文字に変更
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧画面タブ内の上部行へアイコン付き「一覧画面」表示と「伝票詳細」ボタンを追加
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 伝票入力タブ内の上部行を左右構成に変更し、左側へアイコン付き伝票番号表示と「一覧に戻る」ボタン、右側へ修正/追加/削除ボタンを配置
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 一覧画面タブへ戻す GoToListCommand を追加
+- Doc/aicoding_log.md: 作業ログを追記
+### 技術決定 Why
+- タブヘッダーを空にすると操作対象が分かりにくくなるため、タブ内の操作行にアイコン付き見出しと遷移ボタンを置き、既存の一覧ダブルクリックと同じ GoToDetailCommand 経路で伝票詳細へ移動する構成にした
+### 確認
+- 対象 XAML の XML 構文チェック成功
+- 編集ファイルの CRLF 維持を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 10:33 店舗売上入力のESCタブ戻り対応
 ### Agent
 - GPT-5 : OpenAI : Codex

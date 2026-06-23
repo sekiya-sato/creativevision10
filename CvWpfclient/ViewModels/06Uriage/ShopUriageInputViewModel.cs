@@ -162,6 +162,11 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	[RelayCommand]
+	void GoToList() {
+		SelectedTabIndex = 0;
+	}
+
+	[RelayCommand]
 	async Task Init() {
 		await DoList(CancellationToken.None);
 	}
