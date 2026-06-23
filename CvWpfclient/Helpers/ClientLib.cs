@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Input;
 
 namespace CvWpfclient.Helpers;
 /// <summary>
@@ -48,6 +47,7 @@ public class ClientLib {
 	/// [Get the active Window (not recommended)]
 	/// </summary>
 	/// <returns></returns>
+	[Obsolete]
 	private static Window? GetActiveWin() {
 		var activeWin = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
 		/*
@@ -109,8 +109,6 @@ public class ClientLib {
 		if (AppGlobal.DebugMode) {
 			var name = $"{childWin.GetType().FullName}";
 			childWin.ToolTip = name;
-			if ((Keyboard.Modifiers & (ModifierKeys.Shift | ModifierKeys.Control)) != 0)
-				try { Clipboard.SetText(name); } catch { }
 		}
 		// childWin.WindowStartupLocation = loc;
 		// childWin.ShowInTaskbar = IsShowTaskbar;

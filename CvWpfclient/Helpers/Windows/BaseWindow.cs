@@ -57,6 +57,16 @@ public class BaseWindow : Window {
 					owner.Activate();
 			}
 		}
+		else if (e.Key == Key.C && Keyboard.Modifiers.HasFlag(ModifierKeys.Control | ModifierKeys.Shift)) {
+			// Shift+Ctrl+C でクリップボードにコピー
+			if (AppGlobal.DebugMode) {
+				var name = GetType().FullName ?? "";
+				if (string.IsNullOrEmpty(name))
+					return;
+				try { Clipboard.SetText(name); } catch { }
+				e.Handled = true;
+			}
+		}
 	}
 	private bool TryExecuteViewModelCommand(string commandName) {
 		var dc = DataContext;
