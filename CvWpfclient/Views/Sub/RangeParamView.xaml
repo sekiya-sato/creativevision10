@@ -11,7 +11,6 @@
 		<vm:RangeParamViewModel />
 	</helpers:BaseWindow.DataContext>
 	<helpers:BaseWindow.Resources>
-		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 		<!--  編集フォームの TextBox スタイル  -->
 		<Style x:Key="FormTextBox"
 			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"

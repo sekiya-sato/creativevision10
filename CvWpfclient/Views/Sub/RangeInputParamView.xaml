@@ -13,7 +13,6 @@
 		<vm:RangeInputParamViewModel />
 	</helpers:BaseWindow.DataContext>
 	<helpers:BaseWindow.Resources>
-		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 		<Style x:Key="MenteSearchTextBox"
 			BasedOn="{StaticResource SearchTextBox}"
 			TargetType="{x:Type TextBox}">

@@ -14,8 +14,6 @@
 	</helpers:BaseWindow.DataContext>
 
 	<helpers:BaseWindow.Resources>
-		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-
 		<Style x:Key="MenteDataGridColumnHeader"
 			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
 			TargetType="DataGridColumnHeader">

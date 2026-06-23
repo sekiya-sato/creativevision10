@@ -9,10 +9,10 @@
 			<helpers:DateTimeYmdHmsConverter x:Key="DateTimeYmdHmsConverter" />
 			<helpers:EnumShimeDisplayConverter x:Key="EnumShimeDisplayConverter" />
 			<helpers:EnumUri01DisplayConverter x:Key="EnumUri01DisplayConverter" />
-			<helpers:IntToBoolConverter x:Key="IntToBoolConverter" />
 			<helpers:LongToLocalDateTimeStringConverter x:Key="LongToLocalDateTimeStringConverter" />
 			<helpers:StringIsNotEmptyToVisibilityConverter x:Key="StringIsNotEmptyToVisibilityConverter" />
 			<helpers:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+			<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Resources/UIColors.xaml" />
 				<ResourceDictionary Source="/Resources/UICommon.xaml" />

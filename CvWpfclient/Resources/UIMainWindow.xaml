@@ -63,12 +63,6 @@
 		<Setter Property="Background" Value="{DynamicResource MinimizeWindowButtonBackgroundBrush}" />
 	</Style>
 
-	<Style x:Key="MaximizeWinBtn"
-		BasedOn="{StaticResource MainMenuWindowButton}"
-		TargetType="Button">
-		<Setter Property="Content" Value="◻" />
-		<Setter Property="Background" Value="{DynamicResource MenuonlyWindowButtonBackgroundBrush}" />
-	</Style>
 	<Style x:Key="MenuonlyWinBtn"
 		BasedOn="{StaticResource MainMenuWindowButton}"
 		TargetType="Button">

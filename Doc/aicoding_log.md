@@ -1,3 +1,26 @@
+## [2026-06-23] 15:37 Wpfclient リソースとコンバーター重複整理
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：Wpfclient プロジェクト全体で、コンバーターやリソースが同じようなものを重複して作ったり、実際には使われていないものがあったりしないかチェックし、リファクタリングして commit する
+### 実施内容
+- CvWpfclient/App.xaml: 標準 BooleanToVisibilityConverter をアプリ共通リソースとして追加し、未使用の IntToBoolConverter 登録を削除
+- CvWpfclient/Views/Sub/RangeParamView.xaml, CvWpfclient/Views/Sub/RangeInputParamView.xaml, CvWpfclient/Views/Sub/SelectShohinView.xaml, CvWpfclient/Views/00System/SysSchedulerJobMenteView.xaml, CvWpfclient/Views/00System/SysGeneralMenteView.xaml: View ごとの BooleanToVisibilityConverter 重複定義を削除し、SelectShohinView の独自キー参照を共通キーへ統一
+- CvWpfclient/Helpers/Converters/IntToBoolConverter.cs, CvWpfclient/Helpers/Converters/TagToImageSourceConverter.cs: プロジェクト内参照がないコンバーターを削除
+- CvWpfclient/Resources/UICommon.xaml: 未使用の SearchableComboBox1 スタイルを削除
+- CvWpfclient/Resources/UIMainWindow.xaml: MainMenu の動的テーマリソースは維持し、定義箇所のみだった MaximizeWinBtn スタイルを削除
+### 技術決定 Why
+- BooleanToVisibilityConverter は複数 View で同じ標準 converter をローカル定義していたため App.xaml に寄せ、MainMenu のテーマ辞書・色ブラシ・WindowIcon は動的参照されるため削除対象から外した
+### 確認
+- 削除した converter / resource key の残参照なしを `rg` で確認
+- 編集した XAML / ResourceDictionary の XML 構文チェック成功
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 15:27 ShopUriageInputView 明細単価列の右端揃え
 ### Agent
 - GPT-5 : OpenAI : Codex

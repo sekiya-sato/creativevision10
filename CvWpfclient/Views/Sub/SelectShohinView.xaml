@@ -13,8 +13,6 @@
 	</helpers:BaseWindow.DataContext>
 
 	<helpers:BaseWindow.Resources>
-		<BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-
 		<Style x:Key="ConditionLabel"
 			TargetType="TextBlock">
 			<Setter Property="Margin" Value="0,0,0,4" />
@@ -73,7 +71,7 @@
 					<Button MinWidth="110"
 						Command="{Binding SearchOrCommitCommand}"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
-						Visibility="{Binding IsSearchMode, Converter={StaticResource BoolToVisibilityConverter}}">
+						Visibility="{Binding IsSearchMode, Converter={StaticResource BooleanToVisibilityConverter}}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="FormatListBulleted" />
@@ -85,7 +83,7 @@
 						Command="{Binding DoSelectCommand}"
 						IsDefault="True"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
-						Visibility="{Binding IsResultMode, Converter={StaticResource BoolToVisibilityConverter}}">
+						Visibility="{Binding IsResultMode, Converter={StaticResource BooleanToVisibilityConverter}}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="Check" />
@@ -120,7 +118,7 @@
 					DockPanel.Dock="Right"
 					Foreground="{DynamicResource MaterialDesignBodyLight}"
 					Text="{Binding Count, StringFormat={}候補: {0:N0}}"
-					Visibility="{Binding IsResultMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+					Visibility="{Binding IsResultMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
 				<StackPanel Orientation="Horizontal">
 					<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="商品検索・選択" />
@@ -135,7 +133,7 @@
 			Margin="12">
 			<materialDesign:Card Padding="18"
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8"
-				Visibility="{Binding IsSearchMode, Converter={StaticResource BoolToVisibilityConverter}}">
+				Visibility="{Binding IsSearchMode, Converter={StaticResource BooleanToVisibilityConverter}}">
 				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
@@ -327,7 +325,7 @@
 
 			<materialDesign:Card Padding="0"
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8"
-				Visibility="{Binding IsResultMode, Converter={StaticResource BoolToVisibilityConverter}}">
+				Visibility="{Binding IsResultMode, Converter={StaticResource BooleanToVisibilityConverter}}">
 				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
