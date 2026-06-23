@@ -56,6 +56,17 @@ public partial class SelectInputParameter : ObservableObject {
 	[ObservableProperty]
 	string? toSokoName;
 
+	/// <summary>商品Idの複数選択</summary>
+	[ObservableProperty]
+	List<long> shohinIds = [];
+	/// <summary>商品Id複数選択の表示文字列</summary>
+	[ObservableProperty]
+	string shohinIdsText = "未選択";
+
+	/// <summary>入力バーコード</summary>
+	[ObservableProperty]
+	string? inputBarcode;
+
 	/// <summary>商品名（部分一致検索用）</summary>
 	[ObservableProperty]
 	string? shohinNameLike;

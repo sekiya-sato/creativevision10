@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Parameter.DisplayName, TargetNullValue=入力, StringFormat={}{0}一覧条件}"
-	Width="820" Height="560"
+	Width="820" Height="720"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
@@ -83,6 +83,8 @@
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid Margin="2">
 					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
@@ -209,24 +211,68 @@
 					</DockPanel>
 
 					<TextBlock Grid.Row="4" Grid.Column="0"
+						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="商品Id" /></TextBlock>
+					<DockPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+						Margin="0,4">
+						<Button Width="110" Height="36"
+							Command="{Binding DoSelectShohinIdsCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MaterialDesignRaisedButton}"
+							ToolTip="商品Idを選択">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearShohinIdsCommand}"
+							Content="解除" DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							ToolTip="商品Idの選択を解除" />
+						<TextBlock Style="{StaticResource SelectionResultText}"
+							Text="{Binding Parameter.ShohinIdsText}"
+							ToolTipService.InitialShowDelay="300">
+							<TextBlock.ToolTip>
+								<TextBlock MaxWidth="600"
+									Text="{Binding Parameter.ShohinIdsText}"
+									TextWrapping="Wrap" />
+							</TextBlock.ToolTip>
+						</TextBlock>
+					</DockPanel>
+
+					<TextBlock Grid.Row="5" Grid.Column="0"
+						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="入力バーコード" /></TextBlock>
+					<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
+						Width="400"
+						HorizontalAlignment="Left" VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="入力バーコード"
+						Style="{StaticResource FormTextBox}"
+						TabIndex="7"
+						Text="{Binding Parameter.InputBarcode, UpdateSourceTrigger=PropertyChanged}" />
+
+					<TextBlock Grid.Row="6" Grid.Column="0"
 						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="商品名" /></TextBlock>
-					<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
-						VerticalContentAlignment="Center"
+					<TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3"
+						Width="400"
+						HorizontalAlignment="Left" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="商品名 (部分一致)"
 						Style="{StaticResource FormTextBox}"
 						TabIndex="8"
 						Text="{Binding Parameter.ShohinNameLike, UpdateSourceTrigger=PropertyChanged}" />
 
-					<TextBlock Grid.Row="5" Grid.Column="0"
+					<TextBlock Grid.Row="7" Grid.Column="0"
 						Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="件数" /></TextBlock>
-					<TextBox Grid.Row="5" Grid.Column="1"
+					<TextBox Grid.Row="7" Grid.Column="1"
 						Width="220"
 						HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="件数"
 						Style="{StaticResource FormTextBox}"
 						TabIndex="10"
 						Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
-					<TextBlock Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2"
+					<TextBlock Grid.Row="7" Grid.Column="2" Grid.ColumnSpan="2"
 						Margin="12,0,0,0" VerticalAlignment="Center"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="(空白:全件取得)" />

@@ -1,3 +1,25 @@
+## [2026-06-23] 12:05 RangeInputParamView に商品Id複数選択と入力バーコードを追加
+### Agent
+- Kimi K2.7-code : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views.Sub.RangeInputParamView を変更し、商品名の上に商品Idの複数選択と「入力バーコード」の2項目を追加する
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectInputParameter.cs: `ShohinIds`/`ShohinIdsText`/`InputBarcode` プロパティを追加
+- CvWpfclient/Views/Sub/RangeInputParamView.xaml: 商品名行の上に「商品Id」複数選択行と「入力バーコード」入力行を追加（Window高さも 560→720 に拡張）
+- CvWpfclient/Views/Sub/RangeInputParamView.xaml: 「入力バーコード」「商品名」のテキストボックス幅を約半分に縮小（Width=400、左寄せ）
+- CvWpfclient/ViewModels/Sub/RangeInputParamViewModel.cs: `DoSelectShohinIdsCommand`/`ClearShohinIdsCommand` を追加し、MasterShohin からの複数選択結果をテキスト表示へ反映
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `ListWhere` に `EXISTS(json_each(Jmeisai) AS b WHERE json_extract(b.value,'$.Id_Shohin') IN (...))` と `json_extract(b.value,'$.JanCode') = '...'` の条件を追加
+### 技術決定 Why
+- 既存の店舗Id/倉庫Id複数選択と同じ UI パターン（選択ボタン＋解除ボタン＋選択結果テキスト）を流用し、ユーザーが指定した JSON_EXTRACT 比較式をそのまま WHERE 条件に組み込んだ
+### 確認
+- 編集ファイルの CRLF 維持を確認
+- `git diff --check` で空白エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）を確認
+
+---
+
 ## [2026-06-23] 10:41 店舗売上入力のタブ内見出しと遷移ボタン配置
 ### Agent
 - GPT-5 : OpenAI : Codex

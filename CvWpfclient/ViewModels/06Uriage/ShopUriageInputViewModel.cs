@@ -7,6 +7,7 @@ using CvWpfclient.ViewModels.Sub;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 
 namespace CvWpfclient.ViewModels._06Uriage;
 
@@ -69,6 +70,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			if (!string.IsNullOrWhiteSpace(selectParam.ToDate)) clauses.Add($"DenDay <= '{EscapeSqlLiteral(selectParam.ToDate)}'");
 			AddIdInClause(clauses, "Id_Tenpo", selectParam.ToriIds);
 			AddIdInClause(clauses, "Id_Soko", selectParam.SokoIds);
+			if (selectParam.ShohinIds.Any(id => id > 0)) clauses.Add(BuildShohinIdInWhere(selectParam.ShohinIds));
+			if (!string.IsNullOrWhiteSpace(selectParam.InputBarcode)) clauses.Add(BuildInputBarcodeWhere(selectParam.InputBarcode));
 			if (!string.IsNullOrWhiteSpace(selectParam.ShohinNameLike)) clauses.Add(BuildShohinMeisaiWhere(selectParam.ShohinNameLike));
 			return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 		}
@@ -90,6 +93,33 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 						WHERE Name LIKE '%{like}%'
 					)
 		 */
+	}
+
+	static string BuildShohinIdInWhere(IEnumerable<long> ids) {
+		string[] values = ids
+			.Where(id => id > 0)
+			.Distinct()
+			.Select(id => id.ToString(CultureInfo.InvariantCulture))
+			.ToArray();
+		if (values.Length == 0) return string.Empty;
+		return $"""
+			EXISTS (
+				SELECT 1
+				FROM json_each(Jmeisai) AS b
+				WHERE json_extract(b.value, '$.Id_Shohin') IN ({string.Join(",", values)})
+			)
+			""";
+	}
+
+	static string BuildInputBarcodeWhere(string barcode) {
+		string value = EscapeSqlLiteral(barcode.Trim());
+		return $"""
+			EXISTS (
+				SELECT 1
+				FROM json_each(Jmeisai) AS b
+				WHERE json_extract(b.value, '$.JanCode') = '{value}'
+			)
+			""";
 	}
 
 	static void AddIdInClause(List<string> clauses, string column, IEnumerable<long>? ids) {

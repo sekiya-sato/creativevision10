@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
 using CvWpfclient.Helpers;
+using System.Globalization;
 
 namespace CvWpfclient.ViewModels.Sub;
 
@@ -47,6 +48,20 @@ public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranA
 		Parameter.SokoIdsText = "未選択";
 	}
 
+	[RelayCommand]
+	void DoSelectShohinIds() {
+		var selected = ShowMultiSelectDialog<MasterShohin>(typeof(MasterShohin), string.Empty, "Code", Parameter.ShohinIds);
+		if (selected == null) return;
+		Parameter.ShohinIds = [.. selected.Select(x => x.Id)];
+		Parameter.ShohinIdsText = BuildShohinSelectedText(selected);
+	}
+
+	[RelayCommand]
+	void ClearShohinIds() {
+		Parameter.ShohinIds = [];
+		Parameter.ShohinIdsText = "未選択";
+	}
+
 	static string BuildSelectedText(IReadOnlyList<MasterTokui> selected) {
 		if (selected.Count == 0) return "未選択";
 		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatSelectedItem))}";
@@ -64,5 +79,16 @@ public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranA
 		if (cd.Length == 0) return mei;
 		if (mei.Length == 0) return cd;
 		return $"{cd} {mei}";
+	}
+
+	static string BuildShohinSelectedText(IReadOnlyList<MasterShohin> selected) {
+		if (selected.Count == 0) return "未選択";
+		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatShohinItem))}";
+	}
+
+	static string FormatShohinItem(MasterShohin item) {
+		var label = JoinCodeName(item.Code, item.Name);
+		if (label.Length == 0) return item.Id.ToString(CultureInfo.InvariantCulture);
+		return $"{item.Id} {label}";
 	}
 }
