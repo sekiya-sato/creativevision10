@@ -70,14 +70,14 @@
 			<Setter Property="HorizontalAlignment" Value="Stretch" />
 			<Setter Property="VerticalAlignment" Value="Center" />
 			<Setter Property="TextAlignment" Value="Right" />
-			<Setter Property="Padding" Value="0,0,6,0" />
+			<Setter Property="Padding" Value="0,0,0,0" />
 		</Style>
 
 		<Style x:Key="DataGridRightTextBox"
 			TargetType="TextBox">
 			<Setter Property="HorizontalContentAlignment" Value="Right" />
 			<Setter Property="VerticalContentAlignment" Value="Center" />
-			<Setter Property="Padding" Value="0,0,6,0" />
+			<Setter Property="Padding" Value="0,0,0,0" />
 		</Style>
 
 		<Style x:Key="MeisaiReadOnlyTextBlock"
@@ -130,7 +130,7 @@
 
 			<!--  タブ1: 一覧画面  -->
 			<TabItem x:Name="tabList"
-				Header="">
+				d:Header="d:一覧画面" Header="">
 				<Grid Margin="12">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
@@ -138,8 +138,8 @@
 					</Grid.RowDefinitions>
 					<DockPanel Grid.Row="0"
 						Margin="8,0,8,8">
-						<Button DockPanel.Dock="Right"
-							Command="{Binding DoListOnListTabCommand}"
+						<Button Command="{Binding DoListOnListTabCommand}"
+							DockPanel.Dock="Right"
 							Style="{StaticResource MaterialDesignOutlinedButton}"
 							ToolTip="一覧取得 (F5)">
 							<StackPanel Orientation="Horizontal">
@@ -182,11 +182,10 @@
 								Background="{DynamicResource MaterialDesignToolBarBackground}"
 								CornerRadius="8,8,0,0">
 								<DockPanel>
-									<TextBlock DockPanel.Dock="Right"
-										Margin="0,0,12,0" VerticalAlignment="Center"
-											FontSize="13"
-											Foreground="{DynamicResource MaterialDesignBodyLight}"
-											Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+									<TextBlock Margin="0,0,12,0" VerticalAlignment="Center"
+										DockPanel.Dock="Right" FontSize="13"
+										Foreground="{DynamicResource MaterialDesignBodyLight}"
+										Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
 									<TextBlock VerticalAlignment="Center"
 										FontSize="13"
 										Foreground="{DynamicResource MaterialDesignBodyLight}"
@@ -247,7 +246,7 @@
 
 			<!--  タブ2: 詳細画面  -->
 			<TabItem x:Name="tabDetail"
-				Header="">
+				d:Header="d:詳細画面" Header="">
 				<Grid Margin="12">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
