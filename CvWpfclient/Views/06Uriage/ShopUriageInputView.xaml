@@ -387,10 +387,12 @@
 								</StackPanel>
 							</WrapPanel>
 
-							<!--  縦並び: 店舗・倉庫・メモ  -->
+							<!--  縦並び: 店舗・倉庫・伝票担当・顧客・メモ  -->
 							<Grid Margin="0,4,0,0">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="420" />
+									<ColumnDefinition Width="120" />
 									<ColumnDefinition Width="*" />
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
@@ -422,6 +424,29 @@
 									</TextBlock>
 								</DockPanel>
 
+								<!--  伝票担当  -->
+								<TextBlock Grid.Row="0" Grid.Column="2"
+									Style="{StaticResource FormLabel}"
+									Text="伝票担当Id" />
+								<DockPanel Grid.Row="0" Grid.Column="3"
+									Margin="0,4">
+									<TextBox Width="120" Height="36"
+										HorizontalContentAlignment="Left"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBody}">
+										<TextBlock.Text>
+											<MultiBinding StringFormat="{}{0} {1}">
+												<Binding Path="CurrentEdit.VShain.Cd" />
+												<Binding Path="CurrentEdit.VShain.Mei" />
+											</MultiBinding>
+										</TextBlock.Text>
+									</TextBlock>
+								</DockPanel>
+
 								<!--  倉庫  -->
 								<TextBlock Grid.Row="1"
 									Style="{StaticResource FormLabel}"
@@ -445,12 +470,35 @@
 									</TextBlock>
 								</DockPanel>
 
+								<!--  顧客  -->
+								<TextBlock Grid.Row="1" Grid.Column="2"
+									Style="{StaticResource FormLabel}"
+									Text="顧客Id" />
+								<DockPanel Grid.Row="1" Grid.Column="3"
+									Margin="0,4">
+									<TextBox Width="120" Height="36"
+										HorizontalContentAlignment="Left"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectCustomerCommand}"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_Customer, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+										Foreground="{DynamicResource MaterialDesignBody}">
+										<TextBlock.Text>
+											<MultiBinding StringFormat="{}{0} {1}">
+												<Binding Path="CurrentEdit.VCustomer.Cd" />
+												<Binding Path="CurrentEdit.VCustomer.Mei" />
+											</MultiBinding>
+										</TextBlock.Text>
+									</TextBlock>
+								</DockPanel>
+
 								<!--  メモ  -->
 								<TextBlock Grid.Row="2"
 									InputMethod.IsInputMethodEnabled="True"
 									Style="{StaticResource FormLabel}"
 									Text="メモ" />
-								<TextBox Grid.Row="2" Grid.Column="1"
+								<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
 									MinHeight="50"
 									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
 									Style="{StaticResource FormTextBox}"

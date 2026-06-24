@@ -42,7 +42,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	protected override string? ListOrder => "DenDay desc, Id desc";
 	protected override int? ListMaxCount => selectParam?.MaxCount;
 	protected override string LightweightSelectColumns =>
-		"Id,Vdc,Vdu,DenDay,Id_Tenpo,VTenpo,Id_Soko,VSoko,SuTotal,KingakuTotal";
+		"Id,Vdc,Vdu,DenDay,Id_Tenpo,VTenpo,Id_Soko,VSoko,Id_Shain,VShain,Id_Customer,VCustomer,SuTotal,KingakuTotal";
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
@@ -283,6 +283,22 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		if (tokui == null) return;
 		CurrentEdit.Id_Soko = tokui.Id;
 		CurrentEdit.VSoko = new CodeNameView { Sid = tokui.Id, Cd = tokui.Code ?? "", Mei = tokui.Name ?? "" };
+	}
+
+	[RelayCommand]
+	void DoSelectShain() {
+		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code", startPos: CurrentEdit.Id_Shain);
+		if (shain == null) return;
+		CurrentEdit.Id_Shain = shain.Id;
+		CurrentEdit.VShain = new CodeNameView { Sid = shain.Id, Cd = shain.Code ?? "", Mei = shain.Name ?? "" };
+	}
+
+	[RelayCommand]
+	void DoSelectCustomer() {
+		var customer = ShowSelectDialog<MasterEndCustomer>(typeof(MasterEndCustomer), "", "Code", startPos: CurrentEdit.Id_Customer);
+		if (customer == null) return;
+		CurrentEdit.Id_Customer = customer.Id;
+		CurrentEdit.VCustomer = new CodeNameView { Sid = customer.Id, Cd = customer.Code ?? "", Mei = customer.Name ?? "" };
 	}
 
 	[RelayCommand]

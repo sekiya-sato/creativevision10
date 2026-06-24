@@ -1,3 +1,23 @@
+## [2026-06-24] 11:59 店舗売上入力の伝票担当・顧客選択追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：ShopUriageInputView の入力画面で、店舗Id行の右側に「伝票担当Id」、倉庫Id行の右側に「顧客Id」を追加し、それぞれ選択ボタンと Code Name 表示を行う
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 店舗・倉庫入力グリッドを左右2組の選択フィールド構成にし、伝票担当Id と顧客Id の検索入力、選択ボタン、VShain/VCustomer の Code Name 表示を追加
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 軽量取得列に Id_Shain/VShain/Id_Customer/VCustomer を追加し、MasterShain と MasterEndCustomer の選択コマンドを追加
+### 技術決定 Why
+- 既存の店舗Id/倉庫Idと同じ SearchTextBoxAssist.Command + CodeNameView 表示パターンを使い、ヘッダー項目の Id と表示用 JSON を同時更新することで保存データと画面表示を揃える
+### 確認
+- `CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml` の XML 構文解析成功
+- 変更ファイルが CRLF であることを確認
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` ビルド成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-24] 11:04 名称マスターと社員マスターの表示タブ修正
 ### Agent
 - GPT-5 : OpenAI : Codex
