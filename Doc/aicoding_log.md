@@ -1,3 +1,25 @@
+## [2026-06-24] 13:19 取込レイアウト作成画面のCSV出力実装
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：ImportTemplateCreateView で Table 名を選択し、表示更新で列情報を DataGrid に表示、チェック済み列だけを UTF-8 CSV に出力し、データ取得時は入力日付と Vdu を比較して対象データも一緒に出力する
+### 実施内容
+- CvWpfclient/Views/01Master/ImportTemplateCreateView.xaml: テーブル選択、旧テーブル名、件数、列チェック DataGrid、日付指定データ取得、ファイル作成、戻るボタンを配置
+- CvWpfclient/ViewModels/01Master/ImportTemplateCreateViewModel.cs: サーバーテーブル一覧取得、モデル定義からの列情報作成、JSON項目をCSV 1項目内のJSON文字列として扱う出力、Vdu日付絞り込み取得、SaveFileDialog による UTF-8 CSV 保存を追加
+- CvWpfclient/Models/MenuData.cs: 取込レイアウト作成メニューの説明を準備中から実装内容へ更新
+### 技術決定 Why
+- CSV は後続の取込側で InsertBulkParam に変換しやすいようモデル定義単位で列を扱い、JSON列はカンマ・引用符・改行をCSVエスケープして1セルに保持する
+- データ取得は登録処理ではないため既存の QueryListSqlParam を使い、指定日のローカル0時を UTC Ticks に変換して Vdu と比較する
+### 確認
+- `CvWpfclient/Views/01Master/ImportTemplateCreateView.xaml` の XML 構文解析成功
+- 変更ファイルが CRLF であることを確認
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` ビルド成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-24] 11:59 店舗売上入力の伝票担当・顧客選択追加
 ### Agent
 - GPT-5 : OpenAI : Codex
