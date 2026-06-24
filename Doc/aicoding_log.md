@@ -1,3 +1,27 @@
+## [2026-06-24] 13:59 外部CSVマスタ取込画面の検証・登録実装
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：ExternalCsvImportView で取込レイアウトCSVをファイルダイアログから読み込み、フォーマット・型・数値・マスタコード参照エラーを行番号と内容が分かる形で表示し、InsertBulkParam で登録する
+### 実施内容
+- CvWpfclient/Views/01Master/ExternalCsvImportView.xaml: CSVファイル選択、再検証、テーブル/モデル/件数表示、取込プレビュー、エラー一覧、取込実行ボタンを配置
+- CvWpfclient/ViewModels/01Master/ExternalCsvImportViewModel.cs: UTF-8 CSV読込、複数行引用符対応CSV解析、3行ヘッダー検証、列名からモデルプロパティへの対応、数値/日付/JSON/文字数検証、Master参照によるId解決、CodeNameView設定、InsertBulkParam登録を追加
+- CvWpfclient/Models/MenuData.cs: 外部CSVマスタ取込メニューの説明を準備中から実装内容へ更新
+### 技術決定 Why
+- 取込前に全行を検証し、行番号・列名・内容をエラー一覧へ集約することで、CSVフォーマット不備や数値項目の文字混入、マスタ未登録コードを登録前に修正できるようにした
+- コード系項目は Id_ プレフィックスと ForeignKeyAttribute/既存画面の参照先規則から Master を引き、見つからない場合は登録せずエラーにする
+- JSON項目はCSV 1項目内のJSON文字列として検証・デシリアライズし、InsertBulkParam のJSON配列へ安全に載せる
+### 確認
+- `CvWpfclient/Views/01Master/ExternalCsvImportView.xaml` の XML 構文解析成功
+- 変更ファイルが CRLF であることを確認
+- `git diff --check` 成功
+- 通常の `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は実行中の CreativeVision10 によるDLLロックでコピー段階のみ失敗
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -p:OutputPath=obj\CodexBuildOutput\"` ビルド成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-24] 13:19 取込レイアウト作成画面のCSV出力実装
 ### Agent
 - GPT-5 : OpenAI : Codex
