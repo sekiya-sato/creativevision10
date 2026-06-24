@@ -709,7 +709,7 @@ public partial class MainMenuViewModel : ObservableObject {
 			.Select((temperature, index) => new ObservablePoint(index, temperature))
 			.ToArray();
 		// 件数が増えた場合にラベルが重ならないよう、表示ラベルを間引き、回転して配置する
-		const int MaxVisibleLabels = 16;
+		const int MaxVisibleLabels = 36;
 		var labelStep = (int)Math.Ceiling((double)_forecastLabels.Length / MaxVisibleLabels);
 		var displayLabels = _forecastLabels
 			.Select((label, index) => index % labelStep == 0 ? label : string.Empty)
