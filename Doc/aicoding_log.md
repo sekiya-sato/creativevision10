@@ -1,3 +1,25 @@
+## [2026-06-24] 11:04 名称マスターと社員マスターの表示タブ修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MasterMeishoMenteView で「カナ」を「並び順」の上に表示し、MasterShainMenteView に MasterShohinMenteView を参考にした「名称」タブを追加する
+### 実施内容
+- CvWpfclient/Views/01Master/MasterMeishoMenteView.xaml: 詳細フォームに CurrentEdit.Kana 入力欄を追加し、「並び順」の直上へ配置
+- CvWpfclient/Views/01Master/MasterShainMenteView.xaml: 右側 TabControl に「名称」タブを追加し、社員名称リストの追加・削除・区分選択・名称選択を表示
+- CvWpfclient/ViewModels/01Master/MasterShainMenteViewModel.cs: MasterShain.Jsub 用の編集 ObservableCollection、E01-E05 区分取得、追加・削除・名称選択、保存前同期を追加
+### 技術決定 Why
+- MasterShain には既に Jsub が定義されているため、DB構造を増やさず MasterShohinMenteViewModel と同じ編集用コレクションから保存前に CurrentEdit.Jsub へ同期する方式にした
+- 旧変換処理で社員名称区分は E01-E05 として扱われているため、名称タブの区分候補も同じ範囲を取得する
+### 確認
+- `CvWpfclient/Views/01Master/MasterMeishoMenteView.xaml` と `CvWpfclient/Views/01Master/MasterShainMenteView.xaml` の XML 構文解析成功
+- 変更ファイルが CRLF であることを確認
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` ビルド成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-24] 10:29 ログイン社員有効期限メッセージと社員一覧表示修正
 ### Agent
 - GPT-5 : OpenAI : Codex

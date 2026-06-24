@@ -299,8 +299,16 @@
 
 								<TextBlock Grid.Row="3"
 									Style="{StaticResource FormLabel}"
-									Text="並び順" />
+									Text="カナ" />
 								<TextBox Grid.Row="3" Grid.Column="1"
+									materialDesign:HintAssist.Hint="カナ"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Kana}" />
+
+								<TextBlock Grid.Row="4"
+									Style="{StaticResource FormLabel}"
+									Text="並び順" />
+								<TextBox Grid.Row="4" Grid.Column="1"
 									Width="120"
 									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="並び順"
@@ -308,10 +316,10 @@
 									Text="{Binding CurrentEdit.Odr}"
 									TextAlignment="Right" />
 
-								<TextBlock Grid.Row="4"
+								<TextBlock Grid.Row="5"
 									Style="{StaticResource FormLabel}"
 									Text="区分" />
-								<DockPanel Grid.Row="4" Grid.Column="1"
+								<DockPanel Grid.Row="5" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
 										HorizontalContentAlignment="Left"
@@ -331,11 +339,11 @@
 								</DockPanel>
 
 
-								<TextBlock Grid.Row="6"
+								<TextBlock Grid.Row="7"
 									d:Text="登録日/修正日"
 									Style="{StaticResource FormLabel}"
 									Text="" />
-								<TextBlock Grid.Row="6" Grid.Column="1"
+								<TextBlock Grid.Row="7" Grid.Column="1"
 									Margin="20"
 									Foreground="{DynamicResource MaterialDesignBody}"
 									TextWrapping="Wrap">
