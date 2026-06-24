@@ -84,10 +84,11 @@
 						IsDefault="True"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
 						Visibility="{Binding IsResultMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-						<StackPanel Orientation="Horizontal">
-							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+						<StackPanel Orientation="Horizontal" Background="DarkOrange">
+							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Check" />
-							<TextBlock Text="選択" />
+							<TextBlock Margin="6" VerticalAlignment="Center"
+								Text="選択" />
 						</StackPanel>
 					</Button>
 				</StackPanel>
@@ -410,10 +411,11 @@
 							<Button MinWidth="104"
 								Command="{Binding DoSelectCommand}"
 								Style="{StaticResource MaterialDesignRaisedButton}">
-								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+								<StackPanel Orientation="Horizontal" Background="DarkOrange">
+									<materialDesign:PackIcon VerticalAlignment="Center"
 										Kind="Check" />
-									<TextBlock Text="選択" />
+									<TextBlock Margin="6" VerticalAlignment="Center"
+										Text="選択" />
 								</StackPanel>
 							</Button>
 						</StackPanel>

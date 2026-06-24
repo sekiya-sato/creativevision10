@@ -39,7 +39,7 @@
 						<StackPanel Orientation="Horizontal" Background="DarkOrange">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Check" />
-							<TextBlock Margin="6,0,6,0" VerticalAlignment="Center"
+							<TextBlock Margin="6" VerticalAlignment="Center"
 								Text="選択" />
 						</StackPanel>
 					</Button>

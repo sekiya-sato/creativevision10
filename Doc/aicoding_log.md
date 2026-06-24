@@ -1,3 +1,25 @@
+## [2026-06-24] 10:09 Views/Sub 選択ボタンのデザイン統一
+### Agent
+- Kimi K2.7 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient/Views/Sub/ 内の「選択ボタン」を統一したい
+### 実施内容
+- CvWpfclient/Views/Sub/SelectWinView.xaml: TextBlock Margin を 6,0,6,0 から 6 に変更
+- CvWpfclient/Views/Sub/SelectKubunView.xaml: ヘッダー「選択」ボタンに DarkOrange 背景・Check アイコン・Margin="6" を適用
+- CvWpfclient/Views/Sub/SelectMultiWinView.xaml: 同上
+- CvWpfclient/Views/Sub/SelectPostalAddressView.xaml: 同上
+- CvWpfclient/Views/Sub/SelectServerTableView.xaml: 同上
+- CvWpfclient/Views/Sub/SelectShohinColSizView.xaml: 同上
+- CvWpfclient/Views/Sub/SelectShohinView.xaml: ヘッダーと下部の「選択」ボタンに統一パターンを適用
+### 技術決定 Why
+- SelectWinView.xaml の StackPanel（Background="DarkOrange" + PackIcon Kind="Check" + TextBlock Margin="6"）を標準とし、Views/Sub/ 内の同一役割を持つ「選択」ボタンに適用して表記揺れを解消
+### 確認
+- CvWpfclient/CvWpfclient.csproj ビルド成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-24] 09:50 SelectWinView 表示条件変更ボタン追加
 ### Agent
 - GPT-5 : OpenAI : Codex
