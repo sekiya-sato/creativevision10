@@ -1,3 +1,39 @@
+## [2026-06-24] 15:20 気温推移チャートの横軸ラベル表示修正
+### Agent
+- Kimi K2.7-code : OhMyOpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：気温推移チャートで縦線は表示されているが横軸ラベルがほとんど表示されていないため、ラベルが見えるよう修正する
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `ApplyForecastTheme` で件数が多い場合に X 軸ラベルを 45 度回転し、フォントサイズを小さくしてラベルが重ならず表示されるようにした
+### 技術決定 Why
+- 前回の間引き処理だけでは LiveCharts がラベルを非表示にしていたため、回転とフォント縮小で表示領域を確保した
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-24] 15:09 OpenWeatherMap予報取得件数の設定化と表示調整
+### Agent
+- Kimi K2.7-code : OhMyOpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：OpenWeatherMapの予報取得件数を appsettings.json で設定できるようにし、16件/40件のいずれが返ってもクライアント側の表示が崩れないよう対応する
+### 実施内容
+- CvServer/appsettings.json: Application セクションに `OpenWeatherCount`: 40 を追加
+- CvServer/Services/WeatherService.cs: `Application:OpenWeatherCount` を読み込み、1～40の範囲で API の `cnt` パラメータに反映。未設定や不正値の場合は従来値の16をデフォルトとする
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `ApplyForecastTheme` で X 軸ラベルが重ならないよう、件数に応じてラベルを間引いて最大約16個表示するように変更
+### 技術決定 Why
+- OpenWeatherMap無料APIの上限（5日間=40件）を設定ファイルで切り替え可能にし、運用時の柔軟性を確保した
+- クライアントは件数に依存せず、ラベル表示を間引くことで16件/40件の両方で読みやすいチャートを維持した
+### 確認
+- `dotnet build CvServer/CvServer.csproj` が成功（0 警告 0 エラー）
+- `dotnet build CvWpfclient/CvWpfclient.csproj` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-24] 14:20 取込レイアウト作成画面のTable名表示改善
 ### Agent
 - Kimi K2.7-code : OhMyOpenCode : Sisyphus

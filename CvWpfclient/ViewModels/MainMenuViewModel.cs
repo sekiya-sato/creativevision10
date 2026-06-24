@@ -708,10 +708,17 @@ public partial class MainMenuViewModel : ObservableObject {
 		var values = _forecastTemperatures
 			.Select((temperature, index) => new ObservablePoint(index, temperature))
 			.ToArray();
+		// 件数が増えた場合にラベルが重ならないよう、表示ラベルを間引き、回転して配置する
+		const int MaxVisibleLabels = 16;
+		var labelStep = (int)Math.Ceiling((double)_forecastLabels.Length / MaxVisibleLabels);
+		var displayLabels = _forecastLabels
+			.Select((label, index) => index % labelStep == 0 ? label : string.Empty)
+			.ToArray();
+		var isDense = _forecastLabels.Length > MaxVisibleLabels;
 		ForecastXAxes = [new Axis {
-				Labels = _forecastLabels,
-				TextSize = 10,
-				LabelsRotation = 0,
+				Labels = displayLabels,
+				TextSize = isDense ? 9 : 11,
+				LabelsRotation = isDense ? 45 : 0,
 				LabelsPaint = new SolidColorPaint(textColor),
 				SeparatorsPaint = new SolidColorPaint(separatorColor)
 			}];

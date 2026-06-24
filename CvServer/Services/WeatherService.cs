@@ -14,6 +14,8 @@ public partial class WeatherService : IWeatherService {
 	private readonly IHttpContextAccessor _httpContextAccessor;
 	private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 	private static readonly HttpClient httpClient = new();
+	private const int DefaultForecastCount = 40;
+	private const int MaxForecastCount = 40;
 	public WeatherService(ILogger<WeatherService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
@@ -46,7 +48,8 @@ public partial class WeatherService : IWeatherService {
 	public async Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CallContext context = default) {
 		try {
 			var ct = context.CancellationToken;
-			var url = $"https://api.openweathermap.org/data/2.5/forecast?q={region}&appid={GetApiKey()}&units=metric&lang=ja&cnt=16"; // 3時間ごと16件（48時間分）取得
+			var count = GetForecastCount();
+			var url = $"https://api.openweathermap.org/data/2.5/forecast?q={region}&appid={GetApiKey()}&units=metric&lang=ja&cnt={count}"; // 3時間ごと count 件取得
 			var json = await httpClient.GetFromJsonAsync<JsonElement>(url, _jsonOptions, ct);
 			return ParseForecast(json);
 		}
@@ -58,6 +61,14 @@ public partial class WeatherService : IWeatherService {
 
 	private string GetApiKey() {
 		return _configuration["Application:OpenWeatherApiKey"] ?? "";
+	}
+
+	private int GetForecastCount() {
+		var value = _configuration["Application:OpenWeatherCount"];
+		if (!int.TryParse(value, out var count) || count <= 0) {
+			count = DefaultForecastCount;
+		}
+		return Math.Clamp(count, 1, MaxForecastCount);
 	}
 
 	private static WeatherInfo ParseCurrentWeather(JsonElement json) {
