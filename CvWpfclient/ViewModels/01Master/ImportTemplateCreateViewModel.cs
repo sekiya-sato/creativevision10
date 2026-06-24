@@ -209,7 +209,8 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 					.Where(x => tableTypeMap.ContainsKey(x.Item1))
 					.OrderBy(x => x.Item1, StringComparer.OrdinalIgnoreCase)
 					.Select(x => CreateTableRow(x.Item1, x.Item2, x.Item3)));
-			SelectedTable = TableList.FirstOrDefault();
+			SelectedTable = TableList.FirstOrDefault(x => x.TableName.Equals("MasterMeisho", StringComparison.OrdinalIgnoreCase))
+			?? TableList.FirstOrDefault();
 			Message = $"{TableList.Count:N0} テーブルを取得しました。";
 		}
 		catch (OperationCanceledException) {

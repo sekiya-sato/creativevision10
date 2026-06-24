@@ -115,6 +115,7 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
 	[OldTableCommentAttr("入力社員CD")]
 	long id_Shain;
 	/// <summary>
@@ -128,6 +129,7 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// 倉庫キー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui))]
 	[OldTableCommentAttr("倉庫CD")]
 	long id_Soko;
 	/// <summary>
@@ -223,6 +225,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
 	long id_Shohin;
 	/// <summary>
 	/// 商品CD
@@ -252,6 +255,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// 色
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho))]
 	long id_Col;
 	/// <summary>
 	/// カラーCD
@@ -270,6 +274,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho))]
 	long id_Siz;
 	/// <summary>
 	/// サイズCD
@@ -336,6 +341,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
 	long id_Shain;
 	/// <summary>
 	/// 社員CD
@@ -376,6 +382,7 @@ public partial class TranKinHeader : BaseDbClass {
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
 	[OldTableCommentAttr("入力社員CD")]
 	long id_Shain;
 	/// <summary>
@@ -389,7 +396,8 @@ public partial class TranKinHeader : BaseDbClass {
 	/// 取引先キー
 	/// </summary>
 	[ObservableProperty]
-	[OldTableCommentAttr("取引先CD1")]
+	[ForeignKey(nameof(MasterTokui))]
+	[OldTableCommentAttr("取引先CD1  入金であればMasterTokui 支払であればMasterShiire")]
 	long id_Torisaki;
 	/// <summary>
 	/// 取引先データ
@@ -444,6 +452,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	/// 区分ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho))]
 	long id_Kin;
 	/// <summary>
 	/// 入金・支払CD
@@ -538,6 +547,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
+	[ForeignKey(nameof(MasterTokui))]
 	long id_Tokui;
 	/// <summary>
 	/// 得意先データ
@@ -626,6 +636,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	/// 店舗キー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui))]
 	[OldTableCommentAttr("取引先CD1")]
 	long id_Tenpo;
 	/// <summary>
@@ -639,6 +650,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	/// 顧客キー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterEndCustomer))]
 	[OldTableCommentAttr("顧客TEL")]
 	long id_Customer;
 	/// <summary>
@@ -714,6 +726,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	/// 仕入先キー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShiire))]
 	[OldTableCommentAttr("取引先CD1")]
 	long id_Shiire;
 	/// <summary>
@@ -794,6 +807,7 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
+	[ForeignKey(nameof(MasterTokui))]
 	long id_Ido;
 	/// <summary>
 	/// 移動先データ
@@ -833,6 +847,7 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
+	[ForeignKey(nameof(MasterTokui))]
 	long id_Ido;
 	/// <summary>
 	/// 移動先データ
@@ -871,6 +886,7 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
+	[ForeignKey(nameof(MasterTokui))]
 	long id_Ido;
 	/// <summary>
 	/// 移動先データ
@@ -908,6 +924,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	/// 得意先キー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui))]
 	[OldTableCommentAttr("取引先CD1")]
 	long id_Tokui;
 	/// <summary>
@@ -959,6 +976,7 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
+	[ForeignKey(nameof(MasterShiire))]
 	long id_Shiire;
 	/// <summary>
 	/// 仕入先データ

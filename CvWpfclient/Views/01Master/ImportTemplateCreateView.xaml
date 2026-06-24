@@ -1,15 +1,13 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.ImportTemplateCreateView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.ImportTemplateCreateView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
 	Title="取込レイアウト作成"
 	Width="960" Height="620"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="14"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
-	WindowStartupLocation="CenterScreen"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:ImportTemplateCreateViewModel />
@@ -72,8 +70,7 @@
 					<ComboBox.ItemContainerStyle>
 						<Style BasedOn="{StaticResource {x:Type ComboBoxItem}}"
 							TargetType="ComboBoxItem">
-							<Setter Property="ToolTip"
-								Value="{Binding Description}" />
+							<Setter Property="ToolTip" Value="{Binding Description}" />
 						</Style>
 					</ComboBox.ItemContainerStyle>
 				</ComboBox>
@@ -105,13 +102,8 @@
 		<DataGrid Grid.Row="1"
 			Margin="0,8"
 			d:ItemsSource="{d:SampleData ItemCount=8}"
-			materialDesign:DataGridAssist.CellPadding="8,4"
-			materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
-			AutoGenerateColumns="False"
-			CanUserAddRows="False"
-			FrozenColumnCount="2"
-			GridLinesVisibility="All"
-			HeadersVisibility="Column"
+			materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False" FrozenColumnCount="2"
+			GridLinesVisibility="All" HeadersVisibility="Column"
 			HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 			IsSynchronizedWithCurrentItem="True"
 			ItemsSource="{Binding ColumnList}"
@@ -135,8 +127,7 @@
 					Header="選択" />
 				<DataGridTextColumn Width="48"
 					Binding="{Binding No}"
-					Header="No"
-					IsReadOnly="True">
+					Header="No" IsReadOnly="True">
 					<DataGridTextColumn.ElementStyle>
 						<Style TargetType="TextBlock">
 							<Setter Property="HorizontalAlignment" Value="Right" />
@@ -146,20 +137,16 @@
 				</DataGridTextColumn>
 				<DataGridTextColumn Width="190"
 					Binding="{Binding OutputColumnName}"
-					Header="列名"
-					IsReadOnly="True" />
+					Header="列名" IsReadOnly="True" />
 				<DataGridTextColumn Width="150"
 					Binding="{Binding ColumnName}"
-					Header="プロパティ名"
-					IsReadOnly="True" />
+					Header="プロパティ名" IsReadOnly="True" />
 				<DataGridTextColumn Width="110"
 					Binding="{Binding DataType}"
-					Header="データ型"
-					IsReadOnly="True" />
+					Header="データ型" IsReadOnly="True" />
 				<DataGridTextColumn Width="90"
 					Binding="{Binding LengthText}"
-					Header="桁数"
-					IsReadOnly="True">
+					Header="桁数" IsReadOnly="True">
 					<DataGridTextColumn.ElementStyle>
 						<Style BasedOn="{StaticResource RightTextBlock}"
 							TargetType="TextBlock" />
@@ -167,12 +154,10 @@
 				</DataGridTextColumn>
 				<DataGridTextColumn Width="120"
 					Binding="{Binding ImportTypeText}"
-					Header="CSV型"
-					IsReadOnly="True" />
+					Header="CSV型" IsReadOnly="True" />
 				<DataGridTextColumn Width="360"
 					Binding="{Binding Note}"
-					Header="備考"
-					IsReadOnly="True" />
+					Header="備考" IsReadOnly="True" />
 			</DataGrid.Columns>
 		</DataGrid>
 
@@ -212,8 +197,7 @@
 					</StackPanel>
 				</Button>
 				<DatePicker Grid.Column="3"
-					helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
-					IsTodayHighlighted="False"
+					helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 					SelectedDate="{Binding SelectedDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 				<TextBlock Grid.Column="4"
@@ -237,8 +221,7 @@
 				<Button Grid.Column="10"
 					MinWidth="100"
 					Command="{Binding ExitCommand}"
-					Content="戻る (ESC)"
-					IsCancel="True"
+					Content="戻る (ESC)" IsCancel="True"
 					Style="{StaticResource MaterialDesignOutlinedButton}" />
 			</Grid>
 		</Border>

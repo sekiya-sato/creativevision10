@@ -161,6 +161,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 請求/支払先
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui))]
 	long id_Paysaki;
 	/// <summary>
 	/// 請求先データ
