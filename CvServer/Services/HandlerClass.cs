@@ -418,7 +418,11 @@ public partial class CoreService {
 		if (!typeof(BaseDbClass).IsAssignableFrom(itemType) || item is not BaseDbClass db) {
 			return;
 		}
-
+		// SysLoginのLastDateは、ログイン時に更新する
+		if (typeof(SysLogin).IsAssignableFrom(itemType)) {
+			var login = (SysLogin)item;
+			login.LastDate = "";
+		}
 		var vdate = Common.GetVdate();
 		db.Vdc = vdate;
 		db.Vdu = vdate;
