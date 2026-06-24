@@ -1,3 +1,23 @@
+## [2026-06-24] 14:20 取込レイアウト作成画面のTable名表示改善
+### Agent
+- Kimi K2.7-code : OhMyOpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ImportTemplateCreateView でTable名を `MasterShohin` などのテーブル名で表示し、説明文（例：`マスター：商品マスター`）を隣接項目に表示する。プルダウン内はTable名のみとし、Tooltip で説明全文を表示。説明エリアの幅を拡大する。
+### 実施内容
+- CvWpfclient/ViewModels/01Master/ImportTemplateCreateViewModel.cs: `ImportTemplateTableRow` に元コメントを保持する `Description` プロパティを追加し、`CreateTableRow` で `comment` を設定
+- CvWpfclient/Views/01Master/ImportTemplateCreateView.xaml: Table名ComboBoxの `DisplayMemberPath` を `TableName` に変更、選択項目・ドロップダウン項目それぞれに `Description` をTooltipで表示。隣接項目を `OldTableName` 表示から `SelectedTable.Description` 表示のTextBlockに変更し `TextTrimming` + Tooltip で全文表示。説明エリアの列幅を 220→340 に拡大
+### 技術決定 Why
+- テーブル名と説明文を分離し、プルダウンを短いTable名で統一することで選択の視認性を向上させた
+- 説明文は元コメント（プレフィックス付き）をそのまま表示し、Tooltip で全文を確認できるようにした
+- 幅を約1.5倍に拡大し、長い説明文でも切れにくくした
+### 確認
+- 変更ファイルの CRLF 改行を確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-24] 13:59 外部CSVマスタ取込画面の検証・登録実装
 ### Agent
 - GPT-5 : OpenAI : Codex

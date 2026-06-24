@@ -52,9 +52,9 @@
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="220" />
 					<ColumnDefinition Width="8" />
-					<ColumnDefinition Width="220" />
+					<ColumnDefinition Width="340" />
 					<ColumnDefinition Width="8" />
-					<ColumnDefinition Width="90" />
+					<ColumnDefinition Width="80" />
 					<ColumnDefinition Width="12" />
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="*" />
@@ -64,13 +64,25 @@
 					Style="{StaticResource FormCaption}"
 					Text="Table名" />
 				<ComboBox Grid.Column="1"
-					DisplayMemberPath="DisplayName"
+					DisplayMemberPath="TableName"
 					ItemsSource="{Binding TableList}"
 					SelectedItem="{Binding SelectedTable, Mode=TwoWay}"
-					Style="{StaticResource MaterialDesignOutlinedComboBox}" />
-				<TextBox Grid.Column="3"
-					IsReadOnly="True"
-					Text="{Binding OldTableName}" />
+					Style="{StaticResource MaterialDesignOutlinedComboBox}"
+					ToolTip="{Binding SelectedTable.Description}">
+					<ComboBox.ItemContainerStyle>
+						<Style BasedOn="{StaticResource {x:Type ComboBoxItem}}"
+							TargetType="ComboBoxItem">
+							<Setter Property="ToolTip"
+								Value="{Binding Description}" />
+						</Style>
+					</ComboBox.ItemContainerStyle>
+				</ComboBox>
+				<TextBlock Grid.Column="3"
+					VerticalAlignment="Center"
+					Foreground="{DynamicResource MaterialDesignBody}"
+					Text="{Binding SelectedTable.Description}"
+					TextTrimming="CharacterEllipsis"
+					ToolTip="{Binding SelectedTable.Description}" />
 				<TextBox Grid.Column="5"
 					HorizontalContentAlignment="Right"
 					IsReadOnly="True"

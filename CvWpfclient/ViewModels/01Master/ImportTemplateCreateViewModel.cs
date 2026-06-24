@@ -228,6 +228,7 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 		return new ImportTemplateTableRow {
 			TableName = tableName,
 			DisplayName = BuildDisplayName(tableName, comment),
+			Description = comment,
 			OldTableName = NormalizeOldTableName(GetOldTableName(modelType)),
 			RowCount = rowCount,
 			ModelType = modelType
@@ -529,6 +530,7 @@ public sealed partial class ImportTemplateColumnRow : ObservableObject {
 public sealed class ImportTemplateTableRow {
 	public string TableName { get; init; } = string.Empty;
 	public string DisplayName { get; init; } = string.Empty;
+	public string Description { get; init; } = string.Empty;
 	public string OldTableName { get; init; } = string.Empty;
 	public string OldTableNameOrTableName => string.IsNullOrWhiteSpace(OldTableName) ? TableName : OldTableName;
 	public long RowCount { get; init; }
