@@ -8,6 +8,7 @@ using CvBase.Share;
 using CvWpfclient.Helpers;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Globalization;
 
 namespace CvWpfclient.ViewModels.Sub;
 
@@ -20,12 +21,13 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 
 	Type MyType = typeof(string);
 
-	string Kubun = string.Empty;
-
-	string Where = string.Empty;
+	string BaseWhere = string.Empty;
+	string ConditionWhere = string.Empty;
 	string Order = string.Empty;
 	string[] Parameters = [];
 	long StartPos = 0;
+	int? MaxCount = AppGlobal.Application.Limit;
+	SelectParameter? DisplayConditionParameter;
 
 
 	bool isLocalData;
@@ -35,6 +37,7 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 	/// </summary>
 	public void SetLocalData<T>(IEnumerable<T> items, string title = "選択画面", long startPos = 0) where T : BaseDbClass {
 		isLocalData = true;
+		IsDisplayConditionChangeEnabled = false;
 		Title = title;
 		StartPos = startPos;
 		ListData = new ObservableCollection<dynamic>(items.Cast<dynamic>());
@@ -53,9 +56,10 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 		try {
 			ct.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			string? where = SelectDisplayConditionHelper.CombineWhere(BaseWhere, ConditionWhere);
 			QueryListParam queryListParam = typeof(IBaseCodeName).IsAssignableFrom(MyType)
-				? new QueryListSimpleParam(itemType: MyType, where: Where, order: Order, parameters: Parameters, maxCount: AppGlobal.Application.Limit)
-				: new QueryListParam(itemType: MyType, where: Where, order: Order, parameters: Parameters, maxCount: AppGlobal.Application.Limit);
+				? new QueryListSimpleParam(itemType: MyType, where: where, order: Order, parameters: Parameters, maxCount: MaxCount)
+				: new QueryListParam(itemType: MyType, where: where, order: Order, parameters: Parameters, maxCount: MaxCount);
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
@@ -106,6 +110,26 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	public int count;
 
+	[ObservableProperty]
+	bool isDisplayConditionChangeEnabled = true;
+
+	[RelayCommand(IncludeCancelCommand = true)]
+	async Task ChangeDisplayCondition(CancellationToken ct) {
+		if (isLocalData) return;
+
+		long currentId = TryGetCurrentId();
+		string displayName = SelectDisplayConditionHelper.GetDisplayName(MyType, Title);
+		if (!SelectDisplayConditionHelper.TryShowConditionDialog(MyType, BaseWhere, Order, DisplayConditionParameter, this, displayName, out var parameter, out var conditionWhere, out var maxCount)) {
+			return;
+		}
+
+		DisplayConditionParameter = parameter;
+		ConditionWhere = conditionWhere ?? string.Empty;
+		MaxCount = maxCount;
+		StartPos = currentId;
+		await InitList(ct);
+	}
+
 	[RelayCommand]
 	public void DoSelect() {
 		if (Current != null) {
@@ -117,13 +141,24 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 
 	public void SetParam(Type? type0 = null, string where = "", string order = "", string[]? parameters = null, long startPos = 0, long id = 0) {
 		MyType = type0 ?? typeof(string);
-		Where = where;
+		BaseWhere = where;
+		ConditionWhere = string.Empty;
 		Order = order;
 		Parameters = parameters ?? [];
 		StartPos = id != 0 ? id : startPos;
+		MaxCount = AppGlobal.Application.Limit;
+		DisplayConditionParameter = null;
+		IsDisplayConditionChangeEnabled = !isLocalData;
 	}
 	[RelayCommand]
 	public void Exit() {
 		ClientLib.ExitDialogResult(this, false);
+	}
+
+	long TryGetCurrentId() {
+		if (Current == null) return StartPos;
+		var property = Current.GetType().GetProperty(nameof(BaseDbClass.Id));
+		var value = property?.GetValue(Current);
+		return long.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out long id) ? id : StartPos;
 	}
 }

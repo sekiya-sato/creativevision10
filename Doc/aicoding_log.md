@@ -1,3 +1,26 @@
+## [2026-06-24] 09:50 SelectWinView 表示条件変更ボタン追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views.Sub.SelectWinView / SelectMultiWinView に表示条件変更ボタンを追加し、現在表示中の Type に応じて条件ダイアログを決定し、条件変更後に一覧を再表示する
+### 実施内容
+- CvWpfclient/Views/Sub/SelectWinView.xaml: ヘッダー右側に「表示条件変更」ボタンを追加
+- CvWpfclient/Views/Sub/SelectMultiWinView.xaml: ヘッダー右側に「表示条件変更」ボタンを追加
+- CvWpfclient/ViewModels/Sub/SelectWinViewModel.cs: 表示条件変更コマンド、条件保持、条件変更後の再問い合わせを追加
+- CvWpfclient/ViewModels/Sub/SelectMultiWinViewModel.cs: 表示条件変更コマンド、条件保持、条件変更後の再問い合わせ、選択済みIDの維持を追加
+- CvWpfclient/ViewModels/Sub/SelectDisplayConditionHelper.cs: 表示中 Type が MasterShohin の場合は SelectShohinView、それ以外は RangeParamView を開き、元条件と追加条件を合成する共通処理を追加
+### 技術決定 Why
+- SelectWinView / SelectMultiWinView は任意 Type の一覧を表示するため、Type 判定を共通ヘルパーに集約し、MasterShohin のみ既存の専用条件画面を再利用することで、既存の汎用選択フローを崩さず表示条件変更を追加した
+### 確認
+- `CvWpfclient/Views/Sub/SelectWinView.xaml` / `CvWpfclient/Views/Sub/SelectMultiWinView.xaml` の XML 構文解析成功
+- 変更ファイルが UTF-8 BOMなし、CRLF であることを確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---
+
 ## [2026-06-24] 09:07 RangeInputParamView 高負荷検索条件警告追加
 ### Agent
 - GPT-5 : OpenAI : Codex

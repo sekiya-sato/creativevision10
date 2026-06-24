@@ -39,10 +39,13 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 
 	Type MyType = typeof(string);
 
-	string Where = string.Empty;
+	string BaseWhere = string.Empty;
+	string ConditionWhere = string.Empty;
 	string Order = string.Empty;
 	string[] Parameters = [];
 	long StartPos = 0;
+	int? MaxCount = AppGlobal.Application.Limit;
+	SelectParameter? DisplayConditionParameter;
 
 	bool isLocalData;
 
@@ -54,6 +57,7 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 
 	public void SetLocalData<T>(IEnumerable<T> items, string title = "複数選択画面", long startPos = 0, IEnumerable<long>? selectedIds = null) where T : BaseDbClass {
 		isLocalData = true;
+		IsDisplayConditionChangeEnabled = false;
 		Title = title;
 		StartPos = startPos;
 		SetInitialSelectedIds(selectedIds);
@@ -71,9 +75,10 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 		try {
 			ct.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			string? where = SelectDisplayConditionHelper.CombineWhere(BaseWhere, ConditionWhere);
 			QueryListParam queryListParam = typeof(IBaseCodeName).IsAssignableFrom(MyType)
-				? new QueryListSimpleParam(itemType: MyType, where: Where, order: Order, parameters: Parameters, maxCount: AppGlobal.Application.Limit)
-				: new QueryListParam(itemType: MyType, where: Where, order: Order, parameters: Parameters, maxCount: AppGlobal.Application.Limit);
+				? new QueryListSimpleParam(itemType: MyType, where: where, order: Order, parameters: Parameters, maxCount: MaxCount)
+				: new QueryListParam(itemType: MyType, where: where, order: Order, parameters: Parameters, maxCount: MaxCount);
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
@@ -151,6 +156,9 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	int selectedCount;
 
+	[ObservableProperty]
+	bool isDisplayConditionChangeEnabled = true;
+
 	void UpdateCounts() {
 		Count = ListData?.Count ?? 0;
 		SelectedCount = ListData?.Count(row => row.IsSelected) ?? 0;
@@ -190,12 +198,34 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 		ClientLib.ExitDialogResult(this, true);
 	}
 
+	[RelayCommand(IncludeCancelCommand = true)]
+	async Task ChangeDisplayCondition(CancellationToken ct) {
+		if (isLocalData) return;
+
+		long currentId = Current?.Id ?? StartPos;
+		SetInitialSelectedIds(ListData?.Where(row => row.IsSelected).Select(row => row.Id));
+		string displayName = SelectDisplayConditionHelper.GetDisplayName(MyType, Title);
+		if (!SelectDisplayConditionHelper.TryShowConditionDialog(MyType, BaseWhere, Order, DisplayConditionParameter, this, displayName, out var parameter, out var conditionWhere, out var maxCount)) {
+			return;
+		}
+
+		DisplayConditionParameter = parameter;
+		ConditionWhere = conditionWhere ?? string.Empty;
+		MaxCount = maxCount;
+		StartPos = currentId;
+		await InitList(ct);
+	}
+
 	public void SetParam(Type? type0 = null, string where = "", string order = "", string[]? parameters = null, long startPos = 0, long id = 0, IEnumerable<long>? selectedIds = null) {
 		MyType = type0 ?? typeof(string);
-		Where = where;
+		BaseWhere = where;
+		ConditionWhere = string.Empty;
 		Order = order;
 		Parameters = parameters ?? [];
 		StartPos = id != 0 ? id : startPos;
+		MaxCount = AppGlobal.Application.Limit;
+		DisplayConditionParameter = null;
+		IsDisplayConditionChangeEnabled = !isLocalData;
 		SetInitialSelectedIds(selectedIds);
 	}
 

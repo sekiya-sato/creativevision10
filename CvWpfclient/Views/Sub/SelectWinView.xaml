@@ -21,7 +21,19 @@
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button MinWidth="150"
+						Command="{Binding ChangeDisplayConditionCommand}"
+						IsEnabled="{Binding IsDisplayConditionChangeEnabled}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="FilterVariant" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="表示条件変更" />
+						</StackPanel>
+					</Button>
 					<Button x:Name="DefaultButton"
+						Margin="8,0,0,0"
 						Command="{Binding DoSelectCommand}"
 						IsDefault="True"
 						Style="{StaticResource MaterialDesignToolForegroundButton}">
