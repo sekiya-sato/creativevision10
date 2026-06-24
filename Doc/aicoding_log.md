@@ -1,3 +1,23 @@
+## [2026-06-25] 08:47 push前コミット書き換え手順のskill化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：push前commitのコメント・作業者名などの書き換え処理をskill化する
+### 実施内容
+- .agents/skills/rewrite-unpushed-commit/SKILL.md: 未pushコミットのメッセージ、Author、Committerを修正するための確認手順、HEADの場合のamend、履歴途中コミットの場合のcommit-tree/rebase手順、検証項目を追加
+### 技術決定 Why
+- push済み履歴の誤書き換えを避けるため、最初に未push範囲と対象SHAを確認し、履歴途中のコミットは対象コミットのtreeを保ったまま新コミットを作成して後続コミットを載せ直す手順にした
+- repo-local skill の既存構成に合わせ、付属初期化で生成されたUIメタデータは残さず、SKILL.mdのみの軽量構成にした
+### 確認
+- skill frontmatter の name / description と本文見出しを確認
+- 変更ファイルが CRLF / UTF-8 BOMなしであることを確認
+- `quick_validate.py` は実行したが、現在のPython環境にPyYAMLが無いため `ModuleNotFoundError: No module named 'yaml'` で失敗。代替としてfrontmatterの必須形式をPowerShellで確認
+- `git diff --check` 成功
+
+---
+
 ## [2026-06-24] 15:20 気温推移チャートの横軸ラベル表示修正
 ### Agent
 - Kimi K2.7-code : OhMyOpenCode : Sisyphus
