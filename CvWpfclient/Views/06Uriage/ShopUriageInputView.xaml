@@ -138,6 +138,17 @@
 					</Grid.RowDefinitions>
 					<DockPanel Grid.Row="0"
 						Margin="8,0,8,8">
+						<Button DockPanel.Dock="Right"
+							Command="{Binding DoListOnListTabCommand}"
+							Style="{StaticResource MaterialDesignOutlinedButton}"
+							ToolTip="一覧取得 (F5)">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="DatabaseSearch" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="一覧取得" />
+							</StackPanel>
+						</Button>
 						<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
 							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="FormatListBulleted" />
@@ -171,22 +182,11 @@
 								Background="{DynamicResource MaterialDesignToolBarBackground}"
 								CornerRadius="8,8,0,0">
 								<DockPanel>
-									<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-										<TextBlock Margin="0,0,12,0" VerticalAlignment="Center"
+									<TextBlock DockPanel.Dock="Right"
+										Margin="0,0,12,0" VerticalAlignment="Center"
 											FontSize="13"
 											Foreground="{DynamicResource MaterialDesignBodyLight}"
 											Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
-										<Button Command="{Binding DoListOnListTabCommand}"
-											Style="{StaticResource MaterialDesignOutlinedButton}"
-											ToolTip="一覧取得 (F5)">
-											<StackPanel Orientation="Horizontal">
-												<materialDesign:PackIcon VerticalAlignment="Center"
-													Kind="DatabaseSearch" />
-												<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-													Text="一覧取得" />
-											</StackPanel>
-										</Button>
-									</StackPanel>
 									<TextBlock VerticalAlignment="Center"
 										FontSize="13"
 										Foreground="{DynamicResource MaterialDesignBodyLight}"

@@ -1,3 +1,22 @@
+## [2026-06-24] 08:58 ShopUriageInputView 一覧取得ボタン位置変更
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：ShopUriageInputView で「一覧取得」ボタンの位置を上に移動し、伝票詳細と同じ行の右端に配置する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧タブ上段の DockPanel 右端へ「一覧取得」ボタンを移動し、一覧カードヘッダー内の同ボタンを削除した
+### 技術決定 Why
+- 既存の DoListOnListTabCommand、MaterialDesignOutlinedButton、DatabaseSearch アイコンは維持し、配置だけを変えることで動作差分を出さずに指定位置へ移動した
+### 確認
+- `CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml` の XML 構文解析成功
+- `CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml` が UTF-8 BOMなし、CRLF であることを確認
+- `git diff --check -- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---
+
 ## [2026-06-23] 17:33 MasterShainMenteView 有効期限編集項目追加
 ### Agent
 - GPT-5 : OpenAI : Codex
