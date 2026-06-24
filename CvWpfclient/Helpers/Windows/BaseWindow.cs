@@ -71,13 +71,16 @@ public class BaseWindow : Window {
 	private bool TryExecuteViewModelCommand(string commandName) {
 		var dc = DataContext;
 		if (dc == null) return false;
-
-		var prop = dc.GetType().GetProperty(commandName, BindingFlags.Instance | BindingFlags.Public);
-		if (prop?.GetValue(dc) is ICommand cmd && cmd.CanExecute(null)) {
-			cmd.Execute(null);
-			return true;
+		try {
+			var prop = dc.GetType().GetProperty(commandName, BindingFlags.Instance | BindingFlags.Public);
+			if (prop?.GetValue(dc) is ICommand cmd && cmd.CanExecute(null)) {
+				cmd.Execute(null);
+				return true;
+			}
 		}
-
+		catch {
+			// Ignore: コマンドの取得や実行中に例外が発生した場合は無視
+		}
 		return false;
 	}
 
