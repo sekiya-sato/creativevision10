@@ -16,7 +16,39 @@ public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranA
 
 	[RelayCommand]
 	void Ok() {
+		if (RequiresDirectTableCondition()) {
+			MessageEx.ShowWarningDialog(BuildDirectTableConditionMessage(), owner: ActiveWindow);
+			return;
+		}
 		ClientLib.ExitDialogResult(this, true);
+	}
+
+	bool RequiresDirectTableCondition() =>
+		HasMeisaiJsonCondition() && !HasDirectTableCondition();
+
+	bool HasMeisaiJsonCondition() =>
+		Parameter.ShohinIds.Any(id => id > 0)
+		|| !string.IsNullOrWhiteSpace(Parameter.InputBarcode)
+		|| !string.IsNullOrWhiteSpace(Parameter.ShohinNameLike);
+
+	bool HasDirectTableCondition() =>
+		Parameter.FromId.HasValue
+		|| Parameter.ToId.HasValue
+		|| !string.IsNullOrWhiteSpace(Parameter.FromDate)
+		|| !string.IsNullOrWhiteSpace(Parameter.ToDate)
+		|| Parameter.ToriIds.Any(id => id > 0)
+		|| Parameter.SokoIds.Any(id => id > 0);
+
+	string BuildDirectTableConditionMessage() =>
+		$"商品Id・入力バーコード・商品名を条件にする場合は、{BuildDirectTableConditionLabels()} から少なくとも1つは指定してください。";
+
+	string BuildDirectTableConditionLabels() {
+		List<string> labels = ["伝票No", "日付"];
+		if (Parameter.IsToriVisible) {
+			labels.Add(string.IsNullOrWhiteSpace(Parameter.ToriLabel) ? "店舗Id" : Parameter.ToriLabel);
+		}
+		labels.Add("倉庫Id");
+		return string.Join("・", labels);
 	}
 
 	[RelayCommand]

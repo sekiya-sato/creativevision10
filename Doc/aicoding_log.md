@@ -1,3 +1,21 @@
+## [2026-06-24] 09:07 RangeInputParamView 高負荷検索条件警告追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views.Sub.RangeInputParamView で、商品Id・入力バーコード・商品名は JMeisai のJSON関数比較で負荷が高いため、伝票No・日付・店舗Id・倉庫Idなど直接テーブル比較できる項目が少なくとも1つ指定されていない場合に警告を出す
+### 実施内容
+- CvWpfclient/ViewModels/Sub/RangeInputParamViewModel.cs: 商品Id・入力バーコード・商品名のいずれかが指定され、伝票No・日付・店舗Id・倉庫Idの直接条件が未指定の場合、選択確定時に警告してダイアログ確定を止める検証を追加
+### 技術決定 Why
+- `ShopUriageInputViewModel` の `ListWhere` では商品Id・入力バーコード・商品名が `json_each(Jmeisai)` / `json_extract` を使う条件になるため、検索SQL生成側ではなく条件ダイアログ確定時に直接条件の併用を必須化し、既存の一覧取得フローを維持した
+### 確認
+- `CvWpfclient/ViewModels/Sub/RangeInputParamViewModel.cs` が UTF-8 BOMなし、CRLF であることを確認
+- `git diff --check` で空白エラーなしを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` でビルド成功（0 warnings / 0 errors）
+
+---
+
 ## [2026-06-24] 08:58 ShopUriageInputView 一覧取得ボタン位置変更
 ### Agent
 - GPT-5 : OpenAI : Codex
