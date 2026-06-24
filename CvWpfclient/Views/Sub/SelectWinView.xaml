@@ -36,7 +36,7 @@
 						Margin="8,0,0,0"
 						Command="{Binding DoSelectCommand}"
 						Style="{StaticResource MaterialDesignToolForegroundButton}">
-						<StackPanel Background="DarkOrange" Orientation="Horizontal">
+						<StackPanel Background="DarkGray" Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Check" />
 							<TextBlock Margin="6" VerticalAlignment="Center"
