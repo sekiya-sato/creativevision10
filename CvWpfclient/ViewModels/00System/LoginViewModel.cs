@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 namespace CvWpfclient.ViewModels._00System;
 
 public partial class LoginViewModel : Helpers.BaseViewModel {
+	private const int LoginResultEmployeeInvalid = -2;
+	private const string LoginEmployeeInvalidMessage = "社員未設定または有効期限切れのためログインできません。";
+	private const string RefreshEmployeeInvalidMessage = "社員未設定または有効期限切れのためログインRefreshができませんでした。";
 	private readonly ILogger<LoginViewModel> _logger;
 	[ObservableProperty]
 	private string? loginId;
@@ -65,7 +68,7 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 				}
 			}
 			else {
-				MessageEx.ShowErrorDialog("ログインIDかパスワードが間違っています", owner: ClientLib.GetActiveView(this));
+				ShowLoginFailure(reply, "ログインIDかパスワードが間違っています", LoginEmployeeInvalidMessage);
 			}
 		}
 		catch (OperationCanceledException) {
@@ -110,9 +113,9 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 					return;
 				}
 			}
-			if (string.IsNullOrEmpty(reply.JwtMessage)) {
+			if (reply.Result != 0 || string.IsNullOrEmpty(reply.JwtMessage)) {
 				AppGlobal.ClearLoginJwt();
-				MessageEx.ShowErrorDialog("ログインRefreshができませんでした", owner: ClientLib.GetActiveView(this));
+				ShowLoginFailure(reply, "ログインRefreshができませんでした", RefreshEmployeeInvalidMessage);
 			}
 		}
 		catch (Exception ex) {
@@ -131,5 +134,10 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 		}
 
 		return $"{token[..8]}...{token[^8..]}";
+	}
+
+	private void ShowLoginFailure(LoginReply reply, string defaultMessage, string employeeInvalidMessage) {
+		var message = reply.Result == LoginResultEmployeeInvalid ? employeeInvalidMessage : defaultMessage;
+		MessageEx.ShowErrorDialog(message, owner: ClientLib.GetActiveView(this));
 	}
 }

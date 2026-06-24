@@ -216,6 +216,9 @@
 							<DataGridTextColumn Width="220"
 								Binding="{Binding Mail}"
 								Header="メール" />
+							<DataGridTextColumn Width="120"
+								Binding="{Binding ExpireDate, Converter={StaticResource DateYmd8Converter}}"
+								Header="有効期限" />
 							<DataGridTextColumn Width="160"
 								Binding="{Binding VTenpo.Name}"
 								Header="店舗" />

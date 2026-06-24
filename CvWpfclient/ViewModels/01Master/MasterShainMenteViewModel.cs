@@ -8,7 +8,7 @@ public partial class MasterShainMenteViewModel : Helpers.BaseCodeNameLightMenteV
 	[ObservableProperty]
 	string title = "社員マスターメンテ";
 
-	protected override string[] AdditionalLightweightColumns => ["Mail", "VTenpo", "VBumon"];
+	protected override string[] AdditionalLightweightColumns => ["Mail", "ExpireDate", "VTenpo", "VBumon"];
 
 	protected override string? SelectCodeDisplayName => "社員";
 	protected override string? FormFile => "MasterShainMente.qfm";

@@ -1,3 +1,23 @@
+## [2026-06-24] 10:29 ログイン社員有効期限メッセージと社員一覧表示修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：LoginService が返す Result=-2 をログインID/パスワード誤りと分け、ログイン時とRefresh時に社員未設定または有効期限切れと分かるメッセージにし、社員一覧で有効期限を見えるようにする
+### 実施内容
+- CvWpfclient/ViewModels/00System/LoginViewModel.cs: Result=-2 のメッセージ分岐を共通化し、ログイン時とRefresh時に社員未設定または有効期限切れを表示
+- CvWpfclient/ViewModels/01Master/MasterShainMenteViewModel.cs: 社員一覧の軽量取得列に ExpireDate を追加
+- CvWpfclient/Views/01Master/MasterShainMenteView.xaml: 社員一覧DataGridに有効期限列を追加
+### 技術決定 Why
+- LoginService 側の Result=-2 は社員未設定や社員有効期限切れを示すため、クライアントでログインID/パスワード誤りと同じ扱いにせず、ユーザーが原因を判別できる専用メッセージに分岐した
+### 確認
+- `CvWpfclient/Views/01Master/MasterShainMenteView.xaml` の XML 構文解析成功
+- 変更ファイルが CRLF であることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` ビルド成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-24] 10:09 Views/Sub 選択ボタンのデザイン統一
 ### Agent
 - Kimi K2.7 : OpenCode : Sisyphus
