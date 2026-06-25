@@ -152,7 +152,7 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 			HhtNo = GetInt(fields, 1, 3, "HTNO", fileName, lineNo),
 			Serial = GetInt(fields, 2, 5, "シリアル", fileName, lineNo),
 			DenDay = GetString(fields, 3, 8, "日付", fileName, lineNo),
-			Store = GetString(fields, 4, 8, "店舗", fileName, lineNo),
+			Shop = GetString(fields, 4, 8, "店舗", fileName, lineNo),
 			Tanto = GetString(fields, 5, 6, "担当者", fileName, lineNo),
 			HanKubun = GetInt(fields, 6, 1, "販区分", fileName, lineNo),
 			DenNo = GetString(fields, 7, 13, "伝票NO", fileName, lineNo),

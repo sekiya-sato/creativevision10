@@ -78,7 +78,10 @@ public class DefineDataTable {
 			typeof(SummaryUriKake),
 			typeof(SummaryUriSei),
 			typeof(SummaryKaiKake),
-			typeof(SummaryKaiShi)
+			typeof(SummaryKaiShi),
+			// 追加テーブル
+			typeof(TranTokuiPromotion),
+			typeof(TranShopPromotion)
 			/* Product: 以下のテーブルは、優先順位低いが、いずれ作成する予定
 			上代一括変更
 				TranJodai : 伝票No,日付 (from-to),セールCD(Meisho'S01') タイトル  [店舗CD] [商品CD,(色CD,サイズCD) : 掛率,上代]

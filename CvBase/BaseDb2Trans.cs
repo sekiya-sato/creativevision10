@@ -1026,7 +1026,7 @@ public sealed partial class TranHhtData : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string store = string.Empty;
+	string shop = string.Empty;
 	/// <summary>
 	/// 日付 文字  8
 	/// </summary>
@@ -1275,7 +1275,7 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string store = string.Empty;
+	string shop = string.Empty;
 	/// <summary>
 	/// 担当者	文字	6 前'0'埋め
 	/// </summary>

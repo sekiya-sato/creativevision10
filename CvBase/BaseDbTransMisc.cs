@@ -36,15 +36,15 @@ public sealed partial class TranTokuiPromotion : BaseDbClass {
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
-[KeyDml("uk1", true, [nameof(Id_Store), nameof(DenDay)])]
+[KeyDml("uk1", true, [nameof(Id_Shop), nameof(DenDay)])]
 [KeyDml("nk1", false, nameof(DenDay))]
 [Comment("トランザクション：店舗イベントデータ 店舗、日別のイベントデータ")]
-public sealed partial class TranStorePromotion : BaseDbClass {
+public sealed partial class TranShopPromotion : BaseDbClass {
 	/// <summary>
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
-	long id_Store;
+	long id_Shop;
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>

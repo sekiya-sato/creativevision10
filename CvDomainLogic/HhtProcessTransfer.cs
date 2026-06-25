@@ -22,7 +22,7 @@ public partial class HhtProcess {
 			var hhtData = new TranHhtData {
 				Vdc = Common.GetVdate(),
 				Vdu = Common.GetVdate(),
-				Store = item.Store,
+				Shop = item.Shop,
 				DenDay = item.DenDay,
 				Kubun = item.Type0 switch {
 					1 => "22", // 店舗売上
