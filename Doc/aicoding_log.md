@@ -1,3 +1,30 @@
+## [2026-06-25] 11:10 CvWpfclient View/ViewModel ネーミング統一リネーム
+### Agent
+- Kimi K2.7-code : OhMyOpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の View/ViewModel で typo・命名不整合のあるものを変更する（内容がないテンプレートは除く）
+### 実施内容
+- CvWpfclient/Views/00System/ConvertDbView.xaml/.xaml.cs, ConvertSelectedView.xaml/.xaml.cs: `Concvert` → `Convert` にリネームし、x:Class / DataContext / クラス名 / コンストラクタ名を更新
+- CvWpfclient/ViewModels/00System/ConvertDbViewModel.cs, ConvertSelectedViewModel.cs: クラス名を `Convert*` に修正
+- CvWpfclient/Views/Sub/WebPdfView.xaml/.xaml.cs, ViewModels/Sub/WebPdfViewModel.cs: `Webpdf` → `WebPdf` にリネームし、型名・コンストラクタ名を更新
+- CvWpfclient/ViewModels/Sub/RangeParamMiniViewModel.cs: ファイル名の `ViewModels`（複数形）を `ViewModel`（単数）に修正（クラス名は既に単数）
+- CvWpfclient/Models/MenuData.cs: `ConcvertDbView`, `ConcvertSelectedView` の typeof 参照を新名に更新
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: `WebpdfView`, `WebpdfViewModel` の参照を `WebPdfView`, `WebPdfViewModel` に更新
+- 空のテンプレート画面（AutoOrderReplenishExecuteVie, ShouhinJuchuTableView/Summary, ShopCampaignSettingView 等）はユーザー指示により変更対象外とした
+### 技術決定 Why
+- typo は検索時のノイズにもなるため優先して修正した
+- `Webpdf` は略語 PDF を含むため `WebPdf` とし、PascalCase の可読性を向上させた
+- View/ViewModel のペア名は完全一致にすることで、今後の探索・メンテナンスを容易にした
+### 影響範囲
+- CvWpfclient 内の View/ViewModel ファイル名・クラス名・MenuData/BasMenteViewModel の参照のみ。CodeShare/CvBase/CvServer 等下位層には影響なし
+### 確認
+- `grep -R "Concvert\|Webpdf\|RangeParamMiniViewModels" CvWpfclient/` で旧型名残存なしを確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-25] 09:09 RangeParamView の追加複数Id条件対応
 ### Agent
 - GPT-5 : OpenAI : Codex

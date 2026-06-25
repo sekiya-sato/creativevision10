@@ -521,8 +521,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			var viewTitle = string.IsNullOrWhiteSpace(ActiveWindow?.Title)
 				? "PDF表示"
 				: $"{ActiveWindow.Title} - PDF表示";
-			var view = new Views.Sub.WebpdfView { Title = viewTitle };
-			if (view.DataContext is not WebpdfViewModel vm) {
+			var view = new Views.Sub.WebPdfView { Title = viewTitle };
+			if (view.DataContext is not WebPdfViewModel vm) {
 				Message = "PDF表示画面の初期化に失敗しました";
 				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 				return;

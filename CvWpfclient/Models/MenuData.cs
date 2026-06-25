@@ -47,8 +47,8 @@ public partial class MenuData : ObservableObject {
 			new("自動実行履歴", typeof(Views._00System.SysAutoExecHistoryView), addInfo:"自動実行ジョブの履歴"),
 		new("汎用マスタメンテ", typeof(Views._00System.SysGeneralMenteView), addInfo:"MasterMeisho を汎用編集UIで表示・更新"),
 		new("DB定義書出力", typeof(Views._00System.SysTableSpecView), addInfo:"選択テーブルのDB定義書を印刷"),
-		new("旧DBからの変換処理", typeof(Views._00System.ConcvertDbView), addInfo:"旧OracleDBからのデータ変換"),
-		new("旧DBからの選択変換処理", typeof(Views._00System.ConcvertSelectedView), addInfo:"旧OracleDBからの選択変換処理"),
+		new("旧DBからの変換処理", typeof(Views._00System.ConvertDbView), addInfo:"旧OracleDBからのデータ変換"),
+		new("旧DBからの選択変換処理", typeof(Views._00System.ConvertSelectedView), addInfo:"旧OracleDBからの選択変換処理"),
 		new("管理者用システム処理", typeof(Views._00System.SysExecMiscView), addInfo:"管理者用の各種システム処理"),
         /* ================================ */
 			new("----------------", typeof(string) , addInfo:"---"),
