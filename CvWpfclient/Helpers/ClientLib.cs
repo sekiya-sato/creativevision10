@@ -131,7 +131,7 @@ public class ClientLib {
 		foreach (var item in obj.Keys) { // 列を追加する [Add columns]
 			var textColumn = new System.Windows.Controls.DataGridTextColumn();
 			textColumn.Header = item;
-			textColumn.Binding = new System.Windows.Data.Binding($"Item[{item}]");
+			textColumn.Binding = new System.Windows.Data.Binding($"[{item}]");
 			dg.Columns.Add(textColumn);
 		}
 	}
