@@ -68,15 +68,15 @@ public partial class MenuData : ObservableObject {
 			new("得意先イベントメンテ", typeof(Views._01Master.TranTokuiPromotionMenteView), addInfo:"得意先、日付別のイベント名と重要度を登録"),
 			new("店舗イベントメンテ", typeof(Views._01Master.TranShopPromotionMenteView), addInfo:"店舗、日付別のイベント名と重要度を登録"),
 			new("商品バーコードブック", typeof(Views._01Master.MasterPrintBarcodeView), addInfo:"商品バーコードブック印刷"),
-			new("上代一括変更", typeof(Views._01Master.MasterJouDaiBulkChangeView), addInfo:"準備中"),
 			new("取込レイアウト作成", typeof(Views._01Master.ImportTemplateCreateView), addInfo:"テーブル列定義からUTF-8 CSV取込レイアウトを作成"),
 			new("外部CSVマスタ取込", typeof(Views._01Master.ExternalCsvImportView), addInfo:"取込レイアウトCSVを検証してInsertBulkParamで登録"),
+			new("上代一括変更", typeof(Views._01Master.MasterJouDaiBulkChangeView), addInfo:"準備中"),
 			new("原価変更登録", typeof(Views._01Master.GenkaChangeEntryView), addInfo:"準備中"),
 			new("評価替", typeof(Views._01Master.ProductRatingChangeView), addInfo:"準備中"),
 		])),
         /* ================================ */
 		new("■ 予算", new([
-			new("店ブランド予算マスタ", typeof(Views._02Yosan.ShopBrandBudgetMasterView), addInfo:"準備中"),
+			new("店ブランド予算マスタ(月)", typeof(Views._02Yosan.ShopBrandBudgetMasterView), addInfo:"店ブランド別の月毎の日予算を作成"),
 			new("店ブランド予算マスタメンテ", typeof(Views._02Yosan.MasterYosanBrandMenteView), addInfo:"MasterYosanBrand の日別予算レコードを直接編集"),
 			new("販売員別予算マスタ", typeof(Views._02Yosan.SalesStaffBudgetMasterView), addInfo:"準備中"),
 			new("営業担当別予算マスタ", typeof(Views._02Yosan.SalesRepBudgetMasterView), addInfo:"準備中"),
@@ -132,7 +132,7 @@ public partial class MenuData : ObservableObject {
 			new("支払残高明細書", typeof(Views._05Shiire.ShiharaiBalanceDetailView), addInfo:"準備中"),
 		])),
 		new("■ 売上", new([
-			new("出荷・売上入力", typeof(Views._06Uriage.ShukkaUriageInputView), addInfo:"準備中"),
+			new("出荷・売上入力", typeof(Views._06Uriage.ShukkaUriageInputView), addInfo:"出荷売上入力"),
 			new("店舗売上入力", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"店舗売上入力"),
 			new("POS日別精算入力", typeof(Views._06Uriage.PosDailySeisanInputView), addInfo:"準備中"),
 			new("売上金種Viewer", typeof(Views._06Uriage.UriageCashTypeReportView), addInfo:"準備中"),
