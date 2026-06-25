@@ -1,3 +1,23 @@
+## [2026-06-25] 14:21 Shop/Store 表現統一の残り修正
+### Agent
+- [Kimi K2.7-code : OpenCode : Sisyphus]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：Shop と Store の表現揺れを統一（B, C 範囲の残りを修正）
+### 実施内容
+- CvBase/BaseDb2Trans.cs: TranHhtData.store2 を shop2 に変更
+- CvWpfclient/Views/40Shop/CategoryStoreSalesReportCostlessView.xaml: CategoryShopSalesReportCostlessView にリネーム・x:Class 更新
+- CvWpfclient/Views/40Shop/CategoryShopSalesReportCostlessView.xaml.cs: partial class 名を CategoryShopSalesReportCostlessView に変更
+- CvWpfclient/ViewModels/40Shop/CategoryShopSalesReportCostlessViewModel.cs: class 名を CategoryShopSalesReportCostlessViewModel に変更
+- CvWpfclient/Models/MenuData.cs: 「分類別店別売上報告(原価無)」の View 型参照を CategoryShopSalesReportCostlessView に更新
+### 技術決定 Why
+- 既存コミット 22497c6 で store → shop、TranStorePromotion → TranShopPromotion、Id_Store → Id_Shop の統一を実施済みだったが、store2 と WPF 画面層の CategoryStoreSalesReportCostlessView が残っていたため、Shop 表現で統一した
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-25] 13:56 得意先イベントメンテ専用検索ダイアログ追加
 ### Agent
 - GPT-5 : OpenAI : Codex

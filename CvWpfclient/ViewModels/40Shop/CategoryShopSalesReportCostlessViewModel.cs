@@ -7,5 +7,5 @@ using System.Diagnostics;
 
 namespace CvWpfclient.ViewModels._40Shop;
 
-public partial class CategoryStoreSalesReportCostlessViewModel : Helpers.BaseViewModel {
+public partial class CategoryShopSalesReportCostlessViewModel : Helpers.BaseViewModel {
 }

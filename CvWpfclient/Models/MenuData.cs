@@ -283,7 +283,7 @@ public partial class MenuData : ObservableObject {
 			new("汎用在庫表(原価無)", typeof(Views._40Shop.GeneralInventoryTableCostlessView), addInfo:"準備中"),
 			new("売上速報(原価無)", typeof(Views._40Shop.SalesQuickReportCostlessView), addInfo:"準備中"),
 			new("売上週報･月報(原価無)", typeof(Views._40Shop.SalesWeeklyMonthlyReportCostlessView), addInfo:"準備中"),
-			new("分類別店別売上報告(原価無)", typeof(Views._40Shop.CategoryStoreSalesReportCostlessView), addInfo:"準備中"),
+			new("分類別店別売上報告(原価無)", typeof(Views._40Shop.CategoryShopSalesReportCostlessView), addInfo:"準備中"),
 		])),
 		new("■ 物流", new([
 			new("マスタデータ作成", typeof(Views._41Logistics.LogisticsMasterDataCreateView), addInfo:"準備中"),

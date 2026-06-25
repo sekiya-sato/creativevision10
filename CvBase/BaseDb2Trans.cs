@@ -1106,7 +1106,7 @@ public sealed partial class TranHhtData : BaseDbClass {
 	[ObservableProperty]
 	[property: ColumnSizeDml(8)]
 	[property: System.ComponentModel.DefaultValue("")]
-	string store2 = string.Empty;
+	string shop2 = string.Empty;
 	/// <summary>
 	/// セールFLG	文字	1
 	/// </summary>
