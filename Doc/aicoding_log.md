@@ -1,3 +1,23 @@
+## [2026-06-25] 15:56 出荷・売上入力画面作成
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：ShukkaUriageInputView の View / ViewModel 雛形を、ShopUriageInputView を参考に伝票入力画面として作成し、検索画面を共用できるようにする
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShukkaUriageInputView.xaml: 店舗売上入力と同じ一覧/詳細タブ構成で、Tran00Uriage 用の得意先・倉庫・担当者・掛計上日・請求フラグ・手入力No・関連No・明細入力 UI を作成
+- CvWpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs: Tran00Uriage 向け一覧検索、RangeInputParamView 共用呼び出し、明細同期、合計再計算、商品/色/サイズ/担当者選択、バーコード入力反映を実装
+### 技術決定 Why
+- 検索条件画面は既存の SelectInputParameter が表示名・取引先ラベル・検索条件を持つため、得意先Id用パラメータを渡して RangeInputParamView を共用した
+- 明細入力は ShopUriageInputView と同じ Tran99Meisai / SelectShohin / SelectShohinColSiz / InputBarcode 経路を使い、画面ごとの差分をヘッダ項目と Tran00Uriage の検索条件に限定した
+### 確認
+- `CvWpfclient/Views/06Uriage/ShukkaUriageInputView.xaml` の XML パース成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-25] 14:58 共通検索ボタンのアイコン色統一
 ### Agent
 - GPT-5 : OpenAI : Codex
