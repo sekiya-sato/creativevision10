@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Parameter.DisplayName, StringFormat={}{0}選択}"
-	Width="780" Height="520"
+	Width="820" Height="620"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="18" WindowStartupLocation="CenterOwner"
 	mc:Ignorable="d">
@@ -18,6 +18,14 @@
 			<Setter Property="Margin" Value="0,4" />
 			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
 			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+		</Style>
+		<Style x:Key="SelectionResultText"
+			TargetType="TextBlock">
+			<Setter Property="MinWidth" Value="0" />
+			<Setter Property="Margin" Value="12,0,8,0" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+			<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 		</Style>
 	</helpers:BaseWindow.Resources>
 
@@ -61,6 +69,8 @@
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid Margin="2">
 					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
@@ -136,13 +146,87 @@
 						</TextBlock>
 					</DockPanel>
 
-					<TextBlock Grid.Row="2" Grid.Column="0"
+					<DockPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6"
+						Margin="0,4"
+						IsEnabled="{Binding IsAdditionalIds1Enabled}"
+						Opacity="{Binding AdditionalIds1RowOpacity}">
+						<TextBlock Margin="0,0,12,0" VerticalAlignment="Center"
+							DockPanel.Dock="Left" FontWeight="Medium"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding Parameter.AdditionalIds1Label}" />
+						<Button Width="110" Height="36"
+							Command="{Binding DoSelectAdditionalIds1Command}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MaterialDesignRaisedButton}"
+							ToolTip="{Binding Parameter.AdditionalIds1Label, StringFormat={}{0}を選択}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearAdditionalIds1Command}"
+							Content="解除" DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							ToolTip="{Binding Parameter.AdditionalIds1Label, StringFormat={}{0}の選択を解除}" />
+						<TextBlock Style="{StaticResource SelectionResultText}"
+							Text="{Binding Parameter.AdditionalIds1Text}"
+							ToolTipService.InitialShowDelay="300">
+							<TextBlock.ToolTip>
+								<TextBlock MaxWidth="600"
+									Text="{Binding Parameter.AdditionalIds1Text}"
+									TextWrapping="Wrap" />
+							</TextBlock.ToolTip>
+						</TextBlock>
+					</DockPanel>
+
+					<DockPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6"
+						Margin="0,4"
+						IsEnabled="{Binding IsAdditionalIds2Enabled}"
+						Opacity="{Binding AdditionalIds2RowOpacity}">
+						<TextBlock Margin="0,0,12,0" VerticalAlignment="Center"
+							DockPanel.Dock="Left" FontWeight="Medium"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding Parameter.AdditionalIds2Label}" />
+						<Button Width="110" Height="36"
+							Command="{Binding DoSelectAdditionalIds2Command}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MaterialDesignRaisedButton}"
+							ToolTip="{Binding Parameter.AdditionalIds2Label, StringFormat={}{0}を選択}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearAdditionalIds2Command}"
+							Content="解除" DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							ToolTip="{Binding Parameter.AdditionalIds2Label, StringFormat={}{0}の選択を解除}" />
+						<TextBlock Style="{StaticResource SelectionResultText}"
+							Text="{Binding Parameter.AdditionalIds2Text}"
+							ToolTipService.InitialShowDelay="300">
+							<TextBlock.ToolTip>
+								<TextBlock MaxWidth="600"
+									Text="{Binding Parameter.AdditionalIds2Text}"
+									TextWrapping="Wrap" />
+							</TextBlock.ToolTip>
+						</TextBlock>
+					</DockPanel>
+
+					<TextBlock Grid.Row="4" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="{Binding Parameter.ToriLabel}"
 						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
-					<DockPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="5"
+					<DockPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="5"
 						Margin="0,4"
 						Visibility="{Binding Parameter.IsToriVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
 						<Button Width="110" Height="36"
@@ -174,32 +258,32 @@
 						</TextBlock>
 					</DockPanel>
 
-					<TextBlock Grid.Row="3" Grid.Column="0"
+					<TextBlock Grid.Row="5" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="名前(部分一致)" /></TextBlock>
-					<TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="5"
+					<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="5"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="名前"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.Name, UpdateSourceTrigger=PropertyChanged}" />
 
-					<TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="6"
+					<TextBlock Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="6"
 						Margin="0,8,0,0"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="{Binding Parameter.DisplayName, StringFormat={}範囲を指定しない場合、すべての{0}が対象になります。}"
 						TextWrapping="Wrap" />
 
-					<TextBlock Grid.Row="5" Grid.Column="0"
+					<TextBlock Grid.Row="7" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="件数" /></TextBlock>
-					<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"
+					<TextBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2"
 						Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="件数"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
-					<TextBlock Grid.Row="5" Grid.Column="3" Grid.ColumnSpan="3"
+					<TextBlock Grid.Row="7" Grid.Column="3" Grid.ColumnSpan="3"
 						VerticalAlignment="Center"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="(空白:全件取得)" />
