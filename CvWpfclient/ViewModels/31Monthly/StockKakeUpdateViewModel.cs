@@ -68,8 +68,8 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 				var msg = new CvMsg {
 					Code = 0,
 					Flag = CvFlag.Msg051_SummaryRealStock,
-					DataType = typeof(SummaryRealDateParameter),
-					DataMsg = Common.SerializeObject(new SummaryRealDateParameter(yyyymm))
+					DataType = typeof(CalcDateParameter),
+					DataMsg = Common.SerializeObject(new CalcDateParameter(yyyymm))
 				};
 
 				StatusMessage = $"{yyyymm} の処理中...";

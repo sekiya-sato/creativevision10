@@ -116,8 +116,8 @@ public partial class CoreService {
 
 		var param = Common.DeserializeObject(request.DataMsg, request.DataType);
 		var stream = param switch {
-			SummaryDateParameter summaryParam => summaryDb.SummaryAllAsyncStream(summaryParam),
-			SummaryRealDateParameter summaryReal => summaryDb.SummaryRealAsyncStream(summaryReal),
+			CalcDateTermParameter summaryParam => summaryDb.SummaryAllAsyncStream(summaryParam),
+			CalcDateParameter summaryReal => summaryDb.SummaryRealAsyncStream(summaryReal),
 			_ => null
 		};
 

@@ -262,7 +262,7 @@ public class SchedulerService : ISchedulerService {
 				cancellationToken.IsCancellationRequested);
 
 			var summaryDb = new SummaryDb(db);
-			var param = new SummaryDateParameter(yyyymm, yyyymm);
+			var param = new CalcDateTermParameter(yyyymm, yyyymm);
 			await foreach (var step in summaryDb.SummaryAllAsyncStream(param).WithCancellation(cancellationToken)) {
 				if (step.IsCompleted) {
 					memo = $"集計完了: yyyymm={yyyymm}, Duration={step.ErrorMessage}";

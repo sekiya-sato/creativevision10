@@ -11,8 +11,8 @@ public class SummaryDb {
 		_db = db;
 		_logger = new NLogExtender<SummaryDb>();
 	}
-	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(SummaryDateParameter param) {
-		(string Name, Func<SummaryDateParameter, int> Action)[] steps = [
+	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(CalcDateTermParameter param) {
+		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
 			/*
 			*/
 			($"Summary : {nameof(Tran00Uriage)}", CalcSummaryStockTrn<Tran00Uriage>),
@@ -38,7 +38,7 @@ public class SummaryDb {
 	/// <typeparam name="T"></typeparam>
 	/// <param name="param"></param>
 	/// <returns></returns>
-	private int CalcSummaryStockTrn<T>(SummaryDateParameter param) where T : ITranDetail {
+	private int CalcSummaryStockTrn<T>(CalcDateTermParameter param) where T : ITranDetail {
 		var cnt = 0;
 		var tableName = typeof(T).Name;
 		var calcFlag = TranCalcBase.GetCalcSoko(tableName);
@@ -207,7 +207,7 @@ WHERE SumMonth <= @0;
 		return cnt;
 	}
 
-	public IAsyncEnumerable<StreamStepProgress> SummaryRealAsyncStream(SummaryRealDateParameter param) {
+	public IAsyncEnumerable<StreamStepProgress> SummaryRealAsyncStream(CalcDateParameter param) {
 		(string Name, Func<string, int> Action)[] steps = [
 			/*
 			*/

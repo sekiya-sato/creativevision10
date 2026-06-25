@@ -178,13 +178,16 @@ public sealed record OutDataHhtMasterParam {
 }
 
 /// <summary>
-/// 在庫集計テーブルを計算する際の期間指定パラメータ
+/// 計算する際の期間指定パラメータ
 /// </summary>
 /// <param name="DateYymmFrom"></param>
 /// <param name="DateYymmTo"></param>
-public record SummaryDateParameter(string DateYymmFrom, string DateYymmTo);
-
-public record SummaryRealDateParameter(string DateYymm);
+public record CalcDateTermParameter(string DateYymmFrom, string DateYymmTo);
+/// <summary>
+/// 計算する際の年月指定パラメータ
+/// </summary>
+/// <param name="DateYymm"></param>
+public record CalcDateParameter(string DateYymm);
 
 /// <summary>
 /// 在庫集計テーブルを計算する際のトランID指定パラメータ
