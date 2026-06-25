@@ -9,11 +9,11 @@ using System.Globalization;
 
 namespace CvWpfclient.ViewModels._01Master;
 
-public partial class TranTokuiPromotionMenteViewModel : Helpers.BaseMenteViewModel<TranTokuiPromotion> {
+public partial class TranShopPromotionMenteViewModel : Helpers.BaseMenteViewModel<TranShopPromotion> {
 	public sealed record RankOption(int Value, string Name);
 
 	[ObservableProperty]
-	string title = "得意先イベントメンテ";
+	string title = "店舗イベントメンテ";
 
 	TranPromotionSearchParameter? selectParam;
 
@@ -23,7 +23,7 @@ public partial class TranTokuiPromotionMenteViewModel : Helpers.BaseMenteViewMod
 		new(2, "高")
 	];
 
-	protected override string? ListOrder => "P.DenDay DESC, P.Id_Tokui, P.Id DESC";
+	protected override string? ListOrder => "P.DenDay DESC, P.Id_Shop, P.Id DESC";
 	protected override int? ListMaxCount => selectParam?.MaxCount;
 	protected override string? ListWhere => BuildWhereClause(selectParam);
 
@@ -34,22 +34,22 @@ select
 	P.Id,
 	P.Vdc,
 	P.Vdu,
-	P.Id_Tokui,
+	P.Id_Shop,
 	P.DenDay,
 	P.Mame,
 	P.Rank,
-	ifnull(T.Code, '') TokuiCode,
-	ifnull(T.Name, '') TokuiName,
+	ifnull(T.Code, '') ShopCode,
+	ifnull(T.Name, '') ShopName,
 	case P.Rank when 0 then '低' when 1 then '中' when 2 then '高' else '' end RankName
-from TranTokuiPromotion P
-left join MasterTokui T on T.Id = P.Id_Tokui
+from TranShopPromotion P
+left join MasterTokui T on T.Id = P.Id_Shop
 {query.AddWhereOrder()}
 ";
 		return new CvMsg {
 			Code = 0,
 			Flag = CvFlag.Msg101_Op_Query,
 			DataType = typeof(QueryListSqlParam),
-			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(TranTokuiPromotion), sql, query.Parameters))
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(TranShopPromotion), sql, query.Parameters))
 		};
 	}
 
@@ -64,7 +64,7 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 			return new ValueTask<bool>(true);
 		}
 
-		vm.Initialize(selectParam ?? new TranPromotionSearchParameter { DisplayName = "得意先イベント", TargetIdLabel = "得意先Id", MaxCount = AppGlobal.Limit });
+		vm.Initialize(selectParam ?? new TranPromotionSearchParameter { DisplayName = "店舗イベント", TargetIdLabel = "店舗Id", MaxCount = AppGlobal.Limit });
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			selectParam = vm.Parameter;
 			return new ValueTask<bool>(false);
@@ -94,36 +94,36 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 		return base.CreateUpdateParam();
 	}
 
-	protected override void AfterInsert(TranTokuiPromotion item) {
+	protected override void AfterInsert(TranShopPromotion item) {
 		ApplyDisplayColumns(item);
 		base.AfterInsert(item);
 	}
 
-	protected override void AfterUpdate(TranTokuiPromotion item) {
+	protected override void AfterUpdate(TranShopPromotion item) {
 		ApplyDisplayColumns(Current);
 		base.AfterUpdate(item);
 	}
 
-	protected override string GetInsertConfirmMessage() => $"追加しますか？ (得意先Id={CurrentEdit.Id_Tokui}, 日付={CurrentEdit.DenDay})";
+	protected override string GetInsertConfirmMessage() => $"追加しますか？ (店舗Id={CurrentEdit.Id_Shop}, 日付={CurrentEdit.DenDay})";
 
-	protected override string GetUpdateConfirmMessage() => $"修正しますか？ (得意先Id={CurrentEdit.Id_Tokui}, 日付={CurrentEdit.DenDay}, Id={CurrentEdit.Id})";
+	protected override string GetUpdateConfirmMessage() => $"修正しますか？ (店舗Id={CurrentEdit.Id_Shop}, 日付={CurrentEdit.DenDay}, Id={CurrentEdit.Id})";
 
-	protected override string GetDeleteConfirmMessage() => $"削除しますか？ (得意先Id={CurrentEdit.Id_Tokui}, 日付={CurrentEdit.DenDay}, Id={CurrentEdit.Id})";
+	protected override string GetDeleteConfirmMessage() => $"削除しますか？ (店舗Id={CurrentEdit.Id_Shop}, 日付={CurrentEdit.DenDay}, Id={CurrentEdit.Id})";
 
 	[RelayCommand]
-	void DoSelectTokui() {
-		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), string.Empty, "Code", startPos: CurrentEdit.Id_Tokui);
-		if (tokui == null) return;
+	void DoSelectShop() {
+		var shop = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType in (1,3,6)", "Code", startPos: CurrentEdit.Id_Shop);
+		if (shop == null) return;
 
-		CurrentEdit.Id_Tokui = tokui.Id;
-		CurrentEdit.TokuiCode = tokui.Code ?? string.Empty;
-		CurrentEdit.TokuiName = tokui.Name ?? string.Empty;
+		CurrentEdit.Id_Shop = shop.Id;
+		CurrentEdit.ShopCode = shop.Code ?? string.Empty;
+		CurrentEdit.ShopName = shop.Name ?? string.Empty;
 	}
 
 	bool ValidateCurrentEdit() {
 		NormalizeCurrentEdit();
-		if (CurrentEdit.Id_Tokui <= 0) {
-			Message = "得意先Idを選択してください";
+		if (CurrentEdit.Id_Shop <= 0) {
+			Message = "店舗Idを選択してください";
 			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
 			return false;
 		}
@@ -159,10 +159,10 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 
 		List<string> clauses = [];
 		if (param.FromTargetId.HasValue) {
-			clauses.Add($"P.Id_Tokui >= {param.FromTargetId.Value}");
+			clauses.Add($"P.Id_Shop >= {param.FromTargetId.Value}");
 		}
 		if (param.ToTargetId.HasValue) {
-			clauses.Add($"P.Id_Tokui <= {param.ToTargetId.Value}");
+			clauses.Add($"P.Id_Shop <= {param.ToTargetId.Value}");
 		}
 		if (!string.IsNullOrWhiteSpace(param.FromDate)) {
 			clauses.Add($"P.DenDay >= '{EscapeSqlLiteral(param.FromDate)}'");
@@ -181,11 +181,11 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 			FromDate = string.IsNullOrWhiteSpace(param?.FromDate) ? null : param.FromDate,
 			ToDate = string.IsNullOrWhiteSpace(param?.ToDate) ? null : param.ToDate,
 			MaxCount = param?.MaxCount,
-			DisplayName = string.IsNullOrWhiteSpace(param?.DisplayName) ? "得意先イベント" : param.DisplayName,
-			TargetIdLabel = "得意先Id"
+			DisplayName = string.IsNullOrWhiteSpace(param?.DisplayName) ? "店舗イベント" : param.DisplayName,
+			TargetIdLabel = "店舗Id"
 		};
 
-	static void ApplyDisplayColumns(TranTokuiPromotion item) {
+	static void ApplyDisplayColumns(TranShopPromotion item) {
 		item.RankName = GetRankName(item.Rank);
 	}
 

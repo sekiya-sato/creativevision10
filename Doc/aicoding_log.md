@@ -1,3 +1,29 @@
+## [2026-06-25] 14:41 店舗イベントメンテ画面追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：TranShopPromotion に対して、得意先イベントメンテの店舗Id版となる「店舗イベントメンテ」を新規作成し、検索画面は得意先/店舗で共用できるようにする
+### 実施内容
+- CvBase/BaseDbTransMisc.View.cs: TranShopPromotion に一覧表示用の店舗コード、店舗名、重要度名 ResultColumn を追加
+- CvWpfclient/ViewModels/Sub/TranPromotionSearchParameter.cs, TranPromotionSearchParamViewModel.cs: 得意先イベント/店舗イベントで共用する検索条件Subを追加
+- CvWpfclient/Views/Sub/TranPromotionSearchParamView.xaml/.xaml.cs: 対象Idラベルを可変にした共用検索Subダイアログを追加
+- CvWpfclient/ViewModels/01Master/TranTokuiPromotionMenteViewModel.cs: 得意先イベントメンテの検索Sub参照を共用版へ変更
+- CvWpfclient/ViewModels/01Master/TranShopPromotionMenteViewModel.cs: TranShopPromotion の一覧取得、店舗選択、日付・イベント名・重要度検証、追加/修正/削除確認文言を実装
+- CvWpfclient/Views/01Master/TranShopPromotionMenteView.xaml/.xaml.cs: 店舗Id選択、今日ボタン付き DatePicker、イベント名入力、重要度 ComboBox を持つメンテ画面を追加
+- CvWpfclient/Models/MenuData.cs: 「店舗イベントメンテ」を追加
+### 技術決定 Why
+- 検索Subは得意先Id/店舗Idのラベルだけが異なるため、TargetIdLabel を持つ共用パラメータ/画面にして重複を避けた
+- 店舗Idは既存の店舗系画面と同じく MasterTokui の TenType in (1,3,6) から選択する構成にした
+### 確認
+- TranShopPromotionMenteView.xaml、TranTokuiPromotionMenteView.xaml、TranPromotionSearchParamView.xaml の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-25] 14:21 Shop/Store 表現統一の残り修正
 ### Agent
 - [Kimi K2.7-code : OpenCode : Sisyphus]

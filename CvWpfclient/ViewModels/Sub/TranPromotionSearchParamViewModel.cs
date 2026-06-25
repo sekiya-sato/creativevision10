@@ -5,12 +5,12 @@ using System.Globalization;
 
 namespace CvWpfclient.ViewModels.Sub;
 
-public partial class TranTokuiPromotionSearchParamViewModel : Helpers.BaseViewModel {
+public partial class TranPromotionSearchParamViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	TranTokuiPromotionSearchParameter parameter = new();
+	TranPromotionSearchParameter parameter = new();
 
-	public void Initialize(TranTokuiPromotionSearchParameter? param) {
-		Parameter = param ?? new TranTokuiPromotionSearchParameter { DisplayName = "得意先イベント", MaxCount = AppGlobal.Limit };
+	public void Initialize(TranPromotionSearchParameter? param) {
+		Parameter = param ?? new TranPromotionSearchParameter { DisplayName = "イベント", MaxCount = AppGlobal.Limit };
 	}
 
 	[RelayCommand]
@@ -21,8 +21,8 @@ public partial class TranTokuiPromotionSearchParamViewModel : Helpers.BaseViewMo
 	}
 
 	bool ValidateParameter() {
-		if (Parameter.FromTokuiId.HasValue && Parameter.ToTokuiId.HasValue && Parameter.FromTokuiId.Value > Parameter.ToTokuiId.Value) {
-			MessageEx.ShowWarningDialog("得意先Idの開始は終了以下で入力してください", owner: ClientLib.GetActiveView(this));
+		if (Parameter.FromTargetId.HasValue && Parameter.ToTargetId.HasValue && Parameter.FromTargetId.Value > Parameter.ToTargetId.Value) {
+			MessageEx.ShowWarningDialog($"{Parameter.TargetIdLabel}の開始は終了以下で入力してください", owner: ClientLib.GetActiveView(this));
 			return false;
 		}
 		if (!IsValidDate(Parameter.FromDate)) {
