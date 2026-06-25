@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace CvWpfclient.ViewModels.Sub;
 
-public partial class WebpdfViewModel : ObservableObject {
+public partial class WebPdfViewModel : ObservableObject {
 	const string ReloadQueryKey = "cv_reload";
 	long reloadSequence;
 

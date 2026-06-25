@@ -1,3 +1,35 @@
+## [2026-06-25] 10:38 命名・タイポ修正（P0/P2 + P1 例外）
+### Agent
+- Kimi K2.7-code : OhMyOpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ソリューション全体のクラス名・変数名のタイプミスを変更候補からリストアップし、P0/P2 と個別に指示された P1 例外を修正する
+### 実施内容
+- CvWpfclient/Views/00System/ConvertDbView.xaml/.xaml.cs, ConvertSelectedView.xaml/.xaml.cs: `Concvert` → `Convert` にリネーム（x:Class / DataContext / クラス名 / コンストラクタ名）
+- CvWpfclient/ViewModels/00System/ConvertDbViewModel.cs, ConvertSelectedViewModel.cs: クラス名を `Convert*` に修正
+- CvWpfclient/Views/31Monthly/AutoOrderReplenishExecuteVie.xaml/.xaml.cs + ViewModels/31Monthly/AutoOrderReplenishExecuteVieModel.cs: `Vie` → `View` にリネーム（ファイル名も含む）
+- CvWpfclient/Views/Sub/WebPdfView.xaml/.xaml.cs, ViewModels/Sub/WebPdfViewModel.cs: `Webpdf` → `WebPdf` にリネーム
+- CvWpfclient/Helpers/MessageBoxView.xaml/.xaml.cs: `InfomationIcon` → `InformationIcon`, `ApendExpand` → `AppendExpand`
+- CvWpfclient/Models/MenuData.cs: 上記 View の typeof 参照を新名に更新
+- CvDomainLogic/SummaryDb.cs: `calcFlg` → `calcFlag`, `tablename` → `tableName` に統一
+- CvBase/ExDatabase.cs: XML コメントの `tablename` → `tableName` に統一
+- CvBase/Parameters.cs: `SummaryTranIdParameter` の record パラメータを camelCase から PascalCase に変更
+- CvDomainLogic/HhtProcess.cs: `outMasterMei` → `OutMasterMei` に変更
+### 技術決定 Why
+- P0 は明らかなタイポかつ影響範囲が WPF 内部に限定されるため優先修正
+- P2 はローカル変数・private 領域の命名揺れで修正リスクが低いため対応
+- P1 例外（SummaryTranIdParameter, outMasterMei）はユーザーが個別にリネームを指示したため対応。CodeShare/CvBase の API 変更（ExceptionOccured, EnumGendar, ParamIntNoUse, invertFlg/cmdFlg 等）は対象外とした
+### 影響範囲
+- CvWpfclient 内の View/ViewModel/Helpers/Models
+- CvDomainLogic の HhtProcess, SummaryDb
+- CvBase の Parameters, ExDatabase コメント
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"` が成功（0 警告 0 エラー）
+- `dotnet format --verify-no-changes` は既存の unrelated なフォーマット問題を検出するも、今回編集ファイルには該当なし
+
+---
+
 ## [2026-06-25] 11:10 CvWpfclient View/ViewModel ネーミング統一リネーム
 ### Agent
 - Kimi K2.7-code : OhMyOpenCode : Sisyphus

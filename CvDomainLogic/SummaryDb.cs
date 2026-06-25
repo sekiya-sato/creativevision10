@@ -40,19 +40,19 @@ public class SummaryDb {
 	/// <returns></returns>
 	private int CalcSummaryStockTrn<T>(SummaryDateParameter param) where T : ITranDetail {
 		var cnt = 0;
-		var tablename = typeof(T).Name;
-		var calcFlg = TranCalcBase.GetCalcSoko(tablename);
-		var sql = CreateSummaryStockSql(tablename, "Id_Soko", calcFlg, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
+		var tableName = typeof(T).Name;
+		var calcFlag = TranCalcBase.GetCalcSoko(tableName);
+		var sql = CreateSummaryStockSql(tableName, "Id_Soko", calcFlag, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
 		var period = $"{param.DateYymmFrom}-{param.DateYymmTo}";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-		if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
-			cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Soko", period);
+		if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
+			cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tableName}:Id_Soko", period);
 		}
 		if (typeof(ITranIdo).IsAssignableFrom(typeof(T))) {
-			var calcFlg2 = TranCalcBase.GetCalcIdosaki(tablename);
-			if (calcFlg2.Item1 != 0 || calcFlg2.Item2 != 0 || calcFlg2.Item3 != 0 || calcFlg2.Item4 != 0) {
-				sql = CreateSummaryStockSql(tablename, "Id_Ido", calcFlg2, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
-				cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tablename}:Id_Ido", period);
+			var calcFlag2 = TranCalcBase.GetCalcIdosaki(tableName);
+			if (calcFlag2.Item1 != 0 || calcFlag2.Item2 != 0 || calcFlag2.Item3 != 0 || calcFlag2.Item4 != 0) {
+				sql = CreateSummaryStockSql(tableName, "Id_Ido", calcFlag2, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
+				cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tableName}:Id_Ido", period);
 			}
 		}
 		_db.CompleteTransaction();
@@ -64,15 +64,15 @@ public class SummaryDb {
 	/// <param name="id"></param>
 	/// <param name="invertFlg">在庫計算のフラグを反転させるかどうか</param>
 	/// <returns></returns>
-	public int CalcTran2SummaryStock(string tablename, string idSoko, long id, bool invertFlg) {
+	public int CalcTran2SummaryStock(string tableName, string idSoko, long id, bool invertFlg) {
 		var cnt = 0;
-		var calcFlg = TranCalcBase.GetCalcSoko(tablename, invertFlg);
-		var sql = CreateRealStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
-		if (calcFlg.Item1 != 0) {
-			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
-			if (calcFlg.Item1 != 0 || calcFlg.Item2 != 0 || calcFlg.Item3 != 0 || calcFlg.Item4 != 0) {
-				sql = CreateSummaryStockSql(tablename, idSoko, calcFlg, Common.GetVdate(), "t.Id=@0");
-				cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tablename}:Id_Soko", $"Id={id}");
+		var calcFlag = TranCalcBase.GetCalcSoko(tableName, invertFlg);
+		var sql = CreateRealStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
+		if (calcFlag.Item1 != 0) {
+			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_Soko", $"Id={id}");
+			if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
+				sql = CreateSummaryStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
+				cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_Soko", $"Id={id}");
 			}
 		}
 		return cnt;
@@ -82,7 +82,7 @@ public class SummaryDb {
 		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
 		return updatedCount;
 	}
-	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlg, long vdate, string whereClause) => $@"
+	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause) => $@"
 INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, InQty, OutQty, TransitQty)
 SELECT
   substr(t.DenDay, 1, 6) AS SumMonth,
@@ -90,12 +90,12 @@ SELECT
   json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
   json_extract(j.value, '$.Id_Col')    AS Id_Col,
   json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item1})   AS Su,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item1})   AS Su,
   {vdate} vdc,
   {vdate} vdu,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item2})   AS InQty,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item3})   AS OutQty,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item4})   AS TransitQty
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item2})   AS InQty,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item3})   AS OutQty,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item4})   AS TransitQty
 FROM {tableName} AS t
      CROSS JOIN json_each(t.Jmeisai) AS j
 WHERE {whereClause}
@@ -112,14 +112,14 @@ SET Su = Su + excluded.Su, vdu = {vdate},
     TransitQty = TransitQty + excluded.TransitQty
 ;
 ";
-	private string CreateRealStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlg, long vdate, string whereClause) => $@"
+	private string CreateRealStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause) => $@"
 INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
 SELECT
   t.{idSoko} AS Id_Soko,
   json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
   json_extract(j.value, '$.Id_Col')    AS Id_Col,
   json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlg.Item1})   AS Su,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item1})   AS Su,
   {vdate} vdc,
   {vdate} vdu
 FROM {tableName} AS t

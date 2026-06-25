@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace CvWpfclient.ViewModels._00System;
 
-public partial class ConcvertDbViewModel : BaseViewModel {
+public partial class ConvertDbViewModel : BaseViewModel {
 	[ObservableProperty]
 	private bool isInitDb;
 

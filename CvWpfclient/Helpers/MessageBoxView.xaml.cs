@@ -81,13 +81,13 @@ public partial class MessageBoxView : Window {
 	public MessageBoxView() {
 		InitializeComponent();
 		if (string.IsNullOrWhiteSpace(AppendedMessage))
-			ApendExpand.Visibility = Visibility.Hidden;
+			AppendExpand.Visibility = Visibility.Hidden;
 	}
 	public MessageBoxView(string message, Window? owner = null) {
 		InitializeComponent();
 		Message = message;
 		if (string.IsNullOrWhiteSpace(AppendedMessage))
-			ApendExpand.Visibility = Visibility.Hidden;
+			AppendExpand.Visibility = Visibility.Hidden;
 		if (owner is not null && PresentationSource.FromVisual(owner) is not null) Owner = owner;
 	}
 	public MessageBoxView(string message, string appendedMessage, Window? owner = null) {
@@ -95,7 +95,7 @@ public partial class MessageBoxView : Window {
 		Message = message;
 		AppendedMessage = appendedMessage;
 		if (string.IsNullOrWhiteSpace(AppendedMessage))
-			ApendExpand.Visibility = Visibility.Hidden;
+			AppendExpand.Visibility = Visibility.Hidden;
 		if (owner is not null && PresentationSource.FromVisual(owner) is not null) Owner = owner;
 	}
 	public MessageBoxView(string message, MessageBoxButton button, MessageBoxImage image, Window? owner = null) {
@@ -104,7 +104,7 @@ public partial class MessageBoxView : Window {
 		Button = button;
 		Image = image;
 		if (string.IsNullOrWhiteSpace(AppendedMessage))
-			ApendExpand.Visibility = Visibility.Hidden;
+			AppendExpand.Visibility = Visibility.Hidden;
 		if (owner is not null && PresentationSource.FromVisual(owner) is not null) Owner = owner;
 	}
 	public MessageBoxView(string message, string appendedMessage, MessageBoxButton button, MessageBoxImage image, Window? owner = null) {
@@ -112,7 +112,7 @@ public partial class MessageBoxView : Window {
 		Message = message;
 		AppendedMessage = appendedMessage;
 		if (string.IsNullOrWhiteSpace(AppendedMessage))
-			ApendExpand.Visibility = Visibility.Hidden;
+			AppendExpand.Visibility = Visibility.Hidden;
 		Button = button;
 		Image = image;
 		if (owner is not null && PresentationSource.FromVisual(owner) is not null) Owner = owner;
@@ -124,7 +124,7 @@ public partial class MessageBoxView : Window {
 		Image = image;
 		Color = color;
 		if (string.IsNullOrWhiteSpace(AppendedMessage))
-			ApendExpand.Visibility = Visibility.Hidden;
+			AppendExpand.Visibility = Visibility.Hidden;
 		if (owner is not null && PresentationSource.FromVisual(owner) is not null) Owner = owner;
 	}
 	public MessageBoxView(string message, string appendedMessage, MessageBoxButton button, MessageBoxImage image, Brush color, Window? owner = null) {
@@ -132,7 +132,7 @@ public partial class MessageBoxView : Window {
 		Message = message;
 		AppendedMessage = appendedMessage;
 		if (string.IsNullOrWhiteSpace(AppendedMessage))
-			ApendExpand.Visibility = Visibility.Hidden;
+			AppendExpand.Visibility = Visibility.Hidden;
 		Button = button;
 		Image = image;
 		Color = color;
@@ -144,7 +144,7 @@ public partial class MessageBoxView : Window {
 		DataContext = this;
 		HasAppendedMessage = !string.IsNullOrEmpty(AppendedMessage);
 		if (HasAppendedMessage)
-			ApendExpand.IsExpanded = true;
+			AppendExpand.IsExpanded = true;
 		//
 		//RichTextBox
 		FlowDocument document = MessageRichTextBox.Document;
@@ -201,7 +201,7 @@ public partial class MessageBoxView : Window {
 				WarningIcon.Visibility = Visibility.Visible;
 				break;
 			case MessageBoxImage.Information:  //Same : Asterisk
-				InfomationIcon.Visibility = Visibility.Visible;
+				InformationIcon.Visibility = Visibility.Visible;
 				break;
 			default:
 				break;

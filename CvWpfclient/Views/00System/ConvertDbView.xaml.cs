@@ -1,7 +1,7 @@
 namespace CvWpfclient.Views._00System;
 
-public partial class ConcvertDbView : Helpers.BaseWindow {
-	public ConcvertDbView() {
+public partial class ConvertDbView : Helpers.BaseWindow {
+	public ConvertDbView() {
 		InitializeComponent();
 	}
 }

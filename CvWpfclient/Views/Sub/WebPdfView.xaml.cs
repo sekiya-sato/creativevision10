@@ -7,14 +7,14 @@ using System.Windows.Input;
 namespace CvWpfclient.Views.Sub;
 
 /// <summary>
-/// WebpdfView.xaml の相互作用ロジック
+/// WebPdfView.xaml の相互作用ロジック
 /// </summary>
-public partial class WebpdfView : Window {
+public partial class WebPdfView : Window {
 	private int _retryCount;
 	private const int MaxRetryCount = 5;
 	private const int RetryDelayMs = 2000;
 
-	public WebpdfView() {
+	public WebPdfView() {
 		InitializeComponent();
 		PreviewKeyDown += OnPreviewKeyDown;
 		WebView.PreviewKeyDown += OnPreviewKeyDown;
@@ -27,7 +27,7 @@ public partial class WebpdfView : Window {
 		}
 
 		e.Handled = true;
-		if (DataContext is not WebpdfViewModel vm || !vm.ReloadCommand.CanExecute(null)) {
+		if (DataContext is not WebPdfViewModel vm || !vm.ReloadCommand.CanExecute(null)) {
 			return;
 		}
 

@@ -19,9 +19,9 @@ public partial class HhtProcess {
 	/// 
 	/// </summary>
 	/// <param name="isFix">isFix=trueの場合、コードはゼロ埋め8桁、名前はSJIS 40byte固定長で変換する。isFix=falseの場合は元の値をそのまま使用する。</param>
-	/// <param name="outMasterMei">1=略称, 2=カナ, その他=正式名称</param>
+	/// <param name="OutMasterMei">1=略称, 2=カナ, その他=正式名称</param>
 	/// <returns></returns>
-	public List<string> CreateMaster(bool isFix = false, int outMasterMei = 0) {
+	public List<string> CreateMaster(bool isFix = false, int OutMasterMei = 0) {
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 		List<MasterHht> masters = new();
@@ -30,31 +30,31 @@ public partial class HhtProcess {
 		var tan = _db.Fetch<MasterShain>();
 		var tok = _db.Fetch<MasterTokui>("where TenType not in (6)");
 
-		AddTorihikiMasters(masters, sir, "SIR", outMasterMei);
-		AddTorihikiMasters(masters, sok, "SOK", outMasterMei);
-		AddShainMasters(masters, tan, outMasterMei);
-		AddTorihikiMasters(masters, tok, "TOK", outMasterMei);
+		AddTorihikiMasters(masters, sir, "SIR", OutMasterMei);
+		AddTorihikiMasters(masters, sok, "SOK", OutMasterMei);
+		AddShainMasters(masters, tan, OutMasterMei);
+		AddTorihikiMasters(masters, tok, "TOK", OutMasterMei);
 
 		return CreateOutputLines(masters, isFix);
 	}
 
-	private static void AddTorihikiMasters<T>(List<MasterHht> masters, IEnumerable<T> source, string kubun, int outMasterMei)
+	private static void AddTorihikiMasters<T>(List<MasterHht> masters, IEnumerable<T> source, string kubun, int OutMasterMei)
 		where T : MasterTorihiki {
 		foreach (var item in source) {
 			masters.Add(CreateMasterHht(
 				kubun,
 				item.Code ?? string.Empty,
-				Sanitize(SelectName(null, item, outMasterMei)),
+				Sanitize(SelectName(null, item, OutMasterMei)),
 				Sanitize(item.Ryaku ?? string.Empty)));
 		}
 	}
 
-	private static void AddShainMasters(List<MasterHht> masters, IEnumerable<MasterShain> source, int outMasterMei) {
+	private static void AddShainMasters(List<MasterHht> masters, IEnumerable<MasterShain> source, int OutMasterMei) {
 		foreach (var item in source) {
 			masters.Add(CreateMasterHht(
 				"TAN",
 				(item.Code ?? string.Empty).PadLeft(6, '0') + "  ",
-				Sanitize(SelectName(item, null, outMasterMei)),
+				Sanitize(SelectName(item, null, OutMasterMei)),
 				string.Empty));
 		}
 	}
@@ -103,8 +103,8 @@ public partial class HhtProcess {
 		return '"' + s.Replace("\"", "\"\"") + '"';
 	}
 
-	private static string SelectName(MasterShain? shain, MasterTorihiki? torihiki, int outMasterMei) {
-		return outMasterMei switch {
+	private static string SelectName(MasterShain? shain, MasterTorihiki? torihiki, int OutMasterMei) {
+		return OutMasterMei switch {
 			1 => !string.IsNullOrWhiteSpace(shain?.Ryaku) ? shain.Ryaku : !string.IsNullOrWhiteSpace(torihiki?.Ryaku) ? torihiki.Ryaku : torihiki?.Name ?? string.Empty,
 			2 => !string.IsNullOrWhiteSpace(shain?.Kana) ? shain.Kana : !string.IsNullOrWhiteSpace(torihiki?.Kana) ? torihiki.Kana : torihiki?.Name ?? string.Empty,
 			_ => torihiki?.Name ?? shain?.Name ?? string.Empty,

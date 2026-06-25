@@ -263,7 +263,7 @@ public partial class MenuData : ObservableObject {
 			new("消化仕入更新", typeof(Views._31Monthly.ConsumptionPurchaseUpdateView), addInfo:"準備中"),
 			new("積送中クリア", typeof(Views._31Monthly.InTransitClearView), addInfo:"準備中"),
 			new("月間データ集計", typeof(Views._31Monthly.MonthlyDataSummaryView), addInfo:"準備中"),
-			new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteVie), addInfo:"準備中"),
+			new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteView), addInfo:"準備中"),
 		])),
 		new("■ Loyal Customer", new([
 			new("顧客マスタ", typeof(Views._32LoyalCustomer.CustomerMasterView), addInfo:"準備中"),

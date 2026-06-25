@@ -9,7 +9,7 @@ using System.Windows;
 
 namespace CvWpfclient.ViewModels._00System;
 
-public partial class ConcvertSelectedViewModel : BaseViewModel {
+public partial class ConvertSelectedViewModel : BaseViewModel {
 	[ObservableProperty]
 	private bool isInitDb;
 

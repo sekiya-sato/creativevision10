@@ -189,10 +189,10 @@ public record SummaryRealDateParameter(string DateYymm);
 /// <summary>
 /// 在庫集計テーブルを計算する際のトランID指定パラメータ
 /// </summary>
-/// <param name="tableName"></param>
-/// <param name="tranId"></param>
-/// <param name="calcFlag">登録+1, 修正-1,+1, 削除-1</param>
-public record SummaryTranIdParameter(string tableName, long tranId, int calcFlag);
+/// <param name="TableName"></param>
+/// <param name="TranId"></param>
+/// <param name="CalcFlag">登録+1, 修正-1,+1, 削除-1</param>
+public record SummaryTranIdParameter(string TableName, long TranId, int CalcFlag);
 
 
 /// <summary>

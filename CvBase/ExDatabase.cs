@@ -219,7 +219,7 @@ public partial class ExDatabase : Database {
 	/// <summary>
 	/// テーブルが存在するかどうか
 	/// </summary>
-	/// <param name="tablename"></param>
+	/// <param name="tableName"></param>
 	/// <returns></returns>
 	public bool IsExistTable(Type classT) {
 		var tableName = GetTableName(classT); // テーブル名 [Table name]
@@ -228,7 +228,7 @@ public partial class ExDatabase : Database {
 	/// <summary>
 	/// テーブルが存在するかどうか
 	/// </summary>
-	/// <param name="tablename"></param>
+	/// <param name="tableName"></param>
 	/// <returns></returns>
 	public bool IsExistTable(string tableName) {
 		bool ret = false;

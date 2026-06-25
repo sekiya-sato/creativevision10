@@ -7,5 +7,5 @@ using System.Diagnostics;
 
 namespace CvWpfclient.ViewModels._31Monthly;
 
-public partial class AutoOrderReplenishExecuteVieModel : Helpers.BaseViewModel {
+public partial class AutoOrderReplenishExecuteViewModel : Helpers.BaseViewModel {
 }
