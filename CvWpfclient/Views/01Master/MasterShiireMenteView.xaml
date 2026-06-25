@@ -570,8 +570,7 @@
 								</DockPanel>
 
 								<TextBlock Grid.Row="7"
-									Style="{StaticResource FormLabel}"
-									Text="仕入先" />
+									Style="{StaticResource FormLabel}"><Run Text="支払" /><Run Language="ja-jp" Text="先" /></TextBlock>
 								<DockPanel Grid.Row="7" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
