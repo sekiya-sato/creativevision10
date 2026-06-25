@@ -11,6 +11,14 @@ public sealed record class SelectParameter {
 	public string? ToriSearchWhere { get; set; }
 	public List<long> ToriIds { get; set; } = [];
 	public string ToriIdsText { get; set; } = "未選択";
+	public string AdditionalIds1Label { get; set; } = "複数Id 1";
+	public string? AdditionalIds1Column { get; set; }
+	public List<long> AdditionalIds1 { get; set; } = [];
+	public string AdditionalIds1Text { get; set; } = "未選択";
+	public string AdditionalIds2Label { get; set; } = "複数Id 2";
+	public string? AdditionalIds2Column { get; set; }
+	public List<long> AdditionalIds2 { get; set; } = [];
+	public string AdditionalIds2Text { get; set; } = "未選択";
 	public string? FromCode { get; set; }
 	public string? ToCode { get; set; }
 	public List<long> ItemIds { get; set; } = [];

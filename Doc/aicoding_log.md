@@ -1,3 +1,27 @@
+## [2026-06-25] 09:09 RangeParamView の追加複数Id条件対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：RangeParamView に Id 複数選択行をさらに2行追加し、未指定時はグレーアウト、ラベル名も指定可能にする
+### 実施内容
+- CvWpfclient/Views/Sub/RangeParamView.xaml: 既存 Id 複数選択行と同じ見た目で追加複数Id条件2行を配置し、未指定行は無効化・半透明表示するようレイアウトを調整
+- CvWpfclient/ViewModels/Sub/RangeParamViewModel.cs: 追加複数Id条件2系統の選択・解除コマンド、ラベル指定、選択テーブル未指定時の無効化制御を追加
+- CvWpfclient/ViewModels/Sub/SelectParameter.cs: 追加複数Id条件2系統のラベル、SQL列名、選択Id、表示テキストを保持するプロパティを追加
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs, CvWpfclient/ViewModels/Sub/SelectDisplayConditionHelper.cs: 追加複数Id条件を正規化し、列名指定時だけ IN 条件へ反映するよう対応
+### 技術決定 Why
+- 既存の Id 複数選択行の見た目を維持するため、追加2行も同じ DockPanel 構造にした
+- 呼び出し側がテーブル型を渡していない条件行は表示したまま無効化し、複数条件の有無が画面上で分かるようにした
+- 汎用画面から SQL 条件を安全に拡張できるよう、列名が指定された場合だけ追加 Id 条件を where に含める設計にした
+### 確認
+- RangeParamView.xaml の XML パース成功
+- `git diff --check` 成功
+- 通常出力先の `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は CreativeVision10 (14288) と Visual Studio (10744) の DLL ロックで失敗
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -p:OutputPath=obj\CodexBuildOutput\"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-25] 08:47 push前コミット書き換え手順のskill化
 ### Agent
 - GPT-5 : OpenAI : Codex
