@@ -1,3 +1,27 @@
+## [2026-06-25] 13:56 得意先イベントメンテ専用検索ダイアログ追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：得意先イベントメンテから呼び出す検索Subダイアログを新規作成し、条件を得意先Id from-to、日付 from-to、件数に限定する。メニュー位置は顧客マスタメンテの下にする
+### 実施内容
+- CvWpfclient/ViewModels/Sub/TranTokuiPromotionSearchParameter.cs: 専用検索条件パラメータを追加
+- CvWpfclient/ViewModels/Sub/TranTokuiPromotionSearchParamViewModel.cs: 専用検索Subダイアログの初期化、入力検証、OK処理を追加
+- CvWpfclient/Views/Sub/TranTokuiPromotionSearchParamView.xaml/.xaml.cs: 得意先Id範囲、日付範囲、件数だけを入力する検索Subダイアログを追加
+- CvWpfclient/ViewModels/01Master/TranTokuiPromotionMenteViewModel.cs: 一覧取得前に専用検索Subダイアログを表示し、P.Id_Tokui と P.DenDay の検索条件、MaxCount を反映するよう変更
+- CvWpfclient/Models/MenuData.cs: 「得意先イベントメンテ」を「顧客マスタメンテ」の下へ移動
+### 技術決定 Why
+- 汎用 RangeParamView では条件が多すぎるため、TranTokuiPromotion 専用の軽量検索Subダイアログを作成した
+- JOIN 付き一覧SQLの曖昧列を避けるため、検索条件は P.Id_Tokui / P.DenDay として TranTokuiPromotion 側の列へ明示的に適用した
+### 確認
+- TranTokuiPromotionSearchParamView.xaml と TranTokuiPromotionMenteView.xaml の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-25] 13:50 得意先イベントメンテ画面追加
 ### Agent
 - GPT-5 : OpenAI : Codex

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using System.Globalization;
 
 namespace CvWpfclient.ViewModels._01Master;
@@ -14,6 +15,8 @@ public partial class TranTokuiPromotionMenteViewModel : Helpers.BaseMenteViewMod
 	[ObservableProperty]
 	string title = "得意先イベントメンテ";
 
+	TranTokuiPromotionSearchParameter? selectParam;
+
 	public IReadOnlyList<RankOption> RankOptions { get; } = [
 		new(0, "低"),
 		new(1, "中"),
@@ -21,7 +24,8 @@ public partial class TranTokuiPromotionMenteViewModel : Helpers.BaseMenteViewMod
 	];
 
 	protected override string? ListOrder => "P.DenDay DESC, P.Id_Tokui, P.Id DESC";
-	protected override int? ListMaxCount => AppGlobal.Limit;
+	protected override int? ListMaxCount => selectParam?.MaxCount;
+	protected override string? ListWhere => BuildWhereClause(selectParam);
 
 	protected override CvMsg CreateListMessage() {
 		var query = CreateListQueryParam();
@@ -51,6 +55,24 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 
 	[RelayCommand]
 	async Task Init() => await DoList(CancellationToken.None);
+
+	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+
+		var selWin = new Views.Sub.TranTokuiPromotionSearchParamView();
+		if (selWin.DataContext is not TranTokuiPromotionSearchParamViewModel vm) {
+			return new ValueTask<bool>(true);
+		}
+
+		vm.Initialize(selectParam ?? new TranTokuiPromotionSearchParameter { DisplayName = "得意先イベント", MaxCount = AppGlobal.Limit });
+		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
+			selectParam = vm.Parameter;
+			return new ValueTask<bool>(false);
+		}
+
+		selectParam = NormalizeSearchParameter(vm.Parameter);
+		return new ValueTask<bool>(true);
+	}
 
 	protected override bool CanUpdate() => CurrentEdit.Id > 0;
 
@@ -131,6 +153,36 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 		CurrentEdit.Mame = (CurrentEdit.Mame ?? string.Empty).Trim();
 		CurrentEdit.RankName = GetRankName(CurrentEdit.Rank);
 	}
+
+	static string? BuildWhereClause(TranTokuiPromotionSearchParameter? param) {
+		if (param == null) return null;
+
+		List<string> clauses = [];
+		if (param.FromTokuiId.HasValue) {
+			clauses.Add($"P.Id_Tokui >= {param.FromTokuiId.Value}");
+		}
+		if (param.ToTokuiId.HasValue) {
+			clauses.Add($"P.Id_Tokui <= {param.ToTokuiId.Value}");
+		}
+		if (!string.IsNullOrWhiteSpace(param.FromDate)) {
+			clauses.Add($"P.DenDay >= '{EscapeSqlLiteral(param.FromDate)}'");
+		}
+		if (!string.IsNullOrWhiteSpace(param.ToDate)) {
+			clauses.Add($"P.DenDay <= '{EscapeSqlLiteral(param.ToDate)}'");
+		}
+
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	static TranTokuiPromotionSearchParameter NormalizeSearchParameter(TranTokuiPromotionSearchParameter? param) =>
+		new() {
+			FromTokuiId = param?.FromTokuiId,
+			ToTokuiId = param?.ToTokuiId,
+			FromDate = string.IsNullOrWhiteSpace(param?.FromDate) ? null : param.FromDate,
+			ToDate = string.IsNullOrWhiteSpace(param?.ToDate) ? null : param.ToDate,
+			MaxCount = param?.MaxCount,
+			DisplayName = string.IsNullOrWhiteSpace(param?.DisplayName) ? "得意先イベント" : param.DisplayName
+		};
 
 	static void ApplyDisplayColumns(TranTokuiPromotion item) {
 		item.RankName = GetRankName(item.Rank);
