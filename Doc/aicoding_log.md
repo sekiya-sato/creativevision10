@@ -22,6 +22,8 @@
 ### 確認
 - `grep -R "Concvert\|Webpdf\|RangeParamMiniViewModels" CvWpfclient/` で旧型名残存なしを確認
 - `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+- 通常出力先の `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は CreativeVision10 (14288) と Visual Studio (10744) の DLL ロックで失敗
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -p:OutputPath=obj\CodexBuildOutput\"` が成功（0 警告 0 エラー）
 
 ---
 
@@ -44,8 +46,7 @@
 ### 確認
 - RangeParamView.xaml の XML パース成功
 - `git diff --check` 成功
-- 通常出力先の `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` は CreativeVision10 (14288) と Visual Studio (10744) の DLL ロックで失敗
-- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -p:OutputPath=obj\CodexBuildOutput\"` が成功（0 警告 0 エラー）
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
 
 ---
 
