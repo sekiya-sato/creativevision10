@@ -1,3 +1,26 @@
+## [2026-06-25] 13:50 得意先イベントメンテ画面追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：TranTokuiPromotion に対して、得意先・日付ごとにイベント名と重要度を登録できるマスタメンテ系画面を新規作成する
+### 実施内容
+- CvBase/BaseDbTransMisc.View.cs: TranTokuiPromotion に一覧表示用の得意先コード、得意先名、重要度名 ResultColumn を追加
+- CvWpfclient/ViewModels/01Master/TranTokuiPromotionMenteViewModel.cs: BaseMenteViewModel ベースの一覧取得、得意先選択、日付・イベント名・重要度検証、追加/修正/削除確認文言を実装
+- CvWpfclient/Views/01Master/TranTokuiPromotionMenteView.xaml/.xaml.cs: 得意先選択ボタン、今日ボタン付き DatePicker、イベント名入力、重要度 ComboBox を持つメンテ画面を追加
+- CvWpfclient/Models/MenuData.cs: 「得意先イベントメンテ」をマスター配下の得意先マスタ近傍へ追加
+### 技術決定 Why
+- 表示用の得意先名と重要度名は ResultColumn とし、TranTokuiPromotion のDB列を増やさず一覧表示だけ拡張した
+- 日付は既存の DateYmd8Converter と DatePickerTodayButtonBehavior を使い、yyyyMMdd 文字列保存と今日ボタン付き選択を両立した
+### 確認
+- TranTokuiPromotionMenteView.xaml の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-25] 10:38 命名・タイポ修正（P0/P2 + P1 例外）
 ### Agent
 - Kimi K2.7-code : OhMyOpenCode : Sisyphus
