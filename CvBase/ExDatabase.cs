@@ -453,11 +453,11 @@ public partial class ExDatabase : Database {
 	/// RawExecCommand用のSQL文の生成
 	/// [Generate SQL statements for RawExecCommand]
 	/// </summary>
-	/// <param name="cmdFlg"></param>
+	/// <param name="cmdFlag"></param>
 	/// <param name="addSql"></param>
 	/// <returns></returns>
-	public string RawExecGetSql(RawExecCmdEnum cmdFlg, string? addSql = null) {
-		switch (cmdFlg) {
+	public string RawExecGetSql(RawExecCmdEnum cmdFlag, string? addSql = null) {
+		switch (cmdFlag) {
 			case RawExecCmdEnum.ShowTables:
 				return "show tables";
 			//case RawExecCmdEnum.ShowColumns:

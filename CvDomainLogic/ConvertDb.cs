@@ -321,7 +321,8 @@ public partial class ConvertDb {
 	/// </summary>
 	/// <param name="isInit"></param>
 	/// <returns></returns>
-	private int CnvOptionMasterEndCustomer__NoUse() {
+	[Obsolete]
+	private int CnvOptionMasterEndCustomer_Disabled() {
 		const string sql = "select 顧客CD,拡張メモ from HC$master_kokyaku where 顧客CD>'.' and 拡張メモ>'.'  order by 顧客CD"; // 顧客分類 'K01'-'K10'
 		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql);
 		if (rows.Count == 0)
@@ -682,7 +683,8 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 		}
 		return cnt;
 	}
-	public int CnvAfterMasterOption__NoUse() {
+	[Obsolete]
+	public int CnvAfterMasterOption_Disabled() {
 		int cnt = 0;
 		// MasterEndCustomer の Memo をキーに MasterTokui を検索し、該当する場合は MasterEndCustomer の Memo を更新する
 		var customerList = _toDb.Fetch<MasterEndCustomer>("where Memo IS NOT NULL AND Memo <> ''");

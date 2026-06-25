@@ -168,12 +168,12 @@ public sealed class DeleteByIdParam {
 /// <summary>
 /// データ出力I/F : HHTマスタデータ作成パラメータ
 /// </summary>
-public sealed class OutDataHhtMasterParam {
+public sealed record OutDataHhtMasterParam {
 	public bool IsFixedLengthFormat { get; set; }
-	public int ParamIntNoUse { get; set; }
-	public OutDataHhtMasterParam(bool isFixedLengthFormat, int paramIntNoUse) {
+	public int ReservedInt { get; set; }
+	public OutDataHhtMasterParam(bool isFixedLengthFormat, int reservedInt) {
 		IsFixedLengthFormat = isFixedLengthFormat;
-		ParamIntNoUse = paramIntNoUse;
+		ReservedInt = reservedInt;
 	}
 }
 

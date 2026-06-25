@@ -3,7 +3,7 @@ namespace CvBase.Share;
 /// <summary>
 /// 性別 [property: ColumnSizeDml(ctype:ColumnType.Enum)]
 /// </summary>
-public enum EnumGendar : int {
+public enum EnumGender : int {
 	Unknown = 0,
 	Woman = 1,
 	Man = 2

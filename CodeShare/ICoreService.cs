@@ -185,7 +185,7 @@ public enum CvFlag {
 	/// [Exception error QueryDbResult]
 	/// </summary>
 	[EnumMember]
-	Msg802_Error_ExceptionOccured = 9802,
+	Msg802_Error_ExceptionOccurred = 9802,
 	/// <summary>
 	/// 未実装エラー
 	/// [Not implemented error]
@@ -197,7 +197,7 @@ public enum CvFlag {
 	/// [Exception error]
 	/// </summary>
 	[EnumMember]
-	Msg902_Error_ExceptionOccured = 9902,
+	Msg902_Error_ExceptionOccurred = 9902,
 	/// <summary>
 	/// 最大値4桁 9000以降はエラー等
 	/// [Maximum value 4 digits 9000 and later are errors etc.]

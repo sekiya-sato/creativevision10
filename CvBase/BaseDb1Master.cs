@@ -193,15 +193,15 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	/// 性別 0=不明 1=男性 2=女性
 	/// </summary>
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(EnGendar))]
+	[NotifyPropertyChangedFor(nameof(EnGender))]
 	[OldTableCommentAttr("性別")]
-	int gendar = 0;
+	int gender = 0;
 
 	[Ignore]
 	[JsonIgnore]
-	public EnumGendar EnGendar {
-		get => (EnumGendar)Gendar;
-		set => Gendar = (int)value;
+	public EnumGender EnGender {
+		get => (EnumGender)Gender;
+		set => Gender = (int)value;
 	}
 	/// <summary>
 	/// ポイント

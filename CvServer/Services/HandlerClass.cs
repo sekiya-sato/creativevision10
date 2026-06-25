@@ -380,9 +380,9 @@ public partial class CoreService {
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
 		try {
 			if (param is OutDataHhtMasterParam outDataParam) {
-				_logger.LogInformation("パラメータ HhtMaster isFix={IsFix} outMasterMei={OutMasterMei} 内容={Payload}", outDataParam.IsFixedLengthFormat, outDataParam.ParamIntNoUse, Common.SerializeObject(outDataParam));
+				_logger.LogInformation("パラメータ HhtMaster isFix={IsFix} OutMasterMei={OutMasterMei} 内容={Payload}", outDataParam.IsFixedLengthFormat, outDataParam.ReservedInt, Common.SerializeObject(outDataParam));
 
-				var list = new HhtProcess(_db).CreateMaster(outDataParam.IsFixedLengthFormat, outDataParam.ParamIntNoUse);
+				var list = new HhtProcess(_db).CreateMaster(outDataParam.IsFixedLengthFormat, outDataParam.ReservedInt);
 				return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(list));
 			}
 			throw new NotImplementedException();

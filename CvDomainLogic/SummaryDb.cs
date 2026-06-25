@@ -62,11 +62,11 @@ public class SummaryDb {
 	/// Id指定でTranテーブルからSummaryStockおよびSummaryRealStockを更新する(レコード CUD)
 	/// </summary>
 	/// <param name="id"></param>
-	/// <param name="invertFlg">在庫計算のフラグを反転させるかどうか</param>
+	/// <param name="invertFlag">在庫計算のフラグを反転させるかどうか</param>
 	/// <returns></returns>
-	public int CalcTran2SummaryStock(string tableName, string idSoko, long id, bool invertFlg) {
+	public int CalcTran2SummaryStock(string tableName, string idSoko, long id, bool invertFlag) {
 		var cnt = 0;
-		var calcFlag = TranCalcBase.GetCalcSoko(tableName, invertFlg);
+		var calcFlag = TranCalcBase.GetCalcSoko(tableName, invertFlag);
 		var sql = CreateRealStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
 		if (calcFlag.Item1 != 0) {
 			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_Soko", $"Id={id}");
