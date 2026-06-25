@@ -52,7 +52,7 @@
 								Style="{StaticResource MaterialDesignFlatButton}">
 								<materialDesign:PackIcon Width="20" Height="20"
 									HorizontalAlignment="Center" VerticalAlignment="Center"
-									Foreground="{TemplateBinding Foreground}"
+									Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
 									Kind="Magnify" />
 							</Button>
 						</Grid>

@@ -1,3 +1,21 @@
+## [2026-06-25] 14:58 共通検索ボタンのアイコン色統一
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：共通の検索ボタンを白抜きアイコンに統一する
+### 実施内容
+- CvWpfclient/Resources/UISearchTextBox.xaml: 検索ボタン内の Magnify アイコン Foreground を TextBox 側ではなく親 Button の Foreground へバインドするよう変更
+### 技術決定 Why
+- 共通テンプレート上でアイコンが TextBox の文字色を参照していたため、ボタン側の `PrimaryHueMidForegroundBrush` を継承させて検索ボタンの白抜き表示を全画面で統一した
+### 確認
+- `CvWpfclient/Resources/UISearchTextBox.xaml` の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-25] 14:41 店舗イベントメンテ画面追加
 ### Agent
 - GPT-5 : OpenAI : Codex
