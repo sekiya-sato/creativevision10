@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._06Uriage.ShopUriageInputView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._06Uriage.ShopUriageInputView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -130,7 +130,8 @@
 
 			<!--  タブ1: 一覧画面  -->
 			<TabItem x:Name="tabList"
-				d:Header="d:一覧画面" Header="">
+				Height="0"
+				d:Header="d:一覧画面" d:Height="40" Header="">
 				<Grid Margin="12">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
@@ -246,7 +247,8 @@
 
 			<!--  タブ2: 詳細画面  -->
 			<TabItem x:Name="tabDetail"
-				d:Header="d:詳細画面" Header="">
+				Height="0"
+				d:Header="d:詳細画面" d:Height="40" Header="">
 				<Grid Margin="12">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />

@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterShohinMenteView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterShohinMenteView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:Wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf" xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -643,7 +643,7 @@
 								Style="{StaticResource MaterialDesignDataGrid}"
 								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 								<DataGrid.Columns>
-									<DataGridTemplateColumn Width="130"
+									<DataGridTemplateColumn Width="120"
 										Header="カラー検索">
 										<DataGridTemplateColumn.CellTemplate>
 											<DataTemplate>
@@ -724,7 +724,7 @@
 											</DataTemplate>
 										</DataGridTemplateColumn.CellTemplate>
 									</DataGridTemplateColumn>
-									<DataGridTemplateColumn Width="140"
+									<DataGridTemplateColumn Width="120"
 										Header="サイズ" IsReadOnly="True">
 										<DataGridTemplateColumn.CellTemplate>
 											<DataTemplate>
@@ -739,13 +739,13 @@
 											</DataTemplate>
 										</DataGridTemplateColumn.CellTemplate>
 									</DataGridTemplateColumn>
-									<DataGridTextColumn Width="150"
+									<DataGridTextColumn Width="120"
 										Binding="{Binding Jan1}"
 										Header="JANコード1" />
-									<DataGridTextColumn Width="150"
+									<DataGridTextColumn Width="120"
 										Binding="{Binding Jan2}"
 										Header="JANコード2" />
-									<DataGridTextColumn Width="150"
+									<DataGridTextColumn Width="120"
 										Binding="{Binding Jan3}"
 										Header="JANコード3" />
 								</DataGrid.Columns>
