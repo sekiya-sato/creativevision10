@@ -187,8 +187,8 @@ public partial class MainMenuViewModel : ObservableObject {
 	void SetSubMessage() {
 		var renewstr = $"接続先: {AppGlobal.Url} 開始:{_subStartTime.ToString("MM/dd HH:mm")}";
 		StatusMessage = $"左側のメニューリストから選択し、ダブルクリックまたはEnterで実行してください。";
-		ServerStatus = $"接続先 {AppGlobal.Url} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}\n{InfolocalServer.OsVersion ?? "OS-version"}\nDOTNET {InfolocalServer.DotNetVersion ?? "DOTNET-Version"}\nローカル名 {InfolocalServer.MachineName}";
-		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\nDOTNET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
+		ServerStatus = $"接続先 {AppGlobal.Url} \n製品名 {InfolocalServer.Product ?? "product"} {InfolocalServer.Version ?? "Version"}\nビルド日時 {InfolocalServer.BuildDate} {InfolocalServer.DotNetVersion ?? "DOTNET-Version"}\nサーバ開始 {InfolocalServer.StartTime}\nベースDir {InfolocalServer.BaseDir}\n{InfolocalServer.OsVersion ?? "OS-version"}\nローカル名 {InfolocalServer.MachineName}";
+		ClientStatus = $"アプリ開始時間 {_subStartTime.ToString("yyyy/MM/dd HH:mm")}\n{InfolocalUser.OsVer ?? "OS-version"}\n.NET {InfolocalUser.DotnetVer ?? "DOTNET-Version"}\nローカル名   {InfolocalUser.ComputerName} {InfolocalUser.UserName}\nLogin 時間 {InfolocalUser.LoginTime ?? "??:??:??"}\nExpire時間 {InfolocalUser.ExpireTime ?? "??:??:??"}";
 	}
 
 	[RelayCommand]
