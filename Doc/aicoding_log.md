@@ -1,3 +1,23 @@
+## [2026-06-27] 08:41 MainMenu天気パネルの気象庁ページ導線追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MainMenuView の天気パネルで、気象庁概要予報の表示元をクリックして既定ブラウザで開けるようにする
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: JmaWeatherAreaCode から気象庁予報ページURLを組み立て、ClientLib.OpenUrlAsync で開く OpenJmaWeatherOverviewSourceCommand を追加
+- CvWpfclient/Views/MainMenuView.xaml: 天気カード内に気象庁ページを開くアイコン付きボタンを追加
+### 技術決定 Why
+- 概要予報のJSON取得URLではなく、JmaWeatherAreaCode に対応する気象庁の利用者向け予報ページを開くことで、表示元確認の導線として自然に扱えるようにした
+### 確認
+- `CvWpfclient/Views/MainMenuView.xaml` の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-26] 11:29 MainMenu天気パネルの高さ可変化
 ### Agent
 - GPT-5 : OpenAI : Codex

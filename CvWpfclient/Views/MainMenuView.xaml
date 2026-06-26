@@ -407,6 +407,27 @@
 												Foreground="{DynamicResource plainTextColor0}"
 												Text="{Binding WindSpeed}" />
 										</StackPanel>
+										<Button Margin="0,2,0,0"
+											Padding="2,0"
+											HorizontalAlignment="Left"
+											Command="{Binding OpenJmaWeatherOverviewSourceCommand}"
+											Foreground="{DynamicResource plainTextColor0}"
+											Height="20"
+											MinWidth="0"
+											Opacity="0.8"
+											Style="{StaticResource MaterialDesignFlatButton}"
+											ToolTip="{Binding JmaWeatherOverviewSourceUrl}">
+											<StackPanel Orientation="Horizontal">
+												<TextBlock VerticalAlignment="Center"
+													FontSize="10"
+													Text="気象庁" />
+												<materialDesign:PackIcon Width="11"
+													Height="11"
+													Margin="2,0,0,0"
+													VerticalAlignment="Center"
+													Kind="OpenInNew" />
+											</StackPanel>
+										</Button>
 									</StackPanel>
 								</StackPanel>
 							</materialDesign:Card>

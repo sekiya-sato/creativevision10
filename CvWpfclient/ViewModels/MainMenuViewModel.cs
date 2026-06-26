@@ -27,6 +27,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	private const double MoonIconSize = 24.0;
 	private const string DefaultJmaWeatherAreaCode = "130000";
 	private const string JmaWeatherOverviewBaseUrl = "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/";
+	private const string JmaWeatherForecastPageBaseUrl = "https://www.jma.go.jp/bosai/forecast/#area_type=offices&area_code=";
 	private static readonly TimeSpan WeatherGrpcTimeout = TimeSpan.FromSeconds(15);
 	private static readonly TimeSpan JmaWeatherTimeout = TimeSpan.FromSeconds(15);
 
@@ -446,6 +447,8 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	private string jmaWeatherOverviewToolTip = "気象庁概要予報を取得中...";
 
+	public string JmaWeatherOverviewSourceUrl => BuildJmaWeatherOverviewSourceUrl(AppGlobal.JmaWeatherAreaCode);
+
 
 	[ObservableProperty]
 	private ISeries[] forecastSeries = [];
@@ -516,6 +519,7 @@ public partial class MainMenuViewModel : ObservableObject {
 		try {
 			cancellationToken.ThrowIfCancellationRequested();
 			var areaCode = NormalizeJmaWeatherAreaCode(AppGlobal.JmaWeatherAreaCode);
+			OnPropertyChanged(nameof(JmaWeatherOverviewSourceUrl));
 			using var client = new HttpClient { Timeout = JmaWeatherTimeout };
 			using var response = await client.GetAsync($"{JmaWeatherOverviewBaseUrl}{areaCode}.json", cancellationToken);
 			cancellationToken.ThrowIfCancellationRequested();
@@ -537,6 +541,15 @@ public partial class MainMenuViewModel : ObservableObject {
 		catch {
 			JmaWeatherOverviewToolTip = "気象庁概要予報を取得できませんでした";
 		}
+	}
+
+	[RelayCommand]
+	private async Task OpenJmaWeatherOverviewSourceAsync() {
+		await ClientLib.OpenUrlAsync(BuildJmaWeatherOverviewSourceUrl(AppGlobal.JmaWeatherAreaCode));
+	}
+
+	private static string BuildJmaWeatherOverviewSourceUrl(string? areaCode) {
+		return $"{JmaWeatherForecastPageBaseUrl}{NormalizeJmaWeatherAreaCode(areaCode)}";
 	}
 
 	private static string NormalizeJmaWeatherAreaCode(string? areaCode) {
