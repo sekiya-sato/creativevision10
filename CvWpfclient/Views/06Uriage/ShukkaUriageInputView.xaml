@@ -317,7 +317,7 @@
 					</DockPanel>
 
 					<ScrollViewer Grid.Row="1"
-						MaxHeight="300"
+						MaxHeight="370"
 						Padding="10,10,20,20"
 						VerticalScrollBarVisibility="Auto">
 						<StackPanel>
