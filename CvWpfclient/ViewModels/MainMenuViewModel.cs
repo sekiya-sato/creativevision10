@@ -90,6 +90,9 @@ public partial class MainMenuViewModel : ObservableObject {
 	[ObservableProperty]
 	private string moonPhaseToolTip = "旧暦";
 
+	[ObservableProperty]
+	private string functionToolTip = "バージョンアップ(F9) 環境設定(F10) リフレッシュトークン(F11) ログイン(F12)";
+
 	private DispatcherTimer? _timer;
 	private string[] _forecastLabels = [];
 	private double[] _forecastTemperatures = [];

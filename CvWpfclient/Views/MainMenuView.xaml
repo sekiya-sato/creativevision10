@@ -1,4 +1,4 @@
-<Window x:Class="CvWpfclient.Views.MainMenuView"
+﻿<Window x:Class="CvWpfclient.Views.MainMenuView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -301,7 +301,8 @@
 						</Grid>
 						<Border Grid.Row="1"
 							Margin="0,10,0,0" Padding="8"
-							Style="{StaticResource MainMenuDashboardCard}">
+							Style="{StaticResource MainMenuDashboardCard}"
+							ToolTip="{Binding FunctionToolTip}">
 							<StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<TextBlock Foreground="{DynamicResource MenuTitleColor}"
@@ -349,6 +350,7 @@
 						<!--    -->
 						<Grid x:Name="WeatherPanel"
 							Grid.Row="2"
+							MinHeight="40"
 							Margin="0,10,0,0">
 							<Grid.ToolTip>
 								<ToolTip MaxWidth="560">
