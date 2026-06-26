@@ -719,10 +719,10 @@ public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
 	bool isActive;
 	[ObservableProperty]
 	string notes = string.Empty;
-	public static List<MasterShipping> CreateDefaultData(ExDatabase db) {
-		db.Delete<MasterShipping>("where Id>=0");
-		var ret = new List<MasterShipping>();
-		var kuroneko = new MasterShipping {
+
+	private static readonly List<MasterShipping> DefaultShippingData =
+	[
+		new MasterShipping {
 			Id = 1,
 			Code = "KURONEKO",
 			Name = "クロネコヤマト",
@@ -735,9 +735,8 @@ public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
 			Notes = "旧来の汎用フォーム",
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()
-		};
-		ret.Add(kuroneko);
-		var sagawa = new MasterShipping {
+		},
+		new MasterShipping {
 			Id = 2,
 			Code = "SAGAWA",
 			Name = "佐川急便",
@@ -750,9 +749,8 @@ public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
 			Notes = "飛脚宅配便など",
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()
-		};
-		ret.Add(sagawa);
-		var japanPost = new MasterShipping {
+		},
+		new MasterShipping {
 			Id = 3,
 			Code = "JP",
 			Name = "日本郵便",
@@ -765,9 +763,8 @@ public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
 			Notes = "シンプル版",
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()
-		};
-		ret.Add(japanPost);
-		var seino = new MasterShipping {
+		},
+		new MasterShipping {
 			Id = 4,
 			Code = "SEINO",
 			Name = "西濃運輸",
@@ -780,9 +777,8 @@ public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
 			Notes = "カンガルー便など",
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()
-		};
-		ret.Add(seino);
-		var fukuyama = new MasterShipping {
+		},
+		new MasterShipping {
 			Id = 5,
 			Code = "FUKUYAMA",
 			Name = "福山通運",
@@ -795,11 +791,14 @@ public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
 			Notes = "パス形式",
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()
-		};
-		ret.Add(fukuyama);
-		db.InsertBulk<MasterShipping>(ret);
-		return ret;
+		}
+	];
+
+	public static List<MasterShipping> CreateDefaultData(ExDatabase db) {
+		var tableCnt = db.GetTableCounts(nameof(MasterShipping));
+		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {
+			db.InsertBulk<MasterShipping>(DefaultShippingData);
+		}
+		return DefaultShippingData;
 	}
-
-
 }

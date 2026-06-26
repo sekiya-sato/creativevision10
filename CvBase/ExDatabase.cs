@@ -549,12 +549,15 @@ public partial class ExDatabase : Database {
 	/// SqlDepends: テーブル一覧と件数の取得
 	/// </summary>
 	/// <returns></returns>
-	public virtual List<Tuple<string, string, long>> GetTableCounts() {
-		const string sql = """
+	public virtual List<Tuple<string, string, long>> GetTableCounts(string tableName = "") {
+		string sql = $"""
 SELECT type, name,  
 'select '''||name|| '''  name,  count(*) cnt from ' || name || '' AS sqlstr
 FROM sqlite_master WHERE type = 'table' AND ( name NOT LIKE 'sqlite_%' AND name NOT LIKE 'Sys%' )
 """;
+		if (!string.IsNullOrEmpty(tableName)) {
+			sql += $" AND name = '{tableName}'";
+		}
 		var rows = RawExecCmd(sql);
 		var result = new List<Tuple<string, string, long>>();
 		foreach (var row in rows) {
