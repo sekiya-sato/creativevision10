@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 
 namespace CvWpfclient.Helpers;
@@ -169,6 +170,29 @@ public class ClientLib {
 	public static bool IsCursorWait() {
 		return System.Windows.Input.Mouse.OverrideCursor == System.Windows.Input.Cursors.Wait;
 	}
+	/// <summary>
+	/// 指定したURLを既定のブラウザで開く
+	/// </summary>
+	/// <param name="url"></param>
+	/// <returns></returns>
+	public static async Task OpenUrlAsync(string url) {
+		if (string.IsNullOrEmpty(url)) return;
 
+		await Task.Run(() => {
+			try {
+				Cursor2Wait();
+				using var process = Process.Start(new ProcessStartInfo {
+					FileName = url,
+					UseShellExecute = true
+				});
+			}
+			catch (Exception ex) {
+				Debug.WriteLine(ex.Message);
+			}
+			finally {
+				Cursor2Normal();
+			}
+		});
+	}
 }
 
