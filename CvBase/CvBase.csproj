@@ -11,5 +11,8 @@
 	<PackageReference Include="NLog" />
 	<PackageReference Include="NPoco" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CvAsset\CvAsset.csproj" />
+  </ItemGroup>
 
 </Project>

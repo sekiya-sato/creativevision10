@@ -47,6 +47,7 @@ public class DefineDataTable {
 			// マスタテーブル4
 			typeof(MasterYosanBrand),
 			typeof(MasterYosanHanbai),
+			typeof(MasterShipping),
 
 			// ポイント系テーブル
 			typeof(MasterPointRank),
@@ -98,6 +99,10 @@ public class DefineDataTable {
 				return false;
 			}
 		}
+		// 個別の初期化処理
+		MasterShipping.CreateDefaultData(db);
+
+
 		// DBの整合性を管理
 		UpdateDb.WriteVersionInfoAsync(db).Wait();
 		// DerivedClassの作成

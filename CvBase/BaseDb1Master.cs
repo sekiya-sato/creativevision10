@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CvAsset;
 using CvBase.Share;
 using Newtonsoft.Json;
 using NPoco;
@@ -695,4 +696,110 @@ public sealed partial class MasterHht : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	string eol = string.Empty;
+}
+
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[Comment("マスター：出荷配送業者テーブル")]
+public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
+	[ObservableProperty]
+	string code = string.Empty;
+	[ObservableProperty]
+	string name = string.Empty;
+	[ObservableProperty]
+	string ryaku = string.Empty;
+	[ObservableProperty]
+	string kana = string.Empty;
+	[ObservableProperty]
+	bool trackingSupported;
+	[ObservableProperty]
+	string trackingUrlTemplate = string.Empty;
+	[ObservableProperty]
+	string trackingPlaceholder = "{no}";
+	[ObservableProperty]
+	bool isActive;
+	[ObservableProperty]
+	string notes = string.Empty;
+	public static List<MasterShipping> CreateDefaultData(ExDatabase db) {
+		db.Delete<MasterShipping>("where Id>=0");
+		var ret = new List<MasterShipping>();
+		var kuroneko = new MasterShipping {
+			Id = 1,
+			Code = "KURONEKO",
+			Name = "クロネコヤマト",
+			Ryaku = "クロネコ",
+			Kana = "クロネコヤマト",
+			TrackingSupported = true,
+			TrackingUrlTemplate = "https://jizen.kuronekoyamato.co.jp/jizen/servlet/crjz.b.NQ0010?id={no}",
+			TrackingPlaceholder = "{no}",
+			IsActive = true,
+			Notes = "旧来の汎用フォーム",
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		ret.Add(kuroneko);
+		var sagawa = new MasterShipping {
+			Id = 2,
+			Code = "SAGAWA",
+			Name = "佐川急便",
+			Ryaku = "佐川",
+			Kana = "サガワキュウビン",
+			TrackingSupported = true,
+			TrackingUrlTemplate = "https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo={no}",
+			TrackingPlaceholder = "{no}",
+			IsActive = true,
+			Notes = "飛脚宅配便など",
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		ret.Add(sagawa);
+		var japanPost = new MasterShipping {
+			Id = 3,
+			Code = "JP",
+			Name = "日本郵便",
+			Ryaku = "日本郵便",
+			Kana = "ニホンユウビン",
+			TrackingSupported = true,
+			TrackingUrlTemplate = "https://trackings.post.japanpost.jp/services/srv/search/direct?reqCodeNo1={no}",
+			TrackingPlaceholder = "{no}",
+			IsActive = true,
+			Notes = "シンプル版",
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		ret.Add(japanPost);
+		var seino = new MasterShipping {
+			Id = 4,
+			Code = "SEINO",
+			Name = "西濃運輸",
+			Ryaku = "西濃",
+			Kana = "セイノウウンユ",
+			TrackingSupported = true,
+			TrackingUrlTemplate = "https://track.seino.co.jp/cgi-bin/gnpquery.pgm?GNPNO1={no}",
+			TrackingPlaceholder = "{no}",
+			IsActive = true,
+			Notes = "カンガルー便など",
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		ret.Add(seino);
+		var fukuyama = new MasterShipping {
+			Id = 5,
+			Code = "FUKUYAMA",
+			Name = "福山通運",
+			Ryaku = "福山",
+			Kana = "フクヤマツウウン",
+			TrackingSupported = true,
+			TrackingUrlTemplate = "https://corp.fukutsu.co.jp/situation/tracking_no_hunt/{no}",
+			TrackingPlaceholder = "{no}",
+			IsActive = true,
+			Notes = "パス形式",
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		ret.Add(fukuyama);
+		db.InsertBulk<MasterShipping>(ret);
+		return ret;
+	}
+
+
 }
