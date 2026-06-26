@@ -305,12 +305,12 @@
 							ToolTip="{Binding FunctionToolTip}">
 							<StackPanel>
 								<StackPanel Orientation="Horizontal">
-									<TextBlock Foreground="{DynamicResource MenuTitleColor}" 
-									FontSize="15"
-
+									<TextBlock FontSize="15"
+										Foreground="{DynamicResource MenuTitleColor}"
 										Style="{StaticResource SectionTitleText}"
 										Text="選択中メニュー" />
-									<TextBlock Margin="20,0,0,0" FontSize="14"
+									<TextBlock Margin="20,0,0,0"
+										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
 										Opacity="0.6" Text="メニューをダブルクリックまたはEnterキーで画面が起動します。" TextWrapping="Wrap" />
 								</StackPanel>
@@ -368,15 +368,14 @@
 									<StackPanel.ToolTip>
 										<ToolTip MaxWidth="560">
 											<TextBlock Text="{Binding JmaWeatherOverviewToolTip}"
-										TextWrapping="Wrap" />
+												TextWrapping="Wrap" />
 										</ToolTip>
 									</StackPanel.ToolTip>
-
-
 									<materialDesign:PackIcon Width="90" Height="90"
 										VerticalAlignment="Center"
 										Foreground="{DynamicResource plainTextColor0}"
 										Kind="{Binding WeatherIconKind}" />
+
 									<StackPanel Margin="4,0,4,0" VerticalAlignment="Center"
 										Opacity="0.8">
 										<TextBlock FontSize="14"
@@ -407,27 +406,22 @@
 												Foreground="{DynamicResource plainTextColor0}"
 												Text="{Binding WindSpeed}" />
 										</StackPanel>
-										<Button Margin="0,2,0,0"
-											Padding="2,0"
-											HorizontalAlignment="Left"
+										<Button Height="20" MinWidth="0"
+											Margin="0" Padding="0" HorizontalAlignment="Left"
 											Command="{Binding OpenJmaWeatherOverviewSourceCommand}"
 											Foreground="{DynamicResource plainTextColor0}"
-											Height="20"
-											MinWidth="0"
 											Opacity="0.8"
 											Style="{StaticResource MaterialDesignFlatButton}"
 											ToolTip="{Binding JmaWeatherOverviewSourceUrl}">
 											<StackPanel Orientation="Horizontal">
 												<TextBlock VerticalAlignment="Center"
-													FontSize="10"
-													Text="気象庁" />
-												<materialDesign:PackIcon Width="11"
-													Height="11"
-													Margin="2,0,0,0"
-													VerticalAlignment="Center"
+													FontSize="10" Text="気象庁" />
+												<materialDesign:PackIcon Width="11" Height="11"
+													Margin="2,0,0,0" VerticalAlignment="Center"
 													Kind="OpenInNew" />
 											</StackPanel>
 										</Button>
+
 									</StackPanel>
 								</StackPanel>
 							</materialDesign:Card>

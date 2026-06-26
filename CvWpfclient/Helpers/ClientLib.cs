@@ -180,7 +180,6 @@ public class ClientLib {
 
 		await Task.Run(() => {
 			try {
-				Cursor2Wait();
 				using var process = Process.Start(new ProcessStartInfo {
 					FileName = url,
 					UseShellExecute = true
@@ -188,9 +187,6 @@ public class ClientLib {
 			}
 			catch (Exception ex) {
 				Debug.WriteLine(ex.Message);
-			}
-			finally {
-				Cursor2Normal();
 			}
 		});
 	}
