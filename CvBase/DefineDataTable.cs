@@ -1,3 +1,4 @@
+using CvAsset;
 using Microsoft.Extensions.Logging;
 
 namespace CvBase;
@@ -92,6 +93,20 @@ public class DefineDataTable {
 			自動補充設定 (売上/在庫)
 				MasterAutoSupply
 			 */
+			/* 全データベースファイルの構造
+			 * システム系：Sys：管理に関わるテーブル、システム全体に関わるテーブル
+			 *		更新履歴、連番、ログイン、ログイン履歴、マスター操作履歴
+			 *		
+			 * マスター系：Master：マスターデータを管理するテーブル
+			 *		システム管理、名称、社員、顧客、商品、設定、得意先、仕入先
+			 * トランザクション系：Tran：取引に関わるテーブル
+			 *		売上、仕入、移動、入金、支払、棚卸、受発注、HHT 取込
+			 * 集計系：Summary：集計データを管理するテーブル
+			 *		現在庫、年月在庫
+			 * 派生系：Derived：マスタからの派生データを管理するテーブル
+			 *		商品マスタの色サイズ展開
+			 * 
+			 */
 		};
 		foreach (var tableType in tableTypes) {
 			if (!db.CreateTable(tableType, isForce)) {
@@ -99,9 +114,10 @@ public class DefineDataTable {
 				return false;
 			}
 		}
+		// DBがなにもない場合、初期データを作成する
+		InitializeDatabase(db);
 		// 個別の初期化処理
 		MasterShipping.CreateDefaultData(db);
-
 
 		// DBの整合性を管理
 		UpdateDb.WriteVersionInfoAsync(db).Wait();
@@ -113,20 +129,50 @@ public class DefineDataTable {
 
 		return ret;
 	}
+	public void InitializeDatabase(ExDatabase db) {
+		var dblist = db.GetTableCounts();
+		var totalcnt = dblist.Sum(c => c.Item3);
+		if (totalcnt > 0)
+			return;
+		// ログインデータなど最低限のデータを作成する
+		var now = DateTime.Now;
+		var shain = new MasterShain { Code = "0001", Name = "管理者", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() };
+		db.Insert<MasterShain>(shain);
+		var syslogin = new SysLogin {
+			LoginId = now.ToDtStrDate2(),
+			Id_Shain = shain.Id,
+			ExpDate = now.AddMonths(1).ToDtStrDate2(),
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		db.Insert<SysLogin>(syslogin);
+		syslogin.CryptPassword = Common.EncryptLoginRequest(syslogin.LoginId, syslogin.VdateC);
+		db.Update(syslogin);
+		var sysman = new MasterSysman {
+			Name = $"株式会社 CreativeVision10 デモシステム {now.ToDtStrDate2()}",
+			PostalCode = "100-0000",
+			FiscalStartDate = new DateTime(now.Year, 1, 1).ToDtStrDate2(),
+			ShimeBi = 99,
+			ModifyDaysEx = 9999,
+			ModifyDaysPre = 9999,
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate(),
+			Jsub = [new MasterSysTax { Id = 1, TaxRate = 10 }, new MasterSysTax { Id = 2, TaxRate = 8 }]
 
-	/* 全データベースファイルの構造
-	 * システム系：Sys：管理に関わるテーブル、システム全体に関わるテーブル
-	 *		更新履歴、連番、ログイン、ログイン履歴、マスター操作履歴
-	 *		
-	 * マスター系：Master：マスターデータを管理するテーブル
-	 *		システム管理、名称、社員、顧客、商品、設定、得意先、仕入先
-	 * トランザクション系：Tran：取引に関わるテーブル
-	 *		売上、仕入、移動、入金、支払、棚卸、受発注、HHT 取込
-	 * 集計系：Summary：集計データを管理するテーブル
-	 *		現在庫、年月在庫
-	 * 派生系：Derived：マスタからの派生データを管理するテーブル
-	 *		商品マスタの色サイズ展開
-	 * 
-	 */
+		};
+		db.Insert<MasterSysman>(sysman);
+
+
+		/*
+		MasterEndCustomer 1件
+		MasterMeisho BRD 1 ITEM 1
+		MasterShiire 1件
+		MasterShohin 1件 DerivedShohinColSiz 作成 MasterShohinの後
+		MasterTokui 1件
+		 */
+
+	}
+
+
 
 }
