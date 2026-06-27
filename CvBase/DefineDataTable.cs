@@ -39,6 +39,7 @@ public class DefineDataTable {
 			typeof(MasterShain),
 			typeof(MasterEndCustomer),
 			typeof(MasterShohin),
+			typeof(DerivedShohinColSiz),
 
 			// マスタテーブル3
 			typeof(MasterTokui),
@@ -129,6 +130,10 @@ public class DefineDataTable {
 
 		return ret;
 	}
+	/// <summary>
+	/// データがないとき、最低限の初期データを作成する
+	/// </summary>
+	/// <param name="db"></param>
 	public void InitializeDatabase(ExDatabase db) {
 		var dblist = db.GetTableCounts();
 		var totalcnt = dblist.Sum(c => c.Item3);
@@ -161,16 +166,76 @@ public class DefineDataTable {
 
 		};
 		db.Insert<MasterSysman>(sysman);
-
-
-		/*
-		MasterEndCustomer 1件
-		MasterMeisho BRD 1 ITEM 1
-		MasterShiire 1件
-		MasterShohin 1件 DerivedShohinColSiz 作成 MasterShohinの後
-		MasterTokui 1件
-		 */
-
+		var meishoList = new List<MasterMeisho> {
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "IDX", Name = "名称区分インデックス", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "BRD", Name = "ブランド", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "ITM", Name = "アイテム", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "COL", Name = "カラー", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "SIZ", Name = "サイズ", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "NewBrand", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "ITM", KubunName = "アイテム", Code = "01", Name = "NewItem", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "COL", KubunName = "カラー", Code = "01", Name = "NewColor", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "SIZ", KubunName = "サイズ", Code = "01", Name = "NewSize", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		};
+		db.InsertBulk<MasterMeisho>(meishoList);
+		var shohin = new MasterShohin {
+			Code = "0001",
+			Name = "Sample Shohin",
+			Id_Brand = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Id ?? 0,
+			VBrand = new CodeNameView {
+				Sid = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Id ?? 0,
+				Cd = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Code ?? string.Empty,
+				Mei = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Name ?? string.Empty
+			},
+			Id_Item = meishoList.FirstOrDefault(c => c.Kubun == "ITM")?.Id ?? 0,
+			VItem = new CodeNameView {
+				Sid = meishoList.FirstOrDefault(c => c.Kubun == "ITM")?.Id ?? 0,
+				Cd = meishoList.FirstOrDefault(c => c.Kubun == "ITM")?.Code ?? string.Empty,
+				Mei = meishoList.FirstOrDefault(c => c.Kubun == "ITM")?.Name ?? string.Empty
+			},
+			TankaGenka = 1000,
+			TankaJodai = 2000,
+			TankaJodaiOrg = 2000,
+			Jcolsiz = [new MasterShohinColSiz {
+				Id_Col = meishoList.FirstOrDefault(c => c.Kubun == "COL")?.Id ?? 0,
+				Code_Col = meishoList.FirstOrDefault(c => c.Kubun == "COL")?.Code ?? string.Empty,
+				Mei_Col = meishoList.FirstOrDefault(c => c.Kubun == "COL")?.Name ?? string.Empty,
+				Id_Siz = meishoList.FirstOrDefault(c => c.Kubun == "SIZ")?.Id ?? 0,
+				Code_Siz = meishoList.FirstOrDefault(c => c.Kubun == "SIZ")?.Code ?? string.Empty,
+				Mei_Siz = meishoList.FirstOrDefault(c => c.Kubun == "SIZ")?.Name ?? string.Empty
+			}],
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		db.Insert<MasterShohin>(shohin);
+		db.Execute(DerivedShohinColSiz.InsertSql, shohin.Id);
+		var customer = new MasterEndCustomer {
+			Code = "0001",
+			Name = "Sample Customer",
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		db.Insert<MasterEndCustomer>(customer);
+		var shiire = new MasterShiire {
+			Code = "0001",
+			Name = "Sample Shiire",
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		db.Insert<MasterShiire>(shiire);
+		var tokui = new MasterTokui {
+			Code = "0001",
+			Name = "Sample Tokui",
+			Id_Shain = shain.Id,
+			VShain = new CodeNameView {
+				Sid = shain.Id,
+				Cd = shain.Code,
+				Mei = shain.Name
+			},
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		db.Insert<MasterTokui>(tokui);
 	}
 
 
