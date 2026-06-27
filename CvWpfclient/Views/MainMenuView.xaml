@@ -261,13 +261,16 @@
 							<RowDefinition Height="*" MinHeight="160" />
 							<RowDefinition Height="Auto" />
 						</Grid.RowDefinitions>
-						<Grid>
+						<Grid MaxHeight="180"
+							ClipToBounds="True">
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="*" />
 								<ColumnDefinition Width="*" />
 							</Grid.ColumnDefinitions>
 							<Border Grid.Column="0"
 								Margin="0,0,4,0" Padding="4,2,4,8"
+								MaxHeight="180"
+								ClipToBounds="True"
 								Style="{StaticResource MainMenuDashboardCard}">
 								<StackPanel>
 									<TextBlock Margin="10,0,0,0"
@@ -279,11 +282,14 @@
 										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
 										Text="{Binding ServerStatus}"
-										TextWrapping="Wrap" />
+										TextWrapping="Wrap"
+										ToolTip="{Binding ServerStatus}" />
 								</StackPanel>
 							</Border>
 							<Border Grid.Column="1"
 								Margin="4,0,0,0" Padding="4,2,4,8"
+								MaxHeight="180"
+								ClipToBounds="True"
 								Style="{StaticResource MainMenuDashboardCard}">
 								<StackPanel>
 									<TextBlock Margin="10,0,0,0"
@@ -295,7 +301,8 @@
 										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
 										Text="{Binding ClientStatus}"
-										TextWrapping="Wrap" />
+										TextWrapping="Wrap"
+										ToolTip="{Binding ClientStatus}" />
 								</StackPanel>
 							</Border>
 						</Grid>

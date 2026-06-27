@@ -1,3 +1,25 @@
+## [2026-06-27] 14:44 MainMenuステータス表示領域の高さ制限
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MainMenuView のサーバステータス、クライアントステータスを含むエリアの高さを初期表示程度に制限し、全文はToolTipで表示する
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: Server Status / Client Status の上段Gridと各カードに MaxHeight と ClipToBounds を設定し、ステータス本文にToolTipを追加
+- CvWpfclient/Models/MenuData.cs: WPFビルドを阻害していた旧DB変換メニューの View 型参照名を実在する ConvertDbView / ConvertSelectedView に修正
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- ステータス文字列が折り返しで縦に伸びても上段レイアウトを押し下げないよう、表示領域をクリップし、全文確認は同一BindingのToolTipへ委ねた
+- 検証ビルドで発見した Concvert 系の型参照は実在クラス名と不一致だったため、参照名のみを修正してビルド可能な状態に戻した
+### 確認
+- `CvWpfclient/Views/MainMenuView.xaml` の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-27] 08:41 MainMenu天気パネルの気象庁ページ導線追加
 ### Agent
 - GPT-5 : OpenAI : Codex
