@@ -12,17 +12,17 @@
 
 # 最小Buildおよび実行 (Minimal Build and Run)
 
-リポジトリのクローン (Clone the repository)
-	gh repo clone sekiya-sato/creativevision10
-パラメータ調整 (Adjust parameters)
-	CvPrints/CvPrints.csproj
-		PropertyGroup:PrintEnable を false に変更 (In the PropertyGroup section, set PrintEnable to false.)
-サーバービルド＆実行 (Build and run the server)
-	リポジトリフォルダへ移動 cd creativevision10
-	サーバ実行 dotnet run --project CvServer/CvServer.csproj
-クライアントビルド＆実行 (Build and run the client)
-	サーバ実行させたままで別ターミナルでリポジトリフォルダへ移動
-	クライアント実行 dotnet run --project CvWpfclient/CvWpfclient.csproj
+	リポジトリのクローン (Clone the repository)
+		gh repo clone sekiya-sato/creativevision10
+	パラメータ調整 (Adjust parameters)
+		CvPrints/CvPrints.csproj
+			PropertyGroup:PrintEnable を false に変更 (In the PropertyGroup section, set PrintEnable to false.)
+	サーバービルド＆実行 (Build and run the server)
+		リポジトリフォルダへ移動 cd creativevision10
+		サーバ実行 dotnet run --project CvServer/CvServer.csproj
+	クライアントビルド＆実行 (Build and run the client)
+		サーバ実行させたままで別ターミナルでリポジトリフォルダへ移動
+		クライアント実行 dotnet run --project CvWpfclient/CvWpfclient.csproj
 
 # 印刷機能を使用する (Accenture社のPrintStream Coreが必要)
 
