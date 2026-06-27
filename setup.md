@@ -8,7 +8,7 @@
 - 商品画像や社員画像を使う
 - 天気情報や郵便番号などの公開APIを使用する
 - サーバを本格運用する
-- クライアントを配布形式にする
+- クライアントを配布形式にし自動更新に対応する
 
 # 最小Buildおよび実行 (Minimal Build and Run)
 
@@ -55,57 +55,22 @@
 		"JapanPostBiz", "ClientId" にClientIdを記述
 		"JapanPostBiz", "SecretKey" にSecretKeyを記述
 
-
-
-- 住所入力で郵便番号から住所を取得したい: 郵便番号・デジタルアドレスのAPIキーを取得 https://guide-biz.da.pf.japanpost.jp/
-
-	"JapanPostBiz", "ClientId" にClientIdを記述
-	"JapanPostBiz", "SecretKey" にSecretKeyを記述
-
 # サーバを本格運用する
 
-	tmux を使い、dotnet exec CvServer.dll& で実行
-	nginx への組み込み、service化して登録、自動起動
-	 dotnet exec CvServer.dll
-	 ASPNETCORE_ENVIRONMENT=Production などを指定すると、環境ごとの設定が適用される 例: ASPNETCORE_ENVIRONMENT=Production dotnet exec CvServer.dll &
-	 起動後、数10秒-1分程度でAPIが利用可能になる(DB処理、自動実行開始、初期化処理など)
+	Ubuntu24.04LTS nginx への組み込み例
+	/etc/nginx/sites-enabled/default を編集 http2を有効化
+	location / を CvServerのgrpcポートへ転送
+	簡易的に立ち上げるならtmux を使い、dotnet exec CvServer.dll& で実行
+	本格的に立ち上げるならservice化して登録、自動起動
 
-# クライアントを配布形式にする
+# クライアントを配布形式にし自動更新に対応する
 
-
-
-- ビルド(Windows環境)
-
-	dotnet publish "CvWpfclient/CvWpfclient.csproj" -c Release -r win-x64 --self-contained true
-	
-	Linux環境の場合: dotnet publish "CvWpfclient/CvWpfclient.csproj" -c Release -r win-x64 --self-contained true /p:EnableWindowsTargeting=true
-
-- Velopackによる配布ファイル作成 (dotnet tool install -g vpk で事前にインストール)
-	<pre>
+	Velopackによる配布ファイル作成
+	dotnet tool install -g vpk でインストール
 	VS2026の開発者コマンドプロンプトから、publish-velopack.bat を実行
-	事前に、appsettings.Production.json を作成しておく
 	"Version" は publish-velopack.bat 実行時にリビジョン(パッチ番号)が+1される (major.minor.patch)
 	major.minorのほうは手動で変更する、リビジョンを0にしたければ-1を設定しておく
-	"appsettings.Production.json"
-	</pre>
-```
-{
-	"Update": {
-		"FeedUrl": "https://....  クライアントソフトのダウンロード先 配布先URL",
-		"Channel": "stable"
-	},
-	"Application": {
-		"Version": "1.0.1"
-	}
-
-}
-```
-
-- Velopackで作成されたファイル+index.html をすべて配布先URLへ配置
-
+	"Update": "FeedUrl": "https://....  クライアントソフトのダウンロード先 配布先URL",
+	Velopackで作成されたファイル+index.html をすべて配布先URLへ配置
 	bash ~/bin/publish.sh  : WSL2にpublish.shを作成し、scpやftpで配布先URLへコピーする
-
-
-
-
 
