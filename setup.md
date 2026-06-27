@@ -1,82 +1,78 @@
-# インストールの手引
+# インストールの手引 Installation Guide
 
-目次
+目次 Table of Contents
 
-- [サーバインストール](#サーバインストール)
-- [クライアントインストール](#クライアントインストール)
-- [公開APIキー設定](#公開apiキー設定)
+- 最小Buildおよび実行
+- 印刷機能を使用する
+- CV.netの旧DBと接続し直接変換を行う
+- 商品画像や社員画像を使う
+- 天気情報や郵便番号などの公開APIを使用する
+- サーバを本格運用する
+- クライアントを配布形式にする
 
+# 最小Buildおよび実行 (Minimal Build and Run)
 
-# サーバインストール
-
-- リポジトリのクローン 
-
+リポジトリのクローン (Clone the repository)
 	gh repo clone sekiya-sato/creativevision10
+パラメータ調整 (Adjust parameters)
+	CvPrints/CvPrints.csproj
+		PropertyGroup:PrintEnable を false に変更 (In the PropertyGroup section, set PrintEnable to false.)
+サーバービルド＆実行 (Build and run the server)
+	リポジトリフォルダへ移動 cd creativevision10
+	サーバ実行 dotnet run --project CvServer/CvServer.csproj
+クライアントビルド＆実行 (Build and run the client)
+	サーバ実行させたままで別ターミナルでリポジトリフォルダへ移動
+	クライアント実行 dotnet run --project CvWpfclient/CvWpfclient.csproj
 
-- CvServer/appsettings.json の調整
-	<pre>
-	印刷機能を使用する場合
-		appsettings.json "PrintServer" セクション "UsePrint":true に設定
-		CvPrints/CvPrints.csproj: <PrintEnable>true</PrintEnable>
-		CvPrints/ に printstream.jar を配置、Build時IKVMのnugetパッケージが入っていることを確認
-	印刷機能を使用しない場合
-		appsettings.json "PrintServer" セクション "UsePrint":false に設定
-		CvPrints/CvPrints.csproj: <PrintEnable>false</PrintEnable>
-	DBConvert処理を使用する場合
-		appsettings.json "ConnectionStrings" セクション "oracle" に接続文字列を設定
-	Sqliteファイルを別の名前のdbに変更する場合
-		appsettings.json "ConnectionStrings" セクション "sqlite" にベースフォルダからみたdbパスを設定
-	</pre>
+# 印刷機能を使用する (Accenture社のPrintStream Coreが必要)
 
-- DBについて
+	CvPrints/CvPrints.csproj
+		PropertyGroup:PrintEnable を true に変更
+	CvPrints/ に printstream.jar を配置して、サーバをリビルド＆実行
 
-	基本はSQLiteを使用、元DBからの変換処理が必要な場合は接続先のOracleを指定する
+	PrintStream Core とは？
+	Accenture社が提供している印刷・帳票関連ソリューション群の中核となる製品
+	帳票レイアウトを専用の帳票設計ツールによって簡単に作成することが可能
+	この機能を組み込んでいたのがDTP社のCV.net製品
+	Creative Vision 10 は、CV.netのprintstream連携機能をより強化した形で組み込んでいる
 
-- フォルダ構成について
+# CV.netの旧DBと接続し直接変換を行う
 
-	サーバDLLを配置しているフォルダを基準にして
-		log フォルダ: ログファイルを配置(自動で作成される)
-		img フォルダ: 商品画像ファイルを配置 (拡張子は .jpg固定)
-		imgshainフォルダ: 社員画像ファイルを配置 (拡張子は .jpg固定)
-		wrk フォルダ: 一時ファイルを配置 (PDF帳票など)
-		runtimes / ikvm フォルダ: buildで生成されたファイル群
-	基準フォルダには dll, pdb, exe, *.json, *.db などが配置される
+	CvServer/appsettings.json を修正 (あるいは appsettings.Production.json など)
+		"ConnectionStrings" セクション "oracle" にCV.netへの接続文字列を設定
 
-	親フォルダ/printform : 帳票の定義ファイルを配置、帳票定義はXML形式で、帳票のレイアウトや印刷内容を指定する
+# 商品画像や社員画像を使う
 
-- ビルド(Windows/Linux環境)
+	CvServer/img 商品画像フォルダ (商品CD).jpg をおく
+	CvServer/imgshain 社員画像フォルダ (社員CD).jpg をおく
 
-	dotnet build "CvServer/CvServer.csproj"
+# 天気情報や郵便番号などの公開APIを使用する
 
-- 実行
+	CvServer/appsettings.json を修正 (あるいは appsettings.Production.json など)
+	天気情報 : OpenWeatherMapのAPIキーを取得 https://openweathermap.org/
+		"Application", "OpenWeatherApiKey" " にAPIキーを記述
+	郵便番号から住所を検索 :郵便番号・デジタルアドレスのAPIキーを取得 https://guide-biz.da.pf.japanpost.jp/
+		"JapanPostBiz", "ClientId" にClientIdを記述
+		"JapanPostBiz", "SecretKey" にSecretKeyを記述
 
+
+
+- 住所入力で郵便番号から住所を取得したい: 郵便番号・デジタルアドレスのAPIキーを取得 https://guide-biz.da.pf.japanpost.jp/
+
+	"JapanPostBiz", "ClientId" にClientIdを記述
+	"JapanPostBiz", "SecretKey" にSecretKeyを記述
+
+# サーバを本格運用する
+
+	tmux を使い、dotnet exec CvServer.dll& で実行
+	nginx への組み込み、service化して登録、自動起動
 	 dotnet exec CvServer.dll
 	 ASPNETCORE_ENVIRONMENT=Production などを指定すると、環境ごとの設定が適用される 例: ASPNETCORE_ENVIRONMENT=Production dotnet exec CvServer.dll &
 	 起動後、数10秒-1分程度でAPIが利用可能になる(DB処理、自動実行開始、初期化処理など)
 
-- 簡易実行環境
-
-	tmux を使い、dotnet exec CvServer.dll& で実行
-
-- 本番実行環境
-
-	nginx への組み込み、service化して登録、自動起動
+# クライアントを配布形式にする
 
 
-# クライアントインストール
-
-- リポジトリのクローン 
-
-	gh repo clone sekiya-sato/creativevision10
-
-- CvWpfclient/appsettings.json の調整
-	<pre>
-	"ConnectionStrings", "Url": サーバのURLを記述
-	"Application", "Version": バージョン番号を記述
-	"Application", "OpenWeatherApiKey": openweathermapのAPIキーを記述 https://openweathermap.org/
-	"Application", "WeatherRegion": openweathermapの地域を記述
-	"Application", "FitPosition": メニューのみの場合のWindow位置 Left/Right と Top/Bottom の組み合わせを指定
-	</pre>
 
 - ビルド(Windows環境)
 
@@ -110,20 +106,6 @@
 	bash ~/bin/publish.sh  : WSL2にpublish.shを作成し、scpやftpで配布先URLへコピーする
 
 
-# 公開APIキー設定
 
-	クライアント側で設定する場合は、CvWpfclient/appsettings.json などに記述する
-
-	サーバ側で設定する場合は、CvServer/appsettings.json などに記述する
-
-- 現在地の天気情報の表示がしたい: OpenWeatherMapのAPIキーを取得 https://openweathermap.org/
-
-	"Application", "OpenWeatherApiKey" " にAPIキーを記述
-
-- 住所入力で郵便番号から住所を取得したい: 郵便番号・デジタルアドレスのAPIキーを取得 https://guide-biz.da.pf.japanpost.jp/
-
-	"JapanPostBiz", "ClientId" にClientIdを記述
-
-	"JapanPostBiz", "SecretKey" にSecretKeyを記述
 
 
