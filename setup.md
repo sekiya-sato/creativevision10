@@ -76,3 +76,13 @@
 	Velopackで作成されたファイル+index.html をすべて配布先URLへ配置
 	bash ~/bin/publish.sh  : WSL2にpublish.shを作成し、scpやftpで配布先URLへコピーする
 
+
+
+# 開発者ガイド
+
+	Visual Studio 2026 Community を推奨 (2026/06現在)
+	AIコーディングツールは、Codex と OpenCode を使用
+	graphify を使用 
+
+
+
