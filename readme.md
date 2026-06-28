@@ -5,7 +5,7 @@
 
 アパレル業界では、販売管理システムの導入が遅れているケースが多く、特に中小企業ではコストや技術的なハードルが高いことが課題となっています。
 
-[Creative Vision 10](https://github.com/sekiya-sato/creativevision10)は、これらの企業が安心して導入できる本格的な基幹業務ソリューションを提供することを目指しています。
+**Creative Vision 10**は、これらの企業が安心して導入できる本格的な基幹業務ソリューションを提供することを目指しています。
 
 3Tier-System アーキテクチャを採用し、データベース層はSqlite/mariaDB、アプリケーションサーバはHTTP2.0/gRPCで構築、プレゼンテーション層にはWPF MVVMを採用しています。
 
@@ -13,6 +13,17 @@ AIアシスタントは [AGENTS.md](AGENTS.md) を参照してください。
 
 セットアップガイドは [setup.md](setup.md) 、変更履歴は [changelog.md](changelog.md) 。
 
+2000年代半ば、CV.netという製品はクラサバ型のdbMagicからOracle+.net2.0+Biz/Browser V4へと開発プラットフォームを変え、3Tierで構成された最初のシステムとなりました。
+そしてCV.netは今日までアパレル系会社を中心としたのべ200社へ導入されるに至りました。
+
+2020年代に入り、よりオープンで使いやすいシステムに生まれ変わるため、試行錯誤が繰り返されました。
+**cvnetclient**は、クライアント部分をBiz/BrowserからWPFへと変更したオープンソースパッケージですが、DBおよびアプリケーションサーバは同じものを使っていました。
+
+2025/10に.NET10がリリースされ、2026年にはAI開発環境が加速度的に発展し、**Creative Vision 10** の開発も急速に進みました。
+
+現在、既存のCV.netの機能の8割をカバーできるよう2027/1月のリリースを目標としています。
+
+<HR>
 <div style="display: flex; gap: 20px; align-items: center;">
 <img  alt="cv10-logo" src="Doc/cv10logo01.png" style="margin-left: 30px;width: 10%; height: auto;" />
 <img  alt="cv10-logo" src="Doc/cv10logo02.png" style="margin-left: 30px;width: 25%; height: auto;" />
