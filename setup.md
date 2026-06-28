@@ -1,88 +1,123 @@
-# インストールの手引 Installation Guide
+# インストールガイド
 
-目次 Table of Contents
+## 目次
 
-- 最小Buildおよび実行
-- 印刷機能を使用する
-- CV.netの旧DBと接続し直接変換を行う
-- 商品画像や社員画像を使う
-- 天気情報や郵便番号などの公開APIを使用する
-- サーバを本格運用する
-- クライアントを配布形式にし自動更新に対応する
+- [最小構成でビルドして実行する](#最小構成でビルドして実行する)
+- [印刷機能を使用する](#印刷機能を使用する)
+- [CV.net の旧 DB に接続して直接変換する](#cvnet-の旧-db-に接続して直接変換する)
+- [商品画像や社員画像を使用する](#商品画像や社員画像を使用する)
+- [天気情報や郵便番号などの公開 API を使用する](#天気情報や郵便番号などの公開-api-を使用する)
+- [サーバを本格運用する](#サーバを本格運用する)
+- [クライアントを配布形式にして自動更新に対応する](#クライアントを配布形式にして自動更新に対応する)
+- [開発者ガイド](#開発者ガイド)
 
-# 最小Buildおよび実行 (Minimal Build and Run)
+## 最小構成でビルドして実行する
 
-	リポジトリのクローン (Clone the repository)
-		gh repo clone sekiya-sato/creativevision10
-	パラメータ調整 (Adjust parameters)
-		CvPrints/CvPrints.csproj
-			PropertyGroup:PrintEnable を false に変更 (In the PropertyGroup section, set PrintEnable to false.)
-	サーバービルド＆実行 (Build and run the server)
-		リポジトリフォルダへ移動 cd creativevision10
-		サーバ実行 dotnet run --project CvServer/CvServer.csproj
-	クライアントビルド＆実行 (Build and run the client)
-		サーバ実行させたままで別ターミナルでリポジトリフォルダへ移動
-		クライアント実行 dotnet run --project CvWpfclient/CvWpfclient.csproj
-		初期DBの場合、ログインIDとパスワードはDBがつくられた日付(==サーバ起動日yyyyMMdd 例:20270130)となる
+1. リポジトリをクローンします。
 
-# 印刷機能を使用する (Accenture社のPrintStream Coreが必要)
+```bash
+gh repo clone sekiya-sato/creativevision10
+cd creativevision10
+```
 
-	CvPrints/CvPrints.csproj
-		PropertyGroup:PrintEnable を true に変更
-	CvPrints/ に printstream.jar を配置して、サーバをリビルド＆実行
+2. 必要に応じて印刷機能を無効化します。
 
-	PrintStream Core とは？
-	Accenture社が提供している印刷・帳票関連ソリューション群の中核となる製品
-	帳票レイアウトを専用の帳票設計ツールによって簡単に作成することが可能
-	この機能を組み込んでいたのがDTP社のCV.net製品
-	Creative Vision 10 は、CV.netのprintstream連携機能をより強化した形で組み込んでいる
+- `CvPrints/CvPrints.csproj` を開き、`PropertyGroup` 内の `PrintEnable` を `false` に変更します。
 
-# CV.netの旧DBと接続し直接変換を行う
+3. サーバをビルドして実行します。
 
-	CvServer/appsettings.json を修正 (あるいは appsettings.Production.json など)
-		"ConnectionStrings" セクション "oracle" にCV.netへの接続文字列を設定
+```bash
+dotnet run --project CvServer/CvServer.csproj
+```
 
-# 商品画像や社員画像を使う
+4. サーバを起動したまま、別ターミナルでクライアントを実行します。
 
-	CvServer/img 商品画像フォルダ (商品CD).jpg をおく
-	CvServer/imgshain 社員画像フォルダ (社員CD).jpg をおく
+```bash
+cd creativevision10
+dotnet run --project CvWpfclient/CvWpfclient.csproj
+```
 
-# 天気情報や郵便番号などの公開APIを使用する
+- 初期 DB を使用する場合、ログイン ID とパスワードは DB 作成日です。
+- 形式は `yyyyMMdd` です。
+- 例: サーバ起動日が `20270130` の場合、ログイン ID とパスワードはどちらも `20270130` です。
 
-	CvServer/appsettings.json を修正 (あるいは appsettings.Production.json など)
-	天気情報 : OpenWeatherMapのAPIキーを取得 https://openweathermap.org/
-		"Application", "OpenWeatherApiKey" " にAPIキーを記述
-	郵便番号から住所を検索 :郵便番号・デジタルアドレスのAPIキーを取得 https://guide-biz.da.pf.japanpost.jp/
-		"JapanPostBiz", "ClientId" にClientIdを記述
-		"JapanPostBiz", "SecretKey" にSecretKeyを記述
+## 印刷機能を使用する
 
-# サーバを本格運用する
+この機能を利用するには、Accenture 社の `PrintStream Core` が必要です。
 
-	Ubuntu24.04LTS nginx への組み込み例
-	/etc/nginx/sites-enabled/default を編集 http2を有効化
-	location / を CvServerのgrpcポートへ転送
-	簡易的に立ち上げるならtmux を使い、dotnet exec CvServer.dll& で実行
-	本格的に立ち上げるならservice化して登録、自動起動
+1. `CvPrints/CvPrints.csproj` を開き、`PropertyGroup` 内の `PrintEnable` を `true` に変更します。
+2. `CvPrints/` 配下に `printstream.jar` を配置します。
+3. サーバを再ビルドして実行します。
 
-# クライアントを配布形式にし自動更新に対応する
+### PrintStream Core とは
 
-	Velopackによる配布ファイル作成
-	dotnet tool install -g vpk でインストール
-	VS2026の開発者コマンドプロンプトから、publish-velopack.bat を実行
-	"Version" は publish-velopack.bat 実行時にリビジョン(パッチ番号)が+1される (major.minor.patch)
-	major.minorのほうは手動で変更する、リビジョンを0にしたければ-1を設定しておく
-	CvWpfclient/appsettings.json を修正 (あるいは appsettings.Production.json など)
-	"Update": "FeedUrl": "https://....  クライアントソフトのダウンロード先 配布先URL",
-	Velopackで作成されたファイル+index.html をすべて配布先URLへ配置
-	bash ~/bin/publish.sh  : WSL2にpublish.shを作成し、scpやftpで配布先URLへコピーする
+- Accenture 社が提供する、印刷・帳票ソリューション群の中核製品です。
+- 専用の帳票設計ツールを使って、帳票レイアウトを比較的容易に作成できます。
+- DTP 社の `CV.net` 製品では、この機能が組み込まれていました。
+- `Creative Vision 10` では、`CV.net` の PrintStream 連携機能をさらに強化した形で組み込んでいます。
 
+## CV.net の旧 DB に接続して直接変換する
 
+- `CvServer/appsettings.json` を修正します。
+- 必要に応じて `appsettings.Production.json` などの環境別設定ファイルを使用してください。
+- `ConnectionStrings` セクションの `oracle` に、`CV.net` への接続文字列を設定します。
 
-# 開発者ガイド
+## 商品画像や社員画像を使用する
 
-	Visual Studio 2026 Community を推奨 (2026/06現在)
-	AIコーディングツールは、Codex と OpenCode を使用
-	graphify を使用 
+- 商品画像は `CvServer/img/` に配置します。ファイル名は `(商品CD).jpg` です。
+- 社員画像は `CvServer/imgshain/` に配置します。ファイル名は `(社員CD).jpg` です。
 
+## 天気情報や郵便番号などの公開 API を使用する
 
+- `CvServer/appsettings.json` を修正します。
+- 必要に応じて `appsettings.Production.json` などの環境別設定ファイルを使用してください。
 
+### 天気情報
+
+- OpenWeatherMap の API キーを取得します: <https://openweathermap.org/>
+- `Application` セクションの `OpenWeatherApiKey` に API キーを設定します。
+
+### 郵便番号から住所を検索する
+
+- 郵便番号・デジタルアドレス API のキーを取得します: <https://guide-biz.da.pf.japanpost.jp/>
+- `JapanPostBiz` セクションの `ClientId` に `ClientId` を設定します。
+- `JapanPostBiz` セクションの `SecretKey` に `SecretKey` を設定します。
+
+## サーバを本格運用する
+
+Ubuntu 24.04 LTS + nginx で構成する場合の一例です。
+
+- `/etc/nginx/sites-enabled/default` を編集し、`http2` を有効化します。
+- `location /` から `CvServer` の gRPC ポートへ転送するよう設定します。
+- 簡易的に起動する場合は `tmux` を使い、`dotnet exec CvServer.dll` で実行します。
+- 本格運用する場合は service 化して登録し、自動起動に対応させます。
+
+## クライアントを配布形式にして自動更新に対応する
+
+### Velopack による配布ファイル作成
+
+1. `vpk` をインストールします。
+
+```bash
+dotnet tool install -g vpk
+```
+
+2. `VS2026` の開発者コマンドプロンプトから `publish-velopack.bat` を実行します。
+3. `Version` は `publish-velopack.bat` 実行時にリビジョン（パッチ番号）が `+1` されます。
+4. `major.minor` は手動で変更します。
+5. リビジョンを `0` にしたい場合は、事前に `-1` を設定しておきます。
+6. `CvWpfclient/appsettings.json` を修正します。
+7. 必要に応じて `appsettings.Production.json` などの環境別設定ファイルも修正します。
+8. `Update:FeedUrl` に、クライアント配布先の URL を設定します。
+9. Velopack で作成されたファイルと `index.html` を、すべて配布先 URL へ配置します。
+10. 必要に応じて、WSL2 上の `publish.sh` から `scp` や `ftp` を使って配布先へコピーします。
+
+```bash
+bash ~/bin/publish.sh
+```
+
+## 開発者ガイド
+
+- 2026年6月時点では `Visual Studio 2026 Community` を推奨しています。
+- AI コーディングツールとして `Codex` と `OpenCode` を使用しています。
+- コードベースの調査や関係性の把握には `graphify` を使用します。

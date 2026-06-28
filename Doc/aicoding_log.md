@@ -1,3 +1,22 @@
+## [2026-06-28] 16:38 README/setup 文面校正と Markdown 整理
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`readme.md` と `setup.md` の誤字脱字、不自然な言い回し、Markdown 表現を見直して読みやすく整える
+### 実施内容
+- readme.md: プロジェクト説明の日本語表現と表記ゆれを修正し、見出し・箇条書き・リンク文言を整理
+- setup.md: 手順書を見出し、番号付き手順、箇条書き、コードブロック中心の Markdown に再構成
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- 内容自体は変えず、公開ドキュメントとして初見でも追いやすい構造を優先し、インデント列挙を標準的な Markdown 構造へ置き換えた
+### 確認
+- `readme.md` / `setup.md` の CRLF 正規化を実施
+- `git diff --check -- readme.md setup.md Doc/aicoding_log.md` で問題なしを確認
+
+---
+
 ## [2026-06-27] 14:44 MainMenuステータス表示領域の高さ制限
 ### Agent
 - GPT-5 : OpenAI : Codex
