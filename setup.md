@@ -23,6 +23,7 @@
 	クライアントビルド＆実行 (Build and run the client)
 		サーバ実行させたままで別ターミナルでリポジトリフォルダへ移動
 		クライアント実行 dotnet run --project CvWpfclient/CvWpfclient.csproj
+		初期DBの場合、ログインIDとパスワードはDBがつくられた日付(==サーバ起動日yyyyMMdd 例:20270130)となる
 
 # 印刷機能を使用する (Accenture社のPrintStream Coreが必要)
 
@@ -70,6 +71,7 @@
 	VS2026の開発者コマンドプロンプトから、publish-velopack.bat を実行
 	"Version" は publish-velopack.bat 実行時にリビジョン(パッチ番号)が+1される (major.minor.patch)
 	major.minorのほうは手動で変更する、リビジョンを0にしたければ-1を設定しておく
+	CvWpfclient/appsettings.json を修正 (あるいは appsettings.Production.json など)
 	"Update": "FeedUrl": "https://....  クライアントソフトのダウンロード先 配布先URL",
 	Velopackで作成されたファイル+index.html をすべて配布先URLへ配置
 	bash ~/bin/publish.sh  : WSL2にpublish.shを作成し、scpやftpで配布先URLへコピーする
