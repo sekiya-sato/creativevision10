@@ -43,6 +43,7 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg700_Test_Start] = (req, ctx) => NotImplementedTask(req, ctx),
 			[CvFlag.Msg701_TestCase001] = (req, ctx) => NotImplementedTask(req, ctx),
 			[CvFlag.Msg702_TestCase002] = (req, ctx) => NotImplementedTask(req, ctx),
+			[CvFlag.Msg046_MasterShohinMeishoRebuild] = (req, ctx) => HandleConvertMasterShohin(req, ctx),
 		};
 	}
 	// Product : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更

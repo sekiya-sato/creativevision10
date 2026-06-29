@@ -67,6 +67,11 @@ public partial class CoreService {
 		}
 		return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(resultData));
 	}
+	private CvMsg HandleConvertMasterShohin(CvMsg request, CallContext context) {
+		var rebuild = new RebuildDb(_db);
+		var ret = rebuild.RebuildMasterShohin2Meisho();
+		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(new AppGlobal().VerInfo));
+	}
 	/// <summary>
 	/// Query系の処理
 	/// </summary>

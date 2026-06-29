@@ -15,7 +15,7 @@ public class RebuildDb {
 	/// <summary>
 	/// MasterShohinのJcolsizからMeishoを再構築する	
 	/// </summary>
-	public void RebuildMasterShohin2Meisho() {
+	public int RebuildMasterShohin2Meisho() {
 		// ToDo: MasterShohinのJcolsiz、JSON_EXTRACTからMeishoを再構築する
 		var sql = @"
 select distinct 'COL' as Kubun,'ｶﾗｰ' as KubunName,Code_Col, Mei_Col,Name from (
@@ -44,9 +44,7 @@ where json_extract(J.value, '$.Id_Col')=0
 			meisho.Vdu = Common.GetVdate();
 			_db.Insert(meisho);
 		}
-
-
-
+		return 0;
 	}
 
 }
