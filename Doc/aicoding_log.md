@@ -1,3 +1,22 @@
+## [2026-06-29] 17:35 SysGeneralMenteViewの一覧取得ボタン左寄せ
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._00System.SysGeneralMenteView のみ、「一覧取得」ボタンの場所を左に寄せる
+### 実施内容
+- CvWpfclient/Views/00System/SysGeneralMenteView.xaml: ヘッダー右側の操作群にあった「一覧取得」ボタンを、タイトル直後の左側操作群へ移動
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- 他のメンテ画面と同じく、タイトル横に区切り線を置いて「一覧取得」を配置し、保存・削除・追加とは左右で役割を分けた
+### 確認
+- `CvWpfclient/Views/00System/SysGeneralMenteView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-29] 17:28 SysGeneralMenteView の一覧取得条件再指定対応
 ### Agent
 - GPT-5 : OpenAI : Codex

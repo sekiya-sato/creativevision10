@@ -95,17 +95,6 @@
 								Text="追加" />
 						</StackPanel>
 					</Button>
-					<Button Margin="4,0"
-						Command="{Binding DoListCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
-						ToolTip="一覧取得 (F5)">
-						<StackPanel Orientation="Horizontal">
-							<materialDesign:PackIcon VerticalAlignment="Center"
-								Kind="DatabaseSearch" />
-							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="一覧取得" />
-						</StackPanel>
-					</Button>
 				</StackPanel>
 
 				<StackPanel Orientation="Horizontal">
@@ -121,6 +110,20 @@
 					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 						FontSize="20" FontWeight="SemiBold"
 						Text="{Binding Title}" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoListCommand}"
+						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="一覧取得" />
+						</StackPanel>
+					</Button>
 				</StackPanel>
 			</DockPanel>
 		</materialDesign:ColorZone>
