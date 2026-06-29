@@ -12,8 +12,9 @@ public interface IDerivedClass {
 	static abstract string DeleteSql { get; }
 }
 
+// Todo: キーの重複を確認し、対応する
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
-[KeyDml("shcolsz", false, [nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
+[KeyDml("nuniq", false, [nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
 [KeyDml("n1", false, nameof(Id_Shohin))]
 [KeyDml("n2", false, nameof(Code))]
 [KeyDml("njan1", false, nameof(Jan1))]
