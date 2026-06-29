@@ -135,12 +135,117 @@ WHERE EXISTS (
 	/// <returns></returns>
 	public int RebuildTranAll() {
 		//RebuildMasterShohin2Meisho()にて登録されたMasterMeishoを使い、Tran系のテーブルでId_ColとId_Sizを再構築する
-		// まずは Tran00Uriage のJcolsizを更新する
+		int cnt = 0;
 
+		_db.BeginTransaction();
+		try {
+			// まずは Tran00Uriage のJmeisaiを更新する(Id_Col)
+			cnt += ExecuteUpdateAndGetChanges(@"
+UPDATE Tran00Uriage AS T
+SET Jmeisai = (
+    SELECT json_group_array(json(X.value2))
+    FROM (
+        SELECT
+            J.key,
+            CASE
+                WHEN CAST(ifnull(json_extract(J.value, '$.Id_Col'), 0) AS INTEGER) = 0
+                     AND M.Id IS NOT NULL
+                THEN json_set(J.value, '$.Id_Col', M.Id)
+                ELSE J.value
+            END AS value2
+        FROM json_each(T.Jmeisai) AS J
+        LEFT JOIN MasterMeisho AS M
+          ON M.Kubun = 'COL'
+         AND M.Code = COALESCE(
+             NULLIF(json_extract(J.value, '$.Code_Col'), ''),
+             NULLIF(json_extract(J.value, '$.Cd_Col'), '')
+         )
+        ORDER BY CAST(J.key AS INTEGER)
+    ) AS X
+)
+WHERE EXISTS (
+    SELECT 1
+    FROM json_each(T.Jmeisai) AS J
+    JOIN MasterMeisho AS M
+      ON M.Kubun = 'COL'
+     AND M.Code = COALESCE(
+         NULLIF(json_extract(J.value, '$.Code_Col'), ''),
+         NULLIF(json_extract(J.value, '$.Cd_Col'), '')
+     )
+    WHERE CAST(ifnull(json_extract(J.value, '$.Id_Col'), 0) AS INTEGER) = 0
+);
+");
 
+			// Tran00Uriage のJmeisaiを更新する(Id_Siz)
+			cnt += ExecuteUpdateAndGetChanges(@"
+UPDATE Tran00Uriage AS T
+SET Jmeisai = (
+    SELECT json_group_array(json(X.value2))
+    FROM (
+        SELECT
+            J.key,
+            CASE
+                WHEN CAST(ifnull(json_extract(J.value, '$.Id_Siz'), 0) AS INTEGER) = 0
+                     AND M.Id IS NOT NULL
+                THEN json_set(J.value, '$.Id_Siz', M.Id)
+                ELSE J.value
+            END AS value2
+        FROM json_each(T.Jmeisai) AS J
+        LEFT JOIN MasterShohin AS S
+          ON S.Id = CAST(ifnull(json_extract(J.value, '$.Id_Shohin'), 0) AS INTEGER)
+          OR (
+              CAST(ifnull(json_extract(J.value, '$.Id_Shohin'), 0) AS INTEGER) = 0
+              AND S.Code = COALESCE(
+                  NULLIF(json_extract(J.value, '$.Code_Shohin'), ''),
+                  NULLIF(json_extract(J.value, '$.Cd_Shohin'), '')
+              )
+          )
+        LEFT JOIN MasterMeisho AS M
+          ON M.Kubun = S.SizeKu
+         AND M.Code = COALESCE(
+             NULLIF(json_extract(J.value, '$.Code_Siz'), ''),
+             NULLIF(json_extract(J.value, '$.Cd_Siz'), '')
+         )
+        ORDER BY CAST(J.key AS INTEGER)
+    ) AS X
+)
+WHERE EXISTS (
+    SELECT 1
+    FROM json_each(T.Jmeisai) AS J
+    JOIN MasterShohin AS S
+      ON S.Id = CAST(ifnull(json_extract(J.value, '$.Id_Shohin'), 0) AS INTEGER)
+      OR (
+          CAST(ifnull(json_extract(J.value, '$.Id_Shohin'), 0) AS INTEGER) = 0
+          AND S.Code = COALESCE(
+              NULLIF(json_extract(J.value, '$.Code_Shohin'), ''),
+              NULLIF(json_extract(J.value, '$.Cd_Shohin'), '')
+          )
+      )
+    JOIN MasterMeisho AS M
+      ON M.Kubun = S.SizeKu
+     AND M.Code = COALESCE(
+         NULLIF(json_extract(J.value, '$.Code_Siz'), ''),
+         NULLIF(json_extract(J.value, '$.Cd_Siz'), '')
+     )
+    WHERE CAST(ifnull(json_extract(J.value, '$.Id_Siz'), 0) AS INTEGER) = 0
+);
+");
+			_db.CompleteTransaction();
+		}
+		catch {
+			_db.AbortTransaction();
+			throw;
+		}
 
+		return cnt;
+	}
 
+	int ExecuteUpdateAndGetChanges(string sql) {
+		_db.RawExecCmd(sql);
+		if (!string.IsNullOrEmpty(_db.RawLastError)) {
+			throw new InvalidOperationException(_db.RawLastError);
+		}
 
-		return 0;
+		return _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
 	}
 }

@@ -1,3 +1,26 @@
+## [2026-06-30] 08:47 RebuildTranAllの売上明細色サイズId再構築
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvDomainLogic/RebuildDb.cs の RebuildTranAll() で、まず Tran00Uriage の Jmeisai について Id_Col / Id_Siz が 0 の明細を Cd_Col / Cd_Siz 相当コードから MasterMeisho の Id に更新する
+### 実施内容
+- CvDomainLogic/RebuildDb.cs: Tran00Uriage.Jmeisai の Id_Col 更新 SQL と Id_Siz 更新 SQL を分割して追加
+- CvDomainLogic/RebuildDb.cs: 更新 SQL ごとの `SELECT changes()` 取得と SQL エラー時のトランザクション中断処理を追加
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- 色は `MasterMeisho.Kubun='COL'` と色コードで直接解決し、サイズは `MasterShohin.SizeKu` をサイズ区分として `MasterMeisho` を引く必要があるため、更新 SQL を Id_Col 用と Id_Siz 用に分離した
+- 既存 JSON 形式の `Code_Col` / `Code_Siz` を主キーにしつつ、ユーザー指定の Cd 系名称にも対応できるよう `Cd_Col` / `Cd_Siz` を fallback として扱った
+### 確認
+- `git diff --check` で空白エラーなし（Git の CRLF 変換警告のみ）
+- `CvDomainLogic/RebuildDb.cs` の実ファイル改行が CRLF で統一済み
+- ソース内の2本の UPDATE SQL を in-memory SQLite で実行し、Id_Col / Id_Siz の最小更新を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic/CvDomainLogic.csproj"` が成功（0 警告 0 エラー）
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-29] 17:35 SysGeneralMenteViewの一覧取得ボタン左寄せ
 ### Agent
 - GPT-5 : OpenAI : Codex
