@@ -130,6 +130,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg045_ConvertSelectedInit = 45,
 	/// <summary>
+	/// 商品マスタのId_Col=0,Id_Siz=0のデータから名称マスタを再構築する
+	/// </summary>
+	[EnumMember]
+	Msg046_MasterShohinMeishoRebuild = 46,
+	/// <summary>
 	/// 集計処理
 	/// </summary>
 	[EnumMember]
