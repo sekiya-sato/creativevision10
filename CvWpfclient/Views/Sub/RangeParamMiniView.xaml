@@ -95,11 +95,13 @@
 						VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Visibility="{Binding Parameter.IsNameVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
 						Text="{Binding Parameter.DisplayName, StringFormat={}{0}(部分一致)}" />
 					<TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="名前"
 						Style="{StaticResource FormTextBox}"
+						Visibility="{Binding Parameter.IsNameVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
 						Text="{Binding Parameter.Name, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6"

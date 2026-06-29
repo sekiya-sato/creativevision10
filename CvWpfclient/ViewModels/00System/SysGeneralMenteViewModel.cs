@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using Newtonsoft.Json;
 using NPoco;
 using System.Collections;
@@ -18,6 +19,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	Type? targetType;
 	string targetName = string.Empty;
 	int? maxCount;
+	SelectParameter? selectMiniParam;
 
 	[ObservableProperty]
 	string title = "汎用マスタメンテ";
@@ -67,7 +69,12 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	}
 
 	[RelayCommand(IncludeCancelCommand = true)]
-	async Task DoReload(CancellationToken ct) {
+	async Task DoList(CancellationToken ct) {
+		if (!TryShowListConditionDialog()) {
+			Message = "一覧表示の処理を中断しました";
+			return;
+		}
+
 		await ReloadAsync(ct);
 	}
 
@@ -219,8 +226,60 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 		Code = 0,
 		Flag = CvFlag.Msg101_Op_Query,
 		DataType = typeof(QueryListParam),
-		DataMsg = Common.SerializeObject(new QueryListParam(targetType!, maxCount: maxCount))
+		DataMsg = Common.SerializeObject(new QueryListParam(
+			itemType: targetType!,
+			where: BuildListWhere(),
+			order: "Id DESC",
+			maxCount: selectMiniParam?.MaxCount ?? maxCount))
 	};
+
+	string? BuildListWhere() {
+		if (selectMiniParam == null) {
+			return null;
+		}
+
+		List<string> clauses = [];
+		if (selectMiniParam.FromId.HasValue) {
+			clauses.Add($"Id >= {selectMiniParam.FromId.Value}");
+		}
+		if (selectMiniParam.ToId.HasValue) {
+			clauses.Add($"Id <= {selectMiniParam.ToId.Value}");
+		}
+
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
+
+	bool TryShowListConditionDialog() {
+		var selWin = new Views.Sub.RangeParamMiniView();
+		if (selWin.DataContext is not RangeParamMiniViewModel vm) {
+			return true;
+		}
+
+		vm.Initialize(selectMiniParam ?? new SelectParameter {
+			DisplayName = targetName,
+			MaxCount = maxCount,
+			IsNameVisible = false
+		});
+		vm.Parameter.DisplayName = targetName;
+		vm.Parameter.IsNameVisible = false;
+
+		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
+			selectMiniParam = vm.Parameter;
+			return false;
+		}
+
+		selectMiniParam = NormalizeListParameter(vm.Parameter);
+		return true;
+	}
+
+	SelectParameter NormalizeListParameter(SelectParameter parameter) =>
+		new() {
+			FromId = parameter.FromId,
+			ToId = parameter.ToId,
+			DisplayName = targetName,
+			IsNameVisible = false,
+			MaxCount = parameter.MaxCount
+		};
 
 	CvMsg CreateExecuteMessage(object parameter, Type dataType) => new() {
 		Code = 0,

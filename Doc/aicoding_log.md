@@ -1,3 +1,26 @@
+## [2026-06-29] 17:28 SysGeneralMenteView の一覧取得条件再指定対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._00System.SysGeneralMenteView でデータを Id desc で取得し、table選択後の画面で「一覧取得」ボタンから ID の from-to と件数のみ再指定できるようにする
+### 実施内容
+- CvWpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs: 一覧取得を `Id DESC` に変更し、ID範囲と件数条件を保持して `QueryListParam` に反映する処理を追加
+- CvWpfclient/Views/00System/SysGeneralMenteView.xaml: 既存の再読込操作を「一覧取得」ボタンへ変更し、F5 から同じ条件再指定処理を呼び出すよう修正
+- CvWpfclient/ViewModels/Sub/SelectParameter.cs: RangeParamMiniView で名前欄を任意表示にするための `IsNameVisible` を追加
+- CvWpfclient/Views/Sub/RangeParamMiniView.xaml: `IsNameVisible` が false の場合は名前欄を非表示にし、汎用メンテでは ID 範囲と件数のみ指定できるよう修正
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- table選択直後の初期表示は従来通り自動取得し、再取得時だけ条件ダイアログを開くことで既存の画面遷移を維持した
+- 既存の `RangeParamMiniView` を名前欄の表示制御付きで再利用し、ID from-to と件数だけを受け付ける UI に限定した
+### 確認
+- `CvWpfclient/Views/00System/SysGeneralMenteView.xaml` と `CvWpfclient/Views/Sub/RangeParamMiniView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-29] 14:44 SysExecMiscViewの商品名称再構築ボタン対応
 ### Agent
 - GPT-5 : OpenAI : Codex

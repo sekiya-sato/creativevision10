@@ -20,7 +20,7 @@
 			Gesture="F3" />
 		<KeyBinding Command="{Binding DoAddCommand}"
 			Gesture="F4" />
-		<KeyBinding Command="{Binding DoReloadCommand}"
+		<KeyBinding Command="{Binding DoListCommand}"
 			Gesture="F5" />
 	</helpers:BaseWindow.InputBindings>
 
@@ -96,14 +96,14 @@
 						</StackPanel>
 					</Button>
 					<Button Margin="4,0"
-						Command="{Binding DoReloadCommand}"
+						Command="{Binding DoListCommand}"
 						Style="{StaticResource MaterialDesignToolForegroundButton}"
-						ToolTip="再読込 (F5)">
+						ToolTip="一覧取得 (F5)">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
-								Kind="Refresh" />
+								Kind="DatabaseSearch" />
 							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="再読込" />
+								Text="一覧取得" />
 						</StackPanel>
 					</Button>
 				</StackPanel>
