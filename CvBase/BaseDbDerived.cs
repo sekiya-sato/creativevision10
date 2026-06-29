@@ -36,7 +36,8 @@ public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
 	/// </summary>
 	[ObservableProperty]
 	[property: ColumnSizeDml(16)]
-	string code = "";
+	[property: System.ComponentModel.DefaultValue("")]
+	string code = string.Empty;
 	/*
 	/// <summary>
 	/// 名前

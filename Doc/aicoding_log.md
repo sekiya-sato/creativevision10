@@ -1,3 +1,22 @@
+## [2026-06-29] 12:15 DefineDataTable の IDerivedClass 対応テーブル作成処理を修正
+### Agent
+- Kimi K2.7-code : OhMyOpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvBase/DefineDataTable.cs のテーブル作成ループで、IDerivedClass を実装する型は CreateDerivedTable() を使用し、実行前にテーブル存在を確認して不在時のみ作成する。force 時は Drop 後に再作成する。
+### 実施内容
+- CvBase/DefineDataTable.cs: テーブル作成ループ内で `typeof(IDerivedClass).IsAssignableFrom(tableType)` を判定し、派生テーブルは `CreateDerivedTable` を使用するよう変更
+- CvBase/DefineDataTable.cs: `EnsureDerivedTable` ヘルパーを追加し、force 時は Drop 後に再作成、非 force 時はテーブル不在時のみ作成・データ投入を実行
+- CvBase/DefineDataTable.cs: ループ外に残っていた `DerivedShohinColSiz` の個別 `CreateDerivedTable` 呼び出しを削除
+### 技術決定 Why
+- `ExDatabase.CreateDerivedTable<T>()` は `isForce=true` の場合のみ実処理（Drop → Create → データ投入）を行うため、テーブル不在時も `true` を渡して実際の作成とデータ投入を行うようにした
+- 存在確認は `ExDatabase.IsExistTable(Type)` で行い、force 時以外はテーブルが既存の場合に冗長な処理をスキップする
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-28] 16:38 README/setup 文面校正と Markdown 整理
 ### Agent
 - GPT-5 : OpenAI : Codex

@@ -361,12 +361,15 @@ public partial class ExDatabase : Database {
 		}
 		return (ret == 0);
 	}*/
-	public bool CreateDerivedTable<T>(bool isForce = false) where T : IDerivedClass, new() {
+	[Obsolete("Use CreateTable instead.")]
+	public bool CreateDerivedTable(Type t, bool isForce = false) {
 		var ret = true;
+		ret = CreateTable(t, isForce);
+
 		if (isForce) {
-			DropTable(typeof(T));
-			ret = CreateTable<T>(isForce);
-			var createSql = T.CreateSql;
+			DropTable(t);
+			ret = CreateTable(t, isForce);
+			var createSql = GetSqlCreateTable(t);
 			BeginTransaction();
 			var cnt = Execute(createSql);
 			CompleteTransaction();

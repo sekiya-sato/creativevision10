@@ -110,6 +110,7 @@ public class DefineDataTable {
 			 */
 		};
 		foreach (var tableType in tableTypes) {
+			/* if (typeof(IDerivedClass).IsAssignableFrom(tableType)) {} */
 			if (!db.CreateTable(tableType, isForce)) {
 				_logger.LogError("テーブルの作成に失敗しました。テーブル名: {TableName}", tableType.Name);
 				return false;
@@ -122,8 +123,6 @@ public class DefineDataTable {
 
 		// DBの整合性を管理
 		UpdateDb.WriteVersionInfoAsync(db).Wait();
-		// DerivedClassの作成
-		ret = db.CreateDerivedTable<DerivedShohinColSiz>(isForce);
 		// 他、追加処理
 		//var summaryDb = new CvDomainLogic.SummaryDb(db);
 		//summaryDb.CalcSummaryRealStock(DateTime.Now.ToString("yyyyMM"));
