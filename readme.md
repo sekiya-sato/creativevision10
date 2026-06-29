@@ -20,6 +20,10 @@
 
 2025年11月25日に約 30 ファイルの初期リポジトリを登録して以降、既存の `CV.net` 機能の 8 割をカバーできる状態を目指し、<B><Font Color="Red">2027年1月のリリース</Font></B>に向けて開発を進めています。
 
+(リリース予定は秋頃に再度アナウンスします)
+
+[アクティビティ](https://github.com/sekiya-sato/creativevision10/activity?)  [Insights](https://github.com/sekiya-sato/creativevision10/pulse)  [Contributors](https://github.com/sekiya-sato/creativevision10/graphs/contributors?)  [Commits](https://github.com/sekiya-sato/creativevision10/graphs/commit-activity)
+
 
 ---
 
