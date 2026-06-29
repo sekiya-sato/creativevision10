@@ -15,7 +15,8 @@ public class RebuildDb {
 	/// MasterShohinのJcolsizからMeishoを再構築する	
 	/// </summary>
 	public int RebuildMasterShohin2Meisho() {
-		// ToDo: MasterShohinのJcolsiz、JSON_EXTRACTからMeishoを再構築する
+		// MasterShohinのJcolsiz、JSON_EXTRACTからMeishoを再構築する
+		int cnt = 0; // MasterMeishoへの登録件数
 		var coreSql = @"
 SELECT
   M.Code,
@@ -34,6 +35,7 @@ SELECT
 FROM MasterShohin M, json_each(M.Jcolsiz) J
 left outer join MasterMeisho mm on mm.Kubun='COL' and mm.Code=json_extract(J.value, '$.Code_Col')
 ";
+		var updateSql = "";
 		// まずはカラーIdを持たないものを抽出して、MasterMeishoに登録する
 		var meishoSql = @$"
 select distinct 'COL' as Kubun,'ｶﾗｰ' as KubunName,Code_Col as Code, coalesce(nullif(Mei_Col, ''),Name,'新色'||Code_Col) as Name from (
@@ -41,9 +43,13 @@ select distinct 'COL' as Kubun,'ｶﾗｰ' as KubunName,Code_Col as Code, coales
 ";
 		var meishoList = _db.Fetch<MasterMeisho>(meishoSql);
 		_db.BeginTransaction();
-		// 名称マスタ作成
-		_db.InsertBulk<MasterMeisho>(meishoList);
-		var updateSql = @"
+		// カラーId=0のものがあれば、MasterMeishoに登録する
+		if (meishoList.Count > 0) {
+			cnt += meishoList.Count;
+			// 名称マスタ作成
+			_db.InsertBulk<MasterMeisho>(meishoList);
+			// MasterShohinのJcolsizを更新する
+			updateSql = @"
 UPDATE MasterShohin AS S
 SET Jcolsiz = (
     SELECT json_group_array(json(X.value2))
@@ -72,17 +78,23 @@ WHERE EXISTS (
     WHERE json_extract(J.value, '$.Id_Col') = 0
 );
 ";
-		// MasterShohinのJcolsizを更新する(Id_Col)
-		var retCnt = _db.RawExecCmd(updateSql);
+			// MasterShohinのJcolsizを更新する(Id_Col)
+			var retData = _db.RawExecCmd(updateSql);
+		}
+
 		// 次にサイズIdを持たないものを抽出して、MasterMeishoに登録する
 		meishoSql = @$"
 select distinct Kubun,KubunName,Code_Siz as Code, coalesce(nullif(Mei_Siz, ''),'新サイズ'||Code_Siz) as Name from (
 {coreSql} where json_extract(J.value, '$.Id_Siz')=0)
 ";
 		meishoList = _db.Fetch<MasterMeisho>(meishoSql);
-		// 名称マスタ作成
-		_db.InsertBulk<MasterMeisho>(meishoList);
-		updateSql = @"
+		// サイズId=0のものがあれば、MasterMeishoに登録する
+		if (meishoList.Count > 0) {
+			cnt += meishoList.Count;
+			// 名称マスタ作成
+			_db.InsertBulk<MasterMeisho>(meishoList);
+			// MasterShohinのJcolsizを更新する
+			updateSql = @"
 UPDATE MasterShohin AS S
 SET Jcolsiz = (
     SELECT json_group_array(json(X.value2))
@@ -110,9 +122,25 @@ WHERE EXISTS (
      AND M.Code = json_extract(J.value, '$.Code_Siz')
     WHERE json_extract(J.value, '$.Id_Siz') = 0
 );";
-		// MasterShohinのJcolsizを更新する(Id_Siz)
-		retCnt = _db.RawExecCmd(updateSql);
+			// MasterShohinのJcolsizを更新する(Id_Siz)
+			var retData = _db.RawExecCmd(updateSql);
+		}
 		_db.CompleteTransaction();
+		// Derived を更新する
+		return cnt;
+	}
+	/// <summary>
+	/// Tran系のテーブルでId_ColとId_Sizを再構築する
+	/// </summary>
+	/// <returns></returns>
+	public int RebuildTranAll() {
+		//RebuildMasterShohin2Meisho()にて登録されたMasterMeishoを使い、Tran系のテーブルでId_ColとId_Sizを再構築する
+		// まずは Tran00Uriage のJcolsizを更新する
+
+
+
+
+
 		return 0;
 	}
 }
