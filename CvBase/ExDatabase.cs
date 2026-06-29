@@ -325,7 +325,7 @@ public partial class ExDatabase : Database {
 	/// <returns></returns>
 	int CreateIndex(string tbName, string indexSubName, string dbColumn, bool isUnique = false, bool isForce = false) {
 		var indexName = $"{tbName}_{indexSubName}"; // 必ずテーブル名をつけUniqueになるように
-													// インデックスがあるかどうかの確認 [Check if the index exists]
+		/*
 		var checkSql = string.Format("select COLUMN_NAME, INDEX_NAME from INFORMATION_SCHEMA.STATISTICS where TABLE_SCHEMA='{0}' and INDEX_NAME='{1}'"
 			, GetCurrentDatabase(), indexName);
 		if (DatabaseType == NPoco.DatabaseType.SQLite)
@@ -334,16 +334,18 @@ public partial class ExDatabase : Database {
 			checkSql = string.Format("select * from USER_INDEXES where table_name='{0}' and index_name='{1}'", tbName, indexName);
 		var listIndex = Fetch<dynamic>(checkSql);
 		if (listIndex.Count > 0 && isForce) {
-			int ret = Execute(string.Format("DROP INDEX {0}", indexName));
+			int ret = Execute(string.Format("DROP INDEX IF EXISTS {0}", indexName));
 			if (ret != 0) return -1;
 		}
-		if (listIndex.Count == 0 || isForce) {
-			int ret = Execute(string.Format("CREATE {3} INDEX {1} ON {0}({2})"
-			, tbName, indexName, dbColumn, isUnique ? "unique" : ""));
-			if (ret == 0) return 1;
-			else return -1;
+		 */
+		int ret = 0;
+		if (isForce) {
+			ret = Execute(string.Format("DROP INDEX IF EXISTS {0}", indexName));
 		}
-		return 0;
+		ret = Execute(string.Format("CREATE {3} INDEX IF NOT EXISTS {1} ON {0}({2})"
+			, tbName, indexName, dbColumn, isUnique ? "unique" : ""));
+		if (ret == 0) return 1;
+		else return -1;
 	}
 	/*
 	public bool CreateView<T>(bool isForce = false) where T : IViewClass, new() {

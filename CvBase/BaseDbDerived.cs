@@ -13,7 +13,7 @@ public interface IDerivedClass {
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
-[KeyDml("unq1", true, [nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
+[KeyDml("shcolsz", false, [nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
 [KeyDml("n1", false, nameof(Id_Shohin))]
 [KeyDml("n2", false, nameof(Code))]
 [KeyDml("njan1", false, nameof(Jan1))]
