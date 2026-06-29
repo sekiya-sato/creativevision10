@@ -69,14 +69,14 @@
 						</Button>
 						<Button Width="200" Height="42"
 							Margin="0,0,12,12"
-							Command="{Binding Test02Command}"
+							Command="{Binding MasterShohinMeishoRebuildCommand}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							Style="{StaticResource MaterialDesignRaisedButton}">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="DatabaseRefresh" />
 								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="Testケース02" />
+									Text="商品名称再構築" />
 							</StackPanel>
 						</Button>
 					</WrapPanel>

@@ -1,3 +1,24 @@
+## [2026-06-29] 14:44 SysExecMiscViewの商品名称再構築ボタン対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._00System.SysExecMiscView の Testケース02 ボタンを変更し、サーバI/F の CvFlag.Msg046_MasterShohinMeishoRebuild を呼び出して実行するようにする
+### 実施内容
+- CvWpfclient/ViewModels/00System/SysExecMiscViewModel.cs: Test02処理を商品名称マスタ再構築処理へ変更し、CvFlag.Msg046_MasterShohinMeishoRebuild を ICoreService.QueryMsgAsync で呼び出すよう修正
+- CvWpfclient/Views/00System/SysExecMiscView.xaml: Testケース02 ボタンの表示とコマンドバインディングを商品名称再構築用に変更
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- サーバ側には Msg046_MasterShohinMeishoRebuild のハンドラが既に存在するため、CvWpfclient側のみ既存の ICoreService 呼び出しパターンを流用し、サーバ処理には変更を加えない
+- 実行結果欄には開始・成功・失敗を明示し、サーバ応答が負の Code を返した場合は Option/DataMsg を利用してエラー内容を表示する
+### 確認
+- `CvWpfclient/Views/00System/SysExecMiscView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-29] 12:15 DefineDataTable の IDerivedClass 対応テーブル作成処理を修正
 ### Agent
 - Kimi K2.7-code : OhMyOpenCode : Sisyphus

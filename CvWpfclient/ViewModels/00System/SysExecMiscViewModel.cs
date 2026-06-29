@@ -43,26 +43,41 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 	}
 
 	[RelayCommand(IncludeCancelCommand = true)]
-	public async Task Test02(CancellationToken cancellationToken) {
-		if (MessageEx.ShowQuestionDialog("Testケース02？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+	private async Task MasterShohinMeishoRebuildAsync(CancellationToken cancellationToken) {
+		if (MessageEx.ShowQuestionDialog("MasterShohinのId_Col/Id_Sizが0のデータから名称マスタを再構築しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
 		}
 		try {
 			IsProcessing = true;
+			ResultMessage = "商品名称マスタ再構築を実行中です。";
 			ClientLib.Cursor2Wait();
 			cancellationToken.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var msg = new CvMsg { Code = 0, Flag = CvFlag.Msg702_TestCase002 };
+			var msg = new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg046_MasterShohinMeishoRebuild,
+				DataType = typeof(string),
+				DataMsg = string.Empty
+			};
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
-			if (reply?.DataMsg != null && reply?.DataType != null) {
-				ResultMessage = reply.DataMsg;
+			if (reply.Code < 0) {
+				var detail = !string.IsNullOrWhiteSpace(reply.Option) ? reply.Option : reply.DataMsg;
+				ResultMessage = $"商品名称マスタ再構築に失敗しました。{Environment.NewLine}{detail}";
+				MessageEx.ShowErrorDialog(ResultMessage, owner: ClientLib.GetActiveView(this));
+				return;
 			}
+			ResultMessage = "商品名称マスタ再構築が完了しました。";
+			MessageEx.ShowInformationDialog(ResultMessage, owner: ClientLib.GetActiveView(this));
 		}
 		catch (OperationCanceledException) {
 			return;
 		}
 		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
 			return;
+		}
+		catch (Exception ex) {
+			ResultMessage = $"商品名称マスタ再構築中にエラーが発生しました。{Environment.NewLine}{ex.Message}";
+			MessageEx.ShowErrorDialog(ResultMessage, owner: ClientLib.GetActiveView(this));
 		}
 		finally {
 			IsProcessing = false;
