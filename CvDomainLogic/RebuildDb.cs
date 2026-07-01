@@ -114,7 +114,7 @@ SET Jcolsiz = (
         ORDER BY CAST(J.key AS INTEGER)
     ) AS X
 )
-WHERE EXISTS (
+WHERE EXISTS (-
     SELECT 1
     FROM json_each(S.Jcolsiz) AS J
     JOIN MasterMeisho AS M
