@@ -223,3 +223,24 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（警告0、エラー0）
 
 ---
+## [2026-07-02] 12:27 店舗売上入力の明細P/Sセル余白最小化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._06Uriage.ShopUriageInputView` の明細P/S選択セルのサイズと余白を再調整する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: P/S選択用の明細専用 `MeisaiKubunComboBox` / `MeisaiKubunComboBoxItem` スタイルを追加し、Height/MinWidth/FontSize/Padding/DropDown高さを小さく設定
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: P/S列幅を 96 に戻し、RowDetails の MinHeight と Margin、セル内 Margin を最小寄りに調整
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- `MaterialDesignOutlinedComboBox` は明細2段目の小セルでは枠と項目高さが大きく、行高に対して過剰な余白が出るため、P/Sセル専用の軽量な ComboBox スタイルで局所的に詰めた
+### 確認
+- `ShopUriageInputView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `ShopUriageInputView.xaml` が UTF-8 BOM + CRLF、LF-only/CR-only なしであることを確認
+- 通常出力先の `CvWpfclient` ビルドは起動中の `CreativeVision10 (13424)` と Visual Studio のDLLロックで失敗
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -o .omo/build/CvWpfclient"` が成功（警告0、エラー0）
+
+---
