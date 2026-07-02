@@ -561,6 +561,19 @@
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
+							<DataGridTemplateColumn x:Name="MeisaiNoKubunColumn"
+								Width="86"
+								Header="仮行No">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<TextBlock HorizontalAlignment="Center"
+											VerticalAlignment="Center"
+											FontWeight="SemiBold"
+											Foreground="{DynamicResource MaterialDesignBody}"
+											Text="{Binding No}" />
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
 							<DataGridTemplateColumn x:Name="MeisaiShohinIdColumn"
 								Width="140"
 								Header="商品Id">
@@ -743,6 +756,7 @@
 								<Grid MinHeight="30"
 									Margin="0,0,0,6">
 									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="{Binding ActualWidth, Source={x:Reference MeisaiNoKubunColumn}, Converter={StaticResource DoubleToGridLengthConverter}}" />
 										<ColumnDefinition Width="{Binding ActualWidth, Source={x:Reference MeisaiShohinIdColumn}, Converter={StaticResource DoubleToGridLengthConverter}}" />
 										<ColumnDefinition Width="{Binding ActualWidth, Source={x:Reference MeisaiShohinNameColumn}, Converter={StaticResource DoubleToGridLengthConverter}}" />
 										<ColumnDefinition Width="{Binding ActualWidth, Source={x:Reference MeisaiColIdColumn}, Converter={StaticResource DoubleToGridLengthConverter}}" />
@@ -757,14 +771,27 @@
 										<ColumnDefinition Width="{Binding ActualWidth, Source={x:Reference MeisaiEndColumn}, Converter={StaticResource DoubleToGridLengthConverter}}" />
 									</Grid.ColumnDefinitions>
 
-									<TextBlock Grid.Column="0"
+									<Grid Grid.Column="0"
+										Margin="4,0"
+										VerticalAlignment="Center">
+										<Grid.ToolTip>P/S</Grid.ToolTip>
+										<ComboBox Height="28"
+											MinWidth="76"
+											DisplayMemberPath="Name"
+											ItemsSource="{Binding DataContext.MeisaiKubunOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+											SelectedValue="{Binding Kubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+											SelectedValuePath="Value"
+											Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+									</Grid>
+
+									<TextBlock Grid.Column="1"
 										Style="{StaticResource MeisaiReadOnlyTextBlock}"
 										Text="{Binding Code_Shohin}" />
-									<TextBlock Grid.Column="1"
+									<TextBlock Grid.Column="2"
 										Style="{StaticResource MeisaiReadOnlyTextBlock}"
 										Text="{Binding Mei_Shohin}" />
 
-									<Grid Grid.Column="2" Grid.ColumnSpan="2"
+									<Grid Grid.Column="3" Grid.ColumnSpan="2"
 										Margin="2,0">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="50" />
@@ -777,7 +804,7 @@
 											Text="{Binding Mei_Col}" />
 									</Grid>
 
-									<Grid Grid.Column="4" Grid.ColumnSpan="2"
+									<Grid Grid.Column="5" Grid.ColumnSpan="2"
 										Margin="2,0">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="50" />
@@ -790,7 +817,7 @@
 											Text="{Binding Mei_Siz}" />
 									</Grid>
 
-									<TextBlock Grid.Column="7"
+									<TextBlock Grid.Column="8"
 										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">
 										<TextBlock.Text>
 											<MultiBinding Converter="{StaticResource MultiplyValuesConverter}"
@@ -801,7 +828,7 @@
 										</TextBlock.Text>
 									</TextBlock>
 
-									<TextBlock Grid.Column="8"
+									<TextBlock Grid.Column="9"
 										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">
 										<TextBlock.Text>
 											<MultiBinding Converter="{StaticResource MultiplyValuesConverter}"
@@ -812,7 +839,7 @@
 										</TextBlock.Text>
 									</TextBlock>
 
-									<TextBlock Grid.Column="9"
+									<TextBlock Grid.Column="10"
 										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">
 										<TextBlock.Text>
 											<MultiBinding Converter="{StaticResource MultiplyValuesConverter}"
@@ -823,7 +850,7 @@
 										</TextBlock.Text>
 									</TextBlock>
 
-									<Grid Grid.Column="10"
+									<Grid Grid.Column="11"
 										Margin="2,0">
 										<Grid.ColumnDefinitions>
 											<ColumnDefinition Width="64" />

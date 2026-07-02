@@ -12,6 +12,9 @@ using System.Linq;
 namespace CvWpfclient.ViewModels._06Uriage;
 
 public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran01Tenuri> {
+	public sealed record MeisaiKubunOption(int Value, string Name);
+	const int ProperMeisaiKubun = 0;
+	const int SaleMeisaiKubun = 1;
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(DoListOnListTabCommand))]
@@ -33,6 +36,11 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		EnumUri01.UriSale,
 		EnumUri01.Henpin,
 		EnumUri01.HenSale,
+	];
+
+	public IReadOnlyList<MeisaiKubunOption> MeisaiKubunOptions { get; } = [
+		new(ProperMeisaiKubun, "Pプロパー"),
+		new(SaleMeisaiKubun, "Sセール"),
 	];
 
 	bool IsListTabSelected() => SelectedTabIndex == 0;
@@ -141,15 +149,24 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		foreach (var m in EditMeisai) m.PropertyChanged -= OnMeisaiPropertyChanged;
 		EditMeisai = new ObservableCollection<Tran99Meisai>(
 			CurrentEdit.Jmeisai?.Select(Common.CloneObject) ?? []);
-		foreach (var m in EditMeisai) m.PropertyChanged += OnMeisaiPropertyChanged;
+		foreach (var m in EditMeisai) {
+			m.Kubun = NormalizeMeisaiKubun(m.Kubun);
+			m.PropertyChanged += OnMeisaiPropertyChanged;
+		}
 		UpdateTotals();
 	}
 
 	void SyncMeisaiToCurrentEdit() {
-		foreach (var m in EditMeisai) m.Kubun = CurrentEdit.Kubun;
+		foreach (var m in EditMeisai) m.Kubun = NormalizeMeisaiKubun(m.Kubun);
 		CurrentEdit.Jmeisai = [.. EditMeisai];
 		UpdateTotals();
 	}
+
+	static int NormalizeMeisaiKubun(int kubun) =>
+		kubun switch {
+			SaleMeisaiKubun or (int)EnumUri01.UriSale or (int)EnumUri01.HenSale => SaleMeisaiKubun,
+			_ => ProperMeisaiKubun,
+		};
 
 	void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
 		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
@@ -224,7 +241,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	[RelayCommand]
 	void AddMeisai() {
 		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;
-		var newMeisai = new Tran99Meisai { No = nextNo, Kubun = CurrentEdit.Kubun };
+		var newMeisai = new Tran99Meisai { No = nextNo, Kubun = ProperMeisaiKubun };
 		newMeisai.PropertyChanged += OnMeisaiPropertyChanged;
 		EditMeisai.Add(newMeisai);
 	}
@@ -260,7 +277,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			}
 
 			row.No = nextNo++;
-			row.Kubun = CurrentEdit.Kubun;
+			row.Kubun = ProperMeisaiKubun;
 			row.Kingaku = row.Su * row.Tanka;
 			row.PropertyChanged += OnMeisaiPropertyChanged;
 			EditMeisai.Add(row);

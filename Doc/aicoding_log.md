@@ -184,3 +184,22 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
 
 ---
+## [2026-07-02] 12:03 店舗売上入力の明細P/S選択追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._06Uriage.ShopUriageInputView` の伝票明細に仮行NoとP/S選択を追加し、明細 `Kubun` に P=0 / S=1 を保存する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 明細グリッド先頭列に仮行Noを表示し、2段目の RowDetails に Pプロパー / Sセールの選択 ComboBox を追加
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 明細用P/S選択肢を追加し、店舗売上の明細 `Kubun` を伝票ヘッダ区分で上書きせず P=0 / S=1 に正規化する処理へ変更
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- `Tran99Meisai.Kubun` を明細ごとの P/S 区分として扱うため、保存時のヘッダ区分上書きをやめ、既存データの 11/21 は S、その他は P として表示できるよう正規化した
+### 確認
+- `ShopUriageInputView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（警告0、エラー0）
+
+---
