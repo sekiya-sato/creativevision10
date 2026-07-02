@@ -581,7 +581,7 @@
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
 							<DataGridTemplateColumn x:Name="MeisaiNoKubunColumn"
-								Width="96"
+								Width="88"
 								Header="行No">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -594,7 +594,7 @@
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
 							<DataGridTemplateColumn x:Name="MeisaiShohinIdColumn"
-								Width="140"
+								Width="118"
 								Header="商品Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -628,10 +628,10 @@
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
 							<DataGridTemplateColumn x:Name="MeisaiShohinNameColumn"
-								Width="200"
+								Width="168"
 								Header=" " />
 							<DataGridTemplateColumn x:Name="MeisaiColIdColumn"
-								Width="140"
+								Width="112"
 								Header="色Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -665,10 +665,10 @@
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
 							<DataGridTemplateColumn x:Name="MeisaiColNameColumn"
-								Width="60"
+								Width="56"
 								Header=" " />
 							<DataGridTemplateColumn x:Name="MeisaiSizIdColumn"
-								Width="140"
+								Width="112"
 								Header="サイズId">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -702,34 +702,34 @@
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
 							<DataGridTemplateColumn x:Name="MeisaiSizNameColumn"
-								Width="60"
+								Width="56"
 								Header=" " />
 							<DataGridTextColumn x:Name="MeisaiSuColumn"
-								Width="80"
+								Width="54"
 								Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="数量" />
 							<DataGridTextColumn x:Name="MeisaiTankaColumn"
-								Width="90"
+								Width="78"
 								Binding="{Binding Tanka, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="単価" />
 							<DataGridTextColumn x:Name="MeisaiJodaiColumn"
-								Width="100"
+								Width="84"
 								Binding="{Binding Jodai, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="上代単価" />
 							<DataGridTextColumn x:Name="MeisaiGedaiColumn"
-								Width="100"
+								Width="84"
 								Binding="{Binding Gedai, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="下代単価" />
 							<DataGridTemplateColumn x:Name="MeisaiShainColumn"
-								Width="140"
+								Width="118"
 								Header="明細担当Id">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -763,7 +763,7 @@
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
 							<DataGridTemplateColumn x:Name="MeisaiEndColumn"
-								Width="40"
+								Width="0"
 								Header=" " />
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>

@@ -244,3 +244,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -o .omo/build/CvWpfclient"` が成功（警告0、エラー0）
 
 ---
+## [2026-07-02] 12:31 店舗売上入力の明細列幅圧縮
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._06Uriage.ShopUriageInputView` の明細行を右端まで表示できるよう列幅を調整する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 明細の行No、商品Id、商品名、色Id、サイズId、数量、単価、上代単価、下代単価、明細担当Idの列幅を圧縮
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 終端スペーサ列を 0 にして、明細担当Id列まで表示領域に収まりやすくした
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- 明細右端の明細担当Id検索ボタンまで表示するため、数量列を 54px に狭め、検索ボタン付き列はボタン幅を残せる最小寄りの幅にした
+### 確認
+- `ShopUriageInputView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `ShopUriageInputView.xaml` が UTF-8 BOM + CRLF、LF-only/CR-only なしであることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -o .omo/build/CvWpfclient"` が成功（警告0、エラー0）
+
+---
