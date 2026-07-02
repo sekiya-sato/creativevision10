@@ -203,3 +203,23 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（警告0、エラー0）
 
 ---
+## [2026-07-02] 12:23 店舗売上入力の明細P/S表示調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._06Uriage.ShopUriageInputView` の明細行P/S選択表示が空欄になるため、人間の修正を含めて調整する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 人間修正の `行No` 表記を維持しつつ、P/S選択列幅を拡張し、ComboBox の高さ・フォントを調整
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: RowDetails 内の P/S ComboBox の `ItemsSource` を `Window` 祖先参照から `DataGrid.DataContext` 参照へ変更
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- RowDetails 内では `Window` 祖先参照より、同じ DataGrid 配下の `DataContext.MeisaiKubunOptions` を参照する方が安定し、列幅不足による選択値の非表示も避けられるため
+### 確認
+- `ShopUriageInputView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `ShopUriageInputView.xaml` が UTF-8 BOM + CRLF、LF-only/CR-only なしであることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（警告0、エラー0）
+
+---

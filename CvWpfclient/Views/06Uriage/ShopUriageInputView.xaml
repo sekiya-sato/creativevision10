@@ -562,8 +562,8 @@
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
 							<DataGridTemplateColumn x:Name="MeisaiNoKubunColumn"
-								Width="86"
-								Header="仮行No">
+								Width="112"
+								Header="行No">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
 										<TextBlock HorizontalAlignment="Center"
@@ -775,10 +775,12 @@
 										Margin="4,0"
 										VerticalAlignment="Center">
 										<Grid.ToolTip>P/S</Grid.ToolTip>
-										<ComboBox Height="28"
-											MinWidth="76"
+										<ComboBox Height="32"
+											MinWidth="100"
+											FontSize="12"
 											DisplayMemberPath="Name"
-											ItemsSource="{Binding DataContext.MeisaiKubunOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+											HorizontalContentAlignment="Left"
+											ItemsSource="{Binding DataContext.MeisaiKubunOptions, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
 											SelectedValue="{Binding Kubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 											SelectedValuePath="Value"
 											Style="{StaticResource MaterialDesignOutlinedComboBox}" />
