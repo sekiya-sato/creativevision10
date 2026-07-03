@@ -44,11 +44,11 @@ public class UpdateDb {
 				Memo = "新規レコード作成"
 			};
 			await db.InsertAsync(verNow, ct);
-			logger.LogDebug($"DBバージョン新規書込({latestVersion.DbVersion})");
+			logger.LogDebug($"UpdateDb: DBバージョン新規書込({latestVersion.DbVersion})");
 			return;
 		}
 		if (latestDb.DbVersion >= latestVersion.DbVersion) { // DBに最新までレコードがある
-			logger.LogInformation($"DBバージョンは最新({latestVersion.DbVersion})");
+			logger.LogInformation($"UpdateDb: DBバージョンは最新({latestVersion.DbVersion})");
 			return;
 		}
 		foreach (var record in verupSql) { // 配列はforeachで必ず順番に処理される
@@ -56,7 +56,7 @@ public class UpdateDb {
 			if (record.DbVersion > latestDb.DbVersion) { // verupSqlのバージョンがDBのバージョンより新しい場合は、DBをverupSqlのバージョンに合わせるためのSQLを実行する
 				var errorMsg = await SubInsertRecordAsync(db, record, latestDb.DbVersion, logger, ct);
 				if (!string.IsNullOrEmpty(errorMsg)) {
-					logger.LogError($"DBバージョンアップ時エラー rec={record.DbVersion}: {errorMsg} : SQL={record.Sql}");
+					logger.LogError($"UpdateDb: DBバージョンアップ時エラー rec={record.DbVersion}: {errorMsg} : SQL={record.Sql}");
 				}
 			}
 		}
