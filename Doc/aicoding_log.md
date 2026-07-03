@@ -1,3 +1,26 @@
+## [2026-07-03] 11:16 MasterYosanHanbaiMenteView 作成
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：販売員別予算マスタ(月)のメニュー名へ変更し、MasterYosanBrandMenteView を参考に MasterYosanHanbaiMenteView の View.xaml / View.xaml.cs / ViewModel.cs を作成する
+### 実施内容
+- CvWpfclient/Models/MenuData.cs: 販売員別予算マスタを「販売員別予算マスタ(月)」へ変更し、直後に「販売員予算マスタメンテ」を登録
+- CvWpfclient/Views/02Yosan/MasterYosanHanbaiMenteView.xaml: MasterYosanHanbai の一覧と編集フォーム、販売員Id選択、追加・修正・削除・一覧取得ボタンを持つ画面を追加
+- CvWpfclient/Views/02Yosan/MasterYosanHanbaiMenteView.xaml.cs: BaseWindow 継承の初期化コードを追加
+- CvWpfclient/ViewModels/02Yosan/MasterYosanHanbaiMenteViewModel.cs: BaseMenteViewModel<MasterYosanHanbai> による一覧取得、登録、修正、削除、MasterShain 選択、入力検証を実装
+### 技術決定 Why
+- MasterYosanHanbai は VShain 表示列を持たないため、DBモデルは変更せず、3ファイル内で完結する販売員Id選択と補助表示にした
+- 既存の MasterYosanBrandMenteView と同じ BaseMenteViewModel フローを踏襲し、直接編集画面の操作差分を最小化した
+### 確認
+- MasterYosanHanbaiMenteView.xaml のXML構文チェック成功
+- 対象編集ファイルの CRLF 確認済み
+- `git diff --check` エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功：警告0、エラー0
+
+---
+
 ## [2026-07-03] 09:52 ShopUriageInputViewModelの明細行No連番修正
 ### Agent
 - GPT-5 : OpenAI : Sisyphus
