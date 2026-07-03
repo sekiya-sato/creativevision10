@@ -1,3 +1,24 @@
+## [2026-07-03] 08:03 CvWpfclient 重複Converterの App.xaml 集約リファクタ
+### Agent
+- Claude Opus 4.8 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient を全体チェックし、重複または未使用の Converter / XAML 部品をリファクタ（メインメニュー使用分は変更しない）
+### 実施内容
+- CvWpfclient/App.xaml: 各 View にローカル重複宣言されていた MultiplyValuesConverter / DoubleToGridLengthConverter / NumericSignBrushConverter の3つを、App.xaml のリソースへ集約登録
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: ローカルの MultiplyValuesConverter / DoubleToGridLengthConverter 宣言を削除
+- CvWpfclient/Views/06Uriage/ShukkaUriageInputView.xaml: 同上の2宣言を削除
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 同上の2宣言を削除
+- CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml: ローカルの NumericSignBrushConverter 宣言を削除
+### 技術決定 Why
+- App.xaml の規約コメント「Converter があれば App.xaml で定義する」に従い集約。3 Converter はいずれもステートレス実装のため単一インスタンス共有が安全。StaticResource は Application リソースまで探索するため参照側は無修正で解決可能
+- 監査の結果、App.xaml 登録済み Converter 8個は全て使用中（未使用なし）、共有 ResourceDictionary の未使用キーも無しと確認。今回は「重複 Converter の集約」のみを対象とした
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: ビルド成功（0 警告 / 0 エラー）
+
+---
+
 ## [2026-07-03] 15:42 ZaikoQueryView(在庫問合せ)のデザイン改善
 ### Agent
 - Claude Opus 4.8 : Anthropic : Claude Code

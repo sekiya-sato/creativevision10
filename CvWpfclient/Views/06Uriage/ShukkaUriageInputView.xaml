@@ -25,9 +25,6 @@
 	</helpers:BaseWindow.InputBindings>
 
 	<helpers:BaseWindow.Resources>
-		<helpers:MultiplyValuesConverter x:Key="MultiplyValuesConverter" />
-		<helpers:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
-
 		<Style x:Key="MenteSearchTextBox"
 			BasedOn="{StaticResource SearchTextBox}"
 			TargetType="{x:Type TextBox}">

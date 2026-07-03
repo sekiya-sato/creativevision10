@@ -14,8 +14,6 @@
 	</helpers:BaseWindow.DataContext>
 
 	<helpers:BaseWindow.Resources>
-		<helpers:NumericSignBrushConverter x:Key="NumericSignBrushConverter" />
-
 		<!--  DataGrid ヘッダースタイル（テーマカラーベース・複数行中央寄せ）  -->
 		<Style x:Key="MenteDataGridColumnHeader"
 			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
