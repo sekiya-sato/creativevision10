@@ -14,18 +14,49 @@
 	</helpers:BaseWindow.DataContext>
 
 	<helpers:BaseWindow.Resources>
+		<helpers:NumericSignBrushConverter x:Key="NumericSignBrushConverter" />
+
+		<!--  DataGrid ヘッダースタイル（テーマカラーベース・複数行中央寄せ）  -->
 		<Style x:Key="MenteDataGridColumnHeader"
 			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
 			TargetType="DataGridColumnHeader">
 			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
 			<Setter Property="FontWeight" Value="SemiBold" />
-			<Setter Property="Background" Value="{DynamicResource MaterialDesignToolBarBackground}" />
+			<Setter Property="Padding" Value="12,8" />
+			<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+			<Setter Property="TextBlock.TextAlignment" Value="Center" />
 		</Style>
 
 		<Style x:Key="DataGridRightTextBlock"
 			TargetType="TextBlock">
 			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="VerticalAlignment" Value="Center" />
 			<Setter Property="TextAlignment" Value="Right" />
+		</Style>
+
+		<!--  数値セル：右詰め＋符号で色分け（マイナス赤・ゼロ淡色）  -->
+		<Style x:Key="StockNumericCell"
+			TargetType="TextBlock">
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="TextAlignment" Value="Right" />
+			<Setter Property="Foreground" Value="{Binding Text, RelativeSource={RelativeSource Self}, Converter={StaticResource NumericSignBrushConverter}}" />
+		</Style>
+
+		<!--  倉庫毎Total セル：数値セルを太字強調  -->
+		<Style x:Key="StockTotalCell"
+			BasedOn="{StaticResource StockNumericCell}"
+			TargetType="TextBlock">
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+
+		<!--  倉庫名セル：左詰め・中太  -->
+		<Style x:Key="StockSokoCell"
+			TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="Medium" />
 		</Style>
 
 		<Style x:Key="ConditionLabel"
@@ -233,7 +264,7 @@
 						<DataGrid Grid.Row="1"
 							helpers:DataGridDoubleClick.Command="{Binding Owner.OpenStockTabCommand}"
 							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-							AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+							AlternatingRowBackground="Beige" AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
 							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 							IsReadOnly="True"
 							ItemsSource="{Binding Owner.ProductRows}"
@@ -268,11 +299,11 @@
 									Header="シーズン" />
 								<DataGridTextColumn Width="90"
 									Binding="{Binding StockSu, StringFormat={}{0:N0}}"
-									ElementStyle="{StaticResource DataGridRightTextBlock}"
+									ElementStyle="{StaticResource StockNumericCell}"
 									Header="在庫数" />
 								<DataGridTextColumn Width="90"
 									Binding="{Binding TransitQty, StringFormat={}{0:N0}}"
-									ElementStyle="{StaticResource DataGridRightTextBlock}"
+									ElementStyle="{StaticResource StockNumericCell}"
 									Header="移動中" />
 							</DataGrid.Columns>
 							<DataGrid.ColumnHeaderStyle>
@@ -319,12 +350,13 @@
 
 				<DataGrid Grid.Row="1"
 					Margin="0,12,0,0"
-					materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="True" CanUserAddRows="False"
-					CanUserDeleteRows="False" GridLinesVisibility="Horizontal"
+					materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="True"
+					AutoGeneratingColumn="StockGrid_AutoGeneratingColumn" CanUserAddRows="False" CanUserDeleteRows="False" FrozenColumnCount="2" GridLinesVisibility="All"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 					IsReadOnly="True"
 					ItemsSource="{Binding StockTable.DefaultView}"
-					Style="{StaticResource MaterialDesignDataGrid}">
+					Style="{StaticResource MaterialDesignDataGrid}"
+					VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}">
 					<DataGrid.ColumnHeaderStyle>
 						<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
 							TargetType="DataGridColumnHeader" />
@@ -335,7 +367,32 @@
 	</helpers:BaseWindow.Resources>
 
 	<Grid>
-		<TabControl ItemsSource="{Binding Tabs}"
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<!--  ===== ヘッダー: ColorZone ツールバー =====  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<Button Margin="0,0,8,0"
+					Command="{Binding ExitCommand}"
+					Style="{StaticResource MaterialDesignToolForegroundButton}"
+					ToolTip="閉じる (Esc)">
+					<materialDesign:PackIcon Kind="ArrowLeft" />
+				</Button>
+				<materialDesign:PackIcon Width="28" Height="28"
+					VerticalAlignment="Center"
+					Kind="Warehouse" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold" Text="在庫問合せ" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<TabControl Grid.Row="1"
+			ItemsSource="{Binding Tabs}"
 			SelectedItem="{Binding SelectedTab, Mode=TwoWay}"
 			Style="{StaticResource MaterialDesignTabControl}">
 			<TabControl.ItemTemplate>

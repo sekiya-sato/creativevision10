@@ -1,3 +1,23 @@
+## [2026-07-03] 15:42 ZaikoQueryView(在庫問合せ)のデザイン改善
+### Agent
+- Claude Opus 4.8 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.ZaikoQueryView の画面デザインを見やすいものにする
+### 実施内容
+- CvWpfclient/Helpers/Converters/NumericSignBrushConverter.cs: 数値/数値文字列の符号でマイナス=赤・ゼロ=淡色・プラス=既定色を返す IValueConverter を新規追加
+- CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml: ウィンドウ上部に ColorZone ヘッダー（倉庫アイコン+タイトル+閉じるボタン）を追加。DataGrid ヘッダースタイルをテーマカラー(PrimaryHueMid)の白抜き太字・複数行中央寄せに変更。商品一覧/在庫明細の両 DataGrid に交互行背景を追加。在庫数・移動中列を符号色分けスタイルに変更。在庫明細タブは AutoGeneratingColumn で列種別ごとにスタイル適用し、先頭2列固定・格子線Allに変更
+- CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml.cs: StockGrid_AutoGeneratingColumn を追加し、倉庫列=左詰め・倉庫毎Total=太字強調・数値列=右詰め＋N0書式＋符号色分けを割り当て
+### 技術決定 Why
+- 在庫明細タブは DataTable を AutoGenerateColumns で表示しSKU列が動的なため、列名に依存しない色分けとして「セルText(RelativeSource Self)を Converter に通す」方式を採用し、SKU列名に含まれる空白・改行・括弧の Binding パス問題を回避した
+- ヘッダー・交互行背景・数値右詰めは既存 StockInputView のデザイン言語に統一し、画面間の見た目を揃えた
+### 確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功：警告0、エラー0
+- 新規/編集ファイルの CRLF 改行を確認済み
+
+---
+
 ## [2026-07-03] 15:14 StockInputView(棚卸入力)の作成
 ### Agent
 - Claude Sonnet 5 : Anthropic : Claude Code
