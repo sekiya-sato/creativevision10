@@ -6,9 +6,8 @@
 
 **Creative Vision 10** は、そうした企業でも安心して導入できる、本格的な基幹業務ソリューションを目指しています。
 
-アーキテクチャには 3-tier system を採用し、データベース層は SQLite / MariaDB、アプリケーションサーバ層は HTTP/2.0 + gRPC、プレゼンテーション層は WPF + MVVM で構成しています。
+アーキテクチャには 3-tier system を採用し、データベース層は SQLite、アプリケーションサーバ層は HTTP/2.0 + gRPC、プレゼンテーション層は WPF + MVVM で構成しています。
 
-セットアップガイドは [setup.md](setup.md)、変更履歴は [changelog.md](changelog.md) を参照してください。
 
 2000年代半ば、`CV.net` はクラサバ型の `dbMagic` から `Oracle + .NET 2.0 + Biz/Browser V4` へと開発プラットフォームを移し、3-tier 構成の最初のシステムとなりました。
 その後 `CV.net` は、アパレル企業を中心に延べ 200 社へ導入されるまでに成長しました。 参考: [3階層基幹業務システム](https://jglobal.jst.go.jp/detail?JGLOBAL_ID=201103030643532794)
