@@ -1,3 +1,26 @@
+## [2026-07-03] 15:14 StockInputView(棚卸入力)の作成
+### Agent
+- Claude Sonnet 5 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.StockInputView を Tran60Tana テーブル向けに、ShopUriageInputView を参考にして View.xaml / View.xaml.cs / ViewModel.cs の3ファイルで作成する
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 空スタブだった ViewModel を BasePlainLightMenteViewModel<Tran60Tana> ベースで実装。一覧取得（RangeInputParamView条件）、追加・修正・削除、明細行追加削除・バーコード入力、倉庫Id/伝票担当Id/商品/色/サイズ/明細担当Idの選択ダイアログ、合計値再計算を ShopUriageInputViewModel と同じ流儀で実装
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 空の Grid のみだった View に、一覧タブ・詳細タブの2タブ構成、DataGrid明細、行詳細テンプレートを ShopUriageInputView と同じレイアウトパターンで実装
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml.cs: 詳細タブ表示中の Escape キーで一覧タブへ戻る処理を追加
+- CvWpfclient/Models/MenuData.cs: 「棚卸入力」の addInfo を "準備中" から実装内容の説明へ変更
+### 技術決定 Why
+- Tran60Tana は TranAllHeader 共通列＋棚番(TanaNo)のみを持ち、Tran01Tenuri にある店舗(Id_Tenpo)・顧客(Id_Customer)・区分(Kubun)のヘッダ列を持たないため、ShopUriageInputViewModel から店舗/顧客選択・区分コンボを除去し、棚番の単純なテキスト入力に置き換えた
+- 一覧検索条件は RangeInputParamViewModel が常に倉庫Id(SokoIds)条件を持つため、IsToriVisible=false として店舗条件を非表示にし、倉庫Idのみで絞り込む構成にした
+- 明細行(Tran99Meisai)は他Tran系と共通構造のため、商品/色/サイズ選択やバーコード入力、P/S区分コンボは ShopUriageInputViewModel の実装をそのまま踏襲した
+### 確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功：警告0、エラー0
+- `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` で対象ファイルの差分なしを確認
+- 新規/編集ファイルの CRLF 改行を確認済み
+
+---
+
 ## [2026-07-03] 11:16 MasterYosanHanbaiMenteView 作成
 ### Agent
 - GPT-5 : OpenAI : Codex

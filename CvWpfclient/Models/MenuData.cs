@@ -172,7 +172,7 @@ public partial class MenuData : ObservableObject {
 			new("在庫基準自動補充メンテナンス", typeof(Views._07Haibun.ZaikoAutoHojunMenteView), addInfo:"準備中"),
 		])),
 		new("■ 在庫管理", new([
-			new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"準備中"),
+			new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"倉庫の棚卸データをTran60Tanaへ登録"),
 			new("移動入力(即時)", typeof(Views._08Zaiko.IdoInputSokuView), addInfo:"準備中"),
 			new("移動入力(積送)", typeof(Views._08Zaiko.IdoInputOutView), addInfo:"準備中"),
 			new("移動受入力", typeof(Views._08Zaiko.IdoInputUkeView), addInfo:"準備中"),
