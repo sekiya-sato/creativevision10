@@ -44,7 +44,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	string selectedYearMonthString = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
-	double saturdaySundayCoefficient = 1.0;
+	double saturdaySundayCoefficient = 1.8;
 
 	[ObservableProperty]
 	string holidayDaysText = string.Empty;

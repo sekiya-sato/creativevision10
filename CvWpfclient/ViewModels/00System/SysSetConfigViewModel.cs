@@ -26,6 +26,7 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 
 	public string[] HorizontalFitPositionItems { get; } = [DefaultHorizontalFitPosition, "Right"];
 	public string[] VerticalFitPositionItems { get; } = ["Top", DefaultVerticalFitPosition];
+	// 気象庁予報区の一覧（地域 / 地方 / コード）※気象庁の予報区コードが変更された場合は、ここを修正する必要があります。
 	public JmaWeatherAreaOption[] JmaWeatherAreaItems { get; } = [
 		new("北海道", "宗谷地方", "011000"),
 		new("北海道", "上川・留萌地方", "012000"),
