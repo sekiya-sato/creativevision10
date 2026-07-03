@@ -1,3 +1,23 @@
+## [2026-07-03] 09:52 ShopUriageInputViewModelの明細行No連番修正
+### Agent
+- GPT-5 : OpenAI : Sisyphus
+### Editor
+- OpenCode / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._06Uriage.ShopUriageInputView の伝票入力画面の明細で、行No が Jmeisai のJSON配列データのNo を正しくセットし、行追加・行削除時も正しい連番Noがセットされるように修正する
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `DeleteMeisai()` メソッドで行削除後に `RenumberMeisaiNo()` を呼び出すように修正
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `RenumberMeisaiNo()` メソッドを新規追加し、EditMeisai の要素に対して 1 から連番で No を振り直す処理を実装
+### 技術決定 Why
+- 伝票明細の行Noは1からの連番であるべきだが、行削除後にNoを振り直していなかったため連番に抜けが生じる可能性があった
+- `AddMeisai()` と `ApplyBarcodeMeisai()` は既に `Max(m => m.No) + 1` で計算しているため連番維持に問題なし
+- `ApplyMeisaiFromCurrentEdit()` はDBからのJSONデータのNoをそのまま使用するため影響なし
+- 最小限の修正として `DeleteMeisai()` 内でのみ `No` 振り直しを実施
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
 ## [2026-06-30] 08:47 RebuildTranAllの売上明細色サイズId再構築
 ### Agent
 - GPT-5 : OpenAI : Codex

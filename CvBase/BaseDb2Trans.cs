@@ -216,11 +216,11 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	[OldTableCommentAttr("行NO")]
 	int no;
 	/// <summary>
-	/// 区分（2桁 10-19,20-29,30,99）
+	/// 区分（Max2桁 0:Pプロパー 1:Sセール 2:社販）
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("明細取引区分")]
-	int kubun = 10;
+	int kubun = 0;
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>

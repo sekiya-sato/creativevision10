@@ -251,8 +251,15 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		if (SelectedMeisai == null) return;
 		SelectedMeisai.PropertyChanged -= OnMeisaiPropertyChanged;
 		EditMeisai.Remove(SelectedMeisai);
+		RenumberMeisaiNo();
 		SelectedMeisai = EditMeisai.LastOrDefault() ?? null;
 		UpdateTotals();
+	}
+
+	void RenumberMeisaiNo() {
+		for (int i = 0; i < EditMeisai.Count; i++) {
+			EditMeisai[i].No = i + 1;
+		}
 	}
 
 	[RelayCommand]
