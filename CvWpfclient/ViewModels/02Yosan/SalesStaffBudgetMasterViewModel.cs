@@ -3,9 +3,547 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
-using System.Diagnostics;
+using CvWpfclient.Helpers;
+using Newtonsoft.Json;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Windows;
 
 namespace CvWpfclient.ViewModels._02Yosan;
 
-public partial class SalesStaffBudgetMasterViewModel : Helpers.BaseViewModel {
+/// <summary>
+/// 販売員別予算マスタ(月一括) ViewModel
+/// </summary>
+public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
+
+	[ObservableProperty]
+	string title = "販売員別予算マスタ(月)";
+
+	[ObservableProperty]
+	DateTime selectedYearMonth = DateTime.Now;
+
+	[ObservableProperty]
+	long selectedStaffId;
+
+	[ObservableProperty]
+	string selectedStaffCode = string.Empty;
+
+	[ObservableProperty]
+	string selectedStaffName = string.Empty;
+
+	[ObservableProperty]
+	string selectedYearMonthString = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+
+	[ObservableProperty]
+	double saturdaySundayCoefficient = 1.8;
+
+	[ObservableProperty]
+	string holidayDaysText = string.Empty;
+
+	[ObservableProperty]
+	long monthlyBudget;
+
+	[ObservableProperty]
+	long monthlyGrossProfitBudget;
+
+	[ObservableProperty]
+	ObservableCollection<DailyBudgetRow> dailyBudgets = [];
+
+	[ObservableProperty]
+	long totalBudget;
+
+	[ObservableProperty]
+	long remainingBudget;
+
+	[ObservableProperty]
+	long totalGrossProfitBudget;
+
+	[ObservableProperty]
+	long remainingGrossProfitBudget;
+
+	[ObservableProperty]
+	string message = string.Empty;
+
+	[ObservableProperty]
+	bool isBusy;
+
+	[ObservableProperty]
+	DailyBudgetRow? selectedDailyBudgetRow;
+
+	bool isApplyingHolidayDays;
+	bool isApplyingSelectedYearMonthString;
+	bool isRecalculatingTotals;
+
+	public ObservableCollection<DailyBudgetRow> FirstHalfDailyBudgets { get; } = [];
+
+	public ObservableCollection<DailyBudgetRow> SecondHalfDailyBudgets { get; } = [];
+
+	protected override void OnExit() {
+		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+			return;
+		}
+		ClientLib.Exit(this);
+	}
+
+	partial void OnSelectedYearMonthChanged(DateTime value) {
+		if (isApplyingSelectedYearMonthString) return;
+		SelectedYearMonthString = value.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+	}
+
+	partial void OnSaturdaySundayCoefficientChanged(double value) {
+		foreach (var row in DailyBudgets) {
+			UpdateRowCoefficient(row);
+		}
+		RecalculateTotals();
+	}
+
+	partial void OnHolidayDaysTextChanged(string value) {
+		ApplyHolidayDays();
+	}
+
+	partial void OnMonthlyBudgetChanged(long value) {
+		RecalculateTotals();
+	}
+
+	partial void OnMonthlyGrossProfitBudgetChanged(long value) {
+		RecalculateTotals();
+	}
+
+	partial void OnDailyBudgetsChanged(ObservableCollection<DailyBudgetRow> value) {
+		foreach (var row in value) {
+			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
+		}
+		RefreshDailyBudgetViews();
+		RecalculateTotals();
+	}
+
+	void OnDailyBudgetRowPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
+		if (isRecalculatingTotals) return;
+		if (sender is DailyBudgetRow row) {
+			if (e.PropertyName == nameof(DailyBudgetRow.IsHoliday)) {
+				UpdateRowCoefficient(row);
+			}
+			if (!isApplyingHolidayDays) {
+				RecalculateTotals();
+			}
+		}
+	}
+
+	void UpdateRowCoefficient(DailyBudgetRow row) {
+		if (row.IsHoliday) {
+			row.Coefficient = 0;
+			row.SalesBudget = 0;
+			row.GrossProfitBudget = 0;
+		}
+		else if (row.IsSaturday || row.IsSunday) {
+			row.Coefficient = SaturdaySundayCoefficient;
+		}
+		else {
+			row.Coefficient = 1.0;
+		}
+	}
+
+	[RelayCommand]
+	void Init() {
+		SelectedYearMonth = DateTime.Now;
+		ClearAll();
+	}
+
+	[RelayCommand]
+	async Task LoadBudget(CancellationToken ct) {
+		if (!HasSelectedStaff()) return;
+		if (!TryApplySelectedYearMonth()) return;
+
+		IsBusy = true;
+		try {
+			ct.ThrowIfCancellationRequested();
+			ClientLib.Cursor2Wait();
+
+			var (dateFrom, dateTo) = GetDateRange();
+			var where = $"Id_Shain = {SelectedStaffId} AND DenDay >= '{dateFrom}' AND DenDay <= '{dateTo}'";
+			var param = new QueryListParam(
+				itemType: typeof(MasterYosanHanbai),
+				where: where,
+				order: "DenDay"
+			);
+			var msg = new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg101_Op_Query,
+				DataType = typeof(QueryListParam),
+				DataMsg = Common.SerializeObject(param)
+			};
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+			ct.ThrowIfCancellationRequested();
+
+			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;
+			if (list == null || list.Count == 0) {
+				MessageEx.ShowInformationDialog("予算データがありません。", owner: ClientLib.GetActiveView(this));
+				return;
+			}
+
+			GenerateDailyRows();
+			long total = 0;
+			long grossProfitTotal = 0;
+			foreach (var item in list) {
+				if (item is not MasterYosanHanbai yosan) continue;
+				if (yosan.DenDay.Length < 8 || !int.TryParse(yosan.DenDay.Substring(6, 2), out var day)) continue;
+				var row = DailyBudgets.FirstOrDefault(r => r.Day == day);
+				if (row == null) continue;
+				row.SalesBudget = yosan.UriYosan / 1000;
+				row.GrossProfitBudget = yosan.ArariYosan / 1000;
+				total += row.SalesBudget;
+				grossProfitTotal += row.GrossProfitBudget;
+			}
+			MonthlyBudget = total;
+			MonthlyGrossProfitBudget = grossProfitTotal;
+			ApplyHolidayDays();
+			Message = $"{list.Count}件の予算データを読み込みました。";
+		}
+		catch (OperationCanceledException) {
+			Message = "読み込みをキャンセルしました。";
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"予算読み込み失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+		finally {
+			IsBusy = false;
+			ClientLib.Cursor2Normal();
+		}
+	}
+
+	[RelayCommand]
+	void CreateBudget() {
+		if (!HasSelectedStaff()) return;
+		if (!TryApplySelectedYearMonth()) return;
+		GenerateDailyRows();
+		AutoAllocateBudget();
+	}
+
+	[RelayCommand]
+	async Task SaveBudget(CancellationToken ct) {
+		if (!HasSelectedStaff()) return;
+		if (!TryApplySelectedYearMonth()) return;
+		if (DailyBudgets.Count == 0) {
+			MessageEx.ShowWarningDialog("予算データがありません。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		if (!HasDailyRowsForSelectedMonth()) {
+			MessageEx.ShowWarningDialog("対象年月の日数と予算データが一致しません。予算作成を実行してください。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		if (MessageEx.ShowQuestionDialog("予算データを登録しますか？", owner: ClientLib.GetActiveView(this)) != MsgBoxResult.Yes) {
+			return;
+		}
+
+		IsBusy = true;
+		try {
+			ct.ThrowIfCancellationRequested();
+			ClientLib.Cursor2Wait();
+
+			await DeleteExistingBudgets(ct);
+			ct.ThrowIfCancellationRequested();
+
+			var newRecords = new List<MasterYosanHanbai>();
+			var (dateFrom, _) = GetDateRange();
+			var yearMonthStr = dateFrom.Substring(0, 6);
+			foreach (var row in DailyBudgets) {
+				var dayStr = row.Day.ToString("00", CultureInfo.InvariantCulture);
+				var record = new MasterYosanHanbai {
+					Id_Shain = SelectedStaffId,
+					DenDay = yearMonthStr + dayStr,
+					UriYosan = row.SalesBudget * 1000,
+					ArariYosan = row.GrossProfitBudget * 1000
+				};
+				newRecords.Add(record);
+			}
+			var bulkParam = new InsertBulkParam(
+				itemType: typeof(MasterYosanHanbai),
+				item: JsonConvert.SerializeObject(newRecords)
+			);
+			var msg = new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg201_Op_Execute,
+				DataType = typeof(InsertBulkParam),
+				DataMsg = Common.SerializeObject(bulkParam)
+			};
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+			if (reply.Code < 0) {
+				MessageEx.ShowErrorDialog($"登録に失敗しました: {reply.DataMsg}", owner: ClientLib.GetActiveView(this));
+				return;
+			}
+			Message = "予算データを登録しました。";
+			MessageEx.ShowInformationDialog("予算を登録しました。", owner: ClientLib.GetActiveView(this));
+		}
+		catch (OperationCanceledException) {
+			Message = "登録をキャンセルしました。";
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"予算登録失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+		finally {
+			IsBusy = false;
+			ClientLib.Cursor2Normal();
+		}
+	}
+
+	[RelayCommand]
+	async Task DeleteBudget(CancellationToken ct) {
+		if (!HasSelectedStaff()) return;
+		if (!TryApplySelectedYearMonth()) return;
+		if (MessageEx.ShowQuestionDialog("予算データを削除しますか？", owner: ClientLib.GetActiveView(this)) != MsgBoxResult.Yes) {
+			return;
+		}
+
+		IsBusy = true;
+		try {
+			ct.ThrowIfCancellationRequested();
+			ClientLib.Cursor2Wait();
+			await DeleteExistingBudgets(ct);
+			DailyBudgets.Clear();
+			RefreshDailyBudgetViews();
+			MonthlyBudget = 0;
+			MonthlyGrossProfitBudget = 0;
+			RecalculateTotals();
+			Message = "予算データを削除しました。";
+			MessageEx.ShowInformationDialog("削除完了しました。", owner: ClientLib.GetActiveView(this));
+		}
+		catch (OperationCanceledException) {
+			Message = "削除をキャンセルしました。";
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"予算削除失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+		finally {
+			IsBusy = false;
+			ClientLib.Cursor2Normal();
+		}
+	}
+
+	[RelayCommand]
+	void AutoAllocateBudget() {
+		if (!TryApplySelectedYearMonth()) return;
+		if (MonthlyBudget <= 0 && MonthlyGrossProfitBudget <= 0) {
+			MessageEx.ShowWarningDialog("販売員月売上予算または販売員月粗利予算を入力してください。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		if (DailyBudgets.Count == 0 || !HasDailyRowsForSelectedMonth()) {
+			GenerateDailyRows();
+		}
+		var totalCoefficients = DailyBudgets.Sum(r => r.Coefficient);
+		if (totalCoefficients <= 0) {
+			MessageEx.ShowWarningDialog("配分可能な日がありません。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		foreach (var row in DailyBudgets) {
+			row.SalesBudget = (long)Math.Round(MonthlyBudget * row.Coefficient / totalCoefficients);
+			row.GrossProfitBudget = (long)Math.Round(MonthlyGrossProfitBudget * row.Coefficient / totalCoefficients);
+		}
+		RecalculateTotals();
+		Message = "予算を自動配分しました。";
+	}
+
+	[RelayCommand]
+	void RecalculateTotals() {
+		long runningTotal = 0;
+		long runningGrossProfitTotal = 0;
+		isRecalculatingTotals = true;
+		try {
+			foreach (var row in DailyBudgets) {
+				runningTotal += row.SalesBudget;
+				runningGrossProfitTotal += row.GrossProfitBudget;
+				row.RunningTotal = runningTotal;
+				row.RunningGrossProfitTotal = runningGrossProfitTotal;
+			}
+		}
+		finally {
+			isRecalculatingTotals = false;
+		}
+		TotalBudget = runningTotal;
+		RemainingBudget = MonthlyBudget - TotalBudget;
+		TotalGrossProfitBudget = runningGrossProfitTotal;
+		RemainingGrossProfitBudget = MonthlyGrossProfitBudget - TotalGrossProfitBudget;
+	}
+
+	[RelayCommand]
+	void SelectStaff() {
+		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code", startPos: SelectedStaffId);
+		if (shain == null) return;
+		SelectedStaffId = shain.Id;
+		SelectedStaffCode = shain.Code ?? string.Empty;
+		SelectedStaffName = shain.Name ?? string.Empty;
+	}
+
+	[RelayCommand]
+	void ClearAll() {
+		DailyBudgets.Clear();
+		RefreshDailyBudgetViews();
+		MonthlyBudget = 0;
+		MonthlyGrossProfitBudget = 0;
+		TotalBudget = 0;
+		RemainingBudget = 0;
+		TotalGrossProfitBudget = 0;
+		RemainingGrossProfitBudget = 0;
+		Message = string.Empty;
+	}
+
+	void GenerateDailyRows() {
+		DailyBudgets.Clear();
+		var year = SelectedYearMonth.Year;
+		var month = SelectedYearMonth.Month;
+		var daysInMonth = DateTime.DaysInMonth(year, month);
+		for (int day = 1; day <= daysInMonth; day++) {
+			var date = new DateTime(year, month, day);
+			var row = new DailyBudgetRow {
+				Day = day,
+				DayOfWeek = GetDayOfWeekString(date),
+				IsSaturday = date.DayOfWeek == DayOfWeek.Saturday,
+				IsSunday = date.DayOfWeek == DayOfWeek.Sunday,
+				IsHoliday = false,
+				Coefficient = 1.0
+			};
+			if (row.IsSaturday || row.IsSunday) {
+				row.Coefficient = SaturdaySundayCoefficient;
+			}
+			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
+			DailyBudgets.Add(row);
+		}
+		RefreshDailyBudgetViews();
+		ApplyHolidayDays();
+	}
+
+	void ApplyHolidayDays() {
+		var holidayDays = ParseHolidayDays(HolidayDaysText);
+		isApplyingHolidayDays = true;
+		try {
+			foreach (var row in DailyBudgets) {
+				row.IsHoliday = holidayDays.Contains(row.Day);
+				UpdateRowCoefficient(row);
+			}
+		}
+		finally {
+			isApplyingHolidayDays = false;
+		}
+		RecalculateTotals();
+	}
+
+	void RefreshDailyBudgetViews() {
+		FirstHalfDailyBudgets.Clear();
+		SecondHalfDailyBudgets.Clear();
+		foreach (var row in DailyBudgets) {
+			if (row.Day <= 15) {
+				FirstHalfDailyBudgets.Add(row);
+			}
+			else {
+				SecondHalfDailyBudgets.Add(row);
+			}
+		}
+	}
+
+	static HashSet<int> ParseHolidayDays(string text) {
+		var result = new HashSet<int>();
+		if (string.IsNullOrWhiteSpace(text)) return result;
+		var tokens = text.Split([' ', '　', '\t', '\r', '\n', ',', '、', '，'], StringSplitOptions.RemoveEmptyEntries);
+		foreach (var token in tokens) {
+			if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var day) && day > 0) {
+				result.Add(day);
+			}
+		}
+		return result;
+	}
+
+	bool TryApplySelectedYearMonth() {
+		var value = SelectedYearMonthString.Trim();
+		var formats = new[] { "yyyy/MM", "yyyy/M", "yyyyMM", "yyyy-MM", "yyyy-M" };
+		if (!DateTime.TryParseExact(value, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)) {
+			MessageEx.ShowWarningDialog("年月は yyyy/MM 形式で入力してください。", owner: ClientLib.GetActiveView(this));
+			return false;
+		}
+		isApplyingSelectedYearMonthString = true;
+		try {
+			SelectedYearMonth = new DateTime(parsed.Year, parsed.Month, 1);
+			SelectedYearMonthString = SelectedYearMonth.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+		}
+		finally {
+			isApplyingSelectedYearMonthString = false;
+		}
+		return true;
+	}
+
+	bool HasDailyRowsForSelectedMonth() {
+		var daysInMonth = DateTime.DaysInMonth(SelectedYearMonth.Year, SelectedYearMonth.Month);
+		return DailyBudgets.Count == daysInMonth && DailyBudgets.All(row => row.Day >= 1 && row.Day <= daysInMonth);
+	}
+
+	bool HasSelectedStaff() {
+		if (SelectedStaffId != 0) return true;
+		MessageEx.ShowWarningDialog("販売員を選択してください。", owner: ClientLib.GetActiveView(this));
+		return false;
+	}
+
+	async Task DeleteExistingBudgets(CancellationToken ct) {
+		var (dateFrom, dateTo) = GetDateRange();
+		var where = $"Id_Shain = {SelectedStaffId} AND DenDay >= '{dateFrom}' AND DenDay <= '{dateTo}'";
+		var param = new QueryListParam(
+			itemType: typeof(MasterYosanHanbai),
+			where: where,
+			order: "DenDay"
+		);
+		var msg = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListParam),
+			DataMsg = Common.SerializeObject(param)
+		};
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+		var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;
+		if (list == null) return;
+		foreach (var item in list) {
+			if (item is not MasterYosanHanbai yosan || yosan.Id == 0) continue;
+			var deleteParam = new DeleteByIdParam(
+				itemType: typeof(MasterYosanHanbai),
+				id: yosan.Id,
+				originalVdu: yosan.Vdu
+			);
+			var deleteMsg = new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg201_Op_Execute,
+				DataType = typeof(DeleteByIdParam),
+				DataMsg = Common.SerializeObject(deleteParam)
+			};
+			await coreService.QueryMsgAsync(deleteMsg, AppGlobal.GetDefaultCallContext(ct));
+		}
+	}
+
+	(string dateFrom, string dateTo) GetDateRange() {
+		var year = SelectedYearMonth.Year;
+		var month = SelectedYearMonth.Month;
+		var daysInMonth = DateTime.DaysInMonth(year, month);
+		var from = new DateTime(year, month, 1);
+		var to = new DateTime(year, month, daysInMonth);
+		return (from.ToString("yyyyMMdd", CultureInfo.InvariantCulture), to.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
+	}
+
+	static string GetDayOfWeekString(DateTime date) {
+		return date.DayOfWeek switch {
+			DayOfWeek.Monday => "月",
+			DayOfWeek.Tuesday => "火",
+			DayOfWeek.Wednesday => "水",
+			DayOfWeek.Thursday => "木",
+			DayOfWeek.Friday => "金",
+			DayOfWeek.Saturday => "土",
+			DayOfWeek.Sunday => "日",
+			_ => ""
+		};
+	}
+
+	TResult? ShowSelectDialog<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
+		var selWin = new Views.Sub.SelectWinView();
+		if (selWin.DataContext is not Sub.SelectWinViewModel vm) return null;
+		vm.SetParam(tableType, where, order, startPos: startPos);
+		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
+		return vm.Current as TResult;
+	}
 }

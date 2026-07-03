@@ -284,3 +284,25 @@
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -o .omo/build/CvWpfclient"` が成功（警告0、エラー0）
 
 ---
+## [2026-07-03] 11:06 SalesStaffBudgetMasterView 作成
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：ShopBrandBudgetMasterView をもとに、販売員別予算マスタ画面とViewModelを作成し、MasterYosanHanbai と MasterShain 参照を使用する
+### 実施内容
+- CvWpfclient/Views/02Yosan/SalesStaffBudgetMasterView.xaml: 販売員選択、年月、月予算、休日、日別予算グリッド、作成・読込・登録・削除・自動配分・再計算ボタンを持つ画面を作成
+- CvWpfclient/ViewModels/02Yosan/SalesStaffBudgetMasterViewModel.cs: MasterYosanHanbai の月次読込・削除・一括登録、MasterShain 選択、日別配分・累計再計算処理を実装
+- CvWpfclient/Models/MenuData.cs: 販売員別予算マスタの addInfo を準備中から実装内容の説明へ更新
+### 技術決定 Why
+- 既存の ShopBrandBudgetMasterView と同じ月次一括配分操作を維持し、Id_Tenpo + Id_Brand 条件だけを Id_Shain 条件に置換することで画面操作と保存仕様の差分を最小化した
+- MasterYosanHanbai には表示用の VShain computed 列がないため、社員名表示は画面の MasterShain 選択結果で保持した
+- 元の ShopBrandBudgetMasterView のボタンは各コマンドに対応しているため、不要ボタンとしての削除は行わなかった
+### 確認
+- SalesStaffBudgetMasterView.xaml のXML構文チェック成功
+- 対象編集ファイルの CRLF 確認済み
+- `git diff --check` エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功：警告0、エラー0
+
+---
