@@ -3,7 +3,7 @@
 
 	<Style x:Key="CvDatePickerTodayFooterStyle"
 		TargetType="{x:Type Border}">
-		<Setter Property="Padding" Value="10,8,10,10" />
+		<Setter Property="Padding" Value="1" />
 		<Setter Property="BorderThickness" Value="0,1,0,0" />
 		<Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
 		<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
@@ -13,7 +13,7 @@
 		BasedOn="{StaticResource MaterialDesignOutlinedButton}"
 		TargetType="{x:Type Button}">
 		<Setter Property="MinWidth" Value="88" />
-		<Setter Property="Padding" Value="14,4" />
+		<Setter Property="Padding" Value="4" />
 		<Setter Property="HorizontalAlignment" Value="Right" />
 		<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
 	</Style>
