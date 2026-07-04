@@ -282,6 +282,7 @@
 						<DatePicker Grid.Row="7" Grid.Column="1"
 							VerticalAlignment="Center"
 							materialDesign:HintAssist.Hint="日付" FontSize="15" IsTodayHighlighted="False"
+							helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 							SelectedDate="{Binding Current.FiscalStartDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 							Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 						<Label Grid.Row="7" Grid.Column="2"
@@ -341,6 +342,7 @@
 						<DatePicker Grid.Row="10" Grid.Column="3"
 							VerticalAlignment="Center"
 							materialDesign:HintAssist.Hint="日付" FontSize="15" IsTodayHighlighted="False"
+							helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 							SelectedDate="{Binding Current.Jsub[0].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 							Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 						<Label Grid.Row="10" Grid.Column="4"
@@ -371,6 +373,7 @@
 						<DatePicker Grid.Row="11" Grid.Column="3"
 							VerticalAlignment="Center"
 							materialDesign:HintAssist.Hint="日付" FontSize="15" IsTodayHighlighted="False"
+							helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 							SelectedDate="{Binding Current.Jsub[1].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 							Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 						<Label Grid.Row="11" Grid.Column="4"
@@ -400,6 +403,7 @@
 						<DatePicker Grid.Row="12" Grid.Column="3"
 							VerticalAlignment="Center"
 							materialDesign:HintAssist.Hint="日付" FontSize="15" IsTodayHighlighted="False"
+							helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 							SelectedDate="{Binding Current.Jsub[2].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 							Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 						<Label Grid.Row="12" Grid.Column="4"

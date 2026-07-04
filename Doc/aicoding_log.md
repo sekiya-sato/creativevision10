@@ -1,3 +1,21 @@
+## [2026-07-04] 16:13 DatePicker の「今日」ボタンを各要素に明示設定
+### Agent
+- GPT-5.4-mini : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の DatePicker で UICalendar.xaml のグローバル既定から各要素への明示設定に変更し、年月用 DatePicker との使い分けを可能にする
+### 実施内容
+- CvWpfclient/Resources/UICalendar.xaml: グローバル DatePicker Style から `helpers:DatePickerTodayButtonBehavior.IsEnabled=True` の Setter を削除
+- CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml: 4個の DatePicker（期首年月日、新税率切替日×3）に `helpers:DatePickerTodayButtonBehavior.IsEnabled=True` を追加
+- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: 3個の DatePicker（出荷日、納品日、店舗投入日）に `helpers:DatePickerTodayButtonBehavior.IsEnabled=True` を追加
+### 技術決定 Why
+- グローバル既定では年月用 DatePicker への除外が困難なため、必要な要素にのみ明示的に付与する方式に変更。既に個別に付与済みの画面（TranPromotionSearchParamView 等）には影響なし
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+
+---
+
 ## [2026-07-04] 16:00 DatePicker カレンダー下部の「今日」ボタン表示調整
 ### Agent
 - GPT-5 : OpenAI : Codex

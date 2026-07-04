@@ -507,6 +507,7 @@
 								<DatePicker Grid.Row="10" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="出荷日" IsTodayHighlighted="False"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 									SelectedDate="{Binding CurrentEdit.DayShukka, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 
@@ -517,6 +518,7 @@
 								<DatePicker Grid.Row="11" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="納品日" IsTodayHighlighted="False"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 									SelectedDate="{Binding CurrentEdit.DayNohin, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 
@@ -527,6 +529,7 @@
 								<DatePicker Grid.Row="12" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="店舗投入日" IsTodayHighlighted="False"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
 									SelectedDate="{Binding CurrentEdit.DayTento, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
 
