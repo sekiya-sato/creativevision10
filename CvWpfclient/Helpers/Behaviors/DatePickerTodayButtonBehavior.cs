@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 
 namespace CvWpfclient.Helpers;
 
@@ -26,6 +27,13 @@ public static class DatePickerTodayButtonBehavior {
 	static readonly DependencyProperty IsTodayButtonProperty =
 		DependencyProperty.RegisterAttached(
 			"IsTodayButton",
+			typeof(bool),
+			typeof(DatePickerTodayButtonBehavior),
+			new PropertyMetadata(false));
+
+	static readonly DependencyProperty IsOriginalPopupContentProperty =
+		DependencyProperty.RegisterAttached(
+			"IsOriginalPopupContent",
 			typeof(bool),
 			typeof(DatePickerTodayButtonBehavior),
 			new PropertyMetadata(false));
@@ -100,12 +108,18 @@ public static class DatePickerTodayButtonBehavior {
 			return;
 		}
 
+		if (popup.Child is not UIElement originalChild) return;
+
 		popup.Child = null;
 
-		var root = new StackPanel();
+		var root = new Grid();
 		root.SetResourceReference(Panel.BackgroundProperty, "MaterialDesignPaper");
 		root.SetValue(IsTodayButtonHostProperty, true);
-		root.Children.Add(calendar);
+		root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+		root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+		originalChild.SetValue(IsOriginalPopupContentProperty, true);
+		Grid.SetRow(originalChild, 0);
+		root.Children.Add(originalChild);
 
 		var footer = new Border();
 		if (picker.TryFindResource("CvDatePickerTodayFooterStyle") is Style footerStyle)
@@ -118,12 +132,15 @@ public static class DatePickerTodayButtonBehavior {
 		var todayButton = new Button();
 		todayButton.SetValue(IsTodayButtonProperty, true);
 		todayButton.Content = "今日";
-		todayButton.HorizontalAlignment = HorizontalAlignment.Right;
-		todayButton.MinWidth = 72;
-		if (picker.TryFindResource("MaterialDesignOutlinedButton") is Style buttonStyle)
+		if (picker.TryFindResource("CvDatePickerTodayButtonStyle") is Style buttonStyle)
 			todayButton.Style = buttonStyle;
-		todayButton.SetResourceReference(Control.ForegroundProperty, "PrimaryHueMidBrush");
+		else {
+			todayButton.HorizontalAlignment = HorizontalAlignment.Right;
+			todayButton.MinWidth = 88;
+			todayButton.SetResourceReference(Control.ForegroundProperty, "PrimaryHueMidBrush");
+		}
 
+		Grid.SetRow(footer, 1);
 		footer.Child = todayButton;
 		root.Children.Add(footer);
 		popup.Child = root;
@@ -143,20 +160,25 @@ public static class DatePickerTodayButtonBehavior {
 	static void UnwrapTodayButtonHost(DatePicker picker) {
 		if (picker.Template.FindName("PART_Popup", picker) is not Popup popup) return;
 		if (popup.Child is not DependencyObject currentChild || !IsTodayButtonHost(currentChild)) return;
-		if (!TryFindCalendar(currentChild, out var calendar)) return;
 
 		if (FindDescendant<Button>(currentChild, button => IsTodayButton(button)) is Button todayButton) {
 			todayButton.Click -= OnTodayButtonClick;
 			todayButton.Tag = null;
 		}
 
-		if (calendar.Parent is Panel parentPanel)
-			parentPanel.Children.Remove(calendar);
-		else if (calendar.Parent is Decorator parentDecorator)
+		if (FindDescendant<UIElement>(currentChild, element => IsOriginalPopupContent(element)) is not UIElement originalChild)
+			return;
+
+		originalChild.ClearValue(IsOriginalPopupContentProperty);
+
+		var parent = VisualTreeHelper.GetParent(originalChild);
+		if (parent is Panel parentPanel)
+			parentPanel.Children.Remove(originalChild);
+		else if (parent is Decorator parentDecorator)
 			parentDecorator.Child = null;
 
 		popup.Child = null;
-		popup.Child = calendar;
+		popup.Child = originalChild;
 	}
 
 	static void OnTodayButtonClick(object sender, RoutedEventArgs e) {
@@ -213,4 +235,6 @@ public static class DatePickerTodayButtonBehavior {
 	static bool IsTodayButtonHost(DependencyObject obj) => (bool)obj.GetValue(IsTodayButtonHostProperty);
 
 	static bool IsTodayButton(DependencyObject obj) => (bool)obj.GetValue(IsTodayButtonProperty);
+
+	static bool IsOriginalPopupContent(DependencyObject obj) => (bool)obj.GetValue(IsOriginalPopupContentProperty);
 }

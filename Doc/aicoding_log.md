@@ -1,3 +1,36 @@
+## [2026-07-04] 16:00 DatePicker カレンダー下部の「今日」ボタン表示調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：UICalendar.xaml を再確認し、既存のカレンダー表示を維持したまま下部に「今日」ボタンが出るようデザインを修正する
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: MaterialDesign の既存ポップアップ内容を保持したまま、下段フッターへ「今日」ボタンを追加する構成に変更
+- CvWpfclient/Resources/UICalendar.xaml: `CvDatePickerTodayFooterStyle` の余白を調整し、下部配置用の `CvDatePickerTodayButtonStyle` を追加
+### 技術決定 Why
+- `Calendar` 本体だけを抜き出して差し替えると MaterialDesign 側の既存ポップアップ構造を失いやすいため、元のポップアップ内容をそのまま保持してフッターだけ追加する方が表示崩れと取りこぼしを防げるため
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+
+---
+
+## [2026-07-04] 15:40 DatePicker の「今日」ボタン復活
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._01Master.MasterSysKanriMenteView などで使っている日付入力の「今日」ボタンを復活させる
+### 実施内容
+- CvWpfclient/Resources/UICalendar.xaml: 共通 `DatePicker` スタイルを追加し、`helpers:DatePickerTodayButtonBehavior.IsEnabled=True` を既定適用
+### 技術決定 Why
+- 個別 View ごとの付け忘れ修正ではなく、`UICalendar.xaml` の共通既定値に寄せることで `MasterSysKanriMenteView` の未設定箇所と同種の取りこぼしを一括で防止するため
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+
+---
+
 ## [2026-07-03] 08:03 CvWpfclient 重複Converterの App.xaml 集約リファクタ
 ### Agent
 - Claude Opus 4.8 : Anthropic : Claude Code
