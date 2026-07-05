@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore creativevision10.slnx
+
+      - name: Build
+        run: dotnet build creativevision10.slnx --configuration Release --no-restore
+
+      - name: Test TestServer
+        run: dotnet test Tests/TestServer/TestServer.csproj --configuration Release --no-build --logger "trx;LogFileName=TestServer.trx"
+
+      - name: Test TestLogin
+        run: dotnet test Tests/TestLogin/TestLogin.csproj --configuration Release --no-build --logger "trx;LogFileName=TestLogin.trx"
+
+      - name: Verify formatting
+        run: dotnet format creativevision10.slnx --verify-no-changes --no-restore
+
+      - name: Verify whitespace / line ending issues
+        shell: bash
+        run: git diff --check
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/*.trx
