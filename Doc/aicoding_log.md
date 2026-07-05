@@ -1,3 +1,36 @@
+## [2026-07-05] 08:58 WPF実画面確認手順のskill化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvServer/CvWpfclient を起動して実際の画面を確認する手順を、他画面にも使えるskillとして残す
+### 実施内容
+- .agents/skills/verify-wpf-screen-runtime/SKILL.md: WPF実画面確認時の手順を追加。ViewModel側への状態注入、`MainMenuViewModel.SelectedMenu` と `DoMenuCommand` による画面起動、日本語リテラルを一時スクリプトから排除する方針、今回の `StockInputView` 確認例を記録
+### 技術決定 Why
+- UI Automation のキー操作・クリック操作は WPF の実際の選択/コマンド経路に届かない場合があるため、ViewModel と既存コマンドを直接使う確認手順を標準化した
+### 確認
+- `git diff --check -- CvWpfclient/Views/08Zaiko/StockInputView.xaml Doc/aicoding_log.md .agents/skills/verify-wpf-screen-runtime/SKILL.md` 成功
+
+---
+
+## [2026-07-05] 08:38 StockInputView の明細 P/S選択UI削除
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.StockInputView の伝票入力明細で、P/S選択は不要なため UI のみ外す
+### 実施内容
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 明細 RowDetailsTemplate 先頭の P/S コンボボックスを削除し、未使用になった `MeisaiKubunComboBox` / `MeisaiKubunComboBoxItem` スタイルを削除
+### 技術決定 Why
+- 要望が UI のみ外す内容だったため、ViewModel や保存値の扱いは変えず、StockInputView 上の選択 UI だけを除去する最小修正に留めた
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+- `CvServer` と `CvWpfclient` を起動し、`MainMenuViewModel` の `SelectedMenu` / `DoMenuCommand` 経由で `棚卸入力` を開いて、明細先頭が `行No` で P/S 選択 UI が表示されないことを確認
+
+---
+
 ## [2026-07-04] 16:13 DatePicker の「今日」ボタンを各要素に明示設定
 ### Agent
 - GPT-5.4-mini : OpenAI : Sisyphus
