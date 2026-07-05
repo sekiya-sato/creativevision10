@@ -92,6 +92,106 @@ async Task Init() {
 - `Start-Process -WindowStyle Hidden` は `CvServer` など非対話プロセスだけに使う。`CvWpfclient` は通常ウィンドウで起動する。
 - GUI 起動、スクリーンショット取得、プロセス停止は権限付き実行が必要になる場合がある。
 
+## WSL2 から実行する場合
+
+WSL2 環境（Ubuntu など）からこのスキルを実行する場合、Windows 側のプロセス・ファイルシステム・GUI を操作するため、以下の点に注意する。
+
+### ビルド
+
+WSL2 からのビルドは AGENTS.md の WSL2 Build Rule に従う。
+
+```bash
+/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj"
+```
+
+`dotnet run` を使うと、ビルドと実行をまとめて行える。
+
+```bash
+/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet run CvWpfclient\CvWpfclient.csproj"
+```
+
+### Windows プロセスの起動
+
+WSL2 から Windows の `.exe` を起動する場合、以下のいずれかの方法を使う。
+
+1. **直接 Windows パスを指定**
+   ```bash
+   # CvServer は --contentroot を指定しないと appsettings.json が見つからないことがある
+   /mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\documents\new2022\cv10\CvServer\bin\Debug\net10.0\CvServer.exe --contentroot C:\gitroot\documents\new2022\cv10\CvServer\bin\Debug\net10.0"
+   /mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\documents\new2022\cv10\CvWpfclient\bin\Debug\net10.0-windows10.0.19041\CreativeVision10.exe"
+   ```
+
+2. **wslpath でパス変換**
+   ```bash
+   winpath=$(wslpath -w "/mnt/c/gitroot/documents/new2022/cv10/CvWpfclient/bin/Debug/net10.0-windows10.0.19041/CreativeVision10.exe")
+   /mnt/c/Windows/System32/cmd.exe /d /c "$winpath"
+   ```
+
+`CvServer` は `cmd.exe` のカレントディレクトリが `C:\gitroot\UT` などのままだと `appsettings.json` を見つけられず、`Connection string 'sqlite' is not configured.` となることがある。そのため、`--contentroot` で `.exe` と同じディレクトリを明示する。
+
+### 環境変数の受け渡し
+
+WSL2 から Windows プロセスに環境変数を渡す場合、`cmd.exe` の `set` 経由で渡す。
+
+```bash
+# CvServer（Development 設定を使う場合）
+/mnt/c/Windows/System32/cmd.exe /d /c "set ASPNETCORE_ENVIRONMENT=Development && C:\gitroot\documents\new2022\cv10\CvServer\bin\Debug\net10.0\CvServer.exe --contentroot C:\gitroot\documents\new2022\cv10\CvServer\bin\Debug\net10.0"
+
+# CvWpfclient（ビルド済みの .exe を直接起動する場合）
+/mnt/c/Windows/System32/cmd.exe /d /c "set CV10_AUTOMATION_OPEN_MENU=ShopUriageInputView && set CV10_AUTOMATION_TARGET_STATE=DetailWithRow && C:\gitroot\documents\new2022\cv10\CvWpfclient\bin\Debug\net10.0-windows10.0.19041\CreativeVision10.exe"
+
+# CvWpfclient（dotnet run でビルド＆実行をまとめて行う場合）
+/mnt/c/Windows/System32/cmd.exe /d /c "set CV10_AUTOMATION_OPEN_MENU=ShopUriageInputView && set CV10_AUTOMATION_TARGET_STATE=DetailWithRow && C:\gitroot\UT\vscmd.bat dotnet run CvWpfclient\CvWpfclient.csproj"
+```
+
+### PowerShell スクリプトの実行
+
+WSL2 内の PowerShell Core (`pwsh`) ではなく、**Windows 側の PowerShell** (`powershell.exe`) を使う。
+
+```bash
+/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -File "C:\gitroot\documents\new2022\cv10\.tmp_ui_check\hook.ps1"
+```
+
+### スクリーンショット取得
+
+WSL2 から Windows の画面をキャプチャする場合、Windows 側の PowerShell で `System.Windows.Forms` を使う。保存先は `.tmp_ui_check/` など、WSL2 からもアクセスできる Windows 側パスにする。
+
+```powershell
+# このスクリプトは Windows 側 PowerShell (powershell.exe) で実行する
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+$screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+$bitmap = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height
+$graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+$graphics.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
+$bitmap.Save("C:\gitroot\documents\new2022\cv10\.tmp_ui_check\screenshot.png")
+$graphics.Dispose()
+$bitmap.Dispose()
+```
+
+WSL2 側からは `/mnt/c/gitroot/documents/new2022/cv10/.tmp_ui_check/screenshot.png` で画像を確認できる。
+
+### プロセス停止
+
+WSL2 から Windows プロセスを停止する場合、Windows 側の `taskkill.exe` または `powershell.exe` を使う。
+
+```bash
+/mnt/c/Windows/System32/taskkill.exe /F /IM CreativeVision10.exe
+/mnt/c/Windows/System32/taskkill.exe /F /IM CvServer.exe
+```
+
+または PowerShell 経由:
+
+```bash
+/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command "Stop-Process -Name CreativeVision10 -Force; Stop-Process -Name CvServer -Force"
+```
+
+### ファイルパスの注意
+
+- WSL2 側の `/mnt/c/...` パスは、Windows プロセスに渡す前に `C:\...` 形式に変換する。
+- 一時ファイルは Windows 側のパス（`C:\tmp\...` など）に置くか、`wslpath -w` で変換してから渡す。
+- スクリーンショット名、環境変数名、状態名は ASCII のみにする（既存の注意と同じ）。
+
 ## 検証コマンド
 
 ```powershell

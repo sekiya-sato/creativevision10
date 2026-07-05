@@ -1,3 +1,29 @@
+## [2026-07-05] 12:20 verify-wpf-screen-runtime スキルの WSL2 対応追記と動作確認
+### Agent
+- [kimi-k2.7-code : OpenCode : Sisyphus]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：verify-wpf-screen-runtime スキルが WSL2 側からも正常に動作するようチェックし、必要に応じて内容を追記する
+### 実施内容
+- .agents/skills/verify-wpf-screen-runtime/SKILL.md: WSL2 からのビルド・プロセス起動・環境変数渡し・スクリーンショット取得・プロセス停止の手順を追記
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 一時的な自動メニュー起動フックを追加・削除
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 一時的な詳細タブ初期化分岐を追加・削除
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: レイアウト確認（変更なし）
+### 技術決定 Why
+- WSL2 から Windows の GUI プロセスを起動する際、cmd.exe のカレントディレクトリが C:\gitroot\UT のままだと CvServer が appsettings.json を見つけられないため、--contentroot 指定が必要だった
+- スクリーンショットは Windows 側 PowerShell で取得し、.tmp_ui_check/ に保存することで WSL2 側からも /mnt/c/... で確認できる
+- 画面状態は ViewModel 側の環境変数分岐で作り、キー/マウス操作を避けた
+### 影響範囲
+- .agents/skills/verify-wpf-screen-runtime/SKILL.md のみ（製品コードへの変更はなし）
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+- WSL2 から CvServer/CvWpfclient を起動し、ShopUriageInputView の詳細タブに明細行1行を表示したスクリーンショットを取得
+- 一時フック削除後もビルド成功
+- `git diff --check` で LF/CRLF 警告のみ（対象外ファイル）
+
+---
+
 ## [2026-07-05] 08:58 WPF実画面確認手順のskill化
 ### Agent
 - GPT-5 : OpenAI : Codex
