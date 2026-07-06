@@ -155,17 +155,40 @@
 					</Grid.RowDefinitions>
 					<DockPanel Grid.Row="0"
 						Margin="8,0,8,8">
-						<Button Command="{Binding DoListOnListTabCommand}"
-							DockPanel.Dock="Right"
-							Style="{StaticResource MaterialDesignOutlinedButton}"
-							ToolTip="一覧取得 (F5)">
-							<StackPanel Orientation="Horizontal">
-								<materialDesign:PackIcon VerticalAlignment="Center"
-									Kind="DatabaseSearch" />
-								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="一覧取得" />
-							</StackPanel>
-						</Button>
+						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+							<Button Command="{Binding DoListOnListTabCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="一覧取得 (F5)">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="DatabaseSearch" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="一覧取得" />
+								</StackPanel>
+							</Button>
+							<Button Margin="8,0,0,0"
+								Command="{Binding DoPrintListCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="伝票一覧を印刷">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Printer" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="伝票一覧印刷" />
+								</StackPanel>
+							</Button>
+							<Button Margin="8,0,0,0"
+								Command="{Binding DoPrintDetailCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="伝票明細を印刷">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Printer" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="伝票明細印刷" />
+								</StackPanel>
+							</Button>
+						</StackPanel>
 						<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
 							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="FormatListBulleted" />

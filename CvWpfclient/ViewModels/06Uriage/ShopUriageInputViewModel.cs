@@ -236,6 +236,210 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		await DoList(ct);
 	}
 
+	// ---- 印刷 ------------------------------------------------------------
+	// printform/ の qfm は PrintStream の「レコード区分」CSV 形式を使う。
+	//   CSV 先頭カラム = レコード区分キー。 "H" → ヘッダレコード(HEADn)、それ以外 → 明細(itemn)。
+	// 一覧印刷: 伝票ごとに 1 本の "H" 行（HEAD1..HEAD22）。
+	// 明細印刷: 伝票ごとに "H" 行（HEAD1..HEAD37）＋ Jmeisai を json_each で展開した明細行（item1..item72）。
+	// 列の並びは datarecord の item 定義順に一致させる。未使用スロットは '' で桁を保持する。
+	// フィールドの厳密な対応は実機の印刷サーバ出力で最終調整が必要（Tran01Tenuri に存在しない
+	// 手入力No/関連No2 等は空文字、消費税/SYSFLG/送信FLG 等はプレースホルダ '0'/'' としている）。
+
+	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
+	async Task DoPrintList(CancellationToken ct) {
+		var sql = BuildListPrintSql();
+		await RunPrintPdfAsync("ShopUriageInput_header.qfm", null, new QueryListSqlParam(typeof(Tran01Tenuri), sql), ct);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
+	async Task DoPrintDetail(CancellationToken ct) {
+		var sql = BuildDetailPrintSql();
+		await RunPrintPdfAsync("ShopUriageInput_detail.qfm", null, new QueryListSqlParam(typeof(Tran01Tenuri), sql), ct);
+	}
+
+	/// <summary>一覧印刷用 WHERE 句（画面の検索条件を流用。値は ListWhere 側で直接埋め込み済み）。</summary>
+	string PrintWhere() {
+		var where = ListWhere;
+		return string.IsNullOrWhiteSpace(where) ? string.Empty : $"where {where}";
+	}
+
+	// yyyyMMdd(8桁文字列) を "yyyy/MM/dd" に整形
+	const string DenDayFmt = "substr(DenDay,1,4)||'/'||substr(DenDay,5,2)||'/'||substr(DenDay,7,2)";
+	const string KubunLabel = "case Kubun when 10 then '10 売上' when 20 then '20 売上返品' else cast(Kubun as text) end";
+	const string TenpoView = "trim(ifnull(json_extract(VTenpo,'$.Cd'),'')||' '||ifnull(json_extract(VTenpo,'$.Mei'),''))";
+	const string CustomerView = "trim(ifnull(json_extract(VCustomer,'$.Cd'),'')||' '||ifnull(json_extract(VCustomer,'$.Mei'),''))";
+	const string ShainView = "trim(ifnull(json_extract(VShain,'$.Cd'),'')||' '||ifnull(json_extract(VShain,'$.Mei'),''))";
+
+	/// <summary>店舗売上伝票一覧（ヘッダ）印刷 SQL。伝票 1 件 = "H" 行 1 本（HEAD1..HEAD22）。</summary>
+	string BuildListPrintSql() => $@"
+select
+  'H'                                            HEAD1,   -- レコード区分キー
+  '店舗売上伝票一覧'                              HEAD2,   -- 帳票タイトル
+  Id                                             HEAD3,   -- 伝票No
+  {DenDayFmt}                                    HEAD4,   -- 売上日
+  '1'                                            HEAD5,   -- 伝票区分(店舗売上)
+  {KubunLabel}                                   HEAD6,   -- 取引区分
+  '0 通常  ' || {TenpoView}                      HEAD7,   -- 取引詳細 + 店舗
+  cast(Rate as text) || '%'                      HEAD8,   -- 掛率
+  '0'                                            HEAD9,   -- SYSFLG(該当項目なし)
+  '0'                                            HEAD10,  -- 送信FLG(該当項目なし)
+  SuTotal                                        HEAD11,  -- 数量計
+  KingakuTotal                                   HEAD12,  -- 金額計
+  JodaiTotal                                     HEAD13,  -- 上代合計
+  GedaiTotal                                     HEAD14,  -- 下代合計
+  ''                                             HEAD15,  -- 手入力No(該当項目なし)
+  RelateNo1                                      HEAD16,  -- 関連No1
+  ''                                             HEAD17,  -- 関連No2(該当項目なし)
+  {CustomerView}                                 HEAD18,  -- 顧客
+  {ShainView}                                    HEAD19,  -- 入力者
+  ''                                             HEAD20,  -- 性別(該当項目なし)
+  ''                                             HEAD21,  -- 年代(該当項目なし)
+  '0'                                            HEAD22   -- 消費税計(該当項目なし)
+from Tran01Tenuri {PrintWhere()}
+order by DenDay desc, Id desc";
+
+	/// <summary>
+	/// 店舗売上伝票明細印刷 SQL。伝票 1 件 = "H" 行(HEAD1..HEAD37) ＋ 明細行(item1..item72)。
+	/// UNION ALL の桁数を 72 に揃える(H 行は HEAD1..HEAD37 + 空35列)。
+	/// 並びは 伝票(Id desc) → H 行 → 明細(No asc)。
+	/// </summary>
+	string BuildDetailPrintSql() {
+		var where = PrintWhere();
+		// 明細(item)列: json_each(b) から取得。未対応スロットは '' で桁だけ確保。
+		const string M = "json_extract(b.value,";
+		var detailCols =
+$@"  h.Id                                  c1,   -- item1  グループキー/手入力No 表示
+  ''                                    c2,
+  ''                                    c3,
+  ''                                    c4,
+  ''                                    c5,
+  {DenDayFmt2()}                        c6,   -- item6  売上日
+  ''                                    c7,
+  ''                                    c8,
+  ''                                    c9,
+  ''                                    c10,
+  ''                                    c11,
+  ''                                    c12,
+  ''                                    c13,
+  ''                                    c14,
+  ''                                    c15,
+  ''                                    c16,
+  ''                                    c17,
+  ''                                    c18,
+  ''                                    c19,
+  ''                                    c20,
+  ''                                    c21,
+  ''                                    c22,
+  ''                                    c23,
+  ''                                    c24,
+  ''                                    c25,
+  ''                                    c26,
+  ''                                    c27,
+  ''                                    c28,
+  ''                                    c29,
+  ''                                    c30,
+  ''                                    c31,
+  ''                                    c32,
+  ''                                    c33,
+  ''                                    c34,
+  ''                                    c35,
+  ''                                    c36,
+  ''                                    c37,
+  ''                                    c38,
+  ''                                    c39,
+  ''                                    c40,
+  ''                                    c41,
+  ''                                    c42,
+  ''                                    c43,
+  ''                                    c44,
+  {M}'$.Code_Col')                      c45,  -- item45 色CD
+  {M}'$.Code_Shohin')                   c46,  -- item46 商品CD
+  ''                                    c47,
+  ''                                    c48,
+  {M}'$.Mei_Shohin')                    c49,  -- item49 商品名
+  cast({M}'$.Su') as int)               c50,  -- item50 数量
+  {M}'$.Tanka')                         c51,  -- item51 単価
+  {M}'$.Kingaku')                       c52,  -- item52 金額
+  ''                                    c53,
+  '0'                                   c54,  -- item54 消費税(プレースホルダ)
+  {M}'$.Jodai')                         c55,  -- item55 上代単価
+  cast({M}'$.Su') as int)*cast({M}'$.Jodai') as int)   c56,  -- item56 上代金額
+  {M}'$.Gedai')                         c57,  -- item57 下代単価
+  cast({M}'$.Su') as int)*cast({M}'$.Gedai') as int)   c58,  -- item58 下代金額
+  {M}'$.Memo')                          c59,  -- item59 明細メモ/摘要
+  ''                                    c60,
+  ''                                    c61,
+  ''                                    c62,
+  ''                                    c63,
+  ''                                    c64,
+  ''                                    c65,
+  ''                                    c66,
+  ''                                    c67,
+  {M}'$.Code_Siz')                      c68,  -- item68 サイズCD
+  {M}'$.Mei_Col')                       c69,  -- item69 色名
+  ''                                    c70,
+  {M}'$.No')                            c71,  -- item71 行No
+  {M}'$.Mei_Siz')                       c72   -- item72 サイズ名";
+
+		// H 行: HEAD1..HEAD37 を c1..c37 へ、残り c38..c72 は ''。
+		var headerCols =
+$@"  'H'                       c1,   -- HEAD1  レコード区分キー
+  '店舗売上伝票明細'         c2,   -- HEAD2  タイトル
+  cast(Id as text)          c3,   -- HEAD3  伝票No
+  {DenDayFmt}               c4,   -- HEAD4  売上日
+  '1'                       c5,   -- HEAD5  伝票区分
+  {KubunLabel}              c6,   -- HEAD6  取引区分
+  '0 通常  '||{TenpoView}   c7,   -- HEAD7  取引詳細+店舗
+  cast(Rate as text)||'%'   c8,   -- HEAD8  掛率
+  '0'                       c9,   -- HEAD9  SYSFLG
+  '0'                       c10,  -- HEAD10 送信FLG
+  cast(SuTotal as text)     c11,  -- HEAD11 数量計
+  cast(KingakuTotal as text) c12, -- HEAD12 金額計
+  cast(JodaiTotal as text)  c13,  -- HEAD13 上代合計
+  cast(GedaiTotal as text)  c14,  -- HEAD14 下代合計
+  ''                        c15,  -- HEAD15 手入力No
+  cast(RelateNo1 as text)   c16,  -- HEAD16 関連No1
+  ''                        c17,  -- HEAD17 関連No2
+  {CustomerView}            c18,  -- HEAD18 顧客
+  {ShainView}               c19,  -- HEAD19 入力者
+  ''                        c20,  -- HEAD20 性別
+  ''                        c21,  -- HEAD21 年代
+  '0'                       c22,  -- HEAD22 消費税計
+  ''                        c23, '' c24, '' c25, '' c26, '' c27,
+  cast(SuTotal as text)     c28,  -- HEAD28 合計行 数量計
+  cast(KingakuTotal as text) c29, -- HEAD29 合計行 金額計
+  cast(JodaiTotal as text)  c30,  -- HEAD30 合計行 上代合計
+  cast(GedaiTotal as text)  c31,  -- HEAD31 合計行 下代合計
+  '' c32, '' c33, '' c34, '' c35, '' c36, '' c37,
+  '' c38, '' c39, '' c40, '' c41, '' c42, '' c43, '' c44,
+  '' c45, '' c46, '' c47, '' c48, '' c49, '' c50, '' c51, '' c52,
+  '' c53, '' c54, '' c55, '' c56, '' c57, '' c58, '' c59, '' c60,
+  '' c61, '' c62, '' c63, '' c64, '' c65, '' c66, '' c67, '' c68,
+  '' c69, '' c70, '' c71, '' c72";
+
+		return $@"
+select c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,
+       c21,c22,c23,c24,c25,c26,c27,c28,c29,c30,c31,c32,c33,c34,c35,c36,c37,c38,
+       c39,c40,c41,c42,c43,c44,c45,c46,c47,c48,c49,c50,c51,c52,c53,c54,c55,c56,
+       c57,c58,c59,c60,c61,c62,c63,c64,c65,c66,c67,c68,c69,c70,c71,c72
+from (
+  select Id sid, 0 rt, 0 mno,
+{headerCols}
+  from Tran01Tenuri {where}
+  union all
+  select h.Id sid, 1 rt, cast(json_extract(b.value,'$.No') as int) mno,
+{detailCols}
+  from (select * from Tran01Tenuri {where}) h, json_each(h.Jmeisai) b
+)
+order by sid desc, rt, mno";
+	}
+
+	// 明細側は json_each(b) が 'id' 列を持ち非修飾 Id と衝突するため、
+	// 画面 WHERE は json_each 結合前のサブクエリ内で適用してから展開する。
+
+	// item6(売上日) は date decode(S0.4/S4.2/S6.2) 用に生の yyyyMMdd を渡す。
+	static string DenDayFmt2() => "h.DenDay";
+
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
 	async Task DoUpdateOnDetailTab(CancellationToken ct) {
 		await DoUpdate(ct);

@@ -1,3 +1,27 @@
+## [2026-07-06] 13:10 店舗売上入力に伝票一覧印刷/伝票明細印刷を追加
+### Agent
+- Claude Opus 4.8 : Anthropic : Claude Code
+### 目的
+- ユーザーからの要望：ShopUriageInputView の一覧タブに「一覧取得」ボタンのさらに右へ「伝票一覧印刷」「伝票明細印刷」の2ボタンを配置し、printform/ShopUriageInput_header.qfm / ShopUriageInput_detail.qfm で印刷する。明細は Tran01Tenuri + json_each(Jmeisai) で展開して取得する
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: `DoOutputPdf` の本体を `RunPrintPdfAsync(formFile, csvParam, sqlParam, ct)` 保護メソッドへ切り出し、1画面から複数帳票(フォーム+データ)を出し分けられるようにした。`DoOutputPdf` はそのラッパへ変更
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `DoPrintListCommand`(ShopUriageInput_header.qfm) と `DoPrintDetailCommand`(ShopUriageInput_detail.qfm) を追加。いずれも一覧タブ表示時のみ実行可。SQL は PrintStream の「レコード区分」CSV形式に合わせ、先頭カラムをレコード区分キー("H"=ヘッダ/それ以外=明細)とした
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 一覧印刷は伝票1件=「H」行(HEAD1..HEAD22)。明細印刷は伝票の「H」行(HEAD1..HEAD37)＋ json_each(Jmeisai) 展開の明細行(item1..item72) を UNION ALL し、伝票→H→明細No の順に並べる。列並びは qfm の item 定義順に一致させ、未使用スロットは '' で桁を確保
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧タブ上段 DockPanel 右端を StackPanel 化し、一覧取得の右へ Printer アイコン付き「伝票一覧印刷」「伝票明細印刷」ボタンを追加
+### 技術決定 Why
+- 基底 `DoOutputPdf` は単一 FormFile + 単一印刷データ前提のため、2帳票を出すには本体を再利用可能な保護メソッドへ分離するのが最小差分だった
+- qfm は `<prefix id="HEAD" rectype="H">` / `<prefix id="item" default="1">` の複数レコード区分CSV(CHM part5_12)を使うため、WriteDynamicCsv が生成する平坦CSVでも先頭列をキーにして H行/明細行を交互出力する構成にした
+- 明細側 json_each(b) は 'id' 列を持ち非修飾 Id と衝突するため、画面 WHERE は json_each 結合前のサブクエリ内で適用した
+- Tran01Tenuri に存在しない項目(手入力No/関連No2/消費税/SYSFLG/送信FLG 等)は空文字 '' やプレースホルダ '0' とした
+### 未確認 / 要フォロー
+- qfm の各 HEADn/itemn とデータの厳密な対応(桁位置・表示内容)は実機の印刷サーバ出力での確認・微調整が必要。当環境では印刷サーバ/net10 SQLite を実行できずランタイム検証は未実施
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj -o .omo\build\CvWpfclient` 成功（0 警告 / 0 エラー）
+- 2つの qfm は XML パース OK（landscape、items=136/163、datasrc=44/76）。qfm 自体は未変更
+- UNION ALL 両ブランチの列数=72、外側 select も 72 で一致を確認
+
+---
+
 ## [2026-07-06] 12:00 店舗売上入力のヘッダ区分を売上/返品へ整理
 ### Agent
 - [GPT-5 : OpenAI : Codex]

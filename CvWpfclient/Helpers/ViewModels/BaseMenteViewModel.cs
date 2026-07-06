@@ -455,12 +455,16 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	}
 
 	[RelayCommand(IncludeCancelCommand = true)]
-	protected async Task DoOutputPdf(CancellationToken ct) {
+	protected async Task DoOutputPdf(CancellationToken ct) =>
+		await RunPrintPdfAsync(FormFile, PrintByCsvParam, PrintBySqlParam, ct);
+
+	/// <summary>
+	/// 指定したフォームファイルと印刷データ(CSV または SQL)で PDF を生成し、PDF表示画面を開く。
+	/// 1画面で複数の帳票を出し分けたい場合は、この保護メソッドを個別コマンドから直接呼び出す。
+	/// </summary>
+	protected async Task RunPrintPdfAsync(string? formFile, PrintByCsvParam? csvParam, QueryListSqlParam? sqlParam, CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
 
-		var formFile = FormFile;
-		var csvParam = PrintByCsvParam;
-		var sqlParam = PrintBySqlParam;
 		if (string.IsNullOrWhiteSpace(formFile)) {
 			Message = "印刷フォームファイルが設定されていません";
 			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
