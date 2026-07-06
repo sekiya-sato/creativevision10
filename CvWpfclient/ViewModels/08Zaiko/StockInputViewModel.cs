@@ -1,9 +1,11 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
+using Grpc.Core;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -21,6 +23,8 @@ public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	[NotifyCanExecuteChangedFor(nameof(DoUpdateOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoDeleteOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoInsertOnDetailTabCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoPrintListCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoPrintDetailCommand))]
 	int selectedTabIndex;
 
 	[ObservableProperty]
@@ -213,6 +217,167 @@ public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
 	async Task DoInsertOnDetailTab(CancellationToken ct) {
 		await DoInsert(ct);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
+	async Task DoPrintList(CancellationToken ct) {
+		var query = CreateListQueryParam();
+		var sql = $@"
+select
+	Id,
+	'',
+	'',
+	'',
+	'',
+	DenDay,
+	'',
+	'',
+	trim(ifnull(json_extract(VSoko,'$.Cd'),'')),
+	trim(ifnull(json_extract(VSoko,'$.Mei'),'')),
+	SuTotal,
+	KingakuTotal,
+	ifnull(Memo,''),
+	TanaNo,
+	trim(ifnull(json_extract(VShain,'$.Cd'),'')),
+	trim(ifnull(json_extract(VShain,'$.Mei'),''))
+from Tran60Tana
+{query.AddWhereOrder()}
+";
+		await DoPrintAsync("StockInputView_header.qfm", new QueryListSqlParam(typeof(Tran60Tana), sql, query.Parameters), ct);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
+	async Task DoPrintDetail(CancellationToken ct) {
+		var query = CreateListQueryParam();
+		var whereClause = string.IsNullOrWhiteSpace(query.Where) ? string.Empty : $"where {query.Where}";
+		var orderBy = string.IsNullOrWhiteSpace(query.Order) ? "m.No" : $"{QualifyOrder(query.Order, "A")}, m.No";
+		var limitClause = query.MaxCount.HasValue && query.MaxCount.Value > 0 ? $"limit {query.MaxCount.Value}" : string.Empty;
+		var whereOrder = $"{whereClause} order by {orderBy} {limitClause}".Trim();
+
+		var sql = $@"
+select
+	A.Id,
+	'',
+	'',
+	'',
+	'',
+	A.DenDay,
+	'',
+	'',
+	trim(ifnull(json_extract(A.VSoko,'$.Cd'),'')),
+	trim(ifnull(json_extract(A.VSoko,'$.Mei'),'')),
+	A.SuTotal,
+	A.KingakuTotal,
+	ifnull(A.Memo,''),
+	A.TanaNo,
+	trim(ifnull(json_extract(A.VShain,'$.Cd'),'')),
+	trim(ifnull(json_extract(A.VShain,'$.Mei'),'')),
+	json_extract(m.value,'$.Kubun'),
+	json_extract(m.value,'$.Code_Shohin'),
+	json_extract(m.value,'$.Code_Col'),
+	json_extract(m.value,'$.Code_Siz'),
+	json_extract(m.value,'$.Mei_Shohin'),
+	json_extract(m.value,'$.Su'),
+	json_extract(m.value,'$.Tanka'),
+	json_extract(m.value,'$.Kingaku'),
+	trim(ifnull(json_extract(m.value,'$.Code_Shain'),'') || ' ' || ifnull(json_extract(m.value,'$.Mei_Shain'),'')),
+	json_extract(m.value,'$.Jodai'),
+	json_extract(m.value,'$.Gedai'),
+	json_extract(m.value,'$.JanCode'),
+	'',
+	json_extract(m.value,'$.Mei_Col'),
+	json_extract(m.value,'$.Mei_Siz'),
+	json_extract(m.value,'$.No'),
+	json_extract(m.value,'$.Id_Shohin')
+from Tran60Tana A, json_each(A.Jmeisai) m
+{whereOrder}
+";
+		await DoPrintAsync("StockInputView_detail.qfm", new QueryListSqlParam(typeof(Tran60Tana), sql, query.Parameters), ct);
+	}
+
+	async Task DoPrintAsync(string formFile, QueryListSqlParam sqlParam, CancellationToken ct) {
+		if (string.IsNullOrWhiteSpace(formFile)) {
+			Message = "印刷フォームファイルが設定されていません";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
+		if (sqlParam?.Sql is null) {
+			Message = "印刷データが設定されていません";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
+
+		try {
+			ClientLib.Cursor2Wait();
+			var msg = new PrintOperation {
+				DataType = typeof(QueryListSqlParam),
+				DataMsg = Common.SerializeObject(sqlParam),
+				FormFile = formFile,
+			};
+
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			string? pdfdata = null;
+			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
+				ct.ThrowIfCancellationRequested();
+				Message = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
+				if (streamMsg.Status == -2) {
+					Message = streamMsg.DataMsg;
+					MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+					return;
+				}
+				if (streamMsg.Status < 0) {
+					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
+					Message = $"PDF出力失敗: {errorDetail}";
+					MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+					return;
+				}
+				if (streamMsg.IsCompleted) {
+					pdfdata = streamMsg.DataMsg;
+					break;
+				}
+			}
+
+			if (string.IsNullOrWhiteSpace(pdfdata)) {
+				Message = "PDF出力結果が取得できませんでした";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+				return;
+			}
+
+			var viewTitle = string.IsNullOrWhiteSpace(ActiveWindow?.Title)
+				? "PDF表示"
+				: $"{ActiveWindow.Title} - PDF表示";
+			var view = new Views.Sub.WebPdfView { Title = viewTitle };
+			if (view.DataContext is not WebPdfViewModel vm) {
+				Message = "PDF表示画面の初期化に失敗しました";
+				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+				return;
+			}
+
+			vm.Pdfdata = $"{AppGlobal.Url}/wrk/{pdfdata}";
+			view.Title += " " + vm.Pdfdata;
+			ClientLib.ShowDialogView(view, this, IsDialog: false);
+			view.Owner = null;
+			Message = $"PDFを表示しました: {pdfdata}";
+		}
+		catch (OperationCanceledException cancel) {
+			Message = $"Cancelエラー：{cancel.Message}";
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			Message = "PDF出力をキャンセルしました";
+		}
+		catch (Exception ex) {
+			Message = $"PDF出力失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+	}
+
+	static string QualifyOrder(string? order, string alias) {
+		if (string.IsNullOrWhiteSpace(order)) return string.Empty;
+		var parts = order.Split(',').Select(o => $"{alias}.{o.Trim()}");
+		return string.Join(", ", parts);
 	}
 
 	[RelayCommand]
