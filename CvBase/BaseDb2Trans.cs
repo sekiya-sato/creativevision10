@@ -577,6 +577,11 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
+	partial void OnKubunChanged(int value) {
+		// Kubun が変更された後に実行される
+		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+	}
+
 	[Ignore]
 	[JsonIgnore]
 	public EnumUri00 EnKubun {
@@ -675,6 +680,11 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
+	partial void OnKubunChanged(int value) {
+		// Kubun が変更された後に実行される
+		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+	}
+
 	[Ignore]
 	[JsonIgnore]
 	public EnumUri01 EnKubun {
@@ -757,6 +767,10 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
+	partial void OnKubunChanged(int value) {
+		// Kubun が変更された後に実行される
+		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+	}
 	[Ignore]
 	[JsonIgnore]
 	public EnumShiire EnKubun {
@@ -941,6 +955,10 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
+	partial void OnKubunChanged(int value) {
+		// Kubun が変更された後に実行される
+		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+	}
 	[Ignore]
 	[JsonIgnore]
 	public EnumUri01 EnKubun {
@@ -992,6 +1010,10 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
 	int kubun = 10;
+	partial void OnKubunChanged(int value) {
+		// Kubun が変更された後に実行される
+		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+	}
 	[Ignore]
 	[JsonIgnore]
 	public EnumShiire EnKubun {

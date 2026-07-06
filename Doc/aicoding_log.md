@@ -1,3 +1,21 @@
+## [2026-07-06] 18:40 opencode-go models リストの最新化
+### Agent
+- [kimi-k2.7-code : OpenCode : Sisyphus]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：opencode-go の使用モデルを最新のフロンティアモデルに更新する
+### 実施内容
+- opencode.json: `model` を `zhipu/glm-5.2` (1M ctx, SWE-bench Pro 62.1, MIT license) に変更
+- opencode.json: `small_model` を `deepseek/deepseek-v4-flash` (高速・低コスト, 1M ctx) に追加
+### 技術決定 Why
+- GLM-5.2 は 2026年6月リリースのオープンウェイト最強クラスのコーディングモデルであり、Claude Opus 4.8 に次ぐ性能でコスパが良い
+- DeepSeek V4 Flash は出力 $0.28/M と最安クラスであり、軽量タスク用 small_model に最適
+### 確認
+- opencode.json 構文確認（JSON valid）
+
+---
+
 ## [2026-07-05] 12:20 verify-wpf-screen-runtime スキルの WSL2 対応追記と動作確認
 ### Agent
 - [kimi-k2.7-code : OpenCode : Sisyphus]

@@ -33,6 +33,24 @@ public sealed partial class TranTokuiPromotion : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	int rank;
+	/// <summary>
+	/// 得意先コード（一覧表示用）
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string tokuiCode = string.Empty;
+	/// <summary>
+	/// 得意先名（一覧表示用）
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string tokuiName = string.Empty;
+	/// <summary>
+	/// 重要度名（一覧表示用）
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string rankName = string.Empty;
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -64,4 +82,22 @@ public sealed partial class TranShopPromotion : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	int rank;
+	/// <summary>
+	/// 店舗コード（一覧表示用）
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string shopCode = string.Empty;
+	/// <summary>
+	/// 店舗名（一覧表示用）
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string shopName = string.Empty;
+	/// <summary>
+	/// 重要度名（一覧表示用）
+	/// </summary>
+	[ObservableProperty]
+	[property: ResultColumn]
+	string rankName = string.Empty;
 }
