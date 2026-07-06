@@ -21,6 +21,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	[NotifyCanExecuteChangedFor(nameof(DoUpdateOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoDeleteOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoInsertOnDetailTabCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoPrintListCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoPrintDetailCommand))]
 	int selectedTabIndex;
 
 	[ObservableProperty]
@@ -247,20 +249,14 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoPrintList(CancellationToken ct) {
-		var sql = BuildListPrintSql();
-		await RunPrintPdfAsync("ShopUriageInput_header.qfm", null, new QueryListSqlParam(typeof(Tran01Tenuri), sql), ct);
+		var query = CreateListQueryParam();
+		await RunPrintPdfAsync("ShopUriageInput_header.qfm", null, new QueryListSqlParam(typeof(Tran01Tenuri), BuildListPrintSql(query), query.Parameters), ct);
 	}
 
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoPrintDetail(CancellationToken ct) {
-		var sql = BuildDetailPrintSql();
-		await RunPrintPdfAsync("ShopUriageInput_detail.qfm", null, new QueryListSqlParam(typeof(Tran01Tenuri), sql), ct);
-	}
-
-	/// <summary>一覧印刷用 WHERE 句（画面の検索条件を流用。値は ListWhere 側で直接埋め込み済み）。</summary>
-	string PrintWhere() {
-		var where = ListWhere;
-		return string.IsNullOrWhiteSpace(where) ? string.Empty : $"where {where}";
+		var query = CreateListQueryParam();
+		await RunPrintPdfAsync("ShopUriageInput_detail.qfm", null, new QueryListSqlParam(typeof(Tran01Tenuri), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
 	// yyyyMMdd(8桁文字列) を "yyyy/MM/dd" に整形
@@ -271,7 +267,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	const string ShainView = "trim(ifnull(json_extract(VShain,'$.Cd'),'')||' '||ifnull(json_extract(VShain,'$.Mei'),''))";
 
 	/// <summary>店舗売上伝票一覧（ヘッダ）印刷 SQL。伝票 1 件 = "H" 行 1 本（HEAD1..HEAD22）。</summary>
-	string BuildListPrintSql() => $@"
+	static string BuildListPrintSql(QueryListParam query) => $@"
 select
   'H'                                            HEAD1,   -- レコード区分キー
   '店舗売上伝票一覧'                              HEAD2,   -- 帳票タイトル
@@ -295,16 +291,18 @@ select
   ''                                             HEAD20,  -- 性別(該当項目なし)
   ''                                             HEAD21,  -- 年代(該当項目なし)
   '0'                                            HEAD22   -- 消費税計(該当項目なし)
-from Tran01Tenuri {PrintWhere()}
-order by DenDay desc, Id desc";
+from Tran01Tenuri {query.AddWhereOrder()}";
 
 	/// <summary>
 	/// 店舗売上伝票明細印刷 SQL。伝票 1 件 = "H" 行(HEAD1..HEAD37) ＋ 明細行(item1..item72)。
 	/// UNION ALL の桁数を 72 に揃える(H 行は HEAD1..HEAD37 + 空35列)。
 	/// 並びは 伝票(Id desc) → H 行 → 明細(No asc)。
 	/// </summary>
-	string BuildDetailPrintSql() {
-		var where = PrintWhere();
+	static string BuildDetailPrintSql(QueryListParam query) {
+		var whereClause = string.IsNullOrWhiteSpace(query.Where) ? string.Empty : $"where {query.Where}";
+		var orderBy = string.IsNullOrWhiteSpace(query.Order) ? "Id" : query.Order;
+		var limitClause = query.MaxCount.HasValue && query.MaxCount.Value > 0 ? $"limit {query.MaxCount.Value}" : string.Empty;
+		var denpyoSub = $"select * from Tran01Tenuri {whereClause} order by {orderBy} {limitClause}".Trim();
 		// 明細(item)列: json_each(b) から取得。未対応スロットは '' で桁だけ確保。
 		const string M = "json_extract(b.value,";
 		var detailCols =
@@ -423,15 +421,15 @@ select c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,
        c39,c40,c41,c42,c43,c44,c45,c46,c47,c48,c49,c50,c51,c52,c53,c54,c55,c56,
        c57,c58,c59,c60,c61,c62,c63,c64,c65,c66,c67,c68,c69,c70,c71,c72
 from (
-  select Id sid, 0 rt, 0 mno,
+  select DenDay sday, Id sid, 0 rt, 0 mno,
 {headerCols}
-  from Tran01Tenuri {where}
+  from ({denpyoSub})
   union all
-  select h.Id sid, 1 rt, cast(json_extract(b.value,'$.No') as int) mno,
+  select h.DenDay sday, h.Id sid, 1 rt, cast(json_extract(b.value,'$.No') as int) mno,
 {detailCols}
-  from (select * from Tran01Tenuri {where}) h, json_each(h.Jmeisai) b
+  from ({denpyoSub}) h, json_each(h.Jmeisai) b
 )
-order by sid desc, rt, mno";
+order by sday desc, sid desc, rt, mno";
 	}
 
 	// 明細側は json_each(b) が 'id' 列を持ち非修飾 Id と衝突するため、

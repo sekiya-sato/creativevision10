@@ -1,3 +1,24 @@
+## [2026-07-06] 15:45 ShopUriageInputViewの印刷ロジック修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：StockInputViewの一覧印刷・明細印刷に合わせて、ShopUriageInputViewの印刷処理を修正し、一覧側ボタン表示を「伝票印刷」に変更する
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 印刷コマンドをCreateListQueryParamベースに変更し、検索条件・並び順・件数上限・パラメータを印刷SQLへ引き継ぐよう修正
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 明細印刷で対象伝票をサブクエリ化し、一覧条件と同じ伝票集合からヘッダ行・明細行を出力するよう修正
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧側印刷ボタンの表示を「伝票一覧印刷」から「伝票印刷」に変更
+### 技術決定 Why
+- StockInputViewで正常動作している方式に合わせ、QueryListParamを印刷SQL生成へ渡すことで、画面一覧取得時と印刷時の対象データ差異を避けるため
+### 確認
+- ShopUriageInputView.xaml XML構文確認: OK
+- CRLF確認: 対象編集ファイルはCRLFで統一
+- git diff --check: OK
+- CvWpfclient/CvWpfclient.csproj build: 成功（0警告、0エラー）
+
+---
+
 ## [2026-07-06] 15:00 棚卸入力画面の印刷でタイトル・列見出しを出力／エラー修正
 ### Agent
 - Claude Opus 4.8 : Anthropic : Claude Code

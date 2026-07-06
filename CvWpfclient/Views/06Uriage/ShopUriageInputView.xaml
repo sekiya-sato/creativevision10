@@ -169,12 +169,12 @@
 							<Button Margin="8,0,0,0"
 								Command="{Binding DoPrintListCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
-								ToolTip="伝票一覧を印刷">
+								ToolTip="伝票を印刷">
 								<StackPanel Orientation="Horizontal">
 									<materialDesign:PackIcon VerticalAlignment="Center"
 										Kind="Printer" />
 									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-										Text="伝票一覧印刷" />
+										Text="伝票印刷" />
 								</StackPanel>
 							</Button>
 							<Button Margin="8,0,0,0"
