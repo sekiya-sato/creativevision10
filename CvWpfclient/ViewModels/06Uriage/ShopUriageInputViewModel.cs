@@ -266,32 +266,53 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	const string CustomerView = "trim(ifnull(json_extract(VCustomer,'$.Cd'),'')||' '||ifnull(json_extract(VCustomer,'$.Mei'),''))";
 	const string ShainView = "trim(ifnull(json_extract(VShain,'$.Cd'),'')||' '||ifnull(json_extract(VShain,'$.Mei'),''))";
 
-	/// <summary>店舗売上伝票一覧（ヘッダ）印刷 SQL。伝票 1 件 = "H" 行 1 本（HEAD1..HEAD22）。</summary>
-	static string BuildListPrintSql(QueryListParam query) => $@"
-select
-  'H'                                            HEAD1,   -- レコード区分キー
-  '店舗売上伝票一覧'                              HEAD2,   -- 帳票タイトル
-  Id                                             HEAD3,   -- 伝票No
-  {DenDayFmt}                                    HEAD4,   -- 売上日
-  '1'                                            HEAD5,   -- 伝票区分(店舗売上)
-  {KubunLabel}                                   HEAD6,   -- 取引区分
-  '0 通常  ' || {TenpoView}                      HEAD7,   -- 取引詳細 + 店舗
-  cast(Rate as text) || '%'                      HEAD8,   -- 掛率
-  '0'                                            HEAD9,   -- SYSFLG(該当項目なし)
-  '0'                                            HEAD10,  -- 送信FLG(該当項目なし)
-  SuTotal                                        HEAD11,  -- 数量計
-  KingakuTotal                                   HEAD12,  -- 金額計
-  JodaiTotal                                     HEAD13,  -- 上代合計
-  GedaiTotal                                     HEAD14,  -- 下代合計
-  ''                                             HEAD15,  -- 手入力No(該当項目なし)
-  RelateNo1                                      HEAD16,  -- 関連No1
-  ''                                             HEAD17,  -- 関連No2(該当項目なし)
-  {CustomerView}                                 HEAD18,  -- 顧客
-  {ShainView}                                    HEAD19,  -- 入力者
-  ''                                             HEAD20,  -- 性別(該当項目なし)
-  ''                                             HEAD21,  -- 年代(該当項目なし)
-  '0'                                            HEAD22   -- 消費税計(該当項目なし)
-from Tran01Tenuri {query.AddWhereOrder()}";
+	/// <summary>式リストへ位置に応じた一意な列別名(c1, c2, ...)を付与する。</summary>
+	static string AliasColumns(IReadOnlyList<string> exprs) =>
+		string.Join(", ", exprs.Select((e, i) => $"{e} c{i + 1}"));
+
+	/// <summary>外側 select 用に c1..cN のカンマ区切りを生成する。</summary>
+	static string OuterColumns(int count) =>
+		string.Join(",", Enumerable.Range(1, count).Select(i => $"c{i}"));
+
+	/// <summary>店舗売上伝票一覧（ヘッダ）印刷 SQL。先頭に列見出し "H" 行、以降は伝票 1 件 = item 行 1 本。</summary>
+	static string BuildListPrintSql(QueryListParam query) {
+		var whereClause = string.IsNullOrWhiteSpace(query.Where) ? string.Empty : $"where {query.Where}";
+		var orderBy = string.IsNullOrWhiteSpace(query.Order) ? "Id" : query.Order;
+		var limitClause = query.MaxCount.HasValue && query.MaxCount.Value > 0 ? $"limit {query.MaxCount.Value}" : string.Empty;
+		var denpyoSub = $"select * from Tran01Tenuri {whereClause} order by {orderBy} {limitClause}".Trim();
+
+		// 列見出し "H" 行 (c1..c45)。ShopUriageInput_header.qfm の Rec01/Rec02 に合わせる。
+		var head = new[] {
+			"'H'", "'店舗売上伝票一覧'",
+			"'伝票No'", "'売上日'", "'伝票区分'", "'取引区分'", "'取引詳細'",
+			"'数量計'", "'掛率'", "'SYSFLG'", "'送信FLG'", "'金額計'", "'上代合計'",
+			"'下代合計'", "'消費税計'", "'手入力No'", "'関連No2'", "'顧客'", "'入力者'",
+			"'性別'", "'年代'", "'注文番号'", "'関連No1'",
+		};
+		var headCols = AliasColumns(head.Concat(Enumerable.Repeat("''", 45 - head.Length)).ToArray());
+
+		// 明細 item 行 (c1..c45)。prefix "item" として印刷されるよう先頭は 'H' 以外。
+		// c3..c23 は ShopUriageInput_header.qfm の Rec02 が参照する item1..item45 のうち使用されているスロット。
+		var data = new[] {
+			"''", "''",
+			"Id", "DenDay", "'1'", KubunLabel, "'0 通常  ' || " + TenpoView,
+			"SuTotal", "cast(Rate as text) || '%'", "'0'", "'0'",
+			"KingakuTotal", "JodaiTotal", "GedaiTotal", "cast(round(KingakuTotal * 0.1) as int)",
+			"''", "''", CustomerView, ShainView, "''", "''", "''", "RelateNo1",
+		};
+		var dataCols = AliasColumns(data.Concat(Enumerable.Repeat("''", 45 - data.Length)).ToArray());
+
+		return $@"
+select {OuterColumns(45)}
+from (
+  select '' __d, 0 __id, 0 __rt, {headCols}
+  union all
+  select DenDay __d, Id __id, 1 __rt, {dataCols}
+  from ({denpyoSub})
+)
+order by __rt, __d desc, __id desc
+";
+	}
 
 	/// <summary>
 	/// 店舗売上伝票明細印刷 SQL。伝票 1 件 = "H" 行(HEAD1..HEAD37) ＋ 明細行(item1..item72)。

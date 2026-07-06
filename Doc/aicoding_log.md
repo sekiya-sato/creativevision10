@@ -1,3 +1,27 @@
+## [2026-07-06] 16:40 ShopUriageInputView一覧印刷SQLのitem行化修正
+### Agent
+- [kimi-k2.7-code : OpenCode]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ShopUriageInputView の一覧印刷（伝票印刷）で、1 ページに 1 行だけ出力されていた問題を解消し、.omo/shopsales.png のような表形式・複数行の印刷結果を得る
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `BuildListPrintSql` を修正。従来の「伝票 1 件 = H 行 1 本」から、StockInputView と同じ「先頭列見出し H 行 ＋ 以降 item 行」形式に変更
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: item 行の列割り当てを `ShopUriageInput_header.qfm` の Rec02 定義に合わせ、c3..c23 に item1/item6/item22/item44/item32/item11/item12/item29/item30/item14/item15/item17/item18/item19/item24/item25/item31/item26/item27/item45/item28 を配置
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 消費税計を `round(KingakuTotal * 0.1)` で算出（現状で消費税率マスタがないため簡易計算）。性別・年代・注文番号・手入力No・関連No2 はデータ未保存または該当項目なしのため空文字を出力
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `AliasColumns` / `OuterColumns` ヘルパーを追加し、UNION ALL 結合時の無名リテラル列に一意な別名 c1..cN を付与
+### 技術決定 Why
+- `ShopUriageInput_header.qfm` は H レコードをページ先頭の見出し・item レコードをデータ行として解釈する構成。従来のすべて H 行だとヘッダレコードとして 1 ページに 1 つしか出力されず、nowprint.png のように 1 行だけになっていた
+- 列見出しは印刷データ側から供給する方式に合わせ、H 行にタイトル・列名を、item 行に伝票データを流し込むことで、qfm 変更なしで一覧印刷を表形式に近づけた
+- 消費税計・性別・年代などは現時点で保存されていないか該当項目がないため、ユーザー指示に従いダミー（簡易計算または空文字）とした
+### 影響範囲
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs
+### 確認
+- CvWpfclient/CvWpfclient.csproj build: 成功（0 警告 / 0 エラー）
+- CRLF 確認: 対象ファイルは CRLF で統一
+
+---
+
 ## [2026-07-06] 15:45 ShopUriageInputViewの印刷ロジック修正
 ### Agent
 - GPT-5 : OpenAI
