@@ -42,6 +42,13 @@ if "%APP_VERSION%"=="" (
 	exit /b 1
 )
 
+REM CvServer/appsettings.json の ServerVersion も同じ配布バージョンに合わせる。
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%publish-velopack.version.ps1" -AppSettingsPath "%~dp0CvServer\appsettings.json" -Section "" -Key "ServerVersion" -SetVersion "%APP_VERSION%"
+if errorlevel 1 (
+	echo [ERROR] Failed to update ServerVersion in CvServer/appsettings.json.
+	exit /b 1
+)
+
 REM 前回の publish 出力を削除し、古いファイルが package に混ざらないようにする。
 if exist "%PUBLISH_DIR%" rmdir /s /q "%PUBLISH_DIR%"
 

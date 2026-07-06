@@ -1,10 +1,19 @@
 param(
-    # Application.Version を読み書きする appsettings.json のパス。
+    # 読み書きする appsettings.json のパス。
     [Parameter(Mandatory = $true)]
     [string]$AppSettingsPath,
 
+    # 対象キーが属するセクション名。空文字の場合はトップレベルのキーを対象とする。
+    [string]$Section = "Application",
+
+    # 読み書きするバージョンキー名。
+    [string]$Key = "Version",
+
     # 指定時は major.minor.patch の patch だけを +1 して保存する。
-    [switch]$Increment
+    [switch]$Increment,
+
+    # 指定時はこの値で上書き保存する。Increment より優先される。
+    [string]$SetVersion
 )
 
 # Windows PowerShell 5.x でも日本語コメントを壊さないよう UTF-8(BOMなし) を明示する。
@@ -13,8 +22,17 @@ $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 # JSON コメントを含む appsettings.json をそのまま扱うため、JSON パーサーではなくテキストとして読む。
 $content = [System.IO.File]::ReadAllText($AppSettingsPath, $utf8NoBom)
 
-# Application セクション内の Version だけを配布バージョンとして抽出する。
-$match = [regex]::Match($content, '"Application"\s*:\s*\{[\s\S]*?"Version"\s*:\s*"([^"]+)"')
+$hasSection = -not [string]::IsNullOrEmpty($Section)
+$escapedSection = [regex]::Escape($Section)
+$escapedKey = [regex]::Escape($Key)
+
+# 対象セクションまたはトップレベルからバージョン値を抽出する。
+if ($hasSection) {
+    $match = [regex]::Match($content, '"{0}"\s*:\s*\{{[\s\S]*?"{1}"\s*:\s*"([^"]+)"' -f $escapedSection, $escapedKey)
+}
+else {
+    $match = [regex]::Match($content, '"{0}"\s*:\s*"([^"]+)"' -f $escapedKey)
+}
 
 # Version が見つからない場合は呼び出し元の bat で検知できるよう終了コードだけ返す。
 if (-not $match.Success) {
@@ -23,34 +41,46 @@ if (-not $match.Success) {
 
 $version = $match.Groups[1].Value
 
-if ($Increment) {
-    # publish 時の自動採番は x.y.z 形式だけを許可し、patch 以外は変更しない。
-    $versionParts = $version.Split('.')
+if ($Increment -or $SetVersion) {
+    if ($Increment) {
+        # publish 時の自動採番は x.y.z 形式だけを許可し、patch 以外は変更しない。
+        $versionParts = $version.Split('.')
 
-    if ($versionParts.Length -ne 3) {
-        exit 1
+        if ($versionParts.Length -ne 3) {
+            exit 1
+        }
+
+        # patch が数値でない場合は不正な配布バージョンとして停止する。
+        $patchNumber = 0
+        if (-not [int]::TryParse($versionParts[2], [ref]$patchNumber)) {
+            exit 1
+        }
+
+        # patch を +1 した値を、新しいバージョンとして作る。
+        $patchNumber++
+        $newVersion = '{0}.{1}.{2}' -f $versionParts[0], $versionParts[1], $patchNumber
     }
 
-    # patch が数値でない場合は不正な配布バージョンとして停止する。
-    $patchNumber = 0
-    if (-not [int]::TryParse($versionParts[2], [ref]$patchNumber)) {
-        exit 1
+    if ($SetVersion) {
+        $newVersion = $SetVersion
     }
 
-    # patch を +1 した値を、新しい Application.Version として作る。
-    $patchNumber++
-    $newVersion = '{0}.{1}.{2}' -f $versionParts[0], $versionParts[1], $patchNumber
+    # 対象セクションまたはトップレベルのキー値だけを置換し、他の設定やコメントは維持する。
+    if ($hasSection) {
+        $pattern = '((?:"{0}"\s*:\s*\{{[\s\S]*?)"{1}"\s*:\s*")([^"]+)(")' -f $escapedSection, $escapedKey
+    }
+    else {
+        $pattern = '("{0}"\s*:\s*")([^"]+)(")' -f $escapedKey
+    }
 
-    # Application セクション内の Version だけを置換し、他の設定やコメントは維持する。
     $updatedContent = [regex]::Replace(
         $content,
-        '((?:"Application"\s*:\s*\{[\s\S]*?)"Version"\s*:\s*")([^"]+)(")',
+        $pattern,
         {
             # 置換文字列の $1 誤解釈を避けるため、MatchEvaluator で安全に連結する。
             param($matched)
             $matched.Groups[1].Value + $newVersion + $matched.Groups[3].Value
-        },
-        1
+        }
     )
 
     # 置換対象が変わらない場合は、意図した Version 更新ができていないため停止する。

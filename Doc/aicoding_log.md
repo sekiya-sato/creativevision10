@@ -1,3 +1,22 @@
+## [2026-07-07] 08:55 publish-velopack.bat で CvServer/appsettings.json の ServerVersion も WPF 版と同じ値に更新
+### Agent
+- [kimi-k2.7-code : OpenCode]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：publish-velopack.bat で CvWpfclient/appsettings.json の Application.Version を更新したあと、CvServer/appsettings.json の ServerVersion も同じ値に同時に更新する
+### 実施内容
+- CvWpfclient/publish-velopack.version.ps1: セクション名・キー名・固定値上書きを指定できるよう汎用化。Section を空文字にするとトップレベルのキーを対象とし、SetVersion 指定時は Increment より優先して単純に上書きする
+- publish-velopack.bat: CvWpfclient/appsettings.json の Application.Version 増分後に、取得した APP_VERSION で CvServer/appsettings.json の ServerVersion を SetVersion により単純に上書きする処理を追加
+### 技術決定 Why
+- JSON コメントを含む appsettings.json をそのまま扱うため、JSON パーサーではなく正規表現によるテキスト置換を継続。既存の publish-velopack.version.ps1 を流用することで、文字コード（UTF-8 BOM なし）やコメント保持の処理を共通化した
+- ServerVersion は WPF 側の Application.Version と同じ値で単純に上書きし、ServerVersion の既存値は参照しない
+### 確認
+- 正規表現ロジックを C# で検証：Application.Version の patch 増分、トップレベル ServerVersion の固定値上書き、JSON コメント保持、いずれも正常に動作
+- CRLF 確認: 編集した bat/ps1 は CRLF で統一
+
+---
+
 ## [2026-07-06] 16:40 ShopUriageInputView一覧印刷SQLのitem行化修正
 ### Agent
 - [kimi-k2.7-code : OpenCode]
