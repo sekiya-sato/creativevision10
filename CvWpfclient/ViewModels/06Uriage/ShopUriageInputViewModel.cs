@@ -33,9 +33,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 
 	public List<EnumUri01> KubunOptions { get; } = [
 		EnumUri01.Uriage,
-		EnumUri01.UriSale,
 		EnumUri01.Henpin,
-		EnumUri01.HenSale,
 	];
 
 	public IReadOnlyList<MeisaiKubunOption> MeisaiKubunOptions { get; } = [
@@ -142,22 +140,33 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 
 	protected override void OnCurrentEditChangedCore(Tran01Tenuri? oldValue, Tran01Tenuri newValue) {
 		if (newValue == null) return;
-		ApplyMeisaiFromCurrentEdit();
+		bool headerIsSale = IsHeaderSaleKubun(newValue.Kubun);
+		newValue.Kubun = NormalizeHeaderKubun(newValue.Kubun);
+		ApplyMeisaiFromCurrentEdit(headerIsSale);
 	}
 
-	void ApplyMeisaiFromCurrentEdit() {
+	static bool IsHeaderSaleKubun(int kubun) =>
+		kubun is (int)EnumUri01.UriSale or (int)EnumUri01.HenSale;
+
+	static int NormalizeHeaderKubun(int kubun) =>
+		kubun switch {
+			(int)EnumUri01.Henpin or (int)EnumUri01.HenSale => (int)EnumUri01.Henpin,
+			_ => (int)EnumUri01.Uriage,
+		};
+
+	void ApplyMeisaiFromCurrentEdit(bool forceSaleMeisai) {
 		foreach (var m in EditMeisai) m.PropertyChanged -= OnMeisaiPropertyChanged;
 		EditMeisai = new ObservableCollection<Tran99Meisai>(
 			CurrentEdit.Jmeisai?.Select(Common.CloneObject) ?? []);
 		foreach (var m in EditMeisai) {
-			m.Kubun = NormalizeMeisaiKubun(m.Kubun);
+			m.Kubun = forceSaleMeisai ? SaleMeisaiKubun : NormalizeMeisaiKubun(m.Kubun);
 			m.PropertyChanged += OnMeisaiPropertyChanged;
 		}
 		UpdateTotals();
 	}
 
-	void SyncMeisaiToCurrentEdit() {
-		foreach (var m in EditMeisai) m.Kubun = NormalizeMeisaiKubun(m.Kubun);
+	void SyncMeisaiToCurrentEdit(bool forceSaleMeisai = false) {
+		foreach (var m in EditMeisai) m.Kubun = forceSaleMeisai ? SaleMeisaiKubun : NormalizeMeisaiKubun(m.Kubun);
 		CurrentEdit.Jmeisai = [.. EditMeisai];
 		UpdateTotals();
 	}
@@ -186,12 +195,16 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	protected override object CreateInsertParam() {
-		SyncMeisaiToCurrentEdit();
+		bool headerIsSale = IsHeaderSaleKubun(CurrentEdit.Kubun);
+		CurrentEdit.Kubun = NormalizeHeaderKubun(CurrentEdit.Kubun);
+		SyncMeisaiToCurrentEdit(headerIsSale);
 		return base.CreateInsertParam();
 	}
 
 	protected override object CreateUpdateParam() {
-		SyncMeisaiToCurrentEdit();
+		bool headerIsSale = IsHeaderSaleKubun(CurrentEdit.Kubun);
+		CurrentEdit.Kubun = NormalizeHeaderKubun(CurrentEdit.Kubun);
+		SyncMeisaiToCurrentEdit(headerIsSale);
 		return base.CreateUpdateParam();
 	}
 

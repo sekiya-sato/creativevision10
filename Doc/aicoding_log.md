@@ -1,3 +1,22 @@
+## [2026-07-06] 12:00 店舗売上入力のヘッダ区分を売上/返品へ整理
+### Agent
+- [GPT-5 : OpenAI : Codex]
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：店舗売上入力のヘッダ区分を売上/返品のみとし、旧セール系区分は明細行のセール区分へ移す
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: ヘッダ区分候補を売上(10)/返品(20)のみに変更
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 既存ヘッダ区分が11/21の場合は10/20へ正規化し、明細区分をセール(1)へ変換
+### 技術決定 Why
+- プロパー/セールは明細行単位で管理するため、ヘッダには売上/返品の取引方向だけを保持するようにした
+- 旧データの11/21を読み込み時と保存前に吸収し、ヘッダ選択肢削減後も既存データの意味を明細区分へ移せるようにした
+### 確認
+- `git diff --check` エラーなし
+- `CvWpfclient/CvWpfclient.csproj` ビルド成功（0 警告 / 0 エラー）
+
+---
+
 ## [2026-07-06] 18:40 opencode-go models リストの最新化
 ### Agent
 - [kimi-k2.7-code : OpenCode : Sisyphus]
