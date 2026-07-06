@@ -614,6 +614,16 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
 	int rate;
+	/// <summary>
+	/// 消費税
+	/// </summary>
+	[ObservableProperty]
+	int tax;
+	/// <summary>
+	/// 総合計
+	/// </summary>
+	[ObservableProperty]
+	int total;
 }
 
 public enum EnumUri00 : int {
@@ -703,6 +713,16 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
 	int rate;
+	/// <summary>
+	/// 消費税
+	/// </summary>
+	[ObservableProperty]
+	int tax;
+	/// <summary>
+	/// 総合計
+	/// </summary>
+	[ObservableProperty]
+	int total;
 
 }
 public enum EnumUri01 : int {
@@ -797,6 +817,16 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
 	int rate;
+	/// <summary>
+	/// 消費税
+	/// </summary>
+	[ObservableProperty]
+	int tax;
+	/// <summary>
+	/// 総合計
+	/// </summary>
+	[ObservableProperty]
+	int total;
 }
 public enum EnumShiire : int {
 	Shiire = 10,
@@ -977,6 +1007,16 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
 	int rate;
+	/// <summary>
+	/// 消費税
+	/// </summary>
+	[ObservableProperty]
+	int tax;
+	/// <summary>
+	/// 総合計
+	/// </summary>
+	[ObservableProperty]
+	int total;
 }
 
 /// <summary>
@@ -1032,6 +1072,16 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
 	int rate;
+	/// <summary>
+	/// 消費税
+	/// </summary>
+	[ObservableProperty]
+	int tax;
+	/// <summary>
+	/// 総合計
+	/// </summary>
+	[ObservableProperty]
+	int total;
 }
 
 
