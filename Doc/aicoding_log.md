@@ -1,3 +1,54 @@
+## [2026-07-06] 15:00 棚卸入力画面の印刷でタイトル・列見出しを出力／エラー修正
+### Agent
+- Claude Opus 4.8 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- 一覧印刷実行時の `System.ArgumentException (An item with the same key has already been added. Key: '')` を解消する
+- 添付 PDF どおり、帳票タイトルと列見出しも印刷データの一部として出力する
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 印刷 SQL の無名リテラル列（`''`）に一意な別名 `c1..cN` を付与。SQLite では無名リテラル列名が空文字となり、NPoco の `DictionaryMapper` が重複キー `''` で例外になっていた
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: qfm フォームが期待する見出し `HEAD*`（`rectype="H"` 行）を先頭に UNION で出力。`HEAD2`=タイトル、`HEAD3` 以降=列見出し
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 明細印刷は datarecord が `HEAD1..91` の後に `item1..` と続くため、"H" 行の伝票サマリ値（`item1..16`）を 92 列目以降へ配置
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: フォーム定義に合わせ、倉庫（item10/16）と入力者（item9/15）の取り違えを修正
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 印刷 SQL 生成を `BuildListPrintSql` / `BuildDetailPrintSql` へ切り出し、`AliasColumns` / `OuterColumns` ヘルパーを追加
+### 技術決定 Why
+- CSV 出力（`WriteDynamicCsv`）は列順のみを使用しヘッダを含めないため、列名は一意化のみを目的に付与した
+- 帳票タイトル・列見出しは qfm フォームではなく印刷データ側（既存 ShopUriage 帳票と同じ "H" レコード方式）で供給する設計に合わせた
+### 影響範囲
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs
+### 確認
+- `CvWpfclient/CvWpfclient.csproj` ビルド成功（0 警告 / 0 エラー）
+- サマリ行（item1..16）の配置は実機での印刷確認を推奨
+
+---
+
+## [2026-07-06] 13:40 棚卸入力画面に一覧印刷・明細印刷機能を追加
+### Agent
+- [kimi-k2.7-code : OpenCode : Sisyphus]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：棚卸入力画面の一覧タブに「一覧印刷」「明細印刷」ボタンを追加し、既存の qfm フォームを使って印刷できるようにする
+### 実施内容
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 一覧タブの「一覧取得」ボタン右側に間隔を空けて「一覧印刷」「明細印刷」ボタンを追加
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: `DoPrintListCommand` / `DoPrintDetailCommand` を追加し、一覧・明細それぞれで `PrintOperation` 経由の PDF 出力を実行
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 一覧印刷用 SQL を `StockInputView_header.qfm` の item1～item16 に合わせて 16 列で構成
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 明細印刷用 SQL を `StockInputView_detail.qfm` の item1～item33 に合わせ、`Tran60Tana A, json_each(A.Jmeisai) m` で明細を展開
+### 技術決定 Why
+- `BaseMenteViewModel` は単一の `FormFile`/`PrintBySqlParam` を前提としているため、2 つの印刷ボタンに対応するため ViewModel 内に独自の印刷メソッド `DoPrintAsync` を実装した
+- 検索条件の再利用と画面一覧との整合性を保つため、`CreateListQueryParam()` で構築した WHERE/ORDER/LIMIT を両方の印刷 SQL で共通化した
+- 明細 SQL では `json_extract(m.value, '$.xxx')` で `Tran99Meisai` のプロパティを展開し、既存の明細編集ロジックと同じ JSON キー名を使用した
+### 影響範囲
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs
+### 確認
+- `CvWpfclient/CvWpfclient.csproj` ビルド成功（0 警告 / 0 エラー）
+- `StockInputView.xaml` XML 構文チェック OK
+- qfm 検証スクリプト：item 数は header=16 / detail=33 で SQL 列数と一致（orientation が landscape であることのみ警告、既存フォームをそのまま使用）
+
+---
+
 ## [2026-07-06] 13:10 店舗売上入力に伝票一覧印刷/伝票明細印刷を追加
 ### Agent
 - Claude Opus 4.8 : Anthropic : Claude Code

@@ -222,78 +222,127 @@ public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoPrintList(CancellationToken ct) {
 		var query = CreateListQueryParam();
-		var sql = $@"
-select
-	Id,
-	'',
-	'',
-	'',
-	'',
-	DenDay,
-	'',
-	'',
-	trim(ifnull(json_extract(VSoko,'$.Cd'),'')),
-	trim(ifnull(json_extract(VSoko,'$.Mei'),'')),
-	SuTotal,
-	KingakuTotal,
-	ifnull(Memo,''),
-	TanaNo,
-	trim(ifnull(json_extract(VShain,'$.Cd'),'')),
-	trim(ifnull(json_extract(VShain,'$.Mei'),''))
-from Tran60Tana
-{query.AddWhereOrder()}
-";
-		await DoPrintAsync("StockInputView_header.qfm", new QueryListSqlParam(typeof(Tran60Tana), sql, query.Parameters), ct);
+		await DoPrintAsync("StockInputView_header.qfm", new QueryListSqlParam(typeof(Tran60Tana), BuildListPrintSql(query), query.Parameters), ct);
 	}
 
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoPrintDetail(CancellationToken ct) {
 		var query = CreateListQueryParam();
-		var whereClause = string.IsNullOrWhiteSpace(query.Where) ? string.Empty : $"where {query.Where}";
-		var orderBy = string.IsNullOrWhiteSpace(query.Order) ? "m.No" : $"{QualifyOrder(query.Order, "A")}, m.No";
-		var limitClause = query.MaxCount.HasValue && query.MaxCount.Value > 0 ? $"limit {query.MaxCount.Value}" : string.Empty;
-		var whereOrder = $"{whereClause} order by {orderBy} {limitClause}".Trim();
-
-		var sql = $@"
-select
-	A.Id,
-	'',
-	'',
-	'',
-	'',
-	A.DenDay,
-	'',
-	'',
-	trim(ifnull(json_extract(A.VSoko,'$.Cd'),'')),
-	trim(ifnull(json_extract(A.VSoko,'$.Mei'),'')),
-	A.SuTotal,
-	A.KingakuTotal,
-	ifnull(A.Memo,''),
-	A.TanaNo,
-	trim(ifnull(json_extract(A.VShain,'$.Cd'),'')),
-	trim(ifnull(json_extract(A.VShain,'$.Mei'),'')),
-	json_extract(m.value,'$.Kubun'),
-	json_extract(m.value,'$.Code_Shohin'),
-	json_extract(m.value,'$.Code_Col'),
-	json_extract(m.value,'$.Code_Siz'),
-	json_extract(m.value,'$.Mei_Shohin'),
-	json_extract(m.value,'$.Su'),
-	json_extract(m.value,'$.Tanka'),
-	json_extract(m.value,'$.Kingaku'),
-	trim(ifnull(json_extract(m.value,'$.Code_Shain'),'') || ' ' || ifnull(json_extract(m.value,'$.Mei_Shain'),'')),
-	json_extract(m.value,'$.Jodai'),
-	json_extract(m.value,'$.Gedai'),
-	json_extract(m.value,'$.JanCode'),
-	'',
-	json_extract(m.value,'$.Mei_Col'),
-	json_extract(m.value,'$.Mei_Siz'),
-	json_extract(m.value,'$.No'),
-	json_extract(m.value,'$.Id_Shohin')
-from Tran60Tana A, json_each(A.Jmeisai) m
-{whereOrder}
-";
-		await DoPrintAsync("StockInputView_detail.qfm", new QueryListSqlParam(typeof(Tran60Tana), sql, query.Parameters), ct);
+		await DoPrintAsync("StockInputView_detail.qfm", new QueryListSqlParam(typeof(Tran60Tana), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
+
+	// qfm の datarecord では HEAD* が見出し(rectype="H")、item* が明細行の列。
+	// 帳票タイトル(HEAD2)と列見出し(HEAD3～)も印刷データとして先頭に "H" レコードで流し込む。
+
+	/// <summary>棚卸伝票一覧(ヘッダ)印刷 SQL。先頭に見出し "H" 行、以降は伝票 1 件 = item 行 1 本(item1..item16)。</summary>
+	static string BuildListPrintSql(QueryListParam query) {
+		// 見出し "H" 行: HEAD1=区分, HEAD2=タイトル, HEAD3..HEAD10=列見出し
+		var headCols = AliasColumns(new[] {
+			"'H'", "'棚卸伝票一覧'",
+			"'伝票No'", "'棚卸日'", "'倉庫'", "'棚番'", "'数量計'", "'金額計'", "'入力者'", "'メモ'",
+			"''", "''", "''", "''", "''", "''",
+		});
+		// 明細(伝票)行: item1..item16
+		var dataCols = string.Join(", ", new[] {
+			"Id",                                            // item1  伝票No
+			"''", "''", "''", "''",                          // item2..5
+			"DenDay",                                        // item6  棚卸日
+			"''", "''",                                      // item7..8
+			"trim(ifnull(json_extract(VShain,'$.Cd'),''))",  // item9  入力者CD
+			"trim(ifnull(json_extract(VSoko,'$.Cd'),''))",   // item10 倉庫CD
+			"SuTotal",                                       // item11 数量計
+			"KingakuTotal",                                  // item12 金額計
+			"ifnull(Memo,'')",                               // item13 メモ
+			"TanaNo",                                        // item14 棚番
+			"trim(ifnull(json_extract(VShain,'$.Mei'),''))", // item15 入力者名
+			"trim(ifnull(json_extract(VSoko,'$.Mei'),''))",  // item16 倉庫名
+		});
+		return $@"
+select {OuterColumns(16)}
+from (
+	select '' __d, 0 __id, 0 __rt, {headCols}
+	union all
+	select DenDay __d, Id __id, 1 __rt, {dataCols}
+	from (select * from Tran60Tana {query.AddWhereOrder()})
+)
+order by __rt, __d desc, __id desc
+";
+	}
+
+	/// <summary>
+	/// 棚卸伝票明細印刷 SQL。伝票 1 件ごとに見出し "H" 行(タイトル+列見出し+伝票サマリ)＋明細行(item18..item33)。
+	/// datarecord は HEAD1..HEAD91 の後に item1.. が続くため、"H" 行のサマリ値(item1..item16)は 92 列目以降に配置する。
+	/// </summary>
+	static string BuildDetailPrintSql(QueryListParam query) {
+		const string M = "json_extract(m.value,";
+		var whereClause = string.IsNullOrWhiteSpace(query.Where) ? string.Empty : $"where {query.Where}";
+		var orderBy = string.IsNullOrWhiteSpace(query.Order) ? "Id" : query.Order;
+		var limitClause = query.MaxCount.HasValue && query.MaxCount.Value > 0 ? $"limit {query.MaxCount.Value}" : string.Empty;
+		// 検索条件・並び・件数制限を伝票側で適用したサブクエリ
+		var denpyoSub = $"select * from Tran60Tana {whereClause} order by {orderBy} {limitClause}".Trim();
+
+		// 見出し "H" 行(107 列)
+		var head = new List<string> {
+			"'H'", "'棚卸伝票明細'",                                                    // HEAD1,2
+			"'伝票No'", "'棚卸日'", "'倉庫'", "'棚番'", "'入力者'", "'数量計'", "'金額計'", "'メモ'", // HEAD3..10 伝票見出し
+			"'行No'", "'商品CD'", "'商品名'", "'色'", "'サイズ'", "'数量'", "'上代単価'", "'上代金額'", "'摘要'", "'メーカー品番'", // HEAD11..20 明細見出し
+		};
+		while (head.Count < 91) head.Add("''");                              // HEAD21..91
+		head.AddRange(new[] {                                                // item1..16 = 伝票サマリ値(92 列目以降)
+			"Id",                                              // item1  伝票No
+			"''", "''", "''", "''",                            // item2..5
+			"DenDay",                                          // item6  棚卸日
+			"''", "''",                                        // item7..8
+			"trim(ifnull(json_extract(VShain,'$.Cd'),''))",    // item9  入力者CD
+			"trim(ifnull(json_extract(VSoko,'$.Cd'),''))",     // item10 倉庫CD
+			"SuTotal",                                         // item11 数量計
+			"KingakuTotal",                                    // item12 金額計
+			"ifnull(Memo,'')",                                 // item13 メモ
+			"TanaNo",                                          // item14 棚番
+			"trim(ifnull(json_extract(VShain,'$.Mei'),''))",   // item15 入力者名
+			"trim(ifnull(json_extract(VSoko,'$.Mei'),''))",    // item16 倉庫名
+		});
+
+		// 明細行(107 列)。item18..item33 に明細項目、item1..17 と余りは空。
+		var detail = new List<string>();
+		for (int i = 0; i < 17; i++) detail.Add("''");                       // item1..17
+		detail.AddRange(new[] {
+			$"{M}'$.Code_Shohin')",                            // item18 商品CD
+			$"{M}'$.Code_Col')",                               // item19 色CD
+			$"{M}'$.Code_Siz')",                               // item20 サイズCD
+			$"{M}'$.Mei_Shohin')",                             // item21 商品名
+			$"{M}'$.Su')",                                     // item22 数量
+			$"{M}'$.Tanka')",                                  // item23 上代単価
+			$"{M}'$.Kingaku')",                                // item24 上代金額
+			$"trim(ifnull({M}'$.Code_Shain'),'') || ' ' || ifnull({M}'$.Mei_Shain'),''))", // item25 摘要
+			"''", "''", "''", "''",                            // item26..29
+			$"{M}'$.Mei_Col')",                                // item30 色名
+			$"{M}'$.Mei_Siz')",                                // item31 サイズ名
+			$"{M}'$.No')",                                     // item32 行No
+			$"{M}'$.Id_Shohin')",                              // item33 メーカー品番
+		});
+		while (detail.Count < 107) detail.Add("''");                        // 余り列を空で埋める
+
+		return $@"
+select {OuterColumns(107)}
+from (
+	select A.DenDay __d, A.Id __id, 0 __rt, 0 __no, {AliasColumns(head)}
+	from ({denpyoSub}) A
+	union all
+	select A.DenDay __d, A.Id __id, 1 __rt, cast(json_extract(m.value,'$.No') as int) __no, {string.Join(", ", detail)}
+	from ({denpyoSub}) A, json_each(A.Jmeisai) m
+)
+order by __d desc, __id desc, __rt, __no
+";
+	}
+
+	/// <summary>式リストへ位置に応じた一意な列別名(c1, c2, ...)を付与する。</summary>
+	static string AliasColumns(IReadOnlyList<string> exprs) =>
+		string.Join(", ", exprs.Select((e, i) => $"{e} c{i + 1}"));
+
+	/// <summary>外側 select 用に c1..cN のカンマ区切りを生成する。</summary>
+	static string OuterColumns(int count) =>
+		string.Join(",", Enumerable.Range(1, count).Select(i => $"c{i}"));
 
 	async Task DoPrintAsync(string formFile, QueryListSqlParam sqlParam, CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(formFile)) {
