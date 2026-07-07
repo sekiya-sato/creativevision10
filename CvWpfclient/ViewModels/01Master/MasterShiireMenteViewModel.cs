@@ -108,11 +108,11 @@ from MasterShiire {query.AddWhereOrder()}
 			}
 		}
 		catch (OperationCanceledException cancel) {
-			Message = $"Cancel繧ｨ繝ｩ繝ｼ・嘴cancel.Message}";
+			Message = $"Cancelエラー: {cancel.Message}";
 			return;
 		}
 		catch (Exception ex) {
-			Message = $"繝・・繧ｿ蜿門ｾ怜､ｱ謨・ {ex.Message}";
+			Message = $"データ取得失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
 		finally {

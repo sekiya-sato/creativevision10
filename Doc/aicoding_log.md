@@ -1,3 +1,21 @@
+## [2026-07-07] 作業時間不明 catchブロック日本語文字化け修正
+### Agent
+- kimi-k2.6 : opencode-go/kimi-k2.6 : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の 3 マスター ViewModel の catch ブロック内で日本語が文字化けしていた箇所を修正する
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs: `Cancelエラー:` と `データ取得失敗:` に文字化けを修正
+- CvWpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs: 同上
+- CvWpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs: 同上
+### 技術決定 Why
+- UTF-8 日本語が Shift_JIS / EUC-JP として誤デコードされた典型的な文字化け（mojibake）であり、元の語彙と文脈から復元した
+### 確認
+- CvWpfclient ビルド：0 エラー、0 警告で成功
+
+---
+
 ## [2026-07-07] 17:19 名称リスト追加削除ボタン実装
 ### Agent
 - GPT-5 : OpenAI : Codex
