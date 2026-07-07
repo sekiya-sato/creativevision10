@@ -1,3 +1,23 @@
+## [2026-07-07] 09:53 ShopUriageInputView の伝票印刷・伝票明細印刷作り直し
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：ShopUriageInputView の「伝票印刷」「伝票明細印刷」を MasterShiireMenteView などの印刷機能を参考に作り直し、ヘッダは qfm に直接記述し、データ部分のみ SQL 生成にする
+### 実施内容
+- CvWpfclient/ShopUriageInputViewModel.cs: 旧 HEAD レコード生成 SQL を廃止し、一覧12列・明細21列のデータ専用 SQL に変更。VTenpo/VSoko/VShain/VCustomer は Sid/Cd/Mei を空白結合し、DenDay は yyyyMMdd のまま出力
+- printform/ShopUriageInput_header.qfm: タイトル・列見出しを static text 化し、画面入力項目に対応する item1-item12 のみを使用する A4縦帳票に再構成
+- printform/ShopUriageInput_detail.qfm: 明細用の static 見出しと item1-item21 のみを使用し、画面上の明細項目と合計・単価・担当・メモを出力する A4縦帳票に再構成
+### 技術決定 Why
+- SQLで見出し行を生成すると qfm と列数が肥大化し、入力画面に存在しない項目まで帳票に残るため、見出しは qfm static、SQLは実データ列だけに分離した
+- qfm validator の標準に合わせ、既存の横向き帳票から A4縦の複数行レコードへ再配置した
+### 確認
+- qfm validator: ShopUriageInput_header.qfm / ShopUriageInput_detail.qfm とも OK
+- git diff --check: OK
+- WPFビルド: cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj" 成功、警告0・エラー0
+
+---
 ## [2026-07-07] 08:55 publish-velopack.bat で CvServer/appsettings.json の ServerVersion も WPF 版と同じ値に更新
 ### Agent
 - [kimi-k2.7-code : OpenCode]

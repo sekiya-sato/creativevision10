@@ -239,13 +239,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	// ---- 印刷 ------------------------------------------------------------
-	// printform/ の qfm は PrintStream の「レコード区分」CSV 形式を使う。
-	//   CSV 先頭カラム = レコード区分キー。 "H" → ヘッダレコード(HEADn)、それ以外 → 明細(itemn)。
-	// 一覧印刷: 伝票ごとに 1 本の "H" 行（HEAD1..HEAD22）。
-	// 明細印刷: 伝票ごとに "H" 行（HEAD1..HEAD37）＋ Jmeisai を json_each で展開した明細行（item1..item72）。
-	// 列の並びは datarecord の item 定義順に一致させる。未使用スロットは '' で桁を保持する。
-	// フィールドの厳密な対応は実機の印刷サーバ出力で最終調整が必要（Tran01Tenuri に存在しない
-	// 手入力No/関連No2 等は空文字、消費税/SYSFLG/送信FLG 等はプレースホルダ '0'/'' としている）。
+	// qfm 側にタイトルと列見出しを持たせ、SQL は画面入力項目に対応するデータ列だけを返す。
 
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoPrintList(CancellationToken ct) {
@@ -259,205 +253,67 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		await RunPrintPdfAsync("ShopUriageInput_detail.qfm", null, new QueryListSqlParam(typeof(Tran01Tenuri), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
-	// yyyyMMdd(8桁文字列) を "yyyy/MM/dd" に整形
-	const string DenDayFmt = "substr(DenDay,1,4)||'/'||substr(DenDay,5,2)||'/'||substr(DenDay,7,2)";
-	const string KubunLabel = "case Kubun when 10 then '10 売上' when 20 then '20 売上返品' else cast(Kubun as text) end";
-	const string TenpoView = "trim(ifnull(json_extract(VTenpo,'$.Cd'),'')||' '||ifnull(json_extract(VTenpo,'$.Mei'),''))";
-	const string CustomerView = "trim(ifnull(json_extract(VCustomer,'$.Cd'),'')||' '||ifnull(json_extract(VCustomer,'$.Mei'),''))";
-	const string ShainView = "trim(ifnull(json_extract(VShain,'$.Cd'),'')||' '||ifnull(json_extract(VShain,'$.Mei'),''))";
+	// DenDay は qfm 側で yyyy/MM/dd 表示にするため、SQL では yyyyMMdd のまま返す。
+	const string KubunLabel = "case Kubun when 10 then '売上' when 11 then '売上セール' when 20 then '返品' when 21 then '返品セール' else cast(Kubun as text) end";
 
-	/// <summary>式リストへ位置に応じた一意な列別名(c1, c2, ...)を付与する。</summary>
-	static string AliasColumns(IReadOnlyList<string> exprs) =>
-		string.Join(", ", exprs.Select((e, i) => $"{e} c{i + 1}"));
+	static string CodeNameViewSql(string column) =>
+		$"trim(ifnull(json_extract({column},'$.Sid'),'') || ' ' || ifnull(json_extract({column},'$.Cd'),'') || ' ' || ifnull(json_extract({column},'$.Mei'),''))";
 
-	/// <summary>外側 select 用に c1..cN のカンマ区切りを生成する。</summary>
-	static string OuterColumns(int count) =>
-		string.Join(",", Enumerable.Range(1, count).Select(i => $"c{i}"));
+	static string DetailCodeNameSql(string value, string code, string name) =>
+		$"trim(ifnull({value},'') || ' ' || ifnull({code},'') || ' ' || ifnull({name},''))";
 
-	/// <summary>店舗売上伝票一覧（ヘッダ）印刷 SQL。先頭に列見出し "H" 行、以降は伝票 1 件 = item 行 1 本。</summary>
+	/// <summary>店舗売上伝票印刷 SQL。見出しは qfm の static text に持たせ、ここではデータ列だけを返す。</summary>
 	static string BuildListPrintSql(QueryListParam query) {
-		var whereClause = string.IsNullOrWhiteSpace(query.Where) ? string.Empty : $"where {query.Where}";
-		var orderBy = string.IsNullOrWhiteSpace(query.Order) ? "Id" : query.Order;
-		var limitClause = query.MaxCount.HasValue && query.MaxCount.Value > 0 ? $"limit {query.MaxCount.Value}" : string.Empty;
-		var denpyoSub = $"select * from Tran01Tenuri {whereClause} order by {orderBy} {limitClause}".Trim();
-
-		// 列見出し "H" 行 (c1..c45)。ShopUriageInput_header.qfm の Rec01/Rec02 に合わせる。
-		var head = new[] {
-			"'H'", "'店舗売上伝票一覧'",
-			"'伝票No'", "'売上日'", "'伝票区分'", "'取引区分'", "'取引詳細'",
-			"'数量計'", "'掛率'", "'SYSFLG'", "'送信FLG'", "'金額計'", "'上代合計'",
-			"'下代合計'", "'消費税計'", "'手入力No'", "'関連No2'", "'顧客'", "'入力者'",
-			"'性別'", "'年代'", "'注文番号'", "'関連No1'",
-		};
-		var headCols = AliasColumns(head.Concat(Enumerable.Repeat("''", 45 - head.Length)).ToArray());
-
-		// 明細 item 行 (c1..c45)。prefix "item" として印刷されるよう先頭は 'H' 以外。
-		// c3..c23 は ShopUriageInput_header.qfm の Rec02 が参照する item1..item45 のうち使用されているスロット。
-		var data = new[] {
-			"''", "''",
-			"Id", "DenDay", "'1'", KubunLabel, "'0 通常  ' || " + TenpoView,
-			"SuTotal", "cast(Rate as text) || '%'", "'0'", "'0'",
-			"KingakuTotal", "JodaiTotal", "GedaiTotal", "cast(round(KingakuTotal * 0.1) as int)",
-			"''", "''", CustomerView, ShainView, "''", "''", "''", "RelateNo1",
-		};
-		var dataCols = AliasColumns(data.Concat(Enumerable.Repeat("''", 45 - data.Length)).ToArray());
-
 		return $@"
-select {OuterColumns(45)}
-from (
-  select '' __d, 0 __id, 0 __rt, {headCols}
-  union all
-  select DenDay __d, Id __id, 1 __rt, {dataCols}
-  from ({denpyoSub})
-)
-order by __rt, __d desc, __id desc
+select Id,
+DenDay,
+{KubunLabel} KubunText,
+{CodeNameViewSql("VTenpo")} Tenpo,
+{CodeNameViewSql("VSoko")} Soko,
+{CodeNameViewSql("VShain")} Shain,
+{CodeNameViewSql("VCustomer")} Customer,
+SuTotal,
+KingakuTotal,
+JodaiTotal,
+GedaiTotal,
+ifnull(Memo,'') Memo
+from Tran01Tenuri {query.AddWhereOrder()}
 ";
 	}
 
 	/// <summary>
-	/// 店舗売上伝票明細印刷 SQL。伝票 1 件 = "H" 行(HEAD1..HEAD37) ＋ 明細行(item1..item72)。
-	/// UNION ALL の桁数を 72 に揃える(H 行は HEAD1..HEAD37 + 空35列)。
-	/// 並びは 伝票(Id desc) → H 行 → 明細(No asc)。
+	/// 店舗売上伝票明細印刷 SQL。対象伝票を一覧条件で絞り、Jmeisai を json_each で明細行へ展開する。
 	/// </summary>
 	static string BuildDetailPrintSql(QueryListParam query) {
-		var whereClause = string.IsNullOrWhiteSpace(query.Where) ? string.Empty : $"where {query.Where}";
-		var orderBy = string.IsNullOrWhiteSpace(query.Order) ? "Id" : query.Order;
-		var limitClause = query.MaxCount.HasValue && query.MaxCount.Value > 0 ? $"limit {query.MaxCount.Value}" : string.Empty;
-		var denpyoSub = $"select * from Tran01Tenuri {whereClause} order by {orderBy} {limitClause}".Trim();
-		// 明細(item)列: json_each(b) から取得。未対応スロットは '' で桁だけ確保。
-		const string M = "json_extract(b.value,";
-		var detailCols =
-$@"  h.Id                                  c1,   -- item1  グループキー/手入力No 表示
-  ''                                    c2,
-  ''                                    c3,
-  ''                                    c4,
-  ''                                    c5,
-  {DenDayFmt2()}                        c6,   -- item6  売上日
-  ''                                    c7,
-  ''                                    c8,
-  ''                                    c9,
-  ''                                    c10,
-  ''                                    c11,
-  ''                                    c12,
-  ''                                    c13,
-  ''                                    c14,
-  ''                                    c15,
-  ''                                    c16,
-  ''                                    c17,
-  ''                                    c18,
-  ''                                    c19,
-  ''                                    c20,
-  ''                                    c21,
-  ''                                    c22,
-  ''                                    c23,
-  ''                                    c24,
-  ''                                    c25,
-  ''                                    c26,
-  ''                                    c27,
-  ''                                    c28,
-  ''                                    c29,
-  ''                                    c30,
-  ''                                    c31,
-  ''                                    c32,
-  ''                                    c33,
-  ''                                    c34,
-  ''                                    c35,
-  ''                                    c36,
-  ''                                    c37,
-  ''                                    c38,
-  ''                                    c39,
-  ''                                    c40,
-  ''                                    c41,
-  ''                                    c42,
-  ''                                    c43,
-  ''                                    c44,
-  {M}'$.Code_Col')                      c45,  -- item45 色CD
-  {M}'$.Code_Shohin')                   c46,  -- item46 商品CD
-  ''                                    c47,
-  ''                                    c48,
-  {M}'$.Mei_Shohin')                    c49,  -- item49 商品名
-  cast({M}'$.Su') as int)               c50,  -- item50 数量
-  {M}'$.Tanka')                         c51,  -- item51 単価
-  {M}'$.Kingaku')                       c52,  -- item52 金額
-  ''                                    c53,
-  '0'                                   c54,  -- item54 消費税(プレースホルダ)
-  {M}'$.Jodai')                         c55,  -- item55 上代単価
-  cast({M}'$.Su') as int)*cast({M}'$.Jodai') as int)   c56,  -- item56 上代金額
-  {M}'$.Gedai')                         c57,  -- item57 下代単価
-  cast({M}'$.Su') as int)*cast({M}'$.Gedai') as int)   c58,  -- item58 下代金額
-  {M}'$.Memo')                          c59,  -- item59 明細メモ/摘要
-  ''                                    c60,
-  ''                                    c61,
-  ''                                    c62,
-  ''                                    c63,
-  ''                                    c64,
-  ''                                    c65,
-  ''                                    c66,
-  ''                                    c67,
-  {M}'$.Code_Siz')                      c68,  -- item68 サイズCD
-  {M}'$.Mei_Col')                       c69,  -- item69 色名
-  ''                                    c70,
-  {M}'$.No')                            c71,  -- item71 行No
-  {M}'$.Mei_Siz')                       c72   -- item72 サイズ名";
-
-		// H 行: HEAD1..HEAD37 を c1..c37 へ、残り c38..c72 は ''。
-		var headerCols =
-$@"  'H'                       c1,   -- HEAD1  レコード区分キー
-  '店舗売上伝票明細'         c2,   -- HEAD2  タイトル
-  cast(Id as text)          c3,   -- HEAD3  伝票No
-  {DenDayFmt}               c4,   -- HEAD4  売上日
-  '1'                       c5,   -- HEAD5  伝票区分
-  {KubunLabel}              c6,   -- HEAD6  取引区分
-  '0 通常  '||{TenpoView}   c7,   -- HEAD7  取引詳細+店舗
-  cast(Rate as text)||'%'   c8,   -- HEAD8  掛率
-  '0'                       c9,   -- HEAD9  SYSFLG
-  '0'                       c10,  -- HEAD10 送信FLG
-  cast(SuTotal as text)     c11,  -- HEAD11 数量計
-  cast(KingakuTotal as text) c12, -- HEAD12 金額計
-  cast(JodaiTotal as text)  c13,  -- HEAD13 上代合計
-  cast(GedaiTotal as text)  c14,  -- HEAD14 下代合計
-  ''                        c15,  -- HEAD15 手入力No
-  cast(RelateNo1 as text)   c16,  -- HEAD16 関連No1
-  ''                        c17,  -- HEAD17 関連No2
-  {CustomerView}            c18,  -- HEAD18 顧客
-  {ShainView}               c19,  -- HEAD19 入力者
-  ''                        c20,  -- HEAD20 性別
-  ''                        c21,  -- HEAD21 年代
-  '0'                       c22,  -- HEAD22 消費税計
-  ''                        c23, '' c24, '' c25, '' c26, '' c27,
-  cast(SuTotal as text)     c28,  -- HEAD28 合計行 数量計
-  cast(KingakuTotal as text) c29, -- HEAD29 合計行 金額計
-  cast(JodaiTotal as text)  c30,  -- HEAD30 合計行 上代合計
-  cast(GedaiTotal as text)  c31,  -- HEAD31 合計行 下代合計
-  '' c32, '' c33, '' c34, '' c35, '' c36, '' c37,
-  '' c38, '' c39, '' c40, '' c41, '' c42, '' c43, '' c44,
-  '' c45, '' c46, '' c47, '' c48, '' c49, '' c50, '' c51, '' c52,
-  '' c53, '' c54, '' c55, '' c56, '' c57, '' c58, '' c59, '' c60,
-  '' c61, '' c62, '' c63, '' c64, '' c65, '' c66, '' c67, '' c68,
-  '' c69, '' c70, '' c71, '' c72";
-
+		var denpyoSub = $"select * from Tran01Tenuri {query.AddWhereOrder()}";
+		const string M = "json_extract(m.value,";
+		var detailKubunLabel = $"case cast(ifnull({M}'$.Kubun'),0) as int) when 1 then 'S セール' else 'P プロパー' end";
 		return $@"
-select c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,
-       c21,c22,c23,c24,c25,c26,c27,c28,c29,c30,c31,c32,c33,c34,c35,c36,c37,c38,
-       c39,c40,c41,c42,c43,c44,c45,c46,c47,c48,c49,c50,c51,c52,c53,c54,c55,c56,
-       c57,c58,c59,c60,c61,c62,c63,c64,c65,c66,c67,c68,c69,c70,c71,c72
-from (
-  select DenDay sday, Id sid, 0 rt, 0 mno,
-{headerCols}
-  from ({denpyoSub})
-  union all
-  select h.DenDay sday, h.Id sid, 1 rt, cast(json_extract(b.value,'$.No') as int) mno,
-{detailCols}
-  from ({denpyoSub}) h, json_each(h.Jmeisai) b
-)
-order by sday desc, sid desc, rt, mno";
+select h.Id,
+h.DenDay,
+{KubunLabel} KubunText,
+{CodeNameViewSql("h.VTenpo")} Tenpo,
+{CodeNameViewSql("h.VSoko")} Soko,
+{CodeNameViewSql("h.VShain")} Shain,
+{CodeNameViewSql("h.VCustomer")} Customer,
+{M}'$.No') No,
+{detailKubunLabel} MeisaiKubunText,
+{DetailCodeNameSql($"{M}'$.Id_Shohin')", $"{M}'$.Code_Shohin')", $"{M}'$.Mei_Shohin')")} Shohin,
+{DetailCodeNameSql($"{M}'$.Id_Col')", $"{M}'$.Code_Col')", $"{M}'$.Mei_Col')")} Col,
+{DetailCodeNameSql($"{M}'$.Id_Siz')", $"{M}'$.Code_Siz')", $"{M}'$.Mei_Siz')")} Siz,
+ifnull({M}'$.Su'),0) Su,
+ifnull({M}'$.Tanka'),0) Tanka,
+ifnull({M}'$.Kingaku'),0) Kingaku,
+ifnull({M}'$.Jodai'),0) Jodai,
+cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int) JodaiKingaku,
+ifnull({M}'$.Gedai'),0) Gedai,
+cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int) GedaiKingaku,
+{DetailCodeNameSql($"{M}'$.Id_Shain')", $"{M}'$.Code_Shain')", $"{M}'$.Mei_Shain')")} MeisaiShain,
+ifnull({M}'$.Memo'),'') Memo
+from ({denpyoSub}) h, json_each(h.Jmeisai) m
+order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
+";
 	}
-
-	// 明細側は json_each(b) が 'id' 列を持ち非修飾 Id と衝突するため、
-	// 画面 WHERE は json_each 結合前のサブクエリ内で適用してから展開する。
-
-	// item6(売上日) は date decode(S0.4/S4.2/S6.2) 用に生の yyyyMMdd を渡す。
-	static string DenDayFmt2() => "h.DenDay";
 
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
 	async Task DoUpdateOnDetailTab(CancellationToken ct) {
