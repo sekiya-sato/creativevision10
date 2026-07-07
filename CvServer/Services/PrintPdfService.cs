@@ -136,7 +136,7 @@ public partial class CoreService {
 		}
 		else if (param is QueryListSqlParam listParam) {
 			var sql = (listParam.Sql ?? string.Empty).ReplaceServerSqlQuery();
-			var dataList = _db.Fetch<dynamic>(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
+			var dataList = _db.RawExecCmd(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
 			if (dataList.Count == 0) {
 				return new PrintResult(false, "印刷対象データが0件です");
 			}

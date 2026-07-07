@@ -6,11 +6,8 @@ using CvBase;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using Grpc.Core;
-using System.Collections;
 using System.Globalization;
-using System.ServiceModel.Channels;
 using System.Windows;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace CvWpfclient.ViewModels._02Yosan;
 
@@ -72,176 +69,161 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 
 		try {
 			ClientLib.Cursor2Wait();
-			var csvData = await BuildPrintCsvDataAsync(ct);
-			if (string.IsNullOrEmpty(csvData)) {
+			var sqlParam = await BuildPrintSqlParamAsync(ct);
+			if (sqlParam == null) {
 				MessageEx.ShowErrorDialog("印刷データが作成できませんでした");
 				return;
 			}
-			await RunPrintPdfAsync("ShopBudgetReport.qfm", new PrintByCsvParam(csvData), null, ct);
+			await RunPrintPdfAsync("ShopBudgetReport.qfm", null, sqlParam, ct);
 		}
 		finally {
 			ClientLib.Cursor2Normal();
 		}
 	}
 
-	async Task<string> BuildPrintCsvDataAsync(CancellationToken ct) {
+	async Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		var (dateFrom, dateTo) = GetDateRange();
 		var daysInMonth = DateTime.DaysInMonth(SelectedYearMonth.Year, SelectedYearMonth.Month);
 		var yearMonthLabel = SelectedYearMonth.ToString("yy年MM月", CultureInfo.InvariantCulture);
-
-		var shops = await GetShopsAsync(ct);
-		if (shops.Count == 0) {
-			MessageEx.ShowWarningDialog("対象店舗がありません。", owner: ClientLib.GetActiveView(this));
-			return string.Empty;
-		}
-
-		var shopIds = shops.Select(s => s.Id).ToList();
-		var shopMap = shops.ToDictionary(s => s.Id, s => (Code: s.Code ?? string.Empty, Name: s.Name ?? string.Empty));
-
-		var budgetRows = await GetBudgetAsync(dateFrom, dateTo, shopIds, ct);
-		var salesRows = await GetSalesAsync(dateFrom, dateTo, shopIds, ct);
-
+		var year = SelectedYearMonth.Year;
+		var month = SelectedYearMonth.Month;
 		var (prevDateFrom, prevDateTo) = GetPrevYearDateRange();
-		var prevSalesRows = await GetSalesAsync(prevDateFrom, prevDateTo, shopIds, ct);
+		var isDateComparisonStr = IsDateComparison ? "1" : "0";
 
-		var budgetByShopDay = budgetRows
-			.GroupBy(r => (r.Id_Tenpo, r.DenDay))
-			.ToDictionary(g => g.Key, g => g.Sum(r => r.UriYosan));
-
-		var salesByShopDay = salesRows
-			.GroupBy(r => (r.Id_Tenpo, r.DenDay))
-			.ToDictionary(g => g.Key, g => g.Sum(r => (long)r.KingakuTotal));
-
-		var prevSalesByShopDay = prevSalesRows
-			.GroupBy(r => (r.Id_Tenpo, r.DenDay))
-			.ToDictionary(g => g.Key, g => g.Sum(r => (long)r.KingakuTotal));
-
-		var lines = new List<string>();
-		var stores = IsByShop
-			? shops.Select(s => (Id: s.Id, Code: s.Code ?? string.Empty, Name: s.Name ?? string.Empty)).ToList()
-			: new List<(long Id, string Code, string Name)> { (0, string.Empty, "全店") };
-
-		foreach (var store in stores) {
-			long cumBudget = 0;
-			long cumSales = 0;
-			long cumPrevSales = 0;
-
-			for (int day = 1; day <= daysInMonth; day++) {
-				var date = new DateTime(SelectedYearMonth.Year, SelectedYearMonth.Month, day);
-				var dayStr = date.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-				var dayOfWeekStr = GetDayOfWeekString(date);
-
-				long budget = 0;
-				long sales = 0;
-				long prevSales = 0;
-
-				if (IsByShop) {
-					budgetByShopDay.TryGetValue((store.Id, dayStr), out budget);
-					salesByShopDay.TryGetValue((store.Id, dayStr), out sales);
-					var prevDayStr = GetPrevYearDayStr(dayStr);
-					prevSalesByShopDay.TryGetValue((store.Id, prevDayStr), out prevSales);
-				}
-				else {
-					budget = shopIds.Sum(id => {
-						budgetByShopDay.TryGetValue((id, dayStr), out var v);
-						return v;
-					});
-					sales = shopIds.Sum(id => {
-						salesByShopDay.TryGetValue((id, dayStr), out var v);
-						return v;
-					});
-					var prevDayStr = GetPrevYearDayStr(dayStr);
-					prevSales = shopIds.Sum(id => {
-						prevSalesByShopDay.TryGetValue((id, prevDayStr), out var v);
-						return v;
-					});
-				}
-
-				cumBudget += budget;
-				cumSales += sales;
-				cumPrevSales += prevSales;
-
-				var budgetK = budget / 1000;
-				var cumBudgetK = cumBudget / 1000;
-				var prevRatio = prevSales != 0 ? (double)sales / prevSales * 100 : 0;
-				var budgetDiff = sales - budget;
-				var budgetRatio = budget != 0 ? (double)sales / budget * 100 : 0;
-
-				var fields = new string[] {
-					store.Code,
-					store.Name,
-					yearMonthLabel,
-					day.ToString("00", CultureInfo.InvariantCulture),
-					dayOfWeekStr,
-					budgetK.ToString(CultureInfo.InvariantCulture),
-					cumBudgetK.ToString(CultureInfo.InvariantCulture),
-					sales.ToString(CultureInfo.InvariantCulture),
-					cumSales.ToString(CultureInfo.InvariantCulture),
-					prevSales.ToString(CultureInfo.InvariantCulture),
-					cumPrevSales.ToString(CultureInfo.InvariantCulture),
-					prevRatio.ToString("F1", CultureInfo.InvariantCulture),
-					budgetDiff.ToString(CultureInfo.InvariantCulture),
-					budgetRatio.ToString("F1", CultureInfo.InvariantCulture),
-					"0"
-				};
-
-				lines.Add(string.Join(",", fields.Select(EscapeCsvField)));
-			}
-		}
-
-		return string.Join("\r\n", lines) + "\r\n";
-	}
-
-	async Task<List<MasterTokui>> GetShopsAsync(CancellationToken ct) {
-		var where = "TenType=6";
+		var shopWhere = "";
 		if (!string.IsNullOrWhiteSpace(ShopCodeFrom)) {
-			where += $" AND Code >= '{EscapeSqlLiteral(ShopCodeFrom)}'";
+			shopWhere += $" AND Code >= '{EscapeSqlLiteral(ShopCodeFrom)}'";
 		}
 		if (!string.IsNullOrWhiteSpace(ShopCodeTo)) {
-			where += $" AND Code <= '{EscapeSqlLiteral(ShopCodeTo)}'";
+			shopWhere += $" AND Code <= '{EscapeSqlLiteral(ShopCodeTo)}'";
 		}
-		var param = new QueryListParam(typeof(MasterTokui), where, "Code");
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListParam),
-			DataMsg = Common.SerializeObject(param)
-		};
-		var reply = await SendMessageAsync(msg, ct);
-		var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as IList;
-		return list?.Cast<MasterTokui>().ToList() ?? [];
-	}
 
-	async Task<List<MasterYosanBrand>> GetBudgetAsync(string dateFrom, string dateTo, List<long> shopIds, CancellationToken ct) {
-		if (shopIds.Count == 0) return [];
-		var idList = string.Join(",", shopIds);
-		var where = $"DenDay >= '{dateFrom}' AND DenDay <= '{dateTo}' AND Id_Tenpo IN ({idList})";
-		var param = new QueryListParam(typeof(MasterYosanBrand), where, "DenDay, Id_Tenpo");
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListParam),
-			DataMsg = Common.SerializeObject(param)
-		};
-		var reply = await SendMessageAsync(msg, ct);
-		var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as IList;
-		return list?.Cast<MasterYosanBrand>().ToList() ?? [];
-	}
+		var sql = $@"
+WITH RECURSIVE days(day) AS (
+    SELECT 1 UNION ALL SELECT day+1 FROM days WHERE day < {daysInMonth}
+),
+shops AS (
+    SELECT Id, Code, Name FROM MasterTokui
+    WHERE TenType = 6 {shopWhere}
+),
+calendar AS (
+    SELECT
+        printf('%04d%02d%02d', {year}, {month}, day) AS denDay,
+        day,
+        CASE strftime('%w', printf('%04d-%02d-%02d', {year}, {month}, day))
+            WHEN '0' THEN '日' WHEN '1' THEN '月' WHEN '2' THEN '火'
+            WHEN '3' THEN '水' WHEN '4' THEN '木' WHEN '5' THEN '金' WHEN '6' THEN '土'
+        END AS youbi
+    FROM days
+),
+prev_calendar AS (
+    SELECT
+        denDay,
+        strftime('%Y%m%d',
+            CASE
+                WHEN {isDateComparisonStr} = '1' THEN date(denDay_fmt, '-1 year')
+                ELSE date(
+                    date(denDay_fmt, '-1 year'),
+                    (strftime('%w', denDay_fmt) - strftime('%w', date(denDay_fmt, '-1 year'))) || ' days'
+                )
+            END
+        ) AS prevDenDay
+    FROM (
+        SELECT
+            denDay,
+            substr(denDay, 1, 4) || '-' || substr(denDay, 5, 2) || '-' || substr(denDay, 7, 2) AS denDay_fmt
+        FROM calendar
+    )
+),
+budget AS (
+    SELECT Id_Tenpo, DenDay, SUM(UriYosan) AS uriYosan
+    FROM MasterYosanBrand
+    WHERE DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
+    GROUP BY Id_Tenpo, DenDay
+),
+sales AS (
+    SELECT Id_Tenpo, DenDay, SUM(KingakuTotal) AS kingakuTotal
+    FROM Tran01Tenuri
+    WHERE DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
+    GROUP BY Id_Tenpo, DenDay
+),
+prev_sales AS (
+    SELECT Id_Tenpo, DenDay, SUM(KingakuTotal) AS kingakuTotal
+    FROM Tran01Tenuri
+    WHERE DenDay BETWEEN '{prevDateFrom}' AND '{prevDateTo}'
+    GROUP BY Id_Tenpo, DenDay
+),
+daily_by_shop AS (
+    SELECT
+        s.Code, s.Name, '{yearMonthLabel}' AS yearMonth,
+        c.day, c.youbi, pc.prevDenDay,
+        COALESCE(b.UriYosan, 0) AS uriYosan,
+        COALESCE(sa.KingakuTotal, 0) AS kingakuTotal,
+        COALESCE(ps.KingakuTotal, 0) AS prevKingakuTotal
+    FROM shops s
+    CROSS JOIN calendar c
+    LEFT JOIN prev_calendar pc ON pc.denDay = c.denDay
+    LEFT JOIN budget b ON b.Id_Tenpo = s.Id AND b.DenDay = c.denDay
+    LEFT JOIN sales sa ON sa.Id_Tenpo = s.Id AND sa.DenDay = c.denDay
+    LEFT JOIN prev_sales ps ON ps.Id_Tenpo = s.Id AND ps.DenDay = pc.prevDenDay
+)";
 
-	async Task<List<Tran01Tenuri>> GetSalesAsync(string dateFrom, string dateTo, List<long> shopIds, CancellationToken ct) {
-		if (shopIds.Count == 0) return [];
-		var idList = string.Join(",", shopIds);
-		var where = $"DenDay >= '{dateFrom}' AND DenDay <= '{dateTo}' AND Id_Tenpo IN ({idList})";
-		var param = new QueryListParam(typeof(Tran01Tenuri), where, "DenDay, Id_Tenpo");
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListParam),
-			DataMsg = Common.SerializeObject(param)
-		};
-		var reply = await SendMessageAsync(msg, ct);
-		var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as IList;
-		return list?.Cast<Tran01Tenuri>().ToList() ?? [];
+		if (IsByShop) {
+			sql += @"
+SELECT
+    Code, Name, yearMonth,
+    printf('%02d', day) AS day, youbi,
+    CAST(uriYosan / 1000 AS INTEGER) AS budgetK,
+    CAST(SUM(uriYosan) OVER (PARTITION BY Code ORDER BY day) / 1000 AS INTEGER) AS cumBudgetK,
+    kingakuTotal AS sales,
+    SUM(kingakuTotal) OVER (PARTITION BY Code ORDER BY day) AS cumSales,
+    prevKingakuTotal AS prevSales,
+    SUM(prevKingakuTotal) OVER (PARTITION BY Code ORDER BY day) AS cumPrevSales,
+    CASE WHEN prevKingakuTotal != 0
+         THEN ROUND(CAST(kingakuTotal AS REAL) / prevKingakuTotal * 100, 1)
+         ELSE 0 END AS prevRatio,
+    kingakuTotal - uriYosan AS budgetDiff,
+    CASE WHEN uriYosan != 0
+         THEN ROUND(CAST(kingakuTotal AS REAL) / uriYosan * 100, 1)
+         ELSE 0 END AS budgetRatio,
+    0 AS kyakusu
+FROM daily_by_shop
+ORDER BY Code, day";
+		}
+		else {
+			sql += @"
+,daily_total AS (
+    SELECT
+        '' AS Code, '全店' AS Name, yearMonth,
+        day, youbi,
+        SUM(uriYosan) AS uriYosan,
+        SUM(kingakuTotal) AS kingakuTotal,
+        SUM(prevKingakuTotal) AS prevKingakuTotal
+    FROM daily_by_shop
+    GROUP BY yearMonth, day, youbi
+)
+SELECT
+    Code, Name, yearMonth,
+    printf('%02d', day) AS day, youbi,
+    CAST(uriYosan / 1000 AS INTEGER) AS budgetK,
+    CAST(SUM(uriYosan) OVER (PARTITION BY Code ORDER BY day) / 1000 AS INTEGER) AS cumBudgetK,
+    kingakuTotal AS sales,
+    SUM(kingakuTotal) OVER (PARTITION BY Code ORDER BY day) AS cumSales,
+    prevKingakuTotal AS prevSales,
+    SUM(prevKingakuTotal) OVER (PARTITION BY Code ORDER BY day) AS cumPrevSales,
+    CASE WHEN prevKingakuTotal != 0
+         THEN ROUND(CAST(kingakuTotal AS REAL) / prevKingakuTotal * 100, 1)
+         ELSE 0 END AS prevRatio,
+    kingakuTotal - uriYosan AS budgetDiff,
+    CASE WHEN uriYosan != 0
+         THEN ROUND(CAST(kingakuTotal AS REAL) / uriYosan * 100, 1)
+         ELSE 0 END AS budgetRatio,
+    0 AS kyakusu
+FROM daily_total
+ORDER BY day";
+		}
+
+		return new QueryListSqlParam(typeof(object), sql);
 	}
 
 	(string dateFrom, string dateTo) GetDateRange() {
@@ -267,45 +249,7 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 		);
 	}
 
-	string GetPrevYearDayStr(string dayStr) {
-		if (!DateTime.TryParseExact(dayStr, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var current)) {
-			return dayStr;
-		}
-		var baseDate = current.AddMonths(-12);
-		if (!IsDateComparison) {
-			var diff = current.DayOfWeek - baseDate.DayOfWeek;
-			baseDate = baseDate.AddDays(diff);
-		}
-		return baseDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-	}
-
-	static string GetDayOfWeekString(DateTime date) => date.DayOfWeek switch {
-		DayOfWeek.Monday => "月",
-		DayOfWeek.Tuesday => "火",
-		DayOfWeek.Wednesday => "水",
-		DayOfWeek.Thursday => "木",
-		DayOfWeek.Friday => "金",
-		DayOfWeek.Saturday => "土",
-		DayOfWeek.Sunday => "日",
-		_ => ""
-	};
-
 	static string EscapeSqlLiteral(string value) => value.Replace("'", "''");
-
-	static string EscapeCsvField(string? value) {
-		var text = value ?? string.Empty;
-		if (text.Contains('"')) {
-			text = text.Replace("\"", "\"\"");
-		}
-		return text.IndexOfAny([',', '\"', '\r', '\n']) >= 0
-			? $"\"{text}\""
-			: text;
-	}
-
-	async Task<CvMsg> SendMessageAsync(CvMsg message, CancellationToken ct) {
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		return await coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct));
-	}
 
 	TResult? ShowSelectDialog<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
 		var selWin = new Views.Sub.SelectWinView();

@@ -1,3 +1,21 @@
+## [2026-07-07] 14:22 ShopBudgetReportViewModel.cs のCSV処理をSQLに変更
+### Agent
+- [kimi-k2.6 : opencode-go]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ShopBudgetReportViewModel.cs の印刷CSV処理をSQLで解決し、実際のMasterTranから正確に組み立てる
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/ShopBudgetReportViewModel.cs: BuildPrintCsvDataAsyncを削除し、BuildPrintSqlParamAsyncを新設。SQLで店舗リスト(MasterTokui)、カレンダー、予算集計(MasterYosanBrand)、売上集計(Tran01Tenuri)、前年売上(曜日補正あり)、累計(Window関数)、前年比、予算差異、予算達成率を一括計算。DoOutputPdfでQueryListSqlParamを渡すよう変更。不要なメソッド(GetShopsAsync, GetBudgetAsync, GetSalesAsync, GetPrevYearDayStr等)と不要なusingを削除。
+### 技術決定 Why
+- C#側でのGroupBy/ToDictionary/ループによるCSV構築は非効率で間違いやすいため、SQLiteのCTEとWindow関数で一括集計する方針とした。前年データの曜日補正もSQL内でdate/strftime関数で実装。全店舗モードはdaily_total CTEで対応。社販売上はデータがないため項目削除（qfmに該当列なし）。客数は0固定で項目残存。
+### 影響範囲 (省略可)
+- 省略
+### 確認
+- WPF client build 成功 (0エラー 0警告)
+
+---
+
 ## [2026-07-07] 13:20 店舗予算表（ShopBudgetReportView）の作成
 ### Agent
 - [GPT-5 : OpenAI]
