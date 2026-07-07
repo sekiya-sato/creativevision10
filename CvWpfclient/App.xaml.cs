@@ -226,9 +226,11 @@ public partial class App : Application {
 					cfg.SetBasePath(Directory.GetCurrentDirectory());
 					cfg.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 					cfg.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
-					var clientSettings = new ClientSettingsStore().Load();
-					var overrides = new ClientSettingsStore().ToConfigurationOverrides(clientSettings);
-					cfg.AddInMemoryCollection(overrides);
+					if(environment != "Development") { // 開発環境以外では起動時にクライアント設定ストアの内容を構成に反映
+						var clientSettings = new ClientSettingsStore().Load();
+						var overrides = new ClientSettingsStore().ToConfigurationOverrides(clientSettings);
+						cfg.AddInMemoryCollection(overrides);
+					}
 				})
 				.ConfigureLogging((context, logging) => {
 					logging.ClearProviders(); // 既定のログプロバイダーをクリア
