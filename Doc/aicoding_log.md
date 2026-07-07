@@ -1,3 +1,23 @@
+## [2026-07-07] 16:56 BaseViewModel 実行中判定の再帰修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ESCキーで画面を閉じる際に `BaseViewModel.cs` の `HasRunningCommand` で `StackOverflowException` が発生する問題を修正する
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseViewModel.cs: コマンド列挙時に `PropertyType` が対象コマンド型へ代入可能なプロパティだけ `GetValue()` するよう修正
+### 技術決定 Why
+- `HasRunningCommand` 自身を含む全プロパティに対して `GetValue()` していたため、`HasRunningCommand` 評価中に同プロパティを再評価して再帰していた
+- 先に型で絞り込むことで `bool`/`string` など非コマンドプロパティを評価対象から外し、ESC時の実行中コマンド判定だけを安全に行う
+### 影響範囲
+- CvWpfclient の BaseViewModel 系画面における ESC終了時の実行中コマンド判定、および終了時キャンセルコマンド列挙
+### 確認
+- git diff --check：成功
+- dotnet build CvWpfclient/CvWpfclient.csproj：権限申請がワークスペース都合で拒否されたため未実施
+
+---
+
 ## [2026-07-07] 16:49 改善バックログF（堅牢性/保守性）の実施
 ### Agent
 - GPT-5 : OpenAI : Codex

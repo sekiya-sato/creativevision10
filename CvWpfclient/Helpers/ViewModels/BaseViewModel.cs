@@ -59,6 +59,9 @@ public partial class BaseViewModel : ObservableObject, IBaseViewModel, IViewMode
 
 	IEnumerable<TCommand> EnumerateCommandProperties<TCommand>(Func<PropertyInfo, bool>? predicate = null) {
 		foreach (var prop in GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)) {
+			if (!typeof(TCommand).IsAssignableFrom(prop.PropertyType)) {
+				continue;
+			}
 			if (predicate != null && !predicate(prop)) {
 				continue;
 			}
