@@ -1,11 +1,9 @@
-using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
-using Grpc.Core;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -219,216 +217,81 @@ public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<
 		await DoInsert(ct);
 	}
 
+	// qfm 側にタイトルと列見出しを持たせ、SQL は画面入力項目に対応するデータ列だけを返す。
+
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoPrintList(CancellationToken ct) {
 		var query = CreateListQueryParam();
-		await DoPrintAsync("StockInputView_header.qfm", new QueryListSqlParam(typeof(Tran60Tana), BuildListPrintSql(query), query.Parameters), ct);
+		await RunPrintPdfAsync("StockInputView_header.qfm", null, new QueryListSqlParam(typeof(Tran60Tana), BuildListPrintSql(query), query.Parameters), ct);
 	}
 
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoPrintDetail(CancellationToken ct) {
 		var query = CreateListQueryParam();
-		await DoPrintAsync("StockInputView_detail.qfm", new QueryListSqlParam(typeof(Tran60Tana), BuildDetailPrintSql(query), query.Parameters), ct);
+		await RunPrintPdfAsync("StockInputView_detail.qfm", null, new QueryListSqlParam(typeof(Tran60Tana), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
-	// qfm の datarecord では HEAD* が見出し(rectype="H")、item* が明細行の列。
-	// 帳票タイトル(HEAD2)と列見出し(HEAD3～)も印刷データとして先頭に "H" レコードで流し込む。
+	// DenDay は qfm 側で yyyy/MM/dd 表示にするため、SQL では yyyyMMdd のまま返す。
+	static string CodeNameViewSql(string column) =>
+		$"trim(ifnull(json_extract({column},'$.Sid'),'') || ' ' || ifnull(json_extract({column},'$.Cd'),'') || ' ' || ifnull(json_extract({column},'$.Mei'),''))";
 
-	/// <summary>棚卸伝票一覧(ヘッダ)印刷 SQL。先頭に見出し "H" 行、以降は伝票 1 件 = item 行 1 本(item1..item16)。</summary>
+	static string DetailCodeNameSql(string value, string code, string name) =>
+		$"trim(ifnull({value},'') || ' ' || ifnull({code},'') || ' ' || ifnull({name},''))";
+
+	static string MeisaiKubunLabelSql(string jsonExtractPrefix) =>
+		$"case cast(ifnull({jsonExtractPrefix}'$.Kubun'),0) as int) when 1 then 'S セール' else 'P プロパー' end";
+
+	/// <summary>棚卸伝票印刷 SQL。見出しは qfm の static text に持たせ、ここではデータ列だけを返す。</summary>
 	static string BuildListPrintSql(QueryListParam query) {
-		// 見出し "H" 行: HEAD1=区分, HEAD2=タイトル, HEAD3..HEAD10=列見出し
-		var headCols = AliasColumns(new[] {
-			"'H'", "'棚卸伝票一覧'",
-			"'伝票No'", "'棚卸日'", "'倉庫'", "'棚番'", "'数量計'", "'金額計'", "'入力者'", "'メモ'",
-			"''", "''", "''", "''", "''", "''",
-		});
-		// 明細(伝票)行: item1..item16
-		var dataCols = string.Join(", ", new[] {
-			"Id",                                            // item1  伝票No
-			"''", "''", "''", "''",                          // item2..5
-			"DenDay",                                        // item6  棚卸日
-			"''", "''",                                      // item7..8
-			"trim(ifnull(json_extract(VShain,'$.Cd'),''))",  // item9  入力者CD
-			"trim(ifnull(json_extract(VSoko,'$.Cd'),''))",   // item10 倉庫CD
-			"SuTotal",                                       // item11 数量計
-			"KingakuTotal",                                  // item12 金額計
-			"ifnull(Memo,'')",                               // item13 メモ
-			"TanaNo",                                        // item14 棚番
-			"trim(ifnull(json_extract(VShain,'$.Mei'),''))", // item15 入力者名
-			"trim(ifnull(json_extract(VSoko,'$.Mei'),''))",  // item16 倉庫名
-		});
 		return $@"
-select {OuterColumns(16)}
-from (
-	select '' __d, 0 __id, 0 __rt, {headCols}
-	union all
-	select DenDay __d, Id __id, 1 __rt, {dataCols}
-	from (select * from Tran60Tana {query.AddWhereOrder()})
-)
-order by __rt, __d desc, __id desc
+select Id,
+DenDay,
+ifnull(TanaNo,'') TanaNo,
+{CodeNameViewSql("VSoko")} Soko,
+{CodeNameViewSql("VShain")} Shain,
+SuTotal,
+KingakuTotal,
+JodaiTotal,
+GedaiTotal,
+ifnull(Memo,'') Memo,
+'' Blank1,
+'' Blank2
+from Tran60Tana {query.AddWhereOrder()}
 ";
 	}
 
 	/// <summary>
-	/// 棚卸伝票明細印刷 SQL。伝票 1 件ごとに見出し "H" 行(タイトル+列見出し+伝票サマリ)＋明細行(item18..item33)。
-	/// datarecord は HEAD1..HEAD91 の後に item1.. が続くため、"H" 行のサマリ値(item1..item16)は 92 列目以降に配置する。
+	/// 棚卸伝票明細印刷 SQL。対象伝票を一覧条件で絞り、Jmeisai を json_each で明細行へ展開する。
 	/// </summary>
 	static string BuildDetailPrintSql(QueryListParam query) {
+		var denpyoSub = $"select * from Tran60Tana {query.AddWhereOrder()}";
 		const string M = "json_extract(m.value,";
-		var whereClause = string.IsNullOrWhiteSpace(query.Where) ? string.Empty : $"where {query.Where}";
-		var orderBy = string.IsNullOrWhiteSpace(query.Order) ? "Id" : query.Order;
-		var limitClause = query.MaxCount.HasValue && query.MaxCount.Value > 0 ? $"limit {query.MaxCount.Value}" : string.Empty;
-		// 検索条件・並び・件数制限を伝票側で適用したサブクエリ
-		var denpyoSub = $"select * from Tran60Tana {whereClause} order by {orderBy} {limitClause}".Trim();
-
-		// 見出し "H" 行(107 列)
-		var head = new List<string> {
-			"'H'", "'棚卸伝票明細'",                                                    // HEAD1,2
-			"'伝票No'", "'棚卸日'", "'倉庫'", "'棚番'", "'入力者'", "'数量計'", "'金額計'", "'メモ'", // HEAD3..10 伝票見出し
-			"'行No'", "'商品CD'", "'商品名'", "'色'", "'サイズ'", "'数量'", "'上代単価'", "'上代金額'", "'摘要'", "'メーカー品番'", // HEAD11..20 明細見出し
-		};
-		while (head.Count < 91) head.Add("''");                              // HEAD21..91
-		head.AddRange(new[] {                                                // item1..16 = 伝票サマリ値(92 列目以降)
-			"Id",                                              // item1  伝票No
-			"''", "''", "''", "''",                            // item2..5
-			"DenDay",                                          // item6  棚卸日
-			"''", "''",                                        // item7..8
-			"trim(ifnull(json_extract(VShain,'$.Cd'),''))",    // item9  入力者CD
-			"trim(ifnull(json_extract(VSoko,'$.Cd'),''))",     // item10 倉庫CD
-			"SuTotal",                                         // item11 数量計
-			"KingakuTotal",                                    // item12 金額計
-			"ifnull(Memo,'')",                                 // item13 メモ
-			"TanaNo",                                          // item14 棚番
-			"trim(ifnull(json_extract(VShain,'$.Mei'),''))",   // item15 入力者名
-			"trim(ifnull(json_extract(VSoko,'$.Mei'),''))",    // item16 倉庫名
-		});
-
-		// 明細行(107 列)。item18..item33 に明細項目、item1..17 と余りは空。
-		var detail = new List<string>();
-		for (int i = 0; i < 17; i++) detail.Add("''");                       // item1..17
-		detail.AddRange(new[] {
-			$"{M}'$.Code_Shohin')",                            // item18 商品CD
-			$"{M}'$.Code_Col')",                               // item19 色CD
-			$"{M}'$.Code_Siz')",                               // item20 サイズCD
-			$"{M}'$.Mei_Shohin')",                             // item21 商品名
-			$"{M}'$.Su')",                                     // item22 数量
-			$"{M}'$.Tanka')",                                  // item23 上代単価
-			$"{M}'$.Kingaku')",                                // item24 上代金額
-			$"trim(ifnull({M}'$.Code_Shain'),'') || ' ' || ifnull({M}'$.Mei_Shain'),''))", // item25 摘要
-			"''", "''", "''", "''",                            // item26..29
-			$"{M}'$.Mei_Col')",                                // item30 色名
-			$"{M}'$.Mei_Siz')",                                // item31 サイズ名
-			$"{M}'$.No')",                                     // item32 行No
-			$"{M}'$.Id_Shohin')",                              // item33 メーカー品番
-		});
-		while (detail.Count < 107) detail.Add("''");                        // 余り列を空で埋める
-
 		return $@"
-select {OuterColumns(107)}
-from (
-	select A.DenDay __d, A.Id __id, 0 __rt, 0 __no, {AliasColumns(head)}
-	from ({denpyoSub}) A
-	union all
-	select A.DenDay __d, A.Id __id, 1 __rt, cast(json_extract(m.value,'$.No') as int) __no, {string.Join(", ", detail)}
-	from ({denpyoSub}) A, json_each(A.Jmeisai) m
-)
-order by __d desc, __id desc, __rt, __no
+select h.Id,
+h.DenDay,
+ifnull(h.TanaNo,'') TanaNo,
+{CodeNameViewSql("h.VSoko")} Soko,
+{CodeNameViewSql("h.VShain")} Shain,
+h.SuTotal,
+h.KingakuTotal,
+{M}'$.No') No,
+{MeisaiKubunLabelSql(M)} MeisaiKubunText,
+{DetailCodeNameSql($"{M}'$.Id_Shohin')", $"{M}'$.Code_Shohin')", $"{M}'$.Mei_Shohin')")} Shohin,
+{DetailCodeNameSql($"{M}'$.Id_Col')", $"{M}'$.Code_Col')", $"{M}'$.Mei_Col')")} Col,
+{DetailCodeNameSql($"{M}'$.Id_Siz')", $"{M}'$.Code_Siz')", $"{M}'$.Mei_Siz')")} Siz,
+ifnull({M}'$.Su'),0) Su,
+ifnull({M}'$.Tanka'),0) Tanka,
+ifnull({M}'$.Kingaku'),0) Kingaku,
+ifnull({M}'$.Jodai'),0) Jodai,
+cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int) JodaiKingaku,
+ifnull({M}'$.Gedai'),0) Gedai,
+cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int) GedaiKingaku,
+{DetailCodeNameSql($"{M}'$.Id_Shain')", $"{M}'$.Code_Shain')", $"{M}'$.Mei_Shain')")} MeisaiShain,
+ifnull({M}'$.Memo'),'') Memo
+from ({denpyoSub}) h, json_each(h.Jmeisai) m
+order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 ";
 	}
-
-	/// <summary>式リストへ位置に応じた一意な列別名(c1, c2, ...)を付与する。</summary>
-	static string AliasColumns(IReadOnlyList<string> exprs) =>
-		string.Join(", ", exprs.Select((e, i) => $"{e} c{i + 1}"));
-
-	/// <summary>外側 select 用に c1..cN のカンマ区切りを生成する。</summary>
-	static string OuterColumns(int count) =>
-		string.Join(",", Enumerable.Range(1, count).Select(i => $"c{i}"));
-
-	async Task DoPrintAsync(string formFile, QueryListSqlParam sqlParam, CancellationToken ct) {
-		if (string.IsNullOrWhiteSpace(formFile)) {
-			Message = "印刷フォームファイルが設定されていません";
-			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-			return;
-		}
-		if (sqlParam?.Sql is null) {
-			Message = "印刷データが設定されていません";
-			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-			return;
-		}
-
-		try {
-			ClientLib.Cursor2Wait();
-			var msg = new PrintOperation {
-				DataType = typeof(QueryListSqlParam),
-				DataMsg = Common.SerializeObject(sqlParam),
-				FormFile = formFile,
-			};
-
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			string? pdfdata = null;
-			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
-				ct.ThrowIfCancellationRequested();
-				Message = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
-				if (streamMsg.Status == -2) {
-					Message = streamMsg.DataMsg;
-					MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-					return;
-				}
-				if (streamMsg.Status < 0) {
-					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
-					Message = $"PDF出力失敗: {errorDetail}";
-					MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-					return;
-				}
-				if (streamMsg.IsCompleted) {
-					pdfdata = streamMsg.DataMsg;
-					break;
-				}
-			}
-
-			if (string.IsNullOrWhiteSpace(pdfdata)) {
-				Message = "PDF出力結果が取得できませんでした";
-				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-				return;
-			}
-
-			var viewTitle = string.IsNullOrWhiteSpace(ActiveWindow?.Title)
-				? "PDF表示"
-				: $"{ActiveWindow.Title} - PDF表示";
-			var view = new Views.Sub.WebPdfView { Title = viewTitle };
-			if (view.DataContext is not WebPdfViewModel vm) {
-				Message = "PDF表示画面の初期化に失敗しました";
-				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-				return;
-			}
-
-			vm.Pdfdata = $"{AppGlobal.Url}/wrk/{pdfdata}";
-			view.Title += " " + vm.Pdfdata;
-			ClientLib.ShowDialogView(view, this, IsDialog: false);
-			view.Owner = null;
-			Message = $"PDFを表示しました: {pdfdata}";
-		}
-		catch (OperationCanceledException cancel) {
-			Message = $"Cancelエラー：{cancel.Message}";
-		}
-		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
-			Message = "PDF出力をキャンセルしました";
-		}
-		catch (Exception ex) {
-			Message = $"PDF出力失敗: {ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-		}
-		finally {
-			ClientLib.Cursor2Normal();
-		}
-	}
-
-	static string QualifyOrder(string? order, string alias) {
-		if (string.IsNullOrWhiteSpace(order)) return string.Empty;
-		var parts = order.Split(',').Select(o => $"{alias}.{o.Trim()}");
-		return string.Join(", ", parts);
-	}
-
 	[RelayCommand]
 	void AddMeisai() {
 		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;

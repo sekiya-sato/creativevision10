@@ -1,3 +1,23 @@
+## [2026-07-07] 11:17 StockInputView の棚卸伝票印刷 qfm 作り直し
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：6661a658bd38a5201ad1356598de397bd981332f と 2f5c150bcdb16c0f1e5eec1de89fff2b7509e24d を参考に、StockInputView の印刷を ShopUriageInput の qfm 雛形ベースで修正する
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 旧HEAD/item混在SQLと個別DoPrintAsyncを廃止し、RunPrintPdfAsync と item1-item12 / item1-item21 のデータ列SQLへ変更
+- printform/StockInputView_header.qfm: ShopUriageInput_header.qfm を雛形に、棚卸伝票一覧用の固定ラベルと item1-item12 構成へ作り直し
+- printform/StockInputView_detail.qfm: ShopUriageInput_detail.qfm を雛形に、棚卸伝票明細用の固定ラベルと item1-item21 構成へ作り直し
+### 技術決定 Why
+- ShopUriageInputView と同じく、見出しは qfm の static text、SQL は実データ列のみ返す構成に統一し、PrintStream のHEAD混在CSVに依存しない単純な列対応にした
+### 確認
+- qfm validator: OK
+- git diff --check: OK
+- CRLF確認: bare LF なし
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功（0警告、0エラー）
+
+---
 ## [2026-07-07] 10:41 フォーム系共通スタイルを UIFormStyles.xaml へ集約（デザイン改善フェーズ1）
 ### Agent
 - Claude Opus 4.8 : Anthropic
