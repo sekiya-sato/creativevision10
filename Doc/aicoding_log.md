@@ -1,3 +1,30 @@
+## [2026-07-07] 10:41 フォーム系共通スタイルを UIFormStyles.xaml へ集約（デザイン改善フェーズ1）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient のデザイン面レビューを行い、まず「各 View に重複していたフォーム系スタイル定義の集約」（フェーズ1）を実施する
+### 実施内容
+- CvWpfclient/Resources/UIFormStyles.xaml: 新規作成。各 View にローカル重複していた 5 スタイル（MenteSearchTextBox / MenteDataGridColumnHeader / FormLabel / FormTextBox / NumericFormTextBox）を集約
+- CvWpfclient/App.xaml: MergedDictionaries の末尾に UIFormStyles.xaml を登録
+- CvWpfclient/Views/ 配下 29 View: 上記 5 スタイルのローカル重複定義を削除（空になった BaseWindow.Resources コンテナ・付随コメントも除去）。純削除のみ（挿入 0 行 / 計 792 行削除）
+- 例外 3 ファイルは意図的にローカル定義を残置（差異保持のためシャドウ）：ZaikoQueryView（ヘッダー中央寄せ）/ SysTableSpecView（FormLabel Margin=4,0,12,0）/ RangeInputParamView（FormTextBox に MinWidth=0）
+### 技術決定 Why
+- UIFormStyles.xaml は BasedOn で SearchTextBox（UISearchTextBox.xaml）・MaterialDesignDataGridColumnHeader・MaterialDesignOutlinedTextBox を StaticResource 参照するため、App.xaml でこれらより後（末尾）にマージする必要がある。順序を変えると解決に失敗する
+- View 本体の `{StaticResource ...}` 参照はアプリケーションスコープまで解決が及ぶため、ローカル定義削除後も中央定義に解決され、見た目は不変
+- カノニカル定義と異なる 3 件は同名キーをローカルで残すことでシャドウし、意図した差異を維持
+### 影響範囲
+- 新規: CvWpfclient/Resources/UIFormStyles.xaml
+- 変更: CvWpfclient/App.xaml、CvWpfclient/Views/ 配下 29 View（削除のみ）
+### 確認
+- grep 漏れチェック：対象 5 キーのローカル定義は例外 3 ファイルのみ残存
+- dotnet build CvWpfclient/CvWpfclient.csproj：成功（0 警告 / 0 エラー）
+- git diff：View はすべて純削除、追加は App.xaml 1 行と新規辞書のみ
+- 実機目視は未実施（StaticResource 解決順序は設計上正しく全ビルド通過）
+
+---
+
 ## [2026-07-07] 09:53 ShopUriageInputView の伝票印刷・伝票明細印刷作り直し
 ### Agent
 - [GPT-5 : OpenAI]

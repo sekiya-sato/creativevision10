@@ -14,44 +14,6 @@
 		<vm:SysLoginViewModel />
 	</helpers:BaseWindow.DataContext>
 
-	<!--  SearchTextBox 共通スタイル  -->
-	<helpers:BaseWindow.Resources>
-		<Style x:Key="MenteSearchTextBox"
-			BasedOn="{StaticResource SearchTextBox}"
-			TargetType="{x:Type TextBox}">
-			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
-			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
-		</Style>
-
-		<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->
-		<Style x:Key="MenteDataGridColumnHeader"
-			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
-			TargetType="DataGridColumnHeader">
-			<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
-			<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
-			<Setter Property="Padding" Value="12,8" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-		</Style>
-
-		<!--  編集フォームのラベルスタイル  -->
-		<Style x:Key="FormLabel"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="FontWeight" Value="Medium" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-			<Setter Property="Margin" Value="4,0,8,0" />
-		</Style>
-
-		<!--  編集フォームの TextBox スタイル  -->
-		<Style x:Key="FormTextBox"
-			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
-			TargetType="TextBox">
-			<Setter Property="Margin" Value="0,4" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
-		</Style>
-	</helpers:BaseWindow.Resources>
 	<helpers:BaseWindow.InputBindings>
 		<KeyBinding Command="{Binding DoUpdateCommand}"
 			Gesture="F2" />

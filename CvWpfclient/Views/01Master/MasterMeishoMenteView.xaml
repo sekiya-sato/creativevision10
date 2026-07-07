@@ -28,41 +28,6 @@
 			Gesture="F6" />
 	</helpers:BaseWindow.InputBindings>
 
-	<helpers:BaseWindow.Resources>
-		<Style x:Key="MenteSearchTextBox"
-			BasedOn="{StaticResource SearchTextBox}"
-			TargetType="{x:Type TextBox}">
-			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
-			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
-		</Style>
-
-		<Style x:Key="MenteDataGridColumnHeader"
-			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
-			TargetType="DataGridColumnHeader">
-			<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
-			<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
-			<Setter Property="Padding" Value="12,8" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-		</Style>
-
-		<Style x:Key="FormLabel"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="FontWeight" Value="Medium" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-			<Setter Property="Margin" Value="4,0,8,0" />
-		</Style>
-
-		<Style x:Key="FormTextBox"
-			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
-			TargetType="TextBox">
-			<Setter Property="Margin" Value="0,4" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
-		</Style>
-	</helpers:BaseWindow.Resources>
-
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />

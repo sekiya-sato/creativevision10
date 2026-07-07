@@ -10,15 +10,6 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:AutoExecHistoryParamMiniViewModel />
 	</helpers:BaseWindow.DataContext>
-	<helpers:BaseWindow.Resources>
-		<Style x:Key="FormTextBox"
-			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
-			TargetType="TextBox">
-			<Setter Property="Margin" Value="0,4" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-			<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
-		</Style>
-	</helpers:BaseWindow.Resources>
 
 	<Grid>
 		<Grid.RowDefinitions>

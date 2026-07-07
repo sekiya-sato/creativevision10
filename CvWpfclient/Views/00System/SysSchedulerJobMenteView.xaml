@@ -13,17 +13,6 @@
 		<vm:SysSchedulerJobMenteViewModel />
 	</helpers:BaseWindow.DataContext>
 
-	<helpers:BaseWindow.Resources>
-		<Style x:Key="MenteDataGridColumnHeader"
-			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
-			TargetType="DataGridColumnHeader">
-			<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
-			<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
-			<Setter Property="Padding" Value="12,8" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-		</Style>
-	</helpers:BaseWindow.Resources>
-
 	<helpers:BaseWindow.InputBindings>
 		<KeyBinding Command="{Binding LoadTasksCommand}"
 			Gesture="F5" />

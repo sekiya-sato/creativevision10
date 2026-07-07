@@ -13,20 +13,6 @@
 		<vm:RangeInputParamViewModel />
 	</helpers:BaseWindow.DataContext>
 	<helpers:BaseWindow.Resources>
-		<Style x:Key="MenteSearchTextBox"
-			BasedOn="{StaticResource SearchTextBox}"
-			TargetType="{x:Type TextBox}">
-			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
-			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
-		</Style>
-		<Style x:Key="FormLabel"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="FontWeight" Value="Medium" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-			<Setter Property="Margin" Value="4,0,8,0" />
-		</Style>
 		<Style x:Key="FormTextBox"
 			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
 			TargetType="TextBox">

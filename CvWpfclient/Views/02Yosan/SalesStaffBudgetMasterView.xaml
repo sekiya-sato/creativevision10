@@ -17,13 +17,6 @@
 			Gesture="Esc" />
 	</helpers:BaseWindow.InputBindings>
 	<helpers:BaseWindow.Resources>
-		<Style x:Key="MenteSearchTextBox"
-			BasedOn="{StaticResource SearchTextBox}"
-			TargetType="{x:Type TextBox}">
-			<Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Window}}" />
-			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
-		</Style>
 		<Style x:Key="StatusTextBlockStyle"
 			TargetType="TextBlock">
 			<Setter Property="VerticalAlignment" Value="Center" />
