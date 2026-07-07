@@ -43,7 +43,7 @@
 				<StackPanel Orientation="Horizontal">
 					<Button Margin="0,0,8,0"
 						Command="{Binding ExitCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="閉じる (Esc)">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>

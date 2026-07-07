@@ -43,6 +43,7 @@
 								Width="{TemplateBinding Height}"
 								Height="{TemplateBinding Height}"
 								Margin="0" Padding="0"
+								AutomationProperties.Name="検索"
 								Background="{Binding Path=(helpers:SearchTextBoxAssist.ButtonBackground), RelativeSource={RelativeSource TemplatedParent}}"
 								BorderThickness="0.5"
 								Command="{Binding Path=(helpers:SearchTextBoxAssist.Command), RelativeSource={RelativeSource TemplatedParent}}"

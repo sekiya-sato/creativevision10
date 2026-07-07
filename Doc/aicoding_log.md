@@ -1,3 +1,30 @@
+## [2026-07-07] 14:53 アクセシビリティ対応（デザイン改善フェーズ2・共有スタイル経由でアクセシブル名付与）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：デザイン改善フェーズ2（アクセシビリティ、課題A）。AutomationProperties が全体でゼロだったため、スクリーンリーダー向けのアクセシブル名を付与する
+### 実施内容
+- 調査：AutomationProperties は 232 View / Resources で 0 件。一方で HintAssist.Hint 212・ToolTip 184・Window Title 231 と素材は充足。Window 名は Title から UIA が自動公開のため対応不要、アイコン＋テキストボタン(約200)はテキストで読み上げ済み。実作業は共有スタイル数箇所＋Style参照差し替えに集約できると判断
+- CvWpfclient/Resources/UIFormStyles.xaml: FormTextBox に `AutomationProperties.Name ←(materialDesign:HintAssist.Hint)` セッターを追加（NumericFormTextBox は BasedOn で継承、約160 の TextBox に浮動ラベル由来の名前）
+- CvWpfclient/Resources/UIFormStyles.xaml: 新スタイル ToolCommandButton（BasedOn MaterialDesignToolForegroundButton ＋ `AutomationProperties.Name ← ToolTip`）を追加
+- CvWpfclient/Views 配下 36 View: ツールバー系コマンドボタン 116 箇所の `Style="{StaticResource MaterialDesignToolForegroundButton}"` を ToolCommandButton に差し替え（見た目・挙動は不変、ToolTip 由来の名前を付与。アイコンのみの戻る/閉じるも読み上げ可能に）
+- CvWpfclient/Resources/UISearchTextBox.xaml: 検索テンプレート内の Magnify ボタンに固定 Name「検索」
+- CvWpfclient/Resources/UIMainWindow.xaml: ウィンドウ枠ボタン（−/△/X）に固定 Name（最小化／メニューのみ表示／閉じる）
+### 技術決定 Why
+- HintAssist.Hint は MaterialDesign の浮動ラベルで UIA Name に自動反映されないため、Style セッターで Name にバインドして供給。Hint 未設定なら Name は空でコンテンツ名にフォールバックし無害
+- ToolCommandButton は MaterialDesignToolForegroundButton と同一の見た目・挙動に Name を足すだけのため、全 116 箇所を機械的に差し替えても視覚・動作の変化なし
+- ComboBox/DatePicker(36) と稀な CheckBox/Radio/Password は、暗黙スタイル導入が Material 既定を壊すリスクがあるため今回は対象外（後続で慎重に対応）
+### 影響範囲
+- 変更: UIFormStyles.xaml / UISearchTextBox.xaml / UIMainWindow.xaml、CvWpfclient/Views 配下 36 View（Style 参照の差し替えのみ）
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj：各ステップ後およびまとめて成功（0 警告 / 0 エラー）
+- git diff：View 側は全て `MaterialDesignToolForegroundButton → ToolCommandButton` の差し替えのみ（他の変更なし）
+- 実機/スクリーンリーダーでの読み上げ確認は未実施（要実機確認：特に Hint 由来 Name の二重読み上げが無いか。設計上は同値で冪等のため破壊はしない）
+
+---
+
 ## [2026-07-07] 14:45 追加の重複スタイルを UIFormStyles.xaml へ集約（デザイン改善フェーズ1・第2弾）
 ### Agent
 - Claude Opus 4.8 : Anthropic

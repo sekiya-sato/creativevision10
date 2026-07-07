@@ -37,7 +37,7 @@
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button Margin="4,0"
 						Command="{Binding DoUpdateCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="修正 (F2)">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
@@ -48,7 +48,7 @@
 					</Button>
 					<Button Margin="4,0"
 						Command="{Binding DoDeleteCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="削除 (F3)">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
@@ -59,7 +59,7 @@
 					</Button>
 					<Button Margin="4,0"
 						Command="{Binding DoInsertCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="追加 (F4)">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
@@ -73,7 +73,7 @@
 				<StackPanel Orientation="Horizontal">
 					<Button Margin="0,0,8,0"
 						Command="{Binding ExitCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="閉じる (Esc)">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>
@@ -88,7 +88,7 @@
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
 						Opacity="0.3" />
 					<Button Command="{Binding DoListCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="一覧取得 (F5)">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"

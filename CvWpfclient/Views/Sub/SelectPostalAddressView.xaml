@@ -24,7 +24,7 @@
 					<Button x:Name="DefaultButton"
 						Command="{Binding DoSelectCommand}"
 						IsDefault="True"
-						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						Style="{StaticResource ToolCommandButton}">
 						<StackPanel Background="DarkGray" Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Check" />
@@ -37,7 +37,7 @@
 					<Button Margin="0,0,8,0"
 						Command="{Binding ExitCommand}"
 						IsCancel="True"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="閉じる">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>

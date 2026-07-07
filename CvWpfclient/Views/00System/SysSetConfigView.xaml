@@ -45,7 +45,7 @@
 			<DockPanel LastChildFill="True">
 				<Button Command="{Binding NoSaveCommand}"
 					DockPanel.Dock="Right"
-					Style="{StaticResource MaterialDesignToolForegroundButton}"
+					Style="{StaticResource ToolCommandButton}"
 					ToolTip="ファイル保存せず現在の実行設定だけ反映 (Shift+F12)">
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon VerticalAlignment="Center"

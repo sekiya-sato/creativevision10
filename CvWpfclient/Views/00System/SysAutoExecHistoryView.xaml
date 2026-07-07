@@ -35,7 +35,7 @@
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button Margin="4,0"
 						Command="{Binding DoOutputJsonCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="JSON出力 (F6)">
 						<materialDesign:PackIcon Kind="FileExport" />
 					</Button>
@@ -45,7 +45,7 @@
 				<StackPanel Orientation="Horizontal">
 					<Button Margin="0,0,8,0"
 						Command="{Binding ExitCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="閉じる (Esc)">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>
@@ -60,7 +60,7 @@
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
 						Opacity="0.3" />
 					<Button Command="{Binding DoListCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="一覧取得 (F5)">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"

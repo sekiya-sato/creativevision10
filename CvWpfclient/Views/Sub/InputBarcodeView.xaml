@@ -41,7 +41,7 @@
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button MinWidth="96"
 						Command="{Binding DoOkCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						Style="{StaticResource ToolCommandButton}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="Check" />
@@ -54,7 +54,7 @@
 					<Button Margin="0,0,8,0"
 						Command="{Binding ExitCommand}"
 						IsCancel="True"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="閉じる">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>

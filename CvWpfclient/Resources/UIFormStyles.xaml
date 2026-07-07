@@ -40,6 +40,8 @@
 		<Setter Property="Margin" Value="0,4" />
 		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
 		<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+		<!--  スクリーンリーダー用の名前を浮動ラベル(Hint)から供給（NumericFormTextBox も継承）  -->
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
 	</Style>
 
 	<!--  数値入力用 TextBox スタイル  -->
@@ -127,5 +129,16 @@
 		<Setter Property="Margin" Value="8,4,0,4" />
 		<Setter Property="Padding" Value="12,6" />
 		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
+
+	<!--
+		ツールバー系コマンドボタン。MaterialDesignToolForegroundButton と同一の見た目・挙動に、
+		ToolTip 由来のスクリーンリーダー名を付与するだけ（ToolTip 未設定なら Name は空でコンテンツ名にフォールバック）。
+		アイコンのみボタンでも読み上げ可能にするため、従来 MaterialDesignToolForegroundButton を指していた箇所をこれに差し替える。
+	-->
+	<Style x:Key="ToolCommandButton"
+		BasedOn="{StaticResource MaterialDesignToolForegroundButton}"
+		TargetType="Button">
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=ToolTip}" />
 	</Style>
 </ResourceDictionary>

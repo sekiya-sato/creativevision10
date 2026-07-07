@@ -60,6 +60,7 @@
 		BasedOn="{StaticResource MainMenuWindowButton}"
 		TargetType="Button">
 		<Setter Property="Content" Value="-" />
+		<Setter Property="AutomationProperties.Name" Value="最小化" />
 		<Setter Property="Background" Value="{DynamicResource MinimizeWindowButtonBackgroundBrush}" />
 	</Style>
 
@@ -67,6 +68,7 @@
 		BasedOn="{StaticResource MainMenuWindowButton}"
 		TargetType="Button">
 		<Setter Property="Content" Value="△" />
+		<Setter Property="AutomationProperties.Name" Value="メニューのみ表示" />
 		<Setter Property="Background" Value="{DynamicResource MenuonlyWindowButtonBackgroundBrush}" />
 	</Style>
 
@@ -74,6 +76,7 @@
 		BasedOn="{StaticResource MainMenuWindowButton}"
 		TargetType="Button">
 		<Setter Property="Content" Value="X" />
+		<Setter Property="AutomationProperties.Name" Value="閉じる" />
 		<Setter Property="Background" Value="{DynamicResource CloseWindowButtonBackgroundBrush}" />
 	</Style>
 

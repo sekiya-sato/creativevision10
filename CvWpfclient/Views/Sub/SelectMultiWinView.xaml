@@ -24,7 +24,7 @@
 					<Button MinWidth="150"
 						Command="{Binding ChangeDisplayConditionCommand}"
 						IsEnabled="{Binding IsDisplayConditionChangeEnabled}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						Style="{StaticResource ToolCommandButton}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="FilterVariant" />
@@ -34,7 +34,7 @@
 					</Button>
 					<Button Margin="8,0,0,0"
 						Command="{Binding SelectAllCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						Style="{StaticResource ToolCommandButton}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="CheckboxMultipleMarkedOutline" />
@@ -44,7 +44,7 @@
 					</Button>
 					<Button Margin="4,0,0,0"
 						Command="{Binding ClearSelectionCommand}"
-						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						Style="{StaticResource ToolCommandButton}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="CheckboxMultipleBlankOutline" />
@@ -56,7 +56,7 @@
 						Margin="12,0,0,0"
 						Command="{Binding DoSelectCommand}"
 						IsDefault="True"
-						Style="{StaticResource MaterialDesignToolForegroundButton}">
+						Style="{StaticResource ToolCommandButton}">
 						<StackPanel Background="DarkGray" Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="Check" />
@@ -76,7 +76,7 @@
 						Margin="0,0,8,0"
 						Command="{Binding ExitCommand}"
 						IsCancel="True"
-						Style="{StaticResource MaterialDesignToolForegroundButton}"
+						Style="{StaticResource ToolCommandButton}"
 						ToolTip="閉じる">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>
