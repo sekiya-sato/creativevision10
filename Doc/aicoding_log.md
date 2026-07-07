@@ -1,4 +1,23 @@
-## [2026-07-07] 11:17 StockInputView の棚卸伝票印刷 qfm 作り直し
+## [2026-07-07] 11:42 publish-velopack.bat の Velopack 引数不正修正
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：commit 0110aa7084f9bf2f68f12ea856af29cc78ee5f15 の publish-velopack.bat 実行時に Velopack の --packVersion / --packDir 引数が崩れるバグを修正し、CvWpfclient と CvServer の appsettings.json 更新を実行確認する
+### 実施内容
+- CvWpfclient/publish-velopack.version.ps1: Section 空文字指定に依存せず TopLevel スイッチでトップレベルキーを扱えるよう修正し、PowerShell の -f 演算子と正規表現波括弧の衝突を避ける実装へ変更
+- publish-velopack.bat: CvServer/appsettings.json 更新呼び出しを -TopLevel 指定へ変更。検証時に一時コメントアウトした publish.sh 実行行は元に戻した
+- CvWpfclient/appsettings.json / CvServer/appsettings.json: publish-velopack.bat 実行で 0.8.11 に揃うことを確認後、コミット差分に含めないため元の値へ戻した
+### 技術決定 Why
+- -Section "" は呼び出し環境によって空文字引数として扱われず、PowerShell 側の正規表現も format 演算子の波括弧解釈で例外になるため、トップレベル指定を明示的なスイッチに分離した
+### 確認
+- publish-velopack.bat: 成功。dotnet publish と vpk pack が通り、Velopack release 0.8.11 を作成
+- appsettings.json: 実行時に CvWpfclient/Application.Version と CvServer/ServerVersion がどちらも 0.8.11 に更新されることを確認。確認後は元値へ復帰
+- git diff --check: OK
+- CRLF確認: 編集ファイルは CRLF
+
+---## [2026-07-07] 11:17 StockInputView の棚卸伝票印刷 qfm 作り直し
 ### Agent
 - [GPT-5 : OpenAI]
 ### Editor
@@ -745,4 +764,5 @@
 - `git diff --check` エラーなし
 - `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功：警告0、エラー0
 
+---
 ---

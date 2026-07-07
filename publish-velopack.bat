@@ -43,7 +43,7 @@ if "%APP_VERSION%"=="" (
 )
 
 REM CvServer/appsettings.json の ServerVersion も同じ配布バージョンに合わせる。
-powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%publish-velopack.version.ps1" -AppSettingsPath "%~dp0CvServer\appsettings.json" -Section "" -Key "ServerVersion" -SetVersion "%APP_VERSION%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%publish-velopack.version.ps1" -AppSettingsPath "%~dp0CvServer\appsettings.json" -TopLevel -Key "ServerVersion" -SetVersion "%APP_VERSION%"
 if errorlevel 1 (
 	echo [ERROR] Failed to update ServerVersion in CvServer/appsettings.json.
 	exit /b 1
