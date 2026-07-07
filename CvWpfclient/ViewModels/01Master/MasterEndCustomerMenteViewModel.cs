@@ -53,6 +53,14 @@ from MasterEndCustomer {query.AddWhereOrder()}
 	}
 
 	protected override void OnCurrentEditChangedCore(MasterEndCustomer? oldValue, MasterEndCustomer newValue) {
+		if (newValue == null) {
+			EditJsub = [];
+			return;
+		}
+		ApplySubListsFromCurrentEdit();
+	}
+
+	void ApplySubListsFromCurrentEdit() {
 		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
 		foreach (var item in jsubClones) item.BaseList = KubunList;
 		EditJsub = new ObservableCollection<MasterGeneralMeisho>(jsubClones);
@@ -74,7 +82,7 @@ from MasterEndCustomer {query.AddWhereOrder()}
 		if (KubunList.Count > 0) return;
 		try {
 			ClientLib.Cursor2Wait();
-			var param = new QueryListParam(typeof(MasterMeisho), "Kubun='IDX' and Code between 'K01' and 'K10'", "Code");
+			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='IDX' and Code in ({string.Join(",", KubunOptions.Select(x => $"'{x}'"))})", "Code");
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,

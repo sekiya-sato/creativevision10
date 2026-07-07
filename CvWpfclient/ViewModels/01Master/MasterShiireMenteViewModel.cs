@@ -35,8 +35,8 @@ public partial class MasterShiireMenteViewModel : Helpers.BaseCodeNameLightMente
 	ObservableCollection<MasterGeneralMeisho> editJsub = [];
 
 	public ObservableCollection<string> KubunOptions { get; } = new([
-		"S01", "S02", "S03", "S04", "S05",
-		"S06", "S07", "S08", "S09", "S10"
+		"D01", "D02", "D03", "D04", "D05",
+		"D06", "D07", "D08", "D09", "D10"
 	]);
 	public List<MasterMeisho> KubunList = [];
 
@@ -73,6 +73,14 @@ from MasterShiire {query.AddWhereOrder()}
 	}
 
 	protected override void OnCurrentEditChangedCore(MasterShiire? oldValue, MasterShiire newValue) {
+		if (newValue == null) {
+			EditJsub = [];
+			return;
+		}
+		ApplySubListsFromCurrentEdit();
+	}
+
+	void ApplySubListsFromCurrentEdit() {
 		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
 		foreach (var item in jsubClones) item.BaseList = KubunList;
 		EditJsub = new ObservableCollection<MasterGeneralMeisho>(jsubClones);
@@ -94,7 +102,7 @@ from MasterShiire {query.AddWhereOrder()}
 		if (KubunList.Count > 0) return;
 		try {
 			ClientLib.Cursor2Wait();
-			var param = new QueryListParam(typeof(MasterMeisho), "Kubun='IDX' and Code between 'S01' and 'S10'", "Code");
+			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='IDX' and Code in ({string.Join(",", KubunOptions.Select(x => $"'{x}'"))})", "Code");
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
