@@ -1,3 +1,25 @@
+## [2026-07-07] 13:20 店舗予算表（ShopBudgetReportView）の作成
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._02Yosan.ShopBudgetReportView（印刷条件画面）と対応するViewModel、およびprintform/ShopBudgetReport.qfm（リスト帳票）を新規作成する
+### 実施内容
+- CvWpfclient/Views/02Yosan/ShopBudgetReportView.xaml: BaseWindow継承、ColorZoneヘッダー、年月入力、店舗Code From-To（選択ボタン付き）、出力区分（店舗別/全店）ラジオボタン、前年比（日付対比/曜日対比）ラジオボタン、F6印刷実行ボタン、Esc閉じるボタンを配置
+- CvWpfclient/ViewModels/02Yosan/ShopBudgetReportViewModel.cs: BaseViewModel継承、印刷データをC#側でCSV生成（PrintByCsvParam）、MasterYosanBrandから予算集計、Tran01Tenuriから売上（KingakuTotal）集計、前年データ取得（日付対比：AddMonths(-12)、曜日対比：さらに曜日差分調整）、累計は1日からの合計、前年比/予算比/予算差異を計算
+- printform/ShopBudgetReport.qfm: MasterShainMente.qfmを雛形に15列（item1-item15）のCSV入力リスト帳票をA4縦・Shift_JISで作成
+- CvWpfclient/Models/MenuData.cs: 店舗予算表のaddInfo「準備中」を削除
+### 技術決定 Why
+- BaseViewModelへのRunPrintPdfAsync移行はユーザー指示により見送り、今回は対象ViewModel内に直接移植して影響範囲を最小化した
+- 前年比の曜日対比は、current.AddMonths(-12)した日付に対しcurrent.DayOfWeek - baseDate.DayOfWeek分をAddDaysで調整するユーザーの明示式をそのまま実装した
+- qfmはrepo標準のA4縦・CSV data.txt・font size="62"のリスト構成に寄せ、15列を2行に分けず1行フラットで配置（印刷密度の都合上現状最小構成）
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0警告0エラー）
+- `validate_qfm.py printform/ShopBudgetReport.qfm`: OK
+- CRLF確認: 編集ファイルはCRLF
+
+---
 ## [2026-07-07] 11:42 publish-velopack.bat の Velopack 引数不正修正
 ### Agent
 - [GPT-5 : OpenAI]

@@ -80,7 +80,7 @@ public partial class MenuData : ObservableObject {
 			new("店ブランド予算マスタメンテ", typeof(Views._02Yosan.MasterYosanBrandMenteView), addInfo:"MasterYosanBrand の日別予算レコードを直接編集"),
 			new("販売員別予算マスタ(月)", typeof(Views._02Yosan.SalesStaffBudgetMasterView), addInfo:"販売員別の月毎の日予算を作成"),
 			new("販売員予算マスタメンテ", typeof(Views._02Yosan.MasterYosanHanbaiMenteView), addInfo:"MasterYosanHanbai の日別予算レコードを直接編集"),
-			new("店舗予算表", typeof(Views._02Yosan.ShopBudgetReportView), addInfo:"準備中"),
+			new("店舗予算表", typeof(Views._02Yosan.ShopBudgetReportView)),
 			new("店舗ブランド別予算実績対比", typeof(Views._02Yosan.ShopBrandBudgetVsActualView), addInfo:"準備中"),
 			new("日別店別予算表", typeof(Views._02Yosan.DailyShopBudgetReportView), addInfo:"準備中"),
 			new("販売員予算表", typeof(Views._02Yosan.SalesStaffBudgetReportView), addInfo:"準備中"),
