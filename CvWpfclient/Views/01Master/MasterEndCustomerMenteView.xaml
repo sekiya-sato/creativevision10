@@ -289,7 +289,7 @@
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="性別"
 									SelectedIndex="{Binding CurrentEdit.Gendar, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBoxItem Content="不明" />
 									<ComboBoxItem Content="女性" />
 									<ComboBoxItem Content="男性" />

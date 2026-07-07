@@ -288,7 +288,7 @@
 									materialDesign:HintAssist.Hint="得意先種別"
 									SelectedValue="{Binding CurrentEdit.TenType, Mode=TwoWay}"
 									SelectedValuePath="Tag"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBoxItem Content="倉庫" Tag="0" />
 									<ComboBoxItem Content="卸先" Tag="1" />
 									<ComboBoxItem Content="売仕店" Tag="3" />
@@ -303,7 +303,7 @@
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="在庫管理"
 									SelectedIndex="{Binding CurrentEdit.IsZaiko, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBoxItem Content="しない" />
 									<ComboBoxItem Content="する" />
 								</ComboBox>
@@ -468,7 +468,7 @@
 									materialDesign:HintAssist.Hint="締日1"
 									ItemsSource="{Binding ShimeBiItems}"
 									SelectedItem="{Binding CurrentEdit.EnShime1, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
@@ -486,7 +486,7 @@
 									materialDesign:HintAssist.Hint="締日2"
 									ItemsSource="{Binding ShimeBiItems}"
 									SelectedItem="{Binding CurrentEdit.EnShime2, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
@@ -504,7 +504,7 @@
 									materialDesign:HintAssist.Hint="締日3"
 									ItemsSource="{Binding ShimeBiItems}"
 									SelectedItem="{Binding CurrentEdit.EnShime3, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
@@ -523,7 +523,7 @@
 									ItemsSource="{Binding PayMonthItems}"
 									SelectedValue="{Binding CurrentEdit.PayMonth, Mode=TwoWay}"
 									SelectedValuePath="Value"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+									Style="{StaticResource FormComboBox}" />
 
 								<!--  入金日  -->
 								<TextBlock Grid.Row="5"
@@ -534,7 +534,7 @@
 									materialDesign:HintAssist.Hint="入金日"
 									ItemsSource="{Binding ShimeBiItems}"
 									SelectedItem="{Binding CurrentEdit.EnPayDay, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
@@ -574,7 +574,7 @@
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="請求フラグ"
 									SelectedIndex="{Binding CurrentEdit.IsPay, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBoxItem Content="しない" />
 									<ComboBoxItem Content="する" />
 								</ComboBox>

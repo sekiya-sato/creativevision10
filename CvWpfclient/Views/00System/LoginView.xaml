@@ -55,7 +55,7 @@
 							CaretBrush="{DynamicResource CaretColor}"
 							FontSize="16"
 							Foreground="{DynamicResource MaterialDesignBody2}"
-							Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
+							Style="{StaticResource FormPasswordBox}" />
 
 						<Grid>
 							<Grid.ColumnDefinitions>

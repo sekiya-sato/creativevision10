@@ -91,7 +91,7 @@
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						helpers:DatePickerTodayButtonBehavior.IsEnabled="True" FontSize="16" IsTodayHighlighted="False"
 						SelectedDate="{Binding Parameter.FromStartTime, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-						Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+						Style="{StaticResource FormDatePicker}" />
 
 					<TextBlock Grid.Row="1" Grid.Column="3"
 						HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -101,7 +101,7 @@
 						Margin="4,4,0,4" VerticalContentAlignment="Center"
 						helpers:DatePickerTodayButtonBehavior.IsEnabled="True" FontSize="16" IsTodayHighlighted="False"
 						SelectedDate="{Binding Parameter.ToStartTime, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-						Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+						Style="{StaticResource FormDatePicker}" />
 
 					<TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6"
 						Margin="0,8,0,0"

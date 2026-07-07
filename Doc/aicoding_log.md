@@ -1,3 +1,27 @@
+## [2026-07-07] 15:23 アクセシビリティ残件A（ComboBox/DatePicker/PasswordBox にアクセシブル名）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：改善バックログ「A（アクセシビリティ残件）」のみ実施。HintAssist.Hint が UIA 名にならない ComboBox/DatePicker/PasswordBox にスクリーンリーダー名を付与する
+### 実施内容
+- CvWpfclient/Resources/UIFormStyles.xaml: キー付き BasedOn スタイルを追加。FormComboBox(BasedOn MaterialDesignOutlinedComboBox) / FormDatePicker(BasedOn MaterialDesignFloatingHintDatePicker) / FormPasswordBox(BasedOn MaterialDesignFloatingHintPasswordBox)。いずれも AutomationProperties.Name を materialDesign:HintAssist.Hint にバインドするのみ
+- CvWpfclient/Views 配下 18 View: 対象コントロールの Style 参照を差し替え（MaterialDesignOutlinedComboBox→FormComboBox 26 / MaterialDesignFloatingHintDatePicker→FormDatePicker 21 / MaterialDesignFloatingHintPasswordBox→FormPasswordBox 2）
+- MaterialDesignComboBox（別基底）×2 と DataGrid 内の無名選択チェックボックス数件は今回対象外（残タスク）
+### 技術決定 Why
+- フェーズ2の FormTextBox と同一方針。HintAssist.Hint は MaterialDesign の浮動ラベルで UIA Name に自動反映されないため、Style セッターで Name にバインドして供給（Hint 未設定なら Name は空で無害）
+- 暗黙（キー無し TargetType）スタイルは Material 既定テンプレートを全置換し危険なため不採用。キー付き BasedOn なら見た目・挙動は基底と同一で安全
+- PasswordBox は Hint（ラベル）を Name に供給するのみで、パスワード値は公開しない
+### 影響範囲
+- 変更: CvWpfclient/Resources/UIFormStyles.xaml、CvWpfclient/Views 配下 18 View（Style 参照の差し替えのみ）
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj：スタイル追加後・差し替え後の各段階で成功（0 警告 / 0 エラー）
+- git diff：View 側は対象トークンの差し替えのみ（他の変更なし）。削除49=旧トークン49（26+21+2）と一致
+- 実機/スクリーンリーダー確認は未実施（Hint 由来 Name の二重読み上げが無いか要実機確認、設計上は冪等で破壊なし）
+
+---
+
 ## [2026-07-07] 14:53 アクセシビリティ対応（デザイン改善フェーズ2・共有スタイル経由でアクセシブル名付与）
 ### Agent
 - Claude Opus 4.8 : Anthropic

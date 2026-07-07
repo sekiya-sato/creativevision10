@@ -259,7 +259,7 @@
 										Margin="0,4"
 										helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="計上日" FontSize="20" IsTodayHighlighted="False"
 										SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-										Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+										Style="{StaticResource FormDatePicker}" />
 								</StackPanel>
 								<StackPanel Margin="0,0,16,0"
 									Orientation="Horizontal">
@@ -269,7 +269,7 @@
 										Margin="0,4"
 										helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="掛計上日" FontSize="20" IsTodayHighlighted="False"
 										SelectedDate="{Binding CurrentEdit.KakeDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-										Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+										Style="{StaticResource FormDatePicker}" />
 								</StackPanel>
 								<StackPanel Margin="0,0,16,0"
 									Orientation="Horizontal">
@@ -281,7 +281,7 @@
 										ItemsSource="{Binding KubunOptions}"
 										SelectedValue="{Binding CurrentEdit.EnKubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 										SelectedValuePath="Value"
-										Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+										Style="{StaticResource FormComboBox}" />
 								</StackPanel>
 								<StackPanel Margin="0,0,16,0"
 									Orientation="Horizontal">
@@ -293,7 +293,7 @@
 										ItemsSource="{Binding IsPayOptions}"
 										SelectedValue="{Binding CurrentEdit.EnIsPay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 										SelectedValuePath="Value"
-										Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+										Style="{StaticResource FormComboBox}" />
 								</StackPanel>
 								<StackPanel Margin="0,0,16,0"
 									Orientation="Horizontal">

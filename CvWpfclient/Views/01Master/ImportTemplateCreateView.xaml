@@ -65,7 +65,7 @@
 					DisplayMemberPath="TableName"
 					ItemsSource="{Binding TableList}"
 					SelectedItem="{Binding SelectedTable, Mode=TwoWay}"
-					Style="{StaticResource MaterialDesignOutlinedComboBox}"
+					Style="{StaticResource FormComboBox}"
 					ToolTip="{Binding SelectedTable.Description}">
 					<ComboBox.ItemContainerStyle>
 						<Style BasedOn="{StaticResource {x:Type ComboBoxItem}}"
@@ -199,7 +199,7 @@
 				<DatePicker Grid.Column="3"
 					helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 					SelectedDate="{Binding SelectedDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-					Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+					Style="{StaticResource FormDatePicker}" />
 				<TextBlock Grid.Column="4"
 					VerticalAlignment="Center"
 					Text="以降" />

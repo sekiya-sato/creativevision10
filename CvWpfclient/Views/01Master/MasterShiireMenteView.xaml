@@ -419,7 +419,7 @@
 									materialDesign:HintAssist.Hint="締日1"
 									ItemsSource="{Binding ShimeBiItems}"
 									SelectedItem="{Binding CurrentEdit.EnShime1, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
@@ -436,7 +436,7 @@
 									materialDesign:HintAssist.Hint="締日2"
 									ItemsSource="{Binding ShimeBiItems}"
 									SelectedItem="{Binding CurrentEdit.EnShime2, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
@@ -453,7 +453,7 @@
 									materialDesign:HintAssist.Hint="締日3"
 									ItemsSource="{Binding ShimeBiItems}"
 									SelectedItem="{Binding CurrentEdit.EnShime3, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
@@ -471,7 +471,7 @@
 									ItemsSource="{Binding PayMonthItems}"
 									SelectedValue="{Binding CurrentEdit.PayMonth, Mode=TwoWay}"
 									SelectedValuePath="Value"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+									Style="{StaticResource FormComboBox}" />
 
 								<TextBlock Grid.Row="4"
 									Style="{StaticResource FormLabel}"
@@ -481,7 +481,7 @@
 									materialDesign:HintAssist.Hint="支払日"
 									ItemsSource="{Binding ShimeBiItems}"
 									SelectedItem="{Binding CurrentEdit.EnPayDay, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBox.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
@@ -496,7 +496,7 @@
 								<ComboBox Grid.Row="5" Grid.Column="1"
 									Margin="0,4"
 									SelectedIndex="{Binding CurrentEdit.IsPay, Mode=TwoWay}"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}">
+									Style="{StaticResource FormComboBox}">
 									<ComboBoxItem Content="しない" />
 									<ComboBoxItem Content="する" />
 								</ComboBox>

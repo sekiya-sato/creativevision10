@@ -276,7 +276,7 @@
 										Margin="0,4"
 										helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="計上日" FontSize="20" IsTodayHighlighted="False"
 										SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-										Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+										Style="{StaticResource FormDatePicker}" />
 								</StackPanel>
 								<StackPanel Margin="0,0,16,0"
 									Orientation="Horizontal">

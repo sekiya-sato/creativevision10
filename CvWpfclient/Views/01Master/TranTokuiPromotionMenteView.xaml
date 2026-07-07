@@ -250,7 +250,7 @@
 									Margin="0,4" HorizontalAlignment="Left"
 									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="日付" IsTodayHighlighted="False"
 									SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-									Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+									Style="{StaticResource FormDatePicker}" />
 
 								<TextBlock Grid.Row="3"
 									Style="{StaticResource FormLabel}"
@@ -270,7 +270,7 @@
 									ItemsSource="{Binding RankOptions}"
 									SelectedValue="{Binding CurrentEdit.Rank, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									SelectedValuePath="Value"
-									Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+									Style="{StaticResource FormComboBox}" />
 
 								<TextBlock Grid.Row="5"
 									Style="{StaticResource FormLabel}" />

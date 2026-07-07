@@ -141,4 +141,28 @@
 		TargetType="Button">
 		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=ToolTip}" />
 	</Style>
+
+	<!--
+		入力コントロールの浮動ラベル(HintAssist.Hint)をスクリーンリーダー名として公開するスタイル群。
+		見た目は BasedOn 元と同一で、AutomationProperties.Name を Hint にバインドするだけ（Hint 未設定なら空）。
+		従来 Material 既定スタイルを指していた箇所をこれらに差し替える。FormTextBox と同一方針。
+	-->
+	<Style x:Key="FormComboBox"
+		BasedOn="{StaticResource MaterialDesignOutlinedComboBox}"
+		TargetType="ComboBox">
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
+	</Style>
+
+	<Style x:Key="FormDatePicker"
+		BasedOn="{StaticResource MaterialDesignFloatingHintDatePicker}"
+		TargetType="DatePicker">
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
+	</Style>
+
+	<!--  パスワード入力：Hint（ラベル）を名前に供給。値は公開しない  -->
+	<Style x:Key="FormPasswordBox"
+		BasedOn="{StaticResource MaterialDesignFloatingHintPasswordBox}"
+		TargetType="PasswordBox">
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
+	</Style>
 </ResourceDictionary>

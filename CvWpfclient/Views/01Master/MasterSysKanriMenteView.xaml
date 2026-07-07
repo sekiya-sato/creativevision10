@@ -277,7 +277,7 @@
 							VerticalAlignment="Center"
 							helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="日付" FontSize="15" IsTodayHighlighted="False"
 							SelectedDate="{Binding Current.FiscalStartDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+							Style="{StaticResource FormDatePicker}" />
 						<Label Grid.Row="7" Grid.Column="2"
 							Height="30"
 							VerticalAlignment="Top"
@@ -336,7 +336,7 @@
 							VerticalAlignment="Center"
 							helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="日付" FontSize="15" IsTodayHighlighted="False"
 							SelectedDate="{Binding Current.Jsub[0].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+							Style="{StaticResource FormDatePicker}" />
 						<Label Grid.Row="10" Grid.Column="4"
 							Height="30"
 							VerticalAlignment="Top"
@@ -366,7 +366,7 @@
 							VerticalAlignment="Center"
 							helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="日付" FontSize="15" IsTodayHighlighted="False"
 							SelectedDate="{Binding Current.Jsub[1].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+							Style="{StaticResource FormDatePicker}" />
 						<Label Grid.Row="11" Grid.Column="4"
 							VerticalAlignment="Top"
 							Content="新税率2" />
@@ -395,7 +395,7 @@
 							VerticalAlignment="Center"
 							helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="日付" FontSize="15" IsTodayHighlighted="False"
 							SelectedDate="{Binding Current.Jsub[2].DateFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+							Style="{StaticResource FormDatePicker}" />
 						<Label Grid.Row="12" Grid.Column="4"
 							Height="30"
 							VerticalAlignment="Top"

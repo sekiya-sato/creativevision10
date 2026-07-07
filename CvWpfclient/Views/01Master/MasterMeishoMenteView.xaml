@@ -113,7 +113,7 @@
 						Margin="10,0,0,0" VerticalAlignment="Center"
 						ItemsSource="{Binding KubunList}"
 						SelectedItem="{Binding SelectedKubun}"
-						Style="{StaticResource MaterialDesignOutlinedComboBox}">
+						Style="{StaticResource FormComboBox}">
 						<ComboBox.ItemTemplate>
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">

@@ -287,7 +287,7 @@
 									HorizontalAlignment="Left"
 									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="有効期限" IsTodayHighlighted="False"
 									SelectedDate="{Binding CurrentEdit.ExpireDate, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-									Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+									Style="{StaticResource FormDatePicker}" />
 
 								<TextBlock Grid.Row="7"
 									Style="{StaticResource FormLabel}"

@@ -126,7 +126,7 @@
 						materialDesign:HintAssist.Hint="ログインパスワード"
 						CaretBrush="{DynamicResource CaretColor}"
 						Foreground="{DynamicResource MaterialDesignBody2}"
-						Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
+						Style="{StaticResource FormPasswordBox}" />
 
 					<Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
 						Margin="0,18,0,6" />
@@ -159,7 +159,7 @@
 						ItemsSource="{Binding JmaWeatherAreaItems}"
 						SelectedValue="{Binding JmaWeatherAreaCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						SelectedValuePath="Code"
-						Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+						Style="{StaticResource FormComboBox}" />
 
 					<TextBlock Grid.Row="8" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
@@ -177,12 +177,12 @@
 							materialDesign:HintAssist.Hint="左右"
 							ItemsSource="{Binding HorizontalFitPositionItems}"
 							SelectedItem="{Binding HorizontalFitPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+							Style="{StaticResource FormComboBox}" />
 						<ComboBox Grid.Column="2"
 							materialDesign:HintAssist.Hint="上下"
 							ItemsSource="{Binding VerticalFitPositionItems}"
 							SelectedItem="{Binding VerticalFitPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+							Style="{StaticResource FormComboBox}" />
 						<Border Grid.Column="4"
 							MinWidth="110"
 							Padding="10,6" VerticalAlignment="Center"
