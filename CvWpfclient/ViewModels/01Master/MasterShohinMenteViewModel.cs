@@ -151,10 +151,7 @@ from MasterShohin {query.AddWhereOrder()}
 	[ObservableProperty]
 	ObservableCollection<MasterGeneralMeisho> editJsub = [];
 
-	public ObservableCollection<string> KubunOptions { get; } = new([
-		"B01", "B02", "B03", "B04", "B05",
-		"B06", "B07", "B08", "B09", "B10"
-	]);
+	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"B{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
 
 

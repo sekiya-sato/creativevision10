@@ -36,10 +36,7 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 	[ObservableProperty]
 	ObservableCollection<MasterGeneralMeisho> editJsub = [];
 
-	public ObservableCollection<string> KubunOptions { get; } = new([
-		"C01", "C02", "C03", "C04", "C05",
-		"C06", "C07", "C08", "C09", "C10"
-	]);
+	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"C{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
 
 	protected override QueryListSqlParam? PrintBySqlParam {

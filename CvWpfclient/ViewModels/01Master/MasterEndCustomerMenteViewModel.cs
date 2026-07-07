@@ -23,10 +23,7 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseCodeNameLight
 	[ObservableProperty]
 	ObservableCollection<MasterGeneralMeisho> editJsub = [];
 
-	public ObservableCollection<string> KubunOptions { get; } = new([
-		"K01", "K02", "K03", "K04", "K05",
-		"K06", "K07", "K08", "K09", "K10"
-	]);
+	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"K{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
 
 	protected override QueryListSqlParam? PrintBySqlParam {
