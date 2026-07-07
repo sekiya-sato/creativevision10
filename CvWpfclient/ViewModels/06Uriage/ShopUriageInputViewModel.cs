@@ -213,14 +213,14 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	[RelayCommand]
 	void GoToDetail(Tran01Tenuri? item) {
 		if (item != null && item.Id > 0 && !ReferenceEquals(Current, item)) Current = item;
-		if (Current.Id > 0) SelectedTabIndex = 1;
-		/*
-		var view = ClientLib.GetActiveView(this) as Views._06Uriage.ShopUriageInputView;
-		if (view != null) {
-			view.TabControlMain.SelectedIndex = 1;
-			//			view.TabDetail
+		if (Current.Id <= 0) {
+			Current = new Tran01Tenuri {
+				DenDay = DateTime.Now.ToString("yyyyMMdd"),
+				Kubun = (int)EnumUri01.Uriage,
+				Jmeisai = [],
+			};
 		}
-		*/
+		SelectedTabIndex = 1;
 	}
 
 	[RelayCommand]

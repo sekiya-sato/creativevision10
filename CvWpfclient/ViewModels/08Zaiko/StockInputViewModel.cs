@@ -184,7 +184,13 @@ public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	[RelayCommand]
 	void GoToDetail(Tran60Tana? item) {
 		if (item != null && item.Id > 0 && !ReferenceEquals(Current, item)) Current = item;
-		if (Current.Id > 0) SelectedTabIndex = 1;
+		if (Current.Id <= 0) {
+			Current = new Tran60Tana {
+				DenDay = DateTime.Now.ToString("yyyyMMdd"),
+				Jmeisai = [],
+			};
+		}
+		SelectedTabIndex = 1;
 	}
 
 	[RelayCommand]
