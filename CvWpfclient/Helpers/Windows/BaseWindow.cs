@@ -54,7 +54,7 @@ public class BaseWindow : Window {
 				if (result != MessageBoxResult.Yes)
 					return;
 			}
-			if (!TryExecuteViewModelCommand("ExitCommand")) {
+			if (!TryExecuteExitCommand()) {
 				Close();
 				if (Owner is Window owner)
 					owner.Activate();
@@ -87,12 +87,27 @@ public class BaseWindow : Window {
 		return false;
 	}
 
+	private bool TryExecuteExitCommand() {
+		if (DataContext is IViewModelLifecycle lifecycle) {
+			return lifecycle.TryExecuteExitCommand();
+		}
+		return TryExecuteViewModelCommand("ExitCommand");
+	}
+
+	private bool TryExecuteInitCommand() {
+		if (DataContext is IViewModelLifecycle lifecycle) {
+			return lifecycle.TryExecuteInitCommand();
+		}
+		return TryExecuteViewModelCommand("InitCommand");
+	}
+
 	/// <summary>
 	/// DataContext に実行中の非同期コマンド（IAsyncRelayCommand.IsRunning == true）があるか判定
 	/// </summary>
 	private bool HasRunningCommand() {
 		var dc = DataContext;
 		if (dc == null) return false;
+		if (dc is IViewModelLifecycle lifecycle) return lifecycle.HasRunningCommand;
 
 		foreach (var prop in dc.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)) {
 			if (prop.GetValue(dc) is IAsyncRelayCommand cmd && cmd.IsRunning)
@@ -111,14 +126,7 @@ public class BaseWindow : Window {
 		ApplyDefaultMinimumSize();
 		EnsureWithinDisplayBounds();
 
-		// ViewModel に ICommand プロパティ "InitCommand" があれば実行する（XAML でのトリガーを共通化）
-		var dc = DataContext;
-		if (dc == null) return;
-
-		var prop = dc.GetType().GetProperty("InitCommand", BindingFlags.Instance | BindingFlags.Public);
-		if (prop?.GetValue(dc) is ICommand cmd && cmd.CanExecute(null)) {
-			cmd.Execute(null);
-		}
+		TryExecuteInitCommand();
 	}
 
 	protected override void OnClosing(CancelEventArgs e) {
@@ -136,6 +144,10 @@ public class BaseWindow : Window {
 	private void CancelViewModelCommands() {
 		var dc = DataContext;
 		if (dc == null) return;
+		if (dc is IViewModelLifecycle lifecycle) {
+			lifecycle.CancelRunningCommands();
+			return;
+		}
 
 		foreach (var prop in dc.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)) {
 			if (!prop.Name.EndsWith("CancelCommand")) continue;
