@@ -1,3 +1,28 @@
+## [2026-07-07] 17:19 名称リスト追加削除ボタン実装
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：仕入先・得意先・顧客マスターの名称リストタブに「削除」「追加」ボタンを実装し、コミット後に `../cv10` へ ff マージする
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs: 名称リストを `EditJsub` で編集し、追加・削除・保存前同期・区分リスト取得を追加
+- CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs: 名称リストを `EditJsub` で編集し、追加・削除・保存前同期・区分リスト取得を追加
+- CvWpfclient/ViewModels/01Master/MasterEndCustomerMenteViewModel.cs: 名称リストを `EditJsub` で編集し、追加・削除・保存前同期・区分リスト取得を追加
+- CvWpfclient/Views/01Master/MasterShiireMenteView.xaml: 名称リストタブに削除・追加ボタン、区分 ComboBox、コード検索列を追加
+- CvWpfclient/Views/01Master/MasterTokuiMenteView.xaml: 名称リストタブに削除・追加ボタン、区分 ComboBox、コード検索列を追加
+- CvWpfclient/Views/01Master/MasterEndCustomerMenteView.xaml: 名称リストエリアに削除・追加ボタン、区分 ComboBox、コード検索列を追加
+### 技術決定 Why
+- `CurrentEdit.Jsub` 直接バインドでは行追加・削除の通知とキャンセル時の巻き戻しが不安定になるため、既存の社員・商品マスターと同じ `ObservableCollection<MasterGeneralMeisho>` へ展開して保存時に同期する方式にした
+- 区分入力は自由入力ではなく ComboBox にし、既存 `MasterGeneralMeisho.OnKbChanged` の区分名更新で不正コード例外が起きにくい形にした
+### 確認
+- XAML XML 読み込み：成功
+- CRLF 改行確認：成功
+- git diff --check：成功
+- dotnet build CvWpfclient/CvWpfclient.csproj：成功（0 warning / 0 error）
+
+---
+
 ## [2026-07-07] 16:56 BaseViewModel 実行中判定の再帰修正
 ### Agent
 - GPT-5 : OpenAI : Codex

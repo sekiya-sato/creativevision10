@@ -1,8 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CodeShare;
+using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
+using System.Collections;
+using System.Collections.ObjectModel;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -25,6 +29,18 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 		new(3, "3ヶ月後"),
 		new(4, "4ヶ月後"),
 	];
+
+	[ObservableProperty]
+	MasterGeneralMeisho? selectedJsub;
+
+	[ObservableProperty]
+	ObservableCollection<MasterGeneralMeisho> editJsub = [];
+
+	public ObservableCollection<string> KubunOptions { get; } = new([
+		"T01", "T02", "T03", "T04", "T05",
+		"T06", "T07", "T08", "T09", "T10"
+	]);
+	public List<MasterMeisho> KubunList = [];
 
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {
@@ -55,7 +71,58 @@ from MasterTokui {query.AddWhereOrder()}
 	}
 
 	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
+	async Task Init() {
+		await DoGetKubun(CancellationToken.None);
+		await DoList(CancellationToken.None);
+	}
+
+	protected override void OnCurrentEditChangedCore(MasterTokui? oldValue, MasterTokui newValue) {
+		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
+		foreach (var item in jsubClones) item.BaseList = KubunList;
+		EditJsub = new ObservableCollection<MasterGeneralMeisho>(jsubClones);
+	}
+
+	void SyncSubListsToCurrentEdit() => CurrentEdit.Jsub = [.. EditJsub];
+
+	protected override object CreateInsertParam() {
+		SyncSubListsToCurrentEdit();
+		return base.CreateInsertParam();
+	}
+
+	protected override object CreateUpdateParam() {
+		SyncSubListsToCurrentEdit();
+		return base.CreateUpdateParam();
+	}
+
+	async Task DoGetKubun(CancellationToken ct) {
+		if (KubunList.Count > 0) return;
+		try {
+			ClientLib.Cursor2Wait();
+			var param = new QueryListParam(typeof(MasterMeisho), "Kubun='IDX' and Code between 'T01' and 'T10'", "Code");
+			var msg = new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg101_Op_Query,
+				DataType = typeof(QueryListParam),
+				DataMsg = Common.SerializeObject(param)
+			};
+			var reply = await SendMessageAsync(msg, ct);
+			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
+				KubunList.Clear();
+				foreach (var item in list.Cast<MasterMeisho>()) KubunList.Add(item);
+			}
+		}
+		catch (OperationCanceledException cancel) {
+			Message = $"Cancel繧ｨ繝ｩ繝ｼ・嘴cancel.Message}";
+			return;
+		}
+		catch (Exception ex) {
+			Message = $"繝・・繧ｿ蜿門ｾ怜､ｱ謨・ {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+	}
 
 	// ---- 担当者 (MasterShain) 選択 ----
 	[RelayCommand]
@@ -82,6 +149,38 @@ from MasterTokui {query.AddWhereOrder()}
 		if (tokui == null) return;
 		CurrentEdit.Id_Paysaki = tokui.Id;
 		CurrentEdit.VPaysaki = new() { Sid = tokui.Id, Cd = tokui.Code ?? "", Mei = tokui.Name ?? "" };
+	}
+
+	[RelayCommand]
+	void AddJsub() {
+		var newItem = new MasterGeneralMeisho { BaseList = KubunList };
+		EditJsub.Add(newItem);
+		SortJsub();
+		SelectedJsub = newItem;
+	}
+
+	[RelayCommand]
+	void DeleteJsub() {
+		if (SelectedJsub == null) return;
+		EditJsub.Remove(SelectedJsub);
+		SelectedJsub = EditJsub.LastOrDefault();
+	}
+
+	[RelayCommand]
+	void DoSelectJsubCode() {
+		if (SelectedJsub == null) return;
+		var kb = (SelectedJsub.Kb ?? string.Empty).Replace("'", "''");
+		if (string.IsNullOrEmpty(kb)) return;
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{kb}'", "Code", startPos: SelectedJsub.Sid);
+		if (meisho == null) return;
+		SelectedJsub.Cd = meisho.Code ?? "";
+		SelectedJsub.Mei = meisho.Name ?? "";
+	}
+
+	void SortJsub() {
+		var sorted = EditJsub.OrderBy(x => x.Kb).ToList();
+		EditJsub.Clear();
+		foreach (var item in sorted) EditJsub.Add(item);
 	}
 
 	[RelayCommand]
