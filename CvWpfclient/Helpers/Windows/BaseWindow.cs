@@ -12,6 +12,9 @@ namespace CvWpfclient.Helpers;
 
 public class BaseWindow : Window {
 
+	private const double DefaultMinWidth = 640;
+	private const double DefaultMinHeight = 480;
+
 	public BaseWindow() {
 		// ViewModel 側から Dialog を閉じるための共通メッセージ登録
 		// 複数のウィンドウで使う場合には登録してある全てのWindowが反応する
@@ -105,6 +108,7 @@ public class BaseWindow : Window {
 		if (DesignerProperties.GetIsInDesignMode(this))
 			return;
 
+		ApplyDefaultMinimumSize();
 		EnsureWithinDisplayBounds();
 
 		// ViewModel に ICommand プロパティ "InitCommand" があれば実行する（XAML でのトリガーを共通化）
@@ -139,6 +143,23 @@ public class BaseWindow : Window {
 				cmd.Execute(null);
 			}
 		}
+	}
+
+	private void ApplyDefaultMinimumSize() {
+		var defaultMinWidth = GetDefaultMinimumSize(DefaultMinWidth, Width, ActualWidth);
+		if (MinWidth < defaultMinWidth)
+			MinWidth = defaultMinWidth;
+
+		var defaultMinHeight = GetDefaultMinimumSize(DefaultMinHeight, Height, ActualHeight);
+		if (MinHeight < defaultMinHeight)
+			MinHeight = defaultMinHeight;
+	}
+
+	private static double GetDefaultMinimumSize(double defaultSize, double configuredSize, double actualSize) {
+		var currentSize = !double.IsNaN(configuredSize) && configuredSize > 0 ? configuredSize : actualSize;
+		if (currentSize > 0)
+			return Math.Min(defaultSize, currentSize);
+		return defaultSize;
 	}
 
 	private void EnsureWithinDisplayBounds() {

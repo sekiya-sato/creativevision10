@@ -1,3 +1,28 @@
+## [2026-07-07] 16:36 改善バックログB（ウィンドウ最小サイズ）の実施
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`.omo/IMPROVEMENTS.md` の改善案 B「ウィンドウ最小サイズ / サイズ定数」を実施する
+### 実施内容
+- CvWpfclient/Helpers/Windows/BaseWindow.cs: 表示サイズ確定後に既定最小サイズ 640x480 を適用する処理を追加。小型ダイアログは初期サイズを上限にして見た目を変えないよう調整
+- CvWpfclient/Resources/UICommon.xaml: 標準ウィンドウサイズ `StandardWindowWidth` / `StandardWindowHeight` を追加
+- CvWpfclient/Views/**/*.xaml: `Width="1244" Height="900"` の標準画面サイズ指定を共通リソース参照へ置換
+### 技術決定 Why
+- `BaseWindow.EnsureWithinDisplayBounds()` による縮小後も極端な手動リサイズで下部操作列が見切れないよう、BaseWindow 側で共通の最小サイズを持たせる
+- Login など 640x480 より小さい既存画面は初期サイズを最小値として扱い、既存表示サイズを不用意に拡大しない
+- 多数の画面で重複していた 1244x900 を共通リソース化し、今後の標準サイズ変更箇所を一本化する
+### 影響範囲
+- CvWpfclient の BaseWindow 派生画面全般、および 1244x900 を使う標準サイズ画面
+### 確認
+- XAML XML パース：CvWpfclient/Views と CvWpfclient/Resources 配下で成功
+- `Width="1244" Height="900"` 残存確認：0 件
+- git diff --check：成功
+- dotnet build CvWpfclient/CvWpfclient.csproj：初回は NuGet.Config 権限で失敗。権限付き再実行で成功（0 警告 / 0 エラー）
+
+---
+
 ## [2026-07-07] 15:47 改善バックログE（正しさ系）の実施
 ### Agent
 - GPT-5 : OpenAI : Codex

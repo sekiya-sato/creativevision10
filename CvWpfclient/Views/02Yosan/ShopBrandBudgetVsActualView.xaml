@@ -4,7 +4,7 @@
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._02Yosan"
 	Title="店舗ブランド別予算実績対比"
-	Width="1244" Height="900"
+	Width="{StaticResource StandardWindowWidth}" Height="{StaticResource StandardWindowHeight}"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display"
