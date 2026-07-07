@@ -3,10 +3,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using Grpc.Core;
 using System.Collections;
 using System.Globalization;
+using System.ServiceModel.Channels;
 using System.Windows;
+using static OpenTK.Graphics.OpenGL.GL;
 
 namespace CvWpfclient.ViewModels._02Yosan;
 
@@ -70,7 +74,7 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 			ClientLib.Cursor2Wait();
 			var csvData = await BuildPrintCsvDataAsync(ct);
 			if (string.IsNullOrEmpty(csvData)) {
-				Message = "印刷データが作成できませんでした";
+				MessageEx.ShowErrorDialog("印刷データが作成できませんでした");
 				return;
 			}
 			await RunPrintPdfAsync("ShopBudgetReport.qfm", new PrintByCsvParam(csvData), null, ct);
@@ -327,23 +331,20 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 		ct.ThrowIfCancellationRequested();
 
 		if (string.IsNullOrWhiteSpace(formFile)) {
-			Message = "印刷フォームファイルが設定されていません";
-			MessageEx.ShowWarningDialog(Message, owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowWarningDialog("印刷フォームファイルが設定されていません", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 
 		if (csvParam is null && sqlParam is null) {
-			Message = "印刷データが設定されていません";
-			MessageEx.ShowWarningDialog(Message, owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowWarningDialog("印刷データが設定されていません", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 
 		if (csvParam is not null && sqlParam is not null) {
-			Message = "印刷データは CSV と SQL のどちらか一方だけ設定してください";
-			MessageEx.ShowWarningDialog(Message, owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowWarningDialog("印刷データは CSV と SQL のどちらか一方だけ設定してください", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-
+		var mess = "";
 		try {
 			var param = (object?)csvParam ?? sqlParam!;
 			var dataType = csvParam is not null ? typeof(PrintByCsvParam) : typeof(QueryListSqlParam);
@@ -357,16 +358,14 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 			string? pdfdata = null;
 			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
 				ct.ThrowIfCancellationRequested();
-				Message = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
+				mess = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
 				if (streamMsg.Status == -2) {
-					Message = streamMsg.DataMsg;
-					MessageEx.ShowWarningDialog(Message, owner: ClientLib.GetActiveView(this));
+					MessageEx.ShowWarningDialog(streamMsg.DataMsg, owner: ClientLib.GetActiveView(this));
 					return;
 				}
 				if (streamMsg.Status < 0) {
 					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
-					Message = $"PDF出力失敗: {errorDetail}";
-					MessageEx.ShowErrorDialog(Message, owner: ClientLib.GetActiveView(this));
+					MessageEx.ShowErrorDialog($"PDF出力失敗: {errorDetail}", owner: ClientLib.GetActiveView(this));
 					return;
 				}
 
@@ -377,8 +376,7 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 			}
 
 			if (string.IsNullOrWhiteSpace(pdfdata)) {
-				Message = "PDF出力結果が取得できませんでした";
-				MessageEx.ShowWarningDialog(Message, owner: ClientLib.GetActiveView(this));
+				MessageEx.ShowWarningDialog("PDF出力結果が取得できませんでした", owner: ClientLib.GetActiveView(this));
 				return;
 			}
 
@@ -387,8 +385,7 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 				: $"{ClientLib.GetActiveView(this)?.Title} - PDF表示";
 			var view = new Views.Sub.WebPdfView { Title = viewTitle };
 			if (view.DataContext is not WebPdfViewModel vm) {
-				Message = "PDF表示画面の初期化に失敗しました";
-				MessageEx.ShowErrorDialog(Message, owner: ClientLib.GetActiveView(this));
+				MessageEx.ShowErrorDialog("PDF表示画面の初期化に失敗しました", owner: ClientLib.GetActiveView(this));
 				return;
 			}
 
@@ -396,19 +393,19 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 			view.Title += " " + vm.Pdfdata;
 			ClientLib.ShowDialogView(view, this, IsDialog: false);
 			view.Owner = null;
-			Message = $"PDFを表示しました: {pdfdata}";
+			mess = $"PDFを表示しました: {pdfdata}";
 		}
 		catch (OperationCanceledException cancel) {
-			Message = $"Cancelエラー：{cancel.Message}";
+			mess = $"Cancelエラー：{cancel.Message}";
 			return;
 		}
 		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
-			Message = "PDF出力をキャンセルしました";
+			mess = "PDF出力をキャンセルしました";
 			return;
 		}
 		catch (Exception ex) {
-			Message = $"PDF出力失敗: {ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ClientLib.GetActiveView(this));
+			mess = $"PDF出力失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(mess, owner: ClientLib.GetActiveView(this));
 		}
 	}
 }
