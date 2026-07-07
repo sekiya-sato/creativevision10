@@ -16,21 +16,6 @@
 		<KeyBinding Command="{Binding ExitCommand}"
 			Gesture="Esc" />
 	</helpers:BaseWindow.InputBindings>
-	<helpers:BaseWindow.Resources>
-		<Style x:Key="StatusTextBlockStyle"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-		</Style>
-		<Style x:Key="BudgetActionButtonStyle"
-			BasedOn="{StaticResource MaterialDesignOutlinedButton}"
-			TargetType="Button">
-			<Setter Property="Height" Value="36" />
-			<Setter Property="Margin" Value="4,0" />
-			<Setter Property="Padding" Value="10,0" />
-		</Style>
-	</helpers:BaseWindow.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />

@@ -24,40 +24,6 @@
 			Gesture="F5" />
 	</helpers:BaseWindow.InputBindings>
 
-	<helpers:BaseWindow.Resources>
-		<!--  DataGrid 数値列用 右詰めスタイル  -->
-		<Style x:Key="DataGridRightTextBlock"
-			TargetType="TextBlock">
-			<Setter Property="HorizontalAlignment" Value="Stretch" />
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="TextAlignment" Value="Right" />
-			<Setter Property="Padding" Value="0,0,0,0" />
-		</Style>
-
-		<Style x:Key="DataGridRightTextBox"
-			TargetType="TextBox">
-			<Setter Property="HorizontalContentAlignment" Value="Right" />
-			<Setter Property="VerticalContentAlignment" Value="Center" />
-			<Setter Property="Padding" Value="0,0,0,0" />
-		</Style>
-
-		<Style x:Key="MeisaiReadOnlyTextBlock"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-			<Setter Property="Padding" Value="6,0" />
-			<Setter Property="TextTrimming" Value="CharacterEllipsis" />
-		</Style>
-
-		<Style x:Key="MeisaiRightReadOnlyTextBlock"
-			BasedOn="{StaticResource MeisaiReadOnlyTextBlock}"
-			TargetType="TextBlock">
-			<Setter Property="HorizontalAlignment" Value="Stretch" />
-			<Setter Property="TextAlignment" Value="Right" />
-			<Setter Property="Padding" Value="0,0,18,0" />
-		</Style>
-	</helpers:BaseWindow.Resources>
-
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />

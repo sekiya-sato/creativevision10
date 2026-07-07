@@ -48,4 +48,84 @@
 		TargetType="TextBox">
 		<Setter Property="HorizontalContentAlignment" Value="Right" />
 	</Style>
+
+	<!--  設定/変換画面のラベル  -->
+	<Style x:Key="SettingLabel"
+		TargetType="TextBlock">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="FontWeight" Value="Medium" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+		<Setter Property="Margin" Value="0,0,16,0" />
+	</Style>
+
+	<!--  ステータス表示テキスト  -->
+	<Style x:Key="StatusTextBlockStyle"
+		TargetType="TextBlock">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+	</Style>
+
+	<!--  選択結果表示テキスト（範囲/商品選択）  -->
+	<Style x:Key="SelectionResultText"
+		TargetType="TextBlock">
+		<Setter Property="MinWidth" Value="0" />
+		<Setter Property="Margin" Value="12,0,8,0" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+	</Style>
+
+	<!--  明細の読み取り専用テキスト  -->
+	<Style x:Key="MeisaiReadOnlyTextBlock"
+		TargetType="TextBlock">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+		<Setter Property="Padding" Value="6,0" />
+		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+	</Style>
+
+	<!--  明細の右寄せ読み取り専用テキスト（MeisaiReadOnlyTextBlock を継承）  -->
+	<Style x:Key="MeisaiRightReadOnlyTextBlock"
+		BasedOn="{StaticResource MeisaiReadOnlyTextBlock}"
+		TargetType="TextBlock">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="TextAlignment" Value="Right" />
+		<Setter Property="Padding" Value="0,0,18,0" />
+	</Style>
+
+	<!--  DataGrid セル内の右寄せテキスト  -->
+	<Style x:Key="DataGridRightTextBlock"
+		TargetType="TextBlock">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="TextAlignment" Value="Right" />
+		<Setter Property="Padding" Value="0,0,0,0" />
+	</Style>
+
+	<!--  DataGrid セル内の右寄せ TextBox  -->
+	<Style x:Key="DataGridRightTextBox"
+		TargetType="TextBox">
+		<Setter Property="HorizontalContentAlignment" Value="Right" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="Padding" Value="0,0,0,0" />
+	</Style>
+
+	<!--  予算画面のアクションボタン  -->
+	<Style x:Key="BudgetActionButtonStyle"
+		BasedOn="{StaticResource MaterialDesignOutlinedButton}"
+		TargetType="Button">
+		<Setter Property="Height" Value="36" />
+		<Setter Property="Margin" Value="4,0" />
+		<Setter Property="Padding" Value="10,0" />
+	</Style>
+
+	<!--  郵便番号検索ボタン  -->
+	<Style x:Key="PostalSearchButton"
+		BasedOn="{StaticResource MaterialDesignOutlinedButton}"
+		TargetType="Button">
+		<Setter Property="Margin" Value="8,4,0,4" />
+		<Setter Property="Padding" Value="12,6" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
 </ResourceDictionary>

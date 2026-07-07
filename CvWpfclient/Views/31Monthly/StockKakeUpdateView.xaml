@@ -12,15 +12,6 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:StockKakeUpdateViewModel />
 	</helpers:BaseWindow.DataContext>
-	<helpers:BaseWindow.Resources>
-		<Style x:Key="SettingLabel"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="FontWeight" Value="Medium" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-			<Setter Property="Margin" Value="0,0,16,0" />
-		</Style>
-	</helpers:BaseWindow.Resources>
 
 	<Grid>
 		<Grid.RowDefinitions>

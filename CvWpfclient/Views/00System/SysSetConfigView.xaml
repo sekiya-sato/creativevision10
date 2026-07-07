@@ -22,14 +22,6 @@
 		<vm:SysSetConfigViewModel />
 	</helpers:BaseWindow.DataContext>
 	<helpers:BaseWindow.Resources>
-		<Style x:Key="SettingLabel"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="FontWeight" Value="Medium" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-			<Setter Property="Margin" Value="0,0,16,0" />
-		</Style>
-
 		<Style x:Key="SettingTextBox"
 			BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
 			TargetType="TextBox">

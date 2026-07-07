@@ -45,15 +45,6 @@
 			<Setter Property="HorizontalAlignment" Value="Stretch" />
 			<Setter Property="TextAlignment" Value="Right" />
 		</Style>
-
-		<Style x:Key="SelectionResultText"
-			TargetType="TextBlock">
-			<Setter Property="MinWidth" Value="0" />
-			<Setter Property="Margin" Value="12,0,8,0" />
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-			<Setter Property="TextTrimming" Value="CharacterEllipsis" />
-		</Style>
 	</helpers:BaseWindow.Resources>
 
 	<Grid Background="{DynamicResource AppCommonBackgroundBrush}">

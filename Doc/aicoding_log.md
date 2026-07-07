@@ -1,3 +1,27 @@
+## [2026-07-07] 14:45 追加の重複スタイルを UIFormStyles.xaml へ集約（デザイン改善フェーズ1・第2弾）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：スタイル重複の残項目をチェックし、フェーズ1で対象外だった重複スタイルを追加集約する（多言語化は保留）
+### 実施内容
+- CvWpfclient/Resources/UIFormStyles.xaml: 全 View 横断で内容が一致していた 9 スタイルを追加集約（SettingLabel / StatusTextBlockStyle / SelectionResultText / MeisaiReadOnlyTextBlock / MeisaiRightReadOnlyTextBlock / DataGridRightTextBlock / DataGridRightTextBox / BudgetActionButtonStyle / PostalSearchButton）
+- CvWpfclient/Views 配下 16 View: 上記のローカル重複定義を削除（空 Resources コンテナ・付随コメントも除去）
+- 内容が相違する 2 件は意図的にローカル残置：MasterSysKanriMenteView（PostalSearchButton の Margin/Padding/Height 差異）/ ZaikoQueryView（DataGridRightTextBlock の Padding 無し）
+- 各所で内容が相違し集約対象外としたもの：GridRightTextBlock / ConditionSearchTextBox（Height 32/34）/ ConditionLabel（FontSize 12/13）
+### 技術決定 Why
+- MeisaiRightReadOnlyTextBlock は MeisaiReadOnlyTextBlock を BasedOn 参照するため、UIFormStyles.xaml 内で親を先に定義。App.xaml でのマージ順（UIFormStyles を末尾）はフェーズ1で確定済みで、Material/SearchTextBox 依存も解決される
+- 全定義を抽出し setter 集合が完全一致するもののみ集約。相違するものは同名キーのローカル定義でシャドウして挙動を維持
+### 影響範囲
+- 変更: CvWpfclient/Resources/UIFormStyles.xaml、CvWpfclient/Views 配下 16 View（View 側は削除のみ）
+### 確認
+- grep 漏れチェック：集約 9 キーのローカル定義は outlier 2 件のみ残存
+- dotnet build CvWpfclient/CvWpfclient.csproj：成功（0 警告 / 0 エラー）
+- 実機目視は未実施（StaticResource 解決順序は設計上正しく全ビルド通過）
+
+---
+
 ## [2026-07-07] 14:22 ShopBudgetReportViewModel.cs のCSV処理をSQLに変更
 ### Agent
 - [kimi-k2.6 : opencode-go]
