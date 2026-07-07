@@ -81,6 +81,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected virtual string? ListWhere => BuildSelectCodeWhere(SelectCodeParam);
 
 	protected virtual string[]? ListParams => null;
+	protected string[]? SelectCodeWhereParameters { get; set; }
 	protected virtual Window? ActiveWindow => ClientLib.GetActiveView(this);
 	protected virtual string? FormFile => null;
 	protected virtual PrintByCsvParam? PrintByCsvParam => null;
@@ -114,14 +115,17 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected virtual void AfterUpdate(T item) => Message = $"修正しました (CD={GetCode(item)}, Id={item.Id})";
 	protected virtual void AfterDelete(T removedItem) => Message = $"削除しました (CD={GetCode(removedItem)}, Id={removedItem.Id})";
 
-	protected virtual QueryListParam CreateListQueryParam() =>
-		new(
+	protected virtual QueryListParam CreateListQueryParam() {
+		SelectCodeWhereParameters = null;
+		var where = ListWhere;
+		return new(
 			itemType: Tabletype,
-			where: ListWhere,
+			where: where,
 			order: ListOrder,
-			parameters: ListParams,
+			parameters: ListParams ?? SelectCodeWhereParameters,
 			maxCount: ListMaxCount
 		);
+	}
 
 	protected virtual CvMsg CreateListMessage() =>
 		new() {
@@ -207,6 +211,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 
 		List<string> clauses = [];
+		List<string> parameters = [];
 		AddSelectedIdInClause(clauses, "Id", parameter.Ids);
 		if (parameter.FromId.HasValue) {
 			clauses.Add($"Id >= {parameter.FromId.Value}");
@@ -215,17 +220,18 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			clauses.Add($"Id <= {parameter.ToId.Value}");
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.FromCode)) {
-			clauses.Add($"Code >= '{EscapeSqlLiteral(parameter.FromCode)}'");
+			clauses.Add($"Code >= {AddSqlParameter(parameters, parameter.FromCode.Trim())}");
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.ToCode)) {
-			clauses.Add($"Code <= '{EscapeSqlLiteral(parameter.ToCode)}'");
+			clauses.Add($"Code <= {AddSqlParameter(parameters, parameter.ToCode.Trim())}");
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
-			clauses.Add($"Name LIKE '%{EscapeSqlLiteral(parameter.Name)}%'");
+			clauses.Add($"Name LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Name)}%")} ESCAPE '\\'");
 		}
 		AddOptionalSelectedIdInClause(clauses, parameter.AdditionalIds1Column, parameter.AdditionalIds1);
 		AddOptionalSelectedIdInClause(clauses, parameter.AdditionalIds2Column, parameter.AdditionalIds2);
 
+		SelectCodeWhereParameters = [.. parameters];
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
 
@@ -257,6 +263,17 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		string.IsNullOrWhiteSpace(value) ? null : value;
 
 	protected static string EscapeSqlLiteral(string value) => value.Replace("'", "''");
+
+	protected static string EscapeSqlLikePattern(string value) =>
+		value.Trim()
+			.Replace(@"\", @"\\")
+			.Replace("%", @"\%")
+			.Replace("_", @"\_");
+
+	protected static string AddSqlParameter(List<string> parameters, object value) {
+		parameters.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);
+		return $"@{parameters.Count - 1}";
+	}
 
 	protected static string GetCode(BaseDbClass item) =>
 		item is IBaseCodeName cn ? cn.Code : item.Id.ToString();

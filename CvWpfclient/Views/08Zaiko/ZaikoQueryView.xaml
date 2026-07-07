@@ -70,7 +70,7 @@
 			<Setter Property="Width" Value="130" />
 			<Setter Property="Height" Value="32" />
 			<Setter Property="Margin" Value="0" />
-			<Setter Property="Background" Value="White" />
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
 			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
 			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
 		</Style>
@@ -130,7 +130,7 @@
 									Text="商品名" />
 								<TextBox Height="32"
 									Padding="8,0" VerticalContentAlignment="Center"
-									Background="White"
+									Background="{DynamicResource MaterialDesignPaper}"
 									Style="{StaticResource MaterialDesignTextBox}"
 									Text="{Binding Owner.ShohinName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 							</StackPanel>
@@ -193,7 +193,7 @@
 										Text="最大件数" />
 									<TextBox Height="32"
 										Padding="8,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
-										Background="White"
+										Background="{DynamicResource MaterialDesignPaper}"
 										Style="{StaticResource MaterialDesignTextBox}"
 										Text="{Binding Owner.MaxCountText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 								</StackPanel>
@@ -262,7 +262,7 @@
 						<DataGrid Grid.Row="1"
 							helpers:DataGridDoubleClick.Command="{Binding Owner.OpenStockTabCommand}"
 							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-							AlternatingRowBackground="Beige" AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+							AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}" AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
 							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 							IsReadOnly="True"
 							ItemsSource="{Binding Owner.ProductRows}"
@@ -348,7 +348,7 @@
 
 				<DataGrid Grid.Row="1"
 					Margin="0,12,0,0"
-					materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="True"
+					materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}" AutoGenerateColumns="True"
 					AutoGeneratingColumn="StockGrid_AutoGeneratingColumn" CanUserAddRows="False" CanUserDeleteRows="False" FrozenColumnCount="2" GridLinesVisibility="All"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 					IsReadOnly="True"

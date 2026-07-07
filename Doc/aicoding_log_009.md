@@ -1,0 +1,883 @@
+## [2026-07-07] 15:23 アクセシビリティ残件A（ComboBox/DatePicker/PasswordBox にアクセシブル名）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：改善バックログ「A（アクセシビリティ残件）」のみ実施。HintAssist.Hint が UIA 名にならない ComboBox/DatePicker/PasswordBox にスクリーンリーダー名を付与する
+### 実施内容
+- CvWpfclient/Resources/UIFormStyles.xaml: キー付き BasedOn スタイルを追加。FormComboBox(BasedOn MaterialDesignOutlinedComboBox) / FormDatePicker(BasedOn MaterialDesignFloatingHintDatePicker) / FormPasswordBox(BasedOn MaterialDesignFloatingHintPasswordBox)。いずれも AutomationProperties.Name を materialDesign:HintAssist.Hint にバインドするのみ
+- CvWpfclient/Views 配下 18 View: 対象コントロールの Style 参照を差し替え（MaterialDesignOutlinedComboBox→FormComboBox 26 / MaterialDesignFloatingHintDatePicker→FormDatePicker 21 / MaterialDesignFloatingHintPasswordBox→FormPasswordBox 2）
+- MaterialDesignComboBox（別基底）×2 と DataGrid 内の無名選択チェックボックス数件は今回対象外（残タスク）
+### 技術決定 Why
+- フェーズ2の FormTextBox と同一方針。HintAssist.Hint は MaterialDesign の浮動ラベルで UIA Name に自動反映されないため、Style セッターで Name にバインドして供給（Hint 未設定なら Name は空で無害）
+- 暗黙（キー無し TargetType）スタイルは Material 既定テンプレートを全置換し危険なため不採用。キー付き BasedOn なら見た目・挙動は基底と同一で安全
+- PasswordBox は Hint（ラベル）を Name に供給するのみで、パスワード値は公開しない
+### 影響範囲
+- 変更: CvWpfclient/Resources/UIFormStyles.xaml、CvWpfclient/Views 配下 18 View（Style 参照の差し替えのみ）
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj：スタイル追加後・差し替え後の各段階で成功（0 警告 / 0 エラー）
+- git diff：View 側は対象トークンの差し替えのみ（他の変更なし）。削除49=旧トークン49（26+21+2）と一致
+- 実機/スクリーンリーダー確認は未実施（Hint 由来 Name の二重読み上げが無いか要実機確認、設計上は冪等で破壊なし）
+
+---
+
+## [2026-07-07] 14:53 アクセシビリティ対応（デザイン改善フェーズ2・共有スタイル経由でアクセシブル名付与）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：デザイン改善フェーズ2（アクセシビリティ、課題A）。AutomationProperties が全体でゼロだったため、スクリーンリーダー向けのアクセシブル名を付与する
+### 実施内容
+- 調査：AutomationProperties は 232 View / Resources で 0 件。一方で HintAssist.Hint 212・ToolTip 184・Window Title 231 と素材は充足。Window 名は Title から UIA が自動公開のため対応不要、アイコン＋テキストボタン(約200)はテキストで読み上げ済み。実作業は共有スタイル数箇所＋Style参照差し替えに集約できると判断
+- CvWpfclient/Resources/UIFormStyles.xaml: FormTextBox に `AutomationProperties.Name ←(materialDesign:HintAssist.Hint)` セッターを追加（NumericFormTextBox は BasedOn で継承、約160 の TextBox に浮動ラベル由来の名前）
+- CvWpfclient/Resources/UIFormStyles.xaml: 新スタイル ToolCommandButton（BasedOn MaterialDesignToolForegroundButton ＋ `AutomationProperties.Name ← ToolTip`）を追加
+- CvWpfclient/Views 配下 36 View: ツールバー系コマンドボタン 116 箇所の `Style="{StaticResource MaterialDesignToolForegroundButton}"` を ToolCommandButton に差し替え（見た目・挙動は不変、ToolTip 由来の名前を付与。アイコンのみの戻る/閉じるも読み上げ可能に）
+- CvWpfclient/Resources/UISearchTextBox.xaml: 検索テンプレート内の Magnify ボタンに固定 Name「検索」
+- CvWpfclient/Resources/UIMainWindow.xaml: ウィンドウ枠ボタン（−/△/X）に固定 Name（最小化／メニューのみ表示／閉じる）
+### 技術決定 Why
+- HintAssist.Hint は MaterialDesign の浮動ラベルで UIA Name に自動反映されないため、Style セッターで Name にバインドして供給。Hint 未設定なら Name は空でコンテンツ名にフォールバックし無害
+- ToolCommandButton は MaterialDesignToolForegroundButton と同一の見た目・挙動に Name を足すだけのため、全 116 箇所を機械的に差し替えても視覚・動作の変化なし
+- ComboBox/DatePicker(36) と稀な CheckBox/Radio/Password は、暗黙スタイル導入が Material 既定を壊すリスクがあるため今回は対象外（後続で慎重に対応）
+### 影響範囲
+- 変更: UIFormStyles.xaml / UISearchTextBox.xaml / UIMainWindow.xaml、CvWpfclient/Views 配下 36 View（Style 参照の差し替えのみ）
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj：各ステップ後およびまとめて成功（0 警告 / 0 エラー）
+- git diff：View 側は全て `MaterialDesignToolForegroundButton → ToolCommandButton` の差し替えのみ（他の変更なし）
+- 実機/スクリーンリーダーでの読み上げ確認は未実施（要実機確認：特に Hint 由来 Name の二重読み上げが無いか。設計上は同値で冪等のため破壊はしない）
+
+---
+
+## [2026-07-07] 14:45 追加の重複スタイルを UIFormStyles.xaml へ集約（デザイン改善フェーズ1・第2弾）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：スタイル重複の残項目をチェックし、フェーズ1で対象外だった重複スタイルを追加集約する（多言語化は保留）
+### 実施内容
+- CvWpfclient/Resources/UIFormStyles.xaml: 全 View 横断で内容が一致していた 9 スタイルを追加集約（SettingLabel / StatusTextBlockStyle / SelectionResultText / MeisaiReadOnlyTextBlock / MeisaiRightReadOnlyTextBlock / DataGridRightTextBlock / DataGridRightTextBox / BudgetActionButtonStyle / PostalSearchButton）
+- CvWpfclient/Views 配下 16 View: 上記のローカル重複定義を削除（空 Resources コンテナ・付随コメントも除去）
+- 内容が相違する 2 件は意図的にローカル残置：MasterSysKanriMenteView（PostalSearchButton の Margin/Padding/Height 差異）/ ZaikoQueryView（DataGridRightTextBlock の Padding 無し）
+- 各所で内容が相違し集約対象外としたもの：GridRightTextBlock / ConditionSearchTextBox（Height 32/34）/ ConditionLabel（FontSize 12/13）
+### 技術決定 Why
+- MeisaiRightReadOnlyTextBlock は MeisaiReadOnlyTextBlock を BasedOn 参照するため、UIFormStyles.xaml 内で親を先に定義。App.xaml でのマージ順（UIFormStyles を末尾）はフェーズ1で確定済みで、Material/SearchTextBox 依存も解決される
+- 全定義を抽出し setter 集合が完全一致するもののみ集約。相違するものは同名キーのローカル定義でシャドウして挙動を維持
+### 影響範囲
+- 変更: CvWpfclient/Resources/UIFormStyles.xaml、CvWpfclient/Views 配下 16 View（View 側は削除のみ）
+### 確認
+- grep 漏れチェック：集約 9 キーのローカル定義は outlier 2 件のみ残存
+- dotnet build CvWpfclient/CvWpfclient.csproj：成功（0 警告 / 0 エラー）
+- 実機目視は未実施（StaticResource 解決順序は設計上正しく全ビルド通過）
+
+---
+
+## [2026-07-07] 14:22 ShopBudgetReportViewModel.cs のCSV処理をSQLに変更
+### Agent
+- [kimi-k2.6 : opencode-go]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ShopBudgetReportViewModel.cs の印刷CSV処理をSQLで解決し、実際のMasterTranから正確に組み立てる
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/ShopBudgetReportViewModel.cs: BuildPrintCsvDataAsyncを削除し、BuildPrintSqlParamAsyncを新設。SQLで店舗リスト(MasterTokui)、カレンダー、予算集計(MasterYosanBrand)、売上集計(Tran01Tenuri)、前年売上(曜日補正あり)、累計(Window関数)、前年比、予算差異、予算達成率を一括計算。DoOutputPdfでQueryListSqlParamを渡すよう変更。不要なメソッド(GetShopsAsync, GetBudgetAsync, GetSalesAsync, GetPrevYearDayStr等)と不要なusingを削除。
+### 技術決定 Why
+- C#側でのGroupBy/ToDictionary/ループによるCSV構築は非効率で間違いやすいため、SQLiteのCTEとWindow関数で一括集計する方針とした。前年データの曜日補正もSQL内でdate/strftime関数で実装。全店舗モードはdaily_total CTEで対応。社販売上はデータがないため項目削除（qfmに該当列なし）。客数は0固定で項目残存。
+### 影響範囲 (省略可)
+- 省略
+### 確認
+- WPF client build 成功 (0エラー 0警告)
+
+---
+
+## [2026-07-07] 13:20 店舗予算表（ShopBudgetReportView）の作成
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._02Yosan.ShopBudgetReportView（印刷条件画面）と対応するViewModel、およびprintform/ShopBudgetReport.qfm（リスト帳票）を新規作成する
+### 実施内容
+- CvWpfclient/Views/02Yosan/ShopBudgetReportView.xaml: BaseWindow継承、ColorZoneヘッダー、年月入力、店舗Code From-To（選択ボタン付き）、出力区分（店舗別/全店）ラジオボタン、前年比（日付対比/曜日対比）ラジオボタン、F6印刷実行ボタン、Esc閉じるボタンを配置
+- CvWpfclient/ViewModels/02Yosan/ShopBudgetReportViewModel.cs: BaseViewModel継承、印刷データをC#側でCSV生成（PrintByCsvParam）、MasterYosanBrandから予算集計、Tran01Tenuriから売上（KingakuTotal）集計、前年データ取得（日付対比：AddMonths(-12)、曜日対比：さらに曜日差分調整）、累計は1日からの合計、前年比/予算比/予算差異を計算
+- printform/ShopBudgetReport.qfm: MasterShainMente.qfmを雛形に15列（item1-item15）のCSV入力リスト帳票をA4縦・Shift_JISで作成
+- CvWpfclient/Models/MenuData.cs: 店舗予算表のaddInfo「準備中」を削除
+### 技術決定 Why
+- BaseViewModelへのRunPrintPdfAsync移行はユーザー指示により見送り、今回は対象ViewModel内に直接移植して影響範囲を最小化した
+- 前年比の曜日対比は、current.AddMonths(-12)した日付に対しcurrent.DayOfWeek - baseDate.DayOfWeek分をAddDaysで調整するユーザーの明示式をそのまま実装した
+- qfmはrepo標準のA4縦・CSV data.txt・font size="62"のリスト構成に寄せ、15列を2行に分けず1行フラットで配置（印刷密度の都合上現状最小構成）
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0警告0エラー）
+- `validate_qfm.py printform/ShopBudgetReport.qfm`: OK
+- CRLF確認: 編集ファイルはCRLF
+
+---
+## [2026-07-07] 11:42 publish-velopack.bat の Velopack 引数不正修正
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：commit 0110aa7084f9bf2f68f12ea856af29cc78ee5f15 の publish-velopack.bat 実行時に Velopack の --packVersion / --packDir 引数が崩れるバグを修正し、CvWpfclient と CvServer の appsettings.json 更新を実行確認する
+### 実施内容
+- CvWpfclient/publish-velopack.version.ps1: Section 空文字指定に依存せず TopLevel スイッチでトップレベルキーを扱えるよう修正し、PowerShell の -f 演算子と正規表現波括弧の衝突を避ける実装へ変更
+- publish-velopack.bat: CvServer/appsettings.json 更新呼び出しを -TopLevel 指定へ変更。検証時に一時コメントアウトした publish.sh 実行行は元に戻した
+- CvWpfclient/appsettings.json / CvServer/appsettings.json: publish-velopack.bat 実行で 0.8.11 に揃うことを確認後、コミット差分に含めないため元の値へ戻した
+### 技術決定 Why
+- -Section "" は呼び出し環境によって空文字引数として扱われず、PowerShell 側の正規表現も format 演算子の波括弧解釈で例外になるため、トップレベル指定を明示的なスイッチに分離した
+### 確認
+- publish-velopack.bat: 成功。dotnet publish と vpk pack が通り、Velopack release 0.8.11 を作成
+- appsettings.json: 実行時に CvWpfclient/Application.Version と CvServer/ServerVersion がどちらも 0.8.11 に更新されることを確認。確認後は元値へ復帰
+- git diff --check: OK
+- CRLF確認: 編集ファイルは CRLF
+
+---## [2026-07-07] 11:17 StockInputView の棚卸伝票印刷 qfm 作り直し
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：6661a658bd38a5201ad1356598de397bd981332f と 2f5c150bcdb16c0f1e5eec1de89fff2b7509e24d を参考に、StockInputView の印刷を ShopUriageInput の qfm 雛形ベースで修正する
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 旧HEAD/item混在SQLと個別DoPrintAsyncを廃止し、RunPrintPdfAsync と item1-item12 / item1-item21 のデータ列SQLへ変更
+- printform/StockInputView_header.qfm: ShopUriageInput_header.qfm を雛形に、棚卸伝票一覧用の固定ラベルと item1-item12 構成へ作り直し
+- printform/StockInputView_detail.qfm: ShopUriageInput_detail.qfm を雛形に、棚卸伝票明細用の固定ラベルと item1-item21 構成へ作り直し
+### 技術決定 Why
+- ShopUriageInputView と同じく、見出しは qfm の static text、SQL は実データ列のみ返す構成に統一し、PrintStream のHEAD混在CSVに依存しない単純な列対応にした
+### 確認
+- qfm validator: OK
+- git diff --check: OK
+- CRLF確認: bare LF なし
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功（0警告、0エラー）
+
+---
+## [2026-07-07] 10:41 フォーム系共通スタイルを UIFormStyles.xaml へ集約（デザイン改善フェーズ1）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient のデザイン面レビューを行い、まず「各 View に重複していたフォーム系スタイル定義の集約」（フェーズ1）を実施する
+### 実施内容
+- CvWpfclient/Resources/UIFormStyles.xaml: 新規作成。各 View にローカル重複していた 5 スタイル（MenteSearchTextBox / MenteDataGridColumnHeader / FormLabel / FormTextBox / NumericFormTextBox）を集約
+- CvWpfclient/App.xaml: MergedDictionaries の末尾に UIFormStyles.xaml を登録
+- CvWpfclient/Views/ 配下 29 View: 上記 5 スタイルのローカル重複定義を削除（空になった BaseWindow.Resources コンテナ・付随コメントも除去）。純削除のみ（挿入 0 行 / 計 792 行削除）
+- 例外 3 ファイルは意図的にローカル定義を残置（差異保持のためシャドウ）：ZaikoQueryView（ヘッダー中央寄せ）/ SysTableSpecView（FormLabel Margin=4,0,12,0）/ RangeInputParamView（FormTextBox に MinWidth=0）
+### 技術決定 Why
+- UIFormStyles.xaml は BasedOn で SearchTextBox（UISearchTextBox.xaml）・MaterialDesignDataGridColumnHeader・MaterialDesignOutlinedTextBox を StaticResource 参照するため、App.xaml でこれらより後（末尾）にマージする必要がある。順序を変えると解決に失敗する
+- View 本体の `{StaticResource ...}` 参照はアプリケーションスコープまで解決が及ぶため、ローカル定義削除後も中央定義に解決され、見た目は不変
+- カノニカル定義と異なる 3 件は同名キーをローカルで残すことでシャドウし、意図した差異を維持
+### 影響範囲
+- 新規: CvWpfclient/Resources/UIFormStyles.xaml
+- 変更: CvWpfclient/App.xaml、CvWpfclient/Views/ 配下 29 View（削除のみ）
+### 確認
+- grep 漏れチェック：対象 5 キーのローカル定義は例外 3 ファイルのみ残存
+- dotnet build CvWpfclient/CvWpfclient.csproj：成功（0 警告 / 0 エラー）
+- git diff：View はすべて純削除、追加は App.xaml 1 行と新規辞書のみ
+- 実機目視は未実施（StaticResource 解決順序は設計上正しく全ビルド通過）
+
+---
+
+## [2026-07-07] 09:53 ShopUriageInputView の伝票印刷・伝票明細印刷作り直し
+### Agent
+- [GPT-5 : OpenAI]
+### Editor
+- VS2026
+### 目的
+- ユーザーからの要望：ShopUriageInputView の「伝票印刷」「伝票明細印刷」を MasterShiireMenteView などの印刷機能を参考に作り直し、ヘッダは qfm に直接記述し、データ部分のみ SQL 生成にする
+### 実施内容
+- CvWpfclient/ShopUriageInputViewModel.cs: 旧 HEAD レコード生成 SQL を廃止し、一覧12列・明細21列のデータ専用 SQL に変更。VTenpo/VSoko/VShain/VCustomer は Sid/Cd/Mei を空白結合し、DenDay は yyyyMMdd のまま出力
+- printform/ShopUriageInput_header.qfm: タイトル・列見出しを static text 化し、画面入力項目に対応する item1-item12 のみを使用する A4縦帳票に再構成
+- printform/ShopUriageInput_detail.qfm: 明細用の static 見出しと item1-item21 のみを使用し、画面上の明細項目と合計・単価・担当・メモを出力する A4縦帳票に再構成
+### 技術決定 Why
+- SQLで見出し行を生成すると qfm と列数が肥大化し、入力画面に存在しない項目まで帳票に残るため、見出しは qfm static、SQLは実データ列だけに分離した
+- qfm validator の標準に合わせ、既存の横向き帳票から A4縦の複数行レコードへ再配置した
+### 確認
+- qfm validator: ShopUriageInput_header.qfm / ShopUriageInput_detail.qfm とも OK
+- git diff --check: OK
+- WPFビルド: cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj" 成功、警告0・エラー0
+
+---
+## [2026-07-07] 08:55 publish-velopack.bat で CvServer/appsettings.json の ServerVersion も WPF 版と同じ値に更新
+### Agent
+- [kimi-k2.7-code : OpenCode]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：publish-velopack.bat で CvWpfclient/appsettings.json の Application.Version を更新したあと、CvServer/appsettings.json の ServerVersion も同じ値に同時に更新する
+### 実施内容
+- CvWpfclient/publish-velopack.version.ps1: セクション名・キー名・固定値上書きを指定できるよう汎用化。Section を空文字にするとトップレベルのキーを対象とし、SetVersion 指定時は Increment より優先して単純に上書きする
+- publish-velopack.bat: CvWpfclient/appsettings.json の Application.Version 増分後に、取得した APP_VERSION で CvServer/appsettings.json の ServerVersion を SetVersion により単純に上書きする処理を追加
+### 技術決定 Why
+- JSON コメントを含む appsettings.json をそのまま扱うため、JSON パーサーではなく正規表現によるテキスト置換を継続。既存の publish-velopack.version.ps1 を流用することで、文字コード（UTF-8 BOM なし）やコメント保持の処理を共通化した
+- ServerVersion は WPF 側の Application.Version と同じ値で単純に上書きし、ServerVersion の既存値は参照しない
+### 確認
+- 正規表現ロジックを C# で検証：Application.Version の patch 増分、トップレベル ServerVersion の固定値上書き、JSON コメント保持、いずれも正常に動作
+- CRLF 確認: 編集した bat/ps1 は CRLF で統一
+
+---
+
+## [2026-07-06] 16:40 ShopUriageInputView一覧印刷SQLのitem行化修正
+### Agent
+- [kimi-k2.7-code : OpenCode]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：ShopUriageInputView の一覧印刷（伝票印刷）で、1 ページに 1 行だけ出力されていた問題を解消し、.omo/shopsales.png のような表形式・複数行の印刷結果を得る
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `BuildListPrintSql` を修正。従来の「伝票 1 件 = H 行 1 本」から、StockInputView と同じ「先頭列見出し H 行 ＋ 以降 item 行」形式に変更
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: item 行の列割り当てを `ShopUriageInput_header.qfm` の Rec02 定義に合わせ、c3..c23 に item1/item6/item22/item44/item32/item11/item12/item29/item30/item14/item15/item17/item18/item19/item24/item25/item31/item26/item27/item45/item28 を配置
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 消費税計を `round(KingakuTotal * 0.1)` で算出（現状で消費税率マスタがないため簡易計算）。性別・年代・注文番号・手入力No・関連No2 はデータ未保存または該当項目なしのため空文字を出力
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `AliasColumns` / `OuterColumns` ヘルパーを追加し、UNION ALL 結合時の無名リテラル列に一意な別名 c1..cN を付与
+### 技術決定 Why
+- `ShopUriageInput_header.qfm` は H レコードをページ先頭の見出し・item レコードをデータ行として解釈する構成。従来のすべて H 行だとヘッダレコードとして 1 ページに 1 つしか出力されず、nowprint.png のように 1 行だけになっていた
+- 列見出しは印刷データ側から供給する方式に合わせ、H 行にタイトル・列名を、item 行に伝票データを流し込むことで、qfm 変更なしで一覧印刷を表形式に近づけた
+- 消費税計・性別・年代などは現時点で保存されていないか該当項目がないため、ユーザー指示に従いダミー（簡易計算または空文字）とした
+### 影響範囲
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs
+### 確認
+- CvWpfclient/CvWpfclient.csproj build: 成功（0 警告 / 0 エラー）
+- CRLF 確認: 対象ファイルは CRLF で統一
+
+---
+
+## [2026-07-06] 15:45 ShopUriageInputViewの印刷ロジック修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：StockInputViewの一覧印刷・明細印刷に合わせて、ShopUriageInputViewの印刷処理を修正し、一覧側ボタン表示を「伝票印刷」に変更する
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 印刷コマンドをCreateListQueryParamベースに変更し、検索条件・並び順・件数上限・パラメータを印刷SQLへ引き継ぐよう修正
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 明細印刷で対象伝票をサブクエリ化し、一覧条件と同じ伝票集合からヘッダ行・明細行を出力するよう修正
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧側印刷ボタンの表示を「伝票一覧印刷」から「伝票印刷」に変更
+### 技術決定 Why
+- StockInputViewで正常動作している方式に合わせ、QueryListParamを印刷SQL生成へ渡すことで、画面一覧取得時と印刷時の対象データ差異を避けるため
+### 確認
+- ShopUriageInputView.xaml XML構文確認: OK
+- CRLF確認: 対象編集ファイルはCRLFで統一
+- git diff --check: OK
+- CvWpfclient/CvWpfclient.csproj build: 成功（0警告、0エラー）
+
+---
+
+## [2026-07-06] 15:00 棚卸入力画面の印刷でタイトル・列見出しを出力／エラー修正
+### Agent
+- Claude Opus 4.8 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- 一覧印刷実行時の `System.ArgumentException (An item with the same key has already been added. Key: '')` を解消する
+- 添付 PDF どおり、帳票タイトルと列見出しも印刷データの一部として出力する
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 印刷 SQL の無名リテラル列（`''`）に一意な別名 `c1..cN` を付与。SQLite では無名リテラル列名が空文字となり、NPoco の `DictionaryMapper` が重複キー `''` で例外になっていた
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: qfm フォームが期待する見出し `HEAD*`（`rectype="H"` 行）を先頭に UNION で出力。`HEAD2`=タイトル、`HEAD3` 以降=列見出し
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 明細印刷は datarecord が `HEAD1..91` の後に `item1..` と続くため、"H" 行の伝票サマリ値（`item1..16`）を 92 列目以降へ配置
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: フォーム定義に合わせ、倉庫（item10/16）と入力者（item9/15）の取り違えを修正
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 印刷 SQL 生成を `BuildListPrintSql` / `BuildDetailPrintSql` へ切り出し、`AliasColumns` / `OuterColumns` ヘルパーを追加
+### 技術決定 Why
+- CSV 出力（`WriteDynamicCsv`）は列順のみを使用しヘッダを含めないため、列名は一意化のみを目的に付与した
+- 帳票タイトル・列見出しは qfm フォームではなく印刷データ側（既存 ShopUriage 帳票と同じ "H" レコード方式）で供給する設計に合わせた
+### 影響範囲
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs
+### 確認
+- `CvWpfclient/CvWpfclient.csproj` ビルド成功（0 警告 / 0 エラー）
+- サマリ行（item1..16）の配置は実機での印刷確認を推奨
+
+---
+
+## [2026-07-06] 13:40 棚卸入力画面に一覧印刷・明細印刷機能を追加
+### Agent
+- [kimi-k2.7-code : OpenCode : Sisyphus]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：棚卸入力画面の一覧タブに「一覧印刷」「明細印刷」ボタンを追加し、既存の qfm フォームを使って印刷できるようにする
+### 実施内容
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 一覧タブの「一覧取得」ボタン右側に間隔を空けて「一覧印刷」「明細印刷」ボタンを追加
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: `DoPrintListCommand` / `DoPrintDetailCommand` を追加し、一覧・明細それぞれで `PrintOperation` 経由の PDF 出力を実行
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 一覧印刷用 SQL を `StockInputView_header.qfm` の item1～item16 に合わせて 16 列で構成
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 明細印刷用 SQL を `StockInputView_detail.qfm` の item1～item33 に合わせ、`Tran60Tana A, json_each(A.Jmeisai) m` で明細を展開
+### 技術決定 Why
+- `BaseMenteViewModel` は単一の `FormFile`/`PrintBySqlParam` を前提としているため、2 つの印刷ボタンに対応するため ViewModel 内に独自の印刷メソッド `DoPrintAsync` を実装した
+- 検索条件の再利用と画面一覧との整合性を保つため、`CreateListQueryParam()` で構築した WHERE/ORDER/LIMIT を両方の印刷 SQL で共通化した
+- 明細 SQL では `json_extract(m.value, '$.xxx')` で `Tran99Meisai` のプロパティを展開し、既存の明細編集ロジックと同じ JSON キー名を使用した
+### 影響範囲
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs
+### 確認
+- `CvWpfclient/CvWpfclient.csproj` ビルド成功（0 警告 / 0 エラー）
+- `StockInputView.xaml` XML 構文チェック OK
+- qfm 検証スクリプト：item 数は header=16 / detail=33 で SQL 列数と一致（orientation が landscape であることのみ警告、既存フォームをそのまま使用）
+
+---
+
+## [2026-07-06] 13:10 店舗売上入力に伝票一覧印刷/伝票明細印刷を追加
+### Agent
+- Claude Opus 4.8 : Anthropic : Claude Code
+### 目的
+- ユーザーからの要望：ShopUriageInputView の一覧タブに「一覧取得」ボタンのさらに右へ「伝票一覧印刷」「伝票明細印刷」の2ボタンを配置し、printform/ShopUriageInput_header.qfm / ShopUriageInput_detail.qfm で印刷する。明細は Tran01Tenuri + json_each(Jmeisai) で展開して取得する
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: `DoOutputPdf` の本体を `RunPrintPdfAsync(formFile, csvParam, sqlParam, ct)` 保護メソッドへ切り出し、1画面から複数帳票(フォーム+データ)を出し分けられるようにした。`DoOutputPdf` はそのラッパへ変更
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `DoPrintListCommand`(ShopUriageInput_header.qfm) と `DoPrintDetailCommand`(ShopUriageInput_detail.qfm) を追加。いずれも一覧タブ表示時のみ実行可。SQL は PrintStream の「レコード区分」CSV形式に合わせ、先頭カラムをレコード区分キー("H"=ヘッダ/それ以外=明細)とした
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 一覧印刷は伝票1件=「H」行(HEAD1..HEAD22)。明細印刷は伝票の「H」行(HEAD1..HEAD37)＋ json_each(Jmeisai) 展開の明細行(item1..item72) を UNION ALL し、伝票→H→明細No の順に並べる。列並びは qfm の item 定義順に一致させ、未使用スロットは '' で桁を確保
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 一覧タブ上段 DockPanel 右端を StackPanel 化し、一覧取得の右へ Printer アイコン付き「伝票一覧印刷」「伝票明細印刷」ボタンを追加
+### 技術決定 Why
+- 基底 `DoOutputPdf` は単一 FormFile + 単一印刷データ前提のため、2帳票を出すには本体を再利用可能な保護メソッドへ分離するのが最小差分だった
+- qfm は `<prefix id="HEAD" rectype="H">` / `<prefix id="item" default="1">` の複数レコード区分CSV(CHM part5_12)を使うため、WriteDynamicCsv が生成する平坦CSVでも先頭列をキーにして H行/明細行を交互出力する構成にした
+- 明細側 json_each(b) は 'id' 列を持ち非修飾 Id と衝突するため、画面 WHERE は json_each 結合前のサブクエリ内で適用した
+- Tran01Tenuri に存在しない項目(手入力No/関連No2/消費税/SYSFLG/送信FLG 等)は空文字 '' やプレースホルダ '0' とした
+### 未確認 / 要フォロー
+- qfm の各 HEADn/itemn とデータの厳密な対応(桁位置・表示内容)は実機の印刷サーバ出力での確認・微調整が必要。当環境では印刷サーバ/net10 SQLite を実行できずランタイム検証は未実施
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj -o .omo\build\CvWpfclient` 成功（0 警告 / 0 エラー）
+- 2つの qfm は XML パース OK（landscape、items=136/163、datasrc=44/76）。qfm 自体は未変更
+- UNION ALL 両ブランチの列数=72、外側 select も 72 で一致を確認
+
+---
+
+## [2026-07-06] 12:00 店舗売上入力のヘッダ区分を売上/返品へ整理
+### Agent
+- [GPT-5 : OpenAI : Codex]
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：店舗売上入力のヘッダ区分を売上/返品のみとし、旧セール系区分は明細行のセール区分へ移す
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: ヘッダ区分候補を売上(10)/返品(20)のみに変更
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 既存ヘッダ区分が11/21の場合は10/20へ正規化し、明細区分をセール(1)へ変換
+### 技術決定 Why
+- プロパー/セールは明細行単位で管理するため、ヘッダには売上/返品の取引方向だけを保持するようにした
+- 旧データの11/21を読み込み時と保存前に吸収し、ヘッダ選択肢削減後も既存データの意味を明細区分へ移せるようにした
+### 確認
+- `git diff --check` エラーなし
+- `CvWpfclient/CvWpfclient.csproj` ビルド成功（0 警告 / 0 エラー）
+
+---
+
+## [2026-07-06] 18:40 opencode-go models リストの最新化
+### Agent
+- [kimi-k2.7-code : OpenCode : Sisyphus]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：opencode-go の使用モデルを最新のフロンティアモデルに更新する
+### 実施内容
+- opencode.json: `model` を `zhipu/glm-5.2` (1M ctx, SWE-bench Pro 62.1, MIT license) に変更
+- opencode.json: `small_model` を `deepseek/deepseek-v4-flash` (高速・低コスト, 1M ctx) に追加
+### 技術決定 Why
+- GLM-5.2 は 2026年6月リリースのオープンウェイト最強クラスのコーディングモデルであり、Claude Opus 4.8 に次ぐ性能でコスパが良い
+- DeepSeek V4 Flash は出力 $0.28/M と最安クラスであり、軽量タスク用 small_model に最適
+### 確認
+- opencode.json 構文確認（JSON valid）
+
+---
+
+## [2026-07-05] 12:20 verify-wpf-screen-runtime スキルの WSL2 対応追記と動作確認
+### Agent
+- [kimi-k2.7-code : OpenCode : Sisyphus]
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：verify-wpf-screen-runtime スキルが WSL2 側からも正常に動作するようチェックし、必要に応じて内容を追記する
+### 実施内容
+- .agents/skills/verify-wpf-screen-runtime/SKILL.md: WSL2 からのビルド・プロセス起動・環境変数渡し・スクリーンショット取得・プロセス停止の手順を追記
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 一時的な自動メニュー起動フックを追加・削除
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 一時的な詳細タブ初期化分岐を追加・削除
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: レイアウト確認（変更なし）
+### 技術決定 Why
+- WSL2 から Windows の GUI プロセスを起動する際、cmd.exe のカレントディレクトリが C:\gitroot\UT のままだと CvServer が appsettings.json を見つけられないため、--contentroot 指定が必要だった
+- スクリーンショットは Windows 側 PowerShell で取得し、.tmp_ui_check/ に保存することで WSL2 側からも /mnt/c/... で確認できる
+- 画面状態は ViewModel 側の環境変数分岐で作り、キー/マウス操作を避けた
+### 影響範囲
+- .agents/skills/verify-wpf-screen-runtime/SKILL.md のみ（製品コードへの変更はなし）
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+- WSL2 から CvServer/CvWpfclient を起動し、ShopUriageInputView の詳細タブに明細行1行を表示したスクリーンショットを取得
+- 一時フック削除後もビルド成功
+- `git diff --check` で LF/CRLF 警告のみ（対象外ファイル）
+
+---
+
+## [2026-07-05] 08:58 WPF実画面確認手順のskill化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvServer/CvWpfclient を起動して実際の画面を確認する手順を、他画面にも使えるskillとして残す
+### 実施内容
+- .agents/skills/verify-wpf-screen-runtime/SKILL.md: WPF実画面確認時の手順を追加。ViewModel側への状態注入、`MainMenuViewModel.SelectedMenu` と `DoMenuCommand` による画面起動、日本語リテラルを一時スクリプトから排除する方針、今回の `StockInputView` 確認例を記録
+### 技術決定 Why
+- UI Automation のキー操作・クリック操作は WPF の実際の選択/コマンド経路に届かない場合があるため、ViewModel と既存コマンドを直接使う確認手順を標準化した
+### 確認
+- `git diff --check -- CvWpfclient/Views/08Zaiko/StockInputView.xaml Doc/aicoding_log.md .agents/skills/verify-wpf-screen-runtime/SKILL.md` 成功
+
+---
+
+## [2026-07-05] 08:38 StockInputView の明細 P/S選択UI削除
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.StockInputView の伝票入力明細で、P/S選択は不要なため UI のみ外す
+### 実施内容
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 明細 RowDetailsTemplate 先頭の P/S コンボボックスを削除し、未使用になった `MeisaiKubunComboBox` / `MeisaiKubunComboBoxItem` スタイルを削除
+### 技術決定 Why
+- 要望が UI のみ外す内容だったため、ViewModel や保存値の扱いは変えず、StockInputView 上の選択 UI だけを除去する最小修正に留めた
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+- `CvServer` と `CvWpfclient` を起動し、`MainMenuViewModel` の `SelectedMenu` / `DoMenuCommand` 経由で `棚卸入力` を開いて、明細先頭が `行No` で P/S 選択 UI が表示されないことを確認
+
+---
+
+## [2026-07-04] 16:13 DatePicker の「今日」ボタンを各要素に明示設定
+### Agent
+- GPT-5.4-mini : OpenAI : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient の DatePicker で UICalendar.xaml のグローバル既定から各要素への明示設定に変更し、年月用 DatePicker との使い分けを可能にする
+### 実施内容
+- CvWpfclient/Resources/UICalendar.xaml: グローバル DatePicker Style から `helpers:DatePickerTodayButtonBehavior.IsEnabled=True` の Setter を削除
+- CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml: 4個の DatePicker（期首年月日、新税率切替日×3）に `helpers:DatePickerTodayButtonBehavior.IsEnabled=True` を追加
+- CvWpfclient/Views/01Master/MasterShohinMenteView.xaml: 3個の DatePicker（出荷日、納品日、店舗投入日）に `helpers:DatePickerTodayButtonBehavior.IsEnabled=True` を追加
+### 技術決定 Why
+- グローバル既定では年月用 DatePicker への除外が困難なため、必要な要素にのみ明示的に付与する方式に変更。既に個別に付与済みの画面（TranPromotionSearchParamView 等）には影響なし
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+
+---
+
+## [2026-07-04] 16:00 DatePicker カレンダー下部の「今日」ボタン表示調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：UICalendar.xaml を再確認し、既存のカレンダー表示を維持したまま下部に「今日」ボタンが出るようデザインを修正する
+### 実施内容
+- CvWpfclient/Helpers/Behaviors/DatePickerTodayButtonBehavior.cs: MaterialDesign の既存ポップアップ内容を保持したまま、下段フッターへ「今日」ボタンを追加する構成に変更
+- CvWpfclient/Resources/UICalendar.xaml: `CvDatePickerTodayFooterStyle` の余白を調整し、下部配置用の `CvDatePickerTodayButtonStyle` を追加
+### 技術決定 Why
+- `Calendar` 本体だけを抜き出して差し替えると MaterialDesign 側の既存ポップアップ構造を失いやすいため、元のポップアップ内容をそのまま保持してフッターだけ追加する方が表示崩れと取りこぼしを防げるため
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+
+---
+
+## [2026-07-04] 15:40 DatePicker の「今日」ボタン復活
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._01Master.MasterSysKanriMenteView などで使っている日付入力の「今日」ボタンを復活させる
+### 実施内容
+- CvWpfclient/Resources/UICalendar.xaml: 共通 `DatePicker` スタイルを追加し、`helpers:DatePickerTodayButtonBehavior.IsEnabled=True` を既定適用
+### 技術決定 Why
+- 個別 View ごとの付け忘れ修正ではなく、`UICalendar.xaml` の共通既定値に寄せることで `MasterSysKanriMenteView` の未設定箇所と同種の取りこぼしを一括で防止するため
+### 確認
+- `cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功（0 警告 / 0 エラー）
+
+---
+
+## [2026-07-03] 08:03 CvWpfclient 重複Converterの App.xaml 集約リファクタ
+### Agent
+- Claude Opus 4.8 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient を全体チェックし、重複または未使用の Converter / XAML 部品をリファクタ（メインメニュー使用分は変更しない）
+### 実施内容
+- CvWpfclient/App.xaml: 各 View にローカル重複宣言されていた MultiplyValuesConverter / DoubleToGridLengthConverter / NumericSignBrushConverter の3つを、App.xaml のリソースへ集約登録
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: ローカルの MultiplyValuesConverter / DoubleToGridLengthConverter 宣言を削除
+- CvWpfclient/Views/06Uriage/ShukkaUriageInputView.xaml: 同上の2宣言を削除
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 同上の2宣言を削除
+- CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml: ローカルの NumericSignBrushConverter 宣言を削除
+### 技術決定 Why
+- App.xaml の規約コメント「Converter があれば App.xaml で定義する」に従い集約。3 Converter はいずれもステートレス実装のため単一インスタンス共有が安全。StaticResource は Application リソースまで探索するため参照側は無修正で解決可能
+- 監査の結果、App.xaml 登録済み Converter 8個は全て使用中（未使用なし）、共有 ResourceDictionary の未使用キーも無しと確認。今回は「重複 Converter の集約」のみを対象とした
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: ビルド成功（0 警告 / 0 エラー）
+
+---
+
+## [2026-07-03] 15:42 ZaikoQueryView(在庫問合せ)のデザイン改善
+### Agent
+- Claude Opus 4.8 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.ZaikoQueryView の画面デザインを見やすいものにする
+### 実施内容
+- CvWpfclient/Helpers/Converters/NumericSignBrushConverter.cs: 数値/数値文字列の符号でマイナス=赤・ゼロ=淡色・プラス=既定色を返す IValueConverter を新規追加
+- CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml: ウィンドウ上部に ColorZone ヘッダー（倉庫アイコン+タイトル+閉じるボタン）を追加。DataGrid ヘッダースタイルをテーマカラー(PrimaryHueMid)の白抜き太字・複数行中央寄せに変更。商品一覧/在庫明細の両 DataGrid に交互行背景を追加。在庫数・移動中列を符号色分けスタイルに変更。在庫明細タブは AutoGeneratingColumn で列種別ごとにスタイル適用し、先頭2列固定・格子線Allに変更
+- CvWpfclient/Views/08Zaiko/ZaikoQueryView.xaml.cs: StockGrid_AutoGeneratingColumn を追加し、倉庫列=左詰め・倉庫毎Total=太字強調・数値列=右詰め＋N0書式＋符号色分けを割り当て
+### 技術決定 Why
+- 在庫明細タブは DataTable を AutoGenerateColumns で表示しSKU列が動的なため、列名に依存しない色分けとして「セルText(RelativeSource Self)を Converter に通す」方式を採用し、SKU列名に含まれる空白・改行・括弧の Binding パス問題を回避した
+- ヘッダー・交互行背景・数値右詰めは既存 StockInputView のデザイン言語に統一し、画面間の見た目を揃えた
+### 確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功：警告0、エラー0
+- 新規/編集ファイルの CRLF 改行を確認済み
+
+---
+
+## [2026-07-03] 15:14 StockInputView(棚卸入力)の作成
+### Agent
+- Claude Sonnet 5 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.StockInputView を Tran60Tana テーブル向けに、ShopUriageInputView を参考にして View.xaml / View.xaml.cs / ViewModel.cs の3ファイルで作成する
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 空スタブだった ViewModel を BasePlainLightMenteViewModel<Tran60Tana> ベースで実装。一覧取得（RangeInputParamView条件）、追加・修正・削除、明細行追加削除・バーコード入力、倉庫Id/伝票担当Id/商品/色/サイズ/明細担当Idの選択ダイアログ、合計値再計算を ShopUriageInputViewModel と同じ流儀で実装
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 空の Grid のみだった View に、一覧タブ・詳細タブの2タブ構成、DataGrid明細、行詳細テンプレートを ShopUriageInputView と同じレイアウトパターンで実装
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml.cs: 詳細タブ表示中の Escape キーで一覧タブへ戻る処理を追加
+- CvWpfclient/Models/MenuData.cs: 「棚卸入力」の addInfo を "準備中" から実装内容の説明へ変更
+### 技術決定 Why
+- Tran60Tana は TranAllHeader 共通列＋棚番(TanaNo)のみを持ち、Tran01Tenuri にある店舗(Id_Tenpo)・顧客(Id_Customer)・区分(Kubun)のヘッダ列を持たないため、ShopUriageInputViewModel から店舗/顧客選択・区分コンボを除去し、棚番の単純なテキスト入力に置き換えた
+- 一覧検索条件は RangeInputParamViewModel が常に倉庫Id(SokoIds)条件を持つため、IsToriVisible=false として店舗条件を非表示にし、倉庫Idのみで絞り込む構成にした
+- 明細行(Tran99Meisai)は他Tran系と共通構造のため、商品/色/サイズ選択やバーコード入力、P/S区分コンボは ShopUriageInputViewModel の実装をそのまま踏襲した
+### 確認
+- `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` 成功：警告0、エラー0
+- `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` で対象ファイルの差分なしを確認
+- 新規/編集ファイルの CRLF 改行を確認済み
+
+---
+
+## [2026-07-03] 11:16 MasterYosanHanbaiMenteView 作成
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：販売員別予算マスタ(月)のメニュー名へ変更し、MasterYosanBrandMenteView を参考に MasterYosanHanbaiMenteView の View.xaml / View.xaml.cs / ViewModel.cs を作成する
+### 実施内容
+- CvWpfclient/Models/MenuData.cs: 販売員別予算マスタを「販売員別予算マスタ(月)」へ変更し、直後に「販売員予算マスタメンテ」を登録
+- CvWpfclient/Views/02Yosan/MasterYosanHanbaiMenteView.xaml: MasterYosanHanbai の一覧と編集フォーム、販売員Id選択、追加・修正・削除・一覧取得ボタンを持つ画面を追加
+- CvWpfclient/Views/02Yosan/MasterYosanHanbaiMenteView.xaml.cs: BaseWindow 継承の初期化コードを追加
+- CvWpfclient/ViewModels/02Yosan/MasterYosanHanbaiMenteViewModel.cs: BaseMenteViewModel<MasterYosanHanbai> による一覧取得、登録、修正、削除、MasterShain 選択、入力検証を実装
+### 技術決定 Why
+- MasterYosanHanbai は VShain 表示列を持たないため、DBモデルは変更せず、3ファイル内で完結する販売員Id選択と補助表示にした
+- 既存の MasterYosanBrandMenteView と同じ BaseMenteViewModel フローを踏襲し、直接編集画面の操作差分を最小化した
+### 確認
+- MasterYosanHanbaiMenteView.xaml のXML構文チェック成功
+- 対象編集ファイルの CRLF 確認済み
+- `git diff --check` エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功：警告0、エラー0
+
+---
+
+## [2026-07-03] 09:52 ShopUriageInputViewModelの明細行No連番修正
+### Agent
+- GPT-5 : OpenAI : Sisyphus
+### Editor
+- OpenCode / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._06Uriage.ShopUriageInputView の伝票入力画面の明細で、行No が Jmeisai のJSON配列データのNo を正しくセットし、行追加・行削除時も正しい連番Noがセットされるように修正する
+### 実施内容
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `DeleteMeisai()` メソッドで行削除後に `RenumberMeisaiNo()` を呼び出すように修正
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: `RenumberMeisaiNo()` メソッドを新規追加し、EditMeisai の要素に対して 1 から連番で No を振り直す処理を実装
+### 技術決定 Why
+- 伝票明細の行Noは1からの連番であるべきだが、行削除後にNoを振り直していなかったため連番に抜けが生じる可能性があった
+- `AddMeisai()` と `ApplyBarcodeMeisai()` は既に `Max(m => m.No) + 1` で計算しているため連番維持に問題なし
+- `ApplyMeisaiFromCurrentEdit()` はDBからのJSONデータのNoをそのまま使用するため影響なし
+- 最小限の修正として `DeleteMeisai()` 内でのみ `No` 振り直しを実施
+### 確認
+- `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-30] 08:47 RebuildTranAllの売上明細色サイズId再構築
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvDomainLogic/RebuildDb.cs の RebuildTranAll() で、まず Tran00Uriage の Jmeisai について Id_Col / Id_Siz が 0 の明細を Cd_Col / Cd_Siz 相当コードから MasterMeisho の Id に更新する
+### 実施内容
+- CvDomainLogic/RebuildDb.cs: Tran00Uriage.Jmeisai の Id_Col 更新 SQL と Id_Siz 更新 SQL を分割して追加
+- CvDomainLogic/RebuildDb.cs: 更新 SQL ごとの `SELECT changes()` 取得と SQL エラー時のトランザクション中断処理を追加
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- 色は `MasterMeisho.Kubun='COL'` と色コードで直接解決し、サイズは `MasterShohin.SizeKu` をサイズ区分として `MasterMeisho` を引く必要があるため、更新 SQL を Id_Col 用と Id_Siz 用に分離した
+- 既存 JSON 形式の `Code_Col` / `Code_Siz` を主キーにしつつ、ユーザー指定の Cd 系名称にも対応できるよう `Cd_Col` / `Cd_Siz` を fallback として扱った
+### 確認
+- `git diff --check` で空白エラーなし（Git の CRLF 変換警告のみ）
+- `CvDomainLogic/RebuildDb.cs` の実ファイル改行が CRLF で統一済み
+- ソース内の2本の UPDATE SQL を in-memory SQLite で実行し、Id_Col / Id_Siz の最小更新を確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic/CvDomainLogic.csproj"` が成功（0 警告 0 エラー）
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-29] 17:35 SysGeneralMenteViewの一覧取得ボタン左寄せ
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._00System.SysGeneralMenteView のみ、「一覧取得」ボタンの場所を左に寄せる
+### 実施内容
+- CvWpfclient/Views/00System/SysGeneralMenteView.xaml: ヘッダー右側の操作群にあった「一覧取得」ボタンを、タイトル直後の左側操作群へ移動
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- 他のメンテ画面と同じく、タイトル横に区切り線を置いて「一覧取得」を配置し、保存・削除・追加とは左右で役割を分けた
+### 確認
+- `CvWpfclient/Views/00System/SysGeneralMenteView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-29] 17:28 SysGeneralMenteView の一覧取得条件再指定対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._00System.SysGeneralMenteView でデータを Id desc で取得し、table選択後の画面で「一覧取得」ボタンから ID の from-to と件数のみ再指定できるようにする
+### 実施内容
+- CvWpfclient/ViewModels/00System/SysGeneralMenteViewModel.cs: 一覧取得を `Id DESC` に変更し、ID範囲と件数条件を保持して `QueryListParam` に反映する処理を追加
+- CvWpfclient/Views/00System/SysGeneralMenteView.xaml: 既存の再読込操作を「一覧取得」ボタンへ変更し、F5 から同じ条件再指定処理を呼び出すよう修正
+- CvWpfclient/ViewModels/Sub/SelectParameter.cs: RangeParamMiniView で名前欄を任意表示にするための `IsNameVisible` を追加
+- CvWpfclient/Views/Sub/RangeParamMiniView.xaml: `IsNameVisible` が false の場合は名前欄を非表示にし、汎用メンテでは ID 範囲と件数のみ指定できるよう修正
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- table選択直後の初期表示は従来通り自動取得し、再取得時だけ条件ダイアログを開くことで既存の画面遷移を維持した
+- 既存の `RangeParamMiniView` を名前欄の表示制御付きで再利用し、ID from-to と件数だけを受け付ける UI に限定した
+### 確認
+- `CvWpfclient/Views/00System/SysGeneralMenteView.xaml` と `CvWpfclient/Views/Sub/RangeParamMiniView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-29] 14:44 SysExecMiscViewの商品名称再構築ボタン対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._00System.SysExecMiscView の Testケース02 ボタンを変更し、サーバI/F の CvFlag.Msg046_MasterShohinMeishoRebuild を呼び出して実行するようにする
+### 実施内容
+- CvWpfclient/ViewModels/00System/SysExecMiscViewModel.cs: Test02処理を商品名称マスタ再構築処理へ変更し、CvFlag.Msg046_MasterShohinMeishoRebuild を ICoreService.QueryMsgAsync で呼び出すよう修正
+- CvWpfclient/Views/00System/SysExecMiscView.xaml: Testケース02 ボタンの表示とコマンドバインディングを商品名称再構築用に変更
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- サーバ側には Msg046_MasterShohinMeishoRebuild のハンドラが既に存在するため、CvWpfclient側のみ既存の ICoreService 呼び出しパターンを流用し、サーバ処理には変更を加えない
+- 実行結果欄には開始・成功・失敗を明示し、サーバ応答が負の Code を返した場合は Option/DataMsg を利用してエラー内容を表示する
+### 確認
+- `CvWpfclient/Views/00System/SysExecMiscView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-29] 12:15 DefineDataTable の IDerivedClass 対応テーブル作成処理を修正
+### Agent
+- Kimi K2.7-code : OhMyOpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvBase/DefineDataTable.cs のテーブル作成ループで、IDerivedClass を実装する型は CreateDerivedTable() を使用し、実行前にテーブル存在を確認して不在時のみ作成する。force 時は Drop 後に再作成する。
+### 実施内容
+- CvBase/DefineDataTable.cs: テーブル作成ループ内で `typeof(IDerivedClass).IsAssignableFrom(tableType)` を判定し、派生テーブルは `CreateDerivedTable` を使用するよう変更
+- CvBase/DefineDataTable.cs: `EnsureDerivedTable` ヘルパーを追加し、force 時は Drop 後に再作成、非 force 時はテーブル不在時のみ作成・データ投入を実行
+- CvBase/DefineDataTable.cs: ループ外に残っていた `DerivedShohinColSiz` の個別 `CreateDerivedTable` 呼び出しを削除
+### 技術決定 Why
+- `ExDatabase.CreateDerivedTable<T>()` は `isForce=true` の場合のみ実処理（Drop → Create → データ投入）を行うため、テーブル不在時も `true` を渡して実際の作成とデータ投入を行うようにした
+- 存在確認は `ExDatabase.IsExistTable(Type)` で行い、force 時以外はテーブルが既存の場合に冗長な処理をスキップする
+### 確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-28] 16:38 README/setup 文面校正と Markdown 整理
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`readme.md` と `setup.md` の誤字脱字、不自然な言い回し、Markdown 表現を見直して読みやすく整える
+### 実施内容
+- readme.md: プロジェクト説明の日本語表現と表記ゆれを修正し、見出し・箇条書き・リンク文言を整理
+- setup.md: 手順書を見出し、番号付き手順、箇条書き、コードブロック中心の Markdown に再構成
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- 内容自体は変えず、公開ドキュメントとして初見でも追いやすい構造を優先し、インデント列挙を標準的な Markdown 構造へ置き換えた
+### 確認
+- `readme.md` / `setup.md` の CRLF 正規化を実施
+- `git diff --check -- readme.md setup.md Doc/aicoding_log.md` で問題なしを確認
+
+---
+
+## [2026-06-27] 14:44 MainMenuステータス表示領域の高さ制限
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MainMenuView のサーバステータス、クライアントステータスを含むエリアの高さを初期表示程度に制限し、全文はToolTipで表示する
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: Server Status / Client Status の上段Gridと各カードに MaxHeight と ClipToBounds を設定し、ステータス本文にToolTipを追加
+- CvWpfclient/Models/MenuData.cs: WPFビルドを阻害していた旧DB変換メニューの View 型参照名を実在する ConvertDbView / ConvertSelectedView に修正
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- ステータス文字列が折り返しで縦に伸びても上段レイアウトを押し下げないよう、表示領域をクリップし、全文確認は同一BindingのToolTipへ委ねた
+- 検証ビルドで発見した Concvert 系の型参照は実在クラス名と不一致だったため、参照名のみを修正してビルド可能な状態に戻した
+### 確認
+- `CvWpfclient/Views/MainMenuView.xaml` の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-27] 08:41 MainMenu天気パネルの気象庁ページ導線追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MainMenuView の天気パネルで、気象庁概要予報の表示元をクリックして既定ブラウザで開けるようにする
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: JmaWeatherAreaCode から気象庁予報ページURLを組み立て、ClientLib.OpenUrlAsync で開く OpenJmaWeatherOverviewSourceCommand を追加
+- CvWpfclient/Views/MainMenuView.xaml: 天気カード内に気象庁ページを開くアイコン付きボタンを追加
+### 技術決定 Why
+- 概要予報のJSON取得URLではなく、JmaWeatherAreaCode に対応する気象庁の利用者向け予報ページを開くことで、表示元確認の導線として自然に扱えるようにした
+### 確認
+- `CvWpfclient/Views/MainMenuView.xaml` の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+
+## [2026-06-26] 11:29 MainMenu天気パネルの高さ可変化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：MainMenuView.xaml で最大化などにより Height が変化したとき、StackPanel x:Name="WeatherPanel" のエリアを自然に拡大する
+### 実施内容
+- CvWpfclient/Views/MainMenuView.xaml: 右側メインGridの行配分を見直し、選択中メニュー行とWeatherPanel行へ高さ増加分を分配するよう変更
+- CvWpfclient/Views/MainMenuView.xaml: WeatherPanel を StackPanel から Grid に変更し、天気カードと気温推移チャートが行高に追従して縦方向へ伸びるよう変更
+- Doc/aicoding_log.md: 800行超過見込みのため既存ログを Doc/aicoding_log_008.md へアーカイブし、今回作業ログを新規作成
+### 技術決定 Why
+- 最大化時の余り高さが選択中メニュー行だけに入っていたため、WeatherPanel行を Auto から star 行へ変更し、チャートの固定 Height を MinHeight に置き換えて、通常サイズの最低高を保ちながら拡大時だけ伸びる構造にした
+### 確認
+- `CvWpfclient/Views/MainMenuView.xaml` の XML パース成功
+- 編集ファイルの CRLF 確認成功
+- `git diff --check` 成功
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（0 警告 0 エラー）
+
+---
+## [2026-07-02] 12:03 店舗売上入力の明細P/S選択追加
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._06Uriage.ShopUriageInputView` の伝票明細に仮行NoとP/S選択を追加し、明細 `Kubun` に P=0 / S=1 を保存する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 明細グリッド先頭列に仮行Noを表示し、2段目の RowDetails に Pプロパー / Sセールの選択 ComboBox を追加
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 明細用P/S選択肢を追加し、店舗売上の明細 `Kubun` を伝票ヘッダ区分で上書きせず P=0 / S=1 に正規化する処理へ変更
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- `Tran99Meisai.Kubun` を明細ごとの P/S 区分として扱うため、保存時のヘッダ区分上書きをやめ、既存データの 11/21 は S、その他は P として表示できるよう正規化した
+### 確認
+- `ShopUriageInputView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（警告0、エラー0）
+
+---
+## [2026-07-02] 12:23 店舗売上入力の明細P/S表示調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._06Uriage.ShopUriageInputView` の明細行P/S選択表示が空欄になるため、人間の修正を含めて調整する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 人間修正の `行No` 表記を維持しつつ、P/S選択列幅を拡張し、ComboBox の高さ・フォントを調整
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: RowDetails 内の P/S ComboBox の `ItemsSource` を `Window` 祖先参照から `DataGrid.DataContext` 参照へ変更
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- RowDetails 内では `Window` 祖先参照より、同じ DataGrid 配下の `DataContext.MeisaiKubunOptions` を参照する方が安定し、列幅不足による選択値の非表示も避けられるため
+### 確認
+- `ShopUriageInputView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `ShopUriageInputView.xaml` が UTF-8 BOM + CRLF、LF-only/CR-only なしであることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` が成功（警告0、エラー0）
+
+---
+## [2026-07-02] 12:27 店舗売上入力の明細P/Sセル余白最小化
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._06Uriage.ShopUriageInputView` の明細P/S選択セルのサイズと余白を再調整する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: P/S選択用の明細専用 `MeisaiKubunComboBox` / `MeisaiKubunComboBoxItem` スタイルを追加し、Height/MinWidth/FontSize/Padding/DropDown高さを小さく設定
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: P/S列幅を 96 に戻し、RowDetails の MinHeight と Margin、セル内 Margin を最小寄りに調整
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- `MaterialDesignOutlinedComboBox` は明細2段目の小セルでは枠と項目高さが大きく、行高に対して過剰な余白が出るため、P/Sセル専用の軽量な ComboBox スタイルで局所的に詰めた
+### 確認
+- `ShopUriageInputView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `ShopUriageInputView.xaml` が UTF-8 BOM + CRLF、LF-only/CR-only なしであることを確認
+- 通常出力先の `CvWpfclient` ビルドは起動中の `CreativeVision10 (13424)` と Visual Studio のDLLロックで失敗
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -o .omo/build/CvWpfclient"` が成功（警告0、エラー0）
+
+---
+## [2026-07-02] 12:31 店舗売上入力の明細列幅圧縮
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._06Uriage.ShopUriageInputView` の明細行を右端まで表示できるよう列幅を調整する
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 明細の行No、商品Id、商品名、色Id、サイズId、数量、単価、上代単価、下代単価、明細担当Idの列幅を圧縮
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 終端スペーサ列を 0 にして、明細担当Id列まで表示領域に収まりやすくした
+- Doc/aicoding_log.md: 今回作業ログを先頭に追記
+### 技術決定 Why
+- 明細右端の明細担当Id検索ボタンまで表示するため、数量列を 54px に狭め、検索ボタン付き列はボタン幅を残せる最小寄りの幅にした
+### 確認
+- `ShopUriageInputView.xaml` の XML parse OK
+- `git diff --check` で問題なし
+- `ShopUriageInputView.xaml` が UTF-8 BOM + CRLF、LF-only/CR-only なしであることを確認
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -o .omo/build/CvWpfclient"` が成功（警告0、エラー0）
+
+---
+## [2026-07-03] 11:06 SalesStaffBudgetMasterView 作成
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex / VS2026
+### 目的
+- ユーザーからの要望：ShopBrandBudgetMasterView をもとに、販売員別予算マスタ画面とViewModelを作成し、MasterYosanHanbai と MasterShain 参照を使用する
+### 実施内容
+- CvWpfclient/Views/02Yosan/SalesStaffBudgetMasterView.xaml: 販売員選択、年月、月予算、休日、日別予算グリッド、作成・読込・登録・削除・自動配分・再計算ボタンを持つ画面を作成
+- CvWpfclient/ViewModels/02Yosan/SalesStaffBudgetMasterViewModel.cs: MasterYosanHanbai の月次読込・削除・一括登録、MasterShain 選択、日別配分・累計再計算処理を実装
+- CvWpfclient/Models/MenuData.cs: 販売員別予算マスタの addInfo を準備中から実装内容の説明へ更新
+### 技術決定 Why
+- 既存の ShopBrandBudgetMasterView と同じ月次一括配分操作を維持し、Id_Tenpo + Id_Brand 条件だけを Id_Shain 条件に置換することで画面操作と保存仕様の差分を最小化した
+- MasterYosanHanbai には表示用の VShain computed 列がないため、社員名表示は画面の MasterShain 選択結果で保持した
+- 元の ShopBrandBudgetMasterView のボタンは各コマンドに対応しているため、不要ボタンとしての削除は行わなかった
+### 確認
+- SalesStaffBudgetMasterView.xaml のXML構文チェック成功
+- 対象編集ファイルの CRLF 確認済み
+- `git diff --check` エラーなし
+- `C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"` 成功：警告0、エラー0
+
+---
+---

@@ -11,13 +11,13 @@ namespace CvWpfclient.Helpers;
 /// DataGrid の在庫数など、値の正負を一目で判別させたい表示に使う。
 /// </summary>
 public sealed class NumericSignBrushConverter : IValueConverter {
-	static readonly SolidColorBrush NegativeBrush = CreateFrozen(Color.FromRgb(0xD3, 0x2F, 0x2F));
-	static readonly SolidColorBrush ZeroBrush = CreateFrozen(Color.FromRgb(0x9E, 0x9E, 0x9E));
+	static readonly SolidColorBrush FallbackNegativeBrush = CreateFrozen(Color.FromRgb(0xD3, 0x2F, 0x2F));
+	static readonly SolidColorBrush FallbackZeroBrush = CreateFrozen(Color.FromRgb(0x9E, 0x9E, 0x9E));
 
 	public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
 		if (!TryGetNumber(value, culture, out double number)) return DependencyProperty.UnsetValue;
-		if (number < 0) return NegativeBrush;
-		if (number == 0) return ZeroBrush;
+		if (number < 0) return FindBrush("NegativeForegroundBrush") ?? FallbackNegativeBrush;
+		if (number == 0) return FindBrush("ZeroForegroundBrush") ?? FallbackZeroBrush;
 		return DependencyProperty.UnsetValue;
 	}
 
@@ -47,6 +47,15 @@ public sealed class NumericSignBrushConverter : IValueConverter {
 		string text = value.ToString()?.Trim() ?? string.Empty;
 		if (text.Length == 0) return false;
 		return double.TryParse(text, NumberStyles.Any, culture, out number);
+	}
+
+	static Brush? FindBrush(string key) {
+		var resource = Application.Current?.TryFindResource(key);
+		return resource switch {
+			Brush brush => brush,
+			Color color => CreateFrozen(color),
+			_ => null
+		};
 	}
 
 	static SolidColorBrush CreateFrozen(Color color) {

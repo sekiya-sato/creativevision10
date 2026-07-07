@@ -80,6 +80,7 @@ from MasterShohin {query.AddWhereOrder()}
 		}
 
 		List<string> clauses = [];
+		List<string> parameters = [];
 		AddSelectedIdInClause(clauses, "Id_Brand", parameter.Ids);
 		AddSelectedIdInClause(clauses, "Id_Item", parameter.ItemIds);
 		if (parameter.FromId.HasValue) {
@@ -89,26 +90,27 @@ from MasterShohin {query.AddWhereOrder()}
 			clauses.Add($"Id <= {parameter.ToId.Value}");
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.FromCode)) {
-			clauses.Add($"Code >= '{EscapeSqlLiteral(parameter.FromCode)}'");
+			clauses.Add($"Code >= {AddSqlParameter(parameters, parameter.FromCode.Trim())}");
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.ToCode)) {
-			clauses.Add($"Code <= '{EscapeSqlLiteral(parameter.ToCode)}'");
+			clauses.Add($"Code <= {AddSqlParameter(parameters, parameter.ToCode.Trim())}");
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
-			clauses.Add($"Name LIKE '%{EscapeSqlLiteral(parameter.Name)}%'");
+			clauses.Add($"Name LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Name)}%")} ESCAPE '\\'");
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.Jan)) {
-			string jan = EscapeSqlLiteral(parameter.Jan.Trim());
+			string janParameter = AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Jan)}%");
 			clauses.Add($"""
 				EXISTS (
 					SELECT 1
 					FROM DerivedShohinColSiz D
 					WHERE D.Id_Shohin = MasterShohin.Id
-						AND (D.Jan1 LIKE '%{jan}%' OR D.Jan2 LIKE '%{jan}%' OR D.Jan3 LIKE '%{jan}%')
+						AND (D.Jan1 LIKE {janParameter} ESCAPE '\' OR D.Jan2 LIKE {janParameter} ESCAPE '\' OR D.Jan3 LIKE {janParameter} ESCAPE '\')
 				)
 				""");
 		}
 
+		SelectCodeWhereParameters = [.. parameters];
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
 

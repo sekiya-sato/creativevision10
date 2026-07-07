@@ -19,7 +19,7 @@ public class ClientLib {
 				if (win.Owner != null)
 					win.Owner.Activate();
 			}
-			catch (Exception) { }
+			catch (InvalidOperationException) { }
 		}
 	}
 	/// <summary>
@@ -84,11 +84,11 @@ public class ClientLib {
 		if (win != null) {
 			try {
 				win.DialogResult = result;
-				win.Close();
 			}
-			catch (Exception) {
+			catch (InvalidOperationException) {
 				/* ShowかShowDialogか自分でわかってない*/
 				//[Whether to use Show or ShowDialog is not determined by this code]
+				win.Close();
 			}
 		}
 	}

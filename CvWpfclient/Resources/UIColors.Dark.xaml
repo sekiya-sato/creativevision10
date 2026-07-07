@@ -51,6 +51,10 @@
 		Color="#111827" />
 	<SolidColorBrush x:Key="MainMenuChartTextColor"
 		Color="White" />
+	<SolidColorBrush x:Key="NegativeForegroundBrush"
+		Color="#FF8A80" />
+	<SolidColorBrush x:Key="ZeroForegroundBrush"
+		Color="#B0BEC5" />
 
 	<!--  Panel Colors  -->
 	<SolidColorBrush x:Key="panelColor"
@@ -89,6 +93,8 @@
 		Color="#1F2937" />
 	<SolidColorBrush x:Key="MainMenuWeatherIconBrush"
 		Color="#7DD3FC" />
+	<SolidColorBrush x:Key="DataGridAlternatingRowBackgroundBrush"
+		Color="#263241" />
 
 	<!--  Common Background  -->
 	<SolidColorBrush x:Key="AppCommonBackgroundBrush"

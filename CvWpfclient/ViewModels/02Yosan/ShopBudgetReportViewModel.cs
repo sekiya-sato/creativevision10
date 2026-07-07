@@ -90,12 +90,13 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 		var (prevDateFrom, prevDateTo) = GetPrevYearDateRange();
 		var isDateComparisonStr = IsDateComparison ? "1" : "0";
 
+		List<string> parameters = [];
 		var shopWhere = "";
 		if (!string.IsNullOrWhiteSpace(ShopCodeFrom)) {
-			shopWhere += $" AND Code >= '{EscapeSqlLiteral(ShopCodeFrom)}'";
+			shopWhere += $" AND Code >= {AddSqlParameter(parameters, ShopCodeFrom.Trim())}";
 		}
 		if (!string.IsNullOrWhiteSpace(ShopCodeTo)) {
-			shopWhere += $" AND Code <= '{EscapeSqlLiteral(ShopCodeTo)}'";
+			shopWhere += $" AND Code <= {AddSqlParameter(parameters, ShopCodeTo.Trim())}";
 		}
 
 		var sql = $@"
@@ -223,7 +224,7 @@ FROM daily_total
 ORDER BY day";
 		}
 
-		return new QueryListSqlParam(typeof(object), sql);
+		return new QueryListSqlParam(typeof(object), sql, [.. parameters]);
 	}
 
 	(string dateFrom, string dateTo) GetDateRange() {
@@ -249,7 +250,10 @@ ORDER BY day";
 		);
 	}
 
-	static string EscapeSqlLiteral(string value) => value.Replace("'", "''");
+	static string AddSqlParameter(List<string> parameters, object value) {
+		parameters.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);
+		return $"@{parameters.Count - 1}";
+	}
 
 	TResult? ShowSelectDialog<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
 		var selWin = new Views.Sub.SelectWinView();

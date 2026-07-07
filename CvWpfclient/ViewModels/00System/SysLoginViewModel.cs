@@ -114,6 +114,7 @@ internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<
 		}
 
 		List<string> clauses = [];
+		List<string> parameters = [];
 		if (parameter.FromId.HasValue) {
 			clauses.Add($"Id >= {parameter.FromId.Value}");
 		}
@@ -121,9 +122,10 @@ internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<
 			clauses.Add($"Id <= {parameter.ToId.Value}");
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
-			clauses.Add($"LoginId LIKE '%{EscapeSqlLiteral(parameter.Name)}%'");
+			clauses.Add($"LoginId LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Name)}%")} ESCAPE '\\'");
 		}
 
+		SelectCodeWhereParameters = [.. parameters];
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
 }

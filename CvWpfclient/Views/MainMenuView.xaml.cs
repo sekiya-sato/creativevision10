@@ -25,6 +25,9 @@ public partial class MainMenuView : Window {
 
 	private void MainMenuView_Closed(object? sender, EventArgs e) {
 		App.MainThemeService.MainThemeChanged -= OnMainThemeChanged;
+		if (DataContext is IDisposable disposable) {
+			disposable.Dispose();
+		}
 		ClientLib.ExitAllWithoutMe(DataContext);
 		Closed -= MainMenuView_Closed;
 	}

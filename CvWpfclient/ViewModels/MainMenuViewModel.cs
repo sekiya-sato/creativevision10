@@ -23,7 +23,7 @@ using TymeSolarDay = tyme.solar.SolarDay;
 
 namespace CvWpfclient.ViewModels;
 
-public partial class MainMenuViewModel : ObservableObject {
+public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	private const double MoonIconSize = 24.0;
 	private const string DefaultJmaWeatherAreaCode = "130000";
 	private const string JmaWeatherOverviewBaseUrl = "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/";
@@ -95,6 +95,7 @@ public partial class MainMenuViewModel : ObservableObject {
 	private string functionToolTip = "バージョンアップ(F9) 環境設定(F10) リフレッシュトークン(F11) ログイン(F12)";
 
 	private DispatcherTimer? _timer;
+	private bool _disposed;
 	private string[] _forecastLabels = [];
 	private double[] _forecastTemperatures = [];
 
@@ -123,11 +124,31 @@ public partial class MainMenuViewModel : ObservableObject {
 	}
 
 	private void OnThemeChanged(object? sender, AppTheme theme) {
+		if (_disposed) {
+			return;
+		}
 		ApplyForecastTheme();
 	}
 
 	private void OnMainThemeChanged(object? sender, MainTheme theme) {
+		if (_disposed) {
+			return;
+		}
 		UpdateMainThemeButtonLabel(theme);
+	}
+
+	public void Dispose() {
+		if (_disposed) {
+			return;
+		}
+
+		_disposed = true;
+		App.ThemeService.ThemeChanged -= OnThemeChanged;
+		App.MainThemeService.MainThemeChanged -= OnMainThemeChanged;
+		_timer?.Stop();
+		_timer = null;
+		_weatherTimer?.Stop();
+		_weatherTimer = null;
 	}
 
 	partial void OnInfolocalUserChanged(InfoUser value) {
@@ -466,6 +487,9 @@ public partial class MainMenuViewModel : ObservableObject {
 
 	private async void StartWeatherAndCalendar() {
 		await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
+		if (_disposed) {
+			return;
+		}
 
 		// 天気は30分おきに更新
 		_weatherTimer = new DispatcherTimer {
@@ -602,6 +626,9 @@ public partial class MainMenuViewModel : ObservableObject {
 
 		// 3. 次の秒の切り替わりまで非同期で待機
 		await Task.Delay(delayUntilNextSecond);
+		if (_disposed) {
+			return;
+		}
 		_timer = new DispatcherTimer {
 			Interval = TimeSpan.FromSeconds(1)
 		};
