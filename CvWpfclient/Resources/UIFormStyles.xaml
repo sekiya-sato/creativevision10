@@ -18,8 +18,8 @@
 	<Style x:Key="MenteDataGridColumnHeader"
 		BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
 		TargetType="DataGridColumnHeader">
-		<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
-		<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+		<Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary.Light}" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
 		<Setter Property="Padding" Value="12,8" />
 		<Setter Property="FontWeight" Value="SemiBold" />
 	</Style>
