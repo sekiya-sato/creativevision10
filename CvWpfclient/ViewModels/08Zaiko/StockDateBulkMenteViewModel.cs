@@ -3,11 +3,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
+
 
 namespace CvWpfclient.ViewModels._08Zaiko;
 
@@ -154,9 +156,13 @@ public partial class StockDateBulkMenteViewModel : Helpers.BaseViewModel {
 				ct.ThrowIfCancellationRequested();
 				var item = row.ToTran60TanaDate();
 				var isUpdate = item.Id > 0;
-				var parameter = isUpdate
-					? new UpdateParam(typeof(Tran60TanaDate), Common.SerializeObject(item))
-					: new InsertParam(typeof(Tran60TanaDate), Common.SerializeObject(item));
+				object parameter;
+				if (isUpdate) {
+					parameter = new UpdateParam(typeof(Tran60TanaDate), Common.SerializeObject(item));
+				}
+				else {
+					parameter = new InsertParam(typeof(Tran60TanaDate), Common.SerializeObject(item));
+				}
 				var reply = await SendExecuteAsync(parameter, parameter.GetType(), ct);
 				if (reply.Code < 0) {
 					var detail = reply.Code < -9000 ? reply.Option : reply.DataMsg;

@@ -4,8 +4,7 @@
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._08Zaiko"
 	Title="棚卸日一括メンテナンス"
-	Width="1180"
-	Height="760"
+	Width="1180" Height="760"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
@@ -34,8 +33,7 @@
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
-				<StackPanel DockPanel.Dock="Right"
-					Orientation="Horizontal">
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 					<Button Margin="4,0"
 						Command="{Binding DoListCommand}"
 						Style="{StaticResource ToolCommandButton}"
@@ -71,8 +69,7 @@
 						VerticalAlignment="Center"
 						Kind="CalendarEdit" />
 					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-						FontSize="20" FontWeight="SemiBold"
-						Text="棚卸日一括メンテナンス" />
+						FontSize="20" FontWeight="SemiBold" Text="棚卸日一括メンテナンス" />
 				</StackPanel>
 			</DockPanel>
 		</materialDesign:ColorZone>
@@ -97,8 +94,7 @@
 					Text="得意先" />
 				<TextBox Grid.Column="1"
 					MinWidth="260"
-					IsReadOnly="True"
-					materialDesign:HintAssist.Hint="一覧取得で複数選択"
+					materialDesign:HintAssist.Hint="一覧取得で複数選択" IsReadOnly="True"
 					Style="{StaticResource FormTextBox}"
 					Text="{Binding SelectedTokuiText}" />
 
@@ -107,8 +103,7 @@
 					Text="一括棚卸日" />
 				<DatePicker Grid.Column="3"
 					Width="160"
-					helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
-					IsTodayHighlighted="False"
+					helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 					SelectedDate="{Binding BulkTanaDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					Style="{StaticResource FormDatePicker}" />
 				<Button Grid.Column="4"
@@ -175,23 +170,14 @@
 
 				<DataGrid Grid.Row="1"
 					d:ItemsSource="{d:SampleData ItemCount=5}"
-					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True"
-					materialDesign:DataGridAssist.CellPadding="8,4"
-					materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
-					AutoGenerateColumns="False"
-					CanUserAddRows="False"
-					CanUserDeleteRows="False"
-					EnableRowVirtualization="True"
-					FrozenColumnCount="3"
-					GridLinesVisibility="Horizontal"
+					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
+					AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-					IsReadOnly="False"
-					IsSynchronizedWithCurrentItem="True"
+					IsReadOnly="False" IsSynchronizedWithCurrentItem="True"
 					ItemsSource="{Binding ListData}"
 					SelectedItem="{Binding Current}"
 					Style="{StaticResource MaterialDesignDataGrid}"
-					VirtualizingPanel.IsVirtualizing="True"
-					VirtualizingPanel.VirtualizationMode="Recycling">
+					VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 					<DataGrid.Columns>
 						<DataGridTextColumn Width="48"
 							Binding="{Binding RowNo}"
@@ -216,8 +202,7 @@
 							<DataGridTemplateColumn.CellTemplate>
 								<DataTemplate>
 									<DatePicker Margin="0"
-										helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
-										IsTodayHighlighted="False"
+										helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 										SelectedDate="{Binding TanaDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 										Style="{StaticResource FormDatePicker}" />
 								</DataTemplate>
@@ -240,7 +225,7 @@
 										<TextBox MinWidth="90"
 											IsReadOnly="True"
 											Style="{StaticResource FormTextBox}"
-											Text="{Binding AutoHojuText}" />
+											Text="{Binding AutoHoju, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 									</DockPanel>
 								</DataTemplate>
 							</DataGridTemplateColumn.CellTemplate>
@@ -264,12 +249,6 @@
 					TextTrimming="CharacterEllipsis" />
 				<StackPanel HorizontalAlignment="Right"
 					DockPanel.Dock="Right" Orientation="Horizontal">
-					<Button Margin="4,0"
-						Command="{Binding DoListCommand}"
-						Style="{StaticResource ToolCommandButton}"
-						ToolTip="一覧取得 (F5)">
-						<TextBlock Text="一覧取得(F5)" />
-					</Button>
 					<Button Margin="4,0"
 						Command="{Binding UpdateSelectedCommand}"
 						Style="{StaticResource ToolCommandButton}"

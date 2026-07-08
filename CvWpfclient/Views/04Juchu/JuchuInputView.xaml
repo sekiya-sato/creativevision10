@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._04Juchu.JuchuInputView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._04Juchu.JuchuInputView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -539,12 +539,10 @@
 							</DataGridTemplateColumn>
 							<DataGridTextColumn Width="100"
 								Binding="{Binding Code_Shohin}"
-								Header="商品CD"
-								IsReadOnly="True" />
+								Header="商品CD" IsReadOnly="True" />
 							<DataGridTextColumn Width="180"
 								Binding="{Binding Mei_Shohin}"
-								Header="商品名"
-								IsReadOnly="True" />
+								Header="商品名" IsReadOnly="True" />
 							<DataGridTemplateColumn Width="110"
 								Header="色Id">
 								<DataGridTemplateColumn.CellTemplate>
@@ -571,8 +569,7 @@
 							</DataGridTemplateColumn>
 							<DataGridTextColumn Width="90"
 								Binding="{Binding Mei_Col}"
-								Header="色"
-								IsReadOnly="True" />
+								Header="色" IsReadOnly="True" />
 							<DataGridTemplateColumn Width="110"
 								Header="サイズId">
 								<DataGridTemplateColumn.CellTemplate>
@@ -599,8 +596,7 @@
 							</DataGridTemplateColumn>
 							<DataGridTextColumn Width="90"
 								Binding="{Binding Mei_Siz}"
-								Header="サイズ"
-								IsReadOnly="True" />
+								Header="サイズ" IsReadOnly="True" />
 							<DataGridTextColumn Width="70"
 								Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
@@ -652,8 +648,7 @@
 							</DataGridTemplateColumn>
 							<DataGridTextColumn Width="130"
 								Binding="{Binding Mei_Shain}"
-								Header="担当"
-								IsReadOnly="True" />
+								Header="担当" IsReadOnly="True" />
 							<DataGridTextColumn Width="220"
 								Binding="{Binding Memo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 								Header="明細メモ" />
