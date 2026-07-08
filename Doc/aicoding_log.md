@@ -1,3 +1,20 @@
+## [2026-07-08] 11:27 HachuInput qfm 構造修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`HachuInput_header.qfm` / `HachuInput_detail.qfm` を `ShopUriageInput_header.qfm` / `ShopUriageInput_detail.qfm` の構造を壊さずに修正する。
+### 実施内容
+- printform/HachuInput_header.qfm: `ShopUriageInput_header.qfm` の `RecHeader` / `RecData` 構造を基準に、発注用の見出し・出力列へ調整した。
+- printform/HachuInput_detail.qfm: `ShopUriageInput_detail.qfm` の `item1` グループ、`RecData grouplevel=1 breaktype=2`、`RecDetail` 構造を維持し、発注用の見出しと `itemN` 対応へ調整した。
+### 技術決定 Why
+- PrintStream のヘッダ・グループ制御を既存の動作済み qfm と同じ構造に保つため、既存 qfm の record/group 構造を基準にして表示名とデータ参照だけを変更した。
+### 確認
+- `validate_qfm.py` で `HachuInput_header.qfm` / `HachuInput_detail.qfm` が OK になることを確認した。
+
+---
+
 ## [2026-07-08] 10:10 HachuInputView 区分選択と明細列表示修正
 ### Agent
 - GPT-5 : OpenAI : Codex
