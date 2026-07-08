@@ -1,3 +1,28 @@
+## [2026-07-08] 13:00 展示会受注入力 (JuchuInputView) 作成
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：HachuInputView を参考に JuchuInputView（展示会受注入力）を新規作成。Tran12Jyuchu テーブル対応。
+### 実施内容
+- CvWpfclient/ViewModels/04Juchu/JuchuInputViewModel.cs: HachuInputViewModel をベースに Tran12Jyuchu / EnumUri01 / 得意先 へ置換。一覧取得、明細編集、印刷コマンド、バーコード入力を実装。
+- CvWpfclient/Views/04Juchu/JuchuInputView.xaml: HachuInputView.xaml をベースにタイトル・バインディング・列名を受注/得意先へ置換。Width=1400 を維持。
+- CvWpfclient/Views/04Juchu/JuchuInputView.xaml.cs: Escape キーで一覧タブへ戻る処理を追加。
+- printform/JuchuInput_header.qfm: HachuInput_header.qfm をコピーして Shift_JIS 保存。タイトル/ヘッダーを「受注」「得意先」に置換。
+- printform/JuchuInput_detail.qfm: HachuInput_detail.qfm をコピーして Shift_JIS 保存。同上。
+- CvWpfclient/Models/MenuData.cs: 「展示会受注入力」の addInfo を「準備中」から更新。
+### 技術決定 Why
+- HachuInput と JuchuInput は TranAllHeader 継承構造が同一（明細・合計・税・メモなど）。型と名称を置換するだけで再利用可能と判断。
+- CalcFlag の符号は EnumUri01.Uriage/UriSale を正、Henpin/HenSale を負とした（モデルの OnKubunChanged とは別に ViewModel 側でも制御）。
+- qfm はバイナリ読み込み→decode('shift_jis')→テキスト置換→encode('shift_jis') の経路で安全に作成。
+### 影響範囲
+- 新規ファイル 4 件、既存ファイル 1 件 (MenuData.cs) の改修。ビルドは 0 error 0 warning。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-08] 11:27 HachuInput qfm 構造修正
 ### Agent
 - GPT-5 : OpenAI : Codex

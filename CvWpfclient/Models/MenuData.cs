@@ -100,7 +100,7 @@ public partial class MenuData : ObservableObject {
 			new("発注残完了設定", typeof(Views._03Hatchu.HachuZanCompletionSettingView), addInfo:"準備中"),
 		])),
 		new("■ 受注 / 展示会", new([
-			new("展示会受注入力", typeof(Views._04Juchu.JuchuInputView), addInfo:"準備中"),
+			new("展示会受注入力", typeof(Views._04Juchu.JuchuInputView), addInfo:"得意先対象の受注入力・一覧・明細印刷"),
 			new("納品予定表", typeof(Views._04Juchu.NouhinYoteiTableView), addInfo:"準備中"),
 			new("得意先別受注表", typeof(Views._04Juchu.TokuiSakiJuchuTableView), addInfo:"準備中"),
 			new("商品別受注表", typeof(Views._04Juchu.ShouhinJuchuTableView), addInfo:"準備中"),
