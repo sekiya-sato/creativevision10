@@ -513,6 +513,16 @@
 									Text="バーコード入力" />
 							</StackPanel>
 						</Button>
+						<Button Margin="8,0,0,0"
+							Command="{Binding DoInputShohinColSizCommand}"
+							Style="{StaticResource MaterialDesignOutlinedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="Palette" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="色サイズ一括数量入力" />
+							</StackPanel>
+						</Button>
 					</StackPanel>
 
 					<DataGrid x:Name="MeisaiGrid"

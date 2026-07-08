@@ -117,7 +117,7 @@ public partial class MenuData : ObservableObject {
 			new("配分出荷リスト", typeof(Views._04Juchu.HaibunShukkaListView), addInfo:"準備中"),
 		])),
 		new("■ 仕入", new([
-			new("商品仕入入力", typeof(Views._05Shiire.ShiireInputView), addInfo:"準備中"),
+			new("商品仕入入力", typeof(Views._05Shiire.ShiireInputView), addInfo:"仕入先に対する仕入入力"),
 			new("仕入返品入力", typeof(Views._05Shiire.HenpinInputView), addInfo:"準備中"),
 			new("品番別仕入チェックリスト", typeof(Views._05Shiire.HinbanShiireCheckListView), addInfo:"準備中"),
 			new("ブランド別仕入金額表", typeof(Views._05Shiire.BrandShiireKingakuTableView), addInfo:"準備中"),
