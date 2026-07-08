@@ -1,3 +1,26 @@
+## [2026-07-08] 13:00 仕入入力 (ShiireInputView) 作成
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：HachuInputView を参考に ShiireInputView（仕入入力）を作成。Tran03Shiire テーブル対応。
+### 実施内容
+- CvWpfclient/ViewModels/05Shiire/ShiireInputViewModel.cs: HachuInputViewModel をベースに Tran03Shiire 用に全面置換。KakeDay / IsPay / ManualNo を追加。一覧取得、明細編集、印刷コマンド、バーコード入力を実装。
+- CvWpfclient/Views/05Shiire/ShiireInputView.xaml: HachuInputView.xaml をベースにタイトル・バインディング・列名を仕入に置換。詳細タブに掛計上日/支払/手入力Noを追加。Width=1360 を維持。
+- CvWpfclient/Views/05Shiire/ShiireInputView.xaml.cs: Escape キーで一覧タブへ戻る処理を追加。
+- printform/ShiireInput_header.qfm: HachuInput_header.qfm をコピーして Shift_JIS 保存。タイトル/ヘッダーを「仕入」に置換。KakeDay/IsPay/ManualNo 列を追加。
+- printform/ShiireInput_detail.qfm: HachuInput_detail.qfm をコピーして Shift_JIS 保存。同上。
+### 技術決定 Why
+- HachuInput と ShiireInput は TranAllHeader 継承構造が同一。Tran03Shiire は KakeDay / IsPay / ManualNo を追加するだけで、明細・合計・税・メモなどの構造は同一。
+- qfm は Python で shift_jis 読み込み→テキスト置換→shift_jis 書き出しの経路で安全に作成。
+### 影響範囲
+- 新規ファイル 2 件、既存ファイル 3 件の改修。ビルドは 0 error 0 warning。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning。qfm validator OK。
+
+---
+
 ## [2026-07-08] 13:00 展示会受注入力 (JuchuInputView) 作成
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus
