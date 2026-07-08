@@ -51,9 +51,9 @@ public partial class MenuData : ObservableObject {
 		new("旧DBからの選択変換処理", typeof(Views._00System.ConvertSelectedView), addInfo:"旧OracleDBからの選択変換処理 サーバ側にOracle接続定義が必要"),
 		new("管理者用システム処理", typeof(Views._00System.SysExecMiscView), addInfo:"管理者用の各種システム処理"),
         /* ================================ */
-			new("----------------", typeof(string) , addInfo:"---"),
-			new("後で削除: サンプル画面 ---", typeof(SampleView), addInfo:"-- MaterialDesignサンプル"),
-			new("後で削除: Test画面--", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"-- 一時的なテストで使用"),
+			// new("----------------", typeof(string) , addInfo:"---"),
+			// new("後で削除: サンプル画面 ---", typeof(SampleView), addInfo:"-- MaterialDesignサンプル"),
+			// new("後で削除: Test画面--", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"-- 一時的なテストで使用"),
 		])),
 		new("■ マスター", new([
 			new("システム管理マスタ", typeof(Views._01Master.MasterSysKanriMenteView),  addInfo:"会社情報、締日、税率などを設定"),
@@ -86,7 +86,7 @@ public partial class MenuData : ObservableObject {
 			new("販売員予算表", typeof(Views._02Yosan.SalesStaffBudgetReportView), addInfo:"準備中"),
 		])),
 		new("■ 発注", new([
-			new("発注入力", typeof(Views._03Hatchu.HachuInputView)),
+			new("発注入力", typeof(Views._03Hatchu.HachuInputView), addInfo:"仕入先に対する発注入力"),
 			new("発注配分入力", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"準備中"),
 			new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"準備中"),
 			new("仕入先別発注表", typeof(Views._03Hatchu.SupplierHachuTableView), addInfo:"準備中"),
