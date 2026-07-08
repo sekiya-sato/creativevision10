@@ -384,6 +384,72 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	[RelayCommand]
+	void DoInputShohinColSiz() {
+		if (SelectedMeisai == null) {
+			MessageEx.ShowWarningDialog("明細行を選択してください", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		if (SelectedMeisai.Id_Shohin <= 0) {
+			MessageEx.ShowWarningDialog("商品を選択してください", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+
+		var win = new Views.Sub.InputShohinColSizView();
+		if (win.DataContext is not InputShohinColSizViewModel vm) return;
+		vm.SetParam(SelectedMeisai.Id_Shohin);
+		if (ClientLib.ShowDialogView(win, this) != true) return;
+
+		ApplyShohinColSizMeisai(vm.GetResults());
+	}
+
+	void ApplyShohinColSizMeisai(IEnumerable<InputShohinColSizRow> rows) {
+		var results = rows.ToList();
+		if (results.Count == 0) return;
+
+		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;
+		var firstResult = results[0];
+		var firstTarget = SelectedMeisai;
+
+		if (firstTarget != null && firstTarget.Id_Col == 0 && firstTarget.Id_Siz == 0) {
+			FillMeisaiFromColSizRow(firstTarget, firstResult);
+			firstTarget.PropertyChanged += OnMeisaiPropertyChanged;
+			SelectedMeisai = firstTarget;
+			results = results.Skip(1).ToList();
+		}
+
+		foreach (var result in results) {
+			var row = new Tran99Meisai {
+				No = nextNo++,
+				Kubun = ProperMeisaiKubun,
+				Id_Shohin = SelectedMeisai?.Id_Shohin ?? 0,
+				Code_Shohin = SelectedMeisai?.Code_Shohin ?? string.Empty,
+				Mei_Shohin = SelectedMeisai?.Mei_Shohin ?? string.Empty,
+				Tanka = SelectedMeisai?.Tanka ?? 0,
+				Jodai = SelectedMeisai?.Jodai ?? 0,
+				Gedai = SelectedMeisai?.Gedai ?? 0,
+			};
+			FillMeisaiFromColSizRow(row, result);
+			row.PropertyChanged += OnMeisaiPropertyChanged;
+			EditMeisai.Add(row);
+			SelectedMeisai = row;
+		}
+
+		UpdateTotals();
+	}
+
+	static void FillMeisaiFromColSizRow(Tran99Meisai meisai, InputShohinColSizRow row) {
+		meisai.Id_Col = row.Source.Id_Col;
+		meisai.Code_Col = row.Source.Code_Col;
+		meisai.Mei_Col = row.Source.Mei_Col;
+		meisai.Id_Siz = row.Source.Id_Siz;
+		meisai.Code_Siz = row.Source.Code_Siz;
+		meisai.Mei_Siz = row.Source.Mei_Siz;
+		meisai.Su = row.Su;
+		meisai.Kingaku = meisai.Su * meisai.Tanka;
+		meisai.JanCode = row.Source.Jan1;
+	}
+
+	[RelayCommand]
 	void DoSelectTokui() {
 		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "", "Code", startPos: CurrentEdit.Id_Tokui);
 		if (tokui == null) return;
