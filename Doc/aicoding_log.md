@@ -1,3 +1,22 @@
+## [2026-07-08] 15:42 StockDateBulkMenteView.xaml のデザイン統一
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：他の画面と使っている部品を合わせて、極力独自のデザインを入れないようにする。
+### 実施内容
+- CvWpfclient/Views/08Zaiko/StockDateBulkMenteView.xaml: Card に `UniformCornerRadius="8"` を追加（他画面・マスタ画面と統一）。
+- DataGrid の `materialDesign:DataGridAssist.CellPadding` を `8,4` → `12,6`、`ColumnHeaderPadding` を `8,6` → `12,8` に変更（他画面標準値に統一）。
+- 一覧 Card 内の Border に `CornerRadius="8,8,0,0"` を追加（マスタ画面基準に統一）。
+- 下部 Border の Message TextBlock に `FontSize="13"` を追加（マスタ画面基準に統一）。
+### 技術決定 Why
+- レイアウト構造や Window サイズは変更せず、ボタン・色・スタイルなどの共通リソース使用箇所のみを他画面と統一。デザイン崩壊リスクを最小化。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-08] 22:50 色サイズ一括数量入力ボタンを全InputViewに追加
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus

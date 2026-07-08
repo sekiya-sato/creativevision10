@@ -76,7 +76,7 @@
 
 		<materialDesign:Card Grid.Row="1"
 			Margin="12,10,12,8" Padding="12"
-			materialDesign:ElevationAssist.Elevation="Dp2">
+			materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="Auto" />
@@ -147,7 +147,7 @@
 
 		<materialDesign:Card Grid.Row="2"
 			Margin="12,0,12,8" Padding="0"
-			materialDesign:ElevationAssist.Elevation="Dp2">
+			materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
@@ -155,7 +155,8 @@
 				</Grid.RowDefinitions>
 				<Border Grid.Row="0"
 					Padding="12,8"
-					Background="{DynamicResource MaterialDesignToolBarBackground}">
+					Background="{DynamicResource MaterialDesignToolBarBackground}"
+					CornerRadius="8,8,0,0">
 					<DockPanel>
 						<TextBlock VerticalAlignment="Center"
 							DockPanel.Dock="Right"
@@ -170,7 +171,7 @@
 
 				<DataGrid Grid.Row="1"
 					d:ItemsSource="{d:SampleData ItemCount=5}"
-					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
+					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 					AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 					IsReadOnly="False" IsSynchronizedWithCurrentItem="True"
@@ -244,24 +245,12 @@
 			Background="{DynamicResource MaterialDesignToolBarBackground}">
 			<DockPanel>
 				<TextBlock VerticalAlignment="Center"
+					FontSize="13"
 					Foreground="{DynamicResource MaterialDesignBodyLight}"
 					Text="{Binding Message}"
 					TextTrimming="CharacterEllipsis" />
 				<StackPanel HorizontalAlignment="Right"
-					DockPanel.Dock="Right" Orientation="Horizontal">
-					<Button Margin="4,0"
-						Command="{Binding UpdateSelectedCommand}"
-						Style="{StaticResource ToolCommandButton}"
-						ToolTip="更新実行 (F2)">
-						<TextBlock Text="更新実行" />
-					</Button>
-					<Button Margin="4,0"
-						Command="{Binding ExitCommand}"
-						Style="{StaticResource ToolCommandButton}"
-						ToolTip="戻る (Esc)">
-						<TextBlock Text="戻る(ESC)" />
-					</Button>
-				</StackPanel>
+					DockPanel.Dock="Right" Orientation="Horizontal" />
 			</DockPanel>
 		</Border>
 	</Grid>
