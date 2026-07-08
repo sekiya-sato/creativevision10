@@ -6,6 +6,7 @@
 	Title="棚卸日一括メンテナンス"
 	Width="1180" Height="760"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="18"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
@@ -34,17 +35,6 @@
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-					<Button Margin="4,0"
-						Command="{Binding DoListCommand}"
-						Style="{StaticResource ToolCommandButton}"
-						ToolTip="一覧取得 (F5)">
-						<StackPanel Orientation="Horizontal">
-							<materialDesign:PackIcon VerticalAlignment="Center"
-								Kind="DatabaseSearch" />
-							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="一覧取得" />
-						</StackPanel>
-					</Button>
 					<Button Margin="4,0"
 						Command="{Binding UpdateSelectedCommand}"
 						Style="{StaticResource ToolCommandButton}"
@@ -80,7 +70,8 @@
 			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="494*" />
+					<ColumnDefinition Width="43*" />
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="170" />
 					<ColumnDefinition Width="Auto" />
@@ -90,24 +81,37 @@
 				</Grid.ColumnDefinitions>
 
 				<TextBlock Grid.Column="0"
+					Height="25"
 					Margin="4,0,8,0" VerticalAlignment="Center"
 					Text="得意先" />
 				<TextBox Grid.Column="1"
-					MinWidth="260"
+					MinWidth="240"
+					Margin="0,4,10,4"
 					materialDesign:HintAssist.Hint="一覧取得で複数選択" IsReadOnly="True"
 					Style="{StaticResource FormTextBox}"
 					Text="{Binding SelectedTokuiText}" />
+				<Button Grid.Column="2"
+					Width="50" Height="50"
+					Margin="0" HorizontalAlignment="Center"
+					Command="{Binding DoListCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="一覧取得 (F5)">
+					<materialDesign:PackIcon Width="48" Height="48"
+						Background="{DynamicResource PrimaryButtonColor}"
+						Foreground="White" Kind="Magnify" />
+				</Button>
 
-				<TextBlock Grid.Column="2"
+				<TextBlock Grid.Column="3"
+					Height="25"
 					Margin="18,0,8,0" VerticalAlignment="Center"
 					Text="一括棚卸日" />
-				<DatePicker Grid.Column="3"
-					Width="160"
+				<DatePicker Grid.Column="4"
+					Margin="5,0,5,0"
 					helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 					SelectedDate="{Binding BulkTanaDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					Style="{StaticResource FormDatePicker}" />
-				<Button Grid.Column="4"
-					Margin="8,0,0,0"
+				<Button Grid.Column="5"
+					Margin="8,18,0,17"
 					Command="{Binding ApplyBulkTanaDayCommand}"
 					Style="{StaticResource ToolCommandButton}"
 					ToolTip="チェック行へ棚卸日を設定">
@@ -118,21 +122,22 @@
 							Text="設定" />
 					</StackPanel>
 				</Button>
-				<Button Grid.Column="5"
-					Margin="8,0,0,0"
+				<Button Grid.Column="6"
+					Margin="8,18,0,17"
 					Command="{Binding SelectAllTargetsCommand}"
 					Style="{StaticResource ToolCommandButton}"
 					ToolTip="全行を更新対象にする">
 					<materialDesign:PackIcon Kind="CheckboxMarkedOutline" />
 				</Button>
-				<Button Grid.Column="6"
-					Margin="4,0,0,0"
+				<Button Grid.Column="7"
+					Margin="4,18,0,17"
 					Command="{Binding ClearAllTargetsCommand}"
 					Style="{StaticResource ToolCommandButton}"
 					ToolTip="全行の更新対象を外す">
 					<materialDesign:PackIcon Kind="CheckboxBlankOffOutline" />
 				</Button>
-				<TextBlock Grid.Column="7"
+				<TextBlock Grid.Column="8"
+					Height="25"
 					Margin="12,0,4,0" VerticalAlignment="Center"
 					Foreground="{DynamicResource MaterialDesignBodyLight}">
 					<TextBlock.Text>
@@ -158,6 +163,7 @@
 					Background="{DynamicResource MaterialDesignToolBarBackground}"
 					CornerRadius="8,8,0,0">
 					<DockPanel>
+						<StackPanel DockPanel.Dock="Left" Orientation="Horizontal" />
 						<TextBlock VerticalAlignment="Center"
 							DockPanel.Dock="Right"
 							Foreground="{DynamicResource MaterialDesignBodyLight}"
@@ -170,8 +176,10 @@
 				</Border>
 
 				<DataGrid Grid.Row="1"
+					d:DataContext="{d:DesignInstance Type=vm:StockDateBulkRow}"
+					d:ItemsSource="{d:SampleData ItemCount=10}"
 					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-					AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
+					AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FontSize="16" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 					IsReadOnly="False" IsSynchronizedWithCurrentItem="True"
 					ItemsSource="{Binding ListData}"
@@ -225,7 +233,7 @@
 										<TextBox MinWidth="90"
 											IsReadOnly="True"
 											Style="{StaticResource FormTextBox}"
-											Text="{Binding AutoHoju, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+											Text="{Binding AutoHojuText, Mode=OneWay}" />
 									</DockPanel>
 								</DataTemplate>
 							</DataGridTemplateColumn.CellTemplate>

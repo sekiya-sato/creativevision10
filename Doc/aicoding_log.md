@@ -1,3 +1,20 @@
+## [2026-07-08] 23:05 StockDateBulkMenteView.xaml 一覧取得ボタン移動・AutoHoju表示変更
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：一覧取得ボタンをリスト表示枠先頭に移動し虫眼鏡アイコンに変更。AutoHojuの表示をビット組み合わせによる曜日表記に変更。
+### 実施内容
+- CvWpfclient/Views/08Zaiko/StockDateBulkMenteView.xaml: ColorZoneヘッダーから「一覧取得」ボタンを削除し、DataGrid上部Borderの先頭にMagnifyアイコンのみのボタンとして配置。
+- 自動補充フラグ列のTextBox Bindingを`AutoHoju`から`AutoHojuText`に変更（ViewModel側の`FormatAutoHojuText`メソッドがビット解析済み）。
+### 技術決定 Why
+- ViewModelに`FormatAutoHojuText`と`AutoHojuText`プロパティが既に実装されていたため、XAML側のBinding変更のみで対応可能だった。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-08] 15:42 StockDateBulkMenteView.xaml のデザイン統一
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus
