@@ -304,3 +304,23 @@
 - dotnet build CvWpfclient/CvWpfclient.csproj：初回は NuGet.Config 権限で失敗。権限付き再実行で成功（0 警告 / 0 エラー）
 
 ---
+## [2026-07-08] 15:08 棚卸日一括メンテナンス画面の実装
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.StockDateBulkMenteView を Tran60TanaDate 更新画面として作成し、完了後 commit と ../cv10 への rebase / fast-forward merge を行う
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/StockDateBulkMenteViewModel.cs: MasterTokui 複数選択、TenType in (0,3,6) かつ IsZaiko=1 の一覧取得、Tran60TanaDate 既存値反映、棚卸日一括設定、自動補充7ビット曜日選択、選択行の追加/修正処理を実装
+- CvWpfclient/Views/08Zaiko/StockDateBulkMenteView.xaml: 旧画面を参考に、一覧取得・更新実行・棚卸日一括設定・更新対象チェック・DataGrid編集列を配置
+### 技術決定 Why
+- Tran60TanaDate は Id_Shop 単位の設定テーブルのため、MasterTokui を表示主体にし、既存 Tran60TanaDate を合成して未登録行も同じ一覧で編集できるようにした
+- 自動補充フラグは仕様どおり 0-6 ビットを日月火水木金土に割り当て、表示は 0=なし、127=全日、それ以外は曜日連結に統一した
+### 確認
+- XAML XML parse OK (UTF-8)
+- git diff --check OK
+- Build: CvWpfclient 0 error / 0 warning
+- 初回 build は NuGet.Config 読み取り権限で停止したため、同一コマンドを権限付きで再実行して成功
+
+---
