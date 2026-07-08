@@ -516,7 +516,8 @@
 						</Button>
 						<Button Margin="8,0,0,0"
 							Command="{Binding DoInputShohinColSizCommand}"
-							Style="{StaticResource MaterialDesignOutlinedButton}">
+							Style="{StaticResource MaterialDesignOutlinedButton}"
+							ToolTip="明細カーソル行の商品マスタに対する色サイズ一括数量入力を行います">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="Palette" />

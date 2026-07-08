@@ -1,3 +1,31 @@
+## [2026-07-08] 22:50 色サイズ一括数量入力ボタンを全InputViewに追加
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：バーコード入力ボタンがある全てのInputViewに「色サイズ一括数量入力」ボタンを追加する。
+### 実施内容
+- CvWpfclient/Views/03Hatchu/HachuInputView.xaml: バーコード入力ボタンの右に「色サイズ一括数量入力」ボタン(Paletteアイコン)を追加。
+- CvWpfclient/ViewModels/03Hatchu/HachuInputViewModel.cs: DoInputShohinColSizCommand を追加。選択中の商品Idをダイアログに渡し、結果を明細行に反映。
+- CvWpfclient/Views/04Juchu/JuchuInputView.xaml: 同上。
+- CvWpfclient/ViewModels/04Juchu/JuchuInputViewModel.cs: 同上。
+- CvWpfclient/Views/06Uriage/ShukkaUriageInputView.xaml: 同上。
+- CvWpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs: 同上。
+- CvWpfclient/Views/06Uriage/ShopUriageInputView.xaml: 同上。
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 同上。
+- CvWpfclient/Views/08Zaiko/StockInputView.xaml: 同上。
+- CvWpfclient/ViewModels/08Zaiko/StockInputViewModel.cs: 同上。
+### 技術決定 Why
+- ShiireInputView で実装したパターンをそのまま全InputViewに展開。各画面のKubun設定値（ProperMeisaiKubun / CurrentEdit.Kubun）のみ個別対応。
+- 空明細行（色・サイズ未設定）があれば最初の結果で更新し、残りは新規行として追加する仕様を統一。
+### 影響範囲
+- 既存ファイル 10 件の改修。ビルドは 0 error 0 warning。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-08] 22:00 色サイズ一括数量入力 (InputShohinColSizView) の新規作成
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus
