@@ -86,7 +86,7 @@ public partial class MenuData : ObservableObject {
 			new("販売員予算表", typeof(Views._02Yosan.SalesStaffBudgetReportView), addInfo:"準備中"),
 		])),
 		new("■ 発注", new([
-			new("発注入力", typeof(Views._03Hatchu.HachuInputView), addInfo:"準備中"),
+			new("発注入力", typeof(Views._03Hatchu.HachuInputView)),
 			new("発注配分入力", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"準備中"),
 			new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"準備中"),
 			new("仕入先別発注表", typeof(Views._03Hatchu.SupplierHachuTableView), addInfo:"準備中"),

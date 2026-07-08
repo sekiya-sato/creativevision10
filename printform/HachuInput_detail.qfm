@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1"><group level="1" pagechange="0"/></item>
+			<item id="item2"/>
+			<item id="item3"/>
+			<item id="item4"/>
+			<item id="item5"/>
+			<item id="item6"/>
+			<item id="item7"/>
+			<item id="item8"/>
+			<item id="item9"/>
+			<item id="item10"/>
+			<item id="item11"/>
+			<item id="item12"/>
+			<item id="item13"/>
+			<item id="item14"/>
+			<item id="item15"/>
+			<item id="item16"/>
+			<item id="item17"/>
+			<item id="item18"/>
+			<item id="item19"/>
+			<item id="item20"/>
+			<item id="item21"/>
+			<item id="item22"/>
+			<item id="item23"/>
+			<item id="item24"/>
+			<item id="item25"/>
+			<item id="item26"/>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+		</file>
+	</datadesc>
+	<page orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="Form1" tree="1">
+		<position x="8" y="8" width="156" height="272"/>
+		<region id="Rgn01" direction="0" tree="1">
+			<position x="0" y="10" width="150" height="248"/>
+			<color transparent="1"/>
+			<record id="RecTitle" recordtype="1" tree="1">
+				<position x="0" y="0" width="150" height="8"/>
+				<color transparent="1"/>
+				<text id="Title">
+					<position x="0" y="0" width="90" height="5"/>
+					<color transparent="1"/>
+					<data calctype="static">発注明細</data>
+					<decode datatype="string" format=""/>
+					<font size="120"/>
+				</text>
+				<text id="PrintDate">
+					<position x="90" y="1" width="40" height="4"/>
+					<color transparent="1"/>
+					<data calctype="date"/>
+					<decode datatype="date" format="&quot;出力 &quot;YYYY/MM/DD HH24:MI"/>
+					<font size="62"/>
+				</text>
+				<text id="PageNo">
+					<position x="132" y="1" width="18" height="4"/>
+					<color transparent="1"/>
+					<data calctype="page"/>
+					<decode datatype="number" format="&quot;P.&quot;0999"/>
+					<font size="62"/>
+				</text>
+			</record>
+			<record id="RecSlip" grouplevel="1" breaktype="2" tree="1">
+				<position x="0" y="8" width="150" height="12"/>
+				<color base="c8ffc8" transparent="0"/>
+				<border left="1" right="1" top="1" bottom="1"/>
+				<text id="SlipId"><position x="0" y="0" width="15" height="4"/><data calctype="item" datasrc="item1"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipDay"><position x="15" y="0" width="18" height="4"/><data calctype="item" datasrc="item2"/><decode datatype="string" format="S0.4&quot;/&quot;S4.2&quot;/&quot;S6.2"/><font size="62"/></text>
+				<text id="SlipKubun"><position x="33" y="0" width="14" height="4"/><data calctype="item" datasrc="item3"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipShiire"><position x="47" y="0" width="48" height="4"/><data calctype="item" datasrc="item4"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipSoko"><position x="95" y="0" width="30" height="4"/><data calctype="item" datasrc="item5"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipShain"><position x="125" y="0" width="25" height="4"/><data calctype="item" datasrc="item6"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipRelate"><position x="0" y="4" width="15" height="4"/><data calctype="item" datasrc="item7"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipRate"><position x="15" y="4" width="12" height="4"/><data calctype="item" datasrc="item8"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipSu"><position x="27" y="4" width="18" height="4"/><data calctype="item" datasrc="item9"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipKingaku"><position x="45" y="4" width="24" height="4"/><data calctype="item" datasrc="item10"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipTax"><position x="69" y="4" width="20" height="4"/><data calctype="item" datasrc="item11"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipTotal"><position x="89" y="4" width="24" height="4"/><data calctype="item" datasrc="item12"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="SlipLabel"><position x="0" y="8" width="150" height="4"/><data calctype="static">発注No / 発注日 / 区分 / 仕入先 / 倉庫 / 入力者 / 関連No / 掛率 / 数量計 / 金額計 / 税 / 総合計</data><decode datatype="string" format=""/><font size="58"/></text>
+			</record>
+			<record id="RecHeader" recordtype="1" tree="1">
+				<position x="0" y="20" width="150" height="8"/>
+				<color base="e0e0e0" transparent="0"/>
+				<border left="1" right="1" top="1" bottom="1"/>
+				<text id="HdrNo"><position x="0" y="0" width="10" height="4"/><data calctype="static">No</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrKubun"><position x="10" y="0" width="18" height="4"/><data calctype="static">P/S</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrShohin"><position x="28" y="0" width="50" height="4"/><data calctype="static">商品</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrCol"><position x="78" y="0" width="22" height="4"/><data calctype="static">色</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrSiz"><position x="100" y="0" width="22" height="4"/><data calctype="static">サイズ</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrSu"><position x="122" y="0" width="14" height="4"/><data calctype="static">数量</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrTanka"><position x="136" y="0" width="14" height="4"/><data calctype="static">単価</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrKingaku"><position x="0" y="4" width="25" height="4"/><data calctype="static">金額</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrJodai"><position x="25" y="4" width="20" height="4"/><data calctype="static">上代</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrJodaiK"><position x="45" y="4" width="25" height="4"/><data calctype="static">上代金額</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrGedai"><position x="70" y="4" width="20" height="4"/><data calctype="static">下代</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrGedaiK"><position x="90" y="4" width="25" height="4"/><data calctype="static">下代金額</data><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="HdrShain"><position x="115" y="4" width="35" height="4"/><data calctype="static">担当</data><decode datatype="string" format=""/><font size="62"/></text>
+			</record>
+			<record id="RecData" tree="1">
+				<position x="0" y="28" width="150" height="8"/>
+				<color transparent="1"/>
+				<border left="1" right="1" bottom="10"/>
+				<text id="ValNo"><position x="0" y="0" width="10" height="4"/><data calctype="item" datasrc="item13"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValKubun"><position x="10" y="0" width="18" height="4"/><data calctype="item" datasrc="item14"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValShohin"><position x="28" y="0" width="50" height="4"/><data calctype="item" datasrc="item15"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValCol"><position x="78" y="0" width="22" height="4"/><data calctype="item" datasrc="item16"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValSiz"><position x="100" y="0" width="22" height="4"/><data calctype="item" datasrc="item17"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValSu"><position x="122" y="0" width="14" height="4"/><data calctype="item" datasrc="item18"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValTanka"><position x="136" y="0" width="14" height="4"/><data calctype="item" datasrc="item19"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValKingaku"><position x="0" y="4" width="25" height="4"/><data calctype="item" datasrc="item20"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValJodai"><position x="25" y="4" width="20" height="4"/><data calctype="item" datasrc="item21"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValJodaiK"><position x="45" y="4" width="25" height="4"/><data calctype="item" datasrc="item22"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValGedai"><position x="70" y="4" width="20" height="4"/><data calctype="item" datasrc="item23"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValGedaiK"><position x="90" y="4" width="25" height="4"/><data calctype="item" datasrc="item24"/><decode datatype="string" format=""/><font size="62"/></text>
+				<text id="ValShain"><position x="115" y="4" width="35" height="4"/><data calctype="item" datasrc="item25"/><decode datatype="string" format=""/><font size="62"/></text>
+			</record>
+			<record id="RecMemo" tree="1">
+				<position x="0" y="36" width="150" height="4"/>
+				<color transparent="1"/>
+				<text id="ValMemo"><position x="0" y="0" width="150" height="4"/><data calctype="item" datasrc="item26"/><decode datatype="string" format=""/><font size="58"/></text>
+			</record>
+		</region>
+	</page>
+</printstream>

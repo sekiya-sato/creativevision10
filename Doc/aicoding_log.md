@@ -1,3 +1,31 @@
+## [2026-07-08] 09:56 発注入力画面作成
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._03Hatchu.HachuInputView` を `ShopUriageInputView` 参考で作成し、対象テーブルを `Tran13Hachu` とする。qfm(header/detail)追加、log、commit、`../cv10` への ff マージまで実施する。
+### 実施内容
+- CvWpfclient/Views/03Hatchu/HachuInputView.xaml: 一覧・詳細 2 タブ構成、発注ヘッダー入力、明細 DataGrid、一覧/明細印刷ボタンを追加
+- CvWpfclient/Views/03Hatchu/HachuInputView.xaml.cs: 詳細タブで Esc 押下時に一覧へ戻る処理を追加
+- CvWpfclient/ViewModels/03Hatchu/HachuInputViewModel.cs: `BasePlainLightMenteViewModel<Tran13Hachu>` 化、一覧条件、明細同期、仕入先/倉庫/社員/商品/色/サイズ選択、合計再計算、印刷 SQL を実装
+- CvWpfclient/Models/MenuData.cs: `発注入力` の準備中表示を解除
+- printform/HachuInput_header.qfm: 発注一覧印刷フォームを Shift_JIS で追加
+- printform/HachuInput_detail.qfm: 発注明細印刷フォームを Shift_JIS で追加
+- .omo/2026-07-08-hachu-input-plan.md: 実装計画を作成
+### 技術決定 Why
+- `ShopUriageInputView` と同じ一覧/詳細タブ、`CreateListQueryParam()`、`QueryListSqlParam`、`RunPrintPdfAsync` の流れに合わせ、一覧条件と印刷対象がずれない構成にした。
+- 明細は ViewModel 所有の `ObservableCollection<Tran99Meisai>` に展開し、保存直前に `CurrentEdit.Jmeisai` へ同期することで DataGrid の追加/削除通知を安定させた。
+- qfm は repo 既存ルールに合わせ、`printform/` 配下で `data.txt` 入力、A4 縦、Shift_JIS(cp932) とした。
+### 確認
+- XAML/qfm XML 読み込み：成功
+- qfm validator：`HachuInput_header.qfm` / `HachuInput_detail.qfm` ともに OK
+- CRLF 確認：編集ファイル OK
+- git diff --check：成功
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj`：成功（0 warning / 0 error、通常 sandbox では NuGet.Config 権限エラーのため権限付きで再実行）
+
+---
+
 ## [2026-07-07] 作業時間不明 catchブロック日本語文字化け修正
 ### Agent
 - kimi-k2.6 : opencode-go/kimi-k2.6 : Sisyphus
