@@ -37,9 +37,7 @@ public partial class HachuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
 		new(EnumShiire.Shiire, "発注"),
-		new(EnumShiire.Henpin, "返品"),
-		new(EnumShiire.Nebiki, "値引"),
-		new(EnumShiire.Other, "その他"),
+		new(EnumShiire.Henpin, "発注返品"),
 	];
 
 	public IReadOnlyList<MeisaiKubunOption> MeisaiKubunOptions { get; } = [

@@ -502,18 +502,6 @@
 								Binding="{Binding No}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="行No" />
-							<DataGridTemplateColumn Width="92"
-								Header="P/S">
-								<DataGridTemplateColumn.CellTemplate>
-									<DataTemplate>
-										<ComboBox Height="28"
-											DisplayMemberPath="Name"
-											ItemsSource="{Binding DataContext.MeisaiKubunOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-											SelectedValue="{Binding Kubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-											SelectedValuePath="Value" />
-									</DataTemplate>
-								</DataGridTemplateColumn.CellTemplate>
-							</DataGridTemplateColumn>
 							<DataGridTemplateColumn Width="120"
 								Header="商品Id">
 								<DataGridTemplateColumn.CellTemplate>

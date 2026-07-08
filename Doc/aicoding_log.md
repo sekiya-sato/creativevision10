@@ -1,3 +1,23 @@
+## [2026-07-08] 10:10 HachuInputView 区分選択と明細列表示修正
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`HachuInputView` の区分選択を「発注 / 発注返品」の2つに変更し、明細の P/S を画面から削除し、数量・単価・金額を右詰めにする。
+### 実施内容
+- CvWpfclient/ViewModels/03Hatchu/HachuInputViewModel.cs: `KubunOptions` を `発注` と `発注返品` の2件に変更
+- CvWpfclient/Views/03Hatchu/HachuInputView.xaml: 明細 DataGrid の P/S 列を削除。数量・単価・金額は既存の右寄せ表示/編集スタイルを維持
+### 技術決定 Why
+- P/S は「画面からのみ削除」の指定のため、内部明細 `Kubun`、印刷 qfm、印刷 SQL は変更せず、画面列だけを削除した。
+### 確認
+- XAML XML 読み込み：成功
+- CRLF 確認：成功
+- git diff --check：成功
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj`：成功（0 warning / 0 error、通常 sandbox では NuGet.Config 権限エラーのため権限付きで再実行）
+
+---
+
 ## [2026-07-08] 09:56 発注入力画面作成
 ### Agent
 - GPT-5 : OpenAI : Codex
