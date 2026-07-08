@@ -170,7 +170,6 @@
 				</Border>
 
 				<DataGrid Grid.Row="1"
-					d:ItemsSource="{d:SampleData ItemCount=5}"
 					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 					AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
