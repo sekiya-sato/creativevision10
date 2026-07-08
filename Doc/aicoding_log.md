@@ -1,3 +1,28 @@
+## [2026-07-08] 22:00 色サイズ一括数量入力 (InputShohinColSizView) の新規作成
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SelectShohinColSizView を元に、JAN1列を削除して数量(右詰め)入力列を追加したダイアログを新規作成。ShiireInputView の「バーコード入力」ボタンの右に「色サイズ一括数量入力」ボタンを設置し、数量0以外の行を明細として展開する。
+### 実施内容
+- CvWpfclient/ViewModels/Sub/InputShohinColSizViewModel.cs: SelectShohinColSizViewModel をベースに新規作成。数量入力用の ObservableCollection<InputShohinColSizRow> を持ち、数量決定ボタンで数量0以外の行リストを返す。
+- CvWpfclient/Views/Sub/InputShohinColSizView.xaml: JAN1列を削除、数量列(EditingElementStyle=DataGridRightTextBox/右詰め編集可)を追加。数量決定ボタンに変更。BaseWindow継承。
+- CvWpfclient/Views/Sub/InputShohinColSizView.xaml.cs: code-behind を新規作成。
+- CvWpfclient/Views/05Shiire/ShiireInputView.xaml: バーコード入力ボタンの右に「色サイズ一括数量入力」ボタン(Paletteアイコン)を追加。
+- CvWpfclient/ViewModels/05Shiire/ShiireInputViewModel.cs: DoInputShohinColSizCommand を追加。選択中の商品Idをダイアログに渡し、結果を明細行に反映。選択行が空(色サイズ未設定)なら最初の結果で埋め、残りは新規行として追加。
+- CvWpfclient/Models/MenuData.cs: 「商品仕入入力」の addInfo を「準備中」から「仕入先に対する仕入入力」に更新。
+### 技術決定 Why
+- SelectShohinColSizView のレイアウト・スタイルを最大限再利用し、差分を数量列の追加とボタン名称変更に抑えた。
+- 結果の明細展開では、現在選択中の空明細行（色・サイズ未設定）があればその行を最初の結果で更新し、不要な空行増加を防ぐ。
+- 数量列は TwoWay binding + PropertyChanged で即座にViewModel側に反映。
+### 影響範囲
+- 新規ファイル 3 件、既存ファイル 3 件の改修。ビルドは 0 error 0 warning。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-08] 13:00 仕入入力 (ShiireInputView) 作成
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus
