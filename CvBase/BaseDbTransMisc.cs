@@ -101,3 +101,36 @@ public sealed partial class TranShopPromotion : BaseDbClass {
 	[property: ResultColumn]
 	string rankName = string.Empty;
 }
+
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, [nameof(Id_Shop)])]
+[Comment("トランザクション：棚卸日一括メンテデータ MasterTokuiのTenType in (0,3,6)に対し棚卸日を設定する")]
+public sealed partial class Tran60TanaDate : BaseDbClass {
+	/// <summary>
+	/// 店舗Id
+	/// </summary>
+	[ObservableProperty]
+	long id_Shop;
+	/// <summary>
+	/// 棚卸日付 yyyyMMdd 8桁の文字列で表現
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string tanaDay = "19010101";
+	/// <summary>
+	/// 確定日付 yyyyMMdd 8桁の文字列で表現
+	/// </summary>
+	[ObservableProperty]
+	[property: ColumnSizeDml(8)]
+	[property: System.ComponentModel.DefaultValue("")]
+	string fixDay = "19010101";
+	/// <summary>
+	/// 自動補充フラグ (0:なし 1:する(全日))
+	/// </summary>
+	[ObservableProperty]
+	int autoHoju;
+
+
+
+}

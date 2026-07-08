@@ -93,24 +93,19 @@
 				<DataGrid.Columns>
 					<DataGridTextColumn Width="70"
 						Binding="{Binding Source.RowIdx}"
-						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 行"
-						IsReadOnly="True" />
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 行" IsReadOnly="True" />
 					<DataGridTextColumn Width="100"
 						Binding="{Binding Source.Code_Col}"
-						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 色CD"
-						IsReadOnly="True" />
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 色CD" IsReadOnly="True" />
 					<DataGridTextColumn Width="180"
 						Binding="{Binding Source.Mei_Col}"
-						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 色名"
-						IsReadOnly="True" />
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" 色名" IsReadOnly="True" />
 					<DataGridTextColumn Width="110"
 						Binding="{Binding Source.Code_Siz}"
-						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" サイズCD"
-						IsReadOnly="True" />
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" サイズCD" IsReadOnly="True" />
 					<DataGridTextColumn Width="180"
 						Binding="{Binding Source.Mei_Siz}"
-						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" サイズ名"
-						IsReadOnly="True" />
+						CanUserReorder="True" CanUserResize="True" CanUserSort="True" Header=" サイズ名" IsReadOnly="True" />
 					<DataGridTextColumn Width="70"
 						Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 						CanUserReorder="True" CanUserResize="True" CanUserSort="True"
