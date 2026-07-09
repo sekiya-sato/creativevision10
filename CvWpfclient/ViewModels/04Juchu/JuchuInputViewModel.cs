@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace CvWpfclient.ViewModels._04Juchu;
 
-public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran12Jyuchu> {
+public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran12Jyuchu>, ITranInputTab {
 	public sealed record KubunOption(EnumUri01 Value, string Name);
 	public sealed record MeisaiKubunOption(int Value, string Name);
 

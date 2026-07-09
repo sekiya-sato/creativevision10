@@ -11,7 +11,7 @@ using System.Globalization;
 
 namespace CvWpfclient.ViewModels._06Uriage;
 
-public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran00Uriage> {
+public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran00Uriage>, ITranInputTab {
 	public sealed record KubunOption(EnumUri00 Value, string Name);
 	public sealed record YesNoOption(EnumYesNo Value, string Name);
 

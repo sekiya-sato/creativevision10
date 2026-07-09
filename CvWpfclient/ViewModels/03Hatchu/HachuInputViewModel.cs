@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace CvWpfclient.ViewModels._03Hatchu;
 
-public partial class HachuInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran13Hachu> {
+public partial class HachuInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran13Hachu>, ITranInputTab {
 	public sealed record KubunOption(EnumShiire Value, string Name);
 	public sealed record MeisaiKubunOption(int Value, string Name);
 

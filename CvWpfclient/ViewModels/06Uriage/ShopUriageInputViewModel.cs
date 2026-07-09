@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace CvWpfclient.ViewModels._06Uriage;
 
-public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran01Tenuri> {
+public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran01Tenuri>, ITranInputTab {
 	public sealed record MeisaiKubunOption(int Value, string Name);
 	const int ProperMeisaiKubun = 0;
 	const int SaleMeisaiKubun = 1;

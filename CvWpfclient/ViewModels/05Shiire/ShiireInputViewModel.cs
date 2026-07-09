@@ -12,7 +12,7 @@ using System.Linq;
 
 namespace CvWpfclient.ViewModels._05Shiire;
 
-public partial class ShiireInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran03Shiire> {
+public partial class ShiireInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran03Shiire>, ITranInputTab {
 	public sealed record KubunOption(EnumShiire Value, string Name);
 	public sealed record MeisaiKubunOption(int Value, string Name);
 	public sealed record IsPayOption(EnumYesNo Value, string Name);

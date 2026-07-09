@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using CvWpfclient.ViewModels._08Zaiko;
 using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -47,7 +48,11 @@ public class BaseWindow : Window {
 
 		if (e.Key == Key.Escape) {
 			e.Handled = true;
-
+			// 複数タブで、現在詳細画面にある場合には、ESCで一覧画面に戻す(違う処理をしたい場合には独自にOnPreviewKeyDownを実装)
+			if (DataContext is ITranInputTab vm && vm.SelectedTabIndex == 1) {
+				vm.SelectedTabIndex = 0;
+				return;
+			}
 			// 非同期コマンドが実行中の場合は確認ダイアログを表示
 			if (HasRunningCommand()) {
 				var result = MessageEx.ShowQuestionDialog("処理を実行中です。\nメインメニューに戻りますか？", owner: this);
@@ -242,4 +247,8 @@ internal static class NativeMethods {
 		public int right;
 		public int bottom;
 	}
+}
+
+public interface ITranInputTab {
+	public int SelectedTabIndex { get; set; }
 }

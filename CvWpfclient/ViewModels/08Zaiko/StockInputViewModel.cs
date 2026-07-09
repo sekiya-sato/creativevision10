@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace CvWpfclient.ViewModels._08Zaiko;
 
-public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran60Tana> {
+public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran60Tana>, ITranInputTab {
 	public sealed record MeisaiKubunOption(int Value, string Name);
 	const int ProperMeisaiKubun = 0;
 	const int SaleMeisaiKubun = 1;

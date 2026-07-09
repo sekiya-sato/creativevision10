@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace CvWpfclient.ViewModels._08Zaiko;
 
-public partial class IdoInputSokuViewModel : Helpers.BasePlainLightMenteViewModel<Tran05Ido> {
+public partial class IdoInputSokuViewModel : Helpers.BasePlainLightMenteViewModel<Tran05Ido>, ITranInputTab {
 
 
 	[ObservableProperty]
