@@ -26,7 +26,7 @@
 [アクティビティ](https://github.com/sekiya-sato/creativevision10/activity?)  [Insights](https://github.com/sekiya-sato/creativevision10/pulse)  [Contributors](https://github.com/sekiya-sato/creativevision10/graphs/contributors?)  [Commits](https://github.com/sekiya-sato/creativevision10/graphs/commit-activity)
 
 
-<img src="https://komarev.com/ghpvc/?username=sekiya-sato-cv10-readme&style=for-the-badge&color=blue&label=Readme+Views" alt="readme views" />
+<img src="https://komarev.com/ghpvc/?username=sekiya-sato-cv10-readme&style=for-the-badge&color=blueviolet&label=Readme+Views" alt="readme views" />
 
 ---
 
