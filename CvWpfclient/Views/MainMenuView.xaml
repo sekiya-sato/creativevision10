@@ -1,4 +1,4 @@
-﻿<Window x:Class="CvWpfclient.Views.MainMenuView"
+<Window x:Class="CvWpfclient.Views.MainMenuView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -282,8 +282,15 @@
 										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
 										Text="{Binding ServerStatus}"
-										TextWrapping="Wrap"
-										ToolTip="{Binding ServerStatus}" />
+										TextWrapping="Wrap">
+										<TextBlock.ToolTip>
+											<ToolTip MaxWidth="560">
+												<TextBlock Text="{Binding ServerStatus}"
+													TextWrapping="Wrap" />
+											</ToolTip>
+										</TextBlock.ToolTip>
+									</TextBlock>
+
 								</StackPanel>
 							</Border>
 							<Border Grid.Column="1"
@@ -301,8 +308,15 @@
 										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
 										Text="{Binding ClientStatus}"
-										TextWrapping="Wrap"
-										ToolTip="{Binding ClientStatus}" />
+										TextWrapping="Wrap">
+										<TextBlock.ToolTip>
+											<ToolTip MaxWidth="560">
+												<TextBlock Text="{Binding ClientStatus}"
+													TextWrapping="Wrap" />
+											</ToolTip>
+										</TextBlock.ToolTip>
+
+									</TextBlock>
 								</StackPanel>
 							</Border>
 						</Grid>

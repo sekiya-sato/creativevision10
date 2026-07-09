@@ -43,7 +43,7 @@
 				</Button>
 				<materialDesign:PackIcon Width="28" Height="28"
 					VerticalAlignment="Center"
-					Kind="TruckDelivery" />
+					Kind="TruckMinusOutline" />
 				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
 					FontSize="20" FontWeight="SemiBold" Text="移動入力(積送)" />
 			</StackPanel>
