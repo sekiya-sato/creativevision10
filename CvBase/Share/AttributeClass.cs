@@ -116,6 +116,13 @@ public sealed class ColumnSizeDmlAttribute : Attribute {
 [AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 public sealed class NoCreateAttribute : Attribute {
 }
+/// <summary>
+/// 実テーブルの一部として定義してるので単独でCerateTable不要
+/// </summary>
+[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
+public sealed class SubTableDefineAttribute : Attribute {
+}
+
 
 /// <summary>
 /// キー定義 キー名, カラムリスト, ユニークキーか否か

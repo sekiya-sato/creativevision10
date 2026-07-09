@@ -249,6 +249,9 @@ internal static class NativeMethods {
 	}
 }
 
+/// <summary>
+/// 一覧画面と詳細入力画面の複数タブをもつ(BaseWindowで判定)
+/// </summary>
 public interface ITranInputTab {
 	public int SelectedTabIndex { get; set; }
 }

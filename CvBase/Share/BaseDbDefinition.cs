@@ -103,7 +103,7 @@ public partial class BaseDbHasAddress : BaseDbClass {
 /// <summary>
 /// 汎用詳細クラス
 /// </summary>
-[NoCreate]
+[SubTableDefine]
 public partial class BaseDetailClass : ObservableObject {
 	/// <summary>
 	/// 予備項目1
@@ -161,7 +161,7 @@ public partial class CodeNameView : ObservableObject {
 /// <summary>
 /// 汎用カテゴリ名称マスター
 /// </summary>
-[NoCreate]
+[SubTableDefine]
 public sealed partial class MasterGeneralMeisho : CodeNameView {
 	/// <summary>
 	/// 名称区分

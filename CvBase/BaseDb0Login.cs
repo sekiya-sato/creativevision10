@@ -113,7 +113,7 @@ public sealed partial class SysHistJwt : BaseDbClass {
 /// <summary>
 /// ログイン履歴サブテーブル Jsubプロパティ用
 /// </summary>
-[NoCreate]
+[SubTableDefine]
 public sealed partial class SysHistJwtSub : ObservableObject {
 	[ObservableProperty]
 	[property: System.ComponentModel.DefaultValue("")]

@@ -268,7 +268,8 @@ public partial class ExDatabase : Database {
 			return ret;
 		if (classT.GetCustomAttribute<NoCreateAttribute>() != null)
 			return true;
-
+		if (classT.GetCustomAttribute<SubTableDefineAttribute>() != null)
+			return true;
 		try {
 			var createSql = GetSqlCreateTable(classT);
 			using (DbCommand command = Connection.CreateCommand()) {

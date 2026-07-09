@@ -105,7 +105,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 /// <summary>
 /// 消費税率テーブル
 /// </summary>
-[NoCreate]
+[SubTableDefine]
 public sealed partial class MasterSysTax : ObservableObject {
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税CD")]
