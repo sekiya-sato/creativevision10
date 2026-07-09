@@ -1,3 +1,23 @@
+## [2026-07-09] 15:25 ShiireInputViewModel の Rate/Tax 計算バグ修正
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.ViewModels._05Shiire.ShiireInputViewModel で Rate（税率）と Tax（消費税）が正常に計算されていないバグを修正
+### 実施内容
+- CvWpfclient/ViewModels/05Shiire/ShiireInputViewModel.cs:
+  - `OnCurrentEditPropertyChanged`: `Rate` プロパティ変更を監視対象に追加。ユーザーが税率を手動変更しても Tax が再計算されないバグを修正。
+  - `UpdateHeaderTotals`: `CalcFlag` を Tax/Total 計算に反映。返品(仕入返品=20)・値引(30)の伝票で Tax/Total が正のままになっていたバグを修正。`Math.Abs(KingakuTotal) * Rate / 100` で税額を算出し `CalcFlag` で符号を反転、Total も同様に符号付き合計を計算するように変更。
+  - `GoToDetail`: `ContinueWith` による非同期税率取得を `async/await` パターンの `LoadTaxRateAsync` メソッドに置き換え。WPF UI スレッド以外で `CurrentEdit.Rate` を設定していたスレッド安全性の問題を修正。
+### 技術決定 Why
+- `CalcFlag` は取引区分(Kubun)に応じて正負を決定する仕様（<20 なら +1、>=20 and <40 なら -1）だが、`UpdateHeaderTotals` では `CalcFlag` を Tax/Total 計算に使用していなかった。明細の `Kingaku` は正で保存されるため、返品・値引伝票でも Tax が正になってしまい Total が誤っていた。
+- `ContinueWith` は既定でスレッドプール上で実行されるため、WPF の `ObservableObject.PropertyChanged` イベントを UI スレッド外で発火させる危険があった。`await` を使ったローカル非同期メソッドに変更し、UI スレッド上で安全に Rate/Tax を更新するようにした。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-09] 14:10 IdoInputOutView の作成 (View, ViewModel, qfm)
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus

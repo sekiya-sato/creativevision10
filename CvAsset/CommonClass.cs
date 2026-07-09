@@ -94,6 +94,22 @@ public sealed partial class Common {
 			}
 		}
 	}
+	/// <summary>
+	/// 日付を比較する（文字列 'yyyyMMdd' 形式）ymd1がymd2を超えていれば1,同じ日付は0,ymd1がymd2より古ければ-1,ただしymd2が初期値の場合は必ず-1
+	/// </summary>
+	/// <param name="ymd1">比較対象の日付</param>
+	/// <param name="ymd2">初期値の可能性がある日付文字列</param>
+	/// <param name="defaultYmd">初期値 19010101</param>
+	/// <returns>ymd1がより新しい日付であれば1,同じ日付は0,古い日付は-1,ただしymd2が初期値の場合は必ず-1</returns>
+	/// <exception cref="ArgumentException"></exception>
+	public static int CompareYmd(string ymd1, string ymd2, string defaultYmd="19010101") {
+		if (ymd1.Length != 8 || ymd2.Length != 8) {
+			throw new ArgumentException("日付文字列は 'yyyyMMdd' 形式である必要があります。");
+		}
+		if (string.Compare(ymd2, defaultYmd, StringComparison.Ordinal) == 0)
+			return -1;
+		return string.Compare(ymd1, ymd2, StringComparison.Ordinal);
+	}
 
 	/// <summary>
 	/// BaseDbClass継承型の一覧をDataTableへ変換する

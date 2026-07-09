@@ -153,7 +153,7 @@ public partial class ShiireInputViewModel : Helpers.BasePlainLightMenteViewModel
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran03Shiire.Tax) or nameof(Tran03Shiire.Kubun)) {
+		if (e.PropertyName is nameof(Tran03Shiire.Tax) or nameof(Tran03Shiire.Kubun) or nameof(Tran03Shiire.Rate)) {
 			UpdateHeaderTotals();
 		}
 	}
@@ -201,7 +201,16 @@ public partial class ShiireInputViewModel : Helpers.BasePlainLightMenteViewModel
 
 	void UpdateHeaderTotals() {
 		CurrentEdit.CalcFlag = CurrentEdit.EnKubun == EnumShiire.Shiire ? 1 : -1;
-		CurrentEdit.Total = CurrentEdit.KingakuTotal + CurrentEdit.Tax;
+		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
+		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
+		CurrentEdit.Tax = tax;
+		CurrentEdit.Total = absKingakuTotal + tax;
+	}
+
+	async Task LoadTaxRateAsync() {
+		var rate = await AppGlobal.LogicGetTax(1, Current.DenDay);
+		CurrentEdit.Rate = rate;
+		UpdateHeaderTotals();
 	}
 
 	protected override object CreateInsertParam() {
@@ -225,6 +234,9 @@ public partial class ShiireInputViewModel : Helpers.BasePlainLightMenteViewModel
 				CalcFlag = 1,
 				Jmeisai = [],
 			};
+		}
+		if(Current.Rate == 0) { // 仕入伝票の税率0の場合、再度税率を取得
+			_ = LoadTaxRateAsync();
 		}
 		SelectedTabIndex = 1;
 	}

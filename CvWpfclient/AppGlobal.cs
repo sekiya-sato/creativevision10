@@ -16,7 +16,7 @@ namespace CvWpfclient;
 /// <summary>
 /// グローバル変数
 /// </summary>
-public static class AppGlobal {
+public static partial class AppGlobal {
 	private static ILogger? _logger;
 	// Backing field: 内部でのみ null 許容
 	private static IConfigurationRoot? _config;
