@@ -68,6 +68,14 @@ printform/
 output/
 *-shm
 *-wal
-printform/data.txt
+*.json
+.agents
+.claude
+.codegraph
+.codex
+.git
+.github
+*.csproj
+*.csproj.user
 
 
