@@ -173,7 +173,7 @@ public partial class MenuData : ObservableObject {
 		new("■ 在庫管理", new([
 			new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"倉庫の棚卸データをTran60Tanaへ登録"),
 			new("移動入力(即時)", typeof(Views._08Zaiko.IdoInputSokuView), addInfo:"倉庫間即時移動の入力・一覧・明細印刷"),
-			new("移動入力(積送)", typeof(Views._08Zaiko.IdoInputOutView), addInfo:"準備中"),
+			new("移動入力(積送)", typeof(Views._08Zaiko.IdoInputOutView), addInfo:"倉庫間積送移動の入力・一覧・明細印刷"),
 			new("移動受入力", typeof(Views._08Zaiko.IdoInputUkeView), addInfo:"準備中"),
 			new("棚卸差異問合せ", typeof(Views._08Zaiko.StockDifferenceQueryView), addInfo:"準備中"),
 			new("在庫問合せ", typeof(Views._08Zaiko.ZaikoQueryView), addInfo:"商品・色・倉庫条件から現在庫を照会"),

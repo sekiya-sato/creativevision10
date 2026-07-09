@@ -1,3 +1,22 @@
+## [2026-07-09] 14:10 IdoInputOutView の作成 (View, ViewModel, qfm)
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.IdoInputOutView の作成。Tran10IdoOut テーブルを使用した在庫移動(積送)入力画面。即時移動ではなく積送移動（移動受をした時点で移動が完了）であることを明示。
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/IdoInputOutViewModel.cs: IdoInputSokuViewModel をベースに Tran10IdoOut へ全面置換。一覧取得、明細編集、印刷、バーコード入力のロジックを維持。テーブル名・SQL・画面タイトルを積送仕様に変更。
+- CvWpfclient/Views/08Zaiko/IdoInputOutView.xaml: IdoInputSokuView.xaml をベースに、タイトル・バインディング・列名を「移動(積送)」仕様に置換。
+- printform/IdoInputOut_header.qfm / detail.qfm: IdoInputSoku qfm をコピーしファイル名を変更。
+- CvWpfclient/Models/MenuData.cs: 「移動入力(積送)」の addInfo を「準備中」から「倉庫間積送移動の入力・一覧・明細印刷」に更新。
+### 技術決定 Why
+- Tran10IdoOut は Tran05Ido と同一のプロパティ構成（Id_Ido, VIdo, RelateNo1, ManualNo）を持つため、ViewModel を完全に共通化。積送と即時の違いはテーブル名と画面ラベルのみで表現し、業務ロジックは同一構造とした。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-09] 09:50 IdoInputSokuView の作成 (View, ViewModel, qfm)
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus
