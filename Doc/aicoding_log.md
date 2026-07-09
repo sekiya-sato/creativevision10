@@ -1,3 +1,23 @@
+## [2026-07-09] 09:50 IdoInputSokuView の作成 (View, ViewModel, qfm)
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._08Zaiko.IdoInputSokuView の作成。Tran05Ido テーブルを使用した在庫移動(即時)入力画面。
+### 実施内容
+- CvWpfclient/Views/08Zaiko/IdoInputSokuView.xaml: HachuInputView.xaml をベースに、タイトル・バインディング・列名を「移動(即時)」仕様に置換。区分ComboBox/掛率/消費税/総合計を削除し、移動先Idと手入力Noを追加。
+- CvWpfclient/Views/08Zaiko/IdoInputSokuView.xaml.cs: Escape キーで一覧タブに戻る処理を追加。
+- CvWpfclient/ViewModels/08Zaiko/IdoInputSokuViewModel.cs: HachuInputViewModel をベースに Tran05Ido へ全面置換。Kubun 削除、Id_Shiire→Id_Ido(移動先)、ManualNo 対応、Rate/Tax/Total 削除、印刷SQL修正。
+- printform/IdoInputSoku_header.qfm / detail.qfm: HachuInput qfm を Shift_JIS コピーし、タイトル・ヘッダー文字列を「移動」に置換。
+- CvWpfclient/Models/MenuData.cs: 「移動入力(即時)」の addInfo を「準備中」から「倉庫間即時移動の入力・一覧・明細印刷」に更新。
+### 技術決定 Why
+- Tran05Ido は TranAllHeader を継承するが Rate/Tax/Total を持たないため、HachuInputViewModel から金額税関連を削除。倉庫Id(Id_Soko)と移動先Id(Id_Ido)は両方 MasterTokui(TenType=0) から選択する仕様とした。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-08] 23:05 StockDateBulkMenteView.xaml 一覧取得ボタン移動・AutoHoju表示変更
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus
