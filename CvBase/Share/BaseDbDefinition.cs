@@ -12,22 +12,22 @@ public partial class BaseDbClass : ObservableObject {
 	/// ユニークキー
 	/// </summary>
 	[ObservableProperty]
-	[property: Comment("ユニークキー")]
-	long id;
+	[Comment("ユニークキー")]
+	public partial long Id { get; set; }
 	/// <summary>
 	/// 作成日UTC.Ticks
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(VdateC))]
-	[property: Comment("V作成日UTC.Ticks")]
-	long vdc = DateTime.Now.ToUniversalTime().Ticks;
+	[Comment("V作成日UTC.Ticks")]
+	public partial long Vdc { get; set; } = DateTime.Now.ToUniversalTime().Ticks;
 	/// <summary>
 	/// 修正日UTC.Ticks
 	/// </summary>
 	[ObservableProperty]
-	[property: Comment("V修正日UTC.Ticks")]
+	[Comment("V修正日UTC.Ticks")]
 	[NotifyPropertyChangedFor(nameof(VdateU))]
-	long vdu = DateTime.Now.ToUniversalTime().Ticks;
+	public partial long Vdu { get; set; } = DateTime.Now.ToUniversalTime().Ticks;
 	/// <summary>
 	/// 作成日(参照のみ)書式 yyyy/MM/dd HH:mm:ss.ffff DateTime(Vdc).ToLocalTime)
 	/// </summary>
@@ -48,9 +48,8 @@ public partial class BaseDbClass : ObservableObject {
 	/// 表示専用項目
 	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	[property: System.ComponentModel.DefaultValue("")]
-	string disp0 = string.Empty;
+	[ResultColumn]
+	public partial string Disp0 { get; set; } = string.Empty;
 }
 /// <summary>
 /// 住所を持つ共通基底クラス
@@ -60,44 +59,38 @@ public partial class BaseDbHasAddress : BaseDbClass {
 	/// 郵便番号
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string postalCode = string.Empty;
+	[ColumnSizeDml(30)]
+	public partial string PostalCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 住所1 都道府県
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(60)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string address1 = string.Empty;
+	[ColumnSizeDml(60)]
+	public partial string Address1 { get; set; } = string.Empty;
 	/// <summary>
 	/// 住所2 市区町村
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(60)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string address2 = string.Empty;
+	[ColumnSizeDml(60)]
+	public partial string Address2 { get; set; } = string.Empty;
 	/// <summary>
 	/// 住所3 番地
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(60)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string address3 = string.Empty;
+	[ColumnSizeDml(60)]
+	public partial string Address3 { get; set; } = string.Empty;
 	/// <summary>
 	/// 電話番号
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string tel = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Tel { get; set; } = string.Empty;
 	/// <summary>
 	/// メールアドレス
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(120)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mail = string.Empty;
+	[ColumnSizeDml(120)]
+	public partial string Mail { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -109,16 +102,14 @@ public partial class BaseDetailClass : ObservableObject {
 	/// 予備項目1
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(120)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi1 = string.Empty;
+	[ColumnSizeDml(120)]
+	public partial string Yobi1 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備項目1
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(120)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi2 = string.Empty;
+	[ColumnSizeDml(120)]
+	public partial string Yobi2 { get; set; } = string.Empty;
 }
 /// <summary>
 /// Id、コード、名称のみの短い名称データ
@@ -129,21 +120,19 @@ public partial class CodeNameView : ObservableObject {
 	/// 対象テーブルのId
 	/// </summary>
 	[ObservableProperty]
-	long sid;
+	public partial long Sid { get; set; }
 	/// <summary>
 	/// 対象テーブルのCode
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string cd = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Cd { get; set; } = string.Empty;
 	/// <summary>
 	/// 対象テーブルのName
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Mei { get; set; } = string.Empty;
 
 	public CodeNameView() : base() {
 	}
@@ -167,17 +156,17 @@ public sealed partial class MasterGeneralMeisho : CodeNameView {
 	/// 名称区分
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(10)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string kb = string.Empty;
+	[ColumnSizeDml(10)]
+	public partial string Kb { get; set; } = string.Empty;
 	/// <summary>
 	/// 区分名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(40)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string kbname = string.Empty;
-
+	[ColumnSizeDml(40)]
+	public partial string Kbname { get; set; } = string.Empty;
+	/// <summary>
+	/// 選択元のマスターリスト
+	/// </summary>
 	public List<MasterMeisho> BaseList = [];
 	// Kb が変更されたら自動的に呼ばれる (XAML側のトリガー不要)
 	partial void OnKbChanged(string value) {

@@ -16,30 +16,30 @@ public sealed partial class SysUpdateDb : BaseDbClass {
 	/// レコード識別のためのシリアル8桁 yymmddnn 年月日連番 例)26040101
 	/// </summary>
 	[ObservableProperty]
-	int dbVersion;
+	public partial int DbVersion { get; set; }
 	/// <summary>
 	/// SQL実行日 date0.ToString("yyyyMMddHHmmss");
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	string dateStart = string.Empty;
+	[ColumnSizeDml(14)]
+	public partial string DateStart { get; set; } = string.Empty;
 	/// <summary>
 	/// SQLを実行したDbVersion
 	/// </summary>
 	[ObservableProperty]
-	int preVersion;
+	public partial int PreVersion { get; set; }
 	/// <summary>
 	/// 実行したDDL文(複数ある場合は;区切り)
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(1000)]
-	string sql = string.Empty;
+	[ColumnSizeDml(1000)]
+	public partial string Sql { get; set; } = string.Empty;
 	/// <summary>
 	/// メモ / 実行エラー
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(1000)]
-	string memo = string.Empty;
+	[ColumnSizeDml(1000)]
+	public partial string Memo { get; set; } = string.Empty;
 }
 /// <summary>
 /// 連番管理テーブル
@@ -51,25 +51,25 @@ public sealed partial class SysSequence : BaseDbClass {
 	/// テーブル名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	string tableName = string.Empty;
+	[ColumnSizeDml(30)]
+	public partial string TableName { get; set; } = string.Empty;
 	/// <summary>
 	/// 対象カラム名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	string columnName = string.Empty;
+	[ColumnSizeDml(30)]
+	public partial string ColumnName { get; set; } = string.Empty;
 	/// <summary>
 	/// 連番
 	/// </summary>
 	[ObservableProperty]
-	long seqNo;
+	public partial long SeqNo { get; set; }
 	/// <summary>
 	/// メモ (用途、意図などを記述)
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(300)]
-	string memo = string.Empty;
+	[ColumnSizeDml(300)]
+	public partial string Memo { get; set; } = string.Empty;
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -79,43 +79,40 @@ public sealed partial class SysHistAutoexec : BaseDbClass {
 	/// タスク名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string taskName = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string TaskName { get; set; } = string.Empty;
 	/// <summary>
 	/// 開始日時 date0.ToString("yyyyMMddHHmmss");
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string startTime = string.Empty;
+	[ColumnSizeDml(14)]
+	public partial string StartTime { get; set; } = string.Empty;
 	/// <summary>
 	/// 終了日時 date0.ToString("yyyyMMddHHmmss");
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string endTime = string.Empty;
+	[ColumnSizeDml(14)]
+	public partial string EndTime { get; set; } = string.Empty;
 	/// <summary>
 	/// 経過時間 (秒)
 	/// </summary>
 	[ObservableProperty]
-	int elapsedTime;
+	public partial int ElapsedTime { get; set; }
 	/// <summary>
 	/// 実行結果コード 0:成功、0以外:エラーコード
 	/// </summary>
 	[ObservableProperty]
-	int returnCode;
+	public partial int ReturnCode { get; set; }
 	/// <summary>
 	/// 処理件数
 	/// </summary>
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 	/// <summary>
 	/// メモ (エラー内容や処理内容などを記述)
 	/// </summary>
 	[ObservableProperty]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 }
 
 // ToDo : テーブルの変更履歴を保存するテーブルを作成すること。変更前と変更後のデータをJSON形式で保存すること。変更前と変更後のデータは、テーブル名、テーブルId、操作Type（追加、更新、削除）を含むこと。
@@ -134,38 +131,36 @@ public sealed partial class SysHistMaster : BaseDbClass {
 	/// [TableName (Table Name)]
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string tableName = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string TableName { get; set; } = string.Empty;
+
 	/// <summary>
 	/// テーブルIdユニークキー
 	/// </summary>
 	[ObservableProperty]
-	long id_Table;
+	public partial long Id_Table { get; set; }
 	/// <summary>
 	/// テーブル操作Type
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	Type operationType = typeof(string);
+	[ColumnSizeDml(100)]
+	public partial Type OperationType { get; set; } = typeof(string);
 	/// <summary>
 	/// テーブルType
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	Type tableType = typeof(string);
+	[ColumnSizeDml(100)]
+	public partial Type TableType { get; set; } = typeof(string);
 	/// <summary>
 	/// 変更前JSONデータ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(1000)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string itemBefore = string.Empty;
+	[ColumnSizeDml(1000)]
+	public partial string ItemBefore { get; set; } = string.Empty;
 	/// <summary>
 	/// 変更後JSONデータ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(1000)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string itemAfter = string.Empty;
+	[ColumnSizeDml(1000)]
+	public partial string ItemAfter { get; set; } = string.Empty;
 }

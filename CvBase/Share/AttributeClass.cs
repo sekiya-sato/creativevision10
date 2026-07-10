@@ -11,7 +11,9 @@ public sealed class CommentAttribute : Attribute {
 		Content = content;
 	}
 }
-
+/// <summary>
+/// 別アセンブリからテーブルコメントを取得するためのヘルパークラス
+/// </summary>
 public sealed class CommentAttr {
 	public static string GetComment(string tableName) {
 		var assembly = Assembly.GetExecutingAssembly(); // CvBase.dll 自身

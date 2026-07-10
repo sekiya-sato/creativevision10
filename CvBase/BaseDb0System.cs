@@ -7,7 +7,7 @@ namespace CvBase;
 
 
 /// <summary>
-/// マスター：システム管理テーブル(1レコードのみ)
+/// マスター：システム管理テーブル(Id 1 の1レコードのみ)
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("マスター：システム管理テーブル 会社名、消費税設定など")]
@@ -17,119 +17,108 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	/// 自社名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("自社名")]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// ホームページ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("ホームページ")]
-	string hp = string.Empty;
+	public partial string Hp { get; set; } = string.Empty;
 	/// <summary>
 	/// 自社締め日 1-31,99
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShimeBi))]
 	[OldTableCommentAttr("自社締日")]
-	int shimeBi;
-
+	public partial int ShimeBi { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumShime EnShimeBi {
 		get => (EnumShime)ShimeBi;
 		set => ShimeBi = (int)value;
-
 	}
-
 	/// <summary>
 	/// 修正有効日数
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("修正有効日数")]
-	int modifyDaysEx;
+	public partial int ModifyDaysEx { get; set; }
 	/// <summary>
 	/// 先付有効日数
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("先付有効日数")]
-	int modifyDaysPre;
+	public partial int ModifyDaysPre { get; set; }
 	/// <summary>
 	/// 振込先1
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("振込先1")]
-	string bankAccount1 = string.Empty;
+	public partial string BankAccount1 { get; set; } = string.Empty;
 	/// <summary>
 	/// 振込先2
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("振込先2")]
-	string bankAccount2 = string.Empty;
+	public partial string BankAccount2 { get; set; } = string.Empty;
 	/// <summary>
 	/// 振込先3
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("振込先3")]
-	string bankAccount3 = string.Empty;
+	public partial string BankAccount3 { get; set; } = string.Empty;
 	/// <summary>
 	/// 期首年月日
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("19010101")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("期首年月日")]
-	string fiscalStartDate = "19010101";
+	public partial string FiscalStartDate { get; set; } = "19010101";
 	/// <summary>
 	/// 消費税率リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	List<MasterSysTax>? jsub;
-
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial List<MasterSysTax>? Jsub { get; set; }
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
+	[ColumnSizeDml(14)]
 	[OldTableCommentAttr("事業者登録番号", "T+13桁 select 名称 from HC$master_meisho where 名称区分='IBS' and 名称CD='01'")]
-	string taxRegistrationNumber = string.Empty;
+	public partial string TaxRegistrationNumber { get; set; } = string.Empty;
 }
 /// <summary>
-/// 消費税率テーブル
+/// 消費税率テーブル(Id 1-3)
 /// </summary>
 [SubTableDefine]
 public sealed partial class MasterSysTax : ObservableObject {
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税CD")]
-	long id;
+	public partial long Id { get; set; }
 	/// <summary>
 	/// 消費税率 (%) 例:10
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税率")]
-	int taxRate;
+	public partial int TaxRate { get; set; }
 	/// <summary>
 	/// 新消費税開始日(yyyyMMdd)
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("19010101")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("新消費税開始日")]
-	string dateFrom = "19010101";
+	public partial string DateFrom { get; set; } = "19010101";
 	/// <summary>
 	/// 新消費税率 (%) 例:10
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("新消費税率")]
-	int taxNewRate;
+	public partial int TaxNewRate { get; set; }
 }
 /// <summary>
 /// 名称テーブル
@@ -144,52 +133,47 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// 区分
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("名称区分")]
-	string kubun = string.Empty;
+	public partial string Kubun { get; set; } = string.Empty;
 	/// <summary>
 	/// 区分名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(40)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string kubunName = string.Empty;
+	[ColumnSizeDml(40)]
+	public partial string KubunName { get; set; } = string.Empty;
 	/// <summary>
 	/// 名称コード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("名称CD")]
-	string code = "";
+	public partial string Code { get; set; } = "";
 	/// <summary>
 	/// 名称
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("名称")]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// 略称
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
+	[System.ComponentModel.DefaultValue("")]
 	[OldTableCommentAttr("略称")]
-	string ryaku = string.Empty;
+	public partial string Ryaku { get; set; } = string.Empty;
 	/// <summary>
 	/// よみがな
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("カナ")]
-	string kana = string.Empty;
+	public partial string Kana { get; set; } = string.Empty;
 	/// <summary>
 	/// 並び順
 	/// </summary>
 	[ObservableProperty]
-	int odr;
+	public partial int Odr { get; set; }
 }

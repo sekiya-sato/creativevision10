@@ -9,7 +9,7 @@ namespace CvBase;
 /// [Login management table]
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
-[Comment("システム：ログインID管理テーブル")]
+[Comment("システム：ログインID管理テーブル パスワードは暗号化")]
 [KeyDml("uq1", true, nameof(LoginId))]
 [KeyDml("nk2", false, nameof(Id_Shain))]
 [KeyDml("nk3", false, nameof(Id_Role))]
@@ -19,48 +19,44 @@ public sealed partial class SysLogin : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShain))]
-	long id_Shain;
+	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// グループロールユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(SysLogin), nameof(Id))]
-	long id_Role;
+	public partial long Id_Role { get; set; }
 	/// <summary>
 	/// ログインID
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(120)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string loginId = string.Empty;
+	[ColumnSizeDml(120)]
+	public partial string LoginId { get; set; } = string.Empty;
 	/// <summary>
 	/// パスワード 暗号化by Vdc
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(120)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string cryptPassword = string.Empty;
+	[ColumnSizeDml(120)]
+	public partial string CryptPassword { get; set; } = string.Empty;
 	/// <summary>
 	/// 有効期限 yyyyMMddHHmmss
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string expDate = string.Empty;
+	[ColumnSizeDml(14)]
+	public partial string ExpDate { get; set; } = string.Empty;
 	/// <summary>
 	/// 最終ログイン yyyyMMddHHmmss
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string lastDate = string.Empty;
+	[ColumnSizeDml(14)]
+	public partial string LastDate { get; set; } = string.Empty;
 	/// <summary>
 	/// 社員データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vShain = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VShain { get; set; } = new();
 }
 /// <summary>
 /// ログイン履歴テーブル
@@ -75,40 +71,37 @@ public sealed partial class SysHistJwt : BaseDbClass {
 	/// ログインユニークキー
 	/// </summary>
 	[ObservableProperty]
-	long id_Login;
+	public partial long Id_Login { get; set; }
 	/// <summary>
 	/// JwtのUnix有効期限
 	/// </summary>
 	[ObservableProperty]
-	long jwtUnixTime;
+	public partial long JwtUnixTime { get; set; }
 	/// <summary>
 	/// SysHistJwtSub JSON
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	SysHistJwtSub jsub = new();
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	public partial SysHistJwtSub Jsub { get; set; } = new();
 	/// <summary>
 	/// 有効期限yyyyMMddHHmmss
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string expDate = string.Empty;
+	[ColumnSizeDml(14)]
+	public partial string ExpDate { get; set; } = string.Empty;
 	/// <summary>
 	/// IPアドレス
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string ip = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Ip { get; set; } = string.Empty;
 	/// <summary>
 	/// サービスオペレーション
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string op = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Op { get; set; } = string.Empty;
 }
 /// <summary>
 /// ログイン履歴サブテーブル Jsubプロパティ用
@@ -116,26 +109,21 @@ public sealed partial class SysHistJwt : BaseDbClass {
 [SubTableDefine]
 public sealed partial class SysHistJwtSub : ObservableObject {
 	[ObservableProperty]
-	[property: System.ComponentModel.DefaultValue("")]
-	string machine = string.Empty;
+	public partial string Machine { get; set; } = string.Empty;
 	[ObservableProperty]
-	[property: System.ComponentModel.DefaultValue("")]
-	string user = string.Empty;
+	public partial string User { get; set; } = string.Empty;
 	[ObservableProperty]
-	[property: System.ComponentModel.DefaultValue("")]
-	string osVer = string.Empty;
+	public partial string OsVer { get; set; } = string.Empty;
 	/// <summary>
 	/// IPアドレス : NpocoのJson実装(/src/NPoco/fastJSON/JSON.cs)が内部で直接デフォルト値を生成しているためJsonPropertyは無視される 2026/02/17
 	/// </summary>
 	[ObservableProperty]
-	[property: Newtonsoft.Json.JsonProperty("IP")]
-	[property: System.ComponentModel.DefaultValue("")]
-	string ipAddress = string.Empty;
+	[Newtonsoft.Json.JsonProperty("IP")]
+	public partial string IpAddress { get; set; } = string.Empty;
 	/// <summary>
 	/// MACアドレス : NpocoのJson実装(/src/NPoco/fastJSON/JSON.cs)が内部で直接デフォルト値を生成しているためJsonPropertyは無視される 2026/02/17
 	/// </summary>
 	[ObservableProperty]
-	[property: Newtonsoft.Json.JsonProperty("MacA")]
-	[property: System.ComponentModel.DefaultValue("")]
-	string macAddress = string.Empty;
+	[Newtonsoft.Json.JsonProperty("MacA")]
+	public partial string MacAddress { get; set; } = string.Empty;
 }
