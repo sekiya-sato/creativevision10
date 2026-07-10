@@ -33,9 +33,10 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 
 	SelectInputParameter? selectParam;
 
-	public List<EnumUri01> KubunOptions { get; } = [
-		EnumUri01.Uriage,
-		EnumUri01.Henpin,
+	public sealed record KubunOption(EnumUri01 Value, string Name);
+	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
+		new(EnumUri01.Uriage, "売上"),
+		new(EnumUri01.Henpin, "返品"),
 	];
 
 	public IReadOnlyList<MeisaiKubunOption> MeisaiKubunOptions { get; } = [
