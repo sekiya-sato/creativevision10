@@ -21,6 +21,7 @@ insert_final_newline = true
 # MvvmToolkitのpropperty Attribute設定の中で使うattributeのusingは考慮されないのでfullnameで書くようにする
 dotnet_diagnostic.MVVMTK0042.severity = warning
 
+
 # 型メンバー
 # 高度なメンバーを非表示にしない。
 dotnet_hide_advanced_members = false
@@ -256,9 +257,8 @@ dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
-
 # XAMLファイル
-#[*.xaml]
-#indent_size = 4
-#indent_style = tab
-#tab_width = 4
+[*.xaml]
+# XAMLの記述ミスやバインディング型エラーをビルド警告/エラーにする
+dotnet_diagnostic.WPF0001.severity = warning
+
