@@ -19,7 +19,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 	/// カラーバランスの見本
 	/// </summary>
 	[ObservableProperty]
-	private ObservableCollection<ColorBalanceItem> colorItems = new()
+	public partial ObservableCollection<ColorBalanceItem> ColorItems { get; set; } = new()
 	{
 		new("#212025", "#E74545", "#742424","#FFFFFF"),
 		new("#4B3A42", "#F38884", "#A45055","#FFFFFF"),

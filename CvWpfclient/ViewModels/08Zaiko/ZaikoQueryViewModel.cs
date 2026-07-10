@@ -611,7 +611,7 @@ public sealed partial class ZaikoQueryStockTab : ZaikoQueryTabBase {
 		ShohinId = product.Id;
 		ProductCode = product.Code;
 		ProductName = product.Name;
-		this.stockTable = stockTable;
+		StockTable = stockTable;
 	}
 }
 

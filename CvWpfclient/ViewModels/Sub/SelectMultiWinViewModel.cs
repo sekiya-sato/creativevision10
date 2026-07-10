@@ -252,7 +252,7 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 public partial class SelectMultiWinItem : ObservableObject {
 	public SelectMultiWinItem(object item, bool isSelected = false) {
 		Item = item;
-		this.isSelected = isSelected;
+		IsSelected = isSelected;
 	}
 
 	public object Item { get; }

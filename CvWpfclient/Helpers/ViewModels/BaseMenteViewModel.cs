@@ -41,7 +41,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	}
 
 
-	partial void OnCurrentChanged(T? oldValue, T newValue) => OnCurrentChangedCore(oldValue, newValue);
+	partial void OnCurrentChanged(T oldValue, T newValue) => OnCurrentChangedCore(oldValue, newValue);
 
 	protected virtual void OnCurrentChangedCore(T? oldValue, T newValue) {
 		if (newValue == null) {
@@ -59,7 +59,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 
 	// Source generator will declare a partial method `OnCurrentEditChanged(T? oldValue, T newValue)`
 	// Implement it here to forward to a virtual core method that derived viewmodels can override.
-	partial void OnCurrentEditChanged(T? oldValue, T newValue) => OnCurrentEditChangedCore(oldValue, newValue);
+	partial void OnCurrentEditChanged(T oldValue, T newValue) => OnCurrentEditChangedCore(oldValue, newValue);
 
 	protected virtual void OnCurrentEditChangedCore(T? oldValue, T newValue) { }
 
