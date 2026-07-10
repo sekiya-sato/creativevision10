@@ -14,67 +14,62 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// コード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(12)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(12)]
 	[OldTableCommentAttr("得意先CD", "MasterShiire は 仕入先CD")]
-	string code = string.Empty;
+	public partial string Code { get; set; } = string.Empty;
 	/// <summary>
 	/// 名前
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(80)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(80)]
 	[OldTableCommentAttr("得意先名", "MasterShiire は 仕入先名")]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// 略称
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("略称")]
-	string ryaku = string.Empty;
+	public partial string Ryaku { get; set; } = string.Empty;
 	/// <summary>
 	/// カナ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("カナ")]
-	string kana = string.Empty;
+	public partial string Kana { get; set; } = string.Empty;
 	/// <summary>
 	/// 担当者
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("営業担当CD", "MasterShiire は 入力社員CD")]
-	long id_Shain;
+	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 社員データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vShain = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VShain { get; set; } = new();
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率")]
-	int rateProper;
+	public partial int RateProper { get; set; }
 	/// <summary>
 	/// セール掛率
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("セール掛率", "MasterShiire は 掛率2")]
-	int rateSale;
+	public partial int RateSale { get; set; }
 	/// <summary>
 	/// 締日1
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShime1))]
 	[OldTableCommentAttr("締日")]
-	int shime1;
-
+	public partial int Shime1 { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumShime EnShime1 {
@@ -87,8 +82,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShime2))]
 	[OldTableCommentAttr("締日2")]
-	int shime2;
-
+	public partial int Shime2 { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumShime EnShime2 {
@@ -101,8 +95,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShime3))]
 	[OldTableCommentAttr("締日3")]
-	int shime3;
-
+	public partial int Shime3 { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumShime EnShime3 {
@@ -114,69 +107,65 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("入金予定月")]
-	int payMonth;
+	public partial int PayMonth { get; set; }
 	/// <summary>
 	/// 入金/支払日
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnPayDay))]
 	[OldTableCommentAttr("入金予定日")]
-	int payDay;
-
+	public partial int PayDay { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumShime EnPayDay {
 		get => (EnumShime)PayDay;
 		set => PayDay = (int)value;
 	}
-
 	/// <summary>
 	/// 入金/支払方法
 	/// </summary>
 	[ObservableProperty]
-	long id_PayMethod;
+	public partial long Id_PayMethod { get; set; }
 	/// <summary>
 	/// 入金方法データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vPayMethod = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VPayMethod { get; set; } = new();
 	/// <summary>
 	/// 請求/支払フラグ
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsPay))]
 	[OldTableCommentAttr("請求印刷", "MasterShiire は 支払印刷")]
-	int isPay;
-
+	public partial int IsPay { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumYesNo EnIsPay {
 		get => (EnumYesNo)IsPay;
 		set => IsPay = (int)value;
 	}
-
 	/// <summary>
 	/// 請求/支払先
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui))]
-	long id_Paysaki;
+	public partial long Id_Paysaki { get; set; }
 	/// <summary>
 	/// 請求先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vPaysaki = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VPaysaki { get; set; } = new();
 	/// <summary>
 	/// 取引先詳細
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	MasterToriDetail? jdetail;
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	public partial MasterToriDetail? Jdetail { get; set; }
 }
 /// <summary>
 /// 取引先詳細
@@ -186,29 +175,26 @@ public sealed partial class MasterToriDetail : ObservableObject {
 	/// 振込先1
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
-	[property: Newtonsoft.Json.JsonProperty("Bank1")]
+	[ColumnSizeDml(30)]
+	[Newtonsoft.Json.JsonProperty("Bank1")]
 	[OldTableCommentAttr("振込先1", "MasterShiire は 振込銀行/振込支店/振込種別/振込口座 を連結")]
-	string bankAccount1 = string.Empty;
+	public partial string BankAccount1 { get; set; } = string.Empty;
 	/// <summary>
 	/// 振込先2
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
-	[property: Newtonsoft.Json.JsonProperty("Bank2")]
+	[ColumnSizeDml(30)]
+	[Newtonsoft.Json.JsonProperty("Bank2")]
 	[OldTableCommentAttr("振込先2")]
-	string bankAccount2 = string.Empty;
+	public partial string BankAccount2 { get; set; } = string.Empty;
 	/// <summary>
 	/// 振込先3
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
-	[property: Newtonsoft.Json.JsonProperty("Bank3")]
+	[ColumnSizeDml(30)]
+	[Newtonsoft.Json.JsonProperty("Bank3")]
 	[OldTableCommentAttr("振込先3")]
-	string bankAccount3 = string.Empty;
+	public partial string BankAccount3 { get; set; } = string.Empty;
 }
 /// <summary>
 /// 得意先マスター
@@ -224,8 +210,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnTenType))]
 	[OldTableCommentAttr("店種区分")]
-	int tenType;
-
+	public partial int TenType { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumTokui EnTenType {
@@ -238,8 +223,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsZaiko))]
 	[OldTableCommentAttr("在庫管理FLG")]
-	int isZaiko = 1;
-
+	public partial int IsZaiko { get; set; } = 1;
 	[Ignore]
 	[JsonIgnore]
 	public EnumYesNo EnIsZaiko {
@@ -250,16 +234,16 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	/// 名称リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
-	List<MasterGeneralMeisho>? jsub;
+	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 事業者登録番号
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	string taxRegistrationNumber = string.Empty;
+	[ColumnSizeDml(14)]
+	public partial string TaxRegistrationNumber { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -274,16 +258,16 @@ public sealed partial class MasterShiire : MasterTorihiki {
 	/// 名称リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
-	List<MasterGeneralMeisho>? jsub;
+	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 事業者登録番号
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(14)]
-	string taxRegistrationNumber = string.Empty;
+	[ColumnSizeDml(14)]
+	public partial string TaxRegistrationNumber { get; set; } = string.Empty;
 }
 
 /* VShain などが物理DBに存在せず、Class定義上で存在している場合の、SQLでの結合例

@@ -26,95 +26,86 @@ public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
 	/// 商品Id
 	/// </summary>
 	[ObservableProperty]
-	long id_Shohin;
+	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 色サイズ行Index
 	/// </summary>
 	[ObservableProperty]
-	int rowIdx;
+	public partial int RowIdx { get; set; }
 	/// <summary>
 	/// コード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(16)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code = string.Empty;
+	[ColumnSizeDml(16)]
+	public partial string Code { get; set; } = string.Empty;
 	/*
-	/// <summary>
-	/// 名前
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(80)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string name = string.Empty;
-	/// <summary>
-	/// 略称
-	/// </summary>
-	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string ryaku = string.Empty;
-	*/
+/// <summary>
+/// 名前
+/// </summary>
+[ObservableProperty]
+[property: ColumnSizeDml(80)]
+
+string name = string.Empty;
+/// <summary>
+/// 略称
+/// </summary>
+[ObservableProperty]
+[property: ColumnSizeDml(100)]
+
+string ryaku = string.Empty;
+*/
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
-	long id_Col;
+	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// カラーCD
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Col = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Code_Col { get; set; } = string.Empty;
 	/// <summary>
 	/// カラー名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Col = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Mei_Col { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
-	long id_Siz;
+	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// サイズCD
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Siz = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Code_Siz { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Siz = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Mei_Siz { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード1
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string jan1 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Jan1 { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード2
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string jan2 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Jan2 { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード3
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string jan3 = string.Empty;
-
+	[ColumnSizeDml(20)]
+	public partial string Jan3 { get; set; } = string.Empty;
 	[Ignore]
 	/// <summary>
 	/// SqlDepends: View作成のSQL

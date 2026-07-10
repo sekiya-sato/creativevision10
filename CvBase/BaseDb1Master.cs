@@ -18,93 +18,86 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	/// コード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(12)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(12)]
 	[OldTableCommentAttr("社員CD")]
-	string code = string.Empty;
+	public partial string Code { get; set; } = string.Empty;
 	/// <summary>
 	/// 名前
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(80)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(80)]
 	[OldTableCommentAttr("名前")]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// 略称
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string ryaku = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Ryaku { get; set; } = string.Empty;
 	/// <summary>
 	/// カナ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("フリガナ")]
-	string kana = string.Empty;
+	public partial string Kana { get; set; } = string.Empty;
 	/// <summary>
 	/// メールアドレス
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(120)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(120)]
 	[OldTableCommentAttr("メール")]
-	string mail = string.Empty;
+	public partial string Mail { get; set; } = string.Empty;
 	/// <summary>
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("店舗CD")]
 	[ForeignKey(nameof(MasterTokui))]
-	long id_Tenpo;
+	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 店舗データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTenpo = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VTenpo { get; set; } = new();
 	/// <summary>
 	/// 部門Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("部門")]
 	[ForeignKey(nameof(MasterMeisho))]
-	long id_Bumon;
+	public partial long Id_Bumon { get; set; }
 	/// <summary>
 	/// 部門データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vBumon = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VBumon { get; set; } = new();
 	/// <summary>
 	/// 名称リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD05")]
-	List<MasterGeneralMeisho>? jsub;
+	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 詳細内容
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	BaseDetailClass? jdetail;
-
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	public partial BaseDetailClass? Jdetail { get; set; }
 	/// <summary>
 	/// 有効期限 yyyyMMdd (この期限を過ぎた場合はログイン無効)
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("有効期限")]
-	string expireDate = string.Empty;
+	public partial string ExpireDate { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -119,85 +112,76 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	/// コード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(12)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(12)]
 	[OldTableCommentAttr("顧客CD")]
-	string code = string.Empty;
+	public partial string Code { get; set; } = string.Empty;
 	/// <summary>
 	/// 名前
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(80)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(80)]
 	[OldTableCommentAttr("顧客名")]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// 略称
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string ryaku = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Ryaku { get; set; } = string.Empty;
 	/// <summary>
 	/// カナ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("カナ")]
-	string kana = string.Empty;
+	public partial string Kana { get; set; } = string.Empty;
 	/// <summary>
 	/// ランク
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("顧客ランク")]
-	string rank = string.Empty;
+	public partial string Rank { get; set; } = string.Empty;
 	/// <summary>
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("店舗CD")]
-	long id_Tenpo;
+	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 店舗データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTenpo = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VTenpo { get; set; } = new();
 	/// <summary>
 	/// 誕生日 yyyyMMdd
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("誕生日")]
-	string birthday = string.Empty;
+	public partial string Birthday { get; set; } = string.Empty;
 	/// <summary>
 	/// 誕生日 MMdd
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(4)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string birthNoyear = string.Empty;
+	[ColumnSizeDml(4)]
+	public partial string BirthNoyear { get; set; } = string.Empty;
 	/// <summary>
 	/// メモ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(120)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(120)]
 	[OldTableCommentAttr("メモ")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 性別 0=不明 1=男性 2=女性
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnGender))]
 	[OldTableCommentAttr("性別")]
-	int gender = 0;
-
+	public partial int Gender { get; set; } = 0;
 	[Ignore]
 	[JsonIgnore]
 	public EnumGender EnGender {
@@ -208,34 +192,33 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	/// ポイント
 	/// </summary>
 	[ObservableProperty]
-	int point;
+	public partial int Point { get; set; }
 	/// <summary>
 	/// 累計購買回数
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("累計購入数量", "ToDo")]
-	int salesCount;
+	public partial int SalesCount { get; set; }
 	/// <summary>
 	/// 累計購買金額
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("累計購入金額")]
-	int salesKingaku;
+	public partial int SalesKingaku { get; set; }
 	/// <summary>
 	/// 名称リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	List<MasterGeneralMeisho>? jsub;
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 詳細内容
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	BaseDetailClass? jdetail;
-
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	public partial BaseDetailClass? Jdetail { get; set; }
 }
 
 /// <summary>
@@ -253,270 +236,261 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// コード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(16)]
+	[ColumnSizeDml(16)]
 	[OldTableCommentAttr("商品CD")]
-	string code = "";
+	public partial string Code { get; set; } = "";
 	/// <summary>
 	/// 名前
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(80)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(80)]
 	[OldTableCommentAttr("商品名")]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// 略称
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("略称")]
-	string ryaku = string.Empty;
+	public partial string Ryaku { get; set; } = string.Empty;
 	/// <summary>
 	/// カナ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("旧コード")]
-	string kana = string.Empty;
+	public partial string Kana { get; set; } = string.Empty;
 	/// <summary>
 	/// ブランド
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("ブランドCD")]
-	long id_Brand;
+	public partial long Id_Brand { get; set; }
 	/// <summary>
 	/// ブランドデータ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vBrand = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VBrand { get; set; } = new();
 	/// <summary>
 	/// アイテム
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("アイテムCD")]
-	long id_Item;
+	public partial long Id_Item { get; set; }
 	/// <summary>
 	/// アイテムデータ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vItem = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VItem { get; set; } = new();
 	/// <summary>
 	/// 展示会
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("展示会CD")]
-	long id_Tenji;
+	public partial long Id_Tenji { get; set; }
 	/// <summary>
 	/// 展示会データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTenji = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VTenji { get; set; } = new();
 	/// <summary>
 	/// メーカー
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("メーカーCD")]
-	long id_Maker;
+	public partial long Id_Maker { get; set; }
 	/// <summary>
 	/// メーカーデータ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vMaker = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VMaker { get; set; } = new();
 	/// <summary>
 	/// シーズン
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("シーズンCD")]
-	long id_Season;
+	public partial long Id_Season { get; set; }
 	/// <summary>
 	/// シーズンデータ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vSeason = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VSeason { get; set; } = new();
 	/// <summary>
 	/// 素材
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("素材CD")]
-	long id_Material;
+	public partial long Id_Material { get; set; }
 	/// <summary>
 	/// 素材データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vMaterial = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VMaterial { get; set; } = new();
 	/// <summary>
 	/// 原産国
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("原産国CD")]
-	long id_Country;
+	public partial long Id_Country { get; set; }
 	/// <summary>
 	/// 原産国データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vCountry = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VCountry { get; set; } = new();
 	/// <summary>
 	/// 元上代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("元上代")]
-	int tankaJodaiOrg;
+	public partial int TankaJodaiOrg { get; set; }
 	/// <summary>
 	/// 上代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代")]
-	int tankaJodai;
+	public partial int TankaJodai { get; set; }
 	/// <summary>
 	/// 原価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("原価")]
-	int tankaGenka;
+	public partial int TankaGenka { get; set; }
 	/// <summary>
 	/// 仕入単価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("仕入価格")]
-	int tankaShiire;
+	public partial int TankaShiire { get; set; }
 	/// <summary>
 	/// 出荷日(デリバリー)
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("デリバリー日")]
-	string dayShukka = "19010101";
+	public partial string DayShukka { get; set; } = "19010101";
 	/// <summary>
 	/// 納品日
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("納品日")]
-	string dayNohin = "19010101";
+	public partial string DayNohin { get; set; } = "19010101";
 	/// <summary>
 	/// 店頭投入日
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("店頭投入日")]
-	string dayTento = "19010101";
+	public partial string DayTento { get; set; } = "19010101";
 	/// <summary>
 	/// 消費税No
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税CD")]
-	long id_Tax;
+	public partial long Id_Tax { get; set; } = 1;
 	/// <summary>
 	/// 在庫管理フラグ
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnZaiko))]
 	[OldTableCommentAttr("在庫管理FLG")]
-	int isZaiko = 1;
-
+	public partial int IsZaiko { get; set; } = 1;
 	[Ignore]
 	[JsonIgnore]
 	public EnumYesNo EnZaiko {
 		get => (EnumYesNo)IsZaiko;
 		set => IsZaiko = (int)value;
 	}
-
 	/// <summary>
 	/// メーカー品番
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("メーカー品番")]
-	string makerHin = string.Empty;
+	public partial string MakerHin { get; set; } = string.Empty;
 	/// <summary>
 	/// 商品サイズ区分
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("商品サイズ区分")]
-	string sizeKu = "SIZ";
+	public partial string SizeKu { get; set; } = "SIZ";
 	/// <summary>
 	/// 基準倉庫
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("基準倉庫CD")]
-	long id_Soko;
+	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 倉庫データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vSoko = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VSoko { get; set; } = new();
 	/// <summary>
 	/// メモ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(120)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(120)]
 	[OldTableCommentAttr("メモ")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 原価リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("JgenkaはHC$MASTER_SHOHIN_GENKAの内容を格納")]
-	List<MasterShohinGenka>? jgenka;
+	public partial List<MasterShohinGenka>? Jgenka { get; set; }
 	/// <summary>
 	/// 色サイズリスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("JcolsizはHC$MASTER_SHOHIN_JANの内容を格納")]
-	List<MasterShohinColSiz>? jcolsiz;
+	public partial List<MasterShohinColSiz>? Jcolsiz { get; set; }
 	/// <summary>
 	/// 品質リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("JgradeはHC$MASTER_SHOHIN_GRADEの内容を格納")]
-	List<MasterShohinGrade>? jgrade;
+	public partial List<MasterShohinGrade>? Jgrade { get; set; }
 	/// <summary>
 	/// 名称リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
-	List<MasterGeneralMeisho>? jsub;
+	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 詳細内容
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	BaseDetailClass? jdetail;
-
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	public partial BaseDetailClass? Jdetail { get; set; }
 	[Ignore]
 	public Type DerivedClass => typeof(DerivedShohinColSiz);
 }
-
 
 /// <summary>
 /// 商品色サイズJANテーブル
@@ -528,67 +502,59 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	/// 色
 	/// </summary>
 	[ObservableProperty]
-	long id_Col;
+	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// カラーCD
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("色CD")]
-	string code_Col = string.Empty;
+	public partial string Code_Col { get; set; } = string.Empty;
 	/// <summary>
 	/// カラー名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Col = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Mei_Col { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
-	long id_Siz;
+	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// サイズCD
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("サイズCD")]
-	string code_Siz = string.Empty;
+	public partial string Code_Siz { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Siz = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Mei_Siz { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード1
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANコード1")]
-	string jan1 = string.Empty;
+	public partial string Jan1 { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード2
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANコード2")]
-	string jan2 = string.Empty;
+	public partial string Jan2 { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード3
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANコード3")]
-	string jan3 = string.Empty;
-}
+	public partial string Jan3 { get; set; } = string.Empty;}
 /// <summary>
 /// 品質テーブル
 /// </summary>
@@ -600,21 +566,20 @@ public sealed partial class MasterShohinGrade : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("行NO")]
-	int no;
+	public partial int No { get; set; }
 	/// <summary>
 	/// 品質
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(40)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(40)]
 	[OldTableCommentAttr("品質")]
-	string hinshitu = string.Empty;
+	public partial string Hinshitu { get; set; } = string.Empty;
 	/// <summary>
 	/// ％
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("パーセント")]
-	int percent;
+	public partial int Percent { get; set; }
 }
 /// <summary>
 /// 原価テーブル
@@ -627,19 +592,19 @@ public sealed partial class MasterShohinGenka : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("行NO")]
-	int no;
+	public partial int No { get; set; }
 	/// <summary>
 	/// 原価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("原価")]
-	int tankaGenka;
+	public partial int TankaGenka { get; set; }
 	/// <summary>
 	/// 仕入単価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("仕入価格")]
-	int tankaShiire;
+	public partial int TankaShiire { get; set; }
 }
 
 /// <summary>
@@ -652,19 +617,19 @@ public sealed partial class MasterShohinGenka : ObservableObject {
 public sealed partial class MasterConfig : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("カテゴリ")]
-	string category = string.Empty;
+	public partial string Category { get; set; } = string.Empty;
 	[ObservableProperty]
 	[OldTableCommentAttr("フラグ名")]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	[ObservableProperty]
 	[OldTableCommentAttr("値")]
-	string val = string.Empty;
+	public partial string Val { get; set; } = string.Empty;
 	[ObservableProperty]
 	[OldTableCommentAttr("リスト")]
-	string example = string.Empty;
+	public partial string Example { get; set; } = string.Empty;
 	[ObservableProperty]
 	[OldTableCommentAttr("MEMO")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 }
 /// <summary>
 /// ハンディターミナル用のテーブル、HHTマスター作成時のみ必要
@@ -675,51 +640,50 @@ public sealed partial class MasterHht : ObservableObject {
 	/// 1 - 3	識別フラグ	SIR, SOK, TAN, TOK のいずれか
 	/// </summary>
 	[ObservableProperty]
-	string kubun = string.Empty;
+	public partial string Kubun { get; set; } = string.Empty;
 	/// <summary>
 	/// 4 - 11	コード	8桁（社員は6桁+スペース2桁）のゼロ埋めコード
 	/// </summary>
 	[ObservableProperty]
-	string code = string.Empty;
+	public partial string Code { get; set; } = string.Empty;
 	/// <summary>
 	/// 12 - 51	名称1	SJIS 40byteの名称（略称/カナ/名称、TRANSLATE済み）
 	/// </summary>
 	[ObservableProperty]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// 52 - 91	名称2	SJIS 40byteの名称（略称、またはスペース）
 	/// </summary>
 	[ObservableProperty]
-	string nameOpt = string.Empty;
+	public partial string NameOpt { get; set; } = string.Empty;
 	/// <summary>
 	/// 92	終端符号	アスタリスク * 
 	/// </summary>
 	[ObservableProperty]
-	string eol = string.Empty;
+	public partial string Eol { get; set; } = string.Empty;
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("マスター：出荷配送業者テーブル")]
 public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
-	string code = string.Empty;
+	public partial string Code { get; set; } = string.Empty;
 	[ObservableProperty]
-	string name = string.Empty;
+	public partial string Name { get; set; } = string.Empty;
 	[ObservableProperty]
-	string ryaku = string.Empty;
+	public partial string Ryaku { get; set; } = string.Empty;
 	[ObservableProperty]
-	string kana = string.Empty;
+	public partial string Kana { get; set; } = string.Empty;
 	[ObservableProperty]
-	bool trackingSupported;
+	public partial bool TrackingSupported { get; set; }
 	[ObservableProperty]
-	string trackingUrlTemplate = string.Empty;
+	public partial string TrackingUrlTemplate { get; set; } = string.Empty;
 	[ObservableProperty]
-	string trackingPlaceholder = "{no}";
+	public partial string TrackingPlaceholder { get; set; } = "{no}";
 	[ObservableProperty]
-	bool isActive;
+	public partial bool IsActive { get; set; }
 	[ObservableProperty]
-	string notes = string.Empty;
-
+	public partial string Notes { get; set; } = string.Empty;
 	private static readonly List<MasterShipping> DefaultShippingData =
 	[
 		new MasterShipping {
@@ -793,7 +757,6 @@ public sealed partial class MasterShipping : BaseDbClass, IBaseCodeName {
 			Vdu = Common.GetVdate()
 		}
 	];
-
 	public static List<MasterShipping> CreateDefaultData(ExDatabase db) {
 		var tableCnt = db.GetTableCounts(nameof(MasterShipping));
 		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {

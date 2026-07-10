@@ -161,7 +161,6 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
-	[System.ComponentModel.DefaultValue("")]
 	[OldTableCommentAttr("略称")]
 	public partial string Ryaku { get; set; } = string.Empty;
 	/// <summary>

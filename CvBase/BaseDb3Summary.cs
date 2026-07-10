@@ -17,27 +17,27 @@ public partial class SummaryRealStock : BaseDbClass {
 	/// 倉庫ID
 	/// </summary>
 	[ObservableProperty]
-	long id_Soko;
+	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 商品Id
 	/// </summary>
 	[ObservableProperty]
-	long id_Shohin;
+	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
-	long id_Col;
+	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
-	long id_Siz;
+	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
 	/// </summary>
 	[ObservableProperty]
-	int su;
+	public partial int Su { get; set; }
 }
 /// <summary>
 /// 年月集計ファイル: 在庫
@@ -52,43 +52,43 @@ public partial class SummaryStock : SummaryRealStock {
 	/// 年月
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(6)]
-	string sumMonth = "190101";
+	[ColumnSizeDml(6)]
+	public partial string SumMonth { get; set; } = "190101";
 	/// <summary>
 	///	当月までの累計数量
 	/// </summary>
 	[ObservableProperty]
-	int cumulativeSu;
+	public partial int CumulativeSu { get; set; }
 	/// <summary>
 	/// 入庫数
 	/// </summary>
 	[ObservableProperty]
-	int inQty;
+	public partial int InQty { get; set; }
 	/// <summary>
 	/// 出庫数
 	/// </summary>
 	[ObservableProperty]
-	int outQty;
+	public partial int OutQty { get; set; }
 	/// <summary>
 	/// 移動中(入庫予定)
 	/// </summary>
 	[ObservableProperty]
-	int transitQty;
+	public partial int TransitQty { get; set; }
 	/// <summary>
 	/// 調整数
 	/// </summary>
 	[ObservableProperty]
-	int adjustQty;
+	public partial int AdjustQty { get; set; }
 	/// <summary>
 	/// 棚卸日
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	string stocktakeDdate = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string StocktakeDdate { get; set; } = "19010101";
 	/// <summary>
 	/// 棚卸数
 	/// </summary>
 	[ObservableProperty]
-	int actualQty;
+	public partial int ActualQty { get; set; }
 }
 

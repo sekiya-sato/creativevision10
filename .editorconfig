@@ -19,6 +19,7 @@ insert_final_newline = true
 # 未使用の using を削除してほしくない場合(きかなかったので一旦なし 2026/02/27)
 #	dotnet_diagnostic.IDE0005.severity = none
 # MvvmToolkitのpropperty Attribute設定の中で使うattributeのusingは考慮されないのでfullnameで書くようにする
+dotnet_diagnostic.MVVMTK0042.severity = warning
 
 # 型メンバー
 # 高度なメンバーを非表示にしない。

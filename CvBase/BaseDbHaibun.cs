@@ -12,135 +12,130 @@ public sealed partial class TranHaibun : BaseDbClass {
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("配分指示日")]
-	string denDay = "19010101";
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 納品日 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("納品日")]
-	string nouhinDay = string.Empty;
+	public partial string NouhinDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 倉庫Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("倉庫CD")]
-	long id_Soko;
+	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("得意先CD")]
-	long id_Tenpo;
+	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 区分
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("区分")]
-	int kubun;
+	public partial int Kubun { get; set; }
 	/// <summary>
 	/// 送信フラグ 0:未送信 1:送信中 2:送信済み
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("送信FLG")]
-	int sendFlg;
+	public partial int SendFlg { get; set; }
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
-	long id_Shohin;
+	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 入力JANコード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANCODE")]
-	string janCode = string.Empty;
+	public partial string JanCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
-	long id_Col;
+	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
-	long id_Siz;
+	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("数量")]
-	int su;
+	public partial int Su { get; set; }
 	/// <summary>
 	/// 単価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("単価")]
-	int tanka;
+	public partial int Tanka { get; set; }
 	/// <summary>
 	/// 金額
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
-	int kingaku;
+	public partial int Kingaku { get; set; }
 	/// <summary>
 	/// 上代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代金額")]
-	int jodai;
+	public partial int Jodai { get; set; }
 	/// <summary>
 	/// 下代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("下代金額")]
-	int gedai;
+	public partial int Gedai { get; set; }
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO2")]
-	int relateNo2;
+	public partial int RelateNo2 { get; set; }
 	/// <summary>
 	/// 明細メモ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(200)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("明細メモ")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 確定日 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("確定日")]
-	string kakuteiDay = string.Empty;
+	public partial string KakuteiDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 実数量
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("実数量")]
-	int jitsuSu;
+	public partial int JitsuSu { get; set; }
 	/// <summary>
 	/// 入力社員Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("入力社員CD")]
-	long id_Shain;
+	public partial long Id_Shain { get; set; }
 }
 
 // 補充トランザクション
@@ -152,133 +147,128 @@ public sealed partial class TranHoju : BaseDbClass {
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("補充指示日")]
-	string denDay = "19010101";
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 納品日 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("納品日")]
-	string nouhinDay = string.Empty;
+	public partial string NouhinDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 倉庫Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("倉庫CD")]
-	long id_Soko;
+	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("仕入先CD")]
-	long id_Shiire;
+	public partial long Id_Shiire { get; set; }
 	/// <summary>
 	/// 区分
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("区分")]
-	int kubun;
+	public partial int Kubun { get; set; }
 	/// <summary>
 	/// 送信フラグ 0:未送信 1:送信中 2:送信済み
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("送信FLG")]
-	int sendFlg;
+	public partial int SendFlg { get; set; }
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
-	long id_Shohin;
+	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 入力JANコード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANCODE")]
-	string janCode = string.Empty;
+	public partial string JanCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
-	long id_Col;
+	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
-	long id_Siz;
+	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("数量")]
-	int su;
+	public partial int Su { get; set; }
 	/// <summary>
 	/// 単価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("単価")]
-	int tanka;
+	public partial int Tanka { get; set; }
 	/// <summary>
 	/// 金額
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
-	int kingaku;
+	public partial int Kingaku { get; set; }
 	/// <summary>
 	/// 上代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代金額")]
-	int jodai;
+	public partial int Jodai { get; set; }
 	/// <summary>
 	/// 下代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("下代金額")]
-	int gedai;
+	public partial int Gedai { get; set; }
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO2")]
-	int relateNo2;
+	public partial int RelateNo2 { get; set; }
 	/// <summary>
 	/// 明細メモ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(200)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("明細メモ")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 確定日 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("確定日")]
-	string kakuteiDay = string.Empty;
+	public partial string KakuteiDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 実数量
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("実数量")]
-	int jitsuSu;
+	public partial int JitsuSu { get; set; }
 	/// <summary>
 	/// 入力社員Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("入力社員CD")]
-	long id_Shain;
+	public partial long Id_Shain { get; set; }
 }

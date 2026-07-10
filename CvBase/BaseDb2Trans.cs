@@ -5,7 +5,6 @@ using NPoco;
 
 namespace CvBase;
 
-
 public interface ITranDetail {
 	public string DenDay { get; set; }
 	public long Id_Soko { get; set; }
@@ -24,9 +23,6 @@ public interface ITranSoko {
 	public long Id_Soko { get; set; }
 	public int CalcFlag { get; set; }
 }
-
-
-
 
 /// <summary>
 /// Tran系ファイルの出庫・入庫の区分、売上・仕入の区分などの共通的なコードを定義するクラス
@@ -108,100 +104,100 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// 計上日（yyyyMMdd）
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("在庫計上日")]
-	string denDay = "19010101";
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShain))]
 	[OldTableCommentAttr("入力社員CD")]
-	long id_Shain;
+	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 社員データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vShain = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VShain { get; set; } = new();
 	/// <summary>
 	/// 倉庫キー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui))]
 	[OldTableCommentAttr("倉庫CD")]
-	long id_Soko;
+	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 倉庫データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vSoko = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VSoko { get; set; } = new();
 	/// <summary>
 	/// 計算フラグ（1:+ -1:-, 0:計算除外）
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引区分", "getCalcFlag により算出")]
-	int calcFlag = 1;
+	public partial int CalcFlag { get; set; } = 1;
 	/// <summary>
 	/// 数量合計
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("数量合計")]
-	int suTotal;
+	public partial int SuTotal { get; set; }
 	/// <summary>
 	/// 金額合計
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("明細金額合計")]
-	int kingakuTotal;
+	public partial int KingakuTotal { get; set; }
 	/// <summary>
 	/// 上代合計
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代合計")]
-	int jodaiTotal;
+	public partial int JodaiTotal { get; set; }
 	/// <summary>
 	/// 下代合計
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("下代合計")]
-	int gedaiTotal;
+	public partial int GedaiTotal { get; set; }
 	/// <summary>
 	/// 値引: 合計からの
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("値引1 + 値引2 + 値引3")]
-	int nebiki00Total;
+	public partial int Nebiki00Total { get; set; }
 	/// <summary>
 	/// 値引: 明細積上げ
 	/// </summary>
 	[ObservableProperty]
-	int nebiki01Meisai;
+	public partial int Nebiki01Meisai { get; set; }
 	/// <summary>
 	/// ヘッダメモ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(200)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(200)]
+
 	[OldTableCommentAttr("メモ")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 詳細内容
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(1000)]
-	BaseDetailClass? jdetail;
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	public partial BaseDetailClass? Jdetail { get; set; }
 	/// <summary>
 	/// 明細リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(4000)]
-	List<Tran99Meisai>? jmeisai;
+	[SerializedColumn]
+	[ColumnSizeDml(4000)]
+	public partial List<Tran99Meisai>? Jmeisai { get; set; }
 }
 
 /// <summary>
@@ -214,157 +210,148 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("行NO")]
-	int no;
+	public partial int No { get; set; }
 	/// <summary>
 	/// 区分（Max2桁 0:Pプロパー 1:Sセール 2:社販）
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("明細取引区分")]
-	int kubun = 0;
+	public partial int Kubun { get; set; } = 0;
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin))]
-	long id_Shohin;
+	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 商品CD
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
+
 	[OldTableCommentAttr("商品CD")]
-	string code_Shohin = string.Empty;
+	public partial string Code_Shohin { get; set; } = string.Empty;
 	/// <summary>
 	/// 商品名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("明細名称")]
-	string mei_Shohin = string.Empty;
+	public partial string Mei_Shohin { get; set; } = string.Empty;
 	/// <summary>
 	/// 入力JANコード
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANCODE")]
-	string janCode = string.Empty;
+	public partial string JanCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterMeisho))]
-	long id_Col;
+	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// カラーCD
 	/// </summary>
 	[ObservableProperty]
-	[property: System.ComponentModel.DefaultValue("")]
 	[OldTableCommentAttr("色CD")]
-	string code_Col = string.Empty;
+	public partial string Code_Col { get; set; } = string.Empty;
 	/// <summary>
 	/// カラー名
 	/// </summary>
 	[ObservableProperty]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Col = string.Empty;
+	public partial string Mei_Col { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterMeisho))]
-	long id_Siz;
+	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// サイズCD
 	/// </summary>
 	[ObservableProperty]
-	[property: System.ComponentModel.DefaultValue("")]
 	[OldTableCommentAttr("サイズCD")]
-	string code_Siz = string.Empty;
+	public partial string Code_Siz { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ名
 	/// </summary>
 	[ObservableProperty]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Siz = string.Empty;
+	public partial string Mei_Siz { get; set; } = string.Empty;
 	/// <summary>
 	/// 数量
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("数量")]
-	int su;
+	public partial int Su { get; set; }
 	/// <summary>
 	/// 単価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("単価")]
-	int tanka;
+	public partial int Tanka { get; set; }
 	/// <summary>
 	/// 金額
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
-	int kingaku;
+	public partial int Kingaku { get; set; }
 	/// <summary>
 	/// 上代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代金額")]
-	int jodai;
+	public partial int Jodai { get; set; }
 	/// <summary>
 	/// 下代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("下代金額")]
-	int gedai;
+	public partial int Gedai { get; set; }
 	/// <summary>
 	/// 値引: 合計からの
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("明細値引")]
-	int nebiki00;
+	public partial int Nebiki00 { get; set; }
 	/// <summary>
 	/// 値引: 明細1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("明細値引1")]
-	int nebiki01;
+	public partial int Nebiki01 { get; set; }
 	/// <summary>
 	/// 値引: 明細2
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("小計値引 + 小計値引1")]
-	int nebiki02;
+	public partial int Nebiki02 { get; set; }
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShain))]
-	long id_Shain;
+	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 社員CD
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string code_Shain = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Code_Shain { get; set; } = string.Empty;
 	/// <summary>
 	/// 社員名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Shain = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Mei_Shain { get; set; } = string.Empty;
 	/// <summary>
 	/// 明細メモ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(200)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("明細メモ")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -375,66 +362,64 @@ public partial class TranKinHeader : BaseDbClass {
 	/// 計上日（yyyyMMdd）
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("在庫計上日")]
-	string denDay = "19010101";
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShain))]
 	[OldTableCommentAttr("入力社員CD")]
-	long id_Shain;
+	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 社員データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vShain = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VShain { get; set; } = new();
 	/// <summary>
 	/// 取引先キー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui))]
 	[OldTableCommentAttr("取引先CD1  入金であればMasterTokui 支払であればMasterShiire")]
-	long id_Torisaki;
+	public partial long Id_Torisaki { get; set; }
 	/// <summary>
 	/// 取引先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTori = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VTori { get; set; } = new();
 	/// <summary>
 	/// 金額合計
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("明細金額合計")]
-	int kingakuTotal;
+	public partial int KingakuTotal { get; set; }
 	/// <summary>
 	/// 手入力No
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("手入力伝票NO")]
-	string manualNo = string.Empty;
+	public partial string ManualNo { get; set; } = string.Empty;
 	/// <summary>
 	/// ヘッダメモ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(200)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("メモ")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 明細リスト
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(4000)]
-	List<TranKinMeisai>? jmeisai;
+	[SerializedColumn]
+	[ColumnSizeDml(4000)]
+	public partial List<TranKinMeisai>? Jmeisai { get; set; }
 }
 
 /// <summary>
@@ -447,42 +432,40 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("行NO")]
-	int no;
+	public partial int No { get; set; }
 	/// <summary>
 	/// 区分ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterMeisho))]
-	long id_Kin;
+	public partial long Id_Kin { get; set; }
 	/// <summary>
 	/// 入金・支払CD
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
+
 	[OldTableCommentAttr("明細取引区分")]
-	string code_Kin = string.Empty;
+	public partial string Code_Kin { get; set; } = string.Empty;
 	/// <summary>
 	/// 品名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mei_Kin = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string Mei_Kin { get; set; } = string.Empty;
 	/// <summary>
 	/// 金額
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
-	int kingaku;
+	public partial int Kingaku { get; set; }
 	/// <summary>
 	/// 明細メモ
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(200)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("明細メモ")]
-	string memo = string.Empty;
+	public partial string Memo { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -519,9 +502,8 @@ public sealed partial class Tran60Tana : TranAllHeader {
 	/// 棚番
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string tanaNo = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string TanaNo { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -539,31 +521,30 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// 掛計上日（yyyyMMdd）
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("掛計上日")]
-	string kakeDay = "19010101";
+	public partial string KakeDay { get; set; } = "19010101";
 	/// <summary>
 	/// 得意先キー
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
 	[ForeignKey(nameof(MasterTokui))]
-	long id_Tokui;
+	public partial long Id_Tokui { get; set; }
 	/// <summary>
 	/// 得意先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTokui = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VTokui { get; set; } = new();
 	/// <summary>
 	/// 請求フラグ
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsPay))]
 	[OldTableCommentAttr("掛計上FLG")]
-	int isPay;
-
+	public partial int IsPay { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumYesNo EnIsPay {
@@ -576,7 +557,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
-	int kubun = 10;
+	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
 		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
@@ -592,38 +573,37 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// 手入力No
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("手入力伝票NO")]
-	string manualNo = string.Empty;
+	public partial string ManualNo { get; set; } = string.Empty;
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO2")]
-	int relateNo2;
+	public partial int RelateNo2 { get; set; }
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
-	int rate;
+	public partial int Rate { get; set; }
 	/// <summary>
 	/// 消費税
 	/// </summary>
 	[ObservableProperty]
-	int tax;
+	public partial int Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
-	int total;
+	public partial int Total { get; set; }
 }
 
 public enum EnumUri00 : int {
@@ -653,43 +633,42 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui))]
 	[OldTableCommentAttr("取引先CD1")]
-	long id_Tenpo;
+	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 店舗データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTenpo = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VTenpo { get; set; } = new();
 	/// <summary>
 	/// 顧客キー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterEndCustomer))]
 	[OldTableCommentAttr("顧客TEL")]
-	long id_Customer;
+	public partial long Id_Customer { get; set; }
 	/// <summary>
 	/// 顧客データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vCustomer = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VCustomer { get; set; } = new();
 	/// <summary>
 	/// オフライン用顧客CD
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("顧客TEL")]
-	string code_Customer = string.Empty;
+	public partial string Code_Customer { get; set; } = string.Empty;
 	/// <summary>
 	/// 区分（2桁 10-19,20-29,30,99）
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
-	int kubun = 10;
+	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
 		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
@@ -706,24 +685,24 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
+
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
-	int rate;
+	public partial int Rate { get; set; }
 	/// <summary>
 	/// 消費税
 	/// </summary>
 	[ObservableProperty]
-	int tax;
+	public partial int Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
-	int total;
-
+	public partial int Total { get; set; }
 }
 public enum EnumUri01 : int {
 	Uriage = 10,
@@ -732,7 +711,6 @@ public enum EnumUri01 : int {
 	HenSale = 21,
 	Other = 99
 }
-
 
 /// <summary>
 /// 仕入 03 (倉庫 入)
@@ -749,31 +727,30 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	/// 掛計上日（yyyyMMdd）
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
+	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("掛計上日")]
-	string kakeDay = "19010101";
+	public partial string KakeDay { get; set; } = "19010101";
 	/// <summary>
 	/// 仕入先キー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShiire))]
 	[OldTableCommentAttr("取引先CD1")]
-	long id_Shiire;
+	public partial long Id_Shiire { get; set; }
 	/// <summary>
 	/// 仕入先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vShiire = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VShiire { get; set; } = new();
 	/// <summary>
 	/// 支払フラグ
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsPay))]
 	[OldTableCommentAttr("掛計上FLG")]
-	int isPay;
-
+	public partial int IsPay { get; set; }
 	[Ignore]
 	[JsonIgnore]
 	public EnumYesNo EnIsPay {
@@ -786,7 +763,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
-	int kubun = 10;
+	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
 		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
@@ -801,32 +778,31 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	/// 手入力No
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("手入力伝票NO")]
-	string manualNo = string.Empty;
+	public partial string ManualNo { get; set; } = string.Empty;
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
-	int rate;
+	public partial int Rate { get; set; }
 	/// <summary>
 	/// 消費税
 	/// </summary>
 	[ObservableProperty]
-	int tax;
+	public partial int Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
-	int total;
+	public partial int Total { get; set; }
 }
 public enum EnumShiire : int {
 	Shiire = 10,
@@ -852,28 +828,28 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
 	[ForeignKey(nameof(MasterTokui))]
-	long id_Ido;
+	public partial long Id_Ido { get; set; }
 	/// <summary>
 	/// 移動先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vIdo = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VIdo { get; set; } = new();
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	/// 手入力No
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
+
 	[OldTableCommentAttr("手入力伝票NO")]
-	string manualNo = string.Empty;
+	public partial string ManualNo { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -892,28 +868,28 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
 	[ForeignKey(nameof(MasterTokui))]
-	long id_Ido;
+	public partial long Id_Ido { get; set; }
 	/// <summary>
 	/// 移動先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vIdo = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VIdo { get; set; } = new();
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	/// 手入力No
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
+
 	[OldTableCommentAttr("手入力伝票NO")]
-	string manualNo = string.Empty;
+	public partial string ManualNo { get; set; } = string.Empty;
 }
 /// <summary>
 /// 積送移動 11 (倉庫 出, 移動先 入) 実
@@ -931,28 +907,27 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
 	[ForeignKey(nameof(MasterTokui))]
-	long id_Ido;
+	public partial long Id_Ido { get; set; }
 	/// <summary>
 	/// 移動先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vIdo = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VIdo { get; set; } = new();
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	/// 手入力No
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("手入力伝票NO")]
-	string manualNo = string.Empty;
+	public partial string ManualNo { get; set; } = string.Empty;
 }
 /// <summary>
 /// 受注 12
@@ -970,21 +945,21 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui))]
 	[OldTableCommentAttr("取引先CD1")]
-	long id_Tokui;
+	public partial long Id_Tokui { get; set; }
 	/// <summary>
 	/// 得意先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTokui = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VTokui { get; set; } = new();
 	/// <summary>
 	/// 区分（2桁 10-19,20-29,30,99）
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
-	int kubun = 10;
+	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
 		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
@@ -1000,23 +975,23 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
-	int rate;
+	public partial int Rate { get; set; }
 	/// <summary>
 	/// 消費税
 	/// </summary>
 	[ObservableProperty]
-	int tax;
+	public partial int Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
-	int total;
+	public partial int Total { get; set; }
 }
 
 /// <summary>
@@ -1035,21 +1010,21 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
 	[ForeignKey(nameof(MasterShiire))]
-	long id_Shiire;
+	public partial long Id_Shiire { get; set; }
 	/// <summary>
 	/// 仕入先データ
 	/// </summary>
 	[ObservableProperty]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vShiire = new();
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VShiire { get; set; } = new();
 	/// <summary>
 	/// 区分（2桁 10-19,20-29,30,99）
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("取引区分")]
-	int kubun = 10;
+	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
 		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
@@ -1065,23 +1040,23 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	int relateNo1;
+	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	/// 掛率
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("掛率1")]
-	int rate;
+	public partial int Rate { get; set; }
 	/// <summary>
 	/// 消費税
 	/// </summary>
 	[ObservableProperty]
-	int tax;
+	public partial int Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
-	int total;
+	public partial int Total { get; set; }
 }
 
 
@@ -1096,219 +1071,197 @@ public sealed partial class TranHhtData : BaseDbClass {
 	/// 店舗 文字  8
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string shop = string.Empty;
+	[ColumnSizeDml(8)]
+	public partial string Shop { get; set; } = string.Empty;
 	/// <summary>
 	/// 日付 文字  8
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	string denDay = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 処理区分 文字  2
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(2)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string kubun = string.Empty;
+	[ColumnSizeDml(2)]
+	public partial string Kubun { get; set; } = string.Empty;
 	/// <summary>
 	/// 伝票NO	数値	8
 	/// </summary>
 	[ObservableProperty]
-	long denNo;
+	public partial long DenNo { get; set; }
 	/// <summary>
 	/// 担当者	文字	6
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(6)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string tanto = string.Empty;
+	[ColumnSizeDml(6)]
+	public partial string Tanto { get; set; } = string.Empty;
 	/// <summary>
 	/// 取引先	文字	8
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string tori = string.Empty;
+	[ColumnSizeDml(8)]
+	public partial string Tori { get; set; } = string.Empty;
 	/// <summary>
 	/// 品番	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string hinban = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Hinban { get; set; } = string.Empty;
 	/// <summary>
 	/// カラー	文字	8
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string color = string.Empty;
+	[ColumnSizeDml(8)]
+	public partial string Color { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ	文字	8
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string size = string.Empty;
+	[ColumnSizeDml(8)]
+	public partial string Size { get; set; } = string.Empty;
 	/// <summary>
 	/// 元上代	数値	8
 	/// </summary>
 	[ObservableProperty]
-	int motoJodai;
+	public partial int MotoJodai { get; set; }
 	/// <summary>
 	/// 上代	数値	8
 	/// </summary>
 	[ObservableProperty]
-	int jodai;
+	public partial int Jodai { get; set; }
 	/// <summary>
 	/// 下代	数値	8
 	/// </summary>
 	[ObservableProperty]
-	int gedai;
+	public partial int Gedai { get; set; }
 	/// <summary>
 	/// 数量	数値	5
 	/// </summary>
 	[ObservableProperty]
-	int su;
+	public partial int Su { get; set; }
 	/// <summary>
 	/// 店舗2	文字	8
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string shop2 = string.Empty;
+	[ColumnSizeDml(8)]
+	public partial string Shop2 { get; set; } = string.Empty;
 	/// <summary>
 	/// セールFLG	文字	1
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(1)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string saleFlg = string.Empty;
+	[ColumnSizeDml(1)]
+	public partial string SaleFlg { get; set; } = string.Empty;
 	/// <summary>
 	/// 棚番	文字	10
 	/// </summary>
 	[ObservableProperty]
-	int tanaNo = 0;
+	public partial int TanaNo { get; set; } = 0;
 	/// <summary>
 	/// 関連伝票NO	数値	8
 	/// </summary>
 	[ObservableProperty]
-	long relateDenNo;
+	public partial long RelateDenNo { get; set; }
 	/// <summary>
 	/// 掛率	数値	6.3
 	/// </summary>
 	[ObservableProperty]
-	decimal kakeritsu;
+	public partial decimal Kakeritsu { get; set; }
 	/// <summary>
 	/// 納品日	文字	8
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string nouhinDay = string.Empty;
+	[ColumnSizeDml(8)]
+	public partial string NouhinDay { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード1	文字	13
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(13)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string jan1 = string.Empty;
+	[ColumnSizeDml(13)]
+	public partial string Jan1 { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード2	文字	13
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(13)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string jan2 = string.Empty;
+	[ColumnSizeDml(13)]
+	public partial string Jan2 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備03	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi03 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi03 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備04	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi04 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi04 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備05	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi05 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi05 { get; set; } = string.Empty;
+
 	/// <summary>
 	/// 予備06	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi06 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi06 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備07	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi07 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi07 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備08	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi08 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi08 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備09	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi09 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi09 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備10	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi10 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi10 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備11	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi11 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi11 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備12	文字	20
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(20)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string yobi12 = string.Empty;
+	[ColumnSizeDml(20)]
+	public partial string Yobi12 { get; set; } = string.Empty;
 	/// <summary>
 	/// 入力ファイル名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	string fileName = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string FileName { get; set; } = string.Empty;
 	/// <summary>
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
-	int lineNo;
+	public partial int LineNo { get; set; }
 	/// <summary>
 	/// HhtdataからTran系各テーブルへの変換日時(vdu相当の日時データ)
 	/// </summary>
 	[ObservableProperty]
-	long vdCnvDate;
-
+	public partial long VdCnvDate { get; set; }
 }
 
 /// <summary>
@@ -1324,142 +1277,136 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 	/// ファイルレイアウト 1桁:1-9,A-Cで表現されているが、数値に変換して格納する
 	/// </summary>
 	[ObservableProperty]
-	int type0 = 0;
+	public partial int Type0 { get; set; } = 0;
+
 	/// <summary>
 	/// HT No  1-999の数値を格納する。VULCANのファイルレイアウトでは3桁の文字列で表現されているが、数値に変換して格納する
 	/// </summary>
 	[ObservableProperty]
-	int hhtNo = 0;
+	public partial int HhtNo { get; set; } = 0;
 	/// <summary>
 	/// SerialNo 1-9999の数値を格納する。VULCANのファイルレイアウトでは5桁の文字列で表現されているが、数値に変換して格納する
 	/// </summary>
 	[ObservableProperty]
-	int serial = 0;
+	public partial int Serial { get; set; } = 0;
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	string denDay = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 店舗 文字  8 前'0'埋め
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string shop = string.Empty;
+	[ColumnSizeDml(8)]
+	public partial string Shop { get; set; } = string.Empty;
 	/// <summary>
 	/// 担当者	文字	6 前'0'埋め
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(6)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string tanto = string.Empty;
+	[ColumnSizeDml(6)]
+	public partial string Tanto { get; set; } = string.Empty;
 	/// <summary>
 	/// 販売区分 1桁 0:プロパー,1:セール, 9:未使用 (入庫と出庫の場合は 0:買取, 1:委託)
 	/// </summary>
 	[ObservableProperty]
-	int hanKubun = 9;
+	public partial int HanKubun { get; set; } = 9;
 	/// <summary>
 	/// 伝票番号 13桁 先頭8桁に0埋で数値を格納する。(売上と返品の場合は顧客CD 13桁、客数の場合は先頭8桁0埋で客数)
 	/// </summary>
-	[property: ColumnSizeDml(13)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(13)]
 	[ObservableProperty]
-	string denNo = string.Empty;
+	public partial string DenNo { get; set; } = string.Empty;
 	/// <summary>
 	/// JAN 1段目
 	/// </summary>
-	[property: ColumnSizeDml(13)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(13)]
 	[ObservableProperty]
-	string jan1 = string.Empty;
+	public partial string Jan1 { get; set; } = string.Empty;
 	/// <summary>
 	/// JAN 2段目
 	/// </summary>
-	[property: ColumnSizeDml(13)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(13)]
 	[ObservableProperty]
-	string jan2 = string.Empty;
+	public partial string Jan2 { get; set; } = string.Empty;
+
 	/// <summary>
 	/// 数量 6桁 先頭に'0'か'-'、5桁数値を格納する。
 	/// </summary>
 	[ObservableProperty]
-	int su = 9;
+	public partial int Su { get; set; } = 9;
 	/// <summary>
 	/// 単価 9桁数値を格納する。
 	/// </summary>
 	[ObservableProperty]
-	int tanka = 9;
+	public partial int Tanka { get; set; } = 9;
 	/// <summary>
 	/// 取引先 文字 8 前'0'埋め
 	/// </summary>
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[ObservableProperty]
-	string toriSaki = string.Empty;
+	public partial string ToriSaki { get; set; } = string.Empty;
 	/// <summary>
 	/// 掛率 文字 5桁 前'0'埋めで 999.9 を格納する。仕入の場合は発注番号8桁、発注の場合は納品日8桁を格納する。
 	/// </summary>
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
+	[ColumnSizeDml(8)]
 	[ObservableProperty]
-	string kakeRitsu = string.Empty;
+	public partial string KakeRitsu { get; set; } = string.Empty;
 	/// <summary>
 	/// 1取込ファイルの総件数 5桁数値
 	/// </summary>
 	[ObservableProperty]
-	int totalCnt = 9;
+	public partial int TotalCnt { get; set; } = 9;
 	/// <summary>
 	/// 予備空白	文字	6
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(6)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string filler = string.Empty;
+	[ColumnSizeDml(6)]
+	public partial string Filler { get; set; } = string.Empty;
 	/// <summary>
 	/// バックアップファイル名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(100)]
-	string backupFileName = string.Empty;
+	[ColumnSizeDml(100)]
+	public partial string BackupFileName { get; set; } = string.Empty;
 	/// <summary>
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
-	int lineNo;
+	public partial int LineNo { get; set; }
 	/// <summary>
 	/// Local PCのコンピュータ名
 	/// </summary>
 	[ObservableProperty]
-	string? computerName = null;
+	public partial string? ComputerName { get; set; } = null;
 	/// <summary>
 	/// Local PCのユーザ名
 	/// </summary>
 	[ObservableProperty]
-	string? userName = null;
+	public partial string? UserName { get; set; } = null;
 	/// <summary>
 	/// HhtdataからTran系各テーブルへの変換日時(vdu相当の日時データ)
 	/// </summary>
 	[ObservableProperty]
-	long vdCnvDate;
+	public partial long VdCnvDate { get; set; }
 	/// <summary>
 	/// 対象テーブル名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	string targetTableName = string.Empty;
+	[ColumnSizeDml(30)]
+	public partial string TargetTableName { get; set; } = string.Empty;
 	/// <summary>
 	/// 対象テーブルの対象レコードID
 	/// </summary>
 	[ObservableProperty]
-	long targetId;
+	public partial long TargetId { get; set; }
 	/// <summary>
 	/// 変換エラー内容
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(1000)]
-	string errorMsg = string.Empty;
+	[ColumnSizeDml(1000)]
+	public partial string ErrorMsg { get; set; } = string.Empty;
 }
 
 

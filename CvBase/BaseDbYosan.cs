@@ -10,54 +10,52 @@ namespace CvBase;
 [Comment("マスタ：店舗ブランド予算：Tran00Uriage,Tran01Tenuri を合計した売上に対する予算")]
 public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// <summary>
-	/// 店舗Id
+	/// 
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("店舗CD")]
-	long id_Tenpo;
+	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// ブランドId
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("ブランドCD")]
-	long id_Brand;
+	public partial long Id_Brand { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("日付")]
-	[property: ColumnSizeDml(8)]
-	string denDay = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 売上予算
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("売上予算")]
-	long uriYosan;
+	public partial long UriYosan { get; set; }
 	/// <summary>
 	/// 粗利予算
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("粗利予算")]
-	long arariYosan;
-
+	public partial long ArariYosan { get; set; }
 	/// <summary>
 	/// 店舗データ
 	/// </summary>
 	[ObservableProperty]
-	[property: ComputedColumn]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vTenpo = new();
-
+	[ComputedColumn]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VTenpo { get; set; } = new();
 	/// <summary>
 	/// ブランドデータ
 	/// </summary>
 	[ObservableProperty]
-	[property: ComputedColumn]
-	[property: SerializedColumn]
-	[property: ColumnSizeDml(100)]
-	CodeNameView vBrand = new();
+	[ComputedColumn]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VBrand { get; set; } = new();
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -70,24 +68,24 @@ public sealed partial class MasterYosanHanbai : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("販売員CD")]
-	long id_Shain;
+	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("日付")]
-	[property: ColumnSizeDml(8)]
-	string denDay = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 売上予算
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("予算金額")]
-	long uriYosan;
+	public partial long UriYosan { get; set; }
 	/// <summary>
 	/// 粗利予算
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("粗利予算")]
-	long arariYosan;
+	public partial long ArariYosan { get; set; }
 }

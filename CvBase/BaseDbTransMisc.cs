@@ -13,44 +13,42 @@ public sealed partial class TranTokuiPromotion : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui))]
-	long id_Tokui;
+	public partial long Id_Tokui { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string denDay = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// イベント名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mame = "";
+	[ColumnSizeDml(30)]
+	public partial string Mame { get; set; } = string.Empty;
 	/// <summary>
 	/// 重要度 0=低, 1=中, 2=高
 	/// </summary>
 	[ObservableProperty]
-	int rank;
+	public partial int Rank { get; set; }
 	/// <summary>
 	/// 得意先コード（一覧表示用）
 	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	string tokuiCode = string.Empty;
+	[ResultColumn]
+	public partial string TokuiCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 得意先名（一覧表示用）
 	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	string tokuiName = string.Empty;
+	[ResultColumn]
+	public partial string TokuiName { get; set; } = string.Empty;
 	/// <summary>
 	/// 重要度名（一覧表示用）
 	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	string rankName = string.Empty;
+	[ResultColumn]
+	public partial string RankName { get; set; } = string.Empty;
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -62,44 +60,42 @@ public sealed partial class TranShopPromotion : BaseDbClass {
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
-	long id_Shop;
+	public partial long Id_Shop { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string denDay = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// イベント名
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(30)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string mame = "";
+	[ColumnSizeDml(30)]
+	public partial string Mame { get; set; } = string.Empty;
 	/// <summary>
 	/// 重要度 0=低, 1=中, 2=高
 	/// </summary>
 	[ObservableProperty]
-	int rank;
+	public partial int Rank { get; set; }
 	/// <summary>
 	/// 店舗コード（一覧表示用）
 	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	string shopCode = string.Empty;
+	[ResultColumn]
+	public partial string ShopCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 店舗名（一覧表示用）
 	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	string shopName = string.Empty;
+	[ResultColumn]
+	public partial string ShopName { get; set; } = string.Empty;
 	/// <summary>
 	/// 重要度名（一覧表示用）
 	/// </summary>
 	[ObservableProperty]
-	[property: ResultColumn]
-	string rankName = string.Empty;
+	[ResultColumn]
+	public partial string RankName { get; set; } = string.Empty;
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -110,27 +106,22 @@ public sealed partial class Tran60TanaDate : BaseDbClass {
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
-	long id_Shop;
+	public partial long Id_Shop { get; set; }
 	/// <summary>
 	/// 棚卸日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string tanaDay = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string TanaDay { get; set; } = "19010101";
 	/// <summary>
 	/// 確定日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
-	[property: ColumnSizeDml(8)]
-	[property: System.ComponentModel.DefaultValue("")]
-	string fixDay = "19010101";
+	[ColumnSizeDml(8)]
+	public partial string FixDay { get; set; } = "19010101";
 	/// <summary>
 	/// 自動補充フラグ (0:なし 1:する(全日))
 	/// </summary>
 	[ObservableProperty]
-	int autoHoju;
-
-
-
+	public partial int AutoHoju { get; set; }
 }
