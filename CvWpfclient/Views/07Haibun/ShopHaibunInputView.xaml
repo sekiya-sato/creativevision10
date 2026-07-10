@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._07Haibun.ShopHaibunInputView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._07Haibun.ShopHaibunInputView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -88,8 +88,7 @@
 									<TextBlock Style="{StaticResource FormLabel}"
 										Text="区分" />
 									<ComboBox Width="150"
-										materialDesign:HintAssist.Hint="区分"
-										DisplayMemberPath="Name"
+										materialDesign:HintAssist.Hint="区分" DisplayMemberPath="Name"
 										ItemsSource="{Binding KubunOptions}"
 										SelectedValue="{Binding Kubun, Mode=TwoWay}"
 										SelectedValuePath="Value"
@@ -151,8 +150,8 @@
 
 							<!--  3行目: 日付範囲 + 一覧取得  -->
 							<DockPanel Margin="0,4,0,0">
-								<Button DockPanel.Dock="Right"
-									Command="{Binding DoSearchCommand}"
+								<Button Command="{Binding DoSearchCommand}"
+									DockPanel.Dock="Right"
 									Style="{StaticResource MaterialDesignRaisedButton}"
 									ToolTip="一覧取得 (F5)">
 									<StackPanel Orientation="Horizontal">
@@ -203,8 +202,8 @@
 								Background="{DynamicResource MaterialDesignToolBarBackground}"
 								CornerRadius="8,8,0,0">
 								<DockPanel>
-									<Button DockPanel.Dock="Right"
-										Command="{Binding GoToEditCommand}"
+									<Button Command="{Binding GoToEditCommand}"
+										DockPanel.Dock="Right"
 										Style="{StaticResource MaterialDesignOutlinedButton}"
 										ToolTip="選択商品の配分入力へ">
 										<StackPanel Orientation="Horizontal">
@@ -401,7 +400,8 @@
 								Orientation="Horizontal">
 								<TextBlock Style="{StaticResource FormLabel}"
 									Text="上代" />
-								<TextBox Width="100" HorizontalContentAlignment="Right"
+								<TextBox Width="100"
+									HorizontalContentAlignment="Right"
 									IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding TargetJodai, Mode=OneWay, StringFormat={}{0:N0}}" />
@@ -410,7 +410,8 @@
 								Orientation="Horizontal">
 								<TextBlock Style="{StaticResource FormLabel}"
 									Text="配分合計" />
-								<TextBox Width="100" HorizontalContentAlignment="Right"
+								<TextBox Width="100"
+									HorizontalContentAlignment="Right"
 									IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding TotalSu, Mode=OneWay, StringFormat={}{0:N0}}" />
@@ -478,28 +479,22 @@
 								<DataGrid.Columns>
 									<DataGridTextColumn Width="90"
 										Binding="{Binding TenpoCode}"
-										Header="店舗CD"
-										IsReadOnly="True" />
+										Header="店舗CD" IsReadOnly="True" />
 									<DataGridTextColumn Width="160"
 										Binding="{Binding TenpoName}"
-										Header="店舗名"
-										IsReadOnly="True" />
+										Header="店舗名" IsReadOnly="True" />
 									<DataGridTextColumn Width="130"
 										Binding="{Binding ShohinCode}"
-										Header="商品CD"
-										IsReadOnly="True" />
+										Header="商品CD" IsReadOnly="True" />
 									<DataGridTextColumn Width="70"
 										Binding="{Binding ColCode}"
-										Header="色"
-										IsReadOnly="True" />
+										Header="色" IsReadOnly="True" />
 									<DataGridTextColumn Width="90"
 										Binding="{Binding ColName}"
-										Header="色名"
-										IsReadOnly="True" />
+										Header="色名" IsReadOnly="True" />
 									<DataGridTextColumn Width="70"
 										Binding="{Binding SizCode}"
-										Header="サイズ"
-										IsReadOnly="True" />
+										Header="サイズ" IsReadOnly="True" />
 									<DataGridTextColumn Width="90"
 										Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 										EditingElementStyle="{StaticResource DataGridRightTextBox}"
@@ -508,26 +503,21 @@
 									<DataGridTextColumn Width="80"
 										Binding="{Binding Zaiko, StringFormat={}{0:N0}}"
 										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="在庫数"
-										IsReadOnly="True" />
+										Header="在庫数" IsReadOnly="True" />
 									<DataGridTextColumn Width="80"
 										Binding="{Binding KijunZaiko, StringFormat={}{0:N0}}"
 										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="基準在庫"
-										IsReadOnly="True" />
+										Header="基準在庫" IsReadOnly="True" />
 									<DataGridTextColumn Width="80"
 										Binding="{Binding Nouhin, StringFormat={}{0:N0}}"
 										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="納品数"
-										IsReadOnly="True" />
+										Header="納品数" IsReadOnly="True" />
 									<DataGridTextColumn Width="80"
 										Binding="{Binding Uriage, StringFormat={}{0:N0}}"
 										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="売上数"
-										IsReadOnly="True" />
+										Header="売上数" IsReadOnly="True" />
 									<DataGridTextColumn Width="*"
-										Header=" "
-										IsReadOnly="True" />
+										Header=" " IsReadOnly="True" />
 								</DataGrid.Columns>
 								<DataGrid.ColumnHeaderStyle>
 									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"

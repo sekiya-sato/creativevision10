@@ -106,7 +106,7 @@ public sealed partial class Common {
 		if (ymd1.Length != 8 || ymd2.Length != 8) {
 			throw new ArgumentException("日付文字列は 'yyyyMMdd' 形式である必要があります。");
 		}
-		if (string.Compare(ymd2, defaultYmd, StringComparison.Ordinal) == 0)
+		if (string.Compare(ymd2, defaultYmd, StringComparison.Ordinal) <= 0)
 			return -1;
 		return string.Compare(ymd1, ymd2, StringComparison.Ordinal);
 	}

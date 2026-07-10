@@ -290,12 +290,13 @@
 
 								<!--  Group  -->
 								<TextBlock Grid.Row="5"
+									IsEnabled="False"
 									Style="{StaticResource FormLabel}"
 									Text="Group" />
 								<TextBox Grid.Row="5" Grid.Column="1"
 									Width="120" Height="36"
 									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="Group" IsReadOnly="True"
+									materialDesign:HintAssist.Hint="Group" IsEnabled="False" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Id_Role}" />
 
