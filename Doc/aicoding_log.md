@@ -12,6 +12,7 @@
 - CommunityToolkit.Mvvm 推奨の partial property 形式へ統一し、生成プロパティを他のジェネレーターおよびアナライザーから参照可能にするため。
 ### 確認
 - 未変換 ObservableProperty フィールド 0 件、不要な DefaultValue 属性 0 件、CRLF 不正 0 件、`git diff --check` 成功。
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
 
 ---
 
