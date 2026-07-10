@@ -11,6 +11,20 @@ public partial class MasterConfigMenteViewModel : Helpers.BaseMenteViewModel<Mas
 
 	protected override string? ListOrder => "Category,Name";
 
+	protected override string? FormFile => "MasterConfigMente.qfm";
+
+	protected override QueryListSqlParam? PrintBySqlParam {
+		get {
+			var query = CreateListQueryParam();
+			var sql = @$"
+select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
+Category, Name, Val, Example, Memo
+from MasterConfig {query.AddWhereOrder()}
+";
+			return new QueryListSqlParam(typeof(MasterConfig), sql, query.Parameters);
+		}
+	}
+
 	[RelayCommand]
 	async Task Init() => await DoList(CancellationToken.None);
 

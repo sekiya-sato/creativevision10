@@ -1,3 +1,22 @@
+## [2026-07-10] 16:17 MasterConfigMenteView の印刷処理を追加
+### Agent
+- kimi-k2.6 : OpenCode : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._01Master.MasterConfigMenteView の印刷処理を追加する。
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterConfigMenteViewModel.cs: `FormFile` (`MasterConfigMente.qfm`) と `PrintBySqlParam` を追加。一覧SQL印刷で `CreateListQueryParam()` と `query.AddWhereOrder()` を使用し、検索条件・並び順を印刷に反映。
+- CvWpfclient/Views/01Master/MasterConfigMenteView.xaml: F6 キーバインド (`DoOutputPdfCommand`) とツールバー印刷ボタン (`Printer` アイコン) を追加。
+- printform/MasterConfigMente.qfm: 新規作成。8項目 (`Id`, `Vdcdate`, `Vdudate`, `Category`, `Name`, `Val`, `Example`, `Memo`) の一覧帳票。A4縦、Shift_JIS(cp932) 保存。
+### 技術決定 Why
+- 一覧SQL印刷 (`PrintBySqlParam`) を採用し、画面の検索条件・並び順をそのまま印刷に反映させるため。`MasterShainMenteViewModel` の既存パターンに準拠。
+### 確認
+- qfm 検証スクリプト (`validate_qfm.py`): `OK: printform/MasterConfigMente.qfm`。
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-10] 15:10 MainMenuView の実行導線と選択状態の改善
 ### Agent
 - GPT-5 : OpenAI : Codex
