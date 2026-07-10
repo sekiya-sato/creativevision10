@@ -46,7 +46,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 
 	partial void OnSelectedMenuChanged(MenuData? value) {
 		SelectedMenuParentHeader = FindParentHeader(MenuItems, value);
-		CanOpenSelectedMenu = value?.ViewType.IsSubclassOf(typeof(Window)) == true;
+		CanOpenSelectedMenu = value?.IsExecutable == true;
 	}
 
 	[ObservableProperty]

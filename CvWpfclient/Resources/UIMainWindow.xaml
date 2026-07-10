@@ -111,8 +111,8 @@
 				<ControlTemplate TargetType="TreeViewItem">
 					<StackPanel>
 						<Border x:Name="border"
-							Padding="2" Background="Transparent"
-							BorderBrush="Transparent" BorderThickness="1" CornerRadius="8">
+							Padding="2"
+							Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="8">
 							<Grid>
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="4" />
@@ -121,7 +121,8 @@
 								<Border x:Name="selectionAccent"
 									Background="{DynamicResource MenuTitleColor}"
 									CornerRadius="2" Visibility="Collapsed" />
-								<ContentPresenter Grid.Column="1" ContentSource="Header" />
+								<ContentPresenter Grid.Column="1"
+									ContentSource="Header" />
 							</Grid>
 						</Border>
 						<ItemsPresenter Margin="18,0,0,0" />
@@ -130,14 +131,28 @@
 						<Trigger Property="IsMouseOver" Value="True">
 							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuActionButtonHoverBackgroundBrush}" />
 						</Trigger>
-						<Trigger Property="IsKeyboardFocusWithin" Value="True">
-							<Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource MenuTitleColor}" />
-						</Trigger>
 						<Trigger Property="IsSelected" Value="True">
 							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuTreeItemSelectedBackgroundBrush}" />
 							<Setter TargetName="selectionAccent" Property="Visibility" Value="Visible" />
-							<Setter Property="FontWeight" Value="SemiBold" />
 						</Trigger>
+						<!--  実行可能な末端メニューだけ、ホバー背景を表示  -->
+						<MultiDataTrigger>
+							<MultiDataTrigger.Conditions>
+								<Condition Binding="{Binding IsExecutable}" Value="True" />
+								<Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+							</MultiDataTrigger.Conditions>
+							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuActionButtonHoverBackgroundBrush}" />
+						</MultiDataTrigger>
+						<!--  実行可能な末端メニューだけ、選択アクセントを表示  -->
+						<MultiDataTrigger>
+							<MultiDataTrigger.Conditions>
+								<Condition Binding="{Binding IsExecutable}" Value="True" />
+								<Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+							</MultiDataTrigger.Conditions>
+							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuTreeItemSelectedBackgroundBrush}" />
+							<Setter TargetName="selectionAccent" Property="Visibility" Value="Visible" />
+							<Setter Property="FontWeight" Value="SemiBold" />
+						</MultiDataTrigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
 			</Setter.Value>

@@ -19,6 +19,8 @@ public partial class MenuData : ObservableObject {
 
 	/* --- after this line, only use for ViewModel --- */
 	public Type ViewType { get; set; } = typeof(object);
+
+	public bool IsExecutable => ViewType.IsSubclassOf(typeof(System.Windows.Window));
 	public bool IsDialog { get; set; } = true;
 	public int InitParam { get; set; }
 

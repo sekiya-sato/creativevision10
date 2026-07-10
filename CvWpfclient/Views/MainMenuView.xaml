@@ -281,6 +281,7 @@
 									<TextBlock Margin="10,0,10,0"
 										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
+										Opacity="0.7"
 										Text="{Binding ServerStatus}"
 										TextWrapping="Wrap">
 										<TextBlock.ToolTip>
@@ -307,6 +308,7 @@
 									<TextBlock Margin="10,0,10,0"
 										FontSize="14"
 										Foreground="{DynamicResource plainTextColor0}"
+										Opacity="0.7"
 										Text="{Binding ClientStatus}"
 										TextWrapping="Wrap">
 										<TextBlock.ToolTip>
@@ -368,8 +370,7 @@
 										</Style>
 									</TextBlock.Style>
 								</TextBlock>
-								<Button Margin="0,10,0,0"
-									HorizontalAlignment="Right"
+								<Button Margin="0,10,0,0" HorizontalAlignment="Right"
 									Command="{Binding DoMenuCommand}"
 									Content="開く (Enter)"
 									Style="{StaticResource MainMenuOpenSelectedActionButton}" />
