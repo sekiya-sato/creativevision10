@@ -34,7 +34,7 @@ select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
 Code, Name, Ryaku, Kana, Rank,
 trim(ifnull(json_extract(VTenpo,'$.Cd'),'') || ' ' || ifnull(json_extract(VTenpo,'$.Mei'),'')) Tenpo,
 Birthday, BirthNoyear, Memo,
-case Gendar when 1 then '男性' when 2 then '女性' else '不明' end GendarText,
+case Gender when 1 then '男性' when 2 then '女性' else '不明' end GenderText,
 Point, SalesCount, SalesKingaku,
 PostalCode, Address1, Address2, Address3, Tel, Mail
 from MasterEndCustomer {query.AddWhereOrder()}
