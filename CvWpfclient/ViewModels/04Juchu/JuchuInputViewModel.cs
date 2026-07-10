@@ -144,7 +144,7 @@ public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran12Jyuchu.Tax) or nameof(Tran12Jyuchu.Kubun)) {
+		if (e.PropertyName is nameof(Tran12Jyuchu.Tax) or nameof(Tran12Jyuchu.Kubun) or nameof(Tran12Jyuchu.Rate)) {
 			UpdateHeaderTotals();
 		}
 	}
@@ -192,7 +192,16 @@ public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 
 	void UpdateHeaderTotals() {
 		CurrentEdit.CalcFlag = CurrentEdit.EnKubun is EnumUri01.Uriage or EnumUri01.UriSale ? 1 : -1;
-		CurrentEdit.Total = CurrentEdit.KingakuTotal + CurrentEdit.Tax;
+		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
+		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
+		CurrentEdit.Tax = tax;
+		CurrentEdit.Total = absKingakuTotal + tax;
+	}
+
+	async Task LoadTaxRateAsync() {
+		var rate = await AppGlobal.LogicGetTax(1, Current.DenDay);
+		CurrentEdit.Rate = rate;
+		UpdateHeaderTotals();
 	}
 
 	protected override object CreateInsertParam() {
@@ -215,6 +224,9 @@ public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 				CalcFlag = 1,
 				Jmeisai = [],
 			};
+		}
+		if (Current.Rate == 0) {
+			_ = LoadTaxRateAsync();
 		}
 		SelectedTabIndex = 1;
 	}

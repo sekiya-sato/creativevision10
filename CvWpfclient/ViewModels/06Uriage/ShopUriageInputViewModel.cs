@@ -142,10 +142,33 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	}
 
 	protected override void OnCurrentEditChangedCore(Tran01Tenuri? oldValue, Tran01Tenuri newValue) {
+		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
 		if (newValue == null) return;
+		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
 		bool headerIsSale = IsHeaderSaleKubun(newValue.Kubun);
 		newValue.Kubun = NormalizeHeaderKubun(newValue.Kubun);
 		ApplyMeisaiFromCurrentEdit(headerIsSale);
+		UpdateHeaderTotals();
+	}
+
+	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
+		if (e.PropertyName is nameof(Tran01Tenuri.Tax) or nameof(Tran01Tenuri.Kubun) or nameof(Tran01Tenuri.Rate)) {
+			UpdateHeaderTotals();
+		}
+	}
+
+	void UpdateHeaderTotals() {
+		CurrentEdit.CalcFlag = CurrentEdit.EnKubun is EnumUri01.Uriage or EnumUri01.UriSale ? 1 : -1;
+		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
+		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
+		CurrentEdit.Tax = tax;
+		CurrentEdit.Total = absKingakuTotal + tax;
+	}
+
+	async Task LoadTaxRateAsync() {
+		var rate = await AppGlobal.LogicGetTax(1, Current.DenDay);
+		CurrentEdit.Rate = rate;
+		UpdateHeaderTotals();
 	}
 
 	static bool IsHeaderSaleKubun(int kubun) =>
@@ -220,6 +243,9 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 				Kubun = (int)EnumUri01.Uriage,
 				Jmeisai = [],
 			};
+		}
+		if (Current.Rate == 0) {
+			_ = LoadTaxRateAsync();
 		}
 		SelectedTabIndex = 1;
 	}

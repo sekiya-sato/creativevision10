@@ -136,8 +136,35 @@ public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteVie
 	}
 
 	protected override void OnCurrentEditChangedCore(Tran00Uriage? oldValue, Tran00Uriage newValue) {
+		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
 		if (newValue == null) return;
+		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
 		ApplyMeisaiFromCurrentEdit();
+		if (newValue.Id <= 0 && newValue.Rate == 0) {
+			_ = LoadTaxRateAsync();
+		} else {
+			UpdateHeaderTotals();
+		}
+	}
+
+	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
+		if (e.PropertyName is nameof(Tran00Uriage.Tax) or nameof(Tran00Uriage.Kubun) or nameof(Tran00Uriage.Rate)) {
+			UpdateHeaderTotals();
+		}
+	}
+
+	void UpdateHeaderTotals() {
+		CurrentEdit.CalcFlag = CurrentEdit.EnKubun is EnumUri00.Uriage or EnumUri00.UriSale ? 1 : -1;
+		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
+		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
+		CurrentEdit.Tax = tax;
+		CurrentEdit.Total = absKingakuTotal + tax;
+	}
+
+	async Task LoadTaxRateAsync() {
+		var rate = await AppGlobal.LogicGetTax(1, Current.DenDay);
+		CurrentEdit.Rate = rate;
+		UpdateHeaderTotals();
 	}
 
 	void ApplyMeisaiFromCurrentEdit() {
