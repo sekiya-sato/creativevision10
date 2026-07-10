@@ -368,6 +368,11 @@
 										</Style>
 									</TextBlock.Style>
 								</TextBlock>
+								<Button Margin="0,10,0,0"
+									HorizontalAlignment="Right"
+									Command="{Binding DoMenuCommand}"
+									Content="開く (Enter)"
+									Style="{StaticResource MainMenuOpenSelectedActionButton}" />
 							</StackPanel>
 						</Border>
 						<!--    -->

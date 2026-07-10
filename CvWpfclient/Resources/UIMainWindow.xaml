@@ -101,6 +101,7 @@
 
 	<Style x:Key="MenuTreeItemStyle"
 		TargetType="TreeViewItem">
+		<Setter Property="AutomationProperties.Name" Value="{Binding Header}" />
 		<Setter Property="Foreground" Value="{DynamicResource plainTextColor0}" />
 		<Setter Property="FontSize" Value="15" />
 		<Setter Property="Padding" Value="2" />
@@ -110,15 +111,32 @@
 				<ControlTemplate TargetType="TreeViewItem">
 					<StackPanel>
 						<Border x:Name="border"
-							Padding="2"
-							Background="Transparent" CornerRadius="8">
-							<ContentPresenter ContentSource="Header" />
+							Padding="2" Background="Transparent"
+							BorderBrush="Transparent" BorderThickness="1" CornerRadius="8">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="4" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<Border x:Name="selectionAccent"
+									Background="{DynamicResource MenuTitleColor}"
+									CornerRadius="2" Visibility="Collapsed" />
+								<ContentPresenter Grid.Column="1" ContentSource="Header" />
+							</Grid>
 						</Border>
 						<ItemsPresenter Margin="18,0,0,0" />
 					</StackPanel>
 					<ControlTemplate.Triggers>
+						<Trigger Property="IsMouseOver" Value="True">
+							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuActionButtonHoverBackgroundBrush}" />
+						</Trigger>
+						<Trigger Property="IsKeyboardFocusWithin" Value="True">
+							<Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource MenuTitleColor}" />
+						</Trigger>
 						<Trigger Property="IsSelected" Value="True">
 							<Setter TargetName="border" Property="Background" Value="{DynamicResource MainMenuTreeItemSelectedBackgroundBrush}" />
+							<Setter TargetName="selectionAccent" Property="Visibility" Value="Visible" />
+							<Setter Property="FontWeight" Value="SemiBold" />
 						</Trigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
@@ -168,5 +186,19 @@
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
+	</Style>
+	<Style x:Key="MainMenuOpenSelectedActionButton"
+		BasedOn="{StaticResource MainMenuActionButton}"
+		TargetType="Button">
+		<Setter Property="MinWidth" Value="128" />
+		<Setter Property="Background" Value="{DynamicResource PrimaryButtonColor}" />
+		<Setter Property="Opacity" Value="0.9" />
+		<Setter Property="AutomationProperties.Name" Value="選択中のメニューを開く" />
+		<Style.Triggers>
+			<Trigger Property="IsEnabled" Value="False">
+				<Setter Property="Cursor" Value="Arrow" />
+				<Setter Property="Opacity" Value="0.45" />
+			</Trigger>
+		</Style.Triggers>
 	</Style>
 </ResourceDictionary>

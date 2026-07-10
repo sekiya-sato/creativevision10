@@ -1,3 +1,22 @@
+## [2026-07-10] 15:10 MainMenuView の実行導線と選択状態の改善
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuView で、選択したメニューを明確にして実行しやすくする。
+### 実施内容
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: 選択中メニューが実行可能かを判定する `CanOpenSelectedMenu` を追加し、`DoMenuCommand` の CanExecute と連動。
+- CvWpfclient/Resources/UIMainWindow.xaml: ツリー項目の選択アクセント、キーボードフォーカス表示、アクセシビリティ名、選択メニュー実行ボタン用スタイルを追加。
+- CvWpfclient/Views/MainMenuView.xaml: 選択中メニューの説明カードに「開く (Enter)」ボタンを追加。
+### 技術決定 Why
+- 既存の `DoMenuCommand` を単一の実行経路として維持し、親カテゴリなど実行不能な項目は CanExecute により明示的に無効化するため。
+### 確認
+- XAML XML構文確認、リソース参照確認、CRLF不正 0 件、`git diff --check` 成功。
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-10] 13:45 MVVMTK0042 ワーニング対応
 ### Agent
 - GPT-5 : OpenAI : Codex

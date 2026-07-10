@@ -38,10 +38,15 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	public partial MenuData? SelectedMenu { get; set; }
 
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(DoMenuCommand))]
+	public partial bool CanOpenSelectedMenu { get; set; }
+
+	[ObservableProperty]
 	public partial string? SelectedMenuParentHeader { get; set; }
 
 	partial void OnSelectedMenuChanged(MenuData? value) {
 		SelectedMenuParentHeader = FindParentHeader(MenuItems, value);
+		CanOpenSelectedMenu = value?.ViewType.IsSubclassOf(typeof(Window)) == true;
 	}
 
 	[ObservableProperty]
@@ -298,7 +303,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		}
 
 	}
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanOpenSelectedMenu))]
 	async private Task DoMenu() {
 		if (SelectedMenu?.ViewType == null) return;
 		if (!SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
