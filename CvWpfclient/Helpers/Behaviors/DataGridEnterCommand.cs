@@ -1,3 +1,10 @@
+/*
+# description
+DataGridEnterCommand は DataGrid で Enter キーを押したとき、指定した ButtonBase を実行する添付プロパティです。
+
+# example
+<DataGrid helpers:DataGridEnterCommand.TargetButton="{Binding ElementName=SearchButton}" />
+ */
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;

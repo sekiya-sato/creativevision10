@@ -1,3 +1,10 @@
+/*
+# description
+ClientLib は ViewModel からアクティブな Window の終了、ダイアログ表示、DataGrid 設定、カーソル状態、および URL 起動を行う共通ユーティリティです。
+
+# example
+ClientLib.Exit(this);
+ */
 using System.Diagnostics;
 using System.Windows;
 

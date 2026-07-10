@@ -1,3 +1,10 @@
+/*
+# description
+EnumShimeDisplayConverter は締日を表す EnumShime または数値を、画面表示用の括弧付き文字列へ変換する IValueConverter です。
+
+# example
+<TextBlock Text="{Binding Shime, Converter={StaticResource EnumShimeDisplayConverter}}" />
+ */
 using CvBase.Share;
 using System.Globalization;
 using System.Windows.Data;

@@ -1,3 +1,10 @@
+/*
+# description
+PostalAddressSearchHelper は郵便番号検索サービスを呼び出し、選択した住所を ViewModel の住所項目へ反映する処理を共通化します。
+
+# example
+await PostalAddressSearchHelper.SearchAndApplyAsync(this, PostalCode, item => Address1 = item.Address1);
+ */
 using CodeShare;
 using CvWpfclient.ViewModels.Sub;
 using CvWpfclient.Views.Sub;

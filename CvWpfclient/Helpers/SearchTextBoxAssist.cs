@@ -1,3 +1,10 @@
+/*
+# description
+SearchTextBoxAssist は SearchTextBox 風 TextBox テンプレートへ検索コマンドとボタン背景色を設定する添付プロパティです。
+
+# example
+<TextBox helpers:SearchTextBoxAssist.Command="{Binding SearchCommand}" />
+ */
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;

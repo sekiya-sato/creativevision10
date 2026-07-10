@@ -1,3 +1,10 @@
+/*
+# description
+PasswordBoxAssistant は通常 Binding できない PasswordBox.Password を双方向データバインディングする添付プロパティです。
+
+# example
+<PasswordBox helpers:PasswordBoxAssistant.BindPassword="True" helpers:PasswordBoxAssistant.BoundPassword="{Binding Password, Mode=TwoWay}" />
+ */
 using System.Windows;
 using System.Windows.Controls;
 

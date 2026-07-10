@@ -1,3 +1,10 @@
+/*
+# description
+EnumUri01DisplayConverter は売上区分 EnumUri01 を「売上」などの画面表示名へ変換する IValueConverter です。
+
+# example
+<TextBlock Text="{Binding UriKubun, Converter={StaticResource EnumUri01DisplayConverter}}" />
+ */
 using CvBase;
 using System.Globalization;
 using System.Windows.Data;

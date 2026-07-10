@@ -8,6 +8,13 @@
  *	ShowInformationDialog / ShowQuestionDialog / ShowWarningDialog / ShowErrorDialog
  *	class名,Font,mergin調整、ownerの扱い等を修正
 */
+/*
+# description
+MessageBoxView と MessageEx は、所有者 Window・ボタン種別・表示色を指定できるアプリケーション用メッセージボックスを提供します。
+
+# example
+MessageEx.ShowInformation("保存しました。", owner: this);
+ */
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;

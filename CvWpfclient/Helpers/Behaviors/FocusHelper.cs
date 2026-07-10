@@ -1,18 +1,13 @@
 /*
-# file name
-FocusHelper.cs
-
 # description
 FocusHelper は添付プロパティ IsEnterToNext を持ち、Enter キー押下時に次のフォーカス可能要素へ移動します。
 TextBox.AcceptsReturn が true の場合は改行入力を優先し、フォーカス移動しません。
 PreviewKeyDown を使うことでトンネリングで捕捉し、IsDefault ボタンが反応するのを抑止します。
 
 # example
-ViewModel側:
-    <TextBox
-        Foreground="{DynamicResource MaterialDesignBody}"
-        helpers:FocusHelper.IsEnterToNext="True"
-        Text="{Binding Name}" />
+<TextBox
+    helpers:FocusHelper.IsEnterToNext="True"
+    Text="{Binding Name}" />
  */
 using System.Windows;
 using System.Windows.Controls;

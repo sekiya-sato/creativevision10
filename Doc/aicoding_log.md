@@ -1,3 +1,20 @@
+## [2026-07-10] 10:00 Helpers コメント形式の統一
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclient の Helpers 配下にある全 C# ファイルへ # description と # example を付与し、# file name を削除する。
+### 実施内容
+- CvWpfclient/Helpers/**/*.cs: 29 ファイルの先頭コメントを # description と # example で統一し、既存の # file name 見出しを削除。
+### 技術決定 Why
+- 各ヘルパーの用途と呼び出し例をファイル先頭に置き、ファイル名の重複記載をなくしてコメントを簡潔にした。
+### 確認
+- `git diff --check`、全 29 ファイルの CRLF、# description/# example 各 29 件を確認。
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-10] 09:25 ShopHaibunInputView の作成 (View, ViewModel)
 ### Agent
 - Claude Opus 4.8 : Anthropic : ClaudeCode

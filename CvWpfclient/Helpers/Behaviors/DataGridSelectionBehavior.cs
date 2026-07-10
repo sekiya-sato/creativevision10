@@ -1,3 +1,10 @@
+/*
+# description
+DataGridSelectionBehavior は選択行への自動スクロール、選択通知受信時のフォーカス、および識別子による行選択を行う添付プロパティ群です。
+
+# example
+<DataGrid helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" />
+ */
 using CommunityToolkit.Mvvm.Messaging;
 using CvBase;
 using Microsoft.Extensions.Logging;

@@ -1,3 +1,10 @@
+/*
+# description
+BaseLightMenteViewModel は詳細データの非同期読み込みとキャッシュを備えた軽量なマスタ保守画面用 ViewModel 基底クラス群です。
+
+# example
+public partial class SampleMenteViewModel : BaseLightMenteViewModel<SampleEntity> { }
+ */
 using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CvAsset;

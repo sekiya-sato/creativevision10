@@ -1,3 +1,10 @@
+/*
+# description
+MultiplyValuesConverter は複数の数値を乗算し、MultiBinding の表示値として返す IMultiValueConverter です。
+
+# example
+<TextBlock><TextBlock.Text><MultiBinding Converter="{StaticResource MultiplyValuesConverter}"><Binding Path="Quantity" /><Binding Path="Price" /></MultiBinding></TextBlock.Text></TextBlock>
+ */
 using System.Globalization;
 using System.Windows.Data;
 

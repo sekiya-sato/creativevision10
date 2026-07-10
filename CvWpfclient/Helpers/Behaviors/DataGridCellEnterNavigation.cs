@@ -1,7 +1,4 @@
 /*
-# file name
-DataGridCellEnterNavigation.cs
-
 # description
 DataGridCellEnterNavigation は DataGrid に適用する添付プロパティ Behavior です。
 明細行で Enter キー押下時に現在のセル編集をコミットし、次の編集可能セル（DataGridTextColumn かつ IsReadOnly == false）へフォーカスを移動します。

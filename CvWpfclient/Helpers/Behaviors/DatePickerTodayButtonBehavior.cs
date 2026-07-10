@@ -1,3 +1,10 @@
+/*
+# description
+DatePickerTodayButtonBehavior は DatePicker のカレンダーポップアップへ「今日」ボタンを追加する添付プロパティ Behavior です。
+
+# example
+<DatePicker helpers:DatePickerTodayButtonBehavior.IsEnabled="True" />
+ */
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;

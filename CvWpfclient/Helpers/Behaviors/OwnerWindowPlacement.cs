@@ -1,3 +1,10 @@
+/*
+# description
+OwnerWindowPlacement は子 Window を所有者 Window の位置に合わせ、任意のオフセットで表示する添付プロパティです。
+
+# example
+<Window helpers:OwnerWindowPlacement.IsEnabled="True" helpers:OwnerWindowPlacement.TopOffset="24" />
+ */
 using System.Windows;
 
 namespace CvWpfclient.Helpers;

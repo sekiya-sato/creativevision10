@@ -1,3 +1,10 @@
+/*
+# description
+BaseMenteViewModel は検索・編集・登録・削除・印刷など、マスタ保守画面に共通する状態とコマンドを提供する ViewModel 基底クラスです。
+
+# example
+public partial class SampleMenteViewModel : BaseMenteViewModel<SampleEntity> { }
+ */
 using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

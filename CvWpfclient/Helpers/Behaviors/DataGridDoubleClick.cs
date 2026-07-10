@@ -1,18 +1,12 @@
 /*
-# file name
-CommandActionDataGridDoubleClick.cs
-
 # description
 DataGridのダブルクリック時に、選択中の行を引数としてICommandを実行するための添付プロパティ
 
 # example
-Veiw側:
 <DataGrid
     ItemsSource="{Binding Items}"
     SelectedItem="{Binding SelectedItem}"
     helpers:DataGridDoubleClick.Command="{Binding OpenItemCommand}" />
-ViewModel側:
- public ICommand OpenItemCommand  = new RelayCommand<Item>(item => MessageBox.Show(item.Name) );
 */
 
 using System.Windows;
