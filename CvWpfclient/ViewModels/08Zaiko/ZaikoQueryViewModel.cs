@@ -18,64 +18,64 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 	readonly ZaikoQuerySearchTab searchTab;
 
 	[ObservableProperty]
-	ObservableCollection<ZaikoQueryTabBase> tabs = [];
+	public partial ObservableCollection<ZaikoQueryTabBase> Tabs { get; set; } = [];
 
 	[ObservableProperty]
-	ZaikoQueryTabBase? selectedTab;
+	public partial ZaikoQueryTabBase? SelectedTab { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<ZaikoQueryShohinRow> productRows = [];
+	public partial ObservableCollection<ZaikoQueryShohinRow> ProductRows { get; set; } = [];
 
 	[ObservableProperty]
-	ZaikoQueryShohinRow? selectedProduct;
+	public partial ZaikoQueryShohinRow? SelectedProduct { get; set; }
 
 	[ObservableProperty]
-	int productCount;
+	public partial int ProductCount { get; set; }
 
 	[ObservableProperty]
-	string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isBusy;
+	public partial bool IsBusy { get; set; }
 
 	[ObservableProperty]
-	string shohinCodeFrom = string.Empty;
+	public partial string ShohinCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string shohinCodeTo = string.Empty;
+	public partial string ShohinCodeTo { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string colCodeFrom = string.Empty;
+	public partial string ColCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string colCodeTo = string.Empty;
+	public partial string ColCodeTo { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string shohinName = string.Empty;
+	public partial string ShohinName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string sokoCodeFrom = string.Empty;
+	public partial string SokoCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string sokoCodeTo = string.Empty;
+	public partial string SokoCodeTo { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string brandCodeFrom = string.Empty;
+	public partial string BrandCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string brandCodeTo = string.Empty;
+	public partial string BrandCodeTo { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string itemCodeFrom = string.Empty;
+	public partial string ItemCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string itemCodeTo = string.Empty;
+	public partial string ItemCodeTo { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string maxCountText = "500";
+	public partial string MaxCountText { get; set; } = "500";
 
 	[ObservableProperty]
-	bool includeZeroStock = true;
+	public partial bool IncludeZeroStock { get; set; } = true;
 
 	public ZaikoQueryViewModel() {
 		searchTab = new ZaikoQuerySearchTab(this);
@@ -601,10 +601,10 @@ public sealed partial class ZaikoQueryStockTab : ZaikoQueryTabBase {
 	public string ProductName { get; }
 
 	[ObservableProperty]
-	DataTable stockTable;
+	public partial DataTable StockTable { get; set; }
 
 	[ObservableProperty]
-	string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	public ZaikoQueryStockTab(ZaikoQueryShohinRow product, DataTable stockTable)
 		: base($"{product.Code} {product.Name}") {
@@ -628,10 +628,10 @@ public sealed partial class ZaikoQueryShohinRow(MasterShohin shohin) : Observabl
 	public string SeasonDisplay => FormatCodeName(Shohin.VSeason);
 
 	[ObservableProperty]
-	int stockSu;
+	public partial int StockSu { get; set; }
 
 	[ObservableProperty]
-	int transitQty;
+	public partial int TransitQty { get; set; }
 
 	static string FormatCodeName(CodeNameView? value) {
 		if (value == null) return string.Empty;

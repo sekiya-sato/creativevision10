@@ -11,19 +11,19 @@ namespace CvWpfclient.ViewModels._00System;
 
 public partial class ConvertSelectedViewModel : BaseViewModel {
 	[ObservableProperty]
-	private bool isInitDb;
+	public partial bool IsInitDb { get; set; }
 
 	[ObservableProperty]
-	private bool isRunning;
+	public partial bool IsRunning { get; set; }
 
 	[ObservableProperty]
-	private int progressValue;
+	public partial int ProgressValue { get; set; }
 
 	[ObservableProperty]
-	private ObservableCollection<ConvertTaskItem> tasks = [];
+	public partial ObservableCollection<ConvertTaskItem> Tasks { get; set; } = [];
 
 	[ObservableProperty]
-	private ObservableCollection<string> streamMessages = [];
+	public partial ObservableCollection<string> StreamMessages { get; set; } = [];
 
 	[RelayCommand]
 	private async Task InitAsync(CancellationToken cancellationToken) {
@@ -118,7 +118,7 @@ public partial class ConvertSelectedViewModel : BaseViewModel {
 
 public partial class ConvertTaskItem : ObservableObject {
 	[ObservableProperty]
-	private bool isSelected;
+	public partial bool IsSelected { get; set; }
 
 	public string Name { get; }
 

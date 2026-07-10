@@ -7,7 +7,7 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterConfigMenteViewModel : Helpers.BaseMenteViewModel<MasterConfig> {
 	[ObservableProperty]
-	string title = "設定フラグマスタメンテ";
+	public partial string Title { get; set; } = "設定フラグマスタメンテ";
 
 	protected override string? ListOrder => "Category,Name";
 

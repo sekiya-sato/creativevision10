@@ -15,7 +15,7 @@ namespace CvWpfclient.ViewModels._01Master;
 /// </summary>
 public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterTokui> {
 	[ObservableProperty]
-	string title = "得意先マスターメンテ";
+	public partial string Title { get; set; } = "得意先マスターメンテ";
 
 	protected override string[] AdditionalLightweightColumns => ["TenType"];
 
@@ -31,10 +31,10 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 	];
 
 	[ObservableProperty]
-	MasterGeneralMeisho? selectedJsub;
+	public partial MasterGeneralMeisho? SelectedJsub { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<MasterGeneralMeisho> editJsub = [];
+	public partial ObservableCollection<MasterGeneralMeisho> EditJsub { get; set; } = [];
 
 	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"C{i:D2}"));
 	public List<MasterMeisho> KubunList = [];

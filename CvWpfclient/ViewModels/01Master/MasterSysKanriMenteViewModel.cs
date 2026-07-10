@@ -14,10 +14,10 @@ namespace CvWpfclient.ViewModels._01Master;
 public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<MasterSysman> {
 
 	[ObservableProperty]
-	string title = "システム管理マスターメンテ画面";
+	public partial string Title { get; set; } = "システム管理マスターメンテ画面";
 
 	[ObservableProperty]
-	string? desc0;
+	public partial string? Desc0 { get; set; }
 
 	// MasterSysman は単一レコードのため、ListOrderは不要だが、初期値がCodeのため上書きする必要がある
 	protected override string? ListOrder => "Id";

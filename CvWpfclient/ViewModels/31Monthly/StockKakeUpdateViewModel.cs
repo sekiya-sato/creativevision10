@@ -12,19 +12,19 @@ namespace CvWpfclient.ViewModels._31Monthly;
 
 public partial class StockKakeUpdateViewModel : BaseViewModel {
 	[ObservableProperty]
-	private string yearMonthFrom = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+	public partial string YearMonthFrom { get; set; } = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
-	private string yearMonthTo = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+	public partial string YearMonthTo { get; set; } = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
-	private string statusMessage = "年月を yyyy/MM 形式で入力し、実行を押してください。";
+	public partial string StatusMessage { get; set; } = "年月を yyyy/MM 形式で入力し、実行を押してください。";
 
 	[ObservableProperty]
-	private bool isProcessing;
+	public partial bool IsProcessing { get; set; }
 
 	[ObservableProperty]
-	private int progressValue;
+	public partial int ProgressValue { get; set; }
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task ExecuteAsync(CancellationToken cancellationToken) {

@@ -14,13 +14,13 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 	long selectedShohinIdAfterList;
 
 	[ObservableProperty]
-	string title = "商品マスターメンテ";
+	public partial string Title { get; set; } = "商品マスターメンテ";
 
 	[ObservableProperty]
-	Uri? shohinImageUri;
+	public partial Uri? ShohinImageUri { get; set; }
 
 	[ObservableProperty]
-	string shohinImageStatusText = "画像なし";
+	public partial string ShohinImageStatusText { get; set; } = "画像なし";
 
 	protected override string[] AdditionalLightweightColumns => ["VBrand"];
 	protected override string? SelectCodeDisplayName => "商品";
@@ -125,31 +125,31 @@ from MasterShohin {query.AddWhereOrder()}
 	}
 
 	[ObservableProperty]
-	MasterShohinColSiz? selectedJcolsiz;
+	public partial MasterShohinColSiz? SelectedJcolsiz { get; set; }
 
 	[ObservableProperty]
-	MasterShohinGenka? selectedJgenka;
+	public partial MasterShohinGenka? SelectedJgenka { get; set; }
 
 	[ObservableProperty]
-	MasterShohinGrade? selectedJgrade;
+	public partial MasterShohinGrade? SelectedJgrade { get; set; }
 
 	[ObservableProperty]
-	MasterGeneralMeisho? selectedJsub;
+	public partial MasterGeneralMeisho? SelectedJsub { get; set; }
 
 	[ObservableProperty]
-	int interactionTriggersCount;
+	public partial int InteractionTriggersCount { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<MasterShohinGenka> editJgenka = [];
+	public partial ObservableCollection<MasterShohinGenka> EditJgenka { get; set; } = [];
 
 	[ObservableProperty]
-	ObservableCollection<MasterShohinColSiz> editJcolsiz = [];
+	public partial ObservableCollection<MasterShohinColSiz> EditJcolsiz { get; set; } = [];
 
 	[ObservableProperty]
-	ObservableCollection<MasterShohinGrade> editJgrade = [];
+	public partial ObservableCollection<MasterShohinGrade> EditJgrade { get; set; } = [];
 
 	[ObservableProperty]
-	ObservableCollection<MasterGeneralMeisho> editJsub = [];
+	public partial ObservableCollection<MasterGeneralMeisho> EditJsub { get; set; } = [];
 
 	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"B{i:D2}"));
 	public List<MasterMeisho> KubunList = [];

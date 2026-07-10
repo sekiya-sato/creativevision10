@@ -8,7 +8,7 @@ namespace CvWpfclient.ViewModels.Sub;
 public partial class RangeParamMiniViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
-	SelectParameter parameter = new();
+	public partial SelectParameter Parameter { get; set; } = new();
 
 	/// <summary>表示前に呼び出す初期化メソッド</summary>
 	public void Initialize(SelectParameter? param) {

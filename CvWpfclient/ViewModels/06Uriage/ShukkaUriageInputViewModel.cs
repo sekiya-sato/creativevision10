@@ -20,13 +20,13 @@ public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteVie
 	[NotifyCanExecuteChangedFor(nameof(DoUpdateOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoDeleteOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoInsertOnDetailTabCommand))]
-	int selectedTabIndex;
+	public partial int SelectedTabIndex { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<Tran99Meisai> editMeisai = [];
+	public partial ObservableCollection<Tran99Meisai> EditMeisai { get; set; } = [];
 
 	[ObservableProperty]
-	Tran99Meisai? selectedMeisai;
+	public partial Tran99Meisai? SelectedMeisai { get; set; }
 
 	SelectInputParameter? selectParam;
 

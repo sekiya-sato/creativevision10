@@ -11,7 +11,7 @@ namespace CvWpfclient.ViewModels._02Yosan;
 
 public partial class MasterYosanBrandMenteViewModel : Helpers.BaseMenteViewModel<MasterYosanBrand> {
 	[ObservableProperty]
-	string title = "店ブランド予算マスタメンテ";
+	public partial string Title { get; set; } = "店ブランド予算マスタメンテ";
 
 	protected override string? ListOrder => "DenDay DESC, Id_Tenpo, Id_Brand";
 	protected override int? ListMaxCount => AppGlobal.Limit;

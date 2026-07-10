@@ -22,19 +22,19 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	SelectParameter? selectMiniParam;
 
 	[ObservableProperty]
-	string title = "汎用マスタメンテ";
+	public partial string Title { get; set; } = "汎用マスタメンテ";
 
 	[ObservableProperty]
-	string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	ObservableCollection<SysGeneralEditRow> rows = [];
+	public partial ObservableCollection<SysGeneralEditRow> Rows { get; set; } = [];
 
 	[ObservableProperty]
-	SysGeneralEditRow? selectedRow;
+	public partial SysGeneralEditRow? SelectedRow { get; set; }
 
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 
 	public bool HasSelection => SelectedRow != null;
 
@@ -403,13 +403,13 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 public partial class SysGeneralEditRow : ObservableObject {
 	[ObservableProperty]
-	string title = string.Empty;
+	public partial string Title { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isNew;
+	public partial bool IsNew { get; set; }
 
 	[ObservableProperty]
-	Type originalType = typeof(object);
+	public partial Type OriginalType { get; set; } = typeof(object);
 
 	public ObservableCollection<SysGeneralEditCell> Cells { get; } = [];
 
@@ -448,16 +448,16 @@ public partial class SysGeneralEditRow : ObservableObject {
 
 public partial class SysGeneralEditCell : ObservableObject {
 	[ObservableProperty]
-	string key = string.Empty;
+	public partial string Key { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string header = string.Empty;
+	public partial string Header { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string editText = string.Empty;
+	public partial string EditText { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isReadOnly;
+	public partial bool IsReadOnly { get; set; }
 
 	public Type ValueType { get; init; } = typeof(string);
 

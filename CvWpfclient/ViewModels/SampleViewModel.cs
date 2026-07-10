@@ -53,9 +53,9 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 
 	#region テストメッセージ 001, 002
 	[ObservableProperty]
-	string testMsg001Text = $"テストメッセージ {DateTime.Now}";
+	public partial string TestMsg001Text { get; set; } = $"テストメッセージ {DateTime.Now}";
 	[ObservableProperty]
-	string testMsg001Result = string.Empty;
+	public partial string TestMsg001Result { get; set; } = string.Empty;
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestMsg001(CancellationToken ct) {
@@ -68,7 +68,7 @@ public partial class SampleViewModel : Helpers.BaseViewModel {
 	}
 
 	[ObservableProperty]
-	string testMsg002Result = string.Empty;
+	public partial string TestMsg002Result { get; set; } = string.Empty;
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task TestMsg002(CancellationToken ct) {

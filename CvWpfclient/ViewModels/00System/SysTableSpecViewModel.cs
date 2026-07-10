@@ -17,22 +17,22 @@ namespace CvWpfclient.ViewModels._00System;
 public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTableRow> {
 
 	[ObservableProperty]
-	string title = "DB定義書出力";
+	public partial string Title { get; set; } = "DB定義書出力";
 
 	[ObservableProperty]
-	ObservableCollection<SysTableSpecTableRow> tableList = [];
+	public partial ObservableCollection<SysTableSpecTableRow> TableList { get; set; } = [];
 
 	[ObservableProperty]
-	List<long> selectedTableIds = [];
+	public partial List<long> SelectedTableIds { get; set; } = [];
 
 	[ObservableProperty]
-	string selectedTablesText = "未選択";
+	public partial string SelectedTablesText { get; set; } = "未選択";
 
 	[ObservableProperty]
-	int serverTableCount;
+	public partial int ServerTableCount { get; set; }
 
 	[ObservableProperty]
-	int selectedTableCount;
+	public partial int SelectedTableCount { get; set; }
 
 	protected override string? FormFile => "SysTableSpec.qfm";
 

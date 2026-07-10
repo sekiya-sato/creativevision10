@@ -14,16 +14,16 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 	private const string RefreshEmployeeInvalidMessage = "社員未設定または有効期限切れのためログインRefreshができませんでした。";
 	private readonly ILogger<LoginViewModel> _logger;
 	[ObservableProperty]
-	private string? loginId;
+	public partial string? LoginId { get; set; }
 
 	[ObservableProperty]
-	private string? loginPassword;
+	public partial string? LoginPassword { get; set; }
 
 	[ObservableProperty]
-	LoginReply? loginData;
+	public partial LoginReply? LoginData { get; set; }
 
 	[ObservableProperty]
-	bool isVisibleLoginTab = true; // true:ログインタブ、false:ログインリフレッシュのタブ
+	public partial bool IsVisibleLoginTab { get; set; } = true; // true:ログインタブ、false:ログインリフレッシュのタブ
 
 	public LoginViewModel() {
 		_logger = new NLogExtender<LoginViewModel>();

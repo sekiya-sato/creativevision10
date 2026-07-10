@@ -9,7 +9,7 @@ public partial class WebPdfViewModel : ObservableObject {
 	long reloadSequence;
 
 	[ObservableProperty]
-	string? pdfdata;
+	public partial string? Pdfdata { get; set; }
 
 	[RelayCommand]
 	void Reload() {

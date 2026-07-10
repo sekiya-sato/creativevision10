@@ -16,59 +16,59 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	int MaxCount = AppGlobal.Limit;
 
 	[ObservableProperty]
-	string title = "商品検索";
+	public partial string Title { get; set; } = "商品検索";
 
 	[ObservableProperty]
-	long? shohinIdFrom;
+	public partial long? ShohinIdFrom { get; set; }
 
 	[ObservableProperty]
-	long? shohinIdTo;
+	public partial long? ShohinIdTo { get; set; }
 
 	[ObservableProperty]
-	string shohinCodeFrom = string.Empty;
+	public partial string ShohinCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string shohinCodeTo = string.Empty;
+	public partial string ShohinCodeTo { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string shohinName = string.Empty;
+	public partial string ShohinName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	List<long> brandIds = [];
+	public partial List<long> BrandIds { get; set; } = [];
 
 	[ObservableProperty]
-	string brandIdsText = "未選択";
+	public partial string BrandIdsText { get; set; } = "未選択";
 
 	[ObservableProperty]
-	List<long> itemIds = [];
+	public partial List<long> ItemIds { get; set; } = [];
 
 	[ObservableProperty]
-	string itemIdsText = "未選択";
+	public partial string ItemIdsText { get; set; } = "未選択";
 
 	[ObservableProperty]
-	string jan = string.Empty;
+	public partial string Jan { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	ObservableCollection<SelectShohinRow> listData = [];
+	public partial ObservableCollection<SelectShohinRow> ListData { get; set; } = [];
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(DoSelectCommand))]
-	SelectShohinRow? current;
+	public partial SelectShohinRow? Current { get; set; }
 
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 
 	[ObservableProperty]
-	bool isSearchMode = true;
+	public partial bool IsSearchMode { get; set; } = true;
 
 	[ObservableProperty]
-	string searchActionText = "一覧表示";
+	public partial string SearchActionText { get; set; } = "一覧表示";
 
 	[ObservableProperty]
-	bool isConditionOnlyMode;
+	public partial bool IsConditionOnlyMode { get; set; }
 
 	[ObservableProperty]
-	string message = "条件を入力して一覧表示してください";
+	public partial string Message { get; set; } = "条件を入力して一覧表示してください";
 
 	public MasterShohin? SelectedShohin => Current?.Shohin;
 

@@ -20,7 +20,7 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 	bool suppressCurrentChanged;
 
 	[ObservableProperty]
-	bool isDetailLoading;
+	public partial bool IsDetailLoading { get; set; }
 
 	protected virtual int DetailLoadDebounceMilliseconds => 200;
 

@@ -17,7 +17,7 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 	private const int ExpectedFieldCount = 16;
 
 	[ObservableProperty]
-	private string inputDirectory = string.Empty;
+	public partial string InputDirectory { get; set; } = string.Empty;
 
 	[RelayCommand]
 	private void Init() {

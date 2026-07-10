@@ -15,7 +15,7 @@ namespace CvWpfclient.ViewModels._01Master;
 /// </summary>
 public partial class MasterShiireMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShiire> {
 	[ObservableProperty]
-	string title = "仕入先マスターメンテ";
+	public partial string Title { get; set; } = "仕入先マスターメンテ";
 
 	protected override string? SelectCodeDisplayName => "仕入先";
 	protected override string? FormFile => "MasterShiireMente.qfm";
@@ -29,10 +29,10 @@ public partial class MasterShiireMenteViewModel : Helpers.BaseCodeNameLightMente
 	];
 
 	[ObservableProperty]
-	MasterGeneralMeisho? selectedJsub;
+	public partial MasterGeneralMeisho? SelectedJsub { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<MasterGeneralMeisho> editJsub = [];
+	public partial ObservableCollection<MasterGeneralMeisho> EditJsub { get; set; } = [];
 
 	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"D{i:D2}"));
 	public List<MasterMeisho> KubunList = [];

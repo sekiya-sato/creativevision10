@@ -9,10 +9,10 @@ namespace CvWpfclient.ViewModels._00System;
 
 public partial class SysExecMiscViewModel : BaseViewModel {
 	[ObservableProperty]
-	private string resultMessage = string.Empty;
+	public partial string ResultMessage { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private bool isProcessing;
+	public partial bool IsProcessing { get; set; }
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	public async Task Test01(CancellationToken cancellationToken) {

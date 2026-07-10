@@ -14,25 +14,25 @@ namespace CvWpfclient.ViewModels._02Yosan;
 public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
-	string title = "店舗予算表";
+	public partial string Title { get; set; } = "店舗予算表";
 
 	[ObservableProperty]
-	DateTime selectedYearMonth = DateTime.Now;
+	public partial DateTime SelectedYearMonth { get; set; } = DateTime.Now;
 
 	[ObservableProperty]
-	string selectedYearMonthString = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+	public partial string SelectedYearMonthString { get; set; } = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
-	string shopCodeFrom = string.Empty;
+	public partial string ShopCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string shopCodeTo = string.Empty;
+	public partial string ShopCodeTo { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isByShop = true;
+	public partial bool IsByShop { get; set; } = true;
 
 	[ObservableProperty]
-	bool isDateComparison = true;
+	public partial bool IsDateComparison { get; set; } = true;
 
 	partial void OnSelectedYearMonthChanged(DateTime value) {
 		SelectedYearMonthString = value.ToString("yyyy/MM", CultureInfo.InvariantCulture);

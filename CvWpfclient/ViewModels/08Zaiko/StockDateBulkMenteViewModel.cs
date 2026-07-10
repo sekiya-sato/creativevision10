@@ -26,28 +26,28 @@ public partial class StockDateBulkMenteViewModel : Helpers.BaseViewModel {
 	];
 
 	[ObservableProperty]
-	ObservableCollection<StockDateBulkRow> listData = [];
+	public partial ObservableCollection<StockDateBulkRow> ListData { get; set; } = [];
 
 	[ObservableProperty]
-	StockDateBulkRow? current;
+	public partial StockDateBulkRow? Current { get; set; }
 
 	[ObservableProperty]
-	string selectedTokuiText = "未選択";
+	public partial string SelectedTokuiText { get; set; } = "未選択";
 
 	[ObservableProperty]
-	string bulkTanaDay = DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+	public partial string BulkTanaDay { get; set; } = DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
-	string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 
 	[ObservableProperty]
-	int targetCount;
+	public partial int TargetCount { get; set; }
 
 	[ObservableProperty]
-	bool isBusy;
+	public partial bool IsBusy { get; set; }
 
 	List<long> selectedTokuiIds = [];
 
@@ -377,14 +377,14 @@ public partial class StockDateBulkRow : ObservableObject {
 	public string FixDay { get; set; } = "19010101";
 
 	[ObservableProperty]
-	bool isTarget = true;
+	public partial bool IsTarget { get; set; } = true;
 
 	[ObservableProperty]
-	string tanaDay = "19010101";
+	public partial string TanaDay { get; set; } = "19010101";
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(AutoHojuText))]
-	int autoHoju;
+	public partial int AutoHoju { get; set; }
 
 	public string AutoHojuText => StockDateBulkMenteViewModel.FormatAutoHojuText(AutoHoju);
 

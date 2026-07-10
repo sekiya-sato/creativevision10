@@ -16,19 +16,19 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 	private readonly ISchedulerService _schedulerClient;
 
 	[ObservableProperty]
-	string title = "自動実行ジョブ管理";
+	public partial string Title { get; set; } = "自動実行ジョブ管理";
 
 	[ObservableProperty]
-	ObservableCollection<SchedulerTaskInfo> tasks = new();
+	public partial ObservableCollection<SchedulerTaskInfo> Tasks { get; set; } = new();
 
 	[ObservableProperty]
-	SchedulerTaskInfo? selectedTask;
+	public partial SchedulerTaskInfo? SelectedTask { get; set; }
 
 	[ObservableProperty]
-	string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isBusy;
+	public partial bool IsBusy { get; set; }
 
 	public SysSchedulerJobMenteViewModel() {
 		_schedulerChannel = CreateSchedulerChannel();

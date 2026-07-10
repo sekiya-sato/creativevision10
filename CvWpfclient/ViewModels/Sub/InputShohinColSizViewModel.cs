@@ -11,19 +11,19 @@ namespace CvWpfclient.ViewModels.Sub;
 
 public partial class InputShohinColSizViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	string title = "色サイズ一括数量入力";
+	public partial string Title { get; set; } = "色サイズ一括数量入力";
 
 	[ObservableProperty]
-	string searchCondition = string.Empty;
+	public partial string SearchCondition { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	ObservableCollection<InputShohinColSizRow> listData = [];
+	public partial ObservableCollection<InputShohinColSizRow> ListData { get; set; } = [];
 
 	[ObservableProperty]
-	InputShohinColSizRow? current;
+	public partial InputShohinColSizRow? Current { get; set; }
 
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 
 	long idShohin;
 
@@ -97,7 +97,7 @@ public partial class InputShohinColSizViewModel : Helpers.BaseViewModel {
 
 public partial class InputShohinColSizRow : ObservableObject {
 	[ObservableProperty]
-	int su;
+	public partial int Su { get; set; }
 
 	public DerivedShohinColSiz Source { get; set; } = null!;
 }

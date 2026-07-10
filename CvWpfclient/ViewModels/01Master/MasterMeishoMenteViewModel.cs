@@ -10,15 +10,15 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterMeishoMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterMeisho> {
 	[ObservableProperty]
-	string title = "名称マスターメンテ";
+	public partial string Title { get; set; } = "名称マスターメンテ";
 
 	protected override string[] AdditionalLightweightColumns => ["Kubun", "Odr", "KubunName"];
 
 	[ObservableProperty]
-	ObservableCollection<MasterMeisho> kubunList = new();
+	public partial ObservableCollection<MasterMeisho> KubunList { get; set; } = new();
 
 	[ObservableProperty]
-	MasterMeisho? selectedKubun;
+	public partial MasterMeisho? SelectedKubun { get; set; }
 
 	bool suppressSelectedKubunChanged;
 

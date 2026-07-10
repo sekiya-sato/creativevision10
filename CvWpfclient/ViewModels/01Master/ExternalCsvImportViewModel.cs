@@ -19,34 +19,34 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class ExternalCsvImportViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	private string filePath = string.Empty;
+	public partial string FilePath { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private string tableName = string.Empty;
+	public partial string TableName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private string modelName = string.Empty;
+	public partial string ModelName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private int dataRowCount;
+	public partial int DataRowCount { get; set; }
 
 	[ObservableProperty]
-	private int importableRowCount;
+	public partial int ImportableRowCount { get; set; }
 
 	[ObservableProperty]
-	private int errorCount;
+	public partial int ErrorCount { get; set; }
 
 	[ObservableProperty]
-	private string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private ObservableCollection<ExternalCsvPreviewRow> previewRows = [];
+	public partial ObservableCollection<ExternalCsvPreviewRow> PreviewRows { get; set; } = [];
 
 	[ObservableProperty]
-	private ObservableCollection<ExternalCsvImportErrorRow> errorRows = [];
+	public partial ObservableCollection<ExternalCsvImportErrorRow> ErrorRows { get; set; } = [];
 
 	[ObservableProperty]
-	private ExternalCsvImportErrorRow? selectedError;
+	public partial ExternalCsvImportErrorRow? SelectedError { get; set; }
 
 	private readonly Dictionary<string, Type> tableTypeMap = CreateTableTypeMap();
 	private readonly Dictionary<string, object?> masterCache = new(StringComparer.OrdinalIgnoreCase);

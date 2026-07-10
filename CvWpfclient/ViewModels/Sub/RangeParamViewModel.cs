@@ -19,7 +19,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 	string additionalIds2SelectOrder = "Code";
 
 	[ObservableProperty]
-	SelectParameter parameter = new();
+	public partial SelectParameter Parameter { get; set; } = new();
 
 	public bool IsAdditionalIds1Enabled => additionalIds1SelectType != null;
 	public bool IsAdditionalIds2Enabled => additionalIds2SelectType != null;

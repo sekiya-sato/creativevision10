@@ -13,7 +13,7 @@ public partial class TranShopPromotionMenteViewModel : Helpers.BaseMenteViewMode
 	public sealed record RankOption(int Value, string Name);
 
 	[ObservableProperty]
-	string title = "店舗イベントメンテ";
+	public partial string Title { get; set; } = "店舗イベントメンテ";
 
 	TranPromotionSearchParameter? selectParam;
 

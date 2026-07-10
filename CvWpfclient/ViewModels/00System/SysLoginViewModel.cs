@@ -11,7 +11,7 @@ namespace CvWpfclient.ViewModels._00System;
 
 internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<SysLogin> {
 	[ObservableProperty]
-	string title = "ログインマスターメンテ画面";
+	public partial string Title { get; set; } = "ログインマスターメンテ画面";
 
 	SelectParameter? selectMiniParam;
 
@@ -26,7 +26,7 @@ internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<
 	protected override int? ListMaxCount => selectMiniParam?.MaxCount;
 
 	[ObservableProperty]
-	string lastLoginDate = string.Empty;
+	public partial string LastLoginDate { get; set; } = string.Empty;
 
 	[RelayCommand]
 	public async Task Init() {

@@ -8,7 +8,7 @@ namespace CvWpfclient.ViewModels.Sub;
 
 public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranAllHeader> {
 	[ObservableProperty]
-	SelectInputParameter parameter = new();
+	public partial SelectInputParameter Parameter { get; set; } = new();
 
 	public void Initialize(SelectInputParameter? param) {
 		Parameter = param ?? new SelectInputParameter();

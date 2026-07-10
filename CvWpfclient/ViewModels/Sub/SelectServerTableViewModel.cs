@@ -9,22 +9,22 @@ namespace CvWpfclient.ViewModels.Sub;
 
 public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	string title = "サーバーテーブル選択";
+	public partial string Title { get; set; } = "サーバーテーブル選択";
 
 	[ObservableProperty]
-	ObservableCollection<ServerTableCountRow> listData = [];
+	public partial ObservableCollection<ServerTableCountRow> ListData { get; set; } = [];
 
 	[ObservableProperty]
-	ServerTableCountRow? current;
+	public partial ServerTableCountRow? Current { get; set; }
 
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 
 	[ObservableProperty]
-	string selectedTableName = string.Empty;
+	public partial string SelectedTableName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	int selectedRowCount = AppGlobal.Limit;
+	public partial int SelectedRowCount { get; set; } = AppGlobal.Limit;
 
 	partial void OnCurrentChanged(ServerTableCountRow? value) {
 		SelectedTableName = value?.TableName ?? string.Empty;

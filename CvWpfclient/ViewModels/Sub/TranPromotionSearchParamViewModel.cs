@@ -7,7 +7,7 @@ namespace CvWpfclient.ViewModels.Sub;
 
 public partial class TranPromotionSearchParamViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	TranPromotionSearchParameter parameter = new();
+	public partial TranPromotionSearchParameter Parameter { get; set; } = new();
 
 	public void Initialize(TranPromotionSearchParameter? param) {
 		Parameter = param ?? new TranPromotionSearchParameter { DisplayName = "イベント", MaxCount = AppGlobal.Limit };

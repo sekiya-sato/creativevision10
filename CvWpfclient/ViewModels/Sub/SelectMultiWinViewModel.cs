@@ -20,20 +20,20 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 	HashSet<long> initialSelectedIds = [];
 
 	[ObservableProperty]
-	string title = "複数選択画面";
+	public partial string Title { get; set; } = "複数選択画面";
 
 	[ObservableProperty]
-	string displayNameCode = " Code";
+	public partial string DisplayNameCode { get; set; } = " Code";
 	[ObservableProperty]
-	string displayNameName = " 名前";
+	public partial string DisplayNameName { get; set; } = " 名前";
 	[ObservableProperty]
-	string displayNameRyaku = " 略称";
+	public partial string DisplayNameRyaku { get; set; } = " 略称";
 	[ObservableProperty]
-	int displayWidthCode = 80;
+	public partial int DisplayWidthCode { get; set; } = 80;
 	[ObservableProperty]
-	int displayWidthName = 280;
+	public partial int DisplayWidthName { get; set; } = 280;
 	[ObservableProperty]
-	int displayWidthRyaku = 120;
+	public partial int DisplayWidthRyaku { get; set; } = 120;
 
 
 
@@ -100,7 +100,7 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 	}
 
 	[ObservableProperty]
-	ObservableCollection<SelectMultiWinItem>? listData;
+	public partial ObservableCollection<SelectMultiWinItem>? ListData { get; set; }
 
 	partial void OnListDataChanged(ObservableCollection<SelectMultiWinItem>? value) {
 		DetachListData(_observedListData);
@@ -148,16 +148,16 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 	}
 
 	[ObservableProperty]
-	SelectMultiWinItem? current;
+	public partial SelectMultiWinItem? Current { get; set; }
 
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 
 	[ObservableProperty]
-	int selectedCount;
+	public partial int SelectedCount { get; set; }
 
 	[ObservableProperty]
-	bool isDisplayConditionChangeEnabled = true;
+	public partial bool IsDisplayConditionChangeEnabled { get; set; } = true;
 
 	void UpdateCounts() {
 		Count = ListData?.Count ?? 0;
@@ -258,7 +258,7 @@ public partial class SelectMultiWinItem : ObservableObject {
 	public object Item { get; }
 
 	[ObservableProperty]
-	bool isSelected;
+	public partial bool IsSelected { get; set; }
 
 	public long Id => GetItemId(Item);
 

@@ -17,58 +17,58 @@ namespace CvWpfclient.ViewModels._02Yosan;
 public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 
 	[ObservableProperty]
-	string title = "販売員別予算マスタ(月)";
+	public partial string Title { get; set; } = "販売員別予算マスタ(月)";
 
 	[ObservableProperty]
-	DateTime selectedYearMonth = DateTime.Now;
+	public partial DateTime SelectedYearMonth { get; set; } = DateTime.Now;
 
 	[ObservableProperty]
-	long selectedStaffId;
+	public partial long SelectedStaffId { get; set; }
 
 	[ObservableProperty]
-	string selectedStaffCode = string.Empty;
+	public partial string SelectedStaffCode { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string selectedStaffName = string.Empty;
+	public partial string SelectedStaffName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string selectedYearMonthString = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+	public partial string SelectedYearMonthString { get; set; } = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
-	double saturdaySundayCoefficient = 1.8;
+	public partial double SaturdaySundayCoefficient { get; set; } = 1.8;
 
 	[ObservableProperty]
-	string holidayDaysText = string.Empty;
+	public partial string HolidayDaysText { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	long monthlyBudget;
+	public partial long MonthlyBudget { get; set; }
 
 	[ObservableProperty]
-	long monthlyGrossProfitBudget;
+	public partial long MonthlyGrossProfitBudget { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<DailyBudgetRow> dailyBudgets = [];
+	public partial ObservableCollection<DailyBudgetRow> DailyBudgets { get; set; } = [];
 
 	[ObservableProperty]
-	long totalBudget;
+	public partial long TotalBudget { get; set; }
 
 	[ObservableProperty]
-	long remainingBudget;
+	public partial long RemainingBudget { get; set; }
 
 	[ObservableProperty]
-	long totalGrossProfitBudget;
+	public partial long TotalGrossProfitBudget { get; set; }
 
 	[ObservableProperty]
-	long remainingGrossProfitBudget;
+	public partial long RemainingGrossProfitBudget { get; set; }
 
 	[ObservableProperty]
-	string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isBusy;
+	public partial bool IsBusy { get; set; }
 
 	[ObservableProperty]
-	DailyBudgetRow? selectedDailyBudgetRow;
+	public partial DailyBudgetRow? SelectedDailyBudgetRow { get; set; }
 
 	bool isApplyingHolidayDays;
 	bool isApplyingSelectedYearMonthString;

@@ -10,16 +10,16 @@ namespace CvWpfclient.ViewModels.Sub;
 public partial class SelectPostalAddressViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
-	string title = "住所選択";
+	public partial string Title { get; set; } = "住所選択";
 
 	[ObservableProperty]
-	public ObservableCollection<PostalAddressItem>? listData;
+	public partial ObservableCollection<PostalAddressItem>? ListData { get; set; }
 
 	[ObservableProperty]
-	public PostalAddressItem? current;
+	public partial PostalAddressItem? Current { get; set; }
 
 	[ObservableProperty]
-	public int count;
+	public partial int Count { get; set; }
 
 	public void SetLocalData(IEnumerable<PostalAddressItem> items, string windowTitle = "住所選択") {
 		Title = windowTitle;

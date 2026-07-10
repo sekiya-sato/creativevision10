@@ -11,10 +11,10 @@ namespace CvWpfclient.ViewModels._02Yosan;
 
 public partial class MasterYosanHanbaiMenteViewModel : Helpers.BaseMenteViewModel<MasterYosanHanbai> {
 	[ObservableProperty]
-	string title = "販売員予算マスタメンテ";
+	public partial string Title { get; set; } = "販売員予算マスタメンテ";
 
 	[ObservableProperty]
-	string shainDisplay = string.Empty;
+	public partial string ShainDisplay { get; set; } = string.Empty;
 
 	protected override string? ListOrder => "DenDay DESC, Id_Shain";
 	protected override int? ListMaxCount => AppGlobal.Limit;

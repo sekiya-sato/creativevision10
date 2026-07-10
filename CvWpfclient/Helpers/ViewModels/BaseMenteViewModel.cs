@@ -28,10 +28,10 @@ namespace CvWpfclient.Helpers;
 /// <typeparam name="T"></typeparam>
 public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : BaseDbClass, new() {
 	[ObservableProperty]
-	ObservableCollection<T> listData = [];
+	public partial ObservableCollection<T> ListData { get; set; } = [];
 
 	[ObservableProperty]
-	T current = new();
+	public partial T Current { get; set; } = new();
 
 	protected override void OnExit() {
 		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ActiveWindow) != MessageBoxResult.Yes) {
@@ -55,7 +55,7 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	}
 
 	[ObservableProperty]
-	T currentEdit = new();
+	public partial T CurrentEdit { get; set; } = new();
 
 	// Source generator will declare a partial method `OnCurrentEditChanged(T? oldValue, T newValue)`
 	// Implement it here to forward to a virtual core method that derived viewmodels can override.
@@ -64,16 +64,16 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected virtual void OnCurrentEditChangedCore(T? oldValue, T newValue) { }
 
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 
 	[ObservableProperty]
-	DateTime startTime = DateTime.Now;
+	public partial DateTime StartTime { get; set; } = DateTime.Now;
 
 	[ObservableProperty]
-	TimeSpan getListTime = TimeSpan.Zero;
+	public partial TimeSpan GetListTime { get; set; } = TimeSpan.Zero;
 
 	[ObservableProperty]
-	string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	protected virtual Type Tabletype => typeof(T);
 	protected virtual string? ListOrder => "Code";

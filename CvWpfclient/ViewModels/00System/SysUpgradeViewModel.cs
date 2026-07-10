@@ -13,14 +13,14 @@ public partial class SysUpgradeViewModel : Helpers.BaseViewModel {
 	private readonly ILogger<SysUpgradeViewModel> _logger;
 
 	[ObservableProperty]
-	private string _updateStatus = "最新バージョンを確認できます";
+	public partial string UpdateStatus { get; set; } = "最新バージョンを確認できます";
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(ExecuteUpdateCommand))]
-	private bool _isUpdateAvailable;
+	public partial bool IsUpdateAvailable { get; set; }
 
 	[ObservableProperty]
-	string optionMessage = string.Empty;
+	public partial string OptionMessage { get; set; } = string.Empty;
 
 	public SysUpgradeViewModel() {
 		_logger = new NLogExtender<SysUpgradeViewModel>();

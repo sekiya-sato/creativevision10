@@ -12,7 +12,7 @@ namespace CvWpfclient.ViewModels.Sub;
 public partial class SelectKubunViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
-	string title = "区分選択";
+	public partial string Title { get; set; } = "区分選択";
 	string Where = string.Empty;
 	string Order = "Kubun,Code";
 	string StartPos = string.Empty;
@@ -56,13 +56,13 @@ public partial class SelectKubunViewModel : Helpers.BaseViewModel {
 
 
 	[ObservableProperty]
-	public ObservableCollection<dynamic>? listData;
+	public partial ObservableCollection<dynamic>? ListData { get; set; }
 
 	[ObservableProperty]
-	public object? current;
+	public partial object? Current { get; set; }
 
 	[ObservableProperty]
-	public int count;
+	public partial int Count { get; set; }
 
 	[RelayCommand]
 	public void DoSelect() {

@@ -87,31 +87,31 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 	];
 
 	[ObservableProperty]
-	private string url = string.Empty;
+	public partial string Url { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private string loginId = string.Empty;
+	public partial string LoginId { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private string loginPassword = string.Empty;
+	public partial string LoginPassword { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private string weatherRegion = DefaultWeatherRegion;
+	public partial string WeatherRegion { get; set; } = DefaultWeatherRegion;
 
 	[ObservableProperty]
-	private string jmaWeatherAreaCode = DefaultJmaWeatherAreaCode;
+	public partial string JmaWeatherAreaCode { get; set; } = DefaultJmaWeatherAreaCode;
 
 	[ObservableProperty]
-	private string horizontalFitPosition = DefaultHorizontalFitPosition;
+	public partial string HorizontalFitPosition { get; set; } = DefaultHorizontalFitPosition;
 
 	[ObservableProperty]
-	private string verticalFitPosition = DefaultVerticalFitPosition;
+	public partial string VerticalFitPosition { get; set; } = DefaultVerticalFitPosition;
 
 	[ObservableProperty]
-	private int limit = DefaultLimit;
+	public partial int Limit { get; set; } = DefaultLimit;
 
 	[ObservableProperty]
-	private bool debugMode = false;
+	public partial bool DebugMode { get; set; } = false;
 
 	public string DebugModeDisplayText => DebugMode ? "有効" : "無効";
 

@@ -7,28 +7,28 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterShain> {
 	[ObservableProperty]
-	string title = "社員証カード印刷";
+	public partial string Title { get; set; } = "社員証カード印刷";
 
 	[ObservableProperty]
-	long? shainIdFrom;
+	public partial long? ShainIdFrom { get; set; }
 
 	[ObservableProperty]
-	long? shainIdTo;
+	public partial long? ShainIdTo { get; set; }
 
 	[ObservableProperty]
-	string shainCodeFrom = string.Empty;
+	public partial string ShainCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string shainCodeTo = string.Empty;
+	public partial string ShainCodeTo { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	List<long> tenpoIds = [];
+	public partial List<long> TenpoIds { get; set; } = [];
 
 	[ObservableProperty]
-	string tenpoIdsText = "未選択";
+	public partial string TenpoIdsText { get; set; } = "未選択";
 
 	[ObservableProperty]
-	bool isCode39 = true;
+	public partial bool IsCode39 { get; set; } = true;
 
 	protected override string? FormFile => IsCode39 ? "PrintMasterShainCard39.qfm" : "PrintMasterShainCard.qfm";
 

@@ -11,17 +11,17 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterEndCustomerMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterEndCustomer> {
 	[ObservableProperty]
-	string title = "顧客マスターメンテ";
+	public partial string Title { get; set; } = "顧客マスターメンテ";
 
 	protected override string[] AdditionalLightweightColumns => ["Rank", "VTenpo"];
 
 	protected override string? SelectCodeDisplayName => "顧客";
 	protected override string? FormFile => "MasterEndCustomerMente.qfm";
 	[ObservableProperty]
-	MasterGeneralMeisho? selectedJsub;
+	public partial MasterGeneralMeisho? SelectedJsub { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<MasterGeneralMeisho> editJsub = [];
+	public partial ObservableCollection<MasterGeneralMeisho> EditJsub { get; set; } = [];
 
 	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"K{i:D2}"));
 	public List<MasterMeisho> KubunList = [];

@@ -11,13 +11,13 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterShainMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShain> {
 	[ObservableProperty]
-	string title = "社員マスターメンテ";
+	public partial string Title { get; set; } = "社員マスターメンテ";
 
 	[ObservableProperty]
-	MasterGeneralMeisho? selectedJsub;
+	public partial MasterGeneralMeisho? SelectedJsub { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<MasterGeneralMeisho> editJsub = [];
+	public partial ObservableCollection<MasterGeneralMeisho> EditJsub { get; set; } = [];
 
 	public ObservableCollection<string> KubunOptions { get; } = new([
 		"E01", "E02", "E03", "E04", "E05"

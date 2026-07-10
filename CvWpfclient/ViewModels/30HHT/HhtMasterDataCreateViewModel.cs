@@ -14,13 +14,13 @@ public partial class HhtMasterDataCreateViewModel : Helpers.BaseViewModel {
 	private const string DefaultOutputPath = @"C:\hht\hksnds1";
 
 	[ObservableProperty]
-	private bool isCsvFormat = true;
+	public partial bool IsCsvFormat { get; set; } = true;
 
 	[ObservableProperty]
-	private bool isFixedLengthFormat;
+	public partial bool IsFixedLengthFormat { get; set; }
 
 	[ObservableProperty]
-	private string outputPath = string.Empty;
+	public partial string OutputPath { get; set; } = string.Empty;
 
 	[RelayCommand]
 	private void Init() {

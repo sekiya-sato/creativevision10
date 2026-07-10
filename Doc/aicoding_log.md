@@ -1,3 +1,20 @@
+## [2026-07-10] 13:45 MVVMTK0042 ワーニング対応
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvWpfclient プロジェクトの MVVMTK0042 ワーニングを解消し、不要な `System.ComponentModel.DefaultValue("")` 属性を削除する。
+### 実施内容
+- CvWpfclient/**/*.cs: `[ObservableProperty]` を付与した 476 フィールドを `public partial` プロパティへ移行（既存の partial property 1 件は維持）。
+- CvWpfclient/**/*.cs: `System.ComponentModel.DefaultValue("")` が残存しないことを確認し、既存の初期値をプロパティ初期化子として維持。
+### 技術決定 Why
+- CommunityToolkit.Mvvm 推奨の partial property 形式へ統一し、生成プロパティを他のジェネレーターおよびアナライザーから参照可能にするため。
+### 確認
+- 未変換 ObservableProperty フィールド 0 件、不要な DefaultValue 属性 0 件、CRLF 不正 0 件、`git diff --check` 成功。
+
+---
+
 ## [2026-07-10] 10:00 Helpers コメント形式の統一
 ### Agent
 - GPT-5 : OpenAI : Codex

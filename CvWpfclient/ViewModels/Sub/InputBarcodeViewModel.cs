@@ -11,22 +11,22 @@ namespace CvWpfclient.ViewModels.Sub;
 
 public partial class InputBarcodeViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	string barcodeText = string.Empty;
+	public partial string BarcodeText { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	ObservableCollection<InputBarcodeRow> listData = [];
+	public partial ObservableCollection<InputBarcodeRow> ListData { get; set; } = [];
 
 	[ObservableProperty]
-	InputBarcodeRow? current;
+	public partial InputBarcodeRow? Current { get; set; }
 
 	[ObservableProperty]
-	string message = "バーコードを読み取ってください";
+	public partial string Message { get; set; } = "バーコードを読み取ってください";
 
 	[ObservableProperty]
-	int count;
+	public partial int Count { get; set; }
 
 	[ObservableProperty]
-	int totalSu;
+	public partial int TotalSu { get; set; }
 
 	readonly Dictionary<long, MasterShohin> shohinCache = [];
 
@@ -170,40 +170,40 @@ public partial class InputBarcodeViewModel : Helpers.BaseViewModel {
 
 public partial class InputBarcodeRow : ObservableObject {
 	[ObservableProperty]
-	string barcode = string.Empty;
+	public partial string Barcode { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	int su;
+	public partial int Su { get; set; }
 
 	[ObservableProperty]
-	int tanka;
+	public partial int Tanka { get; set; }
 
 	[ObservableProperty]
-	long idShohin;
+	public partial long IdShohin { get; set; }
 
 	[ObservableProperty]
-	string codeShohin = string.Empty;
+	public partial string CodeShohin { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string meiShohin = string.Empty;
+	public partial string MeiShohin { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	long idCol;
+	public partial long IdCol { get; set; }
 
 	[ObservableProperty]
-	string codeCol = string.Empty;
+	public partial string CodeCol { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string meiCol = string.Empty;
+	public partial string MeiCol { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	long idSiz;
+	public partial long IdSiz { get; set; }
 
 	[ObservableProperty]
-	string codeSiz = string.Empty;
+	public partial string CodeSiz { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string meiSiz = string.Empty;
+	public partial string MeiSiz { get; set; } = string.Empty;
 
 	public int Jodai { get; set; }
 	public int Gedai { get; set; }

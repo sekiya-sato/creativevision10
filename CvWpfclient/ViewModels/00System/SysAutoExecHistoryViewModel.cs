@@ -10,7 +10,7 @@ namespace CvWpfclient.ViewModels._00System;
 
 internal partial class SysAutoExecHistoryViewModel : Helpers.BaseMenteViewModel<SysHistAutoexec> {
 	[ObservableProperty]
-	string title = "自動実行履歴";
+	public partial string Title { get; set; } = "自動実行履歴";
 
 	AutoExecHistorySelectParameter? selectParam;
 

@@ -11,37 +11,37 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterPrintBarcodeViewModel : BaseMenteViewModel<MasterShohin> {
 	[ObservableProperty]
-	string title = "商品バーコードブック";
+	public partial string Title { get; set; } = "商品バーコードブック";
 
 	[ObservableProperty]
-	List<long> tenjiIds = [];
+	public partial List<long> TenjiIds { get; set; } = [];
 
 	[ObservableProperty]
-	string tenjiIdsText = "未選択";
+	public partial string TenjiIdsText { get; set; } = "未選択";
 
 	[ObservableProperty]
-	List<long> brandIds = [];
+	public partial List<long> BrandIds { get; set; } = [];
 
 	[ObservableProperty]
-	string brandIdsText = "未選択";
+	public partial string BrandIdsText { get; set; } = "未選択";
 
 	[ObservableProperty]
-	string shohinCodeLike = string.Empty;
+	public partial string ShohinCodeLike { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string shohinNameLike = string.Empty;
+	public partial string ShohinNameLike { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isSkuOutput = true;
+	public partial bool IsSkuOutput { get; set; } = true;
 
 	[ObservableProperty]
-	bool isJanBarcode = true;
+	public partial bool IsJanBarcode { get; set; } = true;
 
 	[ObservableProperty]
-	bool isCode39Barcode;
+	public partial bool IsCode39Barcode { get; set; }
 
 	[ObservableProperty]
-	bool isNw7Barcode;
+	public partial bool IsNw7Barcode { get; set; }
 
 	partial void OnIsJanBarcodeChanged(bool value) {
 		if (!value) return;

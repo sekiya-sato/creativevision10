@@ -17,7 +17,7 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 	ObservableCollection<dynamic>? _observedListData;
 
 	[ObservableProperty]
-	string title = "選択画面";
+	public partial string Title { get; set; } = "選択画面";
 
 	Type MyType = typeof(string);
 
@@ -84,7 +84,7 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 
 
 	[ObservableProperty]
-	public ObservableCollection<dynamic>? listData;
+	public partial ObservableCollection<dynamic>? ListData { get; set; }
 
 	partial void OnListDataChanged(ObservableCollection<dynamic>? value) {
 		if (_observedListData != null) {
@@ -105,13 +105,13 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 	}
 
 	[ObservableProperty]
-	public object? current;
+	public partial object? Current { get; set; }
 
 	[ObservableProperty]
-	public int count;
+	public partial int Count { get; set; }
 
 	[ObservableProperty]
-	bool isDisplayConditionChangeEnabled = true;
+	public partial bool IsDisplayConditionChangeEnabled { get; set; } = true;
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task ChangeDisplayCondition(CancellationToken ct) {

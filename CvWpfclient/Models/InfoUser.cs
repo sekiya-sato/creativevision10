@@ -4,15 +4,15 @@ namespace CvWpfclient.Models;
 
 public partial class InfoUser : ObservableObject {
 	[ObservableProperty]
-	string? osVer = null;
+	public partial string? OsVer { get; set; } = null;
 	[ObservableProperty]
-	string? dotnetVer = null;
+	public partial string? DotnetVer { get; set; } = null;
 	[ObservableProperty]
-	string? computerName = null;
+	public partial string? ComputerName { get; set; } = null;
 	[ObservableProperty]
-	string? userName = null;
+	public partial string? UserName { get; set; } = null;
 	[ObservableProperty]
-	string? loginTime = null;
+	public partial string? LoginTime { get; set; } = null;
 	[ObservableProperty]
-	string? expireTime = null;
+	public partial string? ExpireTime { get; set; } = null;
 }

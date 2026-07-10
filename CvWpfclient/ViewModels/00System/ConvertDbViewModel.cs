@@ -10,16 +10,16 @@ namespace CvWpfclient.ViewModels._00System;
 
 public partial class ConvertDbViewModel : BaseViewModel {
 	[ObservableProperty]
-	private bool isInitDb;
+	public partial bool IsInitDb { get; set; }
 
 	[ObservableProperty]
-	private bool isRunning;
+	public partial bool IsRunning { get; set; }
 
 	[ObservableProperty]
-	private int progressValue;
+	public partial int ProgressValue { get; set; }
 
 	[ObservableProperty]
-	private ObservableCollection<string> streamMessages = [];
+	public partial ObservableCollection<string> StreamMessages { get; set; } = [];
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task ExecuteAsync(CancellationToken cancellationToken) {

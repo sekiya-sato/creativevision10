@@ -27,13 +27,13 @@ public partial class ShiireInputViewModel : Helpers.BasePlainLightMenteViewModel
 	[NotifyCanExecuteChangedFor(nameof(DoInsertOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoPrintListCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoPrintDetailCommand))]
-	int selectedTabIndex;
+	public partial int SelectedTabIndex { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<Tran99Meisai> editMeisai = [];
+	public partial ObservableCollection<Tran99Meisai> EditMeisai { get; set; } = [];
 
 	[ObservableProperty]
-	Tran99Meisai? selectedMeisai;
+	public partial Tran99Meisai? SelectedMeisai { get; set; }
 
 	SelectInputParameter? selectParam;
 

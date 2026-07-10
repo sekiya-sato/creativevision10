@@ -37,63 +37,80 @@ public partial class ShopHaibunInputViewModel : Helpers.BaseViewModel {
 	[NotifyCanExecuteChangedFor(nameof(AddShopCommand))]
 	[NotifyCanExecuteChangedFor(nameof(RemoveShopCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoKakuteiCommand))]
-	int selectedTabIndex;
+	public partial int SelectedTabIndex { get; set; }
 
 	[ObservableProperty]
-	string message = "配分元倉庫と条件を指定して「一覧取得(F5)」を押してください。";
+	public partial string Message { get; set; } = "配分元倉庫と条件を指定して「一覧取得(F5)」を押してください。";
 
 	[ObservableProperty]
-	int searchCount;
+	public partial int SearchCount { get; set; }
 
 	// ---- 配分元倉庫 --------------------------------------------------------
 	[ObservableProperty]
-	long id_Soko;
+	public partial long Id_Soko { get; set; }
 
 	[ObservableProperty]
-	string sokoCode = "";
+	public partial string SokoCode { get; set; } = "";
 
 	[ObservableProperty]
-	string sokoName = "";
+	public partial string SokoName { get; set; } = "";
 
 	[ObservableProperty]
-	int kubun = KubunHatsukai;
+	public partial int Kubun { get; set; } = KubunHatsukai;
 
 	// ---- 検索条件 (FROM-TO) ------------------------------------------------
-	[ObservableProperty] string seasonFrom = "";
-	[ObservableProperty] string seasonTo = "";
-	[ObservableProperty] string brandFrom = "";
-	[ObservableProperty] string brandTo = "";
-	[ObservableProperty] string itemFrom = "";
-	[ObservableProperty] string itemTo = "";
-	[ObservableProperty] DateTime? uriageDayFrom;
-	[ObservableProperty] DateTime? uriageDayTo;
-	[ObservableProperty] DateTime? nyukaDayFrom;
+	[ObservableProperty]
+	public partial string SeasonFrom { get; set; } = "";
+	[ObservableProperty]
+	public partial string SeasonTo { get; set; } = "";
+	[ObservableProperty]
+	public partial string BrandFrom { get; set; } = "";
+	[ObservableProperty]
+	public partial string BrandTo { get; set; } = "";
+	[ObservableProperty]
+	public partial string ItemFrom { get; set; } = "";
+	[ObservableProperty]
+	public partial string ItemTo { get; set; } = "";
+	[ObservableProperty]
+	public partial DateTime? UriageDayFrom { get; set; }
+	[ObservableProperty]
+	public partial DateTime? UriageDayTo { get; set; }
+	[ObservableProperty]
+	public partial DateTime? NyukaDayFrom { get; set; }
 
 	// ---- タブ1: 商品一覧 ---------------------------------------------------
 	[ObservableProperty]
-	ObservableCollection<ShopHaibunSearchRow> searchRows = [];
+	public partial ObservableCollection<ShopHaibunSearchRow> SearchRows { get; set; } = [];
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(GoToEditCommand))]
-	ShopHaibunSearchRow? selectedSearchRow;
+	public partial ShopHaibunSearchRow? SelectedSearchRow { get; set; }
 
 	// ---- タブ2: 配分対象商品 + 配分入力 ------------------------------------
-	[ObservableProperty] string targetShohinCode = "";
-	[ObservableProperty] string targetShohinName = "";
-	[ObservableProperty] string targetBrand = "";
-	[ObservableProperty] string targetItem = "";
-	[ObservableProperty] decimal targetJodai;
-
-	[ObservableProperty] DateTime? shijiDay = DateTime.Today;
-	[ObservableProperty] DateTime? nouhinDay = DateTime.Today;
-	[ObservableProperty] string nyuryokusha = "";
+	[ObservableProperty]
+	public partial string TargetShohinCode { get; set; } = "";
+	[ObservableProperty]
+	public partial string TargetShohinName { get; set; } = "";
+	[ObservableProperty]
+	public partial string TargetBrand { get; set; } = "";
+	[ObservableProperty]
+	public partial string TargetItem { get; set; } = "";
+	[ObservableProperty]
+	public partial decimal TargetJodai { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<ShopHaibunEntryRow> entryRows = [];
+	public partial DateTime? ShijiDay { get; set; } = DateTime.Today;
+	[ObservableProperty]
+	public partial DateTime? NouhinDay { get; set; } = DateTime.Today;
+	[ObservableProperty]
+	public partial string Nyuryokusha { get; set; } = "";
+
+	[ObservableProperty]
+	public partial ObservableCollection<ShopHaibunEntryRow> EntryRows { get; set; } = [];
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(RemoveShopCommand))]
-	ShopHaibunEntryRow? selectedEntryRow;
+	public partial ShopHaibunEntryRow? SelectedEntryRow { get; set; }
 
 	/// <summary>配分合計数（指示数の総和）。</summary>
 	public int TotalSu => EntryRows.Sum(r => r.Su);
@@ -337,32 +354,54 @@ public partial class ShopHaibunInputViewModel : Helpers.BaseViewModel {
 
 /// <summary>タブ1 商品一覧行。</summary>
 public partial class ShopHaibunSearchRow : ObservableObject {
-	[ObservableProperty] string shohinCode = "";
-	[ObservableProperty] string shohinName = "";
-	[ObservableProperty] string brand = "";
-	[ObservableProperty] string item = "";
-	[ObservableProperty] decimal jodai;
-	[ObservableProperty] int uriageSu;    // 累計売上数
-	[ObservableProperty] int zaiko;        // 現在庫
-	[ObservableProperty] int genshiSu;     // 現在指示数
-	[ObservableProperty] int nyukaSu;      // 入荷予定数
-	[ObservableProperty] int haibunKanou;  // 配分可能数
+	[ObservableProperty]
+	public partial string ShohinCode { get; set; } = "";
+	[ObservableProperty]
+	public partial string ShohinName { get; set; } = "";
+	[ObservableProperty]
+	public partial string Brand { get; set; } = "";
+	[ObservableProperty]
+	public partial string Item { get; set; } = "";
+	[ObservableProperty]
+	public partial decimal Jodai { get; set; }
+	[ObservableProperty]
+	public partial int UriageSu { get; set; }    // 累計売上数
+	[ObservableProperty]
+	public partial int Zaiko { get; set; }        // 現在庫
+	[ObservableProperty]
+	public partial int GenshiSu { get; set; }     // 現在指示数
+	[ObservableProperty]
+	public partial int NyukaSu { get; set; }      // 入荷予定数
+	[ObservableProperty]
+	public partial int HaibunKanou { get; set; }  // 配分可能数
 }
 
 /// <summary>タブ2 配分入力行（SKU × 店舗）。指示数(<see cref="Su"/>)を編集。</summary>
 public partial class ShopHaibunEntryRow : ObservableObject {
-	[ObservableProperty] string tenpoCode = "";
-	[ObservableProperty] string tenpoName = "";
-	[ObservableProperty] string shohinCode = "";
-	[ObservableProperty] string colCode = "";
-	[ObservableProperty] string colName = "";
-	[ObservableProperty] string sizCode = "";
-	[ObservableProperty] string sizName = "";
-	[ObservableProperty] int su;           // 指示数（配分数）
-	[ObservableProperty] int zaiko;        // 在庫数（参考）
-	[ObservableProperty] int kijunZaiko;   // 基準在庫（参考）
-	[ObservableProperty] int nouhin;       // 納品数（参考）
-	[ObservableProperty] int uriage;       // 売上数（参考）
+	[ObservableProperty]
+	public partial string TenpoCode { get; set; } = "";
+	[ObservableProperty]
+	public partial string TenpoName { get; set; } = "";
+	[ObservableProperty]
+	public partial string ShohinCode { get; set; } = "";
+	[ObservableProperty]
+	public partial string ColCode { get; set; } = "";
+	[ObservableProperty]
+	public partial string ColName { get; set; } = "";
+	[ObservableProperty]
+	public partial string SizCode { get; set; } = "";
+	[ObservableProperty]
+	public partial string SizName { get; set; } = "";
+	[ObservableProperty]
+	public partial int Su { get; set; }           // 指示数（配分数）
+	[ObservableProperty]
+	public partial int Zaiko { get; set; }        // 在庫数（参考）
+	[ObservableProperty]
+	public partial int KijunZaiko { get; set; }   // 基準在庫（参考）
+	[ObservableProperty]
+	public partial int Nouhin { get; set; }       // 納品数（参考）
+	[ObservableProperty]
+	public partial int Uriage { get; set; }       // 売上数（参考）
 }
 
 /// <summary>

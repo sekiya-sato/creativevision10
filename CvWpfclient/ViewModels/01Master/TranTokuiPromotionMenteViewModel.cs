@@ -13,7 +13,7 @@ public partial class TranTokuiPromotionMenteViewModel : Helpers.BaseMenteViewMod
 	public sealed record RankOption(int Value, string Name);
 
 	[ObservableProperty]
-	string title = "得意先イベントメンテ";
+	public partial string Title { get; set; } = "得意先イベントメンテ";
 
 	TranPromotionSearchParameter? selectParam;
 

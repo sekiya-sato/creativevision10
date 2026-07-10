@@ -9,19 +9,19 @@ namespace CvWpfclient.ViewModels._00System;
 
 public partial class SysSchedulerCronEditViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	string taskName = string.Empty;
+	public partial string TaskName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string cronExpression = string.Empty;
+	public partial string CronExpression { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string previewNextOccurrence = string.Empty;
+	public partial string PreviewNextOccurrence { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string validationMessage = string.Empty;
+	public partial string ValidationMessage { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isValid;
+	public partial bool IsValid { get; set; }
 
 	partial void OnCronExpressionChanged(string value) => ValidateAndPreview();
 

@@ -10,14 +10,14 @@ namespace CvWpfclient.ViewModels._00System;
 
 internal partial class SysLoginHistoryViewModel : Helpers.BaseMenteViewModel<SysHistJwt> {
 	[ObservableProperty]
-	string title = "ログイン履歴";
+	public partial string Title { get; set; } = "ログイン履歴";
 
 	/// <summary>ログインID → 社員表示文字列 (Code Name) のマッピング</summary>
 	Dictionary<long, string> loginIdToShainDisplay = [];
 
 	/// <summary>現在選択中の社員表示文字列</summary>
 	[ObservableProperty]
-	string shainDisplay = string.Empty;
+	public partial string ShainDisplay { get; set; } = string.Empty;
 
 
 	/// <summary>最新順に取得</summary>

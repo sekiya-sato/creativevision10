@@ -32,67 +32,67 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	private static readonly TimeSpan JmaWeatherTimeout = TimeSpan.FromSeconds(15);
 
 	[ObservableProperty]
-	ObservableCollection<MenuData> menuItems = [];
+	public partial ObservableCollection<MenuData> MenuItems { get; set; } = [];
 
 	[ObservableProperty]
-	private MenuData? selectedMenu;
+	public partial MenuData? SelectedMenu { get; set; }
 
 	[ObservableProperty]
-	private string? selectedMenuParentHeader;
+	public partial string? SelectedMenuParentHeader { get; set; }
 
 	partial void OnSelectedMenuChanged(MenuData? value) {
 		SelectedMenuParentHeader = FindParentHeader(MenuItems, value);
 	}
 
 	[ObservableProperty]
-	private string? statusMessage;
+	public partial string? StatusMessage { get; set; }
 
 	[ObservableProperty]
-	private string? expireDate;
+	public partial string? ExpireDate { get; set; }
 
 	[ObservableProperty]
-	private string headerTitle = "Creative Vision 10";
+	public partial string HeaderTitle { get; set; } = "Creative Vision 10";
 
 
 	private DateTime _subStartTime = DateTime.Now;
 	[ObservableProperty]
-	private string subTitle = ".NET10, gRPC, HTTP/2.0";
+	public partial string SubTitle { get; set; } = ".NET10, gRPC, HTTP/2.0";
 
 	[ObservableProperty]
-	private string holidayName = "";
+	public partial string HolidayName { get; set; } = "";
 
 	[ObservableProperty]
-	private string solarTerm = "";
+	public partial string SolarTerm { get; set; } = "";
 
 	[ObservableProperty]
-	private bool isMenuReady;
+	public partial bool IsMenuReady { get; set; }
 
 	[ObservableProperty]
-	private string? currentDate; // yy/MM/dd 用
+	public partial string? CurrentDate { get; set; } // yy/MM/dd 用
 
 	[ObservableProperty]
-	private string? currentTime; // HH:mm:ss 用
+	public partial string? CurrentTime { get; set; } // HH:mm:ss 用
 
 	[ObservableProperty]
-	private string? currentTimeDay; // 曜日部分
+	public partial string? CurrentTimeDay { get; set; } // 曜日部分
 
 	[ObservableProperty]
-	private string? currentTimeClock; // 時刻部分
+	public partial string? CurrentTimeClock { get; set; } // 時刻部分
 
 	[ObservableProperty]
-	private SolidColorBrush? currentTimeDayForeground; // 曜日色
+	public partial SolidColorBrush? CurrentTimeDayForeground { get; set; } // 曜日色
 
 	[ObservableProperty]
-	private string? kyureki; // 旧暦表示用
+	public partial string? Kyureki { get; set; } // 旧暦表示用
 
 	[ObservableProperty]
-	private double moonShadowOffset; // 月アイコンの暗い円をずらして満ち欠け形状にする
+	public partial double MoonShadowOffset { get; set; } // 月アイコンの暗い円をずらして満ち欠け形状にする
 
 	[ObservableProperty]
-	private string moonPhaseToolTip = "旧暦";
+	public partial string MoonPhaseToolTip { get; set; } = "旧暦";
 
 	[ObservableProperty]
-	private string functionToolTip = "バージョンアップ(F9) 環境設定(F10) リフレッシュトークン(F11) ログイン(F12)";
+	public partial string FunctionToolTip { get; set; } = "バージョンアップ(F9) 環境設定(F10) リフレッシュトークン(F11) ログイン(F12)";
 
 	private DispatcherTimer? _timer;
 	private bool _disposed;
@@ -105,16 +105,16 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	private System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo("ja-JP");
 
 	[ObservableProperty]
-	private string serverStatus = string.Empty;
+	public partial string ServerStatus { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private string clientStatus = string.Empty;
+	public partial string ClientStatus { get; set; } = string.Empty;
 
 
 	[ObservableProperty]
-	InfoUser infolocalUser = new InfoUser();
+	public partial InfoUser InfolocalUser { get; set; } = new InfoUser();
 	[ObservableProperty]
-	InfoServer infolocalServer = new InfoServer();
+	public partial InfoServer InfolocalServer { get; set; } = new InfoServer();
 
 	public MainMenuViewModel() {
 		App.ThemeService.ThemeChanged += OnThemeChanged;
@@ -432,7 +432,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	}
 
 	[ObservableProperty]
-	private string mainThemeButtonLabel = "テーマ切替(Default)";
+	public partial string MainThemeButtonLabel { get; set; } = "テーマ切替(Default)";
 
 	private void UpdateMainThemeButtonLabel(MainTheme theme) {
 		MainThemeButtonLabel = $"テーマ切替({theme})";
@@ -441,47 +441,47 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	// ── 天気ダッシュボード ──────────────────────
 
 	[ObservableProperty]
-	private WeatherInfo? currentWeather;
+	public partial WeatherInfo? CurrentWeather { get; set; }
 
 	[ObservableProperty]
-	private string weatherIconKind = "WeatherSunny";
+	public partial string WeatherIconKind { get; set; } = "WeatherSunny";
 
 	[ObservableProperty]
-	private string weatherTemperature = "--℃";
+	public partial string WeatherTemperature { get; set; } = "--℃";
 
 	[ObservableProperty]
-	private string weatherDescription = "取得中...";
+	public partial string WeatherDescription { get; set; } = "取得中...";
 
 	[ObservableProperty]
-	private string weatherLocation = "";
+	public partial string WeatherLocation { get; set; } = "";
 
 	[ObservableProperty]
-	private string sunrise = "";
+	public partial string Sunrise { get; set; } = "";
 	[ObservableProperty]
-	private string sunset = "";
+	public partial string Sunset { get; set; } = "";
 
 	[ObservableProperty]
-	private string humidity = "";
+	public partial string Humidity { get; set; } = "";
 	[ObservableProperty]
-	private string windSpeed = "";
+	public partial string WindSpeed { get; set; } = "";
 
 	[ObservableProperty]
-	private string jmaWeatherOverviewToolTip = "気象庁概要予報を取得中...";
+	public partial string JmaWeatherOverviewToolTip { get; set; } = "気象庁概要予報を取得中...";
 
 	public string JmaWeatherOverviewSourceUrl => BuildJmaWeatherOverviewSourceUrl(AppGlobal.JmaWeatherAreaCode);
 
 
 	[ObservableProperty]
-	private ISeries[] forecastSeries = [];
+	public partial ISeries[] ForecastSeries { get; set; } = [];
 
 	[ObservableProperty]
-	private LiveChartsCore.Measure.Margin? forecastMargin = new LiveChartsCore.Measure.Margin(0, 0, 0, 0);
+	public partial LiveChartsCore.Measure.Margin? ForecastMargin { get; set; } = new LiveChartsCore.Measure.Margin(0, 0, 0, 0);
 
 	[ObservableProperty]
-	private Axis[] forecastXAxes = [new Axis { Labels = [], TextSize = 11 }];
+	public partial Axis[] ForecastXAxes { get; set; } = [new Axis { Labels = [], TextSize = 11 }];
 
 	[ObservableProperty]
-	private Axis[] forecastYAxes = [new Axis { Name = "", TextSize = 11, MinLimit = null, MaxLimit = null }]; // ℃
+	public partial Axis[] ForecastYAxes { get; set; } = [new Axis { Name = "", TextSize = 11, MinLimit = null, MaxLimit = null }]; // ℃
 
 	private DispatcherTimer? _weatherTimer;
 

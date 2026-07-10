@@ -19,31 +19,31 @@ namespace CvWpfclient.ViewModels._01Master;
 
 public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	private ObservableCollection<ImportTemplateTableRow> tableList = [];
+	public partial ObservableCollection<ImportTemplateTableRow> TableList { get; set; } = [];
 
 	[ObservableProperty]
-	private ImportTemplateTableRow? selectedTable;
+	public partial ImportTemplateTableRow? SelectedTable { get; set; }
 
 	[ObservableProperty]
-	private ObservableCollection<ImportTemplateColumnRow> columnList = [];
+	public partial ObservableCollection<ImportTemplateColumnRow> ColumnList { get; set; } = [];
 
 	[ObservableProperty]
-	private ImportTemplateColumnRow? currentColumn;
+	public partial ImportTemplateColumnRow? CurrentColumn { get; set; }
 
 	[ObservableProperty]
-	private DateTime selectedDate = DateTime.Today;
+	public partial DateTime SelectedDate { get; set; } = DateTime.Today;
 
 	[ObservableProperty]
-	private string oldTableName = string.Empty;
+	public partial string OldTableName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private long selectedRowCount;
+	public partial long SelectedRowCount { get; set; }
 
 	[ObservableProperty]
-	private string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	private int selectedColumnCount;
+	public partial int SelectedColumnCount { get; set; }
 
 	private readonly Dictionary<string, Type> tableTypeMap = CreateTableTypeMap();
 	private readonly List<object> outputDataRows = [];
@@ -516,7 +516,7 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 
 public sealed partial class ImportTemplateColumnRow : ObservableObject {
 	[ObservableProperty]
-	private bool isSelected;
+	public partial bool IsSelected { get; set; }
 
 	public int No { get; set; }
 	public string ColumnName { get; set; } = string.Empty;

@@ -6,16 +6,16 @@ namespace CvWpfclient.Models;
 
 public partial class MenuData : ObservableObject {
 	[ObservableProperty]
-	private string header = string.Empty;
+	public partial string Header { get; set; } = string.Empty;
 	/* Obsolete
 	private bool isExpand;
 	private string? icon;
 	 */
 	[ObservableProperty]
-	private ObservableCollection<MenuData>? subItems;
+	public partial ObservableCollection<MenuData>? SubItems { get; set; }
 
 	[ObservableProperty]
-	private string? addInfo;
+	public partial string? AddInfo { get; set; }
 
 	/* --- after this line, only use for ViewModel --- */
 	public Type ViewType { get; set; } = typeof(object);

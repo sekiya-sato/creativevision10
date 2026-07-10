@@ -17,67 +17,67 @@ namespace CvWpfclient.ViewModels._02Yosan;
 public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 	[ObservableProperty]
-	string title = "店ブランド予算マスタ（月一括）";
+	public partial string Title { get; set; } = "店ブランド予算マスタ（月一括）";
 
 	[ObservableProperty]
-	DateTime selectedYearMonth = DateTime.Now;
+	public partial DateTime SelectedYearMonth { get; set; } = DateTime.Now;
 
 	[ObservableProperty]
-	long selectedShopId;
+	public partial long SelectedShopId { get; set; }
 
 	[ObservableProperty]
-	string selectedShopCode = string.Empty;
+	public partial string SelectedShopCode { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string selectedShopName = string.Empty;
+	public partial string SelectedShopName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	long selectedBrandId;
+	public partial long SelectedBrandId { get; set; }
 
 	[ObservableProperty]
-	string selectedBrandCode = string.Empty;
+	public partial string SelectedBrandCode { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string selectedBrandName = string.Empty;
+	public partial string SelectedBrandName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	string selectedYearMonthString = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+	public partial string SelectedYearMonthString { get; set; } = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
-	double saturdaySundayCoefficient = 1.8;
+	public partial double SaturdaySundayCoefficient { get; set; } = 1.8;
 
 	[ObservableProperty]
-	string holidayDaysText = string.Empty;
+	public partial string HolidayDaysText { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	long monthlyBudget;
+	public partial long MonthlyBudget { get; set; }
 
 	[ObservableProperty]
-	long monthlyGrossProfitBudget;
+	public partial long MonthlyGrossProfitBudget { get; set; }
 
 	[ObservableProperty]
-	ObservableCollection<DailyBudgetRow> dailyBudgets = [];
+	public partial ObservableCollection<DailyBudgetRow> DailyBudgets { get; set; } = [];
 
 	[ObservableProperty]
-	long totalBudget;
+	public partial long TotalBudget { get; set; }
 
 	[ObservableProperty]
-	long remainingBudget;
+	public partial long RemainingBudget { get; set; }
 
 	[ObservableProperty]
-	long totalGrossProfitBudget;
+	public partial long TotalGrossProfitBudget { get; set; }
 
 	[ObservableProperty]
-	long remainingGrossProfitBudget;
+	public partial long RemainingGrossProfitBudget { get; set; }
 
 	[ObservableProperty]
-	string message = string.Empty;
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	bool isBusy;
+	public partial bool IsBusy { get; set; }
 
 	[ObservableProperty]
-	DailyBudgetRow? selectedDailyBudgetRow;
+	public partial DailyBudgetRow? SelectedDailyBudgetRow { get; set; }
 
 	bool isApplyingHolidayDays;
 	bool isApplyingSelectedYearMonthString;
@@ -578,34 +578,34 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 /// </summary>
 public partial class DailyBudgetRow : ObservableObject {
 	[ObservableProperty]
-	int day;
+	public partial int Day { get; set; }
 
 	[ObservableProperty]
-	string dayOfWeek = string.Empty;
+	public partial string DayOfWeek { get; set; } = string.Empty;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(RunningTotal))]
-	long salesBudget;
+	public partial long SalesBudget { get; set; }
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(RunningGrossProfitTotal))]
-	long grossProfitBudget;
+	public partial long GrossProfitBudget { get; set; }
 
 	[ObservableProperty]
-	long runningTotal;
+	public partial long RunningTotal { get; set; }
 
 	[ObservableProperty]
-	long runningGrossProfitTotal;
+	public partial long RunningGrossProfitTotal { get; set; }
 
 	[ObservableProperty]
-	double coefficient = 1.0;
+	public partial double Coefficient { get; set; } = 1.0;
 
 	[ObservableProperty]
-	bool isHoliday;
+	public partial bool IsHoliday { get; set; }
 
 	[ObservableProperty]
-	bool isSaturday;
+	public partial bool IsSaturday { get; set; }
 
 	[ObservableProperty]
-	bool isSunday;
+	public partial bool IsSunday { get; set; }
 }
