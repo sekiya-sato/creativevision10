@@ -1,3 +1,24 @@
+## [2026-07-10] 09:25 ShopHaibunInputView の作成 (View, ViewModel)
+### Agent
+- Claude Opus 4.8 : Anthropic : ClaudeCode
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._07Haibun.ShopHaibunInputView`（View/ViewModel の空ファイルあり）を作成。配分元倉庫を選び対象商品を絞り込んで累計売上・現在庫・配分可能数を一覧表示し、選択商品に対し商品・色・サイズ・店舗ごとの配分数を入力、確定で配分データを生成する2タブ画面。**テーブルは作成せず提案のみ／View と ViewModel のみ作成**。
+### 実施内容
+- CvWpfclient/ViewModels/07Haibun/ShopHaibunInputViewModel.cs: `BaseViewModel` 継承の DB 非依存 ViewModel を実装。
+  - タブ1(検索): 配分元倉庫選択、区分(初回配分/在庫配分)、シーズン/ブランド/アイテムの FROM-TO・日付範囲フィルタ、`DoSearch`(F5) で商品一覧(商品CD/名/ブランド/アイテム/上代/累計売上/現在庫/現在指示数/入荷予定数/配分可能数)を取得。
+  - タブ2(修正・登録): 選択商品の SKU(色×サイズ)×店舗を 1 行 = 1 配分明細のフラット DataGrid で表現。指示数を編集、`AddShop`/`RemoveShop`、`DoKakutei`(F2)で `ShopHaibunResult`(配分レコード)を生成。合計 `TotalSu` を集計。
+  - 画面内モデル `ShopHaibunSearchRow` / `ShopHaibunEntryRow`(ObservableObject)、確定レコード `ShopHaibunResult`(record)を同ファイルに定義。デザイン確認用サンプルデータを投入。
+- CvWpfclient/Views/07Haibun/ShopHaibunInputView.xaml: 他画面(06Uriage ShopUriage/ShukkaUriage)と統一したデザイン。`BaseWindow`＋`ColorZone` ヘッダー、`MaterialDesignTabControl`(ヘッダー非表示・`SelectedTabIndex` バインド)、共通スタイル(`FormLabel`/`FormTextBox`/`FormComboBox`/`FormDatePicker`/`MenteSearchTextBox`/`MenteDataGridColumnHeader`/`DataGridRightTextBlock`/`DataGridRightTextBox`/`ToolCommandButton`)を使用。F5=一覧取得・F2=確定の InputBindings。
+### 技術決定 Why
+- テーブル未作成の指示に従い DB 非依存の `BaseViewModel` を採用し、確定処理は生成件数メッセージ表示に留めた。配分テーブルの提案スキーマ(1レコード=倉庫×店舗×商品×色×サイズ: 例 `Tran20ShopHaibun`)は `ShopHaibunResult` の XML doc と `.omo/ShopHaibunInput_plan.md`(コミット対象外)に記載。
+- レガシーの「店舗を横列に並べる」マトリクスUIは動的列生成(code-behind)が必要なため、提案段階では静的列・MVVM 完結で堅牢な「SKU×店舗フラット DataGrid」で表現(粒度は提案テーブルと一致)。
+### 確認
+- Build: CvWpfclient 0 error / 0 warning
+
+---
+
 ## [2026-07-09] 15:25 ShiireInputViewModel の Rate/Tax 計算バグ修正
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus
