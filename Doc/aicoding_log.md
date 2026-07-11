@@ -1,3 +1,22 @@
+## [2026-07-11] 追加 支払入力画面
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._05Shiire.ShiharaiInputView`を`Tran07Shiharai`対応で作成する。qfmは作成しない。
+### 実施内容
+- CvWpfclient/ViewModels/05Shiire/ShiharaiInputViewModel.cs: `Tran07Shiharai`の一覧・ヘッダ編集・`TranKinMeisai`明細の追加/削除/保存を実装。ヘッダの支払先は`MasterShiire`、明細の支払区分は`MasterMeisho`の`Kubun='KIN'`を参照。
+- CvWpfclient/Views/05Shiire/ShiharaiInputView.xaml: 支払入力の一覧/詳細タブ、支払先・担当者検索、明細編集UIを追加。
+- CvWpfclient/Models/MenuData.cs: 支払入力メニューの「準備中」表示を解除。
+### 技術決定 Why
+- 既存の`BasePlainLightMenteViewModel`と入力画面パターンを流用し、qfmがないため印刷処理は追加せず、登録・修正・削除と明細入力に絞った。
+### 確認
+- XAML XML構文確認、リソース参照確認、`git diff --check`成功。
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-10] 16:17 MasterConfigMenteView の印刷処理を追加
 ### Agent
 - kimi-k2.6 : OpenCode : Sisyphus

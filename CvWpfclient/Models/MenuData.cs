@@ -125,7 +125,7 @@ public partial class MenuData : ObservableObject {
 			new("ブランド別仕入金額表", typeof(Views._05Shiire.BrandShiireKingakuTableView), addInfo:"準備中"),
 			new("仕入伝票印刷", typeof(Views._05Shiire.ShiireSlipPrintView), addInfo:"準備中"),
 			new("仕入先別仕入推移表", typeof(Views._05Shiire.ShiireTrendReportView), addInfo:"準備中"),
-			new("支払入力", typeof(Views._05Shiire.ShiharaiInputView), addInfo:"準備中"),
+			new("支払入力", typeof(Views._05Shiire.ShiharaiInputView)),
 			new("支払消込", typeof(Views._05Shiire.ShiharaiMatchingView), addInfo:"準備中"),
 			new("仕入先元帳", typeof(Views._05Shiire.ShiireLedgerView), addInfo:"準備中"),
 			new("買掛金管理表", typeof(Views._05Shiire.KaikakeBalanceReportView), addInfo:"準備中"),

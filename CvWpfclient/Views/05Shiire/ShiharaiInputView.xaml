@@ -1,11 +1,10 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._05Shiire.ShiharaiInputView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._05Shiire.ShiharaiInputView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._05Shiire"
 	Title="支払入力"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	Width="1200" Height="760"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display"
@@ -13,5 +12,191 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:ShiharaiInputViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoUpdateOnDetailTabCommand}" Gesture="F2" />
+		<KeyBinding Command="{Binding DoDeleteOnDetailTabCommand}" Gesture="F3" />
+		<KeyBinding Command="{Binding DoInsertOnDetailTabCommand}" Gesture="F4" />
+		<KeyBinding Command="{Binding DoListOnListTabCommand}" Gesture="F5" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0" Padding="12,8" materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<Button Margin="0,0,8,0" Command="{Binding ExitCommand}" Style="{StaticResource ToolCommandButton}" ToolTip="閉じる (Esc)">
+					<materialDesign:PackIcon Kind="ArrowLeft" />
+				</Button>
+				<materialDesign:PackIcon Width="28" Height="28" VerticalAlignment="Center" Kind="CashMultiple" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="20" FontWeight="SemiBold" Text="支払入力" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}" Style="{StaticResource MaterialDesignTabControl}">
+			<TabItem Height="0" d:Header="d:一覧" d:Height="40" Header="">
+				<Grid Margin="12">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<DockPanel Grid.Row="0" Margin="8,0,8,8">
+						<Button DockPanel.Dock="Right" Command="{Binding DoListOnListTabCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="一覧取得 (F5)">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center" Kind="DatabaseSearch" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="一覧取得" />
+							</StackPanel>
+					</Button>
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center" Kind="FormatListBulleted" />
+						<TextBlock Margin="0,0,16,0" VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold" Text="一覧" />
+						<Button Command="{Binding GoToDetailCommand}" CommandParameter="{Binding Current}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="選択中の支払を表示">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center" Kind="FileDocumentEdit" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="支払詳細" />
+							</StackPanel>
+						</Button>
+					</StackPanel>
+					</DockPanel>
+
+					<materialDesign:Card Grid.Row="1" Padding="0" materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+						<Grid>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="*" />
+							</Grid.RowDefinitions>
+							<Border Grid.Row="0" Padding="12,8" Background="{DynamicResource MaterialDesignToolBarBackground}" CornerRadius="8,8,0,0">
+								<DockPanel>
+									<TextBlock Margin="0,0,12,0" VerticalAlignment="Center" DockPanel.Dock="Right" FontSize="13" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+									<TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="{Binding Message}" TextTrimming="CharacterEllipsis" />
+								</DockPanel>
+							</Border>
+							<DataGrid Grid.Row="1" helpers:DataGridDoubleClick.Command="{Binding GoToDetailCommand}" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True"
+								AutoGenerateColumns="False" IsReadOnly="True" IsSynchronizedWithCurrentItem="True" ItemsSource="{Binding ListData}" SelectedItem="{Binding Current, Mode=TwoWay}"
+								Style="{StaticResource MaterialDesignDataGrid}" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8">
+								<DataGrid.Columns>
+									<DataGridTextColumn Width="90" Binding="{Binding Id}" Header="支払No" />
+									<DataGridTextColumn Width="120" Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}" Header="支払日" />
+									<DataGridTextColumn Width="100" Binding="{Binding VTori.Cd}" Header="支払先CD" />
+									<DataGridTextColumn Width="200" Binding="{Binding VTori.Mei}" Header="支払先名" />
+									<DataGridTextColumn Width="100" Binding="{Binding VShain.Cd}" Header="担当者CD" />
+									<DataGridTextColumn Width="160" Binding="{Binding VShain.Mei}" Header="担当者名" />
+									<DataGridTextColumn Width="130" Binding="{Binding KingakuTotal, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="金額計" />
+									<DataGridTextColumn Width="120" Binding="{Binding ManualNo}" Header="手入力No" />
+								</DataGrid.Columns>
+								<DataGrid.ColumnHeaderStyle>
+									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}" TargetType="DataGridColumnHeader" />
+								</DataGrid.ColumnHeaderStyle>
+							</DataGrid>
+						</Grid>
+					</materialDesign:Card>
+				</Grid>
+			</TabItem>
+
+			<TabItem Height="0" d:Header="d:詳細" d:Height="40" Header="">
+				<Grid Margin="12">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<DockPanel Grid.Row="0" Margin="8,0,8,8">
+						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+							<Button Margin="4,0" Command="{Binding DoUpdateOnDetailTabCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="修正 (F2)">
+								<StackPanel Orientation="Horizontal"><materialDesign:PackIcon VerticalAlignment="Center" Kind="Pencil" /><TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="修正" /></StackPanel>
+							</Button>
+							<Button Margin="4,0" Command="{Binding DoDeleteOnDetailTabCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="削除 (F3)">
+								<StackPanel Orientation="Horizontal"><materialDesign:PackIcon VerticalAlignment="Center" Kind="Delete" /><TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="削除" /></StackPanel>
+							</Button>
+							<Button Margin="4,0" Command="{Binding DoInsertOnDetailTabCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="追加 (F4)">
+								<StackPanel Orientation="Horizontal"><materialDesign:PackIcon VerticalAlignment="Center" Kind="Plus" /><TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="追加" /></StackPanel>
+							</Button>
+						</StackPanel>
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center" Kind="FileDocumentEdit" />
+							<TextBlock Margin="0,0,16,0" VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold" Text="{Binding CurrentEdit.Id, StringFormat={}支払No:{0}}" />
+							<Button Command="{Binding GoToListCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="一覧へ戻る">
+								<StackPanel Orientation="Horizontal"><materialDesign:PackIcon VerticalAlignment="Center" Kind="FormatListBulleted" /><TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="一覧に戻る" /></StackPanel>
+							</Button>
+						</StackPanel>
+					</DockPanel>
+
+					<materialDesign:Card Grid.Row="1" Margin="0,0,0,10" Padding="12" materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="Auto" /><ColumnDefinition Width="160" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="430" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="180" /><ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+							<TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource FormLabel}" Text="支払日" />
+							<DatePicker Grid.Row="0" Grid.Column="1" Margin="0,4,18,4" helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="支払日" IsTodayHighlighted="False" SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormDatePicker}" />
+							<TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource FormLabel}" Text="支払先Id" />
+							<DockPanel Grid.Row="0" Grid.Column="3" Margin="0,4,18,4">
+								<TextBox Width="120" Height="36" helpers:SearchTextBoxAssist.Command="{Binding DoSelectShiireCommand}" BorderThickness="0,0,0,1" DockPanel.Dock="Left" Style="{StaticResource MenteSearchTextBox}" Text="{Binding CurrentEdit.Id_Torisaki, UpdateSourceTrigger=PropertyChanged}" />
+								<StackPanel Margin="10,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
+									<TextBlock Text="{Binding CurrentEdit.VTori.Cd}" />
+									<TextBlock Margin="8,0,0,0" Text="{Binding CurrentEdit.VTori.Mei}" TextTrimming="CharacterEllipsis" />
+								</StackPanel>
+							</DockPanel>
+							<TextBlock Grid.Row="0" Grid.Column="4" Style="{StaticResource FormLabel}" Text="担当者Id" />
+							<DockPanel Grid.Row="0" Grid.Column="5" Margin="0,4">
+								<TextBox Width="100" Height="36" helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}" BorderThickness="0,0,0,1" DockPanel.Dock="Left" Style="{StaticResource MenteSearchTextBox}" Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding CurrentEdit.VShain.Mei}" TextTrimming="CharacterEllipsis" />
+							</DockPanel>
+							<TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FormLabel}" Text="手入力No" />
+							<TextBox Grid.Row="1" Grid.Column="1" Margin="0,4,18,4" Style="{StaticResource FormTextBox}" Text="{Binding CurrentEdit.ManualNo, UpdateSourceTrigger=PropertyChanged}" />
+							<TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource FormLabel}" Text="金額計" />
+							<TextBox Grid.Row="1" Grid.Column="3" Margin="0,4,18,4" HorizontalContentAlignment="Right" IsReadOnly="True" Style="{StaticResource FormTextBox}" Text="{Binding CurrentEdit.KingakuTotal, StringFormat={}{0:N0}}" />
+							<TextBlock Grid.Row="1" Grid.Column="4" Style="{StaticResource FormLabel}" Text="メモ" />
+							<TextBox Grid.Row="1" Grid.Column="5" Margin="0,4" Style="{StaticResource FormTextBox}" Text="{Binding CurrentEdit.Memo, UpdateSourceTrigger=PropertyChanged}" />
+						</Grid>
+					</materialDesign:Card>
+
+					<materialDesign:Card Grid.Row="2" Padding="0" materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+						<Grid>
+							<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+							<Border Grid.Row="0" Padding="12,8" Background="{DynamicResource MaterialDesignToolBarBackground}" CornerRadius="8,8,0,0">
+								<DockPanel>
+									<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+										<Button Margin="4,0" Command="{Binding AddMeisaiCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="明細行追加"><StackPanel Orientation="Horizontal"><materialDesign:PackIcon VerticalAlignment="Center" Kind="Plus" /><TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="明細行追加" /></StackPanel></Button>
+										<Button Margin="4,0" Command="{Binding DeleteMeisaiCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" ToolTip="選択中の明細行を削除"><StackPanel Orientation="Horizontal"><materialDesign:PackIcon VerticalAlignment="Center" Kind="Delete" /><TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="明細行削除" /></StackPanel></Button>
+									</StackPanel>
+									<TextBlock VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Text="支払明細" />
+								</DockPanel>
+							</Border>
+							<DataGrid Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding EditMeisai}" SelectedItem="{Binding SelectedMeisai, Mode=TwoWay}" Style="{StaticResource MaterialDesignDataGrid}" materialDesign:DataGridAssist.CellPadding="10,6" materialDesign:DataGridAssist.ColumnHeaderPadding="10,8">
+								<DataGrid.Columns>
+									<DataGridTextColumn Width="60" Binding="{Binding No}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="No" IsReadOnly="True" />
+									<DataGridTemplateColumn Width="360" Header="支払区分">
+										<DataGridTemplateColumn.CellTemplate>
+											<DataTemplate>
+												<Button HorizontalContentAlignment="Left" Command="{Binding DataContext.DoSelectKinCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignFlatButton}" ToolTip="MasterMeisho (Kubun=KIN) から選択">
+												<TextBlock Text="{Binding Code_Kin}" TextTrimming="CharacterEllipsis" />
+												</Button>
+											</DataTemplate>
+										</DataGridTemplateColumn.CellTemplate>
+										<DataGridTemplateColumn.CellEditingTemplate>
+											<DataTemplate>
+												<Button HorizontalContentAlignment="Left" Command="{Binding DataContext.DoSelectKinCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignOutlinedButton}">
+													<TextBlock Text="{Binding Code_Kin}" />
+												</Button>
+											</DataTemplate>
+										</DataGridTemplateColumn.CellEditingTemplate>
+									</DataGridTemplateColumn>
+									<DataGridTextColumn Width="140" Binding="{Binding Mei_Kin}" Header="支払区分名" IsReadOnly="True" />
+									<DataGridTextColumn Width="140" Binding="{Binding Kingaku, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="金額" />
+									<DataGridTextColumn Width="*" Binding="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" Header="明細メモ" />
+								</DataGrid.Columns>
+								<DataGrid.ColumnHeaderStyle><Style BasedOn="{StaticResource MenteDataGridColumnHeader}" TargetType="DataGridColumnHeader" /></DataGrid.ColumnHeaderStyle>
+							</DataGrid>
+						</Grid>
+					</materialDesign:Card>
+				</Grid>
+			</TabItem>
+		</TabControl>
+	</Grid>
 </helpers:BaseWindow>
