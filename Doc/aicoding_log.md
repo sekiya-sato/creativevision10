@@ -1,3 +1,20 @@
+## [2026-07-11] 14:55 支払入力画面のレイアウト調整
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：支払入力の金額・支払区分を縮小し、メモを広く表示する。画面サイズと他のデザイン上の不整合も確認する。
+### 実施内容
+- CvWpfclient/Views/05Shiire/ShiharaiInputView.xaml: ウィンドウを1100×680へ縮小。ヘッダ金額計の列を430から350、メモ領域を可変列まで拡張。明細の支払区分を360から180、金額を140から100へ縮小し、明細メモの可変幅を拡張。
+### 技術決定 Why
+- 支払区分コードと金額は短い値が前提のため固定幅を抑え、入力・確認が必要なメモを残り幅すべてで表示する。
+### 確認
+- XAML XML構文確認、CRLF不正0件、`git diff --check`成功。
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-11] 追加 支払入力画面
 ### Agent
 - GPT-5 : OpenAI : Codex

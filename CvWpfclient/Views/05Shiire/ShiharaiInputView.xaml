@@ -4,7 +4,7 @@
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._05Shiire"
 	Title="支払入力"
-	Width="1200" Height="760"
+	Width="1100" Height="680"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display"
@@ -127,7 +127,7 @@
 					<materialDesign:Card Grid.Row="1" Margin="0,0,0,10" Padding="12" materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 						<Grid>
 							<Grid.ColumnDefinitions>
-								<ColumnDefinition Width="Auto" /><ColumnDefinition Width="160" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="430" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="180" /><ColumnDefinition Width="*" />
+								<ColumnDefinition Width="Auto" /><ColumnDefinition Width="160" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="350" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="260" /><ColumnDefinition Width="*" />
 							</Grid.ColumnDefinitions>
 							<Grid.RowDefinitions>
 								<RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
@@ -152,7 +152,7 @@
 							<TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource FormLabel}" Text="金額計" />
 							<TextBox Grid.Row="1" Grid.Column="3" Margin="0,4,18,4" HorizontalContentAlignment="Right" IsReadOnly="True" Style="{StaticResource FormTextBox}" Text="{Binding CurrentEdit.KingakuTotal, StringFormat={}{0:N0}}" />
 							<TextBlock Grid.Row="1" Grid.Column="4" Style="{StaticResource FormLabel}" Text="メモ" />
-							<TextBox Grid.Row="1" Grid.Column="5" Margin="0,4" Style="{StaticResource FormTextBox}" Text="{Binding CurrentEdit.Memo, UpdateSourceTrigger=PropertyChanged}" />
+							<TextBox Grid.Row="1" Grid.Column="5" Grid.ColumnSpan="2" Margin="0,4" Style="{StaticResource FormTextBox}" Text="{Binding CurrentEdit.Memo, UpdateSourceTrigger=PropertyChanged}" />
 						</Grid>
 					</materialDesign:Card>
 
@@ -171,7 +171,7 @@
 							<DataGrid Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding EditMeisai}" SelectedItem="{Binding SelectedMeisai, Mode=TwoWay}" Style="{StaticResource MaterialDesignDataGrid}" materialDesign:DataGridAssist.CellPadding="10,6" materialDesign:DataGridAssist.ColumnHeaderPadding="10,8">
 								<DataGrid.Columns>
 									<DataGridTextColumn Width="60" Binding="{Binding No}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="No" IsReadOnly="True" />
-									<DataGridTemplateColumn Width="360" Header="支払区分">
+									<DataGridTemplateColumn Width="180" Header="支払区分">
 										<DataGridTemplateColumn.CellTemplate>
 											<DataTemplate>
 												<Button HorizontalContentAlignment="Left" Command="{Binding DataContext.DoSelectKinCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignFlatButton}" ToolTip="MasterMeisho (Kubun=KIN) から選択">
@@ -188,7 +188,7 @@
 										</DataGridTemplateColumn.CellEditingTemplate>
 									</DataGridTemplateColumn>
 									<DataGridTextColumn Width="140" Binding="{Binding Mei_Kin}" Header="支払区分名" IsReadOnly="True" />
-									<DataGridTextColumn Width="140" Binding="{Binding Kingaku, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="金額" />
+									<DataGridTextColumn Width="100" Binding="{Binding Kingaku, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="金額" />
 									<DataGridTextColumn Width="*" Binding="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" Header="明細メモ" />
 								</DataGrid.Columns>
 								<DataGrid.ColumnHeaderStyle><Style BasedOn="{StaticResource MenteDataGridColumnHeader}" TargetType="DataGridColumnHeader" /></DataGrid.ColumnHeaderStyle>
