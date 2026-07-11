@@ -156,14 +156,16 @@ public class DefineDataTable {
 		db.Update(syslogin);
 		var sysman = new MasterSysman {
 			Name = $"株式会社 CreativeVision10 デモシステム {now.ToDtStrDate2()}",
-			PostalCode = "100-0000",
+			PostalCode = "100-0013",
+			Address1 = "東京都",
+			Address2 = "千代田区",
 			FiscalStartDate = new DateTime(now.Year, 1, 1).ToDtStrDate2(),
 			ShimeBi = 99,
-			ModifyDaysEx = 9999,
-			ModifyDaysPre = 9999,
+			ModifyDaysEx = 100,
+			ModifyDaysPre = 100,
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate(),
-			Jsub = [new MasterSysTax { Id = 1, TaxRate = 10 }, new MasterSysTax { Id = 2, TaxRate = 8 }]
+			Jsub = [new MasterSysTax { Id = 1, DateFrom = "19010101", TaxRate = 10 }, new MasterSysTax { Id = 2, DateFrom = "19010101", TaxRate = 8 }, new MasterSysTax { Id = 3, DateFrom = "19010101", TaxRate = 10 },]
 
 		};
 		db.Insert<MasterSysman>(sysman);
@@ -181,7 +183,7 @@ public class DefineDataTable {
 		db.InsertBulk<MasterMeisho>(meishoList);
 		var shohin = new MasterShohin {
 			Code = "0001",
-			Name = "Sample Shohin",
+			Name = "サンプル商品",
 			Id_Brand = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Id ?? 0,
 			VBrand = new CodeNameView {
 				Sid = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Id ?? 0,
@@ -212,31 +214,46 @@ public class DefineDataTable {
 		db.Execute(DerivedShohinColSiz.InsertSql, shohin.Id);
 		var customer = new MasterEndCustomer {
 			Code = "0001",
-			Name = "Sample Customer",
+			Name = "サンプル顧客",
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()
 		};
 		db.Insert<MasterEndCustomer>(customer);
 		var shiire = new MasterShiire {
 			Code = "0001",
-			Name = "Sample Shiire",
+			Name = "サンプル仕入先",
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()
 		};
 		db.Insert<MasterShiire>(shiire);
 		var tokui = new MasterTokui {
 			Code = "0001",
-			Name = "Sample Tokui",
+			Name = "サンプル得意先",
 			Id_Shain = shain.Id,
 			VShain = new CodeNameView {
 				Sid = shain.Id,
 				Cd = shain.Code,
 				Mei = shain.Name
 			},
+			TenType = 1,
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()
 		};
 		db.Insert<MasterTokui>(tokui);
+		var tenpo = new MasterTokui {
+			Code = "0101",
+			Name = "サンプル店舗A",
+			Id_Shain = shain.Id,
+			VShain = new CodeNameView {
+				Sid = shain.Id,
+				Cd = shain.Code,
+				Mei = shain.Name
+			},
+			TenType = 6,
+			Vdc = Common.GetVdate(),
+			Vdu = Common.GetVdate()
+		};
+		db.Insert<MasterTokui>(tenpo);
 	}
 
 

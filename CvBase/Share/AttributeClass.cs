@@ -151,14 +151,22 @@ public sealed class KeyDmlAttribute : Attribute {
 	}
 }
 /// <summary>
-/// 外部キー定義 参照元テーブル, 参照元カラム(デフォルト Id)
+/// 外部キー定義 参照元テーブル, 参照元カラム(デフォルト Id)、参照元区分(MasterMeishoのKubun)、参照元店種(MasterTokuiのTenType)、参照元名称リスト区分先頭桁(MasterMeishoのKubunの先頭1桁)
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class ForeignKeyAttribute : Attribute {
 	public string TableName { get; }
 	public string KeyName { get; }
-	public ForeignKeyAttribute(string tableName, string keyName = "Id") {
+	public string MeishoKubun { get; }
+	public int TenType { get; }
+	public char MeishoListKubunTop { get; }
+	public string AdditionalInfo { get; }
+	public ForeignKeyAttribute(string tableName, string keyName = "Id", string meishoKubun = "", int tenType = 0, char meishoListKubunTop = '\0', string additionalInfo = "") {
 		TableName = tableName;
 		KeyName = keyName;
+		MeishoKubun = meishoKubun;
+		TenType = tenType;
+		MeishoListKubunTop = meishoListKubunTop;
+		AdditionalInfo = additionalInfo;
 	}
 }

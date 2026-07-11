@@ -53,7 +53,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("店舗CD")]
-	[ForeignKey(nameof(MasterTokui))]
+	[ForeignKey(nameof(MasterTokui), tenType: 6)]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 店舗データ
@@ -67,7 +67,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("部門")]
-	[ForeignKey(nameof(MasterMeisho))]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "BMN")]
 	public partial long Id_Bumon { get; set; }
 	/// <summary>
 	/// 部門データ
@@ -83,6 +83,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD05")]
+	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: 'E')]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 詳細内容
@@ -92,7 +93,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[ColumnSizeDml(1000)]
 	public partial BaseDetailClass? Jdetail { get; set; }
 	/// <summary>
-	/// 有効期限 yyyyMMdd (この期限を過ぎた場合はログイン無効)
+	/// 有効期限 yyyyMMdd (この期限を過ぎた場合はログイン無効) ただし今のところは未使用
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
@@ -147,6 +148,7 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("店舗CD")]
+	[ForeignKey(nameof(MasterTokui), tenType: 6)]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 店舗データ
@@ -211,6 +213,7 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
+	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: 'K')]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 詳細内容
@@ -265,6 +268,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("ブランドCD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "BRD")]
 	public partial long Id_Brand { get; set; }
 	/// <summary>
 	/// ブランドデータ
@@ -278,6 +282,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("アイテムCD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "ITM")]
 	public partial long Id_Item { get; set; }
 	/// <summary>
 	/// アイテムデータ
@@ -291,6 +296,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("展示会CD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "TNJ")]
 	public partial long Id_Tenji { get; set; }
 	/// <summary>
 	/// 展示会データ
@@ -304,6 +310,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("メーカーCD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "MKR")]
 	public partial long Id_Maker { get; set; }
 	/// <summary>
 	/// メーカーデータ
@@ -317,6 +324,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("シーズンCD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "SZN")]
 	public partial long Id_Season { get; set; }
 	/// <summary>
 	/// シーズンデータ
@@ -330,6 +338,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("素材CD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "SZI")]
 	public partial long Id_Material { get; set; }
 	/// <summary>
 	/// 素材データ
@@ -343,6 +352,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("原産国CD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "GEN")]
 	public partial long Id_Country { get; set; }
 	/// <summary>
 	/// 原産国データ
@@ -428,12 +438,14 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("商品サイズ区分")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "SIZ,US0,US1,US2,US3,US4,US5,US6,US7,US8,US9")]
 	public partial string SizeKu { get; set; } = "SIZ";
 	/// <summary>
 	/// 基準倉庫
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("基準倉庫CD")]
+	[ForeignKey(nameof(MasterTokui), tenType: 0)]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 倉庫データ
@@ -480,6 +492,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
+	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: 'B')]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 詳細内容
@@ -502,6 +515,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	/// 色
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "COL")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// カラーCD
@@ -520,6 +534,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "MasterShohinのSizeKuに依存")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// サイズCD
@@ -554,7 +569,8 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANコード3")]
-	public partial string Jan3 { get; set; } = string.Empty;}
+	public partial string Jan3 { get; set; } = string.Empty;
+}
 /// <summary>
 /// 品質テーブル
 /// </summary>

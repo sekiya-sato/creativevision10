@@ -32,7 +32,7 @@ public class TranCalcBase {
 	/// 在庫、入庫、出庫、移動中のフラグを取得する
 	/// </summary>
 	/// <param name="tableName"></param>
-	/// <returns></returns>
+	/// <returns>在庫、入庫、出庫、移動中のフラグ</returns>
 	public static Tuple<int, int, int, int> GetCalcSoko(string tableName, bool invertFlag = false) {
 		var ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
 		if (tableName == nameof(Tran00Uriage)) {
@@ -70,7 +70,7 @@ public class TranCalcBase {
 	/// 移動先基準で在庫計算のためのフラグを取得する。移動中は移動先の在庫に予定として割り当てる
 	/// </summary>
 	/// <param name="tableName"></param>
-	/// <returns></returns>
+	/// <returns>在庫、入庫、出庫、移動中のフラグ</returns>
 	public static Tuple<int, int, int, int> GetCalcIdosaki(string tableName, bool invertFlag = false) {
 		var ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
 		if (tableName == nameof(Tran05Ido)) {
@@ -125,7 +125,7 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// 倉庫キー
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterTokui))]
+	[ForeignKey(nameof(MasterTokui), tenType: 0)]
 	[OldTableCommentAttr("倉庫CD")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
@@ -136,7 +136,7 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	[ColumnSizeDml(100)]
 	public partial CodeNameView VSoko { get; set; } = new();
 	/// <summary>
-	/// 計算フラグ（1:+ -1:-, 0:計算除外）
+	/// 計算フラグ（1:+ -1:-, 0:計算除外 集計処理で返品を考慮するために使用）
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引区分", "getCalcFlag により算出")]
@@ -249,7 +249,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// 色
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho))]
+	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在する色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// カラーCD
@@ -266,7 +266,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho))]
+	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在するサイズ")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// サイズCD
@@ -383,7 +383,7 @@ public partial class TranKinHeader : BaseDbClass {
 	/// 取引先キー
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterTokui))]
+	[ForeignKey(nameof(MasterTokui), additionalInfo: $"入金は{nameof(MasterTokui)}, 支払は{nameof(MasterShiire)}")]
 	[OldTableCommentAttr("取引先CD1  入金であればMasterTokui 支払であればMasterShiire")]
 	public partial long Id_Torisaki { get; set; }
 	/// <summary>
@@ -437,7 +437,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	/// 区分ユニークキー
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho))] // Kubun='KIN' を参照
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "KIN")]
 	public partial long Id_Kin { get; set; }
 	/// <summary>
 	/// 入金・支払CD
@@ -529,7 +529,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引先CD1")]
-	[ForeignKey(nameof(MasterTokui))]
+	[ForeignKey(nameof(MasterTokui), tenType: 1)]
 	public partial long Id_Tokui { get; set; }
 	/// <summary>
 	/// 得意先データ
@@ -631,7 +631,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	/// 店舗キー
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterTokui))]
+	[ForeignKey(nameof(MasterTokui), tenType: 6)]
 	[OldTableCommentAttr("取引先CD1")]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
@@ -943,7 +943,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	/// 得意先キー
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterTokui))]
+	[ForeignKey(nameof(MasterTokui), tenType: 1)]
 	[OldTableCommentAttr("取引先CD1")]
 	public partial long Id_Tokui { get; set; }
 	/// <summary>

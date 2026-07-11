@@ -43,6 +43,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("営業担当CD", "MasterShiire は 入力社員CD")]
+	[ForeignKey(nameof(MasterShain))]
 	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 社員データ
@@ -125,6 +126,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 入金/支払方法
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "KIN")]
 	public partial long Id_PayMethod { get; set; }
 	/// <summary>
 	/// 入金方法データ
@@ -237,6 +239,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
+	[ForeignKey(nameof(MasterGeneralMeisho), meishoListKubunTop: 'C')]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 事業者登録番号
@@ -261,6 +264,7 @@ public sealed partial class MasterShiire : MasterTorihiki {
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
+	[ForeignKey(nameof(MasterGeneralMeisho), meishoListKubunTop: 'D')]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
 	/// 事業者登録番号
