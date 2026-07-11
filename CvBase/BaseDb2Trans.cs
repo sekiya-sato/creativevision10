@@ -437,7 +437,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	/// 区分ユニークキー
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho))]
+	[ForeignKey(nameof(MasterMeisho))] // Kubun='KIN' を参照
 	public partial long Id_Kin { get; set; }
 	/// <summary>
 	/// 入金・支払CD
