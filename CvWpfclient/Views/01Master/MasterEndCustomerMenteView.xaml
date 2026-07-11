@@ -288,7 +288,7 @@
 								<ComboBox Grid.Row="5" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="性別"
-									SelectedIndex="{Binding CurrentEdit.Gendar, Mode=TwoWay}"
+									SelectedIndex="{Binding CurrentEdit.Gender, Mode=TwoWay}"
 									Style="{StaticResource FormComboBox}">
 									<ComboBoxItem Content="不明" />
 									<ComboBoxItem Content="女性" />
