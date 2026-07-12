@@ -17,21 +17,25 @@ public partial class SummaryRealStock : BaseDbClass {
 	/// 倉庫ID
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo: "TenType in (0,3,6)")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 商品Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在する色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在するサイズ")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
@@ -46,7 +50,7 @@ public partial class SummaryRealStock : BaseDbClass {
 [KeyDml("unq1", true, [nameof(SumMonth), nameof(Id_Soko), nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
 [KeyDml("nk1", false, [nameof(Id_Soko)])]
 [KeyDml("nk2", false, [nameof(Id_Shohin)])]
-[Comment("集計データ：年月、倉庫、商品、色、サイズで集計した在庫データ Suは当月のみ、CumulativeSuは累計")]
+[Comment("集計データ：yyyyMM年月、倉庫、商品、色、サイズで集計した在庫データ Suは当月のみ、CumulativeSuは累計")]
 public partial class SummaryStock : SummaryRealStock {
 	/// <summary>
 	/// 年月

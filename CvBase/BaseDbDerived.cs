@@ -26,11 +26,13 @@ public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
 	/// 商品Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 色サイズ行Index
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin), additionalInfo: $"{nameof(MasterShohin)}のJcolsizに存在する行")]
 	public partial int RowIdx { get; set; }
 	/// <summary>
 	/// コード
@@ -58,6 +60,7 @@ string ryaku = string.Empty;
 	/// 色
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin), additionalInfo: $"{nameof(MasterShohin)}のJcolsizに存在する色, {nameof(MasterMeisho)}のId")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// カラーCD
@@ -75,6 +78,7 @@ string ryaku = string.Empty;
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin), additionalInfo: $"{nameof(MasterShohin)}のJcolsizに存在するサイズ, {nameof(MasterMeisho)}のId")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// サイズCD
