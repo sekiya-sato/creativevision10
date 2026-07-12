@@ -27,12 +27,14 @@ public sealed partial class TranHaibun : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("倉庫CD")]
+	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo: "TenType in (0,3,6)")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("得意先CD")]
+	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo: "TenType in (0,3,6)")]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 区分
@@ -50,6 +52,7 @@ public sealed partial class TranHaibun : BaseDbClass {
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 入力JANコード
@@ -62,11 +65,13 @@ public sealed partial class TranHaibun : BaseDbClass {
 	/// 色
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在する色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在するサイズ")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
@@ -135,6 +140,7 @@ public sealed partial class TranHaibun : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("入力社員CD")]
+	[ForeignKey(nameof(MasterShain))]
 	public partial long Id_Shain { get; set; }
 }
 
@@ -162,12 +168,14 @@ public sealed partial class TranHoju : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("倉庫CD")]
+	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo: "TenType in (0,3,6)")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("仕入先CD")]
+	[ForeignKey(nameof(MasterShiire))]
 	public partial long Id_Shiire { get; set; }
 	/// <summary>
 	/// 区分
@@ -185,6 +193,7 @@ public sealed partial class TranHoju : BaseDbClass {
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 入力JANコード
@@ -197,11 +206,13 @@ public sealed partial class TranHoju : BaseDbClass {
 	/// 色
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在する色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在するサイズ")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
@@ -270,5 +281,6 @@ public sealed partial class TranHoju : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("入力社員CD")]
+	[ForeignKey(nameof(MasterShain))]
 	public partial long Id_Shain { get; set; }
 }
