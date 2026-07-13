@@ -153,12 +153,12 @@ public enum CvFlag {
 	/// DBデータを操作
 	/// </summary>
 	[EnumMember]
-	Msg201_Op_Execute = 201,
+	Msg201_Op_Execute = 111,
 	/// <summary>
 	/// データ出力: DataTypeにより処理分岐
 	/// </summary>
 	[EnumMember]
-	Msg300_Op_OutData = 300,
+	Msg300_Op_OutData = 121,
 	/// <summary>
 	/// テスト用メッセージ開始値
 	/// </summary>
