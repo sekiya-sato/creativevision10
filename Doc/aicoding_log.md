@@ -1,3 +1,20 @@
+## [2026-07-13] 11:26 店舗配分入力の TranHaibun CRUD 実装
+### Agent
+- GPT-5 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ShopHaibunInputView に TranHaibun テーブルの取得・追加・修正・削除処理を実装する。
+### 実施内容
+- CvWpfclient/ViewModels/07Haibun/ShopHaibunInputViewModel.cs: サンプルデータ実装を BasePlainLightMenteViewModel<TranHaibun> ベースの一覧取得・追加・更新・削除へ置換し、倉庫・店舗・商品・SKU の選択処理を追加。
+- CvWpfclient/Views/07Haibun/ShopHaibunInputView.xaml: 配分レコード一覧、追加・更新・削除コマンド、および TranHaibun 項目に対応した編集グリッドへ更新。
+### 技術決定 Why
+- 既存の Msg101_Op_Query / Msg201_Op_Execute 共通実装を利用し、クライアント固有の CRUD 通信を増やさずに楽観ロックを含む既存の保守画面規約へ統一するため。
+### 確認
+- XAML XML構文確認、`git diff --check`、`dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-11] 14:55 支払入力画面のレイアウト調整
 ### Agent
 - GPT-5 : OpenAI : Codex
