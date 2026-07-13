@@ -13,12 +13,14 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// 
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui), tenType: 6)]
 	[OldTableCommentAttr("店舗CD")]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// ブランドId
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun:"BRD")]
 	[OldTableCommentAttr("ブランドCD")]
 	public partial long Id_Brand { get; set; }
 	/// <summary>
@@ -67,6 +69,7 @@ public sealed partial class MasterYosanHanbai : BaseDbClass {
 	/// 販売員Id 
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
 	[OldTableCommentAttr("販売員CD")]
 	public partial long Id_Shain { get; set; }
 	/// <summary>

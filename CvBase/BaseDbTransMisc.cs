@@ -12,7 +12,7 @@ public sealed partial class TranTokuiPromotion : BaseDbClass {
 	/// 得意先Id
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterTokui))]
+	[ForeignKey(nameof(MasterTokui), tenType: 1)]
 	public partial long Id_Tokui { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
@@ -60,6 +60,7 @@ public sealed partial class TranShopPromotion : BaseDbClass {
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui), tenType:6)]
 	public partial long Id_Shop { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
@@ -106,6 +107,7 @@ public sealed partial class Tran60TanaDate : BaseDbClass {
 	/// 店舗Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo:"TenType in (0,3,6)")]
 	public partial long Id_Shop { get; set; }
 	/// <summary>
 	/// 棚卸日付 yyyyMMdd 8桁の文字列で表現

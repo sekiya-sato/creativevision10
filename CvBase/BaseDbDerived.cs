@@ -40,22 +40,6 @@ public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
 	[ObservableProperty]
 	[ColumnSizeDml(16)]
 	public partial string Code { get; set; } = string.Empty;
-	/*
-/// <summary>
-/// 名前
-/// </summary>
-[ObservableProperty]
-[property: ColumnSizeDml(80)]
-
-string name = string.Empty;
-/// <summary>
-/// 略称
-/// </summary>
-[ObservableProperty]
-[property: ColumnSizeDml(100)]
-
-string ryaku = string.Empty;
-*/
 	/// <summary>
 	/// 色
 	/// </summary>

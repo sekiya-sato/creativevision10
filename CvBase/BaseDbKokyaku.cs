@@ -50,6 +50,7 @@ public sealed partial class TranPointRireki : BaseDbClass {
 	/// 顧客Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterEndCustomer))]
 	public partial int Id_Customer { get; set; }
 	/// <summary>
 	/// 取得ポイント
@@ -77,6 +78,7 @@ public sealed partial class SummaryPoint : BaseDbClass {
 	/// 顧客Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterEndCustomer))]
 	public partial int Id_Customer { get; set; }
 	/// <summary>
 	/// 合計ポイント

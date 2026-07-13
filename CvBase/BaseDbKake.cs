@@ -13,6 +13,7 @@ public sealed partial class SummaryUriKake : BaseDbClass {
 	/// 得意先Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui), tenType: 1)]
 	[OldTableCommentAttr("得意先CD")]
 	public partial long Id_Tokui { get; set; }
 	/// <summary>
@@ -104,6 +105,7 @@ public sealed partial class SummaryUriSei : BaseDbClass {
 	/// 得意先Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui), tenType: 1)]
 	[OldTableCommentAttr("得意先CD")]
 	public partial long Id_Tokui { get; set; }
 	/// <summary>
@@ -210,6 +212,7 @@ public sealed partial class SummaryKaiKake : BaseDbClass {
 	/// 仕入先Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShiire))]
 	[OldTableCommentAttr("仕入先CD")]
 	public partial long Id_Shiire { get; set; }
 	/// <summary>
@@ -301,6 +304,7 @@ public sealed partial class SummaryKaiShi : BaseDbClass {
 	/// 仕入先Id
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterShiire))]
 	[OldTableCommentAttr("仕入先CD")]
 	public partial long Id_Shiire { get; set; }
 	/// <summary>

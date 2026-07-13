@@ -151,7 +151,7 @@ public sealed class KeyDmlAttribute : Attribute {
 	}
 }
 /// <summary>
-/// 外部キー定義 参照元テーブル, 参照元カラム(デフォルト Id)、参照元区分(MasterMeishoのKubun)、参照元店種(MasterTokuiのTenType)、参照元名称リスト区分先頭桁(MasterMeishoのKubunの先頭1桁)
+/// 参照元を示すための定義 参照元テーブル, 参照元カラム(デフォルト Id)、参照元区分(MasterMeishoのKubun)、参照元店種(MasterTokuiのTenType)、参照元名称リスト区分先頭桁(MasterMeishoのKubunの先頭1桁)
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class ForeignKeyAttribute : Attribute {
