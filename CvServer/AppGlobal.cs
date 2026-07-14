@@ -35,28 +35,29 @@ public class AppGlobal {
 	/// 初期化 Asp.net Core の Run()の前に呼び出される
 	/// テーブルはすべて存在する前提で、存在しないテーブルがあれば作成する
 	/// </summary>
-	public void Init(ExDatabase db, string appName = "", string serverVersion = "0.0.0") {
+	public async Task InitAsync(ExDatabase db, string appName = "", string serverVersion = "0.0.0", CancellationToken ct = default) {
 		VerInfo.Product = appName;
 		VerInfo.Version = serverVersion;
-		var ret = false;
 		var defTable = new DefineDataTable();
-		ret = defTable.Initialize(db, false);
+		await defTable.InitializeAsync(db, false, ct);
 	}
 	/// <summary>
 	/// PDFライブラリの初期化
 	/// </summary>
 	/// <param name="printServerConfig"></param>
-	public void PdfInit(IConfigurationSection printServerConfig) {
+	public async Task<bool> PdfInitAsync(IConfigurationSection printServerConfig) {
 		if (printServerConfig == null) {
-			return;
+			return false;
 		}
 		var printService = new PrintAdapter();
-		var licenseTask = printService.CheckLicenseAsync().Result;
-		foreach (var lic in licenseTask.Where(c => !c.Status)) {
-			var productkey = printServerConfig.GetValue<string>(lic.Product) ?? "";
-			if (!string.IsNullOrEmpty(productkey)) {
-				printService.RegisterLicenseAsync(lic.Product, productkey).Wait();
-			}
+		var licenses = await printService.CheckLicenseAsync();
+		foreach (var license in licenses.Where(x => !x.Status)) {
+			var key = printServerConfig.GetValue<string>(license.Product);
+			if (string.IsNullOrEmpty(key))
+				continue;
+			if (!await printService.RegisterLicenseAsync(license.Product, key))
+				return false;
 		}
+		return true;
 	}
 }

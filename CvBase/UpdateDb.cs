@@ -57,7 +57,7 @@ public class UpdateDb {
 			ct.ThrowIfCancellationRequested();
 			if (record.DbVersion > latestDb.DbVersion) { // verupSqlのバージョンがDBのバージョンより新しい場合は、DBをverupSqlのバージョンに合わせるためのSQLを実行する
 				var errorMsg = await SubInsertRecordAsync(db, record, latestDb.DbVersion, logger, ct);
-				if (!string.IsNullOrEmpty(errorMsg)) {
+				if (!string.IsNullOrEmpty(errorMsg)) { // 失敗したスキーマ変更は再度実行しても失敗するので、エラーをログに出力して処理を続行する
 					logger.LogError($"UpdateDb: DBバージョンアップ時エラー rec={record.DbVersion}: {errorMsg} : SQL={record.Sql}");
 				}
 			}

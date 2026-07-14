@@ -490,9 +490,9 @@ public partial class ExDatabase : Database {
 				return "";
 		}
 	}
-	public string RawSQL = "";
-	public object[]? RawSQLParam = null;
-	public string RawLastError = "";
+	public string RawSql { get; private set; } = "";
+	public object[]? RawSqlParam { get; private set; } = null;
+	public string RawLastError { get; private set; } = "";
 	DbConnection? _conn = null;
 	/*
 	private static readonly JsonSerializerSettings jsonOptions = new() {
@@ -521,8 +521,8 @@ public partial class ExDatabase : Database {
 	/// <param name="para"></param>
 	/// <returns></returns>
 	public List<Dictionary<string, object>> RawExecCmd(string sql, object[]? para = null) {
-		RawSQL = sql;
-		RawSQLParam = para;
+		RawSql = sql;
+		RawSqlParam = para;
 		RawLastError = "";
 		var ret = new List<Dictionary<string, object>>();
 		if (Connection != null) {
@@ -569,7 +569,7 @@ FROM sqlite_master WHERE type = 'table' AND ( name NOT LIKE 'sqlite_%' AND name 
 		foreach (var row in rows) {
 			var sql2 = row["sqlstr"]?.ToString() ?? "";
 			var name = row["name"]?.ToString() ?? "";
-			var comment = CommentAttr.GetComment(name); // コメントの取得 (必要に応じて使用) [Get comment (use as needed)]
+			var comment = GetComment(name); // コメントの取得 (必要に応じて使用) [Get comment (use as needed)]
 			if (!string.IsNullOrEmpty(sql2)) {
 				var retQuery = RawExecCmd(sql2);
 				var cnt = retQuery.FirstOrDefault()?["cnt"] ?? 0;
@@ -578,5 +578,19 @@ FROM sqlite_master WHERE type = 'table' AND ( name NOT LIKE 'sqlite_%' AND name 
 		}
 		return result;
 	}
-
+	/// <summary>
+	/// テーブルコメントを取得するためのヘルパークラス(同一アセンブリからの読み出し)
+	/// </summary>
+	/// <param name="tableName"></param>
+	/// <returns></returns>
+	string GetComment(string tableName) {
+		var assembly = Assembly.GetExecutingAssembly(); // CvBase.dll 自身
+		var type = assembly.GetTypes().FirstOrDefault(t => t.Name == tableName);
+		if (type == null) {
+			return "";
+		}
+		var commentAttr = Attribute.GetCustomAttribute(type, typeof(CommentAttribute)) as CommentAttribute;
+		return commentAttr?.Content ?? "";
+	}
 }
+

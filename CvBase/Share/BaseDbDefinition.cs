@@ -159,7 +159,7 @@ public sealed partial class MasterGeneralMeisho : CodeNameView {
 	[ColumnSizeDml(10)]
 	public partial string Kb { get; set; } = string.Empty;
 	/// <summary>
-	/// 区分名
+	/// 区分名(PascalCase規約外)
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(40)]
@@ -167,13 +167,21 @@ public sealed partial class MasterGeneralMeisho : CodeNameView {
 	/// <summary>
 	/// 選択元のマスターリスト
 	/// </summary>
-	public List<MasterMeisho> BaseList = [];
+	public List<MasterMeisho> BaseList { get; private set; } = [];
 	// Kb が変更されたら自動的に呼ばれる (XAML側のトリガー不要)
 	partial void OnKbChanged(string value) {
 		if (BaseList == null || BaseList.Count == 0) return;
 		var item = BaseList.FirstOrDefault(x => x.Code == value);
 		if (item == null) return;
 		Kbname = item.Name ?? string.Empty;
+	}
+	public MasterGeneralMeisho() : base() {
+	}
+	public MasterGeneralMeisho(List<MasterMeisho> baseList) {
+		BaseList = baseList;
+	}
+	public void SetBaseList(List<MasterMeisho> baseList) {
+		BaseList = baseList;
 	}
 }
 

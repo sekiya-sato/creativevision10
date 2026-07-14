@@ -51,7 +51,7 @@ from MasterShain {query.AddWhereOrder()}
 
 	protected override void OnCurrentEditChangedCore(MasterShain? oldValue, MasterShain newValue) {
 		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
-		foreach (var item in jsubClones) item.BaseList = KubunList;
+		foreach (var item in jsubClones) item.SetBaseList(KubunList);
 		EditJsub = new ObservableCollection<MasterGeneralMeisho>(jsubClones);
 	}
 
@@ -113,7 +113,7 @@ from MasterShain {query.AddWhereOrder()}
 
 	[RelayCommand]
 	void AddJsub() {
-		var newItem = new MasterGeneralMeisho { BaseList = KubunList };
+		var newItem = new MasterGeneralMeisho(KubunList);
 		EditJsub.Add(newItem);
 		SortJsub();
 		SelectedJsub = newItem;

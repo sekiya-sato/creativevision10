@@ -50,7 +50,7 @@ public class CoreServiceTests {
 		var env = new FakeWebHostEnvironment();
 		var httpAccessor = new HttpContextAccessor();
 		var appInit = new AppGlobal();
-		appInit.Init(_db);
+		appInit.InitAsync(_db).Wait();
 		// サービスを作成
 		_service = new CoreService(logger, config, env, httpAccessor, _db);
 		_scheduler = new NCrontab.Scheduler.Scheduler(NullLogger<NCrontab.Scheduler.Scheduler>.Instance);

@@ -83,7 +83,7 @@ from MasterTokui {query.AddWhereOrder()}
 
 	void ApplySubListsFromCurrentEdit() {
 		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
-		foreach (var item in jsubClones) item.BaseList = KubunList;
+		foreach (var item in jsubClones) item.SetBaseList(KubunList);
 		EditJsub = new ObservableCollection<MasterGeneralMeisho>(jsubClones);
 	}
 
@@ -158,7 +158,7 @@ from MasterTokui {query.AddWhereOrder()}
 
 	[RelayCommand]
 	void AddJsub() {
-		var newItem = new MasterGeneralMeisho { BaseList = KubunList };
+		var newItem = new MasterGeneralMeisho (KubunList);
 		EditJsub.Add(newItem);
 		SortJsub();
 		SelectedJsub = newItem;

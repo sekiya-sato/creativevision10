@@ -153,8 +153,10 @@ var appInit = new AppGlobal();
 using (var scope = app.Services.CreateScope()) {
 	var database = scope.ServiceProvider.GetRequiredService<ExDatabase>();
 	// DIスコープから ExDatabase を取得してサーバ起動時に必要な初期化を実行
-	appInit.Init(database, app.Environment.ApplicationName, serverVersion);
-	appInit.PdfInit(builder.Configuration.GetSection("PrintServer"));
+	await appInit.InitAsync(database, app.Environment.ApplicationName, serverVersion, app.Lifetime.ApplicationStopping);
+	var isPdfReady = await appInit.PdfInitAsync(builder.Configuration.GetSection("PrintServer"));
+	if (!isPdfReady)
+		logger.LogWarning("PdfInitAsync Error");
 	logger.LogDebug($"appInit.Init() Server={serverVersion}, SQLite={database.Version}");
 }
 var appStartTime = DateTime.Now;

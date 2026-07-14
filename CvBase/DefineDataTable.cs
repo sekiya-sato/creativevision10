@@ -17,7 +17,7 @@ public class DefineDataTable {
 	/// <param name="db">データベースインスタンス</param>
 	/// <param name="isForce">強制的に作成するかどうか</param>
 	/// <returns>初期化が成功したかどうか</returns>
-	public bool Initialize(ExDatabase db, bool isForce) {
+	public async Task<bool> InitializeAsync(ExDatabase db, bool isForce, CancellationToken ct = default) {
 		var ret = false;
 		// SQLiteのバージョンは 3.49.1 以降 (2025/05/27) select sqlite_version();
 
@@ -118,13 +118,14 @@ public class DefineDataTable {
 				return false;
 			}
 		}
+		ret = true;
 		// DBがなにもない場合、初期データを作成する
 		InitializeDatabase(db);
 		// 個別の初期化処理
 		MasterShipping.CreateDefaultData(db);
 
 		// DBの整合性を管理
-		UpdateDb.WriteVersionInfoAsync(db).Wait();
+		await UpdateDb.WriteVersionInfoAsync(db, ct);
 		// 他、追加処理
 		//var summaryDb = new CvDomainLogic.SummaryDb(db);
 		//summaryDb.CalcSummaryRealStock(DateTime.Now.ToString("yyyyMM"));

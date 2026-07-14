@@ -12,21 +12,6 @@ public sealed class CommentAttribute : Attribute {
 	}
 }
 /// <summary>
-/// 別アセンブリからテーブルコメントを取得するためのヘルパークラス
-/// </summary>
-public sealed class CommentAttr {
-	public static string GetComment(string tableName) {
-		var assembly = Assembly.GetExecutingAssembly(); // CvBase.dll 自身
-		var type = assembly.GetTypes().FirstOrDefault(t => t.Name == tableName);
-
-		if (type == null) {
-			return "";
-		}
-		var commentAttr = Attribute.GetCustomAttribute(type, typeof(CommentAttribute)) as CommentAttribute;
-		return commentAttr?.Content ?? "";
-	}
-}
-/// <summary>
 /// 旧テーブルでどの項目を引き継いでいるのかを示すコメント
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
@@ -38,8 +23,6 @@ public sealed class OldTableCommentAttr : Attribute {
 		Content = content;
 	}
 }
-
-
 
 public enum ColumnType {
 	/// <summary>
