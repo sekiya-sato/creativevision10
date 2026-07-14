@@ -24,6 +24,13 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 	public const int KubunHatsukai = 0;
 	public const int KubunZaiko = 1;
 
+	/// <summary>
+	/// 発注データ（Tran13Hachu、別名 H）の「済フラグがたっていない＝未済」を表す SQL 条件。
+	/// TODO: 発注データの「済フラグ」は未実装のため仮実装。済フラグ実装後はフラグ判定へ置き換えること。
+	/// 現状は仕入 Tran03Shiire.RelateNo1 に発注Id が参照されていない（未消込）ことを未済とみなす。
+	/// </summary>
+	const string HachuMizumiCondition = "NOT EXISTS (SELECT 1 FROM Tran03Shiire S WHERE S.RelateNo1 = H.Id)";
+
 	ShopHaibunSearchParameter? searchParam;
 	MasterShohin? targetShohin;
 	List<DerivedShohinColSiz> targetSkuList = [];
@@ -383,8 +390,10 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 	}
 
 	/// <summary>
-	/// 入荷予定数（未消込の発注 Tran13Hachu を商品Id別に集計）。
-	/// 発注に済フラグは無く、仕入 Tran03Shiire.RelateNo1 に発注Id が入ることで消込済とみなす。
+	/// 入荷予定数（済フラグがたっていない発注 Tran13Hachu を商品Id別に集計）。
+	/// TODO: 発注データの「済フラグ」は未実装のため仮実装。
+	/// 現状は仕入 Tran03Shiire.RelateNo1 に発注Id が参照されていないことを「未済」とみなしている。
+	/// 済フラグ実装後は <see cref="HachuMizumiCondition"/> をフラグ判定に置き換えること。
 	/// </summary>
 	async Task<Dictionary<long, int>> LoadNyukaYoteiTotalsAsync(long idSoko, IReadOnlyCollection<long> shohinIds, CancellationToken ct) {
 		if (shohinIds.Count == 0) return [];
@@ -401,7 +410,7 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 				FROM Tran13Hachu H, json_each(H.Jmeisai) AS m
 				WHERE H.CalcFlag <> 0
 					AND H.Id_Soko = {AddParameter(parameters, idSoko)}
-					AND NOT EXISTS (SELECT 1 FROM Tran03Shiire S WHERE S.RelateNo1 = H.Id)
+					AND {HachuMizumiCondition}
 			) T
 			WHERE {inClause}
 			GROUP BY T.Id_Shohin
@@ -525,6 +534,9 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 		return (sql, parameters);
 	}
 
+	/// <summary>
+	/// SKU 別入荷予定数の SQL（TODO: 済フラグ未実装のため <see cref="HachuMizumiCondition"/> による仮実装）。
+	/// </summary>
 	(string sql, List<string> parameters) SkuNyukaSql(long shohinId, long idSoko) {
 		List<string> parameters = [];
 		string sql = $"""
@@ -540,7 +552,7 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 				FROM Tran13Hachu H, json_each(H.Jmeisai) AS m
 				WHERE H.CalcFlag <> 0
 					AND H.Id_Soko = {AddParameter(parameters, idSoko)}
-					AND NOT EXISTS (SELECT 1 FROM Tran03Shiire S WHERE S.RelateNo1 = H.Id)
+					AND {HachuMizumiCondition}
 			) T
 			WHERE T.Id_Shohin = {AddParameter(parameters, shohinId)}
 			GROUP BY T.Id_Col, T.Id_Siz

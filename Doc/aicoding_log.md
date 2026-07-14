@@ -1,3 +1,19 @@
+## [2026-07-14] 14:55 店舗配分入力：発注「済フラグ」判定を仮実装として明示
+### Agent
+- Claude Fable 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：発注データの「済フラグ」はまだ未実装なので、コメントに残し、仮実装であることを明示する。
+### 実施内容
+- CvWpfclient/ViewModels/07Haibun/ShopHaibunInputViewModel.cs: 入荷予定数の「未済」判定 SQL を `HachuMizumiCondition` 定数へ集約し、TODO コメント（済フラグ実装後にフラグ判定へ置き換え）を追記。商品別・SKU別の両クエリで同定数を参照。
+### 技術決定 Why
+- 済フラグ列が Tran13Hachu に実装された時点で 1 箇所の定数差し替えで移行できるよう、暫定判定（Tran03Shiire.RelateNo1 消込参照）を単一定数に集約した。
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-14] 14:45 店舗配分入力画面の全面書き直し（商品一覧集計＋SKU×店舗配分入力）
 ### Agent
 - Claude Fable 5 : Anthropic : Sekiya Sato Claude
