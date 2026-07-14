@@ -17,11 +17,12 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 	string additionalIds1SelectOrder = "Code";
 	string additionalIds2SelectWhere = string.Empty;
 	string additionalIds2SelectOrder = "Code";
+	List<CvBase.BaseDbClass>? additionalIds1LocalData;
 
 	[ObservableProperty]
 	public partial SelectParameter Parameter { get; set; } = new();
 
-	public bool IsAdditionalIds1Enabled => additionalIds1SelectType != null;
+	public bool IsAdditionalIds1Enabled => additionalIds1SelectType != null || additionalIds1LocalData != null;
 	public bool IsAdditionalIds2Enabled => additionalIds2SelectType != null;
 	public double AdditionalIds1RowOpacity => IsAdditionalIds1Enabled ? 1.0 : 0.45;
 	public double AdditionalIds2RowOpacity => IsAdditionalIds2Enabled ? 1.0 : 0.45;
@@ -39,6 +40,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		string additionalIds1Where = "",
 		string additionalIds1Order = "Code",
 		string? additionalIds1Column = null,
+		IEnumerable<CvBase.BaseDbClass>? additionalIds1LocalData = null,
 		Type? additionalIds2TableType = null,
 		string additionalIds2Label = "複数Id 2",
 		string additionalIds2Where = "",
@@ -53,6 +55,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		additionalIds1SelectType = additionalIds1TableType;
 		additionalIds1SelectWhere = additionalIds1Where;
 		additionalIds1SelectOrder = additionalIds1Order;
+		this.additionalIds1LocalData = additionalIds1LocalData?.ToList();
 		additionalIds2SelectType = additionalIds2TableType;
 		additionalIds2SelectWhere = additionalIds2Where;
 		additionalIds2SelectOrder = additionalIds2Order;
@@ -137,6 +140,19 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand]
 	void DoSelectAdditionalIds1() {
+		if (additionalIds1LocalData != null) {
+			var selWin = new Views.Sub.SelectMultiWinView();
+			if (selWin.DataContext is not SelectMultiWinViewModel vm) return;
+			vm.SetLocalData(additionalIds1LocalData, title: Parameter.AdditionalIds1Label, selectedIds: Parameter.AdditionalIds1);
+			if (ClientLib.ShowDialogView(selWin, this) != true) return;
+			var selectedRows = vm.ListData?.Where(row => row.IsSelected).ToList() ?? [];
+			Parameter = Parameter with {
+				AdditionalIds1 = [.. selectedRows.Select(row => row.Id).Where(id => id > 0).Distinct()],
+				AdditionalIds1Text = BuildSelectedText(selectedRows)
+			};
+			return;
+		}
+
 		if (additionalIds1SelectType == null) return;
 
 		var result = SelectIds(additionalIds1SelectType, additionalIds1SelectWhere, additionalIds1SelectOrder, Parameter.AdditionalIds1);

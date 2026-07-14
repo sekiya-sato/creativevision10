@@ -1,3 +1,21 @@
+## [2026-07-14] 15:40 MasterTokuiMenteView の店種絞り込みを RangeParamView の AdditionalIds1 経由に変更
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views.Sub.RangeParamView の「複数Id1」の部分を「店種」の選択条件に変更。ツールバーの「店種」ボタンは削除して元に戻す。
+### 実施内容
+- CvWpfclient/ViewModels/Sub/RangeParamViewModel.cs: `additionalIds1LocalData` フィールドと `Initialize` パラメータを追加。`DoSelectAdditionalIds1` でローカルデータが設定されていれば `SelectMultiWinViewModel.SetLocalData` を使って複数選択ダイアログを表示するように変更。他画面への影響を避けるため、従来の `additionalIds1SelectType` による選択も併存。
+- CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs: ツールバーから追加した「店種」ボタン・ラベル、および `DoSelectTenTypeCommand` を削除。`ListWhere` オーバーライドも削除。代わりに `TryShowSelectCodeDialog` をオーバーライドし、`RangeParamViewModel.Initialize` の `additionalIds1LocalData` に店種リスト（倉庫/卸先/売仕店/直営店）を渡し、`AdditionalIds1Column = "TenType"` を設定。これにより一覧取得ダイアログの「店種」行で複数選択が可能になり、`BuildSelectCodeWhere` が自動的に `TenType IN (...)` を生成する。
+- CvWpfclient/Views/01Master/MasterTokuiMenteView.xaml: 先ほど追加した「店種」選択ボタンと `TenTypeDisplayText` ラベルを削除して元のレイアウトに戻した。
+### 技術決定 Why
+- `RangeParamView` は汎用的なダイアログなので、ViewModel 自体にローカルデータ選択機能を追加することで、他画面への影響を最小化した。`MasterTokuiMenteViewModel` は `BaseMenteViewModel.TryShowSelectCodeDialog` の既存フックを活用し、一覧条件ダイアログ表示時に `AdditionalIds1` を店種選択として設定する。
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-14] 15:20 MasterTokuiMenteView に店種（TenType）一覧絞り込み条件を追加
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus

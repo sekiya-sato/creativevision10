@@ -118,24 +118,6 @@
 								Text="一覧取得" />
 						</StackPanel>
 					</Button>
-					<Rectangle Width="1"
-						Margin="8,4"
-						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
-						Opacity="0.3" />
-					<Button Command="{Binding DoSelectTenTypeCommand}"
-						Style="{StaticResource ToolCommandButton}"
-						ToolTip="店種選択">
-						<StackPanel Orientation="Horizontal">
-							<materialDesign:PackIcon VerticalAlignment="Center"
-								Kind="Store" />
-							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="店種" />
-						</StackPanel>
-					</Button>
-					<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-						FontSize="14"
-						Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
-						Text="{Binding TenTypeDisplayText}" />
 				</StackPanel>
 			</DockPanel>
 		</materialDesign:ColorZone>
