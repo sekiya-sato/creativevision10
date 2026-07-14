@@ -1,3 +1,20 @@
+## [2026-07-15] 08:45 RangeParamView の複数Id選択行のレイアウト固定化
+### Agent
+- Claude Fable 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：RangeParamView の「得意先Id」「店種」など複数Id選択行で、ラベルとボタンの位置を固定化し、選択ボタンの左端を TextBox（ID開始・名前・件数）の左端と揃える。
+### 実施内容
+- CvWpfclient/Views/Sub/RangeParamView.xaml: Ids行・AdditionalIds1行・AdditionalIds2行の DockPanel（全カラムスパン）からラベル TextBlock を分離して Grid.Column="0"（幅150固定）に配置。ボタン群の DockPanel は Grid.Column="1" ColumnSpan="5" Margin="4,4,4,4" に変更し、TextBox の左端と一致させた。Tori行の DockPanel も Margin を "0,4" → "4,4,4,4" に修正。分離したラベルには AdditionalIds の Opacity バインディングを付与し、無効時の減光表示を維持。
+### 技術決定 Why
+- ラベルとボタンを同一 DockPanel に入れるとボタン位置がラベル文字数に依存してずれるため、他の行（ID・名前・件数）と同じ Grid カラム配置に統一した。
+### 確認
+- `dotnet build CvWpfclient\CvWpfclient.csproj`: 成功（0 warning、0 error）。
+- バインディングパス（IsAdditionalIds1/2Enabled, AdditionalIds1/2RowOpacity 等）の RangeParamViewModel との整合性確認: OK。
+
+---
+
 ## [2026-07-14] 17:47 MasterTokuiMenteView の店種選択不具合を修正
 ### Agent
 - GPT-5 : OpenAI
