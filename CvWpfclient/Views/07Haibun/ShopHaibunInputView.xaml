@@ -1,8 +1,7 @@
 <helpers:BaseWindow x:Class="CvWpfclient.Views._07Haibun.ShopHaibunInputView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._07Haibun"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._07Haibun"
 	Title="店舗配分入力"
 	Width="1400" Height="900"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
@@ -14,7 +13,7 @@
 	</helpers:BaseWindow.DataContext>
 
 	<helpers:BaseWindow.InputBindings>
-		<KeyBinding Command="{Binding DoUpdateOnDetailTabCommand}"
+		<KeyBinding Command="{Binding DoRegisterCommand}"
 			Gesture="F2" />
 		<KeyBinding Command="{Binding DoSearchCommand}"
 			Gesture="F5" />
@@ -54,136 +53,38 @@
 			SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
 			Style="{StaticResource MaterialDesignTabControl}">
 
-			<!--  ================= タブ1: 検索画面 (Shift+F1) =================  -->
+			<!--  ================= タブ1: 商品一覧（商品Id 単位の全体把握） =================  -->
 			<TabItem x:Name="tabSearch"
 				Height="0"
-				d:Header="d:検索画面" d:Height="40" Header="">
+				d:Header="d:商品一覧" d:Height="40" Header="">
 				<Grid Margin="12">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="*" />
 					</Grid.RowDefinitions>
 
-					<!--  検索条件カード  -->
+					<!--  検索条件バー（条件指定は別ウィンドウダイアログ）  -->
 					<materialDesign:Card Grid.Row="0"
-						Margin="0,0,0,8" Padding="12,10"
+						Margin="0,0,0,8" Padding="12,8"
 						materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
-						<StackPanel>
-							<!--  1行目: 配分元倉庫 / 区分  -->
-							<WrapPanel Orientation="Horizontal">
-								<StackPanel Margin="0,4,24,4"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="配分元倉庫" />
-									<TextBox Width="110"
-										helpers:SearchTextBoxAssist.Command="{Binding DoSelectSokoCommand}"
-										Style="{StaticResource MenteSearchTextBox}"
-										Text="{Binding SokoCode, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}"
-										Text="{Binding SokoName}" />
-								</StackPanel>
-								<StackPanel Margin="0,4"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="区分" />
-									<ComboBox Width="150"
-										materialDesign:HintAssist.Hint="区分" DisplayMemberPath="Name"
-										ItemsSource="{Binding KubunOptions}"
-										SelectedValue="{Binding Kubun, Mode=TwoWay}"
-										SelectedValuePath="Value"
-										Style="{StaticResource FormComboBox}" />
-								</StackPanel>
-							</WrapPanel>
-
-							<Separator Margin="0,6"
-								Opacity="0.4" />
-
-							<!--  2行目: 商品分類 FROM-TO  -->
-							<WrapPanel Orientation="Horizontal">
-								<StackPanel Margin="0,4,24,4"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="シーズン" />
-									<TextBox Width="90"
-										materialDesign:HintAssist.Hint="From"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding SeasonFrom, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="6,0" VerticalAlignment="Center"
-										Text="～" />
-									<TextBox Width="90"
-										materialDesign:HintAssist.Hint="To"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding SeasonTo, UpdateSourceTrigger=PropertyChanged}" />
-								</StackPanel>
-								<StackPanel Margin="0,4,24,4"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="ブランド" />
-									<TextBox Width="90"
-										materialDesign:HintAssist.Hint="From"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding BrandFrom, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="6,0" VerticalAlignment="Center"
-										Text="～" />
-									<TextBox Width="90"
-										materialDesign:HintAssist.Hint="To"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding BrandTo, UpdateSourceTrigger=PropertyChanged}" />
-								</StackPanel>
-								<StackPanel Margin="0,4"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="アイテム" />
-									<TextBox Width="90"
-										materialDesign:HintAssist.Hint="From"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding ItemFrom, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="6,0" VerticalAlignment="Center"
-										Text="～" />
-									<TextBox Width="90"
-										materialDesign:HintAssist.Hint="To"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding ItemTo, UpdateSourceTrigger=PropertyChanged}" />
-								</StackPanel>
-							</WrapPanel>
-
-							<!--  3行目: 日付範囲 + 一覧取得  -->
-							<DockPanel Margin="0,4,0,0">
-								<Button Command="{Binding DoSearchCommand}"
-									DockPanel.Dock="Right"
-									Style="{StaticResource MaterialDesignRaisedButton}"
-									ToolTip="一覧取得 (F5)">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon VerticalAlignment="Center"
-											Kind="DatabaseSearch" />
-										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-											Text="一覧取得" />
-									</StackPanel>
-								</Button>
+						<DockPanel>
+							<Button Command="{Binding DoSearchCommand}"
+								DockPanel.Dock="Left"
+								Style="{StaticResource MaterialDesignRaisedButton}"
+								ToolTip="条件を指定して一覧取得 (F5)">
 								<StackPanel Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="配分指示日" />
-									<DatePicker Width="150"
-										helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="From"
-										SelectedDate="{Binding UriageDayFrom, Mode=TwoWay}"
-										Style="{StaticResource FormDatePicker}" />
-									<TextBlock Margin="6,0" VerticalAlignment="Center"
-										Text="～" />
-									<DatePicker Width="150"
-										helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="To"
-										SelectedDate="{Binding UriageDayTo, Mode=TwoWay}"
-										Style="{StaticResource FormDatePicker}" />
-									<TextBlock Margin="24,0,0,0"
-										Style="{StaticResource FormLabel}"
-										Text="追加条件" />
-									<DatePicker Width="150"
-										helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="From"
-										SelectedDate="{Binding NyukaDayFrom, Mode=TwoWay}"
-										Style="{StaticResource FormDatePicker}" />
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="DatabaseSearch" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="一覧取得" />
 								</StackPanel>
-							</DockPanel>
-						</StackPanel>
+							</Button>
+							<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+								FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding SearchConditionText}"
+								TextTrimming="CharacterEllipsis" />
+						</DockPanel>
 					</materialDesign:Card>
 
 					<!--  商品一覧カード  -->
@@ -204,19 +105,19 @@
 								<DockPanel>
 									<Button Command="{Binding GoToEditCommand}"
 										DockPanel.Dock="Right"
-										Style="{StaticResource MaterialDesignOutlinedButton}"
-										ToolTip="選択商品の配分入力へ">
+										Style="{StaticResource MaterialDesignRaisedButton}"
+										ToolTip="選択商品のSKU（色・サイズ）×店舗の配分入力へ">
 										<StackPanel Orientation="Horizontal">
 											<materialDesign:PackIcon VerticalAlignment="Center"
 												Kind="FileDocumentEdit" />
 											<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-										Text="配分レコードを開く" />
+												Text="配分画面へ" />
 										</StackPanel>
 									</Button>
 									<TextBlock VerticalAlignment="Center"
 										FontSize="13"
 										Foreground="{DynamicResource MaterialDesignBodyLight}"
-										Text="{Binding SearchCount, StringFormat={}配分レコード: {0:N0} 件}" />
+										Text="{Binding SearchCount, StringFormat={}対象商品: {0:N0} 件}" />
 								</DockPanel>
 							</Border>
 
@@ -225,7 +126,7 @@
 								Grid.Row="1"
 								helpers:DataGridDoubleClick.Command="{Binding GoToEditCommand}"
 								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-								AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+								AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 								IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
 								ItemsSource="{Binding SearchRows}"
@@ -233,38 +134,47 @@
 								Style="{StaticResource MaterialDesignDataGrid}"
 								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 								<DataGrid.Columns>
-									<DataGridTextColumn Width="150"
-										Binding="{Binding Id}"
-										Header="Id" />
+									<DataGridTextColumn Width="130"
+										Binding="{Binding Code}"
+										Header="商品CD" />
 									<DataGridTextColumn Width="220"
-										Binding="{Binding DenDay}"
-										Header="配分指示日" />
-									<DataGridTextColumn Width="150"
-										Binding="{Binding NouhinDay}"
-										Header="納品日" />
-									<DataGridTextColumn Width="120"
-										Binding="{Binding Id_Soko}"
-										Header="倉庫Id" />
+										Binding="{Binding Name}"
+										Header="商品名" />
+									<DataGridTextColumn Width="130"
+										Binding="{Binding BrandDisplay}"
+										Header="ブランド" />
+									<DataGridTextColumn Width="130"
+										Binding="{Binding ItemDisplay}"
+										Header="アイテム" />
+									<DataGridTextColumn Width="110"
+										Binding="{Binding SeasonDisplay}"
+										Header="シーズン" />
 									<DataGridTextColumn Width="90"
-										Binding="{Binding Id_Tenpo, StringFormat={}{0:N0}}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="店舗Id" />
-									<DataGridTextColumn Width="90"
-										Binding="{Binding Id_Shohin, StringFormat={}{0:N0}}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="商品Id" />
-									<DataGridTextColumn Width="90"
-										Binding="{Binding JanCode}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="JAN" />
-									<DataGridTextColumn Width="100"
-										Binding="{Binding Su, StringFormat={}{0:N0}}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="配分数" />
-									<DataGridTextColumn Width="100"
-										Binding="{Binding Jodai, StringFormat={}{0:N0}}"
+										Binding="{Binding TankaJodai, StringFormat={}{0:N0}}"
 										ElementStyle="{StaticResource DataGridRightTextBlock}"
 										Header="上代" />
+									<DataGridTextColumn Width="90"
+										Binding="{Binding UriageSu, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="累計売上" />
+									<DataGridTextColumn Width="90"
+										Binding="{Binding ZaikoSu, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="現在庫" />
+									<DataGridTextColumn Width="90"
+										Binding="{Binding ShijiSu, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="現在指示数" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding NyukaYoteiSu, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="入荷予定数" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding HaibunKanoSu, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="配分可能数" />
+									<DataGridTextColumn Width="*"
+										Header=" " />
 								</DataGrid.Columns>
 								<DataGrid.ColumnHeaderStyle>
 									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
@@ -276,10 +186,10 @@
 				</Grid>
 			</TabItem>
 
-			<!--  ================= タブ2: 修正・登録画面 (Shift+F2) =================  -->
+			<!--  ================= タブ2: 配分入力（SKU × 店舗） =================  -->
 			<TabItem x:Name="tabEdit"
 				Height="0"
-				d:Header="d:修正・登録画面" d:Height="40" Header="">
+				d:Header="d:配分入力" d:Height="40" Header="">
 				<Grid Margin="12">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
@@ -287,41 +197,30 @@
 						<RowDefinition Height="*" />
 					</Grid.RowDefinitions>
 
-					<!--  ヘッダー: 商品情報 + 日付 + 操作ボタン  -->
+					<!--  ヘッダー: 商品情報 + 操作ボタン  -->
 					<DockPanel Grid.Row="0"
 						Margin="0,0,0,8">
 						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 							<Button Margin="4,0"
 								Command="{Binding GoToSearchCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
-								ToolTip="検索画面へ戻る">
+								ToolTip="商品一覧へ戻る">
 								<StackPanel Orientation="Horizontal">
 									<materialDesign:PackIcon VerticalAlignment="Center"
 										Kind="Magnify" />
 									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-										Text="検索へ" />
+										Text="一覧へ" />
 								</StackPanel>
 							</Button>
 							<Button Margin="4,0"
-								Command="{Binding GoToNewCommand}"
-								Style="{StaticResource MaterialDesignOutlinedButton}"
-								ToolTip="全クリア">
-								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon VerticalAlignment="Center"
-										Kind="Eraser" />
-									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="新規" />
-								</StackPanel>
-							</Button>
-							<Button Margin="4,0"
-								Command="{Binding DoInsertOnDetailTabCommand}"
+								Command="{Binding DoRegisterCommand}"
 								Style="{StaticResource MaterialDesignRaisedButton}"
-								ToolTip="配分データを生成 (F2)">
+								ToolTip="配分指示を登録 (F2)">
 								<StackPanel Orientation="Horizontal">
 									<materialDesign:PackIcon VerticalAlignment="Center"
-										Kind="CheckCircle" />
+										Kind="ContentSaveOutline" />
 									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-									Text="追加" />
+										Text="登録" />
 								</StackPanel>
 							</Button>
 						</StackPanel>
@@ -340,7 +239,7 @@
 						</StackPanel>
 					</DockPanel>
 
-					<!--  商品/配分情報カード  -->
+					<!--  配分情報カード  -->
 					<materialDesign:Card Grid.Row="1"
 						Margin="0,0,0,8" Padding="12,8"
 						materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
@@ -348,22 +247,20 @@
 							<StackPanel Margin="0,4,20,4"
 								Orientation="Horizontal">
 								<TextBlock Style="{StaticResource FormLabel}"
-									Text="倉庫Id" />
-								<TextBox Width="150"
+									Text="配分元倉庫" />
+								<TextBox Width="170"
 									IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Id_Soko, Mode=OneWay}" />
+									Text="{Binding SokoDisplay, Mode=OneWay}" />
 							</StackPanel>
 							<StackPanel Margin="0,4,20,4"
 								Orientation="Horizontal">
 								<TextBlock Style="{StaticResource FormLabel}"
 									Text="区分" />
-								<ComboBox Width="130"
-									DisplayMemberPath="Name"
-									ItemsSource="{Binding KubunOptions}"
-									SelectedValue="{Binding Kubun, Mode=TwoWay}"
-									SelectedValuePath="Value"
-									Style="{StaticResource FormComboBox}" />
+								<TextBox Width="100"
+									IsReadOnly="True"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding KubunDisplay, Mode=OneWay}" />
 							</StackPanel>
 							<StackPanel Margin="0,4,20,4"
 								Orientation="Horizontal">
@@ -387,168 +284,193 @@
 								Orientation="Horizontal">
 								<TextBlock Style="{StaticResource FormLabel}"
 									Text="入力者" />
-								<TextBox Width="120"
-									materialDesign:HintAssist.Hint="入力者"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding Nyuryokusha, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBox Width="170"
+									helpers:SearchTextBoxAssist.Command="{Binding SelectShainCommand}"
+									IsReadOnly="True"
+									Style="{StaticResource MenteSearchTextBox}"
+									Text="{Binding ShainDisplay, Mode=OneWay}" />
 							</StackPanel>
 							<StackPanel Margin="0,4,20,4"
 								Orientation="Horizontal">
 								<TextBlock Style="{StaticResource FormLabel}"
 									Text="上代" />
-								<TextBox Width="100"
+								<TextBox Width="90"
 									HorizontalContentAlignment="Right"
 									IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding TargetJodai, Mode=OneWay, StringFormat={}{0:N0}}" />
 							</StackPanel>
-							<StackPanel Margin="0,4"
+							<StackPanel Margin="0,4,20,4"
 								Orientation="Horizontal">
 								<TextBlock Style="{StaticResource FormLabel}"
-									Text="配分合計" />
-								<TextBox Width="100"
+									Text="総配分数" />
+								<TextBox Width="90"
 									HorizontalContentAlignment="Right"
 									IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									Text="{Binding TotalSu, Mode=OneWay, StringFormat={}{0:N0}}" />
+									Text="{Binding GrandTotalSu, Mode=OneWay, StringFormat={}{0:N0}}" />
+							</StackPanel>
+							<StackPanel Margin="0,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
+									Text="配分可能数" />
+								<TextBox Width="90"
+									HorizontalContentAlignment="Right"
+									IsReadOnly="True"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding HaibunKanoSu, Mode=OneWay, StringFormat={}{0:N0}}" />
 							</StackPanel>
 						</WrapPanel>
 					</materialDesign:Card>
 
-					<!--  配分入力カード  -->
-					<materialDesign:Card Grid.Row="2"
-						Padding="0"
-						materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
-						<Grid>
-							<Grid.RowDefinitions>
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="*" />
-							</Grid.RowDefinitions>
+					<!--  配分入力: 左=配分先店舗 / 右=選択店舗の SKU 明細  -->
+					<Grid Grid.Row="2">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="300" />
+							<ColumnDefinition Width="8" />
+							<ColumnDefinition Width="*" />
+						</Grid.ColumnDefinitions>
 
-							<!--  操作: 店舗追加 / 店舗削除  -->
-							<Border Grid.Row="0"
-								Padding="8,6"
-								Background="{DynamicResource MaterialDesignToolBarBackground}"
-								CornerRadius="8,8,0,0">
-								<StackPanel Orientation="Horizontal">
-									<Button Margin="4,0"
-										Command="{Binding DoSelectTenpoCommand}"
-										Style="{StaticResource MaterialDesignOutlinedButton}"
-										ToolTip="配分先店舗を追加">
-										<StackPanel Orientation="Horizontal">
-											<materialDesign:PackIcon VerticalAlignment="Center"
-												Kind="StorePlusOutline" />
-											<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-											Text="店舗選択" />
-										</StackPanel>
-									</Button>
-									<Button Margin="4,0"
-										Command="{Binding DoSelectShohinCommand}"
-										Style="{StaticResource MaterialDesignOutlinedButton}"
-										ToolTip="選択行の店舗を削除">
-										<StackPanel Orientation="Horizontal">
-											<materialDesign:PackIcon VerticalAlignment="Center"
-											Kind="PackageVariantClosed" />
-											<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-											Text="商品選択" />
-									</StackPanel>
-								</Button>
-								<Button Margin="4,0"
-									Command="{Binding DoSelectSkuCommand}"
-									Style="{StaticResource MaterialDesignOutlinedButton}"
-									ToolTip="商品色サイズを選択">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon VerticalAlignment="Center" Kind="PaletteOutline" />
-										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="SKU選択" />
-									</StackPanel>
-								</Button>
-								<Button Margin="4,0"
-									Command="{Binding DoDeleteOnDetailTabCommand}"
-									Style="{StaticResource MaterialDesignOutlinedButton}"
-									ToolTip="配分レコードを削除">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon VerticalAlignment="Center" Kind="DeleteOutline" />
-										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="削除" />
-									</StackPanel>
-								</Button>
-								<Button Margin="4,0"
-									Command="{Binding DoUpdateOnDetailTabCommand}"
-									Style="{StaticResource MaterialDesignRaisedButton}"
-									ToolTip="配分レコードを更新">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon VerticalAlignment="Center" Kind="ContentSaveOutline" />
-										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="更新" />
-									</StackPanel>
-								</Button>
-									<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-										FontSize="12"
-										Foreground="{DynamicResource MaterialDesignBodyLight}"
-									Text="商品・SKU・店舗を選択し、「指示数」に配分数を入力してください。" />
-								</StackPanel>
-							</Border>
+						<!--  店舗リストカード  -->
+						<materialDesign:Card Grid.Column="0"
+							Padding="0"
+							materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+							<Grid>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="*" />
+								</Grid.RowDefinitions>
 
-							<!--  配分明細 DataGrid (SKU × 店舗)  -->
-							<DataGrid x:Name="EntryGrid"
-								Grid.Row="1"
-								helpers:DataGridCellEnterNavigation.IsEnabled="True" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,4"
-								materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-								EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
-								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-								IsSynchronizedWithCurrentItem="True"
-								ItemsSource="{Binding EntryRows}"
-								SelectedItem="{Binding SelectedEntryRow, Mode=TwoWay}"
-								Style="{StaticResource MaterialDesignDataGrid}"
-								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
-								<DataGrid.Columns>
-									<DataGridTextColumn Width="90"
-										Binding="{Binding Id_Tenpo}"
-										Header="店舗Id" IsReadOnly="True" />
-									<DataGridTextColumn Width="160"
-										Binding="{Binding Id_Soko}"
-										Header="倉庫Id" IsReadOnly="True" />
-									<DataGridTextColumn Width="130"
-										Binding="{Binding Id_Shohin}"
-										Header="商品Id" IsReadOnly="True" />
-									<DataGridTextColumn Width="70"
-										Binding="{Binding Id_Col}"
-										Header="色Id" IsReadOnly="True" />
-									<DataGridTextColumn Width="90"
-										Binding="{Binding Id_Siz}"
-										Header="サイズId" IsReadOnly="True" />
-									<DataGridTextColumn Width="70"
-										Binding="{Binding JanCode}"
-										Header="JAN" IsReadOnly="True" />
-									<DataGridTextColumn Width="90"
-										Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
-										EditingElementStyle="{StaticResource DataGridRightTextBox}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="指示数" />
-									<DataGridTextColumn Width="80"
-										Binding="{Binding JitsuSu, StringFormat={}{0:N0}}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="実数量" />
-									<DataGridTextColumn Width="80"
-										Binding="{Binding SendFlg, StringFormat={}{0:N0}}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="送信FLG" />
-									<DataGridTextColumn Width="80"
-										Binding="{Binding Tanka, StringFormat={}{0:N0}}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="単価" />
-									<DataGridTextColumn Width="80"
-										Binding="{Binding Kingaku, StringFormat={}{0:N0}}"
-										ElementStyle="{StaticResource DataGridRightTextBlock}"
-										Header="金額" />
-									<DataGridTextColumn Width="*"
-										Header=" " IsReadOnly="True" />
-								</DataGrid.Columns>
-								<DataGrid.ColumnHeaderStyle>
-									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
-										TargetType="DataGridColumnHeader" />
-								</DataGrid.ColumnHeaderStyle>
-							</DataGrid>
-						</Grid>
-					</materialDesign:Card>
+								<Border Grid.Row="0"
+									Padding="8,6"
+									Background="{DynamicResource MaterialDesignToolBarBackground}"
+									CornerRadius="8,8,0,0">
+									<StackPanel Orientation="Horizontal">
+										<Button Margin="4,0"
+											Command="{Binding SelectTenpoCommand}"
+											Style="{StaticResource MaterialDesignOutlinedButton}"
+											ToolTip="配分先店舗を選択（複数）">
+											<StackPanel Orientation="Horizontal">
+												<materialDesign:PackIcon VerticalAlignment="Center"
+													Kind="StorePlusOutline" />
+												<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+													Text="店舗選択" />
+											</StackPanel>
+										</Button>
+										<Button Margin="4,0"
+											Command="{Binding RemoveTenpoCommand}"
+											Style="{StaticResource MaterialDesignOutlinedButton}"
+											ToolTip="選択中の店舗をリストから外す">
+											<StackPanel Orientation="Horizontal">
+												<materialDesign:PackIcon VerticalAlignment="Center"
+													Kind="DeleteOutline" />
+												<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+													Text="削除" />
+											</StackPanel>
+										</Button>
+									</StackPanel>
+								</Border>
+
+								<ListBox Grid.Row="1"
+									ItemsSource="{Binding TenpoEntries}"
+									SelectedItem="{Binding SelectedTenpo, Mode=TwoWay}">
+									<ListBox.ItemTemplate>
+										<DataTemplate>
+											<DockPanel>
+												<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+													DockPanel.Dock="Right" FontWeight="SemiBold"
+													Text="{Binding TotalSu, StringFormat={}{0:N0} 点}" />
+												<TextBlock VerticalAlignment="Center"
+													Text="{Binding TenpoDisplay}"
+													TextTrimming="CharacterEllipsis" />
+											</DockPanel>
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+							</Grid>
+						</materialDesign:Card>
+
+						<!--  SKU 明細カード（選択店舗）  -->
+						<materialDesign:Card Grid.Column="2"
+							Padding="0"
+							materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+							<Grid>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="*" />
+								</Grid.RowDefinitions>
+
+								<Border Grid.Row="0"
+									Padding="12,8"
+									Background="{DynamicResource MaterialDesignToolBarBackground}"
+									CornerRadius="8,8,0,0">
+									<DockPanel>
+										<TextBlock VerticalAlignment="Center"
+											FontSize="13" FontWeight="SemiBold"
+											Text="{Binding SelectedTenpo.TenpoDisplay, StringFormat={}配分先: {0}}" />
+										<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+											FontSize="12"
+											Foreground="{DynamicResource MaterialDesignBodyLight}"
+											Text="SKU（色・サイズ）ごとに「指示数」を入力してください。「配分計」「残」は全店舗の入力に連動します。"
+											TextTrimming="CharacterEllipsis" />
+									</DockPanel>
+								</Border>
+
+								<DataGrid x:Name="EntryGrid"
+									Grid.Row="1"
+									helpers:DataGridCellEnterNavigation.IsEnabled="True" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,4"
+									materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+									EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+									HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+									ItemsSource="{Binding SelectedTenpo.Rows}"
+									Style="{StaticResource MaterialDesignDataGrid}"
+									VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+									<DataGrid.Columns>
+										<DataGridTextColumn Width="140"
+											Binding="{Binding ColDisplay}"
+											Header="色" IsReadOnly="True" />
+										<DataGridTextColumn Width="120"
+											Binding="{Binding SizDisplay}"
+											Header="サイズ" IsReadOnly="True" />
+										<DataGridTextColumn Width="130"
+											Binding="{Binding Jan1}"
+											Header="JAN" IsReadOnly="True" />
+										<DataGridTextColumn Width="80"
+											Binding="{Binding Summary.ZaikoSu, StringFormat={}{0:N0}}"
+											ElementStyle="{StaticResource DataGridRightTextBlock}"
+											Header="在庫" IsReadOnly="True" />
+										<DataGridTextColumn Width="90"
+											Binding="{Binding Summary.NyukaYoteiSu, StringFormat={}{0:N0}}"
+											ElementStyle="{StaticResource DataGridRightTextBlock}"
+											Header="入荷予定" IsReadOnly="True" />
+										<DataGridTextColumn Width="80"
+											Binding="{Binding Summary.OtherShijiSu, StringFormat={}{0:N0}}"
+											ElementStyle="{StaticResource DataGridRightTextBlock}"
+											Header="他指示" IsReadOnly="True" />
+										<DataGridTextColumn Width="90"
+											Binding="{Binding Su, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
+											EditingElementStyle="{StaticResource DataGridRightTextBox}"
+											ElementStyle="{StaticResource DataGridRightTextBlock}"
+											Header="指示数" />
+										<DataGridTextColumn Width="90"
+											Binding="{Binding Summary.HaibunTotalSu, StringFormat={}{0:N0}}"
+											ElementStyle="{StaticResource DataGridRightTextBlock}"
+											Header="配分計" IsReadOnly="True" />
+										<DataGridTextColumn Width="80"
+											Binding="{Binding Summary.NokoriSu, StringFormat={}{0:N0}}"
+											ElementStyle="{StaticResource DataGridRightTextBlock}"
+											Header="残" IsReadOnly="True" />
+										<DataGridTextColumn Width="*"
+											Header=" " IsReadOnly="True" />
+									</DataGrid.Columns>
+									<DataGrid.ColumnHeaderStyle>
+										<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+											TargetType="DataGridColumnHeader" />
+									</DataGrid.ColumnHeaderStyle>
+								</DataGrid>
+							</Grid>
+						</materialDesign:Card>
+					</Grid>
 				</Grid>
 			</TabItem>
 

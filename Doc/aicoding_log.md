@@ -1,3 +1,25 @@
+## [2026-07-14] 14:45 店舗配分入力画面の全面書き直し（商品一覧集計＋SKU×店舗配分入力）
+### Agent
+- Claude Fable 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：ShopHaibunInputView を書き直す。一覧取得の条件選択は Sub フォルダの別ウィンドウダイアログ化。MasterShohin を主に累計売上・現在庫・現在指示数・入荷予定数・配分可能数を外部結合集計で表示し、選択商品の SKU（商品Id+色+サイズ）×店舗で指示数を入力して TranHaibun を登録・修正できるようにする。
+### 実施内容
+- CvWpfclient/Views/Sub/ShopHaibunSearchParamView.xaml(.cs): 検索条件ダイアログを新規作成（配分元倉庫必須・区分・商品CD/名・ブランド/アイテム/シーズン範囲・件数）。
+- CvWpfclient/ViewModels/Sub/ShopHaibunSearchParamViewModel.cs: 条件 record と ViewModel を新規作成（TranPromotionSearchParam 方式）。
+- CvWpfclient/ViewModels/07Haibun/ShopHaibunInputViewModel.cs: BasePlainLightMenteViewModel<TranHaibun> の単票 CRUD を廃止し、BaseViewModel + QueryListSqlParam 集計合成方式へ全面書換。タブ1=商品Id単位の全体把握（配分可能数=現在庫−指示数+入荷予定数）、タブ2=店舗リスト×SKU 明細の配分入力（配分計・残が全店舗の入力に即時連動）。登録は既存未送信指示の洗い替え（DeleteByIdParam→InsertBulkParam 一括登録）。
+- CvWpfclient/Views/07Haibun/ShopHaibunInputView.xaml: タブ1=一覧取得（条件ダイアログ経由 F5）＋集計列付き商品一覧、タブ2=左:配分先店舗リスト（店舗ごと合計表示）/右:選択店舗の SKU 明細グリッド（在庫・入荷予定・他指示・指示数・配分計・残）へ全面書換。F2=登録。
+### 技術決定 Why
+- JOIN/GROUP BY 集計は BasePlainLightMenteViewModel の単一テーブル SELECT に載らないため、ZaikoQueryViewModel 前例の QueryListSqlParam＋クライアント側 Dictionary 合成方式を採用。集計受け皿は CvBase（Read-Only層）への DTO 追加を避け SummaryRealStock 型へ別名射影。
+- 累計売上は Tran00Uriage/Tran01Tenuri の Jmeisai を json_each 展開し明細Su×ヘッダCalcFlag で集計（返品考慮）。
+- 発注に済フラグ列が無いため、入荷予定数は Tran03Shiire.RelateNo1 に発注Id が未参照（未消込）の Tran13Hachu 明細を集計。
+- 現在指示数は SendFlg<2（未送信+送信中）。編集・洗い替え対象は SendFlg=0 のみとし送信済データを保護。
+### 確認
+- XML構文・リソースキー・バインディングパス照合、CRLF混在0件、`git diff --check` 成功、`dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-13] 11:26 店舗配分入力の TranHaibun CRUD 実装
 ### Agent
 - GPT-5 : OpenAI : Codex

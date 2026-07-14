@@ -1,71 +1,62 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
+using Newtonsoft.Json;
+using System.Collections;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Globalization;
+using System.Windows;
 
 namespace CvWpfclient.ViewModels._07Haibun;
 
-/// <summary>店舗配分データを <see cref="TranHaibun"/> に登録・保守する画面の ViewModel。</summary>
-public partial class ShopHaibunInputViewModel : BasePlainLightMenteViewModel<TranHaibun> {
+/// <summary>
+/// 店舗配分入力画面の ViewModel。
+/// 入庫予定数量を各店舗へ振り分ける。全体把握は商品Id単位（タブ1）、
+/// 実際の振り分けは商品Id+色+サイズ（SKU）×店舗単位（タブ2）で行い、TranHaibun を作成・修正する。
+/// </summary>
+public partial class ShopHaibunInputViewModel : BaseViewModel {
 	public const int KubunHatsukai = 0;
 	public const int KubunZaiko = 1;
 
-	public sealed record HaibunKubunOption(int Value, string Name);
-
-	public IReadOnlyList<HaibunKubunOption> KubunOptions { get; } = [
-		new(KubunHatsukai, "初回配分"),
-		new(KubunZaiko, "在庫配分"),
-	];
+	ShopHaibunSearchParameter? searchParam;
+	MasterShohin? targetShohin;
+	List<DerivedShohinColSiz> targetSkuList = [];
+	List<TranHaibun> loadedEditableRows = [];
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(DoSearchCommand))]
 	[NotifyCanExecuteChangedFor(nameof(GoToEditCommand))]
-	[NotifyCanExecuteChangedFor(nameof(DoInsertOnDetailTabCommand))]
-	[NotifyCanExecuteChangedFor(nameof(DoUpdateOnDetailTabCommand))]
-	[NotifyCanExecuteChangedFor(nameof(DoDeleteOnDetailTabCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoRegisterCommand))]
 	public partial int SelectedTabIndex { get; set; }
 
 	[ObservableProperty]
-	public partial long Id_Soko { get; set; }
+	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	public partial string SokoCode { get; set; } = string.Empty;
+	public partial bool IsBusy { get; set; }
+
+	// ===== タブ1: 商品一覧 =====
 
 	[ObservableProperty]
-	public partial string SokoName { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial int Kubun { get; set; } = KubunHatsukai;
-
-	[ObservableProperty]
-	public partial DateTime? UriageDayFrom { get; set; }
-
-	[ObservableProperty]
-	public partial DateTime? UriageDayTo { get; set; }
-
-	// 既存レイアウトの入力欄。TranHaibun 単体検索では日付・倉庫・区分を条件に使用する。
-	[ObservableProperty] public partial string SeasonFrom { get; set; } = string.Empty;
-	[ObservableProperty] public partial string SeasonTo { get; set; } = string.Empty;
-	[ObservableProperty] public partial string BrandFrom { get; set; } = string.Empty;
-	[ObservableProperty] public partial string BrandTo { get; set; } = string.Empty;
-	[ObservableProperty] public partial string ItemFrom { get; set; } = string.Empty;
-	[ObservableProperty] public partial string ItemTo { get; set; } = string.Empty;
-	[ObservableProperty] public partial DateTime? NyukaDayFrom { get; set; }
-
-	[ObservableProperty]
-	public partial ObservableCollection<ShopHaibunSearchRow> SearchRows { get; set; } = [];
+	public partial ObservableCollection<ShopHaibunShohinRow> SearchRows { get; set; } = [];
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(GoToEditCommand))]
-	public partial ShopHaibunSearchRow? SelectedSearchRow { get; set; }
+	public partial ShopHaibunShohinRow? SelectedSearchRow { get; set; }
 
 	[ObservableProperty]
-	public partial ObservableCollection<TranHaibun> EntryRows { get; set; } = [];
+	public partial int SearchCount { get; set; }
 
 	[ObservableProperty]
-	public partial TranHaibun? SelectedEntryRow { get; set; }
+	public partial string SearchConditionText { get; set; } = string.Empty;
+
+	// ===== タブ2: 配分入力 =====
 
 	[ObservableProperty]
 	public partial string TargetShohinCode { get; set; } = string.Empty;
@@ -74,7 +65,13 @@ public partial class ShopHaibunInputViewModel : BasePlainLightMenteViewModel<Tra
 	public partial string TargetShohinName { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	public partial decimal TargetJodai { get; set; }
+	public partial int TargetJodai { get; set; }
+
+	[ObservableProperty]
+	public partial string SokoDisplay { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string KubunDisplay { get; set; } = string.Empty;
 
 	[ObservableProperty]
 	public partial DateTime? ShijiDay { get; set; } = DateTime.Today;
@@ -83,157 +80,745 @@ public partial class ShopHaibunInputViewModel : BasePlainLightMenteViewModel<Tra
 	public partial DateTime? NouhinDay { get; set; } = DateTime.Today;
 
 	[ObservableProperty]
-	public partial string Nyuryokusha { get; set; } = string.Empty;
+	public partial long Id_Shain { get; set; }
 
-	public int SearchCount => Count;
-	public int TotalSu => CurrentEdit.Su;
+	[ObservableProperty]
+	public partial string ShainDisplay { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial ObservableCollection<ShopHaibunTenpoEntry> TenpoEntries { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ShopHaibunTenpoEntry? SelectedTenpo { get; set; }
+
+	[ObservableProperty]
+	public partial ObservableCollection<ShopHaibunSkuSummary> SkuSummaries { get; set; } = [];
+
+	/// <summary>全店舗×全SKU の指示数合計</summary>
+	[ObservableProperty]
+	public partial int GrandTotalSu { get; set; }
+
+	/// <summary>商品全体の配分可能数（現在庫 − 指示数 + 入荷予定数）</summary>
+	[ObservableProperty]
+	public partial int HaibunKanoSu { get; set; }
 
 	bool IsListTabSelected() => SelectedTabIndex == 0;
 	bool IsDetailTabSelected() => SelectedTabIndex == 1;
 	bool CanGoToEdit() => IsListTabSelected() && SelectedSearchRow != null;
 
-	protected override Type Tabletype => typeof(TranHaibun);
-	protected override string? ListOrder => "DenDay desc, Id desc";
-	protected override int? ListMaxCount => AppGlobal.Limit;
-	protected override string LightweightSelectColumns =>
-		"Id,Vdc,Vdu,DenDay,NouhinDay,Id_Soko,Id_Tenpo,Kubun,SendFlg,Id_Shohin,JanCode,Id_Col,Id_Siz,Su,Tanka,Kingaku,Jodai,Gedai,RelateNo1,RelateNo2,Memo,KakuteiDay,JitsuSu,Id_Shain";
+	// ===== コマンド =====
 
-	protected override string? ListWhere {
-		get {
-			List<string> clauses = [];
-			if (Id_Soko > 0) clauses.Add($"Id_Soko = {Id_Soko}");
-			clauses.Add($"Kubun = {Kubun}");
-			if (UriageDayFrom.HasValue) clauses.Add($"DenDay >= '{ToYmd8(UriageDayFrom)}'");
-			if (UriageDayTo.HasValue) clauses.Add($"DenDay <= '{ToYmd8(UriageDayTo)}'");
-			return string.Join(" AND ", clauses);
+	[RelayCommand]
+	async Task Init() => await DoSearch(CancellationToken.None);
+
+	/// <summary>一覧取得。条件選択ダイアログを別ウィンドウで表示してから検索する。</summary>
+	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
+	async Task DoSearch(CancellationToken ct) {
+		var win = new Views.Sub.ShopHaibunSearchParamView();
+		if (win.DataContext is not ShopHaibunSearchParamViewModel vm) return;
+		vm.Initialize(searchParam ?? new ShopHaibunSearchParameter { MaxCount = AppGlobal.Limit });
+		if (ClientLib.ShowDialogView(win, this, true) != true) {
+			searchParam = vm.Parameter;
+			Message = "一覧取得を中断しました";
+			return;
+		}
+		searchParam = vm.Parameter;
+
+		StartBusy("一覧取得中...");
+		try {
+			List<MasterShohin> shohinList = await LoadShohinListAsync(searchParam, ct);
+			List<long> ids = shohinList.Select(x => x.Id).ToList();
+			Dictionary<long, int> uriageMap = await LoadUriageTotalsAsync(ids, ct);
+			Dictionary<long, int> zaikoMap = await LoadZaikoTotalsAsync(searchParam.Id_Soko, ids, ct);
+			Dictionary<long, int> shijiMap = await LoadShijiTotalsAsync(searchParam.Id_Soko, ids, ct);
+			Dictionary<long, int> nyukaMap = await LoadNyukaYoteiTotalsAsync(searchParam.Id_Soko, ids, ct);
+
+			ObservableCollection<ShopHaibunShohinRow> rows = [];
+			foreach (MasterShohin shohin in shohinList) {
+				rows.Add(new ShopHaibunShohinRow(shohin) {
+					UriageSu = uriageMap.GetValueOrDefault(shohin.Id),
+					ZaikoSu = zaikoMap.GetValueOrDefault(shohin.Id),
+					ShijiSu = shijiMap.GetValueOrDefault(shohin.Id),
+					NyukaYoteiSu = nyukaMap.GetValueOrDefault(shohin.Id),
+				});
+			}
+			SearchRows = rows;
+			SearchCount = rows.Count;
+			SelectedSearchRow = rows.FirstOrDefault();
+			SearchConditionText = BuildConditionText(searchParam);
+			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 対象商品を {SearchCount:N0} 件取得しました";
+		}
+		catch (OperationCanceledException) {
+			Message = "一覧取得を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"一覧取得失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
 		}
 	}
 
-	protected override void AfterList(System.Collections.IList list) {
-		SearchRows = new ObservableCollection<ShopHaibunSearchRow>(
-			ListData.Select(item => new ShopHaibunSearchRow(item)));
-		OnPropertyChanged(nameof(SearchCount));
-	}
+	/// <summary>配分画面へ。選択商品の SKU（商品+色+サイズ）を確定し、店舗×SKU の入力状態を構築する。</summary>
+	[RelayCommand(CanExecute = nameof(CanGoToEdit), IncludeCancelCommand = true)]
+	async Task GoToEdit(CancellationToken ct) {
+		if (SelectedSearchRow == null || searchParam == null) return;
 
-	protected override void OnCurrentEditChangedCore(TranHaibun? oldValue, TranHaibun newValue) {
-		EntryRows = [newValue];
-		SelectedEntryRow = newValue;
-		ShijiDay = FromYmd8(newValue.DenDay);
-		NouhinDay = FromYmd8(newValue.NouhinDay);
-		TargetShohinCode = newValue.Id_Shohin > 0 ? newValue.Id_Shohin.ToString() : string.Empty;
-		TargetShohinName = newValue.JanCode;
-		TargetJodai = newValue.Jodai;
-		Nyuryokusha = newValue.Id_Shain > 0 ? newValue.Id_Shain.ToString() : string.Empty;
-	}
-
-	partial void OnShijiDayChanged(DateTime? value) => CurrentEdit.DenDay = ToYmd8(value);
-	partial void OnNouhinDayChanged(DateTime? value) => CurrentEdit.NouhinDay = ToYmd8(value);
-	partial void OnNyuryokushaChanged(string value) {
-		if (long.TryParse(value, out var id)) CurrentEdit.Id_Shain = id;
-	}
-
-	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
-
-	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
-	async Task DoSearch(CancellationToken ct) => await DoList(ct);
-
-	[RelayCommand]
-	void DoSelectSoko() {
-		var soko = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code", Id_Soko);
-		if (soko == null) return;
-		Id_Soko = soko.Id;
-		SokoCode = soko.Code;
-		SokoName = soko.Name;
-	}
-
-	[RelayCommand(CanExecute = nameof(CanGoToEdit))]
-	void GoToEdit() {
-		if (SelectedSearchRow == null) return;
-		Current = SelectedSearchRow.Source;
-		SelectedTabIndex = 1;
-	}
-
-	[RelayCommand]
-	void GoToNew() {
-		Current = new TranHaibun {
-			DenDay = ToYmd8(DateTime.Today),
-			NouhinDay = ToYmd8(DateTime.Today),
-			Id_Soko = Id_Soko,
-			Kubun = Kubun,
-		};
-		SelectedTabIndex = 1;
+		StartBusy("配分データ取得中...");
+		try {
+			await LoadEntryAsync(SelectedSearchRow, searchParam, ct);
+			SelectedTabIndex = 1;
+			Message = $"{TargetShohinCode} {TargetShohinName} の配分入力を開始します";
+		}
+		catch (OperationCanceledException) {
+			Message = "配分データ取得を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"配分データ取得失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
 	}
 
 	[RelayCommand]
 	void GoToSearch() => SelectedTabIndex = 0;
 
+	/// <summary>配分先店舗の選択（複数）。選択結果と店舗リストを同期する。</summary>
 	[RelayCommand]
-	void DoSelectTenpo() {
-		var tenpo = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType>=0", "Code", CurrentEdit.Id_Tenpo);
-		if (tenpo == null) return;
-		CurrentEdit.Id_Tenpo = tenpo.Id;
+	void SelectTenpo() {
+		var selWin = new Views.Sub.SelectMultiWinView();
+		if (selWin.DataContext is not SelectMultiWinViewModel vm) return;
+		vm.SetParam(typeof(MasterTokui), "TenType IN (3,6)", "Code",
+			selectedIds: TenpoEntries.Select(x => x.Id_Tenpo));
+		if (ClientLib.ShowDialogView(selWin, this) != true) return;
+		IReadOnlyList<MasterTokui>? selected = vm.GetSelectedItems<MasterTokui>();
+		if (selected == null) return;
+		SyncTenpoEntries(selected);
 	}
 
 	[RelayCommand]
-	void DoSelectShohin() {
-		var shohin = ShowSelectDialog<MasterShohin>(typeof(MasterShohin), string.Empty, "Code", CurrentEdit.Id_Shohin);
-		if (shohin == null) return;
-		CurrentEdit.Id_Shohin = shohin.Id;
-		CurrentEdit.JanCode = string.Empty;
-		CurrentEdit.Jodai = shohin.TankaJodai;
-		CurrentEdit.Gedai = shohin.TankaGenka;
-		CurrentEdit.Tanka = shohin.TankaJodai;
-		TargetShohinCode = shohin.Code;
-		TargetShohinName = shohin.Name;
-		TargetJodai = shohin.TankaJodai;
-	}
-
-	[RelayCommand]
-	void DoSelectSku() {
-		if (CurrentEdit.Id_Shohin <= 0) {
-			MessageEx.ShowWarningDialog("先に商品を選択してください", owner: ClientLib.GetActiveView(this));
+	void RemoveTenpo(ShopHaibunTenpoEntry? entry) {
+		entry ??= SelectedTenpo;
+		if (entry == null) return;
+		if (entry.TotalSu > 0 &&
+			MessageEx.ShowQuestionDialog($"店舗 {entry.TenpoDisplay} には指示数が入力されています。削除しますか？",
+				owner: ActiveWindow) != MessageBoxResult.Yes) {
 			return;
 		}
-		var win = new Views.Sub.SelectShohinColSizView();
-		if (win.DataContext is not SelectShohinColSizViewModel vm) return;
-		vm.SetParam(CurrentEdit.Id_Shohin, CurrentEdit.Id_Col, CurrentEdit.Id_Siz, filterByColor: false);
-		if (ClientLib.ShowDialogView(win, this) != true) return;
-		var sku = vm.Current;
-		CurrentEdit.Id_Col = sku.Id_Col;
-		CurrentEdit.Id_Siz = sku.Id_Siz;
-		CurrentEdit.JanCode = sku.Jan1;
+		foreach (ShopHaibunEntryRow row in entry.Rows) row.Su = 0;
+		entry.PropertyChanged -= OnTenpoEntryPropertyChanged;
+		TenpoEntries.Remove(entry);
+		SelectedTenpo = TenpoEntries.FirstOrDefault();
+		RefreshGrandTotal();
 	}
 
-	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
-	async Task DoInsertOnDetailTab(CancellationToken ct) => await DoInsert(ct);
+	[RelayCommand]
+	void SelectShain() {
+		var shain = ShowSelect<MasterShain>(typeof(MasterShain), string.Empty, "Code", Id_Shain);
+		if (shain == null) return;
+		Id_Shain = shain.Id;
+		ShainDisplay = $"{shain.Code} {shain.Name}";
+	}
 
+	/// <summary>登録（F2）。既存の未送信 TranHaibun を洗い替えし、指示数>0 の店舗×SKU を一括登録する。</summary>
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
-	async Task DoUpdateOnDetailTab(CancellationToken ct) => await DoUpdate(ct);
+	async Task DoRegister(CancellationToken ct) {
+		if (targetShohin == null || searchParam == null) return;
+		if (ShijiDay == null) {
+			MessageEx.ShowWarningDialog("配分指示日を入力してください", owner: ActiveWindow);
+			return;
+		}
+		List<TranHaibun> newRecords = BuildNewRecords();
+		if (newRecords.Count == 0 && loadedEditableRows.Count == 0) {
+			MessageEx.ShowWarningDialog("店舗を追加し、指示数を入力してください", owner: ActiveWindow);
+			return;
+		}
+		string confirm = newRecords.Count == 0
+			? $"指示数が全て0のため、既存の配分指示 {loadedEditableRows.Count:N0} 件を削除します。よろしいですか？"
+			: $"配分指示 {newRecords.Count:N0} 件（合計 {newRecords.Sum(x => x.Su):N0} 点）を登録します。よろしいですか？";
+		if (MessageEx.ShowQuestionDialog(confirm, owner: ActiveWindow) != MessageBoxResult.Yes) return;
 
-	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
-	async Task DoDeleteOnDetailTab(CancellationToken ct) => await DoDelete(ct);
+		StartBusy("配分データ登録中...");
+		try {
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+
+			// 洗い替え: 読込済みの未送信指示を削除（楽観ロック付き）
+			foreach (TranHaibun old in loadedEditableRows) {
+				ct.ThrowIfCancellationRequested();
+				var deleteMsg = new CvMsg {
+					Code = 0,
+					Flag = CvFlag.Msg201_Op_Execute,
+					DataType = typeof(DeleteByIdParam),
+					DataMsg = Common.SerializeObject(new DeleteByIdParam(typeof(TranHaibun), old.Id, old.Vdu)),
+				};
+				CvMsg deleteReply = await coreService.QueryMsgAsync(deleteMsg, AppGlobal.GetDefaultCallContext(ct));
+				if (deleteReply.Code < 0) {
+					throw new InvalidOperationException($"既存指示の削除に失敗しました（Id={old.Id}）。他端末で更新された可能性があります。再取得してください。");
+				}
+			}
+
+			if (newRecords.Count > 0) {
+				var insertMsg = new CvMsg {
+					Code = 0,
+					Flag = CvFlag.Msg201_Op_Execute,
+					DataType = typeof(InsertBulkParam),
+					DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranHaibun), JsonConvert.SerializeObject(newRecords))),
+				};
+				CvMsg insertReply = await coreService.QueryMsgAsync(insertMsg, AppGlobal.GetDefaultCallContext(ct));
+				if (insertReply.Code < 0) {
+					throw new InvalidOperationException($"登録に失敗しました: {insertReply.Option ?? insertReply.DataMsg}");
+				}
+			}
+
+			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分指示を {newRecords.Count:N0} 件登録しました";
+			if (SelectedSearchRow != null) {
+				await LoadEntryAsync(SelectedSearchRow, searchParam, ct);
+			}
+			MessageEx.ShowInformationDialog("登録完了しました。", owner: ActiveWindow);
+		}
+		catch (OperationCanceledException) {
+			Message = "登録を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"登録失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	// ===== タブ1: クエリ =====
+
+	async Task<List<MasterShohin>> LoadShohinListAsync(ShopHaibunSearchParameter param, CancellationToken ct) {
+		List<string> parameters = [];
+		List<string> clauses = [];
+		AddCodeRange(clauses, parameters, "M.Code", param.ShohinCodeFrom, param.ShohinCodeTo);
+		AddLike(clauses, parameters, "M.Name", param.ShohinName);
+		AddCodeRange(clauses, parameters, JsonCd("M.VBrand"), param.BrandFrom, param.BrandTo);
+		AddCodeRange(clauses, parameters, JsonCd("M.VItem"), param.ItemFrom, param.ItemTo);
+		AddCodeRange(clauses, parameters, JsonCd("M.VSeason"), param.SeasonFrom, param.SeasonTo);
+		string where = clauses.Count == 0 ? string.Empty : $"WHERE {string.Join(" AND ", clauses)}";
+		string limit = param.MaxCount is int max and > 0 ? $"LIMIT {max}" : string.Empty;
+		string sql = $"""
+			SELECT
+				M.Id, M.Vdc, M.Vdu, M.Code, M.Name, M.TankaJodai, M.TankaGenka,
+				M.VBrand, M.VItem, M.VSeason
+			FROM MasterShohin M
+			{where}
+			ORDER BY M.Code
+			{limit}
+			""";
+		return await QuerySqlListAsync<MasterShohin>(sql, parameters, ct);
+	}
+
+	/// <summary>累計売上（Tran00/Tran01 の JSON 明細を CalcFlag 考慮で商品Id別に集計）</summary>
+	async Task<Dictionary<long, int>> LoadUriageTotalsAsync(IReadOnlyCollection<long> shohinIds, CancellationToken ct) {
+		if (shohinIds.Count == 0) return [];
+		List<string> parameters = [];
+		string inClause = BuildInClause("T.Id_Shohin", shohinIds, parameters);
+		string sql = $"""
+			SELECT
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				T.Id_Shohin, 0 AS Id_Soko, 0 AS Id_Col, 0 AS Id_Siz,
+				IFNULL(SUM(T.Su), 0) AS Su
+			FROM (
+				SELECT CAST(json_extract(m.value, '$.Id_Shohin') AS INTEGER) AS Id_Shohin,
+					CAST(json_extract(m.value, '$.Su') AS INTEGER) * H.CalcFlag AS Su
+				FROM Tran00Uriage H, json_each(H.Jmeisai) AS m
+				WHERE H.CalcFlag <> 0
+				UNION ALL
+				SELECT CAST(json_extract(m.value, '$.Id_Shohin') AS INTEGER),
+					CAST(json_extract(m.value, '$.Su') AS INTEGER) * H.CalcFlag
+				FROM Tran01Tenuri H, json_each(H.Jmeisai) AS m
+				WHERE H.CalcFlag <> 0
+			) T
+			WHERE {inClause}
+			GROUP BY T.Id_Shohin
+			""";
+		List<SummaryRealStock> rows = await QuerySqlListAsync<SummaryRealStock>(sql, parameters, ct);
+		return rows.ToDictionary(x => x.Id_Shohin, x => x.Su);
+	}
+
+	/// <summary>現在庫（配分元倉庫の SummaryRealStock を商品Id別に集計）</summary>
+	async Task<Dictionary<long, int>> LoadZaikoTotalsAsync(long idSoko, IReadOnlyCollection<long> shohinIds, CancellationToken ct) {
+		if (shohinIds.Count == 0) return [];
+		List<string> parameters = [];
+		string inClause = BuildInClause("R.Id_Shohin", shohinIds, parameters);
+		string sql = $"""
+			SELECT
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				R.Id_Shohin, 0 AS Id_Soko, 0 AS Id_Col, 0 AS Id_Siz,
+				IFNULL(SUM(R.Su), 0) AS Su
+			FROM SummaryRealStock R
+			WHERE R.Id_Soko = {AddParameter(parameters, idSoko)}
+				AND {inClause}
+			GROUP BY R.Id_Shohin
+			""";
+		List<SummaryRealStock> rows = await QuerySqlListAsync<SummaryRealStock>(sql, parameters, ct);
+		return rows.ToDictionary(x => x.Id_Shohin, x => x.Su);
+	}
+
+	/// <summary>現在指示数（配分元倉庫の未送信・送信中 TranHaibun を商品Id別に集計）</summary>
+	async Task<Dictionary<long, int>> LoadShijiTotalsAsync(long idSoko, IReadOnlyCollection<long> shohinIds, CancellationToken ct) {
+		if (shohinIds.Count == 0) return [];
+		List<string> parameters = [];
+		string inClause = BuildInClause("T.Id_Shohin", shohinIds, parameters);
+		string sql = $"""
+			SELECT
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				T.Id_Shohin, 0 AS Id_Soko, 0 AS Id_Col, 0 AS Id_Siz,
+				IFNULL(SUM(T.Su), 0) AS Su
+			FROM TranHaibun T
+			WHERE T.Id_Soko = {AddParameter(parameters, idSoko)}
+				AND T.SendFlg < 2
+				AND {inClause}
+			GROUP BY T.Id_Shohin
+			""";
+		List<SummaryRealStock> rows = await QuerySqlListAsync<SummaryRealStock>(sql, parameters, ct);
+		return rows.ToDictionary(x => x.Id_Shohin, x => x.Su);
+	}
+
+	/// <summary>
+	/// 入荷予定数（未消込の発注 Tran13Hachu を商品Id別に集計）。
+	/// 発注に済フラグは無く、仕入 Tran03Shiire.RelateNo1 に発注Id が入ることで消込済とみなす。
+	/// </summary>
+	async Task<Dictionary<long, int>> LoadNyukaYoteiTotalsAsync(long idSoko, IReadOnlyCollection<long> shohinIds, CancellationToken ct) {
+		if (shohinIds.Count == 0) return [];
+		List<string> parameters = [];
+		string inClause = BuildInClause("T.Id_Shohin", shohinIds, parameters);
+		string sql = $"""
+			SELECT
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				T.Id_Shohin, 0 AS Id_Soko, 0 AS Id_Col, 0 AS Id_Siz,
+				IFNULL(SUM(T.Su), 0) AS Su
+			FROM (
+				SELECT CAST(json_extract(m.value, '$.Id_Shohin') AS INTEGER) AS Id_Shohin,
+					CAST(json_extract(m.value, '$.Su') AS INTEGER) * H.CalcFlag AS Su
+				FROM Tran13Hachu H, json_each(H.Jmeisai) AS m
+				WHERE H.CalcFlag <> 0
+					AND H.Id_Soko = {AddParameter(parameters, idSoko)}
+					AND NOT EXISTS (SELECT 1 FROM Tran03Shiire S WHERE S.RelateNo1 = H.Id)
+			) T
+			WHERE {inClause}
+			GROUP BY T.Id_Shohin
+			""";
+		List<SummaryRealStock> rows = await QuerySqlListAsync<SummaryRealStock>(sql, parameters, ct);
+		return rows.ToDictionary(x => x.Id_Shohin, x => x.Su);
+	}
+
+	// ===== タブ2: 構築 =====
+
+	async Task LoadEntryAsync(ShopHaibunShohinRow row, ShopHaibunSearchParameter param, CancellationToken ct) {
+		targetShohin = row.Shohin;
+		TargetShohinCode = row.Code;
+		TargetShohinName = row.Name;
+		TargetJodai = row.TankaJodai;
+		SokoDisplay = $"{param.SokoCode} {param.SokoName}";
+		KubunDisplay = param.Kubun == KubunZaiko ? "在庫配分" : "初回配分";
+		HaibunKanoSu = row.HaibunKanoSu;
+
+		// SKU 一覧（DerivedShohinColSiz レコード単位 = MasterShohin.Jcolsiz 配列単位）
+		targetSkuList = await LoadSkuListAsync(row.Id, ct);
+
+		// SKU 別の参考値（対象倉庫）
+		Dictionary<SkuKey, int> zaikoMap = await LoadSkuTotalsAsync(SkuZaikoSql(row.Id, param.Id_Soko), ct);
+		Dictionary<SkuKey, int> shijiMap = await LoadSkuTotalsAsync(SkuShijiSql(row.Id, param.Id_Soko), ct);
+		Dictionary<SkuKey, int> nyukaMap = await LoadSkuTotalsAsync(SkuNyukaSql(row.Id, param.Id_Soko), ct);
+
+		// 既存の未送信指示（修正対象）
+		loadedEditableRows = await QueryListAsync<TranHaibun>(
+			$"Id_Soko = {param.Id_Soko} AND Id_Shohin = {row.Id} AND Kubun = {param.Kubun} AND SendFlg = 0",
+			"Id_Tenpo, Id_Col, Id_Siz, Id", ct);
+
+		// 修正対象分を差し引いた「他指示数」を SKU サマリへ設定
+		Dictionary<SkuKey, int> editingMap = loadedEditableRows
+			.GroupBy(x => new SkuKey(x.Id_Col, x.Id_Siz))
+			.ToDictionary(g => g.Key, g => g.Sum(x => x.Su));
+
+		ObservableCollection<ShopHaibunSkuSummary> summaries = [];
+		Dictionary<SkuKey, ShopHaibunSkuSummary> summaryMap = [];
+		foreach (DerivedShohinColSiz sku in targetSkuList) {
+			SkuKey key = new(sku.Id_Col, sku.Id_Siz);
+			var summary = new ShopHaibunSkuSummary(sku) {
+				ZaikoSu = zaikoMap.GetValueOrDefault(key),
+				NyukaYoteiSu = nyukaMap.GetValueOrDefault(key),
+				OtherShijiSu = shijiMap.GetValueOrDefault(key) - editingMap.GetValueOrDefault(key),
+			};
+			summaries.Add(summary);
+			summaryMap[key] = summary;
+		}
+		SkuSummaries = summaries;
+
+		// 既存指示の店舗を復元
+		foreach (ShopHaibunTenpoEntry old in TenpoEntries) old.PropertyChanged -= OnTenpoEntryPropertyChanged;
+		TenpoEntries = [];
+		List<long> tenpoIds = loadedEditableRows.Select(x => x.Id_Tenpo).Distinct().ToList();
+		if (tenpoIds.Count > 0) {
+			List<MasterTokui> tenpoList = await QueryListAsync<MasterTokui>(
+				$"Id IN ({string.Join(",", tenpoIds)})", "Code", ct);
+			SyncTenpoEntries(tenpoList);
+			foreach (TranHaibun old in loadedEditableRows) {
+				ShopHaibunTenpoEntry? entry = TenpoEntries.FirstOrDefault(x => x.Id_Tenpo == old.Id_Tenpo);
+				ShopHaibunEntryRow? entryRow = entry?.Rows.FirstOrDefault(x => x.Id_Col == old.Id_Col && x.Id_Siz == old.Id_Siz);
+				if (entryRow != null) entryRow.Su += old.Su;
+			}
+		}
+		SelectedTenpo = TenpoEntries.FirstOrDefault();
+
+		TranHaibun? first = loadedEditableRows.FirstOrDefault();
+		ShijiDay = FromYmd8(first?.DenDay) ?? DateTime.Today;
+		NouhinDay = FromYmd8(first?.NouhinDay) ?? DateTime.Today;
+		if (first is { Id_Shain: > 0 }) {
+			Id_Shain = first.Id_Shain;
+			if (string.IsNullOrEmpty(ShainDisplay)) ShainDisplay = $"Id:{first.Id_Shain}";
+		}
+		RefreshGrandTotal();
+	}
+
+	async Task<List<DerivedShohinColSiz>> LoadSkuListAsync(long shohinId, CancellationToken ct) {
+		List<string> parameters = [];
+		string sql = $"""
+			SELECT
+				D.Id, D.Id_Shohin, D.RowIdx, D.Code,
+				D.Id_Col, D.Code_Col, D.Mei_Col,
+				D.Id_Siz, D.Code_Siz, D.Mei_Siz,
+				D.Jan1, D.Jan2, D.Jan3
+			FROM DerivedShohinColSiz D
+			WHERE D.Id_Shohin = {AddParameter(parameters, shohinId)}
+			ORDER BY D.RowIdx, D.Code_Col, D.Code_Siz
+			""";
+		return await QuerySqlListAsync<DerivedShohinColSiz>(sql, parameters, ct);
+	}
+
+	(string sql, List<string> parameters) SkuZaikoSql(long shohinId, long idSoko) {
+		List<string> parameters = [];
+		string sql = $"""
+			SELECT
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				R.Id_Shohin, 0 AS Id_Soko, R.Id_Col, R.Id_Siz,
+				IFNULL(SUM(R.Su), 0) AS Su
+			FROM SummaryRealStock R
+			WHERE R.Id_Soko = {AddParameter(parameters, idSoko)}
+				AND R.Id_Shohin = {AddParameter(parameters, shohinId)}
+			GROUP BY R.Id_Col, R.Id_Siz
+			""";
+		return (sql, parameters);
+	}
+
+	(string sql, List<string> parameters) SkuShijiSql(long shohinId, long idSoko) {
+		List<string> parameters = [];
+		string sql = $"""
+			SELECT
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				T.Id_Shohin, 0 AS Id_Soko, T.Id_Col, T.Id_Siz,
+				IFNULL(SUM(T.Su), 0) AS Su
+			FROM TranHaibun T
+			WHERE T.Id_Soko = {AddParameter(parameters, idSoko)}
+				AND T.Id_Shohin = {AddParameter(parameters, shohinId)}
+				AND T.SendFlg < 2
+			GROUP BY T.Id_Col, T.Id_Siz
+			""";
+		return (sql, parameters);
+	}
+
+	(string sql, List<string> parameters) SkuNyukaSql(long shohinId, long idSoko) {
+		List<string> parameters = [];
+		string sql = $"""
+			SELECT
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				T.Id_Shohin, 0 AS Id_Soko, T.Id_Col, T.Id_Siz,
+				IFNULL(SUM(T.Su), 0) AS Su
+			FROM (
+				SELECT CAST(json_extract(m.value, '$.Id_Shohin') AS INTEGER) AS Id_Shohin,
+					CAST(json_extract(m.value, '$.Id_Col') AS INTEGER) AS Id_Col,
+					CAST(json_extract(m.value, '$.Id_Siz') AS INTEGER) AS Id_Siz,
+					CAST(json_extract(m.value, '$.Su') AS INTEGER) * H.CalcFlag AS Su
+				FROM Tran13Hachu H, json_each(H.Jmeisai) AS m
+				WHERE H.CalcFlag <> 0
+					AND H.Id_Soko = {AddParameter(parameters, idSoko)}
+					AND NOT EXISTS (SELECT 1 FROM Tran03Shiire S WHERE S.RelateNo1 = H.Id)
+			) T
+			WHERE T.Id_Shohin = {AddParameter(parameters, shohinId)}
+			GROUP BY T.Id_Col, T.Id_Siz
+			""";
+		return (sql, parameters);
+	}
+
+	async Task<Dictionary<SkuKey, int>> LoadSkuTotalsAsync((string sql, List<string> parameters) query, CancellationToken ct) {
+		List<SummaryRealStock> rows = await QuerySqlListAsync<SummaryRealStock>(query.sql, query.parameters, ct);
+		return rows.ToDictionary(x => new SkuKey(x.Id_Col, x.Id_Siz), x => x.Su);
+	}
+
+	/// <summary>店舗選択結果と TenpoEntries を同期する（既存店舗の入力値は維持）。</summary>
+	void SyncTenpoEntries(IReadOnlyList<MasterTokui> selected) {
+		Dictionary<SkuKey, ShopHaibunSkuSummary> summaryMap =
+			SkuSummaries.ToDictionary(x => new SkuKey(x.Id_Col, x.Id_Siz));
+
+		// 選択から外れた店舗を除去（指示数は 0 に戻してサマリへ反映）
+		foreach (ShopHaibunTenpoEntry entry in TenpoEntries.Where(x => selected.All(s => s.Id != x.Id_Tenpo)).ToList()) {
+			foreach (ShopHaibunEntryRow entryRow in entry.Rows) entryRow.Su = 0;
+			entry.PropertyChanged -= OnTenpoEntryPropertyChanged;
+			TenpoEntries.Remove(entry);
+		}
+
+		// 追加された店舗の行を構築
+		foreach (MasterTokui tenpo in selected) {
+			if (TenpoEntries.Any(x => x.Id_Tenpo == tenpo.Id)) continue;
+			var entry = new ShopHaibunTenpoEntry(tenpo);
+			foreach (DerivedShohinColSiz sku in targetSkuList) {
+				if (!summaryMap.TryGetValue(new SkuKey(sku.Id_Col, sku.Id_Siz), out ShopHaibunSkuSummary? summary)) continue;
+				entry.Rows.Add(new ShopHaibunEntryRow(sku, summary, entry));
+			}
+			entry.PropertyChanged += OnTenpoEntryPropertyChanged;
+			TenpoEntries.Add(entry);
+		}
+		SelectedTenpo ??= TenpoEntries.FirstOrDefault();
+		RefreshGrandTotal();
+	}
+
+	void OnTenpoEntryPropertyChanged(object? sender, PropertyChangedEventArgs e) {
+		if (e.PropertyName == nameof(ShopHaibunTenpoEntry.TotalSu)) RefreshGrandTotal();
+	}
+
+	void RefreshGrandTotal() => GrandTotalSu = TenpoEntries.Sum(x => x.TotalSu);
+
+	List<TranHaibun> BuildNewRecords() {
+		List<TranHaibun> records = [];
+		if (targetShohin == null || searchParam == null) return records;
+		foreach (ShopHaibunTenpoEntry entry in TenpoEntries) {
+			foreach (ShopHaibunEntryRow entryRow in entry.Rows.Where(x => x.Su > 0)) {
+				records.Add(new TranHaibun {
+					DenDay = ToYmd8(ShijiDay),
+					NouhinDay = ToYmd8(NouhinDay),
+					Id_Soko = searchParam.Id_Soko,
+					Id_Tenpo = entry.Id_Tenpo,
+					Kubun = searchParam.Kubun,
+					SendFlg = 0,
+					Id_Shohin = targetShohin.Id,
+					JanCode = entryRow.Jan1,
+					Id_Col = entryRow.Id_Col,
+					Id_Siz = entryRow.Id_Siz,
+					Su = entryRow.Su,
+					Tanka = targetShohin.TankaJodai,
+					Kingaku = entryRow.Su * targetShohin.TankaJodai,
+					Jodai = targetShohin.TankaJodai,
+					Gedai = targetShohin.TankaGenka,
+					Id_Shain = Id_Shain,
+				});
+			}
+		}
+		return records;
+	}
+
+	// ===== 通信・共通ヘルパー =====
+
+	async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var msg = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters])),
+		};
+		CvMsg reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+		ct.ThrowIfCancellationRequested();
+		if (reply.Code < 0 && reply.Code != -1) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
+		}
+		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
+		return list.Cast<T>().ToList();
+	}
+
+	async Task<List<T>> QueryListAsync<T>(string where, string order, CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var msg = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListParam),
+			DataMsg = Common.SerializeObject(new QueryListParam(typeof(T), where, order)),
+		};
+		CvMsg reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+		ct.ThrowIfCancellationRequested();
+		if (reply.Code < 0 && reply.Code != -1) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
+		}
+		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
+		return list.Cast<T>().ToList();
+	}
+
+	TResult? ShowSelect<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
+		var selWin = new Views.Sub.SelectWinView();
+		if (selWin.DataContext is not SelectWinViewModel vm) return null;
+		vm.SetParam(tableType, where, order, startPos: startPos);
+		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
+		return vm.Current as TResult;
+	}
+
+	static string BuildConditionText(ShopHaibunSearchParameter param) {
+		List<string> parts = [$"配分元倉庫: {param.SokoCode} {param.SokoName}", $"区分: {(param.Kubun == KubunZaiko ? "在庫配分" : "初回配分")}"];
+		if (!string.IsNullOrWhiteSpace(param.ShohinCodeFrom) || !string.IsNullOrWhiteSpace(param.ShohinCodeTo))
+			parts.Add($"商品CD: {param.ShohinCodeFrom}～{param.ShohinCodeTo}");
+		if (!string.IsNullOrWhiteSpace(param.ShohinName)) parts.Add($"商品名: {param.ShohinName}");
+		if (!string.IsNullOrWhiteSpace(param.BrandFrom) || !string.IsNullOrWhiteSpace(param.BrandTo))
+			parts.Add($"ブランド: {param.BrandFrom}～{param.BrandTo}");
+		if (!string.IsNullOrWhiteSpace(param.ItemFrom) || !string.IsNullOrWhiteSpace(param.ItemTo))
+			parts.Add($"アイテム: {param.ItemFrom}～{param.ItemTo}");
+		if (!string.IsNullOrWhiteSpace(param.SeasonFrom) || !string.IsNullOrWhiteSpace(param.SeasonTo))
+			parts.Add($"シーズン: {param.SeasonFrom}～{param.SeasonTo}");
+		return string.Join("　", parts);
+	}
+
+	void StartBusy(string message) {
+		IsBusy = true;
+		Message = message;
+		ClientLib.Cursor2Wait();
+	}
+
+	void FinishBusy() {
+		IsBusy = false;
+		ClientLib.Cursor2Normal();
+	}
+
+	Window? ActiveWindow => ClientLib.GetActiveView(this);
+
+	static void AddCodeRange(List<string> clauses, List<string> parameters, string column, string? from, string? to) {
+		string normalizedFrom = Normalize(from);
+		string normalizedTo = Normalize(to);
+		if (!string.IsNullOrEmpty(normalizedFrom)) clauses.Add($"{column} >= {AddParameter(parameters, normalizedFrom)}");
+		if (!string.IsNullOrEmpty(normalizedTo)) clauses.Add($"{column} <= {AddParameter(parameters, normalizedTo)}");
+	}
+
+	static void AddLike(List<string> clauses, List<string> parameters, string column, string? value) {
+		string normalized = Normalize(value);
+		if (string.IsNullOrEmpty(normalized)) return;
+		clauses.Add($"{column} LIKE {AddParameter(parameters, $"%{normalized}%")}");
+	}
+
+	static string BuildInClause(string column, IEnumerable<long> values, List<string> parameters) {
+		string[] parameterNames = values.Select(x => AddParameter(parameters, x)).ToArray();
+		return $"{column} IN ({string.Join(",", parameterNames)})";
+	}
+
+	static string AddParameter(List<string> parameters, object value) {
+		parameters.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);
+		return $"@{parameters.Count - 1}";
+	}
+
+	static string Normalize(string? value) => value?.Trim() ?? string.Empty;
+
+	static string JsonCd(string column) =>
+		$"IFNULL(json_extract(CASE WHEN json_valid({column}) THEN {column} ELSE '{{}}' END, '$.Cd'), '')";
 
 	static string ToYmd8(DateTime? value) => value?.ToString("yyyyMMdd") ?? string.Empty;
 
-	static DateTime? FromYmd8(string value) =>
-		DateTime.TryParseExact(value, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out var result)
-			? result
-			: null;
+	static DateTime? FromYmd8(string? value) =>
+		DateTime.TryParseExact(value, "yyyyMMdd", null, DateTimeStyles.None, out DateTime result) ? result : null;
 }
 
-/// <summary>一覧で表示する配分レコード。</summary>
-public sealed class ShopHaibunSearchRow(TranHaibun source) {
-	public TranHaibun Source { get; } = source;
-	public long Id => source.Id;
-	public string DenDay => source.DenDay;
-	public string NouhinDay => source.NouhinDay;
-	public long Id_Soko => source.Id_Soko;
-	public long Id_Tenpo => source.Id_Tenpo;
-	public long Id_Shohin => source.Id_Shohin;
-	public long Id_Col => source.Id_Col;
-	public long Id_Siz => source.Id_Siz;
-	public string JanCode => source.JanCode;
-	public int Su => source.Su;
-	public int Jodai => source.Jodai;
+readonly record struct SkuKey(long IdCol, long IdSiz);
+
+/// <summary>タブ1の商品一覧行（商品Id 単位の全体把握用）。</summary>
+public sealed class ShopHaibunShohinRow(MasterShohin shohin) {
+	public MasterShohin Shohin { get; } = shohin;
+	public long Id => Shohin.Id;
+	public string Code => Shohin.Code;
+	public string Name => Shohin.Name;
+	public int TankaJodai => Shohin.TankaJodai;
+	public string BrandDisplay => FormatCodeName(Shohin.VBrand);
+	public string ItemDisplay => FormatCodeName(Shohin.VItem);
+	public string SeasonDisplay => FormatCodeName(Shohin.VSeason);
+
+	/// <summary>累計売上（Tran00/Tran01 CalcFlag 考慮）</summary>
+	public int UriageSu { get; init; }
+	/// <summary>現在庫（配分元倉庫）</summary>
+	public int ZaikoSu { get; init; }
+	/// <summary>現在指示数（TranHaibun SendFlg&lt;2）</summary>
+	public int ShijiSu { get; init; }
+	/// <summary>入荷予定数（未消込発注）</summary>
+	public int NyukaYoteiSu { get; init; }
+	/// <summary>配分可能数 = 現在庫 − 指示数 + 入荷予定数</summary>
+	public int HaibunKanoSu => ZaikoSu - ShijiSu + NyukaYoteiSu;
+
+	static string FormatCodeName(CodeNameView? value) {
+		if (value == null) return string.Empty;
+		string cd = value.Cd?.Trim() ?? string.Empty;
+		string mei = value.Mei?.Trim() ?? string.Empty;
+		if (cd.Length == 0) return mei;
+		if (mei.Length == 0) return cd;
+		return $"{cd} {mei}";
+	}
+}
+
+/// <summary>SKU（商品+色+サイズ）単位の配分状況サマリ。全店舗の入力に即時連動する。</summary>
+public sealed partial class ShopHaibunSkuSummary(DerivedShohinColSiz sku) : ObservableObject {
+	public long Id_Col => sku.Id_Col;
+	public long Id_Siz => sku.Id_Siz;
+	public string ColDisplay => JoinCodeName(sku.Code_Col, sku.Mei_Col);
+	public string SizDisplay => JoinCodeName(sku.Code_Siz, sku.Mei_Siz);
+	public string Jan1 => sku.Jan1;
+
+	/// <summary>対象倉庫の現在庫</summary>
+	public int ZaikoSu { get; init; }
+	/// <summary>入荷予定数（未消込発注）</summary>
+	public int NyukaYoteiSu { get; init; }
+	/// <summary>修正対象以外の指示数</summary>
+	public int OtherShijiSu { get; init; }
+
+	/// <summary>全店舗の今回入力合計</summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(NokoriSu))]
+	public partial int HaibunTotalSu { get; set; }
+
+	/// <summary>残 = 在庫 + 入荷予定 − 他指示 − 今回配分合計</summary>
+	public int NokoriSu => ZaikoSu + NyukaYoteiSu - OtherShijiSu - HaibunTotalSu;
+
+	static string JoinCodeName(string? code, string? name) {
+		string cd = code?.Trim() ?? string.Empty;
+		string mei = name?.Trim() ?? string.Empty;
+		if (cd.Length == 0) return mei;
+		if (mei.Length == 0) return cd;
+		return $"{cd} {mei}";
+	}
+}
+
+/// <summary>配分先店舗1件分の入力状態（SKU 行の集合）。</summary>
+public sealed partial class ShopHaibunTenpoEntry(MasterTokui tenpo) : ObservableObject {
+	public long Id_Tenpo => tenpo.Id;
+	public string TenpoCode => tenpo.Code;
+	public string TenpoName => tenpo.Name;
+	public string TenpoDisplay => $"{tenpo.Code} {tenpo.Name}";
+
+	public ObservableCollection<ShopHaibunEntryRow> Rows { get; } = [];
+
+	/// <summary>この店舗の指示数合計</summary>
+	[ObservableProperty]
+	public partial int TotalSu { get; set; }
+
+	public void RefreshTotal() => TotalSu = Rows.Sum(x => x.Su);
+}
+
+/// <summary>店舗×SKU 1行分の配分入力行。</summary>
+public sealed partial class ShopHaibunEntryRow(DerivedShohinColSiz sku, ShopHaibunSkuSummary summary, ShopHaibunTenpoEntry owner) : ObservableObject {
+	public long Id_Col => sku.Id_Col;
+	public long Id_Siz => sku.Id_Siz;
+	public string ColDisplay => summary.ColDisplay;
+	public string SizDisplay => summary.SizDisplay;
+	public string Jan1 => sku.Jan1;
+
+	public ShopHaibunSkuSummary Summary => summary;
+
+	/// <summary>指示数（配分数）</summary>
+	[ObservableProperty]
+	public partial int Su { get; set; }
+
+	partial void OnSuChanged(int oldValue, int newValue) {
+		summary.HaibunTotalSu += newValue - oldValue;
+		owner.RefreshTotal();
+	}
 }

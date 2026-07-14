@@ -1,0 +1,262 @@
+<helpers:BaseWindow x:Class="CvWpfclient.Views.Sub.ShopHaibunSearchParamView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
+	Title="店舗配分 対象商品検索"
+	Width="720" Height="640"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="18" WindowStartupLocation="CenterOwner"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:ShopHaibunSearchParamViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" ClipToBounds="True" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="28" Height="28"
+					VerticalAlignment="Center"
+					Kind="DatabaseSearch" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold" Text="店舗配分 対象商品検索" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<Grid Grid.Row="1"
+			Margin="16">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+
+			<TextBlock Grid.Row="0"
+				Margin="0,0,0,8"
+				FontSize="18" FontWeight="Bold"
+				Foreground="{DynamicResource MaterialDesignBody}"
+				Text="配分対象商品の検索条件を指定してください" />
+
+			<materialDesign:Card Grid.Row="1"
+				Padding="12,12,12,0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid Margin="2">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="140" />
+						<ColumnDefinition Width="180" />
+						<ColumnDefinition Width="40" />
+						<ColumnDefinition Width="180" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<!--  配分元倉庫 (必須)  -->
+					<TextBlock Grid.Row="0" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="配分元倉庫 *" />
+					<TextBox Grid.Row="0" Grid.Column="1"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCommand}"
+						materialDesign:HintAssist.Hint="倉庫CD"
+						IsReadOnly="True"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.SokoCode, Mode=OneWay}" />
+					<TextBlock Grid.Row="0" Grid.Column="3" Grid.ColumnSpan="2"
+						Margin="8,0,0,0" VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignBody}"
+						Text="{Binding Parameter.SokoName}" />
+
+					<!--  区分  -->
+					<TextBlock Grid.Row="1" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="区分" />
+					<ComboBox Grid.Row="1" Grid.Column="1"
+						Margin="0,4"
+						DisplayMemberPath="Name"
+						ItemsSource="{Binding KubunOptions}"
+						SelectedValue="{Binding Parameter.Kubun, UpdateSourceTrigger=PropertyChanged}"
+						SelectedValuePath="Value"
+						Style="{StaticResource FormComboBox}" />
+
+					<!--  商品CD範囲  -->
+					<TextBlock Grid.Row="2" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="商品CD" />
+					<TextBox Grid.Row="2" Grid.Column="1"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectShohinFromCommand}"
+						materialDesign:HintAssist.Hint="商品CD (開始)"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.ShohinCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Grid.Row="2" Grid.Column="2"
+						HorizontalAlignment="Center" VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="-" />
+					<TextBox Grid.Row="2" Grid.Column="3"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectShohinToCommand}"
+						materialDesign:HintAssist.Hint="商品CD (終了)"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.ShohinCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+
+					<!--  商品名  -->
+					<TextBlock Grid.Row="3" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="商品名" />
+					<TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+						VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="商品名 (部分一致)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding Parameter.ShohinName, UpdateSourceTrigger=PropertyChanged}" />
+
+					<!--  ブランド範囲  -->
+					<TextBlock Grid.Row="4" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="ブランド" />
+					<TextBox Grid.Row="4" Grid.Column="1"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectBrandFromCommand}"
+						materialDesign:HintAssist.Hint="ブランド (開始)"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.BrandFrom, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Grid.Row="4" Grid.Column="2"
+						HorizontalAlignment="Center" VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="-" />
+					<TextBox Grid.Row="4" Grid.Column="3"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectBrandToCommand}"
+						materialDesign:HintAssist.Hint="ブランド (終了)"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.BrandTo, UpdateSourceTrigger=PropertyChanged}" />
+
+					<!--  アイテム範囲  -->
+					<TextBlock Grid.Row="5" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="アイテム" />
+					<TextBox Grid.Row="5" Grid.Column="1"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectItemFromCommand}"
+						materialDesign:HintAssist.Hint="アイテム (開始)"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.ItemFrom, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Grid.Row="5" Grid.Column="2"
+						HorizontalAlignment="Center" VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="-" />
+					<TextBox Grid.Row="5" Grid.Column="3"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectItemToCommand}"
+						materialDesign:HintAssist.Hint="アイテム (終了)"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.ItemTo, UpdateSourceTrigger=PropertyChanged}" />
+
+					<!--  シーズン範囲  -->
+					<TextBlock Grid.Row="6" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="シーズン" />
+					<TextBox Grid.Row="6" Grid.Column="1"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectSeasonFromCommand}"
+						materialDesign:HintAssist.Hint="シーズン (開始)"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.SeasonFrom, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Grid.Row="6" Grid.Column="2"
+						HorizontalAlignment="Center" VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="-" />
+					<TextBox Grid.Row="6" Grid.Column="3"
+						VerticalContentAlignment="Center"
+						helpers:SearchTextBoxAssist.Command="{Binding SelectSeasonToCommand}"
+						materialDesign:HintAssist.Hint="シーズン (終了)"
+						Style="{StaticResource MenteSearchTextBox}"
+						Text="{Binding Parameter.SeasonTo, UpdateSourceTrigger=PropertyChanged}" />
+
+					<!--  件数  -->
+					<TextBlock Grid.Row="7" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="件数" />
+					<TextBox Grid.Row="7" Grid.Column="1"
+						HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="件数"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Grid.Row="7" Grid.Column="2" Grid.ColumnSpan="3"
+						Margin="8,0,0,0" VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="(空白:全件取得)" />
+
+					<TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="5"
+						Margin="0,8,0,0"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="配分元倉庫は必須です。他の条件を指定しない場合、すべての商品が対象になります。"
+						TextWrapping="Wrap" />
+				</Grid>
+			</materialDesign:Card>
+		</Grid>
+
+		<StackPanel Grid.Row="2"
+			Margin="0,16,16,16" HorizontalAlignment="Right"
+			Orientation="Horizontal">
+			<Button Width="120" Height="38"
+				Margin="0,0,8,0"
+				Command="{Binding OkCommand}"
+				IsDefault="True"
+				Style="{StaticResource MaterialDesignRaisedButton}">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon VerticalAlignment="Center"
+						Kind="CheckCircle" />
+					<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+						FontSize="16" Text="検索" />
+				</StackPanel>
+			</Button>
+			<Button Width="120" Height="38"
+				Command="{Binding ExitCommand}"
+				IsCancel="True"
+				Style="{StaticResource MaterialDesignFlatButton}">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon VerticalAlignment="Center"
+						Kind="ArrowLeft" />
+					<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+						FontSize="16" Text="戻る" />
+				</StackPanel>
+			</Button>
+		</StackPanel>
+	</Grid>
+</helpers:BaseWindow>
