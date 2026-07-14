@@ -67,7 +67,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		if (ShouldApplyAdditionalLabel(additionalIds2Label, "複数Id 2", ensuredParameter.AdditionalIds2Label)) {
 			ensuredParameter.AdditionalIds2Label = additionalIds2Label;
 		}
-		if (additionalIds1TableType != null) {
+		if (additionalIds1TableType != null || this.additionalIds1LocalData != null) {
 			ensuredParameter.AdditionalIds1Column = string.IsNullOrWhiteSpace(additionalIds1Column) ? ensuredParameter.AdditionalIds1Column : additionalIds1Column;
 		}
 		if (additionalIds2TableType != null) {
@@ -147,7 +147,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 			if (ClientLib.ShowDialogView(selWin, this) != true) return;
 			var selectedRows = vm.ListData?.Where(row => row.IsSelected).ToList() ?? [];
 			Parameter = Parameter with {
-				AdditionalIds1 = [.. selectedRows.Select(row => row.Id).Where(id => id > 0).Distinct()],
+				AdditionalIds1 = [.. selectedRows.Select(row => row.Id).Where(id => id >= 0).Distinct()],
 				AdditionalIds1Text = BuildSelectedText(selectedRows)
 			};
 			return;

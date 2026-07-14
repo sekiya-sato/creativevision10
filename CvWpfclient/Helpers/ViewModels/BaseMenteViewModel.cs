@@ -196,12 +196,12 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			ToriIdsText = NormalizeSelectedIdsText(parameter?.ToriIds, parameter?.ToriIdsText),
 			AdditionalIds1Label = string.IsNullOrWhiteSpace(parameter?.AdditionalIds1Label) ? "複数Id 1" : parameter.AdditionalIds1Label,
 			AdditionalIds1Column = NormalizeNullableText(parameter?.AdditionalIds1Column),
-			AdditionalIds1 = NormalizeSelectedIds(parameter?.AdditionalIds1),
-			AdditionalIds1Text = NormalizeSelectedIdsText(parameter?.AdditionalIds1, parameter?.AdditionalIds1Text),
+			AdditionalIds1 = NormalizeAdditionalSelectedIds(parameter?.AdditionalIds1),
+			AdditionalIds1Text = NormalizeAdditionalSelectedIdsText(parameter?.AdditionalIds1, parameter?.AdditionalIds1Text),
 			AdditionalIds2Label = string.IsNullOrWhiteSpace(parameter?.AdditionalIds2Label) ? "複数Id 2" : parameter.AdditionalIds2Label,
 			AdditionalIds2Column = NormalizeNullableText(parameter?.AdditionalIds2Column),
-			AdditionalIds2 = NormalizeSelectedIds(parameter?.AdditionalIds2),
-			AdditionalIds2Text = NormalizeSelectedIdsText(parameter?.AdditionalIds2, parameter?.AdditionalIds2Text),
+			AdditionalIds2 = NormalizeAdditionalSelectedIds(parameter?.AdditionalIds2),
+			AdditionalIds2Text = NormalizeAdditionalSelectedIdsText(parameter?.AdditionalIds2, parameter?.AdditionalIds2Text),
 			ItemIds = NormalizeSelectedIds(parameter?.ItemIds),
 			ItemIdsText = NormalizeSelectedIdsText(parameter?.ItemIds, parameter?.ItemIdsText),
 			FromCode = NormalizeNullableText(parameter?.FromCode),
@@ -235,8 +235,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
 			clauses.Add($"Name LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Name)}%")} ESCAPE '\\'");
 		}
-		AddOptionalSelectedIdInClause(clauses, parameter.AdditionalIds1Column, parameter.AdditionalIds1);
-		AddOptionalSelectedIdInClause(clauses, parameter.AdditionalIds2Column, parameter.AdditionalIds2);
+		AddOptionalAdditionalIdInClause(clauses, parameter.AdditionalIds1Column, parameter.AdditionalIds1);
+		AddOptionalAdditionalIdInClause(clauses, parameter.AdditionalIds2Column, parameter.AdditionalIds2);
 
 		SelectCodeWhereParameters = [.. parameters];
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
@@ -245,8 +245,17 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected static List<long> NormalizeSelectedIds(IEnumerable<long>? ids) =>
 		ids?.Where(id => id > 0).Distinct().ToList() ?? [];
 
+	protected static List<long> NormalizeAdditionalSelectedIds(IEnumerable<long>? ids) =>
+		ids?.Where(id => id >= 0).Distinct().ToList() ?? [];
+
 	protected static string NormalizeSelectedIdsText(IEnumerable<long>? ids, string? text) {
 		var count = ids?.Where(id => id > 0).Distinct().Count() ?? 0;
+		if (count == 0) return "未選択";
+		return string.IsNullOrWhiteSpace(text) || text == "未選択" ? $"{count}件" : text;
+	}
+
+	protected static string NormalizeAdditionalSelectedIdsText(IEnumerable<long>? ids, string? text) {
+		var count = ids?.Where(id => id >= 0).Distinct().Count() ?? 0;
 		if (count == 0) return "未選択";
 		return string.IsNullOrWhiteSpace(text) || text == "未選択" ? $"{count}件" : text;
 	}
@@ -264,6 +273,17 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	protected static void AddOptionalSelectedIdInClause(List<string> clauses, string? column, IEnumerable<long>? ids) {
 		if (string.IsNullOrWhiteSpace(column)) return;
 		AddSelectedIdInClause(clauses, column, ids);
+	}
+
+	protected static void AddOptionalAdditionalIdInClause(List<string> clauses, string? column, IEnumerable<long>? ids) {
+		if (string.IsNullOrWhiteSpace(column)) return;
+		string[] values = ids?
+			.Where(id => id >= 0)
+			.Distinct()
+			.Select(id => id.ToString(CultureInfo.InvariantCulture))
+			.ToArray() ?? [];
+		if (values.Length == 0) return;
+		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
 	protected static string? NormalizeNullableText(string? value) =>

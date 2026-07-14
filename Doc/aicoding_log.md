@@ -1,3 +1,24 @@
+## [2026-07-14] 17:47 MasterTokuiMenteView の店種選択不具合を修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：直前コミットで実装した MasterTokuiMente の店種選択が正しく動作しない不具合を修正する。
+### 実施内容
+- CvWpfclient/ViewModels/Sub/RangeParamViewModel.cs: ローカル候補を用いる AdditionalIds1 にも検索対象列を初期化し、値0を選択結果として保持するよう修正。
+- CvWpfclient/ViewModels/Sub/SelectMultiWinViewModel.cs: ローカル候補の複数選択では値0を初期選択状態として復元できるよう修正。
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: AdditionalIds の検索条件で値0を有効値として正規化・SQL条件化する処理を追加。
+- CvWpfclient/ViewModels/Sub/SelectDisplayConditionHelper.cs: 共通の一覧条件変更処理でも AdditionalIds の値0を保持・SQL条件化するよう同期。
+### 技術決定 Why
+- 店種の倉庫は TenType=0 が有効値であるため、通常のレコードId（正数のみ）とは分けて AdditionalIds のみ0以上を有効値として扱う。
+### 確認
+- RangeParamView.xaml のXML・店種行バインディング確認: 成功。
+- `git diff --check`: 成功。
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvWpfclient\\CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-14] 15:40 MasterTokuiMenteView の店種絞り込みを RangeParamView の AdditionalIds1 経由に変更
 ### Agent
 - kimi-k2.6 : opencode-go : Sisyphus

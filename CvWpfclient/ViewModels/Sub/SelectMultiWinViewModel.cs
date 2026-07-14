@@ -60,7 +60,7 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 		IsDisplayConditionChangeEnabled = false;
 		Title = title;
 		StartPos = startPos;
-		SetInitialSelectedIds(selectedIds);
+		SetInitialSelectedIds(selectedIds, includeZeroId: true);
 		ListData = WrapItems(items);
 		Current = FindInitialCurrent();
 	}
@@ -233,8 +233,10 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 		ClientLib.ExitDialogResult(this, false);
 	}
 
-	void SetInitialSelectedIds(IEnumerable<long>? selectedIds) {
-		initialSelectedIds = selectedIds?.Where(id => id != 0).ToHashSet() ?? [];
+	void SetInitialSelectedIds(IEnumerable<long>? selectedIds, bool includeZeroId = false) {
+		initialSelectedIds = selectedIds?
+			.Where(id => includeZeroId ? id >= 0 : id > 0)
+			.ToHashSet() ?? [];
 	}
 
 	ObservableCollection<SelectMultiWinItem> WrapItems(IEnumerable items) =>
