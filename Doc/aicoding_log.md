@@ -1,3 +1,21 @@
+## [2026-07-14] 15:20 MasterTokuiMenteView に店種（TenType）一覧絞り込み条件を追加
+### Agent
+- kimi-k2.6 : opencode-go : Sisyphus
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：CvWpfclient.Views._01Master.MasterTokuiMenteView で、一覧取得の条件に Tenshu を追加し、倉庫・直営店などを選択可能にする
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs: `DoSelectTenTypeCommand` を追加し、`SelectMultiWinView`（Id複数選択Win）で店種（倉庫/卸先/売仕店/直営店）を複数選択できるようにした。選択結果を `selectedTenTypeValues` に保持し、`ListWhere` をオーバーライドして `TenType IN (...)` 条件を一覧取得 SQL に付与するようにした。
+- CvWpfclient/Views/01Master/MasterTokuiMenteView.xaml: ツールバーに「店種」選択ボタン（`DoSelectTenTypeCommand`）と、現在の選択状態を示す `TenTypeDisplayText` ラベルを追加した。
+### 技術決定 Why
+- `SelectMultiWinViewModel.SetLocalData` を使い、ローカルデータ（`MasterMeisho` のリスト）として店種選択肢を表示。DB テーブルに依存せずに既存の複数選択ダイアログを流用した。
+- `ListWhere` のオーバーライドは `BuildSelectCodeWhere` の結果に追加条件を付与する形とし、既存の `SelectCodeParam`（コード/名称検索）との併用を可能にした。
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0 warning、0 error）。
+
+---
+
 ## [2026-07-14] 14:55 店舗配分入力：発注「済フラグ」判定を仮実装として明示
 ### Agent
 - Claude Fable 5 : Anthropic : Sekiya Sato Claude

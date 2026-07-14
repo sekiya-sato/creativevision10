@@ -21,6 +21,17 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 
 	protected override string? SelectCodeDisplayName => "得意先";
 	protected override string? FormFile => "MasterTokuiMente.qfm";
+
+	protected override string? ListWhere {
+		get {
+			var where = BuildSelectCodeWhere(SelectCodeParam);
+			if (selectedTenTypeValues is { Count: > 0 }) {
+				var clause = $"TenType IN ({string.Join(",", selectedTenTypeValues)})";
+				where = string.IsNullOrEmpty(where) ? clause : $"{where} AND {clause}";
+			}
+			return where;
+		}
+	}
 	public IReadOnlyList<EnumShime> ShimeBiItems { get; } = Enum.GetValues<EnumShime>();
 	public IReadOnlyList<PayMonthItem> PayMonthItems { get; } = [
 		new(0, "当月"),
@@ -38,6 +49,11 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 
 	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"C{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
+
+	List<int> selectedTenTypeValues = [];
+
+	[ObservableProperty]
+	public partial string TenTypeDisplayText { get; set; } = "未選択";
 
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {
@@ -127,6 +143,27 @@ from MasterTokui {query.AddWhereOrder()}
 		finally {
 			ClientLib.Cursor2Normal();
 		}
+	}
+
+	// ---- 店種選択 ----
+	[RelayCommand]
+	void DoSelectTenType() {
+		var selWin = new Views.Sub.SelectMultiWinView();
+		if (selWin.DataContext is not Sub.SelectMultiWinViewModel vm) return;
+
+		var options = new List<MasterMeisho> {
+			new() { Id = 0, Code = "0", Name = "倉庫" },
+			new() { Id = 1, Code = "1", Name = "卸先" },
+			new() { Id = 3, Code = "3", Name = "売仕店" },
+			new() { Id = 6, Code = "6", Name = "直営店" },
+		};
+		vm.SetLocalData(options, title: "店種選択", selectedIds: selectedTenTypeValues.Select(x => (long)x));
+		if (ClientLib.ShowDialogView(selWin, this) != true) return;
+
+		selectedTenTypeValues = vm.GetSelectedItems<MasterMeisho>().Select(x => (int)x.Id).ToList();
+		TenTypeDisplayText = selectedTenTypeValues.Count == 0
+			? "未選択"
+			: string.Join(", ", selectedTenTypeValues.Select(v => options.First(o => o.Id == v).Name));
 	}
 
 	// ---- 担当者 (MasterShain) 選択 ----
