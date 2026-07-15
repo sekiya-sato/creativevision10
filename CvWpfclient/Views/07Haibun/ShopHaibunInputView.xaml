@@ -411,16 +411,15 @@
 										<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 											FontSize="12"
 											Foreground="{DynamicResource MaterialDesignBodyLight}"
-											Text="SKU（色・サイズ）ごとに「指示数」を入力してください。「配分計」「残」は全店舗の入力に連動します。"
-											TextTrimming="CharacterEllipsis" />
+											Text="SKU（色・サイズ）ごとに「指示数」を入力してください。「配分計」「残」は全店舗の入力に連動します。" TextTrimming="CharacterEllipsis" />
 									</DockPanel>
 								</Border>
 
 								<DataGrid x:Name="EntryGrid"
 									Grid.Row="1"
 									helpers:DataGridCellEnterNavigation.IsEnabled="True" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,4"
-									materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-									EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+									materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True"
+									FrozenColumnCount="2" GridLinesVisibility="Horizontal"
 									HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 									ItemsSource="{Binding SelectedTenpo.Rows}"
 									Style="{StaticResource MaterialDesignDataGrid}"

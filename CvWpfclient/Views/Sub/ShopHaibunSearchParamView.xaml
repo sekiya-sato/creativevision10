@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views.Sub.ShopHaibunSearchParamView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views.Sub.ShopHaibunSearchParamView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
@@ -75,8 +75,7 @@
 					<TextBox Grid.Row="0" Grid.Column="1"
 						VerticalContentAlignment="Center"
 						helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCommand}"
-						materialDesign:HintAssist.Hint="倉庫CD"
-						IsReadOnly="True"
+						materialDesign:HintAssist.Hint="倉庫CD" IsReadOnly="True"
 						Style="{StaticResource MenteSearchTextBox}"
 						Text="{Binding Parameter.SokoCode, Mode=OneWay}" />
 					<TextBlock Grid.Row="0" Grid.Column="3" Grid.ColumnSpan="2"
@@ -225,8 +224,7 @@
 					<TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="5"
 						Margin="0,8,0,0"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
-						Text="配分元倉庫は必須です。他の条件を指定しない場合、すべての商品が対象になります。"
-						TextWrapping="Wrap" />
+						Text="配分元倉庫は必須です。他の条件を指定しない場合、すべての商品が対象になります。" TextWrapping="Wrap" />
 				</Grid>
 			</materialDesign:Card>
 		</Grid>
