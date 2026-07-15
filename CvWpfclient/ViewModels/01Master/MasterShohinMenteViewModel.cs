@@ -29,21 +29,30 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 		get {
 			var query = CreateListQueryParam();
 			var sql = @$"
-select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
-Code, Name, Ryaku, Kana,
-trim(ifnull(json_extract(VBrand,'$.Cd'),'') || ' ' || ifnull(json_extract(VBrand,'$.Mei'),'')) Brand,
-trim(ifnull(json_extract(VItem,'$.Cd'),'') || ' ' || ifnull(json_extract(VItem,'$.Mei'),'')) Item,
-trim(ifnull(json_extract(VMaker,'$.Cd'),'') || ' ' || ifnull(json_extract(VMaker,'$.Mei'),'')) Maker,
-trim(ifnull(json_extract(VSeason,'$.Cd'),'') || ' ' || ifnull(json_extract(VSeason,'$.Mei'),'')) Season,
-trim(ifnull(json_extract(VMaterial,'$.Cd'),'') || ' ' || ifnull(json_extract(VMaterial,'$.Mei'),'')) Material,
-trim(ifnull(json_extract(VCountry,'$.Cd'),'') || ' ' || ifnull(json_extract(VCountry,'$.Mei'),'')) Country,
-trim(ifnull(json_extract(VSoko,'$.Cd'),'') || ' ' || ifnull(json_extract(VSoko,'$.Mei'),'')) Soko,
-TankaJodaiOrg, TankaJodai, TankaGenka, TankaShiire,
-MakerHin, DayShukka, DayNohin, DayTento, SizeKu,
-case IsZaiko when 1 then 'する' else 'しない' end IsZaikoText,
-Memo,
-__serverimg__(Code) ImagePath
-from MasterShohin {query.AddWhereOrder()}
+with TargetShohin as (
+	select *
+	from MasterShohin {query.AddWhereOrder()}
+)
+select M.Id, __serverdate__(M.Vdc) Vdcdate, __serverdate__(M.Vdu) Vdudate,
+M.Code, M.Name, M.Ryaku, M.Kana,
+trim(ifnull(json_extract(M.VBrand,'$.Cd'),'') || ' ' || ifnull(json_extract(M.VBrand,'$.Mei'),'')) Brand,
+trim(ifnull(json_extract(M.VItem,'$.Cd'),'') || ' ' || ifnull(json_extract(M.VItem,'$.Mei'),'')) Item,
+trim(ifnull(json_extract(M.VMaker,'$.Cd'),'') || ' ' || ifnull(json_extract(M.VMaker,'$.Mei'),'')) Maker,
+trim(ifnull(json_extract(M.VSeason,'$.Cd'),'') || ' ' || ifnull(json_extract(M.VSeason,'$.Mei'),'')) Season,
+trim(ifnull(json_extract(M.VMaterial,'$.Cd'),'') || ' ' || ifnull(json_extract(M.VMaterial,'$.Mei'),'')) Material,
+trim(ifnull(json_extract(M.VCountry,'$.Cd'),'') || ' ' || ifnull(json_extract(M.VCountry,'$.Mei'),'')) Country,
+trim(ifnull(json_extract(M.VSoko,'$.Cd'),'') || ' ' || ifnull(json_extract(M.VSoko,'$.Mei'),'')) Soko,
+M.TankaJodaiOrg, M.TankaJodai, M.TankaGenka, M.TankaShiire,
+M.MakerHin, M.DayShukka, M.DayNohin, M.DayTento, M.SizeKu,
+case M.IsZaiko when 1 then 'する' else 'しない' end IsZaikoText,
+M.Memo,
+__serverimg__(M.Code) ImagePath,
+trim(ifnull(json_extract(J.value,'$.Code_Col'),'') || ' ' || ifnull(json_extract(J.value,'$.Mei_Col'),'')) Color,
+trim(ifnull(json_extract(J.value,'$.Code_Siz'),'') || ' ' || ifnull(json_extract(J.value,'$.Mei_Siz'),'')) Size,
+ifnull(json_extract(J.value,'$.Jan1'), '') Jan1,
+ifnull(json_extract(J.value,'$.Jan2'), '') Jan2,
+ifnull(json_extract(J.value,'$.Jan3'), '') Jan3
+from TargetShohin M, json_each(M.Jcolsiz) J
 ";
 			return new QueryListSqlParam(typeof(MasterShohin), sql, query.Parameters);
 		}

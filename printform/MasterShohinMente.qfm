@@ -32,7 +32,7 @@
 			<item id="item27"/>
 			<item id="item28"/>
 			<item id="item29"/>
-			<item id="item30"/>
+						<item id="item30"/> 			<item id="item31"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>
@@ -44,7 +44,7 @@
 			<position x="0" y="10" width="153" height="248"/>
 			<color transparent="1"/>
 			<record id="Rec01" tree="1">
-				<position x="0" y="28" width="153" height="44"/>
+				<position x="0" y="36" width="153" height="44"/>
 				<color transparent="1"/>
 				<border left="1" right="1" top="10" bottom="10"/>
 				<text id="ValCode">
@@ -247,6 +247,7 @@
 					<decode datatype="string" format=""/>
 					<font size="70"/>
 				</text>
+								<text id="ValColor"> 					<position x="0" y="35" width="40" height="4"/> 					<color transparent="1"/> 					<border bottom="1"/> 					<data calctype="item" datasrc="item27"/> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text> 				<text id="ValSize"> 					<position x="40" y="35" width="40" height="4"/> 					<color transparent="1"/> 					<border bottom="1"/> 					<data calctype="item" datasrc="item28"/> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text> 				<text id="ValJan1"> 					<position x="80" y="35" width="38" height="4"/> 					<color transparent="1"/> 					<border bottom="1"/> 					<data calctype="item" datasrc="item29"/> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text> 				<text id="ValJan2"> 					<position x="0" y="39" width="59" height="4"/> 					<color transparent="1"/> 					<border bottom="1"/> 					<data calctype="item" datasrc="item30"/> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text> 				<text id="ValJan3"> 					<position x="59" y="39" width="59" height="4"/> 					<color transparent="1"/> 					<border bottom="1"/> 					<data calctype="item" datasrc="item31"/> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text>
 				<image id="Img01" relative="0">
 					<position x="119" y="1" width="33" height="41"/>
 					<color transparent="1"/>
@@ -254,7 +255,7 @@
 				</image>
 			</record>
 			<record id="Rec02" recordtype="1" tree="1">
-				<position x="0" y="0" width="153" height="28"/>
+				<position x="0" y="0" width="153" height="36"/>
 				<color base="c8ffc8" transparent="0"/>
 				<border left="1" right="1" top="1" bottom="1"/>
 				<text id="HdrCode" valign="middle">
@@ -432,6 +433,7 @@
 					<decode datatype="string" format=""/>
 					<font size="70"/>
 				</text>
+								<text id="HdrColor" valign="middle"> 					<position x="0" y="28" width="40" height="4"/> 					<color base="c8ffc8" transparent="0"/> 					<data calctype="static">&#33394;</data> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text> 				<text id="HdrSizeDetail" valign="middle"> 					<position x="40" y="28" width="40" height="4"/> 					<color base="c8ffc8" transparent="0"/> 					<data calctype="static">&#12469;&#12452;&#12474;</data> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text> 				<text id="HdrJan1" valign="middle"> 					<position x="80" y="28" width="38" height="4"/> 					<color base="c8ffc8" transparent="0"/> 					<data calctype="static">JAN1</data> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text> 				<text id="HdrJan2" valign="middle"> 					<position x="0" y="32" width="59" height="4"/> 					<color base="c8ffc8" transparent="0"/> 					<data calctype="static">JAN2</data> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text> 				<text id="HdrJan3" valign="middle"> 					<position x="59" y="32" width="59" height="4"/> 					<color base="c8ffc8" transparent="0"/> 					<data calctype="static">JAN3</data> 					<decode datatype="string" format=""/> 					<font size="70"/> 				</text>
 				<text id="HdrImage" valign="middle" halign="center">
 					<position x="121" y="0" width="32" height="4"/>
 					<color base="c8ffc8" transparent="0"/>

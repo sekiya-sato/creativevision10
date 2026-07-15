@@ -1,3 +1,22 @@
+## [2026-07-15] 14:15 MasterShohinMente の色・サイズ・JAN印刷対応
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：商品マスター印刷に基本情報だけでなく Jcolsiz の色・サイズ・JAN情報を表示する。
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs: 抽出条件・件数上限・並び順を先に適用した商品を CTE で確定し、json_each(M.Jcolsiz) で色・サイズ・JAN1～3 を行展開するSQLへ変更。
+- printform/MasterShohinMente.qfm: 色、サイズ、JAN1～3 の明細欄と見出しを追加し、データ項目を item31 まで拡張。
+### 技術決定 Why
+- 商品の抽出条件と上限を展開前に適用して既存の選択条件を維持し、SKU単位の帳票行を正しく出力するため。
+### 確認
+- MasterShohinMente.qfm validator: 成功。
+- 開発DB: MasterShohin 16,930件を Jcolsiz 55,881行へ展開でき、色・サイズ・JAN1～3 の取得を確認。
+- dotnet build CvWpfclient/CvWpfclient.csproj: 警告0件、エラー0件。
+- git diff --check: 成功。
+
+---
 ## [2026-07-15] 08:45 RangeParamView の複数Id選択行のレイアウト固定化
 ### Agent
 - Claude Fable 5 : Anthropic
