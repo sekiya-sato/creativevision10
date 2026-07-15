@@ -13,10 +13,11 @@ using System.Windows;
 namespace CvWpfclient.ViewModels.Sub;
 
 public partial class SelectShohinViewModel : Helpers.BaseViewModel {
-	int MaxCount = AppGlobal.Limit;
-
 	[ObservableProperty]
 	public partial string Title { get; set; } = "商品検索";
+
+	[ObservableProperty]
+	public partial int MaxCount { get; set; } = AppGlobal.Limit;
 
 	[ObservableProperty]
 	public partial long? ShohinIdFrom { get; set; }

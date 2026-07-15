@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Title}"
-	Width="980" Height="560"
+	Width="980" Height="600"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display"
@@ -149,6 +149,7 @@
 								<RowDefinition Height="Auto" />
 								<RowDefinition Height="Auto" />
 								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
 							</Grid.RowDefinitions>
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="150" />
@@ -283,8 +284,29 @@
 								Style="{StaticResource ConditionLabel}"
 								Text="JAN（部分一致）" />
 							<TextBox Grid.Row="5" Grid.Column="1"
+								Margin="0,0,0,12"
 								Style="{StaticResource SearchTextBoxStyle}"
 								Text="{Binding Jan, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+							<TextBlock Grid.Row="6" Grid.Column="0"
+								VerticalAlignment="Center"
+								Style="{StaticResource ConditionLabel}"
+								Text="件数" />
+							<Grid Grid.Row="6" Grid.Column="1"
+								HorizontalAlignment="Left">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="140" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<TextBox Grid.Column="0"
+									HorizontalContentAlignment="Right"
+									Style="{StaticResource SearchTextBoxStyle}"
+									Text="{Binding MaxCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Grid.Column="1"
+									Margin="8,0,0,0" VerticalAlignment="Center"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="(空白:全件取得)" />
+							</Grid>
 						</Grid>
 					</ScrollViewer>
 

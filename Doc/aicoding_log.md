@@ -1,3 +1,19 @@
+## [2026-07-15] 14:45 SelectShohinViewに件数入力欄を追加し縦幅を増加
+### Agent
+- kimi-k2.6 : OhMyOpenCode
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：SelectShohinViewに件数の欄がないのでWindow縦幅を少し増やし、RangeParamViewのように件数を追加する
+### 実施内容
+- CvWpfclient/Views/Sub/SelectShohinView.xaml: Window Heightを560→600に増加。検索条件エリアのGrid.RowDefinitionsにRowDefinitionを1つ追加し、JAN（部分一致）の下に「件数」ラベルとTextBox（右寄せ、幅140）+「(空白:全件取得)」注記を配置。JAN行のMarginを他の検索条件同様に0,0,0,12に設定して件数行との間隔を空けた。
+- CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs: `int MaxCount` フィールドを `[ObservableProperty] public partial int MaxCount { get; set; } = AppGlobal.Limit;` に変更し、XAMLから双方向バインド可能にした。
+### 技術決定 Why
+- MaxCountをObservablePropertyにしてXAMLバインドを可能にし、ViewModelのLIMIT制御をユーザー入力に委ねる。RangeParamViewと同じ配置パターン（ラベル左、値右、注記右横）に統一した。
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功（0警告、0エラー）。人間の修正分（printform/MasterShohinMente.qfm）も含めてcommit済み。
+
+---
 ## [2026-07-15] 14:15 MasterShohinMente の色・サイズ・JAN印刷対応
 ### Agent
 - GPT-5 : OpenAI
