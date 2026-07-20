@@ -103,32 +103,20 @@ public enum CvFlag {
 	[EnumMember]
 	Msg003_GetEnv = 3,
 	/// <summary>
-	/// データベースの変換(テーブル初期化なし)
+	/// データベースの変換
 	/// </summary>
 	[EnumMember]
 	Msg040_ConvertDb = 40,
 	/// <summary>
-	/// データベースの変換(テーブル初期化あり)
+	/// タスクリストの取得
 	/// </summary>
 	[EnumMember]
-	Msg041_ConvertDbInit = 41,
+	Msg041_ConvertList = 41,
 	/// <summary>
 	/// テーブル一覧と件数の取得
 	/// </summary>
 	[EnumMember]
 	Msg042_GetTableList = 42,
-	/// <summary>
-	/// タスクリストの取得
-	/// </summary>
-	[EnumMember]
-	Msg043_ConvertList = 43,
-	/// <summary>
-	/// データベースの変換(選択されたタスクのみ)
-	/// </summary>
-	[EnumMember]
-	Msg044_ConvertSelected = 44,
-	[EnumMember]
-	Msg045_ConvertSelectedInit = 45,
 	/// <summary>
 	/// 商品マスタのId_Col=0,Id_Siz=0のデータから名称マスタを再構築する
 	/// </summary>

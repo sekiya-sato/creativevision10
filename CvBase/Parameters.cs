@@ -203,3 +203,14 @@ public record SummaryTranIdParameter(string TableName, long TranId, int CalcFlag
 /// </summary>
 public sealed record PrintByCsvParam(string CsvData);
 
+/// <summary>
+/// ConvertDbのストリーミング処理パラメータ
+/// </summary>
+/// <param name="IsInit"></param>
+public sealed record ConvertDbParam(bool IsInit);
+/// <summary>
+/// ConvertDbのストリーミング処理パラメータ
+/// </summary>
+/// <param name="IsInit"></param>
+/// <param name="SelectedTask"></param>
+public sealed record ConvertSelectedDbParam(bool IsInit, List<string> SelectedTask);

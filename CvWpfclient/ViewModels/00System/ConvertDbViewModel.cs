@@ -1,6 +1,8 @@
 using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CvAsset;
+using CvBase;
 using CvWpfclient.Helpers;
 using Grpc.Core;
 using System.Collections.ObjectModel;
@@ -38,9 +40,9 @@ public partial class ConvertDbViewModel : BaseViewModel {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new CvMsg {
 				Code = 0,
-				Flag = IsInitDb ? CvFlag.Msg041_ConvertDbInit : CvFlag.Msg040_ConvertDb,
-				DataType = typeof(string),
-				DataMsg = string.Empty
+				Flag = CvFlag.Msg040_ConvertDb,
+				DataType = typeof(ConvertDbParam),
+				DataMsg = Common.SerializeObject(new ConvertDbParam(IsInitDb))
 			};
 
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {

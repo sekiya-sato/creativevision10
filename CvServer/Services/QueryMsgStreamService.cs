@@ -47,23 +47,20 @@ public partial class CoreService {
 		await Task.Yield();
 
 		// ConvertDb関連フラグの処理
-		if (request.Flag is CvFlag.Msg040_ConvertDb or CvFlag.Msg041_ConvertDbInit) {
-			var isInit = request.Flag == CvFlag.Msg041_ConvertDbInit;
-
-			// HandleConvertDbStreamAsyncの結果をそのまま返す
-			await foreach (var msg in HandleConvertDbStreamAsync(isInit, ct, request.Flag)) {
-				yield return msg;
+		if (request.Flag is CvFlag.Msg040_ConvertDb) {
+			var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+			if (param is ConvertDbParam convertDb) {
+				await foreach (var msg in HandleConvertDbStreamAsync(convertDb.IsInit, ct, request.Flag)) {
+					yield return msg;
+				}
+				yield break;
 			}
-			yield break;
-		}
-		if (request.Flag is CvFlag.Msg044_ConvertSelected or CvFlag.Msg045_ConvertSelectedInit) {
-			var isInit = request.Flag == CvFlag.Msg045_ConvertSelectedInit;
-			var list = Common.DeserializeObject(request.DataMsg, request.DataType) as List<string> ?? new List<string>();
-			// HandleConvertSelectedStreamAsyncの結果をそのまま返す
-			await foreach (var msg in HandleConvertSelectedStreamAsync(list, isInit, ct, request.Flag)) {
-				yield return msg;
+			else if (param is ConvertSelectedDbParam convertSelected) {
+				await foreach (var msg in HandleConvertSelectedStreamAsync(convertSelected.SelectedTask, convertSelected.IsInit, ct, request.Flag)) {
+					yield return msg;
+				}
+				yield break;
 			}
-			yield break;
 		}
 		// 	集計処理
 		else if (request.Flag is CvFlag.Msg050_Summary or CvFlag.Msg051_SummaryRealStock) {
@@ -79,6 +76,17 @@ public partial class CoreService {
 				yield return msg;
 			}
 			yield break;
+		}
+		else {
+			yield return new StreamMsg {
+				Flag = request.Flag,
+				Code = -1,
+				DataType = typeof(string),
+				DataMsg = $"エラー: パラメータのデシリアライズに失敗 ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+				Progress = 0,
+				IsCompleted = true,
+				IsError = true
+			};
 		}
 	}
 

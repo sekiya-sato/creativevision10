@@ -2,6 +2,7 @@ using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
+using CvBase;
 using CvWpfclient.Helpers;
 using Grpc.Core;
 using System.Collections.ObjectModel;
@@ -32,7 +33,7 @@ public partial class ConvertSelectedViewModel : BaseViewModel {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new CvMsg {
 				Code = 0,
-				Flag = CvFlag.Msg043_ConvertList,
+				Flag = CvFlag.Msg041_ConvertList,
 				DataType = typeof(string),
 				DataMsg = string.Empty
 			};
@@ -91,9 +92,9 @@ public partial class ConvertSelectedViewModel : BaseViewModel {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new CvMsg {
 				Code = 0,
-				Flag = IsInitDb ? CvFlag.Msg045_ConvertSelectedInit : CvFlag.Msg044_ConvertSelected,
-				DataType = typeof(List<string>),
-				DataMsg = Common.SerializeObject(selectedTasks)
+				Flag = CvFlag.Msg040_ConvertDb,
+				DataType = typeof(ConvertSelectedDbParam),
+				DataMsg = Common.SerializeObject(new ConvertSelectedDbParam(IsInitDb, selectedTasks))
 			};
 
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
