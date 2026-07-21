@@ -274,10 +274,17 @@
 								<TextBlock Grid.Row="5"
 									Style="{StaticResource FormLabel}"
 									Text="メール" />
-								<TextBox Grid.Row="5" Grid.Column="1"
-									materialDesign:HintAssist.Hint="メール"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Mail}" />
+								<DockPanel Grid.Row="5" Grid.Column="1">
+									<Button Margin="8,0,0,0"
+										Command="{Binding CheckMailCommand}"
+										DockPanel.Dock="Right"
+										Style="{StaticResource MaterialDesignOutlinedButton}">
+										<TextBlock Text="確認" />
+									</Button>
+									<TextBox materialDesign:HintAssist.Hint="メール"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding CurrentEdit.Mail}" />
+								</DockPanel>
 
 								<TextBlock Grid.Row="6"
 									Style="{StaticResource FormLabel}"

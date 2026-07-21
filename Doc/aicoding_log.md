@@ -1,3 +1,21 @@
+## [2026-07-21] 13:59 社員マスタのメールアドレス形式チェックを追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：社員マスタのメール欄で形式を確認できるようにし、登録・修正時も不正な形式をワーニングして保存を中止する。
+### 実施内容
+- CvWpfclient/Views/01Master/MasterShainMenteView.xaml: メール入力欄の横に形式確認ボタンを追加。
+- CvWpfclient/ViewModels/01Master/MasterShainMenteViewModel.cs: MailAddressによる形式確認コマンドと、追加・修正の確認前に形式不正を検知して保存を中止する検証を追加。
+### 技術決定 Why
+- 今回はViewとViewModelだけの最小変更とし、共通化を保留した。空欄は既存運用を維持して許容し、入力済みの不正形式のみを保存前にワーニングする。
+### 確認
+- MasterShainMenteView.xaml: XML構文、CheckMailCommandバインディング、保存時検証の実装を確認。
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功（0警告、0エラー）。
+- git diff --check: 成功。
+
+---
 ## [2026-07-15] 14:45 SelectShohinViewに件数入力欄を追加し縦幅を増加
 ### Agent
 - kimi-k2.6 : OhMyOpenCode

@@ -6,6 +6,7 @@ using CvBase;
 using CvWpfclient.Helpers;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Net.Mail;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -53,6 +54,14 @@ from MasterShain {query.AddWhereOrder()}
 		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
 		foreach (var item in jsubClones) item.SetBaseList(KubunList);
 		EditJsub = new ObservableCollection<MasterGeneralMeisho>(jsubClones);
+	}
+
+	protected override bool ConfirmAction(string message) {
+		if ((message.StartsWith("追加", StringComparison.Ordinal) || message.StartsWith("修正", StringComparison.Ordinal)) && !ValidateMail()) {
+			return false;
+		}
+
+		return base.ConfirmAction(message);
 	}
 
 	void SyncSubListsToCurrentEdit() => CurrentEdit.Jsub = [.. EditJsub];
@@ -109,6 +118,29 @@ from MasterShain {query.AddWhereOrder()}
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BMN'", "Code", startPos: CurrentEdit.Id_Bumon);
 		CurrentEdit.Id_Bumon = meisho?.Id ?? 0;
 		CurrentEdit.VBumon = new() { Sid = meisho?.Id ?? 0, Cd = meisho?.Code ?? "", Mei = meisho?.Name ?? "" };
+	}
+
+	[RelayCommand]
+	void CheckMail() => ValidateMail(showSuccess: true);
+
+	bool ValidateMail(bool showSuccess = false) {
+		var mail = CurrentEdit.Mail;
+		if (string.IsNullOrWhiteSpace(mail)) {
+			if (!showSuccess) return true;
+			MessageEx.ShowWarningDialog("メールアドレスを入力してください。", owner: ActiveWindow);
+			return false;
+		}
+
+		try {
+			var address = new MailAddress(mail);
+			if (!string.Equals(address.Address, mail, StringComparison.OrdinalIgnoreCase)) throw new FormatException();
+			if (showSuccess) MessageEx.ShowInformationDialog("メールアドレスの形式は正しいです。", owner: ActiveWindow);
+			return true;
+		}
+		catch (FormatException) {
+			MessageEx.ShowWarningDialog("メールアドレスの形式が正しくありません。", owner: ActiveWindow);
+			return false;
+		}
 	}
 
 	[RelayCommand]
