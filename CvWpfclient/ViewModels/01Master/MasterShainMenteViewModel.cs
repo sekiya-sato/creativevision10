@@ -57,7 +57,7 @@ from MasterShain {query.AddWhereOrder()}
 	}
 
 	protected override bool ConfirmAction(string message) {
-		if ((message.StartsWith("追加", StringComparison.Ordinal) || message.StartsWith("修正", StringComparison.Ordinal)) && !ValidateMail()) {
+		if ((message.StartsWith("追加", StringComparison.Ordinal) || message.StartsWith("修正", StringComparison.Ordinal)) && !ClientLib.ValidateMail(CurrentEdit.Mail, ActiveWindow)) {
 			return false;
 		}
 
@@ -121,27 +121,8 @@ from MasterShain {query.AddWhereOrder()}
 	}
 
 	[RelayCommand]
-	void CheckMail() => ValidateMail(showSuccess: true);
+	void CheckMail() => ClientLib.ValidateMail(CurrentEdit.Mail, ActiveWindow,showSuccess: true);
 
-	bool ValidateMail(bool showSuccess = false) {
-		var mail = CurrentEdit.Mail;
-		if (string.IsNullOrWhiteSpace(mail)) {
-			if (!showSuccess) return true;
-			MessageEx.ShowWarningDialog("メールアドレスを入力してください。", owner: ActiveWindow);
-			return false;
-		}
-
-		try {
-			var address = new MailAddress(mail);
-			if (!string.Equals(address.Address, mail, StringComparison.OrdinalIgnoreCase)) throw new FormatException();
-			if (showSuccess) MessageEx.ShowInformationDialog("メールアドレスの形式は正しいです。", owner: ActiveWindow);
-			return true;
-		}
-		catch (FormatException) {
-			MessageEx.ShowWarningDialog("メールアドレスの形式が正しくありません。", owner: ActiveWindow);
-			return false;
-		}
-	}
 
 	[RelayCommand]
 	void AddJsub() {

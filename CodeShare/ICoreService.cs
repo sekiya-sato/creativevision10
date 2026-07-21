@@ -108,7 +108,7 @@ public enum CvFlag {
 	[EnumMember]
 	Msg040_ConvertDb = 40,
 	/// <summary>
-	/// タスクリストの取得
+	/// DB変換タスクリストの取得
 	/// </summary>
 	[EnumMember]
 	Msg041_ConvertList = 41,

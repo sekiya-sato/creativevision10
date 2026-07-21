@@ -46,7 +46,7 @@
 		<region id="Rgn01" direction="0" tree="1">
 			<position x="0" y="10" width="153" height="248"/>
 			<color transparent="1"/>
-			<record id="RecHeader" grouplevel="1" breaktype="2" tree="1">
+			<record id="RecHeader" grouplevel="1" breaktype="2" adjusttype="2" tree="1">
 				<position x="0" y="32" width="153" height="34"/>
 				<color transparent="1"/>
 				<border left="1" right="1" top="10" bottom="1"/>

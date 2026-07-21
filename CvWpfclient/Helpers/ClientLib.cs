@@ -5,7 +5,9 @@ ClientLib は ViewModel からアクティブな Window の終了、ダイアロ
 # example
 ClientLib.Exit(this);
  */
+using OpenTK.Windowing.Desktop;
 using System.Diagnostics;
+using System.Net.Mail;
 using System.Windows;
 
 namespace CvWpfclient.Helpers;
@@ -196,6 +198,23 @@ public class ClientLib {
 				Debug.WriteLine(ex.Message);
 			}
 		});
+	}
+	public static bool ValidateMail(string mail, Window?activeWindow, bool showSuccess = false) {
+		if (string.IsNullOrWhiteSpace(mail)) {
+			if (!showSuccess) return true;
+			MessageEx.ShowWarningDialog("メールアドレスを入力してください。", owner: activeWindow);
+			return false;
+		}
+		try {
+			var address = new MailAddress(mail);
+			if (!string.Equals(address.Address, mail, StringComparison.OrdinalIgnoreCase)) throw new FormatException();
+			if (showSuccess) MessageEx.ShowInformationDialog("メールアドレスの形式は正しいです。", owner: activeWindow);
+			return true;
+		}
+		catch (FormatException) {
+			MessageEx.ShowWarningDialog("メールアドレスの形式が正しくありません。", owner: activeWindow);
+			return false;
+		}
 	}
 }
 
