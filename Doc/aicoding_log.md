@@ -1,3 +1,21 @@
+## [2026-07-22] 15:27 発注入力の総合計を取引区分で色分け（共通コンバータ化）
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code (Sekiya Sato Claude)
+### 目的
+- ユーザーからの要望：総合計の色を、区分10-19は黒、区分20-29は赤、それ以外は黒とする。
+### 実施内容
+- CvWpfclient/Helpers/Converters/TranKubunBrushConverter.cs: 新規。取引区分(Kubun)を前景色ブラシへ変換する IValueConverter。20-29(返品系)は赤(NegativeForegroundBrush / fallback #D32F2F)、それ以外(10-19 の通常取引を含む)は UnsetValue を返し継承色(MaterialDesignBody)へフォールバック。既存 NumericSignBrushConverter と同流儀(FindBrush＋Frozen)。
+- CvWpfclient/App.xaml: 上記コンバータを x:Key="TranKubunBrushConverter" で登録。
+- CvWpfclient/Views/03Hatchu/HachuInputView.xaml: 伝票サマリーの総合計 TextBlock の Foreground を PrimaryHueMidBrush から `{Binding CurrentEdit.Kubun, Converter={StaticResource TranKubunBrushConverter}}` へ変更。
+### 技術決定 Why
+- 色分けは発注固有でなく全伝票入力(受注/仕入等)に効く規則のため、View 直書きの DataTrigger でなく再利用可能な共通コンバータ化した(全体最適・長期視点)。範囲判定(10-19/20-29)は単一 DataTrigger で表現できないためコンバータが適切。
+- 「黒」はリテラル黒でなくテーマ継承色(MaterialDesignBody)にし、ダークテーマでも可読性を確保。Kubun は [NotifyPropertyChangedFor(EnKubun)] 付きで区分コンボ変更に追従するため Kubun へ直接バインド。
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功（0エラー）。警告2件は既コミット(7f16273)の HachuInputViewModel.cs:158 OnEditMeisaiChanged の null許容差異(CS8826)であり本変更起因ではない。
+
+---
 ## [2026-07-22] 14:46 発注入力の入力体験を再設計
 ### Agent
 - GPT-5 : OpenAI
