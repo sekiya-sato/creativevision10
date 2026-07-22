@@ -23,8 +23,8 @@ public sealed class TranKubunBrushConverter : IValueConverter {
 
 	public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
 		if (!TryGetInt(value, culture, out int kubun)) return DependencyProperty.UnsetValue;
-		// 20-29 = 返品系 → 赤。10-19(通常取引)・その他 → 既定色(継承色=MaterialDesignBody)。
-		if (kubun is >= 20 and <= 29) return FindBrush("NegativeForegroundBrush") ?? FallbackReturnBrush;
+		// 20-29 = 返品系, 30-39 = その他返品 → 赤。10-19(通常取引)・その他 → 既定色(継承色=MaterialDesignBody)。
+		if (kubun is >= 20 and <= 39) return FindBrush("NegativeForegroundBrush") ?? FallbackReturnBrush;
 		return DependencyProperty.UnsetValue;
 	}
 

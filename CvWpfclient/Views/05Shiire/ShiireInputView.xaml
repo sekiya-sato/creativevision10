@@ -352,77 +352,77 @@
 								<StackPanel>
 									<WrapPanel VerticalAlignment="Top"
 										Orientation="Horizontal">
-									<StackPanel Margin="0,0,16,0"
-										Orientation="Horizontal">
-										<TextBlock Style="{StaticResource FormLabel}"
-											Text="計上日" />
-										<DatePicker Width="150"
-											Margin="0,4"
-											helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="計上日" FontSize="20" IsTodayHighlighted="False"
-											SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-											Style="{StaticResource FormDatePicker}" />
-									</StackPanel>
-									<StackPanel Margin="0,0,16,0"
-										Orientation="Horizontal">
-										<TextBlock Style="{StaticResource FormLabel}"
-											Text="掛計上日" />
-										<DatePicker Width="150"
-											Margin="0,4"
-											helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="掛計上日" FontSize="20" IsTodayHighlighted="False"
-											SelectedDate="{Binding CurrentEdit.KakeDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-											Style="{StaticResource FormDatePicker}" />
-									</StackPanel>
-									<StackPanel Margin="0,0,16,0"
-										Orientation="Horizontal">
-										<TextBlock Style="{StaticResource FormLabel}"
-											Text="支払" />
-										<ComboBox Width="100"
-											Margin="0,4"
-											DisplayMemberPath="Name"
-											ItemsSource="{Binding IsPayOptions}"
-											SelectedValue="{Binding CurrentEdit.EnIsPay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-											SelectedValuePath="Value"
-											Style="{StaticResource FormComboBox}" />
-									</StackPanel>
-									<StackPanel Margin="0,0,16,0"
-										Orientation="Horizontal">
-										<TextBlock Style="{StaticResource FormLabel}"
-											Text="手入力No" />
-										<TextBox Width="110"
-											Margin="0,4"
-											Style="{StaticResource FormTextBox}"
-											Text="{Binding CurrentEdit.ManualNo, UpdateSourceTrigger=PropertyChanged}" />
-									</StackPanel>
-									<StackPanel Margin="0,0,16,0"
-										Orientation="Horizontal">
-										<TextBlock Style="{StaticResource FormLabel}"
-											Text="区分" />
-										<ComboBox Width="140"
-											Margin="0,4"
-											DisplayMemberPath="Name"
-											ItemsSource="{Binding KubunOptions}"
-											SelectedValue="{Binding CurrentEdit.EnKubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-											SelectedValuePath="Value"
-											Style="{StaticResource FormComboBox}" />
-									</StackPanel>
-									<StackPanel Margin="0,0,16,0"
-										Orientation="Horizontal">
-										<TextBlock Style="{StaticResource FormLabel}"
-											Text="関連No" />
-										<TextBox Width="110"
-											Margin="0,4" HorizontalContentAlignment="Right"
-											Style="{StaticResource FormTextBox}"
-											Text="{Binding CurrentEdit.RelateNo1, UpdateSourceTrigger=PropertyChanged}" />
-									</StackPanel>
-									<StackPanel Margin="0,0,16,0"
-										Orientation="Horizontal">
-										<TextBlock Style="{StaticResource FormLabel}"
-											Text="掛率" />
-										<TextBox Width="90"
-											Margin="0,4" HorizontalContentAlignment="Right"
-											Style="{StaticResource FormTextBox}"
-											Text="{Binding CurrentEdit.Rate, UpdateSourceTrigger=PropertyChanged}" />
-									</StackPanel>
+										<StackPanel Margin="0,0,16,0"
+											Orientation="Horizontal">
+											<TextBlock Style="{StaticResource FormLabel}"
+												Text="計上日" />
+											<DatePicker Width="150"
+												Margin="0,4"
+												helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="計上日" FontSize="20" IsTodayHighlighted="False"
+												SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+												Style="{StaticResource FormDatePicker}" />
+										</StackPanel>
+										<StackPanel Margin="0,0,16,0"
+											Orientation="Horizontal">
+											<TextBlock Style="{StaticResource FormLabel}"
+												Text="掛計上日" />
+											<DatePicker Width="150"
+												Margin="0,4"
+												helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="掛計上日" FontSize="20" IsTodayHighlighted="False"
+												SelectedDate="{Binding CurrentEdit.KakeDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+												Style="{StaticResource FormDatePicker}" />
+										</StackPanel>
+										<StackPanel Margin="0,0,16,0"
+											Orientation="Horizontal">
+											<TextBlock Style="{StaticResource FormLabel}"
+												Text="支払" />
+											<ComboBox Width="100"
+												Margin="0,4"
+												DisplayMemberPath="Name"
+												ItemsSource="{Binding IsPayOptions}"
+												SelectedValue="{Binding CurrentEdit.EnIsPay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+												SelectedValuePath="Value"
+												Style="{StaticResource FormComboBox}" />
+										</StackPanel>
+										<StackPanel Margin="0,0,16,0"
+											Orientation="Horizontal">
+											<TextBlock Style="{StaticResource FormLabel}"
+												Text="手入力No" />
+											<TextBox Width="110"
+												Margin="0,4"
+												Style="{StaticResource FormTextBox}"
+												Text="{Binding CurrentEdit.ManualNo, UpdateSourceTrigger=PropertyChanged}" />
+										</StackPanel>
+										<StackPanel Margin="0,0,16,0"
+											Orientation="Horizontal">
+											<TextBlock Style="{StaticResource FormLabel}"
+												Text="区分" />
+											<ComboBox Width="140"
+												Margin="0,4"
+												DisplayMemberPath="Name"
+												ItemsSource="{Binding KubunOptions}"
+												SelectedValue="{Binding CurrentEdit.EnKubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+												SelectedValuePath="Value"
+												Style="{StaticResource FormComboBox}" />
+										</StackPanel>
+										<StackPanel Margin="0,0,16,0"
+											Orientation="Horizontal">
+											<TextBlock Style="{StaticResource FormLabel}"
+												Text="関連No" />
+											<TextBox Width="110"
+												Margin="0,4" HorizontalContentAlignment="Right"
+												Style="{StaticResource FormTextBox}"
+												Text="{Binding CurrentEdit.RelateNo1, UpdateSourceTrigger=PropertyChanged}" />
+										</StackPanel>
+										<StackPanel Margin="0,0,16,0"
+											Orientation="Horizontal">
+											<TextBlock Style="{StaticResource FormLabel}"
+												Text="掛率" />
+											<TextBox Width="90"
+												Margin="0,4" HorizontalContentAlignment="Right"
+												Style="{StaticResource FormTextBox}"
+												Text="{Binding CurrentEdit.Rate, UpdateSourceTrigger=PropertyChanged}" />
+										</StackPanel>
 									</WrapPanel>
 									<Grid Margin="0,4,0,0">
 										<Grid.ColumnDefinitions>
