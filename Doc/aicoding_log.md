@@ -1,3 +1,22 @@
+## [2026-07-22] 14:16 店舗予算表に出力対象「全て/当年売上あり」を追加しSQLを是正
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code (Sekiya Sato Claude)
+### 目的
+- ユーザーからの要望：店舗予算表(ShopBudgetReportView)に「全て / 当年売上あり」の選択肢を追加し、指定年月の範囲で売上があるもののみ印字できるようにする。あわせて元のSQLの正しさを再確認する。
+### 実施内容
+- CvWpfclient/ViewModels/02Yosan/ShopBudgetReportViewModel.cs: 出力対象プロパティ `IsSalesOnly` を追加。当年売上あり選択時は shops CTE を「指定年月の月間売上合計(KingakuTotal) <> 0」の店舗のみへ絞り込む。前年比の突き合わせ精度バグを是正（prev_sales の抽出を固定月範囲から `DenDay IN (SELECT prevDenDay FROM prev_calendar)` へ変更）。これに伴い未使用となった GetPrevYearDateRange を削除。
+- CvWpfclient/Views/02Yosan/ShopBudgetReportView.xaml: 「出力対象（全て / 当年売上あり）」ラジオグループを追加（行番号を再割当）。実態と食い違っていた注意書き2件を実装に合う文言へ修正。1行増えたため Window Height を540→600へ。
+### 技術決定 Why
+- 売上絞り込みは店舗集合(shops CTE)の段階で行い、店舗別・全店の双方で一貫させた（全体最適）。売上判定は月間合計 <> 0（ユーザー指定）。
+- 曜日対比では前年突き合わせ日が前年同月の範囲外へ最大±6日ずれるため、固定月範囲の抽出だと月初・月末の前年比が欠落していた。実際に必要な prevDenDay 集合で厳密に絞ることで日付対比・曜日対比の双方で正しくなる（長期的な正しさ優先）。
+- 注意書き「予算を組んだ店舗のみ出力」等は実際の SQL（全直営店を出力・前年比は前年実績ベース）と不一致だったため、挙動は変えず文言のみ実態へ是正（ユーザー確認済み）。
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功（0警告、0エラー）。
+- 削除メソッド/変数の残参照なし、XAML の Grid.Row 連番整合を grep で確認。
+
+---
 ## [2026-07-21] 13:59 社員マスタのメールアドレス形式チェックを追加
 ### Agent
 - GPT-5 : OpenAI

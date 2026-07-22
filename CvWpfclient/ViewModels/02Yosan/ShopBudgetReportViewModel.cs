@@ -34,6 +34,12 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	public partial bool IsDateComparison { get; set; } = true;
 
+	/// <summary>
+	/// 出力対象。false=全て / true=当年売上あり（指定年月に売上がある店舗のみ）。
+	/// </summary>
+	[ObservableProperty]
+	public partial bool IsSalesOnly { get; set; }
+
 	partial void OnSelectedYearMonthChanged(DateTime value) {
 		SelectedYearMonthString = value.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 	}
@@ -87,7 +93,6 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 		var yearMonthLabel = SelectedYearMonth.ToString("yy年MM月", CultureInfo.InvariantCulture);
 		var year = SelectedYearMonth.Year;
 		var month = SelectedYearMonth.Month;
-		var (prevDateFrom, prevDateTo) = GetPrevYearDateRange();
 		var isDateComparisonStr = IsDateComparison ? "1" : "0";
 
 		List<string> parameters = [];
@@ -99,13 +104,26 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 			shopWhere += $" AND Code <= {AddSqlParameter(parameters, ShopCodeTo.Trim())}";
 		}
 
+		// 「当年売上あり」選択時は、指定年月に売上（月間合計金額 <> 0）がある店舗のみへ絞り込む。
+		// dateFrom/dateTo は SelectedYearMonth 由来の yyyyMMdd 文字列でユーザ入力を含まないため直接埋め込む。
+		var salesOnlyWhere = "";
+		if (IsSalesOnly) {
+			salesOnlyWhere = $@"
+        AND Id IN (
+            SELECT Id_Tenpo FROM Tran01Tenuri
+            WHERE DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
+            GROUP BY Id_Tenpo
+            HAVING SUM(KingakuTotal) <> 0
+        )";
+		}
+
 		var sql = $@"
 WITH RECURSIVE days(day) AS (
     SELECT 1 UNION ALL SELECT day+1 FROM days WHERE day < {daysInMonth}
 ),
 shops AS (
     SELECT Id, Code, Name FROM MasterTokui
-    WHERE TenType = 6 {shopWhere}
+    WHERE TenType = 6 {shopWhere}{salesOnlyWhere}
 ),
 calendar AS (
     SELECT
@@ -149,9 +167,11 @@ sales AS (
     GROUP BY Id_Tenpo, DenDay
 ),
 prev_sales AS (
+    -- 前年突き合わせ日は prev_calendar が日別に算出する（曜日対比では前年同月の範囲外へ最大±6日ずれる）。
+    -- 固定の月範囲で絞ると月初・月末の前年比が欠落するため、実際に必要な prevDenDay 集合で厳密に絞る。
     SELECT Id_Tenpo, DenDay, SUM(KingakuTotal) AS kingakuTotal
     FROM Tran01Tenuri
-    WHERE DenDay BETWEEN '{prevDateFrom}' AND '{prevDateTo}'
+    WHERE DenDay IN (SELECT prevDenDay FROM prev_calendar)
     GROUP BY Id_Tenpo, DenDay
 ),
 daily_by_shop AS (
@@ -234,19 +254,6 @@ ORDER BY day";
 		return (
 			new DateTime(year, month, 1).ToString("yyyyMMdd", CultureInfo.InvariantCulture),
 			new DateTime(year, month, days).ToString("yyyyMMdd", CultureInfo.InvariantCulture)
-		);
-	}
-
-	(string dateFrom, string dateTo) GetPrevYearDateRange() {
-		var year = SelectedYearMonth.Year;
-		var month = SelectedYearMonth.Month;
-		var days = DateTime.DaysInMonth(year, month);
-		var prevYearMonth = SelectedYearMonth.AddMonths(-12);
-		var prevDays = DateTime.DaysInMonth(prevYearMonth.Year, prevYearMonth.Month);
-		var toDay = Math.Min(days, prevDays);
-		return (
-			new DateTime(prevYearMonth.Year, prevYearMonth.Month, 1).ToString("yyyyMMdd", CultureInfo.InvariantCulture),
-			new DateTime(prevYearMonth.Year, prevYearMonth.Month, toDay).ToString("yyyyMMdd", CultureInfo.InvariantCulture)
 		);
 	}
 
