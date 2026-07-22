@@ -1,3 +1,19 @@
+## [2026-07-22] 15:59 受注/仕入入力を発注基準のカード3ゾーンUIへ統一(Phase3前半)
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code (Sekiya Sato Claude)
+### 目的
+- ユーザーからの要望：Input系最適化 Phase3。発注入力(Hachu)で確立したカード3ゾーンUI（ヘッダバー2行タイトル＋伝票サマリーカード＋明細操作カード＋明細グリッドカード）を、消費税/総合計系の受注(Juchu)・仕入(Shiire)へ横展開する。
+### 実施内容
+- CvWpfclient/Views/04Juchu/JuchuInputView.xaml: 詳細タブを Hachu 基準レイアウトへ差し替え。伝票サマリーカード(数量計/金額計/消費税/総合計、総合計は TranKubunBrushConverter で区分色分け)、DetailStatusText/DetailMeisaiCount バインド、修正・明細行追加を Raised 化。受注/得意先(Tokui)へ語句・バインド置換。
+- CvWpfclient/Views/05Shiire/ShiireInputView.xaml: 同上。クイック入力欄は仕入固有(計上日/掛計上日/支払/手入力No/区分/関連No/掛率)を保持しつつ、サマリー・検索・明細・ボタンは Hachu 基準へ統一。
+### 技術決定 Why
+- Juchu は Hachu と項目構成が同一のためテンプレート流用＋語句置換で一致(全体最適)。Shiire は固有クイック欄のみ差し替え、他ゾーンは基準に寄せて重複を最小化。VM側は Phase2 で基底化済みのため DetailStatusText/DetailMeisaiCount がそのまま利用可能。
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功（0警告、0エラー）。タグ均衡・残存語句(発注/仕入先)を grep 確認。上代/下代系(ShukkaUriage/ShopUriage)はサマリー意味と明細RowDetailsが異なるため後半で別途対応。
+
+---
 ## [2026-07-22] 15:49 伝票入力の共通VM基底 BaseTranInputViewModel を抽出し5伝票を移設
 ### Agent
 - Claude Opus 4.8 : Anthropic
