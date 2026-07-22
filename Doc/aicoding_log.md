@@ -1,3 +1,22 @@
+## [2026-07-22] 14:46 発注入力の入力体験を再設計
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：HachuInputView をスタイリッシュかつ日常業務で使いやすい入力画面へ刷新し、将来の他入力画面展開の土台とする。
+### 実施内容
+- CvWpfclient/Views/03Hatchu/HachuInputView.xaml: 伝票見出し、伝票サマリー、明細操作バー、明細グリッドをCardで階層化し、主要操作と補助操作を視覚的に分離した。
+- CvWpfclient/ViewModels/03Hatchu/HachuInputViewModel.cs: 明細件数と新規・既存伝票を示すヘッダー文言を追加し、明細の追加・削除・再読込時に件数表示を即時更新するようにした。新規明細追加後は追加行を自動選択する。
+### 技術決定 Why
+- 入力画面共通のMaterialDesignリソース、Card、RaisedButtonを再利用し、画面固有の色やスタイルを追加せずに他の入力画面にも適用できる構成とした。
+### 確認
+- HachuInputView.xaml: XML解析、リソースキー・バインディング確認。
+- dotnet build CvWpfclient/CvWpfclient.csproj --no-restore -p:BaseOutputPath=artifacts/hachu-design-build: 成功（警告 0、エラー 0）。既定出力先は起動中のCreativeVision10/Visual StudioによるDLLロックのため未使用。
+- git diff --check: 成功。変更したXAML/C#はCRLFを確認。
+
+---
+
 ## [2026-07-22] 14:39 発注入力の入力デザインを再検討し合計をサマリーカード化
 ### Agent
 - Claude Opus 4.8 : Anthropic

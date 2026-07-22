@@ -5,6 +5,7 @@ using CvBase;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
@@ -33,7 +34,17 @@ public partial class HachuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	[ObservableProperty]
 	public partial Tran99Meisai? SelectedMeisai { get; set; }
 
+	public int DetailMeisaiCount => EditMeisai.Count;
+
+	public string DetailStatusText => CurrentEdit.Id > 0
+		? $"発注 No. {CurrentEdit.Id:N0}"
+		: "新規発注";
+
 	SelectInputParameter? selectParam;
+
+	public HachuInputViewModel() {
+		EditMeisai.CollectionChanged += OnEditMeisaiCollectionChanged;
+	}
 
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
 		new(EnumShiire.Shiire, "発注"),
@@ -141,6 +152,17 @@ public partial class HachuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
 		ApplyMeisaiFromCurrentEdit();
 		UpdateHeaderTotals();
+		OnPropertyChanged(nameof(DetailStatusText));
+	}
+
+	partial void OnEditMeisaiChanged(ObservableCollection<Tran99Meisai>? oldValue, ObservableCollection<Tran99Meisai> newValue) {
+		if (oldValue != null) oldValue.CollectionChanged -= OnEditMeisaiCollectionChanged;
+		newValue.CollectionChanged += OnEditMeisaiCollectionChanged;
+		OnPropertyChanged(nameof(DetailMeisaiCount));
+	}
+
+	void OnEditMeisaiCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+		OnPropertyChanged(nameof(DetailMeisaiCount));
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -346,6 +368,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		var newMeisai = new Tran99Meisai { No = nextNo, Kubun = ProperMeisaiKubun };
 		newMeisai.PropertyChanged += OnMeisaiPropertyChanged;
 		EditMeisai.Add(newMeisai);
+		SelectedMeisai = newMeisai;
 	}
 
 	[RelayCommand]
