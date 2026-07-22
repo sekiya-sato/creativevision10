@@ -1,3 +1,20 @@
+## [2026-07-22] 14:39 発注入力の入力デザインを再検討し合計をサマリーカード化
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code (Sekiya Sato Claude)
+### 目的
+- ユーザーからの要望：発注入力(HachuInputView)の入力デザインを再検討。数量計・金額計・消費税・総合計を同じ列にそろえ、見栄えをよくする。
+### 実施内容
+- CvWpfclient/Views/03Hatchu/HachuInputView.xaml: 詳細タブのヘッダー入力部を DockPanel 構成へ再編。合計4項目(数量計/金額計/消費税/総合計)を横並びの WrapPanel から切り離し、右側の独立した「合計」サマリーカード(materialDesign:Card)へ移動。ラベル列＋値列の2列 Grid にして全値を同一列で右揃え。総合計は Separator で区切り、太字・大きめフォント・PrimaryHueMidBrush で強調。消費税のみ編集可(FormTextBox)、他はTextBlock表示。左側には発注日/区分/関連No/掛率と仕入先/入力者/倉庫/メモを縦積みし、カードと縦に並ぶ構成に。
+### 技術決定 Why
+- 合計は「入力」ではなく「集計」なので入力欄と混在させず独立ブロックに分離するのが正しい(局所最適でなく全体最適)。値を同一列に右揃えすることで桁の視認性が上がり、レシート的に読める。バインディング(SuTotal/KingakuTotal/Tax/Total)と消費税の編集挙動(StringFormat無し・UpdateSourceTrigger=PropertyChanged)は現状維持し、見た目のみ改善(長期的な安全性優先)。
+- 同系の JuchuInputView / ShiireInputView も同一の旧レイアウトを持つため、本カード構成は将来それらへ横展開できる雛形とした。
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功（0警告、0エラー）。
+- 参照リソース(FormLabel/FormTextBox/PrimaryHueMidBrush/MaterialDesignBody 等)の定義済みを確認。タグ整合・インデント(タブ)確認済み。
+
+---
 ## [2026-07-22] 14:16 店舗予算表に出力対象「全て/当年売上あり」を追加しSQLを是正
 ### Agent
 - Claude Opus 4.8 : Anthropic

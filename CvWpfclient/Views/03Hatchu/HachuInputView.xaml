@@ -273,180 +273,214 @@
 						MaxHeight="270"
 						Padding="10,10,20,18"
 						VerticalScrollBarVisibility="Auto">
-						<StackPanel>
-							<WrapPanel Margin="0,4"
-								Orientation="Horizontal">
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="発注日" />
-									<DatePicker Width="150"
-										Margin="0,4"
-										helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="発注日" FontSize="20" IsTodayHighlighted="False"
-										SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-										Style="{StaticResource FormDatePicker}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="区分" />
-									<ComboBox Width="140"
-										Margin="0,4"
-										DisplayMemberPath="Name"
-										ItemsSource="{Binding KubunOptions}"
-										SelectedValue="{Binding CurrentEdit.EnKubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-										SelectedValuePath="Value"
-										Style="{StaticResource FormComboBox}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="関連No" />
-									<TextBox Width="110"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding CurrentEdit.RelateNo1, UpdateSourceTrigger=PropertyChanged}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="掛率" />
-									<TextBox Width="90"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding CurrentEdit.Rate, UpdateSourceTrigger=PropertyChanged}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
+						<DockPanel>
+							<!--  合計サマリー：数量計・金額計・消費税・総合計を同一列に右揃えで表示  -->
+							<materialDesign:Card Margin="16,0,0,0" Padding="16,12"
+								VerticalAlignment="Top"
+								DockPanel.Dock="Right"
+								materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
+								<Grid>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" MinWidth="60" />
+										<ColumnDefinition Width="150" />
+									</Grid.ColumnDefinitions>
+									<Grid.RowDefinitions>
+										<RowDefinition Height="Auto" />
+										<RowDefinition Height="Auto" />
+										<RowDefinition Height="Auto" />
+										<RowDefinition Height="Auto" />
+										<RowDefinition Height="Auto" />
+										<RowDefinition Height="Auto" />
+									</Grid.RowDefinitions>
+
+									<StackPanel Grid.Row="0" Grid.ColumnSpan="2"
+										Margin="0,0,0,8"
+										Orientation="Horizontal">
+										<materialDesign:PackIcon VerticalAlignment="Center"
+											Kind="Calculator" />
+										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+											FontSize="14" FontWeight="SemiBold" Text="合計" />
+									</StackPanel>
+
+									<TextBlock Grid.Row="1" Grid.Column="0"
+										Style="{StaticResource FormLabel}"
 										Text="数量計" />
-									<TextBox Width="110"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										IsReadOnly="True"
-										Style="{StaticResource FormTextBox}"
+									<TextBlock Grid.Row="1" Grid.Column="1"
+										Margin="0,4" HorizontalAlignment="Right" VerticalAlignment="Center"
+										FontSize="16"
+										Foreground="{DynamicResource MaterialDesignBody}"
 										Text="{Binding CurrentEdit.SuTotal, StringFormat={}{0:N0}}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
+
+									<TextBlock Grid.Row="2" Grid.Column="0"
+										Style="{StaticResource FormLabel}"
 										Text="金額計" />
-									<TextBox Width="120"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										IsReadOnly="True"
-										Style="{StaticResource FormTextBox}"
+									<TextBlock Grid.Row="2" Grid.Column="1"
+										Margin="0,4" HorizontalAlignment="Right" VerticalAlignment="Center"
+										FontSize="16"
+										Foreground="{DynamicResource MaterialDesignBody}"
 										Text="{Binding CurrentEdit.KingakuTotal, StringFormat={}{0:N0}}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
+
+									<TextBlock Grid.Row="3" Grid.Column="0"
+										Style="{StaticResource FormLabel}"
 										Text="消費税" />
-									<TextBox Width="110"
+									<TextBox Grid.Row="3" Grid.Column="1"
 										Margin="0,4" HorizontalContentAlignment="Right"
 										Style="{StaticResource FormTextBox}"
 										Text="{Binding CurrentEdit.Tax, UpdateSourceTrigger=PropertyChanged}" />
-								</StackPanel>
-								<StackPanel Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
+
+									<Separator Grid.Row="4" Grid.ColumnSpan="2"
+										Margin="0,6" />
+
+									<TextBlock Grid.Row="5" Grid.Column="0"
+										VerticalAlignment="Center"
+										FontWeight="Bold"
+										Foreground="{DynamicResource MaterialDesignBody}"
 										Text="総合計" />
-									<TextBox Width="120"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										IsReadOnly="True"
-										Style="{StaticResource FormTextBox}"
+									<TextBlock Grid.Row="5" Grid.Column="1"
+										HorizontalAlignment="Right" VerticalAlignment="Center"
+										FontSize="20" FontWeight="Bold"
+										Foreground="{DynamicResource PrimaryHueMidBrush}"
 										Text="{Binding CurrentEdit.Total, StringFormat={}{0:N0}}" />
-								</StackPanel>
-							</WrapPanel>
+								</Grid>
+							</materialDesign:Card>
 
-							<Grid Margin="0,4,0,0">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="110" />
-									<ColumnDefinition Width="420" />
-									<ColumnDefinition Width="120" />
-									<ColumnDefinition Width="*" />
-								</Grid.ColumnDefinitions>
-								<Grid.RowDefinitions>
-									<RowDefinition Height="Auto" />
-									<RowDefinition Height="Auto" />
-									<RowDefinition Height="Auto" />
-								</Grid.RowDefinitions>
+							<!--  入力フィールド  -->
+							<StackPanel>
+								<WrapPanel VerticalAlignment="Top"
+									Orientation="Horizontal">
+									<StackPanel Margin="0,0,16,0"
+										Orientation="Horizontal">
+										<TextBlock Style="{StaticResource FormLabel}"
+											Text="発注日" />
+										<DatePicker Width="150"
+											Margin="0,4"
+											helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="発注日" FontSize="20" IsTodayHighlighted="False"
+											SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+											Style="{StaticResource FormDatePicker}" />
+									</StackPanel>
+									<StackPanel Margin="0,0,16,0"
+										Orientation="Horizontal">
+										<TextBlock Style="{StaticResource FormLabel}"
+											Text="区分" />
+										<ComboBox Width="140"
+											Margin="0,4"
+											DisplayMemberPath="Name"
+											ItemsSource="{Binding KubunOptions}"
+											SelectedValue="{Binding CurrentEdit.EnKubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+											SelectedValuePath="Value"
+											Style="{StaticResource FormComboBox}" />
+									</StackPanel>
+									<StackPanel Margin="0,0,16,0"
+										Orientation="Horizontal">
+										<TextBlock Style="{StaticResource FormLabel}"
+											Text="関連No" />
+										<TextBox Width="110"
+											Margin="0,4" HorizontalContentAlignment="Right"
+											Style="{StaticResource FormTextBox}"
+											Text="{Binding CurrentEdit.RelateNo1, UpdateSourceTrigger=PropertyChanged}" />
+									</StackPanel>
+									<StackPanel Margin="0,0,16,0"
+										Orientation="Horizontal">
+										<TextBlock Style="{StaticResource FormLabel}"
+											Text="掛率" />
+										<TextBox Width="90"
+											Margin="0,4" HorizontalContentAlignment="Right"
+											Style="{StaticResource FormTextBox}"
+											Text="{Binding CurrentEdit.Rate, UpdateSourceTrigger=PropertyChanged}" />
+									</StackPanel>
+								</WrapPanel>
+								<Grid Margin="0,4,0,0">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="110" />
+										<ColumnDefinition Width="420" />
+										<ColumnDefinition Width="120" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<Grid.RowDefinitions>
+										<RowDefinition Height="Auto" />
+										<RowDefinition Height="Auto" />
+										<RowDefinition Height="Auto" />
+									</Grid.RowDefinitions>
 
-								<TextBlock Grid.Row="0"
-									Style="{StaticResource FormLabel}"
-									Text="仕入先Id" />
-								<DockPanel Grid.Row="0" Grid.Column="1"
-									Margin="0,4">
-									<TextBox Width="120" Height="36"
-										HorizontalContentAlignment="Left"
-										helpers:SearchTextBoxAssist.Command="{Binding DoSelectShiireCommand}"
-										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
-										Style="{StaticResource MenteSearchTextBox}"
-										Text="{Binding CurrentEdit.Id_Shiire, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VShiire.Cd" />
-												<Binding Path="CurrentEdit.VShiire.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
-								</DockPanel>
+									<TextBlock Grid.Row="0"
+										Style="{StaticResource FormLabel}"
+										Text="仕入先Id" />
+									<DockPanel Grid.Row="0" Grid.Column="1"
+										Margin="0,4">
+										<TextBox Width="120" Height="36"
+											HorizontalContentAlignment="Left"
+											helpers:SearchTextBoxAssist.Command="{Binding DoSelectShiireCommand}"
+											BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+											Style="{StaticResource MenteSearchTextBox}"
+											Text="{Binding CurrentEdit.Id_Shiire, UpdateSourceTrigger=PropertyChanged}" />
+										<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+											Foreground="{DynamicResource MaterialDesignBody}">
+											<TextBlock.Text>
+												<MultiBinding StringFormat="{}{0} {1}">
+													<Binding Path="CurrentEdit.VShiire.Cd" />
+													<Binding Path="CurrentEdit.VShiire.Mei" />
+												</MultiBinding>
+											</TextBlock.Text>
+										</TextBlock>
+									</DockPanel>
 
-								<TextBlock Grid.Row="0" Grid.Column="2"
-									Style="{StaticResource FormLabel}"
-									Text="入力者Id" />
-								<DockPanel Grid.Row="0" Grid.Column="3"
-									Margin="0,4">
-									<TextBox Width="120" Height="36"
-										HorizontalContentAlignment="Left"
-										helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
-										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
-										Style="{StaticResource MenteSearchTextBox}"
-										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VShain.Cd" />
-												<Binding Path="CurrentEdit.VShain.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
-								</DockPanel>
+									<TextBlock Grid.Row="0" Grid.Column="2"
+										Style="{StaticResource FormLabel}"
+										Text="入力者Id" />
+									<DockPanel Grid.Row="0" Grid.Column="3"
+										Margin="0,4">
+										<TextBox Width="120" Height="36"
+											HorizontalContentAlignment="Left"
+											helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
+											BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+											Style="{StaticResource MenteSearchTextBox}"
+											Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
+										<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+											Foreground="{DynamicResource MaterialDesignBody}">
+											<TextBlock.Text>
+												<MultiBinding StringFormat="{}{0} {1}">
+													<Binding Path="CurrentEdit.VShain.Cd" />
+													<Binding Path="CurrentEdit.VShain.Mei" />
+												</MultiBinding>
+											</TextBlock.Text>
+										</TextBlock>
+									</DockPanel>
 
-								<TextBlock Grid.Row="1"
-									Style="{StaticResource FormLabel}"
-									Text="倉庫Id" />
-								<DockPanel Grid.Row="1" Grid.Column="1"
-									Margin="0,4">
-									<TextBox Width="120" Height="36"
-										HorizontalContentAlignment="Left"
-										helpers:SearchTextBoxAssist.Command="{Binding DoSelectSokoCommand}"
-										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
-										Style="{StaticResource MenteSearchTextBox}"
-										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VSoko.Cd" />
-												<Binding Path="CurrentEdit.VSoko.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
-								</DockPanel>
+									<TextBlock Grid.Row="1"
+										Style="{StaticResource FormLabel}"
+										Text="倉庫Id" />
+									<DockPanel Grid.Row="1" Grid.Column="1"
+										Margin="0,4">
+										<TextBox Width="120" Height="36"
+											HorizontalContentAlignment="Left"
+											helpers:SearchTextBoxAssist.Command="{Binding DoSelectSokoCommand}"
+											BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+											Style="{StaticResource MenteSearchTextBox}"
+											Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
+										<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+											Foreground="{DynamicResource MaterialDesignBody}">
+											<TextBlock.Text>
+												<MultiBinding StringFormat="{}{0} {1}">
+													<Binding Path="CurrentEdit.VSoko.Cd" />
+													<Binding Path="CurrentEdit.VSoko.Mei" />
+												</MultiBinding>
+											</TextBlock.Text>
+										</TextBlock>
+									</DockPanel>
 
-								<TextBlock Grid.Row="2"
-									InputMethod.IsInputMethodEnabled="True"
-									Style="{StaticResource FormLabel}"
-									Text="メモ" />
-								<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
-									MinHeight="48"
-									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Memo}"
-									TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
-							</Grid>
-						</StackPanel>
+									<TextBlock Grid.Row="2"
+										InputMethod.IsInputMethodEnabled="True"
+										Style="{StaticResource FormLabel}"
+										Text="メモ" />
+									<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+										MinHeight="48"
+										materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding CurrentEdit.Memo}"
+										TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+								</Grid>
+							</StackPanel>
+						</DockPanel>
 					</ScrollViewer>
 
 					<StackPanel Grid.Row="2"
