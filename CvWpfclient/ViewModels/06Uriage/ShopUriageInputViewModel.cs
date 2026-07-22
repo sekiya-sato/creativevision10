@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace CvWpfclient.ViewModels._06Uriage;
 
-public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran01Tenuri>, ITranInputTab {
+public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<Tran01Tenuri>, ITranInputTab {
 	public sealed record MeisaiKubunOption(int Value, string Name);
 	const int ProperMeisaiKubun = 0;
 	const int SaleMeisaiKubun = 1;
@@ -25,11 +25,9 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 	[NotifyCanExecuteChangedFor(nameof(DoPrintDetailCommand))]
 	public partial int SelectedTabIndex { get; set; }
 
-	[ObservableProperty]
-	public partial ObservableCollection<Tran99Meisai> EditMeisai { get; set; } = [];
-
-	[ObservableProperty]
-	public partial Tran99Meisai? SelectedMeisai { get; set; }
+	public override string DetailStatusText => CurrentEdit.Id > 0
+		? $"売上 No. {CurrentEdit.Id:N0}"
+		: "新規売上";
 
 	SelectInputParameter? selectParam;
 
@@ -149,6 +147,7 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 		newValue.Kubun = NormalizeHeaderKubun(newValue.Kubun);
 		ApplyMeisaiFromCurrentEdit(headerIsSale);
 		UpdateHeaderTotals();
+		OnPropertyChanged(nameof(DetailStatusText));
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -203,22 +202,8 @@ public partial class ShopUriageInputViewModel : Helpers.BasePlainLightMenteViewM
 			_ => ProperMeisaiKubun,
 		};
 
-	void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
-			m.Kingaku = m.Su * m.Tanka;
-			UpdateTotals();
-		}
-		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku) or nameof(Tran99Meisai.Jodai) or nameof(Tran99Meisai.Gedai)) {
-			UpdateTotals();
-		}
-	}
-
-	void UpdateTotals() {
-		CurrentEdit.SuTotal = EditMeisai.Sum(m => m.Su);
-		CurrentEdit.KingakuTotal = EditMeisai.Sum(m => m.Kingaku);
-		CurrentEdit.JodaiTotal = EditMeisai.Sum(m => m.Su * m.Jodai);
-		CurrentEdit.GedaiTotal = EditMeisai.Sum(m => m.Su * m.Gedai);
-	}
+	// 明細行の金額計算・集計 (OnMeisaiPropertyChanged / UpdateTotals) は基底を使用。
+	// Apply/Sync はセール区分の強制(forceSale)がヘッダ正規化前に確定する固有制御のため VM に温存する。
 
 	protected override object CreateInsertParam() {
 		bool headerIsSale = IsHeaderSaleKubun(CurrentEdit.Kubun);
@@ -357,29 +342,8 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		await DoInsert(ct);
 	}
 
-	[RelayCommand]
-	void AddMeisai() {
-		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;
-		var newMeisai = new Tran99Meisai { No = nextNo, Kubun = ProperMeisaiKubun };
-		newMeisai.PropertyChanged += OnMeisaiPropertyChanged;
-		EditMeisai.Add(newMeisai);
-	}
-
-	[RelayCommand]
-	void DeleteMeisai() {
-		if (SelectedMeisai == null) return;
-		SelectedMeisai.PropertyChanged -= OnMeisaiPropertyChanged;
-		EditMeisai.Remove(SelectedMeisai);
-		RenumberMeisaiNo();
-		SelectedMeisai = EditMeisai.LastOrDefault() ?? null;
-		UpdateTotals();
-	}
-
-	void RenumberMeisaiNo() {
-		for (int i = 0; i < EditMeisai.Count; i++) {
-			EditMeisai[i].No = i + 1;
-		}
-	}
+	// 基底フック: 店舗売上の新規行は P プロパー区分で作る。
+	protected override Tran99Meisai CreateNewMeisai(int no) => new() { No = no, Kubun = ProperMeisaiKubun };
 
 	[RelayCommand]
 	void DoInputBarcode() {

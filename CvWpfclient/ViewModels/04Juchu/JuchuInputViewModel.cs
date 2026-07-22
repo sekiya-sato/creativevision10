@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace CvWpfclient.ViewModels._04Juchu;
 
-public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran12Jyuchu>, ITranInputTab {
+public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12Jyuchu>, ITranInputTab {
 	public sealed record KubunOption(EnumUri01 Value, string Name);
 	public sealed record MeisaiKubunOption(int Value, string Name);
 
@@ -27,11 +27,9 @@ public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	[NotifyCanExecuteChangedFor(nameof(DoPrintDetailCommand))]
 	public partial int SelectedTabIndex { get; set; }
 
-	[ObservableProperty]
-	public partial ObservableCollection<Tran99Meisai> EditMeisai { get; set; } = [];
-
-	[ObservableProperty]
-	public partial Tran99Meisai? SelectedMeisai { get; set; }
+	public override string DetailStatusText => CurrentEdit.Id > 0
+		? $"受注 No. {CurrentEdit.Id:N0}"
+		: "新規受注";
 
 	SelectInputParameter? selectParam;
 
@@ -141,6 +139,7 @@ public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
 		ApplyMeisaiFromCurrentEdit();
 		UpdateHeaderTotals();
+		OnPropertyChanged(nameof(DetailStatusText));
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -149,46 +148,17 @@ public partial class JuchuInputViewModel : Helpers.BasePlainLightMenteViewModel<
 		}
 	}
 
-	void ApplyMeisaiFromCurrentEdit() {
-		foreach (var m in EditMeisai) m.PropertyChanged -= OnMeisaiPropertyChanged;
-		EditMeisai = new ObservableCollection<Tran99Meisai>(
-			CurrentEdit.Jmeisai?.Select(Common.CloneObject) ?? []);
-		foreach (var m in EditMeisai) {
-			m.Kubun = NormalizeMeisaiKubun(m.Kubun);
-			m.PropertyChanged += OnMeisaiPropertyChanged;
-		}
-		UpdateTotals();
-	}
+	// 基底フック: 明細集計後に消費税・総合計を再計算する。
+	protected override void OnTotalsUpdated() => UpdateHeaderTotals();
 
-	void SyncMeisaiToCurrentEdit() {
-		foreach (var m in EditMeisai) m.Kubun = NormalizeMeisaiKubun(m.Kubun);
-		CurrentEdit.Jmeisai = [.. EditMeisai];
-		UpdateTotals();
-	}
+	// 基底フック: 明細区分を P/S に正規化する。
+	protected override int ResolveMeisaiKubun(Tran99Meisai m) => NormalizeMeisaiKubun(m.Kubun);
 
 	static int NormalizeMeisaiKubun(int kubun) =>
 		kubun switch {
 			SaleMeisaiKubun => SaleMeisaiKubun,
 			_ => ProperMeisaiKubun,
 		};
-
-	void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
-			m.Kingaku = m.Su * m.Tanka;
-			UpdateTotals();
-		}
-		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku) or nameof(Tran99Meisai.Jodai) or nameof(Tran99Meisai.Gedai)) {
-			UpdateTotals();
-		}
-	}
-
-	void UpdateTotals() {
-		CurrentEdit.SuTotal = EditMeisai.Sum(m => m.Su);
-		CurrentEdit.KingakuTotal = EditMeisai.Sum(m => m.Kingaku);
-		CurrentEdit.JodaiTotal = EditMeisai.Sum(m => m.Su * m.Jodai);
-		CurrentEdit.GedaiTotal = EditMeisai.Sum(m => m.Su * m.Gedai);
-		UpdateHeaderTotals();
-	}
 
 	void UpdateHeaderTotals() {
 		CurrentEdit.CalcFlag = CurrentEdit.EnKubun is EnumUri01.Uriage or EnumUri01.UriSale ? 1 : -1;
@@ -340,29 +310,8 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 ";
 	}
 
-	[RelayCommand]
-	void AddMeisai() {
-		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;
-		var newMeisai = new Tran99Meisai { No = nextNo, Kubun = ProperMeisaiKubun };
-		newMeisai.PropertyChanged += OnMeisaiPropertyChanged;
-		EditMeisai.Add(newMeisai);
-	}
-
-	[RelayCommand]
-	void DeleteMeisai() {
-		if (SelectedMeisai == null) return;
-		SelectedMeisai.PropertyChanged -= OnMeisaiPropertyChanged;
-		EditMeisai.Remove(SelectedMeisai);
-		RenumberMeisaiNo();
-		SelectedMeisai = EditMeisai.LastOrDefault() ?? null;
-		UpdateTotals();
-	}
-
-	void RenumberMeisaiNo() {
-		for (int i = 0; i < EditMeisai.Count; i++) {
-			EditMeisai[i].No = i + 1;
-		}
-	}
+	// 基底フック: 受注明細の新規行は P プロパー区分で作る。
+	protected override Tran99Meisai CreateNewMeisai(int no) => new() { No = no, Kubun = ProperMeisaiKubun };
 
 	[RelayCommand]
 	void DoInputBarcode() {

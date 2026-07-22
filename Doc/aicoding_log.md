@@ -1,3 +1,24 @@
+## [2026-07-22] 15:49 伝票入力の共通VM基底 BaseTranInputViewModel を抽出し5伝票を移設
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code (Sekiya Sato Claude)
+### 目的
+- ユーザーからの要望：Input系最適化 Phase2。伝票入力VMに重複する明細・合計・状態ロジックを共通基底へ抽出し、対象伝票(発注/受注/仕入/出荷売上/店舗売上)を載せ替える。
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseTranInputViewModel.cs: 新規。`abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMenteViewModel<TDen> where TDen : TranAllHeader, new()`。EditMeisai/SelectedMeisai/DetailMeisaiCount/DetailStatusText(abstract)、UpdateTotals(数量計/金額計/上代計/下代計=TranAllHeader共通)、OnMeisaiPropertyChanged、Apply/SyncMeisaiFromCurrentEdit、AddMeisai/DeleteMeisai/RenumberMeisaiNo([RelayCommand]含む)を集約。伝票固有差分は仮想フック OnTotalsUpdated()/ResolveMeisaiKubun()/CreateNewMeisai()/RenumberMeisaiNo()/DetailStatusText で吸収。
+- CvWpfclient/ViewModels/03Hatchu/HachuInputViewModel.cs, 04Juchu/JuchuInputViewModel.cs, 05Shiire/ShiireInputViewModel.cs: 基底へ載せ替え。OnTotalsUpdated→UpdateHeaderTotals、ResolveMeisaiKubun→NormalizeMeisaiKubun、CreateNewMeisai→Pプロパー を override。消費税/総合計・印刷・検索・バーコード等の固有処理はVMに維持。
+- CvWpfclient/ViewModels/06Uriage/ShukkaUriageInputViewModel.cs: 基底へ載せ替え。ResolveMeisaiKubun→CurrentEdit.Kubun、RenumberMeisaiNo→no-op(採番しない仕様維持)、OnTotalsUpdatedは既定(UpdateHeaderTotals非連動を維持)。
+- CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs: 基底へ載せ替え。機械的重複(明細集計・行操作)のみ基底化し、forceSale(セール区分をヘッダ正規化前に確定)を含む Apply/Sync/CreateInsert/Update・Normalize系はVMに温存。
+- 差分: VM側 計 +50 / -301 行(実質 -251 行の重複除去)。
+### 技術決定 Why
+- 5伝票の伝票クラスは全て TranAllHeader 派生で合計フィールド(SuTotal等)と Jmeisai を共通に持つため、これを制約にすれば集計は完全共通化できる(全体最適)。一方 Rate/Tax/Total/Kubun は各sealed伝票クラス固有のため、消費税/総合計計算(UpdateHeaderTotals)は基底に上げず OnTotalsUpdated フックでVMに残し、CvBase 非改変・低リスクに留めた。
+- ShopUriage の forceSale はヘッダ区分の正規化前に捕捉して保存時に明細区分へ反映する順序依存があり、基底の統一フックへ畳むと保存データが壊れる恐れがあるため、当該制御はVMに温存した(短期的な統一より長期的な正しさ優先)。
+- 副次効果: 手直し時に出ていた CS8826(OnEditMeisaiChanged の null許容不一致)が基底側のシグネチャ統一で解消。
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj (Rebuild): 成功（0警告、0エラー）。ロジックは逐語移動＋仮想化で挙動同一。View レイアウトの横展開(Phase3)は別途。
+
+---
 ## [2026-07-22] 15:27 発注入力の総合計を取引区分で色分け（共通コンバータ化）
 ### Agent
 - Claude Opus 4.8 : Anthropic

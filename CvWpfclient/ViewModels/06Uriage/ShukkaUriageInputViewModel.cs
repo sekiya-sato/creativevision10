@@ -11,7 +11,7 @@ using System.Globalization;
 
 namespace CvWpfclient.ViewModels._06Uriage;
 
-public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran00Uriage>, ITranInputTab {
+public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel<Tran00Uriage>, ITranInputTab {
 	public sealed record KubunOption(EnumUri00 Value, string Name);
 	public sealed record YesNoOption(EnumYesNo Value, string Name);
 
@@ -22,11 +22,9 @@ public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteVie
 	[NotifyCanExecuteChangedFor(nameof(DoInsertOnDetailTabCommand))]
 	public partial int SelectedTabIndex { get; set; }
 
-	[ObservableProperty]
-	public partial ObservableCollection<Tran99Meisai> EditMeisai { get; set; } = [];
-
-	[ObservableProperty]
-	public partial Tran99Meisai? SelectedMeisai { get; set; }
+	public override string DetailStatusText => CurrentEdit.Id > 0
+		? $"売上 No. {CurrentEdit.Id:N0}"
+		: "新規売上";
 
 	SelectInputParameter? selectParam;
 
@@ -145,6 +143,7 @@ public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteVie
 		} else {
 			UpdateHeaderTotals();
 		}
+		OnPropertyChanged(nameof(DetailStatusText));
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -167,36 +166,11 @@ public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteVie
 		UpdateHeaderTotals();
 	}
 
-	void ApplyMeisaiFromCurrentEdit() {
-		foreach (var m in EditMeisai) m.PropertyChanged -= OnMeisaiPropertyChanged;
-		EditMeisai = new ObservableCollection<Tran99Meisai>(
-			CurrentEdit.Jmeisai?.Select(Common.CloneObject) ?? []);
-		foreach (var m in EditMeisai) m.PropertyChanged += OnMeisaiPropertyChanged;
-		UpdateTotals();
-	}
+	// 基底フック: 出荷売上はヘッダ区分を明細区分に反映（ロード時は同値のため実質不変、保存前に統一）。
+	protected override int ResolveMeisaiKubun(Tran99Meisai m) => CurrentEdit.Kubun;
 
-	void SyncMeisaiToCurrentEdit() {
-		foreach (var m in EditMeisai) m.Kubun = CurrentEdit.Kubun;
-		CurrentEdit.Jmeisai = [.. EditMeisai];
-		UpdateTotals();
-	}
-
-	void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
-			m.Kingaku = m.Su * m.Tanka;
-			UpdateTotals();
-		}
-		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku) or nameof(Tran99Meisai.Jodai) or nameof(Tran99Meisai.Gedai)) {
-			UpdateTotals();
-		}
-	}
-
-	void UpdateTotals() {
-		CurrentEdit.SuTotal = EditMeisai.Sum(m => m.Su);
-		CurrentEdit.KingakuTotal = EditMeisai.Sum(m => m.Kingaku);
-		CurrentEdit.JodaiTotal = EditMeisai.Sum(m => m.Su * m.Jodai);
-		CurrentEdit.GedaiTotal = EditMeisai.Sum(m => m.Su * m.Gedai);
-	}
+	// 基底フック: 出荷売上は行Noを振り直さない（元伝票の行対応を維持）。
+	protected override void RenumberMeisaiNo() { }
 
 	protected override object CreateInsertParam() {
 		SyncMeisaiToCurrentEdit();
@@ -244,22 +218,8 @@ public partial class ShukkaUriageInputViewModel : Helpers.BasePlainLightMenteVie
 		await DoInsert(ct);
 	}
 
-	[RelayCommand]
-	void AddMeisai() {
-		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;
-		var newMeisai = new Tran99Meisai { No = nextNo, Kubun = CurrentEdit.Kubun };
-		newMeisai.PropertyChanged += OnMeisaiPropertyChanged;
-		EditMeisai.Add(newMeisai);
-	}
-
-	[RelayCommand]
-	void DeleteMeisai() {
-		if (SelectedMeisai == null) return;
-		SelectedMeisai.PropertyChanged -= OnMeisaiPropertyChanged;
-		EditMeisai.Remove(SelectedMeisai);
-		SelectedMeisai = EditMeisai.LastOrDefault() ?? null;
-		UpdateTotals();
-	}
+	// 基底フック: 出荷売上の新規行はヘッダ区分で作る。
+	protected override Tran99Meisai CreateNewMeisai(int no) => new() { No = no, Kubun = CurrentEdit.Kubun };
 
 	[RelayCommand]
 	void DoInputBarcode() {
