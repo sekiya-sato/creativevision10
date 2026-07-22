@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._06Uriage.ShopUriageInputView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._06Uriage.ShopUriageInputView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -233,7 +233,7 @@
 						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 							<Button Margin="4,0"
 								Command="{Binding DoUpdateOnDetailTabCommand}"
-								Style="{StaticResource MaterialDesignOutlinedButton}"
+								Style="{StaticResource MaterialDesignRaisedButton}"
 								ToolTip="修正 (F2)">
 								<StackPanel Orientation="Horizontal">
 									<materialDesign:PackIcon VerticalAlignment="Center"
@@ -268,9 +268,13 @@
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 								Kind="FileDocumentEdit" />
-							<TextBlock Margin="0,0,16,0" VerticalAlignment="Center"
-								FontSize="16" FontWeight="SemiBold"
-								Text="{Binding CurrentEdit.Id, StringFormat={}伝票番号:{0}}" />
+							<StackPanel Margin="0,0,16,0">
+								<TextBlock FontSize="12"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="店舗売上" />
+								<TextBlock FontSize="16" FontWeight="SemiBold"
+									Text="{Binding DetailStatusText}" />
+							</StackPanel>
 							<Button Command="{Binding GoToListCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
 								ToolTip="一覧画面へ戻る">
@@ -284,7 +288,12 @@
 						</StackPanel>
 					</DockPanel>
 
-					<ScrollViewer Grid.Row="1"
+					<Grid Grid.Row="1">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<ScrollViewer Grid.Column="0"
 						MaxHeight="300"
 						Padding="10,10,20,20"
 						VerticalScrollBarVisibility="Auto">
@@ -313,45 +322,6 @@
 										SelectedValue="{Binding CurrentEdit.EnKubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 										SelectedValuePath="Value"
 										Style="{StaticResource FormComboBox}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="合計数量" />
-									<TextBox Width="120"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										materialDesign:HintAssist.Hint="合計数量" IsReadOnly="True"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding CurrentEdit.SuTotal, StringFormat={}{0:N0}}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="合計金額" />
-									<TextBox Width="120"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										materialDesign:HintAssist.Hint="合計金額" IsReadOnly="True"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding CurrentEdit.KingakuTotal, StringFormat={}{0:N0}}" />
-								</StackPanel>
-								<StackPanel Margin="0,0,16,0"
-									Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="上代合計" />
-									<TextBox Width="120"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										materialDesign:HintAssist.Hint="上代合計" IsReadOnly="True"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding CurrentEdit.JodaiTotal, StringFormat={}{0:N0}}" />
-								</StackPanel>
-								<StackPanel Orientation="Horizontal">
-									<TextBlock Style="{StaticResource FormLabel}"
-										Text="下代合計" />
-									<TextBox Width="120"
-										Margin="0,4" HorizontalContentAlignment="Right"
-										materialDesign:HintAssist.Hint="下代合計" IsReadOnly="True"
-										Style="{StaticResource FormTextBox}"
-										Text="{Binding CurrentEdit.GedaiTotal, StringFormat={}{0:N0}}" />
 								</StackPanel>
 							</WrapPanel>
 
@@ -475,6 +445,38 @@
 							</Grid>
 						</StackPanel>
 					</ScrollViewer>
+						<materialDesign:Card Grid.Column="1"
+							Margin="12,10,0,10" Padding="16,12" VerticalAlignment="Top"
+							materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" MinWidth="72" />
+									<ColumnDefinition Width="150" />
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+
+								<StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,8" Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center" Kind="ReceiptText" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Text="伝票サマリー" />
+								</StackPanel>
+
+								<TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FormLabel}" Text="合計数量" />
+								<TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,4" FontSize="16" Foreground="{DynamicResource MaterialDesignBody}" Text="{Binding CurrentEdit.SuTotal, StringFormat={}{0:N0}}" />
+								<TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource FormLabel}" Text="合計金額" />
+								<TextBlock Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,4" FontSize="16" Foreground="{DynamicResource MaterialDesignBody}" Text="{Binding CurrentEdit.KingakuTotal, StringFormat={}{0:N0}}" />
+								<TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource FormLabel}" Text="上代合計" />
+								<TextBlock Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,4" FontSize="16" Foreground="{DynamicResource MaterialDesignBody}" Text="{Binding CurrentEdit.JodaiTotal, StringFormat={}{0:N0}}" />
+								<TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{DynamicResource MaterialDesignBody}" Text="下代合計" />
+								<TextBlock Grid.Row="4" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource MaterialDesignBody}" Text="{Binding CurrentEdit.GedaiTotal, StringFormat={}{0:N0}}" />
+							</Grid>
+						</materialDesign:Card>
+					</Grid>
 
 					<StackPanel Grid.Row="2"
 						Margin="8,0,8,0" HorizontalAlignment="Center"

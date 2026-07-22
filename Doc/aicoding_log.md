@@ -1,3 +1,22 @@
+## [2026-07-22] 16:10 出荷売上/店舗売上入力に伝票サマリーカードを導入(Phase3後半)
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code (Sekiya Sato Claude)
+### 目的
+- ユーザーからの要望：Input系最適化 Phase3の上代/下代系(出荷売上ShukkaUriage・店舗売上ShopUriage)へ、発注基準の標準要素を適用する。
+### 実施内容
+- CvWpfclient/Views/06Uriage/ShukkaUriageInputView.xaml, ShopUriageInputView.xaml:
+  - ヘッダの伝票番号タイトルを2行表示(キャプション＋DetailStatusText)へ変更。修正ボタンを Raised 化。
+  - 横並び WrapPanel 内にあった4合計(合計数量/合計金額/上代合計/下代合計)を切り出し、右側に独立した「伝票サマリー」カード(ReceiptText、2列Grid、値を同一列右揃え、下代合計を強調)へ集約。詳細ヘッダを2列Grid(入力ScrollViewer＋サマリーカード)へ再構成。
+### 技術決定 Why
+- 上代/下代系は消費税/総合計を持たずサマリーの意味が発注系と異なるため、色分けコンバータは適用せず4項目(数量/金額/上代/下代)のサマリーカードとした(全体最適の中でのバリアント)。
+- 明細は RowDetailsTemplate＋幅同期Converter＋固有スタイル(ShopUriageのP/S ComboBox等)を持つ複雑構造で、ランタイム検証なしの改変は回帰リスクが高いと判断し、明細グリッド・検索グリッドの内部は一切変更せず、ヘッダ/サマリーのみ標準化した(壊さない優先・長期的正しさ)。分割列方式により検索/明細の再インデントを回避。
+- VM側は Phase2 基底化で DetailStatusText/DetailMeisaiCount が利用可能。
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj (Rebuild): 成功（0警告、0エラー）。タグ均衡(Grid/Card/ScrollViewer/StackPanel)・残存(伝票番号)を grep 確認。
+
+---
 ## [2026-07-22] 15:59 受注/仕入入力を発注基準のカード3ゾーンUIへ統一(Phase3前半)
 ### Agent
 - Claude Opus 4.8 : Anthropic
