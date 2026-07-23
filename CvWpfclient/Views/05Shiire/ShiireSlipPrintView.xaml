@@ -49,7 +49,7 @@
 		</materialDesign:ColorZone>
 
 		<Grid Grid.Row="1"
-			Margin="24">
+			Margin="16,12,16,12">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
@@ -61,7 +61,7 @@
 				<RowDefinition Height="*" />
 			</Grid.RowDefinitions>
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="140" />
+				<ColumnDefinition Width="120" />
 				<ColumnDefinition Width="*" />
 				<ColumnDefinition Width="Auto" />
 				<ColumnDefinition Width="*" />
@@ -71,39 +71,43 @@
 			<TextBlock Grid.Row="0" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
 				Text="仕入日" />
-			<TextBox Grid.Row="0" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
-				Text="{Binding DenDayFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<DatePicker Grid.Row="0" Grid.Column="1"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
+				helpers:DatePickerTodayButtonBehavior.IsEnabled="True" FontSize="16" IsTodayHighlighted="False"
+				SelectedDate="{Binding DenDayFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+				Style="{StaticResource FormDatePicker}" />
 			<TextBlock Grid.Row="0" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
-			<TextBox Grid.Row="0" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
-				Text="{Binding DenDayTo, UpdateSourceTrigger=PropertyChanged}" />
+				Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+				Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
+			<DatePicker Grid.Row="0" Grid.Column="3"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
+				helpers:DatePickerTodayButtonBehavior.IsEnabled="True" FontSize="16" IsTodayHighlighted="False"
+				SelectedDate="{Binding DenDayTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+				Style="{StaticResource FormDatePicker}" />
 
 			<!--  仕入先  -->
 			<TextBlock Grid.Row="1" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
 				Text="仕入先" />
 			<TextBox Grid.Row="1" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShiireCodeFromCommand}"
 				BorderThickness="0,0,0,1"
+				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShiireCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="1" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
+				Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+				Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
 			<TextBox Grid.Row="1" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShiireCodeToCommand}"
 				BorderThickness="0,0,0,1"
+				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShiireCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -112,20 +116,22 @@
 				Style="{StaticResource FormLabel}"
 				Text="倉庫" />
 			<TextBox Grid.Row="2" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCodeFromCommand}"
 				BorderThickness="0,0,0,1"
+				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding SokoCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="2" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
+				Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+				Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
 			<TextBox Grid.Row="2" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCodeToCommand}"
 				BorderThickness="0,0,0,1"
+				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding SokoCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -134,17 +140,19 @@
 				Style="{StaticResource FormLabel}"
 				Text="伝票NO" />
 			<TextBox Grid.Row="3" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+				materialDesign:HintAssist.Hint="伝票NO (開始)"
+				Style="{StaticResource FormTextBox}"
 				Text="{Binding DenNoFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="3" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
+				Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+				Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
 			<TextBox Grid.Row="3" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+				materialDesign:HintAssist.Hint="伝票NO (終了)"
+				Style="{StaticResource FormTextBox}"
 				Text="{Binding DenNoTo, UpdateSourceTrigger=PropertyChanged}" />
 
 			<!--  手入力NO  -->
@@ -152,17 +160,19 @@
 				Style="{StaticResource FormLabel}"
 				Text="手入力NO" />
 			<TextBox Grid.Row="4" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
+				materialDesign:HintAssist.Hint="手入力NO (開始)"
+				Style="{StaticResource FormTextBox}"
 				Text="{Binding ManualNoFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="4" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
+				Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+				Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
 			<TextBox Grid.Row="4" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
+				materialDesign:HintAssist.Hint="手入力NO (終了)"
+				Style="{StaticResource FormTextBox}"
 				Text="{Binding ManualNoTo, UpdateSourceTrigger=PropertyChanged}" />
 
 			<!--  取引区分  -->
@@ -171,9 +181,9 @@
 				Style="{StaticResource FormLabel}"
 				Text="取引区分" />
 			<ComboBox Grid.Row="5" Grid.Column="1"
-				Width="200" Height="36"
-				Margin="0,10,0,10"
-				HorizontalAlignment="Left"
+				Width="220"
+				Margin="0,10,0,10" HorizontalAlignment="Left"
+				Background="White"
 				DisplayMemberPath="Name"
 				ItemsSource="{Binding KubunOptions}"
 				SelectedItem="{Binding SelectedKubun}"

@@ -49,7 +49,7 @@
 
 		<ScrollViewer Grid.Row="1"
 			VerticalScrollBarVisibility="Auto">
-			<Grid Margin="24">
+			<Grid Margin="16,12,16,12">
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="Auto" />
@@ -61,7 +61,7 @@
 					<RowDefinition Height="Auto" />
 				</Grid.RowDefinitions>
 				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="130" />
+					<ColumnDefinition Width="120" />
 					<ColumnDefinition Width="*" />
 				</Grid.ColumnDefinitions>
 
@@ -125,8 +125,8 @@
 					Style="{StaticResource FormLabel}"
 					Text="商品CD" />
 				<TextBox Grid.Row="2" Grid.Column="1"
-					Width="360" Height="55"
-					HorizontalAlignment="Left"
+					Width="360"
+					Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
 					materialDesign:HintAssist.Hint="部分一致"
 					Style="{StaticResource FormTextBox}"
 					Text="{Binding ShohinCodeLike, UpdateSourceTrigger=PropertyChanged}" />
@@ -135,8 +135,8 @@
 					Style="{StaticResource FormLabel}"
 					Text="商品名" />
 				<TextBox Grid.Row="3" Grid.Column="1"
-					Width="520" Height="55"
-					HorizontalAlignment="Left"
+					Width="520"
+					Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
 					materialDesign:HintAssist.Hint="部分一致"
 					Style="{StaticResource FormTextBox}"
 					Text="{Binding ShohinNameLike, UpdateSourceTrigger=PropertyChanged}" />

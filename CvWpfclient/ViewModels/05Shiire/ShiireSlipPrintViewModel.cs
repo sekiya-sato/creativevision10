@@ -26,10 +26,10 @@ public partial class ShiireSlipPrintViewModel : Helpers.BaseViewModel {
 
 	// 仕入日(DenDay)範囲
 	[ObservableProperty]
-	public partial string DenDayFrom { get; set; } = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+	public partial DateTime? DenDayFrom { get; set; } = DateTime.Today;
 
 	[ObservableProperty]
-	public partial string DenDayTo { get; set; } = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+	public partial DateTime? DenDayTo { get; set; } = DateTime.Today;
 
 	// 仕入先コード範囲
 	[ObservableProperty]
@@ -141,13 +141,11 @@ public partial class ShiireSlipPrintViewModel : Helpers.BaseViewModel {
 		List<string> where = [];
 
 		// 仕入日範囲(yyyyMMdd へ正規化)
-		if (!string.IsNullOrWhiteSpace(DenDayFrom)) {
-			if (!TryToYmd(DenDayFrom, out var from)) { WarnInvalidDate("仕入日(開始)"); return null; }
-			where.Add($"h.DenDay >= {AddSqlParameter(parameters, from)}");
+		if (DenDayFrom is DateTime fromDt) {
+			where.Add($"h.DenDay >= {AddSqlParameter(parameters, fromDt.ToString("yyyyMMdd", CultureInfo.InvariantCulture))}");
 		}
-		if (!string.IsNullOrWhiteSpace(DenDayTo)) {
-			if (!TryToYmd(DenDayTo, out var to)) { WarnInvalidDate("仕入日(終了)"); return null; }
-			where.Add($"h.DenDay <= {AddSqlParameter(parameters, to)}");
+		if (DenDayTo is DateTime toDt) {
+			where.Add($"h.DenDay <= {AddSqlParameter(parameters, toDt.ToString("yyyyMMdd", CultureInfo.InvariantCulture))}");
 		}
 
 		// 仕入先コード範囲(MasterShiire.Code)

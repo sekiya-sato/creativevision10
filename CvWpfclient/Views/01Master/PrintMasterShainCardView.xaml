@@ -49,7 +49,7 @@
 		</materialDesign:ColorZone>
 
 		<Grid Grid.Row="1"
-			Margin="24">
+			Margin="16,12,16,12">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
@@ -70,20 +70,22 @@
 				Style="{StaticResource FormLabel}"
 				Text="Id" />
 			<TextBox Grid.Row="0" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainIdFromCommand}"
 				BorderThickness="0,0,0,1"
+				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainIdFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="0" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
+				Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+				Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
 			<TextBox Grid.Row="0" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainIdToCommand}"
 				BorderThickness="0,0,0,1"
+				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainIdTo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -92,20 +94,22 @@
 				Style="{StaticResource FormLabel}"
 				Text="社員Code" />
 			<TextBox Grid.Row="1" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeFromCommand}"
 				BorderThickness="0,0,0,1"
+				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="1" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
+				Margin="12,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+				Style="{StaticResource FormLabel}"><Run Language="ja-jp" Text="-" /></TextBlock>
 			<TextBox Grid.Row="1" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Width="220"
+				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeToCommand}"
 				BorderThickness="0,0,0,1"
+				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
