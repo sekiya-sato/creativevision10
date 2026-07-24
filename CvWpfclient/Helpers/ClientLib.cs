@@ -5,7 +5,6 @@ ClientLib は ViewModel からアクティブな Window の終了、ダイアロ
 # example
 ClientLib.Exit(this);
  */
-using OpenTK.Windowing.Desktop;
 using System.Diagnostics;
 using System.Net.Mail;
 using System.Windows;
