@@ -15,6 +15,7 @@ public partial class MainMenuView : Window {
 	private const double ChartRightMargin = 8;
 	private const double ChartTopMargin = 12;
 	private const int MaxVisibleLabels = 36;
+	private const double MinimumXAxisLabelSpacing = 32;
 	private readonly List<Point> _forecastPlotPoints = [];
 	private readonly List<ForecastChartPoint> _forecastDataPoints = [];
 	private double _forecastPlotBottom;
@@ -116,10 +117,11 @@ public partial class MainMenuView : Window {
 			return;
 		}
 
-		var isDense = chart.Points.Count > MaxVisibleLabels;
-		var bottomMargin = isDense ? 48d : 30d;
 		_forecastPlotLeft = ChartLeftMargin;
 		_forecastPlotRight = Math.Max(_forecastPlotLeft + 1, ForecastCanvas.ActualWidth - ChartRightMargin);
+		var labelStep = GetXAxisLabelStep(chart.Points.Count);
+		var isDense = labelStep > 1;
+		var bottomMargin = isDense ? 48d : 30d;
 		_forecastPlotTop = ChartTopMargin;
 		_forecastPlotBottom = Math.Max(_forecastPlotTop + 1, ForecastCanvas.ActualHeight - bottomMargin);
 
@@ -173,7 +175,7 @@ public partial class MainMenuView : Window {
 			ForecastCanvas.Children.Add(marker);
 		}
 
-		AddXAxisLabels(chart.Points, isDense, textBrush);
+		AddXAxisLabels(chart.Points, labelStep, isDense, textBrush);
 		AddHoverVisuals(lineBrush);
 	}
 
@@ -202,10 +204,28 @@ public partial class MainMenuView : Window {
 		}
 	}
 
-	private void AddXAxisLabels(IReadOnlyList<ForecastChartPoint> points, bool isDense, Brush textBrush) {
-		var labelStep = Math.Max(1, (int)Math.Ceiling((double)points.Count / MaxVisibleLabels));
+	private int GetXAxisLabelStep(int pointCount) {
+		if (pointCount <= 2) {
+			return 1;
+		}
+
+		var plotWidth = _forecastPlotRight - _forecastPlotLeft;
+		var maxVisibleLabelsByWidth = Math.Max(2, (int)Math.Floor(plotWidth / MinimumXAxisLabelSpacing) + 1);
+		var maxVisibleLabels = Math.Min(MaxVisibleLabels, maxVisibleLabelsByWidth);
+		return Math.Max(1, (int)Math.Ceiling((double)(pointCount - 1) / (maxVisibleLabels - 1)));
+	}
+
+	private void AddXAxisLabels(IReadOnlyList<ForecastChartPoint> points, int labelStep, bool isDense, Brush textBrush) {
 		var labelWidth = isDense ? 46d : 56d;
 		for (var index = 0; index < points.Count; index += labelStep) {
+			AddXAxisLabel(index);
+		}
+
+		if ((points.Count - 1) % labelStep != 0) {
+			AddXAxisLabel(points.Count - 1);
+		}
+
+		void AddXAxisLabel(int index) {
 			var point = _forecastPlotPoints[index];
 			var label = new TextBlock {
 				FontSize = isDense ? 9 : 11,

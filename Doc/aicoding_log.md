@@ -1,3 +1,20 @@
+## [2026-07-24] 14:28 MainMenu 気温グラフの横軸ラベルを表示幅に応じて間引き
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuView のグラフエリアが小さいとき、横軸の文字表示を数個おきに省略する。
+### 実施内容
+- `CvWpfclient/Views/MainMenuView.xaml.cs`: プロット幅と最小ラベル間隔から横軸ラベルの表示間隔を算出し、狭い表示領域ではラベルを間引くよう変更。最終時刻のラベルは常に表示する。
+### 技術決定 Why
+- 従来は予報点が36件を超えた場合だけ間引いていたため、点数が少なくてもグラフ幅が狭い場合にラベルが重なっていた。描画可能幅に基づく上限を併用し、ウィンドウサイズの変化にも追従させた。
+### 確認
+- `MainMenuView.xaml` のXML構文確認、`git diff --check` を実施。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore -p:BaseOutputPath=C:\gitroot\new2022\cv10-codex\artifacts\mainmenu-chart-label-build`: 成功（0警告、0エラー）。
+
+---
+
 ## [2026-07-24] 13:56 MainMenu の気温推移グラフをWPF標準描画へ置換
 ### Agent
 - GPT-5.6 : OpenAI
