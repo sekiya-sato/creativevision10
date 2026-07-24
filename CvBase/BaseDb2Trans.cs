@@ -8,20 +8,20 @@ namespace CvBase;
 public interface ITranDetail {
 	public string DenDay { get; set; }
 	public long Id_Soko { get; set; }
-	public int CalcFlag { get; set; }
+	public int CalcFlag { get; }
 	public List<Tran99Meisai>? Jmeisai { get; set; }
 }
 public interface ITranIdo {
 	public long Id { get; set; }
 	public string DenDay { get; set; }
 	public long Id_Ido { get; set; }
-	public int CalcFlag { get; set; }
+	public int CalcFlag { get;}
 }
 public interface ITranSoko {
 	public long Id { get; set; }
 	public string DenDay { get; set; }
 	public long Id_Soko { get; set; }
-	public int CalcFlag { get; set; }
+	public int CalcFlag { get; }
 }
 
 /// <summary>
@@ -140,7 +140,7 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("取引区分", "getCalcFlag により算出")]
-	public partial int CalcFlag { get; set; } = 1;
+	public partial int CalcFlag { get; protected set; } = 1;
 	/// <summary>
 	/// 数量合計
 	/// </summary>
@@ -560,7 +560,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
-		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
 	}
 
 	[Ignore]
@@ -671,7 +671,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
-		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
 	}
 
 	[Ignore]
@@ -766,7 +766,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
-		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
 	}
 	[Ignore]
 	[JsonIgnore]
@@ -962,7 +962,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
-		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
 	}
 	[Ignore]
 	[JsonIgnore]
@@ -1027,7 +1027,7 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
 		// Kubun が変更された後に実行される
-		CalcFlag = (value < 20 && value >= 90) ? 1 : -1;
+		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
 	}
 	[Ignore]
 	[JsonIgnore]

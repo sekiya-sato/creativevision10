@@ -170,7 +170,6 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 		};
 
 	void UpdateHeaderTotals() {
-		CurrentEdit.CalcFlag = CurrentEdit.EnKubun == EnumShiire.Shiire ? 1 : -1;
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
 		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
 		CurrentEdit.Tax = tax;
@@ -201,7 +200,6 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
 				KakeDay = DateTime.Now.ToString("yyyyMMdd"),
 				Kubun = (int)EnumShiire.Shiire,
-				CalcFlag = 1,
 				Jmeisai = [],
 			};
 		}

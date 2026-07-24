@@ -153,7 +153,6 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	}
 
 	void UpdateHeaderTotals() {
-		CurrentEdit.CalcFlag = CurrentEdit.EnKubun is EnumUri00.Uriage or EnumUri00.UriSale ? 1 : -1;
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
 		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
 		CurrentEdit.Tax = tax;

@@ -160,7 +160,6 @@ protected override void OnCurrentEditChangedCore(Tran05Ido? oldValue, Tran05Ido 
 	}
 
 	void UpdateHeaderTotals() {
-		CurrentEdit.CalcFlag = -1;
 	}
 
 	protected override object CreateInsertParam() {
@@ -179,7 +178,6 @@ protected override void OnCurrentEditChangedCore(Tran05Ido? oldValue, Tran05Ido 
 		if (Current.Id <= 0) {
 			Current = new Tran05Ido {
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
-				CalcFlag = -1,
 				Jmeisai = [],
 			};
 		}

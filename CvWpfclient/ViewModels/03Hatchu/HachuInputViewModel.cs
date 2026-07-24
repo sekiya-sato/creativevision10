@@ -162,7 +162,6 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		};
 
 	void UpdateHeaderTotals() {
-		CurrentEdit.CalcFlag = CurrentEdit.EnKubun == EnumShiire.Shiire ? 1 : -1;
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
 		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
 		CurrentEdit.Tax = tax;
@@ -192,7 +191,6 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 			Current = new Tran13Hachu {
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
 				Kubun = (int)EnumShiire.Shiire,
-				CalcFlag = 1,
 				Jmeisai = [],
 			};
 		}

@@ -152,11 +152,9 @@
 			<StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
 				Margin="0,8">
 				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="※直営店を出力します。「当年売上あり」選択時は指定年月に売上がある店舗のみ出力します。"
-					TextWrapping="Wrap" />
+					Text="※直営店を出力します。「当年売上あり」選択時は指定年月に売上がある店舗のみ出力します。" TextWrapping="Wrap" />
 				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="※前年に売上実績がある店舗のみ前年比が表示されます。"
-					TextWrapping="Wrap" />
+					Text="※前年に売上実績がある店舗のみ前年比が表示されます。" TextWrapping="Wrap" />
 			</StackPanel>
 
 			<!--  実行ボタン  -->

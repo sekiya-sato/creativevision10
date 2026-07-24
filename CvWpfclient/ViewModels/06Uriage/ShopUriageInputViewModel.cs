@@ -157,7 +157,6 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 	}
 
 	void UpdateHeaderTotals() {
-		CurrentEdit.CalcFlag = CurrentEdit.EnKubun is EnumUri01.Uriage or EnumUri01.UriSale ? 1 : -1;
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
 		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
 		CurrentEdit.Tax = tax;

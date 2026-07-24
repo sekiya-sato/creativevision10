@@ -23,7 +23,6 @@ public partial class ConvertDb {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
-					CalcFlag = getCalcFlag(kubun),
 					ManualNo = getString(rec, "手入力伝票NO"),
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					RelateNo2 = getDataInt(rec, "関連伝票NO2"),
@@ -69,7 +68,6 @@ public partial class ConvertDb {
 				return new Tran01Tenuri() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
-					CalcFlag = getCalcFlag(kubun),
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
@@ -114,7 +112,6 @@ public partial class ConvertDb {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
-					CalcFlag = getCalcFlag(kubun),
 					ManualNo = getString(rec, "手入力伝票NO"),
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
@@ -156,7 +153,6 @@ public partial class ConvertDb {
 
 				return new Tran05Ido() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
-					CalcFlag = getCalcFlag(kubun),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					JodaiTotal = getDataInt(rec, "上代合計"),
@@ -242,7 +238,6 @@ public partial class ConvertDb {
 
 				return new Tran60Tana() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
-					CalcFlag = getCalcFlag(kubun),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
@@ -274,7 +269,6 @@ public partial class ConvertDb {
 
 				return new Tran10IdoOut() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
-					CalcFlag = getCalcFlag(kubun),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					JodaiTotal = getDataInt(rec, "上代合計"),
@@ -313,7 +307,6 @@ public partial class ConvertDb {
 
 				return new Tran11IdoIn() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
-					CalcFlag = getCalcFlag(kubun),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					JodaiTotal = getDataInt(rec, "上代合計"),
@@ -353,7 +346,6 @@ public partial class ConvertDb {
 				return new Tran12Jyuchu() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
-					CalcFlag = getCalcFlag(kubun),
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
@@ -394,7 +386,6 @@ public partial class ConvertDb {
 				return new Tran13Hachu() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
-					CalcFlag = getCalcFlag(kubun),
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
@@ -493,13 +484,6 @@ WHERE EXISTS (
 		var current = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [kubun, code]);
 		return current;
 	}
-	int getCalcFlag(int kubun) {
-		return kubun switch {
-			>= 20 and < 40 => -1,
-			_ => 1,
-		};
-	}
-
 	int getHeaderNebiki(Dictionary<string, object> rec) {
 		return getDataInt(rec, "値引1") + getDataInt(rec, "値引2") + getDataInt(rec, "値引3");
 	}

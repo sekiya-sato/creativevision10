@@ -161,7 +161,6 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 		};
 
 	void UpdateHeaderTotals() {
-		CurrentEdit.CalcFlag = CurrentEdit.EnKubun is EnumUri01.Uriage or EnumUri01.UriSale ? 1 : -1;
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
 		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
 		CurrentEdit.Tax = tax;
@@ -191,7 +190,6 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 			Current = new Tran12Jyuchu {
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
 				Kubun = (int)EnumUri01.Uriage,
-				CalcFlag = 1,
 				Jmeisai = [],
 			};
 		}
