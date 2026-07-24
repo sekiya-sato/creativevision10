@@ -1,3 +1,19 @@
+## [2026-07-24] 09:45 MasterSysKanriMenteView 入力欄の文字が表示されない不具合を修正
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：MasterSysKanriMenteView でTextBoxに値は存在するが表示されない状態を、この画面のみ修正する。
+### 実施内容
+- `CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: 入力TextBox 20箇所の Style を `FormTextBox`(MaterialDesignOutlinedTextBox) から `MaterialDesignTextBox`(下線スタイル) へ変更。
+### 技術決定 Why
+- 前コミット(84fc78e)で無効キー`MaterialDesignBody*`を`FormTextBox`へ置換したが、当画面は外部Label＋固定`Height="30"`のコンパクト構成で、Outlined(浮動ラベル前提)は30px内でテキスト描画領域がクリップされ、値はあるのに不可視になっていた。下線系`MaterialDesignTextBox`はコンパクト高でも文字が表示され、テーマ対応(ライト/ダーク)も維持。隣接のDatePicker/ComboBox(30px)とも高さ整合。
+### 確認
+- `dotnet build C:\gitroot\new2022\cv10-claude\CvWpfclient\CvWpfclient.csproj`: 成功（0警告/0エラー）。
+- 実画面(MasterSysKanriMenteView)を一時フックで起動し`PrintWindow`でキャプチャ、会社名/住所/TEL/税率/事業者登録番号等の値が表示されることを目視確認。確認後フック削除。
+
+---
 ## [2026-07-24] 09:15 CvWpfclient XAMLのレイアウト崩れ点検・修正と check-xaml-layout スキル作成
 ### Agent
 - Claude Opus 4.8 : Anthropic
