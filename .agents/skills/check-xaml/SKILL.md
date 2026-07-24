@@ -22,7 +22,7 @@ description: Validates XAML files for syntax errors, resource references, namesp
 - リファクタリング後の整合性確認
 - ユーザーが明示的に「XAMLをチェックして」「XAMLエラーを確認して」と依頼した場合
 
-Cv では、WPF作業の共通規約は `wpf-project-guide`、画面単位の追加・改修手順は `wpf-view-workflow` が担当します。本スキルはその後段の検証専用スキルです。
+Cv では、WPF作業の共通規約は `wpf-project-guide`、画面単位の追加・改修手順は `wpf-view-workflow` が担当します。本スキルはその後段の検証専用スキルです。なお、見た目のレイアウト崩れ（文字見切れ・余白不足・下端右端の見切れ・デザイン不統一）の検出と修正は `check-xaml-layout` が担当します。本スキルは構文・リソース・バインディングの検証に専念します。
 
 ## 使用方法
 

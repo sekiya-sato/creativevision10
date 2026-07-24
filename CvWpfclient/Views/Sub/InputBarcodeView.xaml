@@ -120,7 +120,7 @@
 		<DataGrid Grid.Row="2"
 			Margin="12"
 			d:ItemsSource="{d:SampleData ItemCount=5}"
-			materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="False"
+			materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}" AutoGenerateColumns="False"
 			CanUserAddRows="False" CanUserDeleteRows="False" FrozenColumnCount="3" GridLinesVisibility="Horizontal"
 			HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 			IsReadOnly="True" IsSynchronizedWithCurrentItem="True"

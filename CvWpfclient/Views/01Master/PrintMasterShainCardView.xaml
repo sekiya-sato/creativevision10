@@ -74,7 +74,6 @@
 				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainIdFromCommand}"
 				BorderThickness="0,0,0,1"
-				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainIdFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="0" Grid.Column="2"
@@ -85,7 +84,6 @@
 				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainIdToCommand}"
 				BorderThickness="0,0,0,1"
-				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainIdTo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -98,7 +96,6 @@
 				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeFromCommand}"
 				BorderThickness="0,0,0,1"
-				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="1" Grid.Column="2"
@@ -109,7 +106,6 @@
 				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeToCommand}"
 				BorderThickness="0,0,0,1"
-				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 

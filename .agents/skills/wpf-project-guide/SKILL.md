@@ -61,6 +61,7 @@ description: Provides the shared CvWpfclient project conventions, resource usage
 - 既存画面は下端・右端が切れやすいため、余白・`Grid` 構造・`ScrollViewer` 有無を重点確認する
 - フォーム追加時は縦方向だけでなく横方向の収まりも確認する
 - DataGrid や TabControl を含む画面では、最下部操作ボタンや補足情報が隠れないか注意する
+- 見た目のレイアウト崩れ（見切れ・余白不足・デザイン不統一）を体系的に洗い出すときは `check-xaml-layout` を使う
 
 ## 画面単位スキルとの関係
 
@@ -71,6 +72,7 @@ description: Provides the shared CvWpfclient project conventions, resource usage
 
 - `wpf-view-workflow`: 画面単位の新規作成・改修手順
 - `check-xaml`: XAML構文、リソース、バインディングの検証
+- `check-xaml-layout`: XAMLの見た目のレイアウト崩れ（見切れ・余白不足・デザイン不統一）の検出と修正
 - `update-design-mente`: マスターメンテ画面を既存MaterialDesign系レイアウトへ統一するとき
 - `change-sublist-to-observablecollection`: マスターメンテ画面のサブリスト通知不具合を修正するとき
 

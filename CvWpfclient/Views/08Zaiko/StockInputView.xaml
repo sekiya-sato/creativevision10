@@ -356,7 +356,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
+										Foreground="{DynamicResource MaterialDesignBody}" TextTrimming="CharacterEllipsis">
 										<TextBlock.Text>
 											<MultiBinding StringFormat="{}{0} {1}">
 												<Binding Path="CurrentEdit.VSoko.Cd" />
@@ -379,7 +379,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
+										Foreground="{DynamicResource MaterialDesignBody}" TextTrimming="CharacterEllipsis">
 										<TextBlock.Text>
 											<MultiBinding StringFormat="{}{0} {1}">
 												<Binding Path="CurrentEdit.VShain.Cd" />
@@ -456,7 +456,7 @@
 						Margin="0,8,0,0"
 						d:ItemsSource="{d:SampleData ItemCount=5}"
 						helpers:DataGridCellEnterNavigation.IsEnabled="True" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6"
-						materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="Beige" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+						materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
 						EnableRowVirtualization="True" GridLinesVisibility="Horizontal" HeadersVisibility="Column"
 						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 						IsSynchronizedWithCurrentItem="True"

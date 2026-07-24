@@ -96,7 +96,6 @@
 				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShiireCodeFromCommand}"
 				BorderThickness="0,0,0,1"
-				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShiireCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="1" Grid.Column="2"
@@ -107,7 +106,6 @@
 				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectShiireCodeToCommand}"
 				BorderThickness="0,0,0,1"
-				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding ShiireCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -120,7 +118,6 @@
 				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCodeFromCommand}"
 				BorderThickness="0,0,0,1"
-				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding SokoCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
 			<TextBlock Grid.Row="2" Grid.Column="2"
@@ -131,7 +128,6 @@
 				Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
 				helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCodeToCommand}"
 				BorderThickness="0,0,0,1"
-				Background="White"
 				Style="{StaticResource MenteSearchTextBox}"
 				Text="{Binding SokoCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -183,7 +179,6 @@
 			<ComboBox Grid.Row="5" Grid.Column="1"
 				Width="220"
 				Margin="0,10,0,10" HorizontalAlignment="Left"
-				Background="White"
 				DisplayMemberPath="Name"
 				ItemsSource="{Binding KubunOptions}"
 				SelectedItem="{Binding SelectedKubun}"

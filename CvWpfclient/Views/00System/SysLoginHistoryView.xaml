@@ -84,7 +84,7 @@
 			<GridSplitter Grid.RowSpan="3" Grid.Column="1"
 				Width="3"
 				Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
-				Background="DarkGray" />
+				Background="{DynamicResource MaterialDesignDivider}" />
 			<!--  ===== 左パネル: 一覧グリッド (Card) =====  -->
 			<materialDesign:Card Grid.Column="0"
 				Padding="0"

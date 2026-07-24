@@ -1,3 +1,30 @@
+## [2026-07-24] 09:15 CvWpfclient XAMLのレイアウト崩れ点検・修正と check-xaml-layout スキル作成
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclientプロジェクト全体のXAMLをチェックし、デザイン崩れ・レイアウト崩れ・余白不足・文字見切れを修正する。あわせて今回のチェックに有用なスキルを他スキルとフォーマットを合わせて作成し、実画面での目視確認も行う。
+### 実施内容
+- `.agents/skills/check-xaml-layout/SKILL.md`: 新規作成（視覚レイアウト崩れ検出・修正専用スキル。check-xamlは構文/リソース/バインディング、本スキルは見切れ・余白・崩れ・不統一を担当）。
+- `.agents/skills/wpf-project-guide/SKILL.md`・`.agents/skills/check-xaml/SKILL.md`: 新スキルへの相互参照を追加。
+- 9 View(HachuInput/JuchuInput/ShiireInput/ShopUriageInput/ShukkaUriageInput/StockInput/IdoInputOut/IdoInputSoku/InputBarcode): `AlternatingRowBackground="Beige"` → `{DynamicResource DataGridAlternatingRowBackgroundBrush}`（ダークテーマ対応、ZaikoQueryView準拠）。
+- `Views/01Master/MasterSysKanriMenteView.xaml`: 無効スタイルキー `Style="{DynamicResource MaterialDesignBody*}"`(20箇所、素TextBox化していた)を`FormTextBox`へ／〒住所行の列重複(住所1/住所2)を解消／Mail欄の負マージン`-17`撤廃で右端はみ出し解消。
+- `Views/05Shiire/ShiireSlipPrintView.xaml`・`Views/01Master/PrintMasterShainCardView.xaml`: 検索欄の固定色`Background="White"`除去（`MenteSearchTextBox`既定の`MaterialDesignPaper`に委譲。ライトはほぼ白で視認性維持、ダーク追従）。
+- `Views/00System/SysAutoExecHistoryView.xaml`・`SysLoginHistoryView.xaml`: GridSplitterの固定色`DarkGray` → `{DynamicResource MaterialDesignDivider}`。
+- Cd+Mei表示に`TextTrimming="CharacterEllipsis"`追加(計12箇所: JuchuInput3/ShopUriage4/ShukkaUriage3/StockInput2)。
+- `Views/Sub/AutoExecHistoryParamMiniView.xaml`・`RangeParamMiniView.xaml`: 操作ボタン行に右下余白(`0,16,16,16`)。`Views/02Yosan/ShopBudgetReportView.xaml`: 注意書きに`TextWrapping="Wrap"`。
+### 技術決定 Why
+- 固定色(Beige/White/DarkGray)はダークテーマで破綻するため既存DynamicResource/共通スタイルに寄せた。`MaterialDesignBody*`は存在しないキーでDynamicResource解決に失敗し素の既定TextBoxになっていたため`FormTextBox`へ差し替え。長い名称の無音見切れは`TextTrimming`で省略表示化。
+- `Background="White"`除去は直近コミット87d6597(白背景追加)の見た目を変更するが、`MenteSearchTextBox`が`MaterialDesignPaper`を既に持ちライトの視認性を保ちつつダークにも追従するため、テーマ的に妥当と判断。
+### 影響範囲
+- CvWpfclient/Views 配下の実体View 17ファイル＋スキル3ファイル。空`<Grid />`スタブ168ファイルは対象外。
+### 確認
+- `dotnet build C:\gitroot\new2022\cv10-claude\CvWpfclient\CvWpfclient.csproj`（絶対パス指定でcv10-claudeを明示ビルド）: 成功（0警告/0エラー）。
+- 実画面確認: MainMenuViewModelに一時フックを入れMasterSysKanriMenteView/ShiireSlipPrintViewを起動、`PrintWindow`(PW_RENDERFULLCONTENT)でキャプチャし見切れ・余白・整列・テーマを目視確認。確認後フックは削除。
+- `git diff --check`クリーン、変更ファイルはCRLF/UTF-8統一。
+
+---
 ## [2026-07-23] 16:45 印刷ダイアログの入力スタイルをRangeInputParamView準拠に統一
 ### Agent
 - kimi-k2.6 : OhMyOpenCode
