@@ -6,12 +6,7 @@ using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.Models;
 using CvWpfclient.Services;
-using LiveChartsCore;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Extensions.DependencyInjection;
-using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Text.Json;
@@ -101,8 +96,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 
 	private DispatcherTimer? _timer;
 	private bool _disposed;
-	private string[] _forecastLabels = [];
-	private double[] _forecastTemperatures = [];
+	private IReadOnlyList<HourlyForecast> _hourlyForecasts = [];
 
 	private DateTime checkDate = DateTime.MinValue;
 	private Dictionary<string, string>? _holidays;
@@ -124,7 +118,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	public MainMenuViewModel() {
 		App.ThemeService.ThemeChanged += OnThemeChanged;
 		App.MainThemeService.MainThemeChanged += OnMainThemeChanged;
-		ApplyForecastTheme();
+		UpdateForecastChart();
 		UpdateMainThemeButtonLabel(App.MainThemeService.CurrentTheme);
 	}
 
@@ -132,7 +126,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		if (_disposed) {
 			return;
 		}
-		ApplyForecastTheme();
+		OnPropertyChanged(nameof(ForecastChart));
 	}
 
 	private void OnMainThemeChanged(object? sender, MainTheme theme) {
@@ -477,16 +471,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 
 
 	[ObservableProperty]
-	public partial ISeries[] ForecastSeries { get; set; } = [];
-
-	[ObservableProperty]
-	public partial LiveChartsCore.Measure.Margin? ForecastMargin { get; set; } = new LiveChartsCore.Measure.Margin(0, 0, 0, 0);
-
-	[ObservableProperty]
-	public partial Axis[] ForecastXAxes { get; set; } = [new Axis { Labels = [], TextSize = 11 }];
-
-	[ObservableProperty]
-	public partial Axis[] ForecastYAxes { get; set; } = [new Axis { Name = "", TextSize = 11, MinLimit = null, MaxLimit = null }]; // ℃
+	public partial ForecastChartData? ForecastChart { get; set; }
 
 	private DispatcherTimer? _weatherTimer;
 
@@ -531,9 +516,8 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 			var forecasts = await weatherService.GetHourlyForecastAsync(reagion, AppGlobal.GetDefaultCallContext(cancellationToken, WeatherGrpcTimeout));
 			cancellationToken.ThrowIfCancellationRequested();
 			if (forecasts.Count > 0) {
-				_forecastLabels = forecasts.Select(f => f.TimeLabel).ToArray();
-				_forecastTemperatures = forecasts.Select(f => f.Temperature).ToArray();
-				ApplyForecastTheme();
+				_hourlyForecasts = forecasts;
+				UpdateForecastChart();
 			}
 		}
 		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
@@ -740,69 +724,18 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		}
 	}
 
-	private void ApplyForecastTheme() {
-		// ForecastYAxes = [new Axis { Name = "℃", TextSize = 10,	}];
-
-		if (_forecastTemperatures.Length == 0) {
-			ForecastSeries = [];
+	private void UpdateForecastChart() {
+		if (_hourlyForecasts.Count == 0) {
+			ForecastChart = null;
 			return;
 		}
 
-		var lineColor = ToSkColor(GetResourceColor("MainMenuChartLineColor", Color.FromRgb(33, 150, 243)));
-		var fillColor = ToSkColor(GetResourceColor("MainMenuChartFillColor", Color.FromArgb(80, 33, 150, 243)));
-		var textColor = ToSkColor(GetResourceColor("MainMenuChartTextColor", Color.FromRgb(0, 0, 0)));
-		var separatorColor = textColor.WithAlpha(51); // 20% opacity
-
-		var values = _forecastTemperatures
-			.Select((temperature, index) => new ObservablePoint(index, temperature))
-			.ToArray();
-		// 件数が増えた場合にラベルが重ならないよう、表示ラベルを間引き、回転して配置する
-		const int MaxVisibleLabels = 36;
-		var labelStep = (int)Math.Ceiling((double)_forecastLabels.Length / MaxVisibleLabels);
-		var displayLabels = _forecastLabels
-			.Select((label, index) => index % labelStep == 0 ? label : string.Empty)
-			.ToArray();
-		var isDense = _forecastLabels.Length > MaxVisibleLabels;
-		ForecastXAxes = [new Axis {
-				Labels = displayLabels,
-				TextSize = isDense ? 9 : 11,
-				LabelsRotation = isDense ? 45 : 0,
-				LabelsPaint = new SolidColorPaint(textColor),
-				SeparatorsPaint = new SolidColorPaint(separatorColor)
-			}];
-		// 縦軸: 5℃刻み、最小・最大をデータに合わせて少しパディング
-		var minTemp = _forecastTemperatures.Min();
-		var maxTemp = _forecastTemperatures.Max();
-		ForecastYAxes = [new Axis {
-			TextSize = 10,
-			MinStep = 5,                              // ← 5刻みに
-			ForceStepToMin = true,                    // ← 自動調整ではなく5刻みを強制
-			MinLimit = Math.Floor(minTemp / 5) * 5,  // ← 下限を5の倍数に揃える
-			MaxLimit = Math.Ceiling(maxTemp / 5) * 5, // ← 上限を5の倍数に揃える
-			LabelsPaint = new SolidColorPaint(textColor),
-			SeparatorsPaint = new SolidColorPaint(separatorColor)
-		}];
-		ForecastMargin = new LiveChartsCore.Measure.Margin(4, 8, 4, 8);
-		ForecastSeries = [
-			new LineSeries<ObservablePoint> {
-					Values = values,
-					Fill = new SolidColorPaint(fillColor),
-					Stroke = new SolidColorPaint(lineColor) { StrokeThickness = 2 },
-					GeometryFill = new SolidColorPaint(lineColor),
-					GeometryStroke = new SolidColorPaint(lineColor),
-					GeometrySize = 6,
-					LineSmoothness = 0.3
-				}
-		];
-	}
-
-	private static Color GetResourceColor(string key, Color fallback) {
-		var resource = FindResource(key);
-		return resource switch {
-			SolidColorBrush brush => brush.Color,
-			Color color => color,
-			_ => fallback,
-		};
+		var minTemperature = Math.Floor(_hourlyForecasts.Min(forecast => forecast.Temperature) / 5) * 5;
+		var maxTemperature = Math.Ceiling(_hourlyForecasts.Max(forecast => forecast.Temperature) / 5) * 5;
+		ForecastChart = new ForecastChartData(
+			_hourlyForecasts.Select(forecast => new ForecastChartPoint(forecast.DateTime, forecast.TimeLabel, forecast.Temperature)).ToArray(),
+			minTemperature,
+			maxTemperature);
 	}
 
 	private static object? FindResource(string key) {
@@ -825,7 +758,6 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		return null;
 	}
 
-	private static SKColor ToSkColor(Color color) => new(color.R, color.G, color.B, color.A);
 	/// <summary>
 	/// 指定したMenuDataの親のHeaderを再帰的に探索して返す
 	/// </summary>
@@ -859,3 +791,13 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		public string? Text { get; set; }
 	}
 }
+
+public sealed record ForecastChartData(
+	IReadOnlyList<ForecastChartPoint> Points,
+	double MinTemperature,
+	double MaxTemperature);
+
+public sealed record ForecastChartPoint(
+	DateTime DateTime,
+	string TimeLabel,
+	double Temperature);

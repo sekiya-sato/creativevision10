@@ -1,3 +1,22 @@
+## [2026-07-24] 13:56 MainMenu の気温推移グラフをWPF標準描画へ置換
+### Agent
+- GPT-5.6 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：SkiaSharp 4.x系への更新問題を解消するため、MainMenuのグラフを現行機能と外観を極力保ったWPF標準のCanvas/Polyline描画へ置換する。
+### 実施内容
+- `Directory.Packages.props`、`CvWpfclient/CvWpfclient.csproj`: `LiveChartsCore.SkiaSharpView.WPF` と `SkiaSharp.Views.WPF` のパッケージ参照を削除。
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 時間別予報を描画専用モデルへ整理し、5℃単位の縦軸範囲を算出するよう変更。
+- `CvWpfclient/Views/MainMenuView.xaml`、`CvWpfclient/Views/MainMenuView.xaml.cs`: Canvas、Polyline、Polygon、Ellipse、TextBlockで折れ線・塗りつぶし・目盛・ラベルを描画し、系列上の近傍ポイントにガイド線、強調マーカー、日時・気温のポップアップを表示。
+### 技術決定 Why
+- LiveChartsCoreとSkiaSharp.Views.WPFを同時に撤去し、WPF標準コントロールだけで既存のデータ取得、30分更新、テーマ切替、5℃目盛、平滑な線、ポイント表示、ツールチップ相当の操作を維持するため。
+### 確認
+- `MainMenuView.xaml` のXML構文、イベント接続、テーマリソース参照を確認。
+- `LiveChartsCore`、`SkiaSharp` のソース・プロジェクト参照が残っていないことを確認。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj -p:BaseOutputPath=C:\gitroot\new2022\cv10-codex\artifacts\canvas-chart-build`: 成功（0警告、0エラー）。
+
+---
 ## [2026-07-24] 09:45 MasterSysKanriMenteView 入力欄の文字が表示されない不具合を修正
 ### Agent
 - Claude Opus 4.8 : Anthropic
