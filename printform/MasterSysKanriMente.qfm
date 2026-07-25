@@ -66,7 +66,7 @@
 			<position x="0" y="10" width="150" height="248"/>
 			<color transparent="1"/>
 			<record id="Rec01" tree="1">
-				<position x="0" y="0" width="150" height="121"/>
+				<position x="0" y="0" width="150" height="127"/>
 				<color transparent="1"/>
 				<border left="1" right="1" top="1" bottom="1"/>
 				<text id="Lbl01" valign="middle">
@@ -332,15 +332,37 @@
 					<decode datatype="string" format=""/>
 					<font size="75"/>
 				</text>
-				<text id="Lbl19" valign="middle">
+				<text id="LblStandardSoko" valign="middle">
 					<position x="4" y="95" width="30" height="4"/>
+					<color transparent="1"/>
+					<data calctype="static">ïWèÄëqå…</data>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>
+				<text id="ValStandardSokoCode">
+					<position x="36" y="95" width="20" height="4"/>
+					<color transparent="1"/>
+					<border bottom="1"/>
+					<data calctype="item" datasrc="item29"/>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>
+				<text id="ValStandardSokoName">
+					<position x="58" y="95" width="88" height="4"/>
+					<color transparent="1"/>
+					<border bottom="1"/>
+					<data calctype="item" datasrc="item30"/>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>				<text id="Lbl19" valign="middle">
+					<position x="4" y="101" width="30" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">ÉzÅ[ÉÄÉyÅ[ÉW</data>
 					<decode datatype="string" format=""/>
 					<font size="75"/>
 				</text>
 				<text id="Val19">
-					<position x="36" y="95" width="82" height="4"/>
+					<position x="36" y="101" width="82" height="4"/>
 					<color transparent="1"/>
 					<border bottom="1"/>
 					<data calctype="item" datasrc="item25"/>
@@ -348,14 +370,14 @@
 					<font size="75"/>
 				</text>
 				<text id="Lbl20" valign="middle">
-					<position x="4" y="101" width="30" height="4"/>
+					<position x="4" y="107" width="30" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">éñã∆é“ìoò^î‘çÜ</data>
 					<decode datatype="string" format=""/>
 					<font size="75"/>
 				</text>
 				<text id="Val20">
-					<position x="36" y="101" width="29" height="4"/>
+					<position x="36" y="107" width="29" height="4"/>
 					<color transparent="1"/>
 					<border bottom="1"/>
 					<data calctype="item" datasrc="item26"/>
@@ -363,14 +385,14 @@
 					<font size="75"/>
 				</text>
 				<text id="Lbl25" valign="middle">
-					<position x="4" y="107" width="30" height="4"/>
+					<position x="4" y="113" width="30" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">ìoò^ì˙</data>
 					<decode datatype="string" format=""/>
 					<font size="75"/>
 				</text>
 				<text id="Val25">
-					<position x="36" y="107" width="34" height="4"/>
+					<position x="36" y="113" width="34" height="4"/>
 					<color transparent="1"/>
 					<border bottom="1"/>
 					<data calctype="item" datasrc="item27"/>
@@ -378,14 +400,14 @@
 					<font size="75"/>
 				</text>
 				<text id="Lbl26" valign="middle">
-					<position x="78" y="107" width="10" height="4"/>
+					<position x="78" y="113" width="10" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">èCê≥ì˙</data>
 					<decode datatype="string" format=""/>
 					<font size="75"/>
 				</text>
 				<text id="Val26">
-					<position x="88" y="107" width="34" height="4"/>
+					<position x="88" y="113" width="34" height="4"/>
 					<color transparent="1"/>
 					<border bottom="1"/>
 					<data calctype="item" datasrc="item28"/>

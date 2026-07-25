@@ -64,6 +64,8 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 			NormalizePrintText(Current.TaxRegistrationNumber),
 			FormatDateTimeText(Current.VdateC),
 			FormatDateTimeText(Current.VdateU),
+			NormalizePrintText(StandardSoko.Cd),
+			NormalizePrintText(StandardSoko.Mei),
 		];
 
 		return string.Join(",", fields.Select(EscapeCsvField)) + "\r\n";

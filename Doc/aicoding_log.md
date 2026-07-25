@@ -1,3 +1,21 @@
+## [2026-07-25] 13:49 システム管理マスタ帳票に標準倉庫を追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：システム管理マスタの印刷レイアウトにも標準倉庫を表示する。
+### 実施内容
+- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs`: 印刷CSVの末尾へ標準倉庫のコード・名称を追加。
+- `printform/MasterSysKanriMente.qfm`: 未使用のitem29・item30を標準倉庫のコード・名称へ割り当て、税率3の後に標準倉庫行を追加。後続の項目は1行下へ移動。
+### 技術決定 Why
+- 既存の未使用データ項目を再利用してCSV定義と帳票の対応を維持し、MasterSysmanの保存項目はId_Sokoのみという設計を変えずに印刷できるようにした。
+### 確認
+- `validate_qfm.py printform/MasterSysKanriMente.qfm`: 成功。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore`: 成功（0警告、0エラー）。
+
+---
+
 ## [2026-07-25] 13:42 システム管理マスタに標準倉庫選択を追加
 ### Agent
 - GPT-5 : OpenAI
