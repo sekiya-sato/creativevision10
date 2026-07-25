@@ -1,3 +1,21 @@
+## [2026-07-25] 13:42 システム管理マスタに標準倉庫選択を追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterSysman に追加された Id_Soko を画面で選択・表示できるようにする。
+### 実施内容
+- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs`: 標準倉庫のコード・名称を表示専用で保持し、再読込時に Id_Soko から倉庫を取得する処理と倉庫選択コマンドを追加。
+- `CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: 標準倉庫Idの検索ボタン付き入力欄、およびコード・名称の表示欄を追加。
+### 技術決定 Why
+- MasterSysman には Id_Soko のみを保存し、コード・名称は ViewModel の表示専用状態として取得することで、保存データを増やさずに選択内容を判別可能にした。
+### 確認
+- `git diff --check`、XAML XML構文確認を実施。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore`: 成功（0警告、0エラー）。
+
+---
+
 ## [2026-07-24] 14:28 MainMenu 気温グラフの横軸ラベルを表示幅に応じて間引き
 ### Agent
 - GPT-5 : OpenAI

@@ -1,3 +1,4 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
@@ -18,6 +19,9 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 
 	[ObservableProperty]
 	public partial string? Desc0 { get; set; }
+
+	[ObservableProperty]
+	public partial CodeNameView StandardSoko { get; set; } = new();
 
 	// MasterSysman は単一レコードのため、ListOrderは不要だが、初期値がCodeのため上書きする必要がある
 	protected override string? ListOrder => "Id";
@@ -111,9 +115,36 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 	async Task Init() => await DoList(CancellationToken.None);
 
 	protected override void AfterList(System.Collections.IList list) {
+		StandardSoko = new();
 		if (list.Count > 0) {
 			var timespan = DateTime.Now - StartTime;
 			Desc0 = $"開始{StartTime} 取得、画面展開{timespan.ToStrSpan()}";
+			_ = LoadStandardSokoAsync(CancellationToken.None);
+		}
+	}
+
+	async Task LoadStandardSokoAsync(CancellationToken ct) {
+		var idSoko = Current.Id_Soko;
+		if (idSoko <= 0) return;
+
+		try {
+			var reply = await SendMessageAsync(new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg101_Op_Query,
+				DataType = typeof(QueryByIdParam),
+				DataMsg = Common.SerializeObject(new QueryByIdParam(typeof(MasterTokui), idSoko))
+			}, ct);
+			if (reply.Code < 0 || Current.Id_Soko != idSoko) return;
+
+			if (Common.DeserializeObject(reply.DataMsg ?? "{}", reply.DataType) is MasterTokui soko) {
+				StandardSoko = new() { Sid = soko.Id, Cd = soko.Code ?? string.Empty, Mei = soko.Name ?? string.Empty };
+			}
+		}
+		catch (OperationCanceledException) {
+			// 画面終了時の参照倉庫取得中断は表示を更新しない。
+		}
+		catch {
+			// 標準倉庫の表示名を取得できない場合も、システム管理マスタの表示は継続する。
 		}
 	}
 
@@ -122,6 +153,15 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 		new UpdateParam(Tabletype, Common.SerializeObject(Current));
 
 	protected override bool CanDelete() => false;
+
+	[RelayCommand]
+	void DoSelectSoko() {
+		var soko = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code", startPos: Current.Id_Soko);
+		if (soko == null) return;
+
+		Current.Id_Soko = soko.Id;
+		StandardSoko = new() { Sid = soko.Id, Cd = soko.Code ?? string.Empty, Mei = soko.Name ?? string.Empty };
+	}
 
 	[RelayCommand]
 	async Task SearchPostalCode() => await PostalAddressSearchHelper.SearchAndApplyAsync(this, Current.PostalCode ?? string.Empty, item => {

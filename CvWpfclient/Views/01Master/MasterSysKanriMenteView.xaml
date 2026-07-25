@@ -317,6 +317,28 @@
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.ModifyDaysPre}"
 							TextWrapping="Wrap" />
+						<Label Grid.Row="9" Grid.Column="0"
+							Height="30"
+							Margin="15,0,0,0" VerticalAlignment="Center"
+							Content="標準倉庫Id" />
+						<DockPanel Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="7"
+							Margin="10,0,0,0">
+							<TextBox Width="120" Height="30"
+								HorizontalContentAlignment="Left"
+								helpers:SearchTextBoxAssist.Command="{Binding DoSelectSokoCommand}"
+								BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+								Style="{StaticResource MenteSearchTextBox}"
+								Text="{Binding Current.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
+							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+								Foreground="{DynamicResource MaterialDesignBody}">
+								<TextBlock.Text>
+									<MultiBinding StringFormat="{}{0} {1}">
+										<Binding Path="StandardSoko.Cd" />
+										<Binding Path="StandardSoko.Mei" />
+									</MultiBinding>
+								</TextBlock.Text>
+							</TextBlock>
+						</DockPanel>
 						<Label Grid.Row="10" Grid.Column="0"
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"
