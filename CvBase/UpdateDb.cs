@@ -22,6 +22,7 @@ public class UpdateDb {
 		new (26_06_23_01,"ALTER TABLE MasterShain ADD COLUMN ExpireDate TEXT NOT NULL DEFAULT '';","2026.06.23定義"),
 		new (26_07_06_01,"ALTER TABLE Tran00Uriage ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran00Uriage ADD COLUMN Total NUMBER not null default 0;ALTER TABLE Tran01Tenuri ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran01Tenuri ADD COLUMN Total NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN Total NUMBER not null default 0;ALTER TABLE Tran12Jyuchu ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran12Jyuchu ADD COLUMN Total NUMBER not null default 0;ALTER TABLE Tran13Hachu ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran13Hachu ADD COLUMN Total NUMBER not null default 0;","2026.07.06定義"),
 		new (26_07_10_01,"ALTER TABLE MasterEndCustomer RENAME COLUMN Gendar to Gender;","2026.07.10定義 綴り間違いを訂正"),
+		new (26_07_25_01,"ALTER TABLE MasterSysman ADD COLUMN Id_Soko NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN IsPrint NUMBER not null default 0;","2026.07.25定義"),
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {

@@ -15,7 +15,7 @@ public interface ITranIdo {
 	public long Id { get; set; }
 	public string DenDay { get; set; }
 	public long Id_Ido { get; set; }
-	public int CalcFlag { get;}
+	public int CalcFlag { get; }
 }
 public interface ITranSoko {
 	public long Id { get; set; }
@@ -803,6 +803,16 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	public partial int Total { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsPrint))]
+	public partial int IsPrint { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsPrint {
+		get => (EnumYesNo)IsPrint;
+		set => IsPrint = (int)value;
+	}
 }
 public enum EnumShiire : int {
 	Shiire = 10,

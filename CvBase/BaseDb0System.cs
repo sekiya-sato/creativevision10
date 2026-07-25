@@ -91,6 +91,11 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ColumnSizeDml(14)]
 	[OldTableCommentAttr("事業者登録番号", "T+13桁 select 名称 from HC$master_meisho where 名称区分='IBS' and 名称CD='01'")]
 	public partial string TaxRegistrationNumber { get; set; } = string.Empty;
+	/// <summary>
+	/// 標準倉庫
+	/// </summary>
+	[ObservableProperty]
+	public partial long Id_Soko { get; set; }
 }
 /// <summary>
 /// 消費税率テーブル(Id 1-3)
