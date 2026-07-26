@@ -96,6 +96,14 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	/// </summary>
 	[ObservableProperty]
 	public partial long Id_Soko { get; set; }
+	/// <summary>
+	/// 倉庫データ
+	/// </summary>
+	[ObservableProperty]
+	[ComputedColumn]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VSoko { get; set; } = new();
 }
 /// <summary>
 /// 消費税率テーブル(Id 1-3)
