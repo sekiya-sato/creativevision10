@@ -73,6 +73,30 @@ public partial class CoreService {
 		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(new AppGlobal().VerInfo));
 	}
 	/// <summary>
+	/// Master系のV*列とJSON内の名称スナップショットを参照先マスタの現在値で再同期する
+	/// (マスタ改名時の伝播はHandleUpdateで自動実行されるため、これはDB変換後や取りこぼしの修復用)
+	/// </summary>
+	private CvMsg HandleMasterVColumnResync(CvMsg request, CallContext context) {
+		var errors = new List<string>();
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var updated = new MasterCascadeDb(_db).ResyncAll(errors);
+			_db.CompleteTransaction();
+			_logger.LogInformation("V*列再同期 更新行数={Count} 失敗ルール数={ErrorCount}", updated, errors.Count);
+			// 一部ルールが失敗した場合は成功扱いにしない(利用者へ提示して再実行を促す)
+			if (errors.Count > 0) {
+				return CreateErrorResponse(request.Flag, UnexpectedErrorCode, string.Join(Environment.NewLine, errors),
+					typeof(string), $"更新行数={updated} 失敗ルール数={errors.Count}");
+			}
+			return CreateSuccessResponse(request.Flag, typeof(string), $"更新行数={updated}");
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			_logger.LogError(ex, "V*列再同期に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), string.Join(Environment.NewLine, errors));
+		}
+	}
+	/// <summary>
 	/// Query系の処理
 	/// </summary>
 	/// <param name="request"></param>

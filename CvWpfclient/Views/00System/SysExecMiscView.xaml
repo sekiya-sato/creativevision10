@@ -79,6 +79,18 @@
 									Text="商品名称再構築" />
 							</StackPanel>
 						</Button>
+						<Button Width="200" Height="42"
+							Margin="0,0,12,12"
+							Command="{Binding MasterVColumnResyncCommand}"
+							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+							Style="{StaticResource MaterialDesignRaisedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="DatabaseSync" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="V*列再同期" />
+							</StackPanel>
+						</Button>
 					</WrapPanel>
 				</Grid>
 			</materialDesign:Card>

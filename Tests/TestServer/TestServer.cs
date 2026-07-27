@@ -187,6 +187,51 @@ public class CoreServiceTests {
 		Assert.AreEqual(vduBefore, db.SingleById<MasterShohin>(shohin.Id).Vdu, "Code/Name以外の変更では参照側のVduが動かない");
 	}
 
+	/// <summary>
+	/// Phase5: Msg047 でV*列とJSON内スナップショットが現在のマスタ内容へ再同期される
+	/// </summary>
+	[TestMethod]
+	public async Task MasterVColumnResync_SyncsStaleSnapshotsAndIsIdempotent() {
+		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		var service = _service ?? throw new AssertFailedException("Service not initialized");
+		foreach (var t in new[] { typeof(MasterMeisho), typeof(MasterShohin), typeof(MasterTokui), typeof(DerivedShohinColSiz) }) {
+			db.CreateTable(t, true, false);
+		}
+
+		var brand = new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "現ブランド", Vdc = 1, Vdu = 1 };
+		db.Insert(brand);
+		var soko = new MasterTokui { Code = "9001", Name = "現倉庫", TenType = 0, Vdc = 1, Vdu = 1 };
+		db.Insert(soko);
+		// V*列とJSON内スナップショットが古い/空の状態を作る
+		var shohin = new MasterShohin {
+			Code = "0001",
+			Name = "商品",
+			Id_Brand = brand.Id,
+			VBrand = new CodeNameView { Sid = brand.Id, Cd = "01", Mei = "旧ブランド" },
+			Id_Soko = soko.Id,
+			Jsub = [new MasterGeneralMeisho { Kb = "B01", Kbname = "区分", Sid = brand.Id, Cd = "01", Mei = "旧ブランド" }],
+			Vdc = 1,
+			Vdu = 1,
+		};
+		db.Insert(shohin);
+		db.Execute("update MasterShohin set VSoko = ''");
+
+		var request = new CvMsg { Flag = CvFlag.Msg047_MasterVColumnResync, Code = 0, DataType = typeof(string), DataMsg = string.Empty };
+		var result = await service.QueryMsgAsync(request);
+
+		Assert.AreEqual(0, result.Code, $"再同期が成功する: {result.Option} {result.DataMsg}");
+		var after = db.SingleById<MasterShohin>(shohin.Id);
+		Assert.AreEqual("現ブランド", after.VBrand.Mei, "VBrandが現行名称になる");
+		Assert.AreEqual("現倉庫", after.VSoko.Mei, "空だったVSokoが埋まる");
+		Assert.AreEqual(soko.Id, after.VSoko.Sid, "VSoko.Sid");
+		Assert.AreEqual("現ブランド", after.Jsub![0].Mei, "Jsub内のMeiも現行名称になる");
+
+		// 2回目は更新0件(冪等)
+		var result2 = await service.QueryMsgAsync(request);
+		Assert.AreEqual(0, result2.Code, "2回目も成功する");
+		Assert.AreEqual("更新行数=0", result2.DataMsg, "2回目は更新0件");
+	}
+
 	[TestMethod]
 	public void RegisterDailySqliteWalCheckpointTask_RegistersTwoAmSchedule() {
 		var schedulerService = _schedulerService ?? throw new AssertFailedException("SchedulerService not initialized");

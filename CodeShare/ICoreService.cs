@@ -123,6 +123,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg046_MasterShohinMeishoRebuild = 46,
 	/// <summary>
+	/// Master系のV*列(CodeNameView)とJSON内の名称スナップショットを参照先マスタの現在値で再同期する
+	/// </summary>
+	[EnumMember]
+	Msg047_MasterVColumnResync = 47,
+	/// <summary>
 	/// 集計処理
 	/// </summary>
 	[EnumMember]

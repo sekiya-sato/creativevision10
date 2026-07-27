@@ -43,6 +43,49 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 	}
 
 	[RelayCommand(IncludeCancelCommand = true)]
+	private async Task MasterVColumnResyncAsync(CancellationToken cancellationToken) {
+		if (MessageEx.ShowQuestionDialog("マスタ名称の複製列(V*列)を現在のマスタ内容で再同期しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+			return;
+		}
+		try {
+			IsProcessing = true;
+			ResultMessage = "V*列の再同期を実行中です。";
+			ClientLib.Cursor2Wait();
+			cancellationToken.ThrowIfCancellationRequested();
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var msg = new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg047_MasterVColumnResync,
+				DataType = typeof(string),
+				DataMsg = string.Empty
+			};
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken));
+			if (reply.Code < 0) {
+				var detail = !string.IsNullOrWhiteSpace(reply.Option) ? reply.Option : reply.DataMsg;
+				ResultMessage = $"V*列の再同期に失敗しました。{Environment.NewLine}{detail}";
+				MessageEx.ShowErrorDialog(ResultMessage, owner: ClientLib.GetActiveView(this));
+				return;
+			}
+			ResultMessage = $"V*列の再同期が完了しました。{Environment.NewLine}{reply.DataMsg}";
+			MessageEx.ShowInformationDialog(ResultMessage, owner: ClientLib.GetActiveView(this));
+		}
+		catch (OperationCanceledException) {
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			return;
+		}
+		catch (Exception ex) {
+			ResultMessage = $"V*列の再同期中にエラーが発生しました。{Environment.NewLine}{ex.Message}";
+			MessageEx.ShowErrorDialog(ResultMessage, owner: ClientLib.GetActiveView(this));
+		}
+		finally {
+			IsProcessing = false;
+			ClientLib.Cursor2Normal();
+		}
+	}
+
+	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task MasterShohinMeishoRebuildAsync(CancellationToken cancellationToken) {
 		if (MessageEx.ShowQuestionDialog("MasterShohinのId_Col/Id_Sizが0のデータから名称マスタを再構築しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;

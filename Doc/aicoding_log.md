@@ -1,3 +1,30 @@
+## [2026-07-27] 13:40 V*列の一括再同期をgRPCと画面に公開（Phase5: Msg047）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：`.omo/20260727_master_vcolumn_sync_design.md` のPhase5を実施。マスタ改名時の伝播（Phase3で自動化済み）とは別に、DB変換後や取りこぼしを修復するための一括再同期を管理者が実行できるようにする。
+### 実施内容
+- `CodeShare/ICoreService.cs`: `CvFlag.Msg047_MasterVColumnResync = 47` を追加（欠番だった47を使用）。
+- `CvServer/Services/QueryMsgService.cs`: `_handlers` に Msg047 を登録。
+- `CvServer/Services/HandlerClass.cs`: `HandleMasterVColumnResync` を追加。Serializableトランザクション内で `MasterCascadeDb.ResyncAll(errors)` を実行し、更新行数を応答に返す。
+- `CvWpfclient/ViewModels/00System/SysExecMiscViewModel.cs`: `MasterVColumnResyncAsync` コマンドを追加（既存の商品名称再構築と同型）。
+- `CvWpfclient/Views/00System/SysExecMiscView.xaml`: 「V*列再同期」ボタンを WrapPanel に追加。
+- `Tests/TestServer/TestServer.cs`: Msg047 の結合テストを追加。古いVBrand・空文字のVSoko・古いJsub.Meiを作ってから実行し、すべて現行値になること、2回目が「更新行数=0」になることを検証。
+### 技術決定 Why
+- 一部ルールだけ失敗した場合は成功扱いにせず `Code < 0` で返すことにした。`ResyncAll` はバッチとして他ルールの処理を継続するため、成功で返すと「更新0件＝既に同期済み」と「更新0件＝全ルール失敗」を利用者が区別できず、修復したつもりで放置される危険があるため。失敗内容は Option に列挙する。
+- 応答の DataMsg は「更新行数=N」の文字列とした。既存の Msg046 はサーバのバージョン情報（InfoServer）を返しているが処理結果と無関係なため踏襲しなかった。
+- PackIcon の `Kind="DatabaseSync"` は MaterialDesignThemes 5.3.2 のアセンブリ内に実在することを確認して採用した（XAMLのenum値は誤りでもビルドが通り実行時に落ちるため）。
+### 影響範囲
+- 管理者用システム処理画面にボタンが1つ増える。既存機能への影響はない。
+- 再同期はV*列22件＋Jsub5テーブル×2種＋KubunName＋Jcolsizを1文ずつ更新し、Jcolsizに変更があった商品はDerivedShohinColSizを再構築する。全件走査となるため実行時間はデータ量に比例する。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計32 / 成功32 / 失敗0。
+- `check-xaml` 手順で SysExecMiscView.xaml を検証：構文・名前空間・リソース参照・コンバーター・バインディングパスすべて問題なし。
+
+---
 ## [2026-07-27] 13:15 JSON内の名称スナップショットの伝播を実装（Phase4: Jsub/Jcolsiz/区分名/Derived）
 ### Agent
 - Claude Opus 5 : Anthropic
