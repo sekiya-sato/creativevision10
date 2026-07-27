@@ -99,7 +99,7 @@ public class DefineDataTable {
 			/* 全データベースファイルの構造
 			 * システム系：Sys：管理に関わるテーブル、システム全体に関わるテーブル
 			 *		更新履歴、連番、ログイン、ログイン履歴、マスター操作履歴
-			 *		
+			 *
 			 * マスター系：Master：マスターデータを管理するテーブル
 			 *		システム管理、名称、社員、顧客、商品、設定、得意先、仕入先
 			 * トランザクション系：Tran：取引に関わるテーブル
@@ -108,7 +108,12 @@ public class DefineDataTable {
 			 *		現在庫、年月在庫
 			 * 派生系：Derived：マスタからの派生データを管理するテーブル
 			 *		商品マスタの色サイズ展開
-			 * 
+			 *
+			 * ■ V*列(CodeNameView)の扱いはこのテーブル種別で決まる (詳細は AGENTS.md / .omo/20260727_master_vcolumn_sync_design.md)
+			 *		Tran系   : 伝票作成時点の名称を保持する監査値。マスタ改名時に伝播しない(意図的)。現行名称が必要なら Id_* からJOINする
+			 *		Master系 : 常に現行名称。CvDomainLogic/MasterCascadeDb がマスタ更新時に伝播する
+			 *		           Master系にV*列を追加したら MasterCascadeDb.VRules への登録も必須
+			 *		Summary系: V*列を持たない(JOIN前提)。新規に追加する参照列もこの方針に合わせることを推奨
 			 */
 		};
 		foreach (var tableType in tableTypes) {

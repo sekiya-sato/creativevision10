@@ -1,3 +1,24 @@
+## [2026-07-27] 14:10 V*列の扱いをAGENTS.mdとテーブル定義に明記（AI向け恒久メモ）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：Master系とTran系でのV*列の扱いについて、今後もAIが誤解しないようソースに明記する。
+### 実施内容
+- `AGENTS.md`: 「Data Model: V*列 (CodeNameView) **IMPORTANT**」節を Build Rule の前に追加。Tran系＝時点値の監査値で伝播禁止、Master系＝常に現行値でMasterCascadeDbが伝播、JSON内スナップショット(Jsub/Jcolsiz/KubunName/Derived)も伝播対象、V*列追加時はVRules登録が必須、json_valid ガードの必要性、Msg047による一括再同期、設計書の参照先を記載。
+- `CvBase/DefineDataTable.cs`: テーブル種別（Sys/Master/Tran/Summary/Derived）を説明している既存コメントブロックに、V*列の扱いがこのテーブル種別で決まることを追記。Summary系はV*列を持たずJOIN前提であることも明記。
+### 技術決定 Why
+- 記載先を AGENTS.md にした。全AIエージェント（OpenCode/Codex/Copilot/ClaudeCode）が最初に読む唯一の共通指示ファイルであり、クラスコメントだけでは該当ファイルを開かない限り気付けないため。逆に各Master系テーブルに個別に書くのは冗長で更新漏れを生むため避けた。
+- `DefineDataTable.cs` を2つ目の記載先にしたのは、既にテーブル種別の分類を説明しているコメントがあり、V*列の意味論がその分類に従うという構造をそのまま接続できるため。テーブル一覧を見に来たAIが必ず通る場所でもある。
+- Phase7で追記した `TranAllHeader` と `CodeNameView` のXMLコメントと合わせ、(1)AI共通指示、(2)テーブル分類、(3)Tran系基底クラス、(4)V*列の型定義 の4箇所で同じ方針に到達できる状態にした。
+### 影響範囲
+- ドキュメント・コメントのみ。動作への影響はない。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計32 / 成功32 / 失敗0。
+
+---
 ## [2026-07-27] 14:00 V*列の意味論をコード上に明文化（Phase7: 仕様コメント整備）
 ### Agent
 - Claude Opus 5 : Anthropic

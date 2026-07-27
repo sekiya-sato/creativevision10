@@ -27,6 +27,17 @@
 - **Server Layering**: (0) -> (1-1.4) -> `CvDomainLogic` (1.5) -> `CvServer` (2).
 - **Client Layering**: (0) -> (1) -> `CvWpfclient`(2).
 
+## Data Model: V*列 (CodeNameView) **IMPORTANT**
+`Id_*` 列とペアで持つ `V*` 列（`CodeNameView{Sid,Cd,Mei}` + `[SerializedColumn]`）は参照先マスタの複製。**意味論はテーブル種別で異なるので、混同しないこと。**
+- **Tran系 (`Tran*`)**: 伝票作成時点の名称を保持する**監査値**。マスタ改名時に**伝播しない**（意図的な仕様）。現行名称が必要な場合は `Id_*` から参照先マスタをJOINする。
+  - Tran系のV*列を `[ComputedColumn]` 化する／伝播対象に加える／JOINで置き換えるのは**禁止**。伝票の時点名称が失われる。
+- **Master系 (`Master*` / `Sys*` / `Derived*`)**: **常に現行名称**。`CvDomainLogic/MasterCascadeDb` がマスタ更新時に伝播する（フックは `CvServer/Services/HandlerClass.HandleUpdate`）。
+  - 伝播対象は V*列に加えて JSON 内のスナップショットも含む: `Jsub`(`MasterGeneralMeisho` の `Cd`/`Mei`/`Kbname`)、`MasterShohin.Jcolsiz`(`Code_Col`/`Mei_Col`/`Code_Siz`/`Mei_Siz`)、`MasterMeisho.KubunName`、`DerivedShohinColSiz`。
+  - Master系にV*列を**追加したら `MasterCascadeDb.VRules` への登録も必須**（未登録は `MasterCascadeDbTests.VRules_CoverAllMasterVColumns` が検出する）。
+- SQLite の `json_extract` は不正JSON（`ALTER TABLE ADD COLUMN ... DEFAULT ''` 直後の空文字など）に対し NULL ではなく `malformed JSON` 例外を投げる。V*列/JSON列を扱うSQLは `json_valid()` でガードする（`MasterCascadeDb.SafeJsonColumn` / `JsonArrayReady` を使う）。
+- 取りこぼしの一括修復は `CvFlag.Msg047_MasterVColumnResync`（管理者用システム処理画面の「V*列再同期」ボタン）。
+- 設計と判断の経緯: `.omo/20260727_master_vcolumn_sync_design.md`
+
 ## Build Rule (WSL2) **IMPORTANT**
 - Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"`
 - Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"`
