@@ -256,6 +256,250 @@ public class MasterCascadeDbTests {
 		Assert.AreEqual("現店舗", Db.SingleById<MasterTokui>(tokui.Id).VPaysaki.Mei, "MasterTokui.VPaysaki(自己参照)");
 	}
 
+	/// <summary>T4: Jsub 配列内の該当要素のみ Cd/Mei が更新され、要素数・順序・非対象要素が変わらない</summary>
+	[TestMethod]
+	public void CascadeFromMaster_UpdatesJsubElementKeepingOrder() {
+		CreateAllTables();
+		var m1 = new MasterMeisho { Kubun = "B01", KubunName = "区分1", Code = "01", Name = "旧名称1", Vdc = 1, Vdu = 1 };
+		var m2 = new MasterMeisho { Kubun = "B02", KubunName = "区分2", Code = "02", Name = "名称2", Vdc = 1, Vdu = 1 };
+		var m3 = new MasterMeisho { Kubun = "B03", KubunName = "区分3", Code = "03", Name = "名称3", Vdc = 1, Vdu = 1 };
+		Db.Insert(m1);
+		Db.Insert(m2);
+		Db.Insert(m3);
+		var shohin = new MasterShohin {
+			Code = "0001",
+			Jsub = [
+				new MasterGeneralMeisho { Kb = "B01", Kbname = "区分1", Sid = m1.Id, Cd = "01", Mei = "旧名称1" },
+				new MasterGeneralMeisho { Kb = "B02", Kbname = "区分2", Sid = m2.Id, Cd = "02", Mei = "名称2" },
+				new MasterGeneralMeisho { Kb = "B03", Kbname = "区分3", Sid = m3.Id, Cd = "03", Mei = "名称3" },
+			],
+			Vdc = 1,
+			Vdu = 1,
+		};
+		Db.Insert(shohin);
+
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), m1.Id, "01", "新名称1", vdate: 999);
+
+		Assert.AreEqual(1, cnt, "更新行数");
+		var after = Db.SingleById<MasterShohin>(shohin.Id);
+		Assert.IsNotNull(after.Jsub);
+		Assert.AreEqual(3, after.Jsub!.Count, "要素数が変わらない");
+		Assert.AreEqual("B01", after.Jsub[0].Kb, "順序が保たれる(1件目)");
+		Assert.AreEqual("新名称1", after.Jsub[0].Mei, "対象要素のMeiが更新される");
+		Assert.AreEqual("01", after.Jsub[0].Cd, "対象要素のCd");
+		Assert.AreEqual("区分1", after.Jsub[0].Kbname, "Kbnameは変わらない");
+		Assert.AreEqual("B02", after.Jsub[1].Kb, "順序が保たれる(2件目)");
+		Assert.AreEqual("名称2", after.Jsub[1].Mei, "非対象要素は変わらない");
+		Assert.AreEqual("B03", after.Jsub[2].Kb, "順序が保たれる(3件目)");
+		Assert.AreEqual("名称3", after.Jsub[2].Mei, "非対象要素は変わらない");
+
+		// 2回目は差分なしで0件
+		Assert.AreEqual(0, new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), m1.Id, "01", "新名称1", vdate: 1000), "冪等");
+	}
+
+	/// <summary>T4-2: Jsub を持つ5テーブルすべてに伝播する</summary>
+	[TestMethod]
+	public void CascadeFromMaster_UpdatesJsubOfAllFiveTables() {
+		CreateAllTables();
+		var meisho = new MasterMeisho { Kubun = "B01", Code = "01", Name = "旧", Vdc = 1, Vdu = 1 };
+		Db.Insert(meisho);
+		List<MasterGeneralMeisho> Sub() => [new MasterGeneralMeisho { Kb = "B01", Kbname = "区分", Sid = meisho.Id, Cd = "01", Mei = "旧" }];
+		Db.Insert(new MasterShain { Code = "0001", Name = "社員", Jsub = Sub(), Vdc = 1, Vdu = 1 });
+		Db.Insert(new MasterEndCustomer { Code = "0001", Name = "顧客", Jsub = Sub(), Vdc = 1, Vdu = 1 });
+		Db.Insert(new MasterShohin { Code = "0001", Name = "商品", Jsub = Sub(), Vdc = 1, Vdu = 1 });
+		Db.Insert(new MasterTokui { Code = "0001", Name = "得意先", Jsub = Sub(), Vdc = 1, Vdu = 1 });
+		Db.Insert(new MasterShiire { Code = "0001", Name = "仕入先", Jsub = Sub(), Vdc = 1, Vdu = 1 });
+
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), meisho.Id, "01", "新", vdate: 999);
+
+		Assert.AreEqual(5, cnt, "5テーブル分が更新される");
+		Assert.AreEqual("新", Db.First<MasterShain>("where Code='0001'").Jsub![0].Mei, "MasterShain.Jsub");
+		Assert.AreEqual("新", Db.First<MasterEndCustomer>("where Code='0001'").Jsub![0].Mei, "MasterEndCustomer.Jsub");
+		Assert.AreEqual("新", Db.First<MasterShohin>("where Code='0001'").Jsub![0].Mei, "MasterShohin.Jsub");
+		Assert.AreEqual("新", Db.First<MasterTokui>("where Code='0001'").Jsub![0].Mei, "MasterTokui.Jsub");
+		Assert.AreEqual("新", Db.First<MasterShiire>("where Code='0001'").Jsub![0].Mei, "MasterShiire.Jsub");
+	}
+
+	/// <summary>T5: 色名称の変更が Jcolsiz と DerivedShohinColSiz へ伝播する</summary>
+	[TestMethod]
+	public void CascadeFromMaster_UpdatesJcolsizAndDerivedTable() {
+		CreateAllTables();
+		Db.CreateTable(typeof(DerivedShohinColSiz), true, false);
+		var col = new MasterMeisho { Kubun = "COL", Code = "01", Name = "旧色", Vdc = 1, Vdu = 1 };
+		var siz = new MasterMeisho { Kubun = "SIZ", Code = "M", Name = "旧サイズ", Vdc = 1, Vdu = 1 };
+		Db.Insert(col);
+		Db.Insert(siz);
+		var shohin = new MasterShohin {
+			Code = "0001",
+			SizeKu = "SIZ",
+			Jcolsiz = [
+				new MasterShohinColSiz { Id_Col = col.Id, Code_Col = "01", Mei_Col = "旧色", Id_Siz = siz.Id, Code_Siz = "M", Mei_Siz = "旧サイズ", Jan1 = "J1" },
+				new MasterShohinColSiz { Id_Col = col.Id, Code_Col = "01", Mei_Col = "旧色", Id_Siz = 0,      Code_Siz = "L", Mei_Siz = "L表記",    Jan1 = "J2" },
+			],
+			Vdc = 1,
+			Vdu = 1,
+		};
+		Db.Insert(shohin);
+		Db.Execute(DerivedShohinColSiz.InsertSql, shohin.Id);
+		Assert.AreEqual(2, Db.ExecuteScalar<int>("select count(*) from DerivedShohinColSiz"), "前提: Derived2行");
+
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), col.Id, "01", "新色", vdate: 999);
+
+		Assert.AreEqual(1, cnt, "MasterShohin1行が更新される");
+		var after = Db.SingleById<MasterShohin>(shohin.Id);
+		Assert.AreEqual("新色", after.Jcolsiz![0].Mei_Col, "Jcolsiz[0].Mei_Col");
+		Assert.AreEqual("新色", after.Jcolsiz[1].Mei_Col, "Jcolsiz[1].Mei_Col");
+		Assert.AreEqual("旧サイズ", after.Jcolsiz[0].Mei_Siz, "サイズ名は変わらない");
+		Assert.AreEqual("L表記", after.Jcolsiz[1].Mei_Siz, "Id_Siz=0の要素は変わらない");
+		Assert.AreEqual("J1", after.Jcolsiz[0].Jan1, "JANなど他項目が保たれる");
+		Assert.AreEqual("J2", after.Jcolsiz[1].Jan1, "JANなど他項目が保たれる");
+		// DerivedShohinColSiz が再構築されている
+		Assert.AreEqual(2, Db.ExecuteScalar<int>("select count(*) from DerivedShohinColSiz"), "Derived行数が変わらない");
+		Assert.AreEqual(2, Db.ExecuteScalar<int>("select count(*) from DerivedShohinColSiz where Mei_Col = '新色'"), "Derivedへ伝播");
+
+		// サイズ名称の変更も同様
+		var cnt2 = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), siz.Id, "M", "新サイズ", vdate: 1000);
+		Assert.AreEqual(1, cnt2, "サイズ変更でも1行更新");
+		Assert.AreEqual("新サイズ", Db.SingleById<MasterShohin>(shohin.Id).Jcolsiz![0].Mei_Siz, "Jcolsiz[0].Mei_Siz");
+		Assert.AreEqual(1, Db.ExecuteScalar<int>("select count(*) from DerivedShohinColSiz where Mei_Siz = '新サイズ'"), "Derivedのサイズ名");
+	}
+
+	/// <summary>T6: 区分定義行(Kubun='IDX')の名称変更が KubunName と Jsub.Kbname へ伝播する</summary>
+	[TestMethod]
+	public void CascadeFromMaster_IdxRowRename_UpdatesKubunNameAndKbname() {
+		CreateAllTables();
+		var idx = new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "B01", Name = "旧区分名", Vdc = 1, Vdu = 1 };
+		Db.Insert(idx);
+		var member = new MasterMeisho { Kubun = "B01", KubunName = "旧区分名", Code = "01", Name = "名称", Vdc = 1, Vdu = 1 };
+		var other = new MasterMeisho { Kubun = "B02", KubunName = "別区分", Code = "01", Name = "名称", Vdc = 1, Vdu = 1 };
+		Db.Insert(member);
+		Db.Insert(other);
+		Db.Insert(new MasterShohin {
+			Code = "0001",
+			Jsub = [
+				new MasterGeneralMeisho { Kb = "B01", Kbname = "旧区分名", Sid = member.Id, Cd = "01", Mei = "名称" },
+				new MasterGeneralMeisho { Kb = "B02", Kbname = "別区分", Sid = other.Id, Cd = "01", Mei = "名称" },
+			],
+			Vdc = 1,
+			Vdu = 1,
+		});
+
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B01", "新区分名", vdate: 999, kubun: "IDX", oldCode: "B01");
+
+		Assert.IsTrue(cnt >= 2, $"MasterMeisho.KubunNameとJsub.Kbnameが更新される (実際={cnt})");
+		Assert.AreEqual("新区分名", Db.SingleById<MasterMeisho>(member.Id).KubunName, "同区分のKubunName");
+		Assert.AreEqual("別区分", Db.SingleById<MasterMeisho>(other.Id).KubunName, "別区分のKubunNameは変わらない");
+		Assert.AreEqual("名称区分", Db.SingleById<MasterMeisho>(idx.Id).KubunName, "IDX行自身のKubunNameは変わらない");
+		var shohin = Db.First<MasterShohin>("where Code='0001'");
+		Assert.AreEqual("新区分名", shohin.Jsub![0].Kbname, "Jsub[0].Kbname");
+		Assert.AreEqual("別区分", shohin.Jsub[1].Kbname, "Jsub[1].Kbnameは変わらない");
+
+		// 2回目は0件(冪等)
+		Assert.AreEqual(0, new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B01", "新区分名", vdate: 1000, kubun: "IDX", oldCode: "B01"), "冪等");
+	}
+
+	/// <summary>T6-2: 区分定義行でも Code 自体が変わった場合は区分名を伝播しない(§7-R6)</summary>
+	[TestMethod]
+	public void CascadeFromMaster_IdxRowCodeChanged_SkipsKubunNamePropagation() {
+		CreateAllTables();
+		var idx = new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "B99", Name = "新区分名", Vdc = 1, Vdu = 1 };
+		Db.Insert(idx);
+		var member = new MasterMeisho { Kubun = "B01", KubunName = "旧区分名", Code = "01", Name = "名称", Vdc = 1, Vdu = 1 };
+		Db.Insert(member);
+
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B99", "新区分名", vdate: 999, kubun: "IDX", oldCode: "B01");
+
+		Assert.AreEqual(0, cnt, "区分コード変更時は伝播しない");
+		Assert.AreEqual("旧区分名", Db.SingleById<MasterMeisho>(member.Id).KubunName, "KubunNameは変わらない");
+	}
+
+	/// <summary>T6-3: IDX以外の行の改名では区分名を伝播しない</summary>
+	[TestMethod]
+	public void CascadeFromMaster_NonIdxRow_DoesNotTouchKubunName() {
+		CreateAllTables();
+		var member = new MasterMeisho { Kubun = "B01", KubunName = "区分名", Code = "01", Name = "新名称", Vdc = 1, Vdu = 1 };
+		Db.Insert(member);
+		var sibling = new MasterMeisho { Kubun = "B01", KubunName = "区分名", Code = "02", Name = "別名称", Vdc = 1, Vdu = 1 };
+		Db.Insert(sibling);
+
+		new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), member.Id, "01", "新名称", vdate: 999, kubun: "B01", oldCode: "01");
+
+		Assert.AreEqual("区分名", Db.SingleById<MasterMeisho>(sibling.Id).KubunName, "他行のKubunNameは変わらない");
+		Assert.AreEqual(1, Db.SingleById<MasterMeisho>(sibling.Id).Vdu, "他行のVduも変わらない");
+	}
+
+	/// <summary>T8: Jsub/Jcolsiz が null / 空文字 / 不正JSON の行が混在しても例外にならない</summary>
+	[TestMethod]
+	public void CascadeFromMaster_ToleratesNullAndInvalidJsonArrays() {
+		CreateAllTables();
+		Db.CreateTable(typeof(DerivedShohinColSiz), true, false);
+		var meisho = new MasterMeisho { Kubun = "B01", Code = "01", Name = "旧", Vdc = 1, Vdu = 1 };
+		Db.Insert(meisho);
+		// 正常な行
+		Db.Insert(new MasterShohin {
+			Code = "0001",
+			Jsub = [new MasterGeneralMeisho { Kb = "B01", Kbname = "区分", Sid = meisho.Id, Cd = "01", Mei = "旧" }],
+			Jcolsiz = [new MasterShohinColSiz { Id_Col = meisho.Id, Code_Col = "01", Mei_Col = "旧" }],
+			Vdc = 1,
+			Vdu = 1,
+		});
+		// Jsub/Jcolsiz が null の行
+		Db.Insert(new MasterShohin { Code = "0002", Vdc = 1, Vdu = 1 });
+		// 空文字・不正JSON・JSONだが配列でない行
+		Db.Insert(new MasterShohin { Code = "0003", Vdc = 1, Vdu = 1 });
+		Db.Execute("update MasterShohin set Jsub = '', Jcolsiz = 'not-json' where Code = '0003'");
+		Db.Insert(new MasterShohin { Code = "0004", Vdc = 1, Vdu = 1 });
+		Db.Execute("update MasterShohin set Jsub = '{}', Jcolsiz = '[]' where Code = '0004'");
+
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), meisho.Id, "01", "新", vdate: 999);
+
+		Assert.IsTrue(cnt >= 2, $"正常な行のJsubとJcolsizが更新される (実際={cnt})");
+		var ok = Db.First<MasterShohin>("where Code='0001'");
+		Assert.AreEqual("新", ok.Jsub![0].Mei, "正常行のJsub");
+		Assert.AreEqual("新", ok.Jcolsiz![0].Mei_Col, "正常行のJcolsiz");
+		// 異常データの行は変更されない
+		Assert.AreEqual("", Db.ExecuteScalar<string>("select Jsub from MasterShohin where Code='0003'"), "空文字の行は変更されない");
+		Assert.AreEqual("not-json", Db.ExecuteScalar<string>("select Jcolsiz from MasterShohin where Code='0003'"), "不正JSONの行は変更されない");
+	}
+
+	/// <summary>ResyncAll: JSON内スナップショット(Jsub/Kbname/KubunName/Jcolsiz)も再同期され、2回目は0件</summary>
+	[TestMethod]
+	public void ResyncAll_SyncsJsonSnapshotsAndIsIdempotent() {
+		CreateAllTables();
+		Db.CreateTable(typeof(DerivedShohinColSiz), true, false);
+		var idx = new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "B01", Name = "現区分名", Vdc = 1, Vdu = 1 };
+		Db.Insert(idx);
+		var member = new MasterMeisho { Kubun = "B01", KubunName = "旧区分名", Code = "01", Name = "現名称", Vdc = 1, Vdu = 1 };
+		Db.Insert(member);
+		var col = new MasterMeisho { Kubun = "COL", Code = "01", Name = "現色", Vdc = 1, Vdu = 1 };
+		Db.Insert(col);
+		var shohin = new MasterShohin {
+			Code = "0001",
+			Jsub = [new MasterGeneralMeisho { Kb = "B01", Kbname = "旧区分名", Sid = member.Id, Cd = "01", Mei = "旧名称" }],
+			Jcolsiz = [new MasterShohinColSiz { Id_Col = col.Id, Code_Col = "01", Mei_Col = "旧色" }],
+			Vdc = 1,
+			Vdu = 1,
+		};
+		Db.Insert(shohin);
+		Db.Execute(DerivedShohinColSiz.InsertSql, shohin.Id);
+
+		var cascade = new MasterCascadeDb(Db);
+		var errors = new List<string>();
+		var first = cascade.ResyncAll(errors);
+		var second = cascade.ResyncAll(errors);
+
+		Assert.AreEqual(0, errors.Count, "SQLエラーが発生していない: " + string.Join(" / ", errors));
+		Assert.IsTrue(first > 0, "初回は更新が発生する");
+		Assert.AreEqual(0, second, "2回目は0件(冪等)");
+		var after = Db.SingleById<MasterShohin>(shohin.Id);
+		Assert.AreEqual("現名称", after.Jsub![0].Mei, "Jsub.Mei");
+		Assert.AreEqual("現区分名", after.Jsub[0].Kbname, "Jsub.Kbname");
+		Assert.AreEqual("現色", after.Jcolsiz![0].Mei_Col, "Jcolsiz.Mei_Col");
+		Assert.AreEqual("現区分名", Db.SingleById<MasterMeisho>(member.Id).KubunName, "MasterMeisho.KubunName");
+		Assert.AreEqual("名称区分", Db.SingleById<MasterMeisho>(idx.Id).KubunName, "IDX行自身のKubunNameは変わらない");
+		Assert.AreEqual(1, Db.ExecuteScalar<int>("select count(*) from DerivedShohinColSiz where Mei_Col='現色'"), "Derivedも再構築される");
+	}
+
 	/// <summary>Phase3: 伝播が必要かの判定(NeedsCascade)</summary>
 	[TestMethod]
 	public void NeedsCascade_ReturnsTrueOnlyWhenCodeOrNameChanged() {

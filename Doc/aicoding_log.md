@@ -1,3 +1,31 @@
+## [2026-07-27] 13:15 JSON内の名称スナップショットの伝播を実装（Phase4: Jsub/Jcolsiz/区分名/Derived）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：`.omo/20260727_master_vcolumn_sync_design.md` のPhase4を実施。V*列に加えて、JSON列に埋め込まれた名称スナップショット（Jsub・Jcolsiz・区分名）と、そこから導出される DerivedShohinColSiz もマスタ改名時に同期する。
+### 実施内容
+- `CvDomainLogic/MasterCascadeDb.cs`: `CascadeJsonRule` と `JsubRules`（5テーブル）を追加。R2=Jsub内のCd/Mei、R3=区分名（MasterMeisho.KubunNameとJsubのKbname）、R4=MasterShohin.Jcolsizの色/サイズ名称、R5=DerivedShohinColSizの再構築を実装。`CascadeFromMaster` に `kubun`/`oldCode` の任意引数を追加。`ResyncAll` にもJSON系の全件再同期を追加し、ルール単位のエラー記録を `RunResync` に共通化。
+- `CvServer/Services/HandlerClass.cs`: フックから `(item as MasterMeisho)?.Kubun` と `(org as IBaseCodeName)?.Code` を渡すよう変更。
+- `CvDomainLogic/RebuildDb.cs`: `WHERE EXISTS (-` の構文エラーを修正（`RebuildMasterShohin2Meisho` の後半、Id_Siz補完が実行時に必ず失敗していた既存不具合）。
+- `Tests/TestServer/MasterCascadeDbTests.cs`: 8件追加（Jsubの順序保持、5テーブル網羅、Jcolsiz＋Derived、区分名、区分コード変更時のスキップ、不正JSON混在への耐性、ResyncAllのJSON系）。
+### 技術決定 Why
+- Jsubの `Kb`/`Kbname` の意味を実コードで確定させた。`Kb`=`MasterMeisho.Kubun`、`Kbname`=`Kubun='IDX'` かつ `Code=Kb` の行の `Name`（`MasterShohinMenteViewModel.DoGetKubun` が `Kubun='IDX' and Code between 'B01' and 'B10'` を取得し、`MasterGeneralMeisho.OnKbChanged` がその Name を Kbname にセットしている）。
+- `MasterMeisho.KubunName` の伝播から `Kubun='IDX'` の行自身を除外した。区分定義行の KubunName を IDX/IDX 行の Name で上書きすると意図しない値になる（初期データではIDX行のKubunName='名称区分'、IDX/IDX行のName='名称区分インデックス'）。ResyncAllでも同じ除外を適用し既存データを壊さないようにした。
+- 区分コード自体が変更された場合は区分名を伝播せず警告ログのみとした。Kubun/SizeKu/Kb の参照先が失われる区分体系の変更であり、伝播では解決できないため。
+- `DerivedShohinColSiz` は個別UPDATEを書かず `DeleteSql`→`InsertSql` で再構築した。当テーブルは Jcolsiz からの完全導出であり、導出定義を二重管理しないため（HandlerDerivedと同じ手順）。再構築対象の商品Idは差分条件で抽出するため、R4実行前に確定させている。
+- `ResyncAll` のJSON系は MasterMeisho を left join する集合演算1文で実装した（当初案の「参照Idを列挙して1件ずつ」は件数が多いと実用時間に収まらないため）。
+- JSON配列を扱う全SQLに `列 is not null and json_valid(列)` を付けた。`json_each` は不正JSONで例外を投げるため、Phase2のV*列と同じ耐性を持たせた。
+- Phase2で `ResyncVRule` に書いた「SQLiteのUPDATEは対象テーブルに別名を付けられない」というコメントは誤りだったので訂正した。SQLiteの qualified-table-name は AS alias を許容し、`RebuildDb.cs:53` も本番で `UPDATE MasterShohin AS S` を使っている。
+### 影響範囲
+- MasterMeisho の改名時に、V*列に加えて Jsub（5テーブル）・Jcolsiz・区分名・DerivedShohinColSiz が更新される。DerivedShohinColSiz の再構築は該当商品ごとに Delete+Insert となるため、多数の商品が参照する色/サイズの改名では処理時間が伸びる（改名は低頻度のため許容）。
+- Tran系には差分なし（伝票の時点名称は従来どおり保持）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計31 / 成功31 / 失敗0。
+
+---
 ## [2026-07-27] 12:45 マスタ更新時のV*列伝播をサーバへ組み込み（Phase3: HandleUpdateフック）
 ### Agent
 - Claude Opus 5 : Anthropic

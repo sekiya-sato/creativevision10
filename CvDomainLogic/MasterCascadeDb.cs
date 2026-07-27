@@ -15,6 +15,14 @@ namespace CvDomainLogic;
 public sealed record CascadeVRule(Type Target, string IdColumn, string VColumn, Type Source);
 
 /// <summary>
+/// JSON配列列（List&lt;MasterGeneralMeisho&gt;）内の名称スナップショットの伝播定義
+/// </summary>
+/// <param name="Target">更新対象の物理テーブル型</param>
+/// <param name="JsonColumn">JSON配列を格納している列名（Jsub）</param>
+/// <param name="Source">参照先マスタ型</param>
+public sealed record CascadeJsonRule(Type Target, string JsonColumn, Type Source);
+
+/// <summary>
 /// マスタの Code/Name 変更を、参照側の V*列(CodeNameView)へ伝播する。
 /// Master系のみが対象。Tran系のV*列は伝票作成時点の名称(監査値)なので伝播しない。
 /// SQLite 3.46+ 前提(json_object/json_extract)。他DB移行時は CvBaseMariadb/CvBaseOracle 側での吸収が必要。
@@ -73,6 +81,25 @@ public class MasterCascadeDb {
 	];
 
 	/// <summary>
+	/// MasterMeisho の「区分そのものを定義する行」の区分。この区分の行の Name が区分名(KubunName/Kbname)の元になる。
+	/// </summary>
+	const string MeishoKubunIndex = "IDX";
+
+	/// <summary>
+	/// Jsub(List&lt;MasterGeneralMeisho&gt;)内の名称スナップショットの伝播定義。
+	/// 各要素は Sid/Cd/Mei(選択された名称行)と Kb/Kbname(区分コードと区分名)を持つ。
+	/// Kb は MasterMeisho.Kubun、Kbname は Kubun='IDX' かつ Code=Kb の行の Name に対応する
+	/// (`MasterShohinMenteViewModel.DoGetKubun` が `Kubun='IDX' and Code between 'B01' and 'B10'` を取得している)。
+	/// </summary>
+	public static readonly CascadeJsonRule[] JsubRules = [
+		new (typeof(MasterShain),        nameof(MasterShain.Jsub),        typeof(MasterMeisho)),
+		new (typeof(MasterEndCustomer),  nameof(MasterEndCustomer.Jsub),  typeof(MasterMeisho)),
+		new (typeof(MasterShohin),       nameof(MasterShohin.Jsub),       typeof(MasterMeisho)),
+		new (typeof(MasterTokui),        nameof(MasterTokui.Jsub),        typeof(MasterMeisho)),
+		new (typeof(MasterShiire),       nameof(MasterShiire.Jsub),       typeof(MasterMeisho)),
+	];
+
+	/// <summary>
 	/// 伝播元となるマスタ型かどうか
 	/// </summary>
 	public static bool IsCascadeSource(Type type) => Array.IndexOf(_sourceTypes, type) >= 0;
@@ -107,19 +134,38 @@ public class MasterCascadeDb {
 	/// 自己参照(MasterTokui.VPaysaki 等)で更新元の行自身が伝播対象になる場合に Vdu が二重更新されて
 	/// クライアント保持値とずれるため、呼び出し側(HandleUpdate)の vdate を渡すこと。
 	/// </param>
+	/// <param name="kubun">
+	/// 更新されたマスタが MasterMeisho の場合の Kubun。'IDX'(区分定義行)のときのみ区分名の伝播(R3)を行う。
+	/// </param>
+	/// <param name="oldCode">
+	/// 変更前の Code。区分定義行で Code 自体が変更された場合は区分体系の変更であり、
+	/// MasterMeisho.Kubun 等の参照が壊れるため R3 を実行せず警告ログを出す。
+	/// </param>
 	/// <returns>更新された行数の合計</returns>
-	public int CascadeFromMaster(Type sourceType, long id, string newCode, string newName, long vdate = 0) {
+	public int CascadeFromMaster(Type sourceType, long id, string newCode, string newName, long vdate = 0,
+								string? kubun = null, string? oldCode = null) {
 		if (!IsCascadeSource(sourceType) || id <= 0)
 			return 0;
 		if (vdate == 0)
 			vdate = Common.GetVdate();
+		var code = newCode ?? string.Empty;
+		var name = newName ?? string.Empty;
 		var cnt = 0;
+		// R1: V*列(物理列)
 		foreach (var rule in VRules) {
 			if (rule.Source != sourceType)
 				continue;
-			cnt += ExecuteVRule(rule, id, newCode ?? string.Empty, newName ?? string.Empty, vdate);
+			cnt += ExecuteVRule(rule, id, code, name, vdate);
 		}
-		// ToDo(Phase4): Jsub / Jcolsiz / Kbname / KubunName のJSON内スナップショット伝播をここに追加する
+		if (sourceType == typeof(MasterMeisho)) {
+			// R2: Jsub 配列内の Cd/Mei
+			foreach (var rule in JsubRules)
+				cnt += ExecuteJsubCodeNameRule(rule, id, code, name, vdate);
+			// R4/R5: MasterShohin.Jcolsiz と DerivedShohinColSiz
+			cnt += ExecuteJcolsizRules(id, code, name, vdate);
+			// R3: 区分名(MasterMeisho.KubunName と Jsub の Kbname)
+			cnt += ExecuteKubunNameRules(code, name, kubun, oldCode, vdate);
+		}
 		return cnt;
 	}
 
@@ -152,8 +198,31 @@ public class MasterCascadeDb {
 				_logger.LogError(ex, "V*列再同期に失敗 {Table}.{Column}", rule.Target.Name, rule.VColumn);
 			}
 		}
-		// ToDo(Phase4): JSON内スナップショット(Jsub / Jcolsiz / Kbname / KubunName)の再同期をここに追加する
+		// JSON内スナップショット(Jsub の Cd/Mei と Kbname)
+		foreach (var rule in JsubRules) {
+			cnt += RunResync(errors, rule.Target.Name, $"{rule.JsonColumn}(Cd/Mei)", () => ResyncJsubCodeName(rule, vdate));
+			cnt += RunResync(errors, rule.Target.Name, $"{rule.JsonColumn}(Kbname)", () => ResyncJsubKbname(rule, vdate));
+		}
+		// MasterMeisho.KubunName
+		cnt += RunResync(errors, nameof(MasterMeisho), nameof(MasterMeisho.KubunName), () => ResyncMeishoKubunName(vdate));
+		// MasterShohin.Jcolsiz と DerivedShohinColSiz
+		cnt += RunResync(errors, nameof(MasterShohin), nameof(MasterShohin.Jcolsiz), () => ResyncJcolsiz(vdate));
 		return cnt;
+	}
+
+	/// <summary>再同期の1単位を実行し、失敗はログとerrorsへ記録して0を返す</summary>
+	int RunResync(List<string> errors, string table, string column, Func<int> action) {
+		try {
+			var one = action();
+			if (one > 0)
+				_logger.LogInformation("V*列再同期 {Table}.{Column} 更新行数={Count}", table, column, one);
+			return one;
+		}
+		catch (Exception ex) {
+			errors.Add($"{table}.{column}: {ex.Message}");
+			_logger.LogError(ex, "V*列再同期に失敗 {Table}.{Column}", table, column);
+			return 0;
+		}
 	}
 
 	/// <summary>
@@ -199,6 +268,259 @@ update {table}
 		return _db.Execute(sql, [id, code, name, vdate]);
 	}
 
+	// ============================================================
+	// R2: Jsub 配列内の Cd/Mei
+	// ============================================================
+
+	/// <summary>
+	/// Jsub 配列のうち $.Sid が一致する要素の $.Cd / $.Mei を更新する。
+	/// json_group_array + json_set で配列を作り直すため、`order by cast(J.key as integer)` で
+	/// 元の要素順を保つ必要がある(省略すると並びが変わる)。実装形は RebuildDb.cs:52-79 を踏襲。
+	/// </summary>
+	int ExecuteJsubCodeNameRule(CascadeJsonRule rule, long id, string code, string name, long vdate) {
+		var table = _db.GetTableName(rule.Target);
+		var col = rule.JsonColumn;
+		var sql = $@"
+update {table} as S
+   set {col} = ( select json_group_array(json(X.value2))
+                   from ( select J.key,
+                                 case when json_extract(J.value, '$.Sid') = @0
+                                      then json_set(J.value, '$.Cd', @1, '$.Mei', @2)
+                                      else J.value end as value2
+                            from json_each(S.{col}) as J
+                           order by cast(J.key as integer) ) as X ),
+       Vdu = @3
+ where {JsonArrayReady($"S.{col}")}
+   and exists ( select 1 from json_each(S.{col}) as J
+                 where json_extract(J.value, '$.Sid') = @0
+                   and ( ifnull(json_extract(J.value, '$.Cd' ), '') <> @1
+                      or ifnull(json_extract(J.value, '$.Mei'), '') <> @2 ) )";
+		return _db.Execute(sql, [id, code, name, vdate]);
+	}
+
+	/// <summary>Jsub 配列を参照先マスタの現在値で再同期する(全件版)</summary>
+	int ResyncJsubCodeName(CascadeJsonRule rule, long vdate) {
+		var table = _db.GetTableName(rule.Target);
+		var source = _db.GetTableName(rule.Source);
+		var col = rule.JsonColumn;
+		var sql = $@"
+update {table} as S
+   set {col} = ( select json_group_array(json(X.value2))
+                   from ( select J.key,
+                                 case when M.Id is not null
+                                      then json_set(J.value, '$.Cd', ifnull(M.Code,''), '$.Mei', ifnull(M.Name,''))
+                                      else J.value end as value2
+                            from json_each(S.{col}) as J
+                            left join {source} M on M.Id = json_extract(J.value, '$.Sid')
+                           order by cast(J.key as integer) ) as X ),
+       Vdu = @0
+ where {JsonArrayReady($"S.{col}")}
+   and exists ( select 1 from json_each(S.{col}) as J
+                 join {source} M on M.Id = json_extract(J.value, '$.Sid')
+                where ifnull(json_extract(J.value, '$.Cd' ), '') <> ifnull(M.Code,'')
+                   or ifnull(json_extract(J.value, '$.Mei'), '') <> ifnull(M.Name,'') )";
+		return _db.Execute(sql, [vdate]);
+	}
+
+	// ============================================================
+	// R3: 区分名 (MasterMeisho.KubunName と Jsub の Kbname)
+	// ============================================================
+
+	/// <summary>
+	/// 区分定義行(Kubun='IDX')の Name 変更を、同区分を持つ行の KubunName と Jsub の Kbname へ伝播する。
+	/// </summary>
+	int ExecuteKubunNameRules(string newCode, string newName, string? kubun, string? oldCode, long vdate) {
+		// 区分定義行(IDX)以外の改名は区分名に影響しない
+		if (!string.Equals(kubun, MeishoKubunIndex, StringComparison.Ordinal))
+			return 0;
+		// 区分コード自体の変更は区分体系の変更であり、MasterMeisho.Kubun / MasterShohin.SizeKu /
+		// MasterGeneralMeisho.Kb の参照先が失われる。伝播では解決できないため実行しない(§7-R6)
+		if (oldCode != null && !string.Equals(oldCode, newCode, StringComparison.Ordinal)) {
+			_logger.LogWarning("区分コード変更({OldCode}→{NewCode})は区分名の伝播対象外。Kubun/SizeKu/Kb の参照が壊れている可能性があるため確認が必要", oldCode, newCode);
+			return 0;
+		}
+		var cnt = ExecuteMeishoKubunNameRule(newCode, newName, vdate);
+		foreach (var rule in JsubRules)
+			cnt += ExecuteJsubKbnameRule(rule, newCode, newName, vdate);
+		return cnt;
+	}
+
+	/// <summary>
+	/// MasterMeisho.KubunName(自己参照の非正規化)を更新する。
+	/// Kubun='IDX' の行自身は対象外: 区分定義行の KubunName を IDX/IDX 行の Name で上書きすると
+	/// 運用上意図しない値になるため(初期データでは IDX 行の KubunName='名称区分'、IDX/IDX 行の Name='名称区分インデックス')。
+	/// </summary>
+	int ExecuteMeishoKubunNameRule(string kubunCode, string kubunName, long vdate) {
+		var table = _db.GetTableName(typeof(MasterMeisho));
+		var sql = $@"
+update {table}
+   set KubunName = @1,
+       Vdu = @2
+ where Kubun = @0
+   and Kubun <> '{MeishoKubunIndex}'
+   and ifnull(KubunName,'') <> @1";
+		return _db.Execute(sql, [kubunCode, kubunName, vdate]);
+	}
+
+	/// <summary>MasterMeisho.KubunName を全件再同期する</summary>
+	int ResyncMeishoKubunName(long vdate) {
+		var table = _db.GetTableName(typeof(MasterMeisho));
+		var sql = $@"
+update {table} as T
+   set KubunName = ( select ifnull(M.Name,'') from {table} M
+                      where M.Kubun = '{MeishoKubunIndex}' and M.Code = T.Kubun ),
+       Vdu = @0
+ where T.Kubun <> '{MeishoKubunIndex}'
+   and exists ( select 1 from {table} M
+                 where M.Kubun = '{MeishoKubunIndex}' and M.Code = T.Kubun
+                   and ifnull(T.KubunName,'') <> ifnull(M.Name,'') )";
+		return _db.Execute(sql, [vdate]);
+	}
+
+	/// <summary>Jsub 配列のうち $.Kb が一致する要素の $.Kbname を更新する</summary>
+	int ExecuteJsubKbnameRule(CascadeJsonRule rule, string kubunCode, string kubunName, long vdate) {
+		var table = _db.GetTableName(rule.Target);
+		var col = rule.JsonColumn;
+		var sql = $@"
+update {table} as S
+   set {col} = ( select json_group_array(json(X.value2))
+                   from ( select J.key,
+                                 case when json_extract(J.value, '$.Kb') = @0
+                                      then json_set(J.value, '$.Kbname', @1)
+                                      else J.value end as value2
+                            from json_each(S.{col}) as J
+                           order by cast(J.key as integer) ) as X ),
+       Vdu = @2
+ where {JsonArrayReady($"S.{col}")}
+   and exists ( select 1 from json_each(S.{col}) as J
+                 where json_extract(J.value, '$.Kb') = @0
+                   and ifnull(json_extract(J.value, '$.Kbname'), '') <> @1 )";
+		return _db.Execute(sql, [kubunCode, kubunName, vdate]);
+	}
+
+	/// <summary>Jsub 配列の Kbname を全件再同期する</summary>
+	int ResyncJsubKbname(CascadeJsonRule rule, long vdate) {
+		var table = _db.GetTableName(rule.Target);
+		var source = _db.GetTableName(rule.Source);
+		var col = rule.JsonColumn;
+		var sql = $@"
+update {table} as S
+   set {col} = ( select json_group_array(json(X.value2))
+                   from ( select J.key,
+                                 case when M.Id is not null
+                                      then json_set(J.value, '$.Kbname', ifnull(M.Name,''))
+                                      else J.value end as value2
+                            from json_each(S.{col}) as J
+                            left join {source} M on M.Kubun = '{MeishoKubunIndex}' and M.Code = json_extract(J.value, '$.Kb')
+                           order by cast(J.key as integer) ) as X ),
+       Vdu = @0
+ where {JsonArrayReady($"S.{col}")}
+   and exists ( select 1 from json_each(S.{col}) as J
+                 join {source} M on M.Kubun = '{MeishoKubunIndex}' and M.Code = json_extract(J.value, '$.Kb')
+                where ifnull(json_extract(J.value, '$.Kbname'), '') <> ifnull(M.Name,'') )";
+		return _db.Execute(sql, [vdate]);
+	}
+
+	// ============================================================
+	// R4/R5: MasterShohin.Jcolsiz と DerivedShohinColSiz
+	// ============================================================
+
+	/// <summary>Jcolsiz の色/サイズ名称を更新し、更新があれば DerivedShohinColSiz を再構築する</summary>
+	int ExecuteJcolsizRules(long id, string code, string name, long vdate) {
+		// 影響を受ける商品Idを先に確定させる(更新後は差分条件で抽出できなくなるため)
+		var shohinIds = FetchJcolsizTargetIds(id);
+		var cnt = ExecuteJcolsizRule("Id_Col", "Code_Col", "Mei_Col", id, code, name, vdate);
+		cnt += ExecuteJcolsizRule("Id_Siz", "Code_Siz", "Mei_Siz", id, code, name, vdate);
+		if (cnt > 0)
+			RebuildDerivedShohinColSiz(shohinIds);
+		return cnt;
+	}
+
+	/// <summary>指定の名称Idを色またはサイズとして参照している商品Idを返す</summary>
+	List<long> FetchJcolsizTargetIds(long id) {
+		var table = _db.GetTableName(typeof(MasterShohin));
+		var sql = $@"
+select distinct S.Id from {table} S, json_each(S.Jcolsiz) J
+ where {JsonArrayReady("S.Jcolsiz")}
+   and ( json_extract(J.value, '$.Id_Col') = @0 or json_extract(J.value, '$.Id_Siz') = @0 )";
+		return _db.Fetch<long>(sql, id);
+	}
+
+	/// <summary>Jcolsiz 配列のうち idPath が一致する要素の コード/名称 を更新する</summary>
+	int ExecuteJcolsizRule(string idPath, string codePath, string meiPath, long id, string code, string name, long vdate) {
+		var table = _db.GetTableName(typeof(MasterShohin));
+		var sql = $@"
+update {table} as S
+   set Jcolsiz = ( select json_group_array(json(X.value2))
+                     from ( select J.key,
+                                   case when json_extract(J.value, '$.{idPath}') = @0
+                                        then json_set(J.value, '$.{codePath}', @1, '$.{meiPath}', @2)
+                                        else J.value end as value2
+                              from json_each(S.Jcolsiz) as J
+                             order by cast(J.key as integer) ) as X ),
+       Vdu = @3
+ where {JsonArrayReady("S.Jcolsiz")}
+   and exists ( select 1 from json_each(S.Jcolsiz) as J
+                 where json_extract(J.value, '$.{idPath}') = @0
+                   and ( ifnull(json_extract(J.value, '$.{codePath}'), '') <> @1
+                      or ifnull(json_extract(J.value, '$.{meiPath}' ), '') <> @2 ) )";
+		return _db.Execute(sql, [id, code, name, vdate]);
+	}
+
+	/// <summary>Jcolsiz の色/サイズ名称を全件再同期し、対象商品の DerivedShohinColSiz を再構築する</summary>
+	int ResyncJcolsiz(long vdate) {
+		var table = _db.GetTableName(typeof(MasterShohin));
+		var source = _db.GetTableName(typeof(MasterMeisho));
+		var diff = $@"
+   and exists ( select 1 from json_each(S.Jcolsiz) as J
+                 left join {source} C on C.Id = json_extract(J.value, '$.Id_Col')
+                 left join {source} Z on Z.Id = json_extract(J.value, '$.Id_Siz')
+                where ( C.Id is not null
+                        and ( ifnull(json_extract(J.value, '$.Code_Col'), '') <> ifnull(C.Code,'')
+                           or ifnull(json_extract(J.value, '$.Mei_Col' ), '') <> ifnull(C.Name,'') ) )
+                   or ( Z.Id is not null
+                        and ( ifnull(json_extract(J.value, '$.Code_Siz'), '') <> ifnull(Z.Code,'')
+                           or ifnull(json_extract(J.value, '$.Mei_Siz' ), '') <> ifnull(Z.Name,'') ) ) )";
+		// 更新対象の商品Idを先に確定させる(Derived再構築用)
+		var shohinIds = _db.Fetch<long>($"select S.Id from {table} S where {JsonArrayReady("S.Jcolsiz")}{diff}");
+		var sql = $@"
+update {table} as S
+   set Jcolsiz = ( select json_group_array(json(X.value2))
+                     from ( select J.key,
+                                   json_set(J.value,
+                                     '$.Code_Col', ifnull(C.Code, ifnull(json_extract(J.value, '$.Code_Col'), '')),
+                                     '$.Mei_Col',  ifnull(C.Name, ifnull(json_extract(J.value, '$.Mei_Col' ), '')),
+                                     '$.Code_Siz', ifnull(Z.Code, ifnull(json_extract(J.value, '$.Code_Siz'), '')),
+                                     '$.Mei_Siz',  ifnull(Z.Name, ifnull(json_extract(J.value, '$.Mei_Siz' ), ''))) as value2
+                              from json_each(S.Jcolsiz) as J
+                              left join {source} C on C.Id = json_extract(J.value, '$.Id_Col')
+                              left join {source} Z on Z.Id = json_extract(J.value, '$.Id_Siz')
+                             order by cast(J.key as integer) ) as X ),
+       Vdu = @0
+ where {JsonArrayReady("S.Jcolsiz")}{diff}";
+		var cnt = _db.Execute(sql, [vdate]);
+		if (cnt > 0)
+			RebuildDerivedShohinColSiz(shohinIds);
+		return cnt;
+	}
+
+	/// <summary>
+	/// DerivedShohinColSiz を MasterShohin.Jcolsiz から作り直す。
+	/// 当テーブルは Jcolsiz からの完全導出(BaseDbDerived.cs の CreateSql がその定義)なので、
+	/// 個別のUPDATEは書かず HandlerDerived と同じ Delete→Insert で再構築する(導出定義の二重管理を避ける)。
+	/// </summary>
+	void RebuildDerivedShohinColSiz(List<long> shohinIds) {
+		foreach (var shohinId in shohinIds) {
+			_db.Execute(DerivedShohinColSiz.DeleteSql, shohinId);
+			_db.Execute(DerivedShohinColSiz.InsertSql, shohinId);
+		}
+	}
+
+	/// <summary>
+	/// json_each に渡す前提条件。null/空文字/不正JSONの行で json_each が例外を投げるのを防ぐ。
+	/// </summary>
+	static string JsonArrayReady(string column) => $"{column} is not null and json_valid({column})";
+
 	/// <summary>
 	/// json_extract に渡すための安全な列式を返す。
 	/// SQLiteの json_extract は不正なJSON(ALTER TABLE の DEFAULT '' 直後の空文字など)に対して
@@ -209,8 +531,8 @@ update {table}
 
 	/// <summary>
 	/// 1ルール分の全件再同期SQLを実行する。
-	/// SQLiteのUPDATEは対象テーブルに別名を付けられないため、外側の行はテーブル名で修飾する
-	/// (自己参照ルールでは内側に別名Sを付けることで参照が区別される)。
+	/// 外側の行はテーブル名で修飾し、内側の参照先には別名Sを付けることで
+	/// 自己参照ルール(MasterTokui.VPaysaki→MasterTokui)でも参照が区別される。
 	/// 参照先が存在しない行は更新しない(旧名称を温存する)。
 	/// </summary>
 	int ResyncVRule(CascadeVRule rule, long vdate) {

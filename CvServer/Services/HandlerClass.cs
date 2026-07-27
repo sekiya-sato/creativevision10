@@ -284,7 +284,9 @@ public partial class CoreService {
 			// vdate は必ず渡す: 自己参照(MasterTokui.Id_Paysakiが自分自身など)で更新元の行自身が伝播対象になり、
 			// 別採番するとクライアントへ返す Vdu とDB上の Vdu がずれて次回保存が楽観排他で弾かれる
 			if (MasterCascadeDb.NeedsCascade(update.ItemType, item, org) && item is IBaseCodeName codeName) {
-				var cascadeCount = new MasterCascadeDb(_db).CascadeFromMaster(update.ItemType, db.Id, codeName.Code, codeName.Name, vdate);
+				// kubun/oldCode は MasterMeisho の区分定義行(Kubun='IDX')の改名を区分名へ伝播するために渡す
+				var cascadeCount = new MasterCascadeDb(_db).CascadeFromMaster(update.ItemType, db.Id, codeName.Code, codeName.Name, vdate,
+					(item as MasterMeisho)?.Kubun, (org as IBaseCodeName)?.Code);
 				_logger.LogInformation("V*列伝播 {ItemType} Id={Id} 更新行数={Count}", update.ItemType.Name, db.Id, cascadeCount);
 			}
 			if (typeof(IDerivedOrigin).IsAssignableFrom(update.ItemType)) {
