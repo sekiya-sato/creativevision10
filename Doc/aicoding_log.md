@@ -1,3 +1,28 @@
+## [2026-07-27] 12:25 Master系V*列の変更時同期ロジック新設（Phase2: V*列伝播）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：Tran系のV*列は伝票の時点名称として物理列を維持し、Master系のV*列は速度と処理の単純化のため物理列を維持したうえで、参照元マスタ（MasterMeisho等）のCode/Name変更時に同期するロジックを組み込む。`.omo/20260727_master_vcolumn_sync_design.md` のPhase2を実施。
+### 実施内容
+- `CvDomainLogic/MasterCascadeDb.cs`: 新規。Master系V*列の伝播定義 `CascadeVRule` を22件（唯一の正）定義し、`IsCascadeSource`（伝播元はMasterMeisho/MasterTokui/MasterShain/MasterShiireの4型）、`CascadeFromMaster`（マスタ改名時の伝播）、`ResyncAll` / `ResyncAll(List<string>)`（保守用の全件再同期）、`CountDanglingRefs`（参照先欠損の調査）を実装。JSON系（Jsub/Jcolsiz/Kbname/KubunName）はPhase4のToDoコメントとして明示。
+- `Tests/TestServer/MasterCascadeDbTests.cs`: 新規。インメモリSQLiteで12件。伝播・冪等性・空V*列の修復・自己参照(VPaysaki)・型別分岐(MasterShiire)・dangling参照・定義マップとクラス定義の整合性検証（VRules_AreConsistentWithEntityDefinitions / VRules_CoverAllMasterVColumns）。
+### 技術決定 Why
+- 伝播はSQLのUPDATE文で実施（対象行をFetchしてループ更新しない）。MasterShohinは十万行規模になり得るため。差分がある行のみ更新する条件をWHEREに入れ冪等にした。
+- `[ForeignKey]` 属性からの自動導出は行わず明示マップを唯一の正とした。`Id_Paysaki` は宣言型ごとに参照先が異なり（MasterTokui→MasterTokui、MasterShiire→MasterShiire）基底の属性では表現できないため。代わりにマップとクラス定義の齟齬・登録漏れを検出する単体テストを追加して腐りを防いだ。
+- SQLiteの `json_extract` は不正JSONに対しNULLではなく `malformed JSON` 例外を投げるため、`case when json_valid(col) then col else '{}' end` で包んだ。`ALTER TABLE ADD COLUMN ... DEFAULT ''` 直後の空文字が1行でもあるとマスタ改名がロールバックする実害があり、テストで検出した。`OR` 条件に `json_valid()=0` を並べる形は評価順が保証されないため採らず、短絡評価が保証される `CASE` を使用。
+- `CascadeFromMaster` に呼び出し側の `Vdu` 値を渡す引数を追加した。自己参照（請求先が自社）で更新元の行自身が伝播対象になり、内部で別途採番するとクライアントへ返す `Vdu` とDB上の値がずれて次回保存が楽観排他で弾かれるため。
+- `ResyncAll` は例外を握り潰すと22ルール中の失敗が黙って飛ばされるため、失敗内容を返すオーバーロードを追加した（Phase5でエラー提示に使う）。
+### 影響範囲
+- 新規2ファイルのみ。既存ソースの変更なし。CvBase（Tran系含む）に差分なし。伝播の呼び出し（CvServer側フック）はPhase3で実施するため、本コミット時点では実行経路から呼ばれない。
+- `.omo/20260727_master_vcolumn_sync_design.md` にPhase1・Phase2の完了と申し送り3点（vdate引き渡し・ResyncAllのエラー返却・json_validガード）、ビルド手順（vscmdclaude.bat、dotnet test不可）を反映（.omoはコミット対象外）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計19 / 成功19 / 失敗0（新規12＋既存SummaryDbTests7）。
+- .NET 10 SDK + Microsoft.Testing.Platform では `dotnet test` が使用不可のため、ビルド後のexeを直接実行して確認。
+
+---
 ## [2026-07-26] 09:13 Tran系V*列（マスタ重複保持）方式の比較検討メモ作成
 ### Agent
 - Kimi K3 : Moonshot AI
