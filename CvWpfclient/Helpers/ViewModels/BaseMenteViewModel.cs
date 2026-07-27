@@ -159,10 +159,26 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		if (reply.Code >= 0) {
 			return false;
 		}
+		if (reply.Code == CvMsgErrorCode.ConcurrentUpdate) {
+			HandleConcurrentUpdate();
+			return true;
+		}
 
 		var detail = reply.Code < -9000 ? reply.Option : reply.DataMsg;
 		MessageEx.ShowErrorDialog($"{actionName}エラー: {detail} ({reply.Code})", owner: ActiveWindow);
 		return true;
+	}
+
+	/// <summary>
+	/// 他端末で更新された一覧を破棄し、最新一覧の再取得を促す。
+	/// </summary>
+	protected virtual void HandleConcurrentUpdate() {
+		ListData = [];
+		Count = 0;
+		Current = new();
+		CurrentEdit = new();
+		Message = "他端末で更新されたため、表示中の一覧は古くなっています。［一覧取得（F5）］で最新の一覧を再取得してください。";
+		MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 	}
 
 	protected virtual bool TryShowSelectCodeDialog(SelectParameter? currentParameter, string displayName, out SelectParameter parameter) {

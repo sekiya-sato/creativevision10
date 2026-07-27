@@ -1,3 +1,29 @@
+## [2026-07-27] 14:02 一覧行移動時の他端末更新検知と再取得案内
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterMenteなどで一覧表示後に他端末更新された行へ移動した場合、理解可能なエラーを表示して一覧再取得を促す。
+### 実施内容
+- `CodeShare/ICoreService.cs`: 楽観排他と想定外エラーの共通メッセージコードを追加。
+- `CvBase/Parameters.cs`: `QueryByIdParam` に一覧取得時点の `ExpectedVdu` を追加し、未指定時は従来どおり照合しない互換動作を維持。
+- `CvServer/Services/HandlerClass.cs`: 詳細取得時に `ExpectedVdu` とDBの `Vdu` を照合し、不一致時は楽観排他エラーを返すよう変更。
+- `CvWpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: 軽量一覧の詳細キャッシュによる確定を廃止し、行移動ごとに `Vdu` を照合。スクロール中の古い応答は現在選択行と一致する場合だけ処理する。
+- `CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: 楽観排他時に一覧・詳細を破棄し、［一覧取得（F5）］での再取得を促す共通メッセージを追加。
+- `Tests/TestServer/TestServer.cs`: `QueryByIdParam` の古い `Vdu` が競合エラーとなり、現在の `Vdu` は正常取得できる回帰テストを追加。
+### 技術決定 Why
+- 詳細キャッシュだけでは一覧取得後の他端末更新を検知できず、保存時まで古い内容を保持する。詳細取得に一覧時点の `Vdu` を渡してサーバーで照合することで、最新内容の暗黙上書きを避けつつ、全軽量メンテ画面へ一貫して適用する。
+### 影響範囲
+- `BaseLightMenteViewModel` を継承するマスターメンテ、システムログイン、伝票入力画面の一覧行移動時の詳細取得。
+- 共通CRUDの更新・削除時に既存の楽観排他エラーが返った場合も、同じ再取得案内を表示する。
+### 確認
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.dll`: 合計33件、成功33件、失敗0件。
+- `vscmdcodex.bat dotnet build CvWpfclient/CvWpfclient.csproj --no-restore`: 成功（0警告0エラー）。
+- 変更6ファイルとログのCRLFを確認し、`git diff --check` を通過。
+
+---
+
 ## [2026-07-27] 14:35 V*列一括再同期の性能改善と実行時間表示（Phase8）
 ### Agent
 - Claude Opus 5 : Anthropic

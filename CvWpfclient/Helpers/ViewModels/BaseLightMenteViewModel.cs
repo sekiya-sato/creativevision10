@@ -1,6 +1,6 @@
 /*
 # description
-BaseLightMenteViewModel は詳細データの非同期読み込みとキャッシュを備えた軽量なマスタ保守画面用 ViewModel 基底クラス群です。
+BaseLightMenteViewModel は詳細データの非同期読み込みと更新日時照合を備えた軽量なマスタ保守画面用 ViewModel 基底クラス群です。
 
 # example
 public partial class SampleMenteViewModel : BaseLightMenteViewModel<SampleEntity> { }
@@ -16,7 +16,6 @@ namespace CvWpfclient.Helpers;
 
 public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T> where T : BaseDbClass, new() {
 	CancellationTokenSource? detailLoadCts;
-	readonly Dictionary<long, T> detailCache = [];
 	bool suppressCurrentChanged;
 
 	[ObservableProperty]
@@ -43,50 +42,12 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 			return;
 		}
 
-		if (TryGetCachedDetail(newValue, out var cachedDetail)) {
-			ApplyLoadedDetail(cachedDetail);
-			return;
-		}
-
 		_ = ScheduleDetailLoadAsync(newValue.Id, newValue.Vdu);
-	}
-
-	protected override void AfterInsert(T item) {
-		StoreDetailCache(item);
-		base.AfterInsert(item);
-	}
-
-	protected override void AfterUpdate(T item) {
-		StoreDetailCache(Current);
-		base.AfterUpdate(item);
-	}
-
-	protected override void AfterDelete(T removedItem) {
-		RemoveDetailCache(removedItem.Id);
-		base.AfterDelete(removedItem);
 	}
 
 	protected virtual void ApplyCurrentToEditor(T item) {
 		CurrentEdit = Common.CloneObject(item);
 		Message = string.Empty;
-	}
-
-	protected virtual void StoreDetailCache(T item) {
-		detailCache[item.Id] = Common.CloneObject(item);
-	}
-
-	protected virtual void RemoveDetailCache(long id) {
-		detailCache.Remove(id);
-	}
-
-	protected virtual bool TryGetCachedDetail(T item, out T detail) {
-		if (detailCache.TryGetValue(item.Id, out var cached) && cached.Vdu == item.Vdu) {
-			detail = Common.CloneObject(cached);
-			return true;
-		}
-
-		detail = new T();
-		return false;
 	}
 
 	protected virtual QueryListParam CreateLightListQueryParam() =>
@@ -145,21 +106,23 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 			return;
 		}
 
-		if (TryGetCachedDetail(Current, out var cachedDetail)) {
-			ApplyLoadedDetail(cachedDetail);
-			return;
-		}
-
 		try {
 			IsDetailLoading = true;
 			var reply = await SendMessageAsync(new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
 				DataType = typeof(QueryByIdParam),
-				DataMsg = Common.SerializeObject(new QueryByIdParam(Tabletype, id))
+				DataMsg = Common.SerializeObject(new QueryByIdParam(Tabletype, id, vdu))
 			}, ct);
 
+			if (Current.Id != id || Current.Vdu != vdu) {
+				return;
+			}
+
 			if (reply.Code < 0) {
+				if (reply.Code == CvMsgErrorCode.ConcurrentUpdate) {
+					HandleConcurrentUpdate();
+				}
 				return;
 			}
 
@@ -167,11 +130,6 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 				return;
 			}
 
-			if (Current.Id != id) {
-				return;
-			}
-
-			StoreDetailCache(detail);
 			ApplyLoadedDetail(detail);
 		}
 		catch (OperationCanceledException) {
@@ -183,6 +141,11 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 		finally {
 			IsDetailLoading = false;
 		}
+	}
+
+	protected override void HandleConcurrentUpdate() {
+		CancelPendingDetailLoad();
+		base.HandleConcurrentUpdate();
 	}
 
 	void ApplyLoadedDetail(T detail) {

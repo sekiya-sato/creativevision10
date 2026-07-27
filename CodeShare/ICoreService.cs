@@ -35,6 +35,21 @@ public sealed class CvMsg {
 }
 
 /// <summary>
+/// 共通メッセージのエラーコード
+/// </summary>
+public static class CvMsgErrorCode {
+	/// <summary>
+	/// 他端末で更新され、クライアントが保持する更新日時と一致しない
+	/// </summary>
+	public const int ConcurrentUpdate = -9901;
+
+	/// <summary>
+	/// 想定外のサーバー処理エラー
+	/// </summary>
+	public const int Unexpected = -9902;
+}
+
+/// <summary>
 /// ストリーミング応答メッセージ
 /// </summary>
 [DataContract]

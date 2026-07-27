@@ -11,8 +11,6 @@ namespace CvServer.Services;
 
 public partial class CoreService {
 	private const int NotFoundCode = -1;
-	private const int ConcurrentUpdateCode = -9901;
-	private const int UnexpectedErrorCode = -9902;
 	private const string ConcurrentUpdateMessage = "他で更新されています";
 
 	private CvMsg HandleCopyReply(CvMsg request, CallContext context) {
@@ -87,7 +85,7 @@ public partial class CoreService {
 			_logger.LogInformation("V*列再同期 {Summary}", summary.Replace(Environment.NewLine, " "));
 			// 一部ルールが失敗した場合は成功扱いにしない(利用者へ提示して再実行を促す)
 			if (errors.Count > 0) {
-				return CreateErrorResponse(request.Flag, UnexpectedErrorCode, string.Join(Environment.NewLine, errors), typeof(string), summary);
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.Unexpected, string.Join(Environment.NewLine, errors), typeof(string), summary);
 			}
 			return CreateSuccessResponse(request.Flag, typeof(string), summary);
 		}
@@ -176,6 +174,9 @@ public partial class CoreService {
 
 		try {
 			var data = _db.Fetch(queryById.ItemType, "where Id = @0", queryById.Id).FirstOrDefault();
+			if (data is BaseDbClass db && queryById.ExpectedVdu > 0 && db.Vdu != queryById.ExpectedVdu) {
+				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, data.GetType(), Common.SerializeObject(data));
+			}
 			return data == null
 				? CreateNotFoundResponse(flag)
 				: CreateSuccessResponse(flag, data.GetType(), Common.SerializeObject(data));
@@ -310,7 +311,7 @@ public partial class CoreService {
 			}
 
 			if (db.Vdu != org.Vdu) {
-				return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
+				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 			}
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			if (typeof(ITranSoko).IsAssignableFrom(update.ItemType)) {
@@ -372,7 +373,7 @@ public partial class CoreService {
 		}
 
 		if (db.Vdu != org.Vdu) {
-			return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
+			return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		if (typeof(ITranSoko).IsAssignableFrom(delete.ItemType)) {
@@ -405,7 +406,7 @@ public partial class CoreService {
 		}
 
 		if (deleteById.OriginalVdu != org.Vdu) {
-			return CreateErrorResponse(flag, ConcurrentUpdateCode, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
+			return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		if (typeof(ITranSoko).IsAssignableFrom(deleteById.ItemType)) {
@@ -508,7 +509,7 @@ public partial class CoreService {
 	}
 
 	private static CvMsg CreateExceptionResponse(CvFlag flag, Exception ex, Type? dataType, string? dataMsg) {
-		return CreateErrorResponse(flag, UnexpectedErrorCode, ex.Message, dataType, dataMsg);
+		return CreateErrorResponse(flag, CvMsgErrorCode.Unexpected, ex.Message, dataType, dataMsg);
 	}
 
 	private static CvMsg CreateErrorResponse(CvFlag flag, int code, string? option, Type? dataType, string? dataMsg) {

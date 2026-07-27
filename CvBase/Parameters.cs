@@ -31,9 +31,15 @@ public sealed record class QueryOneParam {
 public sealed record class QueryByIdParam {
 	public long Id { get; }
 	public Type ItemType { get; }
-	public QueryByIdParam(Type itemType, long id) {
+	/// <summary>
+	/// 一覧取得時点の更新日時。0の場合は従来どおり更新日時を照合しない。
+	/// </summary>
+	public long ExpectedVdu { get; }
+
+	public QueryByIdParam(Type itemType, long id, long expectedVdu = 0) {
 		Id = id;
 		ItemType = itemType;
+		ExpectedVdu = expectedVdu;
 	}
 }
 

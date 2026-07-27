@@ -129,6 +129,33 @@ public class CoreServiceTests {
 		Assert.IsFalse(string.IsNullOrWhiteSpace(result.DataMsg ?? ""));
 	}
 
+	[TestMethod]
+	public async Task QueryById_WithStaleVdu_ReturnsConcurrentUpdate() {
+		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		var service = _service ?? throw new AssertFailedException("Service not initialized");
+		db.CreateTable(typeof(MasterMeisho), true, false);
+		var item = new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "T01", Name = "テスト", Vdc = 100, Vdu = 200 };
+		db.Insert(item);
+
+		var request = new CvMsg {
+			Flag = CvFlag.Msg101_Op_Query,
+			Code = 0,
+			DataType = typeof(QueryByIdParam),
+			DataMsg = Common.SerializeObject(new QueryByIdParam(typeof(MasterMeisho), item.Id, expectedVdu: 100))
+		};
+
+		var result = await service.QueryMsgAsync(request);
+
+		Assert.AreEqual(CvMsgErrorCode.ConcurrentUpdate, result.Code);
+		Assert.AreEqual("他で更新されています", result.Option);
+
+		request.DataMsg = Common.SerializeObject(new QueryByIdParam(typeof(MasterMeisho), item.Id, expectedVdu: 200));
+		var latestResult = await service.QueryMsgAsync(request);
+
+		Assert.AreEqual(0, latestResult.Code);
+		Assert.AreEqual(typeof(MasterMeisho), latestResult.DataType);
+	}
+
 	/// <summary>
 	/// Phase3: HandleUpdate のV*列伝播フックが gRPC 経路で実際に動作することを確認する
 	/// (名称マスタの改名 → 参照している商品マスタの VBrand が現行名称になる)
