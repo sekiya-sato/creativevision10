@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using NPoco;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace CvBase;
 
@@ -23,6 +24,10 @@ public class UpdateDb {
 		new (26_07_06_01,"ALTER TABLE Tran00Uriage ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran00Uriage ADD COLUMN Total NUMBER not null default 0;ALTER TABLE Tran01Tenuri ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran01Tenuri ADD COLUMN Total NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN Total NUMBER not null default 0;ALTER TABLE Tran12Jyuchu ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran12Jyuchu ADD COLUMN Total NUMBER not null default 0;ALTER TABLE Tran13Hachu ADD COLUMN Tax NUMBER not null default 0;ALTER TABLE Tran13Hachu ADD COLUMN Total NUMBER not null default 0;","2026.07.06定義"),
 		new (26_07_10_01,"ALTER TABLE MasterEndCustomer RENAME COLUMN Gendar to Gender;","2026.07.10定義 綴り間違いを訂正"),
 		new (26_07_25_01,"ALTER TABLE MasterSysman ADD COLUMN Id_Soko NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN IsPrint NUMBER not null default 0;","2026.07.25定義"),
+		new (26_07_27_01,"ALTER TABLE MasterSysman ADD COLUMN VSoko  TEXT NOT NULL DEFAULT '';ALTER TABLE MasterYosanBrand ADD COLUMN VTenpo TEXT NOT NULL DEFAULT '';ALTER TABLE MasterYosanBrand ADD COLUMN VBrand TEXT NOT NULL DEFAULT '';ALTER TABLE MasterYosanHanbai ADD COLUMN VShain TEXT NOT NULL DEFAULT '';","2026.07.25定義 V*系処理の統一のため"),
+		new (26_07_27_02,"Update MasterSysman set VSoko='{}' where Id=1;Update MasterYosanBrand set VTenpo='{}',VBrand='{}';Update MasterYosanHanbai set VShain='{}';","  V*項目追加時の空データ処理"),
+		new (26_07_27_03,"update MasterSysman set VSoko=ifnull((select json_object('Sid',ifnull(T.Id,0),'Cd',ifnull(T.Code,''),'Mei',ifnull(T.Name,'')) from MasterTokui T where T.Id=MasterSysman.Id_Soko),json_object('Sid',0,'Cd','','Mei',''));update MasterYosanBrand set VTenpo=ifnull((select json_object('Sid',ifnull(T.Id,0),'Cd',ifnull(T.Code,''),'Mei',ifnull(T.Name,'')) from MasterTokui T where T.Id=MasterYosanBrand.Id_Tenpo),json_object('Sid',0,'Cd','','Mei','')),VBrand=ifnull((select json_object('Sid',ifnull(M.Id,0),'Cd',ifnull(M.Code,''),'Mei',ifnull(M.Name,'')) from MasterMeisho M where M.Id=MasterYosanBrand.Id_Brand),json_object('Sid',0,'Cd','','Mei',''))","2026.07.27定義 Master系V*列の物理化 MasterSysman.VSoko/MasterYosanBrand.VTenpo,VBrand"),
+		new (26_07_27_04,"update MasterYosanHanbai set VShain=ifnull((select json_object('Sid',ifnull(T.Id,0),'Cd',ifnull(T.Code,''),'Mei',ifnull(T.Name,'')) from MasterShain T where T.Id=MasterYosanHanbai.Id_Shain),json_object('Sid',0,'Cd','','Mei',''))","2026.07.27定義 Master系V*列の物理化 MasterSysman.VSoko/MasterYosanBrand.VTenpo,VBrand"),
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {

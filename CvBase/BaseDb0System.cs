@@ -100,7 +100,6 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	/// 倉庫データ
 	/// </summary>
 	[ObservableProperty]
-	[ComputedColumn]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
 	public partial CodeNameView VSoko { get; set; } = new();

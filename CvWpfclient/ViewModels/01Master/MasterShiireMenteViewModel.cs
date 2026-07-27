@@ -135,7 +135,7 @@ from MasterShiire {query.AddWhereOrder()}
 
 	[RelayCommand]
 	void DoSelectPayMethod() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='PAY'", "Code", startPos: CurrentEdit.Id_PayMethod);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='KIN'", "Code", startPos: CurrentEdit.Id_PayMethod);
 		if (meisho == null) return;
 		CurrentEdit.Id_PayMethod = meisho.Id;
 		CurrentEdit.VPayMethod = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };

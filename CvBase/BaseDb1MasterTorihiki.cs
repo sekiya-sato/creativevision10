@@ -152,7 +152,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 請求/支払先
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterTokui))]
+	[ForeignKey(nameof(MasterTokui), additionalInfo: "MasterTokuiではMasterTokui、MasterShiireではMasterShiireを参照する")]
 	public partial long Id_Paysaki { get; set; }
 	/// <summary>
 	/// 請求先データ

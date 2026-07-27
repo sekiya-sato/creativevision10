@@ -46,7 +46,6 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// 店舗データ
 	/// </summary>
 	[ObservableProperty]
-	[ComputedColumn]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
 	public partial CodeNameView VTenpo { get; set; } = new();
@@ -54,7 +53,6 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// ブランドデータ
 	/// </summary>
 	[ObservableProperty]
-	[ComputedColumn]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
 	public partial CodeNameView VBrand { get; set; } = new();
@@ -91,4 +89,11 @@ public sealed partial class MasterYosanHanbai : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("粗利予算")]
 	public partial long ArariYosan { get; set; }
+	/// <summary>
+	/// 社員データ
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	public partial CodeNameView VShain { get; set; } = new();
 }
