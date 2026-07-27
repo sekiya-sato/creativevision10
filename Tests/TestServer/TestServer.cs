@@ -220,6 +220,10 @@ public class CoreServiceTests {
 		var result = await service.QueryMsgAsync(request);
 
 		Assert.AreEqual(0, result.Code, $"再同期が成功する: {result.Option} {result.DataMsg}");
+		// 実行結果メッセージに開始/終了/所要時間が含まれること
+		StringAssert.Contains(result.DataMsg, "開始 ", "開始時刻が含まれる");
+		StringAssert.Contains(result.DataMsg, "終了 ", "終了時刻が含まれる");
+		StringAssert.Contains(result.DataMsg, "所要 ", "所要時間が含まれる");
 		var after = db.SingleById<MasterShohin>(shohin.Id);
 		Assert.AreEqual("現ブランド", after.VBrand.Mei, "VBrandが現行名称になる");
 		Assert.AreEqual("現倉庫", after.VSoko.Mei, "空だったVSokoが埋まる");
@@ -229,7 +233,7 @@ public class CoreServiceTests {
 		// 2回目は更新0件(冪等)
 		var result2 = await service.QueryMsgAsync(request);
 		Assert.AreEqual(0, result2.Code, "2回目も成功する");
-		Assert.AreEqual("更新行数=0", result2.DataMsg, "2回目は更新0件");
+		StringAssert.StartsWith(result2.DataMsg, "更新行数=0", "2回目は更新0件");
 	}
 
 	[TestMethod]

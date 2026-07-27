@@ -247,7 +247,9 @@ public class MasterCascadeDbTests {
 		var second = cascade.ResyncAll(errors);
 
 		Assert.AreEqual(0, errors.Count, "SQLエラーが発生していない: " + string.Join(" / ", errors));
-		Assert.AreEqual(3, first, "VBrand/VSoko/VPaysakiの3件が同期される");
+		// V*列の再同期は対象テーブル単位に1文へまとめているため、件数は「更新された行数」
+		// (MasterShohinの1行でVBrandとVSokoの2列を同時に更新するため2ではなく1と数える)
+		Assert.AreEqual(2, first, "MasterShohin1行 + MasterTokui1行 = 2行が更新される");
 		Assert.AreEqual(0, second, "2回目は0件(冪等)");
 		var shohin = Db.First<MasterShohin>("where Code = '0001'");
 		Assert.AreEqual("現ブランド", shohin.VBrand.Mei, "MasterShohin.VBrand");

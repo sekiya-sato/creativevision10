@@ -78,23 +78,42 @@ public partial class CoreService {
 	/// </summary>
 	private CvMsg HandleMasterVColumnResync(CvMsg request, CallContext context) {
 		var errors = new List<string>();
+		var startTime = DateTime.Now;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			var updated = new MasterCascadeDb(_db).ResyncAll(errors);
 			_db.CompleteTransaction();
-			_logger.LogInformation("V*列再同期 更新行数={Count} 失敗ルール数={ErrorCount}", updated, errors.Count);
+			var summary = BuildResyncSummary(startTime, updated, errors.Count);
+			_logger.LogInformation("V*列再同期 {Summary}", summary.Replace(Environment.NewLine, " "));
 			// 一部ルールが失敗した場合は成功扱いにしない(利用者へ提示して再実行を促す)
 			if (errors.Count > 0) {
-				return CreateErrorResponse(request.Flag, UnexpectedErrorCode, string.Join(Environment.NewLine, errors),
-					typeof(string), $"更新行数={updated} 失敗ルール数={errors.Count}");
+				return CreateErrorResponse(request.Flag, UnexpectedErrorCode, string.Join(Environment.NewLine, errors), typeof(string), summary);
 			}
-			return CreateSuccessResponse(request.Flag, typeof(string), $"更新行数={updated}");
+			return CreateSuccessResponse(request.Flag, typeof(string), summary);
 		}
 		catch (Exception ex) {
 			_db.AbortTransaction();
 			_logger.LogError(ex, "V*列再同期に失敗");
-			return CreateExceptionResponse(request.Flag, ex, typeof(string), string.Join(Environment.NewLine, errors));
+			return CreateExceptionResponse(request.Flag, ex, typeof(string),
+				BuildResyncSummary(startTime, 0, errors.Count) + Environment.NewLine + string.Join(Environment.NewLine, errors));
 		}
+	}
+	/// <summary>
+	/// 再同期の実行結果サマリを組み立てる(開始/終了/所要時間はサーバ側の実測値)
+	/// </summary>
+	private static string BuildResyncSummary(DateTime startTime, int updated, int errorCount) {
+		var endTime = DateTime.Now;
+		var elapsed = endTime - startTime;
+		var lines = new List<string> {
+			$"更新行数={updated}",
+			$"開始 {startTime:yyyy/MM/dd HH:mm:ss}",
+			$"終了 {endTime:yyyy/MM/dd HH:mm:ss}",
+			$"所要 {(int)elapsed.TotalMinutes}分{elapsed.Seconds}秒",
+		};
+		if (errorCount > 0) {
+			lines.Add($"失敗ルール数={errorCount}");
+		}
+		return string.Join(Environment.NewLine, lines);
 	}
 	/// <summary>
 	/// Query系の処理

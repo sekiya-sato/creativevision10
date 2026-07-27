@@ -2,6 +2,7 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace CvDomainLogic;
 
@@ -186,41 +187,39 @@ public class MasterCascadeDb {
 	public int ResyncAll(List<string> errors) {
 		var vdate = Common.GetVdate();
 		var cnt = 0;
-		foreach (var rule in VRules) {
-			try {
-				var one = ResyncVRule(rule, vdate);
-				cnt += one;
-				if (one > 0)
-					_logger.LogInformation("V*列再同期 {Table}.{Column} 更新行数={Count}", rule.Target.Name, rule.VColumn, one);
-			}
-			catch (Exception ex) {
-				errors.Add($"{rule.Target.Name}.{rule.VColumn}: {ex.Message}");
-				_logger.LogError(ex, "V*列再同期に失敗 {Table}.{Column}", rule.Target.Name, rule.VColumn);
-			}
+		var total = Stopwatch.StartNew();
+		// V*列: 対象テーブル単位に1文へまとめる。
+		// 列ごとに1文ずつ実行すると同じテーブルを列数分だけ全走査することになり、
+		// JSON列を含む幅の広い行(MasterShohinは8列=8回)では読み取りI/Oが支配的になるため。
+		foreach (var group in VRules.GroupBy(r => r.Target)) {
+			var rules = group.ToArray();
+			cnt += RunResync(errors, group.Key.Name, $"V*列{rules.Length}列", () => ResyncVRulesByTable(group.Key, rules, vdate));
 		}
-		// JSON内スナップショット(Jsub の Cd/Mei と Kbname)
-		foreach (var rule in JsubRules) {
-			cnt += RunResync(errors, rule.Target.Name, $"{rule.JsonColumn}(Cd/Mei)", () => ResyncJsubCodeName(rule, vdate));
-			cnt += RunResync(errors, rule.Target.Name, $"{rule.JsonColumn}(Kbname)", () => ResyncJsubKbname(rule, vdate));
-		}
+		// Jsub: Cd/Mei と Kbname を1文にまとめる(別文にすると同じテーブルを2回走査することになる)
+		foreach (var rule in JsubRules)
+			cnt += RunResync(errors, rule.Target.Name, rule.JsonColumn, () => ResyncJsub(rule, vdate));
 		// MasterMeisho.KubunName
 		cnt += RunResync(errors, nameof(MasterMeisho), nameof(MasterMeisho.KubunName), () => ResyncMeishoKubunName(vdate));
 		// MasterShohin.Jcolsiz と DerivedShohinColSiz
 		cnt += RunResync(errors, nameof(MasterShohin), nameof(MasterShohin.Jcolsiz), () => ResyncJcolsiz(vdate));
+		_logger.LogInformation("V*列再同期 完了 更新行数={Count} 失敗={ErrorCount} 所要={Elapsed}ms", cnt, errors.Count, total.ElapsedMilliseconds);
 		return cnt;
 	}
 
-	/// <summary>再同期の1単位を実行し、失敗はログとerrorsへ記録して0を返す</summary>
+	/// <summary>
+	/// 再同期の1単位を実行し、失敗はログとerrorsへ記録して0を返す。
+	/// 所要時間を必ずログへ出す(どのルールが遅いかを実データで特定できるようにするため)。
+	/// </summary>
 	int RunResync(List<string> errors, string table, string column, Func<int> action) {
+		var sw = Stopwatch.StartNew();
 		try {
 			var one = action();
-			if (one > 0)
-				_logger.LogInformation("V*列再同期 {Table}.{Column} 更新行数={Count}", table, column, one);
+			_logger.LogInformation("V*列再同期 {Table}.{Column} 更新行数={Count} 所要={Elapsed}ms", table, column, one, sw.ElapsedMilliseconds);
 			return one;
 		}
 		catch (Exception ex) {
 			errors.Add($"{table}.{column}: {ex.Message}");
-			_logger.LogError(ex, "V*列再同期に失敗 {Table}.{Column}", table, column);
+			_logger.LogError(ex, "V*列再同期に失敗 {Table}.{Column} 所要={Elapsed}ms", table, column, sw.ElapsedMilliseconds);
 			return 0;
 		}
 	}
@@ -298,27 +297,39 @@ update {table} as S
 		return _db.Execute(sql, [id, code, name, vdate]);
 	}
 
-	/// <summary>Jsub 配列を参照先マスタの現在値で再同期する(全件版)</summary>
-	int ResyncJsubCodeName(CascadeJsonRule rule, long vdate) {
+	/// <summary>
+	/// Jsub 配列を参照先マスタの現在値で再同期する(全件版)。
+	/// Cd/Mei(=$.Sid の参照先)と Kbname(=Kubun='IDX' かつ Code=$.Kb の行のName)を1文で更新する。
+	/// 別文に分けると同じテーブルを2回全走査することになるため。
+	/// 参照先が見つからない要素は ifnull で現在値を残す。
+	/// </summary>
+	int ResyncJsub(CascadeJsonRule rule, long vdate) {
 		var table = _db.GetTableName(rule.Target);
 		var source = _db.GetTableName(rule.Source);
 		var col = rule.JsonColumn;
+		// M=名称行($.Sid で参照) K=区分定義行($.Kb で参照)
+		var joins = $@"left join {source} M on M.Id = json_extract(J.value, '$.Sid')
+                            left join {source} K on K.Kubun = '{MeishoKubunIndex}' and K.Code = json_extract(J.value, '$.Kb')";
 		var sql = $@"
 update {table} as S
    set {col} = ( select json_group_array(json(X.value2))
                    from ( select J.key,
-                                 case when M.Id is not null
-                                      then json_set(J.value, '$.Cd', ifnull(M.Code,''), '$.Mei', ifnull(M.Name,''))
-                                      else J.value end as value2
+                                 json_set(J.value,
+                                   '$.Cd',     ifnull(M.Code, ifnull(json_extract(J.value, '$.Cd'    ), '')),
+                                   '$.Mei',    ifnull(M.Name, ifnull(json_extract(J.value, '$.Mei'   ), '')),
+                                   '$.Kbname', ifnull(K.Name, ifnull(json_extract(J.value, '$.Kbname'), ''))) as value2
                             from json_each(S.{col}) as J
-                            left join {source} M on M.Id = json_extract(J.value, '$.Sid')
+                            {joins}
                            order by cast(J.key as integer) ) as X ),
        Vdu = @0
  where {JsonArrayReady($"S.{col}")}
    and exists ( select 1 from json_each(S.{col}) as J
-                 join {source} M on M.Id = json_extract(J.value, '$.Sid')
-                where ifnull(json_extract(J.value, '$.Cd' ), '') <> ifnull(M.Code,'')
-                   or ifnull(json_extract(J.value, '$.Mei'), '') <> ifnull(M.Name,'') )";
+                            {joins}
+                where ( M.Id is not null
+                        and ( ifnull(json_extract(J.value, '$.Cd' ), '') <> ifnull(M.Code,'')
+                           or ifnull(json_extract(J.value, '$.Mei'), '') <> ifnull(M.Name,'') ) )
+                   or ( K.Id is not null
+                        and ifnull(json_extract(J.value, '$.Kbname'), '') <> ifnull(K.Name,'') ) )";
 		return _db.Execute(sql, [vdate]);
 	}
 
@@ -398,29 +409,6 @@ update {table} as S
 		return _db.Execute(sql, [kubunCode, kubunName, vdate]);
 	}
 
-	/// <summary>Jsub 配列の Kbname を全件再同期する</summary>
-	int ResyncJsubKbname(CascadeJsonRule rule, long vdate) {
-		var table = _db.GetTableName(rule.Target);
-		var source = _db.GetTableName(rule.Source);
-		var col = rule.JsonColumn;
-		var sql = $@"
-update {table} as S
-   set {col} = ( select json_group_array(json(X.value2))
-                   from ( select J.key,
-                                 case when M.Id is not null
-                                      then json_set(J.value, '$.Kbname', ifnull(M.Name,''))
-                                      else J.value end as value2
-                            from json_each(S.{col}) as J
-                            left join {source} M on M.Kubun = '{MeishoKubunIndex}' and M.Code = json_extract(J.value, '$.Kb')
-                           order by cast(J.key as integer) ) as X ),
-       Vdu = @0
- where {JsonArrayReady($"S.{col}")}
-   and exists ( select 1 from json_each(S.{col}) as J
-                 join {source} M on M.Kubun = '{MeishoKubunIndex}' and M.Code = json_extract(J.value, '$.Kb')
-                where ifnull(json_extract(J.value, '$.Kbname'), '') <> ifnull(M.Name,'') )";
-		return _db.Execute(sql, [vdate]);
-	}
-
 	// ============================================================
 	// R4/R5: MasterShohin.Jcolsiz と DerivedShohinColSiz
 	// ============================================================
@@ -467,11 +455,18 @@ update {table} as S
 		return _db.Execute(sql, [id, code, name, vdate]);
 	}
 
-	/// <summary>Jcolsiz の色/サイズ名称を全件再同期し、対象商品の DerivedShohinColSiz を再構築する</summary>
+	/// <summary>
+	/// Jcolsiz の色/サイズ名称を全件再同期し、対象商品の DerivedShohinColSiz を再構築する。
+	/// 差分条件は json_each を伴い重いため、対象Idを1回だけ抽出して UPDATE は Id 指定で行う
+	/// (UPDATE の WHERE でも同じ差分条件を書くと同じ全走査を2回することになる)。
+	/// </summary>
 	int ResyncJcolsiz(long vdate) {
 		var table = _db.GetTableName(typeof(MasterShohin));
 		var source = _db.GetTableName(typeof(MasterMeisho));
-		var diff = $@"
+		// 更新対象の商品Idを1回だけ抽出する(UPDATEとDerived再構築の両方でこの集合を使う)
+		var shohinIds = _db.Fetch<long>($@"
+select S.Id from {table} S
+ where {JsonArrayReady("S.Jcolsiz")}
    and exists ( select 1 from json_each(S.Jcolsiz) as J
                  left join {source} C on C.Id = json_extract(J.value, '$.Id_Col')
                  left join {source} Z on Z.Id = json_extract(J.value, '$.Id_Siz')
@@ -480,10 +475,12 @@ update {table} as S
                            or ifnull(json_extract(J.value, '$.Mei_Col' ), '') <> ifnull(C.Name,'') ) )
                    or ( Z.Id is not null
                         and ( ifnull(json_extract(J.value, '$.Code_Siz'), '') <> ifnull(Z.Code,'')
-                           or ifnull(json_extract(J.value, '$.Mei_Siz' ), '') <> ifnull(Z.Name,'') ) ) )";
-		// 更新対象の商品Idを先に確定させる(Derived再構築用)
-		var shohinIds = _db.Fetch<long>($"select S.Id from {table} S where {JsonArrayReady("S.Jcolsiz")}{diff}");
-		var sql = $@"
+                           or ifnull(json_extract(J.value, '$.Mei_Siz' ), '') <> ifnull(Z.Name,'') ) ) )");
+		if (shohinIds.Count == 0)
+			return 0;
+		var cnt = 0;
+		foreach (var chunk in shohinIds.Chunk(IdChunkSize)) {
+			var sql = $@"
 update {table} as S
    set Jcolsiz = ( select json_group_array(json(X.value2))
                      from ( select J.key,
@@ -497,22 +494,31 @@ update {table} as S
                               left join {source} Z on Z.Id = json_extract(J.value, '$.Id_Siz')
                              order by cast(J.key as integer) ) as X ),
        Vdu = @0
- where {JsonArrayReady("S.Jcolsiz")}{diff}";
-		var cnt = _db.Execute(sql, [vdate]);
-		if (cnt > 0)
-			RebuildDerivedShohinColSiz(shohinIds);
+ where S.Id in ({string.Join(",", chunk)})";
+			cnt += _db.Execute(sql, [vdate]);
+		}
+		RebuildDerivedShohinColSiz(shohinIds);
 		return cnt;
 	}
+
+	/// <summary>IN句へ展開するIdの分割サイズ(SQL文が長くなりすぎるのを防ぐ)</summary>
+	const int IdChunkSize = 500;
 
 	/// <summary>
 	/// DerivedShohinColSiz を MasterShohin.Jcolsiz から作り直す。
 	/// 当テーブルは Jcolsiz からの完全導出(BaseDbDerived.cs の CreateSql がその定義)なので、
 	/// 個別のUPDATEは書かず HandlerDerived と同じ Delete→Insert で再構築する(導出定義の二重管理を避ける)。
+	/// 1件ずつではなくIN句でまとめて実行する(商品数が多いとSQL往復回数が支配的になるため)。
+	/// Idはすべて long のDB由来値なので、IN句へ直接展開してもインジェクションの余地はない。
 	/// </summary>
 	void RebuildDerivedShohinColSiz(List<long> shohinIds) {
-		foreach (var shohinId in shohinIds) {
-			_db.Execute(DerivedShohinColSiz.DeleteSql, shohinId);
-			_db.Execute(DerivedShohinColSiz.InsertSql, shohinId);
+		if (shohinIds.Count == 0)
+			return;
+		var derived = _db.GetTableName(typeof(DerivedShohinColSiz));
+		foreach (var chunk in shohinIds.Chunk(IdChunkSize)) {
+			var ids = string.Join(",", chunk);
+			_db.Execute($"delete from {derived} where Id_Shohin in ({ids})");
+			_db.Execute($"{DerivedShohinColSiz.CreateSql} where M.Id in ({ids})");
 		}
 	}
 
@@ -530,26 +536,34 @@ update {table} as S
 	static string SafeJsonColumn(string column) => $"case when json_valid({column}) then {column} else '{{}}' end";
 
 	/// <summary>
-	/// 1ルール分の全件再同期SQLを実行する。
-	/// 外側の行はテーブル名で修飾し、内側の参照先には別名Sを付けることで
+	/// 1テーブル分のV*列をまとめて全件再同期する(テーブルを1回だけ全走査する)。
+	/// 外側の行はテーブル名で修飾し、内側の参照先には別名を付けることで
 	/// 自己参照ルール(MasterTokui.VPaysaki→MasterTokui)でも参照が区別される。
-	/// 参照先が存在しない行は更新しない(旧名称を温存する)。
+	/// 参照先が存在しない行(Id_*=0 やdangling)は ifnull で現在値を残す(旧名称を温存する)。
+	/// 戻り値は「更新された行数」であり、列ごとの件数の合計ではない点に注意。
 	/// </summary>
-	int ResyncVRule(CascadeVRule rule, long vdate) {
-		var table = _db.GetTableName(rule.Target);
-		var source = _db.GetTableName(rule.Source);
-		var col = SafeJsonColumn($"{table}.{rule.VColumn}");
+	int ResyncVRulesByTable(Type target, CascadeVRule[] rules, long vdate) {
+		var table = _db.GetTableName(target);
+		var sets = new List<string>(rules.Length);
+		var diffs = new List<string>(rules.Length);
+		for (var i = 0; i < rules.Length; i++) {
+			var rule = rules[i];
+			var source = _db.GetTableName(rule.Source);
+			var alias = $"S{i}"; // 同一テーブルを複数回参照するため別名を分ける
+			var col = SafeJsonColumn($"{table}.{rule.VColumn}");
+			sets.Add($@"{rule.VColumn} = ifnull( ( select json_object('Sid', {alias}.Id, 'Cd', ifnull({alias}.Code,''), 'Mei', ifnull({alias}.Name,''))
+                            from {source} {alias} where {alias}.Id = {table}.{rule.IdColumn} ), {table}.{rule.VColumn} )");
+			diffs.Add($@"exists ( select 1 from {source} {alias}
+                 where {alias}.Id = {table}.{rule.IdColumn}
+                   and ( ifnull(json_extract({col}, '$.Cd' ), '') <> ifnull({alias}.Code,'')
+                      or ifnull(json_extract({col}, '$.Mei'), '') <> ifnull({alias}.Name,'')
+                      or ifnull(json_extract({col}, '$.Sid'),  0) <> {alias}.Id ) )");
+		}
 		var sql = $@"
 update {table}
-   set {rule.VColumn} = ( select json_object('Sid', ifnull(S.Id,0), 'Cd', ifnull(S.Code,''), 'Mei', ifnull(S.Name,''))
-                            from {source} S where S.Id = {table}.{rule.IdColumn} ),
+   set {string.Join(",\r\n       ", sets)},
        Vdu = @0
- where {table}.{rule.IdColumn} > 0
-   and exists ( select 1 from {source} S
-                 where S.Id = {table}.{rule.IdColumn}
-                   and ( ifnull(json_extract({col}, '$.Cd' ), '') <> ifnull(S.Code,'')
-                      or ifnull(json_extract({col}, '$.Mei'), '') <> ifnull(S.Name,'')
-                      or ifnull(json_extract({col}, '$.Sid'),  0) <> S.Id ) )";
+ where {string.Join("\r\n    or ", diffs)}";
 		return _db.Execute(sql, [vdate]);
 	}
 }

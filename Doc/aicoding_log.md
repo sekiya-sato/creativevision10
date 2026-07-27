@@ -1,3 +1,30 @@
+## [2026-07-27] 14:35 V*列一括再同期の性能改善と実行時間表示（Phase8）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：Phase6の実機確認で「1回目2332件・2回目0件」で正常動作を確認したが所要約20分だったため短縮を検討する。あわせて実行結果メッセージに開始時間・終了時間を表示する。
+### 実施内容
+- `CvDomainLogic/MasterCascadeDb.cs`: 全走査回数を削減。(1) `ResyncVRulesByTable` を新設しV*列22ルールを対象テーブル単位の1文へ統合（22回→10回、MasterShohinは8回→1回）。(2) `ResyncJsub` でJsubのCd/MeiとKbnameを1文へ統合（10回→5回）。(3) `ResyncJcolsiz` は対象Idを1回だけ抽出しUPDATEをId指定に変更（2回→1回）。(4) `RebuildDerivedShohinColSiz` をIN句(500件単位)での一括Delete+Insertに変更。(5) `RunResync` にStopwatchを入れルール単位の所要時間を必ずログ出力。
+- `CvServer/Services/HandlerClass.cs`: `BuildResyncSummary` を追加し、応答メッセージに更新行数・開始時刻・終了時刻・所要時間（サーバ側実測）を含めるよう変更。
+- `CvWpfclient/ViewModels/00System/SysExecMiscViewModel.cs`: 実行開始時点で開始時刻を先に表示（数分かかるため）。
+- `Tests/TestServer/`: 件数の意味変更に合わせて期待値を修正し、応答メッセージに開始/終了/所要が含まれることを検証するアサーションを追加。
+### 技術決定 Why
+- 原因はインデックス不足ではなく「同じテーブルを列ごとに何度も全走査する」コード構造だった。`DerivedShohinColSiz.Id_Shohin` には既に `KeyDml("n1")` のインデックスがあることを確認済み。MasterShohin は Jgenka/Jcolsiz/Jgrade/Jsub を含む幅の広い行のため、8回読むか1回読むかで読み取りI/Oが大きく変わる。
+- 全件再同期は本質的に全走査が必要なので `Id_*` 列へのインデックス追加では速くならない。走査回数自体を減らす方針を採った（合計約35回→約16回）。
+- 統合版では参照先が見つからない場合に `ifnull(サブクエリ, 現在値)` で現在値を残すようにし、dangling参照の行の旧名称を温存する従来動作を維持した。
+- V*列をテーブル単位に統合した結果、更新行数の意味が「列ごとの合計」から「更新された行数」に変わる。1行で3列が古い場合に従来3と数えていたものが1になるため、Phase6で観測した2332より小さくなるのは正常。テストの期待値もこの意味に合わせて修正した。
+- ルール単位の所要時間を常にログ出力することにした。残るボトルネックを推測で追わず、次回の実行結果から実データで特定できるようにするため（出力先は logs/server.log）。
+### 影響範囲
+- 再同期処理の内部SQLのみ。伝播の結果（どの列がどう更新されるか）は変わらないため、マスタ改名時の動作には影響しない。
+- 応答メッセージが複数行になる。画面の実行結果欄は TextWrapping="Wrap" で複数行表示に対応済み。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計32 / 成功32 / 失敗0。冪等性・順序保持・dangling参照の温存が引き続き緑であることを確認。
+- 実DB(9.5GB)での短縮効果はユーザー側の次回実行で確認する。ルール単位の所要時間がログに出るため、残るボトルネックはそこで特定できる。
+
+---
 ## [2026-07-27] 14:10 V*列の扱いをAGENTS.mdとテーブル定義に明記（AI向け恒久メモ）
 ### Agent
 - Claude Opus 5 : Anthropic

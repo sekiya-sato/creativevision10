@@ -49,7 +49,8 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 		}
 		try {
 			IsProcessing = true;
-			ResultMessage = "V*列の再同期を実行中です。";
+			// 数分かかることがあるため、開始時刻を先に見せておく
+			ResultMessage = $"V*列の再同期を実行中です。{Environment.NewLine}開始 {DateTime.Now:yyyy/MM/dd HH:mm:ss}";
 			ClientLib.Cursor2Wait();
 			cancellationToken.ThrowIfCancellationRequested();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
