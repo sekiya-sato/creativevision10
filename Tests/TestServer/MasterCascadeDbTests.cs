@@ -256,6 +256,70 @@ public class MasterCascadeDbTests {
 		Assert.AreEqual("現店舗", Db.SingleById<MasterTokui>(tokui.Id).VPaysaki.Mei, "MasterTokui.VPaysaki(自己参照)");
 	}
 
+	/// <summary>Phase3: 伝播が必要かの判定(NeedsCascade)</summary>
+	[TestMethod]
+	public void NeedsCascade_ReturnsTrueOnlyWhenCodeOrNameChanged() {
+		var org = new MasterMeisho { Id = 1, Kubun = "BRD", Code = "01", Name = "旧名称" };
+
+		Assert.IsTrue(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho),
+			new MasterMeisho { Id = 1, Kubun = "BRD", Code = "01", Name = "新名称" }, org), "Name変更");
+		Assert.IsTrue(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho),
+			new MasterMeisho { Id = 1, Kubun = "BRD", Code = "02", Name = "旧名称" }, org), "Code変更");
+		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho),
+			new MasterMeisho { Id = 1, Kubun = "BRD", Code = "01", Name = "旧名称", Ryaku = "略" }, org), "Code/Name以外の変更では伝播しない");
+		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho),
+			new MasterMeisho { Id = 1, Kubun = "IDX", Code = "01", Name = "旧名称" }, org), "Kubun変更のみでは伝播しない");
+		// 伝播元でない型 / IBaseCodeName でない型 / null
+		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterShohin),
+			new MasterShohin { Id = 1, Code = "01", Name = "新" }, new MasterShohin { Id = 1, Code = "01", Name = "旧" }), "伝播元でない型");
+		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterYosanBrand), new MasterYosanBrand(), new MasterYosanBrand()), "IBaseCodeNameでない型");
+		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho), null, org), "newItemがnull");
+		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho), org, null), "orgItemがnull");
+	}
+
+	/// <summary>
+	/// Phase3: HandleUpdate と同じ順序(旧行取得 → Vdu設定 → Update → 伝播)を再現し、
+	/// 自己参照行でも Vdu がずれないことを確認する
+	/// </summary>
+	[TestMethod]
+	public void HandleUpdateSequence_KeepsVduConsistentForSelfReference() {
+		CreateAllTables();
+		var tokui = new MasterTokui { Code = "0101", Name = "旧店舗", TenType = 6, Vdc = 1, Vdu = 100 };
+		Db.Insert(tokui);
+		// 請求先が自分自身(実務上あり得る)
+		Db.Execute("update MasterTokui set Id_Paysaki = @0, VPaysaki = @1 where Id = @0",
+			tokui.Id, "{\"Sid\":" + tokui.Id + ",\"Cd\":\"0101\",\"Mei\":\"旧店舗\"}");
+
+		// --- HandleUpdate と同じ流れ ---
+		var org = Db.SingleById<MasterTokui>(tokui.Id);
+		var item = Db.SingleById<MasterTokui>(tokui.Id);
+		item.Name = "新店舗";
+		const long vdate = 20260727123000;
+		Assert.IsTrue(MasterCascadeDb.NeedsCascade(typeof(MasterTokui), item, org), "伝播が必要と判定される");
+		item.Vdu = vdate;
+		Db.Update(item);
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterTokui), item.Id, item.Code, item.Name, vdate);
+		// --- ここまで ---
+
+		Assert.AreEqual(1, cnt, "自己参照のVPaysakiが更新される");
+		var after = Db.SingleById<MasterTokui>(tokui.Id);
+		Assert.AreEqual("新店舗", after.VPaysaki.Mei, "VPaysakiが現行名称になる");
+		Assert.AreEqual(vdate, after.Vdu, "DB上のVduがクライアントへ返すVduと一致する(楽観排他が誤作動しない)");
+	}
+
+	/// <summary>Phase3: vdateを渡さない場合はVduが別採番され、クライアント保持値とずれることの記録</summary>
+	[TestMethod]
+	public void CascadeFromMaster_WithoutVdate_GeneratesOwnVdu() {
+		CreateAllTables();
+		var brand = new MasterMeisho { Kubun = "BRD", Code = "01", Name = "旧", Vdc = 1, Vdu = 100 };
+		Db.Insert(brand);
+		Db.Insert(new MasterShohin { Code = "0001", Id_Brand = brand.Id, VBrand = Cnv(brand.Id, "01", "旧"), Vdc = 1, Vdu = 100 });
+
+		new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), brand.Id, "01", "新");
+
+		Assert.AreNotEqual(100, Db.First<MasterShohin>("where Code = '0001'").Vdu, "vdate未指定時は内部採番されVduが更新される");
+	}
+
 	/// <summary>
 	/// T7: 伝播定義マップとクラス定義の整合性を検証する(定義の腐り検出)
 	/// </summary>

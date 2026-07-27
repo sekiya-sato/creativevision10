@@ -280,6 +280,13 @@ public partial class CoreService {
 			}
 			db.Vdu = vdate;
 			_db.Update(item);
+			// マスタのCode/Name変更を参照側のV*列へ伝播する(Master系のみ。Tran系のV*列は伝票の時点名称なので対象外)
+			// vdate は必ず渡す: 自己参照(MasterTokui.Id_Paysakiが自分自身など)で更新元の行自身が伝播対象になり、
+			// 別採番するとクライアントへ返す Vdu とDB上の Vdu がずれて次回保存が楽観排他で弾かれる
+			if (MasterCascadeDb.NeedsCascade(update.ItemType, item, org) && item is IBaseCodeName codeName) {
+				var cascadeCount = new MasterCascadeDb(_db).CascadeFromMaster(update.ItemType, db.Id, codeName.Code, codeName.Name, vdate);
+				_logger.LogInformation("V*列伝播 {ItemType} Id={Id} 更新行数={Count}", update.ItemType.Name, db.Id, cascadeCount);
+			}
 			if (typeof(IDerivedOrigin).IsAssignableFrom(update.ItemType)) {
 				new HandlerDerived(_db).Update(update.ItemType, item, ((BaseDbClass)item).Id);
 			}

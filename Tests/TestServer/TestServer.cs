@@ -1,4 +1,5 @@
 using CodeShare;
+using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvBaseSqlite;
@@ -126,6 +127,64 @@ public class CoreServiceTests {
 		Assert.AreEqual(request.Flag, result.Flag);
 		Assert.AreEqual(typeof(Dictionary<string, string>), result.DataType);
 		Assert.IsFalse(string.IsNullOrWhiteSpace(result.DataMsg ?? ""));
+	}
+
+	/// <summary>
+	/// Phase3: HandleUpdate のV*列伝播フックが gRPC 経路で実際に動作することを確認する
+	/// (名称マスタの改名 → 参照している商品マスタの VBrand が現行名称になる)
+	/// </summary>
+	[TestMethod]
+	public async Task Update_MasterMeishoRename_CascadesToReferencingMasterVColumn() {
+		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		var service = _service ?? throw new AssertFailedException("Service not initialized");
+		db.CreateTable(typeof(MasterMeisho), true, false);
+		db.CreateTable(typeof(MasterShohin), true, false);
+
+		var brand = new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
+		db.Insert(brand);
+		var shohin = new MasterShohin {
+			Code = "0001",
+			Name = "サンプル商品",
+			Id_Brand = brand.Id,
+			VBrand = new CodeNameView { Sid = brand.Id, Cd = "01", Mei = "旧ブランド" },
+			Vdc = 1,
+			Vdu = 1,
+		};
+		db.Insert(shohin);
+
+		// クライアントと同じ手順: DBから取得 → Name変更 → UpdateParam で送信
+		var edit = db.SingleById<MasterMeisho>(brand.Id);
+		edit.Name = "新ブランド";
+		var request = new CvMsg {
+			Flag = CvFlag.Msg201_Op_Execute,
+			Code = 0,
+			DataType = typeof(UpdateParam),
+			DataMsg = Common.SerializeObject(new UpdateParam(typeof(MasterMeisho), Common.SerializeObject(edit)))
+		};
+
+		var result = await service.QueryMsgAsync(request);
+
+		Assert.AreEqual(0, result.Code, $"更新が成功する: {result.Option} {result.DataMsg}");
+		Assert.AreEqual("新ブランド", db.SingleById<MasterMeisho>(brand.Id).Name, "名称マスタ自体が更新される");
+		var after = db.SingleById<MasterShohin>(shohin.Id);
+		Assert.AreEqual("新ブランド", after.VBrand.Mei, "商品マスタのVBrandへ伝播している");
+		Assert.AreEqual("01", after.VBrand.Cd, "VBrand.Cd");
+		Assert.AreEqual(brand.Id, after.VBrand.Sid, "VBrand.Sid");
+
+		// 名称以外の変更では伝播しない(無駄なUPDATEを流さない)
+		var edit2 = db.SingleById<MasterMeisho>(brand.Id);
+		var vduBefore = after.Vdu;
+		edit2.Ryaku = "略称のみ変更";
+		var request2 = new CvMsg {
+			Flag = CvFlag.Msg201_Op_Execute,
+			Code = 0,
+			DataType = typeof(UpdateParam),
+			DataMsg = Common.SerializeObject(new UpdateParam(typeof(MasterMeisho), Common.SerializeObject(edit2)))
+		};
+		var result2 = await service.QueryMsgAsync(request2);
+
+		Assert.AreEqual(0, result2.Code, "略称のみの更新も成功する");
+		Assert.AreEqual(vduBefore, db.SingleById<MasterShohin>(shohin.Id).Vdu, "Code/Name以外の変更では参照側のVduが動かない");
 	}
 
 	[TestMethod]

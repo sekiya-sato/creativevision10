@@ -1,3 +1,29 @@
+## [2026-07-27] 12:45 マスタ更新時のV*列伝播をサーバへ組み込み（Phase3: HandleUpdateフック）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：`.omo/20260727_master_vcolumn_sync_design.md` のPhase3を実施。Phase2で作成した伝播ロジックを、マスタ更新の実経路（CoreServiceのHandleUpdate）から呼び出すようにする。
+### 実施内容
+- `CvServer/Services/HandlerClass.cs`: `HandleUpdate` の `_db.Update(item)` 直後、`CompleteTransaction` の前にV*列伝播フックを追加。マスタ更新と同一トランザクション・同一 `vdate` で `MasterCascadeDb.CascadeFromMaster` を呼ぶ。`HandleInsert`/`HandleBulkInsert`/`HandleDelete`/`HandleDeleteById` は変更していない。
+- `CvDomainLogic/MasterCascadeDb.cs`: 伝播要否の判定を `NeedsCascade(itemType, newItem, orgItem)` として追加。伝播元マスタ4型かつCode/Nameが変化した場合のみtrueを返す。
+- `Tests/TestServer/TestServer.cs`: `CoreServiceTests` にgRPC経路の結合テストを追加。`Msg201_Op_Execute`＋`UpdateParam` で名称マスタを改名し、参照している商品マスタの `VBrand` が現行名称になること、および略称のみの変更では参照側の `Vdu` が動かないことを検証。
+- `Tests/TestServer/MasterCascadeDbTests.cs`: `NeedsCascade` の判定、`HandleUpdate` と同順序を再現した自己参照時の `Vdu` 整合、`vdate` 未指定時の挙動の3件を追加。
+### 技術決定 Why
+- 判定条件をインラインに書かず `NeedsCascade` として切り出した。フックの配線ミス（条件式の誤りで伝播が走らない/常に走る）を単体テストで検出できるようにするため。既存の `ITranSoko` 判定はインラインだが、こちらは条件が3項あり誤りやすい。
+- `CascadeFromMaster` へ `HandleUpdate` の `vdate` をそのまま渡した。請求先が自社（`MasterTokui.Id_Paysaki` が自分自身）のケースでは更新元の行自身が伝播対象になるため、伝播側で別採番するとクライアントへ返す `Vdu` とDB上の値がずれ、同一画面からの次回保存が楽観排他（-9901）で弾かれる。
+- 伝播をトランザクション内に置き、SQLエラーは送出させた。マスタ更新だけが成功してV*列が古いまま残る状態を作らないため（`HandleUpdate` の既存 catch が `AbortTransaction` する）。
+- 実機確認の代替として、既存の `CoreServiceTests` ハーネス（インメモリSQLite＋実 `CoreService`）で gRPC 経路そのものを検証した。加えてフックを一時的に無効化して当該テストのみが失敗することを確認し、テストが空振りしていないことを実証した。
+### 影響範囲
+- マスタ（MasterMeisho/MasterTokui/MasterShain/MasterShiire）の更新時に、参照側22箇所のV*列へ最大22本のUPDATEが追加で流れる。Code/Nameが変わらない更新では1本も流れない。
+- Tran系のV*列は対象外のため、伝票の時点名称は従来どおり保持される（差分なし）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計23 / 成功23 / 失敗0。
+- フック無効化時: 合計23 / 失敗1（`Update_MasterMeishoRename_CascadesToReferencingMasterVColumn` のみ）→ 復旧後に再度全緑を確認。
+
+---
 ## [2026-07-27] 12:25 Master系V*列の変更時同期ロジック新設（Phase2: V*列伝播）
 ### Agent
 - Claude Opus 5 : Anthropic

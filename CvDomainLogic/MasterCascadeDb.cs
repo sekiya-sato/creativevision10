@@ -78,6 +78,22 @@ public class MasterCascadeDb {
 	public static bool IsCascadeSource(Type type) => Array.IndexOf(_sourceTypes, type) >= 0;
 
 	/// <summary>
+	/// 更新前後のエンティティを比較し、V*列の伝播が必要かどうかを判定する。
+	/// 伝播元マスタ以外、Code/Nameのどちらも変わっていない場合は false(無駄なUPDATEを流さない)。
+	/// </summary>
+	/// <param name="itemType">更新対象の型</param>
+	/// <param name="newItem">更新後のエンティティ</param>
+	/// <param name="orgItem">更新前のエンティティ(DBから取得したもの)</param>
+	public static bool NeedsCascade(Type itemType, object? newItem, object? orgItem) {
+		if (!IsCascadeSource(itemType))
+			return false;
+		if (newItem is not IBaseCodeName newCn || orgItem is not IBaseCodeName orgCn)
+			return false;
+		return !string.Equals(newCn.Code, orgCn.Code, StringComparison.Ordinal)
+			|| !string.Equals(newCn.Name, orgCn.Name, StringComparison.Ordinal);
+	}
+
+	/// <summary>
 	/// sourceType/id のマスタが newCode/newName へ変更されたことを参照側のV*列へ伝播する。
 	/// 呼び出し側でトランザクションを開始済みであることを前提とする(マスタ更新と同一トランザクションで実行する)。
 	/// SQLエラーは呼び出し側へ送出する(マスタ更新ごとロールバックさせるため)。
