@@ -196,12 +196,16 @@ public partial class ShiireSlipPrintViewModel : Helpers.BaseViewModel {
 		var jodai = $"cast(ifnull({M}'$.Jodai'),0) as int)";
 
 		// 内側: 伝票ヘッダ + 仕入先/倉庫/自社の住所を結合(明細展開前)。
+		// 名称と住所で取得元が異なるのは意図的な仕様:
+		//   名称(item5/6の仕入先名・item16の倉庫名) … 伝票のV*列(VShiire/VSoko)から取る = 伝票作成時点の名称
+		//   住所・電話・郵便番号            … マスタをJOINして取る = 現行値(伝票側に保持していないため)
+		// Tran系のV*列は改名時に伝播しない監査値であるため、名称は時点値のまま出す。
+		// 詳細は .omo/20260727_master_vcolumn_sync_design.md を参照。
 		var header = $@"
 select h.*,
 	ifnull(si.PostalCode,'') siZip,
 	trim(ifnull(si.Address1,'') || ifnull(si.Address2,'') || ifnull(si.Address3,'')) siAddr,
 	ifnull(si.Tel,'') siTel,
-	ifnull(so.Name,'') soName,
 	ifnull(so.PostalCode,'') soZip,
 	trim(ifnull(so.Address1,'') || ifnull(so.Address2,'') || ifnull(so.Address3,'')) soAddr,
 	ifnull(so.Tel,'') soTel,

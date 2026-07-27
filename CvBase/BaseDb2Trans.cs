@@ -98,6 +98,15 @@ public class TranCalcBase {
 
 /// <summary>
 /// 共通トランザクション（ヘッダ）
+/// <para>
+/// V*列（VShain/VSoko など CodeNameView 型の列）は<b>伝票作成時点のマスタ名称を保持する監査値</b>であり、
+/// マスタが改名されても伝播しない（意図的な仕様）。現行名称が必要な場合は Id_* から参照先マスタをJOINすること。
+/// </para>
+/// <para>
+/// Master系のV*列は逆に<b>常に現行名称へ同期される</b>（CvDomainLogic/MasterCascadeDb がマスタ更新時に伝播）。
+/// つまり「V*列が時点値か現行値か」はテーブル種別（Tran系/Master系）だけで判別できる。
+/// 詳細は .omo/20260727_master_vcolumn_sync_design.md を参照。
+/// </para>
 /// </summary>
 public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	/// <summary>

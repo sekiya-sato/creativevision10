@@ -113,6 +113,12 @@ public partial class BaseDetailClass : ObservableObject {
 }
 /// <summary>
 /// Id、コード、名称のみの短い名称データ
+/// <para>
+/// この型の列（V*列）は参照先マスタの複製であり、意味論はテーブル種別で異なる。
+/// <b>Tran系＝伝票作成時点の名称（伝播しない監査値）／Master系＝常に現行名称（CvDomainLogic/MasterCascadeDb が同期）</b>。
+/// Master系に新しくV*列を追加した場合は MasterCascadeDb.VRules への登録も必須
+/// （未登録は MasterCascadeDbTests の VRules_CoverAllMasterVColumns が検出する）。
+/// </para>
 /// </summary>
 [NoCreate]
 public partial class CodeNameView : ObservableObject {

@@ -1,3 +1,27 @@
+## [2026-07-27] 14:00 V*列の意味論をコード上に明文化（Phase7: 仕様コメント整備）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：`.omo/20260727_master_vcolumn_sync_design.md` のPhase7を実施。「V*列が伝票の時点値かマスタの現行値か」をコードを読むだけで判別できるようにする。実機確認（Phase6）はユーザー側で実施するため、その担当区分も設計書に明記する。
+### 実施内容
+- `CvBase/BaseDb2Trans.cs`: `TranAllHeader` のXMLコメントに、V*列は伝票作成時点の名称を保持する監査値でありマスタ改名時に伝播しないこと、現行名称が必要ならId_*からJOINすること、Master系は逆に常に現行名称へ同期されることを明記。
+- `CvBase/Share/BaseDbDefinition.cs`: `CodeNameView` のXMLコメントに同趣旨を追記。あわせて「Master系にV*列を追加した場合は MasterCascadeDb.VRules への登録も必須（未登録は VRules_CoverAllMasterVColumns が検出する）」を明記。
+- `CvWpfclient/ViewModels/05Shiire/ShiireSlipPrintViewModel.cs`: 内側SQLの直前に、名称はV*列（時点値）・住所はマスタJOIN（現行値）で取得元が異なるのは意図的な仕様であることを明記。未使用だった `soName` エイリアスを削除。
+- `.omo/20260727_master_vcolumn_sync_design.md`: Phase6を「ユーザー側で実施（AI作業対象外）」と明記し、DDLはUpdateDb.versionsで自動適用されること・SysUpdateDbのMemoで結果確認できること・M4（Tran系が伝播しないこと）が最重要であることを追記。Phase7完了とチェックリストの消化状況も反映。
+### 技術決定 Why
+- 方針の記載先を `CodeNameView` にも置いた。V*列を新設する開発者が最初に触る型であり、ここに「VRulesへの登録が必要」と書いておかないと伝播漏れが起きる（テストで検出はされるが、意図を知らずに落ちるとテストが誤りだと判断されかねない）。
+- `ShiireSlipPrintViewModel` の未使用 `soName` は残さず削除した。参照0件を確認済み。「倉庫名も現行値で取れるのに使っていない」という誤読を招き、時点値を使うという意図が伝わらなくなるため。
+- Tran系の変更はXMLコメントのみに留めた。列定義・SQL・入力ViewModel・qfmには一切手を入れていない（方針1のとおり現状維持）。
+### 影響範囲
+- コメントとSQL内の未使用エイリアス削除のみ。動作への影響はない。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計32 / 成功32 / 失敗0。
+- `soName` の参照が0件であることを grep で確認してから削除。
+
+---
 ## [2026-07-27] 13:40 V*列の一括再同期をgRPCと画面に公開（Phase5: Msg047）
 ### Agent
 - Claude Opus 5 : Anthropic
