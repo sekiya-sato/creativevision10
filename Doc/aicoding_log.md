@@ -1,3 +1,24 @@
+## [2026-07-28] 09:48 MainMenuView 気温グラフへの降水量バー追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuView の気温グラフに、視認性を保った降水量の棒グラフを追加する
+### 実施内容
+- `CodeShare/IWeather.cs`、`CvServer/Services/WeatherService.cs`: OpenWeatherMap の3時間降水量を共有DTOへ追加し、未提供時は0 mmとして扱うようにした
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 降水量を予報チャート用データへ引き渡すようにした
+- `CvWpfclient/Views/MainMenuView.xaml(.cs)`: 半透明・幅制限付きの降水量バー、凡例、ホバー時の降水量表示を追加した
+- `CvWpfclient/Resources/UIColors*.xaml`: ライト/ダークテーマ用の降水量バー色を追加した
+### 技術決定 Why
+- 降水量は気温と尺度が異なるため、独立した最大値で棒の高さを正規化し、温度の面・折れ線より背面に描画して温度推移の可読性を維持した
+### 確認
+- `vscmdcodex.bat dotnet build CvServer/CvServer.csproj --no-restore -p:BaseOutputPath=...`: 警告0、エラー0
+- `vscmdcodex.bat dotnet build CvWpfclient/CvWpfclient.csproj --no-restore -p:BaseOutputPath=...`: 警告0、エラー0
+- MainMenuView.xaml と色リソースのXML解析、CRLF、`git diff --check`: 問題なし
+
+---
+
 ## [2026-07-27] 14:02 一覧行移動時の他端末更新検知と再取得案内
 ### Agent
 - GPT-5 : OpenAI

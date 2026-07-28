@@ -13,7 +13,7 @@ namespace CvWpfclient.Views;
 public partial class MainMenuView : Window {
 	private const double ChartLeftMargin = 32;
 	private const double ChartRightMargin = 8;
-	private const double ChartTopMargin = 12;
+	private const double ChartTopMargin = 26;
 	private const int MaxVisibleLabels = 36;
 	private const double MinimumXAxisLabelSpacing = 32;
 	private readonly List<Point> _forecastPlotPoints = [];
@@ -134,6 +134,7 @@ public partial class MainMenuView : Window {
 
 		var lineBrush = GetChartBrush("MainMenuChartLineColor", Color.FromRgb(33, 150, 243));
 		var fillBrush = GetChartBrush("MainMenuChartFillColor", Color.FromArgb(80, 33, 150, 243));
+		var precipitationBrush = GetChartBrush("MainMenuChartPrecipitationBrush", Color.FromRgb(0, 137, 123));
 		var textBrush = GetChartBrush("MainMenuChartTextColor", Colors.Black);
 		var gridBrush = CreateTransparentBrush(textBrush, 0.2);
 		AddYAxis(minTemperature, maxTemperature, textBrush, gridBrush);
@@ -147,6 +148,8 @@ public partial class MainMenuView : Window {
 			_forecastPlotPoints.Add(new Point(x, y));
 			_forecastDataPoints.Add(point);
 		}
+
+		AddPrecipitationBars(chart.Points, precipitationBrush);
 
 		var smoothPoints = CreateSmoothPoints(_forecastPlotPoints);
 		var fillPoints = new PointCollection { new Point(_forecastPlotPoints[0].X, _forecastPlotBottom) };
@@ -177,6 +180,42 @@ public partial class MainMenuView : Window {
 
 		AddXAxisLabels(chart.Points, labelStep, isDense, textBrush);
 		AddHoverVisuals(lineBrush);
+	}
+
+	private void AddPrecipitationBars(IReadOnlyList<ForecastChartPoint> points, Brush precipitationBrush) {
+		var maxPrecipitation = points.Max(point => Math.Max(0, point.PrecipitationMm));
+		if (maxPrecipitation <= 0) {
+			return;
+		}
+
+		var plotHeight = _forecastPlotBottom - _forecastPlotTop;
+		var pointSpacing = points.Count <= 1
+			? _forecastPlotRight - _forecastPlotLeft
+			: (_forecastPlotRight - _forecastPlotLeft) / (points.Count - 1);
+		var barWidth = Math.Clamp(pointSpacing * 0.55, 2, 16);
+		var barBrush = CreateTransparentBrush(precipitationBrush, 0.42);
+		for (var index = 0; index < points.Count; index++) {
+			var precipitationMm = Math.Max(0, points[index].PrecipitationMm);
+			if (precipitationMm <= 0) {
+				continue;
+			}
+
+			var x = points.Count == 1
+				? (_forecastPlotLeft + _forecastPlotRight) / 2
+				: _forecastPlotLeft + ((_forecastPlotRight - _forecastPlotLeft) * index / (points.Count - 1));
+			var height = Math.Max(2, precipitationMm / maxPrecipitation * plotHeight);
+			var bar = new Rectangle {
+				Fill = barBrush,
+				Height = Math.Min(plotHeight, height),
+				IsHitTestVisible = false,
+				RadiusX = 1,
+				RadiusY = 1,
+				Width = barWidth,
+			};
+			Canvas.SetLeft(bar, x - barWidth / 2);
+			Canvas.SetTop(bar, _forecastPlotBottom - bar.Height);
+			ForecastCanvas.Children.Add(bar);
+		}
 	}
 
 	private void AddYAxis(double minTemperature, double maxTemperature, Brush textBrush, Brush gridBrush) {
@@ -292,6 +331,7 @@ public partial class MainMenuView : Window {
 
 		ForecastToolTipTime.Text = forecast.DateTime.ToString("M月d日 H時");
 		ForecastToolTipTemperature.Text = $"気温 {forecast.Temperature:F1}℃";
+		ForecastToolTipPrecipitation.Text = $"降水量 {forecast.PrecipitationMm:F1} mm / 3時間";
 		ForecastToolTip.HorizontalOffset = point.X + 10 + 140 > ForecastCanvas.ActualWidth ? point.X - 150 : point.X + 10;
 		ForecastToolTip.VerticalOffset = point.Y < 56 ? point.Y + 10 : point.Y - 56;
 		ForecastToolTip.IsOpen = true;

@@ -96,10 +96,15 @@ public partial class WeatherService : IWeatherService {
 		var forecasts = new List<HourlyForecast>();
 		foreach (var item in list.EnumerateArray()) {
 			var dt = DateTimeOffset.FromUnixTimeSeconds(item.GetProperty("dt").GetInt64()).LocalDateTime;
+			var precipitationMm = item.TryGetProperty("rain", out var rain)
+				&& rain.TryGetProperty("3h", out var precipitation)
+				? Math.Max(0, precipitation.GetDouble())
+				: 0;
 			forecasts.Add(new HourlyForecast {
 				DateTime = dt,
 				Temperature = item.GetProperty("main").GetProperty("temp").GetDouble(),
-				TimeLabel = dt.ToString("d日H時")
+				TimeLabel = dt.ToString("d日H時"),
+				PrecipitationMm = precipitationMm,
 			});
 		}
 		return forecasts;

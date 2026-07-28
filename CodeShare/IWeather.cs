@@ -87,6 +87,10 @@ public sealed record class HourlyForecast {
 	[DataMember(Order = 3)]
 	public string TimeLabel { get; init; } = string.Empty;
 
+	/// <summary>3時間降水量 (mm)</summary>
+	[DataMember(Order = 4)]
+	public double PrecipitationMm { get; init; }
+
 	// デシリアライザ用のデフォルトコンストラクタ
 	public HourlyForecast() { }
 }

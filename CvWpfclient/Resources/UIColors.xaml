@@ -51,6 +51,8 @@
 		Color="#101010" />
 	<SolidColorBrush x:Key="MainMenuChartTextColor"
 		Color="Black" />
+	<SolidColorBrush x:Key="MainMenuChartPrecipitationBrush"
+		Color="#00897B" />
 	<SolidColorBrush x:Key="NegativeForegroundBrush"
 		Color="#D32F2F" />
 	<SolidColorBrush x:Key="ZeroForegroundBrush"

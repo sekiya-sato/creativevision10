@@ -733,7 +733,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		var minTemperature = Math.Floor(_hourlyForecasts.Min(forecast => forecast.Temperature) / 5) * 5;
 		var maxTemperature = Math.Ceiling(_hourlyForecasts.Max(forecast => forecast.Temperature) / 5) * 5;
 		ForecastChart = new ForecastChartData(
-			_hourlyForecasts.Select(forecast => new ForecastChartPoint(forecast.DateTime, forecast.TimeLabel, forecast.Temperature)).ToArray(),
+			_hourlyForecasts.Select(forecast => new ForecastChartPoint(forecast.DateTime, forecast.TimeLabel, forecast.Temperature, forecast.PrecipitationMm)).ToArray(),
 			minTemperature,
 			maxTemperature);
 	}
@@ -800,4 +800,5 @@ public sealed record ForecastChartData(
 public sealed record ForecastChartPoint(
 	DateTime DateTime,
 	string TimeLabel,
-	double Temperature);
+	double Temperature,
+	double PrecipitationMm);
