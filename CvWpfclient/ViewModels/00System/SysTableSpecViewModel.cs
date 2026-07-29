@@ -183,7 +183,7 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 				property.Name,
 				dataType,
 				length,
-				GetPropertyOldComment(property),
+				GetPropertyDescription(property),
 				string.Empty,
 				"フィールド定義",
 				"0",
@@ -383,25 +383,56 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 	static string GetOldTableName(Type type) =>
 		type.GetCustomAttribute<OldTableCommentAttr>()?.Name ?? string.Empty;
 
-	static string GetPropertyOldComment(PropertyInfo property) {
-		var attr = property.GetCustomAttribute<OldTableCommentAttr>();
+	static string GetPropertyDescription(PropertyInfo property) {
+		var descriptions = new List<string>();
+		var oldComment = GetPropertyAttribute<OldTableCommentAttr>(property)?.Content;
+		if (!string.IsNullOrWhiteSpace(oldComment)) {
+			descriptions.Add(oldComment);
+		}
+
+		var foreignKey = GetPropertyAttribute<ForeignKeyAttribute>(property);
+		if (foreignKey != null) {
+			var conditions = new List<string>();
+			if (!string.IsNullOrWhiteSpace(foreignKey.MeishoKubun)) {
+				conditions.Add($"Kubun={foreignKey.MeishoKubun}");
+			}
+			if (foreignKey.TableName == nameof(MasterTokui)) {
+				conditions.Add($"TenType={foreignKey.TenType}");
+			}
+			if (foreignKey.MeishoListKubunTop != '\0') {
+				conditions.Add($"Kubun先頭={foreignKey.MeishoListKubunTop}");
+			}
+			if (!string.IsNullOrWhiteSpace(foreignKey.AdditionalInfo)) {
+				conditions.Add(foreignKey.AdditionalInfo);
+			}
+
+			var reference = $"参照: {foreignKey.TableName}.{foreignKey.KeyName}";
+			descriptions.Add(conditions.Count == 0
+				? reference
+				: $"{reference} ({string.Join(", ", conditions)})");
+		}
+
+		return string.Join(" / ", descriptions);
+	}
+
+	static TAttribute? GetPropertyAttribute<TAttribute>(PropertyInfo property)
+		where TAttribute : Attribute {
+		var attr = property.GetCustomAttribute<TAttribute>();
 		if (attr != null) {
-			return attr.Content ?? string.Empty;
+			return attr;
 		}
 
 		var declaringType = property.DeclaringType;
-		if (declaringType == null) {
-			return string.Empty;
+		if (declaringType == null || property.Name.Length == 0) {
+			return null;
 		}
 
 		// ObservableProperty attributes are emitted on the generated backing field.
-		var fieldName = property.Name.Length == 0
-			? string.Empty
-			: char.ToLowerInvariant(property.Name[0]) + property.Name[1..];
+		var fieldName = char.ToLowerInvariant(property.Name[0]) + property.Name[1..];
 		var field = declaringType.GetField(
 			fieldName,
 			BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-		return field?.GetCustomAttribute<OldTableCommentAttr>()?.Content ?? string.Empty;
+		return field?.GetCustomAttribute<TAttribute>();
 	}
 
 	static string FormatBool(bool value) => value ? "TRUE" : "FALSE";

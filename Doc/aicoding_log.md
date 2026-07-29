@@ -1,3 +1,20 @@
+## [2026-07-29] 17:36 テーブル定義書へ外部キー説明を追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`SysTableSpecView` のテーブル定義書に `ForeignKeyAttribute` などの属性情報を利用した説明を追加する
+### 実施内容
+- `CvWpfclient/ViewModels/00System/SysTableSpecViewModel.cs`: フィールド説明へ既存の旧DBコメントを残したまま、`ForeignKeyAttribute` の参照先テーブル・キー列・名称区分・店種・名称リスト区分・補足情報を追記する処理を追加。ObservableProperty の生成先フィールドに付与された属性も取得する共通処理に整理した。
+### 技術決定 Why
+- 定義書の説明は既存のCSV項目をそのまま使い、QFMのレイアウトや出力形式を変えずに参照関係を確認可能とした。`ForeignKeyAttribute` を正とすることで、個別のプロパティ名から参照先を推測する処理を増やさない。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvWpfclient\\CvWpfclient.csproj`: 0警告 0エラー
+- `git diff --check` および変更C#ファイルのCRLFを確認
+
+---
+
 ## [2026-07-29] 13:35 商品マスタメンテに展示会/シーズン/素材/原産国の選択を追加
 ### Agent
 - Claude Opus 5 : Anthropic
