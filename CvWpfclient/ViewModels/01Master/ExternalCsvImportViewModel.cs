@@ -486,7 +486,8 @@ public partial class ExternalCsvImportViewModel : Helpers.BaseViewModel {
 			"Id_Material" => "SZI",
 			"Id_Country" => "GEN",
 			"Id_Bumon" => "BMN",
-			"Id_PayMethod" => "PAY",
+			// [ForeignKey(meishoKubun:"KIN")] と各メンテ画面の選択条件に合わせる(旧値 "PAY" では名称マスタを引けずV*列が空になる)
+			"Id_PayMethod" => "KIN",
 			"Id_Col" => "COL",
 			"Id_Siz" => item.GetType().GetProperty("SizeKu")?.GetValue(item)?.ToString() ?? "SIZ",
 			_ => string.Empty

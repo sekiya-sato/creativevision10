@@ -1,3 +1,31 @@
+## [2026-07-29] 10:35 CvWpfclient のV*列処理をMaster系同期方式へ追従
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：コミット `7075e1d`（V*列一括変更 Phase1〜8）までの修正に対し、CvWpfclient 側でずれている V*列処理を洗い出して調整する
+### 実施内容
+- `CvWpfclient/ViewModels/02Yosan/MasterYosanHanbaiMenteViewModel.cs`: Phase1 で新設された `MasterYosanHanbai.VShain`（VRules #22）に未対応だったため、一覧SQLへ `Y.VShain` を追加（未使用の `left join MasterShain` は削除）、`DoSelectShain` で `VShain` をセット、`ShainDisplay` を `Id=…` からV*列のコード＋名称表示へ変更
+- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs` / `Views/01Master/MasterSysKanriMenteView.xaml`: `DoSelectSoko` が `Id_Soko` のみ更新し `VSoko` を放置していたのを是正。表示専用の `StandardSoko` と `LoadStandardSokoAsync`（MasterTokui の追加取得）を廃止し、XAML を `Current.VSoko` 直接バインドへ変更
+- `CvWpfclient/ViewModels/02Yosan/SalesStaffBudgetMasterViewModel.cs`: `MasterYosanHanbai` 一括登録時に `VShain` を設定
+- `CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs`: `MasterYosanBrand` 一括登録時に `VTenpo` / `VBrand` を設定
+- `CvWpfclient/ViewModels/02Yosan/MasterYosanBrandMenteViewModel.cs`: 一覧SQLの `json_object(...)` によるV*列再構成をやめ、物理列 `Y.VTenpo` / `Y.VBrand` を直接読むよう単純化
+- `CvWpfclient/ViewModels/01Master/ExternalCsvImportViewModel.cs`: Phase1 の残課題だった `"Id_PayMethod" => "PAY"` を `"KIN"` に統一
+### 技術決定 Why
+- Master系のV*列は物理列であり「常に現行名称」が不変条件。サーバの伝播（`MasterCascadeDb`）はマスタ改名時にしか走らないため、参照Idを変更する画面と新規登録経路ではクライアントがV*列を同時に埋める必要がある。
+- `BaseMenteViewModel.CreateUpdateParam` はエンティティ全体を送るため、一覧SQLでV*列を選択しないと修正保存時に空値で上書きされる（`MasterYosanHanbai` が該当）。`BaseLightMenteViewModel` 系は `QueryByIdParam` で詳細を再取得するため影響を受けない。
+- V*列の再構成JOINは物理列化前の名残であり、残すと「V*列は信用できない」という誤読と、画面でセットしたV*列が一覧で黙って上書きされる挙動を生むため物理列参照へ寄せた。
+### 影響範囲
+- Tran系は方針どおり無変更（V*列＝伝票時点の名称）。`TranShopPromotion` / `TranTokuiPromotion` はV*列を持たないためJOIN表示のまま。
+- `MasterShohin` の `VTenji` / `VSeason` / `VMaterial` / `VCountry` はメンテ画面に選択手段がなくCSV取込・DB変換でのみ設定される。V*列同期の問題ではないため本作業の対象外（別課題）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 0警告 0エラー
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計33件、成功33件、失敗0件
+- 変更7ファイルのCRLF・UTF-8を確認
+
+---
+
 ## [2026-07-28] 09:48 MainMenuView 気温グラフへの降水量バー追加
 ### Agent
 - GPT-5 : OpenAI

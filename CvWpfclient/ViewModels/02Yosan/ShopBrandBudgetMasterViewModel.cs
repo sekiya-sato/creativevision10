@@ -270,6 +270,9 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 				var record = new MasterYosanBrand {
 					Id_Tenpo = SelectedShopId,
 					Id_Brand = SelectedBrandId,
+					// Master系のV*列は常に現行名称。追加時はサーバの伝播が走らないのでクライアントで埋める
+					VTenpo = new CodeNameView { Sid = SelectedShopId, Cd = SelectedShopCode, Mei = SelectedShopName },
+					VBrand = new CodeNameView { Sid = SelectedBrandId, Cd = SelectedBrandCode, Mei = SelectedBrandName },
 					DenDay = yearMonthStr + dayStr,
 					UriYosan = row.SalesBudget * 1000,
 					ArariYosan = row.GrossProfitBudget * 1000

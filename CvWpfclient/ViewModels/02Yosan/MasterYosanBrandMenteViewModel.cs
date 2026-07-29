@@ -61,6 +61,8 @@ public partial class MasterYosanBrandMenteViewModel : Helpers.BaseMenteViewModel
 
 	protected override CvMsg CreateListMessage() {
 		var query = CreateListQueryParam();
+		// VTenpo/VBrand は Master系のV*列(常に現行名称)。マスタ改名時はサーバの MasterCascadeDb が伝播するため
+		// JOINで組み立て直さず物理列をそのまま読む(旧定義が [ComputedColumn] だった名残)。
 		var sql = @$"
 select
 	Y.Id,
@@ -71,11 +73,9 @@ select
 	Y.DenDay,
 	Y.UriYosan,
 	Y.ArariYosan,
-	json_object('Sid', ifnull(T.Id, 0), 'Cd', ifnull(T.Code, ''), 'Mei', ifnull(T.Name, '')) VTenpo,
-	json_object('Sid', ifnull(B.Id, 0), 'Cd', ifnull(B.Code, ''), 'Mei', ifnull(B.Name, '')) VBrand
+	Y.VTenpo,
+	Y.VBrand
 from MasterYosanBrand Y
-left join MasterTokui T on T.Id = Y.Id_Tenpo
-left join MasterMeisho B on B.Id = Y.Id_Brand
 {query.AddWhereOrder()}
 ";
 		return new CvMsg {

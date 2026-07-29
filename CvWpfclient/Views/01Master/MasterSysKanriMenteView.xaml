@@ -333,8 +333,8 @@
 								Foreground="{DynamicResource MaterialDesignBody}">
 								<TextBlock.Text>
 									<MultiBinding StringFormat="{}{0} {1}">
-										<Binding Path="StandardSoko.Cd" />
-										<Binding Path="StandardSoko.Mei" />
+										<Binding Path="Current.VSoko.Cd" />
+										<Binding Path="Current.VSoko.Mei" />
 									</MultiBinding>
 								</TextBlock.Text>
 							</TextBlock>

@@ -60,17 +60,19 @@ public partial class MasterYosanHanbaiMenteViewModel : Helpers.BaseMenteViewMode
 
 	protected override CvMsg CreateListMessage() {
 		var query = CreateListQueryParam();
+		// VShain は Master系のV*列(常に現行名称)。マスタ改名時はサーバの MasterCascadeDb が伝播するため
+		// MasterShain をJOINせずそのまま読む。ここで選択しないと修正保存時に空値で上書きされる。
 		var sql = @$"
 select
 	Y.Id,
 	Y.Vdc,
 	Y.Vdu,
 	Y.Id_Shain,
+	Y.VShain,
 	Y.DenDay,
 	Y.UriYosan,
 	Y.ArariYosan
 from MasterYosanHanbai Y
-left join MasterShain S on S.Id = Y.Id_Shain
 {query.AddWhereOrder()}
 ";
 		return new CvMsg {
@@ -86,7 +88,14 @@ left join MasterShain S on S.Id = Y.Id_Shain
 
 	protected override void OnCurrentEditChangedCore(MasterYosanHanbai? oldValue, MasterYosanHanbai newValue) {
 		base.OnCurrentEditChangedCore(oldValue, newValue);
-		ShainDisplay = newValue.Id_Shain > 0 ? $"Id={newValue.Id_Shain}" : string.Empty;
+		ShainDisplay = FormatShain(newValue);
+	}
+
+	/// <summary>販売員の表示名。V*列(現行名称)を優先し、未設定の行だけIdを出す</summary>
+	static string FormatShain(MasterYosanHanbai item) {
+		if (item.Id_Shain <= 0) return string.Empty;
+		var text = $"{item.VShain?.Cd ?? string.Empty} {item.VShain?.Mei ?? string.Empty}".Trim();
+		return text.Length > 0 ? text : $"Id={item.Id_Shain}";
 	}
 
 	protected override bool CanUpdate() => CurrentEdit.Id > 0;
@@ -120,7 +129,8 @@ left join MasterShain S on S.Id = Y.Id_Shain
 		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code", startPos: CurrentEdit.Id_Shain);
 		if (shain == null) return;
 		CurrentEdit.Id_Shain = shain.Id;
-		ShainDisplay = $"{shain.Code ?? string.Empty} {shain.Name ?? string.Empty}".Trim();
+		CurrentEdit.VShain = new CodeNameView { Sid = shain.Id, Cd = shain.Code ?? string.Empty, Mei = shain.Name ?? string.Empty };
+		ShainDisplay = FormatShain(CurrentEdit);
 	}
 
 	bool ValidateCurrentEdit() {

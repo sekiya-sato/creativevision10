@@ -251,6 +251,8 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 				var dayStr = row.Day.ToString("00", CultureInfo.InvariantCulture);
 				var record = new MasterYosanHanbai {
 					Id_Shain = SelectedStaffId,
+					// Master系のV*列は常に現行名称。追加時はサーバの伝播が走らないのでクライアントで埋める
+					VShain = new CodeNameView { Sid = SelectedStaffId, Cd = SelectedStaffCode, Mei = SelectedStaffName },
 					DenDay = yearMonthStr + dayStr,
 					UriYosan = row.SalesBudget * 1000,
 					ArariYosan = row.GrossProfitBudget * 1000
