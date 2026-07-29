@@ -1,3 +1,31 @@
+## [2026-07-30] 08:45 商品検索画面のデザインをParamView系へ統一
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views.Sub.SelectShohinView` のデザインスタイルを `CvWpfclient.Views.Sub.RangeParamView` など他のParamViewのスタイルに合わせる
+### 実施内容
+- `CvWpfclient/Views/Sub/SelectShohinView.xaml`: ParamView系の共通レイアウトへ全面的に合わせた。
+  - Window: `FontSize="18"` と `WindowStartupLocation="CenterOwner"` を追加、`Height` を 600 → 680 に拡大
+  - ヘッダー: `ColorZone` を `PackIcon`(DatabaseSearch) + タイトルのみの構成に統一し、ヘッダー内の操作ボタン（一覧表示/選択/閉じる）を削除
+  - パン屑用の `Border`（商品検索・選択 / 説明文）を削除し、ParamView同様に`Card`外の太字案内文（`Message`バインド）へ置換
+  - 検索条件: 画面ローカルの `ConditionLabel` / `ConditionSearchTextBox` / `SearchTextBoxStyle` を廃止し、共通の `FormLabel` / `FormTextBox`（`HintAssist.Hint` 付きOutlined）へ変更。列構成を 150/180/40/180/* に、範囲区切りを「～」→「-」に統一
+  - 選択行（ブランドID・アイテムID）のボタンを 112x34/80x34 → 110x36/80x36 とし、ToolTipを追加
+  - 操作ボタンを`Card`外の `Grid.Row="2"` へ移動し、主ボタン（`CheckCircle`）→ 戻る（`ArrowLeft`, Flat）の順・38px高に統一。モードごとに2組を`Visibility`で切替
+  - 検索条件モード末尾に「条件を指定しない場合、すべての商品が対象になります。」の補足行を追加
+  - 商品一覧モードの`Card`・`DataGrid`定義は従来のまま維持
+### 技術決定 Why
+- ParamView系（`RangeParamView` / `RangeInputParamView` / `ShopHaibunSearchParamView` / `TranPromotionSearchParamView`）に共通する「ColorZone(アイコン+題名) → 太字案内文 → Card(フォーム) → 右下操作ボタン」の構成をそのまま採用し、画面固有スタイルを共通リソース（`FormLabel` / `FormTextBox` / `SelectionResultText`）へ寄せた。
+- ヘッダーの操作ボタンは下部操作ボタンと重複するため削除。`DataGridEnterCommand.TargetButton` が参照する `x:Name="DefaultButton"` は商品一覧モードの「選択」ボタンへ移設した。
+- `IsDefault` は検索条件モードと商品一覧モードの両方に付与。相互排他の`Visibility`により、非表示側は `AccessKeyManager` の対象外となるため競合しない。Escは `BaseWindow.OnPreviewKeyDown` が `ExitCommand` を実行するため従来動作を維持。
+### 確認
+- `dotnet build CvWpfclient\CvWpfclient.csproj`: 0警告 0エラー
+- XAMLのCRLF・UTF-8(BOMなし)、`Grid.Row`/`RowDefinition`（8行）の対応を確認
+- 実行時の目視確認（画面起動）は未実施
+
+---
+
 ## [2026-07-29] 17:36 テーブル定義書へ外部キー説明を追加
 ### Agent
 - GPT-5 : OpenAI

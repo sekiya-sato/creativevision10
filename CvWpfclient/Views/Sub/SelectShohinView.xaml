@@ -3,43 +3,17 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Title}"
-	Width="980" Height="600"
+	Width="980" Height="680"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="18"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterOwner"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:SelectShohinViewModel />
 	</helpers:BaseWindow.DataContext>
 
 	<helpers:BaseWindow.Resources>
-		<Style x:Key="ConditionLabel"
-			TargetType="TextBlock">
-			<Setter Property="Margin" Value="0,0,0,4" />
-			<Setter Property="FontSize" Value="13" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-		</Style>
-
-		<Style x:Key="ConditionSearchTextBox"
-			BasedOn="{StaticResource SearchTextBox}"
-			TargetType="{x:Type TextBox}">
-			<Setter Property="Width" Value="130" />
-			<Setter Property="Height" Value="34" />
-			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-			<Setter Property="helpers:SearchTextBoxAssist.ButtonBackground" Value="{DynamicResource SearchButtonBackgroundBrush}" />
-		</Style>
-
-		<Style x:Key="SearchTextBoxStyle"
-			BasedOn="{StaticResource MaterialDesignTextBox}"
-			TargetType="TextBox">
-			<Setter Property="Height" Value="34" />
-			<Setter Property="Padding" Value="8,0" />
-			<Setter Property="VerticalContentAlignment" Value="Center" />
-			<Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-		</Style>
-
 		<Style x:Key="GridRightTextBlock"
 			TargetType="TextBlock">
 			<Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -47,304 +21,217 @@
 		</Style>
 	</helpers:BaseWindow.Resources>
 
-	<Grid Background="{DynamicResource AppCommonBackgroundBrush}">
+	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
-			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 
+		<!--  Header: ColorZone Toolbar  -->
 		<materialDesign:ColorZone Grid.Row="0"
 			Padding="12,8"
-			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
-			<DockPanel>
-				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-					<Button MinWidth="110"
-						Command="{Binding SearchOrCommitCommand}"
-						Style="{StaticResource ToolCommandButton}"
-						Visibility="{Binding IsSearchMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-						<StackPanel Orientation="Horizontal">
-							<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-								Kind="FormatListBulleted" />
-							<TextBlock Text="{Binding SearchActionText}" />
-						</StackPanel>
-					</Button>
-					<Button x:Name="DefaultButton"
-						MinWidth="96"
-						Command="{Binding DoSelectCommand}"
-						IsDefault="True"
-						Style="{StaticResource ToolCommandButton}"
-						Visibility="{Binding IsResultMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-						<StackPanel Background="DarkGray" Orientation="Horizontal">
-							<materialDesign:PackIcon VerticalAlignment="Center"
-								Kind="Check" />
-							<TextBlock Margin="6" VerticalAlignment="Center"
-								Text="選択" />
-						</StackPanel>
-					</Button>
-				</StackPanel>
-
-				<StackPanel Orientation="Horizontal">
-					<Button Margin="0,0,8,0"
-						Command="{Binding ExitCommand}"
-						IsCancel="True"
-						Style="{StaticResource ToolCommandButton}"
-						ToolTip="閉じる">
-						<materialDesign:PackIcon Kind="ArrowLeft" />
-					</Button>
-					<TextBlock VerticalAlignment="Center"
-						FontSize="20" FontWeight="SemiBold"
-						Text="{Binding Title}" />
-					<TextBlock Margin="24,0,0,0" VerticalAlignment="Center"
-						FontSize="14" Opacity="0.75"
-						Text="{Binding Message}" />
-				</StackPanel>
-			</DockPanel>
+			materialDesign:ElevationAssist.Elevation="Dp4" ClipToBounds="True" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="28" Height="28"
+					VerticalAlignment="Center"
+					Kind="DatabaseSearch" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold"
+					Text="{Binding Title}" />
+			</StackPanel>
 		</materialDesign:ColorZone>
 
-		<Border Grid.Row="1"
-			Padding="12,6"
-			Background="{DynamicResource MaterialDesignToolBarBackground}">
-			<DockPanel>
-				<TextBlock VerticalAlignment="Center"
-					DockPanel.Dock="Right"
-					Foreground="{DynamicResource MaterialDesignBodyLight}"
-					Text="{Binding Count, StringFormat={}候補: {0:N0}}"
-					Visibility="{Binding IsResultMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
-				<StackPanel Orientation="Horizontal">
-					<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
-						Text="商品検索・選択" />
-					<TextBlock Margin="16,0,0,0"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"
-						Text="検索条件を入力し、一覧から商品を選択します" />
-				</StackPanel>
-			</DockPanel>
-		</Border>
+		<!--  Main Content  -->
+		<Grid Grid.Row="1"
+			Margin="16">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
 
-		<Grid Grid.Row="2"
-			Margin="12">
-			<materialDesign:Card Padding="18"
+			<TextBlock Grid.Row="0"
+				Margin="0,0,0,8"
+				FontSize="18" FontWeight="Bold"
+				Foreground="{DynamicResource MaterialDesignBody}"
+				Text="{Binding Message}"
+				TextWrapping="Wrap" />
+
+			<!--  検索条件  -->
+			<materialDesign:Card Grid.Row="1"
+				Padding="12,12,12,0"
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8"
 				Visibility="{Binding IsSearchMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-				<Grid>
+				<Grid Margin="2">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
-						<RowDefinition Height="*" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="150" />
+						<ColumnDefinition Width="180" />
+						<ColumnDefinition Width="40" />
+						<ColumnDefinition Width="180" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
 
-					<TextBlock Grid.Row="0"
-						Margin="0,0,0,16"
-						FontSize="18" FontWeight="SemiBold"
-						Foreground="{DynamicResource MaterialDesignBody}"
-						Text="検索条件" />
+					<TextBlock Grid.Row="0" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="商品Id" />
+					<TextBox Grid.Row="0" Grid.Column="1"
+						HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="商品Id (開始)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding ShohinIdFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Grid.Row="0" Grid.Column="2"
+						HorizontalAlignment="Center"
+						Style="{StaticResource FormLabel}"
+						Text="-" />
+					<TextBox Grid.Row="0" Grid.Column="3"
+						HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="商品Id (終了)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding ShohinIdTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-					<ScrollViewer Grid.Row="1"
-						HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-						<Grid>
-							<Grid.RowDefinitions>
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-							</Grid.RowDefinitions>
-							<Grid.ColumnDefinitions>
-								<ColumnDefinition Width="150" />
-								<ColumnDefinition Width="*" />
-							</Grid.ColumnDefinitions>
+					<TextBlock Grid.Row="1" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="商品CD" />
+					<TextBox Grid.Row="1" Grid.Column="1"
+						VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="商品CD (開始)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding ShohinCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Grid.Row="1" Grid.Column="2"
+						HorizontalAlignment="Center"
+						Style="{StaticResource FormLabel}"
+						Text="-" />
+					<TextBox Grid.Row="1" Grid.Column="3"
+						VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="商品CD (終了)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding ShohinCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-							<TextBlock Grid.Row="0" Grid.Column="0"
-								VerticalAlignment="Center"
-								Style="{StaticResource ConditionLabel}"
-								Text="商品Id" />
-							<Grid Grid.Row="0" Grid.Column="1"
-								Margin="0,0,0,12" HorizontalAlignment="Left">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="140" />
-									<ColumnDefinition Width="46" />
-									<ColumnDefinition Width="140" />
-								</Grid.ColumnDefinitions>
-								<TextBox Grid.Column="0"
-									HorizontalContentAlignment="Right"
-									Style="{StaticResource SearchTextBoxStyle}"
-									Text="{Binding ShohinIdFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-								<TextBlock Grid.Column="1"
-									HorizontalAlignment="Center" VerticalAlignment="Center"
-									FontSize="16" Text="～" TextAlignment="Center" />
-								<TextBox Grid.Column="2"
-									HorizontalContentAlignment="Right"
-									Style="{StaticResource SearchTextBoxStyle}"
-									Text="{Binding ShohinIdTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-							</Grid>
-
-							<TextBlock Grid.Row="1" Grid.Column="0"
-								VerticalAlignment="Center"
-								Style="{StaticResource ConditionLabel}"
-								Text="商品CD" />
-							<Grid Grid.Row="1" Grid.Column="1"
-								Margin="0,0,0,12" HorizontalAlignment="Left">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="180" />
-									<ColumnDefinition Width="46" />
-									<ColumnDefinition Width="180" />
-								</Grid.ColumnDefinitions>
-								<TextBox Grid.Column="0"
-									Style="{StaticResource SearchTextBoxStyle}"
-									Text="{Binding ShohinCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-								<TextBlock Grid.Column="1"
-									HorizontalAlignment="Center" VerticalAlignment="Center"
-									FontSize="16" Text="～" TextAlignment="Center" />
-								<TextBox Grid.Column="2"
-									Style="{StaticResource SearchTextBoxStyle}"
-									Text="{Binding ShohinCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-							</Grid>
-
-							<TextBlock Grid.Row="2" Grid.Column="0"
-								VerticalAlignment="Center"
-								Style="{StaticResource ConditionLabel}"
-								Text="ブランドID" />
-							<DockPanel Grid.Row="2" Grid.Column="1"
-								Margin="0,0,0,12"
-								LastChildFill="True">
-								<Button Width="112" Height="34"
-									Command="{Binding SelectBrandIdsCommand}"
-									DockPanel.Dock="Left"
-									Style="{StaticResource MaterialDesignRaisedButton}">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon VerticalAlignment="Center"
-											Kind="CheckboxMultipleMarkedOutline" />
-										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-											Text="選択" />
-									</StackPanel>
-								</Button>
-								<Button Width="80" Height="34"
-									Margin="8,0,0,0"
-									Command="{Binding ClearBrandIdsCommand}"
-									Content="解除" DockPanel.Dock="Right"
-									Style="{StaticResource MaterialDesignFlatButton}" />
-								<TextBlock Style="{StaticResource SelectionResultText}"
+					<TextBlock Grid.Row="2" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="ブランドID" />
+					<DockPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4"
+						Margin="0,4">
+						<Button Width="110" Height="36"
+							Command="{Binding SelectBrandIdsCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MaterialDesignRaisedButton}"
+							ToolTip="ブランドIDを選択">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearBrandIdsCommand}"
+							Content="解除" DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							ToolTip="ブランドIDの選択を解除" />
+						<TextBlock Style="{StaticResource SelectionResultText}"
+							Text="{Binding BrandIdsText}"
+							ToolTipService.InitialShowDelay="300">
+							<TextBlock.ToolTip>
+								<TextBlock MaxWidth="600"
 									Text="{Binding BrandIdsText}"
-									ToolTipService.InitialShowDelay="300">
-									<TextBlock.ToolTip>
-										<TextBlock MaxWidth="600"
-											Text="{Binding BrandIdsText}"
-											TextWrapping="Wrap" />
-									</TextBlock.ToolTip>
-								</TextBlock>
-							</DockPanel>
-
-							<TextBlock Grid.Row="3" Grid.Column="0"
-								VerticalAlignment="Center"
-								Style="{StaticResource ConditionLabel}"
-								Text="アイテムID" />
-							<DockPanel Grid.Row="3" Grid.Column="1"
-								Margin="0,0,0,12"
-								LastChildFill="True">
-								<Button Width="112" Height="34"
-									Command="{Binding SelectItemIdsCommand}"
-									DockPanel.Dock="Left"
-									Style="{StaticResource MaterialDesignRaisedButton}">
-									<StackPanel Orientation="Horizontal">
-										<materialDesign:PackIcon VerticalAlignment="Center"
-											Kind="CheckboxMultipleMarkedOutline" />
-										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-											Text="選択" />
-									</StackPanel>
-								</Button>
-								<Button Width="80" Height="34"
-									Margin="8,0,0,0"
-									Command="{Binding ClearItemIdsCommand}"
-									Content="解除" DockPanel.Dock="Right"
-									Style="{StaticResource MaterialDesignFlatButton}" />
-								<TextBlock Style="{StaticResource SelectionResultText}"
-									Text="{Binding ItemIdsText}"
-									ToolTipService.InitialShowDelay="300">
-									<TextBlock.ToolTip>
-										<TextBlock MaxWidth="600"
-											Text="{Binding ItemIdsText}"
-											TextWrapping="Wrap" />
-									</TextBlock.ToolTip>
-								</TextBlock>
-							</DockPanel>
-
-							<TextBlock Grid.Row="4" Grid.Column="0"
-								VerticalAlignment="Center"
-								Style="{StaticResource ConditionLabel}"
-								Text="商品名（部分一致）" />
-							<TextBox Grid.Row="4" Grid.Column="1"
-								Margin="0,0,0,12"
-								Style="{StaticResource SearchTextBoxStyle}"
-								Text="{Binding ShohinName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-							<TextBlock Grid.Row="5" Grid.Column="0"
-								VerticalAlignment="Center"
-								Style="{StaticResource ConditionLabel}"
-								Text="JAN（部分一致）" />
-							<TextBox Grid.Row="5" Grid.Column="1"
-								Margin="0,0,0,12"
-								Style="{StaticResource SearchTextBoxStyle}"
-								Text="{Binding Jan, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-							<TextBlock Grid.Row="6" Grid.Column="0"
-								VerticalAlignment="Center"
-								Style="{StaticResource ConditionLabel}"
-								Text="件数" />
-							<Grid Grid.Row="6" Grid.Column="1"
-								HorizontalAlignment="Left">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="140" />
-									<ColumnDefinition Width="Auto" />
-								</Grid.ColumnDefinitions>
-								<TextBox Grid.Column="0"
-									HorizontalContentAlignment="Right"
-									Style="{StaticResource SearchTextBoxStyle}"
-									Text="{Binding MaxCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-								<TextBlock Grid.Column="1"
-									Margin="8,0,0,0" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBodyLight}"
-									Text="(空白:全件取得)" />
-							</Grid>
-						</Grid>
-					</ScrollViewer>
-
-					<DockPanel Grid.Row="2"
-						Margin="0,18,0,0">
-						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-							<Button MinWidth="104"
-								Margin="0,0,8,0"
-								Command="{Binding ExitCommand}"
-								Style="{StaticResource MaterialDesignOutlinedButton}">
-								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-										Kind="ArrowLeft" />
-									<TextBlock Text="戻る" />
-								</StackPanel>
-							</Button>
-							<Button MinWidth="128"
-								Command="{Binding SearchOrCommitCommand}"
-								Style="{StaticResource MaterialDesignRaisedButton}">
-								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-										Kind="FormatListBulleted" />
-									<TextBlock Text="{Binding SearchActionText}" />
-								</StackPanel>
-							</Button>
-						</StackPanel>
+									TextWrapping="Wrap" />
+							</TextBlock.ToolTip>
+						</TextBlock>
 					</DockPanel>
+
+					<TextBlock Grid.Row="3" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="アイテムID" />
+					<DockPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4"
+						Margin="0,4">
+						<Button Width="110" Height="36"
+							Command="{Binding SelectItemIdsCommand}"
+							DockPanel.Dock="Left"
+							Style="{StaticResource MaterialDesignRaisedButton}"
+							ToolTip="アイテムIDを選択">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CheckboxMultipleMarkedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="選択" />
+							</StackPanel>
+						</Button>
+						<Button Width="80" Height="36"
+							Margin="8,0,0,0"
+							Command="{Binding ClearItemIdsCommand}"
+							Content="解除" DockPanel.Dock="Right"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							ToolTip="アイテムIDの選択を解除" />
+						<TextBlock Style="{StaticResource SelectionResultText}"
+							Text="{Binding ItemIdsText}"
+							ToolTipService.InitialShowDelay="300">
+							<TextBlock.ToolTip>
+								<TextBlock MaxWidth="600"
+									Text="{Binding ItemIdsText}"
+									TextWrapping="Wrap" />
+							</TextBlock.ToolTip>
+						</TextBlock>
+					</DockPanel>
+
+					<TextBlock Grid.Row="4" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="商品名" />
+					<TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4"
+						VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="商品名 (部分一致)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding ShohinName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+					<TextBlock Grid.Row="5" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="JAN" />
+					<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4"
+						VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="JAN (部分一致)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding Jan, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+					<TextBlock Grid.Row="6" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="件数" />
+					<TextBox Grid.Row="6" Grid.Column="1"
+						HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="件数"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding MaxCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="3"
+						Margin="8,0,0,0" VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="(空白:全件取得)" />
+
+					<TextBlock Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="5"
+						Margin="0,8,0,0"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="条件を指定しない場合、すべての商品が対象になります。" TextWrapping="Wrap" />
 				</Grid>
 			</materialDesign:Card>
 
-			<materialDesign:Card Padding="0"
+			<!--  商品一覧  -->
+			<materialDesign:Card Grid.Row="1"
+				Padding="0"
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8"
 				Visibility="{Binding IsResultMode, Converter={StaticResource BooleanToVisibilityConverter}}">
 				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="*" />
-						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
 
 					<Border Grid.Row="0"
@@ -406,35 +293,73 @@
 								Header="アイテム" />
 						</DataGrid.Columns>
 					</DataGrid>
-
-					<DockPanel Grid.Row="2"
-						Margin="12"
-						LastChildFill="False">
-						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-							<Button MinWidth="104"
-								Margin="0,0,8,0"
-								Command="{Binding BackCommand}"
-								Style="{StaticResource MaterialDesignOutlinedButton}">
-								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
-										Kind="ArrowLeft" />
-									<TextBlock Text="戻る" />
-								</StackPanel>
-							</Button>
-							<Button MinWidth="104"
-								Command="{Binding DoSelectCommand}"
-								Style="{StaticResource MaterialDesignRaisedButton}">
-								<StackPanel Background="DarkGray" Orientation="Horizontal">
-									<materialDesign:PackIcon VerticalAlignment="Center"
-										Kind="Check" />
-									<TextBlock Margin="6" VerticalAlignment="Center"
-										Text="選択" />
-								</StackPanel>
-							</Button>
-						</StackPanel>
-					</DockPanel>
 				</Grid>
 			</materialDesign:Card>
 		</Grid>
+
+		<!--  検索条件モードの操作ボタン  -->
+		<StackPanel Grid.Row="2"
+			Margin="0,0,16,16" HorizontalAlignment="Right"
+			Orientation="Horizontal"
+			Visibility="{Binding IsSearchMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+			<Button Width="150" Height="38"
+				Margin="0,0,8,0"
+				Command="{Binding SearchOrCommitCommand}"
+				IsDefault="True"
+				Style="{StaticResource MaterialDesignRaisedButton}"
+				ToolTip="{Binding SearchActionText, StringFormat={}{0} (Enter)}">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon VerticalAlignment="Center"
+						Kind="CheckCircle" />
+					<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+						FontSize="16"
+						Text="{Binding SearchActionText}" />
+				</StackPanel>
+			</Button>
+			<Button Width="140" Height="38"
+				Command="{Binding ExitCommand}"
+				IsCancel="True"
+				Style="{StaticResource MaterialDesignFlatButton}"
+				ToolTip="戻る (Esc)">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon VerticalAlignment="Center"
+						Kind="ArrowLeft" />
+					<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+						FontSize="16" Text="戻る" />
+				</StackPanel>
+			</Button>
+		</StackPanel>
+
+		<!--  商品一覧モードの操作ボタン  -->
+		<StackPanel Grid.Row="2"
+			Margin="0,0,16,16" HorizontalAlignment="Right"
+			Orientation="Horizontal"
+			Visibility="{Binding IsResultMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+			<Button x:Name="DefaultButton"
+				Width="150" Height="38"
+				Margin="0,0,8,0"
+				Command="{Binding DoSelectCommand}"
+				IsDefault="True"
+				Style="{StaticResource MaterialDesignRaisedButton}"
+				ToolTip="選択 (Enter)">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon VerticalAlignment="Center"
+						Kind="CheckCircle" />
+					<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+						FontSize="16" Text="選択" />
+				</StackPanel>
+			</Button>
+			<Button Width="140" Height="38"
+				Command="{Binding BackCommand}"
+				Style="{StaticResource MaterialDesignFlatButton}"
+				ToolTip="検索条件へ戻る">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon VerticalAlignment="Center"
+						Kind="ArrowLeft" />
+					<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+						FontSize="16" Text="戻る" />
+				</StackPanel>
+			</Button>
+		</StackPanel>
 	</Grid>
 </helpers:BaseWindow>
