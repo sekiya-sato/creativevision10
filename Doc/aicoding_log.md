@@ -1,3 +1,25 @@
+## [2026-07-29] 13:35 商品マスタメンテに展示会/シーズン/素材/原産国の選択を追加
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：商品マスタメンテ画面で `MasterShohin` の `VTenji` / `VSeason` / `VMaterial` / `VCountry` を一覧選択で変更した場合に `MasterShohin` へ反映されるようにする
+### 実施内容
+- `CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`: `DoSelectTenji`(TNJ) / `DoSelectSeason`(SZN) / `DoSelectMaterial`(SZI) / `DoSelectCountry`(GEN) を追加。既存の `DoSelectBrand` / `DoSelectItem` / `DoSelectMaker` と同型で `Id_*` と `V*` を対で更新する
+- `CvWpfclient/Views/01Master/MasterShohinMenteView.xaml`: メーカーの直後に展示会・シーズン・素材・原産国の4行（検索TextBox＋コード名称表示）を追加。詳細タブのGridに `RowDefinition` を2行追加し、元上代以降の `Grid.Row` を 7〜16 → 11〜20 へ繰り下げた
+### 技術決定 Why
+- 選択区分は `[ForeignKey(meishoKubun:…)]` 属性（TNJ/SZN/SZI/GEN）を正とし、`ExternalCsvImportViewModel.ResolveMeishoKubun` の対応と一致させた。
+- これまで4項目は一覧・バーコード印刷・在庫照会・配分の各画面で表示されるのにメンテ画面から変更できず、CSV取込とDB変換でしか設定できなかった。参照Idを変更する経路ではサーバの伝播が走らないため、他の選択コマンドと同様に `Id_*` と `V*` を同時に更新する。
+### 影響範囲
+- `MasterShohinMenteView` 詳細タブのみ。`BaseCodeNameLightMenteViewModel` は `QueryByIdParam` で詳細を再取得するため、軽量一覧に含まれないV*列も正しく往復する。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 0警告 0エラー
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計33件、成功33件、失敗0件
+- XAMLの `Grid.Row` 連番（0〜20）と `RowDefinition` 21行の対応、CRLF・UTF-8(BOM)を確認
+
+---
+
 ## [2026-07-29] 10:35 CvWpfclient のV*列処理をMaster系同期方式へ追従
 ### Agent
 - Claude Opus 5 : Anthropic

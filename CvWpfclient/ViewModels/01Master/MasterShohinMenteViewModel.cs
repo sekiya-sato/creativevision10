@@ -277,6 +277,38 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	}
 
 	[RelayCommand]
+	void DoSelectTenji() {
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='TNJ'", "Code", startPos: CurrentEdit.Id_Tenji);
+		if (meisho == null) return;
+		CurrentEdit.Id_Tenji = meisho.Id;
+		CurrentEdit.VTenji = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
+	}
+
+	[RelayCommand]
+	void DoSelectSeason() {
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='SZN'", "Code", startPos: CurrentEdit.Id_Season);
+		if (meisho == null) return;
+		CurrentEdit.Id_Season = meisho.Id;
+		CurrentEdit.VSeason = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
+	}
+
+	[RelayCommand]
+	void DoSelectMaterial() {
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='SZI'", "Code", startPos: CurrentEdit.Id_Material);
+		if (meisho == null) return;
+		CurrentEdit.Id_Material = meisho.Id;
+		CurrentEdit.VMaterial = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
+	}
+
+	[RelayCommand]
+	void DoSelectCountry() {
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='GEN'", "Code", startPos: CurrentEdit.Id_Country);
+		if (meisho == null) return;
+		CurrentEdit.Id_Country = meisho.Id;
+		CurrentEdit.VCountry = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
+	}
+
+	[RelayCommand]
 	void DoSelectSizeKu() {
 		var selWin = new Views.Sub.SelectKubunView();
 		var vm = selWin.DataContext as Sub.SelectKubunViewModel;
