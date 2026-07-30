@@ -159,14 +159,13 @@ public partial class HhtProcess {
 
 		var builder = new StringBuilder(s.Length);
 		var currentBytes = 0;
-		foreach (var ch in s) {
-			var next = ch.ToString();
-			var charByteCount = SjisEncoding.GetByteCount(next);
+		for (var index = 0; index < s.Length; index++) {
+			var charByteCount = SjisEncoding.GetByteCount(s.AsSpan(index, 1));
 			if (currentBytes + charByteCount > byteWidth) {
 				break;
 			}
 
-			builder.Append(ch);
+			builder.Append(s[index]);
 			currentBytes += charByteCount;
 		}
 

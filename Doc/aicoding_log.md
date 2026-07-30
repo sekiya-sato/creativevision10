@@ -1,3 +1,22 @@
+## [2026-07-30] 16:39 Span<T> による文字列処理の一時割り当て削減
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ソリューション全体を静的監査し、効果が見込める A・B の `Span<T>` 候補を実装する
+### 実施内容
+- `CvDomainLogic/HhtProcess.cs`: Shift_JIS 固定長出力の幅計算で、文字ごとの `ToString()` を廃止し、`ReadOnlySpan<char>` を `Encoding.GetByteCount` に渡すよう変更した。
+- `CvServer/Services/SearchByPostalCodeService.cs`、`CvWpfclient/Helpers/PostalAddressSearchHelper.cs`: 郵便番号正規化を `stackalloc char[7]` による局所処理へ変更し、LINQ の中間列挙・配列を削減した。
+- `CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs`、`CvWpfclient/ViewModels/02Yosan/SalesStaffBudgetMasterViewModel.cs`: 日付文字列の2桁日付解析を `Substring` から `AsSpan` へ変更した。
+### 技術決定 Why
+- `Span<T>` は async・DTO・フィールドへ持ち出さず、出力仕様を変えない同期的な局所処理に限定した。郵便番号はクライアント・サーバーの正規化規則を同時に維持し、8桁目を検出した時点で従来どおり無効入力とする。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build creativevision10.slnx`: 0警告 0エラー
+- `git diff --check`、変更C#ファイルのCRLFを確認
+
+---
+
 ## [2026-07-30] 08:45 商品検索画面のデザインをParamView系へ統一
 ### Agent
 - Claude Opus 5 : Anthropic

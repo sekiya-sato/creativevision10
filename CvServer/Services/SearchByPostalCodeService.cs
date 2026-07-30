@@ -128,12 +128,16 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 	}
 
 	private static string? NormalizePostalCode(string postalCode) {
-		var normalized = new string((postalCode ?? string.Empty)
-			.Select(ToAsciiDigit)
-			.Where(digit => digit.HasValue)
-			.Select(digit => digit.GetValueOrDefault())
-			.ToArray());
-		return normalized.Length is >= MinPostalCodeSearchLength and <= MaxPostalCodeSearchLength ? normalized : null;
+		Span<char> normalized = stackalloc char[MaxPostalCodeSearchLength];
+		var length = 0;
+		foreach (var value in postalCode ?? string.Empty) {
+			var digit = ToAsciiDigit(value);
+			if (!digit.HasValue) continue;
+			if (length == MaxPostalCodeSearchLength) return null;
+			normalized[length++] = digit.GetValueOrDefault();
+		}
+
+		return length >= MinPostalCodeSearchLength ? new string(normalized[..length]) : null;
 	}
 
 	private static char? ToAsciiDigit(char value) {

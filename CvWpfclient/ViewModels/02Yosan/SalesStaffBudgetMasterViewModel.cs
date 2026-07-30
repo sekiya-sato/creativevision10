@@ -187,7 +187,7 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 			long grossProfitTotal = 0;
 			foreach (var item in list) {
 				if (item is not MasterYosanHanbai yosan) continue;
-				if (yosan.DenDay.Length < 8 || !int.TryParse(yosan.DenDay.Substring(6, 2), out var day)) continue;
+				if (yosan.DenDay.Length < 8 || !int.TryParse(yosan.DenDay.AsSpan(6, 2), out var day)) continue;
 				var row = DailyBudgets.FirstOrDefault(r => r.Day == day);
 				if (row == null) continue;
 				row.SalesBudget = yosan.UriYosan / 1000;

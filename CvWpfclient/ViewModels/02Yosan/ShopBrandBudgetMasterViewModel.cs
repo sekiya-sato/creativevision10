@@ -199,7 +199,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			long grossProfitTotal = 0;
 			foreach (var item in list) {
 				if (item is not MasterYosanBrand yosan) continue;
-				if (!int.TryParse(yosan.DenDay.Substring(6, 2), out var day)) continue;
+				if (!int.TryParse(yosan.DenDay.AsSpan(6, 2), out var day)) continue;
 				var row = DailyBudgets.FirstOrDefault(r => r.Day == day);
 				if (row == null) continue;
 				row.SalesBudget = yosan.UriYosan / 1000;
