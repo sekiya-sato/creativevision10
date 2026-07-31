@@ -130,7 +130,7 @@ public partial class MenuData : ObservableObject {
 			new("仕入先元帳", typeof(Views._05Shiire.ShiireLedgerView), addInfo:"仕入先別に繰越残高･仕入･支払･差引残高を日付順に印刷"),
 			new("買掛金管理表", typeof(Views._05Shiire.KaikakeBalanceReportView), addInfo:"仕入先別に前月残･当月仕入･当月支払･当月残を印刷(締め処理の集計結果)"),
 			new("支払一覧表", typeof(Views._05Shiire.ShiharaiListReportView), addInfo:"支払日単位に仕入先別の支払額･残高を一覧印刷"),
-			new("月別支払予定表", typeof(Views._05Shiire.MonthlyShiharaiYoteiTableView), addInfo:"準備中"),
+			new("月別支払予定表", typeof(Views._05Shiire.MonthlyShiharaiYoteiTableView), addInfo:"仕入先の支払条件から支払予定日別の予定額を印刷"),
 			new("支払残高明細書", typeof(Views._05Shiire.ShiharaiBalanceDetailView), addInfo:"仕入先別に支払ヘッダ＋対象期間の仕入･支払明細を単票印刷"),
 		])),
 		new("■ 売上", new([
@@ -147,7 +147,7 @@ public partial class MenuData : ObservableObject {
 			new("入金消込", typeof(Views._06Uriage.NyukinMatchingView), addInfo:"準備中"),
 			new("得意先元帳", typeof(Views._06Uriage.TokuiLedgerView), addInfo:"得意先別に繰越残高･売上･入金･差引残高を日付順に印刷"),
 			new("売掛金管理表", typeof(Views._06Uriage.UrikakeBalanceReportView), addInfo:"得意先別に前月残･当月売上･当月入金･当月残を印刷(締め処理の集計結果)"),
-			new("月別入金予定表", typeof(Views._06Uriage.MonthlyNyukinYoteiTableView), addInfo:"準備中"),
+			new("月別入金予定表", typeof(Views._06Uriage.MonthlyNyukinYoteiTableView), addInfo:"得意先の回収条件から入金予定日別の予定額を印刷"),
 			new("請求一覧表", typeof(Views._06Uriage.SeikyuListReportView), addInfo:"請求日単位に得意先別の請求額･残高を一覧印刷"),
 			new("請求書印刷", typeof(Views._06Uriage.SeikyuBalanceDetailView), addInfo:"得意先別に請求ヘッダ＋対象期間の売上･入金明細を単票印刷"),
 			new("得意先別売上推移表", typeof(Views._06Uriage.TokuiTrendReportView), addInfo:"得意先×年月の数量･金額･累計･前年同月比を印刷"),
