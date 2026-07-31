@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1"/>
+			<item id="item2"/>
+			<item id="item3"/>
+			<item id="item4"/>
+			<item id="item5"/>
+			<item id="item6"/>
+			<item id="item7"/>
+			<item id="item8"/>
+			<item id="item9"/>
+			<item id="item10"/>
+			<item id="item11"/>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+		</file>
+	</datadesc>
+	<page orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="Form1" tree="1">
+		<position x="8" y="8" width="156" height="272"/>
+		<region id="Rgn01" direction="0" tree="1">
+			<position x="0" y="10" width="150" height="248"/>
+			<color transparent="1"/>
+			<record id="RecHeader" recordtype="1" tree="1">
+				<position x="0" y="0" width="150" height="4"/>
+				<color base="c8ffc8" transparent="0"/>
+				<border left="1" right="1" top="1" bottom="1"/>
+				<text id="H1" valign="middle">
+					<position x="0" y="0" width="12" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">年月</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H2" valign="middle">
+					<position x="12" y="0" width="11" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">倉庫CD</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H3" valign="middle">
+					<position x="23" y="0" width="27" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">倉庫名</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H4" valign="middle">
+					<position x="50" y="0" width="13" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">前月残</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H5" valign="middle">
+					<position x="63" y="0" width="12" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">入庫数</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H6" valign="middle">
+					<position x="75" y="0" width="12" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">出庫数</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H7" valign="middle">
+					<position x="87" y="0" width="12" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">移動中</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H8" valign="middle">
+					<position x="99" y="0" width="12" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">調整数</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H9" valign="middle">
+					<position x="111" y="0" width="13" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">当月残</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H10" valign="middle">
+					<position x="124" y="0" width="13" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">棚卸数</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H11" valign="middle">
+					<position x="137" y="0" width="13" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">棚卸差異</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+			</record>
+			<record id="RecData" tree="1">
+				<position x="0" y="4" width="150" height="4"/>
+				<color transparent="1"/>
+				<border left="1" right="1" bottom="10"/>
+				<text id="V1">
+					<position x="0" y="0" width="12" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item1"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V2">
+					<position x="12" y="0" width="11" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item2"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V3">
+					<position x="23" y="0" width="27" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item3"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V4" halign="right">
+					<position x="50" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item4"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V5" halign="right">
+					<position x="63" y="0" width="12" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item5"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V6" halign="right">
+					<position x="75" y="0" width="12" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item6"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V7" halign="right">
+					<position x="87" y="0" width="12" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item7"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V8" halign="right">
+					<position x="99" y="0" width="12" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item8"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V9" halign="right">
+					<position x="111" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item9"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V10" halign="right">
+					<position x="124" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item10"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V11" halign="right">
+					<position x="137" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item11"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+			</record>
+		</region>
+		<text id="TxtTitle" valign="middle" halign="center">
+			<position x="41" y="0" width="68" height="7"/>
+			<color base="97f2ff" transparent="0"/>
+			<border bottom="10"/>
+			<data calctype="static">倉庫別受払表</data>
+			<decode datatype="string" format=""/>
+			<font size="120" style="1"/>
+		</text>
+		<text id="TxtDate" valign="middle">
+			<position x="98" y="1" width="40" height="5"/>
+			<color transparent="1"/>
+			<data calctype="date"/>
+			<decode datatype="date" format="&quot;出力日付: &quot;YYYY/MM/DD HH24:MI:SS"/>
+			<font size="90"/>
+		</text>
+		<text id="TxtPage" valign="middle" halign="right">
+			<position x="138" y="1" width="12" height="5"/>
+			<color transparent="1"/>
+			<data calctype="page"/>
+			<decode datatype="number" format="&quot;P.&quot;0999"/>
+			<font size="90"/>
+		</text>
+	</page>
+</printstream>
