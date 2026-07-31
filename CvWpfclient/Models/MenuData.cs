@@ -153,7 +153,7 @@ public partial class MenuData : ObservableObject {
 			new("得意先別売上推移表", typeof(Views._06Uriage.TokuiTrendReportView), addInfo:"得意先×年月の数量･金額･累計･前年同月比を印刷"),
 		])),
 		new("■ 配分", new([
-			new("店舗配分入力", typeof(Views._07Haibun.ShopHaibunInputView), addInfo:"準備中"),
+			new("店舗配分入力", typeof(Views._07Haibun.ShopHaibunInputView), addInfo:"入荷予定･現在庫をSKU×店舗へ振り分けてTranHaibunを作成"),
 			new("受注配分入力", typeof(Views._07Haibun.JuchuHaibunInputView), addInfo:"準備中"),
 			new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中"),
 			new("在庫品配分", typeof(Views._07Haibun.ZaikoHinHaibunView), addInfo:"準備中"),

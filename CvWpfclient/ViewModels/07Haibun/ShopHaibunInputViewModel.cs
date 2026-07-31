@@ -21,8 +21,10 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// 実際の振り分けは商品Id+色+サイズ（SKU）×店舗単位（タブ2）で行い、TranHaibun を作成・修正する。
 /// </summary>
 public partial class ShopHaibunInputViewModel : BaseViewModel {
-	public const int KubunHatsukai = 0;
-	public const int KubunZaiko = 1;
+	// 配分区分は CvBase の EnumHaibun へ集約した（他の配分画面と値が食い違わないようにするため）。
+	// 値そのものは従来と同じ 0 / 1 なので既存データはそのまま読める。
+	public const int KubunHatsukai = (int)EnumHaibun.Hatsukai;
+	public const int KubunZaiko = (int)EnumHaibun.Zaiko;
 
 	/// <summary>
 	/// 発注データ（Tran13Hachu、別名 H）の「済フラグがたっていない＝未済」を表す SQL 条件。
