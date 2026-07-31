@@ -1,17 +1,365 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._06Uriage.NyukinMatchingView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._06Uriage"
-	Title="入金消込"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	Title="{Binding Title}"
+	Width="1440" Height="860"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="14"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:NyukinMatchingViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding SearchCommand}"
+			Gesture="F5" />
+		<KeyBinding Command="{Binding AutoMatchCommand}"
+			Gesture="F6" />
+		<KeyBinding Command="{Binding ExitCommand}"
+			Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
+					Orientation="Horizontal">
+					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+						Text="売上計:" />
+					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+						FontWeight="SemiBold"
+						Text="{Binding DenTotal, StringFormat={}{0:N0}}" />
+					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+						Text="入金計:" />
+					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+						FontWeight="SemiBold"
+						Text="{Binding KinTotal, StringFormat={}{0:N0}}" />
+					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+						Text="未回収残:" />
+					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+						FontWeight="SemiBold"
+						Text="{Binding RemainTotal, StringFormat={}{0:N0}}" />
+					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+						Text="未充当:" />
+					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+						FontWeight="SemiBold"
+						Text="{Binding UnappliedTotal, StringFormat={}{0:N0}}" />
+				</StackPanel>
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="26" Height="26"
+						VerticalAlignment="Center"
+						Kind="CashCheck" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="18" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<Border Grid.Row="1"
+			Margin="12,12,12,0" Padding="12"
+			BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1"
+			CornerRadius="4">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="120" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+
+				<!--  得意先CD  -->
+				<TextBlock Grid.Row="0" Grid.Column="0"
+					Margin="0,4" VerticalAlignment="Center"
+					Text="得意先CD" />
+				<TextBox Grid.Row="0" Grid.Column="1"
+					Width="180" Height="32" Margin="0,4"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					helpers:SearchTextBoxAssist.Command="{Binding SelectToriFromCommand}"
+					BorderThickness="0,0,0,1"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding ToriCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Grid.Row="0" Grid.Column="2"
+					Margin="8,0" VerticalAlignment="Center"
+					Text="～" />
+				<TextBox Grid.Row="0" Grid.Column="3"
+					Width="180" Height="32" Margin="0,4"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					helpers:SearchTextBoxAssist.Command="{Binding SelectToriToCommand}"
+					BorderThickness="0,0,0,1"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding ToriCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+
+				<!--  対象期間  -->
+				<TextBlock Grid.Row="1" Grid.Column="0"
+					Margin="0,4" VerticalAlignment="Center"
+					Text="対象期間" />
+				<TextBox Grid.Row="1" Grid.Column="1"
+					Width="180" Height="32" Margin="0,4"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding DayFromText, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Grid.Row="1" Grid.Column="2"
+					Margin="8,0" VerticalAlignment="Center"
+					Text="～" />
+				<TextBox Grid.Row="1" Grid.Column="3"
+					Width="180" Height="32" Margin="0,4"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding DayToText, UpdateSourceTrigger=PropertyChanged}" />
+
+				<!--  表示条件  -->
+				<TextBlock Grid.Row="2" Grid.Column="0"
+					Margin="0,4" VerticalAlignment="Center"
+					Text="表示条件" />
+				<StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,4"
+					Orientation="Horizontal">
+					<CheckBox Margin="0,4"
+						Content="突合が取れていない行のみ"
+						IsChecked="{Binding IsUnmatchedOnly}"
+						ToolTip="未回収残≠0 / 未充当≠0 の行だけ残す" />
+				</StackPanel>
+
+				<StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,4">
+					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="この画面は突合（消込シミュレーション）のみで、消込結果は保存しません。" TextWrapping="Wrap" />
+					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="保存先のテーブルがスキーマに無いためです（.omo/2026-07-31_kesikomi_design.md 参照）。" TextWrapping="Wrap" />
+					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="返品・値引伝票は金額がマイナスになります（CalcFlag=-1）。自動充当の対象外です。" TextWrapping="Wrap" />
+					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="店舗売上(Tran01Tenuri)は売掛が立たないため含めません。" TextWrapping="Wrap" />
+				</StackPanel>
+
+				<StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4"
+					Margin="0,12,0,0" HorizontalAlignment="Left"
+					Orientation="Horizontal">
+					<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+						Text="取得件数上限" />
+					<TextBox Width="80" Height="32" Margin="0,0,16,0"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding MaxCountText, UpdateSourceTrigger=PropertyChanged}" />
+					<Button Command="{Binding SearchCommand}"
+						IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+						Style="{StaticResource MaterialDesignFlatMidBgButton}"
+						ToolTip="突合 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Magnify" />
+							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+								FontSize="16" Text="突合" />
+						</StackPanel>
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding AutoMatchCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="取引先ごとに古い順で自動充当 (F6)">
+						<TextBlock FontSize="16" Text="自動充当" />
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding ClearMatchCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="充当をクリア">
+						<TextBlock FontSize="16" Text="充当クリア" />
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding ClearConditionsCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="検索条件をクリア">
+						<TextBlock FontSize="16" Text="条件クリア" />
+					</Button>
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<Grid Grid.Row="2"
+			Margin="12">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="6" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<DockPanel Grid.Column="0">
+				<TextBlock DockPanel.Dock="Top"
+					Margin="0,0,0,6"
+					FontSize="16" FontWeight="SemiBold" Text="卸売上（債権）" />
+				<DataGrid AutoGenerateColumns="False"
+					CanUserAddRows="False" CanUserDeleteRows="False"
+					IsReadOnly="True"
+					ItemsSource="{Binding DenRows}"
+					SelectedItem="{Binding SelectedDenRow}"
+					SelectionMode="Single" SelectionUnit="FullRow"
+					VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+					<DataGrid.Columns>
+						<DataGridTextColumn Width="80"
+							Binding="{Binding Id}"
+							Header="伝票No">
+							<DataGridTextColumn.ElementStyle>
+								<Style TargetType="TextBlock">
+									<Setter Property="HorizontalAlignment" Value="Right" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="90"
+							Binding="{Binding KakeDay}"
+							Header="掛計上日">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="90"
+							Binding="{Binding ToriCode}"
+							Header="取引先CD">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="180"
+							Binding="{Binding ToriName}"
+							Header="取引先名">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="90"
+							Binding="{Binding KubunText}"
+							Header="区分">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="90"
+							Binding="{Binding ManualNo}"
+							Header="手入力No">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="110"
+							Binding="{Binding Amount, StringFormat={}{0:N0}}"
+							Header="売上額">
+							<DataGridTextColumn.ElementStyle>
+								<Style TargetType="TextBlock">
+									<Setter Property="HorizontalAlignment" Value="Right" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="110"
+							Binding="{Binding Allocated, StringFormat={}{0:N0}}"
+							Header="充当済">
+							<DataGridTextColumn.ElementStyle>
+								<Style TargetType="TextBlock">
+									<Setter Property="HorizontalAlignment" Value="Right" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="110"
+							Binding="{Binding Remain, StringFormat={}{0:N0}}"
+							Header="未回収残">
+							<DataGridTextColumn.ElementStyle>
+								<Style TargetType="TextBlock">
+									<Setter Property="HorizontalAlignment" Value="Right" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
+					</DataGrid.Columns>
+				</DataGrid>
+			</DockPanel>
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+				Background="{DynamicResource MaterialDesignDivider}" />
+			<DockPanel Grid.Column="2">
+				<TextBlock DockPanel.Dock="Top"
+					Margin="0,0,0,6"
+					FontSize="16" FontWeight="SemiBold" Text="入金" />
+				<DataGrid AutoGenerateColumns="False"
+					CanUserAddRows="False" CanUserDeleteRows="False"
+					IsReadOnly="True"
+					ItemsSource="{Binding KinRows}"
+					SelectedItem="{Binding SelectedKinRow}"
+					SelectionMode="Single" SelectionUnit="FullRow"
+					VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+					<DataGrid.Columns>
+						<DataGridTextColumn Width="80"
+							Binding="{Binding Id}"
+							Header="伝票No">
+							<DataGridTextColumn.ElementStyle>
+								<Style TargetType="TextBlock">
+									<Setter Property="HorizontalAlignment" Value="Right" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="90"
+							Binding="{Binding DenDay}"
+							Header="計上日">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="90"
+							Binding="{Binding ToriCode}"
+							Header="取引先CD">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="180"
+							Binding="{Binding ToriName}"
+							Header="取引先名">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="90"
+							Binding="{Binding ManualNo}"
+							Header="手入力No">
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="110"
+							Binding="{Binding Amount, StringFormat={}{0:N0}}"
+							Header="入金額">
+							<DataGridTextColumn.ElementStyle>
+								<Style TargetType="TextBlock">
+									<Setter Property="HorizontalAlignment" Value="Right" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="110"
+							Binding="{Binding Allocated, StringFormat={}{0:N0}}"
+							Header="充当済">
+							<DataGridTextColumn.ElementStyle>
+								<Style TargetType="TextBlock">
+									<Setter Property="HorizontalAlignment" Value="Right" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="110"
+							Binding="{Binding Unapplied, StringFormat={}{0:N0}}"
+							Header="未充当">
+							<DataGridTextColumn.ElementStyle>
+								<Style TargetType="TextBlock">
+									<Setter Property="HorizontalAlignment" Value="Right" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
+						<DataGridTextColumn Width="160"
+							Binding="{Binding Memo}"
+							Header="メモ">
+						</DataGridTextColumn>
+					</DataGrid.Columns>
+				</DataGrid>
+			</DockPanel>
+		</Grid>
+
+		<Border Grid.Row="3"
+			Padding="12,6"
+			Background="{DynamicResource MaterialDesignChipBackground}">
+			<TextBlock VerticalAlignment="Center"
+				Text="{Binding Message}" TextTrimming="CharacterEllipsis" />
+		</Border>
+	</Grid>
 </helpers:BaseWindow>
