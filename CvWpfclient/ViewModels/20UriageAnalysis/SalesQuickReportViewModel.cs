@@ -17,6 +17,13 @@ public partial class SalesQuickReportViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "売上速報";
 	protected override string FormFileName => "SalesQuickReport.qfm";
 
+	/// <summary>
+	/// 粗利に関わる列を出すか。店舗向けの「原価無」派生(40Shop)が false で上書きする。
+	/// 粗利は伝票ヘッダの「明細金額合計 − 下代合計」で求める（明細を展開しないので速い）。
+	/// 列数が変わるため派生側は専用の qfm を持つ。
+	/// </summary>
+	protected virtual bool ShowCost => true;
+
 	[ObservableProperty]
 	public partial string TargetDay { get; set; } = DateTime.Today.ToString("yyyy/MM/dd");
 
@@ -54,6 +61,9 @@ public partial class SalesQuickReportViewModel : Helpers.BaseReportViewModel {
 		var shopWhere = BuildCodeRangeWhere(parameters, "t.Code", ShopCodeFrom, ShopCodeTo);
 
 		var having = IsActiveOnly ? "WHERE dayKingaku != 0 OR cumKingaku != 0" : "";
+		var arariCols = ShowCost ? @"
+    dayArari,
+    CASE WHEN dayKingaku != 0 THEN ROUND(CAST(dayArari AS REAL) / dayKingaku * 100, 1) ELSE 0 END AS dayArariRatio," : "";
 
 		var sql = $@"
 WITH shops AS (
@@ -67,6 +77,7 @@ sales AS (
         SUM(CASE WHEN h.DenDay = {target} THEN 1 ELSE 0 END)                          AS dayCount,
         SUM(CASE WHEN h.DenDay = {target} THEN h.SuTotal ELSE 0 END)                  AS daySu,
         SUM(CASE WHEN h.DenDay = {target} THEN h.KingakuTotal ELSE 0 END)             AS dayKingaku,
+        SUM(CASE WHEN h.DenDay = {target} THEN h.KingakuTotal - h.GedaiTotal ELSE 0 END) AS dayArari,
         SUM(CASE WHEN h.DenDay BETWEEN {mStart} AND {target} THEN h.KingakuTotal ELSE 0 END)          AS cumKingaku,
         SUM(CASE WHEN h.DenDay = {prevTarget} THEN h.KingakuTotal ELSE 0 END)         AS prevDayKingaku,
         SUM(CASE WHEN h.DenDay BETWEEN {prevMStart} AND {prevTarget} THEN h.KingakuTotal ELSE 0 END)  AS prevCumKingaku
@@ -86,6 +97,7 @@ joined AS (
         ifnull(sa.dayCount, 0)       AS dayCount,
         ifnull(sa.daySu, 0)          AS daySu,
         ifnull(sa.dayKingaku, 0)     AS dayKingaku,
+        ifnull(sa.dayArari, 0)       AS dayArari,
         ifnull(b.dayYosan, 0)        AS dayYosan,
         ifnull(sa.cumKingaku, 0)     AS cumKingaku,
         ifnull(b.cumYosan, 0)        AS cumYosan,
@@ -97,7 +109,7 @@ joined AS (
 )
 SELECT
     shopCode, shopName,
-    dayCount, daySu, dayKingaku, dayYosan,
+    dayCount, daySu, dayKingaku,{arariCols} dayYosan,
     CASE WHEN dayYosan != 0 THEN ROUND(CAST(dayKingaku AS REAL) / dayYosan * 100, 1) ELSE 0 END AS dayYosanRatio,
     cumKingaku, cumYosan,
     CASE WHEN cumYosan != 0 THEN ROUND(CAST(cumKingaku AS REAL) / cumYosan * 100, 1) ELSE 0 END AS cumYosanRatio,

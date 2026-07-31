@@ -16,6 +16,13 @@ public partial class CategoryShopSalesReportViewModel : Helpers.BaseReportViewMo
 	protected override string ReportTitle => "分類別店別売上報告";
 	protected override string FormFileName => "CategoryShopSalesReport.qfm";
 
+	/// <summary>
+	/// 原価に関わる列を出すか。店舗向けの「原価無」派生(40Shop)が false で上書きする。
+	/// false のときは値入率を SELECT から列ごと外す（上代金額は売価なので残す）。
+	/// 列数が変わるため派生側は専用の qfm を持つ。
+	/// </summary>
+	protected virtual bool ShowCost => true;
+
 	[ObservableProperty]
 	public partial string DenDayFrom { get; set; } = DateTime.Today.ToString("yyyy/MM/01");
 
@@ -73,6 +80,10 @@ public partial class CategoryShopSalesReportViewModel : Helpers.BaseReportViewMo
 
 		var shopCode = IsByShop ? TranMeisaiSql.HeaderCode("VTenpo") : "''";
 		var shopName = IsByShop ? TranMeisaiSql.HeaderName("VTenpo") : "'全店'";
+		var neireCol = ShowCost ? @",
+    CASE WHEN jodaiTotal != 0
+         THEN ROUND(CAST(jodaiTotal - genkaTotal AS REAL) / jodaiTotal * 100, 1)
+         ELSE 0 END AS neireRatio" : "";
 
 		var sql = $@"
 WITH meisai AS (
@@ -108,10 +119,7 @@ SELECT
     SUM(kingaku) OVER (PARTITION BY shopCode) AS shopTotal,
     CASE WHEN SUM(kingaku) OVER (PARTITION BY shopCode) != 0
          THEN ROUND(CAST(kingaku AS REAL) / SUM(kingaku) OVER (PARTITION BY shopCode) * 100, 1)
-         ELSE 0 END AS shareRatio,
-    CASE WHEN jodaiTotal != 0
-         THEN ROUND(CAST(jodaiTotal - genkaTotal AS REAL) / jodaiTotal * 100, 1)
-         ELSE 0 END AS neireRatio
+         ELSE 0 END AS shareRatio{neireCol}
 FROM agg
 ORDER BY shopCode, catCode";
 

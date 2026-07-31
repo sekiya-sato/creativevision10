@@ -17,6 +17,13 @@ public partial class UriageShuhouGeppouViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "売上週報･月報";
 	protected override string FormFileName => "UriageShuhouGeppou.qfm";
 
+	/// <summary>
+	/// 粗利に関わる列を出すか。店舗向けの「原価無」派生(40Shop)が false で上書きする。
+	/// 粗利は伝票ヘッダの「明細金額合計 − 下代合計」で求める。
+	/// 列数が変わるため派生側は専用の qfm を持つ。
+	/// </summary>
+	protected virtual bool ShowCost => true;
+
 	[ObservableProperty]
 	public partial string DenDayFrom { get; set; } = DateTime.Today.AddMonths(-2).ToString("yyyy/MM/01");
 
@@ -78,6 +85,9 @@ public partial class UriageShuhouGeppouViewModel : Helpers.BaseReportViewModel {
 		var periodLabel = unit == PeriodUnit.Month
 			? "(substr(periodKey,1,4) || '/' || substr(periodKey,5,2))"
 			: "(replace(periodKey,'-','/') || '週')";
+		var arariCols = ShowCost ? @"
+    arari,
+    CASE WHEN kingaku != 0 THEN ROUND(CAST(arari AS REAL) / kingaku * 100, 1) ELSE 0 END AS arariRatio," : "";
 
 		var sql = $@"
 WITH sales AS (
@@ -87,7 +97,8 @@ WITH sales AS (
         {shopName} AS shopName,
         h.DenDay   AS denDay,
         h.SuTotal  AS su,
-        h.KingakuTotal AS kingaku
+        h.KingakuTotal AS kingaku,
+        h.KingakuTotal - h.GedaiTotal AS arari
     FROM Tran01Tenuri h
     WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}
       {shopWhere}
@@ -109,7 +120,8 @@ agg AS (
         MAX(denDay)   AS maxDay,
         COUNT(*)      AS denCount,
         SUM(su)       AS su,
-        SUM(kingaku)  AS kingaku
+        SUM(kingaku)  AS kingaku,
+        SUM(arari)    AS arari
     FROM sales
     GROUP BY periodKey, shopCode, shopName
 ),
@@ -131,7 +143,7 @@ joined AS (
 SELECT
     {periodLabel} AS periodLabel,
     shopCode, shopName,
-    su, kingaku, yosan,
+    su, kingaku,{arariCols} yosan,
     CASE WHEN yosan != 0 THEN ROUND(CAST(kingaku AS REAL) / yosan * 100, 1) ELSE 0 END AS yosanRatio,
     prevKingaku,
     CASE WHEN prevKingaku != 0 THEN ROUND(CAST(kingaku AS REAL) / prevKingaku * 100, 1) ELSE 0 END AS prevRatio,

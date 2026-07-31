@@ -17,6 +17,13 @@ public partial class StockMeisaiTableViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "棚卸明細表";
 	protected override string FormFileName => "StockMeisaiTable.qfm";
 
+	/// <summary>
+	/// 原価に関わる列を出すか。店舗向けの「原価無」派生(40Shop)が false で上書きする。
+	/// false のときは原価単価と差異金額を SELECT から**列ごと外す**（見出しも消したいので空文字埋めにしない）。
+	/// 列数が変わるため派生側は専用の qfm を持つ。
+	/// </summary>
+	protected virtual bool ShowCost => true;
+
 	[ObservableProperty]
 	public partial string DenDayFrom { get; set; } = DateTime.Today.ToString("yyyy/MM/01");
 
@@ -71,6 +78,9 @@ public partial class StockMeisaiTableViewModel : Helpers.BaseReportViewModel {
 		where += BuildCodeRangeWhere(parameters, TranMeisaiSql.Str("Code_Shohin"), ShohinCodeFrom, ShohinCodeTo);
 
 		var having = IsDiffOnly ? "WHERE actualSu - theoreticalSu != 0" : "";
+		var costCols = ShowCost ? @",
+    genkaTanka,
+    (actualSu - theoreticalSu) * genkaTanka AS diffKingaku" : "";
 
 		var sql = $@"
 WITH tana AS (
@@ -124,9 +134,7 @@ SELECT
     colName, sizName,
     theoreticalSu,
     actualSu,
-    actualSu - theoreticalSu AS diffSu,
-    genkaTanka,
-    (actualSu - theoreticalSu) * genkaTanka AS diffKingaku
+    actualSu - theoreticalSu AS diffSu{costCols}
 FROM joined
 {having}
 ORDER BY sokoCode, shohinCode, colName, sizName";

@@ -14,6 +14,8 @@
 			<item id="item9"/>
 			<item id="item10"/>
 			<item id="item11"/>
+			<item id="item12"/>
+			<item id="item13"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>
@@ -29,77 +31,91 @@
 				<color base="c8ffc8" transparent="0"/>
 				<border left="1" right="1" top="1" bottom="1"/>
 				<text id="H1" valign="middle">
-					<position x="0" y="0" width="11" height="4"/>
+					<position x="0" y="0" width="10" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ìXï‹CD</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H2" valign="middle">
-					<position x="11" y="0" width="24" height="4"/>
+					<position x="10" y="0" width="20" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ìXï‹ñº</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H3" valign="middle">
-					<position x="35" y="0" width="10" height="4"/>
+					<position x="30" y="0" width="9" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ìñì˙åèêî</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H4" valign="middle">
-					<position x="45" y="0" width="11" height="4"/>
+					<position x="39" y="0" width="9" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ìñì˙êîó </data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H5" valign="middle">
-					<position x="56" y="0" width="16" height="4"/>
+					<position x="48" y="0" width="14" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ìñì˙îÑè„</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H6" valign="middle">
-					<position x="72" y="0" width="15" height="4"/>
+					<position x="62" y="0" width="13" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">ìñì˙ëeóò</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H7" valign="middle">
+					<position x="75" y="0" width="8" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">ëeóòó¶</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H8" valign="middle">
+					<position x="83" y="0" width="13" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ìñì˙ó\éZ</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H7" valign="middle">
-					<position x="87" y="0" width="11" height="4"/>
+				<text id="H9" valign="middle">
+					<position x="96" y="0" width="9" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ìñì˙ó\éZî‰</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H8" valign="middle">
-					<position x="98" y="0" width="17" height="4"/>
+				<text id="H10" valign="middle">
+					<position x="105" y="0" width="15" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ó›åvîÑè„</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H9" valign="middle">
-					<position x="115" y="0" width="16" height="4"/>
+				<text id="H11" valign="middle">
+					<position x="120" y="0" width="14" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ó›åvó\éZ</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H10" valign="middle">
-					<position x="131" y="0" width="10" height="4"/>
+				<text id="H12" valign="middle">
+					<position x="134" y="0" width="8" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ó›åvó\éZî‰</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H11" valign="middle">
-					<position x="141" y="0" width="9" height="4"/>
+				<text id="H13" valign="middle">
+					<position x="142" y="0" width="8" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ëOîNî‰</data>
 					<decode datatype="string" format=""/>
@@ -111,79 +127,93 @@
 				<color transparent="1"/>
 				<border left="1" right="1" bottom="10"/>
 				<text id="V1">
-					<position x="0" y="0" width="11" height="4"/>
+					<position x="0" y="0" width="10" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item1"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V2">
-					<position x="11" y="0" width="24" height="4"/>
+					<position x="10" y="0" width="20" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item2"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V3" halign="right">
-					<position x="35" y="0" width="10" height="4"/>
+					<position x="30" y="0" width="9" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item3"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V4" halign="right">
-					<position x="45" y="0" width="11" height="4"/>
+					<position x="39" y="0" width="9" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item4"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V5" halign="right">
-					<position x="56" y="0" width="16" height="4"/>
+					<position x="48" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item5"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V6" halign="right">
-					<position x="72" y="0" width="15" height="4"/>
+					<position x="62" y="0" width="13" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item6"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V7" halign="right">
-					<position x="87" y="0" width="11" height="4"/>
+					<position x="75" y="0" width="8" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item7"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V8" halign="right">
-					<position x="98" y="0" width="17" height="4"/>
+					<position x="83" y="0" width="13" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item8"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V9" halign="right">
-					<position x="115" y="0" width="16" height="4"/>
+					<position x="96" y="0" width="9" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item9"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V10" halign="right">
-					<position x="131" y="0" width="10" height="4"/>
+					<position x="105" y="0" width="15" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item10"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V11" halign="right">
-					<position x="141" y="0" width="9" height="4"/>
+					<position x="120" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item11"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V12" halign="right">
+					<position x="134" y="0" width="8" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item12"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V13" halign="right">
+					<position x="142" y="0" width="8" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item13"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>

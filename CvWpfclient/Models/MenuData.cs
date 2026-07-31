@@ -282,11 +282,11 @@ public partial class MenuData : ObservableObject {
 		])),
 		new("■ 店舗", new([
 			new("店舗売上入力", typeof(Views._06Uriage.ShopUriageInputView), false),
-			new("棚卸明細表(原価無)", typeof(Views._40Shop.StockTakeDetailReportCostlessView), addInfo:"準備中"),
-			new("汎用在庫表(原価無)", typeof(Views._40Shop.GeneralInventoryTableCostlessView), addInfo:"準備中"),
-			new("売上速報(原価無)", typeof(Views._40Shop.SalesQuickReportCostlessView), addInfo:"準備中"),
-			new("売上週報･月報(原価無)", typeof(Views._40Shop.SalesWeeklyMonthlyReportCostlessView), addInfo:"準備中"),
-			new("分類別店別売上報告(原価無)", typeof(Views._40Shop.CategoryShopSalesReportCostlessView), addInfo:"準備中"),
+			new("棚卸明細表(原価無)", typeof(Views._40Shop.StockTakeDetailReportCostlessView), addInfo:"棚卸明細表の店舗配布版。原価単価･差異金額を出さない"),
+			new("汎用在庫表(原価無)", typeof(Views._40Shop.GeneralInventoryTableCostlessView), addInfo:"汎用在庫表の店舗配布版。原価単価･原価金額を出さない"),
+			new("売上速報(原価無)", typeof(Views._40Shop.SalesQuickReportCostlessView), addInfo:"売上速報の店舗配布版。粗利･粗利率を出さない"),
+			new("売上週報･月報(原価無)", typeof(Views._40Shop.SalesWeeklyMonthlyReportCostlessView), addInfo:"売上週報･月報の店舗配布版。粗利･粗利率を出さない"),
+			new("分類別店別売上報告(原価無)", typeof(Views._40Shop.CategoryShopSalesReportCostlessView), addInfo:"分類別店別売上報告の店舗配布版。値入率を出さない"),
 		])),
 		new("■ 物流", new([
 			new("マスタデータ作成", typeof(Views._41Logistics.LogisticsMasterDataCreateView), addInfo:"準備中"),

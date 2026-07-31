@@ -19,6 +19,13 @@ public partial class GeneralStockTableViewModel : Helpers.BaseReportViewModel {
 	/// <summary>集計単位</summary>
 	public enum StockLevel { Sku, Shohin, Soko }
 
+	/// <summary>
+	/// 原価に関わる列を出すか。店舗向けの「原価無」派生(40Shop)が false で上書きする。
+	/// false のときは原価単価・原価金額を SELECT から列ごと外す（上代金額は売価なので残す）。
+	/// 列数が変わるため派生側は専用の qfm を持つ。
+	/// </summary>
+	protected virtual bool ShowCost => true;
+
 	[ObservableProperty]
 	public partial string SokoCodeFrom { get; set; } = string.Empty;
 
@@ -92,6 +99,10 @@ public partial class GeneralStockTableViewModel : Helpers.BaseReportViewModel {
 			where += " AND s.Su != 0";
 		}
 
+		var costCols = ShowCost ? @"
+    CASE WHEN su != 0 THEN CAST(ROUND(CAST(genkaKingaku AS REAL) / su) AS INTEGER) ELSE 0 END AS genkaTanka,
+    genkaKingaku," : "";
+
 		// 集計単位に応じてキーを潰す。潰した列は空文字を返して GROUP BY でまとめる。
 		var (shohinCode, shohinName, colCode, colName, sizCode, sizName) = level switch {
 			StockLevel.Soko => ("''", "'(倉庫計)'", "''", "''", "''", "''"),
@@ -126,9 +137,7 @@ SELECT
     sokoCode, sokoName,
     shohinCode, shohinName,
     colCode, colName, sizCode, sizName,
-    su,
-    CASE WHEN su != 0 THEN CAST(ROUND(CAST(genkaKingaku AS REAL) / su) AS INTEGER) ELSE 0 END AS genkaTanka,
-    genkaKingaku,
+    su,{costCols}
     jodaiKingaku,
     skuCount
 FROM agg
