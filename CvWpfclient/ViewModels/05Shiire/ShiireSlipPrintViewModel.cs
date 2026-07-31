@@ -14,15 +14,14 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// <summary>
 /// 仕入伝票印刷。印刷範囲(仕入日/仕入先/倉庫/伝票NO/手入力NO/取引区分)を指定し、
 /// ShiireSlipPrint.qfm へ SQL で明細1行=CSV1行のデータを渡して PDF 出力する。
-/// レイアウトの標準は ShopBudgetReport(BaseViewModel 派生の印刷ダイアログ)に合わせる。
+/// レイアウトの標準は ShopBudgetReport(BaseReportViewModel 派生の印刷ダイアログ)に合わせる。
 /// </summary>
-public partial class ShiireSlipPrintViewModel : Helpers.BaseViewModel {
+public partial class ShiireSlipPrintViewModel : Helpers.BaseReportViewModel {
+	protected override string ReportTitle => "仕入伝票印刷";
+	protected override string FormFileName => "ShiireSlipPrint.qfm";
 
 	/// <summary>取引区分の選択肢。Value=null は「全て」。</summary>
 	public sealed record KubunOption(int? Value, string Name);
-
-	[ObservableProperty]
-	public partial string Title { get; set; } = "仕入伝票印刷";
 
 	// 仕入日(DenDay)範囲
 	[ObservableProperty]
@@ -75,56 +74,34 @@ public partial class ShiireSlipPrintViewModel : Helpers.BaseViewModel {
 		SelectedKubun = KubunOptions[0];
 	}
 
-	protected override void OnExit() {
-		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
-			return;
-		}
-		ClientLib.Exit(this);
-	}
-
-	[RelayCommand]
-	void Init() { }
-
 	[RelayCommand]
 	void SelectShiireCodeFrom() {
-		var shiire = ShowSelectDialog<MasterShiire>(typeof(MasterShiire), "", "Code");
-		if (shiire == null) return;
-		ShiireCodeFrom = shiire.Code ?? string.Empty;
+		ShiireCodeFrom = SelectShiireCode() ?? ShiireCodeFrom;
 	}
 
 	[RelayCommand]
 	void SelectShiireCodeTo() {
-		var shiire = ShowSelectDialog<MasterShiire>(typeof(MasterShiire), "", "Code");
-		if (shiire == null) return;
-		ShiireCodeTo = shiire.Code ?? string.Empty;
+		ShiireCodeTo = SelectShiireCode() ?? ShiireCodeTo;
 	}
 
 	[RelayCommand]
 	void SelectSokoCodeFrom() {
-		var soko = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code");
-		if (soko == null) return;
-		SokoCodeFrom = soko.Code ?? string.Empty;
+		SokoCodeFrom = SelectSokoCode() ?? SokoCodeFrom;
 	}
 
 	[RelayCommand]
 	void SelectSokoCodeTo() {
-		var soko = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code");
-		if (soko == null) return;
-		SokoCodeTo = soko.Code ?? string.Empty;
+		SokoCodeTo = SelectSokoCode() ?? SokoCodeTo;
 	}
 
-	[RelayCommand(IncludeCancelCommand = true)]
-	async Task DoOutputPdf(CancellationToken ct) {
+	/// <summary>倉庫選択ダイアログ(TenType=0)。選択されなければ null</summary>
+	string? SelectSokoCode() =>
+		ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code")?.Code;
+
+	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
-		try {
-			ClientLib.Cursor2Wait();
-			var sqlParam = BuildPrintSqlParam();
-			if (sqlParam == null) return; // BuildPrintSqlParam 側で警告済み
-			await RunPrintPdfAsync("ShiireSlipPrint.qfm", null, sqlParam, ct);
-		}
-		finally {
-			ClientLib.Cursor2Normal();
-		}
+		// BuildPrintSqlParam は入力不正時に警告を出して null を返す
+		return Task.FromResult(BuildPrintSqlParam());
 	}
 
 	// 明細JSON(Jmeisai)の各値。ShiireInput の明細印刷SQLと同じ抽出規則。
@@ -292,99 +269,4 @@ order by h.Id, cast(ifnull({M}'$.No'),0) as int)
 
 	void WarnInvalidNumber(string label) =>
 		MessageEx.ShowWarningDialog($"{label}は数値で入力してください。", owner: ClientLib.GetActiveView(this));
-
-	static string AddSqlParameter(List<string> parameters, object value) {
-		parameters.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);
-		return $"@{parameters.Count - 1}";
-	}
-
-	TResult? ShowSelectDialog<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
-		var selWin = new Views.Sub.SelectWinView();
-		if (selWin.DataContext is not Sub.SelectWinViewModel vm) return null;
-		vm.SetParam(tableType, where, order, startPos: startPos);
-		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
-		return vm.Current as TResult;
-	}
-
-	async Task RunPrintPdfAsync(string? formFile, PrintByCsvParam? csvParam, QueryListSqlParam? sqlParam, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-
-		if (string.IsNullOrWhiteSpace(formFile)) {
-			MessageEx.ShowWarningDialog("印刷フォームファイルが設定されていません", owner: ClientLib.GetActiveView(this));
-			return;
-		}
-
-		if (csvParam is null && sqlParam is null) {
-			MessageEx.ShowWarningDialog("印刷データが設定されていません", owner: ClientLib.GetActiveView(this));
-			return;
-		}
-
-		if (csvParam is not null && sqlParam is not null) {
-			MessageEx.ShowWarningDialog("印刷データは CSV と SQL のどちらか一方だけ設定してください", owner: ClientLib.GetActiveView(this));
-			return;
-		}
-		var mess = "";
-		try {
-			var param = (object?)csvParam ?? sqlParam!;
-			var dataType = csvParam is not null ? typeof(PrintByCsvParam) : typeof(QueryListSqlParam);
-			var msg = new PrintOperation {
-				DataType = dataType,
-				DataMsg = Common.SerializeObject(param),
-				FormFile = formFile,
-			};
-
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			string? pdfdata = null;
-			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
-				ct.ThrowIfCancellationRequested();
-				mess = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
-				if (streamMsg.Status == -2) {
-					MessageEx.ShowWarningDialog(streamMsg.DataMsg, owner: ClientLib.GetActiveView(this));
-					return;
-				}
-				if (streamMsg.Status < 0) {
-					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
-					MessageEx.ShowErrorDialog($"PDF出力失敗: {errorDetail}", owner: ClientLib.GetActiveView(this));
-					return;
-				}
-
-				if (streamMsg.IsCompleted) {
-					pdfdata = streamMsg.DataMsg;
-					break;
-				}
-			}
-
-			if (string.IsNullOrWhiteSpace(pdfdata)) {
-				MessageEx.ShowWarningDialog("PDF出力結果が取得できませんでした", owner: ClientLib.GetActiveView(this));
-				return;
-			}
-
-			var viewTitle = string.IsNullOrWhiteSpace(ClientLib.GetActiveView(this)?.Title)
-				? "PDF表示"
-				: $"{ClientLib.GetActiveView(this)?.Title} - PDF表示";
-			var view = new Views.Sub.WebPdfView { Title = viewTitle };
-			if (view.DataContext is not WebPdfViewModel vm) {
-				MessageEx.ShowErrorDialog("PDF表示画面の初期化に失敗しました", owner: ClientLib.GetActiveView(this));
-				return;
-			}
-
-			vm.Pdfdata = $"{AppGlobal.Url}/wrk/{pdfdata}";
-			view.Title += " " + vm.Pdfdata;
-			ClientLib.ShowDialogView(view, this, IsDialog: false);
-			view.Owner = null;
-			mess = $"PDFを表示しました: {pdfdata}";
-		}
-		catch (OperationCanceledException cancel) {
-			mess = $"Cancelエラー：{cancel.Message}";
-			return;
-		}
-		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
-			mess = "PDF出力をキャンセルしました";
-			return;
-		}
-		catch (Exception ex) {
-			mess = $"PDF出力失敗: {ex.Message}";
-			MessageEx.ShowErrorDialog(mess, owner: ClientLib.GetActiveView(this));
-		}
-	}
 }

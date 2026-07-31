@@ -1,20 +1,13 @@
-using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CvAsset;
 using CvBase;
-using CvWpfclient.Helpers;
-using CvWpfclient.ViewModels.Sub;
-using Grpc.Core;
 using System.Globalization;
-using System.Windows;
 
 namespace CvWpfclient.ViewModels._02Yosan;
 
-public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
-
-	[ObservableProperty]
-	public partial string Title { get; set; } = "店舗予算表";
+public partial class ShopBudgetReportViewModel : Helpers.BaseReportViewModel {
+	protected override string ReportTitle => "店舗予算表";
+	protected override string FormFileName => "ShopBudgetReport.qfm";
 
 	[ObservableProperty]
 	public partial DateTime SelectedYearMonth { get; set; } = DateTime.Now;
@@ -44,51 +37,21 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 		SelectedYearMonthString = value.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 	}
 
-	protected override void OnExit() {
-		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
-			return;
-		}
-		ClientLib.Exit(this);
-	}
-
-	[RelayCommand]
-	void Init() { }
-
 	[RelayCommand]
 	void SelectShopCodeFrom() {
-		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=6", "Code");
-		if (tokui == null) return;
-		ShopCodeFrom = tokui.Code ?? string.Empty;
+		ShopCodeFrom = SelectShopCode() ?? ShopCodeFrom;
 	}
 
 	[RelayCommand]
 	void SelectShopCodeTo() {
-		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=6", "Code");
-		if (tokui == null) return;
-		ShopCodeTo = tokui.Code ?? string.Empty;
+		ShopCodeTo = SelectShopCode() ?? ShopCodeTo;
 	}
 
-	[RelayCommand(IncludeCancelCommand = true)]
-	async Task DoOutputPdf(CancellationToken ct) {
-		if (!TryApplySelectedYearMonth()) return;
+	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
+		if (!TryApplySelectedYearMonth()) return Task.FromResult<QueryListSqlParam?>(null);
 		ct.ThrowIfCancellationRequested();
 
-		try {
-			ClientLib.Cursor2Wait();
-			var sqlParam = await BuildPrintSqlParamAsync(ct);
-			if (sqlParam == null) {
-				MessageEx.ShowErrorDialog("印刷データが作成できませんでした");
-				return;
-			}
-			await RunPrintPdfAsync("ShopBudgetReport.qfm", null, sqlParam, ct);
-		}
-		finally {
-			ClientLib.Cursor2Normal();
-		}
-	}
-
-	async Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
-		var (dateFrom, dateTo) = GetDateRange();
+		var (dateFrom, dateTo) = GetMonthRange(SelectedYearMonth);
 		var daysInMonth = DateTime.DaysInMonth(SelectedYearMonth.Year, SelectedYearMonth.Month);
 		var yearMonthLabel = SelectedYearMonth.ToString("yy年MM月", CultureInfo.InvariantCulture);
 		var year = SelectedYearMonth.Year;
@@ -96,13 +59,7 @@ public partial class ShopBudgetReportViewModel : Helpers.BaseViewModel {
 		var isDateComparisonStr = IsDateComparison ? "1" : "0";
 
 		List<string> parameters = [];
-		var shopWhere = "";
-		if (!string.IsNullOrWhiteSpace(ShopCodeFrom)) {
-			shopWhere += $" AND Code >= {AddSqlParameter(parameters, ShopCodeFrom.Trim())}";
-		}
-		if (!string.IsNullOrWhiteSpace(ShopCodeTo)) {
-			shopWhere += $" AND Code <= {AddSqlParameter(parameters, ShopCodeTo.Trim())}";
-		}
+		var shopWhere = BuildCodeRangeWhere(parameters, "Code", ShopCodeFrom, ShopCodeTo);
 
 		// 「当年売上あり」選択時は、指定年月に売上（月間合計金額 <> 0）がある店舗のみへ絞り込む。
 		// dateFrom/dateTo は SelectedYearMonth 由来の yyyyMMdd 文字列でユーザ入力を含まないため直接埋め込む。
@@ -244,123 +201,12 @@ FROM daily_total
 ORDER BY day";
 		}
 
-		return new QueryListSqlParam(typeof(object), sql, [.. parameters]);
-	}
-
-	(string dateFrom, string dateTo) GetDateRange() {
-		var year = SelectedYearMonth.Year;
-		var month = SelectedYearMonth.Month;
-		var days = DateTime.DaysInMonth(year, month);
-		return (
-			new DateTime(year, month, 1).ToString("yyyyMMdd", CultureInfo.InvariantCulture),
-			new DateTime(year, month, days).ToString("yyyyMMdd", CultureInfo.InvariantCulture)
-		);
-	}
-
-	static string AddSqlParameter(List<string> parameters, object value) {
-		parameters.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);
-		return $"@{parameters.Count - 1}";
-	}
-
-	TResult? ShowSelectDialog<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
-		var selWin = new Views.Sub.SelectWinView();
-		if (selWin.DataContext is not Sub.SelectWinViewModel vm) return null;
-		vm.SetParam(tableType, where, order, startPos: startPos);
-		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
-		return vm.Current as TResult;
+		return Task.FromResult<QueryListSqlParam?>(new QueryListSqlParam(typeof(object), sql, [.. parameters]));
 	}
 
 	bool TryApplySelectedYearMonth() {
-		var value = SelectedYearMonthString.Trim();
-		var formats = new[] { "yyyy/MM", "yyyy/M", "yyyyMM", "yyyy-MM", "yyyy-M" };
-		if (!DateTime.TryParseExact(value, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)) {
-			MessageEx.ShowWarningDialog("年月は yyyy/MM 形式で入力してください。", owner: ClientLib.GetActiveView(this));
-			return false;
-		}
-		SelectedYearMonth = new DateTime(parsed.Year, parsed.Month, 1);
-		SelectedYearMonthString = SelectedYearMonth.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+		if (!TryParseYearMonth(SelectedYearMonthString, out var yearMonth)) return false;
+		SelectedYearMonth = yearMonth;
 		return true;
-	}
-
-	async Task RunPrintPdfAsync(string? formFile, PrintByCsvParam? csvParam, QueryListSqlParam? sqlParam, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-
-		if (string.IsNullOrWhiteSpace(formFile)) {
-			MessageEx.ShowWarningDialog("印刷フォームファイルが設定されていません", owner: ClientLib.GetActiveView(this));
-			return;
-		}
-
-		if (csvParam is null && sqlParam is null) {
-			MessageEx.ShowWarningDialog("印刷データが設定されていません", owner: ClientLib.GetActiveView(this));
-			return;
-		}
-
-		if (csvParam is not null && sqlParam is not null) {
-			MessageEx.ShowWarningDialog("印刷データは CSV と SQL のどちらか一方だけ設定してください", owner: ClientLib.GetActiveView(this));
-			return;
-		}
-		var mess = "";
-		try {
-			var param = (object?)csvParam ?? sqlParam!;
-			var dataType = csvParam is not null ? typeof(PrintByCsvParam) : typeof(QueryListSqlParam);
-			var msg = new PrintOperation {
-				DataType = dataType,
-				DataMsg = Common.SerializeObject(param),
-				FormFile = formFile,
-			};
-
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			string? pdfdata = null;
-			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
-				ct.ThrowIfCancellationRequested();
-				mess = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
-				if (streamMsg.Status == -2) {
-					MessageEx.ShowWarningDialog(streamMsg.DataMsg, owner: ClientLib.GetActiveView(this));
-					return;
-				}
-				if (streamMsg.Status < 0) {
-					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
-					MessageEx.ShowErrorDialog($"PDF出力失敗: {errorDetail}", owner: ClientLib.GetActiveView(this));
-					return;
-				}
-
-				if (streamMsg.IsCompleted) {
-					pdfdata = streamMsg.DataMsg;
-					break;
-				}
-			}
-
-			if (string.IsNullOrWhiteSpace(pdfdata)) {
-				MessageEx.ShowWarningDialog("PDF出力結果が取得できませんでした", owner: ClientLib.GetActiveView(this));
-				return;
-			}
-
-			var viewTitle = string.IsNullOrWhiteSpace(ClientLib.GetActiveView(this)?.Title)
-				? "PDF表示"
-				: $"{ClientLib.GetActiveView(this)?.Title} - PDF表示";
-			var view = new Views.Sub.WebPdfView { Title = viewTitle };
-			if (view.DataContext is not WebPdfViewModel vm) {
-				MessageEx.ShowErrorDialog("PDF表示画面の初期化に失敗しました", owner: ClientLib.GetActiveView(this));
-				return;
-			}
-
-			vm.Pdfdata = $"{AppGlobal.Url}/wrk/{pdfdata}";
-			view.Title += " " + vm.Pdfdata;
-			ClientLib.ShowDialogView(view, this, IsDialog: false);
-			view.Owner = null;
-			mess = $"PDFを表示しました: {pdfdata}";
-		}
-		catch (OperationCanceledException cancel) {
-			mess = $"Cancelエラー：{cancel.Message}";
-			return;
-		}
-		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
-			mess = "PDF出力をキャンセルしました";
-			return;
-		}
-		catch (Exception ex) {
-			mess = $"PDF出力失敗: {ex.Message}";
-			MessageEx.ShowErrorDialog(mess, owner: ClientLib.GetActiveView(this));
-		}
 	}
 }

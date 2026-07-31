@@ -480,21 +480,11 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 	}
 
-	protected TResult? ShowSelectDialog<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
-		var selWin = new Views.Sub.SelectWinView();
-		if (selWin.DataContext is not SelectWinViewModel vm) return null;
-		vm.SetParam(tableType, where, order, startPos: startPos);
-		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
-		return vm.Current as TResult;
-	}
+	protected TResult? ShowSelectDialog<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass =>
+		PrintPdfHelper.ShowSelectDialog<TResult>(this, tableType, where, order, startPos);
 
-	protected IReadOnlyList<TResult>? ShowMultiSelectDialog<TResult>(Type tableType, string where, string order, IEnumerable<long>? selectedIds = null, long startPos = 0) where TResult : BaseDbClass {
-		var selWin = new Views.Sub.SelectMultiWinView();
-		if (selWin.DataContext is not SelectMultiWinViewModel vm) return null;
-		vm.SetParam(tableType, where, order, startPos: startPos, selectedIds: selectedIds);
-		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
-		return vm.GetSelectedItems<TResult>();
-	}
+	protected IReadOnlyList<TResult>? ShowMultiSelectDialog<TResult>(Type tableType, string where, string order, IEnumerable<long>? selectedIds = null, long startPos = 0) where TResult : BaseDbClass =>
+		PrintPdfHelper.ShowMultiSelectDialog<TResult>(this, tableType, where, order, selectedIds, startPos);
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	protected async Task DoOutputJson(CancellationToken ct) {
@@ -522,97 +512,6 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	/// 指定したフォームファイルと印刷データ(CSV または SQL)で PDF を生成し、PDF表示画面を開く。
 	/// 1画面で複数の帳票を出し分けたい場合は、この保護メソッドを個別コマンドから直接呼び出す。
 	/// </summary>
-	protected async Task RunPrintPdfAsync(string? formFile, PrintByCsvParam? csvParam, QueryListSqlParam? sqlParam, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-
-		if (string.IsNullOrWhiteSpace(formFile)) {
-			Message = "印刷フォームファイルが設定されていません";
-			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-			return;
-		}
-
-		if (csvParam is null && sqlParam is null) {
-			Message = "印刷データが設定されていません";
-			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-			return;
-		}
-
-		if (csvParam is not null && sqlParam is not null) {
-			Message = "印刷データは CSV と SQL のどちらか一方だけ設定してください";
-			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-			return;
-		}
-
-		try {
-			ClientLib.Cursor2Wait();
-			var param = (object?)csvParam ?? sqlParam!;
-			var dataType = csvParam is not null ? typeof(PrintByCsvParam) : typeof(QueryListSqlParam);
-			var msg = new PrintOperation {
-				DataType = dataType,
-				DataMsg = Common.SerializeObject(param),
-				FormFile = formFile,
-			};
-
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			string? pdfdata = null;
-			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
-				ct.ThrowIfCancellationRequested();
-				Message = string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s)));
-				if (streamMsg.Status == -2) {
-					Message = streamMsg.DataMsg;
-					MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-					return;
-				}
-				if (streamMsg.Status < 0) {
-					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
-					Message = $"PDF出力失敗: {errorDetail}";
-					MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-					return;
-				}
-
-				if (streamMsg.IsCompleted) {
-					pdfdata = streamMsg.DataMsg;
-					break;
-				}
-			}
-
-			if (string.IsNullOrWhiteSpace(pdfdata)) {
-				Message = "PDF出力結果が取得できませんでした";
-				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
-				return;
-			}
-
-			var viewTitle = string.IsNullOrWhiteSpace(ActiveWindow?.Title)
-				? "PDF表示"
-				: $"{ActiveWindow.Title} - PDF表示";
-			var view = new Views.Sub.WebPdfView { Title = viewTitle };
-			if (view.DataContext is not WebPdfViewModel vm) {
-				Message = "PDF表示画面の初期化に失敗しました";
-				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-				return;
-			}
-
-			vm.Pdfdata = $"{AppGlobal.Url}/wrk/{pdfdata}";
-			view.Title += " " + vm.Pdfdata;
-			ClientLib.ShowDialogView(view, this, IsDialog: false);
-			view.Owner = null;
-			Message = $"PDFを表示しました: {pdfdata}";
-		}
-		catch (OperationCanceledException cancel) {
-			Message = $"Cancelエラー：{cancel.Message}";
-			return;
-		}
-		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
-			Message = "PDF出力をキャンセルしました";
-			return;
-		}
-		catch (Exception ex) {
-			Message = $"PDF出力失敗: {ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-		}
-		finally {
-			ClientLib.Cursor2Normal();
-		}
-	}
-
+	protected async Task RunPrintPdfAsync(string? formFile, PrintByCsvParam? csvParam, QueryListSqlParam? sqlParam, CancellationToken ct) =>
+		await PrintPdfHelper.RunPrintPdfAsync(this, ActiveWindow, m => Message = m, formFile, csvParam, sqlParam, ct);
 }
