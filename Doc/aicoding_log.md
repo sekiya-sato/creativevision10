@@ -1,3 +1,36 @@
+## [2026-07-31] 15:05 未実装View/ViewModelの実装計画作成と帳票共通基盤・予算帳票3画面の実装
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：まだ実装されていないViewおよびViewModelの実装計画を`.omo`に作成し、順番に実装する。
+### 実施内容
+- `.omo/2026-07-31_unimplemented_view_viewmodel_plan.md`: 空スタブ画面168件を洗い出し、画面パターン(帳票/照会/伝票入力/マスタメンテ/バッチ更新/消込/配分/新規機能)別に分類してPhase 0〜19の実装順計画を作成した。
+- `CvWpfclient/Helpers/ViewModels/PrintPdfHelper.cs`: PDF帳票出力パイプラインと選択ダイアログ呼び出しを静的ヘルパーへ集約した(新規)。
+- `CvWpfclient/Helpers/ViewModels/BaseReportViewModel.cs`: 帳票型画面の共通基底クラスを追加した。印刷実行コマンド・キャンセル・終了確認・年月日検証・コード範囲WHERE・SQLパラメータ採番・マスタ選択を提供する(新規)。
+- `CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: 重複していた`RunPrintPdfAsync`/`ShowSelectDialog`/`ShowMultiSelectDialog`をヘルパーへの委譲に置換した。
+- `CvWpfclient/ViewModels/02Yosan/ShopBudgetReportViewModel.cs`, `CvWpfclient/ViewModels/05Shiire/ShiireSlipPrintViewModel.cs`: コピーされていた印刷パイプライン等を削除し`BaseReportViewModel`継承へ移行した。
+- `CvWpfclient/{Views,ViewModels}/02Yosan/DailyShopBudgetReportView*`: 日別店別予算表を実装した。
+- `CvWpfclient/{Views,ViewModels}/02Yosan/SalesStaffBudgetReportView*`: 販売員予算表を実装した。
+- `CvWpfclient/{Views,ViewModels}/02Yosan/ShopBrandBudgetVsActualView*`: 店舗ブランド別予算実績対比を実装した。
+- `printform/DailyShopBudgetReport.qfm`, `printform/SalesStaffBudgetReport.qfm`, `printform/ShopBrandBudgetVsActual.qfm`: 各12列の一覧帳票フォームを追加した。
+- `CvWpfclient/Models/MenuData.cs`: 実装した3画面の`addInfo`を`"準備中"`から機能説明へ差し替えた。
+### 技術決定 Why
+- 帳票型が未実装168画面のうち約95画面を占めるため、100行規模の`RunPrintPdfAsync`が3箇所へ重複している状態を先に解消した。これを放置すると同じコードが95回複製される。
+- `Message`/`ActiveWindow`/`ShowSelectDialog`を`BaseViewModel`へ引き上げると、独自に同名メンバーを持つ既存ViewModel10件超とCS0108/CS0114で衝突する。よって引き上げず、実装本体を静的ヘルパーへ出して各基底クラスから委譲する構成にした。
+- qfmは`author-printstream-qfm`の方針どおり既存`ShopBudgetReport.qfm`の構造(A4縦・CSV `data.txt`・RecHeader+RecData)を踏襲し、ゼロから発明していない。
+- 販売員実績は明細の担当社員を優先し、未設定明細は伝票ヘッダの入力社員へ寄せた。明細単位で担当が分かれる運用に対応しつつ、担当未入力分を欠落させないため。
+### 影響範囲
+- `BaseMenteViewModel`派生の全マスタメンテ画面が`RunPrintPdfAsync`の委譲経路を通る。挙動(メッセージ文言・カーソル制御・PDF表示)は移行前と同一。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -p:OutputPath=<別出力先>`: ビルドに成功 0警告 0エラー（既定の出力先はアプリ実行中のためCvBase.dllコピーがMSB3027でロックされる）
+- 新規3画面のSQL5系統(出力区分の分岐込み)を開発DBのコピーへ`LIMIT 0`で実行し、列数12とqfmのitem順一致を確認
+- 新規3XAMLのXML整形式・バインディング名のViewModel整合・リソースキー参照を確認
+- `git diff --check` 問題なし、編集/新規ファイルはCRLF
+
+---
+
 ## [2026-07-31] 10:52 POS売上確定SQLiteマイグレーション不足の修正
 ### Agent
 - GPT-5 : OpenAI

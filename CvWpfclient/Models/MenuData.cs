@@ -83,9 +83,9 @@ public partial class MenuData : ObservableObject {
 			new("販売員別予算マスタ(月)", typeof(Views._02Yosan.SalesStaffBudgetMasterView), addInfo:"販売員別の月毎の日予算を作成"),
 			new("販売員予算マスタメンテ", typeof(Views._02Yosan.MasterYosanHanbaiMenteView), addInfo:"MasterYosanHanbai の日別予算レコードを直接編集"),
 			new("店舗予算表", typeof(Views._02Yosan.ShopBudgetReportView)),
-			new("店舗ブランド別予算実績対比", typeof(Views._02Yosan.ShopBrandBudgetVsActualView), addInfo:"準備中"),
-			new("日別店別予算表", typeof(Views._02Yosan.DailyShopBudgetReportView), addInfo:"準備中"),
-			new("販売員予算表", typeof(Views._02Yosan.SalesStaffBudgetReportView), addInfo:"準備中"),
+			new("店舗ブランド別予算実績対比", typeof(Views._02Yosan.ShopBrandBudgetVsActualView), addInfo:"店舗×ブランドの売上･粗利を月単位で予算実績対比"),
+			new("日別店別予算表", typeof(Views._02Yosan.DailyShopBudgetReportView), addInfo:"日付→店舗順に予算･売上･差異･累計を印刷"),
+			new("販売員予算表", typeof(Views._02Yosan.SalesStaffBudgetReportView), addInfo:"販売員別･日別に予算･売上･差異･累計を印刷"),
 		])),
 		new("■ 発注", new([
 			new("発注入力", typeof(Views._03Hatchu.HachuInputView), addInfo:"仕入先に対する発注入力"),
