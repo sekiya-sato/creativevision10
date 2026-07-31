@@ -1,17 +1,187 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._04Juchu.TantoTenjiJuchuGoukeiTableView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._04Juchu"
-	Title="担当別展示会受注合計表"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	Title="{Binding Title}"
+	Width="820" Height="700"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:TantoTenjiJuchuGoukeiTableViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoOutputPdfCommand}"
+			Gesture="F6" />
+		<KeyBinding Command="{Binding ExitCommand}"
+			Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="Printer" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<Grid Grid.Row="1"
+			Margin="24">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="140" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+
+			<!--  受注日  -->
+			<TextBlock Grid.Row="0" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="受注日" />
+			<TextBox Grid.Row="0" Grid.Column="1"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Style="{StaticResource MaterialDesignTextBox}"
+				Text="{Binding DenDayFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="0" Grid.Column="2"
+				Margin="8,0" VerticalAlignment="Center"
+				Text="～" />
+			<TextBox Grid.Row="0" Grid.Column="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Style="{StaticResource MaterialDesignTextBox}"
+				Text="{Binding DenDayTo, UpdateSourceTrigger=PropertyChanged}" />
+
+			<!--  担当社員  -->
+			<TextBlock Grid.Row="1" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="担当社員" />
+			<TextBox Grid.Row="1" Grid.Column="1"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeFromCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding ShainCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="1" Grid.Column="2"
+				Margin="8,0" VerticalAlignment="Center"
+				Text="～" />
+			<TextBox Grid.Row="1" Grid.Column="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShainCodeToCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding ShainCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+
+			<!--  展示会  -->
+			<TextBlock Grid.Row="2" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="展示会" />
+			<TextBox Grid.Row="2" Grid.Column="1"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectTenjiCodeFromCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding TenjiCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="2" Grid.Column="2"
+				Margin="8,0" VerticalAlignment="Center"
+				Text="～" />
+			<TextBox Grid.Row="2" Grid.Column="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectTenjiCodeToCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding TenjiCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+
+			<!--  集計単位  -->
+			<TextBlock Grid.Row="3" Grid.Column="0"
+				Margin="0,10,0,10"
+				Style="{StaticResource FormLabel}"
+				Text="集計単位" />
+			<StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10,0,10"
+				Orientation="Horizontal">
+				<RadioButton Margin="0,4"
+					Content="担当×展示会"
+					IsChecked="{Binding IsByTenji}" />
+				<RadioButton Margin="16,4,0,4"
+					Content="担当計"
+					IsChecked="{Binding IsByTenji, Converter={StaticResource InverseBooleanConverter}}" />
+			</StackPanel>
+
+			<!--  展示会未設定  -->
+			<TextBlock Grid.Row="4" Grid.Column="0"
+				Margin="0,10,0,10"
+				Style="{StaticResource FormLabel}"
+				Text="展示会未設定" />
+			<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10,0,10"
+				Orientation="Horizontal">
+				<CheckBox Margin="0,4"
+					Content="未設定の商品も含める"
+					IsChecked="{Binding IncludeNoTenji}" />
+			</StackPanel>
+
+			<!--  注意書き  -->
+			<StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,8">
+				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+					Text="※展示会は明細の商品から商品マスタの展示会区分を引いて判定します。" TextWrapping="Wrap" />
+				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+					Text="※担当は明細の担当社員を優先し、未設定の明細は伝票の入力社員へ寄せます。" TextWrapping="Wrap" />
+			</StackPanel>
+
+			<!--  実行ボタン  -->
+			<StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="4"
+				Margin="0,24" HorizontalAlignment="Center"
+				Orientation="Horizontal">
+				<Button Command="{Binding DoOutputPdfCommand}"
+					Style="{StaticResource MaterialDesignFlatMidBgButton}"
+					ToolTip="印刷実行 (F6)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="Printer" />
+						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+							FontSize="20" Text="印刷実行" />
+					</StackPanel>
+				</Button>
+			</StackPanel>
+		</Grid>
+	</Grid>
 </helpers:BaseWindow>
