@@ -103,26 +103,16 @@ public abstract partial class BaseReportViewModel : BaseViewModel {
 
 	/// <summary>
 	/// SQLへ埋め込むユーザ入力値を `@n` プレースホルダとして採番する。
-	/// 戻り値をそのままSQL文へ連結する。
+	/// 戻り値をそのままSQL文へ連結する。実装は SqlWhere（照会基底と共用）。
 	/// </summary>
-	protected static string AddSqlParameter(List<string> parameters, object value) {
-		parameters.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);
-		return $"@{parameters.Count - 1}";
-	}
+	protected static string AddSqlParameter(List<string> parameters, object value) =>
+		SqlWhere.AddParameter(parameters, value);
 
 	/// <summary>
 	/// コード範囲（〜）のWHERE句を組み立てる。空欄の側は条件を付けない。
 	/// </summary>
-	protected static string BuildCodeRangeWhere(List<string> parameters, string columnName, string? codeFrom, string? codeTo) {
-		var where = "";
-		if (!string.IsNullOrWhiteSpace(codeFrom)) {
-			where += $" AND {columnName} >= {AddSqlParameter(parameters, codeFrom.Trim())}";
-		}
-		if (!string.IsNullOrWhiteSpace(codeTo)) {
-			where += $" AND {columnName} <= {AddSqlParameter(parameters, codeTo.Trim())}";
-		}
-		return where;
-	}
+	protected static string BuildCodeRangeWhere(List<string> parameters, string columnName, string? codeFrom, string? codeTo) =>
+		SqlWhere.CodeRange(parameters, columnName, codeFrom, codeTo);
 
 	/// <summary>
 	/// 年月文字列を検証する。不正なら警告を出して false。
