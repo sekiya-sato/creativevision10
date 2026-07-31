@@ -1,3 +1,20 @@
+## [2026-07-31] 10:52 POS売上確定SQLiteマイグレーション不足の修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：POSクライアントの売上確定時に発生した `no such column: PosClientSaleId` を修正する。
+### 実施内容
+- `CvBase/UpdateDb.cs`: `Tran01Tenuri` に端末取引ID `PosClientSaleId` と決済内訳 `JposPayment` を追加するSQLite起動時マイグレーションを追加した。
+### 技術決定 Why
+- 売上確定サービスは重複防止のために端末取引IDを検索し、同じトランザクションで決済内訳も保存するため、モデル定義だけではなく既存DBを更新する2列を同一マイグレーションに含める。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvServer\\CvServer.csproj --no-restore`: 0警告 0エラー
+- 開発用SQLiteで `26072704 -> 26073101` のマイグレーション適用とCvServerの5012番ポート待受を確認
+
+---
+
 ## [2026-07-31] 10:20 POS用gRPC売上確定・JWT認証の追加
 ### Agent
 - GPT-5 : OpenAI
