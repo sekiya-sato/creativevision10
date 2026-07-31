@@ -636,6 +636,13 @@ public enum EnumUri00 : int {
 [Comment("トランザクション：店舗売上データ 店舗に対する売上と店舗(倉庫)からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
+	[ObservableProperty]
+	[ColumnSizeDml(36)]
+	public partial string PosClientSaleId { get; set; } = string.Empty;
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	public partial PosPaymentDetail? JposPayment { get; set; }
 	/// <summary>
 	/// 店舗キー
 	/// </summary>
@@ -712,6 +719,14 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	public partial int Total { get; set; }
+}
+
+/// <summary>POS会計で受領した金種内訳</summary>
+public sealed class PosPaymentDetail {
+	public int CashAmount { get; init; }
+	public int CardAmount { get; init; }
+	public int OtherAmount { get; init; }
+	public int ChangeAmount { get; init; }
 }
 public enum EnumUri01 : int {
 	Uriage = 10,

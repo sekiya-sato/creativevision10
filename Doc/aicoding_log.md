@@ -1,3 +1,24 @@
+## [2026-07-31] 10:20 POS用gRPC売上確定・JWT認証の追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvServerへ接続するPOS画面向けに、バーコード商品検索、会計、売上確定を提供する。
+### 実施内容
+- `CodeShare/IPointOfSaleService.cs`: 認証済みPOS端末向けの商品検索・売上確定gRPC契約を追加した。
+- `CvBase/BaseDb2Trans.cs`: `Tran01Tenuri`へ端末取引IDと決済内訳JSONを追加した。
+- `CvServer/Services/PointOfSaleService.cs`: 商品単価をサーバーで再取得し、売上・決済内訳・在庫集計をSerializableトランザクションで確定する処理を追加した。
+- `CvServer/Program.cs`: POS gRPCサービスを公開した。
+### 技術決定 Why
+- POS専用サービスはJWT認証必須とし、既存のテスト用匿名CoreServiceへ売上確定機能を追加しない。端末取引IDを保存して同一リクエストの再送時に既存売上を返し、二重売上を避ける。
+### 影響範囲
+- CvServer、CodeShare、CvBase、およびcvpos10のPOSクライアント。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvServer\\CvServer.csproj`: 0警告 0エラー
+
+---
+
 ## [2026-07-30] 16:39 Span<T> による文字列処理の一時割り当て削減
 ### Agent
 - GPT-5 : OpenAI
