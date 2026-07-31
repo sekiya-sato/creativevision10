@@ -1,17 +1,163 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._20UriageAnalysis.SalesBudgetRatioReportView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._20UriageAnalysis"
-	Title="売上予算構成比"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	Title="{Binding Title}"
+	Width="820" Height="680"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:SalesBudgetRatioReportViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoOutputPdfCommand}"
+			Gesture="F6" />
+		<KeyBinding Command="{Binding ExitCommand}"
+			Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="Printer" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<Grid Grid.Row="1"
+			Margin="24">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="140" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+
+			<!--  対象年月  -->
+			<TextBlock Grid.Row="0" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="対象年月" />
+			<TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left"
+				Style="{StaticResource MaterialDesignTextBox}"
+				Text="{Binding TargetYearMonth, UpdateSourceTrigger=PropertyChanged}" />
+
+			<!--  店舗  -->
+			<TextBlock Grid.Row="1" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="店舗" />
+			<TextBox Grid.Row="1" Grid.Column="1"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeFromCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding ShopCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="1" Grid.Column="2"
+				Margin="8,0" VerticalAlignment="Center"
+				Text="～" />
+			<TextBox Grid.Row="1" Grid.Column="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeToCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding ShopCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+
+			<!--  ブランド  -->
+			<TextBlock Grid.Row="2" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="ブランド" />
+			<TextBox Grid.Row="2" Grid.Column="1"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCodeFromCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding BrandCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="2" Grid.Column="2"
+				Margin="8,0" VerticalAlignment="Center"
+				Text="～" />
+			<TextBox Grid.Row="2" Grid.Column="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCodeToCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding BrandCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+
+			<!--  出力対象  -->
+			<TextBlock Grid.Row="3" Grid.Column="0"
+				Margin="0,10,0,10"
+				Style="{StaticResource FormLabel}"
+				Text="出力対象" />
+			<StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10,0,10"
+				Orientation="Horizontal">
+				<RadioButton Margin="0,4"
+					Content="予算･実績があるのみ"
+					IsChecked="{Binding IsActiveOnly}" />
+				<RadioButton Margin="16,4,0,4"
+					Content="全て"
+					IsChecked="{Binding IsActiveOnly, Converter={StaticResource InverseBooleanConverter}}" />
+			</StackPanel>
+
+			<!--  注意書き  -->
+			<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,8">
+				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+					Text="※構成比は店舗内での比率です。実績のブランドは売上明細の商品から判定します。" TextWrapping="Wrap" />
+			</StackPanel>
+
+			<!--  実行ボタン  -->
+			<StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4"
+				Margin="0,24" HorizontalAlignment="Center"
+				Orientation="Horizontal">
+				<Button Command="{Binding DoOutputPdfCommand}"
+					Style="{StaticResource MaterialDesignFlatMidBgButton}"
+					ToolTip="印刷実行 (F6)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="Printer" />
+						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+							FontSize="20" Text="印刷実行" />
+					</StackPanel>
+				</Button>
+			</StackPanel>
+		</Grid>
+	</Grid>
 </helpers:BaseWindow>
