@@ -1,17 +1,183 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._06Uriage.HinbanUriageCheckListView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._06Uriage"
-	Title="品番別売上チェックリスト"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	Title="{Binding Title}"
+	Width="820" Height="700"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:HinbanUriageCheckListViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoOutputPdfCommand}"
+			Gesture="F6" />
+		<KeyBinding Command="{Binding ExitCommand}"
+			Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="Printer" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<Grid Grid.Row="1"
+			Margin="24">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="140" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+
+			<!--  売上日  -->
+			<TextBlock Grid.Row="0" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="売上日" />
+			<TextBox Grid.Row="0" Grid.Column="1"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Style="{StaticResource MaterialDesignTextBox}"
+				Text="{Binding DenDayFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="0" Grid.Column="2"
+				Margin="8,0" VerticalAlignment="Center"
+				Text="～" />
+			<TextBox Grid.Row="0" Grid.Column="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				Style="{StaticResource MaterialDesignTextBox}"
+				Text="{Binding DenDayTo, UpdateSourceTrigger=PropertyChanged}" />
+
+			<!--  商品  -->
+			<TextBlock Grid.Row="1" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="商品" />
+			<TextBox Grid.Row="1" Grid.Column="1"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShohinCodeFromCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding ShohinCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="1" Grid.Column="2"
+				Margin="8,0" VerticalAlignment="Center"
+				Text="～" />
+			<TextBox Grid.Row="1" Grid.Column="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectShohinCodeToCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding ShohinCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+
+			<!--  対象売上  -->
+			<TextBlock Grid.Row="2" Grid.Column="0"
+				Margin="0,10,0,10"
+				Style="{StaticResource FormLabel}"
+				Text="対象売上" />
+			<StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10,0,10"
+				Orientation="Horizontal">
+				<CheckBox Margin="0,4"
+					Content="卸売上"
+					IsChecked="{Binding IncludeOroshi}" />
+				<CheckBox Margin="16,4,0,4"
+					Content="店舗売上"
+					IsChecked="{Binding IncludeShop}" />
+			</StackPanel>
+
+			<!--  集計単位  -->
+			<TextBlock Grid.Row="3" Grid.Column="0"
+				Margin="0,10,0,10"
+				Style="{StaticResource FormLabel}"
+				Text="集計単位" />
+			<StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10,0,10"
+				Orientation="Horizontal">
+				<RadioButton Margin="0,4"
+					Content="色ｻｲｽﾞ別"
+					IsChecked="{Binding IsByColorSize}" />
+				<RadioButton Margin="16,4,0,4"
+					Content="商品計"
+					IsChecked="{Binding IsByColorSize, Converter={StaticResource InverseBooleanConverter}}" />
+			</StackPanel>
+
+			<!--  取引区分  -->
+			<TextBlock Grid.Row="4" Grid.Column="0"
+				Margin="0,10,0,10"
+				Style="{StaticResource FormLabel}"
+				Text="取引区分" />
+			<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10,0,10"
+				Orientation="Horizontal">
+				<RadioButton Margin="0,4"
+					Content="売上のみ"
+					IsChecked="{Binding IncludeHenpin, Converter={StaticResource InverseBooleanConverter}}" />
+				<RadioButton Margin="16,4,0,4"
+					Content="返品･値引も含む"
+					IsChecked="{Binding IncludeHenpin}"
+					ToolTip="返品･値引はマイナス計上されます" />
+			</StackPanel>
+
+			<!--  注意書き  -->
+			<StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,8">
+				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+					Text="※卸売上と店舗売上を同時に選ぶと、両方を合算して品番別に集計します。" TextWrapping="Wrap" />
+				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+					Text="※伝票数は卸/店舗をまたいで重複しないよう区別してカウントします。" TextWrapping="Wrap" />
+			</StackPanel>
+
+			<!--  実行ボタン  -->
+			<Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="4"
+				Margin="0,24" HorizontalAlignment="Center"
+				Command="{Binding DoOutputPdfCommand}"
+				Style="{StaticResource MaterialDesignFlatMidBgButton}"
+				ToolTip="印刷実行 (F6)">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon VerticalAlignment="Center"
+						Kind="Printer" />
+					<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+						FontSize="20" Text="印刷実行" />
+				</StackPanel>
+			</Button>
+		</Grid>
+	</Grid>
 </helpers:BaseWindow>
