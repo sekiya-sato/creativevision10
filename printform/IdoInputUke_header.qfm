@@ -282,7 +282,7 @@
 			<position x="41" y="0" width="48" height="7" />
 			<color base="97f2ff" transparent="0" />
 			<border bottom="10" />
-			<data calctype="static">ˆÚ“®(‘¦Žž)“`•[ˆê——</data>
+			<data calctype="static">ˆÚ“®Žó“`•[ˆê——</data>
 			<decode datatype="string" format="" />
 			<font size="120" style="1" />
 		</text>

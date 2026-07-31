@@ -16,6 +16,12 @@ public interface ITranIdo {
 	public string DenDay { get; set; }
 	public long Id_Ido { get; set; }
 	public int CalcFlag { get; }
+	/// <summary>移動先の名称スナップショット。Tran05Ido/Tran10IdoOut/Tran11IdoIn が同じ形で持つ</summary>
+	public CodeNameView VIdo { get; set; }
+	/// <summary>関連No1。積送入庫(Tran11IdoIn)では積送出庫(Tran10IdoOut)のIdをセットする</summary>
+	public int RelateNo1 { get; set; }
+	/// <summary>手入力No</summary>
+	public string ManualNo { get; set; }
 }
 public interface ITranSoko {
 	public long Id { get; set; }
