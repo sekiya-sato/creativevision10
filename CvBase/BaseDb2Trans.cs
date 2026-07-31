@@ -613,6 +613,18 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 	/// </summary>
 	[ObservableProperty]
 	public partial int Total { get; set; }
+	/// <summary>
+	/// 納品書発行済FLG。納品書印刷で立て、納品書未発行チェックリストで 0 を抽出する。
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsPrint))]
+	public partial int IsPrint { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsPrint {
+		get => (EnumYesNo)IsPrint;
+		set => IsPrint = (int)value;
+	}
 }
 
 public enum EnumUri00 : int {

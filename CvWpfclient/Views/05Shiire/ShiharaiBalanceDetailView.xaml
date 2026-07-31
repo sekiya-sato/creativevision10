@@ -139,18 +139,20 @@
 			</StackPanel>
 
 			<!--  実行ボタン  -->
-			<Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4"
+			<StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4"
 				Margin="0,24" HorizontalAlignment="Center"
-				Command="{Binding DoOutputPdfCommand}"
-				Style="{StaticResource MaterialDesignFlatMidBgButton}"
-				ToolTip="印刷実行 (F6)">
-				<StackPanel Orientation="Horizontal">
-					<materialDesign:PackIcon VerticalAlignment="Center"
-						Kind="Printer" />
-					<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-						FontSize="20" Text="印刷実行" />
-				</StackPanel>
-			</Button>
+				Orientation="Horizontal">
+				<Button Command="{Binding DoOutputPdfCommand}"
+					Style="{StaticResource MaterialDesignFlatMidBgButton}"
+					ToolTip="印刷実行 (F6)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="Printer" />
+						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+							FontSize="20" Text="印刷実行" />
+					</StackPanel>
+				</Button>
+			</StackPanel>
 		</Grid>
 	</Grid>
 </helpers:BaseWindow>
