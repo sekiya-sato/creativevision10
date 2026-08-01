@@ -59,6 +59,7 @@ public class DefineDataTable {
 			// トランザクションテーブル
 			typeof(Tran00Uriage),
 			typeof(Tran01Tenuri),
+			typeof(Tran02PosSeisan),
 			typeof(Tran03Shiire),
 			typeof(Tran05Ido),
 			typeof(Tran06Nyukin),
