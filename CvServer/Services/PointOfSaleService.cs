@@ -8,7 +8,7 @@ namespace CvServer.Services;
 
 /// <summary>認証済みPOS端末のバーコード検索と売上確定・取消・精算を提供します。</summary>
 [Authorize]
-public sealed class PointOfSaleService : IPointOfSaleService {
+public sealed record PointOfSaleService : IPointOfSaleService {
 	private readonly ExDatabase _db;
 	private readonly ILogger<PointOfSaleService> _logger;
 	public PointOfSaleService(ExDatabase db, ILogger<PointOfSaleService> logger) { _db = db; _logger = logger; }

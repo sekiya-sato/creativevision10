@@ -4,8 +4,8 @@ using System.ServiceModel;
 
 namespace CodeShare;
 
-[DataContract] public sealed class PosBarcodeLookupRequest { [DataMember(Order = 1)] public string Barcode { get; init; } = string.Empty; }
-[DataContract] public sealed class PosProduct {
+[DataContract] public sealed record PosBarcodeLookupRequest { [DataMember(Order = 1)] public string Barcode { get; init; } = string.Empty; }
+[DataContract] public sealed record PosProduct {
 	[DataMember(Order = 1)] public long ProductId { get; init; }
 	[DataMember(Order = 2)] public string ProductCode { get; init; } = string.Empty;
 	[DataMember(Order = 3)] public string ProductName { get; init; } = string.Empty;
@@ -17,7 +17,7 @@ namespace CodeShare;
 	[DataMember(Order = 9)] public string SizeName { get; init; } = string.Empty;
 	[DataMember(Order = 10)] public int UnitPrice { get; init; }
 }
-[DataContract] public sealed class PosCheckoutLine {
+[DataContract] public sealed record PosCheckoutLine {
 	[DataMember(Order = 1)] public string Barcode { get; init; } = string.Empty;
 	[DataMember(Order = 2)] public long ProductId { get; init; }
 	[DataMember(Order = 3)] public long ColorId { get; init; }
@@ -34,12 +34,12 @@ namespace CodeShare;
 	[DataMember(Order = 12)] public string StaffCode { get; init; } = string.Empty;
 	[DataMember(Order = 13)] public string StaffName { get; init; } = string.Empty;
 }
-[DataContract] public sealed class PosPayment {
+[DataContract] public sealed record PosPayment {
 	[DataMember(Order = 1)] public int CashAmount { get; init; }
 	[DataMember(Order = 2)] public int CardAmount { get; init; }
 	[DataMember(Order = 3)] public int OtherAmount { get; init; }
 }
-[DataContract] public sealed class PosCheckoutRequest {
+[DataContract] public sealed record PosCheckoutRequest {
 	[DataMember(Order = 1)] public string ClientSaleId { get; init; } = string.Empty;
 	[DataMember(Order = 2)] public long StoreId { get; init; }
 	[DataMember(Order = 3)] public long WarehouseId { get; init; }
@@ -49,7 +49,7 @@ namespace CodeShare;
 	/// <summary>伝票区分（10=売上 11=売上(セール) 20=返品 21=返品(セール)）。省略時は 10。</summary>
 	[DataMember(Order = 7)] public int Kubun { get; init; } = 10;
 }
-[DataContract] public sealed class PosCheckoutResponse {
+[DataContract] public sealed record PosCheckoutResponse {
 	[DataMember(Order = 1)] public bool IsSuccess { get; init; }
 	[DataMember(Order = 2)] public bool IsDuplicate { get; init; }
 	[DataMember(Order = 3)] public long SaleId { get; init; }
@@ -58,19 +58,19 @@ namespace CodeShare;
 	[DataMember(Order = 6)] public string Message { get; init; } = string.Empty;
 }
 /// <summary>売上取消リクエスト。SaleId は取消対象の Tran01Tenuri.Id。</summary>
-[DataContract] public sealed class PosCancelSaleRequest {
+[DataContract] public sealed record PosCancelSaleRequest {
 	[DataMember(Order = 1)] public long SaleId { get; init; }
 	/// <summary>取消操作を行った担当者キー。</summary>
 	[DataMember(Order = 2)] public long StaffId { get; init; }
 }
-[DataContract] public sealed class PosCancelSaleResponse {
+[DataContract] public sealed record PosCancelSaleResponse {
 	[DataMember(Order = 1)] public bool IsSuccess { get; init; }
 	/// <summary>生成された取消伝票（Kubun=20）の Id。</summary>
 	[DataMember(Order = 2)] public long CancelSaleId { get; init; }
 	[DataMember(Order = 3)] public string Message { get; init; } = string.Empty;
 }
 /// <summary>日次精算の保存リクエスト。RealAmount/CalcAmount/AmountDiff はサーバが算出する。</summary>
-[DataContract] public sealed class PosSaveSeisanRequest {
+[DataContract] public sealed record PosSaveSeisanRequest {
 	[DataMember(Order = 1)] public long StoreId { get; init; }
 	/// <summary>営業日（yyyyMMdd）。</summary>
 	[DataMember(Order = 2)] public string DenDay { get; init; } = string.Empty;
@@ -97,7 +97,7 @@ namespace CodeShare;
 	[DataMember(Order = 21)] public int ReturnCount { get; init; }
 	[DataMember(Order = 22)] public int TotalQuantity { get; init; }
 }
-[DataContract] public sealed class PosSaveSeisanResponse {
+[DataContract] public sealed record PosSaveSeisanResponse {
 	[DataMember(Order = 1)] public bool IsSuccess { get; init; }
 	/// <summary>保存された Tran02PosSeisan.Id。</summary>
 	[DataMember(Order = 2)] public long SeisanId { get; init; }
