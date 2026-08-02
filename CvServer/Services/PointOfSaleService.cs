@@ -8,7 +8,7 @@ namespace CvServer.Services;
 
 /// <summary>認証済みPOS端末のバーコード検索と売上確定・取消・精算を提供します。</summary>
 [Authorize]
-public sealed record PointOfSaleService : IPointOfSaleService {
+public sealed class PointOfSaleService : IPointOfSaleService {
 	private readonly ExDatabase _db;
 	private readonly ILogger<PointOfSaleService> _logger;
 	public PointOfSaleService(ExDatabase db, ILogger<PointOfSaleService> logger) { _db = db; _logger = logger; }
@@ -51,17 +51,24 @@ public sealed record PointOfSaleService : IPointOfSaleService {
 			var cancelStaff = FindById<MasterShain>(request.StaffId);
 			var now = DateTime.UtcNow.Ticks;
 			var cancelSale = new Tran01Tenuri {
-				Vdc = now, Vdu = now,
+				Vdc = now,
+				Vdu = now,
 				DenDay = DateTime.Today.ToString("yyyyMMdd"),
 				Kubun = (int)EnumUri01.Henpin,
-				Id_Tenpo = original.Id_Tenpo, VTenpo = original.VTenpo,
-				Id_Soko = original.Id_Soko, VSoko = original.VSoko,
+				Id_Tenpo = original.Id_Tenpo,
+				VTenpo = original.VTenpo,
+				Id_Soko = original.Id_Soko,
+				VSoko = original.VSoko,
 				Id_Shain = request.StaffId,
 				VShain = cancelStaff == null ? new CodeNameView() : new CodeNameView(cancelStaff.Id, cancelStaff.Code, cancelStaff.Name),
 				Jmeisai = original.Jmeisai,
-				SuTotal = original.SuTotal, KingakuTotal = original.KingakuTotal,
-				JodaiTotal = original.JodaiTotal, GedaiTotal = original.GedaiTotal, Total = original.Total,
-				PosClientSaleId = cancelId, Memo = $"取消: 元売上No.{original.Id}",
+				SuTotal = original.SuTotal,
+				KingakuTotal = original.KingakuTotal,
+				JodaiTotal = original.JodaiTotal,
+				GedaiTotal = original.GedaiTotal,
+				Total = original.Total,
+				PosClientSaleId = cancelId,
+				Memo = $"取消: 元売上No.{original.Id}",
 				JposPayment = original.JposPayment
 			};
 			_db.Insert(cancelSale);
@@ -89,21 +96,36 @@ public sealed record PointOfSaleService : IPointOfSaleService {
 			var store = FindById<MasterTokui>(request.StoreId);
 			var staff = FindById<MasterShain>(request.StaffId);
 			var seisan = new Tran02PosSeisan {
-				Vdc = DateTime.UtcNow.Ticks, Vdu = DateTime.UtcNow.Ticks,
-				DenDay = request.DenDay, Id_Tenpo = request.StoreId,
+				Vdc = DateTime.UtcNow.Ticks,
+				Vdu = DateTime.UtcNow.Ticks,
+				DenDay = request.DenDay,
+				Id_Tenpo = request.StoreId,
 				VTenpo = store == null ? new CodeNameView() : new CodeNameView(store.Id, store.Code, store.Name),
 				Id_Shain = request.StaffId,
 				VShain = staff == null ? new CodeNameView() : new CodeNameView(staff.Id, staff.Code, staff.Name),
-				SeisanCnt = nextCnt, KyakuSu = request.KyakuSu,
-				Mai10000 = request.Mai10000, Mai5000 = request.Mai5000, Mai2000 = request.Mai2000, Mai1000 = request.Mai1000,
-				Mai500 = request.Mai500, Mai100 = request.Mai100, Mai50 = request.Mai50, Mai10 = request.Mai10,
-				Mai5 = request.Mai5, Mai1 = request.Mai1,
+				SeisanCnt = nextCnt,
+				KyakuSu = request.KyakuSu,
+				Mai10000 = request.Mai10000,
+				Mai5000 = request.Mai5000,
+				Mai2000 = request.Mai2000,
+				Mai1000 = request.Mai1000,
+				Mai500 = request.Mai500,
+				Mai100 = request.Mai100,
+				Mai50 = request.Mai50,
+				Mai10 = request.Mai10,
+				Mai5 = request.Mai5,
+				Mai1 = request.Mai1,
 				JunbiAmount = request.JunbiAmount,
-				RealAmount = realAmount, CalcAmount = calcAmount, AmountDiff = diff,
+				RealAmount = realAmount,
+				CalcAmount = calcAmount,
+				AmountDiff = diff,
 				Jsummary = new PosSeisanSummary {
-					TotalAmount = request.TotalAmount, CashAmount = request.CashAmount,
-					CardAmount = request.CardAmount, OtherAmount = request.OtherAmount,
-					TransactionCount = request.TransactionCount, ReturnCount = request.ReturnCount,
+					TotalAmount = request.TotalAmount,
+					CashAmount = request.CashAmount,
+					CardAmount = request.CardAmount,
+					OtherAmount = request.OtherAmount,
+					TransactionCount = request.TransactionCount,
+					ReturnCount = request.ReturnCount,
 					TotalQuantity = request.TotalQuantity
 				}
 			};
