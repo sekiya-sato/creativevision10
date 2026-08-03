@@ -222,6 +222,96 @@ WHERE SumMonth <= @0;
 			"処理エラー: {StepName}",
 			"処理終了");
 	}
+	/// <summary>
+	/// SummaryKakeの年月のデータを集計する(再作成)
+	/// </summary>
+	/// <param name="DatefromYyyymm"></param>
+	/// <param name="DateToYyyymm"></param>
+	/// <returns></returns>
+	public int CalcSummaryUriKake(string DatefromYyyymm, string DateToYyyymm) {
+		var cnt = 0;
+		const string deleteSql = "DELETE FROM SummaryUriKake WHERE DenMonth BETWEEN @0 AND @1";
+		var vdate = Common.GetVdate();
+		var sql = @$"
+WITH movements AS (
+	SELECT
+		substr(t.KakeDay, 1, 6) AS DenMonth,
+		t.Id_Tokui,
+		SUM((CASE WHEN t.Total <> 0 THEN t.Total ELSE t.KingakuTotal + t.Tax END) * t.CalcFlag) AS TotalSales,
+		SUM(t.KingakuTotal * t.CalcFlag) AS Uriage,
+		SUM(t.Tax * t.CalcFlag) AS Tax,
+		0 AS TotalIn
+	FROM Tran00Uriage AS t
+	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	GROUP BY DenMonth, t.Id_Tokui
+	UNION ALL
+	SELECT
+		substr(t.DenDay, 1, 6) AS DenMonth,
+		t.Id_Torisaki AS Id_Tokui,
+		0 AS TotalSales,
+		0 AS Uriage,
+		0 AS Tax,
+		SUM(t.KingakuTotal) AS TotalIn
+	FROM Tran06Nyukin AS t
+	WHERE substr(t.DenDay, 1, 6) BETWEEN @0 AND @1
+	GROUP BY DenMonth, t.Id_Torisaki
+),
+monthly AS (
+	SELECT
+		DenMonth,
+		Id_Tokui,
+		SUM(TotalSales) AS TotalSales,
+		SUM(Uriage) AS Uriage,
+		SUM(Tax) AS Tax,
+		SUM(TotalIn) AS TotalIn
+	FROM movements
+	GROUP BY DenMonth, Id_Tokui
+),
+previousBalance AS (
+	SELECT s.Id_Tokui, s.Balance
+	FROM SummaryUriKake AS s
+	WHERE s.DenMonth = (
+		SELECT MAX(p.DenMonth)
+		FROM SummaryUriKake AS p
+		WHERE p.Id_Tokui = s.Id_Tokui
+		  AND p.DenMonth < @0
+	)
+)
+INSERT INTO SummaryUriKake (
+	Id_Tokui, DenMonth, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Tax,
+	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
+)
+SELECT
+	m.Id_Tokui,
+	m.DenMonth,
+	IFNULL(p.Balance, 0) + SUM(m.TotalSales - m.TotalIn) OVER (
+		PARTITION BY m.Id_Tokui
+		ORDER BY m.DenMonth
+		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+	) AS Balance,
+	m.TotalIn,
+	m.TotalSales,
+	m.Uriage,
+	0 AS Henpin,
+	0 AS Nebiki,
+	m.Tax,
+	0 AS Cash,
+	0 AS Fee,
+	0 AS Densai,
+	0 AS Offset,
+	0 AS Other,
+	{vdate} AS Vdc,
+	{vdate} AS Vdu
+FROM monthly AS m
+LEFT JOIN previousBalance AS p ON p.Id_Tokui = m.Id_Tokui;
+";
+	var period = $"{DatefromYyyymm}-{DateToYyyymm}";
+	_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+	cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryUriKake(delete)", "SummaryUriKake", period);
+	cnt += ExecuteAndCounts(sql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryUriKake", "SummaryUriKake", period);
+	_db.CompleteTransaction();
+		return cnt;
+	}
 
 
 

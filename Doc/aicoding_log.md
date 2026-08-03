@@ -1,3 +1,20 @@
+## [2026-08-03] 15:22 売掛月次集計ロジックの実装
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`CalcSummaryUriKake()`で、指定年月範囲の売上・入金を得意先別に集計する。
+### 実施内容
+- `CvDomainLogic/SummaryDb.cs`: `Tran00Uriage.KakeDay`を売上計上月、`Tran06Nyukin.DenDay`を入金月として集計し、`CalcFlag`による売上の符号反転、前月残高を引き継ぐ残高計算、対象範囲の削除・再作成を実装した。
+### 技術決定 Why
+- 売上の返品・値引は既存の`CalcFlag`が符号を保持しているため、取引区分を個別に分岐せず同じ集計式へ乗せた。前月以前の直近残高に期間内の売上・入金差額を累積して、部分再集計でも月次残高を維持する。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic\CvDomainLogic.csproj`: 0警告 0エラー
+- `git diff --check`: 問題なし。編集ファイルはCRLF。
+
+---
+
 ## [2026-08-02] 07:32 POS gRPC DataContract DTOとサービス実装のrecord化
 ### Agent
 - GPT-5 : OpenAI
