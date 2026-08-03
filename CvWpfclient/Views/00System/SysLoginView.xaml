@@ -313,7 +313,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  最終ログイン  -->

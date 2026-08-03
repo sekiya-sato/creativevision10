@@ -257,7 +257,7 @@
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Torisaki, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Style="{StaticResource MasterRefText}"
-									Text="{Binding CurrentEdit.VTori, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+									Text="{Binding CurrentEdit.VTori, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 							</DockPanel>
 							<TextBlock Grid.Column="6"
 								Height="16"
@@ -273,7 +273,7 @@
 									Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Margin="8,0,0,0"
 									Style="{StaticResource MasterRefText}"
-									Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+									Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 							</DockPanel>
 							<TextBlock Grid.Row="1" Grid.Column="0"
 								Height="17"

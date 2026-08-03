@@ -330,7 +330,7 @@
 								Style="{StaticResource MenteSearchTextBox}"
 								Text="{Binding Current.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
 							<TextBlock Style="{StaticResource MasterRefText}"
-								Text="{Binding Current.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+								Text="{Binding Current.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 						</DockPanel>
 						<Label Grid.Row="10" Grid.Column="0"
 							Height="30"

@@ -400,7 +400,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<TextBlock Grid.Row="14"
@@ -409,7 +409,7 @@
 								<TextBox Grid.Row="14" Grid.Column="1"
 									materialDesign:HintAssist.Hint="店舗名" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}" />
+									Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId, Mode=OneWay}" />
 
 								<TextBlock Grid.Row="15"
 									Style="{StaticResource FormLabel}"

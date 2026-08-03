@@ -293,7 +293,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  掛率  -->
@@ -507,7 +507,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_PayMethod, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VPayMethod, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VPayMethod, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<TextBlock Grid.Row="7"
@@ -521,7 +521,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Paysaki, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VPaysaki, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VPaysaki, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 							</Grid>
 						</ScrollViewer>

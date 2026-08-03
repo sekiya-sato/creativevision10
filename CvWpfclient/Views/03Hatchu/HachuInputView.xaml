@@ -412,7 +412,7 @@
 												Style="{StaticResource MenteSearchTextBox}"
 												Text="{Binding CurrentEdit.Id_Shiire, UpdateSourceTrigger=PropertyChanged}" />
 											<TextBlock Style="{StaticResource MasterRefText}"
-												Text="{Binding CurrentEdit.VShiire, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+												Text="{Binding CurrentEdit.VShiire, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 										</DockPanel>
 
 										<TextBlock Grid.Row="0" Grid.Column="2"
@@ -427,7 +427,7 @@
 												Style="{StaticResource MenteSearchTextBox}"
 												Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 											<TextBlock Style="{StaticResource MasterRefText}"
-												Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+												Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 										</DockPanel>
 
 										<TextBlock Grid.Row="1"
@@ -442,7 +442,7 @@
 												Style="{StaticResource MenteSearchTextBox}"
 												Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
 											<TextBlock Style="{StaticResource MasterRefText}"
-												Text="{Binding CurrentEdit.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+												Text="{Binding CurrentEdit.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 										</DockPanel>
 
 										<TextBlock Grid.Row="2"

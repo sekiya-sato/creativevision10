@@ -346,7 +346,7 @@
 											Style="{StaticResource MenteSearchTextBox}"
 											Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
 										<TextBlock Style="{StaticResource MasterRefText}"
-											Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+											Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 									</DockPanel>
 
 									<!--  伝票担当  -->
@@ -362,7 +362,7 @@
 											Style="{StaticResource MenteSearchTextBox}"
 											Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 										<TextBlock Style="{StaticResource MasterRefText}"
-											Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+											Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 									</DockPanel>
 
 									<!--  倉庫  -->
@@ -378,7 +378,7 @@
 											Style="{StaticResource MenteSearchTextBox}"
 											Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
 										<TextBlock Style="{StaticResource MasterRefText}"
-											Text="{Binding CurrentEdit.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+											Text="{Binding CurrentEdit.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 									</DockPanel>
 
 									<!--  顧客  -->
@@ -394,7 +394,7 @@
 											Style="{StaticResource MenteSearchTextBox}"
 											Text="{Binding CurrentEdit.Id_Customer, UpdateSourceTrigger=PropertyChanged}" />
 										<TextBlock Style="{StaticResource MasterRefText}"
-											Text="{Binding CurrentEdit.VCustomer, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+											Text="{Binding CurrentEdit.VCustomer, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 									</DockPanel>
 
 									<!--  メモ  -->

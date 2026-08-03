@@ -231,7 +231,7 @@
 								<TextBlock Grid.Row="1" Grid.Column="1"
 									Margin="196,0,0,0"
 									Style="{StaticResource MasterRefText}"
-									Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+									Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 
 								<TextBlock Grid.Row="2"
 									Style="{StaticResource FormLabel}"
@@ -246,7 +246,7 @@
 								<TextBlock Grid.Row="2" Grid.Column="1"
 									Margin="196,0,0,0"
 									Style="{StaticResource MasterRefText}"
-									Text="{Binding CurrentEdit.VBrand, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+									Text="{Binding CurrentEdit.VBrand, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 
 								<TextBlock Grid.Row="3"
 									Style="{StaticResource FormLabel}"

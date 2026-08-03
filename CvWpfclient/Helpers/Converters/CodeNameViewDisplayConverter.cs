@@ -7,12 +7,26 @@ V*列(CodeNameView)を「(Id) コード 名称」の一続きの文字列へ変�
 - IdCodeNameDisplayConverter   : Id / Code / Name を個別に持つマスタ行を同じ書式へ揃える IMultiValueConverter。
 
 いずれも空要素は書式から除外するため、未選択(Sid=0/空文字)なら空文字を返します。
-ConverterParameter に "NoId" を渡すと Id を省略した「コード 名称」表示になります
-(隣に Id 入力欄がある等、Id が二重表示になる箇所向け)。
+
+## Id を出すか出さないかの使い分け **IMPORTANT**
+- **検索TextBox(`SearchTextBoxAssist` で Id_* を編集する欄)が隣にある編集フォーム** → `ConverterParameter="NoId"` を付けて
+  「コード 名称」のみ表示する。Id は隣のTextBoxが表示済みで、付けると二重表示になる。
+- **一覧(DataGrid)列・選択ウィンドウのプレビューなど、Id 入力欄が無い箇所** → 既定のまま「(Id) コード 名称」を表示する。
 
 # example
-<TextBlock Style="{StaticResource MasterRefText}"
-	Text="{Binding CurrentEdit.VBrand, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+<!--  検索TextBox付き: コード 名称のみ  -->
+<DockPanel>
+	<TextBox DockPanel.Dock="Left"
+		helpers:SearchTextBoxAssist.Command="{Binding DoSelectBrandCommand}"
+		Style="{StaticResource MenteSearchTextBox}"
+		Text="{Binding CurrentEdit.Id_Brand, UpdateSourceTrigger=PropertyChanged}" />
+	<TextBlock Style="{StaticResource MasterRefText}"
+		Text="{Binding CurrentEdit.VBrand, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
+</DockPanel>
+
+<!--  一覧列: (Id) コード 名称  -->
+<DataGridTextColumn Binding="{Binding VBrand, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+	Header="ブランド" SortMemberPath="VBrand.Cd" />
 
 <TextBlock>
 	<TextBlock.Text>

@@ -1,3 +1,24 @@
+## [2026-08-03] 16:20 検索TextBox付き項目のマスタ表示からIdを省略
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：隣に検索TextBoxがある項目は、TextBox自体がIdを表示しているため「(Id) Code Name」ではなく「Code Name」のみとする。全体に反映する。
+### 実施内容
+- CvWpfclient/Views 20ファイル・56箇所: `SearchTextBoxAssist` 付きTextBox(`Id_*` を編集)と同じ行に置かれたマスタ参照表示へ `ConverterParameter=NoId` を付与し、「コード 名称」表示に変更（SysLoginView, MasterEndCustomer/Shain/Shiire/Shohin/SysKanri/TokuiMenteView, MasterYosanBrandMenteView, Hachu/Juchu/Henpin/Shiharai/Shiire/Nyukin/ShopUriage/ShukkaUriage/IdoInputOut/Soku/Uke/StockInputView）。
+- CvWpfclient/Helpers/Converters/CodeNameViewDisplayConverter.cs: Idを出す／出さないの使い分け基準をヘッダコメントに明記し、両パターンの例を追記。
+### 技術決定 Why
+- 既存の `ConverterParameter="NoId"` を使うだけで済むため、コンバータのロジック追加は不要。Id省略は「隣にId入力欄があるか」という画面構造で決まるので、コンバータ側の既定は「(Id) コード 名称」のまま据え置き、呼び出し側で明示的に切り替える方針とした。
+- 対象の判定は、同一 DockPanel/Grid 行内に `SearchTextBoxAssist.Command` を持つTextBoxがあるかで機械的に確定させた（該当56箇所すべてがこの条件を満たす）。
+- 一覧(DataGrid)列27箇所と選択ウィンドウのプレビュー3箇所はId入力欄が無く、Idが唯一の識別子として必要なため「(Id) コード 名称」のまま維持した。
+- ShopHaibunInputView の `配分元倉庫`(SokoDisplay) は読み取り専用の要約表示でId欄が併設されていないため対象外。
+### 確認
+- `dotnet build creativevision10.slnx -t:Rebuild`: 成功（0警告 / 0エラー）。
+- 変更21ファイルについて CRLF維持・BOM有無の一致・XmlDocument.Load によるXAML整形式・`git diff --check` を検証（不一致0件）。
+- コンバータ利用87箇所の内訳が NoId 57（今回追加56 + 前回対応済のShopHaibunSearchParamView 1）／「(Id) コード 名称」のまま30（DataGrid列27 + 選択ウィンドウのプレビュー3）であることをgrepで確認。
+
+---
 ## [2026-08-03] 15:45 V*列マスタ表示の「(Id) コード 名称」統一とId中心の選択/範囲UI点検
 ### Agent
 - Opus 5 : Anthropic

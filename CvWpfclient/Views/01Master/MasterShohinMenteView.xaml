@@ -301,7 +301,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Brand, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VBrand, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VBrand, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  アイテム  -->
@@ -317,7 +317,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Item, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VItem, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VItem, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  メーカー  -->
@@ -333,7 +333,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Maker, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VMaker, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VMaker, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  展示会  -->
@@ -349,7 +349,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Tenji, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VTenji, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VTenji, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  シーズン  -->
@@ -365,7 +365,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Season, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VSeason, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VSeason, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  素材  -->
@@ -381,7 +381,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Material, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VMaterial, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VMaterial, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  原産国  -->
@@ -397,7 +397,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Country, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VCountry, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VCountry, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  元上代  -->
@@ -568,7 +568,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<!--  メモ  -->

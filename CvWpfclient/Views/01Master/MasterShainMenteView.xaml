@@ -308,7 +308,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
 								<TextBlock Grid.Row="8"
@@ -323,7 +323,7 @@
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Bumon, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
-										Text="{Binding CurrentEdit.VBumon, Converter={StaticResource CodeNameViewDisplayConverter}}" />
+										Text="{Binding CurrentEdit.VBumon, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 								<TextBlock Grid.Row="10" Grid.Column="1"
 									Margin="20"
