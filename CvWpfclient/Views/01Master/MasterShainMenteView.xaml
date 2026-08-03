@@ -307,15 +307,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VTenpo.Cd" />
-												<Binding Path="CurrentEdit.VTenpo.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<TextBlock Grid.Row="8"
@@ -329,15 +322,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Bumon, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VBumon.Cd" />
-												<Binding Path="CurrentEdit.VBumon.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VBumon, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 								<TextBlock Grid.Row="10" Grid.Column="1"
 									Margin="20"

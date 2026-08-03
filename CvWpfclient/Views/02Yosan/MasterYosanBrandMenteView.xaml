@@ -153,24 +153,12 @@
 							<DataGridTextColumn Width="120"
 								Binding="{Binding DenDay}"
 								Header="日付" />
-							<DataGridTextColumn Width="90"
-								Binding="{Binding Id_Tenpo}"
-								Header="店舗Id" />
-							<DataGridTextColumn Width="90"
-								Binding="{Binding VTenpo.Cd}"
-								Header="店舗CD" />
-							<DataGridTextColumn Width="150"
-								Binding="{Binding VTenpo.Mei}"
-								Header="店舗名" />
-							<DataGridTextColumn Width="100"
-								Binding="{Binding Id_Brand}"
-								Header="ブランドId" />
-							<DataGridTextColumn Width="100"
-								Binding="{Binding VBrand.Cd}"
-								Header="ブランドCD" />
-							<DataGridTextColumn Width="150"
-								Binding="{Binding VBrand.Mei}"
-								Header="ブランド名" />
+							<DataGridTextColumn Width="330"
+								Binding="{Binding VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+								Header="店舗" SortMemberPath="VTenpo.Cd" />
+							<DataGridTextColumn Width="350"
+								Binding="{Binding VBrand, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+								Header="ブランド" SortMemberPath="VBrand.Cd" />
 							<DataGridTextColumn Width="130"
 								Binding="{Binding UriYosan, StringFormat={}{0:N0}}"
 								Header="売上予算" />
@@ -241,15 +229,9 @@
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Grid.Row="1" Grid.Column="1"
-									Margin="196,0,0,0" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}">
-									<TextBlock.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VTenpo.Cd" />
-											<Binding Path="CurrentEdit.VTenpo.Mei" />
-										</MultiBinding>
-									</TextBlock.Text>
-								</TextBlock>
+									Margin="196,0,0,0"
+									Style="{StaticResource MasterRefText}"
+									Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 
 								<TextBlock Grid.Row="2"
 									Style="{StaticResource FormLabel}"
@@ -262,15 +244,9 @@
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Brand, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Grid.Row="2" Grid.Column="1"
-									Margin="196,0,0,0" VerticalAlignment="Center"
-									Foreground="{DynamicResource MaterialDesignBody}">
-									<TextBlock.Text>
-										<MultiBinding StringFormat="{}{0} {1}">
-											<Binding Path="CurrentEdit.VBrand.Cd" />
-											<Binding Path="CurrentEdit.VBrand.Mei" />
-										</MultiBinding>
-									</TextBlock.Text>
-								</TextBlock>
+									Margin="196,0,0,0"
+									Style="{StaticResource MasterRefText}"
+									Text="{Binding CurrentEdit.VBrand, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 
 								<TextBlock Grid.Row="3"
 									Style="{StaticResource FormLabel}"

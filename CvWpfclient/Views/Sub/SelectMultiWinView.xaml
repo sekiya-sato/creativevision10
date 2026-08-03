@@ -111,33 +111,22 @@
 						Background="{DynamicResource MaterialDesignToolBarBackground}"
 						CornerRadius="8,8,0,0">
 						<StackPanel Orientation="Vertical">
-							<Grid>
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="Auto" />
-									<ColumnDefinition Width="Auto" />
-									<ColumnDefinition Width="*" />
-								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0"
-									Foreground="{DynamicResource MaterialDesignBodyLight}"
-									Text="{Binding Current.Code}" />
-								<TextBlock Grid.Column="1"
-									Foreground="{DynamicResource MaterialDesignBodyLight}"
-									Text="  " />
-								<TextBlock Grid.Column="2"
-									MinWidth="0"
-									Foreground="{DynamicResource MaterialDesignBodyLight}"
-									Text="{Binding Current.Name}"
-									TextTrimming="CharacterEllipsis" />
-							</Grid>
-							<TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}"
+							<!--  選択中マスタは「(Id) コード 名称」の共通表示で1行にまとめる  -->
+							<TextBlock MinWidth="0"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
 								TextTrimming="CharacterEllipsis">
 								<TextBlock.Text>
-									<MultiBinding StringFormat="{}{0} {1}">
+									<MultiBinding Converter="{StaticResource IdCodeNameDisplayConverter}">
 										<Binding Path="Current.Id" />
-										<Binding Path="Current.Desc0" />
+										<Binding Path="Current.Code" />
+										<Binding Path="Current.Name" />
 									</MultiBinding>
 								</TextBlock.Text>
 							</TextBlock>
+							<TextBlock MinWidth="0"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Current.Desc0}"
+								TextTrimming="CharacterEllipsis" />
 						</StackPanel>
 					</Border>
 					<DataGrid x:Name="SelectGrid"

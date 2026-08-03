@@ -1,4 +1,4 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._08Zaiko.IdoInputUkeView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._08Zaiko.IdoInputUkeView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -172,18 +172,12 @@
 									<DataGridTextColumn Width="120"
 										Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
 										Header="移動日" />
-									<DataGridTextColumn Width="90"
-										Binding="{Binding VIdo.Cd}"
-										Header="移動先CD" />
-									<DataGridTextColumn Width="180"
-										Binding="{Binding VIdo.Mei}"
-										Header="移動先名" />
-									<DataGridTextColumn Width="90"
-										Binding="{Binding VSoko.Cd}"
-										Header="倉庫CD" />
-									<DataGridTextColumn Width="160"
-										Binding="{Binding VSoko.Mei}"
-										Header="倉庫名" />
+									<DataGridTextColumn Width="270"
+										Binding="{Binding VIdo, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+										Header="移動先" SortMemberPath="VIdo.Cd" />
+									<DataGridTextColumn Width="250"
+										Binding="{Binding VSoko, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+										Header="倉庫" SortMemberPath="VSoko.Cd" />
 									<DataGridTextColumn Width="100"
 										Binding="{Binding SuTotal, StringFormat={}{0:N0}}"
 										ElementStyle="{StaticResource DataGridRightTextBlock}"
@@ -351,15 +345,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Ido, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VIdo.Cd" />
-												<Binding Path="CurrentEdit.VIdo.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VIdo, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<TextBlock Grid.Row="0" Grid.Column="2"
@@ -373,15 +360,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VShain.Cd" />
-												<Binding Path="CurrentEdit.VShain.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<TextBlock Grid.Row="1"
@@ -395,15 +375,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VSoko.Cd" />
-												<Binding Path="CurrentEdit.VSoko.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<TextBlock Grid.Row="2"

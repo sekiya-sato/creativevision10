@@ -428,7 +428,8 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 		TargetShohinCode = row.Code;
 		TargetShohinName = row.Name;
 		TargetJodai = row.TankaJodai;
-		SokoDisplay = $"{param.SokoCode} {param.SokoName}";
+		// 表示書式は XAML 側の V*列共通表示(CodeNameViewDisplayConverter)と揃える
+		SokoDisplay = CodeNameDisplay.Format(param.Id_Soko, param.SokoCode, param.SokoName);
 		KubunDisplay = param.Kubun == KubunZaiko ? "在庫配分" : "初回配分";
 		HaibunKanoSu = row.HaibunKanoSu;
 
@@ -675,7 +676,7 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 	}
 
 	static string BuildConditionText(ShopHaibunSearchParameter param) {
-		List<string> parts = [$"配分元倉庫: {param.SokoCode} {param.SokoName}", $"区分: {(param.Kubun == KubunZaiko ? "在庫配分" : "初回配分")}"];
+		List<string> parts = [$"配分元倉庫: {CodeNameDisplay.Format(param.Id_Soko, param.SokoCode, param.SokoName)}", $"区分: {(param.Kubun == KubunZaiko ? "在庫配分" : "初回配分")}"];
 		if (!string.IsNullOrWhiteSpace(param.ShohinCodeFrom) || !string.IsNullOrWhiteSpace(param.ShohinCodeTo))
 			parts.Add($"商品CD: {param.ShohinCodeFrom}～{param.ShohinCodeTo}");
 		if (!string.IsNullOrWhiteSpace(param.ShohinName)) parts.Add($"商品名: {param.ShohinName}");
@@ -759,14 +760,9 @@ public sealed class ShopHaibunShohinRow(MasterShohin shohin) {
 	/// <summary>配分可能数 = 現在庫 − 指示数 + 入荷予定数</summary>
 	public int HaibunKanoSu => ZaikoSu - ShijiSu + NyukaYoteiSu;
 
-	static string FormatCodeName(CodeNameView? value) {
-		if (value == null) return string.Empty;
-		string cd = value.Cd?.Trim() ?? string.Empty;
-		string mei = value.Mei?.Trim() ?? string.Empty;
-		if (cd.Length == 0) return mei;
-		if (mei.Length == 0) return cd;
-		return $"{cd} {mei}";
-	}
+	// 表示書式は XAML 側の V*列共通表示(CodeNameViewDisplayConverter)と揃える
+	static string FormatCodeName(CodeNameView? value) =>
+		value == null ? string.Empty : CodeNameDisplay.Format(value.Sid, value.Cd, value.Mei);
 }
 
 /// <summary>SKU（商品+色+サイズ）単位の配分状況サマリ。全店舗の入力に即時連動する。</summary>

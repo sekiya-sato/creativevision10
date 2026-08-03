@@ -1,3 +1,40 @@
+## [2026-08-03] 15:45 V*列マスタ表示の「(Id) コード 名称」統一とId中心の選択/範囲UI点検
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient配下のXAML画面を点検し、選択/範囲操作がId中心で統一されているか確認する。あわせてマスタ表示を可能な限り「(Id) Code Name」を一続きにした V*系共通表示へ揃える（レイアウトは崩さない）。
+### 実施内容
+- CvWpfclient/Helpers/Converters/CodeNameViewDisplayConverter.cs: 新規。`CodeNameDisplay.Format` を共通書式ヘルパとし、`CodeNameViewDisplayConverter`(V*列→"(Id) コード 名称")と`IdCodeNameDisplayConverter`(Id/Code/Name の MultiBinding 用)を追加。ConverterParameter="NoId" でId省略可。
+- CvWpfclient/App.xaml: 上記2コンバータを Application.Resources に登録。
+- CvWpfclient/Resources/UIFormStyles.xaml: マスタ参照表示用 `MasterRefText` スタイルを追加（MinWidth=0 / Margin 10,0,0,0 / 省略記号）。各Viewに散在していたインライン指定を集約。
+- 編集フォーム 19ファイル・54箇所: `MultiBinding StringFormat="{0} {1}"`(Cd,Mei)、`"[{0}] {1}"`、および Cd/Mei を並べた StackPanel を共通コンバータ1行へ置換（SysLoginView, MasterEndCustomer/Shain/Shiire/Shohin/SysKanri/TokuiMenteView, MasterYosanBrandMenteView, Hachu/Juchu/Henpin/Shiharai/Shiire/Nyukin/ShopUriage/ShukkaUriage/IdoInputOut/Soku/Uke/StockInputView）。
+- DataGrid 15ファイル・27組: 「○○CD」+「○○名」の分割列を「(Id) コード 名称」の1列へ統合。幅は旧2列の合計値を維持し、`SortMemberPath="V*.Cd"` でソート順を保持、`Mode=OneWay` で編集書き戻しを封じた。
+- MasterYosanBrandMenteView.xaml: 統合列がIdを含むため、隣接していた `店舗Id`/`ブランドId` 単独列を削除し、その幅を統合列へ加算（合計幅は不変）。
+- Views/Sub/SelectWinView.xaml, SelectMultiWinView.xaml, SelectKubunView.xaml: 選択中マスタのプレビューを「コード 名称」＋「Id Desc0」の2行から「(Id) コード 名称」＋「Desc0」へ統一。
+- ViewModels 7ファイル: 重複していた `FormatSelectedItem`/`FormatShohinItem`/`FormatCodeName`/`FormatSoko` を `CodeNameDisplay.Format` に集約（MasterPrintBarcode, PrintMasterShainCard, RangeParam, RangeInputParam, SelectShohin, ShopHaibunInput, ZaikoQuery）。選択結果テキスト・DataTable出力・画面表示の書式が一致。なお 色/サイズ(`Code_Col`/`Code_Siz`)用の `JoinCodeName` は参照先Idを持たないSKU属性のため対象外として残置。
+- Views/Sub/ShopHaibunSearchParamView.xaml: 配分元倉庫の入力欄を倉庫CD表示から `Id_Soko` 表示へ変更し、隣に共通表示を配置。他画面と同じId中心の並びに揃えた。
+- ラベル表記ゆれ修正: `ブランドID`/`アイテムID`/`店舗ID`/`ID (開始)`/`ID (終了)` を `Id` 表記へ統一（SelectShohinView, ShopBrandBudgetMasterView, RangeParamView, RangeParamMiniView, AutoExecHistoryParamMiniView）。ログイン系の "Login ID" は別概念のため対象外。
+- Views/Sub/RangeParamView.xaml: `SelectionResultText` スタイル未適用だった2行に適用し、選択/解除ボタンに不足していたToolTipを追加（他行と同一形式）。
+### 技術決定 Why
+- V*列は `[ObservableProperty]` かつ選択時に必ずインスタンス丸ごと差し替え（クライアント内に `V*.Cd = ...` の直接代入は無し）のため、内部プロパティ単位のMultiBindingではなくV*オブジェクト1つへの `IValueConverter` で通知が成立する。XAMLが8行→2行になり書式の一元管理が可能。
+- DataGrid統合列は `SortMemberPath` を明示。既定では `CodeNameView` 自体で比較され `IComparable` 未実装のためソート時に例外となる。
+- 統合列の幅は旧2列の合計に固定し、Id単独列を削除した箇所ではその幅を加算。グリッド全体の総幅を変えないことでレイアウト崩れを回避。
+- 未選択(Sid=0かつCd/Meiが空)は空文字を返す仕様とし、"(0)" が並ぶ表示を防止。
+- 帳票/集計系の `～CodeFrom`/`～CodeTo` 範囲（78ファイル）はId化していない。SQLの範囲条件がコード順依存で、Id順へ変えると抽出結果が変わる仕様変更になるため、点検結果として報告のみとした。
+### 影響範囲
+- 変更40ファイル（XAML 29 / C# 10 / 新規1）。表示書式の変更が広範に及ぶが、バインド対象データと検索条件は不変。
+- 帳票側のCode範囲UI（78ファイル）は未変更。Id中心化は別途方針決定が必要。
+### 確認
+- `dotnet build creativevision10.slnx -t:Rebuild`: 成功（0警告 / 0エラー）。
+- 変更全ファイルについて CRLF維持・HEADと同一のBOM有無・XmlDocument.Load によるXAML整形式・`git diff --check` を検証（不一致0件）。
+- XAML内に `V*.Cd` / `V*.Mei` の個別表示バインドが残っていないことをgrepで確認。
+- 統合列27箇所すべてに `SortMemberPath` と `Mode=OneWay` が付与済みであることを件数一致で確認。
+- `FormatCodeName(CodeNameView)` の実装3箇所すべてが `CodeNameDisplay.Format` 経由になっていることを確認。
+
+---
+
 ## [2026-08-03] 15:22 売掛月次集計ロジックの実装
 ### Agent
 - GPT-5 : OpenAI

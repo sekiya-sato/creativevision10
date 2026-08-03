@@ -73,15 +73,23 @@
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="配分元倉庫 *" />
 					<TextBox Grid.Row="0" Grid.Column="1"
-						VerticalContentAlignment="Center"
+						HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCommand}"
-						materialDesign:HintAssist.Hint="倉庫CD" IsReadOnly="True"
+						materialDesign:HintAssist.Hint="倉庫Id" IsReadOnly="True"
 						Style="{StaticResource MenteSearchTextBox}"
-						Text="{Binding Parameter.SokoCode, Mode=OneWay}" />
+						Text="{Binding Parameter.Id_Soko, Mode=OneWay}" />
 					<TextBlock Grid.Row="0" Grid.Column="3" Grid.ColumnSpan="2"
-						Margin="8,0,0,0" VerticalAlignment="Center"
-						Foreground="{DynamicResource MaterialDesignBody}"
-						Text="{Binding Parameter.SokoName}" />
+						Margin="8,0,0,0"
+						Style="{StaticResource MasterRefText}">
+						<TextBlock.Text>
+							<MultiBinding Converter="{StaticResource IdCodeNameDisplayConverter}"
+								ConverterParameter="NoId">
+								<Binding Path="Parameter.Id_Soko" />
+								<Binding Path="Parameter.SokoCode" />
+								<Binding Path="Parameter.SokoName" />
+							</MultiBinding>
+						</TextBlock.Text>
+					</TextBlock>
 
 					<!--  区分  -->
 					<TextBlock Grid.Row="1" Grid.Column="0"

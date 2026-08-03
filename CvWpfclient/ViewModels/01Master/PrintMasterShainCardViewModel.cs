@@ -107,19 +107,9 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatSelectedItem))}";
 	}
 
-	static string FormatSelectedItem(MasterTokui item) {
-		var label = JoinCodeName(item.Code, item.Name);
-		if (label.Length == 0) return item.Id.ToString();
-		return $"{item.Id} {label}";
-	}
-
-	static string JoinCodeName(string? code, string? name) {
-		var cd = code?.Trim() ?? string.Empty;
-		var mei = name?.Trim() ?? string.Empty;
-		if (cd.Length == 0) return mei;
-		if (mei.Length == 0) return cd;
-		return $"{cd} {mei}";
-	}
+	// 表示書式は XAML 側の V*列共通表示(CodeNameViewDisplayConverter)と揃える
+	static string FormatSelectedItem(MasterTokui item) =>
+		CodeNameDisplay.Format(item.Id, item.Code, item.Name);
 
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {

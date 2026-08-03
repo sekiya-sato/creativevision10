@@ -66,10 +66,10 @@
 					<TextBlock Grid.Row="0" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="ID" /></TextBlock>
+						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="Id" /></TextBlock>
 					<TextBox Grid.Row="0" Grid.Column="1"
 						Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="ID (開始)"
+						materialDesign:HintAssist.Hint="Id (開始)"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.FromId, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -79,7 +79,7 @@
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="-" /></TextBlock>
 					<TextBox Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="2"
 						Margin="4,4,0,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
-						materialDesign:HintAssist.Hint="ID (終了)"
+						materialDesign:HintAssist.Hint="Id (終了)"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.ToId, UpdateSourceTrigger=PropertyChanged}" />
 

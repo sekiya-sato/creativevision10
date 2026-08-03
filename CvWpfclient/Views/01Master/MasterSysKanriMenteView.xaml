@@ -329,15 +329,8 @@
 								BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 								Style="{StaticResource MenteSearchTextBox}"
 								Text="{Binding Current.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
-							<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-								Foreground="{DynamicResource MaterialDesignBody}">
-								<TextBlock.Text>
-									<MultiBinding StringFormat="{}{0} {1}">
-										<Binding Path="Current.VSoko.Cd" />
-										<Binding Path="Current.VSoko.Mei" />
-									</MultiBinding>
-								</TextBlock.Text>
-							</TextBlock>
+							<TextBlock Style="{StaticResource MasterRefText}"
+								Text="{Binding Current.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 						</DockPanel>
 						<Label Grid.Row="10" Grid.Column="0"
 							Height="30"

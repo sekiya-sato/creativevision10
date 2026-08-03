@@ -1,4 +1,4 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterShohinMenteView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterShohinMenteView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:Wpf="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf" xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -185,9 +185,9 @@
 							<DataGridTextColumn Width="140"
 								Binding="{Binding Kana}"
 								Header="カナ" />
-							<DataGridTextColumn Width="100"
-								Binding="{Binding VBrand.Mei}"
-								Header="ブランド" />
+							<DataGridTextColumn Width="200"
+								Binding="{Binding VBrand, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+								Header="ブランド" SortMemberPath="VBrand.Cd" />
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>
 							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
@@ -300,15 +300,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Brand, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VBrand.Cd" />
-												<Binding Path="CurrentEdit.VBrand.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VBrand, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  アイテム  -->
@@ -323,15 +316,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Item, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VItem.Cd" />
-												<Binding Path="CurrentEdit.VItem.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VItem, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  メーカー  -->
@@ -346,15 +332,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Maker, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VMaker.Cd" />
-												<Binding Path="CurrentEdit.VMaker.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VMaker, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  展示会  -->
@@ -369,15 +348,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Tenji, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VTenji.Cd" />
-												<Binding Path="CurrentEdit.VTenji.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VTenji, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  シーズン  -->
@@ -392,15 +364,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Season, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VSeason.Cd" />
-												<Binding Path="CurrentEdit.VSeason.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VSeason, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  素材  -->
@@ -415,15 +380,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Material, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VMaterial.Cd" />
-												<Binding Path="CurrentEdit.VMaterial.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VMaterial, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  原産国  -->
@@ -438,15 +396,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Country, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VCountry.Cd" />
-												<Binding Path="CurrentEdit.VCountry.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VCountry, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  元上代  -->
@@ -616,15 +567,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Soko, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VSoko.Cd" />
-												<Binding Path="CurrentEdit.VSoko.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VSoko, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  メモ  -->

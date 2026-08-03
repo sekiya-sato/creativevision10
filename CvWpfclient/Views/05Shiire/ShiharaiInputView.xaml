@@ -127,18 +127,12 @@
 									<DataGridTextColumn Width="90"
 										Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
 										Header="支払日" />
-									<DataGridTextColumn Width="100"
-										Binding="{Binding VTori.Cd}"
-										Header="支払先CD" />
-									<DataGridTextColumn Width="200"
-										Binding="{Binding VTori.Mei}"
-										Header="支払先名" />
-									<DataGridTextColumn Width="100"
-										Binding="{Binding VShain.Cd}"
-										Header="担当者CD" />
-									<DataGridTextColumn Width="160"
-										Binding="{Binding VShain.Mei}"
-										Header="担当者名" />
+									<DataGridTextColumn Width="300"
+										Binding="{Binding VTori, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+										Header="支払先" SortMemberPath="VTori.Cd" />
+									<DataGridTextColumn Width="260"
+										Binding="{Binding VShain, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+										Header="担当者" SortMemberPath="VShain.Cd" />
 									<DataGridTextColumn Width="130"
 										Binding="{Binding KingakuTotal, StringFormat={}{0:N0}}"
 										ElementStyle="{StaticResource DataGridRightTextBlock}"
@@ -262,13 +256,8 @@
 									BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Torisaki, UpdateSourceTrigger=PropertyChanged}" />
-								<StackPanel Margin="10,0,0,0" VerticalAlignment="Center"
-									Orientation="Horizontal">
-									<TextBlock Text="{Binding CurrentEdit.VTori.Cd}" />
-									<TextBlock Margin="8,0,0,0"
-										Text="{Binding CurrentEdit.VTori.Mei}"
-										TextTrimming="CharacterEllipsis" />
-								</StackPanel>
+								<TextBlock Style="{StaticResource MasterRefText}"
+									Text="{Binding CurrentEdit.VTori, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 							</DockPanel>
 							<TextBlock Grid.Column="6"
 								Height="16"
@@ -282,9 +271,9 @@
 									BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
-								<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-									Text="{Binding CurrentEdit.VShain.Mei}"
-									TextTrimming="CharacterEllipsis" />
+								<TextBlock Margin="8,0,0,0"
+									Style="{StaticResource MasterRefText}"
+									Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 							</DockPanel>
 							<TextBlock Grid.Row="1" Grid.Column="0"
 								Height="17"

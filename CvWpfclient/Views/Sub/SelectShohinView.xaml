@@ -119,14 +119,14 @@
 
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						Style="{StaticResource FormLabel}"
-						Text="ブランドID" />
+						Text="ブランドId" />
 					<DockPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4"
 						Margin="0,4">
 						<Button Width="110" Height="36"
 							Command="{Binding SelectBrandIdsCommand}"
 							DockPanel.Dock="Left"
 							Style="{StaticResource MaterialDesignRaisedButton}"
-							ToolTip="ブランドIDを選択">
+							ToolTip="ブランドIdを選択">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="CheckboxMultipleMarkedOutline" />
@@ -139,7 +139,7 @@
 							Command="{Binding ClearBrandIdsCommand}"
 							Content="解除" DockPanel.Dock="Right"
 							Style="{StaticResource MaterialDesignFlatButton}"
-							ToolTip="ブランドIDの選択を解除" />
+							ToolTip="ブランドIdの選択を解除" />
 						<TextBlock Style="{StaticResource SelectionResultText}"
 							Text="{Binding BrandIdsText}"
 							ToolTipService.InitialShowDelay="300">
@@ -153,14 +153,14 @@
 
 					<TextBlock Grid.Row="3" Grid.Column="0"
 						Style="{StaticResource FormLabel}"
-						Text="アイテムID" />
+						Text="アイテムId" />
 					<DockPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4"
 						Margin="0,4">
 						<Button Width="110" Height="36"
 							Command="{Binding SelectItemIdsCommand}"
 							DockPanel.Dock="Left"
 							Style="{StaticResource MaterialDesignRaisedButton}"
-							ToolTip="アイテムIDを選択">
+							ToolTip="アイテムIdを選択">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="CheckboxMultipleMarkedOutline" />
@@ -173,7 +173,7 @@
 							Command="{Binding ClearItemIdsCommand}"
 							Content="解除" DockPanel.Dock="Right"
 							Style="{StaticResource MaterialDesignFlatButton}"
-							ToolTip="アイテムIDの選択を解除" />
+							ToolTip="アイテムIdの選択を解除" />
 						<TextBlock Style="{StaticResource SelectionResultText}"
 							Text="{Binding ItemIdsText}"
 							ToolTipService.InitialShowDelay="300">

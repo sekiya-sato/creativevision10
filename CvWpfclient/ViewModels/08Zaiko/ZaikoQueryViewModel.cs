@@ -572,7 +572,7 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 
 	static string FormatSoko(long x, IReadOnlyDictionary<long, MasterTokui> sokoMap) =>
 		sokoMap.TryGetValue(x, out MasterTokui? soko)
-			? JoinCodeName(soko.Code, soko.Name)
+			? CodeNameDisplay.Format(soko.Id, soko.Code, soko.Name)
 			: $"倉庫Id:{x}";
 
 	static string GetSokoCode(long id, IReadOnlyDictionary<long, MasterTokui> sokoMap) =>
@@ -633,14 +633,9 @@ public sealed partial class ZaikoQueryShohinRow(MasterShohin shohin) : Observabl
 	[ObservableProperty]
 	public partial int TransitQty { get; set; }
 
-	static string FormatCodeName(CodeNameView? value) {
-		if (value == null) return string.Empty;
-		string cd = value.Cd?.Trim() ?? string.Empty;
-		string mei = value.Mei?.Trim() ?? string.Empty;
-		if (cd.Length == 0) return mei;
-		if (mei.Length == 0) return cd;
-		return $"{cd} {mei}";
-	}
+	// 表示書式は XAML 側の V*列共通表示(CodeNameViewDisplayConverter)と揃える
+	static string FormatCodeName(CodeNameView? value) =>
+		value == null ? string.Empty : CodeNameDisplay.Format(value.Sid, value.Cd, value.Mei);
 }
 
 readonly record struct ZaikoSkuKey(long IdCol, long IdSiz);

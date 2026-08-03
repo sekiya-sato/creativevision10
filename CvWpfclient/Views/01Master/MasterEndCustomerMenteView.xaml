@@ -181,9 +181,9 @@
 							<DataGridTextColumn Width="90"
 								Binding="{Binding Rank}"
 								Header="ランク" />
-							<DataGridTextColumn Width="160"
-								Binding="{Binding VTenpo.Mei}"
-								Header="店舗" />
+							<DataGridTextColumn Width="220"
+								Binding="{Binding VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+								Header="店舗" SortMemberPath="VTenpo.Cd" />
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>
 							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
@@ -399,15 +399,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}[{0}] {1}">
-												<Binding Path="CurrentEdit.VTenpo.Cd" />
-												<Binding Path="CurrentEdit.VTenpo.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<TextBlock Grid.Row="14"
@@ -415,14 +408,8 @@
 									Text="店舗名" />
 								<TextBox Grid.Row="14" Grid.Column="1"
 									materialDesign:HintAssist.Hint="店舗名" IsReadOnly="True"
-									Style="{StaticResource FormTextBox}">
-									<TextBox.Text>
-										<MultiBinding StringFormat="{}[{0}] {1}">
-											<Binding Path="CurrentEdit.VTenpo.Cd" />
-											<Binding Path="CurrentEdit.VTenpo.Mei" />
-										</MultiBinding>
-									</TextBox.Text>
-								</TextBox>
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}" />
 
 								<TextBlock Grid.Row="15"
 									Style="{StaticResource FormLabel}"

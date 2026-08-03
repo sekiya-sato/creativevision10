@@ -78,6 +78,20 @@
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 	</Style>
 
+	<!--
+		マスタ参照(V*列)の共通表示テキスト。
+		Id入力欄の隣などに置き、CodeNameViewDisplayConverter で「(Id) コード 名称」を一続きに表示する。
+		長い名称でも隣接コントロールを押し出さないよう MinWidth=0 + 省略記号を既定にする。
+	-->
+	<Style x:Key="MasterRefText"
+		TargetType="TextBlock">
+		<Setter Property="MinWidth" Value="0" />
+		<Setter Property="Margin" Value="10,0,0,0" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+	</Style>
+
 	<!--  明細の読み取り専用テキスト  -->
 	<Style x:Key="MeisaiReadOnlyTextBlock"
 		TargetType="TextBlock">

@@ -57,20 +57,21 @@
 			Padding="12,6"
 			Background="{DynamicResource MaterialDesignToolBarBackground}">
 			<DockPanel>
-				<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-					<TextBlock Text="{Binding Current.Code}" />
-					<TextBlock Margin="8,0,0,0"
-						Text="{Binding Current.Name}" />
-				</StackPanel>
-				<TextBlock HorizontalAlignment="Right"
-					Foreground="{DynamicResource MaterialDesignBodyLight}">
+				<!--  選択中マスタは「(Id) コード 名称」の共通表示で1行にまとめる  -->
+				<TextBlock DockPanel.Dock="Left"
+					TextTrimming="CharacterEllipsis">
 					<TextBlock.Text>
-						<MultiBinding StringFormat="{}{0} {1}">
+						<MultiBinding Converter="{StaticResource IdCodeNameDisplayConverter}">
 							<Binding Path="Current.Id" />
-							<Binding Path="Current.Desc0" />
+							<Binding Path="Current.Code" />
+							<Binding Path="Current.Name" />
 						</MultiBinding>
 					</TextBlock.Text>
 				</TextBlock>
+				<TextBlock HorizontalAlignment="Right"
+					Foreground="{DynamicResource MaterialDesignBodyLight}"
+					Text="{Binding Current.Desc0}"
+					TextTrimming="CharacterEllipsis" />
 			</DockPanel>
 		</Border>
 

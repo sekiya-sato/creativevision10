@@ -1,4 +1,4 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._02Yosan.ShopBrandBudgetMasterView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._02Yosan.ShopBrandBudgetMasterView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -73,7 +73,7 @@
 					Text="{Binding SelectedYearMonthString, UpdateSourceTrigger=PropertyChanged}" />
 				<TextBlock Grid.Row="0" Grid.Column="2"
 					Margin="16,0,8,0" VerticalAlignment="Center"
-					Text="店舗ID" />
+					Text="店舗Id" />
 				<DockPanel Grid.Row="0" Grid.Column="3">
 					<TextBox Width="120" Height="36"
 						helpers:SearchTextBoxAssist.Command="{Binding SelectShopCommand}"
@@ -91,7 +91,7 @@
 				</DockPanel>
 				<TextBlock Grid.Row="0" Grid.Column="4"
 					Margin="16,0,8,0" VerticalAlignment="Center"
-					Text="ブランドID" />
+					Text="ブランドId" />
 				<DockPanel Grid.Row="0" Grid.Column="5">
 					<TextBox Width="120" Height="36"
 						helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCommand}"

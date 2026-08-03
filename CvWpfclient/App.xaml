@@ -15,6 +15,8 @@
 			<helpers:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
 			<helpers:NumericSignBrushConverter x:Key="NumericSignBrushConverter" />
 			<helpers:TranKubunBrushConverter x:Key="TranKubunBrushConverter" />
+			<helpers:CodeNameViewDisplayConverter x:Key="CodeNameViewDisplayConverter" />
+			<helpers:IdCodeNameDisplayConverter x:Key="IdCodeNameDisplayConverter" />
 			<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Resources/UIColors.xaml" />

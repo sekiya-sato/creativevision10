@@ -279,19 +279,9 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatSelectedItem))}";
 	}
 
-	static string FormatSelectedItem(MasterMeisho item) {
-		string label = JoinCodeName(item.Code, item.Name);
-		if (label.Length == 0) return item.Id.ToString(CultureInfo.InvariantCulture);
-		return $"{item.Id} {label}";
-	}
-
-	static string JoinCodeName(string? code, string? name) {
-		string cd = code?.Trim() ?? string.Empty;
-		string mei = name?.Trim() ?? string.Empty;
-		if (cd.Length == 0) return mei;
-		if (mei.Length == 0) return cd;
-		return $"{cd} {mei}";
-	}
+	// 表示書式は XAML 側の V*列共通表示(CodeNameViewDisplayConverter)と揃える
+	static string FormatSelectedItem(MasterMeisho item) =>
+		CodeNameDisplay.Format(item.Id, item.Code, item.Name);
 
 	static void AddIdRange(List<string> clauses, string column, long? from, long? to) {
 		if (from.HasValue) {
@@ -362,12 +352,7 @@ public sealed class SelectShohinRow(MasterShohin shohin) {
 	public string BrandDisplay => FormatCodeName(Shohin.VBrand);
 	public string ItemDisplay => FormatCodeName(Shohin.VItem);
 
-	static string FormatCodeName(CodeNameView? value) {
-		if (value == null) return string.Empty;
-		string cd = value.Cd?.Trim() ?? string.Empty;
-		string mei = value.Mei?.Trim() ?? string.Empty;
-		if (cd.Length == 0) return mei;
-		if (mei.Length == 0) return cd;
-		return $"{cd} {mei}";
-	}
+	// 表示書式は XAML 側の V*列共通表示(CodeNameViewDisplayConverter)と揃える
+	static string FormatCodeName(CodeNameView? value) =>
+		value == null ? string.Empty : CodeNameDisplay.Format(value.Sid, value.Cd, value.Mei);
 }

@@ -312,15 +312,8 @@
 										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
-									<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-										Foreground="{DynamicResource MaterialDesignBody}">
-										<TextBlock.Text>
-											<MultiBinding StringFormat="{}{0} {1}">
-												<Binding Path="CurrentEdit.VShain.Cd" />
-												<Binding Path="CurrentEdit.VShain.Mei" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}}" />
 								</DockPanel>
 
 								<!--  最終ログイン  -->
