@@ -3,8 +3,11 @@
 V*列(CodeNameView)を「(Id) コード 名称」の一続きの文字列へ変換する共通コンバータ群です。
 マスタ参照の表示は画面をまたいでこの書式に統一し、Id を主軸とした操作・表示に揃えます。
 
+- CodeNameDisplay              : 書式の唯一の定義元。画面用(Format)と帳票SQL用(Sql/SqlFromVColumn)を対で持つ。
 - CodeNameViewDisplayConverter : CodeNameView(V*列) を1つの表示文字列へ変換する IValueConverter。
 - IdCodeNameDisplayConverter   : Id / Code / Name を個別に持つマスタ行を同じ書式へ揃える IMultiValueConverter。
+
+帳票(qfm)へ渡すCSVも同じ書式にするため、印刷用SQLは自前で `||` を書かず CodeNameDisplay.Sql* を使うこと。
 
 いずれも空要素は書式から除外するため、未選択(Sid=0/空文字)なら空文字を返します。
 
@@ -71,6 +74,24 @@ public static class CodeNameDisplay {
 	/// <summary>ConverterParameter が Id 省略指定かどうか。</summary>
 	public static bool IsNoId(object? parameter) =>
 		parameter is string text && string.Equals(text.Trim(), NoIdParameter, StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// <see cref="Format"/> と同じ「(Id) コード 名称」を SQLite 式として組み立てる（帳票用SQL向け）。
+	/// 画面と帳票で書式がずれないよう、C#版と必ずこの1箇所で対にして定義する。
+	/// </summary>
+	/// <param name="idExpr">Id を返すSQL式。0/NULL なら "(Id) " を出力しない。</param>
+	/// <param name="codeExpr">コードを返すSQL式。</param>
+	/// <param name="nameExpr">名称を返すSQL式。</param>
+	public static string Sql(string idExpr, string codeExpr, string nameExpr) =>
+		$"trim(case when ifnull({idExpr},0) <> 0 then '(' || {idExpr} || ') ' else '' end" +
+		$" || trim(ifnull({codeExpr},'') || ' ' || ifnull({nameExpr},'')))";
+
+	/// <summary>
+	/// V*列(CodeNameView のJSON)を「(Id) コード 名称」の SQLite 式にする。
+	/// </summary>
+	/// <param name="vColumn">V*列。テーブル別名込みで渡せる（例 "h.VSoko"）。</param>
+	public static string SqlFromVColumn(string vColumn) =>
+		Sql($"json_extract({vColumn},'$.Sid')", $"json_extract({vColumn},'$.Cd')", $"json_extract({vColumn},'$.Mei')");
 }
 
 /// <summary>

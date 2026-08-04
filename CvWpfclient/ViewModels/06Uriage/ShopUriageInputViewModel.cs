@@ -267,11 +267,10 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 	// DenDay は qfm 側で yyyy/MM/dd 表示にするため、SQL では yyyyMMdd のまま返す。
 	const string KubunLabel = "case Kubun when 10 then '売上' when 11 then '売上セール' when 20 then '返品' when 21 then '返品セール' else cast(Kubun as text) end";
 
-	static string CodeNameViewSql(string column) =>
-		$"trim(ifnull(json_extract({column},'$.Sid'),'') || ' ' || ifnull(json_extract({column},'$.Cd'),'') || ' ' || ifnull(json_extract({column},'$.Mei'),''))";
+	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
+	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
 
-	static string DetailCodeNameSql(string value, string code, string name) =>
-		$"trim(ifnull({value},'') || ' ' || ifnull({code},'') || ' ' || ifnull({name},''))";
+	static string DetailCodeNameSql(string value, string code, string name) => Helpers.CodeNameDisplay.Sql(value, code, name);
 
 	/// <summary>店舗売上伝票印刷 SQL。見出しは qfm の static text に持たせ、ここではデータ列だけを返す。</summary>
 	static string BuildListPrintSql(QueryListParam query) {

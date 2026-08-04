@@ -1,3 +1,32 @@
+## [2026-08-03] 17:10 帳票(qfm)印字列のV*列書式を画面と同じ「(Id) コード 名称」へ統一
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：直近2コミットで変更した画面の「(Id) Code Name」表示について、qfm帳票で印字している列を確認し、必要な箇所は印刷用SQLを修正する。qfm自体は原則修正しない。
+### 実施内容
+- CvWpfclient/Helpers/Converters/CodeNameViewDisplayConverter.cs: `CodeNameDisplay` に帳票SQL用の `Sql(idExpr, codeExpr, nameExpr)` と `SqlFromVColumn(vColumn)` を追加。画面用 `Format` と同一ファイル・同一書式定義とし、画面と帳票がずれないようにした。
+- 伝票入力系6ファイル（BaseIdoInput/Hachu/Juchu/Shiire/ShopUriage/StockInput の各InputViewModel）: 各ファイルに完全同一内容で重複していた `CodeNameViewSql` / `DetailCodeNameSql` を削除し、`CodeNameDisplay.Sql*` へ委譲。印字が `Id コード 名称` から `(Id) コード 名称` になり、Id未設定時は従来の "0" ではなく空文字になる。
+- printform/*.qfm: 変更なし。`<item>` に `<position length>` 等の桁数制約が無く、CSV項目長は非拘束のため修正不要と判断した。
+### 技術決定 Why
+- 書式のC#版とSQL版を別ファイルに置くと必ず drift するため、`CodeNameDisplay` 1クラスに対で持たせた。印刷用SQLで `||` を手書きしない方針をヘッダコメントに明記。
+- マスタメンテ帳票（MasterShohinMente / MasterEndCustomerMente / MasterShain / MasterShiire / MasterTokui）の参照マスタ列は `コード 名称` のままとした。これらは商品・顧客1件ごとの明細帳票で、自身のIdは独立した項目(ValId)として印字済みであり、参照マスタ側の表示は「隣にId入力欄がある編集フォーム」＝NoId表示と対応するため既に整合している。
+- MasterSysKanriMente は倉庫CD/倉庫名を別項目でCSV出力しており、画面もNoId表示のため対象外とした。
+### 影響範囲
+- 変更7ファイル（すべてC#）。qfmとXAMLは無変更。
+- 印字幅への影響は全列一律 +2桁（括弧分）。server-dev.db の実データで各列の最大表示幅を測定し、増分が2桁のみであることを確認済み。
+### 確認
+- `dotnet build creativevision10.slnx -t:Rebuild`: 成功（0警告 / 0エラー）。
+- Microsoft.Data.Sqlite で生成SQLを server-dev.db に対して実行し、Tran13Hachu / Tran03Shiire / Tran12Jyuchu / Tran10IdoOut / Tran05Ido / Tran01Tenuri / Tran60Tana の各ヘッダ列と発注明細のShohin/Col/Sizが `(4) 004 （株）婚姻届工房` `(1) 00211161001 配色ミニポシェット` の形式で取得できることを確認（構文エラー・列解決エラーなし）。
+- Id=0の行が従来の "0" ではなく空文字になること、二重スペースが出ないことをインメモリDBの境界値ケースで確認。
+- 変更7ファイルのCRLF維持・BOM一致・`git diff --check` を検証（不一致0件）。
+### 既知の問題（本変更とは別件・未修正）
+- 移動系帳票 `IdoInputOut / IdoInputSoku / IdoInputUke` の `_header.qfm` / `_detail.qfm` は、`BaseIdoInputViewModel` のSELECT列順とqfmのitem割付が item3 以降でずれている（qfmが発注帳票からの流用で、移動系SQLには KubunText/Rate/Tax/Total が無いため）。例: 「区分」欄に倉庫、「倉庫」欄に入力者、「掛率」欄に数量計が印字され、末尾3列はダミー値。明細側はさらに大きくずれる。
+- qfm側の見出し(掛率/消費税/総合計)自体が移動業務に合わないため、SQL列順の調整だけでは解決せず、qfmの見出し・レイアウト修正が必要。PRINT_ENABLE無効の環境では出力PDFを確認できないため、本コミットでは手を入れず報告に留めた。
+- 発注/仕入/受注/店舗売上/棚卸の各帳票は列順・見出しともqfmと一致していることを確認済み。
+
+---
 ## [2026-08-03] 16:20 検索TextBox付き項目のマスタ表示からIdを省略
 ### Agent
 - Opus 5 : Anthropic

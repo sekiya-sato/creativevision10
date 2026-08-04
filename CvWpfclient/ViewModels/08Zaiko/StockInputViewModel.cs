@@ -238,11 +238,10 @@ public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	}
 
 	// DenDay は qfm 側で yyyy/MM/dd 表示にするため、SQL では yyyyMMdd のまま返す。
-	static string CodeNameViewSql(string column) =>
-		$"trim(ifnull(json_extract({column},'$.Sid'),'') || ' ' || ifnull(json_extract({column},'$.Cd'),'') || ' ' || ifnull(json_extract({column},'$.Mei'),''))";
+	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
+	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
 
-	static string DetailCodeNameSql(string value, string code, string name) =>
-		$"trim(ifnull({value},'') || ' ' || ifnull({code},'') || ' ' || ifnull({name},''))";
+	static string DetailCodeNameSql(string value, string code, string name) => Helpers.CodeNameDisplay.Sql(value, code, name);
 
 	static string MeisaiKubunLabelSql(string jsonExtractPrefix) =>
 		$"case cast(ifnull({jsonExtractPrefix}'$.Kubun'),0) as int) when 1 then 'S セール' else 'P プロパー' end";

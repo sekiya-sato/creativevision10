@@ -272,11 +272,10 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 	const string KubunLabel = "case Kubun when 10 then '仕入' when 20 then '仕入返品' when 30 then '値引' when 99 then 'その他' else cast(Kubun as text) end";
 	const string IsPayLabel = "case IsPay when 1 then '支払済' else '未払' end";
 
-	static string CodeNameViewSql(string column) =>
-		$"trim(ifnull(json_extract({column},'$.Sid'),'') || ' ' || ifnull(json_extract({column},'$.Cd'),'') || ' ' || ifnull(json_extract({column},'$.Mei'),''))";
+	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
+	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
 
-	static string DetailCodeNameSql(string value, string code, string name) =>
-		$"trim(ifnull({value},'') || ' ' || ifnull({code},'') || ' ' || ifnull({name},''))";
+	static string DetailCodeNameSql(string value, string code, string name) => Helpers.CodeNameDisplay.Sql(value, code, name);
 
 	static string MeisaiKubunLabelSql(string jsonExtractPrefix) =>
 		$"case cast(ifnull({jsonExtractPrefix}'$.Kubun'),0) as int) when 1 then 'S セール' else 'P プロパー' end";

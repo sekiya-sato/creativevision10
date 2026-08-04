@@ -222,11 +222,10 @@ public abstract partial class BaseIdoInputViewModel<TDen> : BaseTranInputViewMod
 			new QueryListSqlParam(typeof(TDen), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
-	static string CodeNameViewSql(string column) =>
-		$"trim(ifnull(json_extract({column},'$.Sid'),'') || ' ' || ifnull(json_extract({column},'$.Cd'),'') || ' ' || ifnull(json_extract({column},'$.Mei'),''))";
+	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
+	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
 
-	static string DetailCodeNameSql(string value, string code, string name) =>
-		$"trim(ifnull({value},'') || ' ' || ifnull({code},'') || ' ' || ifnull({name},''))";
+	static string DetailCodeNameSql(string value, string code, string name) => Helpers.CodeNameDisplay.Sql(value, code, name);
 
 	string BuildListPrintSql(QueryListParam query) {
 		return $@"
