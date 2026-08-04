@@ -240,10 +240,7 @@ SuTotal,
 KingakuTotal,
 JodaiTotal,
 GedaiTotal,
-ifnull(Memo,'') Memo,
-'' as Dummy1,
-0 as Dummy2,
-0 as Dummy3
+ifnull(Memo,'') Memo
 from {TableName} {query.AddWhereOrder()}
 ";
 	}
@@ -273,11 +270,7 @@ cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int) JodaiKi
 ifnull({M}'$.Gedai'),0) Gedai,
 cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int) GedaiKingaku,
 {DetailCodeNameSql($"{M}'$.Id_Shain')", $"{M}'$.Code_Shain')", $"{M}'$.Mei_Shain')")} MeisaiShain,
-ifnull({M}'$.Memo'),'') Memo,
-'' as Dummy1,
-0 as Dummy2,
-0 as Dummy3,
-0 as Dummy4
+ifnull({M}'$.Memo'),'') Memo
 from ({denpyoSub}) h, json_each(h.Jmeisai) m
 order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 ";

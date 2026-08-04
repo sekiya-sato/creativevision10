@@ -26,10 +26,6 @@
 			<item id="item20" />
 			<item id="item21" />
 			<item id="item22" />
-			<item id="item23" />
-			<item id="item24" />
-			<item id="item25" />
-			<item id="item26" />
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt" />
@@ -51,168 +47,154 @@
 					<data calctype="static">移動No</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrDenDay">
+				</text>				<text id="HdrDenDay">
 					<position x="18" y="0" width="18" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="static">移動日</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrKubun">
-					<position x="36" y="0" width="18" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">区分</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrTenpo">
-					<position x="54" y="0" width="48" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">移動先</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrSoko">
-					<position x="102" y="0" width="48" height="4" />
+				</text>				<text id="HdrSoko">
+					<position x="36" y="0" width="57" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="static">倉庫</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrShain">
-					<position x="0" y="4" width="50" height="4" />
+				</text>				<text id="HdrIdo">
+					<position x="93" y="0" width="57" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">移動先</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrShain">
+					<position x="0" y="4" width="40" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="static">入力者</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrCustomer">
-					<position x="50" y="4" width="50" height="4" />
+				</text>				<text id="HdrRelate">
+					<position x="40" y="4" width="25" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="static">関連No</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrShohin">
-					<position x="42" y="8" width="60" height="4" />
+				</text>				<text id="HdrManualNo">
+					<position x="65" y="4" width="30" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
-					<data calctype="static">商品</data>
+					<data calctype="static">手入力No</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrCol">
-					<position x="102" y="8" width="24" height="4" />
+				</text>				<text id="HdrSuTotal">
+					<position x="95" y="4" width="25" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
-					<data calctype="static">色</data>
+					<data calctype="static">数量計</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrSiz">
-					<position x="126" y="8" width="24" height="4" />
+				</text>				<text id="HdrKingakuTotal">
+					<position x="120" y="4" width="30" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
-					<data calctype="static">サイズ</data>
+					<data calctype="static">金額計</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrSu">
-					<position x="0" y="12" width="15" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">数量</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrTanka">
-					<position x="15" y="12" width="20" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">単価</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrKingaku">
-					<position x="35" y="12" width="25" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">金額</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrJodai">
-					<position x="60" y="12" width="20" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">上代</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrJodaiKingaku">
-					<position x="80" y="12" width="25" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">上代金額</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrGedai">
-					<position x="105" y="12" width="20" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">下代</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrGedaiKingaku">
-					<position x="125" y="12" width="25" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">下代金額</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrMShain">
-					<position x="0" y="16" width="60" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">明細担当</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrMemo">
-					<position x="60" y="16" width="90" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="static">メモ</data>
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="HdrNo">
+				</text>				<text id="HdrNo">
 					<position x="0" y="8" width="10" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="static">No</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="HdrMKubun">
-					<position x="10" y="8" width="20" height="4" />
+				</text>				<text id="HdrShohin">
+					<position x="10" y="8" width="92" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
-					<data calctype="static">P/S</data>
+					<data calctype="static">商品</data>
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-			</record>
+				</text>				<text id="HdrCol">
+					<position x="102" y="8" width="24" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">色</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrSiz">
+					<position x="126" y="8" width="24" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">サイズ</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrSu">
+					<position x="0" y="12" width="15" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">数量</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrTanka">
+					<position x="15" y="12" width="20" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">単価</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrKingaku">
+					<position x="35" y="12" width="25" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">金額</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrJodai">
+					<position x="60" y="12" width="20" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">上代</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrJodaiKingaku">
+					<position x="80" y="12" width="25" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">上代金額</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrGedai">
+					<position x="105" y="12" width="20" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">下代</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrGedaiKingaku">
+					<position x="125" y="12" width="25" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">下代金額</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrMShain">
+					<position x="0" y="16" width="60" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">明細担当</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="HdrMemo">
+					<position x="60" y="16" width="90" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="static">メモ</data>
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>			</record>
 			<record id="RecData" grouplevel="1" breaktype="2" tree="1">
 				<position x="0" y="20" width="150" height="8" />
 				<color transparent="1" />
@@ -224,173 +206,159 @@
 					<data calctype="item" datasrc="item1" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="ValDenDay">
+				</text>				<text id="ValDenDay">
 					<position x="18" y="0" width="18" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="item" datasrc="item2" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="ValKubun">
-					<position x="36" y="0" width="18" height="4" />
+				</text>				<text id="ValSoko">
+					<position x="36" y="0" width="57" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="item" datasrc="item3" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="ValTenpo">
-					<position x="54" y="0" width="48" height="4" />
+				</text>				<text id="ValIdo">
+					<position x="93" y="0" width="57" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="item" datasrc="item4" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="ValSoko">
-					<position x="102" y="0" width="48" height="4" />
+				</text>				<text id="ValShain">
+					<position x="0" y="4" width="40" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="item" datasrc="item5" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="ValShain">
-					<position x="0" y="4" width="50" height="4" />
+				</text>				<text id="ValRelate">
+					<position x="40" y="4" width="25" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="item" datasrc="item6" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="ValCustomer">
-					<position x="50" y="4" width="50" height="4" />
+				</text>				<text id="ValManualNo">
+					<position x="65" y="4" width="30" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="item" datasrc="item7" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-			</record>
+				</text>				<text id="ValSuTotal">
+					<position x="95" y="4" width="25" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item8" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValKingakuTotal">
+					<position x="120" y="4" width="30" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item9" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>			</record>
 			<record id="RecDetail" tree="1">
 				<position x="0" y="28" width="150" height="12" />
 				<color transparent="1" />
 				<border left="1" right="1" bottom="1" />
-				<text id="Txt55">
-					<position x="42" y="0" width="60" height="4" />
+				<text id="ValNo">
+					<position x="0" y="0" width="10" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
-					<data calctype="item" datasrc="item15" />
+					<data calctype="item" datasrc="item10" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="Txt56">
+				</text>				<text id="ValShohin">
+					<position x="10" y="0" width="92" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item11" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValCol">
 					<position x="102" y="0" width="24" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
-					<data calctype="item" datasrc="item16" />
+					<data calctype="item" datasrc="item12" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="Txt57">
+				</text>				<text id="ValSiz">
 					<position x="126" y="0" width="24" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item17" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt58">
-					<position x="0" y="4" width="15" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item18" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt59">
-					<position x="15" y="4" width="20" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item19" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt60">
-					<position x="35" y="4" width="25" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item20" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt61">
-					<position x="60" y="4" width="20" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item21" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt62">
-					<position x="80" y="4" width="25" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item22" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt63">
-					<position x="105" y="4" width="20" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item23" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt64">
-					<position x="125" y="4" width="25" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item24" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt65">
-					<position x="0" y="8" width="60" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item25" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="Txt66">
-					<position x="60" y="8" width="90" height="4" />
-					<color transparent="1" />
-					<border bottom="1" />
-					<data calctype="item" datasrc="item26" />
-					<decode datatype="string" format="" />
-					<font size="62" />
-				</text>
-				<text id="ValNo">
-					<position x="0" y="0" width="10" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="item" datasrc="item13" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-				<text id="ValMKubun">
-					<position x="10" y="0" width="20" height="4" />
+				</text>				<text id="ValSu">
+					<position x="0" y="4" width="15" height="4" />
 					<color transparent="1" />
 					<border bottom="1" />
 					<data calctype="item" datasrc="item14" />
 					<decode datatype="string" format="" />
 					<font size="62" />
-				</text>
-			</record>
+				</text>				<text id="ValTanka">
+					<position x="15" y="4" width="20" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item15" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValKingaku">
+					<position x="35" y="4" width="25" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item16" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValJodai">
+					<position x="60" y="4" width="20" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item17" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValJodaiKingaku">
+					<position x="80" y="4" width="25" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item18" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValGedai">
+					<position x="105" y="4" width="20" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item19" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValGedaiKingaku">
+					<position x="125" y="4" width="25" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item20" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValMShain">
+					<position x="0" y="8" width="60" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item21" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>				<text id="ValMemo">
+					<position x="60" y="8" width="90" height="4" />
+					<color transparent="1" />
+					<border bottom="1" />
+					<data calctype="item" datasrc="item22" />
+					<decode datatype="string" format="" />
+					<font size="62" />
+				</text>			</record>
 		</region>
 		<text id="Txt01" valign="middle" halign="center">
 			<position x="40" y="0" width="48" height="7" />

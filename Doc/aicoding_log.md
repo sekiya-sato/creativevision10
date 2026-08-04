@@ -1,3 +1,31 @@
+## [2026-08-03] 17:55 移動系帳票(IdoInputOut/Soku/Uke)の列ズレ修正
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：前タスクの確認で報告した「移動系帳票の列ズレ」を別コミットで修正する。
+### 実施内容
+- printform/IdoInputOut_header.qfm / IdoInputSoku_header.qfm / IdoInputUke_header.qfm: 発注帳票流用のレイアウトを破棄し、移動業務の12項目（移動No/移動日/倉庫/移動先/入力者/関連No/手入力No/数量計/金額計/上代計/下代計/メモ）で再構成。存在しない「区分」「掛率」「消費税」「総合計」の欄を削除した。
+- printform/IdoInputOut_detail.qfm / IdoInputSoku_detail.qfm / IdoInputUke_detail.qfm: 同様に22項目で再構成。伝票部を items1-9、明細部を items10-22 とし、移動に無い「区分」「P/S」欄を削除、空いた幅を商品名(w=92)へ充当した。
+- CvWpfclient/Helpers/ViewModels/BaseIdoInputViewModel.cs: qfmのitem数合わせのために付けていたダミー列（一覧SQLの Dummy1-3、明細SQLの Dummy1-4）を削除。SELECT列数が qfm の item 数（12 / 22）と一致するようになった。
+### 技術決定 Why
+- 移動テーブル(Tran05Ido/Tran10IdoOut/Tran11IdoIn)は TranAllHeader 由来で Rate/Tax/Total を持たないため、SQL側の列順調整だけでは qfm の「掛率」「消費税」「総合計」欄を埋められない。qfm の見出しとレイアウトを移動業務に合わせて作り直す以外に整合させる手段が無いと判断した。
+- ダミー列は「qfmのitem数に合わせる」ためだけに存在していたため、qfm を正した時点で不要になる。残すと再びズレの温床になる。
+- 3帳票は表題以外は完全同一だったため、生成スクリプトで6ファイルを同一ロジックから出力し、表題のみ差し替えた。手作業による取りこぼしを防ぐ目的。
+- 数値項目も既存帳票の慣習どおり datatype="string" のままとし、halign は追加していない（発注/仕入等の他帳票と揃えるため）。
+### 影響範囲
+- 変更7ファイル（qfm 6 / C# 1）。移動系3画面の帳票出力のみ。他帳票のSQL・qfmには一切触れていない。
+### 確認
+- `dotnet build creativevision10.slnx -t:Rebuild`: 成功（0警告 / 0エラー）。
+- 6ファイルすべて XmlDocument.Load が成功し、宣言どおり shift_jis として解釈されること、BOM無し・CRLFのみ・cp932ラウンドトリップがバイト一致（表現不能文字なし）であることを確認。
+- 各qfmで item 定義数と datasrc 参照数が一致し、未使用item・範囲外参照・重複参照が0件であることを確認（header 12/12、detail 22/22）。
+- 修正後SQLを server-dev.db で実行し、Tran10IdoOut / Tran05Ido / Tran11IdoIn の一覧・明細それぞれで列数が qfm の item 数と一致すること、各値が正しい見出しの下に来ることを実データで確認（例: item3 倉庫=(255) 000803 ＺＯＺＯＴＯＷＮ、item11 商品=(28995) 20322234017 マーメイドロングキャミＯＰ）。
+- printform/ の差分が IdoInput* 6ファイルのみであることを確認。
+### 残課題
+- PRINT_ENABLE 無効環境のため出力PDFのレンダリング確認は未実施。実際の印字結果（折り返し・見切れ）は要確認。
+
+---
 ## [2026-08-03] 17:10 帳票(qfm)印字列のV*列書式を画面と同じ「(Id) コード 名称」へ統一
 ### Agent
 - Opus 5 : Anthropic
