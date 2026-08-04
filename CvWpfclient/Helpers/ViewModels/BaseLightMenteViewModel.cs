@@ -50,17 +50,14 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 		Message = string.Empty;
 	}
 
-	protected virtual QueryListParam CreateLightListQueryParam() =>
-		new(
-			itemType: Tabletype,
-			where: ListWhere,
-			order: ListOrder,
-			parameters: ListParams,
-			maxCount: ListMaxCount
-		);
+	/// <summary>
+	/// 軽量一覧のクエリパラメータ。ListWhere が生成した @0 形式のプレースホルダに対応する
+	/// SelectCodeWhereParameters を必ず添付するため、通常一覧と同じ生成処理を使う。
+	/// </summary>
+	protected virtual QueryListParam CreateLightListQueryParam() => CreateListQueryParam();
 
-	protected CvMsg CreateSqlListMessage(string selectColumns) {
-		var query = CreateLightListQueryParam();
+	protected CvMsg CreateSqlListMessage(string selectColumns, QueryListParam? listQuery = null) {
+		var query = listQuery ?? CreateLightListQueryParam();
 		var sql = $"select {selectColumns} From {ResolveTableName(Tabletype)} {query.AddWhereOrder()}";
 		return new CvMsg {
 			Code = 0,
@@ -186,23 +183,24 @@ public abstract partial class BaseCodeNameLightMenteViewModel<T> : BaseLightMent
 	protected virtual string[] AdditionalLightweightColumns => [];
 
 	protected override CvMsg CreateLightListMessage() {
+		var query = CreateLightListQueryParam();
 		if (AdditionalLightweightColumns.Length == 0) {
 			return new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListSimpleParam),
 				DataMsg = Common.SerializeObject(new QueryListSimpleParam(
-					itemType: Tabletype,
-					where: ListWhere,
-					order: ListOrder,
-					parameters: ListParams,
-					maxCount: ListMaxCount
+					itemType: query.ItemType,
+					where: query.Where,
+					order: query.Order,
+					parameters: query.Parameters,
+					maxCount: query.MaxCount
 				))
 			};
 		}
 
 		var selectColumns = string.Join(",", ["Id", "Vdc", "Vdu", "Code", "Name", "Ryaku", "Kana", .. AdditionalLightweightColumns]);
-		return CreateSqlListMessage(selectColumns);
+		return CreateSqlListMessage(selectColumns, query);
 	}
 }
 

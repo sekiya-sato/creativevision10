@@ -124,12 +124,14 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 
 	protected virtual QueryListParam CreateListQueryParam() {
 		SelectCodeWhereParameters = null;
+		// ListWhere の評価が SelectCodeWhereParameters を設定するため、先に where を確定させる
 		var where = ListWhere;
+		var parameters = ListParams ?? SelectCodeWhereParameters;
 		return new(
 			itemType: Tabletype,
 			where: where,
 			order: ListOrder,
-			parameters: ListParams ?? SelectCodeWhereParameters,
+			parameters: parameters,
 			maxCount: ListMaxCount
 		);
 	}
@@ -348,6 +350,13 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			ClientLib.Cursor2Wait();
 
 			var reply = await SendMessageAsync(CreateListMessage(), ct);
+
+			// サーバ例外時は DataMsg が JSON ではなく例外メッセージなので、逆シリアル化せずそのまま表示する
+			if (reply.Code == CvMsgErrorCode.Unexpected) {
+				Message = $"データ取得失敗: {reply.Option}";
+				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+				return;
+			}
 
 			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
 				ListData = new ObservableCollection<T>(list.Cast<T>());

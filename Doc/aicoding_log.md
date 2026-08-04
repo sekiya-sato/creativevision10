@@ -1,3 +1,28 @@
+## [2026-08-04] 13:05 マスタ一覧のCD範囲/名称/JAN条件でデータ取得失敗になる不具合の修正
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：商品マスタメンテなどで一覧取得する際、CDの範囲指定・商品名部分一致・JANの部分一致を指定するとエラー（`データ取得失敗: Unexpected character encountered while parsing value: S. Path '', line 1, position 1.`）になる。SQLをチェックして修正する。
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs: 軽量一覧の `CreateLightListQueryParam()` を `BaseMenteViewModel.CreateListQueryParam()` への委譲に変更し、`SelectCodeWhereParameters`（`@0` 形式プレースホルダの実値）が必ず添付されるようにした。`CreateLightListMessage()` は生成済みの `QueryListParam` から `QueryListSimpleParam` を組み立て、`CreateSqlListMessage()` にも同じ query を渡して `Parameters` を確実に転送する形に変更。
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: `CreateListQueryParam()` の「`ListWhere` の評価が `SelectCodeWhereParameters` を設定する」という引数評価順依存を明示行に分解。あわせて `DoList()` でサーバ例外（`CvMsgErrorCode.Unexpected`）を逆シリアル化前に判定し、`reply.Option` の実エラー内容を表示するようにした。
+### 技術決定 Why
+- 原因はSQL文自体ではなく**バインドパラメータの欠落**だった。`BuildSelectCodeWhere()` は CD範囲・名称LIKE・JAN LIKE を `@0`,`@1`,… のプレースホルダで組み立て、実値を `SelectCodeWhereParameters` に格納する。しかし Light系一覧は `parameters: ListParams`（既定 null）しか渡しておらず、WHERE に `@0` があるのに引数0個で NPoco に到達し `ArgumentOutOfRangeException` が発生していた。通常一覧（`CreateListQueryParam()`）は `ListParams ?? SelectCodeWhereParameters` を渡していたため正常だった。
+- サーバは例外を `DataType=string` / `DataMsg=例外メッセージ` で返すため、クライアントが JSON として解析しようとして例外メッセージ先頭の `S` で失敗する。画面には解析エラーしか出ず原因が潰れる構造だったので、`DoList()` にも例外分岐を追加した。
+- Light系と通常一覧でパラメータ生成が二重管理になっていた点が再発の温床だったため、片方を消すのではなく委譲による一本化を選んだ。
+- Id範囲・Ids IN句はパラメータを使わずSQLへ直接埋め込むため元から動作していた。ユーザー報告が「CD範囲・名称・JANだけエラー」だったことと整合する。
+### 影響範囲
+- Light系一覧を使う全メンテ画面（商品／得意先／仕入先／社員／エンドユーザー／名称／ログイン）。変更は基底クラス2ファイルのみで、各画面の `BuildSelectCodeWhere()` オーバーライドやSQL文自体には手を入れていない。
+### 確認
+- `dotnet build creativevision10.slnx`: 成功（0警告 / 0エラー）。
+- 既存テスト `Tests/TestServer` 33件すべて成功。
+- 一時テストで再現確認：パラメータ0個だと `Specified argument was out of the range of valid values. (Parameter 'Parameter '@0' specified but only 0 parameters supplied ...')` が発生し、これがクライアント側 `parsing value: S` の正体であることを確認。パラメータを渡せば CD範囲・名称LIKE・JANの `EXISTS`（`DerivedShohinColSiz` の `Jan1`/`Jan2`/`Jan3`）サブクエリすべて正常実行。確認後に一時テストは削除（AGENTS.md「Don't add test programs unless explicitly asked」に従う）。
+### 残課題
+- 実機での動作確認（商品マスタメンテ画面で実際に条件指定して一覧取得）は未実施。
+
+---
 ## [2026-08-03] 17:55 移動系帳票(IdoInputOut/Soku/Uke)の列ズレ修正
 ### Agent
 - Opus 5 : Anthropic
