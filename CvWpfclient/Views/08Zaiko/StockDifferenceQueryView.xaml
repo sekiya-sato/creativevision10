@@ -33,8 +33,8 @@
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
-				<StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
-					Orientation="Horizontal">
+				<StackPanel VerticalAlignment="Center"
+					DockPanel.Dock="Right" Orientation="Horizontal">
 					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 						Text="件数:" />
 					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
@@ -70,8 +70,8 @@
 
 		<Border Grid.Row="1"
 			Margin="12,12,12,0" Padding="12"
-			BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1"
-			CornerRadius="4">
+			BorderBrush="{DynamicResource MaterialDesignDivider}"
+			BorderThickness="1" CornerRadius="4">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
@@ -93,16 +93,16 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="棚卸日" />
 				<TextBox Grid.Row="0" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding DenDayFrom, UpdateSourceTrigger=PropertyChanged}" />
 				<TextBlock Grid.Row="0" Grid.Column="2"
 					Margin="8,0" VerticalAlignment="Center"
 					Text="～" />
 				<TextBox Grid.Row="0" Grid.Column="3"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding DenDayTo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -111,8 +111,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="倉庫" />
 				<TextBox Grid.Row="1" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCodeFromCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -121,8 +121,8 @@
 					Margin="8,0" VerticalAlignment="Center"
 					Text="～" />
 				<TextBox Grid.Row="1" Grid.Column="3"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCodeToCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -133,8 +133,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="商品" />
 				<TextBox Grid.Row="2" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectShohinCodeFromCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -143,8 +143,8 @@
 					Margin="8,0" VerticalAlignment="Center"
 					Text="～" />
 				<TextBox Grid.Row="2" Grid.Column="3"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectShohinCodeToCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -178,7 +178,8 @@
 					Orientation="Horizontal">
 					<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
 						Text="取得件数上限" />
-					<TextBox Width="80" Height="32" Margin="0,0,16,0"
+					<TextBox Width="80" Height="32"
+						Margin="0,0,16,0"
 						Style="{StaticResource MaterialDesignTextBox}"
 						Text="{Binding MaxCountText, UpdateSourceTrigger=PropertyChanged}" />
 					<Button Command="{Binding SearchCommand}"
@@ -204,38 +205,29 @@
 
 		<DataGrid Grid.Row="2"
 			Margin="12"
-			AutoGenerateColumns="False"
-			CanUserAddRows="False" CanUserDeleteRows="False"
-			IsReadOnly="True"
+			AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
 			ItemsSource="{Binding Rows}"
 			SelectedItem="{Binding SelectedRow}"
-			SelectionMode="Single" SelectionUnit="FullRow"
-			VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+			SelectionMode="Single" SelectionUnit="FullRow" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 			<DataGrid.Columns>
 				<DataGridTextColumn Width="80"
 					Binding="{Binding SokoCode}"
-					Header="倉庫CD">
-				</DataGridTextColumn>
+					Header="倉庫CD" />
 				<DataGridTextColumn Width="150"
 					Binding="{Binding SokoName}"
-					Header="倉庫名">
-				</DataGridTextColumn>
+					Header="倉庫名" />
 				<DataGridTextColumn Width="120"
 					Binding="{Binding ShohinCode}"
-					Header="品番">
-				</DataGridTextColumn>
+					Header="品番" />
 				<DataGridTextColumn Width="220"
 					Binding="{Binding ShohinName}"
-					Header="商品名">
-				</DataGridTextColumn>
+					Header="商品名" />
 				<DataGridTextColumn Width="100"
 					Binding="{Binding ColName}"
-					Header="色">
-				</DataGridTextColumn>
+					Header="色" />
 				<DataGridTextColumn Width="70"
 					Binding="{Binding SizName}"
-					Header="ｻｲｽﾞ">
-				</DataGridTextColumn>
+					Header="ｻｲｽﾞ" />
 				<DataGridTextColumn Width="90"
 					Binding="{Binding TheoreticalSu, StringFormat={}{0:N0}}"
 					Header="理論在庫">
@@ -288,7 +280,8 @@
 			Padding="12,6"
 			Background="{DynamicResource MaterialDesignChipBackground}">
 			<TextBlock VerticalAlignment="Center"
-				Text="{Binding Message}" TextTrimming="CharacterEllipsis" />
+				Text="{Binding Message}"
+				TextTrimming="CharacterEllipsis" />
 		</Border>
 	</Grid>
 </helpers:BaseWindow>

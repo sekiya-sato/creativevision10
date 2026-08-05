@@ -35,8 +35,8 @@
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
-				<StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
-					Orientation="Horizontal">
+				<StackPanel VerticalAlignment="Center"
+					DockPanel.Dock="Right" Orientation="Horizontal">
 					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 						Text="件数:" />
 					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
@@ -84,8 +84,8 @@
 
 		<Border Grid.Row="1"
 			Margin="12,12,12,0" Padding="12"
-			BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1"
-			CornerRadius="4">
+			BorderBrush="{DynamicResource MaterialDesignDivider}"
+			BorderThickness="1" CornerRadius="4">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
@@ -110,8 +110,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="棚卸日" />
 				<TextBox Grid.Row="0" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding DenDayText, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -120,8 +120,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="対象倉庫" />
 				<TextBox Grid.Row="1" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectSokoCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -135,8 +135,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="品番" />
 				<TextBox Grid.Row="2" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectShohinFromCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -145,8 +145,8 @@
 					Margin="8,0" VerticalAlignment="Center"
 					Text="～" />
 				<TextBox Grid.Row="2" Grid.Column="3"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectShohinToCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -157,8 +157,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="棚番" />
 				<TextBox Grid.Row="3" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding TanaNo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -167,8 +167,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="担当者" />
 				<TextBox Grid.Row="4" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectShainCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -182,8 +182,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="メモ" />
 				<TextBox Grid.Row="5" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -217,7 +217,8 @@
 					Orientation="Horizontal">
 					<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
 						Text="取得件数上限" />
-					<TextBox Width="80" Height="32" Margin="0,0,16,0"
+					<TextBox Width="80" Height="32"
+						Margin="0,0,16,0"
 						Style="{StaticResource MaterialDesignTextBox}"
 						Text="{Binding MaxCountText, UpdateSourceTrigger=PropertyChanged}" />
 					<Button Command="{Binding SearchCommand}"
@@ -243,41 +244,32 @@
 
 		<DataGrid Grid.Row="2"
 			Margin="12"
-			AutoGenerateColumns="False"
-			CanUserAddRows="False" CanUserDeleteRows="False"
+			AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
 			ItemsSource="{Binding Rows}"
 			SelectedItem="{Binding SelectedRow}"
-			SelectionMode="Single" SelectionUnit="CellOrRowHeader"
-			VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+			SelectionMode="Single" SelectionUnit="CellOrRowHeader" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 			<DataGrid.Columns>
 				<DataGridTextColumn Width="110"
 					Binding="{Binding Code_Shohin}"
-					Header="品番" IsReadOnly="True">
-				</DataGridTextColumn>
+					Header="品番" IsReadOnly="True" />
 				<DataGridTextColumn Width="220"
 					Binding="{Binding Mei_Shohin}"
-					Header="商品名" IsReadOnly="True">
-				</DataGridTextColumn>
+					Header="商品名" IsReadOnly="True" />
 				<DataGridTextColumn Width="70"
 					Binding="{Binding Code_Col}"
-					Header="色CD" IsReadOnly="True">
-				</DataGridTextColumn>
+					Header="色CD" IsReadOnly="True" />
 				<DataGridTextColumn Width="110"
 					Binding="{Binding Mei_Col}"
-					Header="色名" IsReadOnly="True">
-				</DataGridTextColumn>
+					Header="色名" IsReadOnly="True" />
 				<DataGridTextColumn Width="70"
 					Binding="{Binding Code_Siz}"
-					Header="ｻｲｽﾞCD" IsReadOnly="True">
-				</DataGridTextColumn>
+					Header="ｻｲｽﾞCD" IsReadOnly="True" />
 				<DataGridTextColumn Width="90"
 					Binding="{Binding Mei_Siz}"
-					Header="ｻｲｽﾞ名" IsReadOnly="True">
-				</DataGridTextColumn>
+					Header="ｻｲｽﾞ名" IsReadOnly="True" />
 				<DataGridTextColumn Width="120"
 					Binding="{Binding JanCode}"
-					Header="JAN" IsReadOnly="True">
-				</DataGridTextColumn>
+					Header="JAN" IsReadOnly="True" />
 				<DataGridTextColumn Width="90"
 					Binding="{Binding TheoreticalSu, StringFormat={}{0:N0}}"
 					Header="理論在庫" IsReadOnly="True">
@@ -335,7 +327,8 @@
 			Padding="12,6"
 			Background="{DynamicResource MaterialDesignChipBackground}">
 			<TextBlock VerticalAlignment="Center"
-				Text="{Binding Message}" TextTrimming="CharacterEllipsis" />
+				Text="{Binding Message}"
+				TextTrimming="CharacterEllipsis" />
 		</Border>
 	</Grid>
 </helpers:BaseWindow>

@@ -33,8 +33,8 @@
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
-				<StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
-					Orientation="Horizontal">
+				<StackPanel VerticalAlignment="Center"
+					DockPanel.Dock="Right" Orientation="Horizontal">
 					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 						Text="件数:" />
 					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
@@ -75,8 +75,8 @@
 
 		<Border Grid.Row="1"
 			Margin="12,12,12,0" Padding="12"
-			BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1"
-			CornerRadius="4">
+			BorderBrush="{DynamicResource MaterialDesignDivider}"
+			BorderThickness="1" CornerRadius="4">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
@@ -98,16 +98,16 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="売上日" />
 				<TextBox Grid.Row="0" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding DenDayFrom, UpdateSourceTrigger=PropertyChanged}" />
 				<TextBlock Grid.Row="0" Grid.Column="2"
 					Margin="8,0" VerticalAlignment="Center"
 					Text="～" />
 				<TextBox Grid.Row="0" Grid.Column="3"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding DenDayTo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -116,8 +116,8 @@
 					Margin="0,4" VerticalAlignment="Center"
 					Text="店舗" />
 				<TextBox Grid.Row="1" Grid.Column="1"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeFromCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -126,8 +126,8 @@
 					Margin="8,0" VerticalAlignment="Center"
 					Text="～" />
 				<TextBox Grid.Row="1" Grid.Column="3"
-					Width="180" Height="32" Margin="0,4"
-					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeToCommand}"
 					BorderThickness="0,0,0,1"
 					Style="{StaticResource MenteSearchTextBox}"
@@ -174,7 +174,8 @@
 					Orientation="Horizontal">
 					<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
 						Text="取得件数上限" />
-					<TextBox Width="80" Height="32" Margin="0,0,16,0"
+					<TextBox Width="80" Height="32"
+						Margin="0,0,16,0"
 						Style="{StaticResource MaterialDesignTextBox}"
 						Text="{Binding MaxCountText, UpdateSourceTrigger=PropertyChanged}" />
 					<Button Command="{Binding SearchCommand}"
@@ -200,26 +201,20 @@
 
 		<DataGrid Grid.Row="2"
 			Margin="12"
-			AutoGenerateColumns="False"
-			CanUserAddRows="False" CanUserDeleteRows="False"
-			IsReadOnly="True"
+			AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
 			ItemsSource="{Binding Rows}"
 			SelectedItem="{Binding SelectedRow}"
-			SelectionMode="Single" SelectionUnit="FullRow"
-			VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+			SelectionMode="Single" SelectionUnit="FullRow" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 			<DataGrid.Columns>
 				<DataGridTextColumn Width="110"
 					Binding="{Binding DenDayLabel}"
-					Header="売上日">
-				</DataGridTextColumn>
+					Header="売上日" />
 				<DataGridTextColumn Width="80"
 					Binding="{Binding ShopCode}"
-					Header="店舗CD">
-				</DataGridTextColumn>
+					Header="店舗CD" />
 				<DataGridTextColumn Width="200"
 					Binding="{Binding ShopName}"
-					Header="店舗名">
-				</DataGridTextColumn>
+					Header="店舗名" />
 				<DataGridTextColumn Width="80"
 					Binding="{Binding DenCount, StringFormat={}{0:N0}}"
 					Header="伝票数">
@@ -299,7 +294,8 @@
 			Padding="12,6"
 			Background="{DynamicResource MaterialDesignChipBackground}">
 			<TextBlock VerticalAlignment="Center"
-				Text="{Binding Message}" TextTrimming="CharacterEllipsis" />
+				Text="{Binding Message}"
+				TextTrimming="CharacterEllipsis" />
 		</Border>
 	</Grid>
 </helpers:BaseWindow>

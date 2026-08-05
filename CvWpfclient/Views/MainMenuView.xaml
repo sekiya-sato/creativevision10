@@ -469,9 +469,12 @@
 										ClipToBounds="True" MouseLeave="ForecastCanvas_MouseLeave" MouseMove="ForecastCanvas_MouseMove" Opacity="0.9" SizeChanged="ForecastCanvas_SizeChanged" SnapsToDevicePixels="True"
 										UseLayoutRounding="True" />
 									<Border Margin="0,3,4,0" Padding="4,1" HorizontalAlignment="Right" VerticalAlignment="Top" Panel.ZIndex="1"
-										Background="{DynamicResource MainMenuChartBackgroundBrush}" BorderBrush="{DynamicResource MainMenuChartTextColor}" BorderThickness="1" CornerRadius="2"
-										IsHitTestVisible="False" Opacity="0.9">
-										<TextBlock FontSize="9" Foreground="{DynamicResource MainMenuChartTextColor}" Text="棒: 降水量 (mm / 3時間)" />
+										Background="{DynamicResource MainMenuChartBackgroundBrush}"
+										BorderBrush="{DynamicResource MainMenuChartTextColor}"
+										BorderThickness="1" CornerRadius="2" IsHitTestVisible="False" Opacity="0.9">
+										<TextBlock FontSize="9"
+											Foreground="{DynamicResource MainMenuChartTextColor}"
+											Text="棒: 降水量 (mm / 3時間)" />
 									</Border>
 									<Popup x:Name="ForecastToolTip"
 										AllowsTransparency="True" IsHitTestVisible="False" Placement="Relative"
