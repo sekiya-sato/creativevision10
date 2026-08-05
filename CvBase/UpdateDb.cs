@@ -28,8 +28,9 @@ public class UpdateDb {
 		new (26_07_27_02,"Update MasterSysman set VSoko='{}' where Id=1;Update MasterYosanBrand set VTenpo='{}',VBrand='{}';Update MasterYosanHanbai set VShain='{}';","  V*項目追加時の空データ処理"),
 		new (26_07_27_03,"update MasterSysman set VSoko=ifnull((select json_object('Sid',ifnull(T.Id,0),'Cd',ifnull(T.Code,''),'Mei',ifnull(T.Name,'')) from MasterTokui T where T.Id=MasterSysman.Id_Soko),json_object('Sid',0,'Cd','','Mei',''));update MasterYosanBrand set VTenpo=ifnull((select json_object('Sid',ifnull(T.Id,0),'Cd',ifnull(T.Code,''),'Mei',ifnull(T.Name,'')) from MasterTokui T where T.Id=MasterYosanBrand.Id_Tenpo),json_object('Sid',0,'Cd','','Mei','')),VBrand=ifnull((select json_object('Sid',ifnull(M.Id,0),'Cd',ifnull(M.Code,''),'Mei',ifnull(M.Name,'')) from MasterMeisho M where M.Id=MasterYosanBrand.Id_Brand),json_object('Sid',0,'Cd','','Mei',''))","2026.07.27定義 Master系V*列の物理化 MasterSysman.VSoko/MasterYosanBrand.VTenpo,VBrand"),
 		new (26_07_27_04,"update MasterYosanHanbai set VShain=ifnull((select json_object('Sid',ifnull(T.Id,0),'Cd',ifnull(T.Code,''),'Mei',ifnull(T.Name,'')) from MasterShain T where T.Id=MasterYosanHanbai.Id_Shain),json_object('Sid',0,'Cd','','Mei',''))","2026.07.27定義 Master系V*列の物理化 MasterSysman.VSoko/MasterYosanBrand.VTenpo,VBrand"),
-		new (26_07_31_01,"ALTER TABLE Tran01Tenuri ADD COLUMN PosClientSaleId TEXT NOT NULL DEFAULT '';ALTER TABLE Tran01Tenuri ADD COLUMN JposPayment TEXT NOT NULL DEFAULT '';","POS売上の端末取引ID・決済内訳列追加"),
+		new (26_07_31_01,"ALTER TABLE Tran01Tenuri ADD COLUMN PosClientSaleId TEXT NOT NULL DEFAULT '';ALTER TABLE Tran01Tenuri ADD COLUMN JposPayment TEXT NOT NULL DEFAULT '{}';","POS売上の端末取引ID・決済内訳列追加"),
 		new (26_07_31_02,"ALTER TABLE Tran00Uriage ADD COLUMN IsPrint NUMBER not null default 0;","納品書発行済フラグ追加 Tran03Shiire.IsPrint と同形"),
+		new (26_08_04_01,"UPDATE Tran01Tenuri SET JposPayment = '{}' WHERE JposPayment = '';","店舗売上の明細照会時エラーの解消"),
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
