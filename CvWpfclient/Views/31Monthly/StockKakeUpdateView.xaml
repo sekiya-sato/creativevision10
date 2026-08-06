@@ -1,4 +1,4 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._31Monthly.StockKakeUpdateView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._31Monthly.StockKakeUpdateView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._31Monthly"
@@ -47,6 +47,7 @@
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="140" />
@@ -88,8 +89,22 @@
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						Margin="0,16,0,0"
 						Style="{StaticResource SettingLabel}"
+						Text="更新対象" />
+					<ComboBox Grid.Row="2" Grid.Column="1"
+						Width="180"
+						HorizontalAlignment="Left"
+						Margin="0,16,0,0"
+						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+						ItemsSource="{Binding UpdateTargets}"
+						SelectedItem="{Binding UpdateTarget}"
+						materialDesign:HintAssist.Hint="更新対象"
+						Style="{StaticResource FormComboBox}" />
+
+					<TextBlock Grid.Row="3" Grid.Column="0"
+						Margin="0,16,0,0"
+						Style="{StaticResource SettingLabel}"
 						Text="進捗" />
-					<ProgressBar Grid.Row="2" Grid.Column="1"
+					<ProgressBar Grid.Row="3" Grid.Column="1"
 						Height="18"
 						Margin="0,16,0,0"
 						Maximum="100" Minimum="0"

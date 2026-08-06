@@ -1,3 +1,26 @@
+## [2026-08-06] 12:32 在庫・掛再更新の対象選択と買掛集計追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：在庫・掛再更新画面で全て／在庫のみ／売掛のみ／買掛のみを選択可能にし、売掛・買掛の月次集計を実行できるようにする。
+### 実施内容
+- CvWpfclient/Views/31Monthly/StockKakeUpdateView.xaml: 更新対象のコンボボックスを追加し、既定値を「全て」とした。
+- CvWpfclient/ViewModels/31Monthly/StockKakeUpdateViewModel.cs: 選択対象に応じて在庫（月単位）、売掛（範囲単位）、買掛（範囲単位）のgRPCストリームを順次実行するよう変更した。ストリームのエラー時は後続処理を停止して画面に表示する。
+- CodeShare/ICoreService.cs / CvServer/Services/QueryMsgStreamService.cs: 売掛・買掛集計用のメッセージフラグを追加し、年月範囲パラメータを対応するサーバー集計処理へ振り分けた。
+- CvDomainLogic/SummaryDb.cs: `CalcSummaryKaiKake()` と売掛・買掛のストリーム実行メソッドを追加した。
+### 技術決定 Why
+- 買掛集計は既存の売掛集計と同じ再作成方式とし、`Tran03Shiire.KakeDay` の仕入額から `Tran07Shiharai.DenDay` の支払額を差し引き、指定範囲直前の残高を起点に月ごとの残高を累積する。これにより `SummaryKaiKake` の年月・仕入先一意制約と既存帳票の残高参照方式に整合する。
+- 在庫は既存の月単位 `Msg051_SummaryRealStock` 呼び出しを維持し、売掛・買掛のみ年月範囲を一度に再作成する。既存の在庫処理の意味を変えず、掛集計の前月残繰越を正しく扱うため。
+### 確認
+- `dotnet build CvDomainLogic/CvDomainLogic.csproj`: 成功（0警告 / 0エラー）。
+- `dotnet build CvServer/CvServer.csproj`: 成功（0警告 / 0エラー）。
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0警告 / 0エラー）。
+- StockKakeUpdateView.xaml: XML構文、リソース定義、バインディング先、CRLFを確認。
+
+---
+
 ## [2026-08-04] 13:05 マスタ一覧のCD範囲/名称/JAN条件でデータ取得失敗になる不具合の修正
 ### Agent
 - Opus 5 : Anthropic

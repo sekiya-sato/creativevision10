@@ -222,6 +222,32 @@ WHERE SumMonth <= @0;
 			"処理エラー: {StepName}",
 			"処理終了");
 	}
+	public IAsyncEnumerable<StreamStepProgress> SummaryUriKakeAsyncStream(CalcDateTermParameter param) {
+		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
+			("Summary : CalcSummaryUriKake", p => CalcSummaryUriKake(p.DateYymmFrom, p.DateYymmTo)),
+		];
+
+		return StreamStepProgressRunner.Run(
+			steps,
+			param,
+			_logger,
+			"処理開始",
+			"処理エラー: {StepName}",
+			"処理終了");
+	}
+	public IAsyncEnumerable<StreamStepProgress> SummaryKaiKakeAsyncStream(CalcDateTermParameter param) {
+		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
+			("Summary : CalcSummaryKaiKake", p => CalcSummaryKaiKake(p.DateYymmFrom, p.DateYymmTo)),
+		];
+
+		return StreamStepProgressRunner.Run(
+			steps,
+			param,
+			_logger,
+			"処理開始",
+			"処理エラー: {StepName}",
+			"処理終了");
+	}
 	/// <summary>
 	/// SummaryKakeの年月のデータを集計する(再作成)
 	/// </summary>
@@ -310,6 +336,96 @@ LEFT JOIN previousBalance AS p ON p.Id_Tokui = m.Id_Tokui;
 	cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryUriKake(delete)", "SummaryUriKake", period);
 	cnt += ExecuteAndCounts(sql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryUriKake", "SummaryUriKake", period);
 	_db.CompleteTransaction();
+		return cnt;
+	}
+	/// <summary>
+	/// SummaryKaiKakeの年月のデータを集計する(再作成)
+	/// </summary>
+	/// <param name="DatefromYyyymm"></param>
+	/// <param name="DateToYyyymm"></param>
+	/// <returns></returns>
+	public int CalcSummaryKaiKake(string DatefromYyyymm, string DateToYyyymm) {
+		var cnt = 0;
+		const string deleteSql = "DELETE FROM SummaryKaiKake WHERE DenMonth BETWEEN @0 AND @1";
+		var vdate = Common.GetVdate();
+		var sql = @$"
+WITH movements AS (
+	SELECT
+		substr(t.KakeDay, 1, 6) AS DenMonth,
+		t.Id_Shiire,
+		SUM((CASE WHEN t.Total <> 0 THEN t.Total ELSE t.KingakuTotal + t.Tax END) * t.CalcFlag) AS TotalShiire,
+		SUM(t.KingakuTotal * t.CalcFlag) AS Shiire,
+		SUM(t.Tax * t.CalcFlag) AS Tax,
+		0 AS TotalOut
+	FROM Tran03Shiire AS t
+	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	GROUP BY DenMonth, t.Id_Shiire
+	UNION ALL
+	SELECT
+		substr(t.DenDay, 1, 6) AS DenMonth,
+		t.Id_Torisaki AS Id_Shiire,
+		0 AS TotalShiire,
+		0 AS Shiire,
+		0 AS Tax,
+		SUM(t.KingakuTotal) AS TotalOut
+	FROM Tran07Shiharai AS t
+	WHERE substr(t.DenDay, 1, 6) BETWEEN @0 AND @1
+	GROUP BY DenMonth, t.Id_Torisaki
+),
+monthly AS (
+	SELECT
+		DenMonth,
+		Id_Shiire,
+		SUM(TotalShiire) AS TotalShiire,
+		SUM(Shiire) AS Shiire,
+		SUM(Tax) AS Tax,
+		SUM(TotalOut) AS TotalOut
+	FROM movements
+	GROUP BY DenMonth, Id_Shiire
+),
+previousBalance AS (
+	SELECT s.Id_Shiire, s.Balance
+	FROM SummaryKaiKake AS s
+	WHERE s.DenMonth = (
+		SELECT MAX(p.DenMonth)
+		FROM SummaryKaiKake AS p
+		WHERE p.Id_Shiire = s.Id_Shiire
+		  AND p.DenMonth < @0
+	)
+)
+INSERT INTO SummaryKaiKake (
+	Id_Shiire, DenMonth, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Tax,
+	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
+)
+SELECT
+	m.Id_Shiire,
+	m.DenMonth,
+	IFNULL(p.Balance, 0) + SUM(m.TotalShiire - m.TotalOut) OVER (
+		PARTITION BY m.Id_Shiire
+		ORDER BY m.DenMonth
+		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+	) AS Balance,
+	m.TotalOut,
+	m.TotalShiire,
+	m.Shiire,
+	0 AS Henpin,
+	0 AS Nebiki,
+	m.Tax,
+	0 AS Cash,
+	0 AS Fee,
+	0 AS Densai,
+	0 AS Offset,
+	0 AS Other,
+	{vdate} AS Vdc,
+	{vdate} AS Vdu
+FROM monthly AS m
+LEFT JOIN previousBalance AS p ON p.Id_Shiire = m.Id_Shiire;
+";
+		var period = $"{DatefromYyyymm}-{DateToYyyymm}";
+		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryKaiKake(delete)", "SummaryKaiKake", period);
+		cnt += ExecuteAndCounts(sql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryKaiKake", "SummaryKaiKake", period);
+		_db.CompleteTransaction();
 		return cnt;
 	}
 

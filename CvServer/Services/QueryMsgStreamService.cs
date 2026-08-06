@@ -63,7 +63,10 @@ public partial class CoreService {
 			}
 		}
 		// 	集計処理
-		else if (request.Flag is CvFlag.Msg050_Summary or CvFlag.Msg051_SummaryRealStock) {
+		else if (request.Flag is CvFlag.Msg050_Summary
+			or CvFlag.Msg051_SummaryRealStock
+			or CvFlag.Msg052_SummaryUriKake
+			or CvFlag.Msg053_SummaryKaiKake) {
 			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
 				yield return msg;
 			}
@@ -123,9 +126,11 @@ public partial class CoreService {
 		var summaryDb = new SummaryDb(_db);
 
 		var param = Common.DeserializeObject(request.DataMsg, request.DataType);
-		var stream = param switch {
-			CalcDateTermParameter summaryParam => summaryDb.SummaryAllAsyncStream(summaryParam),
-			CalcDateParameter summaryReal => summaryDb.SummaryRealAsyncStream(summaryReal),
+		var stream = (request.Flag, param) switch {
+			(CvFlag.Msg050_Summary, CalcDateTermParameter summaryParam) => summaryDb.SummaryAllAsyncStream(summaryParam),
+			(CvFlag.Msg051_SummaryRealStock, CalcDateParameter summaryReal) => summaryDb.SummaryRealAsyncStream(summaryReal),
+			(CvFlag.Msg052_SummaryUriKake, CalcDateTermParameter uriKakeParam) => summaryDb.SummaryUriKakeAsyncStream(uriKakeParam),
+			(CvFlag.Msg053_SummaryKaiKake, CalcDateTermParameter kaiKakeParam) => summaryDb.SummaryKaiKakeAsyncStream(kaiKakeParam),
 			_ => null
 		};
 

@@ -153,6 +153,16 @@ public enum CvFlag {
 	[EnumMember]
 	Msg051_SummaryRealStock = 51,
 	/// <summary>
+	/// 売掛集計処理
+	/// </summary>
+	[EnumMember]
+	Msg052_SummaryUriKake = 52,
+	/// <summary>
+	/// 買掛集計処理
+	/// </summary>
+	[EnumMember]
+	Msg053_SummaryKaiKake = 53,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	[EnumMember]

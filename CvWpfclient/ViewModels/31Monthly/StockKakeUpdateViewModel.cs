@@ -11,11 +11,16 @@ using System.Windows;
 namespace CvWpfclient.ViewModels._31Monthly;
 
 public partial class StockKakeUpdateViewModel : BaseViewModel {
+	public IReadOnlyList<string> UpdateTargets { get; } = ["全て", "在庫のみ", "売掛のみ", "買掛のみ"];
+
 	[ObservableProperty]
 	public partial string YearMonthFrom { get; set; } = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
 	public partial string YearMonthTo { get; set; } = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+
+	[ObservableProperty]
+	public partial string UpdateTarget { get; set; } = "全て";
 
 	[ObservableProperty]
 	public partial string StatusMessage { get; set; } = "年月を yyyy/MM 形式で入力し、実行を押してください。";
@@ -46,8 +51,8 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 
 		List<string> targetMonths = BuildMonthList(yymmFrom, yymmTo);
 		string confirmMessage = targetMonths.Count == 1
-			? $"{targetMonths[0]} の在庫・掛再更新を実行しますか？"
-			: $"{targetMonths[0]} ～ {targetMonths[^1]} の在庫・掛再更新を {targetMonths.Count} ヶ月分実行しますか？";
+			? $"{targetMonths[0]} の{UpdateTarget}を実行しますか？"
+			: $"{targetMonths[0]} ～ {targetMonths[^1]} の{UpdateTarget}を実行しますか？";
 
 		if (MessageEx.ShowQuestionDialog(confirmMessage, owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
@@ -60,34 +65,33 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 
 		try {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var requests = CreateSummaryRequests(targetMonths, yymmFrom, yymmTo);
 			int processedCount = 0;
 
-			foreach (string yyyymm in targetMonths) {
+			foreach (var request in requests) {
 				cancellationToken.ThrowIfCancellationRequested();
 
-				var msg = new CvMsg {
-					Code = 0,
-					Flag = CvFlag.Msg051_SummaryRealStock,
-					DataType = typeof(CalcDateParameter),
-					DataMsg = Common.SerializeObject(new CalcDateParameter(yyyymm))
-				};
-
-				StatusMessage = $"{yyyymm} の処理中...";
-				await foreach (var streamMsg in coreService.QueryMsgStreamAsync(msg, AppGlobal.GetDefaultCallContext(cancellationToken))) {
+				StatusMessage = $"{request.Name} の処理中...";
+				await foreach (var streamMsg in coreService.QueryMsgStreamAsync(request.Message, AppGlobal.GetDefaultCallContext(cancellationToken))) {
 					if (!string.IsNullOrEmpty(streamMsg.DataMsg)) {
 						StatusMessage = streamMsg.DataMsg;
 					}
-					ProgressValue = streamMsg.Progress;
-					if (streamMsg.IsCompleted || streamMsg.IsError) {
+					ProgressValue = (int)Math.Round(
+						(processedCount * 100d + Math.Clamp(streamMsg.Progress, 0, 100)) / requests.Count,
+						MidpointRounding.AwayFromZero);
+					if (streamMsg.IsError) {
+						throw new InvalidOperationException(streamMsg.DataMsg);
+					}
+					if (streamMsg.IsCompleted) {
 						break;
 					}
 				}
 
 				processedCount++;
-				ProgressValue = (int)Math.Round(processedCount * 100d / targetMonths.Count, MidpointRounding.AwayFromZero);
+				ProgressValue = (int)Math.Round(processedCount * 100d / requests.Count, MidpointRounding.AwayFromZero);
 			}
 
-			StatusMessage = $"在庫・掛再更新が完了しました。対象: {targetMonths[0]} ～ {targetMonths[^1]}";
+			StatusMessage = $"{UpdateTarget}が完了しました。対象: {targetMonths[0]} ～ {targetMonths[^1]}";
 		}
 		catch (OperationCanceledException) {
 			StatusMessage = "処理をキャンセルしました。";
@@ -117,6 +121,36 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		yyyymm = trimmed;
 		return true;
 	}
+
+	private List<(string Name, CvMsg Message)> CreateSummaryRequests(IReadOnlyList<string> targetMonths, string yymmFrom, string yymmTo) {
+		List<(string Name, CvMsg Message)> requests = [];
+		if (UpdateTarget is "全て" or "在庫のみ") {
+			requests.AddRange(targetMonths.Select(yyyymm => ($"在庫 {yyyymm}", CreateSummaryMessage(
+				CvFlag.Msg051_SummaryRealStock,
+				typeof(CalcDateParameter),
+				new CalcDateParameter(yyyymm)))));
+		}
+		if (UpdateTarget is "全て" or "売掛のみ") {
+			requests.Add(($"売掛 {yymmFrom} ～ {yymmTo}", CreateSummaryMessage(
+				CvFlag.Msg052_SummaryUriKake,
+				typeof(CalcDateTermParameter),
+				new CalcDateTermParameter(yymmFrom, yymmTo))));
+		}
+		if (UpdateTarget is "全て" or "買掛のみ") {
+			requests.Add(($"買掛 {yymmFrom} ～ {yymmTo}", CreateSummaryMessage(
+				CvFlag.Msg053_SummaryKaiKake,
+				typeof(CalcDateTermParameter),
+				new CalcDateTermParameter(yymmFrom, yymmTo))));
+		}
+		return requests;
+	}
+
+	private static CvMsg CreateSummaryMessage(CvFlag flag, Type dataType, object parameter) => new() {
+		Code = 0,
+		Flag = flag,
+		DataType = dataType,
+		DataMsg = Common.SerializeObject(parameter)
+	};
 
 	private static List<string> BuildMonthList(string yyyymmFrom, string yyyymmTo) {
 		List<string> list = [];
