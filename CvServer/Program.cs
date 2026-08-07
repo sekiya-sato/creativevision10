@@ -168,6 +168,7 @@ app.Lifetime.ApplicationStarted.Register(() => {
 		var schedulerService = app.Services.GetRequiredService<SchedulerService>();
 		schedulerService.RegisterDailySqliteWalCheckpointTask();
 		schedulerService.RegisterWorkFileCleanupTask();
+		schedulerService.RegisterMonthlyResummaryTask();
 	}
 	catch (Exception ex) {
 		logger.LogError(ex, "スケジューラ定期実行登録中に例外が発生しました。");

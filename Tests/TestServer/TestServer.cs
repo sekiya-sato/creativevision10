@@ -279,6 +279,22 @@ public class CoreServiceTests {
 	}
 
 	[TestMethod]
+	public void RegisterMonthlyResummaryTask_RegistersOneTenAmSchedule() {
+		var schedulerService = _schedulerService ?? throw new AssertFailedException("SchedulerService not initialized");
+
+		var result = schedulerService.RegisterMonthlyResummaryTask();
+		var taskId = Guid.Parse(result.TaskId);
+		var scheduledTask = _scheduler!.GetTaskById(taskId);
+
+		Assert.AreEqual(0, result.Result);
+		Assert.IsNotNull(scheduledTask);
+		Assert.AreEqual(SchedulerService.MonthlyResummaryTaskId, taskId);
+
+		var next = scheduledTask!.CrontabSchedule.GetNextOccurrence(new DateTime(2026, 5, 23, 1, 0, 0));
+		Assert.AreEqual(new DateTime(2026, 5, 23, 1, 10, 0), next);
+	}
+
+	[TestMethod]
 	public void ExecuteSqliteWalCheckpoint_ReturnsCheckpointRow() {
 		var dbPath = Path.Combine(Path.GetTempPath(), $"sqlite-wal-checkpoint-{Guid.NewGuid():N}.db");
 		ExDatabaseSqlite? db = null;

@@ -26,9 +26,12 @@ public class SchedulerService : ISchedulerService {
 	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint データベースにWAL履歴を反映させるタスク";
 	public const string WorkFileCleanupCronExpression = "*/10 * * * *";
 	public const string WorkFileCleanupTaskName = "Work file cleanup ワークフォルダにある古いファイルを削除するタスク";
+	public const string MonthlyResummaryCronExpression = "10 1 * * *";
+	public const string MonthlyResummaryTaskName = "在庫 売掛 買掛 の当月と前月 を再集計するタスク";
 
 	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
 	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
+	public static readonly Guid MonthlyResummaryTaskId = Guid.Parse("c3d4e5f6-a7b8-9012-cdef-123456789012");
 
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;
@@ -38,6 +41,13 @@ public class SchedulerService : ISchedulerService {
 	private static readonly TimeSpan WorkFileCleanupTargetAge = TimeSpan.FromHours(WorkFileCleanupTargetAgeHours);
 
 	private sealed record AutoexecTaskResult(int ReturnCode, int Count, string Memo);
+
+	/// <summary>
+	/// 再集計の区分（在庫/売掛/買掛）ごとの実行定義
+	/// </summary>
+	private sealed record ResummaryGroup(string Label, Func<CalcDateTermParameter, IAsyncEnumerable<StreamStepProgress>> CreateStream);
+
+	private sealed record SummaryStreamResult(int Count, string? ErrorMessage);
 
 	public SchedulerService(ILogger<SchedulerService> logger, NCrontab.Scheduler.IScheduler scheduler, IServiceScopeFactory scopeFactory, IConfiguration configuration, IWebHostEnvironment env) {
 		_logger = logger;
@@ -121,6 +131,17 @@ public class SchedulerService : ISchedulerService {
 			WorkFileCleanupTaskId);
 	}
 
+	/// <summary>
+	/// 在庫・売掛・買掛の当月/前月を再集計するタスクを登録する
+	/// </summary>
+	public SchedulerResult RegisterMonthlyResummaryTask() {
+		return RegisterTask(
+			MonthlyResummaryTaskName,
+			MonthlyResummaryCronExpression,
+			(db, ct) => ExecuteMonthlyResummaryCoreAsync(db, MonthlyResummaryTaskName, ct),
+			MonthlyResummaryTaskId);
+	}
+
 	public Task<GetSchedulerTasksResponse> GetTasksAsync(CallContext context = default) {
 		var tasks = _scheduler.GetTasks();
 		var result = new GetSchedulerTasksResponse { Result = Success, Detail = "正常終了" };
@@ -168,7 +189,8 @@ public class SchedulerService : ISchedulerService {
 		if (string.IsNullOrWhiteSpace(taskName))
 			return false;
 		return taskName.Equals(DailyWalCheckpointTaskName, StringComparison.OrdinalIgnoreCase)
-			|| taskName.Equals(WorkFileCleanupTaskName, StringComparison.OrdinalIgnoreCase);
+			|| taskName.Equals(WorkFileCleanupTaskName, StringComparison.OrdinalIgnoreCase)
+			|| taskName.Equals(MonthlyResummaryTaskName, StringComparison.OrdinalIgnoreCase);
 	}
 
 	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executor, Guid? taskId = null) {
@@ -287,6 +309,95 @@ public class SchedulerService : ISchedulerService {
 			return new AutoexecTaskResult(InternalError, processedCount, $"集計例外: {ex.Message}");
 		}
 		return new AutoexecTaskResult(returnCode, processedCount, memo);
+	}
+
+	/// <summary>
+	/// 在庫・売掛・買掛を、前月分・当月分の順で再集計する。
+	/// 区分（在庫/売掛/買掛）は互いに独立で、ある区分がエラーになってもその区分だけ中断し、残りの区分は実行する。
+	/// </summary>
+	private async Task<AutoexecTaskResult> ExecuteMonthlyResummaryCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
+		var now = DateTime.Now;
+		string[] months = [now.AddMonths(-1).ToString("yyyyMM"), now.ToString("yyyyMM")];
+		var summaryDb = new SummaryDb(db);
+		ResummaryGroup[] groups = [
+			new("在庫", summaryDb.SummaryAllAsyncStream),
+			new("売掛", summaryDb.SummaryUriKakeAsyncStream),
+			new("買掛", summaryDb.SummaryKaiKakeAsyncStream),
+		];
+
+		_logger.LogInformation(
+			"再集計開始: TaskName={TaskName}, Months={Months}",
+			taskName,
+			string.Join(",", months));
+
+		var totalCount = 0;
+		var returnCode = Success;
+		var memos = new List<string>();
+
+		foreach (var group in groups) {
+			cancellationToken.ThrowIfCancellationRequested();
+
+			var groupCount = 0;
+			string? groupError = null;
+			foreach (var yyyymm in months) {
+				var param = new CalcDateTermParameter(yyyymm, yyyymm);
+				var result = await RunSummaryStreamAsync(group.CreateStream(param), taskName, group.Label, yyyymm, cancellationToken);
+				groupCount += result.Count;
+				if (result.ErrorMessage != null) {
+					// 同一区分は以降の月を実行せず中断し、次の区分へ進む
+					groupError = $"{yyyymm}: {result.ErrorMessage}";
+					break;
+				}
+			}
+
+			totalCount += groupCount;
+			if (groupError == null) {
+				memos.Add($"{group.Label}=OK({groupCount})");
+			}
+			else {
+				returnCode = InternalError;
+				memos.Add($"{group.Label}=NG({groupError})");
+			}
+		}
+
+		var memo = $"再集計({string.Join(",", months)}): {string.Join(", ", memos)}";
+		_logger.LogInformation("再集計完了: TaskName={TaskName}, ReturnCode={ReturnCode}, Memo={Memo}", taskName, returnCode, memo);
+		return new AutoexecTaskResult(returnCode, totalCount, memo);
+	}
+
+	/// <summary>
+	/// 集計ストリームを実行し、エラーを検出した時点で以降のステップを打ち切る
+	/// </summary>
+	private async Task<SummaryStreamResult> RunSummaryStreamAsync(IAsyncEnumerable<StreamStepProgress> stream, string taskName, string label, string yyyymm, CancellationToken cancellationToken) {
+		var count = 0;
+		try {
+			await foreach (var step in stream.WithCancellation(cancellationToken)) {
+				if (step.IsError) {
+					_logger.LogError(
+						"再集計エラー: TaskName={TaskName}, 区分={Label}, yyyymm={Yyyymm}, Step={Step}, Error={Error}",
+						taskName, label, yyyymm, step.StepName, step.ErrorMessage);
+					return new SummaryStreamResult(count, $"Step={step.StepName}, Error={step.ErrorMessage}");
+				}
+				if (step.IsCompleted) {
+					_logger.LogInformation(
+						"再集計完了: TaskName={TaskName}, 区分={Label}, yyyymm={Yyyymm}, Count={Count}, Duration={Duration}",
+						taskName, label, yyyymm, count, step.ErrorMessage);
+					continue;
+				}
+				count += step.Count;
+				_logger.LogInformation(
+					"再集計進捗: 区分={Label}, yyyymm={Yyyymm}, Step={Step}, Progress={Progress}, Count={Count}",
+					label, yyyymm, step.StepName, step.Progress, step.Count);
+			}
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			throw;
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "再集計中に例外が発生しました: TaskName={TaskName}, 区分={Label}, yyyymm={Yyyymm}", taskName, label, yyyymm);
+			return new SummaryStreamResult(count, $"例外: {ex.Message}");
+		}
+		return new SummaryStreamResult(count, null);
 	}
 
 	private Task<AutoexecTaskResult> ExecuteSqliteWalCheckpointCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
