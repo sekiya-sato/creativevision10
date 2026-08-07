@@ -196,15 +196,6 @@ public record CalcDateTermParameter(string DateYymmFrom, string DateYymmTo);
 public record CalcDateParameter(string DateYymm);
 
 /// <summary>
-/// 在庫集計テーブルを計算する際のトランID指定パラメータ
-/// </summary>
-/// <param name="TableName"></param>
-/// <param name="TranId"></param>
-/// <param name="CalcFlag">登録+1, 修正-1,+1, 削除-1</param>
-public record SummaryTranIdParameter(string TableName, long TranId, int CalcFlag);
-
-
-/// <summary>
 /// クエリI/F : CSV出力パラメータ (Sql出力パラメータはQueryListSqlParamを使う)
 /// </summary>
 public sealed record PrintByCsvParam(string CsvData);
