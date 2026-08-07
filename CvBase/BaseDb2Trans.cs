@@ -660,7 +660,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
-	public partial PosPaymentDetail? JposPayment { get; set; }
+	public partial PosPaymentDetail JposPayment { get; set; } = new();
 	/// <summary>
 	/// 店舗キー
 	/// </summary>
