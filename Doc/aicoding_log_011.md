@@ -1,0 +1,853 @@
+## [2026-08-08] 12:54 McpSqlをSQLiteファイル向けMCPサーバとして実装
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：McpSql を修正し、CvBaseSqlite を使って Sqlite ファイルに対する MCPServer を作成する。必要なメソッドを実装する。
+### 実施内容
+- McpSql/McpSql.csproj: CvBase / CvBaseSqlite への ProjectReference と Microsoft.Data.Sqlite の PackageReference を追加（両パッケージIDとも `Directory.Packages.props` に既出のため共有ファイルの変更は不要）。`SQLitePCLRaw.bundle_e_sqlite3` は CvServer 同様に推移的に流れるので直接参照しない（出力に `runtimes/win-x64/native/e_sqlite3.dll` が入ることを確認済み）。
+- McpSql/Program.cs: `greet` スタブを全面置換。引数解析（第1非フラグ引数 → 環境変数 `MCPSQL_DBFILE`、`--allow-write` は位置自由）、DB接続、ツール登録、stdio サーバ実行、終了処理を実装。
+- McpSql/SqlGuard.cs（新規）: SQL トークナイザ（コメント/文字列/BLOB/引用識別子/バインドパラメータ/括弧深さ）と読み取り専用判定を実装。
+- McpSql/SqliteTools.cs（新規）: `list_tables` / `describe_table` / `list_indexes` / `query` / `explain` と、`--allow-write` 時のみ登録される `execute` を実装。
+- McpSql/StderrLogger.cs（新規）: 環境変数 `MCPSQL_DEBUG` 指定時のみ MCP 内部ログを stderr に出す最小 ILoggerFactory。
+### 技術決定 Why
+- **ModelContextProtocol.Core 2.1.0 で旧スタブはコンパイル不能だった**。`ToolCollection` は `Capabilities.Tools` 配下ではなく `McpServerOptions` 直下、`McpServer` は abstract で `McpServer.Create(transport, options)` が必要、`StdioServerTransport` に引数なし ctor は無く `IAsyncDisposable` のみ、`RunAsync` は transport を取らない。ホスティング用パッケージが無いため属性ベース登録は使えず `McpServerTool.Create` + `ToolCollection` で登録する。
+- **読み取り専用は 4 層で担保する**。キーワード判定はレキサに過ぎずセキュリティ境界にならないため、(1) `Mode=ReadOnly` で接続、(2) `PRAGMA query_only = ON`、(3) `SqlGuard`、(4) 行数・文字数上限と `SqliteCommand.Cancel()`。
+- **読み取り専用時に `ExDatabaseSqlite.GetDbConn()` を使わない**。`GetDbConn` は `Mode=ReadWriteCreate` で開いたうえ `EnableWalMode()` の `PRAGMA journal_mode = WAL` を発行し、DBヘッダを書き換えて `-wal`/`-shm` を生成してしまう。しかもこの書き込みは `query_only` 適用より前に起きるため後追いでは防げない。public コンストラクタ `ExDatabaseSqlite(DbConnection)` は接続を開くだけなのでこちらを使い、`CvBaseSqlite` は改変していない（AGENTS.md の read-only レイヤ）。`ReadOnly` で開けない場合のみ `ReadWrite`（`ReadWriteCreate` ではない）にフォールバックする。
+- **同じ理由で読み取り専用時は `ExDatabaseOption.ClearPools()` を呼ばない**。`PRAGMA optimize` / `wal_checkpoint(TRUNCATE)` / `journal_mode=DELETE` を実行して DB を書き換えるため。`--allow-write` 時のみ呼ぶ。
+- **`KeepConnectionAlive = true` は必須**。NPoco は共有接続を開閉するため、プールに戻ると接続単位設定である `query_only` が失われる。
+- **`PRAGMA` の可否は「`=` の有無」では判定できない**。`PRAGMA optimize` / `wal_checkpoint(...)` / `incremental_vacuum(...)` は `=` 無しで書き込むため、代入の拒否に加えて許可リスト方式にした。
+- **CTE は必ず後続文を検査する**。SQLite 3.46 は `WITH x AS (...) DELETE FROM t` を許すため、括弧深さ 0 の Word だけを走査して後続文の先頭キーワードを判定する。
+- **単文強制は必須**。`SqliteCommand` は `CommandText` 中の全文を順に実行するため、`select 1; delete from t` を通すと DELETE が走る。
+- **`query`/`explain`/`execute` に `ExDatabase.RawExecCmd` を使わない**。(a) 結果を列名キーの `Dictionary` に詰めるため `Id`/`Vdc`/`Vdu` を共有する2テーブルの JOIN が `ArgumentException` になり偽の `{"Error"}` 行として返る、(b) NPoco が `@\w+` を文字列リテラル内まで書き換えるため `WHERE LoginId = 'foo@example.com'` が失敗する、(c) `CancellationToken` 非対応で全件マテリアライズするため暴走クエリを止められない。固定SQLで列名が重複しないスキーマ系のみ再利用し、その際も**必ず `RawLastError` で判定する**（`"Error"` キー判定は `select 1 as Error` を誤検知する）。
+- **`list_tables` に `GetTableCounts()` を使わない**。`name NOT LIKE 'Sys%'` がハードコードされ実在テーブルを隠すうえ、テーブルごとに `count(*)` を無条件実行する（実DBは 9.6GB ある）。`sqlite_master` を直接引き、行数取得は任意かつ `UNION ALL` 1本にまとめた。
+- **行はオブジェクトでなく配列で返す**。キー名の反復が消えてトークンが 2〜4 分の 1 になり、JOIN で重複する列名も保持できる。
+- **パラメータは `JsonElement[]`**。SQLite は動的型で比較が型に敏感なため（`WHERE Id = '5'` は整数 5 に一致しない）、全部を文字列にすると黙って 0 件になる。テーブル名は連結せず `pragma_table_info(@p0)` 等の table-valued pragma 関数でバインドする。
+- **stdout は JSON-RPC 専用**。`Main` 冒頭で `Console.SetOut` を stderr に差し替えて野良 `Console.WriteLine` を無害化し、診断は全て `Console.Error` に出す。
+### 影響範囲
+- 変更は `McpSql/` 配下のみ。`CvBase` / `CvBaseSqlite` は無変更。他プロジェクトへの影響なし。
+### 確認
+- `dotnet build creativevision10.slnx`: 成功（0警告 / 0エラー）。
+- stdio スモークテスト20件を実施し全て期待どおり（失敗0件）。`delete` / `select 1; delete ...`（複数文）/ `with x as (...) delete ...`（CTE内更新）/ `pragma optimize`（`=` 無しの書き込みPRAGMA）/ `pragma journal_mode = WAL`（代入）/ `vacuum` は全て拒否。`-- c /* c */ select 'delete from x'` は正常実行。`select a.Id, b.Id from ... a, ... b` が `columns:["Id","Id"]` を返し重複列名を保持することを確認。BLOB は `{"$blob":"DEADBEEF","len":4}`、NULL は `null` で出力。
+- 読み取り専用の実証: テスト DB は実行後も `journal_mode=delete` のままで `-wal`/`-shm` は生成されず、行数も不変。実DB `CvServer/server-user163.db`（9.6GB）に対しても `list_tables` / `describe_table` / `list_indexes` / `explain` が動作し、ファイルサイズ・更新日時とも不変でサイドカーも生成されないことを確認（`explain` は `SEARCH MasterShohin USING INDEX MasterShohin_uq1 (Code=?)` を返した）。
+- `--allow-write` の実証: `execute` の UPDATE / INSERT が永続化され、`ATTACH` と `PRAGMA` は拒否、`query` は書き込みモードでも DELETE を拒否。終了時に `ClearPools` が働き `journal_mode=delete` へ収束しサイドカーも残らないことを確認。
+- 異常系: DB ファイル不存在 / 破損DB / 不明オプションのいずれも未処理例外を出さず、日本語メッセージと終了コード1で終了することを確認。
+- 注意点: stdin をファイルリダイレクトで与えると EOF でトランスポートが即切断され応答が捨てられる（SDK の仕様）。手動検証時は実クライアント同様に応答が返るまで stdin を開いたままにする必要がある。
+### 残課題
+- MCP クライアント（`claude mcp add`）へ実際に登録しての動作確認は未実施。
+  例) `claude mcp add cv-sqlite -- "C:\gitroot\documents\new2022\cv10\McpSql\bin\Debug\net10.0\McpSql.exe" "C:\gitroot\documents\new2022\cv10\CvServer\server-user163.db"`
+- `CvServer/bin/Debug/net10.0/server-dev.db`（ビルド出力側のコピー、6.3GB）は `database disk image is malformed` で開けない状態だった。本作業とは無関係だが別途確認が必要。
+
+---
+
+## [2026-08-06] 12:32 在庫・掛再更新の対象選択と買掛集計追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：在庫・掛再更新画面で全て／在庫のみ／売掛のみ／買掛のみを選択可能にし、売掛・買掛の月次集計を実行できるようにする。
+### 実施内容
+- CvWpfclient/Views/31Monthly/StockKakeUpdateView.xaml: 更新対象のコンボボックスを追加し、既定値を「全て」とした。
+- CvWpfclient/ViewModels/31Monthly/StockKakeUpdateViewModel.cs: 選択対象に応じて在庫（月単位）、売掛（範囲単位）、買掛（範囲単位）のgRPCストリームを順次実行するよう変更した。ストリームのエラー時は後続処理を停止して画面に表示する。
+- CodeShare/ICoreService.cs / CvServer/Services/QueryMsgStreamService.cs: 売掛・買掛集計用のメッセージフラグを追加し、年月範囲パラメータを対応するサーバー集計処理へ振り分けた。
+- CvDomainLogic/SummaryDb.cs: `CalcSummaryKaiKake()` と売掛・買掛のストリーム実行メソッドを追加した。
+### 技術決定 Why
+- 買掛集計は既存の売掛集計と同じ再作成方式とし、`Tran03Shiire.KakeDay` の仕入額から `Tran07Shiharai.DenDay` の支払額を差し引き、指定範囲直前の残高を起点に月ごとの残高を累積する。これにより `SummaryKaiKake` の年月・仕入先一意制約と既存帳票の残高参照方式に整合する。
+- 在庫は既存の月単位 `Msg051_SummaryRealStock` 呼び出しを維持し、売掛・買掛のみ年月範囲を一度に再作成する。既存の在庫処理の意味を変えず、掛集計の前月残繰越を正しく扱うため。
+### 確認
+- `dotnet build CvDomainLogic/CvDomainLogic.csproj`: 成功（0警告 / 0エラー）。
+- `dotnet build CvServer/CvServer.csproj`: 成功（0警告 / 0エラー）。
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0警告 / 0エラー）。
+- StockKakeUpdateView.xaml: XML構文、リソース定義、バインディング先、CRLFを確認。
+
+---
+
+## [2026-08-04] 13:05 マスタ一覧のCD範囲/名称/JAN条件でデータ取得失敗になる不具合の修正
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：商品マスタメンテなどで一覧取得する際、CDの範囲指定・商品名部分一致・JANの部分一致を指定するとエラー（`データ取得失敗: Unexpected character encountered while parsing value: S. Path '', line 1, position 1.`）になる。SQLをチェックして修正する。
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs: 軽量一覧の `CreateLightListQueryParam()` を `BaseMenteViewModel.CreateListQueryParam()` への委譲に変更し、`SelectCodeWhereParameters`（`@0` 形式プレースホルダの実値）が必ず添付されるようにした。`CreateLightListMessage()` は生成済みの `QueryListParam` から `QueryListSimpleParam` を組み立て、`CreateSqlListMessage()` にも同じ query を渡して `Parameters` を確実に転送する形に変更。
+- CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs: `CreateListQueryParam()` の「`ListWhere` の評価が `SelectCodeWhereParameters` を設定する」という引数評価順依存を明示行に分解。あわせて `DoList()` でサーバ例外（`CvMsgErrorCode.Unexpected`）を逆シリアル化前に判定し、`reply.Option` の実エラー内容を表示するようにした。
+### 技術決定 Why
+- 原因はSQL文自体ではなく**バインドパラメータの欠落**だった。`BuildSelectCodeWhere()` は CD範囲・名称LIKE・JAN LIKE を `@0`,`@1`,… のプレースホルダで組み立て、実値を `SelectCodeWhereParameters` に格納する。しかし Light系一覧は `parameters: ListParams`（既定 null）しか渡しておらず、WHERE に `@0` があるのに引数0個で NPoco に到達し `ArgumentOutOfRangeException` が発生していた。通常一覧（`CreateListQueryParam()`）は `ListParams ?? SelectCodeWhereParameters` を渡していたため正常だった。
+- サーバは例外を `DataType=string` / `DataMsg=例外メッセージ` で返すため、クライアントが JSON として解析しようとして例外メッセージ先頭の `S` で失敗する。画面には解析エラーしか出ず原因が潰れる構造だったので、`DoList()` にも例外分岐を追加した。
+- Light系と通常一覧でパラメータ生成が二重管理になっていた点が再発の温床だったため、片方を消すのではなく委譲による一本化を選んだ。
+- Id範囲・Ids IN句はパラメータを使わずSQLへ直接埋め込むため元から動作していた。ユーザー報告が「CD範囲・名称・JANだけエラー」だったことと整合する。
+### 影響範囲
+- Light系一覧を使う全メンテ画面（商品／得意先／仕入先／社員／エンドユーザー／名称／ログイン）。変更は基底クラス2ファイルのみで、各画面の `BuildSelectCodeWhere()` オーバーライドやSQL文自体には手を入れていない。
+### 確認
+- `dotnet build creativevision10.slnx`: 成功（0警告 / 0エラー）。
+- 既存テスト `Tests/TestServer` 33件すべて成功。
+- 一時テストで再現確認：パラメータ0個だと `Specified argument was out of the range of valid values. (Parameter 'Parameter '@0' specified but only 0 parameters supplied ...')` が発生し、これがクライアント側 `parsing value: S` の正体であることを確認。パラメータを渡せば CD範囲・名称LIKE・JANの `EXISTS`（`DerivedShohinColSiz` の `Jan1`/`Jan2`/`Jan3`）サブクエリすべて正常実行。確認後に一時テストは削除（AGENTS.md「Don't add test programs unless explicitly asked」に従う）。
+### 残課題
+- 実機での動作確認（商品マスタメンテ画面で実際に条件指定して一覧取得）は未実施。
+
+---
+## [2026-08-03] 17:55 移動系帳票(IdoInputOut/Soku/Uke)の列ズレ修正
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：前タスクの確認で報告した「移動系帳票の列ズレ」を別コミットで修正する。
+### 実施内容
+- printform/IdoInputOut_header.qfm / IdoInputSoku_header.qfm / IdoInputUke_header.qfm: 発注帳票流用のレイアウトを破棄し、移動業務の12項目（移動No/移動日/倉庫/移動先/入力者/関連No/手入力No/数量計/金額計/上代計/下代計/メモ）で再構成。存在しない「区分」「掛率」「消費税」「総合計」の欄を削除した。
+- printform/IdoInputOut_detail.qfm / IdoInputSoku_detail.qfm / IdoInputUke_detail.qfm: 同様に22項目で再構成。伝票部を items1-9、明細部を items10-22 とし、移動に無い「区分」「P/S」欄を削除、空いた幅を商品名(w=92)へ充当した。
+- CvWpfclient/Helpers/ViewModels/BaseIdoInputViewModel.cs: qfmのitem数合わせのために付けていたダミー列（一覧SQLの Dummy1-3、明細SQLの Dummy1-4）を削除。SELECT列数が qfm の item 数（12 / 22）と一致するようになった。
+### 技術決定 Why
+- 移動テーブル(Tran05Ido/Tran10IdoOut/Tran11IdoIn)は TranAllHeader 由来で Rate/Tax/Total を持たないため、SQL側の列順調整だけでは qfm の「掛率」「消費税」「総合計」欄を埋められない。qfm の見出しとレイアウトを移動業務に合わせて作り直す以外に整合させる手段が無いと判断した。
+- ダミー列は「qfmのitem数に合わせる」ためだけに存在していたため、qfm を正した時点で不要になる。残すと再びズレの温床になる。
+- 3帳票は表題以外は完全同一だったため、生成スクリプトで6ファイルを同一ロジックから出力し、表題のみ差し替えた。手作業による取りこぼしを防ぐ目的。
+- 数値項目も既存帳票の慣習どおり datatype="string" のままとし、halign は追加していない（発注/仕入等の他帳票と揃えるため）。
+### 影響範囲
+- 変更7ファイル（qfm 6 / C# 1）。移動系3画面の帳票出力のみ。他帳票のSQL・qfmには一切触れていない。
+### 確認
+- `dotnet build creativevision10.slnx -t:Rebuild`: 成功（0警告 / 0エラー）。
+- 6ファイルすべて XmlDocument.Load が成功し、宣言どおり shift_jis として解釈されること、BOM無し・CRLFのみ・cp932ラウンドトリップがバイト一致（表現不能文字なし）であることを確認。
+- 各qfmで item 定義数と datasrc 参照数が一致し、未使用item・範囲外参照・重複参照が0件であることを確認（header 12/12、detail 22/22）。
+- 修正後SQLを server-dev.db で実行し、Tran10IdoOut / Tran05Ido / Tran11IdoIn の一覧・明細それぞれで列数が qfm の item 数と一致すること、各値が正しい見出しの下に来ることを実データで確認（例: item3 倉庫=(255) 000803 ＺＯＺＯＴＯＷＮ、item11 商品=(28995) 20322234017 マーメイドロングキャミＯＰ）。
+- printform/ の差分が IdoInput* 6ファイルのみであることを確認。
+### 残課題
+- PRINT_ENABLE 無効環境のため出力PDFのレンダリング確認は未実施。実際の印字結果（折り返し・見切れ）は要確認。
+
+---
+## [2026-08-03] 17:10 帳票(qfm)印字列のV*列書式を画面と同じ「(Id) コード 名称」へ統一
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：直近2コミットで変更した画面の「(Id) Code Name」表示について、qfm帳票で印字している列を確認し、必要な箇所は印刷用SQLを修正する。qfm自体は原則修正しない。
+### 実施内容
+- CvWpfclient/Helpers/Converters/CodeNameViewDisplayConverter.cs: `CodeNameDisplay` に帳票SQL用の `Sql(idExpr, codeExpr, nameExpr)` と `SqlFromVColumn(vColumn)` を追加。画面用 `Format` と同一ファイル・同一書式定義とし、画面と帳票がずれないようにした。
+- 伝票入力系6ファイル（BaseIdoInput/Hachu/Juchu/Shiire/ShopUriage/StockInput の各InputViewModel）: 各ファイルに完全同一内容で重複していた `CodeNameViewSql` / `DetailCodeNameSql` を削除し、`CodeNameDisplay.Sql*` へ委譲。印字が `Id コード 名称` から `(Id) コード 名称` になり、Id未設定時は従来の "0" ではなく空文字になる。
+- printform/*.qfm: 変更なし。`<item>` に `<position length>` 等の桁数制約が無く、CSV項目長は非拘束のため修正不要と判断した。
+### 技術決定 Why
+- 書式のC#版とSQL版を別ファイルに置くと必ず drift するため、`CodeNameDisplay` 1クラスに対で持たせた。印刷用SQLで `||` を手書きしない方針をヘッダコメントに明記。
+- マスタメンテ帳票（MasterShohinMente / MasterEndCustomerMente / MasterShain / MasterShiire / MasterTokui）の参照マスタ列は `コード 名称` のままとした。これらは商品・顧客1件ごとの明細帳票で、自身のIdは独立した項目(ValId)として印字済みであり、参照マスタ側の表示は「隣にId入力欄がある編集フォーム」＝NoId表示と対応するため既に整合している。
+- MasterSysKanriMente は倉庫CD/倉庫名を別項目でCSV出力しており、画面もNoId表示のため対象外とした。
+### 影響範囲
+- 変更7ファイル（すべてC#）。qfmとXAMLは無変更。
+- 印字幅への影響は全列一律 +2桁（括弧分）。server-dev.db の実データで各列の最大表示幅を測定し、増分が2桁のみであることを確認済み。
+### 確認
+- `dotnet build creativevision10.slnx -t:Rebuild`: 成功（0警告 / 0エラー）。
+- Microsoft.Data.Sqlite で生成SQLを server-dev.db に対して実行し、Tran13Hachu / Tran03Shiire / Tran12Jyuchu / Tran10IdoOut / Tran05Ido / Tran01Tenuri / Tran60Tana の各ヘッダ列と発注明細のShohin/Col/Sizが `(4) 004 （株）婚姻届工房` `(1) 00211161001 配色ミニポシェット` の形式で取得できることを確認（構文エラー・列解決エラーなし）。
+- Id=0の行が従来の "0" ではなく空文字になること、二重スペースが出ないことをインメモリDBの境界値ケースで確認。
+- 変更7ファイルのCRLF維持・BOM一致・`git diff --check` を検証（不一致0件）。
+### 既知の問題（本変更とは別件・未修正）
+- 移動系帳票 `IdoInputOut / IdoInputSoku / IdoInputUke` の `_header.qfm` / `_detail.qfm` は、`BaseIdoInputViewModel` のSELECT列順とqfmのitem割付が item3 以降でずれている（qfmが発注帳票からの流用で、移動系SQLには KubunText/Rate/Tax/Total が無いため）。例: 「区分」欄に倉庫、「倉庫」欄に入力者、「掛率」欄に数量計が印字され、末尾3列はダミー値。明細側はさらに大きくずれる。
+- qfm側の見出し(掛率/消費税/総合計)自体が移動業務に合わないため、SQL列順の調整だけでは解決せず、qfmの見出し・レイアウト修正が必要。PRINT_ENABLE無効の環境では出力PDFを確認できないため、本コミットでは手を入れず報告に留めた。
+- 発注/仕入/受注/店舗売上/棚卸の各帳票は列順・見出しともqfmと一致していることを確認済み。
+
+---
+## [2026-08-03] 16:20 検索TextBox付き項目のマスタ表示からIdを省略
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：隣に検索TextBoxがある項目は、TextBox自体がIdを表示しているため「(Id) Code Name」ではなく「Code Name」のみとする。全体に反映する。
+### 実施内容
+- CvWpfclient/Views 20ファイル・56箇所: `SearchTextBoxAssist` 付きTextBox(`Id_*` を編集)と同じ行に置かれたマスタ参照表示へ `ConverterParameter=NoId` を付与し、「コード 名称」表示に変更（SysLoginView, MasterEndCustomer/Shain/Shiire/Shohin/SysKanri/TokuiMenteView, MasterYosanBrandMenteView, Hachu/Juchu/Henpin/Shiharai/Shiire/Nyukin/ShopUriage/ShukkaUriage/IdoInputOut/Soku/Uke/StockInputView）。
+- CvWpfclient/Helpers/Converters/CodeNameViewDisplayConverter.cs: Idを出す／出さないの使い分け基準をヘッダコメントに明記し、両パターンの例を追記。
+### 技術決定 Why
+- 既存の `ConverterParameter="NoId"` を使うだけで済むため、コンバータのロジック追加は不要。Id省略は「隣にId入力欄があるか」という画面構造で決まるので、コンバータ側の既定は「(Id) コード 名称」のまま据え置き、呼び出し側で明示的に切り替える方針とした。
+- 対象の判定は、同一 DockPanel/Grid 行内に `SearchTextBoxAssist.Command` を持つTextBoxがあるかで機械的に確定させた（該当56箇所すべてがこの条件を満たす）。
+- 一覧(DataGrid)列27箇所と選択ウィンドウのプレビュー3箇所はId入力欄が無く、Idが唯一の識別子として必要なため「(Id) コード 名称」のまま維持した。
+- ShopHaibunInputView の `配分元倉庫`(SokoDisplay) は読み取り専用の要約表示でId欄が併設されていないため対象外。
+### 確認
+- `dotnet build creativevision10.slnx -t:Rebuild`: 成功（0警告 / 0エラー）。
+- 変更21ファイルについて CRLF維持・BOM有無の一致・XmlDocument.Load によるXAML整形式・`git diff --check` を検証（不一致0件）。
+- コンバータ利用87箇所の内訳が NoId 57（今回追加56 + 前回対応済のShopHaibunSearchParamView 1）／「(Id) コード 名称」のまま30（DataGrid列27 + 選択ウィンドウのプレビュー3）であることをgrepで確認。
+
+---
+## [2026-08-03] 15:45 V*列マスタ表示の「(Id) コード 名称」統一とId中心の選択/範囲UI点検
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclient配下のXAML画面を点検し、選択/範囲操作がId中心で統一されているか確認する。あわせてマスタ表示を可能な限り「(Id) Code Name」を一続きにした V*系共通表示へ揃える（レイアウトは崩さない）。
+### 実施内容
+- CvWpfclient/Helpers/Converters/CodeNameViewDisplayConverter.cs: 新規。`CodeNameDisplay.Format` を共通書式ヘルパとし、`CodeNameViewDisplayConverter`(V*列→"(Id) コード 名称")と`IdCodeNameDisplayConverter`(Id/Code/Name の MultiBinding 用)を追加。ConverterParameter="NoId" でId省略可。
+- CvWpfclient/App.xaml: 上記2コンバータを Application.Resources に登録。
+- CvWpfclient/Resources/UIFormStyles.xaml: マスタ参照表示用 `MasterRefText` スタイルを追加（MinWidth=0 / Margin 10,0,0,0 / 省略記号）。各Viewに散在していたインライン指定を集約。
+- 編集フォーム 19ファイル・54箇所: `MultiBinding StringFormat="{0} {1}"`(Cd,Mei)、`"[{0}] {1}"`、および Cd/Mei を並べた StackPanel を共通コンバータ1行へ置換（SysLoginView, MasterEndCustomer/Shain/Shiire/Shohin/SysKanri/TokuiMenteView, MasterYosanBrandMenteView, Hachu/Juchu/Henpin/Shiharai/Shiire/Nyukin/ShopUriage/ShukkaUriage/IdoInputOut/Soku/Uke/StockInputView）。
+- DataGrid 15ファイル・27組: 「○○CD」+「○○名」の分割列を「(Id) コード 名称」の1列へ統合。幅は旧2列の合計値を維持し、`SortMemberPath="V*.Cd"` でソート順を保持、`Mode=OneWay` で編集書き戻しを封じた。
+- MasterYosanBrandMenteView.xaml: 統合列がIdを含むため、隣接していた `店舗Id`/`ブランドId` 単独列を削除し、その幅を統合列へ加算（合計幅は不変）。
+- Views/Sub/SelectWinView.xaml, SelectMultiWinView.xaml, SelectKubunView.xaml: 選択中マスタのプレビューを「コード 名称」＋「Id Desc0」の2行から「(Id) コード 名称」＋「Desc0」へ統一。
+- ViewModels 7ファイル: 重複していた `FormatSelectedItem`/`FormatShohinItem`/`FormatCodeName`/`FormatSoko` を `CodeNameDisplay.Format` に集約（MasterPrintBarcode, PrintMasterShainCard, RangeParam, RangeInputParam, SelectShohin, ShopHaibunInput, ZaikoQuery）。選択結果テキスト・DataTable出力・画面表示の書式が一致。なお 色/サイズ(`Code_Col`/`Code_Siz`)用の `JoinCodeName` は参照先Idを持たないSKU属性のため対象外として残置。
+- Views/Sub/ShopHaibunSearchParamView.xaml: 配分元倉庫の入力欄を倉庫CD表示から `Id_Soko` 表示へ変更し、隣に共通表示を配置。他画面と同じId中心の並びに揃えた。
+- ラベル表記ゆれ修正: `ブランドID`/`アイテムID`/`店舗ID`/`ID (開始)`/`ID (終了)` を `Id` 表記へ統一（SelectShohinView, ShopBrandBudgetMasterView, RangeParamView, RangeParamMiniView, AutoExecHistoryParamMiniView）。ログイン系の "Login ID" は別概念のため対象外。
+- Views/Sub/RangeParamView.xaml: `SelectionResultText` スタイル未適用だった2行に適用し、選択/解除ボタンに不足していたToolTipを追加（他行と同一形式）。
+### 技術決定 Why
+- V*列は `[ObservableProperty]` かつ選択時に必ずインスタンス丸ごと差し替え（クライアント内に `V*.Cd = ...` の直接代入は無し）のため、内部プロパティ単位のMultiBindingではなくV*オブジェクト1つへの `IValueConverter` で通知が成立する。XAMLが8行→2行になり書式の一元管理が可能。
+- DataGrid統合列は `SortMemberPath` を明示。既定では `CodeNameView` 自体で比較され `IComparable` 未実装のためソート時に例外となる。
+- 統合列の幅は旧2列の合計に固定し、Id単独列を削除した箇所ではその幅を加算。グリッド全体の総幅を変えないことでレイアウト崩れを回避。
+- 未選択(Sid=0かつCd/Meiが空)は空文字を返す仕様とし、"(0)" が並ぶ表示を防止。
+- 帳票/集計系の `～CodeFrom`/`～CodeTo` 範囲（78ファイル）はId化していない。SQLの範囲条件がコード順依存で、Id順へ変えると抽出結果が変わる仕様変更になるため、点検結果として報告のみとした。
+### 影響範囲
+- 変更40ファイル（XAML 29 / C# 10 / 新規1）。表示書式の変更が広範に及ぶが、バインド対象データと検索条件は不変。
+- 帳票側のCode範囲UI（78ファイル）は未変更。Id中心化は別途方針決定が必要。
+### 確認
+- `dotnet build creativevision10.slnx -t:Rebuild`: 成功（0警告 / 0エラー）。
+- 変更全ファイルについて CRLF維持・HEADと同一のBOM有無・XmlDocument.Load によるXAML整形式・`git diff --check` を検証（不一致0件）。
+- XAML内に `V*.Cd` / `V*.Mei` の個別表示バインドが残っていないことをgrepで確認。
+- 統合列27箇所すべてに `SortMemberPath` と `Mode=OneWay` が付与済みであることを件数一致で確認。
+- `FormatCodeName(CodeNameView)` の実装3箇所すべてが `CodeNameDisplay.Format` 経由になっていることを確認。
+
+---
+
+## [2026-08-03] 15:22 売掛月次集計ロジックの実装
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`CalcSummaryUriKake()`で、指定年月範囲の売上・入金を得意先別に集計する。
+### 実施内容
+- `CvDomainLogic/SummaryDb.cs`: `Tran00Uriage.KakeDay`を売上計上月、`Tran06Nyukin.DenDay`を入金月として集計し、`CalcFlag`による売上の符号反転、前月残高を引き継ぐ残高計算、対象範囲の削除・再作成を実装した。
+### 技術決定 Why
+- 売上の返品・値引は既存の`CalcFlag`が符号を保持しているため、取引区分を個別に分岐せず同じ集計式へ乗せた。前月以前の直近残高に期間内の売上・入金差額を累積して、部分再集計でも月次残高を維持する。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic\CvDomainLogic.csproj`: 0警告 0エラー
+- `git diff --check`: 問題なし。編集ファイルはCRLF。
+
+---
+
+## [2026-08-02] 07:32 POS gRPC DataContract DTOとサービス実装のrecord化
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：POS gRPC契約のDataContractとCvServer側のサービス実装をclassからrecordへ変更する。
+### 実施内容
+- `CodeShare/IPointOfSaleService.cs`: POSのリクエスト・レスポンスDTO全10型を`sealed record`へ変更した。
+- `CvServer/Services/PointOfSaleService.cs`: gRPCサービス実装を`sealed record`へ変更した。
+### 技術決定 Why
+- `DataContract`、`DataMember`名・Order、プロパティ型を維持し、既存gRPCのワイヤ契約を変えずに値オブジェクトとしての意味を明確化した。サービス実装はCLR上のクラスとして維持されるため、既存のDIとgRPC公開経路を変えない。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CodeShare\\CodeShare.csproj --no-restore`: 0警告 0エラー
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvServer\\CvServer.csproj --no-restore -p:OutputPath=obj\\CodexBuildOutput\\`: 0警告 0エラー
+- `git diff --check`: 問題なし。編集ファイルはCRLF。
+
+---
+
+## [2026-07-31] 15:05 未実装View/ViewModelの実装計画作成と帳票共通基盤・予算帳票3画面の実装
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：まだ実装されていないViewおよびViewModelの実装計画を`.omo`に作成し、順番に実装する。
+### 実施内容
+- `.omo/2026-07-31_unimplemented_view_viewmodel_plan.md`: 空スタブ画面168件を洗い出し、画面パターン(帳票/照会/伝票入力/マスタメンテ/バッチ更新/消込/配分/新規機能)別に分類してPhase 0〜19の実装順計画を作成した。
+- `CvWpfclient/Helpers/ViewModels/PrintPdfHelper.cs`: PDF帳票出力パイプラインと選択ダイアログ呼び出しを静的ヘルパーへ集約した(新規)。
+- `CvWpfclient/Helpers/ViewModels/BaseReportViewModel.cs`: 帳票型画面の共通基底クラスを追加した。印刷実行コマンド・キャンセル・終了確認・年月日検証・コード範囲WHERE・SQLパラメータ採番・マスタ選択を提供する(新規)。
+- `CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: 重複していた`RunPrintPdfAsync`/`ShowSelectDialog`/`ShowMultiSelectDialog`をヘルパーへの委譲に置換した。
+- `CvWpfclient/ViewModels/02Yosan/ShopBudgetReportViewModel.cs`, `CvWpfclient/ViewModels/05Shiire/ShiireSlipPrintViewModel.cs`: コピーされていた印刷パイプライン等を削除し`BaseReportViewModel`継承へ移行した。
+- `CvWpfclient/{Views,ViewModels}/02Yosan/DailyShopBudgetReportView*`: 日別店別予算表を実装した。
+- `CvWpfclient/{Views,ViewModels}/02Yosan/SalesStaffBudgetReportView*`: 販売員予算表を実装した。
+- `CvWpfclient/{Views,ViewModels}/02Yosan/ShopBrandBudgetVsActualView*`: 店舗ブランド別予算実績対比を実装した。
+- `printform/DailyShopBudgetReport.qfm`, `printform/SalesStaffBudgetReport.qfm`, `printform/ShopBrandBudgetVsActual.qfm`: 各12列の一覧帳票フォームを追加した。
+- `CvWpfclient/Models/MenuData.cs`: 実装した3画面の`addInfo`を`"準備中"`から機能説明へ差し替えた。
+### 技術決定 Why
+- 帳票型が未実装168画面のうち約95画面を占めるため、100行規模の`RunPrintPdfAsync`が3箇所へ重複している状態を先に解消した。これを放置すると同じコードが95回複製される。
+- `Message`/`ActiveWindow`/`ShowSelectDialog`を`BaseViewModel`へ引き上げると、独自に同名メンバーを持つ既存ViewModel10件超とCS0108/CS0114で衝突する。よって引き上げず、実装本体を静的ヘルパーへ出して各基底クラスから委譲する構成にした。
+- qfmは`author-printstream-qfm`の方針どおり既存`ShopBudgetReport.qfm`の構造(A4縦・CSV `data.txt`・RecHeader+RecData)を踏襲し、ゼロから発明していない。
+- 販売員実績は明細の担当社員を優先し、未設定明細は伝票ヘッダの入力社員へ寄せた。明細単位で担当が分かれる運用に対応しつつ、担当未入力分を欠落させないため。
+### 影響範囲
+- `BaseMenteViewModel`派生の全マスタメンテ画面が`RunPrintPdfAsync`の委譲経路を通る。挙動(メッセージ文言・カーソル制御・PDF表示)は移行前と同一。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj -p:OutputPath=<別出力先>`: ビルドに成功 0警告 0エラー（既定の出力先はアプリ実行中のためCvBase.dllコピーがMSB3027でロックされる）
+- 新規3画面のSQL5系統(出力区分の分岐込み)を開発DBのコピーへ`LIMIT 0`で実行し、列数12とqfmのitem順一致を確認
+- 新規3XAMLのXML整形式・バインディング名のViewModel整合・リソースキー参照を確認
+- `git diff --check` 問題なし、編集/新規ファイルはCRLF
+
+---
+
+## [2026-07-31] 10:52 POS売上確定SQLiteマイグレーション不足の修正
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：POSクライアントの売上確定時に発生した `no such column: PosClientSaleId` を修正する。
+### 実施内容
+- `CvBase/UpdateDb.cs`: `Tran01Tenuri` に端末取引ID `PosClientSaleId` と決済内訳 `JposPayment` を追加するSQLite起動時マイグレーションを追加した。
+### 技術決定 Why
+- 売上確定サービスは重複防止のために端末取引IDを検索し、同じトランザクションで決済内訳も保存するため、モデル定義だけではなく既存DBを更新する2列を同一マイグレーションに含める。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvServer\\CvServer.csproj --no-restore`: 0警告 0エラー
+- 開発用SQLiteで `26072704 -> 26073101` のマイグレーション適用とCvServerの5012番ポート待受を確認
+
+---
+
+## [2026-07-31] 10:20 POS用gRPC売上確定・JWT認証の追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：CvServerへ接続するPOS画面向けに、バーコード商品検索、会計、売上確定を提供する。
+### 実施内容
+- `CodeShare/IPointOfSaleService.cs`: 認証済みPOS端末向けの商品検索・売上確定gRPC契約を追加した。
+- `CvBase/BaseDb2Trans.cs`: `Tran01Tenuri`へ端末取引IDと決済内訳JSONを追加した。
+- `CvServer/Services/PointOfSaleService.cs`: 商品単価をサーバーで再取得し、売上・決済内訳・在庫集計をSerializableトランザクションで確定する処理を追加した。
+- `CvServer/Program.cs`: POS gRPCサービスを公開した。
+### 技術決定 Why
+- POS専用サービスはJWT認証必須とし、既存のテスト用匿名CoreServiceへ売上確定機能を追加しない。端末取引IDを保存して同一リクエストの再送時に既存売上を返し、二重売上を避ける。
+### 影響範囲
+- CvServer、CodeShare、CvBase、およびcvpos10のPOSクライアント。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvServer\\CvServer.csproj`: 0警告 0エラー
+
+---
+
+## [2026-07-30] 16:39 Span<T> による文字列処理の一時割り当て削減
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：ソリューション全体を静的監査し、効果が見込める A・B の `Span<T>` 候補を実装する
+### 実施内容
+- `CvDomainLogic/HhtProcess.cs`: Shift_JIS 固定長出力の幅計算で、文字ごとの `ToString()` を廃止し、`ReadOnlySpan<char>` を `Encoding.GetByteCount` に渡すよう変更した。
+- `CvServer/Services/SearchByPostalCodeService.cs`、`CvWpfclient/Helpers/PostalAddressSearchHelper.cs`: 郵便番号正規化を `stackalloc char[7]` による局所処理へ変更し、LINQ の中間列挙・配列を削減した。
+- `CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs`、`CvWpfclient/ViewModels/02Yosan/SalesStaffBudgetMasterViewModel.cs`: 日付文字列の2桁日付解析を `Substring` から `AsSpan` へ変更した。
+### 技術決定 Why
+- `Span<T>` は async・DTO・フィールドへ持ち出さず、出力仕様を変えない同期的な局所処理に限定した。郵便番号はクライアント・サーバーの正規化規則を同時に維持し、8桁目を検出した時点で従来どおり無効入力とする。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build creativevision10.slnx`: 0警告 0エラー
+- `git diff --check`、変更C#ファイルのCRLFを確認
+
+---
+
+## [2026-07-30] 08:45 商品検索画面のデザインをParamView系へ統一
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views.Sub.SelectShohinView` のデザインスタイルを `CvWpfclient.Views.Sub.RangeParamView` など他のParamViewのスタイルに合わせる
+### 実施内容
+- `CvWpfclient/Views/Sub/SelectShohinView.xaml`: ParamView系の共通レイアウトへ全面的に合わせた。
+  - Window: `FontSize="18"` と `WindowStartupLocation="CenterOwner"` を追加、`Height` を 600 → 680 に拡大
+  - ヘッダー: `ColorZone` を `PackIcon`(DatabaseSearch) + タイトルのみの構成に統一し、ヘッダー内の操作ボタン（一覧表示/選択/閉じる）を削除
+  - パン屑用の `Border`（商品検索・選択 / 説明文）を削除し、ParamView同様に`Card`外の太字案内文（`Message`バインド）へ置換
+  - 検索条件: 画面ローカルの `ConditionLabel` / `ConditionSearchTextBox` / `SearchTextBoxStyle` を廃止し、共通の `FormLabel` / `FormTextBox`（`HintAssist.Hint` 付きOutlined）へ変更。列構成を 150/180/40/180/* に、範囲区切りを「～」→「-」に統一
+  - 選択行（ブランドID・アイテムID）のボタンを 112x34/80x34 → 110x36/80x36 とし、ToolTipを追加
+  - 操作ボタンを`Card`外の `Grid.Row="2"` へ移動し、主ボタン（`CheckCircle`）→ 戻る（`ArrowLeft`, Flat）の順・38px高に統一。モードごとに2組を`Visibility`で切替
+  - 検索条件モード末尾に「条件を指定しない場合、すべての商品が対象になります。」の補足行を追加
+  - 商品一覧モードの`Card`・`DataGrid`定義は従来のまま維持
+### 技術決定 Why
+- ParamView系（`RangeParamView` / `RangeInputParamView` / `ShopHaibunSearchParamView` / `TranPromotionSearchParamView`）に共通する「ColorZone(アイコン+題名) → 太字案内文 → Card(フォーム) → 右下操作ボタン」の構成をそのまま採用し、画面固有スタイルを共通リソース（`FormLabel` / `FormTextBox` / `SelectionResultText`）へ寄せた。
+- ヘッダーの操作ボタンは下部操作ボタンと重複するため削除。`DataGridEnterCommand.TargetButton` が参照する `x:Name="DefaultButton"` は商品一覧モードの「選択」ボタンへ移設した。
+- `IsDefault` は検索条件モードと商品一覧モードの両方に付与。相互排他の`Visibility`により、非表示側は `AccessKeyManager` の対象外となるため競合しない。Escは `BaseWindow.OnPreviewKeyDown` が `ExitCommand` を実行するため従来動作を維持。
+### 確認
+- `dotnet build CvWpfclient\CvWpfclient.csproj`: 0警告 0エラー
+- XAMLのCRLF・UTF-8(BOMなし)、`Grid.Row`/`RowDefinition`（8行）の対応を確認
+- 実行時の目視確認（画面起動）は未実施
+
+---
+
+## [2026-07-29] 17:36 テーブル定義書へ外部キー説明を追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`SysTableSpecView` のテーブル定義書に `ForeignKeyAttribute` などの属性情報を利用した説明を追加する
+### 実施内容
+- `CvWpfclient/ViewModels/00System/SysTableSpecViewModel.cs`: フィールド説明へ既存の旧DBコメントを残したまま、`ForeignKeyAttribute` の参照先テーブル・キー列・名称区分・店種・名称リスト区分・補足情報を追記する処理を追加。ObservableProperty の生成先フィールドに付与された属性も取得する共通処理に整理した。
+### 技術決定 Why
+- 定義書の説明は既存のCSV項目をそのまま使い、QFMのレイアウトや出力形式を変えずに参照関係を確認可能とした。`ForeignKeyAttribute` を正とすることで、個別のプロパティ名から参照先を推測する処理を増やさない。
+### 確認
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvWpfclient\\CvWpfclient.csproj`: 0警告 0エラー
+- `git diff --check` および変更C#ファイルのCRLFを確認
+
+---
+
+## [2026-07-29] 13:35 商品マスタメンテに展示会/シーズン/素材/原産国の選択を追加
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：商品マスタメンテ画面で `MasterShohin` の `VTenji` / `VSeason` / `VMaterial` / `VCountry` を一覧選択で変更した場合に `MasterShohin` へ反映されるようにする
+### 実施内容
+- `CvWpfclient/ViewModels/01Master/MasterShohinMenteViewModel.cs`: `DoSelectTenji`(TNJ) / `DoSelectSeason`(SZN) / `DoSelectMaterial`(SZI) / `DoSelectCountry`(GEN) を追加。既存の `DoSelectBrand` / `DoSelectItem` / `DoSelectMaker` と同型で `Id_*` と `V*` を対で更新する
+- `CvWpfclient/Views/01Master/MasterShohinMenteView.xaml`: メーカーの直後に展示会・シーズン・素材・原産国の4行（検索TextBox＋コード名称表示）を追加。詳細タブのGridに `RowDefinition` を2行追加し、元上代以降の `Grid.Row` を 7〜16 → 11〜20 へ繰り下げた
+### 技術決定 Why
+- 選択区分は `[ForeignKey(meishoKubun:…)]` 属性（TNJ/SZN/SZI/GEN）を正とし、`ExternalCsvImportViewModel.ResolveMeishoKubun` の対応と一致させた。
+- これまで4項目は一覧・バーコード印刷・在庫照会・配分の各画面で表示されるのにメンテ画面から変更できず、CSV取込とDB変換でしか設定できなかった。参照Idを変更する経路ではサーバの伝播が走らないため、他の選択コマンドと同様に `Id_*` と `V*` を同時に更新する。
+### 影響範囲
+- `MasterShohinMenteView` 詳細タブのみ。`BaseCodeNameLightMenteViewModel` は `QueryByIdParam` で詳細を再取得するため、軽量一覧に含まれないV*列も正しく往復する。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 0警告 0エラー
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計33件、成功33件、失敗0件
+- XAMLの `Grid.Row` 連番（0〜20）と `RowDefinition` 21行の対応、CRLF・UTF-8(BOM)を確認
+
+---
+
+## [2026-07-29] 10:35 CvWpfclient のV*列処理をMaster系同期方式へ追従
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：コミット `7075e1d`（V*列一括変更 Phase1〜8）までの修正に対し、CvWpfclient 側でずれている V*列処理を洗い出して調整する
+### 実施内容
+- `CvWpfclient/ViewModels/02Yosan/MasterYosanHanbaiMenteViewModel.cs`: Phase1 で新設された `MasterYosanHanbai.VShain`（VRules #22）に未対応だったため、一覧SQLへ `Y.VShain` を追加（未使用の `left join MasterShain` は削除）、`DoSelectShain` で `VShain` をセット、`ShainDisplay` を `Id=…` からV*列のコード＋名称表示へ変更
+- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs` / `Views/01Master/MasterSysKanriMenteView.xaml`: `DoSelectSoko` が `Id_Soko` のみ更新し `VSoko` を放置していたのを是正。表示専用の `StandardSoko` と `LoadStandardSokoAsync`（MasterTokui の追加取得）を廃止し、XAML を `Current.VSoko` 直接バインドへ変更
+- `CvWpfclient/ViewModels/02Yosan/SalesStaffBudgetMasterViewModel.cs`: `MasterYosanHanbai` 一括登録時に `VShain` を設定
+- `CvWpfclient/ViewModels/02Yosan/ShopBrandBudgetMasterViewModel.cs`: `MasterYosanBrand` 一括登録時に `VTenpo` / `VBrand` を設定
+- `CvWpfclient/ViewModels/02Yosan/MasterYosanBrandMenteViewModel.cs`: 一覧SQLの `json_object(...)` によるV*列再構成をやめ、物理列 `Y.VTenpo` / `Y.VBrand` を直接読むよう単純化
+- `CvWpfclient/ViewModels/01Master/ExternalCsvImportViewModel.cs`: Phase1 の残課題だった `"Id_PayMethod" => "PAY"` を `"KIN"` に統一
+### 技術決定 Why
+- Master系のV*列は物理列であり「常に現行名称」が不変条件。サーバの伝播（`MasterCascadeDb`）はマスタ改名時にしか走らないため、参照Idを変更する画面と新規登録経路ではクライアントがV*列を同時に埋める必要がある。
+- `BaseMenteViewModel.CreateUpdateParam` はエンティティ全体を送るため、一覧SQLでV*列を選択しないと修正保存時に空値で上書きされる（`MasterYosanHanbai` が該当）。`BaseLightMenteViewModel` 系は `QueryByIdParam` で詳細を再取得するため影響を受けない。
+- V*列の再構成JOINは物理列化前の名残であり、残すと「V*列は信用できない」という誤読と、画面でセットしたV*列が一覧で黙って上書きされる挙動を生むため物理列参照へ寄せた。
+### 影響範囲
+- Tran系は方針どおり無変更（V*列＝伝票時点の名称）。`TranShopPromotion` / `TranTokuiPromotion` はV*列を持たないためJOIN表示のまま。
+- `MasterShohin` の `VTenji` / `VSeason` / `VMaterial` / `VCountry` はメンテ画面に選択手段がなくCSV取込・DB変換でのみ設定される。V*列同期の問題ではないため本作業の対象外（別課題）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 0警告 0エラー
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計33件、成功33件、失敗0件
+- 変更7ファイルのCRLF・UTF-8を確認
+
+---
+
+## [2026-07-28] 09:48 MainMenuView 気温グラフへの降水量バー追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuView の気温グラフに、視認性を保った降水量の棒グラフを追加する
+### 実施内容
+- `CodeShare/IWeather.cs`、`CvServer/Services/WeatherService.cs`: OpenWeatherMap の3時間降水量を共有DTOへ追加し、未提供時は0 mmとして扱うようにした
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 降水量を予報チャート用データへ引き渡すようにした
+- `CvWpfclient/Views/MainMenuView.xaml(.cs)`: 半透明・幅制限付きの降水量バー、凡例、ホバー時の降水量表示を追加した
+- `CvWpfclient/Resources/UIColors*.xaml`: ライト/ダークテーマ用の降水量バー色を追加した
+### 技術決定 Why
+- 降水量は気温と尺度が異なるため、独立した最大値で棒の高さを正規化し、温度の面・折れ線より背面に描画して温度推移の可読性を維持した
+### 確認
+- `vscmdcodex.bat dotnet build CvServer/CvServer.csproj --no-restore -p:BaseOutputPath=...`: 警告0、エラー0
+- `vscmdcodex.bat dotnet build CvWpfclient/CvWpfclient.csproj --no-restore -p:BaseOutputPath=...`: 警告0、エラー0
+- MainMenuView.xaml と色リソースのXML解析、CRLF、`git diff --check`: 問題なし
+
+---
+
+## [2026-07-27] 14:02 一覧行移動時の他端末更新検知と再取得案内
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterMenteなどで一覧表示後に他端末更新された行へ移動した場合、理解可能なエラーを表示して一覧再取得を促す。
+### 実施内容
+- `CodeShare/ICoreService.cs`: 楽観排他と想定外エラーの共通メッセージコードを追加。
+- `CvBase/Parameters.cs`: `QueryByIdParam` に一覧取得時点の `ExpectedVdu` を追加し、未指定時は従来どおり照合しない互換動作を維持。
+- `CvServer/Services/HandlerClass.cs`: 詳細取得時に `ExpectedVdu` とDBの `Vdu` を照合し、不一致時は楽観排他エラーを返すよう変更。
+- `CvWpfclient/Helpers/ViewModels/BaseLightMenteViewModel.cs`: 軽量一覧の詳細キャッシュによる確定を廃止し、行移動ごとに `Vdu` を照合。スクロール中の古い応答は現在選択行と一致する場合だけ処理する。
+- `CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: 楽観排他時に一覧・詳細を破棄し、［一覧取得（F5）］での再取得を促す共通メッセージを追加。
+- `Tests/TestServer/TestServer.cs`: `QueryByIdParam` の古い `Vdu` が競合エラーとなり、現在の `Vdu` は正常取得できる回帰テストを追加。
+### 技術決定 Why
+- 詳細キャッシュだけでは一覧取得後の他端末更新を検知できず、保存時まで古い内容を保持する。詳細取得に一覧時点の `Vdu` を渡してサーバーで照合することで、最新内容の暗黙上書きを避けつつ、全軽量メンテ画面へ一貫して適用する。
+### 影響範囲
+- `BaseLightMenteViewModel` を継承するマスターメンテ、システムログイン、伝票入力画面の一覧行移動時の詳細取得。
+- 共通CRUDの更新・削除時に既存の楽観排他エラーが返った場合も、同じ再取得案内を表示する。
+### 確認
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.dll`: 合計33件、成功33件、失敗0件。
+- `vscmdcodex.bat dotnet build CvWpfclient/CvWpfclient.csproj --no-restore`: 成功（0警告0エラー）。
+- 変更6ファイルとログのCRLFを確認し、`git diff --check` を通過。
+
+---
+
+## [2026-07-27] 14:35 V*列一括再同期の性能改善と実行時間表示（Phase8）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：Phase6の実機確認で「1回目2332件・2回目0件」で正常動作を確認したが所要約20分だったため短縮を検討する。あわせて実行結果メッセージに開始時間・終了時間を表示する。
+### 実施内容
+- `CvDomainLogic/MasterCascadeDb.cs`: 全走査回数を削減。(1) `ResyncVRulesByTable` を新設しV*列22ルールを対象テーブル単位の1文へ統合（22回→10回、MasterShohinは8回→1回）。(2) `ResyncJsub` でJsubのCd/MeiとKbnameを1文へ統合（10回→5回）。(3) `ResyncJcolsiz` は対象Idを1回だけ抽出しUPDATEをId指定に変更（2回→1回）。(4) `RebuildDerivedShohinColSiz` をIN句(500件単位)での一括Delete+Insertに変更。(5) `RunResync` にStopwatchを入れルール単位の所要時間を必ずログ出力。
+- `CvServer/Services/HandlerClass.cs`: `BuildResyncSummary` を追加し、応答メッセージに更新行数・開始時刻・終了時刻・所要時間（サーバ側実測）を含めるよう変更。
+- `CvWpfclient/ViewModels/00System/SysExecMiscViewModel.cs`: 実行開始時点で開始時刻を先に表示（数分かかるため）。
+- `Tests/TestServer/`: 件数の意味変更に合わせて期待値を修正し、応答メッセージに開始/終了/所要が含まれることを検証するアサーションを追加。
+### 技術決定 Why
+- 原因はインデックス不足ではなく「同じテーブルを列ごとに何度も全走査する」コード構造だった。`DerivedShohinColSiz.Id_Shohin` には既に `KeyDml("n1")` のインデックスがあることを確認済み。MasterShohin は Jgenka/Jcolsiz/Jgrade/Jsub を含む幅の広い行のため、8回読むか1回読むかで読み取りI/Oが大きく変わる。
+- 全件再同期は本質的に全走査が必要なので `Id_*` 列へのインデックス追加では速くならない。走査回数自体を減らす方針を採った（合計約35回→約16回）。
+- 統合版では参照先が見つからない場合に `ifnull(サブクエリ, 現在値)` で現在値を残すようにし、dangling参照の行の旧名称を温存する従来動作を維持した。
+- V*列をテーブル単位に統合した結果、更新行数の意味が「列ごとの合計」から「更新された行数」に変わる。1行で3列が古い場合に従来3と数えていたものが1になるため、Phase6で観測した2332より小さくなるのは正常。テストの期待値もこの意味に合わせて修正した。
+- ルール単位の所要時間を常にログ出力することにした。残るボトルネックを推測で追わず、次回の実行結果から実データで特定できるようにするため（出力先は logs/server.log）。
+### 影響範囲
+- 再同期処理の内部SQLのみ。伝播の結果（どの列がどう更新されるか）は変わらないため、マスタ改名時の動作には影響しない。
+- 応答メッセージが複数行になる。画面の実行結果欄は TextWrapping="Wrap" で複数行表示に対応済み。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計32 / 成功32 / 失敗0。冪等性・順序保持・dangling参照の温存が引き続き緑であることを確認。
+- 実DB(9.5GB)での短縮効果はユーザー側の次回実行で確認する。ルール単位の所要時間がログに出るため、残るボトルネックはそこで特定できる。
+
+---
+## [2026-07-27] 14:10 V*列の扱いをAGENTS.mdとテーブル定義に明記（AI向け恒久メモ）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：Master系とTran系でのV*列の扱いについて、今後もAIが誤解しないようソースに明記する。
+### 実施内容
+- `AGENTS.md`: 「Data Model: V*列 (CodeNameView) **IMPORTANT**」節を Build Rule の前に追加。Tran系＝時点値の監査値で伝播禁止、Master系＝常に現行値でMasterCascadeDbが伝播、JSON内スナップショット(Jsub/Jcolsiz/KubunName/Derived)も伝播対象、V*列追加時はVRules登録が必須、json_valid ガードの必要性、Msg047による一括再同期、設計書の参照先を記載。
+- `CvBase/DefineDataTable.cs`: テーブル種別（Sys/Master/Tran/Summary/Derived）を説明している既存コメントブロックに、V*列の扱いがこのテーブル種別で決まることを追記。Summary系はV*列を持たずJOIN前提であることも明記。
+### 技術決定 Why
+- 記載先を AGENTS.md にした。全AIエージェント（OpenCode/Codex/Copilot/ClaudeCode）が最初に読む唯一の共通指示ファイルであり、クラスコメントだけでは該当ファイルを開かない限り気付けないため。逆に各Master系テーブルに個別に書くのは冗長で更新漏れを生むため避けた。
+- `DefineDataTable.cs` を2つ目の記載先にしたのは、既にテーブル種別の分類を説明しているコメントがあり、V*列の意味論がその分類に従うという構造をそのまま接続できるため。テーブル一覧を見に来たAIが必ず通る場所でもある。
+- Phase7で追記した `TranAllHeader` と `CodeNameView` のXMLコメントと合わせ、(1)AI共通指示、(2)テーブル分類、(3)Tran系基底クラス、(4)V*列の型定義 の4箇所で同じ方針に到達できる状態にした。
+### 影響範囲
+- ドキュメント・コメントのみ。動作への影響はない。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計32 / 成功32 / 失敗0。
+
+---
+## [2026-07-27] 14:00 V*列の意味論をコード上に明文化（Phase7: 仕様コメント整備）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：`.omo/20260727_master_vcolumn_sync_design.md` のPhase7を実施。「V*列が伝票の時点値かマスタの現行値か」をコードを読むだけで判別できるようにする。実機確認（Phase6）はユーザー側で実施するため、その担当区分も設計書に明記する。
+### 実施内容
+- `CvBase/BaseDb2Trans.cs`: `TranAllHeader` のXMLコメントに、V*列は伝票作成時点の名称を保持する監査値でありマスタ改名時に伝播しないこと、現行名称が必要ならId_*からJOINすること、Master系は逆に常に現行名称へ同期されることを明記。
+- `CvBase/Share/BaseDbDefinition.cs`: `CodeNameView` のXMLコメントに同趣旨を追記。あわせて「Master系にV*列を追加した場合は MasterCascadeDb.VRules への登録も必須（未登録は VRules_CoverAllMasterVColumns が検出する）」を明記。
+- `CvWpfclient/ViewModels/05Shiire/ShiireSlipPrintViewModel.cs`: 内側SQLの直前に、名称はV*列（時点値）・住所はマスタJOIN（現行値）で取得元が異なるのは意図的な仕様であることを明記。未使用だった `soName` エイリアスを削除。
+- `.omo/20260727_master_vcolumn_sync_design.md`: Phase6を「ユーザー側で実施（AI作業対象外）」と明記し、DDLはUpdateDb.versionsで自動適用されること・SysUpdateDbのMemoで結果確認できること・M4（Tran系が伝播しないこと）が最重要であることを追記。Phase7完了とチェックリストの消化状況も反映。
+### 技術決定 Why
+- 方針の記載先を `CodeNameView` にも置いた。V*列を新設する開発者が最初に触る型であり、ここに「VRulesへの登録が必要」と書いておかないと伝播漏れが起きる（テストで検出はされるが、意図を知らずに落ちるとテストが誤りだと判断されかねない）。
+- `ShiireSlipPrintViewModel` の未使用 `soName` は残さず削除した。参照0件を確認済み。「倉庫名も現行値で取れるのに使っていない」という誤読を招き、時点値を使うという意図が伝わらなくなるため。
+- Tran系の変更はXMLコメントのみに留めた。列定義・SQL・入力ViewModel・qfmには一切手を入れていない（方針1のとおり現状維持）。
+### 影響範囲
+- コメントとSQL内の未使用エイリアス削除のみ。動作への影響はない。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計32 / 成功32 / 失敗0。
+- `soName` の参照が0件であることを grep で確認してから削除。
+
+---
+## [2026-07-27] 13:40 V*列の一括再同期をgRPCと画面に公開（Phase5: Msg047）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：`.omo/20260727_master_vcolumn_sync_design.md` のPhase5を実施。マスタ改名時の伝播（Phase3で自動化済み）とは別に、DB変換後や取りこぼしを修復するための一括再同期を管理者が実行できるようにする。
+### 実施内容
+- `CodeShare/ICoreService.cs`: `CvFlag.Msg047_MasterVColumnResync = 47` を追加（欠番だった47を使用）。
+- `CvServer/Services/QueryMsgService.cs`: `_handlers` に Msg047 を登録。
+- `CvServer/Services/HandlerClass.cs`: `HandleMasterVColumnResync` を追加。Serializableトランザクション内で `MasterCascadeDb.ResyncAll(errors)` を実行し、更新行数を応答に返す。
+- `CvWpfclient/ViewModels/00System/SysExecMiscViewModel.cs`: `MasterVColumnResyncAsync` コマンドを追加（既存の商品名称再構築と同型）。
+- `CvWpfclient/Views/00System/SysExecMiscView.xaml`: 「V*列再同期」ボタンを WrapPanel に追加。
+- `Tests/TestServer/TestServer.cs`: Msg047 の結合テストを追加。古いVBrand・空文字のVSoko・古いJsub.Meiを作ってから実行し、すべて現行値になること、2回目が「更新行数=0」になることを検証。
+### 技術決定 Why
+- 一部ルールだけ失敗した場合は成功扱いにせず `Code < 0` で返すことにした。`ResyncAll` はバッチとして他ルールの処理を継続するため、成功で返すと「更新0件＝既に同期済み」と「更新0件＝全ルール失敗」を利用者が区別できず、修復したつもりで放置される危険があるため。失敗内容は Option に列挙する。
+- 応答の DataMsg は「更新行数=N」の文字列とした。既存の Msg046 はサーバのバージョン情報（InfoServer）を返しているが処理結果と無関係なため踏襲しなかった。
+- PackIcon の `Kind="DatabaseSync"` は MaterialDesignThemes 5.3.2 のアセンブリ内に実在することを確認して採用した（XAMLのenum値は誤りでもビルドが通り実行時に落ちるため）。
+### 影響範囲
+- 管理者用システム処理画面にボタンが1つ増える。既存機能への影響はない。
+- 再同期はV*列22件＋Jsub5テーブル×2種＋KubunName＋Jcolsizを1文ずつ更新し、Jcolsizに変更があった商品はDerivedShohinColSizを再構築する。全件走査となるため実行時間はデータ量に比例する。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計32 / 成功32 / 失敗0。
+- `check-xaml` 手順で SysExecMiscView.xaml を検証：構文・名前空間・リソース参照・コンバーター・バインディングパスすべて問題なし。
+
+---
+## [2026-07-27] 13:15 JSON内の名称スナップショットの伝播を実装（Phase4: Jsub/Jcolsiz/区分名/Derived）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：`.omo/20260727_master_vcolumn_sync_design.md` のPhase4を実施。V*列に加えて、JSON列に埋め込まれた名称スナップショット（Jsub・Jcolsiz・区分名）と、そこから導出される DerivedShohinColSiz もマスタ改名時に同期する。
+### 実施内容
+- `CvDomainLogic/MasterCascadeDb.cs`: `CascadeJsonRule` と `JsubRules`（5テーブル）を追加。R2=Jsub内のCd/Mei、R3=区分名（MasterMeisho.KubunNameとJsubのKbname）、R4=MasterShohin.Jcolsizの色/サイズ名称、R5=DerivedShohinColSizの再構築を実装。`CascadeFromMaster` に `kubun`/`oldCode` の任意引数を追加。`ResyncAll` にもJSON系の全件再同期を追加し、ルール単位のエラー記録を `RunResync` に共通化。
+- `CvServer/Services/HandlerClass.cs`: フックから `(item as MasterMeisho)?.Kubun` と `(org as IBaseCodeName)?.Code` を渡すよう変更。
+- `CvDomainLogic/RebuildDb.cs`: `WHERE EXISTS (-` の構文エラーを修正（`RebuildMasterShohin2Meisho` の後半、Id_Siz補完が実行時に必ず失敗していた既存不具合）。
+- `Tests/TestServer/MasterCascadeDbTests.cs`: 8件追加（Jsubの順序保持、5テーブル網羅、Jcolsiz＋Derived、区分名、区分コード変更時のスキップ、不正JSON混在への耐性、ResyncAllのJSON系）。
+### 技術決定 Why
+- Jsubの `Kb`/`Kbname` の意味を実コードで確定させた。`Kb`=`MasterMeisho.Kubun`、`Kbname`=`Kubun='IDX'` かつ `Code=Kb` の行の `Name`（`MasterShohinMenteViewModel.DoGetKubun` が `Kubun='IDX' and Code between 'B01' and 'B10'` を取得し、`MasterGeneralMeisho.OnKbChanged` がその Name を Kbname にセットしている）。
+- `MasterMeisho.KubunName` の伝播から `Kubun='IDX'` の行自身を除外した。区分定義行の KubunName を IDX/IDX 行の Name で上書きすると意図しない値になる（初期データではIDX行のKubunName='名称区分'、IDX/IDX行のName='名称区分インデックス'）。ResyncAllでも同じ除外を適用し既存データを壊さないようにした。
+- 区分コード自体が変更された場合は区分名を伝播せず警告ログのみとした。Kubun/SizeKu/Kb の参照先が失われる区分体系の変更であり、伝播では解決できないため。
+- `DerivedShohinColSiz` は個別UPDATEを書かず `DeleteSql`→`InsertSql` で再構築した。当テーブルは Jcolsiz からの完全導出であり、導出定義を二重管理しないため（HandlerDerivedと同じ手順）。再構築対象の商品Idは差分条件で抽出するため、R4実行前に確定させている。
+- `ResyncAll` のJSON系は MasterMeisho を left join する集合演算1文で実装した（当初案の「参照Idを列挙して1件ずつ」は件数が多いと実用時間に収まらないため）。
+- JSON配列を扱う全SQLに `列 is not null and json_valid(列)` を付けた。`json_each` は不正JSONで例外を投げるため、Phase2のV*列と同じ耐性を持たせた。
+- Phase2で `ResyncVRule` に書いた「SQLiteのUPDATEは対象テーブルに別名を付けられない」というコメントは誤りだったので訂正した。SQLiteの qualified-table-name は AS alias を許容し、`RebuildDb.cs:53` も本番で `UPDATE MasterShohin AS S` を使っている。
+### 影響範囲
+- MasterMeisho の改名時に、V*列に加えて Jsub（5テーブル）・Jcolsiz・区分名・DerivedShohinColSiz が更新される。DerivedShohinColSiz の再構築は該当商品ごとに Delete+Insert となるため、多数の商品が参照する色/サイズの改名では処理時間が伸びる（改名は低頻度のため許容）。
+- Tran系には差分なし（伝票の時点名称は従来どおり保持）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計31 / 成功31 / 失敗0。
+
+---
+## [2026-07-27] 12:45 マスタ更新時のV*列伝播をサーバへ組み込み（Phase3: HandleUpdateフック）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：`.omo/20260727_master_vcolumn_sync_design.md` のPhase3を実施。Phase2で作成した伝播ロジックを、マスタ更新の実経路（CoreServiceのHandleUpdate）から呼び出すようにする。
+### 実施内容
+- `CvServer/Services/HandlerClass.cs`: `HandleUpdate` の `_db.Update(item)` 直後、`CompleteTransaction` の前にV*列伝播フックを追加。マスタ更新と同一トランザクション・同一 `vdate` で `MasterCascadeDb.CascadeFromMaster` を呼ぶ。`HandleInsert`/`HandleBulkInsert`/`HandleDelete`/`HandleDeleteById` は変更していない。
+- `CvDomainLogic/MasterCascadeDb.cs`: 伝播要否の判定を `NeedsCascade(itemType, newItem, orgItem)` として追加。伝播元マスタ4型かつCode/Nameが変化した場合のみtrueを返す。
+- `Tests/TestServer/TestServer.cs`: `CoreServiceTests` にgRPC経路の結合テストを追加。`Msg201_Op_Execute`＋`UpdateParam` で名称マスタを改名し、参照している商品マスタの `VBrand` が現行名称になること、および略称のみの変更では参照側の `Vdu` が動かないことを検証。
+- `Tests/TestServer/MasterCascadeDbTests.cs`: `NeedsCascade` の判定、`HandleUpdate` と同順序を再現した自己参照時の `Vdu` 整合、`vdate` 未指定時の挙動の3件を追加。
+### 技術決定 Why
+- 判定条件をインラインに書かず `NeedsCascade` として切り出した。フックの配線ミス（条件式の誤りで伝播が走らない/常に走る）を単体テストで検出できるようにするため。既存の `ITranSoko` 判定はインラインだが、こちらは条件が3項あり誤りやすい。
+- `CascadeFromMaster` へ `HandleUpdate` の `vdate` をそのまま渡した。請求先が自社（`MasterTokui.Id_Paysaki` が自分自身）のケースでは更新元の行自身が伝播対象になるため、伝播側で別採番するとクライアントへ返す `Vdu` とDB上の値がずれ、同一画面からの次回保存が楽観排他（-9901）で弾かれる。
+- 伝播をトランザクション内に置き、SQLエラーは送出させた。マスタ更新だけが成功してV*列が古いまま残る状態を作らないため（`HandleUpdate` の既存 catch が `AbortTransaction` する）。
+- 実機確認の代替として、既存の `CoreServiceTests` ハーネス（インメモリSQLite＋実 `CoreService`）で gRPC 経路そのものを検証した。加えてフックを一時的に無効化して当該テストのみが失敗することを確認し、テストが空振りしていないことを実証した。
+### 影響範囲
+- マスタ（MasterMeisho/MasterTokui/MasterShain/MasterShiire）の更新時に、参照側22箇所のV*列へ最大22本のUPDATEが追加で流れる。Code/Nameが変わらない更新では1本も流れない。
+- Tran系のV*列は対象外のため、伝票の時点名称は従来どおり保持される（差分なし）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計23 / 成功23 / 失敗0。
+- フック無効化時: 合計23 / 失敗1（`Update_MasterMeishoRename_CascadesToReferencingMasterVColumn` のみ）→ 復旧後に再度全緑を確認。
+
+---
+## [2026-07-27] 12:25 Master系V*列の変更時同期ロジック新設（Phase2: V*列伝播）
+### Agent
+- Claude Opus 5 : Anthropic
+### Editor
+- ClaudeCode
+### 目的
+- ユーザーからの要望：Tran系のV*列は伝票の時点名称として物理列を維持し、Master系のV*列は速度と処理の単純化のため物理列を維持したうえで、参照元マスタ（MasterMeisho等）のCode/Name変更時に同期するロジックを組み込む。`.omo/20260727_master_vcolumn_sync_design.md` のPhase2を実施。
+### 実施内容
+- `CvDomainLogic/MasterCascadeDb.cs`: 新規。Master系V*列の伝播定義 `CascadeVRule` を22件（唯一の正）定義し、`IsCascadeSource`（伝播元はMasterMeisho/MasterTokui/MasterShain/MasterShiireの4型）、`CascadeFromMaster`（マスタ改名時の伝播）、`ResyncAll` / `ResyncAll(List<string>)`（保守用の全件再同期）、`CountDanglingRefs`（参照先欠損の調査）を実装。JSON系（Jsub/Jcolsiz/Kbname/KubunName）はPhase4のToDoコメントとして明示。
+- `Tests/TestServer/MasterCascadeDbTests.cs`: 新規。インメモリSQLiteで12件。伝播・冪等性・空V*列の修復・自己参照(VPaysaki)・型別分岐(MasterShiire)・dangling参照・定義マップとクラス定義の整合性検証（VRules_AreConsistentWithEntityDefinitions / VRules_CoverAllMasterVColumns）。
+### 技術決定 Why
+- 伝播はSQLのUPDATE文で実施（対象行をFetchしてループ更新しない）。MasterShohinは十万行規模になり得るため。差分がある行のみ更新する条件をWHEREに入れ冪等にした。
+- `[ForeignKey]` 属性からの自動導出は行わず明示マップを唯一の正とした。`Id_Paysaki` は宣言型ごとに参照先が異なり（MasterTokui→MasterTokui、MasterShiire→MasterShiire）基底の属性では表現できないため。代わりにマップとクラス定義の齟齬・登録漏れを検出する単体テストを追加して腐りを防いだ。
+- SQLiteの `json_extract` は不正JSONに対しNULLではなく `malformed JSON` 例外を投げるため、`case when json_valid(col) then col else '{}' end` で包んだ。`ALTER TABLE ADD COLUMN ... DEFAULT ''` 直後の空文字が1行でもあるとマスタ改名がロールバックする実害があり、テストで検出した。`OR` 条件に `json_valid()=0` を並べる形は評価順が保証されないため採らず、短絡評価が保証される `CASE` を使用。
+- `CascadeFromMaster` に呼び出し側の `Vdu` 値を渡す引数を追加した。自己参照（請求先が自社）で更新元の行自身が伝播対象になり、内部で別途採番するとクライアントへ返す `Vdu` とDB上の値がずれて次回保存が楽観排他で弾かれるため。
+- `ResyncAll` は例外を握り潰すと22ルール中の失敗が黙って飛ばされるため、失敗内容を返すオーバーロードを追加した（Phase5でエラー提示に使う）。
+### 影響範囲
+- 新規2ファイルのみ。既存ソースの変更なし。CvBase（Tran系含む）に差分なし。伝播の呼び出し（CvServer側フック）はPhase3で実施するため、本コミット時点では実行経路から呼ばれない。
+- `.omo/20260727_master_vcolumn_sync_design.md` にPhase1・Phase2の完了と申し送り3点（vdate引き渡し・ResyncAllのエラー返却・json_validガード）、ビルド手順（vscmdclaude.bat、dotnet test不可）を反映（.omoはコミット対象外）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（0警告0エラー）。
+- `Tests/TestServer/bin/Debug/net10.0/TestServer.exe`: 合計19 / 成功19 / 失敗0（新規12＋既存SummaryDbTests7）。
+- .NET 10 SDK + Microsoft.Testing.Platform では `dotnet test` が使用不可のため、ビルド後のexeを直接実行して確認。
+
+---
+## [2026-07-26] 09:13 Tran系V*列（マスタ重複保持）方式の比較検討メモ作成
+### Agent
+- Kimi K3 : Moonshot AI
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：TranAllHeader の Id_Soko/VSoko に代表されるTran系のマスタ重複保持について、(1)物理保持(現状)、(2)[ComputedColumn]+SQL再構成、(3)Idのみ保持+JOIN の3方式を比較し全体最適を検討する。計画のみで結果は .omo に保存。
+### 実施内容
+- `.omo/20260726_tran_vcolumn_comparison_plan.md`: 現状調査（V*列25個・書き込み3経路・読み込み3経路・伝播機構なし・印刷の名称/住所混在不整合）を基に3方式を多観点比較し、案2を条件付き推奨とする計画を新規作成。
+### 技術決定 Why
+- `[ComputedColumn]` のDDL除外インフラ（ExDatabase.cs:104）と MasterYosanBrand の json_object(JOIN)再構成パターンが既にリポジトリ内で確立済みのため、XAMLバインドとエンティティ形状を維持したまま正規化できる案2が移行コスト・一貫性の両面で最適と判断。案3はCodeNameView統一パターンを崩し改修量最大のため非推奨。スナップショット要件の有無はユーザー判断待ちとして [blocked] 明記。
+### 確認
+- 調査のみ（計画メモ作成）。ソース改修なしのためビルド確認は不要。メモはCRLF・UTF-8で作成済み。
+
+---
+## [2026-07-25] 13:49 システム管理マスタ帳票に標準倉庫を追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：システム管理マスタの印刷レイアウトにも標準倉庫を表示する。
+### 実施内容
+- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs`: 印刷CSVの末尾へ標準倉庫のコード・名称を追加。
+- `printform/MasterSysKanriMente.qfm`: 未使用のitem29・item30を標準倉庫のコード・名称へ割り当て、税率3の後に標準倉庫行を追加。後続の項目は1行下へ移動。
+### 技術決定 Why
+- 既存の未使用データ項目を再利用してCSV定義と帳票の対応を維持し、MasterSysmanの保存項目はId_Sokoのみという設計を変えずに印刷できるようにした。
+### 確認
+- `validate_qfm.py printform/MasterSysKanriMente.qfm`: 成功。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore`: 成功（0警告、0エラー）。
+
+---
+
+## [2026-07-25] 13:42 システム管理マスタに標準倉庫選択を追加
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MasterSysman に追加された Id_Soko を画面で選択・表示できるようにする。
+### 実施内容
+- `CvWpfclient/ViewModels/01Master/MasterSysKanriMenteViewModel.cs`: 標準倉庫のコード・名称を表示専用で保持し、再読込時に Id_Soko から倉庫を取得する処理と倉庫選択コマンドを追加。
+- `CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: 標準倉庫Idの検索ボタン付き入力欄、およびコード・名称の表示欄を追加。
+### 技術決定 Why
+- MasterSysman には Id_Soko のみを保存し、コード・名称は ViewModel の表示専用状態として取得することで、保存データを増やさずに選択内容を判別可能にした。
+### 確認
+- `git diff --check`、XAML XML構文確認を実施。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore`: 成功（0警告、0エラー）。
+
+---
+
+## [2026-07-24] 14:28 MainMenu 気温グラフの横軸ラベルを表示幅に応じて間引き
+### Agent
+- GPT-5 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：MainMenuView のグラフエリアが小さいとき、横軸の文字表示を数個おきに省略する。
+### 実施内容
+- `CvWpfclient/Views/MainMenuView.xaml.cs`: プロット幅と最小ラベル間隔から横軸ラベルの表示間隔を算出し、狭い表示領域ではラベルを間引くよう変更。最終時刻のラベルは常に表示する。
+### 技術決定 Why
+- 従来は予報点が36件を超えた場合だけ間引いていたため、点数が少なくてもグラフ幅が狭い場合にラベルが重なっていた。描画可能幅に基づく上限を併用し、ウィンドウサイズの変化にも追従させた。
+### 確認
+- `MainMenuView.xaml` のXML構文確認、`git diff --check` を実施。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore -p:BaseOutputPath=C:\gitroot\new2022\cv10-codex\artifacts\mainmenu-chart-label-build`: 成功（0警告、0エラー）。
+
+---
+
+## [2026-07-24] 13:56 MainMenu の気温推移グラフをWPF標準描画へ置換
+### Agent
+- GPT-5.6 : OpenAI
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：SkiaSharp 4.x系への更新問題を解消するため、MainMenuのグラフを現行機能と外観を極力保ったWPF標準のCanvas/Polyline描画へ置換する。
+### 実施内容
+- `Directory.Packages.props`、`CvWpfclient/CvWpfclient.csproj`: `LiveChartsCore.SkiaSharpView.WPF` と `SkiaSharp.Views.WPF` のパッケージ参照を削除。
+- `CvWpfclient/ViewModels/MainMenuViewModel.cs`: 時間別予報を描画専用モデルへ整理し、5℃単位の縦軸範囲を算出するよう変更。
+- `CvWpfclient/Views/MainMenuView.xaml`、`CvWpfclient/Views/MainMenuView.xaml.cs`: Canvas、Polyline、Polygon、Ellipse、TextBlockで折れ線・塗りつぶし・目盛・ラベルを描画し、系列上の近傍ポイントにガイド線、強調マーカー、日時・気温のポップアップを表示。
+### 技術決定 Why
+- LiveChartsCoreとSkiaSharp.Views.WPFを同時に撤去し、WPF標準コントロールだけで既存のデータ取得、30分更新、テーマ切替、5℃目盛、平滑な線、ポイント表示、ツールチップ相当の操作を維持するため。
+### 確認
+- `MainMenuView.xaml` のXML構文、イベント接続、テーマリソース参照を確認。
+- `LiveChartsCore`、`SkiaSharp` のソース・プロジェクト参照が残っていないことを確認。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj -p:BaseOutputPath=C:\gitroot\new2022\cv10-codex\artifacts\canvas-chart-build`: 成功（0警告、0エラー）。
+
+---
+## [2026-07-24] 09:45 MasterSysKanriMenteView 入力欄の文字が表示されない不具合を修正
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：MasterSysKanriMenteView でTextBoxに値は存在するが表示されない状態を、この画面のみ修正する。
+### 実施内容
+- `CvWpfclient/Views/01Master/MasterSysKanriMenteView.xaml`: 入力TextBox 20箇所の Style を `FormTextBox`(MaterialDesignOutlinedTextBox) から `MaterialDesignTextBox`(下線スタイル) へ変更。
+### 技術決定 Why
+- 前コミット(84fc78e)で無効キー`MaterialDesignBody*`を`FormTextBox`へ置換したが、当画面は外部Label＋固定`Height="30"`のコンパクト構成で、Outlined(浮動ラベル前提)は30px内でテキスト描画領域がクリップされ、値はあるのに不可視になっていた。下線系`MaterialDesignTextBox`はコンパクト高でも文字が表示され、テーマ対応(ライト/ダーク)も維持。隣接のDatePicker/ComboBox(30px)とも高さ整合。
+### 確認
+- `dotnet build C:\gitroot\new2022\cv10-claude\CvWpfclient\CvWpfclient.csproj`: 成功（0警告/0エラー）。
+- 実画面(MasterSysKanriMenteView)を一時フックで起動し`PrintWindow`でキャプチャ、会社名/住所/TEL/税率/事業者登録番号等の値が表示されることを目視確認。確認後フック削除。
+
+---
+## [2026-07-24] 09:15 CvWpfclient XAMLのレイアウト崩れ点検・修正と check-xaml-layout スキル作成
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：CvWpfclientプロジェクト全体のXAMLをチェックし、デザイン崩れ・レイアウト崩れ・余白不足・文字見切れを修正する。あわせて今回のチェックに有用なスキルを他スキルとフォーマットを合わせて作成し、実画面での目視確認も行う。
+### 実施内容
+- `.agents/skills/check-xaml-layout/SKILL.md`: 新規作成（視覚レイアウト崩れ検出・修正専用スキル。check-xamlは構文/リソース/バインディング、本スキルは見切れ・余白・崩れ・不統一を担当）。
+- `.agents/skills/wpf-project-guide/SKILL.md`・`.agents/skills/check-xaml/SKILL.md`: 新スキルへの相互参照を追加。
+- 9 View(HachuInput/JuchuInput/ShiireInput/ShopUriageInput/ShukkaUriageInput/StockInput/IdoInputOut/IdoInputSoku/InputBarcode): `AlternatingRowBackground="Beige"` → `{DynamicResource DataGridAlternatingRowBackgroundBrush}`（ダークテーマ対応、ZaikoQueryView準拠）。
+- `Views/01Master/MasterSysKanriMenteView.xaml`: 無効スタイルキー `Style="{DynamicResource MaterialDesignBody*}"`(20箇所、素TextBox化していた)を`FormTextBox`へ／〒住所行の列重複(住所1/住所2)を解消／Mail欄の負マージン`-17`撤廃で右端はみ出し解消。
+- `Views/05Shiire/ShiireSlipPrintView.xaml`・`Views/01Master/PrintMasterShainCardView.xaml`: 検索欄の固定色`Background="White"`除去（`MenteSearchTextBox`既定の`MaterialDesignPaper`に委譲。ライトはほぼ白で視認性維持、ダーク追従）。
+- `Views/00System/SysAutoExecHistoryView.xaml`・`SysLoginHistoryView.xaml`: GridSplitterの固定色`DarkGray` → `{DynamicResource MaterialDesignDivider}`。
+- Cd+Mei表示に`TextTrimming="CharacterEllipsis"`追加(計12箇所: JuchuInput3/ShopUriage4/ShukkaUriage3/StockInput2)。
+- `Views/Sub/AutoExecHistoryParamMiniView.xaml`・`RangeParamMiniView.xaml`: 操作ボタン行に右下余白(`0,16,16,16`)。`Views/02Yosan/ShopBudgetReportView.xaml`: 注意書きに`TextWrapping="Wrap"`。
+### 技術決定 Why
+- 固定色(Beige/White/DarkGray)はダークテーマで破綻するため既存DynamicResource/共通スタイルに寄せた。`MaterialDesignBody*`は存在しないキーでDynamicResource解決に失敗し素の既定TextBoxになっていたため`FormTextBox`へ差し替え。長い名称の無音見切れは`TextTrimming`で省略表示化。
+- `Background="White"`除去は直近コミット87d6597(白背景追加)の見た目を変更するが、`MenteSearchTextBox`が`MaterialDesignPaper`を既に持ちライトの視認性を保ちつつダークにも追従するため、テーマ的に妥当と判断。
+### 影響範囲
+- CvWpfclient/Views 配下の実体View 17ファイル＋スキル3ファイル。空`<Grid />`スタブ168ファイルは対象外。
+### 確認
+- `dotnet build C:\gitroot\new2022\cv10-claude\CvWpfclient\CvWpfclient.csproj`（絶対パス指定でcv10-claudeを明示ビルド）: 成功（0警告/0エラー）。
+- 実画面確認: MainMenuViewModelに一時フックを入れMasterSysKanriMenteView/ShiireSlipPrintViewを起動、`PrintWindow`(PW_RENDERFULLCONTENT)でキャプチャし見切れ・余白・整列・テーマを目視確認。確認後フックは削除。
+- `git diff --check`クリーン、変更ファイルはCRLF/UTF-8統一。
+
+---
+## [2026-07-23] 16:45 印刷ダイアログの入力スタイルをRangeInputParamView準拠に統一
+### Agent
+- kimi-k2.6 : OhMyOpenCode
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：印刷ダイアログのTextBoxをRangeInputParamViewのような枠付き（outlined）スタイルに変更。日付入力もDatePickerに変更。項目どうしの余白もRangeInputParamViewを参考に調整する。
+### 実施内容
+- `CvWpfclient/Views/05Shiire/ShiireSlipPrintView.xaml`:
+  - 仕入日をTextBoxからDatePicker（FormDatePickerスタイル、DateYmd8Converter）に変更
+  - 伝票NO・手入力NOをMaterialDesignTextBoxからFormTextBox（outlined）に変更、HintAssist.Hint追加
+  - 仕入先・倉庫のMenteSearchTextBoxからBackground="White"を削除しMargin="0,4"に統一
+  - 区切り文字を"～"から"-"に変更、列幅140→120、Margin 24→16,12,16,12
+  - 取引区分ComboBoxからBackground="White"を削除
+- `CvWpfclient/ViewModels/05Shiire/ShiireSlipPrintViewModel.cs`: DenDayFrom/Toをstring型からDateTime?型に変更。BuildPrintSqlParam内の日付処理をDateTime?.Value.ToString("yyyyMMdd")に変更。
+- `CvWpfclient/Views/01Master/PrintMasterShainCardView.xaml`: 社員Id・社員CodeのMenteSearchTextBoxからBackground="White"とHeight="36"を削除しMargin="0,4"に統一。区切り文字を"-"に変更、Margin 24→16,12,16,12。
+- `CvWpfclient/Views/01Master/MasterPrintBarcodeView.xaml`: 商品CD・商品名のFormTextBoxからBackground="White"とHeight="55"を削除しMargin="0,4"に統一。Margin 24→16,12,16,12、列幅130→120。
+### 技術決定 Why
+- RangeInputParamViewではFormTextBox（MaterialDesignOutlinedTextBoxベース）を使用しており、枠線付きの一貫性のあるデザインになっている。印刷ダイアログも同じスタイルに統一することで、ユーザー体験の一貫性を向上させた。DatePickerに変更することで日付入力の使い勝手を改善。
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0警告 / 0エラー）。
+
+---
+## [2026-07-23] 16:11 印刷ダイアログ入力項目の背景色を白に統一
+### Agent
+- kimi-k2.6 : OhMyOpenCode
+### Editor
+- OpenCode
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._05Shiire.ShiireSlipPrintView` のTextBox/ComboBox入力項目の背景色を白（検索ボックスと同色）に変更する。他の印刷系ダイアログも同様にチェックする。
+### 実施内容
+- `CvWpfclient/Views/05Shiire/ShiireSlipPrintView.xaml`: 12 TextBox + 1 ComboBox に `Background="White"` を追加（MaterialDesignTextBox、MenteSearchTextBox、MaterialDesignComboBox スタイルの入力項目すべて）。
+- `CvWpfclient/Views/01Master/PrintMasterShainCardView.xaml`: 4 TextBox に `Background="White"` を追加（MenteSearchTextBox スタイル）。
+- `CvWpfclient/Views/01Master/MasterPrintBarcodeView.xaml`: 2 TextBox に `Background="White"` を追加（FormTextBox スタイル）。
+- その他の印刷系ダイアログ（ShippingConfirmDetailPrintView、IdoSokuDetailBookPrintView、IdoDetailBookPrintView、HhtUnupdatedDataPrintView、NouhinBookPrintView、NouhinBookPrintCustomView）は空の `<Grid />` スタブのみで入力項目がないため、対象外。
+### 技術決定 Why
+- 印刷ダイアログのWindow背景は `AppCommonBackgroundBrush` (AntiqueWhite #FAEBD7) であり、`MaterialDesignTextBox` / `MenteSearchTextBox` / `FormTextBox` / `MaterialDesignComboBox` の既定背景は Transparent のため、入力欄がウィンドウ背景色と同化して視認性が低下していた。検索ボックスと同じ白色にすることで入力項目を明確に区別できるようにした。
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`: 成功（0警告 / 0エラー）。
+
+---
+## [2026-07-23] 06:50 仕入伝票印刷(ShiireSlipPrint)の View/ViewModel 作成と qfm 調整
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code (Sekiya Sato Claude)
+### 目的
+- ユーザーからの要望：`CvWpfclient.Views._05Shiire.ShiireSlipPrintView` の作成。View/ViewModel と qfm(ShiireSlipPrint.qfm を一部修正)を、印刷系のプロジェクト標準(ShopBudgetReportView 等)に合わせて実装。実際の印字例(仕入返品伝票)に一致する SQL を生成し印刷ロジックへ渡す。
+### 実施内容
+- CvWpfclient/Views/05Shiire/ShiireSlipPrintView.xaml: スタブから ShopBudgetReport 準拠の印刷ダイアログへ実装。ColorZone ヘッダ + 印刷範囲(仕入日 / 仕入先 / 倉庫 / 伝票NO / 手入力NO の各範囲 + 取引区分コンボ) + 「印刷実行」ボタン。F6=DoOutputPdf / Esc=Exit。仕入先・倉庫は MenteSearchTextBox + SearchTextBoxAssist で選択。
+- CvWpfclient/ViewModels/05Shiire/ShiireSlipPrintViewModel.cs: BaseViewModel 派生。範囲条件を ObservableProperty で保持し、SelectXxx コマンドで MasterShiire / MasterTokui(TenType=0) を選択。DoOutputPdf で QueryListSqlParam を組み、RunPrintPdfAsync("ShiireSlipPrint.qfm", …) で PDF 出力(ShopBudgetReport の印刷ヘルパを踏襲)。
+  - SQL は Jmeisai を json_each で明細1行=CSV1行へ展開し、qfm の item1..item46 順(datasrc)に一致する 46 列を SELECT。仕入先 / 倉庫 / 自社(MasterSysman Id=1)の住所を LEFT JOIN。数量計 / 金額計 / 上代計は伝票単位の window 合計。消費税は「請求時一括」固定、総合計=金額合計。
+- printform/ShiireSlipPrint.qfm: 一部修正のみ。page title「自社納品伝票」→「仕入伝票」。item4(予備コード)の decode 書式 `"("@")"` を空へ変更(データ無しで "()" を出さない)。Shift_JIS(cp932)維持。
+### 技術決定 Why
+- 実 DB(server-dev.db)の Tran03Shiire には Tax/Total 列が無く、SuTotal/KingakuTotal/JodaiTotal のみ存在。印字例も消費税「請求時一括」・総合計=金額合計であるため、欠番列で SQL が壊れるのを避けつつ印字例に一致させるべく、Tax/Total へ依存せず金額合計の window 合計と固定文字で再現した。
+- 印刷データ供給は ShopBudgetReport / ShiireInput 明細印刷と同じ QueryListSqlParam(SELECT 列順=qfm item 順)。CSV はヘッダ無し・SELECT 列順で data.txt へ出力される(PrintPdfService / WriteDynamicCsv)ため、未参照 item(8,9,15…)も '' で列位置を維持。
+- レガシー .omo の「伝票処理区分 / 印刷区分」は現行 Tran03Shiire に対応列が無いため入力条件からは除外。ただし印字例に合わせ、伝票上の「伝票処理区分」欄は "商品仕入" 固定表示、「取引区分」は Kubun ラベル表示とした。
+### 確認
+- dotnet build CvWpfclient/CvWpfclient.csproj: 成功(0警告 / 0エラー)。
+- 生成 SQL を server-dev.db に対して実行し構文/列解決を検証(FieldCount=46=item 数、明細 JSON 展開・住所 JOIN・json_extract すべて解決)。Tran03Shiire は空のため rows=0。
+- staged は対象3ファイルのみ、git diff --check クリーン、qfm は staged blob も cp932 で title「仕入伝票」を確認。
+
+---
+## [2026-07-22] 16:10 出荷売上/店舗売上入力に伝票サマリーカードを導入(Phase3後半)
+### Agent
+- Claude Opus 4.8 : Anthropic
+### Editor
+- Claude Code (Sekiya Sato Claude)
+### 目的
+- ユーザーからの要望：Input系最適化 Phase3の上代/下代系(出荷売上ShukkaUriage・店舗売上ShopUriage)へ、発注基準の標準要素を適用する。
+### 実施内容
