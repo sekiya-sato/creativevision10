@@ -1,3 +1,46 @@
+## [2026-08-08] 12:54 McpSqlをSQLiteファイル向けMCPサーバとして実装
+### Agent
+- Opus 5 : Anthropic
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：McpSql を修正し、CvBaseSqlite を使って Sqlite ファイルに対する MCPServer を作成する。必要なメソッドを実装する。
+### 実施内容
+- McpSql/McpSql.csproj: CvBase / CvBaseSqlite への ProjectReference と Microsoft.Data.Sqlite の PackageReference を追加（両パッケージIDとも `Directory.Packages.props` に既出のため共有ファイルの変更は不要）。`SQLitePCLRaw.bundle_e_sqlite3` は CvServer 同様に推移的に流れるので直接参照しない（出力に `runtimes/win-x64/native/e_sqlite3.dll` が入ることを確認済み）。
+- McpSql/Program.cs: `greet` スタブを全面置換。引数解析（第1非フラグ引数 → 環境変数 `MCPSQL_DBFILE`、`--allow-write` は位置自由）、DB接続、ツール登録、stdio サーバ実行、終了処理を実装。
+- McpSql/SqlGuard.cs（新規）: SQL トークナイザ（コメント/文字列/BLOB/引用識別子/バインドパラメータ/括弧深さ）と読み取り専用判定を実装。
+- McpSql/SqliteTools.cs（新規）: `list_tables` / `describe_table` / `list_indexes` / `query` / `explain` と、`--allow-write` 時のみ登録される `execute` を実装。
+- McpSql/StderrLogger.cs（新規）: 環境変数 `MCPSQL_DEBUG` 指定時のみ MCP 内部ログを stderr に出す最小 ILoggerFactory。
+### 技術決定 Why
+- **ModelContextProtocol.Core 2.1.0 で旧スタブはコンパイル不能だった**。`ToolCollection` は `Capabilities.Tools` 配下ではなく `McpServerOptions` 直下、`McpServer` は abstract で `McpServer.Create(transport, options)` が必要、`StdioServerTransport` に引数なし ctor は無く `IAsyncDisposable` のみ、`RunAsync` は transport を取らない。ホスティング用パッケージが無いため属性ベース登録は使えず `McpServerTool.Create` + `ToolCollection` で登録する。
+- **読み取り専用は 4 層で担保する**。キーワード判定はレキサに過ぎずセキュリティ境界にならないため、(1) `Mode=ReadOnly` で接続、(2) `PRAGMA query_only = ON`、(3) `SqlGuard`、(4) 行数・文字数上限と `SqliteCommand.Cancel()`。
+- **読み取り専用時に `ExDatabaseSqlite.GetDbConn()` を使わない**。`GetDbConn` は `Mode=ReadWriteCreate` で開いたうえ `EnableWalMode()` の `PRAGMA journal_mode = WAL` を発行し、DBヘッダを書き換えて `-wal`/`-shm` を生成してしまう。しかもこの書き込みは `query_only` 適用より前に起きるため後追いでは防げない。public コンストラクタ `ExDatabaseSqlite(DbConnection)` は接続を開くだけなのでこちらを使い、`CvBaseSqlite` は改変していない（AGENTS.md の read-only レイヤ）。`ReadOnly` で開けない場合のみ `ReadWrite`（`ReadWriteCreate` ではない）にフォールバックする。
+- **同じ理由で読み取り専用時は `ExDatabaseOption.ClearPools()` を呼ばない**。`PRAGMA optimize` / `wal_checkpoint(TRUNCATE)` / `journal_mode=DELETE` を実行して DB を書き換えるため。`--allow-write` 時のみ呼ぶ。
+- **`KeepConnectionAlive = true` は必須**。NPoco は共有接続を開閉するため、プールに戻ると接続単位設定である `query_only` が失われる。
+- **`PRAGMA` の可否は「`=` の有無」では判定できない**。`PRAGMA optimize` / `wal_checkpoint(...)` / `incremental_vacuum(...)` は `=` 無しで書き込むため、代入の拒否に加えて許可リスト方式にした。
+- **CTE は必ず後続文を検査する**。SQLite 3.46 は `WITH x AS (...) DELETE FROM t` を許すため、括弧深さ 0 の Word だけを走査して後続文の先頭キーワードを判定する。
+- **単文強制は必須**。`SqliteCommand` は `CommandText` 中の全文を順に実行するため、`select 1; delete from t` を通すと DELETE が走る。
+- **`query`/`explain`/`execute` に `ExDatabase.RawExecCmd` を使わない**。(a) 結果を列名キーの `Dictionary` に詰めるため `Id`/`Vdc`/`Vdu` を共有する2テーブルの JOIN が `ArgumentException` になり偽の `{"Error"}` 行として返る、(b) NPoco が `@\w+` を文字列リテラル内まで書き換えるため `WHERE LoginId = 'foo@example.com'` が失敗する、(c) `CancellationToken` 非対応で全件マテリアライズするため暴走クエリを止められない。固定SQLで列名が重複しないスキーマ系のみ再利用し、その際も**必ず `RawLastError` で判定する**（`"Error"` キー判定は `select 1 as Error` を誤検知する）。
+- **`list_tables` に `GetTableCounts()` を使わない**。`name NOT LIKE 'Sys%'` がハードコードされ実在テーブルを隠すうえ、テーブルごとに `count(*)` を無条件実行する（実DBは 9.6GB ある）。`sqlite_master` を直接引き、行数取得は任意かつ `UNION ALL` 1本にまとめた。
+- **行はオブジェクトでなく配列で返す**。キー名の反復が消えてトークンが 2〜4 分の 1 になり、JOIN で重複する列名も保持できる。
+- **パラメータは `JsonElement[]`**。SQLite は動的型で比較が型に敏感なため（`WHERE Id = '5'` は整数 5 に一致しない）、全部を文字列にすると黙って 0 件になる。テーブル名は連結せず `pragma_table_info(@p0)` 等の table-valued pragma 関数でバインドする。
+- **stdout は JSON-RPC 専用**。`Main` 冒頭で `Console.SetOut` を stderr に差し替えて野良 `Console.WriteLine` を無害化し、診断は全て `Console.Error` に出す。
+### 影響範囲
+- 変更は `McpSql/` 配下のみ。`CvBase` / `CvBaseSqlite` は無変更。他プロジェクトへの影響なし。
+### 確認
+- `dotnet build creativevision10.slnx`: 成功（0警告 / 0エラー）。
+- stdio スモークテスト20件を実施し全て期待どおり（失敗0件）。`delete` / `select 1; delete ...`（複数文）/ `with x as (...) delete ...`（CTE内更新）/ `pragma optimize`（`=` 無しの書き込みPRAGMA）/ `pragma journal_mode = WAL`（代入）/ `vacuum` は全て拒否。`-- c /* c */ select 'delete from x'` は正常実行。`select a.Id, b.Id from ... a, ... b` が `columns:["Id","Id"]` を返し重複列名を保持することを確認。BLOB は `{"$blob":"DEADBEEF","len":4}`、NULL は `null` で出力。
+- 読み取り専用の実証: テスト DB は実行後も `journal_mode=delete` のままで `-wal`/`-shm` は生成されず、行数も不変。実DB `CvServer/server-user163.db`（9.6GB）に対しても `list_tables` / `describe_table` / `list_indexes` / `explain` が動作し、ファイルサイズ・更新日時とも不変でサイドカーも生成されないことを確認（`explain` は `SEARCH MasterShohin USING INDEX MasterShohin_uq1 (Code=?)` を返した）。
+- `--allow-write` の実証: `execute` の UPDATE / INSERT が永続化され、`ATTACH` と `PRAGMA` は拒否、`query` は書き込みモードでも DELETE を拒否。終了時に `ClearPools` が働き `journal_mode=delete` へ収束しサイドカーも残らないことを確認。
+- 異常系: DB ファイル不存在 / 破損DB / 不明オプションのいずれも未処理例外を出さず、日本語メッセージと終了コード1で終了することを確認。
+- 注意点: stdin をファイルリダイレクトで与えると EOF でトランスポートが即切断され応答が捨てられる（SDK の仕様）。手動検証時は実クライアント同様に応答が返るまで stdin を開いたままにする必要がある。
+### 残課題
+- MCP クライアント（`claude mcp add`）へ実際に登録しての動作確認は未実施。
+  例) `claude mcp add cv-sqlite -- "C:\gitroot\documents\new2022\cv10\McpSql\bin\Debug\net10.0\McpSql.exe" "C:\gitroot\documents\new2022\cv10\CvServer\server-user163.db"`
+- `CvServer/bin/Debug/net10.0/server-dev.db`（ビルド出力側のコピー、6.3GB）は `database disk image is malformed` で開けない状態だった。本作業とは無関係だが別途確認が必要。
+
+---
+
 ## [2026-08-06] 12:32 在庫・掛再更新の対象選択と買掛集計追加
 ### Agent
 - GPT-5 : OpenAI
