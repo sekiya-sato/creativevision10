@@ -8,16 +8,17 @@ using System.Text.Json.Serialization;
 
 namespace CvServer.Services;
 
-public partial class SearchByPostalCodeService : IPostalAddressService, IDisposable {
+public partial class SearchByPostalCodeService : IPostalAddressService {
 	private const int MinPostalCodeSearchLength = 3;
 	private const int MaxPostalCodeSearchLength = 7;
 	private readonly ILogger<SearchByPostalCodeService> _logger;
 	private readonly IConfiguration _configuration;
 	private static readonly HttpClient httpClient = new();
 	private static JapanPostBizOptions? _japanPostBizOptions;
-	private readonly SemaphoreSlim _lock = new(1, 1);
-	private string? _cachedToken;
-	private DateTimeOffset _expiresAtUtc = DateTimeOffset.MinValue;
+	// gRPCサービスは呼び出しごとに生成されるため、トークンはプロセス共有で保持する。
+	private static readonly SemaphoreSlim tokenLock = new(1, 1);
+	private static string? cachedToken;
+	private static DateTimeOffset expiresAtUtc = DateTimeOffset.MinValue;
 	public SearchByPostalCodeService(ILogger<SearchByPostalCodeService> logger, IConfiguration configuration) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
@@ -186,33 +187,31 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 
 
 	public async Task<AuthenticationHeaderValue> GetAuthorizationAsync(CancellationToken cancellationToken = default) {
-		await _lock.WaitAsync(cancellationToken).ConfigureAwait(false);
+		await tokenLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 		try {
 			if (IsTokenValid()) {
-				return new AuthenticationHeaderValue("Bearer", _cachedToken);
+				return new AuthenticationHeaderValue("Bearer", cachedToken);
 			}
 			var options = _japanPostBizOptions ?? GetJapanPostBizOptions();
 			var tokenResponse = await RequestTokenAsync(options, cancellationToken).ConfigureAwait(false);
-			_cachedToken = tokenResponse.Token;
-			_expiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(Math.Max(0, tokenResponse.ExpiresIn - options.TokenRefreshMarginSeconds));
+			cachedToken = tokenResponse.Token;
+			expiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(Math.Max(0, tokenResponse.ExpiresIn - options.TokenRefreshMarginSeconds));
 
-			return new AuthenticationHeaderValue("Bearer", _cachedToken);
+			return new AuthenticationHeaderValue("Bearer", cachedToken);
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "日本郵便APIのトークン取得に失敗しました。");
 			throw;
 		}
 		finally {
-			_lock.Release();
+			tokenLock.Release();
 		}
 	}
 	public void Invalidate() {
-		_cachedToken = null;
-		_expiresAtUtc = DateTimeOffset.MinValue;
+		cachedToken = null;
+		expiresAtUtc = DateTimeOffset.MinValue;
 	}
-	private bool IsTokenValid() {
-		return !string.IsNullOrWhiteSpace(_cachedToken) && DateTimeOffset.UtcNow < _expiresAtUtc;
-	}
+	private static bool IsTokenValid() => !string.IsNullOrWhiteSpace(cachedToken) && DateTimeOffset.UtcNow < expiresAtUtc;
 	private JapanPostBizOptions GetJapanPostBizOptions() {
 		var verInfo = new AppGlobal().VerInfo;
 		return new JapanPostBizOptions {
@@ -249,10 +248,6 @@ public partial class SearchByPostalCodeService : IPostalAddressService, IDisposa
 		}
 
 		return tokenResponse;
-	}
-
-	public void Dispose() {
-		_lock.Dispose();
 	}
 
 	private sealed record JapanPostTokenRequest(

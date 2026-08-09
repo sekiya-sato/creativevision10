@@ -29,6 +29,17 @@ public partial class App : Application {
 	private static readonly SemaphoreSlim _hostRestartGate = new(1, 1);
 	private static readonly object _hostLifetimeSync = new();
 	private static CancellationTokenSource _hostLifetimeCts = new();
+	// 常駐WPFクライアントではgRPC接続を維持するため、接続寿命と外側のHTTPタイムアウトは意図して無期限にする。
+	// 有限値が必要になった場合は、この集約設定だけを変更する。
+	private static readonly GrpcTransportSettings _sharedGrpcTransportSettings = new(
+		PooledConnectionIdleTimeout: Timeout.InfiniteTimeSpan,
+		PooledConnectionLifetime: Timeout.InfiniteTimeSpan,
+		RequestTimeout: Timeout.InfiniteTimeSpan);
+
+	private sealed record GrpcTransportSettings(
+		TimeSpan PooledConnectionIdleTimeout,
+		TimeSpan PooledConnectionLifetime,
+		TimeSpan RequestTimeout);
 
 	[STAThread]
 	public static void Main(string[] args) {
@@ -254,7 +265,8 @@ public partial class App : Application {
 				services.AddTransient<GrpcSubPathHandler>(_ => new GrpcSubPathHandler(subPath));
 
 			services.AddSingleton<SocketsHttpHandler>(_ => new SocketsHttpHandler {
-				PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+				PooledConnectionIdleTimeout = _sharedGrpcTransportSettings.PooledConnectionIdleTimeout,
+				PooledConnectionLifetime = _sharedGrpcTransportSettings.PooledConnectionLifetime,
 				KeepAlivePingDelay = TimeSpan.FromSeconds(60), // サーバーの設定より長くするのが一般的
 				KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
 				EnableMultipleHttp2Connections = true,
@@ -268,7 +280,7 @@ public partial class App : Application {
 				// サブパスが定義されている時だけパイプラインに追加
 				if (!string.IsNullOrEmpty(path))
 					b.AddHttpMessageHandler<GrpcSubPathHandler>();
-				b.ConfigureHttpClient(client => client.Timeout = Timeout.InfiniteTimeSpan);
+				b.ConfigureHttpClient(client => client.Timeout = _sharedGrpcTransportSettings.RequestTimeout);
 			}
 
 			// 3. サービスの登録
