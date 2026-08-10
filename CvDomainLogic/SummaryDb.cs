@@ -184,10 +184,11 @@ WHERE EXISTS (
     AND Target.Id_Soko = SummaryRealStock.Id_Soko
     AND Target.Id_Shohin = SummaryRealStock.Id_Shohin
     AND Target.Id_Col = SummaryRealStock.Id_Col
+    AND Target.Id_Siz = SummaryRealStock.Id_Siz
 );
 
 WITH TargetKeys AS (
-  SELECT DISTINCT Id_Soko, Id_Shohin, Id_Col
+  SELECT DISTINCT Id_Soko, Id_Shohin, Id_Col, Id_Siz
   FROM SummaryStock
   WHERE SumMonth BETWEEN @0 AND @1
 )
@@ -205,6 +206,7 @@ INNER JOIN TargetKeys AS k
   ON k.Id_Soko = s.Id_Soko
  AND k.Id_Shohin = s.Id_Shohin
  AND k.Id_Col = s.Id_Col
+ AND k.Id_Siz = s.Id_Siz
 WHERE s.SumMonth <= @1
 GROUP BY
   s.Id_Soko,
