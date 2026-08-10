@@ -1,3 +1,24 @@
+## [2026-08-10] 16:09 SummaryRealStock範囲再集計の色・サイズ単位是正
+### Agent
+- GPT-5.6 : OpenAI : Sekiya Sato Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：`CalcSummaryRealStockRange` の対象を色・サイズ単位とする。
+### 実施内容
+- CvDomainLogic/SummaryDb.cs: `CalcSummaryRealStockRange` の `TargetKeys` 結合を倉庫・商品・色・サイズまで一致させ、指定月に存在する組だけを再作成するよう是正。
+- Tests/TestServer/SummaryDbTests.cs: テスト名を色・サイズ単位の仕様に合わせ、対象月に存在しない別サイズは既存数量を維持することを確認するよう修正。
+- Doc/aicoding_log.md: 調査・修正・確認内容を追記。
+### 技術決定 Why
+- `SummaryRealStock` の一意キーは倉庫・商品・色・サイズであり、範囲再集計も同じ粒度で行う。対象月に存在しない別サイズは更新対象に含めない。
+### 確認
+- `SummaryDbTests` を実行し、修正前の期待値が色単位の仕様になっていることを確認した。
+- `TestServer.dll --filter FullyQualifiedName~SummaryDbTests`: 成功（2件、失敗0件）。
+- `vscmd.bat dotnet build Tests/TestServer/TestServer.csproj --no-restore`: 成功（警告0、エラー0）。
+- CRLF・`git diff --check`: 問題なし。
+
+---
+
 ## [2026-08-10] 16:00 仕入返品入力の画面デザインをcv10共通規約へ是正
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

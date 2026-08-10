@@ -65,7 +65,7 @@ public class SummaryDbTests {
 	}
 
 	[TestMethod]
-	public void CalcSummaryRealStockRange_RebuildsOnlyTargetWarehouseProductColor() {
+	public void CalcSummaryRealStockRange_RebuildsOnlyTargetWarehouseProductColorSize() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		db.CreateTable(typeof(SummaryStock), true, false);
 		db.CreateTable(typeof(SummaryRealStock), true, false);
@@ -95,7 +95,7 @@ public class SummaryDbTests {
 
 		Assert.AreEqual(2, targetRows.Count);
 		Assert.AreEqual(15, targetRows[0].Su);
-		Assert.AreEqual(7, targetRows[1].Su);
+		Assert.AreEqual(999, targetRows[1].Su);
 		Assert.AreEqual(777, unrelated.Su);
 	}
 

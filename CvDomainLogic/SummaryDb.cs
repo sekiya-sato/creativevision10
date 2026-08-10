@@ -167,7 +167,7 @@ GROUP BY
 		return cnt;
 	}
 	/// <summary>
-	/// 指定年月範囲に存在する倉庫・商品・色のSummaryStockを基に、該当するSummaryRealStockを再作成する
+	/// 指定年月範囲に存在する倉庫・商品・色・サイズのSummaryStockを基に、該当するSummaryRealStockを再作成する
 	/// </summary>
 	/// <param name="DateFromYyyymm">対象開始年月</param>
 	/// <param name="DateToYyyymm">対象終了年月</param>
