@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._05Shiire.HenpinInputView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._05Shiire.HenpinInputView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -84,8 +84,8 @@
 					Style="{StaticResource FormLabel}"
 					Text="取引区分" />
 				<ComboBox Grid.Row="0" Grid.Column="1"
-					Margin="0,4,16,4" HorizontalAlignment="Left"
 					MinWidth="180"
+					Margin="0,4,16,4" HorizontalAlignment="Left"
 					DisplayMemberPath="Name"
 					ItemsSource="{Binding KubunOptions}"
 					SelectedValue="{Binding SelectedKubun, Mode=TwoWay}"
@@ -98,8 +98,8 @@
 					Style="{StaticResource FormLabel}"
 					Text="仕入日" />
 				<DatePicker Grid.Row="0" Grid.Column="3"
-					Margin="0,4" HorizontalAlignment="Left"
 					MinWidth="180"
+					Margin="0,4" HorizontalAlignment="Left"
 					helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 					SelectedDate="{Binding DenDay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					Style="{StaticResource FormDatePicker}" />
@@ -119,8 +119,7 @@
 						ItemsSource="{Binding ShiireOptions}"
 						SelectedItem="{Binding SelectedShiire, Mode=TwoWay}"
 						Style="{StaticResource FormComboBox}"
-						ToolTip="返品先の仕入先。対象商品はメーカーCDが仕入先CDと一致するものに絞られます"
-						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />
+						ToolTip="返品先の仕入先。対象商品はメーカーCDが仕入先CDと一致するものに絞られます" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />
 					<Button Grid.Column="1"
 						Command="{Binding SelectShiireDialogCommand}"
 						Content="&lt;&lt;"
@@ -142,8 +141,7 @@
 						ItemsSource="{Binding SokoOptions}"
 						SelectedItem="{Binding SelectedSoko, Mode=TwoWay}"
 						Style="{StaticResource FormComboBox}"
-						ToolTip="返品する在庫のある倉庫"
-						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />
+						ToolTip="返品する在庫のある倉庫" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />
 					<Button Grid.Column="1"
 						Command="{Binding SelectSokoDialogCommand}"
 						Content="&lt;&lt;"
@@ -176,8 +174,7 @@
 						ItemsSource="{Binding ShainOptions}"
 						SelectedItem="{Binding SelectedShain, Mode=TwoWay}"
 						Style="{StaticResource FormComboBox}"
-						ToolTip="伝票の担当者"
-						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />
+						ToolTip="伝票の担当者" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />
 					<Button Grid.Column="1"
 						Command="{Binding SelectShainDialogCommand}"
 						Content="&lt;&lt;"
@@ -229,20 +226,17 @@
 						VerticalAlignment="Center"
 						FontWeight="SemiBold"
 						Text="{Binding InputSuTotal, StringFormat={}{0:N0}}"
-						TextAlignment="Right"
-						ToolTip="数量計" />
+						TextAlignment="Right" ToolTip="数量計" />
 					<TextBlock MinWidth="140"
 						Margin="16,0,0,0" VerticalAlignment="Center"
 						FontWeight="SemiBold"
 						Text="{Binding JodaiKingakuTotal, StringFormat={}￥{0:N0}}"
-						TextAlignment="Right"
-						ToolTip="上代金額計" />
+						TextAlignment="Right" ToolTip="上代金額計" />
 					<TextBlock MinWidth="140"
 						Margin="16,0,0,0" VerticalAlignment="Center"
 						FontWeight="SemiBold"
 						Text="{Binding GedaiKingakuTotal, StringFormat={}￥{0:N0}}"
-						TextAlignment="Right"
-						ToolTip="下代金額計" />
+						TextAlignment="Right" ToolTip="下代金額計" />
 				</StackPanel>
 				<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
 					<materialDesign:PackIcon Margin="0,0,8,0" VerticalAlignment="Center"
@@ -258,8 +252,7 @@
 				</StackPanel>
 				<TextBlock Margin="16,0,0,0"
 					Style="{StaticResource StatusTextBlockStyle}"
-					Text="[在庫取得] をクリックすると、該当仕入先の該当倉庫に在庫が存在する商品を表示します"
-					TextTrimming="CharacterEllipsis" />
+					Text="[在庫取得] をクリックすると、該当仕入先の該当倉庫に在庫が存在する商品を表示します" TextTrimming="CharacterEllipsis" />
 			</DockPanel>
 		</materialDesign:Card>
 
@@ -334,7 +327,8 @@
 		<!--  操作ボタン  -->
 		<Grid Grid.Row="4"
 			Margin="12,10,12,4">
-			<StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+			<StackPanel HorizontalAlignment="Left"
+				Orientation="Horizontal">
 				<Button Command="{Binding ClearConditionsCommand}"
 					Style="{StaticResource MaterialDesignOutlinedButton}"
 					ToolTip="入力内容と一覧をクリア">
@@ -342,14 +336,13 @@
 				</Button>
 				<StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
 					<TextBlock Style="{StaticResource StatusTextBlockStyle}"
-						Text="[実行] をクリックすると、【商品仕入入力】にデータ追加"
-						TextTrimming="CharacterEllipsis" />
+						Text="[実行] をクリックすると、【商品仕入入力】にデータ追加" TextTrimming="CharacterEllipsis" />
 					<TextBlock Style="{StaticResource StatusTextBlockStyle}"
-						Text="修正・削除は、【商品仕入入力】にて可能"
-						TextTrimming="CharacterEllipsis" />
+						Text="修正・削除は、【商品仕入入力】にて可能" TextTrimming="CharacterEllipsis" />
 				</StackPanel>
 			</StackPanel>
-			<StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+			<StackPanel HorizontalAlignment="Right"
+				Orientation="Horizontal">
 				<Button Command="{Binding RegisterCommand}"
 					IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
 					Style="{StaticResource MaterialDesignRaisedButton}"
