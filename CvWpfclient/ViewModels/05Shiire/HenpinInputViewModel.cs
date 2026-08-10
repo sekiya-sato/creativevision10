@@ -49,6 +49,19 @@ public partial class HenpinInputViewModel : BaseStockSheetInputViewModel<Tran03S
 	[ObservableProperty]
 	public partial EnumShiire SelectedKubun { get; set; } = EnumShiire.Henpin;
 
+	/// <summary>
+	/// 仕入日。基底が持つ <see cref="BaseStockSheetInputViewModel{TDen}.DenDayText"/>(文字列)を
+	/// DatePicker 用に見せる。日付入力は他の仕入伝票画面(商品仕入入力)と同じ DatePicker に揃える。
+	/// </summary>
+	public DateTime? DenDay {
+		get => DateTime.TryParseExact(DenDayText.Trim(), "yyyy/MM/dd",
+			CultureInfo.InvariantCulture, DateTimeStyles.None, out var value) ? value : null;
+		set {
+			DenDayText = value?.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) ?? string.Empty;
+			OnPropertyChanged();
+		}
+	}
+
 	// ---- マスタ選択（Id を選び「コード 名称」を表示する） ------------------------
 
 	[ObservableProperty]
@@ -106,7 +119,7 @@ public partial class HenpinInputViewModel : BaseStockSheetInputViewModel<Tran03S
 		SelectedShain = null;
 		IsZeroExcluded = true;
 		IsPrefillTheoretical = true;
-		DenDayText = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+		DenDay = DateTime.Now.Date;
 	}
 
 	// ---- マスタ読み込み ----------------------------------------------------------

@@ -1,3 +1,28 @@
+## [2026-08-10] 16:00 仕入返品入力の画面デザインをcv10共通規約へ是正
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：画面デザインを cv10 のスタイルに合わせる。
+### 実施内容
+- CvWpfclient/Views/05Shiire/HenpinInputView.xaml: `behaviors:Interaction.Triggers` による `ContentRendered` → `InitCommand` 起動を削除（`wpf-project-guide` 違反。`BaseWindow.OnContentRendered` が既に `TryExecuteInitCommand()` を呼ぶため二重起動になり、マスタ取得が2回走っていた）。
+- 同: 仕入日を `TextBox`(文字列)から `FormDatePicker` + `DatePickerTodayButtonBehavior` の `DatePicker` へ変更し、商品仕入入力(`ShiireInputView`)の計上日と揃えた。
+- 同: 仕入先/倉庫/入力者の `StackPanel` + 固定幅 `Width="330"` を、`Grid`(`*` + `Auto`)へ変更。`ColumnDefinition` も `Auto/Auto` から `*` + `MinWidth` にし、ウィンドウ幅に追従させた（`check-xaml-layout` の「固定幅ハードコード」「StackPanel Horizontal に幅可変要素」対策）。
+- 同: 合計欄の固定 `Width` を `MinWidth` 化。説明文・ステータス文に `StatusTextBlockStyle` と `TextTrimming` を付与。`<<` ボタンを素の `Button` から `BudgetActionButtonStyle` へ、取得件数上限を `NumericFormTextBox` へ差し替えた。
+- 同: `FormLabel` と重複していた `HintAssist.Hint` を削除（備考のみ残す）。ラベルが二重表示されており、`ShiireInputView` の「左に FormLabel、コントロールに Hint 無し」の慣習に合わせた。
+- CvWpfclient/ViewModels/05Shiire/HenpinInputViewModel.cs: 基底の `DenDayText`(文字列)を DatePicker へ見せる `DenDay` (DateTime?) プロパティを追加。
+### 技術決定 Why
+- `BaseWindow` が初期化・Escape・Cancel の既定動作を持つため、View 側で同じ導線を追加しない（`wpf-project-guide` の Window 規約）。今回はこの規約違反が実害（マスタ二重取得）になっていた。
+- 幅は固定値ではなく `Auto`/`*` + `MinWidth` を優先し、右端見切れとテーマ/DPI差で破綻しないようにする（`check-xaml-layout` の修正方針）。
+- 共通スタイルは `UIFormStyles.xaml` の既存キーのみを流用し、新規スタイルは追加していない。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx --nologo`: 成功（警告0、エラー0）。
+- 実画面確認: 修正後の初期表示と、仕入先195/倉庫000990 での [在庫取得] 500件表示を再キャプチャして目視確認。ラベル重複の解消、コンボのウィンドウ幅追従、明細の全列表示（横スクロール無し）を確認した。確認用の一時フックは削除済み。
+- CRLF・`git diff --check`: 問題なし。
+
+---
+
 ## [2026-08-10] 15:50 仕入返品入力を在庫一覧方式へ全面変更
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
