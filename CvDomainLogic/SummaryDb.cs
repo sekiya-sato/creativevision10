@@ -20,7 +20,8 @@ public class SummaryDb {
 			($"Summary : {nameof(Tran03Shiire)}", CalcSummaryStockTrn<Tran03Shiire>),
 			($"Summary : {nameof(Tran05Ido)}", CalcSummaryStockTrn<Tran05Ido>),
 			($"Summary : {nameof(Tran10IdoOut)}", CalcSummaryStockTrn<Tran10IdoOut>),
-			($"Summary : {nameof(Tran11IdoIn)}", CalcSummaryStockTrn<Tran11IdoIn>)
+			($"Summary : {nameof(Tran11IdoIn)}", CalcSummaryStockTrn<Tran11IdoIn>),
+			("Summary : CalcSummaryRealStockRange", p => CalcSummaryRealStockRange(p.DateYymmFrom, p.DateYymmTo))
 		];
 		//("Summary : Tran60Tana", CalcSummaryStock<Tran60Tana>),
 
@@ -163,6 +164,57 @@ GROUP BY
   Id_Siz;
 ";
 		cnt += ExecuteAndCounts($"{deleteSql}\n{sql}", [DateYyyymm], "CalcSummaryRealStock", "SummaryRealStock", DateYyyymm);
+		return cnt;
+	}
+	/// <summary>
+	/// 指定年月範囲に存在する倉庫・商品・色のSummaryStockを基に、該当するSummaryRealStockを再作成する
+	/// </summary>
+	/// <param name="DateFromYyyymm">対象開始年月</param>
+	/// <param name="DateToYyyymm">対象終了年月</param>
+	/// <returns></returns>
+	public int CalcSummaryRealStockRange(string DateFromYyyymm, string DateToYyyymm) {
+		var vdate = Common.GetVdate();
+		var period = $"{DateFromYyyymm}-{DateToYyyymm}";
+		var sql = @$"
+DELETE FROM SummaryRealStock
+WHERE EXISTS (
+  SELECT 1
+  FROM SummaryStock AS Target
+  WHERE Target.SumMonth BETWEEN @0 AND @1
+    AND Target.Id_Soko = SummaryRealStock.Id_Soko
+    AND Target.Id_Shohin = SummaryRealStock.Id_Shohin
+    AND Target.Id_Col = SummaryRealStock.Id_Col
+);
+
+WITH TargetKeys AS (
+  SELECT DISTINCT Id_Soko, Id_Shohin, Id_Col
+  FROM SummaryStock
+  WHERE SumMonth BETWEEN @0 AND @1
+)
+INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
+SELECT
+  s.Id_Soko,
+  s.Id_Shohin,
+  s.Id_Col,
+  s.Id_Siz,
+  SUM(s.Su) AS TotalSu,
+  {vdate} AS Vdc,
+  {vdate} AS Vdu
+FROM SummaryStock AS s
+INNER JOIN TargetKeys AS k
+  ON k.Id_Soko = s.Id_Soko
+ AND k.Id_Shohin = s.Id_Shohin
+ AND k.Id_Col = s.Id_Col
+WHERE s.SumMonth <= @1
+GROUP BY
+  s.Id_Soko,
+  s.Id_Shohin,
+  s.Id_Col,
+  s.Id_Siz;
+";
+		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		var cnt = ExecuteAndCounts(sql, [DateFromYyyymm, DateToYyyymm], "CalcSummaryRealStockRange", "SummaryRealStock", period);
+		_db.CompleteTransaction();
 		return cnt;
 	}
 	/// <summary>
