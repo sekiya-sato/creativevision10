@@ -1,7 +1,7 @@
 /*
 # description
 BaseStockSheetInputViewModel は「倉庫のSKUを一覧で引き、行ごとに数量を入力して1伝票にまとめて登録する」
-いわゆる**一覧方式**の入力画面の共通基底クラスです。棚卸入力(一覧方式) と 在庫移動入力 が使います。
+いわゆる**一覧方式**の入力画面の共通基底クラスです。棚卸入力(一覧方式) / 在庫移動入力 / 仕入返品入力 が使います。
 
 伝票明細方式(BaseTranInputViewModel)は「明細行を1件ずつ追加して商品を選ぶ」ので
 実棚のように数百SKUを順に埋める作業には向きません。一覧方式は逆に
@@ -55,10 +55,12 @@ public sealed partial class StockSheetRow : ObservableObject {
 	/// <summary>上代単価。伝票明細の Jodai に入れる。</summary>
 	public int TankaJodai { get; set; }
 
-	/// <summary>入力数（実棚数 / 移動数）。0 の行は伝票明細に含めない。</summary>
+	/// <summary>入力数（実棚数 / 移動数 / 返品数）。0 の行は伝票明細に含めない。</summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(DiffSu))]
 	[NotifyPropertyChangedFor(nameof(RemainSu))]
+	[NotifyPropertyChangedFor(nameof(JodaiKingaku))]
+	[NotifyPropertyChangedFor(nameof(GedaiKingaku))]
 	public partial int InputSu { get; set; }
 
 	/// <summary>入力数 − 理論在庫。棚卸差異（プラスなら現物が多い）。</summary>
@@ -66,6 +68,12 @@ public sealed partial class StockSheetRow : ObservableObject {
 
 	/// <summary>理論在庫 − 入力数。移動後に出庫元へ残る数の目安。</summary>
 	public int RemainSu => TheoreticalSu - InputSu;
+
+	/// <summary>上代金額（入力数 × 上代単価）。伝票の JodaiTotal と同じ積み方。</summary>
+	public int JodaiKingaku => InputSu * TankaJodai;
+
+	/// <summary>下代金額（入力数 × 下代単価）。伝票の GedaiTotal と同じ積み方。</summary>
+	public int GedaiKingaku => InputSu * TankaGenka;
 
 	/// <summary>伝票明細へ変換する。</summary>
 	public Tran99Meisai ToMeisai(int no) => new() {
@@ -157,6 +165,14 @@ public abstract partial class BaseStockSheetInputViewModel<TDen> : BaseQueryView
 	[ObservableProperty]
 	public partial int InputSuTotal { get; set; }
 
+	/// <summary>上代金額の合計（入力数 × 上代単価の総和）</summary>
+	[ObservableProperty]
+	public partial int JodaiKingakuTotal { get; set; }
+
+	/// <summary>下代金額の合計（入力数 × 下代単価の総和）</summary>
+	[ObservableProperty]
+	public partial int GedaiKingakuTotal { get; set; }
+
 	/// <summary>登録済み伝票のId（登録後に画面へ出す）</summary>
 	[ObservableProperty]
 	public partial long RegisteredDenId { get; set; }
@@ -178,6 +194,8 @@ public abstract partial class BaseStockSheetInputViewModel<TDen> : BaseQueryView
 		Rows = [];
 		RowCount = 0;
 		InputSuTotal = 0;
+		JodaiKingakuTotal = 0;
+		GedaiKingakuTotal = 0;
 		RegisteredDenId = 0;
 	}
 
@@ -222,7 +240,11 @@ public abstract partial class BaseStockSheetInputViewModel<TDen> : BaseQueryView
 		if (e.PropertyName == nameof(StockSheetRow.InputSu)) UpdateTotals();
 	}
 
-	void UpdateTotals() => InputSuTotal = Rows.Sum(r => r.InputSu);
+	void UpdateTotals() {
+		InputSuTotal = Rows.Sum(r => r.InputSu);
+		JodaiKingakuTotal = Rows.Sum(r => r.JodaiKingaku);
+		GedaiKingakuTotal = Rows.Sum(r => r.GedaiKingaku);
+	}
 
 	/// <summary>入力済み(数量≠0)の行を伝票にして登録する。</summary>
 	[RelayCommand(IncludeCancelCommand = true)]
