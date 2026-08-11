@@ -20,7 +20,9 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 		context.CancellationToken.ThrowIfCancellationRequested();
 		var sku = _db.Fetch(typeof(DerivedShohinColSiz), "where Jan1=@0 or Jan2=@0 or Jan3=@0", barcode).OfType<DerivedShohinColSiz>().FirstOrDefault();
 		var product = sku == null ? null : FindById<MasterShohin>(sku.Id_Shohin);
-		return Task.FromResult(product == null || sku == null ? null : new PosProduct { ProductId = product.Id, ProductCode = product.Code, ProductName = product.Name, ColorId = sku.Id_Col, ColorCode = sku.Code_Col, ColorName = sku.Mei_Col, SizeId = sku.Id_Siz, SizeCode = sku.Code_Siz, SizeName = sku.Mei_Siz, UnitPrice = product.TankaJodai });
+		if (product == null || sku == null) return Task.FromResult<PosProduct?>(null);
+		var unitPrice = ResolveJodai(product, request.StoreId, DateTime.Today.ToString("yyyyMMdd"));
+		return Task.FromResult<PosProduct?>(new PosProduct { ProductId = product.Id, ProductCode = product.Code, ProductName = product.Name, ColorId = sku.Id_Col, ColorCode = sku.Code_Col, ColorName = sku.Mei_Col, SizeId = sku.Id_Siz, SizeCode = sku.Code_Siz, SizeName = sku.Mei_Siz, UnitPrice = unitPrice });
 	}
 
 	public Task<PosCheckoutResponse> CheckoutAsync(PosCheckoutRequest request, CallContext context = default) {
@@ -142,19 +144,27 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 		var store = FindRequired<MasterTokui>(request.StoreId, "店舗");
 		var warehouse = FindRequired<MasterTokui>(request.WarehouseId, "倉庫");
 		var staff = FindRequired<MasterShain>(request.StaffId, "担当者");
-		var lines = request.Lines.Select((line, index) => CreateLine(line, index + 1, staff)).ToList();
+		var denDay = DateTime.Today.ToString("yyyyMMdd");
+		var lines = request.Lines.Select((line, index) => CreateLine(line, index + 1, staff, store.Id, denDay)).ToList();
 		var total = checked(lines.Sum(line => line.Kingaku));
 		var paid = checked(request.Payment.CashAmount + request.Payment.CardAmount + request.Payment.OtherAmount);
 		if (paid < total) throw new InvalidOperationException("お預り金額が合計金額に不足しています。");
 		var now = DateTime.UtcNow.Ticks;
-		return new Tran01Tenuri { Vdc = now, Vdu = now, DenDay = DateTime.Today.ToString("yyyyMMdd"), Kubun = request.Kubun, Id_Tenpo = store.Id, VTenpo = new CodeNameView(store.Id, store.Code, store.Name), Id_Soko = warehouse.Id, VSoko = new CodeNameView(warehouse.Id, warehouse.Code, warehouse.Name), Id_Shain = staff.Id, VShain = new CodeNameView(staff.Id, staff.Code, staff.Name), Jmeisai = lines, SuTotal = lines.Sum(line => line.Su), KingakuTotal = total, JodaiTotal = lines.Sum(line => line.Jodai), GedaiTotal = lines.Sum(line => line.Gedai), Total = total, PosClientSaleId = request.ClientSaleId, JposPayment = new PosPaymentDetail { CashAmount = request.Payment.CashAmount, CardAmount = request.Payment.CardAmount, OtherAmount = request.Payment.OtherAmount, ChangeAmount = paid - total } };
+		return new Tran01Tenuri { Vdc = now, Vdu = now, DenDay = denDay, Kubun = request.Kubun, Id_Tenpo = store.Id, VTenpo = new CodeNameView(store.Id, store.Code, store.Name), Id_Soko = warehouse.Id, VSoko = new CodeNameView(warehouse.Id, warehouse.Code, warehouse.Name), Id_Shain = staff.Id, VShain = new CodeNameView(staff.Id, staff.Code, staff.Name), Jmeisai = lines, SuTotal = lines.Sum(line => line.Su), KingakuTotal = total, JodaiTotal = lines.Sum(line => line.Jodai), GedaiTotal = lines.Sum(line => line.Gedai), Total = total, PosClientSaleId = request.ClientSaleId, JposPayment = new PosPaymentDetail { CashAmount = request.Payment.CashAmount, CardAmount = request.Payment.CardAmount, OtherAmount = request.Payment.OtherAmount, ChangeAmount = paid - total } };
 	}
 
-	private Tran99Meisai CreateLine(PosCheckoutLine line, int no, MasterShain headerStaff) {
+	private Tran99Meisai CreateLine(PosCheckoutLine line, int no, MasterShain headerStaff, long storeId, string denDay) {
 		var product = FindRequired<MasterShohin>(line.ProductId, "商品");
 		var lineStaff = line.StaffId > 0 ? FindRequired<MasterShain>(line.StaffId, "明細担当者") : headerStaff;
-		return new Tran99Meisai { No = no, Kubun = line.Kubun, Id_Shohin = product.Id, Code_Shohin = product.Code, Mei_Shohin = product.Name, JanCode = line.Barcode, Id_Col = line.ColorId, Code_Col = line.ColorCode, Mei_Col = line.ColorName, Id_Siz = line.SizeId, Code_Siz = line.SizeCode, Mei_Siz = line.SizeName, Su = line.Quantity, Tanka = product.TankaJodai, Kingaku = checked(line.Quantity * product.TankaJodai), Jodai = product.TankaJodai, Gedai = product.TankaGenka, Id_Shain = lineStaff.Id, Code_Shain = lineStaff.Code, Mei_Shain = lineStaff.Name };
+		var tanka = ResolveJodai(product, storeId, denDay);
+		return new Tran99Meisai { No = no, Kubun = line.Kubun, Id_Shohin = product.Id, Code_Shohin = product.Code, Mei_Shohin = product.Name, JanCode = line.Barcode, Id_Col = line.ColorId, Code_Col = line.ColorCode, Mei_Col = line.ColorName, Id_Siz = line.SizeId, Code_Siz = line.SizeCode, Mei_Siz = line.SizeName, Su = line.Quantity, Tanka = tanka, Kingaku = checked(line.Quantity * tanka), Jodai = tanka, Gedai = product.TankaGenka, Id_Shain = lineStaff.Id, Code_Shain = lineStaff.Code, Mei_Shain = lineStaff.Name };
 	}
+
+	/// <summary>
+	/// 店舗・日付に応じた販売価格を解決する。上代一括変更(<see cref="DerivedJodai"/>)の適用行が無ければ商品マスタの上代を返す。
+	/// </summary>
+	private int ResolveJodai(MasterShohin product, long storeId, string denDay)
+		=> new JodaiDb(_db).ResolveJodai(product.Id, EnumJodaiTaisho.Tenpo, storeId, denDay);
 	private T? FindById<T>(long id) where T : BaseDbClass => _db.Fetch(typeof(T), "where Id=@0", id).OfType<T>().FirstOrDefault();
 	private T FindRequired<T>(long id, string name) where T : BaseDbClass => FindById<T>(id) ?? throw new InvalidOperationException($"{name}が見つかりません: Id={id}");
 	private static void ValidateRequest(PosCheckoutRequest request) {

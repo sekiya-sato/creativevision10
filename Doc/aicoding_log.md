@@ -1,3 +1,28 @@
+## [2026-08-11] 13:31 上代一括変更 Phase2 上代解決経路の差し替え(POS/在庫評価)
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：後続フェーズ 2,3,4 を順次実施する（本ログは Phase2）。
+### 実施内容
+- CvBase/BaseDbJodai.cs: 倉庫軸用の `DerivedJodai.ResolveSokoSql()` / `FinalJodaiSokoSql()` と、判定日の既定式 `TodaySql` を追加。
+- CodeShare/IPointOfSaleService.cs: `PosBarcodeLookupRequest` に `StoreId`(Order=2) を追加。
+- CvServer/Services/PointOfSaleService.cs: `LookupProductAsync` と `CreateLine` の単価を `JodaiDb.ResolveJodai` 経由に変更。`ResolveJodai` プライベートメソッドを追加。`CreateSale` で `denDay` を1回だけ算出して明細へ渡すよう整理。
+- CvWpfclient/Helpers/ViewModels/StockSql.cs: `TankaJodai()` を適用上代対応に変更（引数を `stock`/`shohin` の別名2つに）。定価のみが必要な箇所向けに `TankaJodaiMaster()` を追加。
+### 技術決定 Why
+- **在庫評価は倉庫軸の2段解決にした**: `SummaryRealStock.Id_Soko` は倉庫(TenType=0)のことも直営店(TenType=6)のこともある。設計時の既定（倉庫軸は常に本部基準）だと直営店の在庫を本部価格で評価してしまうため、「店舗系の当該店舗 > 本部売上系の全件 > マスタ定価」の順で解決する `ResolveSokoSql` を用意した。倉庫の場合は店舗系の行が一致しないので自然に本部基準へ落ちる。
+- **既存の集計値は変わらない**: 適用行が1件も無ければ `ifnull` で `MasterShohin.TankaJodai` を返すため、上代一括変更を使っていない環境では従来と同じ値になる。
+- `StockSql.TankaJodai()` の引数を変えたのは、解決に在庫行の `Id_Shohin`/`Id_Soko` が必要になったため。既存呼び出し2箇所（`GeneralStockTableViewModel` / `SokoSummaryReportViewModel`）はどちらも既定の別名 `s`/`sh` なので呼び出し側の変更は不要。
+- POS の `StoreId` は Order=2 の追加のみで、未指定(0)なら全店行だけが適用される。既存端末との後方互換を壊さない。
+### 影響範囲
+- **未対応（次フェーズ以降）**: 入力VM群（仕入/受注/発注/売上/在庫/移動/配分/棚卸）の `shohin.TankaJodai` 直読み約10箇所は差し替えていない。これらは商品選択ダイアログから受け取った `MasterShohin` を同期コマンド内で参照しており、解決には店舗/得意先・伝票日付を伴うサーバ問い合わせが必要でコマンドの非同期化を伴う。基幹の入力画面を広く触るため、独立した作業として分離した。
+### 確認
+- `vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- 一時検証（スクラッチ）: 直営店(501)の在庫は店舗系の2500、倉庫(999)の在庫は本部系全件の2900で解決。適用行を全削除するとどちらもマスタ定価2000へフォールバック。`TodaySql` が `20260811` を返すことも確認。
+
+---
+
 ## [2026-08-11] 13:22 上代一括変更 対象店舗・対象明細の重複排除を追加
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

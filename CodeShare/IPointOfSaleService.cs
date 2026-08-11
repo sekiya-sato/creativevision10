@@ -4,7 +4,11 @@ using System.ServiceModel;
 
 namespace CodeShare;
 
-[DataContract] public sealed record PosBarcodeLookupRequest { [DataMember(Order = 1)] public string Barcode { get; init; } = string.Empty; }
+[DataContract] public sealed record PosBarcodeLookupRequest {
+	[DataMember(Order = 1)] public string Barcode { get; init; } = string.Empty;
+	/// <summary>店舗Id。上代一括変更の店舗別価格を引くために使う。0(未指定)なら全店行のみ適用される。</summary>
+	[DataMember(Order = 2)] public long StoreId { get; init; }
+}
 [DataContract] public sealed record PosProduct {
 	[DataMember(Order = 1)] public long ProductId { get; init; }
 	[DataMember(Order = 2)] public string ProductCode { get; init; } = string.Empty;

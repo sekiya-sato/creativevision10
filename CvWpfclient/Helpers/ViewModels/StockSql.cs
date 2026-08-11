@@ -45,6 +45,19 @@ internal static class StockSql {
 	/// <summary>原価単価。商品マスタの原価単価。</summary>
 	internal static string TankaGenka(string a = "sh") => $"ifnull({a}.TankaGenka,0)";
 
-	/// <summary>上代単価。商品マスタの上代単価。</summary>
-	internal static string TankaJodai(string a = "sh") => $"ifnull({a}.TankaJodai,0)";
+	/// <summary>
+	/// 上代単価。上代一括変更(<see cref="CvBase.DerivedJodai"/>)の適用行があればその価格、無ければ商品マスタの上代。
+	/// <para>
+	/// 在庫の <c>Id_Soko</c> は倉庫のことも直営店のこともあるため、直営店なら店頭価格、
+	/// そうでなければ本部基準の全件行を使う（<see cref="CvBase.DerivedJodai.ResolveSokoSql"/>）。
+	/// 適用行が1件も無ければ従来どおり <c>MasterShohin.TankaJodai</c> を返すので、既存の集計値は変わらない。
+	/// </para>
+	/// </summary>
+	/// <param name="stock">在庫テーブルの別名（<c>Id_Shohin</c> / <c>Id_Soko</c> を持つ）</param>
+	/// <param name="a">商品マスタの別名</param>
+	internal static string TankaJodai(string stock = "s", string a = "sh")
+		=> CvBase.DerivedJodai.FinalJodaiSokoSql($"{stock}.Id_Shohin", $"{stock}.Id_Soko", CvBase.DerivedJodai.TodaySql, a);
+
+	/// <summary>上代単価（商品マスタの定価のみ）。上代一括変更を反映したくない箇所で使う。</summary>
+	internal static string TankaJodaiMaster(string a = "sh") => $"ifnull({a}.TankaJodai,0)";
 }

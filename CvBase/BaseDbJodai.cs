@@ -597,4 +597,36 @@ WHERE T.Status = 1 AND json_valid(T.Jshop) AND json_valid(T.Jmeisai)
 	/// </summary>
 	public static string FinalJodaiSql(string shohinExpr, string taishoExpr, string tenpoExpr, string dayExpr, string shohinAlias = "sh")
 		=> $"ifnull({ResolveSql(shohinExpr, taishoExpr, tenpoExpr, dayExpr)}, ifnull({shohinAlias}.TankaJodai,0))";
+
+	/// <summary>
+	/// SqlDepends: <b>倉庫軸</b>（在庫評価など）で適用上代を解決するスカラサブクエリ断片。該当行がなければ NULL を返す。
+	/// <para>
+	/// 在庫の <c>Id_Soko</c> は倉庫(TenType=0)のことも直営店(TenType=6)のこともあるため、
+	/// 「その倉庫が直営店なら店頭価格、そうでなければ本部基準」を1本のSQLで表す。
+	/// 優先順位は 店舗系の当該店舗 &gt; 本部売上系の全件 &gt; （呼び出し側で）マスタ定価。
+	/// 倉庫の場合は店舗系の行が一致しないので自然に本部基準へ落ちる。
+	/// </para>
+	/// </summary>
+	/// <param name="shohinExpr">商品Idの式</param>
+	/// <param name="sokoExpr">倉庫Id／店舗Idの式</param>
+	/// <param name="dayExpr">判定日(yyyyMMdd)の式</param>
+	public static string ResolveSokoSql(string shohinExpr, string sokoExpr, string dayExpr) => @$"(
+    SELECT dj.Jodai FROM {nameof(DerivedJodai)} dj
+     WHERE dj.Id_Shohin = {shohinExpr}
+       AND ((dj.TaishoType = {(int)EnumJodaiTaisho.Tenpo} AND dj.Id_Tenpo = {sokoExpr})
+         OR (dj.TaishoType = {(int)EnumJodaiTaisho.Honbu} AND dj.Id_Tenpo = 0))
+       AND {dayExpr} BETWEEN dj.DayFrom AND dj.DayTo
+     ORDER BY (dj.TaishoType = {(int)EnumJodaiTaisho.Tenpo}) DESC, dj.Priority DESC, dj.Id DESC
+     LIMIT 1)";
+
+	/// <summary>
+	/// SqlDepends: 倉庫軸での最終的な上代。適用上代がなければ商品マスタの上代を使う。
+	/// </summary>
+	public static string FinalJodaiSokoSql(string shohinExpr, string sokoExpr, string dayExpr, string shohinAlias = "sh")
+		=> $"ifnull({ResolveSokoSql(shohinExpr, sokoExpr, dayExpr)}, ifnull({shohinAlias}.TankaJodai,0))";
+
+	/// <summary>
+	/// SqlDepends: 「今日」を yyyyMMdd で返すSQL式（判定日の既定値）
+	/// </summary>
+	public static string TodaySql => "strftime('%Y%m%d','now','localtime')";
 }
