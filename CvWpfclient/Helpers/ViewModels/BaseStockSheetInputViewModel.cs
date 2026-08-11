@@ -369,16 +369,31 @@ WHERE 1 = 1{where}";
 		return await QuerySqlListAsync<DerivedShohinColSiz>(sql, parameters, ct);
 	}
 
-	/// <summary>指定Idの商品マスタ（名称と単価）を取得する。</summary>
+	/// <summary>
+	/// 指定Idの商品マスタ（名称と単価）を取得する。
+	/// <para>
+	/// 上代は上代一括変更(<see cref="DerivedJodai"/>)の適用価格で解決する。
+	/// <see cref="IdSoko"/> は倉庫(TenType=0)のことも直営店(TenType=6)のこともあるため倉庫軸
+	/// （店舗系の当該店舗 &gt; 本部売上系の全件 &gt; マスタ定価）で引く。適用行が無ければ従来どおり
+	/// <see cref="MasterShohin.TankaJodai"/> が返る。
+	/// </para>
+	/// </summary>
 	protected async Task<Dictionary<long, MasterShohin>> LoadShohinMapAsync(IEnumerable<long> shohinIds, CancellationToken ct) {
 		var ids = shohinIds.Where(id => id > 0).Distinct().ToArray();
 		if (ids.Length == 0) return [];
 		var idList = string.Join(",", ids.Select(id => id.ToString(CultureInfo.InvariantCulture)));
+		List<string> parameters = [];
+		var soko = AddSqlParameter(parameters, IdSoko);
+		// 判定日は棚卸日。未入力・不正なら今日（検索前に TryParseDate で検証済みのため通常は通る）
+		var day = TryParseDateQuiet(DenDayText, out var denDay)
+			? AddSqlParameter(parameters, ToDenDay(denDay))
+			: DerivedJodai.TodaySql;
 		var sql = $@"
-SELECT Id, Vdc, Vdu, Code, Name, Ryaku, Kana, TankaGenka, TankaJodai
-FROM MasterShohin
-WHERE Id IN ({idList})";
-		var list = await QuerySqlListAsync<MasterShohin>(sql, [], ct);
+SELECT M.Id, M.Vdc, M.Vdu, M.Code, M.Name, M.Ryaku, M.Kana, M.TankaGenka,
+       {DerivedJodai.FinalJodaiSokoSql("M.Id", soko, day, "M")} AS TankaJodai
+FROM MasterShohin M
+WHERE M.Id IN ({idList})";
+		var list = await QuerySqlListAsync<MasterShohin>(sql, parameters, ct);
 		return list.GroupBy(x => x.Id).ToDictionary(g => g.Key, g => g.First());
 	}
 

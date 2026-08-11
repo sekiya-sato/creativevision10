@@ -150,12 +150,17 @@ public abstract partial class BaseQueryViewModel : BaseViewModel {
 
 	static readonly string[] DateFormats = ["yyyy/MM/dd", "yyyy/M/d", "yyyyMMdd", "yyyy-MM-dd", "yyyy-M-d"];
 
+	/// <summary>
+	/// 日付文字列を警告なしで解釈する。
+	/// <para>SQLの既定値を決めるなど、利用者へ知らせる必要が無い場面で使う（不正なら呼び出し側が既定値へ落とす）。</para>
+	/// </summary>
+	protected static bool TryParseDateQuiet(string? text, out DateTime date) =>
+		DateTime.TryParseExact((text ?? string.Empty).Trim(), DateFormats,
+			System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out date);
+
 	/// <summary>日付文字列を検証する。不正なら警告を出して false。</summary>
 	protected bool TryParseDate(string? text, out DateTime date) {
-		date = default;
-		var value = (text ?? string.Empty).Trim();
-		if (!DateTime.TryParseExact(value, DateFormats, System.Globalization.CultureInfo.InvariantCulture,
-				System.Globalization.DateTimeStyles.None, out date)) {
+		if (!TryParseDateQuiet(text, out date)) {
 			MessageEx.ShowWarningDialog("日付は yyyy/MM/dd 形式で入力してください。", owner: ActiveWindow);
 			return false;
 		}

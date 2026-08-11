@@ -1,3 +1,26 @@
+## [2026-08-12] 09:55 上代一括変更 棚卸系一覧の上代解決差し替え(倉庫軸)
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：上代一括変更の残作業を順次実施する（本ログは作業4：棚卸系一覧）。
+### 実施内容
+- CvWpfclient/Helpers/ViewModels/BaseStockSheetInputViewModel.cs: `LoadShohinMapAsync()` のSQLへ別名 `M` を付け、`M.TankaJodai` を `DerivedJodai.FinalJodaiSokoSql("M.Id", <IdSoko>, <棚卸日>, "M")` へ差し替え。
+- CvWpfclient/Helpers/ViewModels/BaseQueryViewModel.cs: 警告ダイアログを出さない `TryParseDateQuiet()` を追加し、既存の `TryParseDate()` をその上に組み直した（振る舞いは同じ）。
+### 技術決定 Why
+- **倉庫軸(`FinalJodaiSokoSql`)を使う**。棚卸・移動・返品の `Id_Soko` は倉庫(TenType=0)のことも直営店(TenType=6)のこともあるため、「店舗系の当該店舗 > 本部売上系の全件 > マスタ定価」の順で解決する。在庫評価SQL(`StockSql.TankaJodai`)と同じ軸なので評価金額が食い違わない。
+- **判定日は棚卸日(`DenDayText`)**。`OnSearchAsync` が検索前に `TryParseDate` で検証済みなので通常は必ず解釈できるが、データ取得中に警告ダイアログが出るのは不適切なため `TryParseDateQuiet` で静かに解釈し、不正なら今日へ落とす。
+- 行クラスの `TankaJodai` / `JodaiKingaku` / `Tran99Meisai.Jodai` 生成箇所はSQL側で解決済みの値が入るため変更していない。
+### 影響範囲
+- 棚卸入力一覧(StockInputListViewModel)、在庫移動入力(StockIdoInputViewModel)、返品入力(HenpinInputViewModel)の上代・上代金額。
+- 適用上代が無ければ `ifnull` で `MasterShohin.TankaJodai` に落ちるため既存環境では値が変わらない。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `TestServer.exe`: 35件すべて成功。
+- `git diff --check` クリーン、変更ファイルは CR+LF。
+
+---
 ## [2026-08-12] 09:40 上代一括変更 入力VM群の上代解決差し替え(商品選択・バーコード入力ダイアログ)
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
