@@ -1,103 +1,63 @@
-# AGENTS.md - OpenCode AI Agent Instructions
+# CV10 エージェント作業規約
 
-## Tooling & Environment
-- **Roles**: OpenCode (General), Copilot (Inline/Small edits), Codex(WPF,Server).
-- **Stack**: .NET 10, C# 14, gRPC (protobuf-net.Grpc), WPF (MVVM, CommunityToolkit).
-- **Files**: Solution `creativevision10.slnx`.
-- **Line Endings**: Every edited or created file **MUST** use **CR+LF (`\r\n`)** as the line ending. Do not mix or use LF/CR.
-- **SQL** : Use SQLite 3.46 or later syntax.
+## 1. 適用範囲と優先順位
 
-## Priority Workflow (IMPORTANT)
-**Analyze → Plan (TODO-LIST) → Execute → Verify → Write-Log → Git-Commit**
-- Language: Plans, explanations, and comments must be in **JAPANESE**.
-- Task Mgmt: Only ONE `in_progress` task at a time.
-- Preparation: Use `git stash` before work; create a memo in `.omo/` for complex tasks.
-- Search: Use `grep -r` for Japanese terms.
+- 対象リポジトリは CreativeVision10（`creativevision10.slnx`）である。
+- 指示の優先順位は、ユーザーの明示指示、実行環境・安全上の制約、本書、`handoff.md`、個別エージェントの判断とする。
+- 本書はプロジェクト全体の規約、[`handoff.md`](handoff.md) は複数エージェント作業の役割・引継ぎ・競合回避の規約である。並列作業または設計・実装・レビューを分担する作業では、着手前に両方を確認する。
 
-## SkillOpt-Based Skill Maintenance
-- **Evidence-Driven Updates**: Treat `.agents/skills/*/SKILL.md` as the trainable state. Improve it via actual execution evidence (requests, skills, touched files, tool outputs, results, failure modes) rather than broad prompt rewrites.
-- **Separate Reflection**: Fix recurring failures while strictly preserving successful procedures.
-- **Bounded Edits & Splitting**: Limit changes to minimal add/delete/replace actions. Separate generic workflows from feature-specific troubleshooting based on reuse boundaries.
-- **Held-Out Validation**: Gate all edits using unseen test cases. Reject changes that fix the target case but cause regressions in other representative cases.
-- **Isolate Scratches**: Keep rejection reasons and analysis notes in `.omo/`. Deploy only the compact final `SKILL.md` unless research notes are explicitly requested.
-- **No Auto-Tooling**: Do not automatically install or run external SkillOpt tools. Apply the SkillOpt method as a disciplined, local workflow.
+## 2. 作業の基本原則
 
-## Architecture
-- **Read-Only**: Layer 0 (`CodeShare`/`CvAsset`), Layer 1 (`CvBase`), Layer 1.2 (DB), Layer 1.4 (Prints)  Write if necessary.
-- **Server Layering**: (0) -> (1-1.4) -> `CvDomainLogic` (1.5) -> `CvServer` (2).
-- **Client Layering**: (0) -> (1) -> `CvWpfclient`(2).
+- 既存の実装・設計・未コミット変更を尊重し、依頼範囲外のリファクタリングを混在させない。
+- 着手時と完了前に `git status` と対象差分を確認する。既存の変更・未追跡ファイルはユーザーの所有物として扱い、勝手に削除、上書き、stash、reset しない。
+- 要件・DBスキーマ・公開API・既存業務動作を実質的に変える作業は、調査結果、TODO、影響範囲、未決事項を提示し、承認後に実装する。明確に限定された修正は、簡潔な計画を示して実装してよい。
+- 一度に進行中にする作業は一つだけとする。複数作業を分担する場合は `handoff.md` のファイル所有権と引継ぎ形式に従う。
+- 説明、計画、ソースコメント、ログは日本語で記載する。日本語テキストは UTF-8 とする。
+- 検索は原則 `rg` を用い、日本語を含む検索語・出力の文字コードを確認する。
 
-## Data Model: V*列 (CodeNameView) **IMPORTANT**
-`Id_*` 列とペアで持つ `V*` 列（`CodeNameView{Sid,Cd,Mei}` + `[SerializedColumn]`）は参照先マスタの複製。**意味論はテーブル種別で異なるので、混同しないこと。**
-- **Tran系 (`Tran*`)**: 伝票作成時点の名称を保持する**監査値**。マスタ改名時に**伝播しない**（意図的な仕様）。現行名称が必要な場合は `Id_*` から参照先マスタをJOINする。
-  - Tran系のV*列を `[ComputedColumn]` 化する／伝播対象に加える／JOINで置き換えるのは**禁止**。伝票の時点名称が失われる。
-- **Master系 (`Master*` / `Sys*` / `Derived*`)**: **常に現行名称**。`CvDomainLogic/MasterCascadeDb` がマスタ更新時に伝播する（フックは `CvServer/Services/HandlerClass.HandleUpdate`）。
-  - 伝播対象は V*列に加えて JSON 内のスナップショットも含む: `Jsub`(`MasterGeneralMeisho` の `Cd`/`Mei`/`Kbname`)、`MasterShohin.Jcolsiz`(`Code_Col`/`Mei_Col`/`Code_Siz`/`Mei_Siz`)、`MasterMeisho.KubunName`、`DerivedShohinColSiz`。
-  - Master系にV*列を**追加したら `MasterCascadeDb.VRules` への登録も必須**（未登録は `MasterCascadeDbTests.VRules_CoverAllMasterVColumns` が検出する）。
-- SQLite の `json_extract` は不正JSON（`ALTER TABLE ADD COLUMN ... DEFAULT ''` 直後の空文字など）に対し NULL ではなく `malformed JSON` 例外を投げる。V*列/JSON列を扱うSQLは `json_valid()` でガードする（`MasterCascadeDb.SafeJsonColumn` / `JsonArrayReady` を使う）。
-- 取りこぼしの一括修復は `CvFlag.Msg047_MasterVColumnResync`（管理者用システム処理画面の「V*列再同期」ボタン）。
-- 設計と判断の経緯: `.omo/20260727_master_vcolumn_sync_design.md`
+## 3. 技術基盤と編集規約
 
-## Build Rule (WSL2) **IMPORTANT**
-- Build solution: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx"`
-- Build server only: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvServer/CvServer.csproj"`
-- Build WPF client: `/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"`
+- スタック: .NET 10 / C# 14 / protobuf-net.Grpc / WPF（MVVM、CommunityToolkit）/ SQLite 3.46 以降。
+- 変更・作成するファイルの改行は CRLF に統一する。`printform/*.qfm` は Shift_JIS（cp932）、それ以外の日本語テキストは UTF-8 とする。
+- C# は `.editorconfig`、XAML は `Settings.XamlStyler` に従い、名前空間は file-scoped を優先する。
+- 不要な依存性注入、新規フレームワーク、テスト専用の実行プログラムは追加しない。必要な場合は根拠と影響を計画に明記する。
+- PowerShell でファイルを扱う場合は UTF-8 の入出力を明示する。ビルド等では `DOTNET_ENVIRONMENT=Development` および `ASPNETCORE_ENVIRONMENT=Development` を使用する。
 
-## Coding & WPF Standards
-- **Style**: `.editorconfig` (CS), `Settings.XamlStyler` (XAML). File-scoped namespaces.
-- Use **UTF-8** (qfm files is SJIS)
-- **WPF Work**: Load `wpf-project-guide`. Inspect `App.xaml` & `ResourceDictionary` first for UI issues.
-- **Tools**: Use `check-xaml`, `update-design-mente`, `change-sublist-to-observablecollection` appropriately.
-- Avoid excessive dependency injection.
-- Don’t add test programs unless explicitly asked.
+## 4. アーキテクチャとデータ不変条件
 
-## Post-Task Requirements (Log & Commit)
-- **Log**: Append to `Doc/aicoding_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
-- **Log Format**: Folow "Log-Format" section below.**Insert at the top.**
-- **Commit Format**: Folow "Commit-Format" section below.
+- 依存方向は `CodeShare` / `CvAsset`（層0）→ `CvBase`（層1、DB 1.2、Prints 1.4）→ `CvDomainLogic`（1.5）→ `CvServer`（2）とする。クライアントは層0 → 層1 → `CvWpfclient`（2）とする。
+- `Id_*` と対になる `V*`（`CodeNameView`、`[SerializedColumn]`）はテーブル種別で意味が異なる。
+  - `Tran*` の `V*` は伝票時点の監査値であり、マスタ改名時に伝播しない。`[ComputedColumn]` 化、伝播対象化、現行マスタJOINへの置換はしない。
+  - `Master*` / `Sys*` / `Derived*` の `V*` は現行名称である。追加時は `MasterCascadeDb.VRules` に登録し、JSONスナップショットも伝播対象を確認する。
+  - JSON を扱う SQLite SQL は `json_valid()` または `MasterCascadeDb.SafeJsonColumn` / `JsonArrayReady` で不正JSONを防御する。設計根拠は `.omo/20260727_master_vcolumn_sync_design.md` を参照する。
+- WPF変更では先に `App.xaml` と該当リソースを確認し、既存の View / ViewModel / 共有スタイルを踏襲する。必要なときは `.agents/skills/wpf-project-guide`、`check-xaml`、`wpf-view-workflow` など該当スキルを読む。
 
-### Log-Format
-'''
-## [YYYY-MM-DD] hh:mm 作業タイトル
-### Agent
-- [使用した AI Model 名 : AI Provider 名]
-### Editor
-- [使用したエディタ: 不明な場合は"VS2026", 例 "VS2026", "VSCode", "OpenCode", "GitHubCopilot-Cli"] 
-### 目的
-- ユーザーからの要望：[内容端的に]
-### 実施内容
-- [プロジェクト名]/[ファイル名]: [変更内容の要約]
-### 技術決定 Why
-- [例: ProtobufのOrder欠番を避けるため、既存のFlag定義を維持しつつ新機能を追加した]
-### 影響範囲 (省略可)
-- 大規模変更の場合は影響範囲を明記。修正したファイルのみの場合は省略
-### 確認
-- [Buildした結果などを簡潔に記述。クロスプラットフォームの場合はBuild Error がでる可能性があるので省略可]
+## 5. 調査、実装、検証
 
----
-'''
+1. 依頼、既存差分、対象コード、影響範囲を確認する。
+2. 必要なスキルを `.agents/skills/` から選び、その `SKILL.md` を読んで適用する。
+3. 最小変更を実装し、CRLF、差分、関連する静的検査を確認する。
+4. 変更範囲に見合う最小の検証を実施する。共有基盤、DB、公開API、認可、印刷形式の変更は検証範囲を広げる。
 
-### Commit-Format
-'''
-[作業内容]
-[使用した AI Model 名 : AI Provider 名 : エージェント名]
-作業時間 [開始時間] - [終了時間] : [作業時間] (**日本時間JSTで記録**)
-[ユーザ指示の概略]
-'''
-例)
-'''
-SelectKubunView.xamlのMaterialDesignスタイルへの変更
-GPT-5.4-mini : OpenAI : Build
-16:00 - 17:30 : 1時間30分
-SelectKubunView のデザインをMasterMeishoのデザインに統一する
-'''
+基本コマンド（Windows の Developer Command Prompt 経由）:
 
-## graphify
+```text
+C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx
+C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj
+C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj
+```
 
-This project has a graphify knowledge graph at graphify-out/.
+- WPF変更は XAML/XML の妥当性、バインディング、対象プロジェクトのビルドを確認する。画面表示や操作を変更した場合は、可能なら実行時確認も行う。
+- `printform/*.qfm` 変更は cp932 を維持し、SQLの別名と `itemN` の対応を検証する。
+- 完了前に `git diff --check` を実行し、実行できなかった検証は理由と残余リスクを明記する。
 
-Rules:
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- For architecture, relationship, impact-scope, or dependency questions, always start by reading `graphify-out/GRAPH_REPORT.md` before using other search methods
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
+## 6. 記録と Git
+
+- 実装・設定・運用文書を変更した作業は `Doc/aicoding_log.md` の先頭に所定形式で追記する。800行を超える場合は番号付きアーカイブへ退避する。
+- コミット、rebase、merge、push はユーザーが明示した場合だけ実行する。コミット名は `Sekiya Sato Codex` を用い、コミット本文はリポジトリ既定の形式と JST の作業時間を記載する。
+- コミット対象は依頼に直接関係するファイルと作業ログに限定する。worktree をまたぐ手順、競合、fast-forward merge は `handoff.md` の Git 引継ぎ規約に従う。
+
+## 7. 知識グラフとスキル改善
+
+- アーキテクチャ、依存関係、影響範囲の質問では、最初に `graphify-out/GRAPH_REPORT.md` を読む。`graphify-out/wiki/index.md` があれば優先し、横断関係は `graphify query` / `path` / `explain` を優先する。
+- `.agents/skills/*/SKILL.md` の改善は、実作業の証拠に基づいて最小限に行う。失敗要因と成功手順を分離し、検証されていない一般化や外部ツールの自動導入はしない。
