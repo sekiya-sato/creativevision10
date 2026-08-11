@@ -240,7 +240,9 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 			MessageEx.ShowWarningDialog("配分指示日を入力してください", owner: ActiveWindow);
 			return;
 		}
-		List<TranHaibun> newRecords = BuildNewRecords();
+		Dictionary<long, int> jodaiByTenpo =
+			await LoadJodaiByTenpoAsync(targetShohin.Id, TenpoEntries.Select(x => x.Id_Tenpo), ct);
+		List<TranHaibun> newRecords = BuildNewRecords(jodaiByTenpo);
 		if (newRecords.Count == 0 && loadedEditableRows.Count == 0) {
 			MessageEx.ShowWarningDialog("店舗を追加し、指示数を入力してください", owner: ActiveWindow);
 			return;
@@ -312,9 +314,15 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 		AddCodeRange(clauses, parameters, JsonCd("M.VSeason"), param.SeasonFrom, param.SeasonTo);
 		string where = clauses.Count == 0 ? string.Empty : $"WHERE {string.Join(" AND ", clauses)}";
 		string limit = param.MaxCount is int max and > 0 ? $"LIMIT {max}" : string.Empty;
+		// 配分先は直営店なので店舗系で解決する。一覧の時点では配分先が決まっていないため
+		// 店舗系の全件行(Id_Tenpo=0)を代表値として表示し、店舗別の価格は登録時に引き直す
+		// （LoadJodaiByTenpoAsync）。適用行が無ければ商品マスタの上代が返る。
+		string jodaiDay = JodaiDayExpr(parameters);
 		string sql = $"""
 			SELECT
-				M.Id, M.Vdc, M.Vdu, M.Code, M.Name, M.TankaJodai, M.TankaGenka,
+				M.Id, M.Vdc, M.Vdu, M.Code, M.Name,
+				{DerivedJodai.FinalJodaiSql("M.Id", TenpoTaishoExpr, "0", jodaiDay, "M")} AS TankaJodai,
+				M.TankaGenka,
 				M.VBrand, M.VItem, M.VSeason
 			FROM MasterShohin M
 			{where}
@@ -322,6 +330,42 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 			{limit}
 			""";
 		return await QuerySqlListAsync<MasterShohin>(sql, parameters, ct);
+	}
+
+	/// <summary>上代解決の対象系統。店舗配分の配分先は直営店なので店舗系で固定。</summary>
+	static string TenpoTaishoExpr => ((int)EnumJodaiTaisho.Tenpo).ToString(CultureInfo.InvariantCulture);
+
+	/// <summary>上代解決の判定日SQL式。配分指示日を使い、未入力なら今日。</summary>
+	string JodaiDayExpr(List<string> parameters) {
+		string ymd = ToYmd8(ShijiDay);
+		return ymd.Length == 8 ? AddParameter(parameters, ymd) : DerivedJodai.TodaySql;
+	}
+
+	/// <summary>
+	/// 配分先店舗ごとの適用上代（<see cref="DerivedJodai"/>）を引く。
+	/// <para>
+	/// 明細ごとに配分先店舗が違うため商品1件に価格を決め打ちできない。登録の直前に
+	/// 「店舗Id → 適用上代」の対応表を1本のクエリで作り、<see cref="BuildNewRecords"/> へ渡す。
+	/// 該当行が無い店舗は商品マスタの上代が返るので、既存の動作は変わらない。
+	/// </para>
+	/// </summary>
+	async Task<Dictionary<long, int>> LoadJodaiByTenpoAsync(long idShohin, IEnumerable<long> tenpoIds, CancellationToken ct) {
+		List<long> ids = tenpoIds.Where(x => x > 0).Distinct().ToList();
+		if (ids.Count == 0) return [];
+
+		List<string> parameters = [];
+		string shohin = AddParameter(parameters, idShohin);
+		string jodaiDay = JodaiDayExpr(parameters);
+		string idList = string.Join(",", ids.Select(x => x.ToString(CultureInfo.InvariantCulture)));
+		string sql = $"""
+			SELECT
+				T.Id AS Id,
+				{DerivedJodai.FinalJodaiSql(shohin, TenpoTaishoExpr, "T.Id", jodaiDay, "M")} AS TankaJodai
+			FROM MasterTokui T, MasterShohin M
+			WHERE M.Id = {shohin} AND T.Id IN ({idList})
+			""";
+		List<MasterShohin> rows = await QuerySqlListAsync<MasterShohin>(sql, parameters, ct);
+		return rows.GroupBy(x => x.Id).ToDictionary(g => g.Key, g => g.First().TankaJodai);
 	}
 
 	/// <summary>累計売上（Tran00/Tran01 の JSON 明細を CalcFlag 考慮で商品Id別に集計）</summary>
@@ -601,10 +645,17 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 
 	void RefreshGrandTotal() => GrandTotalSu = TenpoEntries.Sum(x => x.TotalSu);
 
-	List<TranHaibun> BuildNewRecords() {
+	/// <param name="jodaiByTenpo">
+	/// 配分先店舗ごとの適用上代（<see cref="LoadJodaiByTenpoAsync"/>）。
+	/// 該当が無い店舗は一覧と同じ代表値（<c>targetShohin.TankaJodai</c>）を使う。
+	/// </param>
+	List<TranHaibun> BuildNewRecords(IReadOnlyDictionary<long, int> jodaiByTenpo) {
 		List<TranHaibun> records = [];
 		if (targetShohin == null || searchParam == null) return records;
 		foreach (ShopHaibunTenpoEntry entry in TenpoEntries) {
+			int jodai = jodaiByTenpo.TryGetValue(entry.Id_Tenpo, out int resolved)
+				? resolved
+				: targetShohin.TankaJodai;
 			foreach (ShopHaibunEntryRow entryRow in entry.Rows.Where(x => x.Su > 0)) {
 				records.Add(new TranHaibun {
 					DenDay = ToYmd8(ShijiDay),
@@ -618,9 +669,9 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 					Id_Col = entryRow.Id_Col,
 					Id_Siz = entryRow.Id_Siz,
 					Su = entryRow.Su,
-					Tanka = targetShohin.TankaJodai,
-					Kingaku = entryRow.Su * targetShohin.TankaJodai,
-					Jodai = targetShohin.TankaJodai,
+					Tanka = jodai,
+					Kingaku = entryRow.Su * jodai,
+					Jodai = jodai,
 					Gedai = targetShohin.TankaGenka,
 					Id_Shain = Id_Shain,
 				});

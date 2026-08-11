@@ -1,3 +1,33 @@
+## [2026-08-12] 10:08 上代一括変更 店舗配分の上代解決差し替え(店舗軸・配分先店舗別)
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：上代一括変更の残作業を順次実施する（本ログは作業5：店舗配分）。
+### 実施内容
+- CvWpfclient/ViewModels/07Haibun/ShopHaibunInputViewModel.cs:
+  - `LoadShohinListAsync()` の `M.TankaJodai` を `DerivedJodai.FinalJodaiSql("M.Id", 店舗系, "0", 指示日, "M")` へ差し替え（一覧の代表値）。
+  - `LoadJodaiByTenpoAsync()` を追加。配分先店舗Idの集合に対し「店舗Id → 適用上代」の対応表を1本のクエリで作る。
+  - `BuildNewRecords()` を `BuildNewRecords(IReadOnlyDictionary<long,int> jodaiByTenpo)` に変更し、`Tanka` / `Kingaku` / `Jodai` を配分先店舗別の適用上代で組み立てる。該当が無い店舗は一覧と同じ代表値へ落とす。
+  - `DoRegister()` で `BuildNewRecords()` の前に対応表を取得する（同メソッドは非同期なので追加の非同期化は不要）。
+  - 判定日の式を作る `JodaiDayExpr()` と対象系統の定数 `TenpoTaishoExpr` を追加。
+### 技術決定 Why
+- **一覧・登録とも店舗系(`EnumJodaiTaisho.Tenpo`)で統一した**（引き継ぎ資料10章の判断項目3）。店舗配分の配分先は必ず直営店(TenType=6)であり、本部売上用(TenType in (1,3)＝卸先・売仕店)の行を引くのは系統として誤りになるため。本部基準へ寄せる案は採らなかった。
+- **一覧は店舗系の全件行(`Id_Tenpo=0`)を代表値として表示する**。一覧の時点では配分先店舗が決まっておらず、明細ごとに配分先が違うため商品1件に価格を決め打ちできない。
+- **登録は配分先店舗別に引き直す**。`BuildNewRecords()` は同期メソッドなので、非同期化せずに呼び出し前へ対応表の取得を挟む形にした。
+- **判定日は配分指示日(`ShijiDay`)**。未入力なら今日へ落とす（`DoRegister` は事前に未入力を弾いている）。
+- 返す型は `MasterShohin` のまま（`Id` に店舗Idを載せる）。サーバは `QueryListSqlParam.ItemType` で型を解決するためクライアント独自のPOCOは使えない。
+### 影響範囲
+- 店舗配分の一覧「上代」、タブ2の `TargetJodai` 表示、登録される `TranHaibun` の `Tanka` / `Kingaku` / `Jodai`。
+- 適用上代が無ければ `ifnull` で `MasterShohin.TankaJodai` に落ちるため既存環境では値が変わらない。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `TestServer.exe`: 35件すべて成功。
+- `git diff --check` クリーン、変更ファイルは CR+LF。
+- **要確認（業務判断）**: 店舗配分の価格軸を店舗系で統一した点。本部基準へ寄せる運用であれば差し戻しが必要。
+
+---
 ## [2026-08-12] 09:55 上代一括変更 棚卸系一覧の上代解決差し替え(倉庫軸)
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
