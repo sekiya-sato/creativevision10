@@ -72,7 +72,7 @@ public partial class MenuData : ObservableObject {
 			new("商品バーコードブック", typeof(Views._01Master.MasterPrintBarcodeView), addInfo:"商品バーコードブック印刷"),
 			new("取込レイアウト作成", typeof(Views._01Master.ImportTemplateCreateView), addInfo:"テーブル列定義からUTF-8 CSV取込レイアウトを作成"),
 			new("外部CSVマスタ取込", typeof(Views._01Master.ExternalCsvImportView), addInfo:"取込レイアウトCSVを検証してInsertBulkParamで登録"),
-			new("AfterToDo: 上代一括変更", typeof(Views._01Master.MasterJouDaiBulkChangeView), addInfo:"準備中 他のがだいたい終わってから実装する"),
+			new("上代一括変更", typeof(Views._01Master.MasterJouDaiBulkChangeView), addInfo:"店舗･期間つきの販売価格をTranJodaiで登録し確定でDerivedJodaiへ展開"),
 			new("AfterToDo: 原価変更登録", typeof(Views._01Master.GenkaChangeEntryView), addInfo:"準備中 他のがだいたい終わってから実装する"),
 			new("AfterToDo: 評価替", typeof(Views._01Master.ProductRatingChangeView), addInfo:"準備中 他のがだいたい終わってから実装する"),
 		])),

@@ -1,3 +1,31 @@
+## [2026-08-11] 13:52 上代一括変更 Phase3 画面(検索画面/修正・登録画面)の実装
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：後続フェーズ 2,3,4 を順次実施する（本ログは Phase3）。
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterJouDaiBulkChangeViewModel.cs: 空のスタブから全面実装。検索(一覧)/新規/読込/対象一覧取得/明細取得/一括計算/登録/確定/取消。行クラス `JodaiListRow` `JodaiCondRow` `JodaiShopRow` `JodaiMeisaiRow` を追加。
+- CvWpfclient/Views/01Master/MasterJouDaiBulkChangeView.xaml: 空の `<Grid />` から全面実装。旧画面と同じ2タブ構成（検索画面 / 修正・登録画面）、伝票ヘッダ・一括変更条件・抽出条件・対象一覧（店舗別期間）・対象明細。
+- CvWpfclient/Models/MenuData.cs: 「AfterToDo: 上代一括変更」の準備中表記を外し、addInfo を実装内容に更新（項目位置と並び順は変更なし）。
+### 技術決定 Why
+- **一覧では JSON列を SELECT しない**。`Jcond`/`Jshop`/`Jmeisai` は明細500件で約128KBになるため、タブ1の一覧SQLは列を明示して除外し、規模は `ShopCnt`/`MeisaiCnt`/`ExpandCnt` の非正規化列で表示する。編集時だけ `SELECT *` で読む。
+- **展開処理を画面から呼ばない**。`TranJodai` が `IDerivedOrigin` を実装しているため、確定(Status=1)で保存した時点でサーバの `HandlerDerived` が同一トランザクションで `DerivedJodai` を展開する。画面は Status を変えて保存するだけにし、展開処理の二重実装を避けた。
+- **登録前に `TranJodai.Normalize()` を必ず呼ぶ**。重複したまま確定すると `DerivedJodai` のユニークキー違反でトランザクションごと失敗するため、`FindDuplicates()` で利用者に確認してから後勝ちで除去する。
+- **プロパー(P)選択時は終了日を 99991231 に寄せる**。ヘッダ・店舗別期間の両方で寄せることで、無期限オーバーレイという設計上の表現とUIの入力値がずれないようにした。
+- 対象系統(`TaishoType`)を切り替えたら対象候補が全く別物（直営店 ⇔ 卸先）になるので、選択済みの対象一覧を破棄する。
+- `DataGridComboBoxColumn` は視覚ツリーの外にあり DataContext を辿れないため、検索項目の選択肢は `FieldOptionsStatic` として静的公開し `x:Static` で参照する。
+- 一括計算の率は**上代からのOFF率**（新販売価格 = 上代 ×(1 − 率/100) を丸め）、金額は**新販売価格の直接指定**とした。旧画面の「新割引率」列と整合する解釈。
+### 影響範囲
+- 新規画面の実装のみ。既存画面・既存ロジックへの変更なし（MenuData は表示名と説明文の変更のみで項目位置は不変）。
+### 確認
+- `vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- StaticResourceキー15種（FormLabel/FormComboBox/FormDatePicker/NumericFormTextBox/BudgetActionButtonStyle/MenteDataGridColumnHeader/DataGridRightTextBlock 他）の実在をリソース辞書で確認。
+- 一時検証（スクラッチ・WPF実体化）: XAMLパースとStaticResource解決、タブ2の実体化、`ApplyCalcAllCommand` 実行まで成功。バインディングエラーは既存の `HenpinInputView` と同種のフレームワーク由来ノイズのみで、本画面固有のものは0件。
+
+---
+
 ## [2026-08-11] 13:31 上代一括変更 Phase2 上代解決経路の差し替え(POS/在庫評価)
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
