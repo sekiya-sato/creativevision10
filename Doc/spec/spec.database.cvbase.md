@@ -160,7 +160,7 @@ CvBase プロジェクトで定義されているテーブル候補を、`[Prima
 | テーブル | 作成 | 主キー | キー | 概要 | 主な固有列 | 定義元 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `DerivedShohinColSiz` | CreateDerivedTable | `Id` | `unq1(Id_Shohin, Id_Col, Id_Siz)`, `n1(Id_Shohin)`, `n2(Code)`, `njan1(Jan1)`, `njan2(Jan2)`, `njan3(Jan3)` | 商品マスタ `MasterShohin` から商品・色・サイズに展開した派生マスタ | `Id`, `Id_Shohin`, `RowIdx`, `Code`, `Id_Col`, `Code_Col`, `Mei_Col`, `Id_Siz`, `Code_Siz`, `Mei_Siz`, `Jan1`, `Jan2`, `Jan3` | `CvBase/BaseDbDerived.cs:160` |
-| `DerivedJodai` | CreateTable | `Id` | `uk1(Id_Tran, TaishoType, Id_Tenpo, Id_Shohin)`, `nk1(Id_Shohin, TaishoType, Id_Tenpo, DayFrom, DayTo)`, `nk2(Id_Tran)`, `nk3(DayTo)` | 適用上代。`TranJodai`(確定分)を「対象 × 商品 × 期間」へ展開したもの。該当行が無ければ `MasterShohin.TankaJodai` を使う。V*列は持たない（JOIN 前提） | `TaishoType`, `Id_Tenpo`(0=全件), `Id_Shohin`, `DayFrom`, `DayTo`, `Kubun`, `Jodai`, `RateOff`, `Id_Tran`, `No`, `Priority` | `CvBase/BaseDbJodai.cs:424` |
+| `DerivedJodai` | CreateTable | `Id` | `uk1(Id_Tran, TaishoType, Id_Tenpo, Id_Shohin)`, `nk1(Id_Shohin, TaishoType, Id_Tenpo, DayFrom, DayTo)`, `nk2(Id_Tran)`, `nk3(DayTo)` | 適用上代。`TranJodai`(確定分)を「対象 × 商品 × 期間」へ展開したもの。該当行が無ければ `MasterShohin.TankaJodai` を使う。V*列は持たない（JOIN 前提） | `TaishoType`, `Id_Tenpo`(0=全件), `Id_Shohin`, `DayFrom`, `DayTo`, `Kubun`, `Jodai`, `RateOff`, `Id_Tran`, `No`, `Priority` | `CvBase/BaseDbJodai.cs:484` |
 
 ## 補足
 

@@ -196,6 +196,11 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	public partial int MeisaiCnt { get; set; }
 	/// <summary>
 	/// <see cref="DerivedJodai"/>への展開行数（再展開時の検証用）
+	/// <para>
+	/// <b>更新するのは <c>CvDomainLogic.JodaiDb.Rebuild()</c> だけ</b>（修復用）。
+	/// 通常の展開は HandlerDerived が Insert/Update/Delete のたびに行うためこの列は追随しない。
+	/// 画面で現在の展開行数を出すときは <see cref="DerivedJodai"/> を <c>Id_Tran</c> で数えること。
+	/// </para>
 	/// </summary>
 	[ObservableProperty]
 	public partial int ExpandCnt { get; set; }

@@ -1,3 +1,29 @@
+## [2026-08-11] 14:20 上代一括変更 一連の作業の点検と展開数表示の不備修正
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：一連の作業のチェックと、残作業に漏れがないかを確認する。
+### 実施内容
+- CvWpfclient/ViewModels/01Master/MasterJouDaiBulkChangeViewModel.cs: 伝票一覧の展開数を `TranJodai.ExpandCnt` 列ではなく `DerivedJodai` の相関サブクエリで数えるよう是正。一覧SQLに別名 `J` を付け WHERE 句も修飾。`LoadEditAsync` と `DoRegister` で `ExpandCnt` 列を読む処理を `ReloadExpandCountAsync()` に置き換え。
+- CvBase/BaseDbJodai.cs: `TranJodai.ExpandCnt` のコメントに「更新するのは `JodaiDb.Rebuild()` だけで、通常の展開では追随しない」ことを明記。
+- Doc/spec/spec.database.cvbase.md: `DerivedJodai` の定義位置を `CvBase/BaseDbJodai.cs:424` → `:484` に訂正（重複排除の追加で行がずれていた）。
+### 技術決定 Why
+- **不備の内容**: 展開は `TranJodai` の `IDerivedOrigin` 経由でサーバの `HandlerDerived` が自動実行するため、画面が伝票を保存しても `ExpandCnt` 列は更新されない。列を更新するのは修復用の `JodaiDb.Rebuild()` だけなので、**確定済み伝票の一覧「展開数」が常に 0 のまま**だった。
+- **保存し直す案は却下**。確定後に `ExpandCnt` を入れて再保存すると `HandlerDerived` が Update で再び発火し、展開（削除＋再INSERT、最大10万行）が2回走る。
+- **一覧SQLで数える方式を採用**。`nk2(Id_Tran)` のインデックスで引けるため相関サブクエリでも安く、常に現在値になる。`ExpandCnt` 列は `Rebuild()` の記録用として残す。
+### 影響範囲
+- 上代一括変更画面のみ。他画面・サーバ処理への影響なし。
+### 確認
+- `vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `TestServer.exe`: 35件すべて成功。
+- 一時検証（スクラッチ）: 対象2店舗×明細3件の確定伝票に対し、一覧SQLが `ShopCnt=2 / MeisaiCnt=3 / ExpandCnt=6` を返し、JSON列(`Jshop`/`Jmeisai`)は未取得(0件)、保存された `ExpandCnt` 列は 0 のままであることを確認（不備の再現と修正の両方を確認）。
+- 一時検証（スクラッチ・WPF実体化）: XAMLパース・StaticResource解決・タブ2実体化に成功。バインディングエラーは既存画面と同種のフレームワーク由来のみ。
+- 全プロジェクトを `TankaJodai` で走査し、残作業の対象（12ファイル）と意図的な対象外（商品マスタメンテ／旧システム変換／初期データ／表示バインディング）を確定。`CvPrints` と `printform/*.qfm` に直接参照が無いことも確認。
+
+---
+
 ## [2026-08-11] 14:01 上代一括変更 Phase4 期限切れパージのスケジューラ登録と送信FLG運用
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

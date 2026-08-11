@@ -297,21 +297,28 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 
 	/// <summary>
 	/// 伝票一覧を読み込む。<b>JSON列(Jcond/Jshop/Jmeisai)は SELECT しない。</b>
-	/// 明細数千件で数百KBになるため、一覧では件数列(ShopCnt/MeisaiCnt/ExpandCnt)だけを見る。
+	/// 明細数千件で数百KBになるため、一覧では件数列(ShopCnt/MeisaiCnt)だけを見る。
+	/// <para>
+	/// 展開数は <see cref="TranJodai.ExpandCnt"/> 列ではなく <see cref="DerivedJodai"/> を数えて出す。
+	/// 展開はサーバの HandlerDerived が自動実行するので、この画面から保存しても列側は更新されず
+	/// 常に 0 のままになるため（列の更新は修復用の <c>JodaiDb.Rebuild()</c> のみが行う）。
+	/// 相関サブクエリは <c>nk2(Id_Tran)</c> のインデックスで引ける。
+	/// </para>
 	/// </summary>
 	async Task LoadListAsync(CancellationToken ct) {
 		List<string> parameters = [];
 		List<string> clauses = [];
-		if (SearchDayFrom != null) clauses.Add($"DenDay >= {AddParameter(parameters, ToDay(SearchDayFrom.Value))}");
-		if (SearchDayTo != null) clauses.Add($"DenDay <= {AddParameter(parameters, ToDay(SearchDayTo.Value))}");
-		if (!string.IsNullOrWhiteSpace(SearchTitle)) clauses.Add($"Title LIKE {AddParameter(parameters, $"%{SearchTitle.Trim()}%")}");
+		if (SearchDayFrom != null) clauses.Add($"J.DenDay >= {AddParameter(parameters, ToDay(SearchDayFrom.Value))}");
+		if (SearchDayTo != null) clauses.Add($"J.DenDay <= {AddParameter(parameters, ToDay(SearchDayTo.Value))}");
+		if (!string.IsNullOrWhiteSpace(SearchTitle)) clauses.Add($"J.Title LIKE {AddParameter(parameters, $"%{SearchTitle.Trim()}%")}");
 		var where = clauses.Count == 0 ? string.Empty : $"WHERE {string.Join(" AND ", clauses)}";
 		var sql = $@"
-SELECT Id, Vdc, Vdu, DenDay, Kubun, TaishoType, Id_Sale, VSale, Title, Id_Shain, VShain,
-       DayFrom, DayTo, Status, FixDay, SendFlg, ShopCnt, MeisaiCnt, ExpandCnt, Memo
-FROM {nameof(TranJodai)}
+SELECT J.Id, J.Vdc, J.Vdu, J.DenDay, J.Kubun, J.TaishoType, J.Id_Sale, J.VSale, J.Title, J.Id_Shain, J.VShain,
+       J.DayFrom, J.DayTo, J.Status, J.FixDay, J.SendFlg, J.ShopCnt, J.MeisaiCnt, J.Memo,
+       (SELECT COUNT(*) FROM {nameof(DerivedJodai)} D WHERE D.Id_Tran = J.Id) AS ExpandCnt
+FROM {nameof(TranJodai)} J
 {where}
-ORDER BY Id DESC
+ORDER BY J.Id DESC
 LIMIT 500";
 		var list = await QuerySqlListAsync<TranJodai>(sql, parameters, ct);
 		ListRows = [.. list.Select(x => new JodaiListRow(x))];
@@ -365,7 +372,6 @@ LIMIT 500";
 		EditMemo = den.Memo;
 		EditStatus = den.Status;
 		EditSendFlg = den.SendFlg;
-		EditExpandCnt = den.ExpandCnt;
 		EditDayFrom = ParseDay(den.DayFrom);
 		EditDayTo = ParseDay(den.DayTo);
 		CalcType = den.CalcType;
@@ -400,6 +406,8 @@ LIMIT 500";
 		})];
 
 		await LoadShopRowsAsync(den.Jshop, ct);
+		// ExpandCnt 列は当てにならないので実際の DerivedJodai を数える
+		await ReloadExpandCountAsync(ct);
 		NotifyCounts();
 	}
 
@@ -670,7 +678,8 @@ LIMIT {maxCount}";
 			EditId = saved.Id;
 			editVdu = saved.Vdu;
 			EditStatus = saved.Status;
-			EditExpandCnt = saved.ExpandCnt;
+			// ExpandCnt 列は保存では更新されないので、実際の DerivedJodai を数え直す
+			await ReloadExpandCountAsync(ct);
 			await LoadListAsync(ct);
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 伝票No {saved.Id:N0} を登録しました（{StatusToName(saved.Status)}）";
 			MessageEx.ShowInformationDialog("登録完了しました。", owner: ActiveWindow);
