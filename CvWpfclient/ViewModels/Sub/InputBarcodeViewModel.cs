@@ -6,6 +6,7 @@ using CvBase;
 using CvWpfclient.Helpers;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace CvWpfclient.ViewModels.Sub;
 
@@ -27,6 +28,18 @@ public partial class InputBarcodeViewModel : Helpers.BaseViewModel {
 
 	[ObservableProperty]
 	public partial int TotalSu { get; set; }
+
+	/// <summary>
+	/// 上代解決の対象系統（<see cref="EnumJodaiTaisho"/>）。呼び出し元が設定する。
+	/// 既定は本部売上用（得意先・倉庫が特定できない画面向け）。
+	/// </summary>
+	public int JodaiTaishoType { get; set; } = (int)EnumJodaiTaisho.Honbu;
+
+	/// <summary>上代解決の対象Id（店舗Id または 得意先Id）。0 なら系統の全件行のみ適用。</summary>
+	public long JodaiTenpoId { get; set; }
+
+	/// <summary>上代解決の判定日 yyyyMMdd。空なら今日。</summary>
+	public string JodaiDay { get; set; } = string.Empty;
 
 	readonly Dictionary<long, MasterShohin> shohinCache = [];
 
@@ -141,8 +154,60 @@ public partial class InputBarcodeViewModel : Helpers.BaseViewModel {
 		if (reply.Code == -1) return null;
 		if (Common.DeserializeObject(reply.DataMsg ?? "{}", reply.DataType) is not MasterShohin shohin) return null;
 
+		await OverwriteJodaiAsync(shohin, ct);
 		shohinCache[idShohin] = shohin;
 		return shohin;
+	}
+
+	/// <summary>
+	/// 上代一括変更(<see cref="DerivedJodai"/>)の適用行があれば <see cref="MasterShohin.TankaJodai"/> を
+	/// 適用価格で上書きする。適用行が無ければ商品マスタの値がそのまま返るので、既存の動作は変わらない。
+	/// <para>
+	/// <b><see cref="shohinCache"/> へ格納する前に呼ぶこと。</b>定価のままキャッシュすると解決値が反映されない。
+	/// 1件取得は <see cref="QueryByIdParam"/> で生SQLを書けないため、上書きだけ別クエリで引く。
+	/// </para>
+	/// </summary>
+	async Task OverwriteJodaiAsync(MasterShohin shohin, CancellationToken ct) {
+		List<string> parameters = [];
+		var shohinId = AddParameter(parameters, shohin.Id);
+		var taisho = AddParameter(parameters, JodaiTaishoType);
+		var tenpo = AddParameter(parameters, JodaiTenpoId);
+		var day = string.IsNullOrWhiteSpace(JodaiDay)
+			? DerivedJodai.TodaySql
+			: AddParameter(parameters, JodaiDay.Trim());
+		var sql = $@"
+SELECT M.Id AS Id,
+       {DerivedJodai.FinalJodaiSql("M.Id", taisho, tenpo, day, "M")} AS TankaJodai
+FROM MasterShohin M
+WHERE M.Id = {shohinId}";
+
+		var resolved = await QuerySqlListAsync<MasterShohin>(sql, parameters, ct);
+		if (resolved.Count > 0) shohin.TankaJodai = resolved[0].TankaJodai;
+	}
+
+	async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var msg = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters]))
+		};
+
+		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+		ct.ThrowIfCancellationRequested();
+		if (reply.Code < 0 && reply.Code != -1) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
+		}
+
+		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
+		return list.Cast<T>().ToList();
+	}
+
+	static string AddParameter(List<string> parameters, object value) {
+		parameters.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);
+		return $"@{parameters.Count - 1}";
 	}
 
 	void UpdateTotals() {

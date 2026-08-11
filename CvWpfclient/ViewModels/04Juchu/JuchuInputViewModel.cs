@@ -314,6 +314,10 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	void DoInputBarcode() {
 		var win = new Views.Sub.InputBarcodeView();
 		if (win.DataContext is not InputBarcodeViewModel vm) return;
+		// 上代一括変更の適用価格を引くための対象軸（受注なので本部売上用・当該得意先・伝票日付）
+		vm.JodaiTaishoType = (int)EnumJodaiTaisho.Honbu;
+		vm.JodaiTenpoId = CurrentEdit.Id_Tokui;
+		vm.JodaiDay = CurrentEdit.DenDay;
 		if (ClientLib.ShowDialogView(win, this) != true) return;
 
 		ApplyBarcodeMeisai(vm.CreateMeisaiRows(ProperMeisaiKubun));
@@ -456,6 +460,10 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		var selWin = new Views.Sub.SelectShohinView();
 		if (selWin.DataContext is not SelectShohinViewModel vm) return null;
 		vm.ShohinCodeFrom = SelectedMeisai?.Code_Shohin ?? string.Empty;
+		// 上代一括変更の適用価格を引くための対象軸（受注なので本部売上用・当該得意先・伝票日付）
+		vm.JodaiTaishoType = (int)EnumJodaiTaisho.Honbu;
+		vm.JodaiTenpoId = CurrentEdit.Id_Tokui;
+		vm.JodaiDay = CurrentEdit.DenDay;
 		if (ClientLib.ShowDialogView(selWin, this) != true) return null;
 		return vm.SelectedShohin;
 	}

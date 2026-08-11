@@ -71,6 +71,18 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	public partial string Message { get; set; } = "条件を入力して一覧表示してください";
 
+	/// <summary>
+	/// 上代解決の対象系統（<see cref="CvBase.EnumJodaiTaisho"/>）。呼び出し元が設定する。
+	/// 既定は本部売上用（得意先・倉庫が特定できない画面向け）。
+	/// </summary>
+	public int JodaiTaishoType { get; set; } = (int)EnumJodaiTaisho.Honbu;
+
+	/// <summary>上代解決の対象Id（店舗Id または 得意先Id）。0 なら系統の全件行のみ適用。</summary>
+	public long JodaiTenpoId { get; set; }
+
+	/// <summary>上代解決の判定日 yyyyMMdd。空なら今日。</summary>
+	public string JodaiDay { get; set; } = string.Empty;
+
 	public MasterShohin? SelectedShohin => Current?.Shohin;
 
 	public bool IsResultMode => !IsSearchMode;
@@ -212,7 +224,45 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 			LIMIT {MaxCount}
 			""";
 
-		return await QuerySqlListAsync<MasterShohin>(sql, parameters, ct);
+		List<MasterShohin> list = await QuerySqlListAsync<MasterShohin>(sql, parameters, ct);
+		await OverwriteJodaiAsync(list, ct);
+		return list;
+	}
+
+	/// <summary>
+	/// 上代一括変更(<see cref="DerivedJodai"/>)の適用行があれば <see cref="MasterShohin.TankaJodai"/> を
+	/// 適用価格で上書きする。適用行が無ければ商品マスタの値がそのまま返るので、既存の動作は変わらない。
+	/// <para>元上代 <see cref="MasterShohin.TankaJodaiOrg"/> は定価なので上書きしない。</para>
+	/// <para>
+	/// 一覧SQLが <c>SELECT M.*</c> のため列を追加できない（同名列が2つになりマッピングが不定になる）。
+	/// 読み込み後に別クエリで解決して差し替える。
+	/// </para>
+	/// </summary>
+	async Task OverwriteJodaiAsync(List<MasterShohin> list, CancellationToken ct) {
+		if (list.Count == 0) return;
+
+		List<string> parameters = [];
+		string taisho = AddParameter(parameters, JodaiTaishoType);
+		string tenpo = AddParameter(parameters, JodaiTenpoId);
+		string day = string.IsNullOrWhiteSpace(JodaiDay)
+			? DerivedJodai.TodaySql
+			: AddParameter(parameters, JodaiDay.Trim());
+		string ids = string.Join(",", list.Select(x => x.Id.ToString(CultureInfo.InvariantCulture)));
+		string sql = $"""
+			SELECT
+				M.Id AS Id,
+				{DerivedJodai.FinalJodaiSql("M.Id", taisho, tenpo, day, "M")} AS TankaJodai
+			FROM MasterShohin M
+			WHERE M.Id IN ({ids})
+			""";
+
+		List<MasterShohin> resolved = await QuerySqlListAsync<MasterShohin>(sql, parameters, ct);
+		Dictionary<long, int> map = resolved
+			.GroupBy(x => x.Id)
+			.ToDictionary(g => g.Key, g => g.First().TankaJodai);
+		foreach (MasterShohin item in list) {
+			if (map.TryGetValue(item.Id, out int jodai)) item.TankaJodai = jodai;
+		}
 	}
 
 	List<string> BuildShohinClauses(List<string> parameters) {

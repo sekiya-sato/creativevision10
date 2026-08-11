@@ -1,3 +1,34 @@
+## [2026-08-12] 09:40 上代一括変更 入力VM群の上代解決差し替え(商品選択・バーコード入力ダイアログ)
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：上代一括変更の残作業（各入力画面が商品マスタの上代を直読みしている箇所を、適用上代の解決経路へ差し替える）を再開する。本ログは商品選択ダイアログとバーコード入力ダイアログの経路（作業1〜3）。
+### 実施内容
+- CvWpfclient/ViewModels/Sub/SelectShohinViewModel.cs: 解決コンテキストの `JodaiTaishoType` / `JodaiTenpoId` / `JodaiDay` を追加。`LoadShohinListAsync` の後段に `OverwriteJodaiAsync()` を足し、`DerivedJodai.FinalJodaiSql` で解決した値で `MasterShohin.TankaJodai` を上書きする。
+- CvWpfclient/ViewModels/Sub/InputBarcodeViewModel.cs: 同じ3プロパティを追加。`LoadShohinAsync` で取得した商品を `shohinCache` へ格納する**前**に `OverwriteJodaiAsync()` で上書きする。生SQLを流すための `QuerySqlListAsync<T>()` / `AddParameter()` を追加。
+- 入力VM 7本の `ShowShohinSelectDialog()` と `DoInputBarcode()` に対象軸の設定を追加：
+  - ViewModels/06Uriage/ShopUriageInputViewModel.cs（店舗用 / `CurrentEdit.Id_Tenpo`）
+  - ViewModels/06Uriage/ShukkaUriageInputViewModel.cs、ViewModels/04Juchu/JuchuInputViewModel.cs（本部売上用 / `CurrentEdit.Id_Tokui`）
+  - ViewModels/03Hatchu/HachuInputViewModel.cs、ViewModels/05Shiire/ShiireInputViewModel.cs、Helpers/ViewModels/BaseIdoInputViewModel.cs、ViewModels/08Zaiko/StockInputViewModel.cs（本部売上用 / 全件行 `Id_Tenpo=0`）
+### 技術決定 Why
+- **商品選択ダイアログは列追加ではなく後段上書き**。一覧SQLが `SELECT M.*` なので `AS TankaJodai` を足すと同名列が2つになり NPoco のマッピングが不定になる。読み込み後にIdリストで1本だけ追加クエリを流して差し替える方式にした。
+- **バーコード側はキャッシュ格納前に上書きする**。`shohinCache` に定価が入ると以降のスキャンで解決値が反映されない。1件取得が `QueryByIdParam` で生SQLを書けないため、上書きだけ `QueryListSqlParam` の別クエリで引く。
+- **対象軸の決め方**。直営店ではない卸先・倉庫軸は `TaishoType=Honbu`。得意先が特定できる伝票（本部売上・受注）はその得意先Idを渡し、特定できないもの（仕入・発注・移動・在庫）は `Id_Tenpo=0`（本部基準の全件行）を渡す。判定日は伝票日付 `CurrentEdit.DenDay`。
+- **返す型は `MasterShohin` のまま**。サーバは `QueryListSqlParam.ItemType` で型を解決するため、クライアント独自のPOCOでは型解決に失敗する。
+- **数値は文字列パラメータで渡してよい**。SQLite の型親和性で INTEGER 列との比較時に数値へ変換される。既存の `BaseStockSheetInputViewModel.cs:355`（`s.Id_Soko = @n`）に前例がある。
+- **仕入・発注・移動の `Tanka` は原価のまま**変更していない。上代は `Jodai` 列の参考値としてのみ使う。
+### 影響範囲
+- 適用上代（`DerivedJodai`）に該当行が無ければ `ifnull` で `MasterShohin.TankaJodai` に落ちるため、**上代一括変更を使っていない環境では値が一切変わらない**。
+- 商品選択ダイアログの一覧「上代」列にも適用価格が表示されるようになる。
+- 残作業：棚卸系一覧（作業4）、店舗配分（作業5）、在庫照会（作業6）、商品バーコードブック（作業7・要業務判断）。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `TestServer.exe`: 35件すべて成功。
+- 変更ファイルが CR+LF であること、`git diff --check` がクリーンであることを確認。
+
+---
 ## [2026-08-11] 14:20 上代一括変更 一連の作業の点検と展開数表示の不備修正
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
