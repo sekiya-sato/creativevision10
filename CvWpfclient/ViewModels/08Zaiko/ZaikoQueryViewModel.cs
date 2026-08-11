@@ -211,10 +211,20 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 		List<string> parameters = [];
 		List<string> clauses = BuildShohinClauses(parameters);
 		string where = clauses.Count == 0 ? string.Empty : $"WHERE {string.Join(" AND ", clauses)}";
+		// 上代は上代一括変更(DerivedJodai)の適用価格で解決する。倉庫はコード範囲(SokoCodeFrom/To)で
+		// 絞るため単一の倉庫Idが取れないので、本部売上系の全件行(Id_Tenpo=0)を基準にする。
+		// 評価金額を出す画面なので、在庫評価SQL(StockSql.TankaJodai)と軸が食い違わないよう本部基準で統一する。
+		string jodai = DerivedJodai.FinalJodaiSql(
+			"M.Id",
+			((int)EnumJodaiTaisho.Honbu).ToString(CultureInfo.InvariantCulture),
+			"0",
+			DerivedJodai.TodaySql,
+			"M");
 		string sql = $"""
 			SELECT
 				M.Id, M.Vdc, M.Vdu, M.Code, M.Name, M.Ryaku, M.Kana,
-				M.TankaJodai, M.VTenji, M.VBrand, M.VMaterial, M.VItem, M.VSeason
+				{jodai} AS TankaJodai,
+				M.VTenji, M.VBrand, M.VMaterial, M.VItem, M.VSeason
 			FROM MasterShohin M
 			{where}
 			ORDER BY M.Code

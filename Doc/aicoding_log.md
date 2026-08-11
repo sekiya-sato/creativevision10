@@ -1,3 +1,27 @@
+## [2026-08-12] 10:18 上代一括変更 在庫照会の上代解決差し替え(本部基準)
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：上代一括変更の残作業を順次実施する（本ログは作業6：在庫照会）。
+### 実施内容
+- CvWpfclient/ViewModels/08Zaiko/ZaikoQueryViewModel.cs: `LoadShohinListAsync()` の `M.TankaJodai` を `DerivedJodai.FinalJodaiSql("M.Id", 本部売上用, "0", 今日, "M")` へ差し替え。
+### 技術決定 Why
+- **本部基準(`Id_Tenpo=0`)で解決する**。倉庫を `SokoCodeFrom` / `SokoCodeTo` のコード範囲で絞る画面のため単一の倉庫Idが取れない。また評価金額を表示する画面なので、在庫評価SQL(`StockSql.TankaJodai`)と軸が食い違わないよう本部基準へ揃えた。
+- 判定日は今日（`DerivedJodai.TodaySql`）。在庫照会は現時点の評価を見る画面のため。
+- 行クラスの `TankaJodai` はSQL側で解決済みの値が入るため変更していない。
+### 影響範囲
+- 在庫照会の「上代」列と評価金額。
+- 適用上代が無ければ `ifnull` で `MasterShohin.TankaJodai` に落ちるため既存環境では値が変わらない。
+### 確認
+- `vscmdclaude.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `TestServer.exe`: 35件すべて成功。
+- `git diff --check` クリーン、変更ファイルは CR+LF。
+- CvWpfclient 全体を `TankaJodai` で走査し、残る参照が「解決経路を通ったオブジェクト」「表示バインディング」「意図的な対象外（商品マスタメンテ／上代一括変更画面自身／`StockSql.TankaJodaiMaster`）」だけであることを確認。生の商品マスタ直読みは残っていない。
+- 残作業は作業7（商品バーコードブックの印字価格）のみ。業務判断待ち。
+
+---
 ## [2026-08-12] 10:08 上代一括変更 店舗配分の上代解決差し替え(店舗軸・配分先店舗別)
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
