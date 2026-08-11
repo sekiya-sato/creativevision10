@@ -1,3 +1,34 @@
+## [2026-08-11] 13:11 上代一括変更のテーブル設計と定義追加
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：旧システムの「上代一括変更」機能を cv10 に追加するにあたり、まずテーブル設計の計画を立て、確定した仕様でテーブル定義を作成する。
+### 実施内容
+- .omo/20260811_jodai_table_design_plan.md: 設計計画を新規作成（仕様の正）。現状分析・方針・テーブル定義・価格解決ロジック・規模見積もり・導入手順。
+- CvBase/BaseDbJodai.cs: 新規作成。実テーブル `TranJodai` / `DerivedJodai`、サブクラス `TranJodaiCond` / `TranJodaiShop` / `TranJodaiMeisai`、Enum `EnumJodaiKubun` / `EnumJodaiTaisho`。`DerivedJodai` に展開SQL(`CreateSql`/`InsertSql`/`DeleteSql`)と解決SQL断片(`ResolveSql`/`FinalJodaiSql`)を実装。
+- CvBase/BaseDb2Trans.cs: 上代の ToDo コメントブロックを削除（原価 `TranGenka` の枠は残置）。
+- CvBase/DefineDataTable.cs: `tableTypes` に `TranJodai` / `DerivedJodai` を追加。上代の ToDo コメントを削除。初期データに名称区分 `SLE`(セール) と `SLE/0001` を追加。
+- CvDomainLogic/JodaiDb.cs: 新規作成。`ResolveJodai` / `ResolveJodaiList` / `Rebuild` / `RebuildAll` / `PurgeExpired`。
+- Doc/spec/spec.database.cvbase.md: テーブル一覧・件数サマリ・補足を更新。
+### 技術決定 Why
+- **商品マスタを書き換えないオーバーレイ方式**: `MasterShohin.TankaJodai` は定価として維持し、期間・対象つきの上書きレコードを `DerivedJodai` に積む。セール終了で自動的に元価格へ戻るため戻し忘れ事故が起きず、過去日の再計算も再現できる。プロパー(P)区分も `DayTo="99991231"` の無期限オーバーレイとして統一し、書き込み経路を1本に保つ。
+- **物理テーブルは `TranJodai` のみ**: 対象店舗・対象明細は JSON 配列で保持。`List<>` 列には `[ColumnSizeDml(ColumnType.Json)]` を付ける（属性が無いと `ExDatabase.GetSqlColumns` が `continue` して MariaDB/Oracle で列が生成されない）。SQLite は `TEXT` でサイズ制限なし、MariaDB は `JSON` 型となり既存 `Jmeisai` の `varchar(4000)` 制限を回避できる。検索性は `DerivedJodai` 側（`Id_Tran` で伝票へ逆引き）で担保する。
+- **展開は `IDerivedOrigin` に載せる**: `TranJodai` に `IDerivedOrigin` を実装し、既存の `HandlerDerived` が Insert/Update/Delete 時に同一トランザクション内で `DerivedJodai` を再展開・削除する（`DerivedShohinColSiz` と同じ仕組み）。専用の確定処理を作らずに整合性が保てる。
+- **`DerivedJodai` に V*列を持たせない**: Derived 系に `CodeNameView` 列を置くと `MasterCascadeDb.VRules` への登録が必須になり（`MasterCascadeDbTests.VRules_CoverAllMasterVColumns` が検出）、数万行への伝播 UPDATE が発生する。Summary 系と同じく JOIN 前提とした。
+- **対象系統 `TaishoType`**: 店舗用(TenType=6)と本部売上用(TenType=1/3)を分ける。`MasterTokui.Id` は TenType をまたいで一意だが、全件ワイルドカード `Id_Tenpo=0` の意味が系統ごとに変わるため列が必要。
+- 価格粒度は商品マスタ単位（色・サイズ別価格を持たない）。展開行数が SKU 数の分だけ減り、キーと解決 SQL が単純になる。
+- 新規テーブルのため `UpdateDb.versions` への追記は不要（`CREATE TABLE IF NOT EXISTS` で稼働中DBも起動時に自動作成される）。
+### 影響範囲
+- 既存テーブル・既存ロジックへの変更なし。`MasterShohin.TankaJodai` を直読みしている箇所（`StockSql.TankaJodai()`、`PointOfSaleService`、各入力VM）の解決API経由への差し替えは次フェーズ。該当行が無ければ従来どおりマスタの上代を返すため、差し替え後も既存動作は変わらない。
+### 確認
+- `vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `TestServer.exe`: 35件すべて成功（`VRules_CoverAllMasterVColumns` を含む）。
+- 一時検証（スクラッチ）: テーブル/インデックス生成、JSON往復（店舗200件・明細500件、`Jmeisai` 実長 128,285 byte）、展開100,000行（約1.0秒）、未確定伝票は展開0件、空文字JSONでも `json_valid()` ガードにより例外なし、優先順位（個別指定>全件、後の伝票が勝つ、期間外は全件行へフォールバック、該当なしはマスタ定価）7ケースすべて期待どおり。
+
+---
+
 ## [2026-08-10] 16:09 SummaryRealStock範囲再集計の色・サイズ単位是正
 ### Agent
 - GPT-5.6 : OpenAI : Sekiya Sato Codex

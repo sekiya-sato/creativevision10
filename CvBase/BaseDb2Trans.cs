@@ -1462,23 +1462,8 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 }
 
 
-/* ToDo: 未作成テーブル(上代、原価)
-
-// 上代一括変更の伝票データ
-[Comment("トランザクション：上代一括変更、伝票No、登録日、日付Frm-To、セールCD(区分'S01')、タイトル、[店舗CD] [商品CD、色サイズ、掛率、上代]")]
-public sealed partial class TranJodai : BaseDbClass {
-}
-
-[Comment("派生テーブル：商品上代テーブル：商品Id、店舗Id、日付Fm-To、上代、元TranId")
-public sealed partial class DerivedJodai : BaseDbClass {
-}
-			派生上代テーブルとマスタから上代を決定する
-			   SELECT COALESCE(d.Jodai, m.Jodai) AS FinalJodai
-				FROM MasterShohin m
-				LEFT JOIN DerivedShohin d ON m.Id = d.Id_Shohin 
-				    AND d.Id_Tenpo = 10
-				    AND 20260415 BETWEEN d.DayFrom AND d.DayTo
-				WHERE m.Id = 1;
+/* ToDo: 未作成テーブル(原価)
+   上代(TranJodai / DerivedJodai)は CvBase/BaseDbJodai.cs で作成済み
 
 // 原価変更の伝票データ
 [Comment("トランザクション：原価変更、伝票No、登録日、評価区分(評価替、その他)、[商品CD、OFF率、(上代、掛率、原価)、新原価]")]

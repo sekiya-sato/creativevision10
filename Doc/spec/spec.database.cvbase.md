@@ -20,10 +20,10 @@ CvBase プロジェクトで定義されているテーブル候補を、`[Prima
 | --- | ---: | --- |
 | システム | 5 | DB 更新履歴、連番、ログイン、ログイン履歴、マスター操作履歴 |
 | マスター | 8 | システム管理、名称、社員、顧客、商品、設定、得意先、仕入先 |
-| トランザクション | 13 | 売上、仕入、移動、入金、支払、棚卸、受発注、HHT 取込 |
+| トランザクション | 14 | 売上、仕入、移動、入金、支払、棚卸、受発注、HHT 取込、上代一括変更 |
 | 集計 | 2 | 現在庫、年月在庫 |
-| 派生 | 1 | 商品マスタの色サイズ展開 |
-| 合計 | 29 | `[PrimaryKey]` または `[Comment]` 付きクラス |
+| 派生 | 2 | 商品マスタの色サイズ展開、適用上代 |
+| 合計 | 31 | `[PrimaryKey]` または `[Comment]` 付きクラス |
 
 ## 作成状態
 
@@ -146,6 +146,7 @@ CvBase プロジェクトで定義されているテーブル候補を、`[Prima
 | `Tran13Hachu` | CreateTable | `Id` | `nk1(DenDay)`, `nk3(Id_Soko)`, `nk4(Id_Shiire)` | 発注。仕入化時は仕入側 `RelateNo1` に発注 `Id` を設定 | `Id_Shiire`, `VShiire`, `Kubun`, `RelateNo1`, `Rate` | `CvBase/BaseDb2Trans.cs:876` |
 | `TranHhtData` | CreateTable | `Id` | `nk1(DenDay)` | ハンディターミナル取込データ | `Store`, `DenDay`, `Kubun`, `DenNo`, `Tanto`, `Tori`, `Hinban`, `Color`, `Size`, `MotoJodai`, `Jodai`, `Gedai`, `Su`, `Store2`, `SaleFlg`, `TanaNo`, `RelateDenNo`, `Kakeritsu`, `NouhinDay`, `Yobi03-12`, `FileName`, `LineNo`, `VdCnvDate` | `CvBase/BaseDb2Trans.cs:920` |
 | `TranVulcanHht` | CreateTable | `Id` | `nk1(BackupFileName)`, `nk2(VdCnvDate)` | VULCAN データレイアウト HHT 取込データ | `Type0`, `HhtNo`, `Serial`, `DenDay`, `Store`, `Tanto`, `HanKubun`, `DenNo`, `Jan1`, `Jan2`, `Su`, `Tanka`, `ToriSaki`, `KakeRitsu`, `TotalCnt`, `Filler`, `BackupFileName`, `LineNo`, `ComputerName`, `UserName`, `VdCnvDate`, `TargetTableName`, `TargetId`, `ErrorMsg` | `CvBase/BaseDb2Trans.cs:1135` |
+| `TranJodai` | CreateTable | `Id` | `nk1(DenDay)`, `nk2(Id_Sale)` | 上代一括変更の伝票。対象店舗・対象明細・抽出条件を JSON 配列で保持し、物理テーブルはこの1表のみ。確定すると `DerivedJodai` へ展開される | `DenDay`, `Kubun`(P/S), `TaishoType`(店舗用/本部売上用), `Id_Sale`, `VSale`, `Title`, `Id_Shain`, `VShain`, `DayFrom`, `DayTo`, `CalcType`, `CalcRate`, `CalcValue`, `RoundUnit`, `RoundType`, `Status`, `FixDay`, `SendFlg`, `ShopCnt`, `MeisaiCnt`, `ExpandCnt`, `Jcond`, `Jshop`, `Jmeisai`, `Memo` | `CvBase/BaseDbJodai.cs:59` |
 
 ### 集計
 
@@ -159,10 +160,17 @@ CvBase プロジェクトで定義されているテーブル候補を、`[Prima
 | テーブル | 作成 | 主キー | キー | 概要 | 主な固有列 | 定義元 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `DerivedShohinColSiz` | CreateDerivedTable | `Id` | `unq1(Id_Shohin, Id_Col, Id_Siz)`, `n1(Id_Shohin)`, `n2(Code)`, `njan1(Jan1)`, `njan2(Jan2)`, `njan3(Jan3)` | 商品マスタ `MasterShohin` から商品・色・サイズに展開した派生マスタ | `Id`, `Id_Shohin`, `RowIdx`, `Code`, `Id_Col`, `Code_Col`, `Mei_Col`, `Id_Siz`, `Code_Siz`, `Mei_Siz`, `Jan1`, `Jan2`, `Jan3` | `CvBase/BaseDbDerived.cs:160` |
+| `DerivedJodai` | CreateTable | `Id` | `uk1(Id_Tran, TaishoType, Id_Tenpo, Id_Shohin)`, `nk1(Id_Shohin, TaishoType, Id_Tenpo, DayFrom, DayTo)`, `nk2(Id_Tran)`, `nk3(DayTo)` | 適用上代。`TranJodai`(確定分)を「対象 × 商品 × 期間」へ展開したもの。該当行が無ければ `MasterShohin.TankaJodai` を使う。V*列は持たない（JOIN 前提） | `TaishoType`, `Id_Tenpo`(0=全件), `Id_Shohin`, `DayFrom`, `DayTo`, `Kubun`, `Jodai`, `RateOff`, `Id_Tran`, `No`, `Priority` | `CvBase/BaseDbJodai.cs:424` |
 
 ## 補足
 
 - `MasterShohin` の `Jcolsiz`、`Jgenka`、`Jgrade` などの `J*` 列は、サブ構造を JSON として持つ前提の列である。
 - `V*` 列の多くは `CodeNameView` を JSON として保持する表示・参照用のスナップショット列である。
 - `SysHistryMaster` は属性上は実テーブル候補だが、現時点の `DefineDataTable.Initialize()` には含まれていない。
-- `BaseDb2Trans.cs` 末尾の上代・原価・予算・配分・補充・売掛/買掛・ポイント系 ToDo テーブルはブロックコメント内のため、このドキュメントでは対象外とした。
+- `BaseDb2Trans.cs` 末尾の原価・予算・配分・補充・売掛/買掛・ポイント系 ToDo テーブルはブロックコメント内のため、このドキュメントでは対象外とした。
+- `TranJodai` の `Jcond` / `Jshop` / `Jmeisai` は `[ColumnSizeDml(ColumnType.Json)]` 指定の JSON 配列列である。
+  SQLite では `TEXT`（サイズ制限なし）、MariaDB では `JSON` 型になる。`List<>` 型に `[ColumnSizeDml]` を付け忘れると
+  MariaDB / Oracle 側で**列自体が生成されない**（`ExDatabase.GetSqlColumns` が `continue` する）ので注意する。
+- `DerivedJodai` は `TranJodai` の `IDerivedOrigin` 実装により、`CvServer/Services/HandlerDerived` が
+  Insert / Update / Delete 時に自動で再展開・削除する（`DerivedShohinColSiz` と同じ仕組み）。
+  手動修復は `CvDomainLogic/JodaiDb.Rebuild()` / `RebuildAll()`。設計は `.omo/20260811_jodai_table_design_plan.md`。

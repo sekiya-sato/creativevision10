@@ -74,6 +74,9 @@ public class DefineDataTable {
 			// 配分テーブル
 			typeof(TranHaibun),
 			typeof(TranHoju),
+			// 上代一括変更テーブル (DerivedJodai は TranJodai の IDerivedOrigin 経由で自動展開される)
+			typeof(TranJodai),
+			typeof(DerivedJodai),
 
 			// 集計テーブル
 			typeof(SummaryStock),
@@ -89,9 +92,6 @@ public class DefineDataTable {
 
 			typeof(Tran60TanaDate),
 			/* Product: 以下のテーブルは、優先順位低いが、いずれ作成する予定
-			上代一括変更
-				TranJodai : 伝票No,日付 (from-to),セールCD(Meisho'S01') タイトル  [店舗CD] [商品CD,(色CD,サイズCD) : 掛率,上代]
-				DerivedJodai : TranJodai-No,日付 (from-to),Id_Shohin,Jodai ??
 			原価変更登録
 				TranGenka : 伝票No,日付(年月+末),セールCD(Meisho'S01') 評価区分(0:通常,1:評価替え) OFF率 [商品CD] :上代 掛率 元原価 新原価
 			自動補充設定 (売上/在庫)
@@ -182,10 +182,12 @@ public class DefineDataTable {
 			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "ITM", Name = "アイテム", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "COL", Name = "カラー", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "SIZ", Name = "サイズ", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "SLE", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "NewBrand", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "ITM", KubunName = "アイテム", Code = "01", Name = "NewItem", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "COL", KubunName = "カラー", Code = "01", Name = "NewColor", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "SIZ", KubunName = "サイズ", Code = "01", Name = "NewSize", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "SLE", KubunName = "セール", Code = "0001", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 		};
 		db.InsertBulk<MasterMeisho>(meishoList);
 		var shohin = new MasterShohin {
