@@ -45,6 +45,12 @@
 					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
 						FontWeight="SemiBold"
 						Text="{Binding StatusName}" />
+					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+						Text="送信:" />
+					<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+						FontWeight="SemiBold"
+						Text="{Binding SendFlgName}"
+						ToolTip="店頭の値札･棚札を差し替えたかどうかの運用管理。価格自体はPOSがサーバから直接引きます" />
 				</StackPanel>
 				<StackPanel Orientation="Horizontal">
 					<Button Margin="0,0,8,0"
@@ -185,6 +191,9 @@
 								<DataGridTextColumn Width="70"
 									Binding="{Binding StatusName}"
 									Header="状態" />
+								<DataGridTextColumn Width="70"
+									Binding="{Binding SendFlgName}"
+									Header="送信" />
 								<DataGridTextColumn Width="130"
 									Binding="{Binding ShainName}"
 									Header="入力者" />
@@ -731,7 +740,13 @@
 						</StackPanel>
 						<StackPanel HorizontalAlignment="Right"
 							Orientation="Horizontal">
-							<Button Command="{Binding DoCancelDenCommand}"
+							<Button Command="{Binding DoMarkSentCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="値札･棚札の差し替えが完了したことを記録する（価格配信ではありません）">
+								<TextBlock FontSize="16" Text="送信済" />
+							</Button>
+							<Button Margin="12,0,0,0"
+								Command="{Binding DoCancelDenCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
 								ToolTip="確定済みの伝票を取消し、展開済みの適用上代を削除">
 								<TextBlock FontSize="16" Text="取消" />

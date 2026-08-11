@@ -165,9 +165,21 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	[NotifyPropertyChangedFor(nameof(StatusName))]
 	[NotifyCanExecuteChangedFor(nameof(DoFixCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoCancelDenCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoMarkSentCommand))]
 	public partial int EditStatus { get; set; }
 
 	public string StatusName => StatusToName(EditStatus);
+
+	/// <summary>
+	/// 送信状態。店頭の値札・棚札を差し替えたかどうかの運用管理に使う。
+	/// 価格そのものは POS がサーバの適用上代を直接引くので、配信処理は不要。
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(SendFlgName))]
+	[NotifyCanExecuteChangedFor(nameof(DoMarkSentCommand))]
+	public partial int EditSendFlg { get; set; }
+
+	public string SendFlgName => SendFlgToName(EditSendFlg);
 
 	[ObservableProperty]
 	public partial int EditExpandCnt { get; set; }
@@ -352,6 +364,7 @@ LIMIT 500";
 		EditTitle = den.Title;
 		EditMemo = den.Memo;
 		EditStatus = den.Status;
+		EditSendFlg = den.SendFlg;
 		EditExpandCnt = den.ExpandCnt;
 		EditDayFrom = ParseDay(den.DayFrom);
 		EditDayTo = ParseDay(den.DayTo);
@@ -398,6 +411,7 @@ LIMIT 500";
 		EditTitle = string.Empty;
 		EditMemo = string.Empty;
 		EditStatus = 0;
+		EditSendFlg = 0;
 		EditExpandCnt = 0;
 		EditDayFrom = DateTime.Today;
 		EditDayTo = DateTime.Today.AddMonths(1);
@@ -693,12 +707,15 @@ LIMIT {maxCount}";
 
 		den.Status = 1;
 		den.FixDay = ToDay(DateTime.Today);
+		// 価格が変わったので値札・棚札の差し替えが必要。確定のたびに未送信へ戻す
+		den.SendFlg = 0;
 		try {
 			StartBusy("確定して適用上代を展開中...");
 			var saved = await SaveDenpyoAsync(den, ct);
 			EditId = saved.Id;
 			editVdu = saved.Vdu;
 			EditStatus = saved.Status;
+			EditSendFlg = saved.SendFlg;
 			await ReloadExpandCountAsync(ct);
 			await LoadListAsync(ct);
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 伝票No {saved.Id:N0} を確定しました（展開 {EditExpandCnt:N0} 行）";
@@ -745,6 +762,47 @@ LIMIT {maxCount}";
 		}
 		catch (Exception ex) {
 			Message = $"取消失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	bool CanMarkSent() => EditId > 0 && EditStatus == 1 && EditSendFlg != 2;
+
+	/// <summary>
+	/// 送信済みにする。<b>価格の配信処理ではない。</b>
+	/// <para>
+	/// cv10 の POS はサーバの適用上代を直接引くため価格配信は不要で、この操作は
+	/// 「店頭の値札・棚札を差し替え終わった」ことを記録する運用管理用のマーク。
+	/// 確定し直すと未送信へ戻る（価格が変わったので貼り替えが再度必要になるため）。
+	/// </para>
+	/// </summary>
+	[RelayCommand(CanExecute = nameof(CanMarkSent))]
+	async Task DoMarkSent(CancellationToken ct) {
+		if (MessageEx.ShowQuestionDialog(
+				$"伝票No {EditId:N0} を送信済みにします。\n（値札・棚札の差し替えが完了した記録です。価格自体はPOSがサーバから直接引きます）\nよろしいですか？",
+				owner: ActiveWindow) != MessageBoxResult.Yes) return;
+		var den = BuildDenpyo(out var error);
+		if (den == null) {
+			MessageEx.ShowWarningDialog(error, owner: ActiveWindow);
+			return;
+		}
+		den.SendFlg = 2;
+		try {
+			StartBusy("送信済みに更新中...");
+			var saved = await SaveDenpyoAsync(den, ct);
+			editVdu = saved.Vdu;
+			EditSendFlg = saved.SendFlg;
+			await LoadListAsync(ct);
+			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 伝票No {saved.Id:N0} を送信済みにしました";
+		}
+		catch (OperationCanceledException) {
+			Message = "更新を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"送信済み更新失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
 		finally {
@@ -799,6 +857,7 @@ LIMIT {maxCount}";
 			RoundType = RoundType,
 			Status = EditStatus,
 			FixDay = EditStatus == 1 ? ToDay(DateTime.Today) : string.Empty,
+			SendFlg = EditSendFlg,
 			Memo = EditMemo,
 			Jcond = [.. CondRows.Where(c => !string.IsNullOrEmpty(c.Field?.Column)).Select((c, i) => new TranJodaiCond {
 				No = i + 1,
@@ -985,6 +1044,12 @@ ORDER BY Odr, Code";
 		_ => "入力中",
 	};
 
+	internal static string SendFlgToName(int sendFlg) => sendFlg switch {
+		1 => "送信中",
+		2 => "送信済",
+		_ => "未送信",
+	};
+
 	internal static string KubunToName(int kubun) => kubun == (int)EnumJodaiKubun.Proper ? "プロパー" : "セール";
 
 	internal static string TaishoToName(int taisho) => taisho == (int)EnumJodaiTaisho.Honbu ? "本部売上" : "店舗";
@@ -1020,6 +1085,7 @@ public sealed class JodaiListRow {
 	public int MeisaiCnt { get; }
 	public int ExpandCnt { get; }
 	public string StatusName { get; }
+	public string SendFlgName { get; }
 	public string ShainName { get; }
 
 	public JodaiListRow(TranJodai den) {
@@ -1034,6 +1100,7 @@ public sealed class JodaiListRow {
 		MeisaiCnt = den.MeisaiCnt;
 		ExpandCnt = den.ExpandCnt;
 		StatusName = MasterJouDaiBulkChangeViewModel.StatusToName(den.Status);
+		SendFlgName = MasterJouDaiBulkChangeViewModel.SendFlgToName(den.SendFlg);
 		ShainName = string.IsNullOrEmpty(den.VShain.Cd) ? string.Empty : $"{den.VShain.Cd} {den.VShain.Mei}";
 	}
 }

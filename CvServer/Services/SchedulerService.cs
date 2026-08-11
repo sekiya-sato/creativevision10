@@ -28,10 +28,13 @@ public class SchedulerService : ISchedulerService {
 	public const string WorkFileCleanupTaskName = "Work file cleanup ワークフォルダにある古いファイルを削除するタスク";
 	public const string MonthlyResummaryCronExpression = "10 1 * * *";
 	public const string MonthlyResummaryTaskName = "在庫 売掛 買掛 の当月と前月 を再集計するタスク";
+	public const string JodaiPurgeCronExpression = "30 1 * * *";
+	public const string JodaiPurgeTaskName = "上代 適用期間が過ぎた適用上代(DerivedJodai)を削除するタスク";
 
 	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
 	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
 	public static readonly Guid MonthlyResummaryTaskId = Guid.Parse("c3d4e5f6-a7b8-9012-cdef-123456789012");
+	public static readonly Guid JodaiPurgeTaskId = Guid.Parse("d4e5f6a7-b8c9-0123-def0-234567890123");
 
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;
@@ -142,6 +145,22 @@ public class SchedulerService : ISchedulerService {
 			MonthlyResummaryTaskId);
 	}
 
+	/// <summary>
+	/// 期限切れの適用上代(<see cref="DerivedJodai"/>)を削除するタスクを登録する。
+	/// <para>
+	/// 保持日数は <see cref="MasterConfig"/> の <see cref="JodaiDb.ConfigKeepDaysName"/>（既定90日）。
+	/// 伝票(<see cref="TranJodai"/>)は残るので、必要になれば <see cref="JodaiDb.Rebuild"/> で復元できる。
+	/// プロパー(P)区分は DayTo="99991231" のため削除対象にならない。
+	/// </para>
+	/// </summary>
+	public SchedulerResult RegisterJodaiPurgeTask() {
+		return RegisterTask(
+			JodaiPurgeTaskName,
+			JodaiPurgeCronExpression,
+			(db, ct) => ExecuteJodaiPurgeCoreAsync(db, JodaiPurgeTaskName, ct),
+			JodaiPurgeTaskId);
+	}
+
 	public Task<GetSchedulerTasksResponse> GetTasksAsync(CallContext context = default) {
 		var tasks = _scheduler.GetTasks();
 		var result = new GetSchedulerTasksResponse { Result = Success, Detail = "正常終了" };
@@ -190,7 +209,8 @@ public class SchedulerService : ISchedulerService {
 			return false;
 		return taskName.Equals(DailyWalCheckpointTaskName, StringComparison.OrdinalIgnoreCase)
 			|| taskName.Equals(WorkFileCleanupTaskName, StringComparison.OrdinalIgnoreCase)
-			|| taskName.Equals(MonthlyResummaryTaskName, StringComparison.OrdinalIgnoreCase);
+			|| taskName.Equals(MonthlyResummaryTaskName, StringComparison.OrdinalIgnoreCase)
+			|| taskName.Equals(JodaiPurgeTaskName, StringComparison.OrdinalIgnoreCase);
 	}
 
 	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executor, Guid? taskId = null) {
@@ -398,6 +418,31 @@ public class SchedulerService : ISchedulerService {
 			return new SummaryStreamResult(count, $"例外: {ex.Message}");
 		}
 		return new SummaryStreamResult(count, null);
+	}
+
+	/// <summary>
+	/// 期限切れの適用上代を削除する。伝票は消さないので、必要になれば再展開で復元できる。
+	/// </summary>
+	private Task<AutoexecTaskResult> ExecuteJodaiPurgeCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+
+		try {
+			var jodaiDb = new JodaiDb(db);
+			var keepDays = jodaiDb.GetKeepDays();
+			var deleted = jodaiDb.PurgeExpiredByConfig(DateTime.Today);
+			var memo = $"適用上代の期限切れ削除: 保持日数={keepDays}, 削除={deleted}";
+			_logger.LogInformation(
+				"適用上代の期限切れ削除: TaskName={TaskName}, KeepDays={KeepDays}, Deleted={Deleted}",
+				taskName, keepDays, deleted);
+			return Task.FromResult(new AutoexecTaskResult(Success, deleted, memo));
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			throw;
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "適用上代の期限切れ削除に失敗しました: TaskName={TaskName}", taskName);
+			return Task.FromResult(new AutoexecTaskResult(InternalError, 0, $"例外: {ex.Message}"));
+		}
 	}
 
 	private Task<AutoexecTaskResult> ExecuteSqliteWalCheckpointCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {

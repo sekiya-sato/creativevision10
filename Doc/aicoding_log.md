@@ -1,3 +1,31 @@
+## [2026-08-11] 14:01 上代一括変更 Phase4 期限切れパージのスケジューラ登録と送信FLG運用
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：後続フェーズ 2,3,4 を順次実施する（本ログは Phase4）。
+### 実施内容
+- CvDomainLogic/JodaiDb.cs: `PurgeExpiredByConfig()` / `GetKeepDays()` / `MarkSent()` と定数 `ConfigKeepDaysName`(=JodaiKeepDays) / `DefaultKeepDays`(=90) を追加。
+- CvServer/Services/SchedulerService.cs: システムタスク `JodaiPurgeTaskName`（毎日1:30）を追加。`RegisterJodaiPurgeTask()` と `ExecuteJodaiPurgeCoreAsync()` を実装し、`IsSystemTask` にも登録。
+- CvServer/Program.cs: `ApplicationStarted` で `RegisterJodaiPurgeTask()` を呼ぶ。
+- CvWpfclient/ViewModels/01Master/MasterJouDaiBulkChangeViewModel.cs: `EditSendFlg` / `SendFlgName` / `DoMarkSentCommand` を追加。確定時に `SendFlg=0`（未送信）へ戻す。一覧行にも送信状態を追加。
+- CvWpfclient/Views/01Master/MasterJouDaiBulkChangeView.xaml: ヘッダの送信状態表示、一覧の「送信」列、[送信済] ボタンを追加。
+### 技術決定 Why
+- **パージは新しい `SchedulerTaskType` を足さず、システムタスクとして登録した**。既存の WALチェックポイント／ワークファイル削除／月次再集計と同じ形で、固定Guid＋固定cronで `Program.cs` から登録する。クライアントのジョブ登録画面は TaskType を `LogOnly` 固定でしか送らないため、enum値を足しても画面から到達できず、使えない選択肢が増えるだけになる。
+- **保持日数は `MasterConfig` の `JodaiKeepDays`（既定90日）**。`DerivedJodai` は伝票から再生成できるので消しても復元可能。プロパー(P)区分は `DayTo="99991231"` なので自動的に対象外になる。
+- **送信FLGは「価格の配信」ではなく「値札・棚札を差し替えた記録」と定義した**。cv10 の POS は `PointOfSaleService` 経由でサーバの適用上代を直接引くため価格配信の実体が存在しない。存在しない配信処理を作らず、運用管理用のマークとして意味づけを明記した。確定のたびに未送信へ戻すのは、価格が変われば貼り替えが再度必要になるため。
+- `MarkSent` は `Status=1`（確定）の伝票だけを対象にする。入力中・取消の伝票を送信済みにできてしまうと運用管理の意味が失われる。
+### 影響範囲
+- 既存のスケジューラ動作には影響なし（タスクを1つ追加するのみ）。`MasterConfig` に `JodaiKeepDays` が無い環境は既定90日で動作する。
+### 確認
+- `vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `TestServer.exe`: 35件すべて成功。
+- 一時検証（スクラッチ）: `GetKeepDays` が既定90／`MasterConfig` 設定後30を返すこと、`PurgeExpiredByConfig` が保持日数より前に終了した1件だけを削除し無期限(99991231)を残すこと、`MarkSent` が確定済み伝票のみ1件更新し未確定は0件であることを確認。
+- 一時検証（スクラッチ・WPF実体化）: XAMLパース・StaticResource解決・タブ2実体化に成功。バインディングエラーは既存画面と同種のフレームワーク由来のみ。
+
+---
+
 ## [2026-08-11] 13:52 上代一括変更 Phase3 画面(検索画面/修正・登録画面)の実装
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
