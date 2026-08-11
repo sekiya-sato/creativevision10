@@ -233,6 +233,61 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	public partial string Memo { get; set; } = string.Empty;
 	[Ignore]
 	public Type DerivedClass => typeof(DerivedJodai);
+
+	/// <summary>
+	/// 対象店舗・対象明細の重複を取り除き、行Noと件数列を整える。<b>保存前に必ず呼ぶこと。</b>
+	/// <para>
+	/// <see cref="DerivedJodai"/> の uk1(Id_Tran, TaishoType, Id_Tenpo, Id_Shohin) はユニークキーなので、
+	/// <see cref="Jshop"/> に同じ店舗、<see cref="Jmeisai"/> に同じ商品が重複していると
+	/// 展開時に制約違反となり<b>トランザクションごと失敗する</b>（伝票の保存自体が通らない）。
+	/// </para>
+	/// <para>
+	/// 重複時は<b>後の指定を残す</b>（＝最後に入力した内容が有効）。
+	/// 期間重複を「後の伝票が勝つ」で解決するのと同じ考え方に揃えている。
+	/// 利用者へ知らせたい場合は <see cref="FindDuplicates"/> を先に呼ぶこと。
+	/// </para>
+	/// </summary>
+	/// <returns>取り除いた重複の件数（対象店舗＋対象明細）</returns>
+	public int Normalize() {
+		var removed = RemoveDuplicates(Jshop, c => c.Id_Tenpo) + RemoveDuplicates(Jmeisai, c => c.Id_Shohin);
+		for (var i = 0; i < Jmeisai.Count; i++)
+			Jmeisai[i].No = i + 1;
+		ShopCnt = Jshop.Count;
+		MeisaiCnt = Jmeisai.Count;
+		return removed;
+	}
+
+	/// <summary>
+	/// 重複している対象店舗・対象商品を利用者向けメッセージとして返す（<see cref="Normalize"/>の前の確認用）。
+	/// </summary>
+	/// <returns>重複が無ければ空リスト</returns>
+	public List<string> FindDuplicates() {
+		var messages = new List<string>();
+		foreach (var group in Jshop.GroupBy(c => c.Id_Tenpo).Where(g => g.Count() > 1)) {
+			var first = group.First();
+			messages.Add($"対象店舗が重複しています：{first.Code_Tenpo} {first.Mei_Tenpo}（{group.Count()}件）");
+		}
+		foreach (var group in Jmeisai.GroupBy(c => c.Id_Shohin).Where(g => g.Count() > 1)) {
+			var first = group.First();
+			messages.Add($"対象商品が重複しています：{first.Code_Shohin} {first.Mei_Shohin}（{group.Count()}件）");
+		}
+		return messages;
+	}
+
+	/// <summary>
+	/// キーが重複する要素を後ろから走査して取り除く（＝最後の指定を残す）
+	/// </summary>
+	static int RemoveDuplicates<T, TKey>(List<T> list, Func<T, TKey> keySelector) {
+		var seen = new HashSet<TKey>();
+		var removed = 0;
+		for (var i = list.Count - 1; i >= 0; i--) {
+			if (seen.Add(keySelector(list[i])))
+				continue;
+			list.RemoveAt(i);
+			removed++;
+		}
+		return removed;
+	}
 }
 
 /// <summary>

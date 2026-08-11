@@ -1,3 +1,23 @@
+## [2026-08-11] 13:22 上代一括変更 対象店舗・対象明細の重複排除を追加
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：UI側で重複排除の処理を追加する。
+### 実施内容
+- CvBase/BaseDbJodai.cs: `TranJodai.Normalize()`（重複除去・行No振り直し・件数列同期）、`TranJodai.FindDuplicates()`（利用者向け重複メッセージ）、内部ヘルパ `RemoveDuplicates` を追加。
+### 技術決定 Why
+- `DerivedJodai` の `uk1(Id_Tran, TaishoType, Id_Tenpo, Id_Shohin)` はユニークキーなので、`Jshop` に同じ店舗・`Jmeisai` に同じ商品が重複していると展開時に制約違反となり、`HandlerClass` のトランザクションごと失敗して伝票の保存自体が通らない。入力時点で取り除く。
+- 重複時は**後の指定を残す**。期間重複を「後の伝票が勝つ」で解決するのと同じ考え方に揃え、最後に入力した価格が有効になるようにした（先勝ちだと後から直した価格が黙って捨てられる）。
+- 展開SQL側での重複排除（`NOT EXISTS` による後勝ち抽出）も検討したが、明細500件×店舗200件で出力10万行×明細500件の相関評価となり展開時間が桁で悪化するため採用しない。入力時の `Normalize()` とユニークキーによる明示的失敗の二段構えとする。
+- `FindDuplicates()` を分離したのは、黙って捨てる前に利用者へ確認を出せるようにするため。
+### 確認
+- `vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- 一時検証（スクラッチ）: 重複2件を検出しメッセージ生成、`Normalize()` で店舗3→2・明細2→1、残るのは後の指定（期間20260805・価格1200）、行No振り直しと `ShopCnt`/`MeisaiCnt` 同期を確認。正規化後は展開2行で成功。未正規化のまま展開すると `UNIQUE constraint failed: DerivedJodai...` で失敗し、部分挿入0行であることも確認。
+
+---
+
 ## [2026-08-11] 13:11 上代一括変更のテーブル設計と定義追加
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
