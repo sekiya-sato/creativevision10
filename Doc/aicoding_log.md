@@ -1,3 +1,24 @@
+## [2026-08-12] Phase 1 業務仕様の決定内容をドラフト化
+### Agent
+- GPT-5.6 : OpenAI : Sekiya Sato Codex
+### Editor
+- Codex
+### 目的
+- 機能完成度チェックリストで未決だった、消込・引当・掛更新・受注発注完了・納品予定日の業務方針を実装前に記録する。
+### 実施内容
+- 消込を、売上又は仕入伝票の `EndFlag` を消込済みに変更する伝票単位の処理と定義した。入金・支払伝票との対応付け、部分消込、FIFO充当は対象外とした。
+- 引当数列を `SummaryRealStock` / `SummaryStock` に追加し、有効在庫を `Su - 引当数` とする方針を記録した。
+- 売掛・買掛を即時更新せず、既存の夜間月次再集計により翌日整合させる方針を記録した。
+- 発注・受注に `EndFlag` を追加し、納品予定日は配分日と別のリードタイム目安とする方針を記録した。
+- 在庫調整の原票方式は、再集計・監査に対応する調整専用伝票案を推奨し、ユーザー承認待ちとした。
+### 確認
+- `SchedulerService.ExecuteMonthlyResummaryCoreAsync()` が在庫・売掛・買掛を前月、当月の順に処理する現行構造を確認。
+- `SummaryRealStock` / `SummaryStock` の現行列と `SummaryDb` の通常更新・Rebuild経路を確認。
+### 追加決定
+- 在庫調整は調整専用伝票を新設し、調整伝票から `SummaryStock` / `SummaryRealStock` を再生成する方式で進めることを承認された。
+
+---
+
 ## [2026-08-12] AGENTS.md の調査・検証最小化規約を追記
 ### Agent
 - GPT-5.6 : OpenAI : Sekiya Sato Codex
