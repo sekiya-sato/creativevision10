@@ -158,6 +158,31 @@ public partial class MasterPrintBarcodeViewModel : BaseMenteViewModel<MasterShoh
 		return Convert.ToInt64(list[0], CultureInfo.InvariantCulture);
 	}
 
+	/// <summary>
+	/// 値札・棚札へ印字する価格のSQL断片。
+	/// <para>
+	/// 上代一括変更(<see cref="DerivedJodai"/>)の適用行があればその価格を、無ければ従来どおり
+	/// <see cref="MasterShohin.TankaJodaiOrg"/>（元上代）を印字する。セール中は適用価格を刷る運用。
+	/// </para>
+	/// <para>
+	/// フォールバックが <c>TankaJodai</c> ではなく <c>TankaJodaiOrg</c> なので、
+	/// <see cref="DerivedJodai.FinalJodaiSql"/> ではなく <see cref="DerivedJodai.ResolveSql"/> を直接包む。
+	/// これにより適用行が無い環境では印字内容が一切変わらない。
+	/// </para>
+	/// <para>
+	/// <b>対象軸は店舗系の全件行（<see cref="EnumJodaiTaisho.Tenpo"/> / Id_Tenpo=0）＝全直営店共通の価格。</b>
+	/// この画面の抽出条件は展示会・ブランド・商品CD/商品名だけで店舗を指定できないため、
+	/// 店舗ごとに価格を変えた分は反映されない。店舗別の値札が必要になったら画面へ店舗指定を足すこと。
+	/// </para>
+	/// </summary>
+	static string JodaiPrintSql {
+		get {
+			var taisho = ((int)EnumJodaiTaisho.Tenpo).ToString(CultureInfo.InvariantCulture);
+			var resolve = DerivedJodai.ResolveSql("S.Id", taisho, "0", DerivedJodai.TodaySql);
+			return $"ifnull({resolve}, ifnull(S.TankaJodaiOrg,0))";
+		}
+	}
+
 	string BuildPrintSql(out string[] parameters) {
 		var where = BuildWhereSql(out parameters);
 		var conditionColumns = BuildConditionColumns();
@@ -166,7 +191,7 @@ public partial class MasterPrintBarcodeViewModel : BaseMenteViewModel<MasterShoh
 select {conditionColumns},
 S.Code 商品CD,
 S.Name 商品名,
-S.TankaJodaiOrg 元上代,
+{JodaiPrintSql} 元上代,
 ifnull(json_extract(S.VTenji, '$.Cd'), '') 展示会CD,
 ifnull(json_extract(S.VTenji, '$.Mei'), '') 展示会名,
 ifnull(json_extract(S.VBrand, '$.Cd'), '') ブランドCD,
@@ -190,7 +215,7 @@ order by S.Id_Tenji, S.Code, D.Code_Col, D.Code_Siz, D.RowIdx
 select {conditionColumns},
 S.Code 商品CD,
 S.Name 商品名,
-S.TankaJodaiOrg 元上代,
+{JodaiPrintSql} 元上代,
 ifnull(json_extract(S.VTenji, '$.Cd'), '') 展示会CD,
 ifnull(json_extract(S.VTenji, '$.Mei'), '') 展示会名,
 ifnull(json_extract(S.VBrand, '$.Cd'), '') ブランドCD,
