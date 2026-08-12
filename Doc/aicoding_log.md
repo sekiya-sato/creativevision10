@@ -1,3 +1,27 @@
+## [2026-08-12] 15:23 CV10機能完成度マトリクスの再確認と後続作業整理
+### Agent
+- GPT-5.6 : OpenAI : Sekiya Sato Codex
+### Editor
+- Codex
+### 目的
+- `.omo/2026-08-12_CV10機能完成度チェックリスト.md` と `.omo/20260812_completion_matrix_handoff.md` を現行 HEAD で再確認し、事実誤認を訂正して実行順序を整理する。
+### 実施内容
+- 1.0必須範囲の View/ViewModel を再集計し、129画面/L0 49画面を130画面/L0 50画面へ訂正。`07Haibun` は18画面、うち17画面がL0と確認した。
+- 自動テスト件数を43から42へ訂正。内訳は `MasterCascadeDbTests` 23 / `TestServer` 10 / `TestLogin` 7 / `SummaryDbTests` 2。
+- 現存しないと記載されていた `.omo/2026-07-31_kesikomi_design.md` を確認し、`TranKesikomi` 新設の推奨案が既存であることを両資料に反映。
+- 引当は「未設計」ではなく、`TranHaibun` に受注配分・取置の部分設計がある一方、引当範囲と有効在庫算式が未決定と整理。
+- L4=8は再分類前の暫定値とした。移動先の即時更新が `GetCalcIdosaki()` を使わず Rebuild と一致しない候補、および Tran からの Rebuild 再実行で二重加算する候補をP0作業に追加。
+### 影響範囲
+- 今回は調査資料と作業ログの更新のみ。業務計算コード、DBスキーマ、公開API、WPF画面は未変更。
+### 確認
+- `Tests/TestServer/TestServer.csproj` ビルド: 成功（警告0、エラー0）。
+- `TestServer.dll --filter FullyQualifiedName~SummaryDbTests --minimum-expected-tests 2`: 2件成功。
+- 現行 HEAD `54e5903` と引継ぎ資料の調査元 HEAD が一致し、中間のコード変更はないことを確認。
+### 残課題
+- P0の在庫集計修正は業務計算と既存データに影響するため、計画承認後に実装担当と独立Testerを分けて行う。
+- 仕様判断6件は、既存推奨案あり（消込・在庫調整）、部分設計あり（引当/配分/取置・納品予定）、追加設計が必要（掛更新・完了FLG）の3群で個別承認が必要。
+
+---
 ## [2026-08-12] 13:35 新メニュー構成への再編とログインロール(Group)の設定対応
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

@@ -67,13 +67,13 @@ public class SummaryDb {
 	/// <returns></returns>
 	public int CalcTran2SummaryStock(string tableName, string idSoko, long id, bool invertFlag) {
 		var cnt = 0;
-		var calcFlag = TranCalcBase.GetCalcSoko(tableName, invertFlag);
+		var calcFlag = (idSoko=="Id_Ido")? TranCalcBase.GetCalcIdosaki(tableName, invertFlag) : TranCalcBase.GetCalcSoko(tableName, invertFlag);
 		var sql = CreateRealStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
 		if (calcFlag.Item1 != 0) {
-			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_Soko", $"Id={id}");
+			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_{idSoko}", $"Id={id}");
 			if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
 				sql = CreateSummaryStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
-				cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_Soko", $"Id={id}");
+				cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_{idSoko}", $"Id={id}");
 			}
 		}
 		return cnt;
