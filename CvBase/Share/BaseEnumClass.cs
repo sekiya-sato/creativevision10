@@ -72,3 +72,21 @@ public enum EnumTokui : int {
 	/// </summary>
 	_6_Tenpo = 6,
 }
+/// <summary>
+/// ログインロール（SysLogin.Id_Role）
+/// メニュー表示のロール別切替に使用する。
+/// </summary>
+public enum EnumLoginRole : int {
+	/// <summary>
+	/// 標準（ロール指定なし。全メニューを表示する）
+	/// </summary>
+	Standard = 0,
+	/// <summary>
+	/// 店舗担当
+	/// </summary>
+	Shop = 1,
+	/// <summary>
+	/// 倉庫担当
+	/// </summary>
+	Warehouse = 2,
+}

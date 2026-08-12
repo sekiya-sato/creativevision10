@@ -122,7 +122,7 @@ public partial class LoginService : ILoginService {
 			//var expire = new DateTime(jwt.ValidTo.ToLocalTime().Ticks, DateTimeKind.Local); // ここで設定してもgRPCシリアライザでKindが落ちる
 			// [Even if set here, the Kind crashes in the gRPC serializer]
 			// UNIX_EPOCH はUTC 1970/01/01 00:00 からの経過秒数
-			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetAddInfo() };
+			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetAddInfo(), Role = loginData.Id_Role };
 			var loginHist = new SysHistJwt {
 				Id_Login = loginData.Id,
 				JwtUnixTime = jwt.ValidTo.ToUnixTime(),
@@ -184,6 +184,8 @@ public partial class LoginService : ILoginService {
 		// トークンに紐づくSysLoginの社員有効期限をチェック（初回起動トークンはSerialNumberが無いためスキップ）
 		// [Check the employee expiration of the SysLogin associated with the token; skip for first-launch tokens without SerialNumber]
 		var serialNumberClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.SerialNumber);
+		// リフレッシュ後もクライアントのロール別メニューを維持するため、SysLoginのロールを引き継ぐ
+		long refreshRole = 0;
 		if (serialNumberClaim != null && long.TryParse(serialNumberClaim.Value, out var loginId)) {
 			var loginDataRefresh = _db.Fetch<SysLogin>($"where Id=@0", [loginId]).FirstOrDefault();
 			if (loginDataRefresh == null)
@@ -191,6 +193,7 @@ public partial class LoginService : ILoginService {
 			var userCheck = ValidateUserExpiration(loginDataRefresh.Id_Shain);
 			if (userCheck != null)
 				return Task.FromResult(userCheck);
+			refreshRole = loginDataRefresh.Id_Role;
 		}
 		var webauthjwt = _configuration.GetSection("WebAuthJwt");
 		var lifetime = TimeSpan.FromMinutes(1);
@@ -213,7 +216,7 @@ public partial class LoginService : ILoginService {
 
 		//var expire = new DateTime(jwt.ValidTo.ToLocalTime().Ticks, DateTimeKind.Local); // ここで設定してもgRPCシリアライザでKindが落ちる
 		// [Even if set here, the Kind crashes in the gRPC serializer]				
-		return Task.FromResult(new LoginReply { JwtMessage = newToken, Result = 0, Expire = jwt.ValidTo.ToLocalTime() });
+		return Task.FromResult(new LoginReply { JwtMessage = newToken, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), Role = refreshRole });
 	}
 
 	/// <summary>

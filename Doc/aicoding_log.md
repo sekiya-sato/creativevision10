@@ -1,3 +1,43 @@
+## [2026-08-12] 13:35 新メニュー構成への再編とログインロール(Group)の設定対応
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：`.omo/2026-08-新メニュー案.md` をもとにメニュー構造を変更する。あわせて SysLogin の Group を 1=店舗 / 2=倉庫担当 とするロール設定を定義し、`CvWpfclient.Views._00System.SysLoginView` で Group を選択できるようにする。
+### 実施内容
+- CvBase/Share/BaseEnumClass.cs: `EnumLoginRole`（Standard=0 / Shop=1 / Warehouse=2）を追加。SysLogin.Id_Role に対応する。
+- CodeShare/ILogin.cs: `LoginReply.Role`（long, `DataMember(Order = 5)`）を追加。ログイン結果でクライアントへロールを返す。
+- CvServer/Services/LoginService.cs: `LoginAsync` で `loginData.Id_Role` を、`LoginRefreshAsync` で SysLogin 再取得時のロールを `LoginReply.Role` に設定。
+- CvWpfclient/AppGlobal.cs: `CurrentRole` と `ToLoginRole(long)` を追加。未定義値は標準として扱う。
+- CvWpfclient/Helpers/Converters/LoginRoleDisplayConverter.cs: 新規。Id_Role を「0:標準 / 1:店舗 / 2:倉庫担当」へ変換する。App.xaml へ登録。
+- CvWpfclient/ViewModels/00System/SysLoginViewModel.cs: `RoleOption` レコードと `RoleOptions` を追加。
+- CvWpfclient/Views/00System/SysLoginView.xaml: Group を `IsEnabled=False` の読取専用 TextBox から ComboBox へ変更（既存の `TranTokuiPromotionMenteView` と同じ `DisplayMemberPath` / `SelectedValuePath` 方式）。一覧の「グループId」列はコンバータでロール名を表示する「Group」列にした。
+- CvWpfclient/Models/MenuData.cs: `AllowedRoles` と `CreateDefault(EnumLoginRole)` / `FilterByRole` を追加し、メニュー定義を新メニュー案の3階層構成へ全面再編。
+- CvWpfclient/ViewModels/MainMenuViewModel.cs: `Init` を `CreateDefault(AppGlobal.CurrentRole)` に変更し、`afterLogin` から `UpdateMenuForRole` でロール別メニューを作り直すようにした。
+### 技術決定 Why
+- **ロールはJWTのRoleクレームではなく `LoginReply.Role` で渡す**。既存のRoleクレームは `Id_Role != 0 ? Id_Role : Id_Shain` で、ロール未設定時に社員Idが入る。社員Id 1/2 を店舗/倉庫担当と誤認するため、ロール判定には使えない。既存クレームは他で未使用のため変更していない。
+- **ロール別メニューは標準業務メニューを削らないショートカット**とした。新メニュー案 5.8 が「店舗Role向けショートカットへ変更」「機能は削除しない」としているため。利用可否の制御は Permission の実装課題として残す。
+- **旧「■ 店舗」の原価無し帳票（`Views._40Shop.*`）は「分析 > 店舗配布版(原価無)」にも配置**した。ロール別メニューだけに置くと標準ロールから到達できなくなるため。
+- **新メニュー案に無い既存メニューは削除せず、最も近い小分類へ配置**した（配分関連メンテナンス、在庫強制調整入力、一時処理用、セット売上分析表、オンラインモニタ、HHT配下の各明細書印刷など）。「得意先別売上推移表」は同種の帳票がある「分析 > 卸・販売員・経営分析」へ移した。
+- **外部連携に POS 小分類は作っていない**。新メニュー案には「POS連携関連設定・処理」があるが、該当するViewが未作成のため。POS日別精算入力と売上金種Viewerは従来どおり「売上」配下に残した。
+- **倉庫業務メニューの内容は暫定**。新メニュー案に倉庫担当の一覧が無いため、在庫照会・移動・出荷の既存機能から構成し、その旨をコードにコメントで明記した。
+### 影響範囲
+- メニューの表示構成が全面的に変わる。View / ViewModel / namespace の移動はしていないため、各画面の実装には影響しない。
+- `LoginReply` にフィールドを追加したので、サーバとクライアントは同時に更新する必要がある（protobuf-net の Order 追加のため旧クライアントからの呼び出しは壊れない）。
+- SysLoginView で Group が編集可能になる。既存レコードの Id_Role は 0 のままなので、設定するまで全ユーザーが標準ロールとして動作する。
+### 確認
+- `dotnet build creativevision10.slnx`（VsDevCmd 経由、cv10-claude ワークツリー）: 成功（警告0、エラー0）。
+- 実行時確認: CvServer と CvWpfclient を起動し、メインメニューのTreeViewが「■ マスター > 基本設定 > システム管理マスタ」の3階層で正しく描画され、未ログイン（標準ロール）ではロール別メニューが表示されないことをウィンドウキャプチャで確認した。確認後、起動したプロセスは停止済み。
+- `git diff --check` クリーン、変更・新規ファイルは UTF-8 / CRLF。
+### 残課題
+- SysLoginView の Group ComboBox と一覧のGroup列は、ビルドと既存実装パターンの一致までの確認。ログインを伴う実画面での表示・保存は未確認。
+- ロール2（倉庫担当）でログインしたときのメニュー切替は実機未確認。
+- 新メニュー案 6章の MenuDefinition（BusinessArea / Capability / Availability / RequiredPermission）は未実装。今回は AllowedRoles のみ導入した。
+- TreeViewItem のテンプレートに展開トグルが無く全階層が常時展開されるため、3階層化でメニューが縦に長くなった。折りたたみ対応は別途検討が必要。
+- 新メニュー案の「保守ツール」の Support / Developer 権限分離は Permission 未実装のため見送った。
+
+---
 ## [2026-08-12] 09:15 上代一括変更 商品バーコードブックの印字価格を適用上代へ差し替え
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections;
@@ -10,8 +11,20 @@ using System.Collections;
 namespace CvWpfclient.ViewModels._00System;
 
 internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<SysLogin> {
+	/// <summary>ロール選択用の選択肢。Value は SysLogin.Id_Role と同じ long で扱う</summary>
+	public sealed record RoleOption(long Value, string Name);
+
 	[ObservableProperty]
 	public partial string Title { get; set; } = "ログインマスターメンテ画面";
+
+	/// <summary>
+	/// ロール(Group)の選択肢。EnumLoginRole と対応させる
+	/// </summary>
+	public IReadOnlyList<RoleOption> RoleOptions { get; } = [
+		new((long)EnumLoginRole.Standard, "0:標準"),
+		new((long)EnumLoginRole.Shop, "1:店舗"),
+		new((long)EnumLoginRole.Warehouse, "2:倉庫担当")
+	];
 
 	SelectParameter? selectMiniParam;
 

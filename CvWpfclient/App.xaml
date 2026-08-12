@@ -17,6 +17,7 @@
 			<helpers:TranKubunBrushConverter x:Key="TranKubunBrushConverter" />
 			<helpers:CodeNameViewDisplayConverter x:Key="CodeNameViewDisplayConverter" />
 			<helpers:IdCodeNameDisplayConverter x:Key="IdCodeNameDisplayConverter" />
+			<helpers:LoginRoleDisplayConverter x:Key="LoginRoleDisplayConverter" />
 			<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Resources/UIColors.xaml" />

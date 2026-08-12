@@ -163,7 +163,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 			return;
 		}
 
-		MenuItems = MenuData.CreateDefault();
+		MenuItems = MenuData.CreateDefault(AppGlobal.CurrentRole);
 		IsMenuReady = true;
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
@@ -367,6 +367,8 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	}
 	async Task afterLogin(_00System.LoginViewModel vm) {
 		if (vm?.LoginData != null) {
+			// SysLogin.Id_Role に応じてロール別メニューを出し分けるため、ログイン結果でメニューを作り直す
+			UpdateMenuForRole(AppGlobal.ToLoginRole(vm.LoginData.Role));
 			ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
 			InfolocalUser.LoginTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 			InfolocalUser.ExpireTime = ExpireDate;
@@ -378,6 +380,19 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 			await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
 		}
 		SetSubMessage();
+	}
+
+	/// <summary>
+	/// ロールが変わったときだけメニューを作り直す。選択中メニューは作り直しで無効になるためクリアする。
+	/// </summary>
+	private void UpdateMenuForRole(EnumLoginRole role) {
+		if (AppGlobal.CurrentRole == role && IsMenuReady) {
+			return;
+		}
+		AppGlobal.CurrentRole = role;
+		SelectedMenu = null;
+		MenuItems = MenuData.CreateDefault(role);
+		IsMenuReady = true;
 	}
 
 	/// <summary>ショートカットでログイン画面を呼び出す</summary>

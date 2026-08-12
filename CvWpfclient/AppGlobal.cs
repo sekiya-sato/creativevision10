@@ -63,6 +63,18 @@ public static partial class AppGlobal {
 	public static Models.InfoUser StaticInfoUser = new();
 	public static InfoServer StaticInfoServer = new();
 
+	/// <summary>
+	/// ログイン中ユーザのロール(SysLogin.Id_Role)。メニューのロール別表示に使用する。
+	/// ログイン前および未設定(0)は標準として扱う。
+	/// </summary>
+	public static EnumLoginRole CurrentRole { get; set; } = EnumLoginRole.Standard;
+
+	/// <summary>
+	/// LoginReply.Role の数値をロールへ変換する。未定義値は標準として扱う。
+	/// </summary>
+	public static EnumLoginRole ToLoginRole(long role) =>
+		Enum.IsDefined(typeof(EnumLoginRole), (int)role) ? (EnumLoginRole)(int)role : EnumLoginRole.Standard;
+
 
 	/// <summary>
 	/// Config読込処理：application startup で一度だけ実行すること

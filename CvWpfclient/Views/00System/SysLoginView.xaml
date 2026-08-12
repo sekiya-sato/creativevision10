@@ -182,8 +182,8 @@
 								Header="Id" />
 							<DataGridTextColumn Binding="{Binding Id_Shain}"
 								Header="社員Id" />
-							<DataGridTextColumn Binding="{Binding Id_Role}"
-								Header="グループId" />
+							<DataGridTextColumn Binding="{Binding Id_Role, Converter={StaticResource LoginRoleDisplayConverter}}"
+								Header="Group" />
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>
 							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
@@ -288,17 +288,19 @@
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.ExpDate, Converter={StaticResource DateTimeYmdHmsConverter}}" />
 
-								<!--  Group  -->
+								<!--  Group (ロール): 0=標準 1=店舗 2=倉庫担当。メニューのロール別表示に使用する  -->
 								<TextBlock Grid.Row="5"
-									IsEnabled="False"
 									Style="{StaticResource FormLabel}"
 									Text="Group" />
-								<TextBox Grid.Row="5" Grid.Column="1"
-									Width="120" Height="36"
+								<ComboBox Grid.Row="5" Grid.Column="1"
+									Width="180"
 									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="Group" IsEnabled="False" IsReadOnly="True"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Id_Role}" />
+									materialDesign:HintAssist.Hint="Group" DisplayMemberPath="Name"
+									ItemsSource="{Binding RoleOptions}"
+									SelectedValue="{Binding CurrentEdit.Id_Role, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									SelectedValuePath="Value"
+									Style="{StaticResource FormComboBox}"
+									ToolTip="店舗/倉庫担当を選ぶと、ログイン時にロール別メニューが追加表示されます" />
 
 								<!--  社員選択  -->
 								<TextBlock Grid.Row="6"

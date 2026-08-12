@@ -47,6 +47,12 @@ public sealed record class LoginReply {
 	/// </summary>
 	[DataMember(Order = 4)]
 	public string InfoPayload { get; set; } = string.Empty;
+	/// <summary>
+	/// ログインユーザのロール(SysLogin.Id_Role)。0=標準 1=店舗 2=倉庫担当
+	/// クライアントのメニューをロール別に切り替えるために返す。
+	/// </summary>
+	[DataMember(Order = 5)]
+	public long Role { get; set; }
 }
 /// <summary>
 /// ログインリフレッシュ
