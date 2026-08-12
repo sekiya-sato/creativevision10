@@ -1,3 +1,35 @@
+## [2026-08-12] 09:06 大規模設計案件用エキスパート引継ぎ規約の新設
+### Agent
+- GPT-5.6 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：将来の設計起点の大規模タスクだけに使う `handoff-expert.md` を作成する。
+### 実施内容
+- handoff-expert.md: Sato、CV10 Manager、Architect、C# Developer、AI Expert、DB Expert、Reviewer、Tester、Git Commitの主鎖、役割、ゲート、専門引継ぎ、モデル割当、共有ワークスペース規約を定義。
+- handoff.md: 通常の引継ぎ規約ではなく、明示された大規模設計案件だけで `handoff-expert.md` を使う参照を追加。
+### 技術決定 Why
+- 大規模案件では設計・データ・業務受入の独立確認が必要だが、通常作業に同じ負荷を持ち込まないため、通常規約から分離した。Git Commitは既存規約どおりSatoの明示承認をゲートとした。
+### 確認
+- Markdownの構造と通常規約からの参照を確認。対象3ファイルは CRLF、`git diff --check` は成功。
+
+---
+## [2026-08-12] 09:06 複数エージェント規約へのTesterとモデル選定の追加
+### Agent
+- GPT-5.6 : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- ユーザーからの要望：直近コミットの調査結果を反映し、軽微変更の単一エージェント実行、Testerの実施条件、GPT-5.6モデル別の推奨を `handoff.md` に追加する。
+### 実施内容
+- handoff.md: 軽微変更の判定と単一エージェントの必須化、Testerの責務・必須条件・引継ぎ内容、Testerとレビューの並行確認フローを追加。
+- handoff.md: Sol、Terra、Lunaの公式分類を基に、CV10の役割別推奨モデルとreasoning初期値、Lunaの利用境界を追加。
+### 技術決定 Why
+- 直近27コミットでテストファイルの変更は3件であり、`SummaryRealStock`ではサイズキー漏れを後続修正・テスト補強した。高リスク変更には独立した受入確認を設け、軽微変更には役割分担の負荷を持ち込まない形とした。
+### 確認
+- Markdownの構造と追加条件を確認。対象2ファイルは CRLF、`git diff --check` は成功。
+
+---
 ## [2026-08-12] 08:40 エージェント規約と複数エージェント引継ぎ規約の再構成
 ### Agent
 - GPT-5.6 : OpenAI : Codex
