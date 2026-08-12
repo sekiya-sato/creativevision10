@@ -126,10 +126,26 @@
 						SelectedItem="{Binding Current}"
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Resources>
+							<Style x:Key="AutoExecErrorTextStyle"
+								TargetType="TextBlock">
+								<Setter Property="Foreground"
+									Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding ReturnCode}"
+										Value="0">
+										<Setter Property="Foreground"
+											Value="{DynamicResource MaterialDesignBody}" />
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</DataGrid.Resources>
 						<DataGrid.Columns>
 							<DataGridTextColumn Binding="{Binding Id}"
+								ElementStyle="{StaticResource AutoExecErrorTextStyle}"
 								Header="Id" />
 							<DataGridTextColumn Binding="{Binding TaskName}"
+								ElementStyle="{StaticResource AutoExecErrorTextStyle}"
 								Header="タスク名" />
 							<DataGridTextColumn Binding="{Binding StartTime, Converter={StaticResource DateTimeYmdHmsConverter}}"
 								Header="開始日時" />

@@ -1,3 +1,25 @@
+## [2026-08-12] 17:07 自動実行履歴のエラー表示を強調
+### Agent
+- GPT-5.6 : OpenAI : Sekiya Sato Codex
+### Editor
+- Codex
+### 目的
+- 月次再集計に失敗したタスクをシステム管理者が自動実行履歴一覧で識別しやすくする。
+### 実施内容
+- 月次Schedulerの失敗経路を再確認した。各集計ストリームのエラーは `ExecuteMonthlyResummaryCoreAsync()` で `InternalError=9` と区分別 `NG` メモに集約され、`ExecuteWithAutoexecHistoryAsync()` の `finally` から `SysHistAutoexec.ReturnCode` / `Memo` / 終了日時等を更新する。
+- `SysAutoExecHistoryView` の一覧で、`ReturnCode != 0` の行は Id列とタスク名列を `MaterialDesignValidationErrorBrush` で赤字表示し、`ReturnCode == 0` は通常色にした。
+- 判定は `SysHistAutoexec` の既存契約「0=成功、0以外=エラー」を直接使い、ViewModel、モデル、Converterは変更していない。
+### 影響範囲
+- `CvWpfclient/Views/00System/SysAutoExecHistoryView.xaml` の一覧表示色のみ。履歴保存処理とDBスキーマは変更していない。
+### 確認
+- XAMLのXML構文、名前空間、`ReturnCode` / `Id` / `TaskName` バインディング、MaterialDesignリソースを確認。
+- `CvWpfclient/CvWpfclient.csproj` ビルド: 成功（警告0、エラー0）。
+- 独立レビュー承認。
+### 残課題
+- 通常のDB書込み可能な経路ではエラー履歴が保存される。履歴INSERT/UPDATE自体の失敗はサーバーログに残るが、履歴行の非0コード保存までは保証されない。プロセス強制終了も同様であり、必要時はサーバーログを確認する。
+- `.omo` の完成度チェックリストとhandoffへ確認結果を反映したが、規約どおりコミット対象外。
+
+---
 ## [2026-08-12] 17:05 P0 在庫即時更新と範囲再構築の整合性修正
 ### Agent
 - GPT-5.6 : OpenAI : Sekiya Sato Codex
