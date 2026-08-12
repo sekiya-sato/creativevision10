@@ -1,0 +1,18 @@
+# cv10/.codex/config.toml
+
+model = "gpt-5.6-terra"
+model_reasoning_effort = "low"
+model_reasoning_summary = "none"
+model_verbosity = "low"
+
+project_doc_max_bytes = 8192
+tool_output_token_limit = 6000
+
+web_search = "disabled"
+
+[agents]
+enabled = false
+
+[features]
+fast_mode = false
+memories = false

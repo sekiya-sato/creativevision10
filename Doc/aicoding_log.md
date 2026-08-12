@@ -1,3 +1,16 @@
+## [2026-08-12] AGENTS.md の調査・検証最小化規約を追記
+### Agent
+- GPT-5.6 : OpenAI : Sekiya Sato Codex
+### Editor
+- Codex
+### 目的
+- 不要な生成物の参照、過大なログ出力、無関係な build/test を抑制する。
+### 実施内容
+- `bin/`、`obj/`、`generated/`、生成済み gRPC C# の原則非参照・非編集、必要ファイル限定、巨大ログの絞り込み、minimal diff、影響する最小プロジェクトでの build/test を AGENTS.md に追記した。
+### 確認
+- `git diff --check`: 成功。
+
+---
 ## [2026-08-12] 17:07 自動実行履歴のエラー表示を強調
 ### Agent
 - GPT-5.6 : OpenAI : Sekiya Sato Codex
