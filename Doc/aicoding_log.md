@@ -1,3 +1,55 @@
+## [2026-08-12] 17:05 P0 在庫即時更新と範囲再構築の整合性修正
+### Agent
+- GPT-5.6 : OpenAI : Sekiya Sato Codex
+### Editor
+- Codex
+### 目的
+- 現行業務規則と `GetCalcIdosaki()` に基づく在庫即時更新を完成させ、Tranからの範囲Rebuildを冪等かつ原子的にする。
+### 実施内容
+- `CalcTran2SummaryStock()` は実在庫を `Su` フラグが非0の場合だけ更新し、`SummaryStock` は在庫・入庫・出庫・積送中の4フラグのいずれかが非0なら更新するよう分離した。これにより `Tran10IdoOut` 移動先の積送中数量だけの更新も反映する。
+- `SummaryAllAsyncStream()` の在庫再構築を単一ステップへ集約し、対象範囲の旧キー退避、対象月削除、6伝票種からの再生成、現在庫再構築を単一Serializableトランザクションで実行するようにした。途中例外は全体をrollbackする。
+- 旧・新自然キーの和集合で `SummaryRealStock` を削除・再生成し、最後のTranが消えたキーを除去する。対象月より前の在庫がある場合は過去累計へ戻す。
+- Tranから復元できない `CumulativeSu` / `AdjustQty` / `StocktakeDdate` / `ActualQty` は削除前に一時表へ退避し、再生成された同一自然キー行へ復元する。対象月から消滅した行は復活させない。
+- `SummaryDbTests` を2件から12件へ拡張し、即時移動、積送出庫・移動受、仕入・返品、修正時の旧値反転、通常更新とRebuild一致、Rebuild冪等性、消滅キー、前月値復帰、範囲外保持、途中失敗rollback、非Tran列保持を確認した。
+### 技術決定 Why
+- 進捗runnerは各ステップ例外を捕捉して次へ進むため、範囲削除と伝票別再生成を別ステップにすると部分再構築が確定する。公開APIを変えず、同期処理1ステップ内でtransactionを完結させた。
+- Rebuild対象月の行を単純DELETEすると棚卸・調整値が失われるため、伝票由来でない4列だけを退避・復元対象とした。
+### 影響範囲
+- `CvDomainLogic/SummaryDb.cs` の在庫即時集計と在庫範囲再構築。DBスキーマと公開gRPC APIは変更していない。
+- `Tests/TestServer/SummaryDbTests.cs` のテスト資産。
+### 確認
+- `Tests/TestServer/TestServer.csproj` ビルド: 成功（警告0、エラー0）。
+- `SummaryDbTests`: 12/12成功。`TestServer` 全体: 45/45成功。
+- 実装担当、独立Tester、独立レビューを分離し、最終レビュー承認。
+### 残課題
+- 月次Schedulerは前月・当月を別呼出するため、前月成功後に当月が失敗すると現在庫が一時的に前月末値になる。各呼出の原子性は成立し、通常経路の失敗は自動実行履歴とサーバーログへ残るため、システム管理者が対応する運用とする。
+- テストはHandlerが行う `Id_Soko` / `Id_Ido` の2呼出を再現したもので、実DBを使う画面からサービスまでのE2Eは未実施。
+- `.omo` の完成度チェックリストとhandoffを最新状態へ更新したが、規約どおりコミット対象外。
+
+---
+## [2026-08-12] 16:27 最新ソースと現行リポジトリによるP0課題の再確認
+### Agent
+- GPT-5.6 : OpenAI : Sekiya Sato Codex
+### Editor
+- Codex
+### 目的
+- 作業対象を旧 `C:\gitroot\new2022\cv10-claude` worktree から現行 `C:\gitroot\new2022\cv10` へ切り替え、ユーザーが修正した最新HEAD `5399328` を基にP0状態を再判定する。
+### 実施内容
+- 両 `.omo` 文書の対象リポジトリ、Git実行方法、コミット名、HEAD説明を現在のCodex作業環境へ変更した。
+- `CalcTran2SummaryStock()` が `idSoko == "Id_Ido"` の場合に `GetCalcIdosaki()` を選択することを確認し、移動先の増減方向修正を「コード修正済み」へ更新した。
+- `SummaryStock` 更新が外側の `calcFlag.Item1 != 0` 内に残るため、`Tran10IdoOut` の移動先 `(0,0,0,1)` が `TransitQty` 更新前にスキップされることを確認した。
+- `SummaryAllAsyncStream()` が対象月の `SummaryStock` を削除せず加算UPSERTする構造と、消滅キーの再構築方式が未設計である点は未解消と判定した。
+- `SummaryDbTests` は既存2件のままで、移動3種、登録/修正/削除、通常更新=Rebuild、Rebuild冪等性のテストは未追加と確認した。
+### 影響範囲
+- 文書更新のみ。`CvDomainLogic/SummaryDb.cs`、テスト、DBスキーマ、公開API、WPF画面は変更していない。
+### 確認
+- `Tests/TestServer/TestServer.csproj` ビルド: 成功（警告0、エラー0）。
+- `TestServer.dll --filter FullyQualifiedName~SummaryDbTests --minimum-expected-tests 2`: 2件成功。
+### 残課題
+- P0は部分完了。積送中のみの更新、Rebuild冪等性、Tran消滅キー、在庫不変条件の回帰テストが残る。
+- L4候補8画面の確定はP0残作業と回帰テスト完了後に行う。
+
+---
 ## [2026-08-12] 15:23 CV10機能完成度マトリクスの再確認と後続作業整理
 ### Agent
 - GPT-5.6 : OpenAI : Sekiya Sato Codex

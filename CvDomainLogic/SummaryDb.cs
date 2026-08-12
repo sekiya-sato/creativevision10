@@ -13,17 +13,8 @@ public class SummaryDb {
 	}
 	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(CalcDateTermParameter param) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
-			/*
-			*/
-			($"Summary : {nameof(Tran00Uriage)}", CalcSummaryStockTrn<Tran00Uriage>),
-			($"Summary : {nameof(Tran01Tenuri)}", CalcSummaryStockTrn<Tran01Tenuri>),
-			($"Summary : {nameof(Tran03Shiire)}", CalcSummaryStockTrn<Tran03Shiire>),
-			($"Summary : {nameof(Tran05Ido)}", CalcSummaryStockTrn<Tran05Ido>),
-			($"Summary : {nameof(Tran10IdoOut)}", CalcSummaryStockTrn<Tran10IdoOut>),
-			($"Summary : {nameof(Tran11IdoIn)}", CalcSummaryStockTrn<Tran11IdoIn>),
-			("Summary : CalcSummaryRealStockRange", p => CalcSummaryRealStockRange(p.DateYymmFrom, p.DateYymmTo))
+			("Summary : SummaryStock", CalcSummaryStockRange)
 		];
-		//("Summary : Tran60Tana", CalcSummaryStock<Tran60Tana>),
 
 		return StreamStepProgressRunner.Run(
 			steps,
@@ -32,6 +23,95 @@ public class SummaryDb {
 			"処理開始",
 			"処理エラー: {StepName}",
 			"処理終了");
+	}
+	/// <summary>
+	/// 指定年月範囲のSummaryStockとSummaryRealStockをTranテーブルから再作成する
+	/// </summary>
+	/// <param name="param"></param>
+	/// <returns></returns>
+	private int CalcSummaryStockRange(CalcDateTermParameter param) {
+		const string tempTableName = "TempSummaryStockRebuildKeys";
+		var cnt = 0;
+		var period = $"{param.DateYymmFrom}-{param.DateYymmTo}";
+		var transactionStarted = false;
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			transactionStarted = true;
+			var prepareSql = $@"
+CREATE TEMP TABLE IF NOT EXISTS {tempTableName} (
+  SumMonth TEXT NOT NULL,
+  Id_Soko INTEGER NOT NULL,
+  Id_Shohin INTEGER NOT NULL,
+  Id_Col INTEGER NOT NULL,
+  Id_Siz INTEGER NOT NULL,
+  CumulativeSu INTEGER NOT NULL,
+  AdjustQty INTEGER NOT NULL,
+  StocktakeDdate TEXT,
+  ActualQty INTEGER NOT NULL,
+  PRIMARY KEY (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz)
+);
+DELETE FROM {tempTableName};
+INSERT INTO {tempTableName} (
+  SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz,
+  CumulativeSu, AdjustQty, StocktakeDdate, ActualQty
+)
+SELECT
+  SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz,
+  CumulativeSu, AdjustQty, StocktakeDdate, ActualQty
+FROM SummaryStock
+WHERE SumMonth BETWEEN @0 AND @1;
+DELETE FROM SummaryStock
+WHERE SumMonth BETWEEN @0 AND @1;
+";
+			cnt += ExecuteAndCounts(prepareSql, [param.DateYymmFrom, param.DateYymmTo], "CalcSummaryStockRange(delete)", "SummaryStock", period);
+			cnt += CalcSummaryStockTrn<Tran00Uriage>(param);
+			cnt += CalcSummaryStockTrn<Tran01Tenuri>(param);
+			cnt += CalcSummaryStockTrn<Tran03Shiire>(param);
+			cnt += CalcSummaryStockTrn<Tran05Ido>(param);
+			cnt += CalcSummaryStockTrn<Tran10IdoOut>(param);
+			cnt += CalcSummaryStockTrn<Tran11IdoIn>(param);
+			var restoreSql = $@"
+UPDATE SummaryStock
+SET (CumulativeSu, AdjustQty, StocktakeDdate, ActualQty) = (
+  SELECT Old.CumulativeSu, Old.AdjustQty, Old.StocktakeDdate, Old.ActualQty
+  FROM {tempTableName} AS Old
+  WHERE Old.SumMonth = SummaryStock.SumMonth
+    AND Old.Id_Soko = SummaryStock.Id_Soko
+    AND Old.Id_Shohin = SummaryStock.Id_Shohin
+    AND Old.Id_Col = SummaryStock.Id_Col
+    AND Old.Id_Siz = SummaryStock.Id_Siz
+)
+WHERE SumMonth BETWEEN @0 AND @1
+  AND EXISTS (
+    SELECT 1
+    FROM {tempTableName} AS Old
+    WHERE Old.SumMonth = SummaryStock.SumMonth
+      AND Old.Id_Soko = SummaryStock.Id_Soko
+      AND Old.Id_Shohin = SummaryStock.Id_Shohin
+      AND Old.Id_Col = SummaryStock.Id_Col
+      AND Old.Id_Siz = SummaryStock.Id_Siz
+  );
+";
+			cnt += ExecuteAndCounts(restoreSql, [param.DateYymmFrom, param.DateYymmTo], "CalcSummaryStockRange(restore)", "SummaryStock", period);
+			cnt += CalcSummaryRealStockRangeCore(param.DateYymmFrom, param.DateYymmTo, tempTableName);
+			_db.CompleteTransaction();
+			transactionStarted = false;
+			return cnt;
+		}
+		catch {
+			if (transactionStarted) {
+				_db.AbortTransaction();
+			}
+			throw;
+		}
+		finally {
+			try {
+				_db.Execute($"DROP TABLE IF EXISTS {tempTableName}");
+			}
+			catch (Exception ex) {
+				_logger.LogWarning(ex, "一時テーブルの削除に失敗しました: {TableName}", tempTableName);
+			}
+		}
 	}
 	/// <summary>
 	/// 年月指定でTranテーブルからSummaryStockを更新する(レコード CUD) SummaryRealStockは後でCalcSummaryRealStock()で一括更新する必要がある
@@ -45,7 +125,6 @@ public class SummaryDb {
 		var calcFlag = TranCalcBase.GetCalcSoko(tableName);
 		var sql = CreateSummaryStockSql(tableName, "Id_Soko", calcFlag, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
 		var period = $"{param.DateYymmFrom}-{param.DateYymmTo}";
-		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
 			cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tableName}:Id_Soko", period);
 		}
@@ -56,7 +135,6 @@ public class SummaryDb {
 				cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tableName}:Id_Ido", period);
 			}
 		}
-		_db.CompleteTransaction();
 		return cnt;
 	}
 	/// <summary>
@@ -67,14 +145,14 @@ public class SummaryDb {
 	/// <returns></returns>
 	public int CalcTran2SummaryStock(string tableName, string idSoko, long id, bool invertFlag) {
 		var cnt = 0;
-		var calcFlag = (idSoko=="Id_Ido")? TranCalcBase.GetCalcIdosaki(tableName, invertFlag) : TranCalcBase.GetCalcSoko(tableName, invertFlag);
-		var sql = CreateRealStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
+		var calcFlag = (idSoko == "Id_Ido") ? TranCalcBase.GetCalcIdosaki(tableName, invertFlag) : TranCalcBase.GetCalcSoko(tableName, invertFlag);
 		if (calcFlag.Item1 != 0) {
-			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_{idSoko}", $"Id={id}");
-			if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
-				sql = CreateSummaryStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
-				cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:Id_{idSoko}", $"Id={id}");
-			}
+			var sql = CreateRealStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
+			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:{idSoko}", $"Id={id}");
+		}
+		if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
+			var sql = CreateSummaryStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
+			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:{idSoko}", $"Id={id}");
 		}
 		return cnt;
 	}
@@ -173,24 +251,48 @@ GROUP BY
 	/// <param name="DateToYyyymm">対象終了年月</param>
 	/// <returns></returns>
 	public int CalcSummaryRealStockRange(string DateFromYyyymm, string DateToYyyymm) {
+		var transactionStarted = false;
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			transactionStarted = true;
+			var cnt = CalcSummaryRealStockRangeCore(DateFromYyyymm, DateToYyyymm);
+			_db.CompleteTransaction();
+			transactionStarted = false;
+			return cnt;
+		}
+		catch {
+			if (transactionStarted) {
+				_db.AbortTransaction();
+			}
+			throw;
+		}
+	}
+	private int CalcSummaryRealStockRangeCore(string DateFromYyyymm, string DateToYyyymm, string? previousTargetKeysTable = null) {
 		var vdate = Common.GetVdate();
 		var period = $"{DateFromYyyymm}-{DateToYyyymm}";
+		var targetKeysSql = previousTargetKeysTable == null
+			? @"SELECT DISTINCT Id_Soko, Id_Shohin, Id_Col, Id_Siz
+  FROM SummaryStock
+  WHERE SumMonth BETWEEN @0 AND @1"
+			: $@"SELECT Id_Soko, Id_Shohin, Id_Col, Id_Siz
+  FROM {previousTargetKeysTable}
+UNION
+SELECT DISTINCT Id_Soko, Id_Shohin, Id_Col, Id_Siz
+  FROM SummaryStock
+  WHERE SumMonth BETWEEN @0 AND @1";
 		var sql = @$"
 DELETE FROM SummaryRealStock
 WHERE EXISTS (
   SELECT 1
-  FROM SummaryStock AS Target
-  WHERE Target.SumMonth BETWEEN @0 AND @1
-    AND Target.Id_Soko = SummaryRealStock.Id_Soko
+  FROM ({targetKeysSql}) AS Target
+  WHERE Target.Id_Soko = SummaryRealStock.Id_Soko
     AND Target.Id_Shohin = SummaryRealStock.Id_Shohin
     AND Target.Id_Col = SummaryRealStock.Id_Col
     AND Target.Id_Siz = SummaryRealStock.Id_Siz
 );
 
 WITH TargetKeys AS (
-  SELECT DISTINCT Id_Soko, Id_Shohin, Id_Col, Id_Siz
-  FROM SummaryStock
-  WHERE SumMonth BETWEEN @0 AND @1
+  {targetKeysSql}
 )
 INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
 SELECT
@@ -214,10 +316,7 @@ GROUP BY
   s.Id_Col,
   s.Id_Siz;
 ";
-		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-		var cnt = ExecuteAndCounts(sql, [DateFromYyyymm, DateToYyyymm], "CalcSummaryRealStockRange", "SummaryRealStock", period);
-		_db.CompleteTransaction();
-		return cnt;
+		return ExecuteAndCounts(sql, [DateFromYyyymm, DateToYyyymm], "CalcSummaryRealStockRange", "SummaryRealStock", period);
 	}
 	/// <summary>
 	/// SummaryStockの年月までのデータを集計してSummaryStockのCumulativeSuに更新する(更新)
