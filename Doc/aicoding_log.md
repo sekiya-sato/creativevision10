@@ -780,3 +780,18 @@
 - `C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj --no-restore --no-dependencies -p:OutputPath=C:\tmp\cv10-weather-build\CvServer\`: 成功（警告0、エラー0）。実行中の CvServer が通常出力先DLLをロックしているため、隔離出力先で検証した。
 
 ---
+## [2026-08-13] 機能完成度チェックリストを発注配分入力の実装状況へ更新
+### Agent
+- GPT-5.6 : OpenAI : Sekiya Sato Codex
+### Editor
+- Codex
+### 目的
+- `.omo` から移動した完成度チェックリストを、発注配分入力の実装・実画面検証後の状態へ更新する。
+### 実施内容
+- `HachuHaibunInput` を L0 から L2 へ更新した。発注Id単位で `TranHaibun` を検索、洗い替え保存、再読込、削除できることを根拠とした。
+- 03Hatchu の内訳を L0=4 / L2=1 / L3=7、全体を L0=49 / L2=14 / L3=59 / L4候補=8 / L5=0、動作画面数を81/130へ更新した。
+- `RelateNo1=発注Id` と `Kubun=0` の初回配分規約を残課題欄へ明記し、配分確定後の移動・出荷伝票生成は未実装として維持した。
+### 確認
+- `00dc202`、`77e3856`、`bbad7ed` のコミットと `HachuHaibunInputViewModel` の登録・読込・削除実装、実画面検証記録を照合。
+
+---
