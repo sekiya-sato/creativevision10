@@ -49,6 +49,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 	[NotifyCanExecuteChangedFor(nameof(DoDeleteCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoRegisterCommand))]
 	[NotifyCanExecuteChangedFor(nameof(ClearAllCommand))]
+	[NotifyCanExecuteChangedFor(nameof(SelectHachuCommand))]
 	public partial int SelectedTabIndex { get; set; }
 
 	[ObservableProperty]
@@ -304,6 +305,55 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 
 	[RelayCommand]
 	void GoToSearch() => SelectedTabIndex = 0;
+
+	/// <summary>
+	/// 発注No の選択。汎用伝票選択ダイアログ(<see cref="Views.Sub.SelectTranWinView"/>)から
+	/// 発注を選び、その配分入力へ切り替える。一覧を経由せずに発注Noから直接入りたい場合の導線。
+	/// </summary>
+	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
+	async Task SelectHachu(CancellationToken ct) {
+		var win = new Views.Sub.SelectTranWinView();
+		if (win.DataContext is not Sub.SelectTranWinViewModel vm) return;
+		vm.SetParam(typeof(Tran13Hachu), where: "CalcFlag <> 0", order: "Id DESC",
+			startPos: HachuNo, title: "発注選択", torisakiHeader: "仕入先", kubunLabels: HachuKubunLabels);
+		if (ClientLib.ShowDialogView(win, this) != true) return;
+		if (vm.GetCurrent<Tran13Hachu>() is not { } hachu || hachu.Id == HachuNo) return;
+
+		// 切り替えると入力途中の配分数は失われるので、読み込み済みの伝票があるときは確認する。
+		if (targetHachu != null &&
+			MessageEx.ShowQuestionDialog(
+				$"入力中の内容は破棄されます。発注No {hachu.Id:N0} の配分入力に切り替えますか？",
+				owner: ActiveWindow) != MessageBoxResult.Yes) {
+			return;
+		}
+
+		StartBusy("配分データ取得中...");
+		try {
+			await LoadEntryAsync(hachu.Id, ct);
+			Message = $"発注No {HachuNo:N0} の配分入力を開始します";
+		}
+		catch (OperationCanceledException) {
+			Message = "配分データ取得を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"配分データ取得失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	/// <summary>
+	/// 発注選択ダイアログへ渡す区分の表示名。
+	/// <see cref="EnumShiire"/> は仕入と発注で共用しているため、発注の呼び名を明示する。
+	/// </summary>
+	static readonly Dictionary<int, string> HachuKubunLabels = new() {
+		[(int)EnumShiire.Shiire] = "発注",
+		[(int)EnumShiire.Henpin] = "返品",
+		[(int)EnumShiire.Nebiki] = "値引",
+		[(int)EnumShiire.Other] = "その他",
+	};
 
 	/// <summary>削除(F7)。選択発注に紐づく未送信の配分をまとめて削除する。</summary>
 	[RelayCommand(CanExecute = nameof(CanDelete), IncludeCancelCommand = true)]

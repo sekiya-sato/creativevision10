@@ -442,6 +442,18 @@
 							<StackPanel Margin="0,4,20,4"
 								Orientation="Horizontal">
 								<TextBlock Style="{StaticResource FormLabel}"
+									Text="発注No" />
+								<TextBox Width="110"
+									helpers:SearchTextBoxAssist.Command="{Binding SelectHachuCommand}"
+									HorizontalContentAlignment="Right"
+									IsReadOnly="True"
+									Style="{StaticResource MenteSearchTextBox}"
+									Text="{Binding HachuNo, Mode=OneWay, StringFormat={}{0:N0}}"
+									ToolTip="発注を選び直す" />
+							</StackPanel>
+							<StackPanel Margin="0,4,20,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
 									Text="発注日" />
 								<TextBox Width="100"
 									IsReadOnly="True"

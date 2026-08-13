@@ -1,3 +1,33 @@
+## [2026-08-13] 汎用の伝票選択ダイアログ(Sub)を追加
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- 伝票テーブル(`Tran*`)を型を問わず一覧・選択できる共通ダイアログを Sub に用意する。
+- 既存の `SelectWinView` は Id / Code / Name / Ryaku の4列固定で、これらの列を持たない伝票テーブルには使えなかった（発注配分入力の発注No選択が実装できず、一覧経由の導線に迂回していた）。
+### 実施内容
+- `SelectTranWinViewModel` / `SelectTranWinView` を新規作成した。`TranAllHeader` または `TranKinHeader` の派生型を `SetParam` で受け取り、伝票共通の9列（伝票No／計上日／区分／取引先／倉庫／数量／金額／入力者／メモ）で一覧表示する。型が条件を満たさない場合は `SetParam` で `ArgumentException` にしている。
+- 取引先の列名が伝票ごとに違う（`VTokui` / `VTenpo` / `VShiire` / `VIdo` / `VTori` / `VCustomer`）ため、`TranRowAccessor` が型ごとに1度だけリフレクションで解決して `TranSelectRow` へ射影する。解決結果は型単位でキャッシュし、行ごとの再検索はしない。既知の列名に一致しない型では、入力者・倉庫以外の `CodeNameView` 列へフォールバックする。
+- 列の構成自体は伝票種別によらないため動的列生成はしていない。ただし取引先の見出しと数量列の有無だけは伝票種別で変わるので、`DataGridColumn` が視覚ツリーに含まれず `RelativeSource` バインドが効かないことを踏まえ `xaml.cs` から設定している。
+- 区分は同じ値でも伝票により呼び名が違う（10 は発注では「発注」、仕入では「仕入」）。既定は enum 名からの表示とし、`SetParam` の `kubunLabels` で呼び出し側から正確な名称を渡せるようにした。
+- 伝票はコード・名称を持たないため、`SelectDisplayConditionHelper` の Code/Name 範囲ダイアログは使わず、伝票No範囲・計上日範囲・最大件数の絞り込みをダイアログ内へ直接置いた。条件のバインド値は呼び出し側の `parameters` の後ろへ連番で追加し、番号の衝突を避けている。
+- 最初の利用者として、発注配分入力のタブ2へ発注No選択(`SelectHachuCommand`)を追加した。2026-08-13 の計画 §4-1 にあった導線で、`SelectWinView` の制約で見送っていたものを復活させた。入力中の伝票があるときは破棄の確認を出す。
+### 影響範囲
+- 新規: `CvWpfclient/ViewModels/Sub/SelectTranWinViewModel.cs`、`CvWpfclient/Views/Sub/SelectTranWinView.xaml`、`CvWpfclient/Views/Sub/SelectTranWinView.xaml.cs`
+- 変更: `CvWpfclient/ViewModels/03Hatchu/HachuHaibunInputViewModel.cs`、`CvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml`（発注No選択の追加のみ）
+- 既存の `SelectWinView` / `SelectMultiWinView` は変更していない。マスタ選択の挙動に影響は無い。
+### 確認
+- `CvWpfclient/CvWpfclient.csproj` ビルド: 成功（警告0、エラー0）。
+- ダイアログが発行するクエリ（`select ... from Tran13Hachu where CalcFlag <> 0 order by Id DESC limit n`）を `server-user163.db` で実行し、`TranRowAccessor` が読む列がすべて取得できることを確認した。
+- 取引先列の解決を全伝票型で机上確認: Tran00Uriage→VTokui、Tran01Tenuri→VTenpo、Tran03Shiire/Tran13Hachu→VShiire、Tran05Ido/Tran10IdoOut/Tran11IdoIn→VIdo、Tran06Nyukin/Tran07Shiharai→VTori、Tran60Tana→該当なし(空欄)。
+- XAMLのバインディング名を ViewModel と機械的に突合（未解決なし）。CRLF、`git diff --check` を確認。
+### 残課題
+- 実行時の画面確認は未実施（サーバー起動を伴うため）。
+- 明細(`Jmeisai`)を含む全列を取得するため、最大件数を大きくすると転送量が増える。選択ダイアログの用途では既定の上限で足りる想定だが、重い場合は列を絞る `QueryListSqlParam` 方式への変更を検討する。
+- `Tran60Tana`(棚卸)は取引先にあたる列が無いため取引先列が空欄になる。棚卸を選択対象にする画面が出てきた時点で、専用の見出し・列構成が必要か判断する。
+
+---
 ## [2026-08-13] 発注配分入力画面を実装
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
