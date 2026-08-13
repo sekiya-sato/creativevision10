@@ -1,3 +1,38 @@
+## [2026-08-13] 発注配分入力画面を実装
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- 空クラスだった `HachuHaibunInputView` / `HachuHaibunInputViewModel` を実装し、発注(入荷予定)を入庫先へ振り分けて `TranHaibun` を作成・修正できるようにする。
+- 旧システムの「検索画面」「修正・登録画面」のキャプチャを設計の基準とした。
+### 実施内容
+- `HachuHaibunInputViewModel` を `BaseViewModel` 継承で新規実装した。`BaseTranInput<Tran13Hachu>` は発注伝票の単票CRUD用で成果物が別テーブルのため使わず、`ShopHaibunInputViewModel` と同じ「独自 gRPC クエリ + クライアント側合成」方式にした。
+- タブ1(検索画面): 検索条件を画面内へ直接配置し、`Tran13Hachu` を主に取得して配分側(`TranHaibun`)を `RelateNo1` で集計・合成する。配分状況(全て/未配分/配分済)は EXISTS / NOT EXISTS で発注へ掛ける。
+- タブ2(修正・登録画面): 発注明細 `Jmeisai` を 商品×色×サイズ へ正規化し、行=入庫先(`MasterTokui` TenType IN (0,3,6) の全件)、列=色サイズ のクロス表で配分数を入力する。列ヘッダに発注数／残／計を表示し、全入庫先の入力へ即時連動させた。
+- 発注伝票に複数商品が含まれるため、旧システム(1画面1商品)には無い商品セレクタをヘッダ直下へ追加し、選択商品でクロス表の列を切り替える方式にした。
+- 登録(F2)は既存配分(`Kubun=0 AND RelateNo1=発注Id AND SendFlg=0 AND KakuteiDay=''`)を `DeleteByIdParam` で洗い替えし、配分数>0 のセルを `InsertBulkParam` で一括登録する。上代は `DerivedJodai.FinalJodaiSql` を商品×入庫先で1本のクエリから引く。
+- クロス表の列は商品ごとに色サイズ構成が違うため静的に書けない。`HachuHaibunInputView.xaml.cs` で `DataGridTextColumn` を動的生成した（動的列生成を code-behind で行う点は `ZaikoQueryView.xaml.cs` の前例に沿う）。読取専用の `ZaikoQuery` と違いセル編集と集計の即時再計算が要るため、`DataTable` + `AutoGenerateColumns` ではなくセルVMへ直接バインドしている。
+- `MenuData.cs` の「発注配分入力」の `addInfo` を "準備中" から機能説明へ変更した。
+### 影響範囲
+- `CvWpfclient/ViewModels/03Hatchu/HachuHaibunInputViewModel.cs`（空クラス→実装）
+- `CvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml`（スタブ→実装）
+- `CvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml.cs`（動的列生成・選択セル表示を追加）
+- `CvWpfclient/Models/MenuData.cs`（`addInfo` 1行）
+- DBスキーマ、`CvBase`、サーバー側は変更していない。`TranHaibun` の既存規約(`Kubun` / `RelateNo1`)に従うだけで新規列は追加していない。
+### 確認
+- `CvWpfclient/CvWpfclient.csproj` ビルド: 成功（警告0、エラー0）。
+- 検索SQL・配分集計SQL・上代解決SQL を `server-user163.db` に対して実行し、構文と結果を確認した（発注Id=1 の明細フィールド名一致、上代 1960/2660 が明細値と一致）。
+- 入庫先件数を確認: TenType=0 が211件、6が244件、3が0件（計455行をクロス表に常時表示する）。
+- CRLF、`git diff --check` を確認。
+### 残課題
+- 実行時の画面確認は未実施（サーバー起動を伴うため）。バインディング名はビルドと grep で照合済み。
+- 旧システムの「事業部」「仕入条件(買取/委託)」は CV10 に対応するマスタ列が無いため非搭載とした。
+- 旧システムの「入力基準（店舗毎／色サイズ毎）」の行列転置、および配分補助機能（均等配分／前回パターン複写／店舗ランク別配分）はユーザー了承のうえ将来実装とし、VMに TODO コメントで残した。
+- `HachuHaibunListViewModel` の冒頭コメントと `MenuData.cs` の「発注配分リスト」`addInfo` は「配分データの区分/関連伝票NOの規約が未確定」と書かれているが、`EnumHaibun` 追加により既に解消済みで記述が古い。別画面のため本作業では触れていない。
+- 設計計画は `.omo/HachuHaibunInput_plan.md`（規約どおりコミット対象外）。
+
+---
 ## [2026-08-12] Phase 1 業務仕様の決定内容をドラフト化
 ### Agent
 - GPT-5.6 : OpenAI : Sekiya Sato Codex

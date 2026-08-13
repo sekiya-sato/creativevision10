@@ -164,7 +164,7 @@ public partial class MenuData : ObservableObject {
 		new("■ 発注", new([
 			new("発注入力", new([
 				new("発注入力", typeof(Views._03Hatchu.HachuInputView), addInfo:"仕入先に対する発注入力"),
-				new("発注配分入力", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"準備中"),
+				new("発注配分入力", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"発注(入荷予定)を入庫先へ色サイズ別に振り分けて配分データを作成"),
 			])),
 			new("発注残・納品予定", new([
 				new("納品予定照会", typeof(Views._03Hatchu.DeliveryScheduleInquiryView), addInfo:"未実装 発注に納品予定日の項目が無く仕様確定待ち"),
