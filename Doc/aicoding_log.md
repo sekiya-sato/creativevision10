@@ -1,3 +1,31 @@
+## [2026-08-13] 発注配分入力のビルドエラーを修正（検証手順の誤りを含む）
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- `master` へマージ後に発生した `CvWpfclient` のビルドエラーを解消する。あわせて見逃した原因を記録する。
+### 実施内容
+- `HachuHaibunInputView.xaml.cs` に `using System.Windows;` を追加した。`DataTemplate` と `Style` の解決に必要だが漏れていた（CS0246 ×3）。
+### 原因と再発防止
+- `C:\gitroot\UT\vscmd.bat` は内部で `cd /d C:\gitroot\new2022\cv10` を実行してから引数のコマンドを走らせる。
+  このため `vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj` を **どのワークツリーから実行しても `cv10`(master) がビルドされる**。
+- 直前の2作業では、この挙動に気づかず相対パスで実行していたため、`cv10-claude` の変更を一度もコンパイルしないまま
+  「ビルド成功」と判断していた。エラーは `master` へ ff マージした後、初めて自分のコードがコンパイルされた時点で表面化した。
+- ワークツリーを指定してビルドする場合は csproj を絶対パスで渡すこと。
+  `C:\gitroot\UT\vscmd.bat dotnet build C:\gitroot\new2022\cv10-claude\CvWpfclient\CvWpfclient.csproj`
+- XAML を含むプロジェクトは、マークアップコンパイル(`*_wpftmp.csproj`)が差分ビルドでスキップされることがある。
+  code-behind を変更した際は `--no-incremental` を付けて確認する。
+### 影響範囲
+- `CvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml.cs` の using 1行のみ。動作の変更は無い。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build C:\gitroot\new2022\cv10-claude\CvWpfclient\CvWpfclient.csproj --no-incremental`: 成功（警告0、エラー0）。
+- マージ後の `cv10`(master) でも同コマンドで成功を確認。
+### 残課題
+- 本エントリより前の2件（発注配分入力、伝票選択ダイアログ）の「ビルド: 成功」は上記の理由で無効な検証だった。
+  本修正時点の再ビルドで両方の成果物を含めて成功を確認している。
+
+---
 ## [2026-08-13] 汎用の伝票選択ダイアログ(Sub)を追加
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
@@ -18,7 +46,7 @@
 - 変更: `CvWpfclient/ViewModels/03Hatchu/HachuHaibunInputViewModel.cs`、`CvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml`（発注No選択の追加のみ）
 - 既存の `SelectWinView` / `SelectMultiWinView` は変更していない。マスタ選択の挙動に影響は無い。
 ### 確認
-- `CvWpfclient/CvWpfclient.csproj` ビルド: 成功（警告0、エラー0）。
+- `CvWpfclient/CvWpfclient.csproj` ビルド: 成功（警告0、エラー0）。※この検証は誤って `cv10`(master) 側をビルドしており無効。「発注配分入力のビルドエラーを修正」のエントリを参照。
 - ダイアログが発行するクエリ（`select ... from Tran13Hachu where CalcFlag <> 0 order by Id DESC limit n`）を `server-user163.db` で実行し、`TranRowAccessor` が読む列がすべて取得できることを確認した。
 - 取引先列の解決を全伝票型で机上確認: Tran00Uriage→VTokui、Tran01Tenuri→VTenpo、Tran03Shiire/Tran13Hachu→VShiire、Tran05Ido/Tran10IdoOut/Tran11IdoIn→VIdo、Tran06Nyukin/Tran07Shiharai→VTori、Tran60Tana→該当なし(空欄)。
 - XAMLのバインディング名を ViewModel と機械的に突合（未解決なし）。CRLF、`git diff --check` を確認。
@@ -51,7 +79,7 @@
 - `CvWpfclient/Models/MenuData.cs`（`addInfo` 1行）
 - DBスキーマ、`CvBase`、サーバー側は変更していない。`TranHaibun` の既存規約(`Kubun` / `RelateNo1`)に従うだけで新規列は追加していない。
 ### 確認
-- `CvWpfclient/CvWpfclient.csproj` ビルド: 成功（警告0、エラー0）。
+- `CvWpfclient/CvWpfclient.csproj` ビルド: 成功（警告0、エラー0）。※この検証は誤って `cv10`(master) 側をビルドしており無効。「発注配分入力のビルドエラーを修正」のエントリを参照。
 - 検索SQL・配分集計SQL・上代解決SQL を `server-user163.db` に対して実行し、構文と結果を確認した（発注Id=1 の明細フィールド名一致、上代 1960/2660 が明細値と一致）。
 - 入庫先件数を確認: TenType=0 が211件、6が244件、3が0件（計455行をクロス表に常時表示する）。
 - CRLF、`git diff --check` を確認。
