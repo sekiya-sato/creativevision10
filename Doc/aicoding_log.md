@@ -1,3 +1,36 @@
+## [2026-08-13] 発注配分入力を実画面で検証し、表示の不具合を修正
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- `CvServer` と `CvWpfclient` を実際に起動し、発注配分入力を検索→配分入力→登録→削除まで通して確認する。
+- 静的確認では出なかった表示の不具合を洗い出す。
+### 実施内容（検証）
+- `.agents/skills/verify-wpf-screen-runtime` の手順に従い、`MainMenuViewModel` と `HachuHaibunInputViewModel` へ環境変数駆動の一時フックを入れて対象画面と状態を作った。確認後に全て削除済み。
+- 発注No 1（発注日 2026/07/08、仕入先 (4) 004、入荷倉庫 (208) 000706、発注数 130、商品2件）を対象に確認した。
+- 検索画面: 条件バーと一覧13列が設計どおり表示され、配分状況が「未配分/一部配分/配分済」で切り替わることを確認。
+- 配分入力画面: 発注明細2件の商品セレクタ、入庫先455行×色サイズ列のクロス表、列ヘッダの発注数/残/計、0を空白表示するセルを確認。
+- 集計連動: 3店舗へ 40/30/30 を入力し、合計列・配分計・残・上代金額(196,000)・原価金額(109,000)・総配分数(100)が即時連動することを確認。
+- 登録: `TranHaibun` 3件が作成され、`DenDay`/`NouhinDay`/`Id_Soko=208`/`Kubun=0`/`SendFlg=0`/`RelateNo1=1`/`Tanka=Jodai=1960`/`Kingaku=Su×1960`/`Gedai=1090` が規約どおりであることをDBで確認。再読込で入力値が復元されることも確認。
+- 削除: 一覧から削除して `TranHaibun` が0件に戻ることを確認。検証用データは残していない。
+### 実施内容（修正）
+- クロス表のSKU列ヘッダで発注数・残・計の数値が欠けていた。列幅62pxに対しヘッダ内 `StackPanel` の `MinWidth=84` が内側幅(列幅−ヘッダのパディング)を超えて溢れていたため。`MinWidth` を外し、列幅を112pxにした。
+- 入力者の表示書式が登録前後で変わっていた（発注ヘッダ由来は `(3) 000017 衣目 元育`、再読込後は `000017 衣目 元育`）。`CodeNameDisplay.Format` へ統一した。仕入先・入力者の検索条件側も同じ書式に揃えた。
+### 影響範囲
+- `CvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml`（ヘッダテンプレートの `MinWidth` 削除）
+- `CvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml.cs`（`SkuColumnWidth` 62→112）
+- `CvWpfclient/ViewModels/03Hatchu/HachuHaibunInputViewModel.cs`（表示書式の統一4箇所）
+- 一時フックは全て削除済みで、`MainMenuViewModel.cs` は差分なしに戻している。
+### 確認
+- `C:\gitroot\UT\vscmdclaude.bat dotnet build CvWpfclient\CvWpfclient.csproj`: 成功（警告0、エラー0）。
+- CRLF、`git diff --check` を確認。
+### 残課題
+- 検証は `cv10`(master) 側の `CvServer\server-user163.db` に対して行った。`cv10-claude` 直下の同名ファイルは別物（ほぼ空）で、MCP が参照しているのは前者。ワークツリー配下に同名DBが複数あるため、検証時は接続先を明示すること。
+- 「展開基準（色/サイズ）」の切替、`SelectTranWinView` による発注No選択、伝票内に商品が3件以上ある場合の商品セレクタは、今回のデータでは十分に確認できていない。
+- 発注数超過時の警告、楽観ロック競合時のエラー経路は未確認。
+
+---
 ## [2026-08-13] 発注配分入力のビルドエラーを修正（検証手順の誤りを含む）
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
@@ -8,14 +41,24 @@
 ### 実施内容
 - `HachuHaibunInputView.xaml.cs` に `using System.Windows;` を追加した。`DataTemplate` と `Style` の解決に必要だが漏れていた（CS0246 ×3）。
 ### 原因と再発防止
-- `C:\gitroot\UT\vscmd.bat` は内部で `cd /d C:\gitroot\new2022\cv10` を実行してから引数のコマンドを走らせる。
-  このため `vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj` を **どのワークツリーから実行しても `cv10`(master) がビルドされる**。
-- 直前の2作業では、この挙動に気づかず相対パスで実行していたため、`cv10-claude` の変更を一度もコンパイルしないまま
-  「ビルド成功」と判断していた。エラーは `master` へ ff マージした後、初めて自分のコードがコンパイルされた時点で表面化した。
-- ワークツリーを指定してビルドする場合は csproj を絶対パスで渡すこと。
-  `C:\gitroot\UT\vscmd.bat dotnet build C:\gitroot\new2022\cv10-claude\CvWpfclient\CvWpfclient.csproj`
-- XAML を含むプロジェクトは、マークアップコンパイル(`*_wpftmp.csproj`)が差分ビルドでスキップされることがある。
-  code-behind を変更した際は `--no-incremental` を付けて確認する。
+- `C:\gitroot\UT\` にはワークツリーごとのバッチが用意されている。いずれも VS 環境をロードした後に
+  自分の `CV_DIR` へ `cd /d` してから引数のコマンドを実行するため、**呼び出し元のカレントディレクトリは効かず、
+  バッチの選択がビルド対象を決める**。
+
+  | バッチ | 対象 |
+  |---|---|
+  | `vscmd.bat` | `C:\gitroot\new2022\cv10`（master） |
+  | `vscmdclaude.bat` | `C:\gitroot\new2022\cv10-claude` |
+  | `vscmdcodex.bat` | `C:\gitroot\new2022\cv10-codex` |
+
+- 直前の2作業では `vscmd.bat` を使っていたため、`cv10-claude` の変更を一度もコンパイルしないまま
+  「ビルド成功」と判断していた。エラーは `master` へ ff マージした後、初めて自分のコードが
+  コンパイルされた時点で表面化した。
+- 作業ワークツリーに対応するバッチを使うこと。`cv10-claude` なら
+  `C:\gitroot\UT\vscmdclaude.bat dotnet build CvWpfclient\CvWpfclient.csproj`。
+  `-v m` を付けると出力先の dll パスが出るので、対象ワークツリーを目視確認できる。
+- AGENTS.md 5章の基本コマンド例は `vscmd.bat`（master 用）のみを載せている。
+  ワークツリーで作業する場合はそのまま使わないこと。
 ### 影響範囲
 - `CvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml.cs` の using 1行のみ。動作の変更は無い。
 ### 確認

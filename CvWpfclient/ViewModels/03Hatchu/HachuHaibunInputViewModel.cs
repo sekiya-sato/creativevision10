@@ -269,7 +269,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		var shiire = ShowSelect<MasterShiire>(typeof(MasterShiire), string.Empty, "Code", CondId_Shiire);
 		if (shiire == null) return;
 		CondId_Shiire = shiire.Id;
-		CondShiireDisplay = $"{shiire.Code} {shiire.Name}";
+		CondShiireDisplay = CodeNameDisplay.Format(shiire.Id, shiire.Code, shiire.Name);
 	}
 
 	[RelayCommand]
@@ -277,7 +277,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		var shain = ShowSelect<MasterShain>(typeof(MasterShain), string.Empty, "Code", CondId_Shain);
 		if (shain == null) return;
 		CondId_Shain = shain.Id;
-		CondShainDisplay = $"{shain.Code} {shain.Name}";
+		CondShainDisplay = CodeNameDisplay.Format(shain.Id, shain.Code, shain.Name);
 	}
 
 	/// <summary>配分入力へ(F6)。選択発注の明細と既存配分を読み込んでタブ2を構築する。</summary>
@@ -390,7 +390,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		var shain = ShowSelect<MasterShain>(typeof(MasterShain), string.Empty, "Code", Id_Shain);
 		if (shain == null) return;
 		Id_Shain = shain.Id;
-		ShainDisplay = $"{shain.Code} {shain.Name}";
+		ShainDisplay = CodeNameDisplay.Format(shain.Id, shain.Code, shain.Name);
 	}
 
 	/// <summary>全クリア(Shift+F6)。入力済みの配分数をすべて 0 に戻す。</summary>
@@ -666,7 +666,8 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 	async Task<string> LoadShainDisplayAsync(long idShain, CancellationToken ct) {
 		List<MasterShain> rows = await QueryListAsync<MasterShain>($"Id = {idShain}", "Id", ct);
 		MasterShain? shain = rows.FirstOrDefault();
-		return shain == null ? $"Id:{idShain}" : $"{shain.Code} {shain.Name}";
+		// 表示書式は発注ヘッダ由来の VShain と揃える（登録前後で見た目が変わらないようにする）
+		return shain == null ? $"Id:{idShain}" : CodeNameDisplay.Format(shain.Id, shain.Code, shain.Name);
 	}
 
 	/// <summary>

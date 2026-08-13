@@ -15,7 +15,8 @@
 	<helpers:BaseWindow.Resources>
 		<!--  クロス表の SKU 列ヘッダ。旧システムの固定ヘッダ（発注数／残／計）に対応する  -->
 		<DataTemplate x:Key="SkuColumnHeaderTemplate">
-			<StackPanel MinWidth="56">
+			<!--  幅は列側(SkuColumnWidth)で決める。MinWidth を付けると内側幅を超えて数値が切れる  -->
+			<StackPanel>
 				<TextBlock HorizontalAlignment="Center"
 					FontWeight="SemiBold"
 					Text="{Binding Code_Col}"

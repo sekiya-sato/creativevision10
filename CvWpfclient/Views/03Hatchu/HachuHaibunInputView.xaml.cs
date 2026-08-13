@@ -9,7 +9,9 @@ namespace CvWpfclient.Views._03Hatchu;
 public partial class HachuHaibunInputView : Helpers.BaseWindow {
 	/// <summary>クロス表の固定列数（行 / 入庫先CD / 入庫先名 / 合計）。これより後ろが SKU の動的列。</summary>
 	const int FixedColumnCount = 4;
-	const double SkuColumnWidth = 62;
+	// 列ヘッダに 色CD/サイズCD と 発注数・残・計 を積むため、数値が切れない幅を確保する
+	// (ヘッダ内側は列幅からヘッダのパディング分を引いた値になる)
+	const double SkuColumnWidth = 112;
 
 	HachuHaibunInputViewModel? viewModel;
 
