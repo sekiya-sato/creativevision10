@@ -634,11 +634,17 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 }
 
 public enum EnumUri00 : int {
+	[Comment("P売上")]
 	Uriage = 10,
+	[Comment("S売上")]
 	UriSale = 11,
+	[Comment("P返品")]
 	Henpin = 20,
+	[Comment("S返品")]
 	HenSale = 21,
+	[Comment("値引")]
 	Nebiki = 30,
+	[Comment("その他")]
 	Other = 99
 }
 
