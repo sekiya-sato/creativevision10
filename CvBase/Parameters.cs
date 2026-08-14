@@ -183,6 +183,11 @@ public sealed class DeleteByIdParam {
 /// <see cref="Columns"/> へ指定できない。付随処理(在庫再集計、V*列伝播、Derived更新)は実行しないため、
 /// サーバー側でそれらに影響する列を拒否する。
 /// </para>
+/// <para>
+/// 楽観排他は <see cref="UpdateParam"/> と同じ考え方で行単位に行う。
+/// <see cref="PartialUpdateRow.ExpectedVdu"/> が現在値と一致しない行が1件でもあれば、
+/// サーバーはトランザクション全体を戻して <c>CvMsgErrorCode.ConcurrentUpdate</c> を返す(部分適用しない)。
+/// </para>
 /// </summary>
 /// <param name="ItemType">対象テーブル型</param>
 /// <param name="Columns">更新する列名の配列</param>
@@ -193,11 +198,15 @@ public sealed record class PartialUpdateParam(Type ItemType, string[] Columns, P
 /// 部分更新の1行分
 /// </summary>
 /// <param name="Id">対象行のId</param>
+/// <param name="ExpectedVdu">
+/// 一覧取得時点の <c>Vdu</c>。サーバー側で現在値と照合し、不一致(または行が削除済み)なら
+/// 更新全体をrollbackする。
+/// </param>
 /// <param name="Values">
 /// <see cref="PartialUpdateParam.Columns"/> と同順・同数の値。
 /// 他のクエリパラメータと同様に文字列で渡し、SQLiteの列アフィニティで変換させる。
 /// </param>
-public sealed record class PartialUpdateRow(long Id, string[] Values);
+public sealed record class PartialUpdateRow(long Id, long ExpectedVdu, string[] Values);
 
 /// <summary>
 /// 部分更新の結果

@@ -1,3 +1,43 @@
+## [2026-08-14] 部分更新に楽観排他を導入し実装を簡素化
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- 直前のコミット `3db7830` で新設した `HandlePartialUpdate()` を `HandleUpdate()` に近づけ、楽観排他を入れる。
+- 併せて `HandlePartialUpdate()` とその付随処理の冗長さを解消する。
+### 実施内容
+- `CvBase/Parameters.cs`: `PartialUpdateRow` へ `ExpectedVdu` を追加した（`PartialUpdateRow(long Id, long ExpectedVdu, string[] Values)`）。命名は既存の `QueryByIdParam.ExpectedVdu` に合わせた。`PartialUpdateParam` のコメントへ楽観排他の契約（1件でも競合すれば全体rollback、部分適用しない）を明記した。
+- `CvServer/Services/HandlerClass.cs`: `HandlePartialUpdate()` を書き換えた。
+  - 楽観排他: 行ごとに `UPDATE {table} SET {列} , Vdu = @ WHERE Id = @ AND Vdu = @ExpectedVdu` を実行し、更新行数が0なら `AbortTransaction()` して `CvMsgErrorCode.ConcurrentUpdate` と `ConcurrentUpdateMessage` を返す。`HandleUpdate()` と同じエラーコード・文言定数・トランザクション構造にした。競合したIdはログと `DataMsg` に残す。
+  - 簡素化: `BuildPartialUpdateGroupKey()` を削除。同値行のグループ化と900件ごとの `Id IN (...)` チャンク分割も削除した。`PartialUpdateReservedColumns` を `PartialUpdateDeniedColumns` へ統合して配列1本・チェック1回にした。`CreatePartialUpdateError()` を削除し `HandleUpdate()` と同じく `CreateErrorResponse()` を直接呼ぶようにした。`TryResolvePartialUpdateColumns()` を `TryValidatePartialUpdate()` へ改名し、型・列・行の検証を1か所へ集約した。
+- `CvWpfclient/Helpers/ViewModels/BaseMatchingViewModel.cs`:
+  - `MatchingDenRow` へ `Vdu` を追加し、一覧取得時に `d.Vdu` を保持するようにした（`DenSelectColumns` は既に `h.Vdu` を選択済みなので派生ViewModelは変更なし）。
+  - `ExecuteKesikomi()` の差分抽出を Id のリストから行のリストへ変え、`PartialUpdateRow(r.Id, r.Vdu, [値])` を送るようにした。
+  - `CvMsgErrorCode.ConcurrentUpdate` を専用処理にした。サーバー側でrollback済みなので「1件も更新していない」ことを文言に含め、一覧を破棄して `一覧取得` での再取得を促す（`BaseMenteViewModel.HandleConcurrentUpdate()` と同じ方針）。
+  - 成功時は `OriginalEndFlag` を手で書き換える代わりに `OnSearchAsync()` で一覧を再取得するようにした。「サーバー更新行数が要求と違う」注記は不要になったため削除した。
+### 技術決定 Why
+- **楽観排他と簡素化が同じ方向を向いていた**。行ごとに `Vdu` を照合するなら更新は1行ずつになるため、同値行のグループ化とチャンク分割そのものが不要になる。結果として `HandlePartialUpdate()` 周辺は4メンバー約140行から2メンバー約100行になり、SQLite のパラメータ上限対策も消えた。
+- **競合時は全件rollback**（ユーザー確認済み）。部分適用を許すと戻り値と画面表現が複雑になり、どこまで反映されたかを利用者が追えない。単一トランザクションで全件戻し、再取得させるほうが状態が単純である。既存の `HandleBulkInsert()` も途中失敗時は全体を戻す方針で揃っている。
+- **成功後は一覧を自動再取得**（ユーザー確認済み）。`PartialUpdateResult` へ新 `Vdu` を持たせて画面の行だけ書き換える案より単純で、`EndFlag` と入金集計も含めて画面が常にDBと一致する。代償はスキャン位置が先頭へ戻ることと再クエリ1回。
+- **`ExpectedVdu` を `WHERE` へ入れる方式にした理由**: `HandleUpdate()` のように事前 `SELECT` で照合すると1行あたり2文になる。条件付き `UPDATE` なら1文で済み、更新行数0で「Vdu不一致または削除済み」を同時に検出できる。エラーコードと文言は `HandleUpdate()` と同一なのでクライアントの扱いは変わらない。
+- 禁止列リスト方式は前回の決定どおり維持した。属性で許可列を宣言する案は部分更新の適用箇所が増えた時点で再判断する（ドラフト4章-10）。
+### 影響範囲
+- `CvBase/Parameters.cs`、`CvServer/Services/HandlerClass.cs`、`CvWpfclient/Helpers/ViewModels/BaseMatchingViewModel.cs`
+- `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md`（2.1.3 の楽観排他の記述を差し替え）
+- `Doc/spec/2026-08-12_CV10機能完成度チェックリスト.md`（8.4 の「意図的に実装しなかった点」から楽観排他を外した）
+- `PartialUpdateParam` の利用者は消込画面のみなので、他画面への影響はない。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj -p:OutputPath=obj\ClaudeBuildOutput\`: 成功（警告0、エラー0）。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj -p:OutputPath=obj\ClaudeBuildOutput\`: 成功（警告0、エラー0）。
+- `C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestServer\TestServer.csproj`: 合計45 / 成功45 / 失敗0。
+- 変更3ファイルを UTF-8(BOMなし) + CRLF へ正規化。`git diff --check`: 成功。
+### 残課題
+- **楽観排他の動作を自動テストで確認できていない**。`CoreService` のハンドラには既存テストが1件も無く（`Tests/TestServer` は `SummaryDb` と `MasterCascadeDb` を直接叩く構成）、テスト専用の実行プログラムを増やさない方針（AGENTS.md 3章）に従って実行時確認へ回した。
+- 競合検知の実行時確認には、2クライアントで同じ伝票を一覧取得するか、一覧取得後にDBの `Vdu` を直接書き換える操作が必要。
+- 前回からの引き継ぎ分（実行時の画面確認、支払消込の実データ不足、元帳の `*` 列追加）は未解消のまま。
+
+---
 ## [2026-08-14] 消込画面をEndFlag方式へ差し替え（Phase1仕様 2.1.1 の実装）
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

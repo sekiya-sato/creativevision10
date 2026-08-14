@@ -39,6 +39,10 @@ namespace CvWpfclient.Helpers;
 /// <summary>債権(売上)/債務(仕入)伝票1件。消込Flgの入力行。</summary>
 public sealed partial class MatchingDenRow : ObservableObject {
 	public long Id { get; set; }
+
+	/// <summary>一覧取得時点の更新日時。消込実行時の楽観排他に使う。</summary>
+	public long Vdu { get; set; }
+
 	public string KakeDay { get; set; } = string.Empty;
 	public string DenDay { get; set; } = string.Empty;
 	public long Id_Tori { get; set; }
@@ -283,6 +287,7 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 				var endFlag = GetDenEndFlag(d);
 				return new MatchingDenRow {
 					Id = d.Id,
+					Vdu = d.Vdu,
 					KakeDay = GetDenKakeDay(d),
 					DenDay = d.DenDay,
 					Id_Tori = toriId,
@@ -357,52 +362,61 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 	/// 一覧取得時点から消込Flgが変化した伝票だけを `EndFlag` へ書き戻す。
 	/// 在庫・掛集計へは影響しないため、<see cref="PartialUpdateParam"/> で該当列のみを更新する
 	/// （行全体を保存する <see cref="UpdateParam"/> だと1件ごとに在庫再集計が走る）。
+	/// <para>
+	/// 楽観排他は行単位で、一覧取得時点の <see cref="MatchingDenRow.Vdu"/> を送ってサーバー側で照合する。
+	/// 1件でも競合すればサーバーは全件rollbackして <see cref="CvMsgErrorCode.ConcurrentUpdate"/> を返すので、
+	/// その場合は一覧を破棄して再取得を促す。成功時も `Vdu` が変わるため一覧を取り直す。
+	/// </para>
 	/// </summary>
 	[RelayCommand(IncludeCancelCommand = true)]
 	protected async Task ExecuteKesikomi(CancellationToken ct) {
 		if (IsBusy) return;
-		var setIds = DenRows.Where(r => r.IsKesikomi && r.OriginalEndFlag == 0).Select(r => r.Id).ToList();
-		var clearIds = DenRows.Where(r => !r.IsKesikomi && r.OriginalEndFlag == 1).Select(r => r.Id).ToList();
-		if (setIds.Count == 0 && clearIds.Count == 0) {
+		var setRows = DenRows.Where(r => r.IsKesikomi && r.OriginalEndFlag == 0).ToList();
+		var clearRows = DenRows.Where(r => !r.IsKesikomi && r.OriginalEndFlag == 1).ToList();
+		if (setRows.Count == 0 && clearRows.Count == 0) {
 			Message = "消込状態に変更がありません。";
 			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
 			return;
 		}
 
-		var confirm = clearIds.Count == 0
-			? $"{setIds.Count:N0} 件を消込しますか。"
-			: $"{setIds.Count:N0} 件を消込、{clearIds.Count:N0} 件を解除しますか。";
+		var confirm = clearRows.Count == 0
+			? $"{setRows.Count:N0} 件を消込しますか。"
+			: $"{setRows.Count:N0} 件を消込、{clearRows.Count:N0} 件を解除しますか。";
 		if (MessageEx.ShowQuestionDialog(confirm, owner: ActiveWindow) != MessageBoxResult.Yes) return;
 
 		StartBusy("消込実行中...");
 		try {
-			// 消込(1)と解除(0)を1回の要求へまとめる。サーバー側は単一トランザクションで処理する。
+			// 消込(1)と解除(0)を1回の要求へまとめる。サーバー側は単一トランザクションで処理し、
+			// 行ごとに一覧取得時点の Vdu を照合する（1件でも競合すれば全件戻る）。
 			PartialUpdateRow[] rows = [
-				.. setIds.Select(id => new PartialUpdateRow(id, ["1"])),
-				.. clearIds.Select(id => new PartialUpdateRow(id, ["0"])),
+				.. setRows.Select(r => new PartialUpdateRow(r.Id, r.Vdu, ["1"])),
+				.. clearRows.Select(r => new PartialUpdateRow(r.Id, r.Vdu, ["0"])),
 			];
 			var param = new PartialUpdateParam(typeof(TDen), [EndFlagColumn], rows);
 			var reply = await SendExecuteAsync(param, ct);
+			if (reply.Code == CvMsgErrorCode.ConcurrentUpdate) {
+				// サーバー側でrollback済みなので1件も書き込まれていない。一覧を破棄して再取得を促す。
+				DetachDenRows(DenRows);
+				DenRows = [];
+				KinRows = [];
+				UpdateTotals();
+				Message = "他端末で更新されたため消込しませんでした（1件も更新していません）。［一覧取得（F5）］で最新の一覧を再取得してください。";
+				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+				return;
+			}
 			if (reply.Code < 0) {
 				var detail = string.IsNullOrEmpty(reply.Option) ? reply.DataMsg : reply.Option;
 				Message = $"消込に失敗しました。{detail}";
 				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 				return;
 			}
-			var result = Common.DeserializeObject(reply.DataMsg ?? string.Empty, reply.DataType) as PartialUpdateResult;
-			// 成功した状態を一覧へ反映し、続けて操作しても同じ更新を再送しないようにする
-			foreach (var row in DenRows) {
-				row.OriginalEndFlag = row.IsKesikomi ? 1 : 0;
-			}
-			UpdateTotals();
-			Message = clearIds.Count == 0
-				? $"{setIds.Count:N0}件消込しました"
-				: $"{setIds.Count:N0}件消込、{clearIds.Count:N0}件解除しました";
-			// 更新行数が要求と違う場合は他端末で先に更新された可能性がある。件数を添えて気付けるようにする。
-			var expected = setIds.Count + clearIds.Count;
-			if (result != null && result.UpdatedCount != expected) {
-				Message += $"（サーバー更新行数 {result.UpdatedCount:N0} / 要求 {expected:N0}。他端末で更新された可能性があります）";
-			}
+			var done = clearRows.Count == 0
+				? $"{setRows.Count:N0}件消込しました"
+				: $"{setRows.Count:N0}件消込、{clearRows.Count:N0}件解除しました";
+			// Vdu が変わったので一覧を取り直す。続けて消込実行しても楽観排他で弾かれない状態にする。
+			await OnSearchAsync(ct);
+			// OnSearchAsync が Message を上書きするため、実行結果は再取得の後に設定する
+			Message = done;
 			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
 		}
 		catch (OperationCanceledException) {
