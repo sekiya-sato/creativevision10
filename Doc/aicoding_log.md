@@ -1,3 +1,45 @@
+## [2026-08-14] 消込2画面を実データで検証し請求先絞り込みの不具合を修正
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- 消込機能を実データ（`server-user163.db`）で通し、楽観排他の競合検知まで実機確認する。
+- 支払消込は実データが仕入1件/支払1件しかなく検証不能だったため、検証用データを投入する。
+### 実施内容（検証データ投入）
+- 仕入24件（仕入20＋返品4、掛計上日2026年07月、計1,056,000円）、支払3件（支払日2026年08月、計1,055,880円）、入金3件（得意先2090向け、2021年10月、計47,240円）を投入した。`ManualNo` に `CLTEST` プレフィックスを付けて識別できるようにした。
+- 仕入は `Jmeisai='[]'` にした。在庫集計は `CROSS JOIN json_each(Jmeisai)` で明細を読むため、明細0件なら `SummaryRealStock` / `SummaryStock` へ影響せず、Rebuildを回しても不変である。
+- 入金側も投入した。既存の入金2,299件は `Id_Torisaki=0` が2,205件、残り94件は `TenType=0`（倉庫）向けで、`TenType=1` に絞る入金消込では卸売上と対応しないため実データだけでは検証できなかった。
+### 実施内容（不具合修正）
+- `CvWpfclient/Helpers/ViewModels/BaseMatchingViewModel.cs`: 請求先・得意先Idの絞り込みが常に0件になる不具合を修正した。`SqlId()` を追加し、Idをパラメータではなく直接SQLへ埋め込む形にした（`BuildPaysakiSubQuery` / `BuildToriWhere`）。
+- `CvWpfclient/Models/MenuData.cs`: 入金消込・支払消込の `addInfo` が「FIFOで突合し未回収残･未充当を確認(保存は未対応)」と旧仕様のままだったため、EndFlag方式の説明へ差し替えた。
+### 技術決定 Why
+- **Idを直接埋め込む理由**: `QueryListSqlParam.Parameters` は `string[]` なので、Idをパラメータで渡すと `Id_Paysaki = '1'` という比較になる。SQLiteは動的型のため整数列と文字列は一致せず、副問い合わせが常に0行になっていた。Idは `long` で数値以外を含み得ないため、サーバー側 `HandlePartialUpdate` の `Id IN (...)` と同じ理由で直接埋め込む方式に統一した。既存画面は取引先を「コード範囲（文字列）」で絞る作りだったため、この問題は今回Id比較を導入して初めて露呈した。
+- **この不具合はビルドとテストでは検出できなかった**。警告0・テスト45/45成功でも一覧が空になる。実機で画面を開いて初めて判明したので、消込のような新しいSQL経路を足したときは実データでの一覧取得確認を必須にする。
+- 検証は skill `verify-wpf-screen-runtime` に従い、`MainMenuViewModel` と `BaseMatchingViewModel` へ環境変数フックを一時的に入れてViewModel経由で画面と条件をセットした。座標クリックではなく UI Automation でボタンを名前解決してクリックした。フックは検証後に削除済み（`TEMP-VERIFY` の残存なしを確認）。
+### 検証結果
+- `UpdateDb` の `26_08_14_01` が実DBへ適用され `EndFlag` 列が両テーブルに存在（`DbVersion=26081401`）。
+- 支払消込: 仕入25件/支払3件を取得、仕入計1,091,200・支払計1,055,880。`消込実行` で「25件消込しました」→ `Tran03Shiire.EndFlag=1` が25件。
+- 入金消込: 売上15件/入金3件を取得、売上計47,380・入金計47,240。「15件消込しました」→ 対象15件のみ `EndFlag=1`（残り50,296件は不変）。
+- `Jmeisai` の `Id_Kin` 別集計は1伝票2明細（手形入金＋振込手数料）も区分ごとに分解された。
+- 楽観排他: 25件中13件目の `Vdu` をDBで書き換えて実行 → サーバーログ `部分更新 競合検知 Tran03Shiire Id=13`、画面は「他端末で更新されたため消込しませんでした（1件も更新していません）」。**Id 1〜12 はUPDATE実行済みだったが `EndFlag` は25件すべて1のままで、部分適用が発生していない**ことをDBで確認した。
+- 成功時の一覧自動再取得も動作し「未反映の変更 0 件」へ戻った。
+### 影響範囲
+- `CvWpfclient/Helpers/ViewModels/BaseMatchingViewModel.cs`、`CvWpfclient/Models/MenuData.cs`
+- `Doc/spec/2026-08-12_CV10機能完成度チェックリスト.md`（8.4.1 実機検証の結果を追加）
+- 投入した検証データは後続検証のため削除せず残す。消込済みになった仕入25件・売上15件の `EndFlag=1` もそのまま。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj -p:OutputPath=obj\ClaudeBuildOutput\`: 成功（警告0、エラー0）。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj -p:OutputPath=obj\ClaudeBuildOutput\`: 成功（警告0、エラー0）。
+- `C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestServer\TestServer.csproj`: 合計45 / 成功45 / 失敗0。
+- `git diff --check`: 成功。変更3ファイルを UTF-8(BOMなし) + CRLF へ正規化。
+### 残課題
+- **サーバー起動時のカレントディレクトリに注意**。`ConnectionStrings:sqlite` が相対パス `server-user163.db` なので、cwd が違うとその場所に空DBが新規作成され、初期データだけの別DBを見てしまう。今回リポジトリ直下に誤って作成し削除した。起動は cwd を `CvServer` にする（`--contentroot` だけでは不十分）。
+- クライアントも作業ディレクトリを exe と揃えないと MaterialDesignThemes のリソース解決に失敗して起動時エラーになる。
+- 元帳（`TokuiLedger` / `ShiireLedger`）への `*` 列追加（ドラフト 2.1.2-6）は未着手のため、消込結果は消込画面でしか見えない。
+- `Id` をSQLへ直接埋め込む対処は消込画面のみに入れた。他画面が今後Id比較を追加する場合は同じ罠を踏むため、`QueryListSqlParam` に数値パラメータを渡せるようにするか、共通ヘルパへ切り出すかを検討する。
+
+---
 ## [2026-08-14] 部分更新に楽観排他を導入し実装を簡素化
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

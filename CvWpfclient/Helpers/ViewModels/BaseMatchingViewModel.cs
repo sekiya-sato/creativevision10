@@ -480,6 +480,17 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 	// ---- データ取得 ---------------------------------------------------------------
 
 	/// <summary>
+	/// Id値をSQLへ直接埋め込む。
+	/// <para>
+	/// `QueryListSqlParam.Parameters` は `string[]` のため、Idをパラメータで渡すと SQLite が
+	/// 整数列と文字列を比較して常に不一致になる（動的型のため `Id = '1'` は 0件）。
+	/// Idは `long` で数値以外を含み得ないので、サーバー側 `HandlePartialUpdate` の `Id IN (...)` と
+	/// 同じ理由で直接埋め込む。
+	/// </para>
+	/// </summary>
+	static string SqlId(long id) => id.ToString(CultureInfo.InvariantCulture);
+
+	/// <summary>
 	/// 請求先配下の取引先Idを返す副問い合わせ。
 	/// <para>
 	/// `Id_Paysaki` が請求先を指す取引先に加え、請求先自身も含める。請求先が自社（`Id_Paysaki` が
@@ -487,8 +498,8 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 	/// `Id = 請求先 AND Id_Paysaki IN (0, 請求先)` を OR で足す（ドラフト 2.1.2-1 の推奨案）。
 	/// </para>
 	/// </summary>
-	string BuildPaysakiSubQuery(List<string> parameters) {
-		var p = AddSqlParameter(parameters, PaysakiId);
+	string BuildPaysakiSubQuery() {
+		var p = SqlId(PaysakiId);
 		return $@"SELECT m.Id FROM {ToriMasterTableName} m
        WHERE {ToriMasterWhereFor("m")}
          AND (m.Id_Paysaki = {p} OR (m.Id = {p} AND m.Id_Paysaki IN (0, {p})))";
@@ -496,12 +507,11 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 
 	async Task<Dictionary<long, MasterTokui>> LoadToriMapAsync(CancellationToken ct) {
 		// 得意先/仕入先どちらも Code/Name を持つので MasterTokui 型で受ける（列構成が同じ）。
-		List<string> parameters = [];
 		var sql = $@"
 SELECT m.Id, m.Vdc, m.Vdu, m.Code, m.Name, m.Ryaku, m.Kana
 FROM {ToriMasterTableName} m
-WHERE m.Id IN ({BuildPaysakiSubQuery(parameters)})";
-		var list = await QuerySqlListAsync<MasterTokui>(sql, parameters, ct);
+WHERE m.Id IN ({BuildPaysakiSubQuery()})";
+		var list = await QuerySqlListAsync<MasterTokui>(sql, [], ct);
 		return list.GroupBy(x => x.Id).ToDictionary(g => g.Key, g => g.First());
 	}
 
@@ -512,7 +522,7 @@ SELECT {DenSelectColumns}
 FROM {DenTableName} h
 WHERE h.KakeDay >= {AddSqlParameter(parameters, dayFrom)}
   AND h.KakeDay <= {AddSqlParameter(parameters, dayTo)}
-  AND h.{DenToriIdColumn} IN ({BuildPaysakiSubQuery(parameters)}){BuildToriWhere(parameters, $"h.{DenToriIdColumn}")}
+  AND h.{DenToriIdColumn} IN ({BuildPaysakiSubQuery()}){BuildToriWhere($"h.{DenToriIdColumn}")}
 ORDER BY h.{DenToriIdColumn}, h.KakeDay, h.Id
 LIMIT {maxCount}";
 		return await QuerySqlListAsync<TDen>(sql, parameters, ct);
@@ -528,15 +538,15 @@ SELECT h.Id, h.Vdc, h.Vdu, h.DenDay, h.Id_Shain, h.VShain, h.Id_Torisaki, h.VTor
 FROM {KinTableName} h
 WHERE h.DenDay >= {AddSqlParameter(parameters, dayFrom)}
   AND h.DenDay <= {AddSqlParameter(parameters, dayTo)}
-  AND h.Id_Torisaki IN ({BuildPaysakiSubQuery(parameters)})
+  AND h.Id_Torisaki IN ({BuildPaysakiSubQuery()})
 ORDER BY h.DenDay, h.Id
 LIMIT {maxCount}";
 		return await QuerySqlListAsync<TKin>(sql, parameters, ct);
 	}
 
 	/// <summary>得意先/仕入先Idが指定されていれば伝票側を1社へ絞る。</summary>
-	string BuildToriWhere(List<string> parameters, string column) =>
-		ToriId <= 0 ? string.Empty : $"{Environment.NewLine}  AND {column} = {AddSqlParameter(parameters, ToriId)}";
+	string BuildToriWhere(string column) =>
+		ToriId <= 0 ? string.Empty : $"{Environment.NewLine}  AND {column} = {SqlId(ToriId)}";
 
 	// ---- 選択ダイアログ ----------------------------------------------------------
 
