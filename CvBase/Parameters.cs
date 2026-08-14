@@ -172,6 +172,40 @@ public sealed class DeleteByIdParam {
 	}
 }
 /// <summary>
+/// クエリI/F : 指定した列だけを更新するパラメータ
+/// <para>
+/// <see cref="UpdateParam"/> は行全体を置き換えるため、<see cref="ITranSoko"/> 実装型では
+/// 1件ごとに在庫再集計(旧値反転＋新値加算)が走る。フラグ列のように在庫・掛集計へ影響しない列を
+/// 多件数まとめて更新する用途では、この型で対象列だけを更新する。
+/// </para>
+/// <para>
+/// <c>Vdu</c> はサーバー側で採番して更新する。<c>Id</c> / <c>Vdc</c> / <c>Vdu</c> は
+/// <see cref="Columns"/> へ指定できない。付随処理(在庫再集計、V*列伝播、Derived更新)は実行しないため、
+/// サーバー側でそれらに影響する列を拒否する。
+/// </para>
+/// </summary>
+/// <param name="ItemType">対象テーブル型</param>
+/// <param name="Columns">更新する列名の配列</param>
+/// <param name="Rows">更新対象行の配列</param>
+public sealed record class PartialUpdateParam(Type ItemType, string[] Columns, PartialUpdateRow[] Rows);
+
+/// <summary>
+/// 部分更新の1行分
+/// </summary>
+/// <param name="Id">対象行のId</param>
+/// <param name="Values">
+/// <see cref="PartialUpdateParam.Columns"/> と同順・同数の値。
+/// 他のクエリパラメータと同様に文字列で渡し、SQLiteの列アフィニティで変換させる。
+/// </param>
+public sealed record class PartialUpdateRow(long Id, string[] Values);
+
+/// <summary>
+/// 部分更新の結果
+/// </summary>
+/// <param name="UpdatedCount">実際に更新された行数</param>
+public sealed record class PartialUpdateResult(int UpdatedCount);
+
+/// <summary>
 /// データ出力I/F : HHTマスタデータ作成パラメータ
 /// </summary>
 public sealed record OutDataHhtMasterParam {

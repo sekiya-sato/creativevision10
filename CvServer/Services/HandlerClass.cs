@@ -6,6 +6,7 @@ using CvBaseOracle;
 using CvDomainLogic;
 using ProtoBuf.Grpc;
 using System.Collections;
+using System.Reflection;
 
 namespace CvServer.Services;
 
@@ -150,9 +151,153 @@ public partial class CoreService {
 			UpdateParam update => HandleUpdate(request.Flag, update),
 			DeleteParam delete => HandleDelete(request.Flag, delete),
 			DeleteByIdParam deleteById => HandleDeleteById(request.Flag, deleteById),
+			PartialUpdateParam partialUpdate => HandlePartialUpdate(request.Flag, partialUpdate),
 			_ => throw new NotImplementedException(),
 		};
 	}
+
+	/// <summary>
+	/// サーバーが管理するため <see cref="PartialUpdateParam.Columns"/> へ指定できない列。
+	/// </summary>
+	private static readonly string[] PartialUpdateReservedColumns = [
+		nameof(BaseDbClass.Id), nameof(BaseDbClass.Vdc), nameof(BaseDbClass.Vdu),
+	];
+
+	/// <summary>
+	/// 部分更新では付随処理(在庫再集計、V*列伝播、Derived更新)を実行しないため、更新を禁止する列。
+	/// <para>
+	/// 在庫系: <c>SummaryDb.CalcTran2SummaryStock()</c> が読む倉庫・SKU・数量・区分・日付。
+	/// 掛系: 売掛買掛集計が読む金額・税・掛計上日。
+	/// マスタ系: <c>MasterCascadeDb</c> のV*列伝播対象となるコード・名称。
+	/// これらを変えるときは行全体を <see cref="UpdateParam"/> で保存させる。
+	/// </para>
+	/// </summary>
+	private static readonly string[] PartialUpdateDeniedColumns = [
+		"Id_Soko", "Id_Ido", "Id_Shohin", "Id_Col", "Id_Siz", "Su", "CalcFlag", "Kubun",
+		"DenDay", "KakeDay", "KingakuTotal", "Tax", "Total", "Jmeisai", "Code", "Name",
+	];
+
+	/// <summary>
+	/// 指定列だけを更新する。<c>Vdu</c> はサーバー側で採番し、全行を単一トランザクションで処理する。
+	/// <para>
+	/// 列名はSQL文へ直接埋め込むため、対象型にマップされた実プロパティ名と完全一致するものだけを採用する
+	/// （一致した実プロパティ名を使って組み立てるので、クライアント文字列はSQLへ渡らない）。
+	/// </para>
+	/// </summary>
+	private CvMsg HandlePartialUpdate(CvFlag flag, PartialUpdateParam partialUpdate) {
+		_logger.LogInformation("パラメータ PartialUpdateParam.ItemType={ItemType} 列={Columns} 行数={RowCount}",
+			partialUpdate.ItemType, string.Join(",", partialUpdate.Columns ?? []), partialUpdate.Rows?.Length ?? 0);
+
+		if (!typeof(BaseDbClass).IsAssignableFrom(partialUpdate.ItemType)) {
+			return CreatePartialUpdateError(flag, $"部分更新できない型です: {partialUpdate.ItemType.Name}");
+		}
+		var columns = partialUpdate.Columns ?? [];
+		var rows = partialUpdate.Rows ?? [];
+		if (columns.Length == 0) {
+			return CreatePartialUpdateError(flag, "更新列が指定されていません");
+		}
+		if (!TryResolvePartialUpdateColumns(partialUpdate.ItemType, columns, out var resolved, out var columnError)) {
+			return CreatePartialUpdateError(flag, columnError);
+		}
+		// 値の数が列数と合わない行は、クライアント側の組み立て誤りなので更新前に全体を弾く
+		foreach (var row in rows) {
+			if (row.Id <= 0) {
+				return CreatePartialUpdateError(flag, $"Idが不正です: {row.Id}");
+			}
+			if ((row.Values?.Length ?? 0) != resolved.Count) {
+				return CreatePartialUpdateError(flag, $"Id={row.Id} の値の数が更新列数と一致しません");
+			}
+		}
+		if (rows.Length == 0) {
+			return CreateSuccessResponse(flag, typeof(PartialUpdateResult), Common.SerializeObject(new PartialUpdateResult(0)));
+		}
+
+		var tableName = _db.GetTableName(partialUpdate.ItemType);
+		var setClause = string.Join(", ", resolved.Select((c, i) => $"{c} = @{i}"));
+		var vduIndex = resolved.Count;
+		var vdate = Common.GetVdate();
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var updated = 0;
+			// 同じ値を持つ行はまとめて更新する。フラグ列の一括更新では実行するSQLが数本に収まる。
+			// グループキーは値を長さ付きで連結する。"1"+"0" と "10"+"" のような結合の衝突を避けるため。
+			foreach (var group in rows.GroupBy(r => BuildPartialUpdateGroupKey(r.Values!), StringComparer.Ordinal)) {
+				var values = group.First().Values!;
+				var ids = group.Select(r => r.Id).Distinct().ToList();
+				// SQLiteのパラメータ上限(既定999)を避けるためId列挙は分割し、Idはlongなので直接埋め込む
+				const int chunkSize = 900;
+				for (var i = 0; i < ids.Count; i += chunkSize) {
+					var chunk = ids.GetRange(i, Math.Min(chunkSize, ids.Count - i));
+					var idList = string.Join(",", chunk.Select(id => id.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+					object[] args = [.. values, vdate];
+					updated += _db.Execute(
+						$"UPDATE {tableName} SET {setClause}, {nameof(BaseDbClass.Vdu)} = @{vduIndex} WHERE {nameof(BaseDbClass.Id)} IN ({idList})",
+						args);
+				}
+			}
+			_db.CompleteTransaction();
+			_logger.LogInformation("部分更新 {Table} 列={Columns} 更新行数={Updated}", tableName, string.Join(",", resolved), updated);
+			return CreateSuccessResponse(flag, typeof(PartialUpdateResult), Common.SerializeObject(new PartialUpdateResult(updated)));
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, typeof(string), string.Empty);
+		}
+	}
+
+	/// <summary>
+	/// 部分更新で同値の行をまとめるためのグループキー。値ごとに文字数を前置して連結し、
+	/// 値の境界が曖昧にならないようにする。
+	/// </summary>
+	private static string BuildPartialUpdateGroupKey(string[] values) {
+		var sb = new System.Text.StringBuilder();
+		foreach (var value in values) {
+			var text = value ?? string.Empty;
+			sb.Append(text.Length.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(':').Append(text).Append(';');
+		}
+		return sb.ToString();
+	}
+
+	/// <summary>
+	/// 要求された列名を、対象型にマップされた実プロパティ名へ解決する。
+	/// 予約列・禁止列・存在しない列・重複指定はすべて拒否する。
+	/// </summary>
+	private static bool TryResolvePartialUpdateColumns(Type itemType, string[] columns, out List<string> resolved, out string error) {
+		resolved = [];
+		error = string.Empty;
+		var mapped = itemType.GetProperties()
+			.Where(p => p.GetCustomAttribute<NPoco.IgnoreAttribute>() == null
+				&& p.GetCustomAttribute<NPoco.ResultColumnAttribute>() == null
+				&& p.GetCustomAttribute<NPoco.ComputedColumnAttribute>() == null)
+			.Select(p => p.Name)
+			.ToList();
+
+		foreach (var column in columns) {
+			var name = (column ?? string.Empty).Trim();
+			var actual = mapped.Find(m => string.Equals(m, name, StringComparison.OrdinalIgnoreCase));
+			if (actual == null) {
+				error = $"{itemType.Name} に存在しない列です: {name}";
+				return false;
+			}
+			if (PartialUpdateReservedColumns.Contains(actual, StringComparer.OrdinalIgnoreCase)) {
+				error = $"サーバーが管理する列は指定できません: {actual}";
+				return false;
+			}
+			if (PartialUpdateDeniedColumns.Contains(actual, StringComparer.OrdinalIgnoreCase)) {
+				error = $"部分更新では変更できない列です(付随処理が必要): {actual}";
+				return false;
+			}
+			if (resolved.Contains(actual, StringComparer.OrdinalIgnoreCase)) {
+				error = $"列が重複しています: {actual}";
+				return false;
+			}
+			resolved.Add(actual);
+		}
+		return true;
+	}
+
+	private static CvMsg CreatePartialUpdateError(CvFlag flag, string message) =>
+		CreateErrorResponse(flag, CvMsgErrorCode.Unexpected, message, typeof(string), string.Empty);
 
 	private CvMsg HandleQueryOne(CvFlag flag, QueryOneParam queryOne) {
 		_logger.LogInformation("パラメータ QueryOneParam.ItemType={ItemType} 内容={Payload}", queryOne.ItemType, Common.SerializeObject(queryOne));

@@ -31,6 +31,7 @@ public class UpdateDb {
 		new (26_07_31_01,"ALTER TABLE Tran01Tenuri ADD COLUMN PosClientSaleId TEXT NOT NULL DEFAULT '';ALTER TABLE Tran01Tenuri ADD COLUMN JposPayment TEXT NOT NULL DEFAULT '{}';","POS売上の端末取引ID・決済内訳列追加"),
 		new (26_07_31_02,"ALTER TABLE Tran00Uriage ADD COLUMN IsPrint NUMBER not null default 0;","納品書発行済フラグ追加 Tran03Shiire.IsPrint と同形"),
 		new (26_08_04_01,"UPDATE Tran01Tenuri SET JposPayment = '{}' WHERE JposPayment = '';","店舗売上の明細照会時エラーの解消"),
+		new (26_08_14_01,"ALTER TABLE Tran00Uriage ADD COLUMN EndFlag NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN EndFlag NUMBER not null default 0;","消込済フラグ追加 既存伝票は全て未消込(0)"),
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {

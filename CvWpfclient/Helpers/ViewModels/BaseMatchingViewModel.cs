@@ -1,16 +1,22 @@
 /*
 # description
 BaseMatchingViewModel は消込画面（入金消込 / 支払消込）の共通基底クラスです。
-債権(売上)/債務(仕入)の伝票と、入金/支払の伝票を取引先・期間で並べ、
-取引先ごとの FIFO で自動充当した結果（未消込残 / 未充当入金）を表示します。
 
-【重要: 保存は行いません】
-消込結果を永続化する場所がスキーマに存在しません（詳細は .omo/2026-07-31_kesikomi_design.md）。
-`Tran00Uriage.IsPay` は旧システムの「掛計上FLG」の移行値で回収済フラグではなく、
-集計テーブル(SummaryUriKake/SummaryUriSei)は取引先×年月/請求日の粒度で伝票単位の消込を表せません。
-よってこの画面は**突合（消込シミュレーション）まで**を担当し、保存コマンドは持ちません。
-保存方式が決まったら充当結果(MatchingDenRow.Allocated / MatchingKinRow.Allocated)を
-そのまま書き出すコマンドを足せるようにしてあります。
+消込とは、売上又は仕入伝票を**伝票単位で決済済みの目印をつける処理**です。
+`Tran00Uriage.EndFlag` / `Tran03Shiire.EndFlag` に 1 を立て、元帳の印字時に `*` を付けます。
+入金・支払との個別対応、充当金額、未充当金額は保持しません（部分消込は仕様対象外）。
+仕様は `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 / 2.1.1 / 2.1.2 を参照してください。
+
+画面は次の2段構成です。
+- `一覧取得`: 請求先(必須)配下の伝票を掛計上日で、入金/支払を支払日で取得し、
+  伝票一覧（消込Flg付き）と入金/支払の区分別集計を並べて合計金額を比較できるようにする。
+- `消込実行`: 一覧取得時点からCheckBoxが変化した伝票だけを `EndFlag` へ書き戻す。
+
+消込は残高計算へ影響しません。売掛・買掛残高は伝票金額ベースで、`SummaryUriKake` /
+`SummaryKaiKake` の値は `EndFlag` の有無で変わりません。
+
+【旧実装からの変更】FIFO自動充当（`ApplyFifoAllocation` / `Allocated` / `AutoMatch` / `ClearMatch`）と
+`.omo/2026-07-31_kesikomi_design.md` の `TranKesikomi` 新設案は不採用となり、本クラスから廃止しました。
 
 # example
 public partial class NyukinMatchingViewModel : Helpers.BaseMatchingViewModel<Tran00Uriage, Tran06Nyukin> {
@@ -19,58 +25,60 @@ public partial class NyukinMatchingViewModel : Helpers.BaseMatchingViewModel<Tra
 	...
 }
  */
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CvAsset;
 using CvBase;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Linq;
+using System.Windows;
 
 namespace CvWpfclient.Helpers;
 
-/// <summary>債権(売上)/債務(仕入)伝票1件。</summary>
+/// <summary>債権(売上)/債務(仕入)伝票1件。消込Flgの入力行。</summary>
 public sealed partial class MatchingDenRow : ObservableObject {
 	public long Id { get; set; }
 	public string KakeDay { get; set; } = string.Empty;
 	public string DenDay { get; set; } = string.Empty;
 	public long Id_Tori { get; set; }
-	public string ToriCode { get; set; } = string.Empty;
-	public string ToriName { get; set; } = string.Empty;
+
+	/// <summary>取引先の「(Id) コード 名称」表示。</summary>
+	public string ToriDisplay { get; set; } = string.Empty;
+
 	public string KubunText { get; set; } = string.Empty;
 	public string ManualNo { get; set; } = string.Empty;
 
 	/// <summary>債権/債務金額。返品・値引は CalcFlag=-1 によりマイナスになる。</summary>
 	public long Amount { get; set; }
 
-	/// <summary>充当済額。</summary>
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(Remain))]
-	public partial long Allocated { get; set; }
+	/// <summary>一覧取得時点の `EndFlag`。消込実行時の差分判定に使う。</summary>
+	public int OriginalEndFlag { get; set; }
 
-	/// <summary>未消込残。</summary>
-	public long Remain => Amount - Allocated;
+	/// <summary>消込Flg（入力可）。</summary>
+	[ObservableProperty]
+	public partial bool IsKesikomi { get; set; }
+
+	/// <summary>一覧取得時点から消込状態が変化したか。</summary>
+	public bool IsChanged => IsKesikomi != (OriginalEndFlag == 1);
 }
 
-/// <summary>入金/支払伝票1件。</summary>
+/// <summary>入金/支払の区分別集計1行（明細 `Jmeisai` の `Id_Kin` 単位）。</summary>
 public sealed partial class MatchingKinRow : ObservableObject {
-	public long Id { get; set; }
-	public string DenDay { get; set; } = string.Empty;
-	public long Id_Tori { get; set; }
-	public string ToriCode { get; set; } = string.Empty;
-	public string ToriName { get; set; } = string.Empty;
-	public string ManualNo { get; set; } = string.Empty;
-	public string Memo { get; set; } = string.Empty;
+	/// <summary>入金・支払区分Id（`MasterMeisho` の `KIN` 区分）。0 は区分未設定。</summary>
+	public long Id_Kin { get; set; }
 
-	/// <summary>入金/支払金額。</summary>
+	/// <summary>区分コード（`Code_Kin`）。</summary>
+	public string CodeKin { get; set; } = string.Empty;
+
+	/// <summary>区分名称（`Mei_Kin`）。</summary>
+	public string MeiKin { get; set; } = string.Empty;
+
+	/// <summary>明細件数。</summary>
+	public int Count { get; set; }
+
+	/// <summary>金額計。</summary>
 	public long Amount { get; set; }
-
-	/// <summary>充当済額。</summary>
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(Unapplied))]
-	public partial long Allocated { get; set; }
-
-	/// <summary>未充当額（前受金、または債権伝票の入力漏れの疑い）。</summary>
-	public long Unapplied => Amount - Allocated;
 }
 
 public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewModel
@@ -96,11 +104,23 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 	/// </summary>
 	protected virtual string ToriMasterWhereFor(string alias) => "1 = 1";
 
+	/// <summary>
+	/// 消込済フラグの列名。<typeparamref name="TDen"/> は <see cref="TranAllHeader"/> 派生で
+	/// `EndFlag` を持たないため、部分更新の対象列名をここで固定する。
+	/// </summary>
+	protected virtual string EndFlagColumn => nameof(Tran00Uriage.EndFlag);
+
 	/// <summary>債権/債務側の画面上の呼び名（"売上" / "仕入"）</summary>
 	protected abstract string DenLabel { get; }
 
 	/// <summary>入金/支払側の画面上の呼び名（"入金" / "支払"）</summary>
 	protected abstract string KinLabel { get; }
+
+	/// <summary>請求先/支払先の画面上の呼び名（"請求先" / "支払先"）</summary>
+	protected abstract string PaysakiLabel { get; }
+
+	/// <summary>得意先/仕入先の画面上の呼び名（"得意先" / "仕入先"）</summary>
+	protected abstract string ToriLabel { get; }
 
 	/// <summary>伝票から取引先Idを取り出す（TranAllHeader に無いため派生で橋渡し）</summary>
 	protected abstract long GetDenToriId(TDen den);
@@ -111,6 +131,12 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 	/// <summary>伝票の総合計を取り出す。0 なら KingakuTotal + Tax で代替する</summary>
 	protected abstract long GetDenTotal(TDen den);
 
+	/// <summary>伝票の消費税。Total が 0 の伝票の代替計算に使う。</summary>
+	protected abstract long GetDenTax(TDen den);
+
+	/// <summary>伝票の消込済フラグ（TranAllHeader に無いため派生で橋渡し）</summary>
+	protected abstract int GetDenEndFlag(TDen den);
+
 	/// <summary>伝票の区分表示</summary>
 	protected abstract string GetDenKubunText(TDen den);
 
@@ -120,24 +146,42 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 	/// <summary>債権/債務側で読み込む列（軽量化のため明細JSONは読まない）</summary>
 	protected abstract string DenSelectColumns { get; }
 
+	/// <summary>取引先マスタから1件選ばせる。派生でマスタ型を確定する。</summary>
+	protected abstract (long Id, string Code, string Name)? PickToriMaster(long startPos);
+
 	// ---- 検索条件 ----------------------------------------------------------------
 
+	/// <summary>請求先/支払先Id。必須。0 は未選択。</summary>
 	[ObservableProperty]
-	public partial string ToriCodeFrom { get; set; } = string.Empty;
+	public partial long PaysakiId { get; set; }
 
+	/// <summary>請求先/支払先の「(Id) コード 名称」表示。</summary>
 	[ObservableProperty]
-	public partial string ToriCodeTo { get; set; } = string.Empty;
+	public partial string PaysakiDisplay { get; set; } = string.Empty;
 
-	/// <summary>対象期間 開始 yyyy/MM/dd（債権側は掛計上日、入金側は計上日で切る）</summary>
+	/// <summary>得意先/仕入先Id。任意。0 なら請求先配下すべて。</summary>
 	[ObservableProperty]
-	public partial string DayFromText { get; set; } = DateTime.Now.AddMonths(-3).ToString("yyyy/MM/01", CultureInfo.InvariantCulture);
+	public partial long ToriId { get; set; }
 
+	/// <summary>得意先/仕入先の「(Id) コード 名称」表示。</summary>
 	[ObservableProperty]
-	public partial string DayToText { get; set; } = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+	public partial string ToriDisplay { get; set; } = string.Empty;
 
-	/// <summary>突合が取れていない行だけ残す（未消込残≠0 / 未充当≠0）</summary>
+	/// <summary>掛計上日 開始 yyyy/MM/dd（既定: 先月1日）</summary>
 	[ObservableProperty]
-	public partial bool IsUnmatchedOnly { get; set; }
+	public partial string KakeDayFromText { get; set; } = DefaultKakeDayFrom();
+
+	/// <summary>掛計上日 終了 yyyy/MM/dd（既定: 先月末日）</summary>
+	[ObservableProperty]
+	public partial string KakeDayToText { get; set; } = DefaultKakeDayTo();
+
+	/// <summary>支払日 開始 yyyy/MM/dd（既定: 当月1日）。入金/支払は計上日(DenDay)で切る。</summary>
+	[ObservableProperty]
+	public partial string PayDayFromText { get; set; } = DefaultPayDayFrom();
+
+	/// <summary>支払日 終了 yyyy/MM/dd（既定: 当月末日）</summary>
+	[ObservableProperty]
+	public partial string PayDayToText { get; set; } = DefaultPayDayTo();
 
 	// ---- 結果 --------------------------------------------------------------------
 
@@ -153,43 +197,82 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 	[ObservableProperty]
 	public partial MatchingKinRow? SelectedKinRow { get; set; }
 
+	/// <summary>伝票の全件合計（チェックの有無を問わない）</summary>
 	[ObservableProperty]
 	public partial long DenTotal { get; set; }
 
+	/// <summary>消込Flgをチェックした伝票の合計</summary>
+	[ObservableProperty]
+	public partial long CheckedTotal { get; set; }
+
+	/// <summary>入金/支払の合計</summary>
 	[ObservableProperty]
 	public partial long KinTotal { get; set; }
 
-	/// <summary>未消込残の合計</summary>
+	/// <summary>チェック件数</summary>
 	[ObservableProperty]
-	public partial long RemainTotal { get; set; }
+	public partial int CheckedCount { get; set; }
 
-	/// <summary>未充当入金の合計</summary>
+	/// <summary>一覧取得時点から消込状態が変化した件数</summary>
 	[ObservableProperty]
-	public partial long UnappliedTotal { get; set; }
+	public partial int ChangedCount { get; set; }
+
+	static string DefaultKakeDayFrom() =>
+		DateTime.Today.AddMonths(-1).ToString("yyyy/MM/01", CultureInfo.InvariantCulture);
+
+	static string DefaultKakeDayTo() {
+		var lastMonth = DateTime.Today.AddMonths(-1);
+		return new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month))
+			.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+	}
+
+	static string DefaultPayDayFrom() =>
+		DateTime.Today.ToString("yyyy/MM/01", CultureInfo.InvariantCulture);
+
+	static string DefaultPayDayTo() {
+		var today = DateTime.Today;
+		return new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month))
+			.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+	}
 
 	protected override void OnClearConditions() {
-		ToriCodeFrom = string.Empty;
-		ToriCodeTo = string.Empty;
-		DayFromText = DateTime.Now.AddMonths(-3).ToString("yyyy/MM/01", CultureInfo.InvariantCulture);
-		DayToText = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
-		IsUnmatchedOnly = false;
+		PaysakiId = 0;
+		PaysakiDisplay = string.Empty;
+		ToriId = 0;
+		ToriDisplay = string.Empty;
+		KakeDayFromText = DefaultKakeDayFrom();
+		KakeDayToText = DefaultKakeDayTo();
+		PayDayFromText = DefaultPayDayFrom();
+		PayDayToText = DefaultPayDayTo();
+		DetachDenRows(DenRows);
 		DenRows = [];
 		KinRows = [];
 		UpdateTotals();
 	}
 
+	/// <summary>一覧取得。請求先必須、掛計上日と支払日の2組の期間で絞る。</summary>
 	protected override async Task OnSearchAsync(CancellationToken ct) {
-		if (!TryParseDate(DayFromText, out var dayFrom)) return;
-		if (!TryParseDate(DayToText, out var dayTo)) return;
-		if (dayFrom > dayTo) {
-			MessageEx.ShowWarningDialog("対象期間の開始日が終了日より後になっています。", owner: ActiveWindow);
+		if (PaysakiId <= 0) {
+			MessageEx.ShowWarningDialog($"{PaysakiLabel}を選択してください。", owner: ActiveWindow);
+			return;
+		}
+		if (!TryParseDate(KakeDayFromText, out var kakeFrom)) return;
+		if (!TryParseDate(KakeDayToText, out var kakeTo)) return;
+		if (kakeFrom > kakeTo) {
+			MessageEx.ShowWarningDialog("掛計上日の開始日が終了日より後になっています。", owner: ActiveWindow);
+			return;
+		}
+		if (!TryParseDate(PayDayFromText, out var payFrom)) return;
+		if (!TryParseDate(PayDayToText, out var payTo)) return;
+		if (payFrom > payTo) {
+			MessageEx.ShowWarningDialog("支払日の開始日が終了日より後になっています。", owner: ActiveWindow);
 			return;
 		}
 		if (!TryGetMaxCount(out var maxCount)) return;
 
 		var toriMap = await LoadToriMapAsync(ct);
-		var denList = await LoadDenAsync(ToDenDay(dayFrom), ToDenDay(dayTo), maxCount, ct);
-		var kinList = await LoadKinAsync(ToDenDay(dayFrom), ToDenDay(dayTo), maxCount, ct);
+		var denList = await LoadDenAsync(ToDenDay(kakeFrom), ToDenDay(kakeTo), maxCount, ct);
+		var kinList = await LoadKinAsync(ToDenDay(payFrom), ToDenDay(payTo), maxCount, ct);
 
 		var denRows = denList
 			.Select(d => {
@@ -197,164 +280,272 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 				toriMap.TryGetValue(toriId, out var tori);
 				var total = GetDenTotal(d);
 				if (total == 0) total = d.KingakuTotal + GetDenTax(d);
+				var endFlag = GetDenEndFlag(d);
 				return new MatchingDenRow {
 					Id = d.Id,
 					KakeDay = GetDenKakeDay(d),
 					DenDay = d.DenDay,
 					Id_Tori = toriId,
-					ToriCode = tori?.Code ?? string.Empty,
-					ToriName = tori?.Name ?? string.Empty,
+					ToriDisplay = CodeNameDisplay.Format(toriId, tori?.Code, tori?.Name),
 					KubunText = GetDenKubunText(d),
 					ManualNo = GetDenManualNo(d),
 					// 返品・値引は CalcFlag=-1。元帳(Phase 3a)と同じ規則で符号を掛ける。
 					Amount = total * d.CalcFlag,
+					OriginalEndFlag = endFlag,
+					// 消込済み伝票は初期ONで表示する。チェックを外して消込実行すると解除になる。
+					IsKesikomi = endFlag == 1,
 				};
 			})
-			.OrderBy(r => r.ToriCode, StringComparer.Ordinal)
+			.OrderBy(r => r.Id_Tori)
 			.ThenBy(r => r.KakeDay, StringComparer.Ordinal)
 			.ThenBy(r => r.Id)
 			.ToList();
 
-		var kinRows = kinList
-			.Select(k => {
-				toriMap.TryGetValue(k.Id_Torisaki, out var tori);
-				return new MatchingKinRow {
-					Id = k.Id,
-					DenDay = k.DenDay,
-					Id_Tori = k.Id_Torisaki,
-					ToriCode = tori?.Code ?? string.Empty,
-					ToriName = tori?.Name ?? string.Empty,
-					ManualNo = k.ManualNo,
-					Memo = k.Memo,
-					Amount = k.KingakuTotal,
-				};
-			})
-			.OrderBy(r => r.ToriCode, StringComparer.Ordinal)
-			.ThenBy(r => r.DenDay, StringComparer.Ordinal)
-			.ThenBy(r => r.Id)
-			.ToList();
-
+		DetachDenRows(DenRows);
 		DenRows = new ObservableCollection<MatchingDenRow>(denRows);
-		KinRows = new ObservableCollection<MatchingKinRow>(kinRows);
-		ApplyFifoAllocation();
-		if (IsUnmatchedOnly) {
-			DenRows = new ObservableCollection<MatchingDenRow>(DenRows.Where(r => r.Remain != 0));
-			KinRows = new ObservableCollection<MatchingKinRow>(KinRows.Where(r => r.Unapplied != 0));
+		AttachDenRows(DenRows);
+		KinRows = new ObservableCollection<MatchingKinRow>(SummarizeKin(kinList));
+		UpdateTotals();
+		Message = $"{DenLabel} {DenRows.Count:N0} 件（うち消込済 {CheckedCount:N0} 件） / {KinLabel} {kinList.Count:N0} 件を取得しました";
+	}
+
+	/// <summary>
+	/// 入金/支払の明細 `Jmeisai` を区分別へ集計する。
+	/// <para>
+	/// `Jmeisai` は `[SerializedColumn]` のJSON列でSQLの GROUP BY が使えないためクライアント側で展開する。
+	/// 集計キーは `Code_Kin`（伝票へコピーされた文字列）ではなく `Id_Kin`（`MasterMeisho` の `KIN` 区分への
+	/// 外部キー）とし、名称は `Mei_Kin` を使う。明細が空の伝票はヘッダの `KingakuTotal` を区分未設定へ寄せる。
+	/// </para>
+	/// </summary>
+	static List<MatchingKinRow> SummarizeKin(List<TKin> kinList) {
+		var map = new Dictionary<long, MatchingKinRow>();
+		MatchingKinRow GetRow(long idKin, string code, string mei) {
+			if (!map.TryGetValue(idKin, out var row)) {
+				row = new MatchingKinRow {
+					Id_Kin = idKin,
+					CodeKin = code,
+					MeiKin = idKin == 0 && mei.Length == 0 ? "(区分未設定)" : mei,
+				};
+				map[idKin] = row;
+			}
+			// 同一Idで名称が空の明細が混ざる場合に備え、最初に見つかった非空の値を採用する
+			if (row.CodeKin.Length == 0 && code.Length > 0) row.CodeKin = code;
+			if (row.MeiKin.Length == 0 && mei.Length > 0) row.MeiKin = mei;
+			return row;
 		}
-		UpdateTotals();
-		Message = $"{DenLabel} {DenRows.Count} 件 / {KinLabel} {KinRows.Count} 件を突合しました（保存はしません）";
-	}
 
-	/// <summary>伝票の消費税。Total が 0 の伝票の代替計算に使う。</summary>
-	protected abstract long GetDenTax(TDen den);
-
-	/// <summary>取引先ごとの FIFO で入金を債権へ充当する。</summary>
-	[RelayCommand]
-	protected void AutoMatch() {
-		ApplyFifoAllocation();
-		UpdateTotals();
-		Message = $"取引先ごとに古い{KinLabel}から順に充当しました（保存はしません）";
-	}
-
-	/// <summary>充当をすべて取り消す。</summary>
-	[RelayCommand]
-	protected void ClearMatch() {
-		foreach (var r in DenRows) r.Allocated = 0;
-		foreach (var r in KinRows) r.Allocated = 0;
-		UpdateTotals();
-		Message = "充当をクリアしました";
-	}
-
-	void ApplyFifoAllocation() {
-		foreach (var r in DenRows) r.Allocated = 0;
-		foreach (var r in KinRows) r.Allocated = 0;
-
-		var denByTori = DenRows.GroupBy(r => r.Id_Tori).ToDictionary(g => g.Key, g => g.ToList());
-		foreach (var kinGroup in KinRows.GroupBy(r => r.Id_Tori)) {
-			if (!denByTori.TryGetValue(kinGroup.Key, out var dens)) continue;
-			// 債権は古い順。返品(マイナス)は充当対象にしないので残高が正の行だけを見る。
-			var queue = dens.Where(d => d.Amount > 0).ToList();
-			var idx = 0;
-			foreach (var kin in kinGroup) {
-				var rest = kin.Amount;
-				while (rest > 0 && idx < queue.Count) {
-					var den = queue[idx];
-					var can = den.Remain;
-					if (can <= 0) { idx++; continue; }
-					var apply = Math.Min(can, rest);
-					den.Allocated += apply;
-					kin.Allocated += apply;
-					rest -= apply;
-					if (den.Remain <= 0) idx++;
-				}
+		foreach (var kin in kinList) {
+			var meisai = kin.Jmeisai;
+			if (meisai == null || meisai.Count == 0) {
+				var row = GetRow(0, string.Empty, string.Empty);
+				row.Count++;
+				row.Amount += kin.KingakuTotal;
+				continue;
+			}
+			foreach (var m in meisai) {
+				var row = GetRow(m.Id_Kin, m.Code_Kin?.Trim() ?? string.Empty, m.Mei_Kin?.Trim() ?? string.Empty);
+				row.Count++;
+				row.Amount += m.Kingaku;
 			}
 		}
+		return [.. map.Values.OrderBy(r => r.CodeKin, StringComparer.Ordinal).ThenBy(r => r.Id_Kin)];
+	}
+
+	// ---- 消込実行 ----------------------------------------------------------------
+
+	/// <summary>
+	/// 一覧取得時点から消込Flgが変化した伝票だけを `EndFlag` へ書き戻す。
+	/// 在庫・掛集計へは影響しないため、<see cref="PartialUpdateParam"/> で該当列のみを更新する
+	/// （行全体を保存する <see cref="UpdateParam"/> だと1件ごとに在庫再集計が走る）。
+	/// </summary>
+	[RelayCommand(IncludeCancelCommand = true)]
+	protected async Task ExecuteKesikomi(CancellationToken ct) {
+		if (IsBusy) return;
+		var setIds = DenRows.Where(r => r.IsKesikomi && r.OriginalEndFlag == 0).Select(r => r.Id).ToList();
+		var clearIds = DenRows.Where(r => !r.IsKesikomi && r.OriginalEndFlag == 1).Select(r => r.Id).ToList();
+		if (setIds.Count == 0 && clearIds.Count == 0) {
+			Message = "消込状態に変更がありません。";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
+
+		var confirm = clearIds.Count == 0
+			? $"{setIds.Count:N0} 件を消込しますか。"
+			: $"{setIds.Count:N0} 件を消込、{clearIds.Count:N0} 件を解除しますか。";
+		if (MessageEx.ShowQuestionDialog(confirm, owner: ActiveWindow) != MessageBoxResult.Yes) return;
+
+		StartBusy("消込実行中...");
+		try {
+			// 消込(1)と解除(0)を1回の要求へまとめる。サーバー側は単一トランザクションで処理する。
+			PartialUpdateRow[] rows = [
+				.. setIds.Select(id => new PartialUpdateRow(id, ["1"])),
+				.. clearIds.Select(id => new PartialUpdateRow(id, ["0"])),
+			];
+			var param = new PartialUpdateParam(typeof(TDen), [EndFlagColumn], rows);
+			var reply = await SendExecuteAsync(param, ct);
+			if (reply.Code < 0) {
+				var detail = string.IsNullOrEmpty(reply.Option) ? reply.DataMsg : reply.Option;
+				Message = $"消込に失敗しました。{detail}";
+				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+				return;
+			}
+			var result = Common.DeserializeObject(reply.DataMsg ?? string.Empty, reply.DataType) as PartialUpdateResult;
+			// 成功した状態を一覧へ反映し、続けて操作しても同じ更新を再送しないようにする
+			foreach (var row in DenRows) {
+				row.OriginalEndFlag = row.IsKesikomi ? 1 : 0;
+			}
+			UpdateTotals();
+			Message = clearIds.Count == 0
+				? $"{setIds.Count:N0}件消込しました"
+				: $"{setIds.Count:N0}件消込、{clearIds.Count:N0}件解除しました";
+			// 更新行数が要求と違う場合は他端末で先に更新された可能性がある。件数を添えて気付けるようにする。
+			var expected = setIds.Count + clearIds.Count;
+			if (result != null && result.UpdatedCount != expected) {
+				Message += $"（サーバー更新行数 {result.UpdatedCount:N0} / 要求 {expected:N0}。他端末で更新された可能性があります）";
+			}
+			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
+		}
+		catch (OperationCanceledException) {
+			Message = "消込実行を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"消込に失敗しました。{ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	/// <summary>一覧の消込Flgを全てONにする。</summary>
+	[RelayCommand]
+	protected void CheckAll() => SetAllChecked(true);
+
+	/// <summary>一覧の消込Flgを全てOFFにする。</summary>
+	[RelayCommand]
+	protected void UncheckAll() => SetAllChecked(false);
+
+	void SetAllChecked(bool value) {
+		foreach (var row in DenRows) row.IsKesikomi = value;
+		UpdateTotals();
+	}
+
+	async Task<CvMsg> SendExecuteAsync(object parameter, CancellationToken ct) {
+		var msg = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg201_Op_Execute,
+			DataType = parameter.GetType(),
+			DataMsg = Common.SerializeObject(parameter),
+		};
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		return await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
+	}
+
+	// ---- 合計 --------------------------------------------------------------------
+
+	void AttachDenRows(IEnumerable<MatchingDenRow> rows) {
+		foreach (var row in rows) row.PropertyChanged += OnDenRowPropertyChanged;
+	}
+
+	void DetachDenRows(IEnumerable<MatchingDenRow> rows) {
+		foreach (var row in rows) row.PropertyChanged -= OnDenRowPropertyChanged;
+	}
+
+	void OnDenRowPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
+		if (e.PropertyName == nameof(MatchingDenRow.IsKesikomi)) UpdateTotals();
 	}
 
 	void UpdateTotals() {
 		DenTotal = DenRows.Sum(r => r.Amount);
+		CheckedTotal = DenRows.Where(r => r.IsKesikomi).Sum(r => r.Amount);
+		CheckedCount = DenRows.Count(r => r.IsKesikomi);
+		ChangedCount = DenRows.Count(r => r.IsChanged);
 		KinTotal = KinRows.Sum(r => r.Amount);
-		RemainTotal = DenRows.Sum(r => r.Remain);
-		UnappliedTotal = KinRows.Sum(r => r.Unapplied);
 	}
 
 	// ---- データ取得 ---------------------------------------------------------------
 
+	/// <summary>
+	/// 請求先配下の取引先Idを返す副問い合わせ。
+	/// <para>
+	/// `Id_Paysaki` が請求先を指す取引先に加え、請求先自身も含める。請求先が自社（`Id_Paysaki` が
+	/// 自分自身）の運用と `Id_Paysaki` 未設定(0)の両方が既存データにあるため、後者が漏れないよう
+	/// `Id = 請求先 AND Id_Paysaki IN (0, 請求先)` を OR で足す（ドラフト 2.1.2-1 の推奨案）。
+	/// </para>
+	/// </summary>
+	string BuildPaysakiSubQuery(List<string> parameters) {
+		var p = AddSqlParameter(parameters, PaysakiId);
+		return $@"SELECT m.Id FROM {ToriMasterTableName} m
+       WHERE {ToriMasterWhereFor("m")}
+         AND (m.Id_Paysaki = {p} OR (m.Id = {p} AND m.Id_Paysaki IN (0, {p})))";
+	}
+
 	async Task<Dictionary<long, MasterTokui>> LoadToriMapAsync(CancellationToken ct) {
 		// 得意先/仕入先どちらも Code/Name を持つので MasterTokui 型で受ける（列構成が同じ）。
 		List<string> parameters = [];
-		var where = BuildCodeRangeWhere(parameters, "m.Code", ToriCodeFrom, ToriCodeTo);
 		var sql = $@"
 SELECT m.Id, m.Vdc, m.Vdu, m.Code, m.Name, m.Ryaku, m.Kana
 FROM {ToriMasterTableName} m
-WHERE {ToriMasterWhereFor("m")}{where}";
+WHERE m.Id IN ({BuildPaysakiSubQuery(parameters)})";
 		var list = await QuerySqlListAsync<MasterTokui>(sql, parameters, ct);
 		return list.GroupBy(x => x.Id).ToDictionary(g => g.Key, g => g.First());
 	}
 
 	async Task<List<TDen>> LoadDenAsync(string dayFrom, string dayTo, int maxCount, CancellationToken ct) {
 		List<string> parameters = [];
-		var toriWhere = BuildToriIdWhere(parameters, $"h.{DenToriIdColumn}");
 		var sql = $@"
 SELECT {DenSelectColumns}
 FROM {DenTableName} h
 WHERE h.KakeDay >= {AddSqlParameter(parameters, dayFrom)}
-  AND h.KakeDay <= {AddSqlParameter(parameters, dayTo)}{toriWhere}
-ORDER BY h.KakeDay, h.Id
+  AND h.KakeDay <= {AddSqlParameter(parameters, dayTo)}
+  AND h.{DenToriIdColumn} IN ({BuildPaysakiSubQuery(parameters)}){BuildToriWhere(parameters, $"h.{DenToriIdColumn}")}
+ORDER BY h.{DenToriIdColumn}, h.KakeDay, h.Id
 LIMIT {maxCount}";
 		return await QuerySqlListAsync<TDen>(sql, parameters, ct);
 	}
 
 	async Task<List<TKin>> LoadKinAsync(string dayFrom, string dayTo, int maxCount, CancellationToken ct) {
 		List<string> parameters = [];
-		var toriWhere = BuildToriIdWhere(parameters, "h.Id_Torisaki");
+		// 入金/支払は請求先配下の取引先分をすべて集計する（得意先Idでの絞り込みは伝票側だけに効かせる）。
+		// 区分別集計に明細が必要なので Jmeisai を読む。
 		var sql = $@"
 SELECT h.Id, h.Vdc, h.Vdu, h.DenDay, h.Id_Shain, h.VShain, h.Id_Torisaki, h.VTori,
-       h.KingakuTotal, h.ManualNo, h.Memo
+       h.KingakuTotal, h.ManualNo, h.Memo, h.Jmeisai
 FROM {KinTableName} h
 WHERE h.DenDay >= {AddSqlParameter(parameters, dayFrom)}
-  AND h.DenDay <= {AddSqlParameter(parameters, dayTo)}{toriWhere}
+  AND h.DenDay <= {AddSqlParameter(parameters, dayTo)}
+  AND h.Id_Torisaki IN ({BuildPaysakiSubQuery(parameters)})
 ORDER BY h.DenDay, h.Id
 LIMIT {maxCount}";
 		return await QuerySqlListAsync<TKin>(sql, parameters, ct);
 	}
 
-	/// <summary>取引先コード範囲を取引先Idの副問い合わせへ変換する。</summary>
-	string BuildToriIdWhere(List<string> parameters, string column) {
-		if (string.IsNullOrWhiteSpace(ToriCodeFrom) && string.IsNullOrWhiteSpace(ToriCodeTo)) return string.Empty;
-		var codeWhere = BuildCodeRangeWhere(parameters, "m.Code", ToriCodeFrom, ToriCodeTo);
-		return $@"
-  AND {column} IN (SELECT m.Id FROM {ToriMasterTableName} m WHERE {ToriMasterWhereFor("m")}{codeWhere})";
-	}
+	/// <summary>得意先/仕入先Idが指定されていれば伝票側を1社へ絞る。</summary>
+	string BuildToriWhere(List<string> parameters, string column) =>
+		ToriId <= 0 ? string.Empty : $"{Environment.NewLine}  AND {column} = {AddSqlParameter(parameters, ToriId)}";
 
 	// ---- 選択ダイアログ ----------------------------------------------------------
 
 	[RelayCommand]
-	void SelectToriFrom() => ToriCodeFrom = PickToriCode() ?? ToriCodeFrom;
+	void SelectPaysaki() {
+		var picked = PickToriMaster(PaysakiId);
+		if (picked == null) return;
+		PaysakiId = picked.Value.Id;
+		PaysakiDisplay = CodeNameDisplay.Format(picked.Value.Id, picked.Value.Code, picked.Value.Name);
+	}
 
 	[RelayCommand]
-	void SelectToriTo() => ToriCodeTo = PickToriCode() ?? ToriCodeTo;
+	void SelectTori() {
+		var picked = PickToriMaster(ToriId);
+		if (picked == null) return;
+		ToriId = picked.Value.Id;
+		ToriDisplay = CodeNameDisplay.Format(picked.Value.Id, picked.Value.Code, picked.Value.Name);
+	}
 
-	/// <summary>取引先コードを選ばせる。得意先/仕入先でマスタが違うので派生で実装する。</summary>
-	protected abstract string? PickToriCode();
+	/// <summary>得意先/仕入先の絞り込みを解除する（請求先配下すべてへ戻す）。</summary>
+	[RelayCommand]
+	void ClearTori() {
+		ToriId = 0;
+		ToriDisplay = string.Empty;
+	}
 }

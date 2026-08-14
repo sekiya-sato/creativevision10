@@ -631,6 +631,23 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
 		get => (EnumYesNo)IsPrint;
 		set => IsPrint = (int)value;
 	}
+	/// <summary>
+	/// 消込済FLG。0=未消込 / 1=消込済。入金消込画面で伝票単位に立て、得意先元帳で `*` を印字する。
+	/// <para>
+	/// 充当金額・未充当金額は保持しない（部分消込は仕様対象外）。売掛残高は伝票金額ベースであり、
+	/// この値は <see cref="SummaryUriKake"/> の集計へ影響しない。仕様は
+	/// `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
+	public partial int EndFlag { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnEndFlag {
+		get => (EnumYesNo)EndFlag;
+		set => EndFlag = (int)value;
+	}
 }
 
 public enum EnumUri00 : int {
@@ -860,6 +877,23 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	public EnumYesNo EnIsPrint {
 		get => (EnumYesNo)IsPrint;
 		set => IsPrint = (int)value;
+	}
+	/// <summary>
+	/// 消込済FLG。0=未消込 / 1=消込済。支払消込画面で伝票単位に立て、仕入先元帳で `*` を印字する。
+	/// <para>
+	/// 充当金額・未充当金額は保持しない（部分消込は仕様対象外）。買掛残高は伝票金額ベースであり、
+	/// この値は <see cref="SummaryKaiKake"/> の集計へ影響しない。仕様は
+	/// `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
+	public partial int EndFlag { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnEndFlag {
+		get => (EnumYesNo)EndFlag;
+		set => EndFlag = (int)value;
 	}
 }
 public enum EnumShiire : int {
