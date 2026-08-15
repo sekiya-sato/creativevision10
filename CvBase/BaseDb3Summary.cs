@@ -42,6 +42,17 @@ public partial class SummaryRealStock : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	public partial int Su { get; set; }
+	/// <summary>
+	/// 引当数（振り分け予定数）。<see cref="TranHaibun"/> の <see cref="TranHaibun.EndFlag"/>=0 の <see cref="TranHaibun.Su"/> 合計。
+	/// <para>
+	/// 有効在庫 = <see cref="Su"/> - <see cref="ReserveQty"/>。この列は <see cref="TranHaibun"/> だけが源泉であり、
+	/// Tran系伝票の在庫計算（<c>SummaryDb.CalcTran2SummaryStock()</c>）では変化しない。
+	/// <see cref="SummaryRealStock"/> は全月合計、<see cref="SummaryStock"/> は <c>SumMonth</c> 単位の合計を保持する。
+	/// 仕様は `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.2 / 2.8 を参照する。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	public partial int ReserveQty { get; set; }
 }
 /// <summary>
 /// 年月集計ファイル: 在庫

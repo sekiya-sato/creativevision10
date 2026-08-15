@@ -1,3 +1,54 @@
+## [2026-08-15] 引当数 ReserveQty と配分の入庫済フラグ EndFlag を追加
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- `SummaryRealStock` / `SummaryStock` へ引当数列 `ReserveQty` を、`TranHaibun` へ入庫済フラグ `EndFlag` を追加する。
+- `TranHaibun` の追加・修正・削除のタイミングで、修正前後のデータを基に `Id_Soko` 単位の引当数（振り分け予定数）を更新する。
+- 仕様ドラフト 2.8 の未決事項（引当数の保持方式・引当対象・解除条件）を確定する。設計を提示しユーザー承認を得てから実装した。
+### 実施内容（スキーマ）
+- `CvBase/BaseDb3Summary.cs`: `SummaryRealStock.ReserveQty` を追加。`SummaryStock` は `SummaryRealStock` の派生クラスなので定義は1箇所、テーブルは2つ。
+- `CvBase/BaseDbHaibun.cs`: `TranHaibun.EndFlag`（+ `EnEndFlag`）を `Tran00Uriage.EndFlag` と同形で追加。引当集計用インデックス `nk2`（`Id_Soko` + SKU）と `ITranReserve` 実装、`using CvBase.Share` を追加。
+- `CvBase/BaseDb2Trans.cs`: `ITranReserve` を `ITranSoko` の隣に定義。引当の源泉となるトランザクションを表す。
+- `CvBase/UpdateDb.cs`: `26_08_15_01` を追加（`SummaryRealStock` / `SummaryStock` へ `ReserveQty`、`TranHaibun` へ `EndFlag`）。インデックス `nk2` は `CreateIndex` が `IF NOT EXISTS` で毎回発行するため UpdateDb 不要。
+### 実施内容（集計）
+- `CvDomainLogic/SummaryDb.cs`: `ReserveKey`（集計キー）、`CalcHaibun2Reserve()`（キー単位）、`CalcReserveQtyAll()`（全件）を追加。Rebuild 3経路（`CalcSummaryStockRange` / `CalcSummaryRealStock` / `CalcSummaryRealStockRange`）の再作成後に `CalcReserveQtyAll()` を呼ぶ。
+- `CvServer/Services/HandlerClass.cs`: Insert / BulkInsert / Update / Delete / DeleteById / PartialUpdate の6経路へフックを追加。在庫更新と同一トランザクション内で実行する。
+### 技術決定 Why
+- **差分加減算ではなくキー単位の引き直しにした理由**: `ReserveQty` は累積値ではなく「現時点の引当残」なので、対象キーを `TranHaibun` から引き直せば常に正解になる。`ITranSoko` 系の「旧値を反転→新値を加算」と違い、呼び出し順やDB更新との前後関係に依存せず、通常更新値とRebuild値が原理的に一致する（仕様 2.2 の受入条件）。修正時は修正前と修正後の両方のキーを渡す。
+- **`SummaryRealStock.ReserveQty` を `SummaryStock` の月次合計ではなく `TranHaibun` から直接引く理由**: `SummaryRealStock` の再作成は `SumMonth <= 対象年月` で打ち切るため、未来日付の配分指示が引当から漏れる。`Su` は「その年月時点の在庫」で正しいが、引当は時点値なので月の打ち切りをしない。
+- **Rebuild で範囲指定せず全件を対象にする理由**: `ReserveQty` は `TranHaibun` だけが源泉で、DELETE→再INSERTされた行の内容に依存しない。全件引き直しが常に正解で、範囲を絞る意味がない。
+- **`HAVING SUM(Su) <> 0` と INSERT 併用の理由**: 引当が0になったキーに0行を作らず、逆に在庫実績が無いSKUへの引当では行を新規作成する（有効在庫がマイナスで見える）。0クリアと `INSERT ... ON CONFLICT` の2文構成で、引当が消えたキーも確実に0になる。
+- **`PartialUpdateDeniedColumns` を変更しなかった理由**: 倉庫・SKU・`Su`・`DenDay` は既に禁止列で、部分更新で変わり得るのは `EndFlag` だけ。禁止列に足すと消込画面と同じ EndFlag 部分更新の経路が塞がるため、ハンドラ側でフックした。対象Idは検証済みの `long` なので `Id IN (...)` へ直接埋め込み、1クエリでまとめて読む。
+- **`BulkInsert` でキーを `HashSet` に貯めてループ後に1回だけ計算する理由**: 配分は `ShopHaibunInputViewModel` 等が数百件を一括登録するため、行ごとに引き直すとSQL発行数が行数に比例する。
+- **引当対象を全 `EnumHaibun` にした理由**: ユーザー指示が `EndFlag` だけでの判定。ドラフト 2.8-2 は `Hatsukai`（入荷前の割付）除外案も併記していたが、除外が必要なら `Kubun <> 0` を1箇所足すだけで対応できる。
+### 副次的に見つけた不具合の修正
+- `CvDomainLogic/SummaryDb.cs` の `CalcSummaryRealStock()` が常に SQLite 構文エラーになっていた。`deleteSql`（`DELETE FROM SummaryRealStock`）に文の区切り `;` が無く、後続の `Insert Into` と1コマンドで連結していたため。テストが無く露呈していなかったが、今回追加した全件Rebuildのテストで発覚したので `;` を追加した。**現在庫の全件再集計（`Msg051_SummaryRealStock`）は今まで動作していなかった**ことになる。
+### 実施内容（ドキュメント）
+- `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md`: 2.8.1（決定と実装）を新設。2.2、4章の2と9、4.1の移行表、承認対象の推奨案一覧（2.8-1〜3を「済」）、6章の追記を更新。
+- `Doc/spec/2026-08-12_CV10機能完成度チェックリスト.md`: 受注残管理表の残課題に、引当数列は追加済みだが未利用である旨を追記。
+### 影響範囲
+- `CvBase/BaseDb2Trans.cs`、`CvBase/BaseDb3Summary.cs`、`CvBase/BaseDbHaibun.cs`、`CvBase/UpdateDb.cs`
+- `CvDomainLogic/SummaryDb.cs`、`CvServer/Services/HandlerClass.cs`、`Tests/TestServer/SummaryDbTests.cs`
+- `Doc/spec/` の2ファイル
+- 既存の在庫計算（`Su` / `InQty` / `OutQty` / `TransitQty`）と掛集計のロジックは変更していない。`ReserveQty` は独立した新規列である。
+- 移行時は `TranHaibun` 0件のため全キー `ReserveQty = 0`。`ALTER TABLE ADD COLUMN` は定数既定値なので `SummaryStock` 349万行 / `SummaryRealStock` 150万行でもメタデータ変更のみ。
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestServer\TestServer.csproj`: 合計51 / 成功51 / 失敗0（新規6件）。
+- 追加したテスト: 追加・削除での増減と実在庫非干渉、`EndFlag` 0→1→0 の解除と復帰、倉庫・年月変更時のキー移動、通常更新値と `CalcReserveQtyAll()` の一致＋現在庫の全月合算、月次Rebuild後の引当数保持、全件Rebuild後の引当数復元。
+- 既存テストの `GetStockSnapshot()` に `ReserveQty` を追加し、Rebuild冪等性の比較対象に含めた。
+- `PrepareStockTables()` へ `TranHaibun` 作成を追加。`CalcSummaryRealStockRange_...` は本番と同じユニークインデックスが必要になったため `PrepareStockTables()` 利用へ変更した（`ON CONFLICT` は対象がユニーク制約でないと prepare 時にエラーになる）。
+- `git diff --check`: 成功。変更9ファイルすべて UTF-8(BOMなし) + CRLF を確認。
+### 残課題
+- **実データでの実機検証は未実施**。`TranHaibun` が0件で配分画面から実データを作っていないため、今回はテストのみ。配分入力画面（`ShopHaibunInput` / `HachuHaibunInput`）で実際に登録・削除して引当数が動くことは、配分機能に着手する時点で確認する。
+- `EndFlag` を操作する画面が無い。振り分け後の入庫を記録する画面（または入庫処理からの自動更新）は未実装で、現状は引当が解除されない。
+- 有効在庫（`Su - ReserveQty`）を表示する画面は未実装。列を用意するところまで。
+- ドラフト 2.8-4（調整数の保持先）は未決のまま。3章の調整専用伝票と併せて判断する。
+- `CalcReserveQtyAll()` の0クリアが `SummaryStock` 349万行のフルスキャンになる。夜間バッチ前提で許容したが、問題化する場合は `ReserveQty <> 0` の部分インデックスを検討する（`KeyDml` が部分インデックス非対応）。
+
+---
 ## [2026-08-14] 消込2画面を実データで検証し請求先絞り込みの不具合を修正
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

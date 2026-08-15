@@ -216,6 +216,18 @@ public partial class CoreService {
 				}
 				updated += count;
 			}
+			// EndFlagの部分更新は引当数を変える。キー列(倉庫・SKU・DenDay・Su)は部分更新できないので、
+			// 更新後の行をIdで読み直したキーだけで足りる
+			if (typeof(ITranReserve).IsAssignableFrom(partialUpdate.ItemType)
+				&& columns.Contains(nameof(ITranReserve.EndFlag), StringComparer.OrdinalIgnoreCase)) {
+				// Idは検証済み(0より大きいlong)なのでSQLへ直接埋め込んでよい
+				var ids = string.Join(",", rows.Select(r => r.Id));
+				var reserveKeys = _db.Fetch(partialUpdate.ItemType, $"where Id in ({ids})")
+					.OfType<ITranReserve>()
+					.Select(ReserveKey.From)
+					.ToHashSet();
+				new SummaryDb(_db).CalcHaibun2Reserve(reserveKeys);
+			}
 			_db.CompleteTransaction();
 			_logger.LogInformation("部分更新 {Table} 列={Columns} 更新行数={Updated}", tableName, string.Join(",", columns), updated);
 			return CreateSuccessResponse(flag, typeof(PartialUpdateResult), Common.SerializeObject(new PartialUpdateResult(updated)));
@@ -366,6 +378,10 @@ public partial class CoreService {
 					summaryDb.CalcTran2SummaryStock(insert.ItemType.Name, "Id_Ido", id, false);
 				}
 			}
+			// 引当数は在庫と同じタイミング(同一トランザクション内)で、追加した行のキーを引き直す
+			if (item is ITranReserve reserve) {
+				new SummaryDb(_db).CalcHaibun2Reserve(ReserveKey.From(reserve));
+			}
 			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
@@ -389,6 +405,8 @@ public partial class CoreService {
 		if (items is not IList list || list.Count == 0) {
 			return CreateNotFoundResponse(flag, listType, "[]");
 		}
+		// 配分は数百件が一括登録されるため、キーを集めてループ後に一度だけ引き直す
+		var reserveKeys = new HashSet<ReserveKey>();
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			foreach (var item in list) {
@@ -405,6 +423,12 @@ public partial class CoreService {
 						summaryDb.CalcTran2SummaryStock(insertBulk.ItemType.Name, "Id_Ido", id, false);
 					}
 				}
+				if (item is ITranReserve reserve) {
+					reserveKeys.Add(ReserveKey.From(reserve));
+				}
+			}
+			if (reserveKeys.Count > 0) {
+				new SummaryDb(_db).CalcHaibun2Reserve(reserveKeys);
 			}
 			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, listType, Common.SerializeObject(list));
@@ -470,6 +494,10 @@ public partial class CoreService {
 					summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Ido", id, false);
 				}
 			}
+			// 引当数は差分ではなくキー単位の引き直しなので、倉庫・SKU・日付が変わった場合に備えて修正前後の両方を渡す
+			if (item is ITranReserve newReserve && org is ITranReserve orgReserve) {
+				new SummaryDb(_db).CalcHaibun2Reserve(ReserveKey.From(orgReserve), ReserveKey.From(newReserve));
+			}
 			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
@@ -514,6 +542,10 @@ public partial class CoreService {
 		if (typeof(IDerivedOrigin).IsAssignableFrom(delete.ItemType)) {
 			new HandlerDerived(_db).Delete(delete.ItemType, item, ((BaseDbClass)item).Id);
 		}
+		// 引当数は削除後のTranHaibunから引き直すので、Deleteの後に実行する
+		if (org is ITranReserve reserve) {
+			new SummaryDb(_db).CalcHaibun2Reserve(ReserveKey.From(reserve));
+		}
 		_db.CompleteTransaction();
 		return CreateSuccessResponse(flag, delete.ItemType, Common.SerializeObject(item));
 	}
@@ -547,6 +579,10 @@ public partial class CoreService {
 		_db.Delete(item);
 		if (typeof(IDerivedOrigin).IsAssignableFrom(deleteById.ItemType)) {
 			new HandlerDerived(_db).Delete(deleteById.ItemType, item, ((BaseDbClass)item).Id);
+		}
+		// 引当数は削除後のTranHaibunから引き直すので、Deleteの後に実行する
+		if (item is ITranReserve reserve) {
+			new SummaryDb(_db).CalcHaibun2Reserve(ReserveKey.From(reserve));
 		}
 		_db.CompleteTransaction();
 		return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));

@@ -29,6 +29,28 @@ public interface ITranSoko {
 	public long Id_Soko { get; set; }
 	public int CalcFlag { get; }
 }
+/// <summary>
+/// 引当数(<see cref="SummaryRealStock.ReserveQty"/>)の源泉となるトランザクション。
+/// <para>
+/// <see cref="ITranSoko"/> が実在庫(<see cref="SummaryRealStock.Su"/>)を動かすのに対し、こちらは引当だけを動かす。
+/// <see cref="EndFlag"/>=0 の行の <see cref="Su"/> が、倉庫+SKU（<see cref="SummaryRealStock"/>）および
+/// <c>substr(DenDay,1,6)</c>+倉庫+SKU（<see cref="SummaryStock"/>）の引当数へ集計される。
+/// 差分加減算ではなく対象キーの引き直しで更新するため、通常更新値とRebuild値は必ず一致する。
+/// 集計は <c>SummaryDb.CalcHaibun2Reserve()</c> / <c>SummaryDb.CalcReserveQtyAll()</c> が行う。
+/// </para>
+/// </summary>
+public interface ITranReserve {
+	public long Id { get; set; }
+	/// <summary>配分指示日 yyyyMMdd。上6桁が <c>SummaryStock.SumMonth</c> になる</summary>
+	public string DenDay { get; set; }
+	public long Id_Soko { get; set; }
+	public long Id_Shohin { get; set; }
+	public long Id_Col { get; set; }
+	public long Id_Siz { get; set; }
+	public int Su { get; set; }
+	/// <summary>0=未入庫(引当中) / 1=入庫済み(引当解除)</summary>
+	public int EndFlag { get; set; }
+}
 
 /// <summary>
 /// Tran系ファイルの出庫・入庫の区分、売上・仕入の区分などの共通的なコードを定義するクラス

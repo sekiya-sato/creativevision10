@@ -79,9 +79,8 @@ public class SummaryDbTests {
 
 	[TestMethod]
 	public void CalcSummaryRealStockRange_RebuildsOnlyTargetWarehouseProductColorSize() {
-		var db = _db ?? throw new AssertFailedException("Database not initialized");
-		db.CreateTable(typeof(SummaryStock), true, false);
-		db.CreateTable(typeof(SummaryRealStock), true, false);
+		// 引当数の反映が ON CONFLICT を使うので、本番と同じユニークインデックスを張る
+		var db = PrepareStockTables();
 
 		InsertSummaryStock(db, "202601", 1, 10, 100, 1000, 10);
 		InsertSummaryStock(db, "202601", 1, 10, 100, 1001, 7);
@@ -349,6 +348,159 @@ public class SummaryDbTests {
 		Assert.AreEqual(88, rebuilt.ActualQty);
 	}
 
+	[TestMethod]
+	public void CalcHaibun2Reserve_InsertAndDelete_UpdatesReserveQtyWithoutTouchingStock() {
+		var db = PrepareStockTables();
+		var summaryDb = new SummaryDb(db);
+		InsertSummaryStock(db, "202608", 1, 10, 100, 1000, 50);
+		db.Insert(new SummaryRealStock { Id_Soko = 1, Id_Shohin = 10, Id_Col = 100, Id_Siz = 1000, Su = 50, Vdc = 1, Vdu = 1 });
+
+		var first = CreateHaibun("20260815", 1, 7);
+		db.Insert(first);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(first));
+
+		AssertMonthReserve(db, "202608", 1, 7);
+		AssertRealReserve(db, 1, 7);
+
+		var second = CreateHaibun("20260820", 1, 3);
+		db.Insert(second);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(second));
+
+		AssertMonthReserve(db, "202608", 1, 10);
+		AssertRealReserve(db, 1, 10);
+
+		db.Delete(first);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(first));
+
+		AssertMonthReserve(db, "202608", 1, 3);
+		AssertRealReserve(db, 1, 3);
+
+		db.Delete(second);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(second));
+
+		AssertMonthReserve(db, "202608", 1, 0);
+		AssertRealReserve(db, 1, 0);
+		// 引当数は実在庫の数量を変えない
+		AssertRealStock(db, 1, 50);
+	}
+
+	[TestMethod]
+	public void CalcHaibun2Reserve_EndFlagTransition_ReleasesAndRestoresReserve() {
+		var db = PrepareStockTables();
+		var summaryDb = new SummaryDb(db);
+		var haibun = CreateHaibun("20260815", 1, 7);
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+
+		// 在庫実績が無いSKUでも引当だけの行が作られる（有効在庫がマイナスで見える）
+		AssertMonthReserve(db, "202608", 1, 7);
+		AssertRealReserve(db, 1, 7);
+		AssertRealStock(db, 1, 0);
+
+		// 振り分け後入庫済み(EndFlag=1)で引当解除
+		haibun.EndFlag = 1;
+		db.Update(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+
+		AssertMonthReserve(db, "202608", 1, 0);
+		AssertRealReserve(db, 1, 0);
+
+		// 入庫を取り消したら再び引当に戻る
+		haibun.EndFlag = 0;
+		db.Update(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+
+		AssertMonthReserve(db, "202608", 1, 7);
+		AssertRealReserve(db, 1, 7);
+	}
+
+	[TestMethod]
+	public void CalcHaibun2Reserve_WarehouseAndMonthChanged_MovesReserveToNewKey() {
+		var db = PrepareStockTables();
+		var summaryDb = new SummaryDb(db);
+		var haibun = CreateHaibun("20260815", 1, 7);
+		db.Insert(haibun);
+		var orgKey = ReserveKey.From(haibun);
+		summaryDb.CalcHaibun2Reserve(orgKey);
+
+		haibun.DenDay = "20260901";
+		haibun.Id_Soko = 2;
+		db.Update(haibun);
+		// 修正前後の両方のキーを渡す
+		summaryDb.CalcHaibun2Reserve(orgKey, ReserveKey.From(haibun));
+
+		AssertMonthReserve(db, "202608", 1, 0);
+		AssertRealReserve(db, 1, 0);
+		AssertMonthReserve(db, "202609", 2, 7);
+		AssertRealReserve(db, 2, 7);
+	}
+
+	[TestMethod]
+	public void CalcReserveQtyAll_MatchesIncrementalUpdateAndSumsAllMonthsForRealStock() {
+		var db = PrepareStockTables();
+		var summaryDb = new SummaryDb(db);
+		TranHaibun[] haibunRows = [
+			CreateHaibun("20260815", 1, 7),
+			CreateHaibun("20260820", 1, 3),
+			CreateHaibun("20260905", 1, 5),
+			CreateHaibun("20260910", 1, 4, endFlag: 1), // 入庫済みは引当に数えない
+			CreateHaibun("20260815", 2, 9),
+		];
+		foreach (var haibun in haibunRows) {
+			db.Insert(haibun);
+			summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+		}
+		var incremental = GetReserveSnapshot(db);
+
+		summaryDb.CalcReserveQtyAll();
+
+		CollectionAssert.AreEqual(incremental, GetReserveSnapshot(db), "通常更新値とRebuild値は一致する");
+		AssertMonthReserve(db, "202608", 1, 10);
+		AssertMonthReserve(db, "202609", 1, 5);
+		AssertMonthReserve(db, "202608", 2, 9);
+		// 現在庫の引当数は全月合計
+		AssertRealReserve(db, 1, 15);
+		AssertRealReserve(db, 2, 9);
+	}
+
+	[TestMethod]
+	public async Task SummaryAllAsyncStream_Rebuild_PreservesReserveQty() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var haibun = CreateHaibun("20260815", 1, 7);
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+		var immediateSnapshot = GetStockSnapshot(db);
+
+		await RunRebuildAsync(summaryDb, "202608", "202608");
+
+		// DELETE→再INSERTしても引当数が失われない
+		CollectionAssert.AreEqual(immediateSnapshot, GetStockSnapshot(db));
+		AssertSummaryStock(db, "202608", 1, 20, 20, 0, 0);
+		AssertMonthReserve(db, "202608", 1, 7);
+		AssertRealStock(db, 1, 20);
+		AssertRealReserve(db, 1, 7);
+	}
+
+	[TestMethod]
+	public void CalcSummaryRealStock_FullRebuild_RestoresReserveQty() {
+		var db = PrepareStockTables();
+		var summaryDb = new SummaryDb(db);
+		InsertSummaryStock(db, "202608", 1, 10, 100, 1000, 50);
+		var haibun = CreateHaibun("20260815", 1, 7);
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+
+		summaryDb.CalcSummaryRealStock("202608");
+
+		AssertRealStock(db, 1, 50);
+		AssertRealReserve(db, 1, 7);
+		AssertMonthReserve(db, "202608", 1, 7);
+	}
+
 	private static void InsertSummaryStock(ExDatabaseSqlite db, string sumMonth, long idSoko, long idShohin, long idCol, long idSiz, int su) {
 		db.Insert(new SummaryStock {
 			SumMonth = sumMonth,
@@ -366,6 +518,8 @@ public class SummaryDbTests {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		db.CreateTable(typeof(SummaryStock), true, false);
 		db.CreateTable(typeof(SummaryRealStock), true, false);
+		// 引当数(ReserveQty)の源泉。Rebuildも通常更新もTranHaibunを読むので常に作成する
+		db.CreateTable(typeof(TranHaibun), true, false);
 		db.Execute("CREATE UNIQUE INDEX SummaryStock_unq1 ON SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz)");
 		db.Execute("CREATE UNIQUE INDEX SummaryRealStock_unq1 ON SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz)");
 		return db;
@@ -431,10 +585,72 @@ public class SummaryDbTests {
 
 	private static string[] GetStockSnapshot(ExDatabaseSqlite db) {
 		var monthly = db.Fetch<SummaryStock>("order by SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz")
-			.Select(x => $"M:{x.SumMonth}:{x.Id_Soko}:{x.Id_Shohin}:{x.Id_Col}:{x.Id_Siz}:{x.Su}:{x.InQty}:{x.OutQty}:{x.TransitQty}");
+			.Select(x => $"M:{x.SumMonth}:{x.Id_Soko}:{x.Id_Shohin}:{x.Id_Col}:{x.Id_Siz}:{x.Su}:{x.InQty}:{x.OutQty}:{x.TransitQty}:{x.ReserveQty}");
 		var real = db.Fetch<SummaryRealStock>("order by Id_Soko, Id_Shohin, Id_Col, Id_Siz")
-			.Select(x => $"R:{x.Id_Soko}:{x.Id_Shohin}:{x.Id_Col}:{x.Id_Siz}:{x.Su}");
+			.Select(x => $"R:{x.Id_Soko}:{x.Id_Shohin}:{x.Id_Col}:{x.Id_Siz}:{x.Su}:{x.ReserveQty}");
 		return monthly.Concat(real).ToArray();
+	}
+
+	/// <summary>引当数だけを抜き出したスナップショット。通常更新値とRebuild値の一致確認に使う</summary>
+	private static string[] GetReserveSnapshot(ExDatabaseSqlite db) {
+		var monthly = db.Fetch<SummaryStock>("order by SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz")
+			.Select(x => $"M:{x.SumMonth}:{x.Id_Soko}:{x.Id_Shohin}:{x.Id_Col}:{x.Id_Siz}:{x.ReserveQty}");
+		var real = db.Fetch<SummaryRealStock>("order by Id_Soko, Id_Shohin, Id_Col, Id_Siz")
+			.Select(x => $"R:{x.Id_Soko}:{x.Id_Shohin}:{x.Id_Col}:{x.Id_Siz}:{x.ReserveQty}");
+		return monthly.Concat(real).ToArray();
+	}
+
+	private static TranHaibun CreateHaibun(
+		string denDay,
+		long idSoko,
+		int su,
+		int endFlag = 0,
+		long idShohin = 10,
+		long idCol = 100,
+		long idSiz = 1000) => new() {
+			DenDay = denDay,
+			Id_Soko = idSoko,
+			Id_Shohin = idShohin,
+			Id_Col = idCol,
+			Id_Siz = idSiz,
+			Su = su,
+			EndFlag = endFlag,
+		};
+
+	/// <summary>月次の引当数。行が無い場合は0とみなす（引当が0のキーに行を作らないため）</summary>
+	private static void AssertMonthReserve(
+		ExDatabaseSqlite db,
+		string sumMonth,
+		long idSoko,
+		int reserveQty,
+		long idShohin = 10,
+		long idCol = 100,
+		long idSiz = 1000) {
+		var rows = db.Fetch<SummaryStock>(
+			"where SumMonth=@0 and Id_Soko=@1 and Id_Shohin=@2 and Id_Col=@3 and Id_Siz=@4",
+			sumMonth,
+			idSoko,
+			idShohin,
+			idCol,
+			idSiz);
+		Assert.AreEqual(reserveQty, rows.Count == 0 ? 0 : rows[0].ReserveQty);
+	}
+
+	/// <summary>現在庫の引当数。行が無い場合は0とみなす</summary>
+	private static void AssertRealReserve(
+		ExDatabaseSqlite db,
+		long idSoko,
+		int reserveQty,
+		long idShohin = 10,
+		long idCol = 100,
+		long idSiz = 1000) {
+		var rows = db.Fetch<SummaryRealStock>(
+			"where Id_Soko=@0 and Id_Shohin=@1 and Id_Col=@2 and Id_Siz=@3",
+			idSoko,
+			idShohin,
+			idCol,
+			idSiz);
+		Assert.AreEqual(reserveQty, rows.Count == 0 ? 0 : rows[0].ReserveQty);
 	}
 
 	private static void AssertSummaryStock(

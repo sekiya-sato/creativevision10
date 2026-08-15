@@ -4,6 +4,19 @@ using Microsoft.Extensions.Logging;
 
 namespace CvDomainLogic;
 
+/// <summary>
+/// 引当数(<see cref="SummaryRealStock.ReserveQty"/>)の集計キー。
+/// <para>
+/// <see cref="SummaryStock"/> は <see cref="SumMonth"/> まで、<see cref="SummaryRealStock"/> は倉庫+SKU で集計する。
+/// </para>
+/// </summary>
+public readonly record struct ReserveKey(string SumMonth, long Id_Soko, long Id_Shohin, long Id_Col, long Id_Siz) {
+	/// <summary>配分行から集計キーを作る。DenDay(yyyyMMdd)の上6桁が SumMonth になる</summary>
+	public static ReserveKey From(ITranReserve row) => new(
+		row.DenDay.Length >= 6 ? row.DenDay[..6] : row.DenDay,
+		row.Id_Soko, row.Id_Shohin, row.Id_Col, row.Id_Siz);
+}
+
 public class SummaryDb {
 	ExDatabase _db;
 	ILogger<SummaryDb> _logger;
@@ -94,6 +107,8 @@ WHERE SumMonth BETWEEN @0 AND @1
 ";
 			cnt += ExecuteAndCounts(restoreSql, [param.DateYymmFrom, param.DateYymmTo], "CalcSummaryStockRange(restore)", "SummaryStock", period);
 			cnt += CalcSummaryRealStockRangeCore(param.DateYymmFrom, param.DateYymmTo, tempTableName);
+			// 引当数はDELETE→再INSERTで失われるので、再作成の最後にTranHaibunから引き直す
+			cnt += CalcReserveQtyAll();
 			_db.CompleteTransaction();
 			transactionStarted = false;
 			return cnt;
@@ -156,6 +171,122 @@ WHERE SumMonth BETWEEN @0 AND @1
 		}
 		return cnt;
 	}
+	/// <summary>
+	/// 配分(<see cref="TranHaibun"/>)の追加・修正・削除に伴い、対象キーの引当数を <see cref="TranHaibun"/> から引き直す。
+	/// <para>
+	/// 差分の加減算をせずキー単位で引き直すため、修正時は修正前と修正後のキーを両方渡せば、
+	/// 呼び出し順やDB更新との前後関係に関係なく正しい値になる（<c>CalcReserveQtyAll()</c> の結果と必ず一致する）。
+	/// 引当数は <see cref="TranHaibun"/> だけが源泉なので、Tran系伝票の在庫計算とは独立している。
+	/// 呼び出し元(<c>HandlerClass</c>)が張ったトランザクション内で実行される前提。
+	/// </para>
+	/// </summary>
+	/// <param name="keys">再計算する集計キー。重複は内部で除去する</param>
+	public int CalcHaibun2Reserve(params ReserveKey[] keys) => CalcHaibun2Reserve((IEnumerable<ReserveKey>)keys);
+	/// <inheritdoc cref="CalcHaibun2Reserve(ReserveKey[])"/>
+	public int CalcHaibun2Reserve(IEnumerable<ReserveKey> keys) {
+		var cnt = 0;
+		var vdate = Common.GetVdate();
+		var monthKeys = keys.Distinct().ToList();
+		if (monthKeys.Count == 0) {
+			return cnt;
+		}
+		foreach (var key in monthKeys) {
+			var sql = CreateReserveMonthSql(vdate,
+				"SumMonth = @0 AND Id_Soko = @1 AND Id_Shohin = @2 AND Id_Col = @3 AND Id_Siz = @4 AND ReserveQty <> 0",
+				"h.EndFlag = 0 AND substr(h.DenDay, 1, 6) = @0 AND h.Id_Soko = @1 AND h.Id_Shohin = @2 AND h.Id_Col = @3 AND h.Id_Siz = @4");
+			cnt += ExecuteAndCounts(sql, [key.SumMonth, key.Id_Soko, key.Id_Shohin, key.Id_Col, key.Id_Siz],
+				"CalcHaibun2Reserve", "SummaryStock:ReserveQty", key.SumMonth);
+		}
+		// SummaryRealStockは年月を持たないので、同一の倉庫+SKUを複数月ぶん重複実行しない
+		foreach (var key in monthKeys.Select(k => (k.Id_Soko, k.Id_Shohin, k.Id_Col, k.Id_Siz)).Distinct()) {
+			var sql = CreateReserveRealSql(vdate,
+				"Id_Soko = @0 AND Id_Shohin = @1 AND Id_Col = @2 AND Id_Siz = @3 AND ReserveQty <> 0",
+				"h.EndFlag = 0 AND h.Id_Soko = @0 AND h.Id_Shohin = @1 AND h.Id_Col = @2 AND h.Id_Siz = @3");
+			cnt += ExecuteAndCounts(sql, [key.Id_Soko, key.Id_Shohin, key.Id_Col, key.Id_Siz],
+				"CalcHaibun2Reserve", "SummaryRealStock:ReserveQty", "");
+		}
+		return cnt;
+	}
+	/// <summary>
+	/// <see cref="SummaryStock"/> と <see cref="SummaryRealStock"/> の引当数を <see cref="TranHaibun"/> から全面的に作り直す。
+	/// <para>
+	/// Rebuild経路は「DELETE → 再INSERT」で引当数を失うため、再作成の最後に必ず呼ぶ。
+	/// 引当数は年月範囲に依存しない(<see cref="TranHaibun"/> だけが源泉)ので、範囲指定ではなく常に全件を対象にする。
+	/// </para>
+	/// </summary>
+	public int CalcReserveQtyAll() {
+		var vdate = Common.GetVdate();
+		var cnt = ExecuteAndCounts(CreateReserveMonthSql(vdate, "ReserveQty <> 0", "h.EndFlag = 0"),
+			[], "CalcReserveQtyAll", "SummaryStock:ReserveQty", "");
+		cnt += ExecuteAndCounts(CreateReserveRealSql(vdate, "ReserveQty <> 0", "h.EndFlag = 0"),
+			[], "CalcReserveQtyAll", "SummaryRealStock:ReserveQty", "");
+		return cnt;
+	}
+	/// <summary>
+	/// SummaryStock(月次)の引当数を TranHaibun から引き直すSQL。「対象を0クリア」→「集計値を反映」の2文。
+	/// 引当が0になったキーに0行を作らないよう HAVING で除外し、在庫実績が無いキーはINSERTで新規作成する。
+	/// </summary>
+	private static string CreateReserveMonthSql(long vdate, string clearWhere, string haibunWhere) => $@"
+UPDATE SummaryStock
+SET ReserveQty = 0, Vdu = {vdate}
+WHERE {clearWhere};
+
+INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, ReserveQty)
+SELECT
+  substr(h.DenDay, 1, 6) AS SumMonth,
+  h.Id_Soko,
+  h.Id_Shohin,
+  h.Id_Col,
+  h.Id_Siz,
+  0 AS Su,
+  {vdate} AS Vdc,
+  {vdate} AS Vdu,
+  SUM(h.Su) AS ReserveQty
+FROM {nameof(TranHaibun)} AS h
+WHERE {haibunWhere}
+GROUP BY
+  SumMonth,
+  h.Id_Soko,
+  h.Id_Shohin,
+  h.Id_Col,
+  h.Id_Siz
+HAVING SUM(h.Su) <> 0
+ON CONFLICT(SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
+SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
+;
+";
+	/// <summary>
+	/// SummaryRealStock(現在庫)の引当数を TranHaibun から引き直すSQL。
+	/// SummaryStockの月次合計ではなく TranHaibun から直接引くのは、SummaryRealStockの再作成が
+	/// 「SumMonth &lt;= 対象年月」で打ち切るため、未来日付の配分指示が引当から漏れるのを避けるため。
+	/// </summary>
+	private static string CreateReserveRealSql(long vdate, string clearWhere, string haibunWhere) => $@"
+UPDATE SummaryRealStock
+SET ReserveQty = 0, Vdu = {vdate}
+WHERE {clearWhere};
+
+INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, ReserveQty)
+SELECT
+  h.Id_Soko,
+  h.Id_Shohin,
+  h.Id_Col,
+  h.Id_Siz,
+  0 AS Su,
+  {vdate} AS Vdc,
+  {vdate} AS Vdu,
+  SUM(h.Su) AS ReserveQty
+FROM {nameof(TranHaibun)} AS h
+WHERE {haibunWhere}
+GROUP BY
+  h.Id_Soko,
+  h.Id_Shohin,
+  h.Id_Col,
+  h.Id_Siz
+HAVING SUM(h.Su) <> 0
+ON CONFLICT(Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
+SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
+;
+";
 	private int ExecuteAndCounts(string sql, object[] args, string operationName, string targetName, string period) {
 		var updatedCount = _db.Execute(sql, args);
 		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
@@ -221,7 +352,8 @@ SET Su = Su + excluded.Su, vdu = {vdate}
 	public int CalcSummaryRealStock(string DateYyyymm) {
 		// DateTime.Now.ToDtStrDate2().Substring(0, 6)
 		var cnt = 0;
-		const string deleteSql = "DELETE FROM SummaryRealStock";
+		// 後続のInsertと1つのコマンドで実行するので、文の区切り(;)が必須
+		const string deleteSql = "DELETE FROM SummaryRealStock;";
 		var vdate = Common.GetVdate();
 		var sql = @$"
 Insert Into SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
@@ -242,6 +374,8 @@ GROUP BY
   Id_Siz;
 ";
 		cnt += ExecuteAndCounts($"{deleteSql}\n{sql}", [DateYyyymm], "CalcSummaryRealStock", "SummaryRealStock", DateYyyymm);
+		// 引当数はDELETE→再INSERTで失われるので、再作成の最後にTranHaibunから引き直す
+		cnt += CalcReserveQtyAll();
 		return cnt;
 	}
 	/// <summary>
@@ -256,6 +390,8 @@ GROUP BY
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			transactionStarted = true;
 			var cnt = CalcSummaryRealStockRangeCore(DateFromYyyymm, DateToYyyymm);
+			// 引当数はDELETE→再INSERTで失われるので、再作成の最後にTranHaibunから引き直す
+			cnt += CalcReserveQtyAll();
 			_db.CompleteTransaction();
 			transactionStarted = false;
 			return cnt;

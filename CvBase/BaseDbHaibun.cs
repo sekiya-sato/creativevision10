@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CvBase.Share;
 using Newtonsoft.Json;
 using NPoco;
 
@@ -7,8 +8,10 @@ namespace CvBase;
 // 配分トランザクション
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("nk1", false, nameof(DenDay))]
+// nk2: 引当数(ReserveQty)の再計算が倉庫+SKUで絞り込むため
+[KeyDml("nk2", false, [nameof(Id_Soko), nameof(Id_Shohin), nameof(Id_Col), nameof(Id_Siz)])]
 [Comment("トランザクション：配分データ 倉庫からの移動指示：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
-public sealed partial class TranHaibun : BaseDbClass {
+public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
@@ -165,6 +168,25 @@ public sealed partial class TranHaibun : BaseDbClass {
 	[OldTableCommentAttr("入力社員CD")]
 	[ForeignKey(nameof(MasterShain))]
 	public partial long Id_Shain { get; set; }
+	/// <summary>
+	/// 入庫済FLG。0=未入庫（引当中） / 1=振り分け後入庫済み（引当解除）。
+	/// <para>
+	/// この値が0の行の <see cref="Su"/> だけが <see cref="SummaryStock.ReserveQty"/> /
+	/// <see cref="SummaryRealStock.ReserveQty"/>（引当数）へ集計される。
+	/// 追加・修正・削除、およびこの列の部分更新のたびに、対象の倉庫+SKU の引当数が引き直される。
+	/// <see cref="KakuteiDay"/>（配分確定）と <see cref="SendFlg"/>（物流連携）は引当の判定に使わない。
+	/// 仕様は `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.2 / 2.8 を参照する。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
+	public partial int EndFlag { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnEndFlag {
+		get => (EnumYesNo)EndFlag;
+		set => EndFlag = (int)value;
+	}
 }
 
 /// <summary>
