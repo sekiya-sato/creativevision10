@@ -40,7 +40,7 @@ public enum EnumJodaiTaisho : int {
 /// JSON配列で保持し、物理テーブルはこの1表のみとする。
 /// 確定(<see cref="Status"/>=1)すると <see cref="DerivedJodai"/> へ「対象店舗 × 対象明細」の直積が展開され、
 /// 実際の価格解決はそちらを引く。展開は <see cref="IDerivedOrigin"/> 経由で
-/// CvServer/Services/HandlerDerived が Insert/Update/Delete 時に自動実行する。
+/// CvDomainLogic の DerivedDb が Insert/Update/Delete 時に自動実行する。
 /// </para>
 /// <para>
 /// 商品マスタ(<see cref="MasterShohin"/>.TankaJodai)は<b>書き換えない</b>(オーバーレイ方式)。
@@ -222,7 +222,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	/// <see cref="DerivedJodai"/>への展開行数（再展開時の検証用）
 	/// <para>
 	/// <b>更新するのは <c>CvDomainLogic.JodaiDb.Rebuild()</c> だけ</b>（修復用）。
-	/// 通常の展開は HandlerDerived が Insert/Update/Delete のたびに行うためこの列は追随しない。
+	/// 通常の展開は DerivedDb が Insert/Update/Delete のたびに行うためこの列は追随しない。
 	/// 画面で現在の展開行数を出すときは <see cref="DerivedJodai"/> を <c>Id_Tran</c> で数えること。
 	/// </para>
 	/// </summary>

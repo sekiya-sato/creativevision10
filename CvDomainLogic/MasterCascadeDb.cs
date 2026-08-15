@@ -507,7 +507,7 @@ update {table} as S
 	/// <summary>
 	/// DerivedShohinColSiz を MasterShohin.Jcolsiz から作り直す。
 	/// 当テーブルは Jcolsiz からの完全導出(BaseDbDerived.cs の CreateSql がその定義)なので、
-	/// 個別のUPDATEは書かず HandlerDerived と同じ Delete→Insert で再構築する(導出定義の二重管理を避ける)。
+	/// 個別のUPDATEは書かず DerivedDb と同じ Delete→Insert で再構築する(導出定義の二重管理を避ける)。
 	/// 1件ずつではなくIN句でまとめて実行する(商品数が多いとSQL往復回数が支配的になるため)。
 	/// Idはすべて long のDB由来値なので、IN句へ直接展開してもインジェクションの余地はない。
 	/// </summary>

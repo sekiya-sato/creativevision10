@@ -27,7 +27,7 @@ namespace CvWpfclient.ViewModels._01Master;
 /// </para>
 /// <para>
 /// 【展開のタイミング】展開・取消は <see cref="TranJodai"/> が <c>IDerivedOrigin</c> を実装しているため
-/// サーバの HandlerDerived が Insert/Update/Delete と同一トランザクションで自動実行する。
+/// サーバが DerivedDb を Insert/Update/Delete と同一トランザクションで自動実行する。
 /// この画面が <see cref="DerivedJodai"/> を直接触ることはない。
 /// </para>
 /// <para>
@@ -300,7 +300,7 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	/// 明細数千件で数百KBになるため、一覧では件数列(ShopCnt/MeisaiCnt)だけを見る。
 	/// <para>
 	/// 展開数は <see cref="TranJodai.ExpandCnt"/> 列ではなく <see cref="DerivedJodai"/> を数えて出す。
-	/// 展開はサーバの HandlerDerived が自動実行するので、この画面から保存しても列側は更新されず
+	/// 展開はサーバが DerivedDb で自動実行するので、この画面から保存しても列側は更新されず
 	/// 常に 0 のままになるため（列の更新は修復用の <c>JodaiDb.Rebuild()</c> のみが行う）。
 	/// 相関サブクエリは <c>nk2(Id_Tran)</c> のインデックスで引ける。
 	/// </para>
@@ -699,7 +699,7 @@ LIMIT {maxCount}";
 	bool CanFix() => EditId > 0 && EditStatus == 0;
 
 	/// <summary>
-	/// 確定する。Status=1 にして保存すると、サーバ側の HandlerDerived が
+	/// 確定する。Status=1 にして保存すると、サーバ側の DerivedDb が
 	/// <see cref="DerivedJodai"/> へ展開する（この画面から展開処理は呼ばない）。
 	/// </summary>
 	[RelayCommand(CanExecute = nameof(CanFix))]

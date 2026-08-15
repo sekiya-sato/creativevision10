@@ -97,10 +97,7 @@ public partial class CoreService {
 	/// ConvertDbのストリーミング処理ハンドラ
 	/// </summary>
 	private async IAsyncEnumerable<StreamMsg> HandleConvertDbStreamAsync(bool isInit, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvFlag flag) {
-		var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
-		var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
-
-		var convertDb = new ConvertDb(fromDb, _db);
+		var convertDb = CreateConvertDb();
 
 		await foreach (var msg in ForwardProgressStreamAsync(flag, convertDb.ConvertAllAsyncStream(isInit), ct)) {
 			yield return msg;
@@ -110,10 +107,7 @@ public partial class CoreService {
 	/// ConvertDbのストリーミング処理ハンドラ
 	/// </summary>
 	private async IAsyncEnumerable<StreamMsg> HandleConvertSelectedStreamAsync(List<string> selectedTask, bool isInit, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvFlag flag) {
-		var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
-		var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
-
-		var convertDb = new ConvertDb(fromDb, _db);
+		var convertDb = CreateConvertDb();
 
 		await foreach (var msg in ForwardProgressStreamAsync(flag, convertDb.ConvertSelectAsyncStream(selectedTask, isInit), ct)) {
 			yield return msg;

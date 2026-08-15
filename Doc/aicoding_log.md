@@ -1,3 +1,42 @@
+## [2026-08-16] 更新経路の責務分担整理と副作用オーケストレーションの集約
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：`CvDomainLogic` と `CvServer` のテーブルに対するロジックの組み込み方を整理し、適切な境界になっているか判断する。できるだけ `CvDomainLogic` へ寄せたいが、クライアントへのインターフェースは `CvServer` である。
+- チェックリストと調査結果を提示し、方針をユーザーが決定してから設計案を作り、承認後に実装した。
+### 事前調査と決定事項
+- 調査の結果、層構成そのものは正しく、問題は `CvServer` 内の重複だと判断した。全面移設はコード量が増えるだけなので行わない（ユーザー判断）。
+- 決定事項：トランザクション・楽観排他・業務イベントログは `CvServer` が持つ。読み取りは生SQL経由のまま「ゆるいルール」を維持し、更新はサーバ側で処理する。`CvDomainLogic` からの `CodeShare` 参照は必要なら可。POSは暫定実装のため触らない。業務単位が複数トランザクションに割れている問題（配分・予算の4画面）は今回のスコープ外とする。
+- 責務分担の基準を次のとおり定めた。副作用の**宣言**は `CvBase` のマーカーインターフェース、副作用の**実行**は `CvDomainLogic`、副作用の**起動順序**とトランザクション・排他・ログは `CvServer`。
+### 実施内容
+- `CvServer/Services/WriteEffectRunner.cs`: 新規。`HandlerClass` の6メソッドに散在していた副作用の分岐（在庫再集計・引当再計算・派生展開・V*列伝播）を `Before` / `After` / `FlushReserve` / `AfterPartialUpdate` に集約。`PartialUpdateDeniedColumns` も副作用の実装と同じファイルへ移した。
+- `CvDomainLogic/DerivedDb.cs`: 新規。`CvServer/Services/HandlerDerived.cs` を移設（削除）。gRPCにも`CodeShare`にも依存しない純粋なテーブル処理のため。使われていなかった `itemType` 引数を落とし、実行行数を返すようにした。
+- `CvServer/Services/HandlerClass.cs`: 6経路を `WriteEffectRunner` 呼び出しへ置換。`SetCreatedAuditValues` が採番した `vdate` を返すようにし、`LogEffects` で副作用の実行行数をログへ出す。`CreateConvertDb()` を追加してOracle接続の組み立て3箇所を集約。
+- `CvServer/Services/QueryMsgStreamService.cs`: Oracle接続の組み立てを `CreateConvertDb()` へ集約。
+- `Tests/TestServer/WriteEffectRunnerTests.cs`: 新規12件。
+- `CvBase/BaseDbJodai.cs`, `CvDomainLogic/JodaiDb.cs`, `CvDomainLogic/MasterCascadeDb.cs`, `CvWpfclient/ViewModels/01Master/MasterJouDaiBulkChangeViewModel.cs`: `HandlerDerived` を指すコメントを `DerivedDb` へ追随。
+### 技術決定 Why
+- **`WriteEffectRunner` を `CvDomainLogic` ではなく `CvServer` に置いた理由**: このクラスが表しているのは「順序」であり、順序はトランザクションを張る側の責務だから。個々の計算は従来どおり `SummaryDb` / `MasterCascadeDb` / `DerivedDb` を呼ぶ。全面移設すると変換層が増えてコード量が膨らむというユーザー判断にも沿う。
+- **`public` にした理由**: `Tests/TestServer` は既に `CvServer` を参照している。従来「更新の手順」はテスト可能な単位になっておらず、`MasterCascadeDbTests` が `// --- HandleUpdate と同じ流れ ---` と手順を手で再現していた（オーケストレーションが実質3重管理）。`public` にすることで手順そのものをテストできる。
+- **在庫と引当で扱いを変えた理由**: `CalcTran2SummaryStock` は `calcFlag` の符号による差分の加減算で、対象行をDBから読んで計算する。したがって更新・削除では行が変わる前に反転する必要があり、一括登録でもまとめられず行ごとに呼ぶ。一方 `CalcHaibun2Reserve` はキー単位の引き直しなので、一括登録では `HashSet` に貯めて最後に1回で足りる。この非対称を `After` の `reserveKeys` 引数と `FlushReserve` で表現した。
+- **`if / else if` を独立した `if` に変えた理由**: 従来は `IDerivedOrigin` に該当すると `ITranSoko` の在庫計算がスキップされていた。現在 `IDerivedOrigin` は `MasterShohin` と `TranJodai` だけで両方を満たす型が無いため**挙動は変わらない**が、両方を満たす型が将来現れると在庫が欠落するため解消した。
+- **`CvBaseOracle` 参照を `CvServer` に残した理由**: 接続先の決定はサーバーの責務であり、`CvDomainLogic` は `ConvertDb` として組み立て済みのものを受け取るだけでよい。
+### 副次的に修正した不具合
+- `HandleDelete` / `HandleDeleteById` に `try`/`catch` が無く、途中で例外が出ても `AbortTransaction` されずトランザクションが開いたままになっていた（`HandleInsert` / `HandleUpdate` にはあった）。`Insert` / `Update` と同じ形へ揃えた。
+- `FetchExistingBaseDbItem` が `_db.Fetch(...)?.First()` で、行が0件のときに `?? new()` へ到達せず `InvalidOperationException` になっていた。他端末が削除済みの行を更新・削除すると `ConcurrentUpdate` ではなく汎用例外が返っていたため、`FirstOrDefault()` にして `ConcurrentUpdate` を返すようにした。`HandleDeleteById` は同じ行を2回読んでいたので1回にまとめた。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx` でソリューション全体のビルド成功（0 warnings / 0 errors）を確認。
+- `Tests\TestServer\bin\Debug\net10.0\TestServer.exe` で 63/63 成功を確認（既存51件＋新規12件）。`dotnet test` は .NET 10 SDK と Microsoft.Testing.Platform の既知の非対応により実行できないため、テスト実行ファイルを直接起動した。
+- 新規テストで固定した挙動: 追加・削除での引当の増減、倉庫変更時に旧キーと新キーの両方が引き直されること、一括登録では `FlushReserve` まで再計算されず同一キーが1回にまとまること、更新が「反転→更新→再計算」の順序であること、削除は反転だけで完結し後処理で在庫を触らないこと、商品マスタの追加・更新・削除に派生テーブルが追随すること、V*列伝播が更新時のみ走りCode/Name無変更なら走らないこと、部分更新は `EndFlag` を含むときだけ引当を引き直すこと、禁止列に副作用が読む列が揃っていること。
+- `git diff --check` で空白エラーなし。`sed` と新規ファイル作成でLFになった6ファイルをCRLFへ戻し、BOM有無を維持したことを確認。
+### 残課題
+- 業務単位が複数トランザクションに割れている問題（`ShopHaibunInputViewModel` などが削除N回＋一括登録1回を別々のgRPC呼び出しで行う）は未着手。途中で失敗すると指示が消えたままになる。
+- `HandlePartialUpdate` は引当以外の副作用を呼ばない。`PartialUpdateDeniedColumns` が正しいことに依存した設計で、今回もその前提を維持している（同じファイルに置いて気づきやすくしただけ）。
+
+---
+
 ## [2026-08-16] CvBase テーブル定義への Comment 属性の全面付与
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

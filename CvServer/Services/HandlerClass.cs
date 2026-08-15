@@ -14,6 +14,13 @@ public partial class CoreService {
 	private const int NotFoundCode = -1;
 	private const string ConcurrentUpdateMessage = "他で更新されています";
 
+	private WriteEffectRunner? _effects;
+	/// <summary>
+	/// テーブル更新に伴う副作用(在庫・引当・派生・V*列伝播)の起動役。
+	/// トランザクションと楽観排他はこのクラスが持ち、副作用の順序は <see cref="WriteEffectRunner"/> が持つ。
+	/// </summary>
+	private WriteEffectRunner Effects => _effects ??= new WriteEffectRunner(_db);
+
 	private CvMsg HandleCopyReply(CvMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogDebug("HandleCopyReply invoked Flag:{Flag}", request.Flag);
@@ -53,12 +60,7 @@ public partial class CoreService {
 		_logger.LogInformation("HandleGetConvertTaskList invoked Flag:{Flag}", request.Flag);
 		var resultData = new List<string>();
 		try {
-			var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
-			var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
-
-			var convertDb = new ConvertDb(fromDb, _db);
-
-			resultData = convertDb.GetAllTaskNames();
+			resultData = CreateConvertDb().GetAllTaskNames();
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "HandleGetConvertTaskList error");
@@ -157,22 +159,6 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// <see cref="PartialUpdateParam.Columns"/> へ指定できない列。
-	/// <para>
-	/// <c>Id</c> / <c>Vdc</c> / <c>Vdu</c> はサーバーが管理する。
-	/// それ以外は部分更新が付随処理(在庫再集計、V*列伝播、Derived更新)を実行しないため禁止する。
-	/// 在庫系は <c>SummaryDb.CalcTran2SummaryStock()</c> が読む倉庫・SKU・数量・区分・日付、
-	/// 掛系は売掛買掛集計が読む金額・税・掛計上日、マスタ系は <c>MasterCascadeDb</c> のV*列伝播対象。
-	/// これらを変えるときは行全体を <see cref="UpdateParam"/> で保存させる。
-	/// </para>
-	/// </summary>
-	private static readonly string[] PartialUpdateDeniedColumns = [
-		nameof(BaseDbClass.Id), nameof(BaseDbClass.Vdc), nameof(BaseDbClass.Vdu),
-		"Id_Soko", "Id_Ido", "Id_Shohin", "Id_Col", "Id_Siz", "Su", "CalcFlag", "Kubun",
-		"DenDay", "KakeDay", "KingakuTotal", "Tax", "Total", "Jmeisai", "Code", "Name",
-	];
-
-	/// <summary>
 	/// 指定列だけを更新する。<c>Vdu</c> はサーバー側で採番し、全行を単一トランザクションで処理する。
 	/// <para>
 	/// 楽観排他は <see cref="HandleUpdate"/> と同じ考え方で行う。行ごとに一覧取得時点の
@@ -216,18 +202,7 @@ public partial class CoreService {
 				}
 				updated += count;
 			}
-			// EndFlagの部分更新は引当数を変える。キー列(倉庫・SKU・DenDay・Su)は部分更新できないので、
-			// 更新後の行をIdで読み直したキーだけで足りる
-			if (typeof(ITranReserve).IsAssignableFrom(partialUpdate.ItemType)
-				&& columns.Contains(nameof(ITranReserve.EndFlag), StringComparer.OrdinalIgnoreCase)) {
-				// Idは検証済み(0より大きいlong)なのでSQLへ直接埋め込んでよい
-				var ids = string.Join(",", rows.Select(r => r.Id));
-				var reserveKeys = _db.Fetch(partialUpdate.ItemType, $"where Id in ({ids})")
-					.OfType<ITranReserve>()
-					.Select(ReserveKey.From)
-					.ToHashSet();
-				new SummaryDb(_db).CalcHaibun2Reserve(reserveKeys);
-			}
+			Effects.AfterPartialUpdate(partialUpdate.ItemType, columns, [.. rows.Select(r => r.Id)]);
 			_db.CompleteTransaction();
 			_logger.LogInformation("部分更新 {Table} 列={Columns} 更新行数={Updated}", tableName, string.Join(",", columns), updated);
 			return CreateSuccessResponse(flag, typeof(PartialUpdateResult), Common.SerializeObject(new PartialUpdateResult(updated)));
@@ -267,7 +242,7 @@ public partial class CoreService {
 				error = $"{itemType.Name} に存在しない列です: {name}";
 				return false;
 			}
-			if (PartialUpdateDeniedColumns.Contains(actual, StringComparer.OrdinalIgnoreCase)) {
+			if (WriteEffectRunner.PartialUpdateDeniedColumns.Contains(actual, StringComparer.OrdinalIgnoreCase)) {
 				error = $"部分更新では変更できない列です: {actual}";
 				return false;
 			}
@@ -362,26 +337,13 @@ public partial class CoreService {
 		_logger.LogInformation("パラメータ InsertParam.ItemType={ItemType} 内容={Payload}", insert.ItemType, Common.SerializeObject(insert));
 
 		var item = insert.GetItemObject();
-		SetCreatedAuditValues(insert.ItemType, item);
+		var vdate = SetCreatedAuditValues(insert.ItemType, item);
 
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-			var newItem = _db.Insert(item);
-			if (typeof(IDerivedOrigin).IsAssignableFrom(insert.ItemType)) {
-				new HandlerDerived(_db).Insert(insert.ItemType, item, ((BaseDbClass)item).Id);
-			}
-			else if (typeof(ITranSoko).IsAssignableFrom(insert.ItemType)) {
-				var summaryDb = new SummaryDb(_db);
-				var id = ((BaseDbClass)item).Id;
-				summaryDb.CalcTran2SummaryStock(insert.ItemType.Name, "Id_Soko", id, false);
-				if (typeof(ITranIdo).IsAssignableFrom(insert.ItemType)) {
-					summaryDb.CalcTran2SummaryStock(insert.ItemType.Name, "Id_Ido", id, false);
-				}
-			}
-			// 引当数は在庫と同じタイミング(同一トランザクション内)で、追加した行のキーを引き直す
-			if (item is ITranReserve reserve) {
-				new SummaryDb(_db).CalcHaibun2Reserve(ReserveKey.From(reserve));
-			}
+			_db.Insert(item);
+			// 副作用(派生展開・在庫・引当)は追加と同一トランザクション内で実行する
+			LogEffects(insert.ItemType, Effects.After(WriteOp.Insert, insert.ItemType, item, null, vdate));
 			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
@@ -405,31 +367,19 @@ public partial class CoreService {
 		if (items is not IList list || list.Count == 0) {
 			return CreateNotFoundResponse(flag, listType, "[]");
 		}
-		// 配分は数百件が一括登録されるため、キーを集めてループ後に一度だけ引き直す
+		// 配分は数百件が一括登録されるため、引当キーを集めてループ後に一度だけ引き直す。
+		// 在庫は差分の加減算なので、まとめずに行ごとに計算する必要がある
 		var reserveKeys = new HashSet<ReserveKey>();
+		var effects = WriteEffectResult.Empty;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			foreach (var item in list) {
-				SetCreatedAuditValues(insertBulk.ItemType, item);
+				var vdate = SetCreatedAuditValues(insertBulk.ItemType, item);
 				_db.Insert(item);
-				if (typeof(IDerivedOrigin).IsAssignableFrom(insertBulk.ItemType)) {
-					new HandlerDerived(_db).Insert(insertBulk.ItemType, item, ((BaseDbClass)item).Id);
-				}
-				else if (typeof(ITranSoko).IsAssignableFrom(insertBulk.ItemType)) {
-					var summaryDb = new SummaryDb(_db);
-					var id = ((BaseDbClass)item).Id;
-					summaryDb.CalcTran2SummaryStock(insertBulk.ItemType.Name, "Id_Soko", id, false);
-					if (typeof(ITranIdo).IsAssignableFrom(insertBulk.ItemType)) {
-						summaryDb.CalcTran2SummaryStock(insertBulk.ItemType.Name, "Id_Ido", id, false);
-					}
-				}
-				if (item is ITranReserve reserve) {
-					reserveKeys.Add(ReserveKey.From(reserve));
-				}
+				effects = effects.Add(Effects.After(WriteOp.Insert, insertBulk.ItemType, item, null, vdate, reserveKeys));
 			}
-			if (reserveKeys.Count > 0) {
-				new SummaryDb(_db).CalcHaibun2Reserve(reserveKeys);
-			}
+			effects = effects.Add(new WriteEffectResult(0, Effects.FlushReserve(reserveKeys), 0, 0));
+			LogEffects(insertBulk.ItemType, effects);
 			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, listType, Common.SerializeObject(list));
 		}
@@ -455,49 +405,20 @@ public partial class CoreService {
 
 		var vdate = Common.GetVdate();
 		try {
-			var orgItem = FetchExistingBaseDbItem(update.ItemType, db.Id);
-			if (orgItem is not BaseDbClass org) {
-				throw new NotImplementedException();
+			// 行が無い = 他端末が削除済み。楽観排他と同じ扱いで再取得させる
+			if (FetchExistingBaseDbItem(update.ItemType, db.Id) is not BaseDbClass org) {
+				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 			}
 
 			if (db.Vdu != org.Vdu) {
 				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 			}
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-			if (typeof(ITranSoko).IsAssignableFrom(update.ItemType)) {
-				var summaryDb = new SummaryDb(_db);
-				var id = ((BaseDbClass)item).Id;
-				summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Soko", id, true);
-				if (typeof(ITranIdo).IsAssignableFrom(update.ItemType)) {
-					summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Ido", id, true);
-				}
-			}
+			// 在庫は差分の加減算なので、DB上の行が変わる前に旧値ぶんを反転しておく
+			Effects.Before(WriteOp.Update, update.ItemType, org);
 			db.Vdu = vdate;
 			_db.Update(item);
-			// マスタのCode/Name変更を参照側のV*列へ伝播する(Master系のみ。Tran系のV*列は伝票の時点名称なので対象外)
-			// vdate は必ず渡す: 自己参照(MasterTokui.Id_Paysakiが自分自身など)で更新元の行自身が伝播対象になり、
-			// 別採番するとクライアントへ返す Vdu とDB上の Vdu がずれて次回保存が楽観排他で弾かれる
-			if (MasterCascadeDb.NeedsCascade(update.ItemType, item, org) && item is IBaseCodeName codeName) {
-				// kubun/oldCode は MasterMeisho の区分定義行(Kubun='IDX')の改名を区分名へ伝播するために渡す
-				var cascadeCount = new MasterCascadeDb(_db).CascadeFromMaster(update.ItemType, db.Id, codeName.Code, codeName.Name, vdate,
-					(item as MasterMeisho)?.Kubun, (org as IBaseCodeName)?.Code);
-				_logger.LogInformation("V*列伝播 {ItemType} Id={Id} 更新行数={Count}", update.ItemType.Name, db.Id, cascadeCount);
-			}
-			if (typeof(IDerivedOrigin).IsAssignableFrom(update.ItemType)) {
-				new HandlerDerived(_db).Update(update.ItemType, item, ((BaseDbClass)item).Id);
-			}
-			else if (typeof(ITranSoko).IsAssignableFrom(update.ItemType)) {
-				var summaryDb = new SummaryDb(_db);
-				var id = ((BaseDbClass)item).Id;
-				summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Soko", id, false);
-				if (typeof(ITranIdo).IsAssignableFrom(update.ItemType)) {
-					summaryDb.CalcTran2SummaryStock(update.ItemType.Name, "Id_Ido", id, false);
-				}
-			}
-			// 引当数は差分ではなくキー単位の引き直しなので、倉庫・SKU・日付が変わった場合に備えて修正前後の両方を渡す
-			if (item is ITranReserve newReserve && org is ITranReserve orgReserve) {
-				new SummaryDb(_db).CalcHaibun2Reserve(ReserveKey.From(orgReserve), ReserveKey.From(newReserve));
-			}
+			LogEffects(update.ItemType, Effects.After(WriteOp.Update, update.ItemType, item, org, vdate));
 			_db.CompleteTransaction();
 			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
@@ -521,71 +442,59 @@ public partial class CoreService {
 			throw new NotImplementedException();
 		}
 
-		var orgItem = FetchExistingBaseDbItem(delete.ItemType, db.Id);
-		if (orgItem is not BaseDbClass org) {
-			throw new NotImplementedException();
+		// 行が無い = 他端末が削除済み。楽観排他と同じ扱いで再取得させる
+		if (FetchExistingBaseDbItem(delete.ItemType, db.Id) is not BaseDbClass org) {
+			return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
 
 		if (db.Vdu != org.Vdu) {
 			return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
-		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-		if (typeof(ITranSoko).IsAssignableFrom(delete.ItemType)) {
-			var summaryDb = new SummaryDb(_db);
-			var id = ((BaseDbClass)item).Id;
-			summaryDb.CalcTran2SummaryStock(delete.ItemType.Name, "Id_Soko", id, true);
-			if (typeof(ITranIdo).IsAssignableFrom(delete.ItemType)) {
-				summaryDb.CalcTran2SummaryStock(delete.ItemType.Name, "Id_Ido", id, true);
-			}
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			// 在庫は差分の加減算なので、行を消す前に旧値ぶんを反転しておく
+			Effects.Before(WriteOp.Delete, delete.ItemType, org);
+			_db.Delete(item);
+			// 引当数は削除後のTranHaibunから引き直すので、Deleteの後に実行する
+			LogEffects(delete.ItemType, Effects.After(WriteOp.Delete, delete.ItemType, item, org, 0));
+			_db.CompleteTransaction();
+			return CreateSuccessResponse(flag, delete.ItemType, Common.SerializeObject(item));
 		}
-		_db.Delete(item);
-		if (typeof(IDerivedOrigin).IsAssignableFrom(delete.ItemType)) {
-			new HandlerDerived(_db).Delete(delete.ItemType, item, ((BaseDbClass)item).Id);
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, delete.ItemType, Common.SerializeObject(item));
 		}
-		// 引当数は削除後のTranHaibunから引き直すので、Deleteの後に実行する
-		if (org is ITranReserve reserve) {
-			new SummaryDb(_db).CalcHaibun2Reserve(ReserveKey.From(reserve));
-		}
-		_db.CompleteTransaction();
-		return CreateSuccessResponse(flag, delete.ItemType, Common.SerializeObject(item));
 	}
 
 	private CvMsg HandleDeleteById(CvFlag flag, DeleteByIdParam deleteById) {
 		_logger.LogInformation("パラメータ DeleteByIdParam.ItemType={ItemType} Id={Id} 内容={Payload}", deleteById.ItemType, deleteById.Id, Common.SerializeObject(deleteById));
 
-		var item = FetchExistingBaseDbItem(deleteById.ItemType, deleteById.Id);
-		if (!typeof(BaseDbClass).IsAssignableFrom(deleteById.ItemType) || item is not BaseDbClass db) {
+		if (!typeof(BaseDbClass).IsAssignableFrom(deleteById.ItemType)) {
 			throw new NotImplementedException();
 		}
-
-		var orgItem = FetchExistingBaseDbItem(deleteById.ItemType, db.Id);
-		if (orgItem is not BaseDbClass org) {
-			throw new NotImplementedException();
+		// 行が無い = 他端末が削除済み。楽観排他と同じ扱いで再取得させる
+		if (FetchExistingBaseDbItem(deleteById.ItemType, deleteById.Id) is not BaseDbClass item) {
+			return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage,
+				deleteById.ItemType, string.Empty);
 		}
 
-		if (deleteById.OriginalVdu != org.Vdu) {
+		if (deleteById.OriginalVdu != item.Vdu) {
 			return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 		}
-		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-		if (typeof(ITranSoko).IsAssignableFrom(deleteById.ItemType)) {
-			var summaryDb = new SummaryDb(_db);
-			var id = ((BaseDbClass)item).Id;
-			summaryDb.CalcTran2SummaryStock(deleteById.ItemType.Name, "Id_Soko", id, true);
-			if (typeof(ITranIdo).IsAssignableFrom(deleteById.ItemType)) {
-				summaryDb.CalcTran2SummaryStock(deleteById.ItemType.Name, "Id_Ido", id, true);
-			}
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			// 在庫は差分の加減算なので、行を消す前に旧値ぶんを反転しておく
+			Effects.Before(WriteOp.Delete, deleteById.ItemType, item);
+			_db.Delete(item);
+			// 引当数は削除後のTranHaibunから引き直すので、Deleteの後に実行する
+			LogEffects(deleteById.ItemType, Effects.After(WriteOp.Delete, deleteById.ItemType, item, item, 0));
+			_db.CompleteTransaction();
+			return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 		}
-
-		_db.Delete(item);
-		if (typeof(IDerivedOrigin).IsAssignableFrom(deleteById.ItemType)) {
-			new HandlerDerived(_db).Delete(deleteById.ItemType, item, ((BaseDbClass)item).Id);
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, deleteById.ItemType, Common.SerializeObject(item));
 		}
-		// 引当数は削除後のTranHaibunから引き直すので、Deleteの後に実行する
-		if (item is ITranReserve reserve) {
-			new SummaryDb(_db).CalcHaibun2Reserve(ReserveKey.From(reserve));
-		}
-		_db.CompleteTransaction();
-		return CreateSuccessResponse(flag, item.GetType(), Common.SerializeObject(item));
 	}
 	/// <summary>
 	/// ToDo: 出力系の処理を集約して、マスタ以外も対応できるようにする
@@ -634,9 +543,13 @@ public partial class CoreService {
 		return queryList.AddWhereOrder();
 	}
 
-	private void SetCreatedAuditValues(Type itemType, object item) {
+	/// <summary>
+	/// 追加時の監査値(<c>Vdc</c> / <c>Vdu</c>)をサーバー側で採番する。
+	/// </summary>
+	/// <returns>採番した更新日時。対象外の型では0</returns>
+	private long SetCreatedAuditValues(Type itemType, object item) {
 		if (!typeof(BaseDbClass).IsAssignableFrom(itemType) || item is not BaseDbClass db) {
-			return;
+			return 0;
 		}
 		// SysLoginのLastDateは、ログイン時に更新する
 		if (typeof(SysLogin).IsAssignableFrom(itemType)) {
@@ -646,11 +559,33 @@ public partial class CoreService {
 		var vdate = Common.GetVdate();
 		db.Vdc = vdate;
 		db.Vdu = vdate;
+		return vdate;
 	}
 
-	private object FetchExistingBaseDbItem(Type itemType, object id) {
-		return _db.Fetch(itemType, "where Id=@0", id)?.First() ?? new();
+	/// <summary>
+	/// 旧Oracle DBからの変換処理を組み立てる。接続先の決定はサーバーの責務なのでここに置く。
+	/// </summary>
+	private ConvertDb CreateConvertDb() {
+		var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
+		var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
+		return new ConvertDb(fromDb, _db);
 	}
+
+	/// <summary>
+	/// 副作用の実行結果をログへ出す(ログはCvServerの責務)。何も起きていない場合は出さない。
+	/// </summary>
+	private void LogEffects(Type itemType, WriteEffectResult result) {
+		if (result == WriteEffectResult.Empty) {
+			return;
+		}
+		_logger.LogInformation("付随処理 {ItemType} {Effects}", itemType.Name, result.ToString());
+	}
+
+	/// <summary>
+	/// Id指定でDB上の行を読む。行が無ければ null を返す(他端末が削除済みのケース)。
+	/// </summary>
+	private BaseDbClass? FetchExistingBaseDbItem(Type itemType, object id) =>
+		_db.Fetch(itemType, "where Id=@0", id)?.OfType<BaseDbClass>().FirstOrDefault();
 
 	private static CvMsg CreateSuccessResponse(CvFlag flag, Type? dataType, string? dataMsg) {
 		return new CvMsg {
