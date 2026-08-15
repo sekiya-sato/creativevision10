@@ -67,6 +67,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("登録日")]
+	[Comment("登録日（yyyyMMdd）")]
 	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 上代変更区分（<see cref="EnumJodaiKubun"/>）0:プロパー(P) 1:セール(S)
@@ -74,6 +75,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("P/S区分")]
+	[Comment("上代変更区分（EnumJodaiKubun）0:プロパー(P) 1:セール(S)")]
 	public partial int Kubun { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -86,6 +88,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnTaisho))]
+	[Comment("対象系統（EnumJodaiTaisho）0:店舗用(TenType=6) 1:本部売上用(TenType in (1、3))")]
 	public partial int TaishoType { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -99,6 +102,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterMeisho), meishoKubun: "SLE")]
 	[OldTableCommentAttr("セールCD")]
+	[Comment("セールCD")]
 	public partial long Id_Sale { get; set; }
 	/// <summary>
 	/// セールデータ
@@ -106,6 +110,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
+	[Comment("セールデータ")]
 	public partial CodeNameView VSale { get; set; } = new();
 	/// <summary>
 	/// タイトル
@@ -113,6 +118,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[ColumnSizeDml(60)]
 	[OldTableCommentAttr("タイトル")]
+	[Comment("タイトル")]
 	public partial string Title { get; set; } = string.Empty;
 	/// <summary>
 	/// 入力社員Id
@@ -120,6 +126,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShain))]
 	[OldTableCommentAttr("入力者")]
+	[Comment("入力社員Id")]
 	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 社員データ
@@ -127,6 +134,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
+	[Comment("社員データ")]
 	public partial CodeNameView VShain { get; set; } = new();
 	/// <summary>
 	/// 適用開始日（yyyyMMdd）。店舗個別指定がない場合の既定値
@@ -134,6 +142,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("開始日")]
+	[Comment("適用開始日（yyyyMMdd）。店舗個別指定がない場合の既定値")]
 	public partial string DayFrom { get; set; } = "19010101";
 	/// <summary>
 	/// 適用終了日（yyyyMMdd）。プロパー(P)区分は "99991231"（無期限）
@@ -141,39 +150,46 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("終了日")]
+	[Comment("適用終了日（yyyyMMdd）。プロパー(P)区分は 99991231（無期限）")]
 	public partial string DayTo { get; set; } = "99991231";
 	/// <summary>
 	/// 一括変更方法 0:金額指定 1:率(%)指定
 	/// </summary>
 	[ObservableProperty]
+	[Comment("一括変更方法 0:金額指定 1:率(%)指定")]
 	public partial int CalcType { get; set; }
 	/// <summary>
 	/// 変更率(%) CalcType=1 のとき使用
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("率")]
+	[Comment("変更率(%) CalcType=1 のとき使用")]
 	public partial decimal CalcRate { get; set; }
 	/// <summary>
 	/// 変更金額 CalcType=0 のとき使用
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
+	[Comment("変更金額 CalcType=0 のとき使用")]
 	public partial int CalcValue { get; set; }
 	/// <summary>
 	/// 丸め単位 0:1円 1:10円 2:百円 3:千円
 	/// </summary>
 	[ObservableProperty]
+	[Comment("丸め単位 0:1円 1:10円 2:百円 3:千円")]
 	public partial int RoundUnit { get; set; }
 	/// <summary>
 	/// 丸め方法 0:切捨 1:四捨五入 2:切上
 	/// </summary>
 	[ObservableProperty]
+	[Comment("丸め方法 0:切捨 1:四捨五入 2:切上")]
 	public partial int RoundType { get; set; }
 	/// <summary>
 	/// 状態 0:入力中 1:確定(展開済) 2:取消
 	/// <para><b>Status=1 の伝票だけが <see cref="DerivedJodai"/> へ展開される</b>（<see cref="DerivedJodai.CreateSql"/>）。</para>
 	/// </summary>
 	[ObservableProperty]
+	[Comment("状態 0:入力中 1:確定(展開済) 2:取消 Status=1 の伝票だけが DerivedJodai へ展開される（DerivedJodai.CreateSql）。")]
 	public partial int Status { get; set; }
 	/// <summary>
 	/// 確定日（yyyyMMdd）。空文字なら未確定
@@ -181,22 +197,26 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("確定日")]
+	[Comment("確定日（yyyyMMdd）。空文字なら未確定")]
 	public partial string FixDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 送信フラグ 0:未送信 1:送信中 2:送信済み（店舗POSへの価格配信状態）
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("送信FLG")]
+	[Comment("送信フラグ 0:未送信 1:送信中 2:送信済み（店舗POSへの価格配信状態）")]
 	public partial int SendFlg { get; set; }
 	/// <summary>
 	/// 対象店舗数（<see cref="Jshop"/>を開かずに一覧表示するための非正規化列）
 	/// </summary>
 	[ObservableProperty]
+	[Comment("対象店舗数（Jshopを開かずに一覧表示するための非正規化列）")]
 	public partial int ShopCnt { get; set; }
 	/// <summary>
 	/// 対象明細数（<see cref="Jmeisai"/>を開かずに一覧表示するための非正規化列）
 	/// </summary>
 	[ObservableProperty]
+	[Comment("対象明細数（Jmeisaiを開かずに一覧表示するための非正規化列）")]
 	public partial int MeisaiCnt { get; set; }
 	/// <summary>
 	/// <see cref="DerivedJodai"/>への展開行数（再展開時の検証用）
@@ -207,6 +227,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
+	[Comment("DerivedJodaiへの展開行数（再展開時の検証用） 更新するのは CvDomainLogic.JodaiDb.Rebuild() だけ（修復用）。")]
 	public partial int ExpandCnt { get; set; }
 	/// <summary>
 	/// 抽出条件リスト
@@ -218,6 +239,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(ColumnType.Json)]
+	[Comment("抽出条件リスト どの条件でこの明細群が作られたかを残す。商品追加後の再抽出と監査の説明に必要。 色・サイズでの絞り込みもここに残る（価格は商品単位なので明細側には持たない）。")]
 	public partial List<TranJodaiCond> Jcond { get; set; } = [];
 	/// <summary>
 	/// 対象店舗リスト（店舗別の適用期間を含む）
@@ -225,6 +247,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(ColumnType.Json)]
+	[Comment("対象店舗リスト（店舗別の適用期間を含む）")]
 	public partial List<TranJodaiShop> Jshop { get; set; } = [];
 	/// <summary>
 	/// 対象明細リスト（商品マスタ単位）
@@ -232,6 +255,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(ColumnType.Json)]
+	[Comment("対象明細リスト（商品マスタ単位）")]
 	public partial List<TranJodaiMeisai> Jmeisai { get; set; } = [];
 	/// <summary>
 	/// ヘッダメモ
@@ -239,6 +263,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[ObservableProperty]
 	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("メモ")]
+	[Comment("ヘッダメモ")]
 	public partial string Memo { get; set; } = string.Empty;
 	[Ignore]
 	public Type DerivedClass => typeof(DerivedJodai);
@@ -303,11 +328,13 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 /// 上代一括変更 抽出条件（<see cref="TranJodai.Jcond"/>の要素）
 /// </summary>
 [SubTableDefine]
+[Comment("トランザクション：上代一括変更の抽出条件サブテーブル TranJodai.Jcond にJSONで格納する")]
 public sealed partial class TranJodaiCond : ObservableObject {
 	/// <summary>
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
+	[Comment("行No")]
 	public partial int No { get; set; }
 	/// <summary>
 	/// 検索項目（メーカー品番／ブランド／アイテム など）
@@ -315,28 +342,33 @@ public sealed partial class TranJodaiCond : ObservableObject {
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("検索項目")]
+	[Comment("検索項目（メーカー品番／ブランド／アイテム など）")]
 	public partial string Field { get; set; } = string.Empty;
 	/// <summary>
 	/// 選択項目のコード(FROM)
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
+	[Comment("選択項目のコード(FROM)")]
 	public partial string CdFrom { get; set; } = string.Empty;
 	/// <summary>
 	/// 選択項目のコード(TO)
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
+	[Comment("選択項目のコード(TO)")]
 	public partial string CdTo { get; set; } = string.Empty;
 	/// <summary>
 	/// 在庫条件 0:在庫無視 1:在庫アリ
 	/// </summary>
 	[ObservableProperty]
+	[Comment("在庫条件 0:在庫無視 1:在庫アリ")]
 	public partial int ZaikoJoken { get; set; }
 	/// <summary>
 	/// 展開単位 0:商品
 	/// </summary>
 	[ObservableProperty]
+	[Comment("展開単位 0:商品")]
 	public partial int TenkaiTani { get; set; }
 }
 
@@ -348,6 +380,7 @@ public sealed partial class TranJodaiCond : ObservableObject {
 /// </para>
 /// </summary>
 [SubTableDefine]
+[Comment("トランザクション：上代一括変更の対象店舗サブテーブル TranJodai.Jshop にJSONで格納する セール期間は店舗ごとにこの要素が正")]
 public sealed partial class TranJodaiShop : ObservableObject {
 	/// <summary>
 	/// 対象店舗Id。0 = 全件（その系統の全店舗／全得意先）
@@ -355,18 +388,21 @@ public sealed partial class TranJodaiShop : ObservableObject {
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui), tenType: 6, additionalInfo: "TranJodai.TaishoType=1 のときは TenType in (1,3)")]
 	[OldTableCommentAttr("店舗CD")]
+	[Comment("対象店舗Id。0 = 全件（その系統の全店舗／全得意先）")]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 店舗CD（時点値）
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(16)]
+	[Comment("店舗CD（時点値）")]
 	public partial string Code_Tenpo { get; set; } = string.Empty;
 	/// <summary>
 	/// 店舗名（時点値）
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(80)]
+	[Comment("店舗名（時点値）")]
 	public partial string Mei_Tenpo { get; set; } = string.Empty;
 	/// <summary>
 	/// 店舗別の適用開始日（yyyyMMdd）
@@ -374,6 +410,7 @@ public sealed partial class TranJodaiShop : ObservableObject {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("開始日")]
+	[Comment("店舗別の適用開始日（yyyyMMdd）")]
 	public partial string DayFrom { get; set; } = "19010101";
 	/// <summary>
 	/// 店舗別の適用終了日（yyyyMMdd）
@@ -381,6 +418,7 @@ public sealed partial class TranJodaiShop : ObservableObject {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("終了日")]
+	[Comment("店舗別の適用終了日（yyyyMMdd）")]
 	public partial string DayTo { get; set; } = "99991231";
 }
 
@@ -391,18 +429,21 @@ public sealed partial class TranJodaiShop : ObservableObject {
 /// </para>
 /// </summary>
 [SubTableDefine]
+[Comment("トランザクション：上代一括変更の明細サブテーブル TranJodai.Jmeisai にJSONで格納する 価格の粒度は商品マスタ単位")]
 public sealed partial class TranJodaiMeisai : ObservableObject {
 	/// <summary>
 	/// 行No
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("行NO")]
+	[Comment("行No")]
 	public partial int No { get; set; }
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin))]
+	[Comment("商品ユニークキー")]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 商品CD（時点値）
@@ -410,36 +451,42 @@ public sealed partial class TranJodaiMeisai : ObservableObject {
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("商品CD")]
+	[Comment("商品CD（時点値）")]
 	public partial string Code_Shohin { get; set; } = string.Empty;
 	/// <summary>
 	/// 商品名（時点値）
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
+	[Comment("商品名（時点値）")]
 	public partial string Mei_Shohin { get; set; } = string.Empty;
 	/// <summary>
 	/// 変更前上代（時点値）
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代")]
+	[Comment("変更前上代（時点値）")]
 	public partial int JodaiOld { get; set; }
 	/// <summary>
 	/// 新販売価格
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("新販売価格")]
+	[Comment("新販売価格")]
 	public partial int JodaiNew { get; set; }
 	/// <summary>
 	/// 新割引率
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("新割引率")]
+	[Comment("新割引率")]
 	public partial decimal RateOff { get; set; }
 	/// <summary>
 	/// 税込価格（<b>表示用スナップショット</b>。正は MasterSysman.Jsub の税率と MasterShohin.Id_Tax）
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("税込価格")]
+	[Comment("税込価格（表示用スナップショット。正は MasterSysman.Jsub の税率と MasterShohin.Id_Tax）")]
 	public partial int PriceInTax { get; set; }
 	/// <summary>
 	/// 店頭投入日（yyyyMMdd）MasterShohin.DayTento の写し（表示用）
@@ -447,6 +494,7 @@ public sealed partial class TranJodaiMeisai : ObservableObject {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("店頭投入日")]
+	[Comment("店頭投入日（yyyyMMdd）MasterShohin.DayTento の写し（表示用）")]
 	public partial string DayTento { get; set; } = "19010101";
 	/// <summary>
 	/// 変更日（yyyyMMdd）
@@ -454,12 +502,14 @@ public sealed partial class TranJodaiMeisai : ObservableObject {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("変更日")]
+	[Comment("変更日（yyyyMMdd）")]
 	public partial string DayChange { get; set; } = "19010101";
 	/// <summary>
 	/// 状況 0:未確認 1:確認済
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("状況")]
+	[Comment("状況 0:未確認 1:確認済")]
 	public partial int Status { get; set; }
 }
 
@@ -490,61 +540,72 @@ public partial class DerivedJodai : BaseDbClass, IDerivedClass {
 	/// 対象系統（<see cref="EnumJodaiTaisho"/>）0:店舗用 1:本部売上用
 	/// </summary>
 	[ObservableProperty]
+	[Comment("対象系統（EnumJodaiTaisho）0:店舗用 1:本部売上用")]
 	public partial int TaishoType { get; set; }
 	/// <summary>
 	/// 対象Id（店舗Id または 得意先Id。<see cref="TaishoType"/>による）。0 = その系統の全件
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui), tenType: 6, additionalInfo: "TaishoType=1 のときは TenType in (1,3)")]
+	[Comment("対象Id（店舗Id または 得意先Id。TaishoTypeによる）。0 = その系統の全件")]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin))]
+	[Comment("商品ユニークキー")]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 適用開始日（yyyyMMdd）
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
+	[Comment("適用開始日（yyyyMMdd）")]
 	public partial string DayFrom { get; set; } = "19010101";
 	/// <summary>
 	/// 適用終了日（yyyyMMdd）。プロパー(P)区分は "99991231"
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
+	[Comment("適用終了日（yyyyMMdd）。プロパー(P)区分は 99991231")]
 	public partial string DayTo { get; set; } = "99991231";
 	/// <summary>
 	/// 上代変更区分（<see cref="EnumJodaiKubun"/>）0:プロパー 1:セール
 	/// </summary>
 	[ObservableProperty]
+	[Comment("上代変更区分（EnumJodaiKubun）0:プロパー 1:セール")]
 	public partial int Kubun { get; set; }
 	/// <summary>
 	/// 適用販売価格
 	/// </summary>
 	[ObservableProperty]
+	[Comment("適用販売価格")]
 	public partial int Jodai { get; set; }
 	/// <summary>
 	/// 割引率
 	/// </summary>
 	[ObservableProperty]
+	[Comment("割引率")]
 	public partial decimal RateOff { get; set; }
 	/// <summary>
 	/// 元伝票Id（<see cref="TranJodai"/>.Id）。JSON化した伝票へ戻る唯一の経路
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(TranJodai))]
+	[Comment("元伝票Id（TranJodai.Id）。JSON化した伝票へ戻る唯一の経路")]
 	public partial long Id_Tran { get; set; }
 	/// <summary>
 	/// 元明細No（<see cref="TranJodaiMeisai"/>.No）
 	/// </summary>
 	[ObservableProperty]
+	[Comment("元明細No（TranJodaiMeisai.No）")]
 	public partial int No { get; set; }
 	/// <summary>
 	/// 競合解決順位。既定は元伝票Id（＝後から出した伝票が勝つ）
 	/// </summary>
 	[ObservableProperty]
+	[Comment("競合解決順位。既定は元伝票Id（＝後から出した伝票が勝つ）")]
 	public partial long Priority { get; set; }
 
 	/// <summary>

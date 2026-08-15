@@ -15,6 +15,7 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui), tenType: 6)]
 	[OldTableCommentAttr("店舗CD")]
+	[Comment("店舗Id 予算の対象店舗（MasterTokui TenType=6）")]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// ブランドId
@@ -22,6 +23,7 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterMeisho), meishoKubun:"BRD")]
 	[OldTableCommentAttr("ブランドCD")]
+	[Comment("ブランドId")]
 	public partial long Id_Brand { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
@@ -29,18 +31,21 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("日付")]
 	[ColumnSizeDml(8)]
+	[Comment("日付 yyyyMMdd 8桁の文字列で表現")]
 	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 売上予算
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("売上予算")]
+	[Comment("売上予算")]
 	public partial long UriYosan { get; set; }
 	/// <summary>
 	/// 粗利予算
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("粗利予算")]
+	[Comment("粗利予算")]
 	public partial long ArariYosan { get; set; }
 	/// <summary>
 	/// 店舗データ
@@ -48,6 +53,7 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
+	[Comment("店舗データ")]
 	public partial CodeNameView VTenpo { get; set; } = new();
 	/// <summary>
 	/// ブランドデータ
@@ -55,6 +61,7 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
+	[Comment("ブランドデータ")]
 	public partial CodeNameView VBrand { get; set; } = new();
 }
 
@@ -69,6 +76,7 @@ public sealed partial class MasterYosanHanbai : BaseDbClass {
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShain))]
 	[OldTableCommentAttr("販売員CD")]
+	[Comment("販売員Id")]
 	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
@@ -76,18 +84,21 @@ public sealed partial class MasterYosanHanbai : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("日付")]
 	[ColumnSizeDml(8)]
+	[Comment("日付 yyyyMMdd 8桁の文字列で表現")]
 	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 売上予算
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("予算金額")]
+	[Comment("売上予算")]
 	public partial long UriYosan { get; set; }
 	/// <summary>
 	/// 粗利予算
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("粗利予算")]
+	[Comment("粗利予算")]
 	public partial long ArariYosan { get; set; }
 	/// <summary>
 	/// 社員データ
@@ -95,5 +106,6 @@ public sealed partial class MasterYosanHanbai : BaseDbClass {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
+	[Comment("社員データ")]
 	public partial CodeNameView VShain { get; set; } = new();
 }

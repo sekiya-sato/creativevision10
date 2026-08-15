@@ -385,6 +385,12 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 
 	static string GetPropertyDescription(PropertyInfo property) {
 		var descriptions = new List<string>();
+		// カラムの [Comment] を説明の先頭に出す (DDLのカラムコメントは未使用のため定義書だけで利用する)
+		var comment = GetPropertyAttribute<CommentAttribute>(property)?.Content;
+		if (!string.IsNullOrWhiteSpace(comment)) {
+			descriptions.Add(comment.Replace(",", string.Empty));
+		}
+
 		var oldComment = GetPropertyAttribute<OldTableCommentAttr>(property)?.Content;
 		if (!string.IsNullOrWhiteSpace(oldComment)) {
 			descriptions.Add(oldComment);

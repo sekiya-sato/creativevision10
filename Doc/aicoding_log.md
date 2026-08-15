@@ -1,3 +1,39 @@
+## [2026-08-16] CvBase テーブル定義への Comment 属性の全面付与
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：`CvBase` のテーブル群へ `Comment` 属性をできるだけ充実させる。目的はソースの可読性向上と、今後AIがテーブルを適切に扱えるようにすること。
+- 事前に `CvWpfclient` 側の仕様（DB定義書出力）を確認し、付与可能な範囲をリストアップしてユーザー承認を得てから実施した。
+### 事前調査（仕様確認）
+- `Comment` 属性の消費先は3箇所で、いずれも**クラス属性のみ**を読んでいた。`ExDatabase.CreateComment`（MariaDB の `ALTER TABLE ... COMMENT`、SQLite/Oracle は no-op）、`ExDatabase.GetComment`（`Msg042_GetTableList` のテーブル一覧の説明列）、`SysTableSpecViewModel.GetClassComment`（DB定義書のテーブル説明）。
+- **カラム（プロパティ）の `Comment` は現状どこからも読まれていなかった**。`ExDatabase.cs` のカラムコメント生成は意図的にコメントアウト済み（`AttributeClass.cs` の「カラムコメントは変更時に問題あるので使用しない」）で、`GetPropertyDescription` は `OldTableCommentAttr.Content`（第2引数）と `ForeignKey` だけを連結していた。
+- 印刷側は対応済みだった。CSV の item6（説明）は `printform/SysTableSpec.qfm` の `Txt09`（`datasrc="item6"`）へ割当済みで、**qfm の修正は不要**。
+- 実テーブル47件のクラス `Comment` は全件付与済み。未付与はサブテーブル定義・共通基底クラスの18件のみ。プロパティ側は `BaseDbClass.Id/Vdc/Vdu` の3件を除き0件だった。
+### 実施内容
+- `CvWpfclient/ViewModels/00System/SysTableSpecViewModel.cs`: `GetPropertyDescription` の先頭でカラムの `Comment` を読むように変更。これが無いとプロパティへ付けた `Comment` が定義書に出ない。テーブルコメントと同様にカンマを除去する。
+- `CvBase/BaseDb*.cs`, `CvBase/Share/BaseDbDefinition.cs`: DB列になるプロパティ639件へ `Comment` を付与。うち605件は既存の `///` サマリからの移植、34件は `///` が無いため実装から起こした（`MasterConfig` 5件、`MasterShipping` 9件、`PosSeisanSummary` 7件、`PosPaymentDetail` 4件ほか）。
+- `CvBase/BaseDb*.cs`: クラス `Comment` 未付与の18型へ付与。サブテーブル定義（`MasterSysTax`、`Tran99Meisai`、`TranJodaiCond/Shop/Meisai` 等）にはどのJSON列へ格納されるかを、共通基底（`TranAllHeader`、`TranKinHeader`、`MasterTorihiki`、`TranCalcBase`）には単独の実テーブルを作らない旨を記載した。
+### 技術決定 Why
+- **既存の `///` サマリを機械的に移植した理由**: 454件のプロパティが既に日本語のXMLドキュメントを持っていたが、XMLドキュメントは実行時のリフレクションから読めないため定義書にも出ず、AIから見える形になっていなかった。文言を起こし直すより、既にレビュー済みの記述を反映用メタデータへ複写する方が正確で差分も追いやすい。
+- **印刷都合の50字トリムを行わなかった理由**: 当初は qfm の item6 が `length="100"`（cp932）である点に合わせて全角50字で切る実装にしたが、目的が可読性とAIの理解であるため情報量を優先した。長文は文単位で約120字まで積む方式とし、印刷時のクリップは許容する。
+- **`<see cref="X"/>` を参照名へ置換してからタグを除去した理由**: タグごと削除すると「`TranHaibun` の `EndFlag`=0 の `Su` 合計」が「の の =0 の 合計」になり、参照関係というAIにとって最も有用な情報が失われる。
+- **`[Ignore]` / `[JsonIgnore]` / `[ResultColumn]` / `[ComputedColumn]` を対象外にした理由**: `TryGetColumnSpec` が定義書から除外している実DB列ではないプロパティと基準を揃えた。`TranTokuiPromotion.TokuiCode` などの一覧表示専用列がこれに当たる。
+- **共通基底クラスへのクラス `Comment` 付与が安全な理由**: `CommentAttribute` は `Inherited` を既定（true）のままにしており、`Attribute.GetCustomAttribute` も既定で継承を辿る。`TranAllHeader` / `TranKinHeader` / `MasterTorihiki` / `SummaryRealStock` の派生テーブルは全て自前の `Comment` を持つため、基底の文言が実テーブルへ漏れることはない。`BaseDbClass` / `BaseDbHasAddress` など純粋な基盤型はテーブルではないためクラス属性を付けていない。
+- **DBスキーマへの影響が無いこと**: `CreateComment` は SQLite で即 return するため、現行のSQLite運用ではDDLも実データも変化しない。MariaDB利用時のみクラス `Comment` が `ALTER TABLE` に埋め込まれるため、文言には `'` を含めていない。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj` でビルド成功（0 warnings / 0 errors）を確認。
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx` でソリューション全体のビルド成功（0 warnings / 0 errors）を確認。
+- `Tests\TestServer\bin\Debug\net10.0\TestServer.exe` で 51 件全て成功を確認（`dotnet test` は .NET 10 SDK と Microsoft.Testing.Platform の既知の非対応により実行不可のため、テスト実行ファイルを直接起動した）。
+- ビルド済み `CvBase.dll` をリフレクションで読み、`SummaryRealStock` / `MasterShipping` / `Tran00Uriage` のクラスおよび各列の `Comment` が取得できること、`[Ignore]` 付きの `EnIsPay` には付与されていないことを確認。
+- `git diff --check` で空白エラーなし、差分が挿入行のみ（削除0行）であることを確認。ファイルのBOM有無と CRLF は生バイトで判定して維持した。
+### 残課題
+- `Tran02PosSeisan` の金種列（`Mai10000` 等）のように、実装から起こした文言はドメイン知識に基づく確認が望ましい。
+- `SysHistJwtSub.IpAddress` / `MacAddress` の `Comment` には元の `///` に含まれるNPocoの実装メモがそのまま入っている。列の意味だけに絞るなら要整理。
+
+---
+
 ## [2026-08-15] 引当数 ReserveQty と配分の入庫済フラグ EndFlag を追加
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

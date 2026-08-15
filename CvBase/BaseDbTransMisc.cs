@@ -13,23 +13,27 @@ public sealed partial class TranTokuiPromotion : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui), tenType: 1)]
+	[Comment("得意先Id")]
 	public partial long Id_Tokui { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
+	[Comment("日付 yyyyMMdd 8桁の文字列で表現")]
 	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// イベント名
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
+	[Comment("イベント名")]
 	public partial string Mame { get; set; } = string.Empty;
 	/// <summary>
 	/// 重要度 0=低, 1=中, 2=高
 	/// </summary>
 	[ObservableProperty]
+	[Comment("重要度 0=低、 1=中、 2=高")]
 	public partial int Rank { get; set; }
 	/// <summary>
 	/// 得意先コード（一覧表示用）
@@ -61,23 +65,27 @@ public sealed partial class TranShopPromotion : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui), tenType:6)]
+	[Comment("店舗Id")]
 	public partial long Id_Shop { get; set; }
 	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
+	[Comment("日付 yyyyMMdd 8桁の文字列で表現")]
 	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// イベント名
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
+	[Comment("イベント名")]
 	public partial string Mame { get; set; } = string.Empty;
 	/// <summary>
 	/// 重要度 0=低, 1=中, 2=高
 	/// </summary>
 	[ObservableProperty]
+	[Comment("重要度 0=低、 1=中、 2=高")]
 	public partial int Rank { get; set; }
 	/// <summary>
 	/// 店舗コード（一覧表示用）
@@ -108,22 +116,26 @@ public sealed partial class Tran60TanaDate : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo:"TenType in (0,3,6)")]
+	[Comment("店舗Id")]
 	public partial long Id_Shop { get; set; }
 	/// <summary>
 	/// 棚卸日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
+	[Comment("棚卸日付 yyyyMMdd 8桁の文字列で表現")]
 	public partial string TanaDay { get; set; } = "19010101";
 	/// <summary>
 	/// 確定日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
+	[Comment("確定日付 yyyyMMdd 8桁の文字列で表現")]
 	public partial string FixDay { get; set; } = "19010101";
 	/// <summary>
 	/// 自動補充フラグ (0:なし 1:する(全日))
 	/// </summary>
 	[ObservableProperty]
+	[Comment("自動補充フラグ (0:なし 1:する(全日))")]
 	public partial int AutoHoju { get; set; }
 }

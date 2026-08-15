@@ -18,29 +18,34 @@ public partial class SummaryRealStock : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo: "TenType in (0,3,6)")]
+	[Comment("倉庫ID")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 商品Id
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin))]
+	[Comment("商品Id")]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在する色")]
+	[Comment("色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在するサイズ")]
+	[Comment("サイズ")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
 	/// </summary>
 	[ObservableProperty]
+	[Comment("数量")]
 	public partial int Su { get; set; }
 	/// <summary>
 	/// 引当数（振り分け予定数）。<see cref="TranHaibun"/> の <see cref="TranHaibun.EndFlag"/>=0 の <see cref="TranHaibun.Su"/> 合計。
@@ -52,6 +57,7 @@ public partial class SummaryRealStock : BaseDbClass {
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
+	[Comment("引当数（振り分け予定数）。TranHaibun の TranHaibun.EndFlag=0 の TranHaibun.Su 合計。 有効在庫 = Su - ReserveQty。")]
 	public partial int ReserveQty { get; set; }
 }
 /// <summary>
@@ -68,42 +74,50 @@ public partial class SummaryStock : SummaryRealStock {
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(6)]
+	[Comment("年月")]
 	public partial string SumMonth { get; set; } = "190101";
 	/// <summary>
 	///	当月までの累計数量
 	/// </summary>
 	[ObservableProperty]
+	[Comment("当月までの累計数量")]
 	public partial int CumulativeSu { get; set; }
 	/// <summary>
 	/// 入庫数
 	/// </summary>
 	[ObservableProperty]
+	[Comment("入庫数")]
 	public partial int InQty { get; set; }
 	/// <summary>
 	/// 出庫数
 	/// </summary>
 	[ObservableProperty]
+	[Comment("出庫数")]
 	public partial int OutQty { get; set; }
 	/// <summary>
 	/// 移動中(入庫予定)
 	/// </summary>
 	[ObservableProperty]
+	[Comment("移動中(入庫予定)")]
 	public partial int TransitQty { get; set; }
 	/// <summary>
 	/// 調整数
 	/// </summary>
 	[ObservableProperty]
+	[Comment("調整数")]
 	public partial int AdjustQty { get; set; }
 	/// <summary>
 	/// 棚卸日
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
+	[Comment("棚卸日")]
 	public partial string StocktakeDdate { get; set; } = "19010101";
 	/// <summary>
 	/// 棚卸数
 	/// </summary>
 	[ObservableProperty]
+	[Comment("棚卸数")]
 	public partial int ActualQty { get; set; }
 }
 

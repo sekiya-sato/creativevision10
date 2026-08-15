@@ -27,72 +27,84 @@ public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin))]
+	[Comment("商品Id")]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 色サイズ行Index
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin), additionalInfo: $"{nameof(MasterShohin)}のJcolsizに存在する行")]
+	[Comment("色サイズ行Index")]
 	public partial int RowIdx { get; set; }
 	/// <summary>
 	/// コード
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(16)]
+	[Comment("コード")]
 	public partial string Code { get; set; } = string.Empty;
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin), additionalInfo: $"{nameof(MasterShohin)}のJcolsizに存在する色, {nameof(MasterMeisho)}のId")]
+	[Comment("色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// カラーCD
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
+	[Comment("カラーCD")]
 	public partial string Code_Col { get; set; } = string.Empty;
 	/// <summary>
 	/// カラー名
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
+	[Comment("カラー名")]
 	public partial string Mei_Col { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin), additionalInfo: $"{nameof(MasterShohin)}のJcolsizに存在するサイズ, {nameof(MasterMeisho)}のId")]
+	[Comment("サイズ")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// サイズCD
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
+	[Comment("サイズCD")]
 	public partial string Code_Siz { get; set; } = string.Empty;
 	/// <summary>
 	/// サイズ名
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
+	[Comment("サイズ名")]
 	public partial string Mei_Siz { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード1
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
+	[Comment("JANコード1")]
 	public partial string Jan1 { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード2
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
+	[Comment("JANコード2")]
 	public partial string Jan2 { get; set; } = string.Empty;
 	/// <summary>
 	/// JANコード3
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
+	[Comment("JANコード3")]
 	public partial string Jan3 { get; set; } = string.Empty;
 	[Ignore]
 	/// <summary>

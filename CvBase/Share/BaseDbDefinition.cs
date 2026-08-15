@@ -60,36 +60,42 @@ public partial class BaseDbHasAddress : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
+	[Comment("郵便番号")]
 	public partial string PostalCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 住所1 都道府県
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(60)]
+	[Comment("住所1 都道府県")]
 	public partial string Address1 { get; set; } = string.Empty;
 	/// <summary>
 	/// 住所2 市区町村
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(60)]
+	[Comment("住所2 市区町村")]
 	public partial string Address2 { get; set; } = string.Empty;
 	/// <summary>
 	/// 住所3 番地
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(60)]
+	[Comment("住所3 番地")]
 	public partial string Address3 { get; set; } = string.Empty;
 	/// <summary>
 	/// 電話番号
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
+	[Comment("電話番号")]
 	public partial string Tel { get; set; } = string.Empty;
 	/// <summary>
 	/// メールアドレス
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(120)]
+	[Comment("メールアドレス")]
 	public partial string Mail { get; set; } = string.Empty;
 }
 
@@ -103,12 +109,14 @@ public partial class BaseDetailClass : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(120)]
+	[Comment("予備項目1")]
 	public partial string Yobi1 { get; set; } = string.Empty;
 	/// <summary>
 	/// 予備項目1
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(120)]
+	[Comment("予備項目1")]
 	public partial string Yobi2 { get; set; } = string.Empty;
 }
 /// <summary>
@@ -126,18 +134,21 @@ public partial class CodeNameView : ObservableObject {
 	/// 対象テーブルのId
 	/// </summary>
 	[ObservableProperty]
+	[Comment("対象テーブルのId")]
 	public partial long Sid { get; set; }
 	/// <summary>
 	/// 対象テーブルのCode
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
+	[Comment("対象テーブルのCode")]
 	public partial string Cd { get; set; } = string.Empty;
 	/// <summary>
 	/// 対象テーブルのName
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
+	[Comment("対象テーブルのName")]
 	public partial string Mei { get; set; } = string.Empty;
 
 	public CodeNameView() : base() {
@@ -163,12 +174,14 @@ public sealed partial class MasterGeneralMeisho : CodeNameView {
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(10)]
+	[Comment("名称区分")]
 	public partial string Kb { get; set; } = string.Empty;
 	/// <summary>
 	/// 区分名(PascalCase規約外)
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(40)]
+	[Comment("区分名(PascalCase規約外)")]
 	public partial string Kbname { get; set; } = string.Empty;
 	/// <summary>
 	/// 選択元のマスターリスト

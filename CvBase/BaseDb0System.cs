@@ -19,6 +19,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("自社名")]
+	[Comment("自社名")]
 	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// ホームページ
@@ -26,6 +27,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("ホームページ")]
+	[Comment("ホームページ")]
 	public partial string Hp { get; set; } = string.Empty;
 	/// <summary>
 	/// 自社締め日 1-31,99
@@ -33,6 +35,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShimeBi))]
 	[OldTableCommentAttr("自社締日")]
+	[Comment("自社締め日 1-31、99")]
 	public partial int ShimeBi { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -45,12 +48,14 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("修正有効日数")]
+	[Comment("修正有効日数")]
 	public partial int ModifyDaysEx { get; set; }
 	/// <summary>
 	/// 先付有効日数
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("先付有効日数")]
+	[Comment("先付有効日数")]
 	public partial int ModifyDaysPre { get; set; }
 	/// <summary>
 	/// 振込先1
@@ -58,6 +63,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("振込先1")]
+	[Comment("振込先1")]
 	public partial string BankAccount1 { get; set; } = string.Empty;
 	/// <summary>
 	/// 振込先2
@@ -65,6 +71,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("振込先2")]
+	[Comment("振込先2")]
 	public partial string BankAccount2 { get; set; } = string.Empty;
 	/// <summary>
 	/// 振込先3
@@ -72,6 +79,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("振込先3")]
+	[Comment("振込先3")]
 	public partial string BankAccount3 { get; set; } = string.Empty;
 	/// <summary>
 	/// 期首年月日
@@ -79,6 +87,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("期首年月日")]
+	[Comment("期首年月日")]
 	public partial string FiscalStartDate { get; set; } = "19010101";
 	/// <summary>
 	/// 消費税率リスト
@@ -86,15 +95,18 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
+	[Comment("消費税率リスト")]
 	public partial List<MasterSysTax>? Jsub { get; set; }
 	[ObservableProperty]
 	[ColumnSizeDml(14)]
 	[OldTableCommentAttr("事業者登録番号", "T+13桁 select 名称 from HC$master_meisho where 名称区分='IBS' and 名称CD='01'")]
+	[Comment("事業者登録番号 T+13桁のインボイス登録番号")]
 	public partial string TaxRegistrationNumber { get; set; } = string.Empty;
 	/// <summary>
 	/// 標準倉庫
 	/// </summary>
 	[ObservableProperty]
+	[Comment("標準倉庫")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 倉庫データ
@@ -102,21 +114,25 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(100)]
+	[Comment("倉庫データ")]
 	public partial CodeNameView VSoko { get; set; } = new();
 }
 /// <summary>
 /// 消費税率テーブル(Id 1-3)
 /// </summary>
 [SubTableDefine]
+[Comment("マスター：消費税率サブテーブル(Id 1-3) MasterSysman.Jsub にJSONで格納する")]
 public sealed partial class MasterSysTax : ObservableObject {
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税CD")]
+	[Comment("消費税CD 1-3の固定連番（MasterSysman.Jsub 内の識別子）")]
 	public partial long Id { get; set; }
 	/// <summary>
 	/// 消費税率 (%) 例:10
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税率")]
+	[Comment("消費税率 (%) 例:10")]
 	public partial int TaxRate { get; set; }
 	/// <summary>
 	/// 新消費税開始日(yyyyMMdd)
@@ -124,12 +140,14 @@ public sealed partial class MasterSysTax : ObservableObject {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("新消費税開始日")]
+	[Comment("新消費税開始日(yyyyMMdd)")]
 	public partial string DateFrom { get; set; } = "19010101";
 	/// <summary>
 	/// 新消費税率 (%) 例:10
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("新消費税率")]
+	[Comment("新消費税率 (%) 例:10")]
 	public partial int TaxNewRate { get; set; }
 }
 /// <summary>
@@ -147,12 +165,14 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("名称区分")]
+	[Comment("区分")]
 	public partial string Kubun { get; set; } = string.Empty;
 	/// <summary>
 	/// 区分名
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(40)]
+	[Comment("区分名")]
 	public partial string KubunName { get; set; } = string.Empty;
 	/// <summary>
 	/// 名称コード
@@ -160,6 +180,7 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("名称CD")]
+	[Comment("名称コード")]
 	public partial string Code { get; set; } = "";
 	/// <summary>
 	/// 名称
@@ -167,6 +188,7 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("名称")]
+	[Comment("名称")]
 	public partial string Name { get; set; } = string.Empty;
 	/// <summary>
 	/// 略称
@@ -174,6 +196,7 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("略称")]
+	[Comment("略称")]
 	public partial string Ryaku { get; set; } = string.Empty;
 	/// <summary>
 	/// よみがな
@@ -181,10 +204,12 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
 	[ColumnSizeDml(100)]
 	[OldTableCommentAttr("カナ")]
+	[Comment("よみがな")]
 	public partial string Kana { get; set; } = string.Empty;
 	/// <summary>
 	/// 並び順
 	/// </summary>
 	[ObservableProperty]
+	[Comment("並び順")]
 	public partial int Odr { get; set; }
 }

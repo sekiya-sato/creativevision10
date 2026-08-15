@@ -18,6 +18,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("配分指示日")]
+	[Comment("日付 yyyyMMdd 8桁の文字列で表現")]
 	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 納品日 yyyyMMdd 8桁の文字列で表現
@@ -25,6 +26,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("納品日")]
+	[Comment("納品日 yyyyMMdd 8桁の文字列で表現")]
 	public partial string NouhinDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 倉庫Id
@@ -32,6 +34,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[OldTableCommentAttr("倉庫CD")]
 	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo: "TenType in (0,3,6)")]
+	[Comment("倉庫Id")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 店舗Id
@@ -39,6 +42,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[OldTableCommentAttr("得意先CD")]
 	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo: "TenType in (0,3,6)")]
+	[Comment("店舗Id")]
 	public partial long Id_Tenpo { get; set; }
 	/// <summary>
 	/// 区分（<see cref="EnumHaibun"/>）。どの画面が作った配分指示かを表す。
@@ -46,6 +50,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
 	[OldTableCommentAttr("区分")]
+	[Comment("区分（EnumHaibun）。どの画面が作った配分指示かを表す。")]
 	public partial int Kubun { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -62,12 +67,14 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("送信FLG")]
+	[Comment("送信フラグ 0:未送信 1:送信中 2:送信済み 物流システムへの連携状態。確定済みかどうかは KakuteiDay で判定する。 修正可能なのは SendFlg = 0 かつ KakuteiDay が空の行だけ。")]
 	public partial int SendFlg { get; set; }
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin))]
+	[Comment("商品ユニークキー")]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 入力JANコード
@@ -75,48 +82,56 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANCODE")]
+	[Comment("入力JANコード")]
 	public partial string JanCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在する色")]
+	[Comment("色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在するサイズ")]
+	[Comment("サイズ")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("数量")]
+	[Comment("数量")]
 	public partial int Su { get; set; }
 	/// <summary>
 	/// 単価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("単価")]
+	[Comment("単価")]
 	public partial int Tanka { get; set; }
 	/// <summary>
 	/// 金額
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
+	[Comment("金額")]
 	public partial int Kingaku { get; set; }
 	/// <summary>
 	/// 上代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代金額")]
+	[Comment("上代")]
 	public partial int Jodai { get; set; }
 	/// <summary>
 	/// 下代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("下代金額")]
+	[Comment("下代")]
 	public partial int Gedai { get; set; }
 	/// <summary>
 	///	関連No1 = <b>元伝票のId</b>（配分の入力元）。
@@ -129,6 +144,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
+	[Comment("関連No1 = 元伝票のId（配分の入力元）。 受注配分なら Tran12Jyuchu.Id、初回配分なら Tran13Hachu.Id。 在庫からの配分（在庫品配分・取置・移動指示）は元伝票が無いので 0。")]
 	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2 = <b>配分確定で作成した伝票のId</b>（配分の出力先）。
@@ -140,6 +156,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO2")]
+	[Comment("関連No2 = 配分確定で作成した伝票のId（配分の出力先）。 店舗向けなら Tran10IdoOut / Tran05Ido.Id、 得意先向けなら Tran00Uriage.Id。未確定は 0。")]
 	public partial int RelateNo2 { get; set; }
 	/// <summary>
 	/// 明細メモ
@@ -147,6 +164,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("明細メモ")]
+	[Comment("明細メモ")]
 	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 確定日 yyyyMMdd 8桁の文字列で表現。空文字なら未確定。
@@ -154,12 +172,14 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("確定日")]
+	[Comment("確定日 yyyyMMdd 8桁の文字列で表現。空文字なら未確定。")]
 	public partial string KakuteiDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 実数量（確定時に実際に出荷・移動した数）。未確定のうちは 0。
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("実数量")]
+	[Comment("実数量（確定時に実際に出荷・移動した数）。未確定のうちは 0。")]
 	public partial int JitsuSu { get; set; }
 	/// <summary>
 	/// 入力社員Id
@@ -167,6 +187,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[OldTableCommentAttr("入力社員CD")]
 	[ForeignKey(nameof(MasterShain))]
+	[Comment("入力社員Id")]
 	public partial long Id_Shain { get; set; }
 	/// <summary>
 	/// 入庫済FLG。0=未入庫（引当中） / 1=振り分け後入庫済み（引当解除）。
@@ -180,6 +201,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
+	[Comment("入庫済FLG。0=未入庫（引当中） / 1=振り分け後入庫済み（引当解除）。 この値が0の行の Su だけが SummaryStock.ReserveQty / SummaryRealStock.ReserveQty（引当数）へ集計される。")]
 	public partial int EndFlag { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -234,6 +256,7 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("補充指示日")]
+	[Comment("日付 yyyyMMdd 8桁の文字列で表現")]
 	public partial string DenDay { get; set; } = "19010101";
 	/// <summary>
 	/// 納品日 yyyyMMdd 8桁の文字列で表現
@@ -241,6 +264,7 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("納品日")]
+	[Comment("納品日 yyyyMMdd 8桁の文字列で表現")]
 	public partial string NouhinDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 倉庫Id
@@ -248,6 +272,7 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("倉庫CD")]
 	[ForeignKey(nameof(MasterTokui), tenType: 0, additionalInfo: "TenType in (0,3,6)")]
+	[Comment("倉庫Id")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
 	/// 店舗Id
@@ -255,24 +280,28 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("仕入先CD")]
 	[ForeignKey(nameof(MasterShiire))]
+	[Comment("店舗Id")]
 	public partial long Id_Shiire { get; set; }
 	/// <summary>
 	/// 区分
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("区分")]
+	[Comment("区分")]
 	public partial int Kubun { get; set; }
 	/// <summary>
 	/// 送信フラグ 0:未送信 1:送信中 2:送信済み
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("送信FLG")]
+	[Comment("送信フラグ 0:未送信 1:送信中 2:送信済み")]
 	public partial int SendFlg { get; set; }
 	/// <summary>
 	/// 商品ユニークキー
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterShohin))]
+	[Comment("商品ユニークキー")]
 	public partial long Id_Shohin { get; set; }
 	/// <summary>
 	/// 入力JANコード
@@ -280,60 +309,70 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("JANCODE")]
+	[Comment("入力JANコード")]
 	public partial string JanCode { get; set; } = string.Empty;
 	/// <summary>
 	/// 色
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在する色")]
+	[Comment("色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>
 	/// サイズ
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(DerivedShohinColSiz), additionalInfo: $"{nameof(DerivedShohinColSiz)}に存在するサイズ")]
+	[Comment("サイズ")]
 	public partial long Id_Siz { get; set; }
 	/// <summary>
 	/// 数量
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("数量")]
+	[Comment("数量")]
 	public partial int Su { get; set; }
 	/// <summary>
 	/// 単価
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("単価")]
+	[Comment("単価")]
 	public partial int Tanka { get; set; }
 	/// <summary>
 	/// 金額
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
+	[Comment("金額")]
 	public partial int Kingaku { get; set; }
 	/// <summary>
 	/// 上代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代金額")]
+	[Comment("上代")]
 	public partial int Jodai { get; set; }
 	/// <summary>
 	/// 下代
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("下代金額")]
+	[Comment("下代")]
 	public partial int Gedai { get; set; }
 	/// <summary>
 	///	関連No1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
+	[Comment("関連No1")]
 	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO2")]
+	[Comment("関連No2")]
 	public partial int RelateNo2 { get; set; }
 	/// <summary>
 	/// 明細メモ
@@ -341,6 +380,7 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("明細メモ")]
+	[Comment("明細メモ")]
 	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 確定日 yyyyMMdd 8桁の文字列で表現
@@ -348,12 +388,14 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("確定日")]
+	[Comment("確定日 yyyyMMdd 8桁の文字列で表現")]
 	public partial string KakuteiDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 実数量
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("実数量")]
+	[Comment("実数量")]
 	public partial int JitsuSu { get; set; }
 	/// <summary>
 	/// 入力社員Id
@@ -361,5 +403,6 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("入力社員CD")]
 	[ForeignKey(nameof(MasterShain))]
+	[Comment("入力社員Id")]
 	public partial long Id_Shain { get; set; }
 }
