@@ -12,7 +12,7 @@ using System.Linq;
 namespace CvWpfclient.ViewModels._04Juchu;
 
 public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12Jyuchu>, ITranInputTab {
-	public sealed record KubunOption(EnumUri01 Value, string Name);
+	public sealed record KubunOption(EnumJuchu Value, string Name);
 	public sealed record MeisaiKubunOption(int Value, string Name);
 
 	const int ProperMeisaiKubun = 0;
@@ -34,8 +34,8 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 	SelectInputParameter? selectParam;
 
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
-		new(EnumUri01.Uriage, "受注"),
-		new(EnumUri01.Henpin, "受注返品"),
+		new(EnumJuchu.Juchu, "受注"),
+		new(EnumJuchu.Henpin, "受注返品"),
 	];
 
 	public IReadOnlyList<MeisaiKubunOption> MeisaiKubunOptions { get; } = [
@@ -189,7 +189,7 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 		if (Current.Id <= 0) {
 			Current = new Tran12Jyuchu {
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
-				Kubun = (int)EnumUri01.Uriage,
+				Kubun = (int)EnumJuchu.Juchu,
 				Jmeisai = [],
 			};
 		}

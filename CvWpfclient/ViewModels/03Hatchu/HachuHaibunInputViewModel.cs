@@ -115,10 +115,10 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 
 	public IReadOnlyList<CodeLabelOption> KubunOptions { get; } = [
 		new(null, "(全て)"),
-		new((int)EnumShiire.Shiire, "10 発注"),
-		new((int)EnumShiire.Henpin, "20 返品"),
-		new((int)EnumShiire.Nebiki, "30 値引"),
-		new((int)EnumShiire.Other, "99 その他"),
+		new((int)EnumHachu.Hachu, "10 発注"),
+		new((int)EnumHachu.Henpin, "20 返品"),
+		new((int)EnumHachu.Nebiki, "30 値引"),
+		new((int)EnumHachu.Other, "99 その他"),
 	];
 
 	public IReadOnlyList<string> HaibunJokyoOptions { get; } = ["全て", "未配分のみ", "配分済のみ"];
@@ -346,13 +346,13 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 
 	/// <summary>
 	/// 発注選択ダイアログへ渡す区分の表示名。
-	/// <see cref="EnumShiire"/> は仕入と発注で共用しているため、発注の呼び名を明示する。
+	/// <see cref="EnumHachu"/> の発注用表示名を明示する。
 	/// </summary>
 	static readonly Dictionary<int, string> HachuKubunLabels = new() {
-		[(int)EnumShiire.Shiire] = "発注",
-		[(int)EnumShiire.Henpin] = "返品",
-		[(int)EnumShiire.Nebiki] = "値引",
-		[(int)EnumShiire.Other] = "その他",
+		[(int)EnumHachu.Hachu] = "発注",
+		[(int)EnumHachu.Henpin] = "返品",
+		[(int)EnumHachu.Nebiki] = "値引",
+		[(int)EnumHachu.Other] = "その他",
 	};
 
 	/// <summary>削除(F7)。選択発注に紐づく未送信の配分をまとめて削除する。</summary>
@@ -571,7 +571,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		HachuDayDisplay = FormatYmd8(targetHachu.DenDay);
 		ShiireDisplay = FormatCodeName(targetHachu.VShiire);
 		SokoDisplay = FormatCodeName(targetHachu.VSoko);
-		KubunDisplay = FormatShiireKubun(targetHachu.Kubun);
+		KubunDisplay = FormatHachuKubun(targetHachu.Kubun);
 
 		// 発注明細を SKU 単位へ正規化（同一SKUの複数行は合算）
 		List<HachuMeisaiSku> skus = NormalizeMeisai(targetHachu.Jmeisai);
@@ -927,12 +927,12 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 	internal static string FormatCodeName(CodeNameView? value) =>
 		value == null ? string.Empty : CodeNameDisplay.Format(value.Sid, value.Cd, value.Mei);
 
-	/// <summary>発注ヘッダの取引区分(<see cref="EnumShiire"/>)を「10 発注」形式で表示する。</summary>
-	internal static string FormatShiireKubun(int kubun) => (EnumShiire)kubun switch {
-		EnumShiire.Shiire => "10 発注",
-		EnumShiire.Henpin => "20 返品",
-		EnumShiire.Nebiki => "30 値引",
-		EnumShiire.Other => "99 その他",
+	/// <summary>発注ヘッダの取引区分(<see cref="EnumHachu"/>)を「10 発注」形式で表示する。</summary>
+	internal static string FormatHachuKubun(int kubun) => (EnumHachu)kubun switch {
+		EnumHachu.Hachu => "10 発注",
+		EnumHachu.Henpin => "20 返品",
+		EnumHachu.Nebiki => "30 値引",
+		EnumHachu.Other => "99 その他",
 		_ => kubun.ToString(CultureInfo.InvariantCulture),
 	};
 }
@@ -967,7 +967,7 @@ public sealed class HachuHaibunListRow(Tran13Hachu hachu, TranHaibun? summary) {
 	public string HachuDay => HachuHaibunInputViewModel.FormatYmd8(hachu.DenDay);
 	public string ShiireDisplay => HachuHaibunInputViewModel.FormatCodeName(hachu.VShiire);
 	public string SokoDisplay => HachuHaibunInputViewModel.FormatCodeName(hachu.VSoko);
-	public string KubunDisplay => HachuHaibunInputViewModel.FormatShiireKubun(hachu.Kubun);
+	public string KubunDisplay => HachuHaibunInputViewModel.FormatHachuKubun(hachu.Kubun);
 	public string Memo => hachu.Memo;
 
 	/// <summary>発注数（発注ヘッダの数量合計）</summary>

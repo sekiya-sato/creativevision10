@@ -192,3 +192,16 @@
 - `PartialUpdateParam` の禁止列リストは定数配列での列挙であり、今後スキーマへ在庫・掛に影響する列を足したときの追記漏れを検出できない。ドラフト4章-10 に記録した。
 
 ---
+## [2026-08-15] 取引区分 enum を業務別に分離し一覧表示名を付与
+### Agent
+- Codex : GPT-5 : Sekiya Sato Codex(home)
+### 目的
+- 取引区分 enum の `Comment` を WPF の一覧選択名と対応させ、受注・発注で仕入・売上用 enum を共用していた状態を解消する。
+### 実施内容
+- `CvBase/BaseDb2Trans.cs`: `EnumUri01` と `EnumShiire` へ `Comment` を付与し、受注用 `EnumJuchu` と発注用 `EnumHachu` を追加した。`Tran12Jyuchu.EnKubun` と `Tran13Hachu.EnKubun` をそれぞれ専用 enum へ変更した。
+- `CvBase/BaseDbJodai.cs` と `CvBase/BaseDbHaibun.cs`: 画面・業務名称に対応する各 enum 値へ `Comment` を付与した。
+- `CvWpfclient`: 受注入力、発注入力、発注配分入力の選択肢・既定値・表示変換を専用 enum へ変更した。
+### 互換性
+- `Kubun` の物理型・値（10 / 20 / 30 / 99）および `CalcFlag` 判定は不変のため、既存 DB・JSON・帳票 SQL の移行は不要。
+### 検証
+- `CvBase`、`CvWpfclient`、`Tests/TestServer` のビルドと `git diff --check` を実施する。

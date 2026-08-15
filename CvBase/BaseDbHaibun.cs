@@ -198,20 +198,28 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 /// </summary>
 public enum EnumHaibun : int {
 	/// <summary>初回配分（発売時に入荷予定を店舗へ振り分ける）。RelateNo1 = 発注Id</summary>
+	[Comment("初回配分")]
 	Hatsukai = 0,
 	/// <summary>在庫配分（倉庫の現在庫を店舗へ振り分ける）。RelateNo1 = 0</summary>
+	[Comment("在庫配分")]
 	Zaiko = 1,
 	/// <summary>受注配分（得意先の受注に対して在庫を割り当てる）。RelateNo1 = 受注Id</summary>
+	[Comment("受注配分")]
 	Juchu = 2,
 	/// <summary>得意先別配分（得意先を軸に商品を振り分ける）。RelateNo1 = 0 または 受注Id</summary>
+	[Comment("得意先別配分")]
 	Tokui = 3,
 	/// <summary>店舗出荷依頼（店舗側から本部倉庫へ出荷を依頼する）。RelateNo1 = 0</summary>
+	[Comment("店舗出荷依頼")]
 	ShopRequest = 4,
 	/// <summary>在庫品配分（滞留在庫などを対象に配分する）。RelateNo1 = 0</summary>
+	[Comment("在庫品配分")]
 	ZaikoHin = 5,
 	/// <summary>取置（特定の得意先・顧客向けに在庫を確保する）。RelateNo1 = 0</summary>
+	[Comment("取置")]
 	Reservation = 6,
 	/// <summary>移動指示（倉庫間の移動を指示する）。RelateNo1 = 0</summary>
+	[Comment("移動指示")]
 	IdoShiji = 7,
 }
 

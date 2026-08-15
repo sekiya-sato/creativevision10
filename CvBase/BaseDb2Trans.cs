@@ -792,10 +792,15 @@ public sealed class PosPaymentDetail {
 	public int ChangeAmount { get; init; }
 }
 public enum EnumUri01 : int {
+	[Comment("売上")]
 	Uriage = 10,
+	[Comment("売上SALE")]
 	UriSale = 11,
+	[Comment("返品")]
 	Henpin = 20,
+	[Comment("返品SALE")]
 	HenSale = 21,
+	[Comment("その他")]
 	Other = 99
 }
 
@@ -919,9 +924,13 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
 	}
 }
 public enum EnumShiire : int {
+	[Comment("仕入")]
 	Shiire = 10,
+	[Comment("仕入返品")]
 	Henpin = 20,
+	[Comment("値引")]
 	Nebiki = 30,
+	[Comment("その他")]
 	Other = 99
 }
 
@@ -1080,8 +1089,8 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	}
 	[Ignore]
 	[JsonIgnore]
-	public EnumUri01 EnKubun {
-		get => (EnumUri01)Kubun;
+	public EnumJuchu EnKubun {
+		get => (EnumJuchu)Kubun;
 		set => Kubun = (int)value;
 	}
 	/// <summary>
@@ -1106,6 +1115,17 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	public partial int Total { get; set; }
+}
+
+public enum EnumJuchu : int {
+	[Comment("受注")]
+	Juchu = 10,
+	[Comment("受注返品")]
+	Henpin = 20,
+	[Comment("値引")]
+	Nebiki = 30,
+	[Comment("その他")]
+	Other = 99
 }
 
 /// <summary>
@@ -1145,8 +1165,8 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	}
 	[Ignore]
 	[JsonIgnore]
-	public EnumShiire EnKubun {
-		get => (EnumShiire)Kubun;
+	public EnumHachu EnKubun {
+		get => (EnumHachu)Kubun;
 		set => Kubun = (int)value;
 	}
 	/// <summary>
@@ -1171,6 +1191,17 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	/// </summary>
 	[ObservableProperty]
 	public partial int Total { get; set; }
+}
+
+public enum EnumHachu : int {
+	[Comment("発注")]
+	Hachu = 10,
+	[Comment("発注返品")]
+	Henpin = 20,
+	[Comment("値引")]
+	Nebiki = 30,
+	[Comment("その他")]
+	Other = 99
 }
 
 

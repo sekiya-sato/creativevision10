@@ -10,8 +10,10 @@ namespace CvBase;
 /// </summary>
 public enum EnumJodaiKubun : int {
 	/// <summary>プロパー(P)。定価変更。期間は無期限として DayTo="99991231" で表現する</summary>
+	[Comment("プロパー(P)")]
 	Proper = 0,
 	/// <summary>セール(S)。期間限定の販売価格</summary>
+	[Comment("セール(S)")]
 	Sale = 1,
 }
 
@@ -24,8 +26,10 @@ public enum EnumJodaiKubun : int {
 /// </summary>
 public enum EnumJodaiTaisho : int {
 	/// <summary>店舗用。<see cref="MasterTokui"/>.TenType=6(直営店)。店舗売上・POSに適用</summary>
+	[Comment("店舗用（直営店）")]
 	Tenpo = 0,
 	/// <summary>本部売上用。<see cref="MasterTokui"/>.TenType in (1,3)(卸先・売仕店)。本部売上・受注に適用</summary>
+	[Comment("本部売上用（卸先・売仕店）")]
 	Honbu = 1,
 }
 

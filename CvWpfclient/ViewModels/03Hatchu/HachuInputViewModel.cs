@@ -13,7 +13,7 @@ using System.Linq;
 namespace CvWpfclient.ViewModels._03Hatchu;
 
 public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13Hachu>, ITranInputTab {
-	public sealed record KubunOption(EnumShiire Value, string Name);
+	public sealed record KubunOption(EnumHachu Value, string Name);
 	public sealed record MeisaiKubunOption(int Value, string Name);
 
 	const int ProperMeisaiKubun = 0;
@@ -35,8 +35,8 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 	SelectInputParameter? selectParam;
 
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
-		new(EnumShiire.Shiire, "発注"),
-		new(EnumShiire.Henpin, "発注返品"),
+		new(EnumHachu.Hachu, "発注"),
+		new(EnumHachu.Henpin, "発注返品"),
 	];
 
 	public IReadOnlyList<MeisaiKubunOption> MeisaiKubunOptions { get; } = [
@@ -190,7 +190,7 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		if (Current.Id <= 0) {
 			Current = new Tran13Hachu {
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
-				Kubun = (int)EnumShiire.Shiire,
+				Kubun = (int)EnumHachu.Hachu,
 				Jmeisai = [],
 			};
 		}
