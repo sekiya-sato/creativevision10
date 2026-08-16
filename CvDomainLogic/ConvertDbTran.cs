@@ -484,6 +484,35 @@ WHERE EXISTS (
 		var current = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [kubun, code]);
 		return current;
 	}
+	/// <summary>
+	/// 旧システムの入金・支払明細区分（<c>HC$tran_tori1.明細取引区分</c>）から
+	/// <see cref="MasterMeisho"/> の <c>KIN</c> 区分コードへの対応表（2026-08-16 ユーザー決定）。
+	/// <para>
+	/// 旧コードは 80/82/85/88/89 の5種類で、KIN 区分の 01〜05 とは体系が異なる。
+	/// 旧82（振込）は入金手段として旧80（現金）と同じ扱いにするため 01 現金入金へ寄せる。
+	/// KIN の 03 手形入金へ対応する旧コードは実データに存在しない。
+	/// </para>
+	/// <para>
+	/// 対応の無いコードは変換せず、<see cref="TranKinMeisai.Id_Kin"/> を 0 のままとし
+	/// <see cref="TranKinMeisai.Code_Kin"/> へ旧コードを残す（消込画面では「未分類」として1本に集約される）。
+	/// </para>
+	/// </summary>
+	static readonly Dictionary<string, string> KinKubunCodeMap = new() {
+		["80"] = "01",  // 現金       -> 01 現金入金
+		["82"] = "01",  // 振込       -> 01 現金入金
+		["85"] = "02",  // 振込手数料 -> 02 振込手数料
+		["88"] = "04",  // 相殺       -> 04 相殺入金
+		["89"] = "05",  // その他     -> 05 その他入金
+	};
+	/// <summary>
+	/// 旧システムの明細取引区分から KIN 区分の <see cref="MasterMeisho"/> を引く。
+	/// 対応表に無い旧コードは <c>null</c> を返す。
+	/// </summary>
+	MasterMeisho? getKinMeisho(string oldCode) {
+		if (!KinKubunCodeMap.TryGetValue(oldCode, out var kinCode))
+			return null;
+		return getMeisho("KIN", kinCode);
+	}
 	int getHeaderNebiki(Dictionary<string, object> rec) {
 		return getDataInt(rec, "値引1") + getDataInt(rec, "値引2") + getDataInt(rec, "値引3");
 	}
@@ -545,7 +574,9 @@ WHERE EXISTS (
 		List<TranKinMeisai> meisaiList = new(detailRows.Count);
 		foreach (var detailRec in detailRows) {
 			var code = getString(detailRec, "明細取引区分");
-			var kinKubun = getMeisho("PAY", code);
+			// 旧コードを KIN 区分へ読み替えてから引く。従来は存在しない区分 "PAY" を引いていたため
+			// 常に null となり、移行済みの入金・支払明細が全て Id_Kin=0 / Mei_Kin 空になっていた。
+			var kinKubun = getKinMeisho(code);
 
 			meisaiList.Add(new TranKinMeisai() {
 				No = getDataInt(detailRec, "行NO"),

@@ -1,3 +1,60 @@
+## [2026-08-16] 入金・支払明細の旧区分コードを KIN 区分へ対応付け
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：`Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` の未決事項を洗い出して提示し、決定できたものから順に対応する。今回は「入金明細の `Id_Kin` が移行データで全件 0」の1件。
+### 事前調査で判明した事実
+- `Tran06Nyukin` 2,302件の `Jmeisai` は `Id_Kin = 0` / `Mei_Kin = ""` で、`Code_Kin` に旧コード `80` / `82` / `85` / `88` / `89` が残っていた。手入力の4件だけが正しく `Id_Kin` を持つ。
+- 原因は `ConvertDbTran.BuildKinMeisaiList()` の `getMeisho("PAY", code)`。`MasterMeisho` に `Kubun = 'PAY'` は存在せず（実在するのは `KIN` の `01`〜`05`）、常に `null` を返していた。加えて旧コードと `KIN` のコード体系が違うため、区分名で引き直しても一致しない。
+- この状態では 2026-08-14 に実装した消込画面の区分別集計が、実データでは「名称空欄の1グループ」に全額集約される。
+### ユーザー決定
+- 旧 `80`（現金）→ `01` 現金入金、旧 `82`（振込）→ `01` 現金入金、旧 `85` → `02` 振込手数料、旧 `88` → `04` 相殺入金、旧 `89` → `05` その他入金。
+- 旧82は入金手段として旧80と同じ扱いにして `01` へ寄せる。`KIN` の `03` 手形入金に対応する旧コードは実データに無い。
+### 実施内容
+- `CvDomainLogic/ConvertDbTran.cs`: 対応表 `KinKubunCodeMap` と `getKinMeisho()` を追加し、`BuildKinMeisaiList()` の `getMeisho("PAY", code)` を置換した。対応表に無い旧コードは従来どおり `Id_Kin = 0` のままとし `Code_Kin` へ旧コードを残す。
+- `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md`: 2.1.4 を新設して事実・原因・対応表・実装方針を記録。2.1.2-3 から参照を張り、末尾へ 2026-08-16 の追記を加えた。
+### 技術決定 Why
+- **対応表を `ConvertDbTran` に置いた理由**: 旧システム固有のコード体系を新コードへ寄せる知識であり、変換層以外から参照されない。入金・支払は同じ `BuildKinMeisaiList()` を通るため、1箇所の修正で両方に効く。
+- **未知コードで例外を投げない理由**: 変換は5万件規模の一括処理で、途中停止すると再実行コストが高い。従来の挙動（`Id_Kin = 0` + 旧コード保持）を残せば、消込画面では「未分類」として金額が消えずに見える。
+- **移行済みDBを再変換しない理由**: 全変換は数分かかるうえ、変換後に手入力された4件が失われる。`Jmeisai` を `json_set` で書き換える一括SQLで是正する。
+- **`UpdateDb.cs` へ入れなかった理由**: 旧システムからの移行データにしか当たらない一過性の是正であり、`UpdateDb` が担うスキーマ移行とは性質が違う。今回はSQLをこのログへ記録して手動適用とする。
+### 移行済みDBの是正SQL（手動適用）
+`Tran06Nyukin` と `Tran07Shiharai` の2本を実行する。冪等（旧コードが残る行だけを対象にするため再実行しても増減しない）。
+```sql
+UPDATE Tran06Nyukin AS t
+SET Jmeisai = (
+  SELECT json_group_array(json(v)) FROM (
+    SELECT CASE WHEN k.Id IS NULL THEN j.value
+                ELSE json_set(j.value,'$.Id_Kin',k.Id,'$.Code_Kin',k.Code,'$.Mei_Kin',k.Name) END AS v
+    FROM json_each(t.Jmeisai) AS j
+    LEFT JOIN MasterMeisho AS k
+      ON k.Kubun = 'KIN'
+     AND k.Code = CASE json_extract(j.value,'$.Code_Kin')
+                    WHEN '80' THEN '01' WHEN '82' THEN '01' WHEN '85' THEN '02'
+                    WHEN '88' THEN '04' WHEN '89' THEN '05' END
+    ORDER BY j.key))
+WHERE t.Jmeisai LIKE '[%'
+  AND EXISTS (SELECT 1 FROM json_each(t.Jmeisai) AS j2
+              WHERE json_extract(j2.value,'$.Code_Kin') IN ('80','82','85','88','89'));
+```
+`Tran07Shiharai` はテーブル名2箇所を置き換えた同一のSQLを実行する。
+
+- `json_group_array(json(v))` の `json()` は必須。`json_set` の結果はサブクエリ境界で JSON サブタイプを失い、`json()` で包まないと**文字列の配列として二重エンコード**される（`["{\"No\":1,...}"]`）。
+- `ORDER BY j.key` も必須。明細が2行以上ある入金が732件あり、`LEFT JOIN` を挟むと元の行順が保証されない。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvDomainLogic\CvDomainLogic.csproj --no-restore`: 成功（警告0、エラー0）。
+- 是正SQLは実DB `server-user163.db` に対し `UPDATE` を `SELECT` へ置き換えた形で変換結果を検証した。単一明細・3明細の両方で、`Id_Kin` / `Code_Kin` / `Mei_Kin` が期待値になり、`No` / `Kingaku` / `Memo` が保持され、行順も維持されることを確認した。
+- `git diff --check`: 成功。
+### 残課題
+- **是正SQLは未適用**。読み取り専用接続で検証しただけで、実DBは書き換えていない。
+- 変換ロジックの修正は**再変換を実行していない**ため、旧システムからの通しでの動作確認は未実施。
+- `Tran07Shiharai` は実データ4件（全て手入力で `Id_Kin` は正しい）のため、支払側は是正SQLの対象行が0件で実効検証ができない。
+- 本書で洗い出した他の未決事項（2.1.2-6 元帳の `*`、2.6 の1〜6、2.7 の1〜6、2.8-4、3章の調整伝票詳細、2.4、2.5、4章-10）は未着手。特に 2.6-3 の `IsPay` は全50,311件が `0` のため、推奨案どおり条件を追加すると売掛が全件消える。次に判断が必要なのはこの1件。
+
+---
+
 ## [2026-08-16] 更新経路の責務分担整理と副作用オーケストレーションの集約
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude
