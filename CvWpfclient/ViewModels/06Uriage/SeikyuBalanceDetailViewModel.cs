@@ -64,12 +64,12 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 		var nyukinPart = IncludeNyukin ? $@"
     UNION ALL
     SELECT
-        h.Id_Tokui AS idTokui, n.DenDay AS denDay, 2 AS srcOrder, n.Id AS denNo,
+        h.Id_Tokui AS idTokui, n.KakeDay AS denDay, 2 AS srcOrder, n.Id AS denNo,
         '入金' AS kubunText, 0 AS su, -n.KingakuTotal AS kingaku
     FROM headers h
     JOIN Tran06Nyukin n
       ON n.Id_Torisaki = h.Id_Tokui
-     AND n.DenDay >= h.dayFrom AND n.DenDay <= h.dayTo" : "";
+     AND n.KakeDay >= h.dayFrom AND n.KakeDay <= h.dayTo" : "";
 
 		var sql = $@"
 WITH headers AS (
@@ -89,12 +89,12 @@ WITH headers AS (
 ),
 details AS (
     SELECT
-        h.Id_Tokui AS idTokui, u.DenDay AS denDay, 1 AS srcOrder, u.Id AS denNo,
+        h.Id_Tokui AS idTokui, u.KakeDay AS denDay, 1 AS srcOrder, u.Id AS denNo,
         {kubunLabel} AS kubunText, u.SuTotal AS su, {UriageKingaku} AS kingaku
     FROM headers h
     JOIN Tran00Uriage u
       ON u.Id_Tokui = h.Id_Tokui
-     AND u.DenDay >= h.dayFrom AND u.DenDay <= h.dayTo{nyukinPart}
+     AND u.KakeDay >= h.dayFrom AND u.KakeDay <= h.dayTo{nyukinPart}
 )
 SELECT
     {TranMeisaiSql.DateLabel("h.seikyuDay")} AS seikyuDayLabel,

@@ -538,7 +538,68 @@ WHERE SumMonth <= @0;
 			"処理終了");
 	}
 	/// <summary>
-	/// SummaryKakeの年月のデータを集計する(再作成)
+	/// 掛集計で伝票側に必ず付ける条件。掛計上しない伝票(<c>IsPay = 0</c>)は売掛・買掛へ入れない。
+	/// <para>2026-08-16 決定。移行済みデータは売上50,311件・仕入25件とも <c>1</c> である。</para>
+	/// </summary>
+	const string KakeDenWhere = "t.IsPay = 1";
+
+	/// <summary>
+	/// 入金/支払明細(<see cref="TranKinMeisai"/>)を <c>json_each</c> で展開する FROM 断片。
+	/// 不正JSONへ <c>json_extract</c> を当てると SQLite が例外を投げるため、空配列へ倒してから展開する。
+	/// </summary>
+	const string KinMeisaiFrom = "json_each(CASE WHEN json_valid(t.Jmeisai) THEN t.Jmeisai ELSE '[]' END) AS m";
+
+	/// <summary>明細の金額。</summary>
+	const string KinMeisaiKingaku = "CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER)";
+
+	/// <summary>
+	/// 入金/支払の区分別内訳を作る集計式。<c>KIN</c> 区分マスタの <c>Code</c> で振り分ける。
+	/// <para>
+	/// <c>01</c>現金 / <c>02</c>振込手数料 / <c>03</c>手形 / <c>04</c>相殺 のいずれにも当たらないものは
+	/// 全て「その他」(<c>99</c>指定)へ寄せる。<c>05</c>その他だけでなく、マスタに無い <c>Id_Kin</c> もここへ落ちるため、
+	/// 内訳の合計は必ず <c>TotalIn</c> / <c>TotalOut</c> に一致する。
+	/// </para>
+	/// </summary>
+	static string KinBucket(string code) =>
+		code == "99"
+			? $"SUM(CASE WHEN IFNULL(k.Code, '') NOT IN ('01','02','03','04') THEN {KinMeisaiKingaku} ELSE 0 END)"
+			: $"SUM(CASE WHEN k.Code = '{code}' THEN {KinMeisaiKingaku} ELSE 0 END)";
+
+	/// <summary>
+	/// 対象期間より後の月も再計算へ含めるため、実効の終了月を求める。
+	/// <para>
+	/// 繰越(<c>Balance</c>)は前月から積み上がるので、過去月だけを再作成すると以降の月が古い繰越のまま残る。
+	/// 指定 <paramref name="dateToYyyymm"/> より後に集計行または伝票が存在すれば、その最大月まで対象を伸ばす。
+	/// 夜間ジョブは前月・当月しか回さないため通常は指定値のままで、画面から任意期間を指定したときだけ伸びる。
+	/// </para>
+	/// <para>
+	/// 伝票側は <c>substr(KakeDay,1,6) &gt; @0</c> と同値の <c>KakeDay &gt; @0 || '99'</c> で書き、
+	/// <c>KakeDay</c> のインデックスが効く形にしている。
+	/// </para>
+	/// </summary>
+	string ExtendToMonth(string summaryTable, string denTable, string kinTable, string dateToYyyymm) {
+		var sql = @$"
+SELECT MAX(m) FROM (
+	SELECT MAX(DenMonth) AS m FROM {summaryTable} WHERE DenMonth > @0
+	UNION ALL
+	SELECT MAX(substr(KakeDay, 1, 6)) FROM {denTable} WHERE KakeDay > @0 || '99'
+	UNION ALL
+	SELECT MAX(substr(KakeDay, 1, 6)) FROM {kinTable} WHERE KakeDay > @0 || '99'
+)";
+		var found = _db.FirstOrDefault<string>(sql, dateToYyyymm);
+		if (string.IsNullOrEmpty(found) || string.CompareOrdinal(found, dateToYyyymm) <= 0) return dateToYyyymm;
+		_logger.LogInformation(
+			"{Table} の再計算範囲を繰越の整合のため {To} から {Extended} へ延長しました", summaryTable, dateToYyyymm, found);
+		return found;
+	}
+
+	/// <summary>
+	/// SummaryUriKakeの年月のデータを集計する(再作成)
+	/// <para>
+	/// 売上は区分(<see cref="EnumUri00"/>)で 売上 / 返品 / 値引 へ、入金は明細の <c>Id_Kin</c> で
+	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。内訳は <c>CalcFlag</c> 込みの符号付きで、
+	/// <c>Uriage + Henpin + Nebiki</c> が全区分の符号付き合計に一致する（返品・値引はマイナスで入る）。
+	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
 	/// <param name="DateToYyyymm"></param>
@@ -547,28 +608,48 @@ WHERE SumMonth <= @0;
 		var cnt = 0;
 		const string deleteSql = "DELETE FROM SummaryUriKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
+		var toMonth = ExtendToMonth("SummaryUriKake", "Tran00Uriage", "Tran06Nyukin", DateToYyyymm);
 		var sql = @$"
-WITH movements AS (
+WITH kinmap AS (
+	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
+),
+movements AS (
 	SELECT
 		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Tokui,
 		SUM((CASE WHEN t.Total <> 0 THEN t.Total ELSE t.KingakuTotal + t.Tax END) * t.CalcFlag) AS TotalSales,
-		SUM(t.KingakuTotal * t.CalcFlag) AS Uriage,
+		SUM(CASE WHEN t.Kubun IN ({(int)EnumUri00.Henpin}, {(int)EnumUri00.HenSale}, {(int)EnumUri00.Nebiki}) THEN 0 ELSE t.KingakuTotal * t.CalcFlag END) AS Uriage,
+		SUM(CASE WHEN t.Kubun IN ({(int)EnumUri00.Henpin}, {(int)EnumUri00.HenSale}) THEN t.KingakuTotal * t.CalcFlag ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun = {(int)EnumUri00.Nebiki} THEN t.KingakuTotal * t.CalcFlag ELSE 0 END) AS Nebiki,
 		SUM(t.Tax * t.CalcFlag) AS Tax,
-		0 AS TotalIn
+		0 AS TotalIn, 0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran00Uriage AS t
-	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	WHERE {KakeDenWhere} AND substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Tokui
 	UNION ALL
+	-- 入金の総額はヘッダから採る。明細を展開すると行が増えて二重計上になるため、区分別内訳とは枝を分ける。
 	SELECT
-		substr(t.DenDay, 1, 6) AS DenMonth,
+		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Torisaki AS Id_Tokui,
-		0 AS TotalSales,
-		0 AS Uriage,
-		0 AS Tax,
-		SUM(t.KingakuTotal) AS TotalIn
+		0, 0, 0, 0, 0,
+		SUM(t.KingakuTotal) AS TotalIn, 0, 0, 0, 0, 0
 	FROM Tran06Nyukin AS t
-	WHERE substr(t.DenDay, 1, 6) BETWEEN @0 AND @1
+	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	GROUP BY DenMonth, t.Id_Torisaki
+	UNION ALL
+	-- 入金の区分別内訳。明細の Id_Kin を KIN 区分マスタのコードへ引き当てる。
+	SELECT
+		substr(t.KakeDay, 1, 6) AS DenMonth,
+		t.Id_Torisaki AS Id_Tokui,
+		0, 0, 0, 0, 0, 0,
+		{KinBucket("01")} AS Cash,
+		{KinBucket("02")} AS Fee,
+		{KinBucket("03")} AS Densai,
+		{KinBucket("04")} AS Offset,
+		{KinBucket("99")} AS Other
+	FROM Tran06Nyukin AS t, {KinMeisaiFrom}
+	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
+	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Torisaki
 ),
 monthly AS (
@@ -577,8 +658,15 @@ monthly AS (
 		Id_Tokui,
 		SUM(TotalSales) AS TotalSales,
 		SUM(Uriage) AS Uriage,
+		SUM(Henpin) AS Henpin,
+		SUM(Nebiki) AS Nebiki,
 		SUM(Tax) AS Tax,
-		SUM(TotalIn) AS TotalIn
+		SUM(TotalIn) AS TotalIn,
+		SUM(Cash) AS Cash,
+		SUM(Fee) AS Fee,
+		SUM(Densai) AS Densai,
+		SUM(Offset) AS Offset,
+		SUM(Other) AS Other
 	FROM movements
 	GROUP BY DenMonth, Id_Tokui
 ),
@@ -607,28 +695,32 @@ SELECT
 	m.TotalIn,
 	m.TotalSales,
 	m.Uriage,
-	0 AS Henpin,
-	0 AS Nebiki,
+	m.Henpin,
+	m.Nebiki,
 	m.Tax,
-	0 AS Cash,
-	0 AS Fee,
-	0 AS Densai,
-	0 AS Offset,
-	0 AS Other,
+	m.Cash,
+	m.Fee,
+	m.Densai,
+	m.Offset,
+	m.Other,
 	{vdate} AS Vdc,
 	{vdate} AS Vdu
 FROM monthly AS m
 LEFT JOIN previousBalance AS p ON p.Id_Tokui = m.Id_Tokui;
 ";
-	var period = $"{DatefromYyyymm}-{DateToYyyymm}";
-	_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-	cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryUriKake(delete)", "SummaryUriKake", period);
-	cnt += ExecuteAndCounts(sql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryUriKake", "SummaryUriKake", period);
-	_db.CompleteTransaction();
+		var period = $"{DatefromYyyymm}-{toMonth}";
+		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryUriKake(delete)", "SummaryUriKake", period);
+		cnt += ExecuteAndCounts(sql, [DatefromYyyymm, toMonth], "CalcSummaryUriKake", "SummaryUriKake", period);
+		_db.CompleteTransaction();
 		return cnt;
 	}
 	/// <summary>
 	/// SummaryKaiKakeの年月のデータを集計する(再作成)
+	/// <para>
+	/// 仕入は区分(<see cref="EnumShiire"/>)で 仕入 / 返品 / 値引 へ、支払は明細の <c>Id_Kin</c> で
+	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。売掛側(<see cref="CalcSummaryUriKake"/>)と同じ規則である。
+	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
 	/// <param name="DateToYyyymm"></param>
@@ -637,28 +729,48 @@ LEFT JOIN previousBalance AS p ON p.Id_Tokui = m.Id_Tokui;
 		var cnt = 0;
 		const string deleteSql = "DELETE FROM SummaryKaiKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
+		var toMonth = ExtendToMonth("SummaryKaiKake", "Tran03Shiire", "Tran07Shiharai", DateToYyyymm);
 		var sql = @$"
-WITH movements AS (
+WITH kinmap AS (
+	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
+),
+movements AS (
 	SELECT
 		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Shiire,
 		SUM((CASE WHEN t.Total <> 0 THEN t.Total ELSE t.KingakuTotal + t.Tax END) * t.CalcFlag) AS TotalShiire,
-		SUM(t.KingakuTotal * t.CalcFlag) AS Shiire,
+		SUM(CASE WHEN t.Kubun IN ({(int)EnumShiire.Henpin}, {(int)EnumShiire.Nebiki}) THEN 0 ELSE t.KingakuTotal * t.CalcFlag END) AS Shiire,
+		SUM(CASE WHEN t.Kubun = {(int)EnumShiire.Henpin} THEN t.KingakuTotal * t.CalcFlag ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun = {(int)EnumShiire.Nebiki} THEN t.KingakuTotal * t.CalcFlag ELSE 0 END) AS Nebiki,
 		SUM(t.Tax * t.CalcFlag) AS Tax,
-		0 AS TotalOut
+		0 AS TotalOut, 0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran03Shiire AS t
-	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	WHERE {KakeDenWhere} AND substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Shiire
 	UNION ALL
+	-- 支払の総額はヘッダから採る。明細を展開すると行が増えて二重計上になるため、区分別内訳とは枝を分ける。
 	SELECT
-		substr(t.DenDay, 1, 6) AS DenMonth,
+		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Torisaki AS Id_Shiire,
-		0 AS TotalShiire,
-		0 AS Shiire,
-		0 AS Tax,
-		SUM(t.KingakuTotal) AS TotalOut
+		0, 0, 0, 0, 0,
+		SUM(t.KingakuTotal) AS TotalOut, 0, 0, 0, 0, 0
 	FROM Tran07Shiharai AS t
-	WHERE substr(t.DenDay, 1, 6) BETWEEN @0 AND @1
+	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	GROUP BY DenMonth, t.Id_Torisaki
+	UNION ALL
+	-- 支払の区分別内訳。入金と同じ KIN 区分マスタを使う。
+	SELECT
+		substr(t.KakeDay, 1, 6) AS DenMonth,
+		t.Id_Torisaki AS Id_Shiire,
+		0, 0, 0, 0, 0, 0,
+		{KinBucket("01")} AS Cash,
+		{KinBucket("02")} AS Fee,
+		{KinBucket("03")} AS Densai,
+		{KinBucket("04")} AS Offset,
+		{KinBucket("99")} AS Other
+	FROM Tran07Shiharai AS t, {KinMeisaiFrom}
+	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
+	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Torisaki
 ),
 monthly AS (
@@ -667,8 +779,15 @@ monthly AS (
 		Id_Shiire,
 		SUM(TotalShiire) AS TotalShiire,
 		SUM(Shiire) AS Shiire,
+		SUM(Henpin) AS Henpin,
+		SUM(Nebiki) AS Nebiki,
 		SUM(Tax) AS Tax,
-		SUM(TotalOut) AS TotalOut
+		SUM(TotalOut) AS TotalOut,
+		SUM(Cash) AS Cash,
+		SUM(Fee) AS Fee,
+		SUM(Densai) AS Densai,
+		SUM(Offset) AS Offset,
+		SUM(Other) AS Other
 	FROM movements
 	GROUP BY DenMonth, Id_Shiire
 ),
@@ -697,23 +816,23 @@ SELECT
 	m.TotalOut,
 	m.TotalShiire,
 	m.Shiire,
-	0 AS Henpin,
-	0 AS Nebiki,
+	m.Henpin,
+	m.Nebiki,
 	m.Tax,
-	0 AS Cash,
-	0 AS Fee,
-	0 AS Densai,
-	0 AS Offset,
-	0 AS Other,
+	m.Cash,
+	m.Fee,
+	m.Densai,
+	m.Offset,
+	m.Other,
 	{vdate} AS Vdc,
 	{vdate} AS Vdu
 FROM monthly AS m
 LEFT JOIN previousBalance AS p ON p.Id_Shiire = m.Id_Shiire;
 ";
-		var period = $"{DatefromYyyymm}-{DateToYyyymm}";
+		var period = $"{DatefromYyyymm}-{toMonth}";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryKaiKake(delete)", "SummaryKaiKake", period);
-		cnt += ExecuteAndCounts(sql, [DatefromYyyymm, DateToYyyymm], "CalcSummaryKaiKake", "SummaryKaiKake", period);
+		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryKaiKake(delete)", "SummaryKaiKake", period);
+		cnt += ExecuteAndCounts(sql, [DatefromYyyymm, toMonth], "CalcSummaryKaiKake", "SummaryKaiKake", period);
 		_db.CompleteTransaction();
 		return cnt;
 	}

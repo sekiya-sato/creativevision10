@@ -62,12 +62,12 @@ public partial class ShiharaiBalanceDetailViewModel : Helpers.BaseReportViewMode
 		var shiharaiPart = IncludeShiharai ? @"
     UNION ALL
     SELECT
-        h.Id_Shiire AS idShiire, p.DenDay AS denDay, 2 AS srcOrder, p.Id AS denNo,
+        h.Id_Shiire AS idShiire, p.KakeDay AS denDay, 2 AS srcOrder, p.Id AS denNo,
         '支払' AS kubunText, 0 AS su, -p.KingakuTotal AS kingaku
     FROM headers h
     JOIN Tran07Shiharai p
       ON p.Id_Torisaki = h.Id_Shiire
-     AND p.DenDay >= h.dayFrom AND p.DenDay <= h.dayTo" : "";
+     AND p.KakeDay >= h.dayFrom AND p.KakeDay <= h.dayTo" : "";
 
 		var sql = $@"
 WITH headers AS (
@@ -87,12 +87,12 @@ WITH headers AS (
 ),
 details AS (
     SELECT
-        h.Id_Shiire AS idShiire, v.DenDay AS denDay, 1 AS srcOrder, v.Id AS denNo,
+        h.Id_Shiire AS idShiire, v.KakeDay AS denDay, 1 AS srcOrder, v.Id AS denNo,
         {kubunLabel} AS kubunText, v.SuTotal AS su, {ShiireKingaku} AS kingaku
     FROM headers h
     JOIN Tran03Shiire v
       ON v.Id_Shiire = h.Id_Shiire
-     AND v.DenDay >= h.dayFrom AND v.DenDay <= h.dayTo{shiharaiPart}
+     AND v.KakeDay >= h.dayFrom AND v.KakeDay <= h.dayTo{shiharaiPart}
 )
 SELECT
     {TranMeisaiSql.DateLabel("h.payDay")} AS payDayLabel,

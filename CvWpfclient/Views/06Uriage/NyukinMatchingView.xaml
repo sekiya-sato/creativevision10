@@ -164,7 +164,7 @@
 					Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding PayDayToText, UpdateSourceTrigger=PropertyChanged}"
-					ToolTip="入金伝票の計上日(DenDay)で絞る" />
+					ToolTip="入金伝票の掛計上日(KakeDay)で絞る" />
 
 				<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
 					Margin="0,4">

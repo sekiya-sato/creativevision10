@@ -125,7 +125,7 @@
 										Binding="{Binding Id}"
 										Header="支払No" />
 									<DataGridTextColumn Width="90"
-										Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+										Binding="{Binding KakeDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
 										Header="支払日" />
 									<DataGridTextColumn Width="300"
 										Binding="{Binding VTori, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
@@ -242,7 +242,7 @@
 							<DatePicker Grid.Row="0" Grid.Column="1"
 								Margin="0,4,18,4"
 								helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="支払日" IsTodayHighlighted="False"
-								SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								SelectedDate="{Binding CurrentEdit.KakeDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 								Style="{StaticResource FormDatePicker}" />
 							<TextBlock Grid.Column="2"
 								Height="16"

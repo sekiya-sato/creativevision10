@@ -13,7 +13,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// </para>
 /// <para>
 /// 店舗売上(Tran01Tenuri)は含めない。店頭現金売上で売掛が立たないため。
-/// 期間は債権側は掛計上日(KakeDay)、入金側は計上日(DenDay)で切る。
+/// 期間は債権側・入金側とも掛計上日(KakeDay)で切る。
 /// `Tran00Uriage.IsPay` は旧システムの「掛計上FLG」の移行値で消込状態ではないため流用しない。
 /// </para>
 /// </summary>

@@ -188,7 +188,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildKinMeisaiList(rec);
 
 				return new Tran06Nyukin() {
-					DenDay = getString(rec, "在庫計上日", "19010101"),
+					KakeDay = getString(rec, "在庫計上日", "19010101"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
 					Jmeisai = meisaiList,
@@ -212,7 +212,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildKinMeisaiList(rec);
 
 				return new Tran07Shiharai() {
-					DenDay = getString(rec, "在庫計上日", "19010101"),
+					KakeDay = getString(rec, "在庫計上日", "19010101"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
 					Jmeisai = meisaiList,

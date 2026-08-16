@@ -197,11 +197,13 @@ public partial class SelectTranWinViewModel : BaseViewModel {
 		if (long.TryParse(DenNoTo.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out long to)) {
 			clauses.Add($"Id <= {AddParameter(parameters, to)}");
 		}
+		// 日付列名は型ごとに違う。TranAllHeader 系は DenDay、入金/支払(TranKinHeader)は KakeDay。
+		var dayColumn = TranRowAccessor.For(myType).DayColumnName;
 		if (DenDayFrom is DateTime dayFrom) {
-			clauses.Add($"DenDay >= {AddParameter(parameters, dayFrom.ToString("yyyyMMdd"))}");
+			clauses.Add($"{dayColumn} >= {AddParameter(parameters, dayFrom.ToString("yyyyMMdd"))}");
 		}
 		if (DenDayTo is DateTime dayTo) {
-			clauses.Add($"DenDay <= {AddParameter(parameters, dayTo.ToString("yyyyMMdd"))}");
+			clauses.Add($"{dayColumn} <= {AddParameter(parameters, dayTo.ToString("yyyyMMdd"))}");
 		}
 		return string.Join(" AND ", clauses);
 	}
@@ -223,6 +225,10 @@ sealed class TranRowAccessor {
 
 	PropertyInfo? id;
 	PropertyInfo? denDay;
+
+	/// <summary>WHERE句へ埋める伝票日付の実列名。<c>DenDay</c> か <c>KakeDay</c>。</summary>
+	public string DayColumnName { get; private set; } = nameof(TranAllHeader.DenDay);
+
 	PropertyInfo? kubun;
 	PropertyInfo? enKubun;
 	PropertyInfo? torisaki;
@@ -243,9 +249,13 @@ sealed class TranRowAccessor {
 
 	static TranRowAccessor Build(Type type) {
 		PropertyInfo[] properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+		// 伝票日付の列名は型で異なる。TranAllHeader 系は DenDay、入金/支払(TranKinHeader)は KakeDay しか持たない。
+		PropertyInfo? day = Find(properties, nameof(TranAllHeader.DenDay))
+			?? Find(properties, nameof(TranKinHeader.KakeDay));
 		var accessor = new TranRowAccessor {
 			id = Find(properties, nameof(BaseDbClass.Id)),
-			denDay = Find(properties, nameof(TranAllHeader.DenDay)),
+			denDay = day,
+			DayColumnName = day?.Name ?? nameof(TranAllHeader.DenDay),
 			kubun = properties.FirstOrDefault(x => x.Name == "Kubun" && x.PropertyType == typeof(int)),
 			enKubun = properties.FirstOrDefault(x => x.Name == "EnKubun" && x.PropertyType.IsEnum),
 			soko = Find(properties, nameof(TranAllHeader.VSoko)),

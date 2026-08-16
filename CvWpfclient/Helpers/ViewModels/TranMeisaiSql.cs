@@ -50,6 +50,18 @@ internal static class TranMeisaiSql {
 	internal static string DateLabel(string column) =>
 		$"case when length({column})=8 then substr({column},1,4)||'/'||substr({column},5,2)||'/'||substr({column},7,2) else ifnull({column},'') end";
 
+	/// <summary>
+	/// 元帳のメモ欄。消込済(<c>EndFlag=1</c>)の伝票はメモの先頭へ <c>*</c> を出す。
+	/// <para>
+	/// 消込マークは専用列を作らずメモ欄へ同居させる。帳票定義(qfm)の列を増やさずに済ませるためで、
+	/// メモが空でなければ <c>*</c> との間に半角空白を1つ入れる。メモが空なら <c>*</c> だけになる。
+	/// 未消込の伝票と、EndFlag を持たない入金・支払・繰越の行はメモをそのまま出す。
+	/// </para>
+	/// </summary>
+	internal static string MemoWithKesikomiMark(string endFlagColumn, string memoColumn) =>
+		$"case when {endFlagColumn} = 1 then '*' || case when ifnull({memoColumn},'') = '' then '' else ' ' || {memoColumn} end"
+		+ $" else ifnull({memoColumn},'') end";
+
 	/// <summary>取引区分の数値をラベルにする case 式を作る。</summary>
 	internal static string KubunLabel(string column, params (int Value, string Label)[] map) {
 		var cases = string.Join(" ", map.Select(m => $"when {m.Value} then '{m.Label}'"));

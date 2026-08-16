@@ -12,7 +12,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// 仕様は `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
 /// </para>
 /// <para>
-/// 期間は債務側は掛計上日(KakeDay)、支払側は計上日(DenDay)で切る。
+/// 期間は債務側・支払側とも掛計上日(KakeDay)で切る。
 /// `Tran03Shiire.IsPay` は旧システムの「掛計上FLG」の移行値で消込状態ではないため流用しない。
 /// </para>
 /// </summary>

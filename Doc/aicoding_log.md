@@ -1,3 +1,69 @@
+## [2026-08-16] 消込・掛集計の残論点を確定し実装（入金支払の掛計上日化、元帳の消込マーク、区分別内訳）
+### Agent
+- Opus 5 : Anthropic : Sekiya Sato Claude
+### Editor
+- Claude Code
+### 目的
+- ユーザーからの要望：`Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` の未決事項を再度洗い出して提示し、決定できたものを新しいドラフトへ確定させて実装する。
+- 決定内容の記録先は `Doc/spec/2026-08-16_phase1_業務仕様決定ドラフト.md` を新設し、2026-08-12 版は履歴として残す。
+### 事前調査で判明した事実
+- 前回ログで「次に判断が必要」とした `IsPay` は、ユーザーが移行済み50,311件を `1` へ一括更新済みだった。`Tran03Shiire` 25件も同じ。推奨案どおり条件を追加しても売掛は消えない。
+- 入金明細の `Id_Kin` も 2.1.4 の是正SQLが適用済みで、2,302件すべてが `KIN` マスタへ紐付いていた。
+- `MasterTokui.Id_Paysaki` / `MasterShiire.Id_Paysaki` は変化なしで全件 `0` のまま。
+- 実DBは WAL モードで、`-wal` に65MBの未チェックポイント分がある。**`.db` だけを複製すると直前の更新が落ちる**。最初の検証はこれに気づかず旧データで走らせ、内訳が全額「その他」に落ちる誤った結果を得た。`-wal` と `-shm` も併せて複製して再検証した。
+- 得意先元帳は売上を `DenDay` で拾っており、`KakeDay` で集計する売掛と基準日が違っていた（ドラフト未記載の論点）。
+### ユーザー決定
+- **A1**: `Id_Paysaki = 0` は親を持たず、その取引先自身に対して請求（支払）を行うとみなす。既存の絞り込み条件をそのまま確定。旧 `Code_Kin = 85` は金額が過大だが一旦 `02` 振込手数料のままとする。
+- **A2**: `Tran06Nyukin` / `Tran07Shiharai` の `DenDay` を `KakeDay` へ**列名変更**し、掛計上日とみなす（2026-08-12 版 2.1.2-2 の「`DenDay` を流用し専用列を追加しない」を変更）。
+- **A3 / A4 / A5**: 消込済み行の再表示、監査列なし、入金側の対象範囲は推奨どおり承認。
+- **C1**: 元帳の `*` は `EndFlag = 1` を条件に、**メモを印字している欄の先頭**へ出す。メモがあれば半角空白1つを挟む。qfm は変更しない。
+- **D1〜D6**: 掛集計は推奨どおり。得意先/仕入先単位を維持、区分別内訳を埋める、`IsPay` 条件を追加、対象期間より後の月も再計算、基準日を `KakeDay` に統一、締日単位の税計算は 1.0 対象外。
+- 請求・支払計算（2.7）以降は未着手のままとする。
+### 実施内容
+- `Doc/spec/2026-08-16_phase1_業務仕様決定ドラフト.md`: 新設。決定の前提となった実データの事実、A1〜D6 の決定、実装箇所、未決事項（E〜I）、受入条件と検証結果を記載。
+- `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md`: 冒頭に引き継ぎ注記を追加。後継書で変更された決定（2.1.2-2）を明示。
+- `CvBase/BaseDb2Trans.cs`: `TranKinHeader.DenDay` を `KakeDay` へ改名。`Tran06Nyukin` / `Tran07Shiharai` の `KeyDml("nk1")` を追随。
+- `CvBase/UpdateDb.cs`: `26_08_16_01` で両テーブルへ `RENAME COLUMN DenDay TO KakeDay`。
+- `CvDomainLogic/SummaryDb.cs`: `CalcSummaryUriKake()` / `CalcSummaryKaiKake()` を改訂。共通の `KakeDenWhere` / `KinMeisaiFrom` / `KinBucket()` / `ExtendToMonth()` を新設。
+- `CvWpfclient/Helpers/ViewModels/TranMeisaiSql.cs`: `MemoWithKesikomiMark()` を追加。両元帳が同じ式を使う。
+- `TokuiLedgerViewModel` / `ShiireLedgerViewModel`: メモ欄の `*` 付与と、基準日の `KakeDay` 化。
+- `SeikyuBalanceDetailViewModel` / `ShiharaiBalanceDetailViewModel`: 入金・支払側の期間条件を `KakeDay` へ。同じ問い合わせ内で軸がずれないよう売上・仕入側も揃えた。`SummaryUriSei` / `SummaryKaiShi` の `DenDay`（請求日・支払日）は据え置き。
+- `BaseKinInputViewModel` / `BaseMatchingViewModel` / `SelectTranWinViewModel` と、入金・支払の入力/消込 XAML 4件を追随。
+- `Tests/TestServer/SummaryKakeDbTests.cs`: 新設（9件）。区分別内訳、`IsPay` 除外、後続月の再計算、`KakeDay` 基準、繰越、再実行の冪等性を固定。
+### 技術決定 Why
+- **入金の内訳をヘッダ総額と別の枝にした理由**: `json_each` で明細を展開すると1伝票が複数行になり、同じ SELECT で `SUM(KingakuTotal)` を採ると明細数だけ二重計上される。`UNION ALL` の枝を「ヘッダ総額」と「区分別内訳」に分けることで、`TotalIn` はヘッダから、内訳は明細から採れる。
+- **バッチSQLで `json_each` を使った理由**: 2.1.2-3 は「JSON関数への依存を増やさない」意図でクライアント側C#展開を採ったが、それは画面照会が `QueryListSqlParam` の既存経路に載るという理由だった。夜間バッチにクライアントは無く、`BaseDbDerived` / `BaseDbJodai` / `TranMeisaiSql` が既に `json_each` を使っているため新規の依存にはならない。
+- **内訳を符号付きで持つ理由**: `Uriage + Henpin + Nebiki` が改訂前の `Uriage`（全区分の符号付き合計）と一致し、テストで検証できる不変条件になる。返品・値引は `CalcFlag = -1` なのでマイナスで入る。売上側に「その他」の内訳列が無いため区分 `99` は `Uriage` に含める。
+- **未知の `Id_Kin` を `Other` へ寄せる理由**: `Cash + Fee + Densai + Offset + Other = TotalIn` を無条件に成り立たせるため。マスタに無い区分があっても金額が消えない。
+- **D4 を「実効終了月を伸ばす」方式にした理由**: 指定範囲を「From 以降すべて」に読み替えると `DateToYyyymm` の意味が失われる。指定はそのまま残し、後続月に集計行または伝票があるときだけ終了月を伸ばす。夜間ジョブは前月・当月しか回さないので通常は挙動が変わらない。
+- **`ExtendToMonth` で `KakeDay > @0 || '99'` と書いた理由**: `substr(KakeDay,1,6) > @0` と論理的に同値でありながら、`KakeDay` のインデックスが効く。実DBで件数一致（37,130件）を確認した。
+- **元帳の `*` に専用列を作らなかった理由**: 列を増やすと `printform/*.qfm` の座標調整が必要になる。メモ欄へ同居させればレイアウトを維持できる、というユーザー指示。
+- **`SelectTranWinViewModel` を列名解決方式にした理由**: このダイアログは `TranAllHeader` 系と `TranKinHeader` 系の両方を扱うが、WHERE句の日付列名を `DenDay` で静的に埋めていた。改名で入金・支払だけ壊れるため、型から `DenDay` / `KakeDay` を解決するようにした。
+- **`SummaryUriSei` / `SummaryKaiShi` の `DenDay` を改名しなかった理由**: こちらは請求日・支払日であり、伝票の計上日とは意味が違う。
+### 確認
+- `dotnet build`: 成功（警告0、エラー0）。
+- `TestServer` 72件（新規9件）、`TestLogin` 7件、いずれも全通過。
+- 実DBの複製（`.db` / `-wal` / `-shm` を揃えて複製し `26_08_16_01` 適用後）に対し、改訂後の集計SQLを実行して確認した。
+  - 売掛18,333行を生成。`Cash + Fee + Densai + Offset + Other <> TotalIn` の行は0件。入金計 10,690,639,150（現金 7,407,676,593 / 手数料 3,146,872,651 / 相殺 120,787,740 / その他 15,302,166）。
+  - `Uriage + Henpin + Nebiki` = 伝票側の符号付き合計。売掛 233,574,853、買掛 992,000 で一致。
+  - D4 は `202001` 指定で実効終了月が `202205` へ延長され、後続月が無い場合は延長しない。
+  - 買掛で繰越の積み上げを確認（`202607` 残 1,091,200 → `202608` 支払 1,055,880 → 残 35,320）。
+  - C1 のメモ欄は4パターン（`* メモ` / `*` / `メモ` / 空）とも期待どおり。
+- 列名変更の影響監査を両方向で実施。入金・支払テーブルを参照する16ファイルに `DenDay` 参照が残っていないこと、`KakeDay` を使う全SQLの対象テーブルが `KakeDay` を持つことを確認した。`CvServer` に入金・支払テーブルを扱うSQLは無い。`WriteEffectRunner.PartialUpdateDeniedColumns` は両方の列名を含むため変更不要。
+- `git diff --check`: 成功。新規2ファイルは UTF-8 BOM なし・CRLF。
+### 落とし穴
+- **WAL を含めずにDBを複製すると古い状態を検証してしまう**。実DBは WAL モードで、`.db` のみの複製では直近の更新が丸ごと欠ける。検証用に複製するときは `-wal` と `-shm` も揃え、`PRAGMA wal_checkpoint(TRUNCATE)` を通すこと。
+- **`substr(t.DenDay,...)` の置換漏れ**。SQL文字列内の列名はコンパイラが検査しないため、ビルド成功では検出できない。最初の一括置換が WHERE 句だけに一致し、`UNION ALL` 側の SELECT リストに `substr(t.DenDay,1,6) AS DenMonth` が残っていた。列名変更では対象テーブルを含む全ファイルを目視で通し、逆方向（新しい列名を持たないテーブルに新列名を使っていないか）も確認する。
+- **NPoco の `Insert` は AutoIncrement 主キーに明示した `Id` を捨てる**。テストで `MasterMeisho` の `Id` を固定したかったが `Insert` では反映されず、外部キーの突き合わせが全て外れて内訳が `Other` に寄った。Id を固定したい場合は生SQLで `INSERT` する。
+### 残課題
+- `26_08_16_01` は実DBへ適用済みだが、実画面での目視確認（入金・支払入力、消込、元帳の印刷プレビュー）は未実施。
+- `SummaryUriKake` / `SummaryKaiKake` は実DBでは0件のまま。夜間ジョブでの初回生成は未実施。
+- 入金・支払入力画面のラベルは「入金日」「支払日」のままで、列名（掛計上日）と表記が揃っていない。表示語の変更要否は未判断。
+- 未着手の決定事項は新ドラフト5章のとおり。請求・支払計算（E1〜E6）、在庫調整・引当の調整数（F1〜F4）、発注・受注残の強制完了（G1〜G3）、納品予定日（H1〜H2）、禁止列リストの保守方針（I1）。
+- `Doc/spec/2026-08-12_CV10機能完成度チェックリスト.md` は今回の変更を未反映。
+
+---
+
 ## [2026-08-16] 入金・支払明細の旧区分コードを KIN 区分へ対応付け
 ### Agent
 - Opus 5 : Anthropic : Sekiya Sato Claude

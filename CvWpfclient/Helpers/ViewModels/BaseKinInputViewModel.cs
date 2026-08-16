@@ -53,10 +53,10 @@ public abstract partial class BaseKinInputViewModel<TDen> : BasePlainLightMenteV
 	bool IsDetailTabSelected() => SelectedTabIndex == 1;
 
 	protected override Type Tabletype => typeof(TDen);
-	protected override string? ListOrder => "DenDay desc, Id desc";
+	protected override string? ListOrder => "KakeDay desc, Id desc";
 	protected override int? ListMaxCount => selectParam?.MaxCount;
 	protected override string LightweightSelectColumns =>
-		"Id,Vdc,Vdu,DenDay,Id_Shain,VShain,Id_Torisaki,VTori,KingakuTotal,ManualNo,Memo";
+		"Id,Vdc,Vdu,KakeDay,Id_Shain,VShain,Id_Torisaki,VTori,KingakuTotal,ManualNo,Memo";
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
@@ -80,8 +80,8 @@ public abstract partial class BaseKinInputViewModel<TDen> : BasePlainLightMenteV
 			List<string> clauses = [];
 			if (selectParam.FromId.HasValue) clauses.Add($"Id >= {selectParam.FromId.Value}");
 			if (selectParam.ToId.HasValue) clauses.Add($"Id <= {selectParam.ToId.Value}");
-			if (!string.IsNullOrWhiteSpace(selectParam.FromDate)) clauses.Add($"DenDay >= '{EscapeSqlLiteral(selectParam.FromDate)}'");
-			if (!string.IsNullOrWhiteSpace(selectParam.ToDate)) clauses.Add($"DenDay <= '{EscapeSqlLiteral(selectParam.ToDate)}'");
+			if (!string.IsNullOrWhiteSpace(selectParam.FromDate)) clauses.Add($"KakeDay >= '{EscapeSqlLiteral(selectParam.FromDate)}'");
+			if (!string.IsNullOrWhiteSpace(selectParam.ToDate)) clauses.Add($"KakeDay <= '{EscapeSqlLiteral(selectParam.ToDate)}'");
 			AddIdInClause(clauses, "Id_Torisaki", selectParam.ToriIds);
 			return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 		}
@@ -136,7 +136,7 @@ public abstract partial class BaseKinInputViewModel<TDen> : BasePlainLightMenteV
 		if (item != null && item.Id > 0 && !ReferenceEquals(Current, item)) Current = item;
 		if (Current.Id <= 0) {
 			Current = new TDen {
-				DenDay = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture),
+				KakeDay = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture),
 				Jmeisai = [],
 			};
 		}

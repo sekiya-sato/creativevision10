@@ -12,6 +12,12 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// 集計テーブルは支払計算(月次更新処理)が作るもので、締め処理を回していない期間では空になるため、
 /// 元帳としては伝票を積み上げた値の方が常に正しい。
 /// 繰越残高 = 期間開始日より前の (仕入 - 支払) の累計。
+///
+/// 期間は仕入・支払とも掛計上日(KakeDay)で切る。買掛集計(SummaryKaiKake)と同じ軸にするためで、
+/// 2026-08-16 に仕入側を DenDay から、支払側を改名前の DenDay から切り替えた。
+/// 画面の条件プロパティ名 DenDayFrom / DenDayTo は互換のため据え置いており、指す値は掛計上日である。
+///
+/// 消込済(EndFlag=1)の伝票はメモ欄の先頭へ `*` を出す。帳票定義(ShiireLedger.qfm)は変更していない。
 /// </summary>
 public partial class ShiireLedgerViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "仕入先元帳";
@@ -60,6 +66,9 @@ public partial class ShiireLedgerViewModel : Helpers.BaseReportViewModel {
 			((int)EnumShiire.Shiire, "仕入"), ((int)EnumShiire.Henpin, "仕入返品"),
 			((int)EnumShiire.Nebiki, "値引"), ((int)EnumShiire.Other, "その他"));
 
+		// 消込済(EndFlag=1)の仕入伝票はメモ欄の先頭へ `*` を出す。qfm には列を追加しない。
+		var memoWithMark = TranMeisaiSql.MemoWithKesikomiMark("h.EndFlag", "h.Memo");
+
 		var activeOnly = IsActiveOnly ? "WHERE moveCount > 0" : "";
 
 		var sql = $@"
@@ -72,30 +81,30 @@ carry AS (
     SELECT idTori, SUM(kari) - SUM(kashi) AS balance
     FROM (
         SELECT h.Id_Shiire AS idTori, {ShiireKingaku} AS kari, 0 AS kashi
-        FROM Tran03Shiire h WHERE h.DenDay < {dayFrom}
+        FROM Tran03Shiire h WHERE h.KakeDay < {dayFrom}
         UNION ALL
         SELECT h.Id_Torisaki AS idTori, 0 AS kari, h.KingakuTotal AS kashi
-        FROM Tran07Shiharai h WHERE h.DenDay < {dayFrom}
+        FROM Tran07Shiharai h WHERE h.KakeDay < {dayFrom}
     )
     GROUP BY idTori
 ),
 -- 期間内の動き
 moves AS (
     SELECT
-        h.Id_Shiire AS idTori, h.DenDay AS denDay, h.Id AS denNo,
+        h.Id_Shiire AS idTori, h.KakeDay AS denDay, h.Id AS denNo,
         1 AS srcOrder, {kubunLabel} AS kubunText,
         h.SuTotal AS su, {ShiireKingaku} AS kari, 0 AS kashi,
-        ifnull(h.ManualNo,'') AS manualNo, ifnull(h.Memo,'') AS memo
+        ifnull(h.ManualNo,'') AS manualNo, {memoWithMark} AS memo
     FROM Tran03Shiire h
-    WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}
+    WHERE h.KakeDay >= {dayFrom} AND h.KakeDay <= {dayTo}
     UNION ALL
     SELECT
-        h.Id_Torisaki AS idTori, h.DenDay AS denDay, h.Id AS denNo,
+        h.Id_Torisaki AS idTori, h.KakeDay AS denDay, h.Id AS denNo,
         2 AS srcOrder, '支払' AS kubunText,
         0 AS su, 0 AS kari, h.KingakuTotal AS kashi,
         ifnull(h.ManualNo,'') AS manualNo, ifnull(h.Memo,'') AS memo
     FROM Tran07Shiharai h
-    WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}
+    WHERE h.KakeDay >= {dayFrom} AND h.KakeDay <= {dayTo}
 ),
 targets AS (
     SELECT

@@ -179,7 +179,7 @@ public abstract partial class BaseMatchingViewModel<TDen, TKin> : BaseQueryViewM
 	[ObservableProperty]
 	public partial string KakeDayToText { get; set; } = DefaultKakeDayTo();
 
-	/// <summary>支払日 開始 yyyy/MM/dd（既定: 当月1日）。入金/支払は計上日(DenDay)で切る。</summary>
+	/// <summary>支払日 開始 yyyy/MM/dd（既定: 当月1日）。入金/支払は掛計上日(KakeDay)で切る。</summary>
 	[ObservableProperty]
 	public partial string PayDayFromText { get; set; } = DefaultPayDayFrom();
 
@@ -533,13 +533,13 @@ LIMIT {maxCount}";
 		// 入金/支払は請求先配下の取引先分をすべて集計する（得意先Idでの絞り込みは伝票側だけに効かせる）。
 		// 区分別集計に明細が必要なので Jmeisai を読む。
 		var sql = $@"
-SELECT h.Id, h.Vdc, h.Vdu, h.DenDay, h.Id_Shain, h.VShain, h.Id_Torisaki, h.VTori,
+SELECT h.Id, h.Vdc, h.Vdu, h.KakeDay, h.Id_Shain, h.VShain, h.Id_Torisaki, h.VTori,
        h.KingakuTotal, h.ManualNo, h.Memo, h.Jmeisai
 FROM {KinTableName} h
-WHERE h.DenDay >= {AddSqlParameter(parameters, dayFrom)}
-  AND h.DenDay <= {AddSqlParameter(parameters, dayTo)}
+WHERE h.KakeDay >= {AddSqlParameter(parameters, dayFrom)}
+  AND h.KakeDay <= {AddSqlParameter(parameters, dayTo)}
   AND h.Id_Torisaki IN ({BuildPaysakiSubQuery()})
-ORDER BY h.DenDay, h.Id
+ORDER BY h.KakeDay, h.Id
 LIMIT {maxCount}";
 		return await QuerySqlListAsync<TKin>(sql, parameters, ct);
 	}

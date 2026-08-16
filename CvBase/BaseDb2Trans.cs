@@ -439,13 +439,17 @@ public sealed partial class Tran99Meisai : ObservableObject {
 [Comment("トランザクション：入金/支払共通ヘッダ Tran06Nyukin/Tran07Shiharai の基底で単独の実テーブルは作成しない")]
 public partial class TranKinHeader : BaseDbClass {
 	/// <summary>
-	/// 計上日（yyyyMMdd）
+	/// 掛計上日（yyyyMMdd）。売掛・買掛の集計、元帳、消込画面はこの日付を基準にする。
+	/// <para>
+	/// 2026-08-16 に <c>DenDay</c> から改名した。売上(<see cref="Tran00Uriage.KakeDay"/>)・
+	/// 仕入(<see cref="Tran03Shiire.KakeDay"/>)と同じ軸で扱うため、入金・支払も掛計上日を持つ。
+	/// </para>
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("在庫計上日")]
-	[Comment("計上日（yyyyMMdd）")]
-	public partial string DenDay { get; set; } = "19010101";
+	[Comment("掛計上日（yyyyMMdd） 売掛・買掛の集計、元帳、消込画面はこの日付を基準にする。 2026-08-16 に DenDay から改名した。")]
+	public partial string KakeDay { get; set; } = "19010101";
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
@@ -568,7 +572,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 /// 入金 06 (取引先 売掛-)
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
-[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk1", false, nameof(KakeDay))]
 [KeyDml("nk2", false, [nameof(Id_Torisaki)])]
 [Comment("トランザクション：入金データ 売掛に対する入金")]
 [OldTableCommentAttr("HC$tran_tori0")]
@@ -578,7 +582,7 @@ public sealed partial class Tran06Nyukin : TranKinHeader {
 /// 支払 07 (取引先 買掛-)
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
-[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk1", false, nameof(KakeDay))]
 [KeyDml("nk2", false, [nameof(Id_Torisaki)])]
 [Comment("トランザクション：支払データ 買掛に対する支払")]
 [OldTableCommentAttr("HC$tran_tori0")]
