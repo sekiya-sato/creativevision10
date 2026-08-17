@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CvBase;
 using CvWpfclient.Helpers;
 using System.Globalization;
+using System.Windows;
 
 namespace CvWpfclient.ViewModels.Sub;
 
@@ -13,6 +14,11 @@ public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranA
 	public void Initialize(SelectInputParameter? param) {
 		Parameter = param ?? new SelectInputParameter();
 	}
+
+	protected override void OnExit() {
+		ClientLib.Exit(this);
+	}
+
 
 	[RelayCommand]
 	void Ok() {

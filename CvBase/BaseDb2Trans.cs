@@ -1869,6 +1869,7 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 }
 
 
+/* 以下は1.1- 以降の対応table */
 /* ToDo: 未作成テーブル(原価)
    上代(TranJodai / DerivedJodai)は CvBase/BaseDbJodai.cs で作成済み
 
@@ -1877,38 +1878,6 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 public sealed partial class TranGenka : BaseDbClass {
 }
 */
-
-
-/* ToDo: 未作成テーブル(配分)
-[Comment("トランザクション：配分データ：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
-public sealed partial class TranHaibun : BaseDbClass {
-}
-[Comment("派生テーブル：配分明細：日付、倉庫Id、商品Id、色サイズ、予定数量、実数量、完了FLG、元伝票Id")]
-public sealed partial class DerivedHaibun : BaseDbClass {
-}
- */
-
-/* ToDo: 未作成テーブル(補充)
-[Comment("トランザクション：補充データ：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
-public sealed partial class TranHojyu : BaseDbClass {
-}
- */
-
-/* ToDo: 未作成テーブル(集計)
-[Comment("集計テーブル：売掛データ：年月、得意先Id、前月残、当月残、売上、入金")]
-public sealed partial class SummaryUrikake : BaseDbClass {
-}
-[Comment("集計テーブル：請求データ：年月+締日、得意先Id、前月残、当月残、売上、入金")]
-public sealed partial class SummaryUriSei : BaseDbClass {
-}
-[Comment("集計テーブル：買掛データ：年月、仕入先Id、前月残、当月残、売上、入金")]
-public sealed partial class SummaryKaikake : BaseDbClass {
-}
-[Comment("集計テーブル：支払データ：年月、仕入先Id、前月残、当月残、売上、入金")]
-public sealed partial class SummaryKaiShi : BaseDbClass {
-}
- */
-
 /* ToDo: 未作成テーブル(顧客)
 [Comment("ベースポイントトランク別ポイント、ボーナスポイント")]
 public sealed partial class MasterPointRank : BaseDbClass {
@@ -1917,4 +1886,3 @@ public sealed partial class MasterPointRank : BaseDbClass {
 public sealed partial class TranPointRireki : BaseDbClass {
 }
  */
-
