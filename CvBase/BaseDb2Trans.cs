@@ -100,6 +100,16 @@ public class TranCalcBase {
 	}
 
 	/// <summary>
+	/// 出荷売上とみなす出荷先の店種区分。1=卸先 / 3=売仕店（決定 G4 / I4）。
+	/// <para>
+	/// 0=倉庫 と 6=直営店 は移動伝票の対象であり、受注残を消化しない。
+	/// 受注残の判定（サーバー側 <c>CompletionDb</c>）と受注残完了設定画面の残数表示で同じ値を使う。
+	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 5.3 を参照する。
+	/// </para>
+	/// </summary>
+	public const string ShukkaTenTypes = "1,3";
+
+	/// <summary>
 	/// 調整数(<see cref="SummaryStock.AdjustQty"/>)へ積むフラグを取得する。
 	/// <para>
 	/// 在庫調整(<see cref="Tran61Chosei"/>)だけが 1 を返す。入出庫と区別して受払表へ出すために

@@ -434,6 +434,52 @@ public class WriteEffectRunnerTests {
 		Assert.AreEqual(0, GetEndFlag(nameof(Tran12Jyuchu), juchu.Id));
 	}
 
+	/// <summary>
+	/// 残完了設定画面が使う `EndFlag` の部分更新は、在庫にも引当にも副作用を起こさない。
+	/// 消込と同じく `PartialUpdateParam` で書き戻すため、副作用の起動対象外であることを固定する。
+	/// </summary>
+	[TestMethod]
+	public void AfterPartialUpdate_HachuEndFlag_HasNoSideEffect() {
+		PrepareCompletionTables();
+		var runner = new WriteEffectRunner(Db);
+		var hachu = CreateHachu([(10, 100, 1000, 10)]);
+		Db.Insert(hachu);
+
+		// 残完了設定画面と同じ更新（EndFlag だけを立てる）
+		Db.Execute("update Tran13Hachu set EndFlag = 1 where Id = @0", hachu.Id);
+		var effect = runner.AfterPartialUpdate(typeof(Tran13Hachu), [nameof(Tran13Hachu.EndFlag)], [hachu.Id]);
+
+		Assert.AreEqual(0, effect, "発注はITranReserveではないので引当再計算は走らない");
+		Assert.AreEqual(1, GetEndFlag(nameof(Tran13Hachu), hachu.Id));
+		Assert.AreEqual(0, Db.Fetch<SummaryRealStock>("").Count, "在庫集計も動かない");
+	}
+
+	/// <summary>
+	/// 残完了設定で手動解除したあと、実績が充足していれば次の書き込みで再び自動完了になる。
+	/// 完了は「未完了かつ全SKU充足」でのみ立つ片方向の判定なので、解除しただけでは戻らない。
+	/// </summary>
+	[TestMethod]
+	public void After_ShiireWrite_RecompletesManuallyClearedHachu() {
+		PrepareCompletionTables();
+		var runner = new WriteEffectRunner(Db);
+		var hachu = CreateHachu([(10, 100, 1000, 10)]);
+		Db.Insert(hachu);
+		var shiire = CreateShiire(hachu.Id, [(10, 100, 1000, 10)]);
+		Db.Insert(shiire);
+		runner.After(WriteOp.Insert, typeof(Tran03Shiire), shiire, null, 1);
+		Assert.AreEqual(1, GetEndFlag(nameof(Tran13Hachu), hachu.Id));
+
+		// 残完了設定から手動で解除する
+		Db.Execute("update Tran13Hachu set EndFlag = 0 where Id = @0", hachu.Id);
+		Assert.AreEqual(0, GetEndFlag(nameof(Tran13Hachu), hachu.Id));
+
+		// 仕入をもう一度保存すると、充足しているので自動完了へ戻る
+		var effect = runner.After(WriteOp.Update, typeof(Tran03Shiire), shiire, shiire, 2);
+
+		Assert.AreEqual(1, effect.Completion);
+		Assert.AreEqual(1, GetEndFlag(nameof(Tran13Hachu), hachu.Id));
+	}
+
 	// ===== ヘルパ =====
 
 	private void PrepareCompletionTables() {

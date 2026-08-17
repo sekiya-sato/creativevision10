@@ -57,13 +57,8 @@ public class CompletionDb(ExDatabase db) {
 	/// <returns>完了フラグを立てた伝票数</returns>
 	public int CalcJuchuEndFlag(IEnumerable<long> juchuIds) =>
 		CalcEndFlag(nameof(Tran12Jyuchu), nameof(Tran00Uriage), juchuIds,
-			actualJoin: $"INNER JOIN {nameof(MasterTokui)} t ON t.Id = h.Id_Tokui AND t.TenType IN ({ShukkaTenTypes})");
-
-	/// <summary>
-	/// 出荷売上とみなす店種区分。1=卸先 / 3=売仕店（決定 G4 / I4）。
-	/// 0=倉庫 と 6=直営店 は移動伝票の対象であり受注残を消化しない。
-	/// </summary>
-	public const string ShukkaTenTypes = "1,3";
+			actualJoin: $"INNER JOIN {nameof(MasterTokui)} t ON t.Id = h.Id_Tokui "
+				+ $"AND t.TenType IN ({TranCalcBase.ShukkaTenTypes})");
 
 	/// <summary>
 	/// 未完了の対象伝票のうち、明細の全SKUが実績で充足したものへ <c>EndFlag=1</c> を立てる。

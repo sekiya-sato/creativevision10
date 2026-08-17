@@ -647,3 +647,53 @@ WHERE t.Jmeisai LIKE '[%'
   現状は棚卸年月末時点の帳簿在庫を保存する。倉庫ごとに棚卸日が異なる運用へ広げる場合は
   `StartStocktake()` で日付別に集計する必要がある。
 - 入力社員は確定処理でのみ選択する。未選択のままでも実行でき、その場合 `Id_Shain=0` で登録される。
+
+---
+## [2026-08-17] 発注残完了設定・受注残完了設定を実装
+### Agent
+- Claude Code : Opus 5 : Sekiya Sato
+### 目的
+- 前コミットで実装した `CompletionDb` の自動完了に対する例外処理として、
+  残っていてもこれ以上入荷・出荷しないと決めた伝票を手で完了にする画面を作る。
+### 設計
+- **画面構成**: 消込画面(`BaseMatchingViewModel`)と同じ2段構成にした。
+  「一覧取得」で伝票を残数付きで並べ、「完了実行」でCheckBoxが変化した伝票だけを書き戻す。
+  やることが消込とほぼ同じ(伝票単位のフラグを一覧で立てる)なので、操作を揃えたほうが学習コストが低い。
+- **書き戻し**: 消込と同じ `PartialUpdateParam` で `EndFlag` 列だけを更新する。
+  行全体を保存する `UpdateParam` だと1件ごとに在庫再集計が走るため。
+  楽観排他は行単位で、1件でも競合すればサーバーが全件rollbackする。
+- **共通化**: 発注と受注は対象テーブルと取引先が違うだけなので、
+  `BaseZanCompletionViewModel<TDen>` へ共通部分を置き、派生はテーブル名と取引先選択だけを与える。
+- **残数の定義**: 明細をSKU単位に畳み、実績が足りないぶんだけを `max(不足, 0)` で合計する。
+  単純な「伝票数量 − 実績数量」にすると、あるSKUの超過が別のSKUの不足を隠してしまうため。
+  サーバー側の自動完了判定(明細単位で全SKU充足)と同じ見方になる。
+### 実施内容
+- `CvBase/BaseDb2Trans.cs`: `TranCalcBase.ShukkaTenTypes` を追加した。
+  受注残を消化する出荷先の店種区分(卸先1・売仕店3)で、サーバーと画面で共用する。
+  `CvWpfclient` は `CvDomainLogic` を参照しないため、共有場所を `CvBase` にした。
+- `CvDomainLogic/CompletionDb.cs`: 上記定数を使うよう変更した(自前の定数を廃止)。
+- `CvWpfclient/Helpers/ViewModels/BaseZanCompletionViewModel.cs`(新規): 共通基底。
+  検索条件(日付from-to / 取引先 / 表示区分「残のみ・全て」/ 取得件数上限)、
+  一覧(完了Flg・伝票No・日付・取引先・数量・実績数・残数・金額)、
+  全チェック・全解除、完了実行を持つ。
+  完了済みは残の有無にかかわらず一覧へ出し、初期ONで表示して解除できるようにした。
+  残がある伝票を完了にするときは確認ダイアログでその件数を知らせる。
+- `CvWpfclient/ViewModels/03Hatchu/HachuZanCompletionSettingViewModel.cs`: 発注側。
+- `CvWpfclient/ViewModels/04Juchu/JuchuZanCompletionSettingViewModel.cs`: 受注側。
+  出荷は卸先・売仕店へのものだけを数えるため `ActualExtraJoin` で店種区分を絞る。
+- `CvWpfclient/Views/03Hatchu/HachuZanCompletionSettingView.xaml`,
+  `CvWpfclient/Views/04Juchu/JuchuZanCompletionSettingView.xaml`: 空Viewを置き換えた。
+- `CvWpfclient/Models/MenuData.cs`: 2項目の説明を実装済みの内容へ更新した。
+### 検証
+- ビルド成功(警告0、エラー0)。
+- `Tests/TestServer`: 合計89 / 成功89 / 失敗0。新規2件。
+  - `AfterPartialUpdate_HachuEndFlag_HasNoSideEffect`: 画面が使う `EndFlag` の部分更新は
+    在庫にも引当にも副作用を起こさない。
+  - `After_ShiireWrite_RecompletesManuallyClearedHachu`: 手動解除しても実績が充足していれば
+    次の書き込みで自動完了へ戻る。完了は片方向の判定なので解除しただけでは戻らない。
+- `Tests/TestLogin`: 合計7 / 成功7 / 失敗0。
+### 残課題
+- 実行時確認が未実施。画面から実際に起動した確認はしていない。
+- 実データは発注1件・受注1件しかないため、一覧の残数表示は実データで検証できていない。
+- 完了済み伝票の編集時ワーニング(`CompletionDb.FindCompleted()` を使う)は未着手。
+  仕入入力・出荷売上入力の保存後処理へ組み込む必要がある。

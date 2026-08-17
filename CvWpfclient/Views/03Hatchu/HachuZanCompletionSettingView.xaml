@@ -1,17 +1,268 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._03Hatchu.HachuZanCompletionSettingView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._03Hatchu"
-	Title="発注残完了設定"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	Title="{Binding Title}"
+	Width="1280" Height="800"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="14"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:HachuZanCompletionSettingViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding SearchCommand}"
+			Gesture="F5" />
+		<KeyBinding Command="{Binding ExecuteCompletionCommand}"
+			Gesture="F6" />
+		<KeyBinding Command="{Binding ExitCommand}"
+			Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="26" Height="26"
+					VerticalAlignment="Center"
+					Kind="CheckboxMultipleMarkedOutline" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="18" FontWeight="SemiBold" Text="{Binding Title}" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<Border Grid.Row="1"
+			Padding="12"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="100" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+
+				<TextBlock Grid.Row="0" Grid.Column="0"
+					Margin="0,4" VerticalAlignment="Center"
+					Text="発注日" />
+				<TextBox Grid.Row="0" Grid.Column="1"
+					Width="180" Height="32"
+					Margin="0,4"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding DenDayFromText, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Grid.Row="0" Grid.Column="2"
+					Margin="8,0" VerticalAlignment="Center"
+					Text="～" />
+				<TextBox Grid.Row="0" Grid.Column="3"
+					Width="180" Height="32"
+					Margin="0,4" HorizontalAlignment="Left"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding DenDayToText, UpdateSourceTrigger=PropertyChanged}" />
+
+				<TextBlock Grid.Row="1" Grid.Column="0"
+					Margin="0,4" VerticalAlignment="Center"
+					Text="仕入先" />
+				<StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,4"
+					Orientation="Horizontal">
+					<Button Width="80"
+						Command="{Binding SelectToriCommand}"
+						Content="選択"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<Button Width="80"
+						Margin="8,0,0,0"
+						Command="{Binding ClearToriCommand}"
+						Content="全件"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBlock Margin="12,0,0,0" VerticalAlignment="Center"
+						Text="{Binding ToriDisplay}" />
+				</StackPanel>
+
+				<TextBlock Grid.Row="2" Grid.Column="0"
+					Margin="0,4" VerticalAlignment="Center"
+					Text="表示区分" />
+				<StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,4"
+					Orientation="Horizontal">
+					<ComboBox Width="140"
+						ItemsSource="{Binding ViewKinds}"
+						SelectedItem="{Binding ViewKind}"
+						Style="{StaticResource FormComboBox}"
+						ToolTip="残のみ：残がある伝票と完了済みの伝票を表示する" />
+					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+						Text="発注は仕入が明細単位で全SKU充足すると自動的に完了します。この画面はそれ以上入荷しない発注を手で完了にするためのものです。"
+						TextWrapping="Wrap" />
+				</StackPanel>
+
+				<StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4"
+					Margin="0,12,0,0" HorizontalAlignment="Left"
+					Orientation="Horizontal">
+					<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+						Text="取得件数上限" />
+					<TextBox Width="80" Height="32"
+						Margin="0,0,16,0"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding MaxCountText, UpdateSourceTrigger=PropertyChanged}" />
+					<Button Command="{Binding SearchCommand}"
+						IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+						Style="{StaticResource MaterialDesignFlatMidBgButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Magnify" />
+							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+								FontSize="16" Text="一覧取得" />
+						</StackPanel>
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding ExecuteCompletionCommand}"
+						IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+						Style="{StaticResource MaterialDesignFlatMidBgButton}"
+						ToolTip="チェックの変化した伝票を完了／解除する (F6)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="CheckDecagram" />
+							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+								FontSize="16" Text="完了実行" />
+						</StackPanel>
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding CheckAllCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="一覧の完了Flgを全てONにする">
+						<TextBlock FontSize="16" Text="全チェック" />
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding UncheckAllCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="一覧の完了Flgを全てOFFにする">
+						<TextBlock FontSize="16" Text="全解除" />
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding ClearConditionsCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="検索条件をクリア">
+						<TextBlock FontSize="16" Text="条件クリア" />
+					</Button>
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<DockPanel Grid.Row="2"
+			Margin="12">
+			<StackPanel Margin="0,0,0,6"
+				DockPanel.Dock="Top" Orientation="Horizontal">
+				<TextBlock FontSize="16" FontWeight="SemiBold" Text="発注伝票（完了設定対象）" />
+				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+					Text="{Binding TargetCount, StringFormat='チェック {0:N0} 件'}" />
+				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+					Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+					Text="{Binding ChangedCount, StringFormat='未反映の変更 {0:N0} 件'}" />
+			</StackPanel>
+			<DataGrid AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="False"
+				ItemsSource="{Binding DenRows}"
+				SelectionMode="Single" SelectionUnit="FullRow" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+				<DataGrid.Columns>
+					<!--  件数を即時連動させるため CheckBoxColumn ではなく TemplateColumn を使う  -->
+					<DataGridTemplateColumn Width="60"
+						Header="完了">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<CheckBox HorizontalAlignment="Center" VerticalAlignment="Center"
+									IsChecked="{Binding IsCompleted, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+					<DataGridTextColumn Width="80"
+						Binding="{Binding Id}"
+						Header="伝票No" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="100"
+						Binding="{Binding DenDay}"
+						Header="発注日" IsReadOnly="True" />
+					<DataGridTextColumn Width="300"
+						Binding="{Binding ToriDisplay}"
+						Header="仕入先" IsReadOnly="True" />
+					<DataGridTextColumn Width="100"
+						Binding="{Binding ManualNo}"
+						Header="手入力No" IsReadOnly="True" />
+					<DataGridTextColumn Width="90"
+						Binding="{Binding DenSu, StringFormat={}{0:N0}}"
+						Header="発注数" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="90"
+						Binding="{Binding ActualSu, StringFormat={}{0:N0}}"
+						Header="納品数" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="90"
+						Binding="{Binding ZanSu, StringFormat={}{0:N0}}"
+						Header="残数" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+								<Setter Property="ToolTip" Value="SKU単位の不足を合計した数。超過分では相殺しない" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="120"
+						Binding="{Binding Amount, StringFormat={}{0:N0}}"
+						Header="金額" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+				</DataGrid.Columns>
+			</DataGrid>
+		</DockPanel>
+
+		<Border Grid.Row="3"
+			Padding="12,8"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<DockPanel>
+				<Button DockPanel.Dock="Right"
+					Command="{Binding ExitCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="閉じる (Esc)">
+					<TextBlock FontSize="16" Text="閉じる" />
+				</Button>
+				<TextBlock VerticalAlignment="Center"
+					Text="{Binding Message}" TextWrapping="Wrap" />
+			</DockPanel>
+		</Border>
+	</Grid>
 </helpers:BaseWindow>

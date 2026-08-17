@@ -172,7 +172,7 @@ public partial class MenuData : ObservableObject {
 				new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"準備中 仕入先別の納品予定を印刷。納期遅れは納品日とEndFlagで判定"),
 				new("仕入未受リスト", typeof(Views._03Hatchu.PendingShiireListView), addInfo:"発注済みで入荷未済の分をSKU別に列挙"),
 				new("発注残管理表", typeof(Views._03Hatchu.HachuZanKanriTableView), addInfo:"発注伝票単位に残数･残金額･経過日数･滞留区分を印刷"),
-				new("発注残完了設定", typeof(Views._03Hatchu.HachuZanCompletionSettingView), addInfo:"準備中 Tran13Hachu.EndFlagを伝票単位で完了/解除する"),
+				new("発注残完了設定", typeof(Views._03Hatchu.HachuZanCompletionSettingView), addInfo:"残がある発注を伝票単位で完了にする(解除も可)。完納すると自動完了するのでこれは例外処理"),
 			])),
 			new("発注帳票", new([
 				new("発注書", typeof(Views._03Hatchu.HachuFormView), addInfo:"仕入先へ渡す発注書を単票印刷"),
@@ -192,7 +192,7 @@ public partial class MenuData : ObservableObject {
 				new("商品別受注表", typeof(Views._04Juchu.ShouhinJuchuTableView), addInfo:"受注明細を品番別に集計して数量･金額･上代を印刷"),
 				new("商品別受注集計表", typeof(Views._04Juchu.ShouhinJuchuSummaryTableView), addInfo:"受注をブランド/アイテム別に集計し分類内構成比を印刷"),
 				new("受注残管理表", typeof(Views._04Juchu.JuchuZanKanriTableView), addInfo:"受注残(受注-紐付く出荷)を伝票単位に印刷。完了済みは対象外"),
-				new("受注残完了設定", typeof(Views._04Juchu.JuchuZanCompletionSettingView), addInfo:"準備中 Tran12Jyuchu.EndFlagを伝票単位で完了/解除する"),
+				new("受注残完了設定", typeof(Views._04Juchu.JuchuZanCompletionSettingView), addInfo:"残がある受注を伝票単位で完了にする(解除も可)。全量出荷すると自動完了するのでこれは例外処理"),
 			])),
 			new("展示会", new([
 				new("展示会スワッチ", typeof(Views._04Juchu.TenjiSwatchView), addInfo:"1.1以降 展示会スワッチはRelease後対応"),
