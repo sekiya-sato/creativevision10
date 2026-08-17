@@ -1,3 +1,35 @@
+## [2026-08-18] I9 配分照会3画面（配分問合わせ／引当問合わせ／有効在庫問合わせ）を実装
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- 未適用課題 I9 を実装し、旧CV.net【配分】9〜11に相当する商品別照会（read-only）3画面を閉じる。
+- あわせて保留仕様 E10/E11/E7/E8-g のユーザー決定を課題台帳へ反映する。
+### 判断すべき仕様と決定（ユーザー確定 2026-08-18）
+- E10 請求書番号: 得意先Id＋年月日(yyyyMMdd)＋連番2桁でユニーク。再発行は連番で識別。
+- E11 その他売上: 区分99を請求一覧用に分離集計（売上本体の畳み込みは維持）。
+- E7 親子締日: 不一致なら警告＋「マスタ変更・請求再計算が必要」メッセージ（ブロックしない）。
+- E8-g 月末以外の締日の消費税: 仮計算として扱い、第2段階で本計算を再設計。
+- 上記は請求・支払計算トラックの前提で、本I9作業には影響しない。台帳2章へ移動済み。
+### 詳細設計
+- `Doc/spec/2026-08-18_I9_配分照会3画面_詳細設計.md` を新設し、方針・SQL・G/W/T・検証を先に確定した。
+- 方針: `ZaikoQueryViewModel`（在庫問合せ）を一般化した共通基底＋3サブクラス。展開する数量だけを差し替える。
+- 引当・有効在庫は `SummaryRealStock.ReserveQty`（materialize済み）を読むだけ。配分数のみ `TranHaibun` を集計する。
+### 実施内容
+- 新規 `CvWpfclient/ViewModels/07Haibun/BaseHaibunInquiryViewModel.cs`。検索条件・商品一覧・倉庫×SKUマトリクスの
+  ドリルダウン・CSV出力（`商品CD_数量名.csv`、UTF-8 BOM）・gRPC照会（`Msg101_Op_Query`）を集約。抽象 `LoadDrillRowsAsync`。
+- `HaibunQueryViewModel`（配分数＝`TranHaibun` `EndFlag=0`）/ `HikiateQueryViewModel`（`ReserveQty`）/
+  `YukoZaikoQueryViewModel`（`Su-ReserveQty`）の3サブクラスを実装。
+- `Views/07Haibun/{HaibunQuery,HikiateQuery,YukoZaikoQuery}View.xaml`(+`.xaml.cs`) を実装。
+  一覧は 在庫／引当／有効在庫／配分数、ダブルクリックで倉庫×色サイズのマトリクスタブを開く。
+- サーバ・スキーマ・Msgの変更なし（読み取りは既存経路、引当は集計テーブル済み）。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`：成功（0 warnings / 0 errors）。
+- `Tests\TestServer\bin\Debug\net10.0\TestServer.exe`：89/89 成功。`dotnet Tests\TestLogin\...\TestLogin.dll`：7/7 成功（件数不変）。
+- 実データは `TranHaibun` 0件のため配分問合わせのマトリクスは空。引当・有効在庫は既存在庫で表示。
+### 完成度への影響
+- 07Haibun の L0 が 20→17、L3 が 0→3。対象画面数131は不変。
+- チェックリスト 3.6 / 11章、課題台帳 I9 / 2章、詳細設計を更新。
+
 ## [2026-08-17] MenuData の実装済み画面説明を更新
 ### Agent
 - Codex : GPT-5 : Sekiya Sato Codex

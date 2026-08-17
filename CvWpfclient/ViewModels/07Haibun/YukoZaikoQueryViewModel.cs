@@ -1,26 +1,38 @@
-using CodeShare;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CvAsset;
 using CvBase;
-using System.Diagnostics;
 
 namespace CvWpfclient.ViewModels._07Haibun;
 
-/*
-=== 未実装（2026-08-17 仕様確定 / 実装待ち） ===
+/// <summary>
+/// 有効在庫問合わせ。旧CV.net【配分】-【有効在庫問合わせ】に相当する。
+/// 商品別に、倉庫×色サイズの<b>有効在庫</b>（<see cref="SummaryRealStock.Su"/> − <see cref="SummaryRealStock.ReserveQty"/>）を展開する。
+/// <para>
+/// 旧は「受注済みで出荷未完了」も差し引いたが、CV10 は受注残を引かない（2026-08-17 決定 I1-y）。
+/// 引当の源泉は <see cref="TranHaibun"/> だけである。在庫実績が無いSKUへ配分するとマイナスで見える（意図どおり）。
+/// 仕様は `Doc/spec/2026-08-18_I9_配分照会3画面_詳細設計.md` を参照する。
+/// </para>
+/// </summary>
+public sealed class YukoZaikoQueryViewModel : BaseHaibunInquiryViewModel {
+	protected override string DrillLabel => "有効在庫";
 
-有効在庫問合わせ。旧CV.net【配分】-【有効在庫問合わせ】に相当する。
-仕様は Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md 5.1.0 / I9 を参照する。
+	protected override async Task<List<SummaryRealStock>> LoadDrillRowsAsync(long shohinId, CancellationToken ct) {
+		List<string> parameters = [];
+		List<string> clauses = BuildStockClauses("R", "D", "Soko", parameters, [shohinId]);
+		string sql = $"""
+			SELECT
+				0 AS Id, 0 AS Vdc, 0 AS Vdu,
+				R.Id_Soko, R.Id_Shohin, R.Id_Col, R.Id_Siz,
+				(R.Su - R.ReserveQty) AS Su,
+				0 AS ReserveQty
+			FROM SummaryRealStock R
+				LEFT JOIN DerivedShohinColSiz D
+					ON D.Id_Shohin = R.Id_Shohin
+					AND D.Id_Col = R.Id_Col
+					AND D.Id_Siz = R.Id_Siz
+				LEFT JOIN MasterTokui Soko ON Soko.Id = R.Id_Soko
+			WHERE {string.Join(" AND ", clauses)}
+			ORDER BY Soko.Code, D.Code_Col, D.Code_Siz
+			""";
 
-画面仕様（旧マニュアル13-配分 の11）:
-  - 検索条件: ブランド / アイテム / 大分類 / 品番 / 納品日 / 指示日 / 営業担当 を FROM-TO
-  - 一覧: 商品CD、上代、ブランド、アイテム、有在(有効在庫数)、引当(総引当商品数計)、在庫(総在庫数)
-  - 商品CDをダブルクリックで引当数照会（倉庫×色サイズの展開）
-
-有効在庫 = SummaryRealStock.Su - SummaryRealStock.ReserveQty。
-旧は「受注済みで出荷が完了していない数量」も差し引いていたが、CV10 は受注残を引かない
-（2026-08-17 決定 I1-y）。引当の源泉は TranHaibun だけである。
-*/
-public partial class YukoZaikoQueryViewModel : Helpers.BaseViewModel {
+		return await QuerySqlListAsync<SummaryRealStock>(sql, parameters, ct);
+	}
 }
