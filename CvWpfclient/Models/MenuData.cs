@@ -215,7 +215,7 @@ public partial class MenuData : ObservableObject {
 			new("仕入照会・帳票", new([
 				new("品番別仕入チェックリスト", typeof(Views._05Shiire.HinbanShiireCheckListView), addInfo:"仕入明細を品番別に集計して数量･金額･上代･平均単価を印刷"),
 				new("ブランド別仕入金額表", typeof(Views._05Shiire.BrandShiireKingakuTableView), addInfo:"ﾌﾞﾗﾝﾄﾞ別･年月別の仕入金額･上代･原価率･構成比を印刷"),
-				new("仕入伝票印刷", typeof(Views._05Shiire.ShiireSlipPrintView), addInfo:"準備中"),
+				new("仕入伝票印刷", typeof(Views._05Shiire.ShiireSlipPrintView), addInfo:"仕入日・仕入先・倉庫・伝票番号などを指定して仕入伝票をPDF印刷"),
 				new("仕入先別仕入推移表", typeof(Views._05Shiire.ShiireTrendReportView), addInfo:"仕入先×年月の数量･金額･累計･前年同月比を印刷"),
 			])),
 		])),
@@ -296,7 +296,7 @@ public partial class MenuData : ObservableObject {
 				new("棚卸差異問合せ", typeof(Views._08Zaiko.StockDifferenceQueryView), addInfo:"棚卸数と理論在庫の差異を画面で確認"),
 				new("棚卸明細表", typeof(Views._08Zaiko.StockMeisaiTableView), addInfo:"棚卸数と理論在庫を突合し差異数･差異金額を印刷"),
 				new("棚卸チェックリスト", typeof(Views._08Zaiko.StockCheckListView), addInfo:"棚卸入力伝票の明細を棚番順に印刷して入力内容を突合"),
-				new("棚卸日一括メンテナンス", typeof(Views._08Zaiko.StockDateBulkMenteView), addInfo:"準備中"),
+				new("棚卸日一括メンテナンス", typeof(Views._08Zaiko.StockDateBulkMenteView), addInfo:"店舗別の棚卸日と自動補充曜日を一覧で設定・更新"),
 			])),
 			new("在庫帳票", new([
 				new("倉庫分類別棚卸表", typeof(Views._08Zaiko.SokoCategoryStockListView), addInfo:"倉庫×分類別にSKUを列挙した実棚記入用リスト"),
