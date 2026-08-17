@@ -305,7 +305,7 @@ public class SummaryDbTests {
 		await RunRebuildAsync(new SummaryDb(db), "202608", "202608");
 
 		AssertSummaryStock(db, "202607", 9, 13, 0, 0, 0, 90, 900, 9000);
-		AssertRealStock(db, 9, 13, 90, 900, 9000);
+		AssertRealStock(db, 9, 13, idShohin: 90, idCol: 900, idSiz: 9000);
 		Assert.AreEqual(0, db.Fetch<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 8).Count);
 		AssertNoRealStock(db, 8, 80, 800, 8000);
 		AssertSummaryStock(db, "202608", 1, -7, 0, 7, 0);
@@ -343,9 +343,11 @@ public class SummaryDbTests {
 			1000);
 		Assert.AreEqual(7, rebuilt.Su);
 		Assert.AreEqual(123, rebuilt.CumulativeSu);
-		Assert.AreEqual(4, rebuilt.AdjustQty);
 		Assert.AreEqual("20260809", rebuilt.StocktakeDdate);
 		Assert.AreEqual(88, rebuilt.ActualQty);
+		// AdjustQty は 2026-08-17 の決定(F0/F2)で在庫調整伝票 Tran61Chosei から導出する列になったため、
+		// 非Tran列として復元する対象から外れた。伝票が無ければ 0 になるのが正しい
+		Assert.AreEqual(0, rebuilt.AdjustQty, "調整数は伝票から再計算されるので手で入れた値は残らない");
 	}
 
 	[TestMethod]
@@ -536,6 +538,200 @@ public class SummaryDbTests {
 		AssertRealReserve(db, 2, 9);
 	}
 
+	/// <summary>
+	/// 出荷指示確定は有効在庫を割ると1件も確定しない。旧CV.netの
+	/// 「有効在庫数 − 入力した予指示が正の場合のみ確定できる」に対応する（仕様 5.2.4 / I3）。
+	/// </summary>
+	[TestMethod]
+	public void ConfirmShipping_RejectsAllWhenAvailableStockGoesNegative() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		// 実在庫5に対して8を配分すると有効在庫が -3 になる
+		var purchase = CreatePurchase("20260810", 1, 5, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var haibun = CreateHaibun("20260815", 1, 8);
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+
+		var cnt = shippingDb.ConfirmShipping([haibun.Id], "20260816", out var errors);
+
+		Assert.AreEqual(0, cnt);
+		Assert.AreEqual(1, errors.Count);
+		Assert.AreEqual(-3, errors[0].Yuko);
+		Assert.AreEqual(8, errors[0].Shiji);
+		Assert.AreEqual("", db.Single<TranHaibun>("where Id=@0", haibun.Id).KakuteiDay, "1件も確定しない");
+
+		// 在庫を積み増すと確定できる
+		var extra = CreatePurchase("20260811", 1, 3, EnumShiire.Shiire);
+		db.Insert(extra);
+		ApplyImmediate(summaryDb, extra, false);
+
+		Assert.AreEqual(1, shippingDb.ConfirmShipping([haibun.Id], "20260816", out var ok));
+		Assert.AreEqual(0, ok.Count);
+		Assert.AreEqual("20260816", db.Single<TranHaibun>("where Id=@0", haibun.Id).KakuteiDay);
+	}
+
+	/// <summary>
+	/// 出荷処理は仮想ヘッダ単位で伝票を作る。出荷先の店種区分で出荷売上と移動出庫に分かれ、
+	/// 伝票Idを RelateNo2 へ書いて EndFlag=1 で引当を解除する（仕様 I2 / I4 / I5）。
+	/// </summary>
+	[TestMethod]
+	public void CreateShippingSlips_SplitsByTenTypeAndReleasesReserve() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var oroshiId = InsertTokui(db, "T011", "卸先", tenType: 1);
+		var chokueiId = InsertTokui(db, "T016", "直営店", tenType: 6);
+		var purchase = CreatePurchase("20260810", 1, 100, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+
+		// 同じ倉庫から卸先と直営店へ配分する。出荷先が違うので仮想ヘッダは別になる
+		var toOroshi = CreateHaibun("20260815", 1, 10);
+		toOroshi.Id_Tenpo = oroshiId;
+		var toChokuei = CreateHaibun("20260815", 1, 4);
+		toChokuei.Id_Tenpo = chokueiId;
+		db.Insert(toOroshi);
+		db.Insert(toChokuei);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(toOroshi));
+		AssertRealReserve(db, 1, 14);
+
+		shippingDb.ConfirmShipping([toOroshi.Id, toChokuei.Id], "20260816", out _);
+		// 倉庫から確定数が返る。卸先は8出荷2欠品、直営店は全量出荷
+		db.Execute("update TranHaibun set JitsuSu=8, ShortSu=2 where Id=@0", toOroshi.Id);
+		db.Execute("update TranHaibun set JitsuSu=4 where Id=@0", toChokuei.Id);
+
+		var created = shippingDb.CreateShippingSlips([toOroshi.Id, toChokuei.Id], "20260817", idShain: 1);
+
+		Assert.AreEqual(2, created.Count, "出荷先ごとに1伝票");
+		var uriage = db.Single<Tran00Uriage>("where Id_Tokui=@0", oroshiId);
+		Assert.AreEqual(8, uriage.SuTotal, "卸先は出荷売上。欠品2は出荷しない");
+		var ido = db.Single<Tran10IdoOut>("where Id_Ido=@0", chokueiId);
+		Assert.AreEqual(4, ido.SuTotal, "直営店は移動出庫");
+
+		Assert.AreEqual(1, db.Single<TranHaibun>("where Id=@0", toOroshi.Id).EndFlag);
+		Assert.AreEqual((int)uriage.Id, db.Single<TranHaibun>("where Id=@0", toOroshi.Id).RelateNo2);
+		AssertRealReserve(db, 1, 0);
+		// 仕入100 − 出荷売上8 − 移動出庫4
+		AssertRealStock(db, 1, 88);
+	}
+
+	/// <summary>全量欠品の行は伝票を作らずに完了だけ立てて引当から外す</summary>
+	[TestMethod]
+	public void CreateShippingSlips_AllShortage_ReleasesReserveWithoutSlip() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var oroshiId = InsertTokui(db, "T011", "卸先", tenType: 1);
+		var purchase = CreatePurchase("20260810", 1, 50, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var haibun = CreateHaibun("20260815", 1, 6);
+		haibun.Id_Tenpo = oroshiId;
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+		shippingDb.ConfirmShipping([haibun.Id], "20260816", out _);
+		db.Execute("update TranHaibun set JitsuSu=0, ShortSu=6 where Id=@0", haibun.Id);
+
+		var created = shippingDb.CreateShippingSlips([haibun.Id], "20260817", idShain: 1);
+
+		Assert.AreEqual(0, created.Count, "出荷数0なら伝票を作らない");
+		Assert.AreEqual(1, db.Single<TranHaibun>("where Id=@0", haibun.Id).EndFlag);
+		AssertRealReserve(db, 1, 0);
+		AssertRealStock(db, 1, 50, "在庫は動かない");
+	}
+
+	/// <summary>
+	/// 棚卸開始処理は対象年月末時点の帳簿在庫を凍結し、棚卸確定処理は実棚数との差を
+	/// 在庫調整伝票(Tran61Chosei)として起こす。仕様 8.1 / 8.4(F0 / F0' / F0'')。
+	/// </summary>
+	[TestMethod]
+	public void Stocktake_StartAndFix_AdjustsStockByChoseiSlip() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		// 仕入20 → 帳簿在庫20
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		AssertRealStock(db, 1, 20);
+
+		stocktakeDb.StartStocktake("202608");
+		var afterStart = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(20, afterStart.BookQty, "棚卸開始処理が帳簿在庫を保存する");
+
+		// 棚卸開始のあとに伝票が入っても帳簿在庫は動かない（棚卸中の凍結）
+		var extra = CreatePurchase("20260811", 1, 5, EnumShiire.Shiire);
+		db.Insert(extra);
+		ApplyImmediate(summaryDb, extra, false);
+		Assert.AreEqual(20, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).BookQty);
+
+		// 実棚18 を登録して確定する。帳簿20との差 -2 が調整伝票になる
+		db.Insert(CreateTana("20260831", 1, 18));
+		var cnt = stocktakeDb.FixStocktake("202608", "20260831", idShain: 1);
+
+		Assert.AreEqual(1, cnt, "倉庫単位に1伝票");
+		var chosei = db.Single<Tran61Chosei>("where TanaMonth=@0", "202608");
+		Assert.AreEqual(-2, chosei.SuTotal);
+		Assert.AreEqual((int)EnumChosei.Tanaoroshi, chosei.Kubun);
+
+		var fixedRow = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(18, fixedRow.ActualQty);
+		Assert.AreEqual(-2, fixedRow.AdjustQty, "差は調整数へ入る");
+		Assert.AreEqual(fixedRow.InQty + fixedRow.OutQty + fixedRow.AdjustQty, fixedRow.Su,
+			"Su = InQty + OutQty + AdjustQty（仕様 8.4.1）");
+		AssertRealStock(db, 1, 23, "仕入20+5に調整-2で23");
+	}
+
+	/// <summary>棚卸確定は再実行できる。前回の調整伝票を取り消してから作り直す（仕様 F0''）</summary>
+	[TestMethod]
+	public void Stocktake_Refix_ReplacesPreviousAdjustment() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608");
+		db.Insert(CreateTana("20260831", 1, 18));
+		stocktakeDb.FixStocktake("202608", "20260831", idShain: 1);
+		AssertRealStock(db, 1, 18);
+
+		// 棚卸数を数え直して再確定する
+		db.Execute("DELETE FROM Tran60Tana");
+		db.Insert(CreateTana("20260831", 1, 21));
+		stocktakeDb.FixStocktake("202608", "20260831", idShain: 1);
+
+		Assert.AreEqual(1, db.Fetch<Tran61Chosei>("where TanaMonth=@0", "202608").Count, "調整伝票は作り直しで1件のまま");
+		AssertRealStock(db, 1, 21, "再確定後は最新の棚卸数に一致する");
+		var row = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(1, row.AdjustQty);
+		Assert.AreEqual(row.InQty + row.OutQty + row.AdjustQty, row.Su);
+	}
+
+	/// <summary>調整伝票は他の伝票と同じ経路でRebuildできる。集計へ直接書かない理由（仕様 8.4 F2）</summary>
+	[TestMethod]
+	public async Task Stocktake_Adjustment_SurvivesRebuild() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608");
+		db.Insert(CreateTana("20260831", 1, 18));
+		stocktakeDb.FixStocktake("202608", "20260831", idShain: 1);
+		var immediate = GetStockSnapshot(db);
+
+		await RunRebuildAsync(summaryDb, "202608", "202608");
+
+		CollectionAssert.AreEqual(immediate, GetStockSnapshot(db), "通常更新値とRebuild値は一致する");
+		AssertRealStock(db, 1, 18);
+		Assert.AreEqual(-2, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).AdjustQty);
+	}
+
 	[TestMethod]
 	public async Task SummaryAllAsyncStream_Rebuild_PreservesReserveQty() {
 		var db = PrepareAllStockTables();
@@ -606,7 +802,23 @@ public class SummaryDbTests {
 		db.CreateTable(typeof(Tran05Ido), true, false);
 		db.CreateTable(typeof(Tran10IdoOut), true, false);
 		db.CreateTable(typeof(Tran11IdoIn), true, false);
+		db.CreateTable(typeof(Tran60Tana), true, false);
+		db.CreateTable(typeof(Tran61Chosei), true, false);
 		return db;
+	}
+
+	/// <summary>出荷処理は得意先マスタの店種区分で伝票種別を分けるので MasterTokui も要る</summary>
+	private ExDatabaseSqlite PrepareShippingTables() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(MasterTokui), true, false);
+		return db;
+	}
+
+	/// <summary>得意先を登録して採番されたIdを返す。Idは自動採番なので明示指定しても反映されない</summary>
+	private static long InsertTokui(ExDatabaseSqlite db, string code, string name, int tenType) {
+		var tokui = new MasterTokui { Code = code, Name = name, TenType = tenType };
+		db.Insert(tokui);
+		return tokui.Id;
 	}
 
 	private static T CreateTransfer<T>(string denDay, long idSoko, long idIdo, int su)
@@ -766,6 +978,7 @@ public class SummaryDbTests {
 		ExDatabaseSqlite db,
 		long idSoko,
 		int su,
+		string? message = null,
 		long idShohin = 10,
 		long idCol = 100,
 		long idSiz = 1000) {
@@ -775,8 +988,19 @@ public class SummaryDbTests {
 			idShohin,
 			idCol,
 			idSiz);
-		Assert.AreEqual(su, row.Su);
+		Assert.AreEqual(su, row.Su, message ?? string.Empty);
 	}
+
+	/// <summary>棚卸入力伝票。在庫は動かさず、棚卸確定処理だけが読む</summary>
+	private static Tran60Tana CreateTana(string denDay, long idSoko, int su,
+		long idShohin = 10, long idCol = 100, long idSiz = 1000) => new() {
+			DenDay = denDay,
+			Id_Soko = idSoko,
+			SuTotal = su,
+			Jmeisai = [new Tran99Meisai {
+				No = 1, Id_Shohin = idShohin, Id_Col = idCol, Id_Siz = idSiz, Su = su,
+			}],
+		};
 
 	private static void AssertNoRealStock(
 		ExDatabaseSqlite db,

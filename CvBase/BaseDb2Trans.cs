@@ -82,6 +82,10 @@ public class TranCalcBase {
 		else if (tableName == nameof(Tran11IdoIn)) {
 			ret = new Tuple<int, int, int, int>(0, 0, 0, 0);
 		}
+		else if (tableName == nameof(Tran61Chosei)) {
+			// 調整は実在庫を動かすが入出庫ではない。内訳は AdjustQty(GetCalcAdjust)へ積む
+			ret = new Tuple<int, int, int, int>(1, 0, 0, 0);
+		}
 		// Tran12Jyuchu Tran13Hachu Tran60Tana
 		if (invertFlag) {
 			var inverted = new Tuple<int, int, int, int>(
@@ -93,6 +97,18 @@ public class TranCalcBase {
 			ret = inverted;
 		}
 		return ret;
+	}
+
+	/// <summary>
+	/// 調整数(<see cref="SummaryStock.AdjustQty"/>)へ積むフラグを取得する。
+	/// <para>
+	/// 在庫調整(<see cref="Tran61Chosei"/>)だけが 1 を返す。入出庫と区別して受払表へ出すために
+	/// <see cref="GetCalcSoko"/> の4フラグとは別に持つ。
+	/// </para>
+	/// </summary>
+	public static int GetCalcAdjust(string tableName, bool invertFlag = false) {
+		var ret = tableName == nameof(Tran61Chosei) ? 1 : 0;
+		return invertFlag ? ret * -1 : ret;
 	}
 
 	/// <summary>
@@ -605,6 +621,64 @@ public sealed partial class Tran60Tana : TranAllHeader {
 	[ColumnSizeDml(20)]
 	[Comment("棚番")]
 	public partial string TanaNo { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 在庫調整 61 (倉庫 増減)
+/// <para>
+/// 在庫強制調整入力と棚卸確定処理が作る調整専用伝票。仕様は
+/// `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.4(F0/F2) を参照する。
+/// </para>
+/// <para>
+/// 伝票にしているのは「通常更新値 = Rebuild値」の品質原則を守るためである。
+/// 集計テーブルへ直接書くと全件Rebuildで消えてしまうが、伝票にしておけば
+/// 他の6伝票と同じ経路で再現できる。<see cref="SummaryStock.AdjustQty"/> へも積むため、
+/// 受払表で入出庫と区別して表示できる。
+/// </para>
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(DenDay))]
+[KeyDml("nk2", false, [nameof(Id_Soko)])]
+[Comment("トランザクション：在庫調整データ 棚卸確定と在庫強制調整による在庫の増減")]
+public sealed partial class Tran61Chosei : TranAllHeader, ITranSoko {
+	/// <summary>
+	/// 調整区分（<see cref="EnumChosei"/>）
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	[Comment("調整区分（EnumChosei）")]
+	public partial int Kubun { get; set; } = (int)EnumChosei.Tanaoroshi;
+	[Ignore]
+	[JsonIgnore]
+	public EnumChosei EnKubun {
+		get => (EnumChosei)Kubun;
+		set => Kubun = (int)value;
+	}
+	/// <summary>
+	/// 調整理由Id（<see cref="MasterMeisho"/> の調整理由区分）。0 なら未設定
+	/// </summary>
+	[ObservableProperty]
+	[Comment("調整理由Id（MasterMeishoの調整理由区分）。0なら未設定")]
+	public partial long Id_Riyu { get; set; }
+	/// <summary>
+	/// 棚卸年月 yyyyMM。棚卸確定処理が作った伝票だけ設定する。手動調整では空
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(6)]
+	[Comment("棚卸年月 yyyyMM。棚卸確定処理が作った伝票だけ設定する。手動調整では空")]
+	public partial string TanaMonth { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 在庫調整の区分（<see cref="Tran61Chosei.Kubun"/>）
+/// </summary>
+public enum EnumChosei : int {
+	/// <summary>棚卸確定処理が作った調整。実棚数と帳簿在庫の差を埋める</summary>
+	[Comment("棚卸調整")]
+	Tanaoroshi = 10,
+	/// <summary>在庫強制調整入力から手で登録した調整</summary>
+	[Comment("強制調整")]
+	Kyosei = 20,
 }
 
 /// <summary>

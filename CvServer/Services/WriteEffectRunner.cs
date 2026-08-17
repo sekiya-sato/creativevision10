@@ -23,17 +23,21 @@ public enum WriteOp {
 /// <param name="Reserve">引当数の更新行数</param>
 /// <param name="Derived">派生テーブルの展開行数</param>
 /// <param name="Cascade">V*列伝播の更新行数</param>
-public readonly record struct WriteEffectResult(int Stock, int Reserve, int Derived, int Cascade) {
+/// <param name="Completion">発注残・受注残の完了フラグを自動で立てた伝票数</param>
+public readonly record struct WriteEffectResult(int Stock, int Reserve, int Derived, int Cascade, int Completion = 0) {
 	/// <summary>副作用なし</summary>
 	public static WriteEffectResult Empty => default;
 
 	/// <summary>複数回の実行結果を足し合わせる(一括登録用)</summary>
 	public WriteEffectResult Add(WriteEffectResult other) =>
-		new(Stock + other.Stock, Reserve + other.Reserve, Derived + other.Derived, Cascade + other.Cascade);
+		new(Stock + other.Stock, Reserve + other.Reserve, Derived + other.Derived, Cascade + other.Cascade,
+			Completion + other.Completion);
 
 	/// <summary>ログ用の要約。すべて0なら空文字</summary>
 	public override string ToString() =>
-		this == default ? string.Empty : $"在庫={Stock} 引当={Reserve} 派生={Derived} V*伝播={Cascade}";
+		this == default ? string.Empty
+			: $"在庫={Stock} 引当={Reserve} 派生={Derived} V*伝播={Cascade}"
+				+ (Completion == 0 ? string.Empty : $" 残完了={Completion}");
 }
 
 /// <summary>
@@ -54,6 +58,7 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 	private readonly ExDatabase _db = db;
 	private readonly SummaryDb _summaryDb = new(db);
 	private readonly DerivedDb _derivedDb = new(db);
+	private readonly CompletionDb _completionDb = new(db);
 
 	/// <summary>
 	/// <see cref="PartialUpdateParam.Columns"/> へ指定できない列。
@@ -136,6 +141,10 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 			stock = CalcStock(itemType, row.Id, invertFlag: false);
 		}
 
+		// 発注残・受注残の自動完了。仕入・出荷が RelateNo1 で紐付く伝票を再判定する。
+		// 完了は立てるだけで、実績が減っても自動では戻さない(仕様 4.3.1)
+		var completion = CalcCompletion(itemType, item, org);
+
 		// 引当数はキー単位の引き直しなので、倉庫・SKU・日付が変わった場合に備えて修正前後の両方を対象にする。
 		// 削除では削除後の TranHaibun から引き直すため、削除された行のキーを渡す
 		var keys = new HashSet<ReserveKey>();
@@ -146,13 +155,47 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 			keys.Add(ReserveKey.From(orgReserve));
 		}
 		if (keys.Count == 0) {
-			return new WriteEffectResult(stock, 0, derived, cascade);
+			return new WriteEffectResult(stock, 0, derived, cascade, completion);
 		}
 		if (reserveKeys != null) {
 			reserveKeys.UnionWith(keys);
-			return new WriteEffectResult(stock, 0, derived, cascade);
+			return new WriteEffectResult(stock, 0, derived, cascade, completion);
 		}
-		return new WriteEffectResult(stock, _summaryDb.CalcHaibun2Reserve(keys), derived, cascade);
+		return new WriteEffectResult(stock, _summaryDb.CalcHaibun2Reserve(keys), derived, cascade, completion);
+	}
+
+	/// <summary>
+	/// 仕入・出荷売上の書き込みに伴い、紐付く発注・受注の完了フラグを再判定する。
+	/// <para>
+	/// 紐付け先が変わった場合に備え、更新前後の <c>RelateNo1</c> を両方対象にする。
+	/// 削除では紐付いていた伝票の残が復活するが、完了は自動で戻さないため実質何も起きない
+	/// (判定は「未完了かつ全SKU充足」でのみ 1 を立てる片方向)。
+	/// </para>
+	/// </summary>
+	private int CalcCompletion(Type itemType, object item, object? org) {
+		var ids = new HashSet<long>();
+		if (item is Tran03Shiire or Tran00Uriage or Tran13Hachu or Tran12Jyuchu) {
+			AddRelateNo(ids, item);
+			AddRelateNo(ids, org);
+		}
+		if (ids.Count == 0) {
+			return 0;
+		}
+		return itemType == typeof(Tran03Shiire) ? _completionDb.CalcHachuEndFlag(ids)
+			: itemType == typeof(Tran00Uriage) ? _completionDb.CalcJuchuEndFlag(ids)
+			// 発注・受注そのものの修正でも、明細が減れば充足するので自分自身を再判定する
+			: itemType == typeof(Tran13Hachu) ? _completionDb.CalcHachuEndFlag(ids)
+			: _completionDb.CalcJuchuEndFlag(ids);
+	}
+
+	/// <summary>完了判定の対象Idを集める。発注・受注自身は Id、仕入・出荷は RelateNo1 を見る</summary>
+	private static void AddRelateNo(HashSet<long> ids, object? row) {
+		switch (row) {
+			case Tran03Shiire s when s.RelateNo1 > 0: ids.Add(s.RelateNo1); break;
+			case Tran00Uriage u when u.RelateNo1 > 0: ids.Add(u.RelateNo1); break;
+			case Tran13Hachu h when h.Id > 0: ids.Add(h.Id); break;
+			case Tran12Jyuchu j when j.Id > 0: ids.Add(j.Id); break;
+		}
 	}
 
 	/// <summary>

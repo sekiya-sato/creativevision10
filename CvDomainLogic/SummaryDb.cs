@@ -83,10 +83,15 @@ WHERE SumMonth BETWEEN @0 AND @1;
 			cnt += CalcSummaryStockTrn<Tran05Ido>(param);
 			cnt += CalcSummaryStockTrn<Tran10IdoOut>(param);
 			cnt += CalcSummaryStockTrn<Tran11IdoIn>(param);
+			// 在庫調整は Tran61Chosei から再現する。集計テーブルへ直接書かず伝票にしているのは
+			// 「通常更新値 = Rebuild値」を保つため(仕様 8.4 F0/F2)
+			cnt += CalcSummaryStockTrn<Tran61Chosei>(param);
+			// AdjustQty は Tran61Chosei から再計算されるので復元対象から外す。
+			// CumulativeSu / StocktakeDdate / ActualQty は伝票から導出できない非Tran列なので復元する
 			var restoreSql = $@"
 UPDATE SummaryStock
-SET (CumulativeSu, AdjustQty, StocktakeDdate, ActualQty) = (
-  SELECT Old.CumulativeSu, Old.AdjustQty, Old.StocktakeDdate, Old.ActualQty
+SET (CumulativeSu, StocktakeDdate, ActualQty) = (
+  SELECT Old.CumulativeSu, Old.StocktakeDdate, Old.ActualQty
   FROM {tempTableName} AS Old
   WHERE Old.SumMonth = SummaryStock.SumMonth
     AND Old.Id_Soko = SummaryStock.Id_Soko
@@ -166,7 +171,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:{idSoko}", $"Id={id}");
 		}
 		if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
-			var sql = CreateSummaryStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
+			var sql = CreateSummaryStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0", invertFlag);
 			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:{idSoko}", $"Id={id}");
 		}
 		return cnt;
@@ -311,8 +316,11 @@ SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
 		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
 		return updatedCount;
 	}
-	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause) => $@"
-INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, InQty, OutQty, TransitQty)
+	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause, bool invertFlag = false) {
+		// 調整数は在庫調整伝票(Tran61Chosei)だけが積む。移動先軸(Id_Ido)では調整は発生しない
+		var adjustFlag = idSoko == nameof(ITranIdo.Id_Ido) ? 0 : TranCalcBase.GetCalcAdjust(tableName, invertFlag);
+		return $@"
+INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, InQty, OutQty, TransitQty, AdjustQty)
 SELECT
   substr(t.DenDay, 1, 6) AS SumMonth,
   t.{idSoko} AS Id_Soko,
@@ -324,7 +332,8 @@ SELECT
   {vdate} vdu,
   SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item2})   AS InQty,
   SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item3})   AS OutQty,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item4})   AS TransitQty
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item4})   AS TransitQty,
+  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{adjustFlag})       AS AdjustQty
 FROM {tableName} AS t
      CROSS JOIN json_each(t.Jmeisai) AS j
 WHERE {whereClause}
@@ -338,9 +347,11 @@ ON CONFLICT(SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
 SET Su = Su + excluded.Su, vdu = {vdate},
     InQty = InQty + excluded.InQty,
     OutQty = OutQty + excluded.OutQty,
-    TransitQty = TransitQty + excluded.TransitQty
+    TransitQty = TransitQty + excluded.TransitQty,
+    AdjustQty = AdjustQty + excluded.AdjustQty
 ;
 ";
+	}
 	private string CreateRealStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause) => $@"
 INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
 SELECT

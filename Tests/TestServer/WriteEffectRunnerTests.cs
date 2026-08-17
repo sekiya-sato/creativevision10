@@ -324,7 +324,162 @@ public class WriteEffectRunnerTests {
 		Assert.IsFalse(denied.Contains(nameof(ITranReserve.EndFlag), System.StringComparer.OrdinalIgnoreCase));
 	}
 
+	// ===== 発注残・受注残の自動完了(CompletionDb) =====
+
+	/// <summary>
+	/// 発注は「明細単位で全SKUが充足」した時点で自動完了する(決定 G0-c)。
+	/// 伝票合計では判定しないので、1SKUでも不足なら未完了のままになる。
+	/// </summary>
+	[TestMethod]
+	public void After_Shiire_CompletesHachuOnlyWhenEverySkuIsFilled() {
+		PrepareCompletionTables();
+		var runner = new WriteEffectRunner(Db);
+		// 発注: SKU-A 10枚 / SKU-B 5枚
+		var hachu = CreateHachu([(10, 100, 1000, 10), (10, 100, 1001, 5)]);
+		Db.Insert(hachu);
+
+		// 合計15枚だがSKU-Aへ寄せた仕入。合計では足りるが SKU-B が不足なので完了しない
+		var shiire1 = CreateShiire(hachu.Id, [(10, 100, 1000, 15)]);
+		Db.Insert(shiire1);
+		var r1 = runner.After(WriteOp.Insert, typeof(Tran03Shiire), shiire1, null, 1);
+
+		Assert.AreEqual(0, r1.Completion);
+		Assert.AreEqual(0, GetEndFlag(nameof(Tran13Hachu), hachu.Id), "SKU-Bが未充足なら完了しない");
+
+		// SKU-B を満たすと完了する
+		var shiire2 = CreateShiire(hachu.Id, [(10, 100, 1001, 5)]);
+		Db.Insert(shiire2);
+		var r2 = runner.After(WriteOp.Insert, typeof(Tran03Shiire), shiire2, null, 1);
+
+		Assert.AreEqual(1, r2.Completion);
+		Assert.AreEqual(1, GetEndFlag(nameof(Tran13Hachu), hachu.Id));
+	}
+
+	/// <summary>いったん完了したものは仕入を削除しても自動では戻らない(決定 4.3.1)</summary>
+	[TestMethod]
+	public void After_DeleteShiire_DoesNotReopenCompletedHachu() {
+		PrepareCompletionTables();
+		var runner = new WriteEffectRunner(Db);
+		var hachu = CreateHachu([(10, 100, 1000, 10)]);
+		Db.Insert(hachu);
+		var shiire = CreateShiire(hachu.Id, [(10, 100, 1000, 10)]);
+		Db.Insert(shiire);
+		runner.After(WriteOp.Insert, typeof(Tran03Shiire), shiire, null, 1);
+		Assert.AreEqual(1, GetEndFlag(nameof(Tran13Hachu), hachu.Id));
+
+		Db.Delete(shiire);
+		runner.After(WriteOp.Delete, typeof(Tran03Shiire), shiire, shiire, 2);
+
+		Assert.AreEqual(1, GetEndFlag(nameof(Tran13Hachu), hachu.Id), "完了は自動で戻さない。戻すのは残完了設定からの手動操作だけ");
+		CollectionAssert.AreEqual(new[] { hachu.Id },
+			new CompletionDb(Db).FindCompleted(typeof(Tran13Hachu), [hachu.Id]).ToArray(),
+			"編集時ワーニング用に完了済みとして検出できる");
+	}
+
+	/// <summary>仕入返品(CalcFlag=-1)は符号付きで数えるため、充足が取り消される</summary>
+	[TestMethod]
+	public void After_Henpin_KeepsHachuIncompleteBySignedQuantity() {
+		PrepareCompletionTables();
+		var runner = new WriteEffectRunner(Db);
+		var hachu = CreateHachu([(10, 100, 1000, 10)]);
+		Db.Insert(hachu);
+		var shiire = CreateShiire(hachu.Id, [(10, 100, 1000, 10)]);
+		var henpin = CreateShiire(hachu.Id, [(10, 100, 1000, 4)], EnumShiire.Henpin);
+		Db.Insert(shiire);
+		Db.Insert(henpin);
+
+		// 10 - 4 = 6 で発注10に足りない
+		Assert.AreEqual(0, runner.After(WriteOp.Insert, typeof(Tran03Shiire), henpin, null, 1).Completion);
+		Assert.AreEqual(0, GetEndFlag(nameof(Tran13Hachu), hachu.Id));
+	}
+
+	/// <summary>
+	/// 受注は「受注伝票Idで紐付いた出荷売上」で消化する。
+	/// 対象は出荷先の店種区分が卸先(1)か売仕店(3)のものだけで、直営店(6)は移動扱いなので数えない(決定 G4 / I4)。
+	/// </summary>
+	[TestMethod]
+	public void After_Uriage_CompletesJuchuOnlyForOroshiAndUrishiTenType() {
+		PrepareCompletionTables();
+		var runner = new WriteEffectRunner(Db);
+		var oroshiId = InsertTokui("T001", "卸先", tenType: 1);
+		var chokueiId = InsertTokui("T006", "直営店", tenType: 6);
+		var juchu = CreateJuchu([(10, 100, 1000, 10)]);
+		Db.Insert(juchu);
+
+		// 直営店への出荷は受注残を消化しない
+		var chokuei = CreateUriage(juchu.Id, chokueiId, [(10, 100, 1000, 10)]);
+		Db.Insert(chokuei);
+		Assert.AreEqual(0, runner.After(WriteOp.Insert, typeof(Tran00Uriage), chokuei, null, 1).Completion);
+		Assert.AreEqual(0, GetEndFlag(nameof(Tran12Jyuchu), juchu.Id));
+
+		// 卸先への出荷で完了する
+		var oroshi = CreateUriage(juchu.Id, oroshiId, [(10, 100, 1000, 10)]);
+		Db.Insert(oroshi);
+		Assert.AreEqual(1, runner.After(WriteOp.Insert, typeof(Tran00Uriage), oroshi, null, 1).Completion);
+		Assert.AreEqual(1, GetEndFlag(nameof(Tran12Jyuchu), juchu.Id));
+	}
+
+	/// <summary>紐付け(RelateNo1)の無い出荷は受注残を消化しない</summary>
+	[TestMethod]
+	public void After_UriageWithoutRelateNo_DoesNotCompleteJuchu() {
+		PrepareCompletionTables();
+		var runner = new WriteEffectRunner(Db);
+		var oroshiId = InsertTokui("T001", "卸先", tenType: 1);
+		var juchu = CreateJuchu([(10, 100, 1000, 10)]);
+		Db.Insert(juchu);
+		var uriage = CreateUriage(0, oroshiId, [(10, 100, 1000, 10)]);
+		Db.Insert(uriage);
+
+		Assert.AreEqual(0, runner.After(WriteOp.Insert, typeof(Tran00Uriage), uriage, null, 1).Completion);
+		Assert.AreEqual(0, GetEndFlag(nameof(Tran12Jyuchu), juchu.Id));
+	}
+
 	// ===== ヘルパ =====
+
+	private void PrepareCompletionTables() {
+		Db.CreateTable(typeof(Tran13Hachu), true, false);
+		Db.CreateTable(typeof(Tran12Jyuchu), true, false);
+		Db.CreateTable(typeof(Tran03Shiire), true, false);
+		Db.CreateTable(typeof(Tran00Uriage), true, false);
+		Db.CreateTable(typeof(MasterTokui), true, false);
+		// Tran03Shiire / Tran00Uriage は ITranSoko なので在庫集計も走る
+		PrepareStockTables();
+	}
+
+	/// <summary>得意先を登録して採番されたIdを返す。Idは自動採番なので明示指定しても反映されない</summary>
+	private long InsertTokui(string code, string name, int tenType) {
+		var tokui = new MasterTokui { Code = code, Name = name, TenType = tenType };
+		Db.Insert(tokui);
+		return tokui.Id;
+	}
+
+	private int GetEndFlag(string table, long id) =>
+		Db.FirstOrDefault<int>($"SELECT EndFlag FROM {table} WHERE Id = @0", id);
+
+	private static List<Tran99Meisai> Meisai(IEnumerable<(long shohin, long col, long siz, int su)> rows) =>
+		[.. rows.Select((r, i) => new Tran99Meisai {
+			No = i + 1, Id_Shohin = r.shohin, Id_Col = r.col, Id_Siz = r.siz, Su = r.su,
+		})];
+
+	private static Tran13Hachu CreateHachu((long shohin, long col, long siz, int su)[] rows) => new() {
+		DenDay = "20260801", Id_Soko = 1, Id_Shiire = 1, Jmeisai = Meisai(rows),
+	};
+
+	private static Tran12Jyuchu CreateJuchu((long shohin, long col, long siz, int su)[] rows) => new() {
+		DenDay = "20260801", Id_Soko = 1, Id_Tokui = 1, Jmeisai = Meisai(rows),
+	};
+
+	private static Tran03Shiire CreateShiire(long relateNo1, (long shohin, long col, long siz, int su)[] rows,
+		EnumShiire kubun = EnumShiire.Shiire) => new() {
+		DenDay = "20260810", Id_Soko = 1, Id_Shiire = 1, RelateNo1 = (int)relateNo1,
+		EnKubun = kubun, Jmeisai = Meisai(rows),
+	};
+
+	private static Tran00Uriage CreateUriage(long relateNo1, long idTokui,
+		(long shohin, long col, long siz, int su)[] rows) => new() {
+		DenDay = "20260812", Id_Soko = 1, Id_Tokui = idTokui, RelateNo1 = (int)relateNo1,
+		Jmeisai = Meisai(rows),
+	};
 
 	private void PrepareStockTables() {
 		Db.CreateTable(typeof(SummaryStock), true, false);

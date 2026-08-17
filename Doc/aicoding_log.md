@@ -531,3 +531,68 @@ WHERE t.Jmeisai LIKE '[%'
   - 発注・受注の自動完了（明細単位で全SKU充足）と残完了設定、完了済み伝票の編集時ワーニング。
   - 配分の確定（`KakuteiDay` と有効在庫割れエラー検証）と出荷処理（伝票作成＋`RelateNo2`＋`EndFlag`）。
   - 棚卸の開始処理・確定処理、在庫恒等式 `Su = InQty + OutQty + AdjustQty` への変更。
+
+---
+## [2026-08-17] 残管理・配分出荷・棚卸の業務ロジックを実装
+### Agent
+- Claude Code : Opus 5 : Sekiya Sato
+### 目的
+- チェックリスト 10.5 の未着手4件について、業務ロジック層を実装する。
+  画面(WPF)は本コミットの範囲外とする。
+### 実施内容
+#### 1. 発注残・受注残の自動完了
+- `CvDomainLogic/CompletionDb.cs`(新規): 紐付く仕入・出荷から完了フラグを自動判定する。
+  - 判定は**明細単位で全SKUが充足**すること(決定 G0-c)。伝票合計では判定しない。
+  - 発注は `Tran03Shiire.RelateNo1`、受注は `Tran00Uriage.RelateNo1` で紐付ける。
+    受注側は出荷先の店種区分が卸先(1)・売仕店(3)のものだけを数える(決定 G4)。
+  - 仕入数・出荷数は `CalcFlag` を掛けた符号付きで数えるため、返品を入れると充足が取り消される。
+  - いったん立った完了は実績が減っても**自動では戻さない**(決定 4.3.1)。
+    `FindCompleted()` を用意し、編集時ワーニングから完了済み伝票を検出できるようにした。
+- `CvServer/Services/WriteEffectRunner.cs`: 上記を書き込み後に起動する。
+  結果は `WriteEffectResult.Completion` としてログへ出す。
+#### 2. 配分の確定・出荷処理
+- `CvDomainLogic/ShippingDb.cs`(新規):
+  - `ConfirmShipping()`: 有効在庫割れを検証して `KakuteiDay` を立てる。
+    旧CV.netと同じく「有効在庫 − 予指示が正の場合のみ確定できる」を守り、
+    1SKUでも割れていれば**1件も確定しない**。割れたSKUは呼び出し元へ返す。
+  - `CreateShippingSlips()`: 仮想ヘッダ
+    (`DenDay + NouhinDay + Id_Soko + Id_Tenpo + Kubun + RelateNo1`、決定 I5)単位で伝票を作る。
+    出荷先の店種区分で分岐し、卸先・売仕店は `Tran00Uriage`、倉庫・直営店は `Tran10IdoOut`(決定 I4)。
+    数量は確定数 `JitsuSu` を使い、欠品は出荷しない。全量欠品の行は伝票を作らず完了だけ立てる。
+    伝票Idを `RelateNo2` へ書き `EndFlag=1` で引当を解除する(決定 I2)。
+  - `CancelConfirm()`: 伝票未作成の行に限り確定を取り消す。
+#### 3. 棚卸
+- `CvBase`: 在庫調整伝票 `Tran61Chosei` を新設した(`ITranSoko`)。区分は `EnumChosei`。
+  集計テーブルへ直接書かず伝票にしたのは「通常更新値 = Rebuild値」を守るためである。
+- `CvBase`: `TranCalcBase.GetCalcAdjust()` を新設。`Tran61Chosei` だけが調整数へ積む。
+- `CvBase`: `SummaryStock.BookQty`(帳簿在庫スナップショット)を追加した。
+- `CvDomainLogic/StocktakeDb.cs`(新規):
+  - `StartStocktake()`: 対象年月末時点の帳簿在庫を凍結する。棚卸中に伝票が入っても差異が動かない。
+  - `FixStocktake()`: 実棚数(`Tran60Tana`)を集計し、帳簿在庫との差を倉庫単位の調整伝票へ起こす。
+    **再確定に対応**し、前回この処理が作った調整伝票を取り消してから作り直す(決定 F0'')。
+#### 4. 在庫恒等式の変更
+- `CvDomainLogic/SummaryDb.cs`: `SummaryStock` の集計へ `AdjustQty` を追加し、
+  Rebuild 対象へ `Tran61Chosei` を加えた。`Su = InQty + OutQty + AdjustQty` になる。
+  `AdjustQty` は伝票から導出できるようになったため、非Tran列の復元対象から外した。
+### スキーマ
+- `26_08_17_02`: `SummaryStock.BookQty` を追加。
+- `Tran61Chosei` は新規テーブルのため `DefineDataTable` が起動時に作成する(UpdateDb不要)。
+### 検証
+- ビルド成功(警告0、エラー0)。
+- `Tests/TestServer`: 合計85 / 成功85 / 失敗0。新規11件。
+  - 完了判定5件: 全SKU充足でのみ完了 / 削除で戻らない / 返品で取り消される /
+    店種区分1・3のみ消化 / 紐付けの無い出荷は消化しない。
+  - 出荷3件: 有効在庫割れは全件エラー / 店種区分で伝票が分かれ引当が解除される / 全量欠品は伝票なし。
+  - 棚卸3件: 開始で帳簿在庫を凍結し確定で調整伝票を起こす / 再確定で作り直す / Rebuildで一致する。
+- `Tests/TestLogin`: 合計7 / 成功7 / 失敗0。
+- 既存テスト `SummaryAllAsyncStream_Rebuild_PreservesNonTranColumnsForRegeneratedNaturalKey` の
+  `AdjustQty` 期待値を更新した。伝票から導出する列になったため、手で入れた値がRebuildで消えるのが正しい。
+- テストが `MasterTokui` の Id を明示指定していた箇所を、採番後のIdを使う形へ直した。
+  自動採番のため明示指定は反映されず、たまたま一致していただけだった。
+### 残課題
+- **画面(WPF)が未着手**である。空Viewのまま残っているのは8本。
+  発注残完了設定 / 受注残完了設定 / 出荷指示確定(商品) / 出荷指示確定(得意先) / 出荷処理入力 /
+  配分問合わせ / 引当問合わせ / 有効在庫問合わせ / 棚卸開始処理 / 棚卸確定処理。
+- 完了済み伝票の編集時ワーニングを仕入入力・出荷売上入力へ組み込んでいない。
+- `Tran61Chosei` を使う在庫強制調整入力も空Viewのままである。
+- 実行時確認は未実施。実DBへの `26_08_17_02` 適用と `Tran61Chosei` の自動作成は未確認。

@@ -65,6 +65,7 @@ public class DefineDataTable {
 			typeof(Tran06Nyukin),
 			typeof(Tran07Shiharai),
 			typeof(Tran60Tana),
+			typeof(Tran61Chosei),
 			typeof(Tran10IdoOut),
 			typeof(Tran11IdoIn),
 			typeof(Tran12Jyuchu),

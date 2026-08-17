@@ -102,9 +102,13 @@ public partial class SummaryStock : SummaryRealStock {
 	public partial int TransitQty { get; set; }
 	/// <summary>
 	/// 調整数
+	/// <para>
+	/// 在庫調整伝票(<see cref="Tran61Chosei"/>)から積む。棚卸確定と在庫強制調整の増減がここに入る。
+	/// 当月の在庫増減は <c>Su = InQty + OutQty + AdjustQty</c> の構成になる（仕様 8.4.1）。
+	/// </para>
 	/// </summary>
 	[ObservableProperty]
-	[Comment("調整数")]
+	[Comment("調整数 在庫調整伝票(Tran61Chosei)から積む。Su = InQty + OutQty + AdjustQty")]
 	public partial int AdjustQty { get; set; }
 	/// <summary>
 	/// 棚卸日
@@ -114,10 +118,20 @@ public partial class SummaryStock : SummaryRealStock {
 	[Comment("棚卸日")]
 	public partial string StocktakeDdate { get; set; } = "19010101";
 	/// <summary>
-	/// 棚卸数
+	/// 帳簿在庫（棚卸開始処理が保存する対象年月末時点のスナップショット）
+	/// <para>
+	/// 棚卸中に伝票が入っても差異表の「帳簿在庫数」が動かないよう凍結するための列。
+	/// 棚卸確定処理は <c>ActualQty - BookQty</c> を調整数として調整伝票へ起こす（仕様 8.1 / F0'）。
+	/// </para>
 	/// </summary>
 	[ObservableProperty]
-	[Comment("棚卸数")]
+	[Comment("帳簿在庫 棚卸開始処理が保存する対象年月末時点のスナップショット")]
+	public partial int BookQty { get; set; }
+	/// <summary>
+	/// 棚卸数（実棚数。棚卸確定処理が <see cref="Tran60Tana"/> から集計して入れる）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("棚卸数 実棚数。棚卸確定処理がTran60Tanaから集計して入れる")]
 	public partial int ActualQty { get; set; }
 }
 
