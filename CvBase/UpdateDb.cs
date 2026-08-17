@@ -34,6 +34,7 @@ public class UpdateDb {
 		new (26_08_14_01,"ALTER TABLE Tran00Uriage ADD COLUMN EndFlag NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN EndFlag NUMBER not null default 0;","消込済フラグ追加 既存伝票は全て未消込(0)"),
 		new (26_08_15_01,"ALTER TABLE SummaryRealStock ADD COLUMN ReserveQty NUMBER not null default 0;ALTER TABLE SummaryStock ADD COLUMN ReserveQty NUMBER not null default 0;ALTER TABLE TranHaibun ADD COLUMN EndFlag NUMBER not null default 0;","引当数・配分入庫済フラグ追加 TranHaibunが0件のため移行時の引当数は全て0"),
 		new (26_08_16_01,"ALTER TABLE Tran06Nyukin RENAME COLUMN DenDay TO KakeDay;ALTER TABLE Tran07Shiharai RENAME COLUMN DenDay TO KakeDay;","入金・支払の日付列を掛計上日へ改名 値はそのまま引き継ぐ インデックスnk1はSQLiteが自動追随する"),
+		new (26_08_17_01,"ALTER TABLE Tran13Hachu ADD COLUMN EndFlag NUMBER not null default 0;ALTER TABLE Tran12Jyuchu ADD COLUMN EndFlag NUMBER not null default 0;ALTER TABLE TranHaibun ADD COLUMN ShortSu NUMBER not null default 0;","発注・受注の完了フラグと配分の欠品数を追加 既存伝票は未完了(0)・欠品0"),
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {

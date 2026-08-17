@@ -1240,6 +1240,26 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 	[ObservableProperty]
 	[Comment("総合計")]
 	public partial int Total { get; set; }
+	/// <summary>
+	/// 完了FLG。0=未完了 / 1=完了。受注残の管理に使う。
+	/// <para>
+	/// 出荷（<see cref="Tran00Uriage"/> の <see cref="Tran00Uriage.RelateNo1"/> に本伝票の Id をセットしたもので、
+	/// 出荷先が卸先または売仕店のもの）が明細単位で全SKU充足した時点で 1 へ自動更新する。
+	/// 受注残完了設定画面から手動で 1 にすることも、0 へ戻すこともできる。
+	/// 1 の伝票は受注残管理表の集計対象から外す（SKUに残があっても完了とみなす）。
+	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 を参照する。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
+	[Comment("完了FLG。0=未完了 / 1=完了。受注残の管理に使う。出荷が明細単位で全SKU充足した時点で1へ自動更新する。受注残完了設定画面から手動で変更できる。")]
+	public partial int EndFlag { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnEndFlag {
+		get => (EnumYesNo)EndFlag;
+		set => EndFlag = (int)value;
+	}
 }
 
 public enum EnumJuchu : int {
@@ -1323,6 +1343,26 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 	[ObservableProperty]
 	[Comment("総合計")]
 	public partial int Total { get; set; }
+	/// <summary>
+	/// 完了FLG。0=未完了 / 1=完了。発注残の管理に使う。
+	/// <para>
+	/// 仕入（<see cref="Tran03Shiire"/> の <see cref="Tran03Shiire.RelateNo1"/> に本伝票の Id をセットしたもの）が
+	/// 明細単位で全SKU充足した時点で 1 へ自動更新する。
+	/// 発注残完了設定画面から手動で 1 にすることも、0 へ戻すこともできる。
+	/// 1 の伝票は発注残管理表の集計対象から外す（SKUに残があっても完了とみなす）。
+	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 を参照する。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
+	[Comment("完了FLG。0=未完了 / 1=完了。発注残の管理に使う。仕入が明細単位で全SKU充足した時点で1へ自動更新する。発注残完了設定画面から手動で変更できる。")]
+	public partial int EndFlag { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnEndFlag {
+		get => (EnumYesNo)EndFlag;
+		set => EndFlag = (int)value;
+	}
 }
 
 public enum EnumHachu : int {

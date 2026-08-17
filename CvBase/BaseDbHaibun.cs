@@ -182,6 +182,19 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[Comment("実数量（確定時に実際に出荷・移動した数）。未確定のうちは 0。")]
 	public partial int JitsuSu { get; set; }
 	/// <summary>
+	/// 欠品数（指示に対して倉庫が出荷できなかった数）。未確定のうちは 0。
+	/// <para>
+	/// <see cref="Su"/>（指示数）はユーザーが配分入力で設定し、倉庫へ送信される。倉庫から戻されるデータで
+	/// <see cref="JitsuSu"/>（出荷数）と本列が設定され、<c>Su = JitsuSu + ShortSu</c> が成立する。
+	/// この状態かつ <see cref="KakuteiDay"/> に有効な日付があるものを確定とみなす。完了は <see cref="EndFlag"/>=1。
+	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.1.2 を参照する。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("欠品数量")]
+	[Comment("欠品数（指示に対して倉庫が出荷できなかった数）。未確定のうちは 0。倉庫から戻されるデータで JitsuSu とともに設定され Su = JitsuSu + ShortSu が成立する。")]
+	public partial int ShortSu { get; set; }
+	/// <summary>
 	/// 入力社員Id
 	/// </summary>
 	[ObservableProperty]
@@ -192,16 +205,18 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <summary>
 	/// 入庫済FLG。0=未入庫（引当中） / 1=振り分け後入庫済み（引当解除）。
 	/// <para>
-	/// この値が0の行の <see cref="Su"/> だけが <see cref="SummaryStock.ReserveQty"/> /
+	/// この値が0で、かつ <see cref="Kubun"/> が <see cref="EnumHaibun.Hatsukai"/>(0) 以外の行の
+	/// <see cref="Su"/> だけが <see cref="SummaryStock.ReserveQty"/> /
 	/// <see cref="SummaryRealStock.ReserveQty"/>（引当数）へ集計される。
+	/// 初回配分は入荷前の振り分けであり現物を押さえないため引当対象外とする。
 	/// 追加・修正・削除、およびこの列の部分更新のたびに、対象の倉庫+SKU の引当数が引き直される。
 	/// <see cref="KakuteiDay"/>（配分確定）と <see cref="SendFlg"/>（物流連携）は引当の判定に使わない。
-	/// 仕様は `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.2 / 2.8 を参照する。
+	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
-	[Comment("入庫済FLG。0=未入庫（引当中） / 1=振り分け後入庫済み（引当解除）。 この値が0の行の Su だけが SummaryStock.ReserveQty / SummaryRealStock.ReserveQty（引当数）へ集計される。")]
+	[Comment("入庫済FLG。0=未入庫（引当中） / 1=振り分け後入庫済み（引当解除）。 この値が0で、かつ Kubun が 0:初回配分 以外の行の Su だけが SummaryStock.ReserveQty / SummaryRealStock.ReserveQty（引当数）へ集計される。")]
 	public partial int EndFlag { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -217,10 +232,15 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 /// 0 / 1 は既存の店舗配分入力(ShopHaibunInputViewModel)が使っていた値なので<b>変更しないこと</b>。
 /// 2 以降を新しい配分画面へ割り当てている。設計の背景は `.omo/2026-07-31_haibun_design.md` を参照。
 /// </para>
+/// <para>
+/// <b>引当対象は <see cref="Hatsukai"/>(0) 以外のすべて</b>。判定は <c>Kubun != 0</c> の一点で行う。
+/// 初回配分は入荷前に入荷予定を振り分けるものであり、現物在庫を押さえないため引当数へ算入しない。
+/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
+/// </para>
 /// </summary>
 public enum EnumHaibun : int {
-	/// <summary>初回配分（発売時に入荷予定を店舗へ振り分ける）。RelateNo1 = 発注Id</summary>
-	[Comment("初回配分")]
+	/// <summary>初回配分（発売時に入荷予定を店舗へ振り分ける）。RelateNo1 = 発注Id。<b>引当対象外</b></summary>
+	[Comment("初回配分（引当対象外）")]
 	Hatsukai = 0,
 	/// <summary>在庫配分（倉庫の現在庫を店舗へ振り分ける）。RelateNo1 = 0</summary>
 	[Comment("在庫配分")]
