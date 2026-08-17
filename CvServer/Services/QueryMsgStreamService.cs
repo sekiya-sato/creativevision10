@@ -66,7 +66,9 @@ public partial class CoreService {
 		else if (request.Flag is CvFlag.Msg050_Summary
 			or CvFlag.Msg051_SummaryRealStock
 			or CvFlag.Msg052_SummaryUriKake
-			or CvFlag.Msg053_SummaryKaiKake) {
+			or CvFlag.Msg053_SummaryKaiKake
+			or CvFlag.Msg054_StocktakeStart
+			or CvFlag.Msg055_StocktakeFix) {
 			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
 				yield return msg;
 			}
@@ -118,6 +120,7 @@ public partial class CoreService {
 	/// </summary>
 	private async IAsyncEnumerable<StreamMsg> HandleSummaryStreamAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvMsg request) {
 		var summaryDb = new SummaryDb(_db);
+		var stocktakeDb = new StocktakeDb(_db);
 
 		var param = Common.DeserializeObject(request.DataMsg, request.DataType);
 		var stream = (request.Flag, param) switch {
@@ -125,6 +128,8 @@ public partial class CoreService {
 			(CvFlag.Msg051_SummaryRealStock, CalcDateParameter summaryReal) => summaryDb.SummaryRealAsyncStream(summaryReal),
 			(CvFlag.Msg052_SummaryUriKake, CalcDateTermParameter uriKakeParam) => summaryDb.SummaryUriKakeAsyncStream(uriKakeParam),
 			(CvFlag.Msg053_SummaryKaiKake, CalcDateTermParameter kaiKakeParam) => summaryDb.SummaryKaiKakeAsyncStream(kaiKakeParam),
+			(CvFlag.Msg054_StocktakeStart, StocktakeParameter startParam) => stocktakeDb.StartAsyncStream(startParam),
+			(CvFlag.Msg055_StocktakeFix, StocktakeParameter fixParam) => stocktakeDb.FixAsyncStream(fixParam),
 			_ => null
 		};
 

@@ -1,5 +1,6 @@
 using CvAsset;
 using CvBase;
+using Microsoft.Extensions.Logging;
 
 namespace CvDomainLogic;
 
@@ -18,6 +19,44 @@ namespace CvDomainLogic;
 /// </summary>
 public class StocktakeDb(ExDatabase db) {
 	private readonly ExDatabase _db = db;
+	private readonly ILogger<StocktakeDb> _logger = new NLogExtender<StocktakeDb>();
+
+	/// <summary>
+	/// 棚卸開始処理をストリーミングで実行する。画面(棚卸開始処理)から `Msg054_StocktakeStart` で呼ばれる。
+	/// </summary>
+	public IAsyncEnumerable<StreamStepProgress> StartAsyncStream(StocktakeParameter param) =>
+		StreamStepProgressRunner.Run(
+			[($"棚卸開始処理 : {param.TanaMonth} 帳簿在庫の保存", p => StartStocktake(p.TanaMonth, p.SokoIds))],
+			param, _logger, "棚卸開始処理を開始", "棚卸開始処理エラー: {StepName}", "棚卸開始処理を終了");
+
+	/// <summary>
+	/// 棚卸確定処理をストリーミングで実行する。画面(棚卸確定処理)から `Msg055_StocktakeFix` で呼ばれる。
+	/// <para>
+	/// 実棚数の反映と調整伝票の生成を1トランザクションで行う。途中で失敗したら全体を戻す。
+	/// </para>
+	/// </summary>
+	public IAsyncEnumerable<StreamStepProgress> FixAsyncStream(StocktakeParameter param) =>
+		StreamStepProgressRunner.Run(
+			[($"棚卸確定処理 : {param.TanaMonth} 在庫調整伝票の作成", RunFixInTransaction)],
+			param, _logger, "棚卸確定処理を開始", "棚卸確定処理エラー: {StepName}", "棚卸確定処理を終了");
+
+	private int RunFixInTransaction(StocktakeParameter param) {
+		var started = false;
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			started = true;
+			var cnt = FixStocktake(param.TanaMonth, param.DenDay, param.IdShain, param.SokoIds);
+			_db.CompleteTransaction();
+			started = false;
+			return cnt;
+		}
+		catch {
+			if (started) {
+				_db.AbortTransaction();
+			}
+			throw;
+		}
+	}
 
 	/// <summary>
 	/// 棚卸開始処理。対象倉庫×SKU について、棚卸終了日時点の帳簿在庫を <see cref="SummaryStock"/> へ保存する。

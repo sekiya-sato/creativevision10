@@ -711,6 +711,56 @@ public class SummaryDbTests {
 		Assert.AreEqual(row.InQty + row.OutQty + row.AdjustQty, row.Su);
 	}
 
+	/// <summary>
+	/// 画面が使うストリーミング経路（Msg054 / Msg055 が呼ぶ入口）が、直接呼び出しと同じ結果になることを確認する。
+	/// 確定処理はトランザクションで包まれる。
+	/// </summary>
+	[TestMethod]
+	public async Task Stocktake_AsyncStream_ProducesSameResultAsDirectCall() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		db.Insert(CreateTana("20260831", 1, 18));
+		var param = new StocktakeParameter("202608", "20260831", 0, []);
+
+		await foreach (var p in stocktakeDb.StartAsyncStream(param)) {
+			Assert.IsFalse(p.IsError, $"{p.StepName}: {p.ErrorMessage}");
+		}
+		Assert.AreEqual(20, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).BookQty);
+
+		await foreach (var p in stocktakeDb.FixAsyncStream(param)) {
+			Assert.IsFalse(p.IsError, $"{p.StepName}: {p.ErrorMessage}");
+		}
+
+		AssertRealStock(db, 1, 18);
+		Assert.AreEqual(-2, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).AdjustQty);
+		Assert.AreEqual(1, db.Fetch<Tran61Chosei>("where TanaMonth=@0", "202608").Count);
+	}
+
+	/// <summary>倉庫を指定すると、その倉庫だけが処理対象になる</summary>
+	[TestMethod]
+	public void Stocktake_WithSokoFilter_TouchesOnlySelectedWarehouse() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		foreach (var soko in new[] { 1L, 2L }) {
+			var purchase = CreatePurchase("20260810", soko, 20, EnumShiire.Shiire);
+			db.Insert(purchase);
+			ApplyImmediate(summaryDb, purchase, false);
+			db.Insert(CreateTana("20260831", soko, 18));
+		}
+
+		stocktakeDb.StartStocktake("202608", [1]);
+		stocktakeDb.FixStocktake("202608", "20260831", idShain: 0, sokoIds: [1]);
+
+		AssertRealStock(db, 1, 18, "指定した倉庫は確定される");
+		AssertRealStock(db, 2, 20, "指定しなかった倉庫は動かない");
+		Assert.AreEqual(0, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 2).BookQty);
+	}
+
 	/// <summary>調整伝票は他の伝票と同じ経路でRebuildできる。集計へ直接書かない理由（仕様 8.4 F2）</summary>
 	[TestMethod]
 	public async Task Stocktake_Adjustment_SurvivesRebuild() {

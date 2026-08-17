@@ -398,8 +398,8 @@ public partial class MenuData : ObservableObject {
 				new("在庫累計更新", typeof(Views._31Monthly.StockRuikeiUpdateView), addInfo:"準備中"),
 			])),
 			new("棚卸更新", new([
-				new("棚卸開始処理", typeof(Views._31Monthly.StockTakeInitiationView), addInfo:"準備中 棚卸終了日時点の帳簿在庫を保存し棚卸中に動かないようにする"),
-				new("棚卸確定処理", typeof(Views._31Monthly.StockTakeFinalizationView), addInfo:"準備中 棚卸数とSuの差をAdjustQtyへ設定して在庫を確定する。再確定可"),
+				new("棚卸開始処理", typeof(Views._31Monthly.StockTakeInitiationView), addInfo:"棚卸年月末時点の帳簿在庫を保存し棚卸中に動かないようにする。差異調査後は再実行する"),
+				new("棚卸確定処理", typeof(Views._31Monthly.StockTakeFinalizationView), addInfo:"実棚数と帳簿在庫の差を在庫調整伝票(Tran61Chosei)にして在庫へ反映する。再確定可"),
 			])),
 			new("再更新", new([
 				new("在庫・掛再更新", typeof(Views._31Monthly.StockKakeUpdateView), addInfo:"在庫･売掛･買掛を取引明細から再集計する"),

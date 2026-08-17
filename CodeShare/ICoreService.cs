@@ -163,6 +163,16 @@ public enum CvFlag {
 	[EnumMember]
 	Msg053_SummaryKaiKake = 53,
 	/// <summary>
+	/// 棚卸開始処理（対象年月末時点の帳簿在庫を凍結する）
+	/// </summary>
+	[EnumMember]
+	Msg054_StocktakeStart = 54,
+	/// <summary>
+	/// 棚卸確定処理（実棚数と帳簿在庫の差を在庫調整伝票へ起こす）
+	/// </summary>
+	[EnumMember]
+	Msg055_StocktakeFix = 55,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	[EnumMember]

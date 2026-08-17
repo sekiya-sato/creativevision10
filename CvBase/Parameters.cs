@@ -239,6 +239,18 @@ public record CalcDateTermParameter(string DateYymmFrom, string DateYymmTo);
 public record CalcDateParameter(string DateYymm);
 
 /// <summary>
+/// 棚卸開始処理・棚卸確定処理のパラメータ
+/// <para>
+/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.1 / 8.4 を参照する。
+/// </para>
+/// </summary>
+/// <param name="TanaMonth">棚卸年月 yyyyMM</param>
+/// <param name="DenDay">確定処理が作る在庫調整伝票の在庫計上日 yyyyMMdd。開始処理では使わない</param>
+/// <param name="IdShain">入力社員Id。0 なら未設定</param>
+/// <param name="SokoIds">対象倉庫Id。空なら全倉庫を対象にする</param>
+public record StocktakeParameter(string TanaMonth, string DenDay, long IdShain, long[] SokoIds);
+
+/// <summary>
 /// クエリI/F : CSV出力パラメータ (Sql出力パラメータはQueryListSqlParamを使う)
 /// </summary>
 public sealed record PrintByCsvParam(string CsvData);

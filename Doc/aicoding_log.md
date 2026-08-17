@@ -596,3 +596,54 @@ WHERE t.Jmeisai LIKE '[%'
 - 完了済み伝票の編集時ワーニングを仕入入力・出荷売上入力へ組み込んでいない。
 - `Tran61Chosei` を使う在庫強制調整入力も空Viewのままである。
 - 実行時確認は未実施。実DBへの `26_08_17_02` 適用と `Tran61Chosei` の自動作成は未確認。
+
+---
+## [2026-08-17] 棚卸開始処理・棚卸確定処理の画面を実装
+### Agent
+- Claude Code : Opus 5 : Sekiya Sato
+### 目的
+- 前コミットで実装した `StocktakeDb` を画面から実行できるようにする。
+  チェックリスト 10.5.1 の未着手画面のうち、バッチ形式の2本を先に閉じる。
+### 設計
+- **通信**: 既存の集計バッチ(在庫・掛再更新)と同じストリーミング経路(`QueryMsgStreamAsync`)へ載せる。
+  1件ずつgRPCを往復せず、進捗とキャンセルを既存の仕組みで扱えるため。
+  - `CvFlag.Msg054_StocktakeStart` / `Msg055_StocktakeFix` を追加した。
+  - パラメータ `StocktakeParameter(TanaMonth, DenDay, IdShain, SokoIds)` を `CvBase/Parameters.cs` へ追加した。
+  - `QueryMsgStreamService.HandleSummaryStreamAsync` の分岐へ2フラグを足し、`StocktakeDb` を呼ぶ。
+- **画面**: 2画面は入力項目がほぼ同じなので基底 `BaseStocktakeViewModel` へ共通化した。
+  棚卸年月・対象倉庫・進捗・実行・キャンセルを基底に置き、派生はフラグと処理名だけを与える。
+  確定処理だけ「調整伝票日付」と「入力社員」を追加で持つ。
+  - 対象倉庫は複数選択ダイアログ(`ShowMultiSelectDialog`)で選ぶ。未選択は全倉庫。
+    旧CV.netは得意先をFROM-TOで範囲指定して一覧から1件ずつ選ぶ形だったが、機能としては同じである。
+### 実施内容
+- `CodeShare/ICoreService.cs`: `Msg054_StocktakeStart` / `Msg055_StocktakeFix` を追加。
+- `CvBase/Parameters.cs`: `StocktakeParameter` を追加。
+- `CvDomainLogic/StocktakeDb.cs`: `StartAsyncStream()` / `FixAsyncStream()` を追加。
+  確定処理は Serializable トランザクションで包み、途中で失敗したら全体を戻す。
+- `CvServer/Services/QueryMsgStreamService.cs`: 2フラグの分岐を追加。
+- `CvWpfclient/ViewModels/31Monthly/BaseStocktakeViewModel.cs`(新規): 共通部分。
+  件数はサーバーが本文へ「件数=N」の形で載せてくるため、完了メッセージから取り出して表示する
+  (`StreamMsg.Code` は 0 / -1 のエラー区分にしか使われていない)。
+- `CvWpfclient/ViewModels/31Monthly/StockTakeInitiationViewModel.cs`: 棚卸開始処理。
+- `CvWpfclient/ViewModels/31Monthly/StockTakeFinalizationViewModel.cs`: 棚卸確定処理。
+- `CvWpfclient/Views/31Monthly/StockTakeInitiationView.xaml` / `StockTakeFinalizationView.xaml`:
+  在庫・掛再更新のレイアウトに合わせて作成した。空Viewを置き換えた。
+- `CvWpfclient/Models/MenuData.cs`: 「月次・更新処理 > 棚卸更新」の2項目の説明を実装済みの内容へ更新した。
+### 検証
+- ビルド成功(警告0、エラー0)。
+- `Tests/TestServer`: 合計87 / 成功87 / 失敗0。新規2件。
+  - `Stocktake_AsyncStream_ProducesSameResultAsDirectCall`: 画面が使うストリーミング経路が
+    直接呼び出しと同じ結果になる。
+  - `Stocktake_WithSokoFilter_TouchesOnlySelectedWarehouse`: 倉庫を指定するとその倉庫だけが対象になる。
+- 実DB(`server-user163.db`、`DbVersion=26081701`)で確認した。
+  - `SummaryStock`(3,494,240行)に `BookQty` は未追加、`Tran61Chosei` も未作成であり、
+    `26_08_17_02` と `DefineDataTable` の対象になる状態である。
+  - 実スキーマを複製した空DBへ `26_08_17_02` を適用して成功。棚卸開始処理のUPDATE文も構文確認した。
+  - 重複適用は `duplicate column name` で失敗するが、`UpdateDb` はログへ残して処理を継続する。
+### 残課題
+- 実行時確認が未実施。画面から実際に起動した確認はしていない。
+- 実DBへ `26_08_17_02` を適用していない。適用時に `SummaryStock` 349万行への ALTER が走る。
+- 棚卸開始処理は `Tran60TanaDate`(棚卸日一括メンテナンス)の棚卸日を参照していない。
+  現状は棚卸年月末時点の帳簿在庫を保存する。倉庫ごとに棚卸日が異なる運用へ広げる場合は
+  `StartStocktake()` で日付別に集計する必要がある。
+- 入力社員は確定処理でのみ選択する。未選択のままでも実行でき、その場合 `Id_Shain=0` で登録される。
