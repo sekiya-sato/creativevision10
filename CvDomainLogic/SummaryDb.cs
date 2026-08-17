@@ -193,7 +193,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 		foreach (var key in monthKeys) {
 			var sql = CreateReserveMonthSql(vdate,
 				"SumMonth = @0 AND Id_Soko = @1 AND Id_Shohin = @2 AND Id_Col = @3 AND Id_Siz = @4 AND ReserveQty <> 0",
-				"h.EndFlag = 0 AND substr(h.DenDay, 1, 6) = @0 AND h.Id_Soko = @1 AND h.Id_Shohin = @2 AND h.Id_Col = @3 AND h.Id_Siz = @4");
+				$"{ReserveTargetWhere} AND substr(h.DenDay, 1, 6) = @0 AND h.Id_Soko = @1 AND h.Id_Shohin = @2 AND h.Id_Col = @3 AND h.Id_Siz = @4");
 			cnt += ExecuteAndCounts(sql, [key.SumMonth, key.Id_Soko, key.Id_Shohin, key.Id_Col, key.Id_Siz],
 				"CalcHaibun2Reserve", "SummaryStock:ReserveQty", key.SumMonth);
 		}
@@ -201,7 +201,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 		foreach (var key in monthKeys.Select(k => (k.Id_Soko, k.Id_Shohin, k.Id_Col, k.Id_Siz)).Distinct()) {
 			var sql = CreateReserveRealSql(vdate,
 				"Id_Soko = @0 AND Id_Shohin = @1 AND Id_Col = @2 AND Id_Siz = @3 AND ReserveQty <> 0",
-				"h.EndFlag = 0 AND h.Id_Soko = @0 AND h.Id_Shohin = @1 AND h.Id_Col = @2 AND h.Id_Siz = @3");
+				$"{ReserveTargetWhere} AND h.Id_Soko = @0 AND h.Id_Shohin = @1 AND h.Id_Col = @2 AND h.Id_Siz = @3");
 			cnt += ExecuteAndCounts(sql, [key.Id_Soko, key.Id_Shohin, key.Id_Col, key.Id_Siz],
 				"CalcHaibun2Reserve", "SummaryRealStock:ReserveQty", "");
 		}
@@ -216,12 +216,31 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// </summary>
 	public int CalcReserveQtyAll() {
 		var vdate = Common.GetVdate();
-		var cnt = ExecuteAndCounts(CreateReserveMonthSql(vdate, "ReserveQty <> 0", "h.EndFlag = 0"),
+		var cnt = ExecuteAndCounts(CreateReserveMonthSql(vdate, "ReserveQty <> 0", ReserveTargetWhere),
 			[], "CalcReserveQtyAll", "SummaryStock:ReserveQty", "");
-		cnt += ExecuteAndCounts(CreateReserveRealSql(vdate, "ReserveQty <> 0", "h.EndFlag = 0"),
+		cnt += ExecuteAndCounts(CreateReserveRealSql(vdate, "ReserveQty <> 0", ReserveTargetWhere),
 			[], "CalcReserveQtyAll", "SummaryRealStock:ReserveQty", "");
 		return cnt;
 	}
+	/// <summary>
+	/// 引当対象行の共通条件。<see cref="TranHaibun.EndFlag"/>=0（未入庫）かつ
+	/// <see cref="TranHaibun.Kubun"/> が <see cref="EnumHaibun.Hatsukai"/>(0) 以外であること。
+	/// <para>
+	/// 初回配分は入荷前に入荷予定を店舗へ振り分けるものであり、現物在庫を押さえないため引当対象外とする。
+	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2 を参照する。
+	/// </para>
+	/// </summary>
+	public static readonly string ReserveTargetWhere = $"h.EndFlag = 0 AND h.Kubun <> {(int)EnumHaibun.Hatsukai}";
+	/// <summary>
+	/// 引当数として積む数量の式。未確定(<see cref="TranHaibun.KakuteiDay"/> が空)は指示数
+	/// <see cref="TranHaibun.Su"/>、確定済みは確定数 <see cref="TranHaibun.JitsuSu"/> を積む。
+	/// <para>
+	/// 確定時に倉庫から <see cref="TranHaibun.JitsuSu"/> / <see cref="TranHaibun.ShortSu"/> が返り
+	/// <c>Su = JitsuSu + ShortSu</c> が成立する。欠品分は出荷されないため、確定と同時に引当から外れる。
+	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2c を参照する。
+	/// </para>
+	/// </summary>
+	public const string ReserveQtySumExpr = "SUM(CASE WHEN ifnull(h.KakuteiDay, '') = '' THEN h.Su ELSE h.JitsuSu END)";
 	/// <summary>
 	/// SummaryStock(月次)の引当数を TranHaibun から引き直すSQL。「対象を0クリア」→「集計値を反映」の2文。
 	/// 引当が0になったキーに0行を作らないよう HAVING で除外し、在庫実績が無いキーはINSERTで新規作成する。
@@ -241,7 +260,7 @@ SELECT
   0 AS Su,
   {vdate} AS Vdc,
   {vdate} AS Vdu,
-  SUM(h.Su) AS ReserveQty
+  {ReserveQtySumExpr} AS ReserveQty
 FROM {nameof(TranHaibun)} AS h
 WHERE {haibunWhere}
 GROUP BY
@@ -250,7 +269,7 @@ GROUP BY
   h.Id_Shohin,
   h.Id_Col,
   h.Id_Siz
-HAVING SUM(h.Su) <> 0
+HAVING {ReserveQtySumExpr} <> 0
 ON CONFLICT(SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
 SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
 ;
@@ -274,7 +293,7 @@ SELECT
   0 AS Su,
   {vdate} AS Vdc,
   {vdate} AS Vdu,
-  SUM(h.Su) AS ReserveQty
+  {ReserveQtySumExpr} AS ReserveQty
 FROM {nameof(TranHaibun)} AS h
 WHERE {haibunWhere}
 GROUP BY
@@ -282,7 +301,7 @@ GROUP BY
   h.Id_Shohin,
   h.Id_Col,
   h.Id_Siz
-HAVING SUM(h.Su) <> 0
+HAVING {ReserveQtySumExpr} <> 0
 ON CONFLICT(Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
 SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
 ;

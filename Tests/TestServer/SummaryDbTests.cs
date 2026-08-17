@@ -414,6 +414,79 @@ public class SummaryDbTests {
 		AssertRealReserve(db, 1, 7);
 	}
 
+	/// <summary>
+	/// 初回配分(Kubun=0)は入荷前の振り分けであり現物を押さえないため引当対象外とする。
+	/// 仕様は 2026-08-17_旧cvnet比較_仕様決定判断材料.md 5.2.2。
+	/// </summary>
+	[TestMethod]
+	public void CalcHaibun2Reserve_HatsukaiHaibun_IsNotReserved() {
+		var db = PrepareStockTables();
+		var summaryDb = new SummaryDb(db);
+		var hatsukai = CreateHaibun("20260815", 1, 7, kubun: EnumHaibun.Hatsukai);
+		db.Insert(hatsukai);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(hatsukai));
+
+		AssertMonthReserve(db, "202608", 1, 0);
+		AssertRealReserve(db, 1, 0);
+
+		// 同じキーへ在庫配分を足すと、その分だけが引当になる
+		var zaiko = CreateHaibun("20260815", 1, 3, kubun: EnumHaibun.Zaiko);
+		db.Insert(zaiko);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(zaiko));
+
+		AssertMonthReserve(db, "202608", 1, 3);
+		AssertRealReserve(db, 1, 3);
+
+		// 初回配分以外は区分を問わず引当対象（取置も含む）
+		var reservation = CreateHaibun("20260815", 1, 2, kubun: EnumHaibun.Reservation);
+		db.Insert(reservation);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(reservation));
+
+		AssertMonthReserve(db, "202608", 1, 5);
+		AssertRealReserve(db, 1, 5);
+
+		// 初回配分を除外する条件は全件Rebuild側にも効く
+		var incremental = GetReserveSnapshot(db);
+		summaryDb.CalcReserveQtyAll();
+		CollectionAssert.AreEqual(incremental, GetReserveSnapshot(db), "通常更新値とRebuild値は一致する");
+	}
+
+	/// <summary>
+	/// 未確定は指示数 Su、確定済み(KakuteiDayに有効日付)は確定数 JitsuSu を引当に積む。
+	/// 欠品(ShortSu)は確定と同時に引当から外れる。仕様は 5.2.2c。
+	/// </summary>
+	[TestMethod]
+	public void CalcHaibun2Reserve_AfterKakutei_UsesJitsuSuInsteadOfSu() {
+		var db = PrepareStockTables();
+		var summaryDb = new SummaryDb(db);
+		var haibun = CreateHaibun("20260815", 1, 10);
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+
+		// 未確定のうちは指示数をそのまま押さえる
+		AssertMonthReserve(db, "202608", 1, 10);
+		AssertRealReserve(db, 1, 10);
+
+		// 倉庫から JitsuSu=4 / ShortSu=6 が返り確定する。Su = JitsuSu + ShortSu
+		haibun.JitsuSu = 4;
+		haibun.ShortSu = 6;
+		haibun.KakuteiDay = "20260816";
+		db.Update(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+
+		AssertMonthReserve(db, "202608", 1, 4);
+		AssertRealReserve(db, 1, 4);
+
+		// 全量欠品なら引当は消える
+		haibun.JitsuSu = 0;
+		haibun.ShortSu = 10;
+		db.Update(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+
+		AssertMonthReserve(db, "202608", 1, 0);
+		AssertRealReserve(db, 1, 0);
+	}
+
 	[TestMethod]
 	public void CalcHaibun2Reserve_WarehouseAndMonthChanged_MovesReserveToNewKey() {
 		var db = PrepareStockTables();
@@ -600,6 +673,10 @@ public class SummaryDbTests {
 		return monthly.Concat(real).ToArray();
 	}
 
+	/// <summary>
+	/// 引当テスト用の配分行。既定は在庫配分(引当対象)・未確定とする。
+	/// 初回配分(<see cref="EnumHaibun.Hatsukai"/>)は引当対象外なので、明示的に kubun を渡す。
+	/// </summary>
 	private static TranHaibun CreateHaibun(
 		string denDay,
 		long idSoko,
@@ -607,7 +684,11 @@ public class SummaryDbTests {
 		int endFlag = 0,
 		long idShohin = 10,
 		long idCol = 100,
-		long idSiz = 1000) => new() {
+		long idSiz = 1000,
+		EnumHaibun kubun = EnumHaibun.Zaiko,
+		string kakuteiDay = "",
+		int jitsuSu = 0,
+		int shortSu = 0) => new() {
 			DenDay = denDay,
 			Id_Soko = idSoko,
 			Id_Shohin = idShohin,
@@ -615,6 +696,10 @@ public class SummaryDbTests {
 			Id_Siz = idSiz,
 			Su = su,
 			EndFlag = endFlag,
+			Kubun = (int)kubun,
+			KakuteiDay = kakuteiDay,
+			JitsuSu = jitsuSu,
+			ShortSu = shortSu,
 		};
 
 	/// <summary>月次の引当数。行が無い場合は0とみなす（引当が0のキーに行を作らないため）</summary>

@@ -345,7 +345,9 @@ public class WriteEffectRunnerTests {
 		}
 	}
 
-	private static TranHaibun CreateHaibun(string denDay, long idSoko, int su, int endFlag = 0) => new() {
+	/// <summary>引当テスト用の配分行。既定は在庫配分(引当対象)・未確定とする</summary>
+	private static TranHaibun CreateHaibun(string denDay, long idSoko, int su, int endFlag = 0,
+		EnumHaibun kubun = EnumHaibun.Zaiko) => new() {
 		DenDay = denDay,
 		Id_Soko = idSoko,
 		Id_Shohin = 10,
@@ -353,6 +355,7 @@ public class WriteEffectRunnerTests {
 		Id_Siz = 1000,
 		Su = su,
 		EndFlag = endFlag,
+		Kubun = (int)kubun,
 	};
 
 	private static Tran05Ido CreateTransfer(string denDay, long idSoko, long idIdo, int su) => new() {

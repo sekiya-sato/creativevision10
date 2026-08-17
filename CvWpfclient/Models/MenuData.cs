@@ -107,9 +107,10 @@ public partial class MenuData : ObservableObject {
 			new("移動受入力", typeof(Views._08Zaiko.IdoInputUkeView), addInfo:"積送中在庫を移動先へ実入庫。未受の出庫伝票から取込可"),
 			new("移動未受リスト", typeof(Views._08Zaiko.IdoUnreceivedListView), addInfo:"出庫済みで入庫未済の移動をSKU別に列挙"),
 			new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"倉庫の棚卸データをTran60Tanaへ登録"),
-			new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中"),
-			new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"準備中"),
-			new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中"),
+			new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中 倉庫の有効在庫を見て店舗から出荷希望数を入力"),
+			new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"準備中 確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
+			new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中 確定した配分をピッキングリストとして印刷"),
+			new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"準備中 商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
 		])) { AllowedRoles = [EnumLoginRole.Warehouse] },
 		/* ================================================================
 		 * 01 マスター
@@ -167,18 +168,17 @@ public partial class MenuData : ObservableObject {
 				new("発注配分入力", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"発注(入荷予定)を入庫先へ色サイズ別に振り分けて配分データを作成"),
 			])),
 			new("発注残・納品予定", new([
-				new("納品予定照会", typeof(Views._03Hatchu.DeliveryScheduleInquiryView), addInfo:"未実装 発注に納品予定日の項目が無く仕様確定待ち"),
-				new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"未実装 発注に納品予定日の項目が無く仕様確定待ち"),
+				new("納品予定照会", typeof(Views._03Hatchu.DeliveryScheduleInquiryView), addInfo:"準備中 発注ヘッダの納品予定日でSKU別入荷予定を照会"),
+				new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"準備中 仕入先別の納品予定を印刷。納期遅れは納品日とEndFlagで判定"),
 				new("仕入未受リスト", typeof(Views._03Hatchu.PendingShiireListView), addInfo:"発注済みで入荷未済の分をSKU別に列挙"),
 				new("発注残管理表", typeof(Views._03Hatchu.HachuZanKanriTableView), addInfo:"発注伝票単位に残数･残金額･経過日数･滞留区分を印刷"),
-				new("発注残完了設定", typeof(Views._03Hatchu.HachuZanCompletionSettingView), addInfo:"準備中"),
+				new("発注残完了設定", typeof(Views._03Hatchu.HachuZanCompletionSettingView), addInfo:"準備中 Tran13Hachu.EndFlagを伝票単位で完了/解除する"),
 			])),
 			new("発注帳票", new([
 				new("発注書", typeof(Views._03Hatchu.HachuFormView), addInfo:"仕入先へ渡す発注書を単票印刷"),
 				new("仕入先別発注表", typeof(Views._03Hatchu.SupplierHachuTableView), addInfo:"仕入先別に件数･数量･金額･上代･原価率を集計"),
 				new("商品別発注表", typeof(Views._03Hatchu.ShohinHachuTableView), addInfo:"発注明細を品番別に集計して数量･金額･上代を印刷"),
 				new("商品別発注集計表", typeof(Views._03Hatchu.ShohinHachuSummaryTableView), addInfo:"発注をブランド/アイテム別に集計し分類内構成比を印刷"),
-				new("発注配分リスト", typeof(Views._03Hatchu.HachuHaibunListView), addInfo:"未実装 配分データの区分/関連伝票NOの規約が未確定"),
 			])),
 		])),
 		/* ================================================================
@@ -187,24 +187,23 @@ public partial class MenuData : ObservableObject {
 		new("■ 受注・展示会", new([
 			new("受注", new([
 				new("展示会受注入力", typeof(Views._04Juchu.JuchuInputView), addInfo:"得意先対象の受注入力・一覧・明細印刷"),
-				new("納品予定表", typeof(Views._04Juchu.NouhinYoteiTableView), addInfo:"未実装 受注に納品予定日の項目が無く仕様確定待ち"),
+				new("納品予定表", typeof(Views._04Juchu.NouhinYoteiTableView), addInfo:"準備中 受注ヘッダの納品予定日で得意先別の納品予定を印刷"),
 				new("得意先別受注表", typeof(Views._04Juchu.TokuiSakiJuchuTableView), addInfo:"得意先別に件数･数量･金額･上代･掛率を集計"),
 				new("商品別受注表", typeof(Views._04Juchu.ShouhinJuchuTableView), addInfo:"受注明細を品番別に集計して数量･金額･上代を印刷"),
 				new("商品別受注集計表", typeof(Views._04Juchu.ShouhinJuchuSummaryTableView), addInfo:"受注をブランド/アイテム別に集計し分類内構成比を印刷"),
-				new("受注残管理表", typeof(Views._04Juchu.JuchuZanKanriTableView), addInfo:"受注伝票単位に残数･残金額･経過日数･滞留区分を印刷"),
-				new("受注残完了設定", typeof(Views._04Juchu.JuchuZanCompletionSettingView), addInfo:"準備中"),
+				new("受注残管理表", typeof(Views._04Juchu.JuchuZanKanriTableView), addInfo:"受注残(受注-紐付く出荷)を伝票単位に印刷。完了済みは対象外"),
+				new("受注残完了設定", typeof(Views._04Juchu.JuchuZanCompletionSettingView), addInfo:"準備中 Tran12Jyuchu.EndFlagを伝票単位で完了/解除する"),
 			])),
 			new("展示会", new([
-				new("展示会スワッチ", typeof(Views._04Juchu.TenjiSwatchView), addInfo:"準備中"),
-				new("スワッチデータ作成", typeof(Views._04Juchu.SwatchDataCreateView), addInfo:"準備中"),
-				new("スワッチデータ一括作成", typeof(Views._04Juchu.SwatchDataBulkCreateView), addInfo:"準備中"),
-				new("絵型一覧表", typeof(Views._04Juchu.DesignListTableView), addInfo:"未実装 絵型画像の保管方法が未定"),
+				new("展示会スワッチ", typeof(Views._04Juchu.TenjiSwatchView), addInfo:"1.1以降 展示会スワッチはRelease後対応"),
+				new("スワッチデータ作成", typeof(Views._04Juchu.SwatchDataCreateView), addInfo:"1.1以降 展示会スワッチはRelease後対応"),
+				new("スワッチデータ一括作成", typeof(Views._04Juchu.SwatchDataBulkCreateView), addInfo:"1.1以降 展示会スワッチはRelease後対応"),
+				new("絵型一覧表", typeof(Views._04Juchu.DesignListTableView), addInfo:"1.1以降 絵型画像の保管方法が未定"),
 			])),
 			new("受注分析・帳票", new([
 				new("得意先別売上予定表", typeof(Views._04Juchu.TokuiSakiUriageYoteiTableView), addInfo:"得意先別に受注残を売上予定額として集計"),
 				new("担当別展示会受注合計表", typeof(Views._04Juchu.TantoTenjiJuchuGoukeiTableView), addInfo:"担当社員×展示会で受注を集計し構成比を印刷"),
 				new("受注ベスト表", typeof(Views._04Juchu.JuchuBestTableView), addInfo:"受注を品番別に順位付けし構成比･累計構成比を印刷"),
-				new("配分出荷リスト", typeof(Views._04Juchu.HaibunShukkaListView), addInfo:"準備中"),
 			])),
 		])),
 		/* ================================================================
@@ -226,27 +225,32 @@ public partial class MenuData : ObservableObject {
 		new("■ 配分・出荷", new([
 			new("配分", new([
 				new("店舗配分入力", typeof(Views._07Haibun.ShopHaibunInputView), addInfo:"入荷予定･現在庫をSKU×店舗へ振り分けてTranHaibunを作成"),
-				new("受注配分入力", typeof(Views._07Haibun.JuchuHaibunInputView), addInfo:"準備中"),
-				new("在庫品配分", typeof(Views._07Haibun.ZaikoHinHaibunView), addInfo:"準備中"),
-				new("得意先別配分入力", typeof(Views._07Haibun.TokuiHaibunInputView), addInfo:"準備中"),
-				new("配分データメンテ", typeof(Views._07Haibun.HaibunDataMenteView), addInfo:"準備中"),
-				new("配分関連メンテナンス", typeof(Views._07Haibun.HaibunMenteView), addInfo:"準備中"),
+				new("受注配分入力", typeof(Views._07Haibun.JuchuHaibunInputView), addInfo:"準備中 受注残を呼び出して有効在庫から配分する"),
+				new("在庫品配分", typeof(Views._07Haibun.ZaikoHinHaibunView), addInfo:"準備中 倉庫の有効在庫を一括で店舗へ配分する"),
+				new("得意先別配分入力", typeof(Views._07Haibun.TokuiHaibunInputView), addInfo:"準備中 得意先を軸に商品を振り分ける"),
+				new("配分データメンテ", typeof(Views._07Haibun.HaibunDataMenteView), addInfo:"準備中 管理者用。確定日･欠品数･完了FLGを直接修正する"),
+				new("配分関連メンテナンス", typeof(Views._07Haibun.HaibunMenteView), addInfo:"1.1以降 自動補充の対象店舗･優先順位を設定する"),
 			])),
 			new("出荷", new([
-				new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中"),
-				new("出荷指示確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"準備中"),
-				new("出荷指示確定(得意先)", typeof(Views._07Haibun.ShippingConfirmTokuiView), addInfo:"準備中"),
-				new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"準備中"),
-				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中"),
-				new("出荷指示一覧印刷", typeof(Views._07Haibun.ShippingConfirmListView), addInfo:"準備中"),
-				new("納入一覧表", typeof(Views._07Haibun.ShippingListReportView), addInfo:"準備中"),
+				new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中 倉庫の有効在庫を見て店舗から出荷希望数を入力"),
+				new("出荷指示確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"準備中 商品基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
+				new("出荷指示確定(得意先)", typeof(Views._07Haibun.ShippingConfirmTokuiView), addInfo:"準備中 得意先基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
+				new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"準備中 確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
+				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中 確定した配分をピッキングリストとして印刷"),
+				new("出荷指示一覧印刷", typeof(Views._07Haibun.ShippingConfirmListView), addInfo:"準備中 確定済みかつ未完了の滞留を検出"),
+				new("納入一覧表", typeof(Views._07Haibun.ShippingListReportView), addInfo:"準備中 商品×出荷先で種まき用の数量表を印刷"),
+			])),
+			new("配分照会", new([
+				new("配分問合わせ", typeof(Views._07Haibun.HaibunQueryView), addInfo:"準備中 出庫側から商品別の配分数を倉庫×色サイズで展開"),
+				new("引当問合わせ", typeof(Views._07Haibun.HikiateQueryView), addInfo:"準備中 入庫側から商品別の引当数を倉庫×色サイズで展開"),
+				new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"準備中 商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
 			])),
 			new("補充・移動指示", new([
-				new("取置入力", typeof(Views._07Haibun.ReservationInputView), addInfo:"準備中"),
+				new("取置入力", typeof(Views._07Haibun.ReservationInputView), addInfo:"準備中 得意先･顧客向けに在庫を確保する(引当対象)"),
 				new("移動指示(SKU)", typeof(Views._07Haibun.IdoInstructionSkuView), addInfo:"準備中"),
 				new("移動指示(商品)", typeof(Views._07Haibun.IdoInstructionShohinView), addInfo:"準備中"),
-				new("自動発注・補充対象除外品設定", typeof(Views._07Haibun.AutoHachuHojunExcludeSettingView), addInfo:"準備中"),
-				new("在庫基準自動補充メンテナンス", typeof(Views._07Haibun.ZaikoAutoHojunMenteView), addInfo:"準備中"),
+				new("自動発注・補充対象除外品設定", typeof(Views._07Haibun.AutoHachuHojunExcludeSettingView), addInfo:"1.1以降 自動補充はRelease後対応"),
+				new("在庫基準自動補充メンテナンス", typeof(Views._07Haibun.ZaikoAutoHojunMenteView), addInfo:"1.1以降 自動補充はRelease後対応"),
 			])),
 		])),
 		/* ================================================================
@@ -284,7 +288,7 @@ public partial class MenuData : ObservableObject {
 				new("在庫移動入力", typeof(Views._08Zaiko.StockIdoInputView), addInfo:"出庫元の在庫一覧から移動数を入力し即時移動伝票を作成"),
 				new("移動未受リスト", typeof(Views._08Zaiko.IdoUnreceivedListView), addInfo:"出庫済みで入庫未済の移動をSKU別に列挙"),
 				new("品番別移動チェックリスト", typeof(Views._08Zaiko.HinbanIdoCheckListView), addInfo:"移動明細を品番別に集計し出庫数･入庫数･差異を印刷"),
-				new("在庫強制調整入力", typeof(Views._08Zaiko.StockForceInputView), addInfo:"未実装 調整を保存する伝票テーブルが無く仕様確定待ち"),
+				new("在庫強制調整入力", typeof(Views._08Zaiko.StockForceInputView), addInfo:"準備中 調整専用伝票Tran61Choseiを新設して在庫を増減する"),
 			])),
 			new("棚卸", new([
 				new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"倉庫の棚卸データをTran60Tanaへ登録"),
@@ -307,7 +311,7 @@ public partial class MenuData : ObservableObject {
 		 * ================================================================ */
 		new("■ 掛管理（請求・支払）", new([
 			new("売掛・請求", new([
-				new("請求計算", typeof(Views._31Monthly.BillingCalculationView), addInfo:"準備中"),
+				new("請求計算", typeof(Views._31Monthly.BillingCalculationView), addInfo:"準備中 締日･請求月･得意先範囲を指定してSummaryUriSeiを作成する"),
 				new("請求一覧表", typeof(Views._06Uriage.SeikyuListReportView), addInfo:"請求日単位に得意先別の請求額･残高を一覧印刷"),
 				new("請求書印刷", typeof(Views._06Uriage.SeikyuBalanceDetailView), addInfo:"得意先別に請求ヘッダ＋対象期間の売上･入金明細を単票印刷"),
 				new("入金入力", typeof(Views._06Uriage.NyukinInputView), addInfo:"得意先からの入金を金種別明細で入力(売掛の減算)"),
@@ -317,7 +321,7 @@ public partial class MenuData : ObservableObject {
 				new("月別入金予定表", typeof(Views._06Uriage.MonthlyNyukinYoteiTableView), addInfo:"得意先の回収条件から入金予定日別の予定額を印刷"),
 			])),
 			new("買掛・支払", new([
-				new("支払計算", typeof(Views._31Monthly.PaymentCalculationView), addInfo:"準備中"),
+				new("支払計算", typeof(Views._31Monthly.PaymentCalculationView), addInfo:"準備中 締日･支払月･仕入先範囲を指定してSummaryKaiShiを作成する"),
 				new("支払入力", typeof(Views._05Shiire.ShiharaiInputView)),
 				new("支払消込", typeof(Views._05Shiire.ShiharaiMatchingView), addInfo:"支払先単位に仕入を一覧し伝票単位で消込(EndFlag)。支払は区分別集計で金額を突合"),
 				new("仕入先元帳", typeof(Views._05Shiire.ShiireLedgerView), addInfo:"仕入先別に繰越残高･仕入･支払･差引残高を日付順に印刷"),
@@ -389,16 +393,16 @@ public partial class MenuData : ObservableObject {
 		 * ================================================================ */
 		new("■ 月次・更新処理", new([
 			new("締め・集計", new([
-				new("締日更新", typeof(Views._31Monthly.ShimebiUpdateView), addInfo:"準備中"),
+				new("締日更新", typeof(Views._31Monthly.ShimebiUpdateView), addInfo:"1.1以降 1.0では伝票の遡及制御を有効日数のワーニングで行う"),
 				new("月間データ集計", typeof(Views._31Monthly.MonthlyDataSummaryView), addInfo:"準備中"),
 				new("在庫累計更新", typeof(Views._31Monthly.StockRuikeiUpdateView), addInfo:"準備中"),
 			])),
 			new("棚卸更新", new([
-				new("棚卸開始処理", typeof(Views._31Monthly.StockTakeInitiationView), addInfo:"準備中"),
-				new("棚卸確定", typeof(Views._31Monthly.StockTakeFinalizationView), addInfo:"準備中"),
+				new("棚卸開始処理", typeof(Views._31Monthly.StockTakeInitiationView), addInfo:"準備中 棚卸終了日時点の帳簿在庫を保存し棚卸中に動かないようにする"),
+				new("棚卸確定処理", typeof(Views._31Monthly.StockTakeFinalizationView), addInfo:"準備中 棚卸数とSuの差をAdjustQtyへ設定して在庫を確定する。再確定可"),
 			])),
 			new("再更新", new([
-				new("在庫・掛再更新", typeof(Views._31Monthly.StockKakeUpdateView), addInfo:"準備中"),
+				new("在庫・掛再更新", typeof(Views._31Monthly.StockKakeUpdateView), addInfo:"在庫･売掛･買掛を取引明細から再集計する"),
 			])),
 			new("原価・評価", new([
 				new("AfterToDo: 原価変更登録", typeof(Views._01Master.GenkaChangeEntryView), addInfo:"準備中 他のがだいたい終わってから実装する"),
@@ -421,6 +425,8 @@ public partial class MenuData : ObservableObject {
 		])),
 		/* ================================================================
 		 * 31 外部連携 : 旧「HHT / POS連携」「物流」を統合
+		 * 2026-08-17 の決定 I6「ハンディは無し」は、配分→出荷のフローでハンディ読取に依存しない
+		 * （伝票作成は「出荷処理入力」に一本化する）という意味であり、HHT連携機能そのものは残す。
 		 * POS は専用画面が未作成のため小分類を作っていない(POS日別精算入力/売上金種Viewerは「売上」配下)
 		 * ================================================================ */
 		new("■ 外部連携", new([
@@ -438,8 +444,8 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("物流連携", new([
 				new("マスタデータ作成", typeof(Views._41Logistics.LogisticsMasterDataCreateView), addInfo:"準備中"),
-				new("連携データ手動送信", typeof(Views._41Logistics.IntegrationDataManualTransmitView), addInfo:"準備中"),
-				new("連携データ手動受信", typeof(Views._41Logistics.IntegrationDataManualReceiveView), addInfo:"準備中"),
+				new("連携データ手動送信", typeof(Views._41Logistics.IntegrationDataManualTransmitView), addInfo:"準備中 配分の指示数を倉庫へ送信する(TranHaibun.SendFlg)"),
+				new("連携データ手動受信", typeof(Views._41Logistics.IntegrationDataManualReceiveView), addInfo:"準備中 倉庫から確定数･欠品数を受信する(JitsuSu/ShortSu)"),
 				new("連携エラーデータ照会", typeof(Views._41Logistics.IntegrationErrorDataQueryView), addInfo:"準備中"),
 			])),
 		])),
