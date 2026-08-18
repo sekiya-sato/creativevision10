@@ -1,3 +1,22 @@
+## [2026-08-18] F2 follow-up 在庫強制調整の取消・実績照会を実装
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- F2 の残作業。在庫強制調整入力で登録した Tran61Chosei(区分=強制調整)を照会し、誤登録を取消(削除)できるようにする。
+### 詳細設計（実装前に作成）
+- `Doc/spec/2026-08-18_F2fu_強制調整の取消・実績照会_詳細設計.md` を新設。クライアントに閉じる(既存の照会Msg101と汎用削除DeleteByIdParamを使う)。
+### 実施内容
+- 新規 `ViewModels/08Zaiko/StockForceHistoryViewModel.cs`(`BaseQueryViewModel` 派生)。倉庫・調整日範囲で `Tran61Chosei`(Kubun=強制調整)を
+  `QuerySqlListAsync` で一覧し、選択伝票の `Jmeisai`(登録時に名称格納済み)を明細表示。取消は `DeleteByIdParam(typeof(Tran61Chosei),Id,Vdu)`。
+- `Tran61Chosei` は `ITranSoko` なので、サーバの汎用削除(`HandleDeleteById`→`WriteEffectRunner.Before` が在庫反転)が在庫を調整前へ戻す。楽観排他競合は再取得を促す。
+- 新規 `Views/08Zaiko/StockForceHistoryView.xaml`(+`.cs`)。ヘッダ一覧＋明細＋取消ボタン。SDK形式WPFのため新規xamlは自動取り込み。
+- `MenuData` に「在庫強制調整実績照会」を追加し、入力側 addInfo の「準備中」を外した。
+### 確認
+- `dotnet build creativevision10.slnx`：成功（0/0）。`TestServer` 92件・`TestLogin` 7件は不変(クライアント閉じ)。
+  Tran61Chosei削除の在庫反転は汎用CRUDの反転テストで担保済み。
+### 完成度への影響
+- F2 の取消・実績照会を実装（残りは調整理由マスタ・実績PDF）。台帳 F2 / チェックリスト14章を更新。
+
 ## [2026-08-18] I7 滞留・欠品の例外画面を実装
 ### Agent
 - Opus 4.8 : Anthropic : Sekiya Sato Claude

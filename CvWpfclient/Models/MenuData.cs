@@ -288,7 +288,8 @@ public partial class MenuData : ObservableObject {
 				new("在庫移動入力", typeof(Views._08Zaiko.StockIdoInputView), addInfo:"出庫元の在庫一覧から移動数を入力し即時移動伝票を作成"),
 				new("移動未受リスト", typeof(Views._08Zaiko.IdoUnreceivedListView), addInfo:"出庫済みで入庫未済の移動をSKU別に列挙"),
 				new("品番別移動チェックリスト", typeof(Views._08Zaiko.HinbanIdoCheckListView), addInfo:"移動明細を品番別に集計し出庫数･入庫数･差異を印刷"),
-				new("在庫強制調整入力", typeof(Views._08Zaiko.StockForceInputView), addInfo:"準備中 調整専用伝票Tran61Choseiを新設して在庫を増減する"),
+				new("在庫強制調整入力", typeof(Views._08Zaiko.StockForceInputView), addInfo:"調整専用伝票Tran61Choseiで在庫を強制的に増減(登録で即時反映)"),
+				new("在庫強制調整実績照会", typeof(Views._08Zaiko.StockForceHistoryView), addInfo:"強制調整伝票を照会し取消(削除で在庫を調整前へ戻す)"),
 			])),
 			new("棚卸", new([
 				new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"倉庫の棚卸データをTran60Tanaへ登録"),
