@@ -1,3 +1,25 @@
+## [2026-08-18] G0-4.3.1 完了済み伝票の編集時ワーニングを実装
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- 未適用課題 G0-4.3.1 を実装。完了(`EndFlag=1`)は自動解除しない（4.3.1）ため、完了済みの発注・受注に紐付く
+  仕入・出荷を編集しても残へ反映されない。利用者が気付けるよう保存後に警告する。
+### 詳細設計（実装前に作成）
+- `Doc/spec/2026-08-18_G0-4.3.1_完了済み伝票の編集時ワーニング_詳細設計.md` を新設。
+- 方針: サーバ・スキーマ変更なし。保存成功後（`AfterInsert/Update/Delete`）にクライアントの読み取り(`Msg101_Op_Query`)で
+  紐付く発注/受注の `EndFlag=1` を確認し、情報ダイアログを出す。保存はブロックしない。
+### 実施内容
+- `CvWpfclient/Helpers/ViewModels/BaseTranInputViewModel.cs`: `WarnIfLinkedZanCompletedAsync(zanType, relateNo1, ...)` を追加。
+  `RelateNo1 > 0` のとき `SELECT * FROM {zanType} WHERE Id = @ AND EndFlag = 1` を投げ、1件でも返れば警告。読み取り失敗は握りつぶす。
+- `ShiireInputViewModel`: `AfterInsert/Update/Delete` を override し `typeof(Tran13Hachu)`（発注）で呼ぶ。仕入返品(`HenpinInput`)も継承で同じ挙動。
+- `ShukkaUriageInputViewModel`: 同様に `typeof(Tran12Jyuchu)`（受注）で呼ぶ。
+- 同期の `AfterXxx` から `_ = WarnIf...Async(...)` の fire-and-forget で起動（保存は成功済みで警告表示の遅延・失敗は業務に影響しない）。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`：成功（0 warnings / 0 errors）。
+- クライアント閉じの変更のため `TestServer` 92件・`TestLogin` 7件は不変（回帰確認済み）。
+### 完成度への影響
+- Lv判定は不変。台帳 G0-4.3.1 を完了、4章の「編集時ワーニングは未実装」を解消。チェックリスト 3.2/3.3/4章/13章を更新。
+
 ## [2026-08-18] I2/I3 出荷指示確定(商品/得意先)・出荷処理入力を実装し ShippingDb をサーバ接続
 ### Agent
 - Opus 4.8 : Anthropic : Sekiya Sato Claude

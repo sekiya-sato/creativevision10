@@ -13,10 +13,12 @@ BaseTranInputViewModel は伝票入力画面（発注/受注/仕入/売上 等�
 # example
 public partial class HachuInputViewModel : BaseTranInputViewModel<Tran13Hachu>, ITranInputTab { ... }
  */
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -81,6 +83,50 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 
 	/// <summary>ヘッダ合計（消費税/総合計など）の再計算フック。既定は何もしない（Uriage 系）。</summary>
 	protected virtual void OnTotalsUpdated() { }
+
+	/// <summary>
+	/// 保存した伝票が完了済みの発注/受注に紐付いていれば、気付き用の警告を出す（G0-4.3.1）。
+	/// <para>
+	/// 完了(<c>EndFlag=1</c>)は自動では解除されない（判断材料 4.3.1）。完了済みの発注・受注へ紐付く
+	/// 仕入・出荷を編集しても残へ反映されないため、利用者が残完了設定で調整できるよう保存後に知らせる。
+	/// 読み取り失敗は握りつぶす（保存は成功しており業務を妨げない）。
+	/// </para>
+	/// </summary>
+	/// <param name="zanType">紐付く発注(<see cref="Tran13Hachu"/>)／受注(<see cref="Tran12Jyuchu"/>)の型</param>
+	/// <param name="relateNo1">保存した伝票の <c>RelateNo1</c>（発注Id／受注Id）。0以下なら何もしない</param>
+	/// <param name="denLabel">保存した伝票の名称（"仕入" / "出荷"）</param>
+	/// <param name="zanLabel">紐付く残伝票の名称（"発注" / "受注"）</param>
+	/// <param name="settingLabel">案内する残完了設定画面の名称</param>
+	protected async Task WarnIfLinkedZanCompletedAsync(Type zanType, int relateNo1, string denLabel, string zanLabel, string settingLabel) {
+		if (relateNo1 <= 0) {
+			return;
+		}
+		try {
+			// Id は long で数値以外を含み得ないためSQLへ直接埋め込む（既存の読み取り規約と同じ）
+			var sql = $"SELECT * FROM {zanType.Name} WHERE Id = {relateNo1} AND EndFlag = 1";
+			var msg = new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg101_Op_Query,
+				DataType = typeof(QueryListSqlParam),
+				DataMsg = Common.SerializeObject(new QueryListSqlParam(zanType, sql, [])),
+			};
+			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(CancellationToken.None));
+			if (reply.Code < 0 && reply.Code != -1) {
+				return; // 通信・SQLエラーは黙って無視（保存は成功している）
+			}
+			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list || list.Count == 0) {
+				return; // 完了していない、または該当なし
+			}
+			MessageEx.ShowInformationDialog(
+				$"この{denLabel}に紐付く{zanLabel} #{relateNo1} は完了済みです。\n"
+				+ $"完了は自動では解除されません。数量を変更した場合は、必要に応じて{settingLabel}で確認してください。",
+				owner: ActiveWindow);
+		}
+		catch {
+			// 警告表示の失敗は業務に影響しないため無視する
+		}
+	}
 
 	/// <summary>CurrentEdit.Jmeisai から編集用明細を再構築し、購読・区分正規化・集計を行う。</summary>
 	protected void ApplyMeisaiFromCurrentEdit() {

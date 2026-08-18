@@ -571,4 +571,21 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	protected override string GetInsertConfirmMessage() => $"追加しますか？ ({DenLabel}No={CurrentEdit.Id})";
 	protected override string GetUpdateConfirmMessage() => $"修正しますか？ ({DenLabel}No={CurrentEdit.Id})";
 	protected override string GetDeleteConfirmMessage() => $"削除しますか？ ({DenLabel}No={CurrentEdit.Id})";
+
+	// G0-4.3.1: 完了済み発注に紐付く仕入を編集したら気付き用の警告を出す（RelateNo1 = 発注Id）。
+	// 仕入返品(HenpinInput)も本クラスを継承するので同じ挙動になる。
+	protected override void AfterInsert(Tran03Shiire item) {
+		base.AfterInsert(item);
+		_ = WarnIfLinkedZanCompletedAsync(typeof(Tran13Hachu), item.RelateNo1, DenLabel, "発注", "発注残完了設定");
+	}
+
+	protected override void AfterUpdate(Tran03Shiire item) {
+		base.AfterUpdate(item);
+		_ = WarnIfLinkedZanCompletedAsync(typeof(Tran13Hachu), item.RelateNo1, DenLabel, "発注", "発注残完了設定");
+	}
+
+	protected override void AfterDelete(Tran03Shiire removedItem) {
+		base.AfterDelete(removedItem);
+		_ = WarnIfLinkedZanCompletedAsync(typeof(Tran13Hachu), removedItem.RelateNo1, DenLabel, "発注", "発注残完了設定");
+	}
 }

@@ -446,4 +446,20 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	protected override string GetInsertConfirmMessage() => $"追加しますか？ (伝票No={CurrentEdit.Id})";
 	protected override string GetUpdateConfirmMessage() => $"修正しますか？ (伝票No={CurrentEdit.Id})";
 	protected override string GetDeleteConfirmMessage() => $"削除しますか？ (伝票No={CurrentEdit.Id})";
+
+	// G0-4.3.1: 完了済み受注に紐付く出荷売上を編集したら気付き用の警告を出す（RelateNo1 = 受注Id）。
+	protected override void AfterInsert(Tran00Uriage item) {
+		base.AfterInsert(item);
+		_ = WarnIfLinkedZanCompletedAsync(typeof(Tran12Jyuchu), item.RelateNo1, "出荷", "受注", "受注残完了設定");
+	}
+
+	protected override void AfterUpdate(Tran00Uriage item) {
+		base.AfterUpdate(item);
+		_ = WarnIfLinkedZanCompletedAsync(typeof(Tran12Jyuchu), item.RelateNo1, "出荷", "受注", "受注残完了設定");
+	}
+
+	protected override void AfterDelete(Tran00Uriage removedItem) {
+		base.AfterDelete(removedItem);
+		_ = WarnIfLinkedZanCompletedAsync(typeof(Tran12Jyuchu), removedItem.RelateNo1, "出荷", "受注", "受注残完了設定");
+	}
 }
