@@ -42,3 +42,29 @@
 - D-06/D-07: 総平均原価の`TQ`と月次処理順。
 - D-08/D-09: 期首残高移行とMini-UAT責任者。
 - D-14: 1.1 LCVの個人情報、ポイント会計、返品・失効、移行責務。
+## [2026-08-18] McpOracleをOracle接続用MCPサーバとして追加
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- `McpSql` と同じ stdio MCP サーバ構成で、Oracle 接続文字列を引数または環境変数から受け取り、スキーマ参照・照会・任意時の更新を行える `McpOracle` プロジェクトを追加する。
+
+### 設計・実装
+- `McpOracle/McpOracle.csproj` を新設し、既存の中央パッケージ管理から `ModelContextProtocol.Core` と `Oracle.ManagedDataAccess.Core` を参照する。
+- 起動引数の第1非オプション引数、または `MCPORACLE_CONNECTION_STRING` を接続文字列として利用する。`--allow-write` を指定しない既定時には更新ツールを MCP に公開しない。
+- `list_tables` / `describe_table` / `list_indexes` は `USER_OBJECTS`、`USER_TAB_COLUMNS`、`USER_CONSTRAINTS`、`USER_INDEXES` などの `USER_*` データディクショナリを使用し、接続ユーザー所有のオブジェクトに限定する。
+- `query` は単文の `SELECT` または `WITH ... SELECT` に限定し、行数・応答サイズ・セルサイズを上限管理する。値は `:p0`、`:p1` 形式でバインドする。
+- `explain` は `EXPLAIN PLAN FOR` と `DBMS_XPLAN.DISPLAY()` を使用する。DDL は `DBMS_METADATA.GET_DDL` が許可されない環境でも、列・制約情報を返せるようにする。
+- 接続文字列・パスワードをログや応答へ出力しない。読取り時の SQL 検証に加え、Oracle アカウント権限を最終的なアクセス制御境界とする。
+- `creativevision10.slnx` に `McpOracle` を追加した。
+
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build McpOracle\McpOracle.csproj` 成功（警告 0、エラー 0）。
+- 引数なし起動で、接続文字列の指定方法を stderr に表示して終了することを確認した。
+- `git diff --check` を実行した。
+
+### 使用例
+- `McpOracle.exe "Data Source=192.168.9.243/cvnet;User Id=CV00PKG;Password=CV00PKG;"`
+- 環境変数: `MCPORACLE_CONNECTION_STRING` に同じ接続文字列を設定して `McpOracle.exe` を起動する。
+- 更新を許可する場合: 上記に `--allow-write` を追加する。
