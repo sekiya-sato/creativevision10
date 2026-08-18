@@ -279,6 +279,54 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(1000, row.Shiire);
 	}
 
+	// ---- 支払残 ------------------------------------------------------------------
+
+	[TestMethod]
+	public void CalcSummaryKaiShi_CalculatesPeriodBreakdownBalanceAndDueDay() {
+		var db = PrepareKaiShiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterShiire { Code = "A001", Shime1 = 20, PayMonth = 0, PayDay = 0 });
+		db.Insert(new MasterShiire { Code = "B001", Shime1 = 99, PayMonth = 1, PayDay = 15 });
+		db.Insert(new SummaryKaiShi {
+			Id_Shiire = 1, DenDay = "20260620", DayFrom = "20260521", DayTo = "20260620", TotalShiire = 500,
+		});
+		db.Insert(CreateBillingShiire("20260710", 1, EnumShiire.Shiire, 1000, 100));
+		db.Insert(CreateBillingShiire("20260711", 1, EnumShiire.Henpin, 200, 20));
+		db.Insert(CreateBillingShiire("20260712", 1, EnumShiire.Nebiki, 100, 10));
+		db.Insert(CreateBillingShiire("20260721", 1, EnumShiire.Shiire, 999, 0));
+		db.Insert(CreateShiharai("20260715", 1, [(KinCash, 300), (KinFee, 40)]));
+
+		summaryDb.CalcSummaryKaiShi("202607", 20, "A001", "A999");
+		var row = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 1, "20260720");
+
+		Assert.AreEqual("20260621", row.DayFrom);
+		Assert.AreEqual("20260720", row.DayTo);
+		Assert.AreEqual(1000, row.Shiire);
+		Assert.AreEqual(200, row.Henpin);
+		Assert.AreEqual(100, row.Nebiki);
+		Assert.AreEqual(90, row.Tax);
+		Assert.AreEqual(790, row.TotalShiire);
+		Assert.AreEqual(340, row.TotalOut);
+		Assert.AreEqual(-950, row.Balance);
+		Assert.AreEqual("20260731", row.ShiharaiYoteiDay);
+		Assert.IsNull(db.FirstOrDefault<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 2, "20260731"));
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiShi_RecalculationIsIdempotent() {
+		var db = PrepareKaiShiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterShiire { Code = "A001", Shime1 = 99, PayMonth = 1, PayDay = 15 });
+		db.Insert(CreateBillingShiire("20260710", 1, EnumShiire.Shiire, 1000, 100));
+
+		summaryDb.CalcSummaryKaiShi("202607", 99);
+		var first = GetKaiShiSnapshot(db);
+		summaryDb.CalcSummaryKaiShi("202607", 99);
+		var second = GetKaiShiSnapshot(db);
+
+		CollectionAssert.AreEqual(first, second);
+	}
+
 	// ---- 準備 --------------------------------------------------------------------
 
 	/// <summary>KIN 区分マスタの Id。実DBの値ではなくテスト内で採番した値を使う</summary>
@@ -352,8 +400,24 @@ public class SummaryKakeDbTests {
 		return tran;
 	}
 
+	private ExDatabaseSqlite PrepareKaiShiTables() {
+		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		db.CreateTable(typeof(SummaryKaiShi), true, false);
+		db.CreateTable(typeof(MasterShiire), true, false);
+		db.CreateTable(typeof(Tran03Shiire), true, false);
+		db.CreateTable(typeof(Tran07Shiharai), true, false);
+		InsertKinMaster(db);
+		return db;
+	}
+
 	private static Tran00Uriage CreateBillingUriage(string kakeDay, long idTokui, EnumUri00 kubun, int total, int tax) {
 		var tran = CreateUriage(kakeDay, idTokui, kubun, total, tax);
+		tran.Total = total;
+		return tran;
+	}
+
+	private static Tran03Shiire CreateBillingShiire(string kakeDay, long idShiire, EnumShiire kubun, int total, int tax) {
+		var tran = CreateShiire(kakeDay, idShiire, kubun, total, tax);
 		tran.Total = total;
 		return tran;
 	}
@@ -393,4 +457,8 @@ public class SummaryKakeDbTests {
 	private static string[] GetUriKakeSnapshot(ExDatabaseSqlite db) =>
 		[.. db.Fetch<SummaryUriKake>("order by Id_Tokui, DenMonth")
 			.Select(x => $"{x.Id_Tokui}:{x.DenMonth}:{x.Balance}:{x.TotalIn}:{x.TotalSales}:{x.Uriage}:{x.Henpin}:{x.Nebiki}:{x.Tax}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}")];
+
+	private static string[] GetKaiShiSnapshot(ExDatabaseSqlite db) =>
+		[.. db.Fetch<SummaryKaiShi>("order by Id_Shiire, DenDay")
+			.Select(x => $"{x.Id_Shiire}:{x.DenDay}:{x.Balance}:{x.TotalOut}:{x.TotalShiire}:{x.Shiire}:{x.Henpin}:{x.Nebiki}:{x.Tax}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}:{x.ShiharaiYoteiDay}")];
 }

@@ -908,6 +908,122 @@ LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 		return new DateTime(month.Year, month.Month, shime == (int)EnumShime.DayLast ? lastDay : Math.Min(shime, lastDay));
 	}
 	/// <summary>
+	/// 指定締日・支払月・仕入先コード範囲の支払残を再作成する。
+	/// </summary>
+	public int CalcSummaryKaiShi(string paymentYyyymm, int shime, string shiireCodeFrom = "", string shiireCodeTo = "") {
+		var (dayFrom, dayTo) = GetClosingPeriod(paymentYyyymm, shime);
+		var vdate = Common.GetVdate();
+		var cnt = 0;
+		var transactionStarted = false;
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			transactionStarted = true;
+			const string deleteSql = @"
+DELETE FROM SummaryKaiShi
+WHERE DenDay = @1
+  AND Id_Shiire IN (
+		SELECT Id FROM MasterShiire
+		WHERE Shime1 = @2
+		  AND (@3 = '' OR Code >= @3)
+		  AND (@4 = '' OR Code <= @4)
+	);";
+			var sql = $@"
+WITH kinmap AS (
+	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
+),
+purchases AS (
+	SELECT
+		t.Id_Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END) AS Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END) AS Tax
+	FROM Tran03Shiire AS t
+	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
+	GROUP BY t.Id_Shiire
+),
+payments AS (
+	SELECT
+		t.Id_Torisaki AS Id_Shiire,
+		{KinBucket("01")} AS Cash,
+		{KinBucket("02")} AS Fee,
+		{KinBucket("03")} AS Densai,
+		{KinBucket("04")} AS Offset,
+		{KinBucket("99")} AS Other
+	FROM Tran07Shiharai AS t, {KinMeisaiFrom}
+	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
+	WHERE t.KakeDay BETWEEN @0 AND @1
+	GROUP BY t.Id_Torisaki
+),
+targets AS (
+	SELECT Id, PayMonth, PayDay
+	FROM MasterShiire
+	WHERE Shime1 = @2
+	  AND (@3 = '' OR Code >= @3)
+	  AND (@4 = '' OR Code <= @4)
+),
+previousBalance AS (
+	SELECT Id_Shiire, SUM(TotalOut - TotalShiire) AS Balance
+	FROM SummaryKaiShi
+	WHERE DayTo < @0
+	GROUP BY Id_Shiire
+),
+calculated AS (
+	SELECT
+		t.Id AS Id_Shiire,
+		IFNULL(s.Shiire, 0) AS Shiire,
+		IFNULL(s.Henpin, 0) AS Henpin,
+		IFNULL(s.Nebiki, 0) AS Nebiki,
+		IFNULL(s.Tax, 0) AS Tax,
+		IFNULL(p.Cash, 0) AS Cash,
+		IFNULL(p.Fee, 0) AS Fee,
+		IFNULL(p.Densai, 0) AS Densai,
+		IFNULL(p.Offset, 0) AS Offset,
+		IFNULL(p.Other, 0) AS Other,
+		strftime('%Y%m%d', CASE
+			WHEN t.PayDay IN (0, 99) THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')
+			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth), printf('+%d days', MIN(t.PayDay, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')) AS INTEGER)) - 1))
+		END) AS ShiharaiYoteiDay
+	FROM targets AS t
+	LEFT JOIN purchases AS s ON s.Id_Shiire = t.Id
+	LEFT JOIN payments AS p ON p.Id_Shiire = t.Id
+)
+INSERT INTO SummaryKaiShi (
+	Id_Shiire, DenDay, DayFrom, DayTo, ShiharaiYoteiDay,
+	Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Tax,
+	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
+)
+SELECT
+	c.Id_Shiire,
+	@1,
+	@0,
+	@1,
+	c.ShiharaiYoteiDay,
+	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Shiire - c.Henpin - c.Nebiki + c.Tax),
+	c.Cash + c.Fee + c.Densai + c.Offset + c.Other,
+	c.Shiire - c.Henpin - c.Nebiki + c.Tax,
+	c.Shiire, c.Henpin, c.Nebiki, c.Tax,
+	c.Cash, c.Fee, c.Densai, c.Offset, c.Other,
+	{vdate}, {vdate}
+FROM calculated AS c
+LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
+";
+			var period = $"{dayFrom}-{dayTo},締日={shime}";
+			var parameters = new object[] { dayFrom, dayTo, shime, shiireCodeFrom, shiireCodeTo, paymentYyyymm };
+			cnt += ExecuteAndCounts(deleteSql, parameters, "CalcSummaryKaiShi(delete)", "SummaryKaiShi", period);
+			cnt += ExecuteAndCounts(sql, parameters, "CalcSummaryKaiShi", "SummaryKaiShi", period);
+			_db.CompleteTransaction();
+			transactionStarted = false;
+			return cnt;
+		}
+		catch {
+			if (transactionStarted) {
+				_db.AbortTransaction();
+			}
+			throw;
+		}
+	}
+	/// <summary>
 	/// SummaryKaiKakeの年月のデータを集計する(再作成)
 	/// <para>
 	/// 仕入は区分(<see cref="EnumShiire"/>)で 仕入 / 返品 / 値引 へ、支払は明細の <c>Id_Kin</c> で

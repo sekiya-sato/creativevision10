@@ -1,3 +1,20 @@
+## [2026-08-18] 支払残の計算処理を追加
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 指定締日・支払月・仕入先コード範囲から支払残を冪等に作成し、支払予定日を保持する。
+
+### 実施内容
+- `SummaryDb.CalcSummaryKaiShi` を追加し、仕入先締日から支払期間を算出して対象仕入先ごとに支払残をDELETE→再作成するようにした。
+- 仕入／返品／値引、返品税の符号、支払内訳、累計残、`PayMonth`／`PayDay` による支払予定日を実装した。
+- 支払残の期間・内訳・累計残・冪等性・月末予定日を検証するテストを追加した。
+
+### 確認
+- `Tests/TestServer/TestServer.csproj` を Development 環境でビルドし、警告・エラーなしを確認した。
+- Microsoft.Testing.Platform の実行形式から `SummaryKakeDbTests` を実行し、13件すべて成功した。
+
 ## [2026-08-18] 請求残の計算処理を追加
 
 ### Agent
