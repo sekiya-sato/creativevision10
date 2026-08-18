@@ -1,3 +1,20 @@
+## [2026-08-18] 在庫・掛再更新へ請求残・支払残のRebuildを追加
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 在庫・掛再更新の売掛・買掛再集計後に、同じ対象年月の請求残・支払残も通常再計算で再作成できるようにする。
+
+### 実施内容
+- `StockKakeUpdate` が売掛・買掛再集計の完了後、得意先／仕入先マスタに実在する有効締日（1～31日・末日）を取得し、対象年月×締日で `Msg056`／`Msg057` を順次実行するようにした。
+- Rebuildから渡す `BillingParameter.IsReissue` は常に `false` とし、既存の請求書番号・連番を保持する通常再計算を使用する。
+- 実行確認時に請求残・支払残も再作成することを表示するようにした。
+
+### 確認
+- `CvServer/CvServer.csproj`、`CvWpfclient/CvWpfclient.csproj`、`Tests/TestServer/TestServer.csproj` を Development 環境で直列ビルドし、警告・エラーなしを確認した。
+- Microsoft.Testing.Platform の実行形式から `SummaryKakeDbTests` を実行し、15件すべて成功した。
+
 ## [2026-08-18] 請求書の明示的再発行を追加
 
 ### Agent

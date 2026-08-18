@@ -5,12 +5,17 @@ using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
 using Grpc.Core;
+using System.Collections;
 using System.Globalization;
 using System.Windows;
 
 namespace CvWpfclient.ViewModels._31Monthly;
 
 public partial class StockKakeUpdateViewModel : BaseViewModel {
+	private sealed class ShimeRow {
+		public int Shime1 { get; set; }
+	}
+
 	public IReadOnlyList<string> UpdateTargets { get; } = ["全て", "在庫のみ", "売掛のみ", "買掛のみ"];
 
 	[ObservableProperty]
@@ -53,6 +58,9 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		string confirmMessage = targetMonths.Count == 1
 			? $"{targetMonths[0]} の{UpdateTarget}を実行しますか？"
 			: $"{targetMonths[0]} ～ {targetMonths[^1]} の{UpdateTarget}を実行しますか？";
+		if (UpdateTarget is "全て" or "売掛のみ" or "買掛のみ") {
+			confirmMessage += "\n請求残・支払残も再作成します。";
+		}
 
 		if (MessageEx.ShowQuestionDialog(confirmMessage, owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
@@ -65,7 +73,7 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 
 		try {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var requests = CreateSummaryRequests(targetMonths, yymmFrom, yymmTo);
+			var requests = await CreateSummaryRequestsAsync(targetMonths, yymmFrom, yymmTo, cancellationToken);
 			int processedCount = 0;
 
 			foreach (var request in requests) {
@@ -122,27 +130,68 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		return true;
 	}
 
-	private List<(string Name, CvMsg Message)> CreateSummaryRequests(IReadOnlyList<string> targetMonths, string yymmFrom, string yymmTo) {
+	private async Task<List<(string Name, CvMsg Message)>> CreateSummaryRequestsAsync(IReadOnlyList<string> targetMonths, string yymmFrom, string yymmTo, CancellationToken cancellationToken) {
 		List<(string Name, CvMsg Message)> requests = [];
+		bool includesUriKake = UpdateTarget is "全て" or "売掛のみ";
+		bool includesKaiKake = UpdateTarget is "全て" or "買掛のみ";
 		if (UpdateTarget is "全て" or "在庫のみ") {
 			requests.AddRange(targetMonths.Select(yyyymm => ($"在庫 {yyyymm}", CreateSummaryMessage(
 				CvFlag.Msg051_SummaryRealStock,
 				typeof(CalcDateParameter),
 				new CalcDateParameter(yyyymm)))));
 		}
-		if (UpdateTarget is "全て" or "売掛のみ") {
+		if (includesUriKake) {
 			requests.Add(($"売掛 {yymmFrom} ～ {yymmTo}", CreateSummaryMessage(
 				CvFlag.Msg052_SummaryUriKake,
 				typeof(CalcDateTermParameter),
 				new CalcDateTermParameter(yymmFrom, yymmTo))));
 		}
-		if (UpdateTarget is "全て" or "買掛のみ") {
+		if (includesKaiKake) {
 			requests.Add(($"買掛 {yymmFrom} ～ {yymmTo}", CreateSummaryMessage(
 				CvFlag.Msg053_SummaryKaiKake,
 				typeof(CalcDateTermParameter),
 				new CalcDateTermParameter(yymmFrom, yymmTo))));
 		}
+		if (includesUriKake) {
+			var shimes = await GetClosingDaysAsync(nameof(MasterTokui), cancellationToken);
+			requests.AddRange(from yyyymm in targetMonths
+				from shime in shimes
+				select ($"請求残 {yyyymm} / {FormatShime(shime)}", CreateSummaryMessage(
+					CvFlag.Msg056_SummaryUriSei,
+					typeof(BillingParameter),
+					new BillingParameter(yyyymm, shime, string.Empty, string.Empty, IsReissue: false))));
+		}
+		if (includesKaiKake) {
+			var shimes = await GetClosingDaysAsync(nameof(MasterShiire), cancellationToken);
+			requests.AddRange(from yyyymm in targetMonths
+				from shime in shimes
+				select ($"支払残 {yyyymm} / {FormatShime(shime)}", CreateSummaryMessage(
+					CvFlag.Msg057_SummaryKaiShi,
+					typeof(BillingParameter),
+					new BillingParameter(yyyymm, shime, string.Empty, string.Empty, IsReissue: false))));
+		}
 		return requests;
+	}
+
+	private async Task<List<int>> GetClosingDaysAsync(string masterTableName, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var message = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(
+				typeof(ShimeRow),
+				$"SELECT DISTINCT Shime1 FROM {masterTableName} WHERE Shime1 BETWEEN 1 AND 31 OR Shime1 = 99 ORDER BY Shime1",
+				[])),
+		};
+		var reply = await coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(cancellationToken));
+		if (reply.Code < 0 && reply.Code != -1) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
+		}
+		return Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList rows
+			? rows.Cast<ShimeRow>().Select(x => x.Shime1).ToList()
+			: [];
 	}
 
 	private static CvMsg CreateSummaryMessage(CvFlag flag, Type dataType, object parameter) => new() {
@@ -151,6 +200,8 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		DataType = dataType,
 		DataMsg = Common.SerializeObject(parameter)
 	};
+
+	private static string FormatShime(int shime) => shime == 99 ? "末日" : $"{shime:00}日";
 
 	private static List<string> BuildMonthList(string yyyymmFrom, string yyyymmTo) {
 		List<string> list = [];
