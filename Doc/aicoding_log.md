@@ -1,3 +1,21 @@
+## [2026-08-18] 請求・支払計算の集計・締日ルールを詳細設計へ反映
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 請求・支払計算と掛月次集計について、締日、対象期間、区分別内訳、累計残高、税率・丸めのユーザー決定を詳細設計へ反映する。
+
+### 実施内容
+- 得意先・仕入先の締日をそれぞれ `MasterTokui.Shime1` / `MasterShiire.Shime1` と明記し、`PayMonth`/`PayDay` は予定日の算出専用とした。
+- `SummaryUriKake` / `SummaryKaiKake`、`SummaryUriSei` / `SummaryKaiShi` の区分別集計、合計式、対象期間分のみを保持する内訳、対象期間までの累計 `Balance` を明文化した。
+- 税は取引の `Tax` を集計し、返品は `CalcFlag` により負値とすること、1.0の新規税額算出は `MasterSysMan` の `No=1` の `Tax` と四捨五入を使うことを記載した。
+- 通常再計算・Rebuild時の採番維持と、明示的再発行時だけの `Renban` 増加を明記した。
+
+### 確認
+- Markdownの見出し・表・用語を確認し、`git diff --check` を実行する。
+- 文書のみの変更のため .NET build/test は省略する。
+
 ## [2026-08-18] CV10機能完成度チェックリストを現行メニュー基準で再作成
 
 ### Agent
