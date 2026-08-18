@@ -12,8 +12,8 @@ namespace Tests.CvServer;
 /// <summary>
 /// 売掛(<see cref="SummaryUriKake"/>) / 買掛(<see cref="SummaryKaiKake"/>)集計のテスト。
 /// <para>
-/// 2026-08-16 の決定（`Doc/spec/2026-08-16_phase1_業務仕様決定ドラフト.md` 3.5）を固定する。
-/// 区分別内訳、`IsPay` による除外、対象期間より後の月の再計算、入金・支払の `KakeDay` 基準を対象にする。
+/// `Doc/spec/2026-08-18_請求計算・支払計算_詳細設計.md` 2.1 の確定ルールを固定する。
+/// 区分別の正値内訳、`Total` / 明細金額の正値源、`IsPay` による除外、後続月再計算、`KakeDay` 基準を対象にする。
 /// </para>
 /// </summary>
 [TestClass]
@@ -47,7 +47,7 @@ public class SummaryKakeDbTests {
 	// ---- 売掛 --------------------------------------------------------------------
 
 	[TestMethod]
-	public void CalcSummaryUriKake_SplitsSalesByKubun_AndKeepsBreakdownSum() {
+	public void CalcSummaryUriKake_UsesTotalForPositiveBreakdownAndNegativeBalance() {
 		var db = PrepareUriKakeTables();
 		var summaryDb = new SummaryDb(db);
 
@@ -57,17 +57,20 @@ public class SummaryKakeDbTests {
 		db.Insert(CreateUriage("20260713", 1, EnumUri00.HenSale, 100, 10));
 		db.Insert(CreateUriage("20260714", 1, EnumUri00.Nebiki, 300, 30));
 		db.Insert(CreateUriage("20260715", 1, EnumUri00.Other, 700, 70));
+		var range40 = CreateUriage("20260716", 1, EnumUri00.Uriage, 400, 40);
+		range40.Kubun = 40;
+		db.Insert(range40);
 
 		summaryDb.CalcSummaryUriKake("202607", "202607");
 		var row = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
 
-		// その他(99)は売上へ含める。返品・値引は CalcFlag=-1 なのでマイナスで入る
-		Assert.AreEqual(1000 + 500 + 700, row.Uriage);
-		Assert.AreEqual(-(200 + 100), row.Henpin);
-		Assert.AreEqual(-300, row.Nebiki);
-		// 内訳の合計 = 全区分の符号付き合計
-		Assert.AreEqual(1000 + 500 + 700 - 200 - 100 - 300, row.Uriage + row.Henpin + row.Nebiki);
-		Assert.AreEqual(100 + 50 + 70 - 20 - 10 - 30, row.Tax);
+		Assert.AreNotEqual(range40.Total, range40.KingakuTotal);
+		Assert.AreEqual(1000 + 500 + 400, row.Uriage);
+		Assert.AreEqual(200 + 100, row.Henpin);
+		Assert.AreEqual(300, row.Nebiki);
+		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40, row.Tax);
+		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Tax, row.TotalSales);
+		Assert.AreEqual(-row.TotalSales, row.Balance);
 	}
 
 	[TestMethod]
@@ -88,7 +91,7 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public void CalcSummaryUriKake_SplitsReceiptsByKinCode_AndFallsBackToOther() {
+	public void CalcSummaryUriKake_UsesJmeisaiAndFallsBackToOther() {
 		var db = PrepareUriKakeTables();
 		var summaryDb = new SummaryDb(db);
 
@@ -98,6 +101,7 @@ public class SummaryKakeDbTests {
 			(KinDensai, 3000),
 			(KinOffset, 200),
 			(KinOther, 60),
+			(KinUnknown, 8),
 			// KIN マスタに存在しない Id_Kin。移行途中の 0 と同じ扱いで「その他」へ寄せる
 			(0, 7),
 		]));
@@ -109,10 +113,25 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(440, row.Fee);
 		Assert.AreEqual(3000, row.Densai);
 		Assert.AreEqual(200, row.Offset);
-		Assert.AreEqual(60 + 7, row.Other);
-		// 内訳の合計は必ずヘッダ総額に一致する
+		Assert.AreEqual(60 + 8 + 7, row.Other);
+		Assert.AreNotEqual(5000 + 440 + 3000 + 200 + 60 + 8 + 7 + 10000, row.TotalIn);
 		Assert.AreEqual(row.TotalIn, row.Cash + row.Fee + row.Densai + row.Offset + row.Other);
-		Assert.AreEqual(5000 + 440 + 3000 + 200 + 60 + 7, row.TotalIn);
+		Assert.AreEqual(5000 + 440 + 3000 + 200 + 60 + 8 + 7, row.TotalIn);
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriKake_HandlesInvalidJsonReceiptAsZero() {
+		var db = PrepareUriKakeTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 0, 0));
+		db.Insert(CreateNyukin("20260710", 1, [(KinCash, 999)]));
+		db.Execute($"UPDATE {nameof(Tran06Nyukin)} SET Jmeisai=@0", "{");
+
+		summaryDb.CalcSummaryUriKake("202607", "202607");
+		var row = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
+
+		Assert.AreEqual(0, row.TotalIn);
+		Assert.AreEqual(0, row.Cash + row.Fee + row.Densai + row.Offset + row.Other);
 	}
 
 	[TestMethod]
@@ -129,7 +148,7 @@ public class SummaryKakeDbTests {
 
 		Assert.IsNull(july);
 		Assert.AreEqual(1200, august.TotalIn);
-		Assert.AreEqual(-1200, august.Balance);
+		Assert.AreEqual(1200, august.Balance);
 	}
 
 	[TestMethod]
@@ -144,8 +163,8 @@ public class SummaryKakeDbTests {
 		var rows = db.Fetch<SummaryUriKake>("where Id_Tokui=@0 order by DenMonth", 1);
 
 		Assert.AreEqual(2, rows.Count);
-		Assert.AreEqual(1000, rows[0].Balance);
-		Assert.AreEqual(600, rows[1].Balance);
+		Assert.AreEqual(-1000, rows[0].Balance);
+		Assert.AreEqual(-600, rows[1].Balance);
 	}
 
 	[TestMethod]
@@ -156,7 +175,7 @@ public class SummaryKakeDbTests {
 		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 0));
 		db.Insert(CreateUriage("20260810", 1, EnumUri00.Uriage, 500, 0));
 		summaryDb.CalcSummaryUriKake("202607", "202608");
-		Assert.AreEqual(1500, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202608").Balance);
+		Assert.AreEqual(-1500, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202608").Balance);
 
 		// 7月の伝票を増やして7月だけを指定して再計算する。8月の繰越も追随しなければならない
 		db.Insert(CreateUriage("20260720", 1, EnumUri00.Uriage, 300, 0));
@@ -164,8 +183,8 @@ public class SummaryKakeDbTests {
 		var rows = db.Fetch<SummaryUriKake>("where Id_Tokui=@0 order by DenMonth", 1);
 
 		Assert.AreEqual(2, rows.Count);
-		Assert.AreEqual(1300, rows[0].Balance);
-		Assert.AreEqual(1800, rows[1].Balance);
+		Assert.AreEqual(-1300, rows[0].Balance);
+		Assert.AreEqual(-1800, rows[1].Balance);
 	}
 
 	[TestMethod]
@@ -261,7 +280,7 @@ public class SummaryKakeDbTests {
 	// ---- 買掛 --------------------------------------------------------------------
 
 	[TestMethod]
-	public void CalcSummaryKaiKake_SplitsPurchasesAndPayments() {
+	public void CalcSummaryKaiKake_UsesTotalForPositiveBreakdownAndNegativeBalance() {
 		var db = PrepareKaiKakeTables();
 		var summaryDb = new SummaryDb(db);
 
@@ -270,17 +289,23 @@ public class SummaryKakeDbTests {
 		db.Insert(CreateShiire("20260712", 1, EnumShiire.Nebiki, 100, 10));
 		db.Insert(CreateShiire("20260713", 1, EnumShiire.Other, 400, 40));
 		db.Insert(CreateShiharai("20260714", 1, [(KinCash, 600), (KinOffset, 50)]));
+		var range40 = CreateShiire("20260715", 1, EnumShiire.Shiire, 400, 40);
+		range40.Kubun = 40;
+		db.Insert(range40);
 
 		summaryDb.CalcSummaryKaiKake("202607", "202607");
 		var row = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
 
+		Assert.AreNotEqual(range40.Total, range40.KingakuTotal);
 		Assert.AreEqual(1000 + 400, row.Shiire);
-		Assert.AreEqual(-200, row.Henpin);
-		Assert.AreEqual(-100, row.Nebiki);
-		Assert.AreEqual(1000 + 400 - 200 - 100, row.Shiire + row.Henpin + row.Nebiki);
+		Assert.AreEqual(200, row.Henpin);
+		Assert.AreEqual(100, row.Nebiki);
+		Assert.AreEqual(100 - 20 + 10 + 40 + 40, row.Tax);
+		Assert.AreEqual(row.Shiire - row.Henpin - row.Nebiki + row.Tax, row.TotalShiire);
 		Assert.AreEqual(600, row.Cash);
 		Assert.AreEqual(50, row.Offset);
 		Assert.AreEqual(row.TotalOut, row.Cash + row.Fee + row.Densai + row.Offset + row.Other);
+		Assert.AreEqual(row.TotalOut - row.TotalShiire, row.Balance);
 	}
 
 	[TestMethod]
@@ -297,6 +322,101 @@ public class SummaryKakeDbTests {
 		var row = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
 
 		Assert.AreEqual(1000, row.Shiire);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiKake_UsesJmeisaiAndFallsBackToOther() {
+		var db = PrepareKaiKakeTables();
+		var summaryDb = new SummaryDb(db);
+
+		db.Insert(CreateShiharai("20260710", 1, [
+			(KinCash, 5000),
+			(KinFee, 440),
+			(KinDensai, 3000),
+			(KinOffset, 200),
+			(KinOther, 60),
+			(KinUnknown, 8),
+			(0, 7),
+		]));
+
+		summaryDb.CalcSummaryKaiKake("202607", "202607");
+		var row = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
+
+		Assert.AreEqual(5000, row.Cash);
+		Assert.AreEqual(440, row.Fee);
+		Assert.AreEqual(3000, row.Densai);
+		Assert.AreEqual(200, row.Offset);
+		Assert.AreEqual(60 + 8 + 7, row.Other);
+		Assert.AreNotEqual(5000 + 440 + 3000 + 200 + 60 + 8 + 7 + 10000, row.TotalOut);
+		Assert.AreEqual(row.TotalOut, row.Cash + row.Fee + row.Densai + row.Offset + row.Other);
+		Assert.AreEqual(5000 + 440 + 3000 + 200 + 60 + 8 + 7, row.TotalOut);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiKake_HandlesInvalidJsonPaymentAsZero() {
+		var db = PrepareKaiKakeTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(CreateShiire("20260710", 1, EnumShiire.Shiire, 0, 0));
+		db.Insert(CreateShiharai("20260710", 1, [(KinCash, 999)]));
+		db.Execute($"UPDATE {nameof(Tran07Shiharai)} SET Jmeisai=@0", "{");
+
+		summaryDb.CalcSummaryKaiKake("202607", "202607");
+		var row = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
+
+		Assert.AreEqual(0, row.TotalOut);
+		Assert.AreEqual(0, row.Cash + row.Fee + row.Densai + row.Offset + row.Other);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiKake_CarriesBalanceForwardAcrossMonths() {
+		var db = PrepareKaiKakeTables();
+		var summaryDb = new SummaryDb(db);
+
+		db.Insert(CreateShiire("20260710", 1, EnumShiire.Shiire, 1000, 0));
+		db.Insert(CreateShiharai("20260805", 1, [(KinCash, 400)]));
+
+		summaryDb.CalcSummaryKaiKake("202607", "202608");
+		var rows = db.Fetch<SummaryKaiKake>("where Id_Shiire=@0 order by DenMonth", 1);
+
+		Assert.AreEqual(2, rows.Count);
+		Assert.AreEqual(-1000, rows[0].Balance);
+		Assert.AreEqual(-600, rows[1].Balance);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiKake_RecalculatesMonthsAfterTargetPeriod() {
+		var db = PrepareKaiKakeTables();
+		var summaryDb = new SummaryDb(db);
+
+		db.Insert(CreateShiire("20260710", 1, EnumShiire.Shiire, 1000, 0));
+		db.Insert(CreateShiire("20260810", 1, EnumShiire.Shiire, 500, 0));
+		summaryDb.CalcSummaryKaiKake("202607", "202608");
+		Assert.AreEqual(-1500, db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202608").Balance);
+
+		db.Insert(CreateShiire("20260720", 1, EnumShiire.Shiire, 300, 0));
+		summaryDb.CalcSummaryKaiKake("202607", "202607");
+		var rows = db.Fetch<SummaryKaiKake>("where Id_Shiire=@0 order by DenMonth", 1);
+
+		Assert.AreEqual(2, rows.Count);
+		Assert.AreEqual(-1300, rows[0].Balance);
+		Assert.AreEqual(-1800, rows[1].Balance);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiKake_RecalculationIsIdempotent() {
+		var db = PrepareKaiKakeTables();
+		var summaryDb = new SummaryDb(db);
+
+		db.Insert(CreateShiire("20260710", 1, EnumShiire.Shiire, 1000, 100));
+		db.Insert(CreateShiire("20260712", 1, EnumShiire.Henpin, 200, 20));
+		db.Insert(CreateShiharai("20260715", 1, [(KinCash, 300), (KinFee, 40)]));
+
+		summaryDb.CalcSummaryKaiKake("202607", "202607");
+		var first = GetKaiKakeSnapshot(db);
+		summaryDb.CalcSummaryKaiKake("202607", "202607");
+		var second = GetKaiKakeSnapshot(db);
+
+		CollectionAssert.AreEqual(first, second);
 	}
 
 	// ---- 支払残 ------------------------------------------------------------------
@@ -369,6 +489,7 @@ public class SummaryKakeDbTests {
 	private const long KinDensai = 103;
 	private const long KinOffset = 104;
 	private const long KinOther = 105;
+	private const long KinUnknown = 106;
 
 	private ExDatabaseSqlite PrepareUriKakeTables() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
@@ -412,6 +533,7 @@ public class SummaryKakeDbTests {
 		InsertMeisho(db, KinDensai, "KIN", "03", "手形入金");
 		InsertMeisho(db, KinOffset, "KIN", "04", "相殺入金");
 		InsertMeisho(db, KinOther, "KIN", "05", "その他入金");
+		InsertMeisho(db, KinUnknown, "KIN", "06", "未知入金");
 		// 同じ Code を持つ別区分に引っ張られないことを担保する
 		InsertMeisho(db, 201, "ITM", "01", "別区分の01");
 	}
@@ -421,12 +543,13 @@ public class SummaryKakeDbTests {
 			$"INSERT INTO {nameof(MasterMeisho)} (Id, Kubun, Code, Name) VALUES (@0, @1, @2, @3)",
 			id, kubun, code, name);
 
-	private static Tran00Uriage CreateUriage(string kakeDay, long idTokui, EnumUri00 kubun, int kingaku, int tax) {
+	private static Tran00Uriage CreateUriage(string kakeDay, long idTokui, EnumUri00 kubun, int total, int tax) {
 		var tran = new Tran00Uriage {
 			DenDay = kakeDay,
 			KakeDay = kakeDay,
 			Id_Tokui = idTokui,
-			KingakuTotal = kingaku,
+			Total = total,
+			KingakuTotal = total + 10000,
 			Tax = tax,
 			IsPay = 1,
 		};
@@ -456,12 +579,13 @@ public class SummaryKakeDbTests {
 		return tran;
 	}
 
-	private static Tran03Shiire CreateShiire(string kakeDay, long idShiire, EnumShiire kubun, int kingaku, int tax) {
+	private static Tran03Shiire CreateShiire(string kakeDay, long idShiire, EnumShiire kubun, int total, int tax) {
 		var tran = new Tran03Shiire {
 			DenDay = kakeDay,
 			KakeDay = kakeDay,
 			Id_Shiire = idShiire,
-			KingakuTotal = kingaku,
+			Total = total,
+			KingakuTotal = total + 10000,
 			Tax = tax,
 			IsPay = 1,
 		};
@@ -473,7 +597,7 @@ public class SummaryKakeDbTests {
 		new() {
 			KakeDay = kakeDay,
 			Id_Torisaki = idTorisaki,
-			KingakuTotal = meisai.Sum(x => x.Kingaku),
+			KingakuTotal = meisai.Sum(x => x.Kingaku) + 10000,
 			Jmeisai = BuildKinMeisai(meisai),
 		};
 
@@ -481,7 +605,7 @@ public class SummaryKakeDbTests {
 		new() {
 			KakeDay = kakeDay,
 			Id_Torisaki = idTorisaki,
-			KingakuTotal = meisai.Sum(x => x.Kingaku),
+			KingakuTotal = meisai.Sum(x => x.Kingaku) + 10000,
 			Jmeisai = BuildKinMeisai(meisai),
 		};
 
@@ -491,6 +615,10 @@ public class SummaryKakeDbTests {
 	private static string[] GetUriKakeSnapshot(ExDatabaseSqlite db) =>
 		[.. db.Fetch<SummaryUriKake>("order by Id_Tokui, DenMonth")
 			.Select(x => $"{x.Id_Tokui}:{x.DenMonth}:{x.Balance}:{x.TotalIn}:{x.TotalSales}:{x.Uriage}:{x.Henpin}:{x.Nebiki}:{x.Tax}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}")];
+
+	private static string[] GetKaiKakeSnapshot(ExDatabaseSqlite db) =>
+		[.. db.Fetch<SummaryKaiKake>("order by Id_Shiire, DenMonth")
+			.Select(x => $"{x.Id_Shiire}:{x.DenMonth}:{x.Balance}:{x.TotalOut}:{x.TotalShiire}:{x.Shiire}:{x.Henpin}:{x.Nebiki}:{x.Tax}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}")];
 
 	private static string[] GetKaiShiSnapshot(ExDatabaseSqlite db) =>
 		[.. db.Fetch<SummaryKaiShi>("order by Id_Shiire, DenDay")

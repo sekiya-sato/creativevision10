@@ -616,7 +616,7 @@ WHERE SumMonth <= @0;
 	/// 入金/支払の区分別内訳を作る集計式。<c>KIN</c> 区分マスタの <c>Code</c> で振り分ける。
 	/// <para>
 	/// <c>01</c>現金 / <c>02</c>振込手数料 / <c>03</c>手形 / <c>04</c>相殺 のいずれにも当たらないものは
-	/// 全て「その他」(<c>99</c>指定)へ寄せる。<c>05</c>その他だけでなく、マスタに無い <c>Id_Kin</c> もここへ落ちるため、
+	/// 全て「その他」(<c>99</c>指定)へ寄せる。<c>05</c>その他だけでなく、有効JSON内でマスタに無い <c>Id_Kin</c> もここへ落ちるため、
 	/// 内訳の合計は必ず <c>TotalIn</c> / <c>TotalOut</c> に一致する。
 	/// </para>
 	/// </summary>
@@ -657,8 +657,8 @@ SELECT MAX(m) FROM (
 	/// SummaryUriKakeの年月のデータを集計する(再作成)
 	/// <para>
 	/// 売上は区分(<see cref="EnumUri00"/>)で 売上 / 返品 / 値引 へ、入金は明細の <c>Id_Kin</c> で
-	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。内訳は <c>CalcFlag</c> 込みの符号付きで、
-	/// <c>Uriage + Henpin + Nebiki</c> が全区分の符号付き合計に一致する（返品・値引はマイナスで入る）。
+	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。売上・返品・値引は税抜 <c>Total</c> の正値内訳とし、
+	/// 合計は内訳と税から算出する。
 	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
@@ -677,31 +677,20 @@ movements AS (
 	SELECT
 		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Tokui,
-		SUM((CASE WHEN t.Total <> 0 THEN t.Total ELSE t.KingakuTotal + t.Tax END) * t.CalcFlag) AS TotalSales,
-		SUM(CASE WHEN t.Kubun IN ({(int)EnumUri00.Henpin}, {(int)EnumUri00.HenSale}, {(int)EnumUri00.Nebiki}) THEN 0 ELSE t.KingakuTotal * t.CalcFlag END) AS Uriage,
-		SUM(CASE WHEN t.Kubun IN ({(int)EnumUri00.Henpin}, {(int)EnumUri00.HenSale}) THEN t.KingakuTotal * t.CalcFlag ELSE 0 END) AS Henpin,
-		SUM(CASE WHEN t.Kubun = {(int)EnumUri00.Nebiki} THEN t.KingakuTotal * t.CalcFlag ELSE 0 END) AS Nebiki,
-		SUM(t.Tax * t.CalcFlag) AS Tax,
-		0 AS TotalIn, 0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Uriage,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,
+		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran00Uriage AS t
 	WHERE {KakeDenWhere} AND substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Tokui
 	UNION ALL
-	-- 入金の総額はヘッダから採る。明細を展開すると行が増えて二重計上になるため、区分別内訳とは枝を分ける。
+	-- 入金は有効JSONの明細だけを正値源とする。不正JSONは KinMeisaiFrom により空明細となる。
 	SELECT
 		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Torisaki AS Id_Tokui,
-		0, 0, 0, 0, 0,
-		SUM(t.KingakuTotal) AS TotalIn, 0, 0, 0, 0, 0
-	FROM Tran06Nyukin AS t
-	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
-	GROUP BY DenMonth, t.Id_Torisaki
-	UNION ALL
-	-- 入金の区分別内訳。明細の Id_Kin を KIN 区分マスタのコードへ引き当てる。
-	SELECT
-		substr(t.KakeDay, 1, 6) AS DenMonth,
-		t.Id_Torisaki AS Id_Tokui,
-		0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0,
 		{KinBucket("01")} AS Cash,
 		{KinBucket("02")} AS Fee,
 		{KinBucket("03")} AS Densai,
@@ -716,12 +705,10 @@ monthly AS (
 	SELECT
 		DenMonth,
 		Id_Tokui,
-		SUM(TotalSales) AS TotalSales,
 		SUM(Uriage) AS Uriage,
 		SUM(Henpin) AS Henpin,
 		SUM(Nebiki) AS Nebiki,
 		SUM(Tax) AS Tax,
-		SUM(TotalIn) AS TotalIn,
 		SUM(Cash) AS Cash,
 		SUM(Fee) AS Fee,
 		SUM(Densai) AS Densai,
@@ -729,6 +716,13 @@ monthly AS (
 		SUM(Other) AS Other
 	FROM movements
 	GROUP BY DenMonth, Id_Tokui
+),
+calculated AS (
+	SELECT
+		m.*,
+		m.Uriage - m.Henpin - m.Nebiki + m.Tax AS TotalSales,
+		m.Cash + m.Fee + m.Densai + m.Offset + m.Other AS TotalIn
+	FROM monthly AS m
 ),
 previousBalance AS (
 	SELECT s.Id_Tokui, s.Balance
@@ -745,28 +739,28 @@ INSERT INTO SummaryUriKake (
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
-	m.Id_Tokui,
-	m.DenMonth,
-	IFNULL(p.Balance, 0) + SUM(m.TotalSales - m.TotalIn) OVER (
-		PARTITION BY m.Id_Tokui
-		ORDER BY m.DenMonth
+	c.Id_Tokui,
+	c.DenMonth,
+	IFNULL(p.Balance, 0) + SUM(c.TotalIn - c.TotalSales) OVER (
+		PARTITION BY c.Id_Tokui
+		ORDER BY c.DenMonth
 		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 	) AS Balance,
-	m.TotalIn,
-	m.TotalSales,
-	m.Uriage,
-	m.Henpin,
-	m.Nebiki,
-	m.Tax,
-	m.Cash,
-	m.Fee,
-	m.Densai,
-	m.Offset,
-	m.Other,
+	c.TotalIn,
+	c.TotalSales,
+	c.Uriage,
+	c.Henpin,
+	c.Nebiki,
+	c.Tax,
+	c.Cash,
+	c.Fee,
+	c.Densai,
+	c.Offset,
+	c.Other,
 	{vdate} AS Vdc,
 	{vdate} AS Vdu
-FROM monthly AS m
-LEFT JOIN previousBalance AS p ON p.Id_Tokui = m.Id_Tokui;
+FROM calculated AS c
+LEFT JOIN previousBalance AS p ON p.Id_Tokui = c.Id_Tokui;
 ";
 		var period = $"{DatefromYyyymm}-{toMonth}";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
@@ -1056,7 +1050,8 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 	/// SummaryKaiKakeの年月のデータを集計する(再作成)
 	/// <para>
 	/// 仕入は区分(<see cref="EnumShiire"/>)で 仕入 / 返品 / 値引 へ、支払は明細の <c>Id_Kin</c> で
-	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。売掛側(<see cref="CalcSummaryUriKake"/>)と同じ規則である。
+	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。仕入・返品・値引は税抜 <c>Total</c> の正値内訳とし、
+	/// 合計は内訳と税から算出する。売掛側(<see cref="CalcSummaryUriKake"/>)と同じ規則である。
 	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
@@ -1075,31 +1070,20 @@ movements AS (
 	SELECT
 		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Shiire,
-		SUM((CASE WHEN t.Total <> 0 THEN t.Total ELSE t.KingakuTotal + t.Tax END) * t.CalcFlag) AS TotalShiire,
-		SUM(CASE WHEN t.Kubun IN ({(int)EnumShiire.Henpin}, {(int)EnumShiire.Nebiki}) THEN 0 ELSE t.KingakuTotal * t.CalcFlag END) AS Shiire,
-		SUM(CASE WHEN t.Kubun = {(int)EnumShiire.Henpin} THEN t.KingakuTotal * t.CalcFlag ELSE 0 END) AS Henpin,
-		SUM(CASE WHEN t.Kubun = {(int)EnumShiire.Nebiki} THEN t.KingakuTotal * t.CalcFlag ELSE 0 END) AS Nebiki,
-		SUM(t.Tax * t.CalcFlag) AS Tax,
-		0 AS TotalOut, 0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,
+		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran03Shiire AS t
 	WHERE {KakeDenWhere} AND substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Shiire
 	UNION ALL
-	-- 支払の総額はヘッダから採る。明細を展開すると行が増えて二重計上になるため、区分別内訳とは枝を分ける。
+	-- 支払は有効JSONの明細だけを正値源とする。不正JSONは KinMeisaiFrom により空明細となる。
 	SELECT
 		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Torisaki AS Id_Shiire,
-		0, 0, 0, 0, 0,
-		SUM(t.KingakuTotal) AS TotalOut, 0, 0, 0, 0, 0
-	FROM Tran07Shiharai AS t
-	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
-	GROUP BY DenMonth, t.Id_Torisaki
-	UNION ALL
-	-- 支払の区分別内訳。入金と同じ KIN 区分マスタを使う。
-	SELECT
-		substr(t.KakeDay, 1, 6) AS DenMonth,
-		t.Id_Torisaki AS Id_Shiire,
-		0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0,
 		{KinBucket("01")} AS Cash,
 		{KinBucket("02")} AS Fee,
 		{KinBucket("03")} AS Densai,
@@ -1114,12 +1098,10 @@ monthly AS (
 	SELECT
 		DenMonth,
 		Id_Shiire,
-		SUM(TotalShiire) AS TotalShiire,
 		SUM(Shiire) AS Shiire,
 		SUM(Henpin) AS Henpin,
 		SUM(Nebiki) AS Nebiki,
 		SUM(Tax) AS Tax,
-		SUM(TotalOut) AS TotalOut,
 		SUM(Cash) AS Cash,
 		SUM(Fee) AS Fee,
 		SUM(Densai) AS Densai,
@@ -1127,6 +1109,13 @@ monthly AS (
 		SUM(Other) AS Other
 	FROM movements
 	GROUP BY DenMonth, Id_Shiire
+),
+calculated AS (
+	SELECT
+		m.*,
+		m.Shiire - m.Henpin - m.Nebiki + m.Tax AS TotalShiire,
+		m.Cash + m.Fee + m.Densai + m.Offset + m.Other AS TotalOut
+	FROM monthly AS m
 ),
 previousBalance AS (
 	SELECT s.Id_Shiire, s.Balance
@@ -1143,28 +1132,28 @@ INSERT INTO SummaryKaiKake (
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
-	m.Id_Shiire,
-	m.DenMonth,
-	IFNULL(p.Balance, 0) + SUM(m.TotalShiire - m.TotalOut) OVER (
-		PARTITION BY m.Id_Shiire
-		ORDER BY m.DenMonth
+	c.Id_Shiire,
+	c.DenMonth,
+	IFNULL(p.Balance, 0) + SUM(c.TotalOut - c.TotalShiire) OVER (
+		PARTITION BY c.Id_Shiire
+		ORDER BY c.DenMonth
 		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 	) AS Balance,
-	m.TotalOut,
-	m.TotalShiire,
-	m.Shiire,
-	m.Henpin,
-	m.Nebiki,
-	m.Tax,
-	m.Cash,
-	m.Fee,
-	m.Densai,
-	m.Offset,
-	m.Other,
+	c.TotalOut,
+	c.TotalShiire,
+	c.Shiire,
+	c.Henpin,
+	c.Nebiki,
+	c.Tax,
+	c.Cash,
+	c.Fee,
+	c.Densai,
+	c.Offset,
+	c.Other,
 	{vdate} AS Vdc,
 	{vdate} AS Vdu
-FROM monthly AS m
-LEFT JOIN previousBalance AS p ON p.Id_Shiire = m.Id_Shiire;
+FROM calculated AS c
+LEFT JOIN previousBalance AS p ON p.Id_Shiire = c.Id_Shiire;
 ";
 		var period = $"{DatefromYyyymm}-{toMonth}";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);

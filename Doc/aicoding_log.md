@@ -1,3 +1,21 @@
+## [2026-08-18] 月次売掛・買掛の確定集計ルールを実装
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 月次売掛・買掛を請求残・支払残と同じ金額列・内訳・残高符号へ統一する。
+
+### 実施内容
+- `CalcSummaryUriKake`／`CalcSummaryKaiKake` を、`Total`の正値内訳、返品税だけの符号化、内訳からの合計算出、`TotalIn/TotalOut - TotalSales/TotalShiire`方向の残高へ対称に更新した。
+- 入金・支払は有効JSONの明細だけを集計し、ヘッダ`KingakuTotal`を正値源から除外した。05・未知KINはOther、不正JSONは空明細・0として処理を継続する。
+- `SummaryKakeDbTests` を売掛・買掛対称に拡張し、区分範囲、99除外、税、残高、後続月、冪等性、KINフォールバック、不正JSONを固定した。テストヘルパーは`Total`／`KingakuTotal`と明細／ヘッダを意図的に異ならせる。
+
+### 確認
+- `Tests/TestServer/TestServer.csproj` を Development 環境でビルドし、警告・エラーなしを確認した。
+- Microsoft.Testing.Platform の実行形式から `SummaryKakeDbTests` を実行し、21件すべて成功した。
+- 金額結果を広範囲に変更する区分C作業のため、独立レビュー待ちとする。
+
 ## [2026-08-18] 請求・支払計算の不正JSON時の明細集計設計を訂正
 
 ### Agent
