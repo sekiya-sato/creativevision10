@@ -312,7 +312,7 @@ public partial class MenuData : ObservableObject {
 		 * ================================================================ */
 		new("■ 掛管理（請求・支払）", new([
 			new("売掛・請求", new([
-				new("請求計算", typeof(Views._31Monthly.BillingCalculationView), addInfo:"準備中 締日･請求月･得意先範囲を指定してSummaryUriSeiを作成する"),
+				new("請求計算", typeof(Views._31Monthly.BillingCalculationView), addInfo:"締日･請求月･得意先範囲を指定してSummaryUriSeiを作成する"),
 				new("請求一覧表", typeof(Views._06Uriage.SeikyuListReportView), addInfo:"請求日単位に得意先別の請求額･残高を一覧印刷"),
 				new("請求書印刷", typeof(Views._06Uriage.SeikyuBalanceDetailView), addInfo:"得意先別に請求ヘッダ＋対象期間の売上･入金明細を単票印刷"),
 				new("入金入力", typeof(Views._06Uriage.NyukinInputView), addInfo:"得意先からの入金を金種別明細で入力(売掛の減算)"),
@@ -322,7 +322,7 @@ public partial class MenuData : ObservableObject {
 				new("月別入金予定表", typeof(Views._06Uriage.MonthlyNyukinYoteiTableView), addInfo:"得意先の回収条件から入金予定日別の予定額を印刷"),
 			])),
 			new("買掛・支払", new([
-				new("支払計算", typeof(Views._31Monthly.PaymentCalculationView), addInfo:"準備中 締日･支払月･仕入先範囲を指定してSummaryKaiShiを作成する"),
+				new("支払計算", typeof(Views._31Monthly.PaymentCalculationView), addInfo:"締日･支払月･仕入先範囲を指定してSummaryKaiShiを作成する"),
 				new("支払入力", typeof(Views._05Shiire.ShiharaiInputView)),
 				new("支払消込", typeof(Views._05Shiire.ShiharaiMatchingView), addInfo:"支払先単位に仕入を一覧し伝票単位で消込(EndFlag)。支払は区分別集計で金額を突合"),
 				new("仕入先元帳", typeof(Views._05Shiire.ShiireLedgerView), addInfo:"仕入先別に繰越残高･仕入･支払･差引残高を日付順に印刷"),

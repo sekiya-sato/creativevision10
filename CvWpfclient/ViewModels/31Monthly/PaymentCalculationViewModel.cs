@@ -1,11 +1,12 @@
 using CodeShare;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CvAsset;
 using CvBase;
-using System.Diagnostics;
 
 namespace CvWpfclient.ViewModels._31Monthly;
 
-public partial class PaymentCalculationViewModel : Helpers.BaseViewModel {
+/// <summary>仕入先締日単位で支払残を作成する。</summary>
+public partial class PaymentCalculationViewModel : BaseBillingCalculationViewModel {
+	protected override CvFlag TargetFlag => CvFlag.Msg057_SummaryKaiShi;
+	protected override string ActionName => "支払計算";
+	protected override string TorihikiName => "仕入先";
+	protected override string MasterTableName => nameof(MasterShiire);
 }
