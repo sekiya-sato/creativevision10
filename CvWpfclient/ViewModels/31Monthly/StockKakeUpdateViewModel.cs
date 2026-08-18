@@ -15,6 +15,12 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 	private sealed class ShimeRow {
 		public int Shime1 { get; set; }
 	}
+	private sealed class ClosingSummaryRow {
+		public string TorihikiCode { get; set; } = string.Empty;
+		public string DayTo { get; set; } = string.Empty;
+		public int Shime1 { get; set; }
+	}
+	private sealed record ClosingMismatch(string KakeType, string TorihikiCode, string SavedDayTo, int CurrentShime);
 
 	public IReadOnlyList<string> UpdateTargets { get; } = ["全て", "在庫のみ", "売掛のみ", "買掛のみ"];
 
@@ -63,6 +69,28 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		}
 
 		if (MessageEx.ShowQuestionDialog(confirmMessage, owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+			return;
+		}
+		try {
+			StatusMessage = "締日変更を確認しています...";
+			var warning = await GetRebuildClosingMismatchWarningAsync(yymmFrom, yymmTo, cancellationToken);
+			if (!string.IsNullOrEmpty(warning)) {
+				StatusMessage = warning;
+				MessageEx.ShowWarningDialog(warning, owner: ClientLib.GetActiveView(this));
+				return;
+			}
+		}
+		catch (OperationCanceledException) {
+			StatusMessage = "締日変更の確認をキャンセルしました。";
+			return;
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+			StatusMessage = "締日変更の確認をキャンセルしました。";
+			return;
+		}
+		catch (Exception ex) {
+			StatusMessage = $"締日変更の確認でエラーが発生しました: {ex.Message}";
+			MessageEx.ShowErrorDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
 			return;
 		}
 
@@ -173,24 +201,96 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		return requests;
 	}
 
+	private async Task<string> GetRebuildClosingMismatchWarningAsync(string yymmFrom, string yymmTo, CancellationToken cancellationToken) {
+		List<ClosingMismatch> mismatches = [];
+		if (UpdateTarget is "全て" or "売掛のみ") {
+			var rows = await QueryClosingSummaryRowsAsync(
+				$"""
+SELECT t.Code AS TorihikiCode, s.DayTo, t.Shime1
+FROM {nameof(SummaryUriSei)} AS s
+INNER JOIN {nameof(MasterTokui)} AS t ON t.Id = s.Id_Tokui
+WHERE substr(s.DayTo, 1, 6) BETWEEN @0 AND @1
+ORDER BY t.Code, s.DayTo
+""",
+				yymmFrom,
+				yymmTo,
+				cancellationToken);
+			mismatches.AddRange(FindClosingMismatches("売掛", rows));
+		}
+		if (UpdateTarget is "全て" or "買掛のみ") {
+			var rows = await QueryClosingSummaryRowsAsync(
+				$"""
+SELECT t.Code AS TorihikiCode, s.DayTo, t.Shime1
+FROM {nameof(SummaryKaiShi)} AS s
+INNER JOIN {nameof(MasterShiire)} AS t ON t.Id = s.Id_Shiire
+WHERE substr(s.DayTo, 1, 6) BETWEEN @0 AND @1
+ORDER BY t.Code, s.DayTo
+""",
+				yymmFrom,
+				yymmTo,
+				cancellationToken);
+			mismatches.AddRange(FindClosingMismatches("買掛", rows));
+		}
+		return BuildClosingMismatchWarning(mismatches);
+	}
+
+	private async Task<List<ClosingSummaryRow>> QueryClosingSummaryRowsAsync(string sql, string yymmFrom, string yymmTo, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+		return await QuerySqlListAsync<ClosingSummaryRow>(sql, [yymmFrom, yymmTo], cancellationToken);
+	}
+
+	private static List<ClosingMismatch> FindClosingMismatches(string kakeType, IEnumerable<ClosingSummaryRow> rows) =>
+		[.. rows.Where(row => !TryGetExpectedClosingDay(row.DayTo, row.Shime1, out var expectedDay) || row.DayTo != expectedDay)
+			.Select(row => new ClosingMismatch(kakeType, row.TorihikiCode, row.DayTo, row.Shime1))];
+
+	private static bool TryGetExpectedClosingDay(string savedDayTo, int shime, out string expectedDay) {
+		expectedDay = string.Empty;
+		if (savedDayTo.Length < 6 || !DateTime.TryParseExact(savedDayTo[..6] + "01", "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var month)) {
+			return false;
+		}
+		if (shime == 99) {
+			expectedDay = new DateTime(month.Year, month.Month, DateTime.DaysInMonth(month.Year, month.Month)).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+			return true;
+		}
+		if (shime is < 1 or > 31) {
+			return false;
+		}
+		expectedDay = new DateTime(month.Year, month.Month, Math.Min(shime, DateTime.DaysInMonth(month.Year, month.Month))).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+		return true;
+	}
+
+	private static string BuildClosingMismatchWarning(IReadOnlyList<ClosingMismatch> mismatches) {
+		if (mismatches.Count == 0) return string.Empty;
+		var lines = mismatches.Take(5).Select(mismatch =>
+			$"{mismatch.KakeType}: {mismatch.TorihikiCode} / 保存締日 {mismatch.SavedDayTo} / 現在締日 {FormatShime(mismatch.CurrentShime)}");
+		var remain = mismatches.Count > 5 ? $"\nほか{mismatches.Count - 5}件" : string.Empty;
+		return $"締日変更を検出したため、再更新を開始しません。\n{string.Join("\n", lines)}{remain}\nマスタ締日が変更されています。請求計算／支払計算画面で対象を手動再計算し、旧締日の残データを確認してから再実行してください";
+	}
+
 	private async Task<List<int>> GetClosingDaysAsync(string masterTableName, CancellationToken cancellationToken) {
+		var rows = await QuerySqlListAsync<ShimeRow>(
+			$"SELECT DISTINCT Shime1 FROM {masterTableName} WHERE Shime1 BETWEEN 1 AND 31 OR Shime1 = 99 ORDER BY Shime1",
+			[],
+			cancellationToken);
+		return rows.Select(x => x.Shime1).ToList();
+	}
+
+	private async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken cancellationToken) {
 		cancellationToken.ThrowIfCancellationRequested();
 		var coreService = AppGlobal.GetGrpcService<ICoreService>();
 		var message = new CvMsg {
 			Code = 0,
 			Flag = CvFlag.Msg101_Op_Query,
 			DataType = typeof(QueryListSqlParam),
-			DataMsg = Common.SerializeObject(new QueryListSqlParam(
-				typeof(ShimeRow),
-				$"SELECT DISTINCT Shime1 FROM {masterTableName} WHERE Shime1 BETWEEN 1 AND 31 OR Shime1 = 99 ORDER BY Shime1",
-				[])),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters])),
 		};
 		var reply = await coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(cancellationToken));
+		cancellationToken.ThrowIfCancellationRequested();
 		if (reply.Code < 0 && reply.Code != -1) {
 			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
 		}
 		return Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList rows
-			? rows.Cast<ShimeRow>().Select(x => x.Shime1).ToList()
+			? rows.Cast<T>().ToList()
 			: [];
 	}
 
@@ -201,7 +301,11 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		DataMsg = Common.SerializeObject(parameter)
 	};
 
-	private static string FormatShime(int shime) => shime == 99 ? "末日" : $"{shime:00}日";
+	private static string FormatShime(int shime) => shime switch {
+		99 => "末日",
+		>= 1 and <= 31 => $"{shime:00}日",
+		_ => $"不正({shime})"
+	};
 
 	private static List<string> BuildMonthList(string yyyymmFrom, string yyyymmTo) {
 		List<string> list = [];
