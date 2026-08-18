@@ -64,45 +64,38 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		StatusMessage = "締日変更を確認しています...";
 		ClientLib.Cursor2Wait();
 		try {
-			var preparation = await SummaryRebuildRequestDispatchGate.PrepareAsync(
+			var result = await SummaryRebuildRequestDispatchGate.ExecuteAsync(
 				ct => GetRebuildClosingMismatchesAsync(snapshot, ct),
-				ct => CreateSummaryRequestsAsync(snapshot, ct),
+				ct => CreateSummaryRequestDescriptorsAsync(snapshot, ct),
+				CreateSummaryRequest,
+				async (descriptor, request, requestIndex, requestCount, ct) => {
+					StatusMessage = $"{request.Name} の処理中...";
+					var coreService = AppGlobal.GetGrpcService<ICoreService>();
+					await foreach (var streamMsg in coreService.QueryMsgStreamAsync(request.Message, AppGlobal.GetDefaultCallContext(ct))) {
+						if (!string.IsNullOrEmpty(streamMsg.DataMsg)) {
+							StatusMessage = streamMsg.DataMsg;
+						}
+						ProgressValue = (int)Math.Round(
+							(requestIndex * 100d + Math.Clamp(streamMsg.Progress, 0, 100)) / requestCount,
+							MidpointRounding.AwayFromZero);
+						if (streamMsg.IsError) {
+							throw new InvalidOperationException(streamMsg.DataMsg);
+						}
+						if (streamMsg.IsCompleted) {
+							break;
+						}
+					}
+					ProgressValue = (int)Math.Round((requestIndex + 1) * 100d / requestCount, MidpointRounding.AwayFromZero);
+				},
 				cancellationToken);
-			if (!preparation.CanStartRequestDispatch) {
-				var warning = SummaryRebuildClosingCheck.BuildMismatchWarning(preparation.Mismatches);
+			if (!result.CanStartRequestDispatch) {
+				var warning = SummaryRebuildClosingCheck.BuildMismatchWarning(result.Mismatches);
 				StatusMessage = warning;
 				MessageEx.ShowWarningDialog(warning, owner: ClientLib.GetActiveView(this));
 				return;
 			}
 
-			StatusMessage = "処理を開始します...";
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var requests = preparation.Requests;
-			int processedCount = 0;
-
-			foreach (var request in requests) {
-				cancellationToken.ThrowIfCancellationRequested();
-
-				StatusMessage = $"{request.Name} の処理中...";
-				await foreach (var streamMsg in coreService.QueryMsgStreamAsync(request.Message, AppGlobal.GetDefaultCallContext(cancellationToken))) {
-					if (!string.IsNullOrEmpty(streamMsg.DataMsg)) {
-						StatusMessage = streamMsg.DataMsg;
-					}
-					ProgressValue = (int)Math.Round(
-						(processedCount * 100d + Math.Clamp(streamMsg.Progress, 0, 100)) / requests.Count,
-						MidpointRounding.AwayFromZero);
-					if (streamMsg.IsError) {
-						throw new InvalidOperationException(streamMsg.DataMsg);
-					}
-					if (streamMsg.IsCompleted) {
-						break;
-					}
-				}
-
-				processedCount++;
-				ProgressValue = (int)Math.Round(processedCount * 100d / requests.Count, MidpointRounding.AwayFromZero);
-			}
-
+			ProgressValue = 100;
 			StatusMessage = $"{snapshot.UpdateTarget}が完了しました。対象: {snapshot.TargetMonths[0]} ～ {snapshot.TargetMonths[^1]}";
 		}
 		catch (OperationCanceledException) {
@@ -145,50 +138,45 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		return message;
 	}
 
-	private async Task<IReadOnlyList<(string Name, CvMsg Message)>> CreateSummaryRequestsAsync(RebuildRequestSnapshot snapshot, CancellationToken cancellationToken) {
-		List<(string Name, CvMsg Message)> requests = [];
-		foreach (var step in SummaryRebuildRequestPlanner.CreatePlan(snapshot.UpdateTarget)) {
-			switch (step.Flag) {
-				case CvFlag.Msg051_SummaryRealStock:
-					requests.AddRange(snapshot.TargetMonths.Select(yyyymm => ($"在庫 {yyyymm}", CreateSummaryMessage(
-						CvFlag.Msg051_SummaryRealStock,
-						typeof(CalcDateParameter),
-						new CalcDateParameter(yyyymm)))));
-					break;
-				case CvFlag.Msg052_SummaryUriKake:
-					requests.Add(($"売掛 {snapshot.YearMonthFrom} ～ {snapshot.YearMonthTo}", CreateSummaryMessage(
-						CvFlag.Msg052_SummaryUriKake,
-						typeof(CalcDateTermParameter),
-						new CalcDateTermParameter(snapshot.YearMonthFrom, snapshot.YearMonthTo))));
-					break;
-				case CvFlag.Msg053_SummaryKaiKake:
-					requests.Add(($"買掛 {snapshot.YearMonthFrom} ～ {snapshot.YearMonthTo}", CreateSummaryMessage(
-						CvFlag.Msg053_SummaryKaiKake,
-						typeof(CalcDateTermParameter),
-						new CalcDateTermParameter(snapshot.YearMonthFrom, snapshot.YearMonthTo))));
-					break;
-				case CvFlag.Msg056_SummaryUriSei:
-					var uriShimes = await GetClosingDaysAsync(nameof(MasterTokui), cancellationToken);
-					requests.AddRange(from yyyymm in snapshot.TargetMonths
-						from shime in uriShimes
-						select ($"請求残 {yyyymm} / {SummaryRebuildClosingCheck.FormatShime(shime)}", CreateSummaryMessage(
-							CvFlag.Msg056_SummaryUriSei,
-							typeof(BillingParameter),
-							new BillingParameter(yyyymm, shime, string.Empty, string.Empty, IsReissue: false))));
-					break;
-				case CvFlag.Msg057_SummaryKaiShi:
-					var kaiShimes = await GetClosingDaysAsync(nameof(MasterShiire), cancellationToken);
-					requests.AddRange(from yyyymm in snapshot.TargetMonths
-						from shime in kaiShimes
-						select ($"支払残 {yyyymm} / {SummaryRebuildClosingCheck.FormatShime(shime)}", CreateSummaryMessage(
-							CvFlag.Msg057_SummaryKaiShi,
-							typeof(BillingParameter),
-							new BillingParameter(yyyymm, shime, string.Empty, string.Empty, IsReissue: false))));
-					break;
-			}
-		}
-		return requests;
+	private async Task<IReadOnlyList<SummaryRebuildRequestDescriptor>> CreateSummaryRequestDescriptorsAsync(RebuildRequestSnapshot snapshot, CancellationToken cancellationToken) {
+		IReadOnlyList<int> uriClosingDays = SummaryRebuildRequestPlanner.RequiresUriClosingDays(snapshot.UpdateTarget)
+			? await GetClosingDaysAsync(nameof(MasterTokui), cancellationToken)
+			: [];
+		IReadOnlyList<int> kaiClosingDays = SummaryRebuildRequestPlanner.RequiresKaiClosingDays(snapshot.UpdateTarget)
+			? await GetClosingDaysAsync(nameof(MasterShiire), cancellationToken)
+			: [];
+		return SummaryRebuildRequestPlanner.CreateDescriptors(
+			snapshot.UpdateTarget,
+			snapshot.TargetMonths,
+			uriClosingDays,
+			kaiClosingDays,
+			snapshot.YearMonthFrom,
+			snapshot.YearMonthTo);
 	}
+
+	private static (string Name, CvMsg Message) CreateSummaryRequest(SummaryRebuildRequestDescriptor descriptor) => descriptor switch {
+		{ Flag: CvFlag.Msg051_SummaryRealStock, TargetMonth: { } targetMonth } => ($"在庫 {targetMonth}", CreateSummaryMessage(
+			CvFlag.Msg051_SummaryRealStock,
+			typeof(CalcDateParameter),
+			new CalcDateParameter(targetMonth))),
+		{ Flag: CvFlag.Msg052_SummaryUriKake } => ($"売掛 {descriptor.YearMonthFrom} ～ {descriptor.YearMonthTo}", CreateSummaryMessage(
+			CvFlag.Msg052_SummaryUriKake,
+			typeof(CalcDateTermParameter),
+			new CalcDateTermParameter(descriptor.YearMonthFrom, descriptor.YearMonthTo))),
+		{ Flag: CvFlag.Msg053_SummaryKaiKake } => ($"買掛 {descriptor.YearMonthFrom} ～ {descriptor.YearMonthTo}", CreateSummaryMessage(
+			CvFlag.Msg053_SummaryKaiKake,
+			typeof(CalcDateTermParameter),
+			new CalcDateTermParameter(descriptor.YearMonthFrom, descriptor.YearMonthTo))),
+		{ Flag: CvFlag.Msg056_SummaryUriSei, TargetMonth: { } targetMonth, Shime: { } shime } => ($"請求残 {targetMonth} / {SummaryRebuildClosingCheck.FormatShime(shime)}", CreateSummaryMessage(
+			CvFlag.Msg056_SummaryUriSei,
+			typeof(BillingParameter),
+			new BillingParameter(targetMonth, shime, string.Empty, string.Empty, IsReissue: false))),
+		{ Flag: CvFlag.Msg057_SummaryKaiShi, TargetMonth: { } targetMonth, Shime: { } shime } => ($"支払残 {targetMonth} / {SummaryRebuildClosingCheck.FormatShime(shime)}", CreateSummaryMessage(
+			CvFlag.Msg057_SummaryKaiShi,
+			typeof(BillingParameter),
+			new BillingParameter(targetMonth, shime, string.Empty, string.Empty, IsReissue: false))),
+		_ => throw new InvalidOperationException("再作成要求記述子が不正です。")
+	};
 
 	private async Task<IReadOnlyList<SummaryClosingMismatch>> GetRebuildClosingMismatchesAsync(RebuildRequestSnapshot snapshot, CancellationToken cancellationToken) {
 		List<SummaryClosingMismatch> mismatches = [];

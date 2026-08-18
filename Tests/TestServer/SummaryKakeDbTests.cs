@@ -586,26 +586,39 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public void SummaryRebuildRequestPlanner_CreatesExactFlagPlanAndConfirmation() {
-		var all = SummaryRebuildRequestPlanner.CreateFlagPlan("全て", 2, 2, 1);
-		var stock = SummaryRebuildRequestPlanner.CreateFlagPlan("在庫のみ", 2, 2, 1);
-		var uri = SummaryRebuildRequestPlanner.CreateFlagPlan("売掛のみ", 2, 2, 1);
-		var kai = SummaryRebuildRequestPlanner.CreateFlagPlan("買掛のみ", 2, 2, 1);
+	public void SummaryRebuildRequestPlanner_CreatesExpandedDescriptorsAndConfirmation() {
+		var all = SummaryRebuildRequestPlanner.CreateDescriptors("全て", ["202607", "202608"], [20, 99], [31], "202607", "202608");
+		var stock = SummaryRebuildRequestPlanner.CreateDescriptors("在庫のみ", ["202607", "202608"], [], [], "202607", "202608");
+		var uri = SummaryRebuildRequestPlanner.CreateDescriptors("売掛のみ", ["202607", "202608"], [20, 99], [], "202607", "202608");
+		var kai = SummaryRebuildRequestPlanner.CreateDescriptors("買掛のみ", ["202607", "202608"], [], [31], "202607", "202608");
 
 		CollectionAssert.AreEqual(new[] {
-			CvFlag.Msg051_SummaryRealStock, CvFlag.Msg051_SummaryRealStock,
-			CvFlag.Msg052_SummaryUriKake, CvFlag.Msg053_SummaryKaiKake,
-			CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei,
-			CvFlag.Msg057_SummaryKaiShi, CvFlag.Msg057_SummaryKaiShi,
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg051_SummaryRealStock, "202607", "202608", "202607"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg051_SummaryRealStock, "202607", "202608", "202608"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg052_SummaryUriKake, "202607", "202608"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg053_SummaryKaiKake, "202607", "202608"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202607", 20),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202607", 99),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202608", 20),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202608", 99),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg057_SummaryKaiShi, "202607", "202608", "202607", 31),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg057_SummaryKaiShi, "202607", "202608", "202608", 31),
 		}, all.ToArray());
-		CollectionAssert.AreEqual(new[] { CvFlag.Msg051_SummaryRealStock, CvFlag.Msg051_SummaryRealStock }, stock.ToArray());
 		CollectionAssert.AreEqual(new[] {
-			CvFlag.Msg052_SummaryUriKake,
-			CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei,
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg051_SummaryRealStock, "202607", "202608", "202607"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg051_SummaryRealStock, "202607", "202608", "202608"),
+		}, stock.ToArray());
+		CollectionAssert.AreEqual(new[] {
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg052_SummaryUriKake, "202607", "202608"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202607", 20),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202607", 99),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202608", 20),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202608", 99),
 		}, uri.ToArray());
 		CollectionAssert.AreEqual(new[] {
-			CvFlag.Msg053_SummaryKaiKake,
-			CvFlag.Msg057_SummaryKaiShi, CvFlag.Msg057_SummaryKaiShi,
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg053_SummaryKaiKake, "202607", "202608"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg057_SummaryKaiShi, "202607", "202608", "202607", 31),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg057_SummaryKaiShi, "202607", "202608", "202608", 31),
 		}, kai.ToArray());
 		Assert.AreEqual("請求残・支払残も再作成します。", SummaryRebuildRequestPlanner.GetClosingSummaryConfirmation("全て"));
 		Assert.AreEqual(string.Empty, SummaryRebuildRequestPlanner.GetClosingSummaryConfirmation("在庫のみ"));
@@ -614,61 +627,121 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public async Task SummaryRebuildRequestDispatchGate_DoesNotCreateRequestsBeforeSuccessfulCheck() {
+	public void SummaryRebuildRequestPlanner_KeepsKakeRequestsWhenClosingDaysAreEmpty() {
+		var all = SummaryRebuildRequestPlanner.CreateDescriptors("全て", ["202607", "202608"], [], [], "202607", "202608");
+		var stock = SummaryRebuildRequestPlanner.CreateDescriptors("在庫のみ", ["202607", "202608"], [], [], "202607", "202608");
+		var uri = SummaryRebuildRequestPlanner.CreateDescriptors("売掛のみ", ["202607", "202608"], [], [], "202607", "202608");
+		var kai = SummaryRebuildRequestPlanner.CreateDescriptors("買掛のみ", ["202607", "202608"], [], [], "202607", "202608");
+
+		CollectionAssert.AreEqual(new[] {
+			CvFlag.Msg051_SummaryRealStock, CvFlag.Msg051_SummaryRealStock,
+			CvFlag.Msg052_SummaryUriKake, CvFlag.Msg053_SummaryKaiKake,
+		}, all.Select(x => x.Flag).ToArray());
+		CollectionAssert.AreEqual(new[] { CvFlag.Msg051_SummaryRealStock, CvFlag.Msg051_SummaryRealStock }, stock.Select(x => x.Flag).ToArray());
+		CollectionAssert.AreEqual(new[] { CvFlag.Msg052_SummaryUriKake }, uri.Select(x => x.Flag).ToArray());
+		CollectionAssert.AreEqual(new[] { CvFlag.Msg053_SummaryKaiKake }, kai.Select(x => x.Flag).ToArray());
+		Assert.IsFalse(all.Any(x => x.Flag is CvFlag.Msg056_SummaryUriSei or CvFlag.Msg057_SummaryKaiShi));
+	}
+
+	[TestMethod]
+	public async Task SummaryRebuildRequestDispatchGate_UsesDescriptorOrderAndStopsBeforeSend() {
 		var mismatch = new SummaryClosingMismatch("売掛", "U001", "20260730", 31);
-		var createCount = 0;
-		var blocked = await SummaryRebuildRequestDispatchGate.PrepareAsync<CvFlag>(
+		var descriptors = SummaryRebuildRequestPlanner.CreateDescriptors("全て", ["202607"], [99], [20], "202607", "202607");
+		List<CvFlag> createdFlags = [];
+		List<CvFlag> sentFlags = [];
+		var completed = await SummaryRebuildRequestDispatchGate.ExecuteAsync<SummaryRebuildRequestDescriptor, CvFlag>(
+			_ => Task.FromResult<IReadOnlyList<SummaryClosingMismatch>>([]),
+			_ => Task.FromResult<IReadOnlyList<SummaryRebuildRequestDescriptor>>(descriptors),
+			descriptor => {
+				createdFlags.Add(descriptor.Flag);
+				return descriptor.Flag;
+			},
+			async (descriptor, request, requestIndex, requestCount, _) => {
+				Assert.AreEqual(descriptor.Flag, request);
+				Assert.AreEqual(descriptors.Count, requestCount);
+				Assert.AreEqual(requestIndex, sentFlags.Count);
+				sentFlags.Add(request);
+				await Task.CompletedTask;
+			},
+			CancellationToken.None);
+		CollectionAssert.AreEqual(descriptors.Select(x => x.Flag).ToArray(), createdFlags.ToArray());
+		CollectionAssert.AreEqual(descriptors.Select(x => x.Flag).ToArray(), sentFlags.ToArray());
+		CollectionAssert.AreEqual(descriptors.ToArray(), completed.Descriptors.ToArray());
+
+		var createDescriptorCount = 0;
+		var createRequestCount = 0;
+		var sendCount = 0;
+		var blocked = await SummaryRebuildRequestDispatchGate.ExecuteAsync<SummaryRebuildRequestDescriptor, CvFlag>(
 			_ => Task.FromResult<IReadOnlyList<SummaryClosingMismatch>>([mismatch]),
 			_ => {
-				createCount++;
-				return Task.FromResult<IReadOnlyList<CvFlag>>([CvFlag.Msg051_SummaryRealStock]);
+				createDescriptorCount++;
+				return Task.FromResult<IReadOnlyList<SummaryRebuildRequestDescriptor>>(descriptors);
+			},
+			_ => {
+				createRequestCount++;
+				return CvFlag.Msg051_SummaryRealStock;
+			},
+			(_, _, _, _, _) => {
+				sendCount++;
+				return Task.CompletedTask;
 			},
 			CancellationToken.None);
 
 		Assert.IsFalse(blocked.CanStartRequestDispatch);
-		Assert.AreEqual(0, createCount);
-		Assert.AreEqual(0, blocked.Requests.Count);
+		Assert.AreEqual(0, createDescriptorCount);
+		Assert.AreEqual(0, createRequestCount);
+		Assert.AreEqual(0, sendCount);
+		Assert.AreEqual(0, blocked.Descriptors.Count);
 
 		try {
-			await SummaryRebuildRequestDispatchGate.PrepareAsync<CvFlag>(
+			await SummaryRebuildRequestDispatchGate.ExecuteAsync<SummaryRebuildRequestDescriptor, CvFlag>(
 				_ => Task.FromException<IReadOnlyList<SummaryClosingMismatch>>(new InvalidOperationException("照会失敗")),
 				_ => {
-					createCount++;
-					return Task.FromResult<IReadOnlyList<CvFlag>>([]);
+					createDescriptorCount++;
+					return Task.FromResult<IReadOnlyList<SummaryRebuildRequestDescriptor>>(descriptors);
+				},
+				_ => {
+					createRequestCount++;
+					return CvFlag.Msg051_SummaryRealStock;
+				},
+				(_, _, _, _, _) => {
+					sendCount++;
+					return Task.CompletedTask;
 				},
 				CancellationToken.None);
 			Assert.Fail("照会例外が発生する必要があります。");
 		}
 		catch (InvalidOperationException) {
 		}
-		Assert.AreEqual(0, createCount);
+		Assert.AreEqual(0, createDescriptorCount);
+		Assert.AreEqual(0, createRequestCount);
+		Assert.AreEqual(0, sendCount);
 
 		using var cancellationSource = new CancellationTokenSource();
 		cancellationSource.Cancel();
 		try {
-			await SummaryRebuildRequestDispatchGate.PrepareAsync<CvFlag>(
+			await SummaryRebuildRequestDispatchGate.ExecuteAsync<SummaryRebuildRequestDescriptor, CvFlag>(
 				_ => Task.FromCanceled<IReadOnlyList<SummaryClosingMismatch>>(cancellationSource.Token),
 				_ => {
-					createCount++;
-					return Task.FromResult<IReadOnlyList<CvFlag>>([]);
+					createDescriptorCount++;
+					return Task.FromResult<IReadOnlyList<SummaryRebuildRequestDescriptor>>(descriptors);
+				},
+				_ => {
+					createRequestCount++;
+					return CvFlag.Msg051_SummaryRealStock;
+				},
+				(_, _, _, _, _) => {
+					sendCount++;
+					return Task.CompletedTask;
 				},
 				CancellationToken.None);
 			Assert.Fail("取消例外が発生する必要があります。");
 		}
 		catch (OperationCanceledException) {
 		}
-		Assert.AreEqual(0, createCount);
-
-		var passed = await SummaryRebuildRequestDispatchGate.PrepareAsync<CvFlag>(
-			_ => Task.FromResult<IReadOnlyList<SummaryClosingMismatch>>([]),
-			_ => {
-				createCount++;
-				return Task.FromResult<IReadOnlyList<CvFlag>>([CvFlag.Msg051_SummaryRealStock]);
-			},
-			CancellationToken.None);
-		Assert.IsTrue(passed.CanStartRequestDispatch);
-		Assert.AreEqual(1, createCount);
-		CollectionAssert.AreEqual(new[] { CvFlag.Msg051_SummaryRealStock }, passed.Requests.ToArray());
+		Assert.AreEqual(0, createDescriptorCount);
+		Assert.AreEqual(0, createRequestCount);
+		Assert.AreEqual(0, sendCount);
 	}
 
 	// ---- 準備 --------------------------------------------------------------------

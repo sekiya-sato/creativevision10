@@ -19,39 +19,23 @@ public sealed class SummaryClosingCheckRow {
 public sealed record SummaryClosingMismatch(string KakeType, string TorihikiCode, string? SavedDayTo, int CurrentShime);
 
 /// <summary>
-/// 再作成するメッセージ種別と、対象年月・締日ごとの展開規則。
+/// 対象年月・締日まで展開済みの再作成要求。クライアントはこの記述子を一対一で表示名とメッセージへ変換する。
 /// </summary>
-public sealed record SummaryRebuildRequestPlanStep(CvFlag Flag, bool IsPerMonth, bool IsPerClosingDay);
+public sealed record SummaryRebuildRequestDescriptor(CvFlag Flag, string YearMonthFrom, string YearMonthTo, string? TargetMonth = null, int? Shime = null);
 
 /// <summary>
 /// 再作成対象ごとのメッセージ順序と確認文を一元化する。
 /// </summary>
 public static class SummaryRebuildRequestPlanner {
-	public static IReadOnlyList<SummaryRebuildRequestPlanStep> CreatePlan(string updateTarget) => updateTarget switch {
-		"全て" => [
-			new(CvFlag.Msg051_SummaryRealStock, true, false),
-			new(CvFlag.Msg052_SummaryUriKake, false, false),
-			new(CvFlag.Msg053_SummaryKaiKake, false, false),
-			new(CvFlag.Msg056_SummaryUriSei, true, true),
-			new(CvFlag.Msg057_SummaryKaiShi, true, true),
-		],
-		"在庫のみ" => [new(CvFlag.Msg051_SummaryRealStock, true, false)],
-		"売掛のみ" => [
-			new(CvFlag.Msg052_SummaryUriKake, false, false),
-			new(CvFlag.Msg056_SummaryUriSei, true, true),
-		],
-		"買掛のみ" => [
-			new(CvFlag.Msg053_SummaryKaiKake, false, false),
-			new(CvFlag.Msg057_SummaryKaiShi, true, true),
-		],
-		_ => throw new ArgumentOutOfRangeException(nameof(updateTarget), updateTarget, "更新対象が不正です。")
-	};
+	public static bool RequiresUriClosingDays(string updateTarget) => GetFlagOrder(updateTarget).Contains(CvFlag.Msg056_SummaryUriSei);
 
-	public static bool IncludesUriKake(string updateTarget) => CreatePlan(updateTarget).Any(step => step.Flag == CvFlag.Msg052_SummaryUriKake);
+	public static bool RequiresKaiClosingDays(string updateTarget) => GetFlagOrder(updateTarget).Contains(CvFlag.Msg057_SummaryKaiShi);
 
-	public static bool IncludesKaiKake(string updateTarget) => CreatePlan(updateTarget).Any(step => step.Flag == CvFlag.Msg053_SummaryKaiKake);
+	public static bool IncludesUriKake(string updateTarget) => GetFlagOrder(updateTarget).Contains(CvFlag.Msg052_SummaryUriKake);
 
-	public static string GetClosingSummaryConfirmation(string updateTarget) => (IncludesUriKake(updateTarget), IncludesKaiKake(updateTarget)) switch {
+	public static bool IncludesKaiKake(string updateTarget) => GetFlagOrder(updateTarget).Contains(CvFlag.Msg053_SummaryKaiKake);
+
+	public static string GetClosingSummaryConfirmation(string updateTarget) => (RequiresUriClosingDays(updateTarget), RequiresKaiClosingDays(updateTarget)) switch {
 		(true, true) => "請求残・支払残も再作成します。",
 		(true, false) => "請求残も再作成します。",
 		(false, true) => "支払残も再作成します。",
@@ -59,24 +43,48 @@ public static class SummaryRebuildRequestPlanner {
 	};
 
 	/// <summary>
-	/// 締日数まで展開した実行フラグ順。要求組立とテストで同じ計画を使用する。
+	/// 対象年月・実在締日まで展開した実行記述子を、実行順で作成する。
 	/// </summary>
-	public static IReadOnlyList<CvFlag> CreateFlagPlan(string updateTarget, int monthCount, int uriClosingCount, int kaiClosingCount) {
-		ArgumentOutOfRangeException.ThrowIfNegative(monthCount);
-		ArgumentOutOfRangeException.ThrowIfNegative(uriClosingCount);
-		ArgumentOutOfRangeException.ThrowIfNegative(kaiClosingCount);
-		List<CvFlag> flags = [];
-		foreach (var step in CreatePlan(updateTarget)) {
-			var count = step.IsPerMonth ? monthCount : 1;
-			if (step.IsPerClosingDay) {
-				count *= step.Flag == CvFlag.Msg056_SummaryUriSei ? uriClosingCount : kaiClosingCount;
-			}
-			for (var index = 0; index < count; index++) {
-				flags.Add(step.Flag);
+	public static IReadOnlyList<SummaryRebuildRequestDescriptor> CreateDescriptors(
+		string updateTarget,
+		IReadOnlyList<string> targetMonths,
+		IReadOnlyList<int> uriClosingDays,
+		IReadOnlyList<int> kaiClosingDays,
+		string yearMonthFrom,
+		string yearMonthTo) {
+		ArgumentOutOfRangeException.ThrowIfZero(targetMonths.Count);
+		List<SummaryRebuildRequestDescriptor> descriptors = [];
+		foreach (var flag in GetFlagOrder(updateTarget)) {
+			switch (flag) {
+				case CvFlag.Msg051_SummaryRealStock:
+					descriptors.AddRange(targetMonths.Select(targetMonth => new SummaryRebuildRequestDescriptor(flag, yearMonthFrom, yearMonthTo, targetMonth)));
+					break;
+				case CvFlag.Msg052_SummaryUriKake:
+				case CvFlag.Msg053_SummaryKaiKake:
+					descriptors.Add(new SummaryRebuildRequestDescriptor(flag, yearMonthFrom, yearMonthTo));
+					break;
+				case CvFlag.Msg056_SummaryUriSei:
+					descriptors.AddRange(from targetMonth in targetMonths
+						from shime in uriClosingDays
+						select new SummaryRebuildRequestDescriptor(flag, yearMonthFrom, yearMonthTo, targetMonth, shime));
+					break;
+				case CvFlag.Msg057_SummaryKaiShi:
+					descriptors.AddRange(from targetMonth in targetMonths
+						from shime in kaiClosingDays
+						select new SummaryRebuildRequestDescriptor(flag, yearMonthFrom, yearMonthTo, targetMonth, shime));
+					break;
 			}
 		}
-		return flags;
+		return descriptors;
 	}
+
+	private static IReadOnlyList<CvFlag> GetFlagOrder(string updateTarget) => updateTarget switch {
+		"全て" => [CvFlag.Msg051_SummaryRealStock, CvFlag.Msg052_SummaryUriKake, CvFlag.Msg053_SummaryKaiKake, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg057_SummaryKaiShi],
+		"在庫のみ" => [CvFlag.Msg051_SummaryRealStock],
+		"売掛のみ" => [CvFlag.Msg052_SummaryUriKake, CvFlag.Msg056_SummaryUriSei],
+		"買掛のみ" => [CvFlag.Msg053_SummaryKaiKake, CvFlag.Msg057_SummaryKaiShi],
+		_ => throw new ArgumentOutOfRangeException(nameof(updateTarget), updateTarget, "更新対象が不正です。")
+	};
 }
 
 /// <summary>
@@ -149,27 +157,36 @@ ORDER BY t.Code, s.DenDay, s.Id
 }
 
 /// <summary>
-/// 締日照会の完了前には再作成要求を作らない送信境界。
+/// 締日照会、要求記述子作成、要求作成、送信を直列に実行する境界。
 /// </summary>
 public static class SummaryRebuildRequestDispatchGate {
-	public static async Task<SummaryRebuildRequestPreparation<TRequest>> PrepareAsync<TRequest>(
+	public static async Task<SummaryRebuildDispatchResult<TDescriptor>> ExecuteAsync<TDescriptor, TRequest>(
 		Func<CancellationToken, Task<IReadOnlyList<SummaryClosingMismatch>>> getMismatchesAsync,
-		Func<CancellationToken, Task<IReadOnlyList<TRequest>>> createRequestsAsync,
+		Func<CancellationToken, Task<IReadOnlyList<TDescriptor>>> createDescriptorsAsync,
+		Func<TDescriptor, TRequest> createRequest,
+		Func<TDescriptor, TRequest, int, int, CancellationToken, Task> sendAsync,
 		CancellationToken cancellationToken) {
 		cancellationToken.ThrowIfCancellationRequested();
 		var mismatches = await getMismatchesAsync(cancellationToken);
 		cancellationToken.ThrowIfCancellationRequested();
 		if (!SummaryRebuildClosingCheck.CanStartRequestDispatch(mismatches)) {
-			return new SummaryRebuildRequestPreparation<TRequest>(mismatches, []);
+			return new SummaryRebuildDispatchResult<TDescriptor>(mismatches, []);
 		}
-		var requests = await createRequestsAsync(cancellationToken);
-		return new SummaryRebuildRequestPreparation<TRequest>(mismatches, requests);
+		var descriptors = await createDescriptorsAsync(cancellationToken);
+		cancellationToken.ThrowIfCancellationRequested();
+		for (var index = 0; index < descriptors.Count; index++) {
+			cancellationToken.ThrowIfCancellationRequested();
+			var descriptor = descriptors[index];
+			var request = createRequest(descriptor);
+			await sendAsync(descriptor, request, index, descriptors.Count, cancellationToken);
+		}
+		return new SummaryRebuildDispatchResult<TDescriptor>(mismatches, descriptors);
 	}
 }
 
 /// <summary>
-/// 締日照会結果と、送信可能な場合だけ作成された要求列。
+/// 締日照会結果と、送信済みまたは不一致で空の要求記述子列。
 /// </summary>
-public sealed record SummaryRebuildRequestPreparation<TRequest>(IReadOnlyList<SummaryClosingMismatch> Mismatches, IReadOnlyList<TRequest> Requests) {
+public sealed record SummaryRebuildDispatchResult<TDescriptor>(IReadOnlyList<SummaryClosingMismatch> Mismatches, IReadOnlyList<TDescriptor> Descriptors) {
 	public bool CanStartRequestDispatch => SummaryRebuildClosingCheck.CanStartRequestDispatch(Mismatches);
 }
