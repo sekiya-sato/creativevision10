@@ -1,3 +1,20 @@
+## [2026-08-18] H4 follow-up 受注側の納品予定照会を実装
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- H1-H4 の follow-up。発注側で実装済みの納品予定照会を、受注側(Tran12Jyuchu)でも同型で実装する。
+### 詳細設計（実装前に作成）
+- `Doc/spec/2026-08-18_H4fu_受注側納品予定照会_詳細設計.md` を新設。発注側 `DeliveryScheduleInquiry` のミラー。
+### 実施内容
+- `ViewModels/04Juchu/NouhinYoteiTableViewModel.cs` を空クラス→`BaseQueryViewModel` 派生へ。対象を `Tran12Jyuchu`・得意先(`Id_Tokui`/`VTokui`)に置換。
+  納品予定日範囲・得意先・未完了のみ・納期遅れのみで絞り、納期遅れ(`NouhinDay<今日` かつ `EndFlag=0`)を遅延日数つきで表示。
+- `Views/04Juchu/NouhinYoteiTableView.xaml` を発注側 View のミラーで実装。
+- `MenuData`: 受注側「納品予定表」を「納品予定照会(受注)」へ改名・addInfo更新。発注側「納品予定照会」の「準備中」を外した(H1-H4本体で実装済みだった)。
+### 確認
+- `dotnet build creativevision10.slnx`：成功（0/0）。サーバ変更なしのため `TestServer` 92件・`TestLogin` 7件は不変。
+### 完成度への影響
+- 04Juchu の 納品予定照会(受注) が L0→L3。台帳 H1-H4 follow-up / チェックリスト3.3/15章を更新。残りは帳票PDF版・残管理表への納期遅れ列(qfm)。
+
 ## [2026-08-18] F2 follow-up 在庫強制調整の取消・実績照会を実装
 ### Agent
 - Opus 4.8 : Anthropic : Sekiya Sato Claude

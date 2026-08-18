@@ -168,7 +168,7 @@ public partial class MenuData : ObservableObject {
 				new("発注配分入力", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"発注(入荷予定)を入庫先へ色サイズ別に振り分けて配分データを作成"),
 			])),
 			new("発注残・納品予定", new([
-				new("納品予定照会", typeof(Views._03Hatchu.DeliveryScheduleInquiryView), addInfo:"準備中 発注ヘッダの納品予定日でSKU別入荷予定を照会"),
+				new("納品予定照会", typeof(Views._03Hatchu.DeliveryScheduleInquiryView), addInfo:"発注ヘッダの納品予定日で入荷予定・納期遅れを照会"),
 				new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"準備中 仕入先別の納品予定を印刷。納期遅れは納品日とEndFlagで判定"),
 				new("仕入未受リスト", typeof(Views._03Hatchu.PendingShiireListView), addInfo:"発注済みで入荷未済の分をSKU別に列挙"),
 				new("発注残管理表", typeof(Views._03Hatchu.HachuZanKanriTableView), addInfo:"発注伝票単位に残数･残金額･経過日数･滞留区分を印刷"),
@@ -187,7 +187,7 @@ public partial class MenuData : ObservableObject {
 		new("■ 受注・展示会", new([
 			new("受注", new([
 				new("展示会受注入力", typeof(Views._04Juchu.JuchuInputView), addInfo:"得意先対象の受注入力・一覧・明細印刷"),
-				new("納品予定表", typeof(Views._04Juchu.NouhinYoteiTableView), addInfo:"準備中 受注ヘッダの納品予定日で得意先別の納品予定を印刷"),
+				new("納品予定照会(受注)", typeof(Views._04Juchu.NouhinYoteiTableView), addInfo:"受注ヘッダの納品予定日で得意先別の出荷予定・納期遅れを照会"),
 				new("得意先別受注表", typeof(Views._04Juchu.TokuiSakiJuchuTableView), addInfo:"得意先別に件数･数量･金額･上代･掛率を集計"),
 				new("商品別受注表", typeof(Views._04Juchu.ShouhinJuchuTableView), addInfo:"受注明細を品番別に集計して数量･金額･上代を印刷"),
 				new("商品別受注集計表", typeof(Views._04Juchu.ShouhinJuchuSummaryTableView), addInfo:"受注をブランド/アイテム別に集計し分類内構成比を印刷"),

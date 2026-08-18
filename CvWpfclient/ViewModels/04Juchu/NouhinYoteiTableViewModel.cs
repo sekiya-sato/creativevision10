@@ -1,35 +1,133 @@
-using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CvAsset;
 using CvBase;
-using System.Diagnostics;
+using CvBase.Share;
+using CvWpfclient.Helpers;
+using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace CvWpfclient.ViewModels._04Juchu;
 
-/*
-=== 未実装（仕様確定待ち） 2026-07-31 Phase 5 ===
+/// <summary>
+/// 納品予定照会（受注側）。受注(<see cref="Tran12Jyuchu"/>)を納品予定日(<see cref="Tran12Jyuchu.NouhinDay"/>)で並べ、
+/// 出荷予定と<b>納期遅れ</b>を画面で確認する。発注側 `DeliveryScheduleInquiry` のミラー。
+/// <para>
+/// 納期遅れ = 納品予定日を過ぎても未完了(<c>EndFlag=0</c>)。判定は納品日と完了フラグで行う（リードタイム自動計算は 2.0 以降）。
+/// 仕様は `Doc/spec/2026-08-18_H4fu_受注側納品予定照会_詳細設計.md` を参照する。
+/// </para>
+/// </summary>
+public partial class NouhinYoteiTableViewModel : BaseQueryViewModel {
+	protected override string QueryTitle => "納品予定照会(受注)";
 
-納品予定表は「受注に対する納品予定日ごとの出荷予定」を出す帳票だが、
-cv10 のスキーマには納品予定日を保持する列が存在しないため実装を保留した。
-03Hatchu の DeliveryScheduleTableViewModel と同じ理由。
+	[ObservableProperty]
+	public partial string NouhinFromText { get; set; } = string.Empty;
 
-調査結果:
-  - Tran12Jyuchu(受注) が持つ日付は DenDay(受注日) のみ。TranAllHeader を含めても他に日付列は無い。
-  - 明細 Tran99Meisai にも日付列は無い。
-  - NouhinDay(納品日) を持つのは TranHhtData / TranHaibun / TranHojyu の3つだけで、
-    いずれも受注とは紐付いていない。
+	[ObservableProperty]
+	public partial string NouhinToText { get; set; } = string.Empty;
 
-実装するには以下のどれかを先に決める必要がある:
-  (A) Tran12Jyuchu（またはその明細）へ納品予定日の列を追加する
-      → CvBase のモデル追加 + UpdateDb マイグレーション + 受注入力画面での入力欄追加が必要
-  (B) 受注と配分(TranHaibun.NouhinDay)を紐付ける規約を決め、配分側の納品日を予定日として使う
-      → TranHaibun.RelateNo1/Kubun の意味付け（Phase 12 の配分系実装）が前提
+	[ObservableProperty]
+	public partial string TokuiCode { get; set; } = string.Empty;
 
-日付軸を持たない代替は実装済み:
-  - 受注残の伝票単位管理 → 「受注残管理表」(JuchuZanKanriTableView)
-  - 得意先別の売上予定額 → 「得意先別売上予定表」(TokuiSakiUriageYoteiTableView)
-    ※こちらも納品予定日を持てないため「受注日で絞った受注残の合計」として実装している
-*/
-public partial class NouhinYoteiTableViewModel : Helpers.BaseViewModel {
+	/// <summary>納期遅れ（予定日超過かつ未完了）だけに絞る</summary>
+	[ObservableProperty]
+	public partial bool OverdueOnly { get; set; }
+
+	/// <summary>未完了だけに絞る</summary>
+	[ObservableProperty]
+	public partial bool IncompleteOnly { get; set; } = true;
+
+	[ObservableProperty]
+	public partial ObservableCollection<NouhinYoteiRow> Rows { get; set; } = [];
+
+	[ObservableProperty]
+	public partial int OverdueCount { get; set; }
+
+	protected override void Init() {
+		Title = QueryTitle;
+		Message = "納品予定日の範囲などを指定して［検索実行］を押してください。";
+	}
+
+	protected override void OnClearConditions() {
+		NouhinFromText = string.Empty;
+		NouhinToText = string.Empty;
+		TokuiCode = string.Empty;
+		OverdueOnly = false;
+		IncompleteOnly = true;
+		Rows = [];
+		OverdueCount = 0;
+	}
+
+	[RelayCommand]
+	void SelectTokui() { var c = SelectTokuiCode(); if (c != null) TokuiCode = c; }
+
+	protected override async Task OnSearchAsync(CancellationToken ct) {
+		if (!TryGetMaxCount(out var maxCount)) return;
+		DateTime? from = null, to = null;
+		if (!string.IsNullOrWhiteSpace(NouhinFromText)) {
+			if (!TryParseDate(NouhinFromText, out var f)) return;
+			from = f;
+		}
+		if (!string.IsNullOrWhiteSpace(NouhinToText)) {
+			if (!TryParseDate(NouhinToText, out var t)) return;
+			to = t;
+		}
+		if (from.HasValue && to.HasValue && from > to) {
+			MessageEx.ShowWarningDialog("納品予定日の開始日が終了日より後になっています。", owner: ActiveWindow);
+			return;
+		}
+
+		var todayYmd = DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+		List<string> parameters = [];
+		var clauses = new List<string> { "ifnull(h.NouhinDay,'') <> ''" };
+		if (from.HasValue) clauses.Add($"h.NouhinDay >= {AddSqlParameter(parameters, ToDenDay(from.Value))}");
+		if (to.HasValue) clauses.Add($"h.NouhinDay <= {AddSqlParameter(parameters, ToDenDay(to.Value))}");
+		if (!string.IsNullOrWhiteSpace(TokuiCode)) {
+			clauses.Add($"te.Code = {AddSqlParameter(parameters, TokuiCode.Trim())}");
+		}
+		if (IncompleteOnly || OverdueOnly) clauses.Add("h.EndFlag = 0");
+		if (OverdueOnly) clauses.Add($"h.NouhinDay < {AddSqlParameter(parameters, todayYmd)}");
+
+		var sql = $@"
+SELECT h.*
+FROM {nameof(Tran12Jyuchu)} h
+LEFT JOIN {nameof(MasterTokui)} te ON te.Id = h.Id_Tokui
+WHERE {string.Join(" AND ", clauses)}
+ORDER BY h.NouhinDay, h.Id
+LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
+
+		var list = await QuerySqlListAsync<Tran12Jyuchu>(sql, parameters, ct);
+		Rows = [.. list.Select(h => new NouhinYoteiRow(h))];
+		OverdueCount = Rows.Count(r => r.OverdueDays > 0);
+		Message = Rows.Count == 0
+			? "該当する受注がありません。"
+			: $"{Rows.Count:N0} 件を取得しました（納期遅れ {OverdueCount:N0} 件）。";
+	}
+}
+
+/// <summary>納品予定照会(受注)の一覧1行。受注(Tran12Jyuchu)をラップして表示と納期遅れを出す。</summary>
+public sealed class NouhinYoteiRow(Tran12Jyuchu juchu) {
+	public long Id => juchu.Id;
+	public string DenDayDisplay => FormatDay(juchu.DenDay);
+	public string NouhinDayDisplay => FormatDay(juchu.NouhinDay);
+	public string TokuiDisplay => juchu.VTokui == null ? string.Empty
+		: CodeNameDisplay.Format(juchu.VTokui.Sid, juchu.VTokui.Cd, juchu.VTokui.Mei);
+	public int SuTotal => juchu.SuTotal;
+	public int KingakuTotal => juchu.KingakuTotal;
+	public string StatusDisplay => juchu.EndFlag == 1 ? "完了" : "未完了";
+
+	/// <summary>納期遅れ日数（今日 − 納品予定日）。未完了かつ予定日超過のときだけ正。それ以外は0。</summary>
+	public int OverdueDays {
+		get {
+			if (juchu.EndFlag != 0) return 0;
+			if (!DateTime.TryParseExact(juchu.NouhinDay, "yyyyMMdd", CultureInfo.InvariantCulture,
+				DateTimeStyles.None, out var d)) return 0;
+			var days = (DateTime.Today - d.Date).Days;
+			return days > 0 ? days : 0;
+		}
+	}
+
+	public string OverdueDisplay => OverdueDays > 0 ? $"{OverdueDays} 日超過" : string.Empty;
+
+	static string FormatDay(string yyyymmdd) =>
+		yyyymmdd is { Length: 8 } ? $"{yyyymmdd[..4]}/{yyyymmdd.Substring(4, 2)}/{yyyymmdd.Substring(6, 2)}" : yyyymmdd;
 }
