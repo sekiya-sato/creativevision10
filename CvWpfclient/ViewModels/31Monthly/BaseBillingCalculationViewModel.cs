@@ -25,6 +25,7 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 	protected abstract string ActionName { get; }
 	protected abstract string TorihikiName { get; }
 	protected abstract string MasterTableName { get; }
+	protected virtual bool SupportsReissue => false;
 	protected virtual string InitialMessage => "請求月・締日・コード範囲を指定して実行してください。";
 
 	[ObservableProperty]
@@ -45,6 +46,8 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 	public partial bool IsProcessing { get; set; }
 	[ObservableProperty]
 	public partial int ProgressValue { get; set; }
+	[ObservableProperty]
+	public partial bool IsReissue { get; set; }
 
 	[RelayCommand]
 	private async Task InitAsync(CancellationToken cancellationToken) {
@@ -106,7 +109,7 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 				Code = 0,
 				Flag = TargetFlag,
 				DataType = typeof(BillingParameter),
-				DataMsg = Common.SerializeObject(new BillingParameter(yyyymm, SelectedShime, codeFrom, codeTo)),
+				DataMsg = Common.SerializeObject(new BillingParameter(yyyymm, SelectedShime, codeFrom, codeTo, SupportsReissue && IsReissue)),
 			};
 			var stepMessage = string.Empty;
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(message, AppGlobal.GetDefaultCallContext(cancellationToken))) {

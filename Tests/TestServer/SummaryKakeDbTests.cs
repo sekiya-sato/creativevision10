@@ -237,6 +237,11 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(2, second.Renban);
 		Assert.AreEqual("1-20260731-02", second.SeikyuNo);
 		Assert.AreEqual("20260815", second.NyukinYoteiDay);
+
+		summaryDb.CalcSummaryUriSei("202607", 99, isReissue: true);
+		var reissued = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");
+		Assert.AreEqual(3, reissued.Renban);
+		Assert.AreEqual("1-20260731-03", reissued.SeikyuNo);
 	}
 
 	[TestMethod]

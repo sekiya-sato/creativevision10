@@ -14,6 +14,7 @@ public partial class BillingCalculationViewModel : BaseBillingCalculationViewMod
 	protected override string ActionName => "請求計算";
 	protected override string TorihikiName => "得意先";
 	protected override string MasterTableName => nameof(MasterTokui);
+	protected override bool SupportsReissue => true;
 
 	protected override async Task<string> GetPreExecuteWarningAsync(string codeFrom, string codeTo, CancellationToken cancellationToken) {
 		List<string> parameters = [SelectedShime.ToString(System.Globalization.CultureInfo.InvariantCulture)];

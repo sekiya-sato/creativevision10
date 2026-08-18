@@ -572,7 +572,7 @@ WHERE SumMonth <= @0;
 	/// <summary>請求残をストリーミングで再作成する。</summary>
 	public IAsyncEnumerable<StreamStepProgress> SummaryUriSeiAsyncStream(BillingParameter param) {
 		(string Name, Func<BillingParameter, int> Action)[] steps = [
-			("Summary : CalcSummaryUriSei", p => CalcSummaryUriSei(p.BillingYyyymm, p.Shime, p.TorisakiCodeFrom, p.TorisakiCodeTo)),
+			("Summary : CalcSummaryUriSei", p => CalcSummaryUriSei(p.BillingYyyymm, p.Shime, p.TorisakiCodeFrom, p.TorisakiCodeTo, p.IsReissue)),
 		];
 
 		return StreamStepProgressRunner.Run(
@@ -779,7 +779,7 @@ LEFT JOIN previousBalance AS p ON p.Id_Tokui = m.Id_Tokui;
 	/// 指定締日・請求月・得意先コード範囲の請求残を再作成する。
 	/// <para>通常再計算では請求書番号と連番を保持し、対象期間の伝票内訳だけを作り直す。</para>
 	/// </summary>
-	public int CalcSummaryUriSei(string billingYyyymm, int shime, string tokuiCodeFrom = "", string tokuiCodeTo = "") {
+	public int CalcSummaryUriSei(string billingYyyymm, int shime, string tokuiCodeFrom = "", string tokuiCodeTo = "", bool isReissue = false) {
 		var (dayFrom, dayTo) = GetClosingPeriod(billingYyyymm, shime);
 		const string tempTableName = "TempSummaryUriSeiPrevious";
 		var vdate = Common.GetVdate();
@@ -882,8 +882,9 @@ SELECT
 	@1,
 	@0,
 	@1,
-	COALESCE(NULLIF(o.SeikyuNo, ''), printf('%d-%s-%02d', c.Id_Tokui, @1, CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END)),
-	CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END,
+	CASE WHEN @6 = 0 THEN COALESCE(NULLIF(o.SeikyuNo, ''), printf('%d-%s-%02d', c.Id_Tokui, @1, CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END))
+		ELSE printf('%d-%s-%02d', c.Id_Tokui, @1, CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban + 1 ELSE 1 END) END,
+	CASE WHEN IFNULL(o.Renban, 0) > 0 AND @6 <> 0 THEN o.Renban + 1 WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END,
 	c.NyukinYoteiDay,
 	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Uriage - c.Henpin - c.Nebiki + c.Tax),
 	c.Cash + c.Fee + c.Densai + c.Offset + c.Other,
@@ -895,8 +896,8 @@ FROM calculated AS c
 LEFT JOIN previousBalance AS b ON b.Id_Tokui = c.Id_Tokui
 LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 ";
-			var period = $"{dayFrom}-{dayTo},締日={shime}";
-			var parameters = new object[] { dayFrom, dayTo, shime, tokuiCodeFrom, tokuiCodeTo, billingYyyymm };
+			var period = $"{dayFrom}-{dayTo},締日={shime},再発行={isReissue}";
+			var parameters = new object[] { dayFrom, dayTo, shime, tokuiCodeFrom, tokuiCodeTo, billingYyyymm, isReissue ? 1 : 0 };
 			cnt += ExecuteAndCounts(prepareSql, parameters, "CalcSummaryUriSei(delete)", "SummaryUriSei", period);
 			cnt += ExecuteAndCounts(sql, parameters, "CalcSummaryUriSei", "SummaryUriSei", period);
 			_db.CompleteTransaction();

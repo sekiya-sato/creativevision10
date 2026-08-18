@@ -245,7 +245,8 @@ public record CalcDateParameter(string DateYymm);
 /// <param name="Shime">締日（1から31または99）</param>
 /// <param name="TorisakiCodeFrom">得意先・仕入先コードの開始。空なら下限なし</param>
 /// <param name="TorisakiCodeTo">得意先・仕入先コードの終了。空なら上限なし</param>
-public record BillingParameter(string BillingYyyymm, int Shime, string TorisakiCodeFrom, string TorisakiCodeTo);
+/// <param name="IsReissue">請求書を明示的に再発行する場合だけtrue。支払計算では常にfalse</param>
+public record BillingParameter(string BillingYyyymm, int Shime, string TorisakiCodeFrom, string TorisakiCodeTo, bool IsReissue = false);
 
 /// <summary>
 /// 棚卸開始処理・棚卸確定処理のパラメータ

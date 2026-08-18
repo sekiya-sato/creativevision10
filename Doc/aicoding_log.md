@@ -1,3 +1,22 @@
+## [2026-08-18] 請求書の明示的再発行を追加
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 通常再計算の採番冪等性を維持しつつ、明示的な請求書再発行時だけ請求書連番を更新できるようにする。
+
+### 実施内容
+- `BillingParameter.IsReissue` を追加し、請求計算のgRPCストリーミングへ伝播した。
+- 請求残の再作成時、通常実行は既存 `SeikyuNo`／`Renban` を維持し、再発行指定時は `Renban` を+1して請求書番号を再採番するようにした。
+- 請求計算画面に再発行チェックボックスを追加した。
+- 採番維持と再発行連番のテストを追加した。
+
+### 確認
+- `Tests/TestServer/TestServer.csproj` を Development 環境でビルドし、警告・エラーなしを確認した。
+- Microsoft.Testing.Platform の実行形式から `SummaryKakeDbTests` を実行し、15件すべて成功した。
+- `CvWpfclient/CvWpfclient.csproj` を Development 環境でビルドし、警告・エラーなしを確認した。
+
 ## [2026-08-18] 請求計算・支払計算の実行画面を追加
 
 ### Agent

@@ -48,6 +48,7 @@
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="140" />
@@ -100,7 +101,13 @@
 							Text="{Binding TorihikiCodeTo}" />
 					</StackPanel>
 
-					<TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+					<CheckBox Grid.Row="4" Grid.Column="1"
+						Margin="0,16,0,0"
+						Content="請求書を再発行する（連番を+1）"
+						IsChecked="{Binding IsReissue}"
+						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}" />
+
+					<TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
 						Margin="0,16,0,0"
 						Foreground="{DynamicResource NegativeForegroundBrush}"
 						Text="{Binding WarningMessage}"
