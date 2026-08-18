@@ -1,3 +1,19 @@
+## [2026-08-18] 請求・支払計算の請求残／支払残スキーマを追加
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 請求計算・支払計算の詳細設計に基づき、請求書番号・連番・入金予定日・支払予定日を保持できるようにする。
+
+### 実施内容
+- `SummaryUriSei` に `SeikyuNo`、`Renban`、`NyukinYoteiDay` を追加した。
+- `SummaryKaiShi` に `ShiharaiYoteiDay` を追加した。
+- `UpdateDb` の `26_08_18_02` で既存DBへ同列を追加し、既存行は空文字または0で初期化する。
+
+### 確認
+- `CvBase/CvBase.csproj` を Development 環境でビルドし、警告・エラーなしを確認した。
+
 ## [2026-08-18] 請求・支払計算の集計・締日ルールを詳細設計へ反映
 
 ### Agent

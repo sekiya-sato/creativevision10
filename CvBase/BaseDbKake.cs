@@ -148,6 +148,25 @@ public sealed partial class SummaryUriSei : BaseDbClass {
 	[Comment("請求終了日 yyyyMMdd 8桁の文字列で表現")]
 	public partial string DayTo { get; set; } = "19010101";
 	/// <summary>
+	/// 請求書番号
+	/// </summary>
+	[ObservableProperty]
+	[Comment("請求書番号 得意先Id-請求日-連番")]
+	public partial string SeikyuNo { get; set; } = string.Empty;
+	/// <summary>
+	/// 請求書連番
+	/// </summary>
+	[ObservableProperty]
+	[Comment("請求書の再発行・差し替え世代")]
+	public partial long Renban { get; set; }
+	/// <summary>
+	/// 入金予定日 yyyyMMdd 8桁の文字列で表現
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("入金予定日 yyyyMMdd 8桁の文字列で表現")]
+	public partial string NyukinYoteiDay { get; set; } = string.Empty;
+	/// <summary>
 	/// 当月残高
 	/// </summary>
 	[ObservableProperty]
@@ -376,6 +395,13 @@ public sealed partial class SummaryKaiShi : BaseDbClass {
 	[OldTableCommentAttr("支払終了日")]
 	[Comment("支払終了日 yyyyMMdd 8桁の文字列で表現")]
 	public partial string DayTo { get; set; } = "19010101";
+	/// <summary>
+	/// 支払予定日 yyyyMMdd 8桁の文字列で表現
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("支払予定日 yyyyMMdd 8桁の文字列で表現")]
+	public partial string ShiharaiYoteiDay { get; set; } = string.Empty;
 	/// <summary>
 	/// 当月残高
 	/// </summary>
