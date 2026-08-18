@@ -1,48 +1,57 @@
+using CvBase;
+using CvWpfclient.Helpers;
+using System.Linq;
+
 namespace CvWpfclient.ViewModels._08Zaiko;
 
 /// <summary>
-/// 在庫強制調整入力 — **仕様確定待ちのため未実装**（Phase 10 で意図的に保留）。
-///
-/// <para>【保留理由: 調整を保存する場所が無い】</para>
-/// <list type="number">
-///   <item>
-///     `SummaryRealStock` は**導出テーブル**である。`CvDomainLogic/SummaryDb.CalcSummaryRealStock()` が
-///     `DELETE FROM SummaryRealStock` の後に `SummaryStock` から作り直すため、
-///     この画面から直接 `SummaryRealStock.Su` を書き換えても**次の在庫再計算で消える**。
-///   </item>
-///   <item>
-///     `SummaryStock` も Tran テーブルからの集計結果（`CalcSummaryStockTrn`）で、
-///     調整分だけを保持し続ける仕組みが無い。
-///   </item>
-///   <item>
-///     `SummaryStock.AdjustQty`（調整数）という列は存在するが、
-///     **リポジトリ内に書き込み側が1つも無い**（読むのは 倉庫別受払表 / 商品別受払表 / 全社受払表 の3帳票のみ）。
-///     つまり「調整をどう記録するか」が未定のまま列だけある状態。
-///   </item>
-///   <item>
-///     在庫を動かす他の伝票は必ず Tran テーブル + `TranCalcBase.GetCalcSoko()` のフラグ経由で計上される。
-///     調整も同じ枠組みに乗せるのが筋だが、調整用の Tran テーブルが存在しない。
-///   </item>
-/// </list>
-///
-/// <para>【実装に必要な前提条件（どちらかを決める必要がある）】</para>
-/// <list type="bullet">
-///   <item>
-///     案A: 調整用 Tran テーブル（例 Tran61Chosei）を新設し、`TranCalcBase.GetCalcSoko` に
-///     `(1, 0, 0, 0)` 相当のフラグと、`CreateSummaryStockSql` の AdjustQty への加算を追加する。
-///     監査が残り、在庫再計算でも消えない。**旧システムに「在庫強制調整実績表」があることから、
-///     調整は伝票として残す設計だったと推測できる**（実績表を出すには元データが必要）。
-///   </item>
-///   <item>
-///     案B: 既存の Tran05Ido / Tran03Shiire に調整用の区分を足して代用する。
-///     テーブルは増えないが「移動でも仕入でもない在庫増減」が混ざるため集計側の条件分岐が増える。
-///   </item>
-/// </list>
-///
+/// 在庫強制調整入力 — 倉庫のSKUを一覧に並べ、行ごとに調整数（符号付き）を入力して
+/// 在庫調整伝票(<see cref="Tran61Chosei"/>)を1伝票登録する。区分は強制調整(<see cref="EnumChosei.Kyosei"/>)。
 /// <para>
-/// どちらも CvBase のスキーマ変更 + CvDomainLogic の集計SQL変更を伴う（クライアントだけでは閉じない）。
-/// 併せて「在庫強制調整実績表」も同じ元データを見る画面になるので、セットで設計する必要がある。
+/// <b>在庫へ即時反映される。</b><see cref="Tran61Chosei"/> は <see cref="ITranSoko"/> 実装なので、
+/// サーバの汎用CRUD副作用(<c>WriteEffectRunner</c>)が登録と同一トランザクションで
+/// <see cref="SummaryRealStock"/> / <see cref="SummaryStock"/> を更新する（プラスで増、マイナスで減）。
+/// 調整は集計テーブルへ直接書かず伝票として残すため、全件Rebuildでも消えない（棚卸確定処理と同じ設計）。
+/// </para>
+/// <para>
+/// 取消（既存調整伝票の削除）・在庫強制調整実績照会（帳票）・調整理由マスタ(<see cref="Tran61Chosei.Id_Riyu"/>)は
+/// follow-up 課題。理由は当面メモで残す。仕様は `Doc/spec/2026-08-18_F2_在庫強制調整入力_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
-public partial class StockForceInputViewModel : Helpers.BaseViewModel {
+public partial class StockForceInputViewModel : Helpers.BaseStockSheetInputViewModel<Tran61Chosei> {
+	protected override string QueryTitle => "在庫強制調整入力";
+	protected override string InputSuHeader => "調整数";
+
+	protected override async Task<List<StockSheetRow>> LoadRowsAsync(CancellationToken ct) {
+		// 棚卸入力(一覧)と同じ組み立て。対象倉庫の在庫SKU（+品番範囲指定時は在庫0のSKUも）を並べる
+		var stock = await LoadStockAsync(ct);
+		var stockMap = stock
+			.GroupBy(s => (s.Id_Shohin, s.Id_Col, s.Id_Siz))
+			.ToDictionary(g => g.Key, g => g.Sum(x => x.Su));
+
+		// 品番範囲を指定したときだけ、在庫0のSKUも並べる（在庫レコードが無いSKUを増やす調整用）
+		var hasShohinRange = !string.IsNullOrWhiteSpace(ShohinCodeFrom) || !string.IsNullOrWhiteSpace(ShohinCodeTo);
+		var skuList = hasShohinRange ? await LoadSkuAsync(ct) : [];
+
+		var keys = new HashSet<(long Shohin, long Col, long Siz)>(stockMap.Keys);
+		foreach (var sku in skuList) keys.Add((sku.Id_Shohin, sku.Id_Col, sku.Id_Siz));
+
+		var shohinMap = await LoadShohinMapAsync(keys.Select(k => k.Shohin), ct);
+		var skuMap = await LoadSkuMapAsync(keys.Select(k => k.Shohin), ct);
+
+		List<StockSheetRow> rows = [];
+		foreach (var key in keys) {
+			shohinMap.TryGetValue(key.Shohin, out var shohin);
+			skuMap.TryGetValue(key, out var sku);
+			rows.Add(CreateRow(
+				key.Shohin, key.Col, key.Siz,
+				stockMap.TryGetValue(key, out var su) ? su : 0,
+				shohin, sku));
+		}
+		return rows;
+	}
+
+	protected override Tran61Chosei BuildDenpyo(List<Tran99Meisai> meisai) => new() {
+		EnKubun = EnumChosei.Kyosei,
+	};
 }

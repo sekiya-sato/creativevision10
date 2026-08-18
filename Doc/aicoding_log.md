@@ -1,3 +1,28 @@
+## [2026-08-18] F2 在庫強制調整入力を実装
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- 未適用課題 F2 の在庫強制調整入力（登録）を実装。倉庫のSKUに調整数を入れて在庫を強制的に増減する。
+### 詳細設計（実装前に作成）
+- `Doc/spec/2026-08-18_F2_在庫強制調整入力_詳細設計.md` を新設。
+- 前提確認: `StockForceInputViewModel` の旧コメント（「保存先が無い・案A/B」）は陳腐化。案A（`Tran61Chosei` 伝票）は
+  実装済みで `ITranSoko`、汎用CRUD副作用(`WriteEffectRunner.CalcStock` が `is ITranSoko` で判定)が在庫へ反映するため
+  **クライアントに閉じる**（サーバ・スキーマ・新規Msg不要）。
+- スコープ: 入力（登録）を実装。取消（削除画面）・実績照会（帳票）・調整理由マスタ(`Id_Riyu`)は follow-up
+  （`MasterMeisho` 調整理由区分が未定義のため、理由は当面メモで残す）。
+### 実施内容
+- `CvWpfclient/ViewModels/08Zaiko/StockForceInputViewModel.cs`: 空クラスを `BaseStockSheetInputViewModel<Tran61Chosei>`
+  の派生へ置換。`LoadRowsAsync` は棚卸入力(一覧)と同じ（在庫SKU＋品番範囲指定時は在庫0SKUも）。
+  `BuildDenpyo` は `EnKubun = EnumChosei.Kyosei`。理論在庫の初期流し込みはしない（調整数は0から入力）。
+- `Views/08Zaiko/StockForceInputView.xaml`: 棚卸入力(一覧)Viewを土台に、棚番を外し「調整日/調整数/現在庫」に読み替え、
+  「調整数を入力した行だけ登録・在庫へ即時反映・マイナスで減算」の注意書きにした。
+- 登録で `SummaryRealStock.Su` と `SummaryStock.AdjustQty` が即時更新される（棚卸確定と同じ経路）。伝票なので全件Rebuildでも消えない。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`：成功（0 warnings / 0 errors）。
+- クライアント閉じの変更のため `TestServer` 92件・`TestLogin` 7件は不変（回帰確認済み）。`Tran61Chosei` の在庫反映は `SummaryDbTests`（棚卸確定経路）で検証済み。
+### 完成度への影響
+- 08Zaiko の L0 が 1→0。在庫強制調整入力が L0→L3。台帳 F2 は入力を完了（取消・実績照会は follow-up）。チェックリスト 3.7/14章を更新。
+
 ## [2026-08-18] G0-4.3.1 完了済み伝票の編集時ワーニングを実装
 ### Agent
 - Opus 4.8 : Anthropic : Sekiya Sato Claude
