@@ -154,8 +154,93 @@ public partial class CoreService {
 			DeleteParam delete => HandleDelete(request.Flag, delete),
 			DeleteByIdParam deleteById => HandleDeleteById(request.Flag, deleteById),
 			PartialUpdateParam partialUpdate => HandlePartialUpdate(request.Flag, partialUpdate),
+			ShippingConfirmParam confirm => HandleShippingConfirm(request.Flag, confirm),
+			ShippingCancelParam cancel => HandleShippingCancel(request.Flag, cancel),
+			ShippingCreateParam create => HandleShippingCreate(request.Flag, create),
 			_ => throw new NotImplementedException(),
 		};
+	}
+
+	/// <summary>
+	/// 出荷指示確定。対象の配分に <c>KakuteiDay</c> を立てる。有効在庫（実在庫 − 引当数）が
+	/// 1SKUでも負になる場合は <see cref="ShippingDb.ConfirmShipping"/> が全件拒否するので、
+	/// 割れたSKUを <see cref="ShippingShortageDto"/> 配列で返して1件も確定しない。
+	/// </summary>
+	private CvMsg HandleShippingConfirm(CvFlag flag, ShippingConfirmParam confirm) {
+		_logger.LogInformation("パラメータ ShippingConfirmParam 件数={Count} 確定日={KakuteiDay}",
+			confirm.HaibunIds?.Length ?? 0, confirm.KakuteiDay);
+
+		var shippingDb = new ShippingDb(_db);
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var confirmed = shippingDb.ConfirmShipping(confirm.HaibunIds ?? [], confirm.KakuteiDay, out var errors);
+			if (errors.Count > 0) {
+				// 有効在庫割れは1件も確定していない。書いていないが念のため戻す
+				_db.AbortTransaction();
+				var dto = errors
+					.Select(e => new ShippingShortageDto(e.Id_Soko, e.Id_Shohin, e.Id_Col, e.Id_Siz, e.Shiji, e.Yuko))
+					.ToArray();
+				_logger.LogInformation("出荷指示確定 有効在庫割れ {Count}SKU", dto.Length);
+				return CreateErrorResponse(flag, CvMsgErrorCode.ShippingUnavailable, "有効在庫が不足しています",
+					typeof(ShippingShortageDto[]), Common.SerializeObject(dto));
+			}
+			_db.CompleteTransaction();
+			_logger.LogInformation("出荷指示確定 確定={Confirmed}", confirmed);
+			return CreateSuccessResponse(flag, typeof(ShippingConfirmResult), Common.SerializeObject(new ShippingConfirmResult(confirmed)));
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>出荷指示確定の取消。まだ伝票を作っていない確定済み行の <c>KakuteiDay</c> を空へ戻す。</summary>
+	private CvMsg HandleShippingCancel(CvFlag flag, ShippingCancelParam cancel) {
+		_logger.LogInformation("パラメータ ShippingCancelParam 件数={Count}", cancel.HaibunIds?.Length ?? 0);
+
+		var shippingDb = new ShippingDb(_db);
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var canceled = shippingDb.CancelConfirm(cancel.HaibunIds ?? []);
+			_db.CompleteTransaction();
+			_logger.LogInformation("出荷指示確定取消 取消={Canceled}", canceled);
+			return CreateSuccessResponse(flag, typeof(ShippingCancelResult), Common.SerializeObject(new ShippingCancelResult(canceled)));
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 出荷処理。確定済み配分に実数量を入れ、出荷売上／移動伝票を作成して <c>EndFlag=1</c>（引当解除）にする。
+	/// 楽観排他は <see cref="ShippingDb.ProcessShipping"/> が先に全行を検証し、競合なら何も書かずに返すので
+	/// ここでトランザクションを戻して再取得を促す。
+	/// </summary>
+	private CvMsg HandleShippingCreate(CvFlag flag, ShippingCreateParam create) {
+		var rows = create.Rows ?? [];
+		_logger.LogInformation("パラメータ ShippingCreateParam 件数={Count} 伝票日={DenDay} 社員={IdShain}",
+			rows.Length, create.DenDay, create.IdShain);
+
+		var shippingDb = new ShippingDb(_db);
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var created = shippingDb.ProcessShipping(
+				[.. rows.Select(r => (r.Id, r.ExpectedVdu, r.JitsuSu))], create.DenDay, create.IdShain, out var conflict);
+			if (conflict) {
+				_db.AbortTransaction();
+				_logger.LogInformation("出荷処理 競合検知");
+				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, typeof(string), string.Empty);
+			}
+			_db.CompleteTransaction();
+			_logger.LogInformation("出荷処理 伝票作成={Slips} 引当解除={Released}", created.Count, rows.Length);
+			return CreateSuccessResponse(flag, typeof(ShippingCreateResult),
+				Common.SerializeObject(new ShippingCreateResult([.. created], rows.Length)));
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, typeof(string), ex.Message);
+		}
 	}
 
 	/// <summary>

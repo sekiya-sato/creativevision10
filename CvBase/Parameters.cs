@@ -251,6 +251,61 @@ public record CalcDateParameter(string DateYymm);
 public record StocktakeParameter(string TanaMonth, string DenDay, long IdShain, long[] SokoIds);
 
 /// <summary>
+/// 出荷指示確定のパラメータ。対象の配分行に <c>KakuteiDay</c> を立てる。
+/// 有効在庫（実在庫 − 引当数）が1SKUでも負になる場合はサーバが1件も確定せず、
+/// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。
+/// 仕様は `Doc/spec/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md` を参照する。
+/// </summary>
+/// <param name="HaibunIds">確定する配分行のId</param>
+/// <param name="KakuteiDay">確定日 yyyyMMdd</param>
+public sealed record ShippingConfirmParam(long[] HaibunIds, string KakuteiDay);
+
+/// <summary>
+/// 出荷指示確定の取消パラメータ。まだ伝票を作っていない確定済み行(<c>RelateNo2=0</c>)の <c>KakuteiDay</c> を空へ戻す。
+/// </summary>
+/// <param name="HaibunIds">取り消す配分行のId</param>
+public sealed record ShippingCancelParam(long[] HaibunIds);
+
+/// <summary>
+/// 出荷処理のパラメータ。確定済み配分に実数量を入れ、出荷売上／移動伝票を作成し <c>EndFlag=1</c>（引当解除）にする。
+/// </summary>
+/// <param name="Rows">出荷処理する行（Id・楽観排他用Vdu・実数量）</param>
+/// <param name="DenDay">生成する伝票の在庫計上日 yyyyMMdd</param>
+/// <param name="IdShain">入力社員Id</param>
+public sealed record ShippingCreateParam(ShippingCreateRow[] Rows, string DenDay, long IdShain);
+
+/// <summary>出荷処理の1行分。実数量は 0〜指示数(Su) にサーバ側でクランプし、欠品は Su − 実数量。</summary>
+/// <param name="Id">配分行のId</param>
+/// <param name="ExpectedVdu">一覧取得時点のVdu。1件でも現在値と不一致なら全体を処理しない</param>
+/// <param name="JitsuSu">実数量（出荷数）</param>
+public sealed record ShippingCreateRow(long Id, long ExpectedVdu, int JitsuSu);
+
+/// <summary>出荷指示確定の結果</summary>
+/// <param name="ConfirmedCount">確定した配分行数</param>
+public sealed record ShippingConfirmResult(int ConfirmedCount);
+
+/// <summary>出荷指示確定取消の結果</summary>
+/// <param name="CanceledCount">取り消した配分行数</param>
+public sealed record ShippingCancelResult(int CanceledCount);
+
+/// <summary>出荷処理の結果</summary>
+/// <param name="CreatedSlipIds">作成した伝票Id（全量欠品の行は伝票を作らない）</param>
+/// <param name="ReleasedCount">完了(EndFlag=1)にして引当解除した配分行数</param>
+public sealed record ShippingCreateResult(long[] CreatedSlipIds, int ReleasedCount);
+
+/// <summary>
+/// 出荷指示確定で有効在庫を割った1SKU。画面へ返すワイヤ用DTO
+/// （ドメインの <c>ShippingConfirmError</c> はサーバ専用のためここへ詰め替える）。
+/// </summary>
+/// <param name="Id_Soko">出庫元倉庫</param>
+/// <param name="Id_Shohin">商品</param>
+/// <param name="Id_Col">色</param>
+/// <param name="Id_Siz">サイズ</param>
+/// <param name="Shiji">確定しようとした指示数の合計</param>
+/// <param name="Yuko">確定前の有効在庫（実在庫 − 引当数）</param>
+public sealed record ShippingShortageDto(long Id_Soko, long Id_Shohin, long Id_Col, long Id_Siz, int Shiji, int Yuko);
+
+/// <summary>
 /// クエリI/F : CSV出力パラメータ (Sql出力パラメータはQueryListSqlParamを使う)
 /// </summary>
 public sealed record PrintByCsvParam(string CsvData);

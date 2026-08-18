@@ -1,3 +1,36 @@
+## [2026-08-18] I2/I3 出荷指示確定(商品/得意先)・出荷処理入力を実装し ShippingDb をサーバ接続
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- 未適用課題 I2/I3 を実装し、配分→確定→出荷→引当解除の業務経路を画面から閉じる（台帳 実施順の提案 1）。
+- 実装済み・テスト済みだった `ShippingDb` は gRPCハンドラ未接続だったため、まず接続する。
+### 詳細設計（実装前に作成）
+- `Doc/spec/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md` を新設。業務モデル（未確定→確定→完了、確定取消）、
+  サーバ設計（param型・ハンドラ・エラーコード・トランザクション）、クライアント設計（確定共通基底＋2サブクラス、出荷処理入力）、
+  G/W/T、テスト計画を先に確定した。
+- 実装中の判断: 実数量設定＋伝票作成を薄い `ShippingDb.ProcessShipping` に切り出し、CvDomainLogic単体でテスト可能にした
+  （`CoreService` のDIを介さない）。楽観排他は先に全行検証して競合なら何も書かない（fail-fast）。
+### 実施内容（サーバ）
+- `CodeShare/ICoreService.cs`: `CvMsgErrorCode.ShippingUnavailable`(-9903) を追加。
+- `CvBase/Parameters.cs`: `ShippingConfirmParam` / `ShippingCancelParam` / `ShippingCreateParam`(+`ShippingCreateRow`)、
+  結果型 `ShippingConfirmResult` / `ShippingCancelResult` / `ShippingCreateResult`、割れSKUの `ShippingShortageDto` を追加。
+- `CvDomainLogic/ShippingDb.cs`: `ProcessShipping` を追加（既存メソッドは不変）。
+- `CvServer/Services/HandlerClass.cs`: `HandleOpExecute` に3分岐と `HandleShippingConfirm` / `HandleShippingCancel` /
+  `HandleShippingCreate` を追加。いずれも Serializable トランザクションで `ShippingDb` を呼ぶ。新規Msgフラグは追加せず既存 `Msg201_Op_Execute` に相乗り。
+### 実施内容（クライアント）
+- `CvWpfclient/Helpers/ViewModels/BaseShippingConfirmViewModel.cs`（新規）＋ `ShippingConfirmShohinViewModel` /
+  `ShippingConfirmTokuiViewModel`（並び順のみ差し替え）。未確定配分の確定/確定取消。有効在庫割れは割れSKUを一覧表示し1件も確定しない。
+- `ShippingInputViewModel`（出荷処理入力）: 確定済み配分に実数量を入力（既定=指示数、欠品=指示数−実数量）→ 伝票作成＋引当解除。在庫計上日・入力社員を持つ。
+- 一覧は照会画面と同じく既存DBマップ型で取得しクライアントで合成する（`Common.SerializeObject` は `Type` を AQN で送るため、
+  クライアント専用POCOはサーバで解決できない）。3View（`ShippingConfirmShohin/Tokui/ShippingInput`）を残完了設定画面のXAMLを土台に実装。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`：成功（0 warnings / 0 errors）。
+- `Tests\TestServer\bin\Debug\net10.0\TestServer.exe`：92/92 成功（`ProcessShipping` 新規3件）。`TestLogin`：7/7 成功。
+- `SummaryDbTests` に `ProcessShipping` の全量／指示数クランプ／楽観排他競合の3テストを追加（既存の出荷テストヘルパを再利用）。
+### 完成度への影響
+- 07Haibun の L0 が 17→14、L3 が 3→6。対象画面数131は不変。チェックリスト 3.6/12章、台帳 I2/I3、詳細設計を更新。
+- あわせて E8-g の訂正（第2段階で請求データを正とし、月末一括計算の消費税との差は手動の相殺データで金額調整）を台帳へ反映。
+
 ## [2026-08-18] I9 配分照会3画面（配分問合わせ／引当問合わせ／有効在庫問合わせ）を実装
 ### Agent
 - Opus 4.8 : Anthropic : Sekiya Sato Claude

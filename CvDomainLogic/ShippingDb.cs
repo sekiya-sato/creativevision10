@@ -167,6 +167,52 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 		return created;
 	}
 
+	/// <summary>
+	/// 出荷処理。確定済み配分に実数量を入れてから伝票を作成する。ハンディ廃止(決定 I6)により、
+	/// 実数量(<see cref="TranHaibun.JitsuSu"/>)・欠品(<see cref="TranHaibun.ShortSu"/>)は
+	/// 出荷処理入力の画面で確定する。
+	/// <para>
+	/// 楽観排他は行単位で<b>先に全行を検証</b>する。対象(<c>EndFlag=0</c> かつ確定済み)に無い行や
+	/// <see cref="TranHaibun.Vdu"/> が一覧取得時点と食い違う行が1件でもあれば、<b>何も書かずに</b>
+	/// <paramref name="concurrencyConflict"/> を <c>true</c> にして返す。呼び出し元がトランザクションを
+	/// 戻して再取得を促す前提。
+	/// </para>
+	/// </summary>
+	/// <param name="rows">出荷処理する行（Id・一覧取得時点のVdu・実数量）</param>
+	/// <param name="denDay">生成する伝票の在庫計上日 yyyyMMdd</param>
+	/// <param name="idShain">入力社員Id</param>
+	/// <param name="concurrencyConflict">競合を検知したら true。true のときは何も書き込んでいない</param>
+	/// <returns>作成した伝票Idの一覧。競合時は空</returns>
+	public IReadOnlyList<long> ProcessShipping(
+		IReadOnlyCollection<(long Id, long ExpectedVdu, int JitsuSu)> rows, string denDay, long idShain, out bool concurrencyConflict) {
+		concurrencyConflict = false;
+		var ids = rows.Where(r => r.Id > 0).Select(r => r.Id).Distinct().ToList();
+		if (ids.Count == 0) {
+			return [];
+		}
+		// 対象は確定済み(KakuteiDay有効)かつ未完了(EndFlag=0)の行だけ
+		var current = _db.Fetch<TranHaibun>(
+			$"where Id in ({string.Join(",", ids)}) and EndFlag = 0 and ifnull(KakuteiDay,'') <> ''")
+			.ToDictionary(x => x.Id);
+		// 1件でも「対象に無い」「Vdu不一致」があれば何も書かずに競合として返す(fail-fast)
+		foreach (var r in rows.Where(r => r.Id > 0)) {
+			if (!current.TryGetValue(r.Id, out var h) || h.Vdu != r.ExpectedVdu) {
+				concurrencyConflict = true;
+				return [];
+			}
+		}
+		var vdate = Common.GetVdate();
+		foreach (var r in rows.Where(r => r.Id > 0)) {
+			var h = current[r.Id];
+			var jitsu = Math.Clamp(r.JitsuSu, 0, h.Su);
+			_db.Execute(
+				$"update {nameof(TranHaibun)} set {nameof(TranHaibun.JitsuSu)} = @0, "
+				+ $"{nameof(TranHaibun.ShortSu)} = @1, {nameof(TranHaibun.Vdu)} = {vdate} where {nameof(TranHaibun.Id)} = @2",
+				jitsu, h.Su - jitsu, r.Id);
+		}
+		return CreateShippingSlips(ids, denDay, idShain);
+	}
+
 	/// <summary>出荷売上とみなす店種区分。1=卸先 / 3=売仕店（決定 I4 / G4）</summary>
 	public static bool IsShukka(int tenType) => tenType is 1 or 3;
 

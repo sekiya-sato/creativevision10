@@ -47,6 +47,12 @@ public static class CvMsgErrorCode {
 	/// 想定外のサーバー処理エラー
 	/// </summary>
 	public const int Unexpected = -9902;
+
+	/// <summary>
+	/// 出荷指示確定で有効在庫が不足している（1件も確定していない）。
+	/// DataType に <c>ShippingShortageDto[]</c> を載せて割れたSKUを返す。
+	/// </summary>
+	public const int ShippingUnavailable = -9903;
 }
 
 /// <summary>

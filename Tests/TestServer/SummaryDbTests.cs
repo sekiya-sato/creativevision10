@@ -644,6 +644,95 @@ public class SummaryDbTests {
 	}
 
 	/// <summary>
+	/// 出荷処理入力(ProcessShipping)は、確定済み配分に実数量を入れてから伝票を作る。
+	/// ハンディ廃止(決定 I6)により実数量・欠品は画面で確定する。JitsuSu=8/ShortSu=2 で出荷売上8。
+	/// </summary>
+	[TestMethod]
+	public void ProcessShipping_SetsJitsuSuAndCreatesSlips() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var oroshiId = InsertTokui(db, "T011", "卸先", tenType: 1);
+		var purchase = CreatePurchase("20260810", 1, 100, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var haibun = CreateHaibun("20260815", 1, 10);
+		haibun.Id_Tenpo = oroshiId;
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+		shippingDb.ConfirmShipping([haibun.Id], "20260816", out _);
+		var vdu = db.Single<TranHaibun>("where Id=@0", haibun.Id).Vdu;
+
+		// 実数量8（欠品2）で出荷処理
+		var created = shippingDb.ProcessShipping([(haibun.Id, vdu, 8)], "20260817", idShain: 1, out var conflict);
+
+		Assert.IsFalse(conflict);
+		Assert.AreEqual(1, created.Count);
+		var after = db.Single<TranHaibun>("where Id=@0", haibun.Id);
+		Assert.AreEqual(8, after.JitsuSu);
+		Assert.AreEqual(2, after.ShortSu);
+		Assert.AreEqual(1, after.EndFlag, "完了して引当解除");
+		Assert.AreEqual(8, db.Single<Tran00Uriage>("where Id_Tokui=@0", oroshiId).SuTotal, "卸先は出荷売上8");
+		AssertRealReserve(db, 1, 0);
+		AssertRealStock(db, 1, 92, "仕入100 − 出荷8");
+	}
+
+	/// <summary>実数量は指示数(Su)を超えないようサーバ側でクランプする。欠品は Su − 実数量。</summary>
+	[TestMethod]
+	public void ProcessShipping_ClampsJitsuSuToShiji() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var oroshiId = InsertTokui(db, "T011", "卸先", tenType: 1);
+		var purchase = CreatePurchase("20260810", 1, 100, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var haibun = CreateHaibun("20260815", 1, 10);
+		haibun.Id_Tenpo = oroshiId;
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+		shippingDb.ConfirmShipping([haibun.Id], "20260816", out _);
+		var vdu = db.Single<TranHaibun>("where Id=@0", haibun.Id).Vdu;
+
+		// 指示数10を超える99を入れても指示数へクランプし、欠品は0
+		shippingDb.ProcessShipping([(haibun.Id, vdu, 99)], "20260817", idShain: 1, out var conflict);
+
+		Assert.IsFalse(conflict);
+		var after = db.Single<TranHaibun>("where Id=@0", haibun.Id);
+		Assert.AreEqual(10, after.JitsuSu);
+		Assert.AreEqual(0, after.ShortSu);
+	}
+
+	/// <summary>一覧取得時点と違うVduを渡すと競合。何も書かずに concurrencyConflict=true を返す。</summary>
+	[TestMethod]
+	public void ProcessShipping_ConcurrencyConflict_WritesNothing() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var oroshiId = InsertTokui(db, "T011", "卸先", tenType: 1);
+		var purchase = CreatePurchase("20260810", 1, 100, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var haibun = CreateHaibun("20260815", 1, 10);
+		haibun.Id_Tenpo = oroshiId;
+		db.Insert(haibun);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+		shippingDb.ConfirmShipping([haibun.Id], "20260816", out _);
+		var vdu = db.Single<TranHaibun>("where Id=@0", haibun.Id).Vdu;
+
+		// 一覧取得時点と違うVduを渡すと競合。何も書かない
+		var created = shippingDb.ProcessShipping([(haibun.Id, vdu + 1, 8)], "20260817", idShain: 1, out var conflict);
+
+		Assert.IsTrue(conflict);
+		Assert.AreEqual(0, created.Count);
+		var after = db.Single<TranHaibun>("where Id=@0", haibun.Id);
+		Assert.AreEqual(0, after.JitsuSu, "実数量は書かれていない");
+		Assert.AreEqual(0, after.EndFlag, "完了していない");
+		Assert.AreEqual("20260816", after.KakuteiDay, "確定は残る");
+		AssertRealReserve(db, 1, 10);
+	}
+
+	/// <summary>
 	/// 棚卸開始処理は対象年月末時点の帳簿在庫を凍結し、棚卸確定処理は実棚数との差を
 	/// 在庫調整伝票(Tran61Chosei)として起こす。仕様 8.1 / 8.4(F0 / F0' / F0'')。
 	/// </summary>
