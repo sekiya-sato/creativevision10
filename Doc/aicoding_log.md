@@ -1,3 +1,31 @@
+## [2026-08-18] I7 滞留・欠品の例外画面を実装
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- 未適用課題 I7。確定済みなのに出荷処理されず放置された配分（滞留）を検出し、確定取消／強制完了で例外処理する。
+### 仕様決定（2026-08-18、ユーザー確定 A〜E）
+- A 滞留の定義: 確定日からの経過日数≥閾値（既定3日・画面可変）＋納品予定日超過も併記。
+- B 例外操作: 確定取消（→未確定）と強制完了（全量欠品でEndFlag=1・引当解除）の2操作。
+- C 欠品分の行き先: 再配分しない。出荷実績が減る＝受注残/発注残が残る形で自然に再配分対象になる。
+- D 画面構成: `ShippingConfirmList`（purpose=滞留検出）を interactive 化。純帳票印刷版はfollow-up。
+- E 権限: 倉庫/物流ロール、Mini-UAT対象。
+### 詳細設計（実装前に作成）
+- `Doc/spec/2026-08-18_I7_滞留・欠品例外_詳細設計.md` を新設。サーバは I2/I3 の既存経路を再利用し変更しない。
+### 実施内容
+- `ShippingConfirmListViewModel`: 空クラスを `BaseQueryViewModel` 派生へ置換。表示区分「滞留」/「欠品実績」。
+  滞留=`EndFlag=0 AND KakuteiDay<>''` を経過日数・予定日超過つきで検出。欠品実績=`EndFlag=1 AND ShortSu>0` を read-only 照会。
+  一覧は `TranHaibun` を取得し倉庫/出荷先/商品/色サイズをクライアント合成（出荷指示確定画面と同方式）。
+- 例外操作（サーバ変更なし・既存 `Msg201_Op_Execute` 再利用）:
+  確定取消=`ShippingCancelParam`、強制完了=`ShippingCreateParam`（実数量0→伝票を作らず `EndFlag=1`・引当解除、
+  テスト済み `CreateShippingSlips_AllShortage` の挙動）。楽観排他競合は一覧破棄→再取得を促す。
+- `ShippingConfirmListView.xaml` を実装。`MenuData` の「出荷指示一覧印刷」を「滞留・欠品例外(出荷指示一覧)」へ改名・addInfo更新。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`：成功（0 warnings / 0 errors）。
+- クライアント閉じの変更のため `TestServer` 92件・`TestLogin` 7件は不変。確定取消・全量欠品完了・引当解除は
+  `SummaryDbTests`（`CancelConfirm` / `CreateShippingSlips_AllShortage` / `ProcessShipping_*`）で検証済み。
+### 完成度への影響
+- 07Haibun の L0 が 14→13（滞留・欠品例外が L0→L3）。台帳 I7 を完了（純帳票印刷版は follow-up）。チェックリスト 3.6/16章を更新。
+
 ## [2026-08-18] H1-H4 納品予定日を追加し発注/受注入力・発注側納品予定照会を実装
 ### Agent
 - Opus 4.8 : Anthropic : Sekiya Sato Claude
