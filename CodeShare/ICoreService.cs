@@ -179,6 +179,16 @@ public enum CvFlag {
 	[EnumMember]
 	Msg055_StocktakeFix = 55,
 	/// <summary>
+	/// 請求残計算処理
+	/// </summary>
+	[EnumMember]
+	Msg056_SummaryUriSei = 56,
+	/// <summary>
+	/// 支払残計算処理
+	/// </summary>
+	[EnumMember]
+	Msg057_SummaryKaiShi = 57,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	[EnumMember]

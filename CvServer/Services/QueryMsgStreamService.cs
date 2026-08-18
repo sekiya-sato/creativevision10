@@ -68,7 +68,9 @@ public partial class CoreService {
 			or CvFlag.Msg052_SummaryUriKake
 			or CvFlag.Msg053_SummaryKaiKake
 			or CvFlag.Msg054_StocktakeStart
-			or CvFlag.Msg055_StocktakeFix) {
+			or CvFlag.Msg055_StocktakeFix
+			or CvFlag.Msg056_SummaryUriSei
+			or CvFlag.Msg057_SummaryKaiShi) {
 			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
 				yield return msg;
 			}
@@ -130,6 +132,8 @@ public partial class CoreService {
 			(CvFlag.Msg053_SummaryKaiKake, CalcDateTermParameter kaiKakeParam) => summaryDb.SummaryKaiKakeAsyncStream(kaiKakeParam),
 			(CvFlag.Msg054_StocktakeStart, StocktakeParameter startParam) => stocktakeDb.StartAsyncStream(startParam),
 			(CvFlag.Msg055_StocktakeFix, StocktakeParameter fixParam) => stocktakeDb.FixAsyncStream(fixParam),
+			(CvFlag.Msg056_SummaryUriSei, BillingParameter uriSeiParam) => summaryDb.SummaryUriSeiAsyncStream(uriSeiParam),
+			(CvFlag.Msg057_SummaryKaiShi, BillingParameter kaiShiParam) => summaryDb.SummaryKaiShiAsyncStream(kaiShiParam),
 			_ => null
 		};
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using CvBase;
 using CvBaseSqlite;
 using CvDomainLogic;
@@ -238,6 +239,20 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual("20260815", second.NyukinYoteiDay);
 	}
 
+	[TestMethod]
+	public async Task SummaryUriSeiAsyncStream_ReportsCompletion() {
+		var db = PrepareUriSeiTables();
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		var completed = false;
+
+		await foreach (var progress in new SummaryDb(db).SummaryUriSeiAsyncStream(new BillingParameter("202607", 99, "", ""))) {
+			Assert.IsFalse(progress.IsError, progress.ErrorMessage);
+			completed |= progress.IsCompleted;
+		}
+
+		Assert.IsTrue(completed);
+	}
+
 	// ---- 買掛 --------------------------------------------------------------------
 
 	[TestMethod]
@@ -325,6 +340,20 @@ public class SummaryKakeDbTests {
 		var second = GetKaiShiSnapshot(db);
 
 		CollectionAssert.AreEqual(first, second);
+	}
+
+	[TestMethod]
+	public async Task SummaryKaiShiAsyncStream_ReportsCompletion() {
+		var db = PrepareKaiShiTables();
+		db.Insert(new MasterShiire { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		var completed = false;
+
+		await foreach (var progress in new SummaryDb(db).SummaryKaiShiAsyncStream(new BillingParameter("202607", 99, "", ""))) {
+			Assert.IsFalse(progress.IsError, progress.ErrorMessage);
+			completed |= progress.IsCompleted;
+		}
+
+		Assert.IsTrue(completed);
 	}
 
 	// ---- 準備 --------------------------------------------------------------------

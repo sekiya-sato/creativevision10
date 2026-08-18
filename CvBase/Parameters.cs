@@ -239,6 +239,15 @@ public record CalcDateTermParameter(string DateYymmFrom, string DateYymmTo);
 public record CalcDateParameter(string DateYymm);
 
 /// <summary>
+/// 請求・支払計算のパラメータ
+/// </summary>
+/// <param name="BillingYyyymm">請求・支払月 yyyyMM</param>
+/// <param name="Shime">締日（1から31または99）</param>
+/// <param name="TorisakiCodeFrom">得意先・仕入先コードの開始。空なら下限なし</param>
+/// <param name="TorisakiCodeTo">得意先・仕入先コードの終了。空なら上限なし</param>
+public record BillingParameter(string BillingYyyymm, int Shime, string TorisakiCodeFrom, string TorisakiCodeTo);
+
+/// <summary>
 /// 棚卸開始処理・棚卸確定処理のパラメータ
 /// <para>
 /// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.1 / 8.4 を参照する。

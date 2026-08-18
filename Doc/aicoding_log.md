@@ -1,3 +1,20 @@
+## [2026-08-18] 請求・支払計算のgRPCストリーミングを結線
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 請求残・支払残の計算を既存の掛再更新と同じgRPCストリーミング経路から実行できるようにする。
+
+### 実施内容
+- `BillingParameter`、`Msg056_SummaryUriSei`、`Msg057_SummaryKaiShi` を追加した。
+- `SummaryDb` に請求残・支払残のストリーミング入口を追加し、`QueryMsgStreamService` から結線した。
+- 両ストリーミング入口がエラーなく完了通知を返すテストを追加した。
+
+### 確認
+- `Tests/TestServer/TestServer.csproj` を Development 環境でビルドし、警告・エラーなしを確認した。
+- Microsoft.Testing.Platform の実行形式から `SummaryKakeDbTests` を実行し、15件すべて成功した。
+
 ## [2026-08-18] 支払残の計算処理を追加
 
 ### Agent

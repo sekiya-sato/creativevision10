@@ -569,6 +569,34 @@ WHERE SumMonth <= @0;
 			"処理エラー: {StepName}",
 			"処理終了");
 	}
+	/// <summary>請求残をストリーミングで再作成する。</summary>
+	public IAsyncEnumerable<StreamStepProgress> SummaryUriSeiAsyncStream(BillingParameter param) {
+		(string Name, Func<BillingParameter, int> Action)[] steps = [
+			("Summary : CalcSummaryUriSei", p => CalcSummaryUriSei(p.BillingYyyymm, p.Shime, p.TorisakiCodeFrom, p.TorisakiCodeTo)),
+		];
+
+		return StreamStepProgressRunner.Run(
+			steps,
+			param,
+			_logger,
+			"処理開始",
+			"処理エラー: {StepName}",
+			"処理終了");
+	}
+	/// <summary>支払残をストリーミングで再作成する。</summary>
+	public IAsyncEnumerable<StreamStepProgress> SummaryKaiShiAsyncStream(BillingParameter param) {
+		(string Name, Func<BillingParameter, int> Action)[] steps = [
+			("Summary : CalcSummaryKaiShi", p => CalcSummaryKaiShi(p.BillingYyyymm, p.Shime, p.TorisakiCodeFrom, p.TorisakiCodeTo)),
+		];
+
+		return StreamStepProgressRunner.Run(
+			steps,
+			param,
+			_logger,
+			"処理開始",
+			"処理エラー: {StepName}",
+			"処理終了");
+	}
 	/// <summary>
 	/// 掛集計で伝票側に必ず付ける条件。掛計上しない伝票(<c>IsPay = 0</c>)は売掛・買掛へ入れない。
 	/// <para>2026-08-16 決定。移行済みデータは売上50,311件・仕入25件とも <c>1</c> である。</para>
