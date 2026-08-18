@@ -50,7 +50,7 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 	protected override string? ListOrder => "DenDay desc, Id desc";
 	protected override int? ListMaxCount => selectParam?.MaxCount;
 	protected override string LightweightSelectColumns =>
-		"Id,Vdc,Vdu,DenDay,Id_Tokui,VTokui,Id_Soko,VSoko,Id_Shain,VShain,Kubun,RelateNo1,Rate,SuTotal,KingakuTotal,Tax,Total";
+		"Id,Vdc,Vdu,DenDay,NouhinDay,Id_Tokui,VTokui,Id_Soko,VSoko,Id_Shain,VShain,Kubun,RelateNo1,Rate,SuTotal,KingakuTotal,Tax,Total";
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();

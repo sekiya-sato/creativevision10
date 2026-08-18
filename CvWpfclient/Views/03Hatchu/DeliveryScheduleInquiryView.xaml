@@ -1,17 +1,146 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._03Hatchu.DeliveryScheduleInquiryView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._03Hatchu.DeliveryScheduleInquiryView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._03Hatchu"
 	Title="納品予定照会"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	Width="1280" Height="800"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="14"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:DeliveryScheduleInquiryViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding SearchCommand}" Gesture="F5" />
+		<KeyBinding Command="{Binding ExitCommand}" Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="OverdueCell" TargetType="TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
+		</Style>
+	</helpers:BaseWindow.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<Button Margin="0,0,8,0"
+					Command="{Binding ExitCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="閉じる (Esc)">
+					<materialDesign:PackIcon Kind="ArrowLeft" />
+				</Button>
+				<materialDesign:PackIcon Width="26" Height="26"
+					VerticalAlignment="Center"
+					Kind="TruckClockOutline" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="18" FontWeight="SemiBold" Text="{Binding Title}" />
+				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+					Opacity="0.8"
+					Text="発注の納品予定日と納期遅れ（予定日超過かつ未完了）を照会します。" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<Border Grid.Row="1"
+			Padding="12"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="納品予定日" />
+				<TextBox Width="150" Height="32"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding NouhinFromText, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Margin="8,0" VerticalAlignment="Center" Text="～" />
+				<TextBox Width="150" Height="32"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding NouhinToText, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Margin="24,0,8,0" VerticalAlignment="Center" Text="仕入先" />
+				<Button Width="70" Command="{Binding SelectShiireCommand}" Content="選択"
+					Style="{StaticResource MaterialDesignOutlinedButton}" />
+				<TextBox Width="120" Height="32" Margin="8,0,0,0"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding ShiireCode, UpdateSourceTrigger=PropertyChanged}" />
+				<CheckBox Margin="24,0,0,0" VerticalAlignment="Center"
+					Content="未完了のみ"
+					IsChecked="{Binding IncompleteOnly}" />
+				<CheckBox Margin="16,0,0,0" VerticalAlignment="Center"
+					Content="納期遅れのみ"
+					IsChecked="{Binding OverdueOnly}" />
+				<TextBlock Margin="24,0,8,0" VerticalAlignment="Center" Text="件数上限" />
+				<TextBox Width="70" Height="32"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding MaxCountText, UpdateSourceTrigger=PropertyChanged}" />
+				<Button Margin="16,0,0,0"
+					Command="{Binding SearchCommand}"
+					IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+					Style="{StaticResource MaterialDesignFlatMidBgButton}"
+					ToolTip="検索 (F5)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center" Kind="Magnify" />
+						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="16" Text="検索実行" />
+					</StackPanel>
+				</Button>
+				<Button Margin="12,0,0,0" Command="{Binding ClearConditionsCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}">
+					<TextBlock FontSize="16" Text="条件クリア" />
+				</Button>
+			</StackPanel>
+		</Border>
+
+		<DataGrid Grid.Row="2"
+			Margin="12"
+			AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
+			ItemsSource="{Binding Rows}"
+			SelectionMode="Single" SelectionUnit="FullRow" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+			<DataGrid.Columns>
+				<DataGridTextColumn Width="90" Binding="{Binding Id}" Header="発注No">
+					<DataGridTextColumn.ElementStyle>
+						<Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+					</DataGridTextColumn.ElementStyle>
+				</DataGridTextColumn>
+				<DataGridTextColumn Width="110" Binding="{Binding DenDayDisplay}" Header="発注日" />
+				<DataGridTextColumn Width="120" Binding="{Binding NouhinDayDisplay}" Header="納品予定日" />
+				<DataGridTextColumn Width="260" Binding="{Binding ShiireDisplay}" Header="仕入先" />
+				<DataGridTextColumn Width="90" Binding="{Binding SuTotal, StringFormat={}{0:N0}}" Header="発注数">
+					<DataGridTextColumn.ElementStyle>
+						<Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+					</DataGridTextColumn.ElementStyle>
+				</DataGridTextColumn>
+				<DataGridTextColumn Width="120" Binding="{Binding KingakuTotal, StringFormat={}{0:N0}}" Header="金額">
+					<DataGridTextColumn.ElementStyle>
+						<Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+					</DataGridTextColumn.ElementStyle>
+				</DataGridTextColumn>
+				<DataGridTextColumn Width="90" Binding="{Binding StatusDisplay}" Header="状態" />
+				<DataGridTextColumn Width="120" Binding="{Binding OverdueDisplay}" Header="納期遅れ"
+					ElementStyle="{StaticResource OverdueCell}" />
+			</DataGrid.Columns>
+		</DataGrid>
+
+		<Border Grid.Row="3"
+			Padding="12,6"
+			Background="{DynamicResource MaterialDesignChipBackground}">
+			<DockPanel>
+				<TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+					Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+					Text="{Binding OverdueCount, StringFormat='納期遅れ {0:N0} 件'}" />
+				<TextBlock VerticalAlignment="Center"
+					Text="{Binding Message}" TextTrimming="CharacterEllipsis" />
+			</DockPanel>
+		</Border>
+	</Grid>
 </helpers:BaseWindow>

@@ -1,3 +1,29 @@
+## [2026-08-18] H1-H4 納品予定日を追加し発注/受注入力・発注側納品予定照会を実装
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- 未適用課題 H1-H4。発注・受注へ納品予定日を伝票単位で持たせ（決定 6.2）、入力と納期遅れ照会を可能にする。
+### 詳細設計（実装前に作成）
+- `Doc/spec/2026-08-18_H1-H4_納品予定日_詳細設計.md` を新設。
+- 列名: ご指示の「NohinDay」は既存の `TranHaibun.NouhinDay` / `TranHoju.NouhinDay` に合わせ **`NouhinDay`** へ正規化（同義）。
+- スコープ: H1（列＋発注/受注入力）と H2/H3（発注側の納品予定照会・納期遅れ）まで。帳票版納品予定表(H4)・受注側照会・
+  残管理表への納期遅れ列・リードタイム自動計算(2.0)は follow-up。
+### 実施内容
+- スキーマ: `CvBase/BaseDb2Trans.cs` の `Tran13Hachu` / `Tran12Jyuchu` に `NouhinDay`（yyyyMMdd、空=未設定）を追加。
+  `CvBase/UpdateDb.cs` に `26_08_18_01`（`ADD COLUMN NouhinDay TEXT NOT NULL DEFAULT ''`）を追加。
+- 入力: `HachuInputView` / `JuchuInputView` のヘッダに納品予定日 DatePicker を追加。
+  `HachuInputViewModel` / `JuchuInputViewModel` の `LightweightSelectColumns` へ `NouhinDay` を足し、修正保存で消えないようにした
+  （`EndFlag` は保存後に再判定されるため軽量列に無いが、`NouhinDay` はユーザーデータなので必ず読む）。
+- 納品予定照会（発注側）: `DeliveryScheduleInquiryViewModel` を空クラスから `BaseQueryViewModel` 派生へ置換。
+  `QuerySqlListAsync<Tran13Hachu>` で納品予定日範囲・仕入先・未完了のみ・納期遅れのみで絞り、
+  納期遅れ（`NouhinDay < 今日` かつ `EndFlag=0`）を遅延日数つきで表示。`DeliveryScheduleInquiryView.xaml` を実装。
+- 在庫・掛・引当の集計SQLに影響しない列なのでサーバ挙動は不変。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`：成功（0 warnings / 0 errors）。
+- `Tests\TestServer\bin\Debug\net10.0\TestServer.exe`：92/92 成功。`TestLogin`：7/7 成功（`DefineDataTable` が新列を作れることも確認）。
+### 完成度への影響
+- 03Hatchu の L0 が 2→1（納品予定照会が L0→L3）。台帳 H1-H4 は列追加＋入力＋発注側照会を実装（帳票・受注側照会は follow-up）。チェックリスト 3.2/3.3/15章を更新。
+
 ## [2026-08-18] F2 在庫強制調整入力を実装
 ### Agent
 - Opus 4.8 : Anthropic : Sekiya Sato Claude

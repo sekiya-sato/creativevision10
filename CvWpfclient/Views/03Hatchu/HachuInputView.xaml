@@ -359,6 +359,16 @@
 										<StackPanel Margin="0,0,16,0"
 											Orientation="Horizontal">
 											<TextBlock Style="{StaticResource FormLabel}"
+												Text="納品予定日" />
+											<DatePicker Width="150"
+												Margin="0,4"
+												helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="納品予定日(任意)" FontSize="20" IsTodayHighlighted="False"
+												SelectedDate="{Binding CurrentEdit.NouhinDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+												Style="{StaticResource FormDatePicker}" />
+										</StackPanel>
+										<StackPanel Margin="0,0,16,0"
+											Orientation="Horizontal">
+											<TextBlock Style="{StaticResource FormLabel}"
 												Text="区分" />
 											<ComboBox Width="140"
 												Margin="0,4"

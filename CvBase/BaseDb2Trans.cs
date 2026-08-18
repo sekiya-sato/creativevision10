@@ -1344,6 +1344,13 @@ public sealed partial class Tran12Jyuchu : TranAllHeader {
 		get => (EnumYesNo)EndFlag;
 		set => EndFlag = (int)value;
 	}
+	/// <summary>
+	/// 納品予定日 yyyyMMdd 8桁。空なら未設定。伝票単位で持ち、納期遅れ判定に使う（決定 6.2 / H1）。
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("納品予定日 yyyyMMdd 8桁。空なら未設定。伝票単位で持ち、納期遅れ判定に使う。")]
+	public partial string NouhinDay { get; set; } = string.Empty;
 }
 
 public enum EnumJuchu : int {
@@ -1447,6 +1454,13 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 		get => (EnumYesNo)EndFlag;
 		set => EndFlag = (int)value;
 	}
+	/// <summary>
+	/// 納品予定日 yyyyMMdd 8桁。空なら未設定。伝票単位で持ち、納期遅れ判定に使う（決定 6.2 / H1）。
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("納品予定日 yyyyMMdd 8桁。空なら未設定。伝票単位で持ち、納期遅れ判定に使う。")]
+	public partial string NouhinDay { get; set; } = string.Empty;
 }
 
 public enum EnumHachu : int {
