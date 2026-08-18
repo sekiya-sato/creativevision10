@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using CodeShare;
 using CvBase;
 using CvBaseSqlite;
 using CvDomainLogic;
@@ -519,6 +521,13 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
+	public void SummaryRebuildClosingCheck_TreatsNullEmptyAndInvalidDayToAsMismatch() {
+		Assert.IsFalse(SummaryRebuildClosingCheck.TryGetExpectedClosingDay(null, 31, out _));
+		Assert.IsFalse(SummaryRebuildClosingCheck.TryGetExpectedClosingDay(string.Empty, 31, out _));
+		Assert.IsFalse(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20261331", 31, out _));
+	}
+
+	[TestMethod]
 	public void SummaryRebuildClosingCheck_AllowsZeroSavedRows() {
 		var mismatches = SummaryRebuildClosingCheck.FindMismatches("売掛", []);
 
@@ -549,6 +558,119 @@ public class SummaryKakeDbTests {
 		StringAssert.Contains(warning, SummaryRebuildClosingCheck.ManualRecalculationGuidance);
 	}
 
+	[TestMethod]
+	public void SummaryRebuildClosingCheck_SelectsByDenDayAndCatchesEmptyOrInvalidDayTo() {
+		var db = PrepareClosingCheckTables();
+		var uriEmptyId = InsertTokui(db, "U001", 31);
+		var uriInvalidId = InsertTokui(db, "U002", 31);
+		var uriOutsideId = InsertTokui(db, "U003", 31);
+		var kaiEmptyId = InsertShiire(db, "K001", 31);
+		var kaiInvalidId = InsertShiire(db, "K002", 31);
+		var kaiOutsideId = InsertShiire(db, "K003", 31);
+		db.Insert(new SummaryUriSei { Id_Tokui = uriEmptyId, DenDay = "20260731", DayTo = string.Empty });
+		db.Insert(new SummaryUriSei { Id_Tokui = uriInvalidId, DenDay = "20260731", DayTo = "20261331" });
+		db.Insert(new SummaryUriSei { Id_Tokui = uriOutsideId, DenDay = "20260831", DayTo = string.Empty });
+		db.Insert(new SummaryKaiShi { Id_Shiire = kaiEmptyId, DenDay = "20260731", DayTo = string.Empty });
+		db.Insert(new SummaryKaiShi { Id_Shiire = kaiInvalidId, DenDay = "20260731", DayTo = "20261331" });
+		db.Insert(new SummaryKaiShi { Id_Shiire = kaiOutsideId, DenDay = "20260831", DayTo = string.Empty });
+
+		var uriRows = db.Fetch<SummaryClosingCheckRow>(SummaryRebuildClosingCheck.UriClosingCheckSql, "202607", "202607");
+		var kaiRows = db.Fetch<SummaryClosingCheckRow>(SummaryRebuildClosingCheck.KaiClosingCheckSql, "202607", "202607");
+
+		CollectionAssert.AreEqual(new[] { "U001", "U002" }, uriRows.Select(row => row.TorihikiCode).ToArray());
+		CollectionAssert.AreEqual(new[] { "K001", "K002" }, kaiRows.Select(row => row.TorihikiCode).ToArray());
+		Assert.AreEqual(2, SummaryRebuildClosingCheck.FindMismatches("売掛", uriRows).Count);
+		Assert.AreEqual(2, SummaryRebuildClosingCheck.FindMismatches("買掛", kaiRows).Count);
+		AssertDayToNullIsRejected(db, nameof(SummaryUriSei));
+		AssertDayToNullIsRejected(db, nameof(SummaryKaiShi));
+	}
+
+	[TestMethod]
+	public void SummaryRebuildRequestPlanner_CreatesExactFlagPlanAndConfirmation() {
+		var all = SummaryRebuildRequestPlanner.CreateFlagPlan("全て", 2, 2, 1);
+		var stock = SummaryRebuildRequestPlanner.CreateFlagPlan("在庫のみ", 2, 2, 1);
+		var uri = SummaryRebuildRequestPlanner.CreateFlagPlan("売掛のみ", 2, 2, 1);
+		var kai = SummaryRebuildRequestPlanner.CreateFlagPlan("買掛のみ", 2, 2, 1);
+
+		CollectionAssert.AreEqual(new[] {
+			CvFlag.Msg051_SummaryRealStock, CvFlag.Msg051_SummaryRealStock,
+			CvFlag.Msg052_SummaryUriKake, CvFlag.Msg053_SummaryKaiKake,
+			CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei,
+			CvFlag.Msg057_SummaryKaiShi, CvFlag.Msg057_SummaryKaiShi,
+		}, all.ToArray());
+		CollectionAssert.AreEqual(new[] { CvFlag.Msg051_SummaryRealStock, CvFlag.Msg051_SummaryRealStock }, stock.ToArray());
+		CollectionAssert.AreEqual(new[] {
+			CvFlag.Msg052_SummaryUriKake,
+			CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg056_SummaryUriSei,
+		}, uri.ToArray());
+		CollectionAssert.AreEqual(new[] {
+			CvFlag.Msg053_SummaryKaiKake,
+			CvFlag.Msg057_SummaryKaiShi, CvFlag.Msg057_SummaryKaiShi,
+		}, kai.ToArray());
+		Assert.AreEqual("請求残・支払残も再作成します。", SummaryRebuildRequestPlanner.GetClosingSummaryConfirmation("全て"));
+		Assert.AreEqual(string.Empty, SummaryRebuildRequestPlanner.GetClosingSummaryConfirmation("在庫のみ"));
+		Assert.AreEqual("請求残も再作成します。", SummaryRebuildRequestPlanner.GetClosingSummaryConfirmation("売掛のみ"));
+		Assert.AreEqual("支払残も再作成します。", SummaryRebuildRequestPlanner.GetClosingSummaryConfirmation("買掛のみ"));
+	}
+
+	[TestMethod]
+	public async Task SummaryRebuildRequestDispatchGate_DoesNotCreateRequestsBeforeSuccessfulCheck() {
+		var mismatch = new SummaryClosingMismatch("売掛", "U001", "20260730", 31);
+		var createCount = 0;
+		var blocked = await SummaryRebuildRequestDispatchGate.PrepareAsync<CvFlag>(
+			_ => Task.FromResult<IReadOnlyList<SummaryClosingMismatch>>([mismatch]),
+			_ => {
+				createCount++;
+				return Task.FromResult<IReadOnlyList<CvFlag>>([CvFlag.Msg051_SummaryRealStock]);
+			},
+			CancellationToken.None);
+
+		Assert.IsFalse(blocked.CanStartRequestDispatch);
+		Assert.AreEqual(0, createCount);
+		Assert.AreEqual(0, blocked.Requests.Count);
+
+		try {
+			await SummaryRebuildRequestDispatchGate.PrepareAsync<CvFlag>(
+				_ => Task.FromException<IReadOnlyList<SummaryClosingMismatch>>(new InvalidOperationException("照会失敗")),
+				_ => {
+					createCount++;
+					return Task.FromResult<IReadOnlyList<CvFlag>>([]);
+				},
+				CancellationToken.None);
+			Assert.Fail("照会例外が発生する必要があります。");
+		}
+		catch (InvalidOperationException) {
+		}
+		Assert.AreEqual(0, createCount);
+
+		using var cancellationSource = new CancellationTokenSource();
+		cancellationSource.Cancel();
+		try {
+			await SummaryRebuildRequestDispatchGate.PrepareAsync<CvFlag>(
+				_ => Task.FromCanceled<IReadOnlyList<SummaryClosingMismatch>>(cancellationSource.Token),
+				_ => {
+					createCount++;
+					return Task.FromResult<IReadOnlyList<CvFlag>>([]);
+				},
+				CancellationToken.None);
+			Assert.Fail("取消例外が発生する必要があります。");
+		}
+		catch (OperationCanceledException) {
+		}
+		Assert.AreEqual(0, createCount);
+
+		var passed = await SummaryRebuildRequestDispatchGate.PrepareAsync<CvFlag>(
+			_ => Task.FromResult<IReadOnlyList<SummaryClosingMismatch>>([]),
+			_ => {
+				createCount++;
+				return Task.FromResult<IReadOnlyList<CvFlag>>([CvFlag.Msg051_SummaryRealStock]);
+			},
+			CancellationToken.None);
+		Assert.IsTrue(passed.CanStartRequestDispatch);
+		Assert.AreEqual(1, createCount);
+		CollectionAssert.AreEqual(new[] { CvFlag.Msg051_SummaryRealStock }, passed.Requests.ToArray());
+	}
+
 	// ---- 準備 --------------------------------------------------------------------
 
 	/// <summary>KIN 区分マスタの Id。実DBの値ではなくテスト内で採番した値を使う</summary>
@@ -566,6 +688,36 @@ public class SummaryKakeDbTests {
 		db.CreateTable(typeof(Tran06Nyukin), true, false);
 		InsertKinMaster(db);
 		return db;
+	}
+
+	private ExDatabaseSqlite PrepareClosingCheckTables() {
+		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		db.CreateTable(typeof(SummaryUriSei), true, false);
+		db.CreateTable(typeof(MasterTokui), true, false);
+		db.CreateTable(typeof(SummaryKaiShi), true, false);
+		db.CreateTable(typeof(MasterShiire), true, false);
+		return db;
+	}
+
+	private static long InsertTokui(ExDatabaseSqlite db, string code, int shime) {
+		db.Insert(new MasterTokui { Code = code, Shime1 = shime });
+		return db.Single<MasterTokui>("where Code=@0", code).Id;
+	}
+
+	private static long InsertShiire(ExDatabaseSqlite db, string code, int shime) {
+		db.Insert(new MasterShiire { Code = code, Shime1 = shime });
+		return db.Single<MasterShiire>("where Code=@0", code).Id;
+	}
+
+	private static void AssertDayToNullIsRejected(ExDatabaseSqlite db, string tableName) {
+		var rejected = false;
+		try {
+			db.Execute($"UPDATE {tableName} SET DayTo = NULL");
+		}
+		catch (SqliteException) {
+			rejected = true;
+		}
+		Assert.IsTrue(rejected, $"{tableName}.DayTo は物理スキーマでNULLを許可してはいけません。");
 	}
 
 	private ExDatabaseSqlite PrepareUriSeiTables() {
