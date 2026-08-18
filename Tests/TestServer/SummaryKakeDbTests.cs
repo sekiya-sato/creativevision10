@@ -184,6 +184,60 @@ public class SummaryKakeDbTests {
 		CollectionAssert.AreEqual(first, second);
 	}
 
+	// ---- 請求残 ------------------------------------------------------------------
+
+	[TestMethod]
+	public void CalcSummaryUriSei_CalculatesPeriodBreakdownBalanceAndDueDay() {
+		var db = PrepareUriSeiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		db.Insert(new MasterTokui { Code = "B001", Shime1 = 20, PayMonth = 1, PayDay = 15 });
+		db.Insert(new SummaryUriSei {
+			Id_Tokui = 1, DenDay = "20260630", DayFrom = "20260601", DayTo = "20260630", TotalSales = 500,
+		});
+		db.Insert(CreateBillingUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
+		db.Insert(CreateBillingUriage("20260711", 1, EnumUri00.Henpin, 200, 20));
+		db.Insert(CreateBillingUriage("20260712", 1, EnumUri00.Nebiki, 100, 10));
+		db.Insert(CreateNyukin("20260715", 1, [(KinCash, 300), (KinFee, 40)]));
+
+		summaryDb.CalcSummaryUriSei("202607", 99, "A001", "A999");
+		var row = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");
+
+		Assert.AreEqual("20260701", row.DayFrom);
+		Assert.AreEqual("20260731", row.DayTo);
+		Assert.AreEqual(1000, row.Uriage);
+		Assert.AreEqual(200, row.Henpin);
+		Assert.AreEqual(100, row.Nebiki);
+		Assert.AreEqual(90, row.Tax);
+		Assert.AreEqual(790, row.TotalSales);
+		Assert.AreEqual(340, row.TotalIn);
+		Assert.AreEqual(-950, row.Balance);
+		Assert.AreEqual("1-20260731-01", row.SeikyuNo);
+		Assert.AreEqual(1, row.Renban);
+		Assert.AreEqual("20260731", row.NyukinYoteiDay);
+		Assert.IsNull(db.FirstOrDefault<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 2, "20260720"));
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriSei_RecalculationKeepsInvoiceNumberAndRenban() {
+		var db = PrepareUriSeiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 99, PayMonth = 1, PayDay = 15 });
+		db.Insert(CreateBillingUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
+
+		summaryDb.CalcSummaryUriSei("202607", 99);
+		var first = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");
+		first.Renban = 2;
+		first.SeikyuNo = "1-20260731-02";
+		db.Update(first);
+		summaryDb.CalcSummaryUriSei("202607", 99);
+		var second = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");
+
+		Assert.AreEqual(2, second.Renban);
+		Assert.AreEqual("1-20260731-02", second.SeikyuNo);
+		Assert.AreEqual("20260815", second.NyukinYoteiDay);
+	}
+
 	// ---- 買掛 --------------------------------------------------------------------
 
 	[TestMethod]
@@ -243,6 +297,16 @@ public class SummaryKakeDbTests {
 		return db;
 	}
 
+	private ExDatabaseSqlite PrepareUriSeiTables() {
+		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		db.CreateTable(typeof(SummaryUriSei), true, false);
+		db.CreateTable(typeof(MasterTokui), true, false);
+		db.CreateTable(typeof(Tran00Uriage), true, false);
+		db.CreateTable(typeof(Tran06Nyukin), true, false);
+		InsertKinMaster(db);
+		return db;
+	}
+
 	private ExDatabaseSqlite PrepareKaiKakeTables() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		db.CreateTable(typeof(SummaryKaiKake), true, false);
@@ -285,6 +349,12 @@ public class SummaryKakeDbTests {
 			IsPay = 1,
 		};
 		tran.EnKubun = kubun;
+		return tran;
+	}
+
+	private static Tran00Uriage CreateBillingUriage(string kakeDay, long idTokui, EnumUri00 kubun, int total, int tax) {
+		var tran = CreateUriage(kakeDay, idTokui, kubun, total, tax);
+		tran.Total = total;
 		return tran;
 	}
 

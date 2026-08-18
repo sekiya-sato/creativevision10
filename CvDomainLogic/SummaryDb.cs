@@ -1,6 +1,8 @@
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace CvDomainLogic;
 
@@ -744,6 +746,166 @@ LEFT JOIN previousBalance AS p ON p.Id_Tokui = m.Id_Tokui;
 		cnt += ExecuteAndCounts(sql, [DatefromYyyymm, toMonth], "CalcSummaryUriKake", "SummaryUriKake", period);
 		_db.CompleteTransaction();
 		return cnt;
+	}
+	/// <summary>
+	/// 指定締日・請求月・得意先コード範囲の請求残を再作成する。
+	/// <para>通常再計算では請求書番号と連番を保持し、対象期間の伝票内訳だけを作り直す。</para>
+	/// </summary>
+	public int CalcSummaryUriSei(string billingYyyymm, int shime, string tokuiCodeFrom = "", string tokuiCodeTo = "") {
+		var (dayFrom, dayTo) = GetClosingPeriod(billingYyyymm, shime);
+		const string tempTableName = "TempSummaryUriSeiPrevious";
+		var vdate = Common.GetVdate();
+		var cnt = 0;
+		var transactionStarted = false;
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			transactionStarted = true;
+			var prepareSql = $@"
+CREATE TEMP TABLE IF NOT EXISTS {tempTableName} AS
+SELECT Id_Tokui, DenDay, SeikyuNo, Renban
+FROM SummaryUriSei
+WHERE 1 = 0;
+DELETE FROM {tempTableName};
+INSERT INTO {tempTableName} (Id_Tokui, DenDay, SeikyuNo, Renban)
+SELECT s.Id_Tokui, s.DenDay, s.SeikyuNo, s.Renban
+FROM SummaryUriSei AS s
+INNER JOIN MasterTokui AS t ON t.Id = s.Id_Tokui
+WHERE s.DenDay = @1
+  AND t.Shime1 = @2
+  AND (@3 = '' OR t.Code >= @3)
+  AND (@4 = '' OR t.Code <= @4);
+DELETE FROM SummaryUriSei
+WHERE DenDay = @1
+  AND Id_Tokui IN (
+		SELECT Id FROM MasterTokui
+		WHERE Shime1 = @2
+		  AND (@3 = '' OR Code >= @3)
+		  AND (@4 = '' OR Code <= @4)
+	);
+";
+			var sql = $@"
+WITH kinmap AS (
+	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
+),
+sales AS (
+	SELECT
+		t.Id_Tokui,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END) AS Uriage,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END) AS Tax
+	FROM Tran00Uriage AS t
+	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
+	GROUP BY t.Id_Tokui
+),
+payments AS (
+	SELECT
+		t.Id_Torisaki AS Id_Tokui,
+		{KinBucket("01")} AS Cash,
+		{KinBucket("02")} AS Fee,
+		{KinBucket("03")} AS Densai,
+		{KinBucket("04")} AS Offset,
+		{KinBucket("99")} AS Other
+	FROM Tran06Nyukin AS t, {KinMeisaiFrom}
+	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
+	WHERE t.KakeDay BETWEEN @0 AND @1
+	GROUP BY t.Id_Torisaki
+),
+targets AS (
+	SELECT Id, PayMonth, PayDay
+	FROM MasterTokui
+	WHERE Shime1 = @2
+	  AND (@3 = '' OR Code >= @3)
+	  AND (@4 = '' OR Code <= @4)
+),
+previousBalance AS (
+	SELECT Id_Tokui, SUM(TotalIn - TotalSales) AS Balance
+	FROM SummaryUriSei
+	WHERE DayTo < @0
+	GROUP BY Id_Tokui
+),
+calculated AS (
+	SELECT
+		t.Id AS Id_Tokui,
+		IFNULL(s.Uriage, 0) AS Uriage,
+		IFNULL(s.Henpin, 0) AS Henpin,
+		IFNULL(s.Nebiki, 0) AS Nebiki,
+		IFNULL(s.Tax, 0) AS Tax,
+		IFNULL(p.Cash, 0) AS Cash,
+		IFNULL(p.Fee, 0) AS Fee,
+		IFNULL(p.Densai, 0) AS Densai,
+		IFNULL(p.Offset, 0) AS Offset,
+		IFNULL(p.Other, 0) AS Other,
+		strftime('%Y%m%d', CASE
+			WHEN t.PayDay IN (0, 99) THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')
+			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth), printf('+%d days', MIN(t.PayDay, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')) AS INTEGER)) - 1))
+		END) AS NyukinYoteiDay
+	FROM targets AS t
+	LEFT JOIN sales AS s ON s.Id_Tokui = t.Id
+	LEFT JOIN payments AS p ON p.Id_Tokui = t.Id
+)
+INSERT INTO SummaryUriSei (
+	Id_Tokui, DenDay, DayFrom, DayTo, SeikyuNo, Renban, NyukinYoteiDay,
+	Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Tax,
+	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
+)
+SELECT
+	c.Id_Tokui,
+	@1,
+	@0,
+	@1,
+	COALESCE(NULLIF(o.SeikyuNo, ''), printf('%d-%s-%02d', c.Id_Tokui, @1, CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END)),
+	CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END,
+	c.NyukinYoteiDay,
+	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Uriage - c.Henpin - c.Nebiki + c.Tax),
+	c.Cash + c.Fee + c.Densai + c.Offset + c.Other,
+	c.Uriage - c.Henpin - c.Nebiki + c.Tax,
+	c.Uriage, c.Henpin, c.Nebiki, c.Tax,
+	c.Cash, c.Fee, c.Densai, c.Offset, c.Other,
+	{vdate}, {vdate}
+FROM calculated AS c
+LEFT JOIN previousBalance AS b ON b.Id_Tokui = c.Id_Tokui
+LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
+";
+			var period = $"{dayFrom}-{dayTo},締日={shime}";
+			var parameters = new object[] { dayFrom, dayTo, shime, tokuiCodeFrom, tokuiCodeTo, billingYyyymm };
+			cnt += ExecuteAndCounts(prepareSql, parameters, "CalcSummaryUriSei(delete)", "SummaryUriSei", period);
+			cnt += ExecuteAndCounts(sql, parameters, "CalcSummaryUriSei", "SummaryUriSei", period);
+			_db.CompleteTransaction();
+			transactionStarted = false;
+			return cnt;
+		}
+		catch {
+			if (transactionStarted) {
+				_db.AbortTransaction();
+			}
+			throw;
+		}
+		finally {
+			try {
+				_db.Execute($"DROP TABLE IF EXISTS {tempTableName}");
+			}
+			catch (Exception ex) {
+				_logger.LogWarning(ex, "請求残計算用の一時テーブル削除に失敗しました: {TableName}", tempTableName);
+			}
+		}
+	}
+
+	private static (string DayFrom, string DayTo) GetClosingPeriod(string billingYyyymm, int shime) {
+		if (!DateTime.TryParseExact(billingYyyymm, "yyyyMM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var billingMonth)) {
+			throw new ArgumentException("請求月はyyyyMM形式で指定してください。", nameof(billingYyyymm));
+		}
+		if (shime is < 1 or > 31 && shime != (int)EnumShime.DayLast) {
+			throw new ArgumentOutOfRangeException(nameof(shime), "締日は1から31または99で指定してください。");
+		}
+		var dayTo = GetClosingDay(billingMonth, shime);
+		var dayFrom = GetClosingDay(billingMonth.AddMonths(-1), shime).AddDays(1);
+		return (dayFrom.ToString("yyyyMMdd", CultureInfo.InvariantCulture), dayTo.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
+	}
+
+	private static DateTime GetClosingDay(DateTime month, int shime) {
+		var lastDay = DateTime.DaysInMonth(month.Year, month.Month);
+		return new DateTime(month.Year, month.Month, shime == (int)EnumShime.DayLast ? lastDay : Math.Min(shime, lastDay));
 	}
 	/// <summary>
 	/// SummaryKaiKakeの年月のデータを集計する(再作成)

@@ -1,3 +1,21 @@
+## [2026-08-18] 請求残の計算処理を追加
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 指定締日・請求月・得意先コード範囲から請求残を冪等に作成し、請求書番号と入金予定日を保持する。
+
+### 実施内容
+- `SummaryDb.CalcSummaryUriSei` を追加し、締日から請求期間を算出して対象得意先ごとに請求残をDELETE→再作成するようにした。
+- 売上／返品／値引、返品税の符号、入金内訳、累計残、`PayMonth`／`PayDay` による入金予定日を実装した。
+- 通常再計算では既存の `SeikyuNo`／`Renban` を維持し、未採番時は連番1で採番するようにした。
+- 請求残の期間・内訳・累計残・採番維持・予定日を検証するテストを追加した。
+
+### 確認
+- `Tests/TestServer/TestServer.csproj` を Development 環境でビルドし、警告・エラーなしを確認した。
+- Microsoft.Testing.Platform の実行形式から `SummaryKakeDbTests` を実行し、11件すべて成功した。
+
 ## [2026-08-18] 請求・支払計算の請求残／支払残スキーマを追加
 
 ### Agent
