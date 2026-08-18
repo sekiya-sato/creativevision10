@@ -1,3 +1,21 @@
+## [2026-08-18] 請求・支払計算のRebuild安全策と月次掛集計ルールを詳細設計へ反映
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- 締日変更済みマスタでのRebuild誤更新を防ぎ、月次売掛・買掛の金額列・残高符号を請求残・支払残と整合させる次段階実装の詳細設計を確定する。
+
+### 実施内容
+- `StockKakeUpdate` の対象別締日変更ブロック、パラメータ化照会、送信0件保証、警告内容、既存残高行がない場合の検出限界を設計化した。
+- `CalcSummaryUriKake`／`CalcSummaryKaiKake` の `Total` 正値集計、正値の返品・値引内訳、税符号、明細だけを正値源とするKIN集計、未知KINのOtherフォールバック、残高符号、JSON防御を具体化した。
+- テストデータの `Total`／`KingakuTotal` 分離、Rebuildブロック受入条件、区分Cの独立確認必須を追記した。
+- Renbanのmigration既定0と計算生成時の業務既定1を区別し、月別予定表・帳票qfmはスコープ外のままとした。
+
+### 確認
+- 文書差分を現行 `SummaryDb`、`SummaryKakeDbTests`、`StockKakeUpdateViewModel` と照合した。
+- 今回は設計文書のみを変更し、ソース実装・テスト・完成度チェックリストは変更していない。
+
 ## [2026-08-18] 在庫・掛再更新へ請求残・支払残のRebuildを追加
 
 ### Agent
