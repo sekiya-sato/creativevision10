@@ -12,15 +12,7 @@ using System.Windows;
 namespace CvWpfclient.ViewModels._31Monthly;
 
 public partial class StockKakeUpdateViewModel : BaseViewModel {
-	private sealed class ShimeRow {
-		public int Shime1 { get; set; }
-	}
-	private sealed class ClosingSummaryRow {
-		public string TorihikiCode { get; set; } = string.Empty;
-		public string DayTo { get; set; } = string.Empty;
-		public int Shime1 { get; set; }
-	}
-	private sealed record ClosingMismatch(string KakeType, string TorihikiCode, string SavedDayTo, int CurrentShime);
+	private sealed record RebuildRequestSnapshot(string UpdateTarget, string YearMonthFrom, string YearMonthTo, IReadOnlyList<string> TargetMonths);
 
 	public IReadOnlyList<string> UpdateTargets { get; } = ["全て", "在庫のみ", "売掛のみ", "買掛のみ"];
 
@@ -60,48 +52,29 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 			return;
 		}
 
-		List<string> targetMonths = BuildMonthList(yymmFrom, yymmTo);
-		string confirmMessage = targetMonths.Count == 1
-			? $"{targetMonths[0]} の{UpdateTarget}を実行しますか？"
-			: $"{targetMonths[0]} ～ {targetMonths[^1]} の{UpdateTarget}を実行しますか？";
-		if (UpdateTarget is "全て" or "売掛のみ" or "買掛のみ") {
-			confirmMessage += "\n請求残・支払残も再作成します。";
-		}
+		var snapshot = new RebuildRequestSnapshot(UpdateTarget, yymmFrom, yymmTo, [.. BuildMonthList(yymmFrom, yymmTo)]);
+		string confirmMessage = BuildConfirmMessage(snapshot);
 
 		if (MessageEx.ShowQuestionDialog(confirmMessage, owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
-			return;
-		}
-		try {
-			StatusMessage = "締日変更を確認しています...";
-			var warning = await GetRebuildClosingMismatchWarningAsync(yymmFrom, yymmTo, cancellationToken);
-			if (!string.IsNullOrEmpty(warning)) {
-				StatusMessage = warning;
-				MessageEx.ShowWarningDialog(warning, owner: ClientLib.GetActiveView(this));
-				return;
-			}
-		}
-		catch (OperationCanceledException) {
-			StatusMessage = "締日変更の確認をキャンセルしました。";
-			return;
-		}
-		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
-			StatusMessage = "締日変更の確認をキャンセルしました。";
-			return;
-		}
-		catch (Exception ex) {
-			StatusMessage = $"締日変更の確認でエラーが発生しました: {ex.Message}";
-			MessageEx.ShowErrorDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
 			return;
 		}
 
 		IsProcessing = true;
 		ProgressValue = 0;
-		StatusMessage = "処理を開始します...";
+		StatusMessage = "締日変更を確認しています...";
 		ClientLib.Cursor2Wait();
-
 		try {
+			var mismatches = await GetRebuildClosingMismatchesAsync(snapshot, cancellationToken);
+			if (!SummaryRebuildClosingCheck.CanStartRequestDispatch(mismatches)) {
+				var warning = SummaryRebuildClosingCheck.BuildMismatchWarning(mismatches);
+				StatusMessage = warning;
+				MessageEx.ShowWarningDialog(warning, owner: ClientLib.GetActiveView(this));
+				return;
+			}
+
+			StatusMessage = "処理を開始します...";
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var requests = await CreateSummaryRequestsAsync(targetMonths, yymmFrom, yymmTo, cancellationToken);
+			var requests = await CreateSummaryRequestsAsync(snapshot, cancellationToken);
 			int processedCount = 0;
 
 			foreach (var request in requests) {
@@ -127,16 +100,16 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 				ProgressValue = (int)Math.Round(processedCount * 100d / requests.Count, MidpointRounding.AwayFromZero);
 			}
 
-			StatusMessage = $"{UpdateTarget}が完了しました。対象: {targetMonths[0]} ～ {targetMonths[^1]}";
+			StatusMessage = $"{snapshot.UpdateTarget}が完了しました。対象: {snapshot.TargetMonths[0]} ～ {snapshot.TargetMonths[^1]}";
 		}
 		catch (OperationCanceledException) {
-			StatusMessage = "処理をキャンセルしました。";
+			StatusMessage = "締日変更の確認または処理をキャンセルしました。";
 		}
 		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
-			StatusMessage = "処理をキャンセルしました。";
+			StatusMessage = "締日変更の確認または処理をキャンセルしました。";
 		}
 		catch (Exception ex) {
-			StatusMessage = $"エラーが発生しました: {ex.Message}";
+			StatusMessage = $"締日変更の確認または処理でエラーが発生しました: {ex.Message}";
 			MessageEx.ShowErrorDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
 		}
 		finally {
@@ -158,42 +131,52 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		return true;
 	}
 
-	private async Task<List<(string Name, CvMsg Message)>> CreateSummaryRequestsAsync(IReadOnlyList<string> targetMonths, string yymmFrom, string yymmTo, CancellationToken cancellationToken) {
+	private static string BuildConfirmMessage(RebuildRequestSnapshot snapshot) {
+		string message = snapshot.TargetMonths.Count == 1
+			? $"{snapshot.TargetMonths[0]} の{snapshot.UpdateTarget}を実行しますか？"
+			: $"{snapshot.TargetMonths[0]} ～ {snapshot.TargetMonths[^1]} の{snapshot.UpdateTarget}を実行しますか？";
+		if (SummaryRebuildClosingCheck.IncludesUriKake(snapshot.UpdateTarget) || SummaryRebuildClosingCheck.IncludesKaiKake(snapshot.UpdateTarget)) {
+			message += $"\n請求残・支払残も再作成します。\n{SummaryRebuildClosingCheck.NoSavedSummaryRowNotice}";
+		}
+		return message;
+	}
+
+	private async Task<List<(string Name, CvMsg Message)>> CreateSummaryRequestsAsync(RebuildRequestSnapshot snapshot, CancellationToken cancellationToken) {
 		List<(string Name, CvMsg Message)> requests = [];
-		bool includesUriKake = UpdateTarget is "全て" or "売掛のみ";
-		bool includesKaiKake = UpdateTarget is "全て" or "買掛のみ";
-		if (UpdateTarget is "全て" or "在庫のみ") {
-			requests.AddRange(targetMonths.Select(yyyymm => ($"在庫 {yyyymm}", CreateSummaryMessage(
+		bool includesUriKake = SummaryRebuildClosingCheck.IncludesUriKake(snapshot.UpdateTarget);
+		bool includesKaiKake = SummaryRebuildClosingCheck.IncludesKaiKake(snapshot.UpdateTarget);
+		if (snapshot.UpdateTarget is "全て" or "在庫のみ") {
+			requests.AddRange(snapshot.TargetMonths.Select(yyyymm => ($"在庫 {yyyymm}", CreateSummaryMessage(
 				CvFlag.Msg051_SummaryRealStock,
 				typeof(CalcDateParameter),
 				new CalcDateParameter(yyyymm)))));
 		}
 		if (includesUriKake) {
-			requests.Add(($"売掛 {yymmFrom} ～ {yymmTo}", CreateSummaryMessage(
+			requests.Add(($"売掛 {snapshot.YearMonthFrom} ～ {snapshot.YearMonthTo}", CreateSummaryMessage(
 				CvFlag.Msg052_SummaryUriKake,
 				typeof(CalcDateTermParameter),
-				new CalcDateTermParameter(yymmFrom, yymmTo))));
+				new CalcDateTermParameter(snapshot.YearMonthFrom, snapshot.YearMonthTo))));
 		}
 		if (includesKaiKake) {
-			requests.Add(($"買掛 {yymmFrom} ～ {yymmTo}", CreateSummaryMessage(
+			requests.Add(($"買掛 {snapshot.YearMonthFrom} ～ {snapshot.YearMonthTo}", CreateSummaryMessage(
 				CvFlag.Msg053_SummaryKaiKake,
 				typeof(CalcDateTermParameter),
-				new CalcDateTermParameter(yymmFrom, yymmTo))));
+				new CalcDateTermParameter(snapshot.YearMonthFrom, snapshot.YearMonthTo))));
 		}
 		if (includesUriKake) {
 			var shimes = await GetClosingDaysAsync(nameof(MasterTokui), cancellationToken);
-			requests.AddRange(from yyyymm in targetMonths
+			requests.AddRange(from yyyymm in snapshot.TargetMonths
 				from shime in shimes
-				select ($"請求残 {yyyymm} / {FormatShime(shime)}", CreateSummaryMessage(
+				select ($"請求残 {yyyymm} / {SummaryRebuildClosingCheck.FormatShime(shime)}", CreateSummaryMessage(
 					CvFlag.Msg056_SummaryUriSei,
 					typeof(BillingParameter),
 					new BillingParameter(yyyymm, shime, string.Empty, string.Empty, IsReissue: false))));
 		}
 		if (includesKaiKake) {
 			var shimes = await GetClosingDaysAsync(nameof(MasterShiire), cancellationToken);
-			requests.AddRange(from yyyymm in targetMonths
+			requests.AddRange(from yyyymm in snapshot.TargetMonths
 				from shime in shimes
-				select ($"支払残 {yyyymm} / {FormatShime(shime)}", CreateSummaryMessage(
+				select ($"支払残 {yyyymm} / {SummaryRebuildClosingCheck.FormatShime(shime)}", CreateSummaryMessage(
 					CvFlag.Msg057_SummaryKaiShi,
 					typeof(BillingParameter),
 					new BillingParameter(yyyymm, shime, string.Empty, string.Empty, IsReissue: false))));
@@ -201,9 +184,9 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		return requests;
 	}
 
-	private async Task<string> GetRebuildClosingMismatchWarningAsync(string yymmFrom, string yymmTo, CancellationToken cancellationToken) {
-		List<ClosingMismatch> mismatches = [];
-		if (UpdateTarget is "全て" or "売掛のみ") {
+	private async Task<List<SummaryClosingMismatch>> GetRebuildClosingMismatchesAsync(RebuildRequestSnapshot snapshot, CancellationToken cancellationToken) {
+		List<SummaryClosingMismatch> mismatches = [];
+		if (SummaryRebuildClosingCheck.IncludesUriKake(snapshot.UpdateTarget)) {
 			var rows = await QueryClosingSummaryRowsAsync(
 				$"""
 SELECT t.Code AS TorihikiCode, s.DayTo, t.Shime1
@@ -212,12 +195,12 @@ INNER JOIN {nameof(MasterTokui)} AS t ON t.Id = s.Id_Tokui
 WHERE substr(s.DayTo, 1, 6) BETWEEN @0 AND @1
 ORDER BY t.Code, s.DayTo
 """,
-				yymmFrom,
-				yymmTo,
+				snapshot.YearMonthFrom,
+				snapshot.YearMonthTo,
 				cancellationToken);
-			mismatches.AddRange(FindClosingMismatches("売掛", rows));
+			mismatches.AddRange(SummaryRebuildClosingCheck.FindMismatches("売掛", rows));
 		}
-		if (UpdateTarget is "全て" or "買掛のみ") {
+		if (SummaryRebuildClosingCheck.IncludesKaiKake(snapshot.UpdateTarget)) {
 			var rows = await QueryClosingSummaryRowsAsync(
 				$"""
 SELECT t.Code AS TorihikiCode, s.DayTo, t.Shime1
@@ -226,49 +209,21 @@ INNER JOIN {nameof(MasterShiire)} AS t ON t.Id = s.Id_Shiire
 WHERE substr(s.DayTo, 1, 6) BETWEEN @0 AND @1
 ORDER BY t.Code, s.DayTo
 """,
-				yymmFrom,
-				yymmTo,
+				snapshot.YearMonthFrom,
+				snapshot.YearMonthTo,
 				cancellationToken);
-			mismatches.AddRange(FindClosingMismatches("買掛", rows));
+			mismatches.AddRange(SummaryRebuildClosingCheck.FindMismatches("買掛", rows));
 		}
-		return BuildClosingMismatchWarning(mismatches);
+		return mismatches;
 	}
 
-	private async Task<List<ClosingSummaryRow>> QueryClosingSummaryRowsAsync(string sql, string yymmFrom, string yymmTo, CancellationToken cancellationToken) {
+	private async Task<List<SummaryClosingCheckRow>> QueryClosingSummaryRowsAsync(string sql, string yymmFrom, string yymmTo, CancellationToken cancellationToken) {
 		cancellationToken.ThrowIfCancellationRequested();
-		return await QuerySqlListAsync<ClosingSummaryRow>(sql, [yymmFrom, yymmTo], cancellationToken);
-	}
-
-	private static List<ClosingMismatch> FindClosingMismatches(string kakeType, IEnumerable<ClosingSummaryRow> rows) =>
-		[.. rows.Where(row => !TryGetExpectedClosingDay(row.DayTo, row.Shime1, out var expectedDay) || row.DayTo != expectedDay)
-			.Select(row => new ClosingMismatch(kakeType, row.TorihikiCode, row.DayTo, row.Shime1))];
-
-	private static bool TryGetExpectedClosingDay(string savedDayTo, int shime, out string expectedDay) {
-		expectedDay = string.Empty;
-		if (savedDayTo.Length < 6 || !DateTime.TryParseExact(savedDayTo[..6] + "01", "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var month)) {
-			return false;
-		}
-		if (shime == 99) {
-			expectedDay = new DateTime(month.Year, month.Month, DateTime.DaysInMonth(month.Year, month.Month)).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-			return true;
-		}
-		if (shime is < 1 or > 31) {
-			return false;
-		}
-		expectedDay = new DateTime(month.Year, month.Month, Math.Min(shime, DateTime.DaysInMonth(month.Year, month.Month))).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-		return true;
-	}
-
-	private static string BuildClosingMismatchWarning(IReadOnlyList<ClosingMismatch> mismatches) {
-		if (mismatches.Count == 0) return string.Empty;
-		var lines = mismatches.Take(5).Select(mismatch =>
-			$"{mismatch.KakeType}: {mismatch.TorihikiCode} / 保存締日 {mismatch.SavedDayTo} / 現在締日 {FormatShime(mismatch.CurrentShime)}");
-		var remain = mismatches.Count > 5 ? $"\nほか{mismatches.Count - 5}件" : string.Empty;
-		return $"締日変更を検出したため、再更新を開始しません。\n{string.Join("\n", lines)}{remain}\nマスタ締日が変更されています。請求計算／支払計算画面で対象を手動再計算し、旧締日の残データを確認してから再実行してください";
+		return await QuerySqlListAsync<SummaryClosingCheckRow>(sql, [yymmFrom, yymmTo], cancellationToken);
 	}
 
 	private async Task<List<int>> GetClosingDaysAsync(string masterTableName, CancellationToken cancellationToken) {
-		var rows = await QuerySqlListAsync<ShimeRow>(
+		var rows = await QuerySqlListAsync<SummaryClosingCheckRow>(
 			$"SELECT DISTINCT Shime1 FROM {masterTableName} WHERE Shime1 BETWEEN 1 AND 31 OR Shime1 = 99 ORDER BY Shime1",
 			[],
 			cancellationToken);
@@ -299,12 +254,6 @@ ORDER BY t.Code, s.DayTo
 		Flag = flag,
 		DataType = dataType,
 		DataMsg = Common.SerializeObject(parameter)
-	};
-
-	private static string FormatShime(int shime) => shime switch {
-		99 => "末日",
-		>= 1 and <= 31 => $"{shime:00}日",
-		_ => $"不正({shime})"
 	};
 
 	private static List<string> BuildMonthList(string yyyymmFrom, string yyyymmTo) {

@@ -1,3 +1,23 @@
+## [2026-08-18] Rebuild締日変更ブロックの独立レビュー指摘を修正
+
+### Agent
+- GPT-5 : OpenAI : Sekiya Sato Codex
+
+### 目的
+- Rebuild締日変更ブロックのサーバ型解決、入力競合、受入テスト不足を解消する。
+
+### 実施内容
+- `SummaryClosingCheckRow` と締日判定規則を `CvBase` の公開共有型へ追加し、`StockKakeUpdate` と請求計算／支払計算の締日取得が WPF private 型を `QueryListSqlParam.ItemType` に渡さないよう統一した。
+- Rebuild実行は確認直後に対象・年月・対象月をスナップショット化し、締日照会から要求生成・完了表示まで同じ値を使用する。`IsProcessing` は照会前に設定し、照会・送信を単一の `try` / `finally` で保護した。不一致、キャンセル、例外では要求列生成・`Msg051`〜`Msg057`の送信へ進まない。
+- 請求残／支払残を含む確認文へ、保存済み集計行がない場合は締日変更を検出できない制約を明示した。
+- 既存 TestServer に、共有DTOの実サーバ `Msg101_Op_Query` 型解決、対象4種、1日／31日月末丸め、99月末、保存行なし、不一致、最大5件＋残件数、送信可否ゲートを追加した。月次掛集計には19／29／39／89境界と90／99除外を売掛・買掛対称に追加した。
+
+### 確認
+- `Tests/TestServer/TestServer.csproj` と `CvWpfclient/CvWpfclient.csproj` を Development 環境でビルドし、警告・エラーなしを確認した。
+- `SummaryKakeDbTests` は25件すべて成功し、共有DTOの実サーバ型解決テストも1件成功した。
+- 締日照会の `await` より後にだけ要求列生成・ストリーム送信が存在することを静的に確認した。WPFの確認ダイアログ操作、通信取消、実画面警告は自動化用プロジェクトがないため未実施。
+- 区分Cの金額集計とRebuild安全策を含むため、独立再レビュー待ちとする。
+
 ## [2026-08-18] Rebuildの締日変更ブロックを追加
 
 ### Agent

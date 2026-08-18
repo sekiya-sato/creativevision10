@@ -130,6 +130,29 @@ public class CoreServiceTests {
 	}
 
 	[TestMethod]
+	public async Task QueryListSql_WithSummaryClosingCheckRow_ResolvesSharedDtoOnServer() {
+		var service = _service ?? throw new AssertFailedException("Service not initialized");
+		var request = new CvMsg {
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(
+				typeof(SummaryClosingCheckRow),
+				"SELECT 'T001' AS TorihikiCode, '20260228' AS DayTo, 31 AS Shime1"))
+		};
+
+		var result = await service.QueryMsgAsync(request);
+		var rows = Common.DeserializeObject(result.DataMsg ?? "[]", result.DataType) as List<SummaryClosingCheckRow>;
+
+		Assert.AreEqual(0, result.Code);
+		Assert.AreEqual(typeof(List<SummaryClosingCheckRow>), result.DataType);
+		Assert.IsNotNull(rows);
+		Assert.AreEqual(1, rows.Count);
+		Assert.AreEqual("T001", rows[0].TorihikiCode);
+		Assert.AreEqual("20260228", rows[0].DayTo);
+		Assert.AreEqual(31, rows[0].Shime1);
+	}
+
+	[TestMethod]
 	public async Task QueryById_WithStaleVdu_ReturnsConcurrentUpdate() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		var service = _service ?? throw new AssertFailedException("Service not initialized");

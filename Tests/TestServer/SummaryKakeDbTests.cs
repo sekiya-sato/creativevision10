@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -60,15 +61,20 @@ public class SummaryKakeDbTests {
 		var range40 = CreateUriage("20260716", 1, EnumUri00.Uriage, 400, 40);
 		range40.Kubun = 40;
 		db.Insert(range40);
+		db.Insert(CreateUriageWithKubun("20260717", 1, 19, 19, 1));
+		db.Insert(CreateUriageWithKubun("20260718", 1, 29, 29, 2));
+		db.Insert(CreateUriageWithKubun("20260719", 1, 39, 39, 3));
+		db.Insert(CreateUriageWithKubun("20260720", 1, 89, 89, 4));
+		db.Insert(CreateUriageWithKubun("20260721", 1, 90, 900, 5));
 
 		summaryDb.CalcSummaryUriKake("202607", "202607");
 		var row = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
 
 		Assert.AreNotEqual(range40.Total, range40.KingakuTotal);
-		Assert.AreEqual(1000 + 500 + 400, row.Uriage);
-		Assert.AreEqual(200 + 100, row.Henpin);
-		Assert.AreEqual(300, row.Nebiki);
-		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40, row.Tax);
+		Assert.AreEqual(1000 + 500 + 400 + 19 + 89, row.Uriage);
+		Assert.AreEqual(200 + 100 + 29, row.Henpin);
+		Assert.AreEqual(300 + 39, row.Nebiki);
+		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax);
 		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Tax, row.TotalSales);
 		Assert.AreEqual(-row.TotalSales, row.Balance);
 	}
@@ -292,15 +298,20 @@ public class SummaryKakeDbTests {
 		var range40 = CreateShiire("20260715", 1, EnumShiire.Shiire, 400, 40);
 		range40.Kubun = 40;
 		db.Insert(range40);
+		db.Insert(CreateShiireWithKubun("20260716", 1, 19, 19, 1));
+		db.Insert(CreateShiireWithKubun("20260717", 1, 29, 29, 2));
+		db.Insert(CreateShiireWithKubun("20260718", 1, 39, 39, 3));
+		db.Insert(CreateShiireWithKubun("20260719", 1, 89, 89, 4));
+		db.Insert(CreateShiireWithKubun("20260720", 1, 90, 900, 5));
 
 		summaryDb.CalcSummaryKaiKake("202607", "202607");
 		var row = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
 
 		Assert.AreNotEqual(range40.Total, range40.KingakuTotal);
-		Assert.AreEqual(1000 + 400, row.Shiire);
-		Assert.AreEqual(200, row.Henpin);
-		Assert.AreEqual(100, row.Nebiki);
-		Assert.AreEqual(100 - 20 + 10 + 40 + 40, row.Tax);
+		Assert.AreEqual(1000 + 400 + 19 + 89, row.Shiire);
+		Assert.AreEqual(200 + 29, row.Henpin);
+		Assert.AreEqual(100 + 39, row.Nebiki);
+		Assert.AreEqual(100 - 20 + 10 + 40 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax);
 		Assert.AreEqual(row.Shiire - row.Henpin - row.Nebiki + row.Tax, row.TotalShiire);
 		Assert.AreEqual(600, row.Cash);
 		Assert.AreEqual(50, row.Offset);
@@ -481,6 +492,63 @@ public class SummaryKakeDbTests {
 		Assert.IsTrue(completed);
 	}
 
+	// ---- 再作成締日検査 ----------------------------------------------------------
+
+	[TestMethod]
+	public void SummaryRebuildClosingCheck_SelectsOnlyRequestedKakeSide() {
+		Assert.IsTrue(SummaryRebuildClosingCheck.IncludesUriKake("全て"));
+		Assert.IsTrue(SummaryRebuildClosingCheck.IncludesKaiKake("全て"));
+		Assert.IsFalse(SummaryRebuildClosingCheck.IncludesUriKake("在庫のみ"));
+		Assert.IsFalse(SummaryRebuildClosingCheck.IncludesKaiKake("在庫のみ"));
+		Assert.IsTrue(SummaryRebuildClosingCheck.IncludesUriKake("売掛のみ"));
+		Assert.IsFalse(SummaryRebuildClosingCheck.IncludesKaiKake("売掛のみ"));
+		Assert.IsFalse(SummaryRebuildClosingCheck.IncludesUriKake("買掛のみ"));
+		Assert.IsTrue(SummaryRebuildClosingCheck.IncludesKaiKake("買掛のみ"));
+	}
+
+	[TestMethod]
+	public void SummaryRebuildClosingCheck_ClampsDayAndUsesMonthEnd() {
+		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260228", 1, out var firstDay));
+		Assert.AreEqual("20260201", firstDay);
+		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260201", 31, out var february31));
+		Assert.AreEqual("20260228", february31);
+		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260401", 31, out var april31));
+		Assert.AreEqual("20260430", april31);
+		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260201", 99, out var februaryEnd));
+		Assert.AreEqual("20260228", februaryEnd);
+	}
+
+	[TestMethod]
+	public void SummaryRebuildClosingCheck_AllowsZeroSavedRows() {
+		var mismatches = SummaryRebuildClosingCheck.FindMismatches("売掛", []);
+
+		Assert.AreEqual(0, mismatches.Count);
+		Assert.IsTrue(SummaryRebuildClosingCheck.CanStartRequestDispatch(mismatches));
+		Assert.AreEqual(string.Empty, SummaryRebuildClosingCheck.BuildMismatchWarning(mismatches));
+		StringAssert.Contains(SummaryRebuildClosingCheck.NoSavedSummaryRowNotice, "保存済み集計行がない場合");
+	}
+
+	[TestMethod]
+	public void SummaryRebuildClosingCheck_BlocksMismatchAndShowsFiveRowsWithRemainder() {
+		var rows = Enumerable.Range(1, 7)
+			.Select(index => new SummaryClosingCheckRow {
+				TorihikiCode = $"T{index:000}",
+				DayTo = "20260227",
+				Shime1 = 31,
+			})
+			.ToList();
+		var mismatches = SummaryRebuildClosingCheck.FindMismatches("買掛", rows);
+		var warning = SummaryRebuildClosingCheck.BuildMismatchWarning(mismatches);
+
+		Assert.AreEqual(7, mismatches.Count);
+		Assert.IsFalse(SummaryRebuildClosingCheck.CanStartRequestDispatch(mismatches));
+		StringAssert.Contains(warning, "買掛: T001 / 保存締日 20260227 / 現在締日 31日");
+		StringAssert.Contains(warning, "買掛: T005 / 保存締日 20260227 / 現在締日 31日");
+		Assert.IsFalse(warning.Contains("T006", StringComparison.Ordinal));
+		StringAssert.Contains(warning, "ほか2件");
+		StringAssert.Contains(warning, SummaryRebuildClosingCheck.ManualRecalculationGuidance);
+	}
+
 	// ---- 準備 --------------------------------------------------------------------
 
 	/// <summary>KIN 区分マスタの Id。実DBの値ではなくテスト内で採番した値を使う</summary>
@@ -557,6 +625,12 @@ public class SummaryKakeDbTests {
 		return tran;
 	}
 
+	private static Tran00Uriage CreateUriageWithKubun(string kakeDay, long idTokui, int kubun, int total, int tax) {
+		var tran = CreateUriage(kakeDay, idTokui, EnumUri00.Uriage, total, tax);
+		tran.Kubun = kubun;
+		return tran;
+	}
+
 	private ExDatabaseSqlite PrepareKaiShiTables() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		db.CreateTable(typeof(SummaryKaiShi), true, false);
@@ -590,6 +664,12 @@ public class SummaryKakeDbTests {
 			IsPay = 1,
 		};
 		tran.EnKubun = kubun;
+		return tran;
+	}
+
+	private static Tran03Shiire CreateShiireWithKubun(string kakeDay, long idShiire, int kubun, int total, int tax) {
+		var tran = CreateShiire(kakeDay, idShiire, EnumShiire.Shiire, total, tax);
+		tran.Kubun = kubun;
 		return tran;
 	}
 

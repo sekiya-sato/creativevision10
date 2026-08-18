@@ -17,9 +17,6 @@ namespace CvWpfclient.ViewModels._31Monthly;
 /// </summary>
 public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 	public sealed record ShimeOption(int Value, string Name);
-	private sealed class ShimeRow {
-		public int Shime1 { get; set; }
-	}
 
 	protected abstract CvFlag TargetFlag { get; }
 	protected abstract string ActionName { get; }
@@ -52,7 +49,7 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 	[RelayCommand]
 	private async Task InitAsync(CancellationToken cancellationToken) {
 		try {
-			var rows = await QuerySqlListAsync<ShimeRow>(
+			var rows = await QuerySqlListAsync<SummaryClosingCheckRow>(
 				$"SELECT DISTINCT Shime1 FROM {MasterTableName} WHERE Shime1 BETWEEN 1 AND 31 OR Shime1 = 99 ORDER BY Shime1",
 				[], cancellationToken);
 			ShimeItems = new ObservableCollection<ShimeOption>(rows
