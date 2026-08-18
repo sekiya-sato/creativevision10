@@ -5,8 +5,11 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
+using System.Text;
 using System.Windows;
 
 namespace CvWpfclient.ViewModels._07Haibun;
@@ -253,6 +256,53 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
 		finally { FinishBusy(); }
+	}
+
+	/// <summary>表示中の一覧をCSV(UTF-8 BOM)へ書き出す。PDF帳票は別途 qfm が要るためCSVで代替（I7 follow-up）。</summary>
+	[RelayCommand]
+	void ExportCsv() {
+		if (Rows.Count == 0) {
+			MessageEx.ShowWarningDialog("出力する明細がありません。先に検索してください。", owner: ActiveWindow);
+			return;
+		}
+		var dialog = new SaveFileDialog {
+			Title = $"{ViewKind}一覧をCSV出力",
+			Filter = "CSVファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*",
+			DefaultExt = ".csv",
+			FileName = $"滞留欠品例外_{DateTime.Today:yyyyMMdd}.csv",
+		};
+		if (dialog.ShowDialog(ActiveWindow) != true) return;
+		try {
+			File.WriteAllText(dialog.FileName, BuildCsv(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+			Message = $"CSVを出力しました: {dialog.FileName}";
+		}
+		catch (Exception ex) {
+			Message = $"CSV出力失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+	}
+
+	string BuildCsv() {
+		string[] headers = ["確定日", "納品予定日", "経過日数", "予定日超過", "倉庫", "出荷先", "種別", "商品", "色/サイズ", "指示数", "実数量", "欠品"];
+		var sb = new StringBuilder();
+		sb.AppendLine(string.Join(",", headers.Select(CsvField)));
+		foreach (var r in Rows) {
+			string[] cells = [
+				r.KakuteiDayDisplay, r.NouhinDayDisplay, r.ElapsedDays.ToString(CultureInfo.InvariantCulture),
+				r.IsOverdue ? "超過" : "", r.SokoDisplay, r.TenpoDisplay, r.DenKindDisplay,
+				r.ShohinDisplay, r.ColSizDisplay,
+				r.Su.ToString(CultureInfo.InvariantCulture),
+				r.JitsuSu.ToString(CultureInfo.InvariantCulture),
+				r.ShortSu.ToString(CultureInfo.InvariantCulture),
+			];
+			sb.AppendLine(string.Join(",", cells.Select(CsvField)));
+		}
+		return sb.ToString();
+	}
+
+	static string CsvField(string value) {
+		var v = (value ?? string.Empty).Replace("\r\n", " ").Replace('\n', ' ').Replace('\r', ' ');
+		return v.Contains(',') || v.Contains('"') ? $"\"{v.Replace("\"", "\"\"")}\"" : v;
 	}
 
 	[RelayCommand]

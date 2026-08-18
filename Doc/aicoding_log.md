@@ -1,3 +1,20 @@
+## [2026-08-18] I7 follow-up 滞留・欠品一覧のCSV出力を実装
+### Agent
+- Opus 4.8 : Anthropic : Sekiya Sato Claude
+### 目的
+- I7 の follow-up「純・帳票印刷版の出荷指示一覧」。一覧を外部へ出力できるようにする。
+### 方針判断
+- PDF帳票(qfm)は座標指定XMLで、生成PDFを目視確認できない環境では崩れリスクがあり品質を担保できないため見送り。
+  確実に出せる CSV 出力で代替する（詳細設計 `Doc/spec/2026-08-18_I7fu_滞留一覧のCSV出力_詳細設計.md`）。
+### 実施内容
+- `ShippingConfirmListViewModel` に `ExportCsv` を追加。表示中の `Rows` を現在の表示列でCSV(UTF-8 BOM)へ書き出す。
+  `SaveFileDialog`、既定名 `滞留欠品例外_yyyymmdd.csv`。カンマ・改行はエスケープ。
+- `ShippingConfirmListView.xaml` に「CSV出力」ボタンを追加。サーバ・スキーマ変更なし。
+### 確認
+- `dotnet build creativevision10.slnx`：成功（0/0）。`TestServer`/`TestLogin` は不変。
+### 完成度への影響
+- I7 の出力を実装（専用PDF帳票のみ見送り、CSVで代替）。台帳 I7 / チェックリスト16章を更新。
+
 ## [2026-08-18] H4 follow-up 受注側の納品予定照会を実装
 ### Agent
 - Opus 4.8 : Anthropic : Sekiya Sato Claude

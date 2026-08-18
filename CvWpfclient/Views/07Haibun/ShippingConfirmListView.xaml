@@ -134,6 +134,14 @@
 					Style="{StaticResource MaterialDesignOutlinedButton}">
 					<TextBlock FontSize="16" Text="全解除" />
 				</Button>
+				<Button Margin="12,0,0,0" Command="{Binding ExportCsvCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="表示中の一覧をCSVへ出力">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center" Kind="FileDelimitedOutline" />
+						<TextBlock FontSize="16" Text="CSV出力" />
+					</StackPanel>
+				</Button>
 				<Button Margin="12,0,0,0" Command="{Binding ClearConditionsCommand}"
 					Style="{StaticResource MaterialDesignOutlinedButton}">
 					<TextBlock FontSize="16" Text="条件クリア" />
