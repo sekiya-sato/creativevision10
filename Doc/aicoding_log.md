@@ -1,3 +1,26 @@
+## [2026-08-19] H1-H4 発注側 納品予定表 PDF を新設（follow-up 残 4/4・完了）
+
+### Agent
+- Claude Opus 4.8 : Anthropic : Sekiya Sato Claude Code
+
+### 目的
+- H1-H4 follow-up 残の最後「発注側 帳票版納品予定表」。空クラス(L0)だった `DeliveryScheduleTableViewModel` を実装し PDF 帳票にする。
+
+### 実施内容
+- qfm `printform/DeliveryScheduleTable.qfm` を新設（9列: 納品予定日/仕入先CD/仕入先名/発注日/伝票NO/発注数/入荷数/残数/納期遅れ、A4縦cp932）。
+- `DeliveryScheduleTableViewModel` を空クラス→`BaseReportViewModel` 派生へ置換（陳腐化コメント〔「納品予定日列が無い」= H1で追加済のため誤り〕も除去）。
+  - 納品予定日範囲・仕入先範囲・未完了のみ・納期遅れのみで絞る。NouhinDay 非空の発注を納品予定日順に出す。
+  - 入荷数は `Tran03Shiire.RelateNo1`=発注Id 紐付け合計（残管理表と同じ規約）。納期遅れは残管理表と同じ判定式。
+- `Views/03Hatchu/DeliveryScheduleTableView.xaml` をプレースホルダ（空Grid）→帳票Viewへ置換。`MenuData.cs`「納品予定表」の説明を「準備中」から更新。
+
+### 検証
+- `dotnet build creativevision10.slnx` 成功（警告0/エラー0）。
+- 実 PDF 描画: `qfmprint` で9列 data.txt（納期遅れ有/無）を渡し `IsSuccess=True`。PDFテキスト層で全9列・納品予定日順・納期遅れ日数が正しいことを確認。
+
+### 完了
+- F2・H1-H4 の follow-up 残（着手可能分）4件すべて実装。残るはリードタイム自動計算(2.0対象外)・調整理由マスタの追加編集(区分は確定済み)のみ。
+- 次: Doc/spec のドキュメント更新と、完了した詳細設計の archive 移動。
+
 ## [2026-08-19] H1-H4 残管理表へ納品予定日・納期遅れ列を追加（follow-up 残 3/4）
 
 ### Agent

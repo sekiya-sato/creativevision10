@@ -169,7 +169,7 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("発注残・納品予定", new([
 				new("納品予定照会", typeof(Views._03Hatchu.DeliveryScheduleInquiryView), addInfo:"発注ヘッダの納品予定日で入荷予定・納期遅れを照会"),
-				new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"準備中 仕入先別の納品予定を印刷。納期遅れは納品日とEndFlagで判定"),
+				new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"発注を納品予定日順に印刷(仕入先別・入荷数/残数・納期遅れ日数)。納期遅れは納品日とEndFlagで判定"),
 				new("仕入未受リスト", typeof(Views._03Hatchu.PendingShiireListView), addInfo:"発注済みで入荷未済の分をSKU別に列挙"),
 				new("発注残管理表", typeof(Views._03Hatchu.HachuZanKanriTableView), addInfo:"発注伝票単位に残数･残金額･経過日数･滞留区分を印刷"),
 				new("発注残完了設定", typeof(Views._03Hatchu.HachuZanCompletionSettingView), addInfo:"残がある発注を伝票単位で完了にする(解除も可)。完納すると自動完了するのでこれは例外処理"),
