@@ -1,3 +1,31 @@
+## [2026-08-20] 請求/支払計算を実DBで突合するツール(summaryreconcile)を新設し UAT-05/06 を通し検証
+
+### Agent
+- Claude Opus 4.8 : Anthropic : Sekiya Sato Claude Code
+
+### Editor
+- Claude Code
+
+### 目的
+- P0 Release Gate（完成度チェックリスト §4.1 段階7 / §3.11）と UAT-05（売掛・請求）/ UAT-06（買掛・支払）を、開発DB `server-user163.db` で実際に成立させる。請求台帳（発行控え）・支払台帳（発行控え）が計算の確定値を忠実に出力することを実データで突合する。
+
+### 判断
+- 開発DB調査（読み取り専用）で `SummaryUriSei`/`SummaryKaiShi`=0行＝請求/支払計算が未実行、支払側は元データ不足（`Tran03Shiire`=2行, `Tran07Shiharai`=0行）と判明（[[cv10-realdb-user163-state]]相当）。→ テストデータ投入が必要。
+- 投入は生SQLの手入れでなく `ExDatabaseSqlite`＋ドメインオブジェクトの `Insert`→`SummaryDb.Calc*`（`Tests/TestServer/SummaryKakeDbTests.cs` と同じ正準方式）。
+- ユーザー指示により対象は「既存取引先を使う」。得意先 000002/000014・仕入先 001/002 に、既存取引ゼロのテスト月 202607 で管理された伝票を紐づけ、実マスタの締日/条件（末日締・翌月末/当月末）のまま計算する。
+
+### 実施内容
+- `tools/summaryreconcile`（`creativevision10.slnx` 非包含の開発ツール）を新設。サブコマンド `seed`/`show`/`idempotent`/`closingcheck`/`all`。README に UAT-05/06 手順・期待値表を記載。
+- CLEAN→SEED→CALC→台帳SQL突合を実装。再実行時は 202607・対象取引先分のTran/Summaryのみ掃除し累積しない。
+
+### 検証（開発DB `server-user163.db`、`refer/back/` にバックアップ済み）
+- 数値突合: 請求台帳（000002=売上額83,500/入金額50,440/残高-33,060/入金予定日20260831/番号1-20260731-01, 000014=33,000/33,000/0/20260831）・支払台帳（001=仕入額77,000/支払額70,000/残高-7,000/支払予定日20260731, 002=16,500/0/-16,500/20260731）が**手計算の期待値と完全一致**。返品税の符号反転（8,500=10,000-2,000+500 / 7,000=8,000-1,000）も一致。
+- `idempotent`=PASS: 2回目計算でSummaryスナップショット完全一致（`SeikyuNo`/`Renban`維持＝D-03、通常計算値=Rebuild値＝D-02）。
+- `closingcheck`=PASS: 締日を99→20に変更すると売掛2・買掛2の不一致を検出し送信ブロック（`SummaryRebuildClosingCheck`）、警告文生成後に締日を99へ復元（E7 締日変更警告）。
+- 帳票PDFの目視確認・実スケール（既存2019-2022売上での請求計算）は次段（B）。
+
+---
+
 ## [2026-08-20] 支払台帳（発行控え）帳票を新設（請求台帳の支払側の対）
 
 ### Agent

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    請求計算・支払計算の実DB突合ハーネス（UAT-05/06 の再現用）。
+    creativevision10.slnx には含めない。開発DBへテスト伝票を投入して計算・突合する開発ツール。
+    使い方は README.md を参照。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>summaryreconcile</AssemblyName>
+    <RootNamespace>SummaryReconcile</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\CvDomainLogic\CvDomainLogic.csproj" />
+    <ProjectReference Include="..\..\CodeShare\CodeShare.csproj" />
+  </ItemGroup>
+</Project>
