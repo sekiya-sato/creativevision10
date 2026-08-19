@@ -1,3 +1,31 @@
+## [2026-08-19] F2 在庫強制調整実績表 PDF を新設（follow-up 残 2/4）
+
+### Agent
+- Claude Opus 4.8 : Anthropic : Sekiya Sato Claude Code
+
+### 目的
+- F2 follow-up 残の2件目「在庫強制調整実績表（PDF）」。強制調整伝票を倉庫・調整日範囲で一覧印刷する帳票を新設する。
+- qfm 作成は `author-printstream-qfm` スキルに従い、`qfmprint` ハーネスで実 PDF 描画確認まで行う。
+
+### 設計判断
+- 明細（SKU別調整数）は `Tran61Chosei.Jmeisai`(JSON) にあり SQL 展開できないため、本表は**伝票単位**（調整数計）で出す。
+  SKU別内訳は既存の「在庫強制調整実績照会」画面で見る。帳票は請求台帳と同じ `BaseReportViewModel` 型で配線。
+
+### 実施内容
+- qfm `printform/StockForceReport.qfm` を新設（`SeikyuLedgerReport.qfm` をコピーし8列へ差替: 調整日/伝票No/倉庫CD/倉庫名/調整理由/調整数計/担当者/メモ）。A4縦・Shift_JIS(cp932)。
+- `StockForceReportViewModel`（`BaseReportViewModel` 派生。Tran61Chosei を MasterTokui/MasterMeisho/MasterShain と LEFT JOIN し Kubun=強制調整・調整日範囲・倉庫で絞る。SELECT 列順=item1..item8）。
+- `Views/08Zaiko/StockForceReportView.xaml(.cs)`（請求台帳Viewを土台に調整日範囲＋倉庫選択）。
+- `Models/MenuData.cs` に「在庫強制調整実績表」を追加。
+
+### 検証
+- `dotnet build creativevision10.slnx` 成功（警告0/エラー0）。
+- qfm validator 代替（cp932読取り・root・path・page・item8/datasrc8）OK。
+- 実 PDF 描画: `qfmprint` で合成 data.txt（正常/負値−3/負値−10・担当者空欄の3行, cp932）を PrintStream へ渡し `IsSuccess=True`・ライセンス全product有効・`outfile.pdf` 生成。
+  PDFテキスト層で全8列・負値・空欄・日付が正しいことを確認。
+
+### 残（次の作業）
+- H-a 残管理表への納品予定日・納期遅れ列、H-b 発注側 帳票版納品予定表（qfm新設）。
+
 ## [2026-08-19] F2 調整理由マスタ＋選択UIを実装（follow-up 残 1/4）
 
 ### Agent
