@@ -12,13 +12,15 @@ using System.Windows;
 namespace CvWpfclient.ViewModels._08Zaiko;
 
 /// <summary>在庫強制調整実績照会の一覧1行（強制調整伝票 Tran61Chosei をラップ）</summary>
-public sealed class StockForceHeaderRow(Tran61Chosei chosei) {
+public sealed class StockForceHeaderRow(Tran61Chosei chosei, string riyuName) {
 	public Tran61Chosei Chosei { get; } = chosei;
 	public long Id => Chosei.Id;
 	public long Vdu => Chosei.Vdu;
 	public string DenDayDisplay => FormatDay(Chosei.DenDay);
 	public string SokoDisplay => Chosei.VSoko == null ? string.Empty
 		: CodeNameDisplay.Format(Chosei.VSoko.Sid, Chosei.VSoko.Cd, Chosei.VSoko.Mei);
+	/// <summary>調整理由名（<see cref="Tran61Chosei.Id_Riyu"/> を MasterMeisho で解決）。</summary>
+	public string RiyuDisplay { get; } = riyuName;
 	public int SuTotal => Chosei.SuTotal;
 	public int MeisaiCount => Chosei.Jmeisai?.Count ?? 0;
 	public string ShainDisplay => Chosei.VShain == null ? string.Empty
@@ -90,9 +92,21 @@ ORDER BY h.DenDay DESC, h.Id DESC
 LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 
 		var list = await QuerySqlListAsync<Tran61Chosei>(sql, parameters, ct);
-		Rows = [.. list.Select(x => new StockForceHeaderRow(x))];
+		var reasonMap = await LoadReasonMapAsync(ct);
+		Rows = [.. list.Select(x => new StockForceHeaderRow(
+			x, x.Id_Riyu > 0 && reasonMap.TryGetValue(x.Id_Riyu, out var n) ? n : string.Empty))];
 		SelectedRow = Rows.FirstOrDefault();
 		Message = Rows.Count == 0 ? "該当する強制調整がありません。" : $"{Rows.Count:N0} 件を取得しました。";
+	}
+
+	/// <summary>調整理由(<c>CHR</c>区分)の Id→名称 辞書を取得する。</summary>
+	async Task<Dictionary<long, string>> LoadReasonMapAsync(CancellationToken ct) {
+		var sql = $@"
+SELECT Id, Vdc, Vdu, Kubun, Code, Name
+FROM {nameof(MasterMeisho)}
+WHERE Kubun = '{ChoseiRiyu.Kubun}'";
+		var list = await QuerySqlListAsync<MasterMeisho>(sql, [], ct);
+		return list.GroupBy(m => m.Id).ToDictionary(g => g.Key, g => g.First().Name);
 	}
 
 	/// <summary>選択した強制調整伝票を取り消す（削除）。サーバが在庫を反転して調整前へ戻す。</summary>

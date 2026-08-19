@@ -1,3 +1,37 @@
+## [2026-08-19] F2 調整理由マスタ＋選択UIを実装（follow-up 残 1/4）
+
+### Agent
+- Claude Opus 4.8 : Anthropic : Sekiya Sato Claude Code
+
+### 目的
+- Doc/spec の完了詳細設計10件を `Doc/spec/archive/` へ退避後、F2・H1-H4 の follow-up 残が最新ソースで未完であることを確認。
+  ユーザーが調整理由区分を確定したため、着手可能な4残作業のうち 1件目「調整理由マスタ＋選択UI」を実装する。
+- 計画: `.omo/2026-08-19_F2H_followup_残作業計画.md`。
+
+### 調整理由区分（ユーザー確定）
+- CalcFlag: コード10〜19=加算(+)/20〜29=減算(−)。10 入庫 / 20 紛失 / 21 盗難 / 22 破損 / 23 検品ミス / 29 その他。
+- `Tran61Chosei.Id_Riyu` は `MasterMeisho`（Kubun=`CHR`）の行を指す。符号は行の Code(int) から算出。
+
+### 実施内容
+- `CvBase/BaseDb2Trans.cs`: `Tran61Chosei.Id_Riyu` に `[ForeignKey(MasterMeisho, meishoKubun:"CHR")]`。
+  静的クラス `ChoseiRiyu`（`Kubun="CHR"`、`CalcFlag(int)`／`CalcFlag(string)`=10〜19で+1/他−1）を新設。
+- `CvBase/DefineDataTable.cs`: 新規DB向けに Kubun=`CHR` の名称区分1行＋理由6行を seed。
+- `CvBase/UpdateDb.cs`: 既存DB向けに `26_08_19_01` を追加し MasterMeisho へ同6行＋IDX行を INSERT（Vdc/Vdu は UTC Ticks を SQLite 式で生成）。
+- `CvWpfclient/Helpers/ViewModels/BaseStockSheetInputViewModel.cs`: `protected virtual int RegisterSign => 1;` を追加し、
+  Register で Su/Kingaku に符号を掛ける（棚卸・移動・返品は既定+1で不変）。
+- `CvWpfclient/ViewModels/08Zaiko/StockForceInputViewModel.cs`: 理由 ComboBox（`Reasons`/`SelectedReason`）を追加。
+  入力は絶対値、`RegisterSign` を選択理由の CalcFlag で決定。理由未選択・入力数<0 は登録前検証で弾く。`BuildDenpyo` で `Id_Riyu` を積む。
+- `CvWpfclient/Views/08Zaiko/StockForceInputView.xaml`: 調整理由 ComboBox（必須）を追加し、注意書きを「増減は理由で決まる」に更新。
+- `CvWpfclient/ViewModels/08Zaiko/StockForceHistoryViewModel.cs` + `View`: 実績照会に「調整理由」列を追加（Id_Riyu を MasterMeisho で解決）。
+
+### 検証
+- `dotnet build creativevision10.slnx` 成功（警告0/エラー0）。
+- `Tests/TestServer` 直接実行: 合計114 / 成功114 / 失敗0（非回帰）。
+- 実機の画面操作確認は未実施（実データに調整対象在庫が要るため別途）。
+
+### 残（次の作業）
+- F2-b 在庫強制調整実績表 PDF（qfm新設）、H-a 残管理表への納品予定日・納期遅れ列、H-b 発注側 帳票版納品予定表（qfm新設）。
+
 ## [2026-08-19] 請求台帳（発行控え）帳票を新設し qfm スキルを実地検証・追記
 
 ### Agent

@@ -665,10 +665,12 @@ public sealed partial class Tran61Chosei : TranAllHeader, ITranSoko {
 		set => Kubun = (int)value;
 	}
 	/// <summary>
-	/// 調整理由Id（<see cref="MasterMeisho"/> の調整理由区分）。0 なら未設定
+	/// 調整理由Id（<see cref="MasterMeisho"/> の調整理由区分 <c>CHR</c>）。0 なら未設定。
+	/// 理由コードの範囲で在庫の増減方向が決まる（<see cref="ChoseiRiyu.CalcFlag(int)"/>）。
 	/// </summary>
 	[ObservableProperty]
-	[Comment("調整理由Id（MasterMeishoの調整理由区分）。0なら未設定")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "CHR")]
+	[Comment("調整理由Id（MasterMeishoのCHR区分）。0なら未設定")]
 	public partial long Id_Riyu { get; set; }
 	/// <summary>
 	/// 棚卸年月 yyyyMM。棚卸確定処理が作った伝票だけ設定する。手動調整では空
@@ -689,6 +691,26 @@ public enum EnumChosei : int {
 	/// <summary>在庫強制調整入力から手で登録した調整</summary>
 	[Comment("強制調整")]
 	Kyosei = 20,
+}
+
+/// <summary>
+/// 調整理由区分（<see cref="MasterMeisho"/> の <c>CHR</c> 区分）。強制調整(<see cref="EnumChosei.Kyosei"/>)の
+/// 理由を表す。<see cref="Tran61Chosei.Id_Riyu"/> が指す名称行の <see cref="MasterMeisho.Code"/> を数値化して使う。
+/// <para>
+/// コード帯で在庫の増減方向（CalcFlag）が決まる。<b>10〜19 は加算(+)、20〜29 は減算(−)</b>。
+/// 既定は 10 入庫 / 20 紛失 / 21 盗難 / 22 破損 / 23 検品ミス / 29 その他。
+/// 入力画面は調整数を絶対値で受け取り、この符号を掛けて伝票へ積む。
+/// </para>
+/// </summary>
+public static class ChoseiRiyu {
+	/// <summary><see cref="MasterMeisho.Kubun"/> の値。</summary>
+	public const string Kubun = "CHR";
+
+	/// <summary>理由コード → 在庫増減の符号。10〜19 は +1（加算）、それ以外（20〜29）は −1（減算）。</summary>
+	public static int CalcFlag(int code) => code is >= 10 and <= 19 ? 1 : -1;
+
+	/// <summary>理由コード文字列 → 符号。数値化できないときは −1（減算）とみなす。</summary>
+	public static int CalcFlag(string code) => int.TryParse(code, out var n) ? CalcFlag(n) : -1;
 }
 
 /// <summary>

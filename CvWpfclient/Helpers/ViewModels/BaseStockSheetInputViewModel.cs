@@ -114,6 +114,12 @@ public abstract partial class BaseStockSheetInputViewModel<TDen> : BaseQueryView
 	/// </summary>
 	protected virtual Task<bool> ValidateBeforeRegisterAsync(CancellationToken ct) => Task.FromResult(true);
 
+	/// <summary>
+	/// 登録する数量・金額に掛ける符号（+1 / −1）。既定は +1（入力値そのまま）。
+	/// 在庫強制調整のように「絶対値で入力し、区分で増減方向を決める」画面が −1 を返して減算にする。
+	/// </summary>
+	protected virtual int RegisterSign => 1;
+
 	// ---- 検索条件 ----------------------------------------------------------------
 
 	/// <summary>対象倉庫コード（棚卸なら棚卸対象、移動なら出庫元）</summary>
@@ -268,7 +274,12 @@ public abstract partial class BaseStockSheetInputViewModel<TDen> : BaseQueryView
 
 		StartBusy("登録中...");
 		try {
-			var meisai = targets.Select((r, i) => r.ToMeisai(i + 1)).ToList();
+			var sign = RegisterSign;
+			var meisai = targets.Select((r, i) => {
+				var m = r.ToMeisai(i + 1);
+				if (sign < 0) { m.Su = -m.Su; m.Kingaku = -m.Kingaku; }
+				return m;
+			}).ToList();
 			var den = BuildDenpyo(meisai);
 			den.DenDay = denDay.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
 			den.Id_Soko = IdSoko;

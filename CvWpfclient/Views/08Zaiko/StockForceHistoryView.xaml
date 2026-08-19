@@ -135,6 +135,9 @@
 					Binding="{Binding SokoDisplay}"
 					Header="倉庫" />
 				<DataGridTextColumn Width="100"
+					Binding="{Binding RiyuDisplay}"
+					Header="調整理由" />
+				<DataGridTextColumn Width="100"
 					Binding="{Binding SuTotal, StringFormat={}{0:N0}}"
 					Header="調整数計">
 					<DataGridTextColumn.ElementStyle>

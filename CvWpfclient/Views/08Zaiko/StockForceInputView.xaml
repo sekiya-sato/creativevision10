@@ -114,6 +114,19 @@
 					Style="{StaticResource MaterialDesignTextBox}"
 					Text="{Binding DenDayText, UpdateSourceTrigger=PropertyChanged}" />
 
+				<!--  調整理由（必須・増減方向を決める）  -->
+				<TextBlock Grid.Row="0" Grid.Column="2"
+					Margin="8,0" VerticalAlignment="Center"
+					Text="調整理由" />
+				<ComboBox Grid.Row="0" Grid.Column="3"
+					Width="200" Height="32"
+					Margin="0,4" HorizontalAlignment="Left"
+					DisplayMemberPath="Name"
+					ItemsSource="{Binding Reasons}"
+					SelectedItem="{Binding SelectedReason}"
+					Style="{StaticResource MaterialDesignComboBox}"
+					ToolTip="増減方向を決めます（入庫=＋、紛失/盗難/破損/検品ミス/その他=−）。一覧表示すると読み込まれます。" />
+
 				<!--  対象倉庫  -->
 				<TextBlock Grid.Row="1" Grid.Column="0"
 					Margin="0,4" VerticalAlignment="Center"
@@ -192,7 +205,7 @@
 				<StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3"
 					Margin="0,4">
 					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-						Text="調整数を入力した行だけを在庫調整伝票として登録します（0の行は対象外）。プラスで増、マイナスで減。" TextWrapping="Wrap" />
+						Text="調整数は0以上で入力します（0の行は対象外）。増減の方向は調整理由で決まります（入庫=＋、紛失/盗難/破損/検品ミス/その他=−）。" TextWrapping="Wrap" />
 					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
 						Text="登録すると在庫へ即時反映されます（棚卸確定と同じく伝票として残り、全件Rebuildでも消えません）。品番範囲を指定すると在庫0のSKUも一覧に出ます。" TextWrapping="Wrap" />
 				</StackPanel>
