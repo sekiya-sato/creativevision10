@@ -1,3 +1,26 @@
+## [2026-08-19] 請求台帳（発行控え）帳票を新設し qfm スキルを実地検証・追記
+
+### Agent
+- Claude Opus 4.8 : Anthropic : Sekiya Sato Claude Code
+
+### 目的
+- 完成度チェックリスト残タスクから qfm スキル検証に適したものを選び、詳細設計→実装→build→実 PDF 描画まで通す。検証で判明した実手順を `author-printstream-qfm` skill へ追記する。
+
+### 選定
+- 請求・支払の主要 6 帳票は qfm+SQL+画面+メニューが全て実装済みで「未実装の qfm」は無かった。唯一のギャップは、請求計算が `SummaryUriSei` に保存する `SeikyuNo`（請求書番号）・`Renban`（再発行世代）・`NyukinYoteiDay`（入金予定日）を**どの帳票も出力していない**こと（`CvWpfclient` で参照ゼロ）。これは P0 Release Gate（§4.1 段階7 の数値突合）の核心で、D-04/D-05 にブロックされない。→ 新帳票「請求台帳（発行控え）」を新設対象に選定。
+
+### 実施内容
+- 詳細設計 `Doc/spec/2026-08-19_請求台帳（発行控え）_詳細設計.md` を作成（目的・列定義 item1..item10・SQL・qfm レイアウト・受入 G/W/T）。
+- qfm `printform/SeikyuLedgerReport.qfm` を新設。`SeikyuListReport.qfm` をコピーし列（請求書番号/請求日/得意先CD/得意先名/対象期間/売上額/消費税/残高/入金予定日/再発行）・見出し・タイトルを最小差分で差替、Shift_JIS(cp932) で保存。
+- `SeikyuLedgerReportViewModel`（`BaseReportViewModel` 派生、`SummaryUriSei` JOIN `MasterTokui` を SELECT 列順=item 順で取得）、`SeikyuLedgerReportView.xaml(.cs)`、`MenuData.cs` に「請求台帳（発行控え）」を追加。
+- skill `author-printstream-qfm/SKILL.md` へ実手順を追記: (1)Python 無し環境での validator 代替（iconv/grep + .NET XML）、(2)DB・サーバ不要で実 PDF を描画する検証ハーネス、(3)`BaseReportViewModel` 帳票配線パターン、(4)worked example。ハーネス一式を `tools/qfmprint/`（`PrintPdfService` の PrintContext 構築を最小再現）として同梱。
+
+### 検証
+- `CvWpfclient` build 成功（警告0/エラー0）。TestServer 114/114 成功（非回帰）。
+- 実 PDF 描画: `tools/qfmprint` ハーネスで `SeikyuLedgerReport.qfm` + 合成 data.txt（正常/負値/大金額/入金予定日空欄の 3 行, cp932）を PrintStream エンジンへ渡し、`IsSuccess=True`・ライセンス全 product 有効・`outfile.pdf` 生成を確認。PDF テキスト層で全 10 列・負値・空欄・日付書式が正しいことを確認。
+- qfm validator（Python）はこの環境に Python 実体が無く実行不可のため、構造チェック（encoding/root/path csv/portrait/A4/item・datasrc 数）と .NET XML 整形式チェックで代替した。
+- 実 DB での数値突合・Mini-UAT は P1 として未実施（本作業は合成データでの描画確認まで）。ローカルハーネスはフォント埋め込みが本番サーバと異なり、ラスタ画像で一部 CJK グリフが欠けるが、テキスト層は正しい。
+
 ## [2026-08-19] PrintStream qfm フォーマット仕様を新設し author-printstream-qfm skill を再構成
 
 ### Agent

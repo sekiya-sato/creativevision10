@@ -1,0 +1,19 @@
+<!--
+  qfm ローカル描画ハーネス（DB・サーバ不要で実 PDF を出す検証用）。
+  CvServer/Services/PrintPdfService.cs の PrintContext 構築を最小再現し、
+  CvPrints.PrintAdapter（PRINT_ENABLE 既定 true・IKVM+printstream.jar）を直接呼ぶ。
+  リポジトリ内のどこにも参照されていない独立プロジェクト。明示ビルド時だけ効く。
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>qfmprint</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- .agents/skills/author-printstream-qfm/tools/qfmprint/ から repo ルートまで 5 階層 -->
+    <ProjectReference Include="..\..\..\..\..\CvPrints\CvPrints.csproj" />
+  </ItemGroup>
+</Project>

@@ -314,6 +314,7 @@ public partial class MenuData : ObservableObject {
 			new("売掛・請求", new([
 				new("請求計算", typeof(Views._31Monthly.BillingCalculationView), addInfo:"締日･請求月･得意先範囲を指定してSummaryUriSeiを作成する"),
 				new("請求一覧表", typeof(Views._06Uriage.SeikyuListReportView), addInfo:"請求日単位に得意先別の請求額･残高を一覧印刷"),
+				new("請求台帳（発行控え）", typeof(Views._06Uriage.SeikyuLedgerReportView), addInfo:"請求計算が保存した請求書番号･再発行世代･入金予定日を含む確定結果を一覧印刷(数値突合･発行控え用)"),
 				new("請求書印刷", typeof(Views._06Uriage.SeikyuBalanceDetailView), addInfo:"得意先別に請求ヘッダ＋対象期間の売上･入金明細を単票印刷"),
 				new("入金入力", typeof(Views._06Uriage.NyukinInputView), addInfo:"得意先からの入金を金種別明細で入力(売掛の減算)"),
 				new("入金消込", typeof(Views._06Uriage.NyukinMatchingView), addInfo:"請求先単位に卸売上を一覧し伝票単位で消込(EndFlag)。入金は区分別集計で金額を突合"),
