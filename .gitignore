@@ -59,6 +59,5 @@ graphify-out/
 *-wal
 # Optional local notes
 printform/data.txt
-
-
+.claude/
 .mcp.json

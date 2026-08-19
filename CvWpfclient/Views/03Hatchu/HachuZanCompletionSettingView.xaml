@@ -1,8 +1,7 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._03Hatchu.HachuZanCompletionSettingView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._03Hatchu"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._03Hatchu"
 	Title="{Binding Title}"
 	Width="1280" Height="800"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
@@ -39,7 +38,8 @@
 					VerticalAlignment="Center"
 					Kind="CheckboxMultipleMarkedOutline" />
 				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-					FontSize="18" FontWeight="SemiBold" Text="{Binding Title}" />
+					FontSize="18" FontWeight="SemiBold"
+					Text="{Binding Title}" />
 			</StackPanel>
 		</materialDesign:ColorZone>
 
@@ -108,8 +108,7 @@
 						Style="{StaticResource FormComboBox}"
 						ToolTip="残のみ：残がある伝票と完了済みの伝票を表示する" />
 					<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-						Text="発注は仕入が明細単位で全SKU充足すると自動的に完了します。この画面はそれ以上入荷しない発注を手で完了にするためのものです。"
-						TextWrapping="Wrap" />
+						Text="発注は仕入が明細単位で全SKU充足すると自動的に完了します。この画面はそれ以上入荷しない発注を手で完了にするためのものです。" TextWrapping="Wrap" />
 				</StackPanel>
 
 				<StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4"
@@ -254,14 +253,15 @@
 			Padding="12,8"
 			Background="{DynamicResource MaterialDesignPaper}">
 			<DockPanel>
-				<Button DockPanel.Dock="Right"
-					Command="{Binding ExitCommand}"
+				<Button Command="{Binding ExitCommand}"
+					DockPanel.Dock="Right"
 					Style="{StaticResource MaterialDesignOutlinedButton}"
 					ToolTip="閉じる (Esc)">
 					<TextBlock FontSize="16" Text="閉じる" />
 				</Button>
 				<TextBlock VerticalAlignment="Center"
-					Text="{Binding Message}" TextWrapping="Wrap" />
+					Text="{Binding Message}"
+					TextWrapping="Wrap" />
 			</DockPanel>
 		</Border>
 	</Grid>

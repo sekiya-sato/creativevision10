@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._03Hatchu.HachuHaibunInputView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._03Hatchu.HachuHaibunInputView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._03Hatchu"
@@ -215,7 +215,8 @@
 									<ComboBox Width="120"
 										DisplayMemberPath="Label"
 										ItemsSource="{Binding KubunOptions}"
-										SelectedValue="{Binding CondKubun, Mode=TwoWay}" SelectedValuePath="Value" />
+										SelectedValue="{Binding CondKubun, Mode=TwoWay}"
+										SelectedValuePath="Value" />
 								</StackPanel>
 								<StackPanel Margin="0,4,20,4"
 									Orientation="Horizontal">
@@ -445,8 +446,8 @@
 								<TextBlock Style="{StaticResource FormLabel}"
 									Text="発注No" />
 								<TextBox Width="110"
-									helpers:SearchTextBoxAssist.Command="{Binding SelectHachuCommand}"
 									HorizontalContentAlignment="Right"
+									helpers:SearchTextBoxAssist.Command="{Binding SelectHachuCommand}"
 									IsReadOnly="True"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding HachuNo, Mode=OneWay, StringFormat={}{0:N0}}"
@@ -558,13 +559,11 @@
 											Style="{StaticResource FormLabel}"
 											Text="展開基準" />
 										<RadioButton Margin="0,0,12,0" VerticalAlignment="Center"
-											Content="色"
-											GroupName="Tenkai"
+											Content="色" GroupName="Tenkai"
 											IsChecked="{Binding IsTenkaiByColor, Mode=TwoWay}"
 											ToolTip="クロス表の列を色順に並べる" />
 										<RadioButton VerticalAlignment="Center"
-											Content="サイズ"
-											GroupName="Tenkai"
+											Content="サイズ" GroupName="Tenkai"
 											IsChecked="{Binding IsTenkaiByColor, Mode=OneWay, Converter={StaticResource InverseBooleanConverter}}"
 											ToolTip="クロス表の列をサイズ順に並べる" />
 									</StackPanel>
@@ -575,11 +574,11 @@
 
 							<DataGrid x:Name="ShohinGrid"
 								Grid.Row="1"
+								MaxHeight="140"
 								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,4" materialDesign:DataGridAssist.ColumnHeaderPadding="12,6"
-								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-								GridLinesVisibility="Horizontal"
+								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" GridLinesVisibility="Horizontal"
 								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-								IsReadOnly="True" MaxHeight="140"
+								IsReadOnly="True"
 								ItemsSource="{Binding ShohinRows}"
 								SelectedItem="{Binding SelectedShohin, Mode=TwoWay}"
 								SelectionMode="Single" SelectionUnit="FullRow"
@@ -639,14 +638,14 @@
 						materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 						<DataGrid x:Name="HaibunGrid"
 							helpers:DataGridCellEnterNavigation.IsEnabled="True" materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
-							AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False"
-							CurrentCellChanged="HaibunGrid_CurrentCellChanged" EnableRowVirtualization="True"
-							FrozenColumnCount="4" GridLinesVisibility="All"
+							AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" CurrentCellChanged="HaibunGrid_CurrentCellChanged"
+							EnableRowVirtualization="True" FrozenColumnCount="4" GridLinesVisibility="All"
 							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 							ItemsSource="{Binding TenpoRows}"
 							SelectionUnit="Cell"
 							Style="{StaticResource MaterialDesignDataGrid}"
-							VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+							VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 							<DataGrid.Columns>
 								<DataGridTextColumn Width="44"
 									Binding="{Binding LineNo}"

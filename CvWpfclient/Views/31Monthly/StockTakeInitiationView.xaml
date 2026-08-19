@@ -56,14 +56,14 @@
 
 					<TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
 						Margin="0,0,0,16"
-						Text="棚卸終了日時点の帳簿在庫を保存します。棚卸作業中に伝票が入っても棚卸差異が動かなくなります。&#x0a;差異調査で伝票を修正したあとは、確定処理の前にもう一度実行してください。"
-						TextWrapping="Wrap" />
+						Text="棚卸終了日時点の帳簿在庫を保存します。棚卸作業中に伝票が入っても棚卸差異が動かなくなります。&#x0a;差異調査で伝票を修正したあとは、確定処理の前にもう一度実行してください。" TextWrapping="Wrap" />
 
 					<TextBlock Grid.Row="1" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
 						Text="棚卸年月" />
 					<TextBox Grid.Row="1" Grid.Column="1"
-						Width="120" HorizontalAlignment="Left" VerticalAlignment="Center"
+						Width="120"
+						HorizontalAlignment="Left" VerticalAlignment="Center"
 						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 						MaxLength="7"
 						Style="{StaticResource MaterialDesignOutlinedTextBox}"

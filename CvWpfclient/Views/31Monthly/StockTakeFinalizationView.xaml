@@ -58,14 +58,14 @@
 
 					<TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
 						Margin="0,0,0,16"
-						Text="実棚数と帳簿在庫の差を在庫調整伝票にして在庫へ反映します。この処理を行わないと棚卸データは在庫に反映されません。&#x0a;確定後に対象日以前の伝票を修正した場合は、もう一度実行すれば作り直します（再確定）。"
-						TextWrapping="Wrap" />
+						Text="実棚数と帳簿在庫の差を在庫調整伝票にして在庫へ反映します。この処理を行わないと棚卸データは在庫に反映されません。&#x0a;確定後に対象日以前の伝票を修正した場合は、もう一度実行すれば作り直します（再確定）。" TextWrapping="Wrap" />
 
 					<TextBlock Grid.Row="1" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
 						Text="棚卸年月" />
 					<TextBox Grid.Row="1" Grid.Column="1"
-						Width="120" HorizontalAlignment="Left" VerticalAlignment="Center"
+						Width="120"
+						HorizontalAlignment="Left" VerticalAlignment="Center"
 						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 						MaxLength="7"
 						Style="{StaticResource MaterialDesignOutlinedTextBox}"
