@@ -82,7 +82,9 @@ WITH juchu AS (
         {TranMeisaiSql.HeaderCode("VTokui")} AS tokuiCode,
         {TranMeisaiSql.HeaderName("VTokui")} AS tokuiName,
         h.SuTotal      AS juchuSu,
-        h.KingakuTotal AS juchuKingaku
+        h.KingakuTotal AS juchuKingaku,
+        h.NouhinDay    AS nouhinDay,
+        h.EndFlag      AS endFlag
     FROM Tran12Jyuchu h
     WHERE {where}
 ),
@@ -104,7 +106,15 @@ joined AS (
              ELSE 0 END                   AS zanKingaku,
         CAST(julianday('{today}')
              - julianday(substr(a.denDay,1,4) || '-' || substr(a.denDay,5,2) || '-' || substr(a.denDay,7,2))
-             AS INTEGER)                  AS elapsedDays
+             AS INTEGER)                  AS elapsedDays,
+        a.nouhinDay                       AS nouhinDay,
+        -- 納期遅れ日数: 納品予定日が非空・未完了・予定日を過ぎている場合のみ (today - 納品予定日)
+        CASE WHEN a.nouhinDay != '' AND a.endFlag = 0
+             AND julianday('{today}') > julianday(substr(a.nouhinDay,1,4) || '-' || substr(a.nouhinDay,5,2) || '-' || substr(a.nouhinDay,7,2))
+             THEN CAST(julianday('{today}')
+                  - julianday(substr(a.nouhinDay,1,4) || '-' || substr(a.nouhinDay,5,2) || '-' || substr(a.nouhinDay,7,2))
+                  AS INTEGER)
+             ELSE 0 END                   AS delayDays
     FROM juchu a
     LEFT JOIN uriage u ON u.denNo = a.denNo
 )
@@ -120,7 +130,9 @@ SELECT
         WHEN elapsedDays >= 30 THEN '30日以上'
         ELSE '30日未満'
     END AS elapsedLabel,
-    {TranMeisaiSql.DateLabel("ifnull(lastUriageDay,'')")} AS lastUriageDayLabel
+    {TranMeisaiSql.DateLabel("ifnull(lastUriageDay,'')")} AS lastUriageDayLabel,
+    CASE WHEN nouhinDay = '' THEN '' ELSE {TranMeisaiSql.DateLabel("nouhinDay")} END AS nouhinDayLabel,
+    CASE WHEN delayDays > 0 THEN CAST(delayDays AS TEXT) || '日' ELSE '' END AS delayLabel
 FROM joined
 {having}
 ORDER BY tokuiCode, denDay, denNo";

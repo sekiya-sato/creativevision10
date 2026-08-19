@@ -1,3 +1,27 @@
+## [2026-08-19] H1-H4 残管理表へ納品予定日・納期遅れ列を追加（follow-up 残 3/4）
+
+### Agent
+- Claude Opus 4.8 : Anthropic : Sekiya Sato Claude Code
+
+### 目的
+- H1-H4 follow-up 残の3件目。発注残管理表・受注残管理表（qfm帳票2種）へ納品予定日・納期遅れ列を追加する。
+
+### 実施内容
+- `printform/HachuZanKanriTable.qfm` / `JuchuZanKanriTable.qfm` を11列→13列へ再構成（末尾に「納品予定日」「納期遅れ」を追加、
+  A4縦150幅内へ各列幅を再配分。Shift_JIS(cp932)、item/datasrc とも13）。
+- `HachuZanKanriTableViewModel` / `JuchuZanKanriTableViewModel` の印刷SQLに列を追加:
+  - CTE で `NouhinDay`・`EndFlag` を取得。
+  - joined で `delayDays`＝納品予定日が非空・`EndFlag=0`・予定日超過のときだけ (基準日−納品予定日)。基準日はクライアント日付。
+  - SELECT 末尾に `nouhinDayLabel`（空なら空欄）・`delayLabel`（"N日" / 遅れ無しは空欄）を item12/item13 として追加。
+
+### 検証
+- `dotnet build creativevision10.slnx` 成功（警告0/エラー0）。
+- 実 PDF 描画: `qfmprint` で両qfmに13列 data.txt（納期遅れ有/無・納品予定日空欄を含む, cp932）を渡し `IsSuccess=True`。
+  PDFテキスト層で発注側=仕入先/発注日/…/納品予定日/納期遅れ、受注側=得意先/受注日/…/最終売上日/納品予定日/納期遅れ が正しく整列することを確認。
+
+### 残（次の作業）
+- H-b 発注側 帳票版納品予定表（`DeliveryScheduleTable` 空クラス実装＋qfm新設）。
+
 ## [2026-08-19] F2 在庫強制調整実績表 PDF を新設（follow-up 残 2/4）
 
 ### Agent
