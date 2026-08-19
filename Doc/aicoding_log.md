@@ -1,3 +1,33 @@
+## [2026-08-20] 支払台帳（発行控え）帳票を新設（請求台帳の支払側の対）
+
+### Agent
+- Claude Opus 4.8 : Anthropic : Sekiya Sato Claude Code
+
+### Editor
+- Claude Code
+
+### 目的
+- P0 Release Gate（完成度チェックリスト §4.1 段階7 / §3.11）の支払側。支払計算が `SummaryKaiShi` に保存する確定済み `ShiharaiYoteiDay`（支払予定日）を突合・発行控えできる帳票が皆無だったため、請求台帳（発行控え, `943aa16`）の支払側の対として新設する。
+
+### 判断
+- `SummaryKaiShi` には請求側の `SeikyuNo`（請求書番号）・`Renban`（再発行世代）に相当する列が存在しない（`CvBase/BaseDbKake.cs` L365-487 で確認）。よって支払台帳は番号・再発行世代を持たない9列構成とし、空いた分を支払額(`TotalOut`)へ充て、仕入額+支払額+残高で対称化した。
+- 既存「支払一覧表」は金額中心で支払予定日を出さず、「月別支払予定表」は `MasterShiire` の支払条件からライブ再計算しており、保存済み `ShiharaiYoteiDay` を出す帳票は皆無だった（請求側と同じ欠落）。→ 支払台帳が保存済み支払予定日を出力する唯一の帳票。
+- D-04/D-05 にブロックされない（顧客提出用の支払通知書ではなく社内突合・発行控えのため）。
+
+### 実施内容
+- 詳細設計 `.omo/2026-08-20_支払台帳_詳細設計.md`（目的・列定義 item1..item9・SQL・qfm レイアウト・受入 G/W/T・実DB突合の段取り）。
+- qfm `printform/ShiharaiLedgerReport.qfm` を新設。`ShiharaiListReport.qfm`（10列）を雛型に、返品・値引列を落とし末尾へ支払予定日を追加した9列（支払日/仕入先CD/仕入先名/対象期間/仕入額/消費税/支払額/残高/支払予定日）へ差替、Shift_JIS(cp932) で保存。
+- `ShiharaiLedgerReportViewModel`（`BaseReportViewModel` 派生、`SummaryKaiShi` JOIN `MasterShiire` を SELECT 列順=item 順で取得）、`ShiharaiLedgerReportView.xaml(.cs)`、`MenuData.cs` に「支払台帳（発行控え）」を「支払一覧表」の直後へ追加。
+
+### 検証
+- qfm validator（Python 実体が無い環境のため .NET XML で代替）: cp932 ラウンドトリップ・encoding=SHIFT_JIS・root=printstream・path csv/data.txt・portrait・A4基本 position・item数9 を確認、OK。
+- `CvWpfclient` build 成功（警告0/エラー0）。
+- 実 PDF 描画: `.agents/skills/author-printstream-qfm/tools/qfmprint` ハーネスで `ShiharaiLedgerReport.qfm` + 合成 data.txt（正常/負値/大金額999999999・支払予定日空欄 の3行, cp932）を PrintStream エンジンへ渡し、`IsSuccess=True`・ライセンス全 product 有効・`outfile.pdf`(2878B) 生成を確認。PDF 内容ストリームを inflate してテキスト層を検証し、9列が定義順・負値(-5000/-500)・大金額・支払予定日空欄(行3)・日付書式(yyyy/MM/dd)・右詰め金額が桁溢れせず収まることを確認（G/W/T-1/2/5）。
+- `TestServer` 117/117 成功（非回帰。影響範囲は WPF + qfm のみ、ドメイン/サーバ非変更）。
+- 実 DB での数値突合・Mini-UAT は P1 として未実施（本作業は合成データでの描画確認まで）。実DB `CvServer/server-user163.db` は `refer/back/` へバックアップ済み。
+
+---
+
 ## [2026-08-19] Doc/spec 3ドキュメントを最新コミット（73ec7a9 メニュー整理・CPAサブメニュー削除）へ対応
 
 ### Agent

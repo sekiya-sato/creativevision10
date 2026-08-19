@@ -324,6 +324,7 @@ public partial class MenuData : ObservableObject {
 				new("仕入先元帳", typeof(Views._05Shiire.ShiireLedgerView), addInfo:"仕入先別に繰越残高･仕入･支払･差引残高を日付順に印刷"),
 				new("買掛金管理表", typeof(Views._05Shiire.KaikakeBalanceReportView), addInfo:"仕入先別に前月残･当月仕入･当月支払･当月残を印刷(締め処理の集計結果)"),
 				new("支払一覧表", typeof(Views._05Shiire.ShiharaiListReportView), addInfo:"支払日単位に仕入先別の支払額･残高を一覧印刷"),
+				new("支払台帳（発行控え）", typeof(Views._05Shiire.ShiharaiLedgerReportView), addInfo:"支払計算が保存した支払予定日を含む確定結果を一覧印刷(数値突合･発行控え用)"),
 				new("月別支払予定表", typeof(Views._05Shiire.MonthlyShiharaiYoteiTableView), addInfo:"仕入先の支払条件から支払予定日別の予定額を印刷"),
 				new("支払残高明細書", typeof(Views._05Shiire.ShiharaiBalanceDetailView), addInfo:"仕入先別に支払ヘッダ＋対象期間の仕入･支払明細を単票印刷"),
 			])),
