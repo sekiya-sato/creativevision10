@@ -654,6 +654,26 @@ SELECT MAX(m) FROM (
 	}
 
 	/// <summary>
+	/// 期首年月日(yyyyMMdd)を <see cref="MasterSysman"/> から取得する。未設定時は "19010101"。
+	/// <para>
+	/// 期首売掛残・買掛残・請求残・支払残は外部CSV取込(ExternalCsvImportView)で Summary 各テーブルへ
+	/// 期首前の年月(DenMonth/DenDay)を持つ行として取り込む。この期首年月より前の集計行は移行時の
+	/// 期首残高として凍結し、売掛・買掛・請求・支払の再計算では削除・上書きしない。繰越(Balance/previousBalance)
+	/// は凍結行を起点として自然に積み上がる。仕様は D-08(期首残高と移行)を参照する。
+	/// </para>
+	/// </summary>
+	private string GetFiscalStartDate() {
+		// MasterSysman 未作成(移行前・一部の単体テスト)では既定 "19010101" を返し、ガードを実質無効化する。
+		var tableExists = _db.FirstOrDefault<string>(
+			"SELECT name FROM sqlite_master WHERE type='table' AND name='MasterSysman'");
+		if (string.IsNullOrEmpty(tableExists)) {
+			return "19010101";
+		}
+		var value = _db.FirstOrDefault<string>("SELECT FiscalStartDate FROM MasterSysman ORDER BY Id LIMIT 1");
+		return string.IsNullOrWhiteSpace(value) ? "19010101" : value;
+	}
+
+	/// <summary>
 	/// SummaryUriKakeの年月のデータを集計する(再作成)
 	/// <para>
 	/// 売上は区分(<see cref="EnumUri00"/>)で 売上 / 返品 / 値引 へ、入金は明細の <c>Id_Kin</c> で
@@ -666,6 +686,10 @@ SELECT MAX(m) FROM (
 	/// <returns></returns>
 	public int CalcSummaryUriKake(string DatefromYyyymm, string DateToYyyymm) {
 		var cnt = 0;
+		// 期首年月(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
+		var fiscalMonth = GetFiscalStartDate()[..6];
+		if (string.CompareOrdinal(DateToYyyymm, fiscalMonth) < 0) return cnt;
+		if (string.CompareOrdinal(DatefromYyyymm, fiscalMonth) < 0) DatefromYyyymm = fiscalMonth;
 		const string deleteSql = "DELETE FROM SummaryUriKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
 		var toMonth = ExtendToMonth("SummaryUriKake", "Tran00Uriage", "Tran06Nyukin", DateToYyyymm);
@@ -775,6 +799,11 @@ LEFT JOIN previousBalance AS p ON p.Id_Tokui = c.Id_Tokui;
 	/// </summary>
 	public int CalcSummaryUriSei(string billingYyyymm, int shime, string tokuiCodeFrom = "", string tokuiCodeTo = "", bool isReissue = false) {
 		var (dayFrom, dayTo) = GetClosingPeriod(billingYyyymm, shime);
+		// 期首日(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
+		// 締期間が期首前に終わるなら何もせず、期首をまたぐ場合は開始日を期首日まで切り上げる。
+		var fiscalStart = GetFiscalStartDate();
+		if (string.CompareOrdinal(dayTo, fiscalStart) < 0) return 0;
+		if (string.CompareOrdinal(dayFrom, fiscalStart) < 0) dayFrom = fiscalStart;
 		const string tempTableName = "TempSummaryUriSeiPrevious";
 		var vdate = Common.GetVdate();
 		var cnt = 0;
@@ -935,6 +964,11 @@ LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 	/// </summary>
 	public int CalcSummaryKaiShi(string paymentYyyymm, int shime, string shiireCodeFrom = "", string shiireCodeTo = "") {
 		var (dayFrom, dayTo) = GetClosingPeriod(paymentYyyymm, shime);
+		// 期首日(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
+		// 締期間が期首前に終わるなら何もせず、期首をまたぐ場合は開始日を期首日まで切り上げる。
+		var fiscalStart = GetFiscalStartDate();
+		if (string.CompareOrdinal(dayTo, fiscalStart) < 0) return 0;
+		if (string.CompareOrdinal(dayFrom, fiscalStart) < 0) dayFrom = fiscalStart;
 		var vdate = Common.GetVdate();
 		var cnt = 0;
 		var transactionStarted = false;
@@ -1059,6 +1093,10 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 	/// <returns></returns>
 	public int CalcSummaryKaiKake(string DatefromYyyymm, string DateToYyyymm) {
 		var cnt = 0;
+		// 期首年月(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
+		var fiscalMonth = GetFiscalStartDate()[..6];
+		if (string.CompareOrdinal(DateToYyyymm, fiscalMonth) < 0) return cnt;
+		if (string.CompareOrdinal(DatefromYyyymm, fiscalMonth) < 0) DatefromYyyymm = fiscalMonth;
 		const string deleteSql = "DELETE FROM SummaryKaiKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
 		var toMonth = ExtendToMonth("SummaryKaiKake", "Tran03Shiire", "Tran07Shiharai", DateToYyyymm);

@@ -212,6 +212,46 @@ public class SummaryKakeDbTests {
 		CollectionAssert.AreEqual(first, second);
 	}
 
+	[TestMethod]
+	public void CalcSummaryUriKake_FreezesPreFiscalOpeningBalanceAndSeedsCarryForward() {
+		var db = PrepareUriKakeTables();
+		AddFiscalStartDate(db, "20260701"); // 期首 = 2026年7月
+		var summaryDb = new SummaryDb(db);
+
+		// 期首前(202606)に期首売掛残をCSV取込相当で投入した状態
+		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 });
+		// 期首前の伝票は集計対象外
+		db.Insert(CreateUriage("20260620", 1, EnumUri00.Uriage, 9999, 0));
+		// 当月(202607)の伝票
+		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 0));
+
+		// 期首をまたぐ範囲を指定しても開始は期首月へ切り上がる
+		summaryDb.CalcSummaryUriKake("202605", "202607");
+
+		var opening = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606");
+		Assert.AreEqual(-5000, opening.Balance, "期首前の残は再計算で上書きしてはいけない");
+		Assert.IsNull(db.FirstOrDefault<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202605"), "期首前の月に行を作ってはいけない");
+
+		var july = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
+		Assert.AreEqual(1000, july.Uriage, "期首前(202606)の伝票は集計されない");
+		Assert.AreEqual(-6000, july.Balance, "期首残 -5000 に当月 -1000 が積み上がる");
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriKake_SkipsRangeEntirelyBeforeFiscalStart() {
+		var db = PrepareUriKakeTables();
+		AddFiscalStartDate(db, "20260701");
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000 });
+		db.Insert(CreateUriage("20260620", 1, EnumUri00.Uriage, 1000, 0));
+
+		var count = summaryDb.CalcSummaryUriKake("202605", "202606");
+
+		Assert.AreEqual(0, count, "期首前だけの範囲は再計算しない");
+		var opening = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606");
+		Assert.AreEqual(-5000, opening.Balance, "期首前の残は変更されない");
+	}
+
 	// ---- 請求残 ------------------------------------------------------------------
 
 	[TestMethod]
@@ -269,6 +309,27 @@ public class SummaryKakeDbTests {
 		var reissued = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");
 		Assert.AreEqual(3, reissued.Renban);
 		Assert.AreEqual("1-20260731-03", reissued.SeikyuNo);
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriSei_ExcludesPreFiscalSlipsAndKeepsOpeningRow() {
+		var db = PrepareUriSeiTables();
+		AddFiscalStartDate(db, "20260701"); // 期首 = 2026年7月
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 20, PayMonth = 1, PayDay = 15 });
+		// 期首前にCSV取込相当で投入した期首請求残
+		db.Insert(new SummaryUriSei { Id_Tokui = 1, DenDay = "20260620", DayFrom = "20260521", DayTo = "20260620", TotalSales = 3000 });
+		// 202607(締日20)の期間は 20260621-20260720。期首(20260701)前の伝票は除外される
+		db.Insert(CreateBillingUriage("20260625", 1, EnumUri00.Uriage, 500, 0));
+		db.Insert(CreateBillingUriage("20260705", 1, EnumUri00.Uriage, 1000, 0));
+
+		summaryDb.CalcSummaryUriSei("202607", 20, "A001", "A999");
+
+		var opening = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260620");
+		Assert.AreEqual(3000, opening.TotalSales, "期首前の請求残は再計算で削除・変更してはいけない");
+
+		var row = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260720");
+		Assert.AreEqual(1000, row.Uriage, "期首前(20260625)の伝票は集計されない");
 	}
 
 	[TestMethod]
@@ -780,6 +841,15 @@ public class SummaryKakeDbTests {
 	private static long InsertShiire(ExDatabaseSqlite db, string code, int shime) {
 		db.Insert(new MasterShiire { Code = code, Shime1 = shime });
 		return db.Single<MasterShiire>("where Code=@0", code).Id;
+	}
+
+	/// <summary>
+	/// 期首年月日(yyyyMMdd)を持つ <see cref="MasterSysman"/> を1件作る。
+	/// 期首以前の集計行を再計算が凍結することを検証するために使う。
+	/// </summary>
+	private static void AddFiscalStartDate(ExDatabaseSqlite db, string fiscalStartYmd) {
+		db.CreateTable(typeof(MasterSysman), true, false);
+		db.Insert(new MasterSysman { FiscalStartDate = fiscalStartYmd });
 	}
 
 	private static void AssertDayToNullIsRejected(ExDatabaseSqlite db, string tableName) {
