@@ -1,3 +1,28 @@
+## [2026-08-19] PrintStream qfm フォーマット仕様を新設し author-printstream-qfm skill を再構成
+
+### Agent
+- Claude Opus 4.8 : Anthropic : Sekiya Sato Claude Code
+
+### 目的
+- qfm を AI が新規作成・修正できる粒度のフォーマット仕様を整備し、既存スキルをその仕様を核とする 2 層構成へ刷新する。
+
+### 判断（順次）
+- CHM `refer/printdll/PrintStream.chm` は `PrintStream_decompiled/` に展開済みで読める（FormEditor 116 ページ + Javadoc）。
+- CHM には raw qfm XML の文法書がない（`datadesc`/`calctype` 等のタグ名で全文検索してもヒット0）。GUI 操作とスクリプト API の解説にとどまる。
+- そのため仕様化は「実 qfm コーパスの機械マイニング（文法）＋ CHM の意味論（属性値）」のハイブリッドで実施可能と判断した。
+
+### 実施内容
+- 実 qfm を機械解析する抽出器 `Doc/spec/tools/extract_qfm_grammar.ps1`（PowerShell・cp932 対応）を作成した。要素／属性／enum 値の分布を出力する。
+- cv10 `printform/`（108 本）と旧cv.net `C:\gitroot\cv\cvnet_pkg\cvnetpss`（1967 本）の計 **2075 本**を解析し、要素 23 種・属性・enum 値を実測で確定した。
+- 仕様本体 `Doc/spec/PrintStream_qfmフォーマット仕様.md` を新設した。要素ツリー、要素×属性×値の文法表、decode 編集文字列チートシート（文字列/数値/日付）、骨格テンプレ、作成ワークフロー、CHM 出所を収録。各項目に出所（`[C]`CHM確定／`[M]`コーパス実測／`[C+M]`両方）を明記した。
+- 入力は CSV のみ（`path datatype="csv"` が 2072/2072）というユーザー指示に合わせ、固定長・XML 入力は対象外とした。複数レコード様式のみ `prefix` を任意扱いで記載した。
+- `.agents/skills/author-printstream-qfm/SKILL.md` を刷新した。書式詳細を仕様 md へ委譲し、SKILL 側は運用規律（Shift_JIS(cp932)・CSV data.txt・コピー起点・validator・PDF 確認・ロールバック）に集約した。雛形選択を表化し、description を仕様核参照へ更新した。
+
+### 確認
+- 仕様 md が参照する雛形 qfm 7 本（MasterShainMente / MasterMeishoMente / MasterSysKanriMente / MasterPrintBarcode002 / ...Code39 / ...Nw7 / ...Sho）の実在を確認した。
+- SKILL.md から仕様 md への相対パス `../../../Doc/spec/...` が構成上正しいことを確認した。
+- コード・テストの変更はない。ドキュメント 2 新設＋スクリプト 1 新設＋スキル 1 更新のみ。実 PDF 出力によるレイアウト確認は本作業では未実施（帳票を実際に作る際に実施する）。
+
 ## [2026-08-18] 請求・支払計算の完成度チェックリストを最終更新
 
 ### Agent
