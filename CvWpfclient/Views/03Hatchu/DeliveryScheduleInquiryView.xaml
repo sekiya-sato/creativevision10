@@ -62,56 +62,70 @@
 		<Border Grid.Row="1"
 			Padding="12"
 			Background="{DynamicResource MaterialDesignPaper}">
-			<StackPanel Orientation="Horizontal">
-				<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
-					Text="納品予定日" />
-				<TextBox Width="150" Height="32"
-					Style="{StaticResource MaterialDesignTextBox}"
-					Text="{Binding NouhinFromText, UpdateSourceTrigger=PropertyChanged}" />
-				<TextBlock Margin="8,0" VerticalAlignment="Center"
-					Text="～" />
-				<TextBox Width="150" Height="32"
-					Style="{StaticResource MaterialDesignTextBox}"
-					Text="{Binding NouhinToText, UpdateSourceTrigger=PropertyChanged}" />
-				<TextBlock Margin="24,0,8,0" VerticalAlignment="Center"
-					Text="仕入先" />
-				<Button Width="70"
-					Command="{Binding SelectShiireCommand}"
-					Content="選択"
-					Style="{StaticResource MaterialDesignOutlinedButton}" />
-				<TextBox Width="120" Height="32"
-					Margin="8,0,0,0"
-					Style="{StaticResource MaterialDesignTextBox}"
-					Text="{Binding ShiireCode, UpdateSourceTrigger=PropertyChanged}" />
-				<CheckBox Margin="24,0,0,0" VerticalAlignment="Center"
-					Content="未完了のみ"
-					IsChecked="{Binding IncompleteOnly}" />
-				<CheckBox Margin="16,0,0,0" VerticalAlignment="Center"
-					Content="納期遅れのみ"
-					IsChecked="{Binding OverdueOnly}" />
-				<TextBlock Margin="24,0,8,0" VerticalAlignment="Center"
-					Text="件数上限" />
-				<TextBox Width="70" Height="32"
-					Style="{StaticResource MaterialDesignTextBox}"
-					Text="{Binding MaxCountText, UpdateSourceTrigger=PropertyChanged}" />
-				<Button Margin="16,0,0,0"
-					Command="{Binding SearchCommand}"
-					IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-					Style="{StaticResource MaterialDesignFlatMidBgButton}"
-					ToolTip="検索 (F5)">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="Magnify" />
-						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-							FontSize="16" Text="検索実行" />
-					</StackPanel>
-				</Button>
-				<Button Margin="12,0,0,0"
-					Command="{Binding ClearConditionsCommand}"
-					Style="{StaticResource MaterialDesignOutlinedButton}">
-					<TextBlock FontSize="16" Text="条件クリア" />
-				</Button>
-			</StackPanel>
+			<WrapPanel Orientation="Horizontal">
+				<StackPanel Margin="0,4,20,4"
+					Orientation="Horizontal">
+					<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+						Text="納品予定日" />
+					<TextBox Width="150" Height="32"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding NouhinFromText, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Margin="8,0" VerticalAlignment="Center"
+						Text="～" />
+					<TextBox Width="150" Height="32"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding NouhinToText, UpdateSourceTrigger=PropertyChanged}" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4"
+					Orientation="Horizontal">
+					<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+						Text="仕入先" />
+					<Button Width="70"
+						Command="{Binding SelectShiireCommand}"
+						Content="選択"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBox Width="120" Height="32"
+						Margin="8,0,0,0"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding ShiireCode, UpdateSourceTrigger=PropertyChanged}" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4"
+					Orientation="Horizontal">
+					<CheckBox VerticalAlignment="Center"
+						Content="未完了のみ"
+						IsChecked="{Binding IncompleteOnly}" />
+					<CheckBox Margin="16,0,0,0" VerticalAlignment="Center"
+						Content="納期遅れのみ"
+						IsChecked="{Binding OverdueOnly}" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4"
+					Orientation="Horizontal">
+					<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+						Text="件数上限" />
+					<TextBox Width="70" Height="32"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding MaxCountText, UpdateSourceTrigger=PropertyChanged}" />
+				</StackPanel>
+				<StackPanel Margin="0,4"
+					Orientation="Horizontal">
+					<Button Command="{Binding SearchCommand}"
+						IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+						Style="{StaticResource MaterialDesignFlatMidBgButton}"
+						ToolTip="検索 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Magnify" />
+							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+								FontSize="16" Text="検索実行" />
+						</StackPanel>
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding ClearConditionsCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}">
+						<TextBlock FontSize="16" Text="条件クリア" />
+					</Button>
+				</StackPanel>
+			</WrapPanel>
 		</Border>
 
 		<DataGrid Grid.Row="2"
