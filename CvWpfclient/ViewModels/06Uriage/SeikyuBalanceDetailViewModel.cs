@@ -81,7 +81,8 @@ WITH headers AS (
         s.TotalSales AS totalSales,
         s.TotalIn    AS totalIn,
         s.Tax        AS tax,
-        s.Balance    AS balance
+        s.Balance    AS balance,
+        s.SeikyuNo   AS seikyuNo
     FROM SummaryUriSei s
     JOIN MasterTokui t ON t.Id = s.Id_Tokui
     WHERE s.DenDay = {seikyuDay}
@@ -105,7 +106,8 @@ SELECT
     CAST(d.denNo AS TEXT) AS denNoText,
     d.kubunText,
     d.su,
-    d.kingaku
+    d.kingaku,
+    h.seikyuNo
 FROM headers h
 LEFT JOIN details d ON d.idTokui = h.Id_Tokui
 ORDER BY h.tokuiCode, d.denDay, d.srcOrder, d.denNo";

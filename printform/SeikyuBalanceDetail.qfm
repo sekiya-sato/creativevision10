@@ -17,6 +17,7 @@
 			<item id="item12"/>
 			<item id="item13"/>
 			<item id="item14"/>
+			<item id="item15"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>
@@ -155,6 +156,20 @@
 			<position x="104" y="32" width="22" height="5"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item9"/>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="HL10" valign="middle">
+			<position x="0" y="32" width="20" height="5"/>
+			<color transparent="1"/>
+			<data calctype="static">¿‹‘”Ô†</data>
+			<decode datatype="string" format=""/>
+			<font size="80"/>
+		</text>
+		<text id="HV10" valign="middle">
+			<position x="20" y="32" width="56" height="5"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item15"/>
 			<decode datatype="string" format=""/>
 			<font size="90"/>
 		</text>
