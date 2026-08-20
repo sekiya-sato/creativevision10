@@ -275,6 +275,12 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[ColumnSizeDml(14)]
 	[Comment("事業者登録番号")]
 	public partial string TaxRegistrationNumber { get; set; } = string.Empty;
+	/// <summary>
+	/// 納品リードタイム日数
+	/// </summary>
+	[ObservableProperty]
+	[Comment("納品リードタイム日数")]
+	public partial int LeadTimeDays { get; set; }
 }
 
 /// <summary>
@@ -302,6 +308,12 @@ public sealed partial class MasterShiire : MasterTorihiki {
 	[ColumnSizeDml(14)]
 	[Comment("事業者登録番号")]
 	public partial string TaxRegistrationNumber { get; set; } = string.Empty;
+	/// <summary>
+	/// 納品リードタイム日数
+	/// </summary>
+	[ObservableProperty]
+	[Comment("納品リードタイム日数")]
+	public partial int LeadTimeDays { get; set; }
 }
 
 /* VShain などが物理DBに存在せず、Class定義上で存在している場合の、SQLでの結合例
