@@ -157,6 +157,24 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		return new ValueTask<CvMsg>(coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct)));
 	}
 
+	/// <summary>任意SQLで型付きリストを取得する。保存後の気付き警告など、一覧表示外の照会に使う。</summary>
+	protected async Task<List<TRow>> QuerySqlListAsync<TRow>(string sql, CancellationToken ct) {
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var message = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(TRow), sql, [])),
+		};
+		var reply = await coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(ct));
+		if (reply.Code < 0 && reply.Code != -1) {
+			return [];
+		}
+		return Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list
+			? list.Cast<TRow>().ToList()
+			: [];
+	}
+
 	protected virtual bool HasExecuteError(CvMsg reply, string actionName) {
 		if (reply.Code >= 0) {
 			return false;

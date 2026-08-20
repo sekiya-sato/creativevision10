@@ -9,4 +9,5 @@ public partial class PaymentCalculationViewModel : BaseBillingCalculationViewMod
 	protected override string ActionName => "支払計算";
 	protected override string TorihikiName => "仕入先";
 	protected override string MasterTableName => nameof(MasterShiire);
+	protected override string PaysakiParentLabel => "支払先";
 }

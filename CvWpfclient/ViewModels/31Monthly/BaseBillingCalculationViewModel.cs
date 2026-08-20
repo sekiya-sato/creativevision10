@@ -24,6 +24,8 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 	protected abstract string MasterTableName { get; }
 	protected virtual bool SupportsReissue => false;
 	protected virtual string InitialMessage => "請求月・締日・コード範囲を指定して実行してください。";
+	/// <summary>親（請求先／支払先）と子（得意先／仕入先）の締日不一致検査（E7）を行うか。既定は行う。</summary>
+	protected virtual bool ChecksPaysakiClosing => true;
 
 	[ObservableProperty]
 	public partial string BillingMonth { get; set; } = DateTime.Today.ToString("yyyy/MM", CultureInfo.InvariantCulture);
@@ -139,7 +141,30 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 		}
 	}
 
-	protected virtual Task<string> GetPreExecuteWarningAsync(string codeFrom, string codeTo, CancellationToken cancellationToken) => Task.FromResult(string.Empty);
+	/// <summary>
+	/// 実行前の警告文を作成する。既定は親子締日不一致（E7）検査。ブロックはしない。
+	/// </summary>
+	protected virtual async Task<string> GetPreExecuteWarningAsync(string codeFrom, string codeTo, CancellationToken cancellationToken) {
+		if (!ChecksPaysakiClosing) return string.Empty;
+		List<string> parameters = [];
+		var where = "WHERE c.Id_Paysaki <> 0 AND c.Shime1 = @0 AND p.Shime1 <> c.Shime1";
+		parameters.Add(SelectedShime.ToString(CultureInfo.InvariantCulture));
+		if (codeFrom.Length > 0) {
+			where += $" AND c.Code >= @{parameters.Count}";
+			parameters.Add(codeFrom);
+		}
+		if (codeTo.Length > 0) {
+			where += $" AND c.Code <= @{parameters.Count}";
+			parameters.Add(codeTo);
+		}
+		var sql = PaysakiClosingCheck.BuildRangeCheckSql(MasterTableName, where);
+		var rows = await QuerySqlListAsync<PaysakiClosingCheckRow>(sql, parameters, cancellationToken);
+		var mismatches = PaysakiClosingCheck.FindMismatches(rows);
+		return PaysakiClosingCheck.BuildMismatchWarning(PaysakiParentLabel, TorihikiName, mismatches);
+	}
+
+	/// <summary>親（請求先／支払先）の呼称。警告文の主語に使う。</summary>
+	protected abstract string PaysakiParentLabel { get; }
 
 	protected async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken cancellationToken) {
 		cancellationToken.ThrowIfCancellationRequested();

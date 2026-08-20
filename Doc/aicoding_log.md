@@ -1,3 +1,44 @@
+## [2026-08-20] E7 親子締日チェックのワーニング表示を実装
+
+### Agent
+- Claude Sonnet 5 / Claude Opus 5 : Anthropic : Sekiya Sato Claude Code
+
+### Editor
+- Claude Code
+
+### 目的
+- `Doc/spec/2026-08-17_旧cvnet比較_未適用・保留課題.md` E7（親子締日チェック）を実装する。親（請求先／支払先＝`Id_Paysaki`）と子（得意先／仕入先）の締日（`Shime1`）が異なる場合に警告を出す。ブロックはしない。
+
+### 判断
+- 表示画面・タイミングは「不整合が**発生する瞬間**（マスタ編集の保存後）」と「**影響が出る瞬間**（請求／支払計算の実行前）」の両方に置く方針とした（`.omo/2026-08-20_E7_親子締日ワーニング_作業計画.md`）。保存前ブロックや帳票出力時の警告は決定事項（ブロックしない／手遅れでノイズになる）に反するため採らない。
+- マスタメンテでは編集した1件を軸に**双方向**（自分が子として見た親、自分が親として見た子）で検査する。親の締日変更は子側からしか検出できないため。
+- 既存の `CvBase/SummaryRebuildClosingCheck.cs`（保存済み集計の`DayTo`と現在マスタ`Shime1`の突合＝Rebuild時のブロック用）はE7とは別ロジックであり、混同しないよう新規に `PaysakiClosingCheck` を切り出した。
+- `BillingCalculationViewModel` には請求計算の事前警告が実装済みだったため、これを `BaseBillingCalculationViewModel` 側の共通実装へ移し、支払計算にも同じ検査を適用した。
+
+### 実施内容
+- `CvBase/PaysakiClosingCheck.cs`: 新設。`PaysakiClosingCheckRow`（Msg101_Op_Queryの共有DTO）、範囲検査SQL（計算画面用）、対象行検査SQL（マスタメンテ用、編集Idを子または親条件に埋め込み双方向検査）、`FindMismatches`、`BuildMismatchWarning`（先頭5件＋「ほかN件」＋案内文）を実装。
+- `CvWpfclient/ViewModels/31Monthly/BaseBillingCalculationViewModel.cs`: `GetPreExecuteWarningAsync`の既定実装を`PaysakiClosingCheck`ベースへ変更し、`ChecksPaysakiClosing`（既定true）・`PaysakiParentLabel`（抽象）を追加。
+- `CvWpfclient/ViewModels/31Monthly/BillingCalculationViewModel.cs`: 個別実装だった親子締日チェックを削除し、`PaysakiParentLabel => "請求先"`のみ指定。
+- `CvWpfclient/ViewModels/31Monthly/PaymentCalculationViewModel.cs`: `PaysakiParentLabel => "支払先"`を追加し、支払計算にも親子締日警告を適用（従来は未実装だった）。
+- `CvWpfclient/Helpers/ViewModels/BaseMenteViewModel.cs`: `QuerySqlListAsync<TRow>(sql, ct)`を追加（一覧表示外の任意SQL照会、保存後の気付き警告などで使う共通ヘルパー）。
+- `CvWpfclient/ViewModels/01Master/MasterTokuiMenteViewModel.cs`: `AfterInsert`/`AfterUpdate`をオーバーライドし、保存した得意先を軸に請求先との締日不一致を非同期検査、不一致時は`MessageEx.ShowWarningDialog`で警告（照会失敗は握りつぶす）。
+- `CvWpfclient/ViewModels/01Master/MasterShiireMenteViewModel.cs`: 同様に仕入先側（支払先との締日不一致）を実装。
+- `Tests/TestServer/PaysakiClosingCheckTests.cs`: 新設。`FindMismatches`（一致/不一致の判定）、`BuildMismatchWarning`（空文字・親子ラベル・案内文・5件超の省略表示）、SQL生成（テーブル名・編集Id・Where句の埋め込み）を検証する7件。
+- `.omo/2026-08-20_E7_親子締日ワーニング_作業計画.md`: 詳細設計メモ（現状調査・画面選定の判断根拠・作業リスト）。
+- `Doc/spec/2026-08-17_旧cvnet比較_未適用・保留課題.md`: E7行を完了に更新。
+
+### 検証
+- ビルド成功（警告0、エラー0）。
+- `dotnet test Tests/TestServer`: 125/125 成功（新規7件含む）。
+- `dotnet test Tests/TestLogin`: 7/7 成功。
+- 実行時のUI確認は未実施（開発DB`server-user163.db`は`Id_Paysaki`が全件0のため、警告発火自体は実データ未確認）。
+
+### 残課題
+- `Id_Paysaki`を持つ実データが投入されていないため、警告メッセージの実表示は未確認。実運用データ投入後の確認が必要。
+- 請求計算・支払計算画面、得意先・仕入先マスターメンテ画面の実行時UI確認（ボタン操作からの警告ダイアログ表示）は未実施。
+
+---
+
 ## [2026-08-20] E11 その他売上（区分99）を請求残へ分離集計、掛集計は畳み込みへ修正
 
 ### Agent

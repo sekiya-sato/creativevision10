@@ -74,6 +74,37 @@ from MasterTokui {query.AddWhereOrder()}
 		await DoList(CancellationToken.None);
 	}
 
+	protected override void AfterInsert(MasterTokui item) {
+		base.AfterInsert(item);
+		_ = WarnIfPaysakiClosingMismatchAsync(item.Id);
+	}
+
+	protected override void AfterUpdate(MasterTokui item) {
+		base.AfterUpdate(item);
+		_ = WarnIfPaysakiClosingMismatchAsync(item.Id);
+	}
+
+	/// <summary>
+	/// 保存した得意先を軸に、請求先（親）と得意先（子）の締日不一致を検査する（E7）。
+	/// ブロックはしない：検出時は気付き用の警告のみ表示し、保存自体は成功済みのまま継続する。
+	/// 照会失敗は握りつぶす（保存は成功しており業務を妨げない）。
+	/// </summary>
+	async Task WarnIfPaysakiClosingMismatchAsync(long editedId) {
+		if (editedId <= 0) return;
+		try {
+			var sql = PaysakiClosingCheck.BuildAffectedRowCheckSql(nameof(MasterTokui), editedId);
+			var rows = await QuerySqlListAsync<PaysakiClosingCheckRow>(sql, CancellationToken.None);
+			var mismatches = PaysakiClosingCheck.FindMismatches(rows);
+			var warning = PaysakiClosingCheck.BuildMismatchWarning("請求先", "得意先", mismatches);
+			if (warning.Length > 0) {
+				MessageEx.ShowWarningDialog(warning, owner: ActiveWindow);
+			}
+		}
+		catch {
+			// 警告表示の失敗は業務に影響しないため無視する
+		}
+	}
+
 	protected override void OnCurrentEditChangedCore(MasterTokui? oldValue, MasterTokui newValue) {
 		if (newValue == null) {
 			EditJsub = [];
