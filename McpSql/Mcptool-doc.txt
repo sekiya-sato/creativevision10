@@ -1,0 +1,22 @@
+# 単一exeとして作成する (例)
+
+dotnet publish McpSql/McpSql.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=None -o C:\gitroot\tools\McpSql
+
+# MCPサーバとして登録する Claude例
+   "mcpServers": {
+      "cv-sqlite": {
+         "command": "C:\gitroot\tools\McpSql\McpSql.exe",
+         "args": ["SQLiteファイル名"]
+      }
+   }
+
+# MCPサーバとして登録する Codex例
+
+config.toml に追加
+
+[mcp_servers.cv-sqlite]
+enabled = true
+command = 'C:\gitroot\tools\McpSql\McpSql.exe'
+args = ['SQLiteファイル名']
+
+

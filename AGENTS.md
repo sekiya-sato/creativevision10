@@ -55,9 +55,9 @@ C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj
 
 ## 6. 記録と Git
 
-- 実装・設定・運用文書を変更した作業は `Doc/aicoding_log.md` の先頭に所定形式で追記する。800行を超える場合は番号付きアーカイブへ退避する。
-- コミット、rebase、merge、push はユーザーが明示した場合だけ実行する。コミット名は `Sekiya Sato Codex` を用い、コミット本文はリポジトリ既定の形式と JST の作業時間を記載する。
-- コミット対象は依頼に直接関係するファイルと作業ログに限定する。worktree をまたぐ手順、競合、fast-forward merge は `handoff.md` の Git 引継ぎ規約に従う。
+- 実装・設定・運用文書を変更した作業は `Doc/aicoding_log.md` の先頭に所定形式で追記する。ただし軽微な変更やドキュメントのみの変更はログ不要。800行を超える場合は番号付きアーカイブへ退避する。
+- コミット、rebase、merge、push はユーザーが明示した場合だけ実行する。コミット本文はリポジトリ既定の形式と JST の作業時間を記載する。
+- コミット対象は依頼に直接関係するファイルと作業ログに限定する。
 
 ## 7. 知識グラフとスキル改善
 
