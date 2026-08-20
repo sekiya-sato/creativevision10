@@ -20,7 +20,8 @@ public class ErrorInterceptor : Interceptor {
 		}
 		catch (Exception ex) {
 			// NLog で詳細な例外を記録 (appsettings.json の設定に従う)
-			_logger.LogError(ex, "gRPCサービス実行中に未ハンドルの例外が発生しました。 Method: {Method}", context.Method);
+			var correlationId = RequestCorrelation.Resolve(context.GetHttpContext());
+			_logger.LogError(ex, "gRPCサービス実行中に未ハンドルの例外が発生しました。 CorrelationId={CorrelationId} Method={Method}", correlationId, context.Method);
 
 			// クライアントには詳細なスタックトレースを隠し、適切なステータスコードを返す
 			throw new RpcException(new Status(StatusCode.Internal, "サーバー側でエラーが発生しました。詳細はログを確認してください。"));

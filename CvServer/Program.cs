@@ -116,21 +116,30 @@ builder.Services.AddSingleton<SchedulerService>();
 var serverVersion = builder.Configuration.GetSection("ServerVersion").Value ?? "0.0.0";
 var app = builder.Build();
 var logger = app.Logger;
+var enableDetailedRequestLogging = builder.Configuration.GetValue<bool>("Diagnostics:EnableDetailedRequestLogging");
 logger.LogDebug("Application Start ------------------------------------");
-// リクエスト／レスポンスヘッダをログするミドルウェア
+// 相関 ID を要求スコープへ設定し、詳細ログが有効なときだけ従来のヘッダ出力を行う。
 app.Use(async (context, next) => {
 	var logger = app.Logger;
-	logger.LogInformation("Incoming request path: {Path}", context.Request.Path);
-	foreach (var h in context.Request.Headers) {
-		if (h.Key != "Authorization") {
-			logger.LogInformation("REQ HDR: {Key} = {Value}", h.Key, h.Value.ToString());
+	var correlationId = RequestCorrelation.Resolve(context);
+	context.Response.Headers[RequestCorrelation.HeaderName] = correlationId;
+	using (logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId })) {
+		if (enableDetailedRequestLogging) {
+			logger.LogInformation("Incoming request path: {Path}", context.Request.Path);
+			foreach (var h in context.Request.Headers) {
+				if (h.Key != "Authorization") {
+					logger.LogInformation("REQ HDR: {Key} = {Value}", h.Key, h.Value.ToString());
+				}
+			}
+		}
+		await next();
+
+		if (enableDetailedRequestLogging) {
+			// レスポンスヘッダ（トレーラはここで見えない場合あり）
+			foreach (var h in context.Response.Headers)
+				logger.LogInformation("_RES HDR: {Key} = {Value}", h.Key, h.Value.ToString());
 		}
 	}
-	await next();
-
-	// レスポンスヘッダ（トレーラはここで見えない場合あり）
-	foreach (var h in context.Response.Headers)
-		logger.LogInformation("_RES HDR: {Key} = {Value}", h.Key, h.Value.ToString());
 });
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions {

@@ -257,6 +257,7 @@ public partial class App : Application {
 		return builder.ConfigureServices((context, services) => {
 			// 1. ハンドラーと通信設定の登録
 			services.AddTransient<JwtAuthorizationHandler>();
+			services.AddTransient<GrpcRequestLoggingHandler>();
 
 			var url = context.Configuration.GetConnectionString("Url")
 				?? throw new InvalidOperationException("Connection string 'Url' is missing.");
@@ -276,7 +277,8 @@ public partial class App : Application {
 			void ConfigureClient<TService>(IServiceCollection srvs, string targetUrl, string path) where TService : class {
 				var b = srvs.AddCodeFirstGrpcClient<TService>((sp, options) => options.Address = new Uri(targetUrl))
 					.ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<SocketsHttpHandler>())
-					.AddHttpMessageHandler<JwtAuthorizationHandler>();
+					.AddHttpMessageHandler<JwtAuthorizationHandler>()
+					.AddHttpMessageHandler<GrpcRequestLoggingHandler>();
 				// サブパスが定義されている時だけパイプラインに追加
 				if (!string.IsNullOrEmpty(path))
 					b.AddHttpMessageHandler<GrpcSubPathHandler>();

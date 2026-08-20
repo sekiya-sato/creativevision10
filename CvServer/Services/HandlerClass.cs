@@ -15,6 +15,15 @@ public partial class CoreService {
 	private const string ConcurrentUpdateMessage = "他で更新されています";
 
 	private WriteEffectRunner? _effects;
+
+	/// <summary>
+	/// 障害調査時だけ、従来どおり要求パラメータ全文とSQLを記録する。
+	/// </summary>
+	private void LogDetailedRequest(string message, Func<object?[]> argsFactory) {
+		if (_configuration.GetValue<bool>("Diagnostics:EnableDetailedRequestLogging")) {
+			_logger.LogInformation(message, argsFactory());
+		}
+	}
 	/// <summary>
 	/// テーブル更新に伴う副作用(在庫・引当・派生・V*列伝播)の起動役。
 	/// トランザクションと楽観排他はこのクラスが持ち、副作用の順序は <see cref="WriteEffectRunner"/> が持つ。
@@ -353,7 +362,7 @@ public partial class CoreService {
 	}
 
 	private CvMsg HandleQueryOne(CvFlag flag, QueryOneParam queryOne) {
-		_logger.LogInformation("パラメータ QueryOneParam.ItemType={ItemType} 内容={Payload}", queryOne.ItemType, Common.SerializeObject(queryOne));
+		LogDetailedRequest("パラメータ QueryOneParam.ItemType={ItemType} 内容={Payload}", () => [queryOne.ItemType, Common.SerializeObject(queryOne)]);
 
 		var sql = queryOne.AddWhere();
 		try {
@@ -368,7 +377,7 @@ public partial class CoreService {
 	}
 
 	private CvMsg HandleQueryById(CvFlag flag, QueryByIdParam queryById) {
-		_logger.LogInformation("パラメータ QueryByIdParam.ItemType={ItemType} 内容={Payload}", queryById.ItemType, Common.SerializeObject(queryById));
+		LogDetailedRequest("パラメータ QueryByIdParam.ItemType={ItemType} 内容={Payload}", () => [queryById.ItemType, Common.SerializeObject(queryById)]);
 
 		try {
 			var data = _db.Fetch(queryById.ItemType, "where Id = @0", queryById.Id).FirstOrDefault();
@@ -388,7 +397,7 @@ public partial class CoreService {
 		var sql = BuildQueryListSql(queryList);
 		var listType = typeof(List<>).MakeGenericType(queryList.ItemType);
 
-		_logger.LogInformation("パラメータ QueryListParam.ItemType={ItemType} 内容={Payload} SQL={Sql}", queryList.ItemType, Common.SerializeObject(queryList), sql);
+		LogDetailedRequest("パラメータ QueryListParam.ItemType={ItemType} 内容={Payload} SQL={Sql}", () => [queryList.ItemType, Common.SerializeObject(queryList), sql]);
 
 		try {
 			var list = _db.Fetch(queryList.ItemType, sql, queryList.Parameters);
@@ -405,7 +414,7 @@ public partial class CoreService {
 		var sql = querySql.Sql ?? string.Empty;
 		var listType = typeof(List<>).MakeGenericType(querySql.ItemType);
 
-		_logger.LogInformation("パラメータ QueryListSqlParam.ItemType={ItemType} 内容={Payload} SQL={Sql}", querySql.ItemType, Common.SerializeObject(querySql), sql);
+		LogDetailedRequest("パラメータ QueryListSqlParam.ItemType={ItemType} 内容={Payload} SQL={Sql}", () => [querySql.ItemType, Common.SerializeObject(querySql), sql]);
 
 		try {
 			var list = _db.Fetch(querySql.ItemType, sql, querySql.Parameters);
@@ -419,7 +428,7 @@ public partial class CoreService {
 	}
 
 	private CvMsg HandleInsert(CvFlag flag, InsertParam insert) {
-		_logger.LogInformation("パラメータ InsertParam.ItemType={ItemType} 内容={Payload}", insert.ItemType, Common.SerializeObject(insert));
+		LogDetailedRequest("パラメータ InsertParam.ItemType={ItemType} 内容={Payload}", () => [insert.ItemType, Common.SerializeObject(insert)]);
 
 		var item = insert.GetItemObject();
 		var vdate = SetCreatedAuditValues(insert.ItemType, item);
@@ -444,7 +453,7 @@ public partial class CoreService {
 	/// <param name="insertBulk"></param>
 	/// <returns></returns>
 	private CvMsg HandleBulkInsert(CvFlag flag, InsertBulkParam insertBulk) {
-		_logger.LogInformation("パラメータ InsertBulkParam.ItemType={ItemType} 内容={Payload}", insertBulk.ItemType, Common.SerializeObject(insertBulk));
+		LogDetailedRequest("パラメータ InsertBulkParam.ItemType={ItemType} 内容={Payload}", () => [insertBulk.ItemType, Common.SerializeObject(insertBulk)]);
 
 		// JSON配列 → List<ItemType> にデシリアライズ
 		var listType = typeof(List<>).MakeGenericType(insertBulk.ItemType);
@@ -481,7 +490,7 @@ public partial class CoreService {
 	/// <returns></returns>
 	/// <exception cref="NotImplementedException"></exception>
 	private CvMsg HandleUpdate(CvFlag flag, UpdateParam update) {
-		_logger.LogInformation("パラメータ UpdateParam.ItemType={ItemType} 内容={Payload}", update.ItemType, Common.SerializeObject(update));
+		LogDetailedRequest("パラメータ UpdateParam.ItemType={ItemType} 内容={Payload}", () => [update.ItemType, Common.SerializeObject(update)]);
 
 		var item = update.GetItemObject();
 		if (!typeof(BaseDbClass).IsAssignableFrom(update.ItemType) || item is not BaseDbClass db) {
@@ -520,7 +529,7 @@ public partial class CoreService {
 	/// <returns></returns>
 	/// <exception cref="NotImplementedException"></exception>
 	private CvMsg HandleDelete(CvFlag flag, DeleteParam delete) {
-		_logger.LogInformation("パラメータ DeleteParam.ItemType={ItemType} 内容={Payload}", delete.ItemType, Common.SerializeObject(delete));
+		LogDetailedRequest("パラメータ DeleteParam.ItemType={ItemType} 内容={Payload}", () => [delete.ItemType, Common.SerializeObject(delete)]);
 
 		var item = delete.GetItemObject();
 		if (!typeof(BaseDbClass).IsAssignableFrom(delete.ItemType) || item is not BaseDbClass db) {
@@ -552,7 +561,7 @@ public partial class CoreService {
 	}
 
 	private CvMsg HandleDeleteById(CvFlag flag, DeleteByIdParam deleteById) {
-		_logger.LogInformation("パラメータ DeleteByIdParam.ItemType={ItemType} Id={Id} 内容={Payload}", deleteById.ItemType, deleteById.Id, Common.SerializeObject(deleteById));
+		LogDetailedRequest("パラメータ DeleteByIdParam.ItemType={ItemType} Id={Id} 内容={Payload}", () => [deleteById.ItemType, deleteById.Id, Common.SerializeObject(deleteById)]);
 
 		if (!typeof(BaseDbClass).IsAssignableFrom(deleteById.ItemType)) {
 			throw new NotImplementedException();
@@ -594,7 +603,7 @@ public partial class CoreService {
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
 		try {
 			if (param is OutDataHhtMasterParam outDataParam) {
-				_logger.LogInformation("パラメータ HhtMaster isFix={IsFix} OutMasterMei={OutMasterMei} 内容={Payload}", outDataParam.IsFixedLengthFormat, outDataParam.ReservedInt, Common.SerializeObject(outDataParam));
+				LogDetailedRequest("パラメータ HhtMaster isFix={IsFix} OutMasterMei={OutMasterMei} 内容={Payload}", () => [outDataParam.IsFixedLengthFormat, outDataParam.ReservedInt, Common.SerializeObject(outDataParam)]);
 
 				var list = new HhtProcess(_db).CreateMaster(outDataParam.IsFixedLengthFormat, outDataParam.ReservedInt);
 				return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(list));

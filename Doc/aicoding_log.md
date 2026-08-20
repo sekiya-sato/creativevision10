@@ -1,3 +1,27 @@
+## [2026-08-20] サーバー・クライアントのログ出力を見直し
+
+### Agent
+- OpenAI GPT-5 : Sekiya Sato Codex
+
+### Editor
+- Codex
+
+### 目的
+- 通常時のログ量と機微情報の残存を抑えつつ、障害時にクライアントとサーバーを横断して追跡できるログへ改める。
+
+### 実施内容
+- `Doc/spec/2026-08-20_ログ出力見直し_詳細設計.md` を新設し、詳細ログの切替、相関ID、例外記録、検証条件を定義。
+- `CvServer`: `Diagnostics:EnableDetailedRequestLogging`（既定false）を追加。要求／応答ヘッダとCoreServiceのPayload・SQL全量出力をこの設定でのみ有効化し、詳細モードでは従来の内容を出力するよう変更。
+- `CvServer`: `X-CV-Correlation-ID` を受信または生成して応答へ返却し、NLogレイアウトと未処理gRPC例外へ相関IDを追加。
+- `CvWpfclient`: gRPC HTTPハンドラーで相関IDを付与し、HTTP通信失敗に相関ID・メソッド・パス・例外全文を記録。NLogファイルレイアウトへ例外全文を追加。
+
+### 検証
+- `CvServer/CvServer.csproj` を Development 環境でビルド: 成功（警告0、エラー0）。
+- `CvWpfclient/CvWpfclient.csproj` を Development 環境でビルド: 成功（警告0、エラー0）。
+- `git diff --check`、変更ファイルのCRLF確認、全量Payload／SQLログの詳細フラグ経由確認: 成功。
+
+---
+
 ## [2026-08-20] E7 親子締日チェックのワーニング表示を実装
 
 ### Agent
