@@ -125,7 +125,8 @@ public partial class CoreService {
 		string tempDir = Path.Combine(resolvedOutputDir, timestamp);
 		Directory.CreateDirectory(tempDir);
 		request.TempDataFullPath = Path.Combine(tempDir, "data.txt");
-		request.TempOutputFullPath = Path.Combine(tempDir, "outfile.pdf");
+		string outname = timestamp[^17..^5]; // GUID-yyyyMMddHHmmssfff から yyyyMMddHHmm を抽出
+		request.TempOutputFullPath = Path.Combine(tempDir, $"outfile{outname}.pdf");
 		request.TempFormFullPath = Path.Combine(resolvedFormDir, request.FormFile);
 
 		if (param is PrintByCsvParam printParam) {
@@ -172,8 +173,7 @@ public partial class CoreService {
 			Thread.Sleep(PrintPostCheckIntervalMilliseconds);
 		}
 		// 2026/06/15 commit 09eeecb7a5f5c29d0522be07ed3bdcbe1c72c74e WebpdfView のブラウザコア初期化ロジック追加 によりPDF生成が安定
-		var timespan = DateTime.Now - start;
-		var ret = new PrintResult(true, $"{timestamp}/outfile.pdf");
+		var ret = new PrintResult(true, $"{timestamp}/{Path.GetFileName(request.TempOutputFullPath)}");
 		return ret;
 	}
 
