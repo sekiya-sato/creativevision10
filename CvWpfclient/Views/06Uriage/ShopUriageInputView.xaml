@@ -88,18 +88,7 @@
 					<DockPanel Grid.Row="0"
 						Margin="8,0,8,8">
 						<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-							<Button Command="{Binding DoListOnListTabCommand}"
-								Style="{StaticResource MaterialDesignOutlinedButton}"
-								ToolTip="一覧取得 (F5)">
-								<StackPanel Orientation="Horizontal">
-									<materialDesign:PackIcon VerticalAlignment="Center"
-										Kind="DatabaseSearch" />
-									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-										Text="一覧取得" />
-								</StackPanel>
-							</Button>
-							<Button Margin="8,0,0,0"
-								Command="{Binding DoPrintListCommand}"
+							<Button Command="{Binding DoPrintListCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
 								ToolTip="伝票を印刷">
 								<StackPanel Orientation="Horizontal">
@@ -126,7 +115,18 @@
 								Kind="FormatListBulleted" />
 							<TextBlock Margin="0,0,16,0" VerticalAlignment="Center"
 								FontSize="16" FontWeight="SemiBold" Text="一覧画面" />
-							<Button Command="{Binding GoToDetailCommand}"
+							<Button Command="{Binding DoListOnListTabCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="一覧取得 (F5)">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="DatabaseSearch" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="一覧取得" />
+								</StackPanel>
+							</Button>
+							<Button Margin="8,0,0,0"
+								Command="{Binding GoToDetailCommand}"
 								CommandParameter="{Binding Current}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
 								ToolTip="選択中の伝票を表示">
