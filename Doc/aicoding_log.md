@@ -1,3 +1,37 @@
+## [2026-08-20] E11 その他売上（区分99）を請求残へ分離集計、掛集計は畳み込みへ修正
+
+### Agent
+- Claude Sonnet 5 : Anthropic : Sekiya Sato Claude Code
+
+### Editor
+- Claude Code
+
+### 目的
+- `Doc/spec/2026-08-17_旧cvnet比較_未適用・保留課題.md` E11（その他売上）を実装する。区分99（その他売上/その他仕入）の扱いを、請求一覧表・掛集計（元帳）の双方で確定させる。
+
+### 判断
+- 課題文「区分99は現在Uriageへ畳んでいる」は2026-08-17時点の草案の記述で誤り。実際は`CalcSummaryUriKake`/`CalcSummaryKaiKake`/`CalcSummaryUriSei`のいずれも区分99をUriage/Henpin/Nebiki(Shiire)のどこにも含めず、単に集計から漏れていた（`TotalSales`に入らない）。
+- 請求残(`SummaryUriSei`)は請求一覧表で内訳を示す必要があるため、新規列`Sonota`へ**分離集計**（Uriageへは畳み込まない）。`TotalSales = Uriage-Henpin-Nebiki+Sonota+Tax`（旧cvnet式 売上-返品-値引+その他売上+消費税 に合わせる）。
+- ユーザーからの追加指示により、掛集計（`SummaryUriKake`=売掛/`SummaryKaiKake`=買掛、元帳・締日変更検査等が参照）は課題文の原意どおり**区分99をUriage/Shiireへ畳み込む**方針へ変更。請求残とは扱いが異なるが、ネットの`TotalSales`/`Balance`はどちらの経路でも一致する。
+- 支払残(`SummaryKaiShi`)側は本課題のスコープ外（請求一覧表のみが対象）のため無改修。
+
+### 実施内容
+- `CvBase/UpdateDb.cs`: マイグレーション`26_08_20_01`で`SummaryUriSei`へ`Sonota`列を追加。
+- `CvBase/BaseDbKake.cs`: `SummaryUriSei`に`Sonota`プロパティを追加（Nebikiの直後、Taxの前）。
+- `CvDomainLogic/SummaryDb.cs`: `CalcSummaryUriSei`の`sales`CTEに`Sonota = SUM(CASE WHEN Kubun=99 THEN Total ELSE 0 END)`を追加し`calculated`CTE・`INSERT`列・`TotalSales`/`Balance`算式に反映。`CalcSummaryUriKake`のUriage判定・`CalcSummaryKaiKake`のShiire判定にそれぞれ`OR Kubun = 99`を追加（follow-up）。
+- `CvWpfclient/ViewModels/06Uriage/SeikyuListReportViewModel.cs`: 請求一覧表SQLに`u.Sonota AS sonota`を追加。
+- `printform/SeikyuListReport.qfm`: 11列目「その他」を追加。既存の用紙サイズ(region width=150/page width=156)は変更せず、対象期間(28→20)・売上額(15→13)・入金額(13→12)を切り詰めて新列分の幅を確保。
+- `Tests/TestServer/SummaryKakeDbTests.cs`: `CalcSummaryUriSei_SeparatesKubun99AsSonotaWithoutFoldingIntoUriage`を新設。既存の`CalcSummaryUriKake_UsesTotalForPositiveBreakdownAndNegativeBalance`/`CalcSummaryKaiKake_UsesTotalForPositiveBreakdownAndNegativeBalance`の期待値を畳み込み後の値へ更新。
+- `tools/summaryreconcile/Program.cs`: Kubun=99の伝票(8000円/税800円)をSeedに追加、`Show()`にSummaryUriKake/SummaryKaiKakeの表示（畳み込み確認用）を追加、起動時に`UpdateDb.WriteVersionInfoAsync`を呼び開発DBのスキーマを追随させる一行を追加。
+- `Doc/spec/2026-08-17_旧cvnet比較_未適用・保留課題.md`のE11行を完了に更新。`Doc/spec/archive/2026-08-18_請求計算・支払計算_詳細設計.md`へ本follow-upによる訂正の追記注記を追加。
+
+### 検証
+- `dotnet test Tests/TestServer`: 118/118 成功（新規1件・既存2件更新含む）。
+- `tools/summaryreconcile all`を開発DB(`server-user163.db`、事前バックアップ済み)で実行：請求残側 Uriage=100000/Henpin=20000/Nebiki=5000/その他売上=8000/Tax=9300/売上額(TotalSales)=92300 が期待値と一致。掛集計側`SummaryUriKake.Uriage=108000`（区分99分8000を含む）で畳み込みを確認。`idempotent`(D-02/D-03)・`closingcheck`(E7)ともPASS。
+- `qfmprint`ローカルPDF描画で11列すべて（「その他」列含む）が用紙内に収まり欠落なく出力されることを確認。
+
+---
+
 ## [2026-08-20] 請求/支払計算を実DBで突合するツール(summaryreconcile)を新設し UAT-05/06 を通し検証
 
 ### Agent

@@ -35,6 +35,7 @@ var cs = new SqliteConnectionStringBuilder {
 using var conn = new SqliteConnection(cs);
 conn.Open();
 var db = new ExDatabaseSqlite(conn) { KeepConnectionAlive = true };
+await UpdateDb.WriteVersionInfoAsync(db); // dbPathのスキーマをUpdateDb.versionsの最新まで追随させる（例: E11 SummaryUriSei.Sonota追加）
 var summaryDb = new SummaryDb(db);
 
 long tokui1 = db.Single<MasterTokui>("where Code=@0", "000002").Id;
@@ -65,6 +66,7 @@ void Seed() {
     db.Insert(Uri("20260705", tokui1, EnumUri00.Uriage, 100000, 10000));
     db.Insert(Uri("20260712", tokui1, EnumUri00.Henpin, 20000, 2000));
     db.Insert(Uri("20260718", tokui1, EnumUri00.Nebiki, 5000, 500));
+    db.Insert(Uri("20260720", tokui1, EnumUri00.Other, 8000, 800)); // E11: 区分99=その他売上、請求一覧の算式でのみ分離集計
     db.Insert(Nyu("20260725", tokui1, [(KinCash, 50000), (KinFee, 440)]));
     db.Insert(Uri("20260710", tokui2, EnumUri00.Uriage, 30000, 3000));
     db.Insert(Nyu("20260728", tokui2, [(KinCash, 33000)]));
@@ -83,10 +85,24 @@ void Calc() {
 }
 
 void Show() {
+    Console.WriteLine("\n===== 売掛集計(SummaryUriKake、区分99は売上へ畳み込み) =====");
+    foreach (var r in db.Fetch<dynamic>(@"
+SELECT t.Code AS CD, t.Name AS 名, k.DenMonth AS 年月,
+       k.Uriage, k.Henpin, k.Nebiki, k.Tax, k.TotalSales AS 売上額, k.TotalIn AS 入金額, k.Balance AS 残高
+FROM SummaryUriKake k JOIN MasterTokui t ON t.Id=k.Id_Tokui WHERE k.DenMonth=@0 ORDER BY t.Code", Month))
+        Console.WriteLine(string.Join(" | ", ((IDictionary<string, object>)r).Select(kv => $"{kv.Key}={kv.Value ?? "-"}")));
+
+    Console.WriteLine("\n===== 買掛集計(SummaryKaiKake、区分99は仕入へ畳み込み) =====");
+    foreach (var r in db.Fetch<dynamic>(@"
+SELECT s.Code AS CD, s.Name AS 名, k.DenMonth AS 年月,
+       k.Shiire, k.Henpin, k.Nebiki, k.Tax, k.TotalShiire AS 仕入額, k.TotalOut AS 支払額, k.Balance AS 残高
+FROM SummaryKaiKake k JOIN MasterShiire s ON s.Id=k.Id_Shiire WHERE k.DenMonth=@0 ORDER BY s.Code", Month))
+        Console.WriteLine(string.Join(" | ", ((IDictionary<string, object>)r).Select(kv => $"{kv.Key}={kv.Value ?? "-"}")));
+
     Console.WriteLine("\n===== 請求台帳（発行控え）=====");
     foreach (var r in db.Fetch<dynamic>($@"
 SELECT u.SeikyuNo AS 番号, {DL("u.DenDay")} AS 請求日, t.Code AS CD, t.Name AS 名,
-       u.Uriage, u.Henpin, u.Nebiki, u.Tax, u.TotalSales AS 売上額, u.TotalIn AS 入金額, u.Balance AS 残高,
+       u.Uriage, u.Henpin, u.Nebiki, u.Sonota AS その他売上, u.Tax, u.TotalSales AS 売上額, u.TotalIn AS 入金額, u.Balance AS 残高,
        {DL("u.NyukinYoteiDay")} AS 入金予定日, u.Renban AS 再
 FROM SummaryUriSei u JOIN MasterTokui t ON t.Id=u.Id_Tokui WHERE u.DenDay=@0 ORDER BY t.Code", DTo))
         Console.WriteLine(string.Join(" | ", ((IDictionary<string, object>)r).Select(kv => $"{kv.Key}={kv.Value ?? "-"}")));
@@ -102,7 +118,7 @@ FROM SummaryKaiShi k JOIN MasterShiire s ON s.Id=k.Id_Shiire WHERE k.DenDay=@0 O
 
 string[] Snapshot() => [
     .. db.Fetch<SummaryUriSei>("where DenDay=@0 order by Id_Tokui", DTo)
-        .Select(x => $"URI {x.Id_Tokui}:{x.SeikyuNo}:R{x.Renban}:{x.TotalSales}:{x.TotalIn}:{x.Balance}:{x.NyukinYoteiDay}"),
+        .Select(x => $"URI {x.Id_Tokui}:{x.SeikyuNo}:R{x.Renban}:{x.TotalSales}:{x.Sonota}:{x.TotalIn}:{x.Balance}:{x.NyukinYoteiDay}"),
     .. db.Fetch<SummaryKaiShi>("where DenDay=@0 order by Id_Shiire", DTo)
         .Select(x => $"KAI {x.Id_Shiire}:{x.TotalShiire}:{x.TotalOut}:{x.Balance}:{x.ShiharaiYoteiDay}"),
 ];

@@ -73,7 +73,7 @@ public class SummaryKakeDbTests {
 		var row = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
 
 		Assert.AreNotEqual(range40.Total, range40.KingakuTotal);
-		Assert.AreEqual(1000 + 500 + 400 + 19 + 89, row.Uriage);
+		Assert.AreEqual(1000 + 500 + 400 + 19 + 89 + 700, row.Uriage, "区分99(その他売上)は売上へ畳み込む");
 		Assert.AreEqual(200 + 100 + 29, row.Henpin);
 		Assert.AreEqual(300 + 39, row.Nebiki);
 		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax);
@@ -287,6 +287,29 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
+	public void CalcSummaryUriSei_SeparatesKubun99AsSonotaWithoutFoldingIntoUriage() {
+		// E11: 区分99(その他売上)は請求残(SummaryUriSei)ではSonotaへ分離集計し、TotalSalesにも加算する。
+		// 一方、CalcSummaryUriKake_UsesTotalForPositiveBreakdownAndNegativeBalance が示す通り
+		// 掛集計(SummaryUriKake)側のUriage畳み込みは変更しない。
+		var db = PrepareUriSeiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		db.Insert(CreateBillingUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
+		db.Insert(CreateBillingUriage("20260711", 1, EnumUri00.Henpin, 200, 20));
+		db.Insert(CreateBillingUriage("20260712", 1, EnumUri00.Nebiki, 100, 10));
+		db.Insert(CreateBillingUriage("20260713", 1, EnumUri00.Other, 300, 30));
+
+		summaryDb.CalcSummaryUriSei("202607", 99);
+		var row = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");
+
+		Assert.AreEqual(1000, row.Uriage, "売上金額に区分99を含めてはいけない");
+		Assert.AreEqual(300, row.Sonota, "区分99は独立してSonotaへ分離集計する");
+		Assert.AreEqual(120, row.Tax);
+		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Sonota + row.Tax, row.TotalSales);
+		Assert.AreEqual(1000 - 200 - 100 + 300 + 120, row.TotalSales);
+	}
+
+	[TestMethod]
 	public void CalcSummaryUriSei_RecalculationKeepsInvoiceNumberAndRenban() {
 		var db = PrepareUriSeiTables();
 		var summaryDb = new SummaryDb(db);
@@ -371,7 +394,7 @@ public class SummaryKakeDbTests {
 		var row = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
 
 		Assert.AreNotEqual(range40.Total, range40.KingakuTotal);
-		Assert.AreEqual(1000 + 400 + 19 + 89, row.Shiire);
+		Assert.AreEqual(1000 + 400 + 19 + 89 + 400, row.Shiire, "区分99(その他仕入)は仕入へ畳み込む");
 		Assert.AreEqual(200 + 29, row.Henpin);
 		Assert.AreEqual(100 + 39, row.Nebiki);
 		Assert.AreEqual(100 - 20 + 10 + 40 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax);

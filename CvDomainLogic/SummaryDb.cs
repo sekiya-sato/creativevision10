@@ -678,7 +678,8 @@ SELECT MAX(m) FROM (
 	/// <para>
 	/// 売上は区分(<see cref="EnumUri00"/>)で 売上 / 返品 / 値引 へ、入金は明細の <c>Id_Kin</c> で
 	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。売上・返品・値引は税抜 <c>Total</c> の正値内訳とし、
-	/// 合計は内訳と税から算出する。
+	/// 合計は内訳と税から算出する。区分99(その他売上)は売上へ畳み込む(請求残<see cref="SummaryUriSei"/>では
+	/// Sonota列へ分離集計するため、こことは扱いが異なる)。
 	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
@@ -701,7 +702,7 @@ movements AS (
 	SELECT
 		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Tokui,
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Uriage,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Uriage,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,
@@ -844,6 +845,7 @@ sales AS (
 		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END) AS Uriage,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun = 99 THEN t.Total ELSE 0 END) AS Sonota,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END) AS Tax
 	FROM Tran00Uriage AS t
 	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
@@ -881,6 +883,7 @@ calculated AS (
 		IFNULL(s.Uriage, 0) AS Uriage,
 		IFNULL(s.Henpin, 0) AS Henpin,
 		IFNULL(s.Nebiki, 0) AS Nebiki,
+		IFNULL(s.Sonota, 0) AS Sonota,
 		IFNULL(s.Tax, 0) AS Tax,
 		IFNULL(p.Cash, 0) AS Cash,
 		IFNULL(p.Fee, 0) AS Fee,
@@ -897,7 +900,7 @@ calculated AS (
 )
 INSERT INTO SummaryUriSei (
 	Id_Tokui, DenDay, DayFrom, DayTo, SeikyuNo, Renban, NyukinYoteiDay,
-	Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Tax,
+	Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Sonota, Tax,
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
@@ -909,10 +912,10 @@ SELECT
 		ELSE printf('%d-%s-%02d', c.Id_Tokui, @1, CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban + 1 ELSE 1 END) END,
 	CASE WHEN IFNULL(o.Renban, 0) > 0 AND @6 <> 0 THEN o.Renban + 1 WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END,
 	c.NyukinYoteiDay,
-	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Uriage - c.Henpin - c.Nebiki + c.Tax),
+	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Uriage - c.Henpin - c.Nebiki + c.Sonota + c.Tax),
 	c.Cash + c.Fee + c.Densai + c.Offset + c.Other,
-	c.Uriage - c.Henpin - c.Nebiki + c.Tax,
-	c.Uriage, c.Henpin, c.Nebiki, c.Tax,
+	c.Uriage - c.Henpin - c.Nebiki + c.Sonota + c.Tax,
+	c.Uriage, c.Henpin, c.Nebiki, c.Sonota, c.Tax,
 	c.Cash, c.Fee, c.Densai, c.Offset, c.Other,
 	{vdate}, {vdate}
 FROM calculated AS c
@@ -1085,7 +1088,7 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 	/// <para>
 	/// 仕入は区分(<see cref="EnumShiire"/>)で 仕入 / 返品 / 値引 へ、支払は明細の <c>Id_Kin</c> で
 	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。仕入・返品・値引は税抜 <c>Total</c> の正値内訳とし、
-	/// 合計は内訳と税から算出する。売掛側(<see cref="CalcSummaryUriKake"/>)と同じ規則である。
+	/// 合計は内訳と税から算出する。区分99(その他仕入)は仕入へ畳み込む。売掛側(<see cref="CalcSummaryUriKake"/>)と同じ規則である。
 	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
@@ -1108,7 +1111,7 @@ movements AS (
 	SELECT
 		substr(t.KakeDay, 1, 6) AS DenMonth,
 		t.Id_Shiire,
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,

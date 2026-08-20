@@ -13,6 +13,7 @@
 			<item id="item8"/>
 			<item id="item9"/>
 			<item id="item10"/>
+			<item id="item11"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>
@@ -49,48 +50,55 @@
 					<font size="62"/>
 				</text>
 				<text id="H4" valign="middle">
-					<position x="48" y="0" width="28" height="4"/>
+					<position x="48" y="0" width="20" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">対象期間</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H5" valign="middle">
-					<position x="76" y="0" width="15" height="4"/>
+					<position x="68" y="0" width="13" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">売上額</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H6" valign="middle">
-					<position x="91" y="0" width="11" height="4"/>
+					<position x="81" y="0" width="11" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">返品</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H7" valign="middle">
-					<position x="102" y="0" width="11" height="4"/>
+					<position x="92" y="0" width="11" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">値引</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="H8" valign="middle">
-					<position x="113" y="0" width="11" height="4"/>
+					<position x="103" y="0" width="11" height="4"/>
+					<color base="c8ffc8" transparent="0"/>
+					<data calctype="static">その他</data>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="H9" valign="middle">
+					<position x="114" y="0" width="11" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">消費税</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H9" valign="middle">
-					<position x="124" y="0" width="13" height="4"/>
+				<text id="H10" valign="middle">
+					<position x="125" y="0" width="12" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">入金額</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H10" valign="middle">
+				<text id="H11" valign="middle">
 					<position x="137" y="0" width="13" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">残高</data>
@@ -124,51 +132,58 @@
 					<font size="62"/>
 				</text>
 				<text id="V4">
-					<position x="48" y="0" width="28" height="4"/>
+					<position x="48" y="0" width="20" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item4"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V5" halign="right">
-					<position x="76" y="0" width="15" height="4"/>
+					<position x="68" y="0" width="13" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item5"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V6" halign="right">
-					<position x="91" y="0" width="11" height="4"/>
+					<position x="81" y="0" width="11" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item6"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V7" halign="right">
-					<position x="102" y="0" width="11" height="4"/>
+					<position x="92" y="0" width="11" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item7"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V8" halign="right">
-					<position x="113" y="0" width="11" height="4"/>
+					<position x="103" y="0" width="11" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item8"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V9" halign="right">
-					<position x="124" y="0" width="13" height="4"/>
+					<position x="114" y="0" width="11" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item9"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
 				<text id="V10" halign="right">
-					<position x="137" y="0" width="13" height="4"/>
+					<position x="125" y="0" width="12" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item10"/>
+					<decode datatype="string" format=""/>
+					<font size="62"/>
+				</text>
+				<text id="V11" halign="right">
+					<position x="137" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item11"/>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
@@ -186,7 +201,7 @@
 			<position x="98" y="1" width="40" height="5"/>
 			<color transparent="1"/>
 			<data calctype="date"/>
-			<decode datatype="date" format="&quot;出力日付: &quot;YYYY/MM/DD HH24:MI:SS"/>
+			<decode datatype="date" format="&quot;出力日時: &quot;YYYY/MM/DD HH24:MI:SS"/>
 			<font size="90"/>
 		</text>
 		<text id="TxtPage" valign="middle" halign="right">

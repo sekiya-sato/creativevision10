@@ -207,6 +207,12 @@ public sealed partial class SummaryUriSei : BaseDbClass {
 	[Comment("値引金額")]
 	public partial long Nebiki { get; set; }
 	/// <summary>
+	/// その他売上金額（区分99）。売上本体(Tran00Uriage)では畳み込んだままだが、請求一覧の算式でのみ分離集計する（E11）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("その他売上金額（区分99） 請求一覧表用に分離集計")]
+	public partial long Sonota { get; set; }
+	/// <summary>
 	/// 消費税
 	/// </summary>
 	[ObservableProperty]

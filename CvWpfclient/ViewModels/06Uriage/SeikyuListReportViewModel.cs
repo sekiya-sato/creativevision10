@@ -64,6 +64,7 @@ SELECT
     u.TotalSales AS totalSales,
     u.Henpin     AS henpin,
     u.Nebiki     AS nebiki,
+    u.Sonota     AS sonota,
     u.Tax        AS tax,
     u.TotalIn    AS totalIn,
     u.Balance    AS balance
