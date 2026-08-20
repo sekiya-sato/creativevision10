@@ -1,3 +1,4 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
@@ -36,6 +37,8 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
 		new(EnumHachu.Hachu, "発注"),
+		new(EnumHachu.Tsuika, "追加発注"),
+		new(EnumHachu.Jido, "自動発注"),
 		new(EnumHachu.Henpin, "発注返品"),
 	];
 
@@ -134,6 +137,11 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
+	// 仕入先掛率(Rate)から分離した消費税率のキャッシュ。伝票を開いた時点の発注日基準で LoadTaxRateAsync が更新する。
+	int taxRatePercent = 10;
+	// 直近に選択・読込した仕入先のリードタイム日数。発注日変更時の納品予定日再計算に使う。
+	int shiireLeadTimeDays;
+
 	protected override void OnCurrentEditChangedCore(Tran13Hachu? oldValue, Tran13Hachu newValue) {
 		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
 		if (newValue == null) return;
@@ -141,11 +149,23 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		ApplyMeisaiFromCurrentEdit();
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
+
+		shiireLeadTimeDays = 0;
+		_ = LoadTaxRateAsync();
+		if (newValue.Id <= 0) {
+			_ = ApplyDefaultSokoAsync();
+		}
+		else if (newValue.Id_Shiire > 0) {
+			_ = CacheShiireLeadTimeAsync(newValue.Id_Shiire);
+		}
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran13Hachu.Tax) or nameof(Tran13Hachu.Kubun) or nameof(Tran13Hachu.Rate)) {
+		if (e.PropertyName is nameof(Tran13Hachu.Tax) or nameof(Tran13Hachu.Kubun)) {
 			UpdateHeaderTotals();
+		}
+		else if (e.PropertyName == nameof(Tran13Hachu.DenDay)) {
+			RecalcNouhinDay();
 		}
 	}
 
@@ -163,15 +183,47 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 
 	void UpdateHeaderTotals() {
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
+		var tax = (int)Math.Round(absKingakuTotal * taxRatePercent / 100.0);
 		CurrentEdit.Tax = tax;
 		CurrentEdit.Total = absKingakuTotal + tax;
 	}
 
 	async Task LoadTaxRateAsync() {
-		var rate = await AppGlobal.LogicGetTax(1, Current.DenDay);
-		CurrentEdit.Rate = rate;
+		taxRatePercent = await AppGlobal.LogicGetTax(1, Current.DenDay);
 		UpdateHeaderTotals();
+	}
+
+	async Task ApplyDefaultSokoAsync() {
+		if (CurrentEdit.Id_Soko > 0) return;
+		var sysman = await AppGlobal.LogicGetSysman();
+		if (sysman.Id_Soko <= 0) return;
+		CurrentEdit.Id_Soko = sysman.Id_Soko;
+		CurrentEdit.VSoko = new CodeNameView { Sid = sysman.VSoko.Sid, Cd = sysman.VSoko.Cd, Mei = sysman.VSoko.Mei };
+	}
+
+	async Task CacheShiireLeadTimeAsync(long idShiire) {
+		var shiire = await LoadFullShiireAsync(idShiire);
+		if (shiire != null) shiireLeadTimeDays = shiire.LeadTimeDays;
+	}
+
+	// 選択ダイアログ(QueryListSimpleParam)は Id/Code/Name しか返さないため、掛率・リードタイムはIdで1件取得し直す。
+	async Task<MasterShiire?> LoadFullShiireAsync(long idShiire) {
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var msg = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryByIdParam),
+			DataMsg = Common.SerializeObject(new QueryByIdParam(typeof(MasterShiire), idShiire))
+		};
+		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
+		if (reply.Code < 0) return null;
+		return Common.DeserializeObject(reply.DataMsg ?? "{}", reply.DataType) as MasterShiire;
+	}
+
+	// 発注日 + 仕入先のリードタイム日数で納品予定日を再計算する（常に上書き）。
+	void RecalcNouhinDay() {
+		if (!DateTime.TryParseExact(CurrentEdit.DenDay, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var denDay)) return;
+		CurrentEdit.NouhinDay = denDay.AddDays(shiireLeadTimeDays).ToString("yyyyMMdd");
 	}
 
 	protected override object CreateInsertParam() {
@@ -191,11 +243,9 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 			Current = new Tran13Hachu {
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
 				Kubun = (int)EnumHachu.Hachu,
+				Rate = 100,
 				Jmeisai = [],
 			};
-		}
-		if (Current.Rate == 0) {
-			_ = LoadTaxRateAsync();
 		}
 		SelectedTabIndex = 1;
 	}
@@ -242,7 +292,7 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		await RunPrintPdfAsync("HachuInput_detail.qfm", null, new QueryListSqlParam(typeof(Tran13Hachu), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
-	const string KubunLabel = "case Kubun when 10 then '発注' when 20 then '返品' when 30 then '値引' when 99 then 'その他' else cast(Kubun as text) end";
+	const string KubunLabel = "case Kubun when 10 then '発注' when 11 then '追加発注' when 15 then '自動発注' when 20 then '返品' when 30 then '値引' when 99 then 'その他' else cast(Kubun as text) end";
 
 	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
 	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
@@ -413,11 +463,18 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	[RelayCommand]
-	void DoSelectShiire() {
+	async Task DoSelectShiire() {
 		var shiire = ShowSelectDialog<MasterShiire>(typeof(MasterShiire), "", "Code", startPos: CurrentEdit.Id_Shiire);
 		if (shiire == null) return;
 		CurrentEdit.Id_Shiire = shiire.Id;
 		CurrentEdit.VShiire = new CodeNameView { Sid = shiire.Id, Cd = shiire.Code ?? "", Mei = shiire.Name ?? "" };
+
+		// 選択ダイアログはCode/Nameしか返さないため、掛率・リードタイムはIdで1件取得し直す。
+		var fullShiire = await LoadFullShiireAsync(shiire.Id);
+		if (fullShiire == null) return;
+		shiireLeadTimeDays = fullShiire.LeadTimeDays;
+		CurrentEdit.Rate = fullShiire.RateProper;
+		RecalcNouhinDay();
 	}
 
 	[RelayCommand]

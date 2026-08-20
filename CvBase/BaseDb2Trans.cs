@@ -1488,6 +1488,10 @@ public sealed partial class Tran13Hachu : TranAllHeader {
 public enum EnumHachu : int {
 	[Comment("発注")]
 	Hachu = 10,
+	[Comment("追加発注")]
+	Tsuika = 11,
+	[Comment("自動発注")]
+	Jido = 15,
 	[Comment("発注返品")]
 	Henpin = 20,
 	[Comment("値引")]
