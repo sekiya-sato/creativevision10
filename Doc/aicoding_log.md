@@ -1,3 +1,35 @@
+## [2026-08-21] 発注書QFM差し替えと出力SQL列調整
+
+### Agent
+- OpenAI GPT-5 : OpenAI : Sekiya Sato Codex
+
+### Editor
+- Codex
+
+### 目的
+- `CvWpfclient.Views._03Hatchu.HachuFormView` の出力を、旧cvnetの `HachuForm.qfm` と `d_sql.txt` の列定義に合わせる。
+
+### 判断
+- 旧 `data.txt` は57列だったため、SQLはitem1～item57を出力し、差し替えQFMに定義されているitem58・item59は空欄のままとする。
+- item16「総合計」は現行発注ヘッダの税計算後合計ではなく、旧帳票に合わせて `KingakuTotal` を出力する。
+- item3「支払先CD」は `Id_Paysaki` がある場合は支払先コード、ない場合は仕入先コードへフォールバックする。
+- 現行マスタにFAX項目がないため、item41・item47・item51は空欄とする。
+
+### 実施内容
+- `refer/qfmsample/HachuFormView/HachuForm.qfm` を `printform/HachuForm.qfm` へ内容を変更せず上書きした。
+- `HachuFormViewModel.cs` のSQLを、旧列順に合わせてヘッダ・明細・住所情報・取引区分名・バーコードを57列で出力する構成へ変更した。
+- 仕入先・入庫先・自社の住所系情報は現行マスタから取得し、伝票時点の名称はV列を優先した。
+
+### 検証
+- `CvWpfclient/CvWpfclient.csproj` のビルド: 成功（警告0、エラー0）。
+- `server-user163.db` を読み取り専用で使用し、同SQL構成を57列・8行で実行できることを確認。
+- SQLのitemコメント57件と旧 `d_sql.txt` の57列名を比較し、不一致なし。
+- QFMはcp932ラウンドトリップ、XML構文、`printstream`、CSV `data.txt`、item59件を確認。元ファイルと差し替え先のSHA256も一致した。
+- 共通 `validate_qfm.py` は旧cvnet QFMの位置（y=16、height=264）が共通期待値（y=8、height=272）と異なるため終了コード1となった。指定どおりQFMをそのまま使用するため、位置属性は変更していない。
+- 実アプリ起動・画面操作・実DBデータでのPDF出力確認は未実施。
+
+---
+
 ## [2026-08-21] 受注配分入力を実装
 
 ### Agent

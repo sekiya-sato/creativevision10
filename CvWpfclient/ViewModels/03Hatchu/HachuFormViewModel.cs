@@ -61,29 +61,104 @@ public partial class HachuFormViewModel : Helpers.BaseReportViewModel {
 		if (long.TryParse(DenNoTo.Trim(), out var noTo)) where += $" AND h.Id <= {noTo}";
 		if (IsHachuOnly) where += " AND h.Kubun = 10";
 
-		// item1..10 = ヘッダ（明細各行に同値を繰り返す） / item11..17 = 明細
+		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
+			((int)EnumHachu.Hachu, "発注"),
+			((int)EnumHachu.Tsuika, "追加発注"),
+			((int)EnumHachu.Jido, "自動発注"),
+			((int)EnumHachu.Henpin, "返品"),
+			((int)EnumHachu.Nebiki, "値引"),
+			((int)EnumHachu.Other, "その他"));
+
+		// 旧cvnetのHachuForm.qfmはitem1..item57のCSV列を使用する。
+		// item58/59はqfm側に定義されているが、旧data.txtには列がないため出力しない。
+		// ヘッダ値は明細各行に繰り返し、qfm側で単票ヘッダと明細へ振り分ける。
 		var sql = $@"
+WITH header AS (
+    SELECT
+        h.*,
+        ifnull(si.PostalCode,'') AS shiirePostalCode,
+        trim(ifnull(si.Address1,'') || ifnull(si.Address2,'') || ifnull(si.Address3,'')) AS shiireAddress,
+        ifnull(si.Tel,'') AS shiireTel,
+        CASE
+            WHEN ifnull(si.Id_Paysaki,0) > 0 THEN ifnull(ps.Code,ifnull(si.Code,''))
+            ELSE ifnull(si.Code,'')
+        END AS paysakiCode,
+        ifnull(so.Code,'') AS sokoCode,
+        ifnull(so.Name,'') AS sokoMasterName,
+        ifnull(so.PostalCode,'') AS sokoPostalCode,
+        trim(ifnull(so.Address1,'') || ifnull(so.Address2,'') || ifnull(so.Address3,'')) AS sokoAddress,
+        ifnull(so.Tel,'') AS sokoTel,
+        ifnull(sys.Name,'') AS sysName,
+        ifnull(sys.PostalCode,'') AS sysPostalCode,
+        trim(ifnull(sys.Address1,'') || ifnull(sys.Address2,'') || ifnull(sys.Address3,'')) AS sysAddress,
+        ifnull(sys.Tel,'') AS sysTel
+    FROM Tran13Hachu h
+    LEFT JOIN MasterShiire si ON si.Id = h.Id_Shiire
+    LEFT JOIN MasterShiire ps ON ps.Id = si.Id_Paysaki
+    LEFT JOIN MasterTokui so ON so.Id = h.Id_Soko
+    LEFT JOIN MasterSysman sys ON sys.Id = 1
+    WHERE {where}
+)
 SELECT
-    {TranMeisaiSql.DateLabel("h.DenDay")}  AS denDayLabel,
-    CAST(h.Id AS TEXT)                     AS denNoText,
-    {TranMeisaiSql.HeaderCode("VShiire")}  AS shiireCode,
-    {TranMeisaiSql.HeaderName("VShiire")}  AS shiireName,
-    h.Rate                                 AS rate,
-    h.SuTotal                              AS suTotal,
-    h.KingakuTotal                         AS kingakuTotal,
-    CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + h.Tax END AS total,
-    ifnull((SELECT sy.Name FROM MasterSysman sy WHERE sy.Id = 1),'')  AS sysName,
-    ifnull((SELECT sy.Tel  FROM MasterSysman sy WHERE sy.Id = 1),'')  AS sysTel,
-    {TranMeisaiSql.Str("Code_Shohin")}     AS shohinCode,
-    {TranMeisaiSql.Str("Mei_Shohin")}      AS shohinName,
-    {TranMeisaiSql.Str("Mei_Col")}         AS colName,
-    {TranMeisaiSql.Str("Mei_Siz")}         AS sizName,
-    {TranMeisaiSql.Num("Su")}              AS su,
-    {TranMeisaiSql.Num("Tanka")}           AS tanka,
-    {TranMeisaiSql.Num("Kingaku")}         AS kingaku
-FROM Tran13Hachu h, {TranMeisaiSql.From}
+    {TranMeisaiSql.HeaderCode("VShiire")},                    /* item1  取引先CD1 */
+    {TranMeisaiSql.HeaderName("VShiire")},                    /* item2  仕入先名 */
+    paysakiCode,                                                /* item3  支払先CD */
+    h.Id,                                                        /* item4  SEQ_NO */
+    {TranMeisaiSql.Num("No")},                                 /* item5  行NO */
+    ifnull(h.DenDay,''),                                         /* item6  在庫計上日 */
+    '19010101',                                                  /* item7  掛計上日 */
+    ifnull(h.NouhinDay,''),                                     /* item8  納品日 */
+    h.Rate,                                                      /* item9  掛率1 */
+    {TranMeisaiSql.HeaderCode("VShain")},                      /* item10 入力社員CD */
+    {TranMeisaiSql.HeaderName("VShain")},                      /* item11 入力社員名 */
+    h.SuTotal,                                                   /* item12 数量合計 */
+    h.KingakuTotal,                                              /* item13 明細金額合計 */
+    h.JodaiTotal,                                                /* item14 上代合計 */
+    '請求時一括',                                                 /* item15 消費税 */
+    h.KingakuTotal,                                              /* item16 総合計 */
+    ifnull(h.Memo,''),                                           /* item17 メモ */
+    {TranMeisaiSql.Str("Code_Shohin")},                         /* item18 商品CD */
+    {TranMeisaiSql.Str("Mei_Shohin")},                          /* item19 商品名 */
+    {TranMeisaiSql.Str("Code_Col")},                            /* item20 色CD */
+    {TranMeisaiSql.Str("Mei_Col")},                             /* item21 色名 */
+    {TranMeisaiSql.Str("Code_Siz")},                            /* item22 サイズCD */
+    {TranMeisaiSql.Str("Mei_Siz")},                             /* item23 サイズ名 */
+    {TranMeisaiSql.Num("Su")},                                  /* item24 数量 */
+    {TranMeisaiSql.Num("Tanka")},                               /* item25 単価 */
+    {TranMeisaiSql.Num("Kingaku")},                             /* item26 金額 */
+    {TranMeisaiSql.Num("Jodai")},                               /* item27 上代単価 */
+    {TranMeisaiSql.Num("Su")} * {TranMeisaiSql.Num("Jodai")},   /* item28 上代金額 */
+    {TranMeisaiSql.Num("No")},                                  /* item29 順 */
+    '',                                                          /* item30 伝票印字1 */
+    '',                                                          /* item31 伝票印字2 */
+    '',                                                          /* item32 伝票印字3 */
+    '',                                                          /* item33 伝票印字4 */
+    printf('%08d', h.Id),                                        /* item34 BARCODE */
+    h.Kubun,                                                     /* item35 取引区分 */
+    sokoCode,                                                     /* item36 入庫先CD */
+    coalesce(nullif({TranMeisaiSql.HeaderName("VSoko")},''), sokoMasterName), /* item37 入庫先名 */
+    sokoPostalCode,                                               /* item38 入庫先郵便番号 */
+    sokoAddress,                                                  /* item39 入庫先住所 */
+    sokoTel,                                                      /* item40 入庫先TEL */
+    '',                                                          /* item41 入庫先FAX */
+    {kubunLabel},                                                 /* item42 取引区分名 */
+    sysName,                                                      /* item43 自社名 */
+    sysPostalCode,                                                /* item44 郵便番号 */
+    sysAddress,                                                   /* item45 住所 */
+    sysTel,                                                       /* item46 TEL */
+    '',                                                          /* item47 FAX */
+    shiirePostalCode,                                             /* item48 得意先郵便番号 */
+    shiireAddress,                                                /* item49 得意先住所 */
+    shiireTel,                                                    /* item50 得意先TEL */
+    '',                                                          /* item51 得意先FAX */
+    '',                                                          /* item52 固定文字 */
+    '',                                                          /* item53 メーカー品番 */
+    '',                                                          /* item54 受注番号 */
+    '',                                                          /* item55 単位 */
+    {TranMeisaiSql.Str("Mei_Shohin")},                          /* item56 明細名称 */
+    {TranMeisaiSql.Str("Memo")}                                 /* item57 明細メモ */
+FROM header h, {TranMeisaiSql.From}
 WHERE {TranMeisaiSql.Guard}
-  AND {where}
 ORDER BY h.Id, {TranMeisaiSql.Num("No")}";
 
 		return Task.FromResult<QueryListSqlParam?>(new QueryListSqlParam(typeof(object), sql, [.. parameters]));
