@@ -53,6 +53,12 @@ public static class CvMsgErrorCode {
 	/// DataType に <c>ShippingShortageDto[]</c> を載せて割れたSKUを返す。
 	/// </summary>
 	public const int ShippingUnavailable = -9903;
+
+	/// <summary>
+	/// パラメータが業務条件を満たしていない（画面で直せる入力エラー）。
+	/// Option にそのまま表示できるメッセージを載せる。
+	/// </summary>
+	public const int InvalidParameter = -9904;
 }
 
 /// <summary>

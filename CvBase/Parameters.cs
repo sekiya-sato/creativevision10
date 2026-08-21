@@ -316,6 +316,26 @@ public sealed record ShippingCreateResult(long[] CreatedSlipIds, int ReleasedCou
 public sealed record ShippingShortageDto(long Id_Soko, long Id_Shohin, long Id_Col, long Id_Siz, int Shiji, int Yuko);
 
 /// <summary>
+/// 期首残高（売掛・請求・買掛・支払）の登録パラメータ。
+/// <para>
+/// 対象日付の既存行を <paramref name="OwnerIds"/> の取引先ぶんだけ削除してから登録し直す（洗い替え）。
+/// 削除と登録は1トランザクションで行う。<c>InsertBulkParam</c> は Insert のみで一意キー(uk1)違反になるため
+/// 再取込に使えず、行単位の Delete では原子性が保てないので専用パラメータを設けている。
+/// 仕様は `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` を参照する。
+/// </para>
+/// </summary>
+/// <param name="TableName">対象テーブル名。<c>OpeningBalanceCsv.AllowedTableNames</c> の4種のみ</param>
+/// <param name="KeyDate">期首行のキー。売掛・買掛は DenMonth(yyyyMM)、請求・支払は DenDay(yyyyMMdd)</param>
+/// <param name="OwnerIds">洗い替え対象の Id_Tokui / Id_Shiire。CSVに現れた取引先だけを対象にする</param>
+/// <param name="ItemsJson">登録する行のJSON配列。残高0で削除だけの取引先は含まれない</param>
+public sealed record OpeningBalanceImportParam(string TableName, string KeyDate, long[] OwnerIds, string ItemsJson);
+
+/// <summary>期首残高登録の結果</summary>
+/// <param name="Deleted">削除した既存行数</param>
+/// <param name="Inserted">登録した行数</param>
+public sealed record OpeningBalanceImportResult(int Deleted, int Inserted);
+
+/// <summary>
 /// クエリI/F : CSV出力パラメータ (Sql出力パラメータはQueryListSqlParamを使う)
 /// </summary>
 public sealed record PrintByCsvParam(string CsvData);

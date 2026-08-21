@@ -1,3 +1,52 @@
+## [2026-08-21] 残高登録処理（BalanceRegistrationView）の実装
+
+### Agent
+- Anthropic Claude Opus 5 : Anthropic : Claude Code
+
+### Editor
+- Claude Code
+
+### 目的
+- 移行時の期首売掛残・請求残・買掛残・支払残を投入する専用画面を新設する。
+- 2026-08-19 の D-08 決定（専用画面を作らず外部CSVマスタ取込で代替）を置き換え、外部CSVマスタ取込・取込レイアウト作成の実装を流用する。
+
+### 判断
+- 汎用CSV取込では次の4点を担保できないため専用画面を新設した。(1) `InsertBulkParam` は Insert のみで再取込が一意キー(uk1)違反になる、(2) 期首前チェックが無い、(3) 繰越の引き継ぎ方が区分で異なる、(4) 行単位 Delete では部分失敗で不整合になる。
+- **繰越の引き継ぎ方が2方式ある**ことを `SummaryDb.cs` の再計算SQLで確認した。売掛/買掛は前月行の `Balance` 列、請求/支払は `DayTo < 開始日` の全行の `SUM(TotalIn - TotalSales)`（`Balance` 列は読まない）である。請求/支払で `Balance` だけを入れた期首行は繰越に効かないため、画面は4区分すべてで `Balance` と合計列の双方を埋める。
+- ユーザーが触れるCSVは日本語1行ヘッダの「標準形式」とし、金額は常に正数＝未回収残とした。内部の `Balance`（負＝未回収）への変換は画面が行い、符号の切替UIは置かない。旧3行ヘッダの「詳細形式」も自動判別で受け付ける（`Balance` は内部符号として解釈）。
+- 残高0の行は、既存行があれば削除、無ければ何もしない。テンプレートが全取引先を出力するため、この規則が無いと `Summary*` に0行が大量に作られる。
+- 洗い替えはCSVに現れた取引先だけを対象にし、CSVに無い取引先の既存行は触らない。
+- テンプレート出力は `TenType IN (1,3)`（卸先・売仕店のみ）・選択締日・コード範囲で絞る。取込時のコード解決は一切絞らない。絞ると対象外の取引先が「マスタにありません」という誤ったエラーになり、本来の警告・エラーが出せなくなる。
+- CSV解析・検証・行生成は WPF/DB 非依存の純ロジックとして `CvBase/OpeningBalanceCsv.cs` へ置き、`Tests/TestServer` から直接検証した（`PaysakiClosingCheck` と同じ置き方）。クライアント専用の場所に置くとテストのためにWPF参照のテストプロジェクトが必要になるため。
+- Excel経由のCSVを前提に、桁区切りカンマ・通貨記号・全角数字・会計表記 `(1200)` を受け付ける数値正規化を入れた。この緩和は残高登録の標準形式だけに適用し、`ExternalCsvImportView` の既存挙動は変えていない。
+- テンプレートCSVは Excel で開いて化けないよう BOM 付き UTF-8 で出力する。取込は BOM 有無どちらも受け付ける。
+
+### 実施内容
+- `CvAsset/CsvText.cs` を新設し、RFC4180相当のCSV解析・組み立てを層0へ集約した。
+- `CvBase/OpeningBalanceCsv.cs` を新設した。区分定義（対象テーブル・キー列・取引先マスタ）、標準形式CSVの解析と出力、数値・日付の正規化、内訳の自動生成と整合検査、行状態（新規/上書き/削除/対象外）の判定、取引先照会SQLの組み立て、期首行キー日付の算出を持つ。
+- `CvBase/Parameters.cs` に `OpeningBalanceImportParam` / `OpeningBalanceImportResult` を追加した。
+- `CodeShare/ICoreService.cs` に `CvMsgErrorCode.InvalidParameter`(-9904) を追加した。
+- `CvDomainLogic/OpeningBalanceDb.cs` を新設し、許可リスト・期首ガード・洗い替え範囲の整合を再検査してから、削除と登録を Serializable の1トランザクションで実行するようにした。
+- `CvServer/Services/HandlerClass.cs` の `HandleOpExecute` に分岐と `HandleOpeningBalanceImport` を追加した。
+- `CvWpfclient/Helpers/CsvImportEngine.cs` を新設し、`ExternalCsvImportViewModel` から取込レイアウトの列定義解決・値変換・マスタコード解決・型マップを抽出した。`ExternalCsvImportViewModel` と `ImportTemplateCreateViewModel` を委譲に変更した（振る舞いは不変）。
+- `BalanceRegistrationViewModel` / `BalanceRegistrationView.xaml` を実装した。①期首情報→②テンプレートCSV出力→③CSV読込と登録の3ブロック構成、F3=テンプレート出力・F4=選択・F5=再検証・F6=登録実行・ESC=戻る。
+- `CvWpfclient/Models/MenuData.cs` の `addInfo` を「準備中」から実内容へ更新した。
+- 詳細設計 `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` を作成し、機能完成度チェックリストの D-08 と残高登録行を専用画面ありへ更新した。
+- 併せて請求書印刷の前回残高の符号誤りを修正した。`SeikyuBalanceDetailViewModel` の `s.Balance - s.TotalSales + s.TotalIn` を `s.Balance + s.TotalSales - s.TotalIn` へ改めた。`Balance = 前回残高 + TotalIn - TotalSales` の逆算であり、旧式は当月増減を2回効かせて `前回残高 + 2×(TotalIn - TotalSales)` を出していた。期首残高を投入すると請求書の前回残高欄（`SeikyuBalanceDetail.qfm` の item5）に必ず現れるため本作業に含めた。回帰テスト `CalcSummaryUriSei_PreviousBalanceIsRecoveredByAddingSalesAndSubtractingPayments` を `Tests/TestServer/SummaryKakeDbTests.cs` へ追加した。
+
+### 検証
+- `creativevision10.slnx` のビルド: 成功（警告0、エラー0）。
+- `Tests/TestServer` 全件: 168件成功・0件失敗。うち本作業の新規は44件（`OpeningBalanceCsvTests` 29件、`OpeningBalanceDbTests` 14件、前回残高の回帰テスト1件）。
+- `OpeningBalanceDbTests` は一意キー(uk1)を含むインデックスを作った実スキーマで実行し、同一CSVの再取込で uk1 違反にならず件数も増えないこと、途中失敗で1件も残らないこと、`OwnerIds` に無い取引先の既存行が消えないことを確認した。
+- 取引先照会SQLは4区分×2スコープの計8本を実SQLiteスキーマで実行して確認した。`MasterShiire` に `TenType` 列が無い問題をこのテストで検出し、買掛・支払では `0 AS TenType` を出力するよう修正した。
+- 期首行の繰越結合を確認した。売掛は `CalcSummaryUriKake` 実行後も期首前行が上書きされないこと、請求は期首行の `TotalIn-TotalSales` が翌締期間（20260731）の `Balance` の起点になることを実DBで確認した。
+- 残高の符号規約は開発DB（`server-user163.db`）の実データで確認した。`SummaryKaiKake` / `SummaryKaiShi` の `Balance=-10400`・`TotalShiire=15400`・`TotalOut=5000` は前残0のとき `-10400 = 0 + 5000 - 15400` であり、`Balance = 前残 + 入金 - 売上`（未回収は負）が成り立つ。
+- 前回残高の回帰テストは `SummaryDb` が実際に作った連続2締期間に対して、正しい式が前月の当月残高と一致し旧式が一致しないことを確認する。ただし `SeikyuBalanceDetailViewModel` のSQL文字列自体は実行していない（CvWpfclient はWPF参照のためTestServerから呼べない）。式の一致はソースコメントで担保している。
+- 既存画面の非回帰はビルドと既存テスト全件成功で確認した。`ExternalCsvImportView` / `ImportTemplateCreateView` の実アプリ操作での確認は未実施。
+- `BalanceRegistrationView.xaml` の全バインディングパス（48件）をViewModel・行クラスのメンバと機械的に突合し、未解決が無いことを確認した。
+- **実アプリ起動・画面操作・実DBでの4区分投入は未実施**（サーバ起動とログインを伴う対話操作が必要）。詳細設計8章の実行時確認（`tools/summaryreconcile` での突合）も未実施で残っている。
+- `git diff --check` はクリーン。新規・変更ファイルはCRLF・UTF-8。
+
 ## [2026-08-21] 発注書QFM差し替えと出力SQL列調整
 
 ### Agent

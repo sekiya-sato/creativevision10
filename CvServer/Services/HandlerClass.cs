@@ -166,8 +166,35 @@ public partial class CoreService {
 			ShippingConfirmParam confirm => HandleShippingConfirm(request.Flag, confirm),
 			ShippingCancelParam cancel => HandleShippingCancel(request.Flag, cancel),
 			ShippingCreateParam create => HandleShippingCreate(request.Flag, create),
+			OpeningBalanceImportParam opening => HandleOpeningBalanceImport(request.Flag, opening),
 			_ => throw new NotImplementedException(),
 		};
+	}
+
+	/// <summary>
+	/// 期首残高（売掛・請求・買掛・支払）の洗い替え登録。対象日付の既存行を指定取引先ぶん削除してから登録する。
+	/// <para>
+	/// <c>Summary*</c> 系は <c>ITranSoko</c> でも <c>IBaseCodeName</c> でもないため、
+	/// <see cref="WriteEffectRunner"/> の付随処理（在庫再集計・V*列伝播・引当）は対象外である。
+	/// </para>
+	/// </summary>
+	private CvMsg HandleOpeningBalanceImport(CvFlag flag, OpeningBalanceImportParam opening) {
+		_logger.LogInformation("パラメータ OpeningBalanceImportParam テーブル={Table} キー={KeyDate} 対象取引先={Count}件",
+			opening.TableName, opening.KeyDate, opening.OwnerIds?.Length ?? 0);
+
+		try {
+			var result = new OpeningBalanceDb(_db).Import(opening);
+			_logger.LogInformation("期首残高登録 削除={Deleted}件 登録={Inserted}件", result.Deleted, result.Inserted);
+			return CreateSuccessResponse(flag, typeof(OpeningBalanceImportResult), Common.SerializeObject(result));
+		}
+		catch (ArgumentException ex) {
+			// 入力条件（テーブル名・期首前・洗い替え範囲）の違反は画面で直せるのでメッセージだけ返す
+			return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, ex.Message,
+				typeof(OpeningBalanceImportParam), Common.SerializeObject(opening));
+		}
+		catch (Exception ex) {
+			return CreateExceptionResponse(flag, ex, typeof(OpeningBalanceImportParam), Common.SerializeObject(opening));
+		}
 	}
 
 	/// <summary>

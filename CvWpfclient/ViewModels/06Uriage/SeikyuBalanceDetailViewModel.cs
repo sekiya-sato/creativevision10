@@ -11,7 +11,9 @@ namespace CvWpfclient.ViewModels._06Uriage;
 ///
 /// 請求ヘッダは集計テーブル SummaryUriSei（請求計算＝月次更新処理の成果物）を読む。
 /// 対象期間は同テーブルの DayFrom〜DayTo。締め処理を回していない請求日は行が無く空になる。
-/// 前回残高は当月残高から当月増減を戻して算出する（Balance - TotalSales + TotalIn）。
+/// 前回残高は当月残高から当月増減を戻して算出する（Balance + TotalSales - TotalIn）。
+/// SummaryUriSei の当月残高は Balance = 前回残高 + TotalIn - TotalSales で作られるため、
+/// 逆算は TotalSales を足し TotalIn を引く。符号を逆にすると当月増減を2回効かせてしまう。
 ///
 /// 明細1行=CSV1行で、ヘッダ項目は各行に同じ値を繰り返す。qfm 側でヘッダ領域と明細領域に
 /// 振り分ける前提（CSV入力のフォームで単票を作る際の定石）。
@@ -77,7 +79,7 @@ WITH headers AS (
         s.Id_Tokui AS Id_Tokui,
         t.Code AS tokuiCode, t.Name AS tokuiName,
         s.DenDay AS seikyuDay, s.DayFrom AS dayFrom, s.DayTo AS dayTo,
-        s.Balance - s.TotalSales + s.TotalIn AS prevBalance,
+        s.Balance + s.TotalSales - s.TotalIn AS prevBalance,
         s.TotalSales AS totalSales,
         s.TotalIn    AS totalIn,
         s.Tax        AS tax,

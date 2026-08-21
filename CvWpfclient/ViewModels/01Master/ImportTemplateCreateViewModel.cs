@@ -274,20 +274,7 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 		SelectedColumnCount = ColumnList.Count(x => x.IsSelected);
 	}
 
-	private static IEnumerable<PropertyInfo> GetDbProperties(Type type) {
-		var props = type
-			.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-			.Where(x => x.CanRead)
-			.Where(x => x.GetIndexParameters().Length == 0)
-			.ToList();
-
-		return [
-			.. props.Where(x => x.Name == "Id"),
-			.. props.Where(x => x.Name == "Vdc"),
-			.. props.Where(x => x.Name == "Vdu"),
-			.. props.Where(x => x.Name != "Id" && x.Name != "Vdc" && x.Name != "Vdu")
-		];
-	}
+	private static IEnumerable<PropertyInfo> GetDbProperties(Type type) => CsvImportEngine.GetDbProperties(type);
 
 	private static bool TryGetColumnSpec(PropertyInfo property, out string dataType, out string length, out string importTypeText, out bool isJson) {
 		dataType = string.Empty;
@@ -394,44 +381,17 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 		}
 	}
 
-	private static string FormatOutputValue(object? value, PropertyInfo property) {
-		if (value == null) {
-			return string.Empty;
-		}
+	private static string FormatOutputValue(object? value, PropertyInfo property) =>
+		CsvImportEngine.FormatOutputValue(value, property);
 
-		if (property.GetCustomAttribute<SerializedColumnAttribute>() != null || IsJsonLikeType(value.GetType())) {
-			return JsonConvert.SerializeObject(value, Formatting.None);
-		}
-
-		return value switch {
-			DateTime date => date.ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture),
-			IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty,
-			_ => value.ToString() ?? string.Empty
-		};
-	}
-
-	private static string BuildCsvLine(IEnumerable<string> fields) =>
-		string.Join(",", fields.Select(EscapeCsvField));
-
-	private static string EscapeCsvField(string? value) {
-		var text = value ?? string.Empty;
-		if (text.Contains('"')) {
-			text = text.Replace("\"", "\"\"");
-		}
-
-		return text.IndexOfAny([',', '"', '\r', '\n']) >= 0
-			? $"\"{text}\""
-			: text;
-	}
+	private static string BuildCsvLine(IEnumerable<string> fields) => CsvText.BuildLine(fields);
 
 	private static long ToLocalDateStartUtcTicks(DateTime date) {
 		var localStart = DateTime.SpecifyKind(date.Date, DateTimeKind.Local);
 		return localStart.ToUniversalTime().Ticks;
 	}
 
-	private static bool IsJsonLikeType(Type type) =>
-		(type != typeof(string) && type != typeof(byte[]) && typeof(IEnumerable).IsAssignableFrom(type))
-		|| (type.IsClass && type != typeof(string));
+	private static bool IsJsonLikeType(Type type) => CsvImportEngine.IsJsonLikeType(type);
 
 	private static string BuildDisplayName(string tableName, string comment) {
 		if (string.IsNullOrWhiteSpace(comment)) {
@@ -453,65 +413,11 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 			? tableName[3..]
 			: tableName;
 
-	private static string GetPropertyOldName(PropertyInfo property) {
-		var attr = property.GetCustomAttribute<OldTableCommentAttr>();
-		if (!string.IsNullOrWhiteSpace(attr?.Name)) {
-			return attr.Name;
-		}
+	private static string GetPropertyOldName(PropertyInfo property) => CsvImportEngine.GetPropertyOldName(property);
 
-		var declaringType = property.DeclaringType;
-		if (declaringType == null) {
-			return property.Name;
-		}
+	private static string GetPropertyOldComment(PropertyInfo property) => CsvImportEngine.GetPropertyOldComment(property);
 
-		var fieldName = property.Name.Length == 0
-			? string.Empty
-			: char.ToLowerInvariant(property.Name[0]) + property.Name[1..];
-		var field = declaringType.GetField(
-			fieldName,
-			BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-		return field?.GetCustomAttribute<OldTableCommentAttr>()?.Name ?? property.Name;
-	}
-
-	private static string GetPropertyOldComment(PropertyInfo property) {
-		var attr = property.GetCustomAttribute<OldTableCommentAttr>();
-		if (!string.IsNullOrWhiteSpace(attr?.Content)) {
-			return attr.Content;
-		}
-
-		var declaringType = property.DeclaringType;
-		if (declaringType == null) {
-			return string.Empty;
-		}
-
-		var fieldName = property.Name.Length == 0
-			? string.Empty
-			: char.ToLowerInvariant(property.Name[0]) + property.Name[1..];
-		var field = declaringType.GetField(
-			fieldName,
-			BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-		return field?.GetCustomAttribute<OldTableCommentAttr>()?.Content ?? string.Empty;
-	}
-
-	private static Dictionary<string, Type> CreateTableTypeMap() =>
-		AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(SafeGetTypes)
-			.Where(x => typeof(BaseDbClass).IsAssignableFrom(x) && !x.IsAbstract)
-			.Where(x => x.GetCustomAttribute<NoCreateAttribute>() == null)
-			.GroupBy(GetTableName, StringComparer.OrdinalIgnoreCase)
-			.ToDictionary(x => x.Key, x => x.First(), StringComparer.OrdinalIgnoreCase);
-
-	private static IEnumerable<Type> SafeGetTypes(Assembly assembly) {
-		try {
-			return assembly.GetTypes();
-		}
-		catch (ReflectionTypeLoadException ex) {
-			return ex.Types.Where(x => x != null).Cast<Type>();
-		}
-	}
-
-	private static string GetTableName(Type type) =>
-		type.GetCustomAttribute<TableNameAttribute>()?.Value ?? type.Name;
+	private static Dictionary<string, Type> CreateTableTypeMap() => CsvImportEngine.CreateTableNameOnlyMap();
 }
 
 public sealed partial class ImportTemplateColumnRow : ObservableObject {

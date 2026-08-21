@@ -287,6 +287,39 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
+	public void CalcSummaryUriSei_PreviousBalanceIsRecoveredByAddingSalesAndSubtractingPayments() {
+		// 請求書印刷(SeikyuBalanceDetailViewModel)の「前回残高」は当月残高から当月増減を戻して算出する。
+		// Balance = 前回残高 + TotalIn - TotalSales で作られるので、逆算は Balance + TotalSales - TotalIn。
+		// 符号を逆にすると当月増減が2回効いてしまうため、その式をここで固定する。
+		var db = PrepareUriSeiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		db.Insert(CreateBillingUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
+		db.Insert(CreateNyukin("20260715", 1, [(KinCash, 300)]));
+		db.Insert(CreateBillingUriage("20260810", 1, EnumUri00.Uriage, 2000, 200));
+		db.Insert(CreateNyukin("20260815", 1, [(KinCash, 500)]));
+
+		summaryDb.CalcSummaryUriSei("202607", 99, "A001", "A999");
+		summaryDb.CalcSummaryUriSei("202608", 99, "A001", "A999");
+
+		var july = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");
+		var august = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260831");
+
+		// 帳票が使う式をSQLとして実行し、前月の当月残高と一致することを確かめる
+		var prevBalance = db.FirstOrDefault<long>(
+			"SELECT s.Balance + s.TotalSales - s.TotalIn FROM SummaryUriSei s WHERE s.Id_Tokui=@0 AND s.DenDay=@1",
+			1, "20260831");
+		Assert.AreEqual(july.Balance, prevBalance, "前回残高は前月の当月残高と一致しなければならない");
+
+		// 符号を逆にした式（旧実装）は当月増減を2回効かせるので一致しない
+		var wrongBalance = db.FirstOrDefault<long>(
+			"SELECT s.Balance - s.TotalSales + s.TotalIn FROM SummaryUriSei s WHERE s.Id_Tokui=@0 AND s.DenDay=@1",
+			1, "20260831");
+		Assert.AreNotEqual(july.Balance, wrongBalance, "符号を逆にした式が偶然一致するテストデータでは検証にならない");
+		Assert.AreEqual(july.Balance + 2 * (august.TotalIn - august.TotalSales), wrongBalance);
+	}
+
+	[TestMethod]
 	public void CalcSummaryUriSei_SeparatesKubun99AsSonotaWithoutFoldingIntoUriage() {
 		// E11: 区分99(その他売上)は請求残(SummaryUriSei)ではSonotaへ分離集計し、TotalSalesにも加算する。
 		// 一方、CalcSummaryUriKake_UsesTotalForPositiveBreakdownAndNegativeBalance が示す通り

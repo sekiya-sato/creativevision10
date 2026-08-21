@@ -398,7 +398,7 @@ public partial class MenuData : ObservableObject {
 			new("▲ その他更新", new([
 				new("積送中クリア", typeof(Views._31Monthly.InTransitClearView), addInfo:"準備中"),
 				new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteView), addInfo:"準備中"),
-				new("残高登録処理", typeof(Views._31Monthly.BalanceRegistrationView), addInfo:"準備中"),
+				new("残高登録処理", typeof(Views._31Monthly.BalanceRegistrationView), addInfo:"期首の売掛/請求/買掛/支払残をテンプレートCSVで投入。期首前の年月で登録し再計算から凍結される"),
 				new("データ整理更新", typeof(Views._31Monthly.DataCleanupUpdateView), addInfo:"準備中"),
 				new("一時処理用(管理者用)", typeof(Views._31Monthly.TemporaryProcessingView), addInfo:"準備中"),
 			])),
