@@ -219,7 +219,7 @@ public partial class MenuData : ObservableObject {
 		new("■ 配分・出荷", new([
 			new("▲ 配分", new([
 				new("店舗配分入力", typeof(Views._07Haibun.ShopHaibunInputView), addInfo:"入荷予定･現在庫をSKU×店舗へ振り分けてTranHaibunを作成"),
-				new("受注配分入力", typeof(Views._07Haibun.JuchuHaibunInputView), addInfo:"準備中 受注残を呼び出して有効在庫から配分する"),
+				new("受注配分入力", typeof(Views._07Haibun.JuchuHaibunInputView), addInfo:"受注伝票を選び受注残をSKU別に配分。有効在庫は参照表示"),
 				new("在庫品配分", typeof(Views._07Haibun.ZaikoHinHaibunView), addInfo:"準備中 倉庫の有効在庫を一括で店舗へ配分する"),
 				new("得意先別配分入力", typeof(Views._07Haibun.TokuiHaibunInputView), addInfo:"準備中 得意先を軸に商品を振り分ける"),
 				new("配分データメンテ", typeof(Views._07Haibun.HaibunDataMenteView), addInfo:"準備中 管理者用。確定日･欠品数･完了FLGを直接修正する"),

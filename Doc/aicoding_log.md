@@ -1,3 +1,36 @@
+## [2026-08-21] 受注配分入力を実装
+
+### Agent
+- Claude Opus 5 : Anthropic : Sekiya Sato Claude Code
+
+### Editor
+- Claude Code
+
+### 目的
+- L0（空クラス）だった `CvWpfclient.Views._07Haibun.JuchuHaibunInputView` の仕様を確定し、実装する。旧CV.net【配分】-【受注配分入力】(`SubDlg_60_hbn15.crs`) に相当する画面。
+
+### 判断
+- 入力単位を**受注伝票1件＝配分1件**に決定（ユーザー確定 2026-08-21）。旧は「倉庫＋商品を選び SKU行×得意先列のクロス表」だったが、`RelateNo1 = 元伝票Id` の規約と出荷処理の伝票まとめ単位（`ShippingDb.CreateShippingSlips`）に素直に合う受注伝票単位へ変更した。複数得意先へ横断的に割り振る用途は「得意先別配分入力」で扱う。
+- 受注残は用途で2種に分けて定義した。一覧の「未配分残」= Σ_SKU MAX(受注数 − 出荷済 − 配分, 0)、明細の「受注残」= MAX(受注数 − 出荷済 − 確定済配分, 0)。明細側は洗い替え対象の配分を差し引かない（旧CV.netも編集対象の配分を残から除外していた）。
+- 配分可能数（有効在庫）= 在庫 − 引当 + 洗い替え対象配分。引当は `SummaryRealStock.ReserveQty`（materialize済み、決定 5.2.2c）を読み、洗い替えで消える自分の分だけ足し戻す。
+- 超過は有効在庫割れ・受注残超過とも**警告のみで登録可**（ユーザー確定）。受注残を超えた分は `RelateNo1 = 0` の別行にして、受注の自動完了判定へ混ざらないようにした。
+- 単価（`Tanka` / `Jodai` / `Gedai`）は受注明細の値をそのまま引き継ぐ。`DerivedJodai` の再解決はしない（伝票時点の価格を優先）。
+- 旧画面のCSV取込／出力、商品分類の可変条件グリッド、在庫数範囲、店舗表示のランク順は見送り（詳細設計 1.2）。
+
+### 実施内容
+- `Doc/spec/2026-08-21_受注配分入力_詳細設計.md` を新設し、入力単位の変更理由、受注残・有効在庫の算式、超過の扱い、画面構成、SQLの受け皿を定義。
+- `CvWpfclient/ViewModels/07Haibun/JuchuHaibunInputViewModel.cs`: 検索（受注No／受注日／指示日／納品日／得意先／入力者／商品CD／取引区分／配分状況）と受注一覧、配分明細（商品×色サイズ）、受注残読込・同数展開・全クリア・削除・登録（洗い替え）を実装。
+- `CvWpfclient/Views/07Haibun/JuchuHaibunInputView.xaml`: 旧画面と同じ2タブ構成（検索画面／修正・登録画面）を `HachuHaibunInputView` の構造に合わせて実装。
+- `CvWpfclient/Models/MenuData.cs`: 受注配分入力の「準備中」を外し、実装内容の説明へ更新。
+- サーバ・DBスキーマ・帳票の変更は無し。引当数は書き込み時にサーバ（`WriteEffectRunner` → `SummaryDb.CalcHaibun2Reserve`）が自動で引き直すため、クライアントからの再計算指示は入れていない。
+
+### 検証
+- `CvWpfclient/CvWpfclient.csproj` をビルド: 成功（警告0、エラー0）。
+- 新規SQL（受注残の3段結合、SKU別の出荷済・確定済配分、受注一覧のEXISTS絞り込み）を `server-user163.db` へ read-only で実行し、構文と結果形を確認。受注データが0件のDBのため件数検証は未実施。
+- `git diff --check`、変更・新規ファイルのCRLF（XAMLはBOM維持）を確認。
+- 実行時の画面確認（起動して操作）は未実施。受注データが無いため、受注登録後にMini-UATが必要。
+
+---
 ## [2026-08-20] サーバー・クライアントのログ出力を見直し
 
 ### Agent
