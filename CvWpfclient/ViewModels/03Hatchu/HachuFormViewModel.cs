@@ -72,6 +72,7 @@ public partial class HachuFormViewModel : Helpers.BaseReportViewModel {
 		// 旧cvnetのHachuForm.qfmはitem1..item57のCSV列を使用する。
 		// item58/59はqfm側に定義されているが、旧data.txtには列がないため出力しない。
 		// ヘッダ値は明細各行に繰り返し、qfm側で単票ヘッダと明細へ振り分ける。
+		// RawExecCmdはSELECT列名をDictionaryキーにするため、全列に一意なitem別名を付ける。
 		var sql = $@"
 WITH header AS (
     SELECT
@@ -100,63 +101,63 @@ WITH header AS (
     WHERE {where}
 )
 SELECT
-    {TranMeisaiSql.HeaderCode("VShiire")},                    /* item1  取引先CD1 */
-    {TranMeisaiSql.HeaderName("VShiire")},                    /* item2  仕入先名 */
-    paysakiCode,                                                /* item3  支払先CD */
-    h.Id,                                                        /* item4  SEQ_NO */
-    {TranMeisaiSql.Num("No")},                                 /* item5  行NO */
-    ifnull(h.DenDay,''),                                         /* item6  在庫計上日 */
-    '19010101',                                                  /* item7  掛計上日 */
-    ifnull(h.NouhinDay,''),                                     /* item8  納品日 */
-    h.Rate,                                                      /* item9  掛率1 */
-    {TranMeisaiSql.HeaderCode("VShain")},                      /* item10 入力社員CD */
-    {TranMeisaiSql.HeaderName("VShain")},                      /* item11 入力社員名 */
-    h.SuTotal,                                                   /* item12 数量合計 */
-    h.KingakuTotal,                                              /* item13 明細金額合計 */
-    h.JodaiTotal,                                                /* item14 上代合計 */
-    '請求時一括',                                                 /* item15 消費税 */
-    h.KingakuTotal,                                              /* item16 総合計 */
-    ifnull(h.Memo,''),                                           /* item17 メモ */
-    {TranMeisaiSql.Str("Code_Shohin")},                         /* item18 商品CD */
-    {TranMeisaiSql.Str("Mei_Shohin")},                          /* item19 商品名 */
-    {TranMeisaiSql.Str("Code_Col")},                            /* item20 色CD */
-    {TranMeisaiSql.Str("Mei_Col")},                             /* item21 色名 */
-    {TranMeisaiSql.Str("Code_Siz")},                            /* item22 サイズCD */
-    {TranMeisaiSql.Str("Mei_Siz")},                             /* item23 サイズ名 */
-    {TranMeisaiSql.Num("Su")},                                  /* item24 数量 */
-    {TranMeisaiSql.Num("Tanka")},                               /* item25 単価 */
-    {TranMeisaiSql.Num("Kingaku")},                             /* item26 金額 */
-    {TranMeisaiSql.Num("Jodai")},                               /* item27 上代単価 */
-    {TranMeisaiSql.Num("Su")} * {TranMeisaiSql.Num("Jodai")},   /* item28 上代金額 */
-    {TranMeisaiSql.Num("No")},                                  /* item29 順 */
-    '',                                                          /* item30 伝票印字1 */
-    '',                                                          /* item31 伝票印字2 */
-    '',                                                          /* item32 伝票印字3 */
-    '',                                                          /* item33 伝票印字4 */
-    printf('%08d', h.Id),                                        /* item34 BARCODE */
-    h.Kubun,                                                     /* item35 取引区分 */
-    sokoCode,                                                     /* item36 入庫先CD */
-    coalesce(nullif({TranMeisaiSql.HeaderName("VSoko")},''), sokoMasterName), /* item37 入庫先名 */
-    sokoPostalCode,                                               /* item38 入庫先郵便番号 */
-    sokoAddress,                                                  /* item39 入庫先住所 */
-    sokoTel,                                                      /* item40 入庫先TEL */
-    '',                                                          /* item41 入庫先FAX */
-    {kubunLabel},                                                 /* item42 取引区分名 */
-    sysName,                                                      /* item43 自社名 */
-    sysPostalCode,                                                /* item44 郵便番号 */
-    sysAddress,                                                   /* item45 住所 */
-    sysTel,                                                       /* item46 TEL */
-    '',                                                          /* item47 FAX */
-    shiirePostalCode,                                             /* item48 得意先郵便番号 */
-    shiireAddress,                                                /* item49 得意先住所 */
-    shiireTel,                                                    /* item50 得意先TEL */
-    '',                                                          /* item51 得意先FAX */
-    '',                                                          /* item52 固定文字 */
-    '',                                                          /* item53 メーカー品番 */
-    '',                                                          /* item54 受注番号 */
-    '',                                                          /* item55 単位 */
-    {TranMeisaiSql.Str("Mei_Shohin")},                          /* item56 明細名称 */
-    {TranMeisaiSql.Str("Memo")}                                 /* item57 明細メモ */
+    {TranMeisaiSql.HeaderCode("VShiire")} AS item1,                    /* 取引先CD1 */
+    {TranMeisaiSql.HeaderName("VShiire")} AS item2,                    /* 仕入先名 */
+    paysakiCode AS item3,                                                /* 支払先CD */
+    h.Id AS item4,                                                       /* SEQ_NO */
+    {TranMeisaiSql.Num("No")} AS item5,                                /* 行NO */
+    ifnull(h.DenDay,'') AS item6,                                       /* 在庫計上日 */
+    '19010101' AS item7,                                                 /* 掛計上日 */
+    ifnull(h.NouhinDay,'') AS item8,                                    /* 納品日 */
+    h.Rate AS item9,                                                     /* 掛率1 */
+    {TranMeisaiSql.HeaderCode("VShain")} AS item10,                    /* 入力社員CD */
+    {TranMeisaiSql.HeaderName("VShain")} AS item11,                    /* 入力社員名 */
+    h.SuTotal AS item12,                                                 /* 数量合計 */
+    h.KingakuTotal AS item13,                                           /* 明細金額合計 */
+    h.JodaiTotal AS item14,                                             /* 上代合計 */
+    '請求時一括' AS item15,                                               /* 消費税 */
+    h.KingakuTotal AS item16,                                           /* 総合計 */
+    ifnull(h.Memo,'') AS item17,                                        /* メモ */
+    {TranMeisaiSql.Str("Code_Shohin")} AS item18,                      /* 商品CD */
+    {TranMeisaiSql.Str("Mei_Shohin")} AS item19,                       /* 商品名 */
+    {TranMeisaiSql.Str("Code_Col")} AS item20,                         /* 色CD */
+    {TranMeisaiSql.Str("Mei_Col")} AS item21,                          /* 色名 */
+    {TranMeisaiSql.Str("Code_Siz")} AS item22,                         /* サイズCD */
+    {TranMeisaiSql.Str("Mei_Siz")} AS item23,                          /* サイズ名 */
+    {TranMeisaiSql.Num("Su")} AS item24,                               /* 数量 */
+    {TranMeisaiSql.Num("Tanka")} AS item25,                            /* 単価 */
+    {TranMeisaiSql.Num("Kingaku")} AS item26,                          /* 金額 */
+    {TranMeisaiSql.Num("Jodai")} AS item27,                            /* 上代単価 */
+    {TranMeisaiSql.Num("Su")} * {TranMeisaiSql.Num("Jodai")} AS item28, /* 上代金額 */
+    {TranMeisaiSql.Num("No")} AS item29,                               /* 順 */
+    '' AS item30,                                                       /* 伝票印字1 */
+    '' AS item31,                                                       /* 伝票印字2 */
+    '' AS item32,                                                       /* 伝票印字3 */
+    '' AS item33,                                                       /* 伝票印字4 */
+    printf('%08d', h.Id) AS item34,                                    /* BARCODE */
+    h.Kubun AS item35,                                                  /* 取引区分 */
+    sokoCode AS item36,                                                 /* 入庫先CD */
+    coalesce(nullif({TranMeisaiSql.HeaderName("VSoko")},''), sokoMasterName) AS item37, /* 入庫先名 */
+    sokoPostalCode AS item38,                                          /* 入庫先郵便番号 */
+    sokoAddress AS item39,                                             /* 入庫先住所 */
+    sokoTel AS item40,                                                 /* 入庫先TEL */
+    '' AS item41,                                                      /* 入庫先FAX */
+    {kubunLabel} AS item42,                                            /* 取引区分名 */
+    sysName AS item43,                                                 /* 自社名 */
+    sysPostalCode AS item44,                                           /* 郵便番号 */
+    sysAddress AS item45,                                              /* 住所 */
+    sysTel AS item46,                                                  /* TEL */
+    '' AS item47,                                                      /* FAX */
+    shiirePostalCode AS item48,                                        /* 得意先郵便番号 */
+    shiireAddress AS item49,                                           /* 得意先住所 */
+    shiireTel AS item50,                                               /* 得意先TEL */
+    '' AS item51,                                                      /* 得意先FAX */
+    '' AS item52,                                                      /* 固定文字 */
+    '' AS item53,                                                      /* メーカー品番 */
+    '' AS item54,                                                      /* 受注番号 */
+    '' AS item55,                                                      /* 単位 */
+    {TranMeisaiSql.Str("Mei_Shohin")} AS item56,                      /* 明細名称 */
+    {TranMeisaiSql.Str("Memo")} AS item57                            /* 明細メモ */
 FROM header h, {TranMeisaiSql.From}
 WHERE {TranMeisaiSql.Guard}
 ORDER BY h.Id, {TranMeisaiSql.Num("No")}";

@@ -1062,7 +1062,7 @@ function OnFetch() {
 			<position x="22" y="38" width="22" height="3"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item51"/>
-			<decode datatype="string" format="&quot;FAX. &quot;@"/>
+			<decode datatype="string" format=""/>
 			<font size="80"/>
 		</text>
 		<text id="Txt97" valign="middle">
@@ -1097,7 +1097,7 @@ function OnFetch() {
 			<position x="128" y="49" width="24" height="3"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item41"/>
-			<decode datatype="string" format="&quot;FAX. &quot;@"/>
+			<decode datatype="string" format=""/>
 			<font size="80"/>
 		</text>
 		<text id="Txt110" valign="middle">
@@ -1132,7 +1132,7 @@ function OnFetch() {
 			<position x="128" y="26" width="25" height="3"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item47"/>
-			<decode datatype="string" format="&quot;FAX. &quot;@"/>
+			<decode datatype="string" format=""/>
 			<font size="80"/>
 		</text>
 		<text id="Txt114" valign="middle">
