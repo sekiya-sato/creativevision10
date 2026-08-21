@@ -833,3 +833,34 @@
 - DBファイル、WAL/SHM、DBバックアップはコミット対象から除外する。
 
 ---
+## [2026-08-21] 請求・支払帳票のPDF目視確認とE7親子締日ワーニングの実データ発火確認
+
+### Agent
+- Anthropic Claude Opus 5 : Sekiya Sato Claude Code
+
+### Editor
+- Claude Code
+
+### 目的
+- チェックリスト §8.1 の残P0「帳票PDFの目視確認」と「E7警告の実データ発火確認」を閉じる。
+
+### 実施内容
+- 請求台帳／請求一覧表／支払台帳／支払一覧表／月別入金予定表／月別支払予定表の6帳票を、サーバ `PrintPdfService` と同経路
+  （帳票SQL → Shift_JIS CSV → `PrintAdapter`/`FormWriter.PDF`）でローカル実描画し、PDFテキスト層と手計算値を突合。
+  結果と指摘（R-01 金額のカンマ書式未設定／R-02 残高・予定額の負値表記）は
+  `Doc/spec/2026-08-21_請求・支払帳票PDF目視確認_結果.md` に記録。R-01/R-02 は人間側で対応するため未修正。
+- `tools/summaryreconcile` に `paysakicheck` コマンドを追加。開発DBへ親子関係（`Id_Paysaki`）と締日不一致を投入し、
+  請求計算／支払計算の実行前警告（`BuildRangeCheckSql`）と、得意先／仕入先マスターメンテ保存後の警告
+  （`BuildAffectedRowCheckSql`、子編集・親編集の双方向）が実データで発火することを確認。検査後に `Id_Paysaki`・締日を必ず復元する。
+- `Doc/spec/2026-08-18_CV10機能完成度チェックリスト.md` / `Doc/spec/2026-08-17_旧cvnet比較_未適用・保留課題.md` /
+  `tools/summaryreconcile/README.md` を現在地に合わせて更新。
+
+### 確認
+- `qfmprint`（`.agents/skills/author-printstream-qfm/tools/qfmprint`）で6帳票とも `IsSuccess=True`、`CheckLicense` の3プロダクトが `status=True`。
+- `dotnet run --project tools/summaryreconcile -- paysakicheck <dbPath>`: `親子締日ワーニング(E7): PASS`
+  （投入前0件 → 得意先1件・仕入先1件を検出、コード範囲外は0件、子編集1/親編集1/一致ペア0、警告文に再計算案内を含む）。
+  実行後に `MasterTokui`/`MasterShiire` の `Id_Paysaki=0`・`Shime1=99` へ復元されていることをSQLで確認。
+- 検証データの `data.txt` は Shift_JIS・CRLF単独であること（`\r\r\n` だと全レコードが重複印字される）。
+- 開発DBは事前に `refer/back/P0PDF_20260821_pre-seed_server-user163.db` へ退避。DB・WAL/SHM・バックアップはコミット対象外。
+
+---

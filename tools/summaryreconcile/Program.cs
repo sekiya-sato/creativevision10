@@ -11,8 +11,9 @@ using Microsoft.Data.Sqlite;
 //   seed          既存テストデータを掃除して再投入し、4計算を実行（既定）
 //   show          現在の SummaryUriSei/SummaryKaiShi を台帳SQLで表示（突合）
 //   idempotent    計算を2回実行し Summary スナップショットが一致するか（D-02 Rebuild冪等性・D-03 番号維持）
-//   closingcheck  締日を変更→締日変更検査SQLで不一致検出→送信ブロック→締日を復元（E7 締日変更警告）
-//   all           seed → show → idempotent → closingcheck を順に実行
+//   closingcheck  締日を変更→締日変更検査SQLで不一致検出→送信ブロック→締日を復元（Rebuild時の締日変更ブロック）
+//   paysakicheck  親子（請求先/支払先↔得意先/仕入先）の締日不一致データを投入し、実DBで警告が発火するか（E7）。検査後に復元
+//   all           seed → show → idempotent → closingcheck → paysakicheck を順に実行
 //   dbPath        省略時 C:\gitroot\new2022\cv10\CvServer\server-user163.db
 //
 // 前提: dbPath は開発用DB。実運用DBには使わない。実行前にバックアップ推奨（refer/back/）。
@@ -162,17 +163,111 @@ bool ClosingCheck() {
     }
 }
 
+/// <summary>
+/// E7 親子締日チェックのワーニング表示を、実DBデータで発火させて確認する。
+/// 開発DBは `Id_Paysaki` が全件0のため、親子関係と締日不一致をここで投入し、検査後に必ず復元する。
+///
+/// 画面側と同じ経路を再現する:
+///   - 請求計算・支払計算の実行前 = BaseBillingCalculationViewModel.GetPreExecuteWarningAsync
+///     （BuildRangeCheckSql + 締日/コード範囲のWHERE。パラメータは QueryListSqlParam と同じ **文字列**）
+///   - 得意先/仕入先マスターメンテの保存後 = WarnIfPaysakiClosingMismatchAsync
+///     （BuildAffectedRowCheckSql。編集Idを軸に子として／親として双方向で検査）
+/// </summary>
+bool PaysakiCheck() {
+    Console.WriteLine("\n----- paysakicheck (E7 親子締日ワーニング / 実データ発火) -----");
+    const int ShimeParent = 20;   // 親だけ別締日にして不一致を作る
+
+    // 親子: 得意先 000002(子,99) → 000016(親,20) = 不一致 / 000014(子,99) → 000023(親,99) = 一致
+    //       仕入先 001(子,99)    → 003(親,20)    = 不一致 / 002(子,99)    → 004(親,99)    = 一致
+    var tParentNg = db.Single<MasterTokui>("where Code=@0", "000016").Id;
+    var tParentOk = db.Single<MasterTokui>("where Code=@0", "000023").Id;
+    var sParentNg = db.Single<MasterShiire>("where Code=@0", "003").Id;
+    var sParentOk = db.Single<MasterShiire>("where Code=@0", "004").Id;
+
+    // 投入前: Id_Paysaki が全件0なら検出0件であること
+    var beforeRows = db.Fetch<PaysakiClosingCheckRow>(
+        PaysakiClosingCheck.BuildRangeCheckSql(nameof(MasterTokui), "WHERE c.Id_Paysaki <> 0 AND c.Shime1 = @0 AND p.Shime1 <> c.Shime1"),
+        ShimeMatched.ToString());
+    Console.WriteLine($"投入前 得意先 不一致: {PaysakiClosingCheck.FindMismatches(beforeRows).Count} 件（Id_Paysaki未設定のため0が正）");
+
+    db.Execute("UPDATE MasterTokui  SET Id_Paysaki=@0 WHERE Code='000002'", tParentNg);
+    db.Execute("UPDATE MasterTokui  SET Id_Paysaki=@0 WHERE Code='000014'", tParentOk);
+    db.Execute("UPDATE MasterTokui  SET Shime1=@0    WHERE Code='000016'", ShimeParent);
+    db.Execute("UPDATE MasterShiire SET Id_Paysaki=@0 WHERE Code='001'", sParentNg);
+    db.Execute("UPDATE MasterShiire SET Id_Paysaki=@0 WHERE Code='002'", sParentOk);
+    db.Execute("UPDATE MasterShiire SET Shime1=@0     WHERE Code='003'", ShimeParent);
+    try {
+        var ok = true;
+
+        // (1) 計算画面の実行前警告。パラメータは画面と同じ文字列で渡す（QueryListSqlParam.Parameters は string[]）。
+        List<PaysakiClosingCheckRow> Range(string table, string codeFrom, string codeTo) {
+            List<string> ps = [ShimeMatched.ToString()];
+            var where = "WHERE c.Id_Paysaki <> 0 AND c.Shime1 = @0 AND p.Shime1 <> c.Shime1";
+            if (codeFrom.Length > 0) { where += $" AND c.Code >= @{ps.Count}"; ps.Add(codeFrom); }
+            if (codeTo.Length > 0) { where += $" AND c.Code <= @{ps.Count}"; ps.Add(codeTo); }
+            return db.Fetch<PaysakiClosingCheckRow>(PaysakiClosingCheck.BuildRangeCheckSql(table, where), [.. ps]);
+        }
+
+        var tRange = PaysakiClosingCheck.FindMismatches(Range(nameof(MasterTokui), "", ""));
+        var sRange = PaysakiClosingCheck.FindMismatches(Range(nameof(MasterShiire), "", ""));
+        Console.WriteLine($"請求計算 実行前警告: 不一致={tRange.Count} 件");
+        Console.WriteLine(PaysakiClosingCheck.BuildMismatchWarning("請求先", "得意先", tRange));
+        Console.WriteLine($"支払計算 実行前警告: 不一致={sRange.Count} 件");
+        Console.WriteLine(PaysakiClosingCheck.BuildMismatchWarning("支払先", "仕入先", sRange));
+        ok &= tRange.Count == 1 && tRange[0].ChildCode == "000002" && tRange[0].ParentShime == ShimeParent;
+        ok &= sRange.Count == 1 && sRange[0].ChildCode == "001";
+
+        // コード範囲で対象外に絞れば0件（範囲条件が効いていること）
+        var tOutOfRange = PaysakiClosingCheck.FindMismatches(Range(nameof(MasterTokui), "000010", "000020"));
+        Console.WriteLine($"コード範囲 000010〜000020 に絞った場合: 不一致={tOutOfRange.Count} 件（0が正）");
+        ok &= tOutOfRange.Count == 0;
+
+        // (2) マスターメンテ保存後の警告。子を編集した場合と親を編集した場合の双方向。
+        List<PaysakiClosingCheckRow> Affected(string table, long editedId) =>
+            PaysakiClosingCheck.FindMismatches(db.Fetch<PaysakiClosingCheckRow>(PaysakiClosingCheck.BuildAffectedRowCheckSql(table, editedId)));
+
+        var childId = db.Single<MasterTokui>("where Code=@0", "000002").Id;
+        var okChildId = db.Single<MasterTokui>("where Code=@0", "000014").Id;
+        var byChild = Affected(nameof(MasterTokui), childId);
+        var byParent = Affected(nameof(MasterTokui), tParentNg);
+        var byOkChild = Affected(nameof(MasterTokui), okChildId);
+        Console.WriteLine($"得意先メンテ保存後: 子(000002)編集={byChild.Count} 親(000016)編集={byParent.Count} 一致ペアの子(000014)編集={byOkChild.Count}（1/1/0が正）");
+        ok &= byChild.Count == 1 && byParent.Count == 1 && byOkChild.Count == 0;
+
+        var sChildId = db.Single<MasterShiire>("where Code=@0", "001").Id;
+        var sByChild = Affected(nameof(MasterShiire), sChildId);
+        var sByParent = Affected(nameof(MasterShiire), sParentNg);
+        Console.WriteLine($"仕入先メンテ保存後: 子(001)編集={sByChild.Count} 親(003)編集={sByParent.Count}（1/1が正）");
+        ok &= sByChild.Count == 1 && sByParent.Count == 1;
+
+        // 警告文に再計算案内が含まれること
+        ok &= PaysakiClosingCheck.BuildMismatchWarning("請求先", "得意先", tRange).Contains(PaysakiClosingCheck.MismatchGuidance);
+
+        Console.WriteLine($"親子締日ワーニング(E7): {(ok ? "PASS" : "FAIL")}");
+        return ok;
+    }
+    finally {
+        db.Execute("UPDATE MasterTokui  SET Id_Paysaki=0 WHERE Code IN ('000002','000014')");
+        db.Execute("UPDATE MasterTokui  SET Shime1=@0    WHERE Code='000016'", ShimeMatched);
+        db.Execute("UPDATE MasterShiire SET Id_Paysaki=0 WHERE Code IN ('001','002')");
+        db.Execute("UPDATE MasterShiire SET Shime1=@0    WHERE Code='003'", ShimeMatched);
+        Console.WriteLine("（Id_Paysaki=0・締日99へ復元）");
+    }
+}
+
 Console.WriteLine($"db={dbPath}\ntokui1={tokui1} tokui2={tokui2} shiire1={shiire1} shiire2={shiire2}  command={command}");
 switch (command) {
     case "seed": Clean(); Seed(); Calc(); Show(); break;
     case "show": Show(); break;
     case "idempotent": Idempotent(); break;
     case "closingcheck": ClosingCheck(); break;
+    case "paysakicheck": PaysakiCheck(); break;
     case "all":
         Clean(); Seed(); Calc(); Show();
         var i = Idempotent();
         var cc = ClosingCheck();
-        Console.WriteLine($"\n=== ALL: idempotent={(i ? "PASS" : "FAIL")} closingcheck={(cc ? "PASS" : "FAIL")} ===");
+        var pc = PaysakiCheck();
+        Console.WriteLine($"\n=== ALL: idempotent={(i ? "PASS" : "FAIL")} closingcheck={(cc ? "PASS" : "FAIL")} paysakicheck={(pc ? "PASS" : "FAIL")} ===");
         break;
     default: Console.WriteLine($"unknown command: {command}"); break;
 }

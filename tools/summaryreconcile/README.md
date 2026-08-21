@@ -26,8 +26,9 @@ dotnet run --project tools/summaryreconcile -- <command> [dbPath]
 | `seed` | テスト範囲を掃除して再投入し、4計算を実行して台帳を表示（既定） | UAT-05/06 通し・数値突合 |
 | `show` | 現在の `SummaryUriSei`/`SummaryKaiShi` を台帳SQLで表示 | 帳票=Summary の突合 |
 | `idempotent` | 計算を2回実行しSummaryスナップショットが一致するか | D-02 Rebuild冪等性 / D-03 請求書番号・再発行世代の維持 |
-| `closingcheck` | 締日を99→20に変更→締日変更検査SQLで不一致検出→送信ブロック→締日を99へ復元 | E7 締日変更警告（`SummaryRebuildClosingCheck`） |
-| `all` | seed → show → idempotent → closingcheck を順に実行 | 上記すべて |
+| `closingcheck` | 締日を99→20に変更→締日変更検査SQLで不一致検出→送信ブロック→締日を99へ復元 | Rebuild時の締日変更ブロック（`SummaryRebuildClosingCheck`） |
+| `paysakicheck` | 親子関係(`Id_Paysaki`)と締日不一致を投入→計算画面の実行前警告とマスターメンテ保存後警告を検査→`Id_Paysaki`・締日を復元 | E7 親子締日ワーニング（`PaysakiClosingCheck`） |
+| `all` | seed → show → idempotent → closingcheck → paysakicheck を順に実行 | 上記すべて |
 
 ## テストデータ仕様（テスト月 202607 = 既存取引ゼロのクリーンルーム）
 
@@ -56,8 +57,31 @@ dotnet run --project tools/summaryreconcile -- <command> [dbPath]
 1. `refer/back/` に対象DBをバックアップ。
 2. `dotnet run --project tools/summaryreconcile -- all` を実行し、出力を証跡として保存。
 3. `show` 出力の各値が上表の期待値と一致することを確認（数値突合）。
-4. `idempotent=PASS`（再計算で番号・金額・予定日が不変）、`closingcheck=PASS`（締日変更でブロック）を確認。
-5. 帳票PDFの目視確認は WPF クライアントから請求台帳/支払台帳/請求一覧表/支払一覧表/月別予定表を出力して行う（本ツールはSQL層の突合まで）。
+4. `idempotent=PASS`（再計算で番号・金額・予定日が不変）、`closingcheck=PASS`（締日変更でブロック）、
+   `paysakicheck=PASS`（親子締日不一致で警告発火）を確認。
+5. 帳票PDFの目視確認は 2026-08-21 に完了（本ツールはSQL層の突合まで。PDFは
+   `.agents/skills/author-printstream-qfm/tools/qfmprint` でローカル描画し、テキスト層で突合した。
+   手順・結果・指摘は [請求・支払帳票PDF目視確認_結果](../../Doc/spec/2026-08-21_請求・支払帳票PDF目視確認_結果.md)）。
+   WPFクライアント実操作での確認（ダイアログ表示・PDFビューア）は Mini-UAT(D-09) の範囲。
+
+## paysakicheck の投入データ（E7 親子締日ワーニング）
+
+開発DBは `MasterTokui` / `MasterShiire` とも `Id_Paysaki` が全件0のため、`paysakicheck` が親子関係と締日不一致を一時投入する。
+
+| 区分 | 子（得意先／仕入先） | 親（請求先／支払先） | 期待 |
+|---|---|---|---|
+| 得意先 | 000002（締日99） | 000016（締日を20へ一時変更） | 不一致→警告 |
+| 得意先 | 000014（締日99） | 000023（締日99） | 一致→警告なし |
+| 仕入先 | 001（締日99） | 003（締日を20へ一時変更） | 不一致→警告 |
+| 仕入先 | 002（締日99） | 004（締日99） | 一致→警告なし |
+
+検査するのは実画面と同じ2経路である。
+
+1. 請求計算・支払計算の実行前（`PaysakiClosingCheck.BuildRangeCheckSql` ＋ 締日・コード範囲のWHERE。
+   パラメータは `QueryListSqlParam.Parameters` と同じ**文字列**で渡す）。コード範囲を外せば0件になることも確認する。
+2. 得意先／仕入先マスターメンテの保存後（`BuildAffectedRowCheckSql`。子を編集した場合・親を編集した場合の双方向）。
+
+`finally` で `Id_Paysaki=0`・締日99へ必ず復元する。ダイアログ表示自体の確認は Mini-UAT(D-09) の範囲。
 
 ## テストデータの除去
 
