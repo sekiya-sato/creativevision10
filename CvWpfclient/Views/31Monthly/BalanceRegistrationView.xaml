@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._31Monthly.BalanceRegistrationView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._31Monthly.BalanceRegistrationView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._31Monthly"
@@ -158,7 +158,9 @@
 
 				<TextBlock Grid.Row="0" Grid.Column="5"
 					VerticalAlignment="Center">
-					<Run Text="対象" /><Run FontWeight="Bold" Text="{Binding TargetCount, Mode=OneWay, StringFormat={}{0:N0}}" /><Run Text="件 ／ うち期首残あり" /><Run FontWeight="Bold" Text="{Binding ExistingCount, Mode=OneWay, StringFormat={}{0:N0}}" /><Run Text="件" />
+					<Run Text="対象" /><Run FontWeight="Bold"
+						Text="{Binding TargetCount, Mode=OneWay, StringFormat={}{0:N0}}" /><Run Text="件 ／ うち期首残あり" /><Run FontWeight="Bold"
+						Text="{Binding ExistingCount, Mode=OneWay, StringFormat={}{0:N0}}" /><Run Text="件" />
 				</TextBlock>
 
 				<Button Grid.Row="0" Grid.Column="7"
@@ -180,12 +182,10 @@
 					<TextBlock Style="{StaticResource FormCaption}"
 						Text="出力内容" />
 					<RadioButton Margin="0,0,16,0"
-						Content="全取引先（残高欄は空）"
-						GroupName="TemplateMode"
+						Content="全取引先（残高欄は空）" GroupName="TemplateMode"
 						IsChecked="{Binding IsTemplateAllOwners, Mode=TwoWay}" />
 					<RadioButton Margin="0,0,24,0"
-						Content="既存の期首残がある取引先のみ"
-						GroupName="TemplateMode"
+						Content="既存の期首残がある取引先のみ" GroupName="TemplateMode"
 						IsChecked="{Binding IsTemplateAllOwners, Mode=TwoWay, Converter={StaticResource InverseBooleanConverter}}" />
 					<CheckBox Content="内訳列（売上・返品・値引・消費税・入金内訳）も出力する"
 						IsChecked="{Binding IncludeBreakdown, Mode=TwoWay}" />
@@ -288,7 +288,8 @@
 							Text="{Binding WarningCount, StringFormat={}{0:N0}}" />
 						<TextBlock Style="{StaticResource FormCaption}"
 							Text="合計 期首残高" />
-						<TextBlock MinWidth="120" VerticalAlignment="Center"
+						<TextBlock MinWidth="120"
+							VerticalAlignment="Center"
 							FontWeight="Bold"
 							Text="{Binding TotalAmount, StringFormat={}{0:N0}}"
 							TextAlignment="Right" />

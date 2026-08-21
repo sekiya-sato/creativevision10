@@ -236,7 +236,7 @@
 											Foreground="{DynamicResource plainTextColor0}"
 											Text="{Binding Header}" />
 										<!--
-                                        <TextBlock Text="{Binding AddInfo}" FontSize="12" Opacity="0.65" Foreground="{DynamicResource plainTextColor0}"/>
+										<TextBlock Text="{Binding AddInfo}" FontSize="12" Opacity="0.65" Foreground="{DynamicResource plainTextColor0}"/>
 										-->
 									</StackPanel>
 								</HierarchicalDataTemplate>
@@ -461,7 +461,7 @@
 									<TextBlock Margin="4,4,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="1"
 										FontSize="11"
 										Foreground="{DynamicResource MainMenuChartTextColor}"
-										Text="&#x0a;℃" />
+										Opacity="0.4" Text="℃&#x0a;" />
 									<!--  標準WPF描画のチャート  -->
 									<Canvas x:Name="ForecastCanvas"
 										MinHeight="130"
@@ -471,7 +471,7 @@
 									<Border Margin="0,3,4,0" Padding="4,1" HorizontalAlignment="Right" VerticalAlignment="Top" Panel.ZIndex="1"
 										Background="{DynamicResource MainMenuChartBackgroundBrush}"
 										BorderBrush="{DynamicResource MainMenuChartTextColor}"
-										BorderThickness="1" CornerRadius="2" IsHitTestVisible="False" Opacity="0.9">
+										BorderThickness="0.5" CornerRadius="2" IsHitTestVisible="False" Opacity="0.4">
 										<TextBlock FontSize="9"
 											Foreground="{DynamicResource MainMenuChartTextColor}"
 											Text="棒: 降水量 (mm / 3時間)" />

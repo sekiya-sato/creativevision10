@@ -538,8 +538,8 @@
 								<TextBlock Margin="0,0,6,0"
 									Style="{StaticResource FormLabel}"
 									Text="同数展開" />
-								<TextBox Width="80" Margin="0,0,8,0"
-									HorizontalContentAlignment="Right"
+								<TextBox Width="80"
+									Margin="0,0,8,0" HorizontalContentAlignment="Right"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding SpreadSu, UpdateSourceTrigger=PropertyChanged}" />
 								<Button Margin="0,0,12,0"
