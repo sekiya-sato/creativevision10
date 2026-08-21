@@ -112,8 +112,10 @@ public partial class DerivedShohinColSiz : BaseDbClass, IDerivedClass {
 	/// </summary>
 	public static string CreateSql => @$"
 Insert into {nameof(DerivedShohinColSiz)}
+  (Id,Id_Shohin,RowIdx,Code,Id_Col,Code_Col,Mei_Col,
+   Id_Siz,Code_Siz,Mei_Siz,Jan1,Jan2,Jan3,Vdc,Vdu)
 SELECT
-  (M.Id * 100 + ROW_NUMBER() OVER (PARTITION BY M.Id)) Id,M.vdc,M.vdu,
+  (M.Id * 100 + ROW_NUMBER() OVER (PARTITION BY M.Id)) Id,
   ifnull(M.Id,0) Id_Shohin,
   ROW_NUMBER() OVER (PARTITION BY M.Id) RowIdx,
   M.Code,
@@ -125,7 +127,9 @@ SELECT
   ifnull(json_extract(J.value, '$.Mei_Siz'), '') AS Mei_Siz,
   ifnull(json_extract(J.value, '$.Jan1'), '') AS Jan1,
   ifnull(json_extract(J.value, '$.Jan2'), '') AS Jan2,
-  ifnull(json_extract(J.value, '$.Jan3'), '') AS Jan3
+  ifnull(json_extract(J.value, '$.Jan3'), '') AS Jan3,
+  M.vdc,
+  M.vdu
 FROM MasterShohin M, json_each(M.Jcolsiz) J
 "; //   M.Name, M.Ryaku,
 	[Ignore]

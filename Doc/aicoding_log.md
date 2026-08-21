@@ -696,3 +696,26 @@
 - `McpOracle.exe "Data Source=192.168.9.243/cvnet;User Id=CV00PKG;Password=CV00PKG;"`
 - 環境変数: `MCPORACLE_CONNECTION_STRING` に同じ接続文字列を設定して `McpOracle.exe` を起動する。
 - 更新を許可する場合: 上記に `--allow-write` を追加する。
+## [2026-08-21] UAT-01派生SKU列順不整合修正とテスト成果物保存
+
+### Agent
+- OpenAI GPT-5 : Sekiya Sato Codex
+
+### Editor
+- Codex
+
+### 目的
+- UAT-01で検出した`DerivedShohinColSiz`の列順不整合を修正し、UAT結果・再テスト手順・実行ソースを保存する。
+
+### 実施内容
+- `CvBase/BaseDbDerived.cs`: `DerivedShohinColSiz.CreateSql`を明示列INSERTへ変更し、DB物理列順に依存しないよう修正。
+- `Doc/spec/2026-08-18_CV10機能完成度チェックリスト.md`: UAT-01の通し実施結果、課題修正、残作業を追記。
+- `Doc/test/`: UAT-01結果レポート、再テスト手順、DB投入・集計検証ソース、帳票検証ソース、読み取り検算SQLを保存。
+
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build CvBase\CvBase.csproj --no-restore`: 成功（警告0、エラー0）。
+- `C:\gitroot\UT\vscmd.bat dotnet build Doc\test\UAT01\UAT01Runner.csproj`: 成功（警告0、エラー0）。
+- `C:\gitroot\UT\vscmd.bat dotnet build Doc\test\UAT01\ReportRunner.csproj`: 成功（警告0、エラー0）。
+- DBファイル、WAL/SHM、DBバックアップはコミット対象から除外する。
+
+---
