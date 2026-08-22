@@ -48,7 +48,7 @@ public sealed partial class ZanCompletionRow : ObservableObject {
 	/// <summary>取引先の「(Id) コード 名称」表示。</summary>
 	public string ToriDisplay { get; set; } = string.Empty;
 
-	public string ManualNo { get; set; } = string.Empty;
+	public int RelateNo1 { get; set; }
 
 	/// <summary>伝票の数量合計（発注数 / 受注数）。</summary>
 	public int DenSu { get; set; }
@@ -224,7 +224,7 @@ public abstract partial class BaseZanCompletionViewModel<TDen> : BaseQueryViewMo
 		// 「残のみ」は残がある伝票だけを出す。完了済みは残の有無にかかわらず出して解除できるようにする
 		var zanWhere = ViewKind == "残のみ" ? $" AND ({zanExpr} > 0 OR h.EndFlag = 1)" : string.Empty;
 		var sql = $@"
-SELECT h.Id, h.Vdu, h.DenDay, h.ManualNo, h.SuTotal, h.KingakuTotal, h.EndFlag,
+SELECT h.Id, h.Vdu, h.DenDay, h.RelateNo1, h.SuTotal, h.KingakuTotal, h.EndFlag,
        h.{DenToriIdColumn} AS Id_Tori,
        ifnull(t.Code, '') AS ToriCode,
        ifnull(t.Name, '') AS ToriName,
@@ -242,7 +242,7 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}
 			Vdu = x.Vdu,
 			DenDay = x.DenDay,
 			ToriDisplay = CodeNameDisplay.Format(x.Id_Tori, x.ToriCode, x.ToriName),
-			ManualNo = x.ManualNo,
+			RelateNo1 = x.RelateNo1,
 			DenSu = x.SuTotal,
 			ActualSu = x.ActualSu,
 			ZanSu = x.ZanSu,
@@ -366,19 +366,4 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}
 		ChangedCount = DenRows.Count(r => r.IsChanged);
 	}
 
-	/// <summary>一覧取得SQLの受け皿</summary>
-	private sealed class ZanCompletionQueryRow {
-		public long Id { get; set; }
-		public long Vdu { get; set; }
-		public string DenDay { get; set; } = string.Empty;
-		public string ManualNo { get; set; } = string.Empty;
-		public int SuTotal { get; set; }
-		public int KingakuTotal { get; set; }
-		public int EndFlag { get; set; }
-		public long Id_Tori { get; set; }
-		public string ToriCode { get; set; } = string.Empty;
-		public string ToriName { get; set; } = string.Empty;
-		public int ActualSu { get; set; }
-		public int ZanSu { get; set; }
-	}
 }

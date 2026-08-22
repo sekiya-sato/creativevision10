@@ -206,8 +206,8 @@
 						Binding="{Binding ToriDisplay}"
 						Header="得意先" IsReadOnly="True" />
 					<DataGridTextColumn Width="100"
-						Binding="{Binding ManualNo}"
-						Header="手入力No" IsReadOnly="True" />
+						Binding="{Binding RelateNo1}"
+						Header="関連伝票No" IsReadOnly="True" />
 					<DataGridTextColumn Width="90"
 						Binding="{Binding DenSu, StringFormat={}{0:N0}}"
 						Header="受注数" IsReadOnly="True">
