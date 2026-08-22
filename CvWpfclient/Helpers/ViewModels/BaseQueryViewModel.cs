@@ -119,25 +119,8 @@ public abstract partial class BaseQueryViewModel : BaseViewModel {
 	/// 生SQLを投げて DBマップ型のリストを取得する。
 	/// T はサーバ側でも解決できる型（CvBase のテーブルクラス）である必要がある。
 	/// </summary>
-	protected async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListSqlParam),
-			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters])),
-		};
-
-		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		ct.ThrowIfCancellationRequested();
-		// Code == -1 は「該当0件」。エラーではないので空リストを返す。
-		if (reply.Code < 0 && reply.Code != -1) {
-			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
-		}
-		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
-		return list.Cast<T>().ToList();
-	}
+	protected Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) =>
+		CoreServiceClient.QuerySqlListAsync<T>(sql, parameters, ct);
 
 	protected static string AddSqlParameter(List<string> parameters, object value) =>
 		SqlWhere.AddParameter(parameters, value);

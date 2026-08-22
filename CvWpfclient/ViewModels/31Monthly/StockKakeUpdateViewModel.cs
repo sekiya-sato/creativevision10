@@ -210,24 +210,8 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		return rows.Select(x => x.Shime1).ToList();
 	}
 
-	private async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken cancellationToken) {
-		cancellationToken.ThrowIfCancellationRequested();
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var message = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListSqlParam),
-			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters])),
-		};
-		var reply = await coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext(cancellationToken));
-		cancellationToken.ThrowIfCancellationRequested();
-		if (reply.Code < 0 && reply.Code != -1) {
-			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
-		}
-		return Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList rows
-			? rows.Cast<T>().ToList()
-			: [];
-	}
+	private Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken cancellationToken) =>
+		CoreServiceClient.QuerySqlListAsync<T>(sql, parameters, cancellationToken);
 
 	private static CvMsg CreateSummaryMessage(CvFlag flag, Type dataType, object parameter) => new() {
 		Code = 0,

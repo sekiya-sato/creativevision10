@@ -1006,23 +1006,8 @@ ORDER BY Odr, Code";
 		return [.. list.Select(x => new MasterOption(x.Id, x.Code ?? string.Empty, x.Name ?? string.Empty))];
 	}
 
-	async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListSqlParam),
-			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters])),
-		};
-		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		ct.ThrowIfCancellationRequested();
-		if (reply.Code < 0 && reply.Code != -1) {
-			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
-		}
-		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
-		return list.Cast<T>().ToList();
-	}
+	Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) =>
+		CoreServiceClient.QuerySqlListAsync<T>(sql, parameters, ct);
 
 	static string AddParameter(List<string> parameters, object value) {
 		parameters.Add(Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty);

@@ -118,7 +118,7 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 	// ===== コマンド =====
 
 	[RelayCommand]
-	async Task Init() => await DoSearch(CancellationToken.None);
+	Task Init() => DoSearch(CancellationToken.None);
 
 	/// <summary>一覧取得。条件選択ダイアログを別ウィンドウで表示してから検索する。</summary>
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
@@ -682,41 +682,11 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 
 	// ===== 通信・共通ヘルパー =====
 
-	async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListSqlParam),
-			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters])),
-		};
-		CvMsg reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		ct.ThrowIfCancellationRequested();
-		if (reply.Code < 0 && reply.Code != -1) {
-			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
-		}
-		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
-		return list.Cast<T>().ToList();
-	}
+	Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) =>
+		CoreServiceClient.QuerySqlListAsync<T>(sql, parameters, ct);
 
-	async Task<List<T>> QueryListAsync<T>(string where, string order, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListParam),
-			DataMsg = Common.SerializeObject(new QueryListParam(typeof(T), where, order)),
-		};
-		CvMsg reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		ct.ThrowIfCancellationRequested();
-		if (reply.Code < 0 && reply.Code != -1) {
-			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
-		}
-		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
-		return list.Cast<T>().ToList();
-	}
+	Task<List<T>> QueryListAsync<T>(string where, string order, CancellationToken ct) =>
+		CoreServiceClient.QueryListAsync<T>(where, order, ct);
 
 	TResult? ShowSelect<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
 		var selWin = new Views.Sub.SelectWinView();

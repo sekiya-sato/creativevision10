@@ -147,19 +147,19 @@ public abstract partial class BaseKinInputViewModel<TDen> : BasePlainLightMenteV
 	void GoToList() => SelectedTabIndex = 0;
 
 	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
+	Task Init() => DoList(CancellationToken.None);
 
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
-	async Task DoListOnListTab(CancellationToken ct) => await DoList(ct);
+	Task DoListOnListTab(CancellationToken ct) => DoList(ct);
 
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
-	async Task DoUpdateOnDetailTab(CancellationToken ct) => await DoUpdate(ct);
+	Task DoUpdateOnDetailTab(CancellationToken ct) => DoUpdate(ct);
 
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
-	async Task DoDeleteOnDetailTab(CancellationToken ct) => await DoDelete(ct);
+	Task DoDeleteOnDetailTab(CancellationToken ct) => DoDelete(ct);
 
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
-	async Task DoInsertOnDetailTab(CancellationToken ct) => await DoInsert(ct);
+	Task DoInsertOnDetailTab(CancellationToken ct) => DoInsert(ct);
 
 	[RelayCommand]
 	void AddMeisai() {

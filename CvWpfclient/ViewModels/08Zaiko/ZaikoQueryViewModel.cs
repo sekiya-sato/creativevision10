@@ -447,25 +447,8 @@ public partial class ZaikoQueryViewModel : Helpers.BaseViewModel {
 		return clauses;
 	}
 
-	async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListSqlParam),
-			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters]))
-		};
-
-		CvMsg reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		ct.ThrowIfCancellationRequested();
-		if (reply.Code < 0 && reply.Code != -1) {
-			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
-		}
-
-		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
-		return list.Cast<T>().ToList();
-	}
+	Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) =>
+		CoreServiceClient.QuerySqlListAsync<T>(sql, parameters, ct);
 
 	void SelectCode<T>(string where, string order, Action<string> setCode)
 		where T : BaseDbClass, IBaseCodeName {

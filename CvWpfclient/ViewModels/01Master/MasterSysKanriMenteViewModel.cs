@@ -111,7 +111,7 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 	}
 
 	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
+	Task Init() => DoList(CancellationToken.None);
 
 	protected override void AfterList(System.Collections.IList list) {
 		if (list.Count > 0) {

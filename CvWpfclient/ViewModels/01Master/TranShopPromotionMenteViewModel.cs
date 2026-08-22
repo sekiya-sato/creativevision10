@@ -54,7 +54,7 @@ left join MasterTokui T on T.Id = P.Id_Shop
 	}
 
 	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
+	Task Init() => DoList(CancellationToken.None);
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();

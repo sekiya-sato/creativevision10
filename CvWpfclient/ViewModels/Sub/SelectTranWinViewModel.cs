@@ -116,7 +116,7 @@ public partial class SelectTranWinViewModel : BaseViewModel {
 	}
 
 	[RelayCommand]
-	async Task Init(CancellationToken ct) => await DoSearch(ct);
+	Task Init(CancellationToken ct) => DoSearch(ct);
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoSearch(CancellationToken ct) {

@@ -199,7 +199,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	bool CanDelete() => IsListTabSelected() && SelectedSearchRow is { HaibunSu: > 0 };
 
 	[RelayCommand]
-	async Task Init(CancellationToken ct) => await DoSearch(ct);
+	Task Init(CancellationToken ct) => DoSearch(ct);
 
 	/// <summary>一覧取得(F5)。受注を主に取得し、出荷済・配分の集計をクライアントで合成する。</summary>
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
@@ -750,8 +750,8 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	}
 
 	/// <summary>修正できる配分（未送信・未確定・未完了）を取得する。Id/Vdu は洗い替え削除に使う。</summary>
-	async Task<List<TranHaibun>> LoadEditableHaibunAsync(long juchuId, CancellationToken ct) =>
-		await QueryListAsync<TranHaibun>(
+	Task<List<TranHaibun>> LoadEditableHaibunAsync(long juchuId, CancellationToken ct) =>
+		QueryListAsync<TranHaibun>(
 			$"Kubun = {KubunJuchu} AND RelateNo1 = {juchuId} AND SendFlg = 0 AND KakuteiDay = '' AND EndFlag = 0",
 			"Id_Shohin, Id_Col, Id_Siz, Id", ct);
 
@@ -928,41 +928,11 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 
 	// ===== 通信・共通ヘルパー =====
 
-	async Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListSqlParam),
-			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters])),
-		};
-		CvMsg reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		ct.ThrowIfCancellationRequested();
-		if (reply.Code < 0 && reply.Code != -1) {
-			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
-		}
-		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
-		return list.Cast<T>().ToList();
-	}
+	Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) =>
+		CoreServiceClient.QuerySqlListAsync<T>(sql, parameters, ct);
 
-	async Task<List<T>> QueryListAsync<T>(string where, string order, CancellationToken ct) {
-		ct.ThrowIfCancellationRequested();
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListParam),
-			DataMsg = Common.SerializeObject(new QueryListParam(typeof(T), where, order)),
-		};
-		CvMsg reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		ct.ThrowIfCancellationRequested();
-		if (reply.Code < 0 && reply.Code != -1) {
-			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
-		}
-		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) return [];
-		return list.Cast<T>().ToList();
-	}
+	Task<List<T>> QueryListAsync<T>(string where, string order, CancellationToken ct) =>
+		CoreServiceClient.QueryListAsync<T>(where, order, ct);
 
 	TResult? ShowSelect<TResult>(Type tableType, string where, string order, long startPos = 0) where TResult : BaseDbClass {
 		var selWin = new Views.Sub.SelectWinView();

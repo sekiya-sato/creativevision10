@@ -87,7 +87,7 @@ from MasterYosanBrand Y
 	}
 
 	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
+	Task Init() => DoList(CancellationToken.None);
 
 	protected override bool CanUpdate() => CurrentEdit.Id > 0;
 

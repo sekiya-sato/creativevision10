@@ -31,15 +31,6 @@ public class ClientLib {
 		}
 	}
 	/// <summary>
-	/// 全てのWindowを閉じる
-	/// [Close all Windows]
-	/// </summary>
-	public static void ExitAll() {
-		foreach (var win in Application.Current.Windows.OfType<Window>()) {
-			win.Close();
-		}
-	}
-	/// <summary>
 	/// 自分と親以外全てのWindowを閉じる
 	/// [Close all Windows except for the current and parent ones]
 	/// </summary>
@@ -50,22 +41,6 @@ public class ClientLib {
 			if (win != myview && win != parent)
 				win.Close();
 		}
-	}
-	/// <summary>
-	/// アクティブなWindowを取得する(非推奨)
-	/// [Get the active Window (not recommended)]
-	/// </summary>
-	/// <returns></returns>
-	[Obsolete]
-	private static Window? GetActiveWin() {
-		var activeWin = Application.Current.Windows.OfType<Window>().SingleOrDefault(w => w.IsActive);
-		/*
-			1. クライアントアプリなので何かしら操作した直後はそのWindowがアクティブである
-		[1. Since it's a client application, the Window just operated on will be active immediately afterward.]
-			2. アクティブなWindowがない場合は最後に開いたWindowを返す(VS2022デバッグを考慮 Microsoft.VisualStudio.DesignTools...)
-		[2. If there is no active Window, return the last opened Window (considering VS2022 debugging Microsoft.VisualStudio.DesignTools...)]
-			*/
-		return activeWin ?? Application.Current.Windows.OfType<Window>().Where(c => !c.ToString().StartsWith("Microsoft.")).LastOrDefault();
 	}
 	/// <summary>
 	/// ViewModelが紐づけられてるViewを取得する
@@ -129,23 +104,6 @@ public class ClientLib {
 		}
 	}
 	/// <summary>
-	/// DataGridに対しDictionary型を参照して列を作成する
-	/// [Create columns in a DataGrid by referring to a Dictionary type]
-	/// </summary>
-	/// <param name="dg"></param>
-	/// <param name="obj"></param>
-	public static void SetDataGridDic(System.Windows.Controls.DataGrid dg, Dictionary<string, object> obj) {
-		dg.Columns.Clear();
-		dg.AutoGenerateColumns = false;
-		foreach (var item in obj.Keys) { // 列を追加する [Add columns]
-			var textColumn = new System.Windows.Controls.DataGridTextColumn();
-			textColumn.Header = item;
-			textColumn.Binding = new System.Windows.Data.Binding($"[{item}]");
-			dg.Columns.Add(textColumn);
-		}
-	}
-
-	/// <summary>
 	/// 使用可能なデータフォルダを取得
 	/// [Retrieve the available data folder]
 	/// </summary>
@@ -182,21 +140,17 @@ public class ClientLib {
 	/// 指定したURLを既定のブラウザで開く
 	/// </summary>
 	/// <param name="url"></param>
-	/// <returns></returns>
-	public static async Task OpenUrlAsync(string url) {
+	public static void OpenUrl(string url) {
 		if (string.IsNullOrEmpty(url)) return;
-
-		await Task.Run(() => {
-			try {
-				using var process = Process.Start(new ProcessStartInfo {
-					FileName = url,
-					UseShellExecute = true
-				});
-			}
-			catch (Exception ex) {
-				Debug.WriteLine(ex.Message);
-			}
-		});
+		try {
+			using var process = Process.Start(new ProcessStartInfo {
+				FileName = url,
+				UseShellExecute = true
+			});
+		}
+		catch (Exception ex) {
+			Debug.WriteLine(ex.Message);
+		}
 	}
 	public static bool ValidateMail(string mail, Window?activeWindow, bool showSuccess = false) {
 		if (string.IsNullOrWhiteSpace(mail)) {

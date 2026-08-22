@@ -1,3 +1,30 @@
+## [2026-08-22] CvWpfclient の通信処理共通化・不要呼び出し削減
+
+### Agent
+- OpenAI Codex
+
+### Editor
+- Codex
+
+### 目的
+- CvWpfclient プロジェクト内に限定し、同一の gRPC 照会・実行処理を通信専用ヘルパーへ集約する。
+- 未使用コードと不要な非同期処理を削減し、既存の業務処理、XAML、空画面、Sample画面の動作を維持する。
+
+### 実施内容
+- `CoreServiceClient` を追加し、型付きSQL照会、通常一覧照会、実行要求の生成・送信・応答判定を共通化した。
+- 各 ViewModel の既存ローカルメソッドは1行の委譲として残し、呼び出し側、継承関係、XAMLコマンド名を維持した。
+- `ClientLib` からプロジェクト内で未使用の `ExitAll`、`GetActiveWin`、`SetDataGridDic` を削除した。
+- URL起動時の不要な `Task.Run` と、処理を転送するだけの `async` / `await` を削減した。
+- `BaseViewModel` への通信処理集約、帳票ラッパー・選択コマンドの追加共通化は、責務過多を避けるため実施しなかった。
+- 応答後のキャンセル判定が異なる月次処理2箇所は、動作を変えないため共通化対象から外した。
+- 空の View / ViewModel と `SampleView` / `SampleViewModel` は変更していない。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore -p:UseAppHost=false -v:minimal`: 成功（警告0、エラー0）。
+- `git diff --check`、UTF-8 BOMなし、CRLFを確認する。
+
+---
+
 ## [2026-08-22] CvServer の不要呼び出し削減・共通化
 
 ### Agent

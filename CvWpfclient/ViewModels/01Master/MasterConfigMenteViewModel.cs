@@ -26,7 +26,7 @@ from MasterConfig {query.AddWhereOrder()}
 	}
 
 	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
+	Task Init() => DoList(CancellationToken.None);
 
 	protected override bool ConfirmAction(string message) {
 		if ((message.StartsWith("追加", StringComparison.Ordinal) || message.StartsWith("修正", StringComparison.Ordinal)) && !ValidateCurrentEdit()) {

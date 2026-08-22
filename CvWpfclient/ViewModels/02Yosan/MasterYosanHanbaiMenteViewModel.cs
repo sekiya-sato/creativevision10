@@ -84,7 +84,7 @@ from MasterYosanHanbai Y
 	}
 
 	[RelayCommand]
-	async Task Init() => await DoList(CancellationToken.None);
+	Task Init() => DoList(CancellationToken.None);
 
 	protected override void OnCurrentEditChangedCore(MasterYosanHanbai? oldValue, MasterYosanHanbai newValue) {
 		base.OnCurrentEditChangedCore(oldValue, newValue);

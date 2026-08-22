@@ -427,7 +427,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		}
 	}
 	[RelayCommand]
-	async private Task ShowUpgrade() {
+	private void ShowUpgrade() {
 		ClientLib.ExitAllWithoutMe(this);
 		var view = new Views._00System.SysUpgradeView { Title = "システムアップデート" };
 		ClientLib.ShowDialogView(view, this, IsDialog: true);
@@ -572,9 +572,8 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	}
 
 	[RelayCommand]
-	private async Task OpenJmaWeatherOverviewSourceAsync() {
-		await ClientLib.OpenUrlAsync(BuildJmaWeatherOverviewSourceUrl(AppGlobal.JmaWeatherAreaCode));
-	}
+	private void OpenJmaWeatherOverviewSource() =>
+		ClientLib.OpenUrl(BuildJmaWeatherOverviewSourceUrl(AppGlobal.JmaWeatherAreaCode));
 
 	private static string BuildJmaWeatherOverviewSourceUrl(string? areaCode) {
 		return $"{JmaWeatherForecastPageBaseUrl}{NormalizeJmaWeatherAreaCode(areaCode)}";

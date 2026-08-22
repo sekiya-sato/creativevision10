@@ -253,16 +253,8 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		return map;
 	}
 
-	async Task<CvMsg> SendExecuteAsync(object parameter, CancellationToken ct) {
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
-			DataType = parameter.GetType(),
-			DataMsg = Common.SerializeObject(parameter),
-		};
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		return await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-	}
+	Task<CvMsg> SendExecuteAsync(object parameter, CancellationToken ct) =>
+		CoreServiceClient.SendExecuteAsync(parameter, ct);
 
 	static string RangeEq(List<string> parameters, string column, string? code) {
 		var c = (code ?? string.Empty).Trim();
