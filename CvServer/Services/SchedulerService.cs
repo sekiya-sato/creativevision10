@@ -24,11 +24,11 @@ public class SchedulerService : ISchedulerService {
 	private const int WorkFileCleanupTargetAgeHours = 2;
 	public const string DailyWalCheckpointCronExpression = "0 2 * * *";
 	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint データベースにWAL履歴を反映させるタスク";
-	public const string WorkFileCleanupCronExpression = "*/10 * * * *";
+	public const string WorkFileCleanupCronExpression = "30 0,12 * * *";
 	public const string WorkFileCleanupTaskName = "Work file cleanup ワークフォルダにある古いファイルを削除するタスク";
 	public const string MonthlyResummaryCronExpression = "10 1 * * *";
 	public const string MonthlyResummaryTaskName = "在庫 売掛 買掛 の当月と前月 を再集計するタスク";
-	public const string JodaiPurgeCronExpression = "30 1 * * *";
+	public const string JodaiPurgeCronExpression = "40 1 * * *";
 	public const string JodaiPurgeTaskName = "上代 適用期間が過ぎた適用上代(DerivedJodai)を削除するタスク";
 
 	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
