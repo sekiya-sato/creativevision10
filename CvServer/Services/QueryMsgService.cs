@@ -13,11 +13,13 @@ public partial class CoreService : ICoreService {
 	private readonly ExDatabase _db;
 	// private readonly ISchedulerService _scheduler;
 	private readonly IHttpContextAccessor _httpContextAccessor;
+	private readonly AppGlobal _appGlobal;
 
 	// フラグ -> ハンドラマップ
 	private readonly Dictionary<CvFlag, Func<CvMsg, CallContext, CvMsg>> _handlers;
 
-	public CoreService(ILogger<CoreService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, ExDatabase db) {
+	public CoreService(ILogger<CoreService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor,
+		ExDatabase db, AppGlobal? appGlobal = null) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
 		ArgumentNullException.ThrowIfNull(env);
@@ -29,6 +31,7 @@ public partial class CoreService : ICoreService {
 		_db = db;
 		// _scheduler = scheduler;
 		_httpContextAccessor = httpContextAccessor;
+		_appGlobal = appGlobal ?? AppGlobal.Shared;
 
 		// ハンドラ登録
 		_handlers = new Dictionary<CvFlag, Func<CvMsg, CallContext, CvMsg>> {

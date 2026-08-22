@@ -16,11 +16,12 @@ public partial class CoreService {
 	[AllowAnonymous]
 	public async IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default) {
 		string? clientId = context.RequestHeaders?.GetValue("x-clientid");
+		var cancellationToken = context.CancellationToken;
 		// 処理のステップと対応するアクションを定義
-		var steps = new (string Name, Func<PrintOperation, PrintResult> Action)[] {
-			("プリント前処理", (req) => printPre(req, clientId)),
-			("プリント本処理", (req) => printPdf(req)),
-			("プリント後処理", (req) => printPost(req))
+		var steps = new (string Name, Func<CancellationToken, Task<PrintResult>> Action)[] {
+			("プリント前処理", ct => Task.Run(() => PrintPre(request, clientId), ct)),
+			("プリント本処理", _ => ExecutePrintAsync(request)),
+			("プリント後処理", ct => PrintPostAsync(request, ct)),
 		};
 		// ステップ数を取得
 		int totalSteps = steps.Length;
@@ -30,7 +31,7 @@ public partial class CoreService {
 			var (Name, Action) = steps[i];
 
 			// 現在のステップを実行
-			var result = await Task.Run(() => Action(request), context.CancellationToken);
+			var result = await Action(cancellationToken);
 
 			// Progress を計算 (現在のステップ数 / 総ステップ数 * 100)
 			int progress = (int)((i + 1) / (double)totalSteps * 100);
@@ -82,7 +83,7 @@ public partial class CoreService {
 	/// Print処理本体
 	/// </summary>
 	/// <returns></returns>
-	private PrintResult printPdf(PrintOperation request) {
+	private async Task<PrintResult> ExecutePrintAsync(PrintOperation request) {
 
 		// printPre で生成した一時フォルダ名を request から取得
 		string timestamp = request.TempFolder;
@@ -98,36 +99,25 @@ public partial class CoreService {
 			OutputFileName = Path.GetFileName(request.TempOutputFullPath),
 		};
 		var printService = new PrintAdapter();
-		var ret = printService.ExecutePrintAsync(context);
-		ret.Wait();
-		return ret.Result;
+		return await printService.ExecutePrintAsync(context);
 	}
 	/// <summary>
 	/// Print前処理(SQLでデータ取得など)
 	/// </summary>
-	private PrintResult printPre(PrintOperation request, string? clientId) {
+	private PrintResult PrintPre(PrintOperation request, string? clientId) {
 		var start = DateTime.Now;
-		var printServer = _configuration.GetSection("PrintServer");
-		string contentRootPath = _env.ContentRootPath;
-		string configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
-		string configuredFormDir = printServer.GetValue<string>("PrintFormDir") ?? ".";
-		string configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
-		string resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
-			? configuredBaseDir
-			: Path.Combine(contentRootPath, configuredBaseDir));
-		string resolvedFormDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredFormDir));
-		string resolvedOutputDir = Path.GetFullPath(Path.Combine(resolvedBaseDir, configuredOutputDir));
+		var paths = PrintServerPathResolver.Resolve(_configuration, _env);
 
 		// 一時フォルダ名を生成し、request に保存して printPdf と共有
 		string timestamp = BuildTempFolderName(clientId);
 		request.TempFolder = timestamp;
-		string tempDir = Path.Combine(resolvedOutputDir, timestamp);
+		string tempDir = Path.Combine(paths.OutputDir, timestamp);
 		Directory.CreateDirectory(tempDir);
 		request.TempDataFullPath = Path.Combine(tempDir, "data.txt");
 		string outname = timestamp[^17..^5]; // GUID-yyyyMMddHHmmssfff から yyyyMMddHHmm を抽出
 		request.TempOutputFullPath = Path.Combine(tempDir, $"outfile{outname}.pdf");
-		request.TempFormFullPath = Path.Combine(resolvedFormDir, request.FormFile);
+		request.TempFormFullPath = Path.Combine(paths.FormDir, request.FormFile);
 
 		if (param is PrintByCsvParam printParam) {
 			if (string.IsNullOrWhiteSpace(printParam.CsvData)) {
@@ -156,7 +146,7 @@ public partial class CoreService {
 	/// <summary>
 	/// Print後処理(PDFが生成されたか確認)
 	/// </summary>
-	private PrintResult printPost(PrintOperation request) {
+	private async Task<PrintResult> PrintPostAsync(PrintOperation request, CancellationToken cancellationToken) {
 		var start = DateTime.Now;
 
 		// request から一時フォルダ名を取得し、出力ファイルパスを再構築
@@ -170,7 +160,7 @@ public partial class CoreService {
 			if (DateTime.Now - start > PrintPostCheckTimeout) {
 				return new PrintResult(false, $"Print後処理(PDF確認): タイムアウト {checkfile}");
 			}
-			Thread.Sleep(PrintPostCheckIntervalMilliseconds);
+			await Task.Delay(PrintPostCheckIntervalMilliseconds, cancellationToken);
 		}
 		// 2026/06/15 commit 09eeecb7a5f5c29d0522be07ed3bdcbe1c72c74e WebpdfView のブラウザコア初期化ロジック追加 によりPDF生成が安定
 		var ret = new PrintResult(true, $"{timestamp}/{Path.GetFileName(request.TempOutputFullPath)}");

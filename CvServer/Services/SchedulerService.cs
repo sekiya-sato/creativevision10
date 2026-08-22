@@ -618,22 +618,12 @@ public class SchedulerService : ISchedulerService {
 	}
 
 	private string ResolvePrintOutputDir() {
-		var printServer = _configuration.GetSection("PrintServer");
-		var contentRootPath = _env.ContentRootPath;
-		var configuredBaseDir = printServer.GetValue<string>("PrintBaseDir") ?? ".";
-		var configuredOutputDir = printServer.GetValue<string>("PrintOutputDir") ?? ".";
-		var resolvedBaseDir = Path.GetFullPath(Path.IsPathRooted(configuredBaseDir)
-			? configuredBaseDir
-			: Path.Combine(contentRootPath, configuredBaseDir));
-
-		return Path.GetFullPath(Path.IsPathRooted(configuredOutputDir)
-			? configuredOutputDir
-			: Path.Combine(resolvedBaseDir, configuredOutputDir));
+		return PrintServerPathResolver.Resolve(_configuration, _env).OutputDir;
 	}
 
 	public static Dictionary<string, object> ExecuteSqliteWalCheckpoint(ExDatabase db) {
 		var result = db.RawExecCmd(SqliteOptimizeSql);
-		Helpers.EnsureRawExecSucceeded(db.RawExecCmd(SqliteOptimizeSql), SqliteOptimizeSql);
+		Helpers.EnsureRawExecSucceeded(result, SqliteOptimizeSql);
 		result = db.RawExecCmd(SqliteWalCheckpointSql);
 		Helpers.EnsureRawExecSucceeded(result, SqliteWalCheckpointSql);
 		if (result.Count == 0) {

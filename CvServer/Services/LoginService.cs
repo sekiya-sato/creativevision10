@@ -16,19 +16,25 @@ public partial class LoginService : ILoginService {
 	private readonly ExDatabase _db;
 	// private readonly ISchedulerService _scheduler;
 	private readonly IHttpContextAccessor _httpContextAccessor;
-	public LoginService(ILogger<LoginService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, ExDatabase db) {
+	private readonly JwtSettings _jwtSettings;
+	private readonly AppGlobal _appGlobal;
+	private readonly JwtSecurityTokenHandler _tokenHandler = new();
+	public LoginService(ILogger<LoginService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor,
+		ExDatabase db, JwtSettings? jwtSettings = null, AppGlobal? appGlobal = null) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
 		ArgumentNullException.ThrowIfNull(env);
 		ArgumentNullException.ThrowIfNull(httpContextAccessor);
+		ArgumentNullException.ThrowIfNull(db);
 		_logger = logger;
 		_configuration = configuration;
 		_env = env;
 		_db = db;
 		// _scheduler = scheduler;
 		_httpContextAccessor = httpContextAccessor;
+		_jwtSettings = jwtSettings ?? new JwtSettings(configuration);
+		_appGlobal = appGlobal ?? AppGlobal.Shared;
 	}
-	private readonly string _longkey = "veryveryhardsecurity-keys.needtoolong";
 
 	/// <summary>
 	/// Login処理を行いJWTを返す
@@ -55,32 +61,11 @@ public partial class LoginService : ILoginService {
 				ExpDate = DateTime.Now.AddYears(1).ToDtStrDateTimeShort(),
 				LastDate = DateTime.Now.ToDtStrDateTimeShort(),
 			};
-			if (_configuration.GetSection("WebAuthJwt") != null) {
-				var lifetime = TimeSpan.FromMinutes(1);
-				var webauthjwt = _configuration.GetSection("WebAuthJwt");
-				if (int.TryParse(webauthjwt.GetSection("Lifetime")?.Value, out int minutes))
-					lifetime = TimeSpan.FromMinutes(minutes);
-				var jwt = createToken(
-					issuer: webauthjwt.GetSection("Issuer")?.Value ?? "issuer",
-					claims: claims,
-					lifetime: lifetime,
-					seckey: webauthjwt.GetSection("SecretKey")?.Value ?? _longkey);
-				var retJwtData = new JwtSecurityTokenHandler().WriteToken(jwt);
-				var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetAddInfo() };
-				var loginHist = new SysHistJwt {
-					Id_Login = -9, // 初回ログインは-9固定
-					JwtUnixTime = jwt.ValidTo.ToUnixTime(),
-					ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
-					Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-					Jsub = Common.DeserializeObject<SysHistJwtSub>(request.Info) ?? new(),
-					Op = "LoginAsync First"
-				};
-				if (request.Info != null)
-
-					_db.Insert<SysHistJwt>(loginHist);
-				return Task.FromResult(ret);
+			var jwt = CreateToken(claims, _jwtSettings.Lifetime);
+			if (request.Info != null) {
+				InsertLoginHistory(jwt, request.Info, "LoginAsync First", -9);
 			}
-
+			return Task.FromResult(CreateLoginReply(jwt, role: 0, includeInfoPayload: true));
 		}
 		var loginData = _db.Fetch<SysLogin>($"where LoginId=@0", [request.LoginId]).FirstOrDefault();
 
@@ -107,58 +92,23 @@ public partial class LoginService : ILoginService {
 				(loginData.Id_Role != 0) ? loginData.Id_Role.ToString() : loginData.Id_Shain.ToString()));
 			claims.Add(new Claim(ClaimTypes.SerialNumber, loginData.Id.ToString()));
 		}
-		// this._configuration.GetSection("WebAuthJwt").GetSection("Lifetime").Value
-		if (_configuration.GetSection("WebAuthJwt") != null) {
-			var lifetime = TimeSpan.FromMinutes(1);
-			var webauthjwt = _configuration.GetSection("WebAuthJwt");
-			if (int.TryParse(webauthjwt.GetSection("Lifetime")?.Value, out int minutes))
-				lifetime = TimeSpan.FromMinutes(minutes);
-			var jwt = createToken(
-				issuer: webauthjwt.GetSection("Issuer")?.Value ?? "issuer",
-				claims: claims,
-				lifetime: lifetime,
-				seckey: webauthjwt.GetSection("SecretKey")?.Value ?? _longkey);
-			var retJwtData = new JwtSecurityTokenHandler().WriteToken(jwt);
-			//var expire = new DateTime(jwt.ValidTo.ToLocalTime().Ticks, DateTimeKind.Local); // ここで設定してもgRPCシリアライザでKindが落ちる
-			// [Even if set here, the Kind crashes in the gRPC serializer]
-			// UNIX_EPOCH はUTC 1970/01/01 00:00 からの経過秒数
-			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetAddInfo(), Role = loginData.Id_Role };
-			var loginHist = new SysHistJwt {
-				Id_Login = loginData.Id,
-				JwtUnixTime = jwt.ValidTo.ToUnixTime(),
-				ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
-				Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-				Jsub = Common.DeserializeObject<SysHistJwtSub>(request.Info) ?? new(),
-				Op = "LoginAsync"
-			};
-			_db.Insert<SysHistJwt>(loginHist);
-
-			return Task.FromResult(ret);
-		}
-		else
-			return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
+		var loginJwt = CreateToken(claims, _jwtSettings.Lifetime);
+		InsertLoginHistory(loginJwt, request.Info, "LoginAsync", loginData.Id);
+		return Task.FromResult(CreateLoginReply(loginJwt, loginData.Id_Role, includeInfoPayload: true));
 	}
 	/// <summary>
 	/// トークン作成共通ロジック
 	/// [Common logic for token creation]
 	/// </summary>
-	/// <param name="issuer"></param>
-	/// <param name="audience"></param>
 	/// <param name="claims"></param>
 	/// <param name="lifetime"></param>
-	/// <param name="seckey"></param>
 	/// <returns></returns>
-	JwtSecurityToken createToken(string issuer, IEnumerable<Claim> claims,
-		TimeSpan lifetime, string seckey) {
-		var jwt = new JwtSecurityToken(
-			issuer: issuer,
+	private JwtSecurityToken CreateToken(IEnumerable<Claim> claims, TimeSpan lifetime, string? issuer = null) {
+		return new JwtSecurityToken(
+			issuer: _jwtSettings.ResolveIssuer(issuer),
 			claims: claims,
 			expires: DateTime.UtcNow.Add(lifetime),
-			signingCredentials: new SigningCredentials(
-				new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(seckey)),
-				SecurityAlgorithms.HmacSha256)
-			);
-		return jwt;
+			signingCredentials: _jwtSettings.CreateSigningCredentials());
 	}
 	/// <summary>
 	/// リフレッシュトークンの取得(app.settings.jsonのRefreshtime 分)
@@ -172,15 +122,10 @@ public partial class LoginService : ILoginService {
 	public Task<LoginReply> LoginRefreshAsync(LoginRefresh request, ProtoBuf.Grpc.CallContext context = default) {
 		// トークンからexpires を取得して、新しいトークンを作成する [Retrieve expires from the token and create a new token]
 		// トークンを解析 [Parse the token]
-		var handler = new JwtSecurityTokenHandler();
-		var jsonToken = handler.ReadToken(request.Token) as JwtSecurityToken;
+		var jsonToken = _tokenHandler.ReadToken(request.Token) as JwtSecurityToken;
 		if (jsonToken == null) {
 			throw new SecurityTokenException("Invalid token");
 		}
-		// 有効期限を取得 [Obtain the expiration date]
-		var expires = jsonToken.ValidTo;
-		if (_configuration.GetSection("WebAuthJwt") == null)
-			throw new SecurityTokenException("Invalid configuration");
 		// トークンに紐づくSysLoginの社員有効期限をチェック（初回起動トークンはSerialNumberが無いためスキップ）
 		// [Check the employee expiration of the SysLogin associated with the token; skip for first-launch tokens without SerialNumber]
 		var serialNumberClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.SerialNumber);
@@ -195,28 +140,9 @@ public partial class LoginService : ILoginService {
 				return Task.FromResult(userCheck);
 			refreshRole = loginDataRefresh.Id_Role;
 		}
-		var webauthjwt = _configuration.GetSection("WebAuthJwt");
-		var lifetime = TimeSpan.FromMinutes(1);
-		if (int.TryParse(webauthjwt.GetSection("Refreshtime")?.Value, out int minutes))
-			lifetime = TimeSpan.FromMinutes(minutes);
-		var jwt = createToken(
-			issuer: jsonToken.Issuer,
-			claims: jsonToken.Claims,
-			lifetime: lifetime,
-			seckey: webauthjwt.GetSection("SecretKey")?.Value ?? _longkey);
-		var newToken = new JwtSecurityTokenHandler().WriteToken(jwt);
-		var loginHist = new SysHistJwt {
-			JwtUnixTime = jwt.ValidTo.ToUnixTime(),
-			ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
-			Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-			Jsub = Common.DeserializeObject<SysHistJwtSub>(request.Info) ?? new(),
-			Op = "LoginRefreshAsync"
-		};
-		_db.Insert<SysHistJwt>(loginHist);
-
-		//var expire = new DateTime(jwt.ValidTo.ToLocalTime().Ticks, DateTimeKind.Local); // ここで設定してもgRPCシリアライザでKindが落ちる
-		// [Even if set here, the Kind crashes in the gRPC serializer]				
-		return Task.FromResult(new LoginReply { JwtMessage = newToken, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), Role = refreshRole });
+		var jwt = CreateToken(jsonToken.Claims, _jwtSettings.RefreshLifetime, jsonToken.Issuer);
+		InsertLoginHistory(jwt, request.Info, "LoginRefreshAsync");
+		return Task.FromResult(CreateLoginReply(jwt, refreshRole, includeInfoPayload: false));
 	}
 
 	/// <summary>
@@ -247,33 +173,9 @@ public partial class LoginService : ILoginService {
 			LastDate = Common.FromUtcTicks(vdate).ToDtStrDateTimeShort(),
 		};
 		_db.Insert<SysLogin>(initLogin);
-		// this._configuration.GetSection("WebAuthJwt").GetSection("Lifetime").Value
-		if (_configuration.GetSection("WebAuthJwt") != null) {
-			var lifetime = TimeSpan.FromMinutes(1);
-			var webauthjwt = _configuration.GetSection("WebAuthJwt");
-			if (int.TryParse(webauthjwt.GetSection("Lifetime")?.Value, out int minutes))
-				lifetime = TimeSpan.FromMinutes(minutes);
-			var jwt = createToken(
-				issuer: webauthjwt.GetSection("Issuer")?.Value ?? "issuer",
-				claims: claims,
-				lifetime: lifetime,
-				seckey: webauthjwt.GetSection("SecretKey")?.Value ?? _longkey);
-			var retJwtData = new JwtSecurityTokenHandler().WriteToken(jwt);
-			var ret = new LoginReply { JwtMessage = retJwtData, Result = 0, Expire = jwt.ValidTo.ToLocalTime(), InfoPayload = GetAddInfo() };
-			var loginHist = new SysHistJwt {
-				Id_Login = initLogin.Id,
-				JwtUnixTime = jwt.ValidTo.ToUnixTime(),
-				ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
-				Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
-				Jsub = Common.DeserializeObject<SysHistJwtSub>(request.Info) ?? new(),
-				Op = "CreateLoginAsync"
-			};
-			_db.Insert<SysHistJwt>(loginHist);
-
-			return Task.FromResult(ret);
-		}
-		else
-			return Task.FromResult(new LoginReply { JwtMessage = "", Result = -1 });
+		var jwt = CreateToken(claims, _jwtSettings.Lifetime);
+		InsertLoginHistory(jwt, request.Info, "CreateLoginAsync", initLogin.Id);
+		return Task.FromResult(CreateLoginReply(jwt, role: 0, includeInfoPayload: true));
 	}
 	/// <summary>
 	/// 社員マスタの有効期限をチェックする
@@ -297,6 +199,31 @@ public partial class LoginService : ILoginService {
 	/// </summary>
 	/// <returns></returns>
 	private string GetAddInfo() {
-		return Common.SerializeObject(new AppGlobal().VerInfo);
+		return Common.SerializeObject(_appGlobal.VerInfo);
+	}
+
+	private LoginReply CreateLoginReply(JwtSecurityToken jwt, long role, bool includeInfoPayload) {
+		var reply = new LoginReply {
+			JwtMessage = _tokenHandler.WriteToken(jwt),
+			Result = 0,
+			Expire = jwt.ValidTo.ToLocalTime(),
+			Role = role,
+		};
+		if (includeInfoPayload) {
+			reply.InfoPayload = GetAddInfo();
+		}
+		return reply;
+	}
+
+	private void InsertLoginHistory(JwtSecurityToken jwt, string info, string operation, long loginId = 0) {
+		var loginHistory = new SysHistJwt {
+			Id_Login = loginId,
+			JwtUnixTime = jwt.ValidTo.ToUnixTime(),
+			ExpDate = jwt.ValidTo.ToLocalTime().ToDtStrDateTimeShort(),
+			Ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? ".",
+			Jsub = Common.DeserializeObject<SysHistJwtSub>(info) ?? new(),
+			Op = operation,
+		};
+		_db.Insert(loginHistory);
 	}
 }

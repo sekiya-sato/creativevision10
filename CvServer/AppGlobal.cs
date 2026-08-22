@@ -7,6 +7,7 @@ namespace CvServer;
 public class AppGlobal {
 	static InfoServer? _ver;
 	public static int Counter = 0;
+	public static AppGlobal Shared { get; } = new();
 	/// <summary>
 	/// アプリケーションのバージョン情報を取得します。
 	/// </summary>

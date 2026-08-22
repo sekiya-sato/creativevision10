@@ -13,19 +13,21 @@ public partial class SearchByPostalCodeService : IPostalAddressService {
 	private const int MaxPostalCodeSearchLength = 7;
 	private readonly ILogger<SearchByPostalCodeService> _logger;
 	private readonly IConfiguration _configuration;
+	private readonly AppGlobal _appGlobal;
 	private static readonly HttpClient httpClient = new();
 	private static JapanPostBizOptions? _japanPostBizOptions;
 	// gRPCサービスは呼び出しごとに生成されるため、トークンはプロセス共有で保持する。
 	private static readonly SemaphoreSlim tokenLock = new(1, 1);
 	private static string? cachedToken;
 	private static DateTimeOffset expiresAtUtc = DateTimeOffset.MinValue;
-	public SearchByPostalCodeService(ILogger<SearchByPostalCodeService> logger, IConfiguration configuration) {
+	public SearchByPostalCodeService(ILogger<SearchByPostalCodeService> logger, IConfiguration configuration, AppGlobal? appGlobal = null) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
 
 		_logger = logger;
 		_configuration = configuration;
-		var verInfo = new AppGlobal().VerInfo;
+		_appGlobal = appGlobal ?? AppGlobal.Shared;
+		var verInfo = _appGlobal.VerInfo;
 		if (httpClient != null && httpClient.DefaultRequestHeaders.Count() == 0) { // UserAgentは必ず設定する。API側でUserAgentがないリクエストを拒否する可能性があるため。
 			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(verInfo.Product, verInfo.Version));
 			_japanPostBizOptions = GetJapanPostBizOptions();
@@ -213,7 +215,7 @@ public partial class SearchByPostalCodeService : IPostalAddressService {
 	}
 	private static bool IsTokenValid() => !string.IsNullOrWhiteSpace(cachedToken) && DateTimeOffset.UtcNow < expiresAtUtc;
 	private JapanPostBizOptions GetJapanPostBizOptions() {
-		var verInfo = new AppGlobal().VerInfo;
+		var verInfo = _appGlobal.VerInfo;
 		return new JapanPostBizOptions {
 			BaseUrl = _configuration.GetSection("JapanPostBiz")["BaseUrl"] ?? "https://api.da.pf.japanpost.jp",
 			TokenPath = _configuration.GetSection("JapanPostBiz")["TokenPath"] ?? "/api/v2/j/token",

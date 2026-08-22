@@ -16,7 +16,8 @@ public partial class WeatherService : IWeatherService {
 	private static readonly HttpClient httpClient = CreateHttpClient();
 	private const int DefaultForecastCount = 40;
 	private const int MaxForecastCount = 40;
-	public WeatherService(ILogger<WeatherService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor) {
+	public WeatherService(ILogger<WeatherService> logger, IConfiguration configuration, IWebHostEnvironment env,
+		IHttpContextAccessor httpContextAccessor, AppGlobal? appGlobal = null) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
 		ArgumentNullException.ThrowIfNull(env);
@@ -25,6 +26,10 @@ public partial class WeatherService : IWeatherService {
 		_configuration = configuration;
 		_env = env;
 		_httpContextAccessor = httpContextAccessor;
+		if (httpClient.DefaultRequestHeaders.UserAgent.Count == 0) {
+			var verInfo = (appGlobal ?? AppGlobal.Shared).VerInfo;
+			httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(verInfo.Product, verInfo.Version));
+		}
 	}
 
 	private static HttpClient CreateHttpClient() {
@@ -32,10 +37,7 @@ public partial class WeatherService : IWeatherService {
 			// OpenWeatherMap の接続先 DNS 変更を長期稼働中にも反映する。
 			PooledConnectionLifetime = TimeSpan.FromMinutes(15),
 		};
-		var client = new HttpClient(handler);
-		var verInfo = new AppGlobal().VerInfo;
-		client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(verInfo.Product, verInfo.Version));
-		return client;
+		return new HttpClient(handler);
 	}
 
 

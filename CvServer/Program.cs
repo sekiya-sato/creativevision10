@@ -16,12 +16,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.IdentityModel.Tokens;
 using NLog.Web;
 using ProtoBuf.Grpc.Server;
 using System.IO.Compression;
 using System.Security.Claims;
-using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,22 +61,10 @@ builder.Services.AddAuthentication(options => { })
 .AddScheme<AuthenticationSchemeOptions, CvServer.Handlers.CustomJwtAuthHandler>(JwtBearerDefaults.AuthenticationScheme, options => { });
 
 // appsettings.json から設定を取得する [Retrieve settings from appsettings.json]
-if (builder.Configuration.GetSection("WebAuthJwt") != null) {
-	var seckey = builder.Configuration.GetSection("WebAuthJwt")?.GetSection("SecretKey")?.Value ?? "veryveryhardsecurity-keys.needtoolong";
-	builder.Services.Configure<JwtBearerOptions>(options => {
-		options.TokenValidationParameters = new TokenValidationParameters {
-			ValidateIssuer = true,
-			ValidIssuer = builder.Configuration.GetSection("WebAuthJwt").GetSection("Issuer").Value, // トークン発行者 [Token issuer]
-			ValidateAudience = false,
-			ValidAudience = builder.Configuration.GetSection("WebAuthJwt").GetSection("Audience").Value, // トークンの受信者(検証しない) [Token recipient (not validated)]
-			ValidateLifetime = true,
-			IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(seckey)),  // トークンの署名を検証するためのキー 16バイト以上 [Key to verify token signature, 16 bytes or more]
-			ValidateIssuerSigningKey = true,
-			ClockSkew = TimeSpan.Zero // WTのLifeTime検証の際の時間のずれを設定するという謎プロパティで、デフォルトは 5分 
-									  // [A mysterious property that sets the time difference during WT Lifetime validation, with a default of 5 minutes]
-		};
-	});
-}
+var jwtSettings = new JwtSettings(builder.Configuration);
+builder.Services.AddSingleton(jwtSettings);
+builder.Services.Configure<JwtBearerOptions>(options =>
+	options.TokenValidationParameters = jwtSettings.CreateTokenValidationParameters());
 #endregion
 
 #region スケジューラの処理 ================================================== [Processing of the scheduler]
@@ -112,6 +98,7 @@ builder.Services.AddScoped<ExDatabase>(sp => {
 	// ファクトリメソッドを使用してインスタンスを生成
 	return CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr);
 });
+builder.Services.AddSingleton(AppGlobal.Shared);
 builder.Services.AddSingleton<SchedulerService>();
 var serverVersion = builder.Configuration.GetSection("ServerVersion").Value ?? "0.0.0";
 var app = builder.Build();
@@ -159,7 +146,7 @@ app.MapGrpcService<PointOfSaleService>();
 app.MapGrpcService<SchedulerService>();
 app.MapGrpcService<SearchByPostalCodeService>();
 app.MapGrpcService<WeatherService>();
-var appInit = new AppGlobal();
+var appInit = app.Services.GetRequiredService<AppGlobal>();
 using (var scope = app.Services.CreateScope()) {
 	var database = scope.ServiceProvider.GetRequiredService<ExDatabase>();
 	// DIスコープから ExDatabase を取得してサーバ起動時に必要な初期化を実行

@@ -41,7 +41,7 @@ public partial class CoreService {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogDebug("HandleGetVersion invoked Flag:{Flag}", request.Flag);
 
-		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(new AppGlobal().VerInfo));
+		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(_appGlobal.VerInfo));
 	}
 
 	private CvMsg HandleGetEnv(CvMsg request, CallContext context) {
@@ -80,7 +80,7 @@ public partial class CoreService {
 	private CvMsg HandleConvertMasterShohin(CvMsg request, CallContext context) {
 		var rebuild = new RebuildDb(_db);
 		var ret = rebuild.RebuildMasterShohin2Meisho();
-		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(new AppGlobal().VerInfo));
+		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(_appGlobal.VerInfo));
 	}
 	/// <summary>
 	/// Master系のV*列とJSON内の名称スナップショットを参照先マスタの現在値で再同期する
