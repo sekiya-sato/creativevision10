@@ -13,7 +13,6 @@
 			<helpers:InverseBooleanConverter x:Key="InverseBooleanConverter" />
 			<helpers:MultiplyValuesConverter x:Key="MultiplyValuesConverter" />
 			<helpers:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
-			<helpers:NumericSignBrushConverter x:Key="NumericSignBrushConverter" />
 			<helpers:TranKubunBrushConverter x:Key="TranKubunBrushConverter" />
 			<helpers:CodeNameViewDisplayConverter x:Key="CodeNameViewDisplayConverter" />
 			<helpers:IdCodeNameDisplayConverter x:Key="IdCodeNameDisplayConverter" />
@@ -28,6 +27,7 @@
 				<ResourceDictionary Source="/Resources/UISearchTextBox.xaml" />
 				<ResourceDictionary Source="/Resources/UICalendar.xaml" />
 				<ResourceDictionary Source="/Resources/UIFormStyles.xaml" />
+				<ResourceDictionary Source="/Resources/UIStockQueryStyles.xaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</Application.Resources>

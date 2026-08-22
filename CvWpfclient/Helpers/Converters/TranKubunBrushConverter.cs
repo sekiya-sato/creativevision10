@@ -19,12 +19,12 @@ namespace CvWpfclient.Helpers;
 /// 総合計など、返品伝票を一目で判別させたい表示に使う。
 /// </summary>
 public sealed class TranKubunBrushConverter : IValueConverter {
-	static readonly SolidColorBrush FallbackReturnBrush = CreateFrozen(Color.FromRgb(0xD3, 0x2F, 0x2F));
+	static readonly SolidColorBrush FallbackReturnBrush = ResourceBrushHelper.CreateFrozen(Color.FromRgb(0xD3, 0x2F, 0x2F));
 
 	public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
 		if (!TryGetInt(value, culture, out int kubun)) return DependencyProperty.UnsetValue;
 		// 20-29 = 返品系, 30-39 = その他返品 → 赤。10-19(通常取引)・その他 → 既定色(継承色=MaterialDesignBody)。
-		if (kubun is >= 20 and <= 39) return FindBrush("NegativeForegroundBrush") ?? FallbackReturnBrush;
+		if (kubun is >= 20 and <= 39) return ResourceBrushHelper.Find("NegativeForegroundBrush") ?? FallbackReturnBrush;
 		return DependencyProperty.UnsetValue;
 	}
 
@@ -53,18 +53,4 @@ public sealed class TranKubunBrushConverter : IValueConverter {
 		return int.TryParse(text, NumberStyles.Any, culture, out number);
 	}
 
-	static Brush? FindBrush(string key) {
-		var resource = Application.Current?.TryFindResource(key);
-		return resource switch {
-			Brush brush => brush,
-			Color color => CreateFrozen(color),
-			_ => null
-		};
-	}
-
-	static SolidColorBrush CreateFrozen(Color color) {
-		SolidColorBrush brush = new(color);
-		brush.Freeze();
-		return brush;
-	}
 }

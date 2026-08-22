@@ -21,15 +21,6 @@
 			Gesture="Esc" />
 	</helpers:BaseWindow.InputBindings>
 
-	<helpers:BaseWindow.Resources>
-		<Style x:Key="OverdueCell"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="FontWeight" Value="SemiBold" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
-		</Style>
-	</helpers:BaseWindow.Resources>
-
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
@@ -175,7 +166,7 @@
 					Header="状態" />
 				<DataGridTextColumn Width="120"
 					Binding="{Binding OverdueDisplay}"
-					ElementStyle="{StaticResource OverdueCell}"
+					ElementStyle="{StaticResource OverdueTextBlock}"
 					Header="納期遅れ" />
 			</DataGrid.Columns>
 		</DataGrid>

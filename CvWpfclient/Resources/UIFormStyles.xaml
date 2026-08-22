@@ -127,6 +127,14 @@
 		<Setter Property="Padding" Value="0,0,0,0" />
 	</Style>
 
+	<!--  期限超過を強調する一覧セル  -->
+	<Style x:Key="OverdueTextBlock"
+		TargetType="TextBlock">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
+	</Style>
+
 	<!--  予算画面のアクションボタン  -->
 	<Style x:Key="BudgetActionButtonStyle"
 		BasedOn="{StaticResource MaterialDesignOutlinedButton}"

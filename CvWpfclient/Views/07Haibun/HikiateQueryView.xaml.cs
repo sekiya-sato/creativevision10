@@ -17,14 +17,14 @@ public partial class HikiateQueryView : Helpers.BaseWindow {
 
 		switch (e.PropertyName) {
 			case "倉庫":
-				column.ElementStyle = FindResource("StockSokoCell") as Style;
+				column.ElementStyle = FindResource("StockQuerySokoCell") as Style;
 				break;
 			case "倉庫毎Total":
-				ApplyNumericStyle(column, "StockTotalCell");
+				ApplyNumericStyle(column, "StockQueryTotalCell");
 				break;
 			default:
 				if (e.PropertyType == typeof(int)) {
-					ApplyNumericStyle(column, "StockNumericCell");
+					ApplyNumericStyle(column, "StockQueryNumericCell");
 				}
 				break;
 		}

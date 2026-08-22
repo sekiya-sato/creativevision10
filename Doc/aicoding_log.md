@@ -1,3 +1,31 @@
+## [2026-08-22] CvWpfclient の XAML関連部品集約
+
+### Agent
+- OpenAI Codex
+
+### Editor
+- Codex
+
+### 目的
+- XAMLで利用する共通スタイル、DataGrid補助処理、ブラシコンバーター補助処理の重複を削減する。
+- 既存の表示、リソースキーの適用範囲、DataGrid操作、業務別コンバーターの責務を維持する。
+
+### 実施内容
+- 在庫・配分照会4画面で重複していた使用中の6スタイルを `UIStockQueryStyles.xaml` へ集約し、既存の汎用キーと衝突しない `StockQuery*` キーへ変更した。
+- `NumericSignBrushConverter` は `UIStockQueryStyles.xaml` 内で定義し、MergedDictionaryロード中の `StaticResource` 解決を辞書内で完結させた。
+- 4画面すべてで未使用だった `StockSokoCell` は共有先へ移さず削除した。
+- 3画面で重複していた期限超過セルスタイルを `UIFormStyles.xaml` の `OverdueTextBlock` へ集約した。
+- `DataGridCellEnterNavigation` と `DataGridSelectionBehavior` のセル取得処理を `DataGridCellHelper` へ集約した。
+- `NumericSignBrushConverter` と `TranKubunBrushConverter` は業務別の型を維持し、ブラシリソース解決とフォールバック生成のみ `ResourceBrushHelper` へ集約した。
+
+### 検証
+- 変更対象XAMLのXML解析: 成功。
+- 共通リソースキーの定義数・利用数と旧キーが残っていないことを確認した。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore -p:UseAppHost=false -v:minimal`: 成功（警告0、エラー0）。
+- UTF-8 BOMなし、CRLF、`git diff --check`を確認する。
+
+---
+
 ## [2026-08-22] CvWpfclient の通信処理共通化・不要呼び出し削減
 
 ### Agent
