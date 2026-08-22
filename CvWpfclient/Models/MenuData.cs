@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CvBase.Share;
-using CvWpfclient.Views;
 using System.Collections.ObjectModel;
 
 namespace CvWpfclient.Models;
@@ -376,8 +375,8 @@ public partial class MenuData : ObservableObject {
 		new("■ 月次・更新処理", new([
 			new("▲ 締め・集計", new([
 				new("締日更新", typeof(Views._31Monthly.ShimebiUpdateView), addInfo:"1.1以降 1.0では伝票の遡及制御を有効日数のワーニングで行う"),
-				new("月間データ集計", typeof(Views._31Monthly.MonthlyDataSummaryView), addInfo:"準備中"),
-				new("在庫累計更新", typeof(Views._31Monthly.StockRuikeiUpdateView), addInfo:"準備中"),
+				/* 月間データ集計 Views._31Monthly.MonthlyDataSummaryView 夜間の自動実行処理で対応するため不要 旧システムでは月の分析データを集計するために使用 */
+				/* 在庫累計更新 Views._31Monthly.StockRuikeiUpdateView cv10ではSummaryRealStock SummaryStock で足りているため不要 旧システムでは増えた過去在庫データを集計し縮小するために使用 */
 			])),
 			new("▲ 棚卸更新", new([
 				new("棚卸開始処理", typeof(Views._31Monthly.StockTakeInitiationView), addInfo:"棚卸年月末時点の帳簿在庫を保存し棚卸中に動かないようにする。差異調査後は再実行する"),
@@ -399,8 +398,8 @@ public partial class MenuData : ObservableObject {
 				new("積送中クリア", typeof(Views._31Monthly.InTransitClearView), addInfo:"準備中"),
 				new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteView), addInfo:"準備中"),
 				new("残高登録処理", typeof(Views._31Monthly.BalanceRegistrationView), addInfo:"期首の売掛/請求/買掛/支払残をテンプレートCSVで投入。期首前の年月で登録し再計算から凍結される"),
-				new("データ整理更新", typeof(Views._31Monthly.DataCleanupUpdateView), addInfo:"準備中"),
-				new("一時処理用(管理者用)", typeof(Views._31Monthly.TemporaryProcessingView), addInfo:"準備中"),
+				/* データ整理更新 Views._31Monthly.DataCleanupUpdateView 整理対象のデータが未確定 旧システムでは増えた完了済データを削除し縮小するために使用 */
+				new("一時処理用(管理者用)", typeof(Views._31Monthly.TemporaryProcessingView), addInfo:"準備中 データ整理更新などが必要であればここに入れる"),
 			])),
 		])),
 		/* ================================================================
@@ -413,7 +412,6 @@ public partial class MenuData : ObservableObject {
 			new("▲ HHT", new([
 				new("HHT用マスタデータ作成", typeof(Views._30HHT.HhtMasterDataCreateView), addInfo:"CSV または固定長で HHT マスタを出力"),
 				new("HHT手動データ受信", typeof(Views._30HHT.HhtManualDataReceiveView), addInfo:"受信フォルダ内の HHT データを手動取込"),
-				new("HHT手動データ受信(ﾃﾞｰﾀ送信後)", typeof(Views._30HHT.HhtManualDataReceive2View), addInfo:"準備中"),
 				new("HHTエラーデータ修正入力", typeof(Views._30HHT.HhtErrorDataInputView), addInfo:"準備中"),
 				new("HHTデータ更新", typeof(Views._30HHT.HhtDataUpdateView), addInfo:"準備中"),
 				new("HHT未更新データ印刷", typeof(Views._30HHT.HhtUnupdatedDataPrintView), addInfo:"準備中"),

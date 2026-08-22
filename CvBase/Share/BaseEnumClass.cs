@@ -89,4 +89,12 @@ public enum EnumLoginRole : int {
 	/// 倉庫担当
 	/// </summary>
 	Warehouse = 2,
+	/// <summary>
+	/// 本部担当
+	/// </summary>
+	Honbu = 3,
+	/// <summary>
+	/// 経理担当
+	/// </summary>
+	Keiri = 4,
 }
