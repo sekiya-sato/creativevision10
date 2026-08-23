@@ -104,7 +104,7 @@ $x=[xml]$t; "root="+$x.DocumentElement.Name+" items="+$x.SelectNodes('//item').C
 
 本番の PDF 生成はサーバ側（gRPC `PrintPdfService` が SQL→CSV→`FormWriter`）だが、**qfm 単体の描画確認は DB もサーバも要らない**。`CvPrints.PrintAdapter` を直接呼ぶ小ハーネスで実 PDF を出せる（`PRINT_ENABLE` は `CvPrints.csproj` で既定 true、IKVM が `printstream.jar` を取り込む）。
 
-ハーネスは同梱: [`tools/qfmprint/`](tools/qfmprint/)（`Program.cs` は `CvServer/Services/PrintPdfService.cs:93-99` の `PrintContext` 構築を最小再現）。
+ハーネスは同梱: [`tools/qfmprint/`](tools/qfmprint/)（`Program.cs` は `CvServer/Services/PrintPdfService.cs:94-100` の `PrintContext` 構築を最小再現）。本番の `OutputFileName` は `outfile{yyyyMMddHHmm}.pdf`（`PrintPdfService.cs:118-119`）だが、本ハーネスは確認しやすいよう固定名 `outfile.pdf` を使う。
 
 手順:
 
