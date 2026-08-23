@@ -1,3 +1,42 @@
+## [2026-08-23] 移行データ変換（ConvertDbTran）のTotal/Tax/IsPay算出ロジック実装
+
+### Agent
+- Sonnet 5 : Anthropic : Claude Code
+
+### Editor
+- Claude Code
+
+### 目的
+- `Doc/spec/2026-08-18_CV10機能完成度チェックリスト.md` 9章「既知のリスク」に記録された「移行売上の`Total`/`Tax`/`IsPay`が未設定」課題を解消する。
+- 開発DBでは`Rate=10%`固定・`IsPay`一括UPDATEという暫定対応のみが行われており、`ConvertDb`（旧システムからの変換エンジン）を再実行すると復元しない状態だったため、変換ロジック本体へ組み込む。
+
+### 事前調査で判明した事実
+- 実移行変換の本体は`CvDomainLogic/ConvertDb.cs`/`ConvertDbTran.cs`の`ConvertDb`クラスで、`tools/summaryreconcile`はテストデータをハードコード投入するだけの別ツールであり無関係。
+- `CnvTran00HonUri`/`CnvTran01TenUri`/`CnvTran03Shiire`/`CnvTran12Jyuchu`/`CnvTran13Hachu`は旧「掛率1」を`Rate`へ既に変換していたが、`Tax`/`Total`は未算出だった。新規入力側（`ShukkaUriageInputViewModel`等）は`Tax = round(|KingakuTotal| * Rate / 100)`、`Total = |KingakuTotal| + Tax`という共通式を使っており、`Rate`は税率(%)として使われている（命名は旧システムの「掛率」を引き継いでいるだけ）。
+- `IsPay`（旧「掛計上FLG」）は`Doc/aicoding_log_013.md`記載のとおり移行データで全件0であり、2026-08-16にユーザーが移行済み50,311件（`Tran03Shiire`は25件）を`1`へ一括UPDATE済みだった。この決定はSQLでの一時対応のみで、コード側には反映されていなかった。
+- 入金が売上の約41倍という別課題（`Tran06Nyukin.KingakuTotal`が単月入金でなく残高/累計相当の疑い）は、旧システム側テーブル（`HC$tran_tori0`/`HC$tran_tori1`）の実データの意味を確認しないと判断できず、今回は対象外とした。
+
+### 実施内容
+- `CvDomainLogic/ConvertDbTran.cs`: `CalcMigratedTaxTotal(int kingakuTotal, int ratePercent)`を追加し、上記の共通式で`Tax`/`Total`を算出。
+- 上記5つの`CnvTran*`関数すべてで、算出した`Tax`/`Total`をヘッダへ設定するよう変更。
+- `CnvTran00HonUri`/`CnvTran03Shiire`の`IsPay`を、旧「掛計上FLG」の値をそのまま使う実装から`1`固定へ変更（2026-08-16のユーザー決定を再変換でも再現）。
+
+### 技術決定 Why
+- **`Rate`（レコード単位の旧「掛率1」）を税率として使った理由**: 開発DBの暫定対応は`Rate=10%`の固定値だったが、実際には新規入力の各InputViewModelも伝票ヘッダの`Rate`列を税率として使っており、移行データも既に`Rate`へ「掛率1」を格納済みだった。固定値より正確で、既存の計算式（`UpdateHeaderTotals`系）と完全に一致させられる。
+- **`IsPay`を条件分岐せず`1`固定にした理由**: 旧「掛計上FLG」は移行データで意味を持たず（全件0）、2026-08-16に売掛/買掛から除外しない方針が確定している。将来別の移行データで旧フラグが意味を持つ可能性はあるが、現時点でそれを判別する情報が無いため、確定済みの決定をそのままコード化した。
+
+### 確認
+- `dotnet build CvDomainLogic/CvDomainLogic.csproj --no-restore`: 成功（警告0、エラー0）。
+- `dotnet build CvServer/CvServer.csproj --no-restore`、`dotnet build Tests/TestServer/TestServer.csproj --no-restore`: いずれも成功。
+- `dotnet test Tests/TestServer/TestServer.csproj --no-build`: 168/168 成功（既存テストに`ConvertDbTran`専用のテストは無し、新規追加もせず）。
+
+### 残課題
+- 実移行DB（複製）に対して`ConvertDb`を再実行し、`Total`/`Tax`/`IsPay`が期待どおりになることの確認は未実施。
+- 入金金額が売上の約41倍になる問題は未着手。旧システム運用担当者への確認が必要（コードだけでは判断できない）。
+- `ConvertDbTran`専用のユニットテストは無く、今回も追加していない（既存も実DB複製での目視確認のみで検証されている）。
+
+---
+
 ## [2026-08-22] CvWpfclient の XAML関連部品集約
 
 ### Agent

@@ -18,6 +18,9 @@ public partial class ConvertDb {
 				var tokui = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
+				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var rate = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
 
 				return new Tran00Uriage() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -27,7 +30,7 @@ public partial class ConvertDb {
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					RelateNo2 = getDataInt(rec, "関連伝票NO2"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
+					KingakuTotal = kingakuTotal,
 					JodaiTotal = getDataInt(rec, "上代合計"),
 					GedaiTotal = getDataInt(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
@@ -38,14 +41,18 @@ public partial class ConvertDb {
 						Yobi2 = getString(rec, "顧客TEL"),
 					},
 					Jmeisai = meisaiList,
-					IsPay = getDataInt(rec, "掛計上FLG"),
+					// 旧「掛計上FLG」は移行データで全件0のまま業務上意味を持たず、2026-08-16に売掛から除外しない方針を確定した
+					// （ユーザーが移行済み50,311件を1へ一括更新済み。Doc/aicoding_log_013.md参照）。再変換でも同じ値になるようここで固定する。
+					IsPay = 1,
 					Id_Shain = shain.Sid,
 					VShain = shain,
 					Id_Soko = soko.Sid,
 					VSoko = soko,
 					Id_Tokui = tokui.Sid,
 					VTokui = tokui,
-					Rate = getDataInt(rec, "掛率1"),
+					Rate = rate,
+					Tax = tax,
+					Total = total,
 				};
 			});
 	}
@@ -64,13 +71,16 @@ public partial class ConvertDb {
 				var kokyaku = getCodeNameView<MasterEndCustomer>(kokyakuCode) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
+				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var rate = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
 
 				return new Tran01Tenuri() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
+					KingakuTotal = kingakuTotal,
 					JodaiTotal = getDataInt(rec, "上代合計"),
 					GedaiTotal = getDataInt(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
@@ -90,7 +100,9 @@ public partial class ConvertDb {
 					Id_Customer = kokyaku.Sid,
 					VCustomer = kokyaku,
 					Code_Customer = kokyakuCode,
-					Rate = getDataInt(rec, "掛率1"),
+					Rate = rate,
+					Tax = tax,
+					Total = total,
 				};
 			});
 	}
@@ -107,6 +119,9 @@ public partial class ConvertDb {
 				var shiire = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
+				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var rate = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
 
 				return new Tran03Shiire() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -115,7 +130,7 @@ public partial class ConvertDb {
 					ManualNo = getString(rec, "手入力伝票NO"),
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
+					KingakuTotal = kingakuTotal,
 					JodaiTotal = getDataInt(rec, "上代合計"),
 					GedaiTotal = getDataInt(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
@@ -126,14 +141,17 @@ public partial class ConvertDb {
 						Yobi2 = getString(rec, "関連伝票NO2"),
 					},
 					Jmeisai = meisaiList,
-					IsPay = getDataInt(rec, "掛計上FLG"),
+					// Tran00Uriage と同じ理由でIsPayを固定する（Tran03Shiireの移行済み25件も同様に1へ一括更新済み）。
+					IsPay = 1,
 					Id_Shain = shain.Sid,
 					VShain = shain,
 					Id_Soko = soko.Sid,
 					VSoko = soko,
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
-					Rate = getDataInt(rec, "掛率1"),
+					Rate = rate,
+					Tax = tax,
+					Total = total,
 				};
 			});
 	}
@@ -342,13 +360,16 @@ public partial class ConvertDb {
 				var tokui = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
+				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var rate = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
 
 				return new Tran12Jyuchu() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
+					KingakuTotal = kingakuTotal,
 					JodaiTotal = getDataInt(rec, "上代合計"),
 					GedaiTotal = getDataInt(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
@@ -365,7 +386,9 @@ public partial class ConvertDb {
 					VSoko = soko,
 					Id_Tokui = tokui.Sid,
 					VTokui = tokui,
-					Rate = getDataInt(rec, "掛率1"),
+					Rate = rate,
+					Tax = tax,
+					Total = total,
 				};
 			});
 	}
@@ -382,13 +405,16 @@ public partial class ConvertDb {
 				var shiire = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
+				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var rate = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
 
 				return new Tran13Hachu() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
+					KingakuTotal = kingakuTotal,
 					JodaiTotal = getDataInt(rec, "上代合計"),
 					GedaiTotal = getDataInt(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
@@ -405,7 +431,9 @@ public partial class ConvertDb {
 					VSoko = soko,
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
-					Rate = getDataInt(rec, "掛率1"),
+					Rate = rate,
+					Tax = tax,
+					Total = total,
 				};
 			});
 	}
@@ -515,6 +543,16 @@ WHERE EXISTS (
 	}
 	int getHeaderNebiki(Dictionary<string, object> rec) {
 		return getDataInt(rec, "値引1") + getDataInt(rec, "値引2") + getDataInt(rec, "値引3");
+	}
+	/// <summary>
+	/// 旧システムの「明細金額合計」（税抜、符号付き）と「掛率1」（税率%。旧システムでは掛率という名称だが
+	/// CV10側では消費税率として使う。新規入力の各InputViewModelのUpdateHeaderTotalsと同じ式）から
+	/// 消費税・総合計を導出する。移行売上のTotal/Tax/IsPayが未設定という既知課題への対応。
+	/// </summary>
+	static (int Tax, int Total) CalcMigratedTaxTotal(int kingakuTotal, int ratePercent) {
+		var absKingakuTotal = Math.Abs(kingakuTotal);
+		var tax = (int)Math.Round(absKingakuTotal * ratePercent / 100.0);
+		return (tax, absKingakuTotal + tax);
 	}
 
 	List<Tran99Meisai>? BuildTranMeisaiList(Dictionary<string, object> rec, string table = "HC$tran_tori1") { // 棚卸は別テーブル
