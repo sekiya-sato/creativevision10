@@ -43,14 +43,17 @@ long tokui1 = db.Single<MasterTokui>("where Code=@0", "000002").Id;
 long tokui2 = db.Single<MasterTokui>("where Code=@0", "000014").Id;
 long shiire1 = db.Single<MasterShiire>("where Code=@0", "001").Id;
 long shiire2 = db.Single<MasterShiire>("where Code=@0", "002").Id;
+long shiire3 = db.Single<MasterShiire>("where Code=@0", "005").Id; // 支払超過（過払い）
+long shiire4 = db.Single<MasterShiire>("where Code=@0", "006").Id; // 相殺のみ（現金支払なし）
+long shiire5 = db.Single<MasterShiire>("where Code=@0", "007").Id; // 複数明細支払（現金+相殺+手数料）
 
 static string DL(string c) => $"case when length({c})=8 then substr({c},1,4)||'/'||substr({c},5,2)||'/'||substr({c},7,2) else ifnull({c},'') end";
 
 void Clean() {
     db.Execute("DELETE FROM Tran00Uriage  WHERE Id_Tokui IN (@0,@1) AND KakeDay BETWEEN @2 AND @3", tokui1, tokui2, DFrom, DTo);
     db.Execute("DELETE FROM Tran06Nyukin  WHERE Id_Torisaki IN (@0,@1) AND KakeDay BETWEEN @2 AND @3", tokui1, tokui2, DFrom, DTo);
-    db.Execute("DELETE FROM Tran03Shiire   WHERE Id_Shiire IN (@0,@1) AND KakeDay BETWEEN @2 AND @3", shiire1, shiire2, DFrom, DTo);
-    db.Execute("DELETE FROM Tran07Shiharai WHERE Id_Torisaki IN (@0,@1) AND KakeDay BETWEEN @2 AND @3", shiire1, shiire2, DFrom, DTo);
+    db.Execute("DELETE FROM Tran03Shiire   WHERE Id_Shiire IN (@0,@1,@2,@3,@4) AND KakeDay BETWEEN @5 AND @6", shiire1, shiire2, shiire3, shiire4, shiire5, DFrom, DTo);
+    db.Execute("DELETE FROM Tran07Shiharai WHERE Id_Torisaki IN (@0,@1,@2,@3,@4) AND KakeDay BETWEEN @5 AND @6", shiire1, shiire2, shiire3, shiire4, shiire5, DFrom, DTo);
     db.Execute("DELETE FROM SummaryUriKake WHERE DenMonth=@0", Month);
     db.Execute("DELETE FROM SummaryKaiKake WHERE DenMonth=@0", Month);
     db.Execute("DELETE FROM SummaryUriSei  WHERE DenDay=@0", DTo);
@@ -75,13 +78,19 @@ void Seed() {
     db.Insert(Shi("20260714", shiire1, EnumShiire.Henpin, 10000, 1000));
     db.Insert(Sih("20260726", shiire1, [(KinCash, 50000), (KinOffset, 20000)]));
     db.Insert(Shi("20260709", shiire2, EnumShiire.Shiire, 15000, 1500));
+    db.Insert(Shi("20260707", shiire3, EnumShiire.Shiire, 50000, 5000));
+    db.Insert(Sih("20260727", shiire3, [(KinCash, 60000)])); // 支払超過（過払い）：仕入額55,000に対し支払60,000、残高+5,000
+    db.Insert(Shi("20260708", shiire4, EnumShiire.Shiire, 30000, 3000));
+    db.Insert(Sih("20260727", shiire4, [(KinOffset, 33000)])); // 相殺のみ：現金支払なしで全額相殺、残高0
+    db.Insert(Shi("20260711", shiire5, EnumShiire.Shiire, 40000, 4000));
+    db.Insert(Sih("20260727", shiire5, [(KinCash, 20000), (KinOffset, 20000), (KinFee, 4000)])); // 複数明細支払：現金+相殺+手数料の3明細、残高0
 }
 
 void Calc() {
     var a = summaryDb.CalcSummaryUriKake(Month, Month);
     var b = summaryDb.CalcSummaryUriSei(Month, ShimeMatched, "000002", "000014");
     var c = summaryDb.CalcSummaryKaiKake(Month, Month);
-    var d = summaryDb.CalcSummaryKaiShi(Month, ShimeMatched, "001", "002");
+    var d = summaryDb.CalcSummaryKaiShi(Month, ShimeMatched, "001", "007");
     Console.WriteLine($"Calc rows: UriKake={a} UriSei={b} KaiKake={c} KaiShi={d}");
 }
 
