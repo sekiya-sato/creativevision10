@@ -198,55 +198,57 @@ left join MasterSysman sys on sys.Id = 1
 ";
 
 		// 外側: 明細(Jmeisai)を json_each で1行ずつ展開し、qfm の item1..item46 順に SELECT。
+		// RawExecCmdはSELECT列名をDictionaryキーにするため、全列に一意なitem別名を付ける。
 		var sql = $@"
 select
-	h.Id,																	/* item1  伝票No */
-	ifnull(h.KakeDay,''),													/* item2  発送日(掛計上日) */
-	ifnull(h.DenDay,''),													/* item3  仕入日 */
-	'',																		/* item4  (予備) */
-	ifnull(json_extract(h.VShiire,'$.Mei'),''),								/* item5  仕入先名 */
-	ifnull(json_extract(h.VShiire,'$.Cd'),''),								/* item6  仕入先CD */
-	h.Rate,																	/* item7  掛率 */
-	'',																		/* item8  (未使用) */
-	'',																		/* item9  (未使用) */
-	ifnull(json_extract(h.VShain,'$.Mei'),''),								/* item10 入力者名 */
-	h.siZip,																/* item11 仕入先〒 */
-	h.siAddr,																/* item12 仕入先住所 */
-	h.siTel,																/* item13 仕入先TEL */
-	'',																		/* item14 仕入先FAX(該当項目なし) */
-	'',																		/* item15 (未使用) */
-	ifnull(json_extract(h.VSoko,'$.Mei'),''),								/* item16 入庫倉庫名 */
-	h.soZip,																/* item17 倉庫〒 */
-	h.soAddr,																/* item18 倉庫住所 */
-	h.soTel,																/* item19 倉庫TEL */
-	'',																		/* item20 倉庫FAX(該当項目なし) */
-	h.sysName,																/* item21 自社名 */
-	h.sysZip,																/* item22 自社〒 */
-	h.sysAddr,																/* item23 自社住所 */
-	h.sysTel,																/* item24 自社TEL */
-	'',																		/* item25 自社FAX(該当項目なし) */
-	ifnull({M}'$.Code_Shohin'),''),											/* item26 商品CD */
-	ifnull({M}'$.Mei_Shohin'),''),											/* item27 商品名 */
-	ifnull({M}'$.Code_Col'),''),											/* item28 色CD */
-	ifnull({M}'$.Mei_Col'),''),												/* item29 色名 */
-	ifnull({M}'$.Code_Siz'),''),											/* item30 サイズCD */
-	ifnull({M}'$.Mei_Siz'),''),												/* item31 サイズ名 */
-	sum({su}) over (partition by h.Id),										/* item32 数量合計 */
-	sum({kingaku}) over (partition by h.Id),								/* item33 金額合計 */
-	sum(({su}) * ({jodai})) over (partition by h.Id),						/* item34 上代合計 */
-	'請求時一括',															/* item35 消費税(仕入は請求時一括のため固定表示) */
-	sum({kingaku}) over (partition by h.Id),								/* item36 総合計(=金額合計、伝票単位の消費税は持たない) */
-	{su},																	/* item37 数量 */
-	{tanka},																/* item38 単価 */
-	{kingaku},																/* item39 金額 */
-	{jodai},																/* item40 上代 */
-	({su}) * ({jodai}),														/* item41 上代合計(行) */
-	cast(ifnull({M}'$.No'),0) as int),										/* item42 明細No */
-	'商品仕入',																/* item43 伝票処理区分 */
-	{KubunLabel},															/* item44 取引区分 */
-	ifnull(h.Memo,''),														/* item45 備考 */
-	{KubunLabel}															/* item46 伝票種別(qfm で""伝票""を付加) */
+	h.Id as item1,															/* item1  伝票No */
+	ifnull(h.KakeDay,'') as item2,											/* item2  発送日(掛計上日) */
+	ifnull(h.DenDay,'') as item3,											/* item3  仕入日 */
+	'' as item4,															/* item4  (予備) */
+	ifnull(json_extract(h.VShiire,'$.Mei'),'') as item5,						/* item5  仕入先名 */
+	ifnull(json_extract(h.VShiire,'$.Cd'),'') as item6,						/* item6  仕入先CD */
+	h.Rate as item7,														/* item7  掛率 */
+	'' as item8,															/* item8  (未使用) */
+	'' as item9,															/* item9  (未使用) */
+	ifnull(json_extract(h.VShain,'$.Mei'),'') as item10,						/* item10 入力者名 */
+	h.siZip as item11,														/* item11 仕入先〒 */
+	h.siAddr as item12,														/* item12 仕入先住所 */
+	h.siTel as item13,														/* item13 仕入先TEL */
+	'' as item14,															/* item14 仕入先FAX(該当項目なし) */
+	'' as item15,															/* item15 (未使用) */
+	ifnull(json_extract(h.VSoko,'$.Mei'),'') as item16,						/* item16 入庫倉庫名 */
+	h.soZip as item17,														/* item17 倉庫〒 */
+	h.soAddr as item18,														/* item18 倉庫住所 */
+	h.soTel as item19,														/* item19 倉庫TEL */
+	'' as item20,															/* item20 倉庫FAX(該当項目なし) */
+	h.sysName as item21,													/* item21 自社名 */
+	h.sysZip as item22,														/* item22 自社〒 */
+	h.sysAddr as item23,														/* item23 自社住所 */
+	h.sysTel as item24,														/* item24 自社TEL */
+	'' as item25,															/* item25 自社FAX(該当項目なし) */
+	ifnull({M}'$.Code_Shohin'),'') as item26,									/* item26 商品CD */
+	ifnull({M}'$.Mei_Shohin'),'') as item27,									/* item27 商品名 */
+	ifnull({M}'$.Code_Col'),'') as item28,										/* item28 色CD */
+	ifnull({M}'$.Mei_Col'),'') as item29,										/* item29 色名 */
+	ifnull({M}'$.Code_Siz'),'') as item30,										/* item30 サイズCD */
+	ifnull({M}'$.Mei_Siz'),'') as item31,										/* item31 サイズ名 */
+	sum({su}) over (partition by h.Id) as item32,								/* item32 数量合計 */
+	sum({kingaku}) over (partition by h.Id) as item33,							/* item33 金額合計 */
+	sum(({su}) * ({jodai})) over (partition by h.Id) as item34,				/* item34 上代合計 */
+	'請求時一括' as item35,													/* item35 消費税(仕入は請求時一括のため固定表示) */
+	sum({kingaku}) over (partition by h.Id) as item36,							/* item36 総合計(=金額合計、伝票単位の消費税は持たない) */
+	{su} as item37,															/* item37 数量 */
+	{tanka} as item38,														/* item38 単価 */
+	{kingaku} as item39,													/* item39 金額 */
+	{jodai} as item40,														/* item40 上代 */
+	({su}) * ({jodai}) as item41,												/* item41 上代合計(行) */
+	cast(ifnull({M}'$.No'),0) as int) as item42,								/* item42 明細No */
+	'商品仕入' as item43,													/* item43 伝票処理区分 */
+	{KubunLabel} as item44,													/* item44 取引区分 */
+	ifnull(h.Memo,'') as item45,											/* item45 備考 */
+	{KubunLabel} as item46													/* item46 伝票種別(qfm で""伝票""を付加) */
 from ({header}) h, json_each(h.Jmeisai) m
+where m.value is not null
 order by h.Id, cast(ifnull({M}'$.No'),0) as int)
 ";
 
