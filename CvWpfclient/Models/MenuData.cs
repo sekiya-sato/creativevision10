@@ -412,8 +412,8 @@ public partial class MenuData : ObservableObject {
 			new("▲ HHT", new([
 				new("HHT用マスタデータ作成", typeof(Views._30HHT.HhtMasterDataCreateView), addInfo:"CSV または固定長で HHT マスタを出力"),
 				new("HHT手動データ受信", typeof(Views._30HHT.HhtManualDataReceiveView), addInfo:"受信フォルダ内の HHT データを手動取込"),
-				new("HHTエラーデータ修正入力", typeof(Views._30HHT.HhtErrorDataInputView), addInfo:"準備中"),
-				new("HHTデータ更新", typeof(Views._30HHT.HhtDataUpdateView), addInfo:"準備中"),
+				new("HHTエラーデータ修正入力", typeof(Views._30HHT.HhtErrorDataInputView), addInfo:"変換エラーのHHTデータを確認・修正"),
+				new("HHTデータ更新", typeof(Views._30HHT.HhtDataUpdateView), addInfo:"受信済みHHTデータを伝票へ展開"),
 				new("HHT未更新データ印刷", typeof(Views._30HHT.HhtUnupdatedDataPrintView), addInfo:"準備中"),
 				new("HHT未更新データ一括削除", typeof(Views._30HHT.HhtUnupdatedDataDeleteView), addInfo:"準備中"),
 				new("出荷指示明細書印刷", typeof(Views._30HHT.ShippingConfirmDetailPrintView), addInfo:"準備中"),

@@ -295,6 +295,34 @@ public record BillingParameter(string BillingYyyymm, int Shime, string TorisakiC
 public record StocktakeParameter(string TanaMonth, string DenDay, long IdShain, long[] SokoIds);
 
 /// <summary>
+/// HHTデータ更新のパラメータ。<see cref="TranVulcanHht"/> を Tran系各テーブルへ展開する。
+/// <para>
+/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
+/// </para>
+/// </summary>
+/// <param name="DateFrom">対象日付From yyyyMMdd。空なら下限なし</param>
+/// <param name="DateTo">対象日付To yyyyMMdd。空なら上限なし</param>
+/// <param name="Types">対象のVULCAN区分(<see cref="TranVulcanHht.Type0"/>)。空なら全区分</param>
+/// <param name="RetryError">true なら <see cref="TranVulcanHht.ErrorMsg"/> が設定済みの行も対象にする</param>
+/// <param name="TargetIds">指定時はこのId群だけを対象にする（エラーデータ修正画面からの再実行用）</param>
+public record HhtUpdateParameter(string DateFrom, string DateTo, int[] Types, bool RetryError, long[] TargetIds);
+
+/// <summary>
+/// HHTデータ更新の対象件数。画面が更新前後に <see cref="TranVulcanHht"/> を数えるために使う。
+/// <para>
+/// <c>QueryListSqlParam</c> の <c>ItemType</c> はサーバ側で型解決するため、
+/// クライアント内の入れ子クラスではなく共有アセンブリ(CvBase)へ置く必要がある。
+/// 列名を <c>TargetRows</c> にしているのは、SQLiteのウィンドウ関数のキーワード <c>ROWS</c> を避けるため。
+/// </para>
+/// </summary>
+public sealed class HhtTargetCountRow {
+	/// <summary>未変換(VdCnvDate=0)の行数</summary>
+	public int TargetRows { get; set; }
+	/// <summary>うち <see cref="TranVulcanHht.ErrorMsg"/> が設定されている行数</summary>
+	public int ErrorRows { get; set; }
+}
+
+/// <summary>
 /// 出荷指示確定のパラメータ。対象の配分行に <c>KakuteiDay</c> を立てる。
 /// 有効在庫（実在庫 − 引当数）が1SKUでも負になる場合はサーバが1件も確定せず、
 /// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。

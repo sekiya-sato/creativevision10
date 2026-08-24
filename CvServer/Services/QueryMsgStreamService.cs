@@ -70,7 +70,8 @@ public partial class CoreService {
 			or CvFlag.Msg054_StocktakeStart
 			or CvFlag.Msg055_StocktakeFix
 			or CvFlag.Msg056_SummaryUriSei
-			or CvFlag.Msg057_SummaryKaiShi) {
+			or CvFlag.Msg057_SummaryKaiShi
+			or CvFlag.Msg058_HhtDataUpdate) {
 			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
 				yield return msg;
 			}
@@ -118,11 +119,12 @@ public partial class CoreService {
 		}
 	}
 	/// <summary>
-	/// 集計処理のストリーミング処理ハンドラ
+	/// 集計処理とHHTデータ更新のストリーミング処理ハンドラ
 	/// </summary>
 	private async IAsyncEnumerable<StreamMsg> HandleSummaryStreamAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvMsg request) {
 		var summaryDb = new SummaryDb(_db);
 		var stocktakeDb = new StocktakeDb(_db);
+		var hhtProcess = new HhtProcess(_db);
 
 		var param = Common.DeserializeObject(request.DataMsg, request.DataType);
 		var stream = (request.Flag, param) switch {
@@ -134,6 +136,7 @@ public partial class CoreService {
 			(CvFlag.Msg055_StocktakeFix, StocktakeParameter fixParam) => stocktakeDb.FixAsyncStream(fixParam),
 			(CvFlag.Msg056_SummaryUriSei, BillingParameter uriSeiParam) => summaryDb.SummaryUriSeiAsyncStream(uriSeiParam),
 			(CvFlag.Msg057_SummaryKaiShi, BillingParameter kaiShiParam) => summaryDb.SummaryKaiShiAsyncStream(kaiShiParam),
+			(CvFlag.Msg058_HhtDataUpdate, HhtUpdateParameter hhtParam) => hhtProcess.UpdateVulcan2TranAsyncStream(hhtParam),
 			_ => null
 		};
 

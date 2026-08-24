@@ -13,5 +13,197 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:HhtErrorDataInputViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="14,10"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="30" Height="30"
+					VerticalAlignment="Center"
+					Kind="AlertCircleOutline" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold" Text="HHTエラーデータ修正入力" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<materialDesign:Card Grid.Row="1"
+			Margin="18,18,18,0" Padding="16"
+			materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock VerticalAlignment="Center"
+					FontWeight="SemiBold" Text="対象日付" />
+				<TextBox Width="120"
+					Margin="10,0,0,0" VerticalAlignment="Center"
+					MaxLength="10"
+					Style="{StaticResource MaterialDesignOutlinedTextBox}"
+					Text="{Binding DateFrom, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Margin="8,0" VerticalAlignment="Center"
+					FontWeight="Bold" Text="-" />
+				<TextBox Width="120"
+					VerticalAlignment="Center"
+					MaxLength="10"
+					Style="{StaticResource MaterialDesignOutlinedTextBox}"
+					Text="{Binding DateTo, UpdateSourceTrigger=PropertyChanged}" />
+
+				<TextBlock Margin="24,0,0,0" VerticalAlignment="Center"
+					FontWeight="SemiBold" Text="ファイル名" />
+				<TextBox Width="200"
+					Margin="10,0,0,0" VerticalAlignment="Center"
+					materialDesign:HintAssist.Hint="部分一致"
+					Style="{StaticResource MaterialDesignOutlinedTextBox}"
+					Text="{Binding FileNameFilter, UpdateSourceTrigger=PropertyChanged}" />
+
+				<Button Margin="24,0,0,0"
+					Command="{Binding ReloadCommand}"
+					Content="検索"
+					IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+					Style="{StaticResource MaterialDesignRaisedButton}" />
+				<TextBlock Margin="24,0,0,0" VerticalAlignment="Center"
+					FontWeight="SemiBold" Text="{Binding ListSummary}" />
+			</StackPanel>
+		</materialDesign:Card>
+
+		<DataGrid Grid.Row="2"
+			Margin="18,12,18,0"
+			AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+			HeadersVisibility="Column"
+			IsReadOnly="{Binding IsProcessing}"
+			ItemsSource="{Binding ListData}"
+			SelectedItem="{Binding SelectedItem}"
+			SelectionMode="Single" SelectionUnit="FullRow">
+			<DataGrid.Columns>
+				<DataGridTextColumn Width="320"
+					Binding="{Binding ErrorMsg}"
+					Header="エラー内容" IsReadOnly="True">
+					<DataGridTextColumn.ElementStyle>
+						<Style TargetType="TextBlock">
+							<Setter Property="TextWrapping" Value="Wrap" />
+						</Style>
+					</DataGridTextColumn.ElementStyle>
+				</DataGridTextColumn>
+				<DataGridComboBoxColumn Width="110"
+					DisplayMemberPath="Name"
+					Header="区分"
+					SelectedValueBinding="{Binding Type0}" SelectedValuePath="Value">
+					<DataGridComboBoxColumn.ElementStyle>
+						<Style TargetType="ComboBox">
+							<Setter Property="ItemsSource" Value="{Binding DataContext.TypeOptions, RelativeSource={RelativeSource AncestorType=Window}}" />
+						</Style>
+					</DataGridComboBoxColumn.ElementStyle>
+					<DataGridComboBoxColumn.EditingElementStyle>
+						<Style TargetType="ComboBox">
+							<Setter Property="ItemsSource" Value="{Binding DataContext.TypeOptions, RelativeSource={RelativeSource AncestorType=Window}}" />
+						</Style>
+					</DataGridComboBoxColumn.EditingElementStyle>
+				</DataGridComboBoxColumn>
+				<DataGridTextColumn Width="90"
+					Binding="{Binding DenDay}"
+					Header="日付" />
+				<DataGridTextColumn Width="90"
+					Binding="{Binding Shop}"
+					Header="店舗" />
+				<DataGridTextColumn Width="80"
+					Binding="{Binding Tanto}"
+					Header="担当者" />
+				<DataGridComboBoxColumn Width="120"
+					DisplayMemberPath="Name"
+					Header="販売区分"
+					SelectedValueBinding="{Binding HanKubun}" SelectedValuePath="Value">
+					<DataGridComboBoxColumn.ElementStyle>
+						<Style TargetType="ComboBox">
+							<Setter Property="ItemsSource" Value="{Binding DataContext.HanKubunOptions, RelativeSource={RelativeSource AncestorType=Window}}" />
+						</Style>
+					</DataGridComboBoxColumn.ElementStyle>
+					<DataGridComboBoxColumn.EditingElementStyle>
+						<Style TargetType="ComboBox">
+							<Setter Property="ItemsSource" Value="{Binding DataContext.HanKubunOptions, RelativeSource={RelativeSource AncestorType=Window}}" />
+						</Style>
+					</DataGridComboBoxColumn.EditingElementStyle>
+				</DataGridComboBoxColumn>
+				<DataGridTextColumn Width="120"
+					Binding="{Binding DenNo}"
+					Header="伝票No/顧客CD/棚番" />
+				<DataGridTextColumn Width="130"
+					Binding="{Binding Jan1}"
+					Header="JAN上段" />
+				<DataGridTextColumn Width="130"
+					Binding="{Binding Jan2}"
+					Header="JAN下段" />
+				<DataGridTextColumn Width="70"
+					Binding="{Binding Su}"
+					Header="数量" />
+				<DataGridTextColumn Width="90"
+					Binding="{Binding Tanka}"
+					Header="単価" />
+				<DataGridTextColumn Width="90"
+					Binding="{Binding ToriSaki}"
+					Header="取引先" />
+				<DataGridTextColumn Width="120"
+					Binding="{Binding KakeRitsu}"
+					Header="掛率/発注No/納品日" />
+				<DataGridTextColumn Width="60"
+					Binding="{Binding HhtNo}"
+					Header="HTNo" IsReadOnly="True" />
+				<DataGridTextColumn Width="80"
+					Binding="{Binding Serial}"
+					Header="Serial" IsReadOnly="True" />
+				<DataGridTextColumn Width="180"
+					Binding="{Binding BackupFileName}"
+					Header="ファイル名" IsReadOnly="True" />
+				<DataGridTextColumn Width="60"
+					Binding="{Binding LineNo}"
+					Header="行No" IsReadOnly="True" />
+			</DataGrid.Columns>
+		</DataGrid>
+
+		<GroupBox Grid.Row="3"
+			Height="90"
+			Margin="18,12,18,0"
+			Header="処理メッセージ">
+			<TextBox Margin="8"
+				IsReadOnly="True"
+				Style="{StaticResource MaterialDesignTextBox}"
+				Text="{Binding StatusMessage, UpdateSourceTrigger=PropertyChanged}"
+				TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+		</GroupBox>
+
+		<Border Grid.Row="4"
+			Padding="18,12"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<StackPanel HorizontalAlignment="Right"
+				Orientation="Horizontal">
+				<Button Width="120" Height="38"
+					Margin="0,0,10,0"
+					Command="{Binding SaveCommand}"
+					Content="保存"
+					IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+					Style="{StaticResource MaterialDesignRaisedButton}" />
+				<Button Width="120" Height="38"
+					Margin="0,0,10,0"
+					Command="{Binding DeleteCommand}"
+					Content="削除"
+					IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+					Style="{StaticResource MaterialDesignOutlinedButton}" />
+				<Button Width="120" Height="38"
+					Margin="0,0,10,0"
+					Command="{Binding RunUpdateCommand}"
+					Content="更新実行"
+					IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+					Style="{StaticResource MaterialDesignRaisedButton}" />
+				<Button Width="120" Height="38"
+					Command="{Binding ExitCommand}"
+					Content="戻る" IsCancel="True"
+					Style="{StaticResource MaterialDesignOutlinedButton}" />
+			</StackPanel>
+		</Border>
+	</Grid>
 </helpers:BaseWindow>

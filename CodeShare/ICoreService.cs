@@ -195,6 +195,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg057_SummaryKaiShi = 57,
 	/// <summary>
+	/// HHTデータ更新処理（TranVulcanHht を Tran系各テーブルへ展開する）
+	/// </summary>
+	[EnumMember]
+	Msg058_HhtDataUpdate = 58,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	[EnumMember]
