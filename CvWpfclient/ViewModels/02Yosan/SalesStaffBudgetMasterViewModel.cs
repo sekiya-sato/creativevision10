@@ -484,39 +484,15 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 		return false;
 	}
 
+	/// <summary>
+	/// 対象年月の既存予算を1往復でまとめて削除する（洗い替えの前段）。
+	/// 1件でも競合すればサーバ側で何も削除されず例外になるので、呼び出し元の catch がメッセージを出す。
+	/// </summary>
 	async Task DeleteExistingBudgets(CancellationToken ct) {
 		var (dateFrom, dateTo) = GetDateRange();
 		var where = $"Id_Shain = {SelectedStaffId} AND DenDay >= '{dateFrom}' AND DenDay <= '{dateTo}'";
-		var param = new QueryListParam(
-			itemType: typeof(MasterYosanHanbai),
-			where: where,
-			order: "DenDay"
-		);
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryListParam),
-			DataMsg = Common.SerializeObject(param)
-		};
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;
-		if (list == null) return;
-		foreach (var item in list) {
-			if (item is not MasterYosanHanbai yosan || yosan.Id == 0) continue;
-			var deleteParam = new DeleteByIdParam(
-				itemType: typeof(MasterYosanHanbai),
-				id: yosan.Id,
-				originalVdu: yosan.Vdu
-			);
-			var deleteMsg = new CvMsg {
-				Code = 0,
-				Flag = CvFlag.Msg201_Op_Execute,
-				DataType = typeof(DeleteByIdParam),
-				DataMsg = Common.SerializeObject(deleteParam)
-			};
-			await coreService.QueryMsgAsync(deleteMsg, AppGlobal.GetDefaultCallContext(ct));
-		}
+		var existing = await CoreServiceClient.QueryListAsync<MasterYosanHanbai>(where, "DenDay", ct);
+		await CoreServiceClient.DeleteBulkAsync(typeof(MasterYosanHanbai), existing, "既存予算", ct);
 	}
 
 	(string dateFrom, string dateTo) GetDateRange() {

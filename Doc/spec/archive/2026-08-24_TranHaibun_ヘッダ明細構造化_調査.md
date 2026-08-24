@@ -243,9 +243,11 @@ I5 は「`TranHaibun` は明細行単位のままとし、仮想ヘッダのキ�
 `dotnet test` は .NET 10 の Microsoft.Testing.Platform 移行により使えないため、
 従来どおりテスト実行ファイルを直接起動した。
 
-残件（本対応の範囲外）: `02Yosan` の予算マスタ2画面
-（`SalesStaffBudgetMasterViewModel:505-520` / `ShopBrandBudgetMasterViewModel:531-546`）にも
-同じ1件ずつ削除のループがあり、しかも応答コードを見ていない。`DeleteBulkAsync` へ寄せられる。
+追加対応（同日）: `02Yosan` の予算マスタ2画面（`SalesStaffBudgetMasterViewModel` /
+`ShopBrandBudgetMasterViewModel`）の `DeleteExistingBudgets` も同じ1件ずつ削除のループで、
+かつ削除応答の `Code` を見ていなかった（失敗が黙って無視される）。
+`CoreServiceClient.QueryListAsync` + `DeleteBulkAsync` へ寄せ、日数ぶん（最大31往復）の削除が
+1往復になり、失敗は例外として既存の catch がダイアログ表示するようになった。
 
 ### 6.2 それでも構造化するなら
 
