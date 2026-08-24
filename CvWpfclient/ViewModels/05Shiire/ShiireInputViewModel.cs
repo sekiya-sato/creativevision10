@@ -160,6 +160,9 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
+	// 掛率(Rate)から分離した消費税率のキャッシュ。伝票を開いた時点の伝票日付基準で LoadTaxRateAsync が更新する。
+	int taxRatePercent = 10;
+
 	protected override void OnCurrentEditChangedCore(Tran03Shiire? oldValue, Tran03Shiire newValue) {
 		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
 		if (newValue == null) return;
@@ -167,10 +170,11 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 		ApplyMeisaiFromCurrentEdit();
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
+		_ = LoadTaxRateAsync();
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran03Shiire.Tax) or nameof(Tran03Shiire.Kubun) or nameof(Tran03Shiire.Rate)) {
+		if (e.PropertyName is nameof(Tran03Shiire.Tax) or nameof(Tran03Shiire.Kubun)) {
 			UpdateHeaderTotals();
 		}
 	}
@@ -189,14 +193,13 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 
 	void UpdateHeaderTotals() {
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
+		var tax = (int)Math.Round(absKingakuTotal * taxRatePercent / 100.0);
 		CurrentEdit.Tax = tax;
 		CurrentEdit.Total = absKingakuTotal + tax;
 	}
 
 	async Task LoadTaxRateAsync() {
-		var rate = await AppGlobal.LogicGetTax(1, Current.DenDay);
-		CurrentEdit.Rate = rate;
+		taxRatePercent = await AppGlobal.LogicGetTax(1, Current.DenDay);
 		UpdateHeaderTotals();
 	}
 
@@ -218,11 +221,9 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
 				KakeDay = DateTime.Now.ToString("yyyyMMdd"),
 				Kubun = (int)DefaultKubun,
+				Rate = 100,
 				Jmeisai = [],
 			};
-		}
-		if(Current.Rate == 0) { // 仕入伝票の税率0の場合、再度税率を取得
-			_ = LoadTaxRateAsync();
 		}
 		SelectedTabIndex = 1;
 	}
@@ -447,11 +448,15 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	[RelayCommand]
-	void DoSelectShiire() {
+	async Task DoSelectShiire() {
 		var shiire = ShowSelectDialog<MasterShiire>(typeof(MasterShiire), "", "Code", startPos: CurrentEdit.Id_Shiire);
 		if (shiire == null) return;
 		CurrentEdit.Id_Shiire = shiire.Id;
 		CurrentEdit.VShiire = new CodeNameView { Sid = shiire.Id, Cd = shiire.Code ?? "", Mei = shiire.Name ?? "" };
+
+		// 選択ダイアログはCode/Nameしか返さないため、掛率はIdで1件取得し直す。
+		var fullShiire = await AppGlobal.LogicGetMasterById<MasterShiire>(shiire.Id);
+		if (fullShiire != null) CurrentEdit.Rate = fullShiire.RateProper;
 	}
 
 	[RelayCommand]

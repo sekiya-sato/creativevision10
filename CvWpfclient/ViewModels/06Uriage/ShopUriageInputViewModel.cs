@@ -139,6 +139,9 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
+	// 掛率(Rate)から分離した消費税率のキャッシュ。伝票を開いた時点の伝票日付基準で LoadTaxRateAsync が更新する。
+	int taxRatePercent = 10;
+
 	protected override void OnCurrentEditChangedCore(Tran01Tenuri? oldValue, Tran01Tenuri newValue) {
 		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
 		if (newValue == null) return;
@@ -148,24 +151,24 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 		ApplyMeisaiFromCurrentEdit(headerIsSale);
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
+		_ = LoadTaxRateAsync();
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran01Tenuri.Tax) or nameof(Tran01Tenuri.Kubun) or nameof(Tran01Tenuri.Rate)) {
+		if (e.PropertyName is nameof(Tran01Tenuri.Tax) or nameof(Tran01Tenuri.Kubun)) {
 			UpdateHeaderTotals();
 		}
 	}
 
 	void UpdateHeaderTotals() {
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
+		var tax = (int)Math.Round(absKingakuTotal * taxRatePercent / 100.0);
 		CurrentEdit.Tax = tax;
 		CurrentEdit.Total = absKingakuTotal + tax;
 	}
 
 	async Task LoadTaxRateAsync() {
-		var rate = await AppGlobal.LogicGetTax(1, Current.DenDay);
-		CurrentEdit.Rate = rate;
+		taxRatePercent = await AppGlobal.LogicGetTax(1, Current.DenDay);
 		UpdateHeaderTotals();
 	}
 
@@ -227,9 +230,6 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 				Kubun = (int)EnumUri01.Uriage,
 				Jmeisai = [],
 			};
-		}
-		if (Current.Rate == 0) {
-			_ = LoadTaxRateAsync();
 		}
 		SelectedTabIndex = 1;
 	}

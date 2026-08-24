@@ -19,8 +19,10 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				var rate = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
+				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
+				var taxRatePercent = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
+				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran00Uriage() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -72,8 +74,10 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				var rate = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
+				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
+				var taxRatePercent = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
+				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran01Tenuri() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -120,8 +124,10 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				var rate = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
+				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
+				var taxRatePercent = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
+				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran03Shiire() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -361,8 +367,10 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				var rate = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
+				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
+				var taxRatePercent = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
+				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran12Jyuchu() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -406,8 +414,10 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				var rate = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, rate);
+				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
+				var taxRatePercent = getDataInt(rec, "掛率1");
+				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
+				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran13Hachu() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -500,6 +510,22 @@ WHERE EXISTS (
 		// Executeメソッドの仕様で、正常終了は0を返すため、更新件数は'SELECT changes()'で取得、クエリの実行自体は効率的に行われます。
 		// アプリ側でレコード1件づつの処理をした場合、実データ5万件程度で数10分、300万件で4時間以上かかって途中リタイア。-> SQLクエリで一括更新する方法に変更して全体で5分程度で完了。
 	}
+	// 取引先コード→掛率(%)のキャッシュ。移行は数万件回るため1件ずつのマスタ取得を避ける。
+	readonly Dictionary<string, int> torihikiRateCache = [];
+	/// <summary>
+	/// 取引先コードから掛率(%)を引く。<c>Tran*.Rate</c> は掛率であり消費税率ではない。
+	/// 旧CVnetの「掛率1」は実質すべて消費税率が入っており掛率の移行元にできないため、CV10マスタの掛率を採用する。
+	/// マスタが引けない場合は0（未設定）とし、税率値を掛率として残さない。
+	/// </summary>
+	int getTorihikiRatePercent(string code) {
+		if (string.IsNullOrWhiteSpace(code))
+			return 0;
+		if (torihikiRateCache.TryGetValue(code, out var cached))
+			return cached;
+		var rate = getMaster<MasterTokui>(code)?.RateProper ?? 0;
+		torihikiRateCache[code] = rate;
+		return rate;
+	}
 	T? getMaster<T>(string code) where T : class, IBaseCodeName, new() {
 		if (string.IsNullOrWhiteSpace(code))
 			return null;
@@ -545,9 +571,10 @@ WHERE EXISTS (
 		return getDataInt(rec, "値引1") + getDataInt(rec, "値引2") + getDataInt(rec, "値引3");
 	}
 	/// <summary>
-	/// 旧システムの「明細金額合計」（税抜、符号付き）と「掛率1」（税率%。旧システムでは掛率という名称だが
-	/// CV10側では消費税率として使う。新規入力の各InputViewModelのUpdateHeaderTotalsと同じ式）から
+	/// 旧システムの「明細金額合計」（税抜、符号付き）と「掛率1」（移行元データは実質すべて消費税率%が入っている）から
 	/// 消費税・総合計を導出する。移行売上のTotal/Tax/IsPayが未設定という既知課題への対応。
+	/// この値は <c>Tran*.Rate</c> には入れない（Rate は掛率。getTorihikiRatePercent でマスタから引く）。
+	/// 詳細: Doc/spec/2026-08-24_Rate列_掛率と税率の分離課題.md
 	/// </summary>
 	static (int Tax, int Total) CalcMigratedTaxTotal(int kingakuTotal, int ratePercent) {
 		var absKingakuTotal = Math.Abs(kingakuTotal);

@@ -66,5 +66,21 @@ public static partial class AppGlobal {
 
 
 
-
+	/// <summary>
+	/// マスタ1件をIdで取得する。選択ダイアログ(QueryListSimpleParam)はId/Code/Nameしか返さないため、
+	/// 掛率などの他列が必要な画面はこれで引き直す。
+	/// </summary>
+	async public static Task<T?> LogicGetMasterById<T>(long id) where T : class {
+		if (id <= 0) return null;
+		var msg = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryByIdParam),
+			DataMsg = Common.SerializeObject(new QueryByIdParam(typeof(T), id))
+		};
+		var coreService = GetGrpcService<ICoreService>();
+		var reply = await coreService.QueryMsgAsync(msg, GetDefaultCallContext());
+		if (reply.Code < 0) return null;
+		return Common.DeserializeObject(reply.DataMsg ?? "{}", reply.DataType) as T;
+	}
 }

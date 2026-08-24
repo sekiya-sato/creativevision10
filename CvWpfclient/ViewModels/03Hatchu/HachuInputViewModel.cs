@@ -207,18 +207,8 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 	}
 
 	// 選択ダイアログ(QueryListSimpleParam)は Id/Code/Name しか返さないため、掛率・リードタイムはIdで1件取得し直す。
-	async Task<MasterShiire?> LoadFullShiireAsync(long idShiire) {
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		var msg = new CvMsg {
-			Code = 0,
-			Flag = CvFlag.Msg101_Op_Query,
-			DataType = typeof(QueryByIdParam),
-			DataMsg = Common.SerializeObject(new QueryByIdParam(typeof(MasterShiire), idShiire))
-		};
-		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext());
-		if (reply.Code < 0) return null;
-		return Common.DeserializeObject(reply.DataMsg ?? "{}", reply.DataType) as MasterShiire;
-	}
+	async Task<MasterShiire?> LoadFullShiireAsync(long idShiire) =>
+		await AppGlobal.LogicGetMasterById<MasterShiire>(idShiire);
 
 	// 発注日 + 仕入先のリードタイム日数で納品予定日を再計算する（常に上書き）。
 	void RecalcNouhinDay() {

@@ -102,6 +102,9 @@ public partial class HenpinInputViewModel : BaseStockSheetInputViewModel<Tran03S
 	/// <summary>登録時に使う消費税率(%)。ValidateBeforeRegisterAsync で確定する。</summary>
 	int taxRate;
 
+	/// <summary>登録時に使う仕入先掛率(%)。Tran03Shiire.Rate は掛率であり消費税率ではない。ValidateBeforeRegisterAsync で確定する。</summary>
+	int shiireRatePercent = 100;
+
 	public HenpinInputViewModel() {
 		// 返品対象は「在庫のある行」だけ。数量の初期値は在庫数（全数返品が既定で、減らして使う）
 		IsZeroExcluded = true;
@@ -275,6 +278,9 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 		// 掛計上日は仕入日と同じ。税率は仕入日時点のものを取る（商品仕入入力と同じ扱い）
 		kakeDay = ToDenDay(denDay);
 		taxRate = await AppGlobal.LogicGetTax(1, kakeDay);
+		// 掛率はコンボ(MasterOption)にCode/Nameしか無いためIdで1件取得し直す
+		var fullShiire = await AppGlobal.LogicGetMasterById<MasterShiire>(SelectedShiire?.Id ?? 0);
+		if (fullShiire != null) shiireRatePercent = fullShiire.RateProper;
 		return true;
 	}
 
@@ -294,7 +300,7 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 				Cd = shiire?.Code ?? string.Empty,
 				Mei = shiire?.Name ?? string.Empty,
 			},
-			Rate = taxRate,
+			Rate = shiireRatePercent,
 			Tax = tax,
 			Total = absKingakuTotal + tax,
 		};

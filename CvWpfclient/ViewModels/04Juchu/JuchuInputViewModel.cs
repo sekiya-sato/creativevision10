@@ -133,6 +133,9 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
+	// 掛率(Rate)から分離した消費税率のキャッシュ。伝票を開いた時点の伝票日付基準で LoadTaxRateAsync が更新する。
+	int taxRatePercent = 10;
+
 	protected override void OnCurrentEditChangedCore(Tran12Jyuchu? oldValue, Tran12Jyuchu newValue) {
 		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
 		if (newValue == null) return;
@@ -140,10 +143,11 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 		ApplyMeisaiFromCurrentEdit();
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
+		_ = LoadTaxRateAsync();
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran12Jyuchu.Tax) or nameof(Tran12Jyuchu.Kubun) or nameof(Tran12Jyuchu.Rate)) {
+		if (e.PropertyName is nameof(Tran12Jyuchu.Tax) or nameof(Tran12Jyuchu.Kubun)) {
 			UpdateHeaderTotals();
 		}
 	}
@@ -162,14 +166,13 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 
 	void UpdateHeaderTotals() {
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * CurrentEdit.Rate / 100.0);
+		var tax = (int)Math.Round(absKingakuTotal * taxRatePercent / 100.0);
 		CurrentEdit.Tax = tax;
 		CurrentEdit.Total = absKingakuTotal + tax;
 	}
 
 	async Task LoadTaxRateAsync() {
-		var rate = await AppGlobal.LogicGetTax(1, Current.DenDay);
-		CurrentEdit.Rate = rate;
+		taxRatePercent = await AppGlobal.LogicGetTax(1, Current.DenDay);
 		UpdateHeaderTotals();
 	}
 
@@ -190,11 +193,9 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 			Current = new Tran12Jyuchu {
 				DenDay = DateTime.Now.ToString("yyyyMMdd"),
 				Kubun = (int)EnumJuchu.Juchu,
+				Rate = 100,
 				Jmeisai = [],
 			};
-		}
-		if (Current.Rate == 0) {
-			_ = LoadTaxRateAsync();
 		}
 		SelectedTabIndex = 1;
 	}
@@ -412,11 +413,15 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	[RelayCommand]
-	void DoSelectTokui() {
+	async Task DoSelectTokui() {
 		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "", "Code", startPos: CurrentEdit.Id_Tokui);
 		if (tokui == null) return;
 		CurrentEdit.Id_Tokui = tokui.Id;
 		CurrentEdit.VTokui = new CodeNameView { Sid = tokui.Id, Cd = tokui.Code ?? "", Mei = tokui.Name ?? "" };
+
+		// 選択ダイアログはCode/Nameしか返さないため、掛率はIdで1件取得し直す。
+		var fullTokui = await AppGlobal.LogicGetMasterById<MasterTokui>(tokui.Id);
+		if (fullTokui != null) CurrentEdit.Rate = fullTokui.RateProper;
 	}
 
 	[RelayCommand]
