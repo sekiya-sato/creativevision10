@@ -162,6 +162,7 @@ public partial class CoreService {
 			UpdateParam update => HandleUpdate(request.Flag, update),
 			DeleteParam delete => HandleDelete(request.Flag, delete),
 			DeleteByIdParam deleteById => HandleDeleteById(request.Flag, deleteById),
+			DeleteBulkParam deleteBulk => HandleBulkDelete(request.Flag, deleteBulk),
 			PartialUpdateParam partialUpdate => HandlePartialUpdate(request.Flag, partialUpdate),
 			ShippingConfirmParam confirm => HandleShippingConfirm(request.Flag, confirm),
 			ShippingCancelParam cancel => HandleShippingCancel(request.Flag, cancel),
@@ -615,6 +616,62 @@ public partial class CoreService {
 		catch (Exception ex) {
 			_db.AbortTransaction();
 			return CreateExceptionResponse(flag, ex, deleteById.ItemType, Common.SerializeObject(item));
+		}
+	}
+
+	/// <summary>
+	/// Id指定の一括削除。洗い替え登録（既存行を消してから入れ直す）を1往復・1トランザクションで行う。
+	/// <para>
+	/// 楽観排他は行単位で<b>先に全行を検証</b>する。行が無い（他端末が削除済み）か <c>Vdu</c> が
+	/// 食い違う行が1件でもあれば、<b>何も削除せず</b>rollbackして再取得させる（部分適用しない）。
+	/// </para>
+	/// <para>
+	/// 引当数は削除後の <see cref="TranHaibun"/> から引き直すため、キーを溜めてループ後に一度だけ処理する
+	/// （<see cref="HandleBulkInsert"/> と同じ理由）。在庫は差分の加減算なので行ごとに反転する。
+	/// </para>
+	/// </summary>
+	private CvMsg HandleBulkDelete(CvFlag flag, DeleteBulkParam deleteBulk) {
+		LogDetailedRequest("パラメータ DeleteBulkParam.ItemType={ItemType} 行数={RowCount} 内容={Payload}",
+			() => [deleteBulk.ItemType, deleteBulk.Rows?.Length ?? 0, Common.SerializeObject(deleteBulk)]);
+
+		if (!typeof(BaseDbClass).IsAssignableFrom(deleteBulk.ItemType)) {
+			throw new NotImplementedException();
+		}
+		// 同じIdを2回渡されると2件目が「行が無い」と判定されるので、先に除いておく
+		var rows = (deleteBulk.Rows ?? []).Where(r => r.Id > 0).DistinctBy(r => r.Id).ToList();
+		if (rows.Count == 0) {
+			return CreateSuccessResponse(flag, typeof(DeleteBulkResult), Common.SerializeObject(new DeleteBulkResult(0)));
+		}
+		var reserveKeys = new HashSet<ReserveKey>();
+		var effects = WriteEffectResult.Empty;
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var targets = new List<BaseDbClass>(rows.Count);
+			foreach (var row in rows) {
+				if (FetchExistingBaseDbItem(deleteBulk.ItemType, row.Id) is not BaseDbClass item || item.Vdu != row.ExpectedVdu) {
+					_db.AbortTransaction();
+					_logger.LogInformation("一括削除 競合検知 {ItemType} Id={Id} ExpectedVdu={ExpectedVdu}",
+						deleteBulk.ItemType.Name, row.Id, row.ExpectedVdu);
+					return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage,
+						deleteBulk.ItemType, $"Id={row.Id}");
+				}
+				targets.Add(item);
+			}
+			foreach (var item in targets) {
+				// 在庫は差分の加減算なので、行を消す前に旧値ぶんを反転しておく
+				Effects.Before(WriteOp.Delete, deleteBulk.ItemType, item);
+				_db.Delete(item);
+				effects = effects.Add(Effects.After(WriteOp.Delete, deleteBulk.ItemType, item, item, 0, reserveKeys));
+			}
+			effects = effects.Add(new WriteEffectResult(0, Effects.FlushReserve(reserveKeys), 0, 0));
+			LogEffects(deleteBulk.ItemType, effects);
+			_db.CompleteTransaction();
+			_logger.LogInformation("一括削除 {ItemType} 削除行数={Deleted}", deleteBulk.ItemType.Name, targets.Count);
+			return CreateSuccessResponse(flag, typeof(DeleteBulkResult), Common.SerializeObject(new DeleteBulkResult(targets.Count)));
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, deleteBulk.ItemType, Common.SerializeObject(deleteBulk));
 		}
 	}
 	/// <summary>

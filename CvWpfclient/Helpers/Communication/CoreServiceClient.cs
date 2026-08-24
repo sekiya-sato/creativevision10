@@ -32,6 +32,35 @@ internal static class CoreServiceClient {
 		return SendAsync(message, ct);
 	}
 
+	/// <summary>
+	/// Id指定の一括削除。洗い替え登録（既存行を消してから入れ直す）で使う。
+	/// <para>
+	/// 1行ずつ <see cref="DeleteByIdParam"/> を送ると通信回数が行数に比例し、途中で失敗すると
+	/// 一部だけ消えた状態が残る。<see cref="DeleteBulkParam"/> は1往復・1トランザクションで、
+	/// 1件でも競合すればサーバ側で何も削除されない。失敗は例外にして呼び出し元に再取得させる。
+	/// </para>
+	/// </summary>
+	/// <param name="itemType">対象テーブル型</param>
+	/// <param name="rows">削除する行（Idと一覧取得時点のVduを使う）</param>
+	/// <param name="label">エラーメッセージに出す対象の呼び名</param>
+	/// <param name="ct">キャンセルトークン</param>
+	/// <returns>削除した行数</returns>
+	internal static async Task<int> DeleteBulkAsync(Type itemType, IEnumerable<BaseDbClass> rows, string label, CancellationToken ct) {
+		DeleteBulkRow[] targets = [.. rows.Where(x => x.Id > 0).Select(x => new DeleteBulkRow(x.Id, x.Vdu))];
+		if (targets.Length == 0) {
+			return 0;
+		}
+		var reply = await SendExecuteAsync(new DeleteBulkParam(itemType, targets), ct);
+		if (reply.Code < 0) {
+			var detail = string.IsNullOrEmpty(reply.Option) ? reply.DataMsg : reply.Option;
+			throw new InvalidOperationException(
+				$"{label}の削除に失敗しました（{targets.Length:N0} 件）。他端末で更新された可能性があります。再取得してください。{detail}");
+		}
+		return Common.DeserializeObject(reply.DataMsg ?? string.Empty, typeof(DeleteBulkResult)) is DeleteBulkResult result
+			? result.DeletedCount
+			: targets.Length;
+	}
+
 	static async Task<List<T>> QueryListCoreAsync<T>(object parameter, Type parameterType, CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
 		var message = new CvMsg {

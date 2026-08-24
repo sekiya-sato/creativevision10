@@ -119,7 +119,7 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 		}
 		var rows = _db.Fetch<TranHaibun>(
 			$"where Id in ({string.Join(",", ids)}) and EndFlag = 0 and ifnull(KakuteiDay,'') <> '' "
-			+ "order by DenDay, NouhinDay, Id_Soko, Id_Tenpo, Kubun, RelateNo1, Id");
+			+ $"order by {HaibunHeaderKey.KeyColumnsSql()}, Id");
 		if (rows.Count == 0) {
 			return [];
 		}
@@ -127,8 +127,8 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 		var summaryDb = new SummaryDb(_db);
 		var created = new List<long>();
 
-		// 仮想ヘッダ単位でまとめる(決定 I5)
-		foreach (var group in rows.GroupBy(x => (x.DenDay, x.NouhinDay, x.Id_Soko, x.Id_Tenpo, x.Kubun, x.RelateNo1))) {
+		// 仮想ヘッダ単位でまとめる(決定 I5)。キーの定義は HaibunHeaderKey に集約している
+		foreach (var group in rows.GroupBy(HaibunHeaderKey.From)) {
 			var shipped = group.Where(x => x.JitsuSu > 0).ToList();
 			long slipId = 0;
 			if (shipped.Count > 0) {
@@ -216,7 +216,7 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 	/// <summary>出荷売上とみなす店種区分。1=卸先 / 3=売仕店（決定 I4 / G4）</summary>
 	public static bool IsShukka(int tenType) => tenType is 1 or 3;
 
-	private long CreateUriage((string DenDay, string NouhinDay, long Id_Soko, long Id_Tenpo, int Kubun, int RelateNo1) key,
+	private long CreateUriage(HaibunHeaderKey key,
 		List<Tran99Meisai> meisai, long idShain, string denDay) {
 		var slip = new Tran00Uriage {
 			DenDay = denDay,
@@ -235,7 +235,7 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 		return slip.Id;
 	}
 
-	private long CreateIdoOut((string DenDay, string NouhinDay, long Id_Soko, long Id_Tenpo, int Kubun, int RelateNo1) key,
+	private long CreateIdoOut(HaibunHeaderKey key,
 		List<Tran99Meisai> meisai, long idShain, string denDay) {
 		var slip = new Tran10IdoOut {
 			DenDay = denDay,

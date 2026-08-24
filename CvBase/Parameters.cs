@@ -172,6 +172,40 @@ public sealed class DeleteByIdParam {
 	}
 }
 /// <summary>
+/// クエリI/F : ID指定の一括削除パラメータ。<see cref="DeleteByIdParam"/> の多件数版。
+/// <para>
+/// 洗い替え登録（既存行を全部消してから入れ直す）で <see cref="DeleteByIdParam"/> を行数ぶん
+/// 往復させると、通信回数が行数に比例し、途中で失敗すると<b>一部だけ消えた状態</b>が残る。
+/// この型は1往復・1トランザクションで消し、付随処理（在庫再集計・引当再計算）も
+/// <see cref="InsertBulkParam"/> と同じくまとめて1回だけ走る。
+/// </para>
+/// <para>
+/// 楽観排他は <see cref="DeleteByIdParam"/> と同じ行単位。<see cref="DeleteBulkRow.ExpectedVdu"/> が
+/// 現在値と一致しない行（または既に削除済みの行）が1件でもあれば、サーバーは<b>何も削除せず</b>
+/// <c>CvMsgErrorCode.ConcurrentUpdate</c> を返す（部分適用しない）。
+/// </para>
+/// </summary>
+/// <param name="ItemType">対象テーブル型</param>
+/// <param name="Rows">削除対象行の配列。空なら削除0件で成功にする</param>
+public sealed record class DeleteBulkParam(Type ItemType, DeleteBulkRow[] Rows);
+
+/// <summary>
+/// 一括削除の1行分
+/// </summary>
+/// <param name="Id">削除する行のId</param>
+/// <param name="ExpectedVdu">
+/// 一覧取得時点の <c>Vdu</c>。サーバー側で現在値と照合し、不一致（または行が削除済み）なら
+/// 削除全体をrollbackする。
+/// </param>
+public sealed record class DeleteBulkRow(long Id, long ExpectedVdu);
+
+/// <summary>
+/// 一括削除の結果
+/// </summary>
+/// <param name="DeletedCount">実際に削除された行数</param>
+public sealed record class DeleteBulkResult(int DeletedCount);
+
+/// <summary>
 /// クエリI/F : 指定した列だけを更新するパラメータ
 /// <para>
 /// <see cref="UpdateParam"/> は行全体を置き換えるため、<see cref="ITranSoko"/> 実装型では

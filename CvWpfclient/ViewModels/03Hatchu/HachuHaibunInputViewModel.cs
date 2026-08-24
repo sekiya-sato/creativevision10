@@ -742,23 +742,9 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		return records;
 	}
 
-	async Task DeleteHaibunRowsAsync(IReadOnlyCollection<TranHaibun> rows, CancellationToken ct) {
-		if (rows.Count == 0) return;
-		var coreService = AppGlobal.GetGrpcService<ICoreService>();
-		foreach (TranHaibun old in rows) {
-			ct.ThrowIfCancellationRequested();
-			var deleteMsg = new CvMsg {
-				Code = 0,
-				Flag = CvFlag.Msg201_Op_Execute,
-				DataType = typeof(DeleteByIdParam),
-				DataMsg = Common.SerializeObject(new DeleteByIdParam(typeof(TranHaibun), old.Id, old.Vdu)),
-			};
-			CvMsg deleteReply = await coreService.QueryMsgAsync(deleteMsg, AppGlobal.GetDefaultCallContext(ct));
-			if (deleteReply.Code < 0) {
-				throw new InvalidOperationException($"既存配分の削除に失敗しました（Id={old.Id}）。他端末で更新された可能性があります。再取得してください。");
-			}
-		}
-	}
+	/// <summary>既存配分を1往復でまとめて削除する。1件でも競合すればサーバ側で何も削除されない</summary>
+	Task DeleteHaibunRowsAsync(IReadOnlyCollection<TranHaibun> rows, CancellationToken ct) =>
+		CoreServiceClient.DeleteBulkAsync(typeof(TranHaibun), rows, "既存配分", ct);
 
 	// ===== 画面状態の更新 =====
 

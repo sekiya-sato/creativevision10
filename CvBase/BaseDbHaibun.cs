@@ -265,6 +265,50 @@ public enum EnumHaibun : int {
 	IdoShiji = 7,
 }
 
+/// <summary>
+/// 配分の<b>仮想ヘッダ</b>キー（決定 I5）。
+/// <para>
+/// <see cref="TranHaibun"/> は明細行（1行=1SKU）のまま持ち、ヘッダは実テーブルを作らずこのキーで括る。
+/// キーは <see cref="DenDay"/>（配分指示日）+ <see cref="NouhinDay"/>（納品日）+
+/// <see cref="Id_Soko"/>（出庫元倉庫）+ <see cref="Id_Tenpo"/>（出荷先）+ <see cref="Kubun"/>（区分）+
+/// <see cref="RelateNo1"/>（元伝票Id）の6列で、旧CV.netの配分伝票NO（1出庫元 ⇒ 1出荷先）と同じ括りになる。
+/// </para>
+/// <para>
+/// <b>キーを削ってはいけない。</b> <see cref="Kubun"/> は引当対象の判定そのもの
+/// （<c>Kubun &lt;&gt; 0</c> が引当対象）で、<see cref="RelateNo1"/> は受注・受注残の自動完了判定に使う。
+/// この2列を落とすと1ヘッダから元伝票を特定できなくなる。
+/// </para>
+/// <para>
+/// 出荷処理（<c>ShippingDb.CreateShippingSlips</c>）が 1キー=1伝票 で出荷売上／移動出庫を作る。
+/// 配分データメンテ・出荷指示明細書印刷・納入一覧表のヘッダ表示もこのキーが単位になる。
+/// 構造化（ヘッダ実テーブル化）の検討経緯は
+/// `Doc/spec/archive/2026-08-24_TranHaibun_ヘッダ明細構造化_調査.md` を参照する。
+/// </para>
+/// </summary>
+public readonly record struct HaibunHeaderKey(string DenDay, string NouhinDay, long Id_Soko, long Id_Tenpo, int Kubun, int RelateNo1) {
+	/// <summary>配分明細行から仮想ヘッダキーを作る</summary>
+	public static HaibunHeaderKey From(TranHaibun row) =>
+		new(row.DenDay, row.NouhinDay, row.Id_Soko, row.Id_Tenpo, row.Kubun, row.RelateNo1);
+
+	/// <summary>配分区分（<see cref="EnumHaibun"/>）</summary>
+	public EnumHaibun EnKubun => (EnumHaibun)Kubun;
+
+	/// <summary>キーの列名。SQLの GROUP BY / ORDER BY をこのキーと必ず一致させるために使う</summary>
+	public static readonly string[] KeyColumns = [
+		nameof(TranHaibun.DenDay), nameof(TranHaibun.NouhinDay), nameof(TranHaibun.Id_Soko),
+		nameof(TranHaibun.Id_Tenpo), nameof(TranHaibun.Kubun), nameof(TranHaibun.RelateNo1),
+	];
+
+	/// <summary>
+	/// キー列をSQLの句へ展開する（例: <c>"h.DenDay, h.NouhinDay, ..."</c>）。
+	/// </summary>
+	/// <param name="alias"><see cref="TranHaibun"/> の別名。空文字なら修飾しない</param>
+	public static string KeyColumnsSql(string alias = "") {
+		var prefix = string.IsNullOrEmpty(alias) ? string.Empty : $"{alias}.";
+		return string.Join(", ", KeyColumns.Select(c => $"{prefix}{c}"));
+	}
+}
+
 // 補充トランザクション
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("nk1", false, nameof(DenDay))]

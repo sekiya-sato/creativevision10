@@ -256,20 +256,8 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 		try {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 
-			// 洗い替え: 読込済みの未送信指示を削除（楽観ロック付き）
-			foreach (TranHaibun old in loadedEditableRows) {
-				ct.ThrowIfCancellationRequested();
-				var deleteMsg = new CvMsg {
-					Code = 0,
-					Flag = CvFlag.Msg201_Op_Execute,
-					DataType = typeof(DeleteByIdParam),
-					DataMsg = Common.SerializeObject(new DeleteByIdParam(typeof(TranHaibun), old.Id, old.Vdu)),
-				};
-				CvMsg deleteReply = await coreService.QueryMsgAsync(deleteMsg, AppGlobal.GetDefaultCallContext(ct));
-				if (deleteReply.Code < 0) {
-					throw new InvalidOperationException($"既存指示の削除に失敗しました（Id={old.Id}）。他端末で更新された可能性があります。再取得してください。");
-				}
-			}
+			// 洗い替え: 読込済みの未送信指示を1往復でまとめて削除（行単位の楽観ロック付き）
+			await CoreServiceClient.DeleteBulkAsync(typeof(TranHaibun), loadedEditableRows, "既存指示", ct);
 
 			if (newRecords.Count > 0) {
 				var insertMsg = new CvMsg {
