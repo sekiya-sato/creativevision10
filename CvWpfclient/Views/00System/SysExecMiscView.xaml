@@ -131,7 +131,7 @@
 						<materialDesign:PackIcon VerticalAlignment="Center"
 							Kind="ArrowLeft" />
 						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-							Text="キャンセル" />
+							Text="戻る" />
 					</StackPanel>
 				</Button>
 			</StackPanel>
