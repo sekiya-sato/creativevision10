@@ -62,14 +62,6 @@ public partial class ExDatabase : Database {
 		Connection?.Close();
 	}
 	/// <summary>
-	/// データベースのクローンを作成する (同じ接続文字列で新しい接続を作成)
-	/// </summary>
-	/// <returns></returns>
-	public virtual ExDatabase CloneDb() {
-		var newDb = new ExDatabase((DbConnection)Activator.CreateInstance(Connection.GetType(), Connection.ConnectionString)!);
-		return newDb;
-	}
-	/// <summary>
 	/// データベースのタイムアウトを変更する (秒単位)
 	/// <para>
 	/// 基底では何もしない。SQLiteの <c>PRAGMA busy_timeout</c> は他DBに存在せず、

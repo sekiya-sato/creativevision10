@@ -1,5 +1,6 @@
 global using MsgBoxResult = System.Windows.MessageBoxResult;
 using CvBase.Share;
+using CvBase.Sql;
 using CvWpfclient.Helpers;
 using CvWpfclient.Models;
 using Grpc.Core;
@@ -62,6 +63,12 @@ public static partial class AppGlobal {
 
 	public static Models.InfoUser StaticInfoUser = new();
 	public static InfoServer StaticInfoServer = new();
+	/// <summary>
+	/// ログイン済みサーバのDB方言を取得する。
+	/// 未ログイン時は <see cref="InfoServer.DbProvider"/> の既定値により SQLite 方言を返す。
+	/// </summary>
+	public static ISqlDialect ServerSqlDialect =>
+		SqlDialects.ByProviderName(StaticInfoServer.DbProvider);
 
 	/// <summary>
 	/// ログイン中ユーザのロール(SysLogin.Id_Role)。メニューのロール別表示に使用する。

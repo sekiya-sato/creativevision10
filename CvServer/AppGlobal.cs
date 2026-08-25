@@ -39,6 +39,7 @@ public class AppGlobal {
 	public async Task InitAsync(ExDatabase db, string appName = "", string serverVersion = "0.0.0", CancellationToken ct = default) {
 		VerInfo.Product = appName;
 		VerInfo.Version = serverVersion;
+		VerInfo.DbProvider = db.Dialect.Name;
 		var defTable = new DefineDataTable();
 		await defTable.InitializeAsync(db, false, ct);
 	}

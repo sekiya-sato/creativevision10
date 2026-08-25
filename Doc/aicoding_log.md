@@ -1,3 +1,22 @@
+## [2026-08-25] 接続先DB方言のクライアント通知
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- CvWpfclient がログイン済みサーバの DB 方言を判別できるようにする。
+
+### 実施内容
+- `InfoServer` に `DbProvider` を追加し、未ログイン時と旧サーバ応答時の既定値を `Sqlite` とした。
+- サーバ初期化時に、構成値ではなく実際の `ExDatabase.Dialect.Name` を `InfoServer.DbProvider` へ設定する。
+- `AppGlobal.ServerSqlDialect` を追加し、`StaticInfoServer.DbProvider` から `SqlDialects` を取得できるようにした。
+- `InfoServer.DbProvider` から各方言を解決する単体テストを追加する。
+
+### 検証
+- `git diff --check` 成功。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvBase\CvBase.csproj --no-restore` 成功（警告0、エラー0）。
+- `C:\gitroot\UT\vscmd.bat dotnet test Tests\TestSqlDialect\TestSqlDialect.csproj --no-restore` は、既存未コミット変更で `ExDatabase.CloneDb()` が削除され、`ExDatabasePostgre.CloneDb()` と `ExDatabaseMaria.CloneDb()` の `override` が不成立となるためコンパイル不能（CS0115）。今回の変更ではないため未修正。
+
 ## [2026-08-25] SQL方言変換器 Phase 6/8 完了と Phase 7 の棚卸し
 
 ### Agent

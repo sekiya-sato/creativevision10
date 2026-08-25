@@ -8,6 +8,7 @@ Autoモードでは警告のみで実行を続けます。
 
 SQLite は現行運用を止めないため、この検出の対象外です。
  */
+using CvBase.Share;
 using CvBase.Sql;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
@@ -142,5 +143,12 @@ public sealed class SqlDialectDetectionTests {
 		Assert.AreSame(SqlDialects.Postgre, SqlDialects.ByProviderName("Postgre"));
 		Assert.AreSame(SqlDialects.Maria, SqlDialects.ByProviderName("MariaDb"));
 		Assert.AreSame(PassThroughSqlDialect.Instance, SqlDialects.ByProviderName("unknown"));
+	}
+
+	[TestMethod]
+	public void InfoServerのDbProviderから方言を選べる() {
+		Assert.AreSame(SqlDialects.Sqlite, SqlDialects.ByProviderName(new InfoServer().DbProvider));
+		Assert.AreSame(SqlDialects.Postgre, SqlDialects.ByProviderName(new InfoServer { DbProvider = "Postgre" }.DbProvider));
+		Assert.AreSame(SqlDialects.Maria, SqlDialects.ByProviderName(new InfoServer { DbProvider = "MariaDb" }.DbProvider));
 	}
 }

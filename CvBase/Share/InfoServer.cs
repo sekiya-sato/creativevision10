@@ -6,6 +6,11 @@ namespace CvBase.Share;
 public sealed record class InfoServer {
 	public string Product { get; set; } = "CvServer";
 	/// <summary>
+	/// 接続先DBの方言名。Sqlite / Postgre / MariaDb。
+	/// 未ログイン時と旧サーバからの応答では、従来運用に合わせて Sqlite とする。
+	/// </summary>
+	public string DbProvider { get; set; } = "Sqlite";
+	/// <summary>
 	/// バージョン文字列
 	/// </summary>
 	public string Version { get; set; } = "0.0.0";
