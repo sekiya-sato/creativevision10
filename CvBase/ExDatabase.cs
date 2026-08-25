@@ -89,7 +89,7 @@ public partial class ExDatabase : Database {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <returns></returns>
-	string GetSqlCreateTable(Type classT) {
+	public string GetSqlCreateTable(Type classT) {
 		var keys = classT.GetCustomAttributes<KeyDmlAttribute>();
 		var primaryKey = classT.GetCustomAttribute<PrimaryKeyAttribute>();
 
@@ -100,9 +100,27 @@ public partial class ExDatabase : Database {
 			key = "";
 
 
-		var sql = string.Format("Create Table IF NOT EXISTS {0} ({1}{2})", GetTableName(classT), string.Join(",", columns), key);
+		var sql = string.Format("Create Table IF NOT EXISTS {0} ({1}{2}){3}", GetTableName(classT), string.Join(",", columns), key, CreateTableSuffix);
 		return sql;
 	}
+
+	/// <summary>
+	/// CREATE TABLE の閉じ括弧の後ろへ付ける定義。既定は空。
+	/// <para>
+	/// MariaDB で文字セットと照合順序を固定するために使う。照合順序は方言変換では直せない差
+	/// (MariaDBの既定は大文字小文字とかなを同一視する) なので、テーブル作成時に決め切る。
+	/// </para>
+	/// </summary>
+	protected virtual string CreateTableSuffix => string.Empty;
+
+	/// <summary>
+	/// スキーマ側の前提条件を検証する。不足内容の文言を返す。空なら合格。
+	/// <para>
+	/// 照合順序のようにDDLやDB作成時にしか決められない条件を起動時に確かめる。
+	/// SQLite は既定でBINARY照合なので検証項目が無い。
+	/// </para>
+	/// </summary>
+	public virtual IReadOnlyList<string> ValidateSchema() => [];
 	public string GetTableName(Type classT) {
 		var tableName = (classT.GetCustomAttribute<TableNameAttribute>()?.Value) ?? classT.Name; // テーブル名 [Table name]
 		return tableName;
@@ -116,7 +134,10 @@ public partial class ExDatabase : Database {
 	/// <returns></returns>
 	public virtual List<string> GetSqlColumns(Type classT) {
 		var ret = new List<string>();
-		var infoArray2 = classT.GetProperties(BindingFlags.Public);
+		// BindingFlags.Public だけでは何も返らない(Instance/Static の指定が必須)。
+		// 指定漏れのため MariaDB では列が0個の CREATE TABLE が生成されていた。
+		// Static を含めないのは DerivedJodai.TodaySql のような式プロパティを列にしないため。
+		var infoArray2 = classT.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 		if (infoArray2 == null || infoArray2.Length == 0)
 			return ret;
 		var infoArray = new List<PropertyInfo>();

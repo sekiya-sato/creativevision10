@@ -32,6 +32,12 @@
   - `Tran*` の `V*` は伝票時点の監査値であり、マスタ改名時に伝播しない。`[ComputedColumn]` 化、伝播対象化、現行マスタJOINへの置換はしない。
   - `Master*` / `Sys*` / `Derived*` の `V*` は現行名称である。追加時は `MasterCascadeDb.VRules` に登録し、JSONスナップショットも伝播対象を確認する。
   - JSON を扱う SQLite SQL は `json_valid()` または `MasterCascadeDb.SafeJsonColumn` / `JsonArrayReady` で不正JSONを防御する。設計根拠は `.omo/20260727_master_vcolumn_sync_design.md` を参照する。
+- SQL は **SQLite 方言を正典** とする。`CvWpfclient` 側で SQL を組み立てる現行ルールは維持し、PostgreSQL / MariaDB へは `CvBase/Sql` の方言変換器が実行時に変換する。設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` を参照する。
+  - **SQLite の実行経路は変えない。** SQLite では方言変換が恒等（`ISqlDialect.TranslatesSql` が false で呼び出し側が短絡）になる。既存 SQL を他DB互換に書き換える改修は行わない。
+  - 使える構文は `CvBase/Sql/SqliteConstructCatalog.cs` に登録済みのものに限る。新しい SQLite 固有構文を使うときは、変換ルール（`CvBase/Sql/Rules/`）を足すか、`QueryKey` と `SqlOverrideCatalog` で方言別の手書き SQL へ差し替える。`Tests/TestSqlDialect` の静的検査が対象外の構文をファイル/行付きで指摘する。
+  - サーバ側で DB 間の構文差がある SQL は、SQLite 方言のまま書いて `ExDatabase.ExecuteDialect` / `FetchDialect` 経由で実行する。DB 別に書き分けない。
+  - 意味差（MariaDB の整数除算、PostgreSQL の `GROUP BY` 厳格化、集約の戻り型）は変換器では直せない。整数結果を意図する除算は `CAST(... AS INTEGER)` で包むなど、**SQLite で結果が変わらない書き方**に寄せる。
+  - 下限バージョンは SQLite 3.38 / MariaDB 10.11 LTS / PostgreSQL 16。MariaDB の照合順序は `utf8mb4_bin`、PostgreSQL は `LC_COLLATE=C` で作成する。起動時に検証し、SQLite 以外は不足なら起動失敗させる。
 - WPF変更では先に `App.xaml` と該当リソースを確認し、既存の View / ViewModel / 共有スタイルを踏襲する。必要なときは `.agents/skills/wpf-project-guide`、`check-xaml`、`wpf-view-workflow` など該当スキルを読む。
 
 ## 5. 調査、実装、検証

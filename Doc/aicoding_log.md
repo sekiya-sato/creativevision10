@@ -1,3 +1,46 @@
+## [2026-08-25] SQL方言変換器 Phase 6/8 完了と Phase 7 の棚卸し
+
+### Agent
+- Sekiya Sato Claude
+
+### 目的
+- Phase 6: DDLの照合順序を固定し、3DBのDDL生成を突き合わせるテストを入れる。
+- Phase 8: クライアントSQLが変換対象範囲に収まっているかの静的検査と `AGENTS.md` の規約追記。
+- Phase 7: 修正は1.0対象外だが、意味差の箇所を機械検出して件数をベースラインで固定する。
+
+### 実施内容（Phase 6）
+- `ExDatabase` に `CreateTableSuffix`（CREATE TABLEの末尾へ付ける定義）と `ValidateSchema()`（スキーマ前提の検証）を追加した。既定は空・検証なしなのでSQLiteの生成DDLは変わらない。
+- `ExDatabaseMaria` でテーブルを `DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin` で作成するようにした。MariaDBの既定照合順序は大文字小文字とかなを同一視し、`=`/`LIKE`/`ORDER BY`/`DISTINCT`/`GROUP BY` の結果がSQLiteと変わる。方言変換では直せない差なのでテーブル作成時に決め切る。あわせて `@@collation_database` を起動時に検証する。
+- `ExDatabasePostgre` で `pg_database.datcollate` がバイト順（C / C.UTF-8 / POSIX）であることを起動時に検証するようにした。PostgreSQLの照合順序はDB作成時にしか決められないため、検証して起動失敗にするしかない。
+- `CvServer/Program.cs` でバージョン検証と併せて `ValidateSchema()` を実行する。SQLiteは警告のみ、他DBは起動失敗。
+- `DefineDataTable` のテーブル型一覧を `InitializeAsync` 内のローカル変数から `public static TableTypes` へ出した（DDLスナップショットテストから参照するため）。
+- `Tests/TestSqlDialect/DdlSnapshotTests` を追加した（6件）。実DB接続なしで3プロバイダーのDDLを生成し、全テーブルで列集合が一致すること、MariaDBが照合順序を固定すること、自動採番列の定義がDBごとに正しいこと、PostgreSQLの列名が小文字になることを検証する。
+
+### Phase 6 で検出した不具合
+- **基底 `ExDatabase.GetSqlColumns` が列を1個も返さなかった（修正済み）。** `classT.GetProperties(BindingFlags.Public)` は `Instance`/`Static` の指定が無いと何も返さない。MariaDBでは列0個の `CREATE TABLE` が生成されていた。SQLite と PostgreSQL は `GetSqlColumns` を override しているため影響は無かった。`MariaDBの列が0個にならない` テストで回帰を防ぐ。
+- **`DerivedJodai.TodaySql` がSQLiteのDDLにだけ余剰列として現れる（未修正）。** `ExDatabaseSqlite.GetSqlColumns` が `GetProperties()` を引数なしで呼ぶため static プロパティも拾う。`TodaySql` は判定日の既定値を返すSQL式で列としては使われない。稼働中のSQLiteのDDLを変えないため修正せず、テストの既知差一覧で許容した。
+
+### 実施内容（Phase 8）
+- `SqlCorpus` にファイル名・行番号を持たせ、`LoadWithLocation` を追加した。
+- `Tests/TestSqlDialect/SqlSubsetCheckTests` を追加した（3件）。`CvWpfclient` とサーバ層のSQLリテラルを走査し、方言変換の対象外の構文をファイル:行と構文IDで指摘する。許容一覧に理由付きで載せたファイルだけ除外し、許容一覧が実在ファイルを指しているかも検証する。SQLiteの動作は阻害しない。
+- `AGENTS.md` §4 に規約を追記した。SQLはSQLite方言を正典とすること、SQLiteの実行経路は変えないこと、使える構文は構文目録に登録済みのものに限ること、サーバ側のDB間差は `ExecuteDialect` 経由にしてDB別に書き分けないこと、意味差はSQLiteで結果が変わらない書き方に寄せること、下限バージョンと照合順序。
+
+### 実施内容（Phase 7 の棚卸し）
+- `Tests/TestSqlDialect/SemanticDifferenceInventoryTests` を追加した（3件）。整数除算と `strftime('%w')` の算術利用を字句解析で検出し、件数の上限を固定する。上限を超えたら失敗するので、新しい画面が意味差を増やしたことに気づける。
+- **見積りの訂正**: 意味差の実測値は当初見積りより大幅に小さい。MariaDBの整数除算は「`/` を含むファイル147」と見積もっていたが、C#コードを除いてSQLリテラルだけを数えると**除算を含むSQLは13本**、`strftime('%w')` の算術は**1本**だった。Phase 7 の作業量は見積りより小さい。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx` 成功（警告0・エラー0）。
+- `dotnet test Tests\TestSqlDialect\TestSqlDialect.csproj` 成功（133件、失敗0）。
+- `dotnet test Tests\TestServer\TestServer.csproj` 成功（212件、失敗0）。
+- `dotnet test Tests\TestLogin\TestLogin.csproj` 成功（7件、失敗0）。
+- `git diff --check` 成功。
+
+### 残作業
+- 3DB差分テスト（T7）は実PostgreSQL/MariaDB接続が必要なため未着手。CV10 1.0 は SQLite のみを扱うため 1.0 の受入条件には含めない。
+- 意味差の修正（除算13本、曜日算術1本、PostgreSQLの `GROUP BY` 厳格化、集約の戻り型）は 1.0 以降。
+- `changes()`（`RebuildDb` / `ConvertDbTran` が更新件数の取得に使用）の他DB対応。
+- `ExDatabase.CloneDb` の潜在不具合（`ExDatabaseSqlite` が override しておらず、clone するとSQLite固有の振る舞いが失われる）。呼び出し元が無いため未修正。
 ## [2026-08-25] SQL方言変換器 Phase 5 完了（サーバ層のJSON配列再構築とUPSERT）
 
 ### Agent

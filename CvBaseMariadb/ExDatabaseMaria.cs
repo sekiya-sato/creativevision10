@@ -15,6 +15,31 @@ public partial class ExDatabaseMaria : ExDatabase {
 	/// <summary>クライアント由来SQLをMariaDB方言へ変換する。</summary>
 	public override CvBase.Sql.ISqlDialect Dialect => CvBase.Sql.SqlDialects.Maria;
 
+	/// <summary>SQLiteのBINARY照合に合わせる照合順序</summary>
+	public const string RequiredCollation = "utf8mb4_bin";
+
+	/// <summary>
+	/// テーブルの文字セットと照合順序を固定する。
+	/// <para>
+	/// MariaDBの既定照合順序 (utf8mb4_general_ci / uca1400_ai_ci) は大文字小文字とかなを
+	/// 同一視するため、<c>=</c>、<c>LIKE</c>、<c>ORDER BY</c>、<c>DISTINCT</c>、<c>GROUP BY</c> の
+	/// 結果がSQLiteと変わる。方言変換では直せない差なのでテーブル作成時に決め切る。
+	/// </para>
+	/// </summary>
+	protected override string CreateTableSuffix => $" DEFAULT CHARSET=utf8mb4 COLLATE={RequiredCollation}";
+
+	/// <summary>
+	/// 接続先データベースの既定照合順序が <see cref="RequiredCollation"/> であることを確かめる。
+	/// 既存テーブルの照合順序はテーブル定義側で決まるが、後から作られる一時テーブルや
+	/// 式の比較でDB既定が効くため、DB自体も揃えておく必要がある。
+	/// </summary>
+	public override IReadOnlyList<string> ValidateSchema() {
+		var collation = ExecuteScalar<string>("select @@collation_database") ?? "";
+		return collation.Equals(RequiredCollation, StringComparison.OrdinalIgnoreCase)
+			? []
+			: [$"データベースの照合順序を {RequiredCollation} にしてください(SQLiteのBINARY照合に合わせるため)。現在={collation}"];
+	}
+
 	public ExDatabaseMaria(DbConnection conn) : this(conn, true) {
 	}
 

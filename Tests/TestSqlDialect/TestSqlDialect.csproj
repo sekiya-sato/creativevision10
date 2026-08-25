@@ -12,11 +12,16 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="MSTest" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\CvAsset\CvAsset.csproj" />
     <ProjectReference Include="..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\CvBasePostgre\CvBasePostgre.csproj" />
+    <ProjectReference Include="..\..\CvBaseMariadb\CvBaseMariadb.csproj" />
   </ItemGroup>
 
 </Project>

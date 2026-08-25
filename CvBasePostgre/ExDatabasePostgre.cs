@@ -28,6 +28,25 @@ public sealed class ExDatabasePostgre : ExDatabase {
 	/// <summary>クライアント由来SQLをPostgreSQL方言へ変換する。</summary>
 	public override CvBase.Sql.ISqlDialect Dialect => CvBase.Sql.SqlDialects.Postgre;
 
+	/// <summary>SQLiteのBINARY照合と並び順が一致するロケール</summary>
+	static readonly string[] _acceptedCollations = ["C", "C.UTF-8", "C.utf8", "POSIX"];
+
+	/// <summary>
+	/// 接続先データベースの照合順序がバイト順であることを確かめる。
+	/// <para>
+	/// PostgreSQLの照合順序はデータベース作成時にしか決められない
+	/// (<c>CREATE DATABASE ... LC_COLLATE='C' LC_CTYPE='C' TEMPLATE template0</c>)。
+	/// 言語ロケールのままだとコード・カナの <c>ORDER BY</c> がSQLiteと変わるため起動時に検証する。
+	/// </para>
+	/// </summary>
+	public override IReadOnlyList<string> ValidateSchema() {
+		var collation = ExecuteScalar<string>("select datcollate from pg_database where datname = current_database()") ?? "";
+		return _acceptedCollations.Contains(collation, StringComparer.OrdinalIgnoreCase)
+			? []
+			: [$"データベースの照合順序をバイト順({string.Join(" / ", _acceptedCollations)})にしてください"
+				+ $"(SQLiteのBINARY照合に合わせるため。CREATE DATABASE ... LC_COLLATE='C' LC_CTYPE='C' TEMPLATE template0)。現在={collation}"];
+	}
+
 	public ExDatabasePostgre(DbConnection conn) : this(conn, true) {
 	}
 

@@ -37,17 +37,38 @@ public static class SqlCorpus {
 	}
 
 	/// <summary>CvWpfclient と CvBase から SQL リテラルを収集する。</summary>
-	public static List<string> Load() {
+	public static List<string> Load() => [.. LoadWithLocation().Select(x => x.Sql)];
+
+	/// <summary>
+	/// SQLリテラルを収集し、どのファイルの何行目にあるかを添えて返す。
+	/// 静的検査で「どこを直せばよいか」を出すために使う。
+	/// </summary>
+	public static List<SqlLiteral> LoadWithLocation(params string[] directories) {
 		var root = FindRepositoryRoot();
-		var literals = new List<string>();
-		foreach (var directory in new[] { "CvWpfclient", "CvBase", "CvDomainLogic" }) {
+		var targets = directories.Length > 0 ? directories : ["CvWpfclient", "CvBase", "CvDomainLogic"];
+		var literals = new List<SqlLiteral>();
+		foreach (var directory in targets) {
 			var path = Path.Combine(root, directory);
 			if (!Directory.Exists(path))
 				continue;
-			foreach (var file in EnumerateSourceFiles(path))
-				literals.AddRange(ExtractSqlLiterals(File.ReadAllText(file)));
+			foreach (var file in EnumerateSourceFiles(path)) {
+				var source = File.ReadAllText(file);
+				var relative = Path.GetRelativePath(root, file).Replace('\\', '/');
+				foreach (var (sql, offset) in ExtractSqlLiteralsWithOffset(source))
+					literals.Add(new SqlLiteral(relative, LineNumberAt(source, offset), sql));
+			}
 		}
 		return literals;
+	}
+
+	/// <summary>文字位置から1始まりの行番号を求める。</summary>
+	static int LineNumberAt(string source, int offset) {
+		var line = 1;
+		for (var i = 0; i < offset && i < source.Length; i++) {
+			if (source[i] == '\n')
+				line++;
+		}
+		return line;
 	}
 
 	/// <summary>ソースファイル全文を収集する。字句解析の耐久試験に使う。</summary>
@@ -70,11 +91,15 @@ public static class SqlCorpus {
 				&& !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase));
 
 	/// <summary>ソース1本からSQLらしいリテラルを取り出す。</summary>
-	public static List<string> ExtractSqlLiterals(string source) {
-		var result = new List<string>();
-		foreach (var literal in ExtractRawStrings(source).Concat(ExtractVerbatimStrings(source))) {
+	public static List<string> ExtractSqlLiterals(string source) =>
+		[.. ExtractSqlLiteralsWithOffset(source).Select(x => x.Sql)];
+
+	/// <summary>ソース1本からSQLらしいリテラルと、その開始位置を取り出す。</summary>
+	static List<(string Sql, int Offset)> ExtractSqlLiteralsWithOffset(string source) {
+		var result = new List<(string, int)>();
+		foreach (var (literal, offset) in ExtractRawStrings(source).Concat(ExtractVerbatimStrings(source))) {
 			if (IsSqlLike(literal))
-				result.Add(literal);
+				result.Add((literal, offset));
 		}
 		return result;
 	}
@@ -86,8 +111,8 @@ public static class SqlCorpus {
 		return _sqlMarkers.Count(m => lower.Contains(m, StringComparison.Ordinal)) >= 2;
 	}
 
-	/// <summary>raw文字列 """...""" / $"""...""" の中身を取り出す。</summary>
-	static IEnumerable<string> ExtractRawStrings(string source) {
+	/// <summary>raw文字列 """...""" / $"""...""" の中身と開始位置を取り出す。</summary>
+	static IEnumerable<(string Text, int Offset)> ExtractRawStrings(string source) {
 		var i = 0;
 		while (true) {
 			var open = source.IndexOf("\"\"\"", i, StringComparison.Ordinal);
@@ -97,13 +122,13 @@ public static class SqlCorpus {
 			var close = source.IndexOf("\"\"\"", contentStart, StringComparison.Ordinal);
 			if (close < 0)
 				yield break;
-			yield return source[contentStart..close];
+			yield return (source[contentStart..close], contentStart);
 			i = close + 3;
 		}
 	}
 
-	/// <summary>verbatim文字列 @"..." / $@"..." の中身を取り出す（"" は " へ戻す）。</summary>
-	static IEnumerable<string> ExtractVerbatimStrings(string source) {
+	/// <summary>verbatim文字列 @"..." / $@"..." の中身と開始位置を取り出す（"" は " へ戻す）。</summary>
+	static IEnumerable<(string Text, int Offset)> ExtractVerbatimStrings(string source) {
 		var i = 0;
 		while (i < source.Length) {
 			var at = source.IndexOf("@\"", i, StringComparison.Ordinal);
@@ -127,8 +152,18 @@ public static class SqlCorpus {
 			}
 			if (found < 0)
 				yield break;
-			yield return source[contentStart..found].Replace("\"\"", "\"", StringComparison.Ordinal);
+			yield return (source[contentStart..found].Replace("\"\"", "\"", StringComparison.Ordinal), contentStart);
 			i = found + 1;
 		}
 	}
+}
+
+/// <summary>
+/// 収集したSQLリテラル1本。
+/// </summary>
+/// <param name="File">リポジトリルートからの相対パス</param>
+/// <param name="Line">リテラルの開始行(1始まり)</param>
+/// <param name="Sql">SQL本文</param>
+public sealed record SqlLiteral(string File, int Line, string Sql) {
+	public override string ToString() => $"{File}:{Line}";
 }

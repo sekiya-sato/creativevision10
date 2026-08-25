@@ -177,8 +177,11 @@ using (var scope = app.Services.CreateScope()) {
 		logger.LogWarning("PdfInitAsync Error");
 	logger.LogDebug("appInit.Init() Server={ServerVersion}, Provider={DatabaseProvider}, DB={DatabaseVersion}",
 		serverVersion, databaseProvider, database.Version);
-	// DBのバージョン・必須機能を検証する。SQLiteは現行運用を止めないため警告のみ、他DBは起動失敗にする
-	var dialectIssues = database.Dialect.Validate(database.Version);
+	// DBのバージョン・必須機能・スキーマ前提(照合順序)を検証する。
+	// SQLiteは現行運用を止めないため警告のみ、他DBは起動失敗にする
+	var dialectIssues = database.Dialect.Validate(database.Version)
+		.Concat(database.ValidateSchema())
+		.ToList();
 	if (dialectIssues.Count > 0) {
 		var detail = string.Join(" / ", dialectIssues);
 		if (isSqlite) {

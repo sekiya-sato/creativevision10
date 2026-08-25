@@ -10,20 +10,14 @@ public class DefineDataTable {
 	/// ロガーインスタンス [Logger instance]
 	/// </summary>
 	private static readonly ILogger<DefineDataTable> _logger = new NLogExtender<DefineDataTable>();
-
 	/// <summary>
-	/// データベースの初期化処理を行う。テーブルの存在チェックと作成を行う。
+	/// 事前作成するテーブルの型一覧。
+	/// <para>
+	/// DDL生成のスナップショットテスト(3DBで同じ列集合になるかの検証)からも参照するため
+	/// メソッド内のローカル変数ではなく公開メンバとして持つ。
+	/// </para>
 	/// </summary>
-	/// <param name="db">データベースインスタンス</param>
-	/// <param name="isForce">強制的に作成するかどうか</param>
-	/// <returns>初期化が成功したかどうか</returns>
-	public async Task<bool> InitializeAsync(ExDatabase db, bool isForce, CancellationToken ct = default) {
-		var ret = false;
-		// SQLiteのバージョンは 3.49.1 以降 (2025/05/27) select sqlite_version();
-
-		// ToDo: テーブルの存在チェックと作成は、テーブルごとに行うのではなく、まとめて行うようにすること / テーブルが追加された場合、事前作成が必要なものはここに追加すること
-
-		var tableTypes = new List<Type> {
+	public static IReadOnlyList<Type> TableTypes { get; } = new List<Type> {
 			// システムテーブル
 			typeof(SysUpdateDb),
 			typeof(SysSequence),
@@ -117,7 +111,22 @@ public class DefineDataTable {
 			 *		           Master系にV*列を追加したら MasterCascadeDb.VRules への登録も必須
 			 *		Summary系: V*列を持たない(JOIN前提)。新規に追加する参照列もこの方針に合わせることを推奨
 			 */
-		};
+	};
+
+
+	/// <summary>
+	/// データベースの初期化処理を行う。テーブルの存在チェックと作成を行う。
+	/// </summary>
+	/// <param name="db">データベースインスタンス</param>
+	/// <param name="isForce">強制的に作成するかどうか</param>
+	/// <returns>初期化が成功したかどうか</returns>
+	public async Task<bool> InitializeAsync(ExDatabase db, bool isForce, CancellationToken ct = default) {
+		var ret = false;
+		// SQLiteのバージョンは 3.49.1 以降 (2025/05/27) select sqlite_version();
+
+		// ToDo: テーブルの存在チェックと作成は、テーブルごとに行うのではなく、まとめて行うようにすること / テーブルが追加された場合、事前作成が必要なものはここに追加すること
+
+		var tableTypes = TableTypes;
 		foreach (var tableType in tableTypes) {
 			/* if (typeof(IDerivedClass).IsAssignableFrom(tableType)) {} */
 			if (!db.CreateTable(tableType, isForce)) {
