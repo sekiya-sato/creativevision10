@@ -83,8 +83,6 @@ public sealed class ExDatabasePostgre : ExDatabase {
 		}
 	}
 
-	public override ExDatabase CloneDb() => GetDbConn(Connection.ConnectionString);
-
 	public override void ChangeTimeout(int timeoutSec) {
 		ArgumentOutOfRangeException.ThrowIfNegative(timeoutSec);
 		CommandTimeout = timeoutSec;

@@ -96,8 +96,6 @@ public partial class ExDatabaseMaria : ExDatabase {
 			conn.Close();
 	}
 
-	public override ExDatabase CloneDb() => GetDbConn(Connection.ConnectionString);
-
 	public override void ChangeTimeout(int timeoutSec) {
 		ArgumentOutOfRangeException.ThrowIfNegative(timeoutSec);
 		CommandTimeout = timeoutSec;
