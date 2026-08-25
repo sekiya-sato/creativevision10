@@ -1,3 +1,25 @@
+## [2026-08-25] MariaDBプロバイダー基盤処理の補完
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- CvServer/CvWpfclientの個別SQL方言対応は保留し、`CvBase.ExDatabase` と既存SQLite実装を基準に、MariaDB/PostgreSQLプロバイダーの基盤処理を最小差分で整合させる。
+
+### 実施内容
+- `CvBase.ExDatabase` に、派生プロバイダーが接続を開くかどうか指定できるprotected constructorを追加した。
+- `ExDatabaseMaria.GetDbConn` が `isOpen=false` でも接続を開いていた処理を修正した。
+- MariaDBのOpen時にDBバージョンを取得し、Clone時も `ExDatabaseMaria` を維持するようにした。
+- MariaDBのタイムアウト変更でSQLite用 `PRAGMA busy_timeout` を使用せず、NPocoの `CommandTimeout` を設定するようにした。
+- MariaDBのテーブル一覧・件数取得を `information_schema.tables` ベースで実装し、共通実装の `sqlite_master` 依存を回避した。
+- `CvBasePostgre` は必要なoverrideが既に実装済みだったため変更せず、`CvBaseSqlite` と変更元DB専用の `CvBaseOracle` も現状維持とした。
+
+### 検証
+- `CvBase`、`CvBaseSqlite`、`CvBaseMariadb`、`CvBasePostgre` を順次buildし、すべて警告0・エラー0。
+- `dotnet build creativevision10.slnx --no-restore` 成功（警告0・エラー0）。
+- `dotnet run --project Tests/TestServer/TestServer.csproj --no-restore` 成功（212件、失敗0、スキップ0）。
+- MariaDB/PostgreSQLの実サーバー接続によるCRUD・メタデータ取得は未実施。
+
 ## [2026-08-25] macOS ZIP内日本語ファイル名正規化スキルの追加
 
 ### Agent

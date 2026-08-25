@@ -508,6 +508,15 @@ public partial class ExDatabase : Database {
 	}
 
 	/// <summary>
+	/// 接続を開くかどうかを指定して初期化します。
+	/// </summary>
+	/// <param name="connection">使用するDB接続。</param>
+	/// <param name="isOpen">接続を開く場合はtrue。</param>
+	protected ExDatabase(DbConnection connection, bool isOpen) : base(connection) {
+		InitializeConnection(connection, isOpen);
+	}
+
+	/// <summary>
 	/// DBプロバイダー固有の <see cref="DatabaseType"/> を指定して初期化します。
 	/// </summary>
 	/// <param name="connection">使用するDB接続。</param>
