@@ -207,7 +207,7 @@ public partial class ExDatabase : Database {
 	/// </summary>
 	/// <param name="dbname"></param>
 	/// <returns></returns>
-	public int UseDatabase(string dbname) {
+	public virtual int UseDatabase(string dbname) {
 		if (Connection != null) {
 			var cmd = CreateCommand(Connection, CommandType.Text, $"use {dbname}", new object[0]);
 			return cmd.ExecuteNonQuery();
@@ -230,7 +230,7 @@ public partial class ExDatabase : Database {
 	/// </summary>
 	/// <param name="tableName"></param>
 	/// <returns></returns>
-	public bool IsExistTable(string tableName) {
+	public virtual bool IsExistTable(string tableName) {
 		bool ret = false;
 		if (string.IsNullOrEmpty(tableName))
 			return false;
@@ -387,7 +387,7 @@ public partial class ExDatabase : Database {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <returns></returns>
-	public int CreateComment(Type classT) {
+	public virtual int CreateComment(Type classT) {
 		if (DatabaseType == NPoco.DatabaseType.SQLite)
 			return 0;
 		if (DatabaseType == NPoco.DatabaseType.Oracle || DatabaseType == NPoco.DatabaseType.OracleManaged)
@@ -462,7 +462,7 @@ public partial class ExDatabase : Database {
 	/// <param name="cmdFlag"></param>
 	/// <param name="addSql"></param>
 	/// <returns></returns>
-	public string RawExecGetSql(RawExecCmdEnum cmdFlag, string? addSql = null) {
+	public virtual string RawExecGetSql(RawExecCmdEnum cmdFlag, string? addSql = null) {
 		switch (cmdFlag) {
 			case RawExecCmdEnum.ShowTables:
 				return "show tables";
@@ -504,8 +504,22 @@ public partial class ExDatabase : Database {
 
 
 	public ExDatabase(DbConnection connection) : base(connection) {
+		InitializeConnection(connection, true);
+	}
+
+	/// <summary>
+	/// DBプロバイダー固有の <see cref="DatabaseType"/> を指定して初期化します。
+	/// </summary>
+	/// <param name="connection">使用するDB接続。</param>
+	/// <param name="databaseType">NPocoのDBプロバイダー定義。</param>
+	/// <param name="isOpen">接続を開く場合はtrue。</param>
+	protected ExDatabase(DbConnection connection, DatabaseType databaseType, bool isOpen = true) : base(connection, databaseType) {
+		InitializeConnection(connection, isOpen);
+	}
+
+	void InitializeConnection(DbConnection connection, bool isOpen) {
 		_conn = connection;
-		if (_conn.State != ConnectionState.Open)
+		if (isOpen && _conn.State != ConnectionState.Open)
 			_conn.Open();
 		/* SerializedColumn に対して効果がない!
 			JsonConvert.DefaultSettings = () => jsonOptions;

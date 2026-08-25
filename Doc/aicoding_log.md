@@ -1,3 +1,24 @@
+## [2026-08-25] PostgreSQL用DBプロバイダーの追加
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- SQLite、MariaDB、Oracle用プロジェクトと同じレイヤーに `CvBasePostgre` を追加し、NpgsqlおよびPostgreSQL固有処理をプロバイダー内へ隔離する。
+
+### 実施内容
+- `CvBasePostgre` を追加し、接続生成、Open/Close、Clone、タイムアウト、DDL型変換、テーブル存在確認、コメント、テーブル件数、診断SQLをPostgreSQL向けに実装した。
+- NPocoが引用する識別子を小文字へ統一し、既存の非引用SQLがPostgreSQLで小文字化される規則と物理名を一致させた。
+- `CvBase.ExDatabase` にDB種別指定コンストラクターとPostgreSQL側で必要な仮想拡張点を追加した。既存プロバイダーの既定動作は維持した。
+- `CvBasePostgre/ExDatabasePostgre.cs` に、残存するSQLite固有SQLと将来のSQL方言抽象化方針をコメントとして記録した。
+- `Directory.Packages.props` に Npgsql 10.0.3、`creativevision10.slnx` と `readme.md` に新規プロジェクトを追加した。
+
+### 検証
+- `dotnet build CvBasePostgre/CvBasePostgre.csproj --no-restore` 成功（警告0・エラー0）。
+- `dotnet build creativevision10.slnx --no-restore` 成功（警告0・エラー0）。
+- `dotnet run --project Tests/TestServer/TestServer.csproj --no-build --no-restore` 成功（212件、失敗0、スキップ0）。
+- PostgreSQL実サーバーがローカル環境にないため、実接続によるDDL/CRUD検証は未実施。
+
 ## [2026-08-24] HHTデータ更新（TranVulcanHht → Tran系）の実装
 
 ### Agent

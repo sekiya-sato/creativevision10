@@ -12,6 +12,7 @@
   <Project Path="CvBase/CvBase.csproj" />
   <Project Path="CvBaseMariadb/CvBaseMariadb.csproj" />
   <Project Path="CvBaseOracle/CvBaseOracle.csproj" />
+  <Project Path="CvBasePostgre/CvBasePostgre.csproj" />
   <Project Path="CvBaseSqlite/CvBaseSqlite.csproj" />
   <Project Path="CvDomainLogic/CvDomainLogic.csproj" />
   <Project Path="CvPrints/CvPrints.csproj" />

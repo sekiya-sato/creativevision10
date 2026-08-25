@@ -126,7 +126,7 @@ HTTP/2 + gRPC への移行により、従来より高速で効率のよい通信
 ## CvBase-DB (Layer 1.2)
 
 - データベースを共通的に扱うための汎用 DB I/F を提供します。
-- `CvBaseSqlite`（SQLite 用）、`CvBaseMariadb`（MariaDB 用）、`CvBaseOracle`（Oracle 用）で構成されています。
+- `CvBaseSqlite`（SQLite 用）、`CvBaseMariadb`（MariaDB 用）、`CvBaseOracle`（Oracle 用）、`CvBasePostgre`（PostgreSQL 用）で構成されています。
 
 ## CvDomainLogic (Layer 1.5)
 
