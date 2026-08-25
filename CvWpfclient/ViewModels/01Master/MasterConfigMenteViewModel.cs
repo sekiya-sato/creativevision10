@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -9,9 +10,64 @@ public partial class MasterConfigMenteViewModel : Helpers.BaseMenteViewModel<Mas
 	[ObservableProperty]
 	public partial string Title { get; set; } = "設定フラグマスタメンテ";
 
+	CategoryRangeParameter? listCondition;
+	List<string>? categoryListCache;
+
 	protected override string? ListOrder => "Category,Name";
 
 	protected override string? FormFile => "MasterConfigMente.qfm";
+
+	protected override string? ListWhere => BuildListConditionWhere(listCondition);
+
+	protected override int? ListMaxCount => listCondition == null ? AppGlobal.Limit : listCondition.MaxCount;
+
+	[RelayCommand]
+	async Task SelectCondition(CancellationToken ct) {
+		if (categoryListCache == null) {
+			var categoryList = await QuerySqlListAsync<CategoryNameRow>(
+				"select distinct Category from MasterConfig order by Category", ct);
+			categoryListCache = [.. categoryList.Select(x => x.Category).Where(c => !string.IsNullOrWhiteSpace(c)).Distinct().OrderBy(c => c)];
+		}
+
+		var dlg = new Views.Sub.CategoryRangeView();
+		if (dlg.DataContext is not CategoryRangeViewModel vm) {
+			return;
+		}
+
+		vm.Initialize(listCondition ?? new CategoryRangeParameter { DisplayName = "設定フラグ", MaxCount = AppGlobal.Limit });
+		vm.Parameter = vm.Parameter with {
+			DisplayName = "設定フラグ",
+			CategoryList = categoryListCache
+		};
+
+		if (ClientLib.ShowDialogView(dlg, this, true) != true) {
+			return;
+		}
+
+		listCondition = vm.Parameter;
+		await DoList(ct);
+	}
+
+	string? BuildListConditionWhere(CategoryRangeParameter? condition) {
+		if (condition == null) {
+			return null;
+		}
+
+		List<string> clauses = [];
+		List<string> parameters = [];
+		if (!string.IsNullOrWhiteSpace(condition.SelectedCategory)) {
+			clauses.Add($"Category = {AddSqlParameter(parameters, condition.SelectedCategory)}");
+		}
+		if (condition.FromId.HasValue) {
+			clauses.Add($"Id >= {condition.FromId.Value}");
+		}
+		if (condition.ToId.HasValue) {
+			clauses.Add($"Id <= {condition.ToId.Value}");
+		}
+
+		SelectCodeWhereParameters = [.. parameters];
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+	}
 
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {

@@ -20,7 +20,7 @@
 			Gesture="F3" />
 		<KeyBinding Command="{Binding DoInsertCommand}"
 			Gesture="F4" />
-		<KeyBinding Command="{Binding DoListCommand}"
+		<KeyBinding Command="{Binding SelectConditionCommand}"
 			Gesture="F5" />
 		<KeyBinding Command="{Binding DoOutputPdfCommand}"
 			Gesture="F6" />
@@ -104,14 +104,14 @@
 						Margin="16,4"
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
 						Opacity="0.3" />
-					<Button Command="{Binding DoListCommand}"
+					<Button Command="{Binding SelectConditionCommand}"
 						Style="{StaticResource ToolCommandButton}"
-						ToolTip="一覧取得 (F5)">
+						ToolTip="取得条件を指定して一覧取得 (F5)">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
-								Kind="DatabaseSearch" />
+								Kind="FilterVariant" />
 							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-								Text="一覧取得" />
+								Text="選択" />
 						</StackPanel>
 					</Button>
 				</StackPanel>
