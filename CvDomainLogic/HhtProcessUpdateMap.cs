@@ -196,24 +196,21 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		return picked;
 	}
 
-	/// <summary>伝票日付時点の消費税率(%)を返す。<c>Rate</c> は掛率に使うのでここでは触らない</summary>
-	private static int ResolveTaxRatePercent(HhtMasterCache cache, string denDay) {
-		var systax = cache.Sysman.Jsub?.FirstOrDefault(x => x.Id == 1);
-		if (systax == null) {
-			return DefaultTaxRatePercent;
-		}
-		var rate = systax.TaxRate;
-		// DateFrom が未設定なら新税率への切替日が無いということなので現行税率を使う。
-		// Common.CompareYmd は 8桁以外で例外を投げるため、渡す前に桁数を確認する
-		if (IsValidYmd(denDay) && IsValidYmd(systax.DateFrom)
-			&& CvAsset.Common.CompareYmd(denDay, systax.DateFrom) >= 0) {
-			rate = systax.TaxNewRate;
-		}
-		return rate > 0 ? rate : DefaultTaxRatePercent;
-	}
+	/// <summary>
+	/// 伝票日付時点の消費税率(%)を返す。<c>Rate</c> は掛率に使うのでここでは触らない。
+	/// <para>
+	/// HHT変換は伝票ヘッダ単位で税率を1本決める（決定 F/G）ため、税区分は標準(Id=1)固定とする。
+	/// 明細別の税区分は入力画面・伝票税額再更新が担う。
+	/// </para>
+	/// </summary>
+	private static int ResolveTaxRatePercent(HhtMasterCache cache, string denDay) =>
+		TaxRateResolver.ResolveTaxRatePercent(cache.Sysman, StandardTaxId, denDay);
+
+	/// <summary>HHT変換で使う標準の消費税区分(<see cref="MasterSysTax.Id"/>)</summary>
+	private const long StandardTaxId = 1;
 
 	/// <summary>消費税率が取得できなかった場合の既定値(%)</summary>
-	private const int DefaultTaxRatePercent = 10;
+	private const int DefaultTaxRatePercent = TaxRateResolver.DefaultTaxRatePercent;
 
 	#endregion
 

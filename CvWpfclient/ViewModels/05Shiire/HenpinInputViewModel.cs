@@ -99,8 +99,13 @@ public partial class HenpinInputViewModel : BaseStockSheetInputViewModel<Tran03S
 	/// <summary>登録時に使う掛計上日(yyyyMMdd)。ValidateBeforeRegisterAsync で確定する。</summary>
 	string kakeDay = string.Empty;
 
-	/// <summary>登録時に使う消費税率(%)。ValidateBeforeRegisterAsync で確定する。</summary>
-	int taxRate;
+	/// <summary>
+	/// 登録時に使う Id_Shohin 別の消費税区分と税率。ValidateBeforeRegisterAsync で確定する。
+	/// <para>
+	/// BuildDenpyo が同期メソッドのため、マスタ参照が要る解決は先にここへ集めておく。
+	/// </para>
+	/// </summary>
+	readonly Dictionary<long, (long TaxId, int Rate)> meisaiTaxByShohin = [];
 
 	/// <summary>登録時に使う仕入先掛率(%)。Tran03Shiire.Rate は掛率であり消費税率ではない。ValidateBeforeRegisterAsync で確定する。</summary>
 	int shiireRatePercent = 100;
@@ -277,19 +282,43 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 
 		// 掛計上日は仕入日と同じ。税率は仕入日時点のものを取る（商品仕入入力と同じ扱い）
 		kakeDay = ToDenDay(denDay);
-		taxRate = await AppGlobal.LogicGetTax(1, kakeDay);
+		await LoadMeisaiTaxAsync();
 		// 掛率はコンボ(MasterOption)にCode/Nameしか無いためIdで1件取得し直す
 		var fullShiire = await AppGlobal.LogicGetMasterById<MasterShiire>(SelectedShiire?.Id ?? 0);
 		if (fullShiire != null) shiireRatePercent = fullShiire.RateProper;
 		return true;
 	}
 
+	/// <summary>
+	/// 返品対象行の商品から消費税区分を引き、掛計上日時点の税率と併せて保持する。
+	/// 商品マスタが引けない明細は標準税率(1)を既定とする。
+	/// </summary>
+	async Task LoadMeisaiTaxAsync() {
+		const long standardTaxId = 1;
+		meisaiTaxByShohin.Clear();
+		var idList = Rows.Where(r => r.InputSu != 0).Select(r => r.Id_Shohin).Distinct();
+		foreach (var idShohin in idList) {
+			var shohin = idShohin > 0 ? await AppGlobal.LogicGetMasterById<MasterShohin>(idShohin) : null;
+			var taxId = shohin?.Id_Tax ?? standardTaxId;
+			// Id_Tax=0 は非課税。LogicGetTax(0,...) は MasterSysTax を引けず例外になるため呼ばない
+			var rate = taxId <= 0 ? 0 : await AppGlobal.LogicGetTax((int)taxId, kakeDay);
+			meisaiTaxByShohin[idShohin] = (taxId, rate);
+		}
+	}
+
 	protected override Tran03Shiire BuildDenpyo(List<Tran99Meisai> meisai) {
 		var shiire = SelectedShiire;
 		var kingakuTotal = meisai.Sum(m => m.Kingaku);
-		// 消費税・総合計の積み方は商品仕入入力(ShiireInputViewModel.UpdateHeaderTotals)と揃える
+		// 消費税・総合計の積み方は商品仕入入力(ShiireInputViewModel.UpdateHeaderTotals)と揃える。
+		// 明細Taxは常に正値で持ち、返品のマイナス計上は Kubun=20 が立てる CalcFlag=-1 が担う
+		foreach (var m in meisai) {
+			var (taxId, rate) = meisaiTaxByShohin.TryGetValue(m.Id_Shohin, out var found) ? found : (1L, 0);
+			m.Id_Tax = taxId;
+			m.TaxRate = rate;
+			m.Tax = (int)Math.Round(Math.Abs(m.Kingaku) * rate / 100.0);
+		}
 		var absKingakuTotal = Math.Abs(kingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * taxRate / 100.0);
+		var tax = meisai.Sum(m => m.Tax);
 		return new Tran03Shiire {
 			// Kubun に 20 を入れると OnKubunChanged が CalcFlag = -1 を立てる（在庫・買掛が減算になる）
 			Kubun = (int)SelectedKubun,

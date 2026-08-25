@@ -200,6 +200,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg058_HhtDataUpdate = 58,
 	/// <summary>
+	/// 伝票税額再更新（明細Taxが未設定のTran系伝票へ明細別消費税を投入する一時的な管理者処理）
+	/// </summary>
+	[EnumMember]
+	Msg059_TranTaxRebuild = 59,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	[EnumMember]

@@ -109,6 +109,27 @@ public partial class CoreService {
 		}
 	}
 	/// <summary>
+	/// 明細Taxが未設定のTran系伝票へ明細別消費税を投入する（移行・既存データ救済用の一時処理）
+	/// </summary>
+	private CvMsg HandleTranTaxRebuild(CvMsg request, CallContext context) {
+		var startTime = DateTime.Now;
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var results = new TranTaxRebuildDb(_db).RebuildAll();
+			_db.CompleteTransaction();
+			var summary = TranTaxRebuildDb.BuildSummary(startTime, results);
+			_logger.LogInformation("伝票税額再更新 {Summary}", summary.Replace(Environment.NewLine, " "));
+			return CreateSuccessResponse(request.Flag, typeof(string), summary);
+		}
+		catch (Exception ex) {
+			// 途中で落ちた場合は部分更新を残さない(明細Tax合計0の判定が壊れて再実行が効かなくなるため)
+			_db.AbortTransaction();
+			_logger.LogError(ex, "伝票税額再更新に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
 	/// 再同期の実行結果サマリを組み立てる(開始/終了/所要時間はサーバ側の実測値)
 	/// </summary>
 	private static string BuildResyncSummary(DateTime startTime, int updated, int errorCount) {

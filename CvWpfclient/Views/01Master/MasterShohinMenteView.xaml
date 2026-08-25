@@ -248,6 +248,7 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<!--  コード  -->
@@ -491,50 +492,63 @@
 									</Grid>
 								</Border>
 
-								<!--  メーカー品番  -->
+								<!--  消費税区分  -->
 								<TextBlock Grid.Row="13"
 									Style="{StaticResource FormLabel}"
+									Text="消費税区分" />
+								<ComboBox Grid.Row="13" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="消費税区分"
+									DisplayMemberPath="Name"
+									ItemsSource="{Binding TaxKubunList}"
+									SelectedValue="{Binding CurrentEdit.Id_Tax, Mode=TwoWay}"
+									SelectedValuePath="Id"
+									Style="{StaticResource FormComboBox}" />
+
+								<!--  メーカー品番  -->
+								<TextBlock Grid.Row="14"
+									Style="{StaticResource FormLabel}"
 									Text="メーカー品番" />
-								<TextBox Grid.Row="13" Grid.Column="1"
+								<TextBox Grid.Row="14" Grid.Column="1"
 									materialDesign:HintAssist.Hint="メーカー品番"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.MakerHin}" />
 
 								<!--  出荷日  -->
-								<TextBlock Grid.Row="14"
+								<TextBlock Grid.Row="15"
 									Style="{StaticResource FormLabel}"
 									Text="出荷日" />
-								<DatePicker Grid.Row="14" Grid.Column="1"
+								<DatePicker Grid.Row="15" Grid.Column="1"
 									Margin="0,4"
 									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="出荷日" IsTodayHighlighted="False"
 									SelectedDate="{Binding CurrentEdit.DayShukka, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									Style="{StaticResource FormDatePicker}" />
 
 								<!--  納品日  -->
-								<TextBlock Grid.Row="15"
+								<TextBlock Grid.Row="16"
 									Style="{StaticResource FormLabel}"
 									Text="納品日" />
-								<DatePicker Grid.Row="15" Grid.Column="1"
+								<DatePicker Grid.Row="16" Grid.Column="1"
 									Margin="0,4"
 									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="納品日" IsTodayHighlighted="False"
 									SelectedDate="{Binding CurrentEdit.DayNohin, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									Style="{StaticResource FormDatePicker}" />
 
 								<!--  店舗投入日  -->
-								<TextBlock Grid.Row="16"
+								<TextBlock Grid.Row="17"
 									Style="{StaticResource FormLabel}"
 									Text="店舗投入日" />
-								<DatePicker Grid.Row="16" Grid.Column="1"
+								<DatePicker Grid.Row="17" Grid.Column="1"
 									Margin="0,4"
 									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="店舗投入日" IsTodayHighlighted="False"
 									SelectedDate="{Binding CurrentEdit.DayTento, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									Style="{StaticResource FormDatePicker}" />
 
 								<!--  在庫管理  -->
-								<TextBlock Grid.Row="17"
+								<TextBlock Grid.Row="18"
 									Style="{StaticResource FormLabel}"
 									Text="在庫管理" />
-								<ComboBox Grid.Row="17" Grid.Column="1"
+								<ComboBox Grid.Row="18" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="在庫管理"
 									SelectedIndex="{Binding CurrentEdit.IsZaiko, Mode=TwoWay}"
@@ -544,10 +558,10 @@
 								</ComboBox>
 
 								<!--  サイズ区分  -->
-								<TextBlock Grid.Row="18"
+								<TextBlock Grid.Row="19"
 									Style="{StaticResource FormLabel}"
 									Text="サイズ区分" />
-								<TextBox Grid.Row="18" Grid.Column="1"
+								<TextBox Grid.Row="19" Grid.Column="1"
 									Width="120" Height="36"
 									Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectSizeKuCommand}"
@@ -556,10 +570,10 @@
 									Text="{Binding CurrentEdit.SizeKu, UpdateSourceTrigger=PropertyChanged}" />
 
 								<!--  基準倉庫  -->
-								<TextBlock Grid.Row="19"
+								<TextBlock Grid.Row="20"
 									Style="{StaticResource FormLabel}"
 									Text="基準倉庫" />
-								<DockPanel Grid.Row="19" Grid.Column="1"
+								<DockPanel Grid.Row="20" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
 										HorizontalContentAlignment="Left"
@@ -572,10 +586,10 @@
 								</DockPanel>
 
 								<!--  メモ  -->
-								<TextBlock Grid.Row="20"
+								<TextBlock Grid.Row="21"
 									Style="{StaticResource FormLabel}"
 									Text="メモ" />
-								<TextBox Grid.Row="20" Grid.Column="1"
+								<TextBox Grid.Row="21" Grid.Column="1"
 									MinHeight="60"
 									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
 									Style="{StaticResource FormTextBox}"

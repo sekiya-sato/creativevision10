@@ -133,8 +133,8 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
-	// 掛率(Rate)から分離した消費税率のキャッシュ。伝票を開いた時点の伝票日付基準で LoadTaxRateAsync が更新する。
-	int taxRatePercent = 10;
+	// 消費税は明細ごとに MasterShohin.Id_Tax の税区分で計算し、ヘッダはその合計を持つ。
+	protected override bool IsMeisaiTaxEnabled => true;
 
 	protected override void OnCurrentEditChangedCore(Tran00Uriage? oldValue, Tran00Uriage newValue) {
 		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
@@ -143,25 +143,27 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		ApplyMeisaiFromCurrentEdit();
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
-		_ = LoadTaxRateAsync();
+		_ = RecalcAllMeisaiTaxAsync();
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
 		if (e.PropertyName is nameof(Tran00Uriage.Tax) or nameof(Tran00Uriage.Kubun)) {
 			UpdateHeaderTotals();
 		}
+		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
+		else if (e.PropertyName is nameof(Tran00Uriage.DenDay)) {
+			_ = RecalcAllMeisaiTaxAsync();
+		}
 	}
+
+	protected override void OnTotalsUpdated() => UpdateHeaderTotals();
 
 	void UpdateHeaderTotals() {
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * taxRatePercent / 100.0);
+		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
+		var tax = EditMeisai.Sum(m => m.Tax);
 		CurrentEdit.Tax = tax;
 		CurrentEdit.Total = absKingakuTotal + tax;
-	}
-
-	async Task LoadTaxRateAsync() {
-		taxRatePercent = await AppGlobal.LogicGetTax(1, Current.DenDay);
-		UpdateHeaderTotals();
 	}
 
 	// 基底フック: 出荷売上はヘッダ区分を明細区分に反映（ロード時は同値のため実質不変、保存前に統一）。

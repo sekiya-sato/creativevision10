@@ -163,6 +163,19 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"B{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
 
+	/// <summary>
+	/// 消費税区分(<see cref="MasterShohin.Id_Tax"/>)の選択肢。
+	/// <para>
+	/// <see cref="MasterSysTax"/> の定義から作り、税率を併記して運用時の取り違えを防ぐ。
+	/// Id=0 は非課税で、明細税額の計算をしないことを表す。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	public partial ObservableCollection<TaxKubunOption> TaxKubunList { get; set; } = [];
+
+	/// <summary>消費税区分コンボの表示項目</summary>
+	public sealed record TaxKubunOption(long Id, string Name);
+
 
 	protected override void OnCurrentEditChangedCore(MasterShohin? oldValue, MasterShohin newValue) {
 		if (newValue == null) {
@@ -219,7 +232,24 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	[RelayCommand]
 	async Task Init() {
 		await DoGetKubun(CancellationToken.None);
+		await LoadTaxKubunAsync();
 		await DoList(CancellationToken.None);
+	}
+
+	/// <summary>
+	/// 消費税区分の選択肢を <see cref="MasterSysTax"/> から作る。
+	/// 表示税率は「今日時点で適用される率」で、伝票の税額は伝票日付時点の率で別途計算される。
+	/// </summary>
+	async Task LoadTaxKubunAsync() {
+		if (TaxKubunList.Count > 0) return;
+		var today = DateTime.Now.ToString("yyyyMMdd");
+		var options = new List<TaxKubunOption> { new(0, "0: 非課税") };
+		var sysman = await AppGlobal.LogicGetSysman();
+		foreach (var systax in (sysman.Jsub ?? []).OrderBy(x => x.Id)) {
+			var rate = await AppGlobal.LogicGetTax((int)systax.Id, today);
+			options.Add(new TaxKubunOption(systax.Id, $"{systax.Id}: {rate}%"));
+		}
+		TaxKubunList = new ObservableCollection<TaxKubunOption>(options);
 	}
 
 	async Task DoGetKubun(CancellationToken ct) {

@@ -137,8 +137,8 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		clauses.Add($"{column} IN ({string.Join(",", values)})");
 	}
 
-	// 仕入先掛率(Rate)から分離した消費税率のキャッシュ。伝票を開いた時点の発注日基準で LoadTaxRateAsync が更新する。
-	int taxRatePercent = 10;
+	// 消費税は明細ごとに MasterShohin.Id_Tax の税区分で計算し、ヘッダはその合計を持つ。
+	protected override bool IsMeisaiTaxEnabled => true;
 	// 直近に選択・読込した仕入先のリードタイム日数。発注日変更時の納品予定日再計算に使う。
 	int shiireLeadTimeDays;
 
@@ -151,7 +151,7 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		OnPropertyChanged(nameof(DetailStatusText));
 
 		shiireLeadTimeDays = 0;
-		_ = LoadTaxRateAsync();
+		_ = RecalcAllMeisaiTaxAsync();
 		if (newValue.Id <= 0) {
 			_ = ApplyDefaultSokoAsync();
 		}
@@ -166,6 +166,8 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		}
 		else if (e.PropertyName == nameof(Tran13Hachu.DenDay)) {
 			RecalcNouhinDay();
+			// 発注日が変われば適用税率が変わるため明細全行を引き直す
+			_ = RecalcAllMeisaiTaxAsync();
 		}
 	}
 
@@ -183,14 +185,10 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 
 	void UpdateHeaderTotals() {
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * taxRatePercent / 100.0);
+		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
+		var tax = EditMeisai.Sum(m => m.Tax);
 		CurrentEdit.Tax = tax;
 		CurrentEdit.Total = absKingakuTotal + tax;
-	}
-
-	async Task LoadTaxRateAsync() {
-		taxRatePercent = await AppGlobal.LogicGetTax(1, Current.DenDay);
-		UpdateHeaderTotals();
 	}
 
 	async Task ApplyDefaultSokoAsync() {

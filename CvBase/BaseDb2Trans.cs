@@ -11,6 +11,19 @@ public interface ITranDetail {
 	public int CalcFlag { get; }
 	public List<Tran99Meisai>? Jmeisai { get; set; }
 }
+/// <summary>
+/// 消費税を持つ伝票（売上/店舗売上/仕入/受注/発注）。
+/// <para>
+/// Tax/Total は各伝票クラス固有の列で <see cref="TranAllHeader"/> には無いため、
+/// 明細別消費税の再計算を伝票種によらず共通で書けるようにこの形で束ねる。
+/// </para>
+/// </summary>
+public interface ITranTax {
+	/// <summary>消費税（明細 Tax の合計）</summary>
+	public int Tax { get; set; }
+	/// <summary>総合計（|明細金額合計| + 消費税）</summary>
+	public int Total { get; set; }
+}
 public interface ITranIdo {
 	public long Id { get; set; }
 	public string DenDay { get; set; }
@@ -429,6 +442,25 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	[Comment("値引: 明細2")]
 	public partial int Nebiki02 { get; set; }
 	/// <summary>
+	/// 消費税区分（MasterSysTax.Id 1-3）。入力時点の MasterShohin.Id_Tax のスナップショット。
+	/// 0 は非課税。棚卸・在庫調整・移動系の明細では未使用（常に0）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税区分（0:非課税/未使用）")]
+	public partial long Id_Tax { get; set; } = 0;
+	/// <summary>
+	/// 明細税額の計算に使用した消費税率(%)。伝票日付時点の値のスナップショット（監査・再表示用）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("適用消費税率(%)（未使用時0）")]
+	public partial int TaxRate { get; set; } = 0;
+	/// <summary>
+	/// 明細ごとの消費税額。常に正値で保持し、返品等の符号はヘッダ Kubun の CalcFlag が決める
+	/// </summary>
+	[ObservableProperty]
+	[Comment("明細消費税額（未使用時0）")]
+	public partial int Tax { get; set; } = 0;
+	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>
 	[ObservableProperty]
@@ -723,7 +755,7 @@ public static class ChoseiRiyu {
 [KeyDml("nk4", false, [nameof(Id_Tokui)])]
 [Comment("トランザクション：本部売上データ 得意先に対する売掛計上と倉庫からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
-public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko {
+public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	/// <summary>
 	/// 掛計上日（yyyyMMdd）
 	/// </summary>
@@ -881,7 +913,7 @@ public enum EnumUri00 : int {
 [KeyDml("nk4", false, nameof(Id_Customer))]
 [Comment("トランザクション：店舗売上データ 店舗に対する売上と店舗(倉庫)からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
-public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko {
+public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	[ObservableProperty]
 	[ColumnSizeDml(36)]
 	[Comment("POSクライアントが採番した会計ID 二重登録を防ぐ冪等キー")]
@@ -1014,7 +1046,7 @@ public enum EnumUri01 : int {
 [KeyDml("nk4", false, [nameof(Id_Shiire)])]
 [Comment("トランザクション：仕入データ 仕入先に対する買掛計上と倉庫への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
-public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko {
+public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	/// <summary>
 	/// 掛計上日（yyyyMMdd）
 	/// </summary>
@@ -1285,7 +1317,7 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 [KeyDml("nk4", false, [nameof(Id_Tokui)])]
 [Comment("トランザクション：受注データ 得意先に対する受注、本部売上になる場合は、本部売上データのRelateNo1に受注データのIdをセット")]
 [OldTableCommentAttr("HC$tran_tori0")]
-public sealed partial class Tran12Jyuchu : TranAllHeader {
+public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	/// <summary>
 	/// 得意先キー
 	/// </summary>
@@ -1395,7 +1427,7 @@ public enum EnumJuchu : int {
 [KeyDml("nk4", false, [nameof(Id_Shiire)])]
 [Comment("トランザクション：発注データ 仕入先に対する発注、仕入になる場合は、仕入データのRelateNo1に発注データのIdをセット")]
 [OldTableCommentAttr("HC$tran_tori0")]
-public sealed partial class Tran13Hachu : TranAllHeader {
+public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	/// <summary>
 	/// 仕入先キー
 	/// </summary>

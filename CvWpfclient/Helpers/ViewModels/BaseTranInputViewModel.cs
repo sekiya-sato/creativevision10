@@ -64,13 +64,71 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 	/// <summary>明細行の変更に応じて金額(Su×Tanka)と合計を再計算する（5伝票共通）。</summary>
 	protected void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
 		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
+			// Kingaku への代入で PropertyChanged が発生し、下の分岐へ再入して税額まで引き直される
 			m.Kingaku = m.Su * m.Tanka;
 			UpdateTotals();
 		}
 		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku) or nameof(Tran99Meisai.Jodai) or nameof(Tran99Meisai.Gedai)) {
 			UpdateTotals();
 		}
+		// 金額が変われば税額が、商品が変われば税区分が変わるため明細税額を引き直す
+		if (IsMeisaiTaxEnabled && sender is Tran99Meisai target
+			&& e.PropertyName is nameof(Tran99Meisai.Kingaku) or nameof(Tran99Meisai.Id_Shohin)) {
+			_ = RecalcMeisaiTaxAsync(target, updateTotals: true);
+		}
 	}
+
+	#region 明細別消費税（Doc/spec/2026-08-25_明細別消費税計算_詳細設計.md 4.2）
+
+	/// <summary>
+	/// 明細別の消費税計算を行うか。移動・棚卸など金額と税を持たない伝票は false のままにする。
+	/// </summary>
+	protected virtual bool IsMeisaiTaxEnabled => false;
+
+	/// <summary>Id_Shohin → MasterShohin.Id_Tax のキャッシュ。明細を触るたびにマスタを引き直さないため。</summary>
+	readonly Dictionary<long, long> shohinTaxIdCache = [];
+
+	/// <summary>
+	/// 明細1行の消費税区分・適用税率・税額を、伝票日付時点の税率で再計算する。
+	/// <para>
+	/// 税額は常に正値で保持する。返品等の符号はヘッダ <c>Kubun</c> から決まる CalcFlag が
+	/// 集計側で担うため、明細側で符号を持たせると二重反転になる。
+	/// </para>
+	/// </summary>
+	protected async Task RecalcMeisaiTaxAsync(Tran99Meisai m, bool updateTotals) {
+		if (!IsMeisaiTaxEnabled) return;
+		m.Id_Tax = await ResolveMeisaiTaxIdAsync(m.Id_Shohin);
+		// Id_Tax=0 は非課税。LogicGetTax(0,...) は MasterSysTax を引けず、
+		// 既定値の空 DateFrom が Common.CompareYmd へ渡って例外になるため呼ぶ前に落とす
+		var rate = m.Id_Tax <= 0 ? 0 : await AppGlobal.LogicGetTax((int)m.Id_Tax, CurrentEdit.DenDay);
+		m.TaxRate = rate;
+		m.Tax = (int)Math.Round(Math.Abs(m.Kingaku) * rate / 100.0);
+		if (updateTotals) UpdateTotals();
+	}
+
+	/// <summary>明細全行の税額を再計算してヘッダ合計へ反映する（伝票を開いた時・伝票日付変更時）。</summary>
+	protected async Task RecalcAllMeisaiTaxAsync() {
+		if (!IsMeisaiTaxEnabled) return;
+		foreach (var m in EditMeisai) {
+			await RecalcMeisaiTaxAsync(m, updateTotals: false);
+		}
+		UpdateTotals();
+	}
+
+	/// <summary>
+	/// 明細の商品から消費税区分を引く。商品マスタが引けない明細は標準税率(1)を既定とする。
+	/// </summary>
+	async Task<long> ResolveMeisaiTaxIdAsync(long idShohin) {
+		const long standardTaxId = 1;
+		if (idShohin <= 0) return standardTaxId;
+		if (shohinTaxIdCache.TryGetValue(idShohin, out var cached)) return cached;
+		var shohin = await AppGlobal.LogicGetMasterById<MasterShohin>(idShohin);
+		var taxId = shohin?.Id_Tax ?? standardTaxId;
+		shohinTaxIdCache[idShohin] = taxId;
+		return taxId;
+	}
+
+	#endregion
 
 	/// <summary>明細から数量計/金額計/上代計/下代計を集計する（TranAllHeader 共通フィールド）。</summary>
 	protected void UpdateTotals() {
