@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CvBase;
 using CvBase.Share;
 using System.Collections.ObjectModel;
 
@@ -428,9 +429,9 @@ public partial class MenuData : ObservableObject {
 			])),
 		])),
 		/* ================================================================
-		 * 32 Loyal Customer（LCV）
+		 * 32 顧客管理
 		 * ================================================================ */
-		new("■ Loyal Customer（LCV）", new([
+		new("■ 顧客管理", new([
 			new("▲ 顧客", new([
 				new("顧客マスタ", typeof(Views._32LoyalCustomer.CustomerMasterView), addInfo:"準備中"),
 				new("顧客カルテ", typeof(Views._32LoyalCustomer.EndCustomerProfileView), addInfo:"準備中"),
@@ -470,4 +471,41 @@ public partial class MenuData : ObservableObject {
 		])),
 	]);
 	}
+}
+/// <summary>
+/// サブメニューの種類
+/// </summary>
+public enum SubMenuType {
+	[Comment("システム管理")]
+	_00System =0,
+	[Comment("マスター")]
+	_01Master = 1,
+	[Comment("予算")]
+	_02Yosan=2,
+	[Comment("発注")]
+	_03Hatchu=3, // 主Table : Tran13Hachu
+	[Comment("受注")]
+	_04Juchu = 4, // 主Table : Tran12Jyuchu
+	[Comment("仕入")]
+	_05Shiire =5, // 主Table : Tran03Shiire
+	[Comment("売上")]
+	_06Uriage=6, // 主Table : Tran00Uriage, Tran01Tenuri,Tran02PosSeisan
+	[Comment("配分・出荷")]
+	_07Haibun=7, // 主Table : TranHaibun
+	[Comment("在庫")]
+	_08Zaiko=8,// 主Table : Tran60Tana,Tran61Chosei
+	[Comment("売上分析")]
+	_20UriageAnalysis =20,
+	[Comment("卸・販売員・経営分析")]
+	_21OroshiAnalysis=21,
+	[Comment("HHT")]
+	_30HHT=30, // 主Table : TranVulcanHht
+	[Comment("月次処理")]
+	_31Monthly=31,
+	[Comment("顧客管理")]
+	_32LoyalCustomer=32, // 主Table : MasterEndCustomer, MasterPointRank, SummaryPoint
+	[Comment("店舗専用")]
+	_40Shop = 40,
+	[Comment("物流連携")]
+	_41Logistics=41,
 }
