@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    明細別消費税（軽減税率混在）の実DB検証ハーネス。
+    creativevision10.slnx には含めない。開発DBへ混在伝票を投入して税額を突合する開発ツール。
+    使い方は README.md を参照。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>taxmix</AssemblyName>
+    <RootNamespace>TaxMix</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\..\..\CvDomainLogic\CvDomainLogic.csproj" />
+    <ProjectReference Include="..\..\..\..\CodeShare\CodeShare.csproj" />
+  </ItemGroup>
+</Project>

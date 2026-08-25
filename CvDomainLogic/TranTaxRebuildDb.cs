@@ -64,8 +64,34 @@ public class TranTaxRebuildDb {
 	/// 商品Id → 消費税区分の対応を一括で読む。
 	/// 明細1行ずつ引くと伝票数×明細数ぶんの往復になるため先にまとめて読む。
 	/// </summary>
-	Dictionary<long, long> LoadShohinTaxIds() =>
+	public Dictionary<long, long> LoadShohinTaxIds() =>
 		_db.Dictionary<long, long>($"SELECT Id, Id_Tax FROM {nameof(MasterShohin)}");
+
+	/// <summary>
+	/// 明細1伝票ぶんの消費税区分・適用税率・税額を設定し、明細税額の合計を返す。
+	/// <para>
+	/// 商品ごとに税区分が異なれば明細ごとに税率が変わる（軽減税率の混在）。
+	/// 税額は常に正値で、返品等の符号はヘッダ <c>Kubun</c> の CalcFlag が集計側で担う。
+	/// </para>
+	/// </summary>
+	/// <param name="meisai">対象の明細（内容を書き換える）</param>
+	/// <param name="sysman">税率定義を持つシステム設定</param>
+	/// <param name="taxIdByShohin">商品Id → 消費税区分。引けない商品は標準税率(1)にする</param>
+	/// <param name="denDay">伝票日付(yyyyMMdd)。税率の切替判定に使う</param>
+	public static int ApplyMeisaiTax(
+		List<Tran99Meisai> meisai, MasterSysman sysman, Dictionary<long, long> taxIdByShohin, string denDay) {
+
+		foreach (var m in meisai) {
+			var taxId = m.Id_Shohin > 0 && taxIdByShohin.TryGetValue(m.Id_Shohin, out var found)
+				? found
+				: StandardTaxId;
+			var rate = TaxRateResolver.ResolveTaxRatePercent(sysman, taxId, denDay);
+			m.Id_Tax = taxId;
+			m.TaxRate = rate;
+			m.Tax = TaxRateResolver.CalcMeisaiTax(m.Kingaku, rate);
+		}
+		return meisai.Sum(m => m.Tax);
+	}
 
 	/// <summary>1テーブルぶんの再更新。Idの昇順にチャンクで読み進める。</summary>
 	TranTaxRebuildResult Rebuild<TDen>(MasterSysman sysman, Dictionary<long, long> taxIdByShohin)
@@ -96,18 +122,7 @@ public class TranTaxRebuildDb {
 					continue;
 				}
 
-				foreach (var m in meisai) {
-					var taxId = m.Id_Shohin > 0 && taxIdByShohin.TryGetValue(m.Id_Shohin, out var found)
-						? found
-						: StandardTaxId;
-					var rate = TaxRateResolver.ResolveTaxRatePercent(sysman, taxId, slip.DenDay);
-					m.Id_Tax = taxId;
-					m.TaxRate = rate;
-					// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
-					m.Tax = TaxRateResolver.CalcMeisaiTax(m.Kingaku, rate);
-				}
-
-				var newTax = meisai.Sum(m => m.Tax);
+				var newTax = ApplyMeisaiTax(meisai, sysman, taxIdByShohin, slip.DenDay);
 				if (newTax != slip.Tax) {
 					headerTaxChanged++;
 					headerTaxDiff += newTax - slip.Tax;
