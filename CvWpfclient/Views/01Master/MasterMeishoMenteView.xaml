@@ -22,7 +22,7 @@
 			Gesture="F3" />
 		<KeyBinding Command="{Binding DoInsertCommand}"
 			Gesture="F4" />
-		<KeyBinding Command="{Binding DoListCommand}"
+		<KeyBinding Command="{Binding SelectConditionCommand}"
 			Gesture="F5" />
 		<KeyBinding Command="{Binding DoOutputPdfCommand}"
 			Gesture="F6" />
@@ -106,24 +106,17 @@
 						Margin="16,4"
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
 						Opacity="0.3" />
-					<Label Margin="0,0,8,0" VerticalAlignment="Center"
-						Content="区分選択" FontSize="13"
-						Foreground="{DynamicResource TitleColor}" />
-					<ComboBox Width="280"
-						Margin="10,0,0,0" VerticalAlignment="Center"
-						ItemsSource="{Binding KubunList}"
-						SelectedItem="{Binding SelectedKubun}"
-						Style="{StaticResource FormComboBox}">
-						<ComboBox.ItemTemplate>
-							<DataTemplate>
-								<StackPanel Orientation="Horizontal">
-									<TextBlock Text="{Binding Code}" />
-									<TextBlock Text=" " />
-									<TextBlock Text="{Binding Name}" />
-								</StackPanel>
-							</DataTemplate>
-						</ComboBox.ItemTemplate>
-					</ComboBox>
+					<Button Margin="10,0,0,0"
+						Command="{Binding SelectConditionCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="区分を指定して一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="FilterVariant" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="選択" />
+						</StackPanel>
+					</Button>
 				</StackPanel>
 			</DockPanel>
 		</materialDesign:ColorZone>

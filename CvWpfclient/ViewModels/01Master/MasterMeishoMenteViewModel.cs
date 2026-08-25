@@ -3,8 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using System.Collections;
-using System.Collections.ObjectModel;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -14,19 +14,14 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseCodeNameLightMente
 
 	protected override string[] AdditionalLightweightColumns => ["Kubun", "Odr", "KubunName"];
 
-	[ObservableProperty]
-	public partial ObservableCollection<MasterMeisho> KubunList { get; set; } = new();
-
-	[ObservableProperty]
-	public partial MasterMeisho? SelectedKubun { get; set; }
-
-	bool suppressSelectedKubunChanged;
+	List<MasterMeisho>? kubunListCache;
+	CategoryRangeParameter? listCondition;
 
 	protected override string? ListOrder => "Kubun,Code";
 	protected override string? FormFile => "MasterMeishoMente.qfm";
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {
-			var kubunCode = SelectedKubun?.Code;
+			var kubunCode = ExtractKubunCode(listCondition?.SelectedCategory);
 			if (string.IsNullOrWhiteSpace(kubunCode)) {
 				return null;
 			}
@@ -40,33 +35,82 @@ from MasterMeisho where Kubun=@0
 		}
 	}
 
-	protected override string? ListWhere {
-		get {
-			var code = SelectedKubun?.Code;
-			if (string.IsNullOrWhiteSpace(code))
-				return null;
-			var safeCode = code.Replace("'", "''");
-			return $"Kubun='{safeCode}'";
+	protected override string? ListWhere => BuildListConditionWhere(listCondition);
+
+	protected override int? ListMaxCount => listCondition == null ? AppGlobal.Limit : listCondition.MaxCount;
+
+	string? BuildListConditionWhere(CategoryRangeParameter? condition) {
+		if (condition == null) {
+			return null;
 		}
+
+		List<string> clauses = [];
+		List<string> parameters = [];
+		var kubunCode = ExtractKubunCode(condition.SelectedCategory);
+		if (!string.IsNullOrWhiteSpace(kubunCode)) {
+			clauses.Add($"Kubun = {AddSqlParameter(parameters, kubunCode)}");
+		}
+		if (condition.FromId.HasValue) {
+			clauses.Add($"Id >= {condition.FromId.Value}");
+		}
+		if (condition.ToId.HasValue) {
+			clauses.Add($"Id <= {condition.ToId.Value}");
+		}
+
+		SelectCodeWhereParameters = [.. parameters];
+		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
+
+	static string FormatKubun(MasterMeisho kubun) => $"{kubun.Code} {kubun.Name}";
+
+	static string? ExtractKubunCode(string? formattedKubun) =>
+		string.IsNullOrWhiteSpace(formattedKubun) ? null : formattedKubun.Split(' ', 2)[0];
 
 	[RelayCommand]
 	async Task Init(CancellationToken ct) {
-		await LoadKubunListAsync(ct);
-		if (KubunList.Count == 0) {
+		kubunListCache ??= await LoadKubunListAsync(ct);
+		if (kubunListCache.Count == 0) {
 			ListData.Clear();
 			Count = 0;
 			return;
 		}
-		suppressSelectedKubunChanged = true;
-		SelectedKubun = KubunList.FirstOrDefault(c => c.Code == "BRD") ?? KubunList.FirstOrDefault();
-		suppressSelectedKubunChanged = false;
-		if (SelectedKubun != null) {
-			await RefreshListForSelectedKubunAsync(ct);
-		}
+
+		var defaultKubun = kubunListCache.FirstOrDefault(c => c.Code == "BRD") ?? kubunListCache.FirstOrDefault();
+		listCondition = new CategoryRangeParameter {
+			DisplayName = "区分",
+			SelectedCategory = defaultKubun == null ? null : FormatKubun(defaultKubun),
+			MaxCount = AppGlobal.Limit
+		};
+		await DoList(ct);
 	}
 
-	async Task LoadKubunListAsync(CancellationToken ct) {
+	[RelayCommand]
+	async Task SelectCondition(CancellationToken ct) {
+		kubunListCache ??= await LoadKubunListAsync(ct);
+		if (kubunListCache.Count == 0) {
+			return;
+		}
+
+		var dlg = new Views.Sub.CategoryRangeView();
+		if (dlg.DataContext is not CategoryRangeViewModel vm) {
+			return;
+		}
+
+		vm.Initialize(listCondition ?? new CategoryRangeParameter { DisplayName = "区分", MaxCount = AppGlobal.Limit });
+		vm.Parameter = vm.Parameter with {
+			DisplayName = "区分",
+			CategoryList = [.. kubunListCache.Select(FormatKubun)]
+		};
+
+		if (ClientLib.ShowDialogView(dlg, this, true) != true) {
+			return;
+		}
+
+		listCondition = vm.Parameter;
+		await DoList(ct);
+	}
+
+	async Task<List<MasterMeisho>> LoadKubunListAsync(CancellationToken ct) {
 		try {
 			ClientLib.Cursor2Wait();
 			var msg = new CodeShare.CvMsg {
@@ -82,28 +126,22 @@ from MasterMeisho where Kubun=@0
 
 			var reply = await SendMessageAsync(msg, ct);
 			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
-				KubunList = new ObservableCollection<MasterMeisho>(list.Cast<MasterMeisho>());
+				return list.Cast<MasterMeisho>().ToList();
 			}
+			return [];
 		}
 		catch (OperationCanceledException) {
 			Message = "区分一覧取得がキャンセルされました";
+			return [];
 		}
 		catch (Exception ex) {
 			Message = $"区分一覧取得失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ClientLib.GetActiveView(this));
+			return [];
 		}
 		finally {
 			ClientLib.Cursor2Normal();
 		}
-	}
-
-	async Task RefreshListForSelectedKubunAsync(CancellationToken ct) {
-		if (SelectedKubun == null) {
-			ListData.Clear();
-			Count = 0;
-			return;
-		}
-		await DoListCommand.ExecuteAsync(ct);
 	}
 
 	[RelayCommand]
@@ -116,10 +154,5 @@ from MasterMeisho where Kubun=@0
 		var meisho = vm.Current as MasterMeisho;
 		CurrentEdit.Kubun = meisho?.Code ?? CurrentEdit.Kubun;
 		CurrentEdit.KubunName = meisho?.Name ?? CurrentEdit.KubunName;
-	}
-
-	partial void OnSelectedKubunChanged(MasterMeisho? oldValue, MasterMeisho? newValue) {
-		if (suppressSelectedKubunChanged) return;
-		_ = RefreshListForSelectedKubunAsync(CancellationToken.None);
 	}
 }
