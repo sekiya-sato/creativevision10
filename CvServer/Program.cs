@@ -92,11 +92,23 @@ https://github.com/thomasgalliker/NCrontab.Scheduler/blob/develop/Samples/NCront
 // Other(if need) : MCVコントローラの処理
 builder.Services.AddControllers();
  */
-var connStr = builder.Configuration.GetConnectionString("sqlite")
-	?? throw new InvalidOperationException("Connection string 'sqlite' is not configured.");
+var databaseProvider = builder.Configuration["Database:Provider"]?.Trim() ?? "Sqlite";
+var (connectionStringName, isSqlite) = databaseProvider.ToUpperInvariant() switch {
+	"SQLITE" => ("sqlite", true),
+	"POSTGRE" => ("postgres", false),
+	"MARIADB" => ("mariadb", false),
+	_ => throw new InvalidOperationException(
+		$"Database:Provider '{databaseProvider}' is invalid. Use Sqlite, Postgre, or MariaDb.")
+};
+var connStr = builder.Configuration.GetConnectionString(connectionStringName)
+	?? throw new InvalidOperationException($"Connection string '{connectionStringName}' is not configured.");
 builder.Services.AddScoped<ExDatabase>(sp => {
-	// ファクトリメソッドを使用してインスタンスを生成
-	return CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr);
+	return databaseProvider.ToUpperInvariant() switch {
+		"SQLITE" => CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr),
+		"POSTGRE" => CvBasePostgre.ExDatabasePostgre.GetDbConn(connStr),
+		"MARIADB" => CvBaseMariadb.ExDatabaseMaria.GetDbConn(connStr),
+		_ => throw new InvalidOperationException($"Database:Provider '{databaseProvider}' is invalid.")
+	};
 });
 builder.Services.AddSingleton(AppGlobal.Shared);
 builder.Services.AddSingleton<SchedulerService>();
@@ -154,15 +166,16 @@ using (var scope = app.Services.CreateScope()) {
 	var isPdfReady = await appInit.PdfInitAsync(builder.Configuration.GetSection("PrintServer"));
 	if (!isPdfReady)
 		logger.LogWarning("PdfInitAsync Error");
-	logger.LogDebug($"appInit.Init() Server={serverVersion}, SQLite={database.Version}");
+	logger.LogDebug("appInit.Init() Server={ServerVersion}, Provider={DatabaseProvider}, DB={DatabaseVersion}",
+		serverVersion, databaseProvider, database.Version);
 }
 var appStartTime = DateTime.Now;
-const string sqliteShutdownCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
 
 app.Lifetime.ApplicationStarted.Register(() => {
 	try {
 		var schedulerService = app.Services.GetRequiredService<SchedulerService>();
-		schedulerService.RegisterDailySqliteWalCheckpointTask();
+		if (isSqlite)
+			schedulerService.RegisterDailySqliteWalCheckpointTask();
 		schedulerService.RegisterWorkFileCleanupTask();
 		schedulerService.RegisterMonthlyResummaryTask();
 		schedulerService.RegisterJodaiPurgeTask();
@@ -173,26 +186,30 @@ app.Lifetime.ApplicationStarted.Register(() => {
 });
 
 app.Lifetime.ApplicationStopping.Register(() => {
-	RunShutdownStep("SQLite shutdown DB 処理", () => {
+	RunShutdownStep("DB shutdown 処理", () => {
 		using var scope = app.Services.CreateScope();
 		var database = scope.ServiceProvider.GetRequiredService<ExDatabase>();
 
-		RunShutdownStep("SQLite shutdown checkpoint の実行", () => {
-			var checkpointResult = database.RawExecCmd(sqliteShutdownCheckpointSql).FirstOrDefault();
-			if (checkpointResult?.TryGetValue("Error", out var checkpointError) == true) {
-				logger.LogWarning("SQLite shutdown checkpoint でエラーが返されました: {Error}", checkpointError);
-			}
-			else if (checkpointResult != null) {
-				logger.LogInformation(
-					"SQLite shutdown checkpoint が完了しました。 Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
-					checkpointResult.TryGetValue("busy", out var busy) ? busy : 0,
-					checkpointResult.TryGetValue("log", out var log) ? log : 0,
-					checkpointResult.TryGetValue("checkpointed", out var checkpointed) ? checkpointed : 0);
-			}
-		});
-		RunShutdownStep("SQLite 接続の shutdown close", database.Close);
+		if (isSqlite) {
+			RunShutdownStep("SQLite shutdown checkpoint の実行", () => {
+				var checkpointResult = database.RawExecCmd("PRAGMA wal_checkpoint(TRUNCATE);").FirstOrDefault();
+				if (checkpointResult?.TryGetValue("Error", out var checkpointError) == true) {
+					logger.LogWarning("SQLite shutdown checkpoint でエラーが返されました: {Error}", checkpointError);
+				}
+				else if (checkpointResult != null) {
+					logger.LogInformation(
+						"SQLite shutdown checkpoint が完了しました。 Busy={Busy}, Log={Log}, Checkpointed={Checkpointed}",
+						checkpointResult.TryGetValue("busy", out var busy) ? busy : 0,
+						checkpointResult.TryGetValue("log", out var log) ? log : 0,
+						checkpointResult.TryGetValue("checkpointed", out var checkpointed) ? checkpointed : 0);
+				}
+			});
+		}
+
+		RunShutdownStep("DB 接続の shutdown close", database.Close);
 	});
-	RunShutdownStep("SQLite pool cleanup の shutdown 実行", () => CvBaseSqlite.ExDatabaseOption.ClearPools(connStr));
+	if (isSqlite)
+		RunShutdownStep("SQLite pool cleanup の shutdown 実行", () => CvBaseSqlite.ExDatabaseOption.ClearPools(connStr));
 });
 
 void RunShutdownStep(string operation, Action action) {

@@ -1,3 +1,22 @@
+## [2026-08-25] CvServerのDBプロバイダー選択対応
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- `CvServer/Program.cs` のSQLite固定登録とSQLite専用保守処理を、既定のSQLite運用を維持したままPostgreSQL／MariaDBへ切り替え可能にする。
+
+### 実施内容
+- `Database:Provider` を `Sqlite`（既定値）、`Postgre`、`MariaDb` として解釈し、各プロバイダーの接続文字列キー（`sqlite`、`postgres`、`mariadb`）と `ExDatabase` 実装を選択するようにした。
+- `CvServer` に `CvBasePostgre` と `CvBaseMariadb` のプロジェクト参照を追加した。
+- SQLite専用の定期WALチェックポイント、停止時の `PRAGMA wal_checkpoint`、SQLiteプール解放をSQLite選択時に限定した。外部DBのWAL／redoはアプリケーションから操作しない。
+- PostgreSQL／MariaDBを使う場合は、対応する接続文字列と `Database:Provider` を環境別設定へ追加する。業務SQLの方言互換は本変更の対象外である。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj` 成功（警告0・エラー0）。
+- `dotnet run --project Tests\TestServer\TestServer.csproj --no-build` 成功（212件、失敗0、スキップ0）。
+- `git diff --check` 成功。
+
 ## [2026-08-25] MariaDBプロバイダー基盤処理の補完
 
 ### Agent
@@ -231,5 +250,3 @@
 - `C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj --no-restore -p:OutputPath=obj\CodexBuildOutput\`: 成功（警告0、エラー0）。
 - `C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestServer\TestServer.csproj --no-restore`: 168件成功、0件失敗。
 - `git diff --check`、UTF-8 BOMなし、CRLFを確認する。
-
----
