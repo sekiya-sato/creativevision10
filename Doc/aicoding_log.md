@@ -1,3 +1,21 @@
+## [2026-08-25] macOS ZIP内日本語ファイル名正規化スキルの追加
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- macOSで圧縮されたZIP内の分解形式の日本語ファイル名を、Windows 11で扱いやすいUnicode NFC形式へ変換する手順をスキル化する。
+
+### 実施内容
+- `.agents/skills/normalize-macos-zip-filenames/SKILL.md` に適用条件、安全な出力モード、完了条件、対象外を記録した。
+- `scripts/normalize-zip-filenames.ps1` を追加し、ZIP内エントリ名のNFC正規化、重複検出、一時ZIP生成、エントリ数・展開後SHA-256検証、明示時のみの元ZIP置換を実装した。
+- `agents/openai.yaml` にスキル表示名と説明を設定した。
+
+### 検証
+- NFD形式の日本語エントリを含むテストZIPで、別ZIP出力を確認（RenamedEntryCount=1、SHA-256 OK）。
+- 同テストZIPで `-ReplaceInput` を確認し、NFC名への変換と一時ファイル残存なしを確認した。
+- `quick_validate.py` は同梱Pythonに `PyYAML` がないため実行できなかった。
+
 ## [2026-08-25] PostgreSQL用DBプロバイダーの追加
 
 ### Agent

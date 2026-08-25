@@ -1,0 +1,3 @@
+interface:
+  display_name: "macOS ZIP日本語名修正"
+  short_description: "ZIP内の日本語ファイル名をWindows向けに正規化"
