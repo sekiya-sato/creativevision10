@@ -1,3 +1,155 @@
+## [2026-08-25] SQL方言変換器 Phase 5 完了（サーバ層のJSON配列再構築とUPSERT）
+
+### Agent
+- Sekiya Sato Claude
+
+### 目的
+- Phase 5 の残作業（`MasterCascadeDb` / `RebuildDb` / `ConvertDbTran` のJSON配列再構築と `SummaryDb` の UPSERT）を実装する。
+- 稼働中のSQLite用SQL文を1文字も書き換えずに済ませる。
+
+### 方式（設計変更）
+当初の設計は「サーバ層のSQLは変換器を通さず、DB別分岐を手で書く」だったが、9本の複雑なSQLをDB別に3通り手書きすることになり、稼働中のSQLite用SQLへ手を入れる必要があった。
+そこで**サーバ層のSQLをSQLite方言のまま残し、実行時に変換器へ通す**方式へ変えた。`ExDatabase` に `ExecuteDialect` / `FetchDialect` / `TranslateDialect` を追加し、`Dialect.TranslatesSql` が false（SQLite）のときは引数をそのまま渡す。SQLite接続では従来の `Execute` / `Fetch` と完全に同じ動作になる。
+保証G2は「変換を差すのはクライアントSQLの受け口1点のみ」から「変換を差す箇所は明示的に指定したものだけ。SQLiteでは常に恒等」へ更新した。非破壊の根拠を「変換器を通さないこと」ではなく「SQLiteでは変換が恒等であること」に置く。
+
+### 実施内容
+- `ExDatabase` に `ExecuteDialect` / `FetchDialect` / `TranslateDialect` を追加した。
+- 呼び出し箇所を差し替えた。SQL文自体は一切変更していない。
+  - `MasterCascadeDb`: `_db.Execute(sql, [...])` 9箇所と `_db.Fetch<long>` 2箇所。
+  - `SummaryDb`: 全SQLの実行が集約されている `ExecuteAndCounts` 1箇所（UPSERT 4箇所を含む）。
+  - `RebuildDb`: 4箇所が集約されている `ExecuteUpdateAndGetChanges` 1箇所。
+  - `ConvertDbTran`: `subCnvTranHeaderSize` 1箇所。
+- 変換ルールを追加した。
+  - `B02-JsonEach` の拡張: `json_each` の `key` 列（配列の要素順保持に使用）を行番号列へ写像する。PostgreSQL は `WITH ORDINALITY AS J(value, jkey)`、MariaDB は `jkey FOR ORDINALITY`。`key` は MariaDB の予約語なので列名を `jkey` にした。`J.key` の参照側は `JsonEachKeyRule` が合わせる。走査は右から左に進み `J.key` の位置ではFROM句を見ていないため、別名の収集だけ `SqlRewriteContext` の生成時に1回行う。`.key` を参照していない `json_each` には行番号列を作らない。
+  - `B04-JsonGroupArray`: PostgreSQL `jsonb_agg` / MariaDB `JSON_ARRAYAGG`。
+  - `B04-JsonObject`: PostgreSQL `jsonb_build_object`（MariaDBは同名）。
+  - `B04-JsonSet`: PostgreSQL は `jsonb_set` をパスごとに入れ子へ展開し、値を `to_jsonb` で包む（MariaDBは同名・同じ引数並び）。引数の対が揃わない形は変換しない。
+  - `C04-Upsert`: MariaDB 向けに `ON CONFLICT(...) DO UPDATE SET` → `ON DUPLICATE KEY UPDATE`、`excluded.列` → `VALUES(列)`。衝突対象の列指定は落とす（対象テーブルは判定列そのものへ一意索引があるため判定は変わらない）。`DO NOTHING` は等価な短い書き方が無いため変換せず未対応構文として報告する。PostgreSQL は SQLite と同一構文なのでルール不要。
+  - `C05-Changes` を構文目録へ追加した（変換は未実装）。
+- `Tests/TestSqlDialect/ServerLayerRuleTests` を追加した（14件）。実際の `Jsub` 再構築SQLと UPSERT SQL を入力に、行番号列の写像、無関係な `key` 列を書き換えないこと、`json_set` の入れ子展開、UPSERT の写像、SQLiteでは同一参照が返ることを検証する。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx` 成功（警告0・エラー0）。
+- `dotnet test Tests\TestSqlDialect\TestSqlDialect.csproj` 成功（120件、失敗0）。
+- `dotnet test Tests\TestServer\TestServer.csproj` 成功（212件、失敗0）。今回差し替えた `MasterCascadeDb` / `SummaryDb` / `RebuildDb` を直接検証する `MasterCascadeDbTests` / `SummaryDbTests` / `SummaryKakeDbTests` / `TranTaxRebuildTests` を含む。
+- 実SQL180本の変換到達率が PostgreSQL 168→**178**、MariaDB 170→**178** に上がった。残る2本は `ExDatabase` の `sqlite_master` 参照（プロバイダー側で override 済み）と、JSONパスがC#の文字列補間穴のままのテンプレート（実行時には実名へ置き換わる）。`CorpusCoverageTests` の下限を更新した。
+- `git diff --check` 成功。
+
+### 残作業
+- `changes()`（`RebuildDb` / `ConvertDbTran` が更新件数の取得に使用）は他DBに同名関数が無く、実行APIの戻り値で取る必要がある。構文目録へ登録済みだが変換は未実装。
+- Phase 6: DDLの照合順序固定（MariaDB は `utf8mb4_bin`、PostgreSQL は `LC_COLLATE=C`）とDDLスナップショットテスト。
+- Phase 7: 意味差の監査（MariaDBの整数除算、PostgreSQLの `GROUP BY` 厳格化、集約戻り型、`strftime('%w')` の算術2箇所）と3DB差分テスト。CV10 1.0 は SQLite のみを扱うため 1.0 の受入条件には含めない。
+- Phase 8: CvWpfclient のSQL静的検査テストと `AGENTS.md` の規約追記。
+- `ExDatabase.CloneDb` の潜在不具合（`ExDatabaseSqlite` が override しておらず、clone するとSQLite固有の振る舞いが失われる）。呼び出し元が無いため未修正。
+## [2026-08-25] SQL方言変換器 SQLite経路の非破壊を構造的に保証 + Phase 5 一部
+
+### Agent
+- Sekiya Sato Claude
+
+### 目的
+- 「既存のSQLite のSQL実行経路は絶対に破壊しない」を、実装の性質への依存ではなく分岐とテストで保証する。
+- Phase 5（サーバ層のDB別分岐）のうち、SQLiteの動作を1バイトも変えない項目を実装する。
+
+### 実施内容
+- `ISqlDialect` に `TranslatesSql` を追加した。SQLite（恒等変換）は false、PostgreSQL / MariaDB は true。
+  `HandlerClass.TranslateClientSql` は先頭でこれを見て即座に引数を返す。SQLite接続時に増える処理は bool 判定1回だけになり、差し替え表の参照も字句解析も走らない。
+- `SqlDialectGuard`（CvWpfclient の開発時自己検査）を例外を投げない実装にした。全画面のクエリ経路を通るため、変換ルールの不具合がSQLiteで動いている画面を壊しうる唯一の箇所だった。検査失敗時は警告ログのみで続行し、`Mode=Off` では検査自体を行わない。
+- `Tests/TestSqlDialect/SqliteRouteGuardTests` を追加した（10件）。SQLite方言が全モードで同一参照を返すこと、Strictモードでも例外を投げないこと、差し替え表にSQLiteを登録できないこと、未終端リテラルや空入力などの壊れたSQLで変換器と自己検査が例外を投げないこと、`QueryListSqlParam` が QueryKey を持たない旧形式JSONも読めること（配布物の組合せが変わっても既存経路が壊れない）を検証する。
+- `ExDatabase.ChangeTimeout` の SQLite固有処理（`PRAGMA busy_timeout`）を `ExDatabaseSqlite` の override へ移し、基底は何もしないようにした。MariaDB / PostgreSQL は既に override 済み。呼び出し元は現在1箇所も無い。
+- `HandlerClass.HandlePartialUpdate` の値バインドを見直した。通信上すべて文字列で来る値を、**SQLiteでは現行どおり文字列のまま渡し**（列アフィニティで解釈させる）、型に厳しい他DBのときだけ列のCLR型へ変換する。変換できない値はサーバで丸めずDB側のエラーに委ねる。
+
+### 調査で判明したこと
+- `UpdateDb` のプロバイダー別ベースライン版数は**不要**だった。`WriteVersionInfoAsync` は `SysUpdateDb` が空（新規DB）のとき最新版数を書いて移行SQLを1本も実行せず返るため、新規作成する PostgreSQL / MariaDB では SQLite 前提の `ALTER TABLE` 22件が最初から流れない。設計書の該当項目を対応不要に更新した。
+- `ExDatabase.CloneDb` に潜在不具合がある（**未修正**）。`ExDatabaseSqlite` が override していないため、SQLite接続を clone すると基底 `ExDatabase` が返り、`Dialect`・`GetSqlColumns`・WALモードの Open/Close というSQLite固有の振る舞いが失われる。現在呼び出し元が1箇所も無いため実害は無い。既存のSQLite経路を変えないため今回は手を付けず、設計書へ記録した。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build` を `CvBase` / `CvBaseSqlite` / `CvBasePostgre` / `CvBaseMariadb` / `CvServer` / `CvWpfclient` に対して実行し、いずれも成功（警告0・エラー0）。
+- `dotnet test Tests\TestSqlDialect\TestSqlDialect.csproj` 成功（106件、失敗0）。
+- `dotnet test Tests\TestServer\TestServer.csproj` 成功（212件、失敗0）。`MasterCascadeDbTests` / `SummaryDbTests` を含む既存のSQLite経路に影響が無いことを確認した。
+- `git diff --check` 成功。
+
+### 残作業
+- Phase 5 の残り: `MasterCascadeDb` / `RebuildDb` / `ConvertDbTran` のJSON配列再構築（`json_group_array` + `json_set`）と `SummaryDb` の UPSERT（`ON CONFLICT` → MariaDB は `ON DUPLICATE KEY UPDATE`）。いずれも稼働中のSQLite用SQLに触るため、SQLite分岐は現行SQLをそのまま保持する形で、独立した変更として実施する。
+- Phase 6: DDLの照合順序固定（MariaDB は `utf8mb4_bin`、PostgreSQL は `LC_COLLATE=C`）。
+- Phase 7: 意味差の監査と3DB差分テスト（CV10 1.0 対象外）。
+- Phase 8: CvWpfclient のSQL静的検査テストと `AGENTS.md` の規約追記。
+## [2026-08-25] SQL方言変換器 Phase 2〜4（カテゴリA/B のルールと QueryKey 差し替え）
+
+### Agent
+- Sekiya Sato Claude
+
+### 目的
+- Phase 1 で入れた骨格へ、カテゴリA（単純写像）とカテゴリB（JSON・日付）の変換ルールを実装する。
+- 変換器で表現できない形が出てもクライアントのSQLite側SQLを書き換えなくて済む逃げ道（QueryKey 差し替え）を用意する。
+- 現行SQLiteの挙動は一切変えない。既存SQL文字列への変更は0件。
+
+### 実施内容
+- カテゴリA のルールを追加した。
+  - `A01-Ifnull`: `ifnull` → `coalesce`（PostgreSQLのみ。MariaDBは同名関数なので `NativeConstructIds` で扱い書き換えない）。
+  - `A02-CastType`: `CAST(x AS TEXT/REAL/INTEGER)` → MariaDB の `CHAR`/`DOUBLE`/`SIGNED`。長さ指定付きの型は触らない。
+  - `A03-ReservedIdent`: 予約語と衝突する列名（`Offset`/`Sql`）を引用。PostgreSQLは小文字で引用しDDLの小文字化と揃える。`LIMIT n OFFSET m` の句キーワードは引用しない。
+  - `A04-NullsOrder`: PostgreSQL の `ORDER BY` へ `NULLS FIRST`。**既定は無効**（`Database:SqlRules:A04-NullsOrder`）。単純な列参照の項だけを対象にする。
+- MariaDB のセッション設定を Phase 1 から継続して有効化した。`PIPES_AS_CONCAT` と `NO_BACKSLASH_ESCAPES` で `||`（約110箇所）と `ESCAPE '\'`（6箇所）をSQL書換なしで解決する。
+- カテゴリB JSON のルールを追加した。
+  - `B01-JsonExtract`: PostgreSQL `((X)::jsonb ->> 'P')` / MariaDB `JSON_VALUE(X,'$.P')`。単一階層パスのみ。
+  - `B02-JsonEach`: PostgreSQL `jsonb_array_elements((X)::jsonb) AS a(value)` / MariaDB `JSON_TABLE(X,'$[*]' COLUMNS(value JSON PATH '$')) AS a`。どちらも `a.value` を提供するため、展開結果を参照する側のSQLは変更不要。
+  - `B03-JsonValid`: PostgreSQL は `IS JSON` 述語（16以降）。MariaDB は同名関数。
+  - `B04-JsonCast`: `json(X)` を PostgreSQL `((X)::jsonb)` / MariaDB `CAST(X AS JSON)` へ。
+- カテゴリB 日付・整形のルールを追加した。
+  - `B05-Strftime`: 書式5種（`%Y%m`/`%Y%m%d`/`%w`/`%d`/`%s`）と `'now','localtime'` の3引数形。`%w` はSQLiteと同じ文字列 '0'〜'6' を返す。
+  - `B06-Printf`: `%0Nd` を `LPAD`/`lpad` へ。`printf('%04d-%02d-%02d', y, m, d)` のような区切り付きの形は連結式を組み立てる。
+  - `B07-DateModifier`: 修飾子のリテラル形（`'-1 year'`）と連結形（`'+' || n || ' months'`、符号省略形も可）を年月日の加減算へ。修飾子なしの `date(x)` は3DBで解釈できるため触らない。
+  - `B08-Julianday`: `julianday(a) - julianday(b)` の減算パターンのみを日数差へ。単独の `julianday` は変換しない。
+- `QueryKey` 差し替え機構を入れた。`QueryListSqlParam` に省略可能な `QueryKey` を追加し（既存117呼び出しは無変更で通る）、`SqlOverrideCatalog` が `(QueryKey, 方言名)` で手書きSQLを返す。SQLiteへの登録は拒否する。
+- 変換器の走査を右から左に変更した。入れ子の内側が先に確定するため、範囲ごと差し替えるルールが内側の変換結果を取り込める。
+- `Inspect()` を「変換を試したうえで残った構文を返す」実装に変えた。ルールが無い構文だけでなく、ルールはあるが対応できない形も検出できる。CvWpfclient の開発時自己検査が精度を得る。
+- SQLite固有構文の目録に「関数呼び出しの形が必要」「引数個数の下限」の条件を追加した。`json` は `IS JSON` でも語として現れ、`date` は他DBにも同名関数があるため、条件なしでは誤検出する。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build` を `CvBase` / `CvServer` / `CvWpfclient` に対して実行し成功（警告0・エラー0）。
+- `dotnet test Tests\TestSqlDialect\TestSqlDialect.csproj` 成功（96件、失敗0）。カテゴリA/B の全ルール、対応できない形を変換しないこと、変換の冪等性、実SQL180本の字句復元性、SQLite方言が同一参照を返すことを確認した。
+- 実SQL180本の変換到達率は PostgreSQL 168本、MariaDB 170本。`CorpusCoverageTests` がこの数値を下限として固定する。残りは Phase 5 で扱うサーバ層構文（`json_group_array`/`json_set`/`json_object`/`sqlite_master`）と、文字列補間穴を含むテンプレート1本。
+- `dotnet test Tests\TestServer\TestServer.csproj` 成功（212件、失敗0）。既存のSQLite経路に影響が無いことを確認した。
+- `git diff --check` 成功。
+
+### 残作業
+- Phase 5: サーバ層のDB別分岐（`MasterCascadeDb`/`RebuildDb`/`ConvertDbTran` のJSON配列再構築、`SummaryDb` の UPSERT、`ExDatabase` のSQLite依存、`UpdateDb` のベースライン版数、`HandlePartialUpdate` の型変換）。
+- Phase 6: DDLの照合順序固定（MariaDB は `utf8mb4_bin`、PostgreSQL は `LC_COLLATE=C`）。
+- Phase 7: 意味差の監査（MariaDBの整数除算、PostgreSQLの `GROUP BY` 厳格化、集約戻り型、`strftime('%w')` の算術2箇所）と3DB差分テスト。CV10 1.0 は SQLite のみを扱うため 1.0 の受入条件には含めない。
+- Phase 8: CvWpfclient のSQL静的検査テストと `AGENTS.md` の規約追記。
+## [2026-08-25] SQL方言変換器 Phase 1（骨格・SQLite恒等性の保証）
+
+### Agent
+- Sekiya Sato Claude
+
+### 目的
+- SQLite / PostgreSQL / MariaDB の3DB同時サポートに向け、クライアント由来SQLの方言変換器の骨格を入れる。
+- クライアント側でのSQL組み立てルールと既存SQL文字列を一切変えず、現行SQLiteの挙動を1バイトも変えない。
+- 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md`、構文インベントリは `.omo/2026-08-25_sql_dialect_server_absorption_and_migration_cost.md` を参照する。
+
+### 実施内容
+- `CvBase/Sql/` に方言変換の基盤を追加した。方言実装をCvBase(層1)へ置いたため、CvServerとCvWpfclientの双方から参照できる。
+  - `ISqlDialect` / `SqlDialectMode` / `SqlDialectOptions`、`SqlToken` / `SqlTokenizer`、`SqlRewriteContext` / `ISqlRewriteRule`、`SqlDialectBase`、`PassThroughSqlDialect` / `SqlDialectVersions`、`SqliteConstructCatalog`、`SqlDialectUnsupportedException`、`SqlDialects`、`SqlDialectGuard`。
+  - `Dialects/PostgreSqlDialect`、`Dialects/MariaSqlDialect`。Phase 1 では変換ルールを持たず、未対応構文の検出とバージョン検証のみ行う。
+- `SqlTokenizer` はSQLを構文解析せず、文字列リテラルとコメントの誤認防止に必要な字句だけを認識する。「返した字句のTextを連結すると入力に完全一致する」を不変条件とし、ルール不一致のSQLが1バイトも変わらないことを保証する。
+- `ExDatabase` に `Dialect` 仮想プロパティ（既定は恒等変換）を追加し、各プロバイダーで上書きした。`ExDatabaseSqlite` は明示的に恒等変換を返す。
+- `ExDatabaseMaria` に接続直後のセッション設定を追加した。`PIPES_AS_CONCAT` と `NO_BACKSLASH_ESCAPES` の2語で、文字列連結 `||`（約110箇所）と `ESCAPE '\'`（6箇所）をSQL書換なしでSQLiteと同じ意味にする。`ONLY_FULL_GROUP_BY` と `STRICT_TRANS_TABLES` は入れない。
+- `CvServer/Services/HandlerClass.cs` に `TranslateClientSql()` を追加し、クライアントSQLの受け口3箇所（`HandleQueryOne` / `HandleQueryList` / `HandleQueryListSql`）だけを通した。`CvBase` / `CvDomainLogic` 内部のSQLは変換器を通さない。
+- `CvServer/Program.cs` で `Database:SqlTranslation`（`Auto` / `Strict` / `Off`）を読み、起動時にDBバージョンを検証する。SQLiteは警告のみ、他DBは起動失敗にする。
+- `CvWpfclient` の `CoreServiceClient.QuerySqlListAsync` に開発時の自己検査を入れた。他DBへ移せない構文を警告するだけで、SQLは変更せず送信も止めない。
+- `Tests/TestSqlDialect` を追加した。CvWpfclient / CvBase / CvDomainLogic のソースから実SQLリテラル180本を収集し、字句解析の復元性とSQLite恒等性を検証する。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build` を `CvBase` / `CvBaseSqlite` / `CvBasePostgre` / `CvBaseMariadb` / `CvServer` / `CvWpfclient` / `Tests\TestSqlDialect` に対して実行し、いずれも成功（警告0・エラー0）。
+- `dotnet test Tests\TestSqlDialect\TestSqlDialect.csproj` 成功（23件、失敗0）。実SQL180本と対象プロジェクトのソース全文で字句列の復元性を確認し、SQLite方言が引数と同一参照を返すことを参照等価で確認した。
+- `dotnet test Tests\TestServer\TestServer.csproj` 成功（212件、失敗0）。既存のSQLite経路に影響が無いことを確認した。
+- `git diff --check` 成功。
+
+### 残作業
+- Phase 2: カテゴリA（`ifnull` → `COALESCE`、`CAST` 型写像、予約語列名の引用）と `QueryKey` オーバーライド機構。
+- Phase 3〜4: JSON（`json_extract` / `json_each` / `json_valid`）と日付・整形（`strftime` / `printf` / `date(±)` / `julianday`）の式書換。
+- Phase 5〜6: サーバ層のDB別分岐、DDLと照合順序、`A04-NullsOrder` の有効化判断。
+- CV10 1.0 は SQLite のみを扱う。PostgreSQL / MariaDB の実接続検証（Phase 7）は 1.0 の受入条件に含めない。
 ## [2026-08-25] CvServerのDBプロバイダー選択対応
 
 ### Agent

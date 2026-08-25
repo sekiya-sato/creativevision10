@@ -2,10 +2,12 @@ using CodeShare;
 using CvAsset;
 using CvBase;
 using CvBase.Share;
+using CvBase.Sql;
 using CvBaseOracle;
 using CvDomainLogic;
 using ProtoBuf.Grpc;
 using System.Collections;
+using System.Globalization;
 using System.Reflection;
 
 namespace CvServer.Services;
@@ -29,6 +31,41 @@ public partial class CoreService {
 	/// トランザクションと楽観排他はこのクラスが持ち、副作用の順序は <see cref="WriteEffectRunner"/> が持つ。
 	/// </summary>
 	private WriteEffectRunner Effects => _effects ??= new WriteEffectRunner(_db);
+
+	/// <summary>
+	/// クライアントが組み立てたSQLを接続先DBの方言へ変換する。
+	/// <para>
+	/// CV10 は SQL の組み立てを CvWpfclient 側でも行うため、送られてくるSQLは SQLite 方言が正典である。
+	/// SQLite 接続では <c>PassThroughSqlDialect</c> が引数の参照をそのまま返すので変換処理は走らない。
+	/// 変換を差すのはこの1点だけで、CvBase / CvDomainLogic 内部のSQLは通さない。
+	/// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` を参照する。
+	/// </para>
+	/// </summary>
+	private string TranslateClientSql(string sql) => TranslateClientSql(sql, null);
+
+	/// <summary>
+	/// <paramref name="queryKey"/> に方言別の手書きSQLが登録されていればそれを使い、
+	/// 無ければ通常の方言変換を行う。
+	/// </summary>
+	private string TranslateClientSql(string sql, string? queryKey) {
+		// SQLite（恒等変換）では即座に引数を返す。差し替え表の参照も変換も行わない。
+		// 現に動いているSQLiteの実行経路へ、方言変換のコードを一切通さないための分岐である。
+		if (!_db.Dialect.TranslatesSql) {
+			return sql;
+		}
+		if (SqlOverrideCatalog.TryGet(queryKey, _db.Dialect.Name, out var overrideSql)) {
+			_logger.LogInformation("SQL方言 手書きSQLへ差し替え 方言={Dialect} QueryKey={QueryKey}",
+				_db.Dialect.Name, queryKey);
+			return overrideSql;
+		}
+		var translated = _db.Dialect.Translate(sql);
+		// 変換が起きたときだけログへ出す。SQLiteでログが増えないようにする
+		if (!ReferenceEquals(translated, sql) && !string.Equals(translated, sql, StringComparison.Ordinal)) {
+			_logger.LogDebug("SQL方言変換 方言={Dialect} 変換前={Before} 変換後={After}",
+				_db.Dialect.Name, sql, translated);
+		}
+		return translated;
+	}
 
 	private CvMsg HandleCopyReply(CvMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
@@ -333,8 +370,13 @@ public partial class CoreService {
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			var updated = 0;
+			// 部分更新の値は通信上すべて文字列で来る。SQLiteは列アフィニティで解釈するため
+			// 現行どおり文字列のまま渡す。型に厳しい他DBのときだけ列のCLR型へ変換する。
+			var columnTypes = _db.Dialect.TranslatesSql
+				? ResolvePartialUpdateColumnTypes(partialUpdate.ItemType, columns)
+				: null;
 			foreach (var row in rows) {
-				object[] args = [.. row.Values, vdate, row.Id, row.ExpectedVdu];
+				object[] args = [.. ConvertPartialUpdateValues(row.Values, columnTypes), vdate, row.Id, row.ExpectedVdu];
 				var count = _db.Execute(sql, args);
 				if (count == 0) {
 					// 部分適用は作らない。1件でも競合したら全件戻して再取得させる。
@@ -353,6 +395,62 @@ public partial class CoreService {
 		catch (Exception ex) {
 			_db.AbortTransaction();
 			return CreateExceptionResponse(flag, ex, typeof(string), string.Empty);
+		}
+	}
+
+	/// <summary>
+	/// 部分更新の対象列のCLR型を解決する。解決できない列は <c>null</c> を置き、文字列のまま渡す。
+	/// </summary>
+	private static Type?[] ResolvePartialUpdateColumnTypes(Type itemType, List<string> columns) {
+		var types = new Type?[columns.Count];
+		for (var i = 0; i < columns.Count; i++) {
+			var property = itemType.GetProperty(columns[i]);
+			var type = property?.PropertyType;
+			// Nullable<T> は T として扱う
+			types[i] = type == null ? null : Nullable.GetUnderlyingType(type) ?? type;
+		}
+		return types;
+	}
+
+	/// <summary>
+	/// 文字列で受けた値を列のCLR型へ変換する。
+	/// <paramref name="columnTypes"/> が <c>null</c>（SQLite）のときは何もせず文字列のまま返す。
+	/// </summary>
+	private static object[] ConvertPartialUpdateValues(string[] values, Type?[]? columnTypes) {
+		if (columnTypes == null) {
+			return [.. values];
+		}
+		var args = new object[values.Length];
+		for (var i = 0; i < values.Length; i++) {
+			var value = values[i] ?? string.Empty;
+			var type = i < columnTypes.Length ? columnTypes[i] : null;
+			args[i] = ConvertPartialUpdateValue(value, type);
+		}
+		return args;
+	}
+
+	private static object ConvertPartialUpdateValue(string value, Type? type) {
+		if (type == null || type == typeof(string)) {
+			return value;
+		}
+		// 空文字は数値列では0、真偽列ではfalseとして扱う。SQLiteは空文字をそのまま格納するが、
+		// 型に厳しいDBでは代入できないため既定値へ寄せる
+		if (string.IsNullOrWhiteSpace(value)) {
+			return type == typeof(bool) ? false : Activator.CreateInstance(type) ?? value;
+		}
+		try {
+			if (type == typeof(bool)) {
+				// 0/1 表現も受ける
+				return bool.TryParse(value, out var flag) ? flag : value.Trim() != "0";
+			}
+			if (type.IsEnum) {
+				return Enum.ToObject(type, Convert.ToInt64(value, CultureInfo.InvariantCulture));
+			}
+			return Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
+		}
+		catch (Exception) {
+			// 変換できない値はDB側のエラーに委ねる（サーバで勝手に丸めない）
+			return value;
 		}
 	}
 
@@ -413,7 +511,7 @@ public partial class CoreService {
 	private CvMsg HandleQueryOne(CvFlag flag, QueryOneParam queryOne) {
 		LogDetailedRequest("パラメータ QueryOneParam.ItemType={ItemType} 内容={Payload}", () => [queryOne.ItemType, Common.SerializeObject(queryOne)]);
 
-		var sql = queryOne.AddWhere();
+		var sql = TranslateClientSql(queryOne.AddWhere());
 		try {
 			var data = _db.Fetch(queryOne.ItemType, sql, queryOne.Parameters).FirstOrDefault();
 			return data == null
@@ -443,7 +541,7 @@ public partial class CoreService {
 	}
 
 	private CvMsg HandleQueryList(CvFlag flag, QueryListParam queryList) {
-		var sql = BuildQueryListSql(queryList);
+		var sql = TranslateClientSql(BuildQueryListSql(queryList));
 		var listType = typeof(List<>).MakeGenericType(queryList.ItemType);
 
 		LogDetailedRequest("パラメータ QueryListParam.ItemType={ItemType} 内容={Payload} SQL={Sql}", () => [queryList.ItemType, Common.SerializeObject(queryList), sql]);
@@ -460,7 +558,7 @@ public partial class CoreService {
 	}
 
 	private CvMsg HandleQueryListSql(CvFlag flag, QueryListSqlParam querySql) {
-		var sql = querySql.Sql ?? string.Empty;
+		var sql = TranslateClientSql(querySql.Sql ?? string.Empty, querySql.QueryKey);
 		var listType = typeof(List<>).MakeGenericType(querySql.ItemType);
 
 		LogDetailedRequest("パラメータ QueryListSqlParam.ItemType={ItemType} 内容={Payload} SQL={Sql}", () => [querySql.ItemType, Common.SerializeObject(querySql), sql]);

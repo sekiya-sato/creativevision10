@@ -501,7 +501,7 @@ WHERE EXISTS (
    AND json_extract(j.value, '$.Id_Siz')   = 0
 )
 ";
-		cnt = _toDb.Execute(sql);
+		cnt = _toDb.ExecuteDialect(sql);
 		var sql2 = $"SELECT changes() AS updated_count";
 		cnt = _toDb.FirstOrDefault<int>(sql2);
 		return cnt;

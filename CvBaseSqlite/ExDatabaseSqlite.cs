@@ -15,6 +15,10 @@ namespace CvBaseSqlite;
 public partial class ExDatabaseSqlite : ExDatabase {
 
 	public override string Version { get; protected set; } = "";
+	/// <summary>
+	/// SQLite方言が正典なので変換しない。引数の参照をそのまま返す実装を明示的に返す。
+	/// </summary>
+	public override CvBase.Sql.ISqlDialect Dialect => CvBase.Sql.SqlDialects.Sqlite;
 	public ExDatabaseSqlite(DbConnection conn) : base(conn) {
 		if (conn != null) {
 			if (conn.State == ConnectionState.Closed)
@@ -52,6 +56,14 @@ public partial class ExDatabaseSqlite : ExDatabase {
 				connInner.Open();
 			EnableWalMode(connInner);
 		}
+	}
+	/// <summary>
+	/// ロック待ち時間を変更する。SQLite固有の <c>PRAGMA busy_timeout</c> をここへ隔離している
+	/// (基底クラスは他DBと共用のため何もしない)。
+	/// </summary>
+	public override void ChangeTimeout(int timeoutSec) {
+		ArgumentOutOfRangeException.ThrowIfNegative(timeoutSec);
+		RawExecCmd($"PRAGMA busy_timeout = {timeoutSec * 1000};");
 	}
 	public override void Close() {
 		if (Connection is SqliteConnection) {

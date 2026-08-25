@@ -2,6 +2,7 @@
   <Folder Name="/Tests/">
     <Project Path="Tests/TestLogin/TestLogin.csproj" />
     <Project Path="Tests/TestServer/TestServer.csproj" />
+    <Project Path="Tests/TestSqlDialect/TestSqlDialect.csproj" />
   </Folder>
   <Folder Name="/ソリューション項目/">
     <File Path="AGENTS.md" />

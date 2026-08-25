@@ -241,7 +241,7 @@ WHERE EXISTS (
 	}
 
 	int ExecuteUpdateAndGetChanges(string sql) {
-		_db.RawExecCmd(sql);
+		_db.RawExecCmd(_db.TranslateDialect(sql));
 		if (!string.IsNullOrEmpty(_db.RawLastError)) {
 			throw new InvalidOperationException(_db.RawLastError);
 		}

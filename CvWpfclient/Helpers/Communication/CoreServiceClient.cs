@@ -5,16 +5,25 @@ CoreServiceClient は、CvWpfclient 内で共通する ICoreService の一覧照
 using CodeShare;
 using CvAsset;
 using CvBase;
+using CvBase.Sql;
 using System.Collections;
 
 namespace CvWpfclient.Helpers;
 
 internal static class CoreServiceClient {
-	internal static Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) =>
-		QueryListCoreAsync<T>(
-			new QueryListSqlParam(typeof(T), sql, [.. parameters]),
+	/// <param name="queryKey">
+	/// 方言別に手書きSQLへ差し替える場合の任意キー。既定は未指定。
+	/// SQLite では常にこの <paramref name="sql"/> がそのまま実行される。
+	/// </param>
+	internal static Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct, string? queryKey = null) {
+		// 開発時のみ、他DBへ移せない構文が混ざっていないかを警告する。SQLは変更せず送信も止めない。
+		// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` §6 を参照する。
+		SqlDialectGuard.WarnIfUnsupported(sql, typeof(T).Name);
+		return QueryListCoreAsync<T>(
+			new QueryListSqlParam(typeof(T), sql, [.. parameters], queryKey),
 			typeof(QueryListSqlParam),
 			ct);
+	}
 
 	internal static Task<List<T>> QueryListAsync<T>(string where, string order, CancellationToken ct) =>
 		QueryListCoreAsync<T>(

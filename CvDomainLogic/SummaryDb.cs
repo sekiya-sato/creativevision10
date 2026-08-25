@@ -314,7 +314,7 @@ SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
 ;
 ";
 	private int ExecuteAndCounts(string sql, object[] args, string operationName, string targetName, string period) {
-		var updatedCount = _db.Execute(sql, args);
+		var updatedCount = _db.ExecuteDialect(sql, args);
 		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
 		return updatedCount;
 	}

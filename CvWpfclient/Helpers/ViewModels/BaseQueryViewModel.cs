@@ -119,8 +119,11 @@ public abstract partial class BaseQueryViewModel : BaseViewModel {
 	/// 生SQLを投げて DBマップ型のリストを取得する。
 	/// T はサーバ側でも解決できる型（CvBase のテーブルクラス）である必要がある。
 	/// </summary>
-	protected Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct) =>
-		CoreServiceClient.QuerySqlListAsync<T>(sql, parameters, ct);
+	/// <param name="queryKey">
+	/// 方言別に手書きSQLへ差し替える場合の任意キー。既定は未指定で、SQLite では影響しない。
+	/// </param>
+	protected Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct, string? queryKey = null) =>
+		CoreServiceClient.QuerySqlListAsync<T>(sql, parameters, ct, queryKey);
 
 	protected static string AddSqlParameter(List<string> parameters, object value) =>
 		SqlWhere.AddParameter(parameters, value);

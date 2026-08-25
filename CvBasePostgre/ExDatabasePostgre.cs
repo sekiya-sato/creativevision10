@@ -25,6 +25,9 @@ public sealed class ExDatabasePostgre : ExDatabase {
 	const int DefaultStringLength = 255;
 	const int DefaultObjectLength = 1000;
 
+	/// <summary>クライアント由来SQLをPostgreSQL方言へ変換する。</summary>
+	public override CvBase.Sql.ISqlDialect Dialect => CvBase.Sql.SqlDialects.Postgre;
+
 	public ExDatabasePostgre(DbConnection conn) : this(conn, true) {
 	}
 

@@ -110,6 +110,15 @@ builder.Services.AddScoped<ExDatabase>(sp => {
 		_ => throw new InvalidOperationException($"Database:Provider '{databaseProvider}' is invalid.")
 	};
 });
+// SQL方言変換の動作モード。Auto=変換して未対応構文は警告 / Strict=未対応構文で例外 / Off=変換しない
+// Off は障害時の退避用で、全プロバイダーが恒等変換に落ちる。
+// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` を参照する。
+CvBase.Sql.SqlDialectOptions.Mode =
+	CvBase.Sql.SqlDialectOptions.ParseMode(builder.Configuration["Database:SqlTranslation"]);
+// ルール A04(PostgreSQL の ORDER BY へ NULLS FIRST を付ける) は既定で無効。
+// ORDER BY 句へ手を入れる唯一のルールなので、3DB差分テストで必要性を確認してから有効化する。
+CvBase.Sql.SqlDialectOptions.EnableNullsFirst =
+	builder.Configuration.GetValue<bool>("Database:SqlRules:A04-NullsOrder");
 builder.Services.AddSingleton(AppGlobal.Shared);
 builder.Services.AddSingleton<SchedulerService>();
 var serverVersion = builder.Configuration.GetSection("ServerVersion").Value ?? "0.0.0";
@@ -168,6 +177,19 @@ using (var scope = app.Services.CreateScope()) {
 		logger.LogWarning("PdfInitAsync Error");
 	logger.LogDebug("appInit.Init() Server={ServerVersion}, Provider={DatabaseProvider}, DB={DatabaseVersion}",
 		serverVersion, databaseProvider, database.Version);
+	// DBのバージョン・必須機能を検証する。SQLiteは現行運用を止めないため警告のみ、他DBは起動失敗にする
+	var dialectIssues = database.Dialect.Validate(database.Version);
+	if (dialectIssues.Count > 0) {
+		var detail = string.Join(" / ", dialectIssues);
+		if (isSqlite) {
+			logger.LogWarning("DBバージョン検証 方言={Dialect} {Detail}", database.Dialect.Name, detail);
+		}
+		else {
+			throw new InvalidOperationException($"DBバージョン検証に失敗しました。方言={database.Dialect.Name} {detail}");
+		}
+	}
+	logger.LogInformation("SQL方言 方言={Dialect} モード={Mode}",
+		database.Dialect.Name, CvBase.Sql.SqlDialectOptions.Mode);
 }
 var appStartTime = DateTime.Now;
 

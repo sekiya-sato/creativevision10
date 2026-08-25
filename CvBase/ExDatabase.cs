@@ -22,6 +22,39 @@ public partial class ExDatabase : Database {
 	private static readonly ILogger<ExDatabase> _logger = new NLogExtender<ExDatabase>();
 
 	public virtual string Version { get; protected set; } = "";
+	/// <summary>
+	/// クライアント由来SQLの方言変換。既定は恒等変換で、プロバイダーが上書きする。
+	/// <para>
+	/// 変換を差すのは CvServer の HandlerClass のクライアントSQL受け口だけである。
+	/// このクラスおよび CvDomainLogic 内部のSQLは変換器を通さない。
+	/// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` を参照する。
+	/// </para>
+	/// </summary>
+	public virtual Sql.ISqlDialect Dialect => Sql.PassThroughSqlDialect.Instance;
+
+	/// <summary>
+	/// SQLite方言で書いたSQLを接続先の方言へ変換してから実行する。
+	/// <para>
+	/// サーバ側のSQL（<c>CvDomainLogic</c> 等）でJSON配列の作り直しやUPSERTのように
+	/// DB間で構文が異なるものに使う。SQLite接続では <see cref="Sql.ISqlDialect.TranslatesSql"/> が
+	/// false なので引数がそのまま渡り、<see cref="Execute(string, object[])"/> と完全に同じ動作になる。
+	/// </para>
+	/// </summary>
+	public int ExecuteDialect(string sql, params object[] args) =>
+		Execute(TranslateDialect(sql), args);
+
+	/// <summary>
+	/// SQLite方言で書いたSQLを接続先の方言へ変換してから取得する。
+	/// SQLite接続では <see cref="Fetch{T}(string, object[])"/> と完全に同じ動作になる。
+	/// </summary>
+	public List<T> FetchDialect<T>(string sql, params object[] args) =>
+		Fetch<T>(TranslateDialect(sql), args);
+
+	/// <summary>
+	/// SQLite方言のSQLを接続先の方言へ変換する。SQLiteでは引数の参照をそのまま返す。
+	/// </summary>
+	public string TranslateDialect(string sql) =>
+		Dialect.TranslatesSql ? Dialect.Translate(sql) : sql;
 	public virtual void Open() {
 		Connection?.Open();
 	}
@@ -38,10 +71,15 @@ public partial class ExDatabase : Database {
 	}
 	/// <summary>
 	/// データベースのタイムアウトを変更する (秒単位)
+	/// <para>
+	/// 基底では何もしない。SQLiteの <c>PRAGMA busy_timeout</c> は他DBに存在せず、
+	/// 意味も「ロック待ち時間」対「コマンド実行時間」で異なるため、各プロバイダーで実装する。
+	/// SQLite は <c>ExDatabaseSqlite</c>、MariaDB / PostgreSQL は <c>CommandTimeout</c> を使う。
+	/// </para>
 	/// </summary>
 	/// <param name="timeoutSec"></param>
 	public virtual void ChangeTimeout(int timeoutSec) {
-		RawExecCmd($"PRAGMA busy_timeout = {timeoutSec * 1000};");
+		ArgumentOutOfRangeException.ThrowIfNegative(timeoutSec);
 	}
 
 

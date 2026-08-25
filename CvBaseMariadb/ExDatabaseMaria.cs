@@ -12,13 +12,18 @@ namespace CvBaseMariadb;
 /// </summary>
 public partial class ExDatabaseMaria : ExDatabase {
 
+	/// <summary>クライアント由来SQLをMariaDB方言へ変換する。</summary>
+	public override CvBase.Sql.ISqlDialect Dialect => CvBase.Sql.SqlDialects.Maria;
+
 	public ExDatabaseMaria(DbConnection conn) : this(conn, true) {
 	}
 
 	ExDatabaseMaria(DbConnection conn, bool isOpen) : base(EnsureMariaConnection(conn), isOpen) {
 		CommandTimeout = 9999;
-		if (isOpen)
+		if (isOpen) {
 			UpdateVersion();
+			ApplySessionSetup();
+		}
 	}
 
 	/// <summary>
@@ -40,6 +45,25 @@ public partial class ExDatabaseMaria : ExDatabase {
 		if (conn.State == ConnectionState.Closed)
 			conn.Open();
 		UpdateVersion();
+		ApplySessionSetup();
+	}
+
+	/// <summary>
+	/// 接続直後のセッション設定を適用する。
+	/// <para>
+	/// 文字列連結 <c>||</c> と <c>ESCAPE '\'</c> をSQLite と同じ意味にするため
+	/// <c>PIPES_AS_CONCAT</c> と <c>NO_BACKSLASH_ESCAPES</c> を足す。
+	/// <c>ONLY_FULL_GROUP_BY</c> と <c>STRICT_TRANS_TABLES</c> は入れない(SQLiteの緩さに合わせる)。
+	/// </para>
+	/// </summary>
+	void ApplySessionSetup() {
+		if (Connection is not MySqlConnection conn || conn.State != ConnectionState.Open)
+			return;
+		foreach (var command in Dialect.SessionSetupCommands) {
+			using var cmd = conn.CreateCommand();
+			cmd.CommandText = command;
+			cmd.ExecuteNonQuery();
+		}
 	}
 
 	public override void Close() {

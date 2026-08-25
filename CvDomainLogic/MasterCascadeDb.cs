@@ -264,7 +264,7 @@ update {table}
    and ( ifnull(json_extract({col}, '$.Cd' ), '') <> @1
       or ifnull(json_extract({col}, '$.Mei'), '') <> @2
       or ifnull(json_extract({col}, '$.Sid'),  0) <> @0 )";
-		return _db.Execute(sql, [id, code, name, vdate]);
+		return _db.ExecuteDialect(sql, [id, code, name, vdate]);
 	}
 
 	// ============================================================
@@ -294,7 +294,7 @@ update {table} as S
                  where json_extract(J.value, '$.Sid') = @0
                    and ( ifnull(json_extract(J.value, '$.Cd' ), '') <> @1
                       or ifnull(json_extract(J.value, '$.Mei'), '') <> @2 ) )";
-		return _db.Execute(sql, [id, code, name, vdate]);
+		return _db.ExecuteDialect(sql, [id, code, name, vdate]);
 	}
 
 	/// <summary>
@@ -330,7 +330,7 @@ update {table} as S
                            or ifnull(json_extract(J.value, '$.Mei'), '') <> ifnull(M.Name,'') ) )
                    or ( K.Id is not null
                         and ifnull(json_extract(J.value, '$.Kbname'), '') <> ifnull(K.Name,'') ) )";
-		return _db.Execute(sql, [vdate]);
+		return _db.ExecuteDialect(sql, [vdate]);
 	}
 
 	// ============================================================
@@ -370,7 +370,7 @@ update {table}
  where Kubun = @0
    and Kubun <> '{MeishoKubunIndex}'
    and ifnull(KubunName,'') <> @1";
-		return _db.Execute(sql, [kubunCode, kubunName, vdate]);
+		return _db.ExecuteDialect(sql, [kubunCode, kubunName, vdate]);
 	}
 
 	/// <summary>MasterMeisho.KubunName を全件再同期する</summary>
@@ -385,7 +385,7 @@ update {table} as T
    and exists ( select 1 from {table} M
                  where M.Kubun = '{MeishoKubunIndex}' and M.Code = T.Kubun
                    and ifnull(T.KubunName,'') <> ifnull(M.Name,'') )";
-		return _db.Execute(sql, [vdate]);
+		return _db.ExecuteDialect(sql, [vdate]);
 	}
 
 	/// <summary>Jsub 配列のうち $.Kb が一致する要素の $.Kbname を更新する</summary>
@@ -406,7 +406,7 @@ update {table} as S
    and exists ( select 1 from json_each(S.{col}) as J
                  where json_extract(J.value, '$.Kb') = @0
                    and ifnull(json_extract(J.value, '$.Kbname'), '') <> @1 )";
-		return _db.Execute(sql, [kubunCode, kubunName, vdate]);
+		return _db.ExecuteDialect(sql, [kubunCode, kubunName, vdate]);
 	}
 
 	// ============================================================
@@ -431,7 +431,7 @@ update {table} as S
 select distinct S.Id from {table} S, json_each(S.Jcolsiz) J
  where {JsonArrayReady("S.Jcolsiz")}
    and ( json_extract(J.value, '$.Id_Col') = @0 or json_extract(J.value, '$.Id_Siz') = @0 )";
-		return _db.Fetch<long>(sql, id);
+		return _db.FetchDialect<long>(sql, id);
 	}
 
 	/// <summary>Jcolsiz 配列のうち idPath が一致する要素の コード/名称 を更新する</summary>
@@ -452,7 +452,7 @@ update {table} as S
                  where json_extract(J.value, '$.{idPath}') = @0
                    and ( ifnull(json_extract(J.value, '$.{codePath}'), '') <> @1
                       or ifnull(json_extract(J.value, '$.{meiPath}' ), '') <> @2 ) )";
-		return _db.Execute(sql, [id, code, name, vdate]);
+		return _db.ExecuteDialect(sql, [id, code, name, vdate]);
 	}
 
 	/// <summary>
@@ -464,7 +464,7 @@ update {table} as S
 		var table = _db.GetTableName(typeof(MasterShohin));
 		var source = _db.GetTableName(typeof(MasterMeisho));
 		// 更新対象の商品Idを1回だけ抽出する(UPDATEとDerived再構築の両方でこの集合を使う)
-		var shohinIds = _db.Fetch<long>($@"
+		var shohinIds = _db.FetchDialect<long>($@"
 select S.Id from {table} S
  where {JsonArrayReady("S.Jcolsiz")}
    and exists ( select 1 from json_each(S.Jcolsiz) as J
@@ -495,7 +495,7 @@ update {table} as S
                              order by cast(J.key as integer) ) as X ),
        Vdu = @0
  where S.Id in ({string.Join(",", chunk)})";
-			cnt += _db.Execute(sql, [vdate]);
+			cnt += _db.ExecuteDialect(sql, [vdate]);
 		}
 		RebuildDerivedShohinColSiz(shohinIds);
 		return cnt;
@@ -564,6 +564,6 @@ update {table}
    set {string.Join(",\r\n       ", sets)},
        Vdu = @0
  where {string.Join("\r\n    or ", diffs)}";
-		return _db.Execute(sql, [vdate]);
+		return _db.ExecuteDialect(sql, [vdate]);
 	}
 }

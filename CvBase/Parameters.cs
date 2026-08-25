@@ -78,13 +78,24 @@ public sealed record class QueryListSqlParam {
 	public string? Sql { get; }
 	public string[] Parameters { get; }
 	public Type ItemType { get; }
-	public QueryListSqlParam(Type itemType, string? sql = null, string[]? parameters = null) {
+	/// <summary>
+	/// 方言別に手書きSQLへ差し替えるための任意キー。既定は未指定(null)。
+	/// <para>
+	/// SQLの組み立てはクライアント側でも行い、SQLite方言を正典とする。変換器で表現できない形が
+	/// 出たとき、SQLite側のSQLを触らずに他DBだけ差し替えるために使う。指定しても SQLite では
+	/// 常にこの <see cref="Sql"/> がそのまま実行される。登録は <c>SqlOverrideCatalog</c> で行う。
+	/// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` §5 を参照する。
+	/// </para>
+	/// </summary>
+	public string? QueryKey { get; }
+	public QueryListSqlParam(Type itemType, string? sql = null, string[]? parameters = null, string? queryKey = null) {
 		Sql = sql;
 		if (parameters != null)
 			Parameters = parameters;
 		else
 			Parameters = Array.Empty<string>();
 		ItemType = itemType;
+		QueryKey = queryKey;
 	}
 }
 
