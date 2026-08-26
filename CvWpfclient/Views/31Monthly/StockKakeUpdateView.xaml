@@ -48,6 +48,7 @@
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="140" />
@@ -75,7 +76,7 @@
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							MaxLength="7"
 							Style="{StaticResource MaterialDesignOutlinedTextBox}"
-							Text="{Binding YearMonthFrom}" />
+							Text="{Binding YearMonthFrom, UpdateSourceTrigger=PropertyChanged}" />
 						<TextBlock Margin="12,0" VerticalAlignment="Center"
 							FontWeight="Bold" Text="-" />
 						<TextBox Width="120"
@@ -83,14 +84,24 @@
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							MaxLength="7"
 							Style="{StaticResource MaterialDesignOutlinedTextBox}"
-							Text="{Binding YearMonthTo}" />
+							Text="{Binding YearMonthTo, UpdateSourceTrigger=PropertyChanged}" />
 					</StackPanel>
 
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						Margin="0,16,0,0"
 						Style="{StaticResource SettingLabel}"
+						Text="集計期間" />
+					<TextBlock Grid.Row="2" Grid.Column="1"
+						Margin="0,16,0,0"
+						VerticalAlignment="Center"
+						Text="{Binding ClosingPeriodText}"
+						TextWrapping="Wrap" />
+
+					<TextBlock Grid.Row="3" Grid.Column="0"
+						Margin="0,16,0,0"
+						Style="{StaticResource SettingLabel}"
 						Text="更新対象" />
-					<ComboBox Grid.Row="2" Grid.Column="1"
+					<ComboBox Grid.Row="3" Grid.Column="1"
 						Width="180"
 						Margin="0,16,0,0" HorizontalAlignment="Left"
 						materialDesign:HintAssist.Hint="更新対象"
@@ -99,11 +110,11 @@
 						SelectedItem="{Binding UpdateTarget}"
 						Style="{StaticResource FormComboBox}" />
 
-					<TextBlock Grid.Row="3" Grid.Column="0"
+					<TextBlock Grid.Row="4" Grid.Column="0"
 						Margin="0,16,0,0"
 						Style="{StaticResource SettingLabel}"
 						Text="進捗" />
-					<ProgressBar Grid.Row="3" Grid.Column="1"
+					<ProgressBar Grid.Row="4" Grid.Column="1"
 						Height="18"
 						Margin="0,16,0,0"
 						Maximum="100" Minimum="0"

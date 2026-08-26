@@ -219,6 +219,16 @@ public sealed class CategoryBDateRuleTests {
 	}
 
 	[TestMethod]
+	public void 自社締日の翌月計上式は変換できる() {
+		const string sql = "SELECT CASE WHEN CAST(substr(t.DenDay, 7, 2) AS INTEGER) > 20 THEN strftime('%Y%m', date(substr(t.DenDay, 1, 4) || '-' || substr(t.DenDay, 5, 2) || '-01', '+1 month')) ELSE substr(t.DenDay, 1, 6) END AS SumMonth FROM Tran00Uriage AS t";
+		foreach (var dialect in new[] { SqlDialects.Postgre, SqlDialects.Maria }) {
+			var translated = dialect.Translate(sql);
+			Assert.IsFalse(translated.Contains("strftime"), translated);
+			Assert.AreEqual(0, dialect.Inspect(sql).Count, dialect.Name);
+		}
+	}
+
+	[TestMethod]
 	public void 曜日ラベルのCASE式は変換できる() {
 		const string sql = "CASE strftime('%w', d) WHEN '0' THEN '日' WHEN '1' THEN '月' END";
 		Assert.AreEqual("CASE CAST(DAYOFWEEK(d)-1 AS CHAR) WHEN '0' THEN '日' WHEN '1' THEN '月' END",

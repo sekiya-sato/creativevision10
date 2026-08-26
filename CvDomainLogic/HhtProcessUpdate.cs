@@ -104,6 +104,8 @@ public partial class HhtProcess {
 		var cache = LoadMasterCache(rows);
 		var result = new HhtUpdateResult(0, 0, 0, 0, 0);
 		var vdate = Common.GetVdate();
+		var summaryDb = new SummaryDb(_db);
+		var shime = summaryDb.GetOwnClosingDay();
 
 		// 重複受信は伝票を作らずエラーにする（同じ実棚数・売上が二重計上されるのを防ぐ）。
 		// グルーピングより先に除くのが重要。再受信された行はヘッダキーが元の行と完全に一致するため、
@@ -149,10 +151,10 @@ public partial class HhtProcess {
 				shiireRelateIds.Add(shiire.RelateNo1);
 			}
 			if (slip.Entity is Tran00Uriage uriage) {
-				uriMonths.Add(uriage.KakeDay.Length >= 6 ? uriage.KakeDay[..6] : uriage.KakeDay);
+				uriMonths.Add(ClosingMonthCalculator.CalculateKakeMonth(uriage.KakeDay, shime));
 			}
 			if (slip.Entity is Tran03Shiire shiire2) {
-				kaiMonths.Add(shiire2.KakeDay.Length >= 6 ? shiire2.KakeDay[..6] : shiire2.KakeDay);
+				kaiMonths.Add(ClosingMonthCalculator.CalculateKakeMonth(shiire2.KakeDay, shime));
 			}
 
 			foreach (var row in group.Rows) {
@@ -176,7 +178,6 @@ public partial class HhtProcess {
 			new CompletionDb(_db).CalcHachuEndFlag(shiireRelateIds);
 		}
 		// 売掛・買掛は月次一括の引き直しなので、対象年月の範囲でまとめて1回だけ呼ぶ
-		var summaryDb = new SummaryDb(_db);
 		if (uriMonths.Count > 0) {
 			summaryDb.CalcSummaryUriKake(uriMonths.Min!, uriMonths.Max!);
 		}

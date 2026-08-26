@@ -56,8 +56,8 @@ public static class SummaryRebuildRequestPlanner {
 		List<SummaryRebuildRequestDescriptor> descriptors = [];
 		foreach (var flag in GetFlagOrder(updateTarget)) {
 			switch (flag) {
-				case CvFlag.Msg051_SummaryRealStock:
-					descriptors.AddRange(targetMonths.Select(targetMonth => new SummaryRebuildRequestDescriptor(flag, yearMonthFrom, yearMonthTo, targetMonth)));
+				case CvFlag.Msg050_Summary:
+					descriptors.Add(new SummaryRebuildRequestDescriptor(flag, yearMonthFrom, yearMonthTo));
 					break;
 				case CvFlag.Msg052_SummaryUriKake:
 				case CvFlag.Msg053_SummaryKaiKake:
@@ -79,8 +79,8 @@ public static class SummaryRebuildRequestPlanner {
 	}
 
 	private static IReadOnlyList<CvFlag> GetFlagOrder(string updateTarget) => updateTarget switch {
-		"全て" => [CvFlag.Msg051_SummaryRealStock, CvFlag.Msg052_SummaryUriKake, CvFlag.Msg053_SummaryKaiKake, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg057_SummaryKaiShi],
-		"在庫のみ" => [CvFlag.Msg051_SummaryRealStock],
+		"全て" => [CvFlag.Msg050_Summary, CvFlag.Msg052_SummaryUriKake, CvFlag.Msg053_SummaryKaiKake, CvFlag.Msg056_SummaryUriSei, CvFlag.Msg057_SummaryKaiShi],
+		"在庫のみ" => [CvFlag.Msg050_Summary],
 		"売掛のみ" => [CvFlag.Msg052_SummaryUriKake, CvFlag.Msg056_SummaryUriSei],
 		"買掛のみ" => [CvFlag.Msg053_SummaryKaiKake, CvFlag.Msg057_SummaryKaiShi],
 		_ => throw new ArgumentOutOfRangeException(nameof(updateTarget), updateTarget, "更新対象が不正です。")

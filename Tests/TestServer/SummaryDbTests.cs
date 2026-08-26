@@ -135,6 +135,32 @@ public class SummaryDbTests {
 	}
 
 	[TestMethod]
+	public async Task SummaryStock_UsesOwnClosingDayForImmediateUpdateAndRebuild() {
+		var db = PrepareAllStockTables();
+		db.Execute($"UPDATE {nameof(MasterSysman)} SET ShimeBi=@0", 20);
+		var rows = new[] {
+			CreatePurchase("20260720", 1, 1, EnumShiire.Shiire),
+			CreatePurchase("20260721", 1, 2, EnumShiire.Shiire),
+			CreatePurchase("20260820", 1, 4, EnumShiire.Shiire),
+			CreatePurchase("20260821", 1, 8, EnumShiire.Shiire),
+		};
+		var summaryDb = new SummaryDb(db);
+		foreach (var row in rows) {
+			db.Insert(row);
+			ApplyImmediate(summaryDb, row, false);
+		}
+
+		AssertSummaryStock(db, "202607", 1, 1, 1, 0, 0);
+		AssertSummaryStock(db, "202608", 1, 6, 6, 0, 0);
+		AssertSummaryStock(db, "202609", 1, 8, 8, 0, 0);
+		var immediate = GetStockSnapshot(db);
+
+		await RunRebuildAsync(new SummaryDb(db), "202607", "202609");
+
+		CollectionAssert.AreEqual(immediate, GetStockSnapshot(db));
+	}
+
+	[TestMethod]
 	public void CalcTran2SummaryStock_TransitOutAndReceipt_UpdateTransitWithoutPrematureRealStock() {
 		var db = PrepareStockTables();
 		db.CreateTable(typeof(Tran10IdoOut), true, false);
@@ -924,6 +950,8 @@ public class SummaryDbTests {
 
 	private ExDatabaseSqlite PrepareStockTables() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		db.CreateTable(typeof(MasterSysman), true, false);
+		db.Insert(new MasterSysman { ShimeBi = 99 });
 		db.CreateTable(typeof(SummaryStock), true, false);
 		db.CreateTable(typeof(SummaryRealStock), true, false);
 		// 引当数(ReserveQty)の源泉。Rebuildも通常更新もTranHaibunを読むので常に作成する

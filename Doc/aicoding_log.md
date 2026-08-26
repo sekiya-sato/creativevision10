@@ -1,3 +1,26 @@
+## [2026-08-26] 自社締日基準の在庫・掛計上月対応
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- `MasterSysman.ShimeBi` を基準に、在庫は `DenDay`、売掛・買掛は `KakeDay` から計上月を決定する。
+- 在庫・掛再更新画面に、指定した計上月へ対応する具体的な集計期間を表示する。
+
+### 実施内容
+- 共通の `ClosingMonthCalculator` を追加し、「日 > 締日なら翌月、それ以外は当月」の計上月判定と、計上月に属する実日付範囲の算出を集約した。
+- 在庫の通常更新・範囲再作成・引当再集計は `DenDay`、売掛・買掛の再集計とHHT後処理は `KakeDay` を使って自社締日基準の月へ集計するよう変更した。
+- 月次自動再集計の対象月も、実行日と自社締日から算出するよう変更した。
+- 在庫・掛再更新画面で自社締日を読み込み、対象年月の入力に応じて「yyyy/MM/dd ～ yyyy/MM/dd」の集計期間を表示するよう変更した。
+- 在庫再更新は `Msg050_Summary` で指定年月を伝票から再集計するよう変更し、既存 `SummaryStock` の合算のみで終わる経路を除いた。
+- 締日20の20日／21日境界、末締め、年越し、うるう日、およびSQLite SQLの他DB方言変換テストを追加した。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet test Tests\TestServer\TestServer.csproj --no-build --no-restore` 成功（231件、失敗0）。
+- `C:\gitroot\UT\vscmd.bat dotnet test Tests\TestSqlDialect\TestSqlDialect.csproj --no-restore` 成功（135件、失敗0）。
+- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore` 成功（警告0、エラー0）。
+- `StockKakeUpdateView.xaml` のXML構文、追加バインディングを確認。
+
 ## [2026-08-25] 接続先DB方言のクライアント通知
 
 ### Agent

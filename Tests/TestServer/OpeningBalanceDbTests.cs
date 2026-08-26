@@ -255,7 +255,7 @@ public class OpeningBalanceDbTests {
 		db.CreateTable(typeof(MasterTokui), true, false);
 		db.CreateTable(typeof(MasterMeisho), true, false);
 		db.CreateTable(typeof(MasterSysman), true, false);
-		db.Insert(new MasterSysman { FiscalStartDate = "20260701" });
+		db.Insert(new MasterSysman { FiscalStartDate = "20260701", ShimeBi = 99 });
 		db.Insert(new MasterTokui { Code = "00123", Shime1 = 99, TenType = 1 });
 		var idTokui = db.Single<MasterTokui>("where Code=@0", "00123").Id;
 
@@ -284,7 +284,7 @@ public class OpeningBalanceDbTests {
 		db.CreateTable(typeof(Tran06Nyukin), true, false);
 		db.CreateTable(typeof(MasterMeisho), true, false);
 		db.CreateTable(typeof(MasterSysman), true, false);
-		db.Insert(new MasterSysman { FiscalStartDate = "20260701" });
+		db.Insert(new MasterSysman { FiscalStartDate = "20260701", ShimeBi = 99 });
 
 		new OpeningBalanceDb(db).Import(Param(nameof(SummaryUriKake), "202606", [1],
 			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -150000, TotalSales = 150000 }]));

@@ -12,19 +12,41 @@ namespace CvDomainLogic;
 /// <see cref="SummaryStock"/> は <see cref="SumMonth"/> まで、<see cref="SummaryRealStock"/> は倉庫+SKU で集計する。
 /// </para>
 /// </summary>
-public readonly record struct ReserveKey(string SumMonth, long Id_Soko, long Id_Shohin, long Id_Col, long Id_Siz) {
-	/// <summary>配分行から集計キーを作る。DenDay(yyyyMMdd)の上6桁が SumMonth になる</summary>
+public readonly record struct ReserveKey(string DenDay, long Id_Soko, long Id_Shohin, long Id_Col, long Id_Siz) {
+	/// <summary>配分行から計算対象日付と在庫キーを作る。計上月は自社締日を取得後に決定する。</summary>
 	public static ReserveKey From(ITranReserve row) => new(
-		row.DenDay.Length >= 6 ? row.DenDay[..6] : row.DenDay,
+		row.DenDay,
 		row.Id_Soko, row.Id_Shohin, row.Id_Col, row.Id_Siz);
 }
 
 public class SummaryDb {
 	ExDatabase _db;
 	ILogger<SummaryDb> _logger;
+	int? _ownClosingDay;
 	public SummaryDb(ExDatabase db) {
 		_db = db;
 		_logger = new NLogExtender<SummaryDb>();
+	}
+
+	/// <summary>MasterSysmanから自社締日を取得する。同一処理中は同じ値を使用する。</summary>
+	public int GetOwnClosingDay() {
+		if (_ownClosingDay.HasValue) {
+			return _ownClosingDay.Value;
+		}
+		if (!_db.IsExistTable(typeof(MasterSysman))) {
+			throw new InvalidOperationException("MasterSysmanが存在しないため、自社締日を取得できません。");
+		}
+		var shime = _db.FirstOrDefault<int>($"SELECT ShimeBi FROM {nameof(MasterSysman)} ORDER BY Id LIMIT 1");
+		ClosingMonthCalculator.ValidateShime(shime);
+		_ownClosingDay = shime;
+		return shime;
+	}
+
+	private static string CreateKakeMonthSql(string targetDayExpression, int shime) {
+		ClosingMonthCalculator.ValidateShime(shime);
+		var currentMonth = $"substr({targetDayExpression}, 1, 6)";
+		var nextMonth = $"strftime('%Y%m', date(substr({targetDayExpression}, 1, 4) || '-' || substr({targetDayExpression}, 5, 2) || '-01', '+1 month'))";
+		return $"CASE WHEN CAST(substr({targetDayExpression}, 7, 2) AS INTEGER) > {shime} THEN {nextMonth} ELSE {currentMonth} END";
 	}
 	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(CalcDateTermParameter param) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
@@ -48,6 +70,8 @@ public class SummaryDb {
 		const string tempTableName = "TempSummaryStockRebuildKeys";
 		var cnt = 0;
 		var period = $"{param.DateYymmFrom}-{param.DateYymmTo}";
+		var shime = GetOwnClosingDay();
+		var targetDays = ClosingMonthCalculator.GetPeriodRange(param.DateYymmFrom, param.DateYymmTo, shime);
 		var transactionStarted = false;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
@@ -79,15 +103,15 @@ DELETE FROM SummaryStock
 WHERE SumMonth BETWEEN @0 AND @1;
 ";
 			cnt += ExecuteAndCounts(prepareSql, [param.DateYymmFrom, param.DateYymmTo], "CalcSummaryStockRange(delete)", "SummaryStock", period);
-			cnt += CalcSummaryStockTrn<Tran00Uriage>(param);
-			cnt += CalcSummaryStockTrn<Tran01Tenuri>(param);
-			cnt += CalcSummaryStockTrn<Tran03Shiire>(param);
-			cnt += CalcSummaryStockTrn<Tran05Ido>(param);
-			cnt += CalcSummaryStockTrn<Tran10IdoOut>(param);
-			cnt += CalcSummaryStockTrn<Tran11IdoIn>(param);
+			cnt += CalcSummaryStockTrn<Tran00Uriage>(targetDays, shime, period);
+			cnt += CalcSummaryStockTrn<Tran01Tenuri>(targetDays, shime, period);
+			cnt += CalcSummaryStockTrn<Tran03Shiire>(targetDays, shime, period);
+			cnt += CalcSummaryStockTrn<Tran05Ido>(targetDays, shime, period);
+			cnt += CalcSummaryStockTrn<Tran10IdoOut>(targetDays, shime, period);
+			cnt += CalcSummaryStockTrn<Tran11IdoIn>(targetDays, shime, period);
 			// 在庫調整は Tran61Chosei から再現する。集計テーブルへ直接書かず伝票にしているのは
 			// 「通常更新値 = Rebuild値」を保つため(仕様 8.4 F0/F2)
-			cnt += CalcSummaryStockTrn<Tran61Chosei>(param);
+			cnt += CalcSummaryStockTrn<Tran61Chosei>(targetDays, shime, period);
 			// AdjustQty は Tran61Chosei から再計算されるので復元対象から外す。
 			// CumulativeSu / StocktakeDdate / ActualQty は伝票から導出できない非Tran列なので復元する
 			var restoreSql = $@"
@@ -141,20 +165,19 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// <typeparam name="T"></typeparam>
 	/// <param name="param"></param>
 	/// <returns></returns>
-	private int CalcSummaryStockTrn<T>(CalcDateTermParameter param) where T : ITranDetail {
+	private int CalcSummaryStockTrn<T>(ClosingMonthCalculator.KakeMonthPeriod targetDays, int shime, string period) where T : ITranDetail {
 		var cnt = 0;
 		var tableName = typeof(T).Name;
 		var calcFlag = TranCalcBase.GetCalcSoko(tableName);
-		var sql = CreateSummaryStockSql(tableName, "Id_Soko", calcFlag, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
-		var period = $"{param.DateYymmFrom}-{param.DateYymmTo}";
+		var sql = CreateSummaryStockSql(tableName, "Id_Soko", calcFlag, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1", shime);
 		if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
-			cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tableName}:Id_Soko", period);
+			cnt += ExecuteAndCounts(sql, [targetDays.DayFrom, targetDays.DayTo], "CalcSummaryStock", $"{tableName}:Id_Soko", period);
 		}
 		if (typeof(ITranIdo).IsAssignableFrom(typeof(T))) {
 			var calcFlag2 = TranCalcBase.GetCalcIdosaki(tableName);
 			if (calcFlag2.Item1 != 0 || calcFlag2.Item2 != 0 || calcFlag2.Item3 != 0 || calcFlag2.Item4 != 0) {
-				sql = CreateSummaryStockSql(tableName, "Id_Ido", calcFlag2, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1");
-				cnt += ExecuteAndCounts(sql, [param.DateYymmFrom, param.DateYymmTo + "99"], "CalcSummaryStock", $"{tableName}:Id_Ido", period);
+				sql = CreateSummaryStockSql(tableName, "Id_Ido", calcFlag2, Common.GetVdate(), "t.DenDay BETWEEN @0 AND @1", shime);
+				cnt += ExecuteAndCounts(sql, [targetDays.DayFrom, targetDays.DayTo], "CalcSummaryStock", $"{tableName}:Id_Ido", period);
 			}
 		}
 		return cnt;
@@ -167,13 +190,14 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// <returns></returns>
 	public int CalcTran2SummaryStock(string tableName, string idSoko, long id, bool invertFlag) {
 		var cnt = 0;
+		var shime = GetOwnClosingDay();
 		var calcFlag = (idSoko == "Id_Ido") ? TranCalcBase.GetCalcIdosaki(tableName, invertFlag) : TranCalcBase.GetCalcSoko(tableName, invertFlag);
 		if (calcFlag.Item1 != 0) {
 			var sql = CreateRealStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0");
 			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:{idSoko}", $"Id={id}");
 		}
 		if (calcFlag.Item1 != 0 || calcFlag.Item2 != 0 || calcFlag.Item3 != 0 || calcFlag.Item4 != 0) {
-			var sql = CreateSummaryStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0", invertFlag);
+			var sql = CreateSummaryStockSql(tableName, idSoko, calcFlag, Common.GetVdate(), "t.Id=@0", shime, invertFlag);
 			cnt += ExecuteAndCounts(sql, [id], "CalcTran2SummaryStock", $"{tableName}:{idSoko}", $"Id={id}");
 		}
 		return cnt;
@@ -193,15 +217,20 @@ WHERE SumMonth BETWEEN @0 AND @1
 	public int CalcHaibun2Reserve(IEnumerable<ReserveKey> keys) {
 		var cnt = 0;
 		var vdate = Common.GetVdate();
-		var monthKeys = keys.Distinct().ToList();
+		var shime = GetOwnClosingDay();
+		var monthKeys = keys
+			.Select(k => (SumMonth: ClosingMonthCalculator.CalculateKakeMonth(k.DenDay, shime), k.Id_Soko, k.Id_Shohin, k.Id_Col, k.Id_Siz))
+			.Distinct()
+			.ToList();
 		if (monthKeys.Count == 0) {
 			return cnt;
 		}
 		foreach (var key in monthKeys) {
-			var sql = CreateReserveMonthSql(vdate,
+			var targetDays = ClosingMonthCalculator.GetPeriod(key.SumMonth, shime);
+			var sql = CreateReserveMonthSql(vdate, shime,
 				"SumMonth = @0 AND Id_Soko = @1 AND Id_Shohin = @2 AND Id_Col = @3 AND Id_Siz = @4 AND ReserveQty <> 0",
-				$"{ReserveTargetWhere} AND substr(h.DenDay, 1, 6) = @0 AND h.Id_Soko = @1 AND h.Id_Shohin = @2 AND h.Id_Col = @3 AND h.Id_Siz = @4");
-			cnt += ExecuteAndCounts(sql, [key.SumMonth, key.Id_Soko, key.Id_Shohin, key.Id_Col, key.Id_Siz],
+				$"{ReserveTargetWhere} AND h.Id_Soko = @1 AND h.Id_Shohin = @2 AND h.Id_Col = @3 AND h.Id_Siz = @4 AND h.DenDay BETWEEN @5 AND @6");
+			cnt += ExecuteAndCounts(sql, [key.SumMonth, key.Id_Soko, key.Id_Shohin, key.Id_Col, key.Id_Siz, targetDays.DayFrom, targetDays.DayTo],
 				"CalcHaibun2Reserve", "SummaryStock:ReserveQty", key.SumMonth);
 		}
 		// SummaryRealStockは年月を持たないので、同一の倉庫+SKUを複数月ぶん重複実行しない
@@ -223,7 +252,8 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// </summary>
 	public int CalcReserveQtyAll() {
 		var vdate = Common.GetVdate();
-		var cnt = ExecuteAndCounts(CreateReserveMonthSql(vdate, "ReserveQty <> 0", ReserveTargetWhere),
+		var shime = GetOwnClosingDay();
+		var cnt = ExecuteAndCounts(CreateReserveMonthSql(vdate, shime, "ReserveQty <> 0", ReserveTargetWhere),
 			[], "CalcReserveQtyAll", "SummaryStock:ReserveQty", "");
 		cnt += ExecuteAndCounts(CreateReserveRealSql(vdate, "ReserveQty <> 0", ReserveTargetWhere),
 			[], "CalcReserveQtyAll", "SummaryRealStock:ReserveQty", "");
@@ -252,14 +282,14 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// SummaryStock(月次)の引当数を TranHaibun から引き直すSQL。「対象を0クリア」→「集計値を反映」の2文。
 	/// 引当が0になったキーに0行を作らないよう HAVING で除外し、在庫実績が無いキーはINSERTで新規作成する。
 	/// </summary>
-	private static string CreateReserveMonthSql(long vdate, string clearWhere, string haibunWhere) => $@"
+	private static string CreateReserveMonthSql(long vdate, int shime, string clearWhere, string haibunWhere) => $@"
 UPDATE SummaryStock
 SET ReserveQty = 0, Vdu = {vdate}
 WHERE {clearWhere};
 
 INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, ReserveQty)
 SELECT
-  substr(h.DenDay, 1, 6) AS SumMonth,
+	  {CreateKakeMonthSql("h.DenDay", shime)} AS SumMonth,
   h.Id_Soko,
   h.Id_Shohin,
   h.Id_Col,
@@ -318,13 +348,13 @@ SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
 		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
 		return updatedCount;
 	}
-	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause, bool invertFlag = false) {
+	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause, int shime, bool invertFlag = false) {
 		// 調整数は在庫調整伝票(Tran61Chosei)だけが積む。移動先軸(Id_Ido)では調整は発生しない
 		var adjustFlag = idSoko == nameof(ITranIdo.Id_Ido) ? 0 : TranCalcBase.GetCalcAdjust(tableName, invertFlag);
 		return $@"
 INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, InQty, OutQty, TransitQty, AdjustQty)
 SELECT
-  substr(t.DenDay, 1, 6) AS SumMonth,
+	  {CreateKakeMonthSql("t.DenDay", shime)} AS SumMonth,
   t.{idSoko} AS Id_Soko,
   json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
   json_extract(j.value, '$.Id_Col')    AS Id_Col,
@@ -637,17 +667,28 @@ WHERE SumMonth <= @0;
 	/// <c>KakeDay</c> のインデックスが効く形にしている。
 	/// </para>
 	/// </summary>
-	string ExtendToMonth(string summaryTable, string denTable, string kinTable, string dateToYyyymm) {
-		var sql = @$"
-SELECT MAX(m) FROM (
-	SELECT MAX(DenMonth) AS m FROM {summaryTable} WHERE DenMonth > @0
-	UNION ALL
-	SELECT MAX(substr(KakeDay, 1, 6)) FROM {denTable} WHERE KakeDay > @0 || '99'
-	UNION ALL
-	SELECT MAX(substr(KakeDay, 1, 6)) FROM {kinTable} WHERE KakeDay > @0 || '99'
-)";
-		var found = _db.FirstOrDefault<string>(sql, dateToYyyymm);
-		if (string.IsNullOrEmpty(found) || string.CompareOrdinal(found, dateToYyyymm) <= 0) return dateToYyyymm;
+	string ExtendToMonth(string summaryTable, string denTable, string kinTable, string dateToYyyymm, int shime) {
+		var candidates = new List<string> { dateToYyyymm };
+		var summaryMonthSql = $@"
+SELECT MAX(DenMonth)
+FROM {summaryTable}
+WHERE DenMonth > @0
+";
+		var summaryMonth = _db.FirstOrDefault<string>(summaryMonthSql, dateToYyyymm);
+		if (!string.IsNullOrEmpty(summaryMonth)) {
+			candidates.Add(summaryMonth);
+		}
+
+		var cutoffDay = ClosingMonthCalculator.GetPeriod(dateToYyyymm, shime).DayTo;
+		foreach (var tableName in new[] { denTable, kinTable }) {
+			var maxDay = _db.FirstOrDefault<string>($"SELECT MAX(KakeDay) FROM {tableName} WHERE KakeDay > @0", cutoffDay);
+			if (!string.IsNullOrEmpty(maxDay)) {
+				candidates.Add(ClosingMonthCalculator.CalculateKakeMonth(maxDay, shime));
+			}
+		}
+
+		var found = candidates.Max(StringComparer.Ordinal)!;
+		if (string.CompareOrdinal(found, dateToYyyymm) <= 0) return dateToYyyymm;
 		_logger.LogInformation(
 			"{Table} の再計算範囲を繰越の整合のため {To} から {Extended} へ延長しました", summaryTable, dateToYyyymm, found);
 		return found;
@@ -688,19 +729,25 @@ SELECT MAX(m) FROM (
 	public int CalcSummaryUriKake(string DatefromYyyymm, string DateToYyyymm) {
 		var cnt = 0;
 		// 期首年月(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
-		var fiscalMonth = GetFiscalStartDate()[..6];
+		var fiscalStart = GetFiscalStartDate();
+		var fiscalMonth = fiscalStart[..6];
 		if (string.CompareOrdinal(DateToYyyymm, fiscalMonth) < 0) return cnt;
 		if (string.CompareOrdinal(DatefromYyyymm, fiscalMonth) < 0) DatefromYyyymm = fiscalMonth;
 		const string deleteSql = "DELETE FROM SummaryUriKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
-		var toMonth = ExtendToMonth("SummaryUriKake", "Tran00Uriage", "Tran06Nyukin", DateToYyyymm);
+		var shime = GetOwnClosingDay();
+		var toMonth = ExtendToMonth("SummaryUriKake", "Tran00Uriage", "Tran06Nyukin", DateToYyyymm, shime);
+		var targetDays = ClosingMonthCalculator.GetPeriodRange(DatefromYyyymm, toMonth, shime);
+		if (string.CompareOrdinal(targetDays.DayTo, fiscalStart) < 0) return cnt;
+		var dayFrom = string.CompareOrdinal(targetDays.DayFrom, fiscalStart) < 0 ? fiscalStart : targetDays.DayFrom;
+		var kakeMonthSql = CreateKakeMonthSql("t.KakeDay", shime);
 		var sql = @$"
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
 ),
 movements AS (
 	SELECT
-		substr(t.KakeDay, 1, 6) AS DenMonth,
+		{kakeMonthSql} AS DenMonth,
 		t.Id_Tokui,
 		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Uriage,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
@@ -708,12 +755,12 @@ movements AS (
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran00Uriage AS t
-	WHERE {KakeDenWhere} AND substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Tokui
 	UNION ALL
 	-- 入金は有効JSONの明細だけを正値源とする。不正JSONは KinMeisaiFrom により空明細となる。
 	SELECT
-		substr(t.KakeDay, 1, 6) AS DenMonth,
+		{kakeMonthSql} AS DenMonth,
 		t.Id_Torisaki AS Id_Tokui,
 		0, 0, 0, 0,
 		{KinBucket("01")} AS Cash,
@@ -723,7 +770,7 @@ movements AS (
 		{KinBucket("99")} AS Other
 	FROM Tran06Nyukin AS t, {KinMeisaiFrom}
 	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
-	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	WHERE t.KakeDay BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Torisaki
 ),
 monthly AS (
@@ -756,7 +803,7 @@ previousBalance AS (
 		SELECT MAX(p.DenMonth)
 		FROM SummaryUriKake AS p
 		WHERE p.Id_Tokui = s.Id_Tokui
-		  AND p.DenMonth < @0
+		  AND p.DenMonth < @2
 	)
 )
 INSERT INTO SummaryUriKake (
@@ -787,10 +834,10 @@ SELECT
 FROM calculated AS c
 LEFT JOIN previousBalance AS p ON p.Id_Tokui = c.Id_Tokui;
 ";
-		var period = $"{DatefromYyyymm}-{toMonth}";
+		var period = $"{DatefromYyyymm}-{toMonth} ({dayFrom}-{targetDays.DayTo},締日={shime})";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryUriKake(delete)", "SummaryUriKake", period);
-		cnt += ExecuteAndCounts(sql, [DatefromYyyymm, toMonth], "CalcSummaryUriKake", "SummaryUriKake", period);
+		cnt += ExecuteAndCounts(sql, [dayFrom, targetDays.DayTo, DatefromYyyymm], "CalcSummaryUriKake", "SummaryUriKake", period);
 		_db.CompleteTransaction();
 		return cnt;
 	}
@@ -1097,19 +1144,25 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 	public int CalcSummaryKaiKake(string DatefromYyyymm, string DateToYyyymm) {
 		var cnt = 0;
 		// 期首年月(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
-		var fiscalMonth = GetFiscalStartDate()[..6];
+		var fiscalStart = GetFiscalStartDate();
+		var fiscalMonth = fiscalStart[..6];
 		if (string.CompareOrdinal(DateToYyyymm, fiscalMonth) < 0) return cnt;
 		if (string.CompareOrdinal(DatefromYyyymm, fiscalMonth) < 0) DatefromYyyymm = fiscalMonth;
 		const string deleteSql = "DELETE FROM SummaryKaiKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
-		var toMonth = ExtendToMonth("SummaryKaiKake", "Tran03Shiire", "Tran07Shiharai", DateToYyyymm);
+		var shime = GetOwnClosingDay();
+		var toMonth = ExtendToMonth("SummaryKaiKake", "Tran03Shiire", "Tran07Shiharai", DateToYyyymm, shime);
+		var targetDays = ClosingMonthCalculator.GetPeriodRange(DatefromYyyymm, toMonth, shime);
+		if (string.CompareOrdinal(targetDays.DayTo, fiscalStart) < 0) return cnt;
+		var dayFrom = string.CompareOrdinal(targetDays.DayFrom, fiscalStart) < 0 ? fiscalStart : targetDays.DayFrom;
+		var kakeMonthSql = CreateKakeMonthSql("t.KakeDay", shime);
 		var sql = @$"
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
 ),
 movements AS (
 	SELECT
-		substr(t.KakeDay, 1, 6) AS DenMonth,
+		{kakeMonthSql} AS DenMonth,
 		t.Id_Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
@@ -1117,12 +1170,12 @@ movements AS (
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran03Shiire AS t
-	WHERE {KakeDenWhere} AND substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Shiire
 	UNION ALL
 	-- 支払は有効JSONの明細だけを正値源とする。不正JSONは KinMeisaiFrom により空明細となる。
 	SELECT
-		substr(t.KakeDay, 1, 6) AS DenMonth,
+		{kakeMonthSql} AS DenMonth,
 		t.Id_Torisaki AS Id_Shiire,
 		0, 0, 0, 0,
 		{KinBucket("01")} AS Cash,
@@ -1132,7 +1185,7 @@ movements AS (
 		{KinBucket("99")} AS Other
 	FROM Tran07Shiharai AS t, {KinMeisaiFrom}
 	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
-	WHERE substr(t.KakeDay, 1, 6) BETWEEN @0 AND @1
+	WHERE t.KakeDay BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Torisaki
 ),
 monthly AS (
@@ -1165,7 +1218,7 @@ previousBalance AS (
 		SELECT MAX(p.DenMonth)
 		FROM SummaryKaiKake AS p
 		WHERE p.Id_Shiire = s.Id_Shiire
-		  AND p.DenMonth < @0
+		  AND p.DenMonth < @2
 	)
 )
 INSERT INTO SummaryKaiKake (
@@ -1196,10 +1249,10 @@ SELECT
 FROM calculated AS c
 LEFT JOIN previousBalance AS p ON p.Id_Shiire = c.Id_Shiire;
 ";
-		var period = $"{DatefromYyyymm}-{toMonth}";
+		var period = $"{DatefromYyyymm}-{toMonth} ({dayFrom}-{targetDays.DayTo},締日={shime})";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryKaiKake(delete)", "SummaryKaiKake", period);
-		cnt += ExecuteAndCounts(sql, [DatefromYyyymm, toMonth], "CalcSummaryKaiKake", "SummaryKaiKake", period);
+		cnt += ExecuteAndCounts(sql, [dayFrom, targetDays.DayTo, DatefromYyyymm], "CalcSummaryKaiKake", "SummaryKaiKake", period);
 		_db.CompleteTransaction();
 		return cnt;
 	}

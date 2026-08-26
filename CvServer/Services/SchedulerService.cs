@@ -337,8 +337,10 @@ public class SchedulerService : ISchedulerService {
 	/// </summary>
 	private async Task<AutoexecTaskResult> ExecuteMonthlyResummaryCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
 		var now = DateTime.Now;
-		string[] months = [now.AddMonths(-1).ToString("yyyyMM"), now.ToString("yyyyMM")];
 		var summaryDb = new SummaryDb(db);
+		var shime = summaryDb.GetOwnClosingDay();
+		var currentKakeMonth = ClosingMonthCalculator.CalculateKakeMonth(now, shime);
+		string[] months = [ClosingMonthCalculator.AddMonths(currentKakeMonth, -1), currentKakeMonth];
 		ResummaryGroup[] groups = [
 			new("在庫", summaryDb.SummaryAllAsyncStream),
 			new("売掛", summaryDb.SummaryUriKakeAsyncStream),

@@ -136,6 +136,8 @@ public class ShippingDbTests {
 	// ===== 準備 =====
 
 	private void PrepareTables() {
+		Db.CreateTable(typeof(MasterSysman), true, false);
+		Db.Insert(new MasterSysman { ShimeBi = 99 });
 		Db.CreateTable(typeof(TranHaibun), true, false);
 		Db.CreateTable(typeof(Tran00Uriage), true, false);
 		Db.CreateTable(typeof(Tran10IdoOut), true, false);

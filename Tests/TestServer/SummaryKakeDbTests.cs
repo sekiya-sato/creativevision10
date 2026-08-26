@@ -176,6 +176,22 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
+	public void CalcSummaryUriKake_UsesOwnClosingDayForDenMonth() {
+		var db = PrepareUriKakeTables();
+		db.Execute($"UPDATE {nameof(MasterSysman)} SET ShimeBi=@0", 20);
+		db.Insert(CreateUriage("20260720", 1, EnumUri00.Uriage, 1, 0));
+		db.Insert(CreateUriage("20260721", 1, EnumUri00.Uriage, 2, 0));
+		db.Insert(CreateUriage("20260820", 1, EnumUri00.Uriage, 4, 0));
+		db.Insert(CreateUriage("20260821", 1, EnumUri00.Uriage, 8, 0));
+
+		new SummaryDb(db).CalcSummaryUriKake("202607", "202609");
+
+		Assert.AreEqual(1, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607").Uriage);
+		Assert.AreEqual(6, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202608").Uriage);
+		Assert.AreEqual(8, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202609").Uriage);
+	}
+
+	[TestMethod]
 	public void CalcSummaryUriKake_RecalculatesMonthsAfterTargetPeriod() {
 		var db = PrepareUriKakeTables();
 		var summaryDb = new SummaryDb(db);
@@ -514,6 +530,22 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
+	public void CalcSummaryKaiKake_UsesOwnClosingDayForDenMonth() {
+		var db = PrepareKaiKakeTables();
+		db.Execute($"UPDATE {nameof(MasterSysman)} SET ShimeBi=@0", 20);
+		db.Insert(CreateShiire("20260720", 1, EnumShiire.Shiire, 1, 0));
+		db.Insert(CreateShiire("20260721", 1, EnumShiire.Shiire, 2, 0));
+		db.Insert(CreateShiire("20260820", 1, EnumShiire.Shiire, 4, 0));
+		db.Insert(CreateShiire("20260821", 1, EnumShiire.Shiire, 8, 0));
+
+		new SummaryDb(db).CalcSummaryKaiKake("202607", "202609");
+
+		Assert.AreEqual(1, db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607").Shiire);
+		Assert.AreEqual(6, db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202608").Shiire);
+		Assert.AreEqual(8, db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202609").Shiire);
+	}
+
+	[TestMethod]
 	public void CalcSummaryKaiKake_RecalculatesMonthsAfterTargetPeriod() {
 		var db = PrepareKaiKakeTables();
 		var summaryDb = new SummaryDb(db);
@@ -710,8 +742,7 @@ public class SummaryKakeDbTests {
 		var kai = SummaryRebuildRequestPlanner.CreateDescriptors("買掛のみ", ["202607", "202608"], [], [31], "202607", "202608");
 
 		CollectionAssert.AreEqual(new[] {
-			new SummaryRebuildRequestDescriptor(CvFlag.Msg051_SummaryRealStock, "202607", "202608", "202607"),
-			new SummaryRebuildRequestDescriptor(CvFlag.Msg051_SummaryRealStock, "202607", "202608", "202608"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg050_Summary, "202607", "202608"),
 			new SummaryRebuildRequestDescriptor(CvFlag.Msg052_SummaryUriKake, "202607", "202608"),
 			new SummaryRebuildRequestDescriptor(CvFlag.Msg053_SummaryKaiKake, "202607", "202608"),
 			new SummaryRebuildRequestDescriptor(CvFlag.Msg056_SummaryUriSei, "202607", "202608", "202607", 20),
@@ -722,8 +753,7 @@ public class SummaryKakeDbTests {
 			new SummaryRebuildRequestDescriptor(CvFlag.Msg057_SummaryKaiShi, "202607", "202608", "202608", 31),
 		}, all.ToArray());
 		CollectionAssert.AreEqual(new[] {
-			new SummaryRebuildRequestDescriptor(CvFlag.Msg051_SummaryRealStock, "202607", "202608", "202607"),
-			new SummaryRebuildRequestDescriptor(CvFlag.Msg051_SummaryRealStock, "202607", "202608", "202608"),
+			new SummaryRebuildRequestDescriptor(CvFlag.Msg050_Summary, "202607", "202608"),
 		}, stock.ToArray());
 		CollectionAssert.AreEqual(new[] {
 			new SummaryRebuildRequestDescriptor(CvFlag.Msg052_SummaryUriKake, "202607", "202608"),
@@ -751,10 +781,10 @@ public class SummaryKakeDbTests {
 		var kai = SummaryRebuildRequestPlanner.CreateDescriptors("買掛のみ", ["202607", "202608"], [], [], "202607", "202608");
 
 		CollectionAssert.AreEqual(new[] {
-			CvFlag.Msg051_SummaryRealStock, CvFlag.Msg051_SummaryRealStock,
+			CvFlag.Msg050_Summary,
 			CvFlag.Msg052_SummaryUriKake, CvFlag.Msg053_SummaryKaiKake,
 		}, all.Select(x => x.Flag).ToArray());
-		CollectionAssert.AreEqual(new[] { CvFlag.Msg051_SummaryRealStock, CvFlag.Msg051_SummaryRealStock }, stock.Select(x => x.Flag).ToArray());
+		CollectionAssert.AreEqual(new[] { CvFlag.Msg050_Summary }, stock.Select(x => x.Flag).ToArray());
 		CollectionAssert.AreEqual(new[] { CvFlag.Msg052_SummaryUriKake }, uri.Select(x => x.Flag).ToArray());
 		CollectionAssert.AreEqual(new[] { CvFlag.Msg053_SummaryKaiKake }, kai.Select(x => x.Flag).ToArray());
 		Assert.IsFalse(all.Any(x => x.Flag is CvFlag.Msg056_SummaryUriSei or CvFlag.Msg057_SummaryKaiShi));
@@ -873,6 +903,7 @@ public class SummaryKakeDbTests {
 
 	private ExDatabaseSqlite PrepareUriKakeTables() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		AddOwnClosingDay(db);
 		db.CreateTable(typeof(SummaryUriKake), true, false);
 		db.CreateTable(typeof(Tran00Uriage), true, false);
 		db.CreateTable(typeof(Tran06Nyukin), true, false);
@@ -905,7 +936,7 @@ public class SummaryKakeDbTests {
 	/// </summary>
 	private static void AddFiscalStartDate(ExDatabaseSqlite db, string fiscalStartYmd) {
 		db.CreateTable(typeof(MasterSysman), true, false);
-		db.Insert(new MasterSysman { FiscalStartDate = fiscalStartYmd });
+		db.Insert(new MasterSysman { FiscalStartDate = fiscalStartYmd, ShimeBi = 99 });
 	}
 
 	private static void AssertDayToNullIsRejected(ExDatabaseSqlite db, string tableName) {
@@ -931,11 +962,17 @@ public class SummaryKakeDbTests {
 
 	private ExDatabaseSqlite PrepareKaiKakeTables() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		AddOwnClosingDay(db);
 		db.CreateTable(typeof(SummaryKaiKake), true, false);
 		db.CreateTable(typeof(Tran03Shiire), true, false);
 		db.CreateTable(typeof(Tran07Shiharai), true, false);
 		InsertKinMaster(db);
 		return db;
+	}
+
+	private static void AddOwnClosingDay(ExDatabaseSqlite db) {
+		db.CreateTable(typeof(MasterSysman), true, false);
+		db.Insert(new MasterSysman { ShimeBi = 99 });
 	}
 
 	/// <summary>

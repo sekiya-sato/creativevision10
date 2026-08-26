@@ -528,6 +528,8 @@ public class WriteEffectRunnerTests {
 	};
 
 	private void PrepareStockTables() {
+		Db.CreateTable(typeof(MasterSysman), true, false);
+		Db.Insert(new MasterSysman { ShimeBi = 99 });
 		Db.CreateTable(typeof(SummaryStock), true, false);
 		Db.CreateTable(typeof(SummaryRealStock), true, false);
 		Db.CreateTable(typeof(TranHaibun), true, false);

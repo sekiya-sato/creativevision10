@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using Grpc.Core;
 using System.Collections;
@@ -26,6 +27,9 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 	public partial string UpdateTarget { get; set; } = "全て";
 
 	[ObservableProperty]
+	public partial string ClosingPeriodText { get; set; } = "自社締日を読み込んでいます...";
+
+	[ObservableProperty]
 	public partial string StatusMessage { get; set; } = "年月を yyyy/MM 形式で入力し、実行を押してください。";
 
 	[ObservableProperty]
@@ -34,8 +38,43 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial int ProgressValue { get; set; }
 
+	private int ownClosingDay;
+
+	[RelayCommand]
+	private async Task InitAsync(CancellationToken cancellationToken) {
+		try {
+			var rows = await QuerySqlListAsync<MasterSysman>(
+				$"SELECT ShimeBi FROM {nameof(MasterSysman)} ORDER BY Id LIMIT 1",
+				[],
+				cancellationToken);
+			if (rows.Count == 0) {
+				throw new InvalidOperationException("システム管理マスタに自社締日がありません。");
+			}
+			ClosingMonthCalculator.ValidateShime(rows[0].ShimeBi);
+			ownClosingDay = rows[0].ShimeBi;
+			UpdateClosingPeriodText();
+		}
+		catch (OperationCanceledException) {
+			ClosingPeriodText = "自社締日の読み込みをキャンセルしました。";
+		}
+		catch (Exception ex) {
+			ClosingPeriodText = $"自社締日の取得に失敗しました: {ex.Message}";
+			StatusMessage = ClosingPeriodText;
+			MessageEx.ShowErrorDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
+		}
+	}
+
+	partial void OnYearMonthFromChanged(string value) => UpdateClosingPeriodText();
+
+	partial void OnYearMonthToChanged(string value) => UpdateClosingPeriodText();
+
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task ExecuteAsync(CancellationToken cancellationToken) {
+		if (ownClosingDay == 0) {
+			StatusMessage = "自社締日を取得できないため、実行できません。";
+			MessageEx.ShowWarningDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
+			return;
+		}
 		if (!TryParseYearMonth(YearMonthFrom, out string yymmFrom)) {
 			StatusMessage = $"開始年月の形式が不正です: {YearMonthFrom}";
 			MessageEx.ShowWarningDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
@@ -127,6 +166,25 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		return true;
 	}
 
+	private void UpdateClosingPeriodText() {
+		if (ownClosingDay == 0) {
+			return;
+		}
+		if (!TryParseYearMonth(YearMonthFrom, out var yymmFrom)
+			|| !TryParseYearMonth(YearMonthTo, out var yymmTo)
+			|| string.CompareOrdinal(yymmFrom, yymmTo) > 0) {
+			ClosingPeriodText = "対象年月を正しく入力すると集計期間を表示します。";
+			return;
+		}
+
+		var period = ClosingMonthCalculator.GetPeriodRange(yymmFrom, yymmTo, ownClosingDay);
+		var shimeText = ownClosingDay == (int)EnumShime.DayLast ? "末日" : $"{ownClosingDay}日";
+		ClosingPeriodText = $"自社締日: {shimeText}　集計期間: {FormatDay(period.DayFrom)} ～ {FormatDay(period.DayTo)}";
+	}
+
+	private static string FormatDay(string yyyymmdd) =>
+		DateTime.ParseExact(yyyymmdd, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+
 	private static string BuildConfirmMessage(RebuildRequestSnapshot snapshot) {
 		string message = snapshot.TargetMonths.Count == 1
 			? $"{snapshot.TargetMonths[0]} の{snapshot.UpdateTarget}を実行しますか？"
@@ -155,10 +213,10 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 	}
 
 	private static (string Name, CvMsg Message) CreateSummaryRequest(SummaryRebuildRequestDescriptor descriptor) => descriptor switch {
-		{ Flag: CvFlag.Msg051_SummaryRealStock, TargetMonth: { } targetMonth } => ($"在庫 {targetMonth}", CreateSummaryMessage(
-			CvFlag.Msg051_SummaryRealStock,
-			typeof(CalcDateParameter),
-			new CalcDateParameter(targetMonth))),
+		{ Flag: CvFlag.Msg050_Summary } => ($"在庫 {descriptor.YearMonthFrom} ～ {descriptor.YearMonthTo}", CreateSummaryMessage(
+			CvFlag.Msg050_Summary,
+			typeof(CalcDateTermParameter),
+			new CalcDateTermParameter(descriptor.YearMonthFrom, descriptor.YearMonthTo))),
 		{ Flag: CvFlag.Msg052_SummaryUriKake } => ($"売掛 {descriptor.YearMonthFrom} ～ {descriptor.YearMonthTo}", CreateSummaryMessage(
 			CvFlag.Msg052_SummaryUriKake,
 			typeof(CalcDateTermParameter),

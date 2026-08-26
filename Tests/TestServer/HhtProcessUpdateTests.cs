@@ -522,7 +522,7 @@ public class HhtProcessUpdateTests {
 
 	private void PrepareMasters() {
 		// 消費税率10%
-		Db.Insert(new MasterSysman { Jsub = [new MasterSysTax { Id = 1, TaxRate = 10, DateFrom = string.Empty, TaxNewRate = 0 }] });
+		Db.Insert(new MasterSysman { ShimeBi = 99, Jsub = [new MasterSysTax { Id = 1, TaxRate = 10, DateFrom = string.Empty, TaxNewRate = 0 }] });
 
 		_idSoko = InsertTokui(SokoCode, (int)EnumTokui._0_Soko, isZaiko: 1);
 		_idTenpo = InsertTokui(TenpoCode, (int)EnumTokui._6_Tenpo, isZaiko: 1);
