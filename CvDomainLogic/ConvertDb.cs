@@ -52,6 +52,7 @@ public partial class ConvertDb {
 		(nameof(CnvTran06Nyukin), static (db, isInit) => db.CnvTran06Nyukin(isInit)),
 		(nameof(CnvTran07Shiharai), static (db, isInit) => db.CnvTran07Shiharai(isInit)),
 		(nameof(CnvTran60Tana), static (db, isInit) => db.CnvTran60Tana(isInit)),
+		(nameof(CnvTran61Chosei), static (db, isInit) => db.CnvTran61Chosei(isInit)),
 		(nameof(CnvTran10Ido), static (db, isInit) => db.CnvTran10Ido(isInit)),
 		(nameof(CnvTran11IdoIn), static (db, isInit) => db.CnvTran11IdoIn(isInit)),
 		(nameof(CnvTran12Jyuchu), static (db, isInit) => db.CnvTran12Jyuchu(isInit)),

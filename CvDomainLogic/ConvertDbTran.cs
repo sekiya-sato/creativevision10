@@ -278,6 +278,41 @@ public partial class ConvertDb {
 			});
 	}
 	/// <summary>
+	/// 在庫調整変換（旧伝票処理区分18）
+	/// </summary>
+	/// <remarks>
+	/// 旧マスタ名称区分 T18（入庫/出庫/盗難/破損/検品ミス/その他）は CV10 の調整理由区分 CHR と
+	/// コード番号が完全一致するため、そのまま <see cref="MasterMeisho"/>(Kubun="CHR") を引ける。
+	/// 旧「取引先CD1」は倉庫CDの重複入力（対向エンティティなし）のため使わない（倉庫CDのみ見る）。
+	/// 区分はすべて強制調整(<see cref="EnumChosei.Kyosei"/>)固定とする。旧18は棚卸確定由来ではなく
+	/// 個別入力の調整のため。数量は旧データでは絶対値のため、<see cref="ChoseiRiyu.CalcFlag(string)"/>
+	/// （10-19:入庫方向 / 20-29:出庫方向）で符号を掛けて明細へ積む。
+	/// 金額・上代・下代・消費税はCV10の在庫調整が金額を持たない設計のため移行しない（常に0）。
+	/// </remarks>
+	public int CnvTran61Chosei(bool isInit = true) {
+		return ConvertTranHeadersByRange(
+			18,
+			isInit,
+			rec => {
+				var shain = getCodeNameView<MasterShain>(getString(rec, "入力社員CD")) ?? new();
+				var soko = getCodeNameView<MasterTokui>(getString(rec, "倉庫CD")) ?? new();
+				var meisaiList = BuildChoseiMeisaiList(rec);
+
+				return new Tran61Chosei() {
+					DenDay = getString(rec, "在庫計上日", "19010101"),
+					EnKubun = EnumChosei.Kyosei,
+					Id_Riyu = getChoseiRiyuId(getString(rec, "取引区分")),
+					Memo = getString(rec, "メモ"),
+					Jmeisai = meisaiList,
+					Id_Shain = shain.Sid,
+					VShain = shain,
+					Id_Soko = soko.Sid,
+					VSoko = soko,
+					SuTotal = meisaiList?.Sum(m => m.Su) ?? 0,
+				};
+			});
+	}
+	/// <summary>
 	/// 積送移動変換
 	/// </summary>
 	public int CnvTran10Ido(bool isInit = true) {
@@ -567,6 +602,18 @@ WHERE EXISTS (
 			return null;
 		return getMeisho("KIN", kinCode);
 	}
+	/// <summary>
+	/// 旧「取引区分」(T18)から CHR区分の <see cref="MasterMeisho"/> Id を引く。
+	/// コード番号がT18/CHRで一致するためそのまま引ける。マスタに無いコード（未知の理由コード）は
+	/// <see cref="ChoseiRiyu.CalcFlag(string)"/> の符号帯（10-19/20-29）に応じて代表コード(10/20)へ丸める。
+	/// </summary>
+	long getChoseiRiyuId(string kubunCode) {
+		var riyu = getMeisho(ChoseiRiyu.Kubun, kubunCode);
+		if (riyu != null)
+			return riyu.Id;
+		var fallbackCode = ChoseiRiyu.CalcFlag(kubunCode) == 1 ? "10" : "20";
+		return getMeisho(ChoseiRiyu.Kubun, fallbackCode)?.Id ?? 0;
+	}
 	int getHeaderNebiki(Dictionary<string, object> rec) {
 		return getDataInt(rec, "値引1") + getDataInt(rec, "値引2") + getDataInt(rec, "値引3");
 	}
@@ -626,6 +673,45 @@ WHERE EXISTS (
 				Nebiki00 = nebiki00,
 				Nebiki01 = nebiki01,
 				Nebiki02 = nebiki02,
+			});
+		}
+
+		return meisaiList;
+	}
+	/// <summary>
+	/// 在庫調整(<see cref="Tran61Chosei"/>)向け明細リストの作成。
+	/// 旧数量は絶対値のため、明細取引区分(=T18/CHRコード)の符号帯で符号を掛けて積む。
+	/// CV10の在庫調整は金額を持たない設計のため、単価・金額・上代・下代・値引・税は移行しない。
+	/// </summary>
+	List<Tran99Meisai>? BuildChoseiMeisaiList(Dictionary<string, object> rec) {
+		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataInt(rec, "SEQ_NO"));
+		if (detailRows.Count == 0)
+			return null;
+
+		List<Tran99Meisai> meisaiList = new(detailRows.Count);
+		foreach (var detailRec in detailRows) {
+			var shohinCode = getString(detailRec, "商品CD");
+			var colCode = getString(detailRec, "色CD");
+			var sizCode = getString(detailRec, "サイズCD");
+			var shohin = getMaster<MasterShohin>(shohinCode);
+			var col = getMeisho("COL", colCode);
+			var siz = getMeisho(shohin?.SizeKu ?? string.Empty, sizCode);
+			var sign = ChoseiRiyu.CalcFlag(getString(detailRec, "明細取引区分"));
+
+			meisaiList.Add(new Tran99Meisai() {
+				No = getDataInt(detailRec, "行NO"),
+				Id_Shohin = shohin?.Id ?? 0,
+				Code_Shohin = shohin?.Code ?? shohinCode,
+				Mei_Shohin = shohin?.Name ?? getString(detailRec, "明細名称"),
+				JanCode = getString(detailRec, "JANCODE"),
+				Id_Col = col?.Id ?? 0,
+				Code_Col = col?.Code ?? colCode,
+				Mei_Col = col?.Name ?? string.Empty,
+				Id_Siz = siz?.Id ?? 0,
+				Code_Siz = siz?.Code ?? sizCode,
+				Mei_Siz = siz?.Name ?? string.Empty,
+				Su = sign * getDataInt(detailRec, "数量"),
+				Memo = getString(detailRec, "明細メモ"),
 			});
 		}
 
