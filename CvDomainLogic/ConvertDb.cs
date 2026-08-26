@@ -47,6 +47,7 @@ public partial class ConvertDb {
 		(nameof(CnvAfterMasterAddress), static (db, isInit) => db.CnvAfterMasterAddress(isInit)),
 		(nameof(CnvTran00HonUri), static (db, isInit) => db.CnvTran00HonUri(isInit)),
 		(nameof(CnvTran01TenUri), static (db, isInit) => db.CnvTran01TenUri(isInit)),
+		/* 旧 伝票処理区分 02 は、生地付属仕入で、cv10では使用しない CnvTran02KijiShiire */
 		(nameof(CnvTran03Shiire), static (db, isInit) => db.CnvTran03Shiire(isInit)),
 		(nameof(CnvTran05Ido), static (db, isInit) => db.CnvTran05Ido(isInit)),
 		(nameof(CnvTran06Nyukin), static (db, isInit) => db.CnvTran06Nyukin(isInit)),
