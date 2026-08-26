@@ -108,9 +108,9 @@ public partial class MenuData : ObservableObject {
 			new("移動未受リスト", typeof(Views._08Zaiko.IdoUnreceivedListView), addInfo:"出庫済みで入庫未済の移動をSKU別に列挙"),
 			new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"倉庫の棚卸データをTran60Tanaへ登録"),
 			new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中 倉庫の有効在庫を見て店舗から出荷希望数を入力"),
-			new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"準備中 確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
+			new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
 			new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中 確定した配分をピッキングリストとして印刷"),
-			new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"準備中 商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
+			new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
 		])) { AllowedRoles = [EnumLoginRole.Warehouse] },
 		/* ================================================================
 		 * 01 マスター
@@ -225,17 +225,17 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ 出荷 ----", new([
 				new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中 倉庫の有効在庫を見て店舗から出荷希望数を入力"),
-				new("出荷指示確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"準備中 商品基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
-				new("出荷指示確定(得意先)", typeof(Views._07Haibun.ShippingConfirmTokuiView), addInfo:"準備中 得意先基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
-				new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"準備中 確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
+				new("出荷指示確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"商品基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
+				new("出荷指示確定(得意先)", typeof(Views._07Haibun.ShippingConfirmTokuiView), addInfo:"得意先基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
+				new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
 				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中 確定した配分をピッキングリストとして印刷"),
 				new("滞留・欠品例外(出荷指示一覧)", typeof(Views._07Haibun.ShippingConfirmListView), addInfo:"確定済みかつ未出荷の滞留を検出し確定取消/強制完了。欠品実績も照会"),
 				new("納入一覧表", typeof(Views._07Haibun.ShippingListReportView), addInfo:"準備中 商品×出荷先で種まき用の数量表を印刷"),
 			])),
 			new("▲ 配分照会 ----", new([
-				new("配分問合わせ", typeof(Views._07Haibun.HaibunQueryView), addInfo:"準備中 出庫側から商品別の配分数を倉庫×色サイズで展開"),
-				new("引当問合わせ", typeof(Views._07Haibun.HikiateQueryView), addInfo:"準備中 入庫側から商品別の引当数を倉庫×色サイズで展開"),
-				new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"準備中 商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
+				new("配分問合わせ", typeof(Views._07Haibun.HaibunQueryView), addInfo:"出庫側から商品別の配分数を倉庫×色サイズで展開"),
+				new("引当問合わせ", typeof(Views._07Haibun.HikiateQueryView), addInfo:"入庫側から商品別の引当数を倉庫×色サイズで展開"),
+				new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
 			])),
 			new("▲ 補充・移動指示 ----", new([
 				new("取置入力", typeof(Views._07Haibun.ReservationInputView), addInfo:"準備中 得意先･顧客向けに在庫を確保する(引当対象)"),
