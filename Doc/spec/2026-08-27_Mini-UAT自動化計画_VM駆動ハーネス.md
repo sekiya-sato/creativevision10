@@ -130,7 +130,7 @@ Viewを実生成するため、XAMLバインディング不整合・`DataContext
 | C-06 明示的再発行 | 画面 | **完了**。`IsReissue=true`で連番が1→2、請求書番号の枝番も`-02`へ追随し、金額は不変 |
 | C-07 Rebuild締日変更ブロック | 画面 | **完了（PASS 8）**。対象は「在庫・掛再更新」画面（`StockKakeUpdateViewModel`）。専用得意先の締日を20→15へ変更後に「売掛のみ」を実行すると、`SummaryRebuildClosingCheck`が不一致を検出して**送信されず**（進捗0のまま）、警告ダイアログ「締日変更を検出したため、再更新を開始しません。売掛: UATVM-T20 / 保存締日 20260720 / 現在締日 15日」が1回出て、DBの請求残（`SeikyuNo`/`Renban`/`TotalSales`/`Balance`）が変わらないことを確認。締日を20へ復元する後始末も検証に含めた |
 | C-08 入力検証 | 画面 | **完了（PASS 2）**。月形式不正・コード範囲逆転で、送信せず警告ダイアログのみ出ることを確認 |
-| C-09 生地・付属仕入の合算 | 計算＋画面 | 未。`Tran02Material`の買掛合算と区分99（その他）の消費税全額計上（UAT-06残作業） |
+| C-09 生地・付属仕入の合算 | 計算＋画面 | **完了（PASS 7）**。支払計算画面から、UAT専用仕入先1件の`Tran02Material`（仕入30,000／返品4,000／値引1,000／その他2,000）を実行。区分99（その他）が仕入へ畳み込まれず`Shiire`列は仕入分のみ、`Tax`列へその他のTotal全額(2,000)が加算され税4,700円（仕入税3,000-返品税400+値引税100+その他2,000）、`TotalShiire`=29,700円が一致することを確認（UAT-06残作業） |
 | C-10 キャンセル | 画面 | 未。`ExecuteCancelCommand`で中断し、DBが中途半端な状態にならない。**課題**: 専用得意先は計算が数十msで終わるため、キャンセルを確実に差し込める対象（十分に重い範囲）の選定が必要 |
 
 ### 3.3 投入した検証用マスタ
@@ -242,7 +242,7 @@ Tran13Hachu    走査     6,693件 / 更新  6,693件 / ヘッダTax変化 6,690
 | 1 | `MessageEx`のTest専用ルート | **完了（2026-08-27）**。[MessageExTestRoute.cs](CvWpfclient/Helpers/MessageExTestRoute.cs)を新設し、[MessageBoxView.xaml.cs](CvWpfclient/Helpers/MessageBoxView.xaml.cs)の`MessageEx` 7メソッド（`ShowInformationDialog`／`ShowInformation`／`ShowQuestionDialog`／`ShowWarningDialog`／`ShowErrorDialog`／`Show`／`ShowDialog`）へ2行の分岐を追加。呼び出し側142ファイルは無変更。`dotnet build CvWpfclient` 0警告0エラー |
 | 2 | `Doc/test/UatVm/` ハーネス骨格＋請求計算1件完走 | **完了（2026-08-27）**。[README](Doc/test/UatVm/README.md)。`BillingCalculationView`を実生成→`BaseWindow`が`InitCommand`を自動実行→実DBから締日取得→VM入力→gRPC`Msg056_SummaryUriSei`→`CalcSummaryUriSei`で3件処理→進捗100・完了メッセージ・完了ダイアログ（件数入り）が画面へ復帰。CvServerの起動とCtrl+C相当の正規終了もハーネスが実施。**PASS 9 / FAIL 0** |
 | 3 | `summaryreconcile -- all` の現HEAD再現確認 | **完了（2026-08-27）**。`idempotent=PASS closingcheck=PASS paysakicheck=PASS`。請求台帳・支払台帳の数値もREADMEの手計算期待値と全件一致（000002: 売上額92,300／入金額50,440／残高-41,860 ほか）。ただし`summaryreconcile.csproj`のProjectReferenceが2階層不足で**ビルド不能だったため修正**（B-4と同種） |
-| 4 | Phase 1 C-01〜C-10 | 進行中。完了: C-01(PASS25) C-02 C-03(PASS7) C-04(PASS12、実データ更新インシデントあり／6.1参照) C-05(PASS18) C-06 C-07(PASS8) C-08(PASS2)。残: C-09 C-10 |
+| 4 | Phase 1 C-01〜C-10 | 進行中。完了: C-01(PASS25) C-02 C-03(PASS7) C-04(PASS12、実データ更新インシデントあり／6.1参照) C-05(PASS18) C-06 C-07(PASS8) C-08(PASS2) C-09(PASS7)。残: C-10 |
 | 5 | 結果レポートとA-2〜A-8の提示 | 未 |
 
 ### 7.1 実装中に判明した事項
@@ -260,6 +260,7 @@ Tran13Hachu    走査     6,693件 / 更新  6,693件 / ヘッダTax変化 6,690
 - 非回帰確認: `Tests/TestServer` 231件すべて成功（2026-08-27）。なお`dotnet test`では0件収集となり終了コード5を返すため、`Tests/TestServer/bin/Debug/net10.0/TestServer.exe`を直接実行して確認する。
 - **任意SQLでUPDATEを送るgRPC APIは存在しない**。`Msg101_Op_Query`（`VmSession.QueryAsync`）はSELECT/クエリ専用で、サーバー側は`QueryListSqlParam`等の限定された型しか受け付けない。行の更新は`Msg201_Op_Execute`＋`UpdateParam`（`VmSession.UpdateAsync`を追加）を使う。サーバーは楽観排他（`Vdu`一致）で照合するため、直前に`QueryAsync`で取得した行をそのまま書き戻す必要がある。
 - Seedプロジェクト（`Doc/test/UatVmSeed`）は`Doc/test/UatVm`配下に置いてはならない。ネストしたcsprojをglobが拾い、`TargetFrameworkAttribute`等が重複してビルド不能になった。並列のフォルダに分離することで解消した。
+- **Tran系ヘッダの`Total`列は税抜金額**（`KingakuTotal`と同値）で、`Tax`は別列として持つ。`SummaryDb`の集計SQLは`t.Total`をそのままSUMするため、テストデータで`Total=税抜+税込`のように加算して投入すると二重計上になる（C-09で実際に踏んだ）。`UAT01Runner`・`summaryreconcile`の投入パターンも一貫してこの規則に従っている。
 
 ## 8. 更新ルール
 

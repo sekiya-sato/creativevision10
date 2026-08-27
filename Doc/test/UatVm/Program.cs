@@ -13,6 +13,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["e7"] = PaysakiWarningScenario.RunAsync,
 	["closingblock"] = ClosingChangeBlockScenario.RunAsync,
 	["taxmix"] = TaxMixScenario.RunAsync,
+	["material"] = MaterialPurchaseScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
@@ -22,6 +23,7 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["e7"] = PaysakiWarningScenario.Seeder,
 	["closingblock"] = ClosingChangeBlockScenario.Seeder,
 	["taxmix"] = TaxMixScenario.Seeder,
+	["material"] = MaterialPurchaseScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
