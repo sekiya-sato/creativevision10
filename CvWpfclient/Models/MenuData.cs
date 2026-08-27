@@ -127,10 +127,11 @@ public partial class MenuData : ObservableObject {
 				new("得意先マスタメンテ", typeof(Views._01Master.MasterTokuiMenteView), addInfo:"得意先マスタメンテ画面"),
 				new("仕入先マスタメンテ", typeof(Views._01Master.MasterShiireMenteView), addInfo:"仕入先マスタメンテ画面"),
 			])),
-			new("▲ 商品 ----", new([
+			new("▲ 商品・資材 ----", new([
 				new("商品マスタ", typeof(Views._01Master.MasterShohinMenteView), addInfo:"商品マスタメンテ画面"),
 				new("商品バーコードブック", typeof(Views._01Master.MasterPrintBarcodeView), addInfo:"商品バーコードブック印刷"),
 				new("上代一括変更", typeof(Views._01Master.MasterJouDaiBulkChangeView), addInfo:"店舗･期間つきの販売価格をTranJodaiで登録し確定でDerivedJodaiへ展開"),
+				new("生地付属マスターメンテ", typeof(Views._01Master.MasterMaterialMenteView), addInfo:"生地・付属品マスタメンテ画面"),
 			])),
 			new("▲ 顧客・イベント ----", new([
 				new("顧客マスタメンテ", typeof(Views._01Master.MasterEndCustomerMenteView), addInfo:"顧客マスタメンテ画面"),
