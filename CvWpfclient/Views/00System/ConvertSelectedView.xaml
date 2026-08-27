@@ -4,7 +4,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
 	Title="旧DBからの選択変換処理"
-	Width="900" Height="800"
+	Width="1150" Height="800"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
@@ -40,8 +40,8 @@
 				<RowDefinition Height="*" />
 			</Grid.RowDefinitions>
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="*" />
-				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="3*" />
+				<ColumnDefinition Width="2*" />
 			</Grid.ColumnDefinitions>
 
 			<materialDesign:Card Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
@@ -129,7 +129,7 @@
 							</DataGridTemplateColumn.CellTemplate>
 						</DataGridTemplateColumn>
 						<DataGridTextColumn Width="*"
-							Binding="{Binding Name}"
+							Binding="{Binding DisplayName}"
 							Header="プログラム名" />
 					</DataGrid.Columns>
 				</DataGrid>

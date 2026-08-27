@@ -17,13 +17,23 @@ public partial class ConvertDbViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial bool IsRunning { get; set; }
 
+	/// <summary>
+	/// 一度でも実行を開始したか。誤って再実行することを防ぐため、実行開始後は
+	/// <see cref="ExecuteCommand"/> を無効のままにする（ウィンドウを開き直すまで再実行不可）。
+	/// </summary>
+	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(ExecuteCommand))]
+	public partial bool HasExecuted { get; set; }
+
 	[ObservableProperty]
 	public partial int ProgressValue { get; set; }
 
 	[ObservableProperty]
 	public partial ObservableCollection<string> StreamMessages { get; set; } = [];
 
-	[RelayCommand(IncludeCancelCommand = true)]
+	private bool CanExecute() => !HasExecuted;
+
+	[RelayCommand(CanExecute = nameof(CanExecute), IncludeCancelCommand = true)]
 	private async Task ExecuteAsync(CancellationToken cancellationToken) {
 		if (MessageEx.ShowQuestionDialog("データベースの変換を開始しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
@@ -33,6 +43,9 @@ public partial class ConvertDbViewModel : BaseViewModel {
 		}
 		try {
 			IsRunning = true;
+			// 実行を開始した時点で確定的に無効化する（キャンセル・エラーで終わっても再実行させない。
+			// サーバ側で一部書き込みが進んでいる可能性があるため、再実行はウィンドウの開き直しを要求する）
+			HasExecuted = true;
 			ProgressValue = 0;
 			StreamMessages.Clear();
 			cancellationToken.ThrowIfCancellationRequested();
