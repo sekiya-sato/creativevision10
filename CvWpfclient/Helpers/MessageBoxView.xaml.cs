@@ -321,6 +321,8 @@ public partial class MessageBoxView : Window {
 public static class MessageEx {
 	#region Information Dialog
 	public static MessageBoxResult ShowInformationDialog(string message, string appendedMessage = "", Window? owner = null) {
+		if (MessageExTestRoute.IsActive)
+			return MessageExTestRoute.Respond(nameof(ShowInformationDialog), MessageBoxButton.OK, MessageBoxImage.Information, message, appendedMessage, isModal: true);
 		if (owner != null)
 			owner.Opacity = 0.7;
 		var cls = new MessageBoxView(message, appendedMessage, MessageBoxButton.OK, MessageBoxImage.Information, owner);
@@ -336,6 +338,8 @@ public static class MessageEx {
 	/// <param name="appendedMessage"></param>
 	/// <returns></returns>
 	public static MessageBoxResult ShowInformation(string message, string appendedMessage = "", Window? owner = null) {
+		if (MessageExTestRoute.IsActive)
+			return MessageExTestRoute.Respond(nameof(ShowInformation), MessageBoxButton.OK, MessageBoxImage.Information, message, appendedMessage, isModal: false);
 		var cls = new MessageBoxView(message, appendedMessage, MessageBoxButton.OK, MessageBoxImage.Information, owner);
 		cls.Show();
 		return cls.Result;
@@ -344,6 +348,8 @@ public static class MessageEx {
 	//
 	#region Question Dialog
 	public static MessageBoxResult ShowQuestionDialog(string message, string appendedMessage = "", Window? owner = null) {
+		if (MessageExTestRoute.IsActive)
+			return MessageExTestRoute.Respond(nameof(ShowQuestionDialog), MessageBoxButton.YesNo, MessageBoxImage.Question, message, appendedMessage, isModal: true);
 		if (owner != null)
 			owner.Opacity = 0.7;
 		var cls = new MessageBoxView(message, appendedMessage, MessageBoxButton.YesNo, MessageBoxImage.Question, owner);
@@ -356,6 +362,8 @@ public static class MessageEx {
 	//
 	#region Warning Dialog
 	public static MessageBoxResult ShowWarningDialog(string message, string appendedMessage = "", Window? owner = null) {
+		if (MessageExTestRoute.IsActive)
+			return MessageExTestRoute.Respond(nameof(ShowWarningDialog), MessageBoxButton.OK, MessageBoxImage.Warning, message, appendedMessage, isModal: true);
 		if (owner != null)
 			owner.Opacity = 0.7;
 		var cls = new MessageBoxView(message, appendedMessage, MessageBoxButton.OK, MessageBoxImage.Warning, owner);
@@ -368,6 +376,8 @@ public static class MessageEx {
 	//
 	#region Error Dialog
 	public static MessageBoxResult ShowErrorDialog(string message, string appendedMessage = "", Window? owner = null) {
+		if (MessageExTestRoute.IsActive)
+			return MessageExTestRoute.Respond(nameof(ShowErrorDialog), MessageBoxButton.OK, MessageBoxImage.Error, message, appendedMessage, isModal: true);
 		if (owner != null)
 			owner.Opacity = 0.7;
 		var cls = new MessageBoxView(message, appendedMessage, MessageBoxButton.OK, MessageBoxImage.Error, owner);
@@ -389,6 +399,8 @@ public static class MessageEx {
 	/// <param name="color"></param>
 	/// <returns></returns>
 	public static MessageBoxResult Show(string message, string appendedMessage, MessageBoxButton messageBoxButton, MessageBoxImage messageBoxImage, Brush color, Window? owner = null) {
+		if (MessageExTestRoute.IsActive)
+			return MessageExTestRoute.Respond(nameof(Show), messageBoxButton, messageBoxImage, message, appendedMessage, isModal: false);
 		var cls = new MessageBoxView(message, appendedMessage, messageBoxButton, messageBoxImage, color);
 		cls.Show();
 		return cls.Result;
@@ -403,6 +415,8 @@ public static class MessageEx {
 	/// <param name="color"></param>
 	/// <returns></returns>
 	public static MessageBoxResult ShowDialog(string message, string appendedMessage, MessageBoxButton messageBoxButton, MessageBoxImage messageBoxImage, Brush color, Window? owner = null) {
+		if (MessageExTestRoute.IsActive)
+			return MessageExTestRoute.Respond(nameof(ShowDialog), messageBoxButton, messageBoxImage, message, appendedMessage, isModal: true);
 		var cls = new MessageBoxView(message, appendedMessage, messageBoxButton, messageBoxImage, color, owner);
 		cls.ShowDialog();
 		return cls.Result;

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    VM駆動UATハーネス。CvWpfclientの実Application・実View・実DI経路を使い、
+    ViewModelのコマンドを直接駆動してUATを無人実行する。
+    slnx には収録しない（Doc/test/UAT01、Doc/spec/tools/* と同じ扱い）。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\CvWpfclient\CvWpfclient.csproj" />
+  </ItemGroup>
+</Project>
