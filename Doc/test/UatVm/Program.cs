@@ -8,6 +8,12 @@ using UatVm.Scenarios;
 //
 var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.OrdinalIgnoreCase) {
 	["billing"] = BillingCalculationScenario.RunAsync,
+	["shime20"] = ShimeBoundaryScenario.RunAsync,
+};
+
+// シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
+var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnoreCase) {
+	["shime20"] = ShimeBoundaryScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
@@ -19,6 +25,7 @@ if (string.IsNullOrEmpty(name) || !scenarios.TryGetValue(name, out var scenario)
 	Console.Error.WriteLine("  --month <yyyy/MM>  請求月（billing）");
 	Console.Error.WriteLine("  --code <code>      対象取引先コード（billing）");
 	Console.Error.WriteLine("  --no-execute       更新を伴う実行を省き、入力検証だけ行う");
+	Console.Error.WriteLine("  --no-seed          網羅データの投入を省く（前回投入済みを再利用）");
 	Console.Error.WriteLine("  --hide-views       Viewを表示しない");
 	return 2;
 }
@@ -38,6 +45,7 @@ var options = new VmHost.Options {
 	ServerUrl = Option("--url"),
 	ShowViews = !Flag("--hide-views"),
 	ManageServer = Flag("--manage-server"),
+	Seed = Flag("--no-seed") ? null : seeders.GetValueOrDefault(name),
 };
 
 var failures = VmHost.Run(options, scenario);

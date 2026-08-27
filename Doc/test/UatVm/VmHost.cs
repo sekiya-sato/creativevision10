@@ -37,6 +37,11 @@ public static class VmHost {
 		public string ScenarioName { get; set; } = "scenario";
 		/// <summary>Viewを画面に表示するか。既定は表示する（実描画とバインディング評価を伴わせるため）。</summary>
 		public bool ShowViews { get; set; } = true;
+		/// <summary>
+		/// 網羅データの投入。CvServerを起動する前に、対象DBのパスを引数として呼ばれる。
+		/// 実DBへ直接書くため、サーバーが動いていない状態で実行する必要がある。
+		/// </summary>
+		public Action<string>? Seed { get; set; }
 	}
 
 	/// <summary>
@@ -121,6 +126,25 @@ public static class VmHost {
 			MessageExTestRoute.Disable();
 			evidence.Dispose();
 			return failed;
+		}
+
+		// 網羅データの投入は、CvServerがDBを開く前に済ませる。
+		if (options.Seed != null) {
+			var repoRootForSeed = Directory.GetParent(baseDir)?.FullName ?? baseDir;
+			var dbPath = Path.Combine(repoRootForSeed, "CvServer", "server-user163.db");
+			try {
+				Boot(baseDir, "シード投入 開始");
+				options.Seed(dbPath);
+				Boot(baseDir, "シード投入 完了");
+			}
+			catch (Exception ex) {
+				Boot(baseDir, $"シード投入 失敗: {ex.GetType().Name}: {ex.Message}");
+				session.Fail("seed", ex.ToString());
+				var failed = session.Complete();
+				MessageExTestRoute.Disable();
+				evidence.Dispose();
+				return failed;
+			}
 		}
 
 		// CvServerを面倒見る場合はここで起動する。終了は必ずfinallyで正規経路を通す。

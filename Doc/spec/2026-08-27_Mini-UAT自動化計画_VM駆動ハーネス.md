@@ -118,9 +118,11 @@ Viewを実生成するため、XAMLバインディング不整合・`DataContext
 
 ### 3.2 実行ケース
 
+**自社締日の扱い（2026-08-27 ユーザー指示）**: `MasterSysman.ShimeBi`は**99のまま変更しない**（影響範囲が広すぎるため）。締日境界の検証は**得意先の`Shime1`のみ**で行う。したがってC-01は請求期間の切れ目の検証であり、D-16の在庫`DenDay`／売掛`KakeDay`側は本Phaseの対象外とする。
+
 | ケース | 層 | 確認内容 |
 |---|---|---|
-| C-01 自社締日20の境界 | 画面 | 7/20・7/21・8/20・8/21を画面入力として与え、計上月が期待どおり切り替わる（D-16） |
+| C-01 締日20の請求期間境界 | 画面 | **完了（PASS 25）**。専用得意先`UATVM-T20`（`Shime1=20`）を追加し、境界日ちょうどに金額の違う売上6件を投入。請求月202607/202608/202609を画面から実行し、期間（20260621〜20260720 / 20260721〜20260820 / 20260821〜20260920）、売上（50,000 / 90,000 / 60,000）、税、売上額、繰越残高（-55,000 → -154,000 → -220,000）が全件一致。期間外の20260620分（10,000）が混入しないことも金額で確認 |
 | C-02 末締め（99） | 画面 | `SelectedShime=99`が「末日」として表示・送信され、繰越が一致 |
 | C-03 E7発火 | 画面 | 親子締日不一致の実データで`WarningMessage`が生成され、警告ダイアログが1回出て、**ブロックせず**続行する |
 | C-04 明細別消費税 | 画面 | 標準／軽減／非課税混在で画面表示値と帳票値が一致 |
@@ -185,8 +187,8 @@ AIが進行できない、または業務責任者の選択が必要な項目の
 |---|---|---|
 | 1 | `MessageEx`のTest専用ルート | **完了（2026-08-27）**。[MessageExTestRoute.cs](CvWpfclient/Helpers/MessageExTestRoute.cs)を新設し、[MessageBoxView.xaml.cs](CvWpfclient/Helpers/MessageBoxView.xaml.cs)の`MessageEx` 7メソッド（`ShowInformationDialog`／`ShowInformation`／`ShowQuestionDialog`／`ShowWarningDialog`／`ShowErrorDialog`／`Show`／`ShowDialog`）へ2行の分岐を追加。呼び出し側142ファイルは無変更。`dotnet build CvWpfclient` 0警告0エラー |
 | 2 | `Doc/test/UatVm/` ハーネス骨格＋請求計算1件完走 | **完了（2026-08-27）**。[README](Doc/test/UatVm/README.md)。`BillingCalculationView`を実生成→`BaseWindow`が`InitCommand`を自動実行→実DBから締日取得→VM入力→gRPC`Msg056_SummaryUriSei`→`CalcSummaryUriSei`で3件処理→進捗100・完了メッセージ・完了ダイアログ（件数入り）が画面へ復帰。CvServerの起動とCtrl+C相当の正規終了もハーネスが実施。**PASS 9 / FAIL 0** |
-| 3 | `summaryreconcile -- all` の現HEAD再現確認 | 未 |
-| 4 | Phase 1 C-01〜C-10 | 未 |
+| 3 | `summaryreconcile -- all` の現HEAD再現確認 | **完了（2026-08-27）**。`idempotent=PASS closingcheck=PASS paysakicheck=PASS`。請求台帳・支払台帳の数値もREADMEの手計算期待値と全件一致（000002: 売上額92,300／入金額50,440／残高-41,860 ほか）。ただし`summaryreconcile.csproj`のProjectReferenceが2階層不足で**ビルド不能だったため修正**（B-4と同種） |
+| 4 | Phase 1 C-01〜C-10 | 進行中。**C-01 完了（PASS 25 / FAIL 0）**、C-08 完了（billingシナリオ） |
 | 5 | 結果レポートとA-2〜A-8の提示 | 未 |
 
 ### 7.1 実装中に判明した事項

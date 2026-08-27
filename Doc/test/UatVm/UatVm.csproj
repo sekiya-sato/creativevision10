@@ -14,5 +14,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\CvWpfclient\CvWpfclient.csproj" />
+    <!-- 網羅データの投入。実DBへ直接書くため、CvServer起動前に実行する。 -->
+    <ProjectReference Include="..\UatVmSeed\UatVmSeed.csproj" />
   </ItemGroup>
 </Project>

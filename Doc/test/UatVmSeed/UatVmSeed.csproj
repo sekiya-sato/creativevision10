@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    VM駆動UATハーネス用の網羅データ投入。
+    実DB(CvServer/server-user163.db)へ直接書くため、CvServerを止めている間に実行する。
+    投入方式は Doc/spec/tools/summaryreconcile と同じ「ドメインオブジェクトのInsert→SummaryDb.Calc*」に倣う。
+    creativevision10.slnx には含めない。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>UatVm.Seed</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\..\CvDomainLogic\CvDomainLogic.csproj" />
+    <ProjectReference Include="..\..\..\CodeShare\CodeShare.csproj" />
+  </ItemGroup>
+</Project>

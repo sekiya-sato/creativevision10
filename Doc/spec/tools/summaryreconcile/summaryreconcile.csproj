@@ -14,9 +14,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CvBase\CvBase.csproj" />
-    <ProjectReference Include="..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
-    <ProjectReference Include="..\..\CvDomainLogic\CvDomainLogic.csproj" />
-    <ProjectReference Include="..\..\CodeShare\CodeShare.csproj" />
+    <!-- 参照は csproj からの相対。Doc/spec/tools/summaryreconcile から4階層上がリポジトリルート。 -->
+    <ProjectReference Include="..\..\..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\..\..\CvDomainLogic\CvDomainLogic.csproj" />
+    <ProjectReference Include="..\..\..\..\CodeShare\CodeShare.csproj" />
   </ItemGroup>
 </Project>

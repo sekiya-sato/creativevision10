@@ -1,4 +1,9 @@
+using System.Collections;
 using System.Windows;
+using CodeShare;
+using CvAsset;
+using CvBase;
+using CvWpfclient;
 using CvWpfclient.Helpers;
 
 namespace UatVm;
@@ -92,6 +97,32 @@ public sealed class VmSession {
 			catch (InvalidOperationException) { /* 既に閉じている */ }
 		}
 		_openedViews.Clear();
+	}
+
+	/// <summary>
+	/// DBの値を読み戻す。ViewModelと同じgRPC経路（<c>Msg101_Op_Query</c>）を使う。
+	/// </summary>
+	/// <remarks>
+	/// <typeparamref name="T"/> はサーバー側でも解決できる共有型（`CvBase`のエンティティ等）でなければならない。
+	/// ハーネス内で定義した型は使えない。
+	/// パラメータは文字列で渡る。SQLiteは動的型のため、整数列と文字列を直接比較すると一致しないことがある。
+	/// コード等の文字列列で絞るか、JOINで解決すること。
+	/// </remarks>
+	public async Task<List<T>> QueryAsync<T>(string sql, params string[] parameters) {
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var message = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(T), sql, [.. parameters])),
+		};
+		var reply = await coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext());
+		if (reply.Code < 0 && reply.Code != -1) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
+		}
+		return Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list
+			? list.Cast<T>().ToList()
+			: [];
 	}
 
 	/// <summary>判定を記録する。</summary>
