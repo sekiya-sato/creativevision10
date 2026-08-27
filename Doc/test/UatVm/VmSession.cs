@@ -125,6 +125,30 @@ public sealed class VmSession {
 			: [];
 	}
 
+	/// <summary>
+	/// ドメインオブジェクトを更新する。ViewModelと同じgRPC経路（<c>Msg201_Op_Execute</c>／`UpdateParam`）を使う。
+	/// </summary>
+	/// <remarks>
+	/// 任意SQLでUPDATEを送るAPIは存在しない（`Msg101_Op_Query`はSELECT/クエリ専用）。
+	/// サーバーは楽観排他（`Vdu`一致）で更新するため、<see cref="QueryAsync{T}"/>で取得した
+	/// 直近の行をそのまま渡すこと。
+	/// </remarks>
+	public async Task<T> UpdateAsync<T>(T item) where T : BaseDbClass {
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var message = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg201_Op_Execute,
+			DataType = typeof(UpdateParam),
+			DataMsg = Common.SerializeObject(new UpdateParam(typeof(T), Common.SerializeObject(item))),
+		};
+		var reply = await coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext());
+		if (reply.Code < 0) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバUpdateでエラーが発生しました");
+		}
+		return (T)(Common.DeserializeObject(reply.DataMsg ?? "null", reply.DataType)
+			?? throw new InvalidOperationException("更新結果を読み取れませんでした。"));
+	}
+
 	/// <summary>判定を記録する。</summary>
 	public bool Check(string name, bool condition, object? detail = null) {
 		if (condition) {

@@ -11,6 +11,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["shime20"] = ShimeBoundaryScenario.RunAsync,
 	["numbering"] = BillingNumberingScenario.RunAsync,
 	["e7"] = PaysakiWarningScenario.RunAsync,
+	["closingblock"] = ClosingChangeBlockScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
@@ -18,6 +19,7 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["shime20"] = ShimeBoundaryScenario.Seeder,
 	["numbering"] = BillingNumberingScenario.Seeder,
 	["e7"] = PaysakiWarningScenario.Seeder,
+	["closingblock"] = ClosingChangeBlockScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
