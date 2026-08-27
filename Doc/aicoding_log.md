@@ -1,3 +1,24 @@
+## [2026-08-27] 日付・年月入力の自動書式補正
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- 日付入力で`yyyyMMdd`、年月入力で`yyyyMM`を入力した場合に、既存の表示形式である`yyyy/MM/dd`、`yyyy/MM`へ自動補正する。
+- 日付と年月の入力対象を分離し、6桁のコード・ID等を年月として誤変換しない。
+
+### 実施内容
+- `DatePickerYmdInputBehavior`を追加し、`FormDatePicker`共通スタイル経由で全DatePickerに適用した。実在する8桁日付だけを補正し、DatePickerの範囲外・除外日・不正日付は既存の検証を維持する。
+- `YearMonthInputBehavior`を追加し、年月専用と確認した29個のTextBoxだけへ適用した。実在する6桁年月だけを補正し、日付・コード・ID・バーコード等のTextBoxには適用していない。
+
+### 確認
+- 変更した29個のXAMLをXMLとして解析し、構文エラーがないことを確認した。
+- `CvWpfclient`をビルドし、警告0・エラー0を確認した。
+- CRLFと`git diff --check`を確認した。
+- 実行時の手入力確認は未実施。
+
+---
+
 ## [2026-08-27] MasterMente系一覧にId列を追加
 
 ### Agent

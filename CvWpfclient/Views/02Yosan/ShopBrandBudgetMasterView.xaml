@@ -70,6 +70,7 @@
 					Text="年月" />
 				<TextBox Grid.Row="0" Grid.Column="1"
 					VerticalAlignment="Center"
+					helpers:YearMonthInputBehavior.IsEnabled="True"
 					Text="{Binding SelectedYearMonthString, UpdateSourceTrigger=PropertyChanged}" />
 				<TextBlock Grid.Row="0" Grid.Column="2"
 					Margin="16,0,8,0" VerticalAlignment="Center"

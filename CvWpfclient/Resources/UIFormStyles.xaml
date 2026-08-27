@@ -179,6 +179,7 @@
 		BasedOn="{StaticResource MaterialDesignFloatingHintDatePicker}"
 		TargetType="DatePicker">
 		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
+		<Setter Property="helpers:DatePickerYmdInputBehavior.IsEnabled" Value="True" />
 	</Style>
 
 	<!--  パスワード入力：Hint（ラベル）を名前に供給。値は公開しない  -->
