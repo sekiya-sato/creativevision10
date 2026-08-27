@@ -26,13 +26,32 @@ public partial class MasterPrintBarcodeViewModel : BaseMenteViewModel<MasterShoh
 	public partial string BrandIdsText { get; set; } = "未選択";
 
 	[ObservableProperty]
+	public partial List<long> ShohinIds { get; set; } = [];
+
+	[ObservableProperty]
+	public partial string ShohinIdsText { get; set; } = "未選択";
+
+	[ObservableProperty]
 	public partial string ShohinCodeLike { get; set; } = string.Empty;
 
 	[ObservableProperty]
 	public partial string ShohinNameLike { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	public partial bool IsSkuOutput { get; set; } = true;
+	public partial bool IsHorizontalOutput { get; set; } = true;
+
+	[ObservableProperty]
+	public partial bool IsVerticalOutput { get; set; }
+
+	partial void OnIsHorizontalOutputChanged(bool value) {
+		if (!value) return;
+		IsVerticalOutput = false;
+	}
+
+	partial void OnIsVerticalOutputChanged(bool value) {
+		if (!value) return;
+		IsHorizontalOutput = false;
+	}
 
 	[ObservableProperty]
 	public partial bool IsJanBarcode { get; set; } = true;
@@ -63,28 +82,27 @@ public partial class MasterPrintBarcodeViewModel : BaseMenteViewModel<MasterShoh
 
 	protected override string? FormFile {
 		get {
-			if (IsSkuOutput) {
-				if (IsCode39Barcode) return "MasterPrintBarcode0021.qfm";
-				if (IsNw7Barcode) return "MasterPrintBarcode0022.qfm";
-				return "MasterPrintBarcode002.qfm";
+			if (IsVerticalOutput) {
+				if (IsCode39Barcode) return "MasterPrintBarcodeView_v_code39.qfm";
+				if (IsNw7Barcode) return "MasterPrintBarcodeView_v_nw7.qfm";
+				return "MasterPrintBarcodeView_v_jan.qfm";
 			}
 
-			if (IsCode39Barcode) return "MasterPrintBarcodeCode39.qfm";
-			if (IsNw7Barcode) return "MasterPrintBarcodeNw7.qfm";
-			return "MasterPrintBarcodeSho.qfm";
+			if (IsCode39Barcode) return "MasterPrintBarcodeView_h_code39.qfm";
+			if (IsNw7Barcode) return "MasterPrintBarcodeView_h_nw7.qfm";
+			return "MasterPrintBarcodeView_h_jan.qfm";
 		}
 	}
 
 	protected override string? ListWhere => BuildListWhere([]);
 
-	protected override string? ListOrder => IsSkuOutput
-		? "S.Id_Tenji, S.Code, D.Code_Col, D.Code_Siz, D.RowIdx"
-		: "S.Id_Tenji, S.Code";
+	protected override string? ListOrder => "S.Id_Tenji, S.Code, D.Code_Col, D.Code_Siz, D.RowIdx";
 
 	string? BuildListWhere(List<string> parameters) {
 		List<string> clauses = [];
 		AddSelectedIdInClause(clauses, "S.Id_Tenji", TenjiIds);
 		AddSelectedIdInClause(clauses, "S.Id_Brand", BrandIds);
+		AddSelectedIdInClause(clauses, "S.Id", ShohinIds);
 		AddLike(clauses, parameters, "S.Code", ShohinCodeLike);
 		AddLike(clauses, parameters, "S.Name", ShohinNameLike);
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
@@ -159,95 +177,34 @@ public partial class MasterPrintBarcodeViewModel : BaseMenteViewModel<MasterShoh
 	}
 
 	/// <summary>
-	/// 値札・棚札へ印字する価格のSQL断片。
-	/// <para>
-	/// 上代一括変更(<see cref="DerivedJodai"/>)の適用行があればその価格を、無ければ従来どおり
-	/// <see cref="MasterShohin.TankaJodaiOrg"/>（元上代）を印字する。セール中は適用価格を刷る運用。
-	/// </para>
-	/// <para>
-	/// フォールバックが <c>TankaJodai</c> ではなく <c>TankaJodaiOrg</c> なので、
-	/// <see cref="DerivedJodai.FinalJodaiSql"/> ではなく <see cref="DerivedJodai.ResolveSql"/> を直接包む。
-	/// これにより適用行が無い環境では印字内容が一切変わらない。
-	/// </para>
-	/// <para>
-	/// <b>対象軸は店舗系の全件行（<see cref="EnumJodaiTaisho.Tenpo"/> / Id_Tenpo=0）＝全直営店共通の価格。</b>
-	/// この画面の抽出条件は展示会・ブランド・商品CD/商品名だけで店舗を指定できないため、
-	/// 店舗ごとに価格を変えた分は反映されない。店舗別の値札が必要になったら画面へ店舗指定を足すこと。
-	/// </para>
+	/// バーコードqfm（<c>MasterPrintBarcodeView_*.qfm</c>）は item1〜item7 を列の並び順で読むため、
+	/// 列名ではなく並び順（商品CD, 商品名, サイズ, 色, JANコード1〜3）を必ず維持すること。
 	/// </summary>
-	static string JodaiPrintSql {
-		get {
-			var taisho = ((int)EnumJodaiTaisho.Tenpo).ToString(CultureInfo.InvariantCulture);
-			var resolve = DerivedJodai.ResolveSql("S.Id", taisho, "0", DerivedJodai.TodaySql);
-			return $"ifnull({resolve}, ifnull(S.TankaJodaiOrg,0))";
-		}
-	}
-
 	string BuildPrintSql(out string[] parameters) {
 		var where = BuildWhereSql(out parameters);
-		var conditionColumns = BuildConditionColumns();
-		if (IsSkuOutput) {
-			return @$"
-select {conditionColumns},
+		return @$"
+select
 S.Code 商品CD,
 S.Name 商品名,
-{JodaiPrintSql} 元上代,
-ifnull(json_extract(S.VTenji, '$.Cd'), '') 展示会CD,
-ifnull(json_extract(S.VTenji, '$.Mei'), '') 展示会名,
-ifnull(json_extract(S.VBrand, '$.Cd'), '') ブランドCD,
-ifnull(json_extract(S.VBrand, '$.Mei'), '') ブランド名,
-ifnull(json_extract(S.VItem, '$.Cd'), '') アイテムCD,
-ifnull(json_extract(S.VItem, '$.Mei'), '') アイテム名,
-S.DayShukka デリバリー日,
-__serverimg__(S.Code) 絵型名,
-ifnull(D.Mei_Col, '') 色名,
-ifnull(D.Mei_Siz, '') サイズ名,
+ifnull(D.Mei_Siz, '') サイズ,
+ifnull(D.Mei_Col, '') 色,
 ifnull(D.Jan1, '') JANコード1,
-case when D.Jan2='' then D.Jan3 end JANコード2
+ifnull(D.Jan2, '') JANコード2,
+ifnull(D.Jan3, '') JANコード3
 from MasterShohin S
 left join DerivedShohinColSiz D on D.Id_Shohin = S.Id
 {where}
 order by S.Id_Tenji, S.Code, D.Code_Col, D.Code_Siz, D.RowIdx
 ";
-		}
-
-		return @$"
-select {conditionColumns},
-S.Code 商品CD,
-S.Name 商品名,
-{JodaiPrintSql} 元上代,
-ifnull(json_extract(S.VTenji, '$.Cd'), '') 展示会CD,
-ifnull(json_extract(S.VTenji, '$.Mei'), '') 展示会名,
-ifnull(json_extract(S.VBrand, '$.Cd'), '') ブランドCD,
-ifnull(json_extract(S.VBrand, '$.Mei'), '') ブランド名,
-ifnull(json_extract(S.VItem, '$.Cd'), '') アイテムCD,
-ifnull(json_extract(S.VItem, '$.Mei'), '') アイテム名,
-S.DayShukka デリバリー日,
-__serverimg__(S.Code) 絵型名,
-ifnull((
-	select ifnull(D.Jan1, ifnull(D.Jan2, ifnull(D.Jan3, '')))
-	from DerivedShohinColSiz D
-	where D.Id_Shohin = S.Id and ifnull(D.Jan1, ifnull(D.Jan2, ifnull(D.Jan3, ''))) <> ''
-	order by D.Code_Col, D.Code_Siz, D.RowIdx
-	limit 1
-), '') JANコード
-from MasterShohin S
-{where}
-order by S.Id_Tenji, S.Code
-";
 	}
 
 	string BuildCountSql(out string[] parameters) {
 		var where = BuildWhereSql(out parameters);
-		var fromSql = IsSkuOutput
-			? $@"
+		return $@"
+select count(*)
 from MasterShohin S
 left join DerivedShohinColSiz D on D.Id_Shohin = S.Id
-{where}"
-			: $@"
-from MasterShohin S
 {where}";
-		return $"select count(*) {fromSql}";
 	}
 
 	string BuildWhereSql(out string[] parameters) {
@@ -256,9 +213,6 @@ from MasterShohin S
 		parameters = [.. list];
 		return string.IsNullOrWhiteSpace(where) ? string.Empty : $"where {where}";
 	}
-
-	string BuildConditionColumns() =>
-		$"{SqlLiteral(TenjiIdsText)} 範囲0,{SqlLiteral(string.Empty)} 範囲1,{SqlLiteral(BrandIdsText)} 範囲2,{SqlLiteral(string.Empty)} 範囲3,{SqlLiteral(ShohinCodeLike)} 範囲4,{SqlLiteral(ShohinNameLike)} 範囲5";
 
 	[RelayCommand]
 	void SelectTenjiIds() {
@@ -299,6 +253,25 @@ from MasterShohin S
 	}
 
 	[RelayCommand]
+	void SelectShohinIds() {
+		var selected = ShowMultiSelectDialog<MasterShohin>(
+			typeof(MasterShohin),
+			"",
+			"Code",
+			ShohinIds,
+			ShohinIds.FirstOrDefault());
+		if (selected == null) return;
+		ShohinIds = [.. selected.Select(x => x.Id)];
+		ShohinIdsText = BuildSelectedText(selected);
+	}
+
+	[RelayCommand]
+	void ClearShohinIds() {
+		ShohinIds = [];
+		ShohinIdsText = "未選択";
+	}
+
+	[RelayCommand]
 	async Task Init() {
 		await Task.CompletedTask;
 	}
@@ -319,11 +292,17 @@ from MasterShohin S
 		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatSelectedItem))}";
 	}
 
+	static string BuildSelectedText(IReadOnlyList<MasterShohin> selected) {
+		if (selected.Count == 0) return "未選択";
+		return $"{selected.Count}件: {string.Join(", ", selected.Select(FormatSelectedItem))}";
+	}
+
 	// 表示書式は XAML 側の V*列共通表示(CodeNameViewDisplayConverter)と揃える
 	static string FormatSelectedItem(MasterMeisho item) =>
 		CodeNameDisplay.Format(item.Id, item.Code, item.Name);
 
-	static string Normalize(string? value) => value?.Trim() ?? string.Empty;
+	static string FormatSelectedItem(MasterShohin item) =>
+		CodeNameDisplay.Format(item.Id, item.Code, item.Name);
 
-	static string SqlLiteral(string? value) => $"'{EscapeSqlLiteral(Normalize(value))}'";
+	static string Normalize(string? value) => value?.Trim() ?? string.Empty;
 }

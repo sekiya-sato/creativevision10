@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<script language="JavaScript">//////////////////////////////////////////////////////////////////////
+// PrintStream FormEditor Generated Script
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// QFM object
+// このオブジェクトがフォームファイルを示します。フォームファイルに定義され
+// る情報は、すべてこのオブジェクトを基点にして取得、設定を行います。
+var qfm	= GetQfm();
+
+//////////////////////////////////////////////////////////////////////
+// Cursor object
+// カーソルはFormEditorで指定した印刷データに対してオープンされ、１件目の
+// レコードに位置付けられています。
+// このカーソルは印刷データの種類や形式によらず、同じように利用できます。
+var cursor	= qfm.GetCursor();
+
+//////////////////////////////////////////////////////////////////////
+// Cursor members
+// カーソルに含まれる列に対応する変数です。この変数はカーソルオブジェクトか
+// らGetValue()メソッドにより印刷データの値を取得する領域として利用
+// されます。
+var dtitem1;
+var dtitem2;
+var dtitem3;
+var dtitem4;
+var dtitem5;
+var dtitem6;
+var dtitem7;
+
+//////////////////////////////////////////////////////////////////////
+// Parameter value
+// 実行パラメータの値が格納されます。この値はFormEditorで設定したデフォルト
+// 値、またはFormWriterのコマンドラインで指定した値となります。
+
+//////////////////////////////////////////////////////////////////////
+// Field object
+// 各フィールドを示すオブジェクトです。オブジェクトのプロパティを操作するこ
+// とによりさまざまな表現を動的に指定する事ができます。
+var page	= qfm.GetPage();
+var fdRgn01	= page.GetField(&quot;Rgn01&quot;);
+var fdRgn02	= page.GetField(&quot;Rgn02&quot;);
+var fdRgn03	= page.GetField(&quot;Rgn03&quot;);
+var fdRgn04	= page.GetField(&quot;Rgn04&quot;);
+var fdRgn05	= page.GetField(&quot;Rgn05&quot;);
+var fdRec03	= page.GetField(&quot;Rec03&quot;);
+var fdTxt12	= page.GetField(&quot;Txt12&quot;);
+var fdTxt13	= page.GetField(&quot;Txt13&quot;);
+var fdBar01	= page.GetField(&quot;Bar01&quot;);
+var fdBar02	= page.GetField(&quot;Bar02&quot;);
+var fdBar03	= page.GetField(&quot;Bar03&quot;);
+var fdTxt11	= page.GetField(&quot;Txt11&quot;);
+var fdTxt18	= page.GetField(&quot;Txt18&quot;);
+var fdTxt15	= page.GetField(&quot;Txt15&quot;);
+var fdTxt16	= page.GetField(&quot;Txt16&quot;);
+
+//////////////////////////////////////////////////////////////////////
+// OnFetch()関数は、印刷データを1件読み込むごとに、FormWriterエンジンより
+// 呼び出されます。この関数では、直前に読み取った印刷データが1件含まれる
+// カーソルオブジェクトcursorを受け取ります。cursorの内容を変更すると、変
+// 更後の内容で印刷されキーブレーク判定が行われます。
+// OnFetch()関数は、主に印刷データのフィルタとして利用します。
+function OnFetch() {
+
+	// 印刷データの取得
+	dtitem1	= cursor.GetValue(&quot;item1&quot;);
+	dtitem2	= cursor.GetValue(&quot;item2&quot;);
+	dtitem3	= cursor.GetValue(&quot;item3&quot;);
+	dtitem4	= cursor.GetValue(&quot;item4&quot;);
+	dtitem5	= cursor.GetValue(&quot;item5&quot;);
+	dtitem6	= cursor.GetValue(&quot;item6&quot;);
+	dtitem7	= cursor.GetValue(&quot;item7&quot;);
+
+	if( dtitem6==&quot;&quot; ) {
+		fdBar02.visible = 0;
+	} else {
+		fdBar02.visible = 1;
+	}
+
+	if( dtitem7==&quot;&quot; ) {
+		fdBar03.visible = 0;
+	} else {
+		fdBar03.visible = 1;
+	}
+
+// カーソルオブジェクトの操作例
+//	if( dtitem1.length == 0 ) {
+//		cursor.SetValue(&quot;item1&quot;, &quot;(未設定)&quot;);
+//	}
+
+// フィールドプロパティの操作例
+//	if( dtitem5.length &lt; 5 ) {
+//		fdBar01.font.color = &quot;#ff0000&quot;;
+//	} else {
+//		fdBar01.font.color = &quot;#000000&quot;;
+//	}
+}
+</script>
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1">
+				<group level="1" pagechange="0"/>
+				<position offset="0" length="11"/>
+			</item>
+			<item id="item2">
+				<position offset="0" length="24"/>
+			</item>
+			<item id="item3">
+				<position offset="0" length="3"/>
+			</item>
+			<item id="item4">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item5">
+				<position offset="0" length="13"/>
+			</item>
+			<item id="item6"/>
+			<item id="item7"/>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+		</file>
+	</datadesc>
+	<page orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="Form1" tree="1">
+		<position x="8" y="16" width="156" height="264"/>
+		<text id="Txt01" valign="middle" halign="center">
+			<position x="40" y="0" width="54" height="7"/>
+			<color base="97f2ff" transparent="0"/>
+			<border bottom="10"/>
+			<data calctype="static">バーコードブックマスタ</data>
+			<decode datatype="string" format=""/>
+			<font size="120" style="1"/>
+		</text>
+		<text id="Txt12" valign="middle">
+			<position x="96" y="0" width="40" height="5"/>
+			<color transparent="1"/>
+			<data calctype="date"/>
+			<decode datatype="date" format="&quot;出力日付: &quot;YYYY/MM/DD HH24:MI:SS"/>
+			<font size="90"/>
+		</text>
+		<text id="Txt13" valign="middle" halign="right">
+			<position x="136" y="0" width="12" height="5"/>
+			<color transparent="1"/>
+			<data calctype="page"/>
+			<decode datatype="number" format="&quot;P.&quot;0999"/>
+			<font size="90"/>
+		</text>
+		<region id="Rgn01" direction="1" link="Rgn02" tree="1">
+			<position x="0" y="14" width="152" height="36"/>
+			<color transparent="1"/>
+			<record id="Rec03" tree="1">
+				<position x="0" y="0" width="36" height="36"/>
+				<color transparent="1"/>
+				<border left="1" right="1" top="1" bottom="1"/>
+				<barcode id="Bar01" type="1" sschar="0" check="0" string="1">
+					<position x="4" y="9" width="28" height="8"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item5"/>
+					<decode datatype="string" format=""/>
+				</barcode>
+				<barcode id="Bar02" type="1" sschar="0" check="0" string="1">
+					<position x="4" y="18" width="28" height="8"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item6"/>
+					<decode datatype="string" format=""/>
+				</barcode>
+				<barcode id="Bar03" type="1" sschar="0" check="0" string="1">
+					<position x="4" y="27" width="28" height="8"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item7"/>
+					<decode datatype="string" format=""/>
+				</barcode>
+				<text id="Txt11">
+					<position x="24" y="4" width="12" height="4"/>
+					<color transparent="1"/>
+					<border bottom="1"/>
+					<data calctype="item" datasrc="item3"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt18">
+					<position x="4" y="4" width="12" height="4"/>
+					<color transparent="1"/>
+					<border bottom="1"/>
+					<data calctype="item" datasrc="item4"/>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt08">
+					<position x="16" y="4" width="8" height="4"/>
+					<color transparent="1"/>
+					<border bottom="1"/>
+					<data calctype="static">サイズ</data>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt09">
+					<position x="0" y="4" width="4" height="4"/>
+					<color transparent="1"/>
+					<border left="1" bottom="1"/>
+					<data calctype="static">色</data>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt15">
+					<position x="0" y="0" width="14" height="4"/>
+					<color transparent="1"/>
+					<border bottom="1"/>
+					<data calctype="item" suppress="1" datasrc="item1"/>
+					<decode datatype="string" format=""/>
+					<font size="80" style="1"/>
+				</text>
+				<text id="Txt16">
+					<position x="14" y="0" width="22" height="4"/>
+					<color transparent="1"/>
+					<border bottom="1"/>
+					<data calctype="item" suppress="1" datasrc="item2"/>
+					<decode datatype="string" format=""/>
+					<font size="80" style="1"/>
+				</text>
+			</record>
+		</region>
+		<region id="Rgn02" direction="1" link="Rgn03" tree="1">
+			<position x="0" y="55" width="152" height="36"/>
+			<color transparent="1"/>
+		</region>
+		<region id="Rgn03" direction="1" link="Rgn04" tree="1">
+			<position x="0" y="96" width="152" height="36"/>
+			<color transparent="1"/>
+		</region>
+		<region id="Rgn04" direction="1" link="Rgn05" tree="1">
+			<position x="0" y="138" width="152" height="36"/>
+			<color transparent="1"/>
+		</region>
+		<region id="Rgn05" direction="1" link="Rgn06" tree="1">
+			<position x="0" y="180" width="152" height="36"/>
+			<color transparent="1"/>
+		</region>
+		<region id="Rgn06" direction="1" tree="1">
+			<position x="0" y="222" width="152" height="36"/>
+			<color transparent="1"/>
+		</region>
+	</page>
+</printstream>

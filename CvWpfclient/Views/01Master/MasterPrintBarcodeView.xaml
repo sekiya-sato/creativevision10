@@ -59,6 +59,7 @@
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
 				</Grid.RowDefinitions>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="120" />
@@ -123,44 +124,72 @@
 
 				<TextBlock Grid.Row="2" Grid.Column="0"
 					Style="{StaticResource FormLabel}"
+					Text="商品Id" />
+				<DockPanel Grid.Row="2" Grid.Column="1"
+					Margin="0,4">
+					<Button Width="110" Height="36"
+						Command="{Binding SelectShohinIdsCommand}"
+						DockPanel.Dock="Left"
+						Style="{StaticResource MaterialDesignRaisedButton}">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="CheckboxMultipleMarkedOutline" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="選択" />
+						</StackPanel>
+					</Button>
+					<Button Width="80" Height="36"
+						Margin="8,0,0,0"
+						Command="{Binding ClearShohinIdsCommand}"
+						Content="解除" DockPanel.Dock="Right"
+						Style="{StaticResource MaterialDesignFlatButton}" />
+					<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignBody}"
+						Text="{Binding ShohinIdsText}"
+						TextTrimming="CharacterEllipsis"
+						ToolTip="{Binding ShohinIdsText}" />
+				</DockPanel>
+
+				<TextBlock Grid.Row="3" Grid.Column="0"
+					Style="{StaticResource FormLabel}"
 					Text="商品CD" />
-				<TextBox Grid.Row="2" Grid.Column="1"
+				<TextBox Grid.Row="3" Grid.Column="1"
 					Width="360"
 					Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
 					materialDesign:HintAssist.Hint="部分一致"
 					Style="{StaticResource FormTextBox}"
 					Text="{Binding ShohinCodeLike, UpdateSourceTrigger=PropertyChanged}" />
 
-				<TextBlock Grid.Row="3" Grid.Column="0"
+				<TextBlock Grid.Row="4" Grid.Column="0"
 					Style="{StaticResource FormLabel}"
 					Text="商品名" />
-				<TextBox Grid.Row="3" Grid.Column="1"
+				<TextBox Grid.Row="4" Grid.Column="1"
 					Width="520"
 					Margin="0,4" HorizontalAlignment="Left" VerticalContentAlignment="Center"
 					materialDesign:HintAssist.Hint="部分一致"
 					Style="{StaticResource FormTextBox}"
 					Text="{Binding ShohinNameLike, UpdateSourceTrigger=PropertyChanged}" />
 
-				<TextBlock Grid.Row="4" Grid.Column="0"
+				<TextBlock Grid.Row="5" Grid.Column="0"
 					Margin="0,12,0,4"
 					Style="{StaticResource FormLabel}"
 					Text="出力方法" />
-				<StackPanel Grid.Row="4" Grid.Column="1"
+				<StackPanel Grid.Row="5" Grid.Column="1"
 					Margin="0,14,0,4"
 					Orientation="Horizontal">
 					<RadioButton Margin="0,4"
-						Content="SKU" GroupName="OutputMethod"
-						IsChecked="{Binding IsSkuOutput}" />
+						Content="並行ならび" GroupName="OutputMethod"
+						IsChecked="{Binding IsHorizontalOutput}" />
 					<RadioButton Margin="24,4,0,4"
-						Content="商品" GroupName="OutputMethod"
-						IsChecked="{Binding IsSkuOutput, Converter={StaticResource InverseBooleanConverter}}" />
+						Content="垂直ならび" GroupName="OutputMethod"
+						IsChecked="{Binding IsVerticalOutput}" />
 				</StackPanel>
 
-				<TextBlock Grid.Row="5" Grid.Column="0"
+				<TextBlock Grid.Row="6" Grid.Column="0"
 					Margin="0,10,0,4"
 					Style="{StaticResource FormLabel}"
 					Text="バーコード" />
-				<StackPanel Grid.Row="5" Grid.Column="1"
+				<StackPanel Grid.Row="6" Grid.Column="1"
 					Margin="0,12,0,4"
 					Orientation="Horizontal">
 					<RadioButton Margin="0,4"
@@ -174,7 +203,7 @@
 						IsChecked="{Binding IsNw7Barcode}" />
 				</StackPanel>
 
-				<Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+				<Button Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
 					Margin="0,28,0,16" HorizontalAlignment="Center"
 					Command="{Binding OutputPdfCommand}"
 					Style="{StaticResource MaterialDesignFlatMidBgButton}"
@@ -187,7 +216,7 @@
 					</StackPanel>
 				</Button>
 
-				<TextBlock Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
+				<TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2"
 					Margin="0,8,0,0"
 					Foreground="{DynamicResource MaterialDesignBodyLight}"
 					Text="{Binding Message}"
