@@ -190,14 +190,12 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 	}
 
 	/// <summary>
-	/// 他端末で更新された一覧を破棄し、最新一覧の再取得を促す。
+	/// 他端末で更新されたとき、一覧は残して編集中の状態だけを破棄し、最新一覧の再取得を促す。
 	/// </summary>
 	protected virtual void HandleConcurrentUpdate() {
-		ListData = [];
-		Count = 0;
 		Current = new();
 		CurrentEdit = new();
-		Message = "他端末で更新されたため、表示中の一覧は古くなっています。［一覧取得（F5）］で最新の一覧を再取得してください。";
+		Message = "他端末で更新されたため、修正内容は保存されませんでした。\n一覧は表示したままですが、最新ではない可能性があります。\n［一覧取得（F5）］で最新の一覧を再取得してください。";
 		MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 	}
 
