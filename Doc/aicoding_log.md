@@ -1,3 +1,32 @@
+## [2026-08-27] MasterMente系一覧にId列を追加
+
+### Agent
+- Claude Sonnet 5 : Anthropic
+
+### Editor
+- Claude Code
+
+### 目的
+- MasterMente系（コード/名前/略称型）の一覧DataGridにコード重複時の一意特定用として`Id`列が無く、問い合わせ時に不便だった。
+- 詳細設計: `Doc/spec/2026-08-27_MasterMente一覧Id列追加_詳細設計.md`
+
+### 実施内容
+- `MasterShohinMenteView.xaml` / `MasterTokuiMenteView.xaml` / `MasterShiireMenteView.xaml` / `MasterShainMenteView.xaml` / `MasterEndCustomerMenteView.xaml` / `MasterMaterialMenteView.xaml` / `MasterMeishoMenteView.xaml` の一覧DataGridで、`Id`列を先頭に追加した。
+- 表示は既存の`CodeNameDisplay.Format`と同じ「Idは括弧書き」規約に合わせ`Binding="{Binding Id, StringFormat={}({0})}"`で`(123)`形式にした。
+- `FrozenColumnCount`を`2`→`3`に変更し、`Id / コード / 名前`（`MasterMeishoMenteView`のみ`Id / 区分 / コード`）をロック列にした。
+- ViewModel側は`ListData`行に既に`Id`があるため変更なし。
+- 対象外: `MasterConfigMenteView`（コード/名前型でない）、`MasterSysKanriMenteView`（一覧なし）、`TranShopPromotionMenteView` / `TranTokuiPromotionMenteView` / `MasterYosanHanbaiMenteView` / `MasterYosanBrandMenteView`（既にId列あり）。
+
+### 技術決定 Why
+- 新規コンバータは追加せず`StringFormat`のみで対応した。理由: `IdCodeNameDisplayConverter`はId/コード/名前を1列に結合する用途で、本件は列を分けたまま`Id`だけ括弧表示したいため既存コンバータの流用対象ではなかった。
+- `MasterMeishoMenteView`は列順（区分がコードより前）を変更せず、`Id`は最先頭に追加するのみとした。理由: ロック列指示は「Id・コード・名前を固定する」という運用一貫性の指示であり、既存の列順自体の変更は依頼範囲外のため。
+
+### 確認
+- `dotnet build CvWpfclient\CvWpfclient.csproj /p:EnableWindowsTargeting=true /p:UseAppHost=false`: 成功（警告0、エラー0）。
+- 画面起動しての目視確認は未実施。
+
+---
+
 ## [2026-08-27] 09:35 MasterShainMente印刷のJsub展開
 
 ### Agent
