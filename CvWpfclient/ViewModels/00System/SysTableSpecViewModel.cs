@@ -34,6 +34,9 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 	[ObservableProperty]
 	public partial int SelectedTableCount { get; set; }
 
+	[ObservableProperty]
+	public partial bool IncludeIndexDefinition { get; set; } = false;
+
 	protected override string? FormFile => "SysTableSpec.qfm";
 
 	protected override PrintByCsvParam? PrintByCsvParam {
@@ -154,7 +157,7 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 
 			var tableComment = GetClassComment(type);
 			var oldTableName = GetOldTableName(type);
-			lines.AddRange(BuildTableCsvLines(row.Code, tableComment, oldTableName, type));
+			lines.AddRange(BuildTableCsvLines(row.Code, tableComment, oldTableName, type, IncludeIndexDefinition));
 		}
 
 		if (lines.Count == 0) {
@@ -170,7 +173,7 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 		return string.Join("\r\n", lines) + "\r\n";
 	}
 
-	static IEnumerable<string> BuildTableCsvLines(string tableName, string tableComment, string oldTableName, Type tableType) {
+	static IEnumerable<string> BuildTableCsvLines(string tableName, string tableComment, string oldTableName, Type tableType, bool includeIndexDefinition) {
 		var fieldNo = 1;
 		foreach (var property in GetDbProperties(tableType)) {
 			if (!TryGetColumnSpec(property, out var dataType, out var length)) {
@@ -191,6 +194,10 @@ public partial class SysTableSpecViewModel : BaseMenteViewModel<SysTableSpecTabl
 				fieldNo.ToString(CultureInfo.InvariantCulture)
 			]);
 			fieldNo++;
+		}
+
+		if (!includeIndexDefinition) {
+			yield break;
 		}
 
 		var indexNo = 1;
