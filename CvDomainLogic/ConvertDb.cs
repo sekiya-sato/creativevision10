@@ -48,7 +48,7 @@ public partial class ConvertDb {
 		(nameof(CnvAfterMasterAddress), static (db, isInit) => db.CnvAfterMasterAddress(isInit)),
 		(nameof(CnvTran00HonUri), static (db, isInit) => db.CnvTran00HonUri(isInit)),
 		(nameof(CnvTran01TenUri), static (db, isInit) => db.CnvTran01TenUri(isInit)),
-		/* 旧 伝票処理区分 02 は、生地付属仕入で、cv10では使用しない CnvTran02KijiShiire */
+		(nameof(CnvTran02Material), static (db, isInit) => db.CnvTran02Material(isInit)),
 		(nameof(CnvTran03Shiire), static (db, isInit) => db.CnvTran03Shiire(isInit)),
 		(nameof(CnvTran05Ido), static (db, isInit) => db.CnvTran05Ido(isInit)),
 		(nameof(CnvTran06Nyukin), static (db, isInit) => db.CnvTran06Nyukin(isInit)),
@@ -595,7 +595,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 	};
 	public int CnvMasterMaterial(bool isInit = true) {
 		const string sql = "select * from HC$MASTER_SHKIJI where 商品CD>'.' order by 商品CD";
-		return ConvertMaster(sql, isInit, rec => {
+		var cnt = ConvertMaster(sql, isInit, rec => {
 			var oldKubun = getString(rec, "区分CD");
 			var newKubunCode = _kubunShkijiMap.GetValueOrDefault(oldKubun, "99");
 			var kubun = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["KIJ", newKubunCode]);
@@ -615,6 +615,26 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 			};
 			return item;
 		});
+		cnt += InsertMaterialPlaceholders();
+		return cnt;
+	}
+	/// <summary>
+	/// <see cref="CnvTran02Material"/>（旧伝票処理区分02）区分30(値引)/99(その他)向けのプレースホルダ資材を追加する。
+	/// <para>
+	/// 旧 <c>HC$tran_tori1</c> の該当明細は商品CDが常に空欄(".")のため、実マスタの代わりにこの2件へ紐付ける
+	/// （ユーザー指定: Code=000030 値引き / Code=000099 消費税）。消費税区分は非課税(0)固定
+	/// （これらは実在の資材ではなく、金額調整の明細行を表す仮想アイテムのため）。
+	/// </para>
+	/// </summary>
+	private int InsertMaterialPlaceholders() {
+		var kubunOther = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["KIJ", "99"]);
+		var vKubun = new CodeNameView(kubunOther ?? new());
+		var placeholders = new List<MasterMaterial> {
+			new() { Code = "000030", Name = "値引き", Id_Kubun = kubunOther?.Id ?? 0, VKubun = vKubun, Id_Tax = 0 },
+			new() { Code = "000099", Name = "消費税", Id_Kubun = kubunOther?.Id ?? 0, VKubun = vKubun, Id_Tax = 0 },
+		};
+		_toDb.InsertBulk<MasterMaterial>(placeholders);
+		return placeholders.Count;
 	}
 	public int CnvMasterConfig(bool isInit = true) {
 		const string sql = "select * from HC$MASTER_Config where フラグ名>'.' order by カテゴリ,フラグ名";

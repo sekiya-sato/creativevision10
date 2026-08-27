@@ -3,7 +3,7 @@ using CvBase.Share;
 
 namespace CvDomainLogic;
 
-// SqlDepends: HC$tran_tori0, HC$tran_tori1, HC$tran_tana0, HC$tran_tana1, MasterShain, MasterTokui, MasterEndCustomer, MasterShohin, MasterMeisho, DerivedShohinColSiz
+// SqlDepends: HC$tran_tori0, HC$tran_tori1, HC$tran_tana0, HC$tran_tana1, MasterShain, MasterTokui, MasterShiire, MasterEndCustomer, MasterShohin, MasterMaterial, MasterMeisho, DerivedShohinColSiz
 public partial class ConvertDb {
 	/// <summary>
 	/// 本部売上変換
@@ -105,6 +105,59 @@ public partial class ConvertDb {
 					VCustomer = kokyaku,
 					Code_Customer = kokyakuCode,
 					Rate = rate,
+					Tax = tax,
+					Total = total,
+				};
+			});
+	}
+	/// <summary>
+	/// 生地・付属仕入変換（旧伝票処理区分2）
+	/// </summary>
+	/// <remarks>
+	/// 旧区分は 10:仕入 20:返品 30:値引 99:その他(消費税調整) の4種。区分30/99は明細の商品CDが常に
+	/// 空欄(".")のため、<see cref="CnvMasterMaterial"/> が用意するプレースホルダ資材（Code=000030 値引き /
+	/// Code=000099 消費税）へ紐付ける（<see cref="BuildMaterialMeisaiList"/> 参照）。
+	/// <para>
+	/// 消費税はヘッダの内税消費税/外税消費税を直接使う（Tran03Shiireのような掛率1からの逆算は行わない。
+	/// 本区分は当該列が実額で入っている）。区分99は金額(明細金額合計)が常に0で税額列にのみ実額が入るため、
+	/// Tax=0固定・Totalへ丸ごと計上する。これは<see cref="SummaryDb.CalcSummaryKaiKake"/>の
+	/// 「区分99はTotalをTaxバケットへ加算する」ルールと合わせて二重計上を避けるため。
+	/// </para>
+	/// <para>
+	/// 掛計上FLGは旧Uriage/Shiireと異なり0/1が実際に混在する（意味のあるフラグ）ため、固定値にせずそのまま反映する。
+	/// </para>
+	/// </remarks>
+	public int CnvTran02Material(bool isInit = true) {
+		return ConvertTranHeadersByRange(
+			2,
+			isInit,
+			rec => {
+				var shain = getCodeNameView<MasterShain>(getString(rec, "入力社員CD")) ?? new();
+				var shiire = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new();
+				var kubun = getDataInt(rec, "取引区分");
+				var meisaiList = BuildMaterialMeisaiList(rec, kubun);
+				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var naizei = getDataInt(rec, "内税消費税");
+				var gaizei = getDataInt(rec, "外税消費税");
+				// 区分99は金額列が常に0で税額列にのみ実額が入るため、Tax=0固定・Totalへ丸ごと計上する
+				var isOther = kubun == 99;
+				var tax = isOther ? 0 : naizei + gaizei;
+				var total = isOther ? Math.Abs(naizei + gaizei) : Math.Abs(kingakuTotal) + tax;
+
+				return new Tran02Material() {
+					DenDay = getString(rec, "在庫計上日", "19010101"),
+					KakeDay = getString(rec, "掛計上日", "19010101"),
+					Kubun = kubun,
+					IsPay = getDataInt(rec, "掛計上FLG"),
+					ManualNo = getString(rec, "手入力伝票NO"),
+					SuTotal = getDataInt(rec, "数量合計"),
+					KingakuTotal = kingakuTotal,
+					Memo = getString(rec, "メモ"),
+					Jmeisai = meisaiList,
+					Id_Shain = shain.Sid,
+					VShain = shain,
+					Id_Shiire = shiire.Sid,
+					VShiire = shiire,
 					Tax = tax,
 					Total = total,
 				};
@@ -673,6 +726,45 @@ WHERE EXISTS (
 				Nebiki00 = nebiki00,
 				Nebiki01 = nebiki01,
 				Nebiki02 = nebiki02,
+			});
+		}
+
+		return meisaiList;
+	}
+	/// <summary>
+	/// 生地・付属仕入(<see cref="Tran02Material"/>)向け明細リストの作成。
+	/// <para>
+	/// 区分30(値引)/99(その他)は商品CDが常に空欄のため、<see cref="CnvMasterMaterial"/> が用意した
+	/// プレースホルダ資材（Code=000030 値引き / Code=000099 消費税）へ固定で紐付ける。
+	/// それ以外(仕入/返品)は商品CDから <see cref="MasterMaterial"/> を通常どおり解決する。
+	/// 消費税はヘッダ側で一括計上するため、明細のId_Tax/TaxRate/Taxは持たない（0固定）。
+	/// </para>
+	/// </summary>
+	List<Tran99MaterialMeisai>? BuildMaterialMeisaiList(Dictionary<string, object> rec, int kubun) {
+		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataInt(rec, "SEQ_NO"));
+		if (detailRows.Count == 0)
+			return null;
+
+		var placeholderCode = kubun switch {
+			30 => "000030",
+			99 => "000099",
+			_ => null,
+		};
+
+		List<Tran99MaterialMeisai> meisaiList = new(detailRows.Count);
+		foreach (var detailRec in detailRows) {
+			var oldCode = getString(detailRec, "商品CD");
+			var material = getMaster<MasterMaterial>(placeholderCode ?? oldCode);
+
+			meisaiList.Add(new Tran99MaterialMeisai() {
+				No = getDataInt(detailRec, "行NO"),
+				Id_Material = material?.Id ?? 0,
+				Code_Material = material?.Code ?? oldCode,
+				Mei_Material = material?.Name ?? getString(detailRec, "明細名称"),
+				Su = getDataInt(detailRec, "数量"),
+				Tanka = getDataInt(detailRec, "単価"),
+				Kingaku = getDataInt(detailRec, "金額"),
+				Memo = getString(detailRec, "明細メモ"),
 			});
 		}
 
