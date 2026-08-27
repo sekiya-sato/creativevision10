@@ -1178,6 +1178,277 @@ public enum EnumShiire : int {
 	Other = 99
 }
 
+/// <summary>
+/// 共通トランザクション（生地・付属仕入ヘッダ）
+/// <para>
+/// <see cref="MasterMaterial"/>（色・サイズを持たない資材マスタ）を明細に持つ生地・付属の仕入伝票の基底。
+/// <see cref="Tran03Shiire"/>/<see cref="TranAllHeader"/> が前提とする倉庫実在庫連動
+/// （<see cref="ITranSoko"/>/<see cref="ITranDetail"/>、色・サイズ別の <c>SuTotal</c> 等）は対象外のため、
+/// それらのインターフェースは実装せず <see cref="TranCalcBase.GetCalcSoko"/> にも登録しない（在庫計算対象外）。
+/// 区分（<see cref="Kubun"/>）は <see cref="EnumShiire"/> をそのまま流用し、買掛集計（<see cref="ITranTax"/>）へは
+/// <see cref="Tran03Shiire"/> と同じ軸（<c>KakeDay</c> / <c>Id_Shiire</c>）で合算される。
+/// </para>
+/// </summary>
+[Comment("トランザクション：生地・付属仕入共通ヘッダ Tran02Materialの基底で単独の実テーブルは作成しない")]
+public partial class TranMaterialHeader : BaseDbClass, ITranTax {
+	/// <summary>
+	/// 計上日（yyyyMMdd）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("計上日（yyyyMMdd）")]
+	public partial string DenDay { get; set; } = "19010101";
+	/// <summary>
+	/// 掛計上日（yyyyMMdd）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("掛計上日（yyyyMMdd）")]
+	public partial string KakeDay { get; set; } = "19010101";
+	/// <summary>
+	/// 社員ユニークキー
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
+	[Comment("社員ユニークキー")]
+	public partial long Id_Shain { get; set; }
+	/// <summary>
+	/// 社員データ
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("社員データ")]
+	public partial CodeNameView VShain { get; set; } = new();
+	/// <summary>
+	/// 仕入先キー
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShiire))]
+	[Comment("仕入先キー")]
+	public partial long Id_Shiire { get; set; }
+	/// <summary>
+	/// 仕入先データ
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("仕入先データ")]
+	public partial CodeNameView VShiire { get; set; } = new();
+	/// <summary>
+	/// 支払フラグ
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsPay))]
+	[Comment("支払フラグ")]
+	public partial int IsPay { get; set; } = 1;
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsPay {
+		get => (EnumYesNo)IsPay;
+		set => IsPay = (int)value;
+	}
+	/// <summary>
+	/// 区分（2桁 10-19,20-29,30,99）
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnKubun))]
+	[Comment("区分（2桁 10-19、20-29、30、99）")]
+	public partial int Kubun { get; set; } = 10;
+	partial void OnKubunChanged(int value) {
+		// Kubun が変更された後に実行される
+		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
+	}
+	[Ignore]
+	[JsonIgnore]
+	public EnumShiire EnKubun {
+		get => (EnumShiire)Kubun;
+		set => Kubun = (int)value;
+	}
+	/// <summary>
+	/// 計算フラグ（1:+ -1:-, 0:計算除外 集計処理で返品を考慮するために使用）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("計算フラグ（1:+ -1:-、 0:計算除外 集計処理で返品を考慮するために使用）")]
+	public partial int CalcFlag { get; protected set; } = 1;
+	/// <summary>
+	/// 手入力No
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(20)]
+	[Comment("手入力No")]
+	public partial string ManualNo { get; set; } = string.Empty;
+	/// <summary>
+	/// 数量合計
+	/// </summary>
+	[ObservableProperty]
+	[Comment("数量合計")]
+	public partial int SuTotal { get; set; }
+	/// <summary>
+	/// 金額合計
+	/// </summary>
+	[ObservableProperty]
+	[Comment("金額合計")]
+	public partial int KingakuTotal { get; set; }
+	/// <summary>
+	/// 消費税
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税")]
+	public partial int Tax { get; set; }
+	/// <summary>
+	/// 総合計
+	/// </summary>
+	[ObservableProperty]
+	[Comment("総合計")]
+	public partial int Total { get; set; }
+	/// <summary>
+	/// 発行済FLG
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsPrint))]
+	[Comment("発行済FLG。伝票印刷で立てる（0=未発行 1=発行済）")]
+	public partial int IsPrint { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsPrint {
+		get => (EnumYesNo)IsPrint;
+		set => IsPrint = (int)value;
+	}
+	/// <summary>
+	/// 消込済FLG
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
+	[Comment("消込済FLG。0=未消込 / 1=消込済。支払消込画面で伝票単位に立て、仕入先元帳で * を印字する。")]
+	public partial int EndFlag { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnEndFlag {
+		get => (EnumYesNo)EndFlag;
+		set => EndFlag = (int)value;
+	}
+	/// <summary>
+	/// ヘッダメモ
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(200)]
+	[Comment("ヘッダメモ")]
+	public partial string Memo { get; set; } = string.Empty;
+	/// <summary>
+	/// 明細リスト
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(4000)]
+	[Comment("明細リスト")]
+	public partial List<Tran99MaterialMeisai>? Jmeisai { get; set; }
+}
+
+/// <summary>
+/// 共通トランザクション（生地・付属仕入明細）
+/// </summary>
+[Comment("トランザクション：生地・付属仕入明細サブテーブル TranMaterialHeader.Jmeisai にJSONで格納する")]
+public sealed partial class Tran99MaterialMeisai : ObservableObject {
+	/// <summary>
+	/// 行No
+	/// </summary>
+	[ObservableProperty]
+	[Comment("行No")]
+	public partial int No { get; set; }
+	/// <summary>
+	/// 生地・付属ユニークキー
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterMaterial))]
+	[Comment("生地・付属ユニークキー")]
+	public partial long Id_Material { get; set; }
+	/// <summary>
+	/// 生地・付属CD
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(20)]
+	[Comment("生地・付属CD")]
+	public partial string Code_Material { get; set; } = string.Empty;
+	/// <summary>
+	/// 生地・付属名
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(100)]
+	[Comment("生地・付属名")]
+	public partial string Mei_Material { get; set; } = string.Empty;
+	/// <summary>
+	/// 数量
+	/// </summary>
+	[ObservableProperty]
+	[Comment("数量")]
+	public partial int Su { get; set; }
+	/// <summary>
+	/// 単価
+	/// </summary>
+	[ObservableProperty]
+	[Comment("単価")]
+	public partial int Tanka { get; set; }
+	/// <summary>
+	/// 金額
+	/// </summary>
+	[ObservableProperty]
+	[Comment("金額")]
+	public partial int Kingaku { get; set; }
+	/// <summary>
+	/// 値引: 合計からの
+	/// </summary>
+	[ObservableProperty]
+	[Comment("値引: 合計からの")]
+	public partial int Nebiki00 { get; set; }
+	/// <summary>
+	/// 値引: 明細1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("値引: 明細1")]
+	public partial int Nebiki01 { get; set; }
+	/// <summary>
+	/// 消費税区分（MasterSysTax.Id 1-3）。入力時点の MasterMaterial.Id_Tax のスナップショット。0は非課税
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税区分（0:非課税/未使用）")]
+	public partial long Id_Tax { get; set; } = 0;
+	/// <summary>
+	/// 明細税額の計算に使用した消費税率(%)。伝票日付時点の値のスナップショット（監査・再表示用）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("適用消費税率(%)（未使用時0）")]
+	public partial int TaxRate { get; set; } = 0;
+	/// <summary>
+	/// 明細ごとの消費税額。常に正値で保持し、返品等の符号はヘッダ Kubun の CalcFlag が決める
+	/// </summary>
+	[ObservableProperty]
+	[Comment("明細消費税額（未使用時0）")]
+	public partial int Tax { get; set; } = 0;
+	/// <summary>
+	/// 明細メモ
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(200)]
+	[Comment("明細メモ")]
+	public partial string Memo { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 生地・付属仕入 02 (仕入先 買掛+)
+/// <para>
+/// 買掛集計（<see cref="SummaryDb.CalcSummaryKaiKake"/> / <see cref="SummaryDb.CalcSummaryKaiShi"/>）は
+/// <see cref="Tran03Shiire"/> と合算して <c>Id_Shiire</c> 軸に積む。区分ごとの振り分けは
+/// <see cref="EnumShiire"/> と同じだが、区分99（その他）は仕入ではなく消費税(<c>Tax</c>)へ全額を積む点が
+/// <see cref="Tran03Shiire"/> と異なる（生地・付属の税調整目的の伝票として使うため）。
+/// </para>
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(KakeDay))]
+[KeyDml("nk2", false, [nameof(Id_Shiire)])]
+[Comment("トランザクション：生地・付属仕入データ MasterMaterialを明細に持つ")]
+public sealed partial class Tran02Material : TranMaterialHeader {
+}
 
 /// <summary>
 /// 移動 05 (倉庫 出, 移動先 入)

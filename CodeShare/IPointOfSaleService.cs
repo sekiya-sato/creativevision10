@@ -103,7 +103,7 @@ namespace CodeShare;
 }
 [DataContract] public sealed record PosSaveSeisanResponse {
 	[DataMember(Order = 1)] public bool IsSuccess { get; init; }
-	/// <summary>保存された Tran02PosSeisan.Id。</summary>
+	/// <summary>保存された Tran04PosSeisan.Id。</summary>
 	[DataMember(Order = 2)] public long SeisanId { get; init; }
 	/// <summary>本日何回目の精算か（同一営業日・店舗で連番）。</summary>
 	[DataMember(Order = 3)] public int SeisanCnt { get; init; }

@@ -93,12 +93,12 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 			var realAmount = CalcGenkin(request);
 			var calcAmount = checked(request.JunbiAmount + request.CashAmount);
 			var diff = checked(realAmount - calcAmount);
-			var nextCnt = _db.Fetch(typeof(Tran02PosSeisan), "where DenDay=@0 and Id_Tenpo=@1", request.DenDay, request.StoreId)
-				.OfType<Tran02PosSeisan>().Max(s => (int?)s.SeisanCnt) ?? 0;
+			var nextCnt = _db.Fetch(typeof(Tran04PosSeisan), "where DenDay=@0 and Id_Tenpo=@1", request.DenDay, request.StoreId)
+				.OfType<Tran04PosSeisan>().Max(s => (int?)s.SeisanCnt) ?? 0;
 			nextCnt++;
 			var store = FindById<MasterTokui>(request.StoreId);
 			var staff = FindById<MasterShain>(request.StaffId);
-			var seisan = new Tran02PosSeisan {
+			var seisan = new Tran04PosSeisan {
 				Vdc = DateTime.UtcNow.Ticks,
 				Vdu = DateTime.UtcNow.Ticks,
 				DenDay = request.DenDay,

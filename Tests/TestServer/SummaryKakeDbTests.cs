@@ -965,6 +965,7 @@ public class SummaryKakeDbTests {
 		AddOwnClosingDay(db);
 		db.CreateTable(typeof(SummaryKaiKake), true, false);
 		db.CreateTable(typeof(Tran03Shiire), true, false);
+		db.CreateTable(typeof(Tran02Material), true, false);
 		db.CreateTable(typeof(Tran07Shiharai), true, false);
 		InsertKinMaster(db);
 		return db;
@@ -1024,6 +1025,7 @@ public class SummaryKakeDbTests {
 		db.CreateTable(typeof(SummaryKaiShi), true, false);
 		db.CreateTable(typeof(MasterShiire), true, false);
 		db.CreateTable(typeof(Tran03Shiire), true, false);
+		db.CreateTable(typeof(Tran02Material), true, false);
 		db.CreateTable(typeof(Tran07Shiharai), true, false);
 		InsertKinMaster(db);
 		return db;

@@ -507,6 +507,7 @@ public class HhtProcessUpdateTests {
 	private void PrepareTables() {
 		foreach (var t in new[] {
 			typeof(TranVulcanHht), typeof(Tran00Uriage), typeof(Tran01Tenuri), typeof(Tran03Shiire),
+			typeof(Tran02Material),
 			typeof(Tran05Ido), typeof(Tran10IdoOut), typeof(Tran11IdoIn), typeof(Tran12Jyuchu),
 			typeof(Tran13Hachu), typeof(Tran60Tana),
 			typeof(MasterTokui), typeof(MasterShiire), typeof(MasterShain), typeof(MasterShohin),

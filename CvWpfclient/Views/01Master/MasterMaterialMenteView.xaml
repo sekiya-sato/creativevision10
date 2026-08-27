@@ -340,8 +340,7 @@
 									Text="消費税区分" />
 								<ComboBox Grid.Row="8" Grid.Column="1"
 									Margin="0,4"
-									materialDesign:HintAssist.Hint="消費税区分"
-									DisplayMemberPath="Name"
+									materialDesign:HintAssist.Hint="消費税区分" DisplayMemberPath="Name"
 									ItemsSource="{Binding TaxKubunList}"
 									SelectedValue="{Binding CurrentEdit.Id_Tax, Mode=TwoWay}"
 									SelectedValuePath="Id"

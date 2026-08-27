@@ -11,7 +11,7 @@ namespace CvBase;
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("nk1", false, [nameof(DenDay), nameof(Id_Tenpo)])]
 [Comment("トランザクション：POS日次精算データ（金種枚数・集計スナップショット）")]
-public sealed partial class Tran02PosSeisan : BaseDbClass {
+public sealed partial class Tran04PosSeisan : BaseDbClass {
 	/// <summary>
 	/// 営業日（yyyyMMdd）
 	/// </summary>
@@ -133,7 +133,7 @@ public sealed partial class Tran02PosSeisan : BaseDbClass {
 }
 
 /// <summary>精算時点の売上集計スナップショット（JSON 列 Jsummary に格納）</summary>
-[Comment("トランザクション：POS精算時点の売上集計サブテーブル Tran02PosSeisan.Jsummary にJSONで格納する")]
+[Comment("トランザクション：POS精算時点の売上集計サブテーブル Tran04PosSeisan.Jsummary にJSONで格納する")]
 public sealed class PosSeisanSummary {
 	[Comment("精算時点の売上合計金額")]
 	public int TotalAmount { get; init; }

@@ -667,7 +667,7 @@ WHERE SumMonth <= @0;
 	/// <c>KakeDay</c> のインデックスが効く形にしている。
 	/// </para>
 	/// </summary>
-	string ExtendToMonth(string summaryTable, string denTable, string kinTable, string dateToYyyymm, int shime) {
+	string ExtendToMonth(string summaryTable, string[] denTables, string kinTable, string dateToYyyymm, int shime) {
 		var candidates = new List<string> { dateToYyyymm };
 		var summaryMonthSql = $@"
 SELECT MAX(DenMonth)
@@ -680,7 +680,7 @@ WHERE DenMonth > @0
 		}
 
 		var cutoffDay = ClosingMonthCalculator.GetPeriod(dateToYyyymm, shime).DayTo;
-		foreach (var tableName in new[] { denTable, kinTable }) {
+		foreach (var tableName in denTables.Append(kinTable)) {
 			var maxDay = _db.FirstOrDefault<string>($"SELECT MAX(KakeDay) FROM {tableName} WHERE KakeDay > @0", cutoffDay);
 			if (!string.IsNullOrEmpty(maxDay)) {
 				candidates.Add(ClosingMonthCalculator.CalculateKakeMonth(maxDay, shime));
@@ -736,7 +736,7 @@ WHERE DenMonth > @0
 		const string deleteSql = "DELETE FROM SummaryUriKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
 		var shime = GetOwnClosingDay();
-		var toMonth = ExtendToMonth("SummaryUriKake", "Tran00Uriage", "Tran06Nyukin", DateToYyyymm, shime);
+		var toMonth = ExtendToMonth("SummaryUriKake", ["Tran00Uriage"], "Tran06Nyukin", DateToYyyymm, shime);
 		var targetDays = ClosingMonthCalculator.GetPeriodRange(DatefromYyyymm, toMonth, shime);
 		if (string.CompareOrdinal(targetDays.DayTo, fiscalStart) < 0) return cnt;
 		var dayFrom = string.CompareOrdinal(targetDays.DayFrom, fiscalStart) < 0 ? fiscalStart : targetDays.DayFrom;
@@ -1039,15 +1039,30 @@ WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
 ),
 purchases AS (
-	SELECT
-		t.Id_Shiire,
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END) AS Shiire,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END) AS Henpin,
-		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END) AS Nebiki,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END) AS Tax
-	FROM Tran03Shiire AS t
-	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
-	GROUP BY t.Id_Shiire
+	-- Tran02Material（生地・付属仕入）を合算する。区分99（その他）は仕入ではなく消費税へ全額を積む点が
+	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため）。
+	SELECT Id_Shiire, SUM(Shiire) AS Shiire, SUM(Henpin) AS Henpin, SUM(Nebiki) AS Nebiki, SUM(Tax) AS Tax
+	FROM (
+		SELECT
+			t.Id_Shiire,
+			CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END AS Shiire,
+			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END AS Henpin,
+			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END AS Nebiki,
+			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END AS Tax
+		FROM Tran03Shiire AS t
+		WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
+		UNION ALL
+		SELECT
+			t.Id_Shiire,
+			CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END AS Shiire,
+			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END AS Henpin,
+			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END AS Nebiki,
+			(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END)
+				+ CASE WHEN t.Kubun = 99 THEN t.Total ELSE 0 END AS Tax
+		FROM Tran02Material AS t
+		WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
+	)
+	GROUP BY Id_Shiire
 ),
 payments AS (
 	SELECT
@@ -1151,7 +1166,7 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 		const string deleteSql = "DELETE FROM SummaryKaiKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
 		var shime = GetOwnClosingDay();
-		var toMonth = ExtendToMonth("SummaryKaiKake", "Tran03Shiire", "Tran07Shiharai", DateToYyyymm, shime);
+		var toMonth = ExtendToMonth("SummaryKaiKake", ["Tran03Shiire", "Tran02Material"], "Tran07Shiharai", DateToYyyymm, shime);
 		var targetDays = ClosingMonthCalculator.GetPeriodRange(DatefromYyyymm, toMonth, shime);
 		if (string.CompareOrdinal(targetDays.DayTo, fiscalStart) < 0) return cnt;
 		var dayFrom = string.CompareOrdinal(targetDays.DayFrom, fiscalStart) < 0 ? fiscalStart : targetDays.DayFrom;
@@ -1170,6 +1185,21 @@ movements AS (
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran03Shiire AS t
+	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
+	GROUP BY DenMonth, t.Id_Shiire
+	UNION ALL
+	-- Tran02Material（生地・付属仕入）。区分99（その他）は仕入ではなく消費税へ全額を積む点が
+	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため）。
+	SELECT
+		{kakeMonthSql} AS DenMonth,
+		t.Id_Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
+		SUM((CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END)
+			+ CASE WHEN t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Tax,
+		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
+	FROM Tran02Material AS t
 	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Shiire
 	UNION ALL

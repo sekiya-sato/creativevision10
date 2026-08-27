@@ -122,7 +122,7 @@ public partial class HhtProcess {
 
 		foreach (var group in groups) {
 			// 客数(12)は対応する伝票がないため対象外とする。
-			// ToDo: Tran02PosSeisan.KyakuSu へ入れる場合は、POS日次精算との突合ルールを別途決める必要がある（決定 12-B）
+			// ToDo: Tran04PosSeisan.KyakuSu へ入れる場合は、POS日次精算との突合ルールを別途決める必要がある（決定 12-B）
 			if (group.Type0 == TypeKyakusu) {
 				foreach (var row in group.Rows) {
 					row.VdCnvDate = vdate;

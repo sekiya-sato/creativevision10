@@ -479,7 +479,7 @@ public enum SubMenuType {
 	[Comment("仕入")]
 	_05Shiire =5, // 主Table : Tran03Shiire
 	[Comment("売上")]
-	_06Uriage=6, // 主Table : Tran00Uriage, Tran01Tenuri,Tran02PosSeisan
+	_06Uriage=6, // 主Table : Tran00Uriage, Tran01Tenuri,Tran04PosSeisan
 	[Comment("配分・出荷")]
 	_07Haibun=7, // 主Table : TranHaibun
 	[Comment("在庫")]
