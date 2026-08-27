@@ -57,6 +57,39 @@ public sealed class ViewDriver<TViewModel> where TViewModel : class {
 	}
 
 	/// <summary>
+	/// 非同期コマンドを開始し、<paramref name="cancelAfter"/>だけ待ってから
+	/// `{selector名}CancelCommand`（`IncludeCancelCommand = true`が生成する取消コマンド）を実行する。
+	/// 完了まで待って結果を返す（キャンセルにより例外・警告に落ちても呼び出し側で判定できるよう例外は投げない）。
+	/// </summary>
+	/// <param name="name">証跡上の名前。</param>
+	/// <param name="selector">対象の非同期コマンド。</param>
+	/// <param name="cancelCommandSelector">対応する取消コマンド（`IRelayCommand`、通常は引数なし）。</param>
+	/// <param name="cancelAfter">実行開始からキャンセルまでの待ち時間。</param>
+	public async Task<bool> RunAndCancelAsync(
+		string name,
+		Func<TViewModel, IAsyncRelayCommand> selector,
+		Func<TViewModel, System.Windows.Input.ICommand> cancelCommandSelector,
+		TimeSpan cancelAfter,
+		object? parameter = null) {
+		var command = selector(Vm);
+		_session.Evidence.Write("command", $"{name}:start", new { cancelAfterMs = cancelAfter.TotalMilliseconds });
+		var task = command.ExecuteAsync(parameter);
+
+		await Task.Delay(cancelAfter);
+		_session.Evidence.Write("command", $"{name}:cancel", null);
+		cancelCommandSelector(Vm).Execute(null);
+
+		try {
+			await task;
+		}
+		catch (OperationCanceledException) {
+			// ViewModel側で捕捉せずに抜けてくる実装もあるため、ここでも許容する。
+		}
+		_session.Evidence.Write("command", $"{name}:end", null);
+		return true;
+	}
+
+	/// <summary>
 	/// 条件が成立するまで待つ。成立しなければ失敗として記録する。
 	/// ロード時に自動実行されるコマンドの完了待ちなどに使う。
 	/// </summary>

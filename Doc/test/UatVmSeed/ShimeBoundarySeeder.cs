@@ -151,6 +151,10 @@ public static class ShimeBoundarySeeder {
 					KingakuTotal = row.Total,
 					Tax = row.Tax,
 					IsPay = 1,
+					// 明細(Jmeisai)を持たせないと json_each(Jmeisai) が null 要素を1件生み、
+					// 在庫Rebuild(SummaryDb.CalcSummaryStockTrn)のSUM(json_extract(...,'$.Su'))が
+					// NULLになって SummaryStock.InQty のNOT NULL制約違反を起こす（C-10で発覚）。
+					Jmeisai = [new Tran99Meisai { No = 1, Su = 1, Kingaku = row.Total }],
 				};
 				tran.EnKubun = EnumUri00.Uriage;
 				db.Insert(tran);
