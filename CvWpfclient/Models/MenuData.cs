@@ -205,6 +205,7 @@ public partial class MenuData : ObservableObject {
 		new("■ 仕入", new([
 			new("商品仕入入力", typeof(Views._05Shiire.ShiireInputView), addInfo:"仕入先に対する仕入入力"),
 			new("仕入返品入力", typeof(Views._05Shiire.HenpinInputView), addInfo:"仕入先への返品･値引を Tran03Shiire の減算区分で入力"),
+			new("生地付属入力", typeof(Views._05Shiire.MaterialInputView), addInfo:"仕入先に対する生地・付属(MasterMaterial)の仕入入力"),
 			new("▲ 仕入照会・帳票 ----", new([
 				new("品番別仕入チェックリスト", typeof(Views._05Shiire.HinbanShiireCheckListView), addInfo:"仕入明細を品番別に集計して数量･金額･上代･平均単価を印刷"),
 				new("ブランド別仕入金額表", typeof(Views._05Shiire.BrandShiireKingakuTableView), addInfo:"ﾌﾞﾗﾝﾄﾞ別･年月別の仕入金額･上代･原価率･構成比を印刷"),
