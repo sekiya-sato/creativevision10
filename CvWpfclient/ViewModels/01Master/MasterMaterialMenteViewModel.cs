@@ -1,6 +1,9 @@
+using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CvAsset;
 using CvBase;
+using System.Collections.ObjectModel;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -14,6 +17,15 @@ public partial class MasterMaterialMenteViewModel : Helpers.BaseCodeNameLightMen
 	protected override string[] AdditionalLightweightColumns => ["VKubun", "VShiire"];
 	protected override string? SelectCodeDisplayName => "生地・付属";
 	protected override string? FormFile => "MasterMaterialMente.qfm";
+
+	/// <summary>
+	/// 消費税区分(<see cref="MasterMaterial.Id_Tax"/>)の選択肢。<see cref="MasterSysTax"/>の定義から作る。
+	/// </summary>
+	[ObservableProperty]
+	public partial ObservableCollection<TaxKubunOption> TaxKubunList { get; set; } = [];
+
+	/// <summary>消費税区分コンボの表示項目</summary>
+	public sealed record TaxKubunOption(long Id, string Name);
 
 	protected override QueryListSqlParam? PrintBySqlParam {
 		get {
@@ -31,7 +43,23 @@ from MasterMaterial {query.AddWhereOrder()}
 	}
 	[RelayCommand]
 	async Task Init() {
+		await LoadTaxKubunAsync();
 		await DoList(CancellationToken.None);
+	}
+
+	/// <summary>
+	/// 消費税区分の選択肢を<see cref="MasterSysTax"/>から作る。表示税率は今日時点で適用される率。
+	/// </summary>
+	async Task LoadTaxKubunAsync() {
+		if (TaxKubunList.Count > 0) return;
+		var today = DateTime.Now.ToString("yyyyMMdd");
+		var options = new List<TaxKubunOption> { new(0, "0: 非課税") };
+		var sysman = await AppGlobal.LogicGetSysman();
+		foreach (var systax in (sysman.Jsub ?? []).OrderBy(x => x.Id)) {
+			var rate = await AppGlobal.LogicGetTax((int)systax.Id, today);
+			options.Add(new TaxKubunOption(systax.Id, $"{systax.Id}: {rate}%"));
+		}
+		TaxKubunList = new ObservableCollection<TaxKubunOption>(options);
 	}
 
 	[RelayCommand]

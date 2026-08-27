@@ -793,6 +793,12 @@ public sealed partial class MasterMaterial : BaseDbClass, IBaseCodeName {
 	[Comment("単価")]
 	public partial int TankaShiire { get; set; }
 	/// <summary>
+	/// 消費税No
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税No")]
+	public partial long Id_Tax { get; set; } = 1;
+	/// <summary>
 	/// メモ
 	/// </summary>
 	[ObservableProperty]

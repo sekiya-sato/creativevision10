@@ -239,6 +239,7 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<!--  コード  -->
@@ -333,11 +334,24 @@
 									Style="{StaticResource NumericFormTextBox}"
 									Text="{Binding CurrentEdit.TankaShiire, StringFormat={}{0:N0}}" />
 
-								<!--  メモ  -->
+								<!--  消費税区分  -->
 								<TextBlock Grid.Row="8"
 									Style="{StaticResource FormLabel}"
+									Text="消費税区分" />
+								<ComboBox Grid.Row="8" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="消費税区分"
+									DisplayMemberPath="Name"
+									ItemsSource="{Binding TaxKubunList}"
+									SelectedValue="{Binding CurrentEdit.Id_Tax, Mode=TwoWay}"
+									SelectedValuePath="Id"
+									Style="{StaticResource FormComboBox}" />
+
+								<!--  メモ  -->
+								<TextBlock Grid.Row="9"
+									Style="{StaticResource FormLabel}"
 									Text="メモ" />
-								<TextBox Grid.Row="8" Grid.Column="1"
+								<TextBox Grid.Row="9" Grid.Column="1"
 									MinHeight="60"
 									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
 									Style="{StaticResource FormTextBox}"
@@ -345,11 +359,11 @@
 									TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
 
 								<!--  登録日/修正日  -->
-								<TextBlock Grid.Row="9"
+								<TextBlock Grid.Row="10"
 									d:Text="登録日/修正日"
 									Style="{StaticResource FormLabel}"
 									Text="" />
-								<TextBlock Grid.Row="9" Grid.Column="1"
+								<TextBlock Grid.Row="10" Grid.Column="1"
 									Margin="20"
 									Foreground="{DynamicResource MaterialDesignBody}"
 									TextWrapping="Wrap">
