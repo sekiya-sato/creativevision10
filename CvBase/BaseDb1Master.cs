@@ -707,6 +707,102 @@ public sealed partial class MasterShohinGenka : ObservableObject {
 }
 
 /// <summary>
+/// 生地・付属品テーブル
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uq1", true, nameof(Code))]
+[Comment("マスター：生地・付属品テーブル")]
+[OldTableCommentAttr("HC$MASTER_SHKIJI")]
+public sealed partial class MasterMaterial : BaseDbClass, IBaseCodeName {
+	/// <summary>
+	/// コード
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(20)]
+	[OldTableCommentAttr("商品CD")]
+	[Comment("コード")]
+	public partial string Code { get; set; } = "";
+	/// <summary>
+	/// 名前
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(100)]
+	[OldTableCommentAttr("商品名")]
+	[Comment("名前")]
+	public partial string Name { get; set; } = string.Empty;
+	/// <summary>
+	/// 略称
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(60)]
+	[OldTableCommentAttr("略称")]
+	[Comment("略称")]
+	public partial string Ryaku { get; set; } = string.Empty;
+	/// <summary>
+	/// カナ
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(100)]
+	[Comment("カナ")]
+	public partial string Kana { get; set; } = string.Empty;
+	/// <summary>
+	/// 区分(生地/付属等)
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("区分CD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: "KIJ")]
+	[Comment("区分")]
+	public partial long Id_Kubun { get; set; }
+	/// <summary>
+	/// 区分データ
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("区分データ")]
+	public partial CodeNameView VKubun { get; set; } = new();
+	/// <summary>
+	/// 仕入先
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("仕入先CD")]
+	[ForeignKey(nameof(MasterShiire))]
+	[Comment("仕入先")]
+	public partial long Id_Shiire { get; set; }
+	/// <summary>
+	/// 仕入先データ
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("仕入先データ")]
+	public partial CodeNameView VShiire { get; set; } = new();
+	/// <summary>
+	/// 仕入先商品コード
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(16)]
+	[OldTableCommentAttr("仕入先商品CD")]
+	[Comment("仕入先商品コード")]
+	public partial string CodeShiire { get; set; } = string.Empty;
+	/// <summary>
+	/// 単価
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("単価")]
+	[Comment("単価")]
+	public partial int TankaShiire { get; set; }
+	/// <summary>
+	/// メモ
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(120)]
+	[OldTableCommentAttr("メモ")]
+	[Comment("メモ")]
+	public partial string Memo { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// 設定フラグテーブル
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]

@@ -79,6 +79,9 @@ public class MasterCascadeDb {
 		new (typeof(MasterTokui),        nameof(MasterTokui.Id_PayMethod),        nameof(MasterTokui.VPayMethod),        typeof(MasterMeisho)),
 		new (typeof(MasterShiire),       nameof(MasterShiire.Id_PayMethod),       nameof(MasterShiire.VPayMethod),       typeof(MasterMeisho)),
 		new (typeof(MasterYosanBrand),   nameof(MasterYosanBrand.Id_Brand),       nameof(MasterYosanBrand.VBrand),       typeof(MasterMeisho)),
+		new (typeof(MasterMaterial),     nameof(MasterMaterial.Id_Kubun),         nameof(MasterMaterial.VKubun),         typeof(MasterMeisho)),
+		// 参照先: MasterShiire
+		new (typeof(MasterMaterial),     nameof(MasterMaterial.Id_Shiire),        nameof(MasterMaterial.VShiire),        typeof(MasterShiire)),
 	];
 
 	/// <summary>
