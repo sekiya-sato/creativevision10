@@ -200,6 +200,8 @@ AIが進行できない、または業務責任者の選択が必要な項目の
 - **CvServerの終了は強制終了にしない**。強制終了すると`server-user163.db-wal`が残る（実測16,512バイト）。`CREATE_NEW_PROCESS_GROUP`で起動し`CTRL_BREAK_EVENT`を送る方式では正常終了しWALは0バイトになった。`CTRL_C_EVENT`はプロセスグループを指定して送れないため使えない。
 - Windows PowerShell 5.1は**BOM無しUTF-8の.ps1をCP932として読む**ため、日本語コメントが引用符を壊して構文エラーになる。`.ps1`はUTF-8 BOM付きで保存する。here-stringも解釈に失敗しやすいため使わない。
 - `MasterTokui`の締日は現状**99（末日）のみ**で、20日締めの境界（C-01）は現データでは検証できない。網羅データの投入が前提となる（3.3）。
+- `MessageBoxView`をMVVM化する必要はない。ハーネスはテスト専用ルートで`MessageBoxView`の生成前に分岐するため、その内部構造には触れない。MVVM化しても得られるものが無く、製品コードの変更量だけが増える。
+- 非回帰確認: `Tests/TestServer` 231件すべて成功（2026-08-27）。なお`dotnet test`では0件収集となり終了コード5を返すため、`Tests/TestServer/bin/Debug/net10.0/TestServer.exe`を直接実行して確認する。
 
 ## 8. 更新ルール
 
