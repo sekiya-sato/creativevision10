@@ -173,14 +173,14 @@ public partial class ConvertDb {
 			rec => {
 				var shain = getCodeNameView<MasterShain>(getString(rec, "入力社員CD")) ?? new();
 				var soko = getCodeNameView<MasterTokui>(getString(rec, "倉庫CD")) ?? new();
-				var shiire = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new();
+				var shiire = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
 				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
 				var taxRatePercent = getDataInt(rec, "掛率1");
 				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
-				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
+				var rate = getShiireRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran03Shiire() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -285,7 +285,7 @@ public partial class ConvertDb {
 			isInit,
 			rec => {
 				var shain = getCodeNameView<MasterShain>(getString(rec, "入力社員CD")) ?? new();
-				var kakesaki = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new(); // 掛先
+				var kakesaki = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new(); // 掛先(支払はMasterShiire)
 				var meisaiList = BuildKinMeisaiList(rec);
 
 				return new Tran07Shiharai() {
@@ -498,14 +498,14 @@ public partial class ConvertDb {
 			rec => {
 				var shain = getCodeNameView<MasterShain>(getString(rec, "入力社員CD")) ?? new();
 				var soko = getCodeNameView<MasterTokui>(getString(rec, "倉庫CD")) ?? new();
-				var shiire = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new();
+				var shiire = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
 				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
 				var taxRatePercent = getDataInt(rec, "掛率1");
 				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
-				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
+				var rate = getShiireRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran13Hachu() {
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -598,10 +598,11 @@ WHERE EXISTS (
 		// Executeメソッドの仕様で、正常終了は0を返すため、更新件数は'SELECT changes()'で取得、クエリの実行自体は効率的に行われます。
 		// アプリ側でレコード1件づつの処理をした場合、実データ5万件程度で数10分、300万件で4時間以上かかって途中リタイア。-> SQLクエリで一括更新する方法に変更して全体で5分程度で完了。
 	}
-	// 取引先コード→掛率(%)のキャッシュ。移行は数万件回るため1件ずつのマスタ取得を避ける。
+	// 取引先コード→掛率(%)のキャッシュ（マスタ種別ごと）。移行は数万件回るため1件ずつのマスタ取得を避ける。
 	readonly Dictionary<string, int> torihikiRateCache = [];
+	readonly Dictionary<string, int> shiireRateCache = [];
 	/// <summary>
-	/// 取引先コードから掛率(%)を引く。<c>Tran*.Rate</c> は掛率であり消費税率ではない。
+	/// 得意先コードから掛率(%)を引く。<c>Tran*.Rate</c> は掛率であり消費税率ではない。
 	/// 旧CVnetの「掛率1」は実質すべて消費税率が入っており掛率の移行元にできないため、CV10マスタの掛率を採用する。
 	/// マスタが引けない場合は0（未設定）とし、税率値を掛率として残さない。
 	/// </summary>
@@ -612,6 +613,19 @@ WHERE EXISTS (
 			return cached;
 		var rate = getMaster<MasterTokui>(code)?.RateProper ?? 0;
 		torihikiRateCache[code] = rate;
+		return rate;
+	}
+	/// <summary>
+	/// 仕入先コードから掛率(%)を引く。仕入/発注の取引先CD1はMasterShiireのコード体系のため、
+	/// <see cref="getTorihikiRatePercent"/>(MasterTokui参照)とは別キャッシュ・別マスタで引く。
+	/// </summary>
+	int getShiireRatePercent(string code) {
+		if (string.IsNullOrWhiteSpace(code))
+			return 0;
+		if (shiireRateCache.TryGetValue(code, out var cached))
+			return cached;
+		var rate = getMaster<MasterShiire>(code)?.RateProper ?? 0;
+		shiireRateCache[code] = rate;
 		return rate;
 	}
 	T? getMaster<T>(string code) where T : class, IBaseCodeName, new() {
