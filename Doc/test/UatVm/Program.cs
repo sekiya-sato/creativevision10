@@ -9,11 +9,13 @@ using UatVm.Scenarios;
 var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.OrdinalIgnoreCase) {
 	["billing"] = BillingCalculationScenario.RunAsync,
 	["shime20"] = ShimeBoundaryScenario.RunAsync,
+	["numbering"] = BillingNumberingScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
 var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnoreCase) {
 	["shime20"] = ShimeBoundaryScenario.Seeder,
+	["numbering"] = BillingNumberingScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
