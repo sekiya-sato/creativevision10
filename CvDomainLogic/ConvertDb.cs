@@ -43,6 +43,7 @@ public partial class ConvertDb {
 		(nameof(CnvMasterShohin), static (db, isInit) => db.CnvMasterShohin(isInit)),
 		(nameof(CnvMasterTokui), static (db, isInit) => db.CnvMasterTokui(isInit)),
 		(nameof(CnvMasterShiire), static (db, isInit) => db.CnvMasterShiire(isInit)),
+		(nameof(CnvMasterMaterial), static (db, isInit) => db.CnvMasterMaterial(isInit)),
 		(nameof(CnvAfterMaster), static (db, isInit) => db.CnvAfterMaster(isInit)),
 		(nameof(CnvAfterMasterAddress), static (db, isInit) => db.CnvAfterMasterAddress(isInit)),
 		(nameof(CnvTran00HonUri), static (db, isInit) => db.CnvTran00HonUri(isInit)),
@@ -580,6 +581,38 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 			var meiList = ConverterGeneralMeisho(10, "S", rec);
 			if (meiList.Count > 0)
 				item.Jsub = meiList;
+			return item;
+		});
+	}
+	/// <summary>
+	/// 生地・付属マスター変換 HC$MASTER_SHKIJI
+	/// <para>旧 区分CD(名称区分'D04') → 新 KIJ資材区分 の対応</para>
+	/// <para>1:生地→01布帛, 2:付属品A群→06ボタン, 3:付属品B群→06ボタン, 6:プレス→99, 7:その他→99, 8:サンプル→99, 9:デザイン→99, 未知→99</para>
+	/// </summary>
+	private static readonly Dictionary<string, string> _kubunShkijiMap = new() {
+		["1"] = "01", ["2"] = "06", ["3"] = "06",
+		["6"] = "99", ["7"] = "99", ["8"] = "99", ["9"] = "99",
+	};
+	public int CnvMasterMaterial(bool isInit = true) {
+		const string sql = "select * from HC$MASTER_SHKIJI where 商品CD>'.' order by 商品CD";
+		return ConvertMaster(sql, isInit, rec => {
+			var oldKubun = getString(rec, "区分CD");
+			var newKubunCode = _kubunShkijiMap.GetValueOrDefault(oldKubun, "99");
+			var kubun = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["KIJ", newKubunCode]);
+			var shiire = _toDb.FirstOrDefault<MasterShiire>("where Code=@0", getString(rec, "仕入先CD"));
+			var item = new MasterMaterial() {
+				Code = getString(rec, "商品CD"),
+				Name = getString(rec, "商品名"),
+				Ryaku = getString(rec, "略称"),
+				Kana = getString(rec, "旧コード"),
+				Id_Kubun = kubun?.Id ?? 0,
+				VKubun = new(kubun ?? new()),
+				Id_Shiire = shiire?.Id ?? 0,
+				VShiire = new(shiire?.Id ?? 0, shiire?.Code ?? string.Empty, shiire?.Name ?? string.Empty),
+				CodeShiire = getString(rec, "仕入先商品CD"),
+				TankaShiire = getDataInt(rec, "単価"),
+				Memo = getString(rec, "メモ"),
+			};
 			return item;
 		});
 	}

@@ -29,6 +29,10 @@ from MasterMaterial {query.AddWhereOrder()}
 			return new QueryListSqlParam(typeof(MasterMaterial), sql, query.Parameters);
 		}
 	}
+	[RelayCommand]
+	async Task Init() {
+		await DoList(CancellationToken.None);
+	}
 
 	[RelayCommand]
 	void DoSelectKubun() {
