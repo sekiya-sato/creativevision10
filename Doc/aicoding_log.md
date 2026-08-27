@@ -1,3 +1,25 @@
+## [2026-08-27] 09:35 MasterShainMente印刷のJsub展開
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- 社員マスタ印刷のQFM item12へMasterShain.JsubをKb順で展開する。
+
+### 実施内容
+- `CvWpfclient/ViewModels/01Master/MasterShainMenteViewModel.cs` のPrintBySqlParamにJsub展開列を追加した。Kb昇順、同一Kbは元配列順とし、`Kb:Kbname Cd:Mei`を`/`で連結する。
+- JSONがnull・空配列・配列以外の場合は空文字とし、CSVレコード内に改行を含めない。
+- `printform/MasterShainMente.qfm` はユーザー変更のitem12名称リスト列レイアウトを保持してコミット対象に含めた。
+
+### 確認
+- cvsqliteのMasterShain Id<10で12列の取得、E01→E02のKb順、空・不正形式Jsubの処理を確認。
+- qfmprintでcp932のdata.txtからPDFを生成し、item12の名称リスト列と`/`区切り表示を目視確認。
+- `Tests/TestSqlDialect` 成功（135件、失敗0件）。
+- `CvWpfclient` build 成功（警告0、エラー0）。
+- Python製QFM validatorは実行環境にPythonがないため未実行。XML・cp932・CRLFは代替確認済み。
+
+---
+
 ## [2026-08-26] 自社締日基準の在庫・掛計上月対応
 
 ### Agent

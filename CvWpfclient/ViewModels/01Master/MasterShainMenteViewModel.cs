@@ -37,8 +37,26 @@ select Id, __serverdate__(Vdc) Vdcdate, __serverdate__(Vdu) Vdudate,
 Code, Name, Ryaku, Kana, Mail,
 '' Spare,
 trim(ifnull(json_extract(VTenpo,'$.Cd'),'') || ' ' || ifnull(json_extract(VTenpo,'$.Mei'),'')) Tenpo,
-trim(ifnull(json_extract(VBumon,'$.Cd'),'') || ' ' || ifnull(json_extract(VBumon,'$.Mei'),'')) Bumon
-from MasterShain {query.AddWhereOrder()}
+trim(ifnull(json_extract(VBumon,'$.Cd'),'') || ' ' || ifnull(json_extract(VBumon,'$.Mei'),'')) Bumon,
+coalesce((
+    select group_concat(X.Line, '/')
+    from (
+        select trim(
+            ifnull(json_extract(J.value,'$.Kb'),'') || ':' ||
+            ifnull(json_extract(J.value,'$.Kbname'),'') || ' ' ||
+            ifnull(json_extract(J.value,'$.Cd'),'') || ':' ||
+            ifnull(json_extract(J.value,'$.Mei'),'')
+        ) Line
+        from json_each(
+            case when json_valid(M.Jsub)
+                 and substr(ltrim(M.Jsub), 1, 1) = '['
+                 then M.Jsub else '[]' end
+        ) J
+        where J.value is not null
+        order by ifnull(json_extract(J.value,'$.Kb'),''), cast(J.key as integer)
+    ) X
+), '') Jsub
+from MasterShain M {query.AddWhereOrder()}
 ";
 			return new QueryListSqlParam(typeof(MasterShain), sql, query.Parameters);
 		}

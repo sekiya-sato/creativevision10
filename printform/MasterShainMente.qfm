@@ -62,7 +62,7 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt09">
-					<position x="106" y="0" width="44" height="4"/>
+					<position x="92" y="0" width="39" height="4"/>
 					<color transparent="1"/>
 					<border top="1" bottom="1"/>
 					<data calctype="item" datasrc="item10"/>
@@ -85,7 +85,7 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt19">
-					<position x="64" y="0" width="42" height="4"/>
+					<position x="59" y="0" width="33" height="4"/>
 					<color transparent="1"/>
 					<border bottom="1"/>
 					<data calctype="item" datasrc="item8"/>
@@ -100,7 +100,7 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt34">
-					<position x="76" y="4" width="26" height="4"/>
+					<position x="43" y="4" width="59" height="4"/>
 					<color transparent="1"/>
 					<border top="1" bottom="1"/>
 					<data calctype="item" datasrc="item12"/>
@@ -108,7 +108,7 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt42">
-					<position x="40" y="0" width="24" height="4"/>
+					<position x="40" y="0" width="19" height="4"/>
 					<color transparent="1"/>
 					<border bottom="1"/>
 					<data calctype="item" datasrc="item6"/>
@@ -124,8 +124,9 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt25">
-					<position x="43" y="4" width="33" height="4"/>
+					<position x="131" y="0" width="19" height="4"/>
 					<color transparent="1"/>
+					<border top="1" bottom="1"/>
 					<data calctype="item" datasrc="item11"/>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
@@ -150,7 +151,7 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt29" valign="middle">
-					<position x="64" y="0" width="42" height="4"/>
+					<position x="59" y="0" width="33" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ÉÅÅ[Éã</data>
 					<decode datatype="string" format=""/>
@@ -164,14 +165,14 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt32" valign="middle">
-					<position x="40" y="0" width="24" height="4"/>
+					<position x="40" y="0" width="19" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ó™èÃ</data>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
 				<text id="Txt38" valign="middle">
-					<position x="106" y="0" width="43" height="4"/>
+					<position x="92" y="0" width="39" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ìXï‹</data>
 					<decode datatype="string" format=""/>
@@ -199,14 +200,14 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt26" valign="middle">
-					<position x="76" y="4" width="26" height="4"/>
+					<position x="43" y="4" width="26" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
-					<data calctype="static"/>
+					<data calctype="static">ñºèÃÉäÉXÉg</data>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
 				<text id="Txt35" valign="middle">
-					<position x="43" y="4" width="33" height="4"/>
+					<position x="131" y="0" width="19" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ïîñÂ</data>
 					<decode datatype="string" format=""/>
