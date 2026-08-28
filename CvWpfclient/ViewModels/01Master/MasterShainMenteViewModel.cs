@@ -39,11 +39,11 @@ Code, Name, Ryaku, Kana, Mail,
 trim(ifnull(json_extract(VTenpo,'$.Cd'),'') || ' ' || ifnull(json_extract(VTenpo,'$.Mei'),'')) Tenpo,
 trim(ifnull(json_extract(VBumon,'$.Cd'),'') || ' ' || ifnull(json_extract(VBumon,'$.Mei'),'')) Bumon,
 coalesce((
-    select group_concat(X.Line, '/')
+    select group_concat(X.Line, ' / ')
     from (
         select trim(
-            ifnull(json_extract(J.value,'$.Kb'),'') || ':' ||
-            ifnull(json_extract(J.value,'$.Kbname'),'') || ' ' ||
+            ifnull(json_extract(J.value,'$.Kb'),'') || '-' ||
+         -- ifnull(json_extract(J.value,'$.Kbname'),'') || ' ' ||
             ifnull(json_extract(J.value,'$.Cd'),'') || ':' ||
             ifnull(json_extract(J.value,'$.Mei'),'')
         ) Line
