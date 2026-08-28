@@ -1,3 +1,23 @@
+## [2026-08-28] SysPermissionProfile初期データ登録
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- 空の権限プロファイルテーブルへ、標準プロファイル4件と権限明細11件を初期登録する。
+
+### 実施内容
+- `DefineDataTable`は既に`SysPermissionProfile.CreateDefaultData`を呼び出しているため、その初期投入経路を使用する。
+- 原因修正後は次回起動時に初期投入できるため、重複する`UpdateDb`マイグレーションは追加しない。
+- `GetTableCounts`が指定済みの`SysPermissionProfile`まで除外していたため、テーブル名指定時は`Sys*`も件数取得するよう修正した。
+
+### 確認
+- `SysPermissionProfile.CreateDefaultData`による初期登録を`SysPermissionProfileDefaultDataTests`で確認する。
+- `CvBase\CvBase.csproj`のビルドは警告0・エラー0、`SysPermissionProfileDefaultDataTests`は成功を確認した。
+- CRLFと`git diff --check`を確認した。
+
+---
+
 ## [2026-08-28] MasterShain担当区分・権限プロファイルの画面反映
 
 ### Agent
