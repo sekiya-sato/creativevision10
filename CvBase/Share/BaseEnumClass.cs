@@ -98,3 +98,45 @@ public enum EnumLoginRole : int {
 	/// </summary>
 	Keiri = 4,
 }
+
+/// <summary>
+/// 担当区分（人の業務上の立場）。MasterShain.ResponsibilityScope / SysPermissionProfile.ResponsibilityScope
+/// 値は担当範囲の広い順に大きくなる（比較で「これ以上の立場か」を判定できる）
+/// </summary>
+public enum EnumResponsibilityScope : int {
+	/// <summary>
+	/// 未設定（移行直後の既定値）
+	/// </summary>
+	Unset = 0,
+	/// <summary>
+	/// 店舗スタッフ
+	/// </summary>
+	StoreStaff = 1,
+	/// <summary>
+	/// 店舗責任者
+	/// </summary>
+	StoreManager = 2,
+	/// <summary>
+	/// エリアマネージャ
+	/// </summary>
+	AreaManager = 3,
+	/// <summary>
+	/// 全社担当者
+	/// </summary>
+	CorporateUser = 4,
+}
+
+/// <summary>
+/// 権限の操作種別。SysPermissionProfileDetail.PermissionType
+/// 操作ログのActionType（ユーザ操作ログ基盤計画書 §2.4）のうち、権限判定に使う種別に絞った部分集合
+/// </summary>
+public enum EnumPermissionType : int {
+	View = 1,
+	Create = 2,
+	Update = 3,
+	Delete = 4,
+	Execute = 5,
+	Approve = 6,
+	Export = 7,
+	Configure = 8,
+}

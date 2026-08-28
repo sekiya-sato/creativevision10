@@ -1,4 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CvAsset;
+using CvBase.Share;
+using Newtonsoft.Json;
 using NPoco;
 
 
@@ -145,4 +148,150 @@ public sealed partial class SysHistJwtSub : ObservableObject {
 	[Newtonsoft.Json.JsonProperty("MacA")]
 	[Comment("MACアドレス : NpocoのJson実装(/src/NPoco/fastJSON/JSON.cs)が内部で直接デフォルト値を生成しているためJsonPropertyは無視される 2026/02/17")]
 	public partial string MacAddress { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// システム：権限プロファイルマスタ（システム操作権限セットの親）
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[Comment("システム：権限プロファイルマスタ 機能単位の操作権限セット")]
+[KeyDml("uq1", true, nameof(Code))]
+[KeyDml("nk2", false, nameof(ResponsibilityScope))]
+public sealed partial class SysPermissionProfile : BaseDbClass {
+	/// <summary>
+	/// 権限プロファイルコード
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(30)]
+	[Comment("権限プロファイルコード 例 CorporateUserDefault")]
+	public partial string Code { get; set; } = string.Empty;
+	/// <summary>
+	/// 表示名称
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(60)]
+	[Comment("表示名称 例 全社担当者 標準権限")]
+	public partial string Name { get; set; } = string.Empty;
+	/// <summary>
+	/// 主に想定する担当区分 0=未設定 1=店舗スタッフ 2=店舗責任者 3=エリアマネージャ 4=全社担当者
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnResponsibilityScope))]
+	[Comment("主に想定する担当区分 0=未設定 1=店舗スタッフ 2=店舗責任者 3=エリアマネージャ 4=全社担当者")]
+	public partial int ResponsibilityScope { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumResponsibilityScope EnResponsibilityScope {
+		get => (EnumResponsibilityScope)ResponsibilityScope;
+		set => ResponsibilityScope = (int)value;
+	}
+	/// <summary>
+	/// 説明
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(120)]
+	[Comment("説明")]
+	public partial string Memo { get; set; } = string.Empty;
+	/// <summary>
+	/// 担当区分の標準プロファイルか
+	/// </summary>
+	[ObservableProperty]
+	[Comment("担当区分の標準プロファイルか")]
+	public partial bool IsDefault { get; set; }
+	/// <summary>
+	/// 使用可能か
+	/// </summary>
+	[ObservableProperty]
+	[Comment("使用可能か")]
+	public partial bool IsActive { get; set; }
+	/// <summary>
+	/// 権限定義バージョン
+	/// </summary>
+	[ObservableProperty]
+	[Comment("権限定義バージョン")]
+	public partial int ProfileVersion { get; set; } = 1;
+
+	/// <summary>
+	/// 初期プロファイルデータ（担当区分ごとの標準プロファイル）
+	/// </summary>
+	static readonly List<SysPermissionProfile> DefaultProfileData =
+	[
+		new SysPermissionProfile { Id = 1, Code = "CorporateUserDefault", Name = "全社担当者 標準権限", ResponsibilityScope = (int)EnumResponsibilityScope.CorporateUser, IsDefault = true, IsActive = true, ProfileVersion = 1, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfile { Id = 2, Code = "AreaManagerDefault", Name = "エリアマネージャ 標準権限", ResponsibilityScope = (int)EnumResponsibilityScope.AreaManager, IsDefault = true, IsActive = true, ProfileVersion = 1, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfile { Id = 3, Code = "StoreManagerDefault", Name = "店舗責任者 標準権限", ResponsibilityScope = (int)EnumResponsibilityScope.StoreManager, IsDefault = true, IsActive = true, ProfileVersion = 1, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfile { Id = 4, Code = "StoreStaffDefault", Name = "店舗スタッフ 標準権限", ResponsibilityScope = (int)EnumResponsibilityScope.StoreStaff, IsDefault = true, IsActive = true, ProfileVersion = 1, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+	];
+
+	/// <summary>
+	/// 初期権限明細データ（機能ID×操作種別の許可/禁止）。明細に無い機能は許可として扱う運用のため、
+	/// ここには「明示的に許可/禁止を定義したい行」だけを持つ
+	/// </summary>
+	static readonly List<SysPermissionProfileDetail> DefaultDetailData =
+	[
+		new SysPermissionProfileDetail { Id_PermissionProfile = 4, FunctionId = "06Uriage.ShopUriageInput", PermissionType = (int)EnumPermissionType.Execute, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 4, FunctionId = "08Zaiko.ZaikoQuery", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 4, FunctionId = "08Zaiko.StockForceInput", PermissionType = (int)EnumPermissionType.Execute, IsAllowed = false, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 3, FunctionId = "06Uriage.ShopUriageInput", PermissionType = (int)EnumPermissionType.Execute, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 3, FunctionId = "06Uriage.ShopUriageInput", PermissionType = (int)EnumPermissionType.Approve, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 3, FunctionId = "08Zaiko.ZaikoQuery", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 3, FunctionId = "08Zaiko.StockForceInput", PermissionType = (int)EnumPermissionType.Execute, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 2, FunctionId = "08Zaiko.IdoInputSoku", PermissionType = (int)EnumPermissionType.Execute, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 2, FunctionId = "08Zaiko.IdoInputSoku", PermissionType = (int)EnumPermissionType.Approve, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "20UriageAnalysis.SalesQuickReport", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "07Haibun.ShopHaibunInput", PermissionType = (int)EnumPermissionType.Execute, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+	];
+
+	/// <summary>
+	/// 権限プロファイル・権限明細の初期データを投入する（件数0のときだけ動作。既存DBは変更しない）
+	/// </summary>
+	public static void CreateDefaultData(ExDatabase db) {
+		var tableCnt = db.GetTableCounts(nameof(SysPermissionProfile));
+		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {
+			db.InsertBulk<SysPermissionProfile>(DefaultProfileData);
+			db.InsertBulk<SysPermissionProfileDetail>(DefaultDetailData);
+		}
+	}
+}
+
+/// <summary>
+/// システム：権限プロファイル明細（SysPermissionProfile と 1:N）
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[Comment("システム：権限プロファイル明細 機能ID×操作種別の許可/禁止")]
+[KeyDml("uq1", true, nameof(Id_PermissionProfile), nameof(FunctionId), nameof(PermissionType))]
+[KeyDml("nk2", false, nameof(FunctionId))]
+public sealed partial class SysPermissionProfileDetail : BaseDbClass {
+	/// <summary>
+	/// 親プロファイルId
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(SysPermissionProfile))]
+	[Comment("親プロファイルId")]
+	public partial long Id_PermissionProfile { get; set; }
+	/// <summary>
+	/// CV10の機能ID
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(60)]
+	[Comment("CV10の機能ID 例 06Uriage.ShopUriageInput")]
+	public partial string FunctionId { get; set; } = string.Empty;
+	/// <summary>
+	/// 操作種別 1=View 2=Create 3=Update 4=Delete 5=Execute 6=Approve 7=Export 8=Configure
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnPermissionType))]
+	[Comment("操作種別 1=View 2=Create 3=Update 4=Delete 5=Execute 6=Approve 7=Export 8=Configure")]
+	public partial int PermissionType { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumPermissionType EnPermissionType {
+		get => (EnumPermissionType)PermissionType;
+		set => PermissionType = (int)value;
+	}
+	/// <summary>
+	/// 許可/禁止
+	/// </summary>
+	[ObservableProperty]
+	[Comment("許可/禁止")]
+	public partial bool IsAllowed { get; set; }
 }

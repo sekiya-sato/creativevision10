@@ -24,6 +24,8 @@ public class DefineDataTable {
 			typeof(SysLogin),
 			typeof(SysHistJwt),
 			typeof(SysHistAutoexec),
+			typeof(SysPermissionProfile),
+			typeof(SysPermissionProfileDetail),
 
 			// マスタテーブル1
 			typeof(MasterSysman),
@@ -141,6 +143,7 @@ public class DefineDataTable {
 		InitializeDatabase(db);
 		// 個別の初期化処理
 		MasterShipping.CreateDefaultData(db);
+		SysPermissionProfile.CreateDefaultData(db);
 
 		// DBの整合性を管理
 		await UpdateDb.WriteVersionInfoAsync(db, ct);

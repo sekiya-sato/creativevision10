@@ -111,6 +111,26 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[OldTableCommentAttr("有効期限")]
 	[Comment("有効期限 yyyyMMdd (この期限を過ぎた場合はログイン無効) ただし今のところは未使用")]
 	public partial string ExpireDate { get; set; } = string.Empty;
+	/// <summary>
+	/// 担当区分 0=未設定 1=店舗スタッフ 2=店舗責任者 3=エリアマネージャ 4=全社担当者
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnResponsibilityScope))]
+	[Comment("担当区分 0=未設定 1=店舗スタッフ 2=店舗責任者 3=エリアマネージャ 4=全社担当者")]
+	public partial int ResponsibilityScope { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumResponsibilityScope EnResponsibilityScope {
+		get => (EnumResponsibilityScope)ResponsibilityScope;
+		set => ResponsibilityScope = (int)value;
+	}
+	/// <summary>
+	/// 権限プロファイルId
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(SysPermissionProfile))]
+	[Comment("権限プロファイルId")]
+	public partial long Id_PermissionProfile { get; set; }
 }
 
 /// <summary>
