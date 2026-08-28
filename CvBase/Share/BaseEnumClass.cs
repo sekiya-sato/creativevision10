@@ -121,9 +121,33 @@ public enum EnumResponsibilityScope : int {
 	/// </summary>
 	AreaManager = 3,
 	/// <summary>
+	/// 外部Role:顧客
+	/// </summary>
+	EndCustomer = 10,
+	/// <summary>
+	/// 外部Role:仕入先
+	/// </summary>
+	Supplier = 11,
+	/// <summary>
+	/// 外部Role:得意先
+	/// </summary>
+	BusinessCustomer = 12,
+	/// <summary>
+	/// 外部Role:その他System
+	/// </summary>
+	ExternalSystem = 20,
+	/// <summary>
+	/// 外部Role:AI Agent
+	/// </summary>
+	AiAgent = 30,
+	/// <summary>
 	/// 全社担当者
 	/// </summary>
-	CorporateUser = 4,
+	CorporateUser = 90,
+}
+public enum EnumResponsibilityExternalScope : int {
+	Warehouse=21,
+	Ecommerce = 22,
 }
 
 /// <summary>
