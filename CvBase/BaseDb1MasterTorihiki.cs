@@ -161,8 +161,8 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	public partial int IsPay { get; set; }
 	[Ignore]
 	[JsonIgnore]
-	public EnumYesNo EnIsPay {
-		get => (EnumYesNo)IsPay;
+	public EnumIsPay EnIsPay {
+		get => (EnumIsPay)IsPay;
 		set => IsPay = (int)value;
 	}
 	/// <summary>

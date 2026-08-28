@@ -289,10 +289,10 @@
 									<StackPanel Margin="0,0,16,0"
 										Orientation="Horizontal">
 										<TextBlock Style="{StaticResource FormLabel}"
-											Text="請求" />
+											Text="掛計上" />
 										<ComboBox Width="130"
 											Margin="0,4"
-											materialDesign:HintAssist.Hint="請求" DisplayMemberPath="Name"
+											materialDesign:HintAssist.Hint="掛計上" DisplayMemberPath="Name"
 											ItemsSource="{Binding IsPayOptions}"
 											SelectedValue="{Binding CurrentEdit.EnIsPay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 											SelectedValuePath="Value"

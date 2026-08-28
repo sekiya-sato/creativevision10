@@ -17,6 +17,16 @@ public enum EnumYesNo : int {
 	Yes = 1
 }
 /// <summary>
+/// 掛計上する、しない
+/// </summary>
+public enum EnumIsPay : int {
+	[Comment("掛計上しない")]
+	No = 0,
+	[Comment("掛計上する")]
+	Yes = 1
+}
+
+/// <summary>
 /// 締め日
 /// </summary>
 public enum EnumShime : int {

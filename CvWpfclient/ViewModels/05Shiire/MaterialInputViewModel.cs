@@ -47,8 +47,8 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 	];
 
 	public IReadOnlyList<IsPayOption> IsPayOptions { get; } = [
-		new(EnumYesNo.No, "未払"),
-		new(EnumYesNo.Yes, "支払済"),
+		new(EnumYesNo.No, "しない"),
+		new(EnumYesNo.Yes, "する"),
 	];
 
 	/// <summary>編集中の明細行。</summary>

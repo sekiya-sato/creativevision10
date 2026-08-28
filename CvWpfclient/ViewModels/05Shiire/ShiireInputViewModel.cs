@@ -65,8 +65,8 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 	];
 
 	public IReadOnlyList<IsPayOption> IsPayOptions { get; } = [
-		new(EnumYesNo.No, "未払"),
-		new(EnumYesNo.Yes, "支払済"),
+		new(EnumYesNo.No, "しない"),
+		new(EnumYesNo.Yes, "する"),
 	];
 
 	bool IsListTabSelected() => SelectedTabIndex == 0;

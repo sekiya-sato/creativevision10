@@ -38,8 +38,8 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	];
 
 	public IReadOnlyList<YesNoOption> IsPayOptions { get; } = [
-		new(EnumYesNo.No, "未請求"),
-		new(EnumYesNo.Yes, "請求対象"),
+		new(EnumYesNo.No, "しない"),
+		new(EnumYesNo.Yes, "する"),
 	];
 
 	bool IsListTabSelected() => SelectedTabIndex == 0;

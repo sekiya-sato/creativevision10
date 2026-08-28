@@ -30,11 +30,6 @@ public partial class ConvertDb {
 	/// [Conversion task definitions in execution order]
 	/// </summary>
 	private static readonly (string Name, Func<ConvertDb, bool, int> Action)[] _stepDefinitions = [
-		/* // Tranテーブルに対するサイズマスタコードの変換
-		("CnvTranSize1", static (db, isInit) => db.CnvTranSize1(isInit)),
-		("CnvTranSize2", static (db, isInit) => db.CnvTranSize2(isInit)),
-		("CnvTranSize3", static (db, isInit) => db.CnvTranSize3(isInit)),
-		*/
 		(nameof(CnvMasterConfig), static (db, isInit) => db.CnvMasterConfig(isInit)),
 		(nameof(CnvMasterSys), static (db, isInit) => db.CnvMasterSys(isInit)),
 		(nameof(CnvMasterMeisho), static (db, isInit) => db.CnvMasterMeisho(isInit)),
@@ -276,7 +271,7 @@ public partial class ConvertDb {
 			var item = new MasterShain() {
 				Code = getString(rec, "社員CD"),
 				Name = getString(rec, "名前"),
-				Kana = getString(rec, "フリカナ"),
+				Kana = getString(rec, "フリガナ"),
 				Mail = getString(rec, "メール"),
 				VTenpo = new() {
 					Cd = getString(rec, "店舗CD"), // 残りはCnvAfterMaster()でセット
@@ -307,7 +302,7 @@ public partial class ConvertDb {
 				Address2 = getString(rec, "住所2"),
 				Address3 = getString(rec, "住所3"),
 				Mail = getString(rec, "メール"),
-				Tel = getString(rec, "TEL").DefaultIfEmpty(getString(rec, "TEL2")),
+				Tel = getString(rec, "TEL1").DefaultIfEmpty(getString(rec, "TEL2")),
 				Memo = getString(rec, "拡張メモ"),
 				VTenpo = new() {
 					Cd = getString(rec, "店舗CD"),  // 残りはCnvAfterMaster()でセット
@@ -833,51 +828,4 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 		var newAddress3 = cityMatch.Success ? restAfterPref[newAddress2.Length..] : restAfterPref;
 		return new Tuple<string, string, string>(newAddress1, newAddress2, newAddress3);
 	}
-
-
-	/*
-	public int CnvAfterMaster2(bool isInit = true) {
-		int cnt = 0;
-		var shohinList = _toDb.Fetch<MasterShohin>();
-		if (shohinList != null && shohinList.Count > 0) {
-			foreach (var shohin in shohinList) {
-				if (shohin.Jcolsiz == null)
-					continue;
-				try {
-					var sizeKubun = shohin.SizeKu;
-					if (string.IsNullOrEmpty(sizeKubun) || sizeKubun == ".") {
-						sizeKubun = "SIZ";
-					}
-					foreach (var colsiz in shohin.Jcolsiz) {
-						bool isUpdate = false;
-						if (colsiz.Id_Col == 0 && !string.IsNullOrEmpty(colsiz.Code_Col)) {
-							var col = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["COL", colsiz.Code_Col]);
-							if (col != null) {
-								colsiz.Id_Col = col.Id;
-								colsiz.Mei_Col = col.Name;
-								isUpdate = true;
-							}
-						}
-						if (colsiz.Id_Siz == 0 && !string.IsNullOrEmpty(colsiz.Code_Siz)) {
-							var siz = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [sizeKubun, colsiz.Code_Siz]);
-							if (siz != null) {
-								colsiz.Id_Siz = siz.Id;
-								colsiz.Mei_Siz = siz.Name;
-								isUpdate = true;
-							}
-						}
-						if (isUpdate) {
-							_toDb.Update(shohin);
-							cnt++;
-						}
-					}
-				}
-				catch (Exception ex) {
-					_logger?.Warn(ex, "CnvAfterMaster2: Failed to resolve ColSize for MasterShohin Code={0}", shohin?.Code);
-				}
-			}
-		}
-		return cnt;
-	}*/
-
 }
