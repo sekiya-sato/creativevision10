@@ -238,6 +238,8 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<TextBlock Grid.Row="1"
@@ -328,7 +330,35 @@
 									<TextBlock Style="{StaticResource MasterRefText}"
 										Text="{Binding CurrentEdit.VBumon, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
-								<TextBlock Grid.Row="10" Grid.Column="1"
+
+								<TextBlock Grid.Row="9"
+									Style="{StaticResource FormLabel}"
+									Text="担当区分" />
+								<ComboBox Grid.Row="9" Grid.Column="1"
+									Width="220"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="担当区分"
+									SelectedValue="{Binding CurrentEdit.ResponsibilityScope, Mode=TwoWay}"
+									SelectedValuePath="Tag"
+									Style="{StaticResource FormComboBox}">
+									<ComboBoxItem Content="未設定" Tag="0" />
+									<ComboBoxItem Content="店舗スタッフ" Tag="1" />
+									<ComboBoxItem Content="店舗責任者" Tag="2" />
+									<ComboBoxItem Content="エリアマネージャ" Tag="3" />
+									<ComboBoxItem Content="全社担当者" Tag="4" />
+								</ComboBox>
+
+								<TextBlock Grid.Row="10"
+									Style="{StaticResource FormLabel}"
+									Text="権限プロファイルId" />
+								<TextBox Grid.Row="10" Grid.Column="1"
+									Width="180"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="権限プロファイルId"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Id_PermissionProfile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="12" Grid.Column="1"
 									Margin="20"
 									Foreground="{DynamicResource MaterialDesignBody}"
 									TextWrapping="Wrap">

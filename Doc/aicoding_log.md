@@ -1,3 +1,22 @@
+## [2026-08-28] MasterShain担当区分・権限プロファイルの画面反映
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- `MasterShain` に追加された担当区分と権限プロファイルIdを、社員マスターメンテで確認・編集できるようにする。
+
+### 実施内容
+- `MasterShainMenteView.xaml` の基本情報タブへ、担当区分の固定選択肢と権限プロファイルId入力欄を追加した。
+- 既存の `CurrentEdit` バインディングと保存経路を再利用し、ViewModelおよび一覧取得列は変更していない。
+
+### 確認
+- XAMLのXML構文、既存リソース参照、`CurrentEdit.ResponsibilityScope` / `CurrentEdit.Id_PermissionProfile` のバインディングを確認した。
+- CRLFと`git diff --check`を確認した。
+- `CvWpfclient\CvWpfclient.csproj`をビルドし、警告0・エラー0を確認した。
+
+---
+
 ## [2026-08-27] MasterMente競合時の一覧保持
 
 ### Agent
