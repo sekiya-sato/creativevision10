@@ -1,3 +1,31 @@
+## [2026-08-28] D-05 請求書の税率別内訳
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- 10.0の適格請求書要件として、請求書へ標準10%・軽減8%・非課税の税率別内訳を印字する。
+
+### 実施内容
+- `SummaryUriSei`へ列を追加せず、請求書印刷時に対象期間の`Tran00Uriage.Jmeisai`を展開し、保存済みの`TaxRate`/`Tax`から集計する。
+- 返品・値引は負符号で相殺し、税抜課税標準額と税額を税率別にCSVへ追加した。
+- 明細集計と請求集計の不一致、不正JSON、未対応税率を印刷前に検出し、PDF生成を停止する。
+- 印刷前検査は`SummaryUriSei`のWHERE句＋相関副問合せとしてサーバーへ送る。先頭`WITH`の完全SQLを型指定照会へ渡してSQLite構文エラーになる経路を解消した。
+- 区分99を請求集計と同じ特殊算式で扱い、返品は`CalcFlag`を使って明細税額の符号を決める。対象5伝票の10%明細を復元し、既存請求集計を変更せずに税率別内訳へ整合させた。
+- `invoicepreflight` VM駆動UATシナリオを追加し、実View・実gRPCで印刷前検査の警告を証跡化する。
+- `SeikyuBalanceDetail.qfm`へ`item16`〜`item20`と税率別内訳を追加し、cp932を維持した。
+- D-10の実効権限・メニュー公開状態は、ユーザー決定により10.0リリース対象外とした。
+
+### 確認
+- QFMをcp932で読込み、XML整形式、`item`数20、`datasrc`数20を確認した。
+- `CvWpfclient\CvWpfclient.csproj`をビルドし、警告0・エラー0を確認した。
+- `Tests\TestServer` 232件、`Tests\TestSqlDialect` 135件の成功を確認した。
+- `git diff --check`を確認した。
+- `UatVm.exe invoicepreflight --manage-server`で、2026/07/31の2件が明細不一致としてPDF生成前に停止することを確認した。
+- 明細復元後に同コマンドを再実行し、印刷前検査通過後にPrintPdf開始へ到達することを確認した（PDF内容は未確認）。
+
+---
+
 ## [2026-08-28] SysPermissionProfile初期データ登録
 
 ### Agent

@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CodeShare;
+using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
 
@@ -45,9 +47,9 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 	[RelayCommand]
 	void SelectTokuiCodeTo() => TokuiCodeTo = SelectTokuiCode() ?? TokuiCodeTo;
 
-	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
+	protected override async Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseDate(SeikyuDay, out var day)) {
-			return Task.FromResult<QueryListSqlParam?>(null);
+			return null;
 		}
 		ct.ThrowIfCancellationRequested();
 
@@ -61,20 +63,8 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
 			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Other, "その他"));
-
-		// 入金明細を含めない場合は売上側だけを UNION 対象にする
-		var nyukinPart = IncludeNyukin ? $@"
-    UNION ALL
-    SELECT
-        h.Id_Tokui AS idTokui, n.KakeDay AS denDay, 2 AS srcOrder, n.Id AS denNo,
-        '入金' AS kubunText, 0 AS su, -n.KingakuTotal AS kingaku
-    FROM headers h
-    JOIN Tran06Nyukin n
-      ON n.Id_Torisaki = h.Id_Tokui
-     AND n.KakeDay >= h.dayFrom AND n.KakeDay <= h.dayTo" : "";
-
-		var sql = $@"
-WITH headers AS (
+		var headersCte = $@"
+headers AS (
     SELECT
         s.Id_Tokui AS Id_Tokui,
         t.Code AS tokuiCode, t.Name AS tokuiName,
@@ -89,6 +79,45 @@ WITH headers AS (
     JOIN MasterTokui t ON t.Id = s.Id_Tokui
     WHERE s.DenDay = {seikyuDay}
       {activeOnly}{tokuiWhere}
+),";
+
+		if (!await ValidateTaxBreakdownAsync(seikyuDay, activeOnly, tokuiWhere, parameters, ct)) {
+			return null;
+		}
+
+		// 入金明細を含めない場合は売上側だけを UNION 対象にする
+		var nyukinPart = IncludeNyukin ? $@"
+    UNION ALL
+    SELECT
+        h.Id_Tokui AS idTokui, n.KakeDay AS denDay, 2 AS srcOrder, n.Id AS denNo,
+        '入金' AS kubunText, 0 AS su, -n.KingakuTotal AS kingaku
+    FROM headers h
+    JOIN Tran06Nyukin n
+      ON n.Id_Torisaki = h.Id_Tokui
+     AND n.KakeDay >= h.dayFrom AND n.KakeDay <= h.dayTo" : "";
+
+		var sql = $@"
+WITH {headersCte}
+taxBreakdown AS (
+    SELECT
+        h.Id_Tokui,
+        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 10
+            THEN CASE WHEN u.Kubun BETWEEN 20 AND 39 THEN -1 ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) ELSE 0 END) AS taxable10,
+        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 10
+            THEN CASE WHEN u.Kubun BETWEEN 20 AND 29 THEN u.CalcFlag ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Tax'), 0) AS INTEGER) ELSE 0 END) AS tax10,
+        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 8
+            THEN CASE WHEN u.Kubun BETWEEN 20 AND 39 THEN -1 ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) ELSE 0 END) AS taxable8,
+        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 8
+            THEN CASE WHEN u.Kubun BETWEEN 20 AND 29 THEN u.CalcFlag ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Tax'), 0) AS INTEGER) ELSE 0 END) AS tax8,
+        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 0
+            THEN CASE WHEN u.Kubun BETWEEN 20 AND 39 THEN -1 ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) ELSE 0 END) AS taxExempt
+    FROM headers h
+    LEFT JOIN Tran00Uriage u
+      ON u.Id_Tokui = h.Id_Tokui
+     AND u.IsPay = 1
+     AND u.KakeDay >= h.dayFrom AND u.KakeDay <= h.dayTo
+    LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
+    GROUP BY h.Id_Tokui
 ),
 details AS (
     SELECT
@@ -109,11 +138,79 @@ SELECT
     d.kubunText,
     d.su,
     d.kingaku,
-    h.seikyuNo
+    h.seikyuNo,
+    IFNULL(b.taxable10, 0) AS taxable10,
+    IFNULL(b.tax10, 0) AS tax10,
+    IFNULL(b.taxable8, 0) AS taxable8,
+    IFNULL(b.tax8, 0) AS tax8,
+    IFNULL(b.taxExempt, 0) AS taxExempt
 FROM headers h
 LEFT JOIN details d ON d.idTokui = h.Id_Tokui
+LEFT JOIN taxBreakdown b ON b.Id_Tokui = h.Id_Tokui
 ORDER BY h.tokuiCode, d.denDay, d.srcOrder, d.denNo";
 
-		return Task.FromResult<QueryListSqlParam?>(new QueryListSqlParam(typeof(object), sql, [.. parameters]));
+		return new QueryListSqlParam(typeof(object), sql, [.. parameters]);
+	}
+
+	/// <summary>
+	/// 適格請求書の税率別内訳を、請求対象の売上明細スナップショットから作れることを確認する。
+	/// 明細欠落・未対応税率・集計値不一致のままPDFを出すと請求額と内訳が食い違うため、印刷前に止める。
+	/// </summary>
+	private async Task<bool> ValidateTaxBreakdownAsync(string seikyuDay, string activeOnly, string tokuiWhere, List<string> parameters, CancellationToken ct) {
+		var sql = $@"
+WHERE DenDay = {seikyuDay}
+  {activeOnly.Replace("s.", string.Empty, StringComparison.Ordinal)}
+  AND Id_Tokui IN (SELECT t.Id FROM MasterTokui t WHERE 1 = 1 {tokuiWhere})
+  AND (
+      TotalSales <> IFNULL((
+          SELECT SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) IN (0, 8, 10)
+              THEN CASE WHEN u.Kubun BETWEEN 20 AND 39 THEN -1 ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) ELSE 0 END)
+          FROM Tran00Uriage u
+          LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
+          WHERE u.Id_Tokui = SummaryUriSei.Id_Tokui AND u.IsPay = 1 AND u.KakeDay BETWEEN SummaryUriSei.DayFrom AND SummaryUriSei.DayTo), 0)
+          + IFNULL((
+          SELECT SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) IN (0, 8, 10)
+              THEN CASE WHEN u.Kubun BETWEEN 20 AND 29 THEN u.CalcFlag ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Tax'), 0) AS INTEGER) ELSE 0 END)
+          FROM Tran00Uriage u
+          LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
+          WHERE u.Id_Tokui = SummaryUriSei.Id_Tokui AND u.IsPay = 1 AND u.KakeDay BETWEEN SummaryUriSei.DayFrom AND SummaryUriSei.DayTo), 0)
+      OR Tax <> IFNULL((
+          SELECT SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) IN (0, 8, 10)
+              THEN CASE WHEN u.Kubun BETWEEN 20 AND 29 THEN u.CalcFlag ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Tax'), 0) AS INTEGER) ELSE 0 END)
+          FROM Tran00Uriage u
+          LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
+          WHERE u.Id_Tokui = SummaryUriSei.Id_Tokui AND u.IsPay = 1 AND u.KakeDay BETWEEN SummaryUriSei.DayFrom AND SummaryUriSei.DayTo), 0)
+      OR EXISTS (SELECT 1 FROM Tran00Uriage u LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
+          WHERE u.Id_Tokui = SummaryUriSei.Id_Tokui AND u.IsPay = 1 AND u.KakeDay BETWEEN SummaryUriSei.DayFrom AND SummaryUriSei.DayTo
+            AND (NOT json_valid(u.Jmeisai) OR CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) NOT IN (0, 8, 10)))
+  )";
+
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var request = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(SummaryUriSei), sql, [.. parameters])),
+		};
+		var reply = await coreService.QueryMsgAsync(request, AppGlobal.GetDefaultCallContext(ct));
+		if (reply.Code < 0 && reply.Code != -1) {
+			var detail = string.IsNullOrWhiteSpace(reply.Option) ? string.Empty : $"{Environment.NewLine}{reply.Option}";
+			MessageEx.ShowWarningDialog(
+				"税率別内訳の印刷前検査に失敗しました。サーバー接続と対象伝票を確認してください。" + detail,
+				owner: ActiveWindow);
+			return false;
+		}
+
+		var invalidRows = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as List<SummaryUriSei> ?? [];
+		if (invalidRows.Count == 0) return true;
+
+		var summary = string.Join(Environment.NewLine, invalidRows.Take(5).Select(x =>
+			$"請求書 {x.SeikyuNo}（得意先Id={x.Id_Tokui}）"));
+		var suffix = invalidRows.Count > 5 ? $"{Environment.NewLine}ほか {invalidRows.Count - 5} 件" : string.Empty;
+		MessageEx.ShowWarningDialog(
+			"税率別内訳が請求集計と一致しないため印刷を中止しました。"
+			+ $"{Environment.NewLine}明細消費税の再更新または対象伝票の修正後に再実行してください。{Environment.NewLine}{summary}{suffix}",
+			owner: ActiveWindow);
+		return false;
 	}
 }

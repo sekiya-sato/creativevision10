@@ -18,6 +18,11 @@
 			<item id="item13"/>
 			<item id="item14"/>
 			<item id="item15"/>
+			<item id="item16"/>
+			<item id="item17"/>
+			<item id="item18"/>
+			<item id="item19"/>
+			<item id="item20"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>
@@ -173,8 +178,85 @@
 			<decode datatype="string" format=""/>
 			<font size="90"/>
 		</text>
+		<text id="TaxBreakdownTitle" valign="middle">
+			<position x="0" y="38" width="70" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">&#31246;&#29575;&#21029;&#20869;&#35379;(&#31246;&#25244;)</data>
+			<decode datatype="string" format=""/>
+			<font size="80" style="1"/>
+		</text>
+		<text id="Taxable10Label" valign="middle">
+			<position x="0" y="42" width="20" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">10%&#23550;&#35937;&#38989;</data>
+			<decode datatype="string" format=""/>
+			<font size="70"/>
+		</text>
+		<text id="Taxable10Value" valign="middle" halign="right">
+			<position x="20" y="42" width="24" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item16"/>
+			<decode datatype="number" format="MI999,999,990"/>
+			<font size="70"/>
+		</text>
+		<text id="Tax10Label" valign="middle">
+			<position x="50" y="42" width="16" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">&#28040;&#36027;&#31246;</data>
+			<decode datatype="string" format=""/>
+			<font size="70"/>
+		</text>
+		<text id="Tax10Value" valign="middle" halign="right">
+			<position x="66" y="42" width="24" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item17"/>
+			<decode datatype="number" format="MI999,999,990"/>
+			<font size="70"/>
+		</text>
+		<text id="Taxable8Label" valign="middle">
+			<position x="0" y="46" width="20" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">8%&#23550;&#35937;&#38989;</data>
+			<decode datatype="string" format=""/>
+			<font size="70"/>
+		</text>
+		<text id="Taxable8Value" valign="middle" halign="right">
+			<position x="20" y="46" width="24" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item18"/>
+			<decode datatype="number" format="MI999,999,990"/>
+			<font size="70"/>
+		</text>
+		<text id="Tax8Label" valign="middle">
+			<position x="50" y="46" width="16" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">&#28040;&#36027;&#31246;</data>
+			<decode datatype="string" format=""/>
+			<font size="70"/>
+		</text>
+		<text id="Tax8Value" valign="middle" halign="right">
+			<position x="66" y="46" width="24" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item19"/>
+			<decode datatype="number" format="MI999,999,990"/>
+			<font size="70"/>
+		</text>
+		<text id="TaxExemptLabel" valign="middle">
+			<position x="0" y="50" width="20" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">&#38750;&#35506;&#31246;</data>
+			<decode datatype="string" format=""/>
+			<font size="70"/>
+		</text>
+		<text id="TaxExemptValue" valign="middle" halign="right">
+			<position x="20" y="50" width="24" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item20"/>
+			<decode datatype="number" format="MI999,999,990"/>
+			<font size="70"/>
+		</text>
 		<region id="Rgn01" direction="0" tree="1">
-			<position x="0" y="38" width="150" height="220"/>
+			<position x="0" y="56" width="150" height="202"/>
 			<color transparent="1"/>
 			<record id="RecHeader" recordtype="1" tree="1">
 				<position x="0" y="0" width="150" height="4"/>
