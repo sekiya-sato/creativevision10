@@ -6,7 +6,6 @@ using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
 using Newtonsoft.Json;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
@@ -1033,7 +1032,7 @@ public sealed class JuchuHaibunListRow(Tran12Jyuchu juchu, TranHaibun? haibun, T
 
 	/// <summary>受注数（受注ヘッダの数量合計）</summary>
 	public int JuchuSu => juchu.SuTotal;
-	public int KingakuTotal => juchu.KingakuTotal;
+	public long KingakuTotal => juchu.KingakuTotal;
 
 	/// <summary>配分指示日（配分側の最小値）</summary>
 	public string ShijiDay => JuchuHaibunInputViewModel.FormatYmd8(haibun?.DenDay);

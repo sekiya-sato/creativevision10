@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
-using CvBase.Share;
 using CvWpfclient.Helpers;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -112,7 +111,7 @@ public sealed class NouhinYoteiRow(Tran12Jyuchu juchu) {
 	public string TokuiDisplay => juchu.VTokui == null ? string.Empty
 		: CodeNameDisplay.Format(juchu.VTokui.Sid, juchu.VTokui.Cd, juchu.VTokui.Mei);
 	public int SuTotal => juchu.SuTotal;
-	public int KingakuTotal => juchu.KingakuTotal;
+	public long KingakuTotal => juchu.KingakuTotal;
 	public string StatusDisplay => juchu.EndFlag == 1 ? "完了" : "未完了";
 
 	/// <summary>納期遅れ日数（今日 − 納品予定日）。未完了かつ予定日超過のときだけ正。それ以外は0。</summary>

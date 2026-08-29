@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
-using CvBase.Share;
 using CvWpfclient.Helpers;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -114,7 +113,7 @@ public sealed class DeliveryScheduleRow(Tran13Hachu hachu) {
 	public string ShiireDisplay => hachu.VShiire == null ? string.Empty
 		: CodeNameDisplay.Format(hachu.VShiire.Sid, hachu.VShiire.Cd, hachu.VShiire.Mei);
 	public int SuTotal => hachu.SuTotal;
-	public int KingakuTotal => hachu.KingakuTotal;
+	public long KingakuTotal => hachu.KingakuTotal;
 	public string StatusDisplay => hachu.EndFlag == 1 ? "完了" : "未完了";
 
 	/// <summary>納期遅れ日数（今日 − 納品予定日）。未完了かつ予定日超過のときだけ正。それ以外は0。</summary>

@@ -3,10 +3,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
-using CvBase.Share;
 using CvWpfclient.Helpers;
 using Newtonsoft.Json;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
@@ -218,7 +216,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		StartBusy("一覧取得中...");
 		try {
 			List<Tran13Hachu> hachuList = await LoadHachuListAsync(ct);
-			List<long> ids = hachuList.Select(x => x.Id).ToList();
+			var ids = hachuList.Select(x => x.Id).ToList();
 			Dictionary<int, TranHaibun> haibunMap = await LoadHaibunSummaryAsync(ids, ct);
 
 			ObservableCollection<HachuHaibunListRow> rows = [];
@@ -579,7 +577,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 
 		// 既存配分（修正対象）
 		loadedEditableRows = await LoadEditableHaibunAsync(hachuId, ct);
-		Dictionary<CellKey, int> existing = loadedEditableRows
+		var existing = loadedEditableRows
 			.GroupBy(x => new CellKey(x.Id_Tenpo, x.Id_Shohin, x.Id_Col, x.Id_Siz))
 			.ToDictionary(g => g.Key, g => g.Sum(x => x.Su));
 
@@ -656,7 +654,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 			"Id_Tenpo, Id_Shohin, Id_Col, Id_Siz, Id", ct);
 
 	async Task<Dictionary<long, MasterShohin>> LoadShohinMapAsync(IEnumerable<long> shohinIds, CancellationToken ct) {
-		List<long> ids = shohinIds.Where(x => x > 0).Distinct().ToList();
+		var ids = shohinIds.Where(x => x > 0).Distinct().ToList();
 		if (ids.Count == 0) return [];
 		List<MasterShohin> rows = await QueryListAsync<MasterShohin>(
 			$"Id IN ({string.Join(",", ids)})", "Code", ct);
@@ -928,7 +926,7 @@ public sealed class HachuHaibunListRow(Tran13Hachu hachu, TranHaibun? summary) {
 
 	/// <summary>発注数（発注ヘッダの数量合計）</summary>
 	public int HachuSu => hachu.SuTotal;
-	public int KingakuTotal => hachu.KingakuTotal;
+	public long KingakuTotal => hachu.KingakuTotal;
 
 	/// <summary>配分指示日（配分側の最小値）</summary>
 	public string ShijiDay => HachuHaibunInputViewModel.FormatYmd8(summary?.DenDay);

@@ -4,12 +4,14 @@ using System.ServiceModel;
 
 namespace CodeShare;
 
-[DataContract] public sealed record PosBarcodeLookupRequest {
+[DataContract]
+public sealed record PosBarcodeLookupRequest {
 	[DataMember(Order = 1)] public string Barcode { get; init; } = string.Empty;
 	/// <summary>店舗Id。上代一括変更の店舗別価格を引くために使う。0(未指定)なら全店行のみ適用される。</summary>
 	[DataMember(Order = 2)] public long StoreId { get; init; }
 }
-[DataContract] public sealed record PosProduct {
+[DataContract]
+public sealed record PosProduct {
 	[DataMember(Order = 1)] public long ProductId { get; init; }
 	[DataMember(Order = 2)] public string ProductCode { get; init; } = string.Empty;
 	[DataMember(Order = 3)] public string ProductName { get; init; } = string.Empty;
@@ -21,7 +23,8 @@ namespace CodeShare;
 	[DataMember(Order = 9)] public string SizeName { get; init; } = string.Empty;
 	[DataMember(Order = 10)] public int UnitPrice { get; init; }
 }
-[DataContract] public sealed record PosCheckoutLine {
+[DataContract]
+public sealed record PosCheckoutLine {
 	[DataMember(Order = 1)] public string Barcode { get; init; } = string.Empty;
 	[DataMember(Order = 2)] public long ProductId { get; init; }
 	[DataMember(Order = 3)] public long ColorId { get; init; }
@@ -38,12 +41,14 @@ namespace CodeShare;
 	[DataMember(Order = 12)] public string StaffCode { get; init; } = string.Empty;
 	[DataMember(Order = 13)] public string StaffName { get; init; } = string.Empty;
 }
-[DataContract] public sealed record PosPayment {
+[DataContract]
+public sealed record PosPayment {
 	[DataMember(Order = 1)] public int CashAmount { get; init; }
 	[DataMember(Order = 2)] public int CardAmount { get; init; }
 	[DataMember(Order = 3)] public int OtherAmount { get; init; }
 }
-[DataContract] public sealed record PosCheckoutRequest {
+[DataContract]
+public sealed record PosCheckoutRequest {
 	[DataMember(Order = 1)] public string ClientSaleId { get; init; } = string.Empty;
 	[DataMember(Order = 2)] public long StoreId { get; init; }
 	[DataMember(Order = 3)] public long WarehouseId { get; init; }
@@ -53,28 +58,32 @@ namespace CodeShare;
 	/// <summary>伝票区分（10=売上 11=売上(セール) 20=返品 21=返品(セール)）。省略時は 10。</summary>
 	[DataMember(Order = 7)] public int Kubun { get; init; } = 10;
 }
-[DataContract] public sealed record PosCheckoutResponse {
+[DataContract]
+public sealed record PosCheckoutResponse {
 	[DataMember(Order = 1)] public bool IsSuccess { get; init; }
 	[DataMember(Order = 2)] public bool IsDuplicate { get; init; }
 	[DataMember(Order = 3)] public long SaleId { get; init; }
-	[DataMember(Order = 4)] public int TotalAmount { get; init; }
-	[DataMember(Order = 5)] public int ChangeAmount { get; init; }
+	[DataMember(Order = 4)] public long TotalAmount { get; init; }
+	[DataMember(Order = 5)] public long ChangeAmount { get; init; }
 	[DataMember(Order = 6)] public string Message { get; init; } = string.Empty;
 }
 /// <summary>売上取消リクエスト。SaleId は取消対象の Tran01Tenuri.Id。</summary>
-[DataContract] public sealed record PosCancelSaleRequest {
+[DataContract]
+public sealed record PosCancelSaleRequest {
 	[DataMember(Order = 1)] public long SaleId { get; init; }
 	/// <summary>取消操作を行った担当者キー。</summary>
 	[DataMember(Order = 2)] public long StaffId { get; init; }
 }
-[DataContract] public sealed record PosCancelSaleResponse {
+[DataContract]
+public sealed record PosCancelSaleResponse {
 	[DataMember(Order = 1)] public bool IsSuccess { get; init; }
 	/// <summary>生成された取消伝票（Kubun=20）の Id。</summary>
 	[DataMember(Order = 2)] public long CancelSaleId { get; init; }
 	[DataMember(Order = 3)] public string Message { get; init; } = string.Empty;
 }
 /// <summary>日次精算の保存リクエスト。RealAmount/CalcAmount/AmountDiff はサーバが算出する。</summary>
-[DataContract] public sealed record PosSaveSeisanRequest {
+[DataContract]
+public sealed record PosSaveSeisanRequest {
 	[DataMember(Order = 1)] public long StoreId { get; init; }
 	/// <summary>営業日（yyyyMMdd）。</summary>
 	[DataMember(Order = 2)] public string DenDay { get; init; } = string.Empty;
@@ -101,7 +110,8 @@ namespace CodeShare;
 	[DataMember(Order = 21)] public int ReturnCount { get; init; }
 	[DataMember(Order = 22)] public int TotalQuantity { get; init; }
 }
-[DataContract] public sealed record PosSaveSeisanResponse {
+[DataContract]
+public sealed record PosSaveSeisanResponse {
 	[DataMember(Order = 1)] public bool IsSuccess { get; init; }
 	/// <summary>保存された Tran04PosSeisan.Id。</summary>
 	[DataMember(Order = 2)] public long SeisanId { get; init; }
@@ -109,7 +119,8 @@ namespace CodeShare;
 	[DataMember(Order = 3)] public int SeisanCnt { get; init; }
 	[DataMember(Order = 4)] public string Message { get; init; } = string.Empty;
 }
-[ServiceContract] public interface IPointOfSaleService {
+[ServiceContract]
+public interface IPointOfSaleService {
 	[OperationContract] Task<PosProduct?> LookupProductAsync(PosBarcodeLookupRequest request, CallContext context = default);
 	[OperationContract] Task<PosCheckoutResponse> CheckoutAsync(PosCheckoutRequest request, CallContext context = default);
 	[OperationContract] Task<PosCancelSaleResponse> CancelSaleAsync(PosCancelSaleRequest request, CallContext context = default);

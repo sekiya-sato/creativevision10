@@ -20,9 +20,9 @@ public interface ITranDetail {
 /// </summary>
 public interface ITranTax {
 	/// <summary>消費税（明細 Tax の合計）</summary>
-	public int Tax { get; set; }
+	public long Tax { get; set; }
 	/// <summary>総合計（|明細金額合計| + 消費税）</summary>
-	public int Total { get; set; }
+	public long Total { get; set; }
 }
 public interface ITranIdo {
 	public long Id { get; set; }
@@ -861,13 +861,13 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("消費税")]
-	public partial int Tax { get; set; }
+	public partial long Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計")]
-	public partial int Total { get; set; }
+	public partial long Total { get; set; }
 	/// <summary>
 	/// 納品書発行済FLG。納品書印刷で立て、納品書未発行チェックリストで 0 を抽出する。
 	/// </summary>
@@ -1016,13 +1016,13 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("消費税")]
-	public partial int Tax { get; set; }
+	public partial long Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計")]
-	public partial int Total { get; set; }
+	public partial long Total { get; set; }
 }
 
 /// <summary>POS会計で受領した金種内訳</summary>
@@ -1144,13 +1144,13 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("消費税")]
-	public partial int Tax { get; set; }
+	public partial long Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計")]
-	public partial int Total { get; set; }
+	public partial long Total { get; set; }
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnIsPrint))]
@@ -1309,19 +1309,19 @@ public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("金額合計")]
-	public partial int KingakuTotal { get; set; }
+	public partial long KingakuTotal { get; set; }
 	/// <summary>
 	/// 消費税
 	/// </summary>
 	[ObservableProperty]
 	[Comment("消費税")]
-	public partial int Tax { get; set; }
+	public partial long Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計")]
-	public partial int Total { get; set; }
+	public partial long Total { get; set; }
 	/// <summary>
 	/// 発行済FLG
 	/// </summary>
@@ -1660,13 +1660,13 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("消費税")]
-	public partial int Tax { get; set; }
+	public partial long Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計")]
-	public partial int Total { get; set; }
+	public partial long Total { get; set; }
 	/// <summary>
 	/// 完了FLG。0=未完了 / 1=完了。受注残の管理に使う。
 	/// <para>
@@ -1770,13 +1770,13 @@ public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("消費税")]
-	public partial int Tax { get; set; }
+	public partial long Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計")]
-	public partial int Total { get; set; }
+	public partial long Total { get; set; }
 	/// <summary>
 	/// 完了FLG。0=未完了 / 1=完了。発注残の管理に使う。
 	/// <para>
