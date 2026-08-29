@@ -32,7 +32,7 @@ public interface ITranIdo {
 	/// <summary>移動先の名称スナップショット。Tran05Ido/Tran10IdoOut/Tran11IdoIn が同じ形で持つ</summary>
 	public CodeNameView VIdo { get; set; }
 	/// <summary>関連No1。積送入庫(Tran11IdoIn)では積送出庫(Tran10IdoOut)のIdをセットする</summary>
-	public int RelateNo1 { get; set; }
+	public long RelateNo1 { get; set; }
 	/// <summary>手入力No</summary>
 	public string ManualNo { get; set; }
 }
@@ -238,34 +238,34 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	[ObservableProperty]
 	[OldTableCommentAttr("明細金額合計")]
 	[Comment("金額合計")]
-	public partial int KingakuTotal { get; set; }
+	public partial long KingakuTotal { get; set; }
 	/// <summary>
 	/// 上代合計
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("上代合計")]
 	[Comment("上代合計")]
-	public partial int JodaiTotal { get; set; }
+	public partial long JodaiTotal { get; set; }
 	/// <summary>
 	/// 下代合計
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("下代合計")]
 	[Comment("下代合計")]
-	public partial int GedaiTotal { get; set; }
+	public partial long GedaiTotal { get; set; }
 	/// <summary>
 	/// 値引: 合計からの
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("値引1 + 値引2 + 値引3")]
 	[Comment("値引: 合計からの")]
-	public partial int Nebiki00Total { get; set; }
+	public partial long Nebiki00Total { get; set; }
 	/// <summary>
 	/// 値引: 明細積上げ
 	/// </summary>
 	[ObservableProperty]
 	[Comment("値引: 明細積上げ")]
-	public partial int Nebiki01Meisai { get; set; }
+	public partial long Nebiki01Meisai { get; set; }
 	/// <summary>
 	/// ヘッダメモ
 	/// </summary>
@@ -1421,19 +1421,19 @@ public sealed partial class Tran99MaterialMeisai : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("金額")]
-	public partial int Kingaku { get; set; }
+	public partial long Kingaku { get; set; }
 	/// <summary>
 	/// 値引: 合計からの
 	/// </summary>
 	[ObservableProperty]
 	[Comment("値引: 合計からの")]
-	public partial int Nebiki00 { get; set; }
+	public partial long Nebiki00 { get; set; }
 	/// <summary>
 	/// 値引: 明細1
 	/// </summary>
 	[ObservableProperty]
 	[Comment("値引: 明細1")]
-	public partial int Nebiki01 { get; set; }
+	public partial long Nebiki01 { get; set; }
 	/// <summary>
 	/// 消費税区分（MasterSysTax.Id 1-3）。入力時点の MasterMaterial.Id_Tax のスナップショット。0は非課税
 	/// </summary>
@@ -1451,7 +1451,7 @@ public sealed partial class Tran99MaterialMeisai : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("明細消費税額（未使用時0）")]
-	public partial int Tax { get; set; } = 0;
+	public partial long Tax { get; set; } = 0;
 	/// <summary>
 	/// 明細メモ
 	/// </summary>
@@ -1500,7 +1500,7 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	/// 手入力No
 	/// </summary>
@@ -1544,7 +1544,7 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	/// 手入力No
 	/// </summary>
@@ -1587,7 +1587,7 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	/// 手入力No
 	/// </summary>

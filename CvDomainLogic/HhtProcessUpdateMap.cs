@@ -637,12 +637,12 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 	/// 税率は <c>Rate</c> ではなくローカル値を使う（<c>Rate</c> は掛率。決定 12-F / 12-G）。
 	/// </para>
 	/// </summary>
-	private static void ApplyTaxOnly(HhtMasterCache cache, string denDay, int kingakuTotal, Action<int> setTax, Action<int> setTotal) {
+	private static void ApplyTaxOnly(HhtMasterCache cache, string denDay, long kingakuTotal, Action<int> setTax, Action<int> setTotal) {
 		var taxRatePercent = ResolveTaxRatePercent(cache, denDay);
 		var absKingakuTotal = Math.Abs(kingakuTotal);
 		var tax = (int)Math.Round(absKingakuTotal * taxRatePercent / 100.0, MidpointRounding.AwayFromZero);
 		setTax(tax);
-		setTotal(absKingakuTotal + tax);
+		setTotal((int)(absKingakuTotal + tax));
 	}
 
 	/// <summary>

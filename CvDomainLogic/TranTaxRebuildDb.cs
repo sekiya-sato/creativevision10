@@ -129,7 +129,7 @@ public class TranTaxRebuildDb {
 				}
 				slip.Jmeisai = meisai;
 				slip.Tax = newTax;
-				slip.Total = Math.Abs(slip.KingakuTotal) + newTax;
+				slip.Total = (int)(Math.Abs(slip.KingakuTotal) + newTax);
 				_db.Update(slip);
 				updated++;
 			}
