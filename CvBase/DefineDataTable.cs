@@ -34,6 +34,7 @@ public class DefineDataTable {
 			// マスタテーブル2
 			typeof(MasterShain),
 			typeof(MasterEndCustomer),
+			typeof(MasterEndCustomerAccount),
 			typeof(MasterShohin),
 			typeof(DerivedShohinColSiz),
 			typeof(MasterMaterial),

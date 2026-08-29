@@ -45,6 +45,7 @@ public class UpdateDb {
 		new (26_08_27_02,"ALTER TABLE MasterMaterial ADD COLUMN Id_Tax NUMBER not null default 1;","MasterMaterial 消費税区分列を追加 既定はMasterSysTax Id=1"),
 		new (26_08_27_03,"Drop table Tran02PosSeisan;","名前の変更"),
 		new (26_08_28_01,"ALTER TABLE MasterShain ADD COLUMN ResponsibilityScope NUMBER not null default 0;ALTER TABLE MasterShain ADD COLUMN Id_PermissionProfile NUMBER not null default 0;","MasterShain 担当区分・権限プロファイル列を追加 既存社員は未設定(0) 権限プロファイル2テーブルはDefineDataTableが作成し初期データを投入する"),
+		new (26_08_29_01,"ALTER TABLE MasterEndCustomer DROP COLUMN Point;ALTER TABLE MasterEndCustomer DROP COLUMN SalesCount;ALTER TABLE MasterEndCustomer DROP COLUMN SalesKingaku;","MasterEndCustomer ポイント・売上集計列を削除しMasterEndCustomerAccountへ分離"),
 	];
 
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {

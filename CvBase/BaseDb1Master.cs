@@ -234,26 +234,6 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 		set => Gender = (int)value;
 	}
 	/// <summary>
-	/// ポイント
-	/// </summary>
-	[ObservableProperty]
-	[Comment("ポイント")]
-	public partial int Point { get; set; }
-	/// <summary>
-	/// 累計購買回数
-	/// </summary>
-	[ObservableProperty]
-	[OldTableCommentAttr("累計購入数量", "ToDo")]
-	[Comment("累計購買回数")]
-	public partial int SalesCount { get; set; }
-	/// <summary>
-	/// 累計購買金額
-	/// </summary>
-	[ObservableProperty]
-	[OldTableCommentAttr("累計購入金額")]
-	[Comment("累計購買金額")]
-	public partial int SalesKingaku { get; set; }
-	/// <summary>
 	/// 名称リスト
 	/// </summary>
 	[ObservableProperty]
@@ -270,6 +250,60 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	[ColumnSizeDml(1000)]
 	[Comment("詳細内容")]
 	public partial BaseDetailClass? Jdetail { get; set; }
+}
+
+/// <summary>
+/// 顧客マスターに紐づけられた会員情報テーブル
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_Customer))]
+[Comment("顧客マスターに紐づけられた会員情報をもつ")]
+public sealed partial class MasterEndCustomerAccount : BaseDbClass {
+	/// <summary>
+	/// 顧客Id
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterEndCustomer))]
+	[Comment("顧客Id")]
+	public partial long Id_Customer { get; set; }
+	/// <summary>
+	/// ポイントランク(ゴールド、シルバーなど)
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("ポイント計算のランク(ゴールド、シルバーなど)")]
+	public partial string PointRank { get; set; } = string.Empty;
+	/// <summary>
+	/// 現在のポイント数
+	/// </summary>
+	[ObservableProperty]
+	[Comment("現在のポイント数")]
+	public partial int Point { get; set; }
+	/// <summary>
+	/// 累計お買上金額
+	/// </summary>
+	[ObservableProperty]
+	[Comment("累計お買上金額")]
+	public partial int SalesTotalKingaku { get; set; }
+	/// <summary>
+	/// 最終来店日 yyyyMMdd
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("最終来店日 yyyyMMdd")]
+	public partial string LastVisitDate { get; set; } = string.Empty;
+	/// <summary>
+	/// 来店回数
+	/// </summary>
+	[ObservableProperty]
+	[Comment("来店回数")]
+	public partial int VisitCount { get; set; }
+	/// <summary>
+	/// 直近の年間お買上金額
+	/// </summary>
+	[ObservableProperty]
+	[Comment("直近の年間お買上金額")]
+	public partial int AnnualSales { get; set; }
 }
 
 /// <summary>
