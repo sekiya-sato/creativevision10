@@ -87,6 +87,17 @@
 						Margin="16,4"
 						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
 						Opacity="0.3" />
+					<Button Margin="0,0,12,0"
+						Command="{Binding DoReselectTableCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="テーブル再選択">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="TableRefresh" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="テーブル再選択" />
+						</StackPanel>
+					</Button>
 					<Button Command="{Binding DoListCommand}"
 						Style="{StaticResource ToolCommandButton}"
 						ToolTip="一覧取得 (F5)">

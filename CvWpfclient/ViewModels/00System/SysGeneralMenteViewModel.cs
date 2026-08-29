@@ -79,6 +79,29 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	}
 
 	[RelayCommand(IncludeCancelCommand = true)]
+	async Task DoReselectTable(CancellationToken ct) {
+		var selectTableView = new Views.Sub.SelectServerTableView();
+		if (ClientLib.ShowDialogView(selectTableView, this, true) != true) {
+			return;
+		}
+
+		if (selectTableView.DataContext is not SelectServerTableViewModel selectVm
+				|| string.IsNullOrWhiteSpace(selectVm.SelectedTableName)) {
+			MessageEx.ShowWarningDialog("テーブルが選択されていません。", owner: ActiveWindow);
+			return;
+		}
+
+		AddInfo = $"{selectVm.SelectedTableName}|{selectVm.SelectedRowCount}";
+		maxCount = null;
+		selectMiniParam = null;
+		if (!ResolveTargetType(exitOnFailure: false)) {
+			return;
+		}
+
+		await ReloadAsync(ct);
+	}
+
+	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoSave(CancellationToken ct) {
 		if (SelectedRow == null || targetType == null) {
 			return;
@@ -324,7 +347,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	Window? ActiveWindow => ClientLib.GetActiveView(this);
 
-	bool ResolveTargetType() {
+	bool ResolveTargetType(bool exitOnFailure = true) {
 		var raw = AddInfo?.Trim() ?? string.Empty;
 		string tableName;
 
@@ -341,7 +364,9 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 		if (string.IsNullOrWhiteSpace(tableName)) {
 			MessageEx.ShowErrorDialog("テーブル名が指定されていません。", owner: ActiveWindow);
-			ClientLib.Exit(this);
+			if (exitOnFailure) {
+				ClientLib.Exit(this);
+			}
 			return false;
 		}
 
@@ -359,7 +384,9 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 		if (resolved == null) {
 			MessageEx.ShowErrorDialog($"指定テーブルに対応する型が見つかりません: {tableName}", owner: ActiveWindow);
-			ClientLib.Exit(this);
+			if (exitOnFailure) {
+				ClientLib.Exit(this);
+			}
 			return false;
 		}
 

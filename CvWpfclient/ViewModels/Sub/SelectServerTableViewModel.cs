@@ -9,7 +9,7 @@ namespace CvWpfclient.ViewModels.Sub;
 
 public partial class SelectServerTableViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	public partial string Title { get; set; } = "サーバーテーブル選択";
+	public partial string Title { get; set; } = "テーブル選択";
 
 	[ObservableProperty]
 	public partial ObservableCollection<ServerTableCountRow> ListData { get; set; } = [];
