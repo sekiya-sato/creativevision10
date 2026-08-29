@@ -291,6 +291,13 @@ public partial class TranAllHeader : BaseDbClass, ITranDetail {
 	[ColumnSizeDml(4000)]
 	[Comment("明細リスト")]
 	public partial List<Tran99Meisai>? Jmeisai { get; set; }
+	/// <summary>
+	/// 旧データ SEQ_NO
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("HC$TRAN_TORI0.SEQ_NO")]
+	[Comment("旧データ SEQ_NO")]
+	public partial long OldSeqNo { get; set; }
 }
 
 /// <summary>
@@ -571,6 +578,13 @@ public partial class TranKinHeader : BaseDbClass {
 	[ColumnSizeDml(4000)]
 	[Comment("明細リスト")]
 	public partial List<TranKinMeisai>? Jmeisai { get; set; }
+	/// <summary>
+	/// 旧データ SEQ_NO
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("HC$TRAN_TORI0.SEQ_NO")]
+	[Comment("旧データ SEQ_NO")]
+	public partial long OldSeqNo { get; set; }
 }
 
 /// <summary>
@@ -1179,9 +1193,12 @@ public enum EnumShiire : int {
 }
 
 /// <summary>
-/// 共通トランザクション（生地・付属仕入ヘッダ）
+/// 生地・付属仕入 02 (仕入先 買掛+)
 /// <para>
-/// <see cref="MasterMaterial"/>（色・サイズを持たない資材マスタ）を明細に持つ生地・付属の仕入伝票の基底。
+/// 買掛集計（<see cref="SummaryDb.CalcSummaryKaiKake"/> / <see cref="SummaryDb.CalcSummaryKaiShi"/>）は
+/// <see cref="Tran03Shiire"/> と合算して <c>Id_Shiire</c> 軸に積む。区分ごとの振り分けは
+/// <see cref="EnumShiire"/> と同じだが、区分99（その他）は仕入ではなく消費税(<c>Tax</c>)へ全額を積む点が
+/// <see cref="Tran03Shiire"/> と異なる（生地・付属の税調整目的の伝票として使うため）。
 /// <see cref="Tran03Shiire"/>/<see cref="TranAllHeader"/> が前提とする倉庫実在庫連動
 /// （<see cref="ITranSoko"/>/<see cref="ITranDetail"/>、色・サイズ別の <c>SuTotal</c> 等）は対象外のため、
 /// それらのインターフェースは実装せず <see cref="TranCalcBase.GetCalcSoko"/> にも登録しない（在庫計算対象外）。
@@ -1189,8 +1206,11 @@ public enum EnumShiire : int {
 /// <see cref="Tran03Shiire"/> と同じ軸（<c>KakeDay</c> / <c>Id_Shiire</c>）で合算される。
 /// </para>
 /// </summary>
-[Comment("トランザクション：生地・付属仕入共通ヘッダ Tran02Materialの基底で単独の実テーブルは作成しない")]
-public partial class TranMaterialHeader : BaseDbClass, ITranTax {
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("nk1", false, nameof(KakeDay))]
+[KeyDml("nk2", false, [nameof(Id_Shiire)])]
+[Comment("トランザクション：生地・付属仕入データ MasterMaterialを明細に持つ")]
+public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	/// <summary>
 	/// 計上日（yyyyMMdd）
 	/// </summary>
@@ -1270,7 +1290,7 @@ public partial class TranMaterialHeader : BaseDbClass, ITranTax {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("計算フラグ（1:+ -1:-、 0:計算除外 集計処理で返品を考慮するために使用）")]
-	public partial int CalcFlag { get; protected set; } = 1;
+	public partial int CalcFlag { get; internal set; } = 1;
 	/// <summary>
 	/// 手入力No
 	/// </summary>
@@ -1343,6 +1363,13 @@ public partial class TranMaterialHeader : BaseDbClass, ITranTax {
 	[ColumnSizeDml(4000)]
 	[Comment("明細リスト")]
 	public partial List<Tran99MaterialMeisai>? Jmeisai { get; set; }
+	/// <summary>
+	/// 旧データ SEQ_NO
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("HC$TRAN_TORI0.SEQ_NO")]
+	[Comment("旧データ SEQ_NO")]
+	public partial long OldSeqNo { get; set; }
 }
 
 /// <summary>
@@ -1432,22 +1459,13 @@ public sealed partial class Tran99MaterialMeisai : ObservableObject {
 	[ColumnSizeDml(200)]
 	[Comment("明細メモ")]
 	public partial string Memo { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// 生地・付属仕入 02 (仕入先 買掛+)
-/// <para>
-/// 買掛集計（<see cref="SummaryDb.CalcSummaryKaiKake"/> / <see cref="SummaryDb.CalcSummaryKaiShi"/>）は
-/// <see cref="Tran03Shiire"/> と合算して <c>Id_Shiire</c> 軸に積む。区分ごとの振り分けは
-/// <see cref="EnumShiire"/> と同じだが、区分99（その他）は仕入ではなく消費税(<c>Tax</c>)へ全額を積む点が
-/// <see cref="Tran03Shiire"/> と異なる（生地・付属の税調整目的の伝票として使うため）。
-/// </para>
-/// </summary>
-[PrimaryKey(nameof(Id), AutoIncrement = true)]
-[KeyDml("nk1", false, nameof(KakeDay))]
-[KeyDml("nk2", false, [nameof(Id_Shiire)])]
-[Comment("トランザクション：生地・付属仕入データ MasterMaterialを明細に持つ")]
-public sealed partial class Tran02Material : TranMaterialHeader {
+	/// <summary>
+	/// 旧データ SEQ_NO
+	/// </summary>
+	[ObservableProperty]
+	[OldTableCommentAttr("HC$TRAN_TORI0.SEQ_NO")]
+	[Comment("旧データ SEQ_NO")]
+	public partial long OldSeqNo { get; set; }
 }
 
 /// <summary>

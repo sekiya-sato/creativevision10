@@ -135,6 +135,16 @@ public partial class ConvertDb {
 			return (int)decimal.Truncate(dec);
 		return val;
 	}
+	private long getDataLong(Dictionary<string, object> rec, string key) {
+		var data = getString(rec, key);
+		if (data == null)
+			return 0;
+		if (long.TryParse(data, out long val))
+			return val;
+		if (decimal.TryParse(data, out var dec))
+			return (long)decimal.Truncate(dec);
+		return val;
+	}
 	#endregion
 	/// <summary>
 	/// 共通変換処理

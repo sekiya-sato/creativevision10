@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using NPoco;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace CvBase;
 
@@ -46,8 +45,8 @@ public class UpdateDb {
 		new (26_08_27_03,"Drop table Tran02PosSeisan;","名前の変更"),
 		new (26_08_28_01,"ALTER TABLE MasterShain ADD COLUMN ResponsibilityScope NUMBER not null default 0;ALTER TABLE MasterShain ADD COLUMN Id_PermissionProfile NUMBER not null default 0;","MasterShain 担当区分・権限プロファイル列を追加 既存社員は未設定(0) 権限プロファイル2テーブルはDefineDataTableが作成し初期データを投入する"),
 		new (26_08_29_01,"ALTER TABLE MasterEndCustomer DROP COLUMN Point;ALTER TABLE MasterEndCustomer DROP COLUMN SalesCount;ALTER TABLE MasterEndCustomer DROP COLUMN SalesKingaku;","MasterEndCustomer ポイント・売上集計列を削除しMasterEndCustomerAccountへ分離"),
+		new (26_08_30_01,"ALTER TABLE Tran00Uriage ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran02Material ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran03Shiire ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran05Ido ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran06Nyukin ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran07Shiharai ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran10IdoOut ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran11IdoIn ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran12Jyuchu ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran13Hachu ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran60Tana ADD COLUMN OldSeqNo NUMBER not null default 0;ALTER TABLE Tran61Chosei ADD COLUMN OldSeqNo NUMBER not null default 0;","旧データのSEQ_NOを追加"),
 	];
-
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);
 	}

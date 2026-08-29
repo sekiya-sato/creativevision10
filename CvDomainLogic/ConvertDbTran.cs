@@ -25,6 +25,7 @@ public partial class ConvertDb {
 				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran00Uriage() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
@@ -80,6 +81,7 @@ public partial class ConvertDb {
 				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran01Tenuri() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
@@ -145,6 +147,7 @@ public partial class ConvertDb {
 				var total = isOther ? Math.Abs(naizei + gaizei) : Math.Abs(kingakuTotal) + tax;
 
 				return new Tran02Material() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
@@ -183,6 +186,7 @@ public partial class ConvertDb {
 				var rate = getShiireRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran03Shiire() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
@@ -229,6 +233,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildTranMeisaiList(rec);
 
 				return new Tran05Ido() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
@@ -265,6 +270,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildKinMeisaiList(rec);
 
 				return new Tran06Nyukin() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					KakeDay = getString(rec, "在庫計上日", "19010101"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
@@ -289,6 +295,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildKinMeisaiList(rec);
 
 				return new Tran07Shiharai() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					KakeDay = getString(rec, "在庫計上日", "19010101"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
@@ -314,6 +321,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildTranMeisaiList(rec, "HC$tran_tana1");
 
 				return new Tran60Tana() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
@@ -352,6 +360,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildChoseiMeisaiList(rec);
 
 				return new Tran61Chosei() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					EnKubun = EnumChosei.Kyosei,
 					Id_Riyu = getChoseiRiyuId(getString(rec, "取引区分")),
@@ -380,6 +389,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildTranMeisaiList(rec);
 
 				return new Tran10IdoOut() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
@@ -418,6 +428,7 @@ public partial class ConvertDb {
 				var meisaiList = BuildTranMeisaiList(rec);
 
 				return new Tran11IdoIn() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
@@ -461,6 +472,7 @@ public partial class ConvertDb {
 				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran12Jyuchu() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
@@ -508,6 +520,7 @@ public partial class ConvertDb {
 				var rate = getShiireRatePercent(getString(rec, "取引先CD1"));
 
 				return new Tran13Hachu() {
+					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
@@ -697,7 +710,7 @@ WHERE EXISTS (
 	}
 
 	List<Tran99Meisai>? BuildTranMeisaiList(Dictionary<string, object> rec, string table = "HC$tran_tori1") { // 棚卸は別テーブル
-		var detailRows = _fromDb.Fetch<Dictionary<string, object>>($"select * from {table} where ヘッダNO=@0 order by 行NO", getDataInt(rec, "SEQ_NO"));
+		var detailRows = _fromDb.Fetch<Dictionary<string, object>>($"select * from {table} where ヘッダNO=@0 order by 行NO", getDataLong(rec, "SEQ_NO"));
 		if (detailRows.Count == 0)
 			return null;
 
@@ -755,7 +768,7 @@ WHERE EXISTS (
 	/// </para>
 	/// </summary>
 	List<Tran99MaterialMeisai>? BuildMaterialMeisaiList(Dictionary<string, object> rec, int kubun) {
-		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataInt(rec, "SEQ_NO"));
+		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataLong(rec, "SEQ_NO"));
 		if (detailRows.Count == 0)
 			return null;
 
@@ -790,7 +803,7 @@ WHERE EXISTS (
 	/// CV10の在庫調整は金額を持たない設計のため、単価・金額・上代・下代・値引・税は移行しない。
 	/// </summary>
 	List<Tran99Meisai>? BuildChoseiMeisaiList(Dictionary<string, object> rec) {
-		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataInt(rec, "SEQ_NO"));
+		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataLong(rec, "SEQ_NO"));
 		if (detailRows.Count == 0)
 			return null;
 
@@ -824,7 +837,7 @@ WHERE EXISTS (
 		return meisaiList;
 	}
 	List<TranKinMeisai>? BuildKinMeisaiList(Dictionary<string, object> rec) {
-		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataInt(rec, "SEQ_NO"));
+		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataLong(rec, "SEQ_NO"));
 		if (detailRows.Count == 0)
 			return null;
 

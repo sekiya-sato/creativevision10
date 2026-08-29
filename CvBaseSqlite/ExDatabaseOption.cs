@@ -78,7 +78,8 @@ public class ExDatabaseOption {
 	}
 
 	static void ExecuteNonQuery(SqliteConnection conn, string sql) {
-		using var cmd = conn.CreateCommand();		cmd.CommandText = sql;
+		using var cmd = conn.CreateCommand();
+		cmd.CommandText = sql;
 		cmd.ExecuteNonQuery();
 	}
 }
