@@ -291,8 +291,28 @@ public partial class ConvertDb {
 	/// <param name="isInit"></param>
 	/// <returns></returns>
 	public int CnvMasterEndCustomer(bool isInit = true) {
-		const string sql = "select * from HC$master_kokyaku where 顧客CD>'.' order by 顧客CD"; // 顧客分類 'K01'-'K10'
-		return ConvertMaster(sql, isInit, rec => {
+		const string sql = """
+select k.*, l.ログインID, l.PASS, p.REALポイント, m.名称 as ポイントランク名称
+from HC$master_kokyaku k
+left join HC$master_kokyaku_login l on l.顧客CD = k.顧客CD
+left join HC$point_real p on p.顧客CD = k.顧客CD
+left join HC$master_meisho m on m.名称区分 = 'PT1' and m.名称CD = k.ポイントランク
+where k.顧客CD > '.'
+order by k.顧客CD
+""";
+		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql);
+
+		// 親テーブルを再作成する前に子テーブルを削除し、外部キー関係を保つ。
+		if (isInit)
+			_toDb.DropTable(typeof(MasterEndCustomerAccount));
+		_toDb.CreateTable(typeof(MasterEndCustomer), isInit);
+		_toDb.CreateTable(typeof(MasterEndCustomerAccount));
+
+		if (rows.Count == 0)
+			return 0;
+
+		var customerList = new List<MasterEndCustomer>(rows.Count);
+		foreach (var rec in rows) {
 			var item = new MasterEndCustomer() {
 				Code = getString(rec, "顧客CD"),
 				Name = getString(rec, "顧客名"),
@@ -311,8 +331,39 @@ public partial class ConvertDb {
 			var meiList = ConverterGeneralMeisho(10, "K", rec);
 			if (meiList.Count > 0)
 				item.Jsub = meiList;
-			return item;
-		});
+			customerList.Add(item);
+		}
+
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		_toDb.InsertBulk(customerList);
+
+		var accountList = new List<MasterEndCustomerAccount>(customerList.Count);
+		foreach (var rec in rows) {
+			var code = getString(rec, "顧客CD");
+			var myCustomer = customerList.Where(c => c.Code == code).FirstOrDefault();
+
+			if (myCustomer == null || myCustomer.Id == 0)
+				throw new InvalidOperationException($"顧客マスターの登録IDを取得できません。顧客CD: {code}");
+
+			accountList.Add(new MasterEndCustomerAccount() {
+				Id_Customer = myCustomer.Id,
+				AccountId = getString(rec, "ログインID"),
+				AccountPassword = getString(rec, "PASS"),
+				IsWithdrawalFlag = getDataInt(rec, "退会FLG"),
+				WithdrawnDate = getString(rec, "退会日"),
+				Kubun = getDataInt(rec, "顧客区分"),
+				PointRank = getString(rec, "ポイントランク名称"),
+				Point = getDataInt(rec, "REALポイント"),
+				SalesTotalKingaku = getDataInt(rec, "累計購入金額"),
+				LastVisitDate = getString(rec, "最終来店日"),
+				VisitCount = getDataInt(rec, "累計来店回数"),
+				AnnualSales = getDataInt(rec, "年間累計購入金額"),
+			});
+		}
+		_toDb.InsertBulk(accountList);
+		_toDb.CompleteTransaction();
+
+		return rows.Count;
 	}
 	/// <summary>
 	/// 顧客マスター変換(Option) 存在するマスタに追加で情報を加える
@@ -585,8 +636,13 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 	/// <para>1:生地→01布帛, 2:付属品A群→06ボタン, 3:付属品B群→06ボタン, 6:プレス→99, 7:その他→99, 8:サンプル→99, 9:デザイン→99, 未知→99</para>
 	/// </summary>
 	private static readonly Dictionary<string, string> _kubunShkijiMap = new() {
-		["1"] = "01", ["2"] = "06", ["3"] = "06",
-		["6"] = "99", ["7"] = "99", ["8"] = "99", ["9"] = "99",
+		["1"] = "01",
+		["2"] = "06",
+		["3"] = "06",
+		["6"] = "99",
+		["7"] = "99",
+		["8"] = "99",
+		["9"] = "99",
 	};
 	public int CnvMasterMaterial(bool isInit = true) {
 		const string sql = "select * from HC$MASTER_SHKIJI where 商品CD>'.' order by 商品CD";

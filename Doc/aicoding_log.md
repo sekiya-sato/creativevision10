@@ -1,3 +1,22 @@
+## [2026-08-29] 顧客変換時の会員情報登録
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- 旧顧客マスター変換時に、確定した顧客Idへ紐づく会員情報を1顧客1件作成する。
+
+### 実施内容
+- `CnvMasterEndCustomer`で顧客を先に一括登録し、顧客コードから確定Idを再取得して`MasterEndCustomerAccount.Id_Customer`へ設定した。
+- 旧ログイン、ポイント残、ポイントランクおよび顧客集計列を、`MasterEndCustomerAccount`の旧列対応コメントに従って移行した。
+- 初期化時は子テーブルを先に削除し、親子テーブルを再作成してから同一トランザクションで登録するようにした。
+
+### 確認
+- `CvDomainLogic\CvDomainLogic.csproj`をビルドし、警告0・エラー0を確認した。
+- `git diff --check`を確認した。
+
+---
+
 ## [2026-08-28] D-05 請求書の税率別内訳
 
 ### Agent

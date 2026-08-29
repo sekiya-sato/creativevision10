@@ -258,6 +258,7 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uk1", true, nameof(Id_Customer))]
 [Comment("顧客マスターに紐づけられた会員情報をもつ")]
+[OldTableCommentAttr("HC$MASTER_KOKYAKU_LOGIN", "顧客CD=HC$MASTER_KOKYAKU.顧客CD")]
 public sealed partial class MasterEndCustomerAccount : BaseDbClass {
 	/// <summary>
 	/// 顧客Id
@@ -271,18 +272,21 @@ public sealed partial class MasterEndCustomerAccount : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("アカウントLoginID")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU_LOGIN.ログインID")]
 	public partial string AccountId { get; set; } = string.Empty;
 	/// <summary>
 	/// アカウントPassword
 	/// </summary>
 	[ObservableProperty]
 	[Comment("アカウントPassword")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU_LOGIN.PASS")]
 	public partial string AccountPassword { get; set; } = string.Empty;
 	/// <summary>
 	/// 退会フラグ
 	/// </summary>
 	[ObservableProperty]
-	[Comment("退会フラグ")]
+	[Comment("退会フラグ 1=退会 0=有効")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU.退会FLG")]
 	public partial int IsWithdrawalFlag { get; set; } = 0;
 	[Ignore]
 	[JsonIgnore]
@@ -295,12 +299,14 @@ public sealed partial class MasterEndCustomerAccount : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("退会日 yyyyMMdd")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU.退会日")]
 	public partial string WithdrawnDate { get; set; } = string.Empty;
 	/// <summary>
 	/// 顧客区分
 	/// </summary>
 	[ObservableProperty]
 	[Comment("顧客区分")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU.顧客区分")]
 	public partial int Kubun { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -314,17 +320,20 @@ public sealed partial class MasterEndCustomerAccount : BaseDbClass {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[Comment("ポイント計算のランク(ゴールド、シルバーなど)")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU.ポイントランク", "select 名称 from HC$master_meisho where 名称区分='PT1' and 名称CD=@0")]
 	public partial string PointRank { get; set; } = string.Empty;
 	/// <summary>
 	/// 現在のポイント数
 	/// </summary>
 	[ObservableProperty]
 	[Comment("現在のポイント数")]
+	[OldTableCommentAttr("HC$POINT_REAL.REALポイント", "select Realポイント from HC$POINT_REAL where 顧客CD=@0")]
 	public partial int Point { get; set; }
 	/// <summary>
 	/// 累計お買上金額
 	/// </summary>
 	[ObservableProperty]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU.累計購入金額")]
 	[Comment("累計お買上金額")]
 	public partial int SalesTotalKingaku { get; set; }
 	/// <summary>
@@ -333,22 +342,23 @@ public sealed partial class MasterEndCustomerAccount : BaseDbClass {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[Comment("最終来店日 yyyyMMdd")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU.最終来店日")]
 	public partial string LastVisitDate { get; set; } = string.Empty;
 	/// <summary>
 	/// 来店回数
 	/// </summary>
 	[ObservableProperty]
 	[Comment("来店回数")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU.累計来店回数")]
 	public partial int VisitCount { get; set; }
 	/// <summary>
 	/// 直近の年間お買上金額
 	/// </summary>
 	[ObservableProperty]
 	[Comment("直近の年間お買上金額")]
+	[OldTableCommentAttr("HC$MASTER_KOKYAKU.年間累計購入金額")]
 	public partial int AnnualSales { get; set; }
 }
-
-
 
 /// <summary>
 /// 商品テーブル
