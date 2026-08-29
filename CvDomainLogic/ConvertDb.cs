@@ -456,7 +456,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				Id_Tax = getDataInt(rec, "消費税CD"),
 				IsZaiko = getDataInt(rec, "在庫管理FLG"),
 				MakerHin = getString(rec, "メーカー品番"),
-				SizeKu = getString(rec, "商品サイズ区分", "SIZ"),
+				SizeKu = sizeKubun,
 				VSoko = new() {
 					Cd = getString(rec, "基準倉庫CD"), // // 残りはCnvAfterMaster()でセット
 				},
