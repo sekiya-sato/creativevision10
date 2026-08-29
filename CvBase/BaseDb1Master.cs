@@ -267,6 +267,48 @@ public sealed partial class MasterEndCustomerAccount : BaseDbClass {
 	[Comment("顧客Id")]
 	public partial long Id_Customer { get; set; }
 	/// <summary>
+	/// アカウントLoginID
+	/// </summary>
+	[ObservableProperty]
+	[Comment("アカウントLoginID")]
+	public partial string AccountId { get; set; } = string.Empty;
+	/// <summary>
+	/// アカウントPassword
+	/// </summary>
+	[ObservableProperty]
+	[Comment("アカウントPassword")]
+	public partial string AccountPassword { get; set; } = string.Empty;
+	/// <summary>
+	/// 退会フラグ
+	/// </summary>
+	[ObservableProperty]
+	[Comment("退会フラグ")]
+	public partial int IsWithdrawalFlag { get; set; } = 0;
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsWithdrawal {
+		get => (EnumYesNo)IsWithdrawalFlag;
+		set => IsWithdrawalFlag = (int)value;
+	}
+	/// <summary>
+	/// 退会日
+	/// </summary>
+	[ObservableProperty]
+	[Comment("退会日 yyyyMMdd")]
+	public partial string WithdrawnDate { get; set; } = string.Empty;
+	/// <summary>
+	/// 顧客区分
+	/// </summary>
+	[ObservableProperty]
+	[Comment("顧客区分")]
+	public partial int Kubun { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumCustomerLcvKubun EnKubun {
+		get => (EnumCustomerLcvKubun)Kubun;
+		set => Kubun = (int)value;
+	}
+	/// <summary>
 	/// ポイントランク(ゴールド、シルバーなど)
 	/// </summary>
 	[ObservableProperty]
@@ -305,6 +347,8 @@ public sealed partial class MasterEndCustomerAccount : BaseDbClass {
 	[Comment("直近の年間お買上金額")]
 	public partial int AnnualSales { get; set; }
 }
+
+
 
 /// <summary>
 /// 商品テーブル

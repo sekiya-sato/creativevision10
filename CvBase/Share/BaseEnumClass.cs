@@ -25,7 +25,19 @@ public enum EnumIsPay : int {
 	[Comment("掛計上する")]
 	Yes = 1
 }
-
+/// <summary>
+/// 顧客LCV区分
+/// </summary>
+public enum EnumCustomerLcvKubun : int {
+	[Comment("0 未使用")]
+	UnUse = 0,
+	[Comment("1 スマホ")]
+	UseMobile = 1,
+	[Comment("4 スマホログインのみ")]
+	UseMobileLoginOnly = 4,
+	[Comment("9 会員情報未登録")]
+	UseMobileNoDetail = 9
+}
 /// <summary>
 /// 締め日
 /// </summary>
@@ -156,7 +168,7 @@ public enum EnumResponsibilityScope : int {
 	CorporateUser = 90,
 }
 public enum EnumResponsibilityExternalScope : int {
-	Warehouse=21,
+	Warehouse = 21,
 	Ecommerce = 22,
 }
 
