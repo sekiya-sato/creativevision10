@@ -68,14 +68,14 @@
 					IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 					Style="{StaticResource MaterialDesignRaisedButton}" />
 				<TextBlock Margin="24,0,0,0" VerticalAlignment="Center"
-					FontWeight="SemiBold" Text="{Binding ListSummary}" />
+					FontWeight="SemiBold"
+					Text="{Binding ListSummary}" />
 			</StackPanel>
 		</materialDesign:Card>
 
 		<DataGrid Grid.Row="2"
 			Margin="18,12,18,0"
-			AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-			HeadersVisibility="Column"
+			AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column"
 			IsReadOnly="{Binding IsProcessing}"
 			ItemsSource="{Binding ListData}"
 			SelectedItem="{Binding SelectedItem}"
@@ -91,9 +91,9 @@
 					</DataGridTextColumn.ElementStyle>
 				</DataGridTextColumn>
 				<DataGridComboBoxColumn Width="110"
-					DisplayMemberPath="Name"
-					Header="区分"
-					SelectedValueBinding="{Binding Type0}" SelectedValuePath="Value">
+					DisplayMemberPath="Name" Header="区分"
+					SelectedValueBinding="{Binding Type0}"
+					SelectedValuePath="Value">
 					<DataGridComboBoxColumn.ElementStyle>
 						<Style TargetType="ComboBox">
 							<Setter Property="ItemsSource" Value="{Binding DataContext.TypeOptions, RelativeSource={RelativeSource AncestorType=Window}}" />
@@ -115,9 +115,9 @@
 					Binding="{Binding Tanto}"
 					Header="担当者" />
 				<DataGridComboBoxColumn Width="120"
-					DisplayMemberPath="Name"
-					Header="販売区分"
-					SelectedValueBinding="{Binding HanKubun}" SelectedValuePath="Value">
+					DisplayMemberPath="Name" Header="販売区分"
+					SelectedValueBinding="{Binding HanKubun}"
+					SelectedValuePath="Value">
 					<DataGridComboBoxColumn.ElementStyle>
 						<Style TargetType="ComboBox">
 							<Setter Property="ItemsSource" Value="{Binding DataContext.HanKubunOptions, RelativeSource={RelativeSource AncestorType=Window}}" />

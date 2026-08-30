@@ -349,12 +349,13 @@
 								</ComboBox>
 
 								<TextBlock Grid.Row="10"
+									d:Visibility="Visible"
 									Style="{StaticResource FormLabel}"
 									Text="権限プロファイルId" Visibility="Collapsed" />
 								<TextBox Grid.Row="10" Grid.Column="1"
 									Width="180"
 									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="権限プロファイルId"
+									d:Visibility="Visible" materialDesign:HintAssist.Hint="権限プロファイルId"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Id_PermissionProfile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									Visibility="Collapsed" />

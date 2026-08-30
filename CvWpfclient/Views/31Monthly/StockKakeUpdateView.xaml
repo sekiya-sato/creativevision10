@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._31Monthly.StockKakeUpdateView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._31Monthly.StockKakeUpdateView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._31Monthly"
@@ -73,19 +73,19 @@
 						Orientation="Horizontal">
 						<TextBox Width="120"
 							VerticalAlignment="Center"
+							helpers:YearMonthInputBehavior.IsEnabled="True"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							MaxLength="7"
 							Style="{StaticResource MaterialDesignOutlinedTextBox}"
-							helpers:YearMonthInputBehavior.IsEnabled="True"
 							Text="{Binding YearMonthFrom, UpdateSourceTrigger=PropertyChanged}" />
 						<TextBlock Margin="12,0" VerticalAlignment="Center"
 							FontWeight="Bold" Text="-" />
 						<TextBox Width="120"
 							VerticalAlignment="Center"
+							helpers:YearMonthInputBehavior.IsEnabled="True"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							MaxLength="7"
 							Style="{StaticResource MaterialDesignOutlinedTextBox}"
-							helpers:YearMonthInputBehavior.IsEnabled="True"
 							Text="{Binding YearMonthTo, UpdateSourceTrigger=PropertyChanged}" />
 					</StackPanel>
 
@@ -94,8 +94,7 @@
 						Style="{StaticResource SettingLabel}"
 						Text="集計期間" />
 					<TextBlock Grid.Row="2" Grid.Column="1"
-						Margin="0,16,0,0"
-						VerticalAlignment="Center"
+						Margin="0,16,0,0" VerticalAlignment="Center"
 						Text="{Binding ClosingPeriodText}"
 						TextWrapping="Wrap" />
 

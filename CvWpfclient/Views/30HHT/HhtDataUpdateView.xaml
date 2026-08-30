@@ -98,8 +98,7 @@
 					<ComboBox Grid.Row="2" Grid.Column="1"
 						Width="200"
 						Margin="0,16,0,0" HorizontalAlignment="Left"
-						materialDesign:HintAssist.Hint="区分"
-						DisplayMemberPath="Name"
+						materialDesign:HintAssist.Hint="区分" DisplayMemberPath="Name"
 						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 						ItemsSource="{Binding TypeFilters}"
 						SelectedItem="{Binding TypeFilter}"
@@ -123,7 +122,8 @@
 						Margin="0,16,0,0" VerticalAlignment="Center"
 						Orientation="Horizontal">
 						<TextBlock VerticalAlignment="Center"
-							FontWeight="SemiBold" Text="{Binding TargetSummary}" />
+							FontWeight="SemiBold"
+							Text="{Binding TargetSummary}" />
 						<Button Margin="16,0,0,0"
 							Command="{Binding RefreshCountCommand}"
 							Content="再集計"
