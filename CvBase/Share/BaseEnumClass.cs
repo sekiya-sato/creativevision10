@@ -208,3 +208,17 @@ public enum EnumPermissionType : int {
 	Export = 7,
 	Configure = 8,
 }
+
+[Comment("SQL方言")]
+public enum EnumSqlDialect {
+	[Comment("SQLite")]
+	Sqlite = 0,
+	[Comment("PostgreSQL")]
+	Postgre = 1,
+	[Comment("MariaDB")]
+	MariaDb = 2,
+	[Comment("MySQL")]
+	MySql = 3,
+	[Comment("Oracle")]
+	Oracle = 4
+}

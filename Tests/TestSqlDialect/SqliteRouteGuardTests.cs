@@ -16,6 +16,7 @@ SqliteRouteGuardTests は「既存のSQLite実行経路を壊さない」こと�
 using CvAsset;
 using CvBase;
 using CvBase.Sql;
+using CvBase.Share;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
@@ -69,9 +70,9 @@ public sealed class SqliteRouteGuardTests {
 
 	[TestMethod]
 	public void 手書きSQLの差し替えはSQLiteに登録できない() {
-		Assert.ThrowsExactly<ArgumentException>(() => SqlOverrideCatalog.Register("K", "Sqlite", "select 1"));
+		Assert.ThrowsExactly<ArgumentException>(() => SqlOverrideCatalog.Register("K", nameof(EnumSqlDialect.Sqlite), "select 1"));
 		// 他方言へ登録しても SQLite 名では引けない
-		SqlOverrideCatalog.Register("K", "Postgre", "select 1");
+		SqlOverrideCatalog.Register("K", nameof(EnumSqlDialect.Postgre), "select 1");
 		Assert.IsFalse(SqlOverrideCatalog.TryGet("K", SqlDialects.Sqlite.Name, out _));
 	}
 
@@ -140,9 +141,9 @@ public sealed class SqliteRouteGuardTests {
 
 	[TestMethod]
 	public void QueryKey未指定なら差し替えは起きない() {
-		SqlOverrideCatalog.Register("K", "Postgre", "select 1");
+		SqlOverrideCatalog.Register("K", nameof(EnumSqlDialect.Postgre), "select 1");
 		var param = new QueryListSqlParam(typeof(MasterTokui), "select 2");
 		Assert.IsNull(param.QueryKey);
-		Assert.IsFalse(SqlOverrideCatalog.TryGet(param.QueryKey, "Postgre", out _));
+		Assert.IsFalse(SqlOverrideCatalog.TryGet(param.QueryKey, nameof(EnumSqlDialect.Postgre), out _));
 	}
 }

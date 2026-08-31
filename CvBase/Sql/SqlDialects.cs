@@ -12,6 +12,7 @@ SQLプレビューに使います（送信するSQLは常にSQLite正典形の�
 var findings = SqlDialects.Postgre.Inspect(sql);   // 未対応構文の確認
 var dialect  = SqlDialects.ByProviderName("MariaDb");
  */
+using CvBase.Share;
 using CvBase.Sql.Dialects;
 
 namespace CvBase.Sql;
@@ -20,7 +21,7 @@ namespace CvBase.Sql;
 public static class SqlDialects {
 
 	/// <summary>SQLite。恒等変換。</summary>
-	public static ISqlDialect Sqlite { get; } = new PassThroughSqlDialect("Sqlite");
+	public static ISqlDialect Sqlite { get; } = new PassThroughSqlDialect(nameof(EnumSqlDialect.Sqlite));
 
 	/// <summary>PostgreSQL</summary>
 	public static ISqlDialect Postgre { get; } = new PostgreSqlDialect();
@@ -32,11 +33,14 @@ public static class SqlDialects {
 	/// 設定値 <c>Database:Provider</c> の文字列から方言を得る。
 	/// 未知の値は恒等変換（現行動作を壊さない側へ倒す）。
 	/// </summary>
-	public static ISqlDialect ByProviderName(string? provider) =>
-		(provider ?? string.Empty).Trim().ToUpperInvariant() switch {
-			"POSTGRE" => Postgre,
-			"MARIADB" => Maria,
-			"SQLITE" => Sqlite,
-			_ => PassThroughSqlDialect.Instance,
-		};
+	public static ISqlDialect ByProviderName(string? provider) {
+		var providerName = provider?.Trim();
+		if (string.Equals(providerName, nameof(EnumSqlDialect.Postgre), StringComparison.OrdinalIgnoreCase))
+			return Postgre;
+		if (string.Equals(providerName, nameof(EnumSqlDialect.MariaDb), StringComparison.OrdinalIgnoreCase))
+			return Maria;
+		if (string.Equals(providerName, nameof(EnumSqlDialect.Sqlite), StringComparison.OrdinalIgnoreCase))
+			return Sqlite;
+		return PassThroughSqlDialect.Instance;
+	}
 }

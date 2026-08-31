@@ -9,6 +9,7 @@
 // COPILOT: 新しいサービスをマップする場合は .MapGrpcService<> とルートハンドラーを適切に配置し、ヘルスチェックやメトリクスの露出も検討すること。
 
 using CvBase;
+using CvBase.Share;
 using CvServer;
 using CvServer.Services;
 using Grpc.Net.Compression;
@@ -92,10 +93,10 @@ https://github.com/thomasgalliker/NCrontab.Scheduler/blob/develop/Samples/NCront
 // Other(if need) : MCVコントローラの処理
 builder.Services.AddControllers();
  */
-var databaseProvider = builder.Configuration["Database:Provider"]?.Trim() ?? "Sqlite";
+var databaseProvider = builder.Configuration["Database:Provider"]?.Trim() ?? nameof(EnumSqlDialect.Sqlite);
 var (connectionStringName, isSqlite) = databaseProvider.ToUpperInvariant() switch {
 	"SQLITE" => ("sqlite", true),
-	"POSTGRE" => ("postgres", false),
+	"POSTGRES" => ("postgres", false),
 	"MARIADB" => ("mariadb", false),
 	_ => throw new InvalidOperationException(
 		$"Database:Provider '{databaseProvider}' is invalid. Use Sqlite, Postgre, or MariaDb.")
@@ -105,7 +106,7 @@ var connStr = builder.Configuration.GetConnectionString(connectionStringName)
 builder.Services.AddScoped<ExDatabase>(sp => {
 	return databaseProvider.ToUpperInvariant() switch {
 		"SQLITE" => CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr),
-		"POSTGRE" => CvBasePostgre.ExDatabasePostgre.GetDbConn(connStr),
+		"POSTGRES" => CvBasePostgre.ExDatabasePostgre.GetDbConn(connStr),
 		"MARIADB" => CvBaseMariadb.ExDatabaseMaria.GetDbConn(connStr),
 		_ => throw new InvalidOperationException($"Database:Provider '{databaseProvider}' is invalid.")
 	};

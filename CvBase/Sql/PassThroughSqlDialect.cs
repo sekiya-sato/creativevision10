@@ -12,6 +12,8 @@ SQLite では未対応構文の検出も行いません（SQLite方言が正典�
 # example
 public override ISqlDialect Dialect => SqlDialects.Sqlite;
  */
+using CvBase.Share;
+
 namespace CvBase.Sql;
 
 /// <summary>変換しない方言。SQLite と ExDatabase の既定値で使う。</summary>
@@ -42,7 +44,7 @@ public sealed class PassThroughSqlDialect : ISqlDialect {
 	/// 現行運用を止めないため、CvServer 側ではこの結果を警告ログにとどめる。
 	/// </summary>
 	public IReadOnlyList<string> Validate(string serverVersion) {
-		if (!string.Equals(Name, "Sqlite", StringComparison.OrdinalIgnoreCase))
+		if (!string.Equals(Name, nameof(EnumSqlDialect.Sqlite), StringComparison.OrdinalIgnoreCase))
 			return [];
 		var version = SqlDialectVersions.Parse(serverVersion);
 		if (version == null)

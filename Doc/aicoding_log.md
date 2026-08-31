@@ -1,3 +1,23 @@
+## [2026-08-31] SQL方言名のEnum化
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- SQL方言の識別名を`EnumSqlDialect`へ集約し、文字列定義の変更漏れを防ぐ。
+
+### 実施内容
+- `EnumSqlDialect`を追加し、InfoServer、方言実装、SQLite判定、SQL差し替え登録、CvServerの既定プロバイダーで`nameof`を使用するよう統一した。
+- 方言解決は従来どおり大文字小文字を区別せず、未対応のMySql／Oracleは恒等方言へフォールバックする。
+- SQL差し替えと方言解決のテストをEnum名へ統一した。
+
+### 確認
+- `Tests\TestSqlDialect\TestSqlDialect.csproj`の135件が成功した。
+- `CvServer\CvServer.csproj`をビルドし、警告0・エラー0を確認した。
+- `git diff --check`を確認した。
+
+---
+
 ## [2026-08-29] 顧客変換時の会員情報登録
 
 ### Agent

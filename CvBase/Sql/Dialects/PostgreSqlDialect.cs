@@ -12,6 +12,7 @@ PostgreSQL は下限を 16 とします。json_valid 相当の `IS JSON` 述語�
 # example
 var sql = SqlDialects.Postgre.Translate(clientSql);
  */
+using CvBase.Share;
 using CvBase.Sql.Rules;
 
 namespace CvBase.Sql.Dialects;
@@ -20,7 +21,7 @@ namespace CvBase.Sql.Dialects;
 public sealed class PostgreSqlDialect : SqlDialectBase {
 
 	/// <summary>方言名</summary>
-	public const string DialectName = "Postgre";
+	public const string DialectName = nameof(EnumSqlDialect.Postgre);
 
 	public PostgreSqlDialect() : base(DialectName, BuildRules()) {
 	}

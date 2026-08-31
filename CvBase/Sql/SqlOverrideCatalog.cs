@@ -17,6 +17,7 @@ SQLite には登録を置きません（SQLiteは常にクライアントのSQL�
 SqlOverrideCatalog.Register("Zaiko.StockAging", "Postgre", "select ...");
 if (SqlOverrideCatalog.TryGet(queryKey, dialect.Name, out var handWritten)) { ... }
  */
+using CvBase.Share;
 using System.Collections.Concurrent;
 
 namespace CvBase.Sql;
@@ -38,7 +39,7 @@ public static class SqlOverrideCatalog {
 		ArgumentException.ThrowIfNullOrWhiteSpace(queryKey);
 		ArgumentException.ThrowIfNullOrWhiteSpace(dialectName);
 		ArgumentException.ThrowIfNullOrWhiteSpace(sql);
-		if (string.Equals(dialectName, "Sqlite", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(dialectName, nameof(EnumSqlDialect.Sqlite), StringComparison.OrdinalIgnoreCase))
 			throw new ArgumentException("SQLiteへの差し替えは登録できません。SQLiteはクライアントのSQLをそのまま実行します。", nameof(dialectName));
 		_entries[(queryKey, dialectName)] = sql;
 	}

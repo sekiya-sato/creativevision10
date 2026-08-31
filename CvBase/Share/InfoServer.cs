@@ -9,7 +9,7 @@ public sealed record class InfoServer {
 	/// 接続先DBの方言名。Sqlite / Postgre / MariaDb。
 	/// 未ログイン時と旧サーバからの応答では、従来運用に合わせて Sqlite とする。
 	/// </summary>
-	public string DbProvider { get; set; } = "Sqlite";
+	public string DbProvider { get; set; } =  nameof(EnumSqlDialect.Sqlite);
 	/// <summary>
 	/// バージョン文字列
 	/// </summary>

@@ -59,7 +59,7 @@ public sealed class SqlDialectDetectionTests {
 	public void Strictモードでは未対応構文が例外になる() {
 		SqlDialectOptions.Mode = SqlDialectMode.Strict;
 		var ex = Assert.ThrowsExactly<SqlDialectUnsupportedException>(() => SqlDialects.Postgre.Translate(UnsupportedSql));
-		Assert.AreEqual("Postgre", ex.DialectName);
+		Assert.AreEqual(nameof(EnumSqlDialect.Postgre), ex.DialectName);
 		Assert.IsTrue(ex.Findings.Count >= 3);
 	}
 
@@ -139,16 +139,16 @@ public sealed class SqlDialectDetectionTests {
 
 	[TestMethod]
 	public void プロバイダー名から方言を選べる() {
-		Assert.AreSame(SqlDialects.Sqlite, SqlDialects.ByProviderName("Sqlite"));
-		Assert.AreSame(SqlDialects.Postgre, SqlDialects.ByProviderName("Postgre"));
-		Assert.AreSame(SqlDialects.Maria, SqlDialects.ByProviderName("MariaDb"));
+		Assert.AreSame(SqlDialects.Sqlite, SqlDialects.ByProviderName(nameof(EnumSqlDialect.Sqlite)));
+		Assert.AreSame(SqlDialects.Postgre, SqlDialects.ByProviderName(nameof(EnumSqlDialect.Postgre)));
+		Assert.AreSame(SqlDialects.Maria, SqlDialects.ByProviderName(nameof(EnumSqlDialect.MariaDb)));
 		Assert.AreSame(PassThroughSqlDialect.Instance, SqlDialects.ByProviderName("unknown"));
 	}
 
 	[TestMethod]
 	public void InfoServerのDbProviderから方言を選べる() {
 		Assert.AreSame(SqlDialects.Sqlite, SqlDialects.ByProviderName(new InfoServer().DbProvider));
-		Assert.AreSame(SqlDialects.Postgre, SqlDialects.ByProviderName(new InfoServer { DbProvider = "Postgre" }.DbProvider));
-		Assert.AreSame(SqlDialects.Maria, SqlDialects.ByProviderName(new InfoServer { DbProvider = "MariaDb" }.DbProvider));
+		Assert.AreSame(SqlDialects.Postgre, SqlDialects.ByProviderName(new InfoServer { DbProvider = nameof(EnumSqlDialect.Postgre) }.DbProvider));
+		Assert.AreSame(SqlDialects.Maria, SqlDialects.ByProviderName(new InfoServer { DbProvider = nameof(EnumSqlDialect.MariaDb) }.DbProvider));
 	}
 }

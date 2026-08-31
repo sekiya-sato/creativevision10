@@ -16,6 +16,7 @@ MariaDB は下限を 10.11 LTS とします。json_each の変換に使う JSON_
 # example
 var sql = SqlDialects.Maria.Translate(clientSql);
  */
+using CvBase.Share;
 using CvBase.Sql.Rules;
 
 namespace CvBase.Sql.Dialects;
@@ -24,7 +25,7 @@ namespace CvBase.Sql.Dialects;
 public sealed class MariaSqlDialect : SqlDialectBase {
 
 	/// <summary>方言名</summary>
-	public const string DialectName = "MariaDb";
+	public const string DialectName = nameof(EnumSqlDialect.MariaDb);
 
 	public MariaSqlDialect() : base(DialectName, BuildRules()) {
 	}
