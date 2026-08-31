@@ -300,17 +300,8 @@ public partial class ConvertDb {
 	/// </summary>
 	/// <param name="isInit"></param>
 	/// <returns></returns>
-	public int CnvMasterEndCustomer(bool isInit = true) {
-		const string sql = """
-select k.*, l.ログインID, l.PASS, p.REALポイント, m.名称 as ポイントランク名称
-from HC$master_kokyaku k
-left join HC$master_kokyaku_login l on l.顧客CD = k.顧客CD
-left join HC$point_real p on p.顧客CD = k.顧客CD
-left join HC$master_meisho m on m.名称区分 = 'PT1' and m.名称CD = k.ポイントランク
-where k.顧客CD > '.'
-order by k.顧客CD
-""";
-		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql);
+	public int CnvMasterEndCustomer(bool isInit = true, int chunkSize = 5000) {
+		var codes = _fromDb.Fetch<string>("select 顧客CD from HC$master_kokyaku where 顧客CD > '.' order by 顧客CD");
 
 		// 親テーブルを再作成する前に子テーブルを削除し、外部キー関係を保つ。
 		if (isInit)
@@ -318,6 +309,30 @@ order by k.顧客CD
 		_toDb.CreateTable(typeof(MasterEndCustomer), isInit);
 		_toDb.CreateTable(typeof(MasterEndCustomerAccount));
 
+		if (codes.Count == 0)
+			return 0;
+
+		int totalCount = 0;
+		foreach (var (startCode, endCode) in SplitCodeRange(codes, chunkSize))
+			totalCount += ConvertMasterEndCustomerChunk(startCode, endCode);
+
+		return totalCount;
+	}
+
+	/// <summary>
+	/// 顧客CDの範囲(startCode〜endCode)1チャンク分の顧客マスターおよび会員アカウントを変換する
+	/// </summary>
+	private int ConvertMasterEndCustomerChunk(string startCode, string endCode) {
+		const string sql = """
+select k.*, l.ログインID, l.PASS, p.REALポイント, m.名称 as ポイントランク名称
+from HC$master_kokyaku k
+left join HC$master_kokyaku_login l on l.顧客CD = k.顧客CD
+left join HC$point_real p on p.顧客CD = k.顧客CD
+left join HC$master_meisho m on m.名称区分 = 'PT1' and m.名称CD = k.ポイントランク
+where k.顧客CD between @0 and @1
+order by k.顧客CD
+""";
+		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql, startCode, endCode);
 		if (rows.Count == 0)
 			return 0;
 
@@ -374,6 +389,21 @@ order by k.顧客CD
 		_toDb.CompleteTransaction();
 
 		return rows.Count;
+	}
+
+	/// <summary>
+	/// ソート済みコードリストをchunkSizeごとに区切り、各チャンクの先頭/末尾コードを範囲として返す
+	/// </summary>
+	private static List<(string StartCode, string EndCode)> SplitCodeRange(List<string> sortedCodes, int chunkSize) {
+		if (chunkSize <= 0)
+			throw new ArgumentException("chunkSize must be positive");
+
+		var ranges = new List<(string, string)>();
+		for (int i = 0; i < sortedCodes.Count; i += chunkSize) {
+			int end = Math.Min(i + chunkSize, sortedCodes.Count) - 1;
+			ranges.Add((sortedCodes[i], sortedCodes[end]));
+		}
+		return ranges;
 	}
 	/// <summary>
 	/// 顧客マスター変換(Option) 存在するマスタに追加で情報を加える
