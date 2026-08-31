@@ -77,5 +77,8 @@ output/
 .github
 *.csproj
 *.csproj.user
+.claude/
+.mcp.json
+.omo-*/
 
 

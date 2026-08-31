@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CvAsset;
 using CvBase.Share;
 using Newtonsoft.Json;
 using NPoco;
@@ -212,4 +213,38 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	[ObservableProperty]
 	[Comment("並び順")]
 	public partial int Odr { get; set; }
+	/// <summary>
+	/// 初期データの作成
+	/// </summary>
+	/// <param name="db"></param>
+	/// <returns></returns>
+	public static List<MasterMeisho> CreateDefaultData(ExDatabase db) {
+		var initData = new List<MasterMeisho>() {
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "IDX", Name = "名称区分インデックス", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "BRD", Name = "ブランド", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "ITM", Name = "アイテム", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "COL", Name = "カラー", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "SIZ", Name = "サイズ", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "SLE", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "CHR", Name = "調整理由", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "NewBrand", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "ITM", KubunName = "アイテム", Code = "01", Name = "NewItem", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "COL", KubunName = "カラー", Code = "01", Name = "NewColor", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "SIZ", KubunName = "サイズ", Code = "01", Name = "NewSize", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "SLE", KubunName = "セール", Code = "0001", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			// 調整理由（在庫強制調整）。コード10〜19=加算(+)/20〜29=減算(−)。ChoseiRiyu.CalcFlag を参照
+			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "10", Name = "入庫", Odr = 10, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "20", Name = "紛失", Odr = 20, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "21", Name = "盗難", Odr = 21, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "22", Name = "破損", Odr = 22, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "23", Name = "検品ミス", Odr = 23, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "29", Name = "その他", Odr = 29, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		};
+		var tableCnt = db.GetTableCounts(nameof(MasterMeisho));
+		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {
+			db.InsertBulk<MasterMeisho>(initData);
+			return initData;
+		}
+		return [];
+	}
 }

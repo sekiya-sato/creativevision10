@@ -58,6 +58,7 @@ graphify-out/
 *-shm
 *-wal
 # Optional local notes
-printform/data.txt
+printform/data*.txt
 .claude/
 .mcp.json
+.omo-*/

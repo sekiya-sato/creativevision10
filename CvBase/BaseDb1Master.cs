@@ -944,6 +944,22 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[OldTableCommentAttr("MEMO")]
 	[Comment("MEMO 設定内容の説明")]
 	public partial string Memo { get; set; } = string.Empty;
+	/// <summary>
+	/// 初期データの作成
+	/// </summary>
+	/// <param name="db"></param>
+	/// <returns></returns>
+	public static List<MasterConfig> CreateDefaultData(ExDatabase db) {
+		var initData = new List<MasterConfig>() {
+			new MasterConfig { Category = "System", Name = "JodaiKeepDays", Val = "90", Example = "30,60,90", Memo = "上代保持日数" }
+		};
+		var tableCnt = db.GetTableCounts(nameof(MasterConfig));
+		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {
+			db.InsertBulk<MasterConfig>(initData);
+			return initData;
+		}
+		return [];
+	}
 }
 /// <summary>
 /// ハンディターミナル用のテーブル、HHTマスター作成時のみ必要
