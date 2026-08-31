@@ -112,11 +112,11 @@ public partial class BaseDetailClass : ObservableObject {
 	[Comment("予備項目1")]
 	public partial string Yobi1 { get; set; } = string.Empty;
 	/// <summary>
-	/// 予備項目1
+	/// 予備項目2
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(120)]
-	[Comment("予備項目1")]
+	[Comment("予備項目2")]
 	public partial string Yobi2 { get; set; } = string.Empty;
 }
 /// <summary>
@@ -128,6 +128,7 @@ public partial class BaseDetailClass : ObservableObject {
 /// （未登録は MasterCascadeDbTests の VRules_CoverAllMasterVColumns が検出する）。
 /// </para>
 /// </summary>
+[Comment("V*列:参照先マスタの複製")]
 [NoCreate]
 public partial class CodeNameView : ObservableObject {
 	/// <summary>

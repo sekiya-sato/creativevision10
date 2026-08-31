@@ -2,9 +2,9 @@ using System.Reflection;
 
 namespace CvBase;
 /// <summary>
-/// テーブルコメント用 (カラムコメント は変更時に問題あるので使用しない)
+/// テーブルおよび列コメント用
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Enum, AllowMultiple = false)]
 public sealed class CommentAttribute : Attribute {
 	public string Content { get; } = string.Empty;
 	public CommentAttribute(string content) {
@@ -14,7 +14,7 @@ public sealed class CommentAttribute : Attribute {
 /// <summary>
 /// 旧テーブルでどの項目を引き継いでいるのかを示すコメント
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Enum, AllowMultiple = false)]
 public sealed class OldTableCommentAttr : Attribute {
 	public string Name { get; } = string.Empty;
 	public string Content { get; } = string.Empty;

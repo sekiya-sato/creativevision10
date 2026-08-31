@@ -640,14 +640,14 @@ public class SchedulerService : ISchedulerService {
 			return dateTime.ToString("yyyyMMddHHmmss");
 		}
 
-		public static int ToHistoryElapsedSeconds(TimeSpan elapsedTime) {
+		public static double ToHistoryElapsedSeconds(TimeSpan elapsedTime) {
 			if (elapsedTime.TotalSeconds <= 0) {
 				return 0;
 			}
-			if (elapsedTime.TotalSeconds >= int.MaxValue) {
-				return int.MaxValue;
+			if (elapsedTime.TotalSeconds >= double.MaxValue) {
+				return double.MaxValue;
 			}
-			return (int)Math.Ceiling(elapsedTime.TotalSeconds);
+			return elapsedTime.TotalSeconds;
 		}
 
 		public static int ToHistoryCount(long count) {

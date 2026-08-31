@@ -3,22 +3,30 @@ namespace CvBase.Share;
 /// <summary>
 /// 性別 [property: ColumnSizeDml(ctype:ColumnType.Enum)]
 /// </summary>
+[Comment("性別")]
 public enum EnumGender : int {
+	[Comment("不明")]
 	Unknown = 0,
+	[Comment("女性")]
 	Woman = 1,
+	[Comment("男性")]
 	Man = 2
 }
 
 /// <summary>
 /// する,しない [property: ColumnSizeDml(ctype:ColumnType.Enum)]
 /// </summary>
+[Comment("汎用Yes／No")]
 public enum EnumYesNo : int {
+	[Comment("しない")]
 	No = 0,
+	[Comment("する")]
 	Yes = 1
 }
 /// <summary>
 /// 掛計上する、しない
 /// </summary>
+[Comment("掛計上")]
 public enum EnumIsPay : int {
 	[Comment("掛計上しない")]
 	No = 0,
@@ -28,6 +36,7 @@ public enum EnumIsPay : int {
 /// <summary>
 /// 顧客LCV区分
 /// </summary>
+[Comment("顧客区分")]
 public enum EnumCustomerLcvKubun : int {
 	[Comment("0 未使用")]
 	UnUse = 0,
@@ -41,6 +50,7 @@ public enum EnumCustomerLcvKubun : int {
 /// <summary>
 /// 締め日
 /// </summary>
+[Comment("締日")]
 public enum EnumShime : int {
 	Day01 = 1,
 	Day02 = 2,
@@ -70,54 +80,66 @@ public enum EnumShime : int {
 	Day26 = 26,
 	Day27 = 27,
 	Day28 = 28,
+	[Comment("末")]
 	DayLast = 99
 }
 
 /// <summary>
 /// 得意先種別
 /// </summary>
+[Comment("得意先種別")]
 public enum EnumTokui : int {
 	/// <summary>
 	/// 倉庫
 	/// </summary>
+	[Comment("倉庫")]
 	_0_Soko = 0,
 	/// <summary>
 	/// 卸先
 	/// </summary>
+	[Comment("卸先")]
 	_1_Oroshi = 1,
 	/// <summary>
 	/// 売仕店
 	/// </summary>
+	[Comment("売仕店")]
 	_3_UriShi = 3,
 	/// <summary>
 	/// 直営店
 	/// </summary>
+	[Comment("直営店")]
 	_6_Tenpo = 6,
 }
 /// <summary>
 /// ログインロール（SysLogin.Id_Role）
 /// メニュー表示のロール別切替に使用する。
 /// </summary>
+[Comment("メニュー権限")]
 public enum EnumLoginRole : int {
 	/// <summary>
 	/// 標準（ロール指定なし。全メニューを表示する）
 	/// </summary>
+	[Comment("標準")]
 	Standard = 0,
 	/// <summary>
-	/// 店舗担当
+	/// 店舗用メニュー
 	/// </summary>
+	[Comment("店舗用メニュー")]
 	Shop = 1,
 	/// <summary>
-	/// 倉庫担当
+	/// 倉庫用メニュー
 	/// </summary>
+	[Comment("倉庫用メニュー")]
 	Warehouse = 2,
 	/// <summary>
-	/// 本部担当
+	/// 本部用メニュー
 	/// </summary>
+	[Comment("本部用メニュー")]
 	Honbu = 3,
 	/// <summary>
-	/// 経理担当
+	/// 経理用メニュー
 	/// </summary>
+	[Comment("経理用メニュー")]
 	Keiri = 4,
 }
 

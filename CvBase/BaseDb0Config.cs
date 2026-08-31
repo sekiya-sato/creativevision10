@@ -110,7 +110,7 @@ public sealed partial class SysHistAutoexec : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("経過時間 (秒)")]
-	public partial int ElapsedTime { get; set; }
+	public partial double ElapsedTime { get; set; }
 	/// <summary>
 	/// 実行結果コード 0:成功、0以外:エラーコード
 	/// </summary>
