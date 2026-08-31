@@ -300,7 +300,7 @@ public partial class ConvertDb {
 	/// </summary>
 	/// <param name="isInit"></param>
 	/// <returns></returns>
-	public int CnvMasterEndCustomer(bool isInit = true, int chunkSize = 5000) {
+	public int CnvMasterEndCustomer(bool isInit = true, int chunkSize = 20000) { // 顧客分割のデフォルトチャンクサイズは20000件
 		var codes = _fromDb.Fetch<string>("select 顧客CD from HC$master_kokyaku where 顧客CD > '.' order by 顧客CD");
 
 		// 親テーブルを再作成する前に子テーブルを削除し、外部キー関係を保つ。
@@ -463,11 +463,27 @@ order by k.顧客CD
 	/// </summary>
 	/// <param name="isInit"></param>
 	/// <returns></returns>
-	public int CnvMasterShohin(bool isInit = true) {
-		const string sql = "select * from HC$master_shohin where 商品CD>'.' order by 商品CD"; // 商品分類 'B01'-'B20'
-		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql);
+	public int CnvMasterShohin(bool isInit = true, int chunkSize = 5000) {
+		var codes = _fromDb.Fetch<string>("select 商品CD from HC$master_shohin where 商品CD > '.' order by 商品CD"); // 商品分類 'B01'-'B20'
+
 		_toDb.CreateTable(typeof(MasterShohin), isInit);
 
+		if (codes.Count == 0)
+			return 0;
+
+		int totalCount = 0;
+		foreach (var (startCode, endCode) in SplitCodeRange(codes, chunkSize))
+			totalCount += ConvertMasterShohinChunk(startCode, endCode);
+
+		return totalCount;
+	}
+
+	/// <summary>
+	/// 商品CDの範囲(startCode〜endCode)1チャンク分の商品マスターを変換する
+	/// </summary>
+	private int ConvertMasterShohinChunk(string startCode, string endCode) {
+		const string sql = "select * from HC$master_shohin where 商品CD between @0 and @1 order by 商品CD";
+		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql, startCode, endCode);
 		if (rows.Count == 0)
 			return 0;
 
