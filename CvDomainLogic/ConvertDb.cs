@@ -122,7 +122,10 @@ public partial class ConvertDb {
 	}
 	// 新規：常に非 null を返すオーバーロード（デフォルト値を指定）
 	private string getString(Dictionary<string, object> rec, string key, string defaultValue) {
-		return getString(rec, key) ?? defaultValue;
+		var ret = getString(rec, key);
+		if(string.IsNullOrEmpty(ret))
+			return defaultValue;
+		return ret;
 	}
 
 	private int getDataInt(Dictionary<string, object> rec, string key) {

@@ -1,3 +1,4 @@
+using CvAsset;
 using CvBase;
 using CvBase.Share;
 
@@ -19,11 +20,11 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
-				var taxRatePercent = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
-				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
-
+				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var total = kingakuTotal + tax;
+				var rate = getDataInt(rec, "掛率1");
+				var memo = getString(rec, "メモ", getString(rec,"MEMO2"));
+				//var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 				return new Tran00Uriage() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -38,10 +39,9 @@ public partial class ConvertDb {
 					GedaiTotal = getDataInt(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
-					Memo = getString(rec, "メモ"),
+					Memo = memo,
 					Jdetail = new BaseDetailClass() {
 						Yobi1 = getString(rec, "取引先CD2"),
-						Yobi2 = getString(rec, "顧客TEL"),
 					},
 					Jmeisai = meisaiList,
 					// 旧「掛計上FLG」は移行データで全件0のまま業務上意味を持たず、2026-08-16に売掛から除外しない方針を確定した
@@ -75,11 +75,9 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
-				var taxRatePercent = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
-				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
-
+				var rate = getDataInt(rec, "掛率1");
+				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var total = kingakuTotal + tax;
 				return new Tran01Tenuri() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -139,13 +137,10 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildMaterialMeisaiList(rec, kubun);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				var naizei = getDataInt(rec, "内税消費税");
-				var gaizei = getDataInt(rec, "外税消費税");
-				// 区分99は金額列が常に0で税額列にのみ実額が入るため、Tax=0固定・Totalへ丸ごと計上する
-				var isOther = kubun == 99;
-				var tax = isOther ? 0 : naizei + gaizei;
-				var total = isOther ? Math.Abs(naizei + gaizei) : Math.Abs(kingakuTotal) + tax;
-
+				var rate = getDataInt(rec, "掛率1");
+				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var total = kingakuTotal + tax;
+				// 区分99は金額列が常に0で税額列にのみ実額が入る
 				return new Tran02Material() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
@@ -180,10 +175,9 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
-				var taxRatePercent = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
-				var rate = getShiireRatePercent(getString(rec, "取引先CD1"));
+				var rate = getDataInt(rec, "掛率1");
+				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var total = kingakuTotal + tax;
 
 				return new Tran03Shiire() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
@@ -466,10 +460,9 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
-				var taxRatePercent = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
-				var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
+				var rate = getDataInt(rec, "掛率1");
+				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var total = kingakuTotal + tax;
 
 				return new Tran12Jyuchu() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
@@ -514,10 +507,9 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				// 旧「掛率1」は名称に反して実質すべて消費税率(%)が入っているため、税額計算にだけ使う
-				var taxRatePercent = getDataInt(rec, "掛率1");
-				var (tax, total) = CalcMigratedTaxTotal(kingakuTotal, taxRatePercent);
-				var rate = getShiireRatePercent(getString(rec, "取引先CD1"));
+				var rate = getDataInt(rec, "掛率1");
+				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var total = kingakuTotal + tax;
 
 				return new Tran13Hachu() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
@@ -668,10 +660,13 @@ WHERE EXISTS (
 	/// </summary>
 	static readonly Dictionary<string, string> KinKubunCodeMap = new() {
 		["80"] = "01",  // 現金       -> 01 現金入金
+		["81"] = "01",  // 小切手     -> 01 現金入金
 		["82"] = "01",  // 振込       -> 01 現金入金
-		["85"] = "02",  // 振込手数料 -> 02 振込手数料
+		["83"] = "02",  // 振込手数料 -> 02 振込手数料
+		["85"] = "03",  // 手形入金   -> 03 手形入金
 		["88"] = "04",  // 相殺       -> 04 相殺入金
 		["89"] = "05",  // その他     -> 05 その他入金
+		["99"] = "05",  // 関連伝票？ -> 05 その他入金
 	};
 	/// <summary>
 	/// 旧システムの明細取引区分から KIN 区分の <see cref="MasterMeisho"/> を引く。
@@ -697,20 +692,10 @@ WHERE EXISTS (
 	int getHeaderNebiki(Dictionary<string, object> rec) {
 		return getDataInt(rec, "値引1") + getDataInt(rec, "値引2") + getDataInt(rec, "値引3");
 	}
-	/// <summary>
-	/// 旧システムの「明細金額合計」（税抜、符号付き）と「掛率1」（移行元データは実質すべて消費税率%が入っている）から
-	/// 消費税・総合計を導出する。移行売上のTotal/Tax/IsPayが未設定という既知課題への対応。
-	/// この値は <c>Tran*.Rate</c> には入れない（Rate は掛率。getTorihikiRatePercent でマスタから引く）。
-	/// 詳細: Doc/spec/2026-08-24_Rate列_掛率と税率の分離課題.md
-	/// </summary>
-	static (int Tax, int Total) CalcMigratedTaxTotal(int kingakuTotal, int ratePercent) {
-		var absKingakuTotal = Math.Abs(kingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * ratePercent / 100.0);
-		return (tax, absKingakuTotal + tax);
-	}
 
 	List<Tran99Meisai>? BuildTranMeisaiList(Dictionary<string, object> rec, string table = "HC$tran_tori1") { // 棚卸は別テーブル
-		var detailRows = _fromDb.Fetch<Dictionary<string, object>>($"select * from {table} where ヘッダNO=@0 order by 行NO", getDataLong(rec, "SEQ_NO"));
+		var taxColumn = (table == "HC$tran_tori1")?",t1.消費税率":"";
+		var detailRows = _fromDb.Fetch<Dictionary<string, object>>($"select t1.*{taxColumn} from {table} t1 where t1.ヘッダNO=@0 order by t1.行NO", getDataLong(rec, "SEQ_NO"));
 		if (detailRows.Count == 0)
 			return null;
 
@@ -722,14 +707,17 @@ WHERE EXISTS (
 			var shohin = getMaster<MasterShohin>(shohinCode);
 			var col = getMeisho("COL", colCode);
 			var siz = getMeisho(shohin?.SizeKu ?? string.Empty, sizCode);
-			int kubun = 0, jodai = 0, gedai = 0, nebiki00 = 0, nebiki01 = 0, nebiki02 = 0;
+			int kubun = 0, jodai = 0, gedai = 0, nebiki00 = 0, nebiki01 = 0, nebiki02 = 0, taxId =0, taxRate = 0, taxKingaku=0;
 			if (table == "HC$tran_tori1") {
 				kubun = getDataInt(detailRec, "明細取引区分");
-				jodai = getDataInt(detailRec, "上代金額");
-				gedai = getDataInt(detailRec, "下代金額");
+				jodai = getDataInt(detailRec, "上代単価");
+				gedai = getDataInt(detailRec, "下代単価");
 				nebiki00 = getDataInt(detailRec, "明細値引");
 				nebiki01 = getDataInt(detailRec, "明細値引1");
 				nebiki02 = getDataInt(detailRec, "小計値引") + getDataInt(detailRec, "小計値引1");
+				taxRate = getDataInt(detailRec, "消費税率");
+				taxId = getTaxIdfromRate(taxRate, getString(detailRec, "伝票日付"));
+				taxKingaku = getDataInt(detailRec, "内税消費税")+ getDataInt(detailRec, "外税消費税");
 			}
 			meisaiList.Add(new Tran99Meisai() {
 				No = getDataInt(detailRec, "行NO"),
@@ -753,6 +741,9 @@ WHERE EXISTS (
 				Nebiki00 = nebiki00,
 				Nebiki01 = nebiki01,
 				Nebiki02 = nebiki02,
+				TaxRate = taxRate,
+				Id_Tax = taxId,
+				Tax = taxKingaku,
 			});
 		}
 
@@ -984,4 +975,28 @@ WHERE EXISTS (
 		return new CodeNameView(current.Id, current.Code, current.Name);
 	}
 
+	MasterSysman? sysman = null;
+	Dictionary<string, Dictionary<int, int>> taxReverseTableByDate = new();
+	/// <summary>
+	/// 消費税率からTaxIdを引く。同じ税率が複数あればId_Taxが若い方を優先する。
+	/// </summary>
+	/// <param name="rate"></param>
+	/// <param name="denDay">伝票日付(yyyyMMdd)</param>
+	/// <returns></returns>
+	int getTaxIdfromRate(int rate, string? denDay) {
+		sysman ??= _toDb.Fetch<MasterSysman>().FirstOrDefault();
+		denDay ??= ""; // denDayが同一日付の場合にはキャッシュを使い回す
+		if (!taxReverseTableByDate.TryGetValue(denDay, out var taxReverseTable)) {
+			taxReverseTable = new Dictionary<int, int>();
+			if (sysman?.Jsub != null) {
+				foreach (var item in sysman.Jsub.OrderBy(x => x.Id)) {
+					var taxrate = TaxRateResolver.ResolveTaxRatePercent(sysman, item.Id, denDay);
+					if (!taxReverseTable.ContainsKey(taxrate))
+						taxReverseTable[taxrate] = (int)item.Id;
+				}
+			}
+			taxReverseTableByDate[denDay] = taxReverseTable;
+		}
+		return taxReverseTable.TryGetValue(rate, out int value) ? value : 0;
+	}
 }

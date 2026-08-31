@@ -860,13 +860,13 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	/// 消費税
 	/// </summary>
 	[ObservableProperty]
-	[Comment("消費税")]
+	[Comment("消費税 Sum(明細消費税)")]
 	public partial long Tax { get; set; }
 	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
-	[Comment("総合計")]
+	[Comment("総合計 Sum(明細金額)+消費税")]
 	public partial long Total { get; set; }
 	/// <summary>
 	/// 納品書発行済FLG。納品書印刷で立て、納品書未発行チェックリストで 0 を抽出する。
