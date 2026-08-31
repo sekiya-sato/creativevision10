@@ -142,6 +142,7 @@ public class ShippingDbTests {
 		Db.CreateTable(typeof(Tran00Uriage), true, false);
 		Db.CreateTable(typeof(Tran10IdoOut), true, false);
 		Db.CreateTable(typeof(MasterTokui), true, false);
+		Db.CreateTable(typeof(MasterShohin), true, false);
 		Db.CreateTable(typeof(SummaryStock), true, false);
 		Db.CreateTable(typeof(SummaryRealStock), true, false);
 		Db.Execute("CREATE UNIQUE INDEX SummaryStock_unq1 ON SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz)");

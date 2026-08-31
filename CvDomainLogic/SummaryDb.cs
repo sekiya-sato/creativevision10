@@ -368,7 +368,11 @@ SELECT
   SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{adjustFlag})       AS AdjustQty
 FROM {tableName} AS t
      CROSS JOIN json_each(t.Jmeisai) AS j
+     LEFT JOIN MasterTokui AS mt ON mt.Id = t.{idSoko}
+     LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
 WHERE {whereClause}
+  AND COALESCE(mt.IsZaiko, 1) = 1
+  AND COALESCE(ms.IsZaiko, 1) = 1
 GROUP BY
   SumMonth,
   t.{idSoko},
@@ -396,7 +400,11 @@ SELECT
   {vdate} vdu
 FROM {tableName} AS t
      CROSS JOIN json_each(t.Jmeisai) AS j
+     LEFT JOIN MasterTokui AS mt ON mt.Id = t.{idSoko}
+     LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
 WHERE {whereClause}
+  AND COALESCE(mt.IsZaiko, 1) = 1
+  AND COALESCE(ms.IsZaiko, 1) = 1
 GROUP BY
   t.{idSoko},
   Id_Shohin,

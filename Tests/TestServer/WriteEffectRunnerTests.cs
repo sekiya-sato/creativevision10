@@ -530,6 +530,9 @@ public class WriteEffectRunnerTests {
 	private void PrepareStockTables() {
 		Db.CreateTable(typeof(MasterSysman), true, false);
 		Db.Insert(new MasterSysman { ShimeBi = 99 });
+		// IsZaiko の判定に使うので在庫更新の全テストで必要。行が無ければ IsZaiko=1 相当として扱う(SummaryDb側でCOALESCE)
+		Db.CreateTable(typeof(MasterTokui), true, false);
+		Db.CreateTable(typeof(MasterShohin), true, false);
 		Db.CreateTable(typeof(SummaryStock), true, false);
 		Db.CreateTable(typeof(SummaryRealStock), true, false);
 		Db.CreateTable(typeof(TranHaibun), true, false);

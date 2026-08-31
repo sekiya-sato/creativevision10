@@ -134,6 +134,36 @@ public class SummaryDbTests {
 		AssertSummaryStock(db, "202608", 2, 0, 0, 0, 0);
 	}
 
+	/// <summary>在庫管理FLG=0の得意先/倉庫・商品には在庫データを作らない</summary>
+	[TestMethod]
+	public void CalcTran2SummaryStock_NonManagedSide_IsSkippedOnBothTokuiAndShohin() {
+		var db = PrepareStockTables();
+		db.CreateTable(typeof(Tran05Ido), true, false);
+		db.Insert(new MasterTokui { Code = "S1", Name = "在庫管理あり", IsZaiko = 1 }); // Id=1
+		db.Insert(new MasterTokui { Code = "S2", Name = "在庫管理なし", IsZaiko = 0 }); // Id=2
+		var tran = CreateTransfer<Tran05Ido>("20260815", 1, 2, 7);
+		db.Insert(tran);
+		var summaryDb = new SummaryDb(db);
+
+		ApplyImmediate(summaryDb, tran, false);
+
+		AssertRealStock(db, 1, -7, "移動元(在庫管理FLG=1)は減る");
+		Assert.AreEqual(0, db.Fetch<SummaryRealStock>("where Id_Soko=@0", 2).Count, "移動先(在庫管理FLG=0)には在庫データを作らない");
+		Assert.AreEqual(0, db.Fetch<SummaryStock>("where Id_Soko=@0", 2).Count);
+
+		// 逆に商品側の在庫管理FLG=0でも同様に抑止される
+		db.CreateTable(typeof(MasterShohin), true, false);
+		var shohin = new MasterShohin { Code = "Z1", Name = "在庫管理しない商品", IsZaiko = 0 };
+		db.Insert(shohin);
+		// Idは採番されるので、CreateTransferが使う固定Id(10)へ寄せる
+		db.Execute("update MasterShohin set Id=10 where Id=@0", shohin.Id);
+		var tran2 = CreateTransfer<Tran05Ido>("20260815", 1, 2, 5);
+		db.Insert(tran2);
+		ApplyImmediate(summaryDb, tran2, false);
+
+		AssertRealStock(db, 1, -7, "商品の在庫管理FLG=0の分は追加されない");
+	}
+
 	[TestMethod]
 	public async Task SummaryStock_UsesOwnClosingDayForImmediateUpdateAndRebuild() {
 		var db = PrepareAllStockTables();
@@ -952,6 +982,9 @@ public class SummaryDbTests {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		db.CreateTable(typeof(MasterSysman), true, false);
 		db.Insert(new MasterSysman { ShimeBi = 99 });
+		// IsZaiko の判定に使うので在庫更新の全テストで必要。行が無ければ IsZaiko=1 相当として扱う(SummaryDb側でCOALESCE)
+		db.CreateTable(typeof(MasterTokui), true, false);
+		db.CreateTable(typeof(MasterShohin), true, false);
 		db.CreateTable(typeof(SummaryStock), true, false);
 		db.CreateTable(typeof(SummaryRealStock), true, false);
 		// 引当数(ReserveQty)の源泉。Rebuildも通常更新もTranHaibunを読むので常に作成する
