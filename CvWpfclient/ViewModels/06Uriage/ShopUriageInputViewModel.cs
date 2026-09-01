@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections.ObjectModel;
@@ -168,13 +169,17 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 	protected override void OnTotalsUpdated() => UpdateHeaderTotals();
 
 	void UpdateHeaderTotals() {
-		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
-		var (tax1, tax2, tax3) = SumMeisaiTaxByBucket(EditMeisai);
-		CurrentEdit.Tax1 = tax1;
-		CurrentEdit.Tax2 = tax2;
-		CurrentEdit.Tax3 = tax3;
-		CurrentEdit.Total = absKingakuTotal + tax1 + tax2 + tax3;
+		// 店舗売上はTaxCalcUnitを持たない(常に伝票単位。現金売のため)。消費税は税区分ごとに1回だけ丸める(TaxCalculator.Apply)。
+		// 返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
+		var rounding = (EnumRounding)CurrentEdit.TaxRounding;
+		var totals = TaxCalculator.Apply(EditMeisai, TaxRateOf, EnumTaxCalcUnit.Slip, rounding);
+		CurrentEdit.TaxableAmount1 = totals.TaxableAmount1;
+		CurrentEdit.TaxableAmount2 = totals.TaxableAmount2;
+		CurrentEdit.TaxableAmount3 = totals.TaxableAmount3;
+		CurrentEdit.Tax1 = totals.Tax1;
+		CurrentEdit.Tax2 = totals.Tax2;
+		CurrentEdit.Tax3 = totals.Tax3;
+		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
 	}
 
 	static bool IsHeaderSaleKubun(int kubun) =>
@@ -450,11 +455,23 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	[RelayCommand]
-	void DoSelectTenpo() {
+	async Task DoSelectTenpo() {
 		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType>=0", "Code", startPos: CurrentEdit.Id_Tenpo);
 		if (tokui == null) return;
 		CurrentEdit.Id_Tenpo = tokui.Id;
 		CurrentEdit.VTenpo = new CodeNameView { Sid = tokui.Id, Cd = tokui.Code ?? "", Mei = tokui.Name ?? "" };
+
+		// 選択ダイアログはCode/Nameしか返さないため、端数処理はIdで1件取得し直す。
+		var fullTenpo = await AppGlobal.LogicGetMasterById<MasterTokui>(tokui.Id);
+		if (fullTenpo != null) {
+			// 店舗売上はTaxCalcUnitを持たず常に伝票単位。端数処理は伝票作成時点のマスタ値をスナップショットする
+			// (Doc/spec/2026-09-01 2.2 / 3.7)。既存伝票の読込時は上書きしない(このコマンドは店舗を選び直したときにしか呼ばれない)。
+			CurrentEdit.TaxRounding = fullTenpo.TaxRounding;
+		}
+		else {
+			// 店舗が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
+			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
+		}
 	}
 
 	[RelayCommand]

@@ -110,6 +110,14 @@ public partial class HenpinInputViewModel : BaseStockSheetInputViewModel<Tran03S
 	/// <summary>登録時に使う仕入先掛率(%)。Tran03Shiire.Rate は掛率であり消費税率ではない。ValidateBeforeRegisterAsync で確定する。</summary>
 	int shiireRatePercent = 100;
 
+	/// <summary>
+	/// 登録時に使う税計算単位・消費税端数処理。伝票作成時点のマスタ値のスナップショット(Doc/spec/2026-09-01 2.2)。
+	/// ValidateBeforeRegisterAsync で仕入先マスタから確定する。仕入先が引けない場合は
+	/// TaxCalcUnit は既定(請求単位)のまま、TaxRounding は MasterSysman.TaxRounding を使う(3.7の解決順3)。
+	/// </summary>
+	int shiireTaxCalcUnit;
+	int shiireTaxRounding;
+
 	public HenpinInputViewModel() {
 		// 返品対象は「在庫のある行」だけ。数量の初期値は在庫数（全数返品が既定で、減らして使う）
 		IsZeroExcluded = true;
@@ -283,9 +291,17 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 		// 掛計上日は仕入日と同じ。税率は仕入日時点のものを取る（商品仕入入力と同じ扱い）
 		kakeDay = ToDenDay(denDay);
 		await LoadMeisaiTaxAsync();
-		// 掛率はコンボ(MasterOption)にCode/Nameしか無いためIdで1件取得し直す
+		// 掛率・税設定はコンボ(MasterOption)にCode/Nameしか無いためIdで1件取得し直す
 		var fullShiire = await AppGlobal.LogicGetMasterById<MasterShiire>(SelectedShiire?.Id ?? 0);
-		if (fullShiire != null) shiireRatePercent = fullShiire.RateProper;
+		if (fullShiire != null) {
+			shiireRatePercent = fullShiire.RateProper;
+			shiireTaxCalcUnit = fullShiire.TaxCalcUnit;
+			shiireTaxRounding = fullShiire.TaxRounding;
+		}
+		else {
+			// 仕入先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
+			shiireTaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
+		}
 		return true;
 	}
 
@@ -312,20 +328,18 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 		// 消費税・総合計の積み方は商品仕入入力(ShiireInputViewModel.UpdateHeaderTotals)と揃える。
 		// 明細Taxは常に正値で持ち、返品のマイナス計上は Kubun=20 が立てる CalcFlag=-1 が担う
 		foreach (var m in meisai) {
-			var (taxId, rate) = meisaiTaxByShohin.TryGetValue(m.Id_Shohin, out var found) ? found : (1L, 0);
-			m.Id_Tax = taxId;
-			m.TaxRate = rate;
-			m.Tax = (int)Math.Round(Math.Abs(m.Kingaku) * rate / 100.0);
+			m.Id_Tax = meisaiTaxByShohin.TryGetValue(m.Id_Shohin, out var found) ? found.TaxId : TaxCalculator.StandardTaxId;
 		}
+		// 税区分(Id_Tax)ごとの税率は明細から解決済み(LoadMeisaiTaxAsync)のものをそのまま使う
+		var rateByTaxId = meisaiTaxByShohin.Values
+			.GroupBy(v => v.TaxId)
+			.ToDictionary(g => g.Key, g => g.First().Rate);
+		int RateOf(long taxId) => rateByTaxId.TryGetValue(taxId, out var rate) ? rate : 0;
+
+		var calcUnit = (EnumTaxCalcUnit)shiireTaxCalcUnit;
+		var rounding = (EnumRounding)shiireTaxRounding;
+		var totals = TaxCalculator.Apply(meisai, RateOf, calcUnit, rounding);
 		var absKingakuTotal = Math.Abs(kingakuTotal);
-		long tax1 = 0, tax2 = 0, tax3 = 0;
-		foreach (var m in meisai) {
-			switch (m.Id_Tax) {
-				case 1: tax1 += m.Tax; break;
-				case 2: tax2 += m.Tax; break;
-				case 3: tax3 += m.Tax; break;
-			}
-		}
 		return new Tran03Shiire {
 			// Kubun に 20 を入れると OnKubunChanged が CalcFlag = -1 を立てる（在庫・買掛が減算になる）
 			Kubun = (int)SelectedKubun,
@@ -337,10 +351,15 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 				Mei = shiire?.Name ?? string.Empty,
 			},
 			Rate = shiireRatePercent,
-			Tax1 = tax1,
-			Tax2 = tax2,
-			Tax3 = tax3,
-			Total = absKingakuTotal + tax1 + tax2 + tax3,
+			TaxCalcUnit = shiireTaxCalcUnit,
+			TaxRounding = shiireTaxRounding,
+			TaxableAmount1 = totals.TaxableAmount1,
+			TaxableAmount2 = totals.TaxableAmount2,
+			TaxableAmount3 = totals.TaxableAmount3,
+			Tax1 = totals.Tax1,
+			Tax2 = totals.Tax2,
+			Tax3 = totals.Tax3,
+			Total = absKingakuTotal + totals.TaxTotal,
 		};
 	}
 }

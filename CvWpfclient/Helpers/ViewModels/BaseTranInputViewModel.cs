@@ -78,7 +78,7 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 		}
 	}
 
-	#region 明細別消費税（Doc/spec/2026-08-25_明細別消費税計算_詳細設計.md 4.2）
+	#region 明細別消費税（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md 3.1〜3.7）
 
 	/// <summary>
 	/// 明細別の消費税計算を行うか。移動・棚卸など金額と税を持たない伝票は false のままにする。
@@ -89,60 +89,64 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 	readonly Dictionary<long, long> shohinTaxIdCache = [];
 
 	/// <summary>
-	/// 明細1行の消費税区分・適用税率・税額を、伝票日付時点の税率で再計算する。
-	/// <para>
-	/// 税額は常に正値で保持する。返品等の符号はヘッダ <c>Kubun</c> から決まる CalcFlag が
-	/// 集計側で担うため、明細側で符号を持たせると二重反転になる。
-	/// </para>
+	/// 伝票日付ごとの消費税区分(1-3)→税率(%)キャッシュ。<see cref="TaxCalculator.Apply"/> の rateOf に渡す。
+	/// 伝票日付が変わるたびに区分1-3をまとめて先読みし直す（明細ごとに個別で引かない）。
+	/// </summary>
+	readonly Dictionary<long, int> taxRateCache = [];
+	string? taxRateCacheDenDay;
+
+	/// <summary>
+	/// 伝票日付時点の消費税区分1-3の税率をまとめて先読みし、キャッシュを更新する。
+	/// 既に同じ伝票日付でキャッシュ済みなら何もしない。
+	/// </summary>
+	protected async Task EnsureTaxRateCacheAsync(string denDay) {
+		if (!IsMeisaiTaxEnabled || taxRateCacheDenDay == denDay) return;
+		taxRateCache.Clear();
+		for (long taxId = 1; taxId <= 3; taxId++) {
+			taxRateCache[taxId] = await AppGlobal.LogicGetTax((int)taxId, denDay);
+		}
+		taxRateCacheDenDay = denDay;
+	}
+
+	/// <summary>
+	/// キャッシュ済みの税率を返す。<see cref="TaxCalculator.Apply"/> の rateOf にそのまま渡せる。
+	/// Id_Tax&lt;=0(非課税)は0を返す(<see cref="AppGlobal.LogicGetTax"/> は0を渡すと例外になるため呼ばない)。
+	/// </summary>
+	protected int TaxRateOf(long taxId) => taxId <= 0 ? 0 : taxRateCache.GetValueOrDefault(taxId);
+
+	/// <summary>
+	/// 明細1行の消費税区分を、商品マスタから解決し直す。適用税率・税額の確定は
+	/// <see cref="TaxCalculator.Apply"/>（各VMの UpdateHeaderTotals）が行う。
 	/// </summary>
 	protected async Task RecalcMeisaiTaxAsync(Tran99Meisai m, bool updateTotals) {
 		if (!IsMeisaiTaxEnabled) return;
 		m.Id_Tax = await ResolveMeisaiTaxIdAsync(m.Id_Shohin);
-		// Id_Tax=0 は非課税。LogicGetTax(0,...) は MasterSysTax を引けず、
-		// 既定値の空 DateFrom が Common.CompareYmd へ渡って例外になるため呼ぶ前に落とす
-		var rate = m.Id_Tax <= 0 ? 0 : await AppGlobal.LogicGetTax((int)m.Id_Tax, CurrentEdit.DenDay);
-		m.TaxRate = rate;
-		m.Tax = (int)Math.Round(Math.Abs(m.Kingaku) * rate / 100.0);
-		if (updateTotals) UpdateTotals();
+		if (updateTotals) {
+			await EnsureTaxRateCacheAsync(CurrentEdit.DenDay);
+			UpdateTotals();
+		}
 	}
 
-	/// <summary>明細全行の税額を再計算してヘッダ合計へ反映する（伝票を開いた時・伝票日付変更時）。</summary>
+	/// <summary>明細全行の消費税区分を再解決してヘッダ合計へ反映する（伝票を開いた時・伝票日付変更時）。</summary>
 	protected async Task RecalcAllMeisaiTaxAsync() {
 		if (!IsMeisaiTaxEnabled) return;
+		await EnsureTaxRateCacheAsync(CurrentEdit.DenDay);
 		foreach (var m in EditMeisai) {
-			await RecalcMeisaiTaxAsync(m, updateTotals: false);
+			m.Id_Tax = await ResolveMeisaiTaxIdAsync(m.Id_Shohin);
 		}
 		UpdateTotals();
 	}
 
 	/// <summary>
-	/// 明細の商品から消費税区分を引く。商品マスタが引けない明細は標準税率(1)を既定とする。
+	/// 明細の商品から消費税区分を引く。商品マスタが引けない明細は標準税率(<see cref="TaxCalculator.StandardTaxId"/>)を既定とする。
 	/// </summary>
 	async Task<long> ResolveMeisaiTaxIdAsync(long idShohin) {
-		const long standardTaxId = 1;
-		if (idShohin <= 0) return standardTaxId;
+		if (idShohin <= 0) return TaxCalculator.StandardTaxId;
 		if (shohinTaxIdCache.TryGetValue(idShohin, out var cached)) return cached;
 		var shohin = await AppGlobal.LogicGetMasterById<MasterShohin>(idShohin);
-		var taxId = shohin?.Id_Tax ?? standardTaxId;
+		var taxId = shohin?.Id_Tax ?? TaxCalculator.StandardTaxId;
 		shohinTaxIdCache[idShohin] = taxId;
 		return taxId;
-	}
-
-	/// <summary>
-	/// 明細税額を消費税区分（<see cref="MasterSysTax.Id"/> 1-3）ごとに合算する。
-	/// ヘッダの <c>Tax1</c>/<c>Tax2</c>/<c>Tax3</c>（<see cref="ITranTax"/>）へそのまま代入できる形にする。
-	/// 非課税(Id_Tax=0)や未知の区分は集計に含めない。
-	/// </summary>
-	protected static (long Tax1, long Tax2, long Tax3) SumMeisaiTaxByBucket(IEnumerable<Tran99Meisai> meisai) {
-		long tax1 = 0, tax2 = 0, tax3 = 0;
-		foreach (var m in meisai) {
-			switch (m.Id_Tax) {
-				case 1: tax1 += m.Tax; break;
-				case 2: tax2 += m.Tax; break;
-				case 3: tax3 += m.Tax; break;
-			}
-		}
-		return (tax1, tax2, tax3);
 	}
 
 	#endregion

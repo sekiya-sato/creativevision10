@@ -318,10 +318,11 @@
 										<TextBlock Grid.Row="3" Grid.Column="0"
 											Style="{StaticResource FormLabel}"
 											Text="消費税" />
-										<TextBox Grid.Row="3" Grid.Column="1"
-											Margin="0,4" HorizontalContentAlignment="Right"
-											Style="{StaticResource FormTextBox}"
-											Text="{Binding CurrentEdit.Tax, UpdateSourceTrigger=PropertyChanged}" />
+										<TextBlock Grid.Row="3" Grid.Column="1"
+											Margin="0,4" HorizontalAlignment="Right" VerticalAlignment="Center"
+											FontSize="16"
+											Foreground="{DynamicResource MaterialDesignBody}"
+											Text="{Binding TaxTotal, StringFormat={}{0:N0}}" />
 
 										<Separator Grid.Row="4" Grid.ColumnSpan="2"
 											Margin="0,6" />

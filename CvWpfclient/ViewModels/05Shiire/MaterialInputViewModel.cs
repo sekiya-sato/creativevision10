@@ -115,6 +115,7 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 		if (e.PropertyName is nameof(Tran02Material.Tax1) or nameof(Tran02Material.Tax2)
 			or nameof(Tran02Material.Tax3) or nameof(Tran02Material.Kubun)) {
 			UpdateHeaderTotals();
+			OnPropertyChanged(nameof(TaxTotal));
 		}
 		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
 		else if (e.PropertyName is nameof(Tran02Material.DenDay)) {
@@ -123,21 +124,21 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 	}
 
 	void UpdateHeaderTotals() {
-		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
-		long tax1 = 0, tax2 = 0, tax3 = 0;
-		foreach (var m in EditMeisai) {
-			switch (m.Id_Tax) {
-				case 1: tax1 += m.Tax; break;
-				case 2: tax2 += m.Tax; break;
-				case 3: tax3 += m.Tax; break;
-			}
-		}
-		CurrentEdit.Tax1 = tax1;
-		CurrentEdit.Tax2 = tax2;
-		CurrentEdit.Tax3 = tax3;
-		CurrentEdit.Total = absKingakuTotal + tax1 + tax2 + tax3;
+		// 消費税は税区分ごとに1回だけ丸める(TaxCalculator.Apply)。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
+		var calcUnit = (EnumTaxCalcUnit)CurrentEdit.TaxCalcUnit;
+		var rounding = (EnumRounding)CurrentEdit.TaxRounding;
+		var totals = TaxCalculator.Apply(EditMeisai, TaxRateOf, calcUnit, rounding);
+		CurrentEdit.TaxableAmount1 = totals.TaxableAmount1;
+		CurrentEdit.TaxableAmount2 = totals.TaxableAmount2;
+		CurrentEdit.TaxableAmount3 = totals.TaxableAmount3;
+		CurrentEdit.Tax1 = totals.Tax1;
+		CurrentEdit.Tax2 = totals.Tax2;
+		CurrentEdit.Tax3 = totals.Tax3;
+		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
 	}
+
+	/// <summary>Tax1+Tax2+Tax3。Tax は分割済みで存在しないため、XAMLの消費税欄表示はこちらを使う。</summary>
+	public long TaxTotal => CurrentEdit.Tax1 + CurrentEdit.Tax2 + CurrentEdit.Tax3;
 
 	void UpdateTotals() {
 		CurrentEdit.SuTotal = EditMeisai.Sum(m => m.Su);
@@ -181,33 +182,55 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 	readonly Dictionary<long, long> materialTaxIdCache = [];
 
 	/// <summary>
-	/// 明細1行の消費税区分・適用税率・税額を、伝票日付時点の税率で再計算する。
-	/// 税額は常に正値で保持する。返品等の符号はヘッダ Kubun から決まる CalcFlag が集計側で担う。
+	/// 伝票日付ごとの消費税区分(1-3)→税率(%)キャッシュ。<see cref="TaxCalculator.Apply"/> の rateOf に渡す。
+	/// 伝票日付が変わるたびに区分1-3をまとめて先読みし直す（明細ごとに個別で引かない）。
+	/// </summary>
+	readonly Dictionary<long, int> taxRateCache = [];
+	string? taxRateCacheDenDay;
+
+	/// <summary>伝票日付時点の消費税区分1-3の税率をまとめて先読みし、キャッシュを更新する。</summary>
+	async Task EnsureTaxRateCacheAsync(string denDay) {
+		if (taxRateCacheDenDay == denDay) return;
+		taxRateCache.Clear();
+		for (long taxId = 1; taxId <= 3; taxId++) {
+			taxRateCache[taxId] = await AppGlobal.LogicGetTax((int)taxId, denDay);
+		}
+		taxRateCacheDenDay = denDay;
+	}
+
+	/// <summary>
+	/// キャッシュ済みの税率を返す。<see cref="TaxCalculator.Apply"/> の rateOf にそのまま渡せる。
+	/// Id_Tax&lt;=0(非課税)は0を返す(<see cref="AppGlobal.LogicGetTax"/> は0を渡すと例外になるため呼ばない)。
+	/// </summary>
+	int TaxRateOf(long taxId) => taxId <= 0 ? 0 : taxRateCache.GetValueOrDefault(taxId);
+
+	/// <summary>
+	/// 明細1行の消費税区分を、生地・付属マスタから解決し直す。適用税率・税額の確定は
+	/// <see cref="TaxCalculator.Apply"/>（<see cref="UpdateHeaderTotals"/>）が行う。
 	/// </summary>
 	async Task RecalcMeisaiTaxAsync(Tran99MaterialMeisai m, bool updateTotals) {
 		m.Id_Tax = await ResolveMeisaiTaxIdAsync(m.Id_Material);
-		// Id_Tax=0 は非課税。LogicGetTax(0,...) は MasterSysTax を引けず例外になるため呼ぶ前に落とす
-		var rate = m.Id_Tax <= 0 ? 0 : await AppGlobal.LogicGetTax((int)m.Id_Tax, CurrentEdit.DenDay);
-		m.TaxRate = rate;
-		m.Tax = (int)Math.Round(Math.Abs(m.Kingaku) * rate / 100.0);
-		if (updateTotals) UpdateTotals();
+		if (updateTotals) {
+			await EnsureTaxRateCacheAsync(CurrentEdit.DenDay);
+			UpdateTotals();
+		}
 	}
 
-	/// <summary>明細全行の税額を再計算してヘッダ合計へ反映する（伝票を開いた時・伝票日付変更時）。</summary>
+	/// <summary>明細全行の消費税区分を再解決してヘッダ合計へ反映する（伝票を開いた時・伝票日付変更時）。</summary>
 	async Task RecalcAllMeisaiTaxAsync() {
+		await EnsureTaxRateCacheAsync(CurrentEdit.DenDay);
 		foreach (var m in EditMeisai) {
-			await RecalcMeisaiTaxAsync(m, updateTotals: false);
+			m.Id_Tax = await ResolveMeisaiTaxIdAsync(m.Id_Material);
 		}
 		UpdateTotals();
 	}
 
-	/// <summary>明細の生地・付属から消費税区分を引く。マスタが引けない明細は標準税率(1)を既定とする。</summary>
+	/// <summary>明細の生地・付属から消費税区分を引く。マスタが引けない明細は標準税率(<see cref="TaxCalculator.StandardTaxId"/>)を既定とする。</summary>
 	async Task<long> ResolveMeisaiTaxIdAsync(long idMaterial) {
-		const long standardTaxId = 1;
-		if (idMaterial <= 0) return standardTaxId;
+		if (idMaterial <= 0) return TaxCalculator.StandardTaxId;
 		if (materialTaxIdCache.TryGetValue(idMaterial, out var cached)) return cached;
 		var material = await AppGlobal.LogicGetMasterById<MasterMaterial>(idMaterial);
-		var taxId = material?.Id_Tax ?? standardTaxId;
+		var taxId = material?.Id_Tax ?? TaxCalculator.StandardTaxId;
 		materialTaxIdCache[idMaterial] = taxId;
 		return taxId;
 	}
@@ -355,11 +378,24 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	[RelayCommand]
-	void DoSelectShiire() {
+	async Task DoSelectShiire() {
 		var shiire = ShowSelectDialog<MasterShiire>(typeof(MasterShiire), "", "Code", startPos: CurrentEdit.Id_Shiire);
 		if (shiire == null) return;
 		CurrentEdit.Id_Shiire = shiire.Id;
 		CurrentEdit.VShiire = new CodeNameView { Sid = shiire.Id, Cd = shiire.Code ?? "", Mei = shiire.Name ?? "" };
+
+		// 選択ダイアログはCode/Nameしか返さないため、税設定はIdで1件取得し直す。
+		var fullShiire = await AppGlobal.LogicGetMasterById<MasterShiire>(shiire.Id);
+		if (fullShiire != null) {
+			// 税計算単位・消費税端数処理は伝票作成時点のマスタ値をスナップショットする(Doc/spec/2026-09-01 2.2)。
+			// 既存伝票の読込時は上書きしない(このコマンドは仕入先を選び直したときにしか呼ばれない)。
+			CurrentEdit.TaxCalcUnit = fullShiire.TaxCalcUnit;
+			CurrentEdit.TaxRounding = fullShiire.TaxRounding;
+		}
+		else {
+			// 仕入先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
+			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
+		}
 	}
 
 	[RelayCommand]

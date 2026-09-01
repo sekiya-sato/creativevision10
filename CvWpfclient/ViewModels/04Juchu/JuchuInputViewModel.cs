@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections.ObjectModel;
@@ -150,6 +151,7 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 		if (e.PropertyName is nameof(Tran12Jyuchu.Tax1) or nameof(Tran12Jyuchu.Tax2)
 			or nameof(Tran12Jyuchu.Tax3) or nameof(Tran12Jyuchu.Kubun)) {
 			UpdateHeaderTotals();
+			OnPropertyChanged(nameof(TaxTotal));
 		}
 		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
 		else if (e.PropertyName is nameof(Tran12Jyuchu.DenDay)) {
@@ -170,14 +172,21 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 		};
 
 	void UpdateHeaderTotals() {
-		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
-		var (tax1, tax2, tax3) = SumMeisaiTaxByBucket(EditMeisai);
-		CurrentEdit.Tax1 = tax1;
-		CurrentEdit.Tax2 = tax2;
-		CurrentEdit.Tax3 = tax3;
-		CurrentEdit.Total = absKingakuTotal + tax1 + tax2 + tax3;
+		// 受注はTaxCalcUnitを持たない(常に伝票単位)。消費税は税区分ごとに1回だけ丸める(TaxCalculator.Apply)。
+		// 返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
+		var rounding = (EnumRounding)CurrentEdit.TaxRounding;
+		var totals = TaxCalculator.Apply(EditMeisai, TaxRateOf, EnumTaxCalcUnit.Slip, rounding);
+		CurrentEdit.TaxableAmount1 = totals.TaxableAmount1;
+		CurrentEdit.TaxableAmount2 = totals.TaxableAmount2;
+		CurrentEdit.TaxableAmount3 = totals.TaxableAmount3;
+		CurrentEdit.Tax1 = totals.Tax1;
+		CurrentEdit.Tax2 = totals.Tax2;
+		CurrentEdit.Tax3 = totals.Tax3;
+		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
 	}
+
+	/// <summary>Tax1+Tax2+Tax3。Tax は分割済みで存在しないため、XAMLの消費税欄表示はこちらを使う。</summary>
+	public long TaxTotal => CurrentEdit.Tax1 + CurrentEdit.Tax2 + CurrentEdit.Tax3;
 
 	protected override object CreateInsertParam() {
 		SyncMeisaiToCurrentEdit();
@@ -422,9 +431,18 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		CurrentEdit.Id_Tokui = tokui.Id;
 		CurrentEdit.VTokui = new CodeNameView { Sid = tokui.Id, Cd = tokui.Code ?? "", Mei = tokui.Name ?? "" };
 
-		// 選択ダイアログはCode/Nameしか返さないため、掛率はIdで1件取得し直す。
+		// 選択ダイアログはCode/Nameしか返さないため、掛率・端数処理はIdで1件取得し直す。
 		var fullTokui = await AppGlobal.LogicGetMasterById<MasterTokui>(tokui.Id);
-		if (fullTokui != null) CurrentEdit.Rate = fullTokui.RateProper;
+		if (fullTokui != null) {
+			CurrentEdit.Rate = fullTokui.RateProper;
+			// 受注はTaxCalcUnitを持たず常に伝票単位。端数処理は伝票作成時点のマスタ値をスナップショットする
+			// (Doc/spec/2026-09-01 2.2)。既存伝票の読込時は上書きしない(このコマンドは取引先を選び直したときにしか呼ばれない)。
+			CurrentEdit.TaxRounding = fullTokui.TaxRounding;
+		}
+		else {
+			// 得意先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
+			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
+		}
 	}
 
 	[RelayCommand]

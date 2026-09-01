@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections.ObjectModel;
@@ -164,6 +165,7 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		if (e.PropertyName is nameof(Tran13Hachu.Tax1) or nameof(Tran13Hachu.Tax2)
 			or nameof(Tran13Hachu.Tax3) or nameof(Tran13Hachu.Kubun)) {
 			UpdateHeaderTotals();
+			OnPropertyChanged(nameof(TaxTotal));
 		}
 		else if (e.PropertyName == nameof(Tran13Hachu.DenDay)) {
 			RecalcNouhinDay();
@@ -185,14 +187,21 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		};
 
 	void UpdateHeaderTotals() {
-		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
-		var (tax1, tax2, tax3) = SumMeisaiTaxByBucket(EditMeisai);
-		CurrentEdit.Tax1 = tax1;
-		CurrentEdit.Tax2 = tax2;
-		CurrentEdit.Tax3 = tax3;
-		CurrentEdit.Total = absKingakuTotal + tax1 + tax2 + tax3;
+		// 発注はTaxCalcUnitを持たない(常に伝票単位)。消費税は税区分ごとに1回だけ丸める(TaxCalculator.Apply)。
+		// 返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
+		var rounding = (EnumRounding)CurrentEdit.TaxRounding;
+		var totals = TaxCalculator.Apply(EditMeisai, TaxRateOf, EnumTaxCalcUnit.Slip, rounding);
+		CurrentEdit.TaxableAmount1 = totals.TaxableAmount1;
+		CurrentEdit.TaxableAmount2 = totals.TaxableAmount2;
+		CurrentEdit.TaxableAmount3 = totals.TaxableAmount3;
+		CurrentEdit.Tax1 = totals.Tax1;
+		CurrentEdit.Tax2 = totals.Tax2;
+		CurrentEdit.Tax3 = totals.Tax3;
+		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
 	}
+
+	/// <summary>Tax1+Tax2+Tax3。Tax は分割済みで存在しないため、XAMLの消費税欄表示はこちらを使う。</summary>
+	public long TaxTotal => CurrentEdit.Tax1 + CurrentEdit.Tax2 + CurrentEdit.Tax3;
 
 	async Task ApplyDefaultSokoAsync() {
 		if (CurrentEdit.Id_Soko > 0) return;
@@ -460,11 +469,18 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		CurrentEdit.Id_Shiire = shiire.Id;
 		CurrentEdit.VShiire = new CodeNameView { Sid = shiire.Id, Cd = shiire.Code ?? "", Mei = shiire.Name ?? "" };
 
-		// 選択ダイアログはCode/Nameしか返さないため、掛率・リードタイムはIdで1件取得し直す。
+		// 選択ダイアログはCode/Nameしか返さないため、掛率・リードタイム・端数処理はIdで1件取得し直す。
 		var fullShiire = await LoadFullShiireAsync(shiire.Id);
-		if (fullShiire == null) return;
+		if (fullShiire == null) {
+			// 仕入先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
+			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
+			return;
+		}
 		shiireLeadTimeDays = fullShiire.LeadTimeDays;
 		CurrentEdit.Rate = fullShiire.RateProper;
+		// 発注はTaxCalcUnitを持たず常に伝票単位。端数処理は伝票作成時点のマスタ値をスナップショットする
+		// (Doc/spec/2026-09-01 2.2)。既存伝票の読込時は上書きしない(このコマンドは仕入先を選び直したときにしか呼ばれない)。
+		CurrentEdit.TaxRounding = fullShiire.TaxRounding;
 		RecalcNouhinDay();
 	}
 

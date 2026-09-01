@@ -196,16 +196,6 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		return picked;
 	}
 
-	/// <summary>
-	/// 伝票日付時点の消費税率(%)を返す。<c>Rate</c> は掛率に使うのでここでは触らない。
-	/// <para>
-	/// HHT変換は伝票ヘッダ単位で税率を1本決める（決定 F/G）ため、税区分は標準(Id=1)固定とする。
-	/// 明細別の税区分は入力画面・伝票税額再更新が担う。
-	/// </para>
-	/// </summary>
-	private static int ResolveTaxRatePercent(HhtMasterCache cache, string denDay) =>
-		TaxRateResolver.ResolveTaxRatePercent(cache.Sysman, StandardTaxId, denDay);
-
 	/// <summary>HHT変換で使う標準の消費税区分(<see cref="MasterSysTax.Id"/>)</summary>
 	private const long StandardTaxId = 1;
 
@@ -385,7 +375,9 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		ApplyCommon(slip, meisai, shain);
 		// Rate は掛率。店舗売上のHHTデータに掛率は来ないので0のままにする
 		slip.Rate = 0;
-		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax1 = tax, total => slip.Total = total);
+		// 店舗売上はTaxCalcUnitを持たず常に伝票単位。端数処理は店舗(Id_Tenpo)のMasterTokuiから転記する
+		slip.TaxRounding = ResolveTaxRounding(cache, tenpo);
+		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, meisai, slip, EnumTaxCalcUnit.Slip, (EnumRounding)slip.TaxRounding);
 		return new HhtSlip(nameof(Tran01Tenuri), slip);
 	}
 
@@ -417,7 +409,10 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		ApplyCommon(slip, meisai, shain);
 		// Rate は掛率(パーセント整数。MasterTokui.RateProper と同単位)。消費税率には使わない
 		slip.Rate = ToRatePercent(TryParseKakeRitsu(group.Type0, head.KakeRitsu));
-		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax1 = tax, total => slip.Total = total);
+		// 税計算単位・消費税端数処理は得意先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+		slip.TaxCalcUnit = tokui.TaxCalcUnit;
+		slip.TaxRounding = ResolveTaxRounding(cache, tokui);
+		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, meisai, slip, (EnumTaxCalcUnit)slip.TaxCalcUnit, (EnumRounding)slip.TaxRounding);
 		return new HhtSlip(nameof(Tran00Uriage), slip);
 	}
 
@@ -452,7 +447,10 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		ApplyCommon(slip, meisai, shain);
 		// Rate は掛率。仕入の掛率欄には発注番号が入るため掛率は来ない
 		slip.Rate = 0;
-		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax1 = tax, total => slip.Total = total);
+		// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+		slip.TaxCalcUnit = shiire.TaxCalcUnit;
+		slip.TaxRounding = ResolveTaxRounding(cache, shiire);
+		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, meisai, slip, (EnumTaxCalcUnit)slip.TaxCalcUnit, (EnumRounding)slip.TaxRounding);
 		return new HhtSlip(nameof(Tran03Shiire), slip);
 	}
 
@@ -480,7 +478,9 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 			Memo = BuildMemo(group),
 		};
 		ApplyCommon(slip, meisai, shain);
-		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax1 = tax, total => slip.Total = total);
+		// 発注はTaxCalcUnitを持たず常に伝票単位。端数処理は仕入先マスタから転記する
+		slip.TaxRounding = ResolveTaxRounding(cache, shiire);
+		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, meisai, slip, EnumTaxCalcUnit.Slip, (EnumRounding)slip.TaxRounding);
 		return new HhtSlip(nameof(Tran13Hachu), slip);
 	}
 
@@ -632,17 +632,39 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 	}
 
 	/// <summary>
-	/// 消費税と総合計を計算する。式は各InputViewModelの UpdateHeaderTotals と同じ。
+	/// 取引先の税計算単位・消費税端数処理を返す(Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md 3.7)。
+	/// 取引先が引けない場合は自社既定の端数処理(<see cref="MasterSysman.TaxRounding"/>)を使う。
 	/// <para>
-	/// 税率は <c>Rate</c> ではなくローカル値を使う（<c>Rate</c> は掛率。決定 12-F / 12-G）。
+	/// 呼び出し元は各Build*で取引先解決に失敗した時点で既にnullを弾いているため、
+	/// このフォールバックは実質防御的なものである。
 	/// </para>
 	/// </summary>
-	private static void ApplyTaxOnly(HhtMasterCache cache, string denDay, long kingakuTotal, Action<int> setTax, Action<int> setTotal) {
-		var taxRatePercent = ResolveTaxRatePercent(cache, denDay);
-		var absKingakuTotal = Math.Abs(kingakuTotal);
-		var tax = (int)Math.Round(absKingakuTotal * taxRatePercent / 100.0, MidpointRounding.AwayFromZero);
-		setTax(tax);
-		setTotal((int)(absKingakuTotal + tax));
+	private static int ResolveTaxRounding(HhtMasterCache cache, MasterTorihiki? torihiki) =>
+		torihiki?.TaxRounding ?? cache.Sysman.TaxRounding;
+
+	/// <summary>
+	/// 消費税と総合計を計算する。式は各InputViewModelの UpdateHeaderTotals と同じ
+	/// (<see cref="TaxCalculator.Apply"/> で税区分ごとに1回だけ丸める)。
+	/// <para>
+	/// HHT変換は伝票ヘッダ単位で税率を1本決める（決定 F/G）ため、明細の税区分は標準(<see cref="StandardTaxId"/>)固定とする。
+	/// 税率は <c>Rate</c> ではなく <see cref="TaxRateResolver"/> のローカル値を使う（<c>Rate</c> は掛率。決定 12-F / 12-G）。
+	/// </para>
+	/// </summary>
+	private static void ApplyTaxOnly(
+			HhtMasterCache cache, string denDay, long kingakuTotal, List<Tran99Meisai> meisai,
+			ITranTax slip, EnumTaxCalcUnit calcUnit, EnumRounding rounding) {
+		foreach (var m in meisai) {
+			m.Id_Tax = StandardTaxId;
+		}
+		var rateOf = TaxRateResolver.CreateRateResolver(cache.Sysman, denDay);
+		var totals = TaxCalculator.Apply(meisai, rateOf, calcUnit, rounding);
+		slip.TaxableAmount1 = totals.TaxableAmount1;
+		slip.TaxableAmount2 = totals.TaxableAmount2;
+		slip.TaxableAmount3 = totals.TaxableAmount3;
+		slip.Tax1 = totals.Tax1;
+		slip.Tax2 = totals.Tax2;
+		slip.Tax3 = totals.Tax3;
+		slip.Total = Math.Abs(kingakuTotal) + totals.TaxTotal;
 	}
 
 	/// <summary>

@@ -160,13 +160,17 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	protected override void OnTotalsUpdated() => UpdateHeaderTotals();
 
 	void UpdateHeaderTotals() {
-		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
-		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
-		var (tax1, tax2, tax3) = SumMeisaiTaxByBucket(EditMeisai);
-		CurrentEdit.Tax1 = tax1;
-		CurrentEdit.Tax2 = tax2;
-		CurrentEdit.Tax3 = tax3;
-		CurrentEdit.Total = absKingakuTotal + tax1 + tax2 + tax3;
+		// 消費税は税区分ごとに1回だけ丸める(TaxCalculator.Apply)。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
+		var calcUnit = (EnumTaxCalcUnit)CurrentEdit.TaxCalcUnit;
+		var rounding = (EnumRounding)CurrentEdit.TaxRounding;
+		var totals = TaxCalculator.Apply(EditMeisai, TaxRateOf, calcUnit, rounding);
+		CurrentEdit.TaxableAmount1 = totals.TaxableAmount1;
+		CurrentEdit.TaxableAmount2 = totals.TaxableAmount2;
+		CurrentEdit.TaxableAmount3 = totals.TaxableAmount3;
+		CurrentEdit.Tax1 = totals.Tax1;
+		CurrentEdit.Tax2 = totals.Tax2;
+		CurrentEdit.Tax3 = totals.Tax3;
+		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
 	}
 
 	// 基底フック: 出荷売上はヘッダ区分を明細区分に反映（ロード時は同値のため実質不変、保存前に統一）。
@@ -332,9 +336,19 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		CurrentEdit.Id_Tokui = tokui.Id;
 		CurrentEdit.VTokui = new CodeNameView { Sid = tokui.Id, Cd = tokui.Code ?? "", Mei = tokui.Name ?? "" };
 
-		// 選択ダイアログはCode/Nameしか返さないため、掛率はIdで1件取得し直す。
+		// 選択ダイアログはCode/Nameしか返さないため、掛率・税設定はIdで1件取得し直す。
 		var fullTokui = await AppGlobal.LogicGetMasterById<MasterTokui>(tokui.Id);
-		if (fullTokui != null) CurrentEdit.Rate = fullTokui.RateProper;
+		if (fullTokui != null) {
+			CurrentEdit.Rate = fullTokui.RateProper;
+			// 税計算単位・消費税端数処理は伝票作成時点のマスタ値をスナップショットする(Doc/spec/2026-09-01 2.2)。
+			// 既存伝票の読込時は上書きしない(このコマンドは取引先を選び直したときにしか呼ばれない)。
+			CurrentEdit.TaxCalcUnit = fullTokui.TaxCalcUnit;
+			CurrentEdit.TaxRounding = fullTokui.TaxRounding;
+		}
+		else {
+			// 得意先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
+			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
+		}
 	}
 
 	[RelayCommand]

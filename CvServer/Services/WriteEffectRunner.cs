@@ -76,7 +76,12 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 	public static readonly string[] PartialUpdateDeniedColumns = [
 		nameof(BaseDbClass.Id), nameof(BaseDbClass.Vdc), nameof(BaseDbClass.Vdu),
 		"Id_Soko", "Id_Ido", "Id_Shohin", "Id_Col", "Id_Siz", "Su", "CalcFlag", "Kubun",
-		"DenDay", "KakeDay", "KingakuTotal", "Tax", "Total", "Jmeisai", "Code", "Name",
+		"DenDay", "KakeDay", "KingakuTotal",
+		"Tax1", "Tax2", "Tax3", "TaxableAmount1", "TaxableAmount2", "TaxableAmount3",
+		"Total", "Jmeisai", "Code", "Name",
+		// TaxCalcUnit/TaxRounding は伝票作成時点のマスタ値のスナップショット(監査値)。
+		// 部分更新で書き換えられると過去伝票の税額が再現できなくなるため禁止する(Doc/spec/2026-09-01 2.2)。
+		"TaxCalcUnit", "TaxRounding",
 	];
 
 	/// <summary>
