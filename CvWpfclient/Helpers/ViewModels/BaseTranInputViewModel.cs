@@ -128,6 +128,23 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 		return taxId;
 	}
 
+	/// <summary>
+	/// 明細税額を消費税区分（<see cref="MasterSysTax.Id"/> 1-3）ごとに合算する。
+	/// ヘッダの <c>Tax1</c>/<c>Tax2</c>/<c>Tax3</c>（<see cref="ITranTax"/>）へそのまま代入できる形にする。
+	/// 非課税(Id_Tax=0)や未知の区分は集計に含めない。
+	/// </summary>
+	protected static (long Tax1, long Tax2, long Tax3) SumMeisaiTaxByBucket(IEnumerable<Tran99Meisai> meisai) {
+		long tax1 = 0, tax2 = 0, tax3 = 0;
+		foreach (var m in meisai) {
+			switch (m.Id_Tax) {
+				case 1: tax1 += m.Tax; break;
+				case 2: tax2 += m.Tax; break;
+				case 3: tax3 += m.Tax; break;
+			}
+		}
+		return (tax1, tax2, tax3);
+	}
+
 	#endregion
 
 	/// <summary>明細から数量計/金額計/上代計/下代計を集計する（TranAllHeader 共通フィールド）。</summary>

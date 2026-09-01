@@ -50,9 +50,12 @@ public class TranTaxRebuildTests {
 		Assert.AreEqual(1L, meisai[2].Id_Tax);
 		Assert.AreEqual(10, meisai[2].TaxRate);
 		Assert.AreEqual(600, meisai[2].Tax);
-		// ヘッダは明細税額の合計。全件10%一括(1750)とは一致しない
-		Assert.AreEqual(1520, headerTax);
-		Assert.AreEqual(meisai.Sum(m => m.Tax), headerTax);
+		// ヘッダは税区分ごとの明細税額合計。全件10%一括(1750)とは一致しない
+		Assert.AreEqual(600L, headerTax.Tax1);
+		Assert.AreEqual(920L, headerTax.Tax2);
+		Assert.AreEqual(0L, headerTax.Tax3);
+		Assert.AreEqual(1520L, headerTax.Tax1 + headerTax.Tax2 + headerTax.Tax3);
+		Assert.AreEqual(meisai.Sum(m => (long)m.Tax), headerTax.Tax1 + headerTax.Tax2 + headerTax.Tax3);
 	}
 
 	[TestMethod]
@@ -66,7 +69,7 @@ public class TranTaxRebuildTests {
 		Assert.AreEqual(0, meisai[0].Tax);
 		// 非課税でない行はそのまま課税される
 		Assert.AreEqual(500, meisai[1].Tax);
-		Assert.AreEqual(500, headerTax);
+		Assert.AreEqual(500, headerTax.Tax1 + headerTax.Tax2 + headerTax.Tax3);
 	}
 
 	[TestMethod]
@@ -114,7 +117,7 @@ public class TranTaxRebuildTests {
 
 		Assert.AreEqual(400, meisai[0].Tax);
 		Assert.AreEqual(500, meisai[1].Tax);
-		Assert.AreEqual(900, headerTax);
+		Assert.AreEqual(900, headerTax.Tax1+headerTax.Tax2+headerTax.Tax3);
 	}
 
 	[TestMethod]

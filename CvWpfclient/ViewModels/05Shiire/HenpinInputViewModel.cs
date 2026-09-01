@@ -318,7 +318,14 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 			m.Tax = (int)Math.Round(Math.Abs(m.Kingaku) * rate / 100.0);
 		}
 		var absKingakuTotal = Math.Abs(kingakuTotal);
-		var tax = meisai.Sum(m => m.Tax);
+		long tax1 = 0, tax2 = 0, tax3 = 0;
+		foreach (var m in meisai) {
+			switch (m.Id_Tax) {
+				case 1: tax1 += m.Tax; break;
+				case 2: tax2 += m.Tax; break;
+				case 3: tax3 += m.Tax; break;
+			}
+		}
 		return new Tran03Shiire {
 			// Kubun に 20 を入れると OnKubunChanged が CalcFlag = -1 を立てる（在庫・買掛が減算になる）
 			Kubun = (int)SelectedKubun,
@@ -330,8 +337,10 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 				Mei = shiire?.Name ?? string.Empty,
 			},
 			Rate = shiireRatePercent,
-			Tax = tax,
-			Total = absKingakuTotal + tax,
+			Tax1 = tax1,
+			Tax2 = tax2,
+			Tax3 = tax3,
+			Total = absKingakuTotal + tax1 + tax2 + tax3,
 		};
 	}
 }

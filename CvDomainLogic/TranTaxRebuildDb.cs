@@ -68,7 +68,7 @@ public class TranTaxRebuildDb {
 		_db.Dictionary<long, long>($"SELECT Id, Id_Tax FROM {nameof(MasterShohin)}");
 
 	/// <summary>
-	/// 明細1伝票ぶんの消費税区分・適用税率・税額を設定し、明細税額の合計を返す。
+	/// 明細1伝票ぶんの消費税区分・適用税率・税額を設定し、消費税区分(1-3)ごとの税額合計を返す。
 	/// <para>
 	/// 商品ごとに税区分が異なれば明細ごとに税率が変わる（軽減税率の混在）。
 	/// 税額は常に正値で、返品等の符号はヘッダ <c>Kubun</c> の CalcFlag が集計側で担う。
@@ -78,7 +78,8 @@ public class TranTaxRebuildDb {
 	/// <param name="sysman">税率定義を持つシステム設定</param>
 	/// <param name="taxIdByShohin">商品Id → 消費税区分。引けない商品は標準税率(1)にする</param>
 	/// <param name="denDay">伝票日付(yyyyMMdd)。税率の切替判定に使う</param>
-	public static int ApplyMeisaiTax(
+	/// <returns>ヘッダ Tax1/Tax2/Tax3 へそのまま代入できる、消費税区分ごとの税額合計</returns>
+	public static (long Tax1, long Tax2, long Tax3) ApplyMeisaiTax(
 		List<Tran99Meisai> meisai, MasterSysman sysman, Dictionary<long, long> taxIdByShohin, string denDay) {
 
 		foreach (var m in meisai) {
@@ -90,7 +91,15 @@ public class TranTaxRebuildDb {
 			m.TaxRate = rate;
 			m.Tax = (int)TranCalcBase.RoundTax(m.Kingaku, rate, CvBase.Share.EnumRounding.Round);
 		}
-		return meisai.Sum(m => m.Tax);
+		long tax1 = 0, tax2 = 0, tax3 = 0;
+		foreach (var m in meisai) {
+			switch (m.Id_Tax) {
+				case 1: tax1 += m.Tax; break;
+				case 2: tax2 += m.Tax; break;
+				case 3: tax3 += m.Tax; break;
+			}
+		}
+		return (tax1, tax2, tax3);
 	}
 
 	/// <summary>1テーブルぶんの再更新。Idの昇順にチャンクで読み進める。</summary>
@@ -122,14 +131,18 @@ public class TranTaxRebuildDb {
 					continue;
 				}
 
-				var newTax = ApplyMeisaiTax(meisai, sysman, taxIdByShohin, slip.DenDay);
-				if (newTax != slip.Tax) {
+				var oldTax = slip.Tax1 + slip.Tax2 + slip.Tax3;
+				var (tax1, tax2, tax3) = ApplyMeisaiTax(meisai, sysman, taxIdByShohin, slip.DenDay);
+				var newTax = tax1 + tax2 + tax3;
+				if (newTax != oldTax) {
 					headerTaxChanged++;
-					headerTaxDiff += newTax - slip.Tax;
+					headerTaxDiff += newTax - oldTax;
 				}
 				slip.Jmeisai = meisai;
-				slip.Tax = newTax;
-				slip.Total = (int)(Math.Abs(slip.KingakuTotal) + newTax);
+				slip.Tax1 = tax1;
+				slip.Tax2 = tax2;
+				slip.Tax3 = tax3;
+				slip.Total = Math.Abs(slip.KingakuTotal) + newTax;
 				_db.Update(slip);
 				updated++;
 			}

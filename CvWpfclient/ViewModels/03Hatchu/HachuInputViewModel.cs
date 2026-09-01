@@ -54,7 +54,7 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 	protected override string? ListOrder => "DenDay desc, Id desc";
 	protected override int? ListMaxCount => selectParam?.MaxCount;
 	protected override string LightweightSelectColumns =>
-		"Id,Vdc,Vdu,DenDay,NouhinDay,Id_Shiire,VShiire,Id_Soko,VSoko,Id_Shain,VShain,Kubun,RelateNo1,Rate,SuTotal,KingakuTotal,Tax,Total";
+		"Id,Vdc,Vdu,DenDay,NouhinDay,Id_Shiire,VShiire,Id_Soko,VSoko,Id_Shain,VShain,Kubun,RelateNo1,Rate,SuTotal,KingakuTotal,Tax1,Tax2,Tax3,Total";
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
@@ -161,7 +161,8 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran13Hachu.Tax) or nameof(Tran13Hachu.Kubun)) {
+		if (e.PropertyName is nameof(Tran13Hachu.Tax1) or nameof(Tran13Hachu.Tax2)
+			or nameof(Tran13Hachu.Tax3) or nameof(Tran13Hachu.Kubun)) {
 			UpdateHeaderTotals();
 		}
 		else if (e.PropertyName == nameof(Tran13Hachu.DenDay)) {
@@ -186,9 +187,11 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 	void UpdateHeaderTotals() {
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
 		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
-		var tax = EditMeisai.Sum(m => m.Tax);
-		CurrentEdit.Tax = tax;
-		CurrentEdit.Total = absKingakuTotal + tax;
+		var (tax1, tax2, tax3) = SumMeisaiTaxByBucket(EditMeisai);
+		CurrentEdit.Tax1 = tax1;
+		CurrentEdit.Tax2 = tax2;
+		CurrentEdit.Tax3 = tax3;
+		CurrentEdit.Total = absKingakuTotal + tax1 + tax2 + tax3;
 	}
 
 	async Task ApplyDefaultSokoAsync() {
@@ -302,7 +305,7 @@ RelateNo1,
 Rate,
 SuTotal,
 KingakuTotal,
-Tax,
+(Tax1+Tax2+Tax3) Tax,
 Total,
 JodaiTotal,
 GedaiTotal,
@@ -325,7 +328,7 @@ h.RelateNo1,
 h.Rate,
 h.SuTotal,
 h.KingakuTotal,
-h.Tax,
+(h.Tax1+h.Tax2+h.Tax3) Tax,
 h.Total,
 {M}'$.No') No,
 {MeisaiKubunLabelSql(M)} MeisaiKubunText,

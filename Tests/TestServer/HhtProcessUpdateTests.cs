@@ -116,7 +116,7 @@ public class HhtProcessUpdateTests {
 		Assert.AreEqual(1, slip.IsPay, "掛計上しないと売掛集計へ入らない");
 		Assert.AreEqual(65, slip.Rate, "Rate は掛率のパーセント整数（10倍整数ではない）");
 		Assert.AreEqual(1000, slip.KingakuTotal, "数量2 × 単価500");
-		Assert.AreEqual(100, slip.Tax, "税率10%（MasterSysman）から自動計算する");
+		Assert.AreEqual(100, slip.Tax1, "税率10%（MasterSysman）から自動計算する");
 		Assert.AreEqual(1100, slip.Total);
 		var meisai = slip.Jmeisai!.Single();
 		Assert.AreEqual(TankaJodai, meisai.Jodai);
@@ -135,7 +135,7 @@ public class HhtProcessUpdateTests {
 		Assert.AreEqual(-1, slip.CalcFlag, "返品は CalcFlag=-1");
 		Assert.AreEqual(-3, slip.SuTotal, "数量は負で格納する");
 		Assert.AreEqual(-1500, slip.KingakuTotal);
-		Assert.AreEqual(150, slip.Tax, "税額は絶対値ベースで計算する");
+		Assert.AreEqual(150, slip.Tax1, "税額は絶対値ベースで計算する");
 	}
 
 	/// <summary>セールは区分11、プロパーは区分10になる</summary>

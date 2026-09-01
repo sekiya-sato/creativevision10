@@ -385,7 +385,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		ApplyCommon(slip, meisai, shain);
 		// Rate は掛率。店舗売上のHHTデータに掛率は来ないので0のままにする
 		slip.Rate = 0;
-		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax = tax, total => slip.Total = total);
+		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax1 = tax, total => slip.Total = total);
 		return new HhtSlip(nameof(Tran01Tenuri), slip);
 	}
 
@@ -417,7 +417,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		ApplyCommon(slip, meisai, shain);
 		// Rate は掛率(パーセント整数。MasterTokui.RateProper と同単位)。消費税率には使わない
 		slip.Rate = ToRatePercent(TryParseKakeRitsu(group.Type0, head.KakeRitsu));
-		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax = tax, total => slip.Total = total);
+		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax1 = tax, total => slip.Total = total);
 		return new HhtSlip(nameof(Tran00Uriage), slip);
 	}
 
@@ -452,7 +452,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		ApplyCommon(slip, meisai, shain);
 		// Rate は掛率。仕入の掛率欄には発注番号が入るため掛率は来ない
 		slip.Rate = 0;
-		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax = tax, total => slip.Total = total);
+		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax1 = tax, total => slip.Total = total);
 		return new HhtSlip(nameof(Tran03Shiire), slip);
 	}
 
@@ -480,7 +480,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 			Memo = BuildMemo(group),
 		};
 		ApplyCommon(slip, meisai, shain);
-		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax = tax, total => slip.Total = total);
+		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, tax => slip.Tax1 = tax, total => slip.Total = total);
 		return new HhtSlip(nameof(Tran13Hachu), slip);
 	}
 

@@ -147,7 +147,8 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran00Uriage.Tax) or nameof(Tran00Uriage.Kubun)) {
+		if (e.PropertyName is nameof(Tran00Uriage.Tax1) or nameof(Tran00Uriage.Tax2)
+			or nameof(Tran00Uriage.Tax3) or nameof(Tran00Uriage.Kubun)) {
 			UpdateHeaderTotals();
 		}
 		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
@@ -161,9 +162,11 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	void UpdateHeaderTotals() {
 		var absKingakuTotal = Math.Abs(CurrentEdit.KingakuTotal);
 		// 明細Taxは常に正値。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める
-		var tax = EditMeisai.Sum(m => m.Tax);
-		CurrentEdit.Tax = tax;
-		CurrentEdit.Total = absKingakuTotal + tax;
+		var (tax1, tax2, tax3) = SumMeisaiTaxByBucket(EditMeisai);
+		CurrentEdit.Tax1 = tax1;
+		CurrentEdit.Tax2 = tax2;
+		CurrentEdit.Tax3 = tax3;
+		CurrentEdit.Total = absKingakuTotal + tax1 + tax2 + tax3;
 	}
 
 	// 基底フック: 出荷売上はヘッダ区分を明細区分に反映（ロード時は同値のため実質不変、保存前に統一）。

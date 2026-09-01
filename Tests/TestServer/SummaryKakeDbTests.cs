@@ -1007,7 +1007,7 @@ public class SummaryKakeDbTests {
 			Id_Tokui = idTokui,
 			Total = total,
 			KingakuTotal = total + 10000,
-			Tax = tax,
+			Tax1 = tax,
 			IsPay = 1,
 		};
 		tran.EnKubun = kubun;
@@ -1050,7 +1050,7 @@ public class SummaryKakeDbTests {
 			Id_Shiire = idShiire,
 			Total = total,
 			KingakuTotal = total + 10000,
-			Tax = tax,
+			Tax1 = tax,
 			IsPay = 1,
 		};
 		tran.EnKubun = kubun;

@@ -31,12 +31,12 @@ public partial class ShiharaiMatchingViewModel : Helpers.BaseMatchingViewModel<T
 	protected override string DenSelectColumns =>
 		"h.Id, h.Vdc, h.Vdu, h.DenDay, h.KakeDay, h.Id_Shiire, h.VShiire, h.Id_Soko, h.VSoko, " +
 		"h.Id_Shain, h.VShain, h.CalcFlag, h.Kubun, h.IsPay, h.EndFlag, h.ManualNo, h.RelateNo1, " +
-		"h.KingakuTotal, h.Tax, h.Total";
+		"h.KingakuTotal, h.Tax1, h.Tax2, h.Tax3, h.Total";
 
 	protected override long GetDenToriId(Tran03Shiire den) => den.Id_Shiire;
 	protected override string GetDenKakeDay(Tran03Shiire den) => den.KakeDay;
 	protected override long GetDenTotal(Tran03Shiire den) => den.Total;
-	protected override long GetDenTax(Tran03Shiire den) => den.Tax;
+	protected override long GetDenTax(Tran03Shiire den) => den.Tax1 + den.Tax2 + den.Tax3;
 	protected override int GetDenEndFlag(Tran03Shiire den) => den.EndFlag;
 	protected override string GetDenManualNo(Tran03Shiire den) => den.ManualNo;
 

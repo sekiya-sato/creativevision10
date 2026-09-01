@@ -33,12 +33,12 @@ public partial class NyukinMatchingViewModel : Helpers.BaseMatchingViewModel<Tra
 	protected override string DenSelectColumns =>
 		"h.Id, h.Vdc, h.Vdu, h.DenDay, h.KakeDay, h.Id_Tokui, h.VTokui, h.Id_Soko, h.VSoko, " +
 		"h.Id_Shain, h.VShain, h.CalcFlag, h.Kubun, h.IsPay, h.EndFlag, h.ManualNo, h.RelateNo1, " +
-		"h.KingakuTotal, h.Tax, h.Total";
+		"h.KingakuTotal, h.Tax1, h.Tax2, h.Tax3, h.Total";
 
 	protected override long GetDenToriId(Tran00Uriage den) => den.Id_Tokui;
 	protected override string GetDenKakeDay(Tran00Uriage den) => den.KakeDay;
 	protected override long GetDenTotal(Tran00Uriage den) => den.Total;
-	protected override long GetDenTax(Tran00Uriage den) => den.Tax;
+	protected override long GetDenTax(Tran00Uriage den) => den.Tax1 + den.Tax2 + den.Tax3;
 	protected override int GetDenEndFlag(Tran00Uriage den) => den.EndFlag;
 	protected override string GetDenManualNo(Tran00Uriage den) => den.ManualNo;
 
