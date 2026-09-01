@@ -777,51 +777,15 @@ WHERE SumMonth <= @0;
 			: $"SUM(CASE WHEN k.Code = '{code}' THEN {KinMeisaiKingaku} ELSE 0 END)";
 
 	/// <summary>
-	/// 対象期間より後の月も再計算へ含めるため、実効の終了月を求める。
-	/// <para>
-	/// 繰越(<c>Balance</c>)は前月から積み上がるので、過去月だけを再作成すると以降の月が古い繰越のまま残る。
-	/// 指定 <paramref name="dateToYyyymm"/> より後に集計行または伝票が存在すれば、その最大月まで対象を伸ばす。
-	/// 夜間ジョブは前月・当月しか回さないため通常は指定値のままで、画面から任意期間を指定したときだけ伸びる。
-	/// </para>
-	/// <para>
-	/// 伝票側は <c>substr(KakeDay,1,6) &gt; @0</c> と同値の <c>KakeDay &gt; @0 || '99'</c> で書き、
-	/// <c>KakeDay</c> のインデックスが効く形にしている。
-	/// </para>
-	/// </summary>
-	string ExtendToMonth(string summaryTable, string[] denTables, string kinTable, string dateToYyyymm, int shime) {
-		var candidates = new List<string> { dateToYyyymm };
-		var summaryMonthSql = $@"
-SELECT MAX(DenMonth)
-FROM {summaryTable}
-WHERE DenMonth > @0
-";
-		var summaryMonth = _db.FirstOrDefault<string>(summaryMonthSql, dateToYyyymm);
-		if (!string.IsNullOrEmpty(summaryMonth)) {
-			candidates.Add(summaryMonth);
-		}
-
-		var cutoffDay = ClosingMonthCalculator.GetPeriod(dateToYyyymm, shime).DayTo;
-		foreach (var tableName in denTables.Append(kinTable)) {
-			var maxDay = _db.FirstOrDefault<string>($"SELECT MAX(KakeDay) FROM {tableName} WHERE KakeDay > @0", cutoffDay);
-			if (!string.IsNullOrEmpty(maxDay)) {
-				candidates.Add(ClosingMonthCalculator.CalculateKakeMonth(maxDay, shime));
-			}
-		}
-
-		var found = candidates.Max(StringComparer.Ordinal)!;
-		if (string.CompareOrdinal(found, dateToYyyymm) <= 0) return dateToYyyymm;
-		_logger.LogInformation(
-			"{Table} の再計算範囲を繰越の整合のため {To} から {Extended} へ延長しました", summaryTable, dateToYyyymm, found);
-		return found;
-	}
-
-	/// <summary>
 	/// 期首年月日(yyyyMMdd)を <see cref="MasterSysman"/> から取得する。未設定時は "19010101"。
 	/// <para>
 	/// 期首売掛残・買掛残・請求残・支払残は外部CSV取込(ExternalCsvImportView)で Summary 各テーブルへ
-	/// 期首前の年月(DenMonth/DenDay)を持つ行として取り込む。この期首年月より前の集計行は移行時の
-	/// 期首残高として凍結し、売掛・買掛・請求・支払の再計算では削除・上書きしない。繰越(Balance/previousBalance)
-	/// は凍結行を起点として自然に積み上がる。仕様は D-08(期首残高と移行)を参照する。
+	/// 期首前の年月(DenMonth/DenDay)を持つ行として取り込む。この期首年月より前は伝票が移行されていない
+	/// ため集計対象にできない、というだけのガードであり、売掛・買掛・請求・支払の再計算では
+	/// 期首年月より前の集計行を削除・上書きしない。期首残高行は「期首直前の1期間の実績行」として
+	/// 置かれ、繰越はテーブルに持たず、帳票側の <c>PreviousBalance</c>(<c>SUM(TotalSales - TotalIn)</c> 等)
+	/// に自然に含まれる形で参照される。仕様は
+	/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 4.2 を参照する。
 	/// </para>
 	/// </summary>
 	private string GetFiscalStartDate() {
@@ -841,7 +805,14 @@ WHERE DenMonth > @0
 	/// 売上は区分(<see cref="EnumUri00"/>)で 売上 / 返品 / 値引 へ、入金は明細の <c>Id_Kin</c> で
 	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。売上・返品・値引は税抜 <c>KingakuTotal</c> の絶対値内訳とし、
 	/// 合計は内訳と税から算出する(<c>Total</c>は税込のため使うと消費税が二重計上になる。仕様3.8)。区分99(その他売上)は
-	/// 売上へ畳み込む(請求残<see cref="SummaryUriSei"/>ではSonota列へ分離集計するため、こことは扱いが異なる)。
+	/// 売上とは別に <c>Sonota</c> 列へ分離集計し、<c>TotalSales</c> へ加算する(請求残<see cref="SummaryUriSei"/>と同じ扱い)。
+	/// </para>
+	/// <para>
+	/// 各行の <c>Balance</c> は対象期間(年月)だけの純増減
+	/// (<c>Uriage - Henpin - Nebiki + Sonota + Tax1 + Tax2 + Tax3 - TotalIn</c>、正=未回収)であり、
+	/// 繰越はテーブルに持たない。過去の期間へ積み上げないため、指定した年月範囲だけを DELETE→INSERT すればよく、
+	/// 後続の月へ影響しない。前残が必要な帳票は <c>SUM(TotalSales - TotalIn) WHERE DenMonth &lt; 対象年月</c> を
+	/// 読み出し時に算出する(表示専用プロパティ <c>PreviousBalance</c>)。
 	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
@@ -849,7 +820,7 @@ WHERE DenMonth > @0
 	/// <returns></returns>
 	public int CalcSummaryUriKake(string DatefromYyyymm, string DateToYyyymm) {
 		var cnt = 0;
-		// 期首年月(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
+		// 期首年月(MasterSysman.FiscalStartDate)以前は伝票が移行されていないため集計しない。
 		var fiscalStart = GetFiscalStartDate();
 		var fiscalMonth = fiscalStart[..6];
 		if (string.CompareOrdinal(DateToYyyymm, fiscalMonth) < 0) return cnt;
@@ -857,7 +828,8 @@ WHERE DenMonth > @0
 		const string deleteSql = "DELETE FROM SummaryUriKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
 		var shime = GetOwnClosingDay();
-		var toMonth = ExtendToMonth("SummaryUriKake", ["Tran00Uriage"], "Tran06Nyukin", DateToYyyymm, shime);
+		// 繰越を持たないため、再計算は指定された年月範囲だけを対象にする(以降の月は変化しない)。
+		var toMonth = DateToYyyymm;
 		var targetDays = ClosingMonthCalculator.GetPeriodRange(DatefromYyyymm, toMonth, shime);
 		if (string.CompareOrdinal(targetDays.DayTo, fiscalStart) < 0) return cnt;
 		var dayFrom = string.CompareOrdinal(targetDays.DayFrom, fiscalStart) < 0 ? fiscalStart : targetDays.DayFrom;
@@ -878,9 +850,10 @@ movements AS (
 		t.Id_Tokui,
 		-- Uriage/Henpin/Nebikiは税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
 		-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Uriage,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Uriage,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun = 99 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Sonota,
 		{uriageTaxCols},
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran00Uriage AS t
@@ -891,7 +864,7 @@ movements AS (
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Torisaki AS Id_Tokui,
-		0, 0, 0,
+		0, 0, 0, 0,
 		{ZeroTaxSourceColumns},
 		{KinBucket("01")} AS Cash,
 		{KinBucket("02")} AS Fee,
@@ -910,6 +883,7 @@ monthly AS (
 		SUM(Uriage) AS Uriage,
 		SUM(Henpin) AS Henpin,
 		SUM(Nebiki) AS Nebiki,
+		SUM(Sonota) AS Sonota,
 		{sumTaxCols},
 		SUM(Cash) AS Cash,
 		SUM(Fee) AS Fee,
@@ -927,6 +901,7 @@ calculated AS (
 		m.Uriage,
 		m.Henpin,
 		m.Nebiki,
+		m.Sonota,
 		m.TaxableAmount1,
 		m.TaxableAmount2,
 		m.TaxableAmount3,
@@ -944,38 +919,25 @@ calculated AS (
 totals AS (
 	SELECT
 		c.*,
-		c.Uriage - c.Henpin - c.Nebiki + (c.Tax1 + c.Tax2 + c.Tax3) AS TotalSales,
+		c.Uriage - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3) AS TotalSales,
 		c.Cash + c.Fee + c.Densai + c.Offset + c.Other AS TotalIn
 	FROM calculated AS c
-),
-previousBalance AS (
-	SELECT s.Id_Tokui, s.Balance
-	FROM SummaryUriKake AS s
-	WHERE s.DenMonth = (
-		SELECT MAX(p.DenMonth)
-		FROM SummaryUriKake AS p
-		WHERE p.Id_Tokui = s.Id_Tokui
-		  AND p.DenMonth < @2
-	)
 )
 INSERT INTO SummaryUriKake (
-	Id_Tokui, DenMonth, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki,
+	Id_Tokui, DenMonth, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Sonota,
 	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
 	c.Id_Tokui,
 	c.DenMonth,
-	IFNULL(p.Balance, 0) + SUM(c.TotalIn - c.TotalSales) OVER (
-		PARTITION BY c.Id_Tokui
-		ORDER BY c.DenMonth
-		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-	) AS Balance,
+	c.TotalSales - c.TotalIn AS Balance,
 	c.TotalIn,
 	c.TotalSales,
 	c.Uriage,
 	c.Henpin,
 	c.Nebiki,
+	c.Sonota,
 	c.Tax1,
 	c.Tax2,
 	c.Tax3,
@@ -989,23 +951,28 @@ SELECT
 	c.Other,
 	{vdate} AS Vdc,
 	{vdate} AS Vdu
-FROM totals AS c
-LEFT JOIN previousBalance AS p ON p.Id_Tokui = c.Id_Tokui;
+FROM totals AS c;
 ";
 		var period = $"{DatefromYyyymm}-{toMonth} ({dayFrom}-{targetDays.DayTo},締日={shime})";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryUriKake(delete)", "SummaryUriKake", period);
-		cnt += ExecuteAndCounts(sql, [dayFrom, targetDays.DayTo, DatefromYyyymm], "CalcSummaryUriKake", "SummaryUriKake", period);
+		cnt += ExecuteAndCounts(sql, [dayFrom, targetDays.DayTo], "CalcSummaryUriKake", "SummaryUriKake", period);
 		_db.CompleteTransaction();
 		return cnt;
 	}
 	/// <summary>
 	/// 指定締日・請求月・得意先コード範囲の請求残を再作成する。
 	/// <para>通常再計算では請求書番号と連番を保持し、対象期間の伝票内訳だけを作り直す。</para>
+	/// <para>
+	/// <c>Balance</c> は当該締期間だけの純増減
+	/// (<c>Uriage - Henpin - Nebiki + Sonota + Tax1 + Tax2 + Tax3 - TotalIn</c>、正=未回収)であり、繰越は持たない。
+	/// 前残が必要な帳票は <c>SUM(TotalSales - TotalIn) WHERE DayTo &lt; 対象期間の開始日</c> を読み出し時に算出する
+	/// (表示専用プロパティ <c>PreviousBalance</c>)。
+	/// </para>
 	/// </summary>
 	public int CalcSummaryUriSei(string billingYyyymm, int shime, string tokuiCodeFrom = "", string tokuiCodeTo = "", bool isReissue = false) {
 		var (dayFrom, dayTo) = GetClosingPeriod(billingYyyymm, shime);
-		// 期首日(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
+		// 期首日(MasterSysman.FiscalStartDate)以前は伝票が移行されていないため集計しない。
 		// 締期間が期首前に終わるなら何もせず、期首をまたぐ場合は開始日を期首日まで切り上げる。
 		var fiscalStart = GetFiscalStartDate();
 		if (string.CompareOrdinal(dayTo, fiscalStart) < 0) return 0;
@@ -1083,12 +1050,6 @@ targets AS (
 	  AND (@3 = '' OR Code >= @3)
 	  AND (@4 = '' OR Code <= @4)
 ),
-previousBalance AS (
-	SELECT Id_Tokui, SUM(TotalIn - TotalSales) AS Balance
-	FROM SummaryUriSei
-	WHERE DayTo < @0
-	GROUP BY Id_Tokui
-),
 calculated AS (
 	-- 消費税(Tax1/2/3)は伝票単位ぶんを合算し、請求単位ぶんだけ得意先(MasterTokui)のTaxRoundingで1回丸める(3.5)。
 	SELECT
@@ -1131,7 +1092,7 @@ SELECT
 		ELSE printf('%d-%s-%02d', c.Id_Tokui, @1, CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban + 1 ELSE 1 END) END,
 	CASE WHEN IFNULL(o.Renban, 0) > 0 AND @6 <> 0 THEN o.Renban + 1 WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END,
 	c.NyukinYoteiDay,
-	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Uriage - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3)),
+	(c.Uriage - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3)) - (c.Cash + c.Fee + c.Densai + c.Offset + c.Other),
 	c.Cash + c.Fee + c.Densai + c.Offset + c.Other,
 	c.Uriage - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3),
 	c.Uriage, c.Henpin, c.Nebiki, c.Sonota,
@@ -1139,7 +1100,6 @@ SELECT
 	c.Cash, c.Fee, c.Densai, c.Offset, c.Other,
 	{vdate}, {vdate}
 FROM calculated AS c
-LEFT JOIN previousBalance AS b ON b.Id_Tokui = c.Id_Tokui
 LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 ";
 			var period = $"{dayFrom}-{dayTo},締日={shime},再発行={isReissue}";
@@ -1184,10 +1144,16 @@ LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 	}
 	/// <summary>
 	/// 指定締日・支払月・仕入先コード範囲の支払残を再作成する。
+	/// <para>
+	/// <c>Balance</c> は当該締期間だけの純増減
+	/// (<c>Shiire - Henpin - Nebiki + Sonota + Tax1 + Tax2 + Tax3 - TotalOut</c>、正=未払)であり、繰越は持たない。
+	/// 前残が必要な帳票は <c>SUM(TotalShiire - TotalOut) WHERE DayTo &lt; 対象期間の開始日</c> を読み出し時に算出する
+	/// (表示専用プロパティ <c>PreviousBalance</c>)。
+	/// </para>
 	/// </summary>
 	public int CalcSummaryKaiShi(string paymentYyyymm, int shime, string shiireCodeFrom = "", string shiireCodeTo = "") {
 		var (dayFrom, dayTo) = GetClosingPeriod(paymentYyyymm, shime);
-		// 期首日(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
+		// 期首日(MasterSysman.FiscalStartDate)以前は伝票が移行されていないため集計しない。
 		// 締期間が期首前に終わるなら何もせず、期首をまたぐ場合は開始日を期首日まで切り上げる。
 		var fiscalStart = GetFiscalStartDate();
 		if (string.CompareOrdinal(dayTo, fiscalStart) < 0) return 0;
@@ -1221,13 +1187,16 @@ WITH kinmap AS (
 purchases AS (
 	-- Tran02Material（生地・付属仕入）を合算する。区分99（その他）は仕入ではなく消費税(Tax1)へ全額を積む点が
 	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため。A-6、丸めは行わずそのまま加算する）。
+	-- Sonota99(A-6用、Tran02Materialの区分99を丸めずTax1へ積む特殊処理)と Sonota(区分99の分離集計、
+	-- Tran03Shiireの区分99のみ、TotalShiireへ加算)は別物であり混同しないこと。
 	SELECT
 		Id_Shiire,
 		SUM(Shiire) AS Shiire, SUM(Henpin) AS Henpin, SUM(Nebiki) AS Nebiki,
 		{sumTaxCols},
+		SUM(Sonota) AS Sonota,
 		SUM(Sonota99) AS Sonota99
 	FROM (
-		-- Shiire/Henpin/Nebiki/Sonota99は税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
+		-- Shiire/Henpin/Nebiki/Sonota/Sonota99は税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
 		-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
 		-- Sonota99(Tran02Materialの区分99)も同様にKingakuTotalへ揃える(丸めずそのままTax1へ積む特殊処理、A-6)。
 		SELECT
@@ -1236,6 +1205,7 @@ purchases AS (
 			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(t.KingakuTotal) ELSE 0 END AS Henpin,
 			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(t.KingakuTotal) ELSE 0 END AS Nebiki,
 			{shiireRowTaxCols},
+			CASE WHEN t.Kubun = 99 THEN ABS(t.KingakuTotal) ELSE 0 END AS Sonota,
 			0 AS Sonota99
 		FROM Tran03Shiire AS t
 		WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
@@ -1246,6 +1216,7 @@ purchases AS (
 			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(t.KingakuTotal) ELSE 0 END AS Henpin,
 			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(t.KingakuTotal) ELSE 0 END AS Nebiki,
 			{materialRowTaxCols},
+			0 AS Sonota,
 			CASE WHEN t.Kubun = 99 THEN ABS(t.KingakuTotal) ELSE 0 END AS Sonota99
 		FROM Tran02Material AS t
 		WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
@@ -1272,12 +1243,6 @@ targets AS (
 	  AND (@3 = '' OR Code >= @3)
 	  AND (@4 = '' OR Code <= @4)
 ),
-previousBalance AS (
-	SELECT Id_Shiire, SUM(TotalOut - TotalShiire) AS Balance
-	FROM SummaryKaiShi
-	WHERE DayTo < @0
-	GROUP BY Id_Shiire
-),
 calculated AS (
 	-- 消費税(Tax1/2/3)は伝票単位ぶんを合算し、請求単位ぶんだけ仕入先(MasterShiire)のTaxRoundingで1回丸める(3.5)。
 	SELECT
@@ -1285,6 +1250,7 @@ calculated AS (
 		IFNULL(s.Shiire, 0) AS Shiire,
 		IFNULL(s.Henpin, 0) AS Henpin,
 		IFNULL(s.Nebiki, 0) AS Nebiki,
+		IFNULL(s.Sonota, 0) AS Sonota,
 		{tax1} AS Tax1,
 		{tax2} AS Tax2,
 		{tax3} AS Tax3,
@@ -1306,7 +1272,7 @@ calculated AS (
 )
 INSERT INTO SummaryKaiShi (
 	Id_Shiire, DenDay, DayFrom, DayTo, ShiharaiYoteiDay,
-	Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki,
+	Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Sonota,
 	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
@@ -1316,15 +1282,14 @@ SELECT
 	@0,
 	@1,
 	c.ShiharaiYoteiDay,
-	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Shiire - c.Henpin - c.Nebiki + (c.Tax1 + c.Tax2 + c.Tax3)),
+	(c.Shiire - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3)) - (c.Cash + c.Fee + c.Densai + c.Offset + c.Other),
 	c.Cash + c.Fee + c.Densai + c.Offset + c.Other,
-	c.Shiire - c.Henpin - c.Nebiki + (c.Tax1 + c.Tax2 + c.Tax3),
-	c.Shiire, c.Henpin, c.Nebiki,
+	c.Shiire - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3),
+	c.Shiire, c.Henpin, c.Nebiki, c.Sonota,
 	c.Tax1, c.Tax2, c.Tax3, c.TaxableAmount1, c.TaxableAmount2, c.TaxableAmount3,
 	c.Cash, c.Fee, c.Densai, c.Offset, c.Other,
 	{vdate}, {vdate}
-FROM calculated AS c
-LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
+FROM calculated AS c;
 ";
 			var period = $"{dayFrom}-{dayTo},締日={shime}";
 			var parameters = new object[] { dayFrom, dayTo, shime, shiireCodeFrom, shiireCodeTo, paymentYyyymm };
@@ -1347,7 +1312,16 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 	/// 仕入は区分(<see cref="EnumShiire"/>)で 仕入 / 返品 / 値引 へ、支払は明細の <c>Id_Kin</c> で
 	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。仕入・返品・値引は税抜 <c>KingakuTotal</c> の絶対値内訳とし、
 	/// 合計は内訳と税から算出する(<c>Total</c>は税込のため使うと消費税が二重計上になる。仕様3.8)。区分99(その他仕入)は
-	/// 仕入へ畳み込む。売掛側(<see cref="CalcSummaryUriKake"/>)と同じ規則である。
+	/// 仕入とは別に <c>Sonota</c> 列(<see cref="Tran03Shiire"/>ぶんのみ)へ分離集計し、<c>TotalShiire</c> へ加算する
+	/// (売掛側<see cref="CalcSummaryUriKake"/>と同じ扱い)。<see cref="Tran02Material"/>の区分99は
+	/// この <c>Sonota</c> とは別物であり、丸めずそのまま <c>Tax1</c> へ全額加算する特殊処理(A-6)を維持する。
+	/// </para>
+	/// <para>
+	/// 各行の <c>Balance</c> は対象期間(年月)だけの純増減
+	/// (<c>Shiire - Henpin - Nebiki + Sonota + Tax1 + Tax2 + Tax3 - TotalOut</c>、正=未払)であり、
+	/// 繰越はテーブルに持たない。過去の期間へ積み上げないため、指定した年月範囲だけを DELETE→INSERT すればよく、
+	/// 後続の月へ影響しない。前残が必要な帳票は <c>SUM(TotalShiire - TotalOut) WHERE DenMonth &lt; 対象年月</c> を
+	/// 読み出し時に算出する(表示専用プロパティ <c>PreviousBalance</c>)。
 	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
@@ -1355,7 +1329,7 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 	/// <returns></returns>
 	public int CalcSummaryKaiKake(string DatefromYyyymm, string DateToYyyymm) {
 		var cnt = 0;
-		// 期首年月(MasterSysman.FiscalStartDate)以前は期首残高として凍結し再計算しない。
+		// 期首年月(MasterSysman.FiscalStartDate)以前は伝票が移行されていないため集計しない。
 		var fiscalStart = GetFiscalStartDate();
 		var fiscalMonth = fiscalStart[..6];
 		if (string.CompareOrdinal(DateToYyyymm, fiscalMonth) < 0) return cnt;
@@ -1363,7 +1337,8 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 		const string deleteSql = "DELETE FROM SummaryKaiKake WHERE DenMonth BETWEEN @0 AND @1";
 		var vdate = Common.GetVdate();
 		var shime = GetOwnClosingDay();
-		var toMonth = ExtendToMonth("SummaryKaiKake", ["Tran03Shiire", "Tran02Material"], "Tran07Shiharai", DateToYyyymm, shime);
+		// 繰越を持たないため、再計算は指定された年月範囲だけを対象にする(以降の月は変化しない)。
+		var toMonth = DateToYyyymm;
 		var targetDays = ClosingMonthCalculator.GetPeriodRange(DatefromYyyymm, toMonth, shime);
 		if (string.CompareOrdinal(targetDays.DayTo, fiscalStart) < 0) return cnt;
 		var dayFrom = string.CompareOrdinal(targetDays.DayFrom, fiscalStart) < 0 ? fiscalStart : targetDays.DayFrom;
@@ -1385,9 +1360,10 @@ movements AS (
 		t.Id_Shiire,
 		-- Shiire/Henpin/Nebikiは税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
 		-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun = 99 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Sonota,
 		{shiireTaxCols},
 		0 AS Sonota99,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
@@ -1399,13 +1375,15 @@ movements AS (
 	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため。A-6、丸めは行わずそのまま加算する）。
 	-- Shiire/Henpin/Nebiki/Sonota99は税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
 	-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
-	-- Sonota99(区分99)も同様にKingakuTotalへ揃える(丸めずそのままTax1へ積む特殊処理、A-6)。
+	-- Sonota99(区分99、A-6用)も同様にKingakuTotalへ揃える(丸めずそのままTax1へ積む特殊処理)。
+	-- ここでのSonota99はSonota(区分99の分離集計、Tran03Shiireぶんのみ)とは別物であり、TotalShiireには積まない。
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Nebiki,
+		0 AS Sonota,
 		{materialTaxCols},
 		SUM(CASE WHEN t.Kubun = 99 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Sonota99,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
@@ -1417,7 +1395,7 @@ movements AS (
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Torisaki AS Id_Shiire,
-		0, 0, 0,
+		0, 0, 0, 0,
 		{ZeroTaxSourceColumns},
 		0 AS Sonota99,
 		{KinBucket("01")} AS Cash,
@@ -1437,6 +1415,7 @@ monthly AS (
 		SUM(Shiire) AS Shiire,
 		SUM(Henpin) AS Henpin,
 		SUM(Nebiki) AS Nebiki,
+		SUM(Sonota) AS Sonota,
 		{sumTaxCols},
 		SUM(Sonota99) AS Sonota99,
 		SUM(Cash) AS Cash,
@@ -1455,6 +1434,7 @@ calculated AS (
 		m.Shiire,
 		m.Henpin,
 		m.Nebiki,
+		m.Sonota,
 		m.TaxableAmount1,
 		m.TaxableAmount2,
 		m.TaxableAmount3,
@@ -1472,38 +1452,25 @@ calculated AS (
 totals AS (
 	SELECT
 		c.*,
-		c.Shiire - c.Henpin - c.Nebiki + (c.Tax1 + c.Tax2 + c.Tax3) AS TotalShiire,
+		c.Shiire - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3) AS TotalShiire,
 		c.Cash + c.Fee + c.Densai + c.Offset + c.Other AS TotalOut
 	FROM calculated AS c
-),
-previousBalance AS (
-	SELECT s.Id_Shiire, s.Balance
-	FROM SummaryKaiKake AS s
-	WHERE s.DenMonth = (
-		SELECT MAX(p.DenMonth)
-		FROM SummaryKaiKake AS p
-		WHERE p.Id_Shiire = s.Id_Shiire
-		  AND p.DenMonth < @2
-	)
 )
 INSERT INTO SummaryKaiKake (
-	Id_Shiire, DenMonth, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki,
+	Id_Shiire, DenMonth, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Sonota,
 	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
 	c.Id_Shiire,
 	c.DenMonth,
-	IFNULL(p.Balance, 0) + SUM(c.TotalOut - c.TotalShiire) OVER (
-		PARTITION BY c.Id_Shiire
-		ORDER BY c.DenMonth
-		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-	) AS Balance,
+	c.TotalShiire - c.TotalOut AS Balance,
 	c.TotalOut,
 	c.TotalShiire,
 	c.Shiire,
 	c.Henpin,
 	c.Nebiki,
+	c.Sonota,
 	c.Tax1,
 	c.Tax2,
 	c.Tax3,
@@ -1517,13 +1484,12 @@ SELECT
 	c.Other,
 	{vdate} AS Vdc,
 	{vdate} AS Vdu
-FROM totals AS c
-LEFT JOIN previousBalance AS p ON p.Id_Shiire = c.Id_Shiire;
+FROM totals AS c;
 ";
 		var period = $"{DatefromYyyymm}-{toMonth} ({dayFrom}-{targetDays.DayTo},締日={shime})";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryKaiKake(delete)", "SummaryKaiKake", period);
-		cnt += ExecuteAndCounts(sql, [dayFrom, targetDays.DayTo, DatefromYyyymm], "CalcSummaryKaiKake", "SummaryKaiKake", period);
+		cnt += ExecuteAndCounts(sql, [dayFrom, targetDays.DayTo], "CalcSummaryKaiKake", "SummaryKaiKake", period);
 		_db.CompleteTransaction();
 		return cnt;
 	}
