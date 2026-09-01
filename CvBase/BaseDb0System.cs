@@ -36,7 +36,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnShimeBi))]
 	[OldTableCommentAttr("自社締日")]
-	[Comment("自社締め日 1-31、99")]
+	[Comment("自社締め日 1-28、99")]
 	public partial int ShimeBi { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -88,7 +88,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("期首年月日")]
-	[Comment("期首年月日")]
+	[Comment("期首年月日 yyyyMMdd")]
 	public partial string FiscalStartDate { get; set; } = "19010101";
 	/// <summary>
 	/// 消費税率リスト
@@ -107,6 +107,7 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	/// 標準倉庫
 	/// </summary>
 	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui),tenType:0)]
 	[Comment("標準倉庫")]
 	public partial long Id_Soko { get; set; }
 	/// <summary>
@@ -117,6 +118,13 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ColumnSizeDml(100)]
 	[Comment("倉庫データ")]
 	public partial CodeNameView VSoko { get; set; } = new();
+	/// <summary>
+	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumRounding))]
+	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	public partial int TaxRounding { get; set; } = 0;
 }
 /// <summary>
 /// 消費税率テーブル(Id 1-3)

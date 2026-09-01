@@ -52,6 +52,8 @@ public enum EnumCustomerLcvKubun : int {
 /// </summary>
 [Comment("締日")]
 public enum EnumShime : int {
+	[Comment("未使用")]
+	Day00 = 0,
 	Day01 = 1,
 	Day02 = 2,
 	Day03 = 3,
@@ -112,9 +114,9 @@ public enum EnumTokui : int {
 }
 
 /// <summary>
-/// 税計算単位
+/// 外税内税区分
 /// </summary>
-[Comment("税計算単位 外税／内税")]
+[Comment("外税内税区分 外税／内税")]
 public enum EnumTaxPriceType : int {
 	/// <summary>
 	/// 外税
@@ -138,15 +140,15 @@ public enum EnumRounding : int {
 	[Comment("四捨五入")]
 	Round = 0,
 	/// <summary>
-	/// 切捨
-	/// </summary>
-	[Comment("切捨")]
-	Floor = 1,
-	/// <summary>
 	/// 切上
 	/// </summary>
 	[Comment("切上")]
-	Ceiling = 2
+	Ceiling = 1,
+	/// <summary>
+	/// 切捨
+	/// </summary>
+	[Comment("切捨")]
+	Floor = 2
 }
 /// <summary>
 /// 税計算単位
@@ -164,6 +166,31 @@ public enum EnumTaxCalcUnit : int {
 	[Comment("取引・伝票単位")]
 	Slip = 1
 }
+/// <summary>
+/// 伝票印字タイプ
+/// </summary>
+[Comment("伝票印字タイプ")]
+public enum  EnumSlipFormType {
+	[Comment("印字しない")]
+	_0_None = 0,
+	[Comment("自社伝票")]
+	_1_Standard = 1,
+	[Comment("百貨店伝票")]
+	_2_DepartmentStore = 2,
+	[Comment("チェーンストア統一伝票1型")]
+	_3_ChainStoreStandardType1 = 3,
+	[Comment("チェーンストア統一伝票")]
+	_4_ChainStoreStandard = 4,
+	[Comment("百貨店伝票（丸井用）")]
+	_5_DepartmentStoreMarui = 5,
+	[Comment("チェーンストア統一伝票（ターンアラウンド用2型）")]
+	_6_ChainStoreTurnaroundType2 = 6,
+	[Comment("チェーンストア統一伝票（ターンアラウンド用1型）")]
+	_7_ChainStoreTurnaroundType1 = 7,
+	[Comment("百貨店伝票Ⅱ型")]
+	_8_DepartmentStoreType2 = 8
+}
+
 /// <summary>
 /// ログインロール（SysLogin.Id_Role）
 /// メニュー表示のロール別切替に使用する。

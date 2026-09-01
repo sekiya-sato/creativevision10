@@ -232,6 +232,7 @@ public partial class ConvertDb {
 			BankAccount2 = getString(recSys, "振込先2"),
 			BankAccount3 = getString(recSys, "振込先3"),
 			FiscalStartDate = getString(recSys, "期首年月日", "19010101"),
+			TaxRounding = getDataInt(recSys, "売上端数区分"),
 			Jsub = new List<MasterSysTax>(),
 		};
 		foreach (var rec in mstTax) {
@@ -351,7 +352,7 @@ order by k.顧客CD
 				Address3 = getString(rec, "住所3"),
 				Mail = getString(rec, "メール"),
 				Tel = getString(rec, "TEL1").DefaultIfEmpty(getString(rec, "TEL2")),
-				Memo = getString(rec, "拡張メモ"),
+				Memo = getString(rec, "拡張メモ").DefaultIfEmpty(getString(rec, "メモ")),
 				VTenpo = new() {
 					Cd = getString(rec, "店舗CD"),  // 残りはCnvAfterMaster()でセット
 				},
@@ -407,59 +408,6 @@ order by k.顧客CD
 			ranges.Add((sortedCodes[i], sortedCodes[end]));
 		}
 		return ranges;
-	}
-	/// <summary>
-	/// 顧客マスター変換(Option) 存在するマスタに追加で情報を加える
-	/// </summary>
-	/// <param name="isInit"></param>
-	/// <returns></returns>
-	[Obsolete]
-	private int CnvOptionMasterEndCustomer_Disabled() {
-		const string sql = "select 顧客CD,拡張メモ from HC$master_kokyaku where 顧客CD>'.' and 拡張メモ>'.'  order by 顧客CD"; // 顧客分類 'K01'-'K10'
-		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql);
-		if (rows.Count == 0)
-			return 0;
-		int cnt = 0;
-		#region ロジック別の処理(1件ずつ取得および更新 / 一括取得後に更新 / 更新のみ逐次実行)
-		// 1) 1件ずつ取得および更新
-		/*
-		foreach (var rec in rows) {
-			var item = _toDb.FirstOrDefault<MasterEndCustomer>("where Code=@0", getString(rec, "顧客CD"));
-			if(item !=null && item.Id > 0) {
-				item.Memo = getString(rec, "拡張メモ");
-				var ret = _toDb.Update<MasterEndCustomer>(item, c => c.Memo);
-				if (ret > 0)
-					cnt++;
-			}
-		}
-		*/
-		// 2) 一括取得後に更新
-		/*
-		var list = _toDb.Fetch<MasterEndCustomer>("where Code in (@0)", codes);
-		foreach (var item in list) {
-			var rec = rows.FirstOrDefault(r => getString(r, "顧客CD") == item.Code);
-			if (rec != null) {
-				item.Memo = getString(rec, "拡張メモ");
-				var ret = _toDb.Update<MasterEndCustomer>(item, c => c.Memo);
-				if (ret > 0)
-					cnt++;
-			}
-		}
-		*/
-		// 3) 更新のみ逐次実行
-		#endregion
-		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
-		foreach (var rec in rows) {
-			var code = getString(rec, "顧客CD");
-			var memo = getString(rec, "拡張メモ");
-			if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(memo))
-				continue;
-			var ret = _toDb.Update<MasterEndCustomer>("set Memo=@0 where Code=@1", memo, code); // "Update MasterEndCustomer "
-			if (ret > 0)
-				cnt += ret;
-		}
-		_toDb.CompleteTransaction();
-		return cnt;
 	}
 	/// <summary>
 	/// 商品マスター変換
@@ -627,20 +575,17 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				VShain = new(shain?.Id ?? 0, shain?.Code ?? string.Empty, shain?.Name ?? string.Empty),
 				RateProper = getDataInt(rec, "掛率"),
 				RateSale = getDataInt(rec, "セール掛率"),
-				//Shime1 = (EnumShime)getDataInt(rec, "締日"),
-				//Shime2 = (EnumShime)getDataInt(rec, "締日2"),
-				//Shime3 = (EnumShime)getDataInt(rec, "締日3"),
 				Shime1 = getDataInt(rec, "締日"),
 				Shime2 = getDataInt(rec, "締日2"),
 				Shime3 = getDataInt(rec, "締日3"),
 				PayMonth = getDataInt(rec, "入金予定月"),
 				PayDay = getDataInt(rec, "入金予定日"),
-				//PayDay = (EnumShime)getDataInt(rec, "入金予定日"),
-				//TenType = (EnumTokui)getDataInt(rec, "店種区分"),
-				//IsZaiko = (EnumYesNo)getDataInt(rec, "在庫管理FLG"),
 				TenType = getDataInt(rec, "店種区分"),
 				IsZaiko = getDataInt(rec, "在庫管理FLG"),
 				IsPay = getDataInt(rec, "請求印刷"),
+				TaxRounding = getDataInt(rec, "消費税端数"),
+				TaxCalcUnit = getDataInt(rec, "消費税計算方法"),
+				SlipFormType = getDataInt(rec, "伝票発行区分"),
 				Jdetail = new MasterToriDetail() {
 					BankAccount1 = getString(rec, "振込先1"),
 					BankAccount2 = getString(rec, "振込先2"),
@@ -678,6 +623,8 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				Shime3 = getDataInt(rec, "締日3"),
 				PayMonth = getDataInt(rec, "入金予定月"),
 				PayDay = getDataInt(rec, "入金予定日"),
+				TaxRounding = getDataInt(rec, "消費税端数"),
+				TaxCalcUnit = getDataInt(rec, "消費税計算方法"),
 				IsPay = getDataInt(rec, "支払印刷"),
 				Jdetail = new MasterToriDetail() {
 					BankAccount1 = $"{getString(rec, "振込銀行")} {getString(rec, "振込支店")} {getString(rec, "振込種別")} {getString(rec, "振込口座")}"
@@ -848,40 +795,11 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 		}
 		return cnt;
 	}
-	[Obsolete]
-	public int CnvAfterMasterOption_Disabled() {
-		int cnt = 0;
-		// MasterEndCustomer の Memo をキーに MasterTokui を検索し、該当する場合は MasterEndCustomer の Memo を更新する
-		var customerList = _toDb.Fetch<MasterEndCustomer>("where Memo IS NOT NULL AND Memo <> ''");
-		if (customerList != null && customerList.Count > 0) {
-			foreach (var customer in customerList) {
-				try {
-					var memo = customer?.Memo ?? string.Empty;
-					if (customer == null || string.IsNullOrWhiteSpace(memo))
-						continue;
-					// 該当Memoを持つ MasterTokui を取得し、存在すれば customer.Memo を更新する
-					var tokui = _toDb.FirstOrDefault<MasterTokui>("where Code=@0", memo);
-					if (tokui != null) {
-						customer.Memo = $"【{tokui.Code}】{tokui.Name}";
-						// 必要ならデータベース上の customer レコードを更新
-						try {
-							_toDb.Update(customer);
-						}
-						catch (Exception updEx) {
-							_logger?.LogWarning(updEx, "CnvAfterMasterOption: Failed to update MasterEndCustomer Id={0}", customer.Id);
-						}
-					}
-				}
-				catch (Exception ex) {
-					_logger?.LogWarning(ex, "CnvAfterMasterOption: Failed to resolve Memo for MasterEndCustomer Code={0}", customer?.Code);
-				}
-			}
-			cnt += customerList.Count;
-		}
-		return cnt;
-	}
-
-
+	/// <summary>
+	/// マスター変換後の住所の正規化
+	/// </summary>
+	/// <param name="isInit"></param>
+	/// <returns></returns>
 	public int CnvAfterMasterAddress(bool isInit = true) {
 		int cnt = 0;
 		cnt += ConvertItemAddress<MasterSysman>();

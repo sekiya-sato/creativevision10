@@ -188,6 +188,20 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[ColumnSizeDml(1000)]
 	[Comment("取引先詳細")]
 	public partial MasterToriDetail? Jdetail { get; set; }
+	/// <summary>
+	/// 税計算単位 0=請求、1=伝票
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumTaxCalcUnit))]
+	[Comment("税計算単位 0=請求、1=伝票")]
+	public partial int TaxCalcUnit { get; set; } = 0;
+	/// <summary>
+	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumRounding))]
+	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	public partial int TaxRounding { get; set; } = 0;
 }
 /// <summary>
 /// 取引先詳細
@@ -281,6 +295,20 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[ObservableProperty]
 	[Comment("納品リードタイム日数")]
 	public partial int LeadTimeDays { get; set; }
+	/// <summary>
+	/// 外税内税区分 0=外税、1=内税 ※伝票印字の表現のみに使用 主に店舗
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumTaxPriceType))]
+	[Comment("外税内税区分 0=外税 1=内税 ※伝票印字の表現のみに使用 主に店舗")]
+	public partial int TaxPriceType { get; set; } = 0;
+	/// <summary>
+	/// 伝票印字タイプ
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumSlipFormType))]
+	[Comment("伝票印字タイプ")]
+	public partial int SlipFormType { get; set; } = 0;
 }
 
 /// <summary>
