@@ -102,7 +102,7 @@ WHERE t.Code = @0 AND s.DenDay = @1", seeded.TokuiCode, expected.DayTo);
 		session.CheckEqual($"C-01 {expected.BillingMonth} 期間開始", expected.DayFrom, actual.DayFrom);
 		session.CheckEqual($"C-01 {expected.BillingMonth} 期間終了", expected.DayTo, actual.DayTo);
 		session.CheckEqual($"C-01 {expected.BillingMonth} 売上", expected.Uriage, actual.Uriage);
-		session.CheckEqual($"C-01 {expected.BillingMonth} 税", expected.Tax, actual.Tax);
+		session.CheckEqual($"C-01 {expected.BillingMonth} 税", expected.Tax, actual.Tax1 + actual.Tax2 + actual.Tax3);
 		session.CheckEqual($"C-01 {expected.BillingMonth} 売上額", expected.TotalSales, actual.TotalSales);
 		session.CheckEqual($"C-01 {expected.BillingMonth} 残高(繰越込み)", expected.Balance, actual.Balance);
 	}

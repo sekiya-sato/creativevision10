@@ -113,7 +113,12 @@ int Mixed() {
 		new() { No = 4, Id_Shohin = 0, Su = 1, Tanka = 2000, Kingaku = 2000 },       // 商品なし→標準1
 	};
 
-	var headerTax = TranTaxRebuildDb.ApplyMeisaiTax(meisai, sysman, taxIdByShohin, DenDay);
+	// ApplyMeisaiTaxは税区分(Id_Tax 1-3)ごとの合計をタプルで返す(フェーズ6でTaxCalculator.Applyへ委譲する形に
+	// 変わった際、ヘッダのTax1/2/3へそのまま代入できるようタプル化された)。本ツールはヘッダTax1/2/3の合計と
+	// 明細ごとの内訳を突合するため、まず合計(headerTax)を出す。
+	var headerTaxByGroup = TranTaxRebuildDb.ApplyMeisaiTax(meisai, sysman, taxIdByShohin, DenDay);
+	var headerTax = (int)(headerTaxByGroup.Tax1 + headerTaxByGroup.Tax2 + headerTaxByGroup.Tax3);
+	Console.WriteLine($"  Tax1(標準)={headerTaxByGroup.Tax1:N0} Tax2(軽減)={headerTaxByGroup.Tax2:N0} Tax3={headerTaxByGroup.Tax3:N0}");
 
 	Console.WriteLine($"{"No",3} {"Id_Shohin",10} {"Kingaku",9} {"Id_Tax",7} {"TaxRate",8} {"Tax",7}");
 	foreach (var m in meisai) {
@@ -155,7 +160,7 @@ int Mixed() {
 	var hikazeiTax = TranTaxRebuildDb.ApplyMeisaiTax(hikazei, sysman, hikazeiMap, DenDay);
 	Check("非課税 税率", 0, hikazei[0].TaxRate);
 	Check("非課税 税額", 0, hikazei[0].Tax);
-	Check("非課税 ヘッダTax", 0, hikazeiTax);
+	Check("非課税 ヘッダTax", 0L, hikazeiTax.Tax1 + hikazeiTax.Tax2 + hikazeiTax.Tax3);
 
 	// 税率切替日をまたぐか（Id=1 は 20191001 から 10%、それ以前は 8%）
 	Console.WriteLine();

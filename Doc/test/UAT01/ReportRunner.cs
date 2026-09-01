@@ -10,7 +10,7 @@ static QueryListSqlParam Sql(string text) => new(typeof(object), text, []);
 
 static string KaikakeSql() => @"
 WITH cur AS (
-  SELECT Id_Shiire, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Tax, Cash, Fee
+  SELECT Id_Shiire, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Tax1+Tax2+Tax3 AS Tax, Cash, Fee
   FROM SummaryKaiKake WHERE DenMonth = '202609'
 ), prev AS (
   SELECT Id_Shiire, Balance FROM SummaryKaiKake WHERE DenMonth = '202608'
@@ -31,7 +31,7 @@ SELECT substr(k.DenDay,1,4)||'/'||substr(k.DenDay,5,2)||'/'||substr(k.DenDay,7,2
        s.Code, s.Name,
        substr(k.DayFrom,1,4)||'/'||substr(k.DayFrom,5,2)||'/'||substr(k.DayFrom,7,2)||'～'||
        substr(k.DayTo,1,4)||'/'||substr(k.DayTo,5,2)||'/'||substr(k.DayTo,7,2),
-       k.TotalShiire, k.Tax, k.TotalOut, k.Balance,
+       k.TotalShiire, k.Tax1+k.Tax2+k.Tax3, k.TotalOut, k.Balance,
        substr(k.ShiharaiYoteiDay,1,4)||'/'||substr(k.ShiharaiYoteiDay,5,2)||'/'||substr(k.ShiharaiYoteiDay,7,2)
 FROM SummaryKaiShi k JOIN MasterShiire s ON s.Id=k.Id_Shiire
 WHERE k.DenDay>='20260901' AND k.DenDay<='20260930'

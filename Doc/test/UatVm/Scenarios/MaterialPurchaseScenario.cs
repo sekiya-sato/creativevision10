@@ -68,18 +68,19 @@ WHERE t.Code = @0 AND s.DenDay = @1", seeded.ShiireCode, seeded.DayTo);
 		if (!session.Check("C-09 支払残が1件作られる", rows.Count == 1, new { count = rows.Count })) return;
 
 		var actual = rows[0];
+		var actualTax = actual.Tax1 + actual.Tax2 + actual.Tax3;
 		session.Note("C-09 実際値", new {
 			actual.Shiire,
 			actual.Henpin,
 			actual.Nebiki,
-			actual.Tax,
+			Tax = actualTax,
 			actual.TotalShiire,
 		});
 
 		session.CheckEqual("C-09 仕入額（区分99は仕入へ畳み込まない）", seeded.ExpectedShiire, actual.Shiire);
 		session.CheckEqual("C-09 返品額", seeded.ExpectedHenpin, actual.Henpin);
 		session.CheckEqual("C-09 値引額", seeded.ExpectedNebiki, actual.Nebiki);
-		session.CheckEqual("C-09 税額（区分99の全額を消費税へ計上）", seeded.ExpectedTax, actual.Tax);
+		session.CheckEqual("C-09 税額（区分99の全額を消費税へ計上）", seeded.ExpectedTax, actualTax);
 		session.CheckEqual("C-09 仕入額合計（TotalShiire）", seeded.ExpectedTotalShiire, actual.TotalShiire);
 
 		session.SetDialogResponder(null);

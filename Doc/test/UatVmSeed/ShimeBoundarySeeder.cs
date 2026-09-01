@@ -1,6 +1,7 @@
 using System.Data;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvBaseSqlite;
 using Microsoft.Data.Sqlite;
 
@@ -87,14 +88,16 @@ public static class ShimeBoundarySeeder {
 		return new Result(tokui.Id, TokuiCode, Shime, _sales, expectations);
 	}
 
-	/// <summary>検証用得意先を用意する。既にあれば締日と支払条件だけ揃える。</summary>
+	/// <summary>検証用得意先を用意する。既にあれば締日・税計算単位・支払条件だけ揃える。</summary>
 	private static MasterTokui EnsureTokui(ExDatabaseSqlite db, Action<string> trace) {
 		var existing = db.Fetch<MasterTokui>("where Code=@0", TokuiCode).FirstOrDefault();
 		if (existing != null) {
-			if (existing.Shime1 != Shime) {
-				db.Execute($"UPDATE {db.GetTableName(typeof(MasterTokui))} SET Shime1=@0 WHERE Id=@1", Shime, existing.Id);
-				trace($"得意先 {TokuiCode} の締日を{Shime}へ更新 Id={existing.Id}");
+			if (existing.Shime1 != Shime || existing.TaxCalcUnit != (int)EnumTaxCalcUnit.Slip) {
+				db.Execute($"UPDATE {db.GetTableName(typeof(MasterTokui))} SET Shime1=@0, TaxCalcUnit=@1 WHERE Id=@2",
+					Shime, (int)EnumTaxCalcUnit.Slip, existing.Id);
+				trace($"得意先 {TokuiCode} の締日を{Shime}・税計算単位を伝票単位へ更新 Id={existing.Id}");
 				existing.Shime1 = Shime;
+				existing.TaxCalcUnit = (int)EnumTaxCalcUnit.Slip;
 			}
 			else {
 				trace($"得意先 {TokuiCode} は既に存在 Id={existing.Id} 締日={existing.Shime1}");
@@ -103,12 +106,15 @@ public static class ShimeBoundarySeeder {
 		}
 
 		// 支払条件は既存の実マスタと同じ「翌月末回収」(PayMonth=1, PayDay=99) に合わせる。
+		// 税計算単位は伝票単位(Slip)。TaxMixSeeder(C-04)がこの得意先の伝票税額再更新を検証するため、
+		// TranTaxRebuildDbがマスタの現在値から再スナップショットしてもSlipのまま保たれる必要がある。
 		var employee = db.Fetch<MasterShain>("order by Id").First();
 		var tokui = new MasterTokui {
 			Code = TokuiCode,
 			Name = "UAT-VM 締日20 境界検証",
 			Ryaku = "UAT-VM T20",
 			Shime1 = Shime,
+			TaxCalcUnit = (int)EnumTaxCalcUnit.Slip,
 			PayMonth = 1,
 			PayDay = 99,
 			Id_Shain = employee.Id,
@@ -147,9 +153,13 @@ public static class ShimeBoundarySeeder {
 					DenDay = row.KakeDay,
 					KakeDay = row.KakeDay,
 					Id_Tokui = tokuiId,
-					Total = row.Total,
+					// row.Totalは税抜(Uriage)金額。KakeDay境界の検証が目的で税額自体は任意の値のため、
+					// 伝票単位(TaxCalcUnit=Slip)としてTax1へそのまま入れ、請求計算側で再丸めさせない(仕様3.5)。
 					KingakuTotal = row.Total,
-					Tax = row.Tax,
+					TaxCalcUnit = (int)EnumTaxCalcUnit.Slip,
+					TaxableAmount1 = row.Total,
+					Tax1 = row.Tax,
+					Total = row.Total + row.Tax,
 					IsPay = 1,
 					// 明細(Jmeisai)を持たせないと json_each(Jmeisai) が null 要素を1件生み、
 					// 在庫Rebuild(SummaryDb.CalcSummaryStockTrn)のSUM(json_extract(...,'$.Su'))が

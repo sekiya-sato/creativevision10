@@ -42,8 +42,9 @@ public static class TaxMixScenario {
 		});
 
 		var before = await ReadUriageAsync(session, seeded.DenId);
-		session.Check("C-04 投入直後は明細税額が未設定", before != null && before.Tax == 0 && before.Jmeisai.All(m => m.Tax == 0),
-			new { before?.Tax, meisaiTax = before?.Jmeisai.Select(m => m.Tax) });
+		var beforeTax = before == null ? 0 : before.Tax1 + before.Tax2 + before.Tax3;
+		session.Check("C-04 投入直後は明細税額が未設定", before != null && beforeTax == 0 && before.Jmeisai.All(m => m.Tax == 0),
+			new { beforeTax, meisaiTax = before?.Jmeisai.Select(m => m.Tax) });
 
 		var d = session.OpenView<SysExecMiscView, SysExecMiscViewModel>();
 
@@ -69,7 +70,7 @@ public static class TaxMixScenario {
 		var after = await ReadUriageAsync(session, seeded.DenId);
 		if (!session.Check("C-04 投入した伝票が読み戻せる", after != null, new { seeded.DenId })) return;
 
-		session.CheckEqual("C-04 ヘッダTaxが標準10%+軽減8%の合計になる", seeded.ExpectedTax, after!.Tax);
+		session.CheckEqual("C-04 ヘッダTaxが標準10%+軽減8%の合計になる", seeded.ExpectedTax, after!.Tax1 + after.Tax2 + after.Tax3);
 		session.CheckEqual("C-04 ヘッダTotalが再計算される", seeded.ExpectedTotal, after.Total);
 
 		var standardLine = after.Jmeisai.FirstOrDefault(m => m.Id_Shohin == seeded.StandardShohinId);

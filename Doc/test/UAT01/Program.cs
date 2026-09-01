@@ -1,4 +1,5 @@
 using CvBase;
+using CvBase.Share;
 using CvBaseSqlite;
 using CvDomainLogic;
 using CvServer.Services;
@@ -157,20 +158,26 @@ CodeNameView SupplierView() => new(supplier.Id, supplier.Code, supplier.Name);
 CodeNameView WarehouseView() => new(warehouse.Id, warehouse.Code, warehouse.Name);
 CodeNameView EmployeeView() => new(employee.Id, employee.Code, employee.Name);
 
+// Tran13Hachu(発注)はTaxCalcUnit列を持たず常に伝票単位(Doc/spec/2026-09-01_...全体設計.md 2.2)。
+// ヘッダTax1を確定値として持ち、TaxableAmount1に税抜金額を入れて整合させる。
 Tran13Hachu Order(string day, int quantity) => new() {
     DenDay = day, NouhinDay = day, Id_Shiire = supplier.Id, VShiire = SupplierView(),
     Id_Soko = warehouse.Id, VSoko = WarehouseView(), Id_Shain = employee.Id, VShain = EmployeeView(),
     Kubun = (int)EnumHachu.Hachu, Rate = 100, Jmeisai = [Line(quantity)],
     SuTotal = quantity, KingakuTotal = quantity * 1000, JodaiTotal = quantity * 2000,
-    GedaiTotal = quantity * 1000, Tax = TaxOf(quantity * 1000, taxRate), Total = quantity * 1000,
+    GedaiTotal = quantity * 1000, TaxableAmount1 = quantity * 1000,
+    Tax1 = TaxOf(quantity * 1000, taxRate), Total = quantity * 1000 + TaxOf(quantity * 1000, taxRate),
 };
 
+// Tran03Shiire(仕入)はTaxCalcUnitを持つが、本UATは受入1件ごとの確定税額を直接検証するため
+// 伝票単位(Slip)に固定する。TaxableAmount1に税抜金額を入れてTax1と整合させる。
 Tran03Shiire Receipt(string day, int quantity, int kind, long relateNo) => new() {
     DenDay = day, KakeDay = day, Id_Shiire = supplier.Id, VShiire = SupplierView(),
     Id_Soko = warehouse.Id, VSoko = WarehouseView(), Id_Shain = employee.Id, VShain = EmployeeView(),
     IsPay = 1, Kubun = kind, RelateNo1 = checked((int)relateNo), Rate = taxRate, Jmeisai = [Line(quantity)],
     SuTotal = quantity, KingakuTotal = quantity * 1000, JodaiTotal = quantity * 2000,
-    GedaiTotal = quantity * 1000, Tax = TaxOf(quantity * 1000, taxRate), Total = quantity * 1000,
+    GedaiTotal = quantity * 1000, TaxCalcUnit = (int)EnumTaxCalcUnit.Slip, TaxableAmount1 = quantity * 1000,
+    Tax1 = TaxOf(quantity * 1000, taxRate), Total = quantity * 1000 + TaxOf(quantity * 1000, taxRate),
 };
 
 int Remaining(long orderId) => db.Fetch<Tran03Shiire>("where RelateNo1=@0", orderId)
@@ -217,12 +224,14 @@ var returnReceipt = Receipt(DayReturn, 1, (int)EnumShiire.Henpin, 0);
 InsertWithEffects(returnReceipt);
 AssertThat(returnReceipt.CalcFlag == -1 && Stock() == 14, "purchase return reduces stock to 14");
 
+// CalcSummaryKaiKake/KaiShiは仕入・返品をTotal(税込)ではなくABS(KingakuTotal)(税抜)でSUMする(仕様3.8)。
+// この検証もSummary側と同じ集計元(KingakuTotal)に合わせる。
 var purchaseNet = db.Fetch<Tran03Shiire>("where Id_Shiire=@0 and KakeDay like @1", supplier.Id, Month + "%")
-    .Where(x => x.Kubun == (int)EnumShiire.Shiire).Sum(x => x.Total);
+    .Where(x => x.Kubun == (int)EnumShiire.Shiire).Sum(x => x.KingakuTotal);
 var returnNet = db.Fetch<Tran03Shiire>("where Id_Shiire=@0 and KakeDay like @1", supplier.Id, Month + "%")
-    .Where(x => x.Kubun == (int)EnumShiire.Henpin).Sum(x => x.Total);
+    .Where(x => x.Kubun == (int)EnumShiire.Henpin).Sum(x => x.KingakuTotal);
 var returnTax = db.Fetch<Tran03Shiire>("where Id_Shiire=@0 and KakeDay like @1", supplier.Id, Month + "%")
-    .Where(x => x.Kubun == (int)EnumShiire.Henpin).Sum(x => x.Tax * x.CalcFlag);
+    .Where(x => x.Kubun == (int)EnumShiire.Henpin).Sum(x => (x.Tax1 + x.Tax2 + x.Tax3) * x.CalcFlag);
 Console.WriteLine($"purchaseNet={purchaseNet} returnNet={returnNet} returnTaxSigned={returnTax}");
 
 await foreach (var step in summary.SummaryAllAsyncStream(new CalcDateTermParameter(Month, Month))) Console.WriteLine($"REBUILD {step}");
@@ -232,8 +241,8 @@ summary.CalcSummaryKaiShi(Month, 99, SupplierCode, SupplierCode);
 var kakeBeforePayment = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", supplier.Id, Month);
 var shiBeforePayment = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", supplier.Id, "20260930");
 AssertThat(kakeBeforePayment.Shiire == purchaseNet && kakeBeforePayment.Henpin == returnNet
-    && kakeBeforePayment.Tax == returnTax + db.Fetch<Tran03Shiire>("where Id_Shiire=@0 and KakeDay like @1", supplier.Id, Month + "%")
-        .Where(x => x.Kubun == (int)EnumShiire.Shiire).Sum(x => x.Tax)
+    && kakeBeforePayment.Tax1 + kakeBeforePayment.Tax2 + kakeBeforePayment.Tax3 == returnTax + db.Fetch<Tran03Shiire>("where Id_Shiire=@0 and KakeDay like @1", supplier.Id, Month + "%")
+        .Where(x => x.Kubun == (int)EnumShiire.Shiire).Sum(x => x.Tax1 + x.Tax2 + x.Tax3)
     && kakeBeforePayment.TotalOut == 0, "accounts payable reflects purchases, return, tax, and no payment");
 AssertThat(shiBeforePayment.TotalOut == 0 && shiBeforePayment.ShiharaiYoteiDay == "20260930", "payment calculation creates due date 20260930");
 
@@ -250,21 +259,21 @@ summary.CalcSummaryKaiShi(Month, 99, SupplierCode, SupplierCode);
 var kake = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", supplier.Id, Month);
 var shi = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", supplier.Id, "20260930");
 var expectedTax = db.Fetch<Tran03Shiire>("where Id_Shiire=@0 and KakeDay like @1", supplier.Id, Month + "%")
-    .Sum(x => x.Kubun == (int)EnumShiire.Henpin ? x.Tax * x.CalcFlag : x.Tax);
+    .Sum(x => x.Kubun == (int)EnumShiire.Henpin ? (x.Tax1 + x.Tax2 + x.Tax3) * x.CalcFlag : x.Tax1 + x.Tax2 + x.Tax3);
 var expectedTotal = purchaseNet - returnNet + expectedTax;
-AssertThat(kake.Shiire == purchaseNet && kake.Henpin == returnNet && kake.Tax == expectedTax
+AssertThat(kake.Shiire == purchaseNet && kake.Henpin == returnNet && kake.Tax1 + kake.Tax2 + kake.Tax3 == expectedTax
     && kake.TotalShiire == expectedTotal && kake.TotalOut == 5000 && kake.Balance == 5000 - expectedTotal,
     "accounts payable reflects the 5000 payment and final balance");
 AssertThat(shi.TotalOut == 5000 && shi.TotalShiire == expectedTotal && shi.Balance == 5000 - expectedTotal
     && shi.ShiharaiYoteiDay == "20260930", "payment summary reflects payment and final balance");
 
-var snapshotKake = string.Join("|", new object[] { kake.Shiire, kake.Henpin, kake.Tax, kake.TotalShiire, kake.TotalOut, kake.Balance });
+var snapshotKake = string.Join("|", new object[] { kake.Shiire, kake.Henpin, kake.Tax1 + kake.Tax2 + kake.Tax3, kake.TotalShiire, kake.TotalOut, kake.Balance });
 var snapshotShi = string.Join("|", new object[] { shi.TotalShiire, shi.TotalOut, shi.Balance, shi.ShiharaiYoteiDay });
 summary.CalcSummaryKaiKake(Month, Month);
 summary.CalcSummaryKaiShi(Month, 99, SupplierCode, SupplierCode);
 var kake2 = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", supplier.Id, Month);
 var shi2 = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", supplier.Id, "20260930");
-AssertThat(snapshotKake == string.Join("|", new object[] { kake2.Shiire, kake2.Henpin, kake2.Tax, kake2.TotalShiire, kake2.TotalOut, kake2.Balance })
+AssertThat(snapshotKake == string.Join("|", new object[] { kake2.Shiire, kake2.Henpin, kake2.Tax1 + kake2.Tax2 + kake2.Tax3, kake2.TotalShiire, kake2.TotalOut, kake2.Balance })
     && snapshotShi == string.Join("|", new object[] { shi2.TotalShiire, shi2.TotalOut, shi2.Balance, shi2.ShiharaiYoteiDay }),
     "accounts payable and payment calculation are idempotent");
 

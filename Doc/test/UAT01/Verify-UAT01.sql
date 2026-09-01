@@ -18,10 +18,10 @@ FROM MasterShohin WHERE Code='UAT01-P01';
 SELECT Id, Id_Shohin, RowIdx, Code, Id_Col, Id_Siz, Jan1
 FROM DerivedShohinColSiz WHERE Id=7893301;
 
-SELECT Id, DenDay, EndFlag, KingakuTotal, Total, Tax
+SELECT Id, DenDay, EndFlag, KingakuTotal, Total, Tax1+Tax2+Tax3 AS Tax
 FROM Tran13Hachu WHERE Id IN (3,4) ORDER BY Id;
 
-SELECT Id, DenDay, Kubun, RelateNo1, KingakuTotal, Total, Tax, CalcFlag
+SELECT Id, DenDay, Kubun, RelateNo1, KingakuTotal, Total, Tax1+Tax2+Tax3 AS Tax, CalcFlag
 FROM Tran03Shiire WHERE Id BETWEEN 26 AND 30 ORDER BY Id;
 
 SELECT Id, KakeDay, Id_Shain, Id_Torisaki, KingakuTotal, Jmeisai
@@ -32,9 +32,9 @@ FROM SummaryRealStock
 WHERE Id_Soko=2813 AND Id_Shohin=78933 AND Id_Col=2757 AND Id_Siz=233;
 
 SELECT Id_Shiire, DenMonth, Balance, TotalOut, TotalShiire,
-       Shiire, Henpin, Tax, Cash
+       Shiire, Henpin, Tax1+Tax2+Tax3 AS Tax, Cash
 FROM SummaryKaiKake WHERE Id_Shiire=502 AND DenMonth='202609';
 
 SELECT Id_Shiire, DenDay, DayFrom, DayTo, ShiharaiYoteiDay,
-       Balance, TotalOut, TotalShiire, Shiire, Henpin, Tax, Cash
+       Balance, TotalOut, TotalShiire, Shiire, Henpin, Tax1+Tax2+Tax3 AS Tax, Cash
 FROM SummaryKaiShi WHERE Id_Shiire=502 AND DenDay='20260930';

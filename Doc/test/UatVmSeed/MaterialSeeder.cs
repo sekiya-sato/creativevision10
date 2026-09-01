@@ -1,6 +1,7 @@
 using System.Data;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvBaseSqlite;
 using Microsoft.Data.Sqlite;
 
@@ -137,15 +138,21 @@ public static class MaterialSeeder {
 	}
 
 	private static void Insert(ExDatabaseSqlite db, long shiireId, EnumShiire kubun, int total, int tax) {
-		// 集計SQL（CalcSummaryKaiShi）はヘッダTotal列を税抜金額としてそのままSUMする
-		// （UAT01Runner／summaryreconcileと同じ規則）。Total=total+taxにすると二重計上になる。
+		// 集計SQL（CalcSummaryKaiShi）はShiire/Henpin/Nebiki/Sonota99をヘッダKingakuTotal(税抜)からSUMし、
+		// 消費税(Tax1)は伝票単位(TaxCalcUnit=Slip)ぶんをヘッダTax1からそのまま合算する（仕様3.5）。
+		// このシードは「税額は伝票が確定済み」ケース(伝票単位)を検証するため、任意の税額をTax1へそのまま入れ、
+		// TaxRounding/請求単位側の再丸めを経由しないことで値がそのまま伝わることを確認する。
+		// 区分99(その他)はTax1/TaxableAmount1を0のままにする(Sonota99としてKingakuTotalが直接消費税へ積まれるため、
+		// 二重計上を避ける)。
 		var tran = new Tran02Material {
 			DenDay = DenDay,
 			KakeDay = DenDay,
 			Id_Shiire = shiireId,
 			KingakuTotal = total,
-			Tax = tax,
-			Total = total,
+			TaxCalcUnit = (int)EnumTaxCalcUnit.Slip,
+			TaxableAmount1 = kubun == EnumShiire.Other ? 0 : total,
+			Tax1 = tax,
+			Total = total + tax,
 			IsPay = 1,
 		};
 		tran.EnKubun = kubun;

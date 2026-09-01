@@ -1,6 +1,7 @@
 using System.Data;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvBaseSqlite;
 using Microsoft.Data.Sqlite;
 
@@ -86,8 +87,12 @@ public static class TaxMixSeeder {
 			VShain = new CodeNameView(employee.Id, employee.Code, employee.Name),
 			SuTotal = meisai.Sum(m => m.Su),
 			KingakuTotal = kingakuTotal,
-			// 明細税額は未設定(0)のまま投入する。TranTaxRebuildDbの対象条件そのもの。
-			Tax = 0,
+			// ヘッダ税額・課税対象額・明細税額は未設定(0)のまま投入する。TranTaxRebuildDbが
+			// 得意先(UATVM-T20、伝票単位)の現在値から再スナップショットしてTax1/2/3・TaxableAmount1/2/3を
+			// 確定させることを検証するため、TaxCalcUnitもここでは設定しない(RebuildGenericが上書きする)。
+			Tax1 = 0,
+			Tax2 = 0,
+			Tax3 = 0,
 			Total = kingakuTotal,
 			IsPay = 1,
 			Jmeisai = meisai,

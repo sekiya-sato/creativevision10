@@ -117,7 +117,7 @@ WHERE t.Code = @0 AND s.DenDay = @1", seeded.TokuiCode, target.DayTo);
 			row.SeikyuNo,
 			row.Renban,
 			row.Uriage,
-			row.Tax,
+			Tax = row.Tax1 + row.Tax2 + row.Tax3,
 			row.TotalSales,
 			row.Balance,
 			row.NyukinYoteiDay,
@@ -127,11 +127,11 @@ WHERE t.Code = @0 AND s.DenDay = @1", seeded.TokuiCode, target.DayTo);
 
 	private static bool SameAmounts(SummaryUriSei a, SummaryUriSei b) =>
 		a.Uriage == b.Uriage && a.Henpin == b.Henpin && a.Nebiki == b.Nebiki && a.Sonota == b.Sonota
-		&& a.Tax == b.Tax && a.TotalSales == b.TotalSales && a.TotalIn == b.TotalIn
+		&& a.Tax1 + a.Tax2 + a.Tax3 == b.Tax1 + b.Tax2 + b.Tax3 && a.TotalSales == b.TotalSales && a.TotalIn == b.TotalIn
 		&& a.Balance == b.Balance && a.NyukinYoteiDay == b.NyukinYoteiDay;
 
 	private static object Compare(SummaryUriSei a, SummaryUriSei b) => new {
-		before = new { a.Uriage, a.Tax, a.TotalSales, a.TotalIn, a.Balance, a.NyukinYoteiDay },
-		after = new { b.Uriage, b.Tax, b.TotalSales, b.TotalIn, b.Balance, b.NyukinYoteiDay },
+		before = new { a.Uriage, Tax = a.Tax1 + a.Tax2 + a.Tax3, a.TotalSales, a.TotalIn, a.Balance, a.NyukinYoteiDay },
+		after = new { b.Uriage, Tax = b.Tax1 + b.Tax2 + b.Tax3, b.TotalSales, b.TotalIn, b.Balance, b.NyukinYoteiDay },
 	};
 }
