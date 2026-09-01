@@ -1,3 +1,25 @@
+## [2026-09-01] 請求書印刷の旧cvnet帳票移植
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- 請求書印刷を、旧cvnetの伝票単位・商品CD単位帳票とCSV列順へ合わせる。
+
+### 実施内容
+- `SeikyuBalanceDetailViewModel`で旧CRSと同じ61列の帳票SQLを組み立て、伝票単位と商品CD単位を切り替えるようにした。
+- 請求期間の売上・入金明細、請求残高、税率別内訳をCSV列へ固定順で出力する。商品CD単位の集約SQLはDB方言間で成立するよう、非集約列をすべて`GROUP BY`へ明記した。
+- 画面に出力単位のラジオボタンを追加し、選択に応じてコピーしたqfmを使用する。
+- 旧`CVPSK003f.qfm`と`CVPSK003_hinf.qfm`を、内容を変更せずcp932のままそれぞれ新名称へコピーした。
+
+### 確認
+- `CvWpfclient\CvWpfclient.csproj`をビルドし、警告0・エラー0を確認した。
+- `Tests\TestSqlDialect\TestSqlDialect.csproj`の135件が成功した。
+- コピー元・先qfmのSHA-256一致、cp932 XML読込、各`item`数69を確認した。
+- `git diff --check`を確認した。
+
+---
+
 ## [2026-08-31] SQL方言名のEnum化
 
 ### Agent

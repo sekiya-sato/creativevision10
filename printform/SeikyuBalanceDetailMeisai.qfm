@@ -1,0 +1,1559 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<script language="JavaScript">//ScriptVersion( &quot;3.0.0.5&quot; );
+//////////////////////////////////////////////////////////////////////
+// PrintStream FormEditor Generated Script
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+// QFM object
+// このオブジェクトがフォームファイルを示します。フォームファイルに定義され
+// る情報は、すべてこのオブジェクトを基点にして取得、設定を行います。
+var qfm	= GetQfm();
+
+//////////////////////////////////////////////////////////////////////
+// Cursor object
+// カーソルはFormEditorで指定した印刷データに対してオープンされ、１件目の
+// レコードに位置付けられています。
+// このカーソルは印刷データの種類や形式によらず、同じように利用できます。
+var cursor	= qfm.GetCursor();
+
+//////////////////////////////////////////////////////////////////////
+// Cursor members
+// カーソルに含まれる列に対応する変数です。この変数はカーソルオブジェクトか
+// らGetValue()メソッドにより印刷データの値を取得する領域として利用
+// されます。
+var dtitem1;
+var dtitem2;
+var dtitem3;
+var dtitem4;
+var dtitem5;
+var dtitem6;
+var dtitem7;
+var dtitem8;
+var dtitem9;
+var dtitem10;
+var dtitem11;
+var dtitem12;
+var dtitem13;
+var dtitem14;
+var dtitem15;
+var dtitem16;
+var dtitem17;
+var dtitem18;
+var dtitem19;
+var dtitem20;
+var dtitem21;
+var dtitem22;
+var dtitem23;
+var dtitem24;
+var dtitem25;
+var dtitem26;
+var dtitem27;
+var dtitem28;
+var dtitem29;
+var dtitem30;
+var dtitem31;
+var dtitem32;
+var dtitem33;
+var dtitem34;
+var dtitem35;
+var dtitem36;
+var dtitem37;
+var dtitem38;
+var dtitem39;
+var dtitem42;
+var dtitem43;
+var dtitem44;
+var dtitem45;
+var dtitem46;
+var dtitem47;
+var dtitem48;
+var dtitem49;
+var dtitem50;
+var dtitem51;
+var dtitem52;
+var dtitem53;
+var dtitem54;
+var dtitem55;
+var dtitem56;
+var dtitem57;
+var dtitem58;
+var dtitem59;
+//////////////////////////////////////////////////////////////////////
+// Parameter value
+// 実行パラメータの値が格納されます。この値はFormEditorで設定したデフォルト
+// 値、またはFormWriterのコマンドラインで指定した値となります。
+
+//////////////////////////////////////////////////////////////////////
+// Field object
+// 各フィールドを示すオブジェクトです。オブジェクトのプロパティを操作するこ
+// とによりさまざまな表現を動的に指定する事ができます。
+var page	= qfm.GetPage();
+var fdRgn03	= page.GetField(&quot;Rgn03&quot;);
+var fdRec09	= page.GetField(&quot;Rec09&quot;);
+var fdRec02	= page.GetField(&quot;Rec02&quot;);
+var fdRec03	= page.GetField(&quot;Rec03&quot;);
+var fdRec04	= page.GetField(&quot;Rec04&quot;);
+var fdRec05	= page.GetField(&quot;Rec05&quot;);
+var fd伝票日付	= page.GetField(&quot;伝票日付&quot;);
+var fd伝票番号	= page.GetField(&quot;伝票番号&quot;);
+var fd取引区分	= page.GetField(&quot;取引区分&quot;);
+var fd単価	= page.GetField(&quot;単価&quot;);
+var fdTxt89	= page.GetField(&quot;Txt89&quot;);
+var fdTxt90	= page.GetField(&quot;Txt90&quot;);
+var fdTxt91	= page.GetField(&quot;Txt91&quot;);
+var fdTxt98	= page.GetField(&quot;Txt98&quot;);
+var fdTxt107	= page.GetField(&quot;Txt107&quot;);
+var fdTxt100	= page.GetField(&quot;Txt100&quot;);
+var fdTxt105	= page.GetField(&quot;Txt105&quot;);
+var fd前回御請求額	= page.GetField(&quot;前回御請求額&quot;);
+var fd御入金額	= page.GetField(&quot;御入金額&quot;);
+var fd今回相殺額	= page.GetField(&quot;今回相殺額&quot;);
+var fd繰越金額	= page.GetField(&quot;繰越金額&quot;);
+var fd御買上額	= page.GetField(&quot;御買上額&quot;);
+var fd今回御請求額	= page.GetField(&quot;今回御請求額&quot;);
+var fd得意先郵便番号	= page.GetField(&quot;得意先郵便番号&quot;);
+var fd得意先住所１	= page.GetField(&quot;得意先住所１&quot;);
+var fd得意先住所２	= page.GetField(&quot;得意先住所２&quot;);
+var fd得意先コード	= page.GetField(&quot;得意先コード&quot;);
+var fd得意先名	= page.GetField(&quot;得意先名&quot;);
+var fd自社郵便番号	= page.GetField(&quot;自社郵便番号&quot;);
+var fd住所	= page.GetField(&quot;住所&quot;);
+var fd住所２	= page.GetField(&quot;住所２&quot;);
+var fd自社名	= page.GetField(&quot;自社名&quot;);
+var fd消費税計	= page.GetField(&quot;消費税計&quot;);
+var fdTxt76	= page.GetField(&quot;Txt76&quot;);
+var fd当月買上合計	= page.GetField(&quot;当月買上合計&quot;);
+var fd支払日	= page.GetField(&quot;支払日&quot;);
+var fdTEL	= page.GetField(&quot;TEL&quot;);
+var fdTxt73	= page.GetField(&quot;Txt73&quot;);
+var fdTxt78	= page.GetField(&quot;Txt78&quot;);
+var fdTxt80	= page.GetField(&quot;Txt80&quot;);
+var fd請求月	= page.GetField(&quot;請求月&quot;);
+var fd振込先１	= page.GetField(&quot;振込先１&quot;);
+var fd振込先2	= page.GetField(&quot;振込先2&quot;);
+var fd振込先3	= page.GetField(&quot;振込先3&quot;);
+var fd担当者	= page.GetField(&quot;担当者&quot;);
+var fd売上日付年	= page.GetField(&quot;売上日付年&quot;);
+var fdTxt99	= page.GetField(&quot;Txt99&quot;);
+
+//////////////////////////////////////////////////////////////////////
+// Static Field object
+// 定数フィールドを示すオブジェクトです。
+var fd金額	= page.GetField(&quot;金額&quot;);
+var fd数量	= page.GetField(&quot;数量&quot;);
+var fd入金	= page.GetField(&quot;入金&quot;);
+var fd明細消費税	= page.GetField(&quot;明細消費税&quot;);
+var fdTxt37	= page.GetField(&quot;Txt37&quot;);
+var fdTxt41	= page.GetField(&quot;Txt41&quot;);
+var fdTxt43	= page.GetField(&quot;Txt43&quot;);
+var fdTxt47	= page.GetField(&quot;Txt47&quot;);
+var fdTxt77	= page.GetField(&quot;Txt77&quot;);
+var fdTxt101	= page.GetField(&quot;Txt101&quot;);
+var fdTxt85	= page.GetField(&quot;Txt85&quot;);
+var fdTxt84	= page.GetField(&quot;Txt84&quot;);
+var fdTxt66	= page.GetField(&quot;Txt66&quot;);
+var fdTxt67	= page.GetField(&quot;Txt67&quot;);
+var fdTxt68	= page.GetField(&quot;Txt68&quot;);
+var fdTxt69	= page.GetField(&quot;Txt69&quot;);
+var fdTxt72	= page.GetField(&quot;Txt72&quot;);
+var fdTxt103	= page.GetField(&quot;Txt103&quot;);
+var fdTxt86	= page.GetField(&quot;Txt86&quot;);
+var fdTxt88	= page.GetField(&quot;Txt88&quot;);
+var fdTxt97	= page.GetField(&quot;Txt97&quot;);
+var fdTxt92	= page.GetField(&quot;Txt92&quot;);
+var fdTxt93	= page.GetField(&quot;Txt93&quot;);
+var fdTxt94	= page.GetField(&quot;Txt94&quot;);
+var fdTxt109	= page.GetField(&quot;Txt109&quot;);
+var fdTxt02	= page.GetField(&quot;Txt02&quot;);
+var fdTxt08	= page.GetField(&quot;Txt08&quot;);
+var fdTxt28	= page.GetField(&quot;Txt28&quot;);
+var fdTxt09	= page.GetField(&quot;Txt09&quot;);
+var fdTxt10	= page.GetField(&quot;Txt10&quot;);
+var fdTxt35	= page.GetField(&quot;Txt35&quot;);
+var fdTxt36	= page.GetField(&quot;Txt36&quot;);
+var fdTxt48	= page.GetField(&quot;Txt48&quot;);
+var fdTxt49	= page.GetField(&quot;Txt49&quot;);
+var fdTxt51	= page.GetField(&quot;Txt51&quot;);
+var fdTxt52	= page.GetField(&quot;Txt52&quot;);
+var fdTxt53	= page.GetField(&quot;Txt53&quot;);
+var fdTxt54	= page.GetField(&quot;Txt54&quot;);
+var fdTxt74	= page.GetField(&quot;Txt74&quot;);
+var fdTxt71	= page.GetField(&quot;Txt71&quot;);
+var fdTxt82	= page.GetField(&quot;Txt82&quot;);
+var fdTxt87	= page.GetField(&quot;Txt87&quot;);
+var fdTxt95	= page.GetField(&quot;Txt95&quot;);
+var fdTxt96	= page.GetField(&quot;Txt96&quot;);
+var fdTxt83	= page.GetField(&quot;Txt83&quot;);
+var fdTxt79	= page.GetField(&quot;Txt79&quot;);
+var fdTxt81	= page.GetField(&quot;Txt81&quot;);
+var fdTxt75	= page.GetField(&quot;Txt75&quot;);
+var fdTxt102	= page.GetField(&quot;Txt102&quot;);
+var fdTxt106	= page.GetField(&quot;Txt106&quot;);
+var fdTxt111	= page.GetField(&quot;Txt111&quot;);
+var fdTxt108	= page.GetField(&quot;Txt108&quot;);
+var fdTxt113	= page.GetField(&quot;Txt113&quot;);
+
+var suryou = 0;
+var kingaku = 0;
+var shouhizei = 0;
+var nyukingaku = 0;
+
+var sv_gyoNO = 0;
+
+//////////////////////////////////////////////////////////////////////
+// OnFormLoad()関数は、フォームファイルをロードして印刷準備が整ったときに、
+// FormWriterエンジンより1回だけ呼び出されます。この関数には、フォームの初
+// 期値を変更するなど、アプリケーション固有の初期化を記述します。また、独自
+// にcursorをループさせて、すべての印刷処理を記述する事もできます。
+function OnFormLoad() {
+	
+// 初期設定例
+//	fd伝票日付.value	= &quot;固有の初期値&quot;;
+
+	var recs	= 0;	// レコードカウンタ
+	while( !cursor.IsEod() ) {
+
+		// 印刷データの取得
+		dtitem1	= cursor.GetValue(&quot;item1&quot;);
+		dtitem2	= cursor.GetValue(&quot;item2&quot;);
+		dtitem3	= cursor.GetValue(&quot;item3&quot;);
+		dtitem4	= cursor.GetValue(&quot;item4&quot;);
+		dtitem5	= cursor.GetValue(&quot;item5&quot;);
+		dtitem6	= cursor.GetValue(&quot;item6&quot;);
+		dtitem7	= cursor.GetValue(&quot;item7&quot;);
+		dtitem8	= cursor.GetValue(&quot;item8&quot;);
+		dtitem9	= cursor.GetValue(&quot;item9&quot;);
+		dtitem10	= cursor.GetValue(&quot;item10&quot;);
+		dtitem11	= cursor.GetValue(&quot;item11&quot;);
+		dtitem12	= cursor.GetValue(&quot;item12&quot;);
+		dtitem13	= cursor.GetValue(&quot;item13&quot;);
+		dtitem14	= cursor.GetValue(&quot;item14&quot;);
+		dtitem15	= cursor.GetValue(&quot;item15&quot;);
+		dtitem16	= cursor.GetValue(&quot;item16&quot;);
+		dtitem17	= cursor.GetValue(&quot;item17&quot;);
+		dtitem18	= cursor.GetValue(&quot;item18&quot;);
+		dtitem19	= cursor.GetValue(&quot;item19&quot;);
+		dtitem20	= cursor.GetValue(&quot;item20&quot;);
+		dtitem21	= cursor.GetValue(&quot;item21&quot;);
+		dtitem22	= cursor.GetValue(&quot;item22&quot;);
+		dtitem23	= cursor.GetValue(&quot;item23&quot;);
+		dtitem24	= cursor.GetValue(&quot;item24&quot;);
+		dtitem25	= cursor.GetValue(&quot;item25&quot;);
+		dtitem26	= cursor.GetValue(&quot;item26&quot;);
+		dtitem27	= cursor.GetValue(&quot;item27&quot;);
+		dtitem28	= cursor.GetValue(&quot;item28&quot;);
+		dtitem29	= cursor.GetValue(&quot;item29&quot;);
+		dtitem30	= cursor.GetValue(&quot;item30&quot;);
+		dtitem31	= cursor.GetValue(&quot;item31&quot;);
+		dtitem32	= cursor.GetValue(&quot;item32&quot;);
+		dtitem33	= cursor.GetValue(&quot;item33&quot;);
+		dtitem34	= cursor.GetValue(&quot;item34&quot;);
+		dtitem35	= cursor.GetValue(&quot;item35&quot;);
+		dtitem36	= cursor.GetValue(&quot;item36&quot;);
+		dtitem37	= cursor.GetValue(&quot;item37&quot;);
+		dtitem38	= cursor.GetValue(&quot;item38&quot;);
+		dtitem39	= cursor.GetValue(&quot;item39&quot;);
+		dtitem42	= cursor.GetValue(&quot;item42&quot;);
+		dtitem43	= cursor.GetValue(&quot;item43&quot;);
+		dtitem44	= cursor.GetValue(&quot;item44&quot;);
+		dtitem45	= cursor.GetValue(&quot;item45&quot;);
+		dtitem46	= cursor.GetValue(&quot;item46&quot;);
+		dtitem47	= cursor.GetValue(&quot;item47&quot;);
+		dtitem48	= cursor.GetValue(&quot;item48&quot;);
+		dtitem49	= cursor.GetValue(&quot;item49&quot;);
+		dtitem50	= cursor.GetValue(&quot;item50&quot;);
+		dtitem51	= cursor.GetValue(&quot;item51&quot;);
+		dtitem52	= cursor.GetValue(&quot;item52&quot;);
+		dtitem53	= cursor.GetValue(&quot;item53&quot;);
+		dtitem54	= cursor.GetValue(&quot;item54&quot;);
+		dtitem55	= cursor.GetValue(&quot;item55&quot;);
+		dtitem56	= cursor.GetValue(&quot;item56&quot;);
+		dtitem57	= cursor.GetValue(&quot;item57&quot;);
+		dtitem58	= cursor.GetValue(&quot;item58&quot;);
+		dtitem59	= cursor.GetValue(&quot;item59&quot;);
+
+		// キーブレイク処理
+		cursor.PrepareKeyBreak();
+
+		// グループの後に行う処理
+		if( recs &gt; 0 ) {
+			// 各レベルのキーブレイクに応じて必要なレコード出力を行う
+			switch( cursor.keyBreakLevel ) {
+			case 1:
+				fdTxt89.value = suryou;
+				fdTxt90.value = kingaku;
+				fdTxt98.value = shouhizei;
+				fdTxt91.value = nyukingaku;
+				fdRec04.Write();
+				suryou = 0;
+				kingaku = 0;
+				shouhizei = 0;
+				nyukingaku = 0;
+				break;
+			}
+			// キーブレイクに改ページ指定がある場合の処理
+			if( cursor.pageBreak ) {
+				page.PageChange();
+			}
+		}
+
+		// 集計処理を行う
+		recs++;
+		cursor.CalculateTotal();
+
+// フィールドオブジェクトの操作例(1)
+		// フォームの指定に従いカーソルデータを一括転送する
+		page.AssignData();
+/*
+// フィールドオブジェクトの操作例(2)
+		// 各フィールドを個別に処理する
+		fd伝票日付.value	= dtitem15;
+		fd伝票番号.value	= dtitem59;
+		fd取引区分.value	= dtitem17;
+		fd単価.value	= dtitem22;
+		fdTxt107.value	= dtitem57;
+		fdTxt100.value	= dtitem56;
+		fdTxt105.value	= dtitem58;
+		fd前回御請求額.value	= dtitem9;
+		fd御入金額.value	= dtitem4;
+		fd今回相殺額.value	= dtitem37;
+		fd繰越金額.value	= dtitem43;
+		fd御買上額.value	= dtitem52;
+		fd今回御請求額.value	= dtitem44;
+		fd得意先郵便番号.value	= dtitem46;
+		fd得意先住所１.value	= dtitem47;
+		fd得意先住所２.value	= dtitem48;
+		fd得意先コード.value	= dtitem11;
+		fd得意先名.value	= dtitem44;
+		fd自社郵便番号.value	= dtitem28;
+		fd住所.value	= dtitem29;
+		fd住所２.value	= dtitem30;
+		fd自社名.value	= dtitem27;
+		fd消費税計.value	= dtitem8;
+		fd当月買上合計.value	= dtitem53;
+		fd支払日.value	= dtitem2;
+		fdTEL.value	= dtitem32;
+		fdTxt73.value	= dtitem33;
+		fdTxt78.value	= dtitem49;
+		fdTxt80.value	= dtitem31;
+		fd請求月.value	= dtitem2;
+		fd振込先１.value	= dtitem34;
+		fd振込先2.value	= dtitem35;
+		fd振込先3.value	= dtitem36;
+		fd担当者.value	= dtitem51;
+		fdTxt99.value	= dtitem55;
+*/
+		// レコードオブジェクトの出力
+		//if (cursor.keyBreakLevel==1 || cursor.keyBreakLevel==3) {
+		// 2014.03.07 #11227対応（取引区分にもkeyBreakLevelを設定）
+		//if (cursor.keyBreakLevel==1 || cursor.keyBreakLevel==3 || cursor.keyBreakLevel==4) {
+		//if (cursor.keyBreakLevel==1 || cursor.keyBreakLevel==3 || cursor.keyBreakLevel==4 || sv_gyoNO != dtitem23) {
+		/*if (cursor.keyBreakLevel==1 || cursor.keyBreakLevel==3 || cursor.keyBreakLevel==4 || sv_gyoNO != dtitem23) {
+			fdRec09.Write();
+			suryou += new Number(fd数量.value);
+			kingaku += new Number(fd金額.value);
+			shouhizei += new Number(fd明細消費税.value);
+			nyukingaku += new Number(fd入金.value);
+		}*/
+		fdRec09.Write();
+		suryou += new Number(fd数量.value);
+		kingaku += new Number(fd金額.value);
+		shouhizei += new Number(fd明細消費税.value);
+		nyukingaku += new Number(fd入金.value);
+		
+		//if (fdTxt85.value != 0) fdRec05.Write();
+		fdRec05.Write();
+
+		// 行NOを保存しておく（入金伝票NO内で同一取引区分への対応）
+		sv_gyoNO = dtitem23;
+
+		// カーソルを次のレコードに移動
+		cursor.MoveNext();
+	}
+
+	// ループ終了後に最後のキーブレイク処理を行う
+	if( recs &gt; 0 ) {
+		fdTxt89.value = suryou;
+		fdTxt90.value = kingaku;
+		fdTxt98.value = shouhizei;
+		fdTxt91.value = nyukingaku;
+		fdRec04.Write();
+		page.PageChange();
+	}
+	qfm.End();	// End()メソッドにより印刷処理は停止します。
+}
+
+//////////////////////////////////////////////////////////////////////
+// OnFetch()関数は、印刷データを1件読み込むごとに、FormWriterエンジンより
+// 呼び出されます。この関数では、直前に読み取った印刷データが1件含まれる
+// カーソルオブジェクトcursorを受け取ります。cursorの内容を変更すると、変
+// 更後の内容で印刷されキーブレーク判定が行われます。
+// OnFetch()関数は、主に印刷データのフィルタとして利用します。
+function OnFetch() {
+
+	// 印刷データの取得
+	dtitem1	= cursor.GetValue(&quot;item1&quot;);
+	dtitem2	= cursor.GetValue(&quot;item2&quot;);
+	dtitem3	= cursor.GetValue(&quot;item3&quot;);
+	dtitem4	= cursor.GetValue(&quot;item4&quot;);
+	dtitem5	= cursor.GetValue(&quot;item5&quot;);
+	dtitem6	= cursor.GetValue(&quot;item6&quot;);
+	dtitem7	= cursor.GetValue(&quot;item7&quot;);
+	dtitem8	= cursor.GetValue(&quot;item8&quot;);
+	dtitem9	= cursor.GetValue(&quot;item9&quot;);
+	dtitem10	= cursor.GetValue(&quot;item10&quot;);
+	dtitem11	= cursor.GetValue(&quot;item11&quot;);
+	dtitem12	= cursor.GetValue(&quot;item12&quot;);
+	dtitem13	= cursor.GetValue(&quot;item13&quot;);
+	dtitem14	= cursor.GetValue(&quot;item14&quot;);
+	dtitem15	= cursor.GetValue(&quot;item15&quot;);
+	dtitem16	= cursor.GetValue(&quot;item16&quot;);
+	dtitem17	= cursor.GetValue(&quot;item17&quot;);
+	dtitem18	= cursor.GetValue(&quot;item18&quot;);
+	dtitem19	= cursor.GetValue(&quot;item19&quot;);
+	dtitem20	= cursor.GetValue(&quot;item20&quot;);
+	dtitem21	= cursor.GetValue(&quot;item21&quot;);
+	dtitem22	= cursor.GetValue(&quot;item22&quot;);
+	dtitem23	= cursor.GetValue(&quot;item23&quot;);
+	dtitem24	= cursor.GetValue(&quot;item24&quot;);
+	dtitem25	= cursor.GetValue(&quot;item25&quot;);
+	dtitem26	= cursor.GetValue(&quot;item26&quot;);
+	dtitem27	= cursor.GetValue(&quot;item27&quot;);
+	dtitem28	= cursor.GetValue(&quot;item28&quot;);
+	dtitem29	= cursor.GetValue(&quot;item29&quot;);
+	dtitem30	= cursor.GetValue(&quot;item30&quot;);
+	dtitem31	= cursor.GetValue(&quot;item31&quot;);
+	dtitem32	= cursor.GetValue(&quot;item32&quot;);
+	dtitem33	= cursor.GetValue(&quot;item33&quot;);
+	dtitem34	= cursor.GetValue(&quot;item34&quot;);
+	dtitem35	= cursor.GetValue(&quot;item35&quot;);
+	dtitem36	= cursor.GetValue(&quot;item36&quot;);
+	dtitem37	= cursor.GetValue(&quot;item37&quot;);
+	dtitem38	= cursor.GetValue(&quot;item38&quot;);
+	dtitem39	= cursor.GetValue(&quot;item39&quot;);
+	dtitem42	= cursor.GetValue(&quot;item42&quot;);
+	dtitem43	= cursor.GetValue(&quot;item43&quot;);
+	dtitem44	= cursor.GetValue(&quot;item44&quot;);
+	dtitem45	= cursor.GetValue(&quot;item45&quot;);
+	dtitem46	= cursor.GetValue(&quot;item46&quot;);
+	dtitem47	= cursor.GetValue(&quot;item47&quot;);
+	dtitem48	= cursor.GetValue(&quot;item48&quot;);
+	dtitem49	= cursor.GetValue(&quot;item49&quot;);
+	dtitem50	= cursor.GetValue(&quot;item50&quot;);
+	dtitem51	= cursor.GetValue(&quot;item51&quot;);
+	dtitem52	= cursor.GetValue(&quot;item52&quot;);
+	dtitem53	= cursor.GetValue(&quot;item53&quot;);
+	dtitem54	= cursor.GetValue(&quot;item54&quot;);
+	dtitem55	= cursor.GetValue(&quot;item55&quot;);
+	dtitem56	= cursor.GetValue(&quot;item56&quot;);
+	dtitem57	= cursor.GetValue(&quot;item57&quot;);
+	dtitem58	= cursor.GetValue(&quot;item58&quot;);
+	dtitem59	= cursor.GetValue(&quot;item59&quot;);
+
+	if( dtitem15==&quot;&quot; ) {
+		fd伝票日付.font.color = &quot;#ffffff&quot;;
+	} else {
+		fd伝票日付.font.color = &quot;#000000&quot;;
+	}
+	//０非表示 20070219
+	if( dtitem13 == 0 ) {
+		fd伝票番号.font.color = &quot;#ffffff&quot;;
+	} else {
+		fd伝票番号.font.color = &quot;#000000&quot;;
+	}
+	if( dtitem18 == 0 ) {
+		fd数量.font.color = &quot;#ffffff&quot;;
+	} else {
+		fd数量.font.color = &quot;#000000&quot;;
+	}
+	if( dtitem19 == 0 ) {
+		fd金額.font.color = &quot;#ffffff&quot;;
+	} else {
+		fd金額.font.color = &quot;#000000&quot;;
+	}
+	if( dtitem20 == 0 ) {
+		fd明細消費税.font.color = &quot;#ffffff&quot;;
+	} else {
+		fd明細消費税.font.color = &quot;#000000&quot;;
+	}
+	if( dtitem24 == 0 ) {
+		fd入金.font.color = &quot;#ffffff&quot;;
+	} else {
+		fd入金.font.color = &quot;#000000&quot;;
+	}
+	
+	if ((dtitem14*1)==6){
+		//print(dtitem14,&quot;OK&quot;);
+		page.GetField(&quot;数量&quot;).value=&quot;&quot;;
+		page.GetField(&quot;金額&quot;).value=&quot;&quot;;
+		page.GetField(&quot;入金&quot;).value=cursor.GetValue(&quot;item24&quot;);
+		page.GetField(&quot;明細消費税&quot;).value=&quot;&quot;;
+	}
+	// 消費税金額表示対応 20061011
+	else if ((dtitem16*1)==99){
+		page.GetField(&quot;数量&quot;).value=&quot;&quot;;
+		page.GetField(&quot;金額&quot;).value=&quot;&quot;;
+		page.GetField(&quot;入金&quot;).value=&quot;&quot;;
+		page.GetField(&quot;明細消費税&quot;).value=cursor.GetValue(&quot;item20&quot;);
+	}
+	else{
+		page.GetField(&quot;数量&quot;).value=cursor.GetValue(&quot;item18&quot;);
+		page.GetField(&quot;金額&quot;).value=cursor.GetValue(&quot;item19&quot;);
+		page.GetField(&quot;入金&quot;).value=&quot;&quot;;
+		page.GetField(&quot;明細消費税&quot;).value=cursor.GetValue(&quot;item20&quot;);
+	}
+	
+	//fdTxt102.visible = 0;
+	//fdTxt99.visible = 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+// OnPageChange()関数は、改ページの直前に呼び出されます。この関数には、
+// 複合フォーム使用時に次のフォームを決定する処理を記述します。戻り値に
+// ページオブジェクトを返すと、改ページ後のフォームになります。
+function OnPageChange() {
+	
+	// ここに改ページ時の処理を記述して下さい。
+	//
+}
+</script>
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item2">
+				<group level="2" pagechange="0"/>
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item3">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item4">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item5">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item6">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item7">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item8">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item9">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item10">
+				<position offset="0" length="6"/>
+			</item>
+			<item id="item11">
+				<position offset="0" length="6"/>
+			</item>
+			<item id="item12">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item13"/>
+			<item id="item14"/>
+			<item id="item15"/>
+			<item id="item16">
+				<group level="4" pagechange="0"/>
+			</item>
+			<item id="item17"/>
+			<item id="item18"/>
+			<item id="item19"/>
+			<item id="item20"/>
+			<item id="item21"/>
+			<item id="item22"/>
+			<item id="item23"/>
+			<item id="item24"/>
+			<item id="item25"/>
+			<item id="item26"/>
+			<item id="item27">
+				<position offset="0" length="32"/>
+			</item>
+			<item id="item28">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item29">
+				<position offset="0" length="6"/>
+			</item>
+			<item id="item30">
+				<position offset="0" length="4"/>
+			</item>
+			<item id="item31">
+				<position offset="0" length="15"/>
+			</item>
+			<item id="item32">
+				<position offset="0" length="12"/>
+			</item>
+			<item id="item33">
+				<position offset="0" length="12"/>
+			</item>
+			<item id="item34">
+				<position offset="0" length="10"/>
+			</item>
+			<item id="item35">
+				<position offset="0" length="10"/>
+			</item>
+			<item id="item36">
+				<position offset="0" length="9"/>
+			</item>
+			<item id="item37">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item38">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item39">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item40">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item41">
+				<position offset="0" length="6"/>
+			</item>
+			<item id="item42">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item43">
+				<position offset="0" length="12"/>
+			</item>
+			<item id="item44"/>
+			<item id="item45">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item46"/>
+			<item id="item47"/>
+			<item id="item48">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item49">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item50"/>
+			<item id="item51">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item52"/>
+			<item id="item53">
+				<group level="1" pagechange="1"/>
+			</item>
+			<item id="item54"/>
+			<item id="item55"/>
+			<item id="item56"/>
+			<item id="item57">
+				<group level="3" pagechange="0"/>
+			</item>
+			<item id="item58">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item59">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item60"/>
+			<item id="item61">
+				<position offset="0" length="2"/>
+			</item>
+			<item id="item62">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item63">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item64">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item65">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item66">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item67">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item68">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item69">
+				<position offset="0" length="56"/>
+			</item>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+			<prefix id="head" rectype="*"/>
+			<prefix id="item" default="1"/>
+		</file>
+	</datadesc>
+	<page title="CVPSK001" orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="請求書" tree="1">
+		<position x="0" y="0" width="164" height="280"/>
+		<cc sf2e8c6="tb6f3c4" s808040="t008000" transparent="1" />
+		<region id="Rgn03" direction="0" tree="1">
+			<position x="6" y="94" width="154" height="172"/>
+			<color border="808040" transparent="1"/>
+			<border left="2" right="2" bottom="2" bottomleft="1" bottomright="1"/>
+			<record id="Rec09" tree="1">
+				<position x="0" y="0" width="154" height="4"/>
+				<color border="808000" transparent="1"/>
+				<border top="1"/>
+				<text id="伝票日付" valign="middle" halign="center">
+					<position x="0" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="item" datasrc="item15"/>
+					<decode datatype="string" format="S0.4&quot;/&quot;S4.2&quot;/&quot;S6.2"/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+				<text id="伝票番号" valign="middle">
+					<position x="18" y="0" width="16" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="item" datasrc="item59"/>
+					<decode datatype="number" format="@&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+				<text id="取引区分" valign="middle">
+					<position x="34" y="0" width="18" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item17"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+				<text id="金額" valign="middle" halign="right">
+					<position x="60" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="static">item19</data>
+					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+				<text id="単価" valign="middle">
+					<position x="126" y="0" width="28" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" datasrc="item22"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+				<text id="数量" valign="middle" halign="right">
+					<position x="52" y="0" width="8" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="static">item18</data>
+					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+				<text id="入金" valign="middle" halign="right">
+					<position x="104" y="0" width="22" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="static">item24</data>
+					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+				<text id="明細消費税" valign="middle" halign="right">
+					<position x="78" y="0" width="16" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="static">item18</data>
+					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+				<text id="Txt112" valign="middle" halign="center">
+					<position x="94" y="0" width="10" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item39"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+			</record>
+			<record id="Rec02" recordtype="3" adjusttype="5" tree="1">
+				<position x="0" y="14" width="154" height="4"/>
+				<color border="808040" transparent="1"/>
+				<border top="1"/>
+				<text id="Txt37" valign="middle">
+					<position x="0" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="date" format="YY/MM/DD"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt41" valign="middle">
+					<position x="52" y="0" width="8" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt43" valign="middle">
+					<position x="60" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format="S0.5"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt47" valign="middle" halign="center">
+					<position x="18" y="0" width="34" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static">以 下 余 白</data>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt77" valign="middle">
+					<position x="126" y="0" width="28" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt85" valign="middle" halign="right">
+					<position x="104" y="0" width="22" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format="S0.5"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt84" valign="middle">
+					<position x="78" y="0" width="16" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt103" valign="middle">
+					<position x="94" y="0" width="10" height="4"/>
+					<color transparent="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+			</record>
+			<record id="Rec03" recordtype="3" tree="1">
+				<position x="0" y="18" width="154" height="4"/>
+				<color border="808000" transparent="1"/>
+				<text id="Txt66" valign="middle" halign="center">
+					<position x="0" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="date" format="YY/MM/DD"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt67" valign="middle">
+					<position x="18" y="0" width="34" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format="S0.8"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt68" valign="middle" halign="right">
+					<position x="60" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt69" valign="middle">
+					<position x="126" y="0" width="28" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format="S0.5"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt72" valign="middle" halign="right">
+					<position x="52" y="0" width="8" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format="S0.24"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt86" valign="middle" halign="right">
+					<position x="104" y="0" width="22" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt88" valign="middle" halign="right">
+					<position x="78" y="0" width="16" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format="S0.24"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt114" valign="middle">
+					<position x="94" y="0" width="10" height="4"/>
+					<color transparent="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+			</record>
+			<record id="Rec04" grouplevel="2" breaktype="1" tree="1">
+				<position x="0" y="10" width="154" height="4"/>
+				<color border="808040" transparent="1"/>
+				<border left="1" right="1" top="1" bottom="1"/>
+				<text id="Txt97" valign="middle" halign="center">
+					<position x="18" y="0" width="34" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static">総 計</data>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt89" valign="middle" halign="right">
+					<position x="52" y="0" width="8" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="static">item18</data>
+					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90"/>
+				</text>
+				<text id="Txt90" valign="middle" halign="right">
+					<position x="60" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static">item19</data>
+					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90"/>
+				</text>
+				<text id="Txt91" valign="middle" halign="right">
+					<position x="104" y="0" width="22" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static">item24</data>
+					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90"/>
+				</text>
+				<text id="Txt92" valign="middle" halign="center">
+					<position x="0" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="date" format="YY/MM/DD"/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt94" valign="middle" halign="right">
+					<position x="126" y="0" width="28" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt98" valign="middle" halign="right">
+					<position x="78" y="0" width="16" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="static">item20</data>
+					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90"/>
+				</text>
+				<text id="Txt101" valign="middle">
+					<position x="94" y="0" width="10" height="4"/>
+					<color transparent="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝" size="90" style="1"/>
+				</text>
+			</record>
+			<record id="Rec05" tree="1">
+				<position x="0" y="4" width="154" height="4"/>
+				<color border="808000" transparent="1"/>
+				<text id="Txt107" valign="middle">
+					<position x="24" y="0" width="28" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="item" datasrc="item57"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝" size="90"/>
+				</text>
+				<text id="Txt100" valign="middle">
+					<position x="10" y="0" width="14" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="item" datasrc="item56"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝" size="90"/>
+				</text>
+				<text id="Txt105" valign="middle" halign="right">
+					<position x="60" y="0" width="18" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="item" datasrc="item58"/>
+					<decode datatype="number" format="MI999,999,999,999&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90"/>
+				</text>
+				<text id="Txt109" valign="middle" halign="right">
+					<position x="78" y="0" width="76" height="4"/>
+					<color border="808040" transparent="1"/>
+					<border right="1"/>
+					<data calctype="static"/>
+					<decode datatype="string" format=""/>
+					<font face="ＭＳ 明朝"/>
+				</text>
+				<text id="Txt104" valign="middle" halign="right">
+					<position x="52" y="0" width="8" height="4"/>
+					<color border="808040" transparent="1"/>
+					<data calctype="item" datasrc="item60"/>
+					<decode datatype="number" format="MI999,999,999,999&quot; &quot;"/>
+					<font face="ＭＳ 明朝" size="90"/>
+				</text>
+			</record>
+		</region>
+		<text id="前回御請求額" valign="middle" halign="right">
+			<position x="7" y="64" width="20" height="8"/>
+			<color border="808040" transparent="1"/>
+			<border left="2" right="1" bottom="2" bottomleft="1"/>
+			<data calctype="item" grouplevel="1" groupcontrol="5" datasrc="item9"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="御入金額" valign="middle" halign="right">
+			<position x="27" y="64" width="20" height="8"/>
+			<color border="808040" transparent="1"/>
+			<border right="1" bottom="2"/>
+			<data calctype="item" grouplevel="1" groupcontrol="5" datasrc="item4"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="今回相殺額" valign="middle" halign="right">
+			<position x="47" y="64" width="17" height="8"/>
+			<color border="808040" transparent="1"/>
+			<border right="1" bottom="2"/>
+			<data calctype="item" grouplevel="1" groupcontrol="5" datasrc="item37"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="繰越金額" valign="middle" halign="right">
+			<position x="64" y="64" width="20" height="8"/>
+			<color border="808040" transparent="1"/>
+			<border right="1" bottom="2"/>
+			<data calctype="item" grouplevel="1" groupcontrol="5" datasrc="item43"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="御買上額" valign="middle" halign="right">
+			<position x="84" y="64" width="17" height="8"/>
+			<color border="808040" transparent="1"/>
+			<border right="1" bottom="2"/>
+			<data calctype="item" grouplevel="1" groupcontrol="5" datasrc="item52"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="今回御請求額" valign="middle" halign="right">
+			<position x="135" y="64" width="23" height="8"/>
+			<color border="808040" transparent="1"/>
+			<border left="2" right="2" bottom="2" bottomleft="1" bottomright="1"/>
+			<data calctype="item" grouplevel="1" groupcontrol="5" datasrc="item44"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt02" valign="middle" halign="center">
+			<position x="60" y="5" width="52" height="8"/>
+			<color font="808040" transparent="1"/>
+			<data calctype="static">御 請 求 書</data>
+			<decode datatype="string" format=""/>
+			<font size="180"/>
+			<cceffect alt="御 請 求 書 （控）"/>
+			<cceffect/>
+		</text>
+		<text id="Txt08">
+			<position x="9" y="46" width="52" height="4"/>
+			<color font="808040" border="ff0000" transparent="1"/>
+			<data calctype="static">毎度、ありがとうございます。</data>
+			<decode datatype="string" format=""/>
+			<font face="ＭＳ 明朝"/>
+		</text>
+		<text id="Txt28">
+			<position x="9" y="50" width="52" height="4"/>
+			<color font="808040" border="ff0000" transparent="1"/>
+			<data calctype="static">下記の通り御請求申し上げます。</data>
+			<decode datatype="string" format=""/>
+			<font face="ＭＳ 明朝"/>
+		</text>
+		<text id="Txt09" valign="middle" halign="center">
+			<position x="6" y="86" width="18" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" top="2" topleft="1"/>
+			<data calctype="static">伝 票 日 付</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt10" valign="middle" halign="center">
+			<position x="132" y="86" width="28" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border right="2" top="2" topright="1"/>
+			<data calctype="static">備考</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt35" valign="middle">
+			<position x="40" y="86" width="18" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border top="2"/>
+			<data calctype="static">取引区分</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt36" valign="middle" halign="center">
+			<position x="66" y="86" width="18" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border top="2"/>
+			<data calctype="static">金額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt48" valign="middle" halign="center">
+			<position x="64" y="60" width="20" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="1" right="1" top="2" bottom="1"/>
+			<data calctype="static" grouplevel="1" groupcontrol="5">今回繰越金額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt49" valign="middle" halign="center">
+			<position x="84" y="60" width="17" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="1" right="1" top="2" bottom="1"/>
+			<data calctype="static" grouplevel="1" groupcontrol="5">当月御買上額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt51" valign="middle" halign="center">
+			<position x="135" y="60" width="23" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" right="2" top="2" bottom="1" topleft="1" topright="1"/>
+			<data calctype="static" grouplevel="1" groupcontrol="5">今回御請求額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt52" valign="middle" halign="center">
+			<position x="7" y="60" width="20" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" right="1" top="2" bottom="1" topleft="1"/>
+			<data calctype="static" grouplevel="1" groupcontrol="5">前回御請求額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt53" valign="middle" halign="center">
+			<position x="27" y="60" width="20" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="1" right="1" top="2" bottom="1"/>
+			<data calctype="static" grouplevel="1" groupcontrol="5">今回御入金額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt54" valign="middle" halign="center">
+			<position x="47" y="60" width="17" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="1" right="1" top="2" bottom="1"/>
+			<data calctype="static" grouplevel="1" groupcontrol="5">今回相殺額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="得意先郵便番号">
+			<position x="11" y="15" width="20" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item46"/>
+			<decode datatype="string" format="&quot;〒&quot;@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="得意先住所１">
+			<position x="8" y="19" width="70" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item47"/>
+			<decode datatype="string" format="&quot;御住所：&quot;@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="得意先住所２">
+			<position x="19" y="23" width="44" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item48"/>
+			<decode datatype="string" format="@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="得意先コード">
+			<position x="8" y="32" width="26" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item11"/>
+			<decode datatype="string" format="&quot;御社名：(&quot;@&quot;)&quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="得意先名" wrap="1" rowspace="10">
+			<position x="19" y="36" width="41" height="9"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item45"/>
+			<decode datatype="string" format="@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="自社郵便番号">
+			<position x="96" y="15" width="22" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item28"/>
+			<decode datatype="string" format="&quot;〒&quot;@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="住所">
+			<position x="93" y="19" width="45" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item29"/>
+			<decode datatype="string" format="S0.48"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="住所２">
+			<position x="93" y="23" width="46" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item30"/>
+			<decode datatype="string" format="S0.48"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="自社名">
+			<position x="93" y="31" width="46" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item27"/>
+			<decode datatype="string" format="S0.48"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="消費税計" valign="middle" halign="right">
+			<position x="101" y="64" width="15" height="8"/>
+			<color border="808040" transparent="1"/>
+			<border right="1" bottom="2"/>
+			<data calctype="item" grouplevel="1" groupcontrol="5" datasrc="item8"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt74" valign="middle" halign="center">
+			<position x="101" y="60" width="15" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="1" right="1" top="2" bottom="1"/>
+			<data calctype="static" grouplevel="1" groupcontrol="5">消費税額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt76">
+			<position x="146" y="5" width="10" height="4"/>
+			<color border="ff8000" transparent="1"/>
+			<data calctype="page" grouplevel="1" groupcontrol="0"/>
+			<decode datatype="number" format="&quot;P.&quot;@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt71" valign="middle" halign="center">
+			<position x="116" y="60" width="18" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="1" right="2" top="2" bottom="1" topright="1"/>
+			<data calctype="static" grouplevel="1" groupcontrol="5">当月御買上合計</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="当月買上合計" valign="middle" halign="right">
+			<position x="116" y="64" width="18" height="8"/>
+			<color border="808040" transparent="1"/>
+			<border right="2" bottom="2" bottomright="1"/>
+			<data calctype="item" grouplevel="1" groupcontrol="5" datasrc="item53"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt82" valign="middle" halign="center">
+			<position x="72" y="49" width="27" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" right="2" top="2" bottom="1" topleft="1"/>
+			<data calctype="static">請　求　日</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="支払日" valign="middle" halign="center">
+			<position x="72" y="53" width="27" height="6"/>
+			<color border="808040" transparent="1"/>
+			<border left="2" right="2" bottom="2" bottomleft="1"/>
+			<data calctype="item" datasrc="item2"/>
+			<decode datatype="string" format="S0.4&quot;年&quot;S4.2&quot;月&quot;S6.2&quot;日&quot;"/>
+			<font face="ＭＳ 明朝" size="110"/>
+		</text>
+		<text id="TEL">
+			<position x="108" y="35" width="30" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item32"/>
+			<decode datatype="string" format="&quot;TEL:&quot;@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt73">
+			<position x="108" y="39" width="30" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item33"/>
+			<decode datatype="string" format="&quot;FAX:&quot;@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt78">
+			<position x="19" y="27" width="44" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item49"/>
+			<decode datatype="string" format="@"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt80">
+			<position x="93" y="27" width="46" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item31"/>
+			<decode datatype="string" format="S0.48"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt87">
+			<position x="63" y="38" width="6" height="4"/>
+			<color border="ff0000" transparent="1"/>
+			<data calctype="static">様</data>
+			<decode datatype="string" format=""/>
+			<font face="ＭＳ 明朝"/>
+		</text>
+		<text id="Txt95" valign="middle">
+			<position x="24" y="86" width="16" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border top="2"/>
+			<data calctype="static">伝票番号</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt96" valign="middle" halign="center">
+			<position x="58" y="86" width="8" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border top="2"/>
+			<data calctype="static">数量</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="請求月">
+			<position x="129" y="15" width="10" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item2"/>
+			<decode datatype="string" format="S4.2&quot;月分&quot;"/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt83">
+			<position x="81" y="266" width="15" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">お振込先：</data>
+			<decode datatype="string" format=""/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="振込先１">
+			<position x="96" y="266" width="60" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item34"/>
+			<decode datatype="string" format=""/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="振込先2">
+			<position x="96" y="270" width="60" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item35"/>
+			<decode datatype="string" format=""/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="振込先3">
+			<position x="96" y="274" width="60" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item36"/>
+			<decode datatype="string" format=""/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="担当者" valign="middle" halign="center">
+			<position x="133" y="53" width="25" height="6"/>
+			<color border="808040" transparent="1"/>
+			<border right="2" bottom="2" bottomright="1"/>
+			<data calctype="item" datasrc="item51"/>
+			<decode datatype="string" format="@"/>
+			<font face="ＭＳ 明朝" size="110"/>
+		</text>
+		<text id="Txt79" valign="middle" halign="center">
+			<position x="133" y="49" width="25" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border right="2" top="2" bottom="1" topright="1"/>
+			<data calctype="static">担　当</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="売上日付年" valign="middle" halign="right">
+			<position x="117" y="5" width="28" height="4"/>
+			<color border="ff8000" transparent="1"/>
+			<data calctype="date"/>
+			<decode datatype="date" format=""/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt81" valign="middle" halign="center">
+			<position x="110" y="86" width="22" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border top="2"/>
+			<data calctype="static">入金</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt75" valign="middle" halign="center">
+			<position x="84" y="86" width="16" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border top="2"/>
+			<data calctype="static">消費税</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt102" valign="middle">
+			<position x="8" y="9" width="22" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" right="2" top="2" bottom="2" topleft="1" bottomleft="1"/>
+			<data calctype="static">請求書NO</data>
+			<decode datatype="string" format="&quot; &quot;@"/>
+			<font size="90"/>
+		</text>
+		<text id="Txt99" valign="middle">
+			<position x="30" y="9" width="21" height="4"/>
+			<color border="808040" transparent="1"/>
+			<border left="2" right="2" top="2" bottom="2" topright="1" bottomright="1"/>
+			<data calctype="item" datasrc="item55"/>
+			<decode datatype="string" format="&quot; &quot;@"/>
+			<font face="ＭＳ 明朝" size="90"/>
+		</text>
+		<text id="Txt106" valign="middle" halign="center">
+			<position x="6" y="90" width="20" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" bottom="1"/>
+			<data calctype="static"/>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt111" valign="middle">
+			<position x="26" y="90" width="50" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border bottom="1"/>
+			<data calctype="static">商  品</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt108" valign="middle" halign="center">
+			<position x="76" y="90" width="18" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border bottom="1"/>
+			<data calctype="static">明細金額</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt113" valign="middle" halign="center">
+			<position x="94" y="90" width="66" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border right="2" bottom="1"/>
+			<data calctype="static"/>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt110" valign="middle" halign="center">
+			<position x="100" y="86" width="10" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border top="2"/>
+			<data calctype="static">税率</data>
+			<decode datatype="string" format=""/>
+			<font size="90" style="64" pitch="-5"/>
+		</text>
+		<text id="Txt121" valign="middle" halign="center">
+			<position x="99" y="49" width="10" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" right="2" top="2" bottom="1"/>
+			<data calctype="static">締 日</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt122" valign="middle" halign="center">
+			<position x="99" y="53" width="10" height="6"/>
+			<color border="808040" transparent="1"/>
+			<border left="2" right="2" bottom="2"/>
+			<data calctype="item" datasrc="item12"/>
+			<decode datatype="string" format="@"/>
+			<font face="ＭＳ 明朝" size="110"/>
+		</text>
+		<text id="Txt123" valign="middle" halign="center">
+			<position x="109" y="49" width="24" height="4"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" right="2" top="2" bottom="1"/>
+			<data calctype="static">お支払予定日</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt124" valign="middle" halign="center">
+			<position x="109" y="53" width="24" height="6"/>
+			<color border="808040" transparent="1"/>
+			<border left="2" right="2" bottom="2"/>
+			<data calctype="item" datasrc="item42"/>
+			<decode datatype="string" format="S0.4&quot;年&quot;S4.2&quot;月&quot;S6.2&quot;日&quot;"/>
+			<font face="ＭＳ 明朝" size="110"/>
+		</text>
+		<image id="Img01" relative="0">
+			<position x="140" y="20" width="20" height="23"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item66"/>
+		</image>
+		<text id="Txt131">
+			<position x="8" y="267" width="29" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">※は軽減税率対象商品</data>
+			<decode datatype="string" format=""/>
+			<font face="ＭＳ 明朝" size="100"/>
+		</text>
+		<text id="Txt128" valign="middle" halign="center">
+			<position x="64" y="73" width="20" height="6"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" right="1" top="2" bottom="1" topleft="1"/>
+			<data calctype="item" datasrc="item40"/>
+			<decode datatype="string" format="&quot;消費税&quot;@&quot;%&quot;"/>
+			<font size="90"/>
+		</text>
+		<text id="Txt129" valign="middle" halign="center">
+			<position x="64" y="79" width="20" height="6"/>
+			<color font="808040" base="f2e8c6" border="808040" transparent="0"/>
+			<border left="2" right="1" top="1" bottom="2" bottomleft="1"/>
+			<data calctype="item" datasrc="item41"/>
+			<decode datatype="string" format="&quot;消費税&quot;@&quot;%&quot;"/>
+			<font size="90"/>
+		</text>
+		<text id="Txt126" valign="middle" halign="right">
+			<position x="84" y="79" width="17" height="6"/>
+			<color border="808040" transparent="1"/>
+			<border left="1" right="1" top="1" bottom="2"/>
+			<data calctype="item" datasrc="item64"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="110"/>
+		</text>
+		<text id="Txt115" valign="middle" halign="right">
+			<position x="84" y="73" width="17" height="6"/>
+			<color border="808040" transparent="1"/>
+			<border left="1" right="1" top="2" bottom="1"/>
+			<data calctype="item" datasrc="item65"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="110"/>
+		</text>
+		<text id="Txt125" valign="middle" halign="right">
+			<position x="101" y="73" width="15" height="6"/>
+			<color border="808040" transparent="1"/>
+			<border left="1" right="2" top="2" bottom="1" topright="1"/>
+			<data calctype="item" datasrc="item63"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="110"/>
+		</text>
+		<text id="Txt130" valign="middle" halign="right">
+			<position x="101" y="79" width="15" height="6"/>
+			<color border="808040" transparent="1"/>
+			<border left="1" right="2" top="1" bottom="2" bottomright="1"/>
+			<data calctype="item" datasrc="item62"/>
+			<decode datatype="number" format="MI999,999,999,990N!&quot; &quot;"/>
+			<font face="ＭＳ 明朝" size="110"/>
+		</text>
+	</page>
+</printstream>

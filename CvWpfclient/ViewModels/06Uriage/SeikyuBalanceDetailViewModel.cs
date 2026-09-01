@@ -22,7 +22,9 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// </summary>
 public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "請求書印刷";
-	protected override string FormFileName => "SeikyuBalanceDetail.qfm";
+	protected override string FormFileName => IsMeisaiUnit
+		? "SeikyuBalanceDetailMeisai.qfm"
+		: "SeikyuBalanceDetailDenpyo.qfm";
 
 	[ObservableProperty]
 	public partial string SeikyuDay { get; set; } = DateTime.Today.ToString("yyyy/MM/dd");
@@ -40,6 +42,10 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 	/// <summary>true=入金明細も印字 / false=売上明細のみ。</summary>
 	[ObservableProperty]
 	public partial bool IncludeNyukin { get; set; } = true;
+
+	/// <summary>false=伝票単位 / true=商品CD単位（旧cvnetの明細単位）。</summary>
+	[ObservableProperty]
+	public partial bool IsMeisaiUnit { get; set; }
 
 	[RelayCommand]
 	void SelectTokuiCodeFrom() => TokuiCodeFrom = SelectTokuiCode() ?? TokuiCodeFrom;
@@ -71,21 +77,6 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 			TaxRateResolver.ResolveTaxRatePercent(sysman, 2, seikyuDayValue),
 			TaxRateResolver.ResolveTaxRatePercent(sysman, 3, seikyuDayValue),
 		};
-		// 税区分1-3のうち、指定税率(10/8)に該当する列だけを足し合わせる式を作る。
-		// 該当するIdが無ければ "0"（その税率の内訳が無い＝0円）。
-		static string SumForRate(string columnPrefix, int[] rates, int targetRate) {
-			List<string> parts = [];
-			for (var n = 1; n <= 3; n++) {
-				if (rates[n - 1] == targetRate) parts.Add($"{columnPrefix}{n}");
-			}
-			return parts.Count > 0 ? string.Join(" + ", parts) : "0";
-		}
-		var taxable10Expr = SumForRate("s.TaxableAmount", rates, 10);
-		var tax10Expr = SumForRate("s.Tax", rates, 10);
-		var taxable8Expr = SumForRate("s.TaxableAmount", rates, 8);
-		var tax8Expr = SumForRate("s.Tax", rates, 8);
-
-		const string UriageKingaku = "CASE WHEN u.Total != 0 THEN u.Total ELSE u.KingakuTotal + (u.Tax1+u.Tax2+u.Tax3) END";
 		var activeOnly = IsActiveOnly ? "AND (s.TotalSales != 0 OR s.Balance != 0)" : "";
 		var kubunLabel = TranMeisaiSql.KubunLabel("u.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
@@ -99,18 +90,18 @@ headers AS (
     SELECT
         s.Id_Tokui AS Id_Tokui,
         t.Code AS tokuiCode, t.Name AS tokuiName,
+        t.PostalCode AS tokuiPostalCode, t.Address1 AS tokuiAddress1, t.Address2 AS tokuiAddress2, t.Address3 AS tokuiAddress3,
+        t.Id_Shain AS tokuiIdShain,
         s.DenDay AS seikyuDay, s.DayFrom AS dayFrom, s.DayTo AS dayTo,
         s.Balance + s.TotalSales - s.TotalIn AS prevBalance,
         s.TotalSales AS totalSales,
         s.TotalIn    AS totalIn,
+        s.Cash, s.Fee, s.Densai, s.Offset, s.Other,
+        s.Uriage, s.Henpin, s.Nebiki, s.Sonota,
         (s.Tax1 + s.Tax2 + s.Tax3) AS tax,
         s.Balance    AS balance,
         s.SeikyuNo   AS seikyuNo,
-        ({taxable10Expr}) AS taxable10,
-        ({tax10Expr}) AS tax10,
-        ({taxable8Expr}) AS taxable8,
-        ({tax8Expr}) AS tax8,
-        (s.TotalSales - (s.Tax1 + s.Tax2 + s.Tax3) - (s.TaxableAmount1 + s.TaxableAmount2 + s.TaxableAmount3)) AS taxExempt
+        s.NyukinYoteiDay AS nyukinYoteiDay
     FROM SummaryUriSei s
     JOIN MasterTokui t ON t.Id = s.Id_Tokui
     WHERE s.DenDay = {seikyuDay}
@@ -121,50 +112,158 @@ headers AS (
 			return null;
 		}
 
-		// 入金明細を含めない場合は売上側だけを UNION 対象にする
-		var nyukinPart = IncludeNyukin ? $@"
+		var saleRows = IsMeisaiUnit
+			? BuildMeisaiRows(kubunLabel)
+			: BuildDenpyoRows(kubunLabel);
+		var nyukinRows = IncludeNyukin ? @"
     UNION ALL
     SELECT
         h.Id_Tokui AS idTokui, n.KakeDay AS denDay, 2 AS srcOrder, n.Id AS denNo,
-        '入金' AS kubunText, 0 AS su, -n.KingakuTotal AS kingaku
+        6 AS processKubun, 0 AS kubun, '入金' AS kubunText,
+        0 AS su, 0 AS kingaku, 0 AS tax, ifnull(n.ManualNo,'') AS manualNo, ifnull(n.Memo,'') AS memo,
+        1 AS lineNo, n.KingakuTotal AS payment, 0 AS taxable1, 0 AS taxable2, 0 AS taxable3,
+        '' AS shohinCode, '' AS shohinName, 0 AS meisaiKingaku, 0 AS meisaiSu
     FROM headers h
     JOIN Tran06Nyukin n
       ON n.Id_Torisaki = h.Id_Tokui
-     AND n.KakeDay >= h.dayFrom AND n.KakeDay <= h.dayTo" : "";
+     AND n.KakeDay >= h.dayFrom AND n.KakeDay <= h.dayTo" : string.Empty;
 
+		var taxRateText = $@"CASE
+    WHEN ifnull(d.processKubun,0) = 6 OR ifnull(d.kubun,0) >= 80 THEN ''
+    WHEN ifnull(d.taxable1,0) != 0 THEN '{rates[0]}%'
+    WHEN ifnull(d.taxable2,0) != 0 THEN '{rates[1]}%'
+    WHEN ifnull(d.taxable3,0) != 0 THEN '{rates[2]}%'
+    ELSE '' END";
+
+		// 旧CRSのSELECT列順（d_sql.txt）をそのまま再現する。qfmはこのCSV順と内蔵スクリプトに依存する。
 		var sql = $@"
 WITH {headersCte}
 details AS (
-    SELECT
-        h.Id_Tokui AS idTokui, u.KakeDay AS denDay, 1 AS srcOrder, u.Id AS denNo,
-        {kubunLabel} AS kubunText, u.SuTotal AS su, {UriageKingaku} AS kingaku
-    FROM headers h
-    JOIN Tran00Uriage u
-      ON u.Id_Tokui = h.Id_Tokui
-     AND u.KakeDay >= h.dayFrom AND u.KakeDay <= h.dayTo{nyukinPart}
+{saleRows}{nyukinRows}
+),
+sysman AS (
+    SELECT Name, PostalCode, Address1, Address2, Address3, Tel, BankAccount1, BankAccount2, BankAccount3
+    FROM MasterSysman ORDER BY Id LIMIT 1
 )
 SELECT
-    {TranMeisaiSql.DateLabel("h.seikyuDay")} AS seikyuDayLabel,
-    h.tokuiCode, h.tokuiName,
-    {TranMeisaiSql.DateLabel("h.dayFrom")} || '～' || {TranMeisaiSql.DateLabel("h.dayTo")} AS termLabel,
-    h.prevBalance, h.totalSales, h.totalIn, h.tax, h.balance,
-    {TranMeisaiSql.DateLabel("d.denDay")} AS denDayLabel,
-    CAST(d.denNo AS TEXT) AS denNoText,
-    d.kubunText,
-    d.su,
-    d.kingaku,
-    h.seikyuNo,
-    h.taxable10,
-    h.tax10,
-    h.taxable8,
-    h.tax8,
-    h.taxExempt
+    h.Id_Tokui AS item1,
+    h.seikyuDay AS item2,
+    h.balance AS item3,
+    (h.Cash+h.Fee+h.Densai+h.Other) AS item4,
+    h.Uriage AS item5,
+    (h.Henpin+h.Nebiki) AS item6,
+    h.Sonota AS item7,
+    h.tax AS item8,
+    h.prevBalance AS item9,
+    h.tokuiCode AS item10,
+    h.tokuiCode AS item11,
+    CASE WHEN substr(h.seikyuDay,7,2) = '99' THEN '末' ELSE CAST(CAST(substr(h.seikyuDay,7,2) AS INTEGER) AS TEXT) END AS item12,
+    ifnull(d.denNo,0) AS item13,
+    ifnull(d.processKubun,0) AS item14,
+    ifnull(d.denDay,'') AS item15,
+    ifnull(d.kubun,0) AS item16,
+    ifnull(d.kubunText,'') AS item17,
+    ifnull(d.su,0) AS item18,
+    ifnull(d.kingaku,0) AS item19,
+    ifnull(d.tax,0) AS item20,
+    ifnull(d.manualNo,'') AS item21,
+    ifnull(d.memo,'') AS item22,
+    ifnull(d.lineNo,0) AS item23,
+    ifnull(d.payment,0) AS item24,
+    0 AS item25,
+    ifnull(d.memo,'') AS item26,
+    ifnull(c.Name,'') AS item27,
+    ifnull(c.PostalCode,'') AS item28,
+    ifnull(c.Address1,'') AS item29,
+    ifnull(c.Address2,'') AS item30,
+    ifnull(c.Address3,'') AS item31,
+    ifnull(c.Tel,'') AS item32,
+    '' AS item33,
+    ifnull(c.BankAccount1,'') AS item34,
+    ifnull(c.BankAccount2,'') AS item35,
+    ifnull(c.BankAccount3,'') AS item36,
+    h.Offset AS item37,
+    h.seikyuNo AS item38,
+    h.prevBalance-h.totalIn AS item39,
+    h.balance AS item40,
+    h.tokuiName AS item41,
+    h.tokuiPostalCode AS item42,
+    h.tokuiAddress1 AS item43,
+    h.tokuiAddress2 AS item44,
+    h.tokuiAddress3 AS item45,
+    h.tokuiIdShain AS item46,
+    '' AS item47,
+    (h.Uriage-h.Henpin-h.Nebiki+h.Sonota) AS item48,
+    h.totalSales AS item49,
+    '' AS item50,
+    h.seikyuNo AS item51,
+    ifnull(d.shohinCode,'') AS item52,
+    ifnull(d.shohinName,'') AS item53,
+    ifnull(d.meisaiKingaku,0) AS item54,
+    ifnull(d.denNo,0) AS item55,
+    ifnull(d.meisaiSu,0) AS item56,
+    0 AS item57,
+    1 AS item58,
+    h.seikyuNo AS item59,
+    {taxRateText} AS item60,
+    h.nyukinYoteiDay AS item61
 FROM headers h
 LEFT JOIN details d ON d.idTokui = h.Id_Tokui
-ORDER BY h.tokuiCode, d.denDay, d.srcOrder, d.denNo";
+LEFT JOIN sysman c ON 1=1
+ORDER BY h.tokuiCode, h.seikyuDay, ifnull(d.denDay,''), ifnull(d.srcOrder,0), ifnull(d.denNo,0), ifnull(d.lineNo,0)";
 
 		return new QueryListSqlParam(typeof(object), sql, [.. parameters]);
 	}
+
+	private static string BuildDenpyoRows(string kubunLabel) => $@"
+    SELECT
+        h.Id_Tokui AS idTokui, u.KakeDay AS denDay, 1 AS srcOrder, u.Id AS denNo,
+        0 AS processKubun, u.Kubun AS kubun, {kubunLabel} AS kubunText,
+        u.CalcFlag*u.SuTotal AS su, u.CalcFlag*u.KingakuTotal AS kingaku,
+        u.CalcFlag*(u.Tax1+u.Tax2+u.Tax3) AS tax, ifnull(u.ManualNo,'') AS manualNo, ifnull(u.Memo,'') AS memo,
+        1 AS lineNo, 0 AS payment, u.TaxableAmount1 AS taxable1, u.TaxableAmount2 AS taxable2, u.TaxableAmount3 AS taxable3,
+        '' AS shohinCode, '' AS shohinName, 0 AS meisaiKingaku, 0 AS meisaiSu
+    FROM headers h
+    JOIN Tran00Uriage u
+      ON u.Id_Tokui = h.Id_Tokui
+     AND u.KakeDay >= h.dayFrom AND u.KakeDay <= h.dayTo";
+
+	private static string BuildMeisaiRows(string kubunLabel) => $@"
+    SELECT
+        h.Id_Tokui AS idTokui, u.KakeDay AS denDay, 1 AS srcOrder, u.Id AS denNo,
+        0 AS processKubun, u.Kubun AS kubun, {kubunLabel} AS kubunText,
+        u.CalcFlag*u.SuTotal AS su, u.CalcFlag*u.KingakuTotal AS kingaku,
+        u.CalcFlag*(u.Tax1+u.Tax2+u.Tax3) AS tax, ifnull(u.ManualNo,'') AS manualNo, ifnull(u.Memo,'') AS memo,
+        {TranMeisaiSql.Num("No")} AS lineNo, 0 AS payment,
+        u.TaxableAmount1 AS taxable1, u.TaxableAmount2 AS taxable2, u.TaxableAmount3 AS taxable3,
+        {TranMeisaiSql.Str("Code_Shohin")} AS shohinCode,
+        {TranMeisaiSql.Str("Mei_Shohin")} AS shohinName,
+        u.CalcFlag*SUM({TranMeisaiSql.Num("Kingaku")}) AS meisaiKingaku,
+        u.CalcFlag*SUM({TranMeisaiSql.Num("Su")}) AS meisaiSu
+    FROM headers h
+    JOIN Tran00Uriage u
+      ON u.Id_Tokui = h.Id_Tokui
+     AND u.KakeDay >= h.dayFrom AND u.KakeDay <= h.dayTo
+    JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) m
+    GROUP BY
+        h.Id_Tokui,
+        u.KakeDay, u.Id, u.Kubun, u.CalcFlag, u.SuTotal, u.KingakuTotal,
+        u.Tax1, u.Tax2, u.Tax3, u.ManualNo, u.Memo,
+        u.TaxableAmount1, u.TaxableAmount2, u.TaxableAmount3,
+        {TranMeisaiSql.Num("No")}, {TranMeisaiSql.Str("Code_Shohin")}, {TranMeisaiSql.Str("Mei_Shohin")}
+    UNION ALL
+    SELECT
+        h.Id_Tokui, u.KakeDay, 1, u.Id,
+        0, u.Kubun, {kubunLabel},
+        u.CalcFlag*u.SuTotal, u.CalcFlag*u.KingakuTotal,
+        u.CalcFlag*(u.Tax1+u.Tax2+u.Tax3), ifnull(u.ManualNo,''), ifnull(u.Memo,''),
+        0, 0, u.TaxableAmount1, u.TaxableAmount2, u.TaxableAmount3,
+        '', '', 0, 0
+    FROM headers h
+    JOIN Tran00Uriage u
+      ON u.Id_Tokui = h.Id_Tokui
+     AND u.KakeDay >= h.dayFrom AND u.KakeDay <= h.dayTo
+    WHERE NOT EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END))";
 
 	/// <summary>
 	/// 適格請求書の税率別内訳（10%/8%/非課税）が、請求残の税額・課税対象額と食い違わないことを確認する。
