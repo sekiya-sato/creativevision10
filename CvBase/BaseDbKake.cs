@@ -66,6 +66,12 @@ public sealed partial class SummaryUriKake : BaseDbClass {
 	[Comment("値引金額")]
 	public partial long Nebiki { get; set; }
 	/// <summary>
+	/// その他売上金額（区分99）。売上本体(Tran00Uriage)では畳み込んだままだが、集計側でのみ分離集計する（E11）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("その他売上金額（区分99） 売上とは別に分離集計")]
+	public partial long Sonota { get; set; }
+	/// <summary>
 	/// 消費税1
 	/// </summary>
 	[ObservableProperty]
@@ -380,6 +386,12 @@ public sealed partial class SummaryKaiKake : BaseDbClass {
 	[Comment("値引金額")]
 	public partial long Nebiki { get; set; }
 	/// <summary>
+	/// その他仕入金額（区分99）。仕入本体(Tran03Shiire/Tran02Material)では畳み込んだままだが、集計側でのみ分離集計する（E11）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("その他仕入金額（区分99） 仕入とは別に分離集計")]
+	public partial long Sonota { get; set; }
+	/// <summary>
 	/// 消費税1
 	/// </summary>
 	[ObservableProperty]
@@ -538,6 +550,12 @@ public sealed partial class SummaryKaiShi : BaseDbClass {
 	[OldTableCommentAttr("値引金額")]
 	[Comment("値引金額")]
 	public partial long Nebiki { get; set; }
+	/// <summary>
+	/// その他仕入金額（区分99）。仕入本体(Tran03Shiire/Tran02Material)では畳み込んだままだが、集計側でのみ分離集計する（E11）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("その他仕入金額（区分99） 仕入とは別に分離集計")]
+	public partial long Sonota { get; set; }
 	/// <summary>
 	/// 消費税1
 	/// </summary>
