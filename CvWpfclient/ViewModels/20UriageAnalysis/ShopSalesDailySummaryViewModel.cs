@@ -70,7 +70,7 @@ WITH agg AS (
         SUM(CASE WHEN h.Kubun IN ({uriKubun}) THEN h.KingakuTotal ELSE 0 END) AS uriKingaku,
         SUM(CASE WHEN h.Kubun IN ({henKubun}) THEN h.KingakuTotal ELSE 0 END) AS henKingaku,
         SUM(h.Nebiki00Total) AS nebiki,
-        SUM(h.Tax)           AS tax,
+        SUM(h.Tax1+h.Tax2+h.Tax3)           AS tax,
         SUM(h.KingakuTotal)  AS netKingaku
     FROM Tran01Tenuri h
     WHERE {where}

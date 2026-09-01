@@ -57,7 +57,7 @@ WITH tokui AS (
     WHERE TenType = 1 {tokuiWhere}
 ),
 cur AS (
-    SELECT Id_Tokui, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Tax,
+    SELECT Id_Tokui, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Tax1, Tax2, Tax3,
            Cash, Fee, Densai, Offset, Other
     FROM SummaryUriKake WHERE DenMonth = {ym}
 ),
@@ -69,7 +69,7 @@ joined AS (
         t.Code AS tokuiCode, t.Name AS tokuiName,
         ifnull(p.Balance, 0)    AS prevBalance,
         ifnull(c.TotalSales, 0) AS totalSales,
-        ifnull(c.Tax, 0)        AS tax,
+        ifnull(c.Tax1, 0) + ifnull(c.Tax2, 0) + ifnull(c.Tax3, 0) AS tax,
         ifnull(c.Henpin, 0)     AS henpin,
         ifnull(c.Nebiki, 0)     AS nebiki,
         ifnull(c.TotalIn, 0)    AS totalIn,

@@ -53,7 +53,7 @@ public partial class ShiharaiBalanceDetailViewModel : Helpers.BaseReportViewMode
 		var payDay = AddSqlParameter(parameters, ToDenDay(day));
 		var shiireWhere = BuildCodeRangeWhere(parameters, "s.Code", ShiireCodeFrom, ShiireCodeTo);
 
-		const string ShiireKingaku = "CASE WHEN v.Total != 0 THEN v.Total ELSE v.KingakuTotal + v.Tax END";
+		const string ShiireKingaku = "CASE WHEN v.Total != 0 THEN v.Total ELSE v.KingakuTotal + (v.Tax1+v.Tax2+v.Tax3) END";
 		var activeOnly = IsActiveOnly ? "AND (k.TotalShiire != 0 OR k.Balance != 0)" : "";
 		var kubunLabel = TranMeisaiSql.KubunLabel("v.Kubun",
 			((int)EnumShiire.Shiire, "仕入"), ((int)EnumShiire.Henpin, "仕入返品"),
@@ -78,7 +78,7 @@ WITH headers AS (
         k.Balance - k.TotalShiire + k.TotalOut AS prevBalance,
         k.TotalShiire AS totalShiire,
         k.TotalOut    AS totalOut,
-        k.Tax         AS tax,
+        (k.Tax1+k.Tax2+k.Tax3) AS tax,
         k.Balance     AS balance
     FROM SummaryKaiShi k
     JOIN MasterShiire s ON s.Id = k.Id_Shiire

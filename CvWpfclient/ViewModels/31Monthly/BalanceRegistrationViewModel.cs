@@ -608,13 +608,17 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 		if (SelectedKind == EnumOpeningBalanceKind.UriSei) {
 			yield return (EnumOpeningBalanceField.Sonota, nameof(SummaryUriSei.Sonota));
 		}
-		// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
-		yield return (EnumOpeningBalanceField.Tax, nameof(SummaryUriKake.Tax1));
+		yield return (EnumOpeningBalanceField.Tax1, nameof(SummaryUriKake.Tax1));
+		yield return (EnumOpeningBalanceField.Tax2, nameof(SummaryUriKake.Tax2));
+		yield return (EnumOpeningBalanceField.Tax3, nameof(SummaryUriKake.Tax3));
 		yield return (EnumOpeningBalanceField.Cash, nameof(SummaryUriKake.Cash));
 		yield return (EnumOpeningBalanceField.Fee, nameof(SummaryUriKake.Fee));
 		yield return (EnumOpeningBalanceField.Densai, nameof(SummaryUriKake.Densai));
 		yield return (EnumOpeningBalanceField.Offset, nameof(SummaryUriKake.Offset));
 		yield return (EnumOpeningBalanceField.Other, nameof(SummaryUriKake.Other));
+		yield return (EnumOpeningBalanceField.TaxableAmount1, nameof(SummaryUriKake.TaxableAmount1));
+		yield return (EnumOpeningBalanceField.TaxableAmount2, nameof(SummaryUriKake.TaxableAmount2));
+		yield return (EnumOpeningBalanceField.TaxableAmount3, nameof(SummaryUriKake.TaxableAmount3));
 	}
 
 	private static void SetLayoutBreakdown(OpeningBalanceBreakdown breakdown, EnumOpeningBalanceField field, long value) {
@@ -623,12 +627,17 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 			case EnumOpeningBalanceField.Henpin: breakdown.Henpin = value; break;
 			case EnumOpeningBalanceField.Nebiki: breakdown.Nebiki = value; break;
 			case EnumOpeningBalanceField.Sonota: breakdown.Sonota = value; break;
-			case EnumOpeningBalanceField.Tax: breakdown.Tax = value; break;
+			case EnumOpeningBalanceField.Tax1: breakdown.Tax1 = value; break;
+			case EnumOpeningBalanceField.Tax2: breakdown.Tax2 = value; break;
+			case EnumOpeningBalanceField.Tax3: breakdown.Tax3 = value; break;
 			case EnumOpeningBalanceField.Cash: breakdown.Cash = value; break;
 			case EnumOpeningBalanceField.Fee: breakdown.Fee = value; break;
 			case EnumOpeningBalanceField.Densai: breakdown.Densai = value; break;
 			case EnumOpeningBalanceField.Offset: breakdown.Offset = value; break;
 			case EnumOpeningBalanceField.Other: breakdown.Other = value; break;
+			case EnumOpeningBalanceField.TaxableAmount1: breakdown.TaxableAmount1 = value; break;
+			case EnumOpeningBalanceField.TaxableAmount2: breakdown.TaxableAmount2 = value; break;
+			case EnumOpeningBalanceField.TaxableAmount3: breakdown.TaxableAmount3 = value; break;
 		}
 	}
 

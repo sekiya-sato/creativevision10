@@ -73,7 +73,7 @@ WITH agg AS (
         COUNT(*)             AS denCount,
         SUM(h.SuTotal)       AS su,
         SUM(h.KingakuTotal)  AS kingaku,
-        SUM(h.Tax)           AS tax,
+        SUM(h.Tax1+h.Tax2+h.Tax3)           AS tax,
         SUM(h.Nebiki00Total) AS nebiki,
         SUM(h.JodaiTotal)    AS jodaiTotal,
         SUM(h.GedaiTotal)    AS gedaiTotal

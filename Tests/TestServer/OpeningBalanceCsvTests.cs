@@ -95,7 +95,7 @@ public class OpeningBalanceCsvTests {
 	[TestMethod]
 	public void Parse_ReadsBreakdownColumns() {
 		var text = string.Join("\r\n", [
-			"得意先コード,期首残高,売上,返品,値引,消費税,現金入金",
+			"得意先コード,期首残高,売上,返品,値引,消費税1,現金入金",
 			"00123,90000,100000,0,0,10000,20000",
 		]);
 
@@ -104,7 +104,7 @@ public class OpeningBalanceCsvTests {
 		Assert.IsFalse(parsed.HasError, string.Join(" / ", parsed.Errors.Select(x => x.Detail)));
 		var row = parsed.Rows.Single();
 		Assert.AreEqual(100000L, row.Breakdown.Main);
-		Assert.AreEqual(10000L, row.Breakdown.Tax);
+		Assert.AreEqual(10000L, row.Breakdown.Tax1);
 		Assert.AreEqual(20000L, row.Breakdown.Cash);
 		Assert.AreEqual(110000L, row.Breakdown.DebitTotal);
 		Assert.AreEqual(20000L, row.Breakdown.CreditTotal);
@@ -131,7 +131,7 @@ public class OpeningBalanceCsvTests {
 
 	[TestMethod]
 	public void Build_UriKake_WithBreakdown_KeepsBreakdownAndDerivesTotals() {
-		var breakdown = new OpeningBalanceBreakdown { Main = 100000, Tax = 10000, Cash = 20000 };
+		var breakdown = new OpeningBalanceBreakdown { Main = 100000, Tax1 = 10000, Cash = 20000 };
 		var result = BuildUriKake([Row(4, "00123", 90000, breakdown)], existing: new Dictionary<long, long>());
 
 		Assert.IsFalse(result.HasError, string.Join(" / ", result.Errors.Select(x => x.Detail)));
@@ -146,7 +146,7 @@ public class OpeningBalanceCsvTests {
 
 	[TestMethod]
 	public void Build_RejectsBreakdownThatDoesNotMatchAmount() {
-		var breakdown = new OpeningBalanceBreakdown { Main = 100000, Tax = 10000 };
+		var breakdown = new OpeningBalanceBreakdown { Main = 100000, Tax1 = 10000 };
 		var result = BuildUriKake([Row(4, "00123", 90000, breakdown)], existing: new Dictionary<long, long>());
 
 		Assert.IsTrue(result.HasError);
@@ -332,7 +332,7 @@ public class OpeningBalanceCsvTests {
 			EnumOpeningBalanceKind.UriSei, includeBreakdown: true,
 			FiscalStart, "20260630", 99,
 			[new OpeningBalanceTemplateRow("00123", "株式会社アルファ", 99, 150000,
-				new OpeningBalanceBreakdown { Main = 140000, Tax = 10000 }, "20260731")]);
+				new OpeningBalanceBreakdown { Main = 140000, Tax1 = 10000 }, "20260731")]);
 
 		var parsed = OpeningBalanceCsv.Parse(string.Join("\r\n", lines), EnumOpeningBalanceKind.UriSei);
 
@@ -341,7 +341,7 @@ public class OpeningBalanceCsvTests {
 		Assert.AreEqual("00123", row.Code);
 		Assert.AreEqual(150000L, row.Amount);
 		Assert.AreEqual(140000L, row.Breakdown.Main);
-		Assert.AreEqual(10000L, row.Breakdown.Tax);
+		Assert.AreEqual(10000L, row.Breakdown.Tax1);
 		Assert.AreEqual("20260731", row.DueDay);
 	}
 

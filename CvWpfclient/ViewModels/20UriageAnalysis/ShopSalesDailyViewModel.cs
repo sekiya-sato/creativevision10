@@ -67,8 +67,8 @@ SELECT
     COUNT(*)             AS denCount,
     SUM(h.SuTotal)       AS su,
     SUM(h.KingakuTotal)  AS kingaku,
-    SUM(h.Tax)           AS tax,
-    SUM(CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + h.Tax END) AS total,
+    SUM(h.Tax1+h.Tax2+h.Tax3)           AS tax,
+    SUM(CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END) AS total,
     SUM(h.Nebiki00Total) AS nebiki,
     CASE WHEN COUNT(*) != 0
          THEN CAST(ROUND(CAST(SUM(h.KingakuTotal) AS REAL) / COUNT(*)) AS INTEGER)

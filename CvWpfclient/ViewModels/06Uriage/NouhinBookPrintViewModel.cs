@@ -89,7 +89,7 @@ public partial class NouhinBookPrintViewModel : Helpers.BaseReportViewModel {
 		List<string> parameters = [];
 		var where = BuildWhere(parameters, from, to);
 
-		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + h.Tax END";
+		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
@@ -105,7 +105,7 @@ SELECT
     {kubunLabel}                           AS kubunText,
     h.SuTotal                              AS suTotal,
     h.KingakuTotal                         AS kingakuTotal,
-    h.Tax                                  AS tax,
+    (h.Tax1+h.Tax2+h.Tax3)                  AS tax,
     {Kingaku}                              AS total,
     {TranMeisaiSql.Str("Code_Shohin")}     AS shohinCode,
     {TranMeisaiSql.Str("Mei_Shohin")}      AS shohinName,

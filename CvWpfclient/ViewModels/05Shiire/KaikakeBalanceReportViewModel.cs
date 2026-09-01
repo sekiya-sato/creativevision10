@@ -57,7 +57,7 @@ WITH shiire AS (
     WHERE 1=1 {shiireWhere}
 ),
 cur AS (
-    SELECT Id_Shiire, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Tax,
+    SELECT Id_Shiire, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Tax1, Tax2, Tax3,
            Cash, Fee, Densai, Offset, Other
     FROM SummaryKaiKake WHERE DenMonth = {ym}
 ),
@@ -69,7 +69,7 @@ joined AS (
         s.Code AS shiireCode, s.Name AS shiireName,
         ifnull(p.Balance, 0)     AS prevBalance,
         ifnull(c.TotalShiire, 0) AS totalShiire,
-        ifnull(c.Tax, 0)         AS tax,
+        ifnull(c.Tax1, 0) + ifnull(c.Tax2, 0) + ifnull(c.Tax3, 0) AS tax,
         ifnull(c.Henpin, 0)      AS henpin,
         ifnull(c.Nebiki, 0)      AS nebiki,
         ifnull(c.TotalOut, 0)    AS totalOut,

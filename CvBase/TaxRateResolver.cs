@@ -1,14 +1,16 @@
-using CvBase;
 using CvBase.Share;
 using System.Globalization;
 
-namespace CvDomainLogic;
+namespace CvBase;
 
 /// <summary>
 /// 伝票日付時点の消費税率を解決する。
 /// <para>
 /// クライアント側の <c>AppGlobal.LogicGetTax</c> と同じ判定をサーバ側で行うための共通処理。
 /// 仕様は `Doc/spec/2026-08-25_明細別消費税計算_詳細設計.md` の 4.4 を参照する。
+/// 元は <c>CvDomainLogic</c> にあったが、帳票VM（<c>CvWpfclient</c>、<c>CvDomainLogic</c> を参照しない）からも
+/// 同じ判定を1箇所から使えるよう <c>CvBase</c> へ移した
+/// （`Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` D-05 のレビュー指摘）。
 /// </para>
 /// </summary>
 public static class TaxRateResolver {

@@ -61,7 +61,7 @@ public partial class ShiireLedgerViewModel : Helpers.BaseReportViewModel {
 		var shiireWhere = BuildCodeRangeWhere(parameters, "Code", ShiireCodeFrom, ShiireCodeTo);
 
 		// 仕入の買掛計上額は総合計(Total)。未計算の伝票が混ざる場合は 明細金額+消費税 で代替する。
-		const string ShiireKingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + h.Tax END";
+		const string ShiireKingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumShiire.Shiire, "仕入"), ((int)EnumShiire.Henpin, "仕入返品"),
 			((int)EnumShiire.Nebiki, "値引"), ((int)EnumShiire.Other, "その他"));

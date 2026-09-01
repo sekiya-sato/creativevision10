@@ -65,7 +65,7 @@ SELECT
     u.Henpin     AS henpin,
     u.Nebiki     AS nebiki,
     u.Sonota     AS sonota,
-    u.Tax        AS tax,
+    (u.Tax1+u.Tax2+u.Tax3) AS tax,
     u.TotalIn    AS totalIn,
     u.Balance    AS balance
 FROM SummaryUriSei u

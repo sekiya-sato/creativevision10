@@ -64,7 +64,7 @@ SELECT
     k.TotalShiire AS totalShiire,
     k.Henpin      AS henpin,
     k.Nebiki      AS nebiki,
-    k.Tax         AS tax,
+    (k.Tax1+k.Tax2+k.Tax3) AS tax,
     k.TotalOut    AS totalOut,
     k.Balance     AS balance
 FROM SummaryKaiShi k

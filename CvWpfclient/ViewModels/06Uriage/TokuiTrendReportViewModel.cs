@@ -66,7 +66,7 @@ public partial class TokuiTrendReportViewModel : Helpers.BaseReportViewModel {
 		var dayTo = AddSqlParameter(parameters, dataTo);
 		var tokuiWhere = BuildCodeRangeWhere(parameters, "Code", TokuiCodeFrom, TokuiCodeTo);
 
-		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + h.Tax END";
+		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
 		var kubunFilter = IncludeHenpin
 			? ""
 			: $" AND h.Kubun IN ({(int)EnumUri00.Uriage},{(int)EnumUri00.UriSale})";
@@ -97,7 +97,7 @@ monthly AS (
         substr(h.DenDay,1,6) AS ym,
         SUM(h.SuTotal)      AS su,
         SUM(h.KingakuTotal) AS kingaku,
-        SUM(h.Tax)          AS tax,
+        SUM(h.Tax1+h.Tax2+h.Tax3)          AS tax,
         SUM({Kingaku})      AS total,
         COUNT(*)            AS denCount
     FROM Tran00Uriage h

@@ -64,7 +64,7 @@ public partial class ShiireTrendReportViewModel : Helpers.BaseReportViewModel {
 		var dayTo = AddSqlParameter(parameters, dataTo);
 		var shiireWhere = BuildCodeRangeWhere(parameters, "Code", ShiireCodeFrom, ShiireCodeTo);
 
-		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + h.Tax END";
+		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
 		var kubunFilter = IncludeHenpin ? "" : $" AND h.Kubun = {(int)EnumShiire.Shiire}";
 		var activeOnly = IsActiveOnly ? "WHERE total != 0 OR su != 0" : "";
 
@@ -94,7 +94,7 @@ monthly AS (
         substr(h.DenDay,1,6) AS ym,
         SUM(h.SuTotal)      AS su,
         SUM(h.KingakuTotal) AS kingaku,
-        SUM(h.Tax)          AS tax,
+        SUM(h.Tax1+h.Tax2+h.Tax3)          AS tax,
         SUM({Kingaku})      AS total,
         COUNT(*)            AS denCount
     FROM Tran03Shiire h

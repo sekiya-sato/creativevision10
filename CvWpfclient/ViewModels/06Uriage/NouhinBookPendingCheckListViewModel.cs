@@ -56,7 +56,7 @@ public partial class NouhinBookPendingCheckListViewModel : Helpers.BaseReportVie
 			where += " AND ifnull(h.IsPrint,0) = 0";
 		}
 
-		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + h.Tax END";
+		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
@@ -71,7 +71,7 @@ SELECT
     {kubunLabel}                           AS kubunText,
     h.SuTotal                              AS suTotal,
     h.KingakuTotal                         AS kingakuTotal,
-    h.Tax                                  AS tax,
+    (h.Tax1+h.Tax2+h.Tax3)                  AS tax,
     {Kingaku}                              AS total,
     CASE WHEN ifnull(h.IsPrint,0) = 0 THEN '未発行' ELSE '発行済' END AS printState,
     ifnull(h.ManualNo,'')                  AS manualNo,

@@ -53,16 +53,47 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 		}
 		ct.ThrowIfCancellationRequested();
 
+		// 税区分(Id_Tax 1-3)→表示税率(10%/8%/非課税)の対応は、この請求締日(DayTo)時点の
+		// MasterSysTax で1回だけ解決する（`Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` D-05）。
+		// 判定は CvDomainLogic/SummaryDb.cs と同じ TaxRateResolver.ResolveTaxRatePercent に揃えており、
+		// マッピングをこの1箇所へまとめている（CvWpfclient は CvDomainLogic を参照しないため、
+		// TaxRateResolver 自体を CvBase へ移設して両側から同じ実装を呼べるようにした）。
+		var sysman = (await CvWpfclient.Helpers.CoreServiceClient.QuerySqlListAsync<MasterSysman>(
+			"SELECT * FROM MasterSysman ORDER BY Id LIMIT 1", [], ct)).FirstOrDefault();
+
 		List<string> parameters = [];
-		var seikyuDay = AddSqlParameter(parameters, ToDenDay(day));
+		var seikyuDayValue = ToDenDay(day);
+		var seikyuDay = AddSqlParameter(parameters, seikyuDayValue);
 		var tokuiWhere = BuildCodeRangeWhere(parameters, "t.Code", TokuiCodeFrom, TokuiCodeTo);
 
-		const string UriageKingaku = "CASE WHEN u.Total != 0 THEN u.Total ELSE u.KingakuTotal + u.Tax END";
+		var rates = new[] {
+			TaxRateResolver.ResolveTaxRatePercent(sysman, 1, seikyuDayValue),
+			TaxRateResolver.ResolveTaxRatePercent(sysman, 2, seikyuDayValue),
+			TaxRateResolver.ResolveTaxRatePercent(sysman, 3, seikyuDayValue),
+		};
+		// 税区分1-3のうち、指定税率(10/8)に該当する列だけを足し合わせる式を作る。
+		// 該当するIdが無ければ "0"（その税率の内訳が無い＝0円）。
+		static string SumForRate(string columnPrefix, int[] rates, int targetRate) {
+			List<string> parts = [];
+			for (var n = 1; n <= 3; n++) {
+				if (rates[n - 1] == targetRate) parts.Add($"{columnPrefix}{n}");
+			}
+			return parts.Count > 0 ? string.Join(" + ", parts) : "0";
+		}
+		var taxable10Expr = SumForRate("s.TaxableAmount", rates, 10);
+		var tax10Expr = SumForRate("s.Tax", rates, 10);
+		var taxable8Expr = SumForRate("s.TaxableAmount", rates, 8);
+		var tax8Expr = SumForRate("s.Tax", rates, 8);
+
+		const string UriageKingaku = "CASE WHEN u.Total != 0 THEN u.Total ELSE u.KingakuTotal + (u.Tax1+u.Tax2+u.Tax3) END";
 		var activeOnly = IsActiveOnly ? "AND (s.TotalSales != 0 OR s.Balance != 0)" : "";
 		var kubunLabel = TranMeisaiSql.KubunLabel("u.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
 			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Other, "その他"));
+		// 税率別内訳(taxable10/tax10/taxable8/tax8/taxExempt)は、明細JSONを丸め直さず
+		// SummaryUriSei.Tax1/2/3・TaxableAmount1/2/3（請求期間で1回だけ丸め済み。3.4/3.5）をそのまま使う。
+		// taxExempt は「請求書の課税対象額に含まれない金額」= 税抜売上合計 − 税区分1-3の課税対象額合計。
 		var headersCte = $@"
 headers AS (
     SELECT
@@ -72,16 +103,21 @@ headers AS (
         s.Balance + s.TotalSales - s.TotalIn AS prevBalance,
         s.TotalSales AS totalSales,
         s.TotalIn    AS totalIn,
-        s.Tax        AS tax,
+        (s.Tax1 + s.Tax2 + s.Tax3) AS tax,
         s.Balance    AS balance,
-        s.SeikyuNo   AS seikyuNo
+        s.SeikyuNo   AS seikyuNo,
+        ({taxable10Expr}) AS taxable10,
+        ({tax10Expr}) AS tax10,
+        ({taxable8Expr}) AS taxable8,
+        ({tax8Expr}) AS tax8,
+        (s.TotalSales - (s.Tax1 + s.Tax2 + s.Tax3) - (s.TaxableAmount1 + s.TaxableAmount2 + s.TaxableAmount3)) AS taxExempt
     FROM SummaryUriSei s
     JOIN MasterTokui t ON t.Id = s.Id_Tokui
     WHERE s.DenDay = {seikyuDay}
       {activeOnly}{tokuiWhere}
 ),";
 
-		if (!await ValidateTaxBreakdownAsync(seikyuDay, activeOnly, tokuiWhere, parameters, ct)) {
+		if (!await ValidateTaxBreakdownAsync(seikyuDay, activeOnly, tokuiWhere, rates, parameters, ct)) {
 			return null;
 		}
 
@@ -98,27 +134,6 @@ headers AS (
 
 		var sql = $@"
 WITH {headersCte}
-taxBreakdown AS (
-    SELECT
-        h.Id_Tokui,
-        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 10
-            THEN CASE WHEN u.Kubun BETWEEN 20 AND 39 THEN -1 ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) ELSE 0 END) AS taxable10,
-        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 10
-            THEN CASE WHEN u.Kubun BETWEEN 20 AND 29 THEN u.CalcFlag ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Tax'), 0) AS INTEGER) ELSE 0 END) AS tax10,
-        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 8
-            THEN CASE WHEN u.Kubun BETWEEN 20 AND 39 THEN -1 ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) ELSE 0 END) AS taxable8,
-        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 8
-            THEN CASE WHEN u.Kubun BETWEEN 20 AND 29 THEN u.CalcFlag ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Tax'), 0) AS INTEGER) ELSE 0 END) AS tax8,
-        SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) = 0
-            THEN CASE WHEN u.Kubun BETWEEN 20 AND 39 THEN -1 ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) ELSE 0 END) AS taxExempt
-    FROM headers h
-    LEFT JOIN Tran00Uriage u
-      ON u.Id_Tokui = h.Id_Tokui
-     AND u.IsPay = 1
-     AND u.KakeDay >= h.dayFrom AND u.KakeDay <= h.dayTo
-    LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
-    GROUP BY h.Id_Tokui
-),
 details AS (
     SELECT
         h.Id_Tokui AS idTokui, u.KakeDay AS denDay, 1 AS srcOrder, u.Id AS denNo,
@@ -139,50 +154,50 @@ SELECT
     d.su,
     d.kingaku,
     h.seikyuNo,
-    IFNULL(b.taxable10, 0) AS taxable10,
-    IFNULL(b.tax10, 0) AS tax10,
-    IFNULL(b.taxable8, 0) AS taxable8,
-    IFNULL(b.tax8, 0) AS tax8,
-    IFNULL(b.taxExempt, 0) AS taxExempt
+    h.taxable10,
+    h.tax10,
+    h.taxable8,
+    h.tax8,
+    h.taxExempt
 FROM headers h
 LEFT JOIN details d ON d.idTokui = h.Id_Tokui
-LEFT JOIN taxBreakdown b ON b.Id_Tokui = h.Id_Tokui
 ORDER BY h.tokuiCode, d.denDay, d.srcOrder, d.denNo";
 
 		return new QueryListSqlParam(typeof(object), sql, [.. parameters]);
 	}
 
 	/// <summary>
-	/// 適格請求書の税率別内訳を、請求対象の売上明細スナップショットから作れることを確認する。
-	/// 明細欠落・未対応税率・集計値不一致のままPDFを出すと請求額と内訳が食い違うため、印刷前に止める。
+	/// 適格請求書の税率別内訳（10%/8%/非課税）が、請求残の税額・課税対象額と食い違わないことを確認する。
+	/// <para>
+	/// 請求単位の伝票は明細 <c>Tax</c> が常に0のため（3.4）、旧来の「明細ごとに丸めた <c>Tax</c> を
+	/// 税率でグルーピングして単純SUM」する検査は成立しない。新方式では内訳自体を
+	/// <c>SummaryUriSei.Tax1/2/3</c>・<c>TaxableAmount1/2/3</c> を税区分ごとに振り分けて作るため
+	/// （<see cref="BuildPrintSqlParamAsync"/>）、この検査で確かめるべきは「振り分け漏れが無いこと」――
+	/// つまり <c>Tax1+Tax2+Tax3</c> が税率別内訳の合計と、<c>TaxableAmount1+2+3</c> が
+	/// 税率別の課税対象額の合計と、それぞれ一致することである。1つでも税区分の解決税率が10%/8%の
+	/// どちらでもなければ（想定外の税率改定など）その分だけ内訳から漏れ、ここで不一致として検出する。
+	/// </para>
 	/// </summary>
-	private async Task<bool> ValidateTaxBreakdownAsync(string seikyuDay, string activeOnly, string tokuiWhere, List<string> parameters, CancellationToken ct) {
+	private async Task<bool> ValidateTaxBreakdownAsync(string seikyuDay, string activeOnly, string tokuiWhere, int[] rates, List<string> parameters, CancellationToken ct) {
+		static string SumForRate(string columnPrefix, int[] rates, int targetRate) {
+			List<string> parts = [];
+			for (var n = 1; n <= 3; n++) {
+				if (rates[n - 1] == targetRate) parts.Add($"{columnPrefix}{n}");
+			}
+			return parts.Count > 0 ? string.Join(" + ", parts) : "0";
+		}
+		var tax10Expr = SumForRate("Tax", rates, 10);
+		var tax8Expr = SumForRate("Tax", rates, 8);
+		var taxable10Expr = SumForRate("TaxableAmount", rates, 10);
+		var taxable8Expr = SumForRate("TaxableAmount", rates, 8);
+
 		var sql = $@"
 WHERE DenDay = {seikyuDay}
   {activeOnly.Replace("s.", string.Empty, StringComparison.Ordinal)}
   AND Id_Tokui IN (SELECT t.Id FROM MasterTokui t WHERE 1 = 1 {tokuiWhere})
   AND (
-      TotalSales <> IFNULL((
-          SELECT SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) IN (0, 8, 10)
-              THEN CASE WHEN u.Kubun BETWEEN 20 AND 39 THEN -1 ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) ELSE 0 END)
-          FROM Tran00Uriage u
-          LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
-          WHERE u.Id_Tokui = SummaryUriSei.Id_Tokui AND u.IsPay = 1 AND u.KakeDay BETWEEN SummaryUriSei.DayFrom AND SummaryUriSei.DayTo), 0)
-          + IFNULL((
-          SELECT SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) IN (0, 8, 10)
-              THEN CASE WHEN u.Kubun BETWEEN 20 AND 29 THEN u.CalcFlag ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Tax'), 0) AS INTEGER) ELSE 0 END)
-          FROM Tran00Uriage u
-          LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
-          WHERE u.Id_Tokui = SummaryUriSei.Id_Tokui AND u.IsPay = 1 AND u.KakeDay BETWEEN SummaryUriSei.DayFrom AND SummaryUriSei.DayTo), 0)
-      OR Tax <> IFNULL((
-          SELECT SUM(CASE WHEN CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) IN (0, 8, 10)
-              THEN CASE WHEN u.Kubun BETWEEN 20 AND 29 THEN u.CalcFlag ELSE 1 END * CAST(IFNULL(json_extract(m.value, '$.Tax'), 0) AS INTEGER) ELSE 0 END)
-          FROM Tran00Uriage u
-          LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
-          WHERE u.Id_Tokui = SummaryUriSei.Id_Tokui AND u.IsPay = 1 AND u.KakeDay BETWEEN SummaryUriSei.DayFrom AND SummaryUriSei.DayTo), 0)
-      OR EXISTS (SELECT 1 FROM Tran00Uriage u LEFT JOIN json_each(CASE WHEN json_valid(u.Jmeisai) THEN u.Jmeisai ELSE '[]' END) AS m
-          WHERE u.Id_Tokui = SummaryUriSei.Id_Tokui AND u.IsPay = 1 AND u.KakeDay BETWEEN SummaryUriSei.DayFrom AND SummaryUriSei.DayTo
-            AND (NOT json_valid(u.Jmeisai) OR CAST(IFNULL(json_extract(m.value, '$.TaxRate'), 0) AS INTEGER) NOT IN (0, 8, 10)))
+      (Tax1 + Tax2 + Tax3) <> ({tax10Expr}) + ({tax8Expr})
+      OR (TaxableAmount1 + TaxableAmount2 + TaxableAmount3) <> ({taxable10Expr}) + ({taxable8Expr})
   )";
 
 		var coreService = AppGlobal.GetGrpcService<ICoreService>();

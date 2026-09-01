@@ -66,7 +66,7 @@ SELECT
     t.Name AS tokuiName,
     {TranMeisaiSql.DateLabel("u.DayFrom")} || '～' || {TranMeisaiSql.DateLabel("u.DayTo")} AS termLabel,
     u.TotalSales AS totalSales,
-    u.Tax        AS tax,
+    (u.Tax1+u.Tax2+u.Tax3) AS tax,
     u.Balance    AS balance,
     {TranMeisaiSql.DateLabel("u.NyukinYoteiDay")} AS nyukinYoteiLabel,
     u.Renban     AS renban

@@ -284,6 +284,9 @@ public class OpeningBalanceDbTests {
 		db.CreateTable(typeof(Tran06Nyukin), true, false);
 		db.CreateTable(typeof(MasterMeisho), true, false);
 		db.CreateTable(typeof(MasterSysman), true, false);
+		// CalcSummaryUriKake は税区分別のTaxRounding解決のためMasterTokuiをLEFT JOINする(3.5)。
+		// 対象取引先が無くてもIFNULLで既定値になるため、テーブルさえあれば行の投入は不要。
+		db.CreateTable(typeof(MasterTokui), true, false);
 		db.Insert(new MasterSysman { FiscalStartDate = "20260701", ShimeBi = 99 });
 
 		new OpeningBalanceDb(db).Import(Param(nameof(SummaryUriKake), "202606", [1],

@@ -67,7 +67,7 @@ SELECT
     s.Name AS shiireName,
     {TranMeisaiSql.DateLabel("k.DayFrom")} || '～' || {TranMeisaiSql.DateLabel("k.DayTo")} AS termLabel,
     k.TotalShiire AS totalShiire,
-    k.Tax         AS tax,
+    (k.Tax1+k.Tax2+k.Tax3) AS tax,
     k.TotalOut    AS totalOut,
     k.Balance     AS balance,
     {TranMeisaiSql.DateLabel("k.ShiharaiYoteiDay")} AS shiharaiYoteiLabel

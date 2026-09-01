@@ -121,7 +121,7 @@ SELECT
     SUM({Pay("CashAmount")} + {Pay("CardAmount")} + {Pay("OtherAmount")} - {Pay("ChangeAmount")}) AS Offset,
     SUM(h.KingakuTotal)
       - SUM({Pay("CashAmount")} + {Pay("CardAmount")} + {Pay("OtherAmount")} - {Pay("ChangeAmount")}) AS Balance,
-    0 AS TotalIn, 0 AS Henpin, 0 AS Nebiki, 0 AS Tax
+    0 AS TotalIn, 0 AS Henpin, 0 AS Nebiki, 0 AS Tax1, 0 AS Tax2, 0 AS Tax3
 FROM Tran01Tenuri h
 WHERE {where}
 GROUP BY h.Id_Tenpo, {dayKey}

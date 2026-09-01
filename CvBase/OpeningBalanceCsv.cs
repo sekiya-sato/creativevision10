@@ -32,9 +32,10 @@ public enum EnumOpeningBalanceStatus {
 /// <summary>CSVの1列が担う意味。</summary>
 public enum EnumOpeningBalanceField {
 	Code, Name, Shime, Amount,
-	Main, Henpin, Nebiki, Sonota, Tax,
+	Main, Henpin, Nebiki, Sonota, Tax1, Tax2, Tax3,
 	Cash, Fee, Densai, Offset, Other,
 	DueDay,
+	TaxableAmount1, TaxableAmount2, TaxableAmount3,
 }
 
 /// <summary>
@@ -59,9 +60,11 @@ public sealed record OpeningBalanceKindSpec(
 public sealed record OpeningBalanceCsvColumn(EnumOpeningBalanceField Field, string Header) {
 	/// <summary>内訳列（省略可能で、指定時は整合検査の対象になる）か。</summary>
 	public bool IsBreakdown => Field is EnumOpeningBalanceField.Main or EnumOpeningBalanceField.Henpin
-		or EnumOpeningBalanceField.Nebiki or EnumOpeningBalanceField.Sonota or EnumOpeningBalanceField.Tax
+		or EnumOpeningBalanceField.Nebiki or EnumOpeningBalanceField.Sonota
+		or EnumOpeningBalanceField.Tax1 or EnumOpeningBalanceField.Tax2 or EnumOpeningBalanceField.Tax3
 		or EnumOpeningBalanceField.Cash or EnumOpeningBalanceField.Fee or EnumOpeningBalanceField.Densai
-		or EnumOpeningBalanceField.Offset or EnumOpeningBalanceField.Other;
+		or EnumOpeningBalanceField.Offset or EnumOpeningBalanceField.Other
+		or EnumOpeningBalanceField.TaxableAmount1 or EnumOpeningBalanceField.TaxableAmount2 or EnumOpeningBalanceField.TaxableAmount3;
 }
 
 /// <summary>内訳の金額。すべて正値で保持する。</summary>
@@ -70,22 +73,30 @@ public sealed class OpeningBalanceBreakdown {
 	public long Henpin { get; set; }
 	public long Nebiki { get; set; }
 	public long Sonota { get; set; }
-	public long Tax { get; set; }
+	public long Tax1 { get; set; }
+	public long Tax2 { get; set; }
+	public long Tax3 { get; set; }
 	public long Cash { get; set; }
 	public long Fee { get; set; }
 	public long Densai { get; set; }
 	public long Offset { get; set; }
 	public long Other { get; set; }
+	/// <summary>税区分1の課税対象額（税抜）。参考値で、DebitTotal の計算には使わない。</summary>
+	public long TaxableAmount1 { get; set; }
+	public long TaxableAmount2 { get; set; }
+	public long TaxableAmount3 { get; set; }
 
 	/// <summary>売上側合計（SummaryUriKake.TotalSales / SummaryKaiKake.TotalShiire）。</summary>
-	public long DebitTotal => Main - Henpin - Nebiki + Sonota + Tax;
+	public long DebitTotal => Main - Henpin - Nebiki + Sonota + Tax1 + Tax2 + Tax3;
 	/// <summary>入金側合計（SummaryUriKake.TotalIn / SummaryKaiKake.TotalOut）。</summary>
 	public long CreditTotal => Cash + Fee + Densai + Offset + Other;
 	/// <summary>内訳から算出した未回収残（正数）。</summary>
 	public long NetAmount => DebitTotal - CreditTotal;
 
-	public bool IsEmpty => Main == 0 && Henpin == 0 && Nebiki == 0 && Sonota == 0 && Tax == 0
-		&& Cash == 0 && Fee == 0 && Densai == 0 && Offset == 0 && Other == 0;
+	public bool IsEmpty => Main == 0 && Henpin == 0 && Nebiki == 0 && Sonota == 0
+		&& Tax1 == 0 && Tax2 == 0 && Tax3 == 0
+		&& Cash == 0 && Fee == 0 && Densai == 0 && Offset == 0 && Other == 0
+		&& TaxableAmount1 == 0 && TaxableAmount2 == 0 && TaxableAmount3 == 0;
 }
 
 /// <summary>CSVから読み取った1行（コード解決前）。</summary>
@@ -222,12 +233,17 @@ public sealed class OpeningBalanceOwnerRow {
 	public long Henpin { get; set; }
 	public long Nebiki { get; set; }
 	public long Sonota { get; set; }
-	public long Tax { get; set; }
+	public long Tax1 { get; set; }
+	public long Tax2 { get; set; }
+	public long Tax3 { get; set; }
 	public long Cash { get; set; }
 	public long Fee { get; set; }
 	public long Densai { get; set; }
 	public long Offset { get; set; }
 	public long Other { get; set; }
+	public long TaxableAmount1 { get; set; }
+	public long TaxableAmount2 { get; set; }
+	public long TaxableAmount3 { get; set; }
 	public string DueDay { get; set; } = string.Empty;
 
 	/// <summary>既存の期首残高（正数＝未回収）。</summary>
@@ -236,8 +252,10 @@ public sealed class OpeningBalanceOwnerRow {
 	public OpeningBalanceOwner ToOwner() => new(Id, Code, Name, Shime1, TenType);
 
 	public OpeningBalanceBreakdown ToBreakdown() => new() {
-		Main = Main, Henpin = Henpin, Nebiki = Nebiki, Sonota = Sonota, Tax = Tax,
+		Main = Main, Henpin = Henpin, Nebiki = Nebiki, Sonota = Sonota,
+		Tax1 = Tax1, Tax2 = Tax2, Tax3 = Tax3,
 		Cash = Cash, Fee = Fee, Densai = Densai, Offset = Offset, Other = Other,
+		TaxableAmount1 = TaxableAmount1, TaxableAmount2 = TaxableAmount2, TaxableAmount3 = TaxableAmount3,
 	};
 }
 
@@ -249,6 +267,14 @@ public sealed class OpeningBalanceOwnerRow {
 /// **正数＝未回収残**である。内部の <c>Balance</c>（負＝未回収）への変換はここで行う。
 /// 繰越の引き継ぎ方が売掛・買掛（Balance列）と請求・支払（TotalIn-TotalSales）で異なるため、
 /// どちらでも起点になるよう Balance と合計列の双方を必ず埋める。
+/// </para>
+/// <para>
+/// 内訳列（売上/仕入・返品・値引・その他売上・消費税1/2/3・課税対象額1/2/3）は
+/// <c>SummaryUriKake</c> 等と同じく**税抜**で入力する（2026-09-01 全体設計 3.8）。
+/// <c>消費税1/2/3</c> は税区分ごとに移行元で1回だけ丸めた確定額、
+/// <c>課税対象額1/2/3</c> はその元になった税抜金額（インボイス制度の税率別内訳の参考値）であり、
+/// 期首残高の合計計算（<see cref="OpeningBalanceBreakdown.DebitTotal"/>）には含めない。
+/// 移行元（旧CVnet）が税込で集計していた場合は、取込前に税抜へ変換してから入力すること。
 /// </para>
 /// </summary>
 public static class OpeningBalanceCsv {
@@ -293,12 +319,17 @@ public static class OpeningBalanceCsv {
 			if (kind == EnumOpeningBalanceKind.UriSei) {
 				columns.Add(new(EnumOpeningBalanceField.Sonota, "その他売上"));
 			}
-			columns.Add(new(EnumOpeningBalanceField.Tax, "消費税"));
+			columns.Add(new(EnumOpeningBalanceField.Tax1, "消費税1"));
+			columns.Add(new(EnumOpeningBalanceField.Tax2, "消費税2"));
+			columns.Add(new(EnumOpeningBalanceField.Tax3, "消費税3"));
 			columns.Add(new(EnumOpeningBalanceField.Cash, spec.IsPayable ? "現金支払" : "現金入金"));
 			columns.Add(new(EnumOpeningBalanceField.Fee, "振込手数料"));
 			columns.Add(new(EnumOpeningBalanceField.Densai, "電子記録債権"));
 			columns.Add(new(EnumOpeningBalanceField.Offset, spec.IsPayable ? "相殺支払" : "相殺入金"));
 			columns.Add(new(EnumOpeningBalanceField.Other, spec.IsPayable ? "その他支払" : "その他入金"));
+			columns.Add(new(EnumOpeningBalanceField.TaxableAmount1, "課税対象額1"));
+			columns.Add(new(EnumOpeningBalanceField.TaxableAmount2, "課税対象額2"));
+			columns.Add(new(EnumOpeningBalanceField.TaxableAmount3, "課税対象額3"));
 		}
 		if (spec.IsClosingBased) {
 			columns.Add(new(EnumOpeningBalanceField.DueDay, spec.IsPayable ? "支払予定日" : "入金予定日"));
@@ -352,12 +383,17 @@ SELECT t.Id AS Id, t.Code AS Code, t.Name AS Name, t.Shime1 AS Shime1, {tenType}
        IFNULL(s.Henpin, 0) AS Henpin,
        IFNULL(s.Nebiki, 0) AS Nebiki,
        {sonota} AS Sonota,
-       IFNULL(s.Tax, 0) AS Tax,
+       IFNULL(s.Tax1, 0) AS Tax1,
+       IFNULL(s.Tax2, 0) AS Tax2,
+       IFNULL(s.Tax3, 0) AS Tax3,
        IFNULL(s.Cash, 0) AS Cash,
        IFNULL(s.Fee, 0) AS Fee,
        IFNULL(s.Densai, 0) AS Densai,
        IFNULL(s."Offset", 0) AS "Offset",
        IFNULL(s.Other, 0) AS Other,
+       IFNULL(s.TaxableAmount1, 0) AS TaxableAmount1,
+       IFNULL(s.TaxableAmount2, 0) AS TaxableAmount2,
+       IFNULL(s.TaxableAmount3, 0) AS TaxableAmount3,
        {dueDay} AS DueDay
 FROM {spec.MasterTableName} AS t
 LEFT JOIN {spec.TableName} AS s ON s.{spec.OwnerColumn} = t.Id AND s.{spec.KeyColumn} = @0
@@ -406,12 +442,17 @@ ORDER BY t.Code
 		EnumOpeningBalanceField.Henpin => breakdown.Henpin,
 		EnumOpeningBalanceField.Nebiki => breakdown.Nebiki,
 		EnumOpeningBalanceField.Sonota => breakdown.Sonota,
-		EnumOpeningBalanceField.Tax => breakdown.Tax,
+		EnumOpeningBalanceField.Tax1 => breakdown.Tax1,
+		EnumOpeningBalanceField.Tax2 => breakdown.Tax2,
+		EnumOpeningBalanceField.Tax3 => breakdown.Tax3,
 		EnumOpeningBalanceField.Cash => breakdown.Cash,
 		EnumOpeningBalanceField.Fee => breakdown.Fee,
 		EnumOpeningBalanceField.Densai => breakdown.Densai,
 		EnumOpeningBalanceField.Offset => breakdown.Offset,
 		EnumOpeningBalanceField.Other => breakdown.Other,
+		EnumOpeningBalanceField.TaxableAmount1 => breakdown.TaxableAmount1,
+		EnumOpeningBalanceField.TaxableAmount2 => breakdown.TaxableAmount2,
+		EnumOpeningBalanceField.TaxableAmount3 => breakdown.TaxableAmount3,
 		_ => 0,
 	};
 
@@ -421,12 +462,17 @@ ORDER BY t.Code
 			case EnumOpeningBalanceField.Henpin: breakdown.Henpin = value; break;
 			case EnumOpeningBalanceField.Nebiki: breakdown.Nebiki = value; break;
 			case EnumOpeningBalanceField.Sonota: breakdown.Sonota = value; break;
-			case EnumOpeningBalanceField.Tax: breakdown.Tax = value; break;
+			case EnumOpeningBalanceField.Tax1: breakdown.Tax1 = value; break;
+			case EnumOpeningBalanceField.Tax2: breakdown.Tax2 = value; break;
+			case EnumOpeningBalanceField.Tax3: breakdown.Tax3 = value; break;
 			case EnumOpeningBalanceField.Cash: breakdown.Cash = value; break;
 			case EnumOpeningBalanceField.Fee: breakdown.Fee = value; break;
 			case EnumOpeningBalanceField.Densai: breakdown.Densai = value; break;
 			case EnumOpeningBalanceField.Offset: breakdown.Offset = value; break;
 			case EnumOpeningBalanceField.Other: breakdown.Other = value; break;
+			case EnumOpeningBalanceField.TaxableAmount1: breakdown.TaxableAmount1 = value; break;
+			case EnumOpeningBalanceField.TaxableAmount2: breakdown.TaxableAmount2 = value; break;
+			case EnumOpeningBalanceField.TaxableAmount3: breakdown.TaxableAmount3 = value; break;
 		}
 	}
 
@@ -835,8 +881,12 @@ ORDER BY t.Code
 				Uriage = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
-				// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
-				Tax1 = breakdown.Tax,
+				Tax1 = breakdown.Tax1,
+				Tax2 = breakdown.Tax2,
+				Tax3 = breakdown.Tax3,
+				TaxableAmount1 = breakdown.TaxableAmount1,
+				TaxableAmount2 = breakdown.TaxableAmount2,
+				TaxableAmount3 = breakdown.TaxableAmount3,
 				Cash = breakdown.Cash,
 				Fee = breakdown.Fee,
 				Densai = breakdown.Densai,
@@ -858,8 +908,12 @@ ORDER BY t.Code
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
 				Sonota = breakdown.Sonota,
-				// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
-				Tax1 = breakdown.Tax,
+				Tax1 = breakdown.Tax1,
+				Tax2 = breakdown.Tax2,
+				Tax3 = breakdown.Tax3,
+				TaxableAmount1 = breakdown.TaxableAmount1,
+				TaxableAmount2 = breakdown.TaxableAmount2,
+				TaxableAmount3 = breakdown.TaxableAmount3,
 				Cash = breakdown.Cash,
 				Fee = breakdown.Fee,
 				Densai = breakdown.Densai,
@@ -875,8 +929,12 @@ ORDER BY t.Code
 				Shiire = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
-				// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
-				Tax1 = breakdown.Tax,
+				Tax1 = breakdown.Tax1,
+				Tax2 = breakdown.Tax2,
+				Tax3 = breakdown.Tax3,
+				TaxableAmount1 = breakdown.TaxableAmount1,
+				TaxableAmount2 = breakdown.TaxableAmount2,
+				TaxableAmount3 = breakdown.TaxableAmount3,
 				Cash = breakdown.Cash,
 				Fee = breakdown.Fee,
 				Densai = breakdown.Densai,
@@ -895,8 +953,12 @@ ORDER BY t.Code
 				Shiire = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
-				// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
-				Tax1 = breakdown.Tax,
+				Tax1 = breakdown.Tax1,
+				Tax2 = breakdown.Tax2,
+				Tax3 = breakdown.Tax3,
+				TaxableAmount1 = breakdown.TaxableAmount1,
+				TaxableAmount2 = breakdown.TaxableAmount2,
+				TaxableAmount3 = breakdown.TaxableAmount3,
 				Cash = breakdown.Cash,
 				Fee = breakdown.Fee,
 				Densai = breakdown.Densai,
