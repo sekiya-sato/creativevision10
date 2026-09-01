@@ -528,7 +528,10 @@ public class HhtProcessUpdateTests {
 		_idSoko = InsertTokui(SokoCode, (int)EnumTokui._0_Soko, isZaiko: 1);
 		_idTenpo = InsertTokui(TenpoCode, (int)EnumTokui._6_Tenpo, isZaiko: 1);
 		_idIdo = InsertTokui(IdoCode, (int)EnumTokui._0_Soko, isZaiko: 1);
-		_idTokui = InsertTokui(TokuiCode, (int)EnumTokui._1_Oroshi, isZaiko: 0);
+		// 卸得意先は伝票単位(TaxCalcUnit=Slip)にして、HHT変換の税額計算(ApplyTaxOnly)が
+		// 伝票へTax1を確定させることを検証できるようにする。既定(請求単位)のままだと
+		// Doc/spec/2026-09-01 3.4 により伝票のTax1/2/3は常に0になり、税額計算の検証にならない。
+		_idTokui = InsertTokui(TokuiCode, (int)EnumTokui._1_Oroshi, isZaiko: 0, taxCalcUnit: (int)EnumTaxCalcUnit.Slip);
 
 		Db.Insert(new MasterShiire { Code = ShiireCode, Name = "仕入先1" });
 		_idShiire = Db.Single<MasterShiire>("where Code=@0", ShiireCode).Id;
@@ -555,8 +558,8 @@ public class HhtProcessUpdateTests {
 		Db.Insert(new MasterEndCustomer { Code = "9990000000001", Name = "顧客1" });
 	}
 
-	private long InsertTokui(string code, int tenType, int isZaiko) {
-		Db.Insert(new MasterTokui { Code = code, Name = $"取引先{code}", TenType = tenType, IsZaiko = isZaiko });
+	private long InsertTokui(string code, int tenType, int isZaiko, int taxCalcUnit = (int)EnumTaxCalcUnit.Billing) {
+		Db.Insert(new MasterTokui { Code = code, Name = $"取引先{code}", TenType = tenType, IsZaiko = isZaiko, TaxCalcUnit = taxCalcUnit });
 		return Db.Single<MasterTokui>("where Code=@0", code).Id;
 	}
 

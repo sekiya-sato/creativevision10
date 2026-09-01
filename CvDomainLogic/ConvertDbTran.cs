@@ -1,6 +1,7 @@
 using CvAsset;
 using CvBase;
 using CvBase.Share;
+using Microsoft.Extensions.Logging;
 
 namespace CvDomainLogic;
 
@@ -10,7 +11,10 @@ public partial class ConvertDb {
 	/// 本部売上変換
 	/// </summary>
 	public int CnvTran00HonUri(bool isInit = true) {
-		return ConvertTranHeadersByRange(
+		var tokuiTaxMap = GetTokuiTaxMap();
+		var sysman = GetSysman();
+		var mismatch = new TaxMismatchCounter();
+		var count = ConvertTranHeadersByRange(
 			0,
 			isInit,
 			rec => {
@@ -20,14 +24,14 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
-				var total = kingakuTotal + tax;
+				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
 				var rate = getDataInt(rec, "掛率1");
 				var memo = getString(rec, "メモ", getString(rec,"MEMO2"));
+				var denDay = getString(rec, "在庫計上日", "19010101");
 				//var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
-				return new Tran00Uriage() {
+				var slip = new Tran00Uriage() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
-					DenDay = getString(rec, "在庫計上日", "19010101"),
+					DenDay = denDay,
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
 					ManualNo = getString(rec, "手入力伝票NO"),
@@ -54,16 +58,27 @@ public partial class ConvertDb {
 					Id_Tokui = tokui.Sid,
 					VTokui = tokui,
 					Rate = rate,
-					Tax1 = tax,
-					Total = total,
 				};
+				// 税計算単位・消費税端数処理は得意先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+				var (calcUnit, rounding) = ResolveTorihikiTax(tokuiTaxMap, tokui.Sid, sysman);
+				slip.TaxCalcUnit = (int)calcUnit;
+				slip.TaxRounding = (int)rounding;
+				var newTax = FinalizeTax(meisaiList ?? [], sysman, denDay, kingakuTotal,
+					GetShohinTaxIdMap(), m => m.Id_Shohin, calcUnit, rounding, slip);
+				mismatch.Record(calcUnit, oldTax, newTax);
+				return slip;
 			});
+		mismatch.LogIfAny(_logger, nameof(Tran00Uriage));
+		return count;
 	}
 	/// <summary>
 	/// 店舗売上変換
 	/// </summary>
 	public int CnvTran01TenUri(bool isInit = true) {
-		return ConvertTranHeadersByRange(
+		var tokuiTaxMap = GetTokuiTaxMap();
+		var sysman = GetSysman();
+		var mismatch = new TaxMismatchCounter();
+		var count = ConvertTranHeadersByRange(
 			1,
 			isInit,
 			rec => {
@@ -76,11 +91,11 @@ public partial class ConvertDb {
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
-				var total = kingakuTotal + tax;
-				return new Tran01Tenuri() {
+				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var denDay = getString(rec, "在庫計上日", "19010101");
+				var slip = new Tran01Tenuri() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
-					DenDay = getString(rec, "在庫計上日", "19010101"),
+					DenDay = denDay,
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
@@ -105,10 +120,17 @@ public partial class ConvertDb {
 					VCustomer = kokyaku,
 					Code_Customer = kokyakuCode,
 					Rate = rate,
-					Tax1 = tax,
-					Total = total,
 				};
+				// 店舗売上はTaxCalcUnitを持たず常に伝票単位。端数処理は店舗(Id_Tenpo)のMasterTokuiのスナップショット(3.7)
+				var (_, rounding) = ResolveTorihikiTax(tokuiTaxMap, tenpo.Sid, sysman);
+				slip.TaxRounding = (int)rounding;
+				var newTax = FinalizeTax(meisaiList ?? [], sysman, denDay, kingakuTotal,
+					GetShohinTaxIdMap(), m => m.Id_Shohin, EnumTaxCalcUnit.Slip, rounding, slip);
+				mismatch.Record(EnumTaxCalcUnit.Slip, oldTax, newTax);
+				return slip;
 			});
+		mismatch.LogIfAny(_logger, nameof(Tran01Tenuri));
+		return count;
 	}
 	/// <summary>
 	/// 生地・付属仕入変換（旧伝票処理区分2）
@@ -128,7 +150,10 @@ public partial class ConvertDb {
 	/// </para>
 	/// </remarks>
 	public int CnvTran02Material(bool isInit = true) {
-		return ConvertTranHeadersByRange(
+		var shiireTaxMap = GetShiireTaxMap();
+		var sysman = GetSysman();
+		var mismatch = new TaxMismatchCounter();
+		var count = ConvertTranHeadersByRange(
 			2,
 			isInit,
 			rec => {
@@ -136,14 +161,19 @@ public partial class ConvertDb {
 				var shiire = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildMaterialMeisaiList(rec, kubun);
-				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var kingakuTotalRaw = getDataInt(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
-				var total = kingakuTotal + tax;
-				// 区分99は金額列が常に0で税額列にのみ実額が入る
-				return new Tran02Material() {
+				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var denDay = getString(rec, "在庫計上日", "19010101");
+				// 区分99(その他)は消費税調整伝票で、明細金額合計は常に0・実額は内税消費税/外税消費税にのみ入る。
+				// SummaryDb.CalcSummaryKaiKake/CalcSummaryKaiShi は区分99をKingakuTotal(Sonota99)からTaxバケットへ
+				// 丸めずそのまま積む(Doc/spec 3.8 A-6)ため、ここでもKingakuTotalへ実額を入れる。
+				// 明細に課税対象が無いためFinalizeTaxの計算結果は自然にTax1/2/3=0となり、
+				// SummaryDb側のSonota99加算と二重計上しない。
+				var kingakuTotal = kubun == 99 ? oldTax : kingakuTotalRaw;
+				var slip = new Tran02Material() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
-					DenDay = getString(rec, "在庫計上日", "19010101"),
+					DenDay = denDay,
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
 					IsPay = getDataInt(rec, "掛計上FLG"),
@@ -156,16 +186,30 @@ public partial class ConvertDb {
 					VShain = shain,
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
-					Tax1 = tax,
-					Total = total,
 				};
+				// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+				var (calcUnit, rounding) = ResolveTorihikiTax(shiireTaxMap, shiire.Sid, sysman);
+				slip.TaxCalcUnit = (int)calcUnit;
+				slip.TaxRounding = (int)rounding;
+				var newTax = FinalizeTax(meisaiList ?? [], sysman, denDay, kingakuTotal,
+					GetMaterialTaxIdMap(), m => m.Id_Material, calcUnit, rounding, slip);
+				// 区分99はTaxが常に0になる設計(上記コメント)なので、旧税額との比較対象から除外する
+				if (kubun != 99) {
+					mismatch.Record(calcUnit, oldTax, newTax);
+				}
+				return slip;
 			});
+		mismatch.LogIfAny(_logger, nameof(Tran02Material));
+		return count;
 	}
 	/// <summary>
 	/// 仕入変換
 	/// </summary>
 	public int CnvTran03Shiire(bool isInit = true) {
-		return ConvertTranHeadersByRange(
+		var shiireTaxMap = GetShiireTaxMap();
+		var sysman = GetSysman();
+		var mismatch = new TaxMismatchCounter();
+		var count = ConvertTranHeadersByRange(
 			3,
 			isInit,
 			rec => {
@@ -176,12 +220,12 @@ public partial class ConvertDb {
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
-				var total = kingakuTotal + tax;
+				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var denDay = getString(rec, "在庫計上日", "19010101");
 
-				return new Tran03Shiire() {
+				var slip = new Tran03Shiire() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
-					DenDay = getString(rec, "在庫計上日", "19010101"),
+					DenDay = denDay,
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
 					ManualNo = getString(rec, "手入力伝票NO"),
@@ -207,10 +251,18 @@ public partial class ConvertDb {
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
 					Rate = rate,
-					Tax1 = tax,
-					Total = total,
 				};
+				// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+				var (calcUnit, rounding) = ResolveTorihikiTax(shiireTaxMap, shiire.Sid, sysman);
+				slip.TaxCalcUnit = (int)calcUnit;
+				slip.TaxRounding = (int)rounding;
+				var newTax = FinalizeTax(meisaiList ?? [], sysman, denDay, kingakuTotal,
+					GetShohinTaxIdMap(), m => m.Id_Shohin, calcUnit, rounding, slip);
+				mismatch.Record(calcUnit, oldTax, newTax);
+				return slip;
 			});
+		mismatch.LogIfAny(_logger, nameof(Tran03Shiire));
+		return count;
 	}
 	/// <summary>
 	/// 移動変換
@@ -450,7 +502,10 @@ public partial class ConvertDb {
 	/// 受注変換
 	/// </summary>
 	public int CnvTran12Jyuchu(bool isInit = true) {
-		return ConvertTranHeadersByRange(
+		var tokuiTaxMap = GetTokuiTaxMap();
+		var sysman = GetSysman();
+		var mismatch = new TaxMismatchCounter();
+		var count = ConvertTranHeadersByRange(
 			12,
 			isInit,
 			rec => {
@@ -461,12 +516,12 @@ public partial class ConvertDb {
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
-				var total = kingakuTotal + tax;
+				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var denDay = getString(rec, "在庫計上日", "19010101");
 
-				return new Tran12Jyuchu() {
+				var slip = new Tran12Jyuchu() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
-					DenDay = getString(rec, "在庫計上日", "19010101"),
+					DenDay = denDay,
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
@@ -488,16 +543,26 @@ public partial class ConvertDb {
 					Id_Tokui = tokui.Sid,
 					VTokui = tokui,
 					Rate = rate,
-					Tax1 = tax,
-					Total = total,
 				};
+				// 受注はTaxCalcUnitを持たず常に伝票単位。端数処理は得意先マスタのスナップショット(3.7)
+				var (_, rounding) = ResolveTorihikiTax(tokuiTaxMap, tokui.Sid, sysman);
+				slip.TaxRounding = (int)rounding;
+				var newTax = FinalizeTax(meisaiList ?? [], sysman, denDay, kingakuTotal,
+					GetShohinTaxIdMap(), m => m.Id_Shohin, EnumTaxCalcUnit.Slip, rounding, slip);
+				mismatch.Record(EnumTaxCalcUnit.Slip, oldTax, newTax);
+				return slip;
 			});
+		mismatch.LogIfAny(_logger, nameof(Tran12Jyuchu));
+		return count;
 	}
 	/// <summary>
 	/// 発注変換
 	/// </summary>
 	public int CnvTran13Hachu(bool isInit = true) {
-		return ConvertTranHeadersByRange(
+		var shiireTaxMap = GetShiireTaxMap();
+		var sysman = GetSysman();
+		var mismatch = new TaxMismatchCounter();
+		var count = ConvertTranHeadersByRange(
 			13,
 			isInit,
 			rec => {
@@ -508,12 +573,12 @@ public partial class ConvertDb {
 				var meisaiList = BuildTranMeisaiList(rec);
 				var kingakuTotal = getDataInt(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var tax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
-				var total = kingakuTotal + tax;
+				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var denDay = getString(rec, "在庫計上日", "19010101");
 
-				return new Tran13Hachu() {
+				var slip = new Tran13Hachu() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
-					DenDay = getString(rec, "在庫計上日", "19010101"),
+					DenDay = denDay,
 					Kubun = kubun,
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
@@ -535,10 +600,17 @@ public partial class ConvertDb {
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
 					Rate = rate,
-					Tax1 = tax,
-					Total = total,
 				};
+				// 発注はTaxCalcUnitを持たず常に伝票単位。端数処理は仕入先マスタのスナップショット(3.7)
+				var (_, rounding) = ResolveTorihikiTax(shiireTaxMap, shiire.Sid, sysman);
+				slip.TaxRounding = (int)rounding;
+				var newTax = FinalizeTax(meisaiList ?? [], sysman, denDay, kingakuTotal,
+					GetShohinTaxIdMap(), m => m.Id_Shohin, EnumTaxCalcUnit.Slip, rounding, slip);
+				mismatch.Record(EnumTaxCalcUnit.Slip, oldTax, newTax);
+				return slip;
 			});
+		mismatch.LogIfAny(_logger, nameof(Tran13Hachu));
+		return count;
 	}
 	public int CnvTranSize1(bool isInit = true) {
 		var cnt = 0;
@@ -694,8 +766,7 @@ WHERE EXISTS (
 	}
 
 	List<Tran99Meisai>? BuildTranMeisaiList(Dictionary<string, object> rec, string table = "HC$tran_tori1") { // 棚卸は別テーブル
-		var taxColumn = (table == "HC$tran_tori1")?",t1.消費税率":"";
-		var detailRows = _fromDb.Fetch<Dictionary<string, object>>($"select t1.*{taxColumn} from {table} t1 where t1.ヘッダNO=@0 order by t1.行NO", getDataLong(rec, "SEQ_NO"));
+		var detailRows = _fromDb.Fetch<Dictionary<string, object>>($"select t1.* from {table} t1 where t1.ヘッダNO=@0 order by t1.行NO", getDataLong(rec, "SEQ_NO"));
 		if (detailRows.Count == 0)
 			return null;
 
@@ -707,7 +778,7 @@ WHERE EXISTS (
 			var shohin = getMaster<MasterShohin>(shohinCode);
 			var col = getMeisho("COL", colCode);
 			var siz = getMeisho(shohin?.SizeKu ?? string.Empty, sizCode);
-			int kubun = 0, jodai = 0, gedai = 0, nebiki00 = 0, nebiki01 = 0, nebiki02 = 0, taxId =0, taxRate = 0, taxKingaku=0;
+			int kubun = 0, jodai = 0, gedai = 0, nebiki00 = 0, nebiki01 = 0, nebiki02 = 0;
 			if (table == "HC$tran_tori1") {
 				kubun = getDataInt(detailRec, "明細取引区分");
 				jodai = getDataInt(detailRec, "上代単価");
@@ -715,9 +786,6 @@ WHERE EXISTS (
 				nebiki00 = getDataInt(detailRec, "明細値引");
 				nebiki01 = getDataInt(detailRec, "明細値引1");
 				nebiki02 = getDataInt(detailRec, "小計値引") + getDataInt(detailRec, "小計値引1");
-				taxRate = getDataInt(detailRec, "消費税率");
-				taxId = getTaxIdfromRate(taxRate, getString(detailRec, "伝票日付"));
-				taxKingaku = getDataInt(detailRec, "内税消費税")+ getDataInt(detailRec, "外税消費税");
 			}
 			meisaiList.Add(new Tran99Meisai() {
 				No = getDataInt(detailRec, "行NO"),
@@ -741,9 +809,8 @@ WHERE EXISTS (
 				Nebiki00 = nebiki00,
 				Nebiki01 = nebiki01,
 				Nebiki02 = nebiki02,
-				TaxRate = taxRate,
-				Id_Tax = taxId,
-				Tax = taxKingaku,
+				// Id_Tax/TaxRate/Tax はヘッダ側の FinalizeTax(TaxCalculator.Apply) が
+				// MasterShohin.Id_Tax から解決して確定させるため、ここでは既定値のまま積む(Doc/spec 3.2)。
 			});
 		}
 
@@ -755,7 +822,8 @@ WHERE EXISTS (
 	/// 区分30(値引)/99(その他)は商品CDが常に空欄のため、<see cref="CnvMasterMaterial"/> が用意した
 	/// プレースホルダ資材（Code=000030 値引き / Code=000099 消費税）へ固定で紐付ける。
 	/// それ以外(仕入/返品)は商品CDから <see cref="MasterMaterial"/> を通常どおり解決する。
-	/// 消費税はヘッダ側で一括計上するため、明細のId_Tax/TaxRate/Taxは持たない（0固定）。
+	/// Id_Tax/TaxRate/Tax はヘッダ側の FinalizeTax(TaxCalculator.Apply) が
+	/// MasterMaterial.Id_Tax から解決して確定させるため、ここでは既定値のまま積む(Doc/spec 3.2)。
 	/// </para>
 	/// </summary>
 	List<Tran99MaterialMeisai>? BuildMaterialMeisaiList(Dictionary<string, object> rec, int kubun) {
@@ -975,28 +1043,116 @@ WHERE EXISTS (
 		return new CodeNameView(current.Id, current.Code, current.Name);
 	}
 
-	MasterSysman? sysman = null;
-	Dictionary<string, Dictionary<int, int>> taxReverseTableByDate = new();
+	#region 消費税計算単位・端数処理の移行(Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md 2.2/3.2-3.7)
+	MasterSysman? _sysman;
+	Dictionary<long, long>? _shohinTaxIdMap;
+	Dictionary<long, long>? _materialTaxIdMap;
+	Dictionary<long, (int TaxCalcUnit, int TaxRounding)>? _tokuiTaxMap;
+	Dictionary<long, (int TaxCalcUnit, int TaxRounding)>? _shiireTaxMap;
+
+	/// <summary>税率定義を持つシステム設定。移行全体で1回だけ読む</summary>
+	MasterSysman GetSysman() => _sysman ??= _toDb.Fetch<MasterSysman>().FirstOrDefault() ?? new MasterSysman();
+
 	/// <summary>
-	/// 消費税率からTaxIdを引く。同じ税率が複数あればId_Taxが若い方を優先する。
+	/// 商品Id → 消費税区分の対応を一括で読む。明細1行ずつマスタを引くと
+	/// 伝票数×明細数ぶんの往復になる（<see cref="Tran01Tenuri"/>は300万件規模）ため、先にまとめて読む。
 	/// </summary>
-	/// <param name="rate"></param>
-	/// <param name="denDay">伝票日付(yyyyMMdd)</param>
-	/// <returns></returns>
-	int getTaxIdfromRate(int rate, string? denDay) {
-		sysman ??= _toDb.Fetch<MasterSysman>().FirstOrDefault();
-		denDay ??= ""; // denDayが同一日付の場合にはキャッシュを使い回す
-		if (!taxReverseTableByDate.TryGetValue(denDay, out var taxReverseTable)) {
-			taxReverseTable = new Dictionary<int, int>();
-			if (sysman?.Jsub != null) {
-				foreach (var item in sysman.Jsub.OrderBy(x => x.Id)) {
-					var taxrate = TaxRateResolver.ResolveTaxRatePercent(sysman, item.Id, denDay);
-					if (!taxReverseTable.ContainsKey(taxrate))
-						taxReverseTable[taxrate] = (int)item.Id;
-				}
-			}
-			taxReverseTableByDate[denDay] = taxReverseTable;
+	Dictionary<long, long> GetShohinTaxIdMap() =>
+		_shohinTaxIdMap ??= _toDb.Dictionary<long, long>($"SELECT Id, Id_Tax FROM {nameof(MasterShohin)}");
+
+	/// <summary>生地・付属Id → 消費税区分の対応を一括で読む(<see cref="GetShohinTaxIdMap"/>と同じ理由)</summary>
+	Dictionary<long, long> GetMaterialTaxIdMap() =>
+		_materialTaxIdMap ??= _toDb.Dictionary<long, long>($"SELECT Id, Id_Tax FROM {nameof(MasterMaterial)}");
+
+	/// <summary>
+	/// 得意先Id → (税計算単位, 消費税端数処理) の対応を一括で辞書化する。
+	/// 取引先Idごとにマスタを引くと伝票件数ぶんの往復になるため、変換タスク開始時に1回だけ読む。
+	/// </summary>
+	Dictionary<long, (int TaxCalcUnit, int TaxRounding)> GetTokuiTaxMap() =>
+		_tokuiTaxMap ??= _toDb.Fetch<MasterTokui>().ToDictionary(t => t.Id, t => (t.TaxCalcUnit, t.TaxRounding));
+
+	/// <summary>仕入先Id → (税計算単位, 消費税端数処理) の対応を一括で辞書化する(<see cref="GetTokuiTaxMap"/>と同じ理由)</summary>
+	Dictionary<long, (int TaxCalcUnit, int TaxRounding)> GetShiireTaxMap() =>
+		_shiireTaxMap ??= _toDb.Fetch<MasterShiire>().ToDictionary(t => t.Id, t => (t.TaxCalcUnit, t.TaxRounding));
+
+	/// <summary>
+	/// 取引先Idから税計算単位・消費税端数処理を解決する(3.7)。取引先が引けない場合(旧データの不整合等)は
+	/// 自社既定の消費税端数処理(<see cref="MasterSysman.TaxRounding"/>)を使い、税計算単位は安全側の伝票単位とする。
+	/// </summary>
+	static (EnumTaxCalcUnit CalcUnit, EnumRounding Rounding) ResolveTorihikiTax(
+		Dictionary<long, (int TaxCalcUnit, int TaxRounding)> map, long torihikiId, MasterSysman sysman) {
+		if (map.TryGetValue(torihikiId, out var found)) {
+			return ((EnumTaxCalcUnit)found.TaxCalcUnit, (EnumRounding)found.TaxRounding);
 		}
-		return taxReverseTable.TryGetValue(rate, out int value) ? value : 0;
+		return (EnumTaxCalcUnit.Slip, (EnumRounding)sysman.TaxRounding);
 	}
+
+	/// <summary>
+	/// 明細のId_Taxを商品/資材マスタから解決し、<see cref="TaxCalculator.Apply"/>でヘッダの
+	/// TaxableAmount1/2/3・Tax1/2/3・Totalを確定する(3.2-3.4)。戻り値は新しい税額合計(Tax1+Tax2+Tax3)で、
+	/// 呼び出し側が旧伝票の税額との比較・ログに使う。
+	/// </summary>
+	/// <typeparam name="TMeisai"><see cref="Tran99Meisai"/> または <see cref="Tran99MaterialMeisai"/></typeparam>
+	static long FinalizeTax<TMeisai>(
+		List<TMeisai> meisai, MasterSysman sysman, string denDay, long kingakuTotal,
+		Dictionary<long, long> taxIdMap, Func<TMeisai, long> keySelector,
+		EnumTaxCalcUnit calcUnit, EnumRounding rounding, ITranTax header)
+		where TMeisai : class, ITaxMeisaiLine {
+
+		foreach (var m in meisai) {
+			var key = keySelector(m);
+			m.TaxId = key > 0 && taxIdMap.TryGetValue(key, out var found) ? found : TaxCalculator.StandardTaxId;
+		}
+		var rateOf = TaxRateResolver.CreateRateResolver(sysman, denDay);
+		var totals = TaxCalculator.Apply(meisai, rateOf, calcUnit, rounding);
+
+		header.TaxableAmount1 = totals.TaxableAmount1;
+		header.TaxableAmount2 = totals.TaxableAmount2;
+		header.TaxableAmount3 = totals.TaxableAmount3;
+		header.Tax1 = totals.Tax1;
+		header.Tax2 = totals.Tax2;
+		header.Tax3 = totals.Tax3;
+		header.Total = Math.Abs(kingakuTotal) + totals.TaxTotal;
+		return totals.TaxTotal;
+	}
+
+	/// <summary>
+	/// 旧伝票の税額(内税消費税+外税消費税)と新計算値の食い違いを集計する。
+	/// 移行は旧システムの実績値を保存する性格も持つため、請求単位(旧税額を捨ててTax=0にする)・
+	/// 伝票単位(TaxCalculator.Applyで計算し直す)の双方について、失われる／変わる金額を可視化する。
+	/// </summary>
+	sealed class TaxMismatchCounter {
+		int _billingMismatch;
+		int _slipMismatch;
+		long _slipDiffSum;
+
+		/// <param name="calcUnit">伝票の税計算単位</param>
+		/// <param name="oldTax">旧伝票の税額(内税消費税+外税消費税)</param>
+		/// <param name="newTax">新計算後の税額合計(Tax1+Tax2+Tax3)</param>
+		public void Record(EnumTaxCalcUnit calcUnit, long oldTax, long newTax) {
+			if (calcUnit == EnumTaxCalcUnit.Billing) {
+				// 請求単位は新Taxが常に0になる設計(3.4)。旧税額が0でなければ、その分は請求計算まで失われる
+				if (oldTax != 0) {
+					_billingMismatch++;
+				}
+			} else if (oldTax != newTax) {
+				_slipMismatch++;
+				_slipDiffSum += newTax - oldTax;
+			}
+		}
+
+		public void LogIfAny(ILogger logger, string tableName) {
+			if (_billingMismatch > 0) {
+				logger.LogWarning(
+					"{Table} 請求単位: 旧税額(内税+外税消費税)が0でない伝票 {Count} 件。新伝票のTax1/2/3は0になり請求計算側で再計算される",
+					tableName, _billingMismatch);
+			}
+			if (_slipMismatch > 0) {
+				logger.LogWarning(
+					"{Table} 伝票単位: 旧税額とTaxCalculator.Applyの計算結果が一致しない伝票 {Count} 件 差額合計 {Diff}",
+					tableName, _slipMismatch, _slipDiffSum);
+			}
+		}
+	}
+	#endregion
 }

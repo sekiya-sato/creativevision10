@@ -1,5 +1,6 @@
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 
@@ -553,6 +554,30 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 		return list.Count;
 	}
 	/// <summary>
+	/// 旧CVnetの「消費税計算方法」(0:請求単位/1:伝票単位/2:明細単位)を、
+	/// CV10の<see cref="EnumTaxCalcUnit"/>(0:請求単位/1:伝票単位の2値)へ丸める。
+	/// <para>
+	/// 設計書 `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` D1のとおり、
+	/// CV10は明細単位を独立した値として持たないため、旧値2は最も近い1(伝票単位)へ丸める。
+	/// 3以上の想定外値も同様に1へ丸める(0のみ請求単位として残し、それ以外は安全側の伝票単位とする)。
+	/// 実データ調査(1.1章)では旧値は全件0であり実害は無いが、防御的に実装する。
+	/// </para>
+	/// </summary>
+	private static int NormalizeTaxCalcUnit(int oldValue) =>
+		oldValue == (int)EnumTaxCalcUnit.Billing ? (int)EnumTaxCalcUnit.Billing : (int)EnumTaxCalcUnit.Slip;
+
+	/// <summary>
+	/// 旧CVnetの「消費税端数」をCV10の<see cref="EnumRounding"/>へそのまま取り込む。
+	/// 旧・新とも 0=四捨五入/1=切上/2=切捨 で値の意味は同じだが、
+	/// 範囲外の値は <see cref="CvBase.TranCalcBase.RoundTax"/> が例外を投げるため、
+	/// 既定値の0(四捨五入)へ丸める防御を入れる。
+	/// </summary>
+	private static int NormalizeTaxRounding(int oldValue) =>
+		oldValue is (int)EnumRounding.Round or (int)EnumRounding.Ceiling or (int)EnumRounding.Floor
+			? oldValue
+			: (int)EnumRounding.Round;
+
+	/// <summary>
 	/// 得意先マスター変換
 	/// </summary>
 	/// <param name="isInit"></param>
@@ -583,8 +608,8 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				TenType = getDataInt(rec, "店種区分"),
 				IsZaiko = getDataInt(rec, "在庫管理FLG"),
 				IsPay = getDataInt(rec, "請求印刷"),
-				TaxRounding = getDataInt(rec, "消費税端数"),
-				TaxCalcUnit = getDataInt(rec, "消費税計算方法"),
+				TaxRounding = NormalizeTaxRounding(getDataInt(rec, "消費税端数")),
+				TaxCalcUnit = NormalizeTaxCalcUnit(getDataInt(rec, "消費税計算方法")),
 				SlipFormType = getDataInt(rec, "伝票発行区分"),
 				Jdetail = new MasterToriDetail() {
 					BankAccount1 = getString(rec, "振込先1"),
@@ -623,8 +648,8 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				Shime3 = getDataInt(rec, "締日3"),
 				PayMonth = getDataInt(rec, "入金予定月"),
 				PayDay = getDataInt(rec, "入金予定日"),
-				TaxRounding = getDataInt(rec, "消費税端数"),
-				TaxCalcUnit = getDataInt(rec, "消費税計算方法"),
+				TaxRounding = NormalizeTaxRounding(getDataInt(rec, "消費税端数")),
+				TaxCalcUnit = NormalizeTaxCalcUnit(getDataInt(rec, "消費税計算方法")),
 				IsPay = getDataInt(rec, "支払印刷"),
 				Jdetail = new MasterToriDetail() {
 					BankAccount1 = $"{getString(rec, "振込銀行")} {getString(rec, "振込支店")} {getString(rec, "振込種別")} {getString(rec, "振込口座")}"

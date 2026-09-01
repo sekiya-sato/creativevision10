@@ -190,7 +190,10 @@ public class DefineDataTable {
 			ModifyDaysPre = 100,
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate(),
-			Jsub = [new MasterSysTax { Id = 1, DateFrom = "19010101", TaxRate = 10 }, new MasterSysTax { Id = 2, DateFrom = "19010101", TaxRate = 8 }, new MasterSysTax { Id = 3, DateFrom = "19010101", TaxRate = 10 },]
+			// Id=3は未使用枠。Id=1と同率(10%)のままだと同一適用日に同一税率のId_Taxが重複し、
+			// 「税率ごとに1回の端数処理」という制度上の制約に違反する
+			// (Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md 3.6)。税率0(未使用)へ修正する。
+			Jsub = [new MasterSysTax { Id = 1, DateFrom = "19010101", TaxRate = 10 }, new MasterSysTax { Id = 2, DateFrom = "19010101", TaxRate = 8 }, new MasterSysTax { Id = 3, DateFrom = "19010101", TaxRate = 0 },]
 
 		};
 		db.Insert<MasterSysman>(sysman);

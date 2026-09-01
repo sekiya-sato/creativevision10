@@ -146,7 +146,8 @@ public partial class CoreService {
 		}
 	}
 	/// <summary>
-	/// 明細Taxが未設定のTran系伝票へ明細別消費税を投入する（移行・既存データ救済用の一時処理）
+	/// 対象6伝票を新しい消費税計算方式（取引先マスタのTaxCalcUnit/TaxRounding・明細別Id_Tax）へ
+	/// 揃える一括再計算（移行・既存データ救済用の一時処理。冪等）
 	/// </summary>
 	private CvMsg HandleTranTaxRebuild(CvMsg request, CallContext context) {
 		var startTime = DateTime.Now;

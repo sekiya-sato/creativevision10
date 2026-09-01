@@ -1,7 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using CvBase;
+using CvBase.Share;
+using CvBaseSqlite;
 using CvDomainLogic;
+using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests.CvServer;
@@ -147,5 +151,192 @@ public class TranTaxRebuildTests {
 		// 8桁でない日付は CvAsset.Common.CompareYmd が例外を投げるため、渡す前に弾いている
 		Assert.AreEqual(8, TaxRateResolver.ResolveTaxRatePercent(sysman, 1, ""));
 		Assert.AreEqual(8, TaxRateResolver.ResolveTaxRatePercent(sysman, 1, "2026"));
+	}
+}
+
+/// <summary>
+/// <see cref="TranTaxRebuildDb.RebuildAll"/>（明細別消費税へ移行するための一括再計算）の検証。
+/// 仕様は `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` の 3.3/3.4/3.6 と 7章。
+/// </summary>
+[TestClass]
+public class TranTaxRebuildDbTests {
+	private ExDatabaseSqlite? _db;
+	private SqliteConnection? _anchorConnection;
+	private ExDatabaseSqlite Db => _db ?? throw new AssertFailedException("Database not initialized");
+
+	[TestInitialize]
+	public void Initialize() {
+		var databaseName = $"TranTaxRebuildDbTests-{Guid.NewGuid():N}";
+		var connectionString = new SqliteConnectionStringBuilder {
+			DataSource = databaseName,
+			Mode = SqliteOpenMode.Memory,
+			Cache = SqliteCacheMode.Shared,
+		}.ToString();
+		_anchorConnection = new SqliteConnection(connectionString);
+		_anchorConnection.Open();
+		var conn = new SqliteConnection(connectionString);
+		conn.Open();
+		_db = new ExDatabaseSqlite(conn);
+		_db.KeepConnectionAlive = true;
+		foreach (var t in new[] {
+			typeof(MasterSysman), typeof(MasterTokui), typeof(MasterShiire), typeof(MasterShohin),
+			typeof(MasterMaterial), typeof(Tran00Uriage), typeof(Tran01Tenuri), typeof(Tran02Material),
+			typeof(Tran03Shiire), typeof(Tran12Jyuchu), typeof(Tran13Hachu),
+		}) {
+			Db.CreateTable(t, true, false);
+		}
+	}
+
+	[TestCleanup]
+	public void Cleanup() {
+		_db?.Close();
+		(_db?.Connection as SqliteConnection)?.Close();
+		_anchorConnection?.Close();
+	}
+
+	static MasterSysman MakeSysman(string fiscalStart = "19010101") => new() {
+		Id = 1,
+		FiscalStartDate = fiscalStart,
+		TaxRounding = (int)EnumRounding.Round,
+		Jsub = [
+			new MasterSysTax { Id = 1, TaxRate = 10, DateFrom = "19010101" },
+			new MasterSysTax { Id = 2, TaxRate = 8, DateFrom = "19010101" },
+		],
+	};
+
+	long InsertTokui(int taxCalcUnit, int taxRounding = (int)EnumRounding.Round) {
+		var code = Guid.NewGuid().ToString("N")[..8];
+		Db.Insert(new MasterTokui { Code = code, Name = "得意先", TaxCalcUnit = taxCalcUnit, TaxRounding = taxRounding });
+		return Db.Single<MasterTokui>("where Code=@0", code).Id;
+	}
+
+	long InsertShohin(long idTax) {
+		var code = Guid.NewGuid().ToString("N")[..8];
+		Db.Insert(new MasterShohin { Code = code, Name = "商品", Id_Tax = idTax });
+		return Db.Single<MasterShohin>("where Code=@0", code).Id;
+	}
+
+	/// <summary>請求単位: ヘッダTax1/2/3=0、TaxableAmountは明細合計で埋まり、Totalは税抜のまま(3.4)</summary>
+	[TestMethod]
+	public void RebuildAll_請求単位はTaxが0でTaxableAmountが埋まる() {
+		Db.Insert(MakeSysman());
+		var idTokui = InsertTokui((int)EnumTaxCalcUnit.Billing);
+		var idShohin = InsertShohin(1);
+		Db.Insert(new Tran00Uriage {
+			DenDay = "20260801",
+			Id_Tokui = idTokui,
+			KingakuTotal = 10000,
+			Jmeisai = [new Tran99Meisai { No = 1, Id_Shohin = idShohin, Kingaku = 10000 }],
+		});
+
+		new TranTaxRebuildDb(Db).RebuildAll();
+
+		var slip = Db.Fetch<Tran00Uriage>().Single();
+		Assert.AreEqual((int)EnumTaxCalcUnit.Billing, slip.TaxCalcUnit, "得意先マスタのTaxCalcUnitがヘッダへスナップショットされる");
+		Assert.AreEqual(0, slip.Tax1);
+		Assert.AreEqual(0, slip.Tax2);
+		Assert.AreEqual(0, slip.Tax3);
+		Assert.AreEqual(10000, slip.TaxableAmount1, "課税対象額は明細から埋まる");
+		Assert.AreEqual(10000, slip.Total, "請求単位のTotalは税抜(|KingakuTotal|)のまま");
+	}
+
+	/// <summary>伝票単位: 税区分ごとに1回だけ丸めるため、明細ごとに丸めた合計とは意図的にずれる(3.3/3.6)</summary>
+	[TestMethod]
+	public void RebuildAll_伝票単位は税区分ごとに1回丸め() {
+		Db.Insert(MakeSysman());
+		var idTokui = InsertTokui((int)EnumTaxCalcUnit.Slip);
+		var idShohin = InsertShohin(1); // 標準税率10%
+		Db.Insert(new Tran00Uriage {
+			DenDay = "20260801",
+			Id_Tokui = idTokui,
+			KingakuTotal = 30,
+			Jmeisai = [
+				new Tran99Meisai { No = 1, Id_Shohin = idShohin, Kingaku = 15 },
+				new Tran99Meisai { No = 2, Id_Shohin = idShohin, Kingaku = 15 },
+			],
+		});
+
+		new TranTaxRebuildDb(Db).RebuildAll();
+
+		var slip = Db.Fetch<Tran00Uriage>().Single();
+		// 明細ごとに丸めると 15*10%=1.5→2 が2行で4になるが、税区分(Id_Tax=1)ごとに1回丸めるため
+		// (15+15)*10%=3.0→3 になる。ここが本設計の要点。
+		Assert.AreEqual(3, slip.Tax1);
+		Assert.AreEqual(30, slip.TaxableAmount1);
+		Assert.AreEqual(33, slip.Total);
+		Assert.AreEqual(3, slip.Jmeisai!.Sum(m => m.Tax), "明細Taxの合計はヘッダTax1と一致する(按分)");
+	}
+
+	/// <summary>複数回実行しても結果が変わらない(冪等)</summary>
+	[TestMethod]
+	public void RebuildAll_複数回実行しても結果が変わらない() {
+		Db.Insert(MakeSysman());
+		var idTokui = InsertTokui((int)EnumTaxCalcUnit.Slip);
+		var idShohin = InsertShohin(1);
+		Db.Insert(new Tran00Uriage {
+			DenDay = "20260801",
+			Id_Tokui = idTokui,
+			KingakuTotal = 10000,
+			Jmeisai = [new Tran99Meisai { No = 1, Id_Shohin = idShohin, Kingaku = 10000 }],
+		});
+
+		var first = new TranTaxRebuildDb(Db).RebuildAll();
+		var second = new TranTaxRebuildDb(Db).RebuildAll();
+
+		var firstUriage = first.Single(r => r.TableName == nameof(Tran00Uriage));
+		var secondUriage = second.Single(r => r.TableName == nameof(Tran00Uriage));
+		Assert.AreEqual(1, firstUriage.HeaderTaxChanged, "初回は未計算(0)から計算値へ変わる");
+		Assert.AreEqual(1, firstUriage.TaxableAmountFilled);
+		Assert.AreEqual(0, secondUriage.HeaderTaxChanged, "2回目は前回と同じ値になり変化なし");
+		Assert.AreEqual(0, secondUriage.TaxableAmountFilled, "2回目は既に埋まっているため新規カウントされない");
+
+		var slip = Db.Fetch<Tran00Uriage>().Single();
+		Assert.AreEqual(1000, slip.Tax1);
+	}
+
+	/// <summary>期首日より前の伝票は再計算の対象外(3.6注記/既存方針)</summary>
+	[TestMethod]
+	public void RebuildAll_期首日より前は対象外() {
+		Db.Insert(MakeSysman(fiscalStart: "20260701"));
+		var idTokui = InsertTokui((int)EnumTaxCalcUnit.Slip);
+		var idShohin = InsertShohin(1);
+		Db.Insert(new Tran00Uriage {
+			DenDay = "20260630", // 期首(2026/07/01)より前
+			Id_Tokui = idTokui,
+			KingakuTotal = 10000,
+			Tax1 = 999, // 再計算されないことを確認するための番兵値
+			TaxCalcUnit = (int)EnumTaxCalcUnit.Billing, // 得意先マスタと食い違う値のまま残るはず
+			Jmeisai = [new Tran99Meisai { No = 1, Id_Shohin = idShohin, Kingaku = 10000 }],
+		});
+
+		var results = new TranTaxRebuildDb(Db).RebuildAll();
+
+		var slip = Db.Fetch<Tran00Uriage>().Single();
+		Assert.AreEqual(999, slip.Tax1, "期首より前は触らない");
+		Assert.AreEqual((int)EnumTaxCalcUnit.Billing, slip.TaxCalcUnit, "スナップショットも上書きされない");
+		Assert.AreEqual(0, results.Single(r => r.TableName == nameof(Tran00Uriage)).Scanned, "走査対象にも含まれない");
+	}
+
+	/// <summary>Tran02Materialの区分99(その他/消費税調整)はKingakuTotal自体が実額でTax1/2/3は0のまま(3.8 A-6)</summary>
+	[TestMethod]
+	public void RebuildAll_Tran02MaterialのSonota99はTaxを0のままKingakuTotalの実額を保つ() {
+		Db.Insert(MakeSysman());
+		var codeShiire = Guid.NewGuid().ToString("N")[..8];
+		Db.Insert(new MasterShiire { Code = codeShiire, Name = "仕入先", TaxCalcUnit = (int)EnumTaxCalcUnit.Slip });
+		var idShiire = Db.Single<MasterShiire>("where Code=@0", codeShiire).Id;
+		Db.Insert(new Tran02Material {
+			DenDay = "20260801",
+			Id_Shiire = idShiire,
+			Kubun = 99,
+			KingakuTotal = 50000, // ConvertDbTranが移行時に実額(旧内税+外税消費税)を入れている想定値
+			Jmeisai = [new Tran99MaterialMeisai { No = 1, Id_Material = 0, Kingaku = 0 }],
+		});
+
+		new TranTaxRebuildDb(Db).RebuildAll();
+
+		var slip = Db.Fetch<Tran02Material>().Single();
+		Assert.AreEqual(0, slip.Tax1, "区分99は明細に課税対象が無いためTaxは0のまま");
+		Assert.AreEqual(50000, slip.KingakuTotal, "実額はKingakuTotalに残る(触らない)");
+		Assert.AreEqual(50000, slip.Total, "Total=|KingakuTotal|+0");
 	}
 }
