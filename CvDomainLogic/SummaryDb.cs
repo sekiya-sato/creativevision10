@@ -835,9 +835,9 @@ WHERE DenMonth > @0
 	/// SummaryUriKakeの年月のデータを集計する(再作成)
 	/// <para>
 	/// 売上は区分(<see cref="EnumUri00"/>)で 売上 / 返品 / 値引 へ、入金は明細の <c>Id_Kin</c> で
-	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。売上・返品・値引は税抜 <c>Total</c> の正値内訳とし、
-	/// 合計は内訳と税から算出する。区分99(その他売上)は売上へ畳み込む(請求残<see cref="SummaryUriSei"/>では
-	/// Sonota列へ分離集計するため、こことは扱いが異なる)。
+	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。売上・返品・値引は税抜 <c>KingakuTotal</c> の絶対値内訳とし、
+	/// 合計は内訳と税から算出する(<c>Total</c>は税込のため使うと消費税が二重計上になる。仕様3.8)。区分99(その他売上)は
+	/// 売上へ畳み込む(請求残<see cref="SummaryUriSei"/>ではSonota列へ分離集計するため、こことは扱いが異なる)。
 	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
@@ -872,9 +872,11 @@ movements AS (
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Tokui,
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Uriage,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
-		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
+		-- Uriage/Henpin/Nebikiは税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
+		-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Uriage,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Nebiki,
 		{uriageTaxCols},
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran00Uriage AS t
@@ -1044,12 +1046,14 @@ WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
 ),
 sales AS (
+	-- Uriage/Henpin/Nebiki/Sonotaは税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
+	-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
 	SELECT
 		t.Id_Tokui,
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END) AS Uriage,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END) AS Henpin,
-		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END) AS Nebiki,
-		SUM(CASE WHEN t.Kubun = 99 THEN t.Total ELSE 0 END) AS Sonota,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN ABS(t.KingakuTotal) ELSE 0 END) AS Uriage,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(t.KingakuTotal) ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(t.KingakuTotal) ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun = 99 THEN ABS(t.KingakuTotal) ELSE 0 END) AS Sonota,
 		{uriageTaxCols}
 	FROM Tran00Uriage AS t
 	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
@@ -1219,11 +1223,14 @@ purchases AS (
 		{sumTaxCols},
 		SUM(Sonota99) AS Sonota99
 	FROM (
+		-- Shiire/Henpin/Nebiki/Sonota99は税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
+		-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
+		-- Sonota99(Tran02Materialの区分99)も同様にKingakuTotalへ揃える(丸めずそのままTax1へ積む特殊処理、A-6)。
 		SELECT
 			t.Id_Shiire,
-			CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END AS Shiire,
-			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END AS Henpin,
-			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END AS Nebiki,
+			CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN ABS(t.KingakuTotal) ELSE 0 END AS Shiire,
+			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(t.KingakuTotal) ELSE 0 END AS Henpin,
+			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(t.KingakuTotal) ELSE 0 END AS Nebiki,
 			{shiireRowTaxCols},
 			0 AS Sonota99
 		FROM Tran03Shiire AS t
@@ -1231,11 +1238,11 @@ purchases AS (
 		UNION ALL
 		SELECT
 			t.Id_Shiire,
-			CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END AS Shiire,
-			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END AS Henpin,
-			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END AS Nebiki,
+			CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN ABS(t.KingakuTotal) ELSE 0 END AS Shiire,
+			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(t.KingakuTotal) ELSE 0 END AS Henpin,
+			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(t.KingakuTotal) ELSE 0 END AS Nebiki,
 			{materialRowTaxCols},
-			CASE WHEN t.Kubun = 99 THEN t.Total ELSE 0 END AS Sonota99
+			CASE WHEN t.Kubun = 99 THEN ABS(t.KingakuTotal) ELSE 0 END AS Sonota99
 		FROM Tran02Material AS t
 		WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
 	)
@@ -1334,8 +1341,9 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 	/// SummaryKaiKakeの年月のデータを集計する(再作成)
 	/// <para>
 	/// 仕入は区分(<see cref="EnumShiire"/>)で 仕入 / 返品 / 値引 へ、支払は明細の <c>Id_Kin</c> で
-	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。仕入・返品・値引は税抜 <c>Total</c> の正値内訳とし、
-	/// 合計は内訳と税から算出する。区分99(その他仕入)は仕入へ畳み込む。売掛側(<see cref="CalcSummaryUriKake"/>)と同じ規則である。
+	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。仕入・返品・値引は税抜 <c>KingakuTotal</c> の絶対値内訳とし、
+	/// 合計は内訳と税から算出する(<c>Total</c>は税込のため使うと消費税が二重計上になる。仕様3.8)。区分99(その他仕入)は
+	/// 仕入へ畳み込む。売掛側(<see cref="CalcSummaryUriKake"/>)と同じ規則である。
 	/// </para>
 	/// </summary>
 	/// <param name="DatefromYyyymm"></param>
@@ -1371,9 +1379,11 @@ movements AS (
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Shiire,
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
-		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
+		-- Shiire/Henpin/Nebikiは税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
+		-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Nebiki,
 		{shiireTaxCols},
 		0 AS Sonota99,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
@@ -1383,14 +1393,17 @@ movements AS (
 	UNION ALL
 	-- Tran02Material（生地・付属仕入）。区分99（その他）は仕入ではなく消費税(Tax1)へ全額を積む点が
 	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため。A-6、丸めは行わずそのまま加算する）。
+	-- Shiire/Henpin/Nebiki/Sonota99は税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
+	-- これに後段でTax1+Tax2+Tax3を加算すると消費税が二重計上になるため(仕様3.8)。
+	-- Sonota99(区分99)も同様にKingakuTotalへ揃える(丸めずそのままTax1へ積む特殊処理、A-6)。
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Shiire,
-		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
-		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
+		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Shiire,
+		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Henpin,
+		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Nebiki,
 		{materialTaxCols},
-		SUM(CASE WHEN t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Sonota99,
+		SUM(CASE WHEN t.Kubun = 99 THEN ABS(IFNULL(t.KingakuTotal, 0)) ELSE 0 END) AS Sonota99,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran02Material AS t
 	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1

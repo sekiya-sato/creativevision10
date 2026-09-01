@@ -83,6 +83,24 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
+	public void CalcSummaryUriKake_DoesNotDoubleCountTaxWithTotal() {
+		// 回帰テスト(仕様3.8): 伝票のTotalは税込(|KingakuTotal|+Tax1)なので、UriageをTotalで積んでからTax1を
+		// 加算すると消費税が二重計上になる。税抜1000・消費税100の売上1件だけなら Uriage=1000 / Tax1=100 /
+		// TotalSales=1100 になるべきで、Totalで集計してしまうと Uriage=1100 / TotalSales=1200 になってしまう。
+		var db = PrepareUriKakeTables();
+		var summaryDb = new SummaryDb(db);
+
+		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
+
+		summaryDb.CalcSummaryUriKake("202607", "202607");
+		var row = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
+
+		Assert.AreEqual(1000, row.Uriage);
+		Assert.AreEqual(100, row.Tax1);
+		Assert.AreEqual(1100, row.TotalSales);
+	}
+
+	[TestMethod]
 	public void CalcSummaryUriKake_ExcludesNotBilledSlips() {
 		var db = PrepareUriKakeTables();
 		var summaryDb = new SummaryDb(db);
@@ -1010,8 +1028,10 @@ public class SummaryKakeDbTests {
 			DenDay = kakeDay,
 			KakeDay = kakeDay,
 			Id_Tokui = idTokui,
-			Total = total,
-			KingakuTotal = total + 10000,
+			// 集計対象(Uriage/Henpin/Nebiki等)はKingakuTotal(税抜)。Totalは実伝票と同じ関係
+			// |KingakuTotal|+Tax1+Tax2+Tax3(税込)にしておく(仕様3.8。Totalで集計するとTax1が二重計上になる)。
+			KingakuTotal = total,
+			Total = Math.Abs(total) + tax,
 			Tax1 = tax,
 			// このヘルパーは丸め済みのTax1を直接指定するテスト用途なので、伝票単位(そのまま合算)を明示する。
 			// 既定の請求単位(TaxCalcUnit=0)のままだとTaxableAmountが未設定のため税額が0扱いになってしまう(3.3/3.5)。
@@ -1039,25 +1059,23 @@ public class SummaryKakeDbTests {
 		return db;
 	}
 
-	private static Tran00Uriage CreateBillingUriage(string kakeDay, long idTokui, EnumUri00 kubun, int total, int tax) {
-		var tran = CreateUriage(kakeDay, idTokui, kubun, total, tax);
-		tran.Total = total;
-		return tran;
-	}
+	// CreateUriage/CreateShiireが既にKingakuTotalを集計対象とする実伝票と同じ関係で作っているため、
+	// 請求残(SummaryUriSei/SummaryKaiShi)向けの別途のTotal上書きは不要になった(仕様3.8)。
+	private static Tran00Uriage CreateBillingUriage(string kakeDay, long idTokui, EnumUri00 kubun, int total, int tax) =>
+		CreateUriage(kakeDay, idTokui, kubun, total, tax);
 
-	private static Tran03Shiire CreateBillingShiire(string kakeDay, long idShiire, EnumShiire kubun, int total, int tax) {
-		var tran = CreateShiire(kakeDay, idShiire, kubun, total, tax);
-		tran.Total = total;
-		return tran;
-	}
+	private static Tran03Shiire CreateBillingShiire(string kakeDay, long idShiire, EnumShiire kubun, int total, int tax) =>
+		CreateShiire(kakeDay, idShiire, kubun, total, tax);
 
 	private static Tran03Shiire CreateShiire(string kakeDay, long idShiire, EnumShiire kubun, int total, int tax) {
 		var tran = new Tran03Shiire {
 			DenDay = kakeDay,
 			KakeDay = kakeDay,
 			Id_Shiire = idShiire,
-			Total = total,
-			KingakuTotal = total + 10000,
+			// 集計対象(Shiire/Henpin/Nebiki等)はKingakuTotal(税抜)。Totalは実伝票と同じ関係
+			// |KingakuTotal|+Tax1+Tax2+Tax3(税込)にしておく(仕様3.8。Totalで集計するとTax1が二重計上になる)。
+			KingakuTotal = total,
+			Total = Math.Abs(total) + tax,
 			Tax1 = tax,
 			// このヘルパーは丸め済みのTax1を直接指定するテスト用途なので、伝票単位(そのまま合算)を明示する。
 			// 既定の請求単位(TaxCalcUnit=0)のままだとTaxableAmountが未設定のため税額が0扱いになってしまう(3.3/3.5)。
