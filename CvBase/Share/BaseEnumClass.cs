@@ -48,7 +48,7 @@ public enum EnumCustomerLcvKubun : int {
 	UseMobileNoDetail = 9
 }
 /// <summary>
-/// 締め日
+/// 締日
 /// </summary>
 [Comment("締日")]
 public enum EnumShime : int {
@@ -109,6 +109,60 @@ public enum EnumTokui : int {
 	/// </summary>
 	[Comment("直営店")]
 	_6_Tenpo = 6,
+}
+
+/// <summary>
+/// 税計算単位
+/// </summary>
+[Comment("税計算単位 外税／内税")]
+public enum EnumTaxPriceType : int {
+	/// <summary>
+	/// 外税
+	/// </summary>
+	[Comment("外税")]
+	Exclusive = 0,
+	/// <summary>
+	/// 内税
+	/// </summary>
+	[Comment("内税")]
+	Inclusive = 1
+}
+/// <summary>
+/// 端数処理
+/// </summary>
+[Comment("端数処理")]
+public enum EnumRounding : int {
+	/// <summary>
+	/// 四捨五入
+	/// </summary>
+	[Comment("四捨五入")]
+	Round = 0,
+	/// <summary>
+	/// 切捨
+	/// </summary>
+	[Comment("切捨")]
+	Floor = 1,
+	/// <summary>
+	/// 切上
+	/// </summary>
+	[Comment("切上")]
+	Ceiling = 2
+}
+/// <summary>
+/// 税計算単位
+/// </summary>
+[Comment("税計算単位 請求／伝票")]
+public enum EnumTaxCalcUnit : int {
+	/// <summary>
+	/// 締め請求期間単位
+	/// </summary>
+	[Comment("締め請求期間単位")]
+	Billing = 0,
+	/// <summary>
+	/// 取引・伝票単位
+	/// </summary>
+	[Comment("取引・伝票単位")]
+	Slip = 1
 }
 /// <summary>
 /// ログインロール（SysLogin.Id_Role）
@@ -221,4 +275,34 @@ public enum EnumSqlDialect {
 	MySql = 3,
 	[Comment("Oracle")]
 	Oracle = 4
+}
+
+public static class TaxCalculater {
+	/// <summary>
+	/// 税額計算（端数処理あり）絶対値で端数処理して符号を戻す
+	/// </summary>
+	/// <param name="taxableAmount">課税対象額</param>
+	/// <param name="taxRate">税率%</param>
+	/// <param name="rounding">端数処理</param>
+	/// <returns></returns>
+	/// <exception cref="ArgumentOutOfRangeException"></exception>
+	public static long RoundTax(long taxableAmount, int taxRate, EnumRounding rounding) {
+		if(taxableAmount== 0 || taxRate == 0) 
+			return 0;
+		long value = checked(taxableAmount * taxRate); // オーバーフローチェック 税率10%で922,337兆円まで
+
+		bool negative = value < 0;
+		long abs = Math.Abs(value);
+
+		(long quotient, long remainder) = Math.DivRem(abs, 100);
+
+		long result = rounding switch {
+			EnumRounding.Floor => quotient,
+			EnumRounding.Round => quotient + (remainder >= 50 ? 1 : 0),
+			EnumRounding.Ceiling => quotient + (remainder != 0 ? 1 : 0),
+			_ => throw new ArgumentOutOfRangeException(nameof(rounding))
+		};
+
+		return negative ? -result : result;
+	}
 }

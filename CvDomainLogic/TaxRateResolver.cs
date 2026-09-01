@@ -1,4 +1,5 @@
 using CvBase;
+using CvBase.Share;
 using System.Globalization;
 
 namespace CvDomainLogic;
@@ -47,7 +48,7 @@ public static class TaxRateResolver {
 	/// <param name="kingaku">明細金額</param>
 	/// <param name="taxRatePercent">適用消費税率(%)</param>
 	public static int CalcMeisaiTax(int kingaku, int taxRatePercent) =>
-		(int)Math.Round(Math.Abs(kingaku) * taxRatePercent / 100.0);
+		(int)TaxCalculater.RoundTax(Math.Abs(kingaku), taxRatePercent, EnumRounding.Round);
 
 	/// <summary>8桁yyyyMMddとして妥当か</summary>
 	public static bool IsValidYmd(string? ymd) =>
