@@ -66,12 +66,42 @@ public sealed partial class SummaryUriKake : BaseDbClass {
 	[Comment("値引金額")]
 	public partial long Nebiki { get; set; }
 	/// <summary>
-	/// 消費税
+	/// 消費税1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税")]
-	[Comment("消費税")]
-	public partial long Tax { get; set; }
+	[Comment("消費税1 Id_Tax=1の消費税額")]
+	public partial long Tax1 { get; set; }
+	/// <summary>
+	/// 消費税2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税2 Id_Tax=2の消費税額")]
+	public partial long Tax2 { get; set; }
+	/// <summary>
+	/// 消費税3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税3 Id_Tax=3の消費税額")]
+	public partial long Tax3 { get; set; }
+	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1 Id_Tax=1の課税対象金額(税抜)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2 Id_Tax=2の課税対象金額(税抜)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3 Id_Tax=3の課税対象金額(税抜)")]
+	public partial long TaxableAmount3 { get; set; }
 	/// <summary>
 	/// 現金入金
 	/// </summary>
@@ -213,12 +243,42 @@ public sealed partial class SummaryUriSei : BaseDbClass {
 	[Comment("その他売上金額（区分99） 請求一覧表用に分離集計")]
 	public partial long Sonota { get; set; }
 	/// <summary>
-	/// 消費税
+	/// 消費税1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税")]
-	[Comment("消費税")]
-	public partial long Tax { get; set; }
+	[Comment("消費税1 Id_Tax=1の消費税額")]
+	public partial long Tax1 { get; set; }
+	/// <summary>
+	/// 消費税2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税2 Id_Tax=2の消費税額")]
+	public partial long Tax2 { get; set; }
+	/// <summary>
+	/// 消費税3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税3 Id_Tax=3の消費税額")]
+	public partial long Tax3 { get; set; }
+	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1 Id_Tax=1の課税対象金額(税抜)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2 Id_Tax=2の課税対象金額(税抜)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3 Id_Tax=3の課税対象金額(税抜)")]
+	public partial long TaxableAmount3 { get; set; }
 	/// <summary>
 	/// 現金入金
 	/// </summary>
@@ -320,12 +380,42 @@ public sealed partial class SummaryKaiKake : BaseDbClass {
 	[Comment("値引金額")]
 	public partial long Nebiki { get; set; }
 	/// <summary>
-	/// 消費税
+	/// 消費税1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税")]
-	[Comment("消費税")]
-	public partial long Tax { get; set; }
+	[Comment("消費税1 Id_Tax=1の消費税額")]
+	public partial long Tax1 { get; set; }
+	/// <summary>
+	/// 消費税2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税2 Id_Tax=2の消費税額")]
+	public partial long Tax2 { get; set; }
+	/// <summary>
+	/// 消費税3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税3 Id_Tax=3の消費税額")]
+	public partial long Tax3 { get; set; }
+	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1 Id_Tax=1の課税対象金額(税抜)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2 Id_Tax=2の課税対象金額(税抜)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3 Id_Tax=3の課税対象金額(税抜)")]
+	public partial long TaxableAmount3 { get; set; }
 	/// <summary>
 	/// 現金支払
 	/// </summary>
@@ -449,12 +539,42 @@ public sealed partial class SummaryKaiShi : BaseDbClass {
 	[Comment("値引金額")]
 	public partial long Nebiki { get; set; }
 	/// <summary>
-	/// 消費税
+	/// 消費税1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("消費税")]
-	[Comment("消費税")]
-	public partial long Tax { get; set; }
+	[Comment("消費税1 Id_Tax=1の消費税額")]
+	public partial long Tax1 { get; set; }
+	/// <summary>
+	/// 消費税2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税2 Id_Tax=2の消費税額")]
+	public partial long Tax2 { get; set; }
+	/// <summary>
+	/// 消費税3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("消費税3 Id_Tax=3の消費税額")]
+	public partial long Tax3 { get; set; }
+	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1 Id_Tax=1の課税対象金額(税抜)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2 Id_Tax=2の課税対象金額(税抜)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3 Id_Tax=3の課税対象金額(税抜)")]
+	public partial long TaxableAmount3 { get; set; }
 	/// <summary>
 	/// 現金入金
 	/// </summary>

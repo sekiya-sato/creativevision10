@@ -22,6 +22,9 @@ public interface ITranTax {
 	public long Tax1 { get; set; }
 	public long Tax2 { get; set; }
 	public long Tax3 { get; set; }
+	public long TaxableAmount1 { get; set; }
+	public long TaxableAmount2 { get; set; }
+	public long TaxableAmount3 { get; set; }
 	/// <summary>総合計（|明細金額合計| + 消費税）</summary>
 	public long Total { get; set; }
 }
@@ -903,6 +906,24 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1  Id_Tax=1 Sum(|明細金額|)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2  Id_Tax=2 Sum(|明細金額|)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3  Id_Tax=3 Sum(|明細金額|)")]
+	public partial long TaxableAmount3 { get; set; }
+	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
@@ -916,11 +937,11 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("税計算単位 0=請求、1=伝票")]
 	public partial int TaxCalcUnit { get; set; } = 0;
 	/// <summary>
-	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// 消費税端数処理 0=四捨五入、1=切上、2=切捨
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumRounding))]
-	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
 	/// <summary>
 	/// 納品書発行済FLG。納品書印刷で立て、納品書未発行チェックリストで 0 を抽出する。
@@ -1084,17 +1105,35 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1  Id_Tax=1 Sum(|明細金額|)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2  Id_Tax=2 Sum(|明細金額|)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3  Id_Tax=3 Sum(|明細金額|)")]
+	public partial long TaxableAmount3 { get; set; }
+	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計 KingakuTotal+Tax1+Tax2+Tax3")]
 	public partial long Total { get; set; }
 	/// <summary>
-	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// 消費税端数処理 0=四捨五入、1=切上、2=切捨
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumRounding))]
-	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
 }
 
@@ -1231,6 +1270,24 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1  Id_Tax=1 Sum(|明細金額|)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2  Id_Tax=2 Sum(|明細金額|)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3  Id_Tax=3 Sum(|明細金額|)")]
+	public partial long TaxableAmount3 { get; set; }
+	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
@@ -1244,11 +1301,11 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("税計算単位 0=請求、1=伝票")]
 	public partial int TaxCalcUnit { get; set; } = 0;
 	/// <summary>
-	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// 消費税端数処理 0=四捨五入、1=切上、2=切捨
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumRounding))]
-	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
 
 	[ObservableProperty]
@@ -1428,6 +1485,24 @@ public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1  Id_Tax=1 Sum(|明細金額|)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2  Id_Tax=2 Sum(|明細金額|)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3  Id_Tax=3 Sum(|明細金額|)")]
+	public partial long TaxableAmount3 { get; set; }
+	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
@@ -1441,11 +1516,11 @@ public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	[Comment("税計算単位 0=請求、1=伝票")]
 	public partial int TaxCalcUnit { get; set; } = 0;
 	/// <summary>
-	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// 消費税端数処理 0=四捨五入、1=切上、2=切捨
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumRounding))]
-	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
 	/// <summary>
 	/// 発行済FLG
@@ -1799,17 +1874,35 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1  Id_Tax=1 Sum(|明細金額|)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2  Id_Tax=2 Sum(|明細金額|)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3  Id_Tax=3 Sum(|明細金額|)")]
+	public partial long TaxableAmount3 { get; set; }
+	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計 KingakuTotal+Tax1+Tax2+Tax3")]
 	public partial long Total { get; set; }
 	/// <summary>
-	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// 消費税端数処理 0=四捨五入、1=切上、2=切捨
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumRounding))]
-	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
 	/// <summary>
 	/// 完了FLG。0=未完了 / 1=完了。受注残の管理に使う。
@@ -1928,17 +2021,35 @@ public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 課税対象額1
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額1  Id_Tax=1 Sum(|明細金額|)")]
+	public partial long TaxableAmount1 { get; set; }
+	/// <summary>
+	/// 課税対象額2
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額2  Id_Tax=2 Sum(|明細金額|)")]
+	public partial long TaxableAmount2 { get; set; }
+	/// <summary>
+	/// 課税対象額3
+	/// </summary>
+	[ObservableProperty]
+	[Comment("課税対象額3  Id_Tax=3 Sum(|明細金額|)")]
+	public partial long TaxableAmount3 { get; set; }
+	/// <summary>
 	/// 総合計
 	/// </summary>
 	[ObservableProperty]
 	[Comment("総合計 KingakuTotal+Tax1+Tax2+Tax3")]
 	public partial long Total { get; set; }
 	/// <summary>
-	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// 消費税端数処理 0=四捨五入、1=切上、2=切捨
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumRounding))]
-	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
 	/// <summary>
 	/// 完了FLG。0=未完了 / 1=完了。発注残の管理に使う。

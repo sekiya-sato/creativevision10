@@ -196,11 +196,11 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[Comment("税計算単位 0=請求、1=伝票")]
 	public partial int TaxCalcUnit { get; set; } = 0;
 	/// <summary>
-	/// 消費税端数処理 0=四捨五入、1=切捨、2=切上
+	/// 消費税端数処理 0=四捨五入、1=切上、2=切捨
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumRounding))]
-	[Comment("消費税端数処理 0=四捨五入、1=切捨、2=切上")]
+	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
 }
 /// <summary>

@@ -608,7 +608,8 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 		if (SelectedKind == EnumOpeningBalanceKind.UriSei) {
 			yield return (EnumOpeningBalanceField.Sonota, nameof(SummaryUriSei.Sonota));
 		}
-		yield return (EnumOpeningBalanceField.Tax, nameof(SummaryUriKake.Tax));
+		// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
+		yield return (EnumOpeningBalanceField.Tax, nameof(SummaryUriKake.Tax1));
 		yield return (EnumOpeningBalanceField.Cash, nameof(SummaryUriKake.Cash));
 		yield return (EnumOpeningBalanceField.Fee, nameof(SummaryUriKake.Fee));
 		yield return (EnumOpeningBalanceField.Densai, nameof(SummaryUriKake.Densai));

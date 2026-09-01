@@ -835,7 +835,8 @@ ORDER BY t.Code
 				Uriage = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
-				Tax = breakdown.Tax,
+				// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
+				Tax1 = breakdown.Tax,
 				Cash = breakdown.Cash,
 				Fee = breakdown.Fee,
 				Densai = breakdown.Densai,
@@ -857,7 +858,8 @@ ORDER BY t.Code
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
 				Sonota = breakdown.Sonota,
-				Tax = breakdown.Tax,
+				// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
+				Tax1 = breakdown.Tax,
 				Cash = breakdown.Cash,
 				Fee = breakdown.Fee,
 				Densai = breakdown.Densai,
@@ -873,7 +875,8 @@ ORDER BY t.Code
 				Shiire = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
-				Tax = breakdown.Tax,
+				// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
+				Tax1 = breakdown.Tax,
 				Cash = breakdown.Cash,
 				Fee = breakdown.Fee,
 				Densai = breakdown.Densai,
@@ -892,7 +895,8 @@ ORDER BY t.Code
 				Shiire = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
-				Tax = breakdown.Tax,
+				// TODO(税区分別): フェーズ5でTax1/2/3へ分割する
+				Tax1 = breakdown.Tax,
 				Cash = breakdown.Cash,
 				Fee = breakdown.Fee,
 				Densai = breakdown.Densai,

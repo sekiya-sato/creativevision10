@@ -126,7 +126,7 @@ public class OpeningBalanceCsvTests {
 		Assert.AreEqual(150000L, record.TotalSales, "請求・支払側と同じ形にするため合計も埋める");
 		Assert.AreEqual(0L, record.TotalIn);
 		Assert.AreEqual(0L, record.Uriage, "内訳未記入の期首行は内訳を持たない");
-		Assert.AreEqual(0L, record.Tax);
+		Assert.AreEqual(0L, record.Tax1);
 	}
 
 	[TestMethod]
@@ -137,7 +137,7 @@ public class OpeningBalanceCsvTests {
 		Assert.IsFalse(result.HasError, string.Join(" / ", result.Errors.Select(x => x.Detail)));
 		var record = (SummaryUriKake)result.Entries.Single().Record!;
 		Assert.AreEqual(100000L, record.Uriage);
-		Assert.AreEqual(10000L, record.Tax);
+		Assert.AreEqual(10000L, record.Tax1);
 		Assert.AreEqual(20000L, record.Cash);
 		Assert.AreEqual(110000L, record.TotalSales);
 		Assert.AreEqual(20000L, record.TotalIn);

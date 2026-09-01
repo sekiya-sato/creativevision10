@@ -76,8 +76,8 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(1000 + 500 + 400 + 19 + 89 + 700, row.Uriage, "区分99(その他売上)は売上へ畳み込む");
 		Assert.AreEqual(200 + 100 + 29, row.Henpin);
 		Assert.AreEqual(300 + 39, row.Nebiki);
-		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax);
-		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Tax, row.TotalSales);
+		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax1);
+		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Tax1, row.TotalSales);
 		Assert.AreEqual(-row.TotalSales, row.Balance);
 	}
 
@@ -292,7 +292,7 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(1000, row.Uriage);
 		Assert.AreEqual(200, row.Henpin);
 		Assert.AreEqual(100, row.Nebiki);
-		Assert.AreEqual(90, row.Tax);
+		Assert.AreEqual(90, row.Tax1);
 		Assert.AreEqual(790, row.TotalSales);
 		Assert.AreEqual(340, row.TotalIn);
 		Assert.AreEqual(-950, row.Balance);
@@ -353,8 +353,8 @@ public class SummaryKakeDbTests {
 
 		Assert.AreEqual(1000, row.Uriage, "売上金額に区分99を含めてはいけない");
 		Assert.AreEqual(300, row.Sonota, "区分99は独立してSonotaへ分離集計する");
-		Assert.AreEqual(120, row.Tax);
-		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Sonota + row.Tax, row.TotalSales);
+		Assert.AreEqual(120, row.Tax1);
+		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Sonota + row.Tax1, row.TotalSales);
 		Assert.AreEqual(1000 - 200 - 100 + 300 + 120, row.TotalSales);
 	}
 
@@ -446,8 +446,8 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(1000 + 400 + 19 + 89 + 400, row.Shiire, "区分99(その他仕入)は仕入へ畳み込む");
 		Assert.AreEqual(200 + 29, row.Henpin);
 		Assert.AreEqual(100 + 39, row.Nebiki);
-		Assert.AreEqual(100 - 20 + 10 + 40 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax);
-		Assert.AreEqual(row.Shiire - row.Henpin - row.Nebiki + row.Tax, row.TotalShiire);
+		Assert.AreEqual(100 - 20 + 10 + 40 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax1);
+		Assert.AreEqual(row.Shiire - row.Henpin - row.Nebiki + row.Tax1, row.TotalShiire);
 		Assert.AreEqual(600, row.Cash);
 		Assert.AreEqual(50, row.Offset);
 		Assert.AreEqual(row.TotalOut, row.Cash + row.Fee + row.Densai + row.Offset + row.Other);
@@ -606,7 +606,7 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(1000, row.Shiire);
 		Assert.AreEqual(200, row.Henpin);
 		Assert.AreEqual(100, row.Nebiki);
-		Assert.AreEqual(90, row.Tax);
+		Assert.AreEqual(90, row.Tax1);
 		Assert.AreEqual(790, row.TotalShiire);
 		Assert.AreEqual(340, row.TotalOut);
 		Assert.AreEqual(-950, row.Balance);
@@ -1084,13 +1084,13 @@ public class SummaryKakeDbTests {
 
 	private static string[] GetUriKakeSnapshot(ExDatabaseSqlite db) =>
 		[.. db.Fetch<SummaryUriKake>("order by Id_Tokui, DenMonth")
-			.Select(x => $"{x.Id_Tokui}:{x.DenMonth}:{x.Balance}:{x.TotalIn}:{x.TotalSales}:{x.Uriage}:{x.Henpin}:{x.Nebiki}:{x.Tax}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}")];
+			.Select(x => $"{x.Id_Tokui}:{x.DenMonth}:{x.Balance}:{x.TotalIn}:{x.TotalSales}:{x.Uriage}:{x.Henpin}:{x.Nebiki}:{x.Tax1}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}")];
 
 	private static string[] GetKaiKakeSnapshot(ExDatabaseSqlite db) =>
 		[.. db.Fetch<SummaryKaiKake>("order by Id_Shiire, DenMonth")
-			.Select(x => $"{x.Id_Shiire}:{x.DenMonth}:{x.Balance}:{x.TotalOut}:{x.TotalShiire}:{x.Shiire}:{x.Henpin}:{x.Nebiki}:{x.Tax}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}")];
+			.Select(x => $"{x.Id_Shiire}:{x.DenMonth}:{x.Balance}:{x.TotalOut}:{x.TotalShiire}:{x.Shiire}:{x.Henpin}:{x.Nebiki}:{x.Tax1}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}")];
 
 	private static string[] GetKaiShiSnapshot(ExDatabaseSqlite db) =>
 		[.. db.Fetch<SummaryKaiShi>("order by Id_Shiire, DenDay")
-			.Select(x => $"{x.Id_Shiire}:{x.DenDay}:{x.Balance}:{x.TotalOut}:{x.TotalShiire}:{x.Shiire}:{x.Henpin}:{x.Nebiki}:{x.Tax}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}:{x.ShiharaiYoteiDay}")];
+			.Select(x => $"{x.Id_Shiire}:{x.DenDay}:{x.Balance}:{x.TotalOut}:{x.TotalShiire}:{x.Shiire}:{x.Henpin}:{x.Nebiki}:{x.Tax1}:{x.Cash}:{x.Fee}:{x.Densai}:{x.Offset}:{x.Other}:{x.ShiharaiYoteiDay}")];
 }
