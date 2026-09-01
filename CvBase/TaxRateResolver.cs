@@ -15,11 +15,22 @@ namespace CvBase;
 /// </summary>
 public static class TaxRateResolver {
 
-	/// <summary>消費税率が取得できなかった場合の既定値(%)</summary>
+	/// <summary>
+	/// 消費税区分の<b>定義自体が引けなかった</b>場合の既定値(%)。
+	/// <para>
+	/// 使ってよいのは「<see cref="MasterSysman.Jsub"/> に該当 <see cref="MasterSysTax.Id"/> の行が無い」
+	/// という<b>マスタ未整備</b>のケースだけ。定義があって税率が 0% の枠（非課税・未使用枠）は
+	/// <b>0% のまま扱う</b>こと。0%をここへ読み替えると、未使用枠の売上に課税してしまう。
+	/// </para>
+	/// </summary>
 	public const int DefaultTaxRatePercent = 10;
 
 	/// <summary>
 	/// 伝票日付時点の消費税率(%)を返す。<c>Rate</c> は掛率に使うのでここでは触らない。
+	/// <para>
+	/// 定義された税率が 0% ならそのまま 0 を返す（非課税・未使用枠）。
+	/// <see cref="DefaultTaxRatePercent"/> へ倒すのは税区分の定義そのものが引けないときだけ。
+	/// </para>
 	/// </summary>
 	/// <param name="sysman">システム設定（<see cref="MasterSysman.Jsub"/> に税率定義を持つ）</param>
 	/// <param name="taxId">消費税区分（<see cref="MasterSysTax.Id"/> 1-3）。0以下は非課税で 0 を返す</param>
@@ -31,17 +42,21 @@ public static class TaxRateResolver {
 			return 0;
 		}
 		var systax = sysman?.Jsub?.FirstOrDefault(x => x.Id == taxId);
-		if (systax == null) {
-			return DefaultTaxRatePercent;
-		}
-		var rate = systax.TaxRate;
+		// 定義が無い＝マスタ未整備。0を返すと課税漏れになるため既定税率へ倒す
+		return systax == null ? DefaultTaxRatePercent : ResolveRateOf(systax, denDay);
+	}
+
+	/// <summary>
+	/// <paramref name="systax"/>1件ぶんの、適用日時点の税率(%)を返す。読み替えは一切しない。
+	/// <c>DateFrom</c> による新税率への切替判定はここに1箇所だけ持つ。
+	/// </summary>
+	static int ResolveRateOf(MasterSysTax systax, string? denDay) {
 		// DateFrom が未設定なら新税率への切替日が無いということなので現行税率を使う。
 		// CvAsset.Common.CompareYmd は 8桁以外で例外を投げるため、渡す前に桁数を確認する
-		if (IsValidYmd(denDay) && IsValidYmd(systax.DateFrom)
-			&& CvAsset.Common.CompareYmd(denDay!, systax.DateFrom) >= 0) {
-			rate = systax.TaxNewRate;
-		}
-		return rate > 0 ? rate : DefaultTaxRatePercent;
+		return IsValidYmd(denDay) && IsValidYmd(systax.DateFrom)
+			&& CvAsset.Common.CompareYmd(denDay!, systax.DateFrom) >= 0
+			? systax.TaxNewRate
+			: systax.TaxRate;
 	}
 
 	/// <summary>
@@ -62,20 +77,6 @@ public static class TaxRateResolver {
 	/// <param name="rounding">端数処理</param>
 	public static int CalcMeisaiTax(int kingaku, int taxRatePercent, EnumRounding rounding) =>
 		(int)TranCalcBase.RoundTax(Math.Abs(kingaku), taxRatePercent, rounding);
-
-	/// <summary>
-	/// <paramref name="systax"/>1件ぶんの適用日時点の税率(%)を返す。<see cref="ResolveTaxRatePercent"/>と同じ
-	/// <c>DateFrom</c>切替判定を使うが、「0%は未設定とみなしDefaultTaxRatePercentへ読み替える」フォールバックは
-	/// 適用しない生の値を返す（<see cref="FindDuplicateTaxRates"/>専用。0%どうしを重複と誤検知しないため）。
-	/// </summary>
-	static int ResolveRawRatePercent(MasterSysTax systax, string? denDay) {
-		var rate = systax.TaxRate;
-		if (IsValidYmd(denDay) && IsValidYmd(systax.DateFrom)
-			&& CvAsset.Common.CompareYmd(denDay!, systax.DateFrom) >= 0) {
-			rate = systax.TaxNewRate;
-		}
-		return rate;
-	}
 
 	/// <summary>
 	/// <see cref="MasterSysman"/> と伝票日付から、消費税区分→適用税率(%) の変換関数を作る。
@@ -117,10 +118,8 @@ public static class TaxRateResolver {
 	/// 期間内のどの時点でも重複を見逃さない。
 	/// </para>
 	/// <para>
-	/// ただし <see cref="ResolveTaxRatePercent"/> は明細の税額計算向けに「0%は未設定とみなし
-	/// <see cref="DefaultTaxRatePercent"/>(10%)へ読み替える」フォールバックを持つ。このフォールバックを
-	/// そのまま使うと、複数の未使用枠(税率0)がすべて10%に読み替えられて誤って重複扱いになってしまうため、
-	/// この判定では読み替え前の生の税率で比較し、税率0（非課税相当・未使用枠）どうしの重複は対象外にする。
+	/// 税率0（非課税相当・未使用枠）どうしの重複は対象外にする。未使用の枠が複数あるのは正常な運用であり、
+	/// 制度が求める「税率ごとに1回の端数処理」に反しないため。
 	/// </para>
 	/// </summary>
 	public static List<TaxRateDuplicate> FindDuplicateTaxRates(IReadOnlyList<MasterSysTax> taxes) {
@@ -135,7 +134,7 @@ public static class TaxRateResolver {
 		// (IdA, IdB, Rate) の組ごとに、重複が起きた確認日を集める。同じ組が複数区間で重複しても1件にまとめるため
 		var periodsByPair = new Dictionary<(long IdA, long IdB, int Rate), List<string?>>();
 		foreach (var checkDate in checkDates) {
-			var rates = taxes.Select(t => (t.Id, Rate: ResolveRawRatePercent(t, checkDate))).ToList();
+			var rates = taxes.Select(t => (t.Id, Rate: ResolveRateOf(t, checkDate))).ToList();
 			for (var i = 0; i < rates.Count; i++) {
 				for (var j = i + 1; j < rates.Count; j++) {
 					if (rates[i].Rate <= 0 || rates[i].Rate != rates[j].Rate) {

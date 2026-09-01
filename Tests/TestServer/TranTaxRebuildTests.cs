@@ -152,6 +152,45 @@ public class TranTaxRebuildTests {
 		Assert.AreEqual(8, TaxRateResolver.ResolveTaxRatePercent(sysman, 1, ""));
 		Assert.AreEqual(8, TaxRateResolver.ResolveTaxRatePercent(sysman, 1, "2026"));
 	}
+
+	[TestMethod]
+	public void ResolveTaxRatePercent_税率0の枠は0のまま既定税率へ倒さない() {
+		// 現行税率そのものが 0% の枠（未使用枠）。既定税率(10%)へ読み替えてはならない
+		// (読み替えると未使用枠を割り当てた商品の売上に課税してしまう)
+		var zeroSysman = new MasterSysman {
+			Id = 1,
+			Jsub = [new MasterSysTax { Id = 1, TaxRate = 0, DateFrom = "", TaxNewRate = 0 }],
+		};
+		Assert.AreEqual(0, TaxRateResolver.ResolveTaxRatePercent(zeroSysman, 1, "20260825"));
+
+		// 切替日以降に 0% へ落とす枠も、切替後は 0% のまま
+		var toZero = new MasterSysman {
+			Id = 1,
+			Jsub = [new MasterSysTax { Id = 1, TaxRate = 8, DateFrom = "20240401", TaxNewRate = 0 }],
+		};
+		Assert.AreEqual(8, TaxRateResolver.ResolveTaxRatePercent(toZero, 1, "20240331"));
+		Assert.AreEqual(0, TaxRateResolver.ResolveTaxRatePercent(toZero, 1, "20240401"));
+	}
+
+	[TestMethod]
+	public void ResolveTaxRatePercent_DateFromが初期値19010101なら未設定として現行税率を使う() {
+		// CvAsset.Common.CompareYmd は ymd2 が初期値(19010101)以下なら必ず -1 を返す（未設定扱い）。
+		// 旧CVnet実データの Id=3 は TaxRate=15 / DateFrom=19010101 / TaxNewRate=0 で、
+		// この仕様により TaxNewRate=0 は一切効かず常に 15% として解決される。
+		// 15% は実在しない税率なので、移行後に Id=3 を使うなら税率定義を直すこと（設計書 3.6）
+		Assert.AreEqual(15, TaxRateResolver.ResolveTaxRatePercent(CreateSysman(), 3, "20260825"));
+		Assert.AreEqual(15, TaxRateResolver.ResolveTaxRatePercent(CreateSysman(), 3, "19001231"));
+	}
+
+	[TestMethod]
+	public void ResolveTaxRatePercent_税区分の定義が無いときだけ既定税率へ倒す() {
+		// 定義が引けないのはマスタ未整備。0を返すと課税漏れになるため既定税率(10%)を使う
+		var empty = new MasterSysman { Id = 1, Jsub = [] };
+		Assert.AreEqual(TaxRateResolver.DefaultTaxRatePercent,
+			TaxRateResolver.ResolveTaxRatePercent(empty, 1, "20260825"));
+		Assert.AreEqual(TaxRateResolver.DefaultTaxRatePercent,
+			TaxRateResolver.ResolveTaxRatePercent(null, 1, "20260825"));
+	}
 }
 
 /// <summary>

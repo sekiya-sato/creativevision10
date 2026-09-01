@@ -55,8 +55,10 @@ public class SummaryDb {
 	/// <summary>
 	/// 税区分1-3の (現行税率, 新税率適用開始日, 新税率) を <see cref="MasterSysman.Jsub"/> から読み込む。
 	/// SQL文字列へ定数として埋め込むため、実行前に一度だけ確定させる(<see cref="TaxRateResolver.CreateRateResolver"/> と同じ考え方)。
-	/// マスタが無い・税区分が未定義の場合は <see cref="TaxRateResolver.DefaultTaxRatePercent"/> にフォールバックし、
-	/// 新税率への切替が起きないよう DateFrom を将来日(99999999)に倒す(<see cref="TaxRateResolver.ResolveTaxRatePercent"/> と同じ判定)。
+	/// 税区分の<b>定義そのものが引けない</b>場合（マスタ未整備）だけ <see cref="TaxRateResolver.DefaultTaxRatePercent"/>
+	/// にフォールバックする。定義があって税率が0%の枠（非課税・未使用枠）は<b>0%のまま</b>扱う
+	/// (<see cref="TaxRateResolver.ResolveTaxRatePercent"/> と同じ判定)。
+	/// <c>DateFrom</c> が未設定・不正なら新税率への切替が起きないよう将来日(99999999)に倒す。
 	/// </summary>
 	private (int Rate, string DateFrom, int NewRate)[] LoadTaxRateDefs() {
 		var tableExists = _db.FirstOrDefault<string>(
@@ -67,14 +69,16 @@ public class SummaryDb {
 		var defs = new (int Rate, string DateFrom, int NewRate)[4]; // index 0は未使用、1-3を使う
 		for (var id = 1; id <= 3; id++) {
 			var t = sysman?.Jsub?.FirstOrDefault(x => x.Id == id);
-			if (t == null || !TaxRateResolver.IsValidYmd(t.DateFrom)) {
-				var fallback = t is { TaxRate: > 0 } ? t.TaxRate : TaxRateResolver.DefaultTaxRatePercent;
-				defs[id] = (fallback, "99999999", fallback);
+			if (t == null) {
+				// 定義が無い＝マスタ未整備。0を返すと課税漏れになるため既定税率へ倒す
+				defs[id] = (TaxRateResolver.DefaultTaxRatePercent, "99999999", TaxRateResolver.DefaultTaxRatePercent);
+			}
+			else if (!TaxRateResolver.IsValidYmd(t.DateFrom)) {
+				// 切替日が無いので全期間を現行税率で通す
+				defs[id] = (t.TaxRate, "99999999", t.TaxRate);
 			}
 			else {
-				var oldRate = t.TaxRate > 0 ? t.TaxRate : TaxRateResolver.DefaultTaxRatePercent;
-				var newRate = t.TaxNewRate > 0 ? t.TaxNewRate : TaxRateResolver.DefaultTaxRatePercent;
-				defs[id] = (oldRate, t.DateFrom, newRate);
+				defs[id] = (t.TaxRate, t.DateFrom, t.TaxNewRate);
 			}
 		}
 		return defs;

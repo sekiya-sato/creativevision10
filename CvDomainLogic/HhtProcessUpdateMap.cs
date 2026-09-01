@@ -199,9 +199,6 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 	/// <summary>HHT変換で使う標準の消費税区分(<see cref="MasterSysTax.Id"/>)</summary>
 	private const long StandardTaxId = 1;
 
-	/// <summary>消費税率が取得できなかった場合の既定値(%)</summary>
-	private const int DefaultTaxRatePercent = TaxRateResolver.DefaultTaxRatePercent;
-
 	#endregion
 
 	#region 伝票の組み立て
