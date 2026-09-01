@@ -96,7 +96,7 @@
 							Command="{Binding TranTaxRebuildCommand}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							Style="{StaticResource MaterialDesignRaisedButton}"
-							ToolTip="明細の消費税が未設定の伝票へ商品ごとの税区分で明細税額を投入します（移行・既存データ救済用）">
+							ToolTip="対象6伝票（売上/店舗売上/生地・付属仕入/商品仕入/受注/発注）の期首日以降を、取引先マスタの現在の税設定で再計算します（冪等）">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon VerticalAlignment="Center"
 									Kind="Calculator" />

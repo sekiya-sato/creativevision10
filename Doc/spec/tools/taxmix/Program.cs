@@ -86,7 +86,8 @@ void Inspect() {
 
 // 軽減税率・標準税率・非課税を混在させた伝票で、明細ごとの税率適用とヘッダ合計を突合する。
 // 実DBの MasterSysTax と MasterShohin.Id_Tax を使い、伝票は投入せずメモリ上で検証する
-// （TranTaxRebuildDb.ApplyMeisaiTax は再更新処理の本体と同じコード）。
+// （TranTaxRebuildDb.ApplyMeisaiTax は伝票単位・四捨五入固定の税率解決ロジックを本体と共有する、
+//   既存テスト向けの後方互換ラッパー）。
 int Mixed() {
 	var fail = 0;
 	void Check(string label, object expected, object actual) {

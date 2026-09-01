@@ -6,6 +6,7 @@ using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
 using System.Globalization;
+using System.Windows;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -123,6 +124,22 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 	// XAMLがCurrent.*に直接バインドしているため、CurrentEditではなくCurrentを送信
 	protected override object CreateUpdateParam() =>
 		new UpdateParam(Tabletype, Common.SerializeObject(Current));
+
+	/// <summary>
+	/// 修正保存の直前に、税率の重複（Doc/spec 3.6）を警告する。保存を禁止するのではなく、
+	/// 未使用枠の運用など意図的な設定もあり得るため確認ダイアログで続行するか尋ねる。
+	/// ユーザーが続行を選んだ場合は、基底の「修正しますか？」確認へ進む。
+	/// </summary>
+	protected override bool ConfirmAction(string message) {
+		if (message.StartsWith("修正", StringComparison.Ordinal) && Current.Jsub is { } jsub) {
+			var warning = TaxRateResolver.BuildDuplicateTaxRateWarning(jsub);
+			if (warning != null && MessageEx.ShowQuestionDialog(warning, owner: ActiveWindow) != MessageBoxResult.Yes) {
+				return false;
+			}
+		}
+
+		return base.ConfirmAction(message);
+	}
 
 	protected override bool CanDelete() => false;
 

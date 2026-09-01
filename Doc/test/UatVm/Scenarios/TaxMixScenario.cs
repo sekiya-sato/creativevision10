@@ -11,9 +11,9 @@ namespace UatVm.Scenarios;
 /// </summary>
 /// <remarks>
 /// <para>
-/// `TranTaxRebuildDb`は「明細Tax合計が0の伝票」だけを対象にする一時処理で、実DBの対象は
-/// 既に0件（済み）である。そこで<see cref="TaxMixSeeder"/>が未処理状態の伝票を1件だけ
-/// 投入し、それだけが拾われることを確認する。既存の実データは対象外のまま変化しない。
+/// `TranTaxRebuildDb`は対象6伝票の期首日以降を全件走査して再計算する冪等な一括再計算処理であり、
+/// 実データも対象に含まれる。そこで<see cref="TaxMixSeeder"/>がヘッダTax未設定の伝票を1件だけ
+/// 投入し、その伝票が期待通りに再計算されることを確認する。
 /// </para>
 /// <para>
 /// 対象画面（`SysExecMiscViewModel`）は`InitCommand`を持たずモーダル前提の初期化も無いため、

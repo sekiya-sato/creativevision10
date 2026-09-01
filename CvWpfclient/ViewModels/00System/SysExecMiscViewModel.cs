@@ -87,14 +87,20 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 	}
 
 	/// <summary>
-	/// 明細Taxが未設定のTran系伝票へ明細別消費税を投入する（移行・既存データ救済用の一時処理）。
-	/// 明細Tax合計が0の伝票だけが対象なので、二重実行しても結果は変わらない。
+	/// 対象6伝票（売上/店舗売上/生地・付属仕入/商品仕入/受注/発注）の期首日以降を全件走査し、
+	/// 取引先マスタ（得意先・仕入先・店舗）の現在値から <c>TaxCalcUnit</c>/<c>TaxRounding</c> を
+	/// ヘッダへ再スナップショットしたうえで、<c>TaxableAmount1/2/3</c>・<c>Tax1/2/3</c>・明細Tax・
+	/// <c>Total</c> を確定する一括再計算処理（<see cref="CvDomainLogic.TranTaxRebuildDb"/>）。
+	/// 計算は現在のマスタ値と明細の生値から一意に決まるため、同じマスタ状態なら何度実行しても結果は変わらない（冪等）。
 	/// </summary>
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task TranTaxRebuildAsync(CancellationToken cancellationToken) {
 		if (MessageEx.ShowQuestionDialog(
-				"明細の消費税が未設定の伝票（売上/店舗売上/仕入/受注/発注）へ、商品ごとの消費税区分で明細税額を投入します。"
-				+ $"{Environment.NewLine}ヘッダの消費税・総合計も明細合計で再計算されます。実行しますか？",
+				"対象6伝票（売上/店舗売上/生地・付属仕入/商品仕入/受注/発注）の期首日以降を全件、"
+				+ "取引先マスタの現在の税設定（税計算単位・端数処理）で再計算します。"
+				+ $"{Environment.NewLine}ヘッダの消費税・総合計も明細合計で再計算されます。"
+				+ $"{Environment.NewLine}何度実行しても結果は変わりません（冪等）が、実行後は請求計算・支払計算をやり直してください。"
+				+ $"{Environment.NewLine}実行しますか？",
 				owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
 		}
