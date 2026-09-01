@@ -88,7 +88,7 @@ public class TranTaxRebuildDb {
 			var rate = TaxRateResolver.ResolveTaxRatePercent(sysman, taxId, denDay);
 			m.Id_Tax = taxId;
 			m.TaxRate = rate;
-			m.Tax = TaxRateResolver.CalcMeisaiTax(m.Kingaku, rate);
+			m.Tax = (int)TranCalcBase.RoundTax(m.Kingaku, rate, CvBase.Share.EnumRounding.Round);
 		}
 		return meisai.Sum(m => m.Tax);
 	}

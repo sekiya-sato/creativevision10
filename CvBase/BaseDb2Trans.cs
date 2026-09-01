@@ -161,6 +161,33 @@ public class TranCalcBase {
 		}
 		return ret;
 	}
+	/// <summary>
+	/// 税額計算（端数処理あり）絶対値で端数処理して符号を戻す
+	/// </summary>
+	/// <param name="taxableAmount">課税対象額</param>
+	/// <param name="taxRate">税率%</param>
+	/// <param name="rounding">端数処理</param>
+	/// <returns></returns>
+	/// <exception cref="ArgumentOutOfRangeException"></exception>
+	public static long RoundTax(long taxableAmount, int taxRate, EnumRounding rounding) {
+		if (taxableAmount == 0 || taxRate == 0)
+			return 0;
+		long value = checked(taxableAmount * taxRate); // オーバーフローチェック 税率10%で922,337兆円まで
+
+		bool negative = value < 0;
+		long abs = Math.Abs(value);
+
+		(long quotient, long remainder) = Math.DivRem(abs, 100);
+
+		long result = rounding switch {
+			EnumRounding.Floor => quotient,
+			EnumRounding.Round => quotient + (remainder >= 50 ? 1 : 0),
+			EnumRounding.Ceiling => quotient + (remainder != 0 ? 1 : 0),
+			_ => throw new ArgumentOutOfRangeException(nameof(rounding))
+		};
+
+		return negative ? -result : result;
+	}
 
 }
 
