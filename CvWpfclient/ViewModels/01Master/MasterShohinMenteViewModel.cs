@@ -107,6 +107,12 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
 			clauses.Add($"Name LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Name)}%")} ESCAPE '\\'");
 		}
+		if (!string.IsNullOrWhiteSpace(parameter.Ryaku)) {
+			clauses.Add($"Ryaku LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Ryaku)}%")} ESCAPE '\\'");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.Kana)) {
+			clauses.Add($"Kana LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Kana)}%")} ESCAPE '\\'");
+		}
 		if (!string.IsNullOrWhiteSpace(parameter.Jan)) {
 			string janParameter = AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Jan)}%");
 			clauses.Add($"""

@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Parameter.DisplayName, StringFormat={}{0}選択}"
-	Width="820" Height="620"
+	Width="820" Height="720"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="18" WindowStartupLocation="CenterOwner"
 	mc:Ignorable="d">
@@ -51,6 +51,8 @@
 				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 				<Grid Margin="2">
 					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
@@ -248,29 +250,55 @@
 					<TextBlock Grid.Row="5" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
-						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="名前(部分一致)" /></TextBlock>
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Visibility="{Binding IsCodeNameFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}"><Run Language="ja-jp" Text="名前(部分一致)" /></TextBlock>
 					<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="5"
 						Margin="4,4,4,4" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="名前"
 						Style="{StaticResource FormTextBox}"
-						Text="{Binding Parameter.Name, UpdateSourceTrigger=PropertyChanged}" />
+						Text="{Binding Parameter.Name, UpdateSourceTrigger=PropertyChanged}"
+						Visibility="{Binding IsCodeNameFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-					<TextBlock Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="6"
+					<TextBlock Grid.Row="6" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Visibility="{Binding IsCodeNameFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}"><Run Language="ja-jp" Text="略称(部分一致)" /></TextBlock>
+					<TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="5"
+						Margin="4,4,4,4" VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="略称"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding Parameter.Ryaku, UpdateSourceTrigger=PropertyChanged}"
+						Visibility="{Binding IsCodeNameFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+					<TextBlock Grid.Row="7" Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="Medium"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Visibility="{Binding IsCodeNameFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}"><Run Language="ja-jp" Text="カナ(部分一致)" /></TextBlock>
+					<TextBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="5"
+						Margin="4,4,4,4" VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="カナ"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding Parameter.Kana, UpdateSourceTrigger=PropertyChanged}"
+						Visibility="{Binding IsCodeNameFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+					<TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="6"
 						Margin="0,8,0,0"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="{Binding Parameter.DisplayName, StringFormat={}範囲を指定しない場合、すべての{0}が対象になります。}"
 						TextWrapping="Wrap" />
 
-					<TextBlock Grid.Row="7" Grid.Column="0"
+					<TextBlock Grid.Row="9" Grid.Column="0"
 						VerticalAlignment="Center"
 						FontWeight="Medium"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"><Run Language="ja-jp" Text="件数" /></TextBlock>
-					<TextBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2"
+					<TextBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="2"
 						Margin="4,4,4,4" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="件数"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding Parameter.MaxCount, UpdateSourceTrigger=PropertyChanged}" />
-					<TextBlock Grid.Row="7" Grid.Column="3" Grid.ColumnSpan="3"
+					<TextBlock Grid.Row="9" Grid.Column="3" Grid.ColumnSpan="3"
 						VerticalAlignment="Center"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="(空白:全件取得)" />

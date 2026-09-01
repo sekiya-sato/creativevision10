@@ -33,7 +33,7 @@ public partial class MasterYosanHanbaiMenteViewModel : Helpers.BaseMenteViewMode
 		}
 
 		var initialParameter = NormalizeSelectParameter(currentParameter ?? new SelectParameter { MaxCount = AppGlobal.Limit }, displayName);
-		vm.Initialize(initialParameter, typeof(MasterShain), "", "Code");
+		vm.Initialize(initialParameter, typeof(MasterShain), "", "Code", isCodeNameFilterVisible: false);
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			parameter = initialParameter;
 			return false;

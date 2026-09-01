@@ -57,7 +57,7 @@ internal static class SelectDisplayConditionHelper {
 		var selWin = new Views.Sub.RangeParamView();
 		if (selWin.DataContext is not RangeParamViewModel vm) {
 			parameter = NormalizeSelectParameter(currentParameter ?? new SelectParameter { DisplayName = displayName }, displayName);
-			conditionWhere = BuildGenericWhere(parameter);
+			conditionWhere = BuildGenericWhere(parameter, itemType);
 			maxCount = parameter.MaxCount;
 			return true;
 		}
@@ -66,13 +66,13 @@ internal static class SelectDisplayConditionHelper {
 		vm.Initialize(initialParameter, itemType, baseWhere ?? string.Empty, order ?? "Code");
 		if (ClientLib.ShowDialogView(selWin, ownerViewModel, true) != true) {
 			parameter = initialParameter;
-			conditionWhere = BuildGenericWhere(parameter);
+			conditionWhere = BuildGenericWhere(parameter, itemType);
 			maxCount = parameter.MaxCount;
 			return false;
 		}
 
 		parameter = NormalizeSelectParameter(vm.Parameter, displayName);
-		conditionWhere = BuildGenericWhere(parameter);
+		conditionWhere = BuildGenericWhere(parameter, itemType);
 		maxCount = parameter.MaxCount;
 		return true;
 	}
@@ -138,16 +138,22 @@ internal static class SelectDisplayConditionHelper {
 			ToCode = NormalizeNullableText(parameter.ToCode),
 			DisplayName = NormalizeNullableText(parameter.DisplayName) ?? displayName,
 			Name = NormalizeNullableText(parameter.Name),
+			Ryaku = NormalizeNullableText(parameter.Ryaku),
+			Kana = NormalizeNullableText(parameter.Kana),
 			Jan = NormalizeNullableText(parameter.Jan),
 			MaxCount = parameter.MaxCount
 		};
 
-	static string? BuildGenericWhere(SelectParameter parameter) {
+	static string? BuildGenericWhere(SelectParameter parameter, Type itemType) {
 		List<string> clauses = [];
 		AddSelectedIdInClause(clauses, "Id", parameter.Ids);
 		AddIdRange(clauses, "Id", parameter.FromId, parameter.ToId);
 		AddCodeRange(clauses, "Code", parameter.FromCode, parameter.ToCode);
 		AddLike(clauses, "Name", parameter.Name);
+		if (typeof(CvBase.Share.IBaseCodeName).IsAssignableFrom(itemType)) {
+			AddLike(clauses, "Ryaku", parameter.Ryaku);
+			AddLike(clauses, "Kana", parameter.Kana);
+		}
 		AddOptionalAdditionalIdInClause(clauses, parameter.AdditionalIds1Column, parameter.AdditionalIds1);
 		AddOptionalAdditionalIdInClause(clauses, parameter.AdditionalIds2Column, parameter.AdditionalIds2);
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
@@ -160,6 +166,8 @@ internal static class SelectDisplayConditionHelper {
 		AddIdRange(clauses, "Id", parameter.FromId, parameter.ToId);
 		AddCodeRange(clauses, "Code", parameter.FromCode, parameter.ToCode);
 		AddLike(clauses, "Name", parameter.Name);
+		AddLike(clauses, "Ryaku", parameter.Ryaku);
+		AddLike(clauses, "Kana", parameter.Kana);
 		if (!string.IsNullOrWhiteSpace(parameter.Jan)) {
 			string jan = EscapeSqlLiteral(parameter.Jan.Trim());
 			clauses.Add($"""

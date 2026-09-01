@@ -728,3 +728,19 @@
 - `C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj --no-restore -p:OutputPath=obj\CodexBuildOutput\`: 成功（警告0、エラー0）。
 - `C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestServer\TestServer.csproj --no-restore`: 168件成功、0件失敗。
 - `git diff --check`、UTF-8 BOMなし、CRLFを確認する。
+## [2026-09-01] 共通選択条件の略称・カナ検索追加
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- 範囲指定の選択条件に、略称とカナの部分一致検索を追加する。
+
+### 実施内容
+- `SelectParameter`へ`Ryaku`と`Kana`を追加し、標準マスタ・汎用選択・商品専用選択の各経路で引継ぐようにした。
+- `RangeParamView`に略称・カナの入力欄を追加し、`IBaseCodeName`実装型だけに表示を限定した。
+- 商品専用の`SelectShohinView`にも同じ2項目を追加した。
+- SQL条件は既存の`Name LIKE`と同じ形式で追加した。標準マスタと商品はプレースホルダー値で渡し、汎用選択は既存の単一引用符エスケープ経路を継承した。
+- 選択用マスタを利用する予算一覧では、対象テーブルに存在しない検索欄を表示しないよう明示的に無効化した。
+
+---

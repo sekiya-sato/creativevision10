@@ -33,7 +33,7 @@ public partial class MasterYosanBrandMenteViewModel : Helpers.BaseMenteViewModel
 		}
 
 		var initialParameter = NormalizeSelectParameter(currentParameter ?? new SelectParameter { MaxCount = AppGlobal.Limit }, displayName);
-		vm.Initialize(initialParameter, typeof(MasterMeisho), "Kubun='BRD'", "Code", typeof(MasterTokui), "TenType in (1,3,6)", "Code");
+		vm.Initialize(initialParameter, typeof(MasterMeisho), "Kubun='BRD'", "Code", typeof(MasterTokui), "TenType in (1,3,6)", "Code", isCodeNameFilterVisible: false);
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			parameter = initialParameter;
 			return false;

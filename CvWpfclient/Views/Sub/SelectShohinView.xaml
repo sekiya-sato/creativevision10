@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels.Sub"
 	Title="{Binding Title}"
-	Width="980" Height="680"
+	Width="980" Height="800"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="18"
 	Foreground="{DynamicResource MaterialDesignBody}"
@@ -64,6 +64,8 @@
 				Visibility="{Binding IsSearchMode, Converter={StaticResource BooleanToVisibilityConverter}}">
 				<Grid Margin="2">
 					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
@@ -196,27 +198,45 @@
 
 					<TextBlock Grid.Row="5" Grid.Column="0"
 						Style="{StaticResource FormLabel}"
-						Text="JAN" />
+						Text="略称" />
 					<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4"
+						VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="略称 (部分一致)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding ShohinRyaku, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+					<TextBlock Grid.Row="6" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="カナ" />
+					<TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="4"
+						VerticalContentAlignment="Center"
+						materialDesign:HintAssist.Hint="カナ (部分一致)"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding ShohinKana, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+					<TextBlock Grid.Row="7" Grid.Column="0"
+						Style="{StaticResource FormLabel}"
+						Text="JAN" />
+					<TextBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="4"
 						VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="JAN (部分一致)"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding Jan, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-					<TextBlock Grid.Row="6" Grid.Column="0"
+					<TextBlock Grid.Row="8" Grid.Column="0"
 						Style="{StaticResource FormLabel}"
 						Text="件数" />
-					<TextBox Grid.Row="6" Grid.Column="1"
+					<TextBox Grid.Row="8" Grid.Column="1"
 						HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
 						materialDesign:HintAssist.Hint="件数"
 						Style="{StaticResource FormTextBox}"
 						Text="{Binding MaxCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-					<TextBlock Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="3"
+					<TextBlock Grid.Row="8" Grid.Column="2" Grid.ColumnSpan="3"
 						Margin="8,0,0,0" VerticalAlignment="Center"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="(空白:全件取得)" />
 
-					<TextBlock Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="5"
+					<TextBlock Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="5"
 						Margin="0,8,0,0"
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="条件を指定しない場合、すべての商品が対象になります。" TextWrapping="Wrap" />

@@ -25,6 +25,8 @@ public sealed record class SelectParameter {
 	public string ItemIdsText { get; set; } = "未選択";
 	public string? DisplayName { get; set; }
 	public string? Name { get; set; }
+	public string? Ryaku { get; set; }
+	public string? Kana { get; set; }
 	public bool IsNameVisible { get; set; } = true;
 	public string? Jan { get; set; }
 	public int? MaxCount { get; set; }

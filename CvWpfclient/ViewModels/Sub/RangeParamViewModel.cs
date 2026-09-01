@@ -22,6 +22,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	public partial SelectParameter Parameter { get; set; } = new();
 
+	public bool IsCodeNameFilterVisible { get; private set; }
 	public bool IsAdditionalIds1Enabled => additionalIds1SelectType != null || additionalIds1LocalData != null;
 	public bool IsAdditionalIds2Enabled => additionalIds2SelectType != null;
 	public double AdditionalIds1RowOpacity => IsAdditionalIds1Enabled ? 1.0 : 0.45;
@@ -45,7 +46,8 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		string additionalIds2Label = "複数Id 2",
 		string additionalIds2Where = "",
 		string additionalIds2Order = "Code",
-		string? additionalIds2Column = null) {
+		string? additionalIds2Column = null,
+		bool? isCodeNameFilterVisible = null) {
 		selectType = tableType;
 		selectWhere = where;
 		selectOrder = order;
@@ -59,6 +61,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		additionalIds2SelectType = additionalIds2TableType;
 		additionalIds2SelectWhere = additionalIds2Where;
 		additionalIds2SelectOrder = additionalIds2Order;
+		IsCodeNameFilterVisible = isCodeNameFilterVisible ?? (tableType != null && typeof(CvBase.Share.IBaseCodeName).IsAssignableFrom(tableType));
 
 		var ensuredParameter = EnsureParameter(param ?? new SelectParameter());
 		if (ShouldApplyAdditionalLabel(additionalIds1Label, "複数Id 1", ensuredParameter.AdditionalIds1Label)) {
@@ -79,6 +82,7 @@ public partial class RangeParamViewModel : Helpers.BaseViewModel {
 		OnPropertyChanged(nameof(IsAdditionalIds2Enabled));
 		OnPropertyChanged(nameof(AdditionalIds1RowOpacity));
 		OnPropertyChanged(nameof(AdditionalIds2RowOpacity));
+		OnPropertyChanged(nameof(IsCodeNameFilterVisible));
 	}
 
 	static bool ShouldApplyAdditionalLabel(string label, string defaultLabel, string currentLabel) =>

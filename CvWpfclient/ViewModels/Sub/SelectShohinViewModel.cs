@@ -35,6 +35,12 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 	public partial string ShohinName { get; set; } = string.Empty;
 
 	[ObservableProperty]
+	public partial string ShohinRyaku { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string ShohinKana { get; set; } = string.Empty;
+
+	[ObservableProperty]
 	public partial List<long> BrandIds { get; set; } = [];
 
 	[ObservableProperty]
@@ -185,6 +191,8 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 		ShohinCodeFrom = parameter?.FromCode ?? string.Empty;
 		ShohinCodeTo = parameter?.ToCode ?? string.Empty;
 		ShohinName = parameter?.Name ?? string.Empty;
+		ShohinRyaku = parameter?.Ryaku ?? string.Empty;
+		ShohinKana = parameter?.Kana ?? string.Empty;
 		BrandIds = NormalizeIds(parameter?.Ids);
 		BrandIdsText = NormalizeSelectedText(BrandIds, parameter?.IdsText);
 		ItemIds = NormalizeIds(parameter?.ItemIds);
@@ -205,6 +213,8 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 			ToCode = NormalizeNullableText(ShohinCodeTo),
 			DisplayName = displayName,
 			Name = NormalizeNullableText(ShohinName),
+			Ryaku = NormalizeNullableText(ShohinRyaku),
+			Kana = NormalizeNullableText(ShohinKana),
 			Jan = NormalizeNullableText(Jan),
 			MaxCount = MaxCount
 		};
@@ -270,6 +280,8 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 		AddIdRange(clauses, "M.Id", ShohinIdFrom, ShohinIdTo);
 		AddCodeRange(clauses, parameters, "M.Code", ShohinCodeFrom, ShohinCodeTo);
 		AddLike(clauses, parameters, "M.Name", ShohinName);
+		AddLike(clauses, parameters, "M.Ryaku", ShohinRyaku);
+		AddLike(clauses, parameters, "M.Kana", ShohinKana);
 		AddSelectedIdInClause(clauses, "M.Id_Brand", BrandIds);
 		AddSelectedIdInClause(clauses, "M.Id_Item", ItemIds);
 

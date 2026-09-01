@@ -241,6 +241,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			FromCode = NormalizeNullableText(parameter?.FromCode),
 			ToCode = NormalizeNullableText(parameter?.ToCode),
 			Name = NormalizeNullableText(parameter?.Name),
+			Ryaku = NormalizeNullableText(parameter?.Ryaku),
+			Kana = NormalizeNullableText(parameter?.Kana),
 			Jan = NormalizeNullableText(parameter?.Jan),
 			MaxCount = parameter?.MaxCount,
 			DisplayName = NormalizeNullableText(parameter?.DisplayName) ?? displayName
@@ -268,6 +270,12 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		}
 		if (!string.IsNullOrWhiteSpace(parameter.Name)) {
 			clauses.Add($"Name LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Name)}%")} ESCAPE '\\'");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.Ryaku)) {
+			clauses.Add($"Ryaku LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Ryaku)}%")} ESCAPE '\\'");
+		}
+		if (!string.IsNullOrWhiteSpace(parameter.Kana)) {
+			clauses.Add($"Kana LIKE {AddSqlParameter(parameters, $"%{EscapeSqlLikePattern(parameter.Kana)}%")} ESCAPE '\\'");
 		}
 		AddOptionalAdditionalIdInClause(clauses, parameter.AdditionalIds1Column, parameter.AdditionalIds1);
 		AddOptionalAdditionalIdInClause(clauses, parameter.AdditionalIds2Column, parameter.AdditionalIds2);
