@@ -44,11 +44,31 @@ public static class TaxRateResolver {
 
 	/// <summary>
 	/// 明細の税額を計算する。常に正値を返し、返品等の符号はヘッダ Kubun の CalcFlag が決める。
+	/// 端数処理は四捨五入(<see cref="EnumRounding.Round"/>)固定。取引先の端数処理を使う場合は
+	/// <see cref="CalcMeisaiTax(int, int, EnumRounding)"/> を使うこと。
 	/// </summary>
 	/// <param name="kingaku">明細金額</param>
 	/// <param name="taxRatePercent">適用消費税率(%)</param>
 	public static int CalcMeisaiTax(int kingaku, int taxRatePercent) =>
-		(int)TranCalcBase.RoundTax(Math.Abs(kingaku), taxRatePercent, EnumRounding.Round);
+		CalcMeisaiTax(kingaku, taxRatePercent, EnumRounding.Round);
+
+	/// <summary>
+	/// 明細の税額を計算する(端数処理指定版)。常に正値を返し、返品等の符号はヘッダ Kubun の CalcFlag が決める。
+	/// </summary>
+	/// <param name="kingaku">明細金額</param>
+	/// <param name="taxRatePercent">適用消費税率(%)</param>
+	/// <param name="rounding">端数処理</param>
+	public static int CalcMeisaiTax(int kingaku, int taxRatePercent, EnumRounding rounding) =>
+		(int)TranCalcBase.RoundTax(Math.Abs(kingaku), taxRatePercent, rounding);
+
+	/// <summary>
+	/// <see cref="MasterSysman"/> と伝票日付から、消費税区分→適用税率(%) の変換関数を作る。
+	/// <see cref="TaxCalculator.Apply"/> の rateOf にそのまま渡せる。
+	/// </summary>
+	/// <param name="sysman">システム設定（税率定義を持つ）</param>
+	/// <param name="denDay">伝票日付(yyyyMMdd)。税率の切替判定に使う</param>
+	public static Func<long, int> CreateRateResolver(MasterSysman? sysman, string? denDay) =>
+		taxId => ResolveTaxRatePercent(sysman, taxId, denDay);
 
 	/// <summary>8桁yyyyMMddとして妥当か</summary>
 	public static bool IsValidYmd(string? ymd) =>
