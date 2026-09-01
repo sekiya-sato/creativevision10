@@ -264,9 +264,8 @@ public sealed class OpeningBalanceOwnerRow {
 /// <c>Tests/TestServer</c> から直接検証する（<see cref="PaysakiClosingCheck"/> と同じ置き方）。
 /// <para>
 /// 標準形式は「先頭のコメント行（<c>#</c>）＋日本語1行ヘッダ＋データ行」で、金額は常に
-/// **正数＝未回収残**である。内部の <c>Balance</c>（負＝未回収）への変換はここで行う。
-/// 繰越の引き継ぎ方が売掛・買掛（Balance列）と請求・支払（TotalIn-TotalSales）で異なるため、
-/// どちらでも起点になるよう Balance と合計列の双方を必ず埋める。
+/// **正数＝未回収残**である。内部の <c>Balance</c>（正＝未回収）への変換はここで行う。
+/// 期首行は期首直前の1期間分の実績行であり、帳票側の <c>PreviousBalance</c> の SUM に自然に含まれる。
 /// </para>
 /// <para>
 /// 内訳列（売上/仕入・返品・値引・その他売上・消費税1/2/3・課税対象額1/2/3）は
@@ -868,8 +867,8 @@ ORDER BY t.Code
 		// 内訳が無い期首行は、繰越の起点として必要な合計だけを持つ（内訳は全て0）。
 		var debit = hasBreakdown ? breakdown.DebitTotal : row.Amount;
 		var credit = hasBreakdown ? breakdown.CreditTotal : 0;
-		// 内部の Balance は「負=未回収」。繰越は売掛・買掛が Balance 列、請求・支払が合計の差で読むため双方を埋める。
-		var balance = credit - debit;
+		// Balance は当期間ネット(正=未回収)。4テーブル共通で Balance = DebitTotal - CreditTotal。
+		var balance = debit - credit;
 
 		return spec.Kind switch {
 			EnumOpeningBalanceKind.UriKake => new SummaryUriKake {
@@ -881,6 +880,7 @@ ORDER BY t.Code
 				Uriage = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
+				Sonota = breakdown.Sonota,
 				Tax1 = breakdown.Tax1,
 				Tax2 = breakdown.Tax2,
 				Tax3 = breakdown.Tax3,
@@ -929,6 +929,7 @@ ORDER BY t.Code
 				Shiire = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
+				Sonota = breakdown.Sonota,
 				Tax1 = breakdown.Tax1,
 				Tax2 = breakdown.Tax2,
 				Tax3 = breakdown.Tax3,
@@ -953,6 +954,7 @@ ORDER BY t.Code
 				Shiire = breakdown.Main,
 				Henpin = breakdown.Henpin,
 				Nebiki = breakdown.Nebiki,
+				Sonota = breakdown.Sonota,
 				Tax1 = breakdown.Tax1,
 				Tax2 = breakdown.Tax2,
 				Tax3 = breakdown.Tax3,
