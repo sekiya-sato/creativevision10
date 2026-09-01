@@ -394,13 +394,18 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// <summary>
 	/// SummaryStock(月次)の引当数を TranHaibun から引き直すSQL。「対象を0クリア」→「集計値を反映」の2文。
 	/// 引当が0になったキーに0行を作らないよう HAVING で除外し、在庫実績が無いキーはINSERTで新規作成する。
+	/// <para>
+	/// 新規作成時は InQty/OutQty/TransitQty/AdjustQty が NOT NULL のため、明示的に0を積む
+	/// （在庫実績を伴わない引当のみのキーで新規行が作られる際、これらを省略すると
+	/// 「NOT NULL constraint failed: SummaryStock.InQty」で失敗する）。
+	/// </para>
 	/// </summary>
 	private static string CreateReserveMonthSql(long vdate, int shime, string clearWhere, string haibunWhere) => $@"
 UPDATE SummaryStock
 SET ReserveQty = 0, Vdu = {vdate}
 WHERE {clearWhere};
 
-INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, ReserveQty)
+INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, ReserveQty, InQty, OutQty, TransitQty, AdjustQty)
 SELECT
 	  {CreateKakeMonthSql("h.DenDay", shime)} AS SumMonth,
   h.Id_Soko,
@@ -410,7 +415,11 @@ SELECT
   0 AS Su,
   {vdate} AS Vdc,
   {vdate} AS Vdu,
-  {ReserveQtySumExpr} AS ReserveQty
+  {ReserveQtySumExpr} AS ReserveQty,
+  0 AS InQty,
+  0 AS OutQty,
+  0 AS TransitQty,
+  0 AS AdjustQty
 FROM {nameof(TranHaibun)} AS h
 WHERE {haibunWhere}
 GROUP BY
