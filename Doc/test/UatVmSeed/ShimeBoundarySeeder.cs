@@ -182,20 +182,21 @@ public static class ShimeBoundarySeeder {
 	/// 請求月ごとの期待値を、投入データから算出する。
 	/// </summary>
 	/// <remarks>
-	/// 残高は `TotalIn - TotalSales` の累積である（`CalcSummaryUriSei` の previousBalance が
-	/// 期間ごとの差分を合算するため）。入金は投入していないので売上額の累積の符号反転になる。
+	/// 残高は当該請求期間だけの `TotalSales - TotalIn` である（新仕様では繰越をテーブルに
+	/// 持たず、期間ごとに独立して計算される）。入金は投入していないため `TotalIn` は常に0で、
+	/// `Balance` は `TotalSales` と一致する。繰越の検証（`PreviousBalance`）が必要になった場合は、
+	/// ここへ別フィールドとして追加し、シナリオ側で別アサーションにすること。
 	/// </remarks>
 	private static List<Expected> BuildExpectations() {
 		var result = new List<Expected>();
-		var cumulative = 0;
 		foreach (var month in _billingMonths) {
 			var period = ClosingMonthCalculator.GetPeriod(month, Shime);
 			var rows = _sales.Where(x => x.ExpectedBillingMonth == month).ToList();
 			var uriage = rows.Sum(x => x.Total);
 			var tax = rows.Sum(x => x.Tax);
 			var totalSales = uriage + tax;
-			cumulative -= totalSales;
-			result.Add(new Expected(month, period.DayFrom, period.DayTo, uriage, tax, totalSales, cumulative));
+			var balance = totalSales; // TotalIn = 0（入金を投入していないため）
+			result.Add(new Expected(month, period.DayFrom, period.DayTo, uriage, tax, totalSales, balance));
 		}
 		return result;
 	}

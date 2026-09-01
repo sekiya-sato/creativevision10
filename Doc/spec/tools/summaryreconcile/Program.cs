@@ -103,21 +103,21 @@ void Show() {
     Console.WriteLine("\n===== 売掛集計(SummaryUriKake、区分99は売上へ畳み込み) =====");
     foreach (var r in db.Fetch<dynamic>(@"
 SELECT t.Code AS CD, t.Name AS 名, k.DenMonth AS 年月,
-       k.Uriage, k.Henpin, k.Nebiki, k.Tax1+k.Tax2+k.Tax3 AS Tax, k.TotalSales AS 売上額, k.TotalIn AS 入金額, k.Balance AS 残高
+       k.Uriage, k.Henpin, k.Nebiki, k.Tax1+k.Tax2+k.Tax3 AS Tax, k.TotalSales AS 売上額, k.TotalIn AS 入金額, k.Balance AS 当期間残高
 FROM SummaryUriKake k JOIN MasterTokui t ON t.Id=k.Id_Tokui WHERE k.DenMonth=@0 ORDER BY t.Code", Month))
         Console.WriteLine(string.Join(" | ", ((IDictionary<string, object>)r).Select(kv => $"{kv.Key}={kv.Value ?? "-"}")));
 
     Console.WriteLine("\n===== 買掛集計(SummaryKaiKake、区分99は仕入へ畳み込み) =====");
     foreach (var r in db.Fetch<dynamic>(@"
 SELECT s.Code AS CD, s.Name AS 名, k.DenMonth AS 年月,
-       k.Shiire, k.Henpin, k.Nebiki, k.Tax1+k.Tax2+k.Tax3 AS Tax, k.TotalShiire AS 仕入額, k.TotalOut AS 支払額, k.Balance AS 残高
+       k.Shiire, k.Henpin, k.Nebiki, k.Tax1+k.Tax2+k.Tax3 AS Tax, k.TotalShiire AS 仕入額, k.TotalOut AS 支払額, k.Balance AS 当期間残高
 FROM SummaryKaiKake k JOIN MasterShiire s ON s.Id=k.Id_Shiire WHERE k.DenMonth=@0 ORDER BY s.Code", Month))
         Console.WriteLine(string.Join(" | ", ((IDictionary<string, object>)r).Select(kv => $"{kv.Key}={kv.Value ?? "-"}")));
 
     Console.WriteLine("\n===== 請求台帳（発行控え）=====");
     foreach (var r in db.Fetch<dynamic>($@"
 SELECT u.SeikyuNo AS 番号, {DL("u.DenDay")} AS 請求日, t.Code AS CD, t.Name AS 名,
-       u.Uriage, u.Henpin, u.Nebiki, u.Sonota AS その他売上, u.Tax1+u.Tax2+u.Tax3 AS Tax, u.TotalSales AS 売上額, u.TotalIn AS 入金額, u.Balance AS 残高,
+       u.Uriage, u.Henpin, u.Nebiki, u.Sonota AS その他売上, u.Tax1+u.Tax2+u.Tax3 AS Tax, u.TotalSales AS 売上額, u.TotalIn AS 入金額, u.Balance AS 当期間残高,
        {DL("u.NyukinYoteiDay")} AS 入金予定日, u.Renban AS 再
 FROM SummaryUriSei u JOIN MasterTokui t ON t.Id=u.Id_Tokui WHERE u.DenDay=@0 ORDER BY t.Code", DTo))
         Console.WriteLine(string.Join(" | ", ((IDictionary<string, object>)r).Select(kv => $"{kv.Key}={kv.Value ?? "-"}")));
@@ -125,7 +125,7 @@ FROM SummaryUriSei u JOIN MasterTokui t ON t.Id=u.Id_Tokui WHERE u.DenDay=@0 ORD
     Console.WriteLine("\n===== 支払台帳（発行控え）=====");
     foreach (var r in db.Fetch<dynamic>($@"
 SELECT {DL("k.DenDay")} AS 支払日, s.Code AS CD, s.Name AS 名,
-       k.Shiire, k.Henpin, k.Nebiki, k.Tax1+k.Tax2+k.Tax3 AS Tax, k.TotalShiire AS 仕入額, k.TotalOut AS 支払額, k.Balance AS 残高,
+       k.Shiire, k.Henpin, k.Nebiki, k.Tax1+k.Tax2+k.Tax3 AS Tax, k.TotalShiire AS 仕入額, k.TotalOut AS 支払額, k.Balance AS 当期間残高,
        {DL("k.ShiharaiYoteiDay")} AS 支払予定日
 FROM SummaryKaiShi k JOIN MasterShiire s ON s.Id=k.Id_Shiire WHERE k.DenDay=@0 ORDER BY s.Code", DTo))
         Console.WriteLine(string.Join(" | ", ((IDictionary<string, object>)r).Select(kv => $"{kv.Key}={kv.Value ?? "-"}")));
