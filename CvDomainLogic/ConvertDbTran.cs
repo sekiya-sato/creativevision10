@@ -54,7 +54,7 @@ public partial class ConvertDb {
 					Id_Tokui = tokui.Sid,
 					VTokui = tokui,
 					Rate = rate,
-					Tax = tax,
+					Tax1 = tax,
 					Total = total,
 				};
 			});
@@ -105,7 +105,7 @@ public partial class ConvertDb {
 					VCustomer = kokyaku,
 					Code_Customer = kokyakuCode,
 					Rate = rate,
-					Tax = tax,
+					Tax1 = tax,
 					Total = total,
 				};
 			});
@@ -156,7 +156,7 @@ public partial class ConvertDb {
 					VShain = shain,
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
-					Tax = tax,
+					Tax1 = tax,
 					Total = total,
 				};
 			});
@@ -207,7 +207,7 @@ public partial class ConvertDb {
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
 					Rate = rate,
-					Tax = tax,
+					Tax1 = tax,
 					Total = total,
 				};
 			});
@@ -488,7 +488,7 @@ public partial class ConvertDb {
 					Id_Tokui = tokui.Sid,
 					VTokui = tokui,
 					Rate = rate,
-					Tax = tax,
+					Tax1 = tax,
 					Total = total,
 				};
 			});
@@ -535,7 +535,7 @@ public partial class ConvertDb {
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
 					Rate = rate,
-					Tax = tax,
+					Tax1 = tax,
 					Total = total,
 				};
 			});
