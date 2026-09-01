@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Summary残高期間集計化(2026-09-02設計書)の適用手順(9章)のうち、
+    請求計算(CalcSummaryUriSei)・支払計算(CalcSummaryKaiShi)の全締日・全期間再計算を
+    自動で回すバッチツール。creativevision10.slnx には含めない。
+    使い方は README.md を参照。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>seikyushiharai_recalc</AssemblyName>
+    <RootNamespace>SeikyuShiharaiRecalc</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 参照は csproj からの相対。Doc/spec/tools/seikyushiharai_recalc から4階層上がリポジトリルート。 -->
+    <ProjectReference Include="..\..\..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\..\..\CvDomainLogic\CvDomainLogic.csproj" />
+    <ProjectReference Include="..\..\..\..\CodeShare\CodeShare.csproj" />
+  </ItemGroup>
+</Project>
