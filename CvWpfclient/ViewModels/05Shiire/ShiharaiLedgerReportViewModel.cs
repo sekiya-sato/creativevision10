@@ -15,6 +15,10 @@ namespace CvWpfclient.ViewModels._05Shiire;
 ///
 /// 請求台帳（発行控え）の支払側の対。ただし SummaryKaiShi には請求側の SeikyuNo/Renban に
 /// 相当する列が無いため、番号・再発行世代は持たない。
+///
+/// SummaryKaiShi は対象期間のみの集計（繰越なし）。当月残(balance)は、対象期間の開始(DayFrom)
+/// より前の全行を SUM(TotalShiire - TotalOut) で積んだ PreviousBalance に当期間の Balance を
+/// 加えて求める（`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
 /// </summary>
 public partial class ShiharaiLedgerReportViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "支払台帳（発行控え）";
@@ -57,7 +61,9 @@ public partial class ShiharaiLedgerReportViewModel : Helpers.BaseReportViewModel
 		var dayTo = AddSqlParameter(parameters, ToDenDay(to));
 		var shiireWhere = BuildCodeRangeWhere(parameters, "s.Code", ShiireCodeFrom, ShiireCodeTo);
 
-		var activeOnly = IsActiveOnly ? "AND (k.TotalOut != 0 OR k.Balance != 0)" : "";
+		// PreviousBalance は対象期間の開始(DayFrom)より前の全行を SUM(TotalShiire - TotalOut) で積む
+		// （設計書 2.3）。行ごとに DayFrom が異なりうるため仕入先＋DayFrom で相関させる。
+		var activeOnly = IsActiveOnly ? "AND ((pb.PreviousBalance + k.Balance) != 0 OR k.TotalOut != 0)" : "";
 
 		// SELECT の列順は ShiharaiLedgerReport.qfm の item1..item9 と一致させる。
 		var sql = $@"
@@ -69,10 +75,16 @@ SELECT
     k.TotalShiire AS totalShiire,
     (k.Tax1+k.Tax2+k.Tax3) AS tax,
     k.TotalOut    AS totalOut,
-    k.Balance     AS balance,
+    ifnull(pb.PreviousBalance,0) + k.Balance AS balance,
     {TranMeisaiSql.DateLabel("k.ShiharaiYoteiDay")} AS shiharaiYoteiLabel
 FROM SummaryKaiShi k
 JOIN MasterShiire s ON s.Id = k.Id_Shiire
+LEFT JOIN (
+    SELECT pb.Id_Shiire, pb.DayFrom, SUM(prior.TotalShiire - prior.TotalOut) AS PreviousBalance
+    FROM (SELECT DISTINCT Id_Shiire, DayFrom FROM SummaryKaiShi WHERE DenDay >= {dayFrom} AND DenDay <= {dayTo}) pb
+    JOIN SummaryKaiShi prior ON prior.Id_Shiire = pb.Id_Shiire AND prior.DayTo < pb.DayFrom
+    GROUP BY pb.Id_Shiire, pb.DayFrom
+) pb ON pb.Id_Shiire = k.Id_Shiire AND pb.DayFrom = k.DayFrom
 WHERE k.DenDay >= {dayFrom} AND k.DenDay <= {dayTo}
   {activeOnly}{shiireWhere}
 ORDER BY k.DenDay, s.Code";

@@ -13,9 +13,10 @@ namespace CvWpfclient.ViewModels._06Uriage;
 ///
 /// 請求ヘッダは集計テーブル SummaryUriSei（請求計算＝月次更新処理の成果物）を読む。
 /// 対象期間は同テーブルの DayFrom〜DayTo。締め処理を回していない請求日は行が無く空になる。
-/// 前回残高は当月残高から当月増減を戻して算出する（Balance + TotalSales - TotalIn）。
-/// SummaryUriSei の当月残高は Balance = 前回残高 + TotalIn - TotalSales で作られるため、
-/// 逆算は TotalSales を足し TotalIn を引く。符号を逆にすると当月増減を2回効かせてしまう。
+/// SummaryUriSei は対象期間のみの集計（繰越なし）。前回残高(prevBalance)は、対象期間の開始
+/// (DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積んで都度算出する（PreviousBalance、
+/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// 当月残高(balance)は PreviousBalance + Balance。
 ///
 /// 明細1行=CSV1行で、ヘッダ項目は各行に同じ値を繰り返す。qfm 側でヘッダ領域と明細領域に
 /// 振り分ける前提（CSV入力のフォームで単票を作る際の定石）。
@@ -77,7 +78,13 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 			TaxRateResolver.ResolveTaxRatePercent(sysman, 2, seikyuDayValue),
 			TaxRateResolver.ResolveTaxRatePercent(sysman, 3, seikyuDayValue),
 		};
-		var activeOnly = IsActiveOnly ? "AND (s.TotalSales != 0 OR s.Balance != 0)" : "";
+		// PreviousBalance は対象期間の開始(DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積む
+		// （設計書 2.3）。相関スカラサブクエリにしているのは、この式が headersCte（"s." エイリアス）と
+		// ValidateTaxBreakdownAsync（"s." を取り除いた無エイリアスのWHERE断片）の両方から
+		// 文字列置換だけで使い回せるようにするため。
+		const string PrevBalanceExpr =
+			"(SELECT ifnull(SUM(pb.TotalSales - pb.TotalIn),0) FROM SummaryUriSei pb WHERE pb.Id_Tokui = s.Id_Tokui AND pb.DayTo < s.DayFrom)";
+		var activeOnly = IsActiveOnly ? $"AND (s.TotalSales != 0 OR ({PrevBalanceExpr} + s.Balance) != 0)" : "";
 		var kubunLabel = TranMeisaiSql.KubunLabel("u.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
@@ -93,13 +100,13 @@ headers AS (
         t.PostalCode AS tokuiPostalCode, t.Address1 AS tokuiAddress1, t.Address2 AS tokuiAddress2, t.Address3 AS tokuiAddress3,
         t.Id_Shain AS tokuiIdShain,
         s.DenDay AS seikyuDay, s.DayFrom AS dayFrom, s.DayTo AS dayTo,
-        s.Balance + s.TotalSales - s.TotalIn AS prevBalance,
+        {PrevBalanceExpr} AS prevBalance,
         s.TotalSales AS totalSales,
         s.TotalIn    AS totalIn,
         s.Cash, s.Fee, s.Densai, s.Offset, s.Other,
         s.Uriage, s.Henpin, s.Nebiki, s.Sonota,
         (s.Tax1 + s.Tax2 + s.Tax3) AS tax,
-        s.Balance    AS balance,
+        {PrevBalanceExpr} + s.Balance AS balance,
         s.SeikyuNo   AS seikyuNo,
         s.NyukinYoteiDay AS nyukinYoteiDay
     FROM SummaryUriSei s

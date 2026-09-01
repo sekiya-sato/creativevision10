@@ -11,7 +11,12 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// 集計テーブル SummaryUriKake を読む。これは請求計算（月次更新処理・31Monthly）の成果物であり、
 /// 締め処理を回していない年月は行が無く空になる。元帳が伝票から積み上げるのとは方針が異なるが、
 /// 「管理表」は締めた結果を確認する帳票なので集計テーブルが正となる。
-/// 前月残は前月行の Balance を引く。
+///
+/// SummaryUriKake は対象年月のみの集計（繰越なし）。前月残(prevBalance)は、対象年月より前の
+/// 全行を SUM(TotalSales - TotalIn) で積んで都度算出する（PreviousBalance、
+/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// 前月に行が無い得意先でも、前々月以前の残があれば前月残に反映される（前月行の直読みだった旧仕様は 0 になっていた）。
+/// 当月残(balance)は PreviousBalance + Balance。
 /// </summary>
 public partial class UrikakeBalanceReportViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "売掛金管理表";
@@ -44,7 +49,6 @@ public partial class UrikakeBalanceReportViewModel : Helpers.BaseReportViewModel
 
 		List<string> parameters = [];
 		var ym = AddSqlParameter(parameters, target.ToString("yyyyMM", CultureInfo.InvariantCulture));
-		var prevYm = AddSqlParameter(parameters, target.AddMonths(-1).ToString("yyyyMM", CultureInfo.InvariantCulture));
 		var tokuiWhere = BuildCodeRangeWhere(parameters, "Code", TokuiCodeFrom, TokuiCodeTo);
 
 		var activeOnly = IsActiveOnly
@@ -61,13 +65,14 @@ cur AS (
            Cash, Fee, Densai, Offset, Other
     FROM SummaryUriKake WHERE DenMonth = {ym}
 ),
-prev AS (
-    SELECT Id_Tokui, Balance FROM SummaryUriKake WHERE DenMonth = {prevYm}
+previousBalance AS (
+    SELECT Id_Tokui, SUM(TotalSales - TotalIn) AS PreviousBalance
+    FROM SummaryUriKake WHERE DenMonth < {ym} GROUP BY Id_Tokui
 ),
 joined AS (
     SELECT
         t.Code AS tokuiCode, t.Name AS tokuiName,
-        ifnull(p.Balance, 0)    AS prevBalance,
+        ifnull(pb.PreviousBalance, 0) AS prevBalance,
         ifnull(c.TotalSales, 0) AS totalSales,
         ifnull(c.Tax1, 0) + ifnull(c.Tax2, 0) + ifnull(c.Tax3, 0) AS tax,
         ifnull(c.Henpin, 0)     AS henpin,
@@ -75,10 +80,10 @@ joined AS (
         ifnull(c.TotalIn, 0)    AS totalIn,
         ifnull(c.Cash, 0)       AS cash,
         ifnull(c.Fee, 0)        AS fee,
-        ifnull(c.Balance, 0)    AS balance
+        ifnull(pb.PreviousBalance, 0) + ifnull(c.Balance, 0) AS balance
     FROM tokui t
     LEFT JOIN cur c  ON c.Id_Tokui = t.Id
-    LEFT JOIN prev p ON p.Id_Tokui = t.Id
+    LEFT JOIN previousBalance pb ON pb.Id_Tokui = t.Id
 )
 SELECT
     tokuiCode, tokuiName,

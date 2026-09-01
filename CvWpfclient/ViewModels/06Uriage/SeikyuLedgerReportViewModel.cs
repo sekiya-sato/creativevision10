@@ -13,6 +13,10 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// 「請求一覧表」が金額中心の一覧で発行情報(番号・世代・予定日)を持たないのに対し、こちらは
 /// 請求計算結果の突合・発行控え用。得意先1件ごとの請求書は「請求書印刷」を使う。
 /// 締め処理を回していない請求日は行が無く空になる。
+///
+/// SummaryUriSei は対象期間のみの集計（繰越なし）。当月残(balance)は、対象期間の開始(DayFrom)
+/// より前の全行を SUM(TotalSales - TotalIn) で積んだ PreviousBalance に当期間の Balance を
+/// 加えて求める（`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
 /// </summary>
 public partial class SeikyuLedgerReportViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "請求台帳（発行控え）";
@@ -55,7 +59,9 @@ public partial class SeikyuLedgerReportViewModel : Helpers.BaseReportViewModel {
 		var dayTo = AddSqlParameter(parameters, ToDenDay(to));
 		var tokuiWhere = BuildCodeRangeWhere(parameters, "t.Code", TokuiCodeFrom, TokuiCodeTo);
 
-		var activeOnly = IsActiveOnly ? "AND (u.TotalSales != 0 OR u.Balance != 0)" : "";
+		// PreviousBalance は対象期間の開始(DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積む
+		// （設計書 2.3）。行ごとに DayFrom が異なりうるため得意先＋DayFrom で相関させる。
+		var activeOnly = IsActiveOnly ? "AND ((pb.PreviousBalance + u.Balance) != 0 OR u.TotalSales != 0)" : "";
 
 		// SELECT の列順は SeikyuLedgerReport.qfm の item1..item10 と一致させる。
 		var sql = $@"
@@ -67,11 +73,17 @@ SELECT
     {TranMeisaiSql.DateLabel("u.DayFrom")} || '～' || {TranMeisaiSql.DateLabel("u.DayTo")} AS termLabel,
     u.TotalSales AS totalSales,
     (u.Tax1+u.Tax2+u.Tax3) AS tax,
-    u.Balance    AS balance,
+    ifnull(pb.PreviousBalance,0) + u.Balance AS balance,
     {TranMeisaiSql.DateLabel("u.NyukinYoteiDay")} AS nyukinYoteiLabel,
     u.Renban     AS renban
 FROM SummaryUriSei u
 JOIN MasterTokui t ON t.Id = u.Id_Tokui
+LEFT JOIN (
+    SELECT pb.Id_Tokui, pb.DayFrom, SUM(prior.TotalSales - prior.TotalIn) AS PreviousBalance
+    FROM (SELECT DISTINCT Id_Tokui, DayFrom FROM SummaryUriSei WHERE DenDay >= {dayFrom} AND DenDay <= {dayTo}) pb
+    JOIN SummaryUriSei prior ON prior.Id_Tokui = pb.Id_Tokui AND prior.DayTo < pb.DayFrom
+    GROUP BY pb.Id_Tokui, pb.DayFrom
+) pb ON pb.Id_Tokui = u.Id_Tokui AND pb.DayFrom = u.DayFrom
 WHERE u.DenDay >= {dayFrom} AND u.DenDay <= {dayTo}
   {activeOnly}{tokuiWhere}
 ORDER BY u.DenDay, t.Code, u.SeikyuNo";

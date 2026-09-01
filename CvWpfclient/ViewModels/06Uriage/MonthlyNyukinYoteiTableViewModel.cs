@@ -15,7 +15,10 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// - PayDay   = 入金日（1〜31。0以下/31以上/その月の日数超は月末へ丸める）
 /// 予定日 = 請求年月に PayMonth を加算した月の PayDay 日。
 ///
-/// 金額は SummaryUriSei（請求計算＝月次更新処理の成果物）の当月残高を使う。
+/// 金額は SummaryUriSei（請求計算＝月次更新処理の成果物）の当月末残高を使う。
+/// SummaryUriSei は対象期間のみの集計（繰越なし）なので、当月末残高は対象期間の開始(DayFrom)
+/// より前の全行を SUM(TotalSales - TotalIn) で積んだ PreviousBalance に当期間の Balance を
+/// 加えて求める（`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
 /// 締め処理を回していない請求日は行が無く空になる。
 /// </summary>
 public partial class MonthlyNyukinYoteiTableViewModel : Helpers.BaseReportViewModel {
@@ -84,12 +87,16 @@ public partial class MonthlyNyukinYoteiTableViewModel : Helpers.BaseReportViewMo
 		var selectDay = IsByTokui ? "MAX(yoteiDay)" : "''";
 		var having = IsActiveOnly ? "HAVING SUM(balance) != 0" : "";
 
+		// 予定金額は当月末残高（PreviousBalance + Balance）。PreviousBalance は対象期間の開始(DayFrom)
+		// より前の全行を SUM(TotalSales - TotalIn) で積む（設計書 2.3）。行ごとに DayFrom が異なるため
+		// 得意先＋DayFrom の相関スカラサブクエリにする。
 		var sql = $@"
 WITH scheduled AS (
     SELECT
         t.Code AS tokuiCode, t.Name AS tokuiName,
         u.DenDay AS shimeDay,
-        u.Balance    AS balance,
+        (SELECT ifnull(SUM(pb.TotalSales - pb.TotalIn),0) FROM SummaryUriSei pb
+          WHERE pb.Id_Tokui = u.Id_Tokui AND pb.DayTo < u.DayFrom) + u.Balance AS balance,
         u.TotalSales AS totalSales,
         u.TotalIn    AS totalIn,
         {PayDate} AS payDate

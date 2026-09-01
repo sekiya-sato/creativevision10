@@ -8,6 +8,11 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// <summary>
 /// 請求一覧表。請求計算で保存した SummaryUriSei を、請求先単位（親のみ）または
 /// 得意先明細＋請求先集計（子含む）として印字する。
+///
+/// SummaryUriSei は対象期間のみの集計（繰越なし）。前月残(prevBalance)・繰越金額(carryOver)は
+/// 対象期間の開始(DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積んで都度算出する
+/// （PreviousBalance、`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// 当月残(balance)は PreviousBalance + Balance。
 /// </summary>
 public partial class SeikyuListReportViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "請求一覧表";
@@ -70,8 +75,10 @@ public partial class SeikyuListReportViewModel : Helpers.BaseReportViewModel {
 			? (IsIncludeChildren ? "parentCode, primaryDay, secondaryDay, childCode" : "parentCode, primaryDay, secondaryDay")
 			: (IsIncludeChildren ? "primaryDay, secondaryDay, parentCode, childCode" : "primaryDay, secondaryDay, parentCode");
 
+		// PreviousBalance は対象期間の開始(DayFrom)より前の全期間を SUM(TotalSales - TotalIn) で
+		// 積んだ値（設計書 2.3）。行ごとに DayFrom が異なりうるため得意先＋DayFrom で相関させる。
 		var source = $@"
-source AS (
+raw AS (
     SELECT
         {primaryDay} AS primaryDay,
         {secondaryDay} AS secondaryDay,
@@ -80,14 +87,14 @@ source AS (
         ifnull(p.Id,c.Id) AS parentId,
         ifnull(p.Code,c.Code) AS parentCode,
         ifnull(p.Name,c.Name) AS parentName,
-        s.Balance + s.TotalSales - s.TotalIn AS prevBalance,
-        s.Balance AS balance,
+        (SELECT ifnull(SUM(pb.TotalSales - pb.TotalIn),0) FROM SummaryUriSei pb
+          WHERE pb.Id_Tokui = s.Id_Tokui AND pb.DayTo < s.DayFrom) AS prevBalance,
+        s.Balance AS rawBalance,
         s.Cash, s.Fee, s.Densai, s.Offset, s.Other,
         s.TotalIn,
         s.Uriage, s.Henpin, s.Nebiki, s.Sonota,
         s.Tax1 + s.Tax2 + s.Tax3 AS tax,
         s.TotalSales,
-        s.Balance + s.TotalSales - s.TotalIn - s.TotalIn AS carryOver,
         s.TotalSales - (s.Tax1 + s.Tax2 + s.Tax3) AS netSales
     FROM SummaryUriSei s
     JOIN MasterTokui c ON c.Id = s.Id_Tokui
@@ -96,7 +103,19 @@ source AS (
       AND c.Shime1 = {shime}
       AND {primaryDay} >= {dateFrom} AND {primaryDay} <= {dateTo}
       {paysakiWhere}
-      AND (s.Balance != 0 OR s.TotalIn != 0 OR s.TotalSales != 0)
+),
+source AS (
+    SELECT
+        primaryDay, secondaryDay, shimeDay, childId, childCode, childName,
+        parentId, parentCode, parentName,
+        prevBalance,
+        prevBalance + rawBalance AS balance,
+        Cash, Fee, Densai, Offset, Other, TotalIn,
+        Uriage, Henpin, Nebiki, Sonota, tax, TotalSales,
+        prevBalance - TotalIn AS carryOver,
+        netSales
+    FROM raw
+    WHERE (prevBalance + rawBalance) != 0 OR TotalIn != 0 OR TotalSales != 0
 )";
 
 		var sql = IsIncludeChildren
