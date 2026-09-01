@@ -52,32 +52,32 @@ public class OpeningBalanceDbTests {
 		var target = new OpeningBalanceDb(db);
 
 		var uriKake = target.Import(Param(nameof(SummaryUriKake), "202606", [1, 2],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 },
-			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = -3000, TotalSales = 3000 }]));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000 },
+			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = 3000, TotalSales = 3000 }]));
 		Assert.AreEqual(0, uriKake.Deleted);
 		Assert.AreEqual(2, uriKake.Inserted);
-		Assert.AreEqual(-5000L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606").Balance);
+		Assert.AreEqual(5000L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606").Balance);
 
 		var uriSei = target.Import(Param(nameof(SummaryUriSei), "20260630", [1],
 			[new SummaryUriSei {
 				Id_Tokui = 1, DenDay = "20260630", DayFrom = "20260601", DayTo = "20260630",
-				Balance = -5000, TotalSales = 5000,
+				Balance = 5000, TotalSales = 5000,
 			}]));
 		Assert.AreEqual(1, uriSei.Inserted);
-		Assert.AreEqual(-5000L, db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260630").Balance);
+		Assert.AreEqual(5000L, db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260630").Balance);
 
 		var kaiKake = target.Import(Param(nameof(SummaryKaiKake), "202606", [11],
-			[new SummaryKaiKake { Id_Shiire = 11, DenMonth = "202606", Balance = -7000, TotalShiire = 7000 }]));
+			[new SummaryKaiKake { Id_Shiire = 11, DenMonth = "202606", Balance = 7000, TotalShiire = 7000 }]));
 		Assert.AreEqual(1, kaiKake.Inserted);
-		Assert.AreEqual(-7000L, db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 11, "202606").Balance);
+		Assert.AreEqual(7000L, db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 11, "202606").Balance);
 
 		var kaiShi = target.Import(Param(nameof(SummaryKaiShi), "20260630", [11],
 			[new SummaryKaiShi {
 				Id_Shiire = 11, DenDay = "20260630", DayFrom = "20260601", DayTo = "20260630",
-				Balance = -7000, TotalShiire = 7000,
+				Balance = 7000, TotalShiire = 7000,
 			}]));
 		Assert.AreEqual(1, kaiShi.Inserted);
-		Assert.AreEqual(-7000L, db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 11, "20260630").Balance);
+		Assert.AreEqual(7000L, db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 11, "20260630").Balance);
 	}
 
 	[TestMethod]
@@ -85,7 +85,7 @@ public class OpeningBalanceDbTests {
 		var db = Prepare();
 
 		new OpeningBalanceDb(db).Import(Param(nameof(SummaryUriKake), "202606", [1],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000, Vdc = 1, Vdu = 1 }]));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000, Vdc = 1, Vdu = 1 }]));
 
 		var row = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606");
 		Assert.IsTrue(row.Vdc > 1, "Vdcはサーバー側で採番する");
@@ -97,8 +97,8 @@ public class OpeningBalanceDbTests {
 		var db = Prepare();
 		var target = new OpeningBalanceDb(db);
 		var param = Param(nameof(SummaryUriKake), "202606", [1, 2],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 },
-			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = -3000, TotalSales = 3000 }]);
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000 },
+			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = 3000, TotalSales = 3000 }]);
 
 		target.Import(param);
 		var second = target.Import(param);
@@ -113,17 +113,17 @@ public class OpeningBalanceDbTests {
 		var db = Prepare();
 		var target = new OpeningBalanceDb(db);
 		target.Import(Param(nameof(SummaryUriKake), "202606", [1, 2],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 },
-			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = -3000, TotalSales = 3000 }]));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000 },
+			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = 3000, TotalSales = 3000 }]));
 
 		// 得意先1だけを載せた2回目。得意先2の期首残は触らない
 		var result = target.Import(Param(nameof(SummaryUriKake), "202606", [1],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -9000, TotalSales = 9000 }]));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 9000, TotalSales = 9000 }]));
 
 		Assert.AreEqual(1, result.Deleted);
 		Assert.AreEqual(1, result.Inserted);
-		Assert.AreEqual(-9000L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606").Balance);
-		Assert.AreEqual(-3000L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 2, "202606").Balance,
+		Assert.AreEqual(9000L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606").Balance);
+		Assert.AreEqual(3000L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 2, "202606").Balance,
 			"CSVに載っていない取引先の既存行は残す");
 	}
 
@@ -132,7 +132,7 @@ public class OpeningBalanceDbTests {
 		var db = Prepare();
 		var target = new OpeningBalanceDb(db);
 		target.Import(Param(nameof(SummaryUriKake), "202606", [1],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 }]));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000 }]));
 
 		// 残高0（削除だけ）の取引先は OwnerIds に載るが行は無い
 		var result = target.Import(Param<SummaryUriKake>(nameof(SummaryUriKake), "202606", [1], []));
@@ -146,12 +146,12 @@ public class OpeningBalanceDbTests {
 	public void Import_KeepsOtherKeyDatesUntouched() {
 		var db = Prepare();
 		var target = new OpeningBalanceDb(db);
-		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202605", Balance = -100, TotalSales = 100 });
+		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202605", Balance = 100, TotalSales = 100 });
 
 		target.Import(Param(nameof(SummaryUriKake), "202606", [1],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 }]));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000 }]));
 
-		Assert.AreEqual(-100L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202605").Balance,
+		Assert.AreEqual(100L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202605").Balance,
 			"別のキー日付の行は対象外");
 	}
 
@@ -163,7 +163,7 @@ public class OpeningBalanceDbTests {
 		var target = new OpeningBalanceDb(db);
 
 		var ex = Assert.ThrowsExactly<ArgumentException>(() => target.Import(Param(nameof(SummaryUriKake), "202607", [1],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202607", Balance = -5000, TotalSales = 5000 }])));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202607", Balance = 5000, TotalSales = 5000 }])));
 
 		StringAssert.Contains(ex.Message, "期首");
 		Assert.AreEqual(0, db.Fetch<SummaryUriKake>("where DenMonth=@0", "202607").Count);
@@ -208,11 +208,11 @@ public class OpeningBalanceDbTests {
 		var target = new OpeningBalanceDb(db);
 
 		var keyMismatch = Assert.ThrowsExactly<ArgumentException>(() => target.Import(Param(nameof(SummaryUriKake), "202606", [1],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202605", Balance = -5000, TotalSales = 5000 }])));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202605", Balance = 5000, TotalSales = 5000 }])));
 		StringAssert.Contains(keyMismatch.Message, "一致しない");
 
 		var ownerMismatch = Assert.ThrowsExactly<ArgumentException>(() => target.Import(Param(nameof(SummaryUriKake), "202606", [1],
-			[new SummaryUriKake { Id_Tokui = 9, DenMonth = "202606", Balance = -5000, TotalSales = 5000 }])));
+			[new SummaryUriKake { Id_Tokui = 9, DenMonth = "202606", Balance = 5000, TotalSales = 5000 }])));
 		StringAssert.Contains(ownerMismatch.Message, "洗い替え対象外");
 	}
 
@@ -225,7 +225,7 @@ public class OpeningBalanceDbTests {
 
 		var ex = Assert.ThrowsExactly<ArgumentException>(() => new OpeningBalanceDb(db).Import(
 			Param(nameof(SummaryUriKake), "202606", [1],
-				[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 }])));
+				[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000 }])));
 
 		StringAssert.Contains(ex.Message, "期首日が未設定");
 	}
@@ -237,9 +237,9 @@ public class OpeningBalanceDbTests {
 
 		// 同一キーの重複行は uk1 違反になる。1件目も残さない
 		Assert.ThrowsExactly<SqliteException>(() => target.Import(Param(nameof(SummaryUriKake), "202606", [1, 2],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 },
-			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = -3000, TotalSales = 3000 },
-			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = -1000, TotalSales = 1000 }])));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000 },
+			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = 3000, TotalSales = 3000 },
+			 new SummaryUriKake { Id_Tokui = 2, DenMonth = "202606", Balance = 1000, TotalSales = 1000 }])));
 
 		Assert.AreEqual(0, db.Fetch<SummaryUriKake>("where DenMonth=@0", "202606").Count, "途中失敗で1件も残さない");
 	}
@@ -247,7 +247,10 @@ public class OpeningBalanceDbTests {
 	// ---- 繰越との結合 ------------------------------------------------------------
 
 	[TestMethod]
-	public void Import_UriSei_SeedsCarryForwardOfNextClosingPeriod() {
+	public void Import_UriSei_OpeningRowIsIncludedInPreviousBalanceOfNextClosingPeriod() {
+		// 繰越はテーブルに持たない(2.3)。期首残高CSVで投入した行は「期首直前の1期間の実績行」として
+		// 残り続け、読み出し側の標準SQL(SUM(TotalSales - TotalIn) WHERE DayTo < 対象期間開始日)へ
+		// 自然に取り込まれることを検証する。
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		db.CreateTable(typeof(SummaryUriSei), true, false);
 		db.CreateTable(typeof(Tran00Uriage), true, false);
@@ -259,25 +262,30 @@ public class OpeningBalanceDbTests {
 		db.Insert(new MasterTokui { Code = "00123", Shime1 = 99, TenType = 1 });
 		var idTokui = db.Single<MasterTokui>("where Code=@0", "00123").Id;
 
-		// 期首残 150,000 を 20260630 の請求行として投入する
+		// 期首残 150,000(正=未回収) を 20260630 の請求行として投入する
 		new OpeningBalanceDb(db).Import(Param(nameof(SummaryUriSei), "20260630", [idTokui],
 			[new SummaryUriSei {
 				Id_Tokui = idTokui, DenDay = "20260630", DayFrom = "20260601", DayTo = "20260630",
-				Balance = -150000, TotalSales = 150000, TotalIn = 0,
+				Balance = 150000, TotalSales = 150000, TotalIn = 0,
 			}]));
 
-		// 期首以降の請求月を計算すると、期首行の TotalIn-TotalSales が繰越の起点になる
+		// 期首以降の請求月を計算する。再計算は対象期間だけの純増減を作るのみで、期首行には触れない
 		new SummaryDb(db).CalcSummaryUriSei("202607", 99);
 
 		var opening = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", idTokui, "20260630");
-		Assert.AreEqual(-150000L, opening.Balance, "期首前の行は再計算で上書きしない");
+		Assert.AreEqual(150000L, opening.Balance, "期首前の行は再計算で上書きしない");
 
 		var july = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", idTokui, "20260731");
-		Assert.AreEqual(-150000L, july.Balance, "期首残 -150,000 が繰越の起点になる");
+		Assert.AreEqual(0L, july.Balance, "7月に伝票が無いので当月分の純増減は0(繰越は積まない)");
+
+		// PreviousBalance の標準SQL(7.3)。期首行だけが対象範囲(DayTo < 7月の開始日)に入る
+		var previousBalance = db.FirstOrDefault<long>(
+			"SELECT SUM(TotalSales - TotalIn) FROM SummaryUriSei WHERE Id_Tokui=@0 AND DayTo < @1", idTokui, july.DayFrom);
+		Assert.AreEqual(150000L, previousBalance, "期首行がPreviousBalanceの累計に含まれる");
 	}
 
 	[TestMethod]
-	public void Import_UriKake_SeedsCarryForwardOfNextMonth() {
+	public void Import_UriKake_OpeningRowIsIncludedInPreviousBalanceOfNextMonth() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		db.CreateTable(typeof(SummaryUriKake), true, false);
 		db.CreateTable(typeof(Tran00Uriage), true, false);
@@ -290,12 +298,19 @@ public class OpeningBalanceDbTests {
 		db.Insert(new MasterSysman { FiscalStartDate = "20260701", ShimeBi = 99 });
 
 		new OpeningBalanceDb(db).Import(Param(nameof(SummaryUriKake), "202606", [1],
-			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -150000, TotalSales = 150000 }]));
+			[new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 150000, TotalSales = 150000 }]));
 
 		new SummaryDb(db).CalcSummaryUriKake("202607", "202607");
 
-		Assert.AreEqual(-150000L, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606").Balance,
-			"期首前の行は再計算で上書きしない");
+		var opening = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606");
+		Assert.AreEqual(150000L, opening.Balance, "期首前の行は再計算で上書きしない");
+		Assert.IsNull(db.FirstOrDefault<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607"),
+			"7月に伝票が無ければ行は作られない(繰越は積まない)");
+
+		// PreviousBalance の標準SQL(7.3)。202606の期首行だけが対象範囲(DenMonth < 202607)に入る
+		var previousBalance = db.FirstOrDefault<long>(
+			"SELECT SUM(TotalSales - TotalIn) FROM SummaryUriKake WHERE Id_Tokui=@0 AND DenMonth < @1", 1, "202607");
+		Assert.AreEqual(150000L, previousBalance, "期首行がPreviousBalanceの累計に含まれる");
 	}
 
 	// ---- 取引先照会SQL（実スキーマで通ること） -----------------------------------
@@ -309,7 +324,7 @@ public class OpeningBalanceDbTests {
 		db.Insert(new MasterTokui { Code = "00900", Name = "直営店E", Shime1 = 99, TenType = 6 });
 		db.Insert(new MasterShiire { Code = "S001", Name = "仕入先A", Shime1 = 99 });
 		var idTokui = db.Single<MasterTokui>("where Code=@0", "00123").Id;
-		db.Insert(new SummaryUriKake { Id_Tokui = idTokui, DenMonth = "202606", Balance = -5000, TotalSales = 5000 });
+		db.Insert(new SummaryUriKake { Id_Tokui = idTokui, DenMonth = "202606", Balance = 5000, TotalSales = 5000 });
 
 		foreach (var kind in new[] {
 			EnumOpeningBalanceKind.UriKake, EnumOpeningBalanceKind.UriSei,
@@ -338,7 +353,7 @@ public class OpeningBalanceDbTests {
 		db.Insert(new MasterTokui { Code = "00900", Name = "直営店E", Shime1 = 99, TenType = 6 });
 		var idTokui = db.Single<MasterTokui>("where Code=@0", "00123").Id;
 		db.Insert(new SummaryUriKake {
-			Id_Tokui = idTokui, DenMonth = "202606", Balance = -5000,
+			Id_Tokui = idTokui, DenMonth = "202606", Balance = 5000,
 			TotalSales = 6000, TotalIn = 1000, Uriage = 6000, Cash = 1000,
 		});
 

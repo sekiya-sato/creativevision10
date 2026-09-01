@@ -8,9 +8,10 @@ namespace Tests.CvServer;
 /// <summary>
 /// 期首残高CSV（標準形式）の解析・数値正規化・行生成のテスト。
 /// <para>
-/// `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` 4.4 / 4.5 の規則を固定する。
-/// 特に「繰越の引き継ぎ方が売掛・買掛(Balance列)と請求・支払(TotalIn-TotalSales)で異なる」ため、
-/// どちらでも期首残が起点になるよう両方の列が埋まることを検証する。
+/// `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` 4.4 / 4.5、および
+/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 6章の規則を固定する。
+/// 4テーブル共通で `Balance = DebitTotal - CreditTotal`(正=未回収・未払)を満たす
+/// 1期間分の実績行を作ることを検証する。繰越はテーブルに持たない。
 /// </para>
 /// </summary>
 [TestClass]
@@ -122,7 +123,7 @@ public class OpeningBalanceCsvTests {
 		Assert.AreEqual(EnumOpeningBalanceStatus.New, entry.Status);
 		var record = (SummaryUriKake)entry.Record!;
 		Assert.AreEqual("202606", record.DenMonth);
-		Assert.AreEqual(-150000L, record.Balance, "内部のBalanceは負=未回収");
+		Assert.AreEqual(150000L, record.Balance, "内部のBalanceは正=未回収");
 		Assert.AreEqual(150000L, record.TotalSales, "請求・支払側と同じ形にするため合計も埋める");
 		Assert.AreEqual(0L, record.TotalIn);
 		Assert.AreEqual(0L, record.Uriage, "内訳未記入の期首行は内訳を持たない");
@@ -141,7 +142,7 @@ public class OpeningBalanceCsvTests {
 		Assert.AreEqual(20000L, record.Cash);
 		Assert.AreEqual(110000L, record.TotalSales);
 		Assert.AreEqual(20000L, record.TotalIn);
-		Assert.AreEqual(-90000L, record.Balance);
+		Assert.AreEqual(90000L, record.Balance, "正=未回収");
 	}
 
 	[TestMethod]
@@ -157,7 +158,9 @@ public class OpeningBalanceCsvTests {
 	// ---- 行生成: 請求（TotalIn-TotalSales で繰越） -------------------------------
 
 	[TestMethod]
-	public void Build_UriSei_SeedsCarryForwardThroughTotalDifference() {
+	public void Build_UriSei_ProducesOnePeriodRowWithPositiveBalanceForUnrecovered() {
+		// 繰越はテーブルに持たない(2.3)。期首行は「期首直前の1期間の実績行」として1件だけ作られ、
+		// Balance = TotalSales - TotalIn(正=未回収) が4テーブル共通の式に一致することを検証する。
 		var request = new OpeningBalanceBuildRequest {
 			Kind = EnumOpeningBalanceKind.UriSei,
 			KeyDate = "20260630",
@@ -171,18 +174,19 @@ public class OpeningBalanceCsvTests {
 		var result = OpeningBalanceCsv.Build(request);
 
 		Assert.IsFalse(result.HasError, string.Join(" / ", result.Errors.Select(x => x.Detail)));
+		Assert.AreEqual(1, result.Entries.Count, "期首行は1期間ぶんの実績行として1件だけ作る");
 		var record = (SummaryUriSei)result.Entries.Single().Record!;
 		Assert.AreEqual("20260630", record.DenDay);
 		Assert.AreEqual("20260601", record.DayFrom);
-		Assert.AreEqual("20260630", record.DayTo, "CalcSummaryUriSei の previousBalance は DayTo で絞る");
-		Assert.AreEqual(-150000L, record.TotalIn - record.TotalSales,
-			"請求の繰越は Balance 列ではなく TotalIn-TotalSales の合計で読まれる");
-		Assert.AreEqual(-150000L, record.Balance, "帳票が読む Balance 列も揃えておく");
+		Assert.AreEqual("20260630", record.DayTo, "PreviousBalanceの標準SQLはDayToで絞る");
+		Assert.AreEqual(150000L, record.TotalSales - record.TotalIn,
+			"Balance = TotalSales - TotalIn(4テーブル共通の式)と一致する");
+		Assert.AreEqual(150000L, record.Balance, "正=未回収");
 		Assert.AreEqual(string.Empty, record.SeikyuNo, "期首行に請求書番号は振らない");
 	}
 
 	[TestMethod]
-	public void Build_KaiShi_SeedsCarryForwardThroughTotalDifference() {
+	public void Build_KaiShi_ProducesOnePeriodRowWithPositiveBalanceForUnpaid() {
 		var request = new OpeningBalanceBuildRequest {
 			Kind = EnumOpeningBalanceKind.KaiShi,
 			KeyDate = "20260630",
@@ -196,9 +200,62 @@ public class OpeningBalanceCsvTests {
 		var result = OpeningBalanceCsv.Build(request);
 
 		Assert.IsFalse(result.HasError, string.Join(" / ", result.Errors.Select(x => x.Detail)));
+		Assert.AreEqual(1, result.Entries.Count, "期首行は1期間ぶんの実績行として1件だけ作る");
 		var record = (SummaryKaiShi)result.Entries.Single().Record!;
-		Assert.AreEqual(-70000L, record.TotalOut - record.TotalShiire);
-		Assert.AreEqual(-70000L, record.Balance);
+		Assert.AreEqual(70000L, record.TotalShiire - record.TotalOut,
+			"Balance = TotalShiire - TotalOut(4テーブル共通の式)と一致する");
+		Assert.AreEqual(70000L, record.Balance, "正=未払");
+	}
+
+	[TestMethod]
+	public void Build_AllFourKinds_SetSonotaFromBreakdownAndAddItToTheTotal() {
+		// 6章: 4種別のSonotaをCreateRecordで全て設定する(現在SummaryUriSeiのみ、を解消)。
+		var breakdown = new OpeningBalanceBreakdown { Main = 100000, Sonota = 5000, Tax1 = 10000 };
+		var netAmount = breakdown.NetAmount; // 100000 + 5000 + 10000 = 115000
+
+		var uriKake = (SummaryUriKake)OpeningBalanceCsv.Build(new OpeningBalanceBuildRequest {
+			Kind = EnumOpeningBalanceKind.UriKake,
+			KeyDate = "202606",
+			FiscalStartDate = FiscalStart,
+			Rows = [Row(4, "00123", netAmount, breakdown)],
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 1)),
+		}).Entries.Single().Record!;
+		Assert.AreEqual(5000L, uriKake.Sonota);
+		Assert.AreEqual(115000L, uriKake.TotalSales, "SonotaはTotalSalesへ加算される");
+
+		var uriSei = (SummaryUriSei)OpeningBalanceCsv.Build(new OpeningBalanceBuildRequest {
+			Kind = EnumOpeningBalanceKind.UriSei,
+			KeyDate = "20260630",
+			DayFrom = "20260601",
+			FiscalStartDate = FiscalStart,
+			SelectedShime = 99,
+			Rows = [Row(4, "00123", netAmount, breakdown)],
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 1)),
+		}).Entries.Single().Record!;
+		Assert.AreEqual(5000L, uriSei.Sonota);
+		Assert.AreEqual(115000L, uriSei.TotalSales);
+
+		var kaiKake = (SummaryKaiKake)OpeningBalanceCsv.Build(new OpeningBalanceBuildRequest {
+			Kind = EnumOpeningBalanceKind.KaiKake,
+			KeyDate = "202606",
+			FiscalStartDate = FiscalStart,
+			Rows = [Row(4, "S001", netAmount, breakdown)],
+			Owners = Owners(new OpeningBalanceOwner(21, "S001", "仕入先A", 99, 0)),
+		}).Entries.Single().Record!;
+		Assert.AreEqual(5000L, kaiKake.Sonota);
+		Assert.AreEqual(115000L, kaiKake.TotalShiire, "SonotaはTotalShiireへ加算される");
+
+		var kaiShi = (SummaryKaiShi)OpeningBalanceCsv.Build(new OpeningBalanceBuildRequest {
+			Kind = EnumOpeningBalanceKind.KaiShi,
+			KeyDate = "20260630",
+			DayFrom = "20260601",
+			FiscalStartDate = FiscalStart,
+			SelectedShime = 99,
+			Rows = [Row(4, "S001", netAmount, breakdown)],
+			Owners = Owners(new OpeningBalanceOwner(21, "S001", "仕入先A", 99, 0)),
+		}).Entries.Single().Record!;
+		Assert.AreEqual(5000L, kaiShi.Sonota);
+		Assert.AreEqual(115000L, kaiShi.TotalShiire);
 	}
 
 	[TestMethod]

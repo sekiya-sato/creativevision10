@@ -51,7 +51,7 @@ public class SummaryKakeDbTests {
 	// ---- 売掛 --------------------------------------------------------------------
 
 	[TestMethod]
-	public void CalcSummaryUriKake_UsesTotalForPositiveBreakdownAndNegativeBalance() {
+	public void CalcSummaryUriKake_SeparatesSonotaAndUsesPositiveBalanceForUnrecovered() {
 		var db = PrepareUriKakeTables();
 		var summaryDb = new SummaryDb(db);
 
@@ -74,12 +74,13 @@ public class SummaryKakeDbTests {
 		var row = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
 
 		Assert.AreNotEqual(range40.Total, range40.KingakuTotal);
-		Assert.AreEqual(1000 + 500 + 400 + 19 + 89 + 700, row.Uriage, "区分99(その他売上)は売上へ畳み込む");
+		Assert.AreEqual(1000 + 500 + 400 + 19 + 89, row.Uriage, "区分99(その他売上)はSonotaへ分離し、売上へは畳み込まない");
 		Assert.AreEqual(200 + 100 + 29, row.Henpin);
 		Assert.AreEqual(300 + 39, row.Nebiki);
+		Assert.AreEqual(700, row.Sonota, "区分99は独立してSonotaへ分離集計する");
 		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax1);
-		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Tax1, row.TotalSales);
-		Assert.AreEqual(-row.TotalSales, row.Balance);
+		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Sonota + row.Tax1, row.TotalSales);
+		Assert.AreEqual(row.TotalSales, row.Balance, "受取が無いので当月分の純増減がそのままBalance(正=未回収)になる");
 	}
 
 	[TestMethod]
@@ -175,11 +176,13 @@ public class SummaryKakeDbTests {
 
 		Assert.IsNull(july);
 		Assert.AreEqual(1200, august.TotalIn);
-		Assert.AreEqual(1200, august.Balance);
+		Assert.AreEqual(-1200, august.Balance, "売上が無く入金のみなので負(過入金)になる");
 	}
 
 	[TestMethod]
-	public void CalcSummaryUriKake_CarriesBalanceForwardAcrossMonths() {
+	public void CalcSummaryUriKake_DoesNotCarryBalanceAcrossMonths() {
+		// 繰越はテーブルに持たない(2.1)。各月のBalanceはその月だけの純増減であり、
+		// 前月の残高を積み上げない(旧仕様のウィンドウ関数による繰越を廃止)。
 		var db = PrepareUriKakeTables();
 		var summaryDb = new SummaryDb(db);
 
@@ -190,8 +193,8 @@ public class SummaryKakeDbTests {
 		var rows = db.Fetch<SummaryUriKake>("where Id_Tokui=@0 order by DenMonth", 1);
 
 		Assert.AreEqual(2, rows.Count);
-		Assert.AreEqual(-1000, rows[0].Balance);
-		Assert.AreEqual(-600, rows[1].Balance);
+		Assert.AreEqual(1000, rows[0].Balance, "7月は売上1000のみ(正=未回収)");
+		Assert.AreEqual(-400, rows[1].Balance, "8月は入金400のみ。7月の残1000は積み上がらない(繰越なら-600になるはず)");
 	}
 
 	[TestMethod]
@@ -211,23 +214,26 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public void CalcSummaryUriKake_RecalculatesMonthsAfterTargetPeriod() {
+	public void CalcSummaryUriKake_RecalculatesOnlyTargetMonthLeavingLaterMonthsUntouched() {
 		var db = PrepareUriKakeTables();
 		var summaryDb = new SummaryDb(db);
 
 		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 0));
 		db.Insert(CreateUriage("20260810", 1, EnumUri00.Uriage, 500, 0));
 		summaryDb.CalcSummaryUriKake("202607", "202608");
-		Assert.AreEqual(-1500, db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202608").Balance);
+		var augustBefore = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202608");
+		Assert.AreEqual(500, augustBefore.Balance);
 
-		// 7月の伝票を増やして7月だけを指定して再計算する。8月の繰越も追随しなければならない
+		// 7月の伝票を増やして7月だけを指定して再計算する。繰越を持たないため8月の行は一切変化しない
 		db.Insert(CreateUriage("20260720", 1, EnumUri00.Uriage, 300, 0));
 		summaryDb.CalcSummaryUriKake("202607", "202607");
 		var rows = db.Fetch<SummaryUriKake>("where Id_Tokui=@0 order by DenMonth", 1);
+		var augustAfter = rows.Single(x => x.DenMonth == "202608");
 
 		Assert.AreEqual(2, rows.Count);
-		Assert.AreEqual(-1300, rows[0].Balance);
-		Assert.AreEqual(-1800, rows[1].Balance);
+		Assert.AreEqual(1300, rows[0].Balance, "7月分の伝票が増えた分だけ増える");
+		Assert.AreEqual(500, augustAfter.Balance, "8月の行は繰越を持たないため変化しない");
+		Assert.AreEqual(augustBefore.Vdc, augustAfter.Vdc, "8月の行はDELETE→INSERTされていない(行そのものが未変更)");
 	}
 
 	[TestMethod]
@@ -248,13 +254,15 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public void CalcSummaryUriKake_FreezesPreFiscalOpeningBalanceAndSeedsCarryForward() {
+	public void CalcSummaryUriKake_FreezesPreFiscalOpeningBalanceRow() {
+		// 繰越はテーブルに持たない(4.2)。期首行は「期首直前の1期間の実績行」として保持されるだけで、
+		// 再計算で上書きされたり、当月の値が積み上げられたりしないことを検証する(積み上げの検証は削除)。
 		var db = PrepareUriKakeTables();
 		AddFiscalStartDate(db, "20260701"); // 期首 = 2026年7月
 		var summaryDb = new SummaryDb(db);
 
 		// 期首前(202606)に期首売掛残をCSV取込相当で投入した状態
-		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000, TotalSales = 5000 });
+		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000, TotalSales = 5000 });
 		// 期首前の伝票は集計対象外
 		db.Insert(CreateUriage("20260620", 1, EnumUri00.Uriage, 9999, 0));
 		// 当月(202607)の伝票
@@ -264,12 +272,12 @@ public class SummaryKakeDbTests {
 		summaryDb.CalcSummaryUriKake("202605", "202607");
 
 		var opening = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606");
-		Assert.AreEqual(-5000, opening.Balance, "期首前の残は再計算で上書きしてはいけない");
+		Assert.AreEqual(5000, opening.Balance, "期首前の残は再計算で上書きしてはいけない");
 		Assert.IsNull(db.FirstOrDefault<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202605"), "期首前の月に行を作ってはいけない");
 
 		var july = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
 		Assert.AreEqual(1000, july.Uriage, "期首前(202606)の伝票は集計されない");
-		Assert.AreEqual(-6000, july.Balance, "期首残 -5000 に当月 -1000 が積み上がる");
+		Assert.AreEqual(1000, july.Balance, "当月分のみの純増減。期首残(5000)は積み上げない");
 	}
 
 	[TestMethod]
@@ -277,14 +285,32 @@ public class SummaryKakeDbTests {
 		var db = PrepareUriKakeTables();
 		AddFiscalStartDate(db, "20260701");
 		var summaryDb = new SummaryDb(db);
-		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = -5000 });
+		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 5000 });
 		db.Insert(CreateUriage("20260620", 1, EnumUri00.Uriage, 1000, 0));
 
 		var count = summaryDb.CalcSummaryUriKake("202605", "202606");
 
 		Assert.AreEqual(0, count, "期首前だけの範囲は再計算しない");
 		var opening = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202606");
-		Assert.AreEqual(-5000, opening.Balance, "期首前の残は変更されない");
+		Assert.AreEqual(5000, opening.Balance, "期首前の残は変更されない");
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriKake_PreviousBalanceSumsPastPeriods() {
+		// PreviousBalanceの標準SQL(7.3): SUM(TotalSales - TotalIn) WHERE DenMonth < 対象年月
+		var db = PrepareUriKakeTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new SummaryUriKake { Id_Tokui = 1, DenMonth = "202606", Balance = 70000, TotalSales = 70000 });
+		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 0));
+		db.Insert(CreateNyukin("20260715", 1, [(KinCash, 300)]));
+
+		summaryDb.CalcSummaryUriKake("202607", "202607");
+		var july = db.Single<SummaryUriKake>("where Id_Tokui=@0 and DenMonth=@1", 1, "202607");
+		Assert.AreEqual(700, july.Balance, "1000 - 300");
+
+		var previousBalance = db.FirstOrDefault<long>(
+			"SELECT SUM(TotalSales - TotalIn) FROM SummaryUriKake WHERE Id_Tokui=@0 AND DenMonth < @1", 1, "202607");
+		Assert.AreEqual(70000L, previousBalance, "期首行だけがPreviousBalanceの累計に含まれる");
 	}
 
 	// ---- 請求残 ------------------------------------------------------------------
@@ -314,7 +340,7 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(90, row.Tax1);
 		Assert.AreEqual(790, row.TotalSales);
 		Assert.AreEqual(340, row.TotalIn);
-		Assert.AreEqual(-950, row.Balance);
+		Assert.AreEqual(450, row.Balance, "正=未回収");
 		Assert.AreEqual("1-20260731-01", row.SeikyuNo);
 		Assert.AreEqual(1, row.Renban);
 		Assert.AreEqual("20260731", row.NyukinYoteiDay);
@@ -322,13 +348,18 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public void CalcSummaryUriSei_PreviousBalanceIsRecoveredByAddingSalesAndSubtractingPayments() {
-		// 請求書印刷(SeikyuBalanceDetailViewModel)の「前回残高」は当月残高から当月増減を戻して算出する。
-		// Balance = 前回残高 + TotalIn - TotalSales で作られるので、逆算は Balance + TotalSales - TotalIn。
-		// 符号を逆にすると当月増減が2回効いてしまうため、その式をここで固定する。
+	public void CalcSummaryUriSei_PreviousBalanceSumsPastPeriodsIncludingOpeningRow() {
+		// PreviousBalance(表示専用、DB非実体)は SUM(TotalSales - TotalIn) WHERE DayTo < 対象期間開始日 で
+		// 読み出し時に算出する(2.3)。Balance列の再計算漏れに左右されないよう、Balance列そのものではなく
+		// 内訳合計から積む式を正とする。期首残高CSVで投入した行もこのSUMへ自然に含まれることを確認する。
 		var db = PrepareUriSeiTables();
 		var summaryDb = new SummaryDb(db);
 		db.Insert(new MasterTokui { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		// 期首残高CSV取込相当(6月末より前の1期間ぶんの実績行)
+		db.Insert(new SummaryUriSei {
+			Id_Tokui = 1, DenDay = "20260630", DayFrom = "20260601", DayTo = "20260630",
+			TotalSales = 150000, TotalIn = 0, Balance = 150000,
+		});
 		db.Insert(CreateBillingUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
 		db.Insert(CreateNyukin("20260715", 1, [(KinCash, 300)]));
 		db.Insert(CreateBillingUriage("20260810", 1, EnumUri00.Uriage, 2000, 200));
@@ -339,26 +370,26 @@ public class SummaryKakeDbTests {
 
 		var july = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");
 		var august = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260831");
+		Assert.AreEqual(800, july.Balance, "7月: Uriage1000+Tax100-TotalIn300");
 
-		// 帳票が使う式をSQLとして実行し、前月の当月残高と一致することを確かめる
-		var prevBalance = db.FirstOrDefault<long>(
-			"SELECT s.Balance + s.TotalSales - s.TotalIn FROM SummaryUriSei s WHERE s.Id_Tokui=@0 AND s.DenDay=@1",
-			1, "20260831");
-		Assert.AreEqual(july.Balance, prevBalance, "前回残高は前月の当月残高と一致しなければならない");
+		// PreviousBalanceの標準SQL(7.3)を実際に実行して検証する
+		var previousForAugust = db.FirstOrDefault<long>(
+			"SELECT SUM(TotalSales - TotalIn) FROM SummaryUriSei WHERE Id_Tokui=@0 AND DayTo < @1", 1, august.DayFrom);
+		Assert.AreEqual(150000 + july.Balance, previousForAugust, "期首行 + 7月分の当月増減の合計が8月の前残になる");
 
-		// 符号を逆にした式（旧実装）は当月増減を2回効かせるので一致しない
-		var wrongBalance = db.FirstOrDefault<long>(
-			"SELECT s.Balance - s.TotalSales + s.TotalIn FROM SummaryUriSei s WHERE s.Id_Tokui=@0 AND s.DenDay=@1",
-			1, "20260831");
-		Assert.AreNotEqual(july.Balance, wrongBalance, "符号を逆にした式が偶然一致するテストデータでは検証にならない");
-		Assert.AreEqual(july.Balance + 2 * (august.TotalIn - august.TotalSales), wrongBalance);
+		var previousForJuly = db.FirstOrDefault<long>(
+			"SELECT SUM(TotalSales - TotalIn) FROM SummaryUriSei WHERE Id_Tokui=@0 AND DayTo < @1", 1, july.DayFrom);
+		Assert.AreEqual(150000, previousForJuly, "7月の前残は期首行だけになる");
+
+		// 当月末残高が必要な帳票は PreviousBalance + Balance で求める(2.3)
+		Assert.AreEqual(150000 + july.Balance + august.Balance, previousForAugust + august.Balance);
 	}
 
 	[TestMethod]
 	public void CalcSummaryUriSei_SeparatesKubun99AsSonotaWithoutFoldingIntoUriage() {
-		// E11: 区分99(その他売上)は請求残(SummaryUriSei)ではSonotaへ分離集計し、TotalSalesにも加算する。
-		// 一方、CalcSummaryUriKake_UsesTotalForPositiveBreakdownAndNegativeBalance が示す通り
-		// 掛集計(SummaryUriKake)側のUriage畳み込みは変更しない。
+		// E11 / 4.3: 区分99(その他売上)は請求残(SummaryUriSei)でもSonotaへ分離集計し、TotalSalesへ加算する。
+		// 掛集計(SummaryUriKake)側も同様にSonotaへ分離する
+		// (CalcSummaryUriKake_SeparatesSonotaAndUsesPositiveBalanceForUnrecovered 参照)。
 		var db = PrepareUriSeiTables();
 		var summaryDb = new SummaryDb(db);
 		db.Insert(new MasterTokui { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
@@ -440,7 +471,7 @@ public class SummaryKakeDbTests {
 	// ---- 買掛 --------------------------------------------------------------------
 
 	[TestMethod]
-	public void CalcSummaryKaiKake_UsesTotalForPositiveBreakdownAndNegativeBalance() {
+	public void CalcSummaryKaiKake_SeparatesSonotaAndUsesPositiveBalanceForUnpaid() {
 		var db = PrepareKaiKakeTables();
 		var summaryDb = new SummaryDb(db);
 
@@ -462,15 +493,16 @@ public class SummaryKakeDbTests {
 		var row = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
 
 		Assert.AreNotEqual(range40.Total, range40.KingakuTotal);
-		Assert.AreEqual(1000 + 400 + 19 + 89 + 400, row.Shiire, "区分99(その他仕入)は仕入へ畳み込む");
+		Assert.AreEqual(1000 + 400 + 19 + 89, row.Shiire, "区分99(その他仕入)はSonotaへ分離し、仕入へは畳み込まない");
 		Assert.AreEqual(200 + 29, row.Henpin);
 		Assert.AreEqual(100 + 39, row.Nebiki);
+		Assert.AreEqual(400, row.Sonota, "区分99は独立してSonotaへ分離集計する");
 		Assert.AreEqual(100 - 20 + 10 + 40 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax1);
-		Assert.AreEqual(row.Shiire - row.Henpin - row.Nebiki + row.Tax1, row.TotalShiire);
+		Assert.AreEqual(row.Shiire - row.Henpin - row.Nebiki + row.Sonota + row.Tax1, row.TotalShiire);
 		Assert.AreEqual(600, row.Cash);
 		Assert.AreEqual(50, row.Offset);
 		Assert.AreEqual(row.TotalOut, row.Cash + row.Fee + row.Densai + row.Offset + row.Other);
-		Assert.AreEqual(row.TotalOut - row.TotalShiire, row.Balance);
+		Assert.AreEqual(row.TotalShiire - row.TotalOut, row.Balance, "正=未払");
 	}
 
 	[TestMethod]
@@ -533,7 +565,9 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public void CalcSummaryKaiKake_CarriesBalanceForwardAcrossMonths() {
+	public void CalcSummaryKaiKake_DoesNotCarryBalanceAcrossMonths() {
+		// 繰越はテーブルに持たない(2.1)。各月のBalanceはその月だけの純増減であり、
+		// 前月の残高を積み上げない(旧仕様のウィンドウ関数による繰越を廃止)。
 		var db = PrepareKaiKakeTables();
 		var summaryDb = new SummaryDb(db);
 
@@ -544,8 +578,8 @@ public class SummaryKakeDbTests {
 		var rows = db.Fetch<SummaryKaiKake>("where Id_Shiire=@0 order by DenMonth", 1);
 
 		Assert.AreEqual(2, rows.Count);
-		Assert.AreEqual(-1000, rows[0].Balance);
-		Assert.AreEqual(-600, rows[1].Balance);
+		Assert.AreEqual(1000, rows[0].Balance, "7月は仕入1000のみ(正=未払)");
+		Assert.AreEqual(-400, rows[1].Balance, "8月は支払400のみ。7月の残1000は積み上がらない(繰越なら-600になるはず)");
 	}
 
 	[TestMethod]
@@ -565,22 +599,26 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public void CalcSummaryKaiKake_RecalculatesMonthsAfterTargetPeriod() {
+	public void CalcSummaryKaiKake_RecalculatesOnlyTargetMonthLeavingLaterMonthsUntouched() {
 		var db = PrepareKaiKakeTables();
 		var summaryDb = new SummaryDb(db);
 
 		db.Insert(CreateShiire("20260710", 1, EnumShiire.Shiire, 1000, 0));
 		db.Insert(CreateShiire("20260810", 1, EnumShiire.Shiire, 500, 0));
 		summaryDb.CalcSummaryKaiKake("202607", "202608");
-		Assert.AreEqual(-1500, db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202608").Balance);
+		var augustBefore = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202608");
+		Assert.AreEqual(500, augustBefore.Balance);
 
+		// 7月の伝票を増やして7月だけを指定して再計算する。繰越を持たないため8月の行は一切変化しない
 		db.Insert(CreateShiire("20260720", 1, EnumShiire.Shiire, 300, 0));
 		summaryDb.CalcSummaryKaiKake("202607", "202607");
 		var rows = db.Fetch<SummaryKaiKake>("where Id_Shiire=@0 order by DenMonth", 1);
+		var augustAfter = rows.Single(x => x.DenMonth == "202608");
 
 		Assert.AreEqual(2, rows.Count);
-		Assert.AreEqual(-1300, rows[0].Balance);
-		Assert.AreEqual(-1800, rows[1].Balance);
+		Assert.AreEqual(1300, rows[0].Balance, "7月分の伝票が増えた分だけ増える");
+		Assert.AreEqual(500, augustAfter.Balance, "8月の行は繰越を持たないため変化しない");
+		Assert.AreEqual(augustBefore.Vdc, augustAfter.Vdc, "8月の行はDELETE→INSERTされていない(行そのものが未変更)");
 	}
 
 	[TestMethod]
@@ -598,6 +636,41 @@ public class SummaryKakeDbTests {
 		var second = GetKaiKakeSnapshot(db);
 
 		CollectionAssert.AreEqual(first, second);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiKake_AddsTran02MaterialKubun99FullyIntoTax1WithoutSonota() {
+		// A-6回帰防止(4.3): Tran02Materialの区分99は丸めずTax1へ全額を積む特殊処理であり、
+		// Tran03Shiireの区分99(Sonotaへ分離集計)とは別物として扱う(混同すると二重計上になる)。
+		var db = PrepareKaiKakeTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(CreateMaterial("20260710", 1, 99, 1000, 0));
+
+		summaryDb.CalcSummaryKaiKake("202607", "202607");
+		var row = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
+
+		Assert.AreEqual(0, row.Shiire);
+		Assert.AreEqual(0, row.Sonota, "Tran02Materialの区分99はSonotaではなくTax1へ積む");
+		Assert.AreEqual(1000, row.Tax1, "丸めずそのままTax1へ全額加算する(A-6)");
+		Assert.AreEqual(1000, row.TotalShiire);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiKake_PreviousBalanceSumsPastPeriods() {
+		// PreviousBalanceの標準SQL(7.3): SUM(TotalShiire - TotalOut) WHERE DenMonth < 対象年月
+		var db = PrepareKaiKakeTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new SummaryKaiKake { Id_Shiire = 1, DenMonth = "202606", Balance = 70000, TotalShiire = 70000 });
+		db.Insert(CreateShiire("20260710", 1, EnumShiire.Shiire, 1000, 0));
+		db.Insert(CreateShiharai("20260715", 1, [(KinCash, 300)]));
+
+		summaryDb.CalcSummaryKaiKake("202607", "202607");
+		var july = db.Single<SummaryKaiKake>("where Id_Shiire=@0 and DenMonth=@1", 1, "202607");
+		Assert.AreEqual(700, july.Balance, "1000 - 300");
+
+		var previousBalance = db.FirstOrDefault<long>(
+			"SELECT SUM(TotalShiire - TotalOut) FROM SummaryKaiKake WHERE Id_Shiire=@0 AND DenMonth < @1", 1, "202607");
+		Assert.AreEqual(70000L, previousBalance, "期首行だけがPreviousBalanceの累計に含まれる");
 	}
 
 	// ---- 支払残 ------------------------------------------------------------------
@@ -628,7 +701,7 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(90, row.Tax1);
 		Assert.AreEqual(790, row.TotalShiire);
 		Assert.AreEqual(340, row.TotalOut);
-		Assert.AreEqual(-950, row.Balance);
+		Assert.AreEqual(450, row.Balance, "正=未払");
 		Assert.AreEqual("20260731", row.ShiharaiYoteiDay);
 		Assert.IsNull(db.FirstOrDefault<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 2, "20260731"));
 	}
@@ -646,6 +719,64 @@ public class SummaryKakeDbTests {
 		var second = GetKaiShiSnapshot(db);
 
 		CollectionAssert.AreEqual(first, second);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiShi_SeparatesTran03ShiireKubun99AsSonota() {
+		// 回帰防止(4.3): 従来はTran03Shiireの区分99(その他仕入)がCalcSummaryKaiShiではどこにも
+		// 入らず欠落していた。買掛(CalcSummaryKaiKake)と揃え、Sonotaへ分離集計してTotalShiireへ加算する。
+		var db = PrepareKaiShiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterShiire { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		db.Insert(CreateBillingShiire("20260710", 1, EnumShiire.Shiire, 1000, 0));
+		db.Insert(CreateBillingShiire("20260711", 1, EnumShiire.Other, 300, 0));
+
+		summaryDb.CalcSummaryKaiShi("202607", 99, "A001", "A999");
+		var row = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 1, "20260731");
+
+		Assert.AreEqual(1000, row.Shiire);
+		Assert.AreEqual(300, row.Sonota, "区分99はSonotaへ分離集計する(欠落の回帰防止)");
+		Assert.AreEqual(1300, row.TotalShiire, "SonotaはTotalShiireへ加算される");
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiShi_AddsTran02MaterialKubun99FullyIntoTax1WithoutSonota() {
+		// A-6回帰防止(4.3): Tran02Materialの区分99は丸めずTax1へ全額を積む特殊処理であり、
+		// Tran03Shiireの区分99(Sonotaへ分離集計)とは別物として扱う(混同すると二重計上になる)。
+		var db = PrepareKaiShiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterShiire { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		db.Insert(CreateMaterial("20260710", 1, 99, 1000, 0));
+
+		summaryDb.CalcSummaryKaiShi("202607", 99, "A001", "A999");
+		var row = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 1, "20260731");
+
+		Assert.AreEqual(0, row.Shiire);
+		Assert.AreEqual(0, row.Sonota, "Tran02Materialの区分99はSonotaではなくTax1へ積む");
+		Assert.AreEqual(1000, row.Tax1, "丸めずそのままTax1へ全額加算する(A-6)");
+		Assert.AreEqual(1000, row.TotalShiire);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiShi_PreviousBalanceSumsPastPeriods() {
+		// PreviousBalanceの標準SQL(7.3): SUM(TotalShiire - TotalOut) WHERE DayTo < 対象期間開始日
+		var db = PrepareKaiShiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterShiire { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		db.Insert(new SummaryKaiShi {
+			Id_Shiire = 1, DenDay = "20260630", DayFrom = "20260601", DayTo = "20260630",
+			TotalShiire = 70000, TotalOut = 0, Balance = 70000,
+		});
+		db.Insert(CreateBillingShiire("20260710", 1, EnumShiire.Shiire, 1000, 0));
+		db.Insert(CreateShiharai("20260715", 1, [(KinCash, 300)]));
+
+		summaryDb.CalcSummaryKaiShi("202607", 99, "A001", "A999");
+		var july = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 1, "20260731");
+		Assert.AreEqual(700, july.Balance, "1000 - 300");
+
+		var previousBalance = db.FirstOrDefault<long>(
+			"SELECT SUM(TotalShiire - TotalOut) FROM SummaryKaiShi WHERE Id_Shiire=@0 AND DayTo < @1", 1, july.DayFrom);
+		Assert.AreEqual(70000L, previousBalance, "期首行だけがPreviousBalanceの累計に含まれる");
 	}
 
 	[TestMethod]
@@ -1089,6 +1220,25 @@ public class SummaryKakeDbTests {
 	private static Tran03Shiire CreateShiireWithKubun(string kakeDay, long idShiire, int kubun, int total, int tax) {
 		var tran = CreateShiire(kakeDay, idShiire, EnumShiire.Shiire, total, tax);
 		tran.Kubun = kubun;
+		return tran;
+	}
+
+	/// <summary>
+	/// Tran02Material(生地・付属仕入)の伝票を作る。区分99(その他)はA-6により丸めずTax1へ全額積む
+	/// 特殊処理の対象であり、Tran03Shiireの区分99(Sonotaへ分離集計)とは別物であることを確認するために使う。
+	/// </summary>
+	private static Tran02Material CreateMaterial(string kakeDay, long idShiire, int kubun, int total, int tax) {
+		var tran = new Tran02Material {
+			DenDay = kakeDay,
+			KakeDay = kakeDay,
+			Id_Shiire = idShiire,
+			Kubun = kubun,
+			KingakuTotal = total,
+			Total = Math.Abs(total) + tax,
+			Tax1 = tax,
+			TaxCalcUnit = (int)EnumTaxCalcUnit.Slip,
+			IsPay = 1,
+		};
 		return tran;
 	}
 
