@@ -26,11 +26,17 @@ public sealed partial class SummaryUriKake : BaseDbClass {
 	[Comment("年月 yyyyMM 6桁の文字列で表現")]
 	public partial string DenMonth { get; set; } = "190101";
 	/// <summary>
-	/// 当月残高
+	/// 前期間までの累計残高。DB上には作らず帳票SQLが SUM(TotalSales - TotalIn) で埋める
+	/// </summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial long PreviousBalance { get; set; } = 0;
+	/// <summary>
+	/// 当期間残高
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("当月残高")]
-	[Comment("当月残高")]
+	[Comment("当期間残高 TotalSales - TotalIn（正=未回収）")]
 	public partial long Balance { get; set; }
 	/// <summary>
 	/// 当月入金合計
@@ -203,11 +209,17 @@ public sealed partial class SummaryUriSei : BaseDbClass {
 	[Comment("入金予定日 yyyyMMdd 8桁の文字列で表現")]
 	public partial string NyukinYoteiDay { get; set; } = string.Empty;
 	/// <summary>
-	/// 当月残高
+	/// 前期間までの累計残高。DB上には作らず帳票SQLが SUM(TotalSales - TotalIn) で埋める
+	/// </summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial long PreviousBalance { get; set; } = 0;
+	/// <summary>
+	/// 当期間残高
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("当月残高")]
-	[Comment("当月残高")]
+	[Comment("当期間残高 TotalSales - TotalIn（正=未回収）")]
 	public partial long Balance { get; set; }
 	/// <summary>
 	/// 当月入金合計
@@ -346,11 +358,17 @@ public sealed partial class SummaryKaiKake : BaseDbClass {
 	[Comment("年月 yyyyMM 6桁の文字列で表現")]
 	public partial string DenMonth { get; set; } = "190101";
 	/// <summary>
-	/// 当月残高
+	/// 前期間までの累計残高。DB上には作らず帳票SQLが SUM(TotalShiire - TotalOut) で埋める
+	/// </summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial long PreviousBalance { get; set; } = 0;
+	/// <summary>
+	/// 当期間残高
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("当月残高")]
-	[Comment("当月残高")]
+	[Comment("当期間残高 TotalShiire - TotalOut（正=未払）")]
 	public partial long Balance { get; set; }
 	/// <summary>
 	/// 当月支払合計
@@ -511,11 +529,17 @@ public sealed partial class SummaryKaiShi : BaseDbClass {
 	[Comment("支払予定日 yyyyMMdd 8桁の文字列で表現")]
 	public partial string ShiharaiYoteiDay { get; set; } = string.Empty;
 	/// <summary>
-	/// 当月残高
+	/// 前期間までの累計残高。DB上には作らず帳票SQLが SUM(TotalShiire - TotalOut) で埋める
+	/// </summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial long PreviousBalance { get; set; } = 0;
+	/// <summary>
+	/// 当期間残高
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("当月残高")]
-	[Comment("当月残高")]
+	[Comment("当期間残高 TotalShiire - TotalOut（正=未払）")]
 	public partial long Balance { get; set; }
 	/// <summary>
 	/// 当月支払合計
