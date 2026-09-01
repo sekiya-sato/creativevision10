@@ -1,3 +1,26 @@
+## [2026-09-01] 請求一覧表の旧cvnet帳票移植
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- 請求一覧表を、旧cvnetの親のみ／子含む帳票とCSV列順へ合わせる。
+
+### 実施内容
+- `SeikyuListReportViewModel`を、締日・対象月・請求先範囲・出力基準・印刷区分・並び順で検索する帳票SQLへ変更した。
+- 親のみは請求先へ集約した23列、子含むは得意先行と請求先別ウィンドウ集計を含む42列を、qfmの`itemN`順で出力する。
+- `MasterTokui.Id_Paysaki`を請求先として使用し、未設定時は得意先自身を請求先にフォールバックする。
+- XAMLへ旧CRS相当の入力項目と親のみ／子含む切替を追加した。
+- 親のみ用`cvnet03prn03f.qfm`と子含む用`cvnet03prn03_ko_f.qfm`を、内容を変更せずcp932のまま新名称へコピーした。
+
+### 確認
+- `CvWpfclient\CvWpfclient.csproj`をビルドし、警告0・エラー0を確認した。
+- `Tests\TestSqlDialect\TestSqlDialect.csproj`の135件が成功した。
+- コピー元・先qfmのSHA-256一致、cp932 XML読込、item数（親のみ23、子含む42）を確認した。
+- 親のみqfmを旧`data.txt`でローカルPDF描画し、A4横の見出し・明細・合計配置を参照PDFと比較した。
+
+---
+
 ## [2026-09-01] 請求書印刷の旧cvnet帳票移植
 
 ### Agent

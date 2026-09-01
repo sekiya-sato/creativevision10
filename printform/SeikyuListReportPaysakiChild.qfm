@@ -1,0 +1,692 @@
+<?xml version="1.0" encoding="SHIFT_JIS"?>
+
+<printstream version="3.0">
+	<datadesc src="file">
+		<datarecord>
+			<item id="item1">
+				<group level="1" pagechange="1"/>
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item2">
+				<position offset="0" length="4"/>
+			</item>
+			<item id="item3">
+				<group level="3" pagechange="0"/>
+				<position offset="0" length="6"/>
+			</item>
+			<item id="item4">
+				<position offset="0" length="18"/>
+			</item>
+			<item id="item5">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item6">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item7">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item8">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item9">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item10">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item11">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item12">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item13">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item14">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item15">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item16">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item17">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item18">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item19">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item20">
+				<position offset="0" length="6"/>
+			</item>
+			<item id="item21">
+				<position offset="0" length="10"/>
+			</item>
+			<item id="item22">
+				<position offset="0" length="5"/>
+			</item>
+			<item id="item23">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item24">
+				<group level="2" pagechange="0"/>
+				<position offset="0" length="6"/>
+			</item>
+			<item id="item25">
+				<position offset="0" length="22"/>
+			</item>
+			<item id="item26">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item27">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item28">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item29">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item30">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item31">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item32">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item33">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item34">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item35">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item36">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item37">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item38">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item39">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item40">
+				<position offset="0" length="8"/>
+			</item>
+			<item id="item41">
+				<position offset="0" length="1"/>
+			</item>
+			<item id="item42">
+				<position offset="0" length="8"/>
+			</item>
+		</datarecord>
+		<file>
+			<path datatype="csv" target="data.txt"/>
+		</file>
+	</datadesc>
+	<page title="請求一覧表" orientation="landscape" cpi="10" lpi="6" compatibility="3.0.0" id="cvnet03prn03" tree="1">
+		<position x="6" y="8" width="226" height="188"/>
+		<text id="cp_title" valign="middle" halign="center">
+			<position x="73" y="0" width="53" height="5"/>
+			<color transparent="1"/>
+			<data calctype="static">請求一覧表</data>
+			<decode datatype="string" format=""/>
+			<font size="110" style="1"/>
+		</text>
+		<text id="cp_date" valign="middle">
+			<position x="176" y="0" width="32" height="4"/>
+			<color transparent="1"/>
+			<data calctype="date"/>
+			<decode datatype="date" format="&quot;印刷日：&quot;YYYY/MM/DD HH24:MI:SS"/>
+			<font size="80"/>
+		</text>
+		<text id="cp_page" valign="middle" halign="right">
+			<position x="208" y="0" width="9" height="4"/>
+			<color transparent="1"/>
+			<data calctype="page"/>
+			<decode datatype="number" format="&quot;P.&quot;0999"/>
+			<font size="80"/>
+		</text>
+		<region id="Region1" direction="0" tree="1">
+			<position x="0" y="12" width="219" height="167"/>
+			<color transparent="1"/>
+			<border left="1" right="1" top="1" bottom="1"/>
+			<record id="RecHead" recordtype="1" tree="1">
+				<position x="0" y="0" width="219" height="6"/>
+				<color base="c8ffc8" transparent="0"/>
+				<border bottom="1"/>
+				<text id="cp_6" valign="middle">
+					<position x="2" y="0" width="37" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">請求先</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt41" valign="middle" halign="right">
+					<position x="48" y="0" width="14" height="6"/>
+					<color transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="static">前月残</data>
+					<decode datatype="string" format="@&quot; &quot;"/>
+					<font size="90"/>
+				</text>
+				<text id="Txt36" valign="middle" halign="right">
+					<position x="88" y="0" width="8" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">手形</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt60" valign="middle" halign="right">
+					<position x="99" y="0" width="9" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">相殺</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt61" valign="middle" halign="right">
+					<position x="108" y="0" width="9" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">その他</data>
+					<decode datatype="string" format="@&quot; &quot;"/>
+					<font size="90"/>
+				</text>
+				<text id="Txt62" valign="middle" halign="right">
+					<position x="133" y="0" width="11" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">売上</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt63" valign="middle" halign="right">
+					<position x="147" y="0" width="8" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">返品</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt66" valign="middle" halign="right">
+					<position x="156" y="0" width="10" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">値引</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt64" valign="middle" halign="right">
+					<position x="181" y="0" width="10" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">消費税</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt68" valign="middle" halign="right">
+					<position x="193" y="0" width="12" height="6"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="static">売上合計</data>
+					<decode datatype="string" format="@&quot; &quot;"/>
+					<font size="90"/>
+				</text>
+				<text id="Txt71" valign="middle" halign="right">
+					<position x="210" y="0" width="8" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">当月残</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt54" valign="middle" halign="right">
+					<position x="39" y="0" width="9" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item21"/>
+					<decode datatype="string" format="S0.6&quot; &quot;"/>
+					<font size="90"/>
+				</text>
+				<text id="Txt78" valign="middle" halign="right">
+					<position x="117" y="0" width="14" height="6"/>
+					<color transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="static">繰越金額</data>
+					<decode datatype="string" format="@&quot; &quot;"/>
+					<font size="90"/>
+				</text>
+				<text id="Txt87" valign="middle" halign="right">
+					<position x="166" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">純売上</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt106" valign="middle" halign="right">
+					<position x="62" y="0" width="13" height="3"/>
+					<color transparent="1"/>
+					<data calctype="static">現金･小切手</data>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>
+				<text id="Txt103" valign="middle" halign="right">
+					<position x="66" y="3" width="9" height="3"/>
+					<color transparent="1"/>
+					<data calctype="static">･振込</data>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>
+				<text id="Txt35" valign="middle" halign="right">
+					<position x="75" y="0" width="9" height="3"/>
+					<color transparent="1"/>
+					<data calctype="static">振込</data>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>
+				<text id="Txt107" valign="middle" halign="right">
+					<position x="75" y="3" width="9" height="3"/>
+					<color transparent="1"/>
+					<data calctype="static">手数料</data>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>
+			</record>
+			<record id="RecDetail" grouplevel="1" breaktype="1" tree="1">
+				<position x="0" y="20" width="219" height="6"/>
+				<color transparent="1"/>
+				<border left="1" right="1" top="10" bottom="1"/>
+				<text id="Txt72" valign="middle">
+					<position x="32" y="0" width="16" height="6"/>
+					<color transparent="1"/>
+					<data calctype="static">合計</data>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt40" valign="middle" halign="right">
+					<position x="48" y="0" width="14" height="6"/>
+					<color transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="sum" datasrc="item5"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt43" valign="middle" halign="right">
+					<position x="62" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item7"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt46" valign="middle" halign="right">
+					<position x="75" y="0" width="9" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item8"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt48" valign="middle" halign="right">
+					<position x="84" y="0" width="12" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item9"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt49" valign="middle" halign="right">
+					<position x="96" y="0" width="12" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item10"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt50" valign="middle" halign="right">
+					<position x="108" y="0" width="9" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item11"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt65" valign="middle" halign="right">
+					<position x="131" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item13"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt67" valign="middle" halign="right">
+					<position x="144" y="0" width="11" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item14"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt70" valign="middle" halign="right">
+					<position x="155" y="0" width="11" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item15"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt74" valign="middle" halign="right">
+					<position x="179" y="0" width="12" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item17"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt75" valign="middle" halign="right">
+					<position x="191" y="0" width="14" height="6"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="sum" datasrc="item18"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt81" valign="middle" halign="right">
+					<position x="205" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item6"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt59" valign="middle" halign="right">
+					<position x="117" y="0" width="14" height="6"/>
+					<color transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="sum" datasrc="item22"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt88" valign="middle" halign="right">
+					<position x="166" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="sum" datasrc="item23"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+			</record>
+			<record id="Rec04" tree="1">
+				<position x="2" y="13" width="216" height="4"/>
+				<color transparent="1"/>
+				<border bottom="12"/>
+				<text id="Txt38" halign="right">
+					<position x="46" y="0" width="14" height="4"/>
+					<color transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="item" datasrc="item5"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt57">
+					<position x="1" y="0" width="11" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item3"/>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt56">
+					<position x="12" y="0" width="25" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item4"/>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt52" halign="right">
+					<position x="60" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item7"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt53" halign="right">
+					<position x="73" y="0" width="9" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item8"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt58" halign="right">
+					<position x="82" y="0" width="12" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item9"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt69" halign="right">
+					<position x="94" y="0" width="12" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item10"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt73" halign="right">
+					<position x="106" y="0" width="9" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item11"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt76" halign="right">
+					<position x="129" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item13"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt77" halign="right">
+					<position x="142" y="0" width="11" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item14"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt79" halign="right">
+					<position x="153" y="0" width="11" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item15"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt80" halign="right">
+					<position x="177" y="0" width="12" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item17"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt82" halign="right">
+					<position x="189" y="0" width="14" height="4"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" datasrc="item18"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt83" halign="right">
+					<position x="203" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item6"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt51" valign="middle" halign="right">
+					<position x="37" y="0" width="9" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item19"/>
+					<decode datatype="string" format="S4.2&quot;/&quot;S6.2&quot; &quot;"/>
+					<font size="80"/>
+				</text>
+				<text id="Txt55" halign="right">
+					<position x="115" y="0" width="14" height="4"/>
+					<color transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="item" datasrc="item22"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt86" halign="right">
+					<position x="164" y="0" width="13" height="4"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item23"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+			</record>
+			<record id="Rec05" grouplevel="2" breaktype="2" tree="1">
+				<position x="0" y="6" width="219" height="6"/>
+				<color base="fcfeda" transparent="0"/>
+				<border top="1" bottom="1"/>
+				<text id="Txt89" valign="middle" halign="right">
+					<position x="48" y="0" width="14" height="6"/>
+					<color transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="item" datasrc="item26"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt90" valign="middle">
+					<position x="1" y="0" width="11" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item24"/>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt91" valign="middle">
+					<position x="12" y="0" width="36" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item25"/>
+					<decode datatype="string" format=""/>
+					<font size="90"/>
+				</text>
+				<text id="Txt92" valign="middle" halign="right">
+					<position x="62" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item28"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt93" valign="middle" halign="right">
+					<position x="75" y="0" width="9" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item29"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt94" valign="middle" halign="right">
+					<position x="84" y="0" width="12" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item30"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt95" valign="middle" halign="right">
+					<position x="96" y="0" width="12" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item31"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt96" valign="middle" halign="right">
+					<position x="108" y="0" width="9" height="6"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" datasrc="item32"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt97" valign="middle" halign="right">
+					<position x="131" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item34"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt98" valign="middle" halign="right">
+					<position x="144" y="0" width="11" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item35"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt99" valign="middle" halign="right">
+					<position x="155" y="0" width="11" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item36"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt100" valign="middle" halign="right">
+					<position x="179" y="0" width="12" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item38"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt101" valign="middle" halign="right">
+					<position x="191" y="0" width="14" height="6"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" datasrc="item39"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt102" valign="middle" halign="right">
+					<position x="205" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item27"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt104" valign="middle" halign="right">
+					<position x="117" y="0" width="14" height="6"/>
+					<color transparent="1"/>
+					<border left="1" right="1"/>
+					<data calctype="item" datasrc="item40"/>
+					<decode datatype="number" format="MI999,999,999,990&quot; &quot;"/>
+					<font size="70"/>
+				</text>
+				<text id="Txt105" valign="middle" halign="right">
+					<position x="166" y="0" width="13" height="6"/>
+					<color transparent="1"/>
+					<data calctype="item" datasrc="item41"/>
+					<decode datatype="number" format="MI999,999,999,990"/>
+					<font size="70"/>
+				</text>
+			</record>
+		</region>
+		<text id="Txt45">
+			<position x="18" y="6" width="15" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item1"/>
+			<decode datatype="string" format="S0.4&quot;/&quot;S4.2&quot;/&quot;S6.2"/>
+			<font size="90"/>
+		</text>
+		<text id="Txt47">
+			<position x="3" y="6" width="15" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item20"/>
+			<decode datatype="string" format="@&quot;：&quot;"/>
+			<font size="90"/>
+		</text>
+		<text id="Txt84">
+			<position x="37" y="6" width="8" height="4"/>
+			<color transparent="1"/>
+			<data calctype="static">締日：</data>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+		<text id="Txt85">
+			<position x="45" y="6" width="15" height="4"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item2"/>
+			<decode datatype="string" format=""/>
+			<font size="90"/>
+		</text>
+	</page>
+</printstream>

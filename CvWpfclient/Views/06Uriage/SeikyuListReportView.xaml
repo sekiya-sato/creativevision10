@@ -1,10 +1,10 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._06Uriage.SeikyuListReportView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._06Uriage.SeikyuListReportView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._06Uriage"
 	Title="{Binding Title}"
-	Width="820" Height="640"
+	Width="820" Height="680"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
@@ -56,6 +56,7 @@
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
 			</Grid.RowDefinitions>
 			<Grid.ColumnDefinitions>
@@ -65,73 +66,94 @@
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
 
-			<!--  請求日  -->
 			<TextBlock Grid.Row="0" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
-				Text="請求日" />
+				Text="締日" />
 			<TextBox Grid.Row="0" Grid.Column="1"
-				Width="200" Height="36"
+				Width="100" Height="36"
 				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
 				Style="{StaticResource MaterialDesignTextBox}"
-				Text="{Binding SeikyuDayFrom, UpdateSourceTrigger=PropertyChanged}" />
-			<TextBlock Grid.Row="0" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
-			<TextBox Grid.Row="0" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
-				Text="{Binding SeikyuDayTo, UpdateSourceTrigger=PropertyChanged}" />
+				Text="{Binding ShimeDay, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="0" Grid.Column="1"
+				Margin="112,0,0,0" VerticalAlignment="Center"
+				Text="1～28、99=末日" />
 
-			<!--  得意先  -->
 			<TextBlock Grid.Row="1" Grid.Column="0"
 				Style="{StaticResource FormLabel}"
-				Text="得意先" />
+				Text="対象月" />
 			<TextBox Grid.Row="1" Grid.Column="1"
 				Width="200" Height="36"
 				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectTokuiCodeFromCommand}"
-				BorderThickness="0,0,0,1"
-				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding TokuiCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
-			<TextBlock Grid.Row="1" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
-			<TextBox Grid.Row="1" Grid.Column="3"
+				Style="{StaticResource MaterialDesignTextBox}"
+				Text="{Binding TargetMonth, UpdateSourceTrigger=PropertyChanged}" />
+
+			<TextBlock Grid.Row="2" Grid.Column="0"
+				Style="{StaticResource FormLabel}"
+				Text="請求先" />
+			<TextBox Grid.Row="2" Grid.Column="1"
 				Width="200" Height="36"
 				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectTokuiCodeToCommand}"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectPaysakiCodeFromCommand}"
 				BorderThickness="0,0,0,1"
 				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding TokuiCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+				Text="{Binding PaysakiCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+			<TextBlock Grid.Row="2" Grid.Column="2"
+				Margin="8,0" VerticalAlignment="Center"
+				Text="～" />
+			<TextBox Grid.Row="2" Grid.Column="3"
+				Width="200" Height="36"
+				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+				helpers:SearchTextBoxAssist.Command="{Binding SelectPaysakiCodeToCommand}"
+				BorderThickness="0,0,0,1"
+				Style="{StaticResource MenteSearchTextBox}"
+				Text="{Binding PaysakiCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
-			<!--  出力対象  -->
-			<TextBlock Grid.Row="2" Grid.Column="0"
-				Margin="0,10,0,10"
+			<TextBlock Grid.Row="3" Grid.Column="0"
+				Margin="0,10"
 				Style="{StaticResource FormLabel}"
-				Text="出力対象" />
-			<StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
-				Margin="0,10,0,10"
+				Text="出力基準" />
+			<StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10"
 				Orientation="Horizontal">
 				<RadioButton Margin="0,4"
-					Content="請求額･残高があるのみ"
-					IsChecked="{Binding IsActiveOnly}" />
+					Content="請求集計月"
+					IsChecked="{Binding IsNyukinYoteiBasis, Converter={StaticResource InverseBooleanConverter}}" />
 				<RadioButton Margin="16,4,0,4"
-					Content="全て"
-					IsChecked="{Binding IsActiveOnly, Converter={StaticResource InverseBooleanConverter}}" />
+					Content="入金予定月"
+					IsChecked="{Binding IsNyukinYoteiBasis}" />
 			</StackPanel>
 
-			<!--  注意書き  -->
-			<StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
-				Margin="0,8">
-				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="※この帳票は締め処理の集計結果を表示します。請求計算/支払計算を実行していない期間は出力されません。" TextWrapping="Wrap" />
-				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="※得意先1件ごとの請求書は「請求書印刷」を使ってください。" TextWrapping="Wrap" />
+			<TextBlock Grid.Row="4" Grid.Column="0"
+				Margin="0,10"
+				Style="{StaticResource FormLabel}"
+				Text="印刷区分" />
+			<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10"
+				Orientation="Horizontal">
+				<RadioButton Margin="0,4"
+					Content="親のみ"
+					IsChecked="{Binding IsIncludeChildren, Converter={StaticResource InverseBooleanConverter}}" />
+				<RadioButton Margin="16,4,0,4"
+					Content="子含む"
+					IsChecked="{Binding IsIncludeChildren}" />
 			</StackPanel>
 
-			<!--  実行ボタン  -->
-			<StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4"
+			<TextBlock Grid.Row="5" Grid.Column="0"
+				Margin="0,10"
+				Style="{StaticResource FormLabel}"
+				Text="並び順" />
+			<StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
+				Margin="0,10"
+				Orientation="Horizontal">
+				<RadioButton Margin="0,4"
+					Content="請求日／入金予定日"
+					IsChecked="{Binding IsPaysakiCodeOrder, Converter={StaticResource InverseBooleanConverter}}" />
+				<RadioButton Margin="16,4,0,4"
+					Content="請求先CD"
+					IsChecked="{Binding IsPaysakiCodeOrder}" />
+			</StackPanel>
+
+			<StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="4"
 				Margin="0,24" HorizontalAlignment="Center"
 				Orientation="Horizontal">
 				<Button Command="{Binding DoOutputPdfCommand}"

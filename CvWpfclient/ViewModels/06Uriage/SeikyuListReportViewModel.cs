@@ -6,74 +6,188 @@ using CvWpfclient.Helpers;
 namespace CvWpfclient.ViewModels._06Uriage;
 
 /// <summary>
-/// 請求一覧表。指定請求日の得意先別 請求額（対象期間・売上・返品・値引・消費税・入金・残高）を一覧で印字する。
-///
-/// 集計テーブル SummaryUriSei を読む。これは請求計算（月次更新処理・31Monthly）が
-/// 請求日単位で作る成果物であり、締め処理を回していない請求日は行が無く空になる。
-/// 請求書印刷が得意先1件ごとの請求書を出すのに対し、こちらは請求日単位の一覧（発行控え）。
+/// 請求一覧表。請求計算で保存した SummaryUriSei を、請求先単位（親のみ）または
+/// 得意先明細＋請求先集計（子含む）として印字する。
 /// </summary>
 public partial class SeikyuListReportViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "請求一覧表";
-	protected override string FormFileName => "SeikyuListReport.qfm";
+	protected override string FormFileName => IsIncludeChildren
+		? "SeikyuListReportPaysakiChild.qfm"
+		: "SeikyuListReportPaysaki.qfm";
 
 	[ObservableProperty]
-	public partial string SeikyuDayFrom { get; set; } = DateTime.Today.ToString("yyyy/MM/01");
+	public partial string TargetMonth { get; set; } = DateTime.Today.ToString("yyyy/MM");
+
+	/// <summary>1～28、99=末日。</summary>
+	[ObservableProperty]
+	public partial string ShimeDay { get; set; } = "99";
+
+	/// <summary>false=請求集計月 / true=入金予定月。</summary>
+	[ObservableProperty]
+	public partial bool IsNyukinYoteiBasis { get; set; }
 
 	[ObservableProperty]
-	public partial string SeikyuDayTo { get; set; } = DateTime.Today.ToString("yyyy/MM/dd");
+	public partial string PaysakiCodeFrom { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	public partial string TokuiCodeFrom { get; set; } = string.Empty;
+	public partial string PaysakiCodeTo { get; set; } = string.Empty;
 
+	/// <summary>false=親のみ / true=子含む。</summary>
 	[ObservableProperty]
-	public partial string TokuiCodeTo { get; set; } = string.Empty;
+	public partial bool IsIncludeChildren { get; set; }
 
-	/// <summary>出力対象。true=請求額または残高があるもののみ / false=全て。</summary>
+	/// <summary>false=出力基準日順 / true=請求先コード順。</summary>
 	[ObservableProperty]
-	public partial bool IsActiveOnly { get; set; } = true;
+	public partial bool IsPaysakiCodeOrder { get; set; } = true;
 
 	[RelayCommand]
-	void SelectTokuiCodeFrom() => TokuiCodeFrom = SelectTokuiCode() ?? TokuiCodeFrom;
+	void SelectPaysakiCodeFrom() => PaysakiCodeFrom = SelectTokuiCode() ?? PaysakiCodeFrom;
 
 	[RelayCommand]
-	void SelectTokuiCodeTo() => TokuiCodeTo = SelectTokuiCode() ?? TokuiCodeTo;
+	void SelectPaysakiCodeTo() => PaysakiCodeTo = SelectTokuiCode() ?? PaysakiCodeTo;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
-		if (!TryParseDate(SeikyuDayFrom, out var from) || !TryParseDate(SeikyuDayTo, out var to)) {
+		if (!TryParseYearMonth(TargetMonth, out var month)) {
 			return Task.FromResult<QueryListSqlParam?>(null);
 		}
-		if (from > to) {
-			MessageEx.ShowWarningDialog("請求日の範囲が逆転しています。", owner: ActiveWindow);
+		if (!int.TryParse(ShimeDay, out var shimeDay) || !((shimeDay >= 1 && shimeDay <= 28) || shimeDay == 99)) {
+			MessageEx.ShowWarningDialog("締日は 1～28 または 99（末日）で入力してください。", owner: ActiveWindow);
 			return Task.FromResult<QueryListSqlParam?>(null);
 		}
 		ct.ThrowIfCancellationRequested();
 
+		var (monthFrom, monthTo) = GetMonthRange(month);
 		List<string> parameters = [];
-		var dayFrom = AddSqlParameter(parameters, ToDenDay(from));
-		var dayTo = AddSqlParameter(parameters, ToDenDay(to));
-		var tokuiWhere = BuildCodeRangeWhere(parameters, "t.Code", TokuiCodeFrom, TokuiCodeTo);
+		var dateFrom = AddSqlParameter(parameters, monthFrom);
+		var dateTo = AddSqlParameter(parameters, monthTo);
+		var shime = AddSqlParameter(parameters, shimeDay);
+		var paysakiWhere = BuildCodeRangeWhere(parameters, "ifnull(p.Code,c.Code)", PaysakiCodeFrom, PaysakiCodeTo);
+		var primaryDay = IsNyukinYoteiBasis ? "s.NyukinYoteiDay" : "s.DenDay";
+		var secondaryDay = IsNyukinYoteiBasis ? "s.DenDay" : "s.NyukinYoteiDay";
+		var primaryLabel = IsNyukinYoteiBasis ? "入金予定日" : "請求日";
+		var secondaryLabel = IsNyukinYoteiBasis ? "請求日" : "入金予定日";
+		var orderBy = IsPaysakiCodeOrder
+			? (IsIncludeChildren ? "parentCode, primaryDay, secondaryDay, childCode" : "parentCode, primaryDay, secondaryDay")
+			: (IsIncludeChildren ? "primaryDay, secondaryDay, parentCode, childCode" : "primaryDay, secondaryDay, parentCode");
 
-		var activeOnly = IsActiveOnly ? "AND (u.TotalSales != 0 OR u.Balance != 0)" : "";
+		var source = $@"
+source AS (
+    SELECT
+        {primaryDay} AS primaryDay,
+        {secondaryDay} AS secondaryDay,
+        c.Shime1 AS shimeDay,
+        c.Id AS childId, c.Code AS childCode, c.Name AS childName,
+        ifnull(p.Id,c.Id) AS parentId,
+        ifnull(p.Code,c.Code) AS parentCode,
+        ifnull(p.Name,c.Name) AS parentName,
+        s.Balance + s.TotalSales - s.TotalIn AS prevBalance,
+        s.Balance AS balance,
+        s.Cash, s.Fee, s.Densai, s.Offset, s.Other,
+        s.TotalIn,
+        s.Uriage, s.Henpin, s.Nebiki, s.Sonota,
+        s.Tax1 + s.Tax2 + s.Tax3 AS tax,
+        s.TotalSales,
+        s.Balance + s.TotalSales - s.TotalIn - s.TotalIn AS carryOver,
+        s.TotalSales - (s.Tax1 + s.Tax2 + s.Tax3) AS netSales
+    FROM SummaryUriSei s
+    JOIN MasterTokui c ON c.Id = s.Id_Tokui
+    LEFT JOIN MasterTokui p ON p.Id = c.Id_Paysaki
+    WHERE c.IsPay = 1
+      AND c.Shime1 = {shime}
+      AND {primaryDay} >= {dateFrom} AND {primaryDay} <= {dateTo}
+      {paysakiWhere}
+      AND (s.Balance != 0 OR s.TotalIn != 0 OR s.TotalSales != 0)
+)";
 
-		var sql = $@"
-SELECT
-    {TranMeisaiSql.DateLabel("u.DenDay")}  AS seikyuDayLabel,
-    t.Code AS tokuiCode,
-    t.Name AS tokuiName,
-    {TranMeisaiSql.DateLabel("u.DayFrom")} || '～' || {TranMeisaiSql.DateLabel("u.DayTo")} AS termLabel,
-    u.TotalSales AS totalSales,
-    u.Henpin     AS henpin,
-    u.Nebiki     AS nebiki,
-    u.Sonota     AS sonota,
-    (u.Tax1+u.Tax2+u.Tax3) AS tax,
-    u.TotalIn    AS totalIn,
-    u.Balance    AS balance
-FROM SummaryUriSei u
-JOIN MasterTokui t ON t.Id = u.Id_Tokui
-WHERE u.DenDay >= {dayFrom} AND u.DenDay <= {dayTo}
-  {activeOnly}{tokuiWhere}
-ORDER BY u.DenDay, t.Code";
+		var sql = IsIncludeChildren
+			? BuildIncludeChildrenSql(source, primaryLabel, secondaryLabel, orderBy)
+			: BuildPaysakiOnlySql(source, primaryLabel, secondaryLabel, orderBy);
 
 		return Task.FromResult<QueryListSqlParam?>(new QueryListSqlParam(typeof(object), sql, [.. parameters]));
 	}
+
+	static string BuildPaysakiOnlySql(string source, string primaryLabel, string secondaryLabel, string orderBy) => $@"
+WITH {source}
+SELECT
+    primaryDay AS item1,
+    shimeDay AS item2,
+    parentCode AS item3,
+    parentName AS item4,
+    SUM(prevBalance) AS item5,
+    SUM(balance) AS item6,
+    SUM(Cash) AS item7,
+    SUM(Fee) AS item8,
+    SUM(Densai) AS item9,
+    SUM(Offset) AS item10,
+    SUM(Other) AS item11,
+    SUM(TotalIn) AS item12,
+    SUM(Uriage) AS item13,
+    SUM(Henpin) AS item14,
+    SUM(Nebiki) AS item15,
+    SUM(Sonota) AS item16,
+    SUM(tax) AS item17,
+    SUM(TotalSales) AS item18,
+    secondaryDay AS item19,
+    '{primaryLabel}' AS item20,
+    '{secondaryLabel}' AS item21,
+    SUM(carryOver) AS item22,
+    SUM(netSales) AS item23
+FROM source
+GROUP BY primaryDay, secondaryDay, shimeDay, parentId, parentCode, parentName
+ORDER BY {orderBy}";
+
+	static string BuildIncludeChildrenSql(string source, string primaryLabel, string secondaryLabel, string orderBy) => $@"
+WITH {source},
+rows AS (
+    SELECT
+        primaryDay, secondaryDay, shimeDay, childId, childCode, childName, parentId, parentCode, parentName,
+        prevBalance, balance, Cash, Fee, Densai, Offset, Other, TotalIn,
+        Uriage, Henpin, Nebiki, Sonota, tax, TotalSales, carryOver, netSales
+    FROM source
+)
+SELECT
+    primaryDay AS item1,
+    shimeDay AS item2,
+    childCode AS item3,
+    childName AS item4,
+    prevBalance AS item5,
+    balance AS item6,
+    Cash AS item7,
+    Fee AS item8,
+    Densai AS item9,
+    Offset AS item10,
+    Other AS item11,
+    TotalIn AS item12,
+    Uriage AS item13,
+    Henpin AS item14,
+    Nebiki AS item15,
+    Sonota AS item16,
+    tax AS item17,
+    TotalSales AS item18,
+    secondaryDay AS item19,
+    '{primaryLabel}' AS item20,
+    '{secondaryLabel}' AS item21,
+    carryOver AS item22,
+    netSales AS item23,
+    parentCode AS item24,
+    parentName AS item25,
+    SUM(prevBalance) OVER (PARTITION BY parentId, primaryDay) AS item26,
+    SUM(balance) OVER (PARTITION BY parentId, primaryDay) AS item27,
+    SUM(Cash) OVER (PARTITION BY parentId, primaryDay) AS item28,
+    SUM(Fee) OVER (PARTITION BY parentId, primaryDay) AS item29,
+    SUM(Densai) OVER (PARTITION BY parentId, primaryDay) AS item30,
+    SUM(Offset) OVER (PARTITION BY parentId, primaryDay) AS item31,
+    SUM(Other) OVER (PARTITION BY parentId, primaryDay) AS item32,
+    SUM(TotalIn) OVER (PARTITION BY parentId, primaryDay) AS item33,
+    SUM(Uriage) OVER (PARTITION BY parentId, primaryDay) AS item34,
+    SUM(Henpin) OVER (PARTITION BY parentId, primaryDay) AS item35,
+    SUM(Nebiki) OVER (PARTITION BY parentId, primaryDay) AS item36,
+    SUM(Sonota) OVER (PARTITION BY parentId, primaryDay) AS item37,
+    SUM(tax) OVER (PARTITION BY parentId, primaryDay) AS item38,
+    SUM(TotalSales) OVER (PARTITION BY parentId, primaryDay) AS item39,
+    SUM(carryOver) OVER (PARTITION BY parentId, primaryDay) AS item40,
+    SUM(netSales) OVER (PARTITION BY parentId, primaryDay) AS item41,
+    MAX(secondaryDay) OVER (PARTITION BY parentId, primaryDay) AS item42
+FROM rows
+ORDER BY {orderBy}";
 }
