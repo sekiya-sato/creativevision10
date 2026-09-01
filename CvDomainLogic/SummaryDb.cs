@@ -493,6 +493,7 @@ FROM {tableName} AS t
      LEFT JOIN MasterTokui AS mt ON mt.Id = t.{idSoko}
      LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
 WHERE {whereClause}
+  AND json_type(t.Jmeisai) = 'array'
   AND COALESCE(mt.IsZaiko, 1) = 1
   AND COALESCE(ms.IsZaiko, 1) = 1
 GROUP BY
@@ -525,6 +526,7 @@ FROM {tableName} AS t
      LEFT JOIN MasterTokui AS mt ON mt.Id = t.{idSoko}
      LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
 WHERE {whereClause}
+  AND json_type(t.Jmeisai) = 'array'
   AND COALESCE(mt.IsZaiko, 1) = 1
   AND COALESCE(ms.IsZaiko, 1) = 1
 GROUP BY
