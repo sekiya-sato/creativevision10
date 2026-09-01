@@ -48,6 +48,115 @@ public class SummaryDb {
 		var nextMonth = $"strftime('%Y%m', date(substr({targetDayExpression}, 1, 4) || '-' || substr({targetDayExpression}, 5, 2) || '-01', '+1 month'))";
 		return $"CASE WHEN CAST(substr({targetDayExpression}, 7, 2) AS INTEGER) > {shime} THEN {nextMonth} ELSE {currentMonth} END";
 	}
+
+	// ---- 税額集計 (請求計算・支払計算・売掛/買掛月次で共通) --------------------------------
+	// 仕様は `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` の 3.3〜3.6 を参照する。
+
+	/// <summary>
+	/// 税区分1-3の (現行税率, 新税率適用開始日, 新税率) を <see cref="MasterSysman.Jsub"/> から読み込む。
+	/// SQL文字列へ定数として埋め込むため、実行前に一度だけ確定させる(<see cref="TaxRateResolver.CreateRateResolver"/> と同じ考え方)。
+	/// マスタが無い・税区分が未定義の場合は <see cref="TaxRateResolver.DefaultTaxRatePercent"/> にフォールバックし、
+	/// 新税率への切替が起きないよう DateFrom を将来日(99999999)に倒す(<see cref="TaxRateResolver.ResolveTaxRatePercent"/> と同じ判定)。
+	/// </summary>
+	private (int Rate, string DateFrom, int NewRate)[] LoadTaxRateDefs() {
+		var tableExists = _db.FirstOrDefault<string>(
+			"SELECT name FROM sqlite_master WHERE type='table' AND name='MasterSysman'");
+		var sysman = string.IsNullOrEmpty(tableExists)
+			? null
+			: _db.Fetch<MasterSysman>("ORDER BY Id LIMIT 1").FirstOrDefault();
+		var defs = new (int Rate, string DateFrom, int NewRate)[4]; // index 0は未使用、1-3を使う
+		for (var id = 1; id <= 3; id++) {
+			var t = sysman?.Jsub?.FirstOrDefault(x => x.Id == id);
+			if (t == null || !TaxRateResolver.IsValidYmd(t.DateFrom)) {
+				var fallback = t is { TaxRate: > 0 } ? t.TaxRate : TaxRateResolver.DefaultTaxRatePercent;
+				defs[id] = (fallback, "99999999", fallback);
+			}
+			else {
+				var oldRate = t.TaxRate > 0 ? t.TaxRate : TaxRateResolver.DefaultTaxRatePercent;
+				var newRate = t.TaxNewRate > 0 ? t.TaxNewRate : TaxRateResolver.DefaultTaxRatePercent;
+				defs[id] = (oldRate, t.DateFrom, newRate);
+			}
+		}
+		return defs;
+	}
+
+	/// <summary>
+	/// 税区分の適用税率(%)を伝票日付式から求めるSQL式。税率改定日(<c>DateFrom</c>)をまたぐ締請求期間は、
+	/// 明細(行)ごとにこの式を掛けてからSUMすることで「新旧税率ぶんを合算後に1回だけ丸める」(3.4)を実現する。
+	/// </summary>
+	private static string RateExprSql(string denDayExpr, (int Rate, string DateFrom, int NewRate) def) =>
+		$"(CASE WHEN {denDayExpr} >= '{def.DateFrom}' THEN {def.NewRate} ELSE {def.Rate} END)";
+
+	/// <summary>
+	/// <see cref="TranCalcBase.RoundTax"/> と同じ結果になるSQL式。
+	/// <paramref name="valueExpr"/> は「課税対象額×税率」の合計(100で割る前・符号付き・丸め前の値)。
+	/// SQLiteの整数除算はゼロ方向切り捨てなので、絶対値化してから割ることで「切捨」をそのまま表現できる
+	/// (負値のCAST/除算はゼロ方向、つまり切り捨てではなく手前に丸まるため、符号を先に外す必要がある)。
+	/// </summary>
+	private static string RoundDivSql(string valueExpr, string roundingExpr) => $@"((CASE WHEN ({valueExpr}) < 0 THEN -1 ELSE 1 END) * (CASE {roundingExpr}
+		WHEN {(int)EnumRounding.Ceiling} THEN (ABS({valueExpr}) + 99) / 100
+		WHEN {(int)EnumRounding.Floor} THEN ABS({valueExpr}) / 100
+		ELSE (ABS({valueExpr}) + 50) / 100
+	END))";
+
+	/// <summary>
+	/// 消費税額・課税対象額の最終列(Tax1/2/3相当)を作る式。伝票単位ぶん(<paramref name="slipExpr"/>、既に丸め済み)は
+	/// そのまま合算し、請求単位ぶん(<paramref name="billingRawExpr"/>、丸め前)だけ期間で1回丸める(3.5)。
+	/// <paramref name="extraExpr"/> は Tran02Materialの区分99(その他)をTax1へ丸めずそのまま積む特殊処理(A-6)向けの追加項。
+	/// </summary>
+	private static string FinalTaxExprSql(string slipExpr, string billingRawExpr, string roundingExpr, string? extraExpr = null) {
+		var expr = $"{slipExpr} + {RoundDivSql(billingRawExpr, roundingExpr)}";
+		return extraExpr != null ? $"({expr} + {extraExpr})" : $"({expr})";
+	}
+
+	/// <summary>
+	/// 符号込みの明細金額式。返品(<c>Kubun</c> 20-29)はヘッダ<c>CalcFlag</c>で符号反転する
+	/// (値引 30-39 は反転しない。既存挙動をそのまま維持する)。
+	/// </summary>
+	private static string SignExpr(string alias) => $"(CASE WHEN {alias}.Kubun BETWEEN 20 AND 29 THEN {alias}.CalcFlag ELSE 1 END)";
+
+	/// <summary>
+	/// 税区分1-3ぶんの SlipTaxN(伝票単位・丸め済) / BillingRawN(請求単位・丸め前) / TaxableAmountN(課税対象額)の
+	/// SELECT列を作る(集計込み・GROUP BYを伴うSELECTで使う)。<paramref name="denDayExpr"/> は税率改定日判定に使う伝票日付式。
+	/// </summary>
+	private static string BuildTaxSourceColumnsSql(string alias, string denDayExpr, (int Rate, string DateFrom, int NewRate)[] defs) =>
+		BuildTaxSourceColumnsSqlCore(alias, denDayExpr, defs, wrapSum: true);
+
+	/// <summary>
+	/// <see cref="BuildTaxSourceColumnsSql"/> の行単位版(SUMを付けない)。UNION後にまとめて1回だけ集計したい場合に使う
+	/// (<see cref="CalcSummaryKaiShi"/> の <c>purchases</c> のように、複数テーブルの明細行を先にUNIONしてから集計する構造)。
+	/// </summary>
+	private static string BuildTaxSourceRowColumnsSql(string alias, string denDayExpr, (int Rate, string DateFrom, int NewRate)[] defs) =>
+		BuildTaxSourceColumnsSqlCore(alias, denDayExpr, defs, wrapSum: false);
+
+	private static string BuildTaxSourceColumnsSqlCore(string alias, string denDayExpr, (int Rate, string DateFrom, int NewRate)[] defs, bool wrapSum) {
+		var sign = SignExpr(alias);
+		var parts = new List<string>();
+		for (var n = 1; n <= 3; n++) {
+			var rateExpr = RateExprSql(denDayExpr, defs[n]);
+			var slip = $"CASE WHEN {alias}.TaxCalcUnit = {(int)EnumTaxCalcUnit.Slip} THEN {sign} * {alias}.Tax{n} ELSE 0 END";
+			var billing = $"CASE WHEN {alias}.TaxCalcUnit = {(int)EnumTaxCalcUnit.Billing} THEN {sign} * {alias}.TaxableAmount{n} * {rateExpr} ELSE 0 END";
+			var taxable = $"{sign} * {alias}.TaxableAmount{n}";
+			parts.Add(wrapSum ? $"SUM({slip}) AS SlipTax{n}" : $"({slip}) AS SlipTax{n}");
+			parts.Add(wrapSum ? $"SUM({billing}) AS BillingRaw{n}" : $"({billing}) AS BillingRaw{n}");
+			parts.Add(wrapSum ? $"SUM({taxable}) AS TaxableAmount{n}" : $"({taxable}) AS TaxableAmount{n}");
+		}
+		return string.Join(",\n\t\t", parts);
+	}
+
+	/// <summary>SlipTaxN/BillingRawN/TaxableAmountNの9列を全て0で埋めるUNION側の穴埋め(税計算対象外の伝票用、列順は<see cref="BuildTaxSourceColumnsSql"/>と揃える)。</summary>
+	private const string ZeroTaxSourceColumns = "0, 0, 0, 0, 0, 0, 0, 0, 0";
+
+	/// <summary>上位CTEでSlipTaxN/BillingRawN/TaxableAmountNをそのままSUMする列を作る(<see cref="BuildTaxSourceColumnsSql"/>で作った列を再集計する側)。</summary>
+	private static string SumTaxSourceColumnsSql() {
+		var parts = new List<string>();
+		for (var n = 1; n <= 3; n++) {
+			parts.Add($"SUM(SlipTax{n}) AS SlipTax{n}");
+			parts.Add($"SUM(BillingRaw{n}) AS BillingRaw{n}");
+			parts.Add($"SUM(TaxableAmount{n}) AS TaxableAmount{n}");
+		}
+		return string.Join(",\n\t\t", parts);
+	}
 	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(CalcDateTermParameter param) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
 			("Summary : SummaryStock", CalcSummaryStockRange)
@@ -749,6 +858,12 @@ WHERE DenMonth > @0
 		if (string.CompareOrdinal(targetDays.DayTo, fiscalStart) < 0) return cnt;
 		var dayFrom = string.CompareOrdinal(targetDays.DayFrom, fiscalStart) < 0 ? fiscalStart : targetDays.DayFrom;
 		var kakeMonthSql = CreateKakeMonthSql("t.KakeDay", shime);
+		var taxDefs = LoadTaxRateDefs();
+		var uriageTaxCols = BuildTaxSourceColumnsSql("t", "t.DenDay", taxDefs);
+		var sumTaxCols = SumTaxSourceColumnsSql();
+		var tax1 = FinalTaxExprSql("m.SlipTax1", "m.BillingRaw1", "IFNULL(mt.TaxRounding, 0)");
+		var tax2 = FinalTaxExprSql("m.SlipTax2", "m.BillingRaw2", "IFNULL(mt.TaxRounding, 0)");
+		var tax3 = FinalTaxExprSql("m.SlipTax3", "m.BillingRaw3", "IFNULL(mt.TaxRounding, 0)");
 		var sql = @$"
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
@@ -760,7 +875,7 @@ movements AS (
 		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Uriage,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,
+		{uriageTaxCols},
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran00Uriage AS t
 	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
@@ -770,7 +885,8 @@ movements AS (
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Torisaki AS Id_Tokui,
-		0, 0, 0, 0,
+		0, 0, 0,
+		{ZeroTaxSourceColumns},
 		{KinBucket("01")} AS Cash,
 		{KinBucket("02")} AS Fee,
 		{KinBucket("03")} AS Densai,
@@ -788,7 +904,7 @@ monthly AS (
 		SUM(Uriage) AS Uriage,
 		SUM(Henpin) AS Henpin,
 		SUM(Nebiki) AS Nebiki,
-		SUM(Tax) AS Tax,
+		{sumTaxCols},
 		SUM(Cash) AS Cash,
 		SUM(Fee) AS Fee,
 		SUM(Densai) AS Densai,
@@ -798,11 +914,33 @@ monthly AS (
 	GROUP BY DenMonth, Id_Tokui
 ),
 calculated AS (
+	-- 消費税(Tax1/2/3)は伝票単位ぶんを合算し、請求単位ぶんだけ端数処理(得意先マスタのTaxRounding)で1回丸める(3.5)。
 	SELECT
-		m.*,
-		m.Uriage - m.Henpin - m.Nebiki + m.Tax AS TotalSales,
-		m.Cash + m.Fee + m.Densai + m.Offset + m.Other AS TotalIn
+		m.DenMonth,
+		m.Id_Tokui,
+		m.Uriage,
+		m.Henpin,
+		m.Nebiki,
+		m.TaxableAmount1,
+		m.TaxableAmount2,
+		m.TaxableAmount3,
+		{tax1} AS Tax1,
+		{tax2} AS Tax2,
+		{tax3} AS Tax3,
+		m.Cash,
+		m.Fee,
+		m.Densai,
+		m.Offset,
+		m.Other
 	FROM monthly AS m
+	LEFT JOIN MasterTokui AS mt ON mt.Id = m.Id_Tokui
+),
+totals AS (
+	SELECT
+		c.*,
+		c.Uriage - c.Henpin - c.Nebiki + (c.Tax1 + c.Tax2 + c.Tax3) AS TotalSales,
+		c.Cash + c.Fee + c.Densai + c.Offset + c.Other AS TotalIn
+	FROM calculated AS c
 ),
 previousBalance AS (
 	SELECT s.Id_Tokui, s.Balance
@@ -815,7 +953,8 @@ previousBalance AS (
 	)
 )
 INSERT INTO SummaryUriKake (
-	Id_Tokui, DenMonth, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Tax,
+	Id_Tokui, DenMonth, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki,
+	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
@@ -831,7 +970,12 @@ SELECT
 	c.Uriage,
 	c.Henpin,
 	c.Nebiki,
-	c.Tax,
+	c.Tax1,
+	c.Tax2,
+	c.Tax3,
+	c.TaxableAmount1,
+	c.TaxableAmount2,
+	c.TaxableAmount3,
 	c.Cash,
 	c.Fee,
 	c.Densai,
@@ -839,7 +983,7 @@ SELECT
 	c.Other,
 	{vdate} AS Vdc,
 	{vdate} AS Vdu
-FROM calculated AS c
+FROM totals AS c
 LEFT JOIN previousBalance AS p ON p.Id_Tokui = c.Id_Tokui;
 ";
 		var period = $"{DatefromYyyymm}-{toMonth} ({dayFrom}-{targetDays.DayTo},締日={shime})";
@@ -890,6 +1034,11 @@ WHERE DenDay = @1
 		  AND (@4 = '' OR Code <= @4)
 	);
 ";
+			var taxDefs = LoadTaxRateDefs();
+			var uriageTaxCols = BuildTaxSourceColumnsSql("t", "t.DenDay", taxDefs);
+			var tax1 = FinalTaxExprSql("IFNULL(s.SlipTax1, 0)", "IFNULL(s.BillingRaw1, 0)", "IFNULL(t.TaxRounding, 0)");
+			var tax2 = FinalTaxExprSql("IFNULL(s.SlipTax2, 0)", "IFNULL(s.BillingRaw2, 0)", "IFNULL(t.TaxRounding, 0)");
+			var tax3 = FinalTaxExprSql("IFNULL(s.SlipTax3, 0)", "IFNULL(s.BillingRaw3, 0)", "IFNULL(t.TaxRounding, 0)");
 			var sql = $@"
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
@@ -901,7 +1050,7 @@ sales AS (
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END) AS Nebiki,
 		SUM(CASE WHEN t.Kubun = 99 THEN t.Total ELSE 0 END) AS Sonota,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END) AS Tax
+		{uriageTaxCols}
 	FROM Tran00Uriage AS t
 	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
 	GROUP BY t.Id_Tokui
@@ -920,7 +1069,7 @@ payments AS (
 	GROUP BY t.Id_Torisaki
 ),
 targets AS (
-	SELECT Id, PayMonth, PayDay
+	SELECT Id, PayMonth, PayDay, TaxRounding
 	FROM MasterTokui
 	WHERE Shime1 = @2
 	  AND (@3 = '' OR Code >= @3)
@@ -933,13 +1082,19 @@ previousBalance AS (
 	GROUP BY Id_Tokui
 ),
 calculated AS (
+	-- 消費税(Tax1/2/3)は伝票単位ぶんを合算し、請求単位ぶんだけ得意先(MasterTokui)のTaxRoundingで1回丸める(3.5)。
 	SELECT
 		t.Id AS Id_Tokui,
 		IFNULL(s.Uriage, 0) AS Uriage,
 		IFNULL(s.Henpin, 0) AS Henpin,
 		IFNULL(s.Nebiki, 0) AS Nebiki,
 		IFNULL(s.Sonota, 0) AS Sonota,
-		IFNULL(s.Tax, 0) AS Tax,
+		{tax1} AS Tax1,
+		{tax2} AS Tax2,
+		{tax3} AS Tax3,
+		IFNULL(s.TaxableAmount1, 0) AS TaxableAmount1,
+		IFNULL(s.TaxableAmount2, 0) AS TaxableAmount2,
+		IFNULL(s.TaxableAmount3, 0) AS TaxableAmount3,
 		IFNULL(p.Cash, 0) AS Cash,
 		IFNULL(p.Fee, 0) AS Fee,
 		IFNULL(p.Densai, 0) AS Densai,
@@ -955,7 +1110,8 @@ calculated AS (
 )
 INSERT INTO SummaryUriSei (
 	Id_Tokui, DenDay, DayFrom, DayTo, SeikyuNo, Renban, NyukinYoteiDay,
-	Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Sonota, Tax,
+	Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Sonota,
+	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
@@ -967,10 +1123,11 @@ SELECT
 		ELSE printf('%d-%s-%02d', c.Id_Tokui, @1, CASE WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban + 1 ELSE 1 END) END,
 	CASE WHEN IFNULL(o.Renban, 0) > 0 AND @6 <> 0 THEN o.Renban + 1 WHEN IFNULL(o.Renban, 0) > 0 THEN o.Renban ELSE 1 END,
 	c.NyukinYoteiDay,
-	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Uriage - c.Henpin - c.Nebiki + c.Sonota + c.Tax),
+	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Uriage - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3)),
 	c.Cash + c.Fee + c.Densai + c.Offset + c.Other,
-	c.Uriage - c.Henpin - c.Nebiki + c.Sonota + c.Tax,
-	c.Uriage, c.Henpin, c.Nebiki, c.Sonota, c.Tax,
+	c.Uriage - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3),
+	c.Uriage, c.Henpin, c.Nebiki, c.Sonota,
+	c.Tax1, c.Tax2, c.Tax3, c.TaxableAmount1, c.TaxableAmount2, c.TaxableAmount3,
 	c.Cash, c.Fee, c.Densai, c.Offset, c.Other,
 	{vdate}, {vdate}
 FROM calculated AS c
@@ -1042,21 +1199,33 @@ WHERE DenDay = @1
 		  AND (@3 = '' OR Code >= @3)
 		  AND (@4 = '' OR Code <= @4)
 	);";
+			var taxDefs = LoadTaxRateDefs();
+			var shiireRowTaxCols = BuildTaxSourceRowColumnsSql("t", "t.DenDay", taxDefs);
+			var materialRowTaxCols = BuildTaxSourceRowColumnsSql("t", "t.DenDay", taxDefs);
+			var sumTaxCols = SumTaxSourceColumnsSql();
+			var tax1 = FinalTaxExprSql("IFNULL(s.SlipTax1, 0)", "IFNULL(s.BillingRaw1, 0)", "IFNULL(t.TaxRounding, 0)", "IFNULL(s.Sonota99, 0)");
+			var tax2 = FinalTaxExprSql("IFNULL(s.SlipTax2, 0)", "IFNULL(s.BillingRaw2, 0)", "IFNULL(t.TaxRounding, 0)");
+			var tax3 = FinalTaxExprSql("IFNULL(s.SlipTax3, 0)", "IFNULL(s.BillingRaw3, 0)", "IFNULL(t.TaxRounding, 0)");
 			var sql = $@"
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
 ),
 purchases AS (
-	-- Tran02Material（生地・付属仕入）を合算する。区分99（その他）は仕入ではなく消費税へ全額を積む点が
-	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため）。
-	SELECT Id_Shiire, SUM(Shiire) AS Shiire, SUM(Henpin) AS Henpin, SUM(Nebiki) AS Nebiki, SUM(Tax) AS Tax
+	-- Tran02Material（生地・付属仕入）を合算する。区分99（その他）は仕入ではなく消費税(Tax1)へ全額を積む点が
+	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため。A-6、丸めは行わずそのまま加算する）。
+	SELECT
+		Id_Shiire,
+		SUM(Shiire) AS Shiire, SUM(Henpin) AS Henpin, SUM(Nebiki) AS Nebiki,
+		{sumTaxCols},
+		SUM(Sonota99) AS Sonota99
 	FROM (
 		SELECT
 			t.Id_Shiire,
 			CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END AS Shiire,
 			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END AS Henpin,
 			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END AS Nebiki,
-			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END AS Tax
+			{shiireRowTaxCols},
+			0 AS Sonota99
 		FROM Tran03Shiire AS t
 		WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
 		UNION ALL
@@ -1065,8 +1234,8 @@ purchases AS (
 			CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN t.Total ELSE 0 END AS Shiire,
 			CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Total ELSE 0 END AS Henpin,
 			CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN t.Total ELSE 0 END AS Nebiki,
-			(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN t.Tax * t.CalcFlag ELSE t.Tax END)
-				+ CASE WHEN t.Kubun = 99 THEN t.Total ELSE 0 END AS Tax
+			{materialRowTaxCols},
+			CASE WHEN t.Kubun = 99 THEN t.Total ELSE 0 END AS Sonota99
 		FROM Tran02Material AS t
 		WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
 	)
@@ -1086,7 +1255,7 @@ payments AS (
 	GROUP BY t.Id_Torisaki
 ),
 targets AS (
-	SELECT Id, PayMonth, PayDay
+	SELECT Id, PayMonth, PayDay, TaxRounding
 	FROM MasterShiire
 	WHERE Shime1 = @2
 	  AND (@3 = '' OR Code >= @3)
@@ -1099,12 +1268,18 @@ previousBalance AS (
 	GROUP BY Id_Shiire
 ),
 calculated AS (
+	-- 消費税(Tax1/2/3)は伝票単位ぶんを合算し、請求単位ぶんだけ仕入先(MasterShiire)のTaxRoundingで1回丸める(3.5)。
 	SELECT
 		t.Id AS Id_Shiire,
 		IFNULL(s.Shiire, 0) AS Shiire,
 		IFNULL(s.Henpin, 0) AS Henpin,
 		IFNULL(s.Nebiki, 0) AS Nebiki,
-		IFNULL(s.Tax, 0) AS Tax,
+		{tax1} AS Tax1,
+		{tax2} AS Tax2,
+		{tax3} AS Tax3,
+		IFNULL(s.TaxableAmount1, 0) AS TaxableAmount1,
+		IFNULL(s.TaxableAmount2, 0) AS TaxableAmount2,
+		IFNULL(s.TaxableAmount3, 0) AS TaxableAmount3,
 		IFNULL(p.Cash, 0) AS Cash,
 		IFNULL(p.Fee, 0) AS Fee,
 		IFNULL(p.Densai, 0) AS Densai,
@@ -1120,7 +1295,8 @@ calculated AS (
 )
 INSERT INTO SummaryKaiShi (
 	Id_Shiire, DenDay, DayFrom, DayTo, ShiharaiYoteiDay,
-	Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Tax,
+	Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki,
+	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
@@ -1129,10 +1305,11 @@ SELECT
 	@0,
 	@1,
 	c.ShiharaiYoteiDay,
-	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Shiire - c.Henpin - c.Nebiki + c.Tax),
+	IFNULL(b.Balance, 0) + (c.Cash + c.Fee + c.Densai + c.Offset + c.Other) - (c.Shiire - c.Henpin - c.Nebiki + (c.Tax1 + c.Tax2 + c.Tax3)),
 	c.Cash + c.Fee + c.Densai + c.Offset + c.Other,
-	c.Shiire - c.Henpin - c.Nebiki + c.Tax,
-	c.Shiire, c.Henpin, c.Nebiki, c.Tax,
+	c.Shiire - c.Henpin - c.Nebiki + (c.Tax1 + c.Tax2 + c.Tax3),
+	c.Shiire, c.Henpin, c.Nebiki,
+	c.Tax1, c.Tax2, c.Tax3, c.TaxableAmount1, c.TaxableAmount2, c.TaxableAmount3,
 	c.Cash, c.Fee, c.Densai, c.Offset, c.Other,
 	{vdate}, {vdate}
 FROM calculated AS c
@@ -1179,6 +1356,13 @@ LEFT JOIN previousBalance AS b ON b.Id_Shiire = c.Id_Shiire;
 		if (string.CompareOrdinal(targetDays.DayTo, fiscalStart) < 0) return cnt;
 		var dayFrom = string.CompareOrdinal(targetDays.DayFrom, fiscalStart) < 0 ? fiscalStart : targetDays.DayFrom;
 		var kakeMonthSql = CreateKakeMonthSql("t.KakeDay", shime);
+		var taxDefs = LoadTaxRateDefs();
+		var shiireTaxCols = BuildTaxSourceColumnsSql("t", "t.DenDay", taxDefs);
+		var materialTaxCols = BuildTaxSourceColumnsSql("t", "t.DenDay", taxDefs);
+		var sumTaxCols = SumTaxSourceColumnsSql();
+		var tax1 = FinalTaxExprSql("m.SlipTax1", "m.BillingRaw1", "IFNULL(ms.TaxRounding, 0)", "m.Sonota99");
+		var tax2 = FinalTaxExprSql("m.SlipTax2", "m.BillingRaw2", "IFNULL(ms.TaxRounding, 0)");
+		var tax3 = FinalTaxExprSql("m.SlipTax3", "m.BillingRaw3", "IFNULL(ms.TaxRounding, 0)");
 		var sql = @$"
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
@@ -1190,22 +1374,23 @@ movements AS (
 		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 OR t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
-		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END) AS Tax,
+		{shiireTaxCols},
+		0 AS Sonota99,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran03Shiire AS t
 	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Shiire
 	UNION ALL
-	-- Tran02Material（生地・付属仕入）。区分99（その他）は仕入ではなく消費税へ全額を積む点が
-	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため）。
+	-- Tran02Material（生地・付属仕入）。区分99（その他）は仕入ではなく消費税(Tax1)へ全額を積む点が
+	-- Tran03Shiire と異なる（生地・付属の税調整目的の伝票として使うため。A-6、丸めは行わずそのまま加算する）。
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 10 AND 19 OR t.Kubun BETWEEN 40 AND 89 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Shiire,
 		SUM(CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Henpin,
 		SUM(CASE WHEN t.Kubun BETWEEN 30 AND 39 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Nebiki,
-		SUM((CASE WHEN t.Kubun BETWEEN 20 AND 29 THEN IFNULL(t.Tax, 0) * t.CalcFlag ELSE IFNULL(t.Tax, 0) END)
-			+ CASE WHEN t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Tax,
+		{materialTaxCols},
+		SUM(CASE WHEN t.Kubun = 99 THEN IFNULL(t.Total, 0) ELSE 0 END) AS Sonota99,
 		0 AS Cash, 0 AS Fee, 0 AS Densai, 0 AS Offset, 0 AS Other
 	FROM Tran02Material AS t
 	WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
@@ -1215,7 +1400,9 @@ movements AS (
 	SELECT
 		{kakeMonthSql} AS DenMonth,
 		t.Id_Torisaki AS Id_Shiire,
-		0, 0, 0, 0,
+		0, 0, 0,
+		{ZeroTaxSourceColumns},
+		0 AS Sonota99,
 		{KinBucket("01")} AS Cash,
 		{KinBucket("02")} AS Fee,
 		{KinBucket("03")} AS Densai,
@@ -1233,7 +1420,8 @@ monthly AS (
 		SUM(Shiire) AS Shiire,
 		SUM(Henpin) AS Henpin,
 		SUM(Nebiki) AS Nebiki,
-		SUM(Tax) AS Tax,
+		{sumTaxCols},
+		SUM(Sonota99) AS Sonota99,
 		SUM(Cash) AS Cash,
 		SUM(Fee) AS Fee,
 		SUM(Densai) AS Densai,
@@ -1243,11 +1431,33 @@ monthly AS (
 	GROUP BY DenMonth, Id_Shiire
 ),
 calculated AS (
+	-- 消費税(Tax1/2/3)は伝票単位ぶんを合算し、請求単位ぶんだけ仕入先(MasterShiire)のTaxRoundingで1回丸める(3.5)。
 	SELECT
-		m.*,
-		m.Shiire - m.Henpin - m.Nebiki + m.Tax AS TotalShiire,
-		m.Cash + m.Fee + m.Densai + m.Offset + m.Other AS TotalOut
+		m.DenMonth,
+		m.Id_Shiire,
+		m.Shiire,
+		m.Henpin,
+		m.Nebiki,
+		m.TaxableAmount1,
+		m.TaxableAmount2,
+		m.TaxableAmount3,
+		{tax1} AS Tax1,
+		{tax2} AS Tax2,
+		{tax3} AS Tax3,
+		m.Cash,
+		m.Fee,
+		m.Densai,
+		m.Offset,
+		m.Other
 	FROM monthly AS m
+	LEFT JOIN MasterShiire AS ms ON ms.Id = m.Id_Shiire
+),
+totals AS (
+	SELECT
+		c.*,
+		c.Shiire - c.Henpin - c.Nebiki + (c.Tax1 + c.Tax2 + c.Tax3) AS TotalShiire,
+		c.Cash + c.Fee + c.Densai + c.Offset + c.Other AS TotalOut
+	FROM calculated AS c
 ),
 previousBalance AS (
 	SELECT s.Id_Shiire, s.Balance
@@ -1260,7 +1470,8 @@ previousBalance AS (
 	)
 )
 INSERT INTO SummaryKaiKake (
-	Id_Shiire, DenMonth, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Tax,
+	Id_Shiire, DenMonth, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki,
+	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
 	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
@@ -1276,7 +1487,12 @@ SELECT
 	c.Shiire,
 	c.Henpin,
 	c.Nebiki,
-	c.Tax,
+	c.Tax1,
+	c.Tax2,
+	c.Tax3,
+	c.TaxableAmount1,
+	c.TaxableAmount2,
+	c.TaxableAmount3,
 	c.Cash,
 	c.Fee,
 	c.Densai,
@@ -1284,7 +1500,7 @@ SELECT
 	c.Other,
 	{vdate} AS Vdc,
 	{vdate} AS Vdu
-FROM calculated AS c
+FROM totals AS c
 LEFT JOIN previousBalance AS p ON p.Id_Shiire = c.Id_Shiire;
 ";
 		var period = $"{DatefromYyyymm}-{toMonth} ({dayFrom}-{targetDays.DayTo},締日={shime})";

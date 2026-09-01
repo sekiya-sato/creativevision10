@@ -1,5 +1,6 @@
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 
 namespace CvDomainLogic;
 
@@ -123,7 +124,10 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 		if (rows.Count == 0) {
 			return [];
 		}
-		var tenTypes = LoadTenTypes(rows.Select(x => x.Id_Tenpo));
+		var tokuiById = LoadTokui(rows.Select(x => x.Id_Tenpo));
+		// MasterSysman(税率)・商品Id→消費税区分は明細をまとめて処理する前に一括で読む(TranTaxRebuildDb.LoadShohinTaxIdsと同じ考え方)。
+		var sysman = _db.Fetch<MasterSysman>("where Id = 1").FirstOrDefault() ?? new MasterSysman();
+		var taxIdByShohin = new TranTaxRebuildDb(_db).LoadShohinTaxIds();
 		var summaryDb = new SummaryDb(_db);
 		var created = new List<long>();
 
@@ -143,9 +147,10 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 					Jodai = h.Jodai,
 					Gedai = h.Gedai,
 				}).ToList();
-				var tenType = tenTypes.GetValueOrDefault(group.Key.Id_Tenpo, 0);
+				var tokui = tokuiById.GetValueOrDefault(group.Key.Id_Tenpo);
+				var tenType = tokui?.TenType ?? 0;
 				slipId = IsShukka(tenType)
-					? CreateUriage(group.Key, meisai, idShain, denDay)
+					? CreateUriage(group.Key, meisai, idShain, denDay, tokui, sysman, taxIdByShohin)
 					: CreateIdoOut(group.Key, meisai, idShain, denDay);
 				created.Add(slipId);
 				// 生成した伝票の在庫を反映する。バッチ処理なので gRPC を往復せず直接呼ぶ
@@ -216,8 +221,22 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 	/// <summary>出荷売上とみなす店種区分。1=卸先 / 3=売仕店（決定 I4 / G4）</summary>
 	public static bool IsShukka(int tenType) => tenType is 1 or 3;
 
+	/// <summary>
+	/// 配分出荷の売上伝票を作る。得意先(店舗、<see cref="MasterTokui"/>)の税計算単位・端数処理をスナップショットし、
+	/// 明細の消費税区分を<see cref="MasterShohin.Id_Tax"/>から解決したうえで<see cref="TaxCalculator.Apply"/>で
+	/// 税額を確定する。従来はここで消費税を一切計算していなかった(Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md)。
+	/// </summary>
 	private long CreateUriage(HaibunHeaderKey key,
-		List<Tran99Meisai> meisai, long idShain, string denDay) {
+		List<Tran99Meisai> meisai, long idShain, string denDay,
+		MasterTokui? tokui, MasterSysman sysman, Dictionary<long, long> taxIdByShohin) {
+		foreach (var m in meisai) {
+			m.Id_Tax = m.Id_Shohin > 0 && taxIdByShohin.TryGetValue(m.Id_Shohin, out var found)
+				? found
+				: TaxCalculator.StandardTaxId;
+		}
+		var calcUnit = (EnumTaxCalcUnit)(tokui?.TaxCalcUnit ?? 0);
+		var rounding = (EnumRounding)(tokui?.TaxRounding ?? 0);
+		var totals = TaxCalculator.Apply(meisai, TaxRateResolver.CreateRateResolver(sysman, denDay), calcUnit, rounding);
 		var slip = new Tran00Uriage {
 			DenDay = denDay,
 			KakeDay = denDay,
@@ -230,7 +249,16 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 			KingakuTotal = meisai.Sum(x => x.Kingaku),
 			Jmeisai = meisai,
 			Memo = "配分出荷",
+			TaxCalcUnit = tokui?.TaxCalcUnit ?? 0,
+			TaxRounding = tokui?.TaxRounding ?? 0,
+			TaxableAmount1 = totals.TaxableAmount1,
+			TaxableAmount2 = totals.TaxableAmount2,
+			TaxableAmount3 = totals.TaxableAmount3,
+			Tax1 = totals.Tax1,
+			Tax2 = totals.Tax2,
+			Tax3 = totals.Tax3,
 		};
+		slip.Total = Math.Abs(slip.KingakuTotal) + totals.TaxTotal;
 		_db.Insert(slip);
 		return slip.Id;
 	}
@@ -251,13 +279,14 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 		return slip.Id;
 	}
 
-	private Dictionary<long, int> LoadTenTypes(IEnumerable<long> tenpoIds) {
+	/// <summary>出荷先(店舗)のMasterTokuiを一括で読む。店種区分(TenType)と税計算単位・端数処理のスナップショットに使う。</summary>
+	private Dictionary<long, MasterTokui> LoadTokui(IEnumerable<long> tenpoIds) {
 		var ids = tenpoIds.Where(x => x > 0).Distinct().ToList();
 		if (ids.Count == 0) {
 			return [];
 		}
 		return _db.Fetch<MasterTokui>($"where Id in ({string.Join(",", ids)})")
-			.ToDictionary(x => x.Id, x => x.TenType);
+			.ToDictionary(x => x.Id);
 	}
 
 	/// <summary>有効在庫割れの集計行</summary>

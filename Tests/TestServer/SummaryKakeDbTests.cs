@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CodeShare;
 using CvBase;
+using CvBase.Share;
 using CvBaseSqlite;
 using CvDomainLogic;
 using Microsoft.Data.Sqlite;
@@ -907,6 +908,8 @@ public class SummaryKakeDbTests {
 		db.CreateTable(typeof(SummaryUriKake), true, false);
 		db.CreateTable(typeof(Tran00Uriage), true, false);
 		db.CreateTable(typeof(Tran06Nyukin), true, false);
+		// 請求単位ぶんの端数処理(TaxRounding)を得意先マスタからJOINするため必要(3.5)。行が無ければ既定の四捨五入になる。
+		db.CreateTable(typeof(MasterTokui), true, false);
 		InsertKinMaster(db);
 		return db;
 	}
@@ -967,6 +970,8 @@ public class SummaryKakeDbTests {
 		db.CreateTable(typeof(Tran03Shiire), true, false);
 		db.CreateTable(typeof(Tran02Material), true, false);
 		db.CreateTable(typeof(Tran07Shiharai), true, false);
+		// 請求単位ぶんの端数処理(TaxRounding)を仕入先マスタからJOINするため必要(3.5)。行が無ければ既定の四捨五入になる。
+		db.CreateTable(typeof(MasterShiire), true, false);
 		InsertKinMaster(db);
 		return db;
 	}
@@ -1008,6 +1013,9 @@ public class SummaryKakeDbTests {
 			Total = total,
 			KingakuTotal = total + 10000,
 			Tax1 = tax,
+			// このヘルパーは丸め済みのTax1を直接指定するテスト用途なので、伝票単位(そのまま合算)を明示する。
+			// 既定の請求単位(TaxCalcUnit=0)のままだとTaxableAmountが未設定のため税額が0扱いになってしまう(3.3/3.5)。
+			TaxCalcUnit = (int)EnumTaxCalcUnit.Slip,
 			IsPay = 1,
 		};
 		tran.EnKubun = kubun;
@@ -1051,6 +1059,9 @@ public class SummaryKakeDbTests {
 			Total = total,
 			KingakuTotal = total + 10000,
 			Tax1 = tax,
+			// このヘルパーは丸め済みのTax1を直接指定するテスト用途なので、伝票単位(そのまま合算)を明示する。
+			// 既定の請求単位(TaxCalcUnit=0)のままだとTaxableAmountが未設定のため税額が0扱いになってしまう(3.3/3.5)。
+			TaxCalcUnit = (int)EnumTaxCalcUnit.Slip,
 			IsPay = 1,
 		};
 		tran.EnKubun = kubun;
