@@ -59,6 +59,16 @@ public static class CvMsgErrorCode {
 	/// Option にそのまま表示できるメッセージを載せる。
 	/// </summary>
 	public const int InvalidParameter = -9904;
+
+	/// <summary>
+	/// 条件に一致するデータが1件も無い。エラーではなく「0件」を表す。
+	/// <para>
+	/// 一覧系の応答は 0 件でも <c>Code</c> が負になるため、呼び出し側は本コードを
+	/// 障害と区別すること。区別しないと DataMsg の <c>"[]"</c> がそのまま
+	/// エラーメッセージとして画面に出る。
+	/// </para>
+	/// </summary>
+	public const int NotFound = -1;
 }
 
 /// <summary>

@@ -13,7 +13,7 @@ using System.Reflection;
 namespace CvServer.Services;
 
 public partial class CoreService {
-	private const int NotFoundCode = -1;
+	private const int NotFoundCode = CvMsgErrorCode.NotFound;
 	private const string ConcurrentUpdateMessage = "他で更新されています";
 
 	private WriteEffectRunner? _effects;

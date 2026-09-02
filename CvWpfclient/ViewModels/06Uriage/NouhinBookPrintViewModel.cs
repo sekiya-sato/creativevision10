@@ -10,19 +10,18 @@ using System.Windows;
 namespace CvWpfclient.ViewModels._06Uriage;
 
 /// <summary>
-/// 納品書印刷。卸売上伝票(Tran00Uriage)から納品書を出力する。
+/// 専用伝票(プレプリント)の互換出力用の基底。旧16列レイアウトの SQL をそのまま維持する。
 ///
-/// 出力は単票形式で、伝票ヘッダ（納品日・得意先・伝票NO・合計）を各明細行に繰り返した CSV を渡し、
-/// qfm 側でヘッダ領域と明細領域へ振り分ける。
+/// 標準納品書は R2 適格返還請求書対応で 66 列へ再設計され、qfm も別物になったため分離した。
+/// このクラス自体は qfm を持たない (FormFileName を override しない) 抽象クラスにしてある。
+/// 16列SQLを新しい66項目の NouhinBookPrint.qfm へ流すと列数不一致で印刷が失敗するので、
+/// 派生側で必ず旧形式用の qfm を指定させる。
 ///
-/// 発行済み管理は Tran00Uriage.IsPrint（0=未発行 / 1=発行済）で行う。
-/// 印刷実行では自動で立てず、PDFを確認したうえで「発行済みにする」を明示的に実行する運用にしている。
-/// 印刷が失敗・中断した伝票を発行済みにしてしまうと、未発行チェックリストから漏れて追跡できなくなるため。
+/// 発行済み管理は Tran00Uriage.IsPrint (0=未発行 / 1=発行済) で行う。
+/// 印刷実行では自動で立てず、PDFを確認したうえで「発行済みにする」を明示的に実行する運用。
 /// </summary>
-/// <summary>専用伝票の互換出力用。標準納品書とは列定義が異なるため分離する。</summary>
-public partial class NouhinBookPrintLegacyViewModel : Helpers.BaseReportViewModel {
+public abstract partial class NouhinBookPrintLegacyViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "納品書印刷";
-	protected override string FormFileName => "NouhinBookPrint.qfm";
 
 	[ObservableProperty]
 	public partial string DenDayFrom { get; set; } = DateTime.Today.ToString("yyyy/MM/dd");

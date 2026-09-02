@@ -38,7 +38,7 @@ public partial class NouhinBookPrintViewModel : Helpers.BaseReportViewModel {
 			ClientLib.Cursor2Wait();
 			var targets = await FetchTargetsAsync(from, to, ct);
 			if (targets.Count == 0) {
-				Message = "対象の伝票がありません";
+				Message = "指定した条件に一致する伝票がありません。売上日・得意先・伝票NO・取引区分と「未発行のみ」の指定を確認してください。";
 				MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
 				return;
 			}
@@ -103,7 +103,10 @@ public partial class NouhinBookPrintViewModel : Helpers.BaseReportViewModel {
 		var reply = await AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(new CvMsg {
 			Code = 0, Flag = CvFlag.Msg101_Op_Query, DataType = typeof(QueryListParam), DataMsg = Common.SerializeObject(param),
 		}, AppGlobal.GetDefaultCallContext(ct));
-		if (reply.Code < 0) throw new InvalidOperationException(reply.DataMsg);
+		// 0件は NotFound(-1) として返る。障害と区別せず投げると DataMsg の "[]" が
+		// そのままエラーメッセージになるため、0件は空リストとして呼び元へ返す。
+		if (reply.Code == CvMsgErrorCode.NotFound) return [];
+		if (reply.Code < 0) throw new InvalidOperationException(string.IsNullOrEmpty(reply.Option) ? reply.DataMsg : reply.Option);
 		return JsonConvert.DeserializeObject<List<Tran00Uriage>>(reply.DataMsg) ?? [];
 	}
 
@@ -132,23 +135,26 @@ tax_rates AS (
     GROUP BY h.Id
 )
 SELECT
-  {TranMeisaiSql.HeaderCode("VTokui")}, {TranMeisaiSql.HeaderName("VTokui")}, {TranMeisaiSql.HeaderCode("VTokui")}, cast(h.Id as text), {TranMeisaiSql.Num("No")},
-  h.DenDay, h.KakeDay, h.DenDay, h.Rate, {TranMeisaiSql.HeaderCode("VShain")}, {TranMeisaiSql.HeaderName("VShain")}, '', {TranMeisaiSql.HeaderName("VShain")},
-  h.CalcFlag*h.SuTotal, h.CalcFlag*h.KingakuTotal, h.CalcFlag*h.JodaiTotal, h.CalcFlag*(h.Tax1+h.Tax2+h.Tax3), h.CalcFlag*CASE WHEN h.Total!=0 THEN h.Total ELSE h.KingakuTotal+h.Tax1+h.Tax2+h.Tax3 END, ifnull(h.Memo,''),
-  {TranMeisaiSql.Str("Code_Shohin")}, {TranMeisaiSql.Str("Mei_Shohin")}, {TranMeisaiSql.Str("Code_Col")}, {TranMeisaiSql.Str("Mei_Col")}, {TranMeisaiSql.Str("Code_Siz")}, {TranMeisaiSql.Str("Mei_Siz")},
-  h.CalcFlag*{TranMeisaiSql.Num("Su")}, {TranMeisaiSql.Num("Tanka")}, h.CalcFlag*{TranMeisaiSql.Num("Kingaku")}, {TranMeisaiSql.Num("Jodai")}, h.CalcFlag*{TranMeisaiSql.Num("Su")}*{TranMeisaiSql.Num("Jodai")}, {TranMeisaiSql.Num("No")}, '', '', '', '',
-  ifnull(sys.Name,''), ifnull(sys.PostalCode,''), trim(ifnull(sys.Address1,'') || ifnull(sys.Address2,'') || ifnull(sys.Address3,'')), ifnull(sys.Tel,''), '',
-  CASE WHEN h.Kubun BETWEEN 20 AND 39 THEN '適格返還請求書' ELSE '納品伝票' END, ifnull(sys.TaxRegistrationNumber,''),
-  CASE WHEN {taxable10} != 0 THEN '10%対象' ELSE '' END, abs({taxable10}), ifnull(tokui.PostalCode,''), abs({tax10}),
-  CASE WHEN {taxable8} != 0 THEN '8%対象 *' ELSE '' END, abs({taxable8}), ifnull(tokui.Tel,''), '', trim(ifnull(tokui.Address1,'') || ifnull(tokui.Address2,'') || ifnull(tokui.Address3,'')), abs({tax8}),
-  {TranMeisaiSql.HeaderName("VSoko")}, ifnull(soko.PostalCode,''), trim(ifnull(soko.Address1,'') || ifnull(soko.Address2,'') || ifnull(soko.Address3,'')), ifnull(soko.Tel,''), '',
-  CASE WHEN abs(h.KingakuTotal)-abs({taxable10})-abs({taxable8}) != 0 THEN '非課税' ELSE '' END, {kubunLabel}, ifnull(h.ManualNo,''), abs(h.KingakuTotal)-abs({taxable10})-abs({taxable8}), '※は軽減税率対象商品',
-  {TranMeisaiSql.Num("TaxRate")}, {TranMeisaiSql.Num("Jodai")}, {TranMeisaiSql.Num("No")}, 0
+  /* RawExecCmd は SELECT 列名を Dictionary キーにするため、全列に一意な item 別名を付ける。
+     別名が無いと '' や h.DenDay のような重複式でキー衝突し、行の材料化が ArgumentException で失敗する。
+     item 番号は NouhinBookPrint.qfm の datarecord item1..item66 と 1:1 で対応させる。 */
+  {TranMeisaiSql.HeaderCode("VTokui")} AS item1, {TranMeisaiSql.HeaderName("VTokui")} AS item2, {TranMeisaiSql.HeaderCode("VTokui")} AS item3, cast(h.Id as text) AS item4, {TranMeisaiSql.Num("No")} AS item5,
+  h.DenDay AS item6, h.KakeDay AS item7, h.DenDay AS item8, h.Rate AS item9, {TranMeisaiSql.HeaderCode("VShain")} AS item10, {TranMeisaiSql.HeaderName("VShain")} AS item11, '' AS item12, {TranMeisaiSql.HeaderName("VShain")} AS item13,
+  h.CalcFlag*h.SuTotal AS item14, h.CalcFlag*h.KingakuTotal AS item15, h.CalcFlag*h.JodaiTotal AS item16, h.CalcFlag*(h.Tax1+h.Tax2+h.Tax3) AS item17, h.CalcFlag*CASE WHEN h.Total!=0 THEN h.Total ELSE h.KingakuTotal+h.Tax1+h.Tax2+h.Tax3 END AS item18, ifnull(h.Memo,'') AS item19,
+  {TranMeisaiSql.Str("Code_Shohin")} AS item20, {TranMeisaiSql.Str("Mei_Shohin")} AS item21, {TranMeisaiSql.Str("Code_Col")} AS item22, {TranMeisaiSql.Str("Mei_Col")} AS item23, {TranMeisaiSql.Str("Code_Siz")} AS item24, {TranMeisaiSql.Str("Mei_Siz")} AS item25,
+  h.CalcFlag*{TranMeisaiSql.Num("Su")} AS item26, {TranMeisaiSql.Num("Tanka")} AS item27, h.CalcFlag*{TranMeisaiSql.Num("Kingaku")} AS item28, {TranMeisaiSql.Num("Jodai")} AS item29, h.CalcFlag*{TranMeisaiSql.Num("Su")}*{TranMeisaiSql.Num("Jodai")} AS item30, {TranMeisaiSql.Num("No")} AS item31, '' AS item32, '' AS item33, '' AS item34, '' AS item35,
+  ifnull(sys.Name,'') AS item36, ifnull(sys.PostalCode,'') AS item37, trim(ifnull(sys.Address1,'') || ifnull(sys.Address2,'') || ifnull(sys.Address3,'')) AS item38, ifnull(sys.Tel,'') AS item39, '' AS item40,
+  CASE WHEN h.Kubun BETWEEN 20 AND 39 THEN '適格返還請求書' ELSE '納品伝票' END AS item41, ifnull(sys.TaxRegistrationNumber,'') AS item42,
+  CASE WHEN {taxable10} != 0 THEN '10%対象' ELSE '' END AS item43, abs({taxable10}) AS item44, ifnull(tokui.PostalCode,'') AS item45, abs({tax10}) AS item46,
+  CASE WHEN {taxable8} != 0 THEN '8%対象 *' ELSE '' END AS item47, abs({taxable8}) AS item48, ifnull(tokui.Tel,'') AS item49, '' AS item50, trim(ifnull(tokui.Address1,'') || ifnull(tokui.Address2,'') || ifnull(tokui.Address3,'')) AS item51, abs({tax8}) AS item52,
+  {TranMeisaiSql.HeaderName("VSoko")} AS item53, ifnull(soko.PostalCode,'') AS item54, trim(ifnull(soko.Address1,'') || ifnull(soko.Address2,'') || ifnull(soko.Address3,'')) AS item55, ifnull(soko.Tel,'') AS item56, '' AS item57,
+  CASE WHEN abs(h.KingakuTotal)-abs({taxable10})-abs({taxable8}) != 0 THEN '非課税' ELSE '' END AS item58, {kubunLabel} AS item59, ifnull(h.ManualNo,'') AS item60, abs(h.KingakuTotal)-abs({taxable10})-abs({taxable8}) AS item61, '※は軽減税率対象商品' AS item62,
+  {TranMeisaiSql.Num("TaxRate")} AS item63, {TranMeisaiSql.Num("Jodai")} AS item64, {TranMeisaiSql.Num("No")} AS item65, 0 AS item66
 FROM Tran00Uriage h
 JOIN selected x ON x.Id=h.Id
 JOIN tax_rates tr ON tr.Id=h.Id
 JOIN json_each(CASE WHEN json_valid(h.Jmeisai) THEN h.Jmeisai ELSE '[]' END) m
-LEFT JOIN MasterSysman sys ON 1=1
+LEFT JOIN MasterSysman sys ON sys.Id = 1
 LEFT JOIN MasterTokui tokui ON tokui.Id=h.Id_Tokui
 LEFT JOIN MasterTokui soko ON soko.Id=h.Id_Soko
 ORDER BY h.Id, {TranMeisaiSql.Num("No")}";
