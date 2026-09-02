@@ -148,6 +148,8 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		if (newValue == null) return;
 		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
 		ApplyMeisaiFromCurrentEdit();
+		// ここは同期メソッドのため税率キャッシュの充填を await できない。キャッシュが空だと
+		// 税額 0 の暫定値になるが、直後の RecalcAllMeisaiTaxAsync が正しい値へ書き直す。
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
 
@@ -162,10 +164,9 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran13Hachu.Tax1) or nameof(Tran13Hachu.Tax2)
-			or nameof(Tran13Hachu.Tax3) or nameof(Tran13Hachu.Kubun)) {
+		// Tax1/2/3 は UpdateHeaderTotals の出力であって入力ではない。監視すると自己再入になるため含めない。
+		if (e.PropertyName is nameof(Tran13Hachu.Kubun) or nameof(Tran13Hachu.TaxRounding)) {
 			UpdateHeaderTotals();
-			OnPropertyChanged(nameof(TaxTotal));
 		}
 		else if (e.PropertyName == nameof(Tran13Hachu.DenDay)) {
 			RecalcNouhinDay();
@@ -198,6 +199,7 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		CurrentEdit.Tax2 = totals.Tax2;
 		CurrentEdit.Tax3 = totals.Tax3;
 		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
+		OnPropertyChanged(nameof(TaxTotal));
 	}
 
 	/// <summary>Tax1+Tax2+Tax3。Tax は分割済みで存在しないため、XAMLの消費税欄表示はこちらを使う。</summary>
@@ -362,7 +364,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	protected override Tran99Meisai CreateNewMeisai(int no) => new() { No = no, Kubun = ProperMeisaiKubun };
 
 	[RelayCommand]
-	void DoInputBarcode() {
+	async Task DoInputBarcode() {
 		var win = new Views.Sub.InputBarcodeView();
 		if (win.DataContext is not InputBarcodeViewModel vm) return;
 		// 上代一括変更の適用価格を引くための対象軸（発注は得意先が特定できないので本部売上用の全件行・伝票日付）
@@ -371,10 +373,10 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		vm.JodaiDay = CurrentEdit.DenDay;
 		if (ClientLib.ShowDialogView(win, this) != true) return;
 
-		ApplyBarcodeMeisai(vm.CreateMeisaiRows(ProperMeisaiKubun));
+		await ApplyBarcodeMeisai(vm.CreateMeisaiRows(ProperMeisaiKubun));
 	}
 
-	void ApplyBarcodeMeisai(IEnumerable<Tran99Meisai> rows) {
+	async Task ApplyBarcodeMeisai(IEnumerable<Tran99Meisai> rows) {
 		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;
 		foreach (var row in rows) {
 			var existing = EditMeisai.FirstOrDefault(m =>
@@ -393,11 +395,14 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 			EditMeisai.Add(row);
 			SelectedMeisai = row;
 		}
-		UpdateTotals();
+		// InputBarcodeRow.ToMeisai は Id_Tax を持たず、値を詰めてから購読を張るため
+		// OnMeisaiPropertyChanged 経由の税区分解決にも乗らない。ここで全行を引き直す
+		// （数量を加算しただけの既存行も同じ1回で正しくなる）。内部で UpdateTotals まで行う。
+		await RecalcAllMeisaiTaxAsync();
 	}
 
 	[RelayCommand]
-	void DoInputShohinColSiz() {
+	async Task DoInputShohinColSiz() {
 		if (SelectedMeisai == null) {
 			MessageEx.ShowWarningDialog("明細行を選択してください", owner: ClientLib.GetActiveView(this));
 			return;
@@ -412,10 +417,10 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		vm.SetParam(SelectedMeisai.Id_Shohin);
 		if (ClientLib.ShowDialogView(win, this) != true) return;
 
-		ApplyShohinColSizMeisai(vm.GetResults());
+		await ApplyShohinColSizMeisai(vm.GetResults());
 	}
 
-	void ApplyShohinColSizMeisai(IEnumerable<InputShohinColSizRow> rows) {
+	async Task ApplyShohinColSizMeisai(IEnumerable<InputShohinColSizRow> rows) {
 		var results = rows.ToList();
 		if (results.Count == 0) return;
 
@@ -424,8 +429,8 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		var firstTarget = SelectedMeisai;
 
 		if (firstTarget != null && firstTarget.Id_Col == 0 && firstTarget.Id_Siz == 0) {
+			// firstTarget は EditMeisai の既存要素であり購読済み。ここで足すと二重購読になる
 			FillMeisaiFromColSizRow(firstTarget, firstResult);
-			firstTarget.PropertyChanged += OnMeisaiPropertyChanged;
 			SelectedMeisai = firstTarget;
 			results = results.Skip(1).ToList();
 		}
@@ -447,7 +452,9 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 			SelectedMeisai = row;
 		}
 
-		UpdateTotals();
+		// 展開行は Id_Tax を持たず、Su/Kingaku も購読を張る前に確定するため税区分解決に乗らない。
+		// ここで全行を引き直す。内部で UpdateTotals まで行う。
+		await RecalcAllMeisaiTaxAsync();
 	}
 
 	static void FillMeisaiFromColSizRow(Tran99Meisai meisai, InputShohinColSizRow row) {
@@ -474,6 +481,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		if (fullShiire == null) {
 			// 仕入先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
 			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
+			UpdateHeaderTotals();
 			return;
 		}
 		shiireLeadTimeDays = fullShiire.LeadTimeDays;
@@ -482,6 +490,9 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		// (Doc/spec/2026-09-01 2.2)。既存伝票の読込時は上書きしない(このコマンドは仕入先を選び直したときにしか呼ばれない)。
 		CurrentEdit.TaxRounding = fullShiire.TaxRounding;
 		RecalcNouhinDay();
+		// 端数処理が変われば税額が変わる。差し替え後の値がたまたま同値だと
+		// PropertyChanged が出ずヘッダが古いままになるため、ここで明示的に引き直す。
+		UpdateHeaderTotals();
 	}
 
 	[RelayCommand]
@@ -501,7 +512,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	[RelayCommand]
-	void DoSelectShohin(Tran99Meisai? meisai) {
+	async Task DoSelectShohin(Tran99Meisai? meisai) {
 		if (meisai != null) SelectedMeisai = meisai;
 		if (SelectedMeisai == null) return;
 		var shohin = ShowShohinSelectDialog();
@@ -519,6 +530,8 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		SelectedMeisai.Tanka = shohin.TankaGenka;
 		SelectedMeisai.Jodai = shohin.TankaJodai;
 		SelectedMeisai.Gedai = shohin.TankaGenka;
+		// 同じ商品を選び直すと Id_Shohin が同値で PropertyChanged が出ないため、明示的に引き直す
+		await RecalcMeisaiTaxAsync(SelectedMeisai, updateTotals: true);
 	}
 
 	MasterShohin? ShowShohinSelectDialog() {

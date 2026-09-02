@@ -106,16 +106,18 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 		if (newValue == null) return;
 		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
 		ApplyMeisaiFromCurrentEdit();
+		// ここは同期メソッドのため税率キャッシュの充填を await できない。キャッシュが空だと
+		// 税額 0 の暫定値になるが、直後の RecalcAllMeisaiTaxAsync が正しい値へ書き直す。
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
 		_ = RecalcAllMeisaiTaxAsync();
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran02Material.Tax1) or nameof(Tran02Material.Tax2)
-			or nameof(Tran02Material.Tax3) or nameof(Tran02Material.Kubun)) {
+		// Tax1/2/3 は UpdateHeaderTotals の出力であって入力ではない。監視すると自己再入になるため含めない。
+		if (e.PropertyName is nameof(Tran02Material.Kubun)
+			or nameof(Tran02Material.TaxCalcUnit) or nameof(Tran02Material.TaxRounding)) {
 			UpdateHeaderTotals();
-			OnPropertyChanged(nameof(TaxTotal));
 		}
 		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
 		else if (e.PropertyName is nameof(Tran02Material.DenDay)) {
@@ -135,6 +137,7 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 		CurrentEdit.Tax2 = totals.Tax2;
 		CurrentEdit.Tax3 = totals.Tax3;
 		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
+		OnPropertyChanged(nameof(TaxTotal));
 	}
 
 	/// <summary>Tax1+Tax2+Tax3。Tax は分割済みで存在しないため、XAMLの消費税欄表示はこちらを使う。</summary>
@@ -396,6 +399,9 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 			// 仕入先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
 			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
 		}
+		// 税計算単位・端数処理が変われば税額が変わる。差し替え後の値がたまたま同値だと
+		// PropertyChanged が出ずヘッダが古いままになるため、ここで明示的に引き直す。
+		UpdateHeaderTotals();
 	}
 
 	[RelayCommand]
@@ -407,7 +413,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	[RelayCommand]
-	void DoSelectMaterial(Tran99MaterialMeisai? meisai) {
+	async Task DoSelectMaterial(Tran99MaterialMeisai? meisai) {
 		if (meisai != null) SelectedMeisai = meisai;
 		if (SelectedMeisai == null) return;
 		var material = ShowSelectDialog<MasterMaterial>(typeof(MasterMaterial), "", "Code", startPos: SelectedMeisai.Id_Material);
@@ -417,6 +423,8 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		SelectedMeisai.Mei_Material = material.Name ?? "";
 		SelectedMeisai.Tanka = material.TankaShiire;
 		SelectedMeisai.Kingaku = SelectedMeisai.Su * SelectedMeisai.Tanka;
+		// 同じ生地・付属を選び直すと Id_Material が同値で PropertyChanged が出ないため、明示的に引き直す
+		await RecalcMeisaiTaxAsync(SelectedMeisai, updateTotals: true);
 	}
 
 	protected override string GetInsertConfirmMessage() => $"追加しますか？ (生地・付属仕入No={CurrentEdit.Id})";
