@@ -12,6 +12,12 @@ public enum SchedulerTaskType {
 	LogOnly = 1,
 	[EnumMember]
 	RunSummary = 2,
+	[EnumMember]
+	MasterShohinMeishoRebuild = 3,
+	[EnumMember]
+	MasterVColumnResync = 4,
+	[EnumMember]
+	TranTaxRebuild = 5,
 }
 
 /// <summary>
@@ -66,6 +72,15 @@ public sealed record class SchedulerTaskInfo {
 	public DateTime? NextOccurrence { get; set; }
 	[DataMember(Order = 5)]
 	public bool IsSystemTask { get; set; }
+	/// <summary>実行する/しないフラグ</summary>
+	[DataMember(Order = 6)]
+	public bool IsEnabled { get; set; } = true;
+	/// <summary>起動間隔の下限チェック対象かどうか</summary>
+	[DataMember(Order = 7)]
+	public bool CheckMinInterval { get; set; }
+	/// <summary>起動間隔の下限（分）。0はチェックなし</summary>
+	[DataMember(Order = 8)]
+	public int MinIntervalMinutes { get; set; }
 }
 
 /// <summary>
@@ -95,6 +110,18 @@ public sealed record class UpdateSchedulerTaskRequest {
 }
 
 
+/// <summary>
+/// スケジュールタスクの実行フラグ設定要求
+/// [Request for enabling/disabling a scheduled task]
+/// </summary>
+[DataContract]
+public sealed record class SetSchedulerTaskEnabledRequest {
+	[DataMember(Order = 1)]
+	public string TaskId { get; set; } = string.Empty;
+	[DataMember(Order = 2)]
+	public bool IsEnabled { get; set; }
+}
+
 [ServiceContract]
 public interface ISchedulerService {
 	[OperationContract]
@@ -111,4 +138,8 @@ public interface ISchedulerService {
 
 	[OperationContract]
 	Task<SchedulerResult> UpdateTaskAsync(UpdateSchedulerTaskRequest request, CallContext context = default);
+
+	/// <summary>スケジュールタスクの実行する/しないフラグを設定する。</summary>
+	[OperationContract]
+	Task<SchedulerResult> SetTaskEnabledAsync(SetSchedulerTaskEnabledRequest request, CallContext context = default);
 }

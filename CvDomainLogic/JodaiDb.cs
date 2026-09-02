@@ -118,7 +118,7 @@ SELECT sh.Id AS Id, {DerivedJodai.FinalJodaiSql("sh.Id", "@0", "@1", "@2", "sh")
 	}
 
 	/// <summary>適用上代の保持日数を設定する <see cref="MasterConfig"/> のフラグ名。</summary>
-	public const string ConfigKeepDaysName = "JodaiKeepDays";
+	public const string ConfigKeepDaysName = MasterConfig.NameJodaiKeepDays;
 
 	/// <summary>保持日数の既定値（日）。</summary>
 	public const int DefaultKeepDays = 90;

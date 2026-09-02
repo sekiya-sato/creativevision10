@@ -13,9 +13,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NCrontab;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Tests.CvServer;
@@ -315,6 +317,89 @@ public class CoreServiceTests {
 
 		var next = scheduledTask!.CrontabSchedule.GetNextOccurrence(new DateTime(2026, 5, 23, 1, 0, 0));
 		Assert.AreEqual(new DateTime(2026, 5, 23, 1, 10, 0), next);
+	}
+
+	/// <summary>
+	/// 自動実行フラグ改修: SchedulerService.CalculateMinIntervalMinutes がcron式ごとの最小発生間隔(分)を正しく算出すること
+	/// </summary>
+	[TestMethod]
+	public void CalculateMinIntervalMinutes_ReturnsMinimumIntervalMinutesForVariousCronExpressions() {
+		// 毎日1回 → 1440分
+		Assert.AreEqual(1440, SchedulerService.CalculateMinIntervalMinutes(CrontabSchedule.Parse("0 3 * * *")));
+		// 毎時 → 60分
+		Assert.AreEqual(60, SchedulerService.CalculateMinIntervalMinutes(CrontabSchedule.Parse("0 * * * *")));
+		// 30分毎 → 30分(下限60分未満)
+		Assert.AreEqual(30, SchedulerService.CalculateMinIntervalMinutes(CrontabSchedule.Parse("*/30 * * * *")));
+		// 既存のワークファイル削除ジョブ(1日2回) → 720分(60分以上)
+		Assert.AreEqual(720, SchedulerService.CalculateMinIntervalMinutes(CrontabSchedule.Parse("30 0,12 * * *")));
+	}
+
+	/// <summary>
+	/// 自動実行フラグ改修: SystemJobDefinitions が7件で、TaskId・JobKeyが全件ユニークであること
+	/// </summary>
+	[TestMethod]
+	public void SystemJobDefinitions_HasSevenUniqueEntries() {
+		var defs = SchedulerService.SystemJobDefinitions;
+
+		Assert.AreEqual(7, defs.Count);
+		Assert.AreEqual(defs.Count, defs.Select(d => d.TaskId).Distinct().Count(), "TaskIdが重複している");
+		Assert.AreEqual(defs.Count, defs.Select(d => d.JobKey).Distinct().Count(), "JobKeyが重複している");
+	}
+
+	/// <summary>
+	/// 自動実行フラグ改修: 新規3ジョブ(商品名称再構築/V*列再同期/伝票税額再更新)は既定で実行フラグOFFかつ起動間隔チェック対象であること
+	/// </summary>
+	[TestMethod]
+	public void SystemJobDefinitions_NewHeavyJobsAreDefaultDisabledWithMinIntervalCheck() {
+		var defs = SchedulerService.SystemJobDefinitions;
+		var newJobKeys = new[] {
+			SchedulerService.JobKeyMasterShohinMeishoRebuild,
+			SchedulerService.JobKeyMasterVColumnResync,
+			SchedulerService.JobKeyTranTaxRebuild,
+		};
+
+		foreach (var jobKey in newJobKeys) {
+			var def = defs.Single(d => d.JobKey == jobKey);
+			Assert.IsFalse(def.DefaultEnabled, $"{jobKey} は既定で実行フラグOFFであること");
+			Assert.IsTrue(def.CheckMinInterval, $"{jobKey} は起動間隔チェック対象であること");
+		}
+	}
+
+	/// <summary>
+	/// 自動実行フラグ改修: 既存4ジョブは既定で実行フラグONかつ起動間隔チェック対象外であること
+	/// </summary>
+	[TestMethod]
+	public void SystemJobDefinitions_ExistingJobsAreDefaultEnabledWithoutMinIntervalCheck() {
+		var defs = SchedulerService.SystemJobDefinitions;
+		var existingJobKeys = new[] {
+			SchedulerService.JobKeyWalCheckpoint,
+			SchedulerService.JobKeyWorkFileCleanup,
+			SchedulerService.JobKeyMonthlyResummary,
+			SchedulerService.JobKeyJodaiPurge,
+		};
+
+		foreach (var jobKey in existingJobKeys) {
+			var def = defs.Single(d => d.JobKey == jobKey);
+			Assert.IsTrue(def.DefaultEnabled, $"{jobKey} は既定で実行フラグONであること");
+			Assert.IsFalse(def.CheckMinInterval, $"{jobKey} は起動間隔チェック対象外であること");
+		}
+	}
+
+	/// <summary>
+	/// 自動実行フラグ改修の要: 起動間隔チェック対象(CheckMinInterval=true)の全ジョブについて、
+	/// 既定cron式の最小発生間隔が下限(SchedulerService.MinIntervalMinutes)を満たしていること
+	/// </summary>
+	[TestMethod]
+	public void SystemJobDefinitions_CheckMinIntervalJobsSatisfyMinimumIntervalThreshold() {
+		var defs = SchedulerService.SystemJobDefinitions.Where(d => d.CheckMinInterval);
+
+		foreach (var def in defs) {
+			var schedule = CrontabSchedule.Parse(def.DefaultCronExpression);
+			var minutes = SchedulerService.CalculateMinIntervalMinutes(schedule);
+			Assert.IsTrue(
+				minutes == null || minutes.Value >= SchedulerService.MinIntervalMinutes,
+				$"{def.JobKey} の既定cron式({def.DefaultCronExpression})の最小間隔({minutes}分)が下限({SchedulerService.MinIntervalMinutes}分)を下回っている");
+		}
 	}
 
 	[TestMethod]

@@ -205,6 +205,9 @@ app.Lifetime.ApplicationStarted.Register(() => {
 		schedulerService.RegisterWorkFileCleanupTask();
 		schedulerService.RegisterMonthlyResummaryTask();
 		schedulerService.RegisterJodaiPurgeTask();
+		schedulerService.RegisterMasterShohinMeishoRebuildTask();
+		schedulerService.RegisterMasterVColumnResyncTask();
+		schedulerService.RegisterTranTaxRebuildTask();
 	}
 	catch (Exception ex) {
 		logger.LogError(ex, "スケジューラ定期実行登録中に例外が発生しました。");

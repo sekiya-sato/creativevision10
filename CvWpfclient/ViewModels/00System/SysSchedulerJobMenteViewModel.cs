@@ -179,6 +179,59 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 		}
 	}
 
+	/// <summary>
+	/// 選択したジョブの実行する/しないフラグを切り替える。
+	/// 実行フラグの変更は必ず確認メッセージを出してからサーバーへ反映する。
+	/// </summary>
+	[RelayCommand]
+	private async Task ToggleTaskEnabledAsync() {
+		if (SelectedTask == null) {
+			MessageEx.ShowWarningDialog("実行する/しないを切り替えるジョブを選択してください", owner: Helpers.ClientLib.GetActiveView(this));
+			return;
+		}
+
+		var next = !SelectedTask.IsEnabled;
+
+		string confirmMessage;
+		if (next) {
+			confirmMessage = $"'{SelectedTask.TaskName}' を【実行する】に変更します。\n設定した起動時間で自動実行されるようになります。\n変更しますか？";
+			if (SelectedTask.CheckMinInterval) {
+				confirmMessage += $"\nこのジョブは負荷の高い処理です。起動間隔は{SelectedTask.MinIntervalMinutes}分以上必要です。";
+			}
+		}
+		else {
+			confirmMessage = $"'{SelectedTask.TaskName}' を【実行しない】に変更します。\nスケジュール時刻になっても実行されなくなります。\n変更しますか？";
+		}
+
+		var confirm = MessageEx.ShowQuestionDialog(confirmMessage, owner: Helpers.ClientLib.GetActiveView(this));
+		if (confirm != MessageBoxResult.Yes) return;
+
+		var request = new SetSchedulerTaskEnabledRequest {
+			TaskId = SelectedTask.TaskId,
+			IsEnabled = next,
+		};
+
+		IsBusy = true;
+		Message = "実行フラグを変更中...";
+		try {
+			var result = await _schedulerClient.SetTaskEnabledAsync(request, AppGlobal.GetDefaultCallContext());
+			if (result.Result != 0) {
+				Message = $"実行フラグ変更エラー: {result.Detail}";
+				MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
+				return;
+			}
+			Message = $"実行フラグを変更しました: {SelectedTask.TaskName} → {(next ? "実行する" : "実行しない")}";
+			await LoadTasksAsync(CancellationToken.None);
+		}
+		catch (Exception ex) {
+			Message = $"変更失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
+		}
+		finally {
+			IsBusy = false;
+		}
+	}
+
 	[RelayCommand]
 	private async Task AddTaskAsync() {
 		var dialog = new Views._00System.SysSchedulerCronEditView();

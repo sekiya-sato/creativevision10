@@ -924,6 +924,36 @@ public sealed partial class MasterMaterial : BaseDbClass, IBaseCodeName {
 [Comment("マスター：設定フラグテーブル name と val の組で設定情報を表す")]
 [OldTableCommentAttr("HC$MASTER_CONFIG")]
 public sealed partial class MasterConfig : BaseDbClass {
+	/// <summary>
+	/// システム共通設定のカテゴリ
+	/// </summary>
+	[Comment("システム共通設定のカテゴリ")]
+	public const string CategorySystem = "System";
+	/// <summary>
+	/// 自動実行ジョブ(スケジューラ)設定のカテゴリ
+	/// </summary>
+	[Comment("自動実行ジョブ(スケジューラ)設定のカテゴリ")]
+	public const string CategoryScheduler = "Scheduler";
+	/// <summary>
+	/// 適用上代(DerivedJodai)の保持日数
+	/// </summary>
+	[Comment("適用上代(DerivedJodai)の保持日数")]
+	public const string NameJodaiKeepDays = "JodaiKeepDays";
+	/// <summary>
+	/// 自動実行ジョブ設定名の接頭辞（Name は "Job.{jobKey}.Enabled" の形になる）
+	/// </summary>
+	[Comment("自動実行ジョブ設定名の接頭辞")]
+	public const string NameSchedulerJobPrefix = "Job.";
+	/// <summary>
+	/// 自動実行ジョブの実行フラグ設定名の接尾辞
+	/// </summary>
+	[Comment("自動実行ジョブの実行フラグ設定名の接尾辞")]
+	public const string NameSchedulerEnabledSuffix = ".Enabled";
+	/// <summary>
+	/// 自動実行ジョブの cron式設定名の接尾辞
+	/// </summary>
+	[Comment("自動実行ジョブの cron式設定名の接尾辞")]
+	public const string NameSchedulerCronSuffix = ".Cron";
 	[ObservableProperty]
 	[OldTableCommentAttr("カテゴリ")]
 	[Comment("カテゴリ 設定値をグループ分けする区分")]
@@ -951,7 +981,7 @@ public sealed partial class MasterConfig : BaseDbClass {
 	/// <returns></returns>
 	public static List<MasterConfig> CreateDefaultData(ExDatabase db) {
 		var initData = new List<MasterConfig>() {
-			new MasterConfig { Category = "System", Name = "JodaiKeepDays", Val = "90", Example = "30,60,90", Memo = "上代保持日数" }
+			new MasterConfig { Category = CategorySystem, Name = NameJodaiKeepDays, Val = "90", Example = "30,60,90", Memo = "上代保持日数" }
 		};
 		var tableCnt = db.GetTableCounts(nameof(MasterConfig));
 		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {

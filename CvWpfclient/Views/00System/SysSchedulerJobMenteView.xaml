@@ -86,6 +86,10 @@
 				Content="起動時間変更"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
 			<Button Margin="20,0,8,0"
+				Command="{Binding ToggleTaskEnabledCommand}"
+				Content="実行する/しない 切替"
+				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
+			<Button Margin="20,0,8,0"
 				Background="{DynamicResource MaterialDesignValidationErrorBrush}"
 				Command="{Binding DeleteTaskCommand}"
 				Content="削除"
@@ -138,6 +142,9 @@
 						<DataGridTextColumn Width="500"
 							Binding="{Binding TaskName}"
 							Header="タスク名" />
+						<DataGridCheckBoxColumn Width="70"
+							Binding="{Binding IsEnabled}"
+							Header="実行" />
 						<DataGridTextColumn Width="190"
 							Binding="{Binding CronExpression}"
 							Header="Cron式" />
