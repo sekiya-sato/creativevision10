@@ -166,7 +166,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	[ObservableProperty]
 	public partial ObservableCollection<MasterGeneralMeisho> EditJsub { get; set; } = [];
 
-	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"B{i:D2}"));
+	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"{MasterMeisho.KubunTopShohin}{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
 
 	/// <summary>
@@ -262,7 +262,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 		if (KubunList.Count > 0) return;
 		try {
 			ClientLib.Cursor2Wait();
-			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunIndex}' and Code between 'B01' and 'B10'", "Code");
+			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunIndex}' and Code between '{MasterMeisho.KubunTopShohin}01' and '{MasterMeisho.KubunTopShohin}10'", "Code");
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,

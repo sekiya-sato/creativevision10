@@ -92,7 +92,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD05")]
-	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: 'E')]
+	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: MasterMeisho.KubunTopShain)]
 	[Comment("名称リスト")]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
@@ -239,7 +239,7 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	[ObservableProperty]
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
-	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: 'K')]
+	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: MasterMeisho.KubunTopEndCustomer)]
 	[Comment("名称リスト")]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
@@ -663,7 +663,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
-	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: 'B')]
+	[ForeignKey(nameof(MasterMeisho), meishoListKubunTop: MasterMeisho.KubunTopShohin)]
 	[Comment("名称リスト")]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>

@@ -34,7 +34,7 @@ public partial class MasterShiireMenteViewModel : Helpers.BaseCodeNameLightMente
 	[ObservableProperty]
 	public partial ObservableCollection<MasterGeneralMeisho> EditJsub { get; set; } = [];
 
-	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"D{i:D2}"));
+	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 10).Select(i => $"{MasterMeisho.KubunTopShiire}{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
 
 	protected override QueryListSqlParam? PrintBySqlParam {

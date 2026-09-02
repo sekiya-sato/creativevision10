@@ -279,7 +279,7 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
-	[ForeignKey(nameof(MasterGeneralMeisho), meishoListKubunTop: 'C')]
+	[ForeignKey(nameof(MasterGeneralMeisho), meishoListKubunTop: MasterMeisho.KubunTopTokui)]
 	[Comment("名称リスト")]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>
@@ -326,7 +326,7 @@ public sealed partial class MasterShiire : MasterTorihiki {
 	[SerializedColumn]
 	[ColumnSizeDml(1000)]
 	[OldTableCommentAttr("名称CD01 - 名称CD10")]
-	[ForeignKey(nameof(MasterGeneralMeisho), meishoListKubunTop: 'D')]
+	[ForeignKey(nameof(MasterGeneralMeisho), meishoListKubunTop: MasterMeisho.KubunTopShiire)]
 	[Comment("名称リスト")]
 	public partial List<MasterGeneralMeisho>? Jsub { get; set; }
 	/// <summary>

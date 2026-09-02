@@ -215,6 +215,21 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// <summary>入金/支払方法区分</summary>
 	[Comment("入金/支払方法区分")]
 	public const string KubunKin = "KIN";
+	/// <summary>商品マスター Jsub(名称リスト)の区分先頭文字(Kb='B01'～'B10')</summary>
+	[Comment("商品マスター 名称区分先頭文字")]
+	public const char KubunTopShohin = 'B';
+	/// <summary>得意先マスター Jsub(名称リスト)の区分先頭文字(Kb='C01'～'C10')</summary>
+	[Comment("得意先マスター 名称区分先頭文字")]
+	public const char KubunTopTokui = 'C';
+	/// <summary>仕入先マスター Jsub(名称リスト)の区分先頭文字(Kb='D01'～'D10')</summary>
+	[Comment("仕入先マスター 名称区分先頭文字")]
+	public const char KubunTopShiire = 'D';
+	/// <summary>社員マスター Jsub(名称リスト)の区分先頭文字(Kb='E01'～'E05')</summary>
+	[Comment("社員マスター 名称区分先頭文字")]
+	public const char KubunTopShain = 'E';
+	/// <summary>エンドカスタマーマスター Jsub(名称リスト)の区分先頭文字(Kb='K01'～'K10')</summary>
+	[Comment("エンドカスタマーマスター 名称区分先頭文字")]
+	public const char KubunTopEndCustomer = 'K';
 	/// <summary>
 	/// 区分
 	/// </summary>

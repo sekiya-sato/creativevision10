@@ -20,9 +20,7 @@ public partial class MasterShainMenteViewModel : Helpers.BaseCodeNameLightMenteV
 	[ObservableProperty]
 	public partial ObservableCollection<MasterGeneralMeisho> EditJsub { get; set; } = [];
 
-	public ObservableCollection<string> KubunOptions { get; } = new([
-		"E01", "E02", "E03", "E04", "E05"
-	]);
+	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 5).Select(i => $"{MasterMeisho.KubunTopShain}{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
 
 	protected override string[] AdditionalLightweightColumns => ["Mail", "ExpireDate", "VTenpo", "VBumon"];
@@ -98,7 +96,7 @@ from MasterShain M {query.AddWhereOrder()}
 		if (KubunList.Count > 0) return;
 		try {
 			ClientLib.Cursor2Wait();
-			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunIndex}' and Code between 'E01' and 'E05'", "Code");
+			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunIndex}' and Code between '{MasterMeisho.KubunTopShain}01' and '{MasterMeisho.KubunTopShain}05'", "Code");
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
