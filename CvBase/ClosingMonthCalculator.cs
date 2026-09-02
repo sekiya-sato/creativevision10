@@ -68,6 +68,16 @@ public static class ClosingMonthCalculator {
 		}
 	}
 
+	/// <summary>
+	/// 指定月における締日の実日付を返す(99は月末、月末を超える指定は<c>Math.Min(shime, 月末日)</c>で丸める)。
+	/// <see cref="ClosingDaySet"/> など締日→日付ロジックを要する共通処理向けのヘルパ。
+	/// </summary>
+	public static DateTime GetClosingDate(DateTime month, int shime) {
+		ValidateShime(shime);
+		var lastDay = DateTime.DaysInMonth(month.Year, month.Month);
+		return new DateTime(month.Year, month.Month, shime == (int)Share.EnumShime.DayLast ? lastDay : Math.Min(shime, lastDay));
+	}
+
 	private static DateTime ParseMonth(string value, string parameterName) {
 		if (!DateTime.TryParseExact(value + "01", "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var month)) {
 			throw new ArgumentException("計上月はyyyyMM形式で指定してください。", parameterName);
