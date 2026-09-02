@@ -1,3 +1,32 @@
+## [2026-09-02] 店舗予算表(ShopBudgetReportView)を旧CVnet仕様で再実装
+
+### Agent
+- Sekiya Sato Claude Opus 5 Middle
+
+### 目的
+- 旧CVnetの「予算 : 予算表」(program_crs / isqlqfw00.aspx の `_30_yosan` / cvnet30prn_yosan.qfm) に合わせて、cv10 の店舗予算表を再実装する。参照資料は `refer/printwrk/ShopBudgetReportView-sample/`。
+
+### 実施内容
+- `printform/ShopBudgetReport.qfm` を旧 `cvnet30prn_yosan.qfm` のコピーへ差し替えた。変更点は `<page>` の `id` を cv10 慣例の `Form1` にした1点のみで、レイアウト・item定義・decode書式は旧フォームのまま。A4横・item1〜item27。cv10の他フォームは全て `id="Form1"`。
+- `ShopBudgetReportViewModel` のSQLを旧 `_30_yosan` の組み立てどおりに書き換えた。旧システムがワークテーブル `HC$WKS_HAN01` へ器を作って UPDATE を重ねていた処理を、CTE (calendar → shops → budget/tenuri/sales → han01 → cum) で再現している。出力27列は qfm の item1〜item27 と1:1で、列順と列数は変更禁止。
+- 出力対象を「予算を組んだ店舗のみ」へ変更した。旧は `HC$MASTER_YO_TENPO` を店舗でGROUP BYした集合が出力の起点で、画面の赤字注意書きもそう書かれている。従来のcv10実装は全直営店を起点にしていた。
+- 売上の符号と区分を旧 `取引区分` の規則へ合わせた。旧は `DECODE(TRUNC(取引区分/10),1,1,2,-1,0)` で10番台=売上/20番台=返品の符号を付け、`MOD(取引区分,10)` で 0=プロパー / 1=セール / 4=社販 を分けていた。cv10 は `Tran01Tenuri.Kubun` が同じ体系(10/11/20/21)で、返品も `KingakuTotal` が正値のため符号付けが必要。従来のcv10実装は `SUM(KingakuTotal)` で返品を加算していた。
+- 整数除算のDB間意味差を避けるため、符号判定は `Kubun / 10` ではなく `Kubun BETWEEN 10 AND 19` / `BETWEEN 20 AND 29` の範囲比較で書いた。
+- 前年日付は旧仕様の2方式を実装した。日付対比は前年同月同日（閏年2/29は旧 `IS_DATE` 判定で対象外になるため前年売上・前年累計を0）、曜日対比は `NEXT_DAY(ADD_ADJMONTH(日付,-12), 日付の曜日)`。#32839 対応（前年が閏年で前年日付が2/28のとき前年2/29分を2/28へ含める）も入れた。Oracle関数依存の分岐をSQLiteで書くと壊れやすいため、日付側はC#で確定させてSQLへ VALUES として渡している。
+- `ShopBudgetReportView.xaml` から旧画面に無い「出力対象(全て/当年売上あり)」ラジオを削除し、注意書きを旧画面の赤字文言に合わせた。残る選択肢は旧画面と同じ「出力区分(店舗別/全店)」と「前年比(日付対比/曜日対比)」。
+
+### 確認
+- 印刷エンジンの日付解釈を実測した。qfm の `datatype="date"` 項目は `yyyyMMdd` を日付として読まず空白印字になる。`yyyy/MM/dd` / `yyyy/MM/dd HH:mm:ss` / `yyyy-MM-dd` は解釈される。よってSQLは `yyyy/MM/dd` で出し、qfm の decode 書式(`YY"年"MM"月"` と `DD`)は旧フォームのまま使う。
+- 27列のCSVを実際に PrintStream へ通してPDFを生成し、内容を検証した。2店舗×3日で2ページ（item3=店舗CD の level1 pagechange が効く）、店舗名・`(合計)`・`26年06月`・グループ合計の `予算 321（千円）`・`前年日付 2025/06/01(日) ～ 2025/06/30(月)`・明細16列が旧レイアウトどおり出力された。
+- 売上区分の集計を旧システムと突き合わせた。2022/05の6店舗(000016/000029/000031/000033/000034/000037)で SU01(売上)・SU03(プロパー)・SU04(セール)・SU05(総売上)・SU20(売上点数) が Oracle と全件一致。
+- 日付対比の前年比を旧システムと突き合わせた。店舗000016・2022/05の31日分で 売上・前年売上・累計・前年累計・前年比(TRUNC 1桁: 226.8 / 845.6 / 69 / 98 など) が Oracle と全件一致。
+- 曜日対比の前年日付を旧Oracle式と突き合わせた。2026/06全30日、2024/02全29日(閏年)、2025/03/01・2025/02/28・2023/01/01・2023/12/31 の計63件すべて一致。`ADD_ADJMONTH` は `ADD_MONTHS` と同じ月末クランプ挙動だった。
+- `CvWpfclient` ビルド成功。`Tests/TestSqlDialect` は135件全て成功（符号判定を範囲比較にする前は「整数除算を含むSQLの本数」の上限13本を超えて失敗していた）。`git diff --check` クリーン、qfm は cp932・CRLF 維持。
+- 未対応（cv10に対応するテーブル・列がないため空欄/0固定。ユーザー了承済み）: 社販売上（`Kubun` に社販がない）、客数（旧 `HC$TRAN_KYAKU` 相当の `Tran04PosSeisan.KyakuSu` が未運用）、既存比（`MasterTokui` に開店日相当が無い）、商品外除外（旧 `商品区分FLG=0` の明細絞り込み。cv10 は売上明細がJSON列で集計に使えない）。
+- 実機PDFの確認条件: `server-user163.db` で予算データがあるのは 2026/06 のみのため、年月に `2026/06` を指定した場合だけ行が出る（対象店舗は 000014 富山 / 000028 イオンモール盛岡）。この2店舗は当年も前年も売上実績が無いため、売上・前年比・前年累計は0で、予算・予算累計・予算差異のみ値が入る。売上まで入ったPDFを見るには、売上実績のある月（例 2022/01。前年 2021/01 も実績あり）へ店舗ブランド予算マスタで予算を登録してから実行する。
+
+---
+
 ## [2026-09-02] 納品書印刷 R2 の実行時エラー修正と確認完了
 
 ### Agent
@@ -762,104 +791,5 @@
 - 実移行DB（複製）に対して`ConvertDb`を再実行し、`Total`/`Tax`/`IsPay`が期待どおりになることの確認は未実施。
 - 入金金額が売上の約41倍になる問題は未着手。旧システム運用担当者への確認が必要（コードだけでは判断できない）。
 - `ConvertDbTran`専用のユニットテストは無く、今回も追加していない（既存も実DB複製での目視確認のみで検証されている）。
-
----
-
-## [2026-08-22] CvWpfclient の XAML関連部品集約
-
-### Agent
-- OpenAI Codex
-
-### Editor
-- Codex
-
-### 目的
-- XAMLで利用する共通スタイル、DataGrid補助処理、ブラシコンバーター補助処理の重複を削減する。
-- 既存の表示、リソースキーの適用範囲、DataGrid操作、業務別コンバーターの責務を維持する。
-
-### 実施内容
-- 在庫・配分照会4画面で重複していた使用中の6スタイルを `UIStockQueryStyles.xaml` へ集約し、既存の汎用キーと衝突しない `StockQuery*` キーへ変更した。
-- `NumericSignBrushConverter` は `UIStockQueryStyles.xaml` 内で定義し、MergedDictionaryロード中の `StaticResource` 解決を辞書内で完結させた。
-- 4画面すべてで未使用だった `StockSokoCell` は共有先へ移さず削除した。
-- 3画面で重複していた期限超過セルスタイルを `UIFormStyles.xaml` の `OverdueTextBlock` へ集約した。
-- `DataGridCellEnterNavigation` と `DataGridSelectionBehavior` のセル取得処理を `DataGridCellHelper` へ集約した。
-- `NumericSignBrushConverter` と `TranKubunBrushConverter` は業務別の型を維持し、ブラシリソース解決とフォールバック生成のみ `ResourceBrushHelper` へ集約した。
-
-### 検証
-- 変更対象XAMLのXML解析: 成功。
-- 共通リソースキーの定義数・利用数と旧キーが残っていないことを確認した。
-- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore -p:UseAppHost=false -v:minimal`: 成功（警告0、エラー0）。
-- UTF-8 BOMなし、CRLF、`git diff --check`を確認する。
-
----
-
-## [2026-08-22] CvWpfclient の通信処理共通化・不要呼び出し削減
-
-### Agent
-- OpenAI Codex
-
-### Editor
-- Codex
-
-### 目的
-- CvWpfclient プロジェクト内に限定し、同一の gRPC 照会・実行処理を通信専用ヘルパーへ集約する。
-- 未使用コードと不要な非同期処理を削減し、既存の業務処理、XAML、空画面、Sample画面の動作を維持する。
-
-### 実施内容
-- `CoreServiceClient` を追加し、型付きSQL照会、通常一覧照会、実行要求の生成・送信・応答判定を共通化した。
-- 各 ViewModel の既存ローカルメソッドは1行の委譲として残し、呼び出し側、継承関係、XAMLコマンド名を維持した。
-- `ClientLib` からプロジェクト内で未使用の `ExitAll`、`GetActiveWin`、`SetDataGridDic` を削除した。
-- URL起動時の不要な `Task.Run` と、処理を転送するだけの `async` / `await` を削減した。
-- `BaseViewModel` への通信処理集約、帳票ラッパー・選択コマンドの追加共通化は、責務過多を避けるため実施しなかった。
-- 応答後のキャンセル判定が異なる月次処理2箇所は、動作を変えないため共通化対象から外した。
-- 空の View / ViewModel と `SampleView` / `SampleViewModel` は変更していない。
-
-### 検証
-- `C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj --no-restore -p:UseAppHost=false -v:minimal`: 成功（警告0、エラー0）。
-- `git diff --check`、UTF-8 BOMなし、CRLFを確認する。
-
----
-
-## [2026-08-22] CvServer の不要呼び出し削減・共通化
-
-### Agent
-- OpenAI Codex
-
-### Editor
-- Codex
-
-### 目的
-- CvServer プロジェクト内に限定し、重複処理と不要な呼び出しを削減する。
-- JWT設定、サーバー情報、印刷パス解決を共通化し、既存の認証・印刷・gRPC動作を維持する。
-
-### 実施内容
-- `SchedulerService.ExecuteSqliteWalCheckpoint` で二重実行されていた `PRAGMA optimize` を1回に修正した。
-- `PrintPdfService` の `Wait` / `Result` とPDF生成待機中の `Thread.Sleep` を、`await` とキャンセル対応 `Task.Delay` に変更した。
-- `JwtSettings` を追加し、JWT検証・発行で使用するIssuer、Audience、SecretKey、有効期間、署名設定を共通化した。
-- `LoginService` のJWT生成、応答生成、`SysHistJwt` 登録を共通化した。
-- `AppGlobal.Shared` を共有インスタンスとしてDI登録し、サーバー情報取得時の都度生成を廃止した。将来利用予定の `Counter` は維持した。
-- `PrintServerPathResolver` を追加し、印刷処理とワークファイル削除処理のパス解決を、従来と同じContentRoot・PrintBaseDir基準で共通化した。
-- 未使用DIは将来利用の可能性があるため維持した。
-- `HandlerClass` の検索・書き込み処理は、共通化により処理順が見えにくくなることを避けるため現状を維持した。
-- 800行を超えていた旧 `Doc/aicoding_log.md` を `Doc/aicoding_log_014.md` へ退避した。
-
-### 検証
-- `C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj --no-restore -p:OutputPath=obj\CodexBuildOutput\`: 成功（警告0、エラー0）。
-- `C:\gitroot\UT\vscmd.bat dotnet run --project Tests\TestServer\TestServer.csproj --no-restore`: 168件成功、0件失敗。
-- `git diff --check`、UTF-8 BOMなし、CRLFを確認する。
-## [2026-09-01] 共通選択条件の略称・カナ検索追加
-
-### Agent
-- Sekiya Sato Codex
-
-### 目的
-- 範囲指定の選択条件に、略称とカナの部分一致検索を追加する。
-
-### 実施内容
-- `SelectParameter`へ`Ryaku`と`Kana`を追加し、標準マスタ・汎用選択・商品専用選択の各経路で引継ぐようにした。
-- `RangeParamView`に略称・カナの入力欄を追加し、`IBaseCodeName`実装型だけに表示を限定した。
-- 商品専用の`SelectShohinView`にも同じ2項目を追加した。
-- SQL条件は既存の`Name LIKE`と同じ形式で追加した。標準マスタと商品はプレースホルダー値で渡し、汎用選択は既存の単一引用符エスケープ経路を継承した。
-- 選択用マスタを利用する予算一覧では、対象テーブルに存在しない検索欄を表示しないよう明示的に無効化した。
 
 ---

@@ -132,34 +132,17 @@
 					IsChecked="{Binding IsDateComparison, Converter={StaticResource InverseBooleanConverter}}" />
 			</StackPanel>
 
-			<!--  出力対象  -->
-			<TextBlock Grid.Row="4" Grid.Column="0"
-				Margin="0,10,0,10"
-				Style="{StaticResource FormLabel}"
-				Text="出力対象" />
-			<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
-				Margin="0,10,0,10"
-				Orientation="Horizontal">
-				<RadioButton Margin="0,4"
-					Content="全て"
-					IsChecked="{Binding IsSalesOnly, Converter={StaticResource InverseBooleanConverter}}" />
-				<RadioButton Margin="16,4,0,4"
-					Content="当年売上あり"
-					IsChecked="{Binding IsSalesOnly}"
-					ToolTip="指定年月の範囲で売上がある店舗のみを印字します" />
-			</StackPanel>
-
 			<!--  注意書き  -->
-			<StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
+			<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
 				Margin="0,8">
 				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="※直営店を出力します。「当年売上あり」選択時は指定年月に売上がある店舗のみ出力します。" TextWrapping="Wrap" />
+					Text="※予算を組んだ店舗のみを出力します" TextWrapping="Wrap" />
 				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="※前年に売上実績がある店舗のみ前年比が表示されます。" TextWrapping="Wrap" />
+					Text="　 前年に売上実績がある店舗のみ前年比が表示されます。" TextWrapping="Wrap" />
 			</StackPanel>
 
 			<!--  実行ボタン  -->
-			<Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="4"
+			<Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4"
 				Margin="0,24" HorizontalAlignment="Center"
 				Command="{Binding DoOutputPdfCommand}"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}"
