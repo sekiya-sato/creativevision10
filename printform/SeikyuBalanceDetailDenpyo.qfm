@@ -1023,10 +1023,10 @@ function OnFetch() {
 			<font face="‚l‚r –¾’©" size="100"/>
 		</text>
 		<text id="Txt73">
-			<position x="108" y="39" width="30" height="4"/>
+			<position x="93" y="39" width="45" height="4"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item33"/>
-			<decode datatype="string" format="&quot;FAX:&quot;@"/>
+			<decode datatype="string" format="&quot;“o˜^”Ô†:&quot;@"/>
 			<font face="‚l‚r –¾’©" size="100"/>
 		</text>
 		<text id="Txt78">

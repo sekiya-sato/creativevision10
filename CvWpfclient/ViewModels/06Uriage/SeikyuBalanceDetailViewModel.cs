@@ -105,6 +105,7 @@ headers AS (
         s.TotalIn    AS totalIn,
         s.Cash, s.Fee, s.Densai, s.Offset, s.Other,
         s.Uriage, s.Henpin, s.Nebiki, s.Sonota,
+        s.Tax1, s.Tax2, s.Tax3, s.TaxableAmount1, s.TaxableAmount2, s.TaxableAmount3,
         (s.Tax1 + s.Tax2 + s.Tax3) AS tax,
         {PrevBalanceExpr} + s.Balance AS balance,
         s.SeikyuNo   AS seikyuNo,
@@ -128,28 +129,67 @@ headers AS (
         h.Id_Tokui AS idTokui, n.KakeDay AS denDay, 2 AS srcOrder, n.Id AS denNo,
         6 AS processKubun, 0 AS kubun, '入金' AS kubunText,
         0 AS su, 0 AS kingaku, 0 AS tax, ifnull(n.ManualNo,'') AS manualNo, ifnull(n.Memo,'') AS memo,
-        1 AS lineNo, n.KingakuTotal AS payment, 0 AS taxable1, 0 AS taxable2, 0 AS taxable3,
+        1 AS lineNo, n.KingakuTotal AS payment, 0 AS taxable1, 0 AS taxable2, 0 AS taxable3, 0 AS idTax,
         '' AS shohinCode, '' AS shohinName, 0 AS meisaiKingaku, 0 AS meisaiSu
     FROM headers h
     JOIN Tran06Nyukin n
       ON n.Id_Torisaki = h.Id_Tokui
      AND n.KakeDay >= h.dayFrom AND n.KakeDay <= h.dayTo" : string.Empty;
 
-		var taxRateText = $@"CASE
+		// 明細行の税率（item39 = qfmの「税率」欄）。
+		// 明細単位は1行=1商品なので、明細JSON(Jmeisai)の Id_Tax スナップショットで正確に決まる。
+		// 伝票単位は1行=1伝票で明細ごとの税率を持てないため、伝票の税区分別課税対象額から
+		// 実際に使われている税率を全て併記する（10%と8%が混在する伝票は "10%/8%" になる）。
+		// 旧実装は taxable1→2→3 の優先順で1つだけ表示していたため、軽減税率の明細を含む伝票が
+		// 10% とだけ表示されていた。
+		var taxRateText = IsMeisaiUnit
+			? $@"CASE
     WHEN ifnull(d.processKubun,0) = 6 OR ifnull(d.kubun,0) >= 80 THEN ''
-    WHEN ifnull(d.taxable1,0) != 0 THEN '{rates[0]}%'
-    WHEN ifnull(d.taxable2,0) != 0 THEN '{rates[1]}%'
-    WHEN ifnull(d.taxable3,0) != 0 THEN '{rates[2]}%'
-    ELSE '' END";
+    WHEN ifnull(d.idTax,0) = 1 THEN '{rates[0]}%'
+    WHEN ifnull(d.idTax,0) = 2 THEN '{rates[1]}%'
+    WHEN ifnull(d.idTax,0) = 3 THEN '{rates[2]}%'
+    ELSE '' END"
+			: $@"CASE
+    WHEN ifnull(d.processKubun,0) = 6 OR ifnull(d.kubun,0) >= 80 THEN ''
+    ELSE ltrim(
+        (CASE WHEN ifnull(d.taxable1,0) != 0 THEN '/{rates[0]}%' ELSE '' END) ||
+        (CASE WHEN ifnull(d.taxable2,0) != 0 THEN '/{rates[1]}%' ELSE '' END) ||
+        (CASE WHEN ifnull(d.taxable3,0) != 0 THEN '/{rates[2]}%' ELSE '' END), '/')
+    END";
 
-		// 旧CRSのSELECT列順（d_sql.txt）をそのまま再現する。qfmはこのCSV順と内蔵スクリプトに依存する。
+		// 請求ヘッダ単位（1請求書=1値）の税率別内訳。ValidateTaxBreakdownAsync と同じ SumForRate を
+		// "h."エイリアス付きで使う（headersCte に Tax1/2/3・TaxableAmount1/2/3 を追加済み）。
+		var tax10ExprH = SumForRate(n => $"h.Tax{n}", rates, 10);
+		var tax8ExprH = SumForRate(n => $"h.Tax{n}", rates, 8);
+		var taxable10ExprH = SumForRate(n => $"h.TaxableAmount{n}", rates, 10);
+		var taxable8ExprH = SumForRate(n => $"h.TaxableAmount{n}", rates, 8);
+
+		// item56/57/58/59/60 は伝票単位(Denpyo)と明細単位(Meisai)のqfmで実際の用途が異なる
+		// （qfmスクリプトを解析して判明。d_sql.txtの列名どおりではない）。
+		// 伝票単位: 税率別内訳（10%/8%の課税対象額・消費税額）を表示する専用欄。
+		// 明細単位: 商品CD・商品名・明細数量・明細金額を表示する商品明細行（item52/53はこの用途ではない）。
+		var item56 = IsMeisaiUnit ? "ifnull(d.shohinCode,'')" : "0";
+		var item57 = IsMeisaiUnit ? "ifnull(d.shohinName,'')" : $"({tax8ExprH})";
+		var item58 = IsMeisaiUnit ? "ifnull(d.meisaiKingaku,0)" : $"({tax10ExprH})";
+		var item59 = IsMeisaiUnit ? "ifnull(d.denNo,0)" : $"({taxable8ExprH})";
+		var item60 = IsMeisaiUnit ? "ifnull(d.meisaiSu,0)" : $"({taxable10ExprH})";
+
+		// 明細単位(Meisai)qfmの税率別内訳（10%/8%の課税対象額・消費税額）は item62〜65 に
+		// バインドされている（伝票単位の item57〜60 と同じ内容だが、明細単位は同じ位置を
+		// 商品明細行(item56〜60)に使うため、qfm側で62番以降へずらして定義されている）。
+		// 旧CRSは61列までしか出力していなかったが、この請求書印刷は旧CRSの単純移植ではなく
+		// 新規SQLのため61列に縛られる理由はなく、明細単位の内訳を表示するため62〜66列を追加する。
+		// item66 は明細単位のスタンプ画像(Img01)。伝票単位のitem61(同じくImg01)と同じ値を渡す。
+
+		// 旧CRSのSELECT列順（d_sql.txt）をおおむね再現しつつ、qfm解析で判明した実際のバインド先へ
+		// 修正して62列以降を追加している。qfmはこのCSV順と内蔵スクリプトに依存する。
 		var sql = $@"
 WITH {headersCte}
 details AS (
 {saleRows}{nyukinRows}
 ),
 sysman AS (
-    SELECT Name, PostalCode, Address1, Address2, Address3, Tel, BankAccount1, BankAccount2, BankAccount3
+    SELECT Name, PostalCode, Address1, Address2, Address3, Tel, BankAccount1, BankAccount2, BankAccount3, TaxRegistrationNumber
     FROM MasterSysman ORDER BY Id LIMIT 1
 )
 SELECT
@@ -185,35 +225,40 @@ SELECT
     ifnull(c.Address2,'') AS item30,
     ifnull(c.Address3,'') AS item31,
     ifnull(c.Tel,'') AS item32,
-    '' AS item33,
+    ifnull(c.TaxRegistrationNumber,'') AS item33,
     ifnull(c.BankAccount1,'') AS item34,
     ifnull(c.BankAccount2,'') AS item35,
     ifnull(c.BankAccount3,'') AS item36,
     h.Offset AS item37,
     h.seikyuNo AS item38,
-    h.prevBalance-h.totalIn AS item39,
-    h.balance AS item40,
-    h.tokuiName AS item41,
-    h.tokuiPostalCode AS item42,
-    h.tokuiAddress1 AS item43,
-    h.tokuiAddress2 AS item44,
-    h.tokuiAddress3 AS item45,
-    h.tokuiIdShain AS item46,
-    '' AS item47,
-    (h.Uriage-h.Henpin-h.Nebiki+h.Sonota) AS item48,
-    h.totalSales AS item49,
+    {taxRateText} AS item39,
+    {rates[0]} AS item40,
+    {rates[1]} AS item41,
+    h.nyukinYoteiDay AS item42,
+    h.prevBalance-h.totalIn AS item43,
+    h.balance AS item44,
+    h.tokuiName AS item45,
+    h.tokuiPostalCode AS item46,
+    h.tokuiAddress1 AS item47,
+    h.tokuiAddress2 AS item48,
+    h.tokuiAddress3 AS item49,
     '' AS item50,
-    h.seikyuNo AS item51,
-    ifnull(d.shohinCode,'') AS item52,
-    ifnull(d.shohinName,'') AS item53,
-    ifnull(d.meisaiKingaku,0) AS item54,
-    ifnull(d.denNo,0) AS item55,
-    ifnull(d.meisaiSu,0) AS item56,
-    0 AS item57,
-    1 AS item58,
-    h.seikyuNo AS item59,
-    {taxRateText} AS item60,
-    h.nyukinYoteiDay AS item61
+    '' AS item51,
+    (h.totalSales - h.tax) AS item52,
+    h.totalSales AS item53,
+    0 AS item54,
+    h.seikyuNo AS item55,
+    {item56} AS item56,
+    {item57} AS item57,
+    {item58} AS item58,
+    {item59} AS item59,
+    {item60} AS item60,
+    h.nyukinYoteiDay AS item61,
+    ({tax8ExprH}) AS item62,
+    ({tax10ExprH}) AS item63,
+    ({taxable8ExprH}) AS item64,
+    ({taxable10ExprH}) AS item65,
+    h.nyukinYoteiDay AS item66
 FROM headers h
 LEFT JOIN details d ON d.idTokui = h.Id_Tokui
 LEFT JOIN sysman c ON 1=1
@@ -225,10 +270,12 @@ ORDER BY h.tokuiCode, h.seikyuDay, ifnull(d.denDay,''), ifnull(d.srcOrder,0), if
 	private static string BuildDenpyoRows(string kubunLabel) => $@"
     SELECT
         h.Id_Tokui AS idTokui, u.KakeDay AS denDay, 1 AS srcOrder, u.Id AS denNo,
-        0 AS processKubun, u.Kubun AS kubun, {kubunLabel} AS kubunText,
+        0 AS processKubun, u.Kubun AS kubun,
+        CASE WHEN u.TaxableAmount2 != 0 THEN ({kubunLabel}) || '*' ELSE ({kubunLabel}) END AS kubunText,
         u.CalcFlag*u.SuTotal AS su, u.CalcFlag*u.KingakuTotal AS kingaku,
         u.CalcFlag*(u.Tax1+u.Tax2+u.Tax3) AS tax, ifnull(u.ManualNo,'') AS manualNo, ifnull(u.Memo,'') AS memo,
         1 AS lineNo, 0 AS payment, u.TaxableAmount1 AS taxable1, u.TaxableAmount2 AS taxable2, u.TaxableAmount3 AS taxable3,
+        0 AS idTax,
         '' AS shohinCode, '' AS shohinName, 0 AS meisaiKingaku, 0 AS meisaiSu
     FROM headers h
     JOIN Tran00Uriage u
@@ -243,8 +290,9 @@ ORDER BY h.tokuiCode, h.seikyuDay, ifnull(d.denDay,''), ifnull(d.srcOrder,0), if
         u.CalcFlag*(u.Tax1+u.Tax2+u.Tax3) AS tax, ifnull(u.ManualNo,'') AS manualNo, ifnull(u.Memo,'') AS memo,
         {TranMeisaiSql.Num("No")} AS lineNo, 0 AS payment,
         u.TaxableAmount1 AS taxable1, u.TaxableAmount2 AS taxable2, u.TaxableAmount3 AS taxable3,
+        {TranMeisaiSql.Num("Id_Tax")} AS idTax,
         {TranMeisaiSql.Str("Code_Shohin")} AS shohinCode,
-        {TranMeisaiSql.Str("Mei_Shohin")} AS shohinName,
+        CASE WHEN {TranMeisaiSql.Num("Id_Tax")} = 2 THEN {TranMeisaiSql.Str("Mei_Shohin")} || '*' ELSE {TranMeisaiSql.Str("Mei_Shohin")} END AS shohinName,
         u.CalcFlag*SUM({TranMeisaiSql.Num("Kingaku")}) AS meisaiKingaku,
         u.CalcFlag*SUM({TranMeisaiSql.Num("Su")}) AS meisaiSu
     FROM headers h
@@ -257,7 +305,8 @@ ORDER BY h.tokuiCode, h.seikyuDay, ifnull(d.denDay,''), ifnull(d.srcOrder,0), if
         u.KakeDay, u.Id, u.Kubun, u.CalcFlag, u.SuTotal, u.KingakuTotal,
         u.Tax1, u.Tax2, u.Tax3, u.ManualNo, u.Memo,
         u.TaxableAmount1, u.TaxableAmount2, u.TaxableAmount3,
-        {TranMeisaiSql.Num("No")}, {TranMeisaiSql.Str("Code_Shohin")}, {TranMeisaiSql.Str("Mei_Shohin")}
+        {TranMeisaiSql.Num("No")}, {TranMeisaiSql.Num("Id_Tax")},
+        {TranMeisaiSql.Str("Code_Shohin")}, {TranMeisaiSql.Str("Mei_Shohin")}
     UNION ALL
     SELECT
         h.Id_Tokui, u.KakeDay, 1, u.Id,
@@ -265,6 +314,7 @@ ORDER BY h.tokuiCode, h.seikyuDay, ifnull(d.denDay,''), ifnull(d.srcOrder,0), if
         u.CalcFlag*u.SuTotal, u.CalcFlag*u.KingakuTotal,
         u.CalcFlag*(u.Tax1+u.Tax2+u.Tax3), ifnull(u.ManualNo,''), ifnull(u.Memo,''),
         0, 0, u.TaxableAmount1, u.TaxableAmount2, u.TaxableAmount3,
+        CASE WHEN u.TaxableAmount1 != 0 THEN 1 WHEN u.TaxableAmount2 != 0 THEN 2 WHEN u.TaxableAmount3 != 0 THEN 3 ELSE 0 END,
         '', '', 0, 0
     FROM headers h
     JOIN Tran00Uriage u
@@ -284,18 +334,25 @@ ORDER BY h.tokuiCode, h.seikyuDay, ifnull(d.denDay,''), ifnull(d.srcOrder,0), if
 	/// どちらでもなければ（想定外の税率改定など）その分だけ内訳から漏れ、ここで不一致として検出する。
 	/// </para>
 	/// </summary>
-	private async Task<bool> ValidateTaxBreakdownAsync(string seikyuDay, string activeOnly, string tokuiWhere, int[] rates, List<string> parameters, CancellationToken ct) {
-		static string SumForRate(string columnPrefix, int[] rates, int targetRate) {
-			List<string> parts = [];
-			for (var n = 1; n <= 3; n++) {
-				if (rates[n - 1] == targetRate) parts.Add($"{columnPrefix}{n}");
-			}
-			return parts.Count > 0 ? string.Join(" + ", parts) : "0";
+	/// <summary>
+	/// 税区分(Id_Tax 1-3)のうち、解決税率が <paramref name="targetRate"/> と一致するものだけを
+	/// <paramref name="columnFor"/>(1〜3)で列名化して "+" で連結する。該当が無ければ "0"。
+	/// 税率別内訳（10%/8%の課税対象額・消費税額）の集計式を、無エイリアス（<see cref="ValidateTaxBreakdownAsync"/>）と
+	/// "h."エイリアス付き（<see cref="BuildPrintSqlParamAsync"/>）の両方から同じロジックで組み立てるための共通部品。
+	/// </summary>
+	private static string SumForRate(Func<int, string> columnFor, int[] rates, int targetRate) {
+		List<string> parts = [];
+		for (var n = 1; n <= 3; n++) {
+			if (rates[n - 1] == targetRate) parts.Add(columnFor(n));
 		}
-		var tax10Expr = SumForRate("Tax", rates, 10);
-		var tax8Expr = SumForRate("Tax", rates, 8);
-		var taxable10Expr = SumForRate("TaxableAmount", rates, 10);
-		var taxable8Expr = SumForRate("TaxableAmount", rates, 8);
+		return parts.Count > 0 ? string.Join(" + ", parts) : "0";
+	}
+
+	private async Task<bool> ValidateTaxBreakdownAsync(string seikyuDay, string activeOnly, string tokuiWhere, int[] rates, List<string> parameters, CancellationToken ct) {
+		var tax10Expr = SumForRate(n => $"Tax{n}", rates, 10);
+		var tax8Expr = SumForRate(n => $"Tax{n}", rates, 8);
+		var taxable10Expr = SumForRate(n => $"TaxableAmount{n}", rates, 10);
+		var taxable8Expr = SumForRate(n => $"TaxableAmount{n}", rates, 8);
 
 		var sql = $@"
 WHERE DenDay = {seikyuDay}
