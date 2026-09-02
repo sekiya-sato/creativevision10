@@ -11,6 +11,9 @@ public sealed class SummaryClosingCheckRow {
 	public string TorihikiCode { get; set; } = string.Empty;
 	public string? DayTo { get; set; }
 	public int Shime1 { get; set; }
+	public int Shime2 { get; set; }
+	public int Shime3 { get; set; }
+	public int OwnShime { get; set; }
 }
 
 /// <summary>
@@ -93,15 +96,15 @@ public static class SummaryRebuildRequestPlanner {
 public static class SummaryRebuildClosingCheck {
 	public const string NoSavedSummaryRowNotice = "保存済み集計行がない場合は、締日変更を検出できません。";
 	public const string ManualRecalculationGuidance = "マスタ締日が変更されています。請求計算／支払計算画面で対象を手動再計算し、旧締日の残データを確認してから再実行してください";
-	public const string UriClosingCheckSql = """
-SELECT t.Code AS TorihikiCode, s.DayTo, t.Shime1
+	public const string UriClosingCheckSql = $"""
+SELECT t.Code AS TorihikiCode, s.DayTo, t.Shime1, t.Shime2, t.Shime3, {ClosingDaySet.OwnShimeSubquerySql} AS OwnShime
 FROM SummaryUriSei AS s
 INNER JOIN MasterTokui AS t ON t.Id = s.Id_Tokui
 WHERE substr(s.DenDay, 1, 6) BETWEEN @0 AND @1
 ORDER BY t.Code, s.DenDay, s.Id
 """;
-	public const string KaiClosingCheckSql = """
-SELECT t.Code AS TorihikiCode, s.DayTo, t.Shime1
+	public const string KaiClosingCheckSql = $"""
+SELECT t.Code AS TorihikiCode, s.DayTo, t.Shime1, t.Shime2, t.Shime3, {ClosingDaySet.OwnShimeSubquerySql} AS OwnShime
 FROM SummaryKaiShi AS s
 INNER JOIN MasterShiire AS t ON t.Id = s.Id_Shiire
 WHERE substr(s.DenDay, 1, 6) BETWEEN @0 AND @1
@@ -119,11 +122,23 @@ ORDER BY t.Code, s.DenDay, s.Id
 	public static bool CanStartRequestDispatch(IReadOnlyList<SummaryClosingMismatch> mismatches) => mismatches.Count == 0;
 
 	/// <summary>
-	/// 保存済みの締日が、その年月の現在締日と異なる行を返す。締日または年月が不正な行も安全のため不一致として扱う。
+	/// 保存済みの締日が、その年月の現在有効締日集合(<see cref="ClosingDaySet.Resolve"/>)のいずれとも
+	/// 一致しない行を返す。締日または年月が不正な行も安全のため不一致として扱う(4.5 #4)。
 	/// </summary>
 	public static List<SummaryClosingMismatch> FindMismatches(string kakeType, IEnumerable<SummaryClosingCheckRow> rows) =>
-		[.. rows.Where(row => !TryGetExpectedClosingDay(row.DayTo, row.Shime1, out var expectedDay) || row.DayTo != expectedDay)
+		[.. rows.Where(row => !IsExpectedClosingDay(row.DayTo, row.Shime1, row.Shime2, row.Shime3, row.OwnShime))
 			.Select(row => new SummaryClosingMismatch(kakeType, row.TorihikiCode, row.DayTo, row.Shime1))];
+
+	/// <summary>保存済み<paramref name="savedDayTo"/>の日部分が、締日1/2/3から解決した有効締日集合のいずれかと一致するか。</summary>
+	private static bool IsExpectedClosingDay(string? savedDayTo, int shime1, int shime2, int shime3, int ownShime) {
+		var days = ClosingDaySet.Resolve(shime1, shime2, shime3, ownShime);
+		foreach (var day in days) {
+			if (TryGetExpectedClosingDay(savedDayTo, day, out var expectedDay) && expectedDay == savedDayTo) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	public static bool TryGetExpectedClosingDay(string? savedDayTo, int shime, out string expectedDay) {
 		expectedDay = string.Empty;
@@ -134,7 +149,7 @@ ORDER BY t.Code, s.DenDay, s.Id
 			expectedDay = new DateTime(month.Year, month.Month, DateTime.DaysInMonth(month.Year, month.Month)).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
 			return true;
 		}
-		if (shime is < 1 or > 31) {
+		if (shime is < 1 or > 28) {
 			return false;
 		}
 		expectedDay = new DateTime(month.Year, month.Month, Math.Min(shime, DateTime.DaysInMonth(month.Year, month.Month))).ToString("yyyyMMdd", CultureInfo.InvariantCulture);

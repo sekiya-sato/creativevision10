@@ -238,12 +238,19 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 		await ReloadTargetCountAsync(ct);
 	}
 
+	/// <summary>
+	/// マスタの締日パターン(Shime1/2/3)を<see cref="ClosingDaySet.ResolveDistinctDays"/>へ通した和集合(4.3、4.5 #7)。
+	/// この画面には「すべて」は追加しない（期首残高は具体的な締日1本を選んで取り込む運用のため）。
+	/// </summary>
 	private async Task LoadShimeItemsAsync(CancellationToken ct) {
-		var sql = $"SELECT DISTINCT Shime1 FROM {Spec.MasterTableName} " +
-			"WHERE Shime1 BETWEEN 1 AND 31 OR Shime1 = 99 ORDER BY Shime1";
-		var rows = await QuerySqlListAsync<SummaryClosingCheckRow>(sql, [], ct);
-		ShimeItems = new ObservableCollection<BalanceShimeOption>(rows
-			.Select(x => new BalanceShimeOption(x.Shime1, OpeningBalanceCsv.FormatShime(x.Shime1))));
+		var patternRows = await QuerySqlListAsync<ShimePatternRow>(
+			$"SELECT DISTINCT Shime1, Shime2, Shime3 FROM {Spec.MasterTableName}", [], ct);
+		var ownShimeRows = await QuerySqlListAsync<MasterSysman>(
+			$"SELECT ShimeBi FROM {nameof(MasterSysman)} ORDER BY Id LIMIT 1", [], ct);
+		var ownShime = ownShimeRows.Count > 0 ? ownShimeRows[0].ShimeBi : 0;
+		var days = ClosingDaySet.ResolveDistinctDays(patternRows.Select(x => (x.Shime1, x.Shime2, x.Shime3)), ownShime);
+		ShimeItems = new ObservableCollection<BalanceShimeOption>(days
+			.Select(x => new BalanceShimeOption(x, OpeningBalanceCsv.FormatShime(x))));
 		SelectedShime = ShimeItems.FirstOrDefault()?.Value ?? 0;
 		if (ShimeItems.Count == 0) {
 			Message = $"{Spec.OwnerLabel}マスタに有効な締日がありません。";

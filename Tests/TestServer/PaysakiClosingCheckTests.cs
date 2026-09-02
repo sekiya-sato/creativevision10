@@ -14,7 +14,7 @@ public class PaysakiClosingCheckTests {
 	[TestMethod]
 	public void FindMismatches_締日が同じ行は対象外() {
 		List<PaysakiClosingCheckRow> rows = [
-			new() { ChildCode = "T001", ParentCode = "T000", ChildShime = 20, ParentShime = 20 },
+			new() { ChildCode = "T001", ParentCode = "T000", ChildShime1 = 20, ParentShime1 = 20 },
 		];
 
 		var mismatches = PaysakiClosingCheck.FindMismatches(rows);
@@ -25,14 +25,36 @@ public class PaysakiClosingCheckTests {
 	[TestMethod]
 	public void FindMismatches_締日が異なる行のみ抽出する() {
 		List<PaysakiClosingCheckRow> rows = [
-			new() { ChildCode = "T001", ParentCode = "T000", ChildShime = 20, ParentShime = 20 },
-			new() { ChildCode = "T002", ParentCode = "T000", ChildShime = 99, ParentShime = 20 },
+			new() { ChildCode = "T001", ParentCode = "T000", ChildShime1 = 20, ParentShime1 = 20 },
+			new() { ChildCode = "T002", ParentCode = "T000", ChildShime1 = 99, ParentShime1 = 20 },
 		];
 
 		var mismatches = PaysakiClosingCheck.FindMismatches(rows);
 
 		Assert.AreEqual(1, mismatches.Count);
 		Assert.AreEqual("T002", mismatches[0].ChildCode);
+	}
+
+	[TestMethod]
+	public void FindMismatches_順序違いの締日集合は一致扱い() {
+		List<PaysakiClosingCheckRow> rows = [
+			new() { ChildCode = "T003", ParentCode = "T000", ChildShime1 = 20, ChildShime2 = 10, ChildShime3 = 99, ParentShime1 = 10, ParentShime2 = 20, ParentShime3 = 99 },
+		];
+
+		var mismatches = PaysakiClosingCheck.FindMismatches(rows);
+
+		Assert.AreEqual(0, mismatches.Count);
+	}
+
+	[TestMethod]
+	public void FindMismatches_Shime1が0なら自社締日へフォールバックして比較する() {
+		List<PaysakiClosingCheckRow> rows = [
+			new() { ChildCode = "T004", ParentCode = "T000", ChildShime1 = 0, ParentShime1 = 20, OwnShime = 20 },
+		];
+
+		var mismatches = PaysakiClosingCheck.FindMismatches(rows);
+
+		Assert.AreEqual(0, mismatches.Count);
 	}
 
 	[TestMethod]
@@ -44,23 +66,23 @@ public class PaysakiClosingCheckTests {
 
 	[TestMethod]
 	public void BuildMismatchWarning_親子ラベルと再計算案内を含む() {
-		List<PaysakiClosingCheckRow> mismatches = [
-			new() { ChildCode = "T002", ParentCode = "T000", ChildShime = 99, ParentShime = 20 },
+		List<PaysakiClosingMismatch> mismatches = [
+			new("T002", "T000", [99], [20]),
 		];
 
 		var warning = PaysakiClosingCheck.BuildMismatchWarning("請求先", "得意先", mismatches);
 
 		StringAssert.Contains(warning, "請求先");
 		StringAssert.Contains(warning, "得意先");
-		StringAssert.Contains(warning, "T002→T000");
+		StringAssert.Contains(warning, "T002(末日)→T000(20日)");
 		StringAssert.Contains(warning, PaysakiClosingCheck.MismatchGuidance);
 	}
 
 	[TestMethod]
 	public void BuildMismatchWarning_6件以上は先頭5件とほかN件を表示する() {
-		List<PaysakiClosingCheckRow> mismatches = [];
+		List<PaysakiClosingMismatch> mismatches = [];
 		for (var i = 0; i < 7; i++) {
-			mismatches.Add(new() { ChildCode = $"T{i:000}", ParentCode = "T900", ChildShime = 99, ParentShime = 20 });
+			mismatches.Add(new($"T{i:000}", "T900", [99], [20]));
 		}
 
 		var warning = PaysakiClosingCheck.BuildMismatchWarning("支払先", "仕入先", mismatches);

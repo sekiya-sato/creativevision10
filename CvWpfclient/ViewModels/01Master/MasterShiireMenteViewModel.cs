@@ -80,6 +80,24 @@ from MasterShiire {query.AddWhereOrder()}
 	}
 
 	/// <summary>
+	/// 追加・修正の保存前に締日1/2/3を検査する（保存前・ブロック。3.2、4.4）。
+	/// 保存後の親子締日不一致警告（E7、非ブロック）とは別物として共存させる。
+	/// </summary>
+	protected override bool ConfirmAction(string message) {
+		if ((message.StartsWith("追加", StringComparison.Ordinal) || message.StartsWith("修正", StringComparison.Ordinal)) && !ValidateClosingDays()) {
+			return false;
+		}
+		return base.ConfirmAction(message);
+	}
+
+	bool ValidateClosingDays() {
+		var error = ClosingDaySet.Validate(CurrentEdit.Shime1, CurrentEdit.Shime2, CurrentEdit.Shime3);
+		if (error.Length == 0) return true;
+		MessageEx.ShowWarningDialog(error, owner: ActiveWindow);
+		return false;
+	}
+
+	/// <summary>
 	/// 保存した仕入先を軸に、支払先（親）と仕入先（子）の締日不一致を検査する（E7）。
 	/// ブロックはしない：検出時は気付き用の警告のみ表示し、保存自体は成功済みのまま継続する。
 	/// 照会失敗は握りつぶす（保存は成功しており業務を妨げない）。

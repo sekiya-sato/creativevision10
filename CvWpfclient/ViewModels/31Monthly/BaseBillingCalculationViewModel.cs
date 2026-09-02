@@ -48,17 +48,27 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial bool IsReissue { get; set; }
 
+	/// <summary>「すべての締日」を表す選択値(4.3)。単一締日として渡されることは無い(0=EnumShimeの未使用)。</summary>
+	public const int AllShimeValue = 0;
+
 	[RelayCommand]
 	private async Task InitAsync(CancellationToken cancellationToken) {
 		try {
-			var rows = await QuerySqlListAsync<SummaryClosingCheckRow>(
-				$"SELECT DISTINCT Shime1 FROM {MasterTableName} WHERE Shime1 BETWEEN 1 AND 31 OR Shime1 = 99 ORDER BY Shime1",
+			var patternRows = await QuerySqlListAsync<ShimePatternRow>(
+				$"SELECT DISTINCT Shime1, Shime2, Shime3 FROM {MasterTableName}",
 				[], cancellationToken);
-			ShimeItems = new ObservableCollection<ShimeOption>(rows
-				.Select(x => x.Shime1)
-				.Select(x => new ShimeOption(x, x == 99 ? "末日" : $"{x:00}日")));
-			SelectedShime = ShimeItems.FirstOrDefault()?.Value ?? 0;
-			StatusMessage = ShimeItems.Count == 0
+			var ownShimeRows = await QuerySqlListAsync<MasterSysman>(
+				$"SELECT ShimeBi FROM {nameof(MasterSysman)} ORDER BY Id LIMIT 1",
+				[], cancellationToken);
+			var ownShime = ownShimeRows.Count > 0 ? ownShimeRows[0].ShimeBi : 0;
+			var days = ClosingDaySet.ResolveDistinctDays(patternRows.Select(x => (x.Shime1, x.Shime2, x.Shime3)), ownShime);
+
+			ShimeItems = new ObservableCollection<ShimeOption>([
+				new ShimeOption(AllShimeValue, "すべて"),
+				.. days.Select(x => new ShimeOption(x, x == 99 ? "末日" : $"{x:00}日")),
+			]);
+			SelectedShime = AllShimeValue;
+			StatusMessage = days.Count == 0
 				? $"{TorihikiName}マスタに有効な締日がありません。"
 				: InitialMessage;
 		}
@@ -77,7 +87,7 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 			ShowWarning($"{ActionName}月の形式が不正です: {BillingMonth}");
 			return;
 		}
-		if (SelectedShime is < 1 or > 31 && SelectedShime != 99) {
+		if (SelectedShime != AllShimeValue && SelectedShime is < 1 or > 28 && SelectedShime != 99) {
 			ShowWarning("締日を選択してください。");
 			return;
 		}
@@ -92,7 +102,7 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 		if (!string.IsNullOrEmpty(WarningMessage)) {
 			MessageEx.ShowWarningDialog(WarningMessage, owner: ClientLib.GetActiveView(this));
 		}
-		var target = $"{yyyymm} / {(SelectedShime == 99 ? "末日" : $"{SelectedShime:00}日")} / {FormatRange(codeFrom, codeTo)}";
+		var target = $"{yyyymm} / {FormatShimeText(SelectedShime)} / {FormatRange(codeFrom, codeTo)}";
 		if (MessageEx.ShowQuestionDialog($"{target} の{ActionName}を実行しますか？",
 			owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
@@ -143,12 +153,16 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 
 	/// <summary>
 	/// 実行前の警告文を作成する。既定は親子締日不一致（E7）検査。ブロックはしない。
+	/// 「すべて」(<see cref="AllShimeValue"/>)選択時は締日での絞りを外して全件検査する(4.5 #2)。
 	/// </summary>
 	protected virtual async Task<string> GetPreExecuteWarningAsync(string codeFrom, string codeTo, CancellationToken cancellationToken) {
 		if (!ChecksPaysakiClosing) return string.Empty;
 		List<string> parameters = [];
-		var where = "WHERE c.Id_Paysaki <> 0 AND c.Shime1 = @0 AND p.Shime1 <> c.Shime1";
-		parameters.Add(SelectedShime.ToString(CultureInfo.InvariantCulture));
+		var where = "WHERE c.Id_Paysaki <> 0";
+		if (SelectedShime != AllShimeValue) {
+			where += $" AND {ClosingDaySet.ContainsShimeSql("c", $"@{parameters.Count}", ClosingDaySet.OwnShimeSubquerySql)}";
+			parameters.Add(SelectedShime.ToString(CultureInfo.InvariantCulture));
+		}
 		if (codeFrom.Length > 0) {
 			where += $" AND c.Code >= @{parameters.Count}";
 			parameters.Add(codeFrom);
@@ -193,6 +207,12 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 		yyyymm = normalized;
 		return true;
 	}
+
+	private static string FormatShimeText(int shime) => shime switch {
+		AllShimeValue => "すべて",
+		99 => "末日",
+		_ => $"{shime:00}日",
+	};
 
 	private static string FormatRange(string codeFrom, string codeTo) => (codeFrom, codeTo) switch {
 		("", "") => "全件",

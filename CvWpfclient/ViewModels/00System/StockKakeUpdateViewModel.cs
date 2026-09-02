@@ -260,12 +260,16 @@ public partial class StockKakeUpdateViewModel : BaseViewModel {
 		return await QuerySqlListAsync<SummaryClosingCheckRow>(sql, [yymmFrom, yymmTo], cancellationToken);
 	}
 
+	/// <summary>
+	/// マスタの締日パターン(Shime1/2/3)を<see cref="ClosingDaySet.ResolveDistinctDays"/>へ通した和集合(4.3、4.5 #6)。
+	/// 自社締日は<see cref="InitAsync"/>で読み込み済みの<see cref="ownClosingDay"/>を使う。
+	/// </summary>
 	private async Task<List<int>> GetClosingDaysAsync(string masterTableName, CancellationToken cancellationToken) {
-		var rows = await QuerySqlListAsync<SummaryClosingCheckRow>(
-			$"SELECT DISTINCT Shime1 FROM {masterTableName} WHERE Shime1 BETWEEN 1 AND 31 OR Shime1 = 99 ORDER BY Shime1",
+		var patternRows = await QuerySqlListAsync<ShimePatternRow>(
+			$"SELECT DISTINCT Shime1, Shime2, Shime3 FROM {masterTableName}",
 			[],
 			cancellationToken);
-		return rows.Select(x => x.Shime1).ToList();
+		return [.. ClosingDaySet.ResolveDistinctDays(patternRows.Select(x => (x.Shime1, x.Shime2, x.Shime3)), ownClosingDay)];
 	}
 
 	private Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken cancellationToken) =>

@@ -833,7 +833,7 @@ ORDER BY t.Code
 		if (!spec.IsClosingBased) {
 			return (fiscalStart.AddMonths(-1).ToString("yyyyMM", CultureInfo.InvariantCulture), string.Empty);
 		}
-		if (shime is (< 1 or > 31) and not (int)EnumShime.DayLast) {
+		if (shime is (< 1 or > 28) and not (int)EnumShime.DayLast) {
 			return (string.Empty, string.Empty);
 		}
 

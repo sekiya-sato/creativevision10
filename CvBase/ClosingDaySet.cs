@@ -95,4 +95,35 @@ public static class ClosingDaySet {
 	public static string ContainsShimeSql(string alias, string shimeParam, string ownShimeParam) =>
 		$"({alias}.Shime1 = {shimeParam} OR {alias}.Shime2 = {shimeParam} OR {alias}.Shime3 = {shimeParam}" +
 		$" OR ({alias}.Shime1 = 0 AND {ownShimeParam} = {shimeParam}))";
+
+	/// <summary>
+	/// 自社締日(<c>MasterSysman.ShimeBi</c>)を1件だけ取得するSQL断片。パラメータバインドの代わりに
+	/// <see cref="ContainsShimeSql"/> の <c>ownShimeParam</c> やSELECT列へそのまま埋め込める(4.5)。
+	/// </summary>
+	public const string OwnShimeSubquerySql = "(SELECT ShimeBi FROM MasterSysman ORDER BY Id LIMIT 1)";
+
+	/// <summary>
+	/// 複数の締日パターン(Shime1/2/3)を<see cref="Resolve"/>へ通した和集合を、重複を除いた昇順で返す(4.3)。
+	/// 「すべての締日」実行や締日候補リストの列挙など、画面・バッチの各所で共用する。
+	/// </summary>
+	public static IReadOnlyList<int> ResolveDistinctDays(IEnumerable<(int Shime1, int Shime2, int Shime3)> patterns, int ownShime) {
+		var days = new SortedSet<int>();
+		foreach (var (shime1, shime2, shime3) in patterns) {
+			foreach (var day in Resolve(shime1, shime2, shime3, ownShime)) days.Add(day);
+		}
+		return [.. days];
+	}
+
+	/// <summary>有効締日集合を「10日/20日/末日」の形式へ整形する(4.5)。</summary>
+	public static string FormatDays(IReadOnlyList<int> days) => string.Join("/", days.Select(d => d == 99 ? "末日" : $"{d}日"));
+}
+
+/// <summary>
+/// 締日パターン(Shime1/2/3)の1行。<see cref="ClosingDaySet.ResolveDistinctDays"/> 向けにマスタから
+/// <c>SELECT DISTINCT Shime1, Shime2, Shime3</c> した結果を受け取るための共有DTOである。
+/// </summary>
+public sealed class ShimePatternRow {
+	public int Shime1 { get; set; }
+	public int Shime2 { get; set; }
+	public int Shime3 { get; set; }
 }

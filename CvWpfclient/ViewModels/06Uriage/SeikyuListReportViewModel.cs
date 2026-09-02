@@ -77,12 +77,16 @@ public partial class SeikyuListReportViewModel : Helpers.BaseReportViewModel {
 
 		// PreviousBalance は対象期間の開始(DayFrom)より前の全期間を SUM(TotalSales - TotalIn) で
 		// 積んだ値（設計書 2.3）。行ごとに DayFrom が異なりうるため得意先＋DayFrom で相関させる。
+		// 締日欄は選択した締日をそのまま出す。複数締日(Shime1/2/3)では c.Shime1 が当該行の締日とは
+		// 限らない(締日[10,20,99]の得意先で締日20を出力すると10が出てしまう)。本帳票は単一締日で
+		// 絞り込むため、全行の締日は選択値に一致する。
+
 		var source = $@"
 raw AS (
     SELECT
         {primaryDay} AS primaryDay,
         {secondaryDay} AS secondaryDay,
-        c.Shime1 AS shimeDay,
+        {shime} AS shimeDay,
         c.Id AS childId, c.Code AS childCode, c.Name AS childName,
         ifnull(p.Id,c.Id) AS parentId,
         ifnull(p.Code,c.Code) AS parentCode,
@@ -100,7 +104,7 @@ raw AS (
     JOIN MasterTokui c ON c.Id = s.Id_Tokui
     LEFT JOIN MasterTokui p ON p.Id = c.Id_Paysaki
     WHERE c.IsPay = 1
-      AND c.Shime1 = {shime}
+      AND {ClosingDaySet.ContainsShimeSql("c", shime, ClosingDaySet.OwnShimeSubquerySql)}
       AND {primaryDay} >= {dateFrom} AND {primaryDay} <= {dateTo}
       {paysakiWhere}
 ),

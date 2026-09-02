@@ -808,15 +808,23 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
-	public void SummaryRebuildClosingCheck_ClampsDayAndUsesMonthEnd() {
+	public void SummaryRebuildClosingCheck_UsesMonthEndAndRejectsOutOfRangeShime() {
+		// 締日の有効値は1〜28と99に統一済み(3.5)。1〜28はどの月にも実在するため月末丸め(Math.Min)は
+		// 到達しなくなり、丸めが効くのは99(末日)だけになった。範囲外は false で弾く。
 		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260228", 1, out var firstDay));
 		Assert.AreEqual("20260201", firstDay);
-		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260201", 31, out var february31));
-		Assert.AreEqual("20260228", february31);
-		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260401", 31, out var april31));
-		Assert.AreEqual("20260430", april31);
+		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260228", 28, out var february28));
+		Assert.AreEqual("20260228", february28);
+		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260428", 28, out var april28));
+		Assert.AreEqual("20260428", april28);
 		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260201", 99, out var februaryEnd));
 		Assert.AreEqual("20260228", februaryEnd);
+		Assert.IsTrue(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20240201", 99, out var leapFebruaryEnd));
+		Assert.AreEqual("20240229", leapFebruaryEnd, "うるう年の末日締めは29日");
+		foreach (var invalid in new[] { 0, 29, 30, 31, 100 }) {
+			Assert.IsFalse(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20260201", invalid, out _),
+				$"締日{invalid}は有効値(1〜28,99)ではないため受け付けてはいけない");
+		}
 	}
 
 	[TestMethod]
@@ -1069,6 +1077,10 @@ public class SummaryKakeDbTests {
 		db.CreateTable(typeof(MasterTokui), true, false);
 		db.CreateTable(typeof(SummaryKaiShi), true, false);
 		db.CreateTable(typeof(MasterShiire), true, false);
+		// UriClosingCheckSql / KaiClosingCheckSql が自社締日(ClosingDaySet.OwnShimeSubquerySql)を
+		// サブクエリで読むため必要(4.5 #4)。
+		db.CreateTable(typeof(MasterSysman), true, false);
+		db.Insert(new MasterSysman { ShimeBi = 99 });
 		return db;
 	}
 

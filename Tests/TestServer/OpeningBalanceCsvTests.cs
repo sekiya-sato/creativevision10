@@ -446,7 +446,8 @@ public class OpeningBalanceCsvTests {
 
 	[TestMethod]
 	public void GetDefaultKeyDate_IsAlwaysBeforeFiscalStart() {
-		foreach (var shime in new[] { 1, 15, 20, 28, 31, 99 }) {
+		// 締日の有効値は1〜28と99(3.5)。29〜31はEnumShimeのComboBoxに存在せず対象外。
+		foreach (var shime in new[] { 1, 15, 20, 28, 99 }) {
 			foreach (var fiscal in new[] { "20260101", "20260301", "20260701", "20261231", "20260215" }) {
 				var (keyDate, _) = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, fiscal, shime);
 				Assert.IsTrue(
