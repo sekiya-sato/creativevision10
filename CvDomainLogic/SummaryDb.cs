@@ -2,7 +2,6 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
 
 namespace CvDomainLogic;
 
@@ -731,11 +730,19 @@ WHERE SumMonth <= @0;
 			"処理エラー: {StepName}",
 			"処理終了");
 	}
-	/// <summary>請求残をストリーミングで再作成する。</summary>
+	/// <summary>
+	/// 請求残をストリーミングで再作成する。<c>param.Shime == 0</c>は「すべての締日」を意味し(4.3)、
+	/// 対象得意先の有効締日を昇順に列挙して締日ごとのステップへ展開する。
+	/// </summary>
 	public IAsyncEnumerable<StreamStepProgress> SummaryUriSeiAsyncStream(BillingParameter param) {
-		(string Name, Func<BillingParameter, int> Action)[] steps = [
-			("Summary : CalcSummaryUriSei", p => CalcSummaryUriSei(p.BillingYyyymm, p.Shime, p.TorisakiCodeFrom, p.TorisakiCodeTo, p.IsReissue)),
-		];
+		IReadOnlyList<int> shimeList = param.Shime == 0
+			? GetAvailableClosingDays(nameof(MasterTokui), param.TorisakiCodeFrom, param.TorisakiCodeTo)
+			: [param.Shime];
+
+		(string Name, Func<BillingParameter, int> Action)[] steps = [.. shimeList.Select(s =>
+			((string Name, Func<BillingParameter, int> Action))(
+				$"Summary : CalcSummaryUriSei ({FormatShimeLabel(s)})",
+				p => CalcSummaryUriSei(p.BillingYyyymm, s, p.TorisakiCodeFrom, p.TorisakiCodeTo, p.IsReissue)))];
 
 		return StreamStepProgressRunner.Run(
 			steps,
@@ -745,11 +752,19 @@ WHERE SumMonth <= @0;
 			"処理エラー: {StepName}",
 			"処理終了");
 	}
-	/// <summary>支払残をストリーミングで再作成する。</summary>
+	/// <summary>
+	/// 支払残をストリーミングで再作成する。<c>param.Shime == 0</c>は「すべての締日」を意味し(4.3)、
+	/// 対象仕入先の有効締日を昇順に列挙して締日ごとのステップへ展開する。
+	/// </summary>
 	public IAsyncEnumerable<StreamStepProgress> SummaryKaiShiAsyncStream(BillingParameter param) {
-		(string Name, Func<BillingParameter, int> Action)[] steps = [
-			("Summary : CalcSummaryKaiShi", p => CalcSummaryKaiShi(p.BillingYyyymm, p.Shime, p.TorisakiCodeFrom, p.TorisakiCodeTo)),
-		];
+		IReadOnlyList<int> shimeList = param.Shime == 0
+			? GetAvailableClosingDays(nameof(MasterShiire), param.TorisakiCodeFrom, param.TorisakiCodeTo)
+			: [param.Shime];
+
+		(string Name, Func<BillingParameter, int> Action)[] steps = [.. shimeList.Select(s =>
+			((string Name, Func<BillingParameter, int> Action))(
+				$"Summary : CalcSummaryKaiShi ({FormatShimeLabel(s)})",
+				p => CalcSummaryKaiShi(p.BillingYyyymm, s, p.TorisakiCodeFrom, p.TorisakiCodeTo)))];
 
 		return StreamStepProgressRunner.Run(
 			steps,
@@ -973,6 +988,65 @@ FROM totals AS c;
 		return cnt;
 	}
 	/// <summary>
+	/// 取引先マスタの締日1/2/3のパターン(<see cref="ClosingDaySet.Resolve"/>の入力)。
+	/// NPocoの複数列マッピングに乗せるため可変プロパティのクラスにする(record structでは単一列スカラーとして
+	/// キャストされてしまい、<c>InvalidCastException</c> になる)。
+	/// </summary>
+	private class ShimePattern {
+		public int Shime1 { get; set; }
+		public int Shime2 { get; set; }
+		public int Shime3 { get; set; }
+	}
+
+	/// <summary>
+	/// <paramref name="tableName"/>(MasterTokui/MasterShiire)に存在する締日1/2/3の組み合わせを重複なく取得する(4.2 手順2)。
+	/// 実データでは高々数件になる。
+	/// </summary>
+	private List<ShimePattern> GetShimePatterns(string tableName, string codeFrom, string codeTo) =>
+		_db.FetchDialect<ShimePattern>(
+			$"SELECT DISTINCT Shime1, Shime2, Shime3 FROM {tableName} WHERE (@0 = '' OR Code >= @0) AND (@1 = '' OR Code <= @1)",
+			codeFrom, codeTo);
+
+	/// <summary>
+	/// <paramref name="tableName"/>に存在する有効締日の和集合を昇順で取得する(4.3「すべての締日」展開用)。
+	/// <c>Shime1 = 0</c>の取引先が1件でもいれば自社締日(<see cref="GetOwnClosingDay"/>)を加える(3.1)。
+	/// </summary>
+	private List<int> GetAvailableClosingDays(string tableName, string codeFrom, string codeTo) {
+		var ownShime = GetOwnClosingDay();
+		var days = new SortedSet<int>();
+		foreach (var p in GetShimePatterns(tableName, codeFrom, codeTo)) {
+			foreach (var d in ClosingDaySet.Resolve(p.Shime1, p.Shime2, p.Shime3, ownShime)) {
+				days.Add(d);
+			}
+		}
+		return [.. days];
+	}
+
+	/// <summary>締日を画面表記へ変換する(99 -> 末日、それ以外は "n日")。ステップ名の表記(4.3)に使う。</summary>
+	private static string FormatShimeLabel(int shime) => shime == (int)EnumShime.DayLast ? "末日" : $"{shime}日";
+
+	/// <summary>
+	/// 別名<paramref name="alias"/>の取引先が締日パターン集合(<paramref name="patterns"/>)のいずれかと一致するかを
+	/// 判定するSQL断片を、行値比較を使わずOR連結で組み立てる(4.2)。
+	/// <para>
+	/// 値は<paramref name="parameters"/>の末尾へ3個ずつ(Shime1/Shime2/Shime3)積み、添字はその時点の要素数から採る。
+	/// SQL断片とバインド値を必ず1回の呼び出しで対にすること。添字を呼び出し側が数えると、
+	/// ずれてもエラーにならず「0件を静かに返す」形で壊れる。
+	/// </para>
+	/// </summary>
+	private static string BuildShimePatternWhereSql(List<object> parameters, string alias, IReadOnlyList<ShimePattern> patterns) {
+		var clauses = new List<string>(patterns.Count);
+		foreach (var p in patterns) {
+			var b = parameters.Count;
+			parameters.Add(p.Shime1);
+			parameters.Add(p.Shime2);
+			parameters.Add(p.Shime3);
+			clauses.Add($"({alias}.Shime1 = @{b} AND {alias}.Shime2 = @{b + 1} AND {alias}.Shime3 = @{b + 2})");
+		}
+		return string.Join(" OR ", clauses);
+	}
+
+	/// <summary>
 	/// 指定締日・請求月・得意先コード範囲の請求残を再作成する。
 	/// <para>通常再計算では請求書番号と連番を保持し、対象期間の伝票内訳だけを作り直す。</para>
 	/// <para>
@@ -983,20 +1057,49 @@ FROM totals AS c;
 	/// </para>
 	/// </summary>
 	public int CalcSummaryUriSei(string billingYyyymm, int shime, string tokuiCodeFrom = "", string tokuiCodeTo = "", bool isReissue = false) {
-		var (dayFrom, dayTo) = GetClosingPeriod(billingYyyymm, shime);
-		// 期首日(MasterSysman.FiscalStartDate)以前は伝票が移行されていないため集計しない。
-		// 締期間が期首前に終わるなら何もせず、期首をまたぐ場合は開始日を期首日まで切り上げる。
-		var fiscalStart = GetFiscalStartDate();
-		if (string.CompareOrdinal(dayTo, fiscalStart) < 0) return 0;
-		if (string.CompareOrdinal(dayFrom, fiscalStart) < 0) dayFrom = fiscalStart;
+		var ownShime = GetOwnClosingDay();
+		var patterns = GetShimePatterns(nameof(MasterTokui), tokuiCodeFrom, tokuiCodeTo);
+
+		// 締日パターン(Shime1/2/3)ごとに有効締日リストを解決し、締請求期間(DayFrom/DayTo)が同じものへまとめる(4.2)。
+		var groups = new Dictionary<(string DayFrom, string DayTo), List<ShimePattern>>();
+		foreach (var p in patterns) {
+			var days = ClosingDaySet.Resolve(p.Shime1, p.Shime2, p.Shime3, ownShime);
+			if (!ClosingDaySet.Contains(days, shime)) continue; // このパターンの取引先は対象締日を持たない
+			var period = ClosingDaySet.GetBillingPeriod(billingYyyymm, days, shime);
+			if (!groups.TryGetValue(period, out var list)) {
+				list = [];
+				groups[period] = list;
+			}
+			list.Add(p);
+		}
+
 		const string tempTableName = "TempSummaryUriSeiPrevious";
 		var vdate = Common.GetVdate();
+		var fiscalStart = GetFiscalStartDate();
+		var taxDefs = LoadTaxRateDefs();
+		var uriageTaxCols = BuildTaxSourceColumnsSql("t", "t.DenDay", taxDefs);
+		var tax1 = FinalTaxExprSql("IFNULL(s.SlipTax1, 0)", "IFNULL(s.BillingRaw1, 0)", "IFNULL(t.TaxRounding, 0)");
+		var tax2 = FinalTaxExprSql("IFNULL(s.SlipTax2, 0)", "IFNULL(s.BillingRaw2, 0)", "IFNULL(t.TaxRounding, 0)");
+		var tax3 = FinalTaxExprSql("IFNULL(s.SlipTax3, 0)", "IFNULL(s.BillingRaw3, 0)", "IFNULL(t.TaxRounding, 0)");
 		var cnt = 0;
 		var transactionStarted = false;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			transactionStarted = true;
-			var prepareSql = $@"
+			// グループ(=締請求期間)ごとに1回だけ既存SQLを実行する。トランザクションは全グループの外側(このtry全体)。
+			foreach (var group in groups.OrderBy(g => g.Key.DayFrom).ThenBy(g => g.Key.DayTo)) {
+				var (dayFromRaw, dayTo) = group.Key;
+				var groupPatterns = group.Value;
+				// 期首日(MasterSysman.FiscalStartDate)以前は伝票が移行されていないため集計しない。
+				// このグループの締期間が期首前に終わるならこのグループだけスキップし、期首をまたぐ場合は開始日を期首日まで切り上げる。
+				if (string.CompareOrdinal(dayTo, fiscalStart) < 0) continue;
+				var dayFrom = string.CompareOrdinal(dayFromRaw, fiscalStart) < 0 ? fiscalStart : dayFromRaw;
+
+				// 取引先の絞り込みは「このグループの締日パターン集合に含まれるか」へ広げる(行値比較は使わずOR連結、値は必ずバインド)。
+				var parameters = new List<object> { dayFrom, dayTo, shime, tokuiCodeFrom, tokuiCodeTo, billingYyyymm, isReissue ? 1 : 0, ownShime };
+				var patternWhere = BuildShimePatternWhereSql(parameters, "t", groupPatterns);
+
+				var prepareSql = $@"
 CREATE TEMP TABLE IF NOT EXISTS {tempTableName} AS
 SELECT Id_Tokui, DenDay, SeikyuNo, Renban
 FROM SummaryUriSei
@@ -1007,24 +1110,19 @@ SELECT s.Id_Tokui, s.DenDay, s.SeikyuNo, s.Renban
 FROM SummaryUriSei AS s
 INNER JOIN MasterTokui AS t ON t.Id = s.Id_Tokui
 WHERE s.DenDay = @1
-  AND t.Shime1 = @2
+  AND ({patternWhere})
   AND (@3 = '' OR t.Code >= @3)
   AND (@4 = '' OR t.Code <= @4);
 DELETE FROM SummaryUriSei
 WHERE DenDay = @1
   AND Id_Tokui IN (
-		SELECT Id FROM MasterTokui
-		WHERE Shime1 = @2
-		  AND (@3 = '' OR Code >= @3)
-		  AND (@4 = '' OR Code <= @4)
+		SELECT t.Id FROM MasterTokui AS t
+		WHERE ({patternWhere})
+		  AND (@3 = '' OR t.Code >= @3)
+		  AND (@4 = '' OR t.Code <= @4)
 	);
 ";
-			var taxDefs = LoadTaxRateDefs();
-			var uriageTaxCols = BuildTaxSourceColumnsSql("t", "t.DenDay", taxDefs);
-			var tax1 = FinalTaxExprSql("IFNULL(s.SlipTax1, 0)", "IFNULL(s.BillingRaw1, 0)", "IFNULL(t.TaxRounding, 0)");
-			var tax2 = FinalTaxExprSql("IFNULL(s.SlipTax2, 0)", "IFNULL(s.BillingRaw2, 0)", "IFNULL(t.TaxRounding, 0)");
-			var tax3 = FinalTaxExprSql("IFNULL(s.SlipTax3, 0)", "IFNULL(s.BillingRaw3, 0)", "IFNULL(t.TaxRounding, 0)");
-			var sql = $@"
+				var sql = $@"
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
 ),
@@ -1056,11 +1154,11 @@ payments AS (
 	GROUP BY t.Id_Torisaki
 ),
 targets AS (
-	SELECT Id, PayMonth, PayDay, TaxRounding
-	FROM MasterTokui
-	WHERE Shime1 = @2
-	  AND (@3 = '' OR Code >= @3)
-	  AND (@4 = '' OR Code <= @4)
+	SELECT t.Id, t.PayMonth, t.PayDay, t.TaxRounding
+	FROM MasterTokui AS t
+	WHERE ({patternWhere})
+	  AND (@3 = '' OR t.Code >= @3)
+	  AND (@4 = '' OR t.Code <= @4)
 ),
 calculated AS (
 	-- 消費税(Tax1/2/3)は伝票単位ぶんを合算し、請求単位ぶんだけ得意先(MasterTokui)のTaxRoundingで1回丸める(3.5)。
@@ -1082,8 +1180,8 @@ calculated AS (
 		IFNULL(p.Offset, 0) AS Offset,
 		IFNULL(p.Other, 0) AS Other,
 		strftime('%Y%m%d', CASE
-			WHEN t.PayDay IN (0, 99) THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')
-			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth), printf('+%d days', MIN(t.PayDay, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')) AS INTEGER)) - 1))
+			WHEN (CASE WHEN t.PayDay = 0 THEN @7 ELSE t.PayDay END) = 99 THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')
+			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth), printf('+%d days', MIN(CASE WHEN t.PayDay = 0 THEN @7 ELSE t.PayDay END, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')) AS INTEGER)) - 1))
 		END) AS NyukinYoteiDay
 	FROM targets AS t
 	LEFT JOIN sales AS s ON s.Id_Tokui = t.Id
@@ -1114,10 +1212,11 @@ SELECT
 FROM calculated AS c
 LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 ";
-			var period = $"{dayFrom}-{dayTo},締日={shime},再発行={isReissue}";
-			var parameters = new object[] { dayFrom, dayTo, shime, tokuiCodeFrom, tokuiCodeTo, billingYyyymm, isReissue ? 1 : 0 };
-			cnt += ExecuteAndCounts(prepareSql, parameters, "CalcSummaryUriSei(delete)", "SummaryUriSei", period);
-			cnt += ExecuteAndCounts(sql, parameters, "CalcSummaryUriSei", "SummaryUriSei", period);
+				var period = $"{dayFrom}-{dayTo},締日={shime},再発行={isReissue}";
+				var parameterArray = parameters.ToArray();
+				cnt += ExecuteAndCounts(prepareSql, parameterArray, "CalcSummaryUriSei(delete)", "SummaryUriSei", period);
+				cnt += ExecuteAndCounts(sql, parameterArray, "CalcSummaryUriSei", "SummaryUriSei", period);
+			}
 			_db.CompleteTransaction();
 			transactionStarted = false;
 			return cnt;
@@ -1137,23 +1236,6 @@ LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 			}
 		}
 	}
-
-	private static (string DayFrom, string DayTo) GetClosingPeriod(string billingYyyymm, int shime) {
-		if (!DateTime.TryParseExact(billingYyyymm, "yyyyMM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var billingMonth)) {
-			throw new ArgumentException("請求月はyyyyMM形式で指定してください。", nameof(billingYyyymm));
-		}
-		if (shime is < 1 or > 31 && shime != (int)EnumShime.DayLast) {
-			throw new ArgumentOutOfRangeException(nameof(shime), "締日は1から31または99で指定してください。");
-		}
-		var dayTo = GetClosingDay(billingMonth, shime);
-		var dayFrom = GetClosingDay(billingMonth.AddMonths(-1), shime).AddDays(1);
-		return (dayFrom.ToString("yyyyMMdd", CultureInfo.InvariantCulture), dayTo.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
-	}
-
-	private static DateTime GetClosingDay(DateTime month, int shime) {
-		var lastDay = DateTime.DaysInMonth(month.Year, month.Month);
-		return new DateTime(month.Year, month.Month, shime == (int)EnumShime.DayLast ? lastDay : Math.Min(shime, lastDay));
-	}
 	/// <summary>
 	/// 指定締日・支払月・仕入先コード範囲の支払残を再作成する。
 	/// <para>
@@ -1164,35 +1246,59 @@ LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 	/// </para>
 	/// </summary>
 	public int CalcSummaryKaiShi(string paymentYyyymm, int shime, string shiireCodeFrom = "", string shiireCodeTo = "") {
-		var (dayFrom, dayTo) = GetClosingPeriod(paymentYyyymm, shime);
-		// 期首日(MasterSysman.FiscalStartDate)以前は伝票が移行されていないため集計しない。
-		// 締期間が期首前に終わるなら何もせず、期首をまたぐ場合は開始日を期首日まで切り上げる。
+		var ownShime = GetOwnClosingDay();
+		var patterns = GetShimePatterns(nameof(MasterShiire), shiireCodeFrom, shiireCodeTo);
+
+		// 締日パターン(Shime1/2/3)ごとに有効締日リストを解決し、締請求期間(DayFrom/DayTo)が同じものへまとめる(4.2)。
+		var groups = new Dictionary<(string DayFrom, string DayTo), List<ShimePattern>>();
+		foreach (var p in patterns) {
+			var days = ClosingDaySet.Resolve(p.Shime1, p.Shime2, p.Shime3, ownShime);
+			if (!ClosingDaySet.Contains(days, shime)) continue; // このパターンの取引先は対象締日を持たない
+			var period = ClosingDaySet.GetBillingPeriod(paymentYyyymm, days, shime);
+			if (!groups.TryGetValue(period, out var list)) {
+				list = [];
+				groups[period] = list;
+			}
+			list.Add(p);
+		}
+
 		var fiscalStart = GetFiscalStartDate();
-		if (string.CompareOrdinal(dayTo, fiscalStart) < 0) return 0;
-		if (string.CompareOrdinal(dayFrom, fiscalStart) < 0) dayFrom = fiscalStart;
 		var vdate = Common.GetVdate();
+		var taxDefs = LoadTaxRateDefs();
+		var shiireRowTaxCols = BuildTaxSourceRowColumnsSql("t", "t.DenDay", taxDefs);
+		var materialRowTaxCols = BuildTaxSourceRowColumnsSql("t", "t.DenDay", taxDefs);
+		var sumTaxCols = SumTaxSourceColumnsSql();
+		var tax1 = FinalTaxExprSql("IFNULL(s.SlipTax1, 0)", "IFNULL(s.BillingRaw1, 0)", "IFNULL(t.TaxRounding, 0)", "IFNULL(s.Sonota99, 0)");
+		var tax2 = FinalTaxExprSql("IFNULL(s.SlipTax2, 0)", "IFNULL(s.BillingRaw2, 0)", "IFNULL(t.TaxRounding, 0)");
+		var tax3 = FinalTaxExprSql("IFNULL(s.SlipTax3, 0)", "IFNULL(s.BillingRaw3, 0)", "IFNULL(t.TaxRounding, 0)");
 		var cnt = 0;
 		var transactionStarted = false;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			transactionStarted = true;
-			const string deleteSql = @"
+			// グループ(=締請求期間)ごとに1回だけ既存SQLを実行する。トランザクションは全グループの外側(このtry全体)。
+			foreach (var group in groups.OrderBy(g => g.Key.DayFrom).ThenBy(g => g.Key.DayTo)) {
+				var (dayFromRaw, dayTo) = group.Key;
+				var groupPatterns = group.Value;
+				// 期首日(MasterSysman.FiscalStartDate)以前は伝票が移行されていないため集計しない。
+				// このグループの締期間が期首前に終わるならこのグループだけスキップし、期首をまたぐ場合は開始日を期首日まで切り上げる。
+				if (string.CompareOrdinal(dayTo, fiscalStart) < 0) continue;
+				var dayFrom = string.CompareOrdinal(dayFromRaw, fiscalStart) < 0 ? fiscalStart : dayFromRaw;
+
+				// 仕入先の絞り込みは「このグループの締日パターン集合に含まれるか」へ広げる(行値比較は使わずOR連結、値は必ずバインド)。
+				var parameters = new List<object> { dayFrom, dayTo, shime, shiireCodeFrom, shiireCodeTo, paymentYyyymm, ownShime };
+				var patternWhere = BuildShimePatternWhereSql(parameters, "t", groupPatterns);
+
+				var deleteSql = $@"
 DELETE FROM SummaryKaiShi
 WHERE DenDay = @1
   AND Id_Shiire IN (
-		SELECT Id FROM MasterShiire
-		WHERE Shime1 = @2
-		  AND (@3 = '' OR Code >= @3)
-		  AND (@4 = '' OR Code <= @4)
+		SELECT t.Id FROM MasterShiire AS t
+		WHERE ({patternWhere})
+		  AND (@3 = '' OR t.Code >= @3)
+		  AND (@4 = '' OR t.Code <= @4)
 	);";
-			var taxDefs = LoadTaxRateDefs();
-			var shiireRowTaxCols = BuildTaxSourceRowColumnsSql("t", "t.DenDay", taxDefs);
-			var materialRowTaxCols = BuildTaxSourceRowColumnsSql("t", "t.DenDay", taxDefs);
-			var sumTaxCols = SumTaxSourceColumnsSql();
-			var tax1 = FinalTaxExprSql("IFNULL(s.SlipTax1, 0)", "IFNULL(s.BillingRaw1, 0)", "IFNULL(t.TaxRounding, 0)", "IFNULL(s.Sonota99, 0)");
-			var tax2 = FinalTaxExprSql("IFNULL(s.SlipTax2, 0)", "IFNULL(s.BillingRaw2, 0)", "IFNULL(t.TaxRounding, 0)");
-			var tax3 = FinalTaxExprSql("IFNULL(s.SlipTax3, 0)", "IFNULL(s.BillingRaw3, 0)", "IFNULL(t.TaxRounding, 0)");
-			var sql = $@"
+				var sql = $@"
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
 ),
@@ -1249,11 +1355,11 @@ payments AS (
 	GROUP BY t.Id_Torisaki
 ),
 targets AS (
-	SELECT Id, PayMonth, PayDay, TaxRounding
-	FROM MasterShiire
-	WHERE Shime1 = @2
-	  AND (@3 = '' OR Code >= @3)
-	  AND (@4 = '' OR Code <= @4)
+	SELECT t.Id, t.PayMonth, t.PayDay, t.TaxRounding
+	FROM MasterShiire AS t
+	WHERE ({patternWhere})
+	  AND (@3 = '' OR t.Code >= @3)
+	  AND (@4 = '' OR t.Code <= @4)
 ),
 calculated AS (
 	-- 消費税(Tax1/2/3)は伝票単位ぶんを合算し、請求単位ぶんだけ仕入先(MasterShiire)のTaxRoundingで1回丸める(3.5)。
@@ -1275,8 +1381,8 @@ calculated AS (
 		IFNULL(p.Offset, 0) AS Offset,
 		IFNULL(p.Other, 0) AS Other,
 		strftime('%Y%m%d', CASE
-			WHEN t.PayDay IN (0, 99) THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')
-			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth), printf('+%d days', MIN(t.PayDay, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')) AS INTEGER)) - 1))
+			WHEN (CASE WHEN t.PayDay = 0 THEN @6 ELSE t.PayDay END) = 99 THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')
+			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth), printf('+%d days', MIN(CASE WHEN t.PayDay = 0 THEN @6 ELSE t.PayDay END, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')) AS INTEGER)) - 1))
 		END) AS ShiharaiYoteiDay
 	FROM targets AS t
 	LEFT JOIN purchases AS s ON s.Id_Shiire = t.Id
@@ -1303,10 +1409,11 @@ SELECT
 	{vdate}, {vdate}
 FROM calculated AS c;
 ";
-			var period = $"{dayFrom}-{dayTo},締日={shime}";
-			var parameters = new object[] { dayFrom, dayTo, shime, shiireCodeFrom, shiireCodeTo, paymentYyyymm };
-			cnt += ExecuteAndCounts(deleteSql, parameters, "CalcSummaryKaiShi(delete)", "SummaryKaiShi", period);
-			cnt += ExecuteAndCounts(sql, parameters, "CalcSummaryKaiShi", "SummaryKaiShi", period);
+				var period = $"{dayFrom}-{dayTo},締日={shime}";
+				var parameterArray = parameters.ToArray();
+				cnt += ExecuteAndCounts(deleteSql, parameterArray, "CalcSummaryKaiShi(delete)", "SummaryKaiShi", period);
+				cnt += ExecuteAndCounts(sql, parameterArray, "CalcSummaryKaiShi", "SummaryKaiShi", period);
+			}
 			_db.CompleteTransaction();
 			transactionStarted = false;
 			return cnt;

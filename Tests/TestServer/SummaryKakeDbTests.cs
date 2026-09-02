@@ -1104,6 +1104,9 @@ public class SummaryKakeDbTests {
 
 	private ExDatabaseSqlite PrepareUriSeiTables() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		// 請求計算は締日未設定(Shime1=0)のフォールバックとPayDay=0の予定日算出で自社締日を使うため、
+		// MasterSysmanが必ず要る(複数締日対応 3.1/3.4)。PrepareKaiKakeTablesと扱いを揃える。
+		AddOwnClosingDay(db);
 		db.CreateTable(typeof(SummaryUriSei), true, false);
 		db.CreateTable(typeof(MasterTokui), true, false);
 		db.CreateTable(typeof(Tran00Uriage), true, false);
@@ -1181,6 +1184,8 @@ public class SummaryKakeDbTests {
 
 	private ExDatabaseSqlite PrepareKaiShiTables() {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		// 支払計算も PrepareUriSeiTables と同じ理由で自社締日が必要。
+		AddOwnClosingDay(db);
 		db.CreateTable(typeof(SummaryKaiShi), true, false);
 		db.CreateTable(typeof(MasterShiire), true, false);
 		db.CreateTable(typeof(Tran03Shiire), true, false);
