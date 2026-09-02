@@ -445,11 +445,11 @@
 							TextWrapping="Wrap" />
 						<Label Grid.Row="15"
 							Height="30"
-							VerticalAlignment="Top"
+							Margin="15,0,0,0" VerticalAlignment="Center"
 							Content="登録日" />
 						<Label Grid.Row="16"
 							Height="30"
-							VerticalAlignment="Top"
+							Margin="15,0,0,0" VerticalAlignment="Top"
 							Content="修正日" />
 						<Label Grid.Row="15" Grid.Column="1" Grid.ColumnSpan="2"
 							Height="30"

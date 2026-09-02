@@ -1199,7 +1199,7 @@ function OnFetch() {
 		<image id="Img01">
 			<position x="140" y="20" width="20" height="23"/>
 			<color transparent="1"/>
-			<data calctype="static">data_kakuin.jpg</data>
+			<data calctype="static">data_companystamp.jpg</data>
 		</image>
 		<text id="Txt131">
 			<position x="8" y="263" width="29" height="4"/>

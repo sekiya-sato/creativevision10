@@ -452,6 +452,7 @@ public partial class MenuData : ObservableObject {
 				new("旧DBからの変換処理", typeof(Views._00System.ConvertDbView), addInfo:"旧OracleDBからのデータ変換 サーバ側にOracle接続定義が必要"),
 				new("旧DBからの選択変換処理", typeof(Views._00System.ConvertSelectedView), addInfo:"旧OracleDBからの選択変換処理 サーバ側にOracle接続定義が必要"),
 				new("在庫・掛再更新", typeof(Views._00System.StockKakeUpdateView), addInfo:"在庫･売掛･買掛を取引明細から再集計する"),
+				/* 消費税再計算はメニュー化しない 1.税設定・商品税区分の変更後に過去伝票を月次で再計算すると、伝票時点の監査値を現在マスタで上書きする、2.全件更新は長時間になるので、気軽に実行できない */
 				new("管理者用システム処理", typeof(Views._00System.SysExecMiscView), addInfo:"管理者用の各種システム処理"),
 			])),
 		])),
