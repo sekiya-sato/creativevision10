@@ -155,7 +155,7 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand]
 	void SelectBrandIds() {
-		var selected = ShowMultiSelectDialog("ブランド選択", "Kubun='BRD'", BrandIds, BrandIds.FirstOrDefault());
+		var selected = ShowMultiSelectDialog("ブランド選択", $"Kubun='{MasterMeisho.KubunBrand}'", BrandIds, BrandIds.FirstOrDefault());
 		if (selected == null) return;
 		BrandIds = [.. selected.Select(x => x.Id)];
 		BrandIdsText = BuildSelectedText(selected);
@@ -169,7 +169,7 @@ public partial class SelectShohinViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand]
 	void SelectItemIds() {
-		var selected = ShowMultiSelectDialog("アイテム選択", "Kubun='ITM'", ItemIds, ItemIds.FirstOrDefault());
+		var selected = ShowMultiSelectDialog("アイテム選択", $"Kubun='{MasterMeisho.KubunItem}'", ItemIds, ItemIds.FirstOrDefault());
 		if (selected == null) return;
 		ItemIds = [.. selected.Select(x => x.Id)];
 		ItemIdsText = BuildSelectedText(selected);

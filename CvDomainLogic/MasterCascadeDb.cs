@@ -85,11 +85,6 @@ public class MasterCascadeDb {
 	];
 
 	/// <summary>
-	/// MasterMeisho の「区分そのものを定義する行」の区分。この区分の行の Name が区分名(KubunName/Kbname)の元になる。
-	/// </summary>
-	const string MeishoKubunIndex = "IDX";
-
-	/// <summary>
 	/// Jsub(List&lt;MasterGeneralMeisho&gt;)内の名称スナップショットの伝播定義。
 	/// 各要素は Sid/Cd/Mei(選択された名称行)と Kb/Kbname(区分コードと区分名)を持つ。
 	/// Kb は MasterMeisho.Kubun、Kbname は Kubun='IDX' かつ Code=Kb の行の Name に対応する
@@ -312,7 +307,7 @@ update {table} as S
 		var col = rule.JsonColumn;
 		// M=名称行($.Sid で参照) K=区分定義行($.Kb で参照)
 		var joins = $@"left join {source} M on M.Id = json_extract(J.value, '$.Sid')
-                            left join {source} K on K.Kubun = '{MeishoKubunIndex}' and K.Code = json_extract(J.value, '$.Kb')";
+                            left join {source} K on K.Kubun = '{MasterMeisho.KubunIndex}' and K.Code = json_extract(J.value, '$.Kb')";
 		var sql = $@"
 update {table} as S
    set {col} = ( select json_group_array(json(X.value2))
@@ -345,7 +340,7 @@ update {table} as S
 	/// </summary>
 	int ExecuteKubunNameRules(string newCode, string newName, string? kubun, string? oldCode, long vdate) {
 		// 区分定義行(IDX)以外の改名は区分名に影響しない
-		if (!string.Equals(kubun, MeishoKubunIndex, StringComparison.Ordinal))
+		if (!string.Equals(kubun, MasterMeisho.KubunIndex, StringComparison.Ordinal))
 			return 0;
 		// 区分コード自体の変更は区分体系の変更であり、MasterMeisho.Kubun / MasterShohin.SizeKu /
 		// MasterGeneralMeisho.Kb の参照先が失われる。伝播では解決できないため実行しない(§7-R6)
@@ -371,7 +366,7 @@ update {table}
    set KubunName = @1,
        Vdu = @2
  where Kubun = @0
-   and Kubun <> '{MeishoKubunIndex}'
+   and Kubun <> '{MasterMeisho.KubunIndex}'
    and ifnull(KubunName,'') <> @1";
 		return _db.ExecuteDialect(sql, [kubunCode, kubunName, vdate]);
 	}
@@ -382,11 +377,11 @@ update {table}
 		var sql = $@"
 update {table} as T
    set KubunName = ( select ifnull(M.Name,'') from {table} M
-                      where M.Kubun = '{MeishoKubunIndex}' and M.Code = T.Kubun ),
+                      where M.Kubun = '{MasterMeisho.KubunIndex}' and M.Code = T.Kubun ),
        Vdu = @0
- where T.Kubun <> '{MeishoKubunIndex}'
+ where T.Kubun <> '{MasterMeisho.KubunIndex}'
    and exists ( select 1 from {table} M
-                 where M.Kubun = '{MeishoKubunIndex}' and M.Code = T.Kubun
+                 where M.Kubun = '{MasterMeisho.KubunIndex}' and M.Code = T.Kubun
                    and ifnull(T.KubunName,'') <> ifnull(M.Name,'') )";
 		return _db.ExecuteDialect(sql, [vdate]);
 	}

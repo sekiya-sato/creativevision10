@@ -243,9 +243,9 @@ public class WriteEffectRunnerTests {
 		CreateCascadeTables();
 		var runner = new WriteEffectRunner(Db);
 
-		var brand = new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
 		Db.Insert(brand);
-		var org = new MasterMeisho { Id = brand.Id, Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
+		var org = new MasterMeisho { Id = brand.Id, Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
 		Db.Insert(new MasterShohin {
 			Code = "0001",
 			Id_Brand = brand.Id,
@@ -269,9 +269,9 @@ public class WriteEffectRunnerTests {
 	[TestMethod]
 	public void After_Update_WithoutNameChange_DoesNotCascade() {
 		CreateCascadeTables();
-		var brand = new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "ブランド", Vdc = 1, Vdu = 1 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "ブランド", Vdc = 1, Vdu = 1 };
 		Db.Insert(brand);
-		var org = new MasterMeisho { Id = brand.Id, Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "ブランド", Vdc = 1, Vdu = 1 };
+		var org = new MasterMeisho { Id = brand.Id, Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "ブランド", Vdc = 1, Vdu = 1 };
 
 		Assert.AreEqual(0, new WriteEffectRunner(Db).After(WriteOp.Update, typeof(MasterMeisho), brand, org, 2).Cascade);
 	}

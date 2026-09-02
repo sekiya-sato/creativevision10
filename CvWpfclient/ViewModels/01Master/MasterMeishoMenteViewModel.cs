@@ -75,7 +75,7 @@ from MasterMeisho where Kubun=@0
 			return;
 		}
 
-		var defaultKubun = kubunListCache.FirstOrDefault(c => c.Code == "BRD") ?? kubunListCache.FirstOrDefault();
+		var defaultKubun = kubunListCache.FirstOrDefault(c => c.Code == MasterMeisho.KubunBrand) ?? kubunListCache.FirstOrDefault();
 		listCondition = new CategoryRangeParameter {
 			DisplayName = "区分",
 			SelectedCategory = defaultKubun == null ? null : FormatKubun(defaultKubun),
@@ -119,7 +119,7 @@ from MasterMeisho where Kubun=@0
 				DataType = typeof(QueryListParam),
 				DataMsg = Common.SerializeObject(new QueryListParam(
 					itemType: typeof(MasterMeisho),
-					where: "Kubun='IDX'",
+					where: $"Kubun='{MasterMeisho.KubunIndex}'",
 					order: "Code"
 				))
 			};
@@ -149,7 +149,7 @@ from MasterMeisho where Kubun=@0
 		var selWin = new Views.Sub.SelectKubunView();
 		var vm = selWin.DataContext as Sub.SelectKubunViewModel;
 		if (vm == null) return;
-		vm.SetParam("Kubun='IDX'", CurrentEdit.Kubun);
+		vm.SetParam($"Kubun='{MasterMeisho.KubunIndex}'", CurrentEdit.Kubun);
 		if (ClientLib.ShowDialogView(selWin, this) != true) return;
 		var meisho = vm.Current as MasterMeisho;
 		CurrentEdit.Kubun = meisho?.Code ?? CurrentEdit.Kubun;

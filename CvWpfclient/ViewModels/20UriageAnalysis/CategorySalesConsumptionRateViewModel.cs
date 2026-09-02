@@ -39,9 +39,9 @@ public partial class CategorySalesConsumptionRateViewModel : Helpers.BaseReportV
 	public partial bool IsRateByStock { get; set; } = true;
 
 	(string Kubun, string IdColumn) Category =>
-		IsByItem ? ("ITM", "sh.Id_Item")
+		IsByItem ? (MasterMeisho.KubunItem, "sh.Id_Item")
 		: IsBySeason ? ("SZN", "sh.Id_Season")
-		: ("BRD", "sh.Id_Brand");
+		: (MasterMeisho.KubunBrand, "sh.Id_Brand");
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseDate(DenDayFrom, out var from) || !TryParseDate(DenDayTo, out var to)) {

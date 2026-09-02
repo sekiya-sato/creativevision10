@@ -50,7 +50,7 @@ public partial class SalesBudgetRatioReportViewModel : Helpers.BaseReportViewMod
 	void SelectBrandCodeTo() => BrandCodeTo = SelectBrandCode() ?? BrandCodeTo;
 
 	string? SelectBrandCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseYearMonth(TargetYearMonth, out var target)) {
@@ -74,7 +74,7 @@ WITH shops AS (
 ),
 brands AS (
     SELECT br.Id, br.Code, br.Name FROM MasterMeisho br
-    WHERE br.Kubun = 'BRD' {brandWhere}
+    WHERE br.Kubun = '{MasterMeisho.KubunBrand}' {brandWhere}
 ),
 budget AS (
     SELECT Id_Tenpo AS idTenpo, Id_Brand AS idBrand, SUM(UriYosan) AS yosan

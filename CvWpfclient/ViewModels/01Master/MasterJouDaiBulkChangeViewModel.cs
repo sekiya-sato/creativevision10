@@ -256,7 +256,7 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 		try {
 			StartBusy("マスタ取得中...");
 			SaleOptions = new ObservableCollection<MasterOption>(
-				await LoadMeishoOptionsAsync("SLE", ct));
+				await LoadMeishoOptionsAsync(MasterMeisho.KubunSale, ct));
 			ShainOptions = new ObservableCollection<MasterOption>(
 				await LoadOptionsAsync<MasterShain>("MasterShain", string.Empty, ct));
 			taxRate = await AppGlobal.LogicGetTax(1, ToDay(DateTime.Today));
@@ -954,7 +954,7 @@ LIMIT {maxCount}";
 
 	[RelayCommand]
 	void SelectSaleDialog() {
-		var selected = PrintPdfHelper.ShowSelectDialog<MasterMeisho>(this, typeof(MasterMeisho), "Kubun='SLE'", "Code",
+		var selected = PrintPdfHelper.ShowSelectDialog<MasterMeisho>(this, typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunSale}'", "Code",
 			startPos: SelectedSale?.Id ?? 0);
 		if (selected == null) return;
 		SelectedSale = FindOrAdd(SaleOptions, selected.Id, selected.Code, selected.Name);

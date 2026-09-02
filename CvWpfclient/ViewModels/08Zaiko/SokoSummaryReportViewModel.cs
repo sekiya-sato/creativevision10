@@ -50,7 +50,7 @@ public partial class SokoSummaryReportViewModel : Helpers.BaseReportViewModel {
 		}
 
 		// ブランドとアイテムはどちらも MasterMeisho。区分と参照する商品マスタ列だけが違う。
-		var (kubun, idColumn) = IsByBrand ? ("BRD", "sh.Id_Brand") : ("ITM", "sh.Id_Item");
+		var (kubun, idColumn) = IsByBrand ? (MasterMeisho.KubunBrand, "sh.Id_Brand") : (MasterMeisho.KubunItem, "sh.Id_Item");
 
 		var sql = $@"
 WITH agg AS (

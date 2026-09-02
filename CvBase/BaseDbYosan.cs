@@ -21,7 +21,7 @@ public sealed partial class MasterYosanBrand : BaseDbClass {
 	/// ブランドId
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun:"BRD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunBrand)]
 	[OldTableCommentAttr("ブランドCD")]
 	[Comment("ブランドId")]
 	public partial long Id_Brand { get; set; }

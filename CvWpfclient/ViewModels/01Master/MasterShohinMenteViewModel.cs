@@ -262,7 +262,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 		if (KubunList.Count > 0) return;
 		try {
 			ClientLib.Cursor2Wait();
-			var param = new QueryListParam(typeof(MasterMeisho), "Kubun='IDX' and Code between 'B01' and 'B10'", "Code");
+			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunIndex}' and Code between 'B01' and 'B10'", "Code");
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
@@ -290,7 +290,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	[RelayCommand]
 	void DoSelectBrand() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code", startPos: CurrentEdit.Id_Brand);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code", startPos: CurrentEdit.Id_Brand);
 		if (meisho == null) return;
 		CurrentEdit.Id_Brand = meisho.Id;
 		CurrentEdit.VBrand = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
@@ -298,7 +298,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	[RelayCommand]
 	void DoSelectItem() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='ITM'", "Code", startPos: CurrentEdit.Id_Item);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunItem}'", "Code", startPos: CurrentEdit.Id_Item);
 		if (meisho == null) return;
 		CurrentEdit.Id_Item = meisho.Id;
 		CurrentEdit.VItem = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
@@ -349,7 +349,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 		var selWin = new Views.Sub.SelectKubunView();
 		var vm = selWin.DataContext as Sub.SelectKubunViewModel;
 		if (vm == null) return;
-		vm.SetParam("Kubun='IDX' and (Code='SIZ' or Code Like 'US%')", CurrentEdit.SizeKu);
+		vm.SetParam($"Kubun='{MasterMeisho.KubunIndex}' and (Code='SIZ' or Code Like 'US%')", CurrentEdit.SizeKu);
 		if (ClientLib.ShowDialogView(selWin, this) != true) return;
 		var meisho = vm.Current as MasterMeisho;
 		if (meisho == null) return;
@@ -366,7 +366,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	[RelayCommand]
 	void DoSelectCol(long? id) {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='COL'", "Code", startPos: SelectedJcolsiz?.Id_Col ?? 0);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunColor}'", "Code", startPos: SelectedJcolsiz?.Id_Col ?? 0);
 		if (meisho == null || SelectedJcolsiz == null) return;
 		SelectedJcolsiz.Id_Col = meisho.Id;
 		SelectedJcolsiz.Code_Col = meisho.Code ?? "";

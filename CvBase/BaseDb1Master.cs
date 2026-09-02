@@ -408,7 +408,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("ブランドCD")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "BRD")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunBrand)]
 	[Comment("ブランド")]
 	public partial long Id_Brand { get; set; }
 	/// <summary>
@@ -424,7 +424,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("アイテムCD")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "ITM")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunItem)]
 	[Comment("アイテム")]
 	public partial long Id_Item { get; set; }
 	/// <summary>
@@ -602,9 +602,9 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("商品サイズ区分")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "SIZ,US0,US1,US2,US3,US4,US5,US6,US7,US8,US9")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunSize + ",US0,US1,US2,US3,US4,US5,US6,US7,US8,US9")]
 	[Comment("商品サイズ区分")]
-	public partial string SizeKu { get; set; } = "SIZ";
+	public partial string SizeKu { get; set; } = MasterMeisho.KubunSize;
 	/// <summary>
 	/// 基準倉庫
 	/// </summary>
@@ -689,7 +689,7 @@ public sealed partial class MasterShohinColSiz : BaseDbClass {
 	/// 色
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "COL")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunColor)]
 	[Comment("色")]
 	public partial long Id_Col { get; set; }
 	/// <summary>

@@ -17,11 +17,11 @@ public class RebuildDb {
 	public int RebuildMasterShohin2Meisho() {
 		// MasterShohinのJcolsiz、JSON_EXTRACTからMeishoを再構築する
 		int cnt = 0; // MasterMeishoへの登録件数
-		var coreSql = @"
+		var coreSql = $@"
 SELECT
   M.Code,
   M.SizeKu as Kubun,
-  (select Name from MasterMeisho where Kubun='IDX' and Code = M.SizeKu) as KubunName,
+  (select Name from MasterMeisho where Kubun='{MasterMeisho.KubunIndex}' and Code = M.SizeKu) as KubunName,
   mm.Name,
   json_extract(J.value, '$.Id_Col') AS Id_Col,
   json_extract(J.value, '$.Code_Col') AS Code_Col,
@@ -33,12 +33,12 @@ SELECT
   json_extract(J.value, '$.Jan2') AS Jan2,
   json_extract(J.value, '$.Jan3') AS Jan3
 FROM MasterShohin M, json_each(M.Jcolsiz) J
-left outer join MasterMeisho mm on mm.Kubun='COL' and mm.Code=json_extract(J.value, '$.Code_Col')
+left outer join MasterMeisho mm on mm.Kubun='{MasterMeisho.KubunColor}' and mm.Code=json_extract(J.value, '$.Code_Col')
 ";
 		var updateSql = "";
 		// まずはカラーIdを持たないものを抽出して、MasterMeishoに登録する
 		var meishoSql = @$"
-select distinct 'COL' as Kubun,'ｶﾗｰ' as KubunName,Code_Col as Code, coalesce(nullif(Mei_Col, ''),Name,'新色'||Code_Col) as Name from (
+select distinct '{MasterMeisho.KubunColor}' as Kubun,'ｶﾗｰ' as KubunName,Code_Col as Code, coalesce(nullif(Mei_Col, ''),Name,'新色'||Code_Col) as Name from (
 {coreSql} where json_extract(J.value, '$.Id_Col')=0)
 ";
 		var meishoList = _db.Fetch<MasterMeisho>(meishoSql);
@@ -49,7 +49,7 @@ select distinct 'COL' as Kubun,'ｶﾗｰ' as KubunName,Code_Col as Code, coales
 			// 名称マスタ作成
 			_db.InsertBulk<MasterMeisho>(meishoList);
 			// MasterShohinのJcolsizを更新する
-			updateSql = @"
+			updateSql = @$"
 UPDATE MasterShohin AS S
 SET Jcolsiz = (
     SELECT json_group_array(json(X.value2))
@@ -64,7 +64,7 @@ SET Jcolsiz = (
             END AS value2
         FROM json_each(S.Jcolsiz) AS J
         LEFT JOIN MasterMeisho AS M
-          ON M.Kubun = 'COL'
+          ON M.Kubun = '{MasterMeisho.KubunColor}'
          AND M.Code = json_extract(J.value, '$.Code_Col')
         ORDER BY CAST(J.key AS INTEGER)
     ) AS X
@@ -73,7 +73,7 @@ WHERE EXISTS (
     SELECT 1
     FROM json_each(S.Jcolsiz) AS J
     JOIN MasterMeisho AS M
-      ON M.Kubun = 'COL'
+      ON M.Kubun = '{MasterMeisho.KubunColor}'
      AND M.Code = json_extract(J.value, '$.Code_Col')
     WHERE json_extract(J.value, '$.Id_Col') = 0
 );
@@ -140,7 +140,7 @@ WHERE EXISTS (
 		_db.BeginTransaction();
 		try {
 			// まずは Tran00Uriage のJmeisaiを更新する(Id_Col)
-			cnt += ExecuteUpdateAndGetChanges(@"
+			cnt += ExecuteUpdateAndGetChanges(@$"
 UPDATE Tran00Uriage AS T
 SET Jmeisai = (
     SELECT json_group_array(json(X.value2))
@@ -155,7 +155,7 @@ SET Jmeisai = (
             END AS value2
         FROM json_each(T.Jmeisai) AS J
         LEFT JOIN MasterMeisho AS M
-          ON M.Kubun = 'COL'
+          ON M.Kubun = '{MasterMeisho.KubunColor}'
          AND M.Code = COALESCE(
              NULLIF(json_extract(J.value, '$.Code_Col'), ''),
              NULLIF(json_extract(J.value, '$.Cd_Col'), '')
@@ -167,7 +167,7 @@ WHERE EXISTS (
     SELECT 1
     FROM json_each(T.Jmeisai) AS J
     JOIN MasterMeisho AS M
-      ON M.Kubun = 'COL'
+      ON M.Kubun = '{MasterMeisho.KubunColor}'
      AND M.Code = COALESCE(
          NULLIF(json_extract(J.value, '$.Code_Col'), ''),
          NULLIF(json_extract(J.value, '$.Cd_Col'), '')

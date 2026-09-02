@@ -57,7 +57,7 @@ public partial class BestSalesReportViewModel : Helpers.BaseReportViewModel {
 	void SelectBrandCodeTo() => BrandCodeTo = SelectBrandCode() ?? BrandCodeTo;
 
 	string? SelectBrandCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseDate(DenDayFrom, out var from) || !TryParseDate(DenDayTo, out var to)) {
@@ -105,7 +105,7 @@ filtered AS (
     SELECT m.*
     FROM meisai m
     LEFT JOIN MasterShohin sh ON sh.Id = m.idShohin
-    LEFT JOIN MasterMeisho br ON br.Id = sh.Id_Brand AND br.Kubun = 'BRD'
+    LEFT JOIN MasterMeisho br ON br.Id = sh.Id_Brand AND br.Kubun = '{MasterMeisho.KubunBrand}'
     WHERE 1=1 {brandWhere}
 ),
 agg AS (

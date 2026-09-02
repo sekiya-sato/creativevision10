@@ -58,7 +58,7 @@ public partial class ShohinTurnoverRateReportViewModel : Helpers.BaseReportViewM
 	void SelectBrandCodeTo() => BrandCodeTo = SelectBrandCode() ?? BrandCodeTo;
 
 	string? SelectBrandCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseDate(DenDayFrom, out var from) || !TryParseDate(DenDayTo, out var to)) {
@@ -126,7 +126,7 @@ joined AS (
         ifnull(u.firstDay, '')     AS firstDay
     FROM keys k
     LEFT JOIN MasterShohin sh ON sh.Id = k.idShohin
-    LEFT JOIN MasterMeisho br ON br.Id = sh.Id_Brand AND br.Kubun = 'BRD'
+    LEFT JOIN MasterMeisho br ON br.Id = sh.Id_Brand AND br.Kubun = '{MasterMeisho.KubunBrand}'
     LEFT JOIN uri u ON u.idShohin = k.idShohin
     LEFT JOIN nyu n ON n.idShohin = k.idShohin
     LEFT JOIN zai z ON z.idShohin = k.idShohin

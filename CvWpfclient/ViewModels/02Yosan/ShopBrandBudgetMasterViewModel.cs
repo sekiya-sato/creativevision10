@@ -402,7 +402,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 	[RelayCommand]
 	void SelectBrand() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code", startPos: SelectedBrandId);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code", startPos: SelectedBrandId);
 		if (meisho == null) return;
 		SelectedBrandId = meisho.Id;
 		SelectedBrandCode = meisho.Code ?? string.Empty;

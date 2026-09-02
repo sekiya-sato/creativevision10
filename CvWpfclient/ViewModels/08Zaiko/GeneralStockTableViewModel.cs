@@ -84,7 +84,7 @@ public partial class GeneralStockTableViewModel : Helpers.BaseReportViewModel {
 		ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code")?.Code;
 
 	string? SelectBrandCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
@@ -129,7 +129,7 @@ WITH agg AS (
     FROM SummaryRealStock s
 {StockSql.JoinSku()}
 {StockSql.JoinSoko()}
-    LEFT JOIN MasterMeisho br ON br.Id = sh.Id_Brand AND br.Kubun = 'BRD'
+    LEFT JOIN MasterMeisho br ON br.Id = sh.Id_Brand AND br.Kubun = '{MasterMeisho.KubunBrand}'
     WHERE {where}
     GROUP BY sokoCode, sokoName, shohinCode, shohinName, colCode, colName, sizCode, sizName
 )

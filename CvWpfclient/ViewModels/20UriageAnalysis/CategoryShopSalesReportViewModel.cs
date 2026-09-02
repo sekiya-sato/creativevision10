@@ -52,9 +52,9 @@ public partial class CategoryShopSalesReportViewModel : Helpers.BaseReportViewMo
 	public partial bool IsByShop { get; set; } = true;
 
 	(string Kubun, string IdColumn) Category =>
-		IsByItem ? ("ITM", "sh.Id_Item")
+		IsByItem ? (MasterMeisho.KubunItem, "sh.Id_Item")
 		: IsBySeason ? ("SZN", "sh.Id_Season")
-		: ("BRD", "sh.Id_Brand");
+		: (MasterMeisho.KubunBrand, "sh.Id_Brand");
 
 	[RelayCommand]
 	void SelectShopCodeFrom() => ShopCodeFrom = SelectShopCode() ?? ShopCodeFrom;

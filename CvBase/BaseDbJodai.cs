@@ -100,7 +100,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	/// セールCD
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "SLE")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunSale)]
 	[OldTableCommentAttr("セールCD")]
 	[Comment("セールCD")]
 	public partial long Id_Sale { get; set; }

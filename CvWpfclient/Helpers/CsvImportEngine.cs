@@ -452,8 +452,8 @@ public sealed class CsvImportMasterResolver {
 
 	private static string ResolveMeishoKubun(PropertyInfo property, object item) =>
 		property.Name switch {
-			"Id_Brand" => "BRD",
-			"Id_Item" => "ITM",
+			"Id_Brand" => MasterMeisho.KubunBrand,
+			"Id_Item" => MasterMeisho.KubunItem,
 			"Id_Tenji" => "TNJ",
 			"Id_Maker" => "MKR",
 			"Id_Season" => "SZN",
@@ -462,8 +462,8 @@ public sealed class CsvImportMasterResolver {
 			"Id_Bumon" => "BMN",
 			// [ForeignKey(meishoKubun:"KIN")] と各メンテ画面の選択条件に合わせる(旧値 "PAY" では名称マスタを引けずV*列が空になる)
 			"Id_PayMethod" => "KIN",
-			"Id_Col" => "COL",
-			"Id_Siz" => item.GetType().GetProperty("SizeKu")?.GetValue(item)?.ToString() ?? "SIZ",
+			"Id_Col" => MasterMeisho.KubunColor,
+			"Id_Siz" => item.GetType().GetProperty("SizeKu")?.GetValue(item)?.ToString() ?? MasterMeisho.KubunSize,
 			_ => string.Empty
 		};
 

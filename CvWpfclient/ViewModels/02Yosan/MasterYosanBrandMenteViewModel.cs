@@ -33,7 +33,7 @@ public partial class MasterYosanBrandMenteViewModel : Helpers.BaseMenteViewModel
 		}
 
 		var initialParameter = NormalizeSelectParameter(currentParameter ?? new SelectParameter { MaxCount = AppGlobal.Limit }, displayName);
-		vm.Initialize(initialParameter, typeof(MasterMeisho), "Kubun='BRD'", "Code", typeof(MasterTokui), "TenType in (1,3,6)", "Code", isCodeNameFilterVisible: false);
+		vm.Initialize(initialParameter, typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code", typeof(MasterTokui), "TenType in (1,3,6)", "Code", isCodeNameFilterVisible: false);
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			parameter = initialParameter;
 			return false;
@@ -125,7 +125,7 @@ from MasterYosanBrand Y
 
 	[RelayCommand]
 	void DoSelectBrand() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code", startPos: CurrentEdit.Id_Brand);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code", startPos: CurrentEdit.Id_Brand);
 		if (meisho == null) return;
 		CurrentEdit.Id_Brand = meisho.Id;
 		CurrentEdit.VBrand = new CodeNameView { Sid = meisho.Id, Cd = meisho.Code ?? string.Empty, Mei = meisho.Name ?? string.Empty };

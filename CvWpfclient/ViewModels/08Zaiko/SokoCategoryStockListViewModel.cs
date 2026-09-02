@@ -56,7 +56,7 @@ public partial class SokoCategoryStockListViewModel : Helpers.BaseReportViewMode
 		ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=0", "Code")?.Code;
 
 	string? SelectCategoryCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{(IsByBrand ? "BRD" : "ITM")}'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{(IsByBrand ? MasterMeisho.KubunBrand : MasterMeisho.KubunItem)}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
@@ -69,7 +69,7 @@ public partial class SokoCategoryStockListViewModel : Helpers.BaseReportViewMode
 			where += " AND s.Su != 0";
 		}
 
-		var (kubun, idColumn) = IsByBrand ? ("BRD", "sh.Id_Brand") : ("ITM", "sh.Id_Item");
+		var (kubun, idColumn) = IsByBrand ? (MasterMeisho.KubunBrand, "sh.Id_Brand") : (MasterMeisho.KubunItem, "sh.Id_Item");
 		// 実棚を手書きする運用では理論在庫を出さないことがある
 		var theoretical = ShowTheoretical ? "s.Su" : "''";
 

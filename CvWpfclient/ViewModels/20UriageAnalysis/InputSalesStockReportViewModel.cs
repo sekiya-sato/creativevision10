@@ -57,7 +57,7 @@ public partial class InputSalesStockReportViewModel : Helpers.BaseReportViewMode
 	void SelectBrandCodeTo() => BrandCodeTo = SelectBrandCode() ?? BrandCodeTo;
 
 	string? SelectBrandCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseDate(DenDayFrom, out var from) || !TryParseDate(DenDayTo, out var to)) {
@@ -137,7 +137,7 @@ joined AS (
     LEFT JOIN MasterShohin sh ON sh.Id = k.idShohin
     LEFT JOIN DerivedShohinColSiz cs
            ON cs.Id_Shohin = k.idShohin AND cs.Id_Col = k.idCol AND cs.Id_Siz = k.idSiz
-    LEFT JOIN MasterMeisho br ON br.Id = sh.Id_Brand AND br.Kubun = 'BRD'
+    LEFT JOIN MasterMeisho br ON br.Id = sh.Id_Brand AND br.Kubun = '{MasterMeisho.KubunBrand}'
     LEFT JOIN nyu n ON n.idShohin = k.idShohin AND n.idCol = k.idCol AND n.idSiz = k.idSiz
     LEFT JOIN uri u ON u.idShohin = k.idShohin AND u.idCol = k.idCol AND u.idSiz = k.idSiz
     LEFT JOIN zai z ON z.idShohin = k.idShohin AND z.idCol = k.idCol AND z.idSiz = k.idSiz

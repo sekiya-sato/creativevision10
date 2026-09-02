@@ -238,10 +238,10 @@ public abstract partial class BaseHaibunInquiryViewModel : Helpers.BaseViewModel
 	void SelectShohinCodeTo() => SelectShohinCode(x => ShohinCodeTo = x);
 
 	[RelayCommand]
-	void SelectColCodeFrom() => SelectCode<MasterMeisho>("Kubun='COL'", "Code", x => ColCodeFrom = x);
+	void SelectColCodeFrom() => SelectCode<MasterMeisho>($"Kubun='{MasterMeisho.KubunColor}'", "Code", x => ColCodeFrom = x);
 
 	[RelayCommand]
-	void SelectColCodeTo() => SelectCode<MasterMeisho>("Kubun='COL'", "Code", x => ColCodeTo = x);
+	void SelectColCodeTo() => SelectCode<MasterMeisho>($"Kubun='{MasterMeisho.KubunColor}'", "Code", x => ColCodeTo = x);
 
 	[RelayCommand]
 	void SelectSokoCodeFrom() => SelectCode<MasterTokui>("TenType=0", "Code", x => SokoCodeFrom = x);
@@ -250,16 +250,16 @@ public abstract partial class BaseHaibunInquiryViewModel : Helpers.BaseViewModel
 	void SelectSokoCodeTo() => SelectCode<MasterTokui>("TenType=0", "Code", x => SokoCodeTo = x);
 
 	[RelayCommand]
-	void SelectBrandCodeFrom() => SelectCode<MasterMeisho>("Kubun='BRD'", "Code", x => BrandCodeFrom = x);
+	void SelectBrandCodeFrom() => SelectCode<MasterMeisho>($"Kubun='{MasterMeisho.KubunBrand}'", "Code", x => BrandCodeFrom = x);
 
 	[RelayCommand]
-	void SelectBrandCodeTo() => SelectCode<MasterMeisho>("Kubun='BRD'", "Code", x => BrandCodeTo = x);
+	void SelectBrandCodeTo() => SelectCode<MasterMeisho>($"Kubun='{MasterMeisho.KubunBrand}'", "Code", x => BrandCodeTo = x);
 
 	[RelayCommand]
-	void SelectItemCodeFrom() => SelectCode<MasterMeisho>("Kubun='ITM'", "Code", x => ItemCodeFrom = x);
+	void SelectItemCodeFrom() => SelectCode<MasterMeisho>($"Kubun='{MasterMeisho.KubunItem}'", "Code", x => ItemCodeFrom = x);
 
 	[RelayCommand]
-	void SelectItemCodeTo() => SelectCode<MasterMeisho>("Kubun='ITM'", "Code", x => ItemCodeTo = x);
+	void SelectItemCodeTo() => SelectCode<MasterMeisho>($"Kubun='{MasterMeisho.KubunItem}'", "Code", x => ItemCodeTo = x);
 
 	async Task<List<MasterShohin>> LoadShohinListAsync(int maxCount, CancellationToken ct) {
 		List<string> parameters = [];

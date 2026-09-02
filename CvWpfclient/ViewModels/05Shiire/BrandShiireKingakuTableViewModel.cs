@@ -58,7 +58,7 @@ public partial class BrandShiireKingakuTableViewModel : Helpers.BaseReportViewMo
 
 	/// <summary>ブランド選択ダイアログ(MasterMeisho の BRD 区分)。</summary>
 	string? SelectBrandCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseYearMonth(StartYearMonth, out var start)) {
@@ -108,7 +108,7 @@ agg AS (
         SUM(m.su * m.jodai)   AS jodaiTotal,
         COUNT(DISTINCT m.denNo) AS denCount
     FROM meisai m
-    JOIN MasterMeisho br ON br.Id = m.idBrand AND br.Kubun = 'BRD'
+    JOIN MasterMeisho br ON br.Id = m.idBrand AND br.Kubun = '{MasterMeisho.KubunBrand}'
     WHERE 1=1 {brandWhere}
     GROUP BY m.ym, br.Code, br.Name
 )

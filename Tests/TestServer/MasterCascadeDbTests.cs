@@ -51,7 +51,7 @@ public class MasterCascadeDbTests {
 	[TestMethod]
 	public void CascadeFromMaster_MasterMeisho_UpdatesShohinVBrand() {
 		CreateAllTables();
-		var brand = new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
 		Db.Insert(brand);
 		var shohin = new MasterShohin {
 			Code = "0001",
@@ -78,8 +78,8 @@ public class MasterCascadeDbTests {
 	[TestMethod]
 	public void CascadeFromMaster_LeavesOtherRowsUnchanged() {
 		CreateAllTables();
-		var brand1 = new MasterMeisho { Kubun = "BRD", Code = "01", Name = "ブランド1", Vdc = 1, Vdu = 1 };
-		var brand2 = new MasterMeisho { Kubun = "BRD", Code = "02", Name = "ブランド2", Vdc = 1, Vdu = 1 };
+		var brand1 = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, Code = "01", Name = "ブランド1", Vdc = 1, Vdu = 1 };
+		var brand2 = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, Code = "02", Name = "ブランド2", Vdc = 1, Vdu = 1 };
 		Db.Insert(brand1);
 		Db.Insert(brand2);
 		var target = new MasterShohin { Code = "0001", Id_Brand = brand1.Id, VBrand = Cnv(brand1.Id, "01", "ブランド1"), Vdc = 1, Vdu = 1 };
@@ -99,7 +99,7 @@ public class MasterCascadeDbTests {
 	[TestMethod]
 	public void CascadeFromMaster_IsIdempotent() {
 		CreateAllTables();
-		var brand = new MasterMeisho { Kubun = "BRD", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
 		Db.Insert(brand);
 		Db.Insert(new MasterShohin { Code = "0001", Id_Brand = brand.Id, VBrand = Cnv(brand.Id, "01", "旧ブランド"), Vdc = 1, Vdu = 1 });
 
@@ -115,7 +115,7 @@ public class MasterCascadeDbTests {
 	[TestMethod]
 	public void CascadeFromMaster_RepairsEmptyVColumn() {
 		CreateAllTables();
-		var brand = new MasterMeisho { Kubun = "BRD", Code = "01", Name = "ブランド", Vdc = 1, Vdu = 1 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, Code = "01", Name = "ブランド", Vdc = 1, Vdu = 1 };
 		Db.Insert(brand);
 		var shohin = new MasterShohin { Code = "0001", Id_Brand = brand.Id, Vdc = 1, Vdu = 1 };
 		Db.Insert(shohin);
@@ -231,7 +231,7 @@ public class MasterCascadeDbTests {
 	[TestMethod]
 	public void ResyncAll_SyncsToCurrentMasterValuesAndIsIdempotent() {
 		CreateAllTables();
-		var brand = new MasterMeisho { Kubun = "BRD", Code = "01", Name = "現ブランド", Vdc = 1, Vdu = 1 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, Code = "01", Name = "現ブランド", Vdc = 1, Vdu = 1 };
 		Db.Insert(brand);
 		var tokui = new MasterTokui { Code = "0101", Name = "現店舗", TenType = 6, Vdc = 1, Vdu = 1 };
 		Db.Insert(tokui);
@@ -327,13 +327,13 @@ public class MasterCascadeDbTests {
 	public void CascadeFromMaster_UpdatesJcolsizAndDerivedTable() {
 		CreateAllTables();
 		Db.CreateTable(typeof(DerivedShohinColSiz), true, false);
-		var col = new MasterMeisho { Kubun = "COL", Code = "01", Name = "旧色", Vdc = 1, Vdu = 1 };
-		var siz = new MasterMeisho { Kubun = "SIZ", Code = "M", Name = "旧サイズ", Vdc = 1, Vdu = 1 };
+		var col = new MasterMeisho { Kubun = MasterMeisho.KubunColor, Code = "01", Name = "旧色", Vdc = 1, Vdu = 1 };
+		var siz = new MasterMeisho { Kubun = MasterMeisho.KubunSize, Code = "M", Name = "旧サイズ", Vdc = 1, Vdu = 1 };
 		Db.Insert(col);
 		Db.Insert(siz);
 		var shohin = new MasterShohin {
 			Code = "0001",
-			SizeKu = "SIZ",
+			SizeKu = MasterMeisho.KubunSize,
 			Jcolsiz = [
 				new MasterShohinColSiz { Id_Col = col.Id, Code_Col = "01", Mei_Col = "旧色", Id_Siz = siz.Id, Code_Siz = "M", Mei_Siz = "旧サイズ", Jan1 = "J1" },
 				new MasterShohinColSiz { Id_Col = col.Id, Code_Col = "01", Mei_Col = "旧色", Id_Siz = 0,      Code_Siz = "L", Mei_Siz = "L表記",    Jan1 = "J2" },
@@ -370,7 +370,7 @@ public class MasterCascadeDbTests {
 	[TestMethod]
 	public void CascadeFromMaster_IdxRowRename_UpdatesKubunNameAndKbname() {
 		CreateAllTables();
-		var idx = new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "B01", Name = "旧区分名", Vdc = 1, Vdu = 1 };
+		var idx = new MasterMeisho { Kubun = MasterMeisho.KubunIndex, KubunName = "名称区分", Code = "B01", Name = "旧区分名", Vdc = 1, Vdu = 1 };
 		Db.Insert(idx);
 		var member = new MasterMeisho { Kubun = "B01", KubunName = "旧区分名", Code = "01", Name = "名称", Vdc = 1, Vdu = 1 };
 		var other = new MasterMeisho { Kubun = "B02", KubunName = "別区分", Code = "01", Name = "名称", Vdc = 1, Vdu = 1 };
@@ -386,7 +386,7 @@ public class MasterCascadeDbTests {
 			Vdu = 1,
 		});
 
-		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B01", "新区分名", vdate: 999, kubun: "IDX", oldCode: "B01");
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B01", "新区分名", vdate: 999, kubun: MasterMeisho.KubunIndex, oldCode: "B01");
 
 		Assert.IsTrue(cnt >= 2, $"MasterMeisho.KubunNameとJsub.Kbnameが更新される (実際={cnt})");
 		Assert.AreEqual("新区分名", Db.SingleById<MasterMeisho>(member.Id).KubunName, "同区分のKubunName");
@@ -397,19 +397,19 @@ public class MasterCascadeDbTests {
 		Assert.AreEqual("別区分", shohin.Jsub[1].Kbname, "Jsub[1].Kbnameは変わらない");
 
 		// 2回目は0件(冪等)
-		Assert.AreEqual(0, new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B01", "新区分名", vdate: 1000, kubun: "IDX", oldCode: "B01"), "冪等");
+		Assert.AreEqual(0, new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B01", "新区分名", vdate: 1000, kubun: MasterMeisho.KubunIndex, oldCode: "B01"), "冪等");
 	}
 
 	/// <summary>T6-2: 区分定義行でも Code 自体が変わった場合は区分名を伝播しない(§7-R6)</summary>
 	[TestMethod]
 	public void CascadeFromMaster_IdxRowCodeChanged_SkipsKubunNamePropagation() {
 		CreateAllTables();
-		var idx = new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "B99", Name = "新区分名", Vdc = 1, Vdu = 1 };
+		var idx = new MasterMeisho { Kubun = MasterMeisho.KubunIndex, KubunName = "名称区分", Code = "B99", Name = "新区分名", Vdc = 1, Vdu = 1 };
 		Db.Insert(idx);
 		var member = new MasterMeisho { Kubun = "B01", KubunName = "旧区分名", Code = "01", Name = "名称", Vdc = 1, Vdu = 1 };
 		Db.Insert(member);
 
-		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B99", "新区分名", vdate: 999, kubun: "IDX", oldCode: "B01");
+		var cnt = new MasterCascadeDb(Db).CascadeFromMaster(typeof(MasterMeisho), idx.Id, "B99", "新区分名", vdate: 999, kubun: MasterMeisho.KubunIndex, oldCode: "B01");
 
 		Assert.AreEqual(0, cnt, "区分コード変更時は伝播しない");
 		Assert.AreEqual("旧区分名", Db.SingleById<MasterMeisho>(member.Id).KubunName, "KubunNameは変わらない");
@@ -469,11 +469,11 @@ public class MasterCascadeDbTests {
 	public void ResyncAll_SyncsJsonSnapshotsAndIsIdempotent() {
 		CreateAllTables();
 		Db.CreateTable(typeof(DerivedShohinColSiz), true, false);
-		var idx = new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "B01", Name = "現区分名", Vdc = 1, Vdu = 1 };
+		var idx = new MasterMeisho { Kubun = MasterMeisho.KubunIndex, KubunName = "名称区分", Code = "B01", Name = "現区分名", Vdc = 1, Vdu = 1 };
 		Db.Insert(idx);
 		var member = new MasterMeisho { Kubun = "B01", KubunName = "旧区分名", Code = "01", Name = "現名称", Vdc = 1, Vdu = 1 };
 		Db.Insert(member);
-		var col = new MasterMeisho { Kubun = "COL", Code = "01", Name = "現色", Vdc = 1, Vdu = 1 };
+		var col = new MasterMeisho { Kubun = MasterMeisho.KubunColor, Code = "01", Name = "現色", Vdc = 1, Vdu = 1 };
 		Db.Insert(col);
 		var shohin = new MasterShohin {
 			Code = "0001",
@@ -505,16 +505,16 @@ public class MasterCascadeDbTests {
 	/// <summary>Phase3: 伝播が必要かの判定(NeedsCascade)</summary>
 	[TestMethod]
 	public void NeedsCascade_ReturnsTrueOnlyWhenCodeOrNameChanged() {
-		var org = new MasterMeisho { Id = 1, Kubun = "BRD", Code = "01", Name = "旧名称" };
+		var org = new MasterMeisho { Id = 1, Kubun = MasterMeisho.KubunBrand, Code = "01", Name = "旧名称" };
 
 		Assert.IsTrue(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho),
-			new MasterMeisho { Id = 1, Kubun = "BRD", Code = "01", Name = "新名称" }, org), "Name変更");
+			new MasterMeisho { Id = 1, Kubun = MasterMeisho.KubunBrand, Code = "01", Name = "新名称" }, org), "Name変更");
 		Assert.IsTrue(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho),
-			new MasterMeisho { Id = 1, Kubun = "BRD", Code = "02", Name = "旧名称" }, org), "Code変更");
+			new MasterMeisho { Id = 1, Kubun = MasterMeisho.KubunBrand, Code = "02", Name = "旧名称" }, org), "Code変更");
 		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho),
-			new MasterMeisho { Id = 1, Kubun = "BRD", Code = "01", Name = "旧名称", Ryaku = "略" }, org), "Code/Name以外の変更では伝播しない");
+			new MasterMeisho { Id = 1, Kubun = MasterMeisho.KubunBrand, Code = "01", Name = "旧名称", Ryaku = "略" }, org), "Code/Name以外の変更では伝播しない");
 		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterMeisho),
-			new MasterMeisho { Id = 1, Kubun = "IDX", Code = "01", Name = "旧名称" }, org), "Kubun変更のみでは伝播しない");
+			new MasterMeisho { Id = 1, Kubun = MasterMeisho.KubunIndex, Code = "01", Name = "旧名称" }, org), "Kubun変更のみでは伝播しない");
 		// 伝播元でない型 / IBaseCodeName でない型 / null
 		Assert.IsFalse(MasterCascadeDb.NeedsCascade(typeof(MasterShohin),
 			new MasterShohin { Id = 1, Code = "01", Name = "新" }, new MasterShohin { Id = 1, Code = "01", Name = "旧" }), "伝播元でない型");
@@ -557,7 +557,7 @@ public class MasterCascadeDbTests {
 	[TestMethod]
 	public void CascadeFromMaster_WithoutVdate_GeneratesOwnVdu() {
 		CreateAllTables();
-		var brand = new MasterMeisho { Kubun = "BRD", Code = "01", Name = "旧", Vdc = 1, Vdu = 100 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, Code = "01", Name = "旧", Vdc = 1, Vdu = 100 };
 		Db.Insert(brand);
 		Db.Insert(new MasterShohin { Code = "0001", Id_Brand = brand.Id, VBrand = Cnv(brand.Id, "01", "旧"), Vdc = 1, Vdu = 100 });
 

@@ -776,7 +776,7 @@ WHERE EXISTS (
 			var colCode = getString(detailRec, "色CD");
 			var sizCode = getString(detailRec, "サイズCD");
 			var shohin = getMaster<MasterShohin>(shohinCode);
-			var col = getMeisho("COL", colCode);
+			var col = getMeisho(MasterMeisho.KubunColor, colCode);
 			var siz = getMeisho(shohin?.SizeKu ?? string.Empty, sizCode);
 			int kubun = 0, jodai = 0, gedai = 0, nebiki00 = 0, nebiki01 = 0, nebiki02 = 0;
 			if (table == "HC$tran_tori1") {
@@ -872,7 +872,7 @@ WHERE EXISTS (
 			var colCode = getString(detailRec, "色CD");
 			var sizCode = getString(detailRec, "サイズCD");
 			var shohin = getMaster<MasterShohin>(shohinCode);
-			var col = getMeisho("COL", colCode);
+			var col = getMeisho(MasterMeisho.KubunColor, colCode);
 			var siz = getMeisho(shohin?.SizeKu ?? string.Empty, sizCode);
 			var sign = ChoseiRiyu.CalcFlag(getString(detailRec, "明細取引区分"));
 

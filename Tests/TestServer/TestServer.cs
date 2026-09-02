@@ -157,7 +157,7 @@ public class CoreServiceTests {
 		var db = _db ?? throw new AssertFailedException("Database not initialized");
 		var service = _service ?? throw new AssertFailedException("Service not initialized");
 		db.CreateTable(typeof(MasterMeisho), true, false);
-		var item = new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "T01", Name = "テスト", Vdc = 100, Vdu = 200 };
+		var item = new MasterMeisho { Kubun = MasterMeisho.KubunIndex, KubunName = "名称区分", Code = "T01", Name = "テスト", Vdc = 100, Vdu = 200 };
 		db.Insert(item);
 
 		var request = new CvMsg {
@@ -190,7 +190,7 @@ public class CoreServiceTests {
 		db.CreateTable(typeof(MasterMeisho), true, false);
 		db.CreateTable(typeof(MasterShohin), true, false);
 
-		var brand = new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "旧ブランド", Vdc = 1, Vdu = 1 };
 		db.Insert(brand);
 		var shohin = new MasterShohin {
 			Code = "0001",
@@ -248,7 +248,7 @@ public class CoreServiceTests {
 			db.CreateTable(t, true, false);
 		}
 
-		var brand = new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "現ブランド", Vdc = 1, Vdu = 1 };
+		var brand = new MasterMeisho { Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "現ブランド", Vdc = 1, Vdu = 1 };
 		db.Insert(brand);
 		var soko = new MasterTokui { Code = "9001", Name = "現倉庫", TenType = 0, Vdc = 1, Vdu = 1 };
 		db.Insert(soko);

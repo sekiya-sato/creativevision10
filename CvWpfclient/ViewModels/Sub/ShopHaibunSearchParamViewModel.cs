@@ -71,16 +71,16 @@ public partial class ShopHaibunSearchParamViewModel : BaseViewModel {
 	void SelectShohinTo() => SelectShohinCode(code => Parameter = Parameter with { ShohinCodeTo = code });
 
 	[RelayCommand]
-	void SelectBrandFrom() => SelectMeisho("BRD", code => Parameter = Parameter with { BrandFrom = code });
+	void SelectBrandFrom() => SelectMeisho(MasterMeisho.KubunBrand, code => Parameter = Parameter with { BrandFrom = code });
 
 	[RelayCommand]
-	void SelectBrandTo() => SelectMeisho("BRD", code => Parameter = Parameter with { BrandTo = code });
+	void SelectBrandTo() => SelectMeisho(MasterMeisho.KubunBrand, code => Parameter = Parameter with { BrandTo = code });
 
 	[RelayCommand]
-	void SelectItemFrom() => SelectMeisho("ITM", code => Parameter = Parameter with { ItemFrom = code });
+	void SelectItemFrom() => SelectMeisho(MasterMeisho.KubunItem, code => Parameter = Parameter with { ItemFrom = code });
 
 	[RelayCommand]
-	void SelectItemTo() => SelectMeisho("ITM", code => Parameter = Parameter with { ItemTo = code });
+	void SelectItemTo() => SelectMeisho(MasterMeisho.KubunItem, code => Parameter = Parameter with { ItemTo = code });
 
 	[RelayCommand]
 	void SelectSeasonFrom() => SelectMeisho("SZN", code => Parameter = Parameter with { SeasonFrom = code });

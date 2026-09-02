@@ -169,6 +169,29 @@ public sealed partial class MasterSysTax : ObservableObject {
 [OldTableCommentAttr("HC$MASTER_MEISHO")]
 public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// <summary>
+	/// 区分そのものを定義する行の区分。この区分の行の Name が他行の KubunName の元になる。
+	/// </summary>
+	[Comment("区分そのものを定義する行の区分")]
+	public const string KubunIndex = "IDX";
+	/// <summary>ブランド区分</summary>
+	[Comment("ブランド区分")]
+	public const string KubunBrand = "BRD";
+	/// <summary>アイテム区分</summary>
+	[Comment("アイテム区分")]
+	public const string KubunItem = "ITM";
+	/// <summary>カラー区分</summary>
+	[Comment("カラー区分")]
+	public const string KubunColor = "COL";
+	/// <summary>サイズ区分</summary>
+	[Comment("サイズ区分")]
+	public const string KubunSize = "SIZ";
+	/// <summary>セール区分</summary>
+	[Comment("セール区分")]
+	public const string KubunSale = "SLE";
+	/// <summary>調整理由区分(CvDomainLogic.ChoseiRiyu参照)</summary>
+	[Comment("調整理由区分")]
+	public const string KubunChoseiRiyu = "CHR";
+	/// <summary>
 	/// 区分
 	/// </summary>
 	[ObservableProperty]
@@ -228,13 +251,13 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// <returns></returns>
 	public static List<MasterMeisho> CreateDefaultData(ExDatabase db) {
 		var initData = new List<MasterMeisho>() {
-			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "IDX", Name = "名称区分インデックス", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "BRD", Name = "ブランド", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "ITM", Name = "アイテム", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "COL", Name = "カラー", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "SIZ", Name = "サイズ", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "SLE", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "IDX", KubunName = "名称区分", Code = "CHR", Name = "調整理由", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "IDX", Name = "名称区分インデックス", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "BRD", Name = "ブランド", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "ITM", Name = "アイテム", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "COL", Name = "カラー", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "SIZ", Name = "サイズ", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "SLE", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "CHR", Name = "調整理由", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "NewBrand", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "ITM", KubunName = "アイテム", Code = "01", Name = "NewItem", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "COL", KubunName = "カラー", Code = "01", Name = "NewColor", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },

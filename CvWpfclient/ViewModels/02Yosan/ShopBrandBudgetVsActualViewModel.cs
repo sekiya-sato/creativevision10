@@ -93,7 +93,7 @@ public partial class ShopBrandBudgetVsActualViewModel : Helpers.BaseReportViewMo
 
 	/// <summary>ブランド選択ダイアログ(MasterMeisho の BRD 区分)。選択されなければ null</summary>
 	string? SelectBrandCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BRD'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseYearMonth(SelectedYearMonthString, out var yearMonth)) {
@@ -137,7 +137,7 @@ WITH shops AS (
 ),
 brands AS (
     SELECT Id, Code, Name FROM MasterMeisho
-    WHERE Kubun = 'BRD' {brandWhere}
+    WHERE Kubun = '{MasterMeisho.KubunBrand}' {brandWhere}
 ),
 budget AS (
     SELECT Id_Tenpo AS idTenpo, Id_Brand AS idBrand,

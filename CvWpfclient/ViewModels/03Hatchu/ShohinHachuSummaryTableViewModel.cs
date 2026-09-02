@@ -61,7 +61,7 @@ public partial class ShohinHachuSummaryTableViewModel : Helpers.BaseReportViewMo
 		where += BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VShiire"), ShiireCodeFrom, ShiireCodeTo);
 		if (!IncludeHenpin) where += " AND h.Kubun = 10";
 
-		var (kubun, idColumn) = IsByBrand ? ("BRD", "s.Id_Brand") : ("ITM", "s.Id_Item");
+		var (kubun, idColumn) = IsByBrand ? (MasterMeisho.KubunBrand, "s.Id_Brand") : (MasterMeisho.KubunItem, "s.Id_Item");
 		var shohinCode = IsByShohin ? "shohinCode" : "''";
 		var shohinName = IsByShohin ? "shohinName" : "'(分類計)'";
 

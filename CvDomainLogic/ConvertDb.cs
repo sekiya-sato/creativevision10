@@ -256,13 +256,13 @@ public partial class ConvertDb {
 	/// 名称マスタ変換 HC$master_meisho
 	/// </summary>
 	public int CnvMasterMeisho(bool isInit = true) {
-		const string sql = """
-    SELECT 
-        T.*, 
+		var sql = $"""
+    SELECT
+        T.*,
         m1.名称 AS KubunName
     FROM HC$master_meisho T
-    LEFT OUTER JOIN HC$master_meisho m1 
-        ON m1.名称区分 = 'IDX' 
+    LEFT OUTER JOIN HC$master_meisho m1
+        ON m1.名称区分 = '{MasterMeisho.KubunIndex}'
         AND T.名称区分 = m1.名称CD
 """;
 		return ConvertMaster(sql, isInit, rec => new MasterMeisho() {
@@ -453,11 +453,11 @@ order by k.顧客CD
 				"select * from HC$MASTER_SHOHIN_GRADE where 商品CD=@0", code);
 			var sizeKubun = getString(rec, "商品サイズ区分");
 			if (string.IsNullOrEmpty(sizeKubun) || sizeKubun == ".") {
-				sizeKubun = "SIZ";
+				sizeKubun = MasterMeisho.KubunSize;
 			}
 			var colsiz = janRows
 				.Select(r => {
-					var col = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["COL", getString(r, "色CD")]);
+					var col = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [MasterMeisho.KubunColor, getString(r, "色CD")]);
 					var siz = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [sizeKubun, getString(r, "サイズCD")]);
 					return new MasterShohinColSiz() {
 						Code_Col = getString(r, "色CD"),
@@ -525,9 +525,9 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				Jgrade = grade.Count > 0 ? grade : null,
 			};
 			if (meisho.Count > 0) {
-				item.VBrand = new(meisho.FirstOrDefault(c => c.Kubun == "BRD") ?? new());
+				item.VBrand = new(meisho.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand) ?? new());
 				item.Id_Brand = item.VBrand.Sid;
-				item.VItem = new(meisho.FirstOrDefault(c => c.Kubun == "ITM") ?? new());
+				item.VItem = new(meisho.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem) ?? new());
 				item.Id_Item = item.VItem.Sid;
 				item.VTenji = new(meisho.FirstOrDefault(c => c.Kubun == "TNJ") ?? new());
 				item.Id_Tenji = item.VTenji.Sid;

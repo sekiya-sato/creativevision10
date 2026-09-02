@@ -746,7 +746,7 @@ public sealed partial class Tran61Chosei : TranAllHeader, ITranSoko {
 	/// 理由コードの範囲で在庫の増減方向が決まる（<see cref="ChoseiRiyu.CalcFlag(int)"/>）。
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "CHR")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunChoseiRiyu)]
 	[Comment("調整理由Id（MasterMeishoのCHR区分）。0なら未設定")]
 	public partial long Id_Riyu { get; set; }
 	/// <summary>
@@ -781,7 +781,7 @@ public enum EnumChosei : int {
 /// </summary>
 public static class ChoseiRiyu {
 	/// <summary><see cref="MasterMeisho.Kubun"/> の値。</summary>
-	public const string Kubun = "CHR";
+	public const string Kubun = MasterMeisho.KubunChoseiRiyu;
 
 	/// <summary>理由コード → 在庫増減の符号。10〜19 は +1（加算）、それ以外（20〜29）は −1（減算）。</summary>
 	public static int CalcFlag(int code) => code is >= 10 and <= 19 ? 1 : -1;

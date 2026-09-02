@@ -237,7 +237,7 @@ left join DerivedShohinColSiz D on D.Id_Shohin = S.Id
 	void SelectBrandIds() {
 		var selected = ShowMultiSelectDialog<MasterMeisho>(
 			typeof(MasterMeisho),
-			"Kubun='BRD'",
+			$"Kubun='{MasterMeisho.KubunBrand}'",
 			"Code",
 			BrandIds,
 			BrandIds.FirstOrDefault());

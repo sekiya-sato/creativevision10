@@ -1404,7 +1404,7 @@ public class SummaryKakeDbTests {
 		InsertMeisho(db, KinOther, "KIN", "05", "その他入金");
 		InsertMeisho(db, KinUnknown, "KIN", "06", "未知入金");
 		// 同じ Code を持つ別区分に引っ張られないことを担保する
-		InsertMeisho(db, 201, "ITM", "01", "別区分の01");
+		InsertMeisho(db, 201, MasterMeisho.KubunItem, "01", "別区分の01");
 	}
 
 	private static void InsertMeisho(ExDatabaseSqlite db, long id, string kubun, string code, string name) =>

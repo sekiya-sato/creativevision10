@@ -198,38 +198,38 @@ public class DefineDataTable {
 		};
 		db.Insert<MasterSysman>(sysman);
 		var meishoList = new List<MasterMeisho> {
-			new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "NewBrand", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "ITM", KubunName = "アイテム", Code = "01", Name = "NewItem", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "COL", KubunName = "カラー", Code = "01", Name = "NewColor", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "SIZ", KubunName = "サイズ", Code = "01", Name = "NewSize", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "SLE", KubunName = "セール", Code = "0001", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "NewBrand", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = MasterMeisho.KubunItem, KubunName = "アイテム", Code = "01", Name = "NewItem", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = MasterMeisho.KubunColor, KubunName = "カラー", Code = "01", Name = "NewColor", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = MasterMeisho.KubunSize, KubunName = "サイズ", Code = "01", Name = "NewSize", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			new MasterMeisho { Kubun = MasterMeisho.KubunSale, KubunName = "セール", Code = "0001", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 		};
 		db.InsertBulk<MasterMeisho>(meishoList);
 		var shohin = new MasterShohin {
 			Code = "0001",
 			Name = "サンプル商品",
-			Id_Brand = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Id ?? 0,
+			Id_Brand = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand)?.Id ?? 0,
 			VBrand = new CodeNameView {
-				Sid = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Id ?? 0,
-				Cd = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Code ?? string.Empty,
-				Mei = meishoList.FirstOrDefault(c => c.Kubun == "BRD")?.Name ?? string.Empty
+				Sid = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand)?.Id ?? 0,
+				Cd = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand)?.Code ?? string.Empty,
+				Mei = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand)?.Name ?? string.Empty
 			},
-			Id_Item = meishoList.FirstOrDefault(c => c.Kubun == "ITM")?.Id ?? 0,
+			Id_Item = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem)?.Id ?? 0,
 			VItem = new CodeNameView {
-				Sid = meishoList.FirstOrDefault(c => c.Kubun == "ITM")?.Id ?? 0,
-				Cd = meishoList.FirstOrDefault(c => c.Kubun == "ITM")?.Code ?? string.Empty,
-				Mei = meishoList.FirstOrDefault(c => c.Kubun == "ITM")?.Name ?? string.Empty
+				Sid = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem)?.Id ?? 0,
+				Cd = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem)?.Code ?? string.Empty,
+				Mei = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem)?.Name ?? string.Empty
 			},
 			TankaGenka = 1000,
 			TankaJodai = 2000,
 			TankaJodaiOrg = 2000,
 			Jcolsiz = [new MasterShohinColSiz {
-				Id_Col = meishoList.FirstOrDefault(c => c.Kubun == "COL")?.Id ?? 0,
-				Code_Col = meishoList.FirstOrDefault(c => c.Kubun == "COL")?.Code ?? string.Empty,
-				Mei_Col = meishoList.FirstOrDefault(c => c.Kubun == "COL")?.Name ?? string.Empty,
-				Id_Siz = meishoList.FirstOrDefault(c => c.Kubun == "SIZ")?.Id ?? 0,
-				Code_Siz = meishoList.FirstOrDefault(c => c.Kubun == "SIZ")?.Code ?? string.Empty,
-				Mei_Siz = meishoList.FirstOrDefault(c => c.Kubun == "SIZ")?.Name ?? string.Empty
+				Id_Col = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunColor)?.Id ?? 0,
+				Code_Col = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunColor)?.Code ?? string.Empty,
+				Mei_Col = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunColor)?.Name ?? string.Empty,
+				Id_Siz = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunSize)?.Id ?? 0,
+				Code_Siz = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunSize)?.Code ?? string.Empty,
+				Mei_Siz = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunSize)?.Name ?? string.Empty
 			}],
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()

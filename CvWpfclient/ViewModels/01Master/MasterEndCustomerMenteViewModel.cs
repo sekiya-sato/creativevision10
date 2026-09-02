@@ -79,7 +79,7 @@ from MasterEndCustomer {query.AddWhereOrder()}
 		if (KubunList.Count > 0) return;
 		try {
 			ClientLib.Cursor2Wait();
-			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='IDX' and Code in ({string.Join(",", KubunOptions.Select(x => $"'{x}'"))})", "Code");
+			var param = new QueryListParam(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunIndex}' and Code in ({string.Join(",", KubunOptions.Select(x => $"'{x}'"))})", "Code");
 			var msg = new CvMsg {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
