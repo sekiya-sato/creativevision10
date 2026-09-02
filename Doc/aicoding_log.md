@@ -1,3 +1,55 @@
+## [2026-09-02] 納品書印刷 R2 の実行時エラー修正と確認完了
+
+### Agent
+- Sekiya Sato Claude Opus 5 Middle
+
+### 目的
+- `b4aecc2` で実装した納品書印刷 R2 の設計・実装を再確認し、報告された実行時エラーを解消する。
+
+### 実施内容
+- 帳票SQLの66列すべてに `AS item1`〜`AS item66` の一意別名を付与した。番号はQFMの `datarecord` と1:1である。
+  `RawExecCmd` は `reader.GetName(i)` を `Dictionary` のキーにするため、別名の無い重複式でキーが衝突していた。
+  リテラル `''` が8回、`h.DenDay`・`VTokui.Cd`・`VShain.Mei` が各2回、明細 `No` が3回あり、`Dictionary.Add` が
+  `ArgumentException` を投げていた。SQL構文は正常で、落ちていたのは結果行の材料化である。
+- `PrintPdfService.PrintPre` に `RawLastError` の判定を追加した。`RawExecCmd` は例外を握り潰して
+  `[{"Error": ...}]` の1行を返すため、SQL失敗が1列だけのCSVとして下流へ流れ、QFM側の原因不明な失敗に化けていた。
+- `MasterSysman` の結合を `ON 1=1` から `ON sys.Id = 1` へ変更した。現在1行のため実害は無かったが、
+  2行目が入れば全明細が増殖する。
+- `NouhinBookPrintLegacyViewModel` を `abstract` 化し、新66項目の `NouhinBookPrint.qfm` を指したままだった
+  `FormFileName` の override を削除した。旧16列SQLを新QFMへ流す到達不能な経路を、派生側で必ずQFMを
+  指定させる形にした。
+- 対象0件のメッセージを修正した。サーバは0件をエラーではなく `Code = -1`・`DataMsg = "[]"` で返すが、
+  `FetchTargetsAsync` が `Code < 0` を一律で例外化していたため「対象の伝票がありません」に到達せず、
+  `印刷に失敗しました: []` と表示されていた。`CvMsgErrorCode.NotFound` を追加して0件と障害を区別し、
+  障害時は生の `DataMsg` より表示用の `Option` を優先する。文言も確認すべき条件を並べた案内へ差し替えた。
+  サーバ側 `HandlerClass` の private 定数も共有定数を参照させ、二重定義を解消した。
+
+### 確認
+- `cv-sqlite` で性質の違う3伝票を実行し、列名が `item1`〜`item66` の66件・順序どおり・重複なしであることを
+  実行結果の `columns` で確認した。
+- 請求単位の返品（Id 1352）は保存 `Tax1..3 = 0` でも item44=5,880 / item46=588 を出力する。
+  10%8%混在（Id 19140）は 3,540/354・2,660/213 で四捨五入式どおり。伝票単位（Id 39537）は保存 `Tax1 = 700` を
+  そのまま通過する。設計書7章の分岐を実測で確認した。
+- QFMは確定版 `CVPNH_01_01_R2.qfm` とバイト一致、SHIFT_JIS・CRLF・XML妥当・`item1`〜`item66` を確認した。
+- 実機PDFはユーザーが確認し問題なしと判定した。
+- 2026/08/02〜09/02で2件しか出ず得意先名・商品名が空になるのは帳票の不具合ではない。その期間の伝票は
+  締日境界検証用の手作りデータで、`VTokui`・`VShain`・`VSoko`・`Jmeisai` の各スナップショットが空文字である。
+  JSONパス名は正しく（全50,322伝票のうち `VTokui.Cd` が空なのは19件）、`DenDay` は TEXT の `yyyyMMdd` で
+  `ToDenDay()` も同形式のため型不一致による取りこぼしも無い。動作確認には売上日 2022/01/12・取引区分「返品」
+  （伝票 45358・45359）を使う。
+
+### 検証
+- `dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `Tests\TestServer\bin\Debug\net10.0\TestServer.exe`: 324件成功、0件失敗。
+- `git diff --check`: 空白エラーなし。UTF-8 BOMなし、CRLFを確認した。
+
+### ドキュメント
+- `Doc/spec/2026-09-02_納品書印刷_R2適格返還請求書_詳細設計.md` に10章（実装・確認の結果）を追記し、
+  `Doc/spec/archive/` へ移動した。
+- `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` の状態行・6章#8・9章R2・10.4・10.5を更新した。
+  9章の残課題 R1〜R5 はこれで全て決着し、本書も archive 候補になった。
+- `Doc/spec/2026-08-18_CV10機能完成度チェックリスト.md` の反映履歴と売上セクションを更新した。
+
 ## [2026-09-02] 納品書印刷 R2適格返還請求書
 
 ### Agent
