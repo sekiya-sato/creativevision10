@@ -228,7 +228,7 @@ bool PaysakiCheck() {
         Console.WriteLine(PaysakiClosingCheck.BuildMismatchWarning("請求先", "得意先", tRange));
         Console.WriteLine($"支払計算 実行前警告: 不一致={sRange.Count} 件");
         Console.WriteLine(PaysakiClosingCheck.BuildMismatchWarning("支払先", "仕入先", sRange));
-        ok &= tRange.Count == 1 && tRange[0].ChildCode == "000002" && tRange[0].ParentShime == ShimeParent;
+        ok &= tRange.Count == 1 && tRange[0].ChildCode == "000002" && tRange[0].ParentDays.Contains(ShimeParent);
         ok &= sRange.Count == 1 && sRange[0].ChildCode == "001";
 
         // コード範囲で対象外に絞れば0件（範囲条件が効いていること）
@@ -237,7 +237,7 @@ bool PaysakiCheck() {
         ok &= tOutOfRange.Count == 0;
 
         // (2) マスターメンテ保存後の警告。子を編集した場合と親を編集した場合の双方向。
-        List<PaysakiClosingCheckRow> Affected(string table, long editedId) =>
+        List<PaysakiClosingMismatch> Affected(string table, long editedId) =>
             PaysakiClosingCheck.FindMismatches(db.Fetch<PaysakiClosingCheckRow>(PaysakiClosingCheck.BuildAffectedRowCheckSql(table, editedId)));
 
         var childId = db.Single<MasterTokui>("where Code=@0", "000002").Id;

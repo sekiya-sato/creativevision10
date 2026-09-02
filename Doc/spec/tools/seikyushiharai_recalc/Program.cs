@@ -114,33 +114,37 @@ if (mode is "kake-plan" or "kake-run") {
 
 // 締日ごとに、その締日を持つ得意先/仕入先の既存 SummaryUriSei/SummaryKaiShi 行から
 // 対象の請求月/支払月(YYYYMM)を列挙する。
+// 締日の列挙は Shime1/2/3 の和集合＋Shime1=0 の自社締日フォールバック(ClosingDaySet.ResolveDistinctDays、4.3)。
+// 対象月の逆算ロジック(DayTo の年月をそのまま対象月とみなす)自体は変更しない。
+var ownShime = db.FirstOrDefault<int>("SELECT ShimeBi FROM MasterSysman ORDER BY Id LIMIT 1");
+
 List<(int Shime, string Yyyymm)> PlanUriSei() {
-    var shimes = db.Fetch<int>(
-        "SELECT DISTINCT Shime1 FROM MasterTokui WHERE Shime1 BETWEEN 1 AND 28 OR Shime1 = 99 ORDER BY Shime1");
+    var patterns = db.Fetch<ShimePatternRow>("SELECT DISTINCT Shime1, Shime2, Shime3 FROM MasterTokui");
+    var shimes = ClosingDaySet.ResolveDistinctDays(patterns.Select(p => (p.Shime1, p.Shime2, p.Shime3)), ownShime);
     var plan = new List<(int, string)>();
     foreach (var shime in shimes) {
-        var months = db.Fetch<string>(@"
+        var months = db.Fetch<string>($@"
 SELECT DISTINCT substr(s.DayTo, 1, 6) AS Ym
 FROM SummaryUriSei s
 JOIN MasterTokui t ON t.Id = s.Id_Tokui
-WHERE t.Shime1 = @0
-ORDER BY Ym", shime);
+WHERE {ClosingDaySet.ContainsShimeSql("t", "@0", "@1")}
+ORDER BY Ym", shime, ownShime);
         plan.AddRange(months.Select(m => (shime, m)));
     }
     return plan;
 }
 
 List<(int Shime, string Yyyymm)> PlanKaiShi() {
-    var shimes = db.Fetch<int>(
-        "SELECT DISTINCT Shime1 FROM MasterShiire WHERE Shime1 BETWEEN 1 AND 28 OR Shime1 = 99 ORDER BY Shime1");
+    var patterns = db.Fetch<ShimePatternRow>("SELECT DISTINCT Shime1, Shime2, Shime3 FROM MasterShiire");
+    var shimes = ClosingDaySet.ResolveDistinctDays(patterns.Select(p => (p.Shime1, p.Shime2, p.Shime3)), ownShime);
     var plan = new List<(int, string)>();
     foreach (var shime in shimes) {
-        var months = db.Fetch<string>(@"
+        var months = db.Fetch<string>($@"
 SELECT DISTINCT substr(s.DayTo, 1, 6) AS Ym
 FROM SummaryKaiShi s
 JOIN MasterShiire t ON t.Id = s.Id_Shiire
-WHERE t.Shime1 = @0
-ORDER BY Ym", shime);
+WHERE {ClosingDaySet.ContainsShimeSql("t", "@0", "@1")}
+ORDER BY Ym", shime, ownShime);
         plan.AddRange(months.Select(m => (shime, m)));
     }
     return plan;
