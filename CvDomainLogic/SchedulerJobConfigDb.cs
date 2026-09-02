@@ -6,8 +6,9 @@ namespace CvDomainLogic;
 /// 自動実行ジョブ（スケジューラ）の「実行する/しない」フラグと cron式を、
 /// 既存テーブル <see cref="MasterConfig"/>（Category/Name/Val）に永続化するクラス。
 /// <para>
-/// DBスキーマは変更しない。キーは Category="Scheduler"、Name="Job.{jobKey}.Enabled" / "Job.{jobKey}.Cron" とし、
-/// Val に文字列で値を保持する。
+/// DBスキーマは変更しない。キーは Category="自動実行管理"、
+/// Name="GenericSQLRegAutoExec"+TaskId先頭8桁（実行フラグ） / "GenericSQLRegAutoExecCron"+TaskId先頭8桁（cron式）とし、
+/// Val に "1"（実行する）/ "0"（実行しない）などの文字列で値を保持する。
 /// </para>
 /// <para>
 /// <b>MasterConfig にレコードが無い場合は「未設定」を表し、初期状態とみなす。</b>
@@ -23,17 +24,17 @@ public class SchedulerJobConfigDb {
 	}
 
 	/// <summary><see cref="MasterConfig"/>.Category に使うカテゴリ名。</summary>
-	public const string ConfigCategory = MasterConfig.CategoryScheduler;
+	public const string ConfigCategory = MasterConfig.CategoryAutoExec;
 
 	/// <summary>
-	/// 指定ジョブの実行フラグを取得する。
+	/// 指定タスクの実行フラグを取得する。
 	/// レコードが無ければ未設定として <c>null</c> を返す。
 	/// </summary>
-	/// <param name="jobKey">ジョブを識別するキー</param>
+	/// <param name="taskId">タスクを識別するId</param>
 	/// <returns>true=実行する、false=実行しない、null=未設定</returns>
-	public bool? GetEnabled(string jobKey) {
+	public bool? GetEnabled(Guid taskId) {
 		var val = _db.FirstOrDefault<string>(
-			$"SELECT Val FROM {nameof(MasterConfig)} WHERE Name = @0", EnabledKey(jobKey));
+			$"SELECT Val FROM {nameof(MasterConfig)} WHERE Name = @0", EnabledKey(taskId));
 		if (string.IsNullOrWhiteSpace(val))
 			return null;
 		return val.Trim().ToLowerInvariant() switch {
@@ -44,39 +45,42 @@ public class SchedulerJobConfigDb {
 	}
 
 	/// <summary>
-	/// 指定ジョブの cron式を取得する。
+	/// 指定タスクの cron式を取得する。
 	/// レコードが無い、または空白のみの場合は <c>null</c> を返す。
 	/// </summary>
-	/// <param name="jobKey">ジョブを識別するキー</param>
-	public string? GetCron(string jobKey) {
+	/// <param name="taskId">タスクを識別するId</param>
+	public string? GetCron(Guid taskId) {
 		var val = _db.FirstOrDefault<string>(
-			$"SELECT Val FROM {nameof(MasterConfig)} WHERE Name = @0", CronKey(jobKey));
+			$"SELECT Val FROM {nameof(MasterConfig)} WHERE Name = @0", CronKey(taskId));
 		return string.IsNullOrWhiteSpace(val) ? null : val;
 	}
 
 	/// <summary>
-	/// 指定ジョブの実行フラグを設定する（upsert）。
+	/// 指定タスクの実行フラグを設定する（upsert）。
 	/// </summary>
-	/// <param name="jobKey">ジョブを識別するキー</param>
+	/// <param name="taskId">タスクを識別するId</param>
 	/// <param name="enabled">true=実行する、false=実行しない</param>
-	public void SetEnabled(string jobKey, bool enabled) {
-		Upsert(EnabledKey(jobKey), enabled ? "1" : "0", $"自動実行ジョブ {jobKey} の実行フラグ");
+	public void SetEnabled(Guid taskId, bool enabled) {
+		Upsert(EnabledKey(taskId), enabled ? MasterConfig.ValAutoExecEnabled : MasterConfig.ValAutoExecDisabled, $"自動実行ジョブ {taskId} の実行フラグ");
 	}
 
 	/// <summary>
-	/// 指定ジョブの cron式を設定する（upsert）。
+	/// 指定タスクの cron式を設定する（upsert）。
 	/// </summary>
-	/// <param name="jobKey">ジョブを識別するキー</param>
+	/// <param name="taskId">タスクを識別するId</param>
 	/// <param name="cronExpression">設定する cron式</param>
-	public void SetCron(string jobKey, string cronExpression) {
-		Upsert(CronKey(jobKey), cronExpression, $"自動実行ジョブ {jobKey} の cron式");
+	public void SetCron(Guid taskId, string cronExpression) {
+		Upsert(CronKey(taskId), cronExpression, $"自動実行ジョブ {taskId} の cron式");
 	}
 
 	/// <summary>Name列に使う実行フラグ用キーを組み立てる。</summary>
-	static string EnabledKey(string jobKey) => $"{MasterConfig.NameSchedulerJobPrefix}{jobKey}{MasterConfig.NameSchedulerEnabledSuffix}";
+	static string EnabledKey(Guid taskId) => $"{MasterConfig.NameAutoExecEnabledPrefix}{TaskIdPrefix(taskId)}";
 
 	/// <summary>Name列に使う cron式用キーを組み立てる。</summary>
-	static string CronKey(string jobKey) => $"{MasterConfig.NameSchedulerJobPrefix}{jobKey}{MasterConfig.NameSchedulerCronSuffix}";
+	static string CronKey(Guid taskId) => $"{MasterConfig.NameAutoExecCronPrefix}{TaskIdPrefix(taskId)}";
+
+	/// <summary>TaskId(Guid)の先頭8桁を取り出す。</summary>
+	static string TaskIdPrefix(Guid taskId) => taskId.ToString()[..8];
 
 	/// <summary>
 	/// <see cref="MasterConfig"/> を Name で検索し、あれば Val/Vdu を更新、無ければ新規登録する。

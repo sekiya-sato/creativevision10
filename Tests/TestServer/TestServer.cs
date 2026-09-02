@@ -402,6 +402,45 @@ public class CoreServiceTests {
 		}
 	}
 
+	/// <summary>
+	/// 自動実行フラグ改修の回帰防止: protobuf-net は bool の false をワイヤに載せないため、
+	/// <see cref="SchedulerTaskInfo.IsEnabled"/> に既定値 true の初期化子を付けると、
+	/// サーバが返した false が受信側で true のままになってしまう。既定値は false でなければならない。
+	/// </summary>
+	[TestMethod]
+	public void SchedulerTaskInfo_IsEnabledDefaultsToFalseForProtobufWireCompatibility() {
+		var info = new SchedulerTaskInfo();
+
+		Assert.IsFalse(info.IsEnabled, "IsEnabledの既定値はfalseであること(protobuf-netのワイヤ互換のため)");
+	}
+
+	/// <summary>
+	/// キー体系変更の回帰防止: MasterConfig の Name は "GenericSQLRegAutoExec"+TaskId先頭8桁 で構成されるため、
+	/// TaskId の先頭8桁が衝突すると別ジョブの実行フラグ/cron式を上書きしてしまう。
+	/// </summary>
+	[TestMethod]
+	public void SystemJobDefinitions_TaskIdFirstEightCharsAreUnique() {
+		var defs = SchedulerService.SystemJobDefinitions;
+
+		var prefixes = defs.Select(d => d.TaskId.ToString()[..8]).Distinct().Count();
+		Assert.AreEqual(defs.Count, prefixes, "TaskIdの先頭8桁が重複している(MasterConfigのName衝突につながる)");
+	}
+
+	/// <summary>
+	/// キー体系変更: MasterConfig の自動実行管理用定数が仕様どおりであること
+	/// </summary>
+	[TestMethod]
+	public void MasterConfig_AutoExecConstants_MatchSpecifiedNamingScheme() {
+		// MSTEST0032: 定数同士の比較は静的に真と判定されるが、定数値の変更検知が目的の意図した比較のため抑止する。
+#pragma warning disable MSTEST0032
+		Assert.AreEqual("自動実行管理", MasterConfig.CategoryAutoExec);
+		Assert.AreEqual("GenericSQLRegAutoExec", MasterConfig.NameAutoExecEnabledPrefix);
+		Assert.AreEqual("GenericSQLRegAutoExecCron", MasterConfig.NameAutoExecCronPrefix);
+		Assert.AreEqual("1", MasterConfig.ValAutoExecEnabled);
+		Assert.AreEqual("0", MasterConfig.ValAutoExecDisabled);
+#pragma warning restore MSTEST0032
+	}
+
 	[TestMethod]
 	public void ExecuteSqliteWalCheckpoint_ReturnsCheckpointRow() {
 		var dbPath = Path.Combine(Path.GetTempPath(), $"sqlite-wal-checkpoint-{Guid.NewGuid():N}.db");

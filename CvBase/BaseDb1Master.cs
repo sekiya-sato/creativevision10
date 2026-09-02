@@ -930,30 +930,35 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("システム共通設定のカテゴリ")]
 	public const string CategorySystem = "System";
 	/// <summary>
-	/// 自動実行ジョブ(スケジューラ)設定のカテゴリ
-	/// </summary>
-	[Comment("自動実行ジョブ(スケジューラ)設定のカテゴリ")]
-	public const string CategoryScheduler = "Scheduler";
-	/// <summary>
 	/// 適用上代(DerivedJodai)の保持日数
 	/// </summary>
 	[Comment("適用上代(DerivedJodai)の保持日数")]
 	public const string NameJodaiKeepDays = "JodaiKeepDays";
 	/// <summary>
-	/// 自動実行ジョブ設定名の接頭辞（Name は "Job.{jobKey}.Enabled" の形になる）
+	/// 自動実行ジョブ(スケジューラ)設定のカテゴリ
 	/// </summary>
-	[Comment("自動実行ジョブ設定名の接頭辞")]
-	public const string NameSchedulerJobPrefix = "Job.";
+	[Comment("自動実行ジョブ(スケジューラ)設定のカテゴリ")]
+	public const string CategoryAutoExec = "自動実行管理";
 	/// <summary>
-	/// 自動実行ジョブの実行フラグ設定名の接尾辞
+	/// 実行フラグ設定名の接頭辞。後ろに TaskId の先頭8桁が付く
 	/// </summary>
-	[Comment("自動実行ジョブの実行フラグ設定名の接尾辞")]
-	public const string NameSchedulerEnabledSuffix = ".Enabled";
+	[Comment("実行フラグ設定名の接頭辞。後ろに TaskId の先頭8桁が付く")]
+	public const string NameAutoExecEnabledPrefix = "GenericSQLRegAutoExec";
 	/// <summary>
-	/// 自動実行ジョブの cron式設定名の接尾辞
+	/// cron式設定名の接頭辞。後ろに TaskId の先頭8桁が付く
 	/// </summary>
-	[Comment("自動実行ジョブの cron式設定名の接尾辞")]
-	public const string NameSchedulerCronSuffix = ".Cron";
+	[Comment("cron式設定名の接頭辞。後ろに TaskId の先頭8桁が付く")]
+	public const string NameAutoExecCronPrefix = "GenericSQLRegAutoExecCron";
+	/// <summary>
+	/// 実行する
+	/// </summary>
+	[Comment("実行する")]
+	public const string ValAutoExecEnabled = "1";
+	/// <summary>
+	/// 実行しない
+	/// </summary>
+	[Comment("実行しない")]
+	public const string ValAutoExecDisabled = "0";
 	[ObservableProperty]
 	[OldTableCommentAttr("カテゴリ")]
 	[Comment("カテゴリ 設定値をグループ分けする区分")]

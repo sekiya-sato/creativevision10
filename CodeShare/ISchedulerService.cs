@@ -72,9 +72,11 @@ public sealed record class SchedulerTaskInfo {
 	public DateTime? NextOccurrence { get; set; }
 	[DataMember(Order = 5)]
 	public bool IsSystemTask { get; set; }
-	/// <summary>実行する/しないフラグ</summary>
+	/// <summary>
+	/// 実行する/しないフラグ。protobuf-net は bool の false をワイヤに載せないため、既定値 true の初期化子を付けるとサーバが返した false が受信側で true のままになる。サーバは常に明示的に値を設定する。
+	/// </summary>
 	[DataMember(Order = 6)]
-	public bool IsEnabled { get; set; } = true;
+	public bool IsEnabled { get; set; }
 	/// <summary>起動間隔の下限チェック対象かどうか</summary>
 	[DataMember(Order = 7)]
 	public bool CheckMinInterval { get; set; }

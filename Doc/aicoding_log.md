@@ -1,3 +1,51 @@
+## [2026-09-03] 自動実行ジョブの実行フラグ表示不具合を修正しMasterConfigキー体系を変更
+
+### Agent
+- Sekiya Sato Claude Opus 5 Middle
+
+### 目的
+- 前回追加した自動実行ジョブの「実行する/しない」フラグが、画面上で新規3タスクも含め全件「実行」表示になり、切替も反映されない不具合を修正する。あわせて `MasterConfig` のキー体系をユーザー指定の命名へ変更する。
+
+### 実施内容
+- `CodeShare/ISchedulerService.cs` の `SchedulerTaskInfo.IsEnabled` から `= true` の初期化子を削除した。protobuf-net は bool の既定値 `false` をワイヤに載せないため、初期化子で `true` を持たせるとサーバが返した `false` が受信側で `true` のまま残り、画面上「実行」が全件ONに見え、切替操作も見た目に反映されない不具合になっていた。サーバ側は常に明示的に値を設定しているため、既定値を `false` に戻すだけで解消する。
+- `MasterConfig`（`CvBase/BaseDb1Master.cs`）のキー体系をユーザー指定の命名へ差し替えた。
+  - `CategoryAutoExec = "自動実行管理"`（旧 `CategoryScheduler = "Scheduler"` を置換・削除）
+  - `NameAutoExecEnabledPrefix = "GenericSQLRegAutoExec"` / `NameAutoExecCronPrefix = "GenericSQLRegAutoExecCron"`（後ろに TaskId の先頭8桁を付与。旧 `NameSchedulerJobPrefix`/`NameSchedulerEnabledSuffix`/`NameSchedulerCronSuffix` の "Job.{jobKey}.Enabled" 形式を置換・削除）
+  - `ValAutoExecEnabled = "1"` / `ValAutoExecDisabled = "0"` を定数化
+- `CvDomainLogic/SchedulerJobConfigDb.cs` を `jobKey: string` 引数から `taskId: Guid` 引数へ変更した（`GetEnabled`/`GetCron`/`SetEnabled`/`SetCron`）。Name列は `Prefix + taskId.ToString()[..8]` で組み立てる。
+- `CvServer/Services/SchedulerService.cs` の呼び出し箇所を `def.JobKey` から `def.TaskId` を渡す形へ変更した。
+
+### テスト追加
+- `Tests/TestServer/TestServer.cs` の既存 `SystemJobDefinitions_...` 系テストに倣い、DB・サーバ起動不要な純粋ロジックのテストを3件追加した（既存テストは変更していない）。
+  - `SchedulerTaskInfo_IsEnabledDefaultsToFalseForProtobufWireCompatibility`: `new SchedulerTaskInfo().IsEnabled` が `false` であることを検証する回帰テスト。
+  - `SystemJobDefinitions_TaskIdFirstEightCharsAreUnique`: `MasterConfig` の Name が `GenericSQLRegAutoExec`+TaskId先頭8桁で構成されるため、先頭8桁が衝突すると別ジョブの設定を上書きしてしまう。7件の `TaskId` の先頭8桁が全てユニークであることを検証する。
+  - `MasterConfig_AutoExecConstants_MatchSpecifiedNamingScheme`: `MasterConfig` の自動実行管理用定数（`CategoryAutoExec`/`NameAutoExecEnabledPrefix`/`NameAutoExecCronPrefix`/`ValAutoExecEnabled`/`ValAutoExecDisabled`）の値が仕様どおりであることを検証する。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `--filter FullyQualifiedName~SchedulerTaskInfo_IsEnabledDefaultsToFalse`: 1件成功。
+- `--filter FullyQualifiedName~SystemJobDefinitions`: 5件成功。
+- `--filter FullyQualifiedName~MasterConfig_AutoExecConstants`: 1件成功。
+- `--filter FullyQualifiedName~CalculateMinIntervalMinutes`: 1件成功。
+- `--filter FullyQualifiedName~Register`（既存の登録系回帰確認）: 3件成功。
+- `git diff --check`: 空白エラーなし（クリーン）。
+
+### 残課題
+- `MasterConfig` への初期データ登録（7タスク分の実行フラグ/cron式の既定値投入）は、`CvBase` が `CvDomainLogic`（`SchedulerJobConfigDb`）を参照することになり依存方向（`CodeShare`/`CvAsset` → `CvBase` → `CvDomainLogic` → `CvServer`）に反するため、今回は保留とした。レコード未登録時はジョブ定義側の既定値（`SchedulerJobDefinition.DefaultEnabled`/`DefaultCronExpression`）を使う現行動作のままとする。
+
+### 変更ファイル
+- `CodeShare/ISchedulerService.cs`（`SchedulerTaskInfo.IsEnabled` の初期化子削除）
+- `CvBase/BaseDb1Master.cs`（`MasterConfig` キー体系変更）
+- `CvDomainLogic/SchedulerJobConfigDb.cs`（`Guid taskId` ベースへ変更）
+- `CvServer/Services/SchedulerService.cs`（呼び出しを `def.TaskId` ベースへ変更）
+- `Tests/TestServer/TestServer.cs`（テスト3件追加）
+- `Doc/aicoding_log.md`（本エントリ）
+
+### 所要時間
+- 約1時間（JST）
+
+---
+
 ## [2026-09-02] 自動実行ジョブに「実行する/しない」フラグを追加
 
 ### Agent

@@ -252,7 +252,7 @@ public class SchedulerService : ISchedulerService {
 				else {
 					bool? persisted = null;
 					try {
-						persisted = configDb?.GetEnabled(def.JobKey);
+						persisted = configDb?.GetEnabled(def.TaskId);
 					}
 					catch (Exception ex) {
 						_logger.LogWarning(ex, "実行フラグの取得に失敗しました。 JobKey={JobKey}", def.JobKey);
@@ -310,7 +310,7 @@ public class SchedulerService : ISchedulerService {
 				try {
 					using var scope = _scopeFactory.CreateScope();
 					var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
-					new SchedulerJobConfigDb(db).SetCron(def.JobKey, request.CronExpression);
+					new SchedulerJobConfigDb(db).SetCron(def.TaskId, request.CronExpression);
 				}
 				catch (Exception ex) {
 					_logger.LogWarning(ex, "cron式の永続化に失敗しました。 JobKey={JobKey}, Cron={Cron}", def.JobKey, request.CronExpression);
@@ -352,7 +352,7 @@ public class SchedulerService : ISchedulerService {
 					try {
 						using var scope = _scopeFactory.CreateScope();
 						var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
-						cronExpression = new SchedulerJobConfigDb(db).GetCron(def.JobKey) ?? def.DefaultCronExpression;
+						cronExpression = new SchedulerJobConfigDb(db).GetCron(def.TaskId) ?? def.DefaultCronExpression;
 					}
 					catch (Exception ex) {
 						_logger.LogWarning(ex, "実行フラグ設定時の永続cron式取得に失敗しました。 JobKey={JobKey}", def.JobKey);
@@ -377,7 +377,7 @@ public class SchedulerService : ISchedulerService {
 
 			using var configScope = _scopeFactory.CreateScope();
 			var configDb = configScope.ServiceProvider.GetRequiredService<ExDatabase>();
-			new SchedulerJobConfigDb(configDb).SetEnabled(def.JobKey, request.IsEnabled);
+			new SchedulerJobConfigDb(configDb).SetEnabled(def.TaskId, request.IsEnabled);
 			_logger.LogInformation("実行フラグ設定: JobKey={JobKey}, TaskId={TaskId}, IsEnabled={IsEnabled}", def.JobKey, guid, request.IsEnabled);
 
 			return Task.FromResult(new SchedulerResult { Result = Success, Detail = "正常終了", TaskId = guid.ToString() });
@@ -477,7 +477,7 @@ public class SchedulerService : ISchedulerService {
 		try {
 			using var scope = _scopeFactory.CreateScope();
 			var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
-			var persistedCron = new SchedulerJobConfigDb(db).GetCron(definition.JobKey);
+			var persistedCron = new SchedulerJobConfigDb(db).GetCron(definition.TaskId);
 			if (!string.IsNullOrWhiteSpace(persistedCron)) {
 				try {
 					CrontabSchedule.Parse(persistedCron);
@@ -551,7 +551,7 @@ public class SchedulerService : ISchedulerService {
 
 		if (definition != null) {
 			var configDb = new SchedulerJobConfigDb(db);
-			var isEnabled = configDb.GetEnabled(definition.JobKey) ?? definition.DefaultEnabled;
+			var isEnabled = configDb.GetEnabled(definition.TaskId) ?? definition.DefaultEnabled;
 			if (!isEnabled) {
 				_logger.LogInformation("実行フラグがfalseのため自動実行をスキップしました。 TaskName={TaskName}, JobKey={JobKey}", taskName, definition.JobKey);
 				return;
