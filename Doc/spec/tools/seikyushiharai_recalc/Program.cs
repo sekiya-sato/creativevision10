@@ -3,7 +3,7 @@ using CvBaseSqlite;
 using CvDomainLogic;
 using Microsoft.Data.Sqlite;
 
-// Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md 9章「適用手順」のうち、
+// Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md 9章「適用手順」のうち、
 // 請求計算(CalcSummaryUriSei)・支払計算(CalcSummaryKaiShi)を「全締日・全請求/支払月」について
 // 自動で回すバッチツール。
 //

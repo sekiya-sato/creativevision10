@@ -187,7 +187,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <see cref="Su"/>（指示数）はユーザーが配分入力で設定し、倉庫へ送信される。倉庫から戻されるデータで
 	/// <see cref="JitsuSu"/>（出荷数）と本列が設定され、<c>Su = JitsuSu + ShortSu</c> が成立する。
 	/// この状態かつ <see cref="KakuteiDay"/> に有効な日付があるものを確定とみなす。完了は <see cref="EndFlag"/>=1。
-	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.1.2 を参照する。
+	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.1.2 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -211,7 +211,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// 初回配分は入荷前の振り分けであり現物を押さえないため引当対象外とする。
 	/// 追加・修正・削除、およびこの列の部分更新のたびに、対象の倉庫+SKU の引当数が引き直される。
 	/// <see cref="KakuteiDay"/>（配分確定）と <see cref="SendFlg"/>（物流連携）は引当の判定に使わない。
-	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
+	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -235,7 +235,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 /// <para>
 /// <b>引当対象は <see cref="Hatsukai"/>(0) 以外のすべて</b>。判定は <c>Kubun != 0</c> の一点で行う。
 /// 初回配分は入荷前に入荷予定を振り分けるものであり、現物在庫を押さえないため引当数へ算入しない。
-/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
 /// </para>
 /// </summary>
 public enum EnumHaibun : int {

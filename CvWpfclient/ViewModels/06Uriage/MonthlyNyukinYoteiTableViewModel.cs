@@ -18,7 +18,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// 金額は SummaryUriSei（請求計算＝月次更新処理の成果物）の当月末残高を使う。
 /// SummaryUriSei は対象期間のみの集計（繰越なし）なので、当月末残高は対象期間の開始(DayFrom)
 /// より前の全行を SUM(TotalSales - TotalIn) で積んだ PreviousBalance に当期間の Balance を
-/// 加えて求める（`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// 加えて求める（`Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
 /// 締め処理を回していない請求日は行が無く空になる。
 /// </summary>
 public partial class MonthlyNyukinYoteiTableViewModel : Helpers.BaseReportViewModel {

@@ -7,7 +7,7 @@ namespace CvDomainLogic;
 /// 発注残・受注残の完了フラグ(<c>Tran13Hachu.EndFlag</c> / <c>Tran12Jyuchu.EndFlag</c>)を、
 /// 紐付く仕入・出荷の実績から自動判定して立てる。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 / 4.3.1 を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 / 4.3.1 を参照する。
 /// </para>
 /// <para>
 /// 判定は次の3点で決まっている。

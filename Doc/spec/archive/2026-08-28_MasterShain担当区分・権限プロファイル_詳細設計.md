@@ -1,7 +1,7 @@
 # MasterShain 担当区分・権限プロファイル 詳細設計
 
 対象: `CvBase`（テーブル定義・初期データ・マイグレーション） / 影響確認: `Tests` `CvWpfclient` `CvServer`
-状態: **承認待ち（実装未着手）**
+状態: **本書スコープ（4章・9章「含む」）は実装完了（commit `e5f59e6`）**。`MasterShain.ResponsibilityScope`/`Id_PermissionProfile`、`SysPermissionProfile`/`SysPermissionProfileDetail`、`EnumResponsibilityScope`/`EnumPermissionType`、マイグレーション`26_08_28_01`、初期データを実装済み。9章「含まない」の4項目（担当区分・プロファイルのメンテ画面UI、権限プロファイルのメンテ画面、権限の実行時判定、`MenuData`への`FunctionId`付与）は本書のスコープ外のまま未着手（D-10により10.0対象外）。
 関連: [.omo/plans/2026-08-28_user_operation_log_layer2_plan.md](.omo/plans/2026-08-28_user_operation_log_layer2_plan.md) §1.2 / §2.3 / §2.5
 
 ## 1. 背景・目的

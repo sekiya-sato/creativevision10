@@ -7,7 +7,7 @@ namespace CvDomainLogic;
 /// <summary>
 /// HHTデータ更新のマスタ解決と伝票組み立て。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` の 5.4 - 5.6 を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-24_HHTデータ更新詳細設計.md` の 5.4 - 5.6 を参照する。
 /// </para>
 /// </summary>
 public partial class HhtProcess {

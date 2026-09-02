@@ -28,7 +28,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// <para>
 /// 引当数・有効在庫は集計テーブル(<see cref="SummaryRealStock"/>)へ materialize 済みのため
 /// 再集計せず列を読む。配分数は集計列が無いため <see cref="TranHaibun"/> を直接集計する。
-/// 詳細は `Doc/spec/2026-08-18_I9_配分照会3画面_詳細設計.md` を参照する。
+/// 詳細は `Doc/spec/archive/2026-08-18_I9_配分照会3画面_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 public abstract partial class BaseHaibunInquiryViewModel : Helpers.BaseViewModel {

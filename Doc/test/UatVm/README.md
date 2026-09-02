@@ -3,7 +3,7 @@
 CvWpfclientの**実View**を生成し、そのViewModelのコマンドを直接駆動してUATを無人実行する。
 UIAutomationやマウス・キー操作のエミュレーションは使わない。
 
-計画と位置づけは [Mini-UAT自動化計画](../../spec/2026-08-27_Mini-UAT自動化計画_VM駆動ハーネス.md) を参照する。
+計画と位置づけは [Mini-UAT自動化計画](../../spec/archive/2026-08-27_Mini-UAT自動化計画_VM駆動ハーネス.md) を参照する。
 
 ## 1. 何を確認するものか
 

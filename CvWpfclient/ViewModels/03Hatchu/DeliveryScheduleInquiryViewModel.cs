@@ -13,7 +13,7 @@ namespace CvWpfclient.ViewModels._03Hatchu;
 /// <para>
 /// 納期遅れ = 納品予定日を過ぎても未完了(<c>EndFlag=0</c>)。判定は納品日と完了フラグで行う（リードタイム自動計算は 2.0 以降）。
 /// 読み取りは既存の照会パターン（`QuerySqlListAsync&lt;Tran13Hachu&gt;`）。仕様は
-/// `Doc/spec/2026-08-18_H1-H4_納品予定日_詳細設計.md` を参照する。
+/// `Doc/spec/archive/2026-08-18_H1-H4_納品予定日_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 public partial class DeliveryScheduleInquiryViewModel : BaseQueryViewModel {

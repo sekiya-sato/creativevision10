@@ -7,7 +7,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// 商品別に、倉庫×色サイズの<b>配分数</b>（<see cref="TranHaibun"/> の未完了行 <c>EndFlag=0</c>）を展開する。
 /// <para>
 /// 配分数は初回配分(<c>Kubun=0</c>)を含む生の振り分け数で、引当数（<c>Kubun&lt;&gt;0</c>・確定切替）とは定義が異なる。
-/// 仕様は `Doc/spec/2026-08-18_I9_配分照会3画面_詳細設計.md` および同 2026-08-17 判断材料 5.1.0 / I9 を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-18_I9_配分照会3画面_詳細設計.md` および同 2026-08-17 判断材料 5.1.0 / I9 を参照する。
 /// </para>
 /// </summary>
 public sealed class HaibunQueryViewModel : BaseHaibunInquiryViewModel {

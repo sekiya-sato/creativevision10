@@ -18,7 +18,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// 金額は SummaryKaiShi（支払計算＝月次更新処理の成果物）の当月末残高を使う。
 /// SummaryKaiShi は対象期間のみの集計（繰越なし）なので、当月末残高は対象期間の開始(DayFrom)
 /// より前の全行を SUM(TotalShiire - TotalOut) で積んだ PreviousBalance に当期間の Balance を
-/// 加えて求める（`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// 加えて求める（`Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
 /// 締め処理を回していない支払日は行が無く空になる。
 /// </summary>
 public partial class MonthlyShiharaiYoteiTableViewModel : Helpers.BaseReportViewModel {

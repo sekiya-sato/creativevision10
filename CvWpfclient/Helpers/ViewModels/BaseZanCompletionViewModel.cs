@@ -9,7 +9,7 @@ BaseZanCompletionViewModel は残完了設定画面（発注残完了設定 / �
 
 完了は伝票単位で `Tran13Hachu.EndFlag` / `Tran12Jyuchu.EndFlag` に 1 を立てます。
 完了にすると残管理表の「残のみ」出力と配分入力の検索から外れます。SKUに残があっても完了扱いです。
-仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.2.1 / 4.3 を参照してください。
+仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.2.1 / 4.3 を参照してください。
 
 画面は消込画面（BaseMatchingViewModel）と同じ2段構成です。
 - `一覧取得`: 日付範囲と取引先で伝票を取得し、伝票単位の残数を付けて完了Flg付きで並べる。

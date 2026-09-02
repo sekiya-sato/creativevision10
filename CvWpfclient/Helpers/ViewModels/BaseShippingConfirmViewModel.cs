@@ -9,7 +9,7 @@ BaseShippingConfirmViewModel は出荷指示確定画面（出荷指示確定(�
 - 取消: 確定済み(伝票未作成)の選択行を ShippingCancelParam で KakuteiDay=空 へ戻す。
 
 商品別/得意先別の違いは並び順(SortOrderSql)だけで、データ源(TranHaibun の EndFlag=0)は同じです。
-サーバ側ロジックは CvDomainLogic/ShippingDb、詳細は Doc/spec/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md。
+サーバ側ロジックは CvDomainLogic/ShippingDb、詳細は Doc/spec/archive/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md。
 
 一覧の列は既存の照会画面(ZaikoQuery)と同じく、テーブル単位に型付きで取得してクライアントで合成します
 （サーバの QueryListSqlParam はDBマップ型しか返せないため、クライアント専用POCOは使いません）。

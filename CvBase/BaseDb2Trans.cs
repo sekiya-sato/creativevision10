@@ -121,7 +121,7 @@ public class TranCalcBase {
 	/// <para>
 	/// 0=倉庫 と 6=直営店 は移動伝票の対象であり、受注残を消化しない。
 	/// 受注残の判定（サーバー側 <c>CompletionDb</c>）と受注残完了設定画面の残数表示で同じ値を使う。
-	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 5.3 を参照する。
+	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 5.3 を参照する。
 	/// </para>
 	/// </summary>
 	public const string ShukkaTenTypes = "1,3";
@@ -714,7 +714,7 @@ public sealed partial class Tran60Tana : TranAllHeader {
 /// 在庫調整 61 (倉庫 増減)
 /// <para>
 /// 在庫強制調整入力と棚卸確定処理が作る調整専用伝票。仕様は
-/// `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.4(F0/F2) を参照する。
+/// `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.4(F0/F2) を参照する。
 /// </para>
 /// <para>
 /// 伝票にしているのは「通常更新値 = Rebuild値」の品質原則を守るためである。
@@ -972,7 +972,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	/// <para>
 	/// 充当金額・未充当金額は保持しない（部分消込は仕様対象外）。売掛残高は伝票金額ベースであり、
 	/// この値は <see cref="SummaryUriKake"/> の集計へ影響しない。仕様は
-	/// `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
+	/// `Doc/spec/archive/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -1345,7 +1345,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	/// <para>
 	/// 充当金額・未充当金額は保持しない（部分消込は仕様対象外）。買掛残高は伝票金額ベースであり、
 	/// この値は <see cref="SummaryKaiKake"/> の集計へ影響しない。仕様は
-	/// `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
+	/// `Doc/spec/archive/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -1955,7 +1955,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	/// 出荷先が卸先または売仕店のもの）が明細単位で全SKU充足した時点で 1 へ自動更新する。
 	/// 受注残完了設定画面から手動で 1 にすることも、0 へ戻すこともできる。
 	/// 1 の伝票は受注残管理表の集計対象から外す（SKUに残があっても完了とみなす）。
-	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 を参照する。
+	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -2113,7 +2113,7 @@ public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	/// 明細単位で全SKU充足した時点で 1 へ自動更新する。
 	/// 発注残完了設定画面から手動で 1 にすることも、0 へ戻すこともできる。
 	/// 1 の伝票は発注残管理表の集計対象から外す（SKUに残があっても完了とみなす）。
-	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 を参照する。
+	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]

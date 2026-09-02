@@ -34,7 +34,7 @@ public sealed class StockForceHeaderRow(Tran61Chosei chosei, string riyuName) {
 /// 在庫強制調整実績照会。在庫強制調整入力で登録した <see cref="Tran61Chosei"/>（区分=強制調整）を照会し、
 /// 誤登録を取消（削除）する。<see cref="Tran61Chosei"/> は <see cref="ITranSoko"/> なので、サーバの汎用削除が
 /// 在庫を反転して戻す（調整前へ復元）。棚卸確定が作った調整は対象外。
-/// <para>仕様は `Doc/spec/2026-08-18_F2fu_強制調整の取消・実績照会_詳細設計.md` を参照する。</para>
+/// <para>仕様は `Doc/spec/archive/2026-08-18_F2fu_強制調整の取消・実績照会_詳細設計.md` を参照する。</para>
 /// </summary>
 public partial class StockForceHistoryViewModel : BaseQueryViewModel {
 	protected override string QueryTitle => "在庫強制調整実績照会";

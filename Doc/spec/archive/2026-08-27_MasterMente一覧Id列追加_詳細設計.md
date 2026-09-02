@@ -1,5 +1,7 @@
 # MasterMente系 一覧DataGridへのId列追加 詳細設計
 
+状態: **実装完了（commit `56c0741`）**。対象7画面すべてで`FrozenColumnCount="3"`と`Header="Id"`列（`(Id)`括弧書き表示）を確認済み。
+
 ## 背景・目的
 
 MasterMente系（`コード / 名前 / 略称 / ...` の並びで一覧DataGridを持つマスタメンテ画面）で、一覧の左端に `Id` 列が無い。

@@ -8,8 +8,8 @@ namespace Tests.CvServer;
 /// <summary>
 /// 期首残高CSV（標準形式）の解析・数値正規化・行生成のテスト。
 /// <para>
-/// `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` 4.4 / 4.5、および
-/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 6章の規則を固定する。
+/// `Doc/spec/archive/2026-08-21_残高登録処理_詳細設計.md` 4.4 / 4.5、および
+/// `Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 6章の規則を固定する。
 /// 4テーブル共通で `Balance = DebitTotal - CreditTotal`(正=未回収・未払)を満たす
 /// 1期間分の実績行を作ることを検証する。繰越はテーブルに持たない。
 /// </para>

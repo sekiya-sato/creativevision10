@@ -9,7 +9,7 @@ public partial class HhtProcess {
 	/// <para>
 	/// 旧CVnet互換の中間テーブル(<see cref="TranHhtData"/>)向けの変換であり、現在どこからも呼ばれていない。
 	/// CV10の正規経路は <see cref="UpdateVulcan2Tran"/>（<see cref="TranVulcanHht"/> から Tran系へ直接展開する）である。
-	/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` の決定 12-A を参照する。
+	/// 仕様は `Doc/spec/archive/2026-08-24_HHTデータ更新詳細設計.md` の決定 12-A を参照する。
 	/// </para>
 	/// </summary>
 	/// <param name="dateFrom">開始日付 (yyyy-MM-dd形式)</param>

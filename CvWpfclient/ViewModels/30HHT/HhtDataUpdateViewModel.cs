@@ -13,7 +13,7 @@ namespace CvWpfclient.ViewModels._30HHT;
 /// <summary>
 /// HHTデータ更新。<see cref="TranVulcanHht"/> を Tran系各テーブルへ展開する。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
 /// 変換本体はサーバ側(<c>CvDomainLogic/HhtProcessUpdate.cs</c>)にあり、
 /// ここは条件の入力と <c>Msg058_HhtDataUpdate</c> の進捗表示だけを持つ。
 /// </para>

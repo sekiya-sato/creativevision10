@@ -12,7 +12,7 @@ namespace CvWpfclient.ViewModels._08Zaiko;
 /// <para>
 /// 明細（SKU別調整数）は <see cref="Tran61Chosei.Jmeisai"/>（JSON）にあり SQL 展開できないため、
 /// 本表は伝票単位（調整数計）で出す。SKU別の内訳は「在庫強制調整実績照会」画面で確認する。
-/// 仕様は `Doc/spec/2026-08-18_F2_在庫強制調整入力_詳細設計.md` の follow-up を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-18_F2_在庫強制調整入力_詳細設計.md` の follow-up を参照する。
 /// </para>
 /// </summary>
 public partial class StockForceReportViewModel : Helpers.BaseReportViewModel {

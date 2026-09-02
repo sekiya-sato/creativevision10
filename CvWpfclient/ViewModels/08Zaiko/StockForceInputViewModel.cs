@@ -20,7 +20,7 @@ namespace CvWpfclient.ViewModels._08Zaiko;
 /// <see cref="SummaryRealStock"/> / <see cref="SummaryStock"/> を更新する（プラスで増、マイナスで減）。
 /// 調整は集計テーブルへ直接書かず伝票として残すため、全件Rebuildでも消えない（棚卸確定処理と同じ設計）。
 /// </para>
-/// <para>仕様は `Doc/spec/2026-08-18_F2_在庫強制調整入力_詳細設計.md` を参照する。</para>
+/// <para>仕様は `Doc/spec/archive/2026-08-18_F2_在庫強制調整入力_詳細設計.md` を参照する。</para>
 /// </summary>
 public partial class StockForceInputViewModel : Helpers.BaseStockSheetInputViewModel<Tran61Chosei> {
 	protected override string QueryTitle => "在庫強制調整入力";

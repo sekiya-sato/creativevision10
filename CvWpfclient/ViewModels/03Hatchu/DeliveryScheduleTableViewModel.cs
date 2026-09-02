@@ -16,7 +16,7 @@ namespace CvWpfclient.ViewModels._03Hatchu;
 /// 各発注の先頭明細行にだけ表示する（qfm側の集計(sum)が明細行ごとに二重加算しないようにするため）。
 /// 納品日・仕入先の見出し表示と仕入先計・納品日計の集計は qfm 側（group/suppress・calctype=sum）で行うため、
 /// SQLは「ヘッダ値を明細行へ乗せたままの単純な平坦行」を返すだけでよい。
-/// 仕様は `Doc/spec/2026-08-18_H1-H4_納品予定日_詳細設計.md` の follow-up と
+/// 仕様は `Doc/spec/archive/2026-08-18_H1-H4_納品予定日_詳細設計.md` の follow-up と
 /// `Doc/spec/2026-08-20_納品予定表(発注)_qfmレイアウト変更_詳細設計.md` を参照する。
 /// </para>
 /// </summary>

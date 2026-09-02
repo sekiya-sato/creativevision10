@@ -16,7 +16,7 @@ public readonly record struct ShippingConfirmError(long Id_Soko, long Id_Shohin,
 /// <summary>
 /// 配分の出荷指示確定と出荷処理（伝票作成）。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.4 / I2 / I3 / I4 / I5 を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.4 / I2 / I3 / I4 / I5 を参照する。
 /// 旧CV.netと同じ2段階で、確定と完了は独立した軸である。
 /// </para>
 /// <list type="number">

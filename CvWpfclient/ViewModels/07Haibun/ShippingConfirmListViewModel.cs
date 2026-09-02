@@ -46,7 +46,7 @@ public sealed partial class ShippingStagnationRow : ObservableObject {
 /// 例外操作（確定取消／強制完了）を行う。欠品実績の照会も兼ねる。
 /// <para>
 /// 旧CV.netの「出荷指示一覧（確定済みかつ未完了の滞留を検出）」に相当する。仕様と決定は
-/// `Doc/spec/2026-08-18_I7_滞留・欠品例外_詳細設計.md` を参照する。サーバは I2/I3 の
+/// `Doc/spec/archive/2026-08-18_I7_滞留・欠品例外_詳細設計.md` を参照する。サーバは I2/I3 の
 /// `ShippingCancelParam`（確定取消）／`ShippingCreateParam`（実数量0＝全量欠品で強制完了）を再利用し、変更しない。
 /// </para>
 /// </summary>

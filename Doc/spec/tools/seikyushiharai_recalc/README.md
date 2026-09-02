@@ -1,6 +1,6 @@
 # seikyushiharai_recalc — 請求・支払・売掛残・買掛残の全期間 一括再計算バッチ
 
-`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 9章「適用手順」のうち、
+`Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 9章「適用手順」のうち、
 請求計算（`CalcSummaryUriSei`）・支払計算（`CalcSummaryKaiShi`）を「全締日・全請求/支払月」について、
 売掛残（`CalcSummaryUriKake`）・買掛残（`CalcSummaryKaiKake`）を「全期間」について
 自動で回すバッチツール。
@@ -64,7 +64,7 @@ dotnet run --project "Doc/spec/tools/seikyushiharai_recalc" -- <mode> [dbPath]
 ## 実行結果2: 売掛残・買掛残（2026-09-02、`CvServer/server-user163.db`）
 
 本部売上ほか5画面の `Id_Tax` セット漏れ修正
-（`Doc/spec/2026-09-02_本部売上入力_消費税セットと画面表示_詳細設計.md` 9.4）に伴い、
+（`Doc/spec/archive/2026-09-02_本部売上入力_消費税セットと画面表示_詳細設計.md` 9.4）に伴い、
 「伝票税額再更新」→ `run` → `kake-run` の順で実行した。
 
 ```

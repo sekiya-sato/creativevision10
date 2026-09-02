@@ -376,7 +376,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// <see cref="TranHaibun.Kubun"/> が <see cref="EnumHaibun.Hatsukai"/>(0) 以外であること。
 	/// <para>
 	/// 初回配分は入荷前に入荷予定を店舗へ振り分けるものであり、現物在庫を押さえないため引当対象外とする。
-	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2 を参照する。
+	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2 を参照する。
 	/// </para>
 	/// </summary>
 	public static readonly string ReserveTargetWhere = $"h.EndFlag = 0 AND h.Kubun <> {(int)EnumHaibun.Hatsukai}";
@@ -386,7 +386,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// <para>
 	/// 確定時に倉庫から <see cref="TranHaibun.JitsuSu"/> / <see cref="TranHaibun.ShortSu"/> が返り
 	/// <c>Su = JitsuSu + ShortSu</c> が成立する。欠品分は出荷されないため、確定と同時に引当から外れる。
-	/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2c を参照する。
+	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2c を参照する。
 	/// </para>
 	/// </summary>
 	public const string ReserveQtySumExpr = "SUM(CASE WHEN ifnull(h.KakuteiDay, '') = '' THEN h.Su ELSE h.JitsuSu END)";
@@ -811,7 +811,7 @@ WHERE SumMonth <= @0;
 	/// 期首年月より前の集計行を削除・上書きしない。期首残高行は「期首直前の1期間の実績行」として
 	/// 置かれ、繰越はテーブルに持たず、帳票側の <c>PreviousBalance</c>(<c>SUM(TotalSales - TotalIn)</c> 等)
 	/// に自然に含まれる形で参照される。仕様は
-	/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 4.2 を参照する。
+	/// `Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 4.2 を参照する。
 	/// </para>
 	/// </summary>
 	private string GetFiscalStartDate() {

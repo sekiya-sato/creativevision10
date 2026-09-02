@@ -7,7 +7,7 @@ namespace CvDomainLogic;
 /// <summary>
 /// HHTデータ更新（<see cref="TranVulcanHht"/> → Tran系各テーブル）。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
 /// 画面(HHTデータ更新)から <c>Msg058_HhtDataUpdate</c> で呼ばれる。
 /// </para>
 /// <para>

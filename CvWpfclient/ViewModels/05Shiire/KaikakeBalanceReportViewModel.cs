@@ -14,7 +14,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 ///
 /// SummaryKaiKake は対象年月のみの集計（繰越なし）。前月残(prevBalance)は、対象年月より前の
 /// 全行を SUM(TotalShiire - TotalOut) で積んで都度算出する（PreviousBalance、
-/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// `Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
 /// 前月に行が無い仕入先でも、前々月以前の残があれば前月残に反映される（前月行の直読みだった旧仕様は 0 になっていた）。
 /// 当月残(balance)は PreviousBalance + Balance。
 /// </summary>

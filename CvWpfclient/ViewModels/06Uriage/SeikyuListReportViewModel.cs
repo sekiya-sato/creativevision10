@@ -11,7 +11,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 ///
 /// SummaryUriSei は対象期間のみの集計（繰越なし）。前月残(prevBalance)・繰越金額(carryOver)は
 /// 対象期間の開始(DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積んで都度算出する
-/// （PreviousBalance、`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// （PreviousBalance、`Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
 /// 当月残(balance)は PreviousBalance + Balance。
 /// </summary>
 public partial class SeikyuListReportViewModel : Helpers.BaseReportViewModel {

@@ -296,7 +296,7 @@ public record BillingParameter(string BillingYyyymm, int Shime, string TorisakiC
 /// <summary>
 /// 棚卸開始処理・棚卸確定処理のパラメータ
 /// <para>
-/// 仕様は `Doc/spec/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.1 / 8.4 を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.1 / 8.4 を参照する。
 /// </para>
 /// </summary>
 /// <param name="TanaMonth">棚卸年月 yyyyMM</param>
@@ -308,7 +308,7 @@ public record StocktakeParameter(string TanaMonth, string DenDay, long IdShain, 
 /// <summary>
 /// HHTデータ更新のパラメータ。<see cref="TranVulcanHht"/> を Tran系各テーブルへ展開する。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 /// <param name="DateFrom">対象日付From yyyyMMdd。空なら下限なし</param>
@@ -337,7 +337,7 @@ public sealed class HhtTargetCountRow {
 /// 出荷指示確定のパラメータ。対象の配分行に <c>KakuteiDay</c> を立てる。
 /// 有効在庫（実在庫 − 引当数）が1SKUでも負になる場合はサーバが1件も確定せず、
 /// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。
-/// 仕様は `Doc/spec/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md` を参照する。
 /// </summary>
 /// <param name="HaibunIds">確定する配分行のId</param>
 /// <param name="KakuteiDay">確定日 yyyyMMdd</param>
@@ -394,7 +394,7 @@ public sealed record ShippingShortageDto(long Id_Soko, long Id_Shohin, long Id_C
 /// 対象日付の既存行を <paramref name="OwnerIds"/> の取引先ぶんだけ削除してから登録し直す（洗い替え）。
 /// 削除と登録は1トランザクションで行う。<c>InsertBulkParam</c> は Insert のみで一意キー(uk1)違反になるため
 /// 再取込に使えず、行単位の Delete では原子性が保てないので専用パラメータを設けている。
-/// 仕様は `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-21_残高登録処理_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 /// <param name="TableName">対象テーブル名。<c>OpeningBalanceCsv.AllowedTableNames</c> の4種のみ</param>

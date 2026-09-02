@@ -1,5 +1,7 @@
 # Summary残高の期間集計化と PreviousBalance 詳細設計（2026-09-02）
 
+状態: **実装完了（2026-09-01、Step 1〜9すべて完了。詳細は12章末尾のステータスと10章の受入条件を参照）**。
+
 ## 1. 目的
 
 `SummaryUriKake`（売掛）/ `SummaryUriSei`（請求）/ `SummaryKaiKake`（買掛）/ `SummaryKaiShi`（支払）の
@@ -276,8 +278,8 @@ DELETE→INSERT する。以降の月は影響を受けない。
 | ファイル | 対応 | 優先 |
 |---|---|---|
 | `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` 2.3 / 3.8 | 新算式・新符号へ更新し、本設計書を `10.5 関連ドキュメント` へ追加 | 高 |
-| `Doc/spec/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md` 4.2 | 前月残・当月残・繰越金額を `PreviousBalance` ベースへ | 高 |
-| `Doc/spec/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md:22, 66` | 前回残高の復元式を `PreviousBalance` へ | 高 |
+| `Doc/spec/archive/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md` 4.2 | 前月残・当月残・繰越金額を `PreviousBalance` ベースへ | 高 |
+| `Doc/spec/archive/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md:22, 66` | 前回残高の復元式を `PreviousBalance` へ | 高 |
 | 本設計書 | 新規作成（`Balance` の一次定義をここへ集約） | 高 |
 | `Doc/spec/archive/2026-08-18_請求計算・支払計算_詳細設計.md` | 冒頭に「本設計書により全面的に置換された」旨の追記 | 中 |
 | `Doc/spec/archive/2026-08-21_残高登録処理_詳細設計.md` | 同上（符号規約が反転した旨を明記） | 中 |
@@ -354,8 +356,8 @@ Tests/TestServer/OpeningBalanceDbTests.cs
 Doc/test/UatVmSeed/ShimeBoundarySeeder.cs
 Doc/test/UatVm/Scenarios/ShimeBoundaryScenario.cs
 Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md
-Doc/spec/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md
-Doc/spec/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md
+Doc/spec/archive/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md
+Doc/spec/archive/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md
 ```
 
 ## 12. 承認確認事項
@@ -384,7 +386,7 @@ Step 4 と Step 5 のみ並列実行してよい（触るファイルが重な�
 
 ```
 作業ディレクトリ: C:\gitroot\new2022\cv10
-設計書: Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md
+設計書: Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md
         （着手前に必ず全文を読むこと）
 
 【この改修の中核】
@@ -428,7 +430,7 @@ SummaryKaiKake=買掛 / SummaryKaiShi=支払）の全列を「対象期間の集
 ### Step 1: テーブル定義（`CvBase/BaseDbKake.cs`）
 
 ```
-Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 3.1 を実装せよ。
+Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 3.1 を実装せよ。
 
 SummaryUriKake / SummaryUriSei / SummaryKaiKake / SummaryKaiShi の4クラスすべてに、
 Balance プロパティの直前へ次を追加する（4クラスとも同一の文面）:
@@ -456,7 +458,7 @@ Sonota 列（3テーブル分）は既に追加済みなので触らないこと
 ### Step 2: マイグレーション（`CvBase/UpdateDb.cs`）
 
 ```
-Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 3.2 を実装せよ。
+Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 3.2 を実装せよ。
 
 versions 配列の末尾（26_09_02_01 の次）へ 26_09_02_02 を1行追加する。SQL は次の4文を
 セミコロン連結した1つの文字列にする:
@@ -478,7 +480,7 @@ Sonotaの分離には別途全期間の再計算が必要」旨を書く。
 ### Step 3: 再計算ロジック（`CvDomainLogic/SummaryDb.cs`）— 本改修の中核
 
 ```
-Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 4章を実装せよ。
+Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 4章を実装せよ。
 このファイルの改修が本改修の中核であり、最も慎重さを要する。
 
 (a) 繰越の除去（4メソッド共通）
@@ -527,7 +529,7 @@ Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計
 ### Step 4: 期首残高（`CvBase/OpeningBalanceCsv.cs`）
 
 ```
-Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 6章を実装せよ。
+Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 6章を実装せよ。
 
 - CreateRecord の `var balance = credit - debit;`（872 付近）を `debit - credit` に変更。
   直前のコメント「内部の Balance は「負=未回収」。繰越は売掛・買掛が Balance 列、
@@ -553,7 +555,7 @@ CvDomainLogic/OpeningBalanceDb.cs は値を加工しないため変更不要。�
 ### Step 5: 帳票・画面 10本（Step 4 と並列可）
 
 ```
-Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 5章を実装せよ。
+Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 5章を実装せよ。
 
 対象10ファイル（5.1 / 5.2 の表に file:line と対応が書いてある）:
   CvWpfclient/ViewModels/06Uriage/SeikyuListReportViewModel.cs        請求一覧表
@@ -599,7 +601,7 @@ CvWpfclient/Views 配下の XAML も変更不要のはず。変更が必要に�
 ### Step 6: テスト（`Tests/TestServer/`）
 
 ```
-Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 7.1〜7.3 を実装せよ。
+Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 7.1〜7.3 を実装せよ。
 Step 1〜5 の実装が済んでいる前提。
 
 (a) 7.1 の表にある10本のテストを書き換える。特に:
@@ -628,7 +630,7 @@ Step 1〜5 の実装が済んでいる前提。
 ### Step 7: UAT シードと突合ツール（solution 外）
 
 ```
-Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 7.4 を実装せよ。
+Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 7.4 を実装せよ。
 これらは solution 外なので dotnet build creativevision10.slnx では検出されない。個別にビルドすること。
 
 - Doc/test/UatVmSeed/ShimeBoundarySeeder.cs:185-201
@@ -647,7 +649,7 @@ Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計
 ### Step 8: ドキュメント更新
 
 ```
-Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 8章を実施せよ。
+Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md の 8章を実施せよ。
 
 高優先:
 - Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md
@@ -655,9 +657,9 @@ Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計
     3.8 節の「Balance 自体の式は変更していない」という記述（284-285 行付近）を
     「本設計により Balance は当期間ネットへ変更された」旨へ差し替え
     10.5 関連ドキュメントへ本設計書を追加
-- Doc/spec/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md 4.2 金額算式（76-92 行付近）
+- Doc/spec/archive/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md 4.2 金額算式（76-92 行付近）
     前月残 / 当月残 / 繰越金額を PreviousBalance ベースの式へ
-- Doc/spec/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md:22, 66
+- Doc/spec/archive/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md:22, 66
     「前回残高は Balance + TotalSales - TotalIn で復元する」を PreviousBalance ベースへ
 
 中優先（冒頭に注記を追記するのみ。本文は歴史的記録として残す）:

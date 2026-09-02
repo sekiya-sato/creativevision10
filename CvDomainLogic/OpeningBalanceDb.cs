@@ -14,7 +14,7 @@ namespace CvDomainLogic;
 /// 期首年月日(<see cref="MasterSysman.FiscalStartDate"/>)より前の集計行は、売掛・買掛・請求・支払の
 /// 再計算では凍結されて上書きされない（<c>SummaryDb</c> の各 Calc に期首ガードがある）。
 /// このため期首残は必ず期首より前のキー日付で登録する必要があり、ここでも二重に検査する。
-/// 仕様は `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-21_残高登録処理_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 public class OpeningBalanceDb {

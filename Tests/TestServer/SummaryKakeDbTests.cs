@@ -16,7 +16,7 @@ namespace Tests.CvServer;
 /// <summary>
 /// 売掛(<see cref="SummaryUriKake"/>) / 買掛(<see cref="SummaryKaiKake"/>)集計のテスト。
 /// <para>
-/// `Doc/spec/2026-08-18_請求計算・支払計算_詳細設計.md` 2.1 の確定ルールを固定する。
+/// `Doc/spec/archive/2026-08-18_請求計算・支払計算_詳細設計.md` 2.1 の確定ルールを固定する。
 /// 区分別の正値内訳、`Total` / 明細金額の正値源、`IsPay` による除外、後続月再計算、`KakeDay` 基準を対象にする。
 /// </para>
 /// </summary>

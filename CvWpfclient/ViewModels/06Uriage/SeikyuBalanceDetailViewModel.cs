@@ -15,7 +15,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// 対象期間は同テーブルの DayFrom〜DayTo。締め処理を回していない請求日は行が無く空になる。
 /// SummaryUriSei は対象期間のみの集計（繰越なし）。前回残高(prevBalance)は、対象期間の開始
 /// (DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積んで都度算出する（PreviousBalance、
-/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// `Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
 /// 当月残高(balance)は PreviousBalance + Balance。
 ///
 /// 明細1行=CSV1行で、ヘッダ項目は各行に同じ値を繰り返す。qfm 側でヘッダ領域と明細領域に

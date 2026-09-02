@@ -4,7 +4,7 @@ using CvDomainLogic;
 using Microsoft.Data.Sqlite;
 
 // 明細別消費税（軽減税率混在）の実DB検証ハーネス。
-// 詳細設計: Doc/spec/2026-08-25_明細別消費税計算_詳細設計.md の 7章「テスト観点」
+// 詳細設計: Doc/spec/archive/2026-08-25_明細別消費税計算_詳細設計.md の 7章「テスト観点」
 //
 // 使い方:  taxmix <command> [dbPath]
 //   inspect   MasterSysTax の定義と対象商品の Id_Tax を表示（投入前の前提確認）

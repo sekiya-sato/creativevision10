@@ -9,7 +9,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// <para>
 /// 消込は伝票単位の目印であり、充当金額・未充当金額・支払伝票との個別対応は保持しない。
 /// 買掛残高は伝票金額ベースなので `SummaryKaiKake` の値は消込の有無で変わらない。
-/// 仕様は `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
 /// </para>
 /// <para>
 /// 期間は債務側・支払側とも掛計上日(KakeDay)で切る。

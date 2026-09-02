@@ -12,7 +12,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// 明細別消費税の計算（軽減税率の混在・非課税・税率切替日・返品符号）。
-/// 仕様は `Doc/spec/2026-08-25_明細別消費税計算_詳細設計.md` の 7章。
+/// 仕様は `Doc/spec/archive/2026-08-25_明細別消費税計算_詳細設計.md` の 7章。
 /// </summary>
 [TestClass]
 public class TranTaxRebuildTests {

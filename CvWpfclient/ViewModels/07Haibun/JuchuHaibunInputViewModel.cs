@@ -24,7 +24,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// <para>
 /// 旧CV.netは「倉庫＋商品を選び SKU行×得意先列のクロス表へ入力する」商品単位の画面だったが、
 /// CV10 は<b>受注伝票まるごとを1配分として扱う</b>（ユーザー確定 2026-08-21）。
-/// 受注残・有効在庫の算式、超過の扱いは `Doc/spec/2026-08-21_受注配分入力_詳細設計.md` を参照する。
+/// 受注残・有効在庫の算式、超過の扱いは `Doc/spec/archive/2026-08-21_受注配分入力_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 public partial class JuchuHaibunInputViewModel : BaseViewModel {

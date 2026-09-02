@@ -9,7 +9,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// <para>
 /// 消込は伝票単位の目印であり、充当金額・未充当金額・入金伝票との個別対応は保持しない。
 /// 売掛残高は伝票金額ベースなので `SummaryUriKake` の値は消込の有無で変わらない。
-/// 仕様は `Doc/spec/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
+/// 仕様は `Doc/spec/archive/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
 /// </para>
 /// <para>
 /// 店舗売上(Tran01Tenuri)は含めない。店頭現金売上で売掛が立たないため。

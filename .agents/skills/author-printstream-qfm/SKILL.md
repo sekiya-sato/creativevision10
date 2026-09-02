@@ -168,7 +168,7 @@ public partial class XxxReportViewModel : Helpers.BaseReportViewModel {
 - VM: `CvWpfclient/ViewModels/06Uriage/SeikyuLedgerReportViewModel.cs`
 - View: `CvWpfclient/Views/06Uriage/SeikyuLedgerReportView.xaml(.cs)`
 - メニュー: `MenuData.cs`「請求台帳（発行控え）」
-- 設計: [`Doc/spec/2026-08-19_請求台帳（発行控え）_詳細設計.md`](../../../Doc/spec/2026-08-19_請求台帳（発行控え）_詳細設計.md)
+- 設計: [`Doc/spec/archive/2026-08-19_請求台帳（発行控え）_詳細設計.md`](../../../Doc/spec/archive/2026-08-19_請求台帳（発行控え）_詳細設計.md)
 
 ## ロールバック
 

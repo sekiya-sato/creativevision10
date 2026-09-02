@@ -44,7 +44,7 @@ public sealed partial class ShippingProcessRow : ObservableObject {
 /// <summary>
 /// 出荷処理入力。確定済みの配分に実数量を入れ、出荷売上／移動伝票を作成して <c>EndFlag=1</c>（引当解除）にする。
 /// 旧CV.netの「出荷処理」に相当し、ハンディ廃止(決定 I6)により実数量・欠品はこの画面で確定する。
-/// サーバ側は <c>ShippingDb.ProcessShipping</c>、詳細は Doc/spec/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md。
+/// サーバ側は <c>ShippingDb.ProcessShipping</c>、詳細は Doc/spec/archive/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md。
 /// </summary>
 public sealed partial class ShippingInputViewModel : BaseQueryViewModel {
 	protected override string QueryTitle => "出荷処理入力";
