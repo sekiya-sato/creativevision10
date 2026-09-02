@@ -171,6 +171,14 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 	private OpeningBalanceBuildResult? buildResult;
 	private string validatedKeyDate = string.Empty;
 
+	/// <summary>
+	/// 自社締日(<c>MasterSysman.ShimeBi</c>)と、マスタの締日パターンを<see cref="ClosingDaySet.ResolveDistinctDays"/>
+	/// へ通した和集合。<see cref="LoadShimeItemsAsync"/> で取得し、<see cref="OpeningBalanceCsv.GetDefaultKeyDate"/>や
+	/// 取込検証(<see cref="OpeningBalanceBuildRequest.OwnShime"/>)へそのまま渡す(4.6)。
+	/// </summary>
+	private int ownShime;
+	private IReadOnlyList<int> resolvedShimeDays = [];
+
 	private OpeningBalanceKindSpec Spec => OpeningBalanceCsv.GetSpec(SelectedKind);
 
 	// ---- 初期化と条件変更 ------------------------------------------------------
@@ -233,6 +241,8 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 		else {
 			ShimeItems = [];
 			SelectedShime = 0;
+			ownShime = 0;
+			resolvedShimeDays = [];
 		}
 		ApplyDefaultKeyDate();
 		await ReloadTargetCountAsync(ct);
@@ -247,8 +257,9 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 			$"SELECT DISTINCT Shime1, Shime2, Shime3 FROM {Spec.MasterTableName}", [], ct);
 		var ownShimeRows = await QuerySqlListAsync<MasterSysman>(
 			$"SELECT ShimeBi FROM {nameof(MasterSysman)} ORDER BY Id LIMIT 1", [], ct);
-		var ownShime = ownShimeRows.Count > 0 ? ownShimeRows[0].ShimeBi : 0;
+		ownShime = ownShimeRows.Count > 0 ? ownShimeRows[0].ShimeBi : 0;
 		var days = ClosingDaySet.ResolveDistinctDays(patternRows.Select(x => (x.Shime1, x.Shime2, x.Shime3)), ownShime);
+		resolvedShimeDays = days;
 		ShimeItems = new ObservableCollection<BalanceShimeOption>(days
 			.Select(x => new BalanceShimeOption(x, OpeningBalanceCsv.FormatShime(x))));
 		SelectedShime = ShimeItems.FirstOrDefault()?.Value ?? 0;
@@ -258,7 +269,7 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 	}
 
 	private void ApplyDefaultKeyDate() {
-		var (keyDate, _) = OpeningBalanceCsv.GetDefaultKeyDate(SelectedKind, FiscalStartDate, SelectedShime);
+		var (keyDate, _) = OpeningBalanceCsv.GetDefaultKeyDate(SelectedKind, FiscalStartDate, resolvedShimeDays, SelectedShime);
 		KeyDateText = OpeningBalanceCsv.FormatDate(keyDate);
 		UpdateKeyDateGuide();
 	}
@@ -428,13 +439,14 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 			var owners = await LoadOwnerRowsAsync(keyDate, EnumOpeningBalanceOwnerScope.All, ct);
 			ct.ThrowIfCancellationRequested();
 
-			var (_, dayFrom) = OpeningBalanceCsv.GetDefaultKeyDate(SelectedKind, FiscalStartDate, SelectedShime);
+			var (_, dayFrom) = OpeningBalanceCsv.GetDefaultKeyDate(SelectedKind, FiscalStartDate, resolvedShimeDays, SelectedShime);
 			var result = OpeningBalanceCsv.Build(new OpeningBalanceBuildRequest {
 				Kind = SelectedKind,
 				KeyDate = keyDate,
 				DayFrom = dayFrom,
 				FiscalStartDate = FiscalStartDate,
 				SelectedShime = SelectedShime,
+				OwnShime = ownShime,
 				Rows = parsed.Rows,
 				Owners = owners.ToDictionary(x => x.Code, x => x.ToOwner(), StringComparer.OrdinalIgnoreCase),
 				ExistingAmounts = owners.Where(x => x.HasExisting != 0).ToDictionary(x => x.Id, x => x.Amount),

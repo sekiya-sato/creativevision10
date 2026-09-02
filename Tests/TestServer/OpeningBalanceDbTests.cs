@@ -373,6 +373,33 @@ public class OpeningBalanceDbTests {
 		Assert.AreEqual(0L, beta.Amount);
 	}
 
+	[TestMethod]
+	public void BuildOwnerQuerySql_ClosingFilter_MatchesOwnerFinalClosingDayOnly() {
+		// 4.6: 締日フィルタは「最終締日(有効締日集合の最大値)が選択締日と一致するか」で絞る。
+		// 中間の締日(20)では引っかからず、最終締日(99)でだけ拾えること。Shime1=0(未設定)は自社締日(20)へ
+		// フォールバックすることも合わせて確認する。
+		var db = Prepare();
+		db.CreateTable(typeof(MasterTokui), true, true);
+		// Prepare()が作るMasterSysman行(ShimeBi未設定)を更新する。挿入すると自社締日サブクエリ
+		// (ORDER BY Id LIMIT 1)が拾うのは先に挿入済みの行になってしまう。
+		db.Execute($"UPDATE {nameof(MasterSysman)} SET ShimeBi=@0", 20);
+		db.Insert(new MasterTokui { Code = "00123", Name = "複数締日", Shime1 = 10, Shime2 = 20, Shime3 = 99, TenType = 1 });
+		db.Insert(new MasterTokui { Code = "00124", Name = "単一締日20", Shime1 = 20, TenType = 1 });
+		db.Insert(new MasterTokui { Code = "00125", Name = "未設定", Shime1 = 0, TenType = 1 });
+
+		// 締日フィルタが効くのは請求・支払(IsClosingBased)だけ。売掛・買掛は締日を持たない(2.5)。
+		var sql = OpeningBalanceCsv.BuildOwnerQuerySql(
+			EnumOpeningBalanceKind.UriSei, EnumOpeningBalanceOwnerScope.ClosingFilter);
+
+		var forFinalShime = db.Fetch<OpeningBalanceOwnerRow>(sql, "20260630", string.Empty, string.Empty, 99);
+		CollectionAssert.AreEqual(new[] { "00123" }, forFinalShime.Select(x => x.Code).ToArray(),
+			"最終締日(99)を選んだときだけ複数締日の得意先が拾える");
+
+		var forMiddleShime = db.Fetch<OpeningBalanceOwnerRow>(sql, "20260630", string.Empty, string.Empty, 20);
+		CollectionAssert.AreEqual(new[] { "00124", "00125" }, forMiddleShime.Select(x => x.Code).ToArray(),
+			"中間の締日(20)では複数締日の得意先は拾えない。単一締日20と、未設定(自社締日20へフォールバック)の得意先だけ拾える");
+	}
+
 	// ---- ヘルパ ------------------------------------------------------------------
 
 	/// <summary>

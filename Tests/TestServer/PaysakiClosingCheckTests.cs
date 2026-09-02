@@ -47,6 +47,20 @@ public class PaysakiClosingCheckTests {
 	}
 
 	[TestMethod]
+	public void FindMismatches_要素数が異なる締日集合は不一致() {
+		// 6.3: 順序違いは一致扱い(既存テスト)だが、要素数そのものが違えば集合として不一致になること。
+		List<PaysakiClosingCheckRow> rows = [
+			new() { ChildCode = "T005", ParentCode = "T000", ChildShime1 = 10, ChildShime2 = 20, ChildShime3 = 99, ParentShime1 = 20 },
+		];
+
+		var mismatches = PaysakiClosingCheck.FindMismatches(rows);
+
+		Assert.AreEqual(1, mismatches.Count);
+		CollectionAssert.AreEquivalent(new[] { 10, 20, 99 }, (System.Collections.ICollection)mismatches[0].ChildDays);
+		CollectionAssert.AreEquivalent(new[] { 20 }, (System.Collections.ICollection)mismatches[0].ParentDays);
+	}
+
+	[TestMethod]
 	public void FindMismatches_Shime1が0なら自社締日へフォールバックして比較する() {
 		List<PaysakiClosingCheckRow> rows = [
 			new() { ChildCode = "T004", ParentCode = "T000", ChildShime1 = 0, ParentShime1 = 20, OwnShime = 20 },

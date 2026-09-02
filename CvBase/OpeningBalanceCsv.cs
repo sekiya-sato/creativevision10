@@ -127,8 +127,11 @@ public sealed class OpeningBalanceCsvParseResult {
 	public bool HasError => Errors.Exists(x => !x.IsWarning);
 }
 
-/// <summary>コード解決した取引先。</summary>
-public sealed record OpeningBalanceOwner(long Id, string Code, string Name, int Shime1, int TenType);
+/// <summary>
+/// コード解決した取引先。締日1/2/3の全列を持つ(複数締日対応 4.6)。
+/// 最終締日(<see cref="ClosingDaySet.Resolve"/>の戻り値の最大値)は取込側で解決する。
+/// </summary>
+public sealed record OpeningBalanceOwner(long Id, string Code, string Name, int Shime1, int Shime2, int Shime3, int TenType);
 
 /// <summary>取込1行の確定結果。</summary>
 public sealed class OpeningBalanceEntry {
@@ -166,6 +169,12 @@ public sealed class OpeningBalanceBuildRequest {
 	/// <summary>取引先コード（大文字小文字を区別しない）から解決した取引先。</summary>
 	public IReadOnlyDictionary<string, OpeningBalanceOwner> Owners { get; init; }
 		= new Dictionary<string, OpeningBalanceOwner>(StringComparer.OrdinalIgnoreCase);
+	/// <summary>
+	/// 自社締日(<c>MasterSysman.ShimeBi</c>)。<see cref="OpeningBalanceOwner.Shime1"/> が0(未設定)の取引先を
+	/// <see cref="ClosingDaySet.Resolve"/> で解決する際のフォールバック値として使う(3.1、4.6)。
+	/// このクラスはDB非依存なので、呼出側(サーバー/画面)が既存の照会経路で取得して渡すこと。
+	/// </summary>
+	public int OwnShime { get; init; }
 	/// <summary>取引先Idごとの現在の期首残高（正数表示）。行が無い取引先は含めない。</summary>
 	public IReadOnlyDictionary<long, long> ExistingAmounts { get; init; } = new Dictionary<long, long>();
 }
@@ -220,6 +229,10 @@ public sealed class OpeningBalanceOwnerRow {
 	public string Code { get; set; } = string.Empty;
 	public string Name { get; set; } = string.Empty;
 	public int Shime1 { get; set; }
+	/// <summary>締日2。<see cref="ClosingDaySet.Resolve"/> による有効締日集合の解決に使う(4.6)。</summary>
+	public int Shime2 { get; set; }
+	/// <summary>締日3。同上。</summary>
+	public int Shime3 { get; set; }
 	public int TenType { get; set; }
 	/// <summary>対象キー日付に既存行があれば1。</summary>
 	public int HasExisting { get; set; }
@@ -249,7 +262,7 @@ public sealed class OpeningBalanceOwnerRow {
 	/// <summary>既存の期首残高（正数＝未回収）。</summary>
 	public long Amount => DebitTotal - CreditTotal;
 
-	public OpeningBalanceOwner ToOwner() => new(Id, Code, Name, Shime1, TenType);
+	public OpeningBalanceOwner ToOwner() => new(Id, Code, Name, Shime1, Shime2, Shime3, TenType);
 
 	public OpeningBalanceBreakdown ToBreakdown() => new() {
 		Main = Main, Henpin = Henpin, Nebiki = Nebiki, Sonota = Sonota,
@@ -364,8 +377,17 @@ public static class OpeningBalanceCsv {
 		// 売掛・請求は卸先(1)・売仕店(3)だけを対象にする(倉庫・直営店を除く)
 		var ownerTypeWhere = !spec.IsPayable && scope.HasFlag(EnumOpeningBalanceOwnerScope.OwnerTypeFilter)
 			? " AND t.TenType IN (1, 3)" : string.Empty;
+		// 締日での絞り込みは「取引先の最終締日(有効締日集合の最大値)が選択締日と一致するか」へ広げる(4.6)。
+		// 前詰めバリデーション(3.2)により 0 でない締日は昇順に前詰めされているため、最終締日は
+		// 「0でない最後の列」で求まる。全て0なら自社締日へフォールバックする(3.1)。
+		var finalShimeSql = $"""
+			CASE WHEN t.Shime3 <> 0 THEN t.Shime3
+			     WHEN t.Shime2 <> 0 THEN t.Shime2
+			     WHEN t.Shime1 <> 0 THEN t.Shime1
+			     ELSE {ClosingDaySet.OwnShimeSubquerySql} END
+			""".ReplaceLineEndings(" ");
 		var closingWhere = spec.IsClosingBased && scope.HasFlag(EnumOpeningBalanceOwnerScope.ClosingFilter)
-			? " AND t.Shime1 = @3" : string.Empty;
+			? $" AND {finalShimeSql} = @3" : string.Empty;
 		var codeWhere = scope.HasFlag(EnumOpeningBalanceOwnerScope.CodeRange)
 			? " AND (@1 = '' OR t.Code >= @1) AND (@2 = '' OR t.Code <= @2)" : string.Empty;
 		var existingWhere = scope.HasFlag(EnumOpeningBalanceOwnerScope.ExistingOnly)
@@ -373,7 +395,7 @@ public static class OpeningBalanceCsv {
 
 		// Offset は SQLite の予約語なので必ず引用符で囲む
 		return $"""
-SELECT t.Id AS Id, t.Code AS Code, t.Name AS Name, t.Shime1 AS Shime1, {tenType} AS TenType,
+SELECT t.Id AS Id, t.Code AS Code, t.Name AS Name, t.Shime1 AS Shime1, t.Shime2 AS Shime2, t.Shime3 AS Shime3, {tenType} AS TenType,
        CASE WHEN s.Id IS NULL THEN 0 ELSE 1 END AS HasExisting,
        IFNULL(s.Balance, 0) AS Balance,
        IFNULL(s.{debitColumn}, 0) AS DebitTotal,
@@ -771,13 +793,20 @@ ORDER BY t.Code
 					Detail = $"マスタは「{owner.Name}」です。CSVの「{row.Name}」は取込に影響しません。",
 				});
 			}
-			if (spec.IsClosingBased && owner.Shime1 != request.SelectedShime) {
-				result.Errors.Add(new OpeningBalanceCsvError {
-					LineNo = row.LineNo,
-					ColumnName = "締日",
-					Detail = $"{spec.OwnerLabel}'{owner.Code}'の締日は{FormatShime(owner.Shime1)}で、選択した締日({FormatShime(request.SelectedShime)})と一致しません。",
-				});
-				continue;
+			if (spec.IsClosingBased) {
+				// 期首残高は取引先ごとに繰越額が1つなので、締日が増えても行を分けない。取引先の
+				// 最終締日(有効締日集合の最大値、Resolveの戻り値は昇順のためその末尾)で1行だけ作る(4.6)。
+				var ownerDays = ClosingDaySet.Resolve(owner.Shime1, owner.Shime2, owner.Shime3, request.OwnShime);
+				var finalShime = ownerDays[^1];
+				if (finalShime != request.SelectedShime) {
+					result.Errors.Add(new OpeningBalanceCsvError {
+						LineNo = row.LineNo,
+						ColumnName = "締日",
+						Detail = $"{spec.OwnerLabel}'{owner.Code}'の最終締日は{FormatShime(finalShime)}で、選択した締日({FormatShime(request.SelectedShime)})と一致しません。" +
+							$"期首残高は最終締日({FormatShime(finalShime)})で取り込んでください。",
+					});
+					continue;
+				}
 			}
 
 			var breakdown = row.Breakdown;
@@ -818,13 +847,22 @@ ORDER BY t.Code
 	/// <summary>
 	/// 期首日から、期首行のキー日付と（請求・支払の）請求開始日を求める。
 	/// <para>
-	/// 売掛・買掛は期首年月の前月。請求・支払は「期首日の直前に来る締日」で、
-	/// 請求開始日はその1つ前の締日の翌日とする。<c>SummaryDb.GetClosingPeriod</c> と同じ締日の求め方に揃えており、
+	/// 売掛・買掛は期首年月の前月。請求・支払は「期首日の直前に来る締日(＝取引先の最終締日)」で、
+	/// 請求開始日はその1つ前の締日の翌日とする。1つ前の締日は<see cref="ClosingDaySet.GetBillingPeriod"/>が
+	/// 実装する3.3の <c>prev</c> の考え方（最小要素なら前月の最大要素、それ以外は同月内の1つ前）で求める。
+	/// <paramref name="days"/> に1件しかない（単一締日）ときは常に「前月の同じ締日」扱いになるため、
+	/// 現行(単一締日のみ)の結果と完全に一致する。
+	/// </para>
+	/// <para>
 	/// これにより <c>CalcSummaryUriSei</c> の <c>previousBalance</c>（<c>DayTo &lt; 開始日</c>）へ確実に入る。
+	/// 期首行は取引先ごとに1行しか作らないため(4.6)、<paramref name="days"/> は呼出側が画面全体の
+	/// 締日候補(<see cref="ClosingDaySet.ResolveDistinctDays"/>の戻り値)を渡せば十分であり、
+	/// 結果として実際の締期間より広いDayFromになる場合があるが、期首行の DayFrom は
+	/// <c>PreviousBalance</c>（<c>DayTo</c>比較のみ）の材料でしかないため実害は無い(4.6)。
 	/// </para>
 	/// </summary>
 	public static (string KeyDate, string DayFrom) GetDefaultKeyDate(
-		EnumOpeningBalanceKind kind, string fiscalStartDate, int shime) {
+		EnumOpeningBalanceKind kind, string fiscalStartDate, IReadOnlyList<int> days, int shime) {
 		var spec = GetSpec(kind);
 		if (!DateTime.TryParseExact(fiscalStartDate, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fiscalStart)) {
 			return (string.Empty, string.Empty);
@@ -836,15 +874,17 @@ ORDER BY t.Code
 		if (shime is (< 1 or > 28) and not (int)EnumShime.DayLast) {
 			return (string.Empty, string.Empty);
 		}
+		if (days == null || days.Count == 0 || !days.Contains(shime)) {
+			return (string.Empty, string.Empty);
+		}
 
 		// 期首日の属する月の締日がまだ期首以降なら、1か月前の締日が「直前の締日」になる
 		var closing = GetClosingDay(fiscalStart, shime);
 		if (closing >= fiscalStart) {
 			closing = GetClosingDay(fiscalStart.AddMonths(-1), shime);
 		}
-		var dayFrom = GetClosingDay(closing.AddMonths(-1), shime).AddDays(1);
-		return (closing.ToString("yyyyMMdd", CultureInfo.InvariantCulture),
-			dayFrom.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
+		var (dayFrom, _) = ClosingDaySet.GetBillingPeriod(closing.ToString("yyyyMM", CultureInfo.InvariantCulture), days, shime);
+		return (closing.ToString("yyyyMMdd", CultureInfo.InvariantCulture), dayFrom);
 	}
 
 	/// <summary>指定月の締日。<c>SummaryDb.GetClosingDay</c> と同じ規則（99は末日、月末を超える指定は月末へ丸める）。</summary>

@@ -168,7 +168,7 @@ public class OpeningBalanceCsvTests {
 			FiscalStartDate = FiscalStart,
 			SelectedShime = 99,
 			Rows = [Row(4, "00123", 150000)],
-			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 1)),
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 0, 0, 1)),
 		};
 
 		var result = OpeningBalanceCsv.Build(request);
@@ -194,7 +194,7 @@ public class OpeningBalanceCsvTests {
 			FiscalStartDate = FiscalStart,
 			SelectedShime = 99,
 			Rows = [Row(4, "S001", 70000)],
-			Owners = Owners(new OpeningBalanceOwner(21, "S001", "仕入先A", 99, 0)),
+			Owners = Owners(new OpeningBalanceOwner(21, "S001", "仕入先A", 99, 0, 0, 0)),
 		};
 
 		var result = OpeningBalanceCsv.Build(request);
@@ -218,7 +218,7 @@ public class OpeningBalanceCsvTests {
 			KeyDate = "202606",
 			FiscalStartDate = FiscalStart,
 			Rows = [Row(4, "00123", netAmount, breakdown)],
-			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 1)),
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 0, 0, 1)),
 		}).Entries.Single().Record!;
 		Assert.AreEqual(5000L, uriKake.Sonota);
 		Assert.AreEqual(115000L, uriKake.TotalSales, "SonotaはTotalSalesへ加算される");
@@ -230,7 +230,7 @@ public class OpeningBalanceCsvTests {
 			FiscalStartDate = FiscalStart,
 			SelectedShime = 99,
 			Rows = [Row(4, "00123", netAmount, breakdown)],
-			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 1)),
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 0, 0, 1)),
 		}).Entries.Single().Record!;
 		Assert.AreEqual(5000L, uriSei.Sonota);
 		Assert.AreEqual(115000L, uriSei.TotalSales);
@@ -240,7 +240,7 @@ public class OpeningBalanceCsvTests {
 			KeyDate = "202606",
 			FiscalStartDate = FiscalStart,
 			Rows = [Row(4, "S001", netAmount, breakdown)],
-			Owners = Owners(new OpeningBalanceOwner(21, "S001", "仕入先A", 99, 0)),
+			Owners = Owners(new OpeningBalanceOwner(21, "S001", "仕入先A", 99, 0, 0, 0)),
 		}).Entries.Single().Record!;
 		Assert.AreEqual(5000L, kaiKake.Sonota);
 		Assert.AreEqual(115000L, kaiKake.TotalShiire, "SonotaはTotalShiireへ加算される");
@@ -252,7 +252,7 @@ public class OpeningBalanceCsvTests {
 			FiscalStartDate = FiscalStart,
 			SelectedShime = 99,
 			Rows = [Row(4, "S001", netAmount, breakdown)],
-			Owners = Owners(new OpeningBalanceOwner(21, "S001", "仕入先A", 99, 0)),
+			Owners = Owners(new OpeningBalanceOwner(21, "S001", "仕入先A", 99, 0, 0, 0)),
 		}).Entries.Single().Record!;
 		Assert.AreEqual(5000L, kaiShi.Sonota);
 		Assert.AreEqual(115000L, kaiShi.TotalShiire);
@@ -267,7 +267,7 @@ public class OpeningBalanceCsvTests {
 			FiscalStartDate = FiscalStart,
 			SelectedShime = 99,
 			Rows = [Row(4, "00123", 150000)],
-			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 20, 1)),
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 20, 0, 0, 1)),
 		};
 
 		var result = OpeningBalanceCsv.Build(request);
@@ -275,6 +275,67 @@ public class OpeningBalanceCsvTests {
 		Assert.IsTrue(result.HasError);
 		StringAssert.Contains(result.Errors[0].Detail, "締日");
 		Assert.AreEqual(0, result.Entries.Count);
+	}
+
+	[TestMethod]
+	public void Build_UriSei_RejectsSelectingAMiddleClosingDayInsteadOfTheFinalOne() {
+		// 4.6: 締日[10,20,99]の得意先は最終締日(99)でしか期首残高を取り込めない。中間の締日(20)を
+		// 選ぶとエラーになり、案内文に最終締日を示すこと。
+		var request = new OpeningBalanceBuildRequest {
+			Kind = EnumOpeningBalanceKind.UriSei,
+			KeyDate = "20260630",
+			DayFrom = "20260601",
+			FiscalStartDate = FiscalStart,
+			SelectedShime = 20,
+			Rows = [Row(4, "00123", 150000)],
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 10, 20, 99, 1)),
+		};
+
+		var result = OpeningBalanceCsv.Build(request);
+
+		Assert.IsTrue(result.HasError);
+		StringAssert.Contains(result.Errors[0].Detail, "最終締日");
+		StringAssert.Contains(result.Errors[0].Detail, "末日");
+		Assert.AreEqual(0, result.Entries.Count);
+	}
+
+	[TestMethod]
+	public void Build_UriSei_AcceptsTheFinalClosingDayOfAMultiShimeOwner() {
+		// 4.6: 締日[10,20,99]の得意先は最終締日(99)を選べば取り込める(1行だけ作る)。
+		var request = new OpeningBalanceBuildRequest {
+			Kind = EnumOpeningBalanceKind.UriSei,
+			KeyDate = "20260630",
+			DayFrom = "20260601",
+			FiscalStartDate = FiscalStart,
+			SelectedShime = 99,
+			Rows = [Row(4, "00123", 150000)],
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 10, 20, 99, 1)),
+		};
+
+		var result = OpeningBalanceCsv.Build(request);
+
+		Assert.IsFalse(result.HasError, string.Join(" / ", result.Errors.Select(x => x.Detail)));
+		Assert.AreEqual(1, result.Entries.Count, "最終締日を選べば1行だけ登録される");
+	}
+
+	[TestMethod]
+	public void Build_UriSei_UnsetShime1FallsBackToOwnShimeForTheFinalClosingDayCheck() {
+		// 3.1/4.6: Shime1=0(未設定)の得意先は自社締日(OwnShime)へフォールバックして最終締日を解決する。
+		var request = new OpeningBalanceBuildRequest {
+			Kind = EnumOpeningBalanceKind.UriSei,
+			KeyDate = "20260630",
+			DayFrom = "20260601",
+			FiscalStartDate = FiscalStart,
+			SelectedShime = 20,
+			OwnShime = 20,
+			Rows = [Row(4, "00123", 150000)],
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 0, 0, 0, 1)),
+		};
+
+		var result = OpeningBalanceCsv.Build(request);
+
+		Assert.IsFalse(result.HasError, string.Join(" / ", result.Errors.Select(x => x.Detail)));
+		Assert.AreEqual(1, result.Entries.Count);
 	}
 
 	// ---- 行状態 ------------------------------------------------------------------
@@ -338,7 +399,7 @@ public class OpeningBalanceCsvTests {
 			KeyDate = "202607",
 			FiscalStartDate = FiscalStart,
 			Rows = [Row(4, "00123", 1000)],
-			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 1)),
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 0, 0, 1)),
 		};
 
 		var result = OpeningBalanceCsv.Build(request);
@@ -355,7 +416,7 @@ public class OpeningBalanceCsvTests {
 			KeyDate = "202606",
 			FiscalStartDate = OpeningBalanceCsv.UnsetFiscalStartDate,
 			Rows = [Row(4, "00123", 1000)],
-			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 1)),
+			Owners = Owners(new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 0, 0, 1)),
 		};
 
 		var result = OpeningBalanceCsv.Build(request);
@@ -422,26 +483,40 @@ public class OpeningBalanceCsvTests {
 
 	[TestMethod]
 	public void GetDefaultKeyDate_ForKakeReturnsMonthBeforeFiscalMonth() {
-		var (keyDate, dayFrom) = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriKake, "20260701", 0);
+		var (keyDate, dayFrom) = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriKake, "20260701", [], 0);
 		Assert.AreEqual("202606", keyDate);
 		Assert.AreEqual(string.Empty, dayFrom);
 
 		// 期首日が月初でなくても、期首年月の前月が対象になる
-		Assert.AreEqual("202606", OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriKake, "20260715", 0).KeyDate);
+		Assert.AreEqual("202606", OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriKake, "20260715", [], 0).KeyDate);
 	}
 
 	[TestMethod]
 	public void GetDefaultKeyDate_ForSeiReturnsClosingDayJustBeforeFiscalStart() {
-		var monthEnd = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, "20260701", 99);
+		// 単一締日(days=[shime])のときは現行(1締日のみ)と同じ結果になる(3.3の一致保証)。
+		var monthEnd = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, "20260701", [99], 99);
 		Assert.AreEqual("20260630", monthEnd.KeyDate);
 		Assert.AreEqual("20260601", monthEnd.DayFrom);
 
-		var day20 = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, "20260701", 20);
+		var day20 = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, "20260701", [20], 20);
 		Assert.AreEqual("20260620", day20.KeyDate, "期首日の直前に来る締日");
 		Assert.AreEqual("20260521", day20.DayFrom, "1つ前の締日の翌日");
 
-		var mid = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.KaiShi, "20260715", 20);
+		var mid = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.KaiShi, "20260715", [20], 20);
 		Assert.AreEqual("20260620", mid.KeyDate, "同月の締日(0720)は期首以降なので前月を使う");
+	}
+
+	[TestMethod]
+	public void GetDefaultKeyDate_MultiShime_UsesPrevWithinTheSet() {
+		// 3.3の境界例([10,20,99]・対象20・prev=10・同月内)を期首直前の締日でも満たすこと(4.6)。
+		var day20 = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, "20260921", [10, 20, 99], 20);
+		Assert.AreEqual("20260920", day20.KeyDate);
+		Assert.AreEqual("20260911", day20.DayFrom, "prevは同月内の10日");
+
+		// 対象が集合の最小要素なら、prevは前月の最大要素になる([20,99]・対象20・202609)
+		var day20AsMin = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, "20260921", [20, 99], 20);
+		Assert.AreEqual("20260920", day20AsMin.KeyDate);
+		Assert.AreEqual("20260901", day20AsMin.DayFrom, "prevは前月の99(月末)");
 	}
 
 	[TestMethod]
@@ -449,7 +524,7 @@ public class OpeningBalanceCsvTests {
 		// 締日の有効値は1〜28と99(3.5)。29〜31はEnumShimeのComboBoxに存在せず対象外。
 		foreach (var shime in new[] { 1, 15, 20, 28, 99 }) {
 			foreach (var fiscal in new[] { "20260101", "20260301", "20260701", "20261231", "20260215" }) {
-				var (keyDate, _) = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, fiscal, shime);
+				var (keyDate, _) = OpeningBalanceCsv.GetDefaultKeyDate(EnumOpeningBalanceKind.UriSei, fiscal, [shime], shime);
 				Assert.IsTrue(
 					OpeningBalanceCsv.IsBeforeFiscalStart(keyDate, fiscal, OpeningBalanceCsv.GetSpec(EnumOpeningBalanceKind.UriSei)),
 					$"締日={shime} 期首={fiscal} で既定キー日付 {keyDate} が期首以降になっている");
@@ -463,7 +538,8 @@ public class OpeningBalanceCsvTests {
 	public void BuildOwnerQuerySql_AppliesScopeFilters() {
 		var all = OpeningBalanceCsv.BuildOwnerQuerySql(EnumOpeningBalanceKind.UriSei, EnumOpeningBalanceOwnerScope.All);
 		Assert.IsFalse(all.Contains("TenType IN"), "取込時のコード解決では絞り込まない");
-		Assert.IsFalse(all.Contains("t.Shime1 = @3"));
+		// 締日での絞り込みは「最終締日 = 選択締日」(4.6)。ClosingFilter 無しでは締日条件が出ない。
+		Assert.IsFalse(all.Contains("= @3"), "ClosingFilter を指定しなければ締日条件は付かない");
 		StringAssert.Contains(all, "FROM MasterTokui AS t");
 		StringAssert.Contains(all, "LEFT JOIN SummaryUriSei AS s ON s.Id_Tokui = t.Id AND s.DenDay = @0");
 
@@ -472,7 +548,11 @@ public class OpeningBalanceCsvTests {
 			EnumOpeningBalanceOwnerScope.OwnerTypeFilter | EnumOpeningBalanceOwnerScope.ClosingFilter
 			| EnumOpeningBalanceOwnerScope.CodeRange | EnumOpeningBalanceOwnerScope.ExistingOnly);
 		StringAssert.Contains(scoped, "t.TenType IN (1, 3)");
-		StringAssert.Contains(scoped, "t.Shime1 = @3");
+		// 最終締日は「0でない最後の締日列、全て0なら自社締日」。単一締日なら Shime1 が選ばれる。
+		StringAssert.Contains(scoped, "WHEN t.Shime3 <> 0 THEN t.Shime3");
+		StringAssert.Contains(scoped, "WHEN t.Shime1 <> 0 THEN t.Shime1");
+		StringAssert.Contains(scoped, "ShimeBi FROM MasterSysman");
+		StringAssert.Contains(scoped, "END = @3");
 		StringAssert.Contains(scoped, "t.Code >= @1");
 		StringAssert.Contains(scoped, "s.Id IS NOT NULL");
 
@@ -508,11 +588,11 @@ public class OpeningBalanceCsvTests {
 			FiscalStartDate = FiscalStart,
 			Rows = rows,
 			Owners = Owners(
-				new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 1),
-				new OpeningBalanceOwner(12, "00124", "ベータ商事", 99, 1),
-				new OpeningBalanceOwner(13, "00125", "ガンマ物産", 99, 3),
-				new OpeningBalanceOwner(14, "00126", "デルタ商会", 99, 1),
-				new OpeningBalanceOwner(19, "00900", "直営店E", 99, 6)),
+				new OpeningBalanceOwner(11, "00123", "株式会社アルファ", 99, 0, 0, 1),
+				new OpeningBalanceOwner(12, "00124", "ベータ商事", 99, 0, 0, 1),
+				new OpeningBalanceOwner(13, "00125", "ガンマ物産", 99, 0, 0, 3),
+				new OpeningBalanceOwner(14, "00126", "デルタ商会", 99, 0, 0, 1),
+				new OpeningBalanceOwner(19, "00900", "直営店E", 99, 0, 0, 6)),
 			ExistingAmounts = existing,
 		});
 }

@@ -793,6 +793,224 @@ public class SummaryKakeDbTests {
 		Assert.IsTrue(completed);
 	}
 
+	// ---- 複数締日 ------------------------------------------------------------------
+	// `Doc/spec/2026-09-02_複数締日対応_詳細設計.md` 6.2 の受入条件を固定する。
+	// 締日ごとの期間分割・「すべての締日」の冪等性・取引先ごとのDayFrom差・0フォールバック・
+	// DELETEスコープ・PayDay=0フォールバックを対象にする。既存の単一締日テストの期待値は変更しない
+	// (3.3の一致保証・受入条件8)。
+
+	[TestMethod]
+	public void CalcSummaryUriSei_MultiShime_SplitsPeriodsPerClosingDay() {
+		// 3.3の境界例([10,20,99]・請求月202609)どおり、締日10/20/99を3回実行すると3行できて、
+		// 各行のDayFrom/DayTo/DenDayと金額が期間どおりに割れること(6.2-1)。
+		var db = PrepareUriSeiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 10, Shime2 = 20, Shime3 = 99, PayMonth = 0, PayDay = 0 });
+		var idTokui = db.Single<MasterTokui>("where Code=@0", "A001").Id;
+		db.Insert(CreateBillingUriage("20260905", idTokui, EnumUri00.Uriage, 1000, 0));
+		db.Insert(CreateBillingUriage("20260915", idTokui, EnumUri00.Uriage, 2000, 0));
+		db.Insert(CreateBillingUriage("20260925", idTokui, EnumUri00.Uriage, 3000, 0));
+
+		summaryDb.CalcSummaryUriSei("202609", 10);
+		summaryDb.CalcSummaryUriSei("202609", 20);
+		summaryDb.CalcSummaryUriSei("202609", 99);
+
+		var rows = db.Fetch<SummaryUriSei>("where Id_Tokui=@0 order by DenDay", idTokui);
+		Assert.AreEqual(3, rows.Count, "締日10/20/99の3回で3行できる");
+
+		Assert.AreEqual("20260901", rows[0].DayFrom);
+		Assert.AreEqual("20260910", rows[0].DayTo);
+		Assert.AreEqual("20260910", rows[0].DenDay);
+		Assert.AreEqual(1000, rows[0].Uriage, "9/5の売上は締日10の期間(9/1-9/10)");
+
+		Assert.AreEqual("20260911", rows[1].DayFrom);
+		Assert.AreEqual("20260920", rows[1].DayTo);
+		Assert.AreEqual("20260920", rows[1].DenDay);
+		Assert.AreEqual(2000, rows[1].Uriage, "9/15の売上は締日20の期間(9/11-9/20)");
+
+		Assert.AreEqual("20260921", rows[2].DayFrom);
+		Assert.AreEqual("20260930", rows[2].DayTo);
+		Assert.AreEqual("20260930", rows[2].DenDay);
+		Assert.AreEqual(3000, rows[2].Uriage, "9/25の売上は締日99(末日)の期間(9/21-9/30)");
+	}
+
+	[TestMethod]
+	public async Task SummaryUriSeiAsyncStream_AllShime_MatchesIndividualShimeRuns() {
+		// 締日[10,20,99]の得意先1件について、「すべての締日」(Shime=0)1回の実行が、
+		// 締日3回の個別実行と同じ結果になること(冪等性、6.2-2)。
+		var individual = BuildMultiShimeUriSeiFixture(out var individualDb);
+		individual.CalcSummaryUriSei("202609", 10);
+		individual.CalcSummaryUriSei("202609", 20);
+		individual.CalcSummaryUriSei("202609", 99);
+		var individualSnapshot = GetUriSeiComparableSnapshot(individualDb);
+
+		var all = BuildMultiShimeUriSeiFixture(out var allDb);
+		await foreach (var progress in all.SummaryUriSeiAsyncStream(new BillingParameter("202609", 0, "", ""))) {
+			Assert.IsFalse(progress.IsError, progress.ErrorMessage);
+		}
+		var allSnapshot = GetUriSeiComparableSnapshot(allDb);
+
+		Assert.AreEqual(3, allSnapshot.Length, "すべての締日の展開で3行できる");
+		CollectionAssert.AreEqual(individualSnapshot, allSnapshot);
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriSei_MixedClosingPatterns_DayFromDiffersPerOwner() {
+		// 2.3の例: 締日[10,20,99]のA社と[20]のB社が混在する状態で締日20の回を実行すると、
+		// DayFromが取引先ごとに異なること(6.2-3)。
+		var db = PrepareUriSeiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 10, Shime2 = 20, Shime3 = 99, PayMonth = 0, PayDay = 0 });
+		db.Insert(new MasterTokui { Code = "B001", Shime1 = 20, PayMonth = 0, PayDay = 0 });
+		var idA = db.Single<MasterTokui>("where Code=@0", "A001").Id;
+		var idB = db.Single<MasterTokui>("where Code=@0", "B001").Id;
+		db.Insert(CreateBillingUriage("20260915", idA, EnumUri00.Uriage, 1000, 0));
+		db.Insert(CreateBillingUriage("20260825", idB, EnumUri00.Uriage, 500, 0));
+
+		summaryDb.CalcSummaryUriSei("202609", 20);
+
+		var rowA = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", idA, "20260920");
+		var rowB = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", idB, "20260920");
+		Assert.AreEqual("20260911", rowA.DayFrom, "A社の直前の締めは同月10日");
+		Assert.AreEqual("20260821", rowB.DayFrom, "B社の直前の締めは前月20日");
+		Assert.AreNotEqual(rowA.DayFrom, rowB.DayFrom, "同じ締日20の回でもDayFromは取引先ごとに異なる");
+		Assert.AreEqual(1000, rowA.Uriage);
+		Assert.AreEqual(500, rowB.Uriage);
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriSei_UnsetShimeFallsBackToOwnClosingDay() {
+		// Shime1=0の得意先がMasterSysman.ShimeBiの回で集計対象になること(3.1、6.2-4)。
+		var db = PrepareUriSeiTables(); // AddOwnClosingDayでShimeBi=99
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "C001", Shime1 = 0, PayMonth = 0, PayDay = 0 });
+		var idC = db.Single<MasterTokui>("where Code=@0", "C001").Id;
+		db.Insert(CreateBillingUriage("20260910", idC, EnumUri00.Uriage, 700, 0));
+
+		summaryDb.CalcSummaryUriSei("202609", 99);
+
+		var row = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", idC, "20260930");
+		Assert.AreEqual(700, row.Uriage, "Shime1=0は自社締日(99)の回で集計される");
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriSei_RerunningOneClosingDayKeepsOtherClosingDayRows() {
+		// 締日10の回を再実行しても締日20・99の行が消えないこと(DELETEスコープの回帰防止、6.2-5)。
+		var db = PrepareUriSeiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 10, Shime2 = 20, Shime3 = 99, PayMonth = 0, PayDay = 0 });
+		var idTokui = db.Single<MasterTokui>("where Code=@0", "A001").Id;
+		db.Insert(CreateBillingUriage("20260905", idTokui, EnumUri00.Uriage, 1000, 0));
+		db.Insert(CreateBillingUriage("20260915", idTokui, EnumUri00.Uriage, 2000, 0));
+		db.Insert(CreateBillingUriage("20260925", idTokui, EnumUri00.Uriage, 3000, 0));
+
+		summaryDb.CalcSummaryUriSei("202609", 10);
+		summaryDb.CalcSummaryUriSei("202609", 20);
+		summaryDb.CalcSummaryUriSei("202609", 99);
+		summaryDb.CalcSummaryUriSei("202609", 10); // 締日10だけ再実行
+
+		var rows = db.Fetch<SummaryUriSei>("where Id_Tokui=@0 order by DenDay", idTokui);
+		Assert.AreEqual(3, rows.Count, "締日10の再実行で20・99の行が消えてはいけない");
+		CollectionAssert.AreEqual(new[] { "20260910", "20260920", "20260930" }, rows.Select(x => x.DenDay).ToArray());
+	}
+
+	[TestMethod]
+	public void CalcSummaryUriSei_PayDayZero_UsesOwnClosingDayAsNyukinYoteiDay() {
+		// PayDay=0 かつ ShimeBi=20 のとき NyukinYoteiDayが20日になること(3.4、6.2-6)。
+		var db = PrepareUriSeiTables();
+		db.Execute($"UPDATE {nameof(MasterSysman)} SET ShimeBi=@0", 20);
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
+		var idTokui = db.Single<MasterTokui>("where Code=@0", "A001").Id;
+		db.Insert(CreateBillingUriage("20260910", idTokui, EnumUri00.Uriage, 1000, 0));
+
+		summaryDb.CalcSummaryUriSei("202609", 99);
+
+		var row = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", idTokui, "20260930");
+		Assert.AreEqual("20260920", row.NyukinYoteiDay, "PayDay=0はShimeBi(20)を予定日の日として使う");
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiShi_MultiShime_SplitsPeriodsPerClosingDay() {
+		// 請求残と同じ検証を支払残(CalcSummaryKaiShi)でも行う(6.2-7)。
+		var db = PrepareKaiShiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterShiire { Code = "A001", Shime1 = 10, Shime2 = 20, Shime3 = 99, PayMonth = 0, PayDay = 0 });
+		var idShiire = db.Single<MasterShiire>("where Code=@0", "A001").Id;
+		db.Insert(CreateBillingShiire("20260905", idShiire, EnumShiire.Shiire, 1000, 0));
+		db.Insert(CreateBillingShiire("20260915", idShiire, EnumShiire.Shiire, 2000, 0));
+		db.Insert(CreateBillingShiire("20260925", idShiire, EnumShiire.Shiire, 3000, 0));
+
+		summaryDb.CalcSummaryKaiShi("202609", 10);
+		summaryDb.CalcSummaryKaiShi("202609", 20);
+		summaryDb.CalcSummaryKaiShi("202609", 99);
+
+		var rows = db.Fetch<SummaryKaiShi>("where Id_Shiire=@0 order by DenDay", idShiire);
+		Assert.AreEqual(3, rows.Count);
+		Assert.AreEqual("20260901", rows[0].DayFrom);
+		Assert.AreEqual("20260910", rows[0].DayTo);
+		Assert.AreEqual(1000, rows[0].Shiire);
+		Assert.AreEqual("20260911", rows[1].DayFrom);
+		Assert.AreEqual("20260920", rows[1].DayTo);
+		Assert.AreEqual(2000, rows[1].Shiire);
+		Assert.AreEqual("20260921", rows[2].DayFrom);
+		Assert.AreEqual("20260930", rows[2].DayTo);
+		Assert.AreEqual(3000, rows[2].Shiire);
+	}
+
+	[TestMethod]
+	public void CalcSummaryKaiShi_MixedClosingPatterns_DayFromDiffersPerOwner() {
+		// 2.3の例を支払残(CalcSummaryKaiShi)でも確認する(6.2-7)。
+		var db = PrepareKaiShiTables();
+		var summaryDb = new SummaryDb(db);
+		db.Insert(new MasterShiire { Code = "A001", Shime1 = 10, Shime2 = 20, Shime3 = 99, PayMonth = 0, PayDay = 0 });
+		db.Insert(new MasterShiire { Code = "B001", Shime1 = 20, PayMonth = 0, PayDay = 0 });
+		var idA = db.Single<MasterShiire>("where Code=@0", "A001").Id;
+		var idB = db.Single<MasterShiire>("where Code=@0", "B001").Id;
+		db.Insert(CreateBillingShiire("20260915", idA, EnumShiire.Shiire, 1000, 0));
+		db.Insert(CreateBillingShiire("20260825", idB, EnumShiire.Shiire, 500, 0));
+
+		summaryDb.CalcSummaryKaiShi("202609", 20);
+
+		var rowA = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", idA, "20260920");
+		var rowB = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", idB, "20260920");
+		Assert.AreEqual("20260911", rowA.DayFrom);
+		Assert.AreEqual("20260821", rowB.DayFrom);
+		Assert.AreNotEqual(rowA.DayFrom, rowB.DayFrom);
+	}
+
+	/// <summary>
+	/// 締日[10,20,99]・9/5・9/15・9/25の売上を持つ得意先1件の請求残フィクスチャを、
+	/// 個別実行と「すべての締日」実行を比較するために独立したDBへ作る(共有 <c>_db</c> は使わない)。
+	/// </summary>
+	private static SummaryDb BuildMultiShimeUriSeiFixture(out ExDatabaseSqlite db) {
+		var connectionString = new SqliteConnectionStringBuilder {
+			DataSource = $"MultiShimeUriSei-{Guid.NewGuid():N}",
+			Mode = SqliteOpenMode.Memory,
+		}.ToString();
+		var conn = new SqliteConnection(connectionString);
+		conn.Open();
+		db = new ExDatabaseSqlite(conn) { KeepConnectionAlive = true };
+		db.CreateTable(typeof(MasterSysman), true, false);
+		db.Insert(new MasterSysman { ShimeBi = 99 });
+		db.CreateTable(typeof(SummaryUriSei), true, false);
+		db.CreateTable(typeof(MasterTokui), true, false);
+		db.CreateTable(typeof(Tran00Uriage), true, false);
+		db.CreateTable(typeof(Tran06Nyukin), true, false);
+		InsertKinMaster(db);
+		db.Insert(new MasterTokui { Code = "A001", Shime1 = 10, Shime2 = 20, Shime3 = 99, PayMonth = 0, PayDay = 0 });
+		var idTokui = db.Single<MasterTokui>("where Code=@0", "A001").Id;
+		db.Insert(CreateBillingUriage("20260905", idTokui, EnumUri00.Uriage, 1000, 0));
+		db.Insert(CreateBillingUriage("20260915", idTokui, EnumUri00.Uriage, 2000, 0));
+		db.Insert(CreateBillingUriage("20260925", idTokui, EnumUri00.Uriage, 3000, 0));
+		return new SummaryDb(db);
+	}
+
+	/// <summary>Id_Tokui(DB採番のため実行間で値が変わりうる)を除いた比較用スナップショット。</summary>
+	private static string[] GetUriSeiComparableSnapshot(ExDatabaseSqlite db) =>
+		[.. db.Fetch<SummaryUriSei>("order by DenDay")
+			.Select(x => $"{x.DenDay}:{x.DayFrom}:{x.DayTo}:{x.Balance}:{x.TotalIn}:{x.TotalSales}:{x.Uriage}:{x.NyukinYoteiDay}")];
+
 	// ---- 再作成締日検査 ----------------------------------------------------------
 
 	[TestMethod]
@@ -832,6 +1050,31 @@ public class SummaryKakeDbTests {
 		Assert.IsFalse(SummaryRebuildClosingCheck.TryGetExpectedClosingDay(null, 31, out _));
 		Assert.IsFalse(SummaryRebuildClosingCheck.TryGetExpectedClosingDay(string.Empty, 31, out _));
 		Assert.IsFalse(SummaryRebuildClosingCheck.TryGetExpectedClosingDay("20261331", 31, out _));
+	}
+
+	[TestMethod]
+	public void SummaryRebuildClosingCheck_MultiShime_MatchesAnyElementOfTheSet() {
+		// 6.3: 保存済みDayToが有効締日集合(複数)のいずれかに一致すれば正常、どれとも一致しなければ不一致。
+		// 要素数違い(3件 vs 1件)・値違いのケースを合わせて確認する。
+		var matches = new[] {
+			new SummaryClosingCheckRow { TorihikiCode = "T010", DayTo = "20260910", Shime1 = 10, Shime2 = 20, Shime3 = 99 },
+			new SummaryClosingCheckRow { TorihikiCode = "T020", DayTo = "20260920", Shime1 = 10, Shime2 = 20, Shime3 = 99 },
+			new SummaryClosingCheckRow { TorihikiCode = "T099", DayTo = "20260930", Shime1 = 10, Shime2 = 20, Shime3 = 99 },
+		};
+		Assert.AreEqual(0, SummaryRebuildClosingCheck.FindMismatches("売掛", matches).Count,
+			"保存済みDayToが集合(要素数3)のいずれかに一致すれば正常");
+
+		var mismatch = new[] {
+			new SummaryClosingCheckRow { TorihikiCode = "T015", DayTo = "20260915", Shime1 = 10, Shime2 = 20, Shime3 = 99 },
+		};
+		Assert.AreEqual(1, SummaryRebuildClosingCheck.FindMismatches("売掛", mismatch).Count,
+			"どの要素とも一致しない日付は不一致");
+
+		var fewerElements = new[] {
+			new SummaryClosingCheckRow { TorihikiCode = "T020b", DayTo = "20260920", Shime1 = 20 },
+		};
+		Assert.AreEqual(0, SummaryRebuildClosingCheck.FindMismatches("売掛", fewerElements).Count,
+			"要素数が1件(単一締日)でも保存値と一致すれば正常");
 	}
 
 	[TestMethod]
