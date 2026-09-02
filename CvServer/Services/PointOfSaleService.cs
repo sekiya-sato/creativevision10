@@ -1,5 +1,6 @@
 using CodeShare;
 using CvBase;
+using CvBase.Share;
 using CvDomainLogic;
 using Microsoft.AspNetCore.Authorization;
 using ProtoBuf.Grpc;
@@ -69,6 +70,13 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 				KingakuTotal = original.KingakuTotal,
 				JodaiTotal = original.JodaiTotal,
 				GedaiTotal = original.GedaiTotal,
+				TaxRounding = original.TaxRounding,
+				TaxableAmount1 = original.TaxableAmount1,
+				TaxableAmount2 = original.TaxableAmount2,
+				TaxableAmount3 = original.TaxableAmount3,
+				Tax1 = original.Tax1,
+				Tax2 = original.Tax2,
+				Tax3 = original.Tax3,
 				Total = original.Total,
 				PosClientSaleId = cancelId,
 				Memo = $"取消: 元売上No.{original.Id}",
@@ -144,20 +152,59 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 		var store = FindRequired<MasterTokui>(request.StoreId, "店舗");
 		var warehouse = FindRequired<MasterTokui>(request.WarehouseId, "倉庫");
 		var staff = FindRequired<MasterShain>(request.StaffId, "担当者");
+		var sysman = FindById<MasterSysman>(1) ?? new MasterSysman();
 		var denDay = DateTime.Today.ToString("yyyyMMdd");
 		var lines = request.Lines.Select((line, index) => CreateLine(line, index + 1, staff, store.Id, denDay)).ToList();
-		var total = checked(lines.Sum(line => line.Kingaku));
+		var kingakuTotal = checked(lines.Sum(line => line.Kingaku));
+		var rounding = (EnumRounding)store.TaxRounding;
+		var totals = TaxCalculator.Apply(
+			lines,
+			TaxRateResolver.CreateRateResolver(sysman, denDay),
+			EnumTaxCalcUnit.Slip,
+			rounding);
+		var total = checked(Math.Abs((long)kingakuTotal) + totals.TaxTotal);
 		var paid = checked(request.Payment.CashAmount + request.Payment.CardAmount + request.Payment.OtherAmount);
 		if (paid < total) throw new InvalidOperationException("お預り金額が合計金額に不足しています。");
 		var now = DateTime.UtcNow.Ticks;
-		return new Tran01Tenuri { Vdc = now, Vdu = now, DenDay = denDay, Kubun = request.Kubun, Id_Tenpo = store.Id, VTenpo = new CodeNameView(store.Id, store.Code, store.Name), Id_Soko = warehouse.Id, VSoko = new CodeNameView(warehouse.Id, warehouse.Code, warehouse.Name), Id_Shain = staff.Id, VShain = new CodeNameView(staff.Id, staff.Code, staff.Name), Jmeisai = lines, SuTotal = lines.Sum(line => line.Su), KingakuTotal = total, JodaiTotal = lines.Sum(line => line.Jodai), GedaiTotal = lines.Sum(line => line.Gedai), Total = total, PosClientSaleId = request.ClientSaleId, JposPayment = new PosPaymentDetail { CashAmount = request.Payment.CashAmount, CardAmount = request.Payment.CardAmount, OtherAmount = request.Payment.OtherAmount, ChangeAmount = paid - total } };
+		return new Tran01Tenuri {
+			Vdc = now,
+			Vdu = now,
+			DenDay = denDay,
+			Kubun = request.Kubun,
+			Id_Tenpo = store.Id,
+			VTenpo = new CodeNameView(store.Id, store.Code, store.Name),
+			Id_Soko = warehouse.Id,
+			VSoko = new CodeNameView(warehouse.Id, warehouse.Code, warehouse.Name),
+			Id_Shain = staff.Id,
+			VShain = new CodeNameView(staff.Id, staff.Code, staff.Name),
+			Jmeisai = lines,
+			SuTotal = lines.Sum(line => line.Su),
+			KingakuTotal = kingakuTotal,
+			JodaiTotal = lines.Sum(line => line.Jodai),
+			GedaiTotal = lines.Sum(line => line.Gedai),
+			TaxRounding = store.TaxRounding,
+			TaxableAmount1 = totals.TaxableAmount1,
+			TaxableAmount2 = totals.TaxableAmount2,
+			TaxableAmount3 = totals.TaxableAmount3,
+			Tax1 = totals.Tax1,
+			Tax2 = totals.Tax2,
+			Tax3 = totals.Tax3,
+			Total = total,
+			PosClientSaleId = request.ClientSaleId,
+			JposPayment = new PosPaymentDetail {
+				CashAmount = request.Payment.CashAmount,
+				CardAmount = request.Payment.CardAmount,
+				OtherAmount = request.Payment.OtherAmount,
+				ChangeAmount = checked((int)(paid - total))
+			}
+		};
 	}
 
 	private Tran99Meisai CreateLine(PosCheckoutLine line, int no, MasterShain headerStaff, long storeId, string denDay) {
 		var product = FindRequired<MasterShohin>(line.ProductId, "商品");
 		var lineStaff = line.StaffId > 0 ? FindRequired<MasterShain>(line.StaffId, "明細担当者") : headerStaff;
 		var tanka = ResolveJodai(product, storeId, denDay);
-		return new Tran99Meisai { No = no, Kubun = line.Kubun, Id_Shohin = product.Id, Code_Shohin = product.Code, Mei_Shohin = product.Name, JanCode = line.Barcode, Id_Col = line.ColorId, Code_Col = line.ColorCode, Mei_Col = line.ColorName, Id_Siz = line.SizeId, Code_Siz = line.SizeCode, Mei_Siz = line.SizeName, Su = line.Quantity, Tanka = tanka, Kingaku = checked(line.Quantity * tanka), Jodai = tanka, Gedai = product.TankaGenka, Id_Shain = lineStaff.Id, Code_Shain = lineStaff.Code, Mei_Shain = lineStaff.Name };
+		return new Tran99Meisai { No = no, Kubun = line.Kubun, Id_Shohin = product.Id, Code_Shohin = product.Code, Mei_Shohin = product.Name, JanCode = line.Barcode, Id_Col = line.ColorId, Code_Col = line.ColorCode, Mei_Col = line.ColorName, Id_Siz = line.SizeId, Code_Siz = line.SizeCode, Mei_Siz = line.SizeName, Su = line.Quantity, Tanka = tanka, Kingaku = checked(line.Quantity * tanka), Jodai = tanka, Gedai = product.TankaGenka, Id_Shain = lineStaff.Id, Code_Shain = lineStaff.Code, Mei_Shain = lineStaff.Name, Id_Tax = product.Id_Tax };
 	}
 
 	/// <summary>

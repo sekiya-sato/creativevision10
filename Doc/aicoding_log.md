@@ -1,3 +1,28 @@
+## [2026-09-02] R4 POS売上消費税計算
+
+### Agent
+- Sekiya Sato Codex
+
+### 目的
+- `PointOfSaleService` が作成する店舗売上伝票へ共通消費税計算を適用し、POS確定時点で税率別課税対象額・税額・税込総合計を確定する。
+
+### 実施内容
+- `PointOfSaleService.CreateLine` で商品マスタの `Id_Tax` を明細へスナップショットするようにした。
+- `CreateSale` で店舗の `TaxRounding` と伝票日付時点の税率を解決し、`TaxCalculator.Apply` を伝票単位で実行した。明細 `TaxRate` / `Tax`、ヘッダ `TaxableAmount1/2/3` / `Tax1/2/3`、税込 `Total` を保存する。
+- POSの決済不足判定と釣銭計算を税込 `Total` 基準へ変更した。gRPC DTO・DBスキーマは変更していない。
+- `CancelSaleAsync` は取消時点のマスタで再計算せず、元売上の `TaxRounding`・税率別課税対象額・税額と明細税スナップショットを継承するようにした。
+- `PointOfSaleServiceTests` を追加し、標準10%・軽減8%・非課税混在、端数処理3種、税込決済不足のロールバック、冪等再送、POS返品、税率変更後の取消、旧税未設定伝票の取消を検証した。
+- R4詳細設計、消費税全体設計、CV10機能完成度チェックリスト、月次請求書設計の残課題・D-11状態を実装済みへ同期した。
+- 実POS端末との結合テストはPOS側プロジェクトの責務としてcv10の対象外とし、cv10内の実装・自動テスト完了をもってR4完了と決定した。
+
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build Tests\TestServer\TestServer.csproj --no-restore -v minimal`：警告0・エラー0。
+- `TestServer.exe --filter 'FullyQualifiedName~PointOfSaleServiceTests'`：9件成功。
+- `TestServer.exe`：全309件成功、失敗0。
+- HHTは `HhtProcessUpdateMap.ApplyTaxOnly`、物流は `ShippingDb.CreateUriage` で既に `TaxCalculator.Apply` を使用しているため変更対象外であることを再確認した。
+
+---
+
 ## [2026-09-02] 月次請求書の適格請求書対応とCSV列マッピング修正
 
 ### Agent
