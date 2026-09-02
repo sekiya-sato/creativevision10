@@ -966,7 +966,8 @@ FROM totals AS c;
 ";
 		var period = $"{DatefromYyyymm}-{toMonth} ({dayFrom}-{targetDays.DayTo},締日={shime})";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryUriKake(delete)", "SummaryUriKake", period);
+		// 戻り値は挿入件数のみとする(削除件数を含めると呼び出し側が実件数の約2倍と誤認するため)。
+		ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryUriKake(delete)", "SummaryUriKake", period);
 		cnt += ExecuteAndCounts(sql, [dayFrom, targetDays.DayTo], "CalcSummaryUriKake", "SummaryUriKake", period);
 		_db.CompleteTransaction();
 		return cnt;
@@ -1499,7 +1500,8 @@ FROM totals AS c;
 ";
 		var period = $"{DatefromYyyymm}-{toMonth} ({dayFrom}-{targetDays.DayTo},締日={shime})";
 		_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-		cnt += ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryKaiKake(delete)", "SummaryKaiKake", period);
+		// 戻り値は挿入件数のみとする(削除件数を含めると呼び出し側が実件数の約2倍と誤認するため)。
+		ExecuteAndCounts(deleteSql, [DatefromYyyymm, toMonth], "CalcSummaryKaiKake(delete)", "SummaryKaiKake", period);
 		cnt += ExecuteAndCounts(sql, [dayFrom, targetDays.DayTo], "CalcSummaryKaiKake", "SummaryKaiKake", period);
 		_db.CompleteTransaction();
 		return cnt;

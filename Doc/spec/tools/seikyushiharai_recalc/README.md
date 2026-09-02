@@ -42,7 +42,7 @@ dotnet run --project "Doc/spec/tools/seikyushiharai_recalc" -- <mode> [dbPath]
 買掛: `Tran03Shiire`/`Tran02Material`/`Tran07Shiharai`）と既存 `Summary*Kake.DenMonth` の
 最大月に、締日が月末でないときの翌月繰り上がりを見込んで1ヶ月足したもの。
 
-`CalcSummary*Kake` の戻り値は DELETE+INSERT の影響行数のため、テーブル実行数の約2倍になる。
+`CalcSummary*Kake` の戻り値は挿入件数のみ(削除件数は含まない)。
 
 ## 実行結果1: 請求計算・支払計算（2026-09-01、`CvServer/server-user163.db`）
 
@@ -78,9 +78,28 @@ dotnet run --project "Doc/spec/tools/seikyushiharai_recalc" -- <mode> [dbPath]
 
 実行後の検証:
 
-- 行数は実行前と同一（`SummaryUriKake` 18,841 行 / `SummaryKaiKake` 2,249 行、ともに 201905〜202608）。
-  戻り値が行数の2倍なのは DELETE+INSERT の影響行数を返すためで、重複挿入ではない
+- 行数は実行前と同一（`SummaryUriKake` 18,841 行 / `SummaryKaiKake` 2,249 行、ともに 201905〜202608）
 - `Balance = TotalSales - TotalIn`（`SummaryUriKake`）不一致 0 件
 - `Balance = TotalShiire - TotalOut`（`SummaryKaiKake`）不一致 0 件
 - `TotalSales = Uriage - Henpin - Nebiki + Sonota + (Tax1+Tax2+Tax3)`（`SummaryUriKake`）不一致 0 件
 - `TestServer.exe` 264 件全件成功
+
+## `CalcSummaryUriKake`/`CalcSummaryKaiKake` 戻り値の修正（2026-09-02）
+
+上記の実行結果2の時点では、`CalcSummary*Kake` の戻り値が DELETE+INSERT の影響行数の合算になっており、
+実際のテーブル行数の約2倍を返していた（37,682 → 実際は 18,841 行、4,498 → 実際は 2,249 行）。
+呼び出し側が実件数と誤認しないよう、戻り値を挿入件数のみへ修正した
+（`CvDomainLogic/SummaryDb.cs`、詳細設計 9.6）。
+
+修正後に同じ範囲で再実行し、戻り値がテーブル行数と一致することを確認した。
+
+```
+売掛残(CalcSummaryUriKake) / 買掛残(CalcSummaryKaiKake) 対象期間: 201304〜202609
+  OK  売掛残(CalcSummaryUriKake)  201304〜202609     18841 行
+  OK  買掛残(CalcSummaryKaiKake)  201304〜202609      2249 行
+
+成功: 2 件  失敗: 0 件  合計挿入行数: 21090
+```
+
+行数（`SummaryUriKake` 18,841行 / `SummaryKaiKake` 2,249行）・`Balance` 不一致0件・
+`TestServer.exe` 264件全件成功、いずれも変化なし。
