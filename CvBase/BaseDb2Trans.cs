@@ -906,6 +906,17 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
+	/// <para>
+	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
+	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
+	/// </para>
+	/// </summary>
+	[ResultColumn]
+	[JsonIgnore]
+	public long Tax => Tax1 + Tax2 + Tax3;
+	/// <summary>
 	/// 課税対象額1
 	/// </summary>
 	[ObservableProperty]
@@ -1270,6 +1281,17 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
+	/// <para>
+	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
+	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
+	/// </para>
+	/// </summary>
+	[ResultColumn]
+	[JsonIgnore]
+	public long Tax => Tax1 + Tax2 + Tax3;
+	/// <summary>
 	/// 課税対象額1
 	/// </summary>
 	[ObservableProperty]
@@ -1484,6 +1506,17 @@ public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	[ObservableProperty]
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
+	/// <summary>
+	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
+	/// <para>
+	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
+	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
+	/// </para>
+	/// </summary>
+	[ResultColumn]
+	[JsonIgnore]
+	public long Tax => Tax1 + Tax2 + Tax3;
 	/// <summary>
 	/// 課税対象額1
 	/// </summary>
@@ -1874,6 +1907,17 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
 	/// <summary>
+	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
+	/// <para>
+	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
+	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
+	/// </para>
+	/// </summary>
+	[ResultColumn]
+	[JsonIgnore]
+	public long Tax => Tax1 + Tax2 + Tax3;
+	/// <summary>
 	/// 課税対象額1
 	/// </summary>
 	[ObservableProperty]
@@ -2020,6 +2064,17 @@ public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	[ObservableProperty]
 	[Comment("消費税3  Id_Tax=3 Sum(明細消費税)")]
 	public partial long Tax3 { get; set; }
+	/// <summary>
+	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
+	/// <para>
+	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
+	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
+	/// </para>
+	/// </summary>
+	[ResultColumn]
+	[JsonIgnore]
+	public long Tax => Tax1 + Tax2 + Tax3;
 	/// <summary>
 	/// 課税対象額1
 	/// </summary>

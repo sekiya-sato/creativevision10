@@ -48,8 +48,11 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	protected override Type Tabletype => typeof(Tran00Uriage);
 	protected override string? ListOrder => "DenDay desc, Id desc";
 	protected override int? ListMaxCount => selectParam?.MaxCount;
+	// 一覧の消費税・総合計列に使うほか、一覧から詳細タブへ移ったときの CurrentEdit の初期値にもなる。
+	// 欠けていると詳細を開いた瞬間に 0 が表示されてから正しい値へ差し替わる。
 	protected override string LightweightSelectColumns =>
-		"Id,Vdc,Vdu,DenDay,KakeDay,Id_Tokui,VTokui,Id_Soko,VSoko,Id_Shain,VShain,IsPay,Kubun,ManualNo,RelateNo1,RelateNo2,Rate,SuTotal,KingakuTotal,JodaiTotal,GedaiTotal";
+		"Id,Vdc,Vdu,DenDay,KakeDay,Id_Tokui,VTokui,Id_Soko,VSoko,Id_Shain,VShain,IsPay,Kubun,ManualNo,RelateNo1,RelateNo2,Rate,SuTotal,KingakuTotal,JodaiTotal,GedaiTotal"
+		+ ",Tax1,Tax2,Tax3,TaxableAmount1,TaxableAmount2,TaxableAmount3,TaxCalcUnit,TaxRounding,Total";
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
@@ -141,14 +144,17 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		if (newValue == null) return;
 		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
 		ApplyMeisaiFromCurrentEdit();
+		// ここは同期メソッドのため税率キャッシュの充填を await できない。キャッシュが空だと
+		// 税額 0 の暫定値になるが、直後の RecalcAllMeisaiTaxAsync が正しい値へ書き直す。
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
 		_ = RecalcAllMeisaiTaxAsync();
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
-		if (e.PropertyName is nameof(Tran00Uriage.Tax1) or nameof(Tran00Uriage.Tax2)
-			or nameof(Tran00Uriage.Tax3) or nameof(Tran00Uriage.Kubun)) {
+		// Tax1/2/3 は UpdateHeaderTotals の出力であって入力ではない。監視すると自己再入になるため含めない。
+		if (e.PropertyName is nameof(Tran00Uriage.Kubun)
+			or nameof(Tran00Uriage.TaxCalcUnit) or nameof(Tran00Uriage.TaxRounding)) {
 			UpdateHeaderTotals();
 		}
 		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
@@ -171,6 +177,48 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		CurrentEdit.Tax2 = totals.Tax2;
 		CurrentEdit.Tax3 = totals.Tax3;
 		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
+		UpdateTaxDisplay(totals);
+	}
+
+	/// <summary>Tax1+Tax2+Tax3。Tax は分割済みで存在しないため、XAMLの消費税欄表示はこちらを使う。</summary>
+	public long TaxTotal => CurrentEdit.Tax1 + CurrentEdit.Tax2 + CurrentEdit.Tax3;
+
+	/// <summary>
+	/// 請求単位（<see cref="EnumTaxCalcUnit.Billing"/>）かどうか。真なら伝票の消費税は 0 が正しく、
+	/// 税額は請求計算が締請求期間で1回だけ丸めて確定する（全体設計 3.4）。画面の注記の表示切替に使う。
+	/// </summary>
+	public bool IsBillingUnitTax => (EnumTaxCalcUnit)CurrentEdit.TaxCalcUnit == EnumTaxCalcUnit.Billing;
+
+	/// <summary>伝票サマリーの課税対象額内訳（税区分ごと1行）。課税対象額 0 の区分は含めない。</summary>
+	[ObservableProperty]
+	public partial IReadOnlyList<TaxBreakdownRow> TaxBreakdown { get; set; } = [];
+
+	void UpdateTaxDisplay(TaxTotals totals) {
+		List<TaxBreakdownRow> rows = [];
+		AddTaxBreakdownRow(rows, 1, totals.TaxableAmount1, totals.Tax1);
+		AddTaxBreakdownRow(rows, 2, totals.TaxableAmount2, totals.Tax2);
+		AddTaxBreakdownRow(rows, 3, totals.TaxableAmount3, totals.Tax3);
+		TaxBreakdown = rows;
+		OnPropertyChanged(nameof(TaxTotal));
+		OnPropertyChanged(nameof(IsBillingUnitTax));
+	}
+
+	void AddTaxBreakdownRow(List<TaxBreakdownRow> rows, long idTax, long taxableAmount, long tax) {
+		if (taxableAmount == 0) return;
+		rows.Add(new TaxBreakdownRow(idTax, TaxRateOf(idTax), taxableAmount, tax));
+	}
+
+	/// <summary>伝票サマリーの課税対象額内訳1行。</summary>
+	/// <param name="IdTax">消費税区分（MasterSysTax.Id 1-3）</param>
+	/// <param name="RatePercent">伝票日付時点の適用税率(%)</param>
+	/// <param name="TaxableAmount">課税対象額（税抜・常に正値）</param>
+	/// <param name="Tax">消費税額。請求単位では 0</param>
+	public sealed record TaxBreakdownRow(long IdTax, int RatePercent, long TaxableAmount, long Tax) {
+		/// <summary>"10% 対象"。税率0（税区分未解決・非課税）は明示して異常に気付けるようにする</summary>
+		public string Label => RatePercent > 0 ? $"{RatePercent}% 対象" : "税率未設定";
+
+		/// <summary>請求単位は課税対象額のみ、伝票単位は "課税対象額 → 税額" を出す</summary>
+		public string AmountText => Tax > 0 ? $"{TaxableAmount:N0} → {Tax:N0}" : $"{TaxableAmount:N0}";
 	}
 
 	// 基底フック: 出荷売上はヘッダ区分を明細区分に反映（ロード時は同値のため実質不変、保存前に統一）。
@@ -229,7 +277,7 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	protected override Tran99Meisai CreateNewMeisai(int no) => new() { No = no, Kubun = CurrentEdit.Kubun };
 
 	[RelayCommand]
-	void DoInputBarcode() {
+	async Task DoInputBarcode() {
 		var win = new Views.Sub.InputBarcodeView();
 		if (win.DataContext is not InputBarcodeViewModel vm) return;
 		// 上代一括変更の適用価格を引くための対象軸（本部売上なので本部売上用・当該得意先・伝票日付）
@@ -238,10 +286,10 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		vm.JodaiDay = CurrentEdit.DenDay;
 		if (ClientLib.ShowDialogView(win, this) != true) return;
 
-		ApplyBarcodeMeisai(vm.CreateMeisaiRows(CurrentEdit.Kubun));
+		await ApplyBarcodeMeisai(vm.CreateMeisaiRows(CurrentEdit.Kubun));
 	}
 
-	void ApplyBarcodeMeisai(IEnumerable<Tran99Meisai> rows) {
+	async Task ApplyBarcodeMeisai(IEnumerable<Tran99Meisai> rows) {
 		var nextNo = EditMeisai.Count > 0 ? EditMeisai.Max(m => m.No) + 1 : 1;
 		foreach (var row in rows) {
 			var existing = EditMeisai.FirstOrDefault(m =>
@@ -260,11 +308,14 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 			EditMeisai.Add(row);
 			SelectedMeisai = row;
 		}
-		UpdateTotals();
+		// InputBarcodeRow.ToMeisai は Id_Tax を持たず、値を詰めてから購読を張るため
+		// OnMeisaiPropertyChanged 経由の税区分解決にも乗らない。ここで全行を引き直す
+		// （数量を加算しただけの既存行も同じ1回で正しくなる）。内部で UpdateTotals まで行う。
+		await RecalcAllMeisaiTaxAsync();
 	}
 
 	[RelayCommand]
-	void DoInputShohinColSiz() {
+	async Task DoInputShohinColSiz() {
 		if (SelectedMeisai == null) {
 			MessageEx.ShowWarningDialog("明細行を選択してください", owner: ClientLib.GetActiveView(this));
 			return;
@@ -279,10 +330,10 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		vm.SetParam(SelectedMeisai.Id_Shohin);
 		if (ClientLib.ShowDialogView(win, this) != true) return;
 
-		ApplyShohinColSizMeisai(vm.GetResults());
+		await ApplyShohinColSizMeisai(vm.GetResults());
 	}
 
-	void ApplyShohinColSizMeisai(IEnumerable<InputShohinColSizRow> rows) {
+	async Task ApplyShohinColSizMeisai(IEnumerable<InputShohinColSizRow> rows) {
 		var results = rows.ToList();
 		if (results.Count == 0) return;
 
@@ -291,8 +342,8 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		var firstTarget = SelectedMeisai;
 
 		if (firstTarget != null && firstTarget.Id_Col == 0 && firstTarget.Id_Siz == 0) {
+			// firstTarget は EditMeisai の既存要素であり購読済み。ここで足すと二重購読になる
 			FillMeisaiFromColSizRow(firstTarget, firstResult);
-			firstTarget.PropertyChanged += OnMeisaiPropertyChanged;
 			SelectedMeisai = firstTarget;
 			results = results.Skip(1).ToList();
 		}
@@ -314,7 +365,9 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 			SelectedMeisai = row;
 		}
 
-		UpdateTotals();
+		// 展開行は Id_Tax を持たず、Su/Kingaku も購読を張る前に確定するため税区分解決に乗らない。
+		// ここで全行を引き直す。内部で UpdateTotals まで行う。
+		await RecalcAllMeisaiTaxAsync();
 	}
 
 	static void FillMeisaiFromColSizRow(Tran99Meisai meisai, InputShohinColSizRow row) {
@@ -349,6 +402,9 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 			// 得意先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
 			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
 		}
+		// 税計算単位・端数処理が変われば税額が変わる。差し替え後の値がたまたま同値だと
+		// PropertyChanged が出ずヘッダが古いままになるため、ここで明示的に引き直す。
+		UpdateHeaderTotals();
 	}
 
 	[RelayCommand]
@@ -368,7 +424,7 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	}
 
 	[RelayCommand]
-	void DoSelectShohin(Tran99Meisai? meisai) {
+	async Task DoSelectShohin(Tran99Meisai? meisai) {
 		if (meisai != null) SelectedMeisai = meisai;
 		if (SelectedMeisai == null) return;
 		var shohin = ShowShohinSelectDialog();
@@ -386,6 +442,8 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		SelectedMeisai.Tanka = shohin.TankaJodai;
 		SelectedMeisai.Jodai = shohin.TankaJodai;
 		SelectedMeisai.Gedai = shohin.TankaGenka;
+		// 同じ商品を選び直すと Id_Shohin が同値で PropertyChanged が出ないため、明示的に引き直す
+		await RecalcMeisaiTaxAsync(SelectedMeisai, updateTotals: true);
 	}
 
 	MasterShohin? ShowShohinSelectDialog() {
