@@ -1196,10 +1196,10 @@ function OnFetch() {
 			<decode datatype="string" format="S0.4&quot;”N&quot;S4.2&quot;ŒŽ&quot;S6.2&quot;“ú&quot;"/>
 			<font face="‚l‚r –¾’©" size="110"/>
 		</text>
-		<image id="Img01" relative="0">
+		<image id="Img01">
 			<position x="140" y="20" width="20" height="23"/>
 			<color transparent="1"/>
-			<data calctype="item" datasrc="item61"/>
+			<data calctype="static">data_kakuin.jpg</data>
 		</image>
 		<text id="Txt131">
 			<position x="8" y="263" width="29" height="4"/>
