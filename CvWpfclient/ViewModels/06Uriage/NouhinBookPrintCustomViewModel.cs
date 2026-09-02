@@ -8,7 +8,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// SQL を二重に持つと片方だけ直して食い違うので、NouhinBookPrintViewModel を継承して
 /// FormFileName のみ差し替える。
 /// </summary>
-public partial class NouhinBookPrintCustomViewModel : NouhinBookPrintViewModel {
+public partial class NouhinBookPrintCustomViewModel : NouhinBookPrintLegacyViewModel {
 	protected override string ReportTitle => "納品書印刷(専用伝票)";
 	protected override string FormFileName => "NouhinBookPrintCustom.qfm";
 }

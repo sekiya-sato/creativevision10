@@ -19,7 +19,8 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// 印刷実行では自動で立てず、PDFを確認したうえで「発行済みにする」を明示的に実行する運用にしている。
 /// 印刷が失敗・中断した伝票を発行済みにしてしまうと、未発行チェックリストから漏れて追跡できなくなるため。
 /// </summary>
-public partial class NouhinBookPrintViewModel : Helpers.BaseReportViewModel {
+/// <summary>専用伝票の互換出力用。標準納品書とは列定義が異なるため分離する。</summary>
+public partial class NouhinBookPrintLegacyViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "納品書印刷";
 	protected override string FormFileName => "NouhinBookPrint.qfm";
 

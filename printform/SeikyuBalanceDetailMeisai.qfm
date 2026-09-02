@@ -1341,28 +1341,28 @@ function OnPageChange() {
 			<font face="ÇlÇr ñæí©" size="100"/>
 		</text>
 		<text id="Txt83">
-			<position x="81" y="266" width="15" height="4"/>
+			<position x="52" y="266" width="15" height="4"/>
 			<color transparent="1"/>
 			<data calctype="static">Ç®êUçûêÊÅF</data>
 			<decode datatype="string" format=""/>
 			<font face="ÇlÇr ñæí©" size="100"/>
 		</text>
 		<text id="êUçûêÊÇP">
-			<position x="96" y="266" width="60" height="4"/>
+			<position x="67" y="266" width="92" height="4"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item34"/>
 			<decode datatype="string" format=""/>
 			<font face="ÇlÇr ñæí©" size="100"/>
 		</text>
 		<text id="êUçûêÊ2">
-			<position x="96" y="270" width="60" height="4"/>
+			<position x="67" y="270" width="92" height="4"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item35"/>
 			<decode datatype="string" format=""/>
 			<font face="ÇlÇr ñæí©" size="100"/>
 		</text>
 		<text id="êUçûêÊ3">
-			<position x="96" y="274" width="60" height="4"/>
+			<position x="67" y="274" width="92" height="4"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item36"/>
 			<decode datatype="string" format=""/>

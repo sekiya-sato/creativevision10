@@ -1,3 +1,22 @@
+## [2026-09-02] 納品書印刷 R2適格返還請求書
+
+### Agent
+- Sekiya Sato Codex
+
+### 実施内容
+- 標準納品書印刷を、取引区分（全部/売上/返品/値引）と伝票タイプ（常に1 自社伝票）の選択を持つ R2 帳票画面へ再設計した。
+- 印刷実行時に対象 `Tran00Uriage` を取得し、楽観排他付き `PartialUpdateParam` で `IsPrint` だけを一括更新してから、取得済み伝票 Id のみを PDF 出力するようにした。
+- 明細の税率スナップショットを使用し、請求単位伝票は印刷専用に税率別税額を再計算した。税率が未設定・想定外、または明細なしの伝票は発行済みにせず中止する。
+- 確定済みの `CVPNH_01_01_R2.qfm` を内容変更なし・cp932のまま `printform/NouhinBookPrint.qfm` へ配置した。
+- 専用伝票帳票は旧16列形式を保つため、互換 ViewModel を分離して継承先を切り替えた。
+
+### 確認
+- `cv-sqlite` で返品伝票を対象に、66列SQL、伝票時点名称、登録番号、10%返還対価・税額を確認した。
+- QFMは cp932/XML、CRLF、66 item、コピー元・先 SHA-256一致を確認した。
+- `C:\\gitroot\\UT\\vscmd.bat dotnet build CvWpfclient\\CvWpfclient.csproj --no-restore`：警告0・エラー0。
+
+---
+
 ## [2026-09-02] R4 POS売上消費税計算
 
 ### Agent
