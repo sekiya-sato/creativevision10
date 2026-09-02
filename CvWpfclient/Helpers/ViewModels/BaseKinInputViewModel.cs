@@ -187,7 +187,7 @@ public abstract partial class BaseKinInputViewModel<TDen> : BasePlainLightMenteV
 	void DoSelectKin(TranKinMeisai? meisai) {
 		if (meisai != null) SelectedMeisai = meisai;
 		if (SelectedMeisai == null) return;
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='KIN'", "Code", startPos: SelectedMeisai.Id_Kin);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunKin}'", "Code", startPos: SelectedMeisai.Id_Kin);
 		if (meisho == null) return;
 		SelectedMeisai.Id_Kin = meisho.Id;
 		SelectedMeisai.Code_Kin = meisho.Code ?? string.Empty;

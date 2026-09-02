@@ -868,7 +868,7 @@ WHERE SumMonth <= @0;
 		var tax3 = FinalTaxExprSql("m.SlipTax3", "m.BillingRaw3", "IFNULL(mt.TaxRounding, 0)");
 		var sql = @$"
 WITH kinmap AS (
-	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
+	SELECT Id, Code FROM MasterMeisho WHERE Kubun = '{MasterMeisho.KubunKin}'
 ),
 movements AS (
 	SELECT
@@ -1124,7 +1124,7 @@ WHERE DenDay = @1
 ";
 				var sql = $@"
 WITH kinmap AS (
-	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
+	SELECT Id, Code FROM MasterMeisho WHERE Kubun = '{MasterMeisho.KubunKin}'
 ),
 sales AS (
 	-- Uriage/Henpin/Nebiki/Sonotaは税抜(KingakuTotal)で積む。t.Totalは税込(|KingakuTotal|+Tax1+Tax2+Tax3)であり、
@@ -1300,7 +1300,7 @@ WHERE DenDay = @1
 	);";
 				var sql = $@"
 WITH kinmap AS (
-	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
+	SELECT Id, Code FROM MasterMeisho WHERE Kubun = '{MasterMeisho.KubunKin}'
 ),
 purchases AS (
 	-- Tran02Material（生地・付属仕入）を合算する。区分99（その他）は仕入ではなく消費税(Tax1)へ全額を積む点が
@@ -1471,7 +1471,7 @@ FROM calculated AS c;
 		var tax3 = FinalTaxExprSql("m.SlipTax3", "m.BillingRaw3", "IFNULL(ms.TaxRounding, 0)");
 		var sql = @$"
 WITH kinmap AS (
-	SELECT Id, Code FROM MasterMeisho WHERE Kubun = 'KIN'
+	SELECT Id, Code FROM MasterMeisho WHERE Kubun = '{MasterMeisho.KubunKin}'
 ),
 movements AS (
 	SELECT

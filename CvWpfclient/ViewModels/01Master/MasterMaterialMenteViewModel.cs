@@ -64,7 +64,7 @@ from MasterMaterial {query.AddWhereOrder()}
 
 	[RelayCommand]
 	void DoSelectKubun() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='KIJ'", "Code", startPos: CurrentEdit.Id_Kubun);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunKiji}'", "Code", startPos: CurrentEdit.Id_Kubun);
 		if (meisho == null) return;
 		CurrentEdit.Id_Kubun = meisho.Id;
 		CurrentEdit.VKubun = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };

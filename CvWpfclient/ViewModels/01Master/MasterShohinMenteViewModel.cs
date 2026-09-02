@@ -306,7 +306,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	[RelayCommand]
 	void DoSelectMaker() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='MKR'", "Code", startPos: CurrentEdit.Id_Maker);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunMaker}'", "Code", startPos: CurrentEdit.Id_Maker);
 		if (meisho == null) return;
 		CurrentEdit.Id_Maker = meisho.Id;
 		CurrentEdit.VMaker = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
@@ -314,7 +314,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	[RelayCommand]
 	void DoSelectTenji() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='TNJ'", "Code", startPos: CurrentEdit.Id_Tenji);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunTenji}'", "Code", startPos: CurrentEdit.Id_Tenji);
 		if (meisho == null) return;
 		CurrentEdit.Id_Tenji = meisho.Id;
 		CurrentEdit.VTenji = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
@@ -322,7 +322,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	[RelayCommand]
 	void DoSelectSeason() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='SZN'", "Code", startPos: CurrentEdit.Id_Season);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunSeason}'", "Code", startPos: CurrentEdit.Id_Season);
 		if (meisho == null) return;
 		CurrentEdit.Id_Season = meisho.Id;
 		CurrentEdit.VSeason = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
@@ -330,7 +330,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	[RelayCommand]
 	void DoSelectMaterial() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='SZI'", "Code", startPos: CurrentEdit.Id_Material);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunMaterial}'", "Code", startPos: CurrentEdit.Id_Material);
 		if (meisho == null) return;
 		CurrentEdit.Id_Material = meisho.Id;
 		CurrentEdit.VMaterial = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
@@ -338,7 +338,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	[RelayCommand]
 	void DoSelectCountry() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='GEN'", "Code", startPos: CurrentEdit.Id_Country);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunCountry}'", "Code", startPos: CurrentEdit.Id_Country);
 		if (meisho == null) return;
 		CurrentEdit.Id_Country = meisho.Id;
 		CurrentEdit.VCountry = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };

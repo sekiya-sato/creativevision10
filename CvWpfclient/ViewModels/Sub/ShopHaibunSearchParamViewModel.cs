@@ -83,10 +83,10 @@ public partial class ShopHaibunSearchParamViewModel : BaseViewModel {
 	void SelectItemTo() => SelectMeisho(MasterMeisho.KubunItem, code => Parameter = Parameter with { ItemTo = code });
 
 	[RelayCommand]
-	void SelectSeasonFrom() => SelectMeisho("SZN", code => Parameter = Parameter with { SeasonFrom = code });
+	void SelectSeasonFrom() => SelectMeisho(MasterMeisho.KubunSeason, code => Parameter = Parameter with { SeasonFrom = code });
 
 	[RelayCommand]
-	void SelectSeasonTo() => SelectMeisho("SZN", code => Parameter = Parameter with { SeasonTo = code });
+	void SelectSeasonTo() => SelectMeisho(MasterMeisho.KubunSeason, code => Parameter = Parameter with { SeasonTo = code });
 
 	void SelectMeisho(string kubun, Action<string> setCode) {
 		var meisho = ShowSelect<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{kubun}'", "Code");

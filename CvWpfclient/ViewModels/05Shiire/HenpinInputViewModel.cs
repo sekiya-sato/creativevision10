@@ -235,7 +235,7 @@ ORDER BY Code";
 SELECT s.Id, s.Vdc, s.Vdu, s.Id_Soko, s.Id_Shohin, s.Id_Col, s.Id_Siz, s.Su
 FROM SummaryRealStock s
      INNER JOIN MasterShohin sh ON sh.Id = s.Id_Shohin
-     INNER JOIN MasterMeisho mk ON mk.Id = sh.Id_Maker AND mk.Kubun = 'MKR'
+     INNER JOIN MasterMeisho mk ON mk.Id = sh.Id_Maker AND mk.Kubun = '{MasterMeisho.KubunMaker}'
 WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
   AND mk.Code = {AddSqlParameter(parameters, shiireCode)}
   AND s.Su > 0";

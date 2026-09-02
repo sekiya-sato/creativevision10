@@ -218,7 +218,7 @@ left join DerivedShohinColSiz D on D.Id_Shohin = S.Id
 	void SelectTenjiIds() {
 		var selected = ShowMultiSelectDialog<MasterMeisho>(
 			typeof(MasterMeisho),
-			"Kubun='TNJ'",
+			$"Kubun='{MasterMeisho.KubunTenji}'",
 			"Code",
 			TenjiIds,
 			TenjiIds.FirstOrDefault());

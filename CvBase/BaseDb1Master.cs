@@ -74,7 +74,7 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("部門")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "BMN")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunBumon)]
 	[Comment("部門Id")]
 	public partial long Id_Bumon { get; set; }
 	/// <summary>
@@ -440,7 +440,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("展示会CD")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "TNJ")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunTenji)]
 	[Comment("展示会")]
 	public partial long Id_Tenji { get; set; }
 	/// <summary>
@@ -456,7 +456,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("メーカーCD")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "MKR")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunMaker)]
 	[Comment("メーカー")]
 	public partial long Id_Maker { get; set; }
 	/// <summary>
@@ -472,7 +472,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("シーズンCD")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "SZN")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunSeason)]
 	[Comment("シーズン")]
 	public partial long Id_Season { get; set; }
 	/// <summary>
@@ -488,7 +488,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("素材CD")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "SZI")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunMaterial)]
 	[Comment("素材")]
 	public partial long Id_Material { get; set; }
 	/// <summary>
@@ -504,7 +504,7 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("原産国CD")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "GEN")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunCountry)]
 	[Comment("原産国")]
 	public partial long Id_Country { get; set; }
 	/// <summary>
@@ -858,7 +858,7 @@ public sealed partial class MasterMaterial : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("区分CD")]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "KIJ")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunKiji)]
 	[Comment("区分")]
 	public partial long Id_Kubun { get; set; }
 	/// <summary>

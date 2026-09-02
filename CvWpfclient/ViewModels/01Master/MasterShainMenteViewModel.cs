@@ -133,7 +133,7 @@ from MasterShain M {query.AddWhereOrder()}
 
 	[RelayCommand]
 	void DoSelectBumon() {
-		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='BMN'", "Code", startPos: CurrentEdit.Id_Bumon);
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBumon}'", "Code", startPos: CurrentEdit.Id_Bumon);
 		CurrentEdit.Id_Bumon = meisho?.Id ?? 0;
 		CurrentEdit.VBumon = new() { Sid = meisho?.Id ?? 0, Cd = meisho?.Code ?? "", Mei = meisho?.Name ?? "" };
 	}

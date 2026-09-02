@@ -59,7 +59,7 @@ public partial class TantoTenjiJuchuGoukeiTableViewModel : Helpers.BaseReportVie
 
 	/// <summary>展示会選択ダイアログ(MasterMeisho の TNJ 区分)。</summary>
 	string? SelectTenjiCode() =>
-		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='TNJ'", "Code")?.Code;
+		ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunTenji}'", "Code")?.Code;
 
 	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
 		if (!TryParseDate(DenDayFrom, out var from) || !TryParseDate(DenDayTo, out var to)) {
@@ -110,7 +110,7 @@ agg AS (
         SUM(m.su * m.jodai)     AS jodaiTotal
     FROM meisai m
     LEFT JOIN MasterShain sn  ON sn.Id = m.idShain
-    LEFT JOIN MasterMeisho tj ON tj.Id = m.idTenji AND tj.Kubun = 'TNJ'
+    LEFT JOIN MasterMeisho tj ON tj.Id = m.idTenji AND tj.Kubun = '{MasterMeisho.KubunTenji}'
     WHERE 1=1 {shainWhere}{tenjiWhere}{tenjiFilter}
     GROUP BY shainCode, shainName, {tenjiCode}, {tenjiName}
 )

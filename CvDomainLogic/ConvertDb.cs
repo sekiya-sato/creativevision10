@@ -282,7 +282,7 @@ public partial class ConvertDb {
 	public int CnvMasterShain(bool isInit = true) {
 		const string sql = "select * from HC$master_shain where 社員CD>'.' order by 社員CD"; // 部門 'BMN' 社員分類 'E01'-'E10'
 		return ConvertMaster(sql, isInit, rec => {
-			var bumonMeisho = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["BMN", getString(rec, "部門", ".")]);
+			var bumonMeisho = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [MasterMeisho.KubunBumon, getString(rec, "部門", ".")]);
 			var item = new MasterShain() {
 				Code = getString(rec, "社員CD"),
 				Name = getString(rec, "名前"),
@@ -485,9 +485,9 @@ order by k.顧客CD
 					Hinshitu = getString(r, "品質"),
 					Percent = getDataInt(r, "パーセント"),
 				}).OrderBy(x => x.No).ToList();
-			var meisho = _toDb.Fetch<MasterMeisho>("""
-where (Kubun ='BRD' and Code =@0) OR (Kubun ='ITM' and Code =@1) OR (Kubun ='TNJ' and Code =@2)
-OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' and Code =@5) OR (Kubun ='MKR' and Code =@6)
+			var meisho = _toDb.Fetch<MasterMeisho>($"""
+where (Kubun ='{MasterMeisho.KubunBrand}' and Code =@0) OR (Kubun ='{MasterMeisho.KubunItem}' and Code =@1) OR (Kubun ='{MasterMeisho.KubunTenji}' and Code =@2)
+OR (Kubun ='{MasterMeisho.KubunSeason}' and Code =@3) OR (Kubun ='{MasterMeisho.KubunMaterial}' and Code =@4) OR (Kubun ='{MasterMeisho.KubunCountry}' and Code =@5) OR (Kubun ='{MasterMeisho.KubunMaker}' and Code =@6)
 """
 			, [getString(rec, "ブランドCD"),
 				getString(rec, "アイテムCD"),
@@ -529,15 +529,15 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 				item.Id_Brand = item.VBrand.Sid;
 				item.VItem = new(meisho.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem) ?? new());
 				item.Id_Item = item.VItem.Sid;
-				item.VTenji = new(meisho.FirstOrDefault(c => c.Kubun == "TNJ") ?? new());
+				item.VTenji = new(meisho.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunTenji) ?? new());
 				item.Id_Tenji = item.VTenji.Sid;
-				item.VSeason = new(meisho.FirstOrDefault(c => c.Kubun == "SZN") ?? new());
+				item.VSeason = new(meisho.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunSeason) ?? new());
 				item.Id_Season = item.VSeason.Sid;
-				item.VMaterial = new(meisho.FirstOrDefault(c => c.Kubun == "SZI") ?? new());
+				item.VMaterial = new(meisho.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunMaterial) ?? new());
 				item.Id_Material = item.VMaterial.Sid;
-				item.VCountry = new(meisho.FirstOrDefault(c => c.Kubun == "GEN") ?? new());
+				item.VCountry = new(meisho.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunCountry) ?? new());
 				item.Id_Country = item.VCountry.Sid;
-				item.VMaker = new(meisho.FirstOrDefault(c => c.Kubun == "MKR") ?? new());
+				item.VMaker = new(meisho.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunMaker) ?? new());
 				item.Id_Maker = item.VMaker.Sid;
 			}
 			var meiList = ConverterGeneralMeisho(10, "B", rec);
@@ -680,7 +680,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 		var cnt = ConvertMaster(sql, isInit, rec => {
 			var oldKubun = getString(rec, "区分CD");
 			var newKubunCode = _kubunShkijiMap.GetValueOrDefault(oldKubun, "99");
-			var kubun = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["KIJ", newKubunCode]);
+			var kubun = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [MasterMeisho.KubunKiji, newKubunCode]);
 			var shiire = _toDb.FirstOrDefault<MasterShiire>("where Code=@0", getString(rec, "仕入先CD"));
 			var item = new MasterMaterial() {
 				Code = getString(rec, "商品CD"),
@@ -709,7 +709,7 @@ OR (Kubun ='SZN' and Code =@3) OR (Kubun ='SZI' and Code =@4) OR (Kubun ='GEN' a
 	/// </para>
 	/// </summary>
 	private int InsertMaterialPlaceholders() {
-		var kubunOther = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", ["KIJ", "99"]);
+		var kubunOther = _toDb.FirstOrDefault<MasterMeisho>("where Kubun=@0 and Code=@1", [MasterMeisho.KubunKiji, "99"]);
 		var vKubun = new CodeNameView(kubunOther ?? new());
 		var placeholders = new List<MasterMaterial> {
 			new() { Code = "000030", Name = "値引き", Id_Kubun = kubunOther?.Id ?? 0, VKubun = vKubun, Id_Tax = 0 },

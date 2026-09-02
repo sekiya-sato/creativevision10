@@ -53,7 +53,7 @@ public partial class CategoryShopSalesReportViewModel : Helpers.BaseReportViewMo
 
 	(string Kubun, string IdColumn) Category =>
 		IsByItem ? (MasterMeisho.KubunItem, "sh.Id_Item")
-		: IsBySeason ? ("SZN", "sh.Id_Season")
+		: IsBySeason ? (MasterMeisho.KubunSeason, "sh.Id_Season")
 		: (MasterMeisho.KubunBrand, "sh.Id_Brand");
 
 	[RelayCommand]

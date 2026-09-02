@@ -191,6 +191,30 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// <summary>調整理由区分(CvDomainLogic.ChoseiRiyu参照)</summary>
 	[Comment("調整理由区分")]
 	public const string KubunChoseiRiyu = "CHR";
+	/// <summary>部門区分</summary>
+	[Comment("部門区分")]
+	public const string KubunBumon = "BMN";
+	/// <summary>展示会区分</summary>
+	[Comment("展示会区分")]
+	public const string KubunTenji = "TNJ";
+	/// <summary>メーカー区分</summary>
+	[Comment("メーカー区分")]
+	public const string KubunMaker = "MKR";
+	/// <summary>シーズン区分</summary>
+	[Comment("シーズン区分")]
+	public const string KubunSeason = "SZN";
+	/// <summary>素材区分</summary>
+	[Comment("素材区分")]
+	public const string KubunMaterial = "SZI";
+	/// <summary>原産国区分</summary>
+	[Comment("原産国区分")]
+	public const string KubunCountry = "GEN";
+	/// <summary>区分(生地/付属等)</summary>
+	[Comment("区分(生地/付属等)")]
+	public const string KubunKiji = "KIJ";
+	/// <summary>入金/支払方法区分</summary>
+	[Comment("入金/支払方法区分")]
+	public const string KubunKin = "KIN";
 	/// <summary>
 	/// 区分
 	/// </summary>

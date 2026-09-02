@@ -1397,12 +1397,12 @@ public class SummaryKakeDbTests {
 	/// </summary>
 	private static void InsertKinMaster(ExDatabaseSqlite db) {
 		db.CreateTable(typeof(MasterMeisho), true, false);
-		InsertMeisho(db, KinCash, "KIN", "01", "現金入金");
-		InsertMeisho(db, KinFee, "KIN", "02", "振込手数料");
-		InsertMeisho(db, KinDensai, "KIN", "03", "手形入金");
-		InsertMeisho(db, KinOffset, "KIN", "04", "相殺入金");
-		InsertMeisho(db, KinOther, "KIN", "05", "その他入金");
-		InsertMeisho(db, KinUnknown, "KIN", "06", "未知入金");
+		InsertMeisho(db, KinCash, MasterMeisho.KubunKin, "01", "現金入金");
+		InsertMeisho(db, KinFee, MasterMeisho.KubunKin, "02", "振込手数料");
+		InsertMeisho(db, KinDensai, MasterMeisho.KubunKin, "03", "手形入金");
+		InsertMeisho(db, KinOffset, MasterMeisho.KubunKin, "04", "相殺入金");
+		InsertMeisho(db, KinOther, MasterMeisho.KubunKin, "05", "その他入金");
+		InsertMeisho(db, KinUnknown, MasterMeisho.KubunKin, "06", "未知入金");
 		// 同じ Code を持つ別区分に引っ張られないことを担保する
 		InsertMeisho(db, 201, MasterMeisho.KubunItem, "01", "別区分の01");
 	}

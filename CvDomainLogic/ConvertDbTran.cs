@@ -747,7 +747,7 @@ WHERE EXISTS (
 	MasterMeisho? getKinMeisho(string oldCode) {
 		if (!KinKubunCodeMap.TryGetValue(oldCode, out var kinCode))
 			return null;
-		return getMeisho("KIN", kinCode);
+		return getMeisho(MasterMeisho.KubunKin, kinCode);
 	}
 	/// <summary>
 	/// 旧「取引区分」(T18)から CHR区分の <see cref="MasterMeisho"/> Id を引く。

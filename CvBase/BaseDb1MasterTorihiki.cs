@@ -140,7 +140,7 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 入金/支払方法
 	/// </summary>
 	[ObservableProperty]
-	[ForeignKey(nameof(MasterMeisho), meishoKubun: "KIN")]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunKin)]
 	[Comment("入金/支払方法")]
 	public partial long Id_PayMethod { get; set; }
 	/// <summary>
