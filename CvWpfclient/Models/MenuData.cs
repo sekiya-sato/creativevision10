@@ -376,10 +376,6 @@ public partial class MenuData : ObservableObject {
 				new("棚卸開始処理", typeof(Views._31Monthly.StockTakeInitiationView), addInfo:"棚卸年月末時点の帳簿在庫を保存し棚卸中に動かないようにする。差異調査後は再実行する"),
 				new("棚卸確定処理", typeof(Views._31Monthly.StockTakeFinalizationView), addInfo:"実棚数と帳簿在庫の差を在庫調整伝票(Tran61Chosei)にして在庫へ反映する。再確定可"),
 			])),
-			new("▲ 再更新 ----", new([
-				new("在庫・掛再更新", typeof(Views._31Monthly.StockKakeUpdateView), addInfo:"在庫･売掛･買掛を取引明細から再集計する"),
-				new("消費税再計算", typeof(Views._31Monthly.TaxRecalculationView), addInfo:"準備中"),
-			])),
 			new("▲ 原価・評価 ----", new([
 				new("原価変更登録", typeof(Views._01Master.GenkaChangeEntryView), addInfo:"準備中 他のがだいたい終わってから実装する"),
 				new("諸掛更新", typeof(Views._31Monthly.SundryChargesUpdateView), addInfo:"準備中"),
@@ -392,8 +388,6 @@ public partial class MenuData : ObservableObject {
 				new("積送中クリア", typeof(Views._31Monthly.InTransitClearView), addInfo:"準備中"),
 				new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteView), addInfo:"準備中"),
 				new("残高登録処理", typeof(Views._31Monthly.BalanceRegistrationView), addInfo:"期首の売掛/請求/買掛/支払残をテンプレートCSVで投入。期首前の年月で登録し再計算から凍結される"),
-				/* データ整理更新 Views._31Monthly.DataCleanupUpdateView 整理対象のデータが未確定 旧システムでは増えた完了済データを削除し縮小するために使用 */
-				new("一時処理用(管理者用)", typeof(Views._31Monthly.TemporaryProcessingView), addInfo:"準備中 データ整理更新などが必要であればここに入れる"),
 			])),
 		])),
 		/* ================================================================
@@ -457,6 +451,7 @@ public partial class MenuData : ObservableObject {
 				new("DB定義書出力", typeof(Views._00System.SysTableSpecView), addInfo:"選択テーブルのDB定義書を印刷"),
 				new("旧DBからの変換処理", typeof(Views._00System.ConvertDbView), addInfo:"旧OracleDBからのデータ変換 サーバ側にOracle接続定義が必要"),
 				new("旧DBからの選択変換処理", typeof(Views._00System.ConvertSelectedView), addInfo:"旧OracleDBからの選択変換処理 サーバ側にOracle接続定義が必要"),
+				new("在庫・掛再更新", typeof(Views._00System.StockKakeUpdateView), addInfo:"在庫･売掛･買掛を取引明細から再集計する"),
 				new("管理者用システム処理", typeof(Views._00System.SysExecMiscView), addInfo:"管理者用の各種システム処理"),
 			])),
 		])),

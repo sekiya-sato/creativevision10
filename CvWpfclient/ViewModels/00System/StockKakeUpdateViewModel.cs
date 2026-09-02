@@ -10,7 +10,7 @@ using System.Collections;
 using System.Globalization;
 using System.Windows;
 
-namespace CvWpfclient.ViewModels._31Monthly;
+namespace CvWpfclient.ViewModels._00System;
 
 public partial class StockKakeUpdateViewModel : BaseViewModel {
 	private sealed record RebuildRequestSnapshot(string UpdateTarget, string YearMonthFrom, string YearMonthTo, IReadOnlyList<string> TargetMonths);
