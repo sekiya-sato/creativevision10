@@ -303,7 +303,7 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 
 			row.No = nextNo++;
 			row.Kubun = CurrentEdit.Kubun;
-			row.Kingaku = row.Su * row.Tanka;
+			row.Kingaku = (long)row.Su * row.Tanka;
 			row.PropertyChanged += OnMeisaiPropertyChanged;
 			EditMeisai.Add(row);
 			SelectedMeisai = row;
@@ -378,7 +378,7 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		meisai.Code_Siz = row.Source.Code_Siz;
 		meisai.Mei_Siz = row.Source.Mei_Siz;
 		meisai.Su = row.Su;
-		meisai.Kingaku = meisai.Su * meisai.Tanka;
+		meisai.Kingaku = (long)meisai.Su * meisai.Tanka;
 		meisai.JanCode = row.Source.Jan1;
 	}
 

@@ -162,7 +162,7 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 			TaxRateResolver.CreateRateResolver(sysman, denDay),
 			EnumTaxCalcUnit.Slip,
 			rounding);
-		var total = checked(Math.Abs((long)kingakuTotal) + totals.TaxTotal);
+		var total = checked(Math.Abs(kingakuTotal) + totals.TaxTotal);
 		var paid = checked(request.Payment.CashAmount + request.Payment.CardAmount + request.Payment.OtherAmount);
 		if (paid < total) throw new InvalidOperationException("お預り金額が合計金額に不足しています。");
 		var now = DateTime.UtcNow.Ticks;
@@ -180,8 +180,8 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 			Jmeisai = lines,
 			SuTotal = lines.Sum(line => line.Su),
 			KingakuTotal = kingakuTotal,
-			JodaiTotal = lines.Sum(line => line.Jodai),
-			GedaiTotal = lines.Sum(line => line.Gedai),
+			JodaiTotal = lines.Sum(line => (long)line.Su * line.Jodai),
+			GedaiTotal = lines.Sum(line => (long)line.Su * line.Gedai),
 			TaxRounding = store.TaxRounding,
 			TaxableAmount1 = totals.TaxableAmount1,
 			TaxableAmount2 = totals.TaxableAmount2,
@@ -204,7 +204,7 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 		var product = FindRequired<MasterShohin>(line.ProductId, "商品");
 		var lineStaff = line.StaffId > 0 ? FindRequired<MasterShain>(line.StaffId, "明細担当者") : headerStaff;
 		var tanka = ResolveJodai(product, storeId, denDay);
-		return new Tran99Meisai { No = no, Kubun = line.Kubun, Id_Shohin = product.Id, Code_Shohin = product.Code, Mei_Shohin = product.Name, JanCode = line.Barcode, Id_Col = line.ColorId, Code_Col = line.ColorCode, Mei_Col = line.ColorName, Id_Siz = line.SizeId, Code_Siz = line.SizeCode, Mei_Siz = line.SizeName, Su = line.Quantity, Tanka = tanka, Kingaku = checked(line.Quantity * tanka), Jodai = tanka, Gedai = product.TankaGenka, Id_Shain = lineStaff.Id, Code_Shain = lineStaff.Code, Mei_Shain = lineStaff.Name, Id_Tax = product.Id_Tax };
+		return new Tran99Meisai { No = no, Kubun = line.Kubun, Id_Shohin = product.Id, Code_Shohin = product.Code, Mei_Shohin = product.Name, JanCode = line.Barcode, Id_Col = line.ColorId, Code_Col = line.ColorCode, Mei_Col = line.ColorName, Id_Siz = line.SizeId, Code_Siz = line.SizeCode, Mei_Siz = line.SizeName, Su = line.Quantity, Tanka = tanka, Kingaku = checked((long)line.Quantity * tanka), Jodai = tanka, Gedai = product.TankaGenka, Id_Shain = lineStaff.Id, Code_Shain = lineStaff.Code, Mei_Shain = lineStaff.Name, Id_Tax = product.Id_Tax };
 	}
 
 	/// <summary>

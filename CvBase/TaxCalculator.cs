@@ -22,7 +22,7 @@ public interface ITaxMeisaiLine {
 
 /// <summary>
 /// <see cref="Tran99Meisai"/> の <see cref="ITaxMeisaiLine"/> 実装。
-/// <c>Kingaku</c>/<c>Tax</c> が int のため、long⇔int の変換をここで吸収する。
+/// <c>Kingaku</c>/<c>Tax</c> ともに long のため、そのまま委譲する。
 /// </summary>
 public sealed partial class Tran99Meisai : ITaxMeisaiLine {
 	long ITaxMeisaiLine.TaxKingaku => Kingaku;
@@ -36,7 +36,7 @@ public sealed partial class Tran99Meisai : ITaxMeisaiLine {
 	}
 	long ITaxMeisaiLine.TaxAmount {
 		get => Tax;
-		set => Tax = (int)value;
+		set => Tax = value;
 	}
 }
 

@@ -118,7 +118,7 @@ int Mixed() {
 	// 変わった際、ヘッダのTax1/2/3へそのまま代入できるようタプル化された)。本ツールはヘッダTax1/2/3の合計と
 	// 明細ごとの内訳を突合するため、まず合計(headerTax)を出す。
 	var headerTaxByGroup = TranTaxRebuildDb.ApplyMeisaiTax(meisai, sysman, taxIdByShohin, DenDay);
-	var headerTax = (int)(headerTaxByGroup.Tax1 + headerTaxByGroup.Tax2 + headerTaxByGroup.Tax3);
+	var headerTax = (headerTaxByGroup.Tax1 + headerTaxByGroup.Tax2 + headerTaxByGroup.Tax3);
 	Console.WriteLine($"  Tax1(標準)={headerTaxByGroup.Tax1:N0} Tax2(軽減)={headerTaxByGroup.Tax2:N0} Tax3={headerTaxByGroup.Tax3:N0}");
 
 	Console.WriteLine($"{"No",3} {"Id_Shohin",10} {"Kingaku",9} {"Id_Tax",7} {"TaxRate",8} {"Tax",7}");
@@ -130,22 +130,22 @@ int Mixed() {
 	// 明細ごとの税率が商品の税区分どおりに分かれること
 	Check("明細1 税区分(軽減)", 2L, meisai[0].Id_Tax);
 	Check("明細1 税率", 8, meisai[0].TaxRate);
-	Check("明細1 税額 10000*8%", 800, meisai[0].Tax);
+	Check("明細1 税額 10000*8%", 800L, meisai[0].Tax);
 	Check("明細2 税率", 8, meisai[1].TaxRate);
-	Check("明細2 税額 1500*8%", 120, meisai[1].Tax);
+	Check("明細2 税額 1500*8%", 120L, meisai[1].Tax);
 	Check("明細3 税区分(標準)", 1L, meisai[2].Id_Tax);
 	Check("明細3 税率", 10, meisai[2].TaxRate);
-	Check("明細3 税額 6000*10%", 600, meisai[2].Tax);
+	Check("明細3 税額 6000*10%", 600L, meisai[2].Tax);
 	Check("明細4 商品なしは標準税率を既定", 1L, meisai[3].Id_Tax);
-	Check("明細4 税額 2000*10%", 200, meisai[3].Tax);
+	Check("明細4 税額 2000*10%", 200L, meisai[3].Tax);
 
 	// ヘッダは明細税額の合計
-	Check("ヘッダTax = 明細合計", 800 + 120 + 600 + 200, headerTax);
+	Check("ヘッダTax = 明細合計", 800L + 120 + 600 + 200, headerTax);
 	Check("ヘッダTax = Sum(明細Tax)", meisai.Sum(m => m.Tax), headerTax);
 
 	// 単一税率で一括計算した場合との差（軽減税率が効いていることの裏付け）
 	var kingakuTotal = meisai.Sum(m => m.Kingaku);
-	var flatTax = (int)Math.Round(Math.Abs(kingakuTotal) * 10 / 100.0);
+	var flatTax = (long)Math.Round(Math.Abs(kingakuTotal) * 10 / 100.0);
 	Console.WriteLine();
 	Console.WriteLine($"  参考: 全件10%一括なら {flatTax:N0} 円 → 明細別だと {headerTax:N0} 円（差 {headerTax - flatTax:N0} 円）");
 	if (headerTax == flatTax) {
@@ -160,7 +160,7 @@ int Mixed() {
 	var hikazeiMap = new Dictionary<long, long> { [37522] = 0 };
 	var hikazeiTax = TranTaxRebuildDb.ApplyMeisaiTax(hikazei, sysman, hikazeiMap, DenDay);
 	Check("非課税 税率", 0, hikazei[0].TaxRate);
-	Check("非課税 税額", 0, hikazei[0].Tax);
+	Check("非課税 税額", 0L, hikazei[0].Tax);
 	Check("非課税 ヘッダTax", 0L, hikazeiTax.Tax1 + hikazeiTax.Tax2 + hikazeiTax.Tax3);
 
 	// 税率切替日をまたぐか（Id=1 は 20191001 から 10%、それ以前は 8%）
@@ -177,7 +177,7 @@ int Mixed() {
 	Console.WriteLine("== 返品相当(金額が負)でも明細税額は正値 ==");
 	var henpin = new List<Tran99Meisai> { new() { No = 1, Id_Shohin = 37522, Su = -5, Tanka = 1000, Kingaku = -5000 } };
 	TranTaxRebuildDb.ApplyMeisaiTax(henpin, sysman, taxIdByShohin, DenDay);
-	Check("返品明細の税額(5000*8%の正値)", 400, henpin[0].Tax);
+	Check("返品明細の税額(5000*8%の正値)", 400L, henpin[0].Tax);
 
 	return fail;
 }

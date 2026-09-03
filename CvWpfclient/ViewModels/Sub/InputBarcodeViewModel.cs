@@ -270,7 +270,7 @@ public partial class InputBarcodeRow : ObservableObject {
 		Mei_Siz = MeiSiz,
 		Su = Su,
 		Tanka = Tanka,
-		Kingaku = Su * Tanka,
+		Kingaku = (long)Su * Tanka,
 		Jodai = Jodai,
 		Gedai = Gedai,
 	};

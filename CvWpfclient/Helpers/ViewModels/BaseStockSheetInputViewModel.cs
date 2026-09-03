@@ -90,7 +90,7 @@ public sealed partial class StockSheetRow : ObservableObject {
 		JanCode = JanCode,
 		Su = InputSu,
 		Tanka = TankaGenka,
-		Kingaku = InputSu * TankaGenka,
+		Kingaku = (long)InputSu * TankaGenka,
 		Jodai = TankaJodai,
 		Gedai = TankaGenka,
 	};
@@ -294,8 +294,8 @@ public abstract partial class BaseStockSheetInputViewModel<TDen> : BaseQueryView
 			den.Jmeisai = meisai;
 			den.SuTotal = meisai.Sum(m => m.Su);
 			den.KingakuTotal = meisai.Sum(m => m.Kingaku);
-			den.JodaiTotal = meisai.Sum(m => m.Su * m.Jodai);
-			den.GedaiTotal = meisai.Sum(m => m.Su * m.Gedai);
+			den.JodaiTotal = meisai.Sum(m => (long)m.Su * m.Jodai);
+			den.GedaiTotal = meisai.Sum(m => (long)m.Su * m.Gedai);
 
 			var inserted = await InsertDenpyoAsync(den, ct);
 			RegisteredDenId = inserted?.Id ?? 0;

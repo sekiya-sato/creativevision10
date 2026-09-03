@@ -442,21 +442,21 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
-	[Comment("金額")]
-	public partial int Kingaku { get; set; }
+	[Comment("金額 数量*単価")]
+	public partial long Kingaku { get; set; }
 	/// <summary>
-	/// 上代
+	/// 上代（単価）
 	/// </summary>
 	[ObservableProperty]
-	[OldTableCommentAttr("上代金額")]
-	[Comment("上代")]
+	[OldTableCommentAttr("上代単価")]
+	[Comment("上代: 単価（金額は 数量*上代 で算出する）")]
 	public partial int Jodai { get; set; }
 	/// <summary>
-	/// 下代
+	/// 下代（単価）
 	/// </summary>
 	[ObservableProperty]
-	[OldTableCommentAttr("下代金額")]
-	[Comment("下代")]
+	[OldTableCommentAttr("下代単価")]
+	[Comment("下代: 単価（金額は 数量*下代 で算出する）")]
 	public partial int Gedai { get; set; }
 	/// <summary>
 	/// 値引: 合計からの
@@ -497,7 +497,7 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("明細消費税額（未使用時0）")]
-	public partial int Tax { get; set; } = 0;
+	public partial long Tax { get; set; } = 0;
 	/// <summary>
 	/// 社員ユニークキー
 	/// </summary>

@@ -352,7 +352,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 
 			row.No = nextNo++;
 			row.Kubun = ProperMeisaiKubun;
-			row.Kingaku = row.Su * row.Tanka;
+			row.Kingaku = (long)row.Su * row.Tanka;
 			row.PropertyChanged += OnMeisaiPropertyChanged;
 			EditMeisai.Add(row);
 			SelectedMeisai = row;
@@ -427,7 +427,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		meisai.Code_Siz = row.Source.Code_Siz;
 		meisai.Mei_Siz = row.Source.Mei_Siz;
 		meisai.Su = row.Su;
-		meisai.Kingaku = meisai.Su * meisai.Tanka;
+		meisai.Kingaku = (long)meisai.Su * meisai.Tanka;
 		meisai.JanCode = row.Source.Jan1;
 	}
 

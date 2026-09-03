@@ -85,7 +85,7 @@ public class PointOfSaleServiceTests {
 		var meisai = slip.Jmeisai ?? throw new AssertFailedException("POS明細が保存されていません");
 		Assert.AreSequenceEqual(new long[] { 1, 2, 0 }, meisai.Select(m => m.Id_Tax).ToArray());
 		Assert.AreSequenceEqual(new[] { 10, 8, 0 }, meisai.Select(m => m.TaxRate).ToArray());
-		Assert.AreSequenceEqual(new[] { 100, 80, 0 }, meisai.Select(m => m.Tax).ToArray());
+		Assert.AreSequenceEqual(new long[] { 100, 80, 0 }, meisai.Select(m => m.Tax).ToArray());
 		Assert.AreEqual(180, meisai.Sum(m => m.Tax));
 	}
 
@@ -166,6 +166,25 @@ public class PointOfSaleServiceTests {
 		Assert.AreEqual(100L, slip.Tax1);
 		Assert.AreEqual(100, slip.Jmeisai!.Single().Tax);
 		Assert.AreEqual(1100L, slip.Total);
+	}
+
+	/// <summary>
+	/// 上代計/下代計は「数量×単価」で積む（<c>Tran99Meisai.Jodai</c>/<c>Gedai</c> は単価であり金額ではない）。
+	/// 以前は数量を掛けずに単価をそのまま合計していたため、他6伝票の集計定義と食い違っていた。
+	/// </summary>
+	[TestMethod]
+	public async Task CheckoutAsync_上代計と下代計は数量を掛けて積む() {
+		var productId = InsertProduct("QTY", 1000, idTax: 1);
+		var request = Request("qty-total", 3300, Line(productId, quantity: 3));
+
+		var response = await Service.CheckoutAsync(request);
+
+		Assert.IsTrue(response.IsSuccess);
+		var slip = Db.Single<Tran01Tenuri>("where Id=@0", response.SaleId);
+		Assert.AreEqual(3, slip.SuTotal);
+		Assert.AreEqual(3000L, slip.KingakuTotal);
+		Assert.AreEqual(3000L, slip.JodaiTotal, "上代計 = 数量3 × 上代単価1000");
+		Assert.AreEqual(1500L, slip.GedaiTotal, "下代計 = 数量3 × 下代単価500");
 	}
 
 	[TestMethod]

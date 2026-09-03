@@ -143,7 +143,7 @@ ORDER BY h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz
 					Id_Siz = h.Id_Siz,
 					Su = h.JitsuSu,
 					Tanka = h.Tanka,
-					Kingaku = h.JitsuSu * h.Tanka,
+					Kingaku = (long)h.JitsuSu * h.Tanka,
 					Jodai = h.Jodai,
 					Gedai = h.Gedai,
 				}).ToList();

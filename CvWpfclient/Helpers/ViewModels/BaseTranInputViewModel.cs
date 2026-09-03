@@ -65,7 +65,7 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 	protected void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
 		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
 			// Kingaku への代入で PropertyChanged が発生し、下の分岐へ再入して税額まで引き直される
-			m.Kingaku = m.Su * m.Tanka;
+			m.Kingaku = (long)m.Su * m.Tanka;
 			UpdateTotals();
 		}
 		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku) or nameof(Tran99Meisai.Jodai) or nameof(Tran99Meisai.Gedai)) {
@@ -155,8 +155,8 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 	protected void UpdateTotals() {
 		CurrentEdit.SuTotal = EditMeisai.Sum(m => m.Su);
 		CurrentEdit.KingakuTotal = EditMeisai.Sum(m => m.Kingaku);
-		CurrentEdit.JodaiTotal = EditMeisai.Sum(m => m.Su * m.Jodai);
-		CurrentEdit.GedaiTotal = EditMeisai.Sum(m => m.Su * m.Gedai);
+		CurrentEdit.JodaiTotal = EditMeisai.Sum(m => (long)m.Su * m.Jodai);
+		CurrentEdit.GedaiTotal = EditMeisai.Sum(m => (long)m.Su * m.Gedai);
 		OnTotalsUpdated();
 	}
 

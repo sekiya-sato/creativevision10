@@ -314,7 +314,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 				Mei_Siz = sku.Mei_Siz,
 				Su = su,
 				Tanka = row.Tanka,
-				Kingaku = su * row.Tanka,
+				Kingaku = (long)su * row.Tanka,
 				Jodai = sku.TankaJodai,
 				Gedai = gedai,
 				Id_Shain = shain?.Id ?? 0,
@@ -622,8 +622,8 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		slip.Jmeisai = meisai;
 		slip.SuTotal = meisai.Sum(x => x.Su);
 		slip.KingakuTotal = meisai.Sum(x => x.Kingaku);
-		slip.JodaiTotal = meisai.Sum(x => x.Jodai * x.Su);
-		slip.GedaiTotal = meisai.Sum(x => x.Gedai * x.Su);
+		slip.JodaiTotal = meisai.Sum(x => (long)x.Su * x.Jodai);
+		slip.GedaiTotal = meisai.Sum(x => (long)x.Su * x.Gedai);
 		slip.Id_Shain = shain?.Id ?? 0;
 		slip.VShain = shain == null ? new CodeNameView() : new CodeNameView(shain.Id, shain.Code, shain.Name);
 	}

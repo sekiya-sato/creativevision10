@@ -156,7 +156,7 @@ public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<
 
 	void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
 		if (sender is Tran99Meisai m && e.PropertyName is nameof(Tran99Meisai.Su) or nameof(Tran99Meisai.Tanka)) {
-			m.Kingaku = m.Su * m.Tanka;
+			m.Kingaku = (long)m.Su * m.Tanka;
 			UpdateTotals();
 		}
 		else if (e.PropertyName is nameof(Tran99Meisai.Kingaku) or nameof(Tran99Meisai.Jodai) or nameof(Tran99Meisai.Gedai)) {
@@ -167,8 +167,8 @@ public partial class StockInputViewModel : Helpers.BasePlainLightMenteViewModel<
 	void UpdateTotals() {
 		CurrentEdit.SuTotal = EditMeisai.Sum(m => m.Su);
 		CurrentEdit.KingakuTotal = EditMeisai.Sum(m => m.Kingaku);
-		CurrentEdit.JodaiTotal = EditMeisai.Sum(m => m.Su * m.Jodai);
-		CurrentEdit.GedaiTotal = EditMeisai.Sum(m => m.Su * m.Gedai);
+		CurrentEdit.JodaiTotal = EditMeisai.Sum(m => (long)m.Su * m.Jodai);
+		CurrentEdit.GedaiTotal = EditMeisai.Sum(m => (long)m.Su * m.Gedai);
 	}
 
 	protected override object CreateInsertParam() {
@@ -348,7 +348,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 
 			row.No = nextNo++;
 			row.Kubun = ProperMeisaiKubun;
-			row.Kingaku = row.Su * row.Tanka;
+			row.Kingaku = (long)row.Su * row.Tanka;
 			row.PropertyChanged += OnMeisaiPropertyChanged;
 			EditMeisai.Add(row);
 			SelectedMeisai = row;
@@ -418,7 +418,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		meisai.Code_Siz = row.Source.Code_Siz;
 		meisai.Mei_Siz = row.Source.Mei_Siz;
 		meisai.Su = row.Su;
-		meisai.Kingaku = meisai.Su * meisai.Tanka;
+		meisai.Kingaku = (long)meisai.Su * meisai.Tanka;
 		meisai.JanCode = row.Source.Jan1;
 	}
 

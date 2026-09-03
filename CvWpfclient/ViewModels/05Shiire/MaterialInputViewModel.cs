@@ -168,7 +168,7 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 	void OnMeisaiPropertyChanged(object? sender, PropertyChangedEventArgs e) {
 		if (sender is Tran99MaterialMeisai m && e.PropertyName is nameof(Tran99MaterialMeisai.Su) or nameof(Tran99MaterialMeisai.Tanka)) {
 			// Kingaku への代入で PropertyChanged が発生し、下の分岐へ再入して税額まで引き直される
-			m.Kingaku = m.Su * m.Tanka;
+			m.Kingaku = (long)m.Su * m.Tanka;
 			UpdateTotals();
 		}
 		else if (e.PropertyName is nameof(Tran99MaterialMeisai.Kingaku)) {
@@ -422,7 +422,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		SelectedMeisai.Code_Material = material.Code ?? "";
 		SelectedMeisai.Mei_Material = material.Name ?? "";
 		SelectedMeisai.Tanka = material.TankaShiire;
-		SelectedMeisai.Kingaku = SelectedMeisai.Su * SelectedMeisai.Tanka;
+		SelectedMeisai.Kingaku = (long)SelectedMeisai.Su * SelectedMeisai.Tanka;
 		// 同じ生地・付属を選び直すと Id_Material が同値で PropertyChanged が出ないため、明示的に引き直す
 		await RecalcMeisaiTaxAsync(SelectedMeisai, updateTotals: true);
 	}
