@@ -44,6 +44,8 @@ public partial class ConvertDb {
 		(nameof(CnvMasterYosanHanbai), static (db, isInit) => db.CnvMasterYosanHanbai(isInit)),
 		(nameof(CnvAfterMaster), static (db, isInit) => db.CnvAfterMaster(isInit)),
 		(nameof(CnvAfterMasterAddress), static (db, isInit) => db.CnvAfterMasterAddress(isInit)),
+		// マスタの後付け項目取り込み。Tran変換が TaxRounding をスナップショットするので必ずTranより前に置く
+		(nameof(CnvMasterAfter2), static (db, isInit) => db.CnvMasterAfter2(isInit)),
 		(nameof(CnvTran00HonUri), static (db, isInit) => db.CnvTran00HonUri(isInit)),
 		(nameof(CnvTran01TenUri), static (db, isInit) => db.CnvTran01TenUri(isInit)),
 		(nameof(CnvTran02Material), static (db, isInit) => db.CnvTran02Material(isInit)),
@@ -174,11 +176,187 @@ public partial class ConvertDb {
 			list.Add(createItem(rec));
 		}
 
+		// isInit=false（テーブルを作り直さない追記実行）では、既にあるCodeを二重登録しない。
+		// これにより同じ変換を何度実行しても結果が変わらず、旧DB側で増えた分だけが
+		// 末尾のIdで追加される。既存Idは動かないので伝票やSummaryのId参照は壊れない。
+		list = ExcludeExistingCodes(list, isInit);
+		if (list.Count == 0)
+			return 0;
+
 		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		_toDb.InsertBulk<T>(list);
 		_toDb.CompleteTransaction();
 
-		return rows.Count;
+		return list.Count;
+	}
+	/// <summary>
+	/// マスタの後付け項目を旧DBから取り込む後処理（Idは振り直さない）。
+	/// <para>
+	/// マスタ変換は Id を AUTOINCREMENT に任せているため、全体を再変換すると旧DB側の
+	/// 件数増減で Id が別値に振り直され、SummaryStock(371万件)・SummaryRealStock(153万件)や
+	/// 再計算手段の無い TranJodai / MasterSysman.Id_Soko まで巻き添えで壊れる。
+	/// そこで「列の追加や変換漏れで未移行のまま残っている項目」だけを、Code をキーに
+	/// 既存行へ UPDATE する。Id は一切動かさない。
+	/// </para>
+	/// <para>
+	/// 何度実行しても同じ結果になる（旧DBの値をそのまま上書きするだけで、
+	/// 前回実行の結果に依存しない）。旧DBに無い Code の行は触らない（アプリで作られた
+	/// マスタや旧DB側で削除されたものを消さないため）。
+	/// </para>
+	/// <para>
+	/// 旧DBに有って cv10 に無い「取りこぼし」行の追加は、本メソッドではなく各
+	/// <c>CnvMaster*</c> を <c>isInit=false</c> で実行することで行う（既存Codeを
+	/// スキップして末尾のIdで追記するため、既存Idは動かない）。マッピングを二重に
+	/// 持たないためにこの分担にしている。
+	/// </para>
+	/// </summary>
+	public int CnvMasterAfter2(bool isInit = true) {
+		var cnt = 0;
+		cnt += backfillMasterTokui();
+		cnt += backfillMasterShiire();
+		cnt += backfillMasterEndCustomerRank();
+		cnt += resolveShiirePaysaki();
+		return cnt;
+	}
+
+	/// <summary>
+	/// 得意先の後付け項目。<c>TaxRounding</c>(消費税端数)と <c>SlipFormType</c>(伝票発行区分)は
+	/// 列が追加される前に変換されたcv10データでは全件0のまま残っている。
+	/// </summary>
+	int backfillMasterTokui() =>
+		backfillByCode<MasterTokui>(
+			"select 得意先CD as Code, 消費税端数 as V1, 伝票発行区分 as V2 from HC$MASTER_TOKUI where 得意先CD>'.'",
+			["TaxRounding", "SlipFormType"],
+			rec => [NormalizeTaxRounding(getDataInt(rec, "V1")), getDataInt(rec, "V2")]);
+
+	/// <summary>
+	/// 仕入先の後付け項目。<c>TaxRounding</c> のほか、<c>PayMonth</c>/<c>PayDay</c> は
+	/// 得意先ブロックのコピーで存在しない列(入金予定月/日)を読んでいたため全件0だった。
+	/// </summary>
+	int backfillMasterShiire() =>
+		backfillByCode<MasterShiire>(
+			"select 仕入先CD as Code, 消費税端数 as V1, 支払予定月 as V2, 支払予定日 as V3 from HC$MASTER_SIIRE where 仕入先CD>'.'",
+			["TaxRounding", "PayMonth", "PayDay"],
+			rec => [NormalizeTaxRounding(getDataInt(rec, "V1")), getDataInt(rec, "V2"), getDataInt(rec, "V3")]);
+
+	/// <summary>
+	/// 顧客ランク。変換コードに代入自体が無く、cv10 は全件空文字だった。
+	/// 件数が150万件超あるため一時テーブル経由の一括UPDATEで処理する。
+	/// </summary>
+	int backfillMasterEndCustomerRank() =>
+		backfillByCode<MasterEndCustomer>(
+			"select 顧客CD as Code, 顧客ランク as V1 from HC$MASTER_KOKYAKU where 顧客CD>'.'",
+			["Rank"],
+			rec => [getString(rec, "V1")]);
+
+	/// <summary>
+	/// 仕入先の支払先(<c>Id_Paysaki</c>/<c>VPaysaki</c>)を解決する。
+	/// <para>
+	/// 支払先は MasterShiire 自身への自己参照のため、変換中は参照先がまだ挿入されて
+	/// いないことがある。全件そろった後でなければ引けないのでここで解決する。
+	/// </para>
+	/// </summary>
+	int resolveShiirePaysaki() {
+		var rows = _fromDb.Fetch<Dictionary<string, object>>(
+			"select 仕入先CD as Code, 支払先CD as Paysaki from HC$MASTER_SIIRE where 仕入先CD>'.'");
+		if (rows.Count == 0)
+			return 0;
+
+		var byCode = _toDb.Fetch<MasterShiire>("").ToDictionary(x => x.Code, StringComparer.Ordinal);
+		var cnt = 0;
+		foreach (var rec in rows) {
+			var code = getString(rec, "Code");
+			var paysakiCode = getString(rec, "Paysaki");
+			if (!byCode.TryGetValue(code, out var target))
+				continue; // cv10 に無い仕入先は触らない
+			// 支払先が空、または cv10 に存在しないコードなら未設定(0)のままにする
+			byCode.TryGetValue(paysakiCode, out var paysaki);
+			var newId = paysaki?.Id ?? 0;
+			var newView = new CodeNameView(newId, paysaki?.Code ?? string.Empty, paysaki?.Name ?? string.Empty);
+			if (target.Id_Paysaki == newId && target.VPaysaki?.Sid == newId)
+				continue; // 既に解決済み（再実行時はここで抜ける）
+			target.Id_Paysaki = newId;
+			target.VPaysaki = newView;
+			_toDb.Update(target);
+			cnt++;
+		}
+		_logger.LogInformation("MasterShiire.Id_Paysaki を解決: {Count}件", cnt);
+		return cnt;
+	}
+
+	/// <summary>
+	/// 旧DBの (Code, 値…) を一時テーブルへ bulk 投入し、Code の join で1回のUPDATEにまとめる。
+	/// <para>
+	/// 1件ずつ Update すると顧客150万件規模で数時間かかるため（既存の
+	/// <c>subCnvTranHeaderSize</c> と同じ理由）、一時テーブル + 一括UPDATEにしている。
+	/// 対象列の値が既に同じ行も書き換えるが、書く値は旧DBの値そのものなので
+	/// 何度実行しても結果は変わらない。
+	/// </para>
+	/// </summary>
+	int backfillByCode<T>(string oldSql, string[] columns, Func<Dictionary<string, object>, object[]> values) {
+		var rows = _fromDb.Fetch<Dictionary<string, object>>(oldSql);
+		if (rows.Count == 0)
+			return 0;
+
+		var table = _toDb.GetTableName(typeof(T));
+		var tmp = $"_bf_{table}";
+		var cols = string.Join(",", columns.Select((c, i) => $"C{i}"));
+		_toDb.ExecuteDialect($"drop table if exists {tmp}");
+		_toDb.ExecuteDialect($"create table {tmp} (Code TEXT not null primary key, {string.Join(",", columns.Select((c, i) => $"C{i}"))})");
+
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		foreach (var rec in rows) {
+			var code = getString(rec, "Code");
+			if (string.IsNullOrEmpty(code))
+				continue;
+			var vals = values(rec);
+			var ph = string.Join(",", Enumerable.Range(1, vals.Length).Select(i => $"@{i}"));
+			_toDb.ExecuteDialect(
+				$"insert or replace into {tmp} (Code,{cols}) values (@0,{ph})",
+				[code, .. vals]);
+		}
+		_toDb.CompleteTransaction();
+
+		var setClause = string.Join(", ", columns.Select((c, i) =>
+			$"{c} = (select t.C{i} from {tmp} t where t.Code = {table}.Code)"));
+		_toDb.ExecuteDialect($@"
+UPDATE {table}
+SET {setClause}
+WHERE EXISTS (select 1 from {tmp} t where t.Code = {table}.Code)");
+		var cnt = _toDb.FirstOrDefault<int>("SELECT changes() AS updated_count");
+		_toDb.ExecuteDialect($"drop table if exists {tmp}");
+
+		_logger.LogInformation("{Table} の後付け項目({Columns})を {Count}件へ反映",
+			table, string.Join("/", columns), cnt);
+		return cnt;
+	}
+
+	/// <summary>
+	/// 追記実行(<paramref name="isInit"/>=false)のとき、cv10 に既に存在する <c>Code</c> の行を除く。
+	/// <para>
+	/// <paramref name="isInit"/>=true はテーブルを drop して作り直すため除外は不要（全件が新規）。
+	/// <c>Code</c> を持たない型は判定できないためそのまま返す。
+	/// </para>
+	/// </summary>
+	private List<T> ExcludeExistingCodes<T>(List<T> list, bool isInit) {
+		if (isInit || list.Count == 0)
+			return list;
+		var codeProp = typeof(T).GetProperty("Code");
+		if (codeProp == null || codeProp.PropertyType != typeof(string))
+			return list;
+
+		var existing = new HashSet<string>(
+			_toDb.Fetch<string>($"select Code from {_toDb.GetTableName(typeof(T))}"),
+			StringComparer.Ordinal);
+		if (existing.Count == 0)
+			return list;
+
+		var added = list.Where(x => !existing.Contains(codeProp.GetValue(x) as string ?? string.Empty)).ToList();
+		if (added.Count != list.Count) {
+			_logger.LogInformation("{Table}: 既存Code {Skip}件をスキップし {Add}件を追加",
+				typeof(T).Name, list.Count - added.Count, added.Count);
+		}
+		return added;
 	}
 	/// <summary>
 	/// 汎用名称リストの作成(該当コードなしは作成しない)
@@ -323,7 +501,7 @@ public partial class ConvertDb {
 
 		int totalCount = 0;
 		foreach (var (startCode, endCode) in SplitCodeRange(codes, chunkSize))
-			totalCount += ConvertMasterEndCustomerChunk(startCode, endCode);
+			totalCount += ConvertMasterEndCustomerChunk(startCode, endCode, isInit);
 
 		return totalCount;
 	}
@@ -331,7 +509,7 @@ public partial class ConvertDb {
 	/// <summary>
 	/// 顧客CDの範囲(startCode〜endCode)1チャンク分の顧客マスターおよび会員アカウントを変換する
 	/// </summary>
-	private int ConvertMasterEndCustomerChunk(string startCode, string endCode) {
+	private int ConvertMasterEndCustomerChunk(string startCode, string endCode, bool isInit) {
 		const string sql = """
 select k.*, l.ログインID, l.PASS, p.REALポイント, m.名称 as ポイントランク名称
 from HC$master_kokyaku k
@@ -358,6 +536,9 @@ order by k.顧客CD
 				Mail = getString(rec, "メール"),
 				Tel = getString(rec, "TEL1").DefaultIfEmpty(getString(rec, "TEL2")),
 				Memo = getString(rec, "拡張メモ").DefaultIfEmpty(getString(rec, "メモ")),
+				// 顧客ランクは旧「顧客ランク」をそのまま持つ（EEE=未ランク等の3桁コード）。
+				// ポイントランク(PointRank)とは別項目で、以前は移行漏れで全件空だった。
+				Rank = getString(rec, "顧客ランク"),
 				VTenpo = new() {
 					Cd = getString(rec, "店舗CD"),  // 残りはCnvAfterMaster()でセット
 				},
@@ -368,12 +549,20 @@ order by k.顧客CD
 			customerList.Add(item);
 		}
 
+		// 追記実行では既存Codeを二重登録しない(顧客アカウントも同じ行だけを作る)
+		customerList = ExcludeExistingCodes(customerList, isInit);
+		if (customerList.Count == 0)
+			return 0;
+		var addedCodes = new HashSet<string>(customerList.Select(c => c.Code), StringComparer.Ordinal);
+
 		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		_toDb.InsertBulk(customerList);
 
 		var accountList = new List<MasterEndCustomerAccount>(customerList.Count);
 		foreach (var rec in rows) {
 			var code = getString(rec, "顧客CD");
+			if (!addedCodes.Contains(code))
+				continue; // 既存Codeでスキップした顧客はアカウントも作らない
 			var myCustomer = customerList.Where(c => c.Code == code).FirstOrDefault();
 
 			if (myCustomer == null || myCustomer.Id == 0)
@@ -397,7 +586,7 @@ order by k.顧客CD
 		_toDb.InsertBulk(accountList);
 		_toDb.CompleteTransaction();
 
-		return rows.Count;
+		return customerList.Count;
 	}
 
 	/// <summary>
@@ -429,7 +618,7 @@ order by k.顧客CD
 
 		int totalCount = 0;
 		foreach (var (startCode, endCode) in SplitCodeRange(codes, chunkSize))
-			totalCount += ConvertMasterShohinChunk(startCode, endCode);
+			totalCount += ConvertMasterShohinChunk(startCode, endCode, isInit);
 
 		return totalCount;
 	}
@@ -437,7 +626,7 @@ order by k.顧客CD
 	/// <summary>
 	/// 商品CDの範囲(startCode〜endCode)1チャンク分の商品マスターを変換する
 	/// </summary>
-	private int ConvertMasterShohinChunk(string startCode, string endCode) {
+	private int ConvertMasterShohinChunk(string startCode, string endCode, bool isInit) {
 		const string sql = "select * from HC$master_shohin where 商品CD between @0 and @1 order by 商品CD";
 		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql, startCode, endCode);
 		if (rows.Count == 0)
@@ -551,6 +740,11 @@ OR (Kubun ='{MasterMeisho.KubunSeason}' and Code =@3) OR (Kubun ='{MasterMeisho.
 			list.Add(item);
 		}
 
+		// 追記実行では既存Codeを二重登録しない
+		list = ExcludeExistingCodes(list, isInit);
+		if (list.Count == 0)
+			return 0;
+
 		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
 		_toDb.InsertBulk<MasterShohin>(list);
 		_toDb.CompleteTransaction();
@@ -633,6 +827,7 @@ OR (Kubun ='{MasterMeisho.KubunSeason}' and Code =@3) OR (Kubun ='{MasterMeisho.
 		const string sql = "select * from HC$MASTER_SIIRE where 仕入先CD>'.' order by 仕入先CD";
 		return ConvertMaster(sql, isInit, rec => {
 			var shain = _toDb.FirstOrDefault<MasterShain>("where Code=@0", getString(rec, "入力社員CD"));
+			var payMethod = getMeisho(MasterMeisho.KubunKin, getString(rec, "支払方法"));
 			var item = new MasterShiire() {
 				Code = getString(rec, "仕入先CD"),
 				Name = getString(rec, "仕入先名"),
@@ -648,13 +843,19 @@ OR (Kubun ='{MasterMeisho.KubunSeason}' and Code =@3) OR (Kubun ='{MasterMeisho.
 				RateProper = getDataInt(rec, "掛率"),
 				RateSale = getDataInt(rec, "掛率2"),
 				Shime1 = getDataInt(rec, "締日"),
-				Shime2 = getDataInt(rec, "締日2"),
-				Shime3 = getDataInt(rec, "締日3"),
-				PayMonth = getDataInt(rec, "入金予定月"),
-				PayDay = getDataInt(rec, "入金予定日"),
+				// HC$MASTER_SIIRE に「締日2」「締日3」は無い(得意先だけが持つ)。
+				// 以前は得意先ブロックをコピーして存在しない列を読んでおり、getString が
+				// 存在しないキーを空文字で返すため黙って0が入っていた。読まずに既定値0とする。
+				PayMonth = getDataInt(rec, "支払予定月"),
+				PayDay = getDataInt(rec, "支払予定日"),
 				TaxRounding = NormalizeTaxRounding(getDataInt(rec, "消費税端数")),
 				TaxCalcUnit = NormalizeTaxCalcUnit(getDataInt(rec, "消費税計算方法")),
 				IsPay = getDataInt(rec, "支払印刷"),
+				// 支払方法は名称マスタ(KIN)を引く。名称マスタは本変換より前に投入済み。
+				Id_PayMethod = payMethod?.Id ?? 0,
+				VPayMethod = new(payMethod?.Id ?? 0, payMethod?.Code ?? string.Empty, payMethod?.Name ?? string.Empty),
+				// Id_Paysaki(支払先)は MasterShiire 自身への自己参照で、変換中は参照先が
+				// まだ挿入されていないことがある。CnvMasterAfter2 で解決する。
 				Jdetail = new MasterToriDetail() {
 					BankAccount1 = $"{getString(rec, "振込銀行")} {getString(rec, "振込支店")} {getString(rec, "振込種別")} {getString(rec, "振込口座")}"
 				},
