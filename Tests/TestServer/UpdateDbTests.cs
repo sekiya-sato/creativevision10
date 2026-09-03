@@ -3,6 +3,7 @@ using CvBaseSqlite;
 using CvDomainLogic;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Linq;
 
 namespace Tests.CvServer;
@@ -158,8 +159,7 @@ public class MasterConfigAutoExecDefaultDataTests {
 		Assert.AreEqual("既存の説明", existing.Memo, "既存の説明を上書きしないこと");
 	}
 
-	/* 以下、buildエラーのため一時的にコメントアウト Codex 5.6-Sol 2026/09/03 15:40
-	[DataTestMethod]
+	[TestMethod]
 	[DataRow("1", true)]
 	[DataRow("true", true)]
 	[DataRow("on", true)]
@@ -203,5 +203,37 @@ public class MasterConfigAutoExecDefaultDataTests {
 		configDb.SetIsSendMail(taskId, false);
 		Assert.AreEqual(MasterConfig.ValAutoExecDisabled, Db.FirstOrDefault<string>("SELECT Val FROM MasterConfig WHERE Name = @0", MasterConfig.AutoExecIsSendMailName(taskId.ToString())));
 	}
-  */
+
+	[TestMethod]
+	public void SetIsSendMail_システムジョブ以外のTaskId_動的追加タスクでも保存して読み戻せる() {
+		// 動的追加タスクは MasterConfig に定義行を持たないが、TaskId先頭8桁のキーで同じように保存できる。
+		var taskId = Guid.NewGuid();
+		var configDb = new SchedulerJobConfigDb(Db);
+
+		configDb.SetIsSendMail(taskId, true);
+
+		Assert.IsTrue(configDb.GetIsSendMail(taskId));
+		var row = Db.FirstOrDefault<MasterConfig>("WHERE Name = @0", MasterConfig.AutoExecIsSendMailName(taskId.ToString()));
+		Assert.IsNotNull(row);
+		Assert.AreEqual(MasterConfig.CategoryAutoExec, row.Category);
+	}
+
+	[TestMethod]
+	public void RemoveIsSendMail_保存済みのフラグ行_削除して未設定に戻る() {
+		var taskId = Guid.NewGuid();
+		var configDb = new SchedulerJobConfigDb(Db);
+		configDb.SetIsSendMail(taskId, true);
+
+		configDb.RemoveIsSendMail(taskId);
+
+		Assert.IsNull(configDb.GetIsSendMail(taskId));
+		Assert.IsNull(Db.FirstOrDefault<MasterConfig>("WHERE Name = @0", MasterConfig.AutoExecIsSendMailName(taskId.ToString())));
+	}
+
+	[TestMethod]
+	public void RemoveIsSendMail_フラグ行がない_例外にならず何もしない() {
+		var configDb = new SchedulerJobConfigDb(Db);
+
+		configDb.RemoveIsSendMail(Guid.NewGuid());
+	}
 }

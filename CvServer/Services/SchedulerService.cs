@@ -22,6 +22,10 @@ public class SchedulerService : ISchedulerService {
 	private const string SqliteWalCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
 	private const int MaxAutoexecTaskNameLength = 100;
 	private const int MaxAutoexecMemoLength = 250;
+	/// <summary>自動実行履歴のMemoへメール送信結果を追記するときの区切り。</summary>
+	private const string AutoexecMemoSeparator = " / ";
+	/// <summary>自動実行履歴のMemoへ追記するメール送信結果の見出し。</summary>
+	private const string AutoexecMailMemoPrefix = "メール:";
 	private const int WorkFileCleanupTargetAgeHours = 2;
 	private const int AutoExecMailTimeoutSeconds = 30;
 	/// <summary>起動間隔の下限チェックを行うかどうかの内部フラグ（重い処理の連続実行を防ぐ）</summary>
@@ -143,6 +147,17 @@ public class SchedulerService : ISchedulerService {
 			: request.TaskName.Trim();
 
 		var result = RegisterTask(taskName, request.CronExpression, (db, ct) => ExecuteTaskCoreAsync(db, request, ct));
+		if (result.Result == Success && request.IsSendMail && Guid.TryParse(result.TaskId, out var addedTaskId)) {
+			// 登録に成功してからフラグを永続化する。フラグの保存に失敗してもタスク登録自体は成功として返す。
+			try {
+				using var scope = _scopeFactory.CreateScope();
+				var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+				new SchedulerJobConfigDb(db).SetIsSendMail(addedTaskId, true);
+			}
+			catch (Exception ex) {
+				_logger.LogError(ex, "追加タスクのメール送信フラグ保存に失敗しました。 TaskId={TaskId}", addedTaskId);
+			}
+		}
 		return Task.FromResult(result);
 	}
 
@@ -165,6 +180,19 @@ public class SchedulerService : ISchedulerService {
 				Detail = $"対象タスクが存在しません: {request.TaskId}",
 				TaskId = request.TaskId,
 			});
+		}
+
+		// 動的追加タスクは再起動で消えるため、残ったメール送信フラグ行も片付ける。
+		// システムジョブは再登録されるので設定を残す。
+		if (FindDefinitionByTaskId(guid) == null) {
+			try {
+				using var scope = _scopeFactory.CreateScope();
+				var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+				new SchedulerJobConfigDb(db).RemoveIsSendMail(guid);
+			}
+			catch (Exception ex) {
+				_logger.LogWarning(ex, "削除タスクのメール送信フラグ削除に失敗しました。 TaskId={TaskId}", guid);
+			}
 		}
 
 		_logger.LogInformation("スケジュール削除: TaskId={TaskId}", guid);
@@ -263,7 +291,14 @@ public class SchedulerService : ISchedulerService {
 				bool isEnabled;
 				var isSendMail = false;
 				if (def == null) {
+					// 動的追加タスクは実行フラグを持たない。メール送信フラグだけ永続値を見る。
 					isEnabled = true;
+					try {
+						isSendMail = configDb?.GetIsSendMail(task.Id) ?? false;
+					}
+					catch (Exception ex) {
+						_logger.LogWarning(ex, "メール送信フラグの取得に失敗しました。 TaskId={TaskId}", task.Id);
+					}
 				}
 				else {
 					bool? persisted = null;
@@ -412,7 +447,8 @@ public class SchedulerService : ISchedulerService {
 	}
 
 	/// <summary>
-	/// スケジュールタスクの実行結果メールを送信する/しないフラグを設定する。システムジョブ以外は対象外。
+	/// スケジュールタスクの実行結果メールを送信する/しないフラグを設定する。
+	/// システムジョブと、スケジューラに登録済みの動的追加タスクの両方を対象にする。
 	/// </summary>
 	public Task<SchedulerResult> SetTaskSendMailAsync(SetSchedulerTaskSendMailRequest request, CallContext context = default) {
 		if (!Guid.TryParse(request.TaskId, out var guid)) {
@@ -420,15 +456,15 @@ public class SchedulerService : ISchedulerService {
 		}
 
 		var def = FindDefinitionByTaskId(guid);
-		if (def == null) {
-			return Task.FromResult(new SchedulerResult { Result = TaskNotFound, Detail = "メール送信フラグを設定できるのはシステムジョブのみです。", TaskId = request.TaskId });
+		if (def == null && !IsRegisteredTask(guid)) {
+			return Task.FromResult(new SchedulerResult { Result = TaskNotFound, Detail = $"対象タスクが存在しません: {request.TaskId}", TaskId = request.TaskId });
 		}
 
 		try {
 			using var scope = _scopeFactory.CreateScope();
 			var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
-			new SchedulerJobConfigDb(db).SetIsSendMail(def.TaskId, request.IsSendMail);
-			_logger.LogInformation("メール送信フラグ設定: JobKey={JobKey}, TaskId={TaskId}, IsSendMail={IsSendMail}", def.JobKey, guid, request.IsSendMail);
+			new SchedulerJobConfigDb(db).SetIsSendMail(guid, request.IsSendMail);
+			_logger.LogInformation("メール送信フラグ設定: JobKey={JobKey}, TaskId={TaskId}, IsSendMail={IsSendMail}", def?.JobKey ?? "(動的追加)", guid, request.IsSendMail);
 
 			return Task.FromResult(new SchedulerResult { Result = Success, Detail = "正常終了", TaskId = guid.ToString() });
 		}
@@ -437,6 +473,163 @@ public class SchedulerService : ISchedulerService {
 			return Task.FromResult(new SchedulerResult { Result = InternalError, Detail = "メール送信フラグ設定に失敗しました。", TaskId = request.TaskId });
 		}
 	}
+
+	/// <summary>指定 TaskId がスケジューラに登録されているかを返す。</summary>
+	private bool IsRegisteredTask(Guid taskId) {
+		try {
+			return _scheduler.GetTasks().Any(task => task.Id == taskId);
+		}
+		catch (Exception ex) {
+			_logger.LogWarning(ex, "スケジュールタスクの存在確認に失敗しました。 TaskId={TaskId}", taskId);
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// 自動実行結果メールの設定を取得する。パスワードは返さず、登録済みかどうかだけを返す。
+	/// </summary>
+	public Task<GetAutoExecMailConfigResponse> GetAutoExecMailConfigAsync(CallContext context = default) {
+		try {
+			using var scope = _scopeFactory.CreateScope();
+			var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+			var values = new AutoExecMailConfigStore(db).Read();
+			var loadResult = new AutoExecMailSettingsLoader(db).Load();
+
+			return Task.FromResult(new GetAutoExecMailConfigResponse {
+				Result = Success,
+				Detail = "正常終了",
+				Config = ToContract(values),
+				HasCredential = values.HasCredential,
+				IsValid = loadResult.IsValid,
+				ValidationDetail = loadResult.IsValid
+					? "この設定でメールを送信できます。"
+					: AutoExecMailResultText.Describe(loadResult.Failure, loadResult.FailureSettingName),
+				SecurityValues = [.. AutoExecMailSettingsLoader.SecurityValues],
+				AuthModeValues = [.. AutoExecMailSettingsLoader.AuthModeValues],
+			});
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "自動実行結果メール設定の取得に失敗しました。");
+			return Task.FromResult(new GetAutoExecMailConfigResponse {
+				Result = InternalError,
+				Detail = "自動実行結果メール設定の取得に失敗しました。",
+			});
+		}
+	}
+
+	/// <summary>
+	/// 自動実行結果メールの設定を保存する。空欄は未入力として保存し、形式が誤っている値だけを拒否する。
+	/// </summary>
+	public Task<SchedulerResult> SetAutoExecMailConfigAsync(SetAutoExecMailConfigRequest request, CallContext context = default) {
+		if (request?.Config == null) {
+			return Task.FromResult(new SchedulerResult { Result = InvalidRequest, Detail = "設定内容が指定されていません。" });
+		}
+
+		var values = ToValues(request.Config);
+		var validation = AutoExecMailConfigStore.Validate(values);
+		if (!validation.IsValid) {
+			return Task.FromResult(new SchedulerResult {
+				Result = InvalidRequest,
+				Detail = $"{validation.ErrorMessage}({validation.ErrorSettingName})",
+			});
+		}
+
+		try {
+			using var scope = _scopeFactory.CreateScope();
+			var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+			// 空文字は「変更しない」、消去指示があったときだけ空文字で上書きする。
+			var credential = request.ClearCredential
+				? string.Empty
+				: string.IsNullOrEmpty(request.Credential) ? null : request.Credential;
+			new AutoExecMailConfigStore(db).Write(values, credential);
+
+			var loadResult = new AutoExecMailSettingsLoader(db).Load();
+			_logger.LogInformation(
+				"自動実行結果メール設定を保存しました。 Server={Server}, Port={Port}, Security={Security}, AuthMode={AuthMode}, 送信可否={IsValid}",
+				values.Server, values.Port, values.Security, values.AuthMode, loadResult.IsValid);
+
+			return Task.FromResult(new SchedulerResult {
+				Result = Success,
+				Detail = loadResult.IsValid
+					? "保存しました。この設定でメールを送信できます。"
+					: $"保存しました。ただしこのままでは送信できません。{AutoExecMailResultText.Describe(loadResult.Failure, loadResult.FailureSettingName)}",
+			});
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "自動実行結果メール設定の保存に失敗しました。");
+			return Task.FromResult(new SchedulerResult { Result = InternalError, Detail = "自動実行結果メール設定の保存に失敗しました。" });
+		}
+	}
+
+	/// <summary>
+	/// 保存済みの設定でテストメールを実際に送信する。設定不備・SMTPエラーはどちらも Detail で返す。
+	/// </summary>
+	public async Task<SchedulerResult> TestSendAutoExecMailAsync(CallContext context = default) {
+		using var scope = _scopeFactory.CreateScope();
+		var mailService = scope.ServiceProvider.GetService<IAutoExecMailService>();
+		if (mailService == null) {
+			_logger.LogError("自動実行結果メールサービスが登録されていないためテスト送信できません。");
+			return new SchedulerResult { Result = InternalError, Detail = "メール送信サービスが登録されていません。" };
+		}
+
+		var message = new AutoExecMailMessage(
+			"[CV10 自動実行] テスト送信",
+			string.Join(Environment.NewLine, [
+				"自動実行結果メールのテスト送信です。",
+				$"送信日時: {DateTime.Now:yyyy/MM/dd HH:mm:ss}",
+				"このメールが届いていれば、自動実行の結果メールも同じ設定で送信されます。",
+			]));
+
+		try {
+			using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(AutoExecMailTimeoutSeconds));
+			var sendResult = await mailService.SendAsync(message, timeoutCts.Token);
+			if (!sendResult.Sent) {
+				_logger.LogWarning(
+					"テストメールを送信しませんでした。 設定不備={Failure}, 設定名={SettingName}",
+					sendResult.SettingsFailure, sendResult.FailureSettingName);
+				return new SchedulerResult {
+					Result = InvalidRequest,
+					Detail = $"テストメールを送信できません。{AutoExecMailResultText.Describe(sendResult.SettingsFailure, sendResult.FailureSettingName)}",
+				};
+			}
+
+			_logger.LogInformation("テストメールを送信しました。");
+			return new SchedulerResult { Result = Success, Detail = "テストメールを送信しました。受信を確認してください。" };
+		}
+		catch (OperationCanceledException ex) {
+			_logger.LogWarning(ex, "テストメールの送信がタイムアウトしました。");
+			return new SchedulerResult {
+				Result = Canceled,
+				Detail = $"テストメールの送信が{AutoExecMailTimeoutSeconds}秒でタイムアウトしました。サーバー名とポート番号を確認してください。",
+			};
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "テストメールの送信に失敗しました。");
+			return new SchedulerResult { Result = InternalError, Detail = $"テストメールの送信に失敗しました。{ex.Message}" };
+		}
+	}
+
+	private static AutoExecMailConfig ToContract(AutoExecMailConfigValues values) => new() {
+		Server = values.Server,
+		Port = values.Port,
+		Security = values.Security,
+		AuthMode = values.AuthMode,
+		UserId = values.UserId,
+		FromAddress = values.FromAddress,
+		FromName = values.FromName,
+		ToAddress = values.ToAddress,
+	};
+
+	private static AutoExecMailConfigValues ToValues(AutoExecMailConfig config) => new(
+		config.Server ?? string.Empty,
+		config.Port ?? string.Empty,
+		config.Security ?? string.Empty,
+		config.AuthMode ?? string.Empty,
+		config.UserId ?? string.Empty,
+		config.FromAddress ?? string.Empty,
+		config.FromName ?? string.Empty,
+		config.ToAddress ?? string.Empty,
+		false);
 
 	private static bool IsSystemTask(string? taskName) {
 		if (string.IsNullOrWhiteSpace(taskName))
@@ -637,20 +830,22 @@ public class SchedulerService : ISchedulerService {
 		using var scope = _scopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
 		var isSendMail = false;
+		var configDb = new SchedulerJobConfigDb(db);
 
 		if (definition != null) {
-			var configDb = new SchedulerJobConfigDb(db);
 			var isEnabled = configDb.GetEnabled(definition.TaskId) ?? definition.DefaultEnabled;
 			if (!isEnabled) {
 				_logger.LogInformation("実行フラグがfalseのため自動実行をスキップしました。 TaskName={TaskName}, JobKey={JobKey}", taskName, definition.JobKey);
 				return;
 			}
-			try {
-				isSendMail = configDb.GetIsSendMail(definition.TaskId) ?? definition.DefaultIsSendMail;
-			}
-			catch (Exception ex) {
-				_logger.LogWarning(ex, "自動実行時のメール送信フラグ取得に失敗しました。 JobKey={JobKey}", definition.JobKey);
-			}
+		}
+
+		try {
+			// システムジョブは定義の既定値、動的追加タスクは既定で送信しない。
+			isSendMail = configDb.GetIsSendMail(taskId) ?? definition?.DefaultIsSendMail ?? false;
+		}
+		catch (Exception ex) {
+			_logger.LogWarning(ex, "自動実行時のメール送信フラグ取得に失敗しました。 TaskName={TaskName}, TaskId={TaskId}", taskName, taskId);
 		}
 
 		IAutoExecMailService? mailService = null;
@@ -1073,7 +1268,7 @@ public class SchedulerService : ISchedulerService {
 		}
 
 		if (historyUpdated && history != null && mailService != null) {
-			await TrySendAutoexecMailAsync(mailService, history);
+			await TrySendAutoexecMailAsync(db, mailService, history);
 		}
 
 		if (caughtException != null) {
@@ -1081,16 +1276,58 @@ public class SchedulerService : ISchedulerService {
 		}
 	}
 
-	private async Task TrySendAutoexecMailAsync(IAutoExecMailService mailService, SysHistAutoexec history) {
+	/// <summary>
+	/// 自動実行結果メールを送信し、その成否を自動実行履歴のMemoへ追記する。
+	/// <para>
+	/// メール本文はこの追記より前の履歴内容から作るため、本文に「メール:...」は含まれない。
+	/// メールの成否は履歴画面で確認する。
+	/// </para>
+	/// </summary>
+	private async Task TrySendAutoexecMailAsync(ExDatabase db, IAutoExecMailService mailService, SysHistAutoexec history) {
+		string mailMemo;
 		try {
 			using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(AutoExecMailTimeoutSeconds));
 			var mailResult = await mailService.SendAsync(BuildAutoExecMailMessage(history), timeoutCts.Token);
 			if (mailResult.Sent) {
 				_logger.LogInformation("自動実行結果メールを送信しました。 HistoryId={HistoryId}, TaskName={TaskName}", history.Id, history.TaskName);
 			}
+			else {
+				_logger.LogWarning(
+					"自動実行結果メールを送信しませんでした。 HistoryId={HistoryId}, TaskName={TaskName}, 理由={Reason}, 設定不備={Failure}, 設定名={SettingName}",
+					history.Id, history.TaskName, mailResult.NotSentReason, mailResult.SettingsFailure, mailResult.FailureSettingName);
+			}
+			mailMemo = $"{AutoexecMailMemoPrefix}{AutoExecMailResultText.Describe(mailResult)}";
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "自動実行結果メールの送信に失敗しました。 HistoryId={HistoryId}, TaskName={TaskName}", history.Id, history.TaskName);
+			mailMemo = $"{AutoexecMailMemoPrefix}送信に失敗しました({ex.GetType().Name})";
+		}
+
+		AppendAutoexecHistoryMemo(db, history, mailMemo);
+	}
+
+	/// <summary>
+	/// 自動実行履歴のMemoへ追記して更新する。Memoは <see cref="MaxAutoexecMemoLength"/> 文字までなので、
+	/// 追記分の場所を確保するために元のMemoを切り詰める。
+	/// </summary>
+	public static string BuildAppendedAutoexecMemo(string? currentMemo, string appendText) {
+		var suffix = AutoexecMemoSeparator + appendText;
+		if (suffix.Length >= MaxAutoexecMemoLength) {
+			return suffix[..MaxAutoexecMemoLength];
+		}
+		var baseMemo = currentMemo ?? string.Empty;
+		var keepLength = MaxAutoexecMemoLength - suffix.Length;
+		return (baseMemo.Length > keepLength ? baseMemo[..keepLength] : baseMemo) + suffix;
+	}
+
+	private void AppendAutoexecHistoryMemo(ExDatabase db, SysHistAutoexec history, string appendText) {
+		try {
+			history.Memo = BuildAppendedAutoexecMemo(history.Memo, appendText);
+			history.Vdu = DateTime.Now.ToUniversalTime().Ticks;
+			db.Update(history, ["Memo", "Vdu"]);
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "自動実行履歴へのメール送信結果の追記に失敗しました。 Id={Id}, TaskName={TaskName}", history.Id, history.TaskName);
 		}
 	}
 

@@ -1206,12 +1206,12 @@ public sealed partial class MasterConfig : BaseDbClass {
 		candidates.AddRange([
 			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailServerIp, Val = "", Example = "例: mail.example.jp", Memo = "自動実行結果メールのSMTPサーバーIPアドレスまたはホスト名", Vdc = vdate, Vdu = vdate },
 			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailServerPort, Val = "", Example = "例: 587（送信ポート）", Memo = "自動実行結果メールのSMTPポート番号", Vdc = vdate, Vdu = vdate },
-			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailUserId, Val = "", Example = "例: user@example.jp（認証ユーザー）", Memo = "自動実行結果メールのSMTPユーザーID", Vdc = vdate, Vdu = vdate },
-			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailUserPass, Val = "", Example = "例: メール認証用パスワード", Memo = "自動実行結果メールのSMTPパスワード", Vdc = vdate, Vdu = vdate },
-			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailSecurity, Val = "", Example = "例: StartTls（STARTTLS暗号化）", Memo = "自動実行結果メールの暗号化方式", Vdc = vdate, Vdu = vdate },
-			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailAuthMode, Val = "", Example = "例: Password（パスワード認証）,OAuth2（OAuth 2.0認証）", Memo = "自動実行結果メールの認証方式", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailUserId, Val = "", Example = "例: user@example.jp（認証ユーザー）認証方式Noneなら空欄", Memo = "自動実行結果メールのSMTPユーザーID", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailUserPass, Val = "", Example = "例: メール認証用パスワード 認証方式Noneなら空欄", Memo = "自動実行結果メールのSMTPパスワード", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailSecurity, Val = "", Example = "None（暗号化なし）,Auto（自動選択）,StartTls,StartTlsWhenAvailable,SslOnConnect", Memo = "自動実行結果メールの暗号化方式。社内リレー（localhost:25など）はNone", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailAuthMode, Val = "", Example = "None（認証なし）,Password（パスワード認証）", Memo = "自動実行結果メールの認証方式。社内リレー（localhost:25など）はNone", Vdc = vdate, Vdu = vdate },
 			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailFromAddr, Val = "", Example = "例: sender@example.jp（送信元）", Memo = "自動実行結果メールの送信元アドレス", Vdc = vdate, Vdu = vdate },
-			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailFromName, Val = "", Example = "例: 自動実行通知", Memo = "自動実行結果メールの送信元表示名", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailFromName, Val = "", Example = "例: 自動実行通知（省略可）", Memo = "自動実行結果メールの送信元表示名。空欄ならアドレスのみで送信する", Vdc = vdate, Vdu = vdate },
 			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailToAddr, Val = "", Example = "例: admin@example.jp（送信先）", Memo = "自動実行結果メールの送信先アドレス", Vdc = vdate, Vdu = vdate },
 		]);
 

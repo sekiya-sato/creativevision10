@@ -101,6 +101,18 @@ public class SchedulerJobConfigDb {
 		Upsert(IsSendMailKey(taskId), isSendMail ? MasterConfig.ValAutoExecEnabled : MasterConfig.ValAutoExecDisabled, $"自動実行ジョブ {taskId} の実行結果メール送信フラグ");
 	}
 
+	/// <summary>
+	/// 指定タスクのメール送信フラグ行を削除する。行が無ければ何もしない。
+	/// 動的追加タスクは削除するとTaskIdが再利用されないため、残った設定行を片付けるために使う。
+	/// </summary>
+	/// <param name="taskId">タスクを識別するId</param>
+	public void RemoveIsSendMail(Guid taskId) {
+		var existing = _db.FirstOrDefault<MasterConfig>(
+			$"SELECT * FROM {nameof(MasterConfig)} WHERE Name = @0", IsSendMailKey(taskId));
+		if (existing != null)
+			_db.Delete(existing);
+	}
+
 	/// <summary>Name列に使う実行フラグ用キーを組み立てる。</summary>
 	static string EnabledKey(Guid taskId) => $"{MasterConfig.NameAutoExecEnabledPrefix}{TaskIdPrefix(taskId)}";
 

@@ -1,6 +1,7 @@
 using CvBase;
 using CvBaseSqlite;
 using CvServer.Services;
+using MailKit.Security;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -48,15 +49,24 @@ public class AutoExecMailSettingsLoaderTests {
 	}
 
 	[TestMethod]
-	public void Load_有効なOAuth2設定_UserPassをアクセストークンとして保持する() {
-		InsertValidSettings("OAuth2", "access-token");
+	public void Load_パスワードを保持する_ToStringには出さない() {
+		InsertValidSettings("Password", "secret-password");
 
 		var result = new AutoExecMailSettingsLoader(Db).Load();
 
 		Assert.IsNotNull(result.Settings);
-		Assert.AreEqual(AutoExecMailAuthMode.OAuth2, result.Settings.AuthMode);
-		Assert.AreEqual("access-token", result.Settings.Credential);
-		Assert.IsFalse(result.Settings.ToString().Contains("access-token", StringComparison.Ordinal));
+		Assert.AreEqual("secret-password", result.Settings.Credential);
+		Assert.IsFalse(result.Settings.ToString().Contains("secret-password", StringComparison.Ordinal));
+	}
+
+	[TestMethod]
+	public void Load_OAuth2_扱わない認証方式なので設定無効理由を返す() {
+		InsertValidSettings("OAuth2");
+
+		var result = new AutoExecMailSettingsLoader(Db).Load();
+
+		Assert.AreEqual(AutoExecMailSettingsFailure.UnsupportedAuthMode, result.Failure);
+		Assert.AreEqual(MasterConfig.NameAutoExecMailAuthMode, result.FailureSettingName);
 	}
 
 	[TestMethod]
@@ -80,7 +90,6 @@ public class AutoExecMailSettingsLoaderTests {
 	[DataRow(MasterConfig.NameAutoExecMailSecurity)]
 	[DataRow(MasterConfig.NameAutoExecMailAuthMode)]
 	[DataRow(MasterConfig.NameAutoExecMailFromAddr)]
-	[DataRow(MasterConfig.NameAutoExecMailFromName)]
 	[DataRow(MasterConfig.NameAutoExecMailToAddr)]
 	public void Load_必須設定が空白_設定無効理由を返す(string settingName) {
 		InsertValidSettings("Password");
@@ -106,13 +115,84 @@ public class AutoExecMailSettingsLoaderTests {
 	}
 
 	[TestMethod]
-	public void Load_StartTls以外_設定無効理由を返す() {
+	[DataRow("None", AutoExecMailSecurity.None)]
+	[DataRow("Auto", AutoExecMailSecurity.Auto)]
+	[DataRow("StartTls", AutoExecMailSecurity.StartTls)]
+	[DataRow("StartTlsWhenAvailable", AutoExecMailSecurity.StartTlsWhenAvailable)]
+	[DataRow("SslOnConnect", AutoExecMailSecurity.SslOnConnect)]
+	public void Load_対応する暗号化方式_そのまま読み込む(string value, AutoExecMailSecurity expected) {
 		InsertValidSettings("Password");
-		UpdateValue(MasterConfig.NameAutoExecMailSecurity, "SslOnConnect");
+		UpdateValue(MasterConfig.NameAutoExecMailSecurity, value);
+
+		var result = new AutoExecMailSettingsLoader(Db).Load();
+
+		Assert.IsNotNull(result.Settings);
+		Assert.AreEqual(expected, result.Settings.Security);
+	}
+
+	[TestMethod]
+	public void Load_未対応の暗号化方式_設定無効理由を返す() {
+		InsertValidSettings("Password");
+		UpdateValue(MasterConfig.NameAutoExecMailSecurity, "Tls13Only");
 
 		var result = new AutoExecMailSettingsLoader(Db).Load();
 
 		Assert.AreEqual(AutoExecMailSettingsFailure.UnsupportedSecurity, result.Failure);
+		Assert.AreEqual(MasterConfig.NameAutoExecMailSecurity, result.FailureSettingName);
+	}
+
+	[TestMethod]
+	public void Load_認証なし_ユーザーIDとパスワードが空でも有効() {
+		InsertValidSettings("None");
+		UpdateValue(MasterConfig.NameAutoExecMailUserId, "");
+		UpdateValue(MasterConfig.NameAutoExecMailUserPass, "");
+		UpdateValue(MasterConfig.NameAutoExecMailSecurity, "None");
+		UpdateValue(MasterConfig.NameAutoExecMailServerIp, "localhost");
+		UpdateValue(MasterConfig.NameAutoExecMailServerPort, "25");
+
+		var result = new AutoExecMailSettingsLoader(Db).Load();
+
+		Assert.IsTrue(result.IsValid);
+		Assert.IsNotNull(result.Settings);
+		Assert.AreEqual(AutoExecMailAuthMode.None, result.Settings.AuthMode);
+		Assert.AreEqual(AutoExecMailSecurity.None, result.Settings.Security);
+		Assert.AreEqual("localhost", result.Settings.Server);
+		Assert.AreEqual(25, result.Settings.Port);
+		Assert.AreEqual("", result.Settings.UserId);
+		Assert.AreEqual("", result.Settings.Credential);
+	}
+
+	[TestMethod]
+	public void Load_認証する_ユーザーIDが空なら設定無効理由を返す() {
+		InsertValidSettings("Password");
+		UpdateValue(MasterConfig.NameAutoExecMailUserId, "");
+
+		var result = new AutoExecMailSettingsLoader(Db).Load();
+
+		Assert.AreEqual(AutoExecMailSettingsFailure.MissingValue, result.Failure);
+		Assert.AreEqual(MasterConfig.NameAutoExecMailUserId, result.FailureSettingName);
+	}
+
+	[TestMethod]
+	public void Load_送信元表示名が空_任意項目なので有効() {
+		InsertValidSettings("Password");
+		UpdateValue(MasterConfig.NameAutoExecMailFromName, "");
+
+		var result = new AutoExecMailSettingsLoader(Db).Load();
+
+		Assert.IsTrue(result.IsValid);
+		Assert.IsNotNull(result.Settings);
+		Assert.AreEqual("", result.Settings.FromName);
+	}
+
+	[TestMethod]
+	public void Load_送信元表示名の行がない_任意項目なので有効() {
+		InsertValidSettings("Password");
+		Db.Delete(Db.Single<MasterConfig>("WHERE Name = @0", MasterConfig.NameAutoExecMailFromName));
+
+		var result = new AutoExecMailSettingsLoader(Db).Load();
+
+		Assert.IsTrue(result.IsValid);
 	}
 
 	[TestMethod]
@@ -229,14 +309,67 @@ public class AutoExecMailServiceTests {
 			() => service.SendAsync(new AutoExecMailMessage("subject", "body")));
 	}
 
-	private static AutoExecMailSettings ValidSettings() => new(
+	[TestMethod]
+	public async Task SendAsync_送信元表示名が空_アドレスだけを差出人にする() {
+		var transport = new RecordingTransport();
+		var service = new AutoExecMailService(
+			new StubSettingsLoader(new AutoExecMailSettingsLoadResult(
+				ValidSettings(fromName: ""),
+				AutoExecMailSettingsFailure.None,
+				null)),
+			transport,
+			NullLogger<AutoExecMailService>.Instance);
+
+		await service.SendAsync(new AutoExecMailMessage("subject", "body"));
+
+		Assert.IsNotNull(transport.Message);
+		var from = transport.Message.From.Mailboxes.Single();
+		Assert.AreEqual("sender@example.com", from.Address);
+		Assert.IsTrue(string.IsNullOrEmpty(from.Name));
+	}
+
+	[TestMethod]
+	[DataRow(AutoExecMailSecurity.None, SecureSocketOptions.None)]
+	[DataRow(AutoExecMailSecurity.Auto, SecureSocketOptions.Auto)]
+	[DataRow(AutoExecMailSecurity.StartTls, SecureSocketOptions.StartTls)]
+	[DataRow(AutoExecMailSecurity.StartTlsWhenAvailable, SecureSocketOptions.StartTlsWhenAvailable)]
+	[DataRow(AutoExecMailSecurity.SslOnConnect, SecureSocketOptions.SslOnConnect)]
+	public void ToSecureSocketOptions_設定の暗号化方式をMailKitのオプションへ変換する(
+		AutoExecMailSecurity security,
+		SecureSocketOptions expected) {
+		Assert.AreEqual(expected, MailKitAutoExecMailTransport.ToSecureSocketOptions(security));
+	}
+
+	[TestMethod]
+	public void Describe_未送信の結果_理由と設定名を含む() {
+		var result = new AutoExecMailSendResult(
+			false,
+			AutoExecMailNotSentReason.InvalidConfiguration,
+			AutoExecMailSettingsFailure.MissingValue,
+			MasterConfig.NameAutoExecMailToAddr);
+
+		var text = AutoExecMailResultText.Describe(result);
+
+		Assert.IsTrue(text.Contains("送信しませんでした", StringComparison.Ordinal));
+		Assert.IsTrue(text.Contains(MasterConfig.NameAutoExecMailToAddr, StringComparison.Ordinal));
+	}
+
+	[TestMethod]
+	public void Describe_送信済みの結果_送信したことを示す() {
+		Assert.AreEqual("送信しました", AutoExecMailResultText.Describe(AutoExecMailSendResult.Success));
+	}
+
+	private static AutoExecMailSettings ValidSettings(
+		AutoExecMailAuthMode authMode = AutoExecMailAuthMode.Password,
+		string fromName = "CV10 自動実行") => new(
 		"smtp.example.com",
 		587,
+		AutoExecMailSecurity.StartTls,
 		"smtp-user",
 		"password",
-		AutoExecMailAuthMode.Password,
+		authMode,
 		"sender@example.com",
-		"CV10 自動実行",
+		fromName,
 		["first@example.com", "second@example.com"]);
 
 	private sealed class StubSettingsLoader : IAutoExecMailSettingsLoader {
