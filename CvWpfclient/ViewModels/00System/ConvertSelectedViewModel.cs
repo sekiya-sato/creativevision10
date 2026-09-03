@@ -165,6 +165,8 @@ internal static class ConvertTaskDisplayNames {
 		["CnvMasterTokui"] = "得意先マスタ",
 		["CnvMasterShiire"] = "仕入先マスタ",
 		["CnvMasterMaterial"] = "生地・付属マスタ",
+		["CnvMasterYosanBrand"] = "店ブランド予算マスタ",
+		["CnvMasterYosanHanbai"] = "販売員予算マスタ",
 		["CnvAfterMaster"] = "マスタ紐付け後処理",
 		["CnvAfterMasterAddress"] = "マスタ住所正規化後処理",
 		["CnvTran00HonUri"] = "本部売上データ(00)",

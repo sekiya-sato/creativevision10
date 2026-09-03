@@ -40,6 +40,8 @@ public partial class ConvertDb {
 		(nameof(CnvMasterTokui), static (db, isInit) => db.CnvMasterTokui(isInit)),
 		(nameof(CnvMasterShiire), static (db, isInit) => db.CnvMasterShiire(isInit)),
 		(nameof(CnvMasterMaterial), static (db, isInit) => db.CnvMasterMaterial(isInit)),
+		(nameof(CnvMasterYosanBrand), static (db, isInit) => db.CnvMasterYosanBrand(isInit)),
+		(nameof(CnvMasterYosanHanbai), static (db, isInit) => db.CnvMasterYosanHanbai(isInit)),
 		(nameof(CnvAfterMaster), static (db, isInit) => db.CnvAfterMaster(isInit)),
 		(nameof(CnvAfterMasterAddress), static (db, isInit) => db.CnvAfterMasterAddress(isInit)),
 		(nameof(CnvTran00HonUri), static (db, isInit) => db.CnvTran00HonUri(isInit)),
@@ -717,6 +719,196 @@ OR (Kubun ='{MasterMeisho.KubunSeason}' and Code =@3) OR (Kubun ='{MasterMeisho.
 		};
 		_toDb.InsertBulk<MasterMaterial>(placeholders);
 		return placeholders.Count;
+	}
+	/// <summary>
+	/// 大量件数の変換結果を、単一トランザクション内でchunkSizeごとに分割してInsertBulkする
+	/// (予算マスタ変換のような数十万件規模の一括変換で、1回のInsertBulkに渡す件数を抑えるための共通ヘルパ)
+	/// </summary>
+	private void InsertBulkChunked<T>(List<T> list, int chunkSize) {
+		if (list.Count == 0)
+			return;
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		foreach (var chunk in list.Chunk(chunkSize))
+			_toDb.InsertBulk<T>(chunk);
+		_toDb.CompleteTransaction();
+	}
+	/// <summary>
+	/// 日付を持つマスタを、年月(yyyyMM)ごとの件数をもとに日付範囲(yyyyMMdd〜yyyyMMdd)へ分割する
+	/// <para>
+	/// ソート済みの(年月, 件数)リストを先頭から累計し、chunkRowsに達したところで1範囲を確定する。
+	/// 件数の少ない年月は次の年月と同じ範囲にまとめられ、末尾の端数も最後の範囲へ含める。
+	/// </para>
+	/// <para>予算マスタは日付が集計キーに含まれるため、年月で区切っても1グループが複数チャンクに分かれることはない。</para>
+	/// </summary>
+	private static List<(string DayFrom, string DayTo)> SplitYearMonthRange(List<(string YearMonth, int Count)> sortedYearMonths, int chunkRows) {
+		if (chunkRows <= 0)
+			throw new ArgumentException("chunkRows must be positive");
+
+		var ranges = new List<(string, string)>();
+		string? startYm = null;
+		string endYm = string.Empty;
+		int sum = 0;
+		foreach (var (yearMonth, count) in sortedYearMonths) {
+			startYm ??= yearMonth;
+			endYm = yearMonth;
+			sum += count;
+			if (sum < chunkRows)
+				continue; // 件数が少ない年月は次の年月と同じ範囲へまとめる
+			ranges.Add(($"{startYm}01", $"{endYm}99"));
+			startYm = null;
+			sum = 0;
+		}
+		if (startYm != null)
+			ranges.Add(($"{startYm}01", $"{endYm}99")); // 末尾の端数を最後の範囲にまとめる
+		return ranges;
+	}
+	/// <summary>
+	/// 店舗ブランド予算マスター変換 HC$MASTER_YO_TENPO
+	/// <para>
+	/// 旧テーブルはアイテムCD単位で予算を保持しているが、新 <see cref="MasterYosanBrand"/> にアイテム次元がないため、
+	/// 店舗CD・ブランドCD・日付単位で予算金額・粗利予算を合計(SUM)して畳み込んで取得する。
+	/// </para>
+	/// <para>
+	/// 数十万件規模になるため、年月(yyyyMM)ごとの件数をもとに日付範囲へ分割して取得・登録する。
+	/// また行ごとの<c>_toDb.FirstOrDefault</c>は使わず、MasterTokui・MasterMeisho(ブランド区分)を事前に全件取得して辞書化する。
+	/// </para>
+	/// </summary>
+	/// <param name="isInit"></param>
+	/// <param name="chunkRows">1チャンクの目安件数</param>
+	/// <returns></returns>
+	public int CnvMasterYosanBrand(bool isInit = true, int chunkRows = 50000) { // 予算分割のデフォルトチャンクサイズは50000件
+		const string ymSql = "select substr(日付,1,6) as YM, count(*) as CNT from HC$MASTER_YO_TENPO where 店舗CD > '.' and 日付 > '.' group by substr(日付,1,6) order by 1";
+		var yearMonths = _fromDb.Fetch<Dictionary<string, object>>(ymSql)
+			.Select(rec => (YearMonth: getString(rec, "YM"), Count: getDataInt(rec, "CNT")))
+			.ToList();
+		_toDb.CreateTable(typeof(MasterYosanBrand), isInit);
+
+		if (yearMonths.Count == 0)
+			return 0;
+
+		var tokuiDict = _toDb.Fetch<MasterTokui>().ToDictionary(t => t.Code);
+		var brandDict = _toDb.Fetch<MasterMeisho>("where Kubun=@0", MasterMeisho.KubunBrand).ToDictionary(m => m.Code);
+
+		int totalCount = 0;
+		int skipCount = 0;
+		foreach (var (dayFrom, dayTo) in SplitYearMonthRange(yearMonths, chunkRows)) {
+			var (count, skip) = ConvertMasterYosanBrandChunk(dayFrom, dayTo, tokuiDict, brandDict);
+			totalCount += count;
+			skipCount += skip;
+		}
+		if (skipCount > 0)
+			_logger.LogWarning("MasterYosanBrand変換: 店舗CD未解決のため {Count} 件をスキップしました", skipCount);
+
+		return totalCount;
+	}
+	/// <summary>
+	/// 日付範囲(dayFrom〜dayTo)1チャンク分の店舗ブランド予算を変換する
+	/// </summary>
+	/// <returns>登録件数と、店舗CD未解決でスキップした件数</returns>
+	private (int Count, int Skip) ConvertMasterYosanBrandChunk(string dayFrom, string dayTo, Dictionary<string, MasterTokui> tokuiDict, Dictionary<string, MasterMeisho> brandDict) {
+		const string sql = """
+select 店舗CD, ブランドCD, 日付, sum(予算金額) as 予算金額, sum(粗利予算) as 粗利予算
+from HC$MASTER_YO_TENPO
+where 店舗CD > '.' and 日付 between @0 and @1
+group by 店舗CD, ブランドCD, 日付
+order by 店舗CD, ブランドCD, 日付
+""";
+		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql, dayFrom, dayTo);
+		if (rows.Count == 0)
+			return (0, 0);
+
+		var list = new List<MasterYosanBrand>(rows.Count);
+		int skipCount = 0;
+		foreach (var rec in rows) {
+			var tenpoCode = getString(rec, "店舗CD");
+			if (!tokuiDict.TryGetValue(tenpoCode, out var tokui)) {
+				skipCount++;
+				continue; // 店舗CDが未解決の行は対象店舗が存在しないため変換対象外
+			}
+			var brandCode = getString(rec, "ブランドCD");
+			brandDict.TryGetValue(brandCode, out var brand); // ブランドIdは任意のため、未解決でもId=0で登録する
+
+			list.Add(new MasterYosanBrand() {
+				Id_Tenpo = tokui.Id,
+				Id_Brand = brand?.Id ?? 0,
+				DenDay = getString(rec, "日付"),
+				UriYosan = getDataLong(rec, "予算金額"),
+				ArariYosan = getDataLong(rec, "粗利予算"),
+				VTenpo = new CodeNameView(tokui.Id, tokui.Code, tokui.Name),
+				VBrand = brand != null ? new CodeNameView(brand) : new(),
+			});
+		}
+		InsertBulkChunked(list, 20000);
+
+		return (list.Count, skipCount);
+	}
+	/// <summary>
+	/// 販売員予算マスター変換 HC$MASTER_YO_HANBAI
+	/// <para>cv163スキーマでは0件だが、他スキーマには実データがあるため年月(yyyyMM)ごとの件数をもとに日付範囲へ分割して変換する。</para>
+	/// </summary>
+	/// <param name="isInit"></param>
+	/// <param name="chunkRows">1チャンクの目安件数</param>
+	/// <returns></returns>
+	public int CnvMasterYosanHanbai(bool isInit = true, int chunkRows = 50000) { // 予算分割のデフォルトチャンクサイズは50000件
+		const string ymSql = "select substr(日付,1,6) as YM, count(*) as CNT from HC$MASTER_YO_HANBAI where 販売員CD > '.' and 日付 > '.' group by substr(日付,1,6) order by 1";
+		var yearMonths = _fromDb.Fetch<Dictionary<string, object>>(ymSql)
+			.Select(rec => (YearMonth: getString(rec, "YM"), Count: getDataInt(rec, "CNT")))
+			.ToList();
+		_toDb.CreateTable(typeof(MasterYosanHanbai), isInit);
+
+		if (yearMonths.Count == 0)
+			return 0;
+
+		var shainDict = _toDb.Fetch<MasterShain>().ToDictionary(s => s.Code);
+
+		int totalCount = 0;
+		int skipCount = 0;
+		foreach (var (dayFrom, dayTo) in SplitYearMonthRange(yearMonths, chunkRows)) {
+			var (count, skip) = ConvertMasterYosanHanbaiChunk(dayFrom, dayTo, shainDict);
+			totalCount += count;
+			skipCount += skip;
+		}
+		if (skipCount > 0)
+			_logger.LogWarning("MasterYosanHanbai変換: 販売員CD未解決のため {Count} 件をスキップしました", skipCount);
+
+		return totalCount;
+	}
+	/// <summary>
+	/// 日付範囲(dayFrom〜dayTo)1チャンク分の販売員予算を変換する
+	/// </summary>
+	/// <returns>登録件数と、販売員CD未解決でスキップした件数</returns>
+	private (int Count, int Skip) ConvertMasterYosanHanbaiChunk(string dayFrom, string dayTo, Dictionary<string, MasterShain> shainDict) {
+		const string sql = """
+select 販売員CD, 日付, sum(予算金額) as 予算金額, sum(粗利予算) as 粗利予算
+from HC$MASTER_YO_HANBAI
+where 販売員CD > '.' and 日付 between @0 and @1
+group by 販売員CD, 日付
+order by 販売員CD, 日付
+""";
+		var rows = _fromDb.Fetch<Dictionary<string, object>>(sql, dayFrom, dayTo);
+		if (rows.Count == 0)
+			return (0, 0);
+
+		var list = new List<MasterYosanHanbai>(rows.Count);
+		int skipCount = 0;
+		foreach (var rec in rows) {
+			var shainCode = getString(rec, "販売員CD");
+			if (!shainDict.TryGetValue(shainCode, out var shain)) {
+				skipCount++;
+				continue; // 販売員CDが未解決の行は対象社員が存在しないため変換対象外
+			}
+
+			list.Add(new MasterYosanHanbai() {
+				Id_Shain = shain.Id,
+				DenDay = getString(rec, "日付"),
+				UriYosan = getDataLong(rec, "予算金額"),
+				ArariYosan = getDataLong(rec, "粗利予算"),
+				VShain = new CodeNameView(shain.Id, shain.Code, shain.Name),
+			});
+		}
+		InsertBulkChunked(list, 20000);
+
+		return (list.Count, skipCount);
 	}
 	public int CnvMasterConfig(bool isInit = true) {
 		const string sql = "select * from HC$MASTER_Config where フラグ名>'.' order by カテゴリ,フラグ名";
