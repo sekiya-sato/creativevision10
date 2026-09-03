@@ -543,7 +543,7 @@ public partial class TranKinHeader : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
-	[OldTableCommentAttr("在庫計上日")]
+	[OldTableCommentAttr("掛計上日")]
 	[Comment("掛計上日（yyyyMMdd） 売掛・買掛の集計、元帳、消込画面はこの日付を基準にする。 2026-08-16 に DenDay から改名した。")]
 	public partial string KakeDay { get; set; } = "19010101";
 	/// <summary>
@@ -679,6 +679,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 [KeyDml("nk2", false, [nameof(Id_Torisaki)])]
 [Comment("トランザクション：入金データ 売掛に対する入金")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran06Nyukin : TranKinHeader {
 }
 /// <summary>
@@ -689,6 +690,7 @@ public sealed partial class Tran06Nyukin : TranKinHeader {
 [KeyDml("nk2", false, [nameof(Id_Torisaki)])]
 [Comment("トランザクション：支払データ 買掛に対する支払")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran07Shiharai : TranKinHeader {
 }
 
@@ -701,6 +703,7 @@ public sealed partial class Tran07Shiharai : TranKinHeader {
 [KeyDml("nk5", false, [nameof(Id_Soko), nameof(DenDay)])]
 [Comment("トランザクション：棚卸データ 月末あるいは特定日の倉庫現在値")]
 [OldTableCommentAttr("HC$tran_tana0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran60Tana : TranAllHeader {
 	/// <summary>
 	/// 棚番
@@ -729,6 +732,7 @@ public sealed partial class Tran60Tana : TranAllHeader {
 [KeyDml("nk2", false, [nameof(Id_Soko)])]
 [KeyDml("nk5", false, [nameof(Id_Soko), nameof(DenDay)])]
 [Comment("トランザクション：在庫調整データ 棚卸確定と在庫強制調整による在庫の増減")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran61Chosei : TranAllHeader, ITranSoko {
 	/// <summary>
 	/// 調整区分（<see cref="EnumChosei"/>）
@@ -803,6 +807,7 @@ public static class ChoseiRiyu {
 [KeyDml("nk5", false, [nameof(Id_Tokui), nameof(DenDay)])]
 [Comment("トランザクション：本部売上データ 得意先に対する売掛計上と倉庫からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	/// <summary>
 	/// 掛計上日（yyyyMMdd）
@@ -875,7 +880,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2
 	/// </summary>
@@ -1017,6 +1022,7 @@ public enum EnumUri00 : int {
 [KeyDml("nk5", false, [nameof(Id_Tenpo), nameof(DenDay)])]
 [Comment("トランザクション：店舗売上データ 店舗に対する売上と店舗(倉庫)からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	[ObservableProperty]
 	[ColumnSizeDml(36)]
@@ -1048,7 +1054,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterEndCustomer))]
-	[OldTableCommentAttr("顧客TEL")]
+	[OldTableCommentAttr("顧客TEL", "顧客CDに相当する列が旧DBに無く、顧客TELからMasterEndCustomerを解決したId")]
 	[Comment("顧客キー")]
 	public partial long Id_Customer { get; set; }
 	/// <summary>
@@ -1188,6 +1194,7 @@ public enum EnumUri01 : int {
 [KeyDml("nk5", false, [nameof(Id_Shiire), nameof(DenDay)])]
 [Comment("トランザクション：仕入データ 仕入先に対する買掛計上と倉庫への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	/// <summary>
 	/// 掛計上日（yyyyMMdd）
@@ -1259,7 +1266,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	/// 掛率
 	/// </summary>
@@ -1394,6 +1401,7 @@ public enum EnumShiire : int {
 [KeyDml("nk2", false, [nameof(Id_Shiire)])]
 [KeyDml("nk5", false, [nameof(Id_Shiire), nameof(DenDay)])]
 [Comment("トランザクション：生地・付属仕入データ MasterMaterialを明細に持つ")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	/// <summary>
 	/// 計上日（yyyyMMdd）
@@ -1698,13 +1706,6 @@ public sealed partial class Tran99MaterialMeisai : ObservableObject {
 	[ColumnSizeDml(200)]
 	[Comment("明細メモ")]
 	public partial string Memo { get; set; } = string.Empty;
-	/// <summary>
-	/// 旧データ SEQ_NO
-	/// </summary>
-	[ObservableProperty]
-	[OldTableCommentAttr("HC$TRAN_TORI0.SEQ_NO")]
-	[Comment("旧データ SEQ_NO")]
-	public partial long OldSeqNo { get; set; }
 }
 
 /// <summary>
@@ -1718,6 +1719,7 @@ public sealed partial class Tran99MaterialMeisai : ObservableObject {
 [KeyDml("nk6", false, [nameof(Id_Ido), nameof(DenDay)])]
 [Comment("トランザクション：移動データ(即時) 倉庫からの出庫と移動先への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	/// <summary>
 	/// 移動先キー
@@ -1764,6 +1766,7 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 [KeyDml("nk6", false, [nameof(Id_Ido), nameof(DenDay)])]
 [Comment("トランザクション：移動データ(積送出庫) 倉庫からの出庫、積送中在庫へ(移動先への入庫予定)")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	/// <summary>
 	/// 移動先キー
@@ -1809,6 +1812,7 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 [KeyDml("nk6", false, [nameof(Id_Ido), nameof(DenDay)])]
 [Comment("トランザクション：移動データ(積送入庫) 積送中在庫(倉庫からの出庫)から移動先への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 	/// <summary>
 	/// 移動先キー
@@ -1852,6 +1856,7 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 [KeyDml("nk5", false, [nameof(Id_Tokui), nameof(DenDay)])]
 [Comment("トランザクション：受注データ 得意先に対する受注、本部売上になる場合は、本部売上データのRelateNo1に受注データのIdをセット")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	/// <summary>
 	/// 得意先キー
@@ -2011,6 +2016,7 @@ public enum EnumJuchu : int {
 [KeyDml("nk5", false, [nameof(Id_Shiire), nameof(DenDay)])]
 [Comment("トランザクション：発注データ 仕入先に対する発注、仕入になる場合は、仕入データのRelateNo1に発注データのIdをセット")]
 [OldTableCommentAttr("HC$tran_tori0")]
+[KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
 public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	/// <summary>
 	/// 仕入先キー

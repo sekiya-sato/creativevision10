@@ -23,8 +23,8 @@ public partial class ConvertDb {
 				var tokui = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
-				var kingakuTotal = getDataInt(rec, "明細金額合計");
-				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var kingakuTotal = getDataLong(rec, "明細金額合計");
+				var oldTax = getDataLong(rec, "内税消費税") + getDataLong(rec, "外税消費税");
 				var rate = getDataInt(rec, "掛率1");
 				var memo = getString(rec, "メモ", getString(rec,"MEMO2"));
 				var denDay = getString(rec, "在庫計上日", "19010101");
@@ -34,12 +34,12 @@ public partial class ConvertDb {
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
 					ManualNo = getString(rec, "手入力伝票NO"),
-					RelateNo1 = getDataInt(rec, "関連伝票NO"),
+					RelateNo1 = getDataLong(rec, "関連伝票NO"),
 					RelateNo2 = getDataInt(rec, "関連伝票NO2"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = kingakuTotal,
-					JodaiTotal = getDataInt(rec, "上代合計"),
-					GedaiTotal = getDataInt(rec, "下代合計"),
+					JodaiTotal = getDataLong(rec, "上代合計"),
+					GedaiTotal = getDataLong(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
 					Memo = memo,
@@ -88,9 +88,9 @@ public partial class ConvertDb {
 				var kokyaku = getCodeNameView<MasterEndCustomer>(kokyakuCode) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
-				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var kingakuTotal = getDataLong(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var oldTax = getDataLong(rec, "内税消費税") + getDataLong(rec, "外税消費税");
 				var denDay = getString(rec, "在庫計上日", "19010101");
 				var slip = new Tran01Tenuri() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
@@ -99,8 +99,8 @@ public partial class ConvertDb {
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = kingakuTotal,
-					JodaiTotal = getDataInt(rec, "上代合計"),
-					GedaiTotal = getDataInt(rec, "下代合計"),
+					JodaiTotal = getDataLong(rec, "上代合計"),
+					GedaiTotal = getDataLong(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
 					Memo = getString(rec, "メモ"),
@@ -160,9 +160,9 @@ public partial class ConvertDb {
 				var shiire = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildMaterialMeisaiList(rec, kubun);
-				var kingakuTotalRaw = getDataInt(rec, "明細金額合計");
+				var kingakuTotalRaw = getDataLong(rec, "明細金額合計");
 				// Tran02Material は Rate 列を持たないため旧「掛率1」は読まない
-				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var oldTax = getDataLong(rec, "内税消費税") + getDataLong(rec, "外税消費税");
 				var denDay = getString(rec, "在庫計上日", "19010101");
 				// 区分99(その他)は消費税調整伝票で、明細金額合計は常に0・実額は内税消費税/外税消費税にのみ入る。
 				// SummaryDb.CalcSummaryKaiKake/CalcSummaryKaiShi は区分99をKingakuTotal(Sonota99)からTaxバケットへ
@@ -217,9 +217,9 @@ public partial class ConvertDb {
 				var shiire = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
-				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var kingakuTotal = getDataLong(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var oldTax = getDataLong(rec, "内税消費税") + getDataLong(rec, "外税消費税");
 				var denDay = getString(rec, "在庫計上日", "19010101");
 
 				var slip = new Tran03Shiire() {
@@ -228,11 +228,11 @@ public partial class ConvertDb {
 					KakeDay = getString(rec, "掛計上日", "19010101"),
 					Kubun = kubun,
 					ManualNo = getString(rec, "手入力伝票NO"),
-					RelateNo1 = getDataInt(rec, "関連伝票NO"),
+					RelateNo1 = getDataLong(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = kingakuTotal,
-					JodaiTotal = getDataInt(rec, "上代合計"),
-					GedaiTotal = getDataInt(rec, "下代合計"),
+					JodaiTotal = getDataLong(rec, "上代合計"),
+					GedaiTotal = getDataLong(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
 					Memo = getString(rec, "メモ"),
@@ -281,13 +281,13 @@ public partial class ConvertDb {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
-					JodaiTotal = getDataInt(rec, "上代合計"),
-					GedaiTotal = getDataInt(rec, "下代合計"),
+					KingakuTotal = getDataLong(rec, "明細金額合計"),
+					JodaiTotal = getDataLong(rec, "上代合計"),
+					GedaiTotal = getDataLong(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
 					ManualNo = getString(rec, "手入力伝票NO"),
-					RelateNo1 = getDataInt(rec, "関連伝票NO"),
+					RelateNo1 = getDataLong(rec, "関連伝票NO"),
 					Memo = getString(rec, "メモ"),
 					Jdetail = new BaseDetailClass() {
 						Yobi1 = getString(rec, "関連伝票NO2"),
@@ -316,8 +316,8 @@ public partial class ConvertDb {
 
 				return new Tran06Nyukin() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
-					KakeDay = getString(rec, "在庫計上日", "19010101"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
+					KakeDay = getString(rec, "掛計上日", "19010101"),
+					KingakuTotal = getDataLong(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
 					Jmeisai = meisaiList,
 					Id_Shain = shain.Sid,
@@ -341,8 +341,8 @@ public partial class ConvertDb {
 
 				return new Tran07Shiharai() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
-					KakeDay = getString(rec, "在庫計上日", "19010101"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
+					KakeDay = getString(rec, "掛計上日", "19010101"),
+					KingakuTotal = getDataLong(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
 					Jmeisai = meisaiList,
 					Id_Shain = shain.Sid,
@@ -369,7 +369,7 @@ public partial class ConvertDb {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
+					KingakuTotal = getDataLong(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
 					// 棚卸の元テーブル HC$tran_tana0 は「関連伝票NO」「関連伝票NO2」を持たない
 					// （対向エンティティが無い）。getString は存在しないキーを空文字で返すため、
@@ -439,13 +439,13 @@ public partial class ConvertDb {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
-					JodaiTotal = getDataInt(rec, "上代合計"),
-					GedaiTotal = getDataInt(rec, "下代合計"),
+					KingakuTotal = getDataLong(rec, "明細金額合計"),
+					JodaiTotal = getDataLong(rec, "上代合計"),
+					GedaiTotal = getDataLong(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
 					ManualNo = getString(rec, "手入力伝票NO"),
-					RelateNo1 = getDataInt(rec, "関連伝票NO"),
+					RelateNo1 = getDataLong(rec, "関連伝票NO"),
 					Memo = getString(rec, "メモ"),
 					Jdetail = new BaseDetailClass() {
 						Yobi1 = getString(rec, "関連伝票NO2"),
@@ -478,13 +478,13 @@ public partial class ConvertDb {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = getString(rec, "在庫計上日", "19010101"),
 					SuTotal = getDataInt(rec, "数量合計"),
-					KingakuTotal = getDataInt(rec, "明細金額合計"),
-					JodaiTotal = getDataInt(rec, "上代合計"),
-					GedaiTotal = getDataInt(rec, "下代合計"),
+					KingakuTotal = getDataLong(rec, "明細金額合計"),
+					JodaiTotal = getDataLong(rec, "上代合計"),
+					GedaiTotal = getDataLong(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
 					ManualNo = getString(rec, "手入力伝票NO"),
-					RelateNo1 = getDataInt(rec, "関連伝票NO"),
+					RelateNo1 = getDataLong(rec, "関連伝票NO"),
 					Memo = getString(rec, "メモ"),
 					Jdetail = new BaseDetailClass() {
 						Yobi1 = getString(rec, "関連伝票NO2"),
@@ -515,9 +515,9 @@ public partial class ConvertDb {
 				var tokui = getCodeNameView<MasterTokui>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
-				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var kingakuTotal = getDataLong(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var oldTax = getDataLong(rec, "内税消費税") + getDataLong(rec, "外税消費税");
 				var denDay = getString(rec, "在庫計上日", "19010101");
 
 				var slip = new Tran12Jyuchu() {
@@ -527,8 +527,8 @@ public partial class ConvertDb {
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = kingakuTotal,
-					JodaiTotal = getDataInt(rec, "上代合計"),
-					GedaiTotal = getDataInt(rec, "下代合計"),
+					JodaiTotal = getDataLong(rec, "上代合計"),
+					GedaiTotal = getDataLong(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
 					Memo = getString(rec, "メモ"),
@@ -572,9 +572,9 @@ public partial class ConvertDb {
 				var shiire = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildTranMeisaiList(rec);
-				var kingakuTotal = getDataInt(rec, "明細金額合計");
+				var kingakuTotal = getDataLong(rec, "明細金額合計");
 				var rate = getDataInt(rec, "掛率1");
-				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
+				var oldTax = getDataLong(rec, "内税消費税") + getDataLong(rec, "外税消費税");
 				var denDay = getString(rec, "在庫計上日", "19010101");
 
 				var slip = new Tran13Hachu() {
@@ -584,8 +584,8 @@ public partial class ConvertDb {
 					RelateNo1 = getDataInt(rec, "関連伝票NO"),
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = kingakuTotal,
-					JodaiTotal = getDataInt(rec, "上代合計"),
-					GedaiTotal = getDataInt(rec, "下代合計"),
+					JodaiTotal = getDataLong(rec, "上代合計"),
+					GedaiTotal = getDataLong(rec, "下代合計"),
 					Nebiki00Total = getHeaderNebiki(rec),
 					Nebiki01Meisai = 0,
 					Memo = getString(rec, "メモ"),
@@ -676,6 +676,60 @@ WHERE EXISTS (
 		// Executeメソッドの仕様で、正常終了は0を返すため、更新件数は'SELECT changes()'で取得、クエリの実行自体は効率的に行われます。
 		// アプリ側でレコード1件づつの処理をした場合、実データ5万件程度で数10分、300万件で4時間以上かかって途中リタイア。-> SQLクエリで一括更新する方法に変更して全体で5分程度で完了。
 	}
+	/// <summary>
+	/// 関連伝票の紐付けを旧SEQ_NOから cv10 の Id へ張り替える（全Tran変換の後に実行する後処理）。
+	/// <para>
+	/// 変換直後の <c>RelateNo1</c> には旧「関連伝票NO」（=親伝票の旧 SEQ_NO）が入っているが、
+	/// アプリ側は <c>RelateNo1</c> を cv10 の Id として扱う（<c>WHERE a.RelateNo1 = h.Id</c>。
+	/// 発注残完了設定・入荷予定表・配分など）。張り替えないとこれらの機能で変換データが紐付かない。
+	/// </para>
+	/// <para>
+	/// 変換ステップの順序は 売上→…→仕入→…→受注→発注 で、依存関係（発注→仕入、受注→売上）と逆のため
+	/// 各変換の中では親の Id を引けない。そこで全変換の後に走る独立ステップとして一括UPDATEする。
+	/// 変換画面で個別タスクだけ実行しても壊れないよう、親が未変換なら単に0件で終わる作りにしている。
+	/// </para>
+	/// </summary>
+	public int CnvTranRelateFix(bool isInit = true) {
+		var cnt = 0;
+		cnt += subRelinkRelateNo1<Tran03Shiire, Tran13Hachu>();  // 仕入 → 発注
+		cnt += subRelinkRelateNo1<Tran00Uriage, Tran12Jyuchu>(); // 売上 → 受注
+		cnt += subRelinkRelateNo1<Tran11IdoIn, Tran10IdoOut>();  // 移動受 → 積送移動
+		return cnt;
+	}
+	/// <summary>
+	/// <typeparamref name="TChild"/> の <c>RelateNo1</c>（旧SEQ_NO）を、
+	/// <typeparamref name="TParent"/> の <c>OldSeqNo</c> で引いた <c>Id</c> へ置き換える。
+	/// <para>
+	/// 再実行しても二重変換にならない。張替後の <c>RelateNo1</c> は親の Id（小さい値）になるが、
+	/// <c>OldSeqNo</c> は旧SEQ_NO（実データでは500万以上）で値域が重ならないため、
+	/// 2回目以降は EXISTS が成立せず0件で終わる。
+	/// </para>
+	/// <para>
+	/// 判定は「親に一致する <c>OldSeqNo</c> があるか」だけで、子側の <c>OldSeqNo</c> は見ていない。
+	/// したがってアプリで作られた子（<c>OldSeqNo</c>=0）も対象になり得るが、その <c>RelateNo1</c> には
+	/// 既に cv10 の Id（小さい値）が入っており旧SEQ_NOと一致しないため実際には書き換わらない。
+	/// 親が未変換・別伝票種別を指している場合も EXISTS が成立せず手つかずで残る。
+	/// </para>
+	/// </summary>
+	int subRelinkRelateNo1<TChild, TParent>() {
+		var child = typeof(TChild).Name;
+		var parent = typeof(TParent).Name;
+		var sql = @$"
+UPDATE {child}
+SET RelateNo1 = (
+  SELECT p.Id FROM {parent} p WHERE p.OldSeqNo = {child}.RelateNo1
+)
+WHERE {child}.RelateNo1 > 0
+  AND EXISTS (
+    SELECT 1 FROM {parent} p WHERE p.OldSeqNo = {child}.RelateNo1
+  )
+";
+		_toDb.ExecuteDialect(sql);
+		// Execute系は正常終了で0を返すため、更新件数は changes() で取る（subCnvTranHeaderSize と同じ規約）
+		var cnt = _toDb.FirstOrDefault<int>("SELECT changes() AS updated_count");
+		_logger.LogInformation("関連伝票の張替 {Child}.RelateNo1 -> {Parent}.Id : {Count}件", child, parent, cnt);
+		return cnt;
+	}
 	// 旧「掛率1」は掛率(%)そのものなので、Tran*.Rate へはそのまま移行する。
 	// かつて「旧の掛率1には実質すべて消費税率が入っているのでCV10マスタの掛率を採用する」という
 	// 前提で getTorihikiRatePercent/getShiireRatePercent を用意していたが、実データを確認すると
@@ -737,8 +791,8 @@ WHERE EXISTS (
 		var fallbackCode = ChoseiRiyu.CalcFlag(kubunCode) == 1 ? "10" : "20";
 		return getMeisho(ChoseiRiyu.Kubun, fallbackCode)?.Id ?? 0;
 	}
-	int getHeaderNebiki(Dictionary<string, object> rec) {
-		return getDataInt(rec, "値引1") + getDataInt(rec, "値引2") + getDataInt(rec, "値引3");
+	long getHeaderNebiki(Dictionary<string, object> rec) {
+		return getDataLong(rec, "値引1") + getDataLong(rec, "値引2") + getDataLong(rec, "値引3");
 	}
 
 	List<Tran99Meisai>? BuildTranMeisaiList(Dictionary<string, object> rec, string table = "HC$tran_tori1") { // 棚卸は別テーブル
@@ -777,7 +831,7 @@ WHERE EXISTS (
 				Mei_Siz = siz?.Name ?? string.Empty,
 				Su = getDataInt(detailRec, "数量"),
 				Tanka = getDataInt(detailRec, "単価"),
-				Kingaku = getDataInt(detailRec, "金額"),
+				Kingaku = getDataLong(detailRec, "金額"),
 				Memo = getString(detailRec, "明細メモ"),
 				Kubun = kubun,
 				Jodai = jodai,
@@ -825,7 +879,7 @@ WHERE EXISTS (
 				Mei_Material = material?.Name ?? getString(detailRec, "明細名称"),
 				Su = getDataInt(detailRec, "数量"),
 				Tanka = getDataInt(detailRec, "単価"),
-				Kingaku = getDataInt(detailRec, "金額"),
+				Kingaku = getDataLong(detailRec, "金額"),
 				Memo = getString(detailRec, "明細メモ"),
 			});
 		}
@@ -888,7 +942,7 @@ WHERE EXISTS (
 				Id_Kin = kinKubun?.Id ?? 0,
 				Code_Kin = kinKubun?.Code ?? code,
 				Mei_Kin = kinKubun?.Name ?? string.Empty,
-				Kingaku = getDataInt(detailRec, "金額"),
+				Kingaku = getDataLong(detailRec, "金額"),
 				Memo = getString(detailRec, "明細メモ"),
 			});
 		}

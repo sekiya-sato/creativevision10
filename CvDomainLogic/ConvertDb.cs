@@ -57,6 +57,8 @@ public partial class ConvertDb {
 		(nameof(CnvTran11IdoIn), static (db, isInit) => db.CnvTran11IdoIn(isInit)),
 		(nameof(CnvTran12Jyuchu), static (db, isInit) => db.CnvTran12Jyuchu(isInit)),
 		(nameof(CnvTran13Hachu), static (db, isInit) => db.CnvTran13Hachu(isInit)),
+		// 関連伝票の張替は全Tran変換の後に実行する必要があるため必ず最後に置く
+		(nameof(CnvTranRelateFix), static (db, isInit) => db.CnvTranRelateFix(isInit)),
 	];
 
 	/// <summary>
@@ -240,7 +242,7 @@ public partial class ConvertDb {
 		};
 		foreach (var rec in mstTax) {
 			var tax = new MasterSysTax() {
-				Id = getDataInt(rec, "消費税CD"),
+				Id = getDataLong(rec, "消費税CD"),
 				TaxRate = getDataInt(rec, "消費税率"),
 				DateFrom = getString(rec, "新消費税開始日", "19010101"),
 				TaxNewRate = getDataInt(rec, "新消費税率"),
@@ -514,7 +516,7 @@ OR (Kubun ='{MasterMeisho.KubunSeason}' and Code =@3) OR (Kubun ='{MasterMeisho.
 				DayShukka = getString(rec, "デリバリー日", "19010101"),
 				DayNohin = getString(rec, "納品日", "19010101"),
 				DayTento = getString(rec, "店頭投入日", "19010101"),
-				Id_Tax = getDataInt(rec, "消費税CD"),
+				Id_Tax = getDataLong(rec, "消費税CD"),
 				IsZaiko = getDataInt(rec, "在庫管理FLG"),
 				MakerHin = getString(rec, "メーカー品番"),
 				SizeKu = sizeKubun,

@@ -176,7 +176,7 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 	/// <param name="denLabel">保存した伝票の名称（"仕入" / "出荷"）</param>
 	/// <param name="zanLabel">紐付く残伝票の名称（"発注" / "受注"）</param>
 	/// <param name="settingLabel">案内する残完了設定画面の名称</param>
-	protected async Task WarnIfLinkedZanCompletedAsync(Type zanType, int relateNo1, string denLabel, string zanLabel, string settingLabel) {
+	protected async Task WarnIfLinkedZanCompletedAsync(Type zanType, long relateNo1, string denLabel, string zanLabel, string settingLabel) {
 		if (relateNo1 <= 0) {
 			return;
 		}

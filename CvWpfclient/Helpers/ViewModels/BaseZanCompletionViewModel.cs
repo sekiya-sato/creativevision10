@@ -48,7 +48,7 @@ public sealed partial class ZanCompletionRow : ObservableObject {
 	/// <summary>取引先の「(Id) コード 名称」表示。</summary>
 	public string ToriDisplay { get; set; } = string.Empty;
 
-	public int RelateNo1 { get; set; }
+	public long RelateNo1 { get; set; }
 
 	/// <summary>伝票の数量合計（発注数 / 受注数）。</summary>
 	public int DenSu { get; set; }

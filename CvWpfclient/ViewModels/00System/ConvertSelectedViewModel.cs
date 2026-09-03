@@ -190,6 +190,7 @@ internal static class ConvertTaskDisplayNames {
 		["CnvTran11IdoIn"] = "積送移動入データ(11)",
 		["CnvTran12Jyuchu"] = "受注データ(12)",
 		["CnvTran13Hachu"] = "発注データ(13)",
+		["CnvTranRelateFix"] = "関連伝票の張替(仕入→発注/売上→受注/移動受→積送)",
 	};
 
 	public static string GetDisplayName(string name) =>
