@@ -97,11 +97,12 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 			if (request.StoreId <= 0) throw new InvalidOperationException("店舗を指定してください。");
 			if (string.IsNullOrWhiteSpace(request.DenDay) || request.DenDay.Length != 8) throw new InvalidOperationException("営業日を yyyyMMdd で指定してください。");
 			if (request.StaffId <= 0) throw new InvalidOperationException("担当者を指定してください。");
+			if (string.IsNullOrWhiteSpace(request.RegisterNo)) throw new InvalidOperationException("レジ番号を指定してください。");
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			var realAmount = CalcGenkin(request);
 			var calcAmount = checked(request.JunbiAmount + request.CashAmount);
 			var diff = checked(realAmount - calcAmount);
-			var nextCnt = _db.Fetch(typeof(Tran04PosSeisan), "where DenDay=@0 and Id_Tenpo=@1", request.DenDay, request.StoreId)
+			var nextCnt = _db.Fetch(typeof(Tran04PosSeisan), "where DenDay=@0 and Id_Tenpo=@1 and RegisterNo=@2", request.DenDay, request.StoreId, request.RegisterNo)
 				.OfType<Tran04PosSeisan>().Max(s => (int?)s.SeisanCnt) ?? 0;
 			nextCnt++;
 			var store = FindById<MasterTokui>(request.StoreId);
@@ -112,6 +113,7 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 				DenDay = request.DenDay,
 				Id_Tenpo = request.StoreId,
 				VTenpo = store == null ? new CodeNameView() : new CodeNameView(store.Id, store.Code, store.Name),
+				RegisterNo = request.RegisterNo,
 				Id_Shain = request.StaffId,
 				VShain = staff == null ? new CodeNameView() : new CodeNameView(staff.Id, staff.Code, staff.Name),
 				SeisanCnt = nextCnt,
@@ -137,7 +139,12 @@ public sealed class PointOfSaleService : IPointOfSaleService {
 					OtherAmount = request.OtherAmount,
 					TransactionCount = request.TransactionCount,
 					ReturnCount = request.ReturnCount,
-					TotalQuantity = request.TotalQuantity
+					TotalQuantity = request.TotalQuantity,
+					TaxAmount = request.TaxAmount,
+					GiftCertificateAmount = request.GiftCertificateAmount,
+					CreditSaleAmount = request.CreditSaleAmount,
+					StampCount = request.StampCount,
+					StampAmount = request.StampAmount
 				}
 			};
 			_db.Insert(seisan);

@@ -265,6 +265,7 @@ public class PointOfSaleServiceTests {
 		foreach (var type in new[] {
 			typeof(MasterSysman), typeof(MasterTokui), typeof(MasterShain), typeof(MasterShohin),
 			typeof(DerivedJodai), typeof(Tran01Tenuri), typeof(SummaryStock), typeof(SummaryRealStock),
+			typeof(Tran04PosSeisan),
 		}) {
 			Db.CreateTable(type, true, false);
 		}
@@ -328,4 +329,76 @@ public class PointOfSaleServiceTests {
 		Payment = new PosPayment { CashAmount = cashAmount },
 		Kubun = (int)EnumUri01.Uriage,
 	};
+
+	private PosSaveSeisanRequest SeisanRequest(string registerNo = "01") => new() {
+		StoreId = _storeId,
+		RegisterNo = registerNo,
+		DenDay = DateTime.Today.ToString("yyyyMMdd"),
+		StaffId = _staffId,
+		KyakuSu = 3,
+		Mai10000 = 1,
+		Mai1000 = 5,
+		JunbiAmount = 5000,
+		CashAmount = 15000,
+		TotalAmount = 15000,
+		CardAmount = 0,
+		OtherAmount = 0,
+		TransactionCount = 3,
+		ReturnCount = 0,
+		TotalQuantity = 4,
+		TaxAmount = 1200,
+		GiftCertificateAmount = 500,
+		CreditSaleAmount = 300,
+		StampCount = 2,
+		StampAmount = 400,
+	};
+
+	[TestMethod]
+	public async Task SaveSeisanAsync_レジ番号と集計スナップショットを保存する() {
+		var request = SeisanRequest("01");
+
+		var response = await Service.SaveSeisanAsync(request);
+
+		Assert.IsTrue(response.IsSuccess);
+		var seisan = Db.Single<Tran04PosSeisan>("where Id=@0", response.SeisanId);
+		Assert.AreEqual("01", seisan.RegisterNo);
+		var summary = seisan.Jsummary ?? throw new AssertFailedException("集計スナップショットが保存されていません");
+		Assert.AreEqual(request.TaxAmount, summary.TaxAmount);
+		Assert.AreEqual(request.GiftCertificateAmount, summary.GiftCertificateAmount);
+		Assert.AreEqual(request.CreditSaleAmount, summary.CreditSaleAmount);
+		Assert.AreEqual(request.StampCount, summary.StampCount);
+		Assert.AreEqual(request.StampAmount, summary.StampAmount);
+	}
+
+	[TestMethod]
+	public async Task SaveSeisanAsync_レジ番号が異なると連番はそれぞれ1から始まる() {
+		var responseRegister01 = await Service.SaveSeisanAsync(SeisanRequest("01"));
+		var responseRegister02 = await Service.SaveSeisanAsync(SeisanRequest("02"));
+
+		Assert.IsTrue(responseRegister01.IsSuccess);
+		Assert.IsTrue(responseRegister02.IsSuccess);
+		Assert.AreEqual(1, responseRegister01.SeisanCnt);
+		Assert.AreEqual(1, responseRegister02.SeisanCnt);
+	}
+
+	[TestMethod]
+	public async Task SaveSeisanAsync_同一レジ番号は連番が継続する() {
+		var first = await Service.SaveSeisanAsync(SeisanRequest("01"));
+		var second = await Service.SaveSeisanAsync(SeisanRequest("01"));
+
+		Assert.IsTrue(first.IsSuccess);
+		Assert.IsTrue(second.IsSuccess);
+		Assert.AreEqual(1, first.SeisanCnt);
+		Assert.AreEqual(2, second.SeisanCnt);
+	}
+
+	[TestMethod]
+	public async Task SaveSeisanAsync_レジ番号未指定はエラーになる() {
+		var request = SeisanRequest("   ");
+
+		var response = await Service.SaveSeisanAsync(request);
+
+		Assert.IsFalse(response.IsSuccess);
+		StringAssert.Contains(response.Message, "レジ番号");
+	}
 }

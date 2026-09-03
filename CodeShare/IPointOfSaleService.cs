@@ -85,30 +85,42 @@ public sealed record PosCancelSaleResponse {
 [DataContract]
 public sealed record PosSaveSeisanRequest {
 	[DataMember(Order = 1)] public long StoreId { get; init; }
+	/// <summary>レジ番号。</summary>
+	[DataMember(Order = 2)] public string RegisterNo { get; init; } = string.Empty;
 	/// <summary>営業日（yyyyMMdd）。</summary>
-	[DataMember(Order = 2)] public string DenDay { get; init; } = string.Empty;
-	[DataMember(Order = 3)] public long StaffId { get; init; }
+	[DataMember(Order = 3)] public string DenDay { get; init; } = string.Empty;
+	[DataMember(Order = 4)] public long StaffId { get; init; }
 	/// <summary>来店客数。</summary>
-	[DataMember(Order = 4)] public int KyakuSu { get; init; }
-	[DataMember(Order = 5)] public int Mai10000 { get; init; }
-	[DataMember(Order = 6)] public int Mai5000 { get; init; }
-	[DataMember(Order = 7)] public int Mai2000 { get; init; }
-	[DataMember(Order = 8)] public int Mai1000 { get; init; }
-	[DataMember(Order = 9)] public int Mai500 { get; init; }
-	[DataMember(Order = 10)] public int Mai100 { get; init; }
-	[DataMember(Order = 11)] public int Mai50 { get; init; }
-	[DataMember(Order = 12)] public int Mai10 { get; init; }
-	[DataMember(Order = 13)] public int Mai5 { get; init; }
-	[DataMember(Order = 14)] public int Mai1 { get; init; }
+	[DataMember(Order = 5)] public int KyakuSu { get; init; }
+	[DataMember(Order = 6)] public int Mai10000 { get; init; }
+	[DataMember(Order = 7)] public int Mai5000 { get; init; }
+	[DataMember(Order = 8)] public int Mai2000 { get; init; }
+	[DataMember(Order = 9)] public int Mai1000 { get; init; }
+	[DataMember(Order = 10)] public int Mai500 { get; init; }
+	[DataMember(Order = 11)] public int Mai100 { get; init; }
+	[DataMember(Order = 12)] public int Mai50 { get; init; }
+	[DataMember(Order = 13)] public int Mai10 { get; init; }
+	[DataMember(Order = 14)] public int Mai5 { get; init; }
+	[DataMember(Order = 15)] public int Mai1 { get; init; }
 	/// <summary>釣銭準備金。</summary>
-	[DataMember(Order = 15)] public int JunbiAmount { get; init; }
-	[DataMember(Order = 16)] public int TotalAmount { get; init; }
-	[DataMember(Order = 17)] public int CashAmount { get; init; }
-	[DataMember(Order = 18)] public int CardAmount { get; init; }
-	[DataMember(Order = 19)] public int OtherAmount { get; init; }
-	[DataMember(Order = 20)] public int TransactionCount { get; init; }
-	[DataMember(Order = 21)] public int ReturnCount { get; init; }
-	[DataMember(Order = 22)] public int TotalQuantity { get; init; }
+	[DataMember(Order = 16)] public int JunbiAmount { get; init; }
+	[DataMember(Order = 17)] public int TotalAmount { get; init; }
+	[DataMember(Order = 18)] public int CashAmount { get; init; }
+	[DataMember(Order = 19)] public int CardAmount { get; init; }
+	[DataMember(Order = 20)] public int OtherAmount { get; init; }
+	[DataMember(Order = 21)] public int TransactionCount { get; init; }
+	[DataMember(Order = 22)] public int ReturnCount { get; init; }
+	[DataMember(Order = 23)] public int TotalQuantity { get; init; }
+	/// <summary>外税合計金額。</summary>
+	[DataMember(Order = 24)] public int TaxAmount { get; init; }
+	/// <summary>金券使用金額。</summary>
+	[DataMember(Order = 25)] public int GiftCertificateAmount { get; init; }
+	/// <summary>掛売金額。</summary>
+	[DataMember(Order = 26)] public int CreditSaleAmount { get; init; }
+	/// <summary>収入印紙枚数合計。</summary>
+	[DataMember(Order = 27)] public int StampCount { get; init; }
+	/// <summary>収入印紙金額合計。</summary>
+	[DataMember(Order = 28)] public int StampAmount { get; init; }
 }
 [DataContract]
 public sealed record PosSaveSeisanResponse {

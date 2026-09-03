@@ -9,7 +9,7 @@ namespace CvBase;
 /// POS日次精算（精算確定の履歴。同一店舗・同一日で SeisanCnt をインクリメントして履歴化する）
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
-[KeyDml("nk1", false, [nameof(DenDay), nameof(Id_Tenpo)])]
+[KeyDml("nk1", false, [nameof(DenDay), nameof(Id_Tenpo), nameof(RegisterNo)])]
 [Comment("トランザクション：POS日次精算データ（金種枚数・集計スナップショット）")]
 public sealed partial class Tran04PosSeisan : BaseDbClass {
 	/// <summary>
@@ -34,6 +34,13 @@ public sealed partial class Tran04PosSeisan : BaseDbClass {
 	[ColumnSizeDml(100)]
 	[Comment("店舗データ")]
 	public partial CodeNameView VTenpo { get; set; } = new();
+	/// <summary>
+	/// レジ番号（同一店舗・同一営業日でレジごとに精算を区別する）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("レジ番号")]
+	public partial string RegisterNo { get; set; } = string.Empty;
 	/// <summary>
 	/// 社員ユニークキー（精算担当）
 	/// </summary>
@@ -149,4 +156,14 @@ public sealed class PosSeisanSummary {
 	public int ReturnCount { get; init; }
 	[Comment("精算時点の売上数量合計")]
 	public int TotalQuantity { get; init; }
+	[Comment("精算時点の外税合計金額")]
+	public int TaxAmount { get; init; }
+	[Comment("精算時点の金券使用金額")]
+	public int GiftCertificateAmount { get; init; }
+	[Comment("精算時点の掛売金額")]
+	public int CreditSaleAmount { get; init; }
+	[Comment("精算時点の収入印紙枚数合計")]
+	public int StampCount { get; init; }
+	[Comment("精算時点の収入印紙金額合計")]
+	public int StampAmount { get; init; }
 }
