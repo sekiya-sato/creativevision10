@@ -65,7 +65,16 @@ C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj
 - コミット、rebase、merge、push はユーザーが明示した場合だけ実行する。コミット本文はリポジトリ既定の形式と JST の作業時間を記載する。
 - コミット対象は依頼に直接関係するファイルと作業ログに限定する。
 
-## 7. 知識グラフとスキル改善
 
-- アーキテクチャ、依存関係、影響範囲の質問では、最初に `graphify-out/GRAPH_REPORT.md` を読む。`graphify-out/wiki/index.md` があれば優先し、横断関係は `graphify query` / `path` / `explain` を優先する。
-- `.agents/skills/*/SKILL.md` の改善は、実作業の証拠に基づいて最小限に行う。失敗要因と成功手順を分離し、検証されていない一般化や外部ツールの自動導入はしない。
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

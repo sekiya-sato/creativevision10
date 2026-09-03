@@ -118,6 +118,13 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		RecalculateTotals();
 	}
 
+	partial void OnSelectedBrandCodeChanged(string value) {
+		if (string.IsNullOrWhiteSpace(value)) {
+			SelectedBrandId = 0;
+			SelectedBrandName = string.Empty;
+		}
+	}
+
 	partial void OnDailyBudgetsChanged(ObservableCollection<DailyBudgetRow> value) {
 		foreach (var row in value) {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
@@ -160,8 +167,8 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 	[RelayCommand]
 	async Task LoadBudget(CancellationToken ct) {
-		if (SelectedShopId == 0 || SelectedBrandId == 0) {
-			MessageEx.ShowWarningDialog("店舗とブランドを選択してください。", owner: ClientLib.GetActiveView(this));
+		if (SelectedShopId == 0) {
+			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		if (!TryApplySelectedYearMonth()) return;
@@ -226,8 +233,8 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 	[RelayCommand]
 	void CreateBudget() {
-		if (SelectedShopId == 0 || SelectedBrandId == 0) {
-			MessageEx.ShowWarningDialog("店舗とブランドを選択してください。", owner: ClientLib.GetActiveView(this));
+		if (SelectedShopId == 0) {
+			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		if (!TryApplySelectedYearMonth()) return;
@@ -237,8 +244,8 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 	[RelayCommand]
 	async Task SaveBudget(CancellationToken ct) {
-		if (SelectedShopId == 0 || SelectedBrandId == 0) {
-			MessageEx.ShowWarningDialog("店舗とブランドを選択してください。", owner: ClientLib.GetActiveView(this));
+		if (SelectedShopId == 0) {
+			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		if (!TryApplySelectedYearMonth()) return;
@@ -312,8 +319,8 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 
 	[RelayCommand]
 	async Task DeleteBudget(CancellationToken ct) {
-		if (SelectedShopId == 0 || SelectedBrandId == 0) {
-			MessageEx.ShowWarningDialog("店舗とブランドを選択してください。", owner: ClientLib.GetActiveView(this));
+		if (SelectedShopId == 0) {
+			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		if (!TryApplySelectedYearMonth()) return;

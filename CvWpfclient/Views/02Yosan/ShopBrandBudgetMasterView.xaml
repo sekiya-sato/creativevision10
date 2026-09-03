@@ -92,7 +92,7 @@
 				</DockPanel>
 				<TextBlock Grid.Row="0" Grid.Column="4"
 					Margin="16,0,8,0" VerticalAlignment="Center"
-					Text="ブランドId" />
+					Text="ブランドId(任意)" />
 				<DockPanel Grid.Row="0" Grid.Column="5">
 					<TextBox Width="120" Height="36"
 						helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCommand}"

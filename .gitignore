@@ -60,5 +60,6 @@ graphify-out/
 # Optional local notes
 printform/data*.*
 .claude/
+.codex/
 .mcp.json
 .omo-*/

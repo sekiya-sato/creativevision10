@@ -78,6 +78,7 @@ output/
 *.csproj
 *.csproj.user
 .claude/
+.codex/
 .mcp.json
 .omo-*/
 
