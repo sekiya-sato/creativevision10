@@ -698,6 +698,7 @@ public sealed partial class Tran07Shiharai : TranKinHeader {
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("nk1", false, nameof(DenDay))]
 [KeyDml("nk2", false, [nameof(Id_Soko)])]
+[KeyDml("nk5", false, [nameof(Id_Soko), nameof(DenDay)])]
 [Comment("トランザクション：棚卸データ 月末あるいは特定日の倉庫現在値")]
 [OldTableCommentAttr("HC$tran_tana0")]
 public sealed partial class Tran60Tana : TranAllHeader {
@@ -726,6 +727,7 @@ public sealed partial class Tran60Tana : TranAllHeader {
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("nk1", false, nameof(DenDay))]
 [KeyDml("nk2", false, [nameof(Id_Soko)])]
+[KeyDml("nk5", false, [nameof(Id_Soko), nameof(DenDay)])]
 [Comment("トランザクション：在庫調整データ 棚卸確定と在庫強制調整による在庫の増減")]
 public sealed partial class Tran61Chosei : TranAllHeader, ITranSoko {
 	/// <summary>
@@ -798,6 +800,7 @@ public static class ChoseiRiyu {
 [KeyDml("nk2", false, nameof(KakeDay))]
 [KeyDml("nk3", false, [nameof(Id_Soko)])]
 [KeyDml("nk4", false, [nameof(Id_Tokui)])]
+[KeyDml("nk5", false, [nameof(Id_Tokui), nameof(DenDay)])]
 [Comment("トランザクション：本部売上データ 得意先に対する売掛計上と倉庫からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
@@ -1011,6 +1014,7 @@ public enum EnumUri00 : int {
 [KeyDml("nk2", false, [nameof(Id_Soko)])]
 [KeyDml("nk3", false, [nameof(Id_Tenpo)])]
 [KeyDml("nk4", false, nameof(Id_Customer))]
+[KeyDml("nk5", false, [nameof(Id_Tenpo), nameof(DenDay)])]
 [Comment("トランザクション：店舗売上データ 店舗に対する売上と店舗(倉庫)からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
@@ -1181,6 +1185,7 @@ public enum EnumUri01 : int {
 [KeyDml("nk2", false, nameof(KakeDay))]
 [KeyDml("nk3", false, [nameof(Id_Soko)])]
 [KeyDml("nk4", false, [nameof(Id_Shiire)])]
+[KeyDml("nk5", false, [nameof(Id_Shiire), nameof(DenDay)])]
 [Comment("トランザクション：仕入データ 仕入先に対する買掛計上と倉庫への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
@@ -1387,6 +1392,7 @@ public enum EnumShiire : int {
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("nk1", false, nameof(KakeDay))]
 [KeyDml("nk2", false, [nameof(Id_Shiire)])]
+[KeyDml("nk5", false, [nameof(Id_Shiire), nameof(DenDay)])]
 [Comment("トランザクション：生地・付属仕入データ MasterMaterialを明細に持つ")]
 public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	/// <summary>
@@ -1708,6 +1714,8 @@ public sealed partial class Tran99MaterialMeisai : ObservableObject {
 [KeyDml("nk1", false, nameof(DenDay))]
 [KeyDml("nk2", false, [nameof(Id_Soko)])]
 [KeyDml("nk3", false, [nameof(Id_Ido)])]
+[KeyDml("nk5", false, [nameof(Id_Soko), nameof(DenDay)])]
+[KeyDml("nk6", false, [nameof(Id_Ido), nameof(DenDay)])]
 [Comment("トランザクション：移動データ(即時) 倉庫からの出庫と移動先への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
@@ -1752,6 +1760,8 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 [KeyDml("nk1", false, nameof(DenDay))]
 [KeyDml("nk2", false, [nameof(Id_Soko)])]
 [KeyDml("nk3", false, [nameof(Id_Ido)])]
+[KeyDml("nk5", false, [nameof(Id_Soko), nameof(DenDay)])]
+[KeyDml("nk6", false, [nameof(Id_Ido), nameof(DenDay)])]
 [Comment("トランザクション：移動データ(積送出庫) 倉庫からの出庫、積送中在庫へ(移動先への入庫予定)")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
@@ -1795,6 +1805,8 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 [KeyDml("nk1", false, nameof(DenDay))]
 [KeyDml("nk2", false, [nameof(Id_Soko)])]
 [KeyDml("nk3", false, [nameof(Id_Ido)])]
+[KeyDml("nk5", false, [nameof(Id_Soko), nameof(DenDay)])]
+[KeyDml("nk6", false, [nameof(Id_Ido), nameof(DenDay)])]
 [Comment("トランザクション：移動データ(積送入庫) 積送中在庫(倉庫からの出庫)から移動先への入庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
@@ -1837,6 +1849,7 @@ public sealed partial class Tran11IdoIn : TranAllHeader, ITranIdo, ITranSoko {
 [KeyDml("nk1", false, nameof(DenDay))]
 [KeyDml("nk3", false, [nameof(Id_Soko)])]
 [KeyDml("nk4", false, [nameof(Id_Tokui)])]
+[KeyDml("nk5", false, [nameof(Id_Tokui), nameof(DenDay)])]
 [Comment("トランザクション：受注データ 得意先に対する受注、本部売上になる場合は、本部売上データのRelateNo1に受注データのIdをセット")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
@@ -1995,6 +2008,7 @@ public enum EnumJuchu : int {
 [KeyDml("nk1", false, nameof(DenDay))]
 [KeyDml("nk3", false, [nameof(Id_Soko)])]
 [KeyDml("nk4", false, [nameof(Id_Shiire)])]
+[KeyDml("nk5", false, [nameof(Id_Shiire), nameof(DenDay)])]
 [Comment("トランザクション：発注データ 仕入先に対する発注、仕入になる場合は、仕入データのRelateNo1に発注データのIdをセット")]
 [OldTableCommentAttr("HC$tran_tori0")]
 public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
