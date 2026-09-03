@@ -39,6 +39,14 @@ public partial class ConvertSelectedViewModel : BaseViewModel {
 		try {
 			HasExecuted = false;
 			Tasks.Clear();
+
+			var connections = await CoreServiceClient.GetConnectionStatusAsync(cancellationToken);
+			if (!connections.Any(c => string.Equals(c, "oracle", StringComparison.OrdinalIgnoreCase))) {
+				MessageEx.ShowErrorDialog("変換に必要なOracle接続が不足してます", owner: ClientLib.GetActiveView(this));
+				ClientLib.Exit(this);
+				return;
+			}
+
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new CvMsg {
 				Code = 0,

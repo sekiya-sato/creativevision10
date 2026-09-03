@@ -31,6 +31,24 @@ internal static class CoreServiceClient {
 			typeof(QueryListParam),
 			ct);
 
+	/// <summary>
+	/// サーバー側の接続定義キー一覧(<see cref="CvFlag.Msg004_GetConnectionStatus"/>)を取得する。
+	/// 実際の接続文字列は含まず、settings.*.json の ConnectionStrings に定義されたキー名のみを返す。
+	/// </summary>
+	internal static async Task<List<string>> GetConnectionStatusAsync(CancellationToken ct) {
+		var message = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg004_GetConnectionStatus,
+			DataType = typeof(string),
+			DataMsg = string.Empty
+		};
+		var reply = await SendAsync(message, ct);
+		if (reply.Code < 0) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "接続定義一覧の取得でエラーが発生しました");
+		}
+		return Common.DeserializeObject<List<string>>(reply.DataMsg ?? "[]") ?? [];
+	}
+
 	internal static Task<CvMsg> SendExecuteAsync(object parameter, CancellationToken ct) {
 		var message = new CvMsg {
 			Code = 0,

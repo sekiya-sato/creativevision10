@@ -31,6 +31,24 @@ public partial class ConvertDbViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial ObservableCollection<string> StreamMessages { get; set; } = [];
 
+	[RelayCommand]
+	private async Task InitAsync(CancellationToken cancellationToken) {
+		try {
+			var connections = await CoreServiceClient.GetConnectionStatusAsync(cancellationToken);
+			if (!connections.Any(c => string.Equals(c, "oracle", StringComparison.OrdinalIgnoreCase))) {
+				MessageEx.ShowErrorDialog("変換に必要なOracle接続が不足してます", owner: ClientLib.GetActiveView(this));
+				ClientLib.Exit(this);
+			}
+		}
+		catch (OperationCanceledException) {
+		}
+		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"接続状態の確認中にエラーが発生しました。\n{ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+	}
+
 	private bool CanExecute() => !HasExecuted;
 
 	[RelayCommand(CanExecute = nameof(CanExecute), IncludeCancelCommand = true)]
