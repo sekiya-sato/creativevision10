@@ -161,7 +161,7 @@
 										Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
 										Header="発注日" />
 									<DataGridTextColumn Width="80"
-										Binding="{Binding EnKubun}"
+										Binding="{Binding EnKubun, Converter={StaticResource EnumCommentDisplayConverter}}"
 										Header="区分" />
 									<DataGridTextColumn Width="270"
 										Binding="{Binding VShiire, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
