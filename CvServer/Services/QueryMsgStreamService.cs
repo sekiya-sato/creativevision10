@@ -10,13 +10,29 @@ using ProtoBuf.Grpc;
 namespace CvServer.Services;
 
 public partial class CoreService {
+	/// <summary>
+	/// 進捗をクライアント表示用の1行に整形する。
+	/// ステップの開始と終了は <see cref="StreamStepProgress.Phase"/> で文言を分ける
+	/// （開始時は件数が未確定なので「件数=0」を出さない）。
+	/// </summary>
+	private static string FormatProgressMessage(StreamStepProgress progress) {
+		var time = $"----{DateTime.Now: MM/dd HH:mm:ss.fff}";
+		if (progress.IsError) {
+			return $"エラー: {progress.StepName} - {progress.ErrorMessage} {time}";
+		}
+		return progress.Phase switch {
+			StreamStepProgressPhase.Started => $"開始: {progress.StepName} {time}",
+			StreamStepProgressPhase.Error => $"エラー: {progress.StepName} - {progress.ErrorMessage} {time}",
+			StreamStepProgressPhase.Completed => $"全処理完了: 所要={progress.ErrorMessage} {time}",
+			_ => $"完了: {progress.StepName} 件数={progress.Count} 所要={progress.ElapsedSeconds:0.0}s {time}",
+		};
+	}
+
 	private static StreamMsg CreateProgressStreamMsg(CvFlag flag, StreamStepProgress progress) => new() {
 		Flag = flag,
 		Code = progress.IsError ? -1 : 0,
 		DataType = typeof(string),
-		DataMsg = progress.IsError
-			? $"エラー: {progress.StepName} - {progress.ErrorMessage} ----{DateTime.Now: MM/dd HH:mm:ss.fff}"
-			: $"{(progress.IsCompleted ? "完了" : "処理中")}: {progress.StepName} 件数={progress.Count} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+		DataMsg = FormatProgressMessage(progress),
 		Progress = progress.Progress,
 		IsCompleted = progress.IsCompleted,
 		IsError = progress.IsError

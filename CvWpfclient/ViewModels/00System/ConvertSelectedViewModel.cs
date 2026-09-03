@@ -109,6 +109,8 @@ public partial class ConvertSelectedViewModel : BaseViewModel {
 			HasExecuted = true;
 			ProgressValue = 0;
 			StreamMessages.Clear();
+			// 実行の区切りを最初に置く（サーバからの各ステップ行は、この行より上に積まれる）
+			StreamMessages.Insert(0, $"===== 実行開始: {selectedTasks.Count}件 初期化={(IsInitDb ? "あり" : "なし")} ----{DateTime.Now: MM/dd HH:mm:ss.fff}");
 			cancellationToken.ThrowIfCancellationRequested();
 
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();

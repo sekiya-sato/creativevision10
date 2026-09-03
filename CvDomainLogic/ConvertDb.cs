@@ -7,10 +7,38 @@ using System.Text.RegularExpressions;
 namespace CvDomainLogic;
 
 /// <summary>
+/// ステップ進捗の局面。1ステップにつき <see cref="StreamStepProgressPhase.Started"/> と
+/// <see cref="StreamStepProgressPhase.Finished"/>（失敗時は <see cref="StreamStepProgressPhase.Error"/>）が
+/// 1回ずつ流れ、全ステップ終了後に <see cref="StreamStepProgressPhase.Completed"/> が1回流れる。
+/// </summary>
+public enum StreamStepProgressPhase {
+	/// <summary>ステップ開始（件数・所要時間は未確定）</summary>
+	Started,
+	/// <summary>ステップ正常終了（件数・所要時間が確定）</summary>
+	Finished,
+	/// <summary>ステップ異常終了</summary>
+	Error,
+	/// <summary>全ステップ終了</summary>
+	Completed,
+}
+
+/// <summary>
 /// 変換ステップの進捗情報
 /// [Conversion step progress information]
 /// </summary>
-public record StreamStepProgress(string StepName, int Count, int Progress, bool IsCompleted = false, bool IsError = false, string? ErrorMessage = null);
+/// <param name="Phase">この通知がステップの開始・終了・エラー・全体完了のどれを表すか。
+/// 開始と終了が同じ文言で並ぶのを避けるため、表示側はこれで文言を出し分ける。</param>
+/// <param name="ElapsedSeconds"><see cref="StreamStepProgressPhase.Started"/> では 0。
+/// それ以外はそのステップ（全体完了では全体）の所要秒数。</param>
+public record StreamStepProgress(
+	string StepName,
+	int Count,
+	int Progress,
+	bool IsCompleted = false,
+	bool IsError = false,
+	string? ErrorMessage = null,
+	StreamStepProgressPhase Phase = StreamStepProgressPhase.Finished,
+	double ElapsedSeconds = 0);
 
 /// <summary>
 /// SqlDepends: データベースを変換するクラス

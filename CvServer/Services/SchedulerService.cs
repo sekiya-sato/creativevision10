@@ -719,7 +719,8 @@ public class SchedulerService : ISchedulerService {
 					_logger.LogError("集計エラー: Step={Step}, Error={Error}",
 						step.StepName, step.ErrorMessage);
 				}
-				else {
+				else if (step.Phase != StreamStepProgressPhase.Started) {
+					// 開始通知は件数が未確定（常に0）なので、進捗ログと件数の採用対象から外す
 					processedCount = step.Count;
 					_logger.LogInformation("集計進捗: Step={Step}, Progress={Progress}, Count={Count}",
 						step.StepName, step.Progress, step.Count);
@@ -806,6 +807,10 @@ public class SchedulerService : ISchedulerService {
 					_logger.LogInformation(
 						"再集計完了: TaskName={TaskName}, 区分={Label}, yyyymm={Yyyymm}, Count={Count}, Duration={Duration}",
 						taskName, label, yyyymm, count, step.ErrorMessage);
+					continue;
+				}
+				if (step.Phase == StreamStepProgressPhase.Started) {
+					// 開始通知は件数が未確定（常に0）なので、ログ・件数集計とも対象外
 					continue;
 				}
 				count += step.Count;
