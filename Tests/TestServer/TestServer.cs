@@ -3,6 +3,7 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvBaseSqlite;
+using CvDomainLogic;
 using CvServer;
 using CvServer.Services;
 using Microsoft.AspNetCore.Hosting;
@@ -439,6 +440,71 @@ public class CoreServiceTests {
 		Assert.AreEqual("1", MasterConfig.ValAutoExecEnabled);
 		Assert.AreEqual("0", MasterConfig.ValAutoExecDisabled);
 #pragma warning restore MSTEST0032
+	}
+
+	/// <summary>
+	/// MasterConfig一元化の要: 自動実行ジョブ定義の出典は MasterConfig.AutoExecJobDefaults(CvBase)であり、
+	/// SchedulerService.SystemJobDefinitions は同じ内容を参照するだけで、二重管理になっていないことを保証する。
+	/// 件数・並び順・TaskId・タスク名・cron式・既定の実行フラグが完全に一致することを確認する。
+	/// </summary>
+	[TestMethod]
+	public void MasterConfigAutoExecJobDefaults_MatchesSchedulerServiceSystemJobDefinitions() {
+		var masterDefs = MasterConfig.AutoExecJobDefaults;
+		var schedulerDefs = SchedulerService.SystemJobDefinitions;
+
+		Assert.AreEqual(masterDefs.Count, schedulerDefs.Count, "件数が一致しない(MasterConfigとSchedulerServiceで二重管理になっている疑いがある)");
+
+		for (int i = 0; i < masterDefs.Count; i++) {
+			var m = masterDefs[i];
+			var s = schedulerDefs[i];
+
+			Assert.AreEqual(Guid.Parse(m.TaskId), s.TaskId, $"[{i}] TaskIdが一致しない");
+			Assert.AreEqual(m.TaskName, s.TaskName, $"[{i}] TaskNameが一致しない");
+			Assert.AreEqual(m.Cron, s.DefaultCronExpression, $"[{i}] 既定cron式が一致しない");
+			Assert.AreEqual(m.Enabled == MasterConfig.ValAutoExecEnabled, s.DefaultEnabled, $"[{i}] 既定の実行フラグが一致しない");
+		}
+	}
+
+	/// <summary>
+	/// MasterConfig一元化: AutoExecEnabledName/AutoExecCronName が「接頭辞+TaskId先頭8桁」で
+	/// 設定名(MasterConfig.Name)を組み立てること。
+	/// </summary>
+	[TestMethod]
+	public void MasterConfigAutoExecNames_BuildPrefixPlusTaskIdFirstEightChars() {
+		const string taskId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+		Assert.AreEqual("GenericSQLRegAutoExeca1b2c3d4", MasterConfig.AutoExecEnabledName(taskId));
+		Assert.AreEqual("GenericSQLRegAutoExecCrona1b2c3d4", MasterConfig.AutoExecCronName(taskId));
+	}
+
+	/// <summary>
+	/// MasterConfig一元化: MasterConfig.AutoExecEnabledName/AutoExecCronName で組み立てたNameが、
+	/// CvDomainLogic.SchedulerJobConfigDb が実際にDBへ書き込む行のNameと一致すること。
+	/// SchedulerJobConfigDb のキー組み立て(EnabledKey/CronKey)はprivateのため、
+	/// SetEnabled/SetCron でDBに書いた行をMasterConfig側の組み立てNameで検索できるかで間接的に検証する。
+	/// </summary>
+	[TestMethod]
+	public void MasterConfigAutoExecNames_MatchSchedulerJobConfigDbPersistedKeys() {
+		var db = _db ?? throw new AssertFailedException("Database not initialized");
+		var configDb = new SchedulerJobConfigDb(db);
+		var taskId = SchedulerService.MonthlyResummaryTaskId;
+
+		configDb.SetEnabled(taskId, false);
+		configDb.SetCron(taskId, "*/5 * * * *");
+
+		var enabledRow = db.FirstOrDefault<MasterConfig>(
+			$"SELECT * FROM {nameof(MasterConfig)} WHERE Name = @0", MasterConfig.AutoExecEnabledName(taskId.ToString()));
+		var cronRow = db.FirstOrDefault<MasterConfig>(
+			$"SELECT * FROM {nameof(MasterConfig)} WHERE Name = @0", MasterConfig.AutoExecCronName(taskId.ToString()));
+
+		Assert.IsNotNull(enabledRow, "MasterConfig.AutoExecEnabledNameで組み立てたNameでSchedulerJobConfigDbが書いた行が見つからない(キー組み立てが不一致)");
+		Assert.AreEqual(MasterConfig.ValAutoExecDisabled, enabledRow!.Val);
+		Assert.IsNotNull(cronRow, "MasterConfig.AutoExecCronNameで組み立てたNameでSchedulerJobConfigDbが書いた行が見つからない(キー組み立てが不一致)");
+		Assert.AreEqual("*/5 * * * *", cronRow!.Val);
+
+		// 逆方向: SchedulerJobConfigDb.GetEnabled/GetCronが書き込んだ内容を正しく読み戻せること
+		Assert.AreEqual(false, configDb.GetEnabled(taskId));
+		Assert.AreEqual("*/5 * * * *", configDb.GetCron(taskId));
 	}
 
 	[TestMethod]

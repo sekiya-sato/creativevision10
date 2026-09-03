@@ -32,28 +32,32 @@ public class SchedulerService : ISchedulerService {
 	/// <summary>起動間隔算出の対象期間（日数）</summary>
 	private const int IntervalLookaheadDays = 31;
 
-	public const string DailyWalCheckpointCronExpression = "0 2 * * *";
-	public const string DailyWalCheckpointTaskName = "SQLite WAL checkpoint データベースにWAL履歴を反映させるタスク";
-	public const string WorkFileCleanupCronExpression = "30 0,12 * * *";
-	public const string WorkFileCleanupTaskName = "Work file cleanup ワークフォルダにある古いファイルを削除するタスク";
-	public const string MonthlyResummaryCronExpression = "10 1 * * *";
-	public const string MonthlyResummaryTaskName = "在庫 売掛 買掛 の当月と前月 を再集計するタスク";
-	public const string JodaiPurgeCronExpression = "40 1 * * *";
-	public const string JodaiPurgeTaskName = "上代 適用期間が過ぎた適用上代(DerivedJodai)を削除するタスク";
-	public const string MasterShohinMeishoRebuildCronExpression = "20 3 * * *";
-	public const string MasterShohinMeishoRebuildTaskName = "商品名称再構築 MasterShohinのId_Col/Id_Sizが0のデータから名称マスタを再構築するタスク";
-	public const string MasterVColumnResyncCronExpression = "40 3 * * *";
-	public const string MasterVColumnResyncTaskName = "V*列再同期 マスタ名称の複製列(V*列)を現在のマスタ内容で再同期するタスク";
-	public const string TranTaxRebuildCronExpression = "0 4 * * *";
-	public const string TranTaxRebuildTaskName = "伝票税額再更新 対象6伝票の期首日以降を取引先マスタの現在の税設定で再計算するタスク";
+	/// <summary>
+	/// 以下の cron式・タスク名・TaskId・既定実行フラグの値の出典は <see cref="MasterConfig"/>（CvBase）側の定数であり、
+	/// ここにある同名の公開定数は外部参照（テスト等）向けの互換のための別名である。
+	/// </summary>
+	public const string DailyWalCheckpointCronExpression = MasterConfig.AutoExecCronWalCheckpoint;
+	public const string DailyWalCheckpointTaskName = MasterConfig.AutoExecTaskNameWalCheckpoint;
+	public const string WorkFileCleanupCronExpression = MasterConfig.AutoExecCronWorkFileCleanup;
+	public const string WorkFileCleanupTaskName = MasterConfig.AutoExecTaskNameWorkFileCleanup;
+	public const string MonthlyResummaryCronExpression = MasterConfig.AutoExecCronMonthlyResummary;
+	public const string MonthlyResummaryTaskName = MasterConfig.AutoExecTaskNameMonthlyResummary;
+	public const string JodaiPurgeCronExpression = MasterConfig.AutoExecCronJodaiPurge;
+	public const string JodaiPurgeTaskName = MasterConfig.AutoExecTaskNameJodaiPurge;
+	public const string MasterShohinMeishoRebuildCronExpression = MasterConfig.AutoExecCronMasterShohinMeishoRebuild;
+	public const string MasterShohinMeishoRebuildTaskName = MasterConfig.AutoExecTaskNameMasterShohinMeishoRebuild;
+	public const string MasterVColumnResyncCronExpression = MasterConfig.AutoExecCronMasterVColumnResync;
+	public const string MasterVColumnResyncTaskName = MasterConfig.AutoExecTaskNameMasterVColumnResync;
+	public const string TranTaxRebuildCronExpression = MasterConfig.AutoExecCronTranTaxRebuild;
+	public const string TranTaxRebuildTaskName = MasterConfig.AutoExecTaskNameTranTaxRebuild;
 
-	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
-	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
-	public static readonly Guid MonthlyResummaryTaskId = Guid.Parse("c3d4e5f6-a7b8-9012-cdef-123456789012");
-	public static readonly Guid JodaiPurgeTaskId = Guid.Parse("d4e5f6a7-b8c9-0123-def0-234567890123");
-	public static readonly Guid MasterShohinMeishoRebuildTaskId = Guid.Parse("e5f6a7b8-c9d0-1234-ef01-345678901234");
-	public static readonly Guid MasterVColumnResyncTaskId = Guid.Parse("f6a7b8c9-d0e1-2345-f012-456789012345");
-	public static readonly Guid TranTaxRebuildTaskId = Guid.Parse("a7b8c9d0-e1f2-3456-0123-567890123456");
+	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWalCheckpoint);
+	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWorkFileCleanup);
+	public static readonly Guid MonthlyResummaryTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdMonthlyResummary);
+	public static readonly Guid JodaiPurgeTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdJodaiPurge);
+	public static readonly Guid MasterShohinMeishoRebuildTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdMasterShohinMeishoRebuild);
+	public static readonly Guid MasterVColumnResyncTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdMasterVColumnResync);
+	public static readonly Guid TranTaxRebuildTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdTranTaxRebuild);
 
 	/// <summary>ジョブを識別するキー（<see cref="MasterConfig"/> の Name に使う固定文字列）</summary>
 	public const string JobKeyWalCheckpoint = "WalCheckpoint";
@@ -78,14 +82,17 @@ public class SchedulerService : ISchedulerService {
 	/// 実行フラグ・cron式の永続値は <see cref="SchedulerJobConfigDb"/> 経由で参照し、未設定ならここの既定値を使う。
 	/// </summary>
 	public static readonly IReadOnlyList<SchedulerJobDefinition> SystemJobDefinitions = [
-		new(DailyWalCheckpointTaskId, JobKeyWalCheckpoint, DailyWalCheckpointTaskName, DailyWalCheckpointCronExpression, true, false),
-		new(WorkFileCleanupTaskId, JobKeyWorkFileCleanup, WorkFileCleanupTaskName, WorkFileCleanupCronExpression, true, false),
-		new(MonthlyResummaryTaskId, JobKeyMonthlyResummary, MonthlyResummaryTaskName, MonthlyResummaryCronExpression, true, false),
-		new(JodaiPurgeTaskId, JobKeyJodaiPurge, JodaiPurgeTaskName, JodaiPurgeCronExpression, true, false),
-		new(MasterShohinMeishoRebuildTaskId, JobKeyMasterShohinMeishoRebuild, MasterShohinMeishoRebuildTaskName, MasterShohinMeishoRebuildCronExpression, false, true),
-		new(MasterVColumnResyncTaskId, JobKeyMasterVColumnResync, MasterVColumnResyncTaskName, MasterVColumnResyncCronExpression, false, true),
-		new(TranTaxRebuildTaskId, JobKeyTranTaxRebuild, TranTaxRebuildTaskName, TranTaxRebuildCronExpression, false, true),
+		new(DailyWalCheckpointTaskId, JobKeyWalCheckpoint, DailyWalCheckpointTaskName, DailyWalCheckpointCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledWalCheckpoint), false),
+		new(WorkFileCleanupTaskId, JobKeyWorkFileCleanup, WorkFileCleanupTaskName, WorkFileCleanupCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledWorkFileCleanup), false),
+		new(MonthlyResummaryTaskId, JobKeyMonthlyResummary, MonthlyResummaryTaskName, MonthlyResummaryCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMonthlyResummary), false),
+		new(JodaiPurgeTaskId, JobKeyJodaiPurge, JodaiPurgeTaskName, JodaiPurgeCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledJodaiPurge), false),
+		new(MasterShohinMeishoRebuildTaskId, JobKeyMasterShohinMeishoRebuild, MasterShohinMeishoRebuildTaskName, MasterShohinMeishoRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMasterShohinMeishoRebuild), true),
+		new(MasterVColumnResyncTaskId, JobKeyMasterVColumnResync, MasterVColumnResyncTaskName, MasterVColumnResyncCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMasterVColumnResync), true),
+		new(TranTaxRebuildTaskId, JobKeyTranTaxRebuild, TranTaxRebuildTaskName, TranTaxRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledTranTaxRebuild), true),
 	];
+
+	/// <summary>MasterConfigの実行フラグ値(1/0)を bool に変換する</summary>
+	private static bool IsEnabledDefault(string value) => value == MasterConfig.ValAutoExecEnabled;
 
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;

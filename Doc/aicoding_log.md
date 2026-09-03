@@ -1,3 +1,52 @@
+## [2026-09-03] 自動実行ジョブ定義をMasterConfigへ一元化し初期データ登録を実装
+
+### Agent
+- Sekiya Sato Claude Opus 5 Middle
+
+### 目的
+- 自動実行ジョブ7件の TaskId・タスク名・既定cron式・既定の実行フラグが `SchedulerService`（`CvServer`）にリテラルで直書きされており、`MasterConfig`（`CvBase`）側の設定名組み立て（`AutoExecEnabledName`/`AutoExecCronName`）と定義が分かれていた。定義の出典を一箇所へ一元化し、あわせて前回保留にしていたMasterConfigへの初期データ登録を実装する。
+
+### 実施内容
+- `CvBase/BaseDb1Master.cs` の `MasterConfig` に、自動実行ジョブ7件（`WalCheckpoint`/`WorkFileCleanup`/`MonthlyResummary`/`JodaiPurge`/`MasterShohinMeishoRebuild`/`MasterVColumnResync`/`TranTaxRebuild`）ごとの既定定義を `AutoExecTaskId{Job}`/`AutoExecTaskName{Job}`/`AutoExecCron{Job}`/`AutoExecEnabled{Job}` 定数として移動した。`public sealed record AutoExecJobDefault(string TaskId, string TaskName, string Cron, string Enabled)` と、7件をまとめた `public static readonly IReadOnlyList<AutoExecJobDefault> AutoExecJobDefaults` を追加し、これを唯一の出典とした。
+- `MasterConfig.AutoExecEnabledName(taskId)`/`AutoExecCronName(taskId)` を追加し、「接頭辞＋TaskId先頭8桁」の設定名組み立てを一箇所に集約した（`CvDomainLogic/SchedulerJobConfigDb` のキー組み立てと同一規則）。
+- `MasterConfig.CreateDefaultData` を、テーブルが空かどうかで判定する方式から「候補行をNameで存在チェックし、無い行だけInsertする」方式へ変更した。候補は `JodaiKeepDays` 1行 + 自動実行ジョブ7件×2行（実行フラグ行・cron式行）＝計15行で、既存4ジョブ（WalCheckpoint/WorkFileCleanup/MonthlyResummary/JodaiPurge）の実行フラグ既定値は `"1"`、新規3ジョブ（MasterShohinMeishoRebuild/MasterVColumnResync/TranTaxRebuild）は `"0"` とした。
+- `CvServer/Services/SchedulerService.cs` のcron式・タスク名・TaskId・`DefaultEnabled` を、リテラルから `MasterConfig` の定数参照へ置き換えた。公開定数名（`DailyWalCheckpointCronExpression` 等）はテスト・外部参照との互換のためそのまま残し、値だけを `MasterConfig` 側の定数へ委譲した。`CheckMinInterval` と `JobKey` 定数はコード側の方針のため据え置いた。
+- 以前保留にしていた「`CvBase` が `CvDomainLogic` を参照してしまう」問題は、定義とキー組み立てをすべて `MasterConfig`（`CvBase`）側に置くことで解消した。`CreateDefaultData` は `CvDomainLogic/SchedulerJobConfigDb` を参照しない。
+
+### テスト追加
+- `Tests/TestServer/TestServer.cs`（既存の `SystemJobDefinitions_...` 系テストに倣い、DB不要な純粋ロジックのテストを2件、DB使用のテストを1件追加。既存テストは変更していない）
+  - `MasterConfigAutoExecJobDefaults_MatchesSchedulerServiceSystemJobDefinitions`: `MasterConfig.AutoExecJobDefaults` と `SchedulerService.SystemJobDefinitions` の件数・並び順・TaskId（`Guid.Parse`して比較）・TaskName・cron式・既定の実行フラグが一致し、定義の出典が `MasterConfig` 側に一元化され二重管理になっていないことを検証する。
+  - `MasterConfigAutoExecNames_BuildPrefixPlusTaskIdFirstEightChars`: `AutoExecEnabledName`/`AutoExecCronName` が「接頭辞＋TaskId先頭8桁」で設定名を組み立てることを検証する。
+  - `MasterConfigAutoExecNames_MatchSchedulerJobConfigDbPersistedKeys`: `SchedulerJobConfigDb.SetEnabled`/`SetCron`（キー組み立てはprivate）がDBへ書き込んだ行を、`MasterConfig` 側の組み立てNameで検索できることを確認し、キー組み立てが一致することを間接的に検証する。あわせて `GetEnabled`/`GetCron` での読み戻しも確認する。
+- `Tests/TestServer/UpdateDbTests.cs`（`SysPermissionProfileDefaultDataTests` のDBセットアップ方法に倣い、新規テストクラス `MasterConfigAutoExecDefaultDataTests` を追加）
+  - `CreateDefaultData_EmptyTable_InsertsFifteenRows`: 空テーブルに対しては15行すべてをInsertすること。
+  - `CreateDefaultData_AutoExecJobRows_HaveExpectedEnabledDefaults`: 自動実行ジョブ分の14行（Category=`自動実行管理`）が登録され、既存4ジョブ=`"1"`、新規3ジョブ=`"0"` であること。
+  - `CreateDefaultData_CalledTwice_SecondCallInsertsNothing`: 2回目の呼び出しでは不足行が無いため戻り値が空リストで、行数も増えないこと（不足行のみ追加方式の検証）。
+
+### 検証
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`: 成功（警告0、エラー0）。
+- `--filter FullyQualifiedName~SystemJobDefinitions`: 6件成功。
+- `--filter FullyQualifiedName~MasterConfig`: 7件成功。
+- `--filter FullyQualifiedName~CalculateMinIntervalMinutes`: 1件成功。
+- `--filter FullyQualifiedName~Register`: 3件成功。
+- `Tests/TestServer/TestServer.csproj` 全件: 338件成功、失敗0、スキップ0。
+- `git diff --check`: 空白エラーなし（autocrlf由来の改行正規化警告のみ）。
+
+### 残課題
+- なし（前回の残課題「`MasterConfig` への初期データ登録の保留」は本エントリで解消した）。
+
+### 変更ファイル
+- `CvBase/BaseDb1Master.cs`（`MasterConfig` の自動実行ジョブ既定定義・`CreateDefaultData` 変更）
+- `CvServer/Services/SchedulerService.cs`（`MasterConfig` 定数参照への置き換え）
+- `Tests/TestServer/TestServer.cs`（テスト3件追加）
+- `Tests/TestServer/UpdateDbTests.cs`（テストクラス1件・テスト3件追加）
+- `Doc/aicoding_log.md`（本エントリ）
+
+### 所要時間
+- 約1時間（JST）
+
+---
+
 ## [2026-09-03] 自動実行ジョブの実行フラグ表示不具合を修正しMasterConfigキー体系を変更
 
 ### Agent
@@ -730,65 +779,3 @@
 - `C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj` 成功（警告0・エラー0）。
 - `dotnet run --project Tests\TestServer\TestServer.csproj --no-build` 成功（212件、失敗0、スキップ0）。
 - `git diff --check` 成功。
-
-## [2026-08-25] MariaDBプロバイダー基盤処理の補完
-
-### Agent
-- Sekiya Sato Codex
-
-### 目的
-- CvServer/CvWpfclientの個別SQL方言対応は保留し、`CvBase.ExDatabase` と既存SQLite実装を基準に、MariaDB/PostgreSQLプロバイダーの基盤処理を最小差分で整合させる。
-
-### 実施内容
-- `CvBase.ExDatabase` に、派生プロバイダーが接続を開くかどうか指定できるprotected constructorを追加した。
-- `ExDatabaseMaria.GetDbConn` が `isOpen=false` でも接続を開いていた処理を修正した。
-- MariaDBのOpen時にDBバージョンを取得し、Clone時も `ExDatabaseMaria` を維持するようにした。
-- MariaDBのタイムアウト変更でSQLite用 `PRAGMA busy_timeout` を使用せず、NPocoの `CommandTimeout` を設定するようにした。
-- MariaDBのテーブル一覧・件数取得を `information_schema.tables` ベースで実装し、共通実装の `sqlite_master` 依存を回避した。
-- `CvBasePostgre` は必要なoverrideが既に実装済みだったため変更せず、`CvBaseSqlite` と変更元DB専用の `CvBaseOracle` も現状維持とした。
-
-### 検証
-- `CvBase`、`CvBaseSqlite`、`CvBaseMariadb`、`CvBasePostgre` を順次buildし、すべて警告0・エラー0。
-- `dotnet build creativevision10.slnx --no-restore` 成功（警告0・エラー0）。
-- `dotnet run --project Tests/TestServer/TestServer.csproj --no-restore` 成功（212件、失敗0、スキップ0）。
-- MariaDB/PostgreSQLの実サーバー接続によるCRUD・メタデータ取得は未実施。
-
-## [2026-08-25] macOS ZIP内日本語ファイル名正規化スキルの追加
-
-### Agent
-- Sekiya Sato Codex
-
-### 目的
-- macOSで圧縮されたZIP内の分解形式の日本語ファイル名を、Windows 11で扱いやすいUnicode NFC形式へ変換する手順をスキル化する。
-
-### 実施内容
-- `.agents/skills/normalize-macos-zip-filenames/SKILL.md` に適用条件、安全な出力モード、完了条件、対象外を記録した。
-- `scripts/normalize-zip-filenames.ps1` を追加し、ZIP内エントリ名のNFC正規化、重複検出、一時ZIP生成、エントリ数・展開後SHA-256検証、明示時のみの元ZIP置換を実装した。
-- `agents/openai.yaml` にスキル表示名と説明を設定した。
-
-### 検証
-- NFD形式の日本語エントリを含むテストZIPで、別ZIP出力を確認（RenamedEntryCount=1、SHA-256 OK）。
-- 同テストZIPで `-ReplaceInput` を確認し、NFC名への変換と一時ファイル残存なしを確認した。
-- `quick_validate.py` は同梱Pythonに `PyYAML` がないため実行できなかった。
-
-## [2026-08-25] PostgreSQL用DBプロバイダーの追加
-
-### Agent
-- Sekiya Sato Codex
-
-### 目的
-- SQLite、MariaDB、Oracle用プロジェクトと同じレイヤーに `CvBasePostgre` を追加し、NpgsqlおよびPostgreSQL固有処理をプロバイダー内へ隔離する。
-
-### 実施内容
-- `CvBasePostgre` を追加し、接続生成、Open/Close、Clone、タイムアウト、DDL型変換、テーブル存在確認、コメント、テーブル件数、診断SQLをPostgreSQL向けに実装した。
-- NPocoが引用する識別子を小文字へ統一し、既存の非引用SQLがPostgreSQLで小文字化される規則と物理名を一致させた。
-- `CvBase.ExDatabase` にDB種別指定コンストラクターとPostgreSQL側で必要な仮想拡張点を追加した。既存プロバイダーの既定動作は維持した。
-- `CvBasePostgre/ExDatabasePostgre.cs` に、残存するSQLite固有SQLと将来のSQL方言抽象化方針をコメントとして記録した。
-- `Directory.Packages.props` に Npgsql 10.0.3、`creativevision10.slnx` と `readme.md` に新規プロジェクトを追加した。
-
-### 検証
-- `dotnet build CvBasePostgre/CvBasePostgre.csproj --no-restore` 成功（警告0・エラー0）。
-- `dotnet build creativevision10.slnx --no-restore` 成功（警告0・エラー0）。
-- `dotnet run --project Tests/TestServer/TestServer.csproj --no-build --no-restore` 成功（212件、失敗0、スキップ0）。
-- PostgreSQL実サーバーがローカル環境にないため、実接続によるDDL/CRUD検証は未実施。
-

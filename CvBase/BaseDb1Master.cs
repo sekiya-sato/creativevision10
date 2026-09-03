@@ -959,6 +959,164 @@ public sealed partial class MasterConfig : BaseDbClass {
 	/// </summary>
 	[Comment("実行しない")]
 	public const string ValAutoExecDisabled = "0";
+	/// <summary>
+	/// SQLite WAL checkpoint タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("SQLite WAL checkpoint タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdWalCheckpoint = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+	/// <summary>
+	/// SQLite WAL checkpoint タスクの表示名
+	/// </summary>
+	[Comment("SQLite WAL checkpoint タスクの表示名")]
+	public const string AutoExecTaskNameWalCheckpoint = "SQLite WAL checkpoint データベースにWAL履歴を反映させるタスク";
+	/// <summary>
+	/// SQLite WAL checkpoint タスクの既定cron式
+	/// </summary>
+	[Comment("SQLite WAL checkpoint タスクの既定cron式")]
+	public const string AutoExecCronWalCheckpoint = "0 2 * * *";
+	/// <summary>
+	/// SQLite WAL checkpoint タスクの既定の実行フラグ
+	/// </summary>
+	[Comment("SQLite WAL checkpoint タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledWalCheckpoint = ValAutoExecEnabled;
+	/// <summary>
+	/// ワークファイル削除タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("ワークファイル削除タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdWorkFileCleanup = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
+	/// <summary>
+	/// ワークファイル削除タスクの表示名
+	/// </summary>
+	[Comment("ワークファイル削除タスクの表示名")]
+	public const string AutoExecTaskNameWorkFileCleanup = "Work file cleanup ワークフォルダにある古いファイルを削除するタスク";
+	/// <summary>
+	/// ワークファイル削除タスクの既定cron式
+	/// </summary>
+	[Comment("ワークファイル削除タスクの既定cron式")]
+	public const string AutoExecCronWorkFileCleanup = "30 0,12 * * *";
+	/// <summary>
+	/// ワークファイル削除タスクの既定の実行フラグ
+	/// </summary>
+	[Comment("ワークファイル削除タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledWorkFileCleanup = ValAutoExecEnabled;
+	/// <summary>
+	/// 在庫/売掛/買掛 再集計タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("在庫/売掛/買掛 再集計タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdMonthlyResummary = "c3d4e5f6-a7b8-9012-cdef-123456789012";
+	/// <summary>
+	/// 在庫/売掛/買掛 再集計タスクの表示名
+	/// </summary>
+	[Comment("在庫/売掛/買掛 再集計タスクの表示名")]
+	public const string AutoExecTaskNameMonthlyResummary = "在庫 売掛 買掛 の当月と前月 を再集計するタスク";
+	/// <summary>
+	/// 在庫/売掛/買掛 再集計タスクの既定cron式
+	/// </summary>
+	[Comment("在庫/売掛/買掛 再集計タスクの既定cron式")]
+	public const string AutoExecCronMonthlyResummary = "10 1 * * *";
+	/// <summary>
+	/// 在庫/売掛/買掛 再集計タスクの既定の実行フラグ
+	/// </summary>
+	[Comment("在庫/売掛/買掛 再集計タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledMonthlyResummary = ValAutoExecEnabled;
+	/// <summary>
+	/// 適用上代の期限切れ削除タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("適用上代の期限切れ削除タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdJodaiPurge = "d4e5f6a7-b8c9-0123-def0-234567890123";
+	/// <summary>
+	/// 適用上代の期限切れ削除タスクの表示名
+	/// </summary>
+	[Comment("適用上代の期限切れ削除タスクの表示名")]
+	public const string AutoExecTaskNameJodaiPurge = "上代 適用期間が過ぎた適用上代(DerivedJodai)を削除するタスク";
+	/// <summary>
+	/// 適用上代の期限切れ削除タスクの既定cron式
+	/// </summary>
+	[Comment("適用上代の期限切れ削除タスクの既定cron式")]
+	public const string AutoExecCronJodaiPurge = "40 1 * * *";
+	/// <summary>
+	/// 適用上代の期限切れ削除タスクの既定の実行フラグ
+	/// </summary>
+	[Comment("適用上代の期限切れ削除タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledJodaiPurge = ValAutoExecEnabled;
+	/// <summary>
+	/// 商品名称再構築タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("商品名称再構築タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdMasterShohinMeishoRebuild = "e5f6a7b8-c9d0-1234-ef01-345678901234";
+	/// <summary>
+	/// 商品名称再構築タスクの表示名
+	/// </summary>
+	[Comment("商品名称再構築タスクの表示名")]
+	public const string AutoExecTaskNameMasterShohinMeishoRebuild = "商品名称再構築 MasterShohinのId_Col/Id_Sizが0のデータから名称マスタを再構築するタスク";
+	/// <summary>
+	/// 商品名称再構築タスクの既定cron式
+	/// </summary>
+	[Comment("商品名称再構築タスクの既定cron式")]
+	public const string AutoExecCronMasterShohinMeishoRebuild = "20 3 * * *";
+	/// <summary>
+	/// 商品名称再構築タスクの既定の実行フラグ
+	/// </summary>
+	[Comment("商品名称再構築タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledMasterShohinMeishoRebuild = ValAutoExecDisabled;
+	/// <summary>
+	/// V*列再同期タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("V*列再同期タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdMasterVColumnResync = "f6a7b8c9-d0e1-2345-f012-456789012345";
+	/// <summary>
+	/// V*列再同期タスクの表示名
+	/// </summary>
+	[Comment("V*列再同期タスクの表示名")]
+	public const string AutoExecTaskNameMasterVColumnResync = "V*列再同期 マスタ名称の複製列(V*列)を現在のマスタ内容で再同期するタスク";
+	/// <summary>
+	/// V*列再同期タスクの既定cron式
+	/// </summary>
+	[Comment("V*列再同期タスクの既定cron式")]
+	public const string AutoExecCronMasterVColumnResync = "40 3 * * *";
+	/// <summary>
+	/// V*列再同期タスクの既定の実行フラグ
+	/// </summary>
+	[Comment("V*列再同期タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledMasterVColumnResync = ValAutoExecDisabled;
+	/// <summary>
+	/// 伝票税額再更新タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("伝票税額再更新タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdTranTaxRebuild = "a7b8c9d0-e1f2-3456-0123-567890123456";
+	/// <summary>
+	/// 伝票税額再更新タスクの表示名
+	/// </summary>
+	[Comment("伝票税額再更新タスクの表示名")]
+	public const string AutoExecTaskNameTranTaxRebuild = "伝票税額再更新 対象6伝票の期首日以降を取引先マスタの現在の税設定で再計算するタスク";
+	/// <summary>
+	/// 伝票税額再更新タスクの既定cron式
+	/// </summary>
+	[Comment("伝票税額再更新タスクの既定cron式")]
+	public const string AutoExecCronTranTaxRebuild = "0 4 * * *";
+	/// <summary>
+	/// 伝票税額再更新タスクの既定の実行フラグ
+	/// </summary>
+	[Comment("伝票税額再更新タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledTranTaxRebuild = ValAutoExecDisabled;
+	/// <summary>自動実行ジョブ1件の既定定義（TaskId・表示名・既定cron式・既定の実行フラグ）</summary>
+	public sealed record AutoExecJobDefault(string TaskId, string TaskName, string Cron, string Enabled);
+	/// <summary>自動実行ジョブの既定定義一覧。MasterConfig の初期データと SchedulerService のジョブ定義の唯一の出典。</summary>
+	public static readonly IReadOnlyList<AutoExecJobDefault> AutoExecJobDefaults = [
+		new(AutoExecTaskIdWalCheckpoint, AutoExecTaskNameWalCheckpoint, AutoExecCronWalCheckpoint, AutoExecEnabledWalCheckpoint),
+		new(AutoExecTaskIdWorkFileCleanup, AutoExecTaskNameWorkFileCleanup, AutoExecCronWorkFileCleanup, AutoExecEnabledWorkFileCleanup),
+		new(AutoExecTaskIdMonthlyResummary, AutoExecTaskNameMonthlyResummary, AutoExecCronMonthlyResummary, AutoExecEnabledMonthlyResummary),
+		new(AutoExecTaskIdJodaiPurge, AutoExecTaskNameJodaiPurge, AutoExecCronJodaiPurge, AutoExecEnabledJodaiPurge),
+		new(AutoExecTaskIdMasterShohinMeishoRebuild, AutoExecTaskNameMasterShohinMeishoRebuild, AutoExecCronMasterShohinMeishoRebuild, AutoExecEnabledMasterShohinMeishoRebuild),
+		new(AutoExecTaskIdMasterVColumnResync, AutoExecTaskNameMasterVColumnResync, AutoExecCronMasterVColumnResync, AutoExecEnabledMasterVColumnResync),
+		new(AutoExecTaskIdTranTaxRebuild, AutoExecTaskNameTranTaxRebuild, AutoExecCronTranTaxRebuild, AutoExecEnabledTranTaxRebuild),
+	];
+	/// <summary>TaskId(Guid文字列)から実行フラグ設定名を組み立てる。CvDomainLogic の SchedulerJobConfigDb と同じ規則（先頭8桁）。</summary>
+	public static string AutoExecEnabledName(string taskId) => NameAutoExecEnabledPrefix + AutoExecTaskIdPrefix(taskId);
+	/// <summary>TaskId(Guid文字列)から cron式設定名を組み立てる。CvDomainLogic の SchedulerJobConfigDb と同じ規則（先頭8桁）。</summary>
+	public static string AutoExecCronName(string taskId) => NameAutoExecCronPrefix + AutoExecTaskIdPrefix(taskId);
+	/// <summary>TaskId(Guid文字列)の先頭8桁を取り出す。8文字未満なら全体を返す（防御的処理）。</summary>
+	static string AutoExecTaskIdPrefix(string taskId) => string.IsNullOrEmpty(taskId) ? string.Empty : taskId[..Math.Min(8, taskId.Length)];
 	[ObservableProperty]
 	[OldTableCommentAttr("カテゴリ")]
 	[Comment("カテゴリ 設定値をグループ分けする区分")]
@@ -980,20 +1138,44 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("MEMO 設定内容の説明")]
 	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
-	/// 初期データの作成
+	/// 初期データの作成。不足している設定行だけを追加する（既存行の値は上書きしない）。
+	/// 対象は JodaiKeepDays と、自動実行ジョブ(<see cref="AutoExecJobDefaults"/>)ごとの実行フラグ行・cron式行。
+	/// 既存の Name 一覧と突き合わせ、未登録の行のみ Insert する（テーブルが空かどうかでは判定しない）。
 	/// </summary>
 	/// <param name="db"></param>
-	/// <returns></returns>
+	/// <returns>実際に Insert した行の一覧（追加が無ければ空リスト）</returns>
 	public static List<MasterConfig> CreateDefaultData(ExDatabase db) {
-		var initData = new List<MasterConfig>() {
-			new MasterConfig { Category = CategorySystem, Name = NameJodaiKeepDays, Val = "90", Example = "30,60,90", Memo = "上代保持日数" }
+		var vdate = Common.GetVdate();
+		var candidates = new List<MasterConfig>() {
+			new MasterConfig { Category = CategorySystem, Name = NameJodaiKeepDays, Val = "90", Example = "30,60,90", Memo = "上代保持日数", Vdc = vdate, Vdu = vdate },
 		};
-		var tableCnt = db.GetTableCounts(nameof(MasterConfig));
-		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {
-			db.InsertBulk<MasterConfig>(initData);
-			return initData;
+		foreach (var job in AutoExecJobDefaults) {
+			candidates.Add(new MasterConfig {
+				Category = CategoryAutoExec,
+				Name = AutoExecEnabledName(job.TaskId),
+				Val = job.Enabled,
+				Example = $"{ValAutoExecEnabled},{ValAutoExecDisabled}",
+				Memo = $"{job.TaskName} の実行フラグ",
+				Vdc = vdate,
+				Vdu = vdate,
+			});
+			candidates.Add(new MasterConfig {
+				Category = CategoryAutoExec,
+				Name = AutoExecCronName(job.TaskId),
+				Val = job.Cron,
+				Example = "分 時 日 月 曜日",
+				Memo = $"{job.TaskName} の起動cron式",
+				Vdc = vdate,
+				Vdu = vdate,
+			});
 		}
-		return [];
+
+		var existingNames = new HashSet<string>(db.Fetch<string>($"SELECT Name FROM {nameof(MasterConfig)}"));
+		var initData = candidates.Where(c => !existingNames.Contains(c.Name)).ToList();
+		if (initData.Count > 0) {
+			db.InsertBulk<MasterConfig>(initData);
+		}
+		return initData;
 	}
 }
 /// <summary>
