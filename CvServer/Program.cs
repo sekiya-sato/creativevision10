@@ -121,6 +121,9 @@ CvBase.Sql.SqlDialectOptions.Mode =
 CvBase.Sql.SqlDialectOptions.EnableNullsFirst =
 	builder.Configuration.GetValue<bool>("Database:SqlRules:A04-NullsOrder");
 builder.Services.AddSingleton(AppGlobal.Shared);
+builder.Services.AddScoped<IAutoExecMailSettingsLoader, AutoExecMailSettingsLoader>();
+builder.Services.AddScoped<IAutoExecMailTransport, MailKitAutoExecMailTransport>();
+builder.Services.AddScoped<IAutoExecMailService, AutoExecMailService>();
 builder.Services.AddSingleton<SchedulerService>();
 var serverVersion = builder.Configuration.GetSection("ServerVersion").Value ?? "0.0.0";
 var app = builder.Build();

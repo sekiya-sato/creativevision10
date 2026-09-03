@@ -83,6 +83,8 @@ public sealed record class SchedulerTaskInfo {
 	/// <summary>起動間隔の下限（分）。0はチェックなし</summary>
 	[DataMember(Order = 8)]
 	public int MinIntervalMinutes { get; set; }
+	[DataMember(Order = 9)]
+	public bool IsSendMail { get; set; }
 }
 
 /// <summary>
@@ -124,6 +126,18 @@ public sealed record class SetSchedulerTaskEnabledRequest {
 	public bool IsEnabled { get; set; }
 }
 
+/// <summary>
+/// スケジュールタスクのメール送信フラグ設定要求
+/// [Request for enabling/disabling scheduler task mail notifications]
+/// </summary>
+[DataContract]
+public sealed record class SetSchedulerTaskSendMailRequest {
+	[DataMember(Order = 1)]
+	public string TaskId { get; set; } = string.Empty;
+	[DataMember(Order = 2)]
+	public bool IsSendMail { get; set; }
+}
+
 [ServiceContract]
 public interface ISchedulerService {
 	[OperationContract]
@@ -144,4 +158,8 @@ public interface ISchedulerService {
 	/// <summary>スケジュールタスクの実行する/しないフラグを設定する。</summary>
 	[OperationContract]
 	Task<SchedulerResult> SetTaskEnabledAsync(SetSchedulerTaskEnabledRequest request, CallContext context = default);
+
+	/// <summary>スケジュールタスクのメール送信する/しないフラグを設定する。</summary>
+	[OperationContract]
+	Task<SchedulerResult> SetTaskSendMailAsync(SetSchedulerTaskSendMailRequest request, CallContext context = default);
 }

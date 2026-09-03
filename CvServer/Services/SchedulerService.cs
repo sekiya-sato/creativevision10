@@ -23,6 +23,7 @@ public class SchedulerService : ISchedulerService {
 	private const int MaxAutoexecTaskNameLength = 100;
 	private const int MaxAutoexecMemoLength = 250;
 	private const int WorkFileCleanupTargetAgeHours = 2;
+	private const int AutoExecMailTimeoutSeconds = 30;
 	/// <summary>起動間隔の下限チェックを行うかどうかの内部フラグ（重い処理の連続実行を防ぐ）</summary>
 	public const bool MinIntervalCheckEnabled = true;
 	/// <summary>起動間隔の下限（分）。重い処理はこれより短い間隔では設定させない</summary>
@@ -31,6 +32,10 @@ public class SchedulerService : ISchedulerService {
 	private const int MaxIntervalOccurrenceCount = 20000;
 	/// <summary>起動間隔算出の対象期間（日数）</summary>
 	private const int IntervalLookaheadDays = 31;
+	/// <summary>予定時刻に対して遅れて起動した場合に許容する猶予(秒)</summary>
+	private const int ScheduleWindowLateSeconds = 30;
+	/// <summary>タイマ誤差で予定時刻より早く起動した場合に許容する猶予(秒)</summary>
+	private const int ScheduleWindowEarlySeconds = 1;
 
 	/// <summary>
 	/// 以下の cron式・タスク名・TaskId・既定実行フラグの値の出典は <see cref="MasterConfig"/>（CvBase）側の定数であり、
@@ -75,6 +80,7 @@ public class SchedulerService : ISchedulerService {
 		string TaskName,
 		string DefaultCronExpression,
 		bool DefaultEnabled,
+		bool DefaultIsSendMail,
 		bool CheckMinInterval);
 
 	/// <summary>
@@ -82,17 +88,19 @@ public class SchedulerService : ISchedulerService {
 	/// 実行フラグ・cron式の永続値は <see cref="SchedulerJobConfigDb"/> 経由で参照し、未設定ならここの既定値を使う。
 	/// </summary>
 	public static readonly IReadOnlyList<SchedulerJobDefinition> SystemJobDefinitions = [
-		new(DailyWalCheckpointTaskId, JobKeyWalCheckpoint, DailyWalCheckpointTaskName, DailyWalCheckpointCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledWalCheckpoint), false),
-		new(WorkFileCleanupTaskId, JobKeyWorkFileCleanup, WorkFileCleanupTaskName, WorkFileCleanupCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledWorkFileCleanup), false),
-		new(MonthlyResummaryTaskId, JobKeyMonthlyResummary, MonthlyResummaryTaskName, MonthlyResummaryCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMonthlyResummary), false),
-		new(JodaiPurgeTaskId, JobKeyJodaiPurge, JodaiPurgeTaskName, JodaiPurgeCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledJodaiPurge), false),
-		new(MasterShohinMeishoRebuildTaskId, JobKeyMasterShohinMeishoRebuild, MasterShohinMeishoRebuildTaskName, MasterShohinMeishoRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMasterShohinMeishoRebuild), true),
-		new(MasterVColumnResyncTaskId, JobKeyMasterVColumnResync, MasterVColumnResyncTaskName, MasterVColumnResyncCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMasterVColumnResync), true),
-		new(TranTaxRebuildTaskId, JobKeyTranTaxRebuild, TranTaxRebuildTaskName, TranTaxRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledTranTaxRebuild), true),
+		new(DailyWalCheckpointTaskId, JobKeyWalCheckpoint, DailyWalCheckpointTaskName, DailyWalCheckpointCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledWalCheckpoint), IsSendMailDefault(DailyWalCheckpointTaskId), false),
+		new(WorkFileCleanupTaskId, JobKeyWorkFileCleanup, WorkFileCleanupTaskName, WorkFileCleanupCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledWorkFileCleanup), IsSendMailDefault(WorkFileCleanupTaskId), false),
+		new(MonthlyResummaryTaskId, JobKeyMonthlyResummary, MonthlyResummaryTaskName, MonthlyResummaryCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMonthlyResummary), IsSendMailDefault(MonthlyResummaryTaskId), false),
+		new(JodaiPurgeTaskId, JobKeyJodaiPurge, JodaiPurgeTaskName, JodaiPurgeCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledJodaiPurge), IsSendMailDefault(JodaiPurgeTaskId), false),
+		new(MasterShohinMeishoRebuildTaskId, JobKeyMasterShohinMeishoRebuild, MasterShohinMeishoRebuildTaskName, MasterShohinMeishoRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMasterShohinMeishoRebuild), IsSendMailDefault(MasterShohinMeishoRebuildTaskId), true),
+		new(MasterVColumnResyncTaskId, JobKeyMasterVColumnResync, MasterVColumnResyncTaskName, MasterVColumnResyncCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMasterVColumnResync), IsSendMailDefault(MasterVColumnResyncTaskId), true),
+		new(TranTaxRebuildTaskId, JobKeyTranTaxRebuild, TranTaxRebuildTaskName, TranTaxRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledTranTaxRebuild), IsSendMailDefault(TranTaxRebuildTaskId), true),
 	];
 
 	/// <summary>MasterConfigの実行フラグ値(1/0)を bool に変換する</summary>
 	private static bool IsEnabledDefault(string value) => value == MasterConfig.ValAutoExecEnabled;
+	private static bool IsSendMailDefault(Guid taskId) => IsEnabledDefault(
+		MasterConfig.AutoExecJobDefaults.Single(definition => Guid.Parse(definition.TaskId) == taskId).IsSendMail);
 
 	private readonly ILogger<SchedulerService> _logger;
 	private readonly NCrontab.Scheduler.IScheduler _scheduler;
@@ -253,6 +261,7 @@ public class SchedulerService : ISchedulerService {
 				var def = FindDefinitionByTaskId(task.Id);
 				var checkMinInterval = def != null && def.CheckMinInterval && MinIntervalCheckEnabled;
 				bool isEnabled;
+				var isSendMail = false;
 				if (def == null) {
 					isEnabled = true;
 				}
@@ -265,6 +274,12 @@ public class SchedulerService : ISchedulerService {
 						_logger.LogWarning(ex, "実行フラグの取得に失敗しました。 JobKey={JobKey}", def.JobKey);
 					}
 					isEnabled = persisted ?? def.DefaultEnabled;
+					try {
+						isSendMail = configDb?.GetIsSendMail(def.TaskId) ?? def.DefaultIsSendMail;
+					}
+					catch (Exception ex) {
+						_logger.LogWarning(ex, "メール送信フラグの取得に失敗しました。 JobKey={JobKey}", def.JobKey);
+					}
 				}
 
 				result.Tasks.Add(new SchedulerTaskInfo {
@@ -274,6 +289,7 @@ public class SchedulerService : ISchedulerService {
 					NextOccurrence = task.CrontabSchedule.GetNextOccurrence(DateTime.Now),
 					IsSystemTask = IsSystemTask(task.Name),
 					IsEnabled = isEnabled,
+					IsSendMail = isSendMail,
 					CheckMinInterval = checkMinInterval,
 					MinIntervalMinutes = checkMinInterval ? MinIntervalMinutes : 0,
 				});
@@ -395,6 +411,33 @@ public class SchedulerService : ISchedulerService {
 		}
 	}
 
+	/// <summary>
+	/// スケジュールタスクの実行結果メールを送信する/しないフラグを設定する。システムジョブ以外は対象外。
+	/// </summary>
+	public Task<SchedulerResult> SetTaskSendMailAsync(SetSchedulerTaskSendMailRequest request, CallContext context = default) {
+		if (!Guid.TryParse(request.TaskId, out var guid)) {
+			return Task.FromResult(new SchedulerResult { Result = InvalidTaskId, Detail = $"TaskId が不正です: {request.TaskId}", TaskId = request.TaskId });
+		}
+
+		var def = FindDefinitionByTaskId(guid);
+		if (def == null) {
+			return Task.FromResult(new SchedulerResult { Result = TaskNotFound, Detail = "メール送信フラグを設定できるのはシステムジョブのみです。", TaskId = request.TaskId });
+		}
+
+		try {
+			using var scope = _scopeFactory.CreateScope();
+			var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+			new SchedulerJobConfigDb(db).SetIsSendMail(def.TaskId, request.IsSendMail);
+			_logger.LogInformation("メール送信フラグ設定: JobKey={JobKey}, TaskId={TaskId}, IsSendMail={IsSendMail}", def.JobKey, guid, request.IsSendMail);
+
+			return Task.FromResult(new SchedulerResult { Result = Success, Detail = "正常終了", TaskId = guid.ToString() });
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "メール送信フラグ設定に失敗しました。 TaskId={TaskId}", guid);
+			return Task.FromResult(new SchedulerResult { Result = InternalError, Detail = "メール送信フラグ設定に失敗しました。", TaskId = request.TaskId });
+		}
+	}
+
 	private static bool IsSystemTask(string? taskName) {
 		if (string.IsNullOrWhiteSpace(taskName))
 			return false;
@@ -458,6 +501,16 @@ public class SchedulerService : ISchedulerService {
 	}
 
 	/// <summary>
+	/// 起動要求が cron の予定時刻に基づくものかを判定する。
+	/// (now - late, now + early] の範囲に cron の発生時刻があれば予定内とみなす。
+	/// cron は分単位のため正規の起動は必ず秒が00になる。予定外の割り込み起動を弾くために使う。
+	/// </summary>
+	public static bool IsWithinScheduleWindow(CrontabSchedule schedule, DateTime now, TimeSpan late, TimeSpan early) {
+		ArgumentNullException.ThrowIfNull(schedule);
+		return schedule.GetNextOccurrence(now - late) <= now + early;
+	}
+
+	/// <summary>
 	/// 起動間隔の下限違反を判定する。チェック無効/対象外ジョブ/アドホックタスクは常に違反なしとする。
 	/// </summary>
 	private static bool ViolatesMinInterval(SchedulerJobDefinition? definition, CrontabSchedule schedule, out int actualMinutes) {
@@ -516,20 +569,13 @@ public class SchedulerService : ISchedulerService {
 		}
 
 		try {
-			Guid guid;
+			var guid = taskId ?? Guid.NewGuid();
 			var scheduledTask = new AsyncScheduledTask(
-				taskId ?? Guid.NewGuid(),
+				guid,
 				taskName,
 				schedule,
-				ct => ExecuteScheduledTaskWithScopeAsync(taskName, definition, ct, executor));
-			if (taskId.HasValue) {
-				guid = taskId.Value;
-				_scheduler.AddTask(scheduledTask);
-			}
-			else {
-				guid = scheduledTask.Id;
-				_scheduler.AddTask(scheduledTask);
-			}
+				ct => ExecuteScheduledTaskWithScopeAsync(guid, taskName, definition, ct, executor));
+			_scheduler.AddTask(scheduledTask);
 
 			_logger.LogInformation(
 				"スケジュール登録: TaskId={TaskId}, TaskName={TaskName}, Cron={Cron}",
@@ -552,9 +598,45 @@ public class SchedulerService : ISchedulerService {
 		}
 	}
 
-	private async Task ExecuteScheduledTaskWithScopeAsync(string taskName, SchedulerJobDefinition? definition, CancellationToken cancellationToken, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executeAsync) {
+	/// <summary>
+	/// スケジューラからの起動要求が予定時刻によるものかを判定する。
+	/// NCrontab.Scheduler 2.1.23 は AddTask/UpdateTask/RemoveTask で待機をキャンセルした際に
+	/// 待機中のタスクをそのまま実行してしまうため、予定時刻外の割り込み起動をここで捨てる。
+	/// 判定できない場合は実行する(fail-open)。ガードが原因で自動実行が止まる事故を避けるため。
+	/// </summary>
+	private bool IsScheduledInvocation(Guid taskId, string taskName) {
+		CrontabSchedule? schedule;
+		try {
+			// 実行中スケジューラから現在の cron を引く。UpdateTask 直後でも最新の値が取れる
+			schedule = _scheduler.GetTasks().FirstOrDefault(t => t.Id == taskId)?.CrontabSchedule;
+		}
+		catch (Exception ex) {
+			_logger.LogWarning(ex, "予定時刻判定のためのスケジュール取得に失敗しました。 TaskName={TaskName}, TaskId={TaskId}", taskName, taskId);
+			return true;
+		}
+
+		if (schedule == null) {
+			return true;
+		}
+
+		var now = DateTime.Now;
+		if (IsWithinScheduleWindow(schedule, now, TimeSpan.FromSeconds(ScheduleWindowLateSeconds), TimeSpan.FromSeconds(ScheduleWindowEarlySeconds))) {
+			return true;
+		}
+
+		_logger.LogInformation(
+			"予定時刻外の起動要求のためスキップしました。 TaskName={TaskName}, TaskId={TaskId}, Now={Now}, NextOccurrence={NextOccurrence}",
+			taskName, taskId, now, schedule.GetNextOccurrence(now));
+		return false;
+	}
+
+	private async Task ExecuteScheduledTaskWithScopeAsync(Guid taskId, string taskName, SchedulerJobDefinition? definition, CancellationToken cancellationToken, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executeAsync) {
+		if (!IsScheduledInvocation(taskId, taskName)) {
+			return;
+		}
 		using var scope = _scopeFactory.CreateScope();
 		var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+		var isSendMail = false;
 
 		if (definition != null) {
 			var configDb = new SchedulerJobConfigDb(db);
@@ -563,9 +645,27 @@ public class SchedulerService : ISchedulerService {
 				_logger.LogInformation("実行フラグがfalseのため自動実行をスキップしました。 TaskName={TaskName}, JobKey={JobKey}", taskName, definition.JobKey);
 				return;
 			}
+			try {
+				isSendMail = configDb.GetIsSendMail(definition.TaskId) ?? definition.DefaultIsSendMail;
+			}
+			catch (Exception ex) {
+				_logger.LogWarning(ex, "自動実行時のメール送信フラグ取得に失敗しました。 JobKey={JobKey}", definition.JobKey);
+			}
 		}
 
-		await ExecuteWithAutoexecHistoryAsync(db, taskName, cancellationToken, executeAsync);
+		IAutoExecMailService? mailService = null;
+		if (isSendMail) {
+			try {
+				mailService = scope.ServiceProvider.GetService<IAutoExecMailService>();
+			}
+			catch (Exception ex) {
+				_logger.LogError(ex, "自動実行結果メールサービスの解決に失敗しました。 TaskName={TaskName}", taskName);
+			}
+			if (mailService == null) {
+				_logger.LogWarning("自動実行結果メールサービスが登録されていないため送信しません。 TaskName={TaskName}", taskName);
+			}
+		}
+		await ExecuteWithAutoexecHistoryAsync(db, taskName, cancellationToken, executeAsync, mailService);
 	}
 
 	private async Task<AutoexecTaskResult> ExecuteTaskCoreAsync(ExDatabase db, AddSchedulerTaskRequest request, CancellationToken cancellationToken) {
@@ -943,12 +1043,13 @@ public class SchedulerService : ISchedulerService {
 		return Task.FromResult(new AutoexecTaskResult(returnCode, deletedCount, memo));
 	}
 
-	private async Task ExecuteWithAutoexecHistoryAsync(ExDatabase db, string taskName, CancellationToken cancellationToken, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executeAsync) {
+	private async Task ExecuteWithAutoexecHistoryAsync(ExDatabase db, string taskName, CancellationToken cancellationToken, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executeAsync, IAutoExecMailService? mailService) {
 		var startTime = DateTime.Now;
 		var stopwatch = Stopwatch.StartNew();
 		var history = InsertAutoexecHistory(db, taskName, startTime);
 		var result = new AutoexecTaskResult(Success, 0, "正常終了");
 		Exception? caughtException = null;
+		var historyUpdated = false;
 
 		try {
 			result = await executeAsync(db, cancellationToken);
@@ -963,12 +1064,46 @@ public class SchedulerService : ISchedulerService {
 		}
 		finally {
 			stopwatch.Stop();
-			UpdateAutoexecHistory(db, history, DateTime.Now, stopwatch.Elapsed, result);
+			historyUpdated = UpdateAutoexecHistory(db, history, DateTime.Now, stopwatch.Elapsed, result);
+		}
+
+		if (historyUpdated && history != null && mailService != null) {
+			await TrySendAutoexecMailAsync(mailService, history);
 		}
 
 		if (caughtException != null) {
 			ExceptionDispatchInfo.Capture(caughtException).Throw();
 		}
+	}
+
+	private async Task TrySendAutoexecMailAsync(IAutoExecMailService mailService, SysHistAutoexec history) {
+		try {
+			using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(AutoExecMailTimeoutSeconds));
+			var mailResult = await mailService.SendAsync(BuildAutoExecMailMessage(history), timeoutCts.Token);
+			if (mailResult.Sent) {
+				_logger.LogInformation("自動実行結果メールを送信しました。 HistoryId={HistoryId}, TaskName={TaskName}", history.Id, history.TaskName);
+			}
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "自動実行結果メールの送信に失敗しました。 HistoryId={HistoryId}, TaskName={TaskName}", history.Id, history.TaskName);
+		}
+	}
+
+	/// <summary>自動実行履歴の確定値からメール件名と本文を作成する。</summary>
+	public static AutoExecMailMessage BuildAutoExecMailMessage(SysHistAutoexec history) {
+		ArgumentNullException.ThrowIfNull(history);
+		var resultText = history.ReturnCode == Success ? "正常終了" : "異常終了";
+		var body = string.Join(Environment.NewLine, [
+			"自動実行処理結果",
+			$"タスク名: {history.TaskName}",
+			$"開始日時: {history.StartTime}",
+			$"終了日時: {history.EndTime}",
+			$"経過時間(秒): {history.ElapsedTime:0.########}",
+			$"戻り値: {history.ReturnCode}",
+			$"処理件数: {history.Count}",
+			$"内容: {history.Memo}",
+		]);
+		return new AutoExecMailMessage($"[CV10 自動実行] {history.TaskName} - {resultText}", body);
 	}
 
 	private SysHistAutoexec? InsertAutoexecHistory(ExDatabase db, string taskName, DateTime startTime) {
@@ -992,9 +1127,9 @@ public class SchedulerService : ISchedulerService {
 		}
 	}
 
-	private void UpdateAutoexecHistory(ExDatabase db, SysHistAutoexec? history, DateTime endTime, TimeSpan elapsedTime, AutoexecTaskResult result) {
+	private bool UpdateAutoexecHistory(ExDatabase db, SysHistAutoexec? history, DateTime endTime, TimeSpan elapsedTime, AutoexecTaskResult result) {
 		if (history == null) {
-			return;
+			return false;
 		}
 
 		try {
@@ -1006,9 +1141,11 @@ public class SchedulerService : ISchedulerService {
 			history.Vdu = DateTime.Now.ToUniversalTime().Ticks;
 
 			db.Update(history, ["EndTime", "ElapsedTime", "ReturnCode", "Count", "Memo", "Vdu"]);
+			return true;
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "自動実行履歴の終了更新に失敗しました。 Id={Id}, TaskName={TaskName}", history.Id, history.TaskName);
+			return false;
 		}
 	}
 

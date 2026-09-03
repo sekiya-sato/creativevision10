@@ -950,6 +950,29 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("cron式設定名の接頭辞。後ろに TaskId の先頭8桁が付く")]
 	public const string NameAutoExecCronPrefix = "GenericSQLRegAutoExecCron";
 	/// <summary>
+	/// メール送信フラグ設定名の接頭辞。後ろに TaskId の先頭8桁が付く
+	/// </summary>
+	[Comment("メール送信フラグ設定名の接頭辞。後ろに TaskId の先頭8桁が付く")]
+	public const string NameAutoExecIsSendMailPrefix = "GenericSQLRegAutoExecIsSendMail";
+	/// <summary>自動実行結果メールのSMTPサーバー</summary>
+	public const string NameAutoExecMailServerIp = "AutoExecMailServerIp";
+	/// <summary>自動実行結果メールのSMTPポート番号</summary>
+	public const string NameAutoExecMailServerPort = "AutoExecMailServerPort";
+	/// <summary>自動実行結果メールのSMTPユーザーID</summary>
+	public const string NameAutoExecMailUserId = "AutoExecMailUserId";
+	/// <summary>自動実行結果メールのSMTPパスワード</summary>
+	public const string NameAutoExecMailUserPass = "AutoExecMailUserPass";
+	/// <summary>自動実行結果メールの暗号化方式</summary>
+	public const string NameAutoExecMailSecurity = "AutoExecMailSecurity";
+	/// <summary>自動実行結果メールの認証方式</summary>
+	public const string NameAutoExecMailAuthMode = "AutoExecMailAuthMode";
+	/// <summary>自動実行結果メールの送信元アドレス</summary>
+	public const string NameAutoExecMailFromAddr = "AutoExecMailFromAddr";
+	/// <summary>自動実行結果メールの送信元表示名</summary>
+	public const string NameAutoExecMailFromName = "AutoExecMailFromName";
+	/// <summary>自動実行結果メールの送信先アドレス</summary>
+	public const string NameAutoExecMailToAddr = "AutoExecMailToAddr";
+	/// <summary>
 	/// 実行する
 	/// </summary>
 	[Comment("実行する")]
@@ -1099,22 +1122,24 @@ public sealed partial class MasterConfig : BaseDbClass {
 	/// </summary>
 	[Comment("伝票税額再更新タスクの既定の実行フラグ")]
 	public const string AutoExecEnabledTranTaxRebuild = ValAutoExecDisabled;
-	/// <summary>自動実行ジョブ1件の既定定義（TaskId・表示名・既定cron式・既定の実行フラグ）</summary>
-	public sealed record AutoExecJobDefault(string TaskId, string TaskName, string Cron, string Enabled);
+	/// <summary>自動実行ジョブ1件の既定定義（TaskId・表示名・既定cron式・既定の実行フラグ・メール送信フラグ）</summary>
+	public sealed record AutoExecJobDefault(string TaskId, string TaskName, string Cron, string Enabled, string IsSendMail);
 	/// <summary>自動実行ジョブの既定定義一覧。MasterConfig の初期データと SchedulerService のジョブ定義の唯一の出典。</summary>
 	public static readonly IReadOnlyList<AutoExecJobDefault> AutoExecJobDefaults = [
-		new(AutoExecTaskIdWalCheckpoint, AutoExecTaskNameWalCheckpoint, AutoExecCronWalCheckpoint, AutoExecEnabledWalCheckpoint),
-		new(AutoExecTaskIdWorkFileCleanup, AutoExecTaskNameWorkFileCleanup, AutoExecCronWorkFileCleanup, AutoExecEnabledWorkFileCleanup),
-		new(AutoExecTaskIdMonthlyResummary, AutoExecTaskNameMonthlyResummary, AutoExecCronMonthlyResummary, AutoExecEnabledMonthlyResummary),
-		new(AutoExecTaskIdJodaiPurge, AutoExecTaskNameJodaiPurge, AutoExecCronJodaiPurge, AutoExecEnabledJodaiPurge),
-		new(AutoExecTaskIdMasterShohinMeishoRebuild, AutoExecTaskNameMasterShohinMeishoRebuild, AutoExecCronMasterShohinMeishoRebuild, AutoExecEnabledMasterShohinMeishoRebuild),
-		new(AutoExecTaskIdMasterVColumnResync, AutoExecTaskNameMasterVColumnResync, AutoExecCronMasterVColumnResync, AutoExecEnabledMasterVColumnResync),
-		new(AutoExecTaskIdTranTaxRebuild, AutoExecTaskNameTranTaxRebuild, AutoExecCronTranTaxRebuild, AutoExecEnabledTranTaxRebuild),
+		new(AutoExecTaskIdWalCheckpoint, AutoExecTaskNameWalCheckpoint, AutoExecCronWalCheckpoint, AutoExecEnabledWalCheckpoint, ValAutoExecDisabled),
+		new(AutoExecTaskIdWorkFileCleanup, AutoExecTaskNameWorkFileCleanup, AutoExecCronWorkFileCleanup, AutoExecEnabledWorkFileCleanup, ValAutoExecDisabled),
+		new(AutoExecTaskIdMonthlyResummary, AutoExecTaskNameMonthlyResummary, AutoExecCronMonthlyResummary, AutoExecEnabledMonthlyResummary, ValAutoExecDisabled),
+		new(AutoExecTaskIdJodaiPurge, AutoExecTaskNameJodaiPurge, AutoExecCronJodaiPurge, AutoExecEnabledJodaiPurge, ValAutoExecDisabled),
+		new(AutoExecTaskIdMasterShohinMeishoRebuild, AutoExecTaskNameMasterShohinMeishoRebuild, AutoExecCronMasterShohinMeishoRebuild, AutoExecEnabledMasterShohinMeishoRebuild, ValAutoExecDisabled),
+		new(AutoExecTaskIdMasterVColumnResync, AutoExecTaskNameMasterVColumnResync, AutoExecCronMasterVColumnResync, AutoExecEnabledMasterVColumnResync, ValAutoExecDisabled),
+		new(AutoExecTaskIdTranTaxRebuild, AutoExecTaskNameTranTaxRebuild, AutoExecCronTranTaxRebuild, AutoExecEnabledTranTaxRebuild, ValAutoExecDisabled),
 	];
 	/// <summary>TaskId(Guid文字列)から実行フラグ設定名を組み立てる。CvDomainLogic の SchedulerJobConfigDb と同じ規則（先頭8桁）。</summary>
 	public static string AutoExecEnabledName(string taskId) => NameAutoExecEnabledPrefix + AutoExecTaskIdPrefix(taskId);
 	/// <summary>TaskId(Guid文字列)から cron式設定名を組み立てる。CvDomainLogic の SchedulerJobConfigDb と同じ規則（先頭8桁）。</summary>
 	public static string AutoExecCronName(string taskId) => NameAutoExecCronPrefix + AutoExecTaskIdPrefix(taskId);
+	/// <summary>TaskId(Guid文字列)からメール送信フラグ設定名を組み立てる。CvDomainLogic の SchedulerJobConfigDb と同じ規則（先頭8桁）。</summary>
+	public static string AutoExecIsSendMailName(string taskId) => NameAutoExecIsSendMailPrefix + AutoExecTaskIdPrefix(taskId);
 	/// <summary>TaskId(Guid文字列)の先頭8桁を取り出す。8文字未満なら全体を返す（防御的処理）。</summary>
 	static string AutoExecTaskIdPrefix(string taskId) => string.IsNullOrEmpty(taskId) ? string.Empty : taskId[..Math.Min(8, taskId.Length)];
 	[ObservableProperty]
@@ -1139,7 +1164,7 @@ public sealed partial class MasterConfig : BaseDbClass {
 	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 初期データの作成。不足している設定行だけを追加する（既存行の値は上書きしない）。
-	/// 対象は JodaiKeepDays と、自動実行ジョブ(<see cref="AutoExecJobDefaults"/>)ごとの実行フラグ行・cron式行。
+	/// 対象は JodaiKeepDays、自動実行ジョブ(<see cref="AutoExecJobDefaults"/>)ごとの実行フラグ行・cron式行・メール送信フラグ行、メール共通設定。
 	/// 既存の Name 一覧と突き合わせ、未登録の行のみ Insert する（テーブルが空かどうかでは判定しない）。
 	/// </summary>
 	/// <param name="db"></param>
@@ -1168,7 +1193,27 @@ public sealed partial class MasterConfig : BaseDbClass {
 				Vdc = vdate,
 				Vdu = vdate,
 			});
+			candidates.Add(new MasterConfig {
+				Category = CategoryAutoExec,
+				Name = AutoExecIsSendMailName(job.TaskId),
+				Val = job.IsSendMail,
+				Example = $"{ValAutoExecEnabled}=送信する,{ValAutoExecDisabled}=送信しない",
+				Memo = $"{job.TaskName} の実行結果メール送信フラグ",
+				Vdc = vdate,
+				Vdu = vdate,
+			});
 		}
+		candidates.AddRange([
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailServerIp, Val = "", Example = "例: mail.example.jp", Memo = "自動実行結果メールのSMTPサーバーIPアドレスまたはホスト名", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailServerPort, Val = "", Example = "例: 587（送信ポート）", Memo = "自動実行結果メールのSMTPポート番号", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailUserId, Val = "", Example = "例: user@example.jp（認証ユーザー）", Memo = "自動実行結果メールのSMTPユーザーID", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailUserPass, Val = "", Example = "例: メール認証用パスワード", Memo = "自動実行結果メールのSMTPパスワード", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailSecurity, Val = "", Example = "例: StartTls（STARTTLS暗号化）", Memo = "自動実行結果メールの暗号化方式", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailAuthMode, Val = "", Example = "例: Password（パスワード認証）,OAuth2（OAuth 2.0認証）", Memo = "自動実行結果メールの認証方式", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailFromAddr, Val = "", Example = "例: sender@example.jp（送信元）", Memo = "自動実行結果メールの送信元アドレス", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailFromName, Val = "", Example = "例: 自動実行通知", Memo = "自動実行結果メールの送信元表示名", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailToAddr, Val = "", Example = "例: admin@example.jp（送信先）", Memo = "自動実行結果メールの送信先アドレス", Vdc = vdate, Vdu = vdate },
+		]);
 
 		var existingNames = new HashSet<string>(db.Fetch<string>($"SELECT Name FROM {nameof(MasterConfig)}"));
 		var initData = candidates.Where(c => !existingNames.Contains(c.Name)).ToList();

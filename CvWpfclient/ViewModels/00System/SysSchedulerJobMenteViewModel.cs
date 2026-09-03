@@ -67,11 +67,23 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand]
 	public async Task Init() {
-		await LoadTasksAsync(CancellationToken.None);
+		await ReloadAsync(CancellationToken.None);
 	}
 
+	/// <summary>一覧を再取得する。F5 / 一覧更新ボタン用。現在の選択行を維持する。</summary>
 	[RelayCommand(IncludeCancelCommand = true)]
-	private async Task LoadTasksAsync(CancellationToken ct) {
+	private Task LoadTasksAsync(CancellationToken ct)
+		=> ReloadAsync(ct, SelectedTask?.TaskId);
+
+	/// <summary>
+	/// 一覧を再取得し、選択行を復元する。
+	/// selectTaskId が見つからない場合は fallbackIndex の位置、それも無ければ先頭行を選択する。
+	/// </summary>
+	private async Task ReloadAsync(
+		CancellationToken ct,
+		string? selectTaskId = null,
+		int? fallbackIndex = null,
+		bool keepMessage = false) {
 		IsBusy = true;
 		Message = "一覧を取得中...";
 		try {
@@ -82,7 +94,10 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 				return;
 			}
 			Tasks = new ObservableCollection<SchedulerTaskInfo>(response.Tasks);
-			Message = $"ジョブ一覧を取得しました (件数: {Tasks.Count})";
+			SelectedTask = ResolveSelection(selectTaskId, fallbackIndex);
+			if (!keepMessage) {
+				Message = $"ジョブ一覧を取得しました (件数: {Tasks.Count})";
+			}
 		}
 		catch (Exception ex) {
 			Message = $"取得失敗: {ex.Message}";
@@ -91,6 +106,18 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 		finally {
 			IsBusy = false;
 		}
+	}
+
+	/// <summary>再取得後に選択すべき行を決める。</summary>
+	private SchedulerTaskInfo? ResolveSelection(string? taskId, int? fallbackIndex) {
+		if (!string.IsNullOrEmpty(taskId)) {
+			var match = Tasks.FirstOrDefault(x => x.TaskId == taskId);
+			if (match != null) return match;
+		}
+		if (fallbackIndex is int idx && Tasks.Count > 0) {
+			return Tasks[Math.Clamp(idx, 0, Tasks.Count - 1)];
+		}
+		return Tasks.FirstOrDefault();
 	}
 
 	[RelayCommand]
@@ -108,8 +135,11 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 
 		if (Helpers.ClientLib.ShowDialogView(dialog, this, true) != true) return;
 
+		var taskId = SelectedTask.TaskId;
+		var taskName = SelectedTask.TaskName;
+
 		var request = new UpdateSchedulerTaskRequest {
-			TaskId = SelectedTask.TaskId,
+			TaskId = taskId,
 			CronExpression = vm.CronExpression,
 		};
 
@@ -122,8 +152,8 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 				MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
 				return;
 			}
-			Message = $"スケジュールを更新しました: {SelectedTask.TaskName}";
-			await LoadTasksAsync(CancellationToken.None);
+			Message = $"スケジュールを更新しました: {taskName}";
+			await ReloadAsync(CancellationToken.None, taskId, keepMessage: true);
 		}
 		catch (Exception ex) {
 			Message = $"更新失敗: {ex.Message}";
@@ -154,6 +184,9 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 			if (confirm != MessageBoxResult.Yes) return;
 		}
 
+		var taskName = SelectedTask.TaskName;
+		var index = Tasks.IndexOf(SelectedTask);
+
 		var request = new RemoveSchedulerTaskRequest {
 			TaskId = SelectedTask.TaskId,
 		};
@@ -167,8 +200,8 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 				MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
 				return;
 			}
-			Message = $"ジョブを削除しました: {SelectedTask.TaskName}";
-			await LoadTasksAsync(CancellationToken.None);
+			Message = $"ジョブを削除しました: {taskName}";
+			await ReloadAsync(CancellationToken.None, null, fallbackIndex: index, keepMessage: true);
 		}
 		catch (Exception ex) {
 			Message = $"削除失敗: {ex.Message}";
@@ -206,8 +239,11 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 		var confirm = MessageEx.ShowQuestionDialog(confirmMessage, owner: Helpers.ClientLib.GetActiveView(this));
 		if (confirm != MessageBoxResult.Yes) return;
 
+		var taskId = SelectedTask.TaskId;
+		var taskName = SelectedTask.TaskName;
+
 		var request = new SetSchedulerTaskEnabledRequest {
-			TaskId = SelectedTask.TaskId,
+			TaskId = taskId,
 			IsEnabled = next,
 		};
 
@@ -220,8 +256,53 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 				MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
 				return;
 			}
-			Message = $"実行フラグを変更しました: {SelectedTask.TaskName} → {(next ? "実行する" : "実行しない")}";
-			await LoadTasksAsync(CancellationToken.None);
+			Message = $"実行フラグを変更しました: {taskName} → {(next ? "実行する" : "実行しない")}";
+			await ReloadAsync(CancellationToken.None, taskId, keepMessage: true);
+		}
+		catch (Exception ex) {
+			Message = $"変更失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
+		}
+		finally {
+			IsBusy = false;
+		}
+	}
+
+	/// <summary>
+	/// 選択したジョブのメール送信する/しないフラグを切り替える。
+	/// メール送信フラグの変更は必ず確認メッセージを出してからサーバーへ反映する。
+	/// </summary>
+	[RelayCommand]
+	private async Task ToggleTaskSendMailAsync() {
+		if (SelectedTask == null) {
+			MessageEx.ShowWarningDialog("メール送信する/しないを切り替えるジョブを選択してください", owner: Helpers.ClientLib.GetActiveView(this));
+			return;
+		}
+
+		var next = !SelectedTask.IsSendMail;
+		var confirmMessage = $"'{SelectedTask.TaskName}' を【メール送信{(next ? "する" : "しない")}】に変更します。\n変更しますか？";
+		var confirm = MessageEx.ShowQuestionDialog(confirmMessage, owner: Helpers.ClientLib.GetActiveView(this));
+		if (confirm != MessageBoxResult.Yes) return;
+
+		var taskId = SelectedTask.TaskId;
+		var taskName = SelectedTask.TaskName;
+
+		var request = new SetSchedulerTaskSendMailRequest {
+			TaskId = taskId,
+			IsSendMail = next,
+		};
+
+		IsBusy = true;
+		Message = "メール送信フラグを変更中...";
+		try {
+			var result = await _schedulerClient.SetTaskSendMailAsync(request, AppGlobal.GetDefaultCallContext());
+			if (result.Result != 0) {
+				Message = $"メール送信フラグ変更エラー: {result.Detail}";
+				MessageEx.ShowErrorDialog(Message, owner: Helpers.ClientLib.GetActiveView(this));
+				return;
+			}
+			Message = $"メール送信フラグを変更しました: {taskName} → メール送信{(next ? "する" : "しない")}";
+			await ReloadAsync(CancellationToken.None, taskId, keepMessage: true);
 		}
 		catch (Exception ex) {
 			Message = $"変更失敗: {ex.Message}";
@@ -259,7 +340,7 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 				return;
 			}
 			Message = $"ジョブを登録しました: {result.TaskId}";
-			await LoadTasksAsync(CancellationToken.None);
+			await ReloadAsync(CancellationToken.None, result.TaskId, keepMessage: true);
 		}
 		catch (Exception ex) {
 			Message = $"登録失敗: {ex.Message}";

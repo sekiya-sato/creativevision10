@@ -1,9 +1,10 @@
 /*
 # description
-DataGridSelectionBehavior は選択行への自動スクロール、選択通知受信時のフォーカス、および識別子による行選択を行う添付プロパティ群です。
+DataGridSelectionBehavior は選択行への自動スクロール、選択通知受信時のフォーカス、識別子による行選択、および選択行への CurrentCell 追随を行う添付プロパティ群です。
 
 # example
 <DataGrid helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" />
+<DataGrid helpers:DataGridSelectionBehavior.SyncCurrentCellWithSelectedItem="True" />
  */
 using CommunityToolkit.Mvvm.Messaging;
 using CvBase;
@@ -39,6 +40,13 @@ public static class DataGridSelectionBehavior {
 			typeof(DataGridSelectionBehavior),
 			new PropertyMetadata("Id"));
 
+	public static readonly DependencyProperty SyncCurrentCellWithSelectedItemProperty =
+		DependencyProperty.RegisterAttached(
+			"SyncCurrentCellWithSelectedItem",
+			typeof(bool),
+			typeof(DataGridSelectionBehavior),
+			new PropertyMetadata(false, OnSyncCurrentCellWithSelectedItemChanged));
+
 	public static bool GetAutoScrollToSelectedItem(DependencyObject obj) =>
 		(bool)obj.GetValue(AutoScrollToSelectedItemProperty);
 
@@ -56,6 +64,12 @@ public static class DataGridSelectionBehavior {
 
 	public static void SetSelectionIdPropertyName(DependencyObject obj, string value) =>
 		obj.SetValue(SelectionIdPropertyNameProperty, value);
+
+	public static bool GetSyncCurrentCellWithSelectedItem(DependencyObject obj) =>
+		(bool)obj.GetValue(SyncCurrentCellWithSelectedItemProperty);
+
+	public static void SetSyncCurrentCellWithSelectedItem(DependencyObject obj, bool value) =>
+		obj.SetValue(SyncCurrentCellWithSelectedItemProperty, value);
 
 	private static void OnAutoScrollToSelectedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
 		if (d is not DataGrid grid) return;
@@ -86,9 +100,25 @@ public static class DataGridSelectionBehavior {
 		}
 	}
 
+	private static void OnSyncCurrentCellWithSelectedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+		if (d is not DataGrid grid) return;
+
+		if ((bool)e.NewValue) {
+			grid.SelectionChanged += Grid_SelectionChangedForCurrentCell;
+		}
+		else {
+			grid.SelectionChanged -= Grid_SelectionChangedForCurrentCell;
+		}
+	}
+
 	private static void Grid_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 		if (sender is not DataGrid grid) return;
 		ScrollSelectionIntoView(grid, grid.SelectedItem);
+	}
+
+	private static void Grid_SelectionChangedForCurrentCell(object sender, SelectionChangedEventArgs e) {
+		if (sender is not DataGrid grid) return;
+		SyncCurrentCell(grid, grid.SelectedItem);
 	}
 
 	private static void Grid_Loaded(object sender, RoutedEventArgs e) {
@@ -159,6 +189,29 @@ public static class DataGridSelectionBehavior {
 			}
 			catch (Exception ex) {
 				Logger.LogError(ex, "Error in BringSelectionIntoView");
+			}
+		}, DispatcherPriority.Render);
+	}
+
+	/// <summary>選択行に CurrentCell を追随させる。キーボード操作の起点が先頭行に戻るのを防ぐ。</summary>
+	private static void SyncCurrentCell(DataGrid grid, object? item) {
+		if (item == null) return;
+
+		grid.Dispatcher.BeginInvoke(() => {
+			try {
+				if (!grid.Items.Contains(item)) return;
+				var column = grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
+				if (column == null) return;
+				grid.CurrentCell = new DataGridCellInfo(item, column);
+
+				// グリッドに既にキーボードフォーカスがある場合だけセルへフォーカスを移す。
+				// ボタン操作直後にフォーカスを奪わないため。
+				if (!grid.IsKeyboardFocusWithin) return;
+				var cell = DataGridCellHelper.GetCell(grid, grid.CurrentCell);
+				cell?.Focus();
+			}
+			catch (Exception ex) {
+				Logger.LogError(ex, "Error in SyncCurrentCell");
 			}
 		}, DispatcherPriority.Render);
 	}

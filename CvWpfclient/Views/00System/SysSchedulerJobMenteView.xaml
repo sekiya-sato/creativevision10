@@ -90,6 +90,10 @@
 				Content="実行する/しない 切替"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
 			<Button Margin="20,0,8,0"
+				Command="{Binding ToggleTaskSendMailCommand}"
+				Content="メール送信する/しない 切替"
+				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
+			<Button Margin="20,0,8,0"
 				Background="{DynamicResource MaterialDesignValidationErrorBrush}"
 				Command="{Binding DeleteTaskCommand}"
 				Content="削除"
@@ -127,7 +131,7 @@
 				<DataGrid x:Name="TaskGrid"
 					Grid.Row="1"
 					d:ItemsSource="{d:SampleData ItemCount=5}"
-					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" helpers:DataGridSelectionBehavior.SyncCurrentCellWithSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 					AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 					IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
@@ -139,13 +143,16 @@
 						<DataGridTextColumn Width="280"
 							Binding="{Binding TaskId}"
 							Header="TaskId" />
-						<DataGridTextColumn Width="500"
+						<DataGridTextColumn Width="520"
 							Binding="{Binding TaskName}"
 							Header="タスク名" />
-						<DataGridCheckBoxColumn Width="70"
+						<DataGridCheckBoxColumn Width="60"
 							Binding="{Binding IsEnabled}"
 							Header="実行" />
-						<DataGridTextColumn Width="190"
+						<DataGridCheckBoxColumn Width="60"
+							Binding="{Binding IsSendMail}"
+							Header="メール" />
+						<DataGridTextColumn Width="120"
 							Binding="{Binding CronExpression}"
 							Header="Cron式" />
 						<DataGridTextColumn Width="180"

@@ -3,11 +3,12 @@ using CvBase;
 namespace CvDomainLogic;
 
 /// <summary>
-/// 自動実行ジョブ（スケジューラ）の「実行する/しない」フラグと cron式を、
+/// 自動実行ジョブ（スケジューラ）の「実行する/しない」フラグ、cron式、メール送信フラグを、
 /// 既存テーブル <see cref="MasterConfig"/>（Category/Name/Val）に永続化するクラス。
 /// <para>
 /// DBスキーマは変更しない。キーは Category="自動実行管理"、
-/// Name="GenericSQLRegAutoExec"+TaskId先頭8桁（実行フラグ） / "GenericSQLRegAutoExecCron"+TaskId先頭8桁（cron式）とし、
+/// Name="GenericSQLRegAutoExec"+TaskId先頭8桁（実行フラグ） / "GenericSQLRegAutoExecCron"+TaskId先頭8桁（cron式） /
+/// "GenericSQLRegAutoExecIsSendMail"+TaskId先頭8桁（メール送信フラグ）とし、
 /// Val に "1"（実行する）/ "0"（実行しない）などの文字列で値を保持する。
 /// </para>
 /// <para>
@@ -56,6 +57,24 @@ public class SchedulerJobConfigDb {
 	}
 
 	/// <summary>
+	/// 指定タスクのメール送信フラグを取得する。
+	/// レコードが無い、空白のみ、または値が不正なら <c>null</c> を返す。
+	/// </summary>
+	/// <param name="taskId">タスクを識別するId</param>
+	/// <returns>true=送信する、false=送信しない、null=未設定または不正</returns>
+	public bool? GetIsSendMail(Guid taskId) {
+		var val = _db.FirstOrDefault<string>(
+			$"SELECT Val FROM {nameof(MasterConfig)} WHERE Name = @0", IsSendMailKey(taskId));
+		if (string.IsNullOrWhiteSpace(val))
+			return null;
+		return val.Trim().ToLowerInvariant() switch {
+			"1" or "true" or "on" => true,
+			"0" or "false" or "off" => false,
+			_ => null,
+		};
+	}
+
+	/// <summary>
 	/// 指定タスクの実行フラグを設定する（upsert）。
 	/// </summary>
 	/// <param name="taskId">タスクを識別するId</param>
@@ -73,11 +92,23 @@ public class SchedulerJobConfigDb {
 		Upsert(CronKey(taskId), cronExpression, $"自動実行ジョブ {taskId} の cron式");
 	}
 
+	/// <summary>
+	/// 指定タスクのメール送信フラグを設定する（upsert）。
+	/// </summary>
+	/// <param name="taskId">タスクを識別するId</param>
+	/// <param name="isSendMail">true=送信する、false=送信しない</param>
+	public void SetIsSendMail(Guid taskId, bool isSendMail) {
+		Upsert(IsSendMailKey(taskId), isSendMail ? MasterConfig.ValAutoExecEnabled : MasterConfig.ValAutoExecDisabled, $"自動実行ジョブ {taskId} の実行結果メール送信フラグ");
+	}
+
 	/// <summary>Name列に使う実行フラグ用キーを組み立てる。</summary>
 	static string EnabledKey(Guid taskId) => $"{MasterConfig.NameAutoExecEnabledPrefix}{TaskIdPrefix(taskId)}";
 
 	/// <summary>Name列に使う cron式用キーを組み立てる。</summary>
 	static string CronKey(Guid taskId) => $"{MasterConfig.NameAutoExecCronPrefix}{TaskIdPrefix(taskId)}";
+
+	/// <summary>Name列に使うメール送信フラグ用キーを組み立てる。</summary>
+	static string IsSendMailKey(Guid taskId) => $"{MasterConfig.NameAutoExecIsSendMailPrefix}{TaskIdPrefix(taskId)}";
 
 	/// <summary>TaskId(Guid)の先頭8桁を取り出す。</summary>
 	static string TaskIdPrefix(Guid taskId) => taskId.ToString()[..8];
