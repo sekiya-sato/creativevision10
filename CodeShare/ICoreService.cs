@@ -140,6 +140,15 @@ public enum CvFlag {
 	[EnumMember]
 	Msg003_GetEnv = 3,
 	/// <summary>
+	/// サーバー側の接続定義の配列を返す Message=接続定義の配列 例 "Sqlite,MariaDB,PostgreSQL,Oracle"
+	/// </summary>
+	[EnumMember]
+	Msg004_GetConnectionStatus = 4,
+	[EnumMember]
+	Msg030_ConvertSqlite2Mariadb = 31,
+	[EnumMember]
+	Msg030_ConvertSqlite2Postgre = 32,
+	/// <summary>
 	/// データベースの変換
 	/// </summary>
 	[EnumMember]

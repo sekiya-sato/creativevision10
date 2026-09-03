@@ -88,6 +88,16 @@ public partial class CoreService {
 		return CreateSuccessResponse(request.Flag, typeof(Dictionary<string, string>), Common.SerializeObject(GetEnvironmentVariables()));
 	}
 
+	private CvMsg HandleGetConnectionStatus(CvMsg request, CallContext context) {
+		ArgumentNullException.ThrowIfNull(request);
+		_logger.LogDebug("HandleGetConnectionStatus invoked Flag:{Flag}", request.Flag);
+
+		var resultData = _configuration.GetSection("ConnectionStrings").GetChildren()
+			.Select(c => c.Key)
+			.ToList();
+		return CreateSuccessResponse(request.Flag, typeof(List<string>), Common.SerializeObject(resultData));
+	}
+
 	private CvMsg HandlerGetTableList(CvMsg request, CallContext context) {
 		ArgumentNullException.ThrowIfNull(request);
 		_logger.LogInformation("HandleGetTableList invoked Flag:{Flag}", request.Flag);

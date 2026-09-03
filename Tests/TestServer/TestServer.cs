@@ -133,6 +133,25 @@ public class CoreServiceTests {
 	}
 
 	[TestMethod]
+	public async Task GetConnectionStatus_ReturnsConnectionStringKeysSerialized() {
+		var request = new CvMsg {
+			Flag = CvFlag.Msg004_GetConnectionStatus,
+		};
+		if (_service == null) {
+			Assert.Fail("Service not initialized");
+			return;
+		}
+
+		var result = await _service.QueryMsgAsync(request);
+
+		Assert.IsNotNull(result);
+		Assert.AreEqual(0, result.Code);
+		Assert.AreEqual(request.Flag, result.Flag);
+		Assert.AreEqual(typeof(List<string>), result.DataType);
+		Assert.IsFalse(string.IsNullOrWhiteSpace(result.DataMsg ?? ""));
+	}
+
+	[TestMethod]
 	public async Task QueryListSql_WithSummaryClosingCheckRow_ResolvesSharedDtoOnServer() {
 		var service = _service ?? throw new AssertFailedException("Service not initialized");
 		var request = new CvMsg {
