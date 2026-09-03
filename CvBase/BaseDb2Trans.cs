@@ -464,21 +464,21 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	[ObservableProperty]
 	[OldTableCommentAttr("明細値引")]
 	[Comment("値引: 合計からの")]
-	public partial int Nebiki00 { get; set; }
+	public partial long Nebiki00 { get; set; }
 	/// <summary>
 	/// 値引: 明細1
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("明細値引1")]
 	[Comment("値引: 明細1")]
-	public partial int Nebiki01 { get; set; }
+	public partial long Nebiki01 { get; set; }
 	/// <summary>
 	/// 値引: 明細2
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("小計値引 + 小計値引1")]
 	[Comment("値引: 明細2")]
-	public partial int Nebiki02 { get; set; }
+	public partial long Nebiki02 { get; set; }
 	/// <summary>
 	/// 消費税区分（MasterSysTax.Id 1-3）。入力時点の MasterShohin.Id_Tax のスナップショット。
 	/// 0 は非課税。棚卸・在庫調整・移動系の明細では未使用（常に0）
@@ -584,7 +584,7 @@ public partial class TranKinHeader : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("明細金額合計")]
 	[Comment("金額合計")]
-	public partial int KingakuTotal { get; set; }
+	public partial long KingakuTotal { get; set; }
 	/// <summary>
 	/// 手入力No
 	/// </summary>
@@ -660,7 +660,7 @@ public sealed partial class TranKinMeisai : ObservableObject {
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
 	[Comment("金額")]
-	public partial int Kingaku { get; set; }
+	public partial long Kingaku { get; set; }
 	/// <summary>
 	/// 明細メモ
 	/// </summary>

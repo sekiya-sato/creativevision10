@@ -28,7 +28,6 @@ public partial class ConvertDb {
 				var rate = getDataInt(rec, "掛率1");
 				var memo = getString(rec, "メモ", getString(rec,"MEMO2"));
 				var denDay = getString(rec, "在庫計上日", "19010101");
-				//var rate = getTorihikiRatePercent(getString(rec, "取引先CD1"));
 				var slip = new Tran00Uriage() {
 					OldSeqNo = getDataLong(rec, "SEQ_NO"),
 					DenDay = denDay,
@@ -162,7 +161,7 @@ public partial class ConvertDb {
 				var kubun = getDataInt(rec, "取引区分");
 				var meisaiList = BuildMaterialMeisaiList(rec, kubun);
 				var kingakuTotalRaw = getDataInt(rec, "明細金額合計");
-				var rate = getDataInt(rec, "掛率1");
+				// Tran02Material は Rate 列を持たないため旧「掛率1」は読まない
 				var oldTax = getDataInt(rec, "内税消費税") + getDataInt(rec, "外税消費税");
 				var denDay = getString(rec, "在庫計上日", "19010101");
 				// 区分99(その他)は消費税調整伝票で、明細金額合計は常に0・実額は内税消費税/外税消費税にのみ入る。
@@ -372,10 +371,12 @@ public partial class ConvertDb {
 					SuTotal = getDataInt(rec, "数量合計"),
 					KingakuTotal = getDataInt(rec, "明細金額合計"),
 					Memo = getString(rec, "メモ"),
-					Jdetail = new BaseDetailClass() {
-						Yobi1 = getString(rec, "関連伝票NO"),
-						Yobi2 = getString(rec, "関連伝票NO2"),
-					},
+					// 棚卸の元テーブル HC$tran_tana0 は「関連伝票NO」「関連伝票NO2」を持たない
+					// （対向エンティティが無い）。getString は存在しないキーを空文字で返すため、
+					// 以前はこの予備欄へ黙って空文字が入るだけで何も移行できていなかった。
+					// 実在する旧「棚番」を専用列 TanaNo へ移す。
+					TanaNo = getString(rec, "棚番"),
+					Jdetail = new BaseDetailClass(),
 					Jmeisai = meisaiList,
 					Id_Shain = shain.Sid,
 					VShain = shain,
@@ -675,36 +676,11 @@ WHERE EXISTS (
 		// Executeメソッドの仕様で、正常終了は0を返すため、更新件数は'SELECT changes()'で取得、クエリの実行自体は効率的に行われます。
 		// アプリ側でレコード1件づつの処理をした場合、実データ5万件程度で数10分、300万件で4時間以上かかって途中リタイア。-> SQLクエリで一括更新する方法に変更して全体で5分程度で完了。
 	}
-	// 取引先コード→掛率(%)のキャッシュ（マスタ種別ごと）。移行は数万件回るため1件ずつのマスタ取得を避ける。
-	readonly Dictionary<string, int> torihikiRateCache = [];
-	readonly Dictionary<string, int> shiireRateCache = [];
-	/// <summary>
-	/// 得意先コードから掛率(%)を引く。<c>Tran*.Rate</c> は掛率であり消費税率ではない。
-	/// 旧CVnetの「掛率1」は実質すべて消費税率が入っており掛率の移行元にできないため、CV10マスタの掛率を採用する。
-	/// マスタが引けない場合は0（未設定）とし、税率値を掛率として残さない。
-	/// </summary>
-	int getTorihikiRatePercent(string code) {
-		if (string.IsNullOrWhiteSpace(code))
-			return 0;
-		if (torihikiRateCache.TryGetValue(code, out var cached))
-			return cached;
-		var rate = getMaster<MasterTokui>(code)?.RateProper ?? 0;
-		torihikiRateCache[code] = rate;
-		return rate;
-	}
-	/// <summary>
-	/// 仕入先コードから掛率(%)を引く。仕入/発注の取引先CD1はMasterShiireのコード体系のため、
-	/// <see cref="getTorihikiRatePercent"/>(MasterTokui参照)とは別キャッシュ・別マスタで引く。
-	/// </summary>
-	int getShiireRatePercent(string code) {
-		if (string.IsNullOrWhiteSpace(code))
-			return 0;
-		if (shiireRateCache.TryGetValue(code, out var cached))
-			return cached;
-		var rate = getMaster<MasterShiire>(code)?.RateProper ?? 0;
-		shiireRateCache[code] = rate;
-		return rate;
-	}
+	// 旧「掛率1」は掛率(%)そのものなので、Tran*.Rate へはそのまま移行する。
+	// かつて「旧の掛率1には実質すべて消費税率が入っているのでCV10マスタの掛率を採用する」という
+	// 前提で getTorihikiRatePercent/getShiireRatePercent を用意していたが、実データを確認すると
+	// 掛率1 の値は 0/60/90/100 のみ(区分0,1,3,12,13で確認)で消費税率(3/5/8/10)ではなかった。
+	// 前提が誤りで両メソッドも呼ばれていなかったため、誤解を招くだけなので削除した。
 	T? getMaster<T>(string code) where T : class, IBaseCodeName, new() {
 		if (string.IsNullOrWhiteSpace(code))
 			return null;
