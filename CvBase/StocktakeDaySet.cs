@@ -3,10 +3,17 @@ using System.Globalization;
 namespace CvBase;
 
 /// <summary>棚卸基準日の解決結果。</summary>
+/// <param name="Id_Shop">店舗Id</param>
+/// <param name="TanaDay">棚卸基準日 yyyyMMdd</param>
+/// <param name="SumMonth">基準日が属する計上月 yyyyMM</param>
+/// <param name="DayFrom">計上月の初日 yyyyMMdd</param>
+/// <param name="DayTo">計上月の最終日 yyyyMMdd</param>
+/// <param name="IsFallback">棚卸日が未設定で計上月末へフォールバックしたか</param>
 public readonly record struct StocktakeDay(
 	long Id_Shop,
 	string TanaDay,
 	string SumMonth,
+	string DayFrom,
 	string DayTo,
 	bool IsFallback);
 
@@ -37,12 +44,12 @@ public static class StocktakeDaySet {
 
 		if (IsUnset(tanaDay)) {
 			var fallbackPeriod = ClosingMonthCalculator.GetPeriod(fallbackMonth, shime);
-			return new StocktakeDay(idShop, fallbackPeriod.DayTo, fallbackMonth, fallbackPeriod.DayTo, true);
+			return new StocktakeDay(idShop, fallbackPeriod.DayTo, fallbackMonth, fallbackPeriod.DayFrom, fallbackPeriod.DayTo, true);
 		}
 
 		var sumMonth = ClosingMonthCalculator.CalculateKakeMonth(tanaDay!, shime);
-		var dayTo = ClosingMonthCalculator.GetPeriod(sumMonth, shime).DayTo;
-		return new StocktakeDay(idShop, tanaDay!, sumMonth, dayTo, false);
+		var period = ClosingMonthCalculator.GetPeriod(sumMonth, shime);
+		return new StocktakeDay(idShop, tanaDay!, sumMonth, period.DayFrom, period.DayTo, false);
 	}
 
 	private static void ValidateMonth(string value, string parameterName) {

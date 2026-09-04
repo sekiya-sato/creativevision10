@@ -1,3 +1,5 @@
+using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using CvBase;
@@ -815,7 +817,7 @@ public class SummaryDbTests {
 
 		// 実棚18 を登録して確定する。帳簿20との差 -2 が調整伝票になる
 		db.Insert(CreateTana("20260831", 1, 18));
-		var cnt = stocktakeDb.FixStocktake("202608", "20260831", idShain: 1);
+		var cnt = stocktakeDb.FixStocktake("202608", idShain: 1);
 
 		Assert.AreEqual(1, cnt, "倉庫単位に1伝票");
 		var chosei = db.Single<Tran61Chosei>("where TanaMonth=@0", "202608");
@@ -841,13 +843,13 @@ public class SummaryDbTests {
 		ApplyImmediate(summaryDb, purchase, false);
 		stocktakeDb.StartStocktake("202608");
 		db.Insert(CreateTana("20260831", 1, 18));
-		stocktakeDb.FixStocktake("202608", "20260831", idShain: 1);
+		stocktakeDb.FixStocktake("202608", idShain: 1);
 		AssertRealStock(db, 1, 18);
 
 		// 棚卸数を数え直して再確定する
 		db.Execute("DELETE FROM Tran60Tana");
 		db.Insert(CreateTana("20260831", 1, 21));
-		stocktakeDb.FixStocktake("202608", "20260831", idShain: 1);
+		stocktakeDb.FixStocktake("202608", idShain: 1);
 
 		Assert.AreEqual(1, db.Fetch<Tran61Chosei>("where TanaMonth=@0", "202608").Count, "調整伝票は作り直しで1件のまま");
 		AssertRealStock(db, 1, 21, "再確定後は最新の棚卸数に一致する");
@@ -899,7 +901,7 @@ public class SummaryDbTests {
 		}
 
 		stocktakeDb.StartStocktake("202608", [1]);
-		stocktakeDb.FixStocktake("202608", "20260831", idShain: 0, sokoIds: [1]);
+		stocktakeDb.FixStocktake("202608", idShain: 0, sokoIds: [1]);
 
 		AssertRealStock(db, 1, 18, "指定した倉庫は確定される");
 		AssertRealStock(db, 2, 20, "指定しなかった倉庫は動かない");
@@ -917,7 +919,7 @@ public class SummaryDbTests {
 		ApplyImmediate(summaryDb, purchase, false);
 		stocktakeDb.StartStocktake("202608");
 		db.Insert(CreateTana("20260831", 1, 18));
-		stocktakeDb.FixStocktake("202608", "20260831", idShain: 1);
+		stocktakeDb.FixStocktake("202608", idShain: 1);
 		var immediate = GetStockSnapshot(db);
 
 		await RunRebuildAsync(summaryDb, "202608", "202608");
@@ -1138,6 +1140,160 @@ public class SummaryDbTests {
 		var soko2 = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 2);
 		Assert.AreEqual(37, soko2.BookQty, "soko2は棚卸日が月末なので差し引かない");
 		Assert.AreEqual("20260831", soko2.StocktakeDdate);
+	}
+
+	/// <summary>調整伝票の計上日は店舗ごとの棚卸基準日になる(設計書2.3〜2.5, 4)</summary>
+	[TestMethod]
+	public void FixStocktake_UsesPerShopTanaDayForChoseiSlip() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		db.Insert(CreateTana("20260825", 1, 18));
+
+		var result = stocktakeDb.FixStocktake(days, 1);
+
+		Assert.AreEqual(1, result.SlipCount);
+		Assert.IsFalse(result.IsConfirmationRequired);
+		var chosei = db.Single<Tran61Chosei>("");
+		Assert.AreEqual("20260825", chosei.DenDay, "調整伝票の計上日は店舗の棚卸基準日");
+		Assert.AreEqual("202608", chosei.TanaMonth);
+		Assert.AreEqual(-2, chosei.SuTotal);
+		var row = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(18, row.ActualQty);
+		Assert.AreEqual(-2, row.AdjustQty);
+	}
+
+	/// <summary>棚番違いの複数の棚卸伝票は合計して1件の調整伝票にまとめる</summary>
+	[TestMethod]
+	public void FixStocktake_SumsMultipleTanaSlipsOnBaseDay() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		db.Insert(CreateTana("20260825", 1, 10));
+		db.Insert(CreateTana("20260825", 1, 8));
+
+		var result = stocktakeDb.FixStocktake(days, 1);
+
+		var row = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(18, row.ActualQty, "棚番違いの複数伝票は合計する");
+		Assert.AreEqual(1, result.SlipCount);
+		Assert.AreEqual(-2, db.Single<Tran61Chosei>("").SuTotal);
+	}
+
+	/// <summary>基準日以外の棚卸入力があると、何も変更せず中断して内訳(Misdated)を返す</summary>
+	[TestMethod]
+	public void FixStocktake_AbortsWhenTanaDateMismatch() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		// 基準日8/25と違うが計上月(8月)内の棚卸入力
+		db.Insert(CreateTana("20260820", 1, 18));
+
+		var result = stocktakeDb.FixStocktake(days, 1);
+
+		Assert.IsTrue(result.IsConfirmationRequired);
+		Assert.AreEqual(0, result.SlipCount);
+		Assert.AreEqual(0, result.AlignedCount);
+		Assert.AreEqual(1, result.Misdated.Count);
+		Assert.AreEqual("20260820", result.Misdated[0].DenDay);
+		Assert.AreEqual(1, result.Misdated[0].SlipCount);
+		Assert.AreEqual(0, db.Fetch<Tran61Chosei>("").Count, "調整伝票は作られない");
+		var tana = db.Single<Tran60Tana>("");
+		Assert.AreEqual("20260820", tana.DenDay, "棚卸伝票の計上日は補正されない");
+	}
+
+	/// <summary>補正(alignMisdated)を指示すると、日付違いの棚卸伝票を基準日へ揃えてから確定する</summary>
+	[TestMethod]
+	public void FixStocktake_AlignsMisdatedTanaWhenConfirmed() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		db.Insert(CreateTana("20260820", 1, 18));
+
+		var result = stocktakeDb.FixStocktake(days, 1, alignMisdated: true);
+
+		Assert.AreEqual(1, result.AlignedCount);
+		Assert.AreEqual(1, result.SlipCount);
+		var tana = db.Single<Tran60Tana>("");
+		Assert.AreEqual("20260825", tana.DenDay, "棚卸伝票の計上日は基準日へ補正される");
+		var row = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(18, row.ActualQty);
+		Assert.AreEqual(-2, db.Single<Tran61Chosei>("").SuTotal);
+	}
+
+	/// <summary>計上月の外にある棚卸入力は別の月の棚卸なので、日付違いの検知にも集計にも含めない</summary>
+	[TestMethod]
+	public void FixStocktake_IgnoresTanaOutsideAccountingMonth() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		db.Insert(CreateTana("20260825", 1, 18));
+		db.Insert(CreateTana("20260705", 1, 99));
+
+		var result = stocktakeDb.FixStocktake(days, 1);
+
+		Assert.IsFalse(result.IsConfirmationRequired, "7月分は8月の棚卸確定の検知対象外");
+		Assert.AreEqual(1, result.SlipCount);
+		var row = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(18, row.ActualQty, "7月分の99は混ざらない");
+	}
+
+	/// <summary>確定処理の実行日は再確定要否判定の基準として Tran60TanaDate.FixDay に書かれる</summary>
+	[TestMethod]
+	public void FixStocktake_WritesFixDay() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		db.Insert(CreateTana("20260825", 1, 18));
+		Assert.AreEqual("19010101", db.Single<Tran60TanaDate>("where Id_Shop=@0", 1).FixDay, "前提: 未確定");
+
+		stocktakeDb.FixStocktake(days, 1);
+
+		Assert.AreEqual(
+			DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture),
+			db.Single<Tran60TanaDate>("where Id_Shop=@0", 1).FixDay);
 	}
 
 	/// <summary>当月に動きが無い在庫は当該計上月の行を持たないので、行補完しないと帳簿在庫が記録できない</summary>

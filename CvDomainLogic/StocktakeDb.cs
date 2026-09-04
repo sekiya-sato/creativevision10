@@ -45,7 +45,9 @@ public class StocktakeDb(ExDatabase db) {
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			started = true;
-			var cnt = FixStocktake(param.TanaMonth, param.DenDay, param.IdShain, param.SokoIds);
+			// param.DenDay は使わない。調整伝票の計上日は店舗ごとの棚卸基準日になったため(設計書2.4)。
+			// パラメータからの削除と「日付補正するか」の確認フラグの追加は Step6 で行う
+			var cnt = FixStocktake(param.TanaMonth, param.IdShain, param.SokoIds);
 			_db.CompleteTransaction();
 			started = false;
 			return cnt;
@@ -254,58 +256,158 @@ WHERE SumMonth = @1
 	/// 旧CV.netも「確定処理後に過去の伝票を訂正した場合は再確定する」運用だった。
 	/// </para>
 	/// </summary>
-	/// <param name="tanaMonth">棚卸年月 yyyyMM</param>
-	/// <param name="denDay">生成する調整伝票の在庫計上日 yyyyMMdd</param>
+	/// <param name="fallbackMonth">棚卸日が未設定の店舗に使うフォールバック計上月 yyyyMM</param>
 	/// <param name="idShain">入力社員Id</param>
-	/// <param name="sokoIds">対象倉庫Id。空なら全倉庫</param>
+	/// <param name="sokoIds">対象倉庫Id。空なら既定の対象倉庫</param>
 	/// <returns>生成した調整伝票の件数</returns>
-	public int FixStocktake(string tanaMonth, string denDay, long idShain, IEnumerable<long>? sokoIds = null) {
+	public int FixStocktake(string fallbackMonth, long idShain, IEnumerable<long>? sokoIds = null) =>
+		FixStocktake(ResolveDays(fallbackMonth, sokoIds), idShain).SlipCount;
+
+	/// <summary>
+	/// 棚卸確定処理。店舗ごとの基準日で実棚数を集計し、帳簿在庫との差を在庫調整伝票へ起こす。
+	/// <para>
+	/// 基準日以外の日付で入力された棚卸伝票を先に検知する。1件以上あり
+	/// <paramref name="alignMisdated"/> が false なら**何も変更せずに中断**し、対象の内訳を返す。
+	/// 呼び出し側は「基準日に補正するか」を確認して true で呼び直す(設計書4)。
+	/// </para>
+	/// <para>
+	/// 補正は棚卸伝票の <c>DenDay</c> を書き換えるので <c>Vdu</c> が動く。再確定要否の判定は
+	/// <c>DenDay &lt;= 基準日 かつ Vdu &gt; FixDay</c> なので、補正した伝票が直後に「再確定要」として
+	/// 現れないよう、補正 → 確定 → <see cref="Tran60TanaDate.FixDay"/> 書き込み の順序を守る。
+	/// 呼び出し側は全体を1トランザクションで囲むこと(<see cref="RunFixInTransaction"/>)。
+	/// </para>
+	/// </summary>
+	/// <param name="days">解決済みの店舗別棚卸基準日</param>
+	/// <param name="idShain">入力社員Id</param>
+	/// <param name="alignMisdated">基準日以外の棚卸入力の <c>DenDay</c> を基準日へ補正してから確定するか</param>
+	public StocktakeFixResult FixStocktake(IReadOnlyList<StocktakeDay> days, long idShain, bool alignMisdated = false) {
+		var result = new StocktakeFixResult();
+		if (days.Count == 0) {
+			return result;
+		}
+
+		// 0) 基準日以外の棚卸入力を検知する。補正の指示が無ければ何も変更せず中断する
+		foreach (var day in days) {
+			result.Misdated.AddRange(FetchMisdatedTana(day));
+		}
+		if (result.Misdated.Count > 0 && !alignMisdated) {
+			return result;
+		}
+		if (result.Misdated.Count > 0) {
+			foreach (var day in days) {
+				result.AlignedCount += AlignMisdatedTana(day);
+			}
+		}
+
 		var summaryDb = new SummaryDb(_db);
+		foreach (var day in days) {
+			result.SlipCount += FixStocktakeOne(day, idShain, summaryDb);
+		}
+		StoreFixDay(days);
+		return result;
+	}
+
+	/// <summary>店舗1件分の棚卸確定処理。</summary>
+	private int FixStocktakeOne(StocktakeDay day, long idShain, SummaryDb summaryDb) {
+		var soko = day.Id_Shop;
 		// 1) 前回の棚卸調整を取り消す（在庫も戻す）
 		var oldIds = _db.Fetch<long>(
-			$"SELECT Id FROM {nameof(Tran61Chosei)} WHERE TanaMonth = @0 AND Kubun = @1 {BuildSokoWhere(sokoIds, "Id_Soko")}",
-			tanaMonth, (int)EnumChosei.Tanaoroshi);
+			$"SELECT Id FROM {nameof(Tran61Chosei)} WHERE TanaMonth = @0 AND Kubun = @1 AND Id_Soko = {soko}",
+			day.SumMonth, (int)EnumChosei.Tanaoroshi);
 		foreach (var id in oldIds) {
 			summaryDb.CalcTran2SummaryStock(nameof(Tran61Chosei), nameof(ITranSoko.Id_Soko), id, invertFlag: true);
 			_db.Execute($"DELETE FROM {nameof(Tran61Chosei)} WHERE Id = @0", id);
 		}
 
 		// 2) 実棚数を SummaryStock.ActualQty へ反映する
-		StoreActualQty(tanaMonth, sokoIds);
+		StoreActualQty(day);
 
-		// 3) 帳簿在庫との差を倉庫単位の調整伝票にまとめて起こす
+		// 3) 帳簿在庫との差を1伝票にまとめて起こす
 		var diffs = _db.Fetch<StocktakeDiff>($@"
 SELECT Id_Soko, Id_Shohin, Id_Col, Id_Siz, (ActualQty - BookQty) AS Sa
-FROM SummaryStock
-WHERE SumMonth = @0 AND ActualQty <> BookQty
-  {BuildSokoWhere(sokoIds, "Id_Soko")}
-ORDER BY Id_Soko, Id_Shohin, Id_Col, Id_Siz
-", tanaMonth);
-
-		var cnt = 0;
-		foreach (var group in diffs.GroupBy(x => x.Id_Soko)) {
-			var meisai = group.Select((d, i) => new Tran99Meisai {
-				No = i + 1,
-				Id_Shohin = d.Id_Shohin,
-				Id_Col = d.Id_Col,
-				Id_Siz = d.Id_Siz,
-				Su = d.Sa,
-			}).ToList();
-			var chosei = new Tran61Chosei {
-				DenDay = denDay,
-				Id_Soko = group.Key,
-				Id_Shain = idShain,
-				EnKubun = EnumChosei.Tanaoroshi,
-				TanaMonth = tanaMonth,
-				SuTotal = meisai.Sum(x => x.Su),
-				Jmeisai = meisai,
-				Memo = $"棚卸確定 {tanaMonth}",
-			};
-			_db.Insert(chosei);
-			summaryDb.CalcTran2SummaryStock(nameof(Tran61Chosei), nameof(ITranSoko.Id_Soko), chosei.Id, invertFlag: false);
-			cnt++;
+FROM {nameof(SummaryStock)}
+WHERE SumMonth = @0 AND Id_Soko = {soko} AND ActualQty <> BookQty
+ORDER BY Id_Shohin, Id_Col, Id_Siz
+", day.SumMonth);
+		if (diffs.Count == 0) {
+			return 0;
 		}
-		return cnt;
+
+		var meisai = diffs.Select((d, i) => new Tran99Meisai {
+			No = i + 1,
+			Id_Shohin = d.Id_Shohin,
+			Id_Col = d.Id_Col,
+			Id_Siz = d.Id_Siz,
+			Su = d.Sa,
+		}).ToList();
+		var chosei = new Tran61Chosei {
+			// 計上日は店舗ごとの棚卸基準日。計上月は既存の自社締日ロジックが DenDay から決めるので
+			// SummaryStock.SumMonth と一致する(設計書2.4)
+			DenDay = day.TanaDay,
+			Id_Soko = soko,
+			Id_Shain = idShain,
+			EnKubun = EnumChosei.Tanaoroshi,
+			TanaMonth = day.SumMonth,
+			SuTotal = meisai.Sum(x => x.Su),
+			Jmeisai = meisai,
+			Memo = $"棚卸確定 {day.TanaDay}",
+		};
+		_db.Insert(chosei);
+		summaryDb.CalcTran2SummaryStock(nameof(Tran61Chosei), nameof(ITranSoko.Id_Soko), chosei.Id, invertFlag: false);
+		return 1;
+	}
+
+	/// <summary>
+	/// 基準日以外の日付で入力された棚卸伝票を日付別に数える。
+	/// 対象は計上月の期間内(<c>DayFrom〜DayTo</c>)にあり基準日と一致しないものだけで、
+	/// 計上月の外にある棚卸入力は別の月の棚卸なので触らない(設計書4)。
+	/// </summary>
+	public List<StocktakeMisdated> FetchMisdatedTana(StocktakeDay day) {
+		if (!_db.IsExistTable(typeof(Tran60Tana))) {
+			return [];
+		}
+		return _db.Fetch<StocktakeMisdated>($@"
+SELECT {day.Id_Shop} AS Id_Soko, DenDay AS DenDay, COUNT(*) AS SlipCount
+FROM {nameof(Tran60Tana)}
+WHERE Id_Soko = {day.Id_Shop}
+  AND DenDay BETWEEN @0 AND @1
+  AND DenDay <> @2
+GROUP BY DenDay
+ORDER BY DenDay
+", day.DayFrom, day.DayTo, day.TanaDay);
+	}
+
+	/// <summary>基準日以外の棚卸伝票の <c>DenDay</c> を基準日へ補正する。</summary>
+	private int AlignMisdatedTana(StocktakeDay day) {
+		var vdate = Common.GetVdate();
+		return _db.Execute($@"
+UPDATE {nameof(Tran60Tana)}
+SET DenDay = @2,
+    Vdu = {vdate}
+WHERE Id_Soko = {day.Id_Shop}
+  AND DenDay BETWEEN @0 AND @1
+  AND DenDay <> @2
+;", day.DayFrom, day.DayTo, day.TanaDay);
+	}
+
+	/// <summary>
+	/// 確定処理の実行日を <see cref="Tran60TanaDate.FixDay"/> へ書く。
+	/// 再確定要否の判定(<c>Vdu &gt; FixDay</c>)がこの値を基準にする(設計書2.5)。
+	/// 棚卸日を設定していない店舗には行が無いので、その場合は作らない。
+	/// </summary>
+	private int StoreFixDay(IReadOnlyList<StocktakeDay> days) {
+		if (days.Count == 0 || !_db.IsExistTable(typeof(Tran60TanaDate))) {
+			return 0;
+		}
+		var vdate = Common.GetVdate();
+		var today = DateTime.Now.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
+		var ids = string.Join(",", days.Select(x => x.Id_Shop));
+		return _db.Execute($@"
+UPDATE {nameof(Tran60TanaDate)}
+SET FixDay = @0,
+    Vdu = {vdate}
+WHERE Id_Shop IN ({ids})
+;", today);
 	}
 
 	/// <summary>
@@ -314,27 +416,32 @@ ORDER BY Id_Soko, Id_Shohin, Id_Col, Id_Siz
 	/// <see cref="Tran60Tana"/> は在庫を動かさない伝票なので、集計へ取り込むのはこの処理だけである。
 	/// 棚卸伝票が無いSKUは実棚0ではなく「数えていない」なので、対象外にして帳簿在庫のままにする。
 	/// </para>
+	/// <para>
+	/// 対象は <c>DenDay</c> が棚卸基準日と**厳密に一致**する伝票だけである(設計書2.3)。
+	/// 棚番違いの複数伝票は合計する。基準日以外の日付で入力された伝票は
+	/// <see cref="FetchMisdatedTana"/> が確定処理の前に検知する。
+	/// </para>
 	/// </summary>
-	private int StoreActualQty(string tanaMonth, IEnumerable<long>? sokoIds) {
+	private int StoreActualQty(StocktakeDay day) {
 		var vdate = Common.GetVdate();
 		var sql = $@"
-UPDATE SummaryStock
+UPDATE {nameof(SummaryStock)}
 SET ActualQty = ifnull((
       SELECT SUM(cast(ifnull(json_extract(m.value,'$.Su'),0) as integer))
       FROM {nameof(Tran60Tana)} h, json_each(h.Jmeisai) m
       WHERE json_valid(h.Jmeisai)
-        AND substr(h.DenDay, 1, 6) = SummaryStock.SumMonth
-        AND h.Id_Soko = SummaryStock.Id_Soko
-        AND cast(ifnull(json_extract(m.value,'$.Id_Shohin'),0) as integer) = SummaryStock.Id_Shohin
-        AND cast(ifnull(json_extract(m.value,'$.Id_Col'),0) as integer)    = SummaryStock.Id_Col
-        AND cast(ifnull(json_extract(m.value,'$.Id_Siz'),0) as integer)    = SummaryStock.Id_Siz
+        AND h.DenDay = @1
+        AND h.Id_Soko = {nameof(SummaryStock)}.Id_Soko
+        AND cast(ifnull(json_extract(m.value,'$.Id_Shohin'),0) as integer) = {nameof(SummaryStock)}.Id_Shohin
+        AND cast(ifnull(json_extract(m.value,'$.Id_Col'),0) as integer)    = {nameof(SummaryStock)}.Id_Col
+        AND cast(ifnull(json_extract(m.value,'$.Id_Siz'),0) as integer)    = {nameof(SummaryStock)}.Id_Siz
     ), BookQty),
     Vdu = {vdate}
 WHERE SumMonth = @0
-  {BuildSokoWhere(sokoIds, "Id_Soko")}
+  AND Id_Soko = {day.Id_Shop}
 ;
 ";
-		return _db.ExecuteDialect(sql, tanaMonth);
+		return _db.ExecuteDialect(sql, day.SumMonth, day.TanaDay);
 	}
 
 	/// <summary>
@@ -464,6 +571,33 @@ ORDER BY c.Id_Shohin, c.Id_Col, c.Id_Siz
 	private static string BuildSokoWhere(IEnumerable<long>? sokoIds, string column) {
 		var ids = sokoIds?.Where(x => x > 0).Distinct().ToList();
 		return ids == null || ids.Count == 0 ? string.Empty : $" AND {column} IN ({string.Join(",", ids)})";
+	}
+
+	/// <summary>
+	/// 基準日以外の日付で入力された棚卸伝票の1行(<see cref="FetchMisdatedTana"/>の戻り)
+	/// </summary>
+	public sealed class StocktakeMisdated {
+		/// <summary>店舗Id</summary>
+		public long Id_Soko { get; set; }
+		/// <summary>棚卸入力の計上日 yyyyMMdd</summary>
+		public string DenDay { get; set; } = string.Empty;
+		/// <summary>その日付の棚卸伝票の件数</summary>
+		public int SlipCount { get; set; }
+	}
+
+	/// <summary>棚卸確定処理の結果</summary>
+	public sealed class StocktakeFixResult {
+		/// <summary>生成した在庫調整伝票の件数</summary>
+		public int SlipCount { get; set; }
+		/// <summary>
+		/// 基準日以外の日付で入力された棚卸伝票。<see cref="IsConfirmationRequired"/> が true のときは
+		/// 確定処理を実行していない(何も変更していない)。
+		/// </summary>
+		public List<StocktakeMisdated> Misdated { get; set; } = [];
+		/// <summary>基準日へ補正した棚卸伝票の件数</summary>
+		public int AlignedCount { get; set; }
+		/// <summary>日付補正の確認が必要で確定処理を中断したか</summary>
+		public bool IsConfirmationRequired => Misdated.Count > 0 && AlignedCount == 0 && SlipCount == 0;
 	}
 
 	/// <summary>基準日時点の帳簿在庫の1行(<see cref="FetchBookQtyAsOf"/>の戻り)</summary>
