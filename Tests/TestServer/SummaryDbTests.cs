@@ -1348,6 +1348,153 @@ public class SummaryDbTests {
 		Assert.AreEqual(20, rows[0].BookQty);
 	}
 
+	/// <summary>棚卸開始前は IsStarted/IsFixed/IsRefixRequired が全て false になる</summary>
+	[TestMethod]
+	public void FetchRefixStatus_ReportsNotStartedBeforeStart() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		var st = stocktakeDb.FetchRefixStatus(days);
+
+		Assert.AreEqual(1, st.Count);
+		Assert.IsFalse(st[0].IsStarted, "棚卸開始処理をまだ実行していない");
+		Assert.IsFalse(st[0].IsFixed);
+		Assert.IsFalse(st[0].IsRefixRequired);
+		Assert.AreEqual("20260825", st[0].TanaDay);
+		Assert.AreEqual("202608", st[0].SumMonth);
+		Assert.IsFalse(st[0].IsFallback);
+	}
+
+	/// <summary>棚卸開始処理を実行すると IsStarted が true になる</summary>
+	[TestMethod]
+	public void FetchRefixStatus_ReportsStartedAfterStart() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		var st = stocktakeDb.FetchRefixStatus(days);
+
+		Assert.IsTrue(st[0].IsStarted);
+		Assert.IsFalse(st[0].IsFixed);
+		Assert.IsFalse(st[0].IsRefixRequired);
+	}
+
+	/// <summary>確定直後は再確定不要。確定処理が作った調整伝票自身が再確定要を誘発しないことの担保でもある</summary>
+	[TestMethod]
+	public void FetchRefixStatus_ReportsFixedAfterFix() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		db.Insert(CreateTana("20260825", 1, 18));
+		stocktakeDb.FixStocktake(days, 1);
+
+		var st = stocktakeDb.FetchRefixStatus(days);
+
+		Assert.IsTrue(st[0].IsStarted);
+		Assert.IsTrue(st[0].IsFixed);
+		Assert.IsFalse(st[0].IsRefixRequired, "確定直後は再確定不要");
+		Assert.AreNotEqual(CvBase.StocktakeDaySet.UnsetDay, st[0].FixDay);
+	}
+
+	/// <summary>確定後に基準日以前の伝票を修正すると再確定要になる(本判定の核)</summary>
+	[TestMethod]
+	public void FetchRefixStatus_RequiresRefixWhenPastSlipChanged() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		db.Insert(CreateTana("20260825", 1, 18));
+		stocktakeDb.FixStocktake(days, 1);
+		Assert.IsFalse(stocktakeDb.FetchRefixStatus(days)[0].IsRefixRequired, "前提: 確定直後は再確定不要");
+
+		// 基準日以前の仕入伝票を修正して Vdu を進める(確定時刻より確実に後にする)
+		var target = db.Single<Tran03Shiire>("where DenDay=@0", "20260810");
+		target.Vdu = CvAsset.Common.GetVdate() + 1;
+		db.Update(target);
+
+		var st = stocktakeDb.FetchRefixStatus(days);
+
+		Assert.IsTrue(st[0].IsFixed);
+		Assert.IsTrue(st[0].IsRefixRequired, "確定後に基準日以前の伝票が更新されたので再確定要");
+	}
+
+	/// <summary>基準日より後の伝票を修正しても再確定要にはならない(基準日時点の棚卸には影響しない)</summary>
+	[TestMethod]
+	public void FetchRefixStatus_IgnoresSlipAfterBaseDay() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var early = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(early);
+		ApplyImmediate(summaryDb, early, false);
+		var late = CreatePurchase("20260828", 1, 5, EnumShiire.Shiire);
+		db.Insert(late);
+		ApplyImmediate(summaryDb, late, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		db.Insert(CreateTana("20260825", 1, 18));
+		stocktakeDb.FixStocktake(days, 1);
+
+		// 基準日(8/25)より後の8/28の伝票だけを修正する
+		var target = db.Single<Tran03Shiire>("where DenDay=@0", "20260828");
+		target.Vdu = CvAsset.Common.GetVdate() + 1;
+		db.Update(target);
+
+		var st = stocktakeDb.FetchRefixStatus(days);
+
+		Assert.IsFalse(st[0].IsRefixRequired, "基準日より後の伝票の修正は再確定要にならない");
+	}
+
+	/// <summary>棚卸日未設定の店舗は計上月末へフォールバックする</summary>
+	[TestMethod]
+	public void FetchRefixStatus_FallsBackWhenTanaDayUnset() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		stocktakeDb.StartStocktake("202608", [1L]);
+
+		var days = stocktakeDb.ResolveDays("202608", [1L]);
+		var st = stocktakeDb.FetchRefixStatus(days);
+
+		Assert.IsTrue(st[0].IsFallback, "棚卸日未設定なら計上月末へフォールバック");
+		Assert.AreEqual("20260831", st[0].TanaDay);
+		Assert.IsTrue(st[0].IsStarted);
+		Assert.IsFalse(st[0].IsFixed);
+	}
+
 	/// <summary>既定SKU(10/100/1000)のBookQtyを取り出す。行が無ければ0(帳簿在庫の履歴も棚卸入力も無いSKU)</summary>
 	private static int GetBookQty(
 		System.Collections.Generic.List<StocktakeDb.StocktakeBookQty> rows,

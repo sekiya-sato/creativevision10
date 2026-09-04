@@ -391,6 +391,79 @@ WHERE Id_Soko = {day.Id_Shop}
 	}
 
 	/// <summary>
+	/// 店舗ごとの棚卸の進行状況(開始済み／確定済み／再確定要)を返す。画面の店舗一覧に出す(設計書2.5)。
+	/// <para>
+	/// 再確定要の判定は「確定済みで、かつ基準日以前の伝票が確定後に更新されていること」。
+	/// 旧CV.netの「確定処理後に過去の伝票を訂正した場合は再度確定の表示がでます」に対応する。
+	/// </para>
+	/// <para>
+	/// 確定時刻の基準には <see cref="Tran60TanaDate.FixDay"/> ではなく同じ更新で書かれる
+	/// <c>Tran60TanaDate.Vdu</c>(UTC Ticks)を使う。<c>FixDay</c> は日付8桁なので、
+	/// 「10時に確定して15時に伝票を修正した」同日中の修正を取りこぼすためである。
+	/// </para>
+	/// <para>
+	/// 制約: 棚卸日一括メンテナンスで <see cref="Tran60TanaDate"/> の行を更新すると <c>Vdu</c> が動き、
+	/// 判定の基準時刻がリセットされる。棚卸日(<c>TanaDay</c>)を変えたのなら再確定が要るので整合するが、
+	/// 自動補充だけ変えた場合は確定後の伝票修正を取りこぼす。
+	/// </para>
+	/// </summary>
+	public List<StocktakeShopStatus> FetchRefixStatus(IReadOnlyList<StocktakeDay> days) {
+		var statuses = new List<StocktakeShopStatus>(days.Count);
+		var fixInfo = FetchFixInfo(days);
+		foreach (var day in days) {
+			var status = new StocktakeShopStatus {
+				Id_Soko = day.Id_Shop,
+				TanaDay = day.TanaDay,
+				SumMonth = day.SumMonth,
+				IsFallback = day.IsFallback,
+				IsStarted = _db.FirstOrDefault<int>($@"
+SELECT COUNT(*) FROM {nameof(SummaryStock)}
+WHERE SumMonth = @0 AND Id_Soko = {day.Id_Shop} AND StocktakeDdate = @1", day.SumMonth, day.TanaDay) > 0,
+			};
+			if (fixInfo.TryGetValue(day.Id_Shop, out var info) && !StocktakeDaySet.IsUnset(info.FixDay)) {
+				status.FixDay = info.FixDay;
+				status.IsFixed = true;
+				status.IsRefixRequired = HasSlipChangedAfter(day, info.Vdu);
+			}
+			statuses.Add(status);
+		}
+		return statuses;
+	}
+
+	/// <summary>店舗別の最終確定日と確定時刻(<c>Vdu</c>)を引く。</summary>
+	private Dictionary<long, (string FixDay, long Vdu)> FetchFixInfo(IReadOnlyList<StocktakeDay> days) {
+		if (days.Count == 0 || !_db.IsExistTable(typeof(Tran60TanaDate))) {
+			return [];
+		}
+		var ids = string.Join(",", days.Select(x => x.Id_Shop));
+		var rows = _db.Fetch<Tran60TanaDate>(
+			$"SELECT * FROM {nameof(Tran60TanaDate)} WHERE Id_Shop IN ({ids}) ORDER BY Id");
+		var map = new Dictionary<long, (string, long)>();
+		foreach (var row in rows) {
+			map[row.Id_Shop] = (row.FixDay, row.Vdu);
+		}
+		return map;
+	}
+
+	/// <summary>
+	/// 基準日以前の伝票が確定時刻より後に更新されているか。
+	/// 在庫に効く伝票に加えて棚卸伝票(<see cref="Tran60Tana"/>)も見る。実棚数を数え直したら再確定が要るためである。
+	/// </summary>
+	private bool HasSlipChangedAfter(StocktakeDay day, long fixVdu) {
+		var sources = StockSuSources
+			.Select(x => (x.TableName, x.Axis))
+			.Append((TableName: nameof(Tran60Tana), Axis: nameof(ITranSoko.Id_Soko)))
+			.Distinct();
+		var branches = sources.Select(x => $@"
+  SELECT 1 AS Hit FROM {x.TableName} AS t
+  WHERE t.{x.Axis} = {day.Id_Shop} AND t.DenDay <= @0 AND t.Vdu > @1");
+		var sql = $@"
+SELECT COUNT(*) FROM ({string.Join("\n  UNION ALL", branches)}
+) AS c";
+		return _db.FirstOrDefault<int>(sql, day.TanaDay, fixVdu) > 0;
+	}
+
+	/// <summary>
 	/// 確定処理の実行日を <see cref="Tran60TanaDate.FixDay"/> へ書く。
 	/// 再確定要否の判定(<c>Vdu &gt; FixDay</c>)がこの値を基準にする(設計書2.5)。
 	/// 棚卸日を設定していない店舗には行が無いので、その場合は作らない。
@@ -571,6 +644,26 @@ ORDER BY c.Id_Shohin, c.Id_Col, c.Id_Siz
 	private static string BuildSokoWhere(IEnumerable<long>? sokoIds, string column) {
 		var ids = sokoIds?.Where(x => x > 0).Distinct().ToList();
 		return ids == null || ids.Count == 0 ? string.Empty : $" AND {column} IN ({string.Join(",", ids)})";
+	}
+
+	/// <summary>店舗1件の棚卸の進行状況(<see cref="FetchRefixStatus"/>の戻り)</summary>
+	public sealed class StocktakeShopStatus {
+		/// <summary>店舗Id</summary>
+		public long Id_Soko { get; set; }
+		/// <summary>棚卸基準日 yyyyMMdd</summary>
+		public string TanaDay { get; set; } = string.Empty;
+		/// <summary>計上月 yyyyMM</summary>
+		public string SumMonth { get; set; } = string.Empty;
+		/// <summary>最終確定日 yyyyMMdd。未確定なら <see cref="StocktakeDaySet.UnsetDay"/></summary>
+		public string FixDay { get; set; } = StocktakeDaySet.UnsetDay;
+		/// <summary>棚卸日が未設定で計上月末へフォールバックしたか</summary>
+		public bool IsFallback { get; set; }
+		/// <summary>この基準日で棚卸開始処理が済んでいるか</summary>
+		public bool IsStarted { get; set; }
+		/// <summary>棚卸確定処理が済んでいるか</summary>
+		public bool IsFixed { get; set; }
+		/// <summary>確定後に基準日以前の伝票が修正され、再確定が必要か</summary>
+		public bool IsRefixRequired { get; set; }
 	}
 
 	/// <summary>
