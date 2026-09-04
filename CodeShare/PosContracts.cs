@@ -1,6 +1,4 @@
-using ProtoBuf.Grpc;
 using System.Runtime.Serialization;
-using System.ServiceModel;
 
 namespace CodeShare;
 
@@ -140,11 +138,4 @@ public sealed record PosSaveSeisanResponse {
 	/// <summary>本日何回目の精算か（同一営業日・店舗で連番）。</summary>
 	[DataMember(Order = 3)] public int SeisanCnt { get; init; }
 	[DataMember(Order = 4)] public string Message { get; init; } = string.Empty;
-}
-[ServiceContract]
-public interface IPointOfSaleService {
-	[OperationContract] Task<PosProduct?> LookupProductAsync(PosBarcodeLookupRequest request, CallContext context = default);
-	[OperationContract] Task<PosCheckoutResponse> CheckoutAsync(PosCheckoutRequest request, CallContext context = default);
-	[OperationContract] Task<PosCancelSaleResponse> CancelSaleAsync(PosCancelSaleRequest request, CallContext context = default);
-	[OperationContract] Task<PosSaveSeisanResponse> SaveSeisanAsync(PosSaveSeisanRequest request, CallContext context = default);
 }

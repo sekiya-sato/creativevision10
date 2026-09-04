@@ -168,7 +168,6 @@ app.UseAuthorization();
 // Configure the HTTP request pipeline.
 app.MapGrpcService<LoginService>();
 app.MapGrpcService<CoreService>();
-app.MapGrpcService<PointOfSaleService>();
 app.MapGrpcService<SchedulerService>();
 app.MapGrpcService<SearchByPostalCodeService>();
 app.MapGrpcService<WeatherService>();
