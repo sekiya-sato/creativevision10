@@ -908,6 +908,80 @@ public class SummaryDbTests {
 		Assert.AreEqual(0, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 2).BookQty);
 	}
 
+	/// <summary>
+	/// UAT-04通しシナリオ: 店舗ごとに違う棚卸日で「開始→入力→差異→確定→過去伝票修正→再確定」を通す(設計書2.1〜2.5)。
+	/// 店舗1は棚卸日8/25、店舗2は棚卸日8/31。8/28の仕入は店舗1の帳簿在庫からだけ差し引かれる。
+	/// </summary>
+	[TestMethod]
+	public void Stocktake_EndToEnd_PerShopTanaDay() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		db.Insert(new Tran60TanaDate { Id_Shop = 2, TanaDay = "20260831" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+
+		// 1) 仕入(店舗ごとに8月累計を作る)
+		var p1a = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(p1a);
+		ApplyImmediate(summaryDb, p1a, false);
+		var p1b = CreatePurchase("20260828", 1, 5, EnumShiire.Shiire);
+		db.Insert(p1b);
+		ApplyImmediate(summaryDb, p1b, false);
+		var p2a = CreatePurchase("20260810", 2, 30, EnumShiire.Shiire);
+		db.Insert(p2a);
+		ApplyImmediate(summaryDb, p2a, false);
+		var p2b = CreatePurchase("20260828", 2, 7, EnumShiire.Shiire);
+		db.Insert(p2b);
+		ApplyImmediate(summaryDb, p2b, false);
+		AssertRealStock(db, 1, 25, "前提: 店舗1の8月累計は20+5=25");
+		AssertRealStock(db, 2, 37, "前提: 店舗2の8月累計は30+7=37");
+
+		// 2) 棚卸開始。店舗1は棚卸日8/25なので8/28分(+5)を差し引き、店舗2は月末なので差し引かない
+		stocktakeDb.StartStocktake("202608", [1L, 2L]);
+		Assert.AreEqual(20, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).BookQty);
+		Assert.AreEqual(37, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 2).BookQty);
+
+		// 3) 実棚入力(店舗ごとの基準日で)
+		db.Insert(CreateTana("20260825", 1, 18));
+		db.Insert(CreateTana("20260831", 2, 40));
+
+		// 4) 確定。倉庫ごとに1伝票、計上日は店舗の棚卸基準日
+		var days = stocktakeDb.ResolveDays("202608", [1L, 2L]);
+		var result = stocktakeDb.FixStocktake(days, 1);
+
+		Assert.IsFalse(result.IsConfirmationRequired);
+		Assert.AreEqual(2, result.SlipCount, "店舗ごとに1伝票");
+		var chosei1 = db.Single<Tran61Chosei>("where Id_Soko=@0", 1);
+		Assert.AreEqual("20260825", chosei1.DenDay);
+		Assert.AreEqual(-2, chosei1.SuTotal);
+		var chosei2 = db.Single<Tran61Chosei>("where Id_Soko=@0", 2);
+		Assert.AreEqual("20260831", chosei2.DenDay);
+		Assert.AreEqual(3, chosei2.SuTotal);
+		AssertRealStock(db, 1, 23, "店舗1: 仕入25 + 調整-2 = 23");
+		AssertRealStock(db, 2, 40, "店舗2: 仕入37 + 調整+3 = 40");
+
+		// 5) 確定直後は両店舗とも再確定不要
+		var status = stocktakeDb.FetchRefixStatus(days);
+		Assert.IsTrue(status.All(x => x.IsFixed));
+		Assert.IsFalse(status.Any(x => x.IsRefixRequired), "確定直後は再確定不要");
+
+		// 6) 過去伝票の修正(店舗1の8/10の仕入伝票だけ)
+		p1a.Vdu = CvAsset.Common.GetVdate() + 1;
+		db.Update(p1a);
+
+		var statusAfterEdit = stocktakeDb.FetchRefixStatus(days);
+		Assert.IsTrue(statusAfterEdit.Single(x => x.Id_Soko == 1).IsRefixRequired, "店舗1は基準日以前の伝票が確定後に更新された");
+		Assert.IsFalse(statusAfterEdit.Single(x => x.Id_Soko == 2).IsRefixRequired, "店舗2の伝票は触っていない");
+
+		// 7) 店舗1だけ再確定。前回の調整伝票は置き換わり、増えない
+		var result2 = stocktakeDb.FixStocktake(stocktakeDb.ResolveDays("202608", [1L]), 1);
+
+		Assert.AreEqual(1, result2.SlipCount);
+		Assert.AreEqual(1, db.Fetch<Tran61Chosei>("where Id_Soko=@0", 1).Count, "前回分が置き換わり増えていない");
+		AssertRealStock(db, 1, 23, "再確定で二重計上されない");
+	}
+
 	/// <summary>調整伝票は他の伝票と同じ経路でRebuildできる。集計へ直接書かない理由（仕様 8.4 F2）</summary>
 	[TestMethod]
 	public async Task Stocktake_Adjustment_SurvivesRebuild() {

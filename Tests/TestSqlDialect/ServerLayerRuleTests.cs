@@ -169,4 +169,180 @@ SET ReserveQty = excluded.ReserveQty, Vdu = 1
 			Assert.IsTrue(ReferenceEquals(sql, SqlDialects.Sqlite.Translate(sql)));
 		}
 	}
+
+	// ---- 棚卸(StocktakeDb) ----
+
+	/// <summary>
+	/// StocktakeDb.BuildBookQtyAsOfSql が組む帳簿在庫の逆算SQL。派生表の中で json_each を CROSS JOIN し、
+	/// UNION ALL で複数伝票分の明細展開を束ねる。key列は参照しないので ORDINALITY は付かない。
+	/// </summary>
+	const string BookQtyAsOfSql = """
+SELECT
+  c.Id_Shohin AS Id_Shohin,
+  c.Id_Col    AS Id_Col,
+  c.Id_Siz    AS Id_Siz,
+  c.Su - COALESCE(v.Su, 0) AS BookQty
+FROM (
+  SELECT Id_Shohin, Id_Col, Id_Siz, SUM(Su) AS Su
+  FROM SummaryStock
+  WHERE Id_Soko = 1
+    AND SumMonth <= @2
+  GROUP BY Id_Shohin, Id_Col, Id_Siz
+) AS c
+LEFT JOIN (
+  SELECT Id_Shohin, Id_Col, Id_Siz, SUM(Su) AS Su
+  FROM (
+  SELECT
+    json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
+    json_extract(j.value, '$.Id_Col')    AS Id_Col,
+    json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
+    json_extract(j.value, '$.Su')*t.CalcFlag*1 AS Su
+  FROM Tran00Uriage AS t
+       CROSS JOIN json_each(t.Jmeisai) AS j
+       LEFT JOIN MasterTokui AS mt ON mt.Id = t.Id_Soko
+       LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
+  WHERE t.Id_Soko = 1
+    AND t.DenDay > @0
+    AND t.DenDay <= @1
+    AND json_type(t.Jmeisai) = 'array'
+    AND COALESCE(mt.IsZaiko, 1) = 1
+    AND COALESCE(ms.IsZaiko, 1) = 1
+  UNION ALL
+  SELECT
+    json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
+    json_extract(j.value, '$.Id_Col')    AS Id_Col,
+    json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
+    json_extract(j.value, '$.Su')*t.CalcFlag*-1 AS Su
+  FROM Tran03Shiire AS t
+       CROSS JOIN json_each(t.Jmeisai) AS j
+       LEFT JOIN MasterTokui AS mt ON mt.Id = t.Id_Soko
+       LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
+  WHERE t.Id_Soko = 1
+    AND t.DenDay > @0
+    AND t.DenDay <= @1
+    AND json_type(t.Jmeisai) = 'array'
+    AND COALESCE(mt.IsZaiko, 1) = 1
+    AND COALESCE(ms.IsZaiko, 1) = 1
+  ) AS d
+  GROUP BY Id_Shohin, Id_Col, Id_Siz
+) AS v ON v.Id_Shohin = c.Id_Shohin AND v.Id_Col = c.Id_Col AND v.Id_Siz = c.Id_Siz
+ORDER BY c.Id_Shohin, c.Id_Col, c.Id_Siz
+""";
+
+	/// <summary>
+	/// StocktakeDb.StartStocktakeOne が実棚だけのSKUを拾うために使う、Tran60Tana の json_each を
+	/// CROSS JOIN する形。同じく key列は参照しない。
+	/// </summary>
+	const string TanaOnlySkuSql = """
+INSERT INTO TempStocktakeBookQty (Id_Shohin, Id_Col, Id_Siz, BookQty)
+SELECT s.Id_Shohin, s.Id_Col, s.Id_Siz, 0
+FROM (
+  SELECT DISTINCT
+    json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
+    json_extract(j.value, '$.Id_Col')    AS Id_Col,
+    json_extract(j.value, '$.Id_Siz')    AS Id_Siz
+  FROM Tran60Tana AS t
+       CROSS JOIN json_each(t.Jmeisai) AS j
+  WHERE t.Id_Soko = 1
+    AND t.DenDay = @0
+    AND json_type(t.Jmeisai) = 'array'
+) AS s
+WHERE NOT EXISTS (
+  SELECT 1 FROM TempStocktakeBookQty AS x
+  WHERE x.Id_Shohin = s.Id_Shohin AND x.Id_Col = s.Id_Col AND x.Id_Siz = s.Id_Siz
+)
+""";
+
+	/// <summary>StocktakeDb.StoreActualQty が組む、実棚数をSummaryStock.ActualQtyへ反映するSQL。カンマ結合のFROM句</summary>
+	const string StoreActualQtySql = """
+UPDATE SummaryStock
+SET ActualQty = ifnull((
+      SELECT SUM(cast(ifnull(json_extract(m.value,'$.Su'),0) as integer))
+      FROM Tran60Tana h, json_each(h.Jmeisai) m
+      WHERE json_valid(h.Jmeisai)
+        AND h.DenDay = @1
+        AND h.Id_Soko = SummaryStock.Id_Soko
+        AND cast(ifnull(json_extract(m.value,'$.Id_Shohin'),0) as integer) = SummaryStock.Id_Shohin
+        AND cast(ifnull(json_extract(m.value,'$.Id_Col'),0) as integer)    = SummaryStock.Id_Col
+        AND cast(ifnull(json_extract(m.value,'$.Id_Siz'),0) as integer)    = SummaryStock.Id_Siz
+    ), BookQty),
+    Vdu = 1
+WHERE SumMonth = @0
+  AND Id_Soko = 1
+""";
+
+	/// <summary>
+	/// StocktakeDb.StartStocktakeOne の行補完INSERT。ON CONFLICTを使わない素のINSERT/SELECTなので
+	/// UPSERTの書き換え対象にはならない(4方言そのままで通る)。
+	/// </summary>
+	const string BookQtyRowCompletionInsertSql = """
+INSERT INTO SummaryStock
+  (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz,
+   Su, ReserveQty, CumulativeSu, InQty, OutQty, TransitQty, AdjustQty,
+   StocktakeDdate, BookQty, ActualQty, Vdc, Vdu)
+SELECT @1, 1, t.Id_Shohin, t.Id_Col, t.Id_Siz,
+   0, 0, 0, 0, 0, 0, 0,
+   @0, t.BookQty, t.BookQty, 1, 1
+FROM TempStocktakeBookQty AS t
+WHERE NOT EXISTS (
+  SELECT 1 FROM SummaryStock AS s
+  WHERE s.SumMonth = @1 AND s.Id_Soko = 1
+    AND s.Id_Shohin = t.Id_Shohin AND s.Id_Col = t.Id_Col AND s.Id_Siz = t.Id_Siz
+)
+""";
+
+	/// <summary>棚卸の帳簿在庫逆算SQLを各方言へ変換できる</summary>
+	[TestMethod]
+	public void 棚卸の帳簿在庫逆算SQLを各方言へ変換できる() {
+		var pg = SqlDialects.Postgre.Translate(BookQtyAsOfSql);
+		StringAssert.Contains(pg, "jsonb_array_elements");
+		Assert.IsFalse(pg.Contains("ORDINALITY"), "key列を参照していないのでORDINALITYは付かない");
+		Assert.IsFalse(pg.Contains("json_each"), pg);
+		Assert.AreEqual(0, SqlDialects.Postgre.Inspect(BookQtyAsOfSql).Count);
+
+		var maria = SqlDialects.Maria.Translate(BookQtyAsOfSql);
+		StringAssert.Contains(maria, "JSON_TABLE");
+		Assert.IsFalse(maria.Contains("ORDINALITY"), "key列を参照していないのでORDINALITYは付かない");
+		Assert.IsFalse(maria.Contains("json_each"), maria);
+		Assert.AreEqual(0, SqlDialects.Maria.Inspect(BookQtyAsOfSql).Count);
+	}
+
+	/// <summary>棚卸開始処理が実棚だけのSKUを拾うSQL(json_each の CROSS JOIN)も各方言へ変換できる</summary>
+	[TestMethod]
+	public void 棚卸の実棚専用SKU補完SQLを各方言へ変換できる() {
+		var pg = SqlDialects.Postgre.Translate(TanaOnlySkuSql);
+		StringAssert.Contains(pg, "jsonb_array_elements");
+		Assert.IsFalse(pg.Contains("ORDINALITY"));
+		Assert.IsFalse(pg.Contains("json_each"), pg);
+		Assert.AreEqual(0, SqlDialects.Postgre.Inspect(TanaOnlySkuSql).Count);
+
+		var maria = SqlDialects.Maria.Translate(TanaOnlySkuSql);
+		StringAssert.Contains(maria, "JSON_TABLE");
+		Assert.IsFalse(maria.Contains("ORDINALITY"));
+		Assert.IsFalse(maria.Contains("json_each"), maria);
+		Assert.AreEqual(0, SqlDialects.Maria.Inspect(TanaOnlySkuSql).Count);
+	}
+
+	/// <summary>実棚数の反映SQL(カンマ結合のFROM句の json_each)を各方言へ変換できる</summary>
+	[TestMethod]
+	public void 実棚数の反映SQLを各方言へ変換できる() {
+		var pg = SqlDialects.Postgre.Translate(StoreActualQtySql);
+		StringAssert.Contains(pg, "jsonb_array_elements");
+		Assert.IsFalse(pg.Contains("json_each"), pg);
+		Assert.AreEqual(0, SqlDialects.Postgre.Inspect(StoreActualQtySql).Count);
+
+		var maria = SqlDialects.Maria.Translate(StoreActualQtySql);
+		StringAssert.Contains(maria, "JSON_TABLE");
+		Assert.IsFalse(maria.Contains("json_each"), maria);
+		Assert.AreEqual(0, SqlDialects.Maria.Inspect(StoreActualQtySql).Count);
+	}
+
+	/// <summary>棚卸開始処理の行補完INSERTはON CONFLICTを使っていないのでUPSERTの書き換えが起きない</summary>
+	[TestMethod]
+	public void 棚卸の行補完INSERTはUPSERT書き換えの対象にならない() {
+		Assert.AreEqual(BookQtyRowCompletionInsertSql, SqlDialects.Postgre.Translate(BookQtyRowCompletionInsertSql));
+		Assert.AreEqual(BookQtyRowCompletionInsertSql, SqlDialects.Maria.Translate(BookQtyRowCompletionInsertSql));
+		Assert.AreEqual(0, SqlDialects.Postgre.Inspect(BookQtyRowCompletionInsertSql).Count);
+		Assert.AreEqual(0, SqlDialects.Maria.Inspect(BookQtyRowCompletionInsertSql).Count);
+	}
 }
