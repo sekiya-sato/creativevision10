@@ -1,6 +1,8 @@
 using System.Runtime.Serialization;
 
-namespace CodeShare;
+
+namespace CvBase;
+
 
 [DataContract]
 public sealed record PosBarcodeLookupRequest {
