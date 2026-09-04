@@ -24,6 +24,12 @@ public sealed class StocktakeShopStatus {
 	public bool IsFixed { get; set; }
 	/// <summary>確定後に基準日以前の伝票が修正され、再確定が必要か</summary>
 	public bool IsRefixRequired { get; set; }
+	/// <summary>基準日時点の帳簿在庫の合計。棚卸開始処理が済んでいなければ0</summary>
+	public int BookQtyTotal { get; set; }
+	/// <summary>実棚数の合計。棚卸確定処理が済んでいなければ帳簿在庫と同じ（未計数扱い）</summary>
+	public int ActualQtyTotal { get; set; }
+	/// <summary>帳簿在庫と実棚数が違うSKUの件数</summary>
+	public int DiffSkuCount { get; set; }
 }
 
 /// <summary>

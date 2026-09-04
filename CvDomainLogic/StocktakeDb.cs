@@ -436,6 +436,18 @@ WHERE SumMonth = @0 AND Id_Soko = {day.Id_Shop} AND StocktakeDdate = @1", day.Su
 				status.IsFixed = true;
 				status.IsRefixRequired = HasSlipChangedAfter(day, info.Vdu);
 			}
+			var totals = _db.FirstOrDefault<StocktakeTotals>($@"
+SELECT
+  SUM(BookQty) AS BookQtyTotal,
+  SUM(ActualQty) AS ActualQtyTotal,
+  SUM(CASE WHEN ActualQty <> BookQty THEN 1 ELSE 0 END) AS DiffSkuCount
+FROM {nameof(SummaryStock)}
+WHERE SumMonth = @0 AND Id_Soko = {day.Id_Shop}", day.SumMonth);
+			if (totals != null) {
+				status.BookQtyTotal = totals.BookQtyTotal;
+				status.ActualQtyTotal = totals.ActualQtyTotal;
+				status.DiffSkuCount = totals.DiffSkuCount;
+			}
 			statuses.Add(status);
 		}
 		return statuses;
@@ -655,6 +667,13 @@ ORDER BY c.Id_Shohin, c.Id_Col, c.Id_Siz
 	private static string BuildSokoWhere(IEnumerable<long>? sokoIds, string column) {
 		var ids = sokoIds?.Where(x => x > 0).Distinct().ToList();
 		return ids == null || ids.Count == 0 ? string.Empty : $" AND {column} IN ({string.Join(",", ids)})";
+	}
+
+	/// <summary>店舗別の帳簿在庫・実棚数の合計(<see cref="FetchRefixStatus"/>の内部集計)</summary>
+	private sealed class StocktakeTotals {
+		public int BookQtyTotal { get; set; }
+		public int ActualQtyTotal { get; set; }
+		public int DiffSkuCount { get; set; }
 	}
 
 	/// <summary>基準日時点の帳簿在庫の1行(<see cref="FetchBookQtyAsOf"/>の戻り)</summary>

@@ -1,6 +1,8 @@
 using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Globalization;
+using CvBase;
+using CvWpfclient.Helpers;
+using System.Windows;
 
 namespace CvWpfclient.ViewModels._31Monthly;
 
@@ -14,6 +16,10 @@ namespace CvWpfclient.ViewModels._31Monthly;
 /// <b>再確定できる。</b>確定後に棚卸対象日以前の伝票を修正した場合は、もう一度実行すれば
 /// 前回この処理が作った調整伝票を取り消してから作り直す（仕様 F0''）。
 /// </para>
+/// <para>
+/// 調整伝票の計上日は店舗ごとの棚卸基準日(<c>Tran60TanaDate.TanaDay</c>)になったため、日付入力欄は無い
+/// （設計書2.4）。基準日以外の日付で棚卸入力された伝票があれば、実行前に補正するか確認する（設計書4）。
+/// </para>
 /// </summary>
 public partial class StockTakeFinalizationViewModel : BaseStocktakeViewModel {
 	protected override CvFlag TargetFlag => CvFlag.Msg055_StocktakeFix;
@@ -21,22 +27,35 @@ public partial class StockTakeFinalizationViewModel : BaseStocktakeViewModel {
 	protected override string ResultUnit => "件の在庫調整伝票を作成";
 
 	/// <summary>
-	/// 生成する在庫調整伝票の在庫計上日。既定は棚卸年月の月末
+	/// 基準日以外の日付で入力された棚卸伝票を基準日へ補正してから確定するか。
+	/// <see cref="ConfirmBeforeExecute"/> の確認結果で決まる。
 	/// </summary>
 	[ObservableProperty]
-	public partial string DenDay { get; set; } =
-		DateTime.Now.ToString("yyyy/MM/", CultureInfo.InvariantCulture)
-			+ DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month).ToString("00", CultureInfo.InvariantCulture);
+	protected override partial bool AlignMisdated { get; set; }
 
-	protected override bool ValidateBeforeExecute(out string errorMessage) {
-		if (!TryParseDate(DenDay, out _)) {
-			errorMessage = $"調整伝票日付の形式が不正です: {DenDay}";
-			return false;
+	/// <summary>
+	/// 基準日以外の棚卸入力(<see cref="BaseStocktakeViewModel.MisdatedRows"/>)があれば、
+	/// 計上日を基準日へ補正してから確定するかを Yes/No で確認する(設計書4)。
+	/// </summary>
+	protected override bool ConfirmBeforeExecute() {
+		if (MisdatedRows.Count == 0) {
+			AlignMisdated = false;
+			return true;
 		}
-		errorMessage = string.Empty;
-		return true;
-	}
 
-	protected override string BuildDenDay(string yyyymm) =>
-		TryParseDate(DenDay, out var day) ? day : LastDayOfMonth(yyyymm);
+		var slipCount = MisdatedRows.Sum(x => x.SlipCount);
+		var result = MessageEx.ShowQuestionDialog(
+			$"基準日以外の日付で入力された棚卸伝票が {slipCount} 件あります。計上日を棚卸基準日へ補正してから確定しますか？\n"
+				+ "（いいえ を選ぶと、これらの棚卸入力は集計されません）",
+			owner: ClientLib.GetActiveView(this));
+		if (result == MessageBoxResult.Yes) {
+			AlignMisdated = true;
+			return true;
+		}
+		if (result == MessageBoxResult.No) {
+			AlignMisdated = false;
+			return true;
+		}
+		return false;
+	}
 }
