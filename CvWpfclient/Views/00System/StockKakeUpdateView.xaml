@@ -63,6 +63,10 @@
 							Kind="CalendarRange" />
 						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
 							FontSize="17" FontWeight="SemiBold" Text="年月指定" />
+						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+							FontStyle="Italic" Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="※ 棚卸中の店舗がある場合、再集計後に棚卸開始処理の再実行が必要です"
+							TextWrapping="Wrap" />
 					</StackPanel>
 
 					<TextBlock Grid.Row="1" Grid.Column="0"

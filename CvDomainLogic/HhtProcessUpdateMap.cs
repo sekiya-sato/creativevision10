@@ -483,7 +483,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 
 	private HhtSlip? BuildTana(HhtSlipGroup group, HhtMasterCache cache, List<Tran99Meisai> meisai, MasterShain? shain, List<string> errors) {
 		var head = group.Rows[0];
-		var soko = ResolveSoko(cache, head.Shop, errors, "倉庫");
+		var soko = ResolveStocktakeSoko(cache, head.Shop, errors);
 		if (soko == null) {
 			return null;
 		}
@@ -584,6 +584,31 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 	#endregion
 
 	#region 補助
+
+	/// <summary>
+	/// 棚卸伝票の倉庫・店舗を解決する。棚卸の対象店舗は倉庫(0)/売仕店(3)/直営店(6)である(設計書2.6)。
+	/// <para>
+	/// 汎用の <see cref="ResolveSoko"/> は売仕店(3)を落とすため、棚卸日一括メンテナンスや在庫集計側の
+	/// <c>TenType in (0,3,6)</c> と食い違っていた。売仕店で棚卸を行うとHHT取込だけが弾かれるので、
+	/// 棚卸伝票についてはここで <c>(0,3,6)</c> に揃える。
+	/// </para>
+	/// <para>
+	/// 移動など他の伝票種別は本設計の対象外なので <see cref="ResolveSoko"/> のまま残してある。
+	/// そちらの店種区分をどうするかは別途決める。
+	/// </para>
+	/// </summary>
+	private static MasterTokui? ResolveStocktakeSoko(HhtMasterCache cache, string rawCode, List<string> errors) {
+		var tokui = ResolveTokui(cache, rawCode,
+			[(int)EnumTokui._0_Soko, (int)EnumTokui._3_UriShi, (int)EnumTokui._6_Tenpo], out var error);
+		if (tokui == null) {
+			errors.Add(error == null
+				? $"E010 倉庫が未登録です ({rawCode})"
+				: error.StartsWith("複数", StringComparison.Ordinal)
+					? $"E014 倉庫が{error} ({rawCode})"
+					: $"E013 倉庫の{error} ({rawCode})");
+		}
+		return tokui;
+	}
 
 	/// <summary>倉庫・店舗を解決する。倉庫(TenType=0)と直営店(TenType=6)のどちらでもよい</summary>
 	private static MasterTokui? ResolveSoko(HhtMasterCache cache, string rawCode, List<string> errors, string label) {
