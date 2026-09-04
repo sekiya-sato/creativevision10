@@ -121,6 +121,16 @@ public sealed record PosSaveSeisanRequest {
 	[DataMember(Order = 27)] public int StampCount { get; init; }
 	/// <summary>収入印紙金額合計。</summary>
 	[DataMember(Order = 28)] public int StampAmount { get; init; }
+	/// <summary>
+	/// メッセージ型
+	/// </summary>
+	[DataMember(Order = 29)]
+	public Type DataType { get; set; } = typeof(string);
+	/// <summary>
+	/// メッセージ本体
+	/// </summary>
+	[DataMember(Order = 30)]
+	public string DataMsg { get; set; } = string.Empty;
 }
 [DataContract]
 public sealed record PosSaveSeisanResponse {
