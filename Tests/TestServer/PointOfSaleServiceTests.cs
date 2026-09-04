@@ -2,11 +2,14 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CodeShare;
+using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvBaseSqlite;
 using CvServer.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -22,12 +25,14 @@ public class PointOfSaleServiceTests {
 	private ExDatabaseSqlite? _db;
 	private SqliteConnection? _anchorConnection;
 	private PointOfSaleService? _service;
+	private CoreService? _coreService;
 	private long _storeId;
 	private long _warehouseId;
 	private long _staffId;
 
 	private ExDatabaseSqlite Db => _db ?? throw new AssertFailedException("Database not initialized");
 	private PointOfSaleService Service => _service ?? throw new AssertFailedException("Service not initialized");
+	private CoreService CoreService => _coreService ?? throw new AssertFailedException("CoreService not initialized");
 
 	[TestInitialize]
 	public void Initialize() {
@@ -49,6 +54,13 @@ public class PointOfSaleServiceTests {
 		_warehouseId = InsertTokui("WAREHOUSE", "倉庫", tenType: 0, taxRounding: EnumRounding.Round);
 		_staffId = InsertStaff();
 		_service = new PointOfSaleService(Db, NullLogger<PointOfSaleService>.Instance);
+		_coreService = new CoreService(
+			NullLogger<CoreService>.Instance,
+			new ConfigurationBuilder().AddInMemoryCollection([]).Build(),
+			new FakeWebHostEnvironment(),
+			new HttpContextAccessor(),
+			Db,
+			Service);
 	}
 
 	[TestCleanup]
@@ -313,6 +325,58 @@ public class PointOfSaleServiceTests {
 		};
 		Db.Insert(row);
 		return row.Id;
+	}
+
+	[TestMethod]
+	public async Task QueryMsgAsync_POS操作を共通CvMsg経由で実行できる() {
+		var lookupReply = await CoreService.QueryMsgAsync(new CvMsg {
+			Flag = CvFlag.Msg070_PosLookupProduct,
+			DataType = typeof(PosBarcodeLookupRequest),
+			DataMsg = Common.SerializeObject(new PosBarcodeLookupRequest { Barcode = "" }),
+		});
+		Assert.AreEqual(CvMsgErrorCode.NotFound, lookupReply.Code);
+		Assert.AreEqual(CvFlag.Msg070_PosLookupProduct, lookupReply.Flag);
+		Assert.AreEqual(typeof(PosProduct), lookupReply.DataType);
+
+		var productId = InsertProduct("CORE-POS", 1000, idTax: 1);
+		var checkoutRequest = Request("core-pos-checkout", 1100, Line(productId));
+		var checkoutReply = await CoreService.QueryMsgAsync(new CvMsg {
+			Flag = CvFlag.Msg071_PosCheckout,
+			DataType = typeof(PosCheckoutRequest),
+			DataMsg = Common.SerializeObject(checkoutRequest),
+		});
+		Assert.AreEqual(0, checkoutReply.Code, checkoutReply.Option);
+		Assert.AreEqual(CvFlag.Msg071_PosCheckout, checkoutReply.Flag);
+		Assert.AreEqual(typeof(PosCheckoutResponse), checkoutReply.DataType);
+		var checkout = Common.DeserializeObject(checkoutReply.DataMsg, checkoutReply.DataType) as PosCheckoutResponse;
+		Assert.IsNotNull(checkout);
+		Assert.IsTrue(checkout.IsSuccess);
+
+		var cancelReply = await CoreService.QueryMsgAsync(new CvMsg {
+			Flag = CvFlag.Msg072_PosCancelSale,
+			DataType = typeof(PosCancelSaleRequest),
+			DataMsg = Common.SerializeObject(new PosCancelSaleRequest { SaleId = checkout.SaleId, StaffId = _staffId }),
+		});
+		Assert.AreEqual(0, cancelReply.Code, cancelReply.Option);
+		Assert.AreEqual(CvFlag.Msg072_PosCancelSale, cancelReply.Flag);
+		Assert.AreEqual(typeof(PosCancelSaleResponse), cancelReply.DataType);
+		var cancel = Common.DeserializeObject(cancelReply.DataMsg, cancelReply.DataType) as PosCancelSaleResponse;
+		Assert.IsNotNull(cancel);
+		Assert.IsTrue(cancel.IsSuccess);
+
+		var seisanRequest = SeisanRequest();
+		var seisanReply = await CoreService.QueryMsgAsync(new CvMsg {
+			Flag = CvFlag.Msg073_PosSaveSeisan,
+			DataType = typeof(PosSaveSeisanRequest),
+			DataMsg = Common.SerializeObject(seisanRequest),
+		});
+		Assert.AreEqual(0, seisanReply.Code, seisanReply.Option);
+		Assert.AreEqual(CvFlag.Msg073_PosSaveSeisan, seisanReply.Flag);
+		Assert.AreEqual(typeof(PosSaveSeisanResponse), seisanReply.DataType);
+		var seisan = Common.DeserializeObject(seisanReply.DataMsg, seisanReply.DataType) as PosSaveSeisanResponse;
+		Assert.IsNotNull(seisan);
+		Assert.IsTrue(seisan.IsSuccess);
+		Assert.IsNotNull(Db.Single<Tran04PosSeisan>("where Id=@0", seisan.SeisanId).Jsummary);
 	}
 
 	private static PosCheckoutLine Line(long productId, int quantity = 1) => new() {

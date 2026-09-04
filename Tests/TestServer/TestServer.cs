@@ -56,7 +56,8 @@ public class CoreServiceTests {
 		var appInit = new AppGlobal();
 		appInit.InitAsync(_db).Wait();
 		// サービスを作成
-		_service = new CoreService(logger, config, env, httpAccessor, _db);
+		_service = new CoreService(logger, config, env, httpAccessor, _db,
+			new PointOfSaleService(_db, NullLogger<PointOfSaleService>.Instance));
 		_scheduler = new NCrontab.Scheduler.Scheduler(NullLogger<NCrontab.Scheduler.Scheduler>.Instance);
 		_serviceProvider = new ServiceCollection()
 			.AddSingleton<ExDatabase>(_db)

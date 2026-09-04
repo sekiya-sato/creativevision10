@@ -129,6 +129,57 @@ public partial class CoreService {
 		var ret = rebuild.RebuildMasterShohin2Meisho();
 		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(_appGlobal.VerInfo));
 	}
+
+	private async Task<CvMsg> HandlePosLookupProductAsync(CvMsg request, CallContext context) {
+		if (!TryDeserializePosRequest<PosBarcodeLookupRequest>(request, out var payload, out var error)) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, error, typeof(string), string.Empty);
+		}
+		var product = await _pointOfSaleService.LookupProductAsync(payload, context);
+		return product == null
+			? CreateNotFoundResponse(request.Flag, typeof(PosProduct), "null")
+			: CreateSuccessResponse(request.Flag, typeof(PosProduct), Common.SerializeObject(product));
+	}
+
+	private async Task<CvMsg> HandlePosCheckoutAsync(CvMsg request, CallContext context) {
+		if (!TryDeserializePosRequest<PosCheckoutRequest>(request, out var payload, out var error)) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, error, typeof(string), string.Empty);
+		}
+		var response = await _pointOfSaleService.CheckoutAsync(payload, context);
+		return CreateSuccessResponse(request.Flag, typeof(PosCheckoutResponse), Common.SerializeObject(response));
+	}
+
+	private async Task<CvMsg> HandlePosCancelSaleAsync(CvMsg request, CallContext context) {
+		if (!TryDeserializePosRequest<PosCancelSaleRequest>(request, out var payload, out var error)) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, error, typeof(string), string.Empty);
+		}
+		var response = await _pointOfSaleService.CancelSaleAsync(payload, context);
+		return CreateSuccessResponse(request.Flag, typeof(PosCancelSaleResponse), Common.SerializeObject(response));
+	}
+
+	private async Task<CvMsg> HandlePosSaveSeisanAsync(CvMsg request, CallContext context) {
+		if (!TryDeserializePosRequest<PosSaveSeisanRequest>(request, out var payload, out var error)) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, error, typeof(string), string.Empty);
+		}
+		var response = await _pointOfSaleService.SaveSeisanAsync(payload, context);
+		return CreateSuccessResponse(request.Flag, typeof(PosSaveSeisanResponse), Common.SerializeObject(response));
+	}
+
+	private static bool TryDeserializePosRequest<T>(CvMsg request, out T payload, out string error) where T : class {
+		payload = default!;
+		error = string.Empty;
+		if (request.DataType != typeof(T)) {
+			error = $"POS要求型が不正です。期待値={typeof(T).Name} 実際={request.DataType?.Name}";
+			return false;
+		}
+		try {
+			payload = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType) as T ?? throw new InvalidOperationException("POS要求を復元できません。");
+			return true;
+		}
+		catch (Exception ex) {
+			error = $"POS要求の復元に失敗しました: {ex.Message}";
+			return false;
+		}
+	}
 	/// <summary>
 	/// Master系のV*列とJSON内の名称スナップショットを参照先マスタの現在値で再同期する
 	/// (マスタ改名時の伝播はHandleUpdateで自動実行されるため、これはDB変換後や取りこぼしの修復用)
