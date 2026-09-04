@@ -1084,6 +1084,114 @@ public class SummaryDbTests {
 		Assert.AreEqual(0, GetBookQty(stocktakeDb.FetchBookQtyAsOf(afterTransit)), "基準日を移動出庫日より後にしても着側は0のまま");
 	}
 
+	/// <summary>
+	/// 棚卸開始処理は計上月末の帳簿在庫を8桁(yyyyMMdd)で保存する。
+	/// 旧実装は計上月(6桁 "202608")をそのまま <see cref="SummaryStock.StocktakeDdate"/> に書いていた不具合があった。
+	/// </summary>
+	[TestMethod]
+	public void StartStocktake_WritesEightDigitStocktakeDate() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+
+		stocktakeDb.StartStocktake("202608");
+
+		var row = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual("20260831", row.StocktakeDdate, "棚卸日未設定なら計上月末が8桁で入る");
+		Assert.AreEqual(20, row.BookQty);
+	}
+
+	/// <summary>
+	/// 店舗別棚卸日(<see cref="Tran60TanaDate"/>)の核心動作。店舗ごとに違う基準日で帳簿在庫が凍結される。
+	/// </summary>
+	[TestMethod]
+	public void StartStocktake_UsesPerShopTanaDay() {
+		var db = PrepareAllStockTables();
+		db.CreateTable(typeof(Tran60TanaDate), true, false);
+		db.Insert(new Tran60TanaDate { Id_Shop = 1, TanaDay = "20260825" });
+		db.Insert(new Tran60TanaDate { Id_Shop = 2, TanaDay = "20260831" });
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var soko1Early = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(soko1Early);
+		ApplyImmediate(summaryDb, soko1Early, false);
+		var soko1Late = CreatePurchase("20260828", 1, 5, EnumShiire.Shiire);
+		db.Insert(soko1Late);
+		ApplyImmediate(summaryDb, soko1Late, false);
+		var soko2Early = CreatePurchase("20260810", 2, 30, EnumShiire.Shiire);
+		db.Insert(soko2Early);
+		ApplyImmediate(summaryDb, soko2Early, false);
+		var soko2Late = CreatePurchase("20260828", 2, 7, EnumShiire.Shiire);
+		db.Insert(soko2Late);
+		ApplyImmediate(summaryDb, soko2Late, false);
+		Assert.AreEqual(25, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).Su, "前提: soko1の8月累計は20+5=25");
+		Assert.AreEqual(37, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 2).Su, "前提: soko2の8月累計は30+7=37");
+
+		stocktakeDb.StartStocktake("202608", [1L, 2L]);
+
+		var soko1 = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(20, soko1.BookQty, "soko1は棚卸日8/25なので8/28の+5を差し引く");
+		Assert.AreEqual("20260825", soko1.StocktakeDdate);
+		var soko2 = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 2);
+		Assert.AreEqual(37, soko2.BookQty, "soko2は棚卸日が月末なので差し引かない");
+		Assert.AreEqual("20260831", soko2.StocktakeDdate);
+	}
+
+	/// <summary>当月に動きが無い在庫は当該計上月の行を持たないので、行補完しないと帳簿在庫が記録できない</summary>
+	[TestMethod]
+	public void StartStocktake_CompletesRowForSkuWithoutCurrentMonthRow() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var lastMonth = CreatePurchase("20260710", 1, 12, EnumShiire.Shiire);
+		db.Insert(lastMonth);
+		ApplyImmediate(summaryDb, lastMonth, false);
+		Assert.AreEqual(0, db.Fetch<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).Count, "前提: 202608/soko1の行は無い");
+
+		stocktakeDb.StartStocktake("202608", [1L]);
+
+		var row = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(12, row.BookQty, "行が作られ帳簿在庫が記録される");
+		Assert.AreEqual(0, row.Su);
+		Assert.AreEqual("20260831", row.StocktakeDdate);
+	}
+
+	/// <summary>在庫履歴が無く実棚入力だけあるSKUにも行を作る</summary>
+	[TestMethod]
+	public void StartStocktake_CompletesRowForCountedOnlySku() {
+		var db = PrepareAllStockTables();
+		var stocktakeDb = new StocktakeDb(db);
+		db.Insert(CreateTana("20260831", 1, 3, 20L, 200L, 2000L));
+
+		stocktakeDb.StartStocktake("202608", [1L]);
+
+		var row = db.Single<SummaryStock>(
+			"where SumMonth=@0 and Id_Soko=@1 and Id_Shohin=@2 and Id_Col=@3 and Id_Siz=@4",
+			"202608", 1, 20L, 200L, 2000L);
+		Assert.AreEqual(0, row.BookQty, "在庫履歴が無いSKUの帳簿在庫は0");
+	}
+
+	/// <summary>何度実行しても同じ結果になり、行補完が重複行を作らない</summary>
+	[TestMethod]
+	public void StartStocktake_IsIdempotent() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+
+		stocktakeDb.StartStocktake("202608", [1L]);
+		stocktakeDb.StartStocktake("202608", [1L]);
+
+		var rows = db.Fetch<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1);
+		Assert.AreEqual(1, rows.Count, "行補完は重複行を作らない");
+		Assert.AreEqual(20, rows[0].BookQty);
+	}
+
 	/// <summary>既定SKU(10/100/1000)のBookQtyを取り出す。行が無ければ0(帳簿在庫の履歴も棚卸入力も無いSKU)</summary>
 	private static int GetBookQty(
 		System.Collections.Generic.List<StocktakeDb.StocktakeBookQty> rows,

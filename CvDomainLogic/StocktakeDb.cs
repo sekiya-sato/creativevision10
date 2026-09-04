@@ -59,36 +59,185 @@ public class StocktakeDb(ExDatabase db) {
 	}
 
 	/// <summary>
-	/// 棚卸開始処理。対象倉庫×SKU について、棚卸終了日時点の帳簿在庫を <see cref="SummaryStock"/> へ保存する。
+	/// 対象店舗の棚卸基準日を解決する(設計書2.1)。店舗ごとの <see cref="Tran60TanaDate.TanaDay"/> を引き、
+	/// 未設定の店舗は <paramref name="fallbackMonth"/> の計上月末へフォールバックする。
+	/// </summary>
+	/// <param name="fallbackMonth">棚卸日が未設定の店舗に使うフォールバック計上月 yyyyMM</param>
+	/// <param name="sokoIds">対象倉庫Id。空なら既定の対象倉庫を自動で拾う</param>
+	public IReadOnlyList<StocktakeDay> ResolveDays(string fallbackMonth, IEnumerable<long>? sokoIds = null) {
+		var shime = new SummaryDb(_db).GetOwnClosingDay();
+		var ids = sokoIds?.Where(x => x > 0).Distinct().ToList() ?? [];
+		if (ids.Count == 0) {
+			ids = FetchDefaultSokoIds(fallbackMonth, shime);
+		}
+		var tanaDays = FetchTanaDays(ids);
+		return [.. ids.Select(id => StocktakeDaySet.Resolve(id, tanaDays.GetValueOrDefault(id), shime, fallbackMonth))];
+	}
+
+	/// <summary>
+	/// 倉庫指定なしで呼ばれたときの既定の対象倉庫。当該計上月に在庫集計行がある倉庫と、
+	/// 計上月の期間内に棚卸入力がある倉庫を拾う。
 	/// <para>
-	/// 帳簿在庫は「対象年月以前の <see cref="SummaryStock.Su"/> の累計」で求める。
+	/// 画面からは対象店舗を明示で渡す(設計書2.6)。ここは倉庫指定なしの旧経路向けの既定であり、
+	/// 棚卸日が翌計上月へ繰り越される店舗(締日が末日でない場合)は拾えない。
+	/// </para>
+	/// </summary>
+	private List<long> FetchDefaultSokoIds(string fallbackMonth, int shime) {
+		var ids = _db.Fetch<long>($"SELECT DISTINCT Id_Soko FROM {nameof(SummaryStock)} WHERE SumMonth = @0", fallbackMonth);
+		if (_db.IsExistTable(typeof(Tran60Tana))) {
+			var period = ClosingMonthCalculator.GetPeriod(fallbackMonth, shime);
+			ids.AddRange(_db.Fetch<long>(
+				$"SELECT DISTINCT Id_Soko FROM {nameof(Tran60Tana)} WHERE DenDay BETWEEN @0 AND @1",
+				period.DayFrom, period.DayTo));
+		}
+		return [.. ids.Where(x => x > 0).Distinct().Order()];
+	}
+
+	/// <summary>
+	/// 店舗別の棚卸日を <see cref="Tran60TanaDate"/> から引く。テーブルが無ければ全店舗未設定として扱う。
+	/// 同一店舗に複数行あれば <c>Id</c> の大きい方を採る(一意キーは <c>uk1(Id_Shop)</c> なので通常は1行)。
+	/// </summary>
+	private Dictionary<long, string> FetchTanaDays(IReadOnlyList<long> sokoIds) {
+		if (sokoIds.Count == 0 || !_db.IsExistTable(typeof(Tran60TanaDate))) {
+			return [];
+		}
+		var rows = _db.Fetch<Tran60TanaDate>(
+			$"SELECT * FROM {nameof(Tran60TanaDate)} WHERE Id_Shop IN ({string.Join(",", sokoIds)}) ORDER BY Id");
+		var map = new Dictionary<long, string>();
+		foreach (var row in rows) {
+			map[row.Id_Shop] = row.TanaDay;
+		}
+		return map;
+	}
+
+	/// <summary>
+	/// 棚卸開始処理。店舗ごとの棚卸基準日を解決してから <see cref="StartStocktake(IReadOnlyList{StocktakeDay})"/> を呼ぶ。
+	/// </summary>
+	/// <param name="fallbackMonth">棚卸日が未設定の店舗に使うフォールバック計上月 yyyyMM</param>
+	/// <param name="sokoIds">対象倉庫Id。空なら既定の対象倉庫</param>
+	/// <returns>保存した行数</returns>
+	public int StartStocktake(string fallbackMonth, IEnumerable<long>? sokoIds = null) =>
+		StartStocktake(ResolveDays(fallbackMonth, sokoIds));
+
+	/// <summary>
+	/// 棚卸開始処理。店舗ごとの基準日時点の帳簿在庫を <see cref="SummaryStock"/> へ保存する。
+	/// <para>
+	/// 帳簿在庫は <see cref="FetchBookQtyAsOf"/> の逆算で求める(設計書2.2)。
 	/// 同じ条件で何度でも実行でき、実行のたびに最新の帳簿在庫で上書きする
 	/// （旧CV.netも差異調査・伝票修正のあとに再実行する運用だった）。
 	/// </para>
+	/// <para>
+	/// 店舗ごとに基準日が違うので単一SQLで全店舗を捌かず店舗ループにする。
+	/// 帳簿在庫は店舗単位の一時表へ吐いてから、行補完(INSERT)と値の書き込み(UPDATE)の2文で反映する。
+	/// UPSERT(<c>ON CONFLICT</c>)を使わないのは、素の INSERT/UPDATE なら4方言そのままで通るためである。
+	/// </para>
+	/// <para>
+	/// 在庫再集計(Rebuild)は対象期間の <see cref="SummaryStock"/> を作り直すので、ここで補完した行と
+	/// <see cref="SummaryStock.BookQty"/> は失われる。Rebuild のあとは本処理を再実行する運用とする(設計書4)。
+	/// </para>
 	/// </summary>
-	/// <param name="tanaMonth">棚卸年月 yyyyMM</param>
-	/// <param name="sokoIds">対象倉庫Id。空なら全倉庫</param>
-	/// <returns>保存した行数</returns>
-	public int StartStocktake(string tanaMonth, IEnumerable<long>? sokoIds = null) {
+	/// <param name="days">解決済みの店舗別棚卸基準日</param>
+	/// <returns>補完・更新した行数</returns>
+	public int StartStocktake(IReadOnlyList<StocktakeDay> days) {
+		if (days.Count == 0) {
+			return 0;
+		}
+		var cnt = 0;
+		try {
+			_db.Execute($@"
+CREATE TEMP TABLE IF NOT EXISTS {TempBookQtyTable} (
+  Id_Shohin INTEGER NOT NULL,
+  Id_Col INTEGER NOT NULL,
+  Id_Siz INTEGER NOT NULL,
+  BookQty INTEGER NOT NULL,
+  PRIMARY KEY (Id_Shohin, Id_Col, Id_Siz)
+);");
+			foreach (var day in days) {
+				cnt += StartStocktakeOne(day);
+			}
+		}
+		finally {
+			try {
+				_db.Execute($"DROP TABLE IF EXISTS {TempBookQtyTable}");
+			}
+			catch (Exception ex) {
+				_logger.LogWarning(ex, "一時テーブルの削除に失敗しました: {TableName}", TempBookQtyTable);
+			}
+		}
+		return cnt;
+	}
+
+	private const string TempBookQtyTable = "TempStocktakeBookQty";
+
+	/// <summary>店舗1件分の棚卸開始処理。</summary>
+	private int StartStocktakeOne(StocktakeDay day) {
 		var vdate = Common.GetVdate();
-		var sokoWhere = BuildSokoWhere(sokoIds, "s.Id_Soko");
-		var sql = $@"
-UPDATE SummaryStock
-SET BookQty = ifnull((
-      SELECT SUM(p.Su) FROM SummaryStock p
-      WHERE p.Id_Soko = SummaryStock.Id_Soko
-        AND p.Id_Shohin = SummaryStock.Id_Shohin
-        AND p.Id_Col = SummaryStock.Id_Col
-        AND p.Id_Siz = SummaryStock.Id_Siz
-        AND p.SumMonth <= SummaryStock.SumMonth
+		var soko = day.Id_Shop;
+		_db.Execute($"DELETE FROM {TempBookQtyTable}");
+
+		// 1) 基準日時点の帳簿在庫を一時表へ
+		_db.ExecuteDialect(
+			$"INSERT INTO {TempBookQtyTable} (Id_Shohin, Id_Col, Id_Siz, BookQty){BuildBookQtyAsOfSql(soko)}",
+			day.TanaDay, day.DayTo, day.SumMonth);
+
+		// 2) 在庫履歴が無く基準日の棚卸入力にだけ現れるSKUを帳簿在庫0で足す。
+		//    これを入れないと「実棚だけあるSKU」が差異に上がらない
+		if (_db.IsExistTable(typeof(Tran60Tana))) {
+			_db.ExecuteDialect($@"
+INSERT INTO {TempBookQtyTable} (Id_Shohin, Id_Col, Id_Siz, BookQty)
+SELECT s.Id_Shohin, s.Id_Col, s.Id_Siz, 0
+FROM (
+  SELECT DISTINCT
+    json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
+    json_extract(j.value, '$.Id_Col')    AS Id_Col,
+    json_extract(j.value, '$.Id_Siz')    AS Id_Siz
+  FROM {nameof(Tran60Tana)} AS t
+       CROSS JOIN json_each(t.Jmeisai) AS j
+  WHERE t.Id_Soko = {soko}
+    AND t.DenDay = @0
+    AND json_type(t.Jmeisai) = 'array'
+) AS s
+WHERE NOT EXISTS (
+  SELECT 1 FROM {TempBookQtyTable} AS x
+  WHERE x.Id_Shohin = s.Id_Shohin AND x.Id_Col = s.Id_Col AND x.Id_Siz = s.Id_Siz
+)
+;", day.TanaDay);
+		}
+
+		// 3) 当該計上月の行が無いSKUを補完する。当月に動きが無い在庫はこの月の行を持たないため、
+		//    UPDATE だけでは帳簿在庫を記録できない
+		var inserted = _db.Execute($@"
+INSERT INTO {nameof(SummaryStock)}
+  (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz,
+   Su, ReserveQty, CumulativeSu, InQty, OutQty, TransitQty, AdjustQty,
+   StocktakeDdate, BookQty, ActualQty, Vdc, Vdu)
+SELECT @1, {soko}, t.Id_Shohin, t.Id_Col, t.Id_Siz,
+   0, 0, 0, 0, 0, 0, 0,
+   @0, t.BookQty, t.BookQty, {vdate}, {vdate}
+FROM {TempBookQtyTable} AS t
+WHERE NOT EXISTS (
+  SELECT 1 FROM {nameof(SummaryStock)} AS s
+  WHERE s.SumMonth = @1 AND s.Id_Soko = {soko}
+    AND s.Id_Shohin = t.Id_Shohin AND s.Id_Col = t.Id_Col AND s.Id_Siz = t.Id_Siz
+)
+;", day.TanaDay, day.SumMonth);
+
+		// 4) 帳簿在庫と棚卸日(8桁)を書く
+		var updated = _db.Execute($@"
+UPDATE {nameof(SummaryStock)}
+SET BookQty = COALESCE((
+      SELECT t.BookQty FROM {TempBookQtyTable} AS t
+      WHERE t.Id_Shohin = {nameof(SummaryStock)}.Id_Shohin
+        AND t.Id_Col = {nameof(SummaryStock)}.Id_Col
+        AND t.Id_Siz = {nameof(SummaryStock)}.Id_Siz
     ), 0),
     StocktakeDdate = @0,
     Vdu = {vdate}
-WHERE SumMonth = @0
-  {sokoWhere.Replace("s.Id_Soko", "Id_Soko")}
-;
-";
-		return _db.ExecuteDialect(sql, tanaMonth);
+WHERE SumMonth = @1
+  AND Id_Soko = {soko}
+;", day.TanaDay, day.SumMonth);
+
+		return inserted + updated;
 	}
 
 	/// <summary>
