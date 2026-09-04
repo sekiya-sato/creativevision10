@@ -88,7 +88,7 @@ WHERE SumMonth = @0
   {sokoWhere.Replace("s.Id_Soko", "Id_Soko")}
 ;
 ";
-		return _db.Execute(sql, tanaMonth);
+		return _db.ExecuteDialect(sql, tanaMonth);
 	}
 
 	/// <summary>
@@ -185,13 +185,144 @@ WHERE SumMonth = @0
   {BuildSokoWhere(sokoIds, "Id_Soko")}
 ;
 ";
-		return _db.Execute(sql, tanaMonth);
+		return _db.ExecuteDialect(sql, tanaMonth);
+	}
+
+	/// <summary>
+	/// 基準日時点の帳簿在庫をSKU別に取得する(設計書2.2の逆算方式)。
+	/// <para>
+	/// <c>SummaryStock</c> は計上月末時点の在庫しか持たないので、月末累計から
+	/// 「基準日より後・計上月末まで」の伝票増減を差し引いて基準日時点へ戻す。
+	/// 走査が当該計上月かつ基準日より後に限定されるため、月初から積み上げるより対象行が少ない。
+	/// </para>
+	/// <para>
+	/// <c>SummaryStock.CumulativeSu</c> は使わない。書き手の <c>SummaryDb.CalcSummaryStockCumulative</c> が
+	/// 本番経路から呼ばれておらず、実運用で最新化されている保証がないためである。
+	/// </para>
+	/// </summary>
+	/// <param name="day">解決済みの棚卸基準日(<see cref="StocktakeDaySet.Resolve"/>の戻り値)</param>
+	/// <returns>帳簿在庫が非0、または基準日より後に動きがあったSKUの行</returns>
+	public List<StocktakeBookQty> FetchBookQtyAsOf(StocktakeDay day) =>
+		_db.FetchDialect<StocktakeBookQty>(BuildBookQtyAsOfSql(day.Id_Shop), day.TanaDay, day.DayTo, day.SumMonth);
+
+	/// <summary>
+	/// 在庫数(<c>Su</c>)に効く伝票と集計軸の組。<see cref="TranCalcBase.GetCalcSoko"/> /
+	/// <see cref="TranCalcBase.GetCalcIdosaki"/> が返す符号をそのまま使い、符号表をここで再定義しない。
+	/// <para>
+	/// 逆算に使うのは在庫数(Item1)だけである。入出庫内訳(<c>InQty</c>/<c>OutQty</c>)・
+	/// 移動中(<c>TransitQty</c>)・調整数(<c>AdjustQty</c>)は <c>Su</c> の外側の内訳列であり、
+	/// 帳簿在庫の加減算には使わない。とくに移動中の現物は実地棚卸で数えられないため、
+	/// 帳簿在庫にも実棚数にも現れず差異を生まない(設計書2.2)。
+	/// </para>
+	/// </summary>
+	private static readonly (string TableName, string Axis, int SuFlag)[] StockSuSources = BuildStockSuSources();
+
+	private static (string TableName, string Axis, int SuFlag)[] BuildStockSuSources() {
+		// SummaryDb.CalcSummaryStockRange が走査する7伝票と同じ並び。ここを増減させたら向こうも合わせる
+		string[] tableNames = [
+			nameof(Tran00Uriage), nameof(Tran01Tenuri), nameof(Tran03Shiire),
+			nameof(Tran05Ido), nameof(Tran10IdoOut), nameof(Tran11IdoIn), nameof(Tran61Chosei),
+		];
+		var sources = new List<(string, string, int)>();
+		foreach (var tableName in tableNames) {
+			var soko = TranCalcBase.GetCalcSoko(tableName).Item1;
+			if (soko != 0) {
+				sources.Add((tableName, nameof(ITranSoko.Id_Soko), soko));
+			}
+			// 移動先軸は ITranIdo を実装しない伝票では 0 が返るので、この判定だけで足りる
+			var idosaki = TranCalcBase.GetCalcIdosaki(tableName).Item1;
+			if (idosaki != 0) {
+				sources.Add((tableName, nameof(ITranIdo.Id_Ido), idosaki));
+			}
+		}
+		return [.. sources];
+	}
+
+	/// <summary>
+	/// 基準日時点の帳簿在庫を求めるSQLを組む。パラメータは @0=基準日, @1=計上月末日, @2=計上月。
+	/// <para>
+	/// 明細の展開・<c>CalcFlag</c> の掛け方・<c>IsZaiko</c> の除外条件は
+	/// <c>SummaryDb.CreateSummaryStockSql</c> と同一にしてある。片方だけ条件が違うと
+	/// 累計と逆算が相殺せず帳簿在庫がずれるためである。
+	/// <para>
+	/// 実データ(<c>server-user163.db</c>)で倉庫113/253/284の3シナリオ計61,196SKUを、
+	/// 逆算と順算(前月末累計＋月初からの積み上げ)で突き合わせて検証した。
+	/// 除外条件を外すと不一致0件、付けると <c>MasterShohin.IsZaiko=0</c> の商品だけ不一致になる
+	/// (当該DBには <c>IsZaiko=0</c> の商品の <see cref="SummaryStock"/> 行が14,066件残っている)。
+	/// これは過去の更新ロジックで作られた行が残っているだけであり、現行仕様では
+	/// <c>IsZaiko</c> を見るのが正しい。Rebuildを通せば当該行は落ちて整合する。
+	/// つまり不一致は保存済みデータの陳腐化であって、逆算ロジックの誤りではない。
+	/// </para>
+	/// </para>
+	/// <para>
+	/// 対象SKU(Keys)は保存済み累計(<c>Cum</c>)だけから採る。基準日より後にしか動きが無いSKUは
+	/// 当月の <see cref="SummaryStock"/> 行が必ずあるので <c>Cum</c> に現れる。逆に在庫履歴も
+	/// 棚卸入力も無いSKUに帳簿在庫の行を作る必要はない(棚卸入力があるSKUの行補完は棚卸開始処理側で行う)。
+	/// </para>
+	/// <para>
+	/// 内側の分岐では列別名を GROUP BY せず、外側の派生表で1回だけ集約する。
+	/// 別名を GROUP BY できない方言があるためである。
+	/// </para>
+	/// <para>
+	/// CTE(<c>WITH</c>)ではなく派生表で書いてある。NPocoの <c>Fetch&lt;T&gt;(sql, args)</c> は
+	/// SQLが <c>SELECT</c> で始まらないと <c>SELECT ... FROM &lt;テーブル名&gt;</c> を前置するため、
+	/// <c>WITH</c> 始まりのSQLは壊れて `near "Cum": syntax error` になる。
+	/// 派生表なら <c>SELECT</c> 始まりになり、CTEをサブクエリに書けるかの方言差も避けられる。
+	/// </para>
+	/// </summary>
+	/// <param name="idSoko">対象倉庫Id。long なのでSQLへ直接埋め込む(<see cref="BuildSokoWhere"/>と同じ理由)</param>
+	private static string BuildBookQtyAsOfSql(long idSoko) {
+		var branches = StockSuSources.Select(x => $@"
+  SELECT
+    json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
+    json_extract(j.value, '$.Id_Col')    AS Id_Col,
+    json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
+    json_extract(j.value, '$.Su')*t.CalcFlag*{x.SuFlag} AS Su
+  FROM {x.TableName} AS t
+       CROSS JOIN json_each(t.Jmeisai) AS j
+       LEFT JOIN MasterTokui AS mt ON mt.Id = t.{x.Axis}
+       LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
+  WHERE t.{x.Axis} = {idSoko}
+    AND t.DenDay > @0
+    AND t.DenDay <= @1
+    AND json_type(t.Jmeisai) = 'array'
+    AND COALESCE(mt.IsZaiko, 1) = 1
+    AND COALESCE(ms.IsZaiko, 1) = 1");
+		return $@"
+SELECT
+  c.Id_Shohin AS Id_Shohin,
+  c.Id_Col    AS Id_Col,
+  c.Id_Siz    AS Id_Siz,
+  c.Su - COALESCE(v.Su, 0) AS BookQty
+FROM (
+  SELECT Id_Shohin, Id_Col, Id_Siz, SUM(Su) AS Su
+  FROM SummaryStock
+  WHERE Id_Soko = {idSoko}
+    AND SumMonth <= @2
+  GROUP BY Id_Shohin, Id_Col, Id_Siz
+) AS c
+LEFT JOIN (
+  SELECT Id_Shohin, Id_Col, Id_Siz, SUM(Su) AS Su
+  FROM ({string.Join("\n  UNION ALL", branches)}
+  ) AS d
+  GROUP BY Id_Shohin, Id_Col, Id_Siz
+) AS v ON v.Id_Shohin = c.Id_Shohin AND v.Id_Col = c.Id_Col AND v.Id_Siz = c.Id_Siz
+ORDER BY c.Id_Shohin, c.Id_Col, c.Id_Siz
+";
 	}
 
 	/// <summary>倉庫Idの絞り込み。Idは long なのでSQLへ直接埋め込む(パラメータでは動的型比較で一致しない)</summary>
 	private static string BuildSokoWhere(IEnumerable<long>? sokoIds, string column) {
 		var ids = sokoIds?.Where(x => x > 0).Distinct().ToList();
 		return ids == null || ids.Count == 0 ? string.Empty : $" AND {column} IN ({string.Join(",", ids)})";
+	}
+
+	/// <summary>基準日時点の帳簿在庫の1行(<see cref="FetchBookQtyAsOf"/>の戻り)</summary>
+	public sealed class StocktakeBookQty {
+		public long Id_Shohin { get; set; }
+		public long Id_Col { get; set; }
+		public long Id_Siz { get; set; }
+		public int BookQty { get; set; }
 	}
 
 	/// <summary>棚卸差異の1行</summary>

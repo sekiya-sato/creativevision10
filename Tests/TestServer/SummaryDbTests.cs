@@ -965,6 +965,136 @@ public class SummaryDbTests {
 		AssertMonthReserve(db, "202608", 1, 7);
 	}
 
+	/// <summary>
+	/// 基準日時点の帳簿在庫の逆算(設計書2.2)。基準日より後・計上月末までの伝票増減を
+	/// 月末累計から差し引くことで、月次スナップショットしか持たない SummaryStock から
+	/// 任意日時点の帳簿在庫を復元できることを確認する。
+	/// </summary>
+	[TestMethod]
+	public void FetchBookQtyAsOf_ExcludesSlipsAfterBaseDay() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var early = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(early);
+		ApplyImmediate(summaryDb, early, false);
+		var late = CreatePurchase("20260828", 1, 5, EnumShiire.Shiire);
+		db.Insert(late);
+		ApplyImmediate(summaryDb, late, false);
+		Assert.AreEqual(25, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).Su,
+			"前提: 8月分の累計は20+5=25");
+
+		var beforeLate = StocktakeDaySet.Resolve(1, "20260825", 99, "202608");
+		Assert.AreEqual(20, GetBookQty(stocktakeDb.FetchBookQtyAsOf(beforeLate)), "基準日より後の8/28分(+5)を差し引く");
+
+		var atMonthEnd = StocktakeDaySet.Resolve(1, "20260831", 99, "202608");
+		Assert.AreEqual(25, GetBookQty(stocktakeDb.FetchBookQtyAsOf(atMonthEnd)), "基準日が月末なら差し引く伝票が無い");
+	}
+
+	/// <summary>逆算条件は `DenDay > 基準日` なので、基準日当日の伝票は帳簿在庫に含まれる(設計書2.2の仕様)</summary>
+	[TestMethod]
+	public void FetchBookQtyAsOf_IncludesSlipOnBaseDay() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var early = CreatePurchase("20260810", 1, 20, EnumShiire.Shiire);
+		db.Insert(early);
+		ApplyImmediate(summaryDb, early, false);
+		var onBaseDay = CreatePurchase("20260825", 1, 6, EnumShiire.Shiire);
+		db.Insert(onBaseDay);
+		ApplyImmediate(summaryDb, onBaseDay, false);
+
+		var day = StocktakeDaySet.Resolve(1, "20260825", 99, "202608");
+
+		Assert.AreEqual(26, GetBookQty(stocktakeDb.FetchBookQtyAsOf(day)), "基準日当日の伝票は差し引かず帳簿在庫に含む");
+	}
+
+	/// <summary>計上月をまたいで前月以前の SummaryStock 行が累計へ繰り越されることを確認する</summary>
+	[TestMethod]
+	public void FetchBookQtyAsOf_CarriesOverPreviousMonths() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var lastMonth = CreatePurchase("20260710", 1, 30, EnumShiire.Shiire);
+		db.Insert(lastMonth);
+		ApplyImmediate(summaryDb, lastMonth, false);
+		var thisMonth = CreatePurchase("20260820", 1, 4, EnumShiire.Shiire);
+		db.Insert(thisMonth);
+		ApplyImmediate(summaryDb, thisMonth, false);
+
+		var midMonth = StocktakeDaySet.Resolve(1, "20260815", 99, "202608");
+		Assert.AreEqual(30, GetBookQty(stocktakeDb.FetchBookQtyAsOf(midMonth)), "当月分(8/20の+4)は基準日より後なので差し引く");
+
+		var monthEnd = StocktakeDaySet.Resolve(1, "20260831", 99, "202608");
+		Assert.AreEqual(34, GetBookQty(stocktakeDb.FetchBookQtyAsOf(monthEnd)), "月末なら前月30+当月4");
+	}
+
+	/// <summary>
+	/// 移動(即時)は発側 Id_Soko と着側 Id_Ido の両軸に効く。基準日を移動前に取ると
+	/// 両倉庫とも移動前の状態(発側は減る前、着側は増える前)へ戻ることを確認する。
+	/// </summary>
+	[TestMethod]
+	public void FetchBookQtyAsOf_HandlesTransferOnBothAxes() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260801", 1, 10, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var transfer = CreateTransfer<Tran05Ido>("20260820", 1, 2, 7);
+		db.Insert(transfer);
+		ApplyImmediate(summaryDb, transfer, false);
+		Assert.AreEqual(3, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 1).Su, "前提: 発側は10-7=3");
+		Assert.AreEqual(7, db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 2).Su, "前提: 着側は7");
+
+		var beforeTransfer = StocktakeDaySet.Resolve(1, "20260815", 99, "202608");
+		Assert.AreEqual(10, GetBookQty(stocktakeDb.FetchBookQtyAsOf(beforeTransfer)), "移動前は発側が10のまま");
+		var beforeTransferDest = StocktakeDaySet.Resolve(2, "20260815", 99, "202608");
+		Assert.AreEqual(0, GetBookQty(stocktakeDb.FetchBookQtyAsOf(beforeTransferDest)), "移動前は着側は未着で0");
+
+		var afterTransfer = StocktakeDaySet.Resolve(1, "20260825", 99, "202608");
+		Assert.AreEqual(3, GetBookQty(stocktakeDb.FetchBookQtyAsOf(afterTransfer)), "移動後は発側が3");
+		var afterTransferDest = StocktakeDaySet.Resolve(2, "20260825", 99, "202608");
+		Assert.AreEqual(7, GetBookQty(stocktakeDb.FetchBookQtyAsOf(afterTransferDest)), "移動後は着側が7");
+	}
+
+	/// <summary>
+	/// 移動中(TransitQty)は Su の外側の内訳列であり逆算の加減算対象にならない。
+	/// 移動出庫だけ(未入庫)の状態では着側の Su も TransitQty も帳簿在庫に反映されないことを確認する(設計書2.2)。
+	/// </summary>
+	[TestMethod]
+	public void FetchBookQtyAsOf_IgnoresTransitQty() {
+		var db = PrepareAllStockTables();
+		var summaryDb = new SummaryDb(db);
+		var stocktakeDb = new StocktakeDb(db);
+		var purchase = CreatePurchase("20260801", 1, 10, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var transitOut = CreateTransfer<Tran10IdoOut>("20260820", 1, 2, 7);
+		db.Insert(transitOut);
+		ApplyImmediate(summaryDb, transitOut, false);
+		var destRow = db.Single<SummaryStock>("where SumMonth=@0 and Id_Soko=@1", "202608", 2);
+		Assert.AreEqual(0, destRow.Su, "前提: 未入庫のため着側Suは0");
+		Assert.AreEqual(7, destRow.TransitQty, "前提: 移動中数量は7");
+
+		var beforeTransit = StocktakeDaySet.Resolve(2, "20260815", 99, "202608");
+		Assert.AreEqual(0, GetBookQty(stocktakeDb.FetchBookQtyAsOf(beforeTransit)), "移動中は実地棚卸で数えられないので帳簿在庫に含めない");
+
+		var afterTransit = StocktakeDaySet.Resolve(2, "20260825", 99, "202608");
+		Assert.AreEqual(0, GetBookQty(stocktakeDb.FetchBookQtyAsOf(afterTransit)), "基準日を移動出庫日より後にしても着側は0のまま");
+	}
+
+	/// <summary>既定SKU(10/100/1000)のBookQtyを取り出す。行が無ければ0(帳簿在庫の履歴も棚卸入力も無いSKU)</summary>
+	private static int GetBookQty(
+		System.Collections.Generic.List<StocktakeDb.StocktakeBookQty> rows,
+		long idShohin = 10,
+		long idCol = 100,
+		long idSiz = 1000) =>
+		rows.Where(x => x.Id_Shohin == idShohin && x.Id_Col == idCol && x.Id_Siz == idSiz)
+			.Select(x => x.BookQty)
+			.DefaultIfEmpty(0)
+			.First();
+
 	private static void InsertSummaryStock(ExDatabaseSqlite db, string sumMonth, long idSoko, long idShohin, long idCol, long idSiz, int su) {
 		db.Insert(new SummaryStock {
 			SumMonth = sumMonth,
