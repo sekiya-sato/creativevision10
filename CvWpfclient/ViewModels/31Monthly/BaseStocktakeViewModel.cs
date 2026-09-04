@@ -120,8 +120,11 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 				Code = 0,
 				Flag = TargetFlag,
 				DataType = typeof(StocktakeParameter),
+				// 基準日は店舗ごとに Tran60TanaDate.TanaDay から解決される。yyyymm は棚卸日が
+				// 未設定の店舗に使うフォールバック計上月として渡す(設計書2.1)。
+				// AlignMisdated(基準日以外の棚卸入力の日付補正)の確認フローは Step7 で画面へ入れる
 				DataMsg = Common.SerializeObject(
-					new StocktakeParameter(yyyymm, BuildDenDay(yyyymm), IdShain, [.. SokoIds])),
+					new StocktakeParameter(yyyymm, IdShain, [.. SokoIds], AlignMisdated)),
 			};
 			// 件数はサーバー側が本文へ「件数=N」の形で載せてくる(CreateProgressStreamMsg)。
 			// 最後に届く Complete は件数0なので、その手前のステップ行を控えておく
@@ -186,7 +189,18 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 	}
 
 	/// <summary>調整伝票の在庫計上日。開始処理では使わないので既定は棚卸年月の月末</summary>
+	/// <remarks>
+	/// 調整伝票の計上日は店舗ごとの棚卸基準日になったのでサーバへは渡していない(設計書2.4)。
+	/// 確定画面の日付入力欄の撤去とあわせて Step7 で削除する。
+	/// </remarks>
 	protected virtual string BuildDenDay(string yyyymm) => LastDayOfMonth(yyyymm);
+
+	/// <summary>
+	/// 基準日以外の日付で入力された棚卸伝票の計上日を基準日へ補正してから確定するか。
+	/// 既定は false で、該当があればサーバは何も変更せず中断する。
+	/// 補正の可否を利用者へ確認するフローは Step7 で確定画面へ入れる(設計書4)。
+	/// </summary>
+	protected virtual bool AlignMisdated => false;
 
 	/// <summary>yyyyMM から月末日 yyyyMMdd を作る</summary>
 	protected static string LastDayOfMonth(string yyyymm) {

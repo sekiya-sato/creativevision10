@@ -26,7 +26,8 @@ public class StocktakeDb(ExDatabase db) {
 	/// </summary>
 	public IAsyncEnumerable<StreamStepProgress> StartAsyncStream(StocktakeParameter param) =>
 		StreamStepProgressRunner.Run(
-			[($"棚卸開始処理 : {param.TanaMonth} 帳簿在庫の保存", p => StartStocktake(p.TanaMonth, p.SokoIds))],
+			[($"棚卸開始処理 : 帳簿在庫の保存(棚卸日未設定店舗は {param.FallbackMonth} 月末)",
+				p => StartStocktake(p.FallbackMonth, p.SokoIds))],
 			param, _logger, "棚卸開始処理を開始", "棚卸開始処理エラー: {StepName}", "棚卸開始処理を終了");
 
 	/// <summary>
@@ -37,20 +38,30 @@ public class StocktakeDb(ExDatabase db) {
 	/// </summary>
 	public IAsyncEnumerable<StreamStepProgress> FixAsyncStream(StocktakeParameter param) =>
 		StreamStepProgressRunner.Run(
-			[($"棚卸確定処理 : {param.TanaMonth} 在庫調整伝票の作成", RunFixInTransaction)],
+			[($"棚卸確定処理 : 在庫調整伝票の作成", RunFixInTransaction)],
 			param, _logger, "棚卸確定処理を開始", "棚卸確定処理エラー: {StepName}", "棚卸確定処理を終了");
 
+	/// <summary>
+	/// 確定処理を1トランザクションで実行する。
+	/// <para>
+	/// 基準日以外の棚卸入力があり <see cref="StocktakeParameter.AlignMisdated"/> が false のときは
+	/// 何も変更せず <see cref="StocktakeMisdatedException"/> を投げる。ストリームの実行経路では
+	/// 件数(int)しか返せないため、確認が必要な中断を例外で表に出している。画面は事前に
+	/// `Msg060_StocktakeStatus` で内訳を取得して確認ダイアログを出す(設計書4)。
+	/// </para>
+	/// </summary>
 	private int RunFixInTransaction(StocktakeParameter param) {
 		var started = false;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			started = true;
-			// param.DenDay は使わない。調整伝票の計上日は店舗ごとの棚卸基準日になったため(設計書2.4)。
-			// パラメータからの削除と「日付補正するか」の確認フラグの追加は Step6 で行う
-			var cnt = FixStocktake(param.TanaMonth, param.IdShain, param.SokoIds);
+			var result = FixStocktake(ResolveDays(param.FallbackMonth, param.SokoIds), param.IdShain, param.AlignMisdated);
+			if (result.IsConfirmationRequired) {
+				throw new StocktakeMisdatedException(result.Misdated);
+			}
 			_db.CompleteTransaction();
 			started = false;
-			return cnt;
+			return result.SlipCount;
 		}
 		catch {
 			if (started) {
@@ -644,53 +655,6 @@ ORDER BY c.Id_Shohin, c.Id_Col, c.Id_Siz
 	private static string BuildSokoWhere(IEnumerable<long>? sokoIds, string column) {
 		var ids = sokoIds?.Where(x => x > 0).Distinct().ToList();
 		return ids == null || ids.Count == 0 ? string.Empty : $" AND {column} IN ({string.Join(",", ids)})";
-	}
-
-	/// <summary>店舗1件の棚卸の進行状況(<see cref="FetchRefixStatus"/>の戻り)</summary>
-	public sealed class StocktakeShopStatus {
-		/// <summary>店舗Id</summary>
-		public long Id_Soko { get; set; }
-		/// <summary>棚卸基準日 yyyyMMdd</summary>
-		public string TanaDay { get; set; } = string.Empty;
-		/// <summary>計上月 yyyyMM</summary>
-		public string SumMonth { get; set; } = string.Empty;
-		/// <summary>最終確定日 yyyyMMdd。未確定なら <see cref="StocktakeDaySet.UnsetDay"/></summary>
-		public string FixDay { get; set; } = StocktakeDaySet.UnsetDay;
-		/// <summary>棚卸日が未設定で計上月末へフォールバックしたか</summary>
-		public bool IsFallback { get; set; }
-		/// <summary>この基準日で棚卸開始処理が済んでいるか</summary>
-		public bool IsStarted { get; set; }
-		/// <summary>棚卸確定処理が済んでいるか</summary>
-		public bool IsFixed { get; set; }
-		/// <summary>確定後に基準日以前の伝票が修正され、再確定が必要か</summary>
-		public bool IsRefixRequired { get; set; }
-	}
-
-	/// <summary>
-	/// 基準日以外の日付で入力された棚卸伝票の1行(<see cref="FetchMisdatedTana"/>の戻り)
-	/// </summary>
-	public sealed class StocktakeMisdated {
-		/// <summary>店舗Id</summary>
-		public long Id_Soko { get; set; }
-		/// <summary>棚卸入力の計上日 yyyyMMdd</summary>
-		public string DenDay { get; set; } = string.Empty;
-		/// <summary>その日付の棚卸伝票の件数</summary>
-		public int SlipCount { get; set; }
-	}
-
-	/// <summary>棚卸確定処理の結果</summary>
-	public sealed class StocktakeFixResult {
-		/// <summary>生成した在庫調整伝票の件数</summary>
-		public int SlipCount { get; set; }
-		/// <summary>
-		/// 基準日以外の日付で入力された棚卸伝票。<see cref="IsConfirmationRequired"/> が true のときは
-		/// 確定処理を実行していない(何も変更していない)。
-		/// </summary>
-		public List<StocktakeMisdated> Misdated { get; set; } = [];
-		/// <summary>基準日へ補正した棚卸伝票の件数</summary>
-		public int AlignedCount { get; set; }
-		/// <summary>日付補正の確認が必要で確定処理を中断したか</summary>
-		public bool IsConfirmationRequired => Misdated.Count > 0 && AlignedCount == 0 && SlipCount == 0;
 	}
 
 	/// <summary>基準日時点の帳簿在庫の1行(<see cref="FetchBookQtyAsOf"/>の戻り)</summary>

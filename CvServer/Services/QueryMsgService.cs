@@ -53,6 +53,7 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg046_MasterShohinMeishoRebuild] = (req, ctx) => Task.FromResult(HandleConvertMasterShohin(req, ctx)),
 			[CvFlag.Msg047_MasterVColumnResync] = (req, ctx) => Task.FromResult(HandleMasterVColumnResync(req, ctx)),
 			[CvFlag.Msg059_TranTaxRebuild] = (req, ctx) => Task.FromResult(HandleTranTaxRebuild(req, ctx)),
+			[CvFlag.Msg060_StocktakeStatus] = (req, ctx) => Task.FromResult(HandleStocktakeStatus(req, ctx)),
 			[CvFlag.Msg070_PosLookupProduct] = HandlePosLookupProductAsync,
 			[CvFlag.Msg071_PosCheckout] = HandlePosCheckoutAsync,
 			[CvFlag.Msg072_PosCancelSale] = HandlePosCancelSaleAsync,

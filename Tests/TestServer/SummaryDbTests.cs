@@ -871,7 +871,7 @@ public class SummaryDbTests {
 		db.Insert(purchase);
 		ApplyImmediate(summaryDb, purchase, false);
 		db.Insert(CreateTana("20260831", 1, 18));
-		var param = new StocktakeParameter("202608", "20260831", 0, []);
+		var param = new StocktakeParameter("202608", 0, []);
 
 		await foreach (var p in stocktakeDb.StartAsyncStream(param)) {
 			Assert.IsFalse(p.IsError, $"{p.StepName}: {p.ErrorMessage}");

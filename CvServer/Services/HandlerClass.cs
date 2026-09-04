@@ -229,6 +229,32 @@ public partial class CoreService {
 	}
 
 	/// <summary>
+	/// 棚卸の店舗別状況照会。棚卸開始処理・棚卸確定処理の画面が店舗一覧を組み立てるのに使う。
+	/// <para>
+	/// 店舗ごとの棚卸日・計上月・開始済み／確定済み／再確定要と、基準日以外の日付で入力された
+	/// 棚卸伝票の内訳を返す。確定処理の前に日付補正の要否を確認するためにも使う(設計書2.5 / 4)。
+	/// </para>
+	/// </summary>
+	private CvMsg HandleStocktakeStatus(CvMsg request, CallContext context) {
+		try {
+			if (Common.DeserializeObject(request.DataMsg, request.DataType) is not StocktakeParameter param) {
+				return CreateErrorResponse(request.Flag, -1, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+			}
+			var stocktakeDb = new StocktakeDb(_db);
+			var days = stocktakeDb.ResolveDays(param.FallbackMonth, param.SokoIds);
+			var reply = new StocktakeStatusReply { Shops = stocktakeDb.FetchRefixStatus(days) };
+			foreach (var day in days) {
+				reply.Misdated.AddRange(stocktakeDb.FetchMisdatedTana(day));
+			}
+			return CreateSuccessResponse(request.Flag, typeof(StocktakeStatusReply), Common.SerializeObject(reply));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "棚卸の店舗別状況照会に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
 	/// 再同期の実行結果サマリを組み立てる(開始/終了/所要時間はサーバ側の実測値)
 	/// </summary>
 	private static string BuildResyncSummary(DateTime startTime, int updated, int errorCount) {

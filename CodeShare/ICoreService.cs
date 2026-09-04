@@ -224,6 +224,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg059_TranTaxRebuild = 59,
 	/// <summary>
+	/// 棚卸の店舗別状況照会（棚卸日・計上月・開始済み／確定済み／再確定要と、基準日以外の棚卸入力の内訳）
+	/// </summary>
+	[EnumMember]
+	Msg060_StocktakeStatus = 60,
+	/// <summary>
 	/// POS: バーコードから商品を検索する
 	/// </summary>
 	[EnumMember]

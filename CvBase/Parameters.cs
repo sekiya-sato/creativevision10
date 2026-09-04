@@ -299,11 +299,17 @@ public record BillingParameter(string BillingYyyymm, int Shime, string TorisakiC
 /// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.1 / 8.4 を参照する。
 /// </para>
 /// </summary>
-/// <param name="TanaMonth">棚卸年月 yyyyMM</param>
-/// <param name="DenDay">確定処理が作る在庫調整伝票の在庫計上日 yyyyMMdd。開始処理では使わない</param>
+/// <param name="FallbackMonth">
+/// 棚卸日(<see cref="Tran60TanaDate.TanaDay"/>)が未設定の店舗に使うフォールバック計上月 yyyyMM。
+/// 基準日は店舗ごとに解決するので、この値は未設定店舗の月末フォールバックにだけ使う(設計書2.1)
+/// </param>
 /// <param name="IdShain">入力社員Id。0 なら未設定</param>
-/// <param name="SokoIds">対象倉庫Id。空なら全倉庫を対象にする</param>
-public record StocktakeParameter(string TanaMonth, string DenDay, long IdShain, long[] SokoIds);
+/// <param name="SokoIds">対象倉庫Id。空なら既定の対象倉庫</param>
+/// <param name="AlignMisdated">
+/// 確定処理で、基準日以外の日付で入力された棚卸伝票の計上日を基準日へ補正してから確定するか。
+/// false で実行して該当があれば、何も変更せず中断して内訳を返す(設計書4)
+/// </param>
+public record StocktakeParameter(string FallbackMonth, long IdShain, long[] SokoIds, bool AlignMisdated = false);
 
 /// <summary>
 /// HHTデータ更新のパラメータ。<see cref="TranVulcanHht"/> を Tran系各テーブルへ展開する。
