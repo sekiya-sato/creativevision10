@@ -93,13 +93,7 @@
 				Command="{Binding ToggleTaskSendMailCommand}"
 				Content="メール送信する/しない 切替"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
-			<Button Margin="20,0,8,0"
-				Background="{DynamicResource MaterialDesignValidationErrorBrush}"
-				Command="{Binding DeleteTaskCommand}"
-				Content="削除"
-				Foreground="{DynamicResource MaterialDesignPaper}"
-				Style="{StaticResource MaterialDesignFlatButton}" />
-		</StackPanel>
+        </StackPanel>
 
 		<!--  DataGrid  -->
 		<materialDesign:Card Grid.Row="2"

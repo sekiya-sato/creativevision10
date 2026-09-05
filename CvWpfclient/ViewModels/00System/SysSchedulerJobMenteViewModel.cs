@@ -164,7 +164,7 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 		}
 	}
 
-	[RelayCommand]
+	[Obsolete]
 	private async Task DeleteTaskAsync() {
 		if (SelectedTask == null) {
 			MessageEx.ShowWarningDialog("削除するジョブを選択してください", owner: Helpers.ClientLib.GetActiveView(this));
