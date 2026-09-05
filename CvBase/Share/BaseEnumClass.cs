@@ -596,3 +596,27 @@ public enum EnumCostRevalStatus : int {
 	[Comment("取消")]
 	Canceled = 1
 }
+
+/// <summary>
+/// 諸掛確認画面（原価4項目 詳細設計 §3.8、§8.2）の行に付与する重みづけ。DBへは保存せず、
+/// <see cref="CvBase.SundryChargeDetailRow"/>/<see cref="CvBase.SundryChargeSummaryRow"/>を通じて
+/// クライアントと共有するためだけに定義する。
+/// </summary>
+[Comment("諸掛確認の判定重み")]
+public enum EnumSundryCheckSeverity : int {
+	/// <summary>
+	/// 情報表示。中断・是正の対象ではない（例: 対象月に諸掛明細が0件、原価方式=最終仕入原価）。
+	/// </summary>
+	[Comment("情報")]
+	Info = 0,
+	/// <summary>
+	/// 警告。総平均原価更新は妨げないが是正が望ましい（例: Id_Shohin未入力、金額0円）。
+	/// </summary>
+	[Comment("警告")]
+	Warning = 1,
+	/// <summary>
+	/// エラー。総平均原価更新の前に是正が必要（設計書§6.5）。
+	/// </summary>
+	[Comment("エラー")]
+	Error = 2
+}

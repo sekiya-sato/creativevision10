@@ -124,6 +124,89 @@ public sealed class ConsumptionPreviewRow {
 }
 
 /// <summary>
+/// 諸掛確認一覧の明細行（原価4項目 詳細設計 §8.2）。<c>Tran02Material</c>ヘッダ1件・明細1件に対応する。
+/// 更新を伴わない参照専用画面のためエラー行も本行に含めて返す（§3.8）。
+/// </summary>
+public sealed class SundryChargeDetailRow {
+	/// <summary>伝票のId(<c>Tran02Material.Id</c>)。</summary>
+	public long Id_Material_Slip { get; set; }
+	/// <summary>伝票No。<c>Tran02Material</c>は`Id`をそのまま伝票Noとして表示する（既存一覧の作法に合わせる）。</summary>
+	public long DenNo { get; set; }
+	/// <summary>伝票日 yyyyMMdd。</summary>
+	public string DenDay { get; set; } = string.Empty;
+	/// <summary>取引区分（<c>EnumShiire</c>: 10=仕入、20=仕入返品、30=値引、99=その他）。</summary>
+	public int Kubun { get; set; }
+	/// <summary>仕入先Id。</summary>
+	public long Id_Shiire { get; set; }
+	/// <summary>仕入先名。</summary>
+	public string MeiShiire { get; set; } = string.Empty;
+	/// <summary>明細No(<c>Tran99MaterialMeisai.No</c>)。</summary>
+	public int MeisaiNo { get; set; }
+	/// <summary>費目Id(生地・付属マスタ)。</summary>
+	public long Id_Material { get; set; }
+	/// <summary>費目名。</summary>
+	public string MeiMaterial { get; set; } = string.Empty;
+	/// <summary>費用を負担する商品Id。0=諸掛ではない明細（設計書§3.3）。</summary>
+	public long Id_Shohin { get; set; }
+	/// <summary>商品コード。</summary>
+	public string CodeShohin { get; set; } = string.Empty;
+	/// <summary>商品名。</summary>
+	public string MeiShohin { get; set; } = string.Empty;
+	/// <summary>数量。</summary>
+	public int Su { get; set; }
+	/// <summary>金額。ヘッダ<c>CalcFlag</c>を適用した符号付き・税抜（設計書§3.4）。</summary>
+	public long Kingaku { get; set; }
+	/// <summary>この行の判定重み。</summary>
+	public EnumSundryCheckSeverity Severity { get; set; }
+	/// <summary>画面表示用のエラー・警告・情報メッセージ。</summary>
+	public string ErrorMessage { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 諸掛確認一覧の商品別集計行（原価4項目 詳細設計 §8.2）。総平均原価更新の分子・分母（§6.3）と
+/// 同じ集計を先に見せる（§6.5のエラーをこの画面で発見できるようにするため）。
+/// </summary>
+public sealed class SundryChargeSummaryRow {
+	/// <summary>商品Id。</summary>
+	public long Id_Shohin { get; set; }
+	/// <summary>商品コード。</summary>
+	public string CodeShohin { get; set; } = string.Empty;
+	/// <summary>商品名。</summary>
+	public string MeiShohin { get; set; } = string.Empty;
+	/// <summary>諸掛件数。</summary>
+	public long SundryCount { get; set; }
+	/// <summary>諸掛金額（設計書§3.5の合計。符号付き）。</summary>
+	public long SundryAmount { get; set; }
+	/// <summary>当月仕入数（設計書§6.3と同じ定義）。</summary>
+	public long PurchaseQty { get; set; }
+	/// <summary>当月仕入金額（設計書§6.3と同じ定義。諸掛は含まない）。</summary>
+	public long PurchaseAmount { get; set; }
+	/// <summary>前月在庫数（設計書§6.2と同じ定義）。</summary>
+	public long OpeningQty { get; set; }
+	/// <summary>この商品の判定重み（明細側で検出した最大の重みを表示する）。</summary>
+	public EnumSundryCheckSeverity Severity { get; set; }
+	/// <summary>画面表示用のエラー・警告・情報メッセージ。</summary>
+	public string ErrorMessage { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 諸掛確認画面の結果全体（原価4項目 詳細設計 §3.8、§8.2）。保存を伴わない参照専用であり、
+/// 本結果に対応する更新(Apply)メソッドは存在しない。
+/// </summary>
+public sealed class SundryChargeCheckResult {
+	/// <summary>明細行一覧。</summary>
+	public IReadOnlyList<SundryChargeDetailRow> DetailRows { get; set; } = [];
+	/// <summary>商品別集計行一覧。</summary>
+	public IReadOnlyList<SundryChargeSummaryRow> SummaryRows { get; set; } = [];
+	/// <summary>画面上部に表示する情報メッセージ（例: 現在の原価方式=最終仕入原価、対象月に諸掛明細が0件）。</summary>
+	public IReadOnlyList<string> InfoMessages { get; set; } = [];
+	/// <summary>エラー件数（明細・集計行の合算。総平均原価更新の実行可否判定に使う）。</summary>
+	public long ErrorCount { get; set; }
+	/// <summary>警告件数。</summary>
+	public long WarningCount { get; set; }
+}
+
+/// <summary>
 /// 消化仕入更新の対象期間が支払計算済み範囲に含まれるため、更新を中断したことを表す（原価4項目 詳細設計 §4.6）。
 /// <para>
 /// <see cref="CvDomainLogic.StocktakeDb"/> の <c>StocktakeMisdatedException</c>（棚卸確定処理の中断例外、

@@ -152,6 +152,7 @@ public partial class ConvertDb {
 		var shiireTaxMap = GetShiireTaxMap();
 		var sysman = GetSysman();
 		var mismatch = new TaxMismatchCounter();
+		int totalUnresolvedShohinCodeCount = 0;
 		var count = ConvertTranHeadersByRange(
 			2,
 			isInit,
@@ -159,7 +160,8 @@ public partial class ConvertDb {
 				var shain = getCodeNameView<MasterShain>(getString(rec, "入力社員CD")) ?? new();
 				var shiire = getCodeNameView<MasterShiire>(getString(rec, "取引先CD1")) ?? new();
 				var kubun = getDataInt(rec, "取引区分");
-				var meisaiList = BuildMaterialMeisaiList(rec, kubun);
+				var meisaiList = BuildMaterialMeisaiList(rec, kubun, out var unresolvedCount);
+				totalUnresolvedShohinCodeCount += unresolvedCount;
 				var kingakuTotalRaw = getDataLong(rec, "明細金額合計");
 				// Tran02Material は Rate 列を持たないため旧「掛率1」は読まない
 				var oldTax = getDataLong(rec, "内税消費税") + getDataLong(rec, "外税消費税");
@@ -199,6 +201,11 @@ public partial class ConvertDb {
 				return slip;
 			});
 		mismatch.LogIfAny(_logger, nameof(Tran02Material));
+		if (totalUnresolvedShohinCodeCount > 0) {
+			_logger.LogWarning(
+				"{Table} 関連商品CDを商品マスタへ解決できなかった件数 {Count} 件",
+				nameof(Tran02Material), totalUnresolvedShohinCodeCount);
+		}
 		return count;
 	}
 	/// <summary>
@@ -856,7 +863,8 @@ WHERE {child}.RelateNo1 > 0
 	/// MasterMaterial.Id_Tax から解決して確定させるため、ここでは既定値のまま積む(Doc/spec 3.2)。
 	/// </para>
 	/// </summary>
-	List<Tran99MaterialMeisai>? BuildMaterialMeisaiList(Dictionary<string, object> rec, int kubun) {
+	List<Tran99MaterialMeisai>? BuildMaterialMeisaiList(Dictionary<string, object> rec, int kubun, out int unresolvedShohinCodeCount) {
+		unresolvedShohinCodeCount = 0;
 		var detailRows = _fromDb.Fetch<Dictionary<string, object>>("select * from HC$tran_tori1 where ヘッダNO=@0 order by 行NO", getDataLong(rec, "SEQ_NO"));
 		if (detailRows.Count == 0)
 			return null;
@@ -872,6 +880,28 @@ WHERE {child}.RelateNo1 > 0
 			var oldCode = getString(detailRec, "商品CD");
 			var material = getMaster<MasterMaterial>(placeholderCode ?? oldCode);
 
+			// 関連商品CD（諸掛の費用を負担する商品）の解決処理（原価4項目 詳細設計 §3.3）
+			// 旧DBの明細テーブル HC$tran_tori1 の「関連商品CD」列から商品マスタを解決する。
+			// 解決できないコードがあっても異常終了させない。旧データに商品コード以外の文字列
+			// （注文番号など）が入っている実例があるため、そうしたレコードは Id_Shohin=0、
+			// Code_Shohin=旧コード、Mei_Shohin="" として扱う。
+			var relatedShohinCode = getString(detailRec, "関連商品CD");
+			long idShohin = 0;
+			string codeShohin = string.Empty;
+			string meiShohin = string.Empty;
+			if (!string.IsNullOrWhiteSpace(relatedShohinCode)) {
+				var relatedShohin = getMaster<MasterShohin>(relatedShohinCode);
+				if (relatedShohin != null) {
+					idShohin = relatedShohin.Id;
+					codeShohin = relatedShohin.Code;
+					meiShohin = relatedShohin.Name;
+				} else {
+					// 解決失敗：旧コードをそのまま Code_Shohin へ保持
+					codeShohin = relatedShohinCode;
+					unresolvedShohinCodeCount++;
+				}
+			}
+
 			meisaiList.Add(new Tran99MaterialMeisai() {
 				No = getDataInt(detailRec, "行NO"),
 				Id_Material = material?.Id ?? 0,
@@ -881,6 +911,9 @@ WHERE {child}.RelateNo1 > 0
 				Tanka = getDataInt(detailRec, "単価"),
 				Kingaku = getDataLong(detailRec, "金額"),
 				Memo = getString(detailRec, "明細メモ"),
+				Id_Shohin = idShohin,
+				Code_Shohin = codeShohin,
+				Mei_Shohin = meiShohin,
 			});
 		}
 
