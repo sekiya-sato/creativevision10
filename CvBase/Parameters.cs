@@ -1,3 +1,4 @@
+using CvBase.Share;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
 
@@ -430,3 +431,44 @@ public sealed record ConvertDbParam(bool IsInit);
 /// <param name="IsInit"></param>
 /// <param name="SelectedTask"></param>
 public sealed record ConvertSelectedDbParam(bool IsInit, List<string> SelectedTask);
+
+/// <summary>
+/// 評価替え（原価4項目 詳細設計 §16.4、§16.11）の実行パラメータ。確認(<c>PreviewRevaluation</c>)・
+/// 更新(<c>ApplyRevaluation</c>)の両方で同一の値を渡す。
+/// </summary>
+/// <param name="TargetMonth">対象計上月 yyyyMM。画面表示は yyyy/MM。</param>
+/// <param name="ApplyPoint">適用時点。0=月末、1=期末（設計書§16.4）。</param>
+/// <param name="Cond">抽出条件（項目選択式のFrom～To条件行）。0行なら全在庫商品が対象。</param>
+/// <param name="GroupKey">集計単位。0=ブランド、1=アイテム、2=シーズン、3=メーカー、4=展示会。</param>
+/// <param name="Method">評価替え指定方式。1=率一括、2=金額一括。</param>
+/// <param name="RatePercent">掛率(整数%)。<paramref name="Method"/>=1(率一括)は1～100。方式2は0。</param>
+/// <param name="FixedCost">指定単価(円)。<paramref name="Method"/>=2(金額一括)は1以上。方式1は0。</param>
+/// <param name="RoundingUnit">端数単位。1、10、100円のみ（既定1）。</param>
+/// <param name="Rounding">端数処理。</param>
+/// <param name="Id_Shain">実行社員Id。</param>
+/// <param name="BatchId">評価替え実行Id(GUID D形式)。確認と更新で同一値を使う。</param>
+/// <param name="ConfirmedShohinVdu">
+/// 確認(<c>PreviewRevaluation</c>)結果の<see cref="RevaluationPreviewResult.ConfirmedShohinVdu"/>を
+/// そのまま渡す。更新実行時に対象商品の現在の<c>Vdu</c>と照合し、1件でも不一致（確認後に対象商品が
+/// 更新された）があれば更新を中断する（設計書§2.4-4）。<c>null</c>または空の場合はこの再検査を行わない。
+/// </param>
+/// <param name="ConfirmedShimeBi">確認結果の<see cref="RevaluationPreviewResult.ConfirmedShimeBi"/>。
+/// 更新時の自社締日と不一致なら中断する（設計書§2.4-4）。<c>null</c>ならこの再検査を行わない。</param>
+/// <param name="ConfirmedCostMethod">確認結果の<see cref="RevaluationPreviewResult.ConfirmedCostMethod"/>。
+/// 更新時の<c>MasterSysman.CostMethod</c>と不一致なら中断する（設計書§2.4-4）。
+/// <c>null</c>ならこの再検査を行わない。</param>
+public sealed record CostRevaluationParameter(
+	string TargetMonth,
+	EnumCostRevalApplyPoint ApplyPoint,
+	CostRevaluationCondition Cond,
+	EnumCostRevalGroupKey GroupKey,
+	EnumCostRevaluationMethod Method,
+	int RatePercent,
+	int FixedCost,
+	int RoundingUnit,
+	EnumRounding Rounding,
+	long Id_Shain,
+	string BatchId,
+	IReadOnlyDictionary<long, long>? ConfirmedShohinVdu = null,
+	int? ConfirmedShimeBi = null,
+	int? ConfirmedCostMethod = null);

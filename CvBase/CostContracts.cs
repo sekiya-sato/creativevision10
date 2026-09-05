@@ -226,6 +226,107 @@ public sealed class ConsumptionPurchasePaidPeriodException(string targetMonth)
 }
 
 /// <summary>
+/// 評価替え一覧の集計行（原価4項目 詳細設計 §16.6.1）。<c>GroupKey</c>で選択した軸1件に対応する。
+/// </summary>
+public sealed class RevaluationSummaryRow {
+	/// <summary>集計単位のコード（<c>GroupKey</c>で選択した軸のコード）。</summary>
+	public string GroupCode { get; set; } = string.Empty;
+	/// <summary>集計単位の名称。</summary>
+	public string GroupName { get; set; } = string.Empty;
+	/// <summary>対象品番数。</summary>
+	public long TargetCount { get; set; }
+	/// <summary>数量（Σ Qty）。</summary>
+	public long Qty { get; set; }
+	/// <summary>元上代金額（Σ MasterShohin.TankaJodai × Qty）。</summary>
+	public long JodaiAmount { get; set; }
+	/// <summary>在庫金額（Σ BeforeCost × Qty）。</summary>
+	public long BeforeAmount { get; set; }
+	/// <summary>評価減後金額（Σ AfterCost × Qty）。</summary>
+	public long AfterAmount { get; set; }
+	/// <summary>
+	/// 評価減差額（在庫金額－評価減後金額）。設計書§2.5.11が明示するとおり導出値であり、
+	/// <see cref="TranGenkaReval"/>には列を持たない。本DTOでは表示の便宜上、読み取り専用プロパティとして公開する。
+	/// </summary>
+	public long DiffAmount => BeforeAmount - AfterAmount;
+}
+
+/// <summary>
+/// 評価替え一覧の明細行（原価4項目 詳細設計 §16.6.2）。
+/// </summary>
+public sealed class RevaluationDetailRow {
+	/// <summary>商品Id。</summary>
+	public long Id_Shohin { get; set; }
+	/// <summary>商品コード。</summary>
+	public string CodeShohin { get; set; } = string.Empty;
+	/// <summary>商品名。</summary>
+	public string MeiShohin { get; set; } = string.Empty;
+	/// <summary>シーズン名。</summary>
+	public string MeiSeason { get; set; } = string.Empty;
+	/// <summary>ブランド名。</summary>
+	public string MeiBrand { get; set; } = string.Empty;
+	/// <summary>アイテム名。</summary>
+	public string MeiItem { get; set; } = string.Empty;
+	/// <summary>上代。</summary>
+	public long Jodai { get; set; }
+	/// <summary>対象計上月末の在庫数（設計書§16.5）。</summary>
+	public long Qty { get; set; }
+	/// <summary>計算前原価（対象計上月時点の解決原価）。</summary>
+	public long BeforeCost { get; set; }
+	/// <summary>計算後原価。対象外・エラー行は0。</summary>
+	public long AfterCost { get; set; }
+	/// <summary>在庫金額（BeforeCost × Qty）。</summary>
+	public long BeforeAmount { get; set; }
+	/// <summary>評価減後金額（AfterCost × Qty）。対象外・エラー行は0。</summary>
+	public long AfterAmount { get; set; }
+	/// <summary>対象商品か（設計書§16.5の条件1～6を全て満たすか）。</summary>
+	public bool IsTarget { get; set; }
+	/// <summary>
+	/// 対象外の理由（在庫0／原価0／引き下げにならない）。<see cref="IsTarget"/>=falseかつ
+	/// <see cref="Error"/>=Noneのときのみ設定する。対象外はエラーではない（設計書§16.9）。
+	/// </summary>
+	public string ExcludeReason { get; set; } = string.Empty;
+	/// <summary>この行の計算エラー種別。<c>AfterCost&lt;=0</c>のときのみ設定する（設計書§16.9）。</summary>
+	public EnumCostCalcError Error { get; set; }
+	/// <summary>画面表示用のエラーメッセージ。</summary>
+	public string ErrorMessage { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 評価替えの確認（プレビュー）結果全体（原価4項目 詳細設計 §16.6）。
+/// </summary>
+public sealed class RevaluationPreviewResult {
+	/// <summary>集計行一覧（<c>GroupKey</c>で選択した軸ごと）。</summary>
+	public IReadOnlyList<RevaluationSummaryRow> SummaryRows { get; set; } = [];
+	/// <summary>明細行一覧（対象外・エラー行を含む）。</summary>
+	public IReadOnlyList<RevaluationDetailRow> DetailRows { get; set; } = [];
+	/// <summary>全体の合計行（設計書§16.6.1「最下部に全体の合計行を表示する」）。</summary>
+	public RevaluationSummaryRow Total { get; set; } = new();
+	/// <summary>エラー件数（<c>AfterCost&lt;=0</c>の行数。1件でもあれば更新不可、設計書§16.9）。</summary>
+	public long ErrorCount { get; set; }
+	/// <summary>画面上部に表示する情報メッセージ（例: データが存在しません、更新対象がありませんでした＋対象外内訳）。</summary>
+	public IReadOnlyList<string> InfoMessages { get; set; } = [];
+	/// <summary>
+	/// 確認時点の対象商品Id→<c>MasterShohin.Vdu</c>。<see cref="CostRevaluationParameter.ConfirmedShohinVdu"/>へ
+	/// そのまま渡すことで、更新実行時に確認後の変更を検知できる（設計書§2.4-4）。
+	/// </summary>
+	public IReadOnlyDictionary<long, long> ConfirmedShohinVdu { get; set; } = new Dictionary<long, long>();
+	/// <summary>確認時点の自社締日。<see cref="CostRevaluationParameter.ConfirmedShimeBi"/>へそのまま渡す。</summary>
+	public int ConfirmedShimeBi { get; set; }
+	/// <summary>確認時点の<c>MasterSysman.CostMethod</c>。<see cref="CostRevaluationParameter.ConfirmedCostMethod"/>へそのまま渡す。</summary>
+	public int ConfirmedCostMethod { get; set; }
+}
+
+/// <summary>
+/// 評価替えの対象計上月が支払計算済み範囲に含まれるため、更新を中断したことを表す（原価4項目 詳細設計 §16.9、§4.6準拠）。
+/// <see cref="ConsumptionPurchasePaidPeriodException"/>と同じ前例に倣う。
+/// </summary>
+public sealed class CostRevaluationPaidPeriodException(string targetMonth)
+	: Exception($"対象月 {targetMonth} は支払計算済み範囲に含まれるため、評価替えを中断しました。支払計算を取り消してから再実行してください。") {
+	/// <summary>対象計上月 yyyyMM。</summary>
+	public string TargetMonth { get; } = targetMonth;
+}
+
+/// <summary>
 /// 原価4処理の更新結果（原価4項目 詳細設計 §2.4、§10.2）。
 /// </summary>
 public sealed class CostUpdateResult {
