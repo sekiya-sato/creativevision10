@@ -124,6 +124,19 @@ public sealed class ConsumptionPreviewRow {
 }
 
 /// <summary>
+/// 消化仕入更新の対象期間が支払計算済み範囲に含まれるため、更新を中断したことを表す（原価4項目 詳細設計 §4.6）。
+/// <para>
+/// <see cref="CvDomainLogic.StocktakeDb"/> の <c>StocktakeMisdatedException</c>（棚卸確定処理の中断例外、
+/// `CvBase/StocktakeContracts.cs`）と同じ前例に倣い、確認が必要な中断を例外で表に出す。
+/// </para>
+/// </summary>
+public sealed class ConsumptionPurchasePaidPeriodException(string targetMonth)
+	: Exception($"対象月 {targetMonth} は支払計算済み範囲に含まれるため、消化仕入更新を中断しました。支払計算を取り消してから再実行してください。") {
+	/// <summary>対象計上月 yyyyMM。</summary>
+	public string TargetMonth { get; } = targetMonth;
+}
+
+/// <summary>
 /// 原価4処理の更新結果（原価4項目 詳細設計 §2.4、§10.2）。
 /// </summary>
 public sealed class CostUpdateResult {

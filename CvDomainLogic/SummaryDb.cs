@@ -469,9 +469,23 @@ SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
 		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
 		return updatedCount;
 	}
+	/// <summary>
+	/// 在庫集計(<see cref="CreateSummaryStockSql"/>・<see cref="CreateRealStockSql"/>)のWHERE句へ足す
+	/// 「消化仕入は在庫加算しない」条件(原価4項目 詳細設計§4.5「在庫集計はIsStock=1を1条件追加する」)。
+	/// <para>
+	/// 両関数は<c>Tran00Uriage</c>/<c>Tran01Tenuri</c>/<c>Tran05Ido</c>/<c>Tran61Chosei</c>など
+	/// <c>IsStock</c>列を持たないテーブルからも呼ばれるため、無条件には追加できない。
+	/// <c>IsStock</c>列を持つのは仕入(<see cref="Tran03Shiire"/>)だけであり、
+	/// <paramref name="tableName"/>がそれと一致する場合だけ条件を足す。
+	/// </para>
+	/// </summary>
+	private static string CreateIsStockWhereClause(string tableName) =>
+		tableName == nameof(Tran03Shiire) ? " AND t.IsStock = 1" : string.Empty;
+
 	private string CreateSummaryStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause, int shime, bool invertFlag = false) {
 		// 調整数は在庫調整伝票(Tran61Chosei)だけが積む。移動先軸(Id_Ido)では調整は発生しない
 		var adjustFlag = idSoko == nameof(ITranIdo.Id_Ido) ? 0 : TranCalcBase.GetCalcAdjust(tableName, invertFlag);
+		var isStockWhere = CreateIsStockWhereClause(tableName);
 		return $@"
 INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu, InQty, OutQty, TransitQty, AdjustQty)
 SELECT
@@ -495,6 +509,7 @@ WHERE {whereClause}
   AND json_type(t.Jmeisai) = 'array'
   AND COALESCE(mt.IsZaiko, 1) = 1
   AND COALESCE(ms.IsZaiko, 1) = 1
+  {isStockWhere}
 GROUP BY
   SumMonth,
   t.{idSoko},
@@ -510,7 +525,13 @@ SET Su = Su + excluded.Su, vdu = {vdate},
 ;
 ";
 	}
-	private string CreateRealStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause) => $@"
+	private string CreateRealStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause) {
+		// 設計書§4.5は年月在庫(CreateSummaryStockSql)にしかIsStock除外を明記していないが、現在庫
+		// (SummaryRealStock)も同じ条件を入れる。U-04「消化仕入は在庫・総平均原価から除外」の目的は
+		// 現在庫にも当然効くべきであり、年月在庫だけ除外すると現在庫との集計が乖離するため
+		// （設計書の記述漏れ。Step5実装判断として報告する）。
+		var isStockWhere = CreateIsStockWhereClause(tableName);
+		return $@"
 INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
 SELECT
   t.{idSoko} AS Id_Soko,
@@ -528,6 +549,7 @@ WHERE {whereClause}
   AND json_type(t.Jmeisai) = 'array'
   AND COALESCE(mt.IsZaiko, 1) = 1
   AND COALESCE(ms.IsZaiko, 1) = 1
+  {isStockWhere}
 GROUP BY
   t.{idSoko},
   Id_Shohin,
@@ -537,6 +559,7 @@ ON CONFLICT(Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
 SET Su = Su + excluded.Su, vdu = {vdate}
 ;
 ";
+	}
 	/// <summary>
 	/// SummaryStockの年月までのデータを集計してSummaryRealStockに更新する(再作成)
 	/// </summary>

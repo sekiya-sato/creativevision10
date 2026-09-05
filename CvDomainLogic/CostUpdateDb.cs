@@ -374,7 +374,7 @@ ON CONFLICT(SumMonth, Id_Shohin, CostMethod, ChangeKind) DO UPDATE SET
 	/// 成果テーブルから都度算出する。
 	/// </summary>
 	public CostMonthStatus FetchCostMonthStatus(string sumMonth, EnumCostProcessKind processKind) => processKind switch {
-		EnumCostProcessKind.ConsumptionPurchase => FetchConsumptionStatusStub(sumMonth),
+		EnumCostProcessKind.ConsumptionPurchase => FetchConsumptionStatus(sumMonth),
 		EnumCostProcessKind.CostUpdate => FetchCostUpdateStatus(sumMonth),
 		_ => throw new ArgumentOutOfRangeException(nameof(processKind), processKind, "未定義の原価処理区分です。"),
 	};
@@ -384,15 +384,6 @@ ON CONFLICT(SumMonth, Id_Shohin, CostMethod, ChangeKind) DO UPDATE SET
 		FetchCostMonthStatus(sumMonth, EnumCostProcessKind.ConsumptionPurchase),
 		FetchCostMonthStatus(sumMonth, EnumCostProcessKind.CostUpdate),
 	];
-
-	// TODO(Step5): 消化仕入(ProcessKind=1)の状態算出は TranConsumptionPurchaseLink を読むStep5で実装する。
-	// 本Stepでは対象テーブル(TranConsumptionPurchaseLink)への書き込み側が無いため、常に「状態0(未実行)」を返す
-	// 暫定実装とする。設計書§2.5.6の算出方法（対応関係の突合による状態1/2判定）はStep5で実装すること。
-	private static CostMonthStatus FetchConsumptionStatusStub(string sumMonth) => new() {
-		SumMonth = sumMonth,
-		ProcessKind = EnumCostProcessKind.ConsumptionPurchase,
-		Status = EnumCostProcessStatus.NotRun,
-	};
 
 	/// <summary>
 	/// 原価更新(<c>ProcessKind=3</c>)の月次状態を設計書§2.5.6の算出方法1〜4のとおりに算出する。
@@ -441,10 +432,12 @@ LIMIT 1", sumMonth, (int)EnumCostChangeKind.Monthly);
 		var currentEligibleCount = FetchEligibleProductCount(period, costMethod);
 		var countMismatch = currentEligibleCount != summary.Cnt;
 
-		// TODO(Step5): 「消化仕入が状態2である」場合に原価更新も状態2にする無効化連鎖(設計書§2.5.6手順3、§7の表)を
-		// ここに追加する。消化仕入の状態算出(FetchConsumptionStatusStub)がStep5で実装されるまでは判定できない。
+		// 消化仕入(ProcessKind=1)が「再実行要」なら原価更新も無効化する連鎖(設計書§2.5.6手順3、§7の表)。
+		// 消化仕入は在庫加算しない(IsStock=0)ため原価更新の対象抽出そのものには含まれないが、
+		// 消化仕入の再生成で買掛が変わりうるため、先行処理として無効化する。
+		var consumptionRerunRequired = FetchConsumptionStatus(sumMonth).Status == EnumCostProcessStatus.RerunRequired;
 
-		status.Status = currentCostMethod != costMethod || sourceChanged || countMismatch
+		status.Status = currentCostMethod != costMethod || sourceChanged || countMismatch || consumptionRerunRequired
 			? EnumCostProcessStatus.RerunRequired
 			: EnumCostProcessStatus.Completed;
 		return status;
