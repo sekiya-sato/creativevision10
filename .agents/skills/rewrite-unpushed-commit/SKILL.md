@@ -12,7 +12,7 @@ description: Safely rewrite local unpushed git commits in cv10, especially commi
 - まず `git status --short --branch` と `git log --oneline --decorate --reverse origin/master..HEAD` で未push範囲を確認する。
 - 対象SHAが `origin/*` 側に含まれる、または push 済みの可能性がある場合は、履歴を書き換える前にユーザーへ確認する。
 - 未コミット変更がある場合は、対象外変更を失わない。必要なら `git stash push -u -m "<作業名>"` を使うが、ユーザー変更を勝手に戻さない。
-- コミット作成・書き換え時の作業者名は、repo 指示に従い `Sekiya Sato Codex` を使う。
+- コミット作成・書き換え時の作業者名は、`Sekiya Sato Codex(home)` を使い、必ず `git -c user.name="Sekiya Sato Codex(home)" commit ...` を実行する。
 - 対象コミットが `HEAD` でない場合は、対象コミットだけを作り直し、後続コミットを `rebase --onto` で載せ直す。
 - `git reset --hard` や `git checkout -- <path>` は使わない。
 
@@ -59,7 +59,7 @@ GPT-5 : OpenAI : Codex
 [ユーザ指示の概略]
 "@, [Text.UTF8Encoding]::new($false))
 
-git -c user.name="Sekiya Sato Codex" commit --amend --author="Sekiya Sato Codex <sekiya.sato@gmail.com>" -F $msgPath
+git -c user.name="Sekiya Sato Codex(home)" commit --amend --author="Sekiya Sato Codex(home) <sekiya.sato@gmail.com>" -F $msgPath
 Remove-Item -LiteralPath $msgPath
 ```
 
@@ -89,10 +89,10 @@ GPT-5 : OpenAI : Codex
 "@, [Text.UTF8Encoding]::new($false))
 
 try {
-    $env:GIT_AUTHOR_NAME = "Sekiya Sato Codex"
+    $env:GIT_AUTHOR_NAME = "Sekiya Sato Codex(home)"
     $env:GIT_AUTHOR_EMAIL = $authorEmail
     $env:GIT_AUTHOR_DATE = $authorDate
-    $env:GIT_COMMITTER_NAME = "Sekiya Sato Codex"
+    $env:GIT_COMMITTER_NAME = "Sekiya Sato Codex(home)"
     $env:GIT_COMMITTER_EMAIL = $committerEmail
     $env:GIT_COMMITTER_DATE = $committerDate
     $newCommit = git commit-tree $tree -p $parent -F $msgPath
@@ -124,7 +124,7 @@ git branch --contains <old-sha>
 完了条件:
 
 - 作業ツリーが意図せず汚れていない。
-- 新しいコミットの Author / Committer が `Sekiya Sato Codex`。
+- 新しいコミットの Author / Committer が `Sekiya Sato Codex(home)`。
 - メッセージが Commit-Format に沿っている。
 - 旧SHAが現在ブランチから外れている。`git branch --contains <old-sha>` が空でない場合は、残っているブランチを報告する。
 - 後続コミット数と順序が意図通り。

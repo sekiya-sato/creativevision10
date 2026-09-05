@@ -1,11 +1,11 @@
 ---
 name: check-xaml-layout
-description: Detects and fixes visual layout defects in CvWpfclient XAML - clipped text, insufficient margins, bottom/right cut-off, missing ScrollViewer, hardcoded sizes, and design inconsistency against shared MaterialDesign styles. Complements check-xaml (syntax/resource/binding) with a rendering-oriented layout review.
+description: Detects and fixes visual layout defects in CvWpfclient XAML - clipped text, insufficient margins, bottom/right cut-off, missing ScrollViewer, hardcoded sizes, and design inconsistency against shared MaterialDesign styles. Provides an independent rendering-oriented layout review in addition to source-level XML/resource/binding checks.
 ---
 
 # Check XAML Layout
 
-このスキルは、`CvWpfclient` の XAML について **見た目のレイアウト崩れ** を検出して修正するためのチェックリストとワークフローです。構文・リソース・バインディングの検証は `check-xaml`、実画面での目視確認は `verify-wpf-screen-runtime`、WPF全体の共通規約は `wpf-project-guide` が担当します。本スキルはその中間にあたる「ソース上の危険パターン検出 → 修正 → 目視確認」の一連を担います。
+このスキルは、`CvWpfclient` の XAML について **見た目のレイアウト崩れ** を検出して修正するためのチェックリストとワークフローです。構文・リソース・バインディングはXML整形式・xmlns・resource・Converter・Bindingの組込みチェックで確認し、実画面での目視確認は `verify-wpf-screen-runtime`、WPF全体の共通規約は `wpf-project-guide` が担当します。本スキルはその中間にあたる「ソース上の危険パターン検出 → 修正 → 目視確認」の一連を担います。
 
 このスキルが検出・修正する対象：
 
@@ -20,17 +20,17 @@ description: Detects and fixes visual layout defects in CvWpfclient XAML - clipp
 - 「XAMLのデザイン崩れ／レイアウト崩れをチェックして」「余白が足りない」「文字が見切れている」と依頼されたとき
 - 画面を新規作成・大幅改修したあと、見た目の破綻がないか確認したいとき
 - 複数画面をまとめて棚卸しし、見た目の品質を底上げしたいとき
-- `check-xaml` で構文・リソースは通ったが、実画面でレイアウトが崩れる疑いがあるとき
+- XML/resourceの組込みチェック後も、実画面でレイアウトが崩れる疑いがあるとき
 
 ## このスキルの責務と関連スキル
 
 - 本スキル: XAML の **視覚的レイアウト崩れ** の検出と修正
-- `check-xaml`: 構文・名前空間・リソース参照・コンバーター・バインディングパスの検証
+- XML整形式・名前空間・リソース参照・Converter・Bindingの組込みチェック
 - `verify-wpf-screen-runtime`: `CvServer`+`CvWpfclient` を起動しての実画面目視確認
 - `wpf-project-guide`: 共通リソース・`BaseWindow`・`DynamicResource`・レイアウト注意点の共通規約
 - `update-design-mente`: マスターメンテ画面を `MasterShohinMenteView` 系デザインへ統一するとき
 
-構文とレイアウトの両方を見たい場合は、先に `check-xaml` で構文・リソースを通してから本スキルでレイアウトを見る。
+構文とレイアウトの両方を見たい場合は、先にXML整形式・resource確認を通してから本スキルでレイアウトを見る。
 
 ## 前提とする共通スタイル（Cv固有）
 
@@ -76,7 +76,7 @@ description: Detects and fixes visual layout defects in CvWpfclient XAML - clipp
   <!-- ✅ 例: 外周に余白 -->
   <Grid Margin="16">
   ```
-- **DataGrid セルに `Padding` が無く、文字が罫線に接触**（`helpers:DataGridAssist.CellPadding` や列ヘッダースタイルで統一）。
+- **DataGrid セルに `Padding` が無く、文字が罫線に接触**（`materialDesign:DataGridAssist.CellPadding` や列ヘッダースタイルで統一）。
 
 ### 3. 下端・右端の見切れ（cv10 で最も多い）
 
@@ -170,7 +170,7 @@ grep -Ln 'ScrollViewer' CvWpfclient/Views/**/*.xaml
 
 ## 報告フォーマット
 
-`check-xaml` と同様、正常はサマリー、問題は詳細に報告する。
+組込みチェックと同様、正常はサマリー、問題は詳細に報告する。
 
 ```
 ## レイアウトチェック結果: [ファイルパス or 範囲]
@@ -200,4 +200,4 @@ grep -Ln 'ScrollViewer' CvWpfclient/Views/**/*.xaml
 
 ## 更新履歴
 
-- **v0.1.0 (2026-07-24)**: 初版。`check-xaml`（構文）から分離した視覚レイアウト崩れ検出・修正スキルとして作成。
+- **v0.1.0 (2026-07-24)**: 初版。XML構文チェックから分離した視覚レイアウト崩れ検出・修正スキルとして作成。

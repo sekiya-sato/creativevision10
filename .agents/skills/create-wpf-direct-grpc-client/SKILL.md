@@ -28,13 +28,13 @@ description: Creates or fixes CvWpfclient ViewModel-owned code-first gRPC client
 
 ## 実装手順
 
-### 1. 対象サービスだけ DI 登録を外す
+### 1. 現在の登録と利用者を照合してから対象サービスだけ DI 登録を外す
 
-`App.xaml.cs` の `ConfigureServices` から対象サービスのみ削除する。`GetGrpcService<T>()` や他サービスの登録は残す。
+`App.xaml.cs` の `ConfigureServices`、対象 ViewModel、全利用者を `rg` で照合する。`ConfigureClient<TService>` が存在する場合だけ、対象サービスの登録を削除する。`GetGrpcService<T>()` や他サービスの登録は残す。現行 Scheduler 契約は `ISchedulerService` / `GetTasksAsync` であり、過去の `IScheduler` / `GetAllTasksAsync` を使わない。
 
 ```csharp
 // 削除例
-ConfigureClient<IScheduler>(services, url, subPath);
+ConfigureClient<ISchedulerService>(services, url, subPath);
 ```
 
 ### 2. ViewModel に直接クライアントを持たせる
@@ -52,11 +52,11 @@ ViewModel にチャンネルとクライアントを追加する。
 
 ```csharp
 private readonly GrpcChannel _schedulerChannel;
-private readonly IScheduler _schedulerClient;
+private readonly ISchedulerService _schedulerClient;
 
 public XxxViewModel() {
     _schedulerChannel = CreateSchedulerChannel();
-    _schedulerClient = _schedulerChannel.CreateGrpcService<IScheduler>();
+    _schedulerClient = _schedulerChannel.CreateGrpcService<ISchedulerService>();
 }
 ```
 
@@ -94,7 +94,7 @@ private static GrpcChannel CreateSchedulerChannel() {
 ### 4. 呼び出し時は CallContext を渡す
 
 ```csharp
-var response = await _schedulerClient.GetAllTasksAsync(AppGlobal.GetDefaultCallContext(ct));
+var response = await _schedulerClient.GetTasksAsync(AppGlobal.GetDefaultCallContext(ct));
 ```
 
 キャンセル可能なコマンドでは `CancellationToken` 付きの `GetDefaultCallContext(ct)` を使う。
@@ -131,6 +131,8 @@ C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfcli
 ```
 
 5. 可能なら対象画面を起動し、初回ロード・更新・キャンセル時の例外がないことを確認する。
+
+`ISchedulerService`、サービス名、メソッド名は作業時点の `CodeShare/ISchedulerService.cs`、`CvServer/Services/SchedulerService.cs`、対象 ViewModel で再確認する。設計メモやこの例だけから契約を固定しない。
 
 ## ログ
 

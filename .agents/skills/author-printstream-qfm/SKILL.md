@@ -41,8 +41,8 @@ ViewModel 側の印刷配線（`FormFile` / `PrintBySqlParam` / `PrintByCsvParam
 |---|---|
 | 一覧帳票（region + record 繰り返し） | `printform/MasterShainMente.qfm`, `printform/MasterMeishoMente.qfm` |
 | 単票帳票（ラベル + 値） | `printform/MasterSysKanriMente.qfm` |
-| バーコード（1件1ページ） | `printform/MasterPrintBarcode002.qfm` |
-| バーコード（複数件を1ページ） | `printform/MasterPrintBarcodeCode39.qfm`, `...Nw7.qfm`, `...Sho.qfm` |
+| バーコード（縦配置） | `printform/MasterPrintBarcodeView_v_code39.qfm`, `..._v_nw7.qfm`, `..._v_jan.qfm` |
+| バーコード（横配置） | `printform/MasterPrintBarcodeView_h_code39.qfm`, `..._h_nw7.qfm`, `..._h_jan.qfm` |
 
 用紙は縦横どちらも実運用がある（仕様 md §3.1）。近い向きの前例を選ぶ。
 
@@ -59,6 +59,12 @@ ViewModel 側の印刷配線（`FormFile` / `PrintBySqlParam` / `PrintByCsvParam
 9. **Shift_JIS(cp932)** で保存する。
 10. validator を実行する（下記。Python が無ければ構造チェックで代替）。
 11. **実 PDF をローカル描画して確認する**（下記ハーネス。DB・サーバ不要）。
+
+### 旧 CRS とセットで移行するとき
+
+旧 CRS は帳票要件の根拠として読む。`SatooDialog.Title`、範囲指定・選択肢、`OnTouch` の条件、切替先 qfm を対応表にしてから、WPF 画面側の実装へ渡す。`OnTouch` の SELECT 列順は qfm の `item1..itemN` と CSV 列順に対応させ、同名列は必ず一意の別名にする。サーバの CSV 化は重複列名を扱えないためである。
+
+旧 qfm をそのまま採用する指定では、cp932 と CRLF を保ったバイト単位コピーを優先する。カード型など意図的に標準 A4 位置と異なる帳票は、validator の位置警告だけで変更せず、XML 構造・`itemN` 対応・PDF 結果を分けて確認する。
 
 ## 検証
 
@@ -159,6 +165,8 @@ public partial class XxxReportViewModel : Helpers.BaseReportViewModel {
 - View は `BaseWindow` を継承した XAML（`DoOutputPdfCommand` を F6/ボタンに割当）。既存帳票 View をコピーする。
 - メニュー登録は `CvWpfclient/Models/MenuData.cs` に 1 行追加。
 - `DoOutputPdf`（基底）→ `RunPrintPdfAsync`（`PrintPdfHelper`）が gRPC でサーバへ投げる。**実行時はサーバ＋DB が要る**が、qfm 自体の描画確認は上記ローカルハーネスで先行できる。
+
+この配線は作業時点の `CvWpfclient/Helpers/ViewModels/BaseReportViewModel.cs` と `PrintPdfHelper.cs` で確認する。設計書・過去の CRS だけで基底 API や出力経路を決めない。
 
 ### 実装済みの worked example
 

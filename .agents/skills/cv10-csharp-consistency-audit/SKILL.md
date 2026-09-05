@@ -21,10 +21,9 @@ description: Audit cv10 C# subprojects such as CvBase, CvDomainLogic, CvServer, 
 ```powershell
 git status --short
 git rev-parse HEAD
-Get-Content graphify-out\GRAPH_REPORT.md -TotalCount 120
 ```
 
-- `GRAPH_REPORT.md` の built commit と HEAD が一致しない場合、graphify は参考扱いにし、実ファイル確認を優先する。
+- `graphify-out/graph.json` がある場合は、最初に `graphify query "<対象プロジェクトと調査観点>"` を試す。コマンドが使えない、結果が不足する、または graph の built commit が HEAD と一致しない場合は、graph を探索の補助に留め、対象ソースを `rg` と直接読取りで裏付ける。`GRAPH_REPORT.md` は広域の構成把握が必要なときだけ読む。
 - 未コミット変更がある場合、ユーザー変更を戻さない。対象外なら無視し、対象内なら内容を読んで作業する。
 - ユーザーが「log, commit不要」と言った場合、`Doc/aicoding_log.md` 追記と commit は行わない。
 

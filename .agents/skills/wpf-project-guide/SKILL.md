@@ -19,7 +19,7 @@ description: Provides the shared CvWpfclient project conventions, resource usage
 - `CvWpfclient` 全体の共通ルールを示す
 - 画面単位の作業前提を整理する
 - 詳細な画面追加・改修手順は `wpf-view-workflow` へ委譲する
-- XAML検証は `check-xaml`、マスターメンテのデザイン統一は `update-design-mente` へ委譲する
+- XAML検証は XML/resource/binding の組込みチェックで行い、マスターメンテのデザイン統一は `update-design-mente` へ委譲する。画面受入は `Doc/test/UatVm/README.md` を読み、可能なら UatVm を優先する。Scheduler画面では `ISchedulerService` 契約、`BaseWindow` の `InitCommand` 自動実行、XAML Converter資源を確認する
 
 ## まず確認すること
 
@@ -27,6 +27,7 @@ description: Provides the shared CvWpfclient project conventions, resource usage
 2. 影響ファイルを把握する
 3. `CvWpfclient/App.xaml` を確認し、既存の `MergedDictionaries` を把握する
 4. 共有リソースを直接増やす前に、既存スタイルとリソースキーを再利用できるか確認する
+5. XAML変更時は XML整形式、xmlns、同一View/App.xaml/MergedDictionary資源、Converter、対応ViewModel/ItemsSource要素Binding の順に確認する。動的DataContext等は警告扱いとし、見た目検査は `check-xaml-layout` に委譲する
 
 ## プロジェクト構造の前提
 
@@ -71,7 +72,7 @@ description: Provides the shared CvWpfclient project conventions, resource usage
 ## 関連スキルの使い分け
 
 - `wpf-view-workflow`: 画面単位の新規作成・改修手順
-- `check-xaml`: XAML構文、リソース、バインディングの検証
+- XML整形式・xmlns・resource・Converter・Bindingの組込みチェック
 - `check-xaml-layout`: XAMLの見た目のレイアウト崩れ（見切れ・余白不足・デザイン不統一）の検出と修正
 - `update-design-mente`: マスターメンテ画面を既存MaterialDesign系レイアウトへ統一するとき
 - `change-sublist-to-observablecollection`: マスターメンテ画面のサブリスト通知不具合を修正するとき
@@ -79,10 +80,10 @@ description: Provides the shared CvWpfclient project conventions, resource usage
 ## 推奨確認手順
 
 1. 必要なView / ViewModel / Resource / MenuDataの変更を行う
-2. XAML変更がある場合は必要に応じて `check-xaml` を使う
+2. XAML変更がある場合は、XML整形式・xmlns・resource・Converter・Bindingを確認する。可能なら `dotnet build Doc/test/UatVm/UatVm.csproj` と対象シナリオを先に実行する
 3. 可能なら `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行する
 4. 形式崩れが疑われる場合は `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` を使う
-5. 作業完了後は `Doc/aicoding_log.md` に記録する
+5. 実装・設定・運用文書変更で、軽微/文書のみを除く場合は `Doc/aicoding_log.md` 先頭へ記録する。commit/rebase/merge/push はユーザー明示時のみ行う
 
 ## 更新履歴
 

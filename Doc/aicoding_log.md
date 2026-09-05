@@ -1,3 +1,24 @@
+## [2026-09-05] 15:00 追加 skill 整理
+### Agent
+- GPT-5.6 Sol : OpenAI : Codex
+- GPT-5.6 Terra : OpenAI : Codex
+- GPT-5.6 Luna : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- 現行規約・ソース根拠に合わせ、廃止3 skillと存続skillの参照関係を整理する
+### 実施内容
+- 廃止対象 `check-xaml` / `create-print-view-from-crs` / `fix-scheduler-job-management-wpf` の存続skillからの参照を除去
+- 更新skillへ App.xaml、DataGridAssist、UatVm、Scheduler契約、CRS/QFM列対応、commit user.name規約を反映
+### 技術決定 Why
+- 現行の `Doc/test/UatVm/README.md`、`CvWpfclient/App.xaml`、MasterShohinMenteView、ISchedulerServiceを根拠に、重複skillを増やさず共通guideへ統合した
+### 確認
+- 存続18 skillのfrontmatter/name、TODO、CRLFを手動確認
+- 削除対象skill内部以外の参照をrg確認
+- git diff --check：問題なし
+- quick_validate.py：同梱Pythonで実行したがPyYAML不足のため未実行、手動検証で代替
+
+---
 ## [2026-09-04] 20:42 POS専用gRPC契約と公開経路の削除
 ### Agent
 - GPT-5.6 Terra : OpenAI

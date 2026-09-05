@@ -21,7 +21,7 @@ description: Guides CvWpfclient master maintenance screen design unification usi
 
 ## 手順
 
-1. 既存の対象ビュー（例: `MasterShiireMenteView.xaml`）を読み込み、`MasterShohinMenteView.xaml` の構成を参照しながらColorZoneヘッダー、Cardレイアウト、MaterialDesignOutlined 入力をマッピングする
+1. `CvWpfclient/App.xaml` と既存の対象ビュー（例: `MasterShiireMenteView.xaml`）を先に読み込み、`MasterShohinMenteView.xaml` の構成を参照しながらColorZoneヘッダー、Cardレイアウト、MaterialDesignOutlined 入力をマッピングする。`App.xaml` のマージ辞書・キーが現行定義であることを確認する
 2. 支払情報タブでは `RowDefinitions` を再計算し、支払フラグ／支払方法／仕入先ブロックを1つずつ明確な行へ移動。仕入先検索は DockPanel や SearchTextBox を使い文言を統一する
 3. 詳細内容タブの下部に `登録日/修正日` 表示を追加するには `MultiBinding` などで `InfoLabel` を構成し、`Row3` あたりに新しい `TextBlock` を配置してタイムスタンプを `FormTextBox` 風に見せる
 4. 更新後は `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド確認（可能な限り）
@@ -30,8 +30,8 @@ description: Guides CvWpfclient master maintenance screen design unification usi
 ## 設計のポイント
 
 - `ColorZone` は `Mode="PrimaryMid"` と `Color="PrimaryHueMidBrush"` を併用して統一感を出す
-- Card 内のフォームは `helpers:FormTextBox` / `helpers:SearchTextBox` などのスタイルを利用し、余計な SolidColorBrush を直接指定しない
-- DataGrid には `helpers:DataGridAssist.CellPadding` や `PrimaryHueMidBrush` の ColumnHeader を使い、既存のスタイルに合わせる
+- Card 内のフォームは `StaticResource FormTextBox` / `StaticResource MenteSearchTextBox` などのスタイルを利用し、余計な SolidColorBrush を直接指定しない
+- DataGrid には `materialDesign:DataGridAssist.CellPadding` / `ColumnHeaderPadding` と `DynamicResource PrimaryHueMidBrush` を使う。`DataGridAssist` は `materialDesign` 名前空間である
 - 支払フラグなどのチェックボックスは `MaterialDesignCheckBox` か `CheckBox` の `Style` を MaterialDesign 風に揃える
 
 ## 報告/ログ

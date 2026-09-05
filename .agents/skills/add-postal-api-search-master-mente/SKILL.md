@@ -5,20 +5,17 @@ description: Adds a Japan Post postal-code API search button to master maintenan
 
 # Add Postal API Search to Master Mente
 
-このスキルは、`CvWpfclient` のマスターメンテ画面に日本郵便APIを使った `〒API検索` ボタンを追加し、郵便番号から `Address1` `Address2` `Address3` を自動設定するための手順をまとめたものです。
+このスキルは、`CvWpfclient` のマスターメンテ画面に `〒API検索` ボタンを追加し、郵便番号から `Address1` `Address2` `Address3` を設定するための手順をまとめたものです。クライアントは既存の gRPC 住所検索を使い、日本郵便 API の認証・再試行はサーバ側に閉じる。
 
 ## いつ使うか
 
 - `PostalCode` と `Address1` `Address2` `Address3` を持つマスターメンテ画面へ、同じ郵便番号検索UIを横展開するとき
-- 既存の `IPostalAddressService` と `JapanPostBizTokenProvider` を使って住所自動入力を追加するとき
-- `CvWpfclient` のView / ViewModel / appsettings / DI をまたいで修正するとき
+- 既存の `PostalAddressSearchHelper` と `IPostalAddressService` を使って住所入力を追加するとき
+- View / ViewModel の最小変更で既存の住所検索フローを横展開するとき
 
-## 前提
+## 現行経路の確認
 
-- `CvWpfclient/Services/PostalAddressService.cs` が存在し、`IPostalAddressService` が利用可能であること
-- `CvWpfclient/Services/JapanPostBizTokenProvider.cs` が存在し、Authorization は `Bearer {token}` 固定で送ること
-- `CvWpfclient/App.xaml.cs` で `IPostalAddressService` と `IJapanPostBizTokenProvider` が DI 登録されていること
-- `CvWpfclient/appsettings.json` に `JapanPostBiz` セクションがあること
+実装前に `CvWpfclient/Helpers/PostalAddressSearchHelper.cs`、`CodeShare/IPostalAddress.cs`、`CvServer/Services/SearchByPostalCodeService.cs`、`CvServer/Program.cs` を確認する。現行では Helper が `IPostalAddressService.SearchByPostalCodeAsync` を gRPC で呼び、サーバの `SearchByPostalCodeService` が外部 API とトークンを管理し、`Program.cs` がサービスを公開する。過去のクライアント DI・appsettings・トークン実装を前提に横展開しない。
 
 ## 実装手順
 
@@ -26,7 +23,7 @@ description: Adds a Japan Post postal-code API search button to master maintenan
 
 - `CurrentEdit.PostalCode` を使う画面では、`[RelayCommand] async Task SearchPostalCode()` を追加する
 - 画面ごとの重複を減らすため、`CvWpfclient/Helpers/PostalAddressSearchHelper.cs` の `SearchAndApplyAsync()` を使う
-- 1件ヒット時だけ `PostalCode` と `Address1-3` を反映する
+- Helper は 3〜7 桁を正規化し、1件なら即時、複数件なら選択ダイアログを経て `applyAddress` を呼ぶ。画面側で検索・例外・複数候補の処理を重複実装しない
 
 例:
 
@@ -86,21 +83,15 @@ async Task SearchPostalCode() {
 - `MasterShiireMenteView` / `MasterShiireMenteViewModel`
 - `MasterSysKanriMenteView` / `MasterSysKanriMenteViewModel`
 
-## URL / 認証の注意
-
-- 検索URLは `GET /api/v2/searchcode/{search_code}`
-- 通常の7桁郵便番号検索では、まず `page` と `limit` の必須クエリを優先する
-- Authorization は `Bearer {token}` 固定
-- token API レスポンスの `token_type` を HTTP スキームへそのまま使わない
-
 ## 確認手順
 
-1. 郵便番号7桁を入力して `〒API検索` ボタンを押す
-2. 1件ヒット時に `Address1-3` が反映されることを確認する
-3. 代替出力先で `CvWpfclient` をビルドする
+1. 3〜7桁（ハイフン・全角数字を含む入力も含める）の郵便番号で `〒API検索` を押す
+2. 1件では `Address1-3`、複数件では選択した住所が反映されることを確認する
+3. gRPC 到達確認が必要なら `SearchByPostalCodeService` のエラー種別を確認する。外部 API の認証・URL・トークンを View 側に追加しない
+4. `CvWpfclient` をビルドする
 
-```bash
-/mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj /p:OutDir=c:\gitroot\documents\new2022\cv10\artifacts\postalout\"
+```powershell
+C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"
 ```
 
 ## 更新履歴

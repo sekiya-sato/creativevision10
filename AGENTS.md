@@ -38,7 +38,7 @@
   - サーバ側で DB 間の構文差がある SQL は、SQLite 方言のまま書いて `ExDatabase.ExecuteDialect` / `FetchDialect` 経由で実行する。DB 別に書き分けない。
   - 意味差（MariaDB の整数除算、PostgreSQL の `GROUP BY` 厳格化、集約の戻り型）は変換器では直せない。整数結果を意図する除算は `CAST(... AS INTEGER)` で包むなど、**SQLite で結果が変わらない書き方**に寄せる。
   - 下限バージョンは SQLite 3.38 / MariaDB 10.11 LTS / PostgreSQL 16。MariaDB の照合順序は `utf8mb4_bin`、PostgreSQL は `LC_COLLATE=C` で作成する。起動時に検証し、SQLite 以外は不足なら起動失敗させる。
-- WPF変更では先に `App.xaml` と該当リソースを確認し、既存の View / ViewModel / 共有スタイルを踏襲する。必要なときは `.agents/skills/wpf-project-guide`、`check-xaml`、`wpf-view-workflow` など該当スキルを読む。
+- WPF変更では先に `App.xaml` と該当リソースを確認し、既存の View / ViewModel / 共有スタイルを踏襲する。必要なときは `.agents/skills/wpf-project-guide`、`check-xaml-layout`、`wpf-view-workflow` など該当スキルを読む。
 
 ## 5. 調査、実装、検証
 

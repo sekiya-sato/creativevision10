@@ -140,7 +140,7 @@ validator の position warning は、legacy 帳票との差分を示すだけの
 
 1. 対象 XAML の `DoOutputJsonCommand` が残っていないことを確認する。
 2. qfm 検証スクリプトを実行する。
-3. XAML を変更した場合は `check-xaml` または XML 構文確認を行う。
+3. XAML を変更した場合は XML整形式・xmlns・resource・Converter・Bindingの確認を行う。
 4. SQL印刷の場合は、可能なら `CvServer/server-cv00.db` など実DBに対して SELECT を実行し、列数が qfm の `itemN` 数と一致することを確認する。
 5. `git diff --check` を実行する。
 6. WPF クライアントをビルドする。

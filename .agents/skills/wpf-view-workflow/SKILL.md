@@ -27,13 +27,14 @@ description: Defines the standard workflow for creating or updating individual W
 4. 必要に応じて `MenuData.cs` に起動導線を追加する
 5. 共有リソースや共通スタイルを流用し、独自実装を最小化する
 6. XAML / ビルド確認を行う
+7. 画面受入は可能なら `Doc/test/UatVm/README.md` のViewModel駆動シナリオを実行する
 
 ## cv10 実績からの優先ルール
 
 - ユーザーが参照画面や配置を指定した場合は、最初にその画面を読み、ボタン位置・列順・メニュー位置を文字通りに維持する。
 - `PrintMasterShainCardView`、`MasterShohinMenteView`、`SelectMultiWinView` など具体名が出た場合は、同じ flow / command / layout 構造から始める。
 - `MenuData.cs` は、`システム管理マスタの下`、`汎用マスタメンテの下` など指定された親項目と並び順を変えない。
-- `BaseMenteViewModel<T>` の既定動作を使う前に対象 model を確認する。`Code` / `Name` 前提でない table は `ListOrder` や検索・印刷 hook を個別に合わせる。
+- `BaseMenteViewModel<T>` の既定動作を使う前に対象 model を確認する。`Code` / `Name` 前提でない table は `ListOrder` や検索・印刷 hook を個別に合わせる。印刷画面は `BaseReportViewModel` を優先し、CRSの条件/UI/OnTouchを要件としてマッピングする。SQL SELECT列順、CSV列順、QFM `itemN` を一致させる。
 - 一覧選択やバーコード取込で明細・合計を更新する場合は、既存 ViewModel の中央経路を使う。例: `ShopUriageInputViewModel` では `EditMeisai`、`OnMeisaiPropertyChanged`、`UpdateTotals()` 経由で反映する。
 
 ## 既存画面改修の基本手順
@@ -49,7 +50,8 @@ description: Defines the standard workflow for creating or updating individual W
 - 既存命名規則に合わせて `*View.xaml` を使う
 - `BaseWindow` を使うべき画面では素の `Window` を採用しない
 - `ContentRendered` で `InitCommand` を重ねない
-- 共通スタイルを使える箇所は `helpers:FormTextBox` など既存パターンを優先する
+- Scheduler画面では `ISchedulerService` の実契約（`GetTasksAsync` 等）を確認し、`BaseWindow` の `InitCommand` を二重起動せず、XAML Converter資源をApp.xamlまたは画面リソースで確認する
+- 共通スタイルを使える箇所は `StaticResource FormTextBox` など既存パターンを優先する
 - リソース追加前に既存ResourceDictionaryを確認する
 
 ## ViewModel 作成・改修の規約
@@ -73,7 +75,7 @@ description: Defines the standard workflow for creating or updating individual W
 
 ## 検証手順
 
-1. XAML変更がある場合、必要に応じて `check-xaml` を使う
+1. XAML変更がある場合、XML整形式・xmlns・resource・Converter・Bindingを確認する
 2. 変更ファイルの CRLF を確認する
 3. `git diff --check` を実行する
 4. WPF クライアントをビルドする
@@ -86,14 +88,14 @@ C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfcli
 
 ## ログとコミット
 
-- `commitまで` または AGENTS.md の通常 workflow で commit が必要な作業は、ビルド成功だけで完了扱いにしない。
+- DocログはAGENTS条件（軽微/文書のみを除く実装・設定・運用文書変更）に従い、commit/rebase/merge/pushはユーザー明示時のみ行う。
 - `Doc/aicoding_log.md` は先頭へ追記し、追記位置が既存ログの途中でないことを確認する。
 - `.omo` と `.sisyphus` は scratch として扱い、ユーザーが明示しない限り commit 対象に含めない。
 
 ## 関連スキル
 
 - `wpf-project-guide`: WPF全体規約
-- `check-xaml`: XAML検証
+- XML整形式・xmlns・resource・Converter・Bindingの組込み確認
 - `update-design-mente`: マスターメンテ画面のデザイン統一
 - `change-sublist-to-observablecollection`: DataGridのサブリスト通知問題の修正
 
