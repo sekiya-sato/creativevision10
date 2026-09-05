@@ -125,6 +125,14 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ForeignKey(nameof(EnumRounding))]
 	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
+	/// <summary>
+	/// 原価方式 0=固定原価、1=最終仕入原価、2=総平均原価（原価4項目 詳細設計 §2.5.7）。
+	/// 方式変更は設定値だけを変更し、原価履歴とMasterShohin.TankaGenkaは変更適用月からの再計算が成功するまで自動変更しない
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostMethod))]
+	[Comment("原価方式 0=固定原価、1=最終仕入原価、2=総平均原価")]
+	public partial int CostMethod { get; set; } = 0;
 }
 /// <summary>
 /// 消費税率テーブル(Id 1-3)

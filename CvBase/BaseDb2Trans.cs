@@ -1370,6 +1370,21 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 		get => (EnumYesNo)EndFlag;
 		set => EndFlag = (int)value;
 	}
+	/// <summary>
+	/// 在庫加算対象か 0=在庫加算しない、1=在庫加算する（原価4項目 詳細設計 §2.5.9）。
+	/// 消化仕入更新が生成する仕入だけ0とし、既存仕入・通常入力仕入は1で在庫・買掛集計結果を維持する
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumYesNo))]
+	[Comment("在庫加算対象か 0=在庫加算しない、1=在庫加算する")]
+	public partial int IsStock { get; set; } = 1;
+	/// <summary>
+	/// 仕入の生成区分 0=手動・通常、1=消化仕入更新による自動生成（原価4項目 詳細設計 §2.5.9）
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumGeneratedKind))]
+	[Comment("仕入の生成区分 0=手動・通常、1=消化仕入更新による自動生成")]
+	public partial int GeneratedKind { get; set; } = 0;
 }
 public enum EnumShiire : int {
 	[Comment("仕入")]
@@ -1706,6 +1721,28 @@ public sealed partial class Tran99MaterialMeisai : ObservableObject {
 	[ColumnSizeDml(200)]
 	[Comment("明細メモ")]
 	public partial string Memo { get; set; } = string.Empty;
+	/// <summary>
+	/// 費用を負担する商品。`0` = 諸掛ではない明細（原価4項目 詳細設計 §3.3）。既存明細は `Id_Shohin=0` として読める。
+	/// JSON明細のためDDL変更・マイグレーションは不要
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
+	[Comment("費用を負担する商品。0=諸掛ではない明細")]
+	public partial long Id_Shohin { get; set; } = 0;
+	/// <summary>
+	/// 伝票時点の商品コード。伝票時点の監査値でありマスタ改名を伝播しない（Tran系のV*規約）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(16)]
+	[Comment("伝票時点の商品コード。マスタ改名を伝播しない")]
+	public partial string Code_Shohin { get; set; } = string.Empty;
+	/// <summary>
+	/// 伝票時点の商品名。伝票時点の監査値でありマスタ改名を伝播しない（Tran系のV*規約）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(80)]
+	[Comment("伝票時点の商品名。マスタ改名を伝播しない")]
+	public partial string Mei_Shohin { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -2580,14 +2617,432 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 
 
 /* 以下は1.1- 以降の対応table */
-/* ToDo: 未作成テーブル(原価)
-   上代(TranJodai / DerivedJodai)は CvBase/BaseDbJodai.cs で作成済み
+/* 上代(TranJodai / DerivedJodai)は CvBase/BaseDbJodai.cs で作成済み */
 
-// 原価変更の伝票データ
-[Comment("トランザクション：原価変更、伝票No、登録日、評価区分(評価替、その他)、[商品CD、OFF率、(上代、掛率、原価)、新原価]")]
+/// <summary>
+/// トランザクション：商品原価履歴。1行=1計上月×1商品×1原価方式。
+/// 月次原価計算（最終仕入原価更新・総平均原価更新）と評価替えの双方が <see cref="ChangeKind"/> で書き分けて書き込む
+/// （原価4項目 詳細設計 §2.5.3、§2.6、§16）。
+/// <para>
+/// `TranGenka` は旧CV.netでは「伝票No・日付(年月+末)・セールCD・評価区分・OFF率・[商品CD]上代・掛率・元原価・新原価」を
+/// 持つ手入力の原価変更伝票（評価替え登録）として予約されていたが、この構想は採らない。
+/// セール連動OFF率は上代一括変更の `Scope` が担い、原価側に別系統の適用範囲は作らない（詳細は §16.3）。
+/// </para>
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, [nameof(SumMonth), nameof(Id_Shohin), nameof(CostMethod), nameof(ChangeKind)])]
+[KeyDml("nk1", false, [nameof(Id_Shohin), nameof(EffectiveDay)])]
+[KeyDml("nk2", false, nameof(BatchId))]
+[KeyDml("nk3", false, nameof(SourceRevalId))]
+[Comment("トランザクション：商品原価履歴。1行=1計上月×1商品×1原価方式。月次原価計算と評価替えの双方がChangeKindで書き分ける")]
 public sealed partial class TranGenka : BaseDbClass {
+	/// <summary>
+	/// 更新実行ID。保存時は空文字不可
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(36)]
+	[Comment("更新実行ID。保存時は空文字不可")]
+	public partial string BatchId { get; set; } = string.Empty;
+	/// <summary>
+	/// 対象計上月。保存時は6桁年月必須
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(6)]
+	[Comment("対象計上月。保存時は6桁年月必須")]
+	public partial string SumMonth { get; set; } = string.Empty;
+	/// <summary>
+	/// 原価適用日
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("原価適用日")]
+	public partial string EffectiveDay { get; set; } = "19010101";
+	/// <summary>
+	/// 原価方式 0=基準・固定、1=最終仕入、2=総平均
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostMethod))]
+	[Comment("原価方式 0=基準・固定、1=最終仕入、2=総平均")]
+	public partial int CostMethod { get; set; } = 0;
+	/// <summary>
+	/// 原価履歴の発生要因 0=月次原価計算、1=評価替え
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostChangeKind))]
+	[Comment("原価履歴の発生要因 0=月次原価計算、1=評価替え")]
+	public partial int ChangeKind { get; set; } = 0;
+	/// <summary>
+	/// 評価替え実行ヘッダ。`ChangeKind=0` は0
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(TranGenkaReval))]
+	[Comment("評価替え実行ヘッダ。ChangeKind=0は0")]
+	public partial long SourceRevalId { get; set; } = 0;
+	/// <summary>
+	/// 商品ID。保存時は1以上
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
+	[Comment("商品ID。保存時は1以上")]
+	public partial long Id_Shohin { get; set; } = 0;
+	/// <summary>
+	/// 計算時点の商品コード・名称
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("計算時点の商品コード・名称")]
+	public partial CodeNameView VShohin { get; set; } = new();
+	/// <summary>
+	/// 計算前原価
+	/// </summary>
+	[ObservableProperty]
+	[Comment("計算前原価")]
+	public partial int BeforeCost { get; set; } = 0;
+	/// <summary>
+	/// 計算後原価。通常計算行は1円以上
+	/// </summary>
+	[ObservableProperty]
+	[Comment("計算後原価。通常計算行は1円以上")]
+	public partial int AfterCost { get; set; } = 0;
+	/// <summary>
+	/// 前月在庫数。最終仕入方式は0。評価替えは対象計上月末の在庫数
+	/// </summary>
+	[ObservableProperty]
+	[Comment("前月在庫数。最終仕入方式は0。評価替えは対象計上月末の在庫数")]
+	public partial long OpeningQty { get; set; } = 0;
+	/// <summary>
+	/// 前月在庫金額。最終仕入方式は0
+	/// </summary>
+	[ObservableProperty]
+	[Comment("前月在庫金額。最終仕入方式は0")]
+	public partial long OpeningAmount { get; set; } = 0;
+	/// <summary>
+	/// 対象期間の在庫加算仕入数。最終仕入方式は0
+	/// </summary>
+	[ObservableProperty]
+	[Comment("対象期間の在庫加算仕入数。最終仕入方式は0")]
+	public partial long PurchaseQty { get; set; } = 0;
+	/// <summary>
+	/// 対象期間の在庫加算仕入金額。最終仕入方式は0
+	/// </summary>
+	[ObservableProperty]
+	[Comment("対象期間の在庫加算仕入金額。最終仕入方式は0")]
+	public partial long PurchaseAmount { get; set; } = 0;
+	/// <summary>
+	/// 対象期間に算入した諸掛額。総平均原価方式のみ。最終仕入方式は0
+	/// </summary>
+	[ObservableProperty]
+	[Comment("対象期間に算入した諸掛額。総平均原価方式のみ。最終仕入方式は0")]
+	public partial long SundryAmount { get; set; } = 0;
+	/// <summary>
+	/// 最終仕入根拠の仕入伝票。それ以外は0
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(Tran03Shiire))]
+	[Comment("最終仕入根拠の仕入伝票。それ以外は0")]
+	public partial long SourceTranId { get; set; } = 0;
+	/// <summary>
+	/// 最終仕入根拠の明細No。それ以外は0。Jmeisai JSON配列内のNo値でありDB上の行は指さない
+	/// </summary>
+	[ObservableProperty]
+	[Comment("最終仕入根拠の明細No。それ以外は0")]
+	public partial int SourceLineNo { get; set; } = 0;
+	/// <summary>
+	/// 実行社員ID。保存時は1以上
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
+	[Comment("実行社員ID。保存時は1以上")]
+	public partial long Id_Shain { get; set; } = 0;
+	/// <summary>
+	/// 実行時点の社員コード・名称
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("実行時点の社員コード・名称")]
+	public partial CodeNameView VShain { get; set; } = new();
 }
-*/
+
+/// <summary>
+/// トランザクション：消化仕入更新が売上明細から生成した仕入明細との対応。
+/// 売上1明細から生成できる仕入明細は1行だけ（原価4項目 詳細設計 §2.5.5）。
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, [nameof(SourceType), nameof(SourceId), nameof(SourceLineNo)])]
+[KeyDml("nk1", false, nameof(SourceDay))]
+[KeyDml("nk2", false, nameof(GeneratedShiireId))]
+[KeyDml("nk3", false, [nameof(Id_Shiire), nameof(SourceDay)])]
+[KeyDml("nk4", false, nameof(BatchId))]
+[Comment("トランザクション：消化仕入更新による売上明細と自動生成仕入明細の対応")]
+public sealed partial class TranConsumptionPurchaseLink : BaseDbClass {
+	/// <summary>
+	/// 消化仕入更新実行ID。保存時は空文字不可
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(36)]
+	[Comment("消化仕入更新実行ID。保存時は空文字不可")]
+	public partial string BatchId { get; set; } = string.Empty;
+	/// <summary>
+	/// 消化仕入の売上元テーブル種別 0=Tran00Uriage、1=Tran01Tenuri
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumConsumptionSourceType))]
+	[Comment("消化仕入の売上元テーブル種別 0=Tran00Uriage、1=Tran01Tenuri")]
+	public partial int SourceType { get; set; } = 0;
+	/// <summary>
+	/// 売上ヘッダID。保存時は1以上。参照先はSourceTypeによりTran00UriageまたはTran01Tenuriに切り替わるため
+	/// 単一の[ForeignKey]は付けない
+	/// </summary>
+	[ObservableProperty]
+	[Comment("売上ヘッダID。保存時は1以上")]
+	public partial long SourceId { get; set; } = 0;
+	/// <summary>
+	/// 売上明細No。保存時は1以上。Jmeisai JSON配列内のNo値でありDB上の行は指さない
+	/// </summary>
+	[ObservableProperty]
+	[Comment("売上明細No。保存時は1以上")]
+	public partial int SourceLineNo { get; set; } = 0;
+	/// <summary>
+	/// 売上計上日。対象月検索用
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("売上計上日。対象月検索用")]
+	public partial string SourceDay { get; set; } = "19010101";
+	/// <summary>
+	/// 生成時点の売上ヘッダまたは明細の最大Vdu
+	/// </summary>
+	[ObservableProperty]
+	[Comment("生成時点の売上ヘッダまたは明細の最大Vdu")]
+	public partial long SourceVdu { get; set; } = 0;
+	/// <summary>
+	/// 生成した仕入伝票。保存時は1以上
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(Tran03Shiire))]
+	[Comment("生成した仕入伝票。保存時は1以上")]
+	public partial long GeneratedShiireId { get; set; } = 0;
+	/// <summary>
+	/// 生成した仕入明細No。保存時は1以上。Jmeisai JSON配列内のNo値でありDB上の行は指さない
+	/// </summary>
+	[ObservableProperty]
+	[Comment("生成した仕入明細No。保存時は1以上")]
+	public partial int GeneratedLineNo { get; set; } = 0;
+	/// <summary>
+	/// 対象商品ID。保存時は1以上
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
+	[Comment("対象商品ID。保存時は1以上")]
+	public partial long Id_Shohin { get; set; } = 0;
+	/// <summary>
+	/// 委託仕入先ID。保存時は1以上
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShiire))]
+	[Comment("委託仕入先ID。保存時は1以上")]
+	public partial long Id_Shiire { get; set; } = 0;
+}
+
+/// <summary>
+/// トランザクション：評価替えの実行ヘッダ（条件・指定値・集計値）。`TranGenka` の `ChangeKind=1` 行は
+/// `SourceRevalId` で本テーブルを指す（原価4項目 詳細設計 §2.5.11、§16）。
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(BatchId))]
+[KeyDml("nk1", false, [nameof(SumMonth), nameof(Status)])]
+[KeyDml("nk2", false, nameof(EffectiveDay))]
+[Comment("トランザクション：評価替えの実行ヘッダ（条件・指定値・集計値）")]
+public sealed partial class TranGenkaReval : BaseDbClass {
+	/// <summary>
+	/// 評価替え実行ID。保存時は空文字不可
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(36)]
+	[Comment("評価替え実行ID。保存時は空文字不可")]
+	public partial string BatchId { get; set; } = string.Empty;
+	/// <summary>
+	/// 対象計上月。保存時は6桁年月必須
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(6)]
+	[Comment("対象計上月。保存時は6桁年月必須")]
+	public partial string SumMonth { get; set; } = string.Empty;
+	/// <summary>
+	/// 原価適用日。TranGenkaの同名列と同値
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("原価適用日。TranGenkaの同名列と同値")]
+	public partial string EffectiveDay { get; set; } = "19010101";
+	/// <summary>
+	/// 適用時点 0=月末、1=期末
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostRevalApplyPoint))]
+	[Comment("適用時点 0=月末、1=期末")]
+	public partial int ApplyPoint { get; set; } = 0;
+	/// <summary>
+	/// 実行時点のMasterSysman.CostMethod
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostMethod))]
+	[Comment("実行時点のMasterSysman.CostMethod")]
+	public partial int CostMethod { get; set; } = 0;
+	/// <summary>
+	/// 評価替え指定方式 1=率一括、2=金額一括。保存時は1か2
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostRevaluationMethod))]
+	[Comment("評価替え指定方式 1=率一括、2=金額一括。保存時は1か2")]
+	public partial int Method { get; set; } = 0;
+	/// <summary>
+	/// 掛率（整数%）。Method=1は1～100。Method=2は0
+	/// </summary>
+	[ObservableProperty]
+	[Comment("掛率（整数%）。Method=1は1～100。Method=2は0")]
+	public partial int RatePercent { get; set; } = 0;
+	/// <summary>
+	/// 指定単価（円）。Method=2は1以上。Method=1は0
+	/// </summary>
+	[ObservableProperty]
+	[Comment("指定単価（円）。Method=2は1以上。Method=1は0")]
+	public partial int FixedCost { get; set; } = 0;
+	/// <summary>
+	/// 端数単位。1、10、100円のみ（画面で指定）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("端数単位。1、10、100円のみ（画面で指定）")]
+	public partial int RoundingUnit { get; set; } = 1;
+	/// <summary>
+	/// 端数処理 0=四捨五入、1=切上、2=切捨
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumRounding))]
+	[Comment("端数処理 0=四捨五入、1=切上、2=切捨")]
+	public partial int Rounding { get; set; } = 0;
+	/// <summary>
+	/// 集計単位 0=ブランド、1=アイテム、2=シーズン、3=メーカー、4=展示会
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostRevalGroupKey))]
+	[Comment("集計単位 0=ブランド、1=アイテム、2=シーズン、3=メーカー、4=展示会")]
+	public partial int GroupKey { get; set; } = 0;
+	/// <summary>
+	/// 抽出条件。項目・From・Toの行を配列で保持し、CodeNameViewで名称も残す
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(1000)]
+	[Comment("抽出条件。項目・From・Toの行を配列で保持し、CodeNameViewで名称も残す")]
+	public partial CostRevaluationCondition JCond { get; set; } = new();
+	/// <summary>
+	/// 対象品番数
+	/// </summary>
+	[ObservableProperty]
+	[Comment("対象品番数")]
+	public partial long TargetCount { get; set; } = 0;
+	/// <summary>
+	/// 対象数量計
+	/// </summary>
+	[ObservableProperty]
+	[Comment("対象数量計")]
+	public partial long TargetQty { get; set; } = 0;
+	/// <summary>
+	/// 元上代金額計
+	/// </summary>
+	[ObservableProperty]
+	[Comment("元上代金額計")]
+	public partial long JodaiAmount { get; set; } = 0;
+	/// <summary>
+	/// 在庫金額計（Σ BeforeCost × Qty）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("在庫金額計（Σ BeforeCost × Qty）")]
+	public partial long BeforeAmount { get; set; } = 0;
+	/// <summary>
+	/// 評価減後金額計（Σ AfterCost × Qty）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("評価減後金額計（Σ AfterCost × Qty）")]
+	public partial long AfterAmount { get; set; } = 0;
+	/// <summary>
+	/// 実行状態 0=有効、1=取消
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostRevalStatus))]
+	[Comment("実行状態 0=有効、1=取消")]
+	public partial int Status { get; set; } = 0;
+	/// <summary>
+	/// 実行社員ID。保存時は1以上
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
+	[Comment("実行社員ID。保存時は1以上")]
+	public partial long Id_Shain { get; set; } = 0;
+	/// <summary>
+	/// 実行時点の社員コード・名称
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("実行時点の社員コード・名称")]
+	public partial CodeNameView VShain { get; set; } = new();
+}
+
+/// <summary>
+/// `TranGenkaReval.JCond` のJSON構造。評価替えの抽出条件（項目選択式のFrom～To条件行の集合）を保持する。
+/// 年度は選択項目に含めない（原価4項目 詳細設計 §13 U-17。CV10 `MasterShohin` に年度に相当する列が無いため）。
+/// 条件による履歴検索の用途はないため列展開せずJSON1列にしている（§13 U-21）。
+/// </summary>
+public sealed partial class CostRevaluationCondition : ObservableObject {
+	/// <summary>
+	/// 抽出条件行
+	/// </summary>
+	[ObservableProperty]
+	[Comment("抽出条件行")]
+	public partial List<CostRevaluationCondRow> Rows { get; set; } = [];
+}
+
+/// <summary>
+/// 評価替え抽出条件の1行。`MasterJouDaiBulkChangeViewModel` の `JodaiCondRow` と同じ、項目選択式のFrom～Toである。
+/// </summary>
+public sealed partial class CostRevaluationCondRow : ObservableObject {
+	/// <summary>
+	/// 項目種別
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumCostRevalCondField))]
+	[Comment("項目種別")]
+	public partial int FieldKind { get; set; } = 0;
+	/// <summary>
+	/// 選択項目のコード(FROM)
+	/// </summary>
+	[ObservableProperty]
+	[Comment("選択項目のコード(FROM)")]
+	public partial string CodeFrom { get; set; } = string.Empty;
+	/// <summary>
+	/// 選択項目のコード(TO)
+	/// </summary>
+	[ObservableProperty]
+	[Comment("選択項目のコード(TO)")]
+	public partial string CodeTo { get; set; } = string.Empty;
+	/// <summary>
+	/// 選択項目の名称データ(FROM)
+	/// </summary>
+	[ObservableProperty]
+	[Comment("選択項目の名称データ(FROM)")]
+	public partial CodeNameView VFrom { get; set; } = new();
+	/// <summary>
+	/// 選択項目の名称データ(TO)
+	/// </summary>
+	[ObservableProperty]
+	[Comment("選択項目の名称データ(TO)")]
+	public partial CodeNameView VTo { get; set; } = new();
+}
+
 /* ToDo: 未作成テーブル(顧客)
 [Comment("ベースポイントトランク別ポイント、ボーナスポイント")]
 public sealed partial class MasterPointRank : BaseDbClass {

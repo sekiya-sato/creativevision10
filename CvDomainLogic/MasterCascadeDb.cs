@@ -67,6 +67,8 @@ public class MasterCascadeDb {
 		new (typeof(MasterYosanBrand),   nameof(MasterYosanBrand.Id_Tenpo),       nameof(MasterYosanBrand.VTenpo),       typeof(MasterTokui)),
 		// 参照先: MasterShiire (仕入先の請求先は仕入先自身)
 		new (typeof(MasterShiire),       nameof(MasterShiire.Id_Paysaki),         nameof(MasterShiire.VPaysaki),         typeof(MasterShiire)),
+		// 参照先: MasterShiire (消化仕入の委託仕入先。原価4項目 詳細設計 §2.5.8)
+		new (typeof(MasterShohin),       nameof(MasterShohin.Id_ConsignmentShiire), nameof(MasterShohin.VConsignmentShiire), typeof(MasterShiire)),
 		// 参照先: MasterMeisho
 		new (typeof(MasterShain),        nameof(MasterShain.Id_Bumon),            nameof(MasterShain.VBumon),            typeof(MasterMeisho)),
 		new (typeof(MasterShohin),       nameof(MasterShohin.Id_Brand),           nameof(MasterShohin.VBrand),           typeof(MasterMeisho)),

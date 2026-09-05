@@ -91,9 +91,13 @@ public class DefineDataTable {
 			typeof(TranShopPromotion),
 
 			typeof(Tran60TanaDate),
+
+			// 原価テーブル (原価4項目 詳細設計 §2.5.1〜§2.5.11)
+			typeof(TranGenka),
+			typeof(TranConsumptionPurchaseLink),
+			typeof(TranGenkaReval),
+
 			/* Product: 以下のテーブルは、優先順位低いが、いずれ作成する予定
-			原価変更登録
-				TranGenka : 伝票No,日付(年月+末),セールCD(Meisho'S01') 評価区分(0:通常,1:評価替え) OFF率 [商品CD] :上代 掛率 元原価 新原価
 			自動補充設定 (売上/在庫)
 				MasterAutoSupply
 			 */

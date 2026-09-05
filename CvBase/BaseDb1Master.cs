@@ -674,6 +674,54 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	[ColumnSizeDml(1000)]
 	[Comment("詳細内容")]
 	public partial BaseDetailClass? Jdetail { get; set; }
+	/// <summary>
+	/// 仕入区分 0=通常仕入、3=消化仕入（原価4項目 詳細設計 §2.5.8）
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumPurchaseType))]
+	[Comment("仕入区分 0=通常仕入、3=消化仕入")]
+	public partial int PurchaseType { get; set; } = 0;
+	/// <summary>
+	/// 委託仕入先ID。PurchaseType=3は1以上必須
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShiire))]
+	[Comment("委託仕入先ID。PurchaseType=3は1以上必須")]
+	public partial long Id_ConsignmentShiire { get; set; } = 0;
+	/// <summary>
+	/// 委託仕入先の現行名称。マスタV*のため名称変更を伝播する（MasterCascadeDb.VRulesへ登録済み）
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("委託仕入先の現行名称")]
+	public partial CodeNameView VConsignmentShiire { get; set; } = new();
+	/// <summary>
+	/// 消化仕入計算区分 0=原価代用、1=上代×掛率
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumConsumptionCalcType))]
+	[Comment("消化仕入計算区分 0=原価代用、1=上代×掛率")]
+	public partial int ConsumptionCalcType { get; set; } = 0;
+	/// <summary>
+	/// 掛率を1/100%単位で保持。6500=65.00%。計算区分1は1～10000
+	/// </summary>
+	[ObservableProperty]
+	[Comment("掛率を1/100%単位で保持。6500=65.00%。計算区分1は1～10000")]
+	public partial int ConsumptionRateBasisPoints { get; set; } = 0;
+	/// <summary>
+	/// 端数単位。1、10、100、1000円のみ
+	/// </summary>
+	[ObservableProperty]
+	[Comment("端数単位。1、10、100、1000円のみ")]
+	public partial int ConsumptionRoundingUnit { get; set; } = 1;
+	/// <summary>
+	/// 端数処理 0=四捨五入、1=切上、2=切捨
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumRounding))]
+	[Comment("端数処理 0=四捨五入、1=切上、2=切捨")]
+	public partial int ConsumptionRounding { get; set; } = 0;
 	[Ignore]
 	public Type DerivedClass => typeof(DerivedShohinColSiz);
 }
