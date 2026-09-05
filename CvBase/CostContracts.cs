@@ -51,6 +51,12 @@ public sealed class CostMonthStatus {
 /// 両処理で列構成が共通するため1つのDTOで共有する。
 /// </summary>
 public sealed class CostPreviewRow {
+	/// <summary>
+	/// 計上月 yyyyMM。総平均原価更新の対象月自身は画面入力の<c>TargetMonth</c>と同じ値、
+	/// §6.6で再計算される後続月はその後続月自身の値になる。最終仕入原価更新は常に<c>TargetMonth</c>。
+	/// 後続月再計算の対象月と変更前後差額を確認一覧で区別できるようにするため、Step 7で追加した。
+	/// </summary>
+	public string SumMonth { get; set; } = string.Empty;
 	/// <summary>商品Id。</summary>
 	public long Id_Shohin { get; set; }
 	/// <summary>商品コード。</summary>

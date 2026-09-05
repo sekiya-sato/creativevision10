@@ -266,4 +266,10 @@ public enum EnumCostCalcError : int {
 	InvalidRoundingUnit,
 	/// <summary>掛率が範囲外(消化仕入は設計書§2.5.8の1～10000、評価替えは§13 U-18・§16.5の1～100)。</summary>
 	InvalidRate,
+	/// <summary>
+	/// 現在の<c>MasterSysman.CostMethod</c>がこの更新処理と一致しない(設計書§2.3、§5.1、§6.1)。
+	/// 商品ごとの計算エラーではなく、更新処理そのものが実行不可であることを示す全体エラー。
+	/// Step 7（<c>CvDomainLogic/CostUpdateDbCost.cs</c>）で追加。
+	/// </summary>
+	CostMethodMismatch,
 }
