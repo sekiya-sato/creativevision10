@@ -93,6 +93,17 @@ public partial class CoreService {
 			}
 			yield break;
 		}
+		// 原価4処理・評価替えの更新実行(Step 9)。Apply*は内部で既にマニュアル排他制御を取得しているため
+		// (設計書 CostUpdateDb.cs 参照)、StreamStepProgressRunnerの排他引数は使わない(二重取得になる)。
+		else if (request.Flag is CvFlag.Msg082_CostConsumptionApply
+			or CvFlag.Msg085_CostLastPurchaseApply
+			or CvFlag.Msg087_CostTotalAverageApply
+			or CvFlag.Msg089_CostRevaluationApply) {
+			await foreach (var msg in HandleCostUpdateApplyStreamAsync(ct, request)) {
+				yield return msg;
+			}
+			yield break;
+		}
 		// テストストリーミング処理（既存）
 		else if (request.Flag is CvFlag.Msg710_StreamingTest) {
 			// 追加：HandleConvertTestStreamAsync を呼ぶ
@@ -173,6 +184,162 @@ public partial class CoreService {
 			yield return msg;
 		}
 	}
+
+	#region 原価4処理・評価替えの更新実行(Step 9)
+	// 正典は `Doc/spec/2026-09-05_原価4項目_詳細設計.md` §8.1・§9.3、
+	// `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4。
+	//
+	// 設計上の注意: Apply*(ApplyConsumptionPurchases/ApplyLastPurchaseCost/ApplyTotalAverageCost/
+	// ApplyRevaluation)はCostUpdateDb内部で既にマニュアル排他制御(ManualLockDb.TryBegin)を取得している
+	// (Step 9-3)。StreamStepProgressRunner.Runの排他引数(manualLockDb/lockProcessName)を使うと、
+	// 外側でTryBeginしたのと同じ一連処理名の行が既に存在する状態で内側のTryBeginが呼ばれ、
+	// 必ず「先行処理あり」で失敗する(二重取得)。そのためここではRunの排他引数を使わず、
+	// (b) ストリームハンドラ内で直接StreamMsgを組み立てる方式を採る。
+	// Apply*は同期メソッドでCostUpdateResult(UpdatedCount/ErrorCount/BatchId/Messageを含む)を返すため、
+	// Run(steps: IReadOnlyList<(string,Func<TArg,int>)>)の「ステップ名+件数(int)」だけの形にも合わない
+	// (Runを使うにはCostUpdateResultの構造化情報をstring/intへ落とし込む必要があり、そのほうが情報を失う)。
+
+	/// <summary>
+	/// パラメータのデシリアライズに失敗した場合の共通エラーストリームメッセージ(既存の分岐と同じ書式)。
+	/// </summary>
+	private static StreamMsg CreateCostUpdateParamErrorStreamMsg(CvFlag flag) => new() {
+		Flag = flag,
+		Code = -1,
+		DataType = typeof(string),
+		DataMsg = $"エラー: パラメータのデシリアライズに失敗 ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+		Progress = 0,
+		IsCompleted = true,
+		IsError = true
+	};
+
+	/// <summary>開始通知(件数は未確定のため出さない。既存のFormatProgressMessageの書式に合わせる)。</summary>
+	private static StreamMsg CreateCostUpdateStartedStreamMsg(CvFlag flag, string stepName) => new() {
+		Flag = flag,
+		Code = 0,
+		DataType = typeof(string),
+		DataMsg = $"開始: {stepName} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+		Progress = 0,
+		IsCompleted = false,
+		IsError = false
+	};
+
+	/// <summary>
+	/// <see cref="CostUpdateResult"/>を最終ストリームメッセージへ変換する。<c>UpdatedCount</c>・<c>ErrorCount</c>・
+	/// <c>BatchId</c>・<c>Message</c>を失わないよう、<c>CostUpdateResult</c>そのものを<c>DataMsg</c>へ載せる。
+	/// <c>IsSuccess=false</c>のとき(排他取得失敗・エラー行あり・原価方式不一致など)は
+	/// エラーとしてストリームを終える。
+	/// </summary>
+	private static StreamMsg CreateCostUpdateResultStreamMsg(CvFlag flag, CostUpdateResult result) => new() {
+		Flag = flag,
+		Code = result.IsSuccess ? 0 : CvMsgErrorCode.InvalidParameter,
+		DataType = typeof(CostUpdateResult),
+		DataMsg = Common.SerializeObject(result),
+		Progress = 100,
+		IsCompleted = true,
+		IsError = !result.IsSuccess
+	};
+
+	/// <summary>
+	/// 例外で中断した場合も<see cref="CostUpdateResult"/>と同じ形へ包んで返す。
+	/// <see cref="ConsumptionPurchasePaidPeriodException"/>・<see cref="CostRevaluationPaidPeriodException"/>は
+	/// 「支払計算を取り消してから再実行してください」まで<c>Message</c>に含む(例外メッセージをそのまま使う)。
+	/// </summary>
+	private static StreamMsg CreateCostUpdateExceptionStreamMsg(CvFlag flag, string targetMonth, string batchId, string message) {
+		var result = new CostUpdateResult {
+			IsSuccess = false,
+			BatchId = batchId,
+			TargetMonth = targetMonth,
+			UpdatedCount = 0,
+			ErrorCount = 0,
+			Message = message,
+			StartedAt = 0,
+			FinishedAt = Common.GetVdate(),
+		};
+		return CreateCostUpdateResultStreamMsg(flag, result);
+	}
+
+	/// <summary>
+	/// クライアントが<c>BatchId</c>を空文字で送ってきた場合に、サーバー側でGUIDのD形式(36文字)を採番する
+	/// (原価4項目 詳細設計 §2.5.2「実行IDはGUIDのD形式」)。空でなければ、確認(プレビュー)と更新で
+	/// 同一値を使う運用のためクライアント指定値をそのまま使う。純関数として切り出し、単体テスト対象にする。
+	/// </summary>
+	public static string ResolveBatchId(string? batchId) =>
+		string.IsNullOrEmpty(batchId) ? Guid.NewGuid().ToString("D") : batchId;
+
+	/// <summary>
+	/// 開始通知 → 実行 → 結果通知の1系列を組み立てる共通処理。<paramref name="apply"/>は同期処理のため
+	/// <see cref="Task.Run(Func{Task},CancellationToken)"/>相当で実行し、呼び出し元スレッドを塞がない。
+	/// </summary>
+	private static async IAsyncEnumerable<StreamMsg> RunCostApplyStreamAsync(
+		CvFlag flag,
+		string stepName,
+		string targetMonth,
+		string batchId,
+		Func<CostUpdateResult> apply,
+		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct) {
+		yield return CreateCostUpdateStartedStreamMsg(flag, stepName);
+
+		StreamMsg finalMsg;
+		try {
+			var result = await Task.Run(apply, ct);
+			finalMsg = CreateCostUpdateResultStreamMsg(flag, result);
+		}
+		catch (ConsumptionPurchasePaidPeriodException ex) {
+			// 例外を握りつぶさず、利用者に「支払計算を取り消してから再実行する」旨が伝わる形で終える(設計書§4.6)。
+			finalMsg = CreateCostUpdateExceptionStreamMsg(flag, targetMonth, batchId, ex.Message);
+		}
+		catch (CostRevaluationPaidPeriodException ex) {
+			finalMsg = CreateCostUpdateExceptionStreamMsg(flag, targetMonth, batchId, ex.Message);
+		}
+		catch (Exception ex) {
+			finalMsg = CreateCostUpdateExceptionStreamMsg(flag, targetMonth, batchId, ex.Message);
+		}
+		yield return finalMsg;
+	}
+
+	/// <summary>
+	/// 原価4処理・評価替えの更新実行(Msg082/085/087/089)のディスパッチ。パラメータ型で処理を振り分け、
+	/// <c>Id_Shain</c>をJWT解決値へ上書きし(監査値のため。TranGenka.Id_Shain/TranGenkaReval.Id_Shainへ書く値であり、利用者が任意に指定できてはならない)、<c>BatchId</c>が空文字なら
+	/// サーバー側で採番してから<see cref="RunCostApplyStreamAsync"/>へ渡す。
+	/// </summary>
+	private IAsyncEnumerable<StreamMsg> HandleCostUpdateApplyStreamAsync(CancellationToken ct, CvMsg request) {
+		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+		var costDb = new CostUpdateDb(_db);
+		var idShain = ResolveLoginShainId();
+
+		switch (request.Flag, param) {
+			case (CvFlag.Msg082_CostConsumptionApply, CostUpdateParameter p):
+				p.Id_Shain = idShain;
+				p.BatchId = ResolveBatchId(p.BatchId);
+				return RunCostApplyStreamAsync(request.Flag, "消化仕入更新", p.TargetMonth, p.BatchId,
+					() => costDb.ApplyConsumptionPurchases(p), ct);
+			case (CvFlag.Msg085_CostLastPurchaseApply, CostUpdateParameter p):
+				p.Id_Shain = idShain;
+				p.BatchId = ResolveBatchId(p.BatchId);
+				return RunCostApplyStreamAsync(request.Flag, "最終仕入原価更新", p.TargetMonth, p.BatchId,
+					() => costDb.ApplyLastPurchaseCost(p), ct);
+			case (CvFlag.Msg087_CostTotalAverageApply, CostUpdateParameter p):
+				p.Id_Shain = idShain;
+				p.BatchId = ResolveBatchId(p.BatchId);
+				return RunCostApplyStreamAsync(request.Flag, "総平均原価更新", p.TargetMonth, p.BatchId,
+					() => costDb.ApplyTotalAverageCost(p), ct);
+			case (CvFlag.Msg089_CostRevaluationApply, CostRevaluationParameter rp): {
+				var resolvedBatchId = ResolveBatchId(rp.BatchId);
+				var overridden = rp with { Id_Shain = idShain, BatchId = resolvedBatchId };
+				return RunCostApplyStreamAsync(request.Flag, "評価替え", overridden.TargetMonth, overridden.BatchId,
+					() => costDb.ApplyRevaluation(overridden), ct);
+			}
+			default:
+				return SingleMsgStream(CreateCostUpdateParamErrorStreamMsg(request.Flag));
+		}
+	}
+
+	/// <summary>1件だけのStreamMsgを<see cref="IAsyncEnumerable{T}"/>へ包む(パラメータ不正時の共通処理用)。</summary>
+	private static async IAsyncEnumerable<StreamMsg> SingleMsgStream(StreamMsg msg) {
+		await Task.Yield();
+		yield return msg;
+	}
+	#endregion
 
 	#region テストストリーミング処理
 	/// <summary>

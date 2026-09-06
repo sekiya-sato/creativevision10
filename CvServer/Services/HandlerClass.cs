@@ -308,6 +308,154 @@ public partial class CoreService {
 		}
 	}
 
+	// ==================================================================
+	// 原価4処理・評価替えのプレビュー・状態照会・取消(Step 9)
+	// 正典は `Doc/spec/2026-09-05_原価4項目_詳細設計.md` §8・§9、
+	// `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4。
+	// ここで扱うのはDBを変更しないもの(月次状態照会・4処理と評価替えの確認・評価替えの取消)だけである。
+	// 更新実行(Apply*)はQueryMsgStreamService側(ストリーミング)で扱う。
+	// ==================================================================
+
+	/// <summary>
+	/// 原価4処理の月次状態照会(設計書§2.5.6・§8.1)。消化仕入・原価更新の2区分をまとめて返す。DBは変更しない。
+	/// </summary>
+	private CvMsg HandleCostMonthStatus(CvMsg request, CallContext context) {
+		try {
+			if (Common.DeserializeObject(request.DataMsg, request.DataType) is not string sumMonth || string.IsNullOrWhiteSpace(sumMonth)) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+			}
+			var statuses = new CostUpdateDb(_db).FetchCostMonthStatuses(sumMonth);
+			return CreateSuccessResponse(request.Flag, typeof(IReadOnlyList<CostMonthStatus>), Common.SerializeObject(statuses));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "原価4処理の月次状態照会に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// <see cref="CostUpdateParameter.Id_Shain"/>をクライアントの申告値ではなくJWTの値へ上書きする。
+	/// <c>TranGenka.Id_Shain</c>等へ書き込まれる監査値のため、利用者が任意に選べる値であってはならない
+	/// (マニュアル排他制御 詳細設計§2.5.3と同じ理由)。
+	/// </summary>
+	private CostUpdateParameter OverrideIdShain(CostUpdateParameter param) {
+		param.Id_Shain = ResolveLoginShainId();
+		return param;
+	}
+
+	/// <summary>
+	/// 消化仕入更新の確認(プレビュー)。DBは変更しない(設計書§2.4-1)。
+	/// </summary>
+	private CvMsg HandleCostConsumptionPreview(CvMsg request, CallContext context) {
+		try {
+			if (Common.DeserializeObject(request.DataMsg, request.DataType) is not CostUpdateParameter param) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+			}
+			OverrideIdShain(param);
+			var rows = new CostUpdateDb(_db).PreviewConsumptionPurchases(param);
+			return CreateSuccessResponse(request.Flag, typeof(IReadOnlyList<ConsumptionPreviewRow>), Common.SerializeObject(rows));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "消化仕入更新の確認に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 諸掛確認(参照専用。Applyは無い。設計書§3.8)。
+	/// </summary>
+	private CvMsg HandleCostSundryPreview(CvMsg request, CallContext context) {
+		try {
+			if (Common.DeserializeObject(request.DataMsg, request.DataType) is not CostUpdateParameter param) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+			}
+			OverrideIdShain(param);
+			var result = new CostUpdateDb(_db).PreviewSundryCharges(param);
+			return CreateSuccessResponse(request.Flag, typeof(SundryChargeCheckResult), Common.SerializeObject(result));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "諸掛確認に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 最終仕入原価更新の確認(プレビュー)。DBは変更しない。
+	/// </summary>
+	private CvMsg HandleCostLastPurchasePreview(CvMsg request, CallContext context) {
+		try {
+			if (Common.DeserializeObject(request.DataMsg, request.DataType) is not CostUpdateParameter param) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+			}
+			OverrideIdShain(param);
+			var rows = new CostUpdateDb(_db).PreviewLastPurchaseCost(param);
+			return CreateSuccessResponse(request.Flag, typeof(IReadOnlyList<CostPreviewRow>), Common.SerializeObject(rows));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "最終仕入原価更新の確認に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 総平均原価更新の確認(プレビュー)。DBは変更しない。
+	/// </summary>
+	private CvMsg HandleCostTotalAveragePreview(CvMsg request, CallContext context) {
+		try {
+			if (Common.DeserializeObject(request.DataMsg, request.DataType) is not CostUpdateParameter param) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+			}
+			OverrideIdShain(param);
+			var rows = new CostUpdateDb(_db).PreviewTotalAverageCost(param);
+			return CreateSuccessResponse(request.Flag, typeof(IReadOnlyList<CostPreviewRow>), Common.SerializeObject(rows));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "総平均原価更新の確認に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 評価替えの確認(プレビュー)。DBは変更しない(設計書§16.6)。
+	/// </summary>
+	private CvMsg HandleCostRevaluationPreview(CvMsg request, CallContext context) {
+		try {
+			if (Common.DeserializeObject(request.DataMsg, request.DataType) is not CostRevaluationParameter param) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+			}
+			// Id_Shainはクライアント申告値を使わずサーバー側で上書きする(監査値のため。TranGenka.Id_Shain/TranGenkaReval.Id_Shainへ書く値であり、利用者が任意に指定できてはならない)。
+			// CostRevaluationParameterはrecordのため、CostUpdateParameterと異なり`with`式で複製する。
+			param = param with { Id_Shain = ResolveLoginShainId() };
+			var result = new CostUpdateDb(_db).PreviewRevaluation(param);
+			return CreateSuccessResponse(request.Flag, typeof(RevaluationPreviewResult), Common.SerializeObject(result));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "評価替えの確認に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 評価替えの取消(設計書§16.7「再実行と取消」)。実行社員IdはJWTから解決し、クライアントの申告値は
+	/// 受け取らない(強制クリアと同じ理由。監査値のため)。リクエストからは<c>revalId</c>だけを受け取る。
+	/// 業務規則による拒否(<c>CostUpdateResult.IsSuccess=false</c>)も、既存の<c>PosCheckout</c>等と同じく
+	/// 転送層は成功応答とし、可否はDTO内の<c>IsSuccess</c>で表す。
+	/// </summary>
+	private CvMsg HandleCostRevaluationCancel(CvMsg request, CallContext context) {
+		try {
+			if (Common.DeserializeObject(request.DataMsg, request.DataType) is not long revalId || revalId <= 0) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+			}
+			var idShain = ResolveLoginShainId();
+			var result = new CostUpdateDb(_db).CancelRevaluation(revalId, idShain);
+			return CreateSuccessResponse(request.Flag, typeof(CostUpdateResult), Common.SerializeObject(result));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "評価替えの取消に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
 	/// <summary>
 	/// 再同期の実行結果サマリを組み立てる(開始/終了/所要時間はサーバ側の実測値)
 	/// </summary>

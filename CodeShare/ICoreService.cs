@@ -259,6 +259,61 @@ public enum CvFlag {
 	[EnumMember]
 	Msg073_PosSaveSeisan = 73,
 	/// <summary>
+	/// 原価4処理の月次状態照会（消化仕入・原価更新の2区分をまとめて返す。参照専用）
+	/// </summary>
+	[EnumMember]
+	Msg080_CostMonthStatus = 80,
+	/// <summary>
+	/// 消化仕入更新の確認（プレビュー）。DBは変更しない
+	/// </summary>
+	[EnumMember]
+	Msg081_CostConsumptionPreview = 81,
+	/// <summary>
+	/// 消化仕入更新の更新実行（ストリーミング。進捗通知あり）
+	/// </summary>
+	[EnumMember]
+	Msg082_CostConsumptionApply = 82,
+	/// <summary>
+	/// 諸掛確認（参照専用。Applyは無い）
+	/// </summary>
+	[EnumMember]
+	Msg083_CostSundryPreview = 83,
+	/// <summary>
+	/// 最終仕入原価更新の確認（プレビュー）。DBは変更しない
+	/// </summary>
+	[EnumMember]
+	Msg084_CostLastPurchasePreview = 84,
+	/// <summary>
+	/// 最終仕入原価更新の更新実行（ストリーミング。進捗通知あり）
+	/// </summary>
+	[EnumMember]
+	Msg085_CostLastPurchaseApply = 85,
+	/// <summary>
+	/// 総平均原価更新の確認（プレビュー）。DBは変更しない
+	/// </summary>
+	[EnumMember]
+	Msg086_CostTotalAveragePreview = 86,
+	/// <summary>
+	/// 総平均原価更新の更新実行（ストリーミング。進捗通知あり）
+	/// </summary>
+	[EnumMember]
+	Msg087_CostTotalAverageApply = 87,
+	/// <summary>
+	/// 評価替えの確認（プレビュー）。DBは変更しない
+	/// </summary>
+	[EnumMember]
+	Msg088_CostRevaluationPreview = 88,
+	/// <summary>
+	/// 評価替えの更新実行（ストリーミング。進捗通知あり）
+	/// </summary>
+	[EnumMember]
+	Msg089_CostRevaluationApply = 89,
+	/// <summary>
+	/// 評価替えの取消。実行社員IdはJWTから解決し、クライアントからは受け取らない
+	/// </summary>
+	[EnumMember]
+	Msg090_CostRevaluationCancel = 90,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	[EnumMember]
