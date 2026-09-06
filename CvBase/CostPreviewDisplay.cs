@@ -79,4 +79,14 @@ public static class CostPreviewDisplay {
 		DateTime.TryParseExact(yyyymm + "01", "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day)
 			? day.ToString("yyyy/MM", CultureInfo.InvariantCulture)
 			: yyyymm;
+
+	/// <summary>
+	/// 最終仕入原価更新・総平均原価更新のプレビュー結果が「原価方式不一致」1行だけかどうかを判定する
+	/// （原価4項目 詳細設計 §2.3、§8.4・§8.5）。サーバーは<c>MasterSysman.CostMethod</c>が画面の方式と
+	/// 一致しないとき、商品を特定しない<see cref="EnumCostCalcError.CostMethodMismatch"/>の1行だけを返す
+	/// （<c>CostUpdateDbCost.NewCostMethodMismatchRow</c>）。画面はこれを確認一覧の1行として埋もれさせず、
+	/// 「現在の原価方式では実行できません」という専用メッセージとして表示するために使う。
+	/// </summary>
+	public static bool IsCostMethodMismatchOnly(IReadOnlyList<CostPreviewRow> rows) =>
+		rows.Count == 1 && rows[0].Error == EnumCostCalcError.CostMethodMismatch;
 }

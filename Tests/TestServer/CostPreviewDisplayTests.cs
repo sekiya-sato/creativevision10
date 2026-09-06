@@ -1,6 +1,7 @@
 using CvBase;
 using CvBase.Share;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
 namespace Tests.CvServer;
 
@@ -87,5 +88,35 @@ public class CostPreviewDisplayTests {
 	[TestMethod]
 	public void FormatYm6ToSlash_yyyyMMをスラッシュ区切りへ変換する() {
 		Assert.AreEqual("2026/09", CostPreviewDisplay.FormatYm6ToSlash("202609"));
+	}
+
+	[TestMethod]
+	public void IsCostMethodMismatchOnly_不一致1件だけならtrue() {
+		var rows = new List<CostPreviewRow> {
+			new() { Error = EnumCostCalcError.CostMethodMismatch, ErrorMessage = "現在の原価方式(固定原価)では最終仕入原価更新を実行できません。" },
+		};
+		Assert.IsTrue(CostPreviewDisplay.IsCostMethodMismatchOnly(rows));
+	}
+
+	[TestMethod]
+	public void IsCostMethodMismatchOnly_0件ならfalse() {
+		Assert.IsFalse(CostPreviewDisplay.IsCostMethodMismatchOnly([]));
+	}
+
+	[TestMethod]
+	public void IsCostMethodMismatchOnly_不一致行に加えて通常行があればfalse() {
+		var rows = new List<CostPreviewRow> {
+			new() { Error = EnumCostCalcError.CostMethodMismatch, ErrorMessage = "現在の原価方式では実行できません。" },
+			new() { Id_Shohin = 1, Error = EnumCostCalcError.None },
+		};
+		Assert.IsFalse(CostPreviewDisplay.IsCostMethodMismatchOnly(rows));
+	}
+
+	[TestMethod]
+	public void IsCostMethodMismatchOnly_1件でも不一致以外のエラーならfalse() {
+		var rows = new List<CostPreviewRow> {
+			new() { Id_Shohin = 1, Error = EnumCostCalcError.NonPositiveAfterCost },
+		};
+		Assert.IsFalse(CostPreviewDisplay.IsCostMethodMismatchOnly(rows));
 	}
 }

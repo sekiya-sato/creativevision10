@@ -185,6 +185,14 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 				SourceTranId = best.ShiireId,
 				SourceLineNo = best.MeisaiNo,
 				SourceDay = best.DenDay,
+				// 設計書§8.4の一覧列「数量／仕入金額」。採用した最終仕入明細の Su / Kingaku をそのまま載せる。
+				// AfterCost = round_away_from_zero(Kingaku / Su)（§5.3）の計算根拠であり、
+				// これが無いと利用者が確認一覧で結果を検算できない。
+				// TranGenkaへは§5.3のとおり0で保存する（最終仕入原価方式では使わない列のため）。
+				// プレビュー行は保存行と別物であり、ここでの PurchaseQty/PurchaseAmount は
+				// 総平均原価（§8.5「当月仕入数／当月仕入金額」）とは意味が異なる。
+				PurchaseQty = best.Su,
+				PurchaseAmount = best.Kingaku,
 				Error = calc.Error,
 				ErrorMessage = DescribeCostCalcError(calc.Error),
 			});

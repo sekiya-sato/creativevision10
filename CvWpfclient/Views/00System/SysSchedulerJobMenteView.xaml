@@ -93,7 +93,7 @@
 				Command="{Binding ToggleTaskSendMailCommand}"
 				Content="メール送信する/しない 切替"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
-        </StackPanel>
+		</StackPanel>
 
 		<!--  DataGrid  -->
 		<materialDesign:Card Grid.Row="2"
@@ -125,8 +125,9 @@
 				<DataGrid x:Name="TaskGrid"
 					Grid.Row="1"
 					d:ItemsSource="{d:SampleData ItemCount=5}"
-					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" helpers:DataGridSelectionBehavior.SyncCurrentCellWithSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
-					AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" helpers:DataGridSelectionBehavior.SyncCurrentCellWithSelectedItem="True"
+					materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8" AutoGenerateColumns="False" EnableRowVirtualization="True"
+					FrozenColumnCount="1" GridLinesVisibility="Horizontal"
 					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 					IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
 					ItemsSource="{Binding Tasks}"

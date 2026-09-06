@@ -378,8 +378,8 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ 原価・評価 ----", new([
 				new("諸掛確認", typeof(Views._31Monthly.SundryChargesUpdateView), addInfo:"準備中 入力済みの諸掛を確認する。更新処理は持たない"),
-				new("最終仕入原価更新", typeof(Views._31Monthly.LastPurchaseCostRefreshView), addInfo:"準備中"),
-				new("総平均原価更新", typeof(Views._31Monthly.TotalAverageCostUpdateView), addInfo:"準備中"),
+				new("最終仕入原価更新", typeof(Views._31Monthly.LastPurchaseCostRefreshView)),
+				new("総平均原価更新", typeof(Views._31Monthly.TotalAverageCostUpdateView)),
 				new("消化仕入更新", typeof(Views._31Monthly.ConsumptionPurchaseUpdateView)),
 				new("評価替", typeof(Views._31Monthly.CostRevaluationView), addInfo:"準備中 他のがだいたい終わってから実装する"),
 			])),
