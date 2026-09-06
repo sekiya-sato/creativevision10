@@ -347,4 +347,124 @@ public class CostCalculatorTests {
 
 		Assert.IsTrue(late.CompareTo(early) > 0);
 	}
+
+	// ------------------------------------------------------------------
+	// C-14 オーバーフロー(設計書§11.1): 数量×単価・在庫×原価・按分中間値がlongの範囲で
+	// 破綻しないことを固定する。本プロジェクトはCheckForOverflowUnderflowを設定していないため、
+	// long同士の算術は既定でunchecked(オーバーフロー時に例外を出さず、2の補数でラップする)。
+	// 以下は「壊れていないこと」の確認と、「壊れている箇所」を再現して固定する目的の両方を含む。
+	// 壊れている箇所はテストで固定するのみとし、production コードは修正しない(私の判断を待つ)。
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void CalcTotalAverageCost_Denominatorの2項オーバーフローは必ず負になりエラーで捕捉される() {
+		// OpeningQty・PurchaseQtyはどちらも正の値として渡ってくる想定であり、2つの正のlongの加算が
+		// オーバーフローする場合、2の補数表現の性質上、結果は必ず負になる(0<=a,b<2^63のときa+b<2^64であり、
+		// 2^63を超えた場合のみ符号ビットが立つため)。したがって既存の「Denominator<=0はエラー」判定に
+		// 必ず引っかかり、誤った正の値を分母に使うことはない。安全側であることをここで固定する。
+		var input = new CostCalculator.TotalAverageInput(
+			OpeningQty: long.MaxValue - 5, OpeningAmount: 1, PurchaseQty: 10, PurchaseAmount: 1, SundryAmount: 0);
+
+		var result = CostCalculator.CalcTotalAverageCost(input, beforeCost: 1);
+
+		Assert.AreEqual(EnumCostCalcError.NonPositiveDenominator, result.Error);
+		Assert.IsTrue(result.Denominator < 0, $"Denominator={result.Denominator}");
+	}
+
+	/// <summary>
+	/// 【既知の限界。実務データでは到達しない】<see cref="CostCalculator.CalcTotalAverageCost"/>のNumerator計算
+	/// (<c>OpeningAmount + PurchaseAmount + SundryAmount</c>)はchecked演算ではないため、
+	/// 3項の加算が2度ラップアラウンドすると、本来は表現不能な巨大な金額のはずが、
+	/// 何の検知もされずに全く別の「もっともらしい」小さな正の値になり得る。
+	/// <para>
+	/// 本テストは OpeningAmount・PurchaseAmount をそれぞれ<c>long.MaxValue</c>近くまで積み、
+	/// SundryAmount で帳尻を合わせることで、意図的に「一見正常に見える」誤った計算結果を再現する。
+	/// Denominatorの2項加算(<see cref="CalcTotalAverageCost_Denominatorの2項オーバーフローは必ず負になりエラーで捕捉される"/>)
+	/// と異なり、Numeratorは3項の加算であるため「2つの正が負にラップし、3つ目の正でまた正に戻る」
+	/// 経路が存在し、safety netにならない。
+	/// </para>
+	/// <para>
+	/// 実務データでOpeningAmount・PurchaseAmountがlong.MaxValue付近(約922京円)に達することは現実的ではないが、
+	/// 設計書§11.1 C-14は「longの範囲で破綻しないこと」を求めており、この関数がchecked/BigIntegerを
+	/// 使っていない以上、境界では誤った値を返し得ることをここで固定して報告する。
+	/// </para>
+	/// </summary>
+	[TestMethod]
+	public void CalcTotalAverageCost_Numeratorの3項オーバーフローは検知されない既知の限界() {
+		const long openingAmount = long.MaxValue - 100; // 9223372036854775707
+		const long purchaseAmount = long.MaxValue - 100; // 同上。2つ合計はunchecked long加算で-202へラップする
+		const long sundryAmount = 100_202; // -202 + 100_202 = 100_000 (本来あり得ない巨大な合計が消えて小さい正値になる)
+		var input = new CostCalculator.TotalAverageInput(
+			OpeningQty: 10, OpeningAmount: openingAmount, PurchaseQty: 14, PurchaseAmount: purchaseAmount, SundryAmount: sundryAmount);
+
+		var result = CostCalculator.CalcTotalAverageCost(input, beforeCost: 1);
+
+		// 現在の実装が実際に返す値をそのまま固定する(退行検知が目的。これが「正しい」という意味ではない)。
+		Assert.AreEqual(EnumCostCalcError.None, result.Error, "オーバーフローがエラーとして検知されていない");
+		Assert.AreEqual(100_000L, result.Numerator, "3項加算がラップアラウンドし、本来の巨大な合計とは無関係な値になっている");
+		Assert.AreEqual(4166L, result.AfterCost); // floor(100000/24) — 何の警告もなく「もっともらしい」原価が返る
+	}
+
+	[TestMethod]
+	public void RoundToUnit_極端に大きい値はdecimalからlongへの変換でOverflowExceptionになる() {
+		// RoundToUnitの最終行 (long)(roundedScaled * unit) はdecimal→long変換であり、
+		// C#仕様上decimalが絡む数値変換は常にchecked相当でOverflowExceptionを送出する
+		// (int/long同士のプリミティブ演算のようにcheckedコンテキスト指定が必要なわけではない)。
+		// したがってRoundToUnit自体は「誤った値を返す」のではなく「例外で検知される」安全側であることを固定する。
+		var huge = (decimal)long.MaxValue * 1000m; // long表現域を明らかに超える
+		Assert.ThrowsExactly<OverflowException>(() => CostCalculator.RoundToUnit(huge, unit: 1, EnumRounding.Floor));
+	}
+
+	[TestMethod]
+	public void CalcLastPurchaseCost_保存先のint列に収まらないAfterCostはエラーになる() {
+		// CalcLastPurchaseCostはkingaku/suをdecimalで割ってからMath.Round・(long)キャストするため、
+		// 計算そのものはlongの範囲まで破綻しない。ただし保存先のTranGenka.AfterCostと
+		// MasterShohin.TankaGenkaはint列であり、long→intのナローイングキャストはuncheckedである。
+		// そのまま通すと符号が反転した負の原価が無警告で保存されるため、範囲外はここでエラーにする
+		// (設計書§2.2「DB保存値は現行互換の円単位整数」、§11.1 C-14)。
+		var result = CostCalculator.CalcLastPurchaseCost(kingaku: long.MaxValue - 1, su: 1);
+
+		Assert.AreEqual(EnumCostCalcError.AfterCostOutOfRange, result.Error);
+	}
+
+	[TestMethod]
+	public void CalcLastPurchaseCost_int範囲の上限ちょうどは正常に計算される() {
+		// 境界。int.MaxValue は保存できるのでエラーにしない。
+		var result = CostCalculator.CalcLastPurchaseCost(kingaku: int.MaxValue, su: 1);
+
+		Assert.AreEqual(EnumCostCalcError.None, result.Error);
+		Assert.AreEqual(int.MaxValue, result.AfterCost);
+	}
+
+	[TestMethod]
+	public void CalcTotalAverageCost_int範囲を超えるAfterCostはエラーになる() {
+		// 総平均原価も保存先は同じint列であり、同じ理由で範囲外をエラーにする。
+		var input = new CostCalculator.TotalAverageInput(
+			OpeningQty: 0, OpeningAmount: 0, PurchaseQty: 1, PurchaseAmount: 3_000_000_000L, SundryAmount: 0);
+
+		var result = CostCalculator.CalcTotalAverageCost(input, beforeCost: 0);
+
+		Assert.AreEqual(EnumCostCalcError.AfterCostOutOfRange, result.Error);
+	}
+
+	/// <summary>
+	/// 【既知の限界。実務データでは到達しない】<see cref="CostCalculator.CalcConsumptionUnitCostByRate"/>の
+	/// <c>raw = uriageTanka * rateBasisPoints / 10000m</c> は、乗算 <c>uriageTanka * rateBasisPoints</c> が
+	/// 「long(uriageTanka) × int(rateBasisPoints、long へ昇格)」というlong同士の乗算として先に評価され、
+	/// 10000mによる除算(decimal昇格)より前にオーバーフローし得る。乗算は加算と違い、オーバーフロー時に
+	/// 符号や大小関係が保証されないため、Denominatorの2項加算のような「安全側に倒れる」性質がない。
+	/// </summary>
+	[TestMethod]
+	public void CalcConsumptionUnitCostByRate_乗算段階のオーバーフローは検知されない既知の限界() {
+		const long hugeUriageTanka = 2_000_000_000_000_000L; // 2×10^15。現実の売上単価としてはあり得ないが、long範囲内
+		const int rateBasisPoints = 10000; // 100%。本来ならAfterCost==hugeUriageTankaになるはず
+
+		var result = CostCalculator.CalcConsumptionUnitCostByRate(hugeUriageTanka, rateBasisPoints, roundingUnit: 1, rounding: EnumRounding.Round);
+
+		Assert.AreEqual(EnumCostCalcError.None, result.Error, "オーバーフローがエラーとして検知されていない");
+		// 本来100%掛率ならAfterCost==hugeUriageTankaになるはずだが、乗算オーバーフローにより一致しない。
+		Assert.AreNotEqual(hugeUriageTanka, result.AfterCost);
+		// 現在の実装が実際に返す値をそのまま固定する(退行検知が目的)。
+		Assert.AreEqual(155_325_592_629_045L, result.AfterCost);
+	}
 }

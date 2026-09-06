@@ -754,6 +754,49 @@ public class CostUpdateDbCostTests {
 		StringAssert.Contains(result.Message, "確認後に原価方式が変更されました");
 	}
 
+	// ------------------------------------------------------------------
+	// C-14 オーバーフロー(設計書§11.1): DB層(TranGenka.AfterCost/MasterShohin.TankaGenka)は
+	// int列であり、CostCalculatorの計算結果(long)を保存する箇所でint32へキャストしている。
+	// ここでの破綻の再現。修正はせず固定・報告のみ行う。
+	// ------------------------------------------------------------------
+
+	/// <summary>
+	/// 計算後原価が保存先の<c>int</c>列に収まらない場合、符号が反転した負の原価を保存せず
+	/// <see cref="EnumCostCalcError.AfterCostOutOfRange"/>のエラーにすること。
+	/// <para>
+	/// <c>TranGenka.AfterCost</c>・<c>MasterShohin.TankaGenka</c>はどちらも<c>int</c>列であり、
+	/// 保存直前の<c>long → int</c>のナローイングキャストはC#の既定でuncheckedである。
+	/// 範囲外の値をそのままキャストすると、0円以下をエラーとする規定（設計書§6.5）を
+	/// すり抜けて<b>負の原価が無警告で保存される</b>。それを防ぐため
+	/// <see cref="CostCalculator.CalcTotalAverageCost"/>が範囲を検査する（設計書§11.1 C-14）。
+	/// </para>
+	/// <para>
+	/// 1個・30億円の仕入は現実の商品規模では起こらないが、金額の桁を誤入力すれば到達しうる。
+	/// 誤った原価が残るより更新を止めるほうが安全である。
+	/// </para>
+	/// </summary>
+	[TestMethod]
+	public void ApplyTotalAverageCost_AfterCostExceedsInt32Range_IsErrorNotWrappedNegative() {
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 0);
+		// InsertPurchaseヘルパーはTanka(int列)へKingaku/Suを代入するため使わず、直接Kingakuだけを設定する
+		// (総平均原価の集計SQLはSu・Kingakuのみを見て、Tankaは使わない)。
+		var meisai = new System.Collections.Generic.List<Tran99Meisai> {
+			new() { No = 1, Id_Shohin = idShohin, Su = 1, Tanka = 0, Kingaku = 3_000_000_000L }, // 3,000,000,000 > Int32.MaxValue
+		};
+		var header = new Tran03Shiire { DenDay = "20260910", KakeDay = "20260910", IsStock = 1, IsPay = 1, Jmeisai = meisai, Vdc = 1, Vdu = 1 };
+		header.Kubun = 10;
+		Db.Insert(header);
+
+		var result = new CostUpdateDb(Db).ApplyTotalAverageCost(NewParam("202609", idShain));
+
+		Assert.IsFalse(result.IsSuccess, "範囲外の原価は更新せず中断すること");
+		Assert.AreEqual(1, result.ErrorCount);
+		Assert.IsNull(FetchGenka(idShohin, "202609", (int)EnumCostMethod.TotalAverage), "TranGenkaへ行を作らないこと");
+		Assert.AreEqual(0, TankaGenkaOf(idShohin), "MasterShohin.TankaGenkaを変更しないこと");
+	}
+
 	[TestMethod]
 	public void ApplyTotalAverageCost_ConfirmedMatches_Succeeds() {
 		CreateCostTables((int)EnumCostMethod.TotalAverage);

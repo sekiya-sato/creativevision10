@@ -127,6 +127,15 @@ public class CostUpdateDbConsumptionTests {
 		return header.Id;
 	}
 
+	/// <summary>店舗売上(<see cref="Tran01Tenuri"/>)を1件登録する。卸売上(<see cref="Tran00Uriage"/>)と同じく
+	/// <see cref="ProcessSalesTable"/>の対象テーブルであることを確認するために使う(設計書§11.1 C-05)。</summary>
+	private long InsertTenuri(string denDay, int kubun, long idSoko, params Tran99Meisai[] meisai) {
+		var header = new Tran01Tenuri { DenDay = denDay, Id_Soko = idSoko, Jmeisai = [.. meisai], Vdc = 1, Vdu = 1 };
+		header.Kubun = kubun;
+		Db.Insert(header);
+		return header.Id;
+	}
+
 	private static Tran99Meisai NewLine(int no, long idShohin, int su, int tanka, int jodai = 0) => new() {
 		No = no,
 		Id_Shohin = idShohin,
@@ -271,6 +280,46 @@ public class CostUpdateDbConsumptionTests {
 		Assert.AreEqual(2, generated.Count);
 		Assert.IsTrue(generated.Any(g => g.Kubun == (int)EnumShiire.Shiire && g.CalcFlag == 1));
 		Assert.IsTrue(generated.Any(g => g.Kubun == (int)EnumShiire.Henpin && g.CalcFlag == -1));
+	}
+
+	[TestMethod]
+	public void Apply_TenuriSource_GeneratesPurchase_SameAsUriage() {
+		// 設計書§11.1 C-05: 卸売上(Tran00Uriage)だけでなく店舗売上(Tran01Tenuri)も
+		// ProcessSalesTableの対象であることを確認する(既存テストはTran00Uriageしか使っていなかった)。
+		CreateConsumptionTables();
+		var idShiire = InsertShiire("SR1");
+		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
+		var idShain = InsertShain("E1");
+		InsertTenuri("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 2, tanka: 1000));
+
+		var result = new CostUpdateDb(Db).ApplyConsumptionPurchases(NewParam("202609", idShain));
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+		var generated = Db.Fetch<Tran03Shiire>("WHERE GeneratedKind=@0", (int)EnumGeneratedKind.ConsumptionPurchase);
+		Assert.AreEqual(1, generated.Count);
+		Assert.AreEqual(2, generated[0].Jmeisai![0].Su);
+		Assert.AreEqual(500, generated[0].Jmeisai![0].Tanka);
+	}
+
+	[TestMethod]
+	public void Apply_UriageAndTenuriBothInPeriod_EachSourceHeaderGeneratesItsOwnPurchase() {
+		// 生成単位は(SourceType, SourceId(=売上伝票そのもの), Id_ConsignmentShiire)であり、
+		// 卸売上と店舗売上は別のSourceTypeのため、同一商品・同一消化仕入先でもマージされず
+		// 伝票ごとに別々の消化仕入が生成される(設計書§4.5)。
+		CreateConsumptionTables();
+		var idShiire = InsertShiire("SR1");
+		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
+		var idShain = InsertShain("E1");
+		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 2, tanka: 1000));
+		InsertTenuri("20260911", 10, idSoko: 1, NewLine(1, idShohin, su: 3, tanka: 1000));
+
+		var result = new CostUpdateDb(Db).ApplyConsumptionPurchases(NewParam("202609", idShain));
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+		var generated = Db.Fetch<Tran03Shiire>("WHERE GeneratedKind=@0", (int)EnumGeneratedKind.ConsumptionPurchase);
+		Assert.AreEqual(2, generated.Count);
+		Assert.IsTrue(generated.Any(g => g.Jmeisai![0].Su == 2)); // 卸売上分
+		Assert.IsTrue(generated.Any(g => g.Jmeisai![0].Su == 3)); // 店舗売上分
 	}
 
 	// ------------------------------------------------------------------

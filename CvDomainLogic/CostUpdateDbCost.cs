@@ -66,6 +66,7 @@ public partial class CostUpdateDb {
 		EnumCostCalcError.PurchaseAmountWithoutQty => "当月仕入額はあるが数量が0です。",
 		EnumCostCalcError.SundryOnlyWithoutBase => "当月仕入が無く諸掛だけがあります。",
 		EnumCostCalcError.CostMethodMismatch => "現在の原価方式ではこの更新を実行できません。",
+			EnumCostCalcError.AfterCostOutOfRange => "計算後原価が保存できる範囲(int)を超えています。金額の桁を確認してください。",
 		_ => error.ToString(),
 	};
 

@@ -76,6 +76,9 @@ public static class CostCalculator {
 		if (afterCost <= 0) {
 			return CostCalcResult.Fail(EnumCostCalcError.NonPositiveAfterCost);
 		}
+		if (afterCost > int.MaxValue) {
+			return CostCalcResult.Fail(EnumCostCalcError.AfterCostOutOfRange);
+		}
 
 		return new CostCalcResult(afterCost, EnumCostCalcError.None);
 	}
@@ -184,6 +187,9 @@ public static class CostCalculator {
 		var afterCost = (long)Math.Floor((decimal)numerator / denominator);
 		if (afterCost <= 0) {
 			return new TotalAverageResult(afterCost, denominator, numerator, EnumCostCalcError.NonPositiveAfterCost);
+		}
+		if (afterCost > int.MaxValue) {
+			return new TotalAverageResult(afterCost, denominator, numerator, EnumCostCalcError.AfterCostOutOfRange);
 		}
 
 		return new TotalAverageResult(afterCost, denominator, numerator, EnumCostCalcError.None);
@@ -323,4 +329,16 @@ public enum EnumCostCalcError : int {
 	/// Step 7（<c>CvDomainLogic/CostUpdateDbCost.cs</c>）で追加。
 	/// </summary>
 	CostMethodMismatch,
+	/// <summary>
+	/// 計算後原価が保存先の <c>int</c> 列に収まらない（設計書§2.2「DB保存値は現行互換の円単位整数」）。
+	/// <para>
+	/// <c>TranGenka.AfterCost</c> と <c>MasterShohin.TankaGenka</c> はどちらも <c>int</c> 列である。
+	/// 中間計算は <c>long</c>／<c>decimal</c> で行うため、範囲を超えた値がそのまま
+	/// <c>long → int</c> のナローイングキャストへ渡ると、C#の既定（unchecked）では
+	/// <b>符号が反転した負の原価が無警告で保存される</b>。0円以下はエラーとする規定（§5.3、§6.5）が
+	/// あるにもかかわらず、キャストで負になった値はその検査より後に生まれるため素通りしてしまう。
+	/// 入力誤り（金額の桁間違いなど）で到達しうる経路なので、保存前にここで検出する。
+	/// </para>
+	/// </summary>
+	AfterCostOutOfRange,
 }
