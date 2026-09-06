@@ -83,31 +83,11 @@ public partial class CostUpdateDb {
 	}
 
 	/// <summary>
-	/// 決算期末月への読み替え(設計書§16.4)の純粋な年月演算だけを取り出したもの。現在時刻に依存する
-	/// 「未来月」判定を含まないため、単体テストで<c>202608→202703</c>・<c>202702→202703</c>の2例を
-	/// 現在時刻に左右されず固定できる（設計書§16.4「この2例をテストで固定すること」）。
-	/// <para>
-	/// 入力月・期首月をともに「西暦0年1月を0とする絶対月インデックス」へ変換し、期首月と同じ剰余を持つ
-	/// 直近(入力月以下)の会計年度開始月インデックスを求める。決算期末月はその11か月後(=開始から12か月目)。
-	/// 期首月が1月(会計年度=暦年)の場合も含めて破綻しない。
-	/// </para>
+	/// 決算期末月への読み替え(設計書§16.4)。純粋な年月演算は <see cref="ClosingMonthCalculator.ResolveFiscalYearEndMonth"/>
+	/// にあり、サーバーと画面(CvWpfclient)の双方が同じ実装を使う。ここはその薄い委譲である。
 	/// </summary>
-	/// <param name="targetMonth">入力計上月 yyyyMM。</param>
-	/// <param name="fiscalStartMonth">会計年度の期首月(1～12)。</param>
-	/// <returns>入力計上月が属する会計年度の決算期末月 yyyyMM。</returns>
-	public static string ResolveFiscalYearEndMonth(string targetMonth, int fiscalStartMonth) {
-		var year = int.Parse(targetMonth[..4]);
-		var month = int.Parse(targetMonth[4..6]);
-
-		var inputIdx = (year * 12) + (month - 1);
-		var startMonth0 = fiscalStartMonth - 1;
-		var offset = ((inputIdx - startMonth0) % 12 + 12) % 12;
-		var fiscalStartIdx = inputIdx - offset;
-		var fiscalEndIdx = fiscalStartIdx + 11;
-		var fiscalEndYear = fiscalEndIdx / 12;
-		var fiscalEndMonth = (fiscalEndIdx % 12) + 1;
-		return $"{fiscalEndYear:D4}{fiscalEndMonth:D2}";
-	}
+	public static string ResolveFiscalYearEndMonth(string targetMonth, int fiscalStartMonth) =>
+		ClosingMonthCalculator.ResolveFiscalYearEndMonth(targetMonth, fiscalStartMonth);
 
 	/// <summary>
 	/// 期間解決以外の入力検査（設計書§16.9: 指定方式・率・金額・端数単位）。

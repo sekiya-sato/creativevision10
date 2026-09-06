@@ -84,4 +84,37 @@ public static class ClosingMonthCalculator {
 		}
 		return month;
 	}
+
+	/// <summary>
+	/// 入力計上月が属する会計年度の決算期末月(yyyyMM)を返す。
+	/// 評価替えの適用時点=期末(原価4項目 詳細設計 §16.4)で、対象計上月を読み替えるために使う。
+	/// <para>
+	/// 現在時刻に依存する「未来月」判定は含めない。純粋な年月演算だけにしてあるので、
+	/// 設計書§16.4の例(期首4月・入力202608→202703、入力202702→202703)を
+	/// 現在時刻に左右されず単体テストで固定できる。
+	/// </para>
+	/// <para>
+	/// 入力月・期首月をともに「西暦0年1月を0とする絶対月インデックス」へ変換し、期首月と同じ剰余を持つ
+	/// 直近(入力月以下)の会計年度開始月インデックスを求める。決算期末月はその11か月後(=開始から12か月目)。
+	/// 期首月が1月(会計年度=暦年)の場合も含めて破綻しない。
+	/// </para>
+	/// <para>
+	/// サーバー(評価替えの対象期間解決)とクライアント(画面での読み替え結果の事前表示)の双方が使うため、
+	/// <see cref="ClosingMonthCalculator"/> と同じく計上月の暦の規則を持つ本クラスへ置く。
+	/// </para>
+	/// </summary>
+	/// <param name="targetMonth">入力計上月 yyyyMM。</param>
+	/// <param name="fiscalStartMonth">会計年度の期首月(1〜12)。</param>
+	/// <returns>入力計上月が属する会計年度の決算期末月 yyyyMM。</returns>
+	public static string ResolveFiscalYearEndMonth(string targetMonth, int fiscalStartMonth) {
+		var month = ParseMonth(targetMonth, nameof(targetMonth));
+		if (fiscalStartMonth is < 1 or > 12) {
+			throw new ArgumentOutOfRangeException(nameof(fiscalStartMonth), fiscalStartMonth, "期首月は1〜12で指定してください。");
+		}
+		var inputIdx = (month.Year * 12) + (month.Month - 1);
+		var startMonth0 = fiscalStartMonth - 1;
+		var offset = ((inputIdx - startMonth0) % 12 + 12) % 12;
+		var fiscalEndIdx = inputIdx - offset + 11;
+		return $"{fiscalEndIdx / 12:D4}{fiscalEndIdx % 12 + 1:D2}";
+	}
 }

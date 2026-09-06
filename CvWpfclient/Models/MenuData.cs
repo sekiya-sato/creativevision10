@@ -381,7 +381,7 @@ public partial class MenuData : ObservableObject {
 				new("最終仕入原価更新", typeof(Views._31Monthly.LastPurchaseCostRefreshView)),
 				new("総平均原価更新", typeof(Views._31Monthly.TotalAverageCostUpdateView)),
 				new("消化仕入更新", typeof(Views._31Monthly.ConsumptionPurchaseUpdateView)),
-				new("評価替", typeof(Views._31Monthly.CostRevaluationView), addInfo:"準備中 他のがだいたい終わってから実装する"),
+				new("評価替", typeof(Views._31Monthly.CostRevaluationView), addInfo:"条件で抽出した在庫商品の原価を率または金額で引き下げ、月末または期末の原価履歴として確定する"),
 			])),
 			new("▲ その他更新 ----", new([
 				new("積送中クリア", typeof(Views._31Monthly.InTransitClearView), addInfo:"準備中"),

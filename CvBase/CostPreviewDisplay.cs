@@ -111,4 +111,119 @@ public static class CostPreviewDisplay {
 	/// </summary>
 	public static bool IsCostMethodMismatchOnly(IReadOnlyList<CostPreviewRow> rows) =>
 		rows.Count == 1 && rows[0].Error == EnumCostCalcError.CostMethodMismatch;
+
+	// ------------------------------------------------------------------
+	// 評価替え（原価4項目 詳細設計 §16、§8.6）
+	// ------------------------------------------------------------------
+
+	/// <summary>
+	/// 評価替えの指定方式（1=率一括、2=金額一括）の表示文言（設計書§16.4）。
+	/// </summary>
+	public static string FormatCostRevaluationMethod(EnumCostRevaluationMethod method) => method switch {
+		EnumCostRevaluationMethod.ByRate => "率一括指定",
+		EnumCostRevaluationMethod.ByFixed => "金額一括指定",
+		_ => $"不明({(int)method})",
+	};
+
+	/// <summary>評価替えの適用時点（0=月末、1=期末）の表示文言（設計書§16.4）。</summary>
+	public static string FormatCostRevalApplyPoint(EnumCostRevalApplyPoint applyPoint) => applyPoint switch {
+		EnumCostRevalApplyPoint.MonthEnd => "月末",
+		EnumCostRevalApplyPoint.FiscalEnd => "期末",
+		_ => $"不明({(int)applyPoint})",
+	};
+
+	/// <summary>評価替えの集計単位（設計書§16.4・§16.6.1）の表示文言。</summary>
+	public static string FormatCostRevalGroupKey(EnumCostRevalGroupKey groupKey) => groupKey switch {
+		EnumCostRevalGroupKey.Brand => "ブランド",
+		EnumCostRevalGroupKey.Item => "アイテム",
+		EnumCostRevalGroupKey.Season => "シーズン",
+		EnumCostRevalGroupKey.Maker => "メーカー",
+		EnumCostRevalGroupKey.Tenji => "展示会",
+		_ => $"不明({(int)groupKey})",
+	};
+
+	/// <summary>評価替え抽出条件の項目種別（設計書§16.4。年度は含まない）の表示文言。</summary>
+	public static string FormatCostRevalCondField(EnumCostRevalCondField field) => field switch {
+		EnumCostRevalCondField.ShohinCode => "商品CD",
+		EnumCostRevalCondField.MakerCode => "メーカー品番",
+		EnumCostRevalCondField.Brand => "ブランド",
+		EnumCostRevalCondField.Item => "アイテム",
+		EnumCostRevalCondField.Maker => "メーカー",
+		EnumCostRevalCondField.Season => "シーズン",
+		EnumCostRevalCondField.Tenji => "展示会",
+		EnumCostRevalCondField.Material => "素材",
+		EnumCostRevalCondField.Country => "原産国",
+		_ => $"不明({(int)field})",
+	};
+
+	/// <summary>端数処理（0=四捨五入、1=切上、2=切捨）の表示文言（評価替え画面の端数処理選択。設計書§16.4）。</summary>
+	public static string FormatRounding(EnumRounding rounding) => rounding switch {
+		EnumRounding.Round => "四捨五入",
+		EnumRounding.Ceiling => "切上",
+		EnumRounding.Floor => "切捨",
+		_ => $"不明({(int)rounding})",
+	};
+
+	/// <summary>評価替えヘッダの実行状態（0=有効、1=取消）の表示文言（設計書§16.7、<see cref="TranGenkaReval"/>）。</summary>
+	public static string FormatCostRevalStatus(EnumCostRevalStatus status) => status switch {
+		EnumCostRevalStatus.Active => "有効",
+		EnumCostRevalStatus.Canceled => "取消",
+		_ => $"不明({(int)status})",
+	};
+
+	/// <summary>
+	/// 評価替え明細行の「状態」列（設計書§16.6.2、§16.9）。エラー行(<c>AfterCost&lt;=0</c>)を最優先し、
+	/// 次に対象外・対象を判定する。対象外はエラーではない（§16.9）ため区別して表示する。
+	/// </summary>
+	public static string FormatRevaluationRowStatus(bool isTarget, EnumCostCalcError error, string? errorMessage) =>
+		IsErrorRow(error, errorMessage) ? "エラー" : isTarget ? "対象" : "対象外";
+
+	/// <summary>
+	/// 評価替え明細行の「エラー」列（設計書§16.6.2）。エラー行は<paramref name="errorMessage"/>、
+	/// 対象外行は<paramref name="excludeReason"/>（在庫0／原価0／引き下げにならない）を表示する。
+	/// 対象行はいずれも空文字。
+	/// </summary>
+	public static string FormatRevaluationRowReason(bool isTarget, EnumCostCalcError error, string? errorMessage, string? excludeReason) =>
+		IsErrorRow(error, errorMessage) ? errorMessage ?? string.Empty : !isTarget ? excludeReason ?? string.Empty : string.Empty;
+
+	/// <summary>
+	/// 掛率入力欄の直後に表示する計算式（設計書§16.5「画面ラベルは『率』ではなく『掛率』とし、
+	/// 入力欄の直後に計算式`新原価 = 元原価 × 掛率%`（四捨五入等は指定した端数処理）を表示して
+	/// 誤入力を防ぐ」）。
+	/// </summary>
+	public static string BuildRevaluationRateFormulaText(int ratePercent) =>
+		$"新原価 = 元原価 × 掛率{ratePercent}%（四捨五入等は指定した端数処理）";
+
+	/// <summary>
+	/// 評価替えの掛率(<c>RatePercent</c>)入力検証（設計書§16.4・§16.9「指定方式1で率が1～100の外」）。
+	/// 純関数として切り出し、サーバー(<c>CostUpdateDbReval.ValidateRevaluationInputs</c>)と同じ規則を
+	/// 画面側でも即時に適用できるようにする。エラーが無ければ<c>null</c>を返す。
+	/// </summary>
+	public static string? ValidateRevaluationRatePercent(int ratePercent) =>
+		ratePercent is < 1 or > 100 ? "掛率は1～100の範囲で指定してください。" : null;
+
+	/// <summary>
+	/// 評価替えの指定単価(<c>FixedCost</c>)入力検証（設計書§16.4・§16.9「指定方式2で金額が0以下」）。
+	/// エラーが無ければ<c>null</c>を返す。
+	/// </summary>
+	public static string? ValidateRevaluationFixedCost(int fixedCost) =>
+		fixedCost < 1 ? "指定単価は1円以上で指定してください。" : null;
+
+	/// <summary>
+	/// 評価替えの端数単位(<c>RoundingUnit</c>)入力検証（設計書§16.4・§16.9「端数単位が1／10／100以外」）。
+	/// エラーが無ければ<c>null</c>を返す。
+	/// </summary>
+	public static string? ValidateRevaluationRoundingUnit(int roundingUnit) =>
+		roundingUnit is not (1 or 10 or 100) ? "端数単位は1、10、100円のいずれかで指定してください。" : null;
+
+	/// <summary>
+	/// 評価替えの指定方式(<see cref="EnumCostRevaluationMethod"/>)に応じた率・金額の入力検証をまとめて行う。
+	/// サーバー側(<c>CostUpdateDbReval.ValidateRevaluationInputs</c>)と同じ判定を、確認(サーバー往復)の
+	/// 前に画面側で即座に行うための純関数（設計書§16.9「入力エラー（確認を実行させない）」）。
+	/// </summary>
+	public static string? ValidateRevaluationMethodValue(EnumCostRevaluationMethod method, int ratePercent, int fixedCost) => method switch {
+		EnumCostRevaluationMethod.ByRate => ValidateRevaluationRatePercent(ratePercent),
+		EnumCostRevaluationMethod.ByFixed => ValidateRevaluationFixedCost(fixedCost),
+		_ => "未定義の指定方式です。",
+	};
 }

@@ -591,8 +591,16 @@ public class CostUpdateDbRevalTests {
 	[TestMethod]
 	public void ResolveFiscalYearEndMonth_FixedExamples() {
 		// 設計書§16.4の2例をテストで固定する。現在時刻に依存しない純粋な年月演算のみを検証する。
+		// 実体は ClosingMonthCalculator にあり、サーバーと画面(CvWpfclient)が同じ実装を使う。
+		// CostUpdateDb 側は薄い委譲なので、両方から同じ結果が返ることも併せて固定する。
 		Assert.AreEqual("202703", CostUpdateDb.ResolveFiscalYearEndMonth("202608", fiscalStartMonth: 4));
 		Assert.AreEqual("202703", CostUpdateDb.ResolveFiscalYearEndMonth("202702", fiscalStartMonth: 4));
+		Assert.AreEqual("202703", ClosingMonthCalculator.ResolveFiscalYearEndMonth("202608", 4));
+		Assert.AreEqual("202703", ClosingMonthCalculator.ResolveFiscalYearEndMonth("202702", 4));
+		// 期首月が1月(会計年度=暦年)でも破綻しないこと。
+		Assert.AreEqual("202612", ClosingMonthCalculator.ResolveFiscalYearEndMonth("202608", 1));
+		// 期首月が12月(年をまたぐ会計年度)。202608は202512開始の年度に属し、期末は202611。
+		Assert.AreEqual("202611", ClosingMonthCalculator.ResolveFiscalYearEndMonth("202608", 12));
 	}
 
 	[TestMethod]
