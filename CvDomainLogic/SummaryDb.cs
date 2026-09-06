@@ -27,6 +27,32 @@ public class SummaryDb {
 		_logger = new NLogExtender<SummaryDb>();
 	}
 
+	// ==================================================================
+	// マニュアル排他制御（設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4）
+	// ==================================================================
+	// 一連処理名は設計書§2.4の表の値をそのまま使う。予想処理秒数は具体値の定めが無いため、
+	// 処理の規模（全期間・全テーブルを走るか、単一集計かの桁の違い）から見積もった値であり、
+	// 実測に応じて調整してよい（監視タスクの異常判定は max(ExpectedDuration×2, 15分) のため、
+	// 過小でも15分の下限がある）。
+
+	/// <summary>在庫・掛再集計(<see cref="SummaryAllAsyncStream"/>)。全期間・全テーブルを走るため最も規模が大きい</summary>
+	private const string ProcessNameSummaryAll = "在庫・掛再集計";
+	/// <summary>現在庫再集計(<see cref="SummaryRealAsyncStream"/>)。単一月の在庫集計のみ</summary>
+	private const string ProcessNameSummaryReal = "現在庫再集計";
+	/// <summary>売掛再集計(<see cref="SummaryUriKakeAsyncStream"/>)。指定期間の売掛集計のみ</summary>
+	private const string ProcessNameSummaryUriKake = "売掛再集計";
+	/// <summary>買掛再集計(<see cref="SummaryKaiKakeAsyncStream"/>)。指定期間の買掛集計のみ</summary>
+	private const string ProcessNameSummaryKaiKake = "買掛再集計";
+	/// <summary>請求計算(<see cref="SummaryUriSeiAsyncStream"/>)。締日ごとにステップが展開されるため得意先数に応じて増える</summary>
+	private const string ProcessNameSummaryUriSei = "請求計算";
+	/// <summary>支払計算(<see cref="SummaryKaiShiAsyncStream"/>)。締日ごとにステップが展開されるため仕入先数に応じて増える</summary>
+	private const string ProcessNameSummaryKaiShi = "支払計算";
+
+	private const long ExpectedDurationSummaryAllSeconds = 3600; // 全期間・全テーブル再構築のため1時間を見込む
+	private const long ExpectedDurationSummaryRealSeconds = 600; // 単一月の現在庫集計のみのため10分
+	private const long ExpectedDurationSummaryKakeSeconds = 900; // 指定期間の掛集計のみのため15分
+	private const long ExpectedDurationSummaryBillingSeconds = 1800; // 締日ごとの複数ステップになり得るため30分
+
 	/// <summary>MasterSysmanから自社締日を取得する。同一処理中は同じ値を使用する。</summary>
 	public int GetOwnClosingDay() {
 		if (_ownClosingDay.HasValue) {
@@ -171,7 +197,10 @@ public class SummaryDb {
 			_logger,
 			"処理開始",
 			"処理エラー: {StepName}",
-			"処理終了");
+			"処理終了",
+			new ManualLockDb(_db),
+			ProcessNameSummaryAll,
+			ExpectedDurationSummaryAllSeconds);
 	}
 	/// <summary>
 	/// 指定年月範囲のSummaryStockとSummaryRealStockをTranテーブルから再作成する
@@ -725,7 +754,10 @@ WHERE SumMonth <= @0;
 			_logger,
 			"処理開始",
 			"処理エラー: {StepName}",
-			"処理終了");
+			"処理終了",
+			new ManualLockDb(_db),
+			ProcessNameSummaryReal,
+			ExpectedDurationSummaryRealSeconds);
 	}
 	public IAsyncEnumerable<StreamStepProgress> SummaryUriKakeAsyncStream(CalcDateTermParameter param) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
@@ -738,7 +770,10 @@ WHERE SumMonth <= @0;
 			_logger,
 			"処理開始",
 			"処理エラー: {StepName}",
-			"処理終了");
+			"処理終了",
+			new ManualLockDb(_db),
+			ProcessNameSummaryUriKake,
+			ExpectedDurationSummaryKakeSeconds);
 	}
 	public IAsyncEnumerable<StreamStepProgress> SummaryKaiKakeAsyncStream(CalcDateTermParameter param) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
@@ -751,7 +786,10 @@ WHERE SumMonth <= @0;
 			_logger,
 			"処理開始",
 			"処理エラー: {StepName}",
-			"処理終了");
+			"処理終了",
+			new ManualLockDb(_db),
+			ProcessNameSummaryKaiKake,
+			ExpectedDurationSummaryKakeSeconds);
 	}
 	/// <summary>
 	/// 請求残をストリーミングで再作成する。<c>param.Shime == 0</c>は「すべての締日」を意味し(4.3)、
@@ -773,7 +811,10 @@ WHERE SumMonth <= @0;
 			_logger,
 			"処理開始",
 			"処理エラー: {StepName}",
-			"処理終了");
+			"処理終了",
+			new ManualLockDb(_db),
+			ProcessNameSummaryUriSei,
+			ExpectedDurationSummaryBillingSeconds);
 	}
 	/// <summary>
 	/// 支払残をストリーミングで再作成する。<c>param.Shime == 0</c>は「すべての締日」を意味し(4.3)、
@@ -795,7 +836,10 @@ WHERE SumMonth <= @0;
 			_logger,
 			"処理開始",
 			"処理エラー: {StepName}",
-			"処理終了");
+			"処理終了",
+			new ManualLockDb(_db),
+			ProcessNameSummaryKaiShi,
+			ExpectedDurationSummaryBillingSeconds);
 	}
 	/// <summary>
 	/// 掛集計で伝票側に必ず付ける条件。掛計上しない伝票(<c>IsPay = 0</c>)は売掛・買掛へ入れない。

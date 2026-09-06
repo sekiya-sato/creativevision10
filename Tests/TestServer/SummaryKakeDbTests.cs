@@ -39,6 +39,11 @@ public class SummaryKakeDbTests {
 		conn.Open();
 		_db = new ExDatabaseSqlite(conn);
 		_db.KeepConnectionAlive = true;
+		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// StreamStepProgressRunner経由の全ストリーム処理(SummaryUriKakeAsyncStream等)で使うため、
+		// 個々のテストのテーブル準備に関わらずここで作っておく。
+		_db.CreateTable(typeof(SysSequence), true, false);
+		_db.CreateTable(typeof(SysHistAutoexec), true, false);
 	}
 
 	[TestCleanup]
@@ -81,6 +86,58 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax1);
 		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Sonota + row.Tax1, row.TotalSales);
 		Assert.AreEqual(row.TotalSales, row.Balance, "受取が無いので当月分の純増減がそのままBalance(正=未回収)になる");
+	}
+
+	// ------------------------------------------------------------------
+	// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)
+	// StreamStepProgressRunner経由の適用確認。SummaryUriKakeAsyncStreamで代表させる。
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public async Task SummaryUriKakeAsyncStream_LockHeld_EndsWithoutRunningAnyStep() {
+		// 排他行がある状態で呼ぶと、1ステップも実行せずエラー通知でストリームが終わる(設計書§2.1・§2.4)
+		var db = PrepareUriKakeTables();
+		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
+		new ManualLockDb(db).TryBegin("他の一連処理", "実行中", 600, "先行中");
+
+		var summaryDb = new SummaryDb(db);
+		var progresses = new List<StreamStepProgress>();
+		await foreach (var p in summaryDb.SummaryUriKakeAsyncStream(new CalcDateTermParameter("202607", "202607"))) {
+			progresses.Add(p);
+		}
+
+		Assert.AreEqual(1, progresses.Count, "1ステップも実行されず、通知は1件(エラー)だけで終わる");
+		Assert.IsTrue(progresses[0].IsError);
+		Assert.AreEqual(StreamStepProgressPhase.Error, progresses[0].Phase);
+		StringAssert.Contains(progresses[0].ErrorMessage, "他の一連処理");
+		StringAssert.Contains(progresses[0].ErrorMessage, "実行中");
+		// 集計は実行されていない
+		Assert.AreEqual(0, db.Fetch<SummaryUriKake>().Count);
+		// 排他行は先行のもの1行のまま(後発は行を作らない)
+		var locks = db.Fetch<SysSequence>($"WHERE SysSeqType={(int)EmSysSeqType.ManualLock}");
+		Assert.AreEqual(1, locks.Count);
+		Assert.AreEqual("他の一連処理", locks[0].TableName);
+	}
+
+	[TestMethod]
+	public async Task SummaryUriKakeAsyncStream_NormalRun_ClearsLockAndAddsHistory() {
+		// 正常終了するとSysSequenceの行が消え、SysHistAutoexecへ手動実行履歴が1件増える(設計書§2.3)
+		var db = PrepareUriKakeTables();
+		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
+
+		var summaryDb = new SummaryDb(db);
+		var sawError = false;
+		await foreach (var p in summaryDb.SummaryUriKakeAsyncStream(new CalcDateTermParameter("202607", "202607"))) {
+			sawError |= p.IsError;
+		}
+
+		Assert.IsFalse(sawError);
+		Assert.AreEqual(1, db.Fetch<SummaryUriKake>().Count, "集計は正常に実行されている");
+		Assert.AreEqual(0, db.Fetch<SysSequence>($"WHERE SysSeqType={(int)EmSysSeqType.ManualLock}").Count);
+		var histories = db.Fetch<SysHistAutoexec>($"WHERE SysHistType={(int)EmSysHistType.ManualExec}");
+		Assert.AreEqual(1, histories.Count);
+		Assert.AreEqual("売掛再集計", histories[0].TaskName);
+		Assert.AreEqual(0, histories[0].ReturnCode);
 	}
 
 	[TestMethod]
@@ -997,6 +1054,10 @@ public class SummaryKakeDbTests {
 		db.CreateTable(typeof(MasterTokui), true, false);
 		db.CreateTable(typeof(Tran00Uriage), true, false);
 		db.CreateTable(typeof(Tran06Nyukin), true, false);
+		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// SummaryUriSeiAsyncStreamの経路で使うため、独立DBにも作っておく。
+		db.CreateTable(typeof(SysSequence), true, false);
+		db.CreateTable(typeof(SysHistAutoexec), true, false);
 		InsertKinMaster(db);
 		db.Insert(new MasterTokui { Code = "A001", Shime1 = 10, Shime2 = 20, Shime3 = 99, PayMonth = 0, PayDay = 0 });
 		var idTokui = db.Single<MasterTokui>("where Code=@0", "A001").Id;

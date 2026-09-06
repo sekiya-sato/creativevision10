@@ -23,6 +23,11 @@ namespace CvDomainLogic;
 /// </summary>
 public partial class CostUpdateDb {
 	private const string RevaluationLabel = "評価替え";
+	/// <summary>
+	/// 予想処理秒数(評価替え、適用・取消共通)。対象は全在庫商品になり得るが、単一SQLでの抽出・
+	/// 一括upsertが中心のため最終仕入原価更新より長めの15分を見込む。
+	/// </summary>
+	private const long ExpectedDurationRevaluationSeconds = 900;
 
 	// ==================================================================
 	// 8-0. 適用日の解決（設計書§16.4）
@@ -467,6 +472,15 @@ public partial class CostUpdateDb {
 	/// </summary>
 	public CostUpdateResult ApplyRevaluation(CostRevaluationParameter param) {
 		var startedAt = Common.GetVdate();
+
+		// マニュアル排他制御(設計書§2.4)。Serializableトランザクションを開始する前に取得する。
+		var manualLockDb = new ManualLockDb(_db);
+		var lockResult = manualLockDb.TryBegin(RevaluationLabel, "対象抽出・計算", ExpectedDurationRevaluationSeconds);
+		if (!lockResult.IsAcquired) {
+			return NewManualLockFailure(param.BatchId, param.TargetMonth, startedAt, RevaluationLabel, lockResult.Blocker);
+		}
+		using var lockHandle = lockResult.Handle!;
+
 		var started = false;
 		try {
 			_db.BeginTransaction(IsolationLevel.Serializable);
@@ -577,6 +591,7 @@ public partial class CostUpdateDb {
 
 			_db.CompleteTransaction();
 			started = false;
+			manualLockDb.Complete(lockHandle, 0, genkaRows.Count);
 			return new CostUpdateResult {
 				IsSuccess = true,
 				BatchId = param.BatchId,
@@ -613,6 +628,15 @@ public partial class CostUpdateDb {
 	/// </summary>
 	public CostUpdateResult CancelRevaluation(long revalId, long idShain) {
 		var startedAt = Common.GetVdate();
+
+		// マニュアル排他制御(設計書§2.4)。評価替えの適用(ApplyRevaluation)と同じ一連処理名を使う。
+		var manualLockDb = new ManualLockDb(_db);
+		var lockResult = manualLockDb.TryBegin(RevaluationLabel, "取消", ExpectedDurationRevaluationSeconds);
+		if (!lockResult.IsAcquired) {
+			return NewManualLockFailure(string.Empty, string.Empty, startedAt, RevaluationLabel, lockResult.Blocker);
+		}
+		using var lockHandle = lockResult.Handle!;
+
 		var started = false;
 		try {
 			_db.BeginTransaction(IsolationLevel.Serializable);
@@ -664,6 +688,7 @@ WHERE g.ChangeKind = {(int)EnumCostChangeKind.Reval}
 
 			_db.CompleteTransaction();
 			started = false;
+			manualLockDb.Complete(lockHandle, 0, targetIds.Count);
 			return new CostUpdateResult {
 				IsSuccess = true,
 				BatchId = header.BatchId,

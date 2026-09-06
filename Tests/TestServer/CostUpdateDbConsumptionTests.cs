@@ -32,6 +32,10 @@ public class CostUpdateDbConsumptionTests {
 		conn.Open();
 		_db = new ExDatabaseSqlite(conn);
 		_db.KeepConnectionAlive = true;
+		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// ApplyConsumptionPurchasesで使うため、個々のテストのテーブル準備に関わらずここで作っておく。
+		_db.CreateTable(typeof(SysSequence), true, false);
+		_db.CreateTable(typeof(SysHistAutoexec), true, false);
 	}
 
 	[TestCleanup]

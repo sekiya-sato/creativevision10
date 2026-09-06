@@ -20,6 +20,14 @@ public partial class CostUpdateDb {
 	private const string LastPurchaseLabel = "最終仕入原価更新";
 	private const string TotalAverageLabel = "総平均原価更新";
 
+	/// <summary>予想処理秒数(最終仕入原価更新)。対象1か月ぶんの最終行決定・保存のみのため10分を見込む。</summary>
+	private const long ExpectedDurationLastPurchaseSeconds = 600;
+	/// <summary>
+	/// 予想処理秒数(総平均原価更新)。対象月に加え、§6.6の後続月再計算カスケードが月ごとに走り得るため、
+	/// 最終仕入原価更新より長めの20分を見込む。
+	/// </summary>
+	private const long ExpectedDurationTotalAverageSeconds = 1200;
+
 	// ==================================================================
 	// 7-0. 共通ヘルパー
 	// ==================================================================
@@ -215,6 +223,15 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 	/// </summary>
 	public CostUpdateResult ApplyLastPurchaseCost(CostUpdateParameter param) {
 		var startedAt = Common.GetVdate();
+
+		// マニュアル排他制御(設計書§2.4)。Serializableトランザクションを開始する前に取得する。
+		var manualLockDb = new ManualLockDb(_db);
+		var lockResult = manualLockDb.TryBegin(LastPurchaseLabel, "最終行決定・保存", ExpectedDurationLastPurchaseSeconds);
+		if (!lockResult.IsAcquired) {
+			return NewManualLockFailure(param, startedAt, LastPurchaseLabel, lockResult.Blocker);
+		}
+		using var lockHandle = lockResult.Handle!;
+
 		var started = false;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
@@ -239,6 +256,7 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 				// 設計書§5.4「対象期間に通常仕入がない商品は更新しない」。対象月に対象商品が1件も無い。
 				_db.CompleteTransaction();
 				started = false;
+				manualLockDb.Complete(lockHandle, 0, 0);
 				return new CostUpdateResult {
 					IsSuccess = true,
 					BatchId = param.BatchId,
@@ -285,6 +303,7 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 
 			_db.CompleteTransaction();
 			started = false;
+			manualLockDb.Complete(lockHandle, 0, genkaRows.Count);
 			return new CostUpdateResult {
 				IsSuccess = true,
 				BatchId = param.BatchId,
@@ -480,6 +499,15 @@ ORDER BY SumMonth ASC
 	/// </summary>
 	public CostUpdateResult ApplyTotalAverageCost(CostUpdateParameter param) {
 		var startedAt = Common.GetVdate();
+
+		// マニュアル排他制御(設計書§2.4)。Serializableトランザクションを開始する前に取得する。
+		var manualLockDb = new ManualLockDb(_db);
+		var lockResult = manualLockDb.TryBegin(TotalAverageLabel, "対象月決定", ExpectedDurationTotalAverageSeconds);
+		if (!lockResult.IsAcquired) {
+			return NewManualLockFailure(param, startedAt, TotalAverageLabel, lockResult.Blocker);
+		}
+		using var lockHandle = lockResult.Handle!;
+
 		var started = false;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
@@ -500,7 +528,12 @@ ORDER BY SumMonth ASC
 			var updatedCount = 0L;
 			var totalErrorCount = 0L;
 
-			foreach (var month in months) {
+			for (var monthIndex = 0; monthIndex < months.Count; monthIndex++) {
+				var month = months[monthIndex];
+				// §6.6の後続月再計算カスケードは長時間になり得るため、月ごとに進捗(ColumnName=計上月)を書く。
+				// Vduが前進しないと監視タスク(設計書§3.4)に異常と判定されるための対応。
+				manualLockDb.Progress(lockHandle, $"総平均原価再計算: {month}", monthIndex + 1);
+
 				var (rows, plans, period) = ComputeTotalAverageForMonth(month, beforeCostOverrides: null);
 				var errorCount = rows.Count(r => r.Error != EnumCostCalcError.None);
 				if (errorCount > 0) {
@@ -556,6 +589,7 @@ ORDER BY SumMonth ASC
 
 			_db.CompleteTransaction();
 			started = false;
+			manualLockDb.Complete(lockHandle, 0, (int)updatedCount);
 			var followUpCount = months.Count - 1;
 			var message = followUpCount > 0
 				? $"{updatedCount}件の総平均原価を更新しました（対象月と再計算した後続{followUpCount}か月分の合計）。"

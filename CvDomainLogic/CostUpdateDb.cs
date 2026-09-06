@@ -49,6 +49,40 @@ public partial class CostUpdateDb(ExDatabase db) {
 	}
 
 	// ==================================================================
+	// マニュアル排他制御（正典は `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`、以下「設計書」。Step 9-3）
+	// ==================================================================
+	// 原価4処理と評価替えは同期メソッドのため、StreamStepProgressRunnerを経由しない。
+	// Serializableトランザクションを開始する前にTryBeginし、取得できなければ例外にせず
+	// CostUpdateResult(IsSuccess=false)で返す（設計書§2.4適用時の要件。業務エラーと異なり
+	// 「今は実行できないだけ」で再実行すれば通るため）。
+
+	/// <summary>
+	/// 原価4処理・評価替え共通の排他取得失敗メッセージ（設計書§2.4適用時の要件：
+	/// 先行処理のTableName/ColumnNameと開始時刻を含める）。
+	/// </summary>
+	private static string BuildManualLockBlockedMessage(string processName, SysSequence? blocker) =>
+		ManualLockMessages.BuildBlockedMessage(processName, blocker);
+
+	/// <summary>
+	/// 排他取得失敗を表す<see cref="CostUpdateResult"/>を作る（設計書§2.4適用時の要件。例外にはしない）。
+	/// 業務エラー（<c>Failure</c>系メソッド）とは異なる「今は実行できないだけ」の状態であることを示す。
+	/// </summary>
+	private static CostUpdateResult NewManualLockFailure(string batchId, string targetMonth, long startedAt, string processName, SysSequence? blocker) => new() {
+		IsSuccess = false,
+		BatchId = batchId,
+		TargetMonth = targetMonth,
+		UpdatedCount = 0,
+		ErrorCount = 0,
+		Message = BuildManualLockBlockedMessage(processName, blocker),
+		StartedAt = startedAt,
+		FinishedAt = Common.GetVdate(),
+	};
+
+	/// <summary><see cref="CostUpdateParameter"/>版のオーバーロード。</summary>
+	private static CostUpdateResult NewManualLockFailure(CostUpdateParameter param, long startedAt, string processName, SysSequence? blocker) =>
+		NewManualLockFailure(param.BatchId, param.TargetMonth, startedAt, processName, blocker);
+
+	// ==================================================================
 	// 4-1. 対象期間の解決（設計書§2.1）
 	// ==================================================================
 

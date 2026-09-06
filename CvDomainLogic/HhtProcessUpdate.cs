@@ -45,6 +45,13 @@ public partial class HhtProcess {
 	/// <summary><see cref="TranVulcanHht.ErrorMsg"/> の桁数上限</summary>
 	private const int ErrorMsgMaxLength = 1000;
 
+	// マニュアル排他制御（設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4）。
+	// 一連処理名は設計書§2.4の表の値をそのまま使う。予想処理秒数は具体値の定めが無いため、
+	// HHTからTran系複数テーブルへ展開する規模を踏まえて見積もった値。
+	/// <summary>HHT取込反映(<see cref="UpdateVulcan2TranAsyncStream"/>)</summary>
+	private const string ProcessNameHhtUpdate = "HHT取込反映";
+	private const long ExpectedDurationHhtUpdateSeconds = 1800; // 複数Tranテーブルへの展開を伴うため30分
+
 	/// <summary>
 	/// HHTデータ更新をストリーミングで実行する。
 	/// <para>
@@ -55,7 +62,8 @@ public partial class HhtProcess {
 	public IAsyncEnumerable<StreamStepProgress> UpdateVulcan2TranAsyncStream(HhtUpdateParameter param) =>
 		StreamStepProgressRunner.Run(
 			[($"HHTデータ更新 : Tran系への展開 {DescribeTarget(param)}", RunUpdateInTransaction)],
-			param, _logger, "HHTデータ更新を開始", "HHTデータ更新エラー: {StepName}", "HHTデータ更新を終了");
+			param, _logger, "HHTデータ更新を開始", "HHTデータ更新エラー: {StepName}", "HHTデータ更新を終了",
+			new ManualLockDb(_db), ProcessNameHhtUpdate, ExpectedDurationHhtUpdateSeconds);
 
 	private static string DescribeTarget(HhtUpdateParameter param) {
 		if (param.TargetIds is { Length: > 0 }) {

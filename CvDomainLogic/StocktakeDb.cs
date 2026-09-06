@@ -21,6 +21,16 @@ public class StocktakeDb(ExDatabase db) {
 	private readonly ExDatabase _db = db;
 	private readonly ILogger<StocktakeDb> _logger = new NLogExtender<StocktakeDb>();
 
+	// マニュアル排他制御（設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4）。
+	// 一連処理名は設計書§2.4の表の値をそのまま使う。予想処理秒数は具体値の定めが無いため、
+	// 処理の規模から見積もった値。
+	/// <summary>棚卸開始処理(<see cref="StartAsyncStream"/>)。帳簿在庫のスナップショット保存のみ</summary>
+	private const string ProcessNameStocktakeStart = "棚卸開始処理";
+	/// <summary>棚卸確定処理(<see cref="FixAsyncStream"/>)。実棚差異ぶんの調整伝票生成を伴う</summary>
+	private const string ProcessNameStocktakeFix = "棚卸確定処理";
+	private const long ExpectedDurationStartSeconds = 600; // 帳簿在庫の保存のみのため10分
+	private const long ExpectedDurationFixSeconds = 900; // 調整伝票生成を伴うため15分
+
 	/// <summary>
 	/// 棚卸開始処理をストリーミングで実行する。画面(棚卸開始処理)から `Msg054_StocktakeStart` で呼ばれる。
 	/// </summary>
@@ -28,7 +38,8 @@ public class StocktakeDb(ExDatabase db) {
 		StreamStepProgressRunner.Run(
 			[($"棚卸開始処理 : 帳簿在庫の保存(棚卸日未設定店舗は {param.FallbackMonth} 月末)",
 				p => StartStocktake(p.FallbackMonth, p.SokoIds))],
-			param, _logger, "棚卸開始処理を開始", "棚卸開始処理エラー: {StepName}", "棚卸開始処理を終了");
+			param, _logger, "棚卸開始処理を開始", "棚卸開始処理エラー: {StepName}", "棚卸開始処理を終了",
+			new ManualLockDb(_db), ProcessNameStocktakeStart, ExpectedDurationStartSeconds);
 
 	/// <summary>
 	/// 棚卸確定処理をストリーミングで実行する。画面(棚卸確定処理)から `Msg055_StocktakeFix` で呼ばれる。
@@ -39,7 +50,8 @@ public class StocktakeDb(ExDatabase db) {
 	public IAsyncEnumerable<StreamStepProgress> FixAsyncStream(StocktakeParameter param) =>
 		StreamStepProgressRunner.Run(
 			[($"棚卸確定処理 : 在庫調整伝票の作成", RunFixInTransaction)],
-			param, _logger, "棚卸確定処理を開始", "棚卸確定処理エラー: {StepName}", "棚卸確定処理を終了");
+			param, _logger, "棚卸確定処理を開始", "棚卸確定処理エラー: {StepName}", "棚卸確定処理を終了",
+			new ManualLockDb(_db), ProcessNameStocktakeFix, ExpectedDurationFixSeconds);
 
 	/// <summary>
 	/// 確定処理を1トランザクションで実行する。

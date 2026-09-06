@@ -13,6 +13,14 @@ namespace CvDomainLogic;
 /// </para>
 /// </summary>
 public partial class CostUpdateDb {
+	/// <summary>
+	/// マニュアル排他制御（`Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`§2.4）の一連処理名。
+	/// 設計書§2.4の表の値をそのまま使う。
+	/// </summary>
+	private const string ConsumptionLabel = "消化仕入更新";
+	/// <summary>予想処理秒数。対象1か月ぶんの売上抽出と仕入生成のみのため10分を見込む。</summary>
+	private const long ExpectedDurationConsumptionSeconds = 600;
+
 	// ==================================================================
 	// 5-1. 対象売上の抽出・生成計画（設計書§4.3〜§4.5、§4.7、§4.8）
 	// ==================================================================
@@ -381,6 +389,16 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 	/// </summary>
 	public CostUpdateResult ApplyConsumptionPurchases(CostUpdateParameter param) {
 		var startedAt = Common.GetVdate();
+
+		// マニュアル排他制御(設計書§2.4)。Serializableトランザクションを開始する前に取得する。
+		// 取得できなければ例外にせず失敗を返す(業務エラーではなく「今は実行できない」ため)。
+		var manualLockDb = new ManualLockDb(_db);
+		var lockResult = manualLockDb.TryBegin(ConsumptionLabel, "対象抽出・計算", ExpectedDurationConsumptionSeconds);
+		if (!lockResult.IsAcquired) {
+			return NewManualLockFailure(param, startedAt, ConsumptionLabel, lockResult.Blocker);
+		}
+		using var lockHandle = lockResult.Handle!;
+
 		var started = false;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
@@ -413,6 +431,8 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 
 			_db.CompleteTransaction();
 			started = false;
+			// マニュアル排他制御の終了記録(設計書§2.3)。正常に最後まで到達したときだけ呼ぶ。
+			manualLockDb.Complete(lockHandle, 0, updatedCount);
 			return new CostUpdateResult {
 				IsSuccess = true,
 				BatchId = param.BatchId,
@@ -428,6 +448,8 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 			if (started) {
 				_db.AbortTransaction();
 			}
+			// マニュアル排他制御: Completeを呼ばず、行はusing(lockHandle)のDisposeに任せて残す
+			// (異常終了として監視タスクまたは強制クリアで解放される。設計書§2.1〜§2.3、ManualLockHandle参照)。
 			throw;
 		}
 	}
