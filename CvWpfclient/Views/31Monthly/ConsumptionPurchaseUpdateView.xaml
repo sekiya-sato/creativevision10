@@ -13,5 +13,220 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:ConsumptionPurchaseUpdateViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="14,10"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="30" Height="30"
+					VerticalAlignment="Center"
+					Kind="CashRegister" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold" Text="消化仕入更新" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<Grid Grid.Row="1"
+			Margin="18">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
+
+			<materialDesign:Card Grid.Row="0"
+				Padding="24"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="120" />
+						<ColumnDefinition Width="180" />
+						<ColumnDefinition Width="140" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="140" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<TextBlock Grid.Row="0" Grid.Column="0"
+						VerticalAlignment="Center"
+						Style="{StaticResource SettingLabel}"
+						Text="対象月" />
+					<TextBox Grid.Row="0" Grid.Column="1"
+						Width="120"
+						HorizontalAlignment="Left" VerticalAlignment="Center"
+						helpers:YearMonthInputBehavior.IsEnabled="True"
+						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+						MaxLength="7"
+						Style="{StaticResource MaterialDesignOutlinedTextBox}"
+						Text="{Binding TargetMonth}" />
+
+					<TextBlock Grid.Row="0" Grid.Column="2"
+						VerticalAlignment="Center"
+						Style="{StaticResource SettingLabel}"
+						Text="対象期間" />
+					<TextBlock Grid.Row="0" Grid.Column="3"
+						VerticalAlignment="Center"
+						Text="{Binding PeriodText}" />
+
+					<Button Grid.Row="0" Grid.Column="5"
+						Width="120" HorizontalAlignment="Right"
+						Command="{Binding RefreshStatusCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Refresh" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="状態更新" />
+						</StackPanel>
+					</Button>
+
+					<TextBlock Grid.Row="1" Grid.Column="0"
+						Margin="0,12,0,0" VerticalAlignment="Center"
+						Style="{StaticResource SettingLabel}"
+						Text="前回実行日時" />
+					<TextBlock Grid.Row="1" Grid.Column="1"
+						Margin="0,12,0,0" VerticalAlignment="Center"
+						Text="{Binding LastRunAtText}" />
+
+					<TextBlock Grid.Row="1" Grid.Column="2"
+						Margin="0,12,0,0" VerticalAlignment="Center"
+						Style="{StaticResource SettingLabel}"
+						Text="状態" />
+					<TextBlock Grid.Row="1" Grid.Column="3"
+						Margin="0,12,0,0" VerticalAlignment="Center"
+						Text="{Binding ProcessStatusText}" />
+				</Grid>
+			</materialDesign:Card>
+
+			<GroupBox Grid.Row="1"
+				Margin="0,18,0,0"
+				Header="確認一覧">
+				<Grid Margin="8">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<StackPanel Grid.Row="0"
+						Margin="0,0,0,8"
+						Orientation="Horizontal">
+						<TextBlock VerticalAlignment="Center"
+							Text="{Binding TargetCount, StringFormat='対象 {0:N0} 件'}" />
+						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+							Foreground="{DynamicResource NegativeForegroundBrush}"
+							Text="{Binding ErrorCount, StringFormat='エラー {0:N0} 件'}" />
+						<CheckBox Margin="24,0,0,0" VerticalAlignment="Center"
+							Content="エラー行のみ表示"
+							IsChecked="{Binding ShowErrorsOnly}" />
+						<Button Margin="24,0,0,0"
+							Command="{Binding ExportCsvCommand}"
+							Style="{StaticResource MaterialDesignOutlinedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="FileDelimitedOutline" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="CSV出力" />
+							</StackPanel>
+						</Button>
+					</StackPanel>
+
+					<DataGrid Grid.Row="1"
+						AutoGenerateColumns="False"
+						CanUserAddRows="False" CanUserDeleteRows="False"
+						IsReadOnly="True"
+						ItemsSource="{Binding Rows}">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="90" Binding="{Binding SourceTypeText}" Header="売上種別" />
+							<DataGridTextColumn Width="80" Binding="{Binding SourceId}" Header="売上No" />
+							<DataGridTextColumn Width="100" Binding="{Binding SourceDayText}" Header="売上日" />
+							<DataGridTextColumn Width="200" Binding="{Binding ShohinText}" Header="商品" />
+							<DataGridTextColumn Width="70" Binding="{Binding Su}" Header="数量" />
+							<DataGridTextColumn Width="150" Binding="{Binding MeiShiire}" Header="仕入先" />
+							<DataGridTextColumn Width="90" Binding="{Binding CalcTypeText}" Header="計算区分" />
+							<DataGridTextColumn Width="80" Binding="{Binding RateText}" Header="掛率" />
+							<DataGridTextColumn Width="90" Binding="{Binding UnitCost, StringFormat=N0}" Header="生成単価" />
+							<DataGridTextColumn Width="100" Binding="{Binding Kingaku, StringFormat=N0}" Header="生成金額" />
+							<DataGridTextColumn Width="90" Binding="{Binding Tax, StringFormat=N0}" Header="税額" />
+							<DataGridTextColumn Width="70" Binding="{Binding StatusText}" Header="状態" />
+							<DataGridTextColumn Width="220" Binding="{Binding ErrorMessage}" Header="エラー" />
+						</DataGrid.Columns>
+					</DataGrid>
+				</Grid>
+			</GroupBox>
+
+			<GroupBox Grid.Row="2"
+				Margin="0,18,0,0"
+				Header="処理メッセージ">
+				<Grid Margin="8">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
+					<ProgressBar Height="18"
+						Maximum="100" Minimum="0"
+						Value="{Binding ProgressValue}" />
+					<TextBox Grid.Row="1"
+						MaxHeight="60"
+						Margin="0,8,0,0"
+						IsReadOnly="True"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding StatusMessage, UpdateSourceTrigger=PropertyChanged}"
+						TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+				</Grid>
+			</GroupBox>
+		</Grid>
+
+		<Border Grid.Row="2"
+			Padding="18,12"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<StackPanel HorizontalAlignment="Right"
+				Orientation="Horizontal">
+				<Button Width="128" Height="38"
+					Margin="0,0,10,0"
+					Command="{Binding ConfirmCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="ClipboardCheckOutline" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="確認" />
+					</StackPanel>
+				</Button>
+				<Button Width="128" Height="38"
+					Margin="0,0,10,0"
+					Command="{Binding UpdateCommand}"
+					IsDefault="True"
+					Style="{StaticResource MaterialDesignRaisedButton}">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="DatabaseImportOutline" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="更新" />
+					</StackPanel>
+				</Button>
+				<Button Width="128" Height="38"
+					Command="{Binding ExitCommand}"
+					IsCancel="True"
+					Style="{StaticResource MaterialDesignOutlinedButton}">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="ArrowLeft" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="キャンセル" />
+					</StackPanel>
+				</Button>
+			</StackPanel>
+		</Border>
+	</Grid>
 </helpers:BaseWindow>

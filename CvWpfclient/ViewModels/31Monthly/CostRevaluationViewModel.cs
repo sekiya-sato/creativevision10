@@ -5,7 +5,7 @@ using CvAsset;
 using CvBase;
 using System.Diagnostics;
 
-namespace CvWpfclient.ViewModels._01Master;
+namespace CvWpfclient.ViewModels._31Monthly;
 
-public partial class ProductRatingChangeViewModel : Helpers.BaseViewModel {
+public partial class CostRevaluationViewModel : Helpers.BaseViewModel {
 }

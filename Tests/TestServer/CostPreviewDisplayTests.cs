@@ -1,0 +1,91 @@
+using CvBase;
+using CvBase.Share;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Tests.CvServer;
+
+/// <summary>
+/// <see cref="CostPreviewDisplay"/>（原価4画面の確認一覧が共通で使う表示整形・判定ロジック）。
+/// 仕様は `Doc/spec/2026-09-05_原価4項目_詳細設計.md` の §8.1・§8.3 を参照する。
+/// <para>
+/// 本来はViewModel（`CvWpfclient`）に置く内容だが、`Tests/TestServer` から `CvWpfclient`
+/// （WPFプロジェクト）を参照できないため（<c>TaxRateDuplicateTests</c>と同じ理由）、
+/// 整形対象のenumと同じ `CvBase` へ切り出してある。
+/// </para>
+/// </summary>
+[TestClass]
+public class CostPreviewDisplayTests {
+	[TestMethod]
+	public void FormatRateBasisPoints_6500は65パーセント表示になる() {
+		Assert.AreEqual("65.00%", CostPreviewDisplay.FormatRateBasisPoints(6500));
+	}
+
+	[TestMethod]
+	public void FormatRateBasisPoints_1は0点01パーセント表示になる() {
+		Assert.AreEqual("0.01%", CostPreviewDisplay.FormatRateBasisPoints(1));
+	}
+
+	[TestMethod]
+	public void FormatRateBasisPoints_0は0パーセント表示になる() {
+		Assert.AreEqual("0.00%", CostPreviewDisplay.FormatRateBasisPoints(0));
+	}
+
+	[TestMethod]
+	public void IsErrorRow_エラーコードが0でメッセージも空なら正常行() {
+		Assert.IsFalse(CostPreviewDisplay.IsErrorRow(EnumCostCalcError.None, string.Empty));
+		Assert.IsFalse(CostPreviewDisplay.IsErrorRow(EnumCostCalcError.None, null));
+	}
+
+	[TestMethod]
+	public void IsErrorRow_エラーコードが0でもメッセージがあればエラー行() {
+		// CostUpdateDbConsumption.NewErrorRow のように、Error=None(0)のままErrorMessageだけ
+		// 設定される行がある(例:「商品ID=0の明細は消化仕入対象にできません。」)。
+		Assert.IsTrue(CostPreviewDisplay.IsErrorRow(EnumCostCalcError.None, "商品ID=0の明細は消化仕入対象にできません。"));
+	}
+
+	[TestMethod]
+	public void IsErrorRow_エラーコードが非0ならエラー行() {
+		Assert.IsTrue(CostPreviewDisplay.IsErrorRow((EnumCostCalcError)5, string.Empty));
+	}
+
+	[TestMethod]
+	public void FormatRowStatus_エラー行はエラー正常行は正常() {
+		Assert.AreEqual("エラー", CostPreviewDisplay.FormatRowStatus((EnumCostCalcError)1, "エラーです"));
+		Assert.AreEqual("正常", CostPreviewDisplay.FormatRowStatus(EnumCostCalcError.None, string.Empty));
+	}
+
+	[TestMethod]
+	public void FormatConsumptionSourceType_0は卸売上_1は店舗売上() {
+		Assert.AreEqual("卸売上", CostPreviewDisplay.FormatConsumptionSourceType((EnumConsumptionSourceType)0));
+		Assert.AreEqual("店舗売上", CostPreviewDisplay.FormatConsumptionSourceType((EnumConsumptionSourceType)1));
+	}
+
+	[TestMethod]
+	public void FormatConsumptionCalcType_0は原価代用_1は上代掛率() {
+		Assert.AreEqual("原価代用", CostPreviewDisplay.FormatConsumptionCalcType((EnumConsumptionCalcType)0));
+		Assert.AreEqual("上代×掛率", CostPreviewDisplay.FormatConsumptionCalcType((EnumConsumptionCalcType)1));
+	}
+
+	[TestMethod]
+	public void FormatCostProcessStatus_0から3までの状態文言() {
+		Assert.AreEqual("未実行", CostPreviewDisplay.FormatCostProcessStatus((EnumCostProcessStatus)0));
+		Assert.AreEqual("完了", CostPreviewDisplay.FormatCostProcessStatus((EnumCostProcessStatus)1));
+		Assert.AreEqual("再実行要", CostPreviewDisplay.FormatCostProcessStatus((EnumCostProcessStatus)2));
+		Assert.AreEqual("エラー", CostPreviewDisplay.FormatCostProcessStatus((EnumCostProcessStatus)3));
+	}
+
+	[TestMethod]
+	public void FormatYmd8ToSlash_yyyyMMddをスラッシュ区切りへ変換する() {
+		Assert.AreEqual("2026/09/06", CostPreviewDisplay.FormatYmd8ToSlash("20260906"));
+	}
+
+	[TestMethod]
+	public void FormatYmd8ToSlash_不正な値はそのまま返す() {
+		Assert.AreEqual("invalid", CostPreviewDisplay.FormatYmd8ToSlash("invalid"));
+	}
+
+	[TestMethod]
+	public void FormatYm6ToSlash_yyyyMMをスラッシュ区切りへ変換する() {
+		Assert.AreEqual("2026/09", CostPreviewDisplay.FormatYm6ToSlash("202609"));
+	}
+}
