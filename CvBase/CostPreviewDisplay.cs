@@ -81,6 +81,28 @@ public static class CostPreviewDisplay {
 			: yyyymm;
 
 	/// <summary>
+	/// 諸掛確認画面（原価4項目 詳細設計 §8.2）の判定重み(<see cref="EnumSundryCheckSeverity"/>)の表示文言。
+	/// </summary>
+	public static string FormatSundryCheckSeverity(EnumSundryCheckSeverity severity) => severity switch {
+		EnumSundryCheckSeverity.Info => "情報",
+		EnumSundryCheckSeverity.Warning => "警告",
+		EnumSundryCheckSeverity.Error => "エラー",
+		_ => $"不明({(int)severity})",
+	};
+
+	/// <summary>
+	/// 生地・付属仕入(<see cref="Tran02Material"/>)の取引区分(<see cref="EnumShiire"/>: 10=仕入、20=仕入返品、
+	/// 30=値引、99=その他)の表示文言。諸掛確認画面（原価4項目 詳細設計 §8.2）の「取引区分」列で使う。
+	/// </summary>
+	public static string FormatShiireKubun(int kubun) => kubun switch {
+		(int)EnumShiire.Shiire => "仕入",
+		(int)EnumShiire.Henpin => "仕入返品",
+		(int)EnumShiire.Nebiki => "値引",
+		(int)EnumShiire.Other => "その他",
+		_ => $"不明({kubun})",
+	};
+
+	/// <summary>
 	/// 最終仕入原価更新・総平均原価更新のプレビュー結果が「原価方式不一致」1行だけかどうかを判定する
 	/// （原価4項目 詳細設計 §2.3、§8.4・§8.5）。サーバーは<c>MasterSysman.CostMethod</c>が画面の方式と
 	/// 一致しないとき、商品を特定しない<see cref="EnumCostCalcError.CostMethodMismatch"/>の1行だけを返す

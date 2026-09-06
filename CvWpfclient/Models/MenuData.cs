@@ -377,7 +377,7 @@ public partial class MenuData : ObservableObject {
 				new("棚卸確定処理", typeof(Views._31Monthly.StockTakeFinalizationView), addInfo:"実棚数と帳簿在庫の差を在庫調整伝票(Tran61Chosei)にして在庫へ反映する。再確定可"),
 			])),
 			new("▲ 原価・評価 ----", new([
-				new("諸掛確認", typeof(Views._31Monthly.SundryChargesUpdateView), addInfo:"準備中 入力済みの諸掛を確認する。更新処理は持たない"),
+				new("諸掛確認", typeof(Views._31Monthly.SundryChargesUpdateView), addInfo:"入力済みの諸掛を確認する。更新処理は持たない"),
 				new("最終仕入原価更新", typeof(Views._31Monthly.LastPurchaseCostRefreshView)),
 				new("総平均原価更新", typeof(Views._31Monthly.TotalAverageCostUpdateView)),
 				new("消化仕入更新", typeof(Views._31Monthly.ConsumptionPurchaseUpdateView)),

@@ -119,4 +119,29 @@ public class CostPreviewDisplayTests {
 		};
 		Assert.IsFalse(CostPreviewDisplay.IsCostMethodMismatchOnly(rows));
 	}
+
+	[TestMethod]
+	public void FormatSundryCheckSeverity_情報警告エラーの3区分() {
+		Assert.AreEqual("情報", CostPreviewDisplay.FormatSundryCheckSeverity(EnumSundryCheckSeverity.Info));
+		Assert.AreEqual("警告", CostPreviewDisplay.FormatSundryCheckSeverity(EnumSundryCheckSeverity.Warning));
+		Assert.AreEqual("エラー", CostPreviewDisplay.FormatSundryCheckSeverity(EnumSundryCheckSeverity.Error));
+	}
+
+	[TestMethod]
+	public void FormatSundryCheckSeverity_未定義値は不明表示() {
+		Assert.AreEqual("不明(99)", CostPreviewDisplay.FormatSundryCheckSeverity((EnumSundryCheckSeverity)99));
+	}
+
+	[TestMethod]
+	public void FormatShiireKubun_10仕入20仕入返品30値引99その他() {
+		Assert.AreEqual("仕入", CostPreviewDisplay.FormatShiireKubun(10));
+		Assert.AreEqual("仕入返品", CostPreviewDisplay.FormatShiireKubun(20));
+		Assert.AreEqual("値引", CostPreviewDisplay.FormatShiireKubun(30));
+		Assert.AreEqual("その他", CostPreviewDisplay.FormatShiireKubun(99));
+	}
+
+	[TestMethod]
+	public void FormatShiireKubun_未定義値は不明表示() {
+		Assert.AreEqual("不明(0)", CostPreviewDisplay.FormatShiireKubun(0));
+	}
 }
