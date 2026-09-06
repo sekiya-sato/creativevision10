@@ -59,6 +59,8 @@ public class SchedulerService : ISchedulerService {
 	public const string MasterVColumnResyncTaskName = MasterConfig.AutoExecTaskNameMasterVColumnResync;
 	public const string TranTaxRebuildCronExpression = MasterConfig.AutoExecCronTranTaxRebuild;
 	public const string TranTaxRebuildTaskName = MasterConfig.AutoExecTaskNameTranTaxRebuild;
+	public const string ManualLockMonitorCronExpression = MasterConfig.AutoExecCronManualLockMonitor;
+	public const string ManualLockMonitorTaskName = MasterConfig.AutoExecTaskNameManualLockMonitor;
 
 	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWalCheckpoint);
 	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWorkFileCleanup);
@@ -67,6 +69,7 @@ public class SchedulerService : ISchedulerService {
 	public static readonly Guid MasterShohinMeishoRebuildTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdMasterShohinMeishoRebuild);
 	public static readonly Guid MasterVColumnResyncTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdMasterVColumnResync);
 	public static readonly Guid TranTaxRebuildTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdTranTaxRebuild);
+	public static readonly Guid ManualLockMonitorTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdManualLockMonitor);
 
 	/// <summary>ジョブを識別するキー（<see cref="MasterConfig"/> の Name に使う固定文字列）</summary>
 	public const string JobKeyWalCheckpoint = "WalCheckpoint";
@@ -76,6 +79,7 @@ public class SchedulerService : ISchedulerService {
 	public const string JobKeyMasterShohinMeishoRebuild = "MasterShohinMeishoRebuild";
 	public const string JobKeyMasterVColumnResync = "MasterVColumnResync";
 	public const string JobKeyTranTaxRebuild = "TranTaxRebuild";
+	public const string JobKeyManualLockMonitor = "ManualLockMonitor";
 
 	/// <summary>システムジョブ1件の定義（TaskId・設定キー・名称・既定cron・既定の実行フラグ・起動間隔チェックの有無）</summary>
 	public sealed record SchedulerJobDefinition(
@@ -99,6 +103,8 @@ public class SchedulerService : ISchedulerService {
 		new(MasterShohinMeishoRebuildTaskId, JobKeyMasterShohinMeishoRebuild, MasterShohinMeishoRebuildTaskName, MasterShohinMeishoRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMasterShohinMeishoRebuild), IsSendMailDefault(MasterShohinMeishoRebuildTaskId), true),
 		new(MasterVColumnResyncTaskId, JobKeyMasterVColumnResync, MasterVColumnResyncTaskName, MasterVColumnResyncCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledMasterVColumnResync), IsSendMailDefault(MasterVColumnResyncTaskId), true),
 		new(TranTaxRebuildTaskId, JobKeyTranTaxRebuild, TranTaxRebuildTaskName, TranTaxRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledTranTaxRebuild), IsSendMailDefault(TranTaxRebuildTaskId), true),
+		// CheckMinInterval は必ずfalse: 監視タスクは5分毎cronであり、MinIntervalMinutes(60分)の下限チェック対象にすると弾かれてしまう。
+		new(ManualLockMonitorTaskId, JobKeyManualLockMonitor, ManualLockMonitorTaskName, ManualLockMonitorCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledManualLockMonitor), IsSendMailDefault(ManualLockMonitorTaskId), false),
 	];
 
 	/// <summary>MasterConfigの実行フラグ値(1/0)を bool に変換する</summary>
@@ -112,6 +118,17 @@ public class SchedulerService : ISchedulerService {
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private static readonly TimeSpan WorkFileCleanupTargetAge = TimeSpan.FromHours(WorkFileCleanupTargetAgeHours);
+
+	/// <summary>
+	/// マニュアル排他制御監視タスク（設計書§3）が前回チェック時点で保持する状態。
+	/// 設計書§3は「タスクは静的変数に保持する」と定めるが、static fieldにすると単体テストで
+	/// 状態が漏れる（<c>CvDomainLogic.ManualLockMonitor</c>のクラスコメント参照）。
+	/// <see cref="SchedulerService"/>はDIでシングルトン登録されている（<c>CvServer/Program.cs</c>）ため、
+	/// このインスタンスフィールドはアプリ実行中は事実上の静的変数と同じ役割を果たす。
+	/// </summary>
+	private CvDomainLogic.ManualLockMonitorState? _manualLockMonitorState;
+	/// <summary>前回状態の読み書きを直列化するための排他オブジェクト。</summary>
+	private readonly object _manualLockMonitorGate = new();
 
 	private sealed record AutoexecTaskResult(int ReturnCode, int Count, string Memo);
 
@@ -268,6 +285,25 @@ public class SchedulerService : ISchedulerService {
 	public SchedulerResult RegisterTranTaxRebuildTask() {
 		var def = FindDefinition(JobKeyTranTaxRebuild);
 		return RegisterSystemJob(def, (db, ct) => ExecuteTranTaxRebuildCoreAsync(db, def.TaskName, ct));
+	}
+
+	/// <summary>
+	/// マニュアル排他制御の監視タスク（設計書§3、Step 9-4）を登録する。5分毎に実行する。
+	/// <para>
+	/// <b>汎用の自動実行履歴ラッパーを使わない理由（報告事項）</b>: 他の6タスクと同様に
+	/// <see cref="ExecuteWithAutoexecHistoryAsync"/>を使うと、実行の都度（5分毎に）
+	/// 「処理開始」/「処理完了」の<see cref="SysHistAutoexec"/>行が1件増えてしまう。
+	/// 設計書§3.1（2a: 行が無ければ何もしない・ログも出さない）と§3.3（2c: Vduが前進していればログを出さない）は
+	/// 「該当ティックでは1行も増えない」ことを要求しており、また§3.7は
+	/// 「ログは必ず2b→2f/2eで対になる」という不変条件を課している。汎用ラッパーの行が
+	/// 挟まるとどちらも満たせなくなるため、このタスクだけ<c>suppressAutoexecHistory: true</c>で登録し、
+	/// <see cref="SysHistAutoexec"/>への書き込みはドメインロジック（<see cref="ManualLockDb.RecordMonitorDetected"/>等）が
+	/// 判定（§3.2/§3.5/§3.6）に応じて行う。
+	/// </para>
+	/// </summary>
+	public SchedulerResult RegisterManualLockMonitorTask() {
+		var def = FindDefinition(JobKeyManualLockMonitor);
+		return RegisterSystemJob(def, (db, ct) => ExecuteManualLockMonitorCoreAsync(db, def.TaskName, ct), suppressAutoexecHistory: true);
 	}
 
 	public Task<GetSchedulerTasksResponse> GetTasksAsync(CallContext context = default) {
@@ -725,7 +761,7 @@ public class SchedulerService : ISchedulerService {
 	/// システムジョブ定義を登録する。cron式は永続値(<see cref="SchedulerJobConfigDb.GetCron"/>)があればそれを使い、
 	/// 無い/parse失敗の場合は定義の既定cronにフォールバックする。
 	/// </summary>
-	private SchedulerResult RegisterSystemJob(SchedulerJobDefinition definition, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executor) {
+	private SchedulerResult RegisterSystemJob(SchedulerJobDefinition definition, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executor, bool suppressAutoexecHistory = false) {
 		var cronExpression = definition.DefaultCronExpression;
 		try {
 			using var scope = _scopeFactory.CreateScope();
@@ -745,10 +781,16 @@ public class SchedulerService : ISchedulerService {
 			_logger.LogWarning(ex, "永続化cron式の取得に失敗したため既定値を使用します。 JobKey={JobKey}", definition.JobKey);
 		}
 
-		return RegisterTask(definition.TaskName, cronExpression, executor, definition.TaskId, definition);
+		return RegisterTask(definition.TaskName, cronExpression, executor, definition.TaskId, definition, suppressAutoexecHistory);
 	}
 
-	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executor, Guid? taskId = null, SchedulerJobDefinition? definition = null) {
+	/// <summary>
+	/// <paramref name="suppressAutoexecHistory"/>は<see cref="RegisterManualLockMonitorTask"/>専用。
+	/// trueの場合、<see cref="ExecuteWithAutoexecHistoryAsync"/>（実行の都度<see cref="SysHistAutoexec"/>に
+	/// 開始/終了行を書く汎用処理）を経由せず、実行フラグ判定後に<paramref name="executor"/>を直接呼ぶ。
+	/// メール送信もこの経路では行わない（監視タスクは既定でメール送信フラグを持たない）。
+	/// </summary>
+	private SchedulerResult RegisterTask(string taskName, string cronExpression, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executor, Guid? taskId = null, SchedulerJobDefinition? definition = null, bool suppressAutoexecHistory = false) {
 		CrontabSchedule schedule;
 		try {
 			schedule = CrontabSchedule.Parse(cronExpression);
@@ -767,7 +809,7 @@ public class SchedulerService : ISchedulerService {
 				guid,
 				taskName,
 				schedule,
-				ct => ExecuteScheduledTaskWithScopeAsync(guid, taskName, definition, ct, executor));
+				ct => ExecuteScheduledTaskWithScopeAsync(guid, taskName, definition, ct, executor, suppressAutoexecHistory));
 			_scheduler.AddTask(scheduledTask);
 
 			_logger.LogInformation(
@@ -823,7 +865,7 @@ public class SchedulerService : ISchedulerService {
 		return false;
 	}
 
-	private async Task ExecuteScheduledTaskWithScopeAsync(Guid taskId, string taskName, SchedulerJobDefinition? definition, CancellationToken cancellationToken, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executeAsync) {
+	private async Task ExecuteScheduledTaskWithScopeAsync(Guid taskId, string taskName, SchedulerJobDefinition? definition, CancellationToken cancellationToken, Func<ExDatabase, CancellationToken, Task<AutoexecTaskResult>> executeAsync, bool suppressAutoexecHistory = false) {
 		if (!IsScheduledInvocation(taskId, taskName)) {
 			return;
 		}
@@ -838,6 +880,21 @@ public class SchedulerService : ISchedulerService {
 				_logger.LogInformation("実行フラグがfalseのため自動実行をスキップしました。 TaskName={TaskName}, JobKey={JobKey}", taskName, definition.JobKey);
 				return;
 			}
+		}
+
+		if (suppressAutoexecHistory) {
+			// SysHistAutoexecへの記録はexecuteAsync側（ドメインロジック）が判定に応じて行うため、
+			// ここでは汎用の開始/終了ログを書かずにそのまま実行する（理由は RegisterManualLockMonitorTask 参照）。
+			try {
+				await executeAsync(db, cancellationToken);
+			}
+			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+				throw;
+			}
+			catch (Exception ex) {
+				_logger.LogError(ex, "自動実行に失敗しました（履歴記録は抑止対象）。 TaskName={TaskName}", taskName);
+			}
+			return;
 		}
 
 		try {
@@ -1138,6 +1195,52 @@ public class SchedulerService : ISchedulerService {
 			_logger.LogError(ex, "伝票税額再更新に失敗しました: TaskName={TaskName}", taskName);
 			return Task.FromResult(new AutoexecTaskResult(InternalError, 0, $"例外: {ex.Message}"));
 		}
+	}
+
+	/// <summary>
+	/// マニュアル排他制御の監視タスク本体（設計書§3、Step 9-4）。判定の純関数（<see cref="CvDomainLogic.ManualLockMonitor.Evaluate"/>）は
+	/// CvDomainLogicに置き、ここでは「前回状態の読み書き（本来の静的変数の代わり）」と
+	/// 「判定結果に応じたDB書き込み（<see cref="ManualLockDb.RecordMonitorDetected"/>等）」だけを行う薄い呼び出しにする。
+	/// </summary>
+	private Task<AutoexecTaskResult> ExecuteManualLockMonitorCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+
+		var lockDb = new ManualLockDb(db);
+		var nowUtcTicks = DateTime.UtcNow.Ticks;
+
+		CvDomainLogic.ManualLockMonitorTick tick;
+		lock (_manualLockMonitorGate) {
+			var activeLocks = lockDb.FetchActiveLocks();
+			tick = CvDomainLogic.ManualLockMonitor.Evaluate(_manualLockMonitorState, activeLocks, nowUtcTicks);
+			_manualLockMonitorState = tick.NextState;
+		}
+
+		switch (tick.Action) {
+			case CvDomainLogic.ManualLockMonitorAction.RecordDetected:
+				lockDb.RecordMonitorDetected(tick.Subject!, taskName);
+				_logger.LogWarning(
+					"マニュアル排他制御監視: 実行中の一連処理を検知しました。 TableName={TableName}, ColumnName={ColumnName}, SeqNo={SeqNo}",
+					tick.Subject!.TableName, tick.Subject.ColumnName, tick.Subject.SeqNo);
+				break;
+			case CvDomainLogic.ManualLockMonitorAction.RecordTimeout:
+				lockDb.RecordMonitorTimeout(tick.Subject!, taskName);
+				_logger.LogError(
+					"マニュアル排他制御監視: 長時間更新が無いため異常とみなし強制解放しました。 TableName={TableName}, ColumnName={ColumnName}, ExpectedDuration={ExpectedDuration}",
+					tick.Subject!.TableName, tick.Subject.ColumnName, tick.Subject.ExpectedDuration);
+				break;
+			case CvDomainLogic.ManualLockMonitorAction.RecordNormalEnd:
+				lockDb.RecordMonitorNormalEnd(tick.Subject!, taskName);
+				_logger.LogInformation(
+					"マニュアル排他制御監視: 一連処理の正常終了を検知しました。 TableName={TableName}",
+					tick.Subject!.TableName);
+				break;
+			case CvDomainLogic.ManualLockMonitorAction.None:
+			default:
+				break;
+		}
+
+		// suppressAutoexecHistory:true で登録しているため、この戻り値自体はSysHistAutoexecへは書かれない。
+		return Task.FromResult(new AutoexecTaskResult(Success, 0, "監視完了"));
 	}
 
 	private Task<AutoexecTaskResult> ExecuteSqliteWalCheckpointCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {

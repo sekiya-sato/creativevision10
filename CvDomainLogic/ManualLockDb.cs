@@ -340,6 +340,80 @@ public class ManualLockDb(ExDatabase db) {
 			(int)EmSysSeqType.ManualLock);
 
 	// ==================================================================
+	// 5. 監視タスク（設計書§3、Step 9-4）
+	// ==================================================================
+	// 判定そのもの（純関数）は<see cref="ManualLockMonitor.Evaluate"/>が行う。ここは判定結果に応じた
+	// DB書き込み（SysSequenceの削除、SysHistAutoexecへのログ）だけを担う。書式組み立ては
+	// NormalizeTaskName/FormatHistoryDateTime/TicksToSeconds/AppendTruncatedMemoを処理側（Complete）と
+	// 共通利用し、重複実装を避ける（設計書§3.7、報告事項の指示に対応）。
+
+	/// <summary>
+	/// 監視タスクが§3.5（2e）で異常とみなしたときの<see cref="SysHistAutoexec.ReturnCode"/>。
+	/// 値そのものに意味は無く、0以外であることだけが規約（設計書§3.5）
+	/// </summary>
+	public const int MonitorTimeoutReturnCode = 9;
+
+	/// <summary>監視ログの目印（設計書§3.7の2b）。<see cref="SysHistAutoexec.Memo"/>の先頭に付ける</summary>
+	private const string MonitorDetectedMarker = "[2b:検知]";
+	/// <summary>監視ログの目印（設計書§3.7の2e）</summary>
+	private const string MonitorTimeoutMarker = "[2e:タイムアウト解放]";
+	/// <summary>監視ログの目印（設計書§3.7の2f）</summary>
+	private const string MonitorNormalEndMarker = "[2f:正常終了]";
+
+	/// <summary>
+	/// 監視タスクが§3.2（2b）で行を新規検知したときの履歴を書く（設計書§3.2、§3.7）。
+	/// <see cref="EmSysHistType.AutoExec"/>（0）で記録する。監視タスク自身が自動実行のため、
+	/// 処理側が§2.3-2で書く<see cref="EmSysHistType.ManualExec"/>の履歴とは別行になる（設計書§3.7）。
+	/// </summary>
+	/// <param name="subject">検知した行のスナップショット</param>
+	/// <param name="monitorTaskName">監視タスクの表示名（<see cref="SysHistAutoexec.TaskName"/>）</param>
+	public void RecordMonitorDetected(ManualLockMonitorState subject, string monitorTaskName) =>
+		InsertMonitorHistory(monitorTaskName, 0, MonitorDetectedMarker, subject);
+
+	/// <summary>
+	/// 監視タスクが§3.5（2e）で閾値超過（異常）と判定したときに、対象行を削除して履歴を書く（設計書§3.5、§3.7）。
+	/// <c>ReturnCode</c>は<see cref="MonitorTimeoutReturnCode"/>（非0）を使う。
+	/// </summary>
+	public void RecordMonitorTimeout(ManualLockMonitorState subject, string monitorTaskName) {
+		ArgumentNullException.ThrowIfNull(subject);
+		_db.ExecuteDialect($"DELETE FROM {nameof(SysSequence)} WHERE Id=@0", subject.Id);
+		InsertMonitorHistory(monitorTaskName, MonitorTimeoutReturnCode, MonitorTimeoutMarker, subject);
+	}
+
+	/// <summary>
+	/// 監視タスクが§3.6（2f）で正常終了を検知したときの履歴を書く。対象行は既にDB上から消えているため
+	/// （処理側が§2.3-3で自分の行を削除済み）、ここでは削除は行わない。
+	/// </summary>
+	public void RecordMonitorNormalEnd(ManualLockMonitorState subject, string monitorTaskName) =>
+		InsertMonitorHistory(monitorTaskName, 0, MonitorNormalEndMarker, subject);
+
+	/// <summary>
+	/// 監視タスクの<see cref="SysHistAutoexec"/>ログを組み立てて書き込む共通処理（設計書§3.7）。
+	/// </summary>
+	private void InsertMonitorHistory(string monitorTaskName, int returnCode, string marker, ManualLockMonitorState subject) {
+		ArgumentNullException.ThrowIfNull(subject);
+		var vdate = Common.GetVdate();
+		var detail =
+			$"TableName={subject.TableName}, ColumnName={subject.ColumnName}, SeqNo={subject.SeqNo}, " +
+			$"Vdc={FormatHistoryDateTime(subject.Vdc)}, Vdu={FormatHistoryDateTime(subject.Vdu)}, ExpectedDuration={subject.ExpectedDuration}秒";
+		var memo = AppendTruncatedMemo(marker, detail, MemoMaxLength);
+
+		var history = new SysHistAutoexec {
+			SysHistType = (int)EmSysHistType.AutoExec,
+			TaskName = NormalizeTaskName(monitorTaskName),
+			StartTime = FormatHistoryDateTime(subject.Vdc),
+			EndTime = FormatHistoryDateTime(vdate),
+			ElapsedTime = TicksToSeconds(vdate - subject.Vdc),
+			ReturnCode = returnCode,
+			Count = 0,
+			Memo = memo,
+			Vdc = vdate,
+			Vdu = vdate,
+		};
+		_db.Insert(history);
+	}
+
+	// ==================================================================
 	// 内部ヘルパー
 	// ==================================================================
 

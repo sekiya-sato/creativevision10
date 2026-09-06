@@ -356,13 +356,14 @@ public class CoreServiceTests {
 	}
 
 	/// <summary>
-	/// 自動実行フラグ改修: SystemJobDefinitions が7件で、TaskId・JobKeyが全件ユニークであること
+	/// 自動実行フラグ改修: SystemJobDefinitions が8件(Step 9-4でマニュアル排他制御監視を追加)で、
+	/// TaskId・JobKeyが全件ユニークであること
 	/// </summary>
 	[TestMethod]
 	public void SystemJobDefinitions_HasSevenUniqueEntries() {
 		var defs = SchedulerService.SystemJobDefinitions;
 
-		Assert.AreEqual(7, defs.Count);
+		Assert.AreEqual(8, defs.Count);
 		Assert.AreEqual(defs.Count, defs.Select(d => d.TaskId).Distinct().Count(), "TaskIdが重複している");
 		Assert.AreEqual(defs.Count, defs.Select(d => d.JobKey).Distinct().Count(), "JobKeyが重複している");
 	}
@@ -387,7 +388,9 @@ public class CoreServiceTests {
 	}
 
 	/// <summary>
-	/// 自動実行フラグ改修: 既存4ジョブは既定で実行フラグONかつ起動間隔チェック対象外であること
+	/// 自動実行フラグ改修: 既存4ジョブ＋マニュアル排他制御監視(Step 9-4)は既定で実行フラグONかつ起動間隔チェック対象外であること。
+	/// 監視タスクは5分毎cronのため、CheckMinInterval=trueにするとMinIntervalMinutes(60分)の下限チェックで弾かれてしまう
+	/// (詳細設計書§3、CvServer/Services/SchedulerService.cs の RegisterManualLockMonitorTask 参照)。
 	/// </summary>
 	[TestMethod]
 	public void SystemJobDefinitions_ExistingJobsAreDefaultEnabledWithoutMinIntervalCheck() {
@@ -397,6 +400,7 @@ public class CoreServiceTests {
 			SchedulerService.JobKeyWorkFileCleanup,
 			SchedulerService.JobKeyMonthlyResummary,
 			SchedulerService.JobKeyJodaiPurge,
+			SchedulerService.JobKeyManualLockMonitor,
 		};
 
 		foreach (var jobKey in existingJobKeys) {
