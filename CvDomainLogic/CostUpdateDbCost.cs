@@ -43,6 +43,17 @@ public partial class CostUpdateDb {
 			.AddDays(-1)
 			.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
 
+	/// <summary>
+	/// <see cref="EnumCostTargetExclusion"/>を画面表示用の日本語メッセージへ変換する
+	/// （設計書§6.5「2026-09-06改訂」）。<see cref="DescribeCostCalcError"/>と同じ場所・同じ作法で組み立てる。
+	/// </summary>
+	private static string DescribeCostTargetExclusion(EnumCostTargetExclusion exclusion) => exclusion switch {
+		EnumCostTargetExclusion.None => string.Empty,
+		EnumCostTargetExclusion.NegativeOpeningQty => "前月在庫数が負のため対象外です。在庫を訂正してください。",
+		EnumCostTargetExclusion.NoCostWithOpeningStock => "前月在庫があるが原価が未設定のため対象外です。原価を設定してください。",
+		_ => exclusion.ToString(),
+	};
+
 	/// <summary><see cref="EnumCostCalcError"/>を画面表示用の日本語メッセージへ変換する。</summary>
 	private static string DescribeCostCalcError(EnumCostCalcError error) => error switch {
 		EnumCostCalcError.None => string.Empty,
@@ -443,6 +454,33 @@ ORDER BY SumMonth ASC
 			var input = inputs.GetValueOrDefault(idShohin);
 			var sundryAmount = sundry.GetValueOrDefault(idShohin, 0L);
 			var openingAmount = input.OpeningQty * beforeCost;
+
+			// 対象外判定(設計書§6.5「2026-09-06改訂: 負在庫と原価0円は『エラー』から『対象外』へ」、§13 U-06・U-15)。
+			// CalcTotalAverageCostを呼ぶ前に判定し、対象外ならTranGenkaへ行を作らず・MasterShohin.TankaGenkaも
+			// 変更せず・エラー件数にも数えない。OpeningQty=0かつBeforeCost=0はここでNoneのまま計算対象に残る
+			// (当月仕入で原価が決まる正常経路。設計書§6.5「ここを一緒に除外すると新規商品の原価が永久に決まらない」)。
+			var exclusion = CostCalculator.GetTotalAverageExclusion(input.OpeningQty, beforeCost);
+			if (exclusion != EnumCostTargetExclusion.None) {
+				rows.Add(new CostPreviewRow {
+					SumMonth = sumMonth,
+					Id_Shohin = idShohin,
+					CodeShohin = shohin.Code,
+					MeiShohin = shohin.Name,
+					BeforeCost = beforeCost,
+					AfterCost = 0,
+					OpeningQty = input.OpeningQty,
+					OpeningAmount = openingAmount,
+					PurchaseQty = input.PurchaseQty,
+					PurchaseAmount = input.PurchaseAmount,
+					SundryAmount = sundryAmount,
+					Error = EnumCostCalcError.None,
+					ErrorMessage = string.Empty,
+					IsTarget = false,
+					ExcludeReason = DescribeCostTargetExclusion(exclusion),
+				});
+				continue;
+			}
+
 			// TotalAverageInput.PurchaseAmountには諸掛を含めない。CalcTotalAverageCost側がSundryAmountを
 			// 分子へ加算する(設計書§6.3、CostCalculator.csのコメント参照)。TQは加算しない(設計書§6.4)。
 			var taInput = new CostCalculator.TotalAverageInput(input.OpeningQty, openingAmount, input.PurchaseQty, input.PurchaseAmount, sundryAmount);
@@ -462,6 +500,7 @@ ORDER BY SumMonth ASC
 				SundryAmount = sundryAmount,
 				Error = calc.Error,
 				ErrorMessage = DescribeCostCalcError(calc.Error),
+				IsTarget = true,
 			});
 
 			if (!calc.IsError) {

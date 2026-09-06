@@ -99,6 +99,33 @@ public static class CostCalculator {
 	}
 
 	/// <summary>
+	/// 総平均原価更新の対象外判定（設計書§6.5「2026-09-06改訂: 負在庫と原価0円は『エラー』から
+	/// 『対象外』へ」、§13 U-06・U-15）。
+	/// <para>
+	/// 対象外は「計算そのものを行わない」判断であり、<see cref="CalcTotalAverageCost"/>が返す
+	/// <see cref="EnumCostCalcError"/>（計算が成立しない入力エラー）とは別物である。呼び出し側
+	/// （<c>CvDomainLogic.CostUpdateDb.ComputeTotalAverageForMonth</c>）は<see cref="CalcTotalAverageCost"/>を
+	/// 呼ぶ前に本関数で対象外を判定し、対象外なら計算自体を行わない・原価を変更しない・エラー件数に
+	/// 数えない（設計書§6.5）。
+	/// </para>
+	/// <para>
+	/// <c>OpeningQty = 0</c> かつ <c>beforeCost = 0</c> は対象外にしない
+	/// （<see cref="EnumCostTargetExclusion.None"/>を返す）。これは「まだ仕入が発生しておらず原価が
+	/// 決まっていない商品」であり、当月仕入だけで初めて原価を確定させる正常経路である
+	/// （設計書§6.5「ここを一緒に除外すると新規商品の原価が永久に決まらない」）。
+	/// </para>
+	/// </summary>
+	public static EnumCostTargetExclusion GetTotalAverageExclusion(long openingQty, long beforeCost) {
+		if (openingQty < 0) {
+			return EnumCostTargetExclusion.NegativeOpeningQty;
+		}
+		if (openingQty > 0 && beforeCost <= 0) {
+			return EnumCostTargetExclusion.NoCostWithOpeningStock;
+		}
+		return EnumCostTargetExclusion.None;
+	}
+
+	/// <summary>
 	/// 総平均原価（設計書§6.3・§6.4・§6.5）。
 	/// <c>Denominator = OpeningQty + PurchaseQty</c>、
 	/// <c>Numerator = OpeningAmount + PurchaseAmount + SundryAmount</c>、
@@ -114,6 +141,15 @@ public static class CostCalculator {
 	/// </para>
 	/// <para>
 	/// 判定順は設計書§6.5の表のとおり。
+	/// </para>
+	/// <para>
+	/// <b>2026-09-06改訂</b>: 負在庫・前月在庫ありで原価0円以下は「エラー」から「対象外」へ変わり
+	/// （<see cref="GetTotalAverageExclusion"/>）、呼び出し側がその判定を計算前に行うようになったため、
+	/// 通常経路では本関数内の以下2つのガードには到達しない。ここでは
+	/// 呼び出し側の判定漏れに備えた防御としてガードを残す（削除しない判断）。理由:
+	/// 本関数は<c>CvBase</c>の純関数として単体テストされ、呼び出し側の判定と独立に「不正な入力を
+	/// 計算に使わない」性質を保証しておきたいため。ガードに到達すること自体が呼び出し側の実装誤りを
+	/// 示すシグナルになる。
 	/// </para>
 	/// </summary>
 	public static TotalAverageResult CalcTotalAverageCost(TotalAverageInput input, long beforeCost) {
@@ -234,6 +270,21 @@ public static class CostCalculator {
 			return MeisaiNo.CompareTo(other.MeisaiNo);
 		}
 	}
+}
+
+/// <summary>
+/// 総平均原価更新の対象外種別（設計書§6.5「2026-09-06改訂」、§13 U-06・U-15）。
+/// <see cref="CostCalculator.GetTotalAverageExclusion"/>が返す。エラー（<see cref="EnumCostCalcError"/>）と
+/// 異なり、対象外は入力に不備があるわけではなく「原価を変更しない」という正常な判断であり、
+/// エラー件数には算入しない（設計書§6.5）。
+/// </summary>
+public enum EnumCostTargetExclusion : int {
+	/// <summary>対象外ではない（通常どおり計算する）。</summary>
+	None = 0,
+	/// <summary>前月在庫数が負(設計書§6.5「OpeningQty &lt; 0」、§13 U-06)。在庫を訂正してから再実行する。</summary>
+	NegativeOpeningQty,
+	/// <summary>前月在庫があるのに計算前原価が0以下(設計書§6.5「OpeningQty &gt; 0、BeforeCost &lt;= 0」、§13 U-15)。原価を設定してから再実行する。</summary>
+	NoCostWithOpeningStock,
 }
 
 /// <summary>

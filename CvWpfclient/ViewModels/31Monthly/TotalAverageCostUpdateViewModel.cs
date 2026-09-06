@@ -77,7 +77,9 @@ public partial class TotalAverageCostUpdateViewModel : BaseCostUpdateViewModel {
 		ApplyRowFilter();
 
 		var errorCount = _allRows.Count(x => x.IsError);
-		return new PreviewOutcome(_allRows.Count, errorCount, result.Confirmed);
+		// 対象外(設計書§6.5「2026-09-06改訂」)はエラーではないため別集計する。エラー件数には算入しない。
+		var excludedCount = _allRows.Count(x => !x.IsTarget && !x.IsError);
+		return new PreviewOutcome(_allRows.Count, errorCount, result.Confirmed, excludedCount);
 	}
 
 	protected override void ClearRows() {
@@ -86,13 +88,21 @@ public partial class TotalAverageCostUpdateViewModel : BaseCostUpdateViewModel {
 		CostMethodMismatchMessage = string.Empty;
 	}
 
+	/// <summary>
+	/// エラー行のみ・対象外行のみの2つの絞り込みを持つ(設計書§6.5「2026-09-06改訂」)。両方チェックした場合は
+	/// エラー行のみを優先する(対象外はエラーではなく、両方はそもそも同時に真にならないため優先順位に実害はない)。
+	/// </summary>
+	private IEnumerable<TotalAveragePreviewRowVm> FilteredRows() =>
+		ShowErrorsOnly ? _allRows.Where(x => x.IsError)
+		: ShowExcludedOnly ? _allRows.Where(x => !x.IsTarget && !x.IsError)
+		: _allRows;
+
 	protected override void ApplyRowFilter() {
-		Rows = new ObservableCollection<TotalAveragePreviewRowVm>(
-			ShowErrorsOnly ? _allRows.Where(x => x.IsError) : _allRows);
+		Rows = new ObservableCollection<TotalAveragePreviewRowVm>(FilteredRows());
 	}
 
 	protected override string BuildCsvText() {
-		var rows = ShowErrorsOnly ? _allRows.Where(x => x.IsError) : _allRows;
+		var rows = FilteredRows();
 		var sb = new StringBuilder();
 		sb.AppendLine(CsvText.BuildLine(CsvHeader));
 		foreach (var row in rows) {
@@ -130,8 +140,15 @@ public sealed class TotalAveragePreviewRowVm {
 	public long Denominator => OpeningQty + PurchaseQty;
 	public required EnumCostCalcError Error { get; init; }
 	public required string ErrorMessage { get; init; }
+	/// <summary>対象商品か（設計書§6.5「2026-09-06改訂」）。falseは負在庫／前月在庫があるが原価0円。</summary>
+	public required bool IsTarget { get; init; }
+	/// <summary>対象外の理由。<see cref="IsTarget"/>=falseのときのみ設定される。</summary>
+	public required string ExcludeReason { get; init; }
 	public bool IsError => CostPreviewDisplay.IsErrorRow(Error, ErrorMessage);
-	public string StatusText => CostPreviewDisplay.FormatRowStatus(Error, ErrorMessage);
+	/// <summary>「状態」列（エラー／対象外／正常の3値。設計書§6.5「2026-09-06改訂」）。</summary>
+	public string StatusText => CostPreviewDisplay.FormatCostPreviewRowStatus(IsTarget, Error, ErrorMessage);
+	/// <summary>「エラー」列。エラー行はエラーメッセージ、対象外行は対象外理由を表示する。</summary>
+	public string ReasonText => CostPreviewDisplay.FormatCostPreviewRowReason(IsTarget, Error, ErrorMessage, ExcludeReason);
 
 	public static TotalAveragePreviewRowVm FromDto(CostPreviewRow row) => new() {
 		SumMonth = row.SumMonth,
@@ -147,6 +164,8 @@ public sealed class TotalAveragePreviewRowVm {
 		SundryAmount = row.SundryAmount,
 		Error = row.Error,
 		ErrorMessage = row.ErrorMessage,
+		IsTarget = row.IsTarget,
+		ExcludeReason = row.ExcludeReason,
 	};
 
 	/// <summary>CSV出力用の列(<see cref="TotalAverageCostUpdateViewModel"/>のヘッダ順と一致させる)。</summary>
@@ -164,6 +183,6 @@ public sealed class TotalAveragePreviewRowVm {
 		SundryAmount.ToString(CultureInfo.InvariantCulture),
 		Denominator.ToString(CultureInfo.InvariantCulture),
 		StatusText,
-		ErrorMessage,
+		ReasonText,
 	];
 }

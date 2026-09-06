@@ -119,6 +119,23 @@ public static class CostPreviewDisplay {
 		IsErrorRow(error, errorMessage) ? "エラー" : "正常";
 
 	/// <summary>
+	/// 総平均原価更新一覧の「状態」列（設計書§6.5「2026-09-06改訂」、§8.5）。エラー行を最優先し、
+	/// 次に対象外・正常を判定する。<see cref="FormatRevaluationRowStatus"/>と同じ考え方（対象外はエラーでは
+	/// ない）だが、対象行は評価替えの「対象」ではなく既存の「正常」という文言を維持する
+	/// （最終仕入原価更新・消化仕入更新など、対象外を持たない他の原価4画面と表示文言をそろえるため）。
+	/// </summary>
+	public static string FormatCostPreviewRowStatus(bool isTarget, EnumCostCalcError error, string? errorMessage) =>
+		IsErrorRow(error, errorMessage) ? "エラー" : isTarget ? "正常" : "対象外";
+
+	/// <summary>
+	/// 総平均原価更新一覧の「エラー」列（設計書§6.5「2026-09-06改訂」、§8.5）。エラー行は
+	/// <paramref name="errorMessage"/>、対象外行は<paramref name="excludeReason"/>（負在庫／原価0円）を表示する。
+	/// 正常行はいずれも空文字。<see cref="FormatRevaluationRowReason"/>と同じ組み立て方。
+	/// </summary>
+	public static string FormatCostPreviewRowReason(bool isTarget, EnumCostCalcError error, string? errorMessage, string? excludeReason) =>
+		IsErrorRow(error, errorMessage) ? errorMessage ?? string.Empty : !isTarget ? excludeReason ?? string.Empty : string.Empty;
+
+	/// <summary>
 	/// 消化仕入の生成元売上テーブル種別（0=卸売上 <c>Tran00Uriage</c>、1=店舗売上 <c>Tran01Tenuri</c>）の表示文言。
 	/// </summary>
 	public static string FormatConsumptionSourceType(EnumConsumptionSourceType sourceType) => sourceType switch {

@@ -185,6 +185,34 @@ public class CostCalculatorTests {
 	}
 
 	// ------------------------------------------------------------
+	// GetTotalAverageExclusion: 設計書§6.5「2026-09-06改訂」、§13 U-06・U-15
+	// OpeningQtyが-1/0/1、beforeCostが0/1の組み合わせで境界値を固定する。
+	// ------------------------------------------------------------
+
+	[TestMethod]
+	public void GetTotalAverageExclusion_前月在庫が負は原価に関わらず負在庫で対象外() {
+		Assert.AreEqual(EnumCostTargetExclusion.NegativeOpeningQty, CostCalculator.GetTotalAverageExclusion(openingQty: -1, beforeCost: 0));
+		Assert.AreEqual(EnumCostTargetExclusion.NegativeOpeningQty, CostCalculator.GetTotalAverageExclusion(openingQty: -1, beforeCost: 1));
+	}
+
+	[TestMethod]
+	public void GetTotalAverageExclusion_前月在庫0は原価0でも対象外にならない() {
+		// 最重要: 新規商品(前月在庫0・原価未設定)を対象外に巻き込むと、当月仕入で原価が永久に決まらなくなる。
+		Assert.AreEqual(EnumCostTargetExclusion.None, CostCalculator.GetTotalAverageExclusion(openingQty: 0, beforeCost: 0));
+		Assert.AreEqual(EnumCostTargetExclusion.None, CostCalculator.GetTotalAverageExclusion(openingQty: 0, beforeCost: 1));
+	}
+
+	[TestMethod]
+	public void GetTotalAverageExclusion_前月在庫が正で原価0以下は対象外() {
+		Assert.AreEqual(EnumCostTargetExclusion.NoCostWithOpeningStock, CostCalculator.GetTotalAverageExclusion(openingQty: 1, beforeCost: 0));
+	}
+
+	[TestMethod]
+	public void GetTotalAverageExclusion_前月在庫が正で原価も正なら対象外にならない() {
+		Assert.AreEqual(EnumCostTargetExclusion.None, CostCalculator.GetTotalAverageExclusion(openingQty: 1, beforeCost: 1));
+	}
+
+	// ------------------------------------------------------------
 	// RoundToUnit: 単位×丸め方式の組み合わせ、境界(ちょうど半分)、不正unit
 	// ------------------------------------------------------------
 

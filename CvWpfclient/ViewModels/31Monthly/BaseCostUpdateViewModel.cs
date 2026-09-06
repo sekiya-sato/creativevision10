@@ -31,8 +31,14 @@ namespace CvWpfclient.ViewModels._31Monthly;
 /// </para>
 /// </summary>
 public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
-	/// <summary>確認(プレビュー)1回ぶんの結果概要。一覧行そのものはDTO型が画面ごとに異なるため派生側が保持する。</summary>
-	protected sealed record PreviewOutcome(long TargetCount, long ErrorCount, CostConfirmSnapshot Confirmed);
+	/// <summary>
+	/// 確認(プレビュー)1回ぶんの結果概要。一覧行そのものはDTO型が画面ごとに異なるため派生側が保持する。
+	/// <para>
+	/// <paramref name="ExcludedCount"/>は総平均原価更新のみ意味を持つ(設計書§6.5「2026-09-06改訂」)。
+	/// 既定値0のため、対象外を持たない画面（消化仕入更新・最終仕入原価更新）は呼び出し側を変更しなくてよい。
+	/// </para>
+	/// </summary>
+	protected sealed record PreviewOutcome(long TargetCount, long ErrorCount, CostConfirmSnapshot Confirmed, long ExcludedCount = 0);
 
 	// ------------------------------------------------------------------
 	// 派生側が差し込む項目
@@ -83,8 +89,20 @@ public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
 	public partial long TargetCount { get; set; }
 	[ObservableProperty]
 	public partial long ErrorCount { get; set; }
+	/// <summary>
+	/// 対象外件数（設計書§6.5「2026-09-06改訂」）。総平均原価更新のみ意味を持つ。他画面は常に0のまま
+	/// （既定の<see cref="PreviewOutcome.ExcludedCount"/>=0を反映するだけになるため、既存3画面は無変更で動く）。
+	/// </summary>
+	[ObservableProperty]
+	public partial long ExcludedCount { get; set; }
 	[ObservableProperty]
 	public partial bool ShowErrorsOnly { get; set; }
+	/// <summary>
+	/// 対象外行のみ表示（設計書§6.5「2026-09-06改訂」）。<see cref="ShowErrorsOnly"/>と同じ仕組みで
+	/// 派生側の<see cref="ApplyRowFilter"/>を呼び直す。対象外を持たない画面では派生側が無視してよい。
+	/// </summary>
+	[ObservableProperty]
+	public partial bool ShowExcludedOnly { get; set; }
 	[ObservableProperty]
 	public partial string StatusMessage { get; set; } = "対象月を指定し、状態更新・確認の順に実行してください。";
 	[ObservableProperty]
@@ -116,6 +134,13 @@ public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
 	partial void OnShowErrorsOnlyChanged(bool value) => ApplyRowFilter();
 
 	/// <summary>
+	/// 対象外行の絞り込み（<see cref="ShowExcludedOnly"/>）が変わったら派生の一覧を再描画する
+	/// （設計書§6.5「2026-09-06改訂」。対象外を持たない画面は<see cref="ApplyRowFilter"/>の既定実装が
+	/// 何もしないため、この変更を無視してよい）。
+	/// </summary>
+	partial void OnShowExcludedOnlyChanged(bool value) => ApplyRowFilter();
+
+	/// <summary>
 	/// <see cref="ShowErrorsOnly"/>の現在値に従って、派生側が保持する一覧全体から表示用コレクションを
 	/// 再構築する。既定は何もしない（一覧を持たない状況はない想定だが、安全側の既定として空実装にする）。
 	/// </summary>
@@ -125,6 +150,7 @@ public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
 		ConfirmedSnapshot = null;
 		TargetCount = 0;
 		ErrorCount = 0;
+		ExcludedCount = 0;
 		ClearRows();
 		UpdateCommand.NotifyCanExecuteChanged();
 	}
@@ -232,12 +258,16 @@ public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
 			var outcome = await RunPreviewAsync(param, cancellationToken);
 			TargetCount = outcome.TargetCount;
 			ErrorCount = outcome.ErrorCount;
+			ExcludedCount = outcome.ExcludedCount;
 			ConfirmedSnapshot = outcome.Confirmed;
 			UpdateCommand.NotifyCanExecuteChanged();
 
+			// 対象外(設計書§6.5「2026-09-06改訂」)はエラーではなく更新を妨げないため、件数表示だけ分けて出す。
 			StatusMessage = ErrorCount > 0
-				? $"確認しました。対象 {TargetCount:N0} 件（エラー {ErrorCount:N0} 件）。エラーを解消してから再度確認してください。"
-				: $"確認しました。対象 {TargetCount:N0} 件。更新を実行できます。";
+				? $"確認しました。対象 {TargetCount:N0} 件（エラー {ErrorCount:N0} 件、対象外 {ExcludedCount:N0} 件）。エラーを解消してから再度確認してください。"
+				: ExcludedCount > 0
+					? $"確認しました。対象 {TargetCount:N0} 件（対象外 {ExcludedCount:N0} 件）。更新を実行できます。"
+					: $"確認しました。対象 {TargetCount:N0} 件。更新を実行できます。";
 		}
 		catch (OperationCanceledException) {
 			StatusMessage = "確認をキャンセルしました。";

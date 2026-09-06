@@ -374,8 +374,9 @@ public class CostUpdateDbCostTests {
 	}
 
 	[TestMethod]
-	public void ApplyTotalAverageCost_NegativeOpeningStock_RollsBackEverything() {
-		// 設計書§6.5「OpeningQty<0はエラー」、§2.4-2・§10.2「1件でもエラーがあれば全件ロールバック」
+	public void ApplyTotalAverageCost_NegativeOpeningStock_IsExcludedButOthersSucceed() {
+		// 設計書§6.5「2026-09-06改訂: OpeningQty<0は対象外(エラーではない)」、§13 U-06。
+		// 対象外は他の正常な商品の更新を巻き添えにしない(改訂前は§2.4-2・§10.2で全件ロールバックしていた)。
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idGood = InsertShohin("GOOD", tankaGenka: 100);
@@ -384,16 +385,28 @@ public class CostUpdateDbCostTests {
 		InsertPurchase("20260910", 10, idBad, su: 10, kingaku: 1000);
 		InsertOpeningStock("202608", idBad, su: -5);
 
-		var result = new CostUpdateDb(Db).ApplyTotalAverageCost(NewParam("202609", idShain));
+		var costUpdateDb = new CostUpdateDb(Db);
+		var preview = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain));
+		var badRow = preview.Rows.Single(r => r.Id_Shohin == idBad);
+		Assert.IsFalse(badRow.IsTarget);
+		Assert.AreEqual(EnumCostCalcError.None, badRow.Error);
+		Assert.IsTrue(badRow.ExcludeReason.Contains("負", StringComparison.Ordinal));
 
-		Assert.IsFalse(result.IsSuccess);
-		Assert.AreEqual(0, Db.Fetch<TranGenka>().Count);
+		var result = costUpdateDb.ApplyTotalAverageCost(NewParam("202609", idShain));
+
+		Assert.IsTrue(result.IsSuccess);
+		Assert.AreEqual(0, result.ErrorCount);
+		// 対象外の商品はTranGenka行を作らず、MasterShohin.TankaGenkaも変わらない。
+		Assert.IsNull(FetchGenka(idBad, "202609", (int)EnumCostMethod.TotalAverage));
+		Assert.AreEqual(100, TankaGenkaOf(idBad));
+		// 他の正常な商品は更新される。
+		Assert.AreEqual(100, FetchGenka(idGood, "202609", (int)EnumCostMethod.TotalAverage)!.AfterCost);
 		Assert.AreEqual(100, TankaGenkaOf(idGood));
 	}
 
 	[TestMethod]
-	public void ApplyTotalAverageCost_BeforeCostNonPositiveWithOpeningStock_RollsBackEverything() {
-		// 設計書§6.5「OpeningQty>0、BeforeCost<=0はエラー」
+	public void ApplyTotalAverageCost_BeforeCostNonPositiveWithOpeningStock_IsExcludedButOthersSucceed() {
+		// 設計書§6.5「2026-09-06改訂: OpeningQty>0、BeforeCost<=0は対象外(エラーではない)」、§13 U-15。
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idGood = InsertShohin("GOOD", tankaGenka: 100);
@@ -402,11 +415,42 @@ public class CostUpdateDbCostTests {
 		InsertPurchase("20260910", 10, idBad, su: 10, kingaku: 1000);
 		InsertOpeningStock("202608", idBad, su: 5);
 
-		var result = new CostUpdateDb(Db).ApplyTotalAverageCost(NewParam("202609", idShain));
+		var costUpdateDb = new CostUpdateDb(Db);
+		var preview = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain));
+		var badRow = preview.Rows.Single(r => r.Id_Shohin == idBad);
+		Assert.IsFalse(badRow.IsTarget);
+		Assert.AreEqual(EnumCostCalcError.None, badRow.Error);
+		Assert.IsTrue(badRow.ExcludeReason.Contains("原価", StringComparison.Ordinal));
 
-		Assert.IsFalse(result.IsSuccess);
-		Assert.AreEqual(0, Db.Fetch<TranGenka>().Count);
-		Assert.AreEqual(100, TankaGenkaOf(idGood));
+		var result = costUpdateDb.ApplyTotalAverageCost(NewParam("202609", idShain));
+
+		Assert.IsTrue(result.IsSuccess);
+		Assert.AreEqual(0, result.ErrorCount);
+		Assert.IsNull(FetchGenka(idBad, "202609", (int)EnumCostMethod.TotalAverage));
+		Assert.AreEqual(0, TankaGenkaOf(idBad));
+		Assert.AreEqual(100, FetchGenka(idGood, "202609", (int)EnumCostMethod.TotalAverage)!.AfterCost);
+	}
+
+	[TestMethod]
+	public void ApplyTotalAverageCost_NewProductWithZeroOpeningAndZeroCost_IsNotExcluded() {
+		// 設計書§6.5「OpeningQty=0かつBeforeCost=0は対象外にしない(最重要)」。
+		// これを対象外に巻き込むと新規商品の原価が永久に決まらない。当月仕入だけで原価が確定する。
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idNew = InsertShohin("NEW", tankaGenka: 0);
+		InsertPurchase("20260910", 10, idNew, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var preview = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain));
+		var row = preview.Rows.Single(r => r.Id_Shohin == idNew);
+		Assert.IsTrue(row.IsTarget);
+		Assert.AreEqual(string.Empty, row.ExcludeReason);
+
+		var result = costUpdateDb.ApplyTotalAverageCost(NewParam("202609", idShain));
+
+		Assert.IsTrue(result.IsSuccess);
+		Assert.AreEqual(100, FetchGenka(idNew, "202609", (int)EnumCostMethod.TotalAverage)!.AfterCost);
+		Assert.AreEqual(100, TankaGenkaOf(idNew));
 	}
 
 	[TestMethod]

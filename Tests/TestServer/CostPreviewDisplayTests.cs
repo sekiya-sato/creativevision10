@@ -232,6 +232,40 @@ public class CostPreviewDisplayTests {
 			CostPreviewDisplay.BuildRevaluationRateFormulaText(70));
 	}
 
+	// ------------------------------------------------------------------
+	// 総平均原価更新の対象外表示（設計書§6.5「2026-09-06改訂」）
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void FormatCostPreviewRowStatus_エラー行は対象外より優先してエラー表示() {
+		Assert.AreEqual("エラー", CostPreviewDisplay.FormatCostPreviewRowStatus(true, (EnumCostCalcError)1, "数量の合計が0以下です。"));
+		Assert.AreEqual("エラー", CostPreviewDisplay.FormatCostPreviewRowStatus(false, (EnumCostCalcError)1, "数量の合計が0以下です。"));
+	}
+
+	[TestMethod]
+	public void FormatCostPreviewRowStatus_エラーでなければ正常対象外を区別する() {
+		Assert.AreEqual("正常", CostPreviewDisplay.FormatCostPreviewRowStatus(true, EnumCostCalcError.None, string.Empty));
+		Assert.AreEqual("対象外", CostPreviewDisplay.FormatCostPreviewRowStatus(false, EnumCostCalcError.None, string.Empty));
+	}
+
+	[TestMethod]
+	public void FormatCostPreviewRowReason_エラー行はエラーメッセージを表示する() {
+		Assert.AreEqual("数量の合計が0以下です。",
+			CostPreviewDisplay.FormatCostPreviewRowReason(true, (EnumCostCalcError)1, "数量の合計が0以下です。", string.Empty));
+	}
+
+	[TestMethod]
+	public void FormatCostPreviewRowReason_対象外行は対象外理由を表示する() {
+		Assert.AreEqual("前月在庫数が負のため対象外です。在庫を訂正してください。",
+			CostPreviewDisplay.FormatCostPreviewRowReason(false, EnumCostCalcError.None, string.Empty, "前月在庫数が負のため対象外です。在庫を訂正してください。"));
+	}
+
+	[TestMethod]
+	public void FormatCostPreviewRowReason_正常行は空文字() {
+		Assert.AreEqual(string.Empty,
+			CostPreviewDisplay.FormatCostPreviewRowReason(true, EnumCostCalcError.None, string.Empty, string.Empty));
+	}
+
 	[TestMethod]
 	public void ValidateRevaluationRatePercent_1から100は成功() {
 		Assert.IsNull(CostPreviewDisplay.ValidateRevaluationRatePercent(1));

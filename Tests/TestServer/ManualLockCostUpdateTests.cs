@@ -175,12 +175,13 @@ public class ManualLockCostUpdateTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_BusinessError_LeavesLockRowForMonitor() {
-		// 設計書§6.5「OpeningQty<0はエラー」。業務エラーはCompleteを呼ばず、行を残す方針(ManualLockHandle参照)
+		// 設計書§6.5「当月仕入額はあるが数量0はエラー」。2026-09-06改訂で負在庫・原価0円は対象外(エラーではない)へ
+		// 変わったため(§2.4-2・§10.2のロールバック対象外)、本テストは改訂後も残るエラー条件で業務エラーを起こす。
+		// 業務エラーはCompleteを呼ばず、行を残す方針(ManualLockHandle参照)
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idBad = InsertShohin("BAD", tankaGenka: 100);
-		InsertPurchase("20260910", 10, idBad, su: 10, kingaku: 1000);
-		InsertOpeningStock("202608", idBad, su: -5);
+		InsertPurchase("20260910", 10, idBad, su: 0, kingaku: 1000);
 
 		var result = new CostUpdateDb(Db).ApplyTotalAverageCost(NewParam("202609", idShain));
 

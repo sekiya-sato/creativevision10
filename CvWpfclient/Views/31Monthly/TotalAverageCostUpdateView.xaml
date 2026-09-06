@@ -146,9 +146,15 @@
 						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 							Foreground="{DynamicResource NegativeForegroundBrush}"
 							Text="{Binding ErrorCount, StringFormat='エラー {0:N0} 件'}" />
+						<!-- 対象外(設計書§6.5「2026-09-06改訂」)。エラー件数とは別に表示する。 -->
+						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+							Text="{Binding ExcludedCount, StringFormat='対象外 {0:N0} 件'}" />
 						<CheckBox Margin="24,0,0,0" VerticalAlignment="Center"
 							Content="エラー行のみ表示"
 							IsChecked="{Binding ShowErrorsOnly}" />
+						<CheckBox Margin="16,0,0,0" VerticalAlignment="Center"
+							Content="対象外行のみ表示"
+							IsChecked="{Binding ShowExcludedOnly}" />
 						<Button Margin="24,0,0,0"
 							Command="{Binding ExportCsvCommand}"
 							Style="{StaticResource MaterialDesignOutlinedButton}">
@@ -183,7 +189,7 @@
 							<DataGridTextColumn Width="90" Binding="{Binding SundryAmount, StringFormat=N0}" Header="諸掛" />
 							<DataGridTextColumn Width="80" Binding="{Binding Denominator, StringFormat=N0}" Header="分母" />
 							<DataGridTextColumn Width="70" Binding="{Binding StatusText}" Header="状態" />
-							<DataGridTextColumn Width="220" Binding="{Binding ErrorMessage}" Header="エラー" />
+							<DataGridTextColumn Width="220" Binding="{Binding ReasonText}" Header="エラー" />
 						</DataGrid.Columns>
 					</DataGrid>
 				</Grid>
