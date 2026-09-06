@@ -569,6 +569,54 @@
 									Binding="{Binding Tax, StringFormat={}{0:N0}}"
 									ElementStyle="{StaticResource DataGridRightTextBlock}"
 									Header="消費税" IsReadOnly="True" />
+								<!--
+									諸掛（費用を負担する商品）列。原価4項目 詳細設計 §3.3。
+									Id_Shohin=0 は「諸掛ではない」通常の資材購入を表し、入力は任意。
+									Code_Shohin/Mei_Shohinは伝票時点の監査値でありマスタ改名を伝播しない(Tran系のV*規約)。
+									生地・付属Id列と同じ作法（虫眼鏡ボタンでMasterShohinを選択）。クリアボタンで
+									「諸掛ではない」(Id_Shohin=0)へ戻せる。
+								-->
+								<DataGridTemplateColumn Width="150"
+									Header="商品Id(諸掛負担先)">
+									<DataGridTemplateColumn.CellTemplate>
+										<DataTemplate>
+											<Grid Margin="2,1">
+												<Grid.ColumnDefinitions>
+													<ColumnDefinition Width="*" />
+													<ColumnDefinition Width="30" />
+													<ColumnDefinition Width="30" />
+												</Grid.ColumnDefinitions>
+												<TextBox Height="28"
+													IsReadOnly="True"
+													Text="{Binding Id_Shohin, UpdateSourceTrigger=PropertyChanged}" />
+												<Button Grid.Column="1"
+													Width="26" Height="26"
+													Margin="2,0,0,0" Padding="0"
+													Command="{Binding DataContext.DoSelectShohinCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+													CommandParameter="{Binding}"
+													ToolTip="商品を選択(諸掛の負担先)">
+													<materialDesign:PackIcon Width="16" Height="16"
+														Kind="Magnify" />
+												</Button>
+												<Button Grid.Column="2"
+													Width="26" Height="26"
+													Margin="2,0,0,0" Padding="0"
+													Command="{Binding DataContext.DoClearShohinCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+													CommandParameter="{Binding}"
+													ToolTip="選択解除(諸掛ではない明細に戻す)">
+													<materialDesign:PackIcon Width="16" Height="16"
+														Kind="CloseCircleOutline" />
+												</Button>
+											</Grid>
+										</DataTemplate>
+									</DataGridTemplateColumn.CellTemplate>
+								</DataGridTemplateColumn>
+								<DataGridTextColumn Width="100"
+									Binding="{Binding Code_Shohin}"
+									Header="商品CD" IsReadOnly="True" />
+								<DataGridTextColumn Width="200"
+									Binding="{Binding Mei_Shohin}"
+									Header="商品名" IsReadOnly="True" />
 								<DataGridTextColumn Width="260"
 									Binding="{Binding Memo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									Header="明細メモ" />

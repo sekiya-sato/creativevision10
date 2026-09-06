@@ -427,6 +427,36 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		await RecalcMeisaiTaxAsync(SelectedMeisai, updateTotals: true);
 	}
 
+	/// <summary>
+	/// 諸掛（費用を負担する商品）の選択。原価4項目 詳細設計 §3.3。
+	/// <see cref="Tran99MaterialMeisai.Id_Shohin"/>=0は「諸掛ではない」通常の資材購入を表し、入力は任意。
+	/// 生地・付属Id列の<see cref="DoSelectMaterial"/>と同じ作法で<see cref="MasterShohin"/>を選択する。
+	/// </summary>
+	[RelayCommand]
+	void DoSelectShohin(Tran99MaterialMeisai? meisai) {
+		if (meisai != null) SelectedMeisai = meisai;
+		if (SelectedMeisai == null) return;
+		var shohin = ShowSelectDialog<MasterShohin>(typeof(MasterShohin), "", "Code", startPos: SelectedMeisai.Id_Shohin);
+		if (shohin == null) return;
+		SelectedMeisai.Id_Shohin = shohin.Id;
+		// Code_Shohin/Mei_Shohin は伝票時点の監査値。商品マスタの改名を伝播しない(Tran系のV*規約)ため、
+		// ここで選択時点の値をスナップショットしてよい(以後マスタが改名されても追随させない)。
+		SelectedMeisai.Code_Shohin = shohin.Code ?? "";
+		SelectedMeisai.Mei_Shohin = shohin.Name ?? "";
+	}
+
+	/// <summary>
+	/// 諸掛負担商品の選択解除。一度選んだ商品を「諸掛ではない」(Id_Shohin=0)へ戻す唯一の手段。
+	/// </summary>
+	[RelayCommand]
+	void DoClearShohin(Tran99MaterialMeisai? meisai) {
+		if (meisai != null) SelectedMeisai = meisai;
+		if (SelectedMeisai == null) return;
+		SelectedMeisai.Id_Shohin = 0;
+		SelectedMeisai.Code_Shohin = "";
+		SelectedMeisai.Mei_Shohin = "";
+	}
+
 	protected override string GetInsertConfirmMessage() => $"追加しますか？ (生地・付属仕入No={CurrentEdit.Id})";
 	protected override string GetUpdateConfirmMessage() => $"修正しますか？ (生地・付属仕入No={CurrentEdit.Id})";
 	protected override string GetDeleteConfirmMessage() => $"削除しますか？ (生地・付属仕入No={CurrentEdit.Id})";

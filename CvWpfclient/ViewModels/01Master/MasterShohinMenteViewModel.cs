@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Collections;
@@ -182,15 +183,81 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	/// <summary>消費税区分コンボの表示項目</summary>
 	public sealed record TaxKubunOption(long Id, string Name);
 
+	/// <summary>区分値コンボの共通表示項目（原価4項目 詳細設計 §2.5.8の各区分値）。</summary>
+	public sealed record CodeOption(int Value, string Name);
+
+	/// <summary>
+	/// 仕入区分(<see cref="EnumPurchaseType"/>)の選択肢（原価4項目 詳細設計 §2.5.8）。
+	/// </summary>
+	public IReadOnlyList<CodeOption> PurchaseTypeOptions { get; } = [
+		new((int)EnumPurchaseType.Normal, "通常仕入"),
+		new((int)EnumPurchaseType.Consumption, "消化仕入"),
+	];
+
+	/// <summary>消化仕入計算区分(<see cref="EnumConsumptionCalcType"/>)の選択肢（§2.5.8・§4.4）。</summary>
+	public IReadOnlyList<CodeOption> ConsumptionCalcTypeOptions { get; } = [
+		new((int)EnumConsumptionCalcType.CostBased, "原価代用"),
+		new((int)EnumConsumptionCalcType.RateBased, "上代×掛率"),
+	];
+
+	/// <summary>消化仕入の端数単位の選択肢（§2.5.8「1、10、100、1000円のみ」）。</summary>
+	public IReadOnlyList<CodeOption> ConsumptionRoundingUnitOptions { get; } = [
+		new(1, "1円"),
+		new(10, "10円"),
+		new(100, "100円"),
+		new(1000, "1000円"),
+	];
+
+	/// <summary>消化仕入の端数処理(<see cref="EnumRounding"/>)の選択肢（§2.5.8）。</summary>
+	public IReadOnlyList<CodeOption> ConsumptionRoundingOptions { get; } = [
+		new((int)EnumRounding.Round, "四捨五入"),
+		new((int)EnumRounding.Ceiling, "切上"),
+		new((int)EnumRounding.Floor, "切捨"),
+	];
+
+	/// <summary>
+	/// 仕入区分が消化仕入(<see cref="EnumPurchaseType.Consumption"/>)かどうか。
+	/// 消化仕入設定タブの委託仕入先以下の入力欄を、通常仕入時にグレーアウトして誤入力を防ぐために使う
+	/// (§2.5.8「PurchaseType=0の場合、他の消化仕入用列は計算に使用しない」)。値自体は消さずに保持する。
+	/// </summary>
+	public bool IsConsumptionPurchase => CurrentEdit.PurchaseType == (int)EnumPurchaseType.Consumption;
+
+	/// <summary>
+	/// 原価履歴(<see cref="TranGenka"/>)。商品マスタから参照専用で表示する（原価4項目 詳細設計 §2.6・§9.4）。
+	/// 旧 <see cref="MasterShohin.Jgenka"/>（旧HC$MASTER_SHOHIN_GENKAの移行保持データ）とは別物であり、
+	/// 「原価履歴」タブで明確に区別して表示する。専用APIは設けず既存のSQL照会経路で取得する。
+	/// </summary>
+	[ObservableProperty]
+	public partial ObservableCollection<CostGenkaHistoryRow> CostGenkaHistory { get; set; } = [];
+
+	/// <summary>原価履歴グリッド1行の表示用DTO。列は原価4項目 詳細設計 §9.4・§16.11(ChangeKind)を参照する。</summary>
+	public sealed record CostGenkaHistoryRow(
+		string SumMonthText,
+		string EffectiveDay,
+		string CostMethodText,
+		string ChangeKindText,
+		int BeforeCost,
+		int AfterCost,
+		long OpeningQty,
+		long OpeningAmount,
+		long PurchaseQty,
+		long PurchaseAmount,
+		long SundryAmount,
+		long Vdu,
+		CodeNameView VShain);
 
 	protected override void OnCurrentEditChangedCore(MasterShohin? oldValue, MasterShohin newValue) {
+		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
 		if (newValue == null) {
 			ShohinImageUri = null;
 			ShohinImageStatusText = "画像なし";
 			return;
 		}
+		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
 
 		ApplySubListsFromCurrentEdit();
+		CostGenkaHistory = [];
+		OnPropertyChanged(nameof(IsConsumptionPurchase));
 
 		var code = newValue.Code?.Trim();
 		if (string.IsNullOrWhiteSpace(code)) {
@@ -200,6 +267,12 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 		else {
 			ShohinImageUri = new Uri($"{AppGlobal.Url.TrimEnd('/')}/img/{Uri.EscapeDataString(code)}.jpg");
 			ShohinImageStatusText = string.Empty;
+		}
+	}
+
+	void OnCurrentEditPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
+		if (e.PropertyName == nameof(MasterShohin.PurchaseType)) {
+			OnPropertyChanged(nameof(IsConsumptionPurchase));
 		}
 	}
 
@@ -362,6 +435,87 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 		if (tokui == null) return;
 		CurrentEdit.Id_Soko = tokui.Id;
 		CurrentEdit.VSoko = new() { Sid = tokui.Id, Cd = tokui.Code ?? "", Mei = tokui.Name ?? "" };
+	}
+
+	/// <summary>
+	/// 委託仕入先の選択（原価4項目 詳細設計 §2.5.8）。<see cref="MasterShohin.VConsignmentShiire"/>は
+	/// Master系のV*列で、既存の<see cref="DoSelectBrand"/>等と同じ作法(Id_*とV*を両方設定)に倣う。
+	/// <see cref="MasterShohin.VConsignmentShiire"/>はマスタ改名を伝播するV*列のため、
+	/// <c>MasterCascadeDb.VRules</c>登録済みの名称変更カスケードが以後の改名を追随させる。
+	/// </summary>
+	[RelayCommand]
+	void DoSelectConsignmentShiire() {
+		var shiire = ShowSelectDialog<MasterShiire>(typeof(MasterShiire), "", "Code", startPos: CurrentEdit.Id_ConsignmentShiire);
+		if (shiire == null) return;
+		CurrentEdit.Id_ConsignmentShiire = shiire.Id;
+		CurrentEdit.VConsignmentShiire = new() { Sid = shiire.Id, Cd = shiire.Code ?? "", Mei = shiire.Name ?? "" };
+	}
+
+	/// <summary>
+	/// 原価履歴(<see cref="TranGenka"/>)を選択中の商品で取得する（原価4項目 詳細設計 §2.6・§9.4）。
+	/// サーバー側に専用APIは無いため、既存のSQL照会経路(<see cref="QuerySqlListAsync{TRow}"/>)を使う。
+	/// 旧<see cref="MasterShohin.Jgenka"/>とは別のテーブルであり、本コマンドはTranGenkaだけを対象にする。
+	/// </summary>
+	[RelayCommand]
+	async Task DoLoadCostHistory(CancellationToken ct) {
+		if (CurrentEdit.Id <= 0) {
+			CostGenkaHistory = [];
+			return;
+		}
+		try {
+			ClientLib.Cursor2Wait();
+			var sql = $"select * from TranGenka where Id_Shohin={CurrentEdit.Id} order by EffectiveDay desc, SumMonth desc, ChangeKind desc, Vdu desc, Id desc";
+			var rows = await QuerySqlListAsync<TranGenka>(sql, ct);
+			CostGenkaHistory = new ObservableCollection<CostGenkaHistoryRow>(rows.Select(r => new CostGenkaHistoryRow(
+				CostPreviewDisplay.FormatYm6ToSlash(r.SumMonth),
+				r.EffectiveDay,
+				CostPreviewDisplay.FormatCostMethod((EnumCostMethod)r.CostMethod),
+				CostPreviewDisplay.FormatCostChangeKind((EnumCostChangeKind)r.ChangeKind),
+				r.BeforeCost,
+				r.AfterCost,
+				r.OpeningQty,
+				r.OpeningAmount,
+				r.PurchaseQty,
+				r.PurchaseAmount,
+				r.SundryAmount,
+				r.Vdu,
+				r.VShain)));
+		}
+		catch (OperationCanceledException cancel) {
+			Message = $"Cancelエラー：{cancel.Message}";
+		}
+		catch (Exception ex) {
+			Message = $"原価履歴取得失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			ClientLib.Cursor2Normal();
+		}
+	}
+
+	/// <summary>
+	/// 追加・修正の保存前に消化仕入設定を検査する（保存前・ブロック。原価4項目 詳細設計 §4.2）。
+	/// <see cref="MasterTokuiMenteViewModel.ConfirmAction"/>と同じ作法で、削除確認では検査しない。
+	/// </summary>
+	protected override bool ConfirmAction(string message) {
+		if ((message.StartsWith("追加", StringComparison.Ordinal) || message.StartsWith("修正", StringComparison.Ordinal)) && !ValidateConsumptionSettings()) {
+			return false;
+		}
+		return base.ConfirmAction(message);
+	}
+
+	bool ValidateConsumptionSettings() {
+		var error = CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			(EnumPurchaseType)CurrentEdit.PurchaseType,
+			CurrentEdit.Id_ConsignmentShiire,
+			(EnumConsumptionCalcType)CurrentEdit.ConsumptionCalcType,
+			CurrentEdit.TankaShiire,
+			CurrentEdit.TankaGenka,
+			CurrentEdit.ConsumptionRateBasisPoints,
+			CurrentEdit.ConsumptionRoundingUnit);
+		if (error == null) return true;
+		MessageEx.ShowWarningDialog(error, owner: ActiveWindow);
+		return false;
 	}
 
 	[RelayCommand]

@@ -280,4 +280,121 @@ public class CostPreviewDisplayTests {
 	public void ValidateRevaluationMethodValue_未定義方式はエラー() {
 		Assert.IsNotNull(CostPreviewDisplay.ValidateRevaluationMethodValue((EnumCostRevaluationMethod)0, 70, 1000));
 	}
+
+	// ------------------------------------------------------------------
+	// 商品マスタの消化仕入設定（原価4項目 詳細設計 §2.5.8・§4.2、Step 10-6）
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ConsumptionRateBasisPointsToPercent_6500は65点00() {
+		Assert.AreEqual(65.00m, CostPreviewDisplay.ConsumptionRateBasisPointsToPercent(6500));
+	}
+
+	[TestMethod]
+	public void ConsumptionRateBasisPointsToPercent_1は0点01() {
+		Assert.AreEqual(0.01m, CostPreviewDisplay.ConsumptionRateBasisPointsToPercent(1));
+	}
+
+	[TestMethod]
+	public void TryParseConsumptionRatePercent_65点00は6500へ変換() {
+		Assert.IsTrue(CostPreviewDisplay.TryParseConsumptionRatePercent("65.00", out var bp));
+		Assert.AreEqual(6500, bp);
+	}
+
+	[TestMethod]
+	public void TryParseConsumptionRatePercent_往復変換が一致する() {
+		Assert.IsTrue(CostPreviewDisplay.TryParseConsumptionRatePercent(
+			CostPreviewDisplay.ConsumptionRateBasisPointsToPercent(6500).ToString("0.00"), out var bp));
+		Assert.AreEqual(6500, bp);
+	}
+
+	[TestMethod]
+	public void TryParseConsumptionRatePercent_空文字は0で成功() {
+		Assert.IsTrue(CostPreviewDisplay.TryParseConsumptionRatePercent("", out var bp));
+		Assert.AreEqual(0, bp);
+		Assert.IsTrue(CostPreviewDisplay.TryParseConsumptionRatePercent(null, out var bp2));
+		Assert.AreEqual(0, bp2);
+	}
+
+	[TestMethod]
+	public void TryParseConsumptionRatePercent_不正値や負値は失敗() {
+		Assert.IsFalse(CostPreviewDisplay.TryParseConsumptionRatePercent("abc", out _));
+		Assert.IsFalse(CostPreviewDisplay.TryParseConsumptionRatePercent("-1", out _));
+	}
+
+	[TestMethod]
+	public void ValidateShohinConsumptionSettings_消化仕入で委託仕入先未設定はエラー() {
+		Assert.IsNotNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 0, EnumConsumptionCalcType.CostBased, 100, 100, 0, 1));
+	}
+
+	[TestMethod]
+	public void ValidateShohinConsumptionSettings_消化仕入で委託仕入先設定済みは成功() {
+		Assert.IsNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.CostBased, 100, 100, 0, 1));
+	}
+	[TestMethod]
+	public void ValidateShohinConsumptionSettings_通常仕入は委託仕入先未設定でも成功() {
+		Assert.IsNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Normal, 0, EnumConsumptionCalcType.CostBased, 100, 0, 0, 1));
+	}
+
+	/// <summary>
+	/// 設計書§2.5.8・§4.2「PurchaseType!=3 の場合も設定値は保持するが処理では使用しない」。
+	/// 通常仕入の商品は消化仕入の設定値が既定のまま(計算区分0=原価代用、掛率0、端数単位1)であり、
+	/// 原価も仕入単価も未設定の商品が多数ある。ここで検査すると商品マスタの大半が保存できなくなる。
+	/// </summary>
+	[TestMethod]
+	public void ValidateShohinConsumptionSettings_通常仕入は原価も仕入単価も0でも成功() {
+		Assert.IsNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Normal, 0, EnumConsumptionCalcType.CostBased, 0, 0, 0, 1));
+		// 掛率・端数単位が不正な既定値でも、通常仕入なら保存できること
+		Assert.IsNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Normal, 0, EnumConsumptionCalcType.RateBased, 0, 0, 0, 5));
+	}
+
+	[TestMethod]
+	public void ValidateShohinConsumptionSettings_原価代用は仕入単価原価どちらか正値なら成功() {
+		Assert.IsNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.CostBased, 100, 0, 0, 1));
+		Assert.IsNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.CostBased, 0, 100, 0, 1));
+	}
+
+	[TestMethod]
+	public void ValidateShohinConsumptionSettings_原価代用は両方0ならエラー() {
+		Assert.IsNotNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.CostBased, 0, 0, 0, 1));
+	}
+
+	[TestMethod]
+	public void ValidateShohinConsumptionSettings_上代掛率は範囲外でエラー() {
+		Assert.IsNotNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.RateBased, 0, 0, 0, 1));
+		Assert.IsNotNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.RateBased, 0, 0, 10001, 1));
+		Assert.IsNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.RateBased, 0, 0, 6500, 1));
+	}
+
+	[TestMethod]
+	public void ValidateShohinConsumptionSettings_端数単位が不正ならエラー() {
+		Assert.IsNotNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.RateBased, 0, 0, 6500, 5));
+		Assert.IsNull(CostPreviewDisplay.ValidateShohinConsumptionSettings(
+			EnumPurchaseType.Consumption, 1, EnumConsumptionCalcType.RateBased, 0, 0, 6500, 1000));
+	}
+
+	[TestMethod]
+	public void FormatCostMethod_各方式の表示文言() {
+		Assert.AreEqual("固定原価", CostPreviewDisplay.FormatCostMethod(EnumCostMethod.Fixed));
+		Assert.AreEqual("最終仕入原価", CostPreviewDisplay.FormatCostMethod(EnumCostMethod.LastPurchase));
+		Assert.AreEqual("総平均原価", CostPreviewDisplay.FormatCostMethod(EnumCostMethod.TotalAverage));
+	}
+
+	[TestMethod]
+	public void FormatCostChangeKind_月次原価計算と評価替えを区別する() {
+		Assert.AreEqual("月次原価計算", CostPreviewDisplay.FormatCostChangeKind(EnumCostChangeKind.Monthly));
+		Assert.AreEqual("評価替え", CostPreviewDisplay.FormatCostChangeKind(EnumCostChangeKind.Reval));
+	}
 }

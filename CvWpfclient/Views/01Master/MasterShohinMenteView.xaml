@@ -771,15 +771,27 @@
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 									Kind="CurrencyJpy" />
-								<TextBlock Text="原価" />
+								<TextBlock Text="原価(旧)" />
 							</StackPanel>
 						</TabItem.Header>
 						<Grid>
 							<Grid.RowDefinitions>
 								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
 								<RowDefinition Height="*" />
 							</Grid.RowDefinitions>
-							<StackPanel Grid.Row="0"
+							<!--
+								Jgenkaは旧HC$MASTER_SHOHIN_GENKAの移行保持データであり、原価4項目で新設した
+								原価履歴(TranGenka、「原価履歴」タブ)とは別物(原価4項目 詳細設計 §2.6)。
+								新しい原価解決・原価計算には使用しない。編集自体は既存機能のまま維持する。
+							-->
+							<TextBlock Grid.Row="0"
+								Margin="8,8,8,0"
+								FontSize="12"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="旧HC$MASTER_SHOHIN_GENKAの移行保持データです。原価計算では使用しません。最新の原価変更履歴は「原価履歴」タブを参照してください。"
+								TextWrapping="Wrap" />
+							<StackPanel Grid.Row="1"
 								Margin="8,8,8,0" HorizontalAlignment="Center"
 								Orientation="Horizontal">
 								<Button Margin="8,0"
@@ -804,7 +816,7 @@
 								</Button>
 							</StackPanel>
 							<DataGrid x:Name="JgenkaGrid"
-								Grid.Row="1"
+								Grid.Row="2"
 								Margin="8"
 								d:ItemsSource="{d:SampleData ItemCount=3}"
 								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
@@ -825,6 +837,216 @@
 									<DataGridTextColumn Width="150"
 										Binding="{Binding TankaShiire}"
 										Header="仕入単価" />
+								</DataGrid.Columns>
+								<DataGrid.ColumnHeaderStyle>
+									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+										TargetType="DataGridColumnHeader" />
+								</DataGrid.ColumnHeaderStyle>
+							</DataGrid>
+						</Grid>
+					</TabItem>
+
+					<!--  タブ: 消化仕入設定(原価4項目 詳細設計 §2.5.8・§4.2)  -->
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="TruckDelivery" />
+								<TextBlock Text="消化仕入設定" />
+							</StackPanel>
+						</TabItem.Header>
+						<ScrollViewer Padding="16"
+							VerticalScrollBarVisibility="Auto">
+							<StackPanel MaxWidth="640">
+								<!--  仕入区分  -->
+								<StackPanel Margin="0,0,0,12">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="仕入区分" />
+									<ComboBox Width="220"
+										Margin="0,4" HorizontalAlignment="Left"
+										DisplayMemberPath="Name"
+										ItemsSource="{Binding PurchaseTypeOptions}"
+										SelectedValue="{Binding CurrentEdit.PurchaseType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+										SelectedValuePath="Value"
+										Style="{StaticResource FormComboBox}" />
+								</StackPanel>
+
+								<!--
+									以下は仕入区分=消化仕入のときだけ使用する設定。§2.5.8「PurchaseType=0の場合、
+									他の消化仕入用列は計算に使用しない」。入力自体は保持するため無効化はComboBox以外の
+									誤操作防止目的で、通常仕入時にグレーアウトして見せる（値は消さない）。
+								-->
+								<StackPanel IsEnabled="{Binding IsConsumptionPurchase}">
+									<Border Margin="0,0,0,4" Padding="12,8"
+										Background="{DynamicResource MaterialDesignDivider}"
+										CornerRadius="6">
+										<TextBlock FontSize="12"
+											Text="仕入区分が「消化仕入」のときだけ使用します。「通常仕入」では入力しても処理に使用しません。"
+											TextWrapping="Wrap" />
+									</Border>
+
+									<!--  委託仕入先  -->
+									<TextBlock Margin="0,8,0,0"
+										Style="{StaticResource FormLabel}"
+										Text="委託仕入先" />
+									<DockPanel Margin="0,4">
+										<TextBox Width="120" Height="36"
+											HorizontalContentAlignment="Left"
+											helpers:SearchTextBoxAssist.Command="{Binding DoSelectConsignmentShiireCommand}"
+											BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+											Style="{StaticResource MenteSearchTextBox}"
+											Text="{Binding CurrentEdit.Id_ConsignmentShiire, UpdateSourceTrigger=PropertyChanged}" />
+										<TextBlock Style="{StaticResource MasterRefText}"
+											Text="{Binding CurrentEdit.VConsignmentShiire, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
+									</DockPanel>
+
+									<!--  消化仕入計算区分  -->
+									<TextBlock Margin="0,8,0,0"
+										Style="{StaticResource FormLabel}"
+										Text="消化仕入計算区分" />
+									<ComboBox Width="220"
+										Margin="0,4" HorizontalAlignment="Left"
+										DisplayMemberPath="Name"
+										ItemsSource="{Binding ConsumptionCalcTypeOptions}"
+										SelectedValue="{Binding CurrentEdit.ConsumptionCalcType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+										SelectedValuePath="Value"
+										Style="{StaticResource FormComboBox}" />
+
+									<!--
+										掛率はDBには1/100%単位(ConsumptionRateBasisPoints。6500=65.00%)で保存するが、
+										入力は利用者にとって自然な%単位("65.00")で行わせる(原価4項目 詳細設計 §4.2)。
+										往復変換はCostPreviewDisplay.ConsumptionRateBasisPointsToPercent /
+										TryParseConsumptionRatePercentへ切り出し済み。ここではその変換を行う
+										ConsumptionRatePercentConverterを介してCurrentEdit.ConsumptionRateBasisPointsへ直接束縛する。
+									-->
+									<TextBlock Margin="0,8,0,0"
+										Style="{StaticResource FormLabel}"
+										Text="掛率(%)" />
+									<TextBox Width="160"
+										Margin="0,4" HorizontalAlignment="Left"
+										materialDesign:HintAssist.Hint="例: 65.00"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding CurrentEdit.ConsumptionRateBasisPoints, Converter={StaticResource ConsumptionRatePercentConverter}, UpdateSourceTrigger=PropertyChanged}" />
+
+									<!--  端数単位  -->
+									<TextBlock Margin="0,8,0,0"
+										Style="{StaticResource FormLabel}"
+										Text="端数単位" />
+									<ComboBox Width="160"
+										Margin="0,4" HorizontalAlignment="Left"
+										DisplayMemberPath="Name"
+										ItemsSource="{Binding ConsumptionRoundingUnitOptions}"
+										SelectedValue="{Binding CurrentEdit.ConsumptionRoundingUnit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+										SelectedValuePath="Value"
+										Style="{StaticResource FormComboBox}" />
+
+									<!--  端数処理  -->
+									<TextBlock Margin="0,8,0,0"
+										Style="{StaticResource FormLabel}"
+										Text="端数処理" />
+									<ComboBox Width="160"
+										Margin="0,4" HorizontalAlignment="Left"
+										DisplayMemberPath="Name"
+										ItemsSource="{Binding ConsumptionRoundingOptions}"
+										SelectedValue="{Binding CurrentEdit.ConsumptionRounding, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+										SelectedValuePath="Value"
+										Style="{StaticResource FormComboBox}" />
+								</StackPanel>
+							</StackPanel>
+						</ScrollViewer>
+					</TabItem>
+
+					<!--  タブ: 原価履歴(原価4項目 詳細設計 §2.6・§9.4。旧Jgenkaとは別物)  -->
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="History" />
+								<TextBlock Text="原価履歴" />
+							</StackPanel>
+						</TabItem.Header>
+						<Grid>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="*" />
+							</Grid.RowDefinitions>
+							<DockPanel Grid.Row="0"
+								Margin="8,8,8,0">
+								<Button DockPanel.Dock="Left"
+									Command="{Binding DoLoadCostHistoryCommand}"
+									Style="{StaticResource MaterialDesignOutlinedButton}"
+									ToolTip="選択中の商品の原価変更履歴(TranGenka)を取得する">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon VerticalAlignment="Center"
+											Kind="DatabaseSearch" />
+										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+											Text="履歴取得" />
+									</StackPanel>
+								</Button>
+								<TextBlock Margin="12,0,0,0" VerticalAlignment="Center"
+									FontSize="12"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="月次原価計算(消化仕入・最終仕入原価更新・総平均原価更新)と評価替えの双方が書き込む原価履歴(TranGenka)を参照専用で表示します。編集はできません。"
+									TextWrapping="Wrap" />
+							</DockPanel>
+							<DataGrid x:Name="CostGenkaHistoryGrid"
+								Grid.Row="1"
+								Margin="8"
+								d:ItemsSource="{d:SampleData ItemCount=3}"
+								helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+								AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+								HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+								IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+								ItemsSource="{Binding CostGenkaHistory}"
+								Style="{StaticResource MaterialDesignDataGrid}"
+								VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+								<DataGrid.Columns>
+									<DataGridTextColumn Width="90"
+										Binding="{Binding SumMonthText}"
+										Header="計上月" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding EffectiveDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+										Header="適用日" />
+									<DataGridTextColumn Width="110"
+										Binding="{Binding CostMethodText}"
+										Header="原価方式" />
+									<DataGridTextColumn Width="110"
+										Binding="{Binding ChangeKindText}"
+										Header="変更種別" />
+									<DataGridTextColumn Width="90"
+										Binding="{Binding BeforeCost, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="前原価" />
+									<DataGridTextColumn Width="90"
+										Binding="{Binding AfterCost, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="後原価" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding OpeningQty, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="前月在庫数" />
+									<DataGridTextColumn Width="120"
+										Binding="{Binding OpeningAmount, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="前月在庫金額" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding PurchaseQty, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="当月仕入数" />
+									<DataGridTextColumn Width="120"
+										Binding="{Binding PurchaseAmount, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="当月仕入金額" />
+									<DataGridTextColumn Width="100"
+										Binding="{Binding SundryAmount, StringFormat={}{0:N0}}"
+										ElementStyle="{StaticResource DataGridRightTextBlock}"
+										Header="諸掛" />
+									<DataGridTextColumn Width="150"
+										Binding="{Binding Vdu, Converter={StaticResource LongToLocalDateTimeStringConverter}, ConverterParameter='yyyy/MM/dd HH:mm:ss'}"
+										Header="実行日時" />
+									<DataGridTextColumn Width="180"
+										Binding="{Binding VShain, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+										Header="実行社員" />
 								</DataGrid.Columns>
 								<DataGrid.ColumnHeaderStyle>
 									<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"

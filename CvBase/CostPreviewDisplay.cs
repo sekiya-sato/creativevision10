@@ -27,6 +27,86 @@ public static class CostPreviewDisplay {
 		(rateBasisPoints / 100.0).ToString("0.00", CultureInfo.InvariantCulture) + "%";
 
 	/// <summary>
+	/// 商品マスタ <c>MasterShohin.ConsumptionRateBasisPoints</c>（1/100%単位。6500=65.00%）を
+	/// 編集画面の%入力欄用の値へ変換する（原価4項目 詳細設計 §2.5.8・§4.2）。
+	/// 利用者には「65.00」のように%単位で入力させ、DBには1/100%単位のまま保存するための往復変換の片側。
+	/// 表示専用の<see cref="FormatRateBasisPoints(int)"/>と異なり、"%"記号を付けない編集用の数値を返す。
+	/// </summary>
+	public static decimal ConsumptionRateBasisPointsToPercent(int rateBasisPoints) => rateBasisPoints / 100m;
+
+	/// <summary>
+	/// 編集画面で入力された%単位の掛率文字列を、DB保存用の1/100%単位(<c>ConsumptionRateBasisPoints</c>)へ変換する。
+	/// <see cref="ConsumptionRateBasisPointsToPercent(int)"/>の逆変換。空文字は0として成功扱いする。
+	/// 数値として解釈できない、または負値の場合は<see langword="false"/>を返し<paramref name="rateBasisPoints"/>は0のままにする。
+	/// </summary>
+	public static bool TryParseConsumptionRatePercent(string? text, out int rateBasisPoints) {
+		rateBasisPoints = 0;
+		if (string.IsNullOrWhiteSpace(text)) return true;
+		if (!decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var percent)) return false;
+		if (percent < 0) return false;
+		rateBasisPoints = (int)Math.Round(percent * 100m, MidpointRounding.AwayFromZero);
+		return true;
+	}
+
+	/// <summary>
+	/// 商品マスタの消化仕入設定に対する保存時検査（原価4項目 詳細設計 §4.2）。
+	/// エラーが無ければ<see langword="null"/>を返す。サーバー側に専用APIは無いため、
+	/// 画面（<c>MasterShohinMenteViewModel</c>）の保存前チェックがこの規則を実施する唯一の場所になる。
+	/// </summary>
+	public static string? ValidateShohinConsumptionSettings(
+		EnumPurchaseType purchaseType,
+		long idConsignmentShiire,
+		EnumConsumptionCalcType consumptionCalcType,
+		int tankaShiire,
+		int tankaGenka,
+		int consumptionRateBasisPoints,
+		int consumptionRoundingUnit) {
+
+		// 消化仕入(PurchaseType=3)以外は、設定値を保持するだけで処理に使用しない(§2.5.8・§4.2)。
+		// したがって検査もしない。ここで検査すると、原価も仕入単価も未設定の通常商品
+		// (計算区分は既定0=原価代用)が保存できなくなり、商品マスタの大半が登録不能になる。
+		if (purchaseType != EnumPurchaseType.Consumption) {
+			return null;
+		}
+		if (idConsignmentShiire <= 0) {
+			return "消化仕入（仕入区分=消化仕入）を選択した場合、委託仕入先の指定が必須です。";
+		}
+		if (consumptionCalcType == EnumConsumptionCalcType.CostBased) {
+			if (tankaShiire <= 0 && tankaGenka <= 0) {
+				return "消化仕入計算区分が「原価代用」の場合、仕入単価または原価のいずれかを正値で設定してください。";
+			}
+		}
+		else if (consumptionCalcType == EnumConsumptionCalcType.RateBased) {
+			if (consumptionRateBasisPoints is < 1 or > 10000) {
+				return "消化仕入計算区分が「上代×掛率」の場合、掛率は0.01%～100.00%の範囲で指定してください。";
+			}
+			if (consumptionRoundingUnit is not (1 or 10 or 100 or 1000)) {
+				return "消化仕入の端数単位は1、10、100、1000円のいずれかで指定してください。";
+			}
+		}
+		return null;
+	}
+
+	/// <summary>原価方式（0=固定、1=最終仕入、2=総平均）の表示文言（原価4項目 詳細設計 §2.3）。</summary>
+	public static string FormatCostMethod(EnumCostMethod costMethod) => costMethod switch {
+		EnumCostMethod.Fixed => "固定原価",
+		EnumCostMethod.LastPurchase => "最終仕入原価",
+		EnumCostMethod.TotalAverage => "総平均原価",
+		_ => $"不明({(int)costMethod})",
+	};
+
+	/// <summary>
+	/// 原価履歴(<see cref="TranGenka"/>)の発生要因（0=月次原価計算、1=評価替え）の表示文言。
+	/// 商品マスタの原価履歴参照（原価4項目 詳細設計 §2.6・§9.4・§16.11）で、
+	/// 月次バッチによる行と評価替えによる行を区別するために表示する。
+	/// </summary>
+	public static string FormatCostChangeKind(EnumCostChangeKind changeKind) => changeKind switch {
+		EnumCostChangeKind.Monthly => "月次原価計算",
+		EnumCostChangeKind.Reval => "評価替え",
+		_ => $"不明({(int)changeKind})",
+	};
+
+	/// <summary>
 	/// 行がエラー行かどうかを判定する。<c>CostUpdateDbConsumption.PreviewConsumptionPurchases</c>の
 	/// エラー件数集計（<c>errorCount = computation.Rows.Count(r =&gt; r.Error != EnumCostCalcError.None
 	/// || !string.IsNullOrEmpty(r.ErrorMessage))</c>）と同じ基準を、画面側でも一貫して使うために切り出す。
