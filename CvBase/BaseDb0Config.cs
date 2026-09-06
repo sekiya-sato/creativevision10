@@ -47,10 +47,17 @@ public sealed partial class SysUpdateDb : BaseDbClass {
 	public partial string Memo { get; set; } = string.Empty;
 }
 /// <summary>
-/// 連番管理テーブル
+/// 連番管理テーブル（マニュアル排他制御詳細設計 §1.1）
+/// SysSeqType=0（テーブル連番）: 通常の連番発行に使用。複数行が正常。
+/// SysSeqType=1（排他制御）: 一連のまとまった処理の進捗を記録。全体で1行が正常。
+/// 既存列の SysSeqType=1 での用途は次のとおり:
+/// TableName=一連処理名、ColumnName=現在の処理名、SeqNo=処理順No、
+/// Memo=処理時間と処理内容を追記、Vdc=一連処理の開始時刻、
+/// Vdu=最後に進捗を書いた時刻（監視タスク生存判定に使用）
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [Comment("システム：連番管理テーブル BaseDbClass.Id以外の項目で連番を発行し管理する")]
+[KeyDml("nk1", false, [nameof(SysSeqType), nameof(TableName)])]
 public sealed partial class SysSequence : BaseDbClass {
 	/// <summary>
 	/// テーブル名
@@ -79,6 +86,18 @@ public sealed partial class SysSequence : BaseDbClass {
 	[ColumnSizeDml(300)]
 	[Comment("メモ (用途、意図などを記述)")]
 	public partial string Memo { get; set; } = string.Empty;
+	/// <summary>
+	/// 連番種別 (0:テーブル連番 1:排他制御)
+	/// </summary>
+	[ObservableProperty]
+	[Comment("連番種別 (0:テーブル連番 1:排他制御)")]
+	public partial int SysSeqType { get; set; }
+	/// <summary>
+	/// 予想処理時間(秒) SysSeqType=1のときだけ意味を持つ
+	/// </summary>
+	[ObservableProperty]
+	[Comment("予想処理時間(秒) SysSeqType=1のときだけ意味を持つ")]
+	public partial long ExpectedDuration { get; set; }
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -129,6 +148,12 @@ public sealed partial class SysHistAutoexec : BaseDbClass {
 	[ObservableProperty]
 	[Comment("メモ (エラー内容や処理内容などを記述)")]
 	public partial string Memo { get; set; } = string.Empty;
+	/// <summary>
+	/// 実行種別 (0:自動実行 1:手動実行)
+	/// </summary>
+	[ObservableProperty]
+	[Comment("実行種別 (0:自動実行 1:手動実行)")]
+	public partial int SysHistType { get; set; }
 }
 
 // ToDo : テーブルの変更履歴を保存するテーブルを作成すること。変更前と変更後のデータをJSON形式で保存すること。変更前と変更後のデータは、テーブル名、テーブルId、操作Type（追加、更新、削除）を含むこと。

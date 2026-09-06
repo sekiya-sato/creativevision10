@@ -620,3 +620,37 @@ public enum EnumSundryCheckSeverity : int {
 	[Comment("エラー")]
 	Error = 2
 }
+
+/// <summary>
+/// 連番種別（マニュアル排他制御詳細設計 §1.3）
+/// </summary>
+[Comment("連番種別")]
+public enum EmSysSeqType : int {
+	/// <summary>
+	/// テーブル連番
+	/// </summary>
+	[Comment("テーブル連番")]
+	TableSeq = 0,
+	/// <summary>
+	/// 排他制御
+	/// </summary>
+	[Comment("排他制御")]
+	ManualLock = 1
+}
+
+/// <summary>
+/// 自動実行履歴の実行種別（マニュアル排他制御詳細設計 §1.2）
+/// </summary>
+[Comment("自動実行履歴の実行種別")]
+public enum EmSysHistType : int {
+	/// <summary>
+	/// 自動実行
+	/// </summary>
+	[Comment("自動実行")]
+	AutoExec = 0,
+	/// <summary>
+	/// 手動実行
+	/// </summary>
+	[Comment("手動実行")]
+	ManualExec = 1
+}

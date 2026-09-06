@@ -307,10 +307,14 @@ public class UpdateDbCost4ItemsStep3Tests {
 		Assert.AreEqual(1L, (long)shiire!.IsStock, "既存仕入はIsStock=1で補完し在庫・買掛集計結果を維持すること");
 		Assert.AreEqual(0L, (long)shiire.GeneratedKind, "既存仕入はGeneratedKind=0(手動・通常)で補完すること");
 
+		// 以降のマイグレーションが追加されても壊れないよう、最新バージョンは「26_09_06_01以上」で判定し、
+		// SQLの成否は当該バージョンの行だけを見る。
 		var latest = await Db.FirstOrDefaultAsync<SysUpdateDb>("order by DbVersion desc");
 		Assert.IsNotNull(latest);
-		Assert.AreEqual(26_09_06_01, latest.DbVersion, "DBバージョンが26_09_06_01まで進むこと");
-		Assert.IsTrue(string.IsNullOrEmpty(latest.Memo) || !latest.Memo!.Contains("Error", StringComparison.OrdinalIgnoreCase), $"バージョンアップSQLがエラーなく実行されること: {latest.Memo}");
+		Assert.IsTrue(latest!.DbVersion >= 26_09_06_01, $"DBバージョンが26_09_06_01以上まで進むこと: {latest.DbVersion}");
+		var applied = await Db.FirstOrDefaultAsync<SysUpdateDb>($"where DbVersion = {26_09_06_01}");
+		Assert.IsNotNull(applied, "26_09_06_01の適用行が残ること");
+		Assert.IsTrue(string.IsNullOrEmpty(applied!.Memo) || !applied.Memo!.Contains("Error", StringComparison.OrdinalIgnoreCase), $"バージョンアップSQLがエラーなく実行されること: {applied.Memo}");
 	}
 
 	/// <summary>
@@ -346,5 +350,69 @@ public class UpdateDbCost4ItemsStep3Tests {
 		}
 
 		db.Close();
+	}
+}
+
+/// <summary>
+/// マニュアル排他制御 (2026-09-06_マニュアル排他制御_詳細設計.md §1) の <see cref="UpdateDb"/>
+/// 新バージョン(26_09_06_02)適用検証。移行前(列追加前)のスキーマを模した最小テーブルへ実際に
+/// バージョンアップSQLを適用し、新列が既存業務動作を維持する初期値で補完されることを確認する。
+/// 同書 §5 の L-13(既存のSysHistAutoexec行がSysHistType=0で補完される)に対応する。
+/// </summary>
+[TestClass]
+public class UpdateDbManualLockTests {
+	private ExDatabaseSqlite? _db;
+
+	private ExDatabaseSqlite Db => _db ?? throw new AssertFailedException("Database not initialized");
+
+	[TestInitialize]
+	public void Initialize() {
+		var connection = new SqliteConnection("Data Source=:memory:");
+		connection.Open();
+		_db = new ExDatabaseSqlite(connection);
+		Db.CreateTable(typeof(SysUpdateDb), true, false);
+		// 対象2テーブルは列追加前の最小スキーマを模して直接作成する
+		Db.Execute("CREATE TABLE SysSequence (Id INTEGER PRIMARY KEY AUTOINCREMENT);");
+		Db.Execute("INSERT INTO SysSequence (Id) VALUES (1);");
+		Db.Execute("CREATE TABLE SysHistAutoexec (Id INTEGER PRIMARY KEY AUTOINCREMENT);");
+		Db.Execute("INSERT INTO SysHistAutoexec (Id) VALUES (1);");
+	}
+
+	[TestCleanup]
+	public void Cleanup() {
+		_db?.Close();
+		(_db?.Connection as SqliteConnection)?.Close();
+	}
+
+	/// <summary>
+	/// バージョン26_09_06_01(直前バージョン)まで適用済みのDBに対して更新をかけると、
+	/// 26_09_06_02のALTER TABLE群が実行され、既存行が既定値で補完されること。
+	/// SysSeqType=0(テーブル連番)、SysHistType=0(自動実行)で補完されるため、
+	/// 既存の連番用途と自動実行履歴画面の意味は変わらない。
+	/// </summary>
+	[TestMethod]
+	public async Task WriteVersionInfoAsync_直前バージョンから適用_排他制御の列が既定値で追加される() {
+		await Db.InsertAsync(new SysUpdateDb {
+			DbVersion = 26_09_06_01,
+			DateStart = DateTime.Now.ToString("yyyyMMddHHmmss"),
+			Sql = "",
+			Memo = "テスト用の直前バージョン",
+			PreVersion = 26_09_06_01,
+		});
+
+		await UpdateDb.WriteVersionInfoAsync(Db);
+
+		dynamic? seq = Db.FirstOrDefault<dynamic>("SELECT SysSeqType, ExpectedDuration FROM SysSequence WHERE Id = 1");
+		Assert.IsNotNull(seq);
+		Assert.AreEqual(0L, (long)seq!.SysSeqType, "既存行はSysSeqType=0(テーブル連番)で補完し、排他制御の対象にしないこと");
+		Assert.AreEqual(0L, (long)seq.ExpectedDuration, "ExpectedDurationは0で補完すること");
+
+		dynamic? hist = Db.FirstOrDefault<dynamic>("SELECT SysHistType FROM SysHistAutoexec WHERE Id = 1");
+		Assert.IsNotNull(hist);
+		Assert.AreEqual(0L, (long)hist!.SysHistType, "既存履歴はSysHistType=0(自動実行)で補完し、自動実行履歴画面の内容を変えないこと");
+
+		var applied = await Db.FirstOrDefaultAsync<SysUpdateDb>($"where DbVersion = {26_09_06_02}");
+		Assert.IsNotNull(applied, "26_09_06_02の適用行が残ること");
+		Assert.IsTrue(string.IsNullOrEmpty(applied!.Memo) || !applied.Memo!.Contains("Error", StringComparison.OrdinalIgnoreCase), $"バージョンアップSQLがエラーなく実行されること: {applied.Memo}");
 	}
 }
