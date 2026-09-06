@@ -188,7 +188,7 @@ public class CostUpdateDbConsumptionTests {
 		var idShain = InsertShain("E1");
 		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 2, tanka: 1000));
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(1, rows.Count);
 		Assert.AreEqual(EnumCostCalcError.None, rows[0].Error);
@@ -204,7 +204,7 @@ public class CostUpdateDbConsumptionTests {
 		// 履歴が無い場合はTankaGenkaへフォールバックする(設計書§4.4)
 		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000));
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(1, rows.Count);
 		Assert.AreEqual(300, rows[0].UnitCost);
@@ -214,7 +214,7 @@ public class CostUpdateDbConsumptionTests {
 			BatchId = "b", SumMonth = "202608", EffectiveDay = "20260820",
 			CostMethod = (int)EnumCostMethod.Fixed, ChangeKind = 0, Id_Shohin = idShohin, AfterCost = 555, Vdc = 1, Vdu = 1,
 		});
-		var rows2 = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows2 = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 		Assert.AreEqual(555, rows2[0].UnitCost);
 	}
 
@@ -226,7 +226,7 @@ public class CostUpdateDbConsumptionTests {
 		var idShain = InsertShain("E1");
 		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1999));
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		var expected = CostCalculator.CalcConsumptionUnitCostByRate(1999, 6500, 10, EnumRounding.Floor);
 		Assert.AreEqual(1, rows.Count);
@@ -395,7 +395,7 @@ public class CostUpdateDbConsumptionTests {
 		var idShain = InsertShain("E1");
 		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000));
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(1, rows.Count);
 		Assert.AreNotEqual(string.Empty, rows[0].ErrorMessage);
@@ -409,7 +409,7 @@ public class CostUpdateDbConsumptionTests {
 		var idShain = InsertShain("E1");
 		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000));
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(1, rows.Count);
 		Assert.AreEqual(EnumCostCalcError.InvalidRate, rows[0].Error);
@@ -423,7 +423,7 @@ public class CostUpdateDbConsumptionTests {
 		var idShain = InsertShain("E1");
 		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 0, tanka: 1000));
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(1, rows.Count);
 		Assert.AreNotEqual(string.Empty, rows[0].ErrorMessage);
@@ -440,7 +440,7 @@ public class CostUpdateDbConsumptionTests {
 			NewLine(1, idShohin, su: 1, tanka: 1000),
 			new Tran99Meisai { No = 2, Id_Shohin = 0, Su = 1, Tanka = 100, Kingaku = 100 });
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(2, rows.Count);
 		Assert.IsTrue(rows.Any(r => r.SourceLineNo == 2 && !string.IsNullOrEmpty(r.ErrorMessage)));
@@ -453,7 +453,7 @@ public class CostUpdateDbConsumptionTests {
 		Db.Execute($"INSERT INTO {nameof(Tran00Uriage)} (DenDay, Kubun, Jmeisai, Vdc, Vdu) VALUES (@0, @1, @2, 1, 1)",
 			"20260910", 10, "not-json");
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(1, rows.Count);
 		Assert.AreNotEqual(string.Empty, rows[0].ErrorMessage);
@@ -466,7 +466,7 @@ public class CostUpdateDbConsumptionTests {
 		var idShain = InsertShain("E1");
 		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idNormalShohin, su: 1, tanka: 1000));
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(0, rows.Count);
 	}
@@ -479,7 +479,7 @@ public class CostUpdateDbConsumptionTests {
 		var idShain = InsertShain("E1");
 		InsertUriage("20260910", 30, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000)); // Kubun=30 値引
 
-		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain));
+		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(1, rows.Count);
 		Assert.AreNotEqual(string.Empty, rows[0].ErrorMessage);
@@ -710,5 +710,146 @@ public class CostUpdateDbConsumptionTests {
 		Assert.AreEqual(0L, generated[0].Tax2);
 		Assert.AreEqual(0L, generated[0].Tax3);
 		Assert.AreEqual(2000L, generated[0].TaxableAmount1);
+	}
+
+	// ------------------------------------------------------------------
+	// 確認後の変更検知(設計書§2.4-4、2026-09-06追記でStep 9として4処理へ統一)
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ApplyConsumptionPurchases_ConfirmedMatches_Succeeds() {
+		CreateConsumptionTables();
+		var idShiire = InsertShiire("SR1");
+		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
+		var idShain = InsertShain("E1");
+		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 3, tanka: 1000));
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewConsumptionPurchases(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		var result = costUpdateDb.ApplyConsumptionPurchases(previewParam);
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+	}
+
+	[TestMethod]
+	public void ApplyConsumptionPurchases_ConfirmedOmitted_SkipsCheck() {
+		CreateConsumptionTables();
+		var idShiire = InsertShiire("SR1");
+		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
+		var idShain = InsertShain("E1");
+		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 3, tanka: 1000));
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		costUpdateDb.PreviewConsumptionPurchases(previewParam);
+		InsertUriage("20260911", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000)); // 確認後にデータ追加
+
+		var result = costUpdateDb.ApplyConsumptionPurchases(previewParam); // Confirmedを渡していない
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+	}
+
+	[TestMethod]
+	public void ApplyConsumptionPurchases_SourceRowAddedAfterConfirm_Aborts() {
+		CreateConsumptionTables();
+		var idShiire = InsertShiire("SR1");
+		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
+		var idShain = InsertShain("E1");
+		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 3, tanka: 1000));
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewConsumptionPurchases(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		// 確認後に対象期間の売上を1件追加する
+		InsertUriage("20260911", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000));
+
+		var result = costUpdateDb.ApplyConsumptionPurchases(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後にデータが追加・変更・削除されました");
+		Assert.AreEqual(0, Db.Fetch<Tran03Shiire>("WHERE GeneratedKind=@0", (int)EnumGeneratedKind.ConsumptionPurchase).Count);
+	}
+
+	[TestMethod]
+	public void ApplyConsumptionPurchases_SourceRowDeletedAfterConfirm_DetectedByCountEvenWithoutVduAdvance() {
+		CreateConsumptionTables();
+		var idShiire = InsertShiire("SR1");
+		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
+		var idShain = InsertShain("E1");
+		var id1 = InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000));
+		var id2 = InsertUriage("20260911", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000));
+		// 明示的にVduをずらす(既定のInsertUriageは両方Vdu=1のため、削除対象を「最大Vduではない側」にする)
+		var header1 = Db.FirstOrDefault<Tran00Uriage>("WHERE Id=@0", id1)!;
+		header1.Vdu = 100;
+		Db.Update(header1, ["Vdu"]);
+		var header2 = Db.FirstOrDefault<Tran00Uriage>("WHERE Id=@0", id2)!;
+		header2.Vdu = 200;
+		Db.Update(header2, ["Vdu"]);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewConsumptionPurchases(previewParam);
+		Assert.AreEqual(200, preview.Confirmed.SourceMaxVdu);
+		Assert.AreEqual(2, preview.Confirmed.SourceCount);
+		previewParam.Confirmed = preview.Confirmed;
+
+		// 最大Vduを持つ行(id2)ではなく、id1(Vdu=100)だけを削除する。削除後の最大Vduは200のままで前進しない
+		Db.Delete<Tran00Uriage>("WHERE Id=@0", id1);
+
+		var result = costUpdateDb.ApplyConsumptionPurchases(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後にデータが追加・変更・削除されました");
+	}
+
+	[TestMethod]
+	public void ApplyConsumptionPurchases_ShimeBiChangedAfterConfirm_Aborts() {
+		CreateConsumptionTables();
+		var idShiire = InsertShiire("SR1");
+		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
+		var idShain = InsertShain("E1");
+		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 3, tanka: 1000));
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewConsumptionPurchases(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		var sysman = Db.FirstOrDefault<MasterSysman>("WHERE Id=@0", 1L)!;
+		sysman.ShimeBi = 20;
+		Db.Update(sysman, ["ShimeBi"]);
+
+		var result = costUpdateDb.ApplyConsumptionPurchases(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後に自社締日が変更されました");
+	}
+
+	[TestMethod]
+	public void ApplyConsumptionPurchases_CostMethodChangedAfterConfirm_Aborts() {
+		CreateConsumptionTables();
+		var idShiire = InsertShiire("SR1");
+		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
+		var idShain = InsertShain("E1");
+		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 3, tanka: 1000));
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewConsumptionPurchases(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		var sysman = Db.FirstOrDefault<MasterSysman>("WHERE Id=@0", 1L)!;
+		sysman.CostMethod = (int)EnumCostMethod.TotalAverage;
+		Db.Update(sysman, ["CostMethod"]);
+
+		var result = costUpdateDb.ApplyConsumptionPurchases(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後に原価方式が変更されました");
 	}
 }

@@ -111,12 +111,10 @@ public class CostUpdateDbRevalTests {
 		CostRevaluationCondition? cond = null,
 		long idShain = 0,
 		string batchId = "R1",
-		IReadOnlyDictionary<long, long>? confirmedShohinVdu = null,
-		int? confirmedShimeBi = null,
-		int? confirmedCostMethod = null) => new(
+		CostConfirmSnapshot? confirmed = null) => new(
 			targetMonth, applyPoint, cond ?? new CostRevaluationCondition(), groupKey, method,
 			ratePercent, fixedCost, roundingUnit, rounding, idShain, batchId,
-			confirmedShohinVdu, confirmedShimeBi, confirmedCostMethod);
+			confirmed);
 
 	private TranGenka? FetchGenka(long idShohin, string sumMonth, int costMethod, int changeKind) =>
 		Db.FirstOrDefault<TranGenka>(
@@ -400,23 +398,130 @@ public class CostUpdateDbRevalTests {
 
 		var previewParam = NewRevalParam("202609", EnumCostRevaluationMethod.ByRate, ratePercent: 50, idShain: idShain);
 		var preview = costUpdateDb.PreviewRevaluation(previewParam);
-		Assert.IsTrue(preview.ConfirmedShohinVdu.ContainsKey(idShohin));
+		Assert.IsTrue(preview.Confirmed.SourceMaxVdu > 0);
 
-		// 確認後に対象商品を直接更新する(例: 別画面での編集を模擬)
+		// 確認後に対象商品を直接更新する(例: 別画面での編集を模擬)。Vduを前進させるため既存より大きい値にする
 		var shohin = Db.FirstOrDefault<MasterShohin>("WHERE Id=@0", idShohin)!;
 		shohin.Vdu += 1;
 		Db.Update(shohin, ["Vdu"]);
 
-		var applyParam = previewParam with {
-			ConfirmedShohinVdu = preview.ConfirmedShohinVdu,
-			ConfirmedShimeBi = preview.ConfirmedShimeBi,
-			ConfirmedCostMethod = preview.ConfirmedCostMethod,
-		};
+		var applyParam = previewParam with { Confirmed = preview.Confirmed };
 		var result = costUpdateDb.ApplyRevaluation(applyParam);
 
 		Assert.IsFalse(result.IsSuccess);
-		StringAssert.Contains(result.Message, "確認後に対象商品が更新されました");
+		StringAssert.Contains(result.Message, "確認後にデータが追加・変更・削除されました");
 		Assert.AreEqual(0, Db.Fetch<TranGenka>($"WHERE ChangeKind=@0", (int)EnumCostChangeKind.Reval).Count);
+	}
+
+	// ------------------------------------------------------------------
+	// T-R10b: Confirmedを渡さなければ検査されず従来どおり通る
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ApplyRevaluation_ConfirmedOmitted_SkipsCheck() {
+		CreateRevalTables();
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 1000);
+		var costUpdateDb = new CostUpdateDb(Db);
+		SeedBaseline(costUpdateDb, idShain, idShohin);
+		InsertStock("202609", idShohin, 5);
+
+		var previewParam = NewRevalParam("202609", EnumCostRevaluationMethod.ByRate, ratePercent: 50, idShain: idShain);
+		costUpdateDb.PreviewRevaluation(previewParam);
+
+		// 確認後に対象商品を直接更新しても、Confirmedを渡さなければ検査されない
+		var shohin = Db.FirstOrDefault<MasterShohin>("WHERE Id=@0", idShohin)!;
+		shohin.Vdu += 1;
+		Db.Update(shohin, ["Vdu"]);
+
+		var result = costUpdateDb.ApplyRevaluation(previewParam);
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+	}
+
+	// ------------------------------------------------------------------
+	// T-R10c: 確認後に締日が変わると中断する
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ApplyRevaluation_ShimeBiChangedAfterConfirm_Aborts() {
+		CreateRevalTables();
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 1000);
+		var costUpdateDb = new CostUpdateDb(Db);
+		SeedBaseline(costUpdateDb, idShain, idShohin);
+		InsertStock("202609", idShohin, 5);
+
+		var previewParam = NewRevalParam("202609", EnumCostRevaluationMethod.ByRate, ratePercent: 50, idShain: idShain);
+		var preview = costUpdateDb.PreviewRevaluation(previewParam);
+
+		var sysman = Db.FirstOrDefault<MasterSysman>("WHERE Id=@0", 1L)!;
+		sysman.ShimeBi = 20;
+		Db.Update(sysman, ["ShimeBi"]);
+
+		var applyParam = previewParam with { Confirmed = preview.Confirmed };
+		var result = costUpdateDb.ApplyRevaluation(applyParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後に自社締日が変更されました");
+	}
+
+	// ------------------------------------------------------------------
+	// T-R10d: 確認後に原価方式が変わると中断する(評価替えはCostMethodによらず実行可(§16.8)だが、
+	// BeforeCostの解決に方式を使うため確認スナップショットの検査対象には含める)
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ApplyRevaluation_CostMethodChangedAfterConfirm_Aborts() {
+		CreateRevalTables(costMethod: (int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 1000);
+		var costUpdateDb = new CostUpdateDb(Db);
+		SeedBaseline(costUpdateDb, idShain, idShohin);
+		InsertStock("202609", idShohin, 5);
+
+		var previewParam = NewRevalParam("202609", EnumCostRevaluationMethod.ByRate, ratePercent: 50, idShain: idShain);
+		var preview = costUpdateDb.PreviewRevaluation(previewParam);
+
+		var sysman = Db.FirstOrDefault<MasterSysman>("WHERE Id=@0", 1L)!;
+		sysman.CostMethod = (int)EnumCostMethod.TotalAverage;
+		Db.Update(sysman, ["CostMethod"]);
+
+		var applyParam = previewParam with { Confirmed = preview.Confirmed };
+		var result = costUpdateDb.ApplyRevaluation(applyParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後に原価方式が変更されました");
+	}
+
+	// ------------------------------------------------------------------
+	// T-R10e: 確認後に対象データが1件削除されると、最大Vduが前進しなくても件数の不一致で中断する
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ApplyRevaluation_SourceRowDeletedAfterConfirm_DetectedByCountEvenWithoutVduAdvance() {
+		CreateRevalTables();
+		var idShain = InsertShain();
+		var idShohin1 = InsertShohin("A1", tankaGenka: 1000);
+		var idShohin2 = InsertShohin("A2", tankaGenka: 1000);
+		var costUpdateDb = new CostUpdateDb(Db);
+		SeedBaseline(costUpdateDb, idShain, idShohin1, idShohin2);
+		InsertStock("202609", idShohin1, 5);
+		InsertStock("202609", idShohin2, 5);
+
+		var previewParam = NewRevalParam("202609", EnumCostRevaluationMethod.ByRate, ratePercent: 50, idShain: idShain);
+		var preview = costUpdateDb.PreviewRevaluation(previewParam);
+		var beforeMaxVdu = preview.Confirmed.SourceMaxVdu;
+
+		// 対象データを1件削除する(最大Vduは前進しない。件数だけが変わる)
+		Db.Delete<MasterShohin>("WHERE Id=@0", idShohin2);
+
+		var applyParam = previewParam with { Confirmed = preview.Confirmed };
+		var result = costUpdateDb.ApplyRevaluation(applyParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後にデータが追加・変更・削除されました");
+		Assert.AreEqual(beforeMaxVdu, preview.Confirmed.SourceMaxVdu); // 削除では最大Vduは前進しないことの確認
 	}
 
 	// ------------------------------------------------------------------

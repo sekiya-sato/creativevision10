@@ -301,6 +301,11 @@ public partial class CoreService {
 	/// 原価4処理・評価替えの更新実行(Msg082/085/087/089)のディスパッチ。パラメータ型で処理を振り分け、
 	/// <c>Id_Shain</c>をJWT解決値へ上書きし(監査値のため。TranGenka.Id_Shain/TranGenkaReval.Id_Shainへ書く値であり、利用者が任意に指定できてはならない)、<c>BatchId</c>が空文字なら
 	/// サーバー側で採番してから<see cref="RunCostApplyStreamAsync"/>へ渡す。
+	/// <para>
+	/// <c>Confirmed</c>（<see cref="CostConfirmSnapshot"/>、設計書§2.4-4）は<c>Id_Shain</c>とは異なり
+	/// 上書きしない。クライアントが「自分が見た確認結果の時点」を主張するための値であり、
+	/// サーバーが上書きすると確認〜更新間の変更検知そのものが機能しなくなるため。
+	/// </para>
 	/// </summary>
 	private IAsyncEnumerable<StreamMsg> HandleCostUpdateApplyStreamAsync(CancellationToken ct, CvMsg request) {
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);

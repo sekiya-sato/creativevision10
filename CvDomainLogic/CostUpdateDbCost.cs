@@ -200,14 +200,17 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 	/// <summary>
 	/// 最終仕入原価更新の確認（プレビュー）。DBは一切変更しない（設計書§2.4-1）。
 	/// <c>MasterSysman.CostMethod</c>が1（最終仕入原価）でなければ、更新不可を表す1行だけを返す（設計書§2.3）。
+	/// 戻り値には確認時点の指紋(<see cref="CostConfirmSnapshot"/>、設計書§2.4-4)を含める。原価方式が
+	/// 不一致の場合も指紋自体は算出して返す（<see cref="CostUpdateParameter.Confirmed"/>へ渡せるようにするため）。
 	/// </summary>
-	public IReadOnlyList<CostPreviewRow> PreviewLastPurchaseCost(CostUpdateParameter param) {
+	public CostPreviewResult PreviewLastPurchaseCost(CostUpdateParameter param) {
 		var currentCostMethod = (EnumCostMethod)GetCurrentCostMethod();
+		var confirmed = FetchConfirmSnapshot(EnumCostProcessKind.CostUpdate, param.TargetMonth);
 		if (currentCostMethod != EnumCostMethod.LastPurchase) {
-			return [NewCostMethodMismatchRow(param.TargetMonth, LastPurchaseLabel, currentCostMethod)];
+			return new CostPreviewResult { Rows = [NewCostMethodMismatchRow(param.TargetMonth, LastPurchaseLabel, currentCostMethod)], Confirmed = confirmed };
 		}
 		var (rows, _, _) = ComputeLastPurchaseForMonth(param.TargetMonth);
-		return rows;
+		return new CostPreviewResult { Rows = rows, Confirmed = confirmed };
 	}
 
 	/// <summary>
@@ -231,6 +234,16 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 			return NewManualLockFailure(param, startedAt, LastPurchaseLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+
+		// 確認後の変更検知(設計書§2.4-4)。排他取得後・トランザクション開始前に検査する
+		// (検査から更新までの間に他処理が割り込めないようにするため)。Confirmedがnullなら検査しない。
+		if (param.Confirmed != null) {
+			var current = FetchConfirmSnapshot(EnumCostProcessKind.CostUpdate, param.TargetMonth);
+			var mismatch = DetectConfirmMismatch(param.Confirmed, current);
+			if (mismatch != null) {
+				return NewConfirmMismatchFailure(param, startedAt, mismatch);
+			}
+		}
 
 		var started = false;
 		try {
@@ -460,11 +473,18 @@ ORDER BY SumMonth ASC
 	/// <c>BeforeCost</c>解決に使う。途中の月でエラーが出た場合はそこで打ち切り、それ以降の月は計算しない
 	/// （設計書§6.6「途中月の伝票・在庫が不足またはエラーなら全更新を中断する」）。
 	/// </para>
+	/// <para>
+	/// 戻り値には確認時点の指紋(<see cref="CostConfirmSnapshot"/>、設計書§2.4-4)を含める。§6.6の後続月再計算
+	/// カスケードは対象月より後の月も見るが、指紋は対象月(<c>param.TargetMonth</c>)の期間だけを対象にする
+	/// （実装判断: 月次状態算出（§2.5.6）も対象月単位で判定しており、後続月分まで指紋に含めると
+	/// 後続月のデータ変化のたびに対象月の確認が無効になり再確認の頻度が過大になるため）。
+	/// </para>
 	/// </summary>
-	public IReadOnlyList<CostPreviewRow> PreviewTotalAverageCost(CostUpdateParameter param) {
+	public CostPreviewResult PreviewTotalAverageCost(CostUpdateParameter param) {
 		var currentCostMethod = (EnumCostMethod)GetCurrentCostMethod();
+		var confirmed = FetchConfirmSnapshot(EnumCostProcessKind.CostUpdate, param.TargetMonth);
 		if (currentCostMethod != EnumCostMethod.TotalAverage) {
-			return [NewCostMethodMismatchRow(param.TargetMonth, TotalAverageLabel, currentCostMethod)];
+			return new CostPreviewResult { Rows = [NewCostMethodMismatchRow(param.TargetMonth, TotalAverageLabel, currentCostMethod)], Confirmed = confirmed };
 		}
 
 		var months = new List<string> { param.TargetMonth };
@@ -482,7 +502,7 @@ ORDER BY SumMonth ASC
 				overrides[idShohin] = plan.AfterCost;
 			}
 		}
-		return rows;
+		return new CostPreviewResult { Rows = rows, Confirmed = confirmed };
 	}
 
 	/// <summary>
@@ -507,6 +527,16 @@ ORDER BY SumMonth ASC
 			return NewManualLockFailure(param, startedAt, TotalAverageLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+
+		// 確認後の変更検知(設計書§2.4-4)。排他取得後・トランザクション開始前に検査する
+		// (検査から更新までの間に他処理が割り込めないようにするため)。Confirmedがnullなら検査しない。
+		if (param.Confirmed != null) {
+			var current = FetchConfirmSnapshot(EnumCostProcessKind.CostUpdate, param.TargetMonth);
+			var mismatch = DetectConfirmMismatch(param.Confirmed, current);
+			if (mismatch != null) {
+				return NewConfirmMismatchFailure(param, startedAt, mismatch);
+			}
+		}
 
 		var started = false;
 		try {

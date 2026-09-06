@@ -164,7 +164,7 @@ public class CostUpdateDbCostTests {
 		InsertPurchase("20260910", 10, idShohin, su: 1, kingaku: 100); // 先の伝票(小さいId)、単価100
 		InsertPurchase("20260910", 10, idShohin, su: 1, kingaku: 200); // 後の伝票(大きいId)、単価200
 
-		var rows = new CostUpdateDb(Db).PreviewLastPurchaseCost(NewParam("202609"));
+		var rows = new CostUpdateDb(Db).PreviewLastPurchaseCost(NewParam("202609")).Rows;
 
 		Assert.AreEqual(200, rows.Single(r => r.Id_Shohin == idShohin).AfterCost);
 	}
@@ -178,7 +178,7 @@ public class CostUpdateDbCostTests {
 			NewLine(1, idShohin, su: 1, kingaku: 100),
 			NewLine(2, idShohin, su: 1, kingaku: 300));
 
-		var rows = new CostUpdateDb(Db).PreviewLastPurchaseCost(NewParam("202609"));
+		var rows = new CostUpdateDb(Db).PreviewLastPurchaseCost(NewParam("202609")).Rows;
 
 		Assert.AreEqual(300, rows.Single(r => r.Id_Shohin == idShohin).AfterCost);
 	}
@@ -212,7 +212,7 @@ public class CostUpdateDbCostTests {
 		InsertPurchase("20260910", 10, idD, su: 1, kingaku: 100, isStock: 0);
 		InsertPurchase("20260910", 10, idE, su: 1, kingaku: 100);
 
-		var rows = new CostUpdateDb(Db).PreviewLastPurchaseCost(NewParam("202609"));
+		var rows = new CostUpdateDb(Db).PreviewLastPurchaseCost(NewParam("202609")).Rows;
 
 		Assert.AreEqual(0, rows.Count);
 	}
@@ -318,7 +318,7 @@ public class CostUpdateDbCostTests {
 	public void PreviewLastPurchaseCost_WrongCostMethod_ReturnsMismatchRow() {
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 
-		var rows = new CostUpdateDb(Db).PreviewLastPurchaseCost(NewParam("202609"));
+		var rows = new CostUpdateDb(Db).PreviewLastPurchaseCost(NewParam("202609")).Rows;
 
 		Assert.AreEqual(1, rows.Count);
 		Assert.AreEqual(EnumCostCalcError.CostMethodMismatch, rows[0].Error);
@@ -511,7 +511,7 @@ public class CostUpdateDbCostTests {
 		Db.Execute($"DELETE FROM {nameof(Tran03Shiire)} WHERE DenDay=@0", "20260910");
 		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 2000);
 
-		var preview = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain));
+		var preview = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain)).Rows;
 
 		Assert.IsTrue(preview.Any(r => r.SumMonth == "202609" && r.Id_Shohin == idShohin));
 		var row610 = preview.Single(r => r.SumMonth == "202610" && r.Id_Shohin == idShohin);
@@ -573,5 +573,195 @@ public class CostUpdateDbCostTests {
 
 		Assert.IsTrue(rerun.IsSuccess);
 		Assert.AreEqual(80, TankaGenkaOf(idShohin));
+	}
+
+	// ------------------------------------------------------------------
+	// 確認後の変更検知(設計書§2.4-4、2026-09-06追記でStep 9として4処理へ統一)。
+	// 最終仕入原価更新・総平均原価更新はどちらもProcessKind=CostUpdateの同じ指紋を使うため、
+	// 代表して最終仕入原価更新で一通り固定し、総平均原価更新は往復と省略時の2点だけ確認する。
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ApplyLastPurchaseCost_ConfirmedMatches_Succeeds() {
+		CreateCostTables((int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1");
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewLastPurchaseCost(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		var result = costUpdateDb.ApplyLastPurchaseCost(previewParam);
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+	}
+
+	[TestMethod]
+	public void ApplyLastPurchaseCost_ConfirmedOmitted_SkipsCheck() {
+		CreateCostTables((int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1");
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		costUpdateDb.PreviewLastPurchaseCost(previewParam);
+		InsertPurchase("20260911", 10, idShohin, su: 1, kingaku: 500); // 確認後にデータ追加
+
+		var result = costUpdateDb.ApplyLastPurchaseCost(previewParam); // Confirmedを渡していない
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+	}
+
+	[TestMethod]
+	public void ApplyLastPurchaseCost_SourceRowAddedAfterConfirm_Aborts() {
+		CreateCostTables((int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1");
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewLastPurchaseCost(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		InsertPurchase("20260911", 10, idShohin, su: 1, kingaku: 500); // 確認後に対象期間の仕入を1件追加
+
+		var result = costUpdateDb.ApplyLastPurchaseCost(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後にデータが追加・変更・削除されました");
+		Assert.IsNull(FetchGenka(idShohin, "202609", (int)EnumCostMethod.LastPurchase));
+	}
+
+	[TestMethod]
+	public void ApplyLastPurchaseCost_SourceRowDeletedAfterConfirm_DetectedByCountEvenWithoutVduAdvance() {
+		CreateCostTables((int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1");
+		var id1 = InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+		var id2 = InsertPurchase("20260911", 10, idShohin, su: 5, kingaku: 1500);
+		// 明示的にVduをずらす(既定のInsertPurchaseは両方Vdu=1のため、削除対象を「最大Vduではない側」にする)
+		var header1 = Db.FirstOrDefault<Tran03Shiire>("WHERE Id=@0", id1)!;
+		header1.Vdu = 100;
+		Db.Update(header1, ["Vdu"]);
+		var header2 = Db.FirstOrDefault<Tran03Shiire>("WHERE Id=@0", id2)!;
+		header2.Vdu = 200;
+		Db.Update(header2, ["Vdu"]);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewLastPurchaseCost(previewParam);
+		Assert.AreEqual(200, preview.Confirmed.SourceMaxVdu);
+		previewParam.Confirmed = preview.Confirmed;
+
+		// 最大Vduを持つ行(id2)ではなく、id1(Vdu=100)だけを削除する。削除後の最大Vduは200のままで前進しない
+		Db.Delete<Tran03Shiire>("WHERE Id=@0", id1);
+
+		var result = costUpdateDb.ApplyLastPurchaseCost(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後にデータが追加・変更・削除されました");
+	}
+
+	[TestMethod]
+	public void ApplyLastPurchaseCost_ShimeBiChangedAfterConfirm_Aborts() {
+		CreateCostTables((int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1");
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewLastPurchaseCost(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		var sysman = Db.FirstOrDefault<MasterSysman>("WHERE Id=@0", 1L)!;
+		sysman.ShimeBi = 20;
+		Db.Update(sysman, ["ShimeBi"]);
+
+		var result = costUpdateDb.ApplyLastPurchaseCost(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後に自社締日が変更されました");
+	}
+
+	[TestMethod]
+	public void ApplyLastPurchaseCost_CostMethodChangedAfterConfirm_Aborts() {
+		CreateCostTables((int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1");
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewLastPurchaseCost(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		var sysman = Db.FirstOrDefault<MasterSysman>("WHERE Id=@0", 1L)!;
+		sysman.CostMethod = (int)EnumCostMethod.TotalAverage;
+		Db.Update(sysman, ["CostMethod"]);
+
+		var result = costUpdateDb.ApplyLastPurchaseCost(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後に原価方式が変更されました");
+	}
+
+	[TestMethod]
+	public void ApplyTotalAverageCost_ConfirmedMatches_Succeeds() {
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 100);
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewTotalAverageCost(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		var result = costUpdateDb.ApplyTotalAverageCost(previewParam);
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+	}
+
+	[TestMethod]
+	public void ApplyTotalAverageCost_ConfirmedOmitted_SkipsCheck() {
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 100);
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		costUpdateDb.PreviewTotalAverageCost(previewParam);
+		InsertPurchase("20260911", 10, idShohin, su: 1, kingaku: 100); // 確認後にデータ追加
+
+		var result = costUpdateDb.ApplyTotalAverageCost(previewParam); // Confirmedを渡していない
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+	}
+
+	[TestMethod]
+	public void ApplyTotalAverageCost_SourceRowAddedAfterConfirm_Aborts() {
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 100);
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var costUpdateDb = new CostUpdateDb(Db);
+		var previewParam = NewParam("202609", idShain);
+		var preview = costUpdateDb.PreviewTotalAverageCost(previewParam);
+		previewParam.Confirmed = preview.Confirmed;
+
+		InsertPurchase("20260911", 10, idShohin, su: 1, kingaku: 100); // 確認後に対象期間の仕入を1件追加
+
+		var result = costUpdateDb.ApplyTotalAverageCost(previewParam);
+
+		Assert.IsFalse(result.IsSuccess);
+		StringAssert.Contains(result.Message, "確認後にデータが追加・変更・削除されました");
+		Assert.IsNull(FetchGenka(idShohin, "202609", (int)EnumCostMethod.TotalAverage));
 	}
 }

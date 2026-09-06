@@ -373,9 +373,14 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 
 	/// <summary>
 	/// 消化仕入更新の確認（プレビュー）。DBは一切変更しない（設計書§2.4-1）。
+	/// 戻り値には確認時点の指紋(<see cref="CostConfirmSnapshot"/>、設計書§2.4-4)を含める。
+	/// 呼び出し側はこれを<see cref="CostUpdateParameter.Confirmed"/>へそのまま入れて
+	/// <see cref="ApplyConsumptionPurchases"/>へ渡すことで、確認後の変更を検知できる。
 	/// </summary>
-	public IReadOnlyList<ConsumptionPreviewRow> PreviewConsumptionPurchases(CostUpdateParameter param) =>
-		ComputeConsumptionPurchases(param.TargetMonth).Rows;
+	public ConsumptionPreviewResult PreviewConsumptionPurchases(CostUpdateParameter param) => new() {
+		Rows = ComputeConsumptionPurchases(param.TargetMonth).Rows,
+		Confirmed = FetchConfirmSnapshot(EnumCostProcessKind.ConsumptionPurchase, param.TargetMonth),
+	};
 
 	/// <summary>
 	/// 消化仕入更新を実行する（設計書§4.6、§10.2）。
@@ -398,6 +403,16 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 			return NewManualLockFailure(param, startedAt, ConsumptionLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+
+		// 確認後の変更検知(設計書§2.4-4)。排他取得後・トランザクション開始前に検査する
+		// (検査から更新までの間に他処理が割り込めないようにするため)。Confirmedがnullなら検査しない。
+		if (param.Confirmed != null) {
+			var current = FetchConfirmSnapshot(EnumCostProcessKind.ConsumptionPurchase, param.TargetMonth);
+			var mismatch = DetectConfirmMismatch(param.Confirmed, current);
+			if (mismatch != null) {
+				return NewConfirmMismatchFailure(param, startedAt, mismatch);
+			}
+		}
 
 		var started = false;
 		try {

@@ -19,6 +19,36 @@ public sealed class CostUpdateParameter {
 	public string BatchId { get; set; } = string.Empty;
 	/// <summary>確認(プレビュー)のみで更新を伴わないか。</summary>
 	public bool IsPreview { get; set; }
+	/// <summary>
+	/// 確認(Preview)結果が返した<see cref="CostConfirmSnapshot"/>をそのまま渡す（原価4項目 詳細設計 §2.4-4、
+	/// 2026-09-06追記）。更新実行時に現在の指紋と照合し、不一致（確認後にデータが変更された）なら更新を
+	/// 中断する。<c>null</c>の場合はこの再検査を行わない（既存の「省略時は検査しない」性質を維持する）。
+	/// </summary>
+	public CostConfirmSnapshot? Confirmed { get; set; }
+}
+
+/// <summary>
+/// 原価4処理（消化仕入更新・最終仕入原価更新・総平均原価更新・評価替え）共通の「確認後の変更検知」用
+/// 指紋（原価4項目 詳細設計 §2.4-4、§2.5.6、2026-09-06追記でStep 9として4処理へ統一）。
+/// <para>
+/// 商品Idごとの辞書（評価替えのStep 8時点の実装、<c>ConfirmedShohinVdu</c>）ではなく、
+/// §2.5.6が月次状態の判定で既に採用している「入力データの最大<c>Vdu</c>と件数を組み合わせた指紋」を
+/// 4処理共通の方式として採用する。4処理は入力データのテーブルが異なる（消化仕入は売上、
+/// 原価更新は仕入・諸掛・在庫、評価替えは商品マスタ・在庫）ため、商品Idの辞書では伝票側だけの変更
+/// （例: 対象商品を変えない伝票の追加・削除）を検知できない。§2.5.6は「削除だけが起きた場合は
+/// 最大Vduが前進しないため、件数を見ないと検出できない」と指摘しており、同じ考え方をそのまま使う。
+/// 対象が数万件でも指紋は2つの数値で済むため、確認〜更新間で往復するデータ量が対象件数に依存せず一定になる。
+/// </para>
+/// </summary>
+public sealed class CostConfirmSnapshot {
+	/// <summary>確認時点の入力データの最大<c>Vdu</c>。<c>0</c>は「対象データなし」を意味する。</summary>
+	public long SourceMaxVdu { get; set; }
+	/// <summary>確認時点の入力データの件数。最大<c>Vdu</c>が前進しない削除だけの変更を検知するために使う。</summary>
+	public long SourceCount { get; set; }
+	/// <summary>確認時点の自社締日（<c>MasterSysman.ShimeBi</c>）。</summary>
+	public int ShimeBi { get; set; }
+	/// <summary>確認時点の<c>MasterSysman.CostMethod</c>。</summary>
+	public int CostMethod { get; set; }
 }
 
 /// <summary>
@@ -44,6 +74,20 @@ public sealed class CostMonthStatus {
 	public EnumCostMethod CostMethod { get; set; }
 	/// <summary>算出根拠にした入力データの件数。</summary>
 	public long SourceCount { get; set; }
+}
+
+/// <summary>
+/// 最終仕入原価更新・総平均原価更新の確認（プレビュー）結果全体（原価4項目 詳細設計 §8.4・§8.5、§2.4-4）。
+/// 両処理で列構成が共通するため1つのDTOで共有する（<see cref="CostPreviewRow"/>と同じ理由）。
+/// </summary>
+public sealed class CostPreviewResult {
+	/// <summary>プレビュー一覧行。</summary>
+	public IReadOnlyList<CostPreviewRow> Rows { get; set; } = [];
+	/// <summary>
+	/// 確認時点の指紋（設計書§2.4-4）。<see cref="CostUpdateParameter.Confirmed"/>へそのまま渡すことで、
+	/// 更新実行時に確認後の変更を検知できる。
+	/// </summary>
+	public CostConfirmSnapshot Confirmed { get; set; } = new();
 }
 
 /// <summary>
@@ -87,6 +131,19 @@ public sealed class CostPreviewRow {
 	public EnumCostCalcError Error { get; set; }
 	/// <summary>画面表示用のエラーメッセージ。</summary>
 	public string ErrorMessage { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 消化仕入更新の確認（プレビュー）結果全体（原価4項目 詳細設計 §8.3、§2.4-4）。
+/// </summary>
+public sealed class ConsumptionPreviewResult {
+	/// <summary>プレビュー一覧行。</summary>
+	public IReadOnlyList<ConsumptionPreviewRow> Rows { get; set; } = [];
+	/// <summary>
+	/// 確認時点の指紋（設計書§2.4-4）。<see cref="CostUpdateParameter.Confirmed"/>へそのまま渡すことで、
+	/// 更新実行時に確認後の変更を検知できる。
+	/// </summary>
+	public CostConfirmSnapshot Confirmed { get; set; } = new();
 }
 
 /// <summary>
@@ -306,14 +363,12 @@ public sealed class RevaluationPreviewResult {
 	/// <summary>画面上部に表示する情報メッセージ（例: データが存在しません、更新対象がありませんでした＋対象外内訳）。</summary>
 	public IReadOnlyList<string> InfoMessages { get; set; } = [];
 	/// <summary>
-	/// 確認時点の対象商品Id→<c>MasterShohin.Vdu</c>。<see cref="CostRevaluationParameter.ConfirmedShohinVdu"/>へ
-	/// そのまま渡すことで、更新実行時に確認後の変更を検知できる（設計書§2.4-4）。
+	/// 確認時点の指紋（設計書§2.4-4）。Step 8時点では商品Id→<c>Vdu</c>の辞書
+	/// （<c>ConfirmedShohinVdu</c>）＋締日＋原価方式の3項目だったが、Step 9で他の3処理と同じ
+	/// <see cref="CostConfirmSnapshot"/>（入力データの最大<c>Vdu</c>＋件数の指紋）へ統一した。
+	/// <see cref="CostRevaluationParameter.Confirmed"/>へそのまま渡す。
 	/// </summary>
-	public IReadOnlyDictionary<long, long> ConfirmedShohinVdu { get; set; } = new Dictionary<long, long>();
-	/// <summary>確認時点の自社締日。<see cref="CostRevaluationParameter.ConfirmedShimeBi"/>へそのまま渡す。</summary>
-	public int ConfirmedShimeBi { get; set; }
-	/// <summary>確認時点の<c>MasterSysman.CostMethod</c>。<see cref="CostRevaluationParameter.ConfirmedCostMethod"/>へそのまま渡す。</summary>
-	public int ConfirmedCostMethod { get; set; }
+	public CostConfirmSnapshot Confirmed { get; set; } = new();
 }
 
 /// <summary>

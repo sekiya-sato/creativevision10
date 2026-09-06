@@ -447,16 +447,12 @@ public sealed record ConvertSelectedDbParam(bool IsInit, List<string> SelectedTa
 /// <param name="Rounding">端数処理。</param>
 /// <param name="Id_Shain">実行社員Id。</param>
 /// <param name="BatchId">評価替え実行Id(GUID D形式)。確認と更新で同一値を使う。</param>
-/// <param name="ConfirmedShohinVdu">
-/// 確認(<c>PreviewRevaluation</c>)結果の<see cref="RevaluationPreviewResult.ConfirmedShohinVdu"/>を
-/// そのまま渡す。更新実行時に対象商品の現在の<c>Vdu</c>と照合し、1件でも不一致（確認後に対象商品が
-/// 更新された）があれば更新を中断する（設計書§2.4-4）。<c>null</c>または空の場合はこの再検査を行わない。
+/// <param name="Confirmed">
+/// 確認(<c>PreviewRevaluation</c>)結果の<see cref="RevaluationPreviewResult.Confirmed"/>をそのまま渡す。
+/// 更新実行時に現在の指紋と照合し、不一致（確認後にデータが変更された）があれば更新を中断する
+/// （設計書§2.4-4、2026-09-06追記で他の3処理と同じ<see cref="CostConfirmSnapshot"/>方式へ統一した）。
+/// <c>null</c>の場合はこの再検査を行わない。
 /// </param>
-/// <param name="ConfirmedShimeBi">確認結果の<see cref="RevaluationPreviewResult.ConfirmedShimeBi"/>。
-/// 更新時の自社締日と不一致なら中断する（設計書§2.4-4）。<c>null</c>ならこの再検査を行わない。</param>
-/// <param name="ConfirmedCostMethod">確認結果の<see cref="RevaluationPreviewResult.ConfirmedCostMethod"/>。
-/// 更新時の<c>MasterSysman.CostMethod</c>と不一致なら中断する（設計書§2.4-4）。
-/// <c>null</c>ならこの再検査を行わない。</param>
 public sealed record CostRevaluationParameter(
 	string TargetMonth,
 	EnumCostRevalApplyPoint ApplyPoint,
@@ -469,6 +465,4 @@ public sealed record CostRevaluationParameter(
 	EnumRounding Rounding,
 	long Id_Shain,
 	string BatchId,
-	IReadOnlyDictionary<long, long>? ConfirmedShohinVdu = null,
-	int? ConfirmedShimeBi = null,
-	int? ConfirmedCostMethod = null);
+	CostConfirmSnapshot? Confirmed = null);

@@ -138,7 +138,7 @@ public class ManualLockCostUpdateTests {
 
 		new ManualLockDb(Db).TryBegin("先行一連処理", "処理中", 600);
 
-		var preview = new CostUpdateDb(Db).PreviewTotalAverageCost(NewParam("202609", idShain));
+		var preview = new CostUpdateDb(Db).PreviewTotalAverageCost(NewParam("202609", idShain)).Rows;
 
 		Assert.AreEqual(1, preview.Count);
 		Assert.AreEqual(4916, preview[0].AfterCost);

@@ -16,9 +16,10 @@ namespace CvDomainLogic;
 /// </para>
 /// <para>
 /// 設計書§16.10・§2.4-4の「実行履歴の記録・プロセス間排他・<c>CvFlag</c>」はStep 9の担当のため、本ファイルには
-/// 含めない。§2.4-4「確認時点からの変化検知」のうち対象商品の<c>Vdu</c>・自社締日・原価方式の再検査だけは
-/// 本ファイルの責務とし、<see cref="CostRevaluationParameter.ConfirmedShohinVdu"/>等（<c>Parameters.cs</c>で
-/// 追加）を使って実現する（実装判断の詳細はプロパティのコメントを参照）。
+/// 含めない。§2.4-4「確認時点からの変化検知」は、Step 8時点では本ファイルだけが商品Id→<c>Vdu</c>の辞書
+/// （<c>CostRevaluationParameter.ConfirmedShohinVdu</c>等）で先行実装していたが、2026-09-06追記でStep 9として
+/// 消化仕入更新・最終仕入原価更新・総平均原価更新と共通の<see cref="CostConfirmSnapshot"/>方式へ統一した
+/// （<see cref="CostUpdateDb.FetchRevaluationConfirmSnapshot"/>、実装判断の詳細はそのコメントを参照）。
 /// </para>
 /// </summary>
 public partial class CostUpdateDb {
@@ -411,9 +412,8 @@ public partial class CostUpdateDb {
 			Total = total,
 			ErrorCount = errorCount,
 			InfoMessages = computation.InfoMessages,
-			ConfirmedShohinVdu = targetRows.ToDictionary(r => r.Shohin.Id, r => r.Shohin.Vdu),
-			ConfirmedShimeBi = computation.CurrentShimeBi,
-			ConfirmedCostMethod = computation.CurrentCostMethod,
+			// Step 9で他の3処理と同じCostConfirmSnapshot方式へ統一(設計書§2.4-4、2026-09-06追記)。
+			Confirmed = FetchRevaluationConfirmSnapshot(computation.SumMonth),
 		};
 	}
 
@@ -438,36 +438,15 @@ public partial class CostUpdateDb {
 	};
 
 	/// <summary>
-	/// 確認時点からの変化を検知する（設計書§2.4-4）。<see cref="CostRevaluationParameter.ConfirmedShohinVdu"/>等が
-	/// 指定されていない（<c>null</c>）場合はこの再検査を省略する。
-	/// </summary>
-	private static string? DetectConfirmMismatch(CostRevaluationParameter param, RevalComputation computation) {
-		if (param.ConfirmedShimeBi is int confirmedShimeBi && confirmedShimeBi != computation.CurrentShimeBi) {
-			return "確認後に自社締日が変更されました。再確認してください。";
-		}
-		if (param.ConfirmedCostMethod is int confirmedCostMethod && confirmedCostMethod != computation.CurrentCostMethod) {
-			return "確認後に原価方式が変更されました。再確認してください。";
-		}
-		if (param.ConfirmedShohinVdu is { Count: > 0 } confirmedVdu) {
-			var currentVdu = computation.Rows.ToDictionary(r => r.Shohin.Id, r => r.Shohin.Vdu);
-			foreach (var (idShohin, expectedVdu) in confirmedVdu) {
-				if (!currentVdu.TryGetValue(idShohin, out var vdu) || vdu != expectedVdu) {
-					return "確認後に対象商品が更新されました。再確認してください。";
-				}
-			}
-		}
-		return null;
-	}
-
-	/// <summary>
 	/// 評価替えを実行する（設計書§16.7、§2.4）。
 	/// <para>
-	/// 手順: (1) 入力検査(§16.4・§16.9) (2) 対象期間が支払計算済みなら<see cref="CostRevaluationPaidPeriodException"/>で
-	/// 中断(§4.6と同じ扱い) (3) サーバー側で対象抽出・計算を再実行する(§2.4-3) (4) 確認時点からの変化を検知したら中断する
-	/// (§2.4-4) (5) エラー行が1件でもあれば更新しない(§2.4-2・§16.9) (6) 条件一致0件・対象0件ならそれぞれの
-	/// メッセージで中断する(§16.9) (7) <see cref="TranGenkaReval"/>ヘッダを1行作成し、<see cref="TranGenka"/>を
-	/// 一括upsertし、<see cref="RefreshCurrentProductCost"/>で現在原価へ反映する(§2.7)。全体を1つの
-	/// <c>Serializable</c>トランザクションで行い、部分成功を許可しない。
+	/// 手順: (0) 確認時点からの変化を検知したら中断する(§2.4-4。排他取得後・トランザクション開始前に検査する。
+	/// 他の3処理(消化仕入更新・最終仕入原価更新・総平均原価更新)と同じ配置に2026-09-06追記で統一) (1) 入力検査(§16.4・§16.9)
+	/// (2) 対象期間が支払計算済みなら<see cref="CostRevaluationPaidPeriodException"/>で中断(§4.6と同じ扱い)
+	/// (3) サーバー側で対象抽出・計算を再実行する(§2.4-3) (4) エラー行が1件でもあれば更新しない(§2.4-2・§16.9)
+	/// (5) 条件一致0件・対象0件ならそれぞれのメッセージで中断する(§16.9) (6) <see cref="TranGenkaReval"/>ヘッダを
+	/// 1行作成し、<see cref="TranGenka"/>を一括upsertし、<see cref="RefreshCurrentProductCost"/>で現在原価へ反映する
+	/// (§2.7)。全体を1つの<c>Serializable</c>トランザクションで行い、部分成功を許可しない。
 	/// </para>
 	/// </summary>
 	public CostUpdateResult ApplyRevaluation(CostRevaluationParameter param) {
@@ -480,6 +459,21 @@ public partial class CostUpdateDb {
 			return NewManualLockFailure(param.BatchId, param.TargetMonth, startedAt, RevaluationLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+
+		// 確認後の変更検知(設計書§2.4-4)。排他取得後・トランザクション開始前に検査する
+		// (検査から更新までの間に他処理が割り込めないようにするため。他の3処理と同じ配置)。
+		// Confirmedがnullなら検査しない。対象計上月の解決(ResolveRevaluationPeriod)自体が失敗する場合は
+		// ここでは検査せず、後続のComputeRevaluationがInputErrorとして同じ検査を行い失敗を返す。
+		if (param.Confirmed != null) {
+			var (resolution, _) = ResolveRevaluationPeriod(param);
+			if (resolution != null) {
+				var current = FetchRevaluationConfirmSnapshot(resolution.SumMonth);
+				var mismatch = DetectConfirmMismatch(param.Confirmed, current);
+				if (mismatch != null) {
+					return NewRevalFailure(param, startedAt, 0, mismatch);
+				}
+			}
+		}
 
 		var started = false;
 		try {
@@ -496,13 +490,6 @@ public partial class CostUpdateDb {
 			if (IsPeriodAlreadyPaid(computation.Period)) {
 				// 消化仕入更新(§4.6)と同じ扱い。catchブロックがstartedを見てAbortTransactionする。
 				throw new CostRevaluationPaidPeriodException(param.TargetMonth);
-			}
-
-			var mismatch = DetectConfirmMismatch(param, computation);
-			if (mismatch != null) {
-				_db.AbortTransaction();
-				started = false;
-				return NewRevalFailure(param, startedAt, 0, mismatch);
 			}
 
 			if (computation.MatchedCount == 0) {

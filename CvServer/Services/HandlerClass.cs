@@ -352,8 +352,8 @@ public partial class CoreService {
 				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
 			}
 			OverrideIdShain(param);
-			var rows = new CostUpdateDb(_db).PreviewConsumptionPurchases(param);
-			return CreateSuccessResponse(request.Flag, typeof(IReadOnlyList<ConsumptionPreviewRow>), Common.SerializeObject(rows));
+			var result = new CostUpdateDb(_db).PreviewConsumptionPurchases(param);
+			return CreateSuccessResponse(request.Flag, typeof(ConsumptionPreviewResult), Common.SerializeObject(result));
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "消化仕入更新の確認に失敗");
@@ -388,8 +388,8 @@ public partial class CoreService {
 				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
 			}
 			OverrideIdShain(param);
-			var rows = new CostUpdateDb(_db).PreviewLastPurchaseCost(param);
-			return CreateSuccessResponse(request.Flag, typeof(IReadOnlyList<CostPreviewRow>), Common.SerializeObject(rows));
+			var result = new CostUpdateDb(_db).PreviewLastPurchaseCost(param);
+			return CreateSuccessResponse(request.Flag, typeof(CostPreviewResult), Common.SerializeObject(result));
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "最終仕入原価更新の確認に失敗");
@@ -406,8 +406,8 @@ public partial class CoreService {
 				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
 			}
 			OverrideIdShain(param);
-			var rows = new CostUpdateDb(_db).PreviewTotalAverageCost(param);
-			return CreateSuccessResponse(request.Flag, typeof(IReadOnlyList<CostPreviewRow>), Common.SerializeObject(rows));
+			var result = new CostUpdateDb(_db).PreviewTotalAverageCost(param);
+			return CreateSuccessResponse(request.Flag, typeof(CostPreviewResult), Common.SerializeObject(result));
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "総平均原価更新の確認に失敗");

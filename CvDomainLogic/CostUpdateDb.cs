@@ -83,6 +83,137 @@ public partial class CostUpdateDb(ExDatabase db) {
 		NewManualLockFailure(param.BatchId, param.TargetMonth, startedAt, processName, blocker);
 
 	// ==================================================================
+	// 確認後の変更検知（設計書§2.4-4、§2.5.6、2026-09-06追記でStep 9として4処理へ統一）
+	// ==================================================================
+	// Step 8（評価替え）だけに入っていた「確認〜更新間の変更検知」を4処理共通にする。方式は商品Idごとの
+	// 辞書ではなく、§2.5.6が月次状態判定で既に定義している「入力データの最大Vduと件数の指紋」を使う
+	// （理由は`CostConfirmSnapshot`のコメントを参照）。
+
+	/// <summary><see cref="FetchConfirmSnapshot"/>・<see cref="FetchRevaluationConfirmSnapshot"/>が使う集計行。</summary>
+	private sealed class SourceFingerprintRow {
+		public long MaxVdu { get; set; }
+		public long Cnt { get; set; }
+	}
+
+	/// <summary>
+	/// 消化仕入更新・原価更新（最終仕入原価更新・総平均原価更新）の確認スナップショット（設計書§2.4-4）を
+	/// 対象計上月ぶん算出する。評価替えは入力データの集合が異なる（<c>MasterShohin</c>・<c>SummaryStock</c>）ため
+	/// 本メソッドの対象外とし、<see cref="FetchRevaluationConfirmSnapshot"/>を別途用意する。
+	/// <para>
+	/// 入力データの定義は月次状態算出（<see cref="FetchCostUpdateStatus"/>・<see cref="HasSourceChangedAfter"/>）と
+	/// 同じ対象テーブルを踏襲する（設計書§2.5.6の指紋定義をそのまま流用）。ただし月次状態算出は
+	/// 「最終成功時刻からの変化の有無」を問う<b>比較判定</b>であるのに対し、本メソッドは往復用の
+	/// <b>指紋そのもの（最大Vdu・件数）</b>を返す必要があり、集計の形（1本のCOUNT/MAXクエリ）が異なるため
+	/// SQL自体は共通の1メソッドへ完全統合していない。加えて原価更新(<c>CostUpdate</c>)の対象範囲は、
+	/// 月次状態算出が対象月の<c>SummaryStock</c>のみを見る（§2.5.6「対象月のSummaryStockにVdu&gt;Tの行がある」）のに対し、
+	/// 総平均原価の前月在庫解決（<see cref="CostUpdateDbSundry"/>相当ロジック、`SumMonth &lt; targetMonth`）・
+	/// 評価替えの在庫数解決（`SumMonth &lt;= sumMonth`）が対象月<b>以前</b>の値を参照するため、
+	/// 本メソッドは「対象月以前」の<c>SummaryStock</c>を対象にする（月次状態表示用の判定とは目的が異なるための実装判断）。
+	/// </para>
+	/// </summary>
+	public CostConfirmSnapshot FetchConfirmSnapshot(EnumCostProcessKind processKind, string targetMonth) {
+		var period = ResolvePeriod(targetMonth);
+		var sql = processKind switch {
+			EnumCostProcessKind.ConsumptionPurchase => $@"
+SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt FROM (
+  SELECT Vdu FROM {nameof(Tran00Uriage)} WHERE DenDay BETWEEN @0 AND @1
+  UNION ALL
+  SELECT Vdu FROM {nameof(Tran01Tenuri)} WHERE DenDay BETWEEN @0 AND @1
+) AS src",
+			EnumCostProcessKind.CostUpdate => $@"
+SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt FROM (
+  SELECT Vdu FROM {nameof(Tran03Shiire)} WHERE IsStock = 1 AND DenDay BETWEEN @0 AND @1
+  UNION ALL
+  SELECT Vdu FROM {nameof(Tran02Material)} WHERE DenDay BETWEEN @0 AND @1
+  UNION ALL
+  SELECT Vdu FROM {nameof(SummaryStock)} WHERE SumMonth <= @2
+) AS src",
+			_ => throw new ArgumentOutOfRangeException(nameof(processKind), processKind,
+				"確認スナップショットに対応しない処理区分です。評価替えはFetchRevaluationConfirmSnapshotを使用してください。"),
+		};
+		var fp = _db.FirstOrDefault<SourceFingerprintRow>(sql, period.DayFrom, period.DayTo, targetMonth) ?? new SourceFingerprintRow();
+		return new CostConfirmSnapshot {
+			SourceMaxVdu = fp.MaxVdu,
+			SourceCount = fp.Cnt,
+			ShimeBi = new SummaryDb(_db).GetOwnClosingDay(),
+			CostMethod = GetCurrentCostMethod(),
+		};
+	}
+
+	/// <summary>
+	/// 評価替え専用の確認スナップショット（設計書§2.4-4、§16.5）。評価替えの入力データは
+	/// <c>MasterShohin</c>（<c>IsZaiko=1 AND PurchaseType=通常仕入</c>。<see cref="CostUpdateDbReval.ComputeRevaluation"/>の
+	/// 抽出条件<c>matchWhere</c>と同じ基底集合）と対象計上月以前の<c>SummaryStock</c>であり、
+	/// 消化仕入・原価更新（伝票データ）とは集合がまったく異なるため、<see cref="EnumCostProcessKind"/>を使う
+	/// <see cref="FetchConfirmSnapshot"/>とは別の専用メソッドとして分離する。
+	/// <para>
+	/// <b>実装判断</b>: 画面が選択する抽出条件（<c>CostRevaluationCondition</c>、コード範囲によるFrom～To）は
+	/// 指紋の対象から外し、常に全在庫商品（条件行0件相当）を基準にする。抽出条件は確認・更新の同一パラメータを
+	/// 往復させるだけで変化しない値であり、指紋が検知すべき「データそのものの変化」とは性質が違うため。
+	/// </para>
+	/// </summary>
+	public CostConfirmSnapshot FetchRevaluationConfirmSnapshot(string sumMonth) {
+		var shohinFp = _db.FirstOrDefault<SourceFingerprintRow>($@"
+SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt
+FROM {nameof(MasterShohin)}
+WHERE IsZaiko = 1 AND PurchaseType = {(int)EnumPurchaseType.Normal}") ?? new SourceFingerprintRow();
+		var stockFp = _db.FirstOrDefault<SourceFingerprintRow>($@"
+SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt
+FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFingerprintRow();
+		return new CostConfirmSnapshot {
+			SourceMaxVdu = Math.Max(shohinFp.MaxVdu, stockFp.MaxVdu),
+			SourceCount = shohinFp.Cnt + stockFp.Cnt,
+			ShimeBi = new SummaryDb(_db).GetOwnClosingDay(),
+			CostMethod = GetCurrentCostMethod(),
+		};
+	}
+
+	/// <summary>
+	/// 確認スナップショット(<paramref name="confirmed"/>)と現在の指紋(<paramref name="current"/>)を比較し、
+	/// 確認後の変化を検知する（設計書§2.4-4）。<paramref name="confirmed"/>が<c>null</c>の場合はこの再検査を
+	/// 省略する（既存（評価替えStep 8）の「省略時は検査しない」性質を維持する）。
+	/// <para>
+	/// <b>評価替えの原価方式チェックについての実装判断</b>: 評価替えは<c>MasterSysman.CostMethod</c>の値に
+	/// かかわらず実行できる（設計書§16.8、§13 U-20）が、これは「実行の可否」の話であり、本メソッドが検査する
+	/// 「確認後にデータが変わっていないか」とは別問題である。評価替えの計算は実行時点の<c>CostMethod</c>を
+	/// <see cref="CostUpdateDb.ResolveCostAsOf(IReadOnlyCollection{long},string,EnumCostMethod,string?)"/>へ渡して
+	/// <c>BeforeCost</c>を解決するため、確認後に方式が変われば指紋（商品・在庫のVdu）が変わらなくても
+	/// 計算結果が変わり得る。そのため評価替えでも原価方式チェックは中断理由に含める。
+	/// </para>
+	/// </summary>
+	private static string? DetectConfirmMismatch(CostConfirmSnapshot? confirmed, CostConfirmSnapshot current) {
+		if (confirmed == null) {
+			return null;
+		}
+		if (confirmed.ShimeBi != current.ShimeBi) {
+			return "確認後に自社締日が変更されました。再度確認してください。";
+		}
+		if (confirmed.CostMethod != current.CostMethod) {
+			return "確認後に原価方式が変更されました。再度確認してください。";
+		}
+		if (confirmed.SourceMaxVdu != current.SourceMaxVdu || confirmed.SourceCount != current.SourceCount) {
+			return "確認後にデータが追加・変更・削除されました。再度確認してください。";
+		}
+		return null;
+	}
+
+	/// <summary>
+	/// 確認後の変更検知（<see cref="DetectConfirmMismatch"/>）で中断したことを表す<see cref="CostUpdateResult"/>を作る。
+	/// 排他失敗（<see cref="NewManualLockFailure(CostUpdateParameter,long,string,SysSequence?)"/>）と同様、
+	/// 例外にはせず「今は実行できないだけ」を表す形で返す（設計書§2.4適用時の要件）。
+	/// </summary>
+	private static CostUpdateResult NewConfirmMismatchFailure(CostUpdateParameter param, long startedAt, string message) => new() {
+		IsSuccess = false,
+		BatchId = param.BatchId,
+		TargetMonth = param.TargetMonth,
+		UpdatedCount = 0,
+		ErrorCount = 0,
+		Message = message,
+		StartedAt = startedAt,
+		FinishedAt = Common.GetVdate(),
+	};
+
+	// ==================================================================
 	// 4-1. 対象期間の解決（設計書§2.1）
 	// ==================================================================
 
