@@ -15,6 +15,7 @@ MessageBoxView と MessageEx は、所有者 Window・ボタン種別・表示�
 # example
 MessageEx.ShowInformation("保存しました。", owner: this);
  */
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -248,9 +249,17 @@ public partial class MessageBoxView : Window {
 				break;
 		}
 
-		// 最も左側の表示されているボタンにフォーカスを設定する
+		// DefaultResultが指定されていれば、そのボタンへフォーカスする。
+		// 指定が無い(既定のNone)場合は従来どおり最も左側の表示されているボタンにフォーカスする
 		Dispatcher.InvokeAsync(() => {
-			if (CanReceiveInitialFocus(LeftButton)) {
+			var preferred = DefaultResult == MessageBoxResult.None
+				? null
+				: new[] { LeftButton, MiddleButton, RightButton }
+					.FirstOrDefault(b => CanReceiveInitialFocus(b) && b.Tag is MessageBoxResult tag && tag == DefaultResult);
+			if (preferred != null) {
+				Keyboard.Focus(preferred);
+			}
+			else if (CanReceiveInitialFocus(LeftButton)) {
 				Keyboard.Focus(LeftButton);
 			}
 			else if (CanReceiveInitialFocus(MiddleButton)) {
@@ -347,12 +356,14 @@ public static class MessageEx {
 	#endregion
 	//
 	#region Question Dialog
-	public static MessageBoxResult ShowQuestionDialog(string message, string appendedMessage = "", Window? owner = null) {
+	public static MessageBoxResult ShowQuestionDialog(string message, string appendedMessage = "", Window? owner = null, MessageBoxResult defaultResult = MessageBoxResult.None) {
 		if (MessageExTestRoute.IsActive)
 			return MessageExTestRoute.Respond(nameof(ShowQuestionDialog), MessageBoxButton.YesNo, MessageBoxImage.Question, message, appendedMessage, isModal: true);
 		if (owner != null)
 			owner.Opacity = 0.7;
-		var cls = new MessageBoxView(message, appendedMessage, MessageBoxButton.YesNo, MessageBoxImage.Question, owner);
+		var cls = new MessageBoxView(message, appendedMessage, MessageBoxButton.YesNo, MessageBoxImage.Question, owner) {
+			DefaultResult = defaultResult
+		};
 		cls.ShowDialog();
 		if (owner != null)
 			owner.Opacity = 1;

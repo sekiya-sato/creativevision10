@@ -229,6 +229,16 @@ public enum CvFlag {
 	[EnumMember]
 	Msg060_StocktakeStatus = 60,
 	/// <summary>
+	/// マニュアル排他制御の状態照会（SysSeqType=1の行を照会する。読み取りのみ）
+	/// </summary>
+	[EnumMember]
+	Msg061_ManualLockStatus = 61,
+	/// <summary>
+	/// マニュアル排他制御の強制クリア（SysSeqType=1の行を全件削除し履歴を残す）
+	/// </summary>
+	[EnumMember]
+	Msg062_ManualLockClear = 62,
+	/// <summary>
 	/// POS: バーコードから商品を検索する
 	/// </summary>
 	[EnumMember]

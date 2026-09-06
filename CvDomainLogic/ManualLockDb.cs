@@ -340,7 +340,96 @@ public class ManualLockDb(ExDatabase db) {
 			(int)EmSysSeqType.ManualLock);
 
 	// ==================================================================
-	// 5. 監視タスク（設計書§3、Step 9-4）
+	// 5. 強制クリア（設計書§2.5、Step 9-5）
+	// ==================================================================
+
+	/// <summary>
+	/// 強制クリア（<see cref="ForceClearManualLocks"/>）が<see cref="SysHistAutoexec"/>へ書く
+	/// <see cref="SysHistAutoexec.TaskName"/>（設計書§2.5.3）
+	/// </summary>
+	public const string ManualLockClearTaskName = "マニュアル排他制御クリア";
+
+	/// <summary>
+	/// 現在排他が掛かっている行を、確認ダイアログ表示用のDTOへ詰めて返す（設計書§2.5.1-1、§2.5.2）。
+	/// <b>DBは変更しない。</b>
+	/// <para>
+	/// <see cref="ManualLockRow.ElapsedSecondsSinceVdu"/>と<see cref="ManualLockRow.IsLikelyAlive"/>は
+	/// クライアントとサーバーで時計がずれる可能性があるため、サーバー時刻（<see cref="Common.GetVdate"/>）で
+	/// 一貫して算出する。閾値判定は<see cref="ManualLockMonitor.ComputeThresholdTicks"/>を再利用し、
+	/// 監視タスク（§3.4）と同じ基準にする。
+	/// </para>
+	/// </summary>
+	public ManualLockStatus FetchManualLockStatus() {
+		var now = Common.GetVdate();
+		var rows = FetchActiveLocks().Select(row => {
+			var elapsedTicks = now - row.Vdu;
+			var threshold = ManualLockMonitor.ComputeThresholdTicks(row.ExpectedDuration);
+			return new ManualLockRow {
+				TableName = row.TableName,
+				ColumnName = row.ColumnName,
+				SeqNo = row.SeqNo,
+				Vdc = row.Vdc,
+				Vdu = row.Vdu,
+				ElapsedSecondsSinceVdu = (long)TicksToSeconds(elapsedTicks),
+				ExpectedDuration = row.ExpectedDuration,
+				Memo = row.Memo,
+				IsLikelyAlive = elapsedTicks < threshold,
+			};
+		}).ToList();
+		return new ManualLockStatus { Rows = rows, HasLikelyAlive = rows.Any(x => x.IsLikelyAlive) };
+	}
+
+	/// <summary>
+	/// <c>SysSeqType=1</c>の行を全件削除し、<see cref="SysHistAutoexec"/>へ手動実行の履歴を残す（設計書§2.5.3）。
+	/// 通常は1行だが、§2.1の競合で一時的に2行になった直後などに備えて全件を対象とする。
+	/// <c>SysSeqType=0</c>（テーブル連番）の行は本メソッドのDELETE条件に含まれないため消えない。
+	/// <para>
+	/// 0件のときは削除するものが無いため<b>履歴を書かない</b>。呼び出し側は設計書§2.5.1-2で、
+	/// この場合は確認ダイアログ自体を出さない設計であり、通常0件で呼ばれることはない。
+	/// </para>
+	/// </summary>
+	/// <param name="idShain">実行社員Id。「誰がいつ何を強制解放したか」として<c>Memo</c>へ残す（設計書§2.5.3）</param>
+	/// <returns>削除した行数</returns>
+	public int ForceClearManualLocks(long idShain) {
+		var rows = FetchActiveLocks();
+		if (rows.Count == 0) {
+			return 0;
+		}
+
+		var deletedCount = _db.ExecuteDialect(
+			$"DELETE FROM {nameof(SysSequence)} WHERE SysSeqType=@0", (int)EmSysSeqType.ManualLock);
+
+		var vdate = Common.GetVdate();
+		var detail = string.Join(MemoSeparator, rows.Select(row =>
+			$"TableName={row.TableName}, ColumnName={row.ColumnName}, SeqNo={row.SeqNo}, " +
+			$"Vdc={FormatHistoryDateTime(row.Vdc)}, Vdu={FormatHistoryDateTime(row.Vdu)}, Memo={row.Memo}"));
+		// 実行社員を末尾に追記する: AppendTruncatedMemoは先頭(古い内容)から切り捨てるため、
+		// 300文字を超えても「誰が実行したか」が失われないようにする
+		var memo = AppendTruncatedMemo(detail, $"実行社員Id={idShain}", MemoMaxLength);
+
+		var history = new SysHistAutoexec {
+			SysHistType = (int)EmSysHistType.ManualExec,
+			TaskName = NormalizeTaskName(ManualLockClearTaskName),
+			StartTime = FormatHistoryDateTime(vdate),
+			EndTime = FormatHistoryDateTime(vdate),
+			ElapsedTime = 0,
+			ReturnCode = 0,
+			Count = deletedCount,
+			Memo = memo,
+			Vdc = vdate,
+			Vdu = vdate,
+		};
+		_db.Insert(history);
+
+		_logger.LogWarning(
+			"マニュアル排他制御: 強制クリアを実行しました。 実行社員Id={IdShain}, 削除件数={DeletedCount}",
+			idShain, deletedCount);
+
+		return deletedCount;
+	}
+
+	// ==================================================================
+	// 6. 監視タスク（設計書§3、Step 9-4）
 	// ==================================================================
 	// 判定そのもの（純関数）は<see cref="ManualLockMonitor.Evaluate"/>が行う。ここは判定結果に応じた
 	// DB書き込み（SysSequenceの削除、SysHistAutoexecへのログ）だけを担う。書式組み立ては

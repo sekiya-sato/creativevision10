@@ -54,6 +54,8 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg047_MasterVColumnResync] = (req, ctx) => Task.FromResult(HandleMasterVColumnResync(req, ctx)),
 			[CvFlag.Msg059_TranTaxRebuild] = (req, ctx) => Task.FromResult(HandleTranTaxRebuild(req, ctx)),
 			[CvFlag.Msg060_StocktakeStatus] = (req, ctx) => Task.FromResult(HandleStocktakeStatus(req, ctx)),
+			[CvFlag.Msg061_ManualLockStatus] = (req, ctx) => Task.FromResult(HandleManualLockStatus(req, ctx)),
+			[CvFlag.Msg062_ManualLockClear] = (req, ctx) => Task.FromResult(HandleManualLockClear(req, ctx)),
 			[CvFlag.Msg070_PosLookupProduct] = HandlePosLookupProductAsync,
 			[CvFlag.Msg071_PosCheckout] = HandlePosCheckoutAsync,
 			[CvFlag.Msg072_PosCancelSale] = HandlePosCancelSaleAsync,

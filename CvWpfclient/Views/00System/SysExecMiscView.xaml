@@ -104,6 +104,19 @@
 									Text="伝票税額再更新" />
 							</StackPanel>
 						</Button>
+						<Button Width="200" Height="42"
+							Margin="0,0,12,12"
+							Command="{Binding ManualLockClearCommand}"
+							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+							Style="{StaticResource MaterialDesignRaisedButton}"
+							ToolTip="処理が落ちて排他行が残ったままのとき、監視タスクの自動解放を待たずに強制解放します">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="LockOpenVariant" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="マニュアル排他制御クリア" />
+							</StackPanel>
+						</Button>
 					</WrapPanel>
 				</Grid>
 			</materialDesign:Card>

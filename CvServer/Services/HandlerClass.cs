@@ -255,6 +255,60 @@ public partial class CoreService {
 	}
 
 	/// <summary>
+	/// ログイン中の社員Id（<see cref="SysLogin.Id_Shain"/>）をJWTから解決する。
+	/// <para>
+	/// JWTの <see cref="System.Security.Claims.ClaimTypes.SerialNumber"/> には
+	/// <see cref="SysLogin.Id"/> が入る（<c>LoginService.cs:93</c>）ので、そこから
+	/// <see cref="SysLogin"/> を引いて社員Idを得る。初回起動トークンなど
+	/// <c>SerialNumber</c> を持たない場合や該当行が無い場合は0を返す。
+	/// </para>
+	/// <para>
+	/// 監査値をクライアントの申告に依存させないための共通処理である。
+	/// </para>
+	/// </summary>
+	private long ResolveLoginShainId() {
+		var user = _httpContextAccessor.HttpContext?.User;
+		var serial = user?.FindFirst(System.Security.Claims.ClaimTypes.SerialNumber)?.Value;
+		if (!long.TryParse(serial, out var loginId) || loginId <= 0) {
+			return 0;
+		}
+		return _db.FirstOrDefault<SysLogin>("where Id=@0", loginId)?.Id_Shain ?? 0;
+	}
+
+	/// <summary>
+	/// マニュアル排他制御の状態照会（設計書§2.5.1-1）。DBは変更しない。
+	/// </summary>
+	private CvMsg HandleManualLockStatus(CvMsg request, CallContext context) {
+		try {
+			var status = new ManualLockDb(_db).FetchManualLockStatus();
+			return CreateSuccessResponse(request.Flag, typeof(ManualLockStatus), Common.SerializeObject(status));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "マニュアル排他制御の状態照会に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// マニュアル排他制御の強制クリア（設計書§2.5.3）。実行社員Idはリクエストからは受け取らず、
+	/// <see cref="ResolveLoginShainId"/> でJWTから解決する。
+	/// </summary>
+	private CvMsg HandleManualLockClear(CvMsg request, CallContext context) {
+		try {
+			// 実行社員はクライアントの申告値ではなくJWTから解決する。強制クリアは排他制御そのものを
+			// 無効化する操作であり、履歴の「誰が解放したか」は後の原因追跡の要になるため、
+			// 利用者が任意に選べる値であってはならない(マニュアル排他制御 詳細設計§2.5.3)。
+			var idShain = ResolveLoginShainId();
+			var deletedCount = new ManualLockDb(_db).ForceClearManualLocks(idShain);
+			return CreateSuccessResponse(request.Flag, typeof(int), Common.SerializeObject(deletedCount));
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "マニュアル排他制御の強制クリアに失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
 	/// 再同期の実行結果サマリを組み立てる(開始/終了/所要時間はサーバ側の実測値)
 	/// </summary>
 	private static string BuildResyncSummary(DateTime startTime, int updated, int errorCount) {
