@@ -255,6 +255,17 @@ public partial class CoreService {
 	}
 
 	/// <summary>
+	/// JWTの <see cref="System.Security.Claims.ClaimTypes.SerialNumber"/>（<see cref="SysLogin.Id"/>）を解決する。
+	/// 初回起動トークンなど <c>SerialNumber</c> を持たない場合は0を返す。
+	/// <see cref="ResolveLoginShainId"/>と<see cref="ResolveDeclaredDeviceInfo"/>が共通で使う経路（設計書§2.5.3）。
+	/// </summary>
+	private long ResolveLoginId() {
+		var user = _httpContextAccessor.HttpContext?.User;
+		var serial = user?.FindFirst(System.Security.Claims.ClaimTypes.SerialNumber)?.Value;
+		return long.TryParse(serial, out var loginId) && loginId > 0 ? loginId : 0;
+	}
+
+	/// <summary>
 	/// ログイン中の社員Id（<see cref="SysLogin.Id_Shain"/>）をJWTから解決する。
 	/// <para>
 	/// JWTの <see cref="System.Security.Claims.ClaimTypes.SerialNumber"/> には
@@ -267,13 +278,43 @@ public partial class CoreService {
 	/// </para>
 	/// </summary>
 	private long ResolveLoginShainId() {
-		var user = _httpContextAccessor.HttpContext?.User;
-		var serial = user?.FindFirst(System.Security.Claims.ClaimTypes.SerialNumber)?.Value;
-		if (!long.TryParse(serial, out var loginId) || loginId <= 0) {
+		var loginId = ResolveLoginId();
+		if (loginId <= 0) {
 			return 0;
 		}
 		return _db.FirstOrDefault<SysLogin>("where Id=@0", loginId)?.Id_Shain ?? 0;
 	}
+
+	/// <summary>
+	/// マニュアル排他制御の強制クリア履歴へ残す端末情報の表示用文字列を組み立てる（設計書§2.5.3 Step T8）。
+	/// <para>
+	/// IPアドレスだけが<see cref="Microsoft.AspNetCore.Http.HttpContext.Connection"/>から取る
+	/// <b>サーバー由来</b>の値であり、最も確実である。マシン名・ログオンユーザー名・OSバージョン・
+	/// MACアドレスは<see cref="SysHistJwt.Jsub"/>（ログイン時にクライアントが申告した値、
+	/// <c>CvWpfclient/ViewModels/00System/LoginViewModel.cs</c>の<c>SubGetInfo</c>が作る）であり、
+	/// 監査値ではない。詳細設計§2.5.3が定める「申告値を監査値にしない」原則に照らし、
+	/// 履歴上でも申告値であることが分かるよう「申告」を付けて記録する。
+	/// </para>
+	/// <para>
+	/// <see cref="SysHistJwt.Ip"/>はログイン時点の値のため使わない。強制クリア時点の
+	/// <c>RemoteIpAddress</c>の方が新鮮で確実である（設計書§6.1）。
+	/// IPが取れない場合・該当する<see cref="SysHistJwt"/>行が無い場合も例外にせず「不明」で埋める。
+	/// </para>
+	/// </summary>
+	private string ResolveDeclaredDeviceInfo() {
+		var ip = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
+		var loginId = ResolveLoginId();
+		var jsub = loginId > 0
+			? _db.FirstOrDefault<SysHistJwt>("where Id_Login=@0 order by Id desc", loginId)?.Jsub
+			: null;
+		return $"IP={ip ?? "不明"}, " +
+			$"申告Machine={NullIfEmpty(jsub?.Machine) ?? "不明"}, " +
+			$"申告User={NullIfEmpty(jsub?.User) ?? "不明"}, " +
+			$"申告OsVer={NullIfEmpty(jsub?.OsVer) ?? "不明"}, " +
+			$"申告MacAddress={NullIfEmpty(jsub?.MacAddress) ?? "不明"}";
+	}
+
+	private static string? NullIfEmpty(string? value) => string.IsNullOrEmpty(value) ? null : value;
 
 	/// <summary>
 	/// マニュアル排他制御の状態照会（設計書§2.5.1-1）。DBは変更しない。
@@ -299,7 +340,8 @@ public partial class CoreService {
 			// 無効化する操作であり、履歴の「誰が解放したか」は後の原因追跡の要になるため、
 			// 利用者が任意に選べる値であってはならない(マニュアル排他制御 詳細設計§2.5.3)。
 			var idShain = ResolveLoginShainId();
-			var deletedCount = new ManualLockDb(_db).ForceClearManualLocks(idShain);
+			var deviceInfo = ResolveDeclaredDeviceInfo();
+			var deletedCount = new ManualLockDb(_db).ForceClearManualLocks(idShain, deviceInfo);
 			return CreateSuccessResponse(request.Flag, typeof(int), Common.SerializeObject(deletedCount));
 		}
 		catch (Exception ex) {

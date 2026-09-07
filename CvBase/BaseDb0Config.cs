@@ -145,7 +145,18 @@ public sealed partial class SysHistAutoexec : BaseDbClass {
 	/// <summary>
 	/// メモ (エラー内容や処理内容などを記述)
 	/// </summary>
+	/// <remarks>
+	/// マニュアル排他制御 詳細設計§2.5.3(Step T8, 2026-09-07)により2000を明示した。
+	/// 従来は本属性が未指定で既定(255)が使われており、アプリ側が300文字まで書こうとしていたため
+	/// 方言によっては溢れうる状態だった。
+	/// 強制クリア履歴へ端末情報(IP・申告Machine/User/OsVer/MacAddress)を追記すると
+	/// 従来の300文字では収まらないため。SQLiteはTEXT型のため実体の変更は不要だが、
+	/// 他方言(Oracle/PostgreSQL等)は本属性からDDLを生成する際にこの上限を使う。
+	/// 既存DBの列幅拡張(ALTER)が必要かどうかはUpdateDb側の調査事項であり、本属性の変更だけでは
+	/// 既存の物理列は広がらない(詳細は<see cref="CvDomainLogic.ManualLockDb"/>のHistoryMemoMaxLength参照)。
+	/// </remarks>
 	[ObservableProperty]
+	[ColumnSizeDml(2000)]
 	[Comment("メモ (エラー内容や処理内容などを記述)")]
 	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>

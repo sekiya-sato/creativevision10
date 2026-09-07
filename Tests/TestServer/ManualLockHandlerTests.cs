@@ -58,6 +58,7 @@ public class ManualLockHandlerTests {
 		Db.CreateTable(typeof(SysSequence), true, false);
 		Db.CreateTable(typeof(SysHistAutoexec), true, false);
 		Db.CreateTable(typeof(SysLogin), true, false);
+		Db.CreateTable(typeof(SysHistJwt), true, false);
 
 		_httpContextAccessor = new HttpContextAccessor();
 		_service = new CoreService(
@@ -100,6 +101,28 @@ public class ManualLockHandlerTests {
 
 	private void SetHttpContextUser(ClaimsPrincipal principal) {
 		_httpContextAccessor!.HttpContext = new DefaultHttpContext { User = principal };
+	}
+
+	/// <summary>
+	/// <see cref="HandlerClass.ResolveDeclaredDeviceInfo"/>がリモートIPを読めるよう、
+	/// <c>HttpContext</c>の<c>Connection.RemoteIpAddress</c>を設定する。
+	/// </summary>
+	private void SetRemoteIpAddress(string ip) {
+		var context = _httpContextAccessor!.HttpContext ?? new DefaultHttpContext();
+		context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(ip);
+		_httpContextAccessor.HttpContext = context;
+	}
+
+	/// <summary>
+	/// <paramref name="loginId"/>（<c>SysHistJwt.Id_Login</c>）向けに、ログイン時のクライアント申告値を
+	/// 積んだ<see cref="SysHistJwt"/>行を1件投入する。<see cref="HandlerClass.ResolveDeclaredDeviceInfo"/>が
+	/// ここから端末情報(申告値)を読む。
+	/// </summary>
+	private void InsertJwtHistory(long loginId, string machine, string user, string osVer, string macAddress) {
+		Db.Insert(new SysHistJwt {
+			Id_Login = loginId,
+			Jsub = new SysHistJwtSub { Machine = machine, User = user, OsVer = osVer, MacAddress = macAddress },
+		});
 	}
 
 	private System.Collections.Generic.List<SysSequence> FetchAllSequences() =>
@@ -293,5 +316,69 @@ public class ManualLockHandlerTests {
 		var deletedCount = Common.DeserializeObject<int>(response.DataMsg);
 		Assert.AreEqual(0, deletedCount);
 		Assert.AreEqual(0, FetchAllHistories().Count);
+	}
+
+	// ==================================================================
+	// Msg062_ManualLockClear: 端末情報の記録（テスト計画§6.1、詳細設計§2.5.3 Step T8）
+	// ==================================================================
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task Msg062_実行社員が判明していても端末情報がIPと申告値として記録される() {
+		SetLoggedInUser(loginId: 7, idShain: 4321);
+		SetRemoteIpAddress("192.168.1.10");
+		InsertJwtHistory(loginId: 7, machine: "PC-SALES01", user: "yamada", osVer: "Windows 11", macAddress: "00-11-22-33-44-55");
+		var lockDb = new ManualLockDb(Db);
+		lockDb.TryBegin("在庫・掛再集計", "買掛集計", 600, "実行中メモ");
+
+		var response = await InvokeAsync(CvFlag.Msg062_ManualLockClear);
+
+		Assert.AreEqual(0, response.Code);
+		var history = FetchAllHistories().Single();
+		// 実行社員が判明していても常に端末情報を記録すること(設計書§2.5.3の理由3点)。
+		Assert.IsTrue(history.Memo.Contains("実行社員Id=4321"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("IP=192.168.1.10"), $"Memo={history.Memo}");
+		// マシン名・ユーザー名・OSバージョン・MACアドレスは申告値であることが分かる形で記録すること。
+		Assert.IsTrue(history.Memo.Contains("申告Machine=PC-SALES01"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("申告User=yamada"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("申告OsVer=Windows 11"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("申告MacAddress=00-11-22-33-44-55"), $"Memo={history.Memo}");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task Msg062_JWTのclaimが無い場合でもIPが取れれば端末情報が記録される() {
+		// 実行社員0(claim無し)の場合、Id_Loginが解決できないため申告値(Machine等)は「不明」になるが、
+		// IPはサーバー由来のためJWTの有無に関係なく取れる。
+		SetHttpContextUser(new ClaimsPrincipal(new ClaimsIdentity()));
+		SetRemoteIpAddress("10.0.0.5");
+		var lockDb = new ManualLockDb(Db);
+		lockDb.TryBegin("在庫・掛再集計", "買掛集計", 600, "実行中メモ");
+
+		var response = await InvokeAsync(CvFlag.Msg062_ManualLockClear);
+
+		Assert.AreEqual(0, response.Code);
+		var history = FetchAllHistories().Single();
+		Assert.IsTrue(history.Memo.Contains("実行社員Id=0"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("IP=10.0.0.5"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("申告Machine=不明"), $"Memo={history.Memo}");
+	}
+
+	[TestMethod]
+	public async System.Threading.Tasks.Task Msg062_IPも申告値も取れない場合でも例外にならず不明で記録される() {
+		// DefaultHttpContextはConnection.RemoteIpAddress未設定だとnullのままであり、
+		// SysHistJwt行も無いため、すべて「不明」で埋まること。落ちないことの確認が主眼。
+		SetLoggedInUser(loginId: 1, idShain: 111);
+		var lockDb = new ManualLockDb(Db);
+		lockDb.TryBegin("在庫・掛再集計", "買掛集計", 600, "実行中メモ");
+
+		var response = await InvokeAsync(CvFlag.Msg062_ManualLockClear);
+
+		Assert.AreEqual(0, response.Code);
+		var history = FetchAllHistories().Single();
+		Assert.IsTrue(history.Memo.Contains("実行社員Id=111"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("IP=不明"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("申告Machine=不明"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("申告User=不明"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("申告OsVer=不明"), $"Memo={history.Memo}");
+		Assert.IsTrue(history.Memo.Contains("申告MacAddress=不明"), $"Memo={history.Memo}");
 	}
 }

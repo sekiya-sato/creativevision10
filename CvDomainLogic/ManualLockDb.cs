@@ -115,9 +115,16 @@ public class ManualLockDb(ExDatabase db) {
 	private readonly ILogger<ManualLockDb> _logger = new NLogExtender<ManualLockDb>();
 
 	/// <summary>
-	/// <see cref="SysSequence.Memo"/>の<c>[ColumnSizeDml(300)]</c>に合わせた上限
+	/// <see cref="SysSequence.Memo"/>の<c>[ColumnSizeDml(300)]</c>に合わせた上限。
+	/// <b>注意</b>: これは<see cref="SysSequence"/>専用であり、<see cref="SysHistAutoexec"/>の
+	/// 上限には<see cref="HistoryMemoMaxLength"/>を使うこと(混同しないこと。設計書§2.5.3 Step T8)。
 	/// </summary>
 	private const int MemoMaxLength = 300;
+	/// <summary>
+	/// <see cref="SysHistAutoexec.Memo"/>の<c>[ColumnSizeDml(2000)]</c>に合わせた上限（設計書§2.5.3 Step T8、2026-09-07）。
+	/// 強制クリア履歴・監視タスク履歴など、<see cref="SysHistAutoexec"/>へ書く<c>Memo</c>の切り捨てはすべてこちらを使う
+	/// </summary>
+	private const int HistoryMemoMaxLength = 2000;
 	/// <summary>
 	/// <see cref="SysHistAutoexec.TaskName"/>の<c>[ColumnSizeDml(100)]</c>に合わせた上限
 	/// </summary>
@@ -389,8 +396,17 @@ public class ManualLockDb(ExDatabase db) {
 	/// </para>
 	/// </summary>
 	/// <param name="idShain">実行社員Id。「誰がいつ何を強制解放したか」として<c>Memo</c>へ残す（設計書§2.5.3）</param>
+	/// <param name="declaredDeviceInfo">
+	/// 強制クリアを実行した端末の情報。組み立て済みの表示用文字列で受け取る（設計書§2.5.3 Step T8）。
+	/// <para>
+	/// <b>端末情報の解決はハンドラ層（サーバー）の責務</b>であり、本メソッド（ドメイン層）は
+	/// <c>HttpContext</c>や<c>SysHistJwt</c>に依存しない。呼び出し側（<c>HandlerClass.HandleManualLockClear</c>）が
+	/// IPアドレス（サーバー由来）とログイン時のクライアント申告値（<c>SysHistJwt.Jsub</c>）から
+	/// 組み立てた文字列をそのまま渡す。空文字なら付記しない（省略可、既定は空文字）。
+	/// </para>
+	/// </param>
 	/// <returns>削除した行数</returns>
-	public int ForceClearManualLocks(long idShain) {
+	public int ForceClearManualLocks(long idShain, string declaredDeviceInfo = "") {
 		var rows = FetchActiveLocks();
 		if (rows.Count == 0) {
 			return 0;
@@ -403,9 +419,13 @@ public class ManualLockDb(ExDatabase db) {
 		var detail = string.Join(MemoSeparator, rows.Select(row =>
 			$"TableName={row.TableName}, ColumnName={row.ColumnName}, SeqNo={row.SeqNo}, " +
 			$"Vdc={FormatHistoryDateTime(row.Vdc)}, Vdu={FormatHistoryDateTime(row.Vdu)}, Memo={row.Memo}"));
-		// 実行社員を末尾に追記する: AppendTruncatedMemoは先頭(古い内容)から切り捨てるため、
-		// 300文字を超えても「誰が実行したか」が失われないようにする
-		var memo = AppendTruncatedMemo(detail, $"実行社員Id={idShain}", MemoMaxLength);
+		// 実行社員・端末情報を末尾に追記する: AppendTruncatedMemoは先頭(古い内容)から切り捨てるため、
+		// 上限を超えても「誰が・どの端末から実行したか」が失われないようにする。
+		// 実行社員が判明している場合も常に端末情報を記録する（設計書§2.5.3 Step T8、理由3点は同章参照）。
+		var executorInfo = string.IsNullOrEmpty(declaredDeviceInfo)
+			? $"実行社員Id={idShain}"
+			: $"実行社員Id={idShain}, {declaredDeviceInfo}";
+		var memo = AppendTruncatedMemo(detail, executorInfo, HistoryMemoMaxLength);
 
 		var history = new SysHistAutoexec {
 			SysHistType = (int)EmSysHistType.ManualExec,
@@ -422,8 +442,8 @@ public class ManualLockDb(ExDatabase db) {
 		_db.Insert(history);
 
 		_logger.LogWarning(
-			"マニュアル排他制御: 強制クリアを実行しました。 実行社員Id={IdShain}, 削除件数={DeletedCount}",
-			idShain, deletedCount);
+			"マニュアル排他制御: 強制クリアを実行しました。 実行社員Id={IdShain}, 削除件数={DeletedCount}, {DeclaredDeviceInfo}",
+			idShain, deletedCount, declaredDeviceInfo);
 
 		return deletedCount;
 	}
@@ -485,7 +505,7 @@ public class ManualLockDb(ExDatabase db) {
 		var detail =
 			$"TableName={subject.TableName}, ColumnName={subject.ColumnName}, SeqNo={subject.SeqNo}, " +
 			$"Vdc={FormatHistoryDateTime(subject.Vdc)}, Vdu={FormatHistoryDateTime(subject.Vdu)}, ExpectedDuration={subject.ExpectedDuration}秒";
-		var memo = AppendTruncatedMemo(marker, detail, MemoMaxLength);
+		var memo = AppendTruncatedMemo(marker, detail, HistoryMemoMaxLength);
 
 		var history = new SysHistAutoexec {
 			SysHistType = (int)EmSysHistType.AutoExec,
