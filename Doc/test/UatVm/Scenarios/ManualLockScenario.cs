@@ -73,6 +73,13 @@ public static class ManualLockScenario {
 	// ==================================================================
 	// 実行対象（既存動作実績のある組み合わせを再利用）
 	// ==================================================================
+	/// <summary>
+	/// E-07（総平均原価更新を実際に実行するケース）を有効にするかどうか。
+	/// 既定は<c>false</c>で、<c>--allow-cost-update</c>を指定したときだけ<c>true</c>になる（<c>Program.cs</c>が設定する）。
+	/// 実DBの原価データを書き換えるため、明示指定を必須としている（2026-09-07 ユーザー判断）。
+	/// </summary>
+	public static bool AllowCostUpdate { get; set; }
+
 	private const string BillingMonth = "2026/07";
 	private const string TokuiCode = "000002";
 
@@ -576,6 +583,16 @@ public static class ManualLockScenario {
 	// ==================================================================
 
 	private static async Task RunE07Async(VmSession session, Switches switches) {
+		// E-07は総平均原価更新(UpdateCommand)を実際に実行し、実DBの原価データを書き換える。
+		// 13処理のうちProgressを複数回呼ぶのは総平均原価更新だけであり、Vduが前進し続ける
+		// 長時間占有を作れるのはこれしかないため対象に選んだが、影響範囲が他ケースより大きい。
+		// したがってS2の設定やPreviewの成否とは別に、--allow-cost-update の明示指定を必須とする
+		// （2026-09-07 ユーザー判断。テスト計画§4.2 E-07）。
+		if (!AllowCostUpdate) {
+			session.Note("E-07 スキップ", "--allow-cost-update が指定されていません。"
+				+ "E-07は総平均原価更新を実際に実行し実DBの原価データを書き換えるため、明示指定を必須としています。");
+			return;
+		}
 		if (!switches.HasS2) {
 			session.Note("E-07 スキップ", "CV10_LOCK_SLEEP_STEP_MS(S2)が未設定のため、Vduを前進させ続ける長時間占有を作れません。");
 			return;
