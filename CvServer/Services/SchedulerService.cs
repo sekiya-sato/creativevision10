@@ -1208,11 +1208,23 @@ public class SchedulerService : ISchedulerService {
 		var lockDb = new ManualLockDb(db);
 		var nowUtcTicks = DateTime.UtcNow.Ticks;
 
+		bool previousIsNull;
 		CvDomainLogic.ManualLockMonitorTick tick;
 		lock (_manualLockMonitorGate) {
+			previousIsNull = _manualLockMonitorState is null;
 			var activeLocks = lockDb.FetchActiveLocks();
 			tick = CvDomainLogic.ManualLockMonitor.Evaluate(_manualLockMonitorState, activeLocks, nowUtcTicks);
 			_manualLockMonitorState = tick.NextState;
+		}
+
+		// 再起動を跨いだ場合の例外（設計書§3.7追記、Step T9）: このtickが新しい2bを書くよりも前に判定する。
+		// 先に新しい2bを書いてしまうと「直近の監視ログ」がそちらにすり替わり、
+		// 本来閉じるべき孤立2b（再起動前に記録されたまま対になっていない行）を見失う
+		// （理由の詳細はManualLockDb.TryRecordOrphanClosedのコメント参照）。
+		if (lockDb.TryRecordOrphanClosed(previousIsNull, taskName, nowUtcTicks)) {
+			_logger.LogWarning(
+				"マニュアル排他制御監視: 再起動を跨いで孤立した2bを検知したため、対を閉じる補完記録を書きました。 TaskName={TaskName}",
+				taskName);
 		}
 
 		switch (tick.Action) {

@@ -468,6 +468,13 @@ public class ManualLockDb(ExDatabase db) {
 	private const string MonitorTimeoutMarker = "[2e:タイムアウト解放]";
 	/// <summary>監視ログの目印（設計書§3.7の2f）</summary>
 	private const string MonitorNormalEndMarker = "[2f:正常終了]";
+	/// <summary>
+	/// 監視ログの目印（設計書§3.7「再起動を跨いだ場合の例外」、Step T9）。
+	/// 再起動を跨いで孤立した2bへ、対を閉じる補完記録を書くときに使う。
+	/// 既存の2e（実際に解放した）/2f（実際の正常終了検知）とは意図的に区別する新しいマーカーであり、
+	/// 「後から対を閉じただけの記録」であることを履歴上で明示する（既存マーカーは流用しない）。
+	/// </summary>
+	private const string MonitorOrphanClosedMarker = "[2h:孤立2b補完]";
 
 	/// <summary>
 	/// 監視タスクが§3.2（2b）で行を新規検知したときの履歴を書く（設計書§3.2、§3.7）。
@@ -495,6 +502,81 @@ public class ManualLockDb(ExDatabase db) {
 	/// </summary>
 	public void RecordMonitorNormalEnd(ManualLockMonitorState subject, string monitorTaskName) =>
 		InsertMonitorHistory(monitorTaskName, 0, MonitorNormalEndMarker, subject);
+
+	/// <summary>
+	/// 再起動を跨いで孤立した2bへ、対を閉じる補完記録を書く（設計書§3.7「再起動を跨いだ場合の例外」、Step T9）。
+	/// 判定そのもの（純関数）は<see cref="ManualLockMonitor.ShouldCloseOrphanedDetection"/>が行う。
+	/// ここは「直近の監視ログをDBから読む」「判定結果に応じて補完記録を書く」というDB結合部分だけを担う
+	/// （<see cref="ManualLockMonitor.Evaluate"/>とその実行部分の分担と同じ考え方）。
+	/// <para>
+	/// <b>冪等性の根拠</b>: 本メソッドが補完記録を書くのは「直近の監視ログが[2b:検知]のまま」の場合だけである。
+	/// 書いた直後は「直近の監視ログ」が本メソッド自身が今書いた[2h:孤立2b補完]の行になり、
+	/// マーカーが2bではなくなる。したがって次回tickで本メソッドが再度呼ばれても
+	/// <c>latestHistoryIsDetectedMarker</c>がfalseになり、再度書かれることはない。
+	/// 直近1件をId降順で読む（<see cref="FindLatestMonitorHistory"/>）ことにこの理屈が依存するため、
+	/// 並び順は<c>ORDER BY Id DESC LIMIT 1</c>で固定している。前回状態の永続化など追加の仕掛けは不要
+	/// （設計書の「やらないこと」に従う）。
+	/// </para>
+	/// <para>
+	/// <b>呼び出し順序についての注意</b>: 呼び出し側（<c>SchedulerService.ExecuteManualLockMonitorCoreAsync</c>）は
+	/// 本メソッドを、その回のtickが新しい2b（<see cref="ManualLockMonitorAction.RecordDetected"/>）を
+	/// 書くよりも前に呼ぶこと。同一tick内で先に新しい2bを書いてしまうと、「直近の監視ログ」が
+	/// その新しい2bにすり替わり、本来閉じるべき孤立2b（1つ前の行）を見失う。
+	/// </para>
+	/// </summary>
+	/// <param name="previousIsNull">今回のtickの<c>previous</c>（前回状態）がnullかどうか</param>
+	/// <param name="monitorTaskName">監視タスクの表示名（<see cref="SysHistAutoexec.TaskName"/>）</param>
+	/// <param name="nowUtcTicks">現在時刻（UTC Ticks）</param>
+	/// <returns>補完記録を書いたかどうか</returns>
+	public bool TryRecordOrphanClosed(bool previousIsNull, string monitorTaskName, long nowUtcTicks) {
+		if (!previousIsNull) {
+			// 通常のtickは前回状態を持っているはずなので、DB問い合わせ自体を省略する
+			// （ShouldCloseOrphanedDetectionもfalseを返す判定だが、無駄なSELECTを避けるための早期リターン）。
+			return false;
+		}
+
+		var latest = FindLatestMonitorHistory(monitorTaskName);
+		var isOrphanCandidate = latest != null && latest.Memo.StartsWith(MonitorDetectedMarker, StringComparison.Ordinal);
+		if (!ManualLockMonitor.ShouldCloseOrphanedDetection(previousIsNull, isOrphanCandidate)) {
+			return false;
+		}
+
+		InsertOrphanClosedHistory(latest!, monitorTaskName, nowUtcTicks);
+		return true;
+	}
+
+	/// <summary>
+	/// 監視タスクの直近の履歴行（本タスク名で最新の<see cref="SysHistAutoexec"/>行）を1件返す。
+	/// 無ければnull。<see cref="TryRecordOrphanClosed"/>専用の内部ヘルパー
+	/// </summary>
+	private SysHistAutoexec? FindLatestMonitorHistory(string monitorTaskName) =>
+		_db.FetchDialect<SysHistAutoexec>(
+			$"SELECT * FROM {nameof(SysHistAutoexec)} WHERE TaskName=@0 AND SysHistType=@1 ORDER BY Id DESC LIMIT 1",
+			NormalizeTaskName(monitorTaskName), (int)EmSysHistType.AutoExec).FirstOrDefault();
+
+	/// <summary>
+	/// 孤立2bを閉じる補完記録を組み立てて書き込む。孤立2b自体の<c>Memo</c>文字列は解析せず、
+	/// <see cref="SysHistAutoexec"/>の列（<c>Id</c>/<c>StartTime</c>/<c>EndTime</c>）だけを参照して
+	/// 追跡できるようにする（設計方針「Memo文字列の解析はしない」に従う）。
+	/// </summary>
+	private void InsertOrphanClosedHistory(SysHistAutoexec orphan, string monitorTaskName, long nowUtcTicks) {
+		var detail = $"対象の孤立2b: Id={orphan.Id}, StartTime={orphan.StartTime}, EndTime={orphan.EndTime}";
+		var memo = AppendTruncatedMemo(MonitorOrphanClosedMarker, detail, HistoryMemoMaxLength);
+
+		var history = new SysHistAutoexec {
+			SysHistType = (int)EmSysHistType.AutoExec,
+			TaskName = NormalizeTaskName(monitorTaskName),
+			StartTime = orphan.StartTime,
+			EndTime = FormatHistoryDateTime(nowUtcTicks),
+			ElapsedTime = TicksToSeconds(nowUtcTicks - orphan.Vdu),
+			ReturnCode = 0,
+			Count = 0,
+			Memo = memo,
+			Vdc = nowUtcTicks,
+			Vdu = nowUtcTicks,
+		};
+		_db.Insert(history);
+	}
 
 	/// <summary>
 	/// 監視タスクの<see cref="SysHistAutoexec"/>ログを組み立てて書き込む共通処理（設計書§3.7）。

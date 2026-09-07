@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvBaseSqlite;
@@ -160,6 +161,46 @@ public class ManualLockMonitorTests {
 		var tick = ManualLockMonitor.Evaluate(previous: null, activeLocks: tableSeqOnly, nowUtcTicks: 1_000_000L);
 
 		Assert.AreEqual(ManualLockMonitorAction.None, tick.Action);
+	}
+
+	// ------------------------------------------------------------------
+	// Step T9(2026-09-07: 閾値条件を撤去): ShouldCloseOrphanedDetection(純関数)。
+	// 再起動を跨いで孤立した2bへの補完記録が必要かどうかの判定(設計書§3.7「再起動を跨いだ場合の例外」)。
+	// previousIsNullかつ直近ログが2bのままなら、経過時間を問わず即座に補完対象にする。
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ShouldCloseOrphanedDetection_previousがnullで直近ログが2bなら経過時間に関係なく補完対象にする() {
+		var result = ManualLockMonitor.ShouldCloseOrphanedDetection(previousIsNull: true, latestHistoryIsDetectedMarker: true);
+
+		Assert.IsTrue(result, "previousが無く、直近ログが2bのままなら即座に補完対象にすること");
+	}
+
+	[TestMethod]
+	public void ShouldCloseOrphanedDetection_previousが非nullなら対象にしない() {
+		// 同一プロセス内でEvaluateが一度でも2bを検知していれば、previousは以後null以外になる。
+		// つまりこの組み合わせ(previous非null)は再起動直後ではないため対象にしない。
+		var result = ManualLockMonitor.ShouldCloseOrphanedDetection(previousIsNull: false, latestHistoryIsDetectedMarker: true);
+
+		Assert.IsFalse(result);
+	}
+
+	[TestMethod]
+	public void ShouldCloseOrphanedDetection_直近ログが2bでなければ対象にしない() {
+		// 直近ログが既に2e/2fで対が閉じている場合(latestHistoryIsDetectedMarker=false)は、
+		// previousがnullであっても補完記録を書く必要が無い。
+		var result = ManualLockMonitor.ShouldCloseOrphanedDetection(previousIsNull: true, latestHistoryIsDetectedMarker: false);
+
+		Assert.IsFalse(result);
+	}
+
+	[TestMethod]
+	public void ShouldCloseOrphanedDetection_直近ログが無ければ対象にしない() {
+		// 監視ログが1件も無い場合、呼び出し側(ManualLockDb.TryRecordOrphanClosed)は
+		// latestHistoryIsDetectedMarker=falseを渡す。
+		var result = ManualLockMonitor.ShouldCloseOrphanedDetection(previousIsNull: true, latestHistoryIsDetectedMarker: false);
+
+		Assert.IsFalse(result);
 	}
 }
 
@@ -384,6 +425,112 @@ public class ManualLockMonitorDbTests {
 		Assert.AreEqual(ManualLockMonitorAction.RecordTimeout, tickAfter.Action, "経過時間が閾値を超えた直後は削除すること");
 		Assert.AreEqual(0, Db.Fetch<SysSequence>($"SELECT * FROM {nameof(SysSequence)}").Count, "閾値超過でSysSequenceの行が削除されること");
 		Assert.AreEqual(2, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count, "閾値超過でSysHistAutoexecが増えること");
+	}
+
+	// ------------------------------------------------------------------
+	// Step T9: ManualLockDb.TryRecordOrphanClosed(DB結合)。
+	// 設計書§3.7「再起動を跨いだ場合の例外」への対応。RunTickで作った2bを、
+	// previousIsNull(=前回状態が失われた=再起動直後)を模してTryRecordOrphanClosedへ渡す。
+	// ------------------------------------------------------------------
+
+	/// <summary>孤立2bがあれば、経過時間に関係なく補完記録[2h:孤立2b補完]が1行書かれること(2026-09-07: 閾値条件を撤去)</summary>
+	[TestMethod]
+	public void TryRecordOrphanClosed_孤立2bがあれば経過時間に関係なく補完記録を書く() {
+		var lockDb = new ManualLockDb(Db);
+		var begun = lockDb.TryBegin("在庫・掛再集計", "買掛集計", 600);
+		RunTick(lockDb, previous: null, nowUtcTicks: begun.Handle!.Vdc); // 2bを1件作る(再起動前の記録を模す)
+		Assert.AreEqual(1, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count);
+
+		// 記録直後(経過時間ほぼ0)でも書かれることを確認する。
+		var written = lockDb.TryRecordOrphanClosed(previousIsNull: true, MonitorTaskName, nowUtcTicks: Common.GetVdate());
+
+		Assert.IsTrue(written, "経過時間に関係なく補完記録を書くこと");
+		var histories = Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)} ORDER BY Id");
+		Assert.AreEqual(2, histories.Count, "2b(孤立)に加えて補完記録の2行になること");
+		Assert.IsTrue(histories[1].Memo.StartsWith("[2h:"), $"2行目は補完記録のマーカーであること: {histories[1].Memo}");
+		Assert.AreEqual((int)EmSysHistType.AutoExec, histories[1].SysHistType);
+	}
+
+	/// <summary>同じ状態で2回tickしても補完記録が2行にならない(冪等性)</summary>
+	[TestMethod]
+	public void TryRecordOrphanClosed_同じ状態で2回呼んでも1行しか書かれない() {
+		var lockDb = new ManualLockDb(Db);
+		var begun = lockDb.TryBegin("売掛再集計", "売掛集計", 600);
+		RunTick(lockDb, previous: null, nowUtcTicks: begun.Handle!.Vdc);
+
+		var nowUtcTicks = Common.GetVdate();
+
+		var firstCall = lockDb.TryRecordOrphanClosed(previousIsNull: true, MonitorTaskName, nowUtcTicks);
+		Assert.IsTrue(firstCall);
+		Assert.AreEqual(2, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count);
+
+		// 2回目: 直近の監視ログは既に1回目が書いた[2h:孤立2b補完]になっているため、
+		// previousIsNull=trueのまま(まだEvaluateで2bを検知し直していない状態)でも書かれないこと。
+		var secondCall = lockDb.TryRecordOrphanClosed(previousIsNull: true, MonitorTaskName, nowUtcTicks + 1);
+		Assert.IsFalse(secondCall, "直近ログが既に2hになっているため2回目は書かれないこと(冪等性)");
+		Assert.AreEqual(2, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count, "補完記録は1行のままであること");
+	}
+
+	/// <summary>監視ログが1件も無い場合も例外にならず何も書かない</summary>
+	[TestMethod]
+	public void TryRecordOrphanClosed_監視ログが1件も無ければ何もしない() {
+		var lockDb = new ManualLockDb(Db);
+
+		var written = lockDb.TryRecordOrphanClosed(previousIsNull: true, MonitorTaskName, nowUtcTicks: Common.GetVdate());
+
+		Assert.IsFalse(written, "監視ログが無ければ書かないこと");
+		Assert.AreEqual(0, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count);
+	}
+
+	/// <summary>直近が2f(正常終了)など対が閉じている場合は何もしない</summary>
+	[TestMethod]
+	public void TryRecordOrphanClosed_直近が2fで対が閉じていれば何もしない() {
+		var lockDb = new ManualLockDb(Db);
+		var begun = lockDb.TryBegin("請求計算", "請求集計", 600);
+		var tick1 = RunTick(lockDb, previous: null, nowUtcTicks: begun.Handle!.Vdc);
+		// Completeは処理側自身の手動実行履歴(TaskName=処理名、設計書§2.3-2)も1行書くため、
+		// 監視タスク自身の履歴(TaskName=MonitorTaskName)だけをTaskNameで絞って数える(既存のAssertMonitorHistoryPairsAlternateと同じ考え方)。
+		lockDb.Complete(begun.Handle, 0, 10, "正常終了");
+		RunTick(lockDb, tick1.NextState, begun.Handle.Vdc + 1000); // 2f(正常終了)を記録
+		Assert.AreEqual(2, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)} WHERE TaskName=@0", MonitorTaskName).Count);
+
+		var threshold = ManualLockMonitor.ComputeThresholdTicks(0);
+		var written = lockDb.TryRecordOrphanClosed(previousIsNull: true, MonitorTaskName, nowUtcTicks: Common.GetVdate() + threshold + 1);
+
+		Assert.IsFalse(written, "直近ログが2fで対が既に閉じているため書かないこと");
+		Assert.AreEqual(2, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)} WHERE TaskName=@0", MonitorTaskName).Count);
+	}
+
+	/// <summary>直近が2e(タイムアウト解放)など対が閉じている場合も何もしない</summary>
+	[TestMethod]
+	public void TryRecordOrphanClosed_直近が2eで対が閉じていれば何もしない() {
+		var lockDb = new ManualLockDb(Db);
+		var begun = lockDb.TryBegin("HHT取込反映", "HHT反映", 60);
+		begun.Handle!.Dispose(); // Completeを呼ばずに異常終了
+		var tick1 = RunTick(lockDb, previous: null, nowUtcTicks: begun.Handle.Vdc);
+		var monitorThreshold = ManualLockMonitor.ComputeThresholdTicks(60);
+		RunTick(lockDb, tick1.NextState, begun.Handle.Vdc + monitorThreshold + 1); // 2e(タイムアウト解放)を記録
+		Assert.AreEqual(2, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count);
+
+		var threshold = ManualLockMonitor.ComputeThresholdTicks(0);
+		var written = lockDb.TryRecordOrphanClosed(previousIsNull: true, MonitorTaskName, nowUtcTicks: Common.GetVdate() + threshold + 1);
+
+		Assert.IsFalse(written, "直近ログが2eで対が既に閉じているため書かないこと");
+		Assert.AreEqual(2, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count);
+	}
+
+	/// <summary>previousが非nullなら(=再起動直後ではないなら)、閾値を超えていても書かない</summary>
+	[TestMethod]
+	public void TryRecordOrphanClosed_previousが非nullなら書かない() {
+		var lockDb = new ManualLockDb(Db);
+		var begun = lockDb.TryBegin("評価替え", "評価替え計算", 600);
+		RunTick(lockDb, previous: null, nowUtcTicks: begun.Handle!.Vdc);
+
+		var threshold = ManualLockMonitor.ComputeThresholdTicks(0);
+		var written = lockDb.TryRecordOrphanClosed(previousIsNull: false, MonitorTaskName, nowUtcTicks: Common.GetVdate() + threshold + 1);
+
+		Assert.IsFalse(written, "previousが非nullのとき(同一プロセス内の通常tick)は対象にしないこと");
+		Assert.AreEqual(1, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count);
 	}
 
 	/// <summary>

@@ -128,4 +128,46 @@ public static class ManualLockMonitor {
 		// §3.4（2d）: 閾値内。何もしない（状態は維持する）。
 		return new ManualLockMonitorTick(current, ManualLockMonitorAction.None, null);
 	}
+
+	/// <summary>
+	/// 再起動を跨いで孤立した2bへ、対を閉じる補完記録が必要かを判定する（設計書§3.7「再起動を跨いだ場合の例外」、Step T9）。
+	/// 呼び出し側（<see cref="ManualLockDb.TryRecordOrphanClosed"/>）が「直近の監視ログ（本タスク名で
+	/// 最新の<see cref="SysHistAutoexec"/>行）の内容」を渡し、本メソッドは判定だけを行う純関数のままにする
+	/// （<see cref="Evaluate"/>と同じ配置方針。設計書§3備考「純関数の性質を壊さない配置」）。
+	/// <para>
+	/// <b><paramref name="previousIsNull"/>で絞る理由</b>: <see cref="Evaluate"/>でRecordDetected（2b）が
+	/// 一度実行されると、次回tickの<c>previous</c>は必ず非nullになる（2c/2dでは維持され、2e/2fで初めて
+	/// nullに戻るが、そのときは直近の監視ログ自体も2e/2fになっている）。したがって
+	/// 「<c>previous</c>がnullなのに直近の監視ログは2bのまま」という組み合わせは、
+	/// プロセス再起動でメモリ上の状態（<c>SchedulerService._manualLockMonitorState</c>）が失われた
+	/// 直後の最初のtickでしか起こり得ない。§3.4のVdu前進監視（2c/2dの判定、対象は排他行そのもの）とは
+	/// 判定対象が異なる別軸の閾値であり、混同しないこと。
+	/// </para>
+	/// <para>
+	/// <b>閾値を外した理由（2026-09-07 ユーザー決定）</b>: <paramref name="previousIsNull"/>（再起動でメモリ上の
+	/// 前回状態が失われた直後）かつ直近の監視ログが2bのままという組み合わせは、その2bが通常の流れでは
+	/// 絶対に対にならないことの証明である（2bを書いたプロセスの状態は既に失われている）。閾値を待つと
+	/// 穴が生じる。行が残っている場合、閾値未達のうちに<see cref="Evaluate"/>が新しい2bを書き、直近ログが
+	/// すり替わって古い孤立2bが永久に埋もれる（実運用で観測したId 542→543、5分間隔の例）。補完記録は
+	/// <see cref="SysHistAutoexec"/>へ1行書くだけで排他行の解放など破壊的な操作を一切しないため、
+	/// 「早すぎる補完」を警戒する必要もない。
+	/// </para>
+	/// <para>
+	/// <b>対象範囲（設計書の(a)行が既に消えている場合／(b)まだ残っている場合）</b>: 本メソッドは
+	/// <c>SysSequence</c>の行が現存するかどうかを一切見ない。孤立2bに対応する2e/2fが欠落しているという
+	/// ログ上の事実は、行の有無に関わらず同じだからである。行が残っている場合(b)は<see cref="Evaluate"/>が
+	/// 別途「新しい2b」としてその行を検知し直し、そこから通常どおり2c/2d/2e/2fへ続く（既存の流れは変えない）。
+	/// ただし補完記録は閾値を待たず即時に書かれるため、同一tick内では本メソッドによる補完判定が
+	/// <see cref="Evaluate"/>の新規2b検知より先に行われ、両者が競合することはない。
+	/// 本メソッドはそれとは独立に「直近ログが2bのまま」という記録だけを見て両ケース(a)(b)を区別せず対応する。
+	/// </para>
+	/// </summary>
+	/// <param name="previousIsNull">今回のtickの<c>previous</c>（前回状態）がnullかどうか</param>
+	/// <param name="latestHistoryIsDetectedMarker">
+	/// 直近の監視ログ（本タスク名で最新の<see cref="SysHistAutoexec"/>行）のMemoが
+	/// 「[2b:検知]」で始まったままかどうか
+	/// </param>
+	public static bool ShouldCloseOrphanedDetection(bool previousIsNull, bool latestHistoryIsDetectedMarker) {
+		return previousIsNull && latestHistoryIsDetectedMarker;
+	}
 }
