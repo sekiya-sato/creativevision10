@@ -438,7 +438,7 @@ public partial class MenuData : ObservableObject {
 		 * ================================================================ */
 		new("■ システム管理", new([
 			new("▲ ログイン管理 ----", new([
-				new("ログイン管理マスタ", typeof(Views._00System.SysLoginView), addInfo:"ログインIDの管理とユーザ割当、有効期限の設定"),
+				new("ログイン管理マスタ", typeof(Views._00System.SysLoginView), addInfo:"ログインIDの管理とユーザ割当、有効期限の設定 旧データ変換した際には社員Idの再割当が必要"),
 				new("ログイン履歴情報", typeof(Views._00System.SysLoginHistoryView), addInfo:"ログイン履歴の確認"),
 			])),
 			new("▲ 自動実行 ----", new([

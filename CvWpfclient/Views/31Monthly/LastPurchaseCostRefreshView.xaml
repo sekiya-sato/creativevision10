@@ -80,7 +80,8 @@
 						Text="{Binding PeriodText}" />
 
 					<Button Grid.Row="0" Grid.Column="5"
-						Width="120" HorizontalAlignment="Right"
+						Width="120"
+						HorizontalAlignment="Right"
 						Command="{Binding RefreshStatusCommand}"
 						Style="{StaticResource MaterialDesignOutlinedButton}">
 						<StackPanel Orientation="Horizontal">
@@ -125,8 +126,8 @@
 					-->
 					<Border Grid.Row="0"
 						Margin="0,0,0,8" Padding="12,8"
-						BorderBrush="{DynamicResource NegativeForegroundBrush}" BorderThickness="1"
-						CornerRadius="4"
+						BorderBrush="{DynamicResource NegativeForegroundBrush}"
+						BorderThickness="1" CornerRadius="4"
 						Visibility="{Binding CostMethodMismatchMessage, Converter={StaticResource StringIsNotEmptyToVisibilityConverter}}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
@@ -134,7 +135,8 @@
 								Kind="AlertCircleOutline" />
 							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
 								Foreground="{DynamicResource NegativeForegroundBrush}"
-								Text="{Binding CostMethodMismatchMessage}" TextWrapping="Wrap" />
+								Text="{Binding CostMethodMismatchMessage}"
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</Border>
 
@@ -162,21 +164,39 @@
 					</StackPanel>
 
 					<DataGrid Grid.Row="2"
-						AutoGenerateColumns="False"
-						CanUserAddRows="False" CanUserDeleteRows="False"
-						IsReadOnly="True"
+						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
 						ItemsSource="{Binding Rows}">
 						<DataGrid.Columns>
-							<DataGridTextColumn Width="200" Binding="{Binding ShohinText}" Header="商品" />
-							<DataGridTextColumn Width="90" Binding="{Binding BeforeCost, StringFormat=N0}" Header="前原価" />
-							<DataGridTextColumn Width="90" Binding="{Binding AfterCost, StringFormat=N0}" Header="後原価" />
-							<DataGridTextColumn Width="100" Binding="{Binding SourceDayText}" Header="最終仕入日" />
-							<DataGridTextColumn Width="90" Binding="{Binding SourceTranId}" Header="仕入No" />
-							<DataGridTextColumn Width="70" Binding="{Binding SourceLineNo}" Header="明細No" />
-							<DataGridTextColumn Width="70" Binding="{Binding QtyText}" Header="数量" />
-							<DataGridTextColumn Width="90" Binding="{Binding AmountText}" Header="仕入金額" />
-							<DataGridTextColumn Width="70" Binding="{Binding StatusText}" Header="状態" />
-							<DataGridTextColumn Width="220" Binding="{Binding ErrorMessage}" Header="エラー" />
+							<DataGridTextColumn Width="200"
+								Binding="{Binding ShohinText}"
+								Header="商品" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding BeforeCost, StringFormat=N0}"
+								Header="前原価" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding AfterCost, StringFormat=N0}"
+								Header="後原価" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding SourceDayText}"
+								Header="最終仕入日" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding SourceTranId}"
+								Header="仕入No" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding SourceLineNo}"
+								Header="明細No" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding QtyText}"
+								Header="数量" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding AmountText}"
+								Header="仕入金額" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding StatusText}"
+								Header="状態" />
+							<DataGridTextColumn Width="220"
+								Binding="{Binding ErrorMessage}"
+								Header="エラー" />
 						</DataGrid.Columns>
 					</DataGrid>
 				</Grid>

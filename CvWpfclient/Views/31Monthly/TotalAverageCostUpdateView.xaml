@@ -80,7 +80,8 @@
 						Text="{Binding PeriodText}" />
 
 					<Button Grid.Row="0" Grid.Column="5"
-						Width="120" HorizontalAlignment="Right"
+						Width="120"
+						HorizontalAlignment="Right"
 						Command="{Binding RefreshStatusCommand}"
 						Style="{StaticResource MaterialDesignOutlinedButton}">
 						<StackPanel Orientation="Horizontal">
@@ -125,8 +126,8 @@
 					-->
 					<Border Grid.Row="0"
 						Margin="0,0,0,8" Padding="12,8"
-						BorderBrush="{DynamicResource NegativeForegroundBrush}" BorderThickness="1"
-						CornerRadius="4"
+						BorderBrush="{DynamicResource NegativeForegroundBrush}"
+						BorderThickness="1" CornerRadius="4"
 						Visibility="{Binding CostMethodMismatchMessage, Converter={StaticResource StringIsNotEmptyToVisibilityConverter}}">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
@@ -134,7 +135,8 @@
 								Kind="AlertCircleOutline" />
 							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
 								Foreground="{DynamicResource NegativeForegroundBrush}"
-								Text="{Binding CostMethodMismatchMessage}" TextWrapping="Wrap" />
+								Text="{Binding CostMethodMismatchMessage}"
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</Border>
 
@@ -146,7 +148,7 @@
 						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 							Foreground="{DynamicResource NegativeForegroundBrush}"
 							Text="{Binding ErrorCount, StringFormat='エラー {0:N0} 件'}" />
-						<!-- 対象外(設計書§6.5「2026-09-06改訂」)。エラー件数とは別に表示する。 -->
+						<!--  対象外(設計書§6.5「2026-09-06改訂」)。エラー件数とは別に表示する。  -->
 						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 							Text="{Binding ExcludedCount, StringFormat='対象外 {0:N0} 件'}" />
 						<CheckBox Margin="24,0,0,0" VerticalAlignment="Center"
@@ -172,24 +174,48 @@
 						どの月の行か区別できるように列として表示する（設計書の列指定に無い追加列。詳細はVMのコメント参照）。
 					-->
 					<DataGrid Grid.Row="2"
-						AutoGenerateColumns="False"
-						CanUserAddRows="False" CanUserDeleteRows="False"
-						IsReadOnly="True"
+						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
 						ItemsSource="{Binding Rows}">
 						<DataGrid.Columns>
-							<DataGridTextColumn Width="80" Binding="{Binding SumMonthText}" Header="計上月" />
-							<DataGridTextColumn Width="200" Binding="{Binding ShohinText}" Header="商品" />
-							<DataGridTextColumn Width="90" Binding="{Binding BeforeCost, StringFormat=N0}" Header="前原価" />
-							<DataGridTextColumn Width="90" Binding="{Binding AfterCost, StringFormat=N0}" Header="後原価" />
-							<DataGridTextColumn Width="90" Binding="{Binding DiffCost, StringFormat=N0}" Header="差額" />
-							<DataGridTextColumn Width="90" Binding="{Binding OpeningQty, StringFormat=N0}" Header="前月在庫数" />
-							<DataGridTextColumn Width="100" Binding="{Binding OpeningAmount, StringFormat=N0}" Header="前月在庫金額" />
-							<DataGridTextColumn Width="90" Binding="{Binding PurchaseQty, StringFormat=N0}" Header="当月仕入数" />
-							<DataGridTextColumn Width="100" Binding="{Binding PurchaseAmount, StringFormat=N0}" Header="当月仕入金額" />
-							<DataGridTextColumn Width="90" Binding="{Binding SundryAmount, StringFormat=N0}" Header="諸掛" />
-							<DataGridTextColumn Width="80" Binding="{Binding Denominator, StringFormat=N0}" Header="分母" />
-							<DataGridTextColumn Width="70" Binding="{Binding StatusText}" Header="状態" />
-							<DataGridTextColumn Width="220" Binding="{Binding ReasonText}" Header="エラー" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding SumMonthText}"
+								Header="計上月" />
+							<DataGridTextColumn Width="200"
+								Binding="{Binding ShohinText}"
+								Header="商品" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding BeforeCost, StringFormat=N0}"
+								Header="前原価" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding AfterCost, StringFormat=N0}"
+								Header="後原価" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding DiffCost, StringFormat=N0}"
+								Header="差額" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding OpeningQty, StringFormat=N0}"
+								Header="前月在庫数" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding OpeningAmount, StringFormat=N0}"
+								Header="前月在庫金額" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding PurchaseQty, StringFormat=N0}"
+								Header="当月仕入数" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding PurchaseAmount, StringFormat=N0}"
+								Header="当月仕入金額" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding SundryAmount, StringFormat=N0}"
+								Header="諸掛" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding Denominator, StringFormat=N0}"
+								Header="分母" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding StatusText}"
+								Header="状態" />
+							<DataGridTextColumn Width="220"
+								Binding="{Binding ReasonText}"
+								Header="エラー" />
 						</DataGrid.Columns>
 					</DataGrid>
 				</Grid>

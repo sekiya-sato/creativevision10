@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._00System.SysAutoExecMailConfigView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._00System.SysAutoExecMailConfigView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
@@ -146,13 +146,12 @@
 						Style="{StaticResource SettingLabel}"
 						Text="パスワード" />
 					<StackPanel Grid.Row="6" Grid.Column="1">
-						<PasswordBox
-							helpers:PasswordBoxAssistant.BindPassword="True"
+						<PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
 							helpers:PasswordBoxAssistant.BoundPassword="{Binding Credential, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							IsEnabled="{Binding IsCredentialRequired}"
 							materialDesign:HintAssist.Hint="パスワード"
 							CaretBrush="{DynamicResource MaterialDesignBody}"
 							Foreground="{DynamicResource MaterialDesignBody}"
+							IsEnabled="{Binding IsCredentialRequired}"
 							Style="{StaticResource FormPasswordBox}" />
 						<TextBlock Margin="0,4,0,0"
 							FontSize="13"

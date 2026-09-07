@@ -80,7 +80,8 @@
 						Text="{Binding PeriodText}" />
 
 					<Button Grid.Row="0" Grid.Column="5"
-						Width="120" HorizontalAlignment="Right"
+						Width="120"
+						HorizontalAlignment="Right"
 						Command="{Binding RefreshStatusCommand}"
 						Style="{StaticResource MaterialDesignOutlinedButton}">
 						<StackPanel Orientation="Horizontal">
@@ -142,24 +143,48 @@
 					</StackPanel>
 
 					<DataGrid Grid.Row="1"
-						AutoGenerateColumns="False"
-						CanUserAddRows="False" CanUserDeleteRows="False"
-						IsReadOnly="True"
+						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
 						ItemsSource="{Binding Rows}">
 						<DataGrid.Columns>
-							<DataGridTextColumn Width="90" Binding="{Binding SourceTypeText}" Header="売上種別" />
-							<DataGridTextColumn Width="80" Binding="{Binding SourceId}" Header="売上No" />
-							<DataGridTextColumn Width="100" Binding="{Binding SourceDayText}" Header="売上日" />
-							<DataGridTextColumn Width="200" Binding="{Binding ShohinText}" Header="商品" />
-							<DataGridTextColumn Width="70" Binding="{Binding Su}" Header="数量" />
-							<DataGridTextColumn Width="150" Binding="{Binding MeiShiire}" Header="仕入先" />
-							<DataGridTextColumn Width="90" Binding="{Binding CalcTypeText}" Header="計算区分" />
-							<DataGridTextColumn Width="80" Binding="{Binding RateText}" Header="掛率" />
-							<DataGridTextColumn Width="90" Binding="{Binding UnitCost, StringFormat=N0}" Header="生成単価" />
-							<DataGridTextColumn Width="100" Binding="{Binding Kingaku, StringFormat=N0}" Header="生成金額" />
-							<DataGridTextColumn Width="90" Binding="{Binding Tax, StringFormat=N0}" Header="税額" />
-							<DataGridTextColumn Width="70" Binding="{Binding StatusText}" Header="状態" />
-							<DataGridTextColumn Width="220" Binding="{Binding ErrorMessage}" Header="エラー" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding SourceTypeText}"
+								Header="売上種別" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding SourceId}"
+								Header="売上No" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding SourceDayText}"
+								Header="売上日" />
+							<DataGridTextColumn Width="200"
+								Binding="{Binding ShohinText}"
+								Header="商品" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding Su}"
+								Header="数量" />
+							<DataGridTextColumn Width="150"
+								Binding="{Binding MeiShiire}"
+								Header="仕入先" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding CalcTypeText}"
+								Header="計算区分" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding RateText}"
+								Header="掛率" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding UnitCost, StringFormat=N0}"
+								Header="生成単価" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding Kingaku, StringFormat=N0}"
+								Header="生成金額" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Tax, StringFormat=N0}"
+								Header="税額" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding StatusText}"
+								Header="状態" />
+							<DataGridTextColumn Width="220"
+								Binding="{Binding ErrorMessage}"
+								Header="エラー" />
 						</DataGrid.Columns>
 					</DataGrid>
 				</Grid>

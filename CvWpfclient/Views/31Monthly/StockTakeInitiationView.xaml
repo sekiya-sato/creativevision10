@@ -147,10 +147,11 @@
 					</Border>
 
 					<DataGrid Grid.Row="1"
-						materialDesign:DataGridAssist.CellPadding="10,6" materialDesign:DataGridAssist.ColumnHeaderPadding="10,8"
-						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FontSize="14" GridLinesVisibility="Horizontal"
+						materialDesign:DataGridAssist.CellPadding="10,6" materialDesign:DataGridAssist.ColumnHeaderPadding="10,8" AutoGenerateColumns="False" CanUserAddRows="False"
+						CanUserDeleteRows="False" EnableRowVirtualization="True" FontSize="14" GridLinesVisibility="Horizontal"
 						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-						IsReadOnly="False" ItemsSource="{Binding Rows}"
+						IsReadOnly="False"
+						ItemsSource="{Binding Rows}"
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>

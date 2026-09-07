@@ -789,8 +789,7 @@
 								Margin="8,8,8,0"
 								FontSize="12"
 								Foreground="{DynamicResource MaterialDesignBodyLight}"
-								Text="旧HC$MASTER_SHOHIN_GENKAの移行保持データです。原価計算では使用しません。最新の原価変更履歴は「原価履歴」タブを参照してください。"
-								TextWrapping="Wrap" />
+								Text="旧HC$MASTER_SHOHIN_GENKAの移行保持データです。原価計算では使用しません。最新の原価変更履歴は「原価履歴」タブを参照してください。" TextWrapping="Wrap" />
 							<StackPanel Grid.Row="1"
 								Margin="8,8,8,0" HorizontalAlignment="Center"
 								Orientation="Horizontal">
@@ -880,9 +879,7 @@
 									<Border Margin="0,0,0,4" Padding="12,8"
 										Background="{DynamicResource MaterialDesignDivider}"
 										CornerRadius="6">
-										<TextBlock FontSize="12"
-											Text="仕入区分が「消化仕入」のときだけ使用します。「通常仕入」では入力しても処理に使用しません。"
-											TextWrapping="Wrap" />
+										<TextBlock FontSize="12" Text="仕入区分が「消化仕入」のときだけ使用します。「通常仕入」では入力しても処理に使用しません。" TextWrapping="Wrap" />
 									</Border>
 
 									<!--  委託仕入先  -->
@@ -972,8 +969,8 @@
 							</Grid.RowDefinitions>
 							<DockPanel Grid.Row="0"
 								Margin="8,8,8,0">
-								<Button DockPanel.Dock="Left"
-									Command="{Binding DoLoadCostHistoryCommand}"
+								<Button Command="{Binding DoLoadCostHistoryCommand}"
+									DockPanel.Dock="Left"
 									Style="{StaticResource MaterialDesignOutlinedButton}"
 									ToolTip="選択中の商品の原価変更履歴(TranGenka)を取得する">
 									<StackPanel Orientation="Horizontal">
@@ -986,8 +983,7 @@
 								<TextBlock Margin="12,0,0,0" VerticalAlignment="Center"
 									FontSize="12"
 									Foreground="{DynamicResource MaterialDesignBodyLight}"
-									Text="月次原価計算(消化仕入・最終仕入原価更新・総平均原価更新)と評価替えの双方が書き込む原価履歴(TranGenka)を参照専用で表示します。編集はできません。"
-									TextWrapping="Wrap" />
+									Text="月次原価計算(消化仕入・最終仕入原価更新・総平均原価更新)と評価替えの双方が書き込む原価履歴(TranGenka)を参照専用で表示します。編集はできません。" TextWrapping="Wrap" />
 							</DockPanel>
 							<DataGrid x:Name="CostGenkaHistoryGrid"
 								Grid.Row="1"
