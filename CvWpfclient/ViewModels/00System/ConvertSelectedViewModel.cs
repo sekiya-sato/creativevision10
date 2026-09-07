@@ -195,6 +195,7 @@ internal static class ConvertTaskDisplayNames {
 		["CnvTran11IdoIn"] = "積送移動入データ(11)  ← HC$TRAN_TORI0 / HC$TRAN_TORI1 (伝票処理区分=11)",
 		["CnvTran12Jyuchu"] = "受注データ(12)  ← HC$TRAN_TORI0 / HC$TRAN_TORI1 (伝票処理区分=12)",
 		["CnvTran13Hachu"] = "発注データ(13)  ← HC$TRAN_TORI0 / HC$TRAN_TORI1 (伝票処理区分=13)",
+		["CnvTranShohinSupplement"] = "Tran用補足商品マスタの作成・明細Id再設定  ← 旧DB参照なし(cv10内で完結)",
 		["CnvTranRelateFix"] = "関連伝票の張替(仕入→発注/売上→受注/移動受→積送)  ← 旧DB参照なし(cv10内で完結)",
 	};
 

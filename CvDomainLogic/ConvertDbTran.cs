@@ -645,44 +645,245 @@ public partial class ConvertDb {
 	/// 明細サイズコード変換
 	/// </summary>
 	public int subCnvTranHeaderSize<T>(bool isInit = true) where T : ITranDetail {
-		var cnt = 0;
 		var tname = typeof(T).Name;
+		var countSql = @$"
+SELECT COUNT(*)
+FROM {tname}
+WHERE json_valid({tname}.Jmeisai)
+  AND EXISTS (
+    SELECT 1
+    FROM json_each(CASE WHEN json_valid({tname}.Jmeisai) THEN {tname}.Jmeisai ELSE '[]' END) AS j
+    JOIN DerivedShohinColSiz AS m
+      ON json_extract(j.value, '$.Id_Shohin') = m.Id_Shohin
+     AND json_extract(j.value, '$.Id_Col')    = m.Id_Col
+     AND json_extract(j.value, '$.Code_Siz')  = m.Code_Siz
+    WHERE CAST(COALESCE(json_extract(j.value, '$.Id_Siz'), 0) AS INTEGER) = 0
+  )
+";
+		var cnt = _toDb.FetchDialect<int>(countSql).FirstOrDefault();
 		var sql = @$"
 UPDATE {tname}
 SET Jmeisai = (
-  SELECT json_group_array(
-           json_set(
-             j.value,
-             '$.Id_Siz',
-             m.Id_Siz
-           )
-         )
-  FROM json_each({tname}.Jmeisai) AS j
-  JOIN DerivedShohinColSiz AS m
-    ON json_extract(j.value, '$.Id_Shohin') = m.Id_Shohin
-   AND json_extract(j.value, '$.Id_Col')    = m.Id_Col
-   AND json_extract(j.value, '$.Code_Siz')  = m.Code_Siz
-   AND json_extract(j.value, '$.Id_Siz')   = 0
+  SELECT json_group_array(json(x.value2))
+  FROM (
+    SELECT
+      j.key,
+      CASE
+        WHEN CAST(COALESCE(json_extract(j.value, '$.Id_Siz'), 0) AS INTEGER) = 0
+             AND m.Id_Siz IS NOT NULL
+        THEN json_set(j.value, '$.Id_Siz', m.Id_Siz)
+        ELSE j.value
+      END AS value2
+    FROM json_each(CASE WHEN json_valid({tname}.Jmeisai) THEN {tname}.Jmeisai ELSE '[]' END) AS j
+    LEFT JOIN DerivedShohinColSiz AS m
+      ON json_extract(j.value, '$.Id_Shohin') = m.Id_Shohin
+     AND json_extract(j.value, '$.Id_Col')    = m.Id_Col
+     AND json_extract(j.value, '$.Code_Siz')  = m.Code_Siz
+    ORDER BY CAST(j.key AS INTEGER)
+  ) AS x
 )
-WHERE EXISTS (
+WHERE json_valid({tname}.Jmeisai)
+  AND EXISTS (
   SELECT 1
-  FROM json_each({tname}.Jmeisai) AS j
+  FROM json_each(CASE WHEN json_valid({tname}.Jmeisai) THEN {tname}.Jmeisai ELSE '[]' END) AS j
   JOIN DerivedShohinColSiz AS m
     ON json_extract(j.value, '$.Id_Shohin') = m.Id_Shohin
    AND json_extract(j.value, '$.Id_Col')    = m.Id_Col
    AND json_extract(j.value, '$.Code_Siz')  = m.Code_Siz
-   AND json_extract(j.value, '$.Id_Siz')   = 0
+  WHERE CAST(COALESCE(json_extract(j.value, '$.Id_Siz'), 0) AS INTEGER) = 0
 )
 ";
-		cnt = _toDb.ExecuteDialect(sql);
-		var sql2 = $"SELECT changes() AS updated_count";
-		cnt = _toDb.FirstOrDefault<int>(sql2);
+		_toDb.ExecuteDialect(sql);
 		return cnt;
 		// SQLite の JSON 関数を使用して、Jmeisai 内のサイズコードを一括で更新する SQL クエリを実行する。
 		// このクエリは、Jmeisai 内の Id_Siz が 0 のレコードに対して、DerivedShohinColSiz テーブルから対応するサイズコードを取得して更新します。
-		// Executeメソッドの仕様で、正常終了は0を返すため、更新件数は'SELECT changes()'で取得、クエリの実行自体は効率的に行われます。
+		// 更新件数は、他DBに存在しない changes() を避けるため、同じ EXISTS 条件の事前COUNTで取得します。
 		// アプリ側でレコード1件づつの処理をした場合、実データ5万件程度で数10分、300万件で4時間以上かかって途中リタイア。-> SQLクエリで一括更新する方法に変更して全体で5分程度で完了。
 	}
+
+	const string TranShohinSupplementSuffix = "（Tran用補足マスタ）";
+	const int MasterShohinCodeMaxLength = 16;
+	const int MasterShohinNameMaxLength = 80;
+
+	/// <summary>
+	/// 通常商品の伝票明細に残った未解決商品コードから補足商品マスタを作成し、
+	/// 明細の <c>Id_Shohin</c> だけを商品マスタのIdへ張り替える。
+	/// </summary>
+	/// <remarks>
+	/// 生地・付属仕入の <see cref="Tran02Material"/> は <c>Id_Shohin</c> の意味が異なるため対象外。
+	/// 補足マスタ作成と全対象伝票のJSON更新は、再実行可能な単一トランザクションで行う。
+	/// </remarks>
+	public int CnvTranShohinSupplement(bool isInit = true) {
+		if (!_toDb.IsExistTable<MasterShohin>()) {
+			_logger.LogWarning("Tran用補足商品マスタを作成できません。{Table} が存在しません", nameof(MasterShohin));
+			return 0;
+		}
+
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		var addedCount = 0;
+		var updatedCount = 0;
+		try {
+			var candidates = new Dictionary<string, string>(StringComparer.Ordinal);
+			var invalidCandidates = new HashSet<string>(StringComparer.Ordinal);
+			CollectTranShohinSupplementCandidates<Tran00Uriage>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran01Tenuri>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran03Shiire>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran05Ido>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran10IdoOut>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran11IdoIn>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran12Jyuchu>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran13Hachu>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran60Tana>(candidates, invalidCandidates);
+			CollectTranShohinSupplementCandidates<Tran61Chosei>(candidates, invalidCandidates);
+
+			var existingCodes = _toDb.Fetch<MasterShohinCode>(
+				$"SELECT Code FROM {nameof(MasterShohin)}")
+				.Where(x => !string.IsNullOrEmpty(x.Code))
+				.Select(x => x.Code)
+				.ToHashSet(StringComparer.Ordinal);
+
+			foreach (var invalid in invalidCandidates.OrderBy(x => x, StringComparer.Ordinal)) {
+				if (string.IsNullOrWhiteSpace(invalid))
+					_logger.LogWarning("Tran明細の商品コードが空のため、補足商品マスタを作成せず明細を保持します");
+				else if (!existingCodes.Contains(invalid))
+					_logger.LogWarning(
+						"Tran明細の商品コードが{MaxLength}文字を超えるため、補足商品マスタを作成せず明細を保持します。Code={Code}",
+						MasterShohinCodeMaxLength, invalid);
+			}
+
+			var supplements = candidates
+				.Where(x => !existingCodes.Contains(x.Key))
+				.Select(x => new MasterShohin {
+					Code = x.Key,
+					Name = BuildTranShohinSupplementName(x.Key, x.Value),
+				})
+				.ToList();
+			if (supplements.Count > 0) {
+				_toDb.InsertBulk<MasterShohin>(supplements);
+				addedCount = supplements.Count;
+			}
+
+			updatedCount += RelinkTranShohin<Tran00Uriage>();
+			updatedCount += RelinkTranShohin<Tran01Tenuri>();
+			updatedCount += RelinkTranShohin<Tran03Shiire>();
+			updatedCount += RelinkTranShohin<Tran05Ido>();
+			updatedCount += RelinkTranShohin<Tran10IdoOut>();
+			updatedCount += RelinkTranShohin<Tran11IdoIn>();
+			updatedCount += RelinkTranShohin<Tran12Jyuchu>();
+			updatedCount += RelinkTranShohin<Tran13Hachu>();
+			updatedCount += RelinkTranShohin<Tran60Tana>();
+			updatedCount += RelinkTranShohin<Tran61Chosei>();
+
+			_toDb.CompleteTransaction();
+		}
+		catch {
+			_toDb.AbortTransaction();
+			throw;
+		}
+
+		if (addedCount > 0)
+			_shohinTaxIdMap = null;
+		_logger.LogInformation(
+			"Tran用補足商品マスタを{AddedCount}件追加し、通常商品明細を含む伝票{UpdatedCount}件のId_Shohinを再設定しました",
+			addedCount, updatedCount);
+		return addedCount + updatedCount;
+	}
+
+	void CollectTranShohinSupplementCandidates<T>(Dictionary<string, string> candidates, HashSet<string> invalidCandidates)
+		where T : ITranDetail {
+		if (!_toDb.IsExistTable<T>())
+			return;
+
+		var tname = typeof(T).Name;
+		var rows = _toDb.FetchDialect<TranShohinCandidate>(@$"
+SELECT
+  json_extract(j.value, '$.Code_Shohin') AS Code,
+  COALESCE(MIN(NULLIF(json_extract(j.value, '$.Mei_Shohin'), '')), '') AS Name
+FROM {tname}, json_each(CASE WHEN json_valid({tname}.Jmeisai) THEN {tname}.Jmeisai ELSE '[]' END) AS j
+WHERE CAST(COALESCE(json_extract(j.value, '$.Id_Shohin'), 0) AS INTEGER) = 0
+GROUP BY json_extract(j.value, '$.Code_Shohin')
+");
+		foreach (var row in rows) {
+			var code = row.Code ?? string.Empty;
+			if (string.IsNullOrWhiteSpace(code) || code.Length > MasterShohinCodeMaxLength) {
+				invalidCandidates.Add(code);
+				continue;
+			}
+			if (!candidates.TryGetValue(code, out var currentName)
+				|| string.IsNullOrWhiteSpace(currentName) && !string.IsNullOrWhiteSpace(row.Name))
+				candidates[code] = row.Name ?? string.Empty;
+		}
+	}
+
+	int RelinkTranShohin<T>() where T : ITranDetail {
+		if (!_toDb.IsExistTable<T>())
+			return 0;
+
+		var tname = typeof(T).Name;
+		var targetExistsSql = @$"
+FROM {tname}
+WHERE json_valid({tname}.Jmeisai)
+  AND EXISTS (
+    SELECT 1
+    FROM json_each(CASE WHEN json_valid({tname}.Jmeisai) THEN {tname}.Jmeisai ELSE '[]' END) AS j
+    JOIN {nameof(MasterShohin)} AS m
+      ON m.Code = json_extract(j.value, '$.Code_Shohin')
+    WHERE CAST(COALESCE(json_extract(j.value, '$.Id_Shohin'), 0) AS INTEGER) = 0
+      AND TRIM(COALESCE(json_extract(j.value, '$.Code_Shohin'), '')) <> ''
+  )";
+		var cnt = _toDb.FetchDialect<int>($"SELECT COUNT(*) {targetExistsSql}").FirstOrDefault();
+		if (cnt == 0)
+			return 0;
+
+		_toDb.ExecuteDialect(@$"
+UPDATE {tname}
+SET Jmeisai = (
+  SELECT json_group_array(json(x.value2))
+  FROM (
+    SELECT
+      j.key,
+      CASE
+        WHEN CAST(COALESCE(json_extract(j.value, '$.Id_Shohin'), 0) AS INTEGER) = 0
+             AND m.Id IS NOT NULL
+        THEN json_set(j.value, '$.Id_Shohin', m.Id)
+        ELSE j.value
+      END AS value2
+    FROM json_each(CASE WHEN json_valid({tname}.Jmeisai) THEN {tname}.Jmeisai ELSE '[]' END) AS j
+    LEFT JOIN {nameof(MasterShohin)} AS m
+      ON m.Code = json_extract(j.value, '$.Code_Shohin')
+    ORDER BY CAST(j.key AS INTEGER)
+  ) AS x
+)
+WHERE json_valid({tname}.Jmeisai)
+  AND EXISTS (
+    SELECT 1
+    FROM json_each(CASE WHEN json_valid({tname}.Jmeisai) THEN {tname}.Jmeisai ELSE '[]' END) AS j
+    JOIN {nameof(MasterShohin)} AS m
+      ON m.Code = json_extract(j.value, '$.Code_Shohin')
+    WHERE CAST(COALESCE(json_extract(j.value, '$.Id_Shohin'), 0) AS INTEGER) = 0
+      AND TRIM(COALESCE(json_extract(j.value, '$.Code_Shohin'), '')) <> ''
+  )
+");
+		return cnt;
+	}
+
+	static string BuildTranShohinSupplementName(string code, string? detailName) {
+		var baseName = string.IsNullOrWhiteSpace(detailName) ? code : detailName.Trim();
+		var maxBaseNameLength = MasterShohinNameMaxLength - TranShohinSupplementSuffix.Length;
+		if (baseName.Length > maxBaseNameLength)
+			baseName = baseName[..maxBaseNameLength];
+		return baseName + TranShohinSupplementSuffix;
+	}
+
+	sealed class TranShohinCandidate {
+		public string? Code { get; set; }
+		public string? Name { get; set; }
+	}
+
+	sealed class MasterShohinCode {
+		public string Code { get; set; } = string.Empty;
+	}
+
 	/// <summary>
 	/// 関連伝票の紐付けを旧SEQ_NOから cv10 の Id へ張り替える（全Tran変換の後に実行する後処理）。
 	/// <para>

@@ -87,6 +87,8 @@ public partial class ConvertDb {
 		(nameof(CnvTran11IdoIn), static (db, isInit) => db.CnvTran11IdoIn(isInit)),
 		(nameof(CnvTran12Jyuchu), static (db, isInit) => db.CnvTran12Jyuchu(isInit)),
 		(nameof(CnvTran13Hachu), static (db, isInit) => db.CnvTran13Hachu(isInit)),
+		// 未解決の商品マスタ補完とId再設定は、通常商品の全Tran変換後に行う
+		(nameof(CnvTranShohinSupplement), static (db, isInit) => db.CnvTranShohinSupplement(isInit)),
 		// 関連伝票の張替は全Tran変換の後に実行する必要があるため必ず最後に置く
 		(nameof(CnvTranRelateFix), static (db, isInit) => db.CnvTranRelateFix(isInit)),
 	];

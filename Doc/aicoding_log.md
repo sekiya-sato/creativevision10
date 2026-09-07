@@ -1,3 +1,26 @@
+## [2026-09-07] 14:48 Tran未解決商品の補足マスタ生成
+### Agent
+- GPT-5.6 Sol : OpenAI : Codex
+- GPT-5.6 Terra : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- Tran通常商品明細で未解決の `MasterShohin` を補足生成し、明細を保持したまま `Id_Shohin` を再設定する
+### 実施内容
+- 全通常Tran 10型の変換後に補足マスタ生成・明細再紐付けステップを追加
+- 空・16文字超コードと `Tran02Material` の関連商品を生成対象外として保持
+- JSON更新を全明細保持型へ変更し、サイズ補完の不一致明細脱落も修正
+- 変換選択画面の表示名とSQLite自動テストを追加
+### 技術決定 Why
+- 補足マスタ追加とJSON再紐付けをSerializableトランザクションにまとめ、再実行時の重複作成を防ぐ
+### 確認
+- CvDomainLogic build：警告0、エラー0
+- TestServer 対象テスト：2件成功
+- TestSqlDialect：141件成功
+- CvWpfclient build：警告0、エラー0
+- git diff --check：問題なし
+
+---
 ## [2026-09-05] 15:00 追加 skill 整理
 ### Agent
 - GPT-5.6 Sol : OpenAI : Codex
