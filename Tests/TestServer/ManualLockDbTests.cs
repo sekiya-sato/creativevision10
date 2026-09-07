@@ -210,6 +210,53 @@ public class ManualLockDbTests {
 	}
 
 	// ------------------------------------------------------------------
+	// E-16: 実処理でMemoが300文字を超える場合の確認(テスト計画 2026-09-07)。
+	// 既存のL-05テストは1回のProgressでの切り捨てのみを見ているため、Progressを繰り返し呼んで
+	// 積み上がった結果が上限内に収まり、末尾(最新)が残ることを補って確認する
+	// ------------------------------------------------------------------
+
+	/// <summary>
+	/// Progressを30回繰り返しても最終的なMemoが上限(300文字)以内に収まり、
+	/// 最後に渡した内容が末尾に残り、最初に渡した内容は切り捨てられて残らないことを確認する。
+	/// Memo列は[ColumnSizeDml(300)]のため、300文字を超えて書こうとするとDB側で失敗する可能性があるが、
+	/// 30回のProgressが例外なく完走すること自体も実質的な確認事項である。
+	/// </summary>
+	[TestMethod]
+	public void Progress_30回繰り返しても300文字以内に収まり末尾が残る() {
+		// ManualLockDb.MemoMaxLengthはprivateのため、SysSequence.Memoの[ColumnSizeDml(300)]に合わせて
+		// リテラルで指定する(根拠: CvBase/BaseDb0Config.cs のSysSequence.Memo列定義)
+		const int MemoMaxLength = 300;
+		const int iterationCount = 30;
+		// 他のステップ名(ステップ1番目、ステップ2番目、…)と紛れないよう一意な文字列にする
+		const string firstStepName = "初回ステップ_一意マーカーZZZ";
+
+		var target = new ManualLockDb(Db);
+		var begun = target.TryBegin("在庫・掛再集計", "買掛集計", 600, "開始メモ");
+		Assert.IsTrue(begun.IsAcquired);
+
+		string? lastStepName = null;
+		string? lastAppendMemo = null;
+		for (var i = 0; i < iterationCount; i++) {
+			var stepName = i == 0 ? firstStepName : $"ステップ{i}番目";
+			var appendMemo = $"処理内容{i}番目の詳細説明テキストです0123456789";
+
+			var updated = target.Progress(begun.Handle!, stepName, i + 1, appendMemo);
+			Assert.AreEqual(1, updated, $"{i}回目のProgressが例外なく完走し1件更新できること");
+
+			lastStepName = stepName;
+			lastAppendMemo = appendMemo;
+		}
+
+		var after = FetchAllSequences().Single();
+		Assert.IsTrue(after.Memo.Length <= MemoMaxLength, $"Memo.Length={after.Memo.Length}は{MemoMaxLength}以下であること");
+		Assert.IsTrue(after.Memo.Contains(lastStepName!), "最後に渡したstepNameがMemoに含まれること");
+		Assert.IsTrue(after.Memo.Contains(lastAppendMemo!), "最後に渡したappendMemoがMemoに含まれること");
+		Assert.IsFalse(after.Memo.Contains(firstStepName), "最初に渡したstepNameは古い側として切り捨てられ残っていないこと");
+		Assert.AreEqual(lastStepName, after.ColumnName, "ColumnNameは最後のProgressの値になっていること");
+		Assert.AreEqual(iterationCount, after.SeqNo, "SeqNoは最後のProgressの値になっていること");
+	}
+
+	// ------------------------------------------------------------------
 	// L-06: Completeで SeqNo=99 が書かれ、SysHistAutoexecが1行増え、SysSequenceの行が消える
 	// ------------------------------------------------------------------
 

@@ -323,6 +323,69 @@ public class ManualLockMonitorDbTests {
 		AssertMonitorHistoryPairsAlternate();
 	}
 
+	// ------------------------------------------------------------------
+	// E-06: 閾値直前(および閾値ちょうど)では解放しないことのDB結合レベルの確認(テスト計画 2026-09-07)。
+	// 純関数レベルの境界(Evaluate_ExpectedDurationが小さいとき15分の下限が効く境界値 等)は既にあるが、
+	// 「DB上の行が実際に削除されないこと」「SysHistAutoexecが増えないこと」までは確認していなかった。
+	// 誤解放は最悪の事故のため、下限15分が効く場合とExpectedDuration×2が効く場合の両方で確認する。
+	// 判定条件は「経過時間 > 閾値」(ManualLockMonitor.Evaluate)である。
+	// ------------------------------------------------------------------
+
+	/// <summary>ExpectedDurationが小さく、15分の下限が効く場合の閾値境界(DB結合レベル)</summary>
+	[TestMethod]
+	public void 閾値直前と閾値ちょうどでは行を削除せず履歴も増えない_下限15分が効く場合() {
+		const long expectedDurationSeconds = 60; // ×2=120秒 < 15分 なので下限(15分)が効く
+		var threshold = ManualLockMonitor.ComputeThresholdTicks(expectedDurationSeconds);
+		Assert.AreEqual(TimeSpan.FromMinutes(15).Ticks, threshold, "下限15分が効いていることの前提確認");
+		AssertNotReleasedAtOrBeforeThreshold("在庫・掛再集計", "買掛集計", expectedDurationSeconds, threshold);
+	}
+
+	/// <summary>ExpectedDurationが大きく、×2が15分の下限を上回って効く場合の閾値境界(DB結合レベル)</summary>
+	[TestMethod]
+	public void 閾値直前と閾値ちょうどでは行を削除せず履歴も増えない_倍数2倍が効く場合() {
+		const long expectedDurationSeconds = 3600; // ×2=7200秒(2時間) > 15分 なので倍数側が効く
+		var threshold = ManualLockMonitor.ComputeThresholdTicks(expectedDurationSeconds);
+		Assert.AreEqual(expectedDurationSeconds * 2 * OneSecondTicksForDbTests, threshold, "倍数2倍が効いていることの前提確認");
+		AssertNotReleasedAtOrBeforeThreshold("評価替え", "評価替え計算", expectedDurationSeconds, threshold);
+	}
+
+	private const long OneSecondTicksForDbTests = TimeSpan.TicksPerSecond;
+
+	/// <summary>
+	/// 閾値-1(直前)・閾値ちょうど(超えていない)では行が残り履歴も増えないこと、
+	/// 閾値+1(直後)では行が消え履歴が増えることを、同一の一連処理に対して連続で確認する。
+	/// 2b(検知)のログが先に出ている必要があるため、RunTickの呼び出し順序は既存テストに倣う。
+	/// </summary>
+	private void AssertNotReleasedAtOrBeforeThreshold(string processName, string stepName, long expectedDurationSeconds, long threshold) {
+		var lockDb = new ManualLockDb(Db);
+		var begun = lockDb.TryBegin(processName, stepName, expectedDurationSeconds, "実行中");
+		Assert.IsTrue(begun.IsAcquired);
+
+		// 1回目のティック: 2b(検知)を先に発生させる
+		var tick1 = RunTick(lockDb, previous: null, nowUtcTicks: begun.Handle!.Vdc);
+		Assert.AreEqual(ManualLockMonitorAction.RecordDetected, tick1.Action);
+		Assert.AreEqual(1, Db.Fetch<SysSequence>($"SELECT * FROM {nameof(SysSequence)}").Count);
+		Assert.AreEqual(1, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count);
+
+		// 閾値-1 Tick(直前): 行は残り、履歴も増えない
+		var tickBefore = RunTick(lockDb, tick1.NextState, begun.Handle.Vdc + threshold - 1);
+		Assert.AreEqual(ManualLockMonitorAction.None, tickBefore.Action, "経過時間が閾値未満のときは削除しないこと");
+		Assert.AreEqual(1, Db.Fetch<SysSequence>($"SELECT * FROM {nameof(SysSequence)}").Count, "閾値未満ではSysSequenceの行が残ること");
+		Assert.AreEqual(1, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count, "閾値未満ではSysHistAutoexecが増えないこと");
+
+		// 閾値ちょうど(経過時間 > 閾値 ではないので削除しない)
+		var tickAt = RunTick(lockDb, tickBefore.NextState, begun.Handle.Vdc + threshold);
+		Assert.AreEqual(ManualLockMonitorAction.None, tickAt.Action, "経過時間がちょうど閾値のときは削除しないこと");
+		Assert.AreEqual(1, Db.Fetch<SysSequence>($"SELECT * FROM {nameof(SysSequence)}").Count, "閾値ちょうどでもSysSequenceの行が残ること");
+		Assert.AreEqual(1, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count, "閾値ちょうどでもSysHistAutoexecが増えないこと");
+
+		// 閾値+1 Tick(直後): 直前・ちょうどとの対比として、同一メソッド内で連続して行が消えることを確認する
+		var tickAfter = RunTick(lockDb, tickAt.NextState, begun.Handle.Vdc + threshold + 1);
+		Assert.AreEqual(ManualLockMonitorAction.RecordTimeout, tickAfter.Action, "経過時間が閾値を超えた直後は削除すること");
+		Assert.AreEqual(0, Db.Fetch<SysSequence>($"SELECT * FROM {nameof(SysSequence)}").Count, "閾値超過でSysSequenceの行が削除されること");
+		Assert.AreEqual(2, Db.Fetch<SysHistAutoexec>($"SELECT * FROM {nameof(SysHistAutoexec)}").Count, "閾値超過でSysHistAutoexecが増えること");
+	}
+
 	/// <summary>
 	/// 監視タスクの履歴(<c>SysHistAutoexec</c>、<c>TaskName=マニュアル排他制御監視</c>)をId昇順に読み、
 	/// 「2b」で始まり、次が必ず「2e」または「2f」であることを確認する(設計書§3.7の不変条件)。
