@@ -42,7 +42,6 @@ if (string.IsNullOrEmpty(name) || !scenarios.TryGetValue(name, out var scenario)
 	Console.Error.WriteLine("  --no-execute       更新を伴う実行を省き、入力検証だけ行う");
 	Console.Error.WriteLine("  --no-seed          網羅データの投入を省く（前回投入済みを再利用）");
 	Console.Error.WriteLine("  --hide-views       Viewを表示しない");
-	Console.Error.WriteLine("  --allow-cost-update  manuallock E-07で総平均原価更新を実際に実行する（実DBの原価データを書き換える）");
 	Console.Error.WriteLine("  --fire-at <HH:mm:ss> 同日の壁時計時刻まで待ってから実行する（manuallockrace）");
 	Console.Error.WriteLine("  --race-label <名前>  証跡・記録上の自分の名前、例 A/B（manuallockrace、既定は請求計算役、Bのみ支払計算役）");
 	return 2;
@@ -57,8 +56,6 @@ bool Flag(string key) => args.Any(x => string.Equals(x, key, StringComparison.Or
 if (Option("--month") is { } month) BillingCalculationScenario.BillingMonth = month;
 if (Option("--code") is { } code) BillingCalculationScenario.TokuiCode = code;
 if (Flag("--no-execute")) BillingCalculationScenario.Execute = false;
-// manuallock E-07 は総平均原価更新を実際に実行し実DBの原価データを書き換えるため、明示的な指定を要求する
-if (Flag("--allow-cost-update")) ManualLockScenario.AllowCostUpdate = true;
 
 // manuallockrace: 2プロセスを同一の壁時計時刻で発火させるための同期パラメータ（Run-ManualLockRace.ps1が渡す）。
 if (Option("--race-label") is { } raceLabel) ManualLockRaceScenario.RaceLabel = raceLabel;

@@ -53,11 +53,12 @@ namespace UatVm.Scenarios;
 /// 同じ理由で中断される。
 /// </description></item>
 /// <item><description>
-/// E-07: <see cref="TotalAverageCostUpdateView"/>（総平均原価更新）。原価4項目のうち
-/// <c>ApplyTotalAverageCost</c>だけが<c>Progress</c>を複数回（後続月カスケードの月ごとに1回）呼ぶため、
-/// 「Vduが前進し続ける長時間占有」を作れる唯一の画面である（他12処理は単一ステップのみ）。
-/// 原価方式（<c>MasterSysman.CostMethod</c>）が総平均原価でない、または確認(プレビュー)がエラーを
-/// 返す実DB状態では実行できないため、その場合はスキップする。
+/// E-07: <see cref="BillingCalculationView"/>（請求計算）を、E-01・E-02の先行側と同じ得意先・月で
+/// 再利用する。請求計算は単一得意先・単一月に絞ってもStreamStepProgressRunner経由のステップ数が2になる
+/// （実行ログ「処理開始 ステップ数=2」→「Summary : CalcSummaryUriSei (16日) (1/2)」→「(末日) (2/2)」）ため、
+/// Progressが複数回呼ばれVduが前進し続ける長時間占有を作れる。「Progressを複数回呼ぶのは総平均原価更新
+/// だけである」という記述は誤りだったため訂正した。原価画面（総平均原価更新）を使わないため実DBの
+/// 原価データを書き換えず、S2/S3/S5のスイッチ3つが揃っていれば実行できる。
 /// </description></item>
 /// </list>
 /// </para>
@@ -73,13 +74,6 @@ public static class ManualLockScenario {
 	// ==================================================================
 	// 実行対象（既存動作実績のある組み合わせを再利用）
 	// ==================================================================
-	/// <summary>
-	/// E-07（総平均原価更新を実際に実行するケース）を有効にするかどうか。
-	/// 既定は<c>false</c>で、<c>--allow-cost-update</c>を指定したときだけ<c>true</c>になる（<c>Program.cs</c>が設定する）。
-	/// 実DBの原価データを書き換えるため、明示指定を必須としている（2026-09-07 ユーザー判断）。
-	/// </summary>
-	public static bool AllowCostUpdate { get; set; }
-
 	private const string BillingMonth = "2026/07";
 	private const string TokuiCode = "000002";
 
@@ -89,7 +83,6 @@ public static class ManualLockScenario {
 	// 監視タスクのログ目印（CvDomainLogic/ManualLockDb.cs の private const と同じ値）。
 	// 製品コードは変更せず、証跡照合のためだけにここへ複製する。
 	private const string MonitorDetectedMarker = "[2b:検知]";
-	private const string MonitorTimeoutMarker = "[2e:タイムアウト解放]";
 	private const string MonitorNormalEndMarker = "[2f:正常終了]";
 
 	public static async Task RunAsync(VmSession session) {
@@ -104,7 +97,7 @@ public static class ManualLockScenario {
 		await EnsureCleanStateAsync(session);
 
 		session.Note("case:開始", "E-01 排他制御の正常実行");
-		await RunE01Async(session, switches);
+		await RunE01Async(session, switches, autoExecConfig);
 
 		session.Note("case:開始", "E-10 排他中でもPreviewは動く");
 		await RunE10Async(session);
@@ -131,6 +124,8 @@ public static class ManualLockScenario {
 	private sealed record Switches(string? S1BeginMs, string? S2StepMs, string? S3MinThresholdMin, string? S5ExpectedSec) {
 		public bool HasS1 => TryPositiveInt(S1BeginMs, out _);
 		public bool HasS2 => TryPositiveInt(S2StepMs, out _);
+		public bool HasS3 => TryPositiveInt(S3MinThresholdMin, out _);
+		public bool HasS5 => TryPositiveInt(S5ExpectedSec, out _);
 	}
 
 	private static Switches ReadSwitches() => new(
@@ -145,8 +140,19 @@ public static class ManualLockScenario {
 	}
 
 	private sealed record AutoExecConfig(string CronVal, string EnabledVal) {
-		/// <summary>手順書のとおりS4を1分間隔へ変更済みか（E-01の監視ログ観測に必要）。</summary>
-		public bool IsCronShortened => CronVal.Contains("*/1", StringComparison.Ordinal);
+		/// <summary>
+		/// 手順書のとおりS4を毎分実行へ変更済みか（E-01・E-08の監視ログ観測に必要）。
+		/// cron式は5フィールド(分 時 日 月 曜日)で、CvServerは<c>CrontabSchedule.Parse</c>を
+		/// オプション無しで呼ぶため分単位固定（秒フィールドは無い）。分フィールドだけを見て判定する。
+		/// 旧実装は<c>CronVal.Contains("*/1")</c>で判定していたため、実際によく使われる`* * * * *`
+		/// （分フィールドが`*`、これも毎分の意味）を誤って「短縮されていない」と判定していた。
+		/// </summary>
+		public bool IsEveryMinute {
+			get {
+				var minuteField = CronVal.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+				return minuteField is "*" or "*/1";
+			}
+		}
 		/// <summary>監視タスクが有効か（E-08の観測に必要。手順書はE-02/E-03用に停止を指示している）。</summary>
 		public bool IsEnabled => EnabledVal != "0";
 	}
@@ -270,15 +276,22 @@ public static class ManualLockScenario {
 	// E-01: 排他制御の正常実行
 	// ==================================================================
 
-	private static async Task RunE01Async(VmSession session, Switches switches) {
+	private static async Task RunE01Async(VmSession session, Switches switches, AutoExecConfig autoExecConfig) {
 		var before = await FetchLockRowsAsync(session);
 		if (!session.Check("E-01 開始前に排他行が無い", before.Count == 0, new { before })) {
 			return;
 		}
 		var beforeHist = await CountManualExecHistAsync(session, "請求計算");
+		// 前回実行が残した2b/2fを今回のものと誤認しないための基準点。これより新しいIdだけを照合する。
+		var monitorBaselineId = (await FetchMonitorHistAsync(session)).Select(x => x.Id).DefaultIfEmpty(0).Max();
 
 		var d = session.OpenView<BillingCalculationView, BillingCalculationViewModel>();
-		await d.WaitAsync("init:締日一覧の取得", vm => vm.ShimeItems.Count > 0);
+		// --hide-views指定時はView.Show()を呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
+		// InitCommandが走らず、ShimeItemsが空のままになる（他のシナリオがWaitAsyncで待てているのは
+		// ShowViews=trueで実際に描画されるため）。ViewModel自身のInitCommand
+		// （BaseBillingCalculationViewModel.InitAsyncに[RelayCommand]が生成するIAsyncRelayCommand）を
+		// RunAsyncで明示実行し、完了を待つことで代替する。
+		await d.RunAsync("init:締日一覧の取得", vm => vm.InitCommand);
 		d.Input("対象", vm => {
 			vm.BillingMonth = BillingMonth;
 			vm.TorihikiCodeFrom = TokuiCode;
@@ -312,7 +325,7 @@ public static class ManualLockScenario {
 		var afterHist = await CountManualExecHistAsync(session, "請求計算");
 		session.Check("E-01 SysHistAutoexecにSysHistType=1(手動実行)の行が増えている", afterHist > beforeHist, new { beforeHist, afterHist });
 
-		await CheckMonitorPairAsync(session, "E-01", switches);
+		await CheckMonitorPairAsync(session, "E-01", autoExecConfig, monitorBaselineId);
 
 		session.SetDialogResponder(null);
 	}
@@ -334,21 +347,52 @@ public static class ManualLockScenario {
 
 	/// <summary>
 	/// 監視タスクのログ（TaskName=監視タスク名）が2b→2fの対になっているかを確認できるなら確認する。
-	/// S4（cron短縮）が効いておらず、対象処理が短時間で終わる場合は観測できないため、
-	/// その場合はsession.Noteに理由を残してスキップする（テスト計画書E-01の要件どおり）。
+	/// <para>
+	/// 処理完了直後の1回だけの読み取りでは、2b（検知）は記録済みでも2f（正常終了）はまだ監視タスクの
+	/// 次回tickを待っている途中であることが多く、「スキップ」と誤判定していた（実DBでは
+	/// [2b:検知]→処理側履歴→[2f:正常終了]の順で対が成立していた）。2bを確認できたら、2fが現れるまで
+	/// 最大約150秒（cron 1分の2tick分＋余裕）、10秒間隔でポーリングする。
+	/// </para>
+	/// 監視が無効、または毎分実行でない場合はこれまでどおり理由を残してスキップする（テスト計画書E-01の要件どおり）。
+	/// 時間内に2fが出なければ理由を残してスキップする（FAILにはしない）。
 	/// </summary>
-	private static async Task CheckMonitorPairAsync(VmSession session, string caseId, Switches switches) {
+	private static async Task CheckMonitorPairAsync(VmSession session, string caseId, AutoExecConfig autoExecConfig, long baselineId) {
+		if (!autoExecConfig.IsEnabled) {
+			session.Note($"{caseId} 監視ログ2b→2fの対の確認をスキップ", "監視タスクの実行フラグがOFFのため観測できません。");
+			return;
+		}
+		if (!autoExecConfig.IsEveryMinute) {
+			session.Note($"{caseId} 監視ログ2b→2fの対の確認をスキップ", "S4(cron)が毎分実行になっていないため、既定間隔では観測できません。");
+			return;
+		}
+
+		// 対象を取り違えないよう、Memoに当該処理名(請求計算)が含まれ、かつ本ケース開始後に
+		// 記録された行(Idが基準点より新しい)だけを見る。基準点が無いと前回実行が残した2fで誤PASSになる。
+		bool IsTarget(SysHistAutoexec x, string marker) =>
+			x.Id > baselineId
+			&& x.Memo.StartsWith(marker, StringComparison.Ordinal)
+			&& x.Memo.Contains("請求計算", StringComparison.Ordinal);
+
 		var hist = await FetchMonitorHistAsync(session);
-		var recent = hist.Take(4).ToList();
-		var has2b = recent.Any(x => x.Memo.StartsWith(MonitorDetectedMarker, StringComparison.Ordinal));
-		var has2f = recent.Any(x => x.Memo.StartsWith(MonitorNormalEndMarker, StringComparison.Ordinal));
-		if (has2b && has2f) {
-			session.Check($"{caseId} 監視ログが2b→2fの対になっている", true, new { recent = recent.Select(x => new { x.Memo, x.StartTime, x.EndTime }) });
+		if (!hist.Any(x => IsTarget(x, MonitorDetectedMarker))) {
+			session.Note($"{caseId} 監視ログ2b→2fの対の確認をスキップ", "2b(検知)がまだ記録されていないため観測できませんでした。");
+			return;
+		}
+
+		var found = false;
+		List<SysHistAutoexec> recent = [];
+		for (var i = 0; i < 15 && !found; i++) {
+			await Task.Delay(10_000);
+			recent = await FetchMonitorHistAsync(session);
+			found = recent.Any(x => IsTarget(x, MonitorNormalEndMarker));
+		}
+
+		if (found) {
+			session.Check($"{caseId} 監視ログが2b→2fの対になっている", true,
+				new { recent = recent.Take(4).Select(x => new { x.Memo, x.StartTime, x.EndTime }) });
 		}
 		else {
-			session.Note($"{caseId} 監視ログ2b→2fの対の確認をスキップ",
-				"S4のcron短縮とサーバ稼働時間・処理時間の組み合わせに依存するため、今回の実行では観測できませんでした。"
-				+ $" (直近の監視ログ件数={recent.Count})");
+			session.Note($"{caseId} 監視ログ2b→2fの対の確認をスキップ", "2b(検知)は確認できましたが、150秒以内に2f(正常終了)が記録されず観測できませんでした。");
 		}
 	}
 
@@ -401,7 +445,8 @@ public static class ManualLockScenario {
 		}
 
 		var occupier = session.OpenView<BillingCalculationView, BillingCalculationViewModel>();
-		await occupier.WaitAsync("init:締日一覧の取得(先行)", vm => vm.ShimeItems.Count > 0);
+		// 修正1と同じ理由（--hide-viewsでは自動実行されるInitCommandが走らない）でRunAsyncにより明示実行する。
+		await occupier.RunAsync("init:締日一覧の取得(先行)", vm => vm.InitCommand);
 		occupier.Input("対象(先行=請求計算)", vm => {
 			vm.BillingMonth = BillingMonth;
 			vm.TorihikiCodeFrom = TokuiCode;
@@ -429,7 +474,8 @@ public static class ManualLockScenario {
 		var beforeSecondCount = (await FetchLockRowsAsync(session)).Count;
 
 		var second = session.OpenView<PaymentCalculationView, PaymentCalculationViewModel>();
-		await second.WaitAsync("init:締日一覧の取得(後発)", vm => vm.ShimeItems.Count > 0);
+		// 修正1と同じ理由でRunAsyncにより明示実行する。
+		await second.RunAsync("init:締日一覧の取得(後発)", vm => vm.InitCommand);
 		var shiireRows = await session.QueryAsync<MasterShiire>($"SELECT * FROM {nameof(MasterShiire)} ORDER BY Id LIMIT 1");
 		if (shiireRows.Count == 0) {
 			session.Fail("E-02", "MasterShiireに1件も無いため、支払計算を起動できません。");
@@ -554,9 +600,9 @@ public static class ManualLockScenario {
 			return;
 		}
 
-		// cronが1分間隔でなければ、既定5分の間に本ケースの排他行がとうに消えてしまい観測できない。
-		if (!autoExecConfig.IsCronShortened) {
-			session.Note("E-08 スキップ", "S4(cron)が1分間隔へ短縮されていないため、既定5分の間隔では観測できません。");
+		// cronが毎分実行でなければ、既定5分の間に本ケースの排他行がとうに消えてしまい観測できない。
+		if (!autoExecConfig.IsEveryMinute) {
+			session.Note("E-08 スキップ", "S4(cron)が毎分実行へ変更されていないため、既定5分の間隔では観測できません。");
 			return;
 		}
 
@@ -583,18 +629,21 @@ public static class ManualLockScenario {
 	// ==================================================================
 
 	private static async Task RunE07Async(VmSession session, Switches switches) {
-		// E-07は総平均原価更新(UpdateCommand)を実際に実行し、実DBの原価データを書き換える。
-		// 13処理のうちProgressを複数回呼ぶのは総平均原価更新だけであり、Vduが前進し続ける
-		// 長時間占有を作れるのはこれしかないため対象に選んだが、影響範囲が他ケースより大きい。
-		// したがってS2の設定やPreviewの成否とは別に、--allow-cost-update の明示指定を必須とする
-		// （2026-09-07 ユーザー判断。テスト計画§4.2 E-07）。
-		if (!AllowCostUpdate) {
-			session.Note("E-07 スキップ", "--allow-cost-update が指定されていません。"
-				+ "E-07は総平均原価更新を実際に実行し実DBの原価データを書き換えるため、明示指定を必須としています。");
-			return;
-		}
-		if (!switches.HasS2) {
-			session.Note("E-07 スキップ", "CV10_LOCK_SLEEP_STEP_MS(S2)が未設定のため、Vduを前進させ続ける長時間占有を作れません。");
+		// E-07は請求計算(ExecuteCommand)を使う。単一得意先・単一月に絞っても
+		// StreamStepProgressRunner経由のステップ数が2になる（実行ログ: 処理開始 ステップ数=2 →
+		// Summary : CalcSummaryUriSei (16日) (1/2) → (末日) (2/2)）ため、Progressが複数回呼ばれVduが前進する。
+		// 総平均原価更新を使わずに済むため実DBの原価データを書き換えず、--allow-cost-update のような
+		// 明示同意は不要になった（このためAllowCostUpdateは削除した）。
+		//
+		// 前提: S2/S3/S5の3つすべてが設定されていること。
+		// S5でExpectedDurationを小さく(例10秒)し、S3で下限を1分にしないと、閾値が
+		// max(ExpectedDuration×2, 15分)のままになり処理時間が閾値に届かないため、
+		// 「閾値を超えてもVdu前進なら解放されない」ことを実証できない。
+		if (!switches.HasS2 || !switches.HasS3 || !switches.HasS5) {
+			session.Note("E-07 スキップ", "CV10_LOCK_SLEEP_STEP_MS(S2)/CV10_LOCK_MIN_THRESHOLD_MIN(S3)/CV10_LOCK_EXPECTED_SEC(S5)の"
+				+ "いずれかが未設定のため実行できません。S5でExpectedDurationを小さく(例10秒)し、S3で下限を1分にしないと"
+				+ "閾値がmax(ExpectedDuration×2, 15分)のままとなり、処理時間が閾値に届かず「閾値を超えてもVdu前進なら"
+				+ "解放されない」ことを実証できません。");
 			return;
 		}
 		var before = await FetchLockRowsAsync(session);
@@ -602,37 +651,38 @@ public static class ManualLockScenario {
 			return;
 		}
 
-		var sysmanRows = await session.QueryAsync<MasterSysman>($"SELECT * FROM {nameof(MasterSysman)} ORDER BY Id LIMIT 1");
-		if (sysmanRows.Count == 0 || (EnumCostMethod)sysmanRows[0].CostMethod != EnumCostMethod.TotalAverage) {
-			session.Note("E-07 スキップ", $"MasterSysman.CostMethodが総平均原価(2)ではないため(現在値={(sysmanRows.Count == 0 ? "取得不可" : sysmanRows[0].CostMethod.ToString())})、"
-				+ "Progressを複数回呼ぶ総平均原価更新を実行できません。");
-			return;
-		}
-
-		var d = session.OpenView<TotalAverageCostUpdateView, TotalAverageCostUpdateViewModel>();
-		await d.WaitAsync("init:状態取得", vm => vm.ProcessStatusText != "－" || !string.IsNullOrEmpty(vm.StatusMessage));
-		d.Input("対象月", vm => vm.TargetMonth = BillingMonth, new { TargetMonth = BillingMonth });
+		var d = session.OpenView<BillingCalculationView, BillingCalculationViewModel>();
+		// 修正1と同じ理由（--hide-viewsでは自動実行されるInitCommandが走らない）でRunAsyncにより明示実行する。
+		await d.RunAsync("init:締日一覧の取得", vm => vm.InitCommand);
+		d.Input("対象", vm => {
+			vm.BillingMonth = BillingMonth;
+			vm.TorihikiCodeFrom = TokuiCode;
+			vm.TorihikiCodeTo = TokuiCode;
+		}, new { BillingMonth, TokuiCode });
 
 		session.ClearDialogs();
-		session.SetDialogResponder(request => request.Button == MessageBoxButton.YesNo ? MessageBoxResult.No : MessageBoxResult.OK);
-		await d.RunAsync("confirm:総平均原価Preview", vm => vm.ConfirmCommand);
-
-		if (d.Vm.ErrorCount > 0 || !d.Vm.CanUpdate) {
-			session.Note("E-07 スキップ", $"確認(プレビュー)がエラーを含むか更新不可のため実行できません。ErrorCount={d.Vm.ErrorCount}, StatusMessage={d.Vm.StatusMessage}");
-			return;
-		}
-
 		session.SetDialogResponder(request => request.Button == MessageBoxButton.YesNo ? MessageBoxResult.Yes : MessageBoxResult.OK);
-		var task = d.Vm.UpdateCommand.ExecuteAsync(null);
+		var task = d.Vm.ExecuteCommand.ExecuteAsync(null);
 
-		// Vduが前進し続けていることを、複数回のスナップショットで確認する。
+		// 「経過時間が閾値(S3=1分想定)を超えた状態でもVdu前進により解放されない」ことが要点のため、
+		// サンプリング期間が閾値を超えるまで観測を続ける。10秒間隔で最大20回(約200秒、1分を十分に超える)。
+		// あわせて[2e:タイムアウト解放]が記録されないこと、行が途中で消えないことも見る。
+		// 監視が解放(2e)すれば行そのものが消えるため、行の生存だけを見れば足りる。
+		// 監視ログの2eを別途走査する必要はない。
 		var vduSamples = new List<long>();
-		for (var i = 0; i < 6 && !task.IsCompleted; i++) {
-			await Task.Delay(2_000);
+		var rowMissingWhileRunning = false;
+		for (var i = 0; i < 20 && !task.IsCompleted; i++) {
+			await Task.Delay(10_000);
+			if (task.IsCompleted) {
+				break;
+			}
 			var rows = await FetchLockRowsAsync(session);
-			var mine = rows.FirstOrDefault(x => x.TableName == "総平均原価更新");
+			var mine = rows.FirstOrDefault(x => x.TableName == "請求計算");
 			if (mine != null) {
 				vduSamples.Add(mine.Vdu);
+			}
+			else if (vduSamples.Count > 0) {
+				rowMissingWhileRunning = true;
 			}
 		}
 
@@ -641,14 +691,15 @@ public static class ManualLockScenario {
 
 		if (vduSamples.Count >= 2) {
 			var advanced = vduSamples.Zip(vduSamples.Skip(1), (a, b) => b >= a).All(x => x);
-			session.Check("E-07 占有中Vduが前進し続け、監視に解放されず完走する", advanced, new { vduSamples });
+			session.Check("E-07 占有中Vduが単調に前進し続ける", advanced, new { vduSamples });
 		}
 		else {
 			session.Note("E-07 Vdu前進の複数回観測をスキップ", $"観測できたVduサンプルが{vduSamples.Count}件のみでした（処理が短時間で終わった可能性があります）。");
 		}
+		session.Check("E-07 占有中に行が消えない(Vdu前進中は監視に解放されない)", !rowMissingWhileRunning);
 
 		var after = await FetchLockRowsAsync(session);
-		session.Check("E-07 完了後に排他行が消えている(監視に途中で解放されていない)", after.Count == 0, new { after });
+		session.Check("E-07 完了後に排他行が消えている(完走で解放される)", after.Count == 0, new { after });
 
 		session.SetDialogResponder(null);
 	}
