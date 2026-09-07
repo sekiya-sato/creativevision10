@@ -18,7 +18,10 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["cancel"] = CancelDuringRebuildScenario.RunAsync,
 	["invoicepreflight"] = InvoicePreflightScenario.RunAsync,
 	["manuallock"] = ManualLockScenario.RunAsync,
+	["manuallock2"] = ManualLockCoverageScenario.RunAsync,
 	["manuallockrace"] = ManualLockRaceScenario.RunAsync,
+	["manuallockrestart1"] = ManualLockRestartScenario.RunAsync,
+	["manuallockrestart2"] = ManualLockRestartScenario.RunAsync2,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。

@@ -19,9 +19,13 @@ namespace UatVm.Scenarios;
 /// </summary>
 /// <remarks>
 /// <para>
-/// E-01 → E-10 → E-02 → E-09 → E-03(+E-08) → E-07 の順に1本のシナリオ内で検証する。
+/// E-01 → E-10 → E-02 → E-09 → E-11 → E-03(+E-08) → E-14 → E-07 → E-15 の順に1本のシナリオ内で検証する。
 /// 排他行（<c>SysSequence.SysSeqType=1</c>）の状態が前のケースの前提になるため、順序に意味がある
 /// （テスト計画書「内部で E-01 → E-10 → E-02 → E-03 の順に検証する」）。
+/// E-11・E-14・E-15は手動観測手順書（<c>Doc/test/2026-09-07_マニュアル排他制御_手動観測手順.md</c>）
+/// §4・§7・§8をシナリオ用に読み替えて追加したもの。E-11はE-09同様「排他行0件」が前提のため
+/// E-09の直後、E-14はE-03と同じ「直接INSERT→強制クリア」の系統のためE-03の直後、
+/// E-15はE-07と同じS3/S5前提を再利用するためE-07の直後に置く。
 /// </para>
 /// <para>
 /// 環境変数スイッチ（S1〜S5、テストスイッチ手順書§2）はCvServer起動前に外部で設定する前提であり、
@@ -84,6 +88,7 @@ public static class ManualLockScenario {
 	// 製品コードは変更せず、証跡照合のためだけにここへ複製する。
 	private const string MonitorDetectedMarker = "[2b:検知]";
 	private const string MonitorNormalEndMarker = "[2f:正常終了]";
+	private const string MonitorTimeoutMarker = "[2e:タイムアウト解放]";
 
 	public static async Task RunAsync(VmSession session) {
 		var switches = ReadSwitches();
@@ -108,11 +113,20 @@ public static class ManualLockScenario {
 		session.Note("case:開始", "E-09 排他行0件のUI分岐");
 		await RunE09Async(session);
 
+		session.Note("case:開始", "E-11 SysSeqType=0の連番行が排他・監視の双方に無影響");
+		await RunE11Async(session, switches);
+
 		session.Note("case:開始", "E-03 管理メニューからの解除 (+E-08 監視の2f)");
 		await RunE03AndE08Async(session, autoExecConfig);
 
+		session.Note("case:開始", "E-14 監視無効時は自動解放されず強制クリアが唯一の回復手段");
+		await RunE14Async(session, autoExecConfig);
+
 		session.Note("case:開始", "E-07 Vdu前進中は解放しない");
 		await RunE07Async(session, switches);
+
+		session.Note("case:開始", "E-15 SeqNo=99が残った状態からの自動解放");
+		await RunE15Async(session, switches);
 
 		session.Note("case:終了", "manuallock 全ケース完了");
 	}
@@ -207,18 +221,21 @@ public static class ManualLockScenario {
 	/// <summary>
 	/// テスト用の排他行を直接INSERTする。CvServerとは別のSQLite接続を使う（WALモードのため短時間の
 	/// 競合は許容される。README§5.5参照）。<paramref name="vduAgoSeconds"/>で「最終更新からの経過時間」を作る。
+	/// <paramref name="sysSeqType"/>・<paramref name="seqNo"/>は既定値で既存呼び出しを壊さない
+	/// （E-11はSysSeqType=0の行、E-15はSeqNo=99の行を作るために追加した）。
 	/// </summary>
-	private static Task<long> InsertFakeLockRowAsync(string tableName, string columnName, long expectedDurationSeconds, double vduAgoSeconds, string memo) =>
+	private static Task<long> InsertFakeLockRowAsync(string tableName, string columnName, long expectedDurationSeconds, double vduAgoSeconds, string memo,
+			int sysSeqType = (int)EmSysSeqType.ManualLock, int seqNo = 1) =>
 		Task.Run(() => {
 			var dbPath = ResolveDbPath();
 			using var db = ExDatabaseSqlite.GetDbConn(dbPath);
 			var now = DateTime.UtcNow.Ticks;
 			var vdu = now - (long)(vduAgoSeconds * TimeSpan.TicksPerSecond);
 			var row = new SysSequence {
-				SysSeqType = (int)EmSysSeqType.ManualLock,
+				SysSeqType = sysSeqType,
 				TableName = tableName,
 				ColumnName = columnName,
-				SeqNo = 1,
+				SeqNo = seqNo,
 				Memo = memo,
 				ExpectedDuration = expectedDurationSeconds,
 				Vdc = vdu,
@@ -241,6 +258,27 @@ public static class ManualLockScenario {
 			var dbPath = ResolveDbPath();
 			using var db = ExDatabaseSqlite.GetDbConn(dbPath);
 			db.Execute($"DELETE FROM {nameof(SysSequence)} WHERE Id=@0", id);
+		});
+
+	/// <summary>
+	/// E-11用。<c>SysSeqType=0</c>の行は<see cref="FetchLockRowsAsync"/>（SysSeqType=1限定）では
+	/// 見えないため、TableNameで直接引く。
+	/// </summary>
+	private static Task<List<SysSequence>> FetchRowsByTableNameAsync(VmSession session, string tableName) =>
+		session.QueryAsync<SysSequence>($"SELECT * FROM {nameof(SysSequence)} WHERE TableName=@0 ORDER BY Id", tableName);
+
+	/// <summary>
+	/// E-14用。監視タスクの実行フラグ(MasterConfig)をCvServerとは別接続で書き換える。
+	/// 実行フラグは発火の都度DBから読まれるため、静的初期化で読むS1〜S5の環境変数スイッチと異なり
+	/// CvServer再起動なしに即時反映される。
+	/// </summary>
+	private static Task SetAutoExecEnabledAsync(string val) =>
+		Task.Run(() => {
+			var dbPath = ResolveDbPath();
+			using var db = ExDatabaseSqlite.GetDbConn(dbPath);
+			var name = MasterConfig.NameAutoExecEnabledPrefix + MasterConfig.AutoExecTaskIdManualLockMonitor[..8];
+			db.Execute($"UPDATE {nameof(MasterConfig)} SET Val=@0 WHERE Category=@1 AND Name=@2",
+				val, MasterConfig.CategoryAutoExec, name);
 		});
 
 	private static Task DeleteAllLockRowsAsync() =>
@@ -540,6 +578,91 @@ public static class ManualLockScenario {
 	}
 
 	// ==================================================================
+	// E-11: SysSeqType=0の連番行が排他・監視の双方に無影響 (L-12/L-17)
+	// ==================================================================
+
+	/// <summary>
+	/// 手動観測手順書§4のシナリオ読み替え版。<c>SysSeqType=0</c>の行を作る運用経路が無いため、
+	/// E-10・E-03と同様に直接INSERTで作る。
+	/// </summary>
+	private static async Task RunE11Async(VmSession session, Switches switches) {
+		var before = await FetchLockRowsAsync(session);
+		if (!session.Check("E-11 開始前に排他行(SysSeqType=1)が無い", before.Count == 0, new { before })) {
+			return;
+		}
+
+		var tableName = $"{FakeLockTablePrefix}-E11";
+		// 監視ログの誤判定防止（E-01のmonitorBaselineIdと同じ手法）。
+		var monitorBaselineId = (await FetchMonitorHistAsync(session)).Select(x => x.Id).DefaultIfEmpty(0).Max();
+
+		var lockId = await InsertFakeLockRowAsync(tableName, "connOK", expectedDurationSeconds: 0, vduAgoSeconds: 0,
+			memo: "E-11: SysSeqType=0の連番行が排他・監視に無影響なことの確認用（直接INSERT）",
+			sysSeqType: 0);
+		session.Note("E-11 SysSeqType=0のテスト用行を直接INSERT", new { lockId });
+
+		try {
+			var seqRows = await FetchRowsByTableNameAsync(session, tableName);
+			session.Check("E-11 SysSeqType=0の行が存在する", seqRows.Any(x => x.Id == lockId && x.SysSeqType == 0), new { seqRows });
+
+			// (1) 排他判定に影響しないこと: 単一得意先の請求計算が正常に開始できることを確認する
+			// （完走までは待たない。開始できたことが確認できたら片付ける、E-01と同じ作法）。
+			var d = session.OpenView<BillingCalculationView, BillingCalculationViewModel>();
+			await d.RunAsync("init:締日一覧の取得", vm => vm.InitCommand);
+			d.Input("対象", vm => {
+				vm.BillingMonth = BillingMonth;
+				vm.TorihikiCodeFrom = TokuiCode;
+				vm.TorihikiCodeTo = TokuiCode;
+			}, new { BillingMonth, TokuiCode });
+
+			session.ClearDialogs();
+			session.SetDialogResponder(request => request.Button == MessageBoxButton.YesNo ? MessageBoxResult.Yes : MessageBoxResult.OK);
+			var task = d.Vm.ExecuteCommand.ExecuteAsync(null);
+
+			var seen = await PollForSingleLockRowAsync(session, timeoutMs: switches.HasS2 ? 10_000 : 1_500);
+			if (seen != null) {
+				session.Check("E-11 SysSeqType=0の行があっても請求計算の排他行(SysSeqType=1)が1件できる(開始できる)",
+					seen.TableName == "請求計算", new { seen.TableName });
+			}
+			else {
+				session.Note("E-11 排他行の途中観測をスキップ", "S2未設定等により処理が短時間で完了したため観測できませんでした。");
+			}
+
+			await task;
+			d.Snapshot("完了後", vm => new { vm.StatusMessage, vm.IsProcessing });
+
+			var afterMain = await FetchLockRowsAsync(session);
+			session.Check("E-11 請求計算完了後にSysSeqType=1の行が消えている", afterMain.Count == 0, new { afterMain });
+
+			// (2) 監視が無視すること: 監視ログにE-11の行への言及が一切ないことを確認する
+			// （長く待つ必要はない。数tick待つ実装にはしない）。
+			var hist = await FetchMonitorHistAsync(session);
+			var mentions = hist.Where(x => x.Id > monitorBaselineId && x.Memo.Contains(tableName, StringComparison.Ordinal)).ToList();
+			session.Check("E-11 監視ログがSysSeqType=0の行に一切言及しない", mentions.Count == 0, new { mentions = mentions.Select(x => x.Memo) });
+
+			// (3) 強制クリアがSysSeqType=1だけを消すこと(L-17)。
+			// SysSeqType=1の行が1件も無い状態でクリアしても「何も消さなかった」だけで検証にならないため、
+			// 使い捨ての排他行を1件作ってから実行する。
+			var victimId = await InsertFakeLockRowAsync($"{FakeLockTablePrefix}-E11-victim", "強制クリア対象", 600, 5,
+				memo: "E-11: 強制クリアがSysSeqType=1だけを消すことの確認用（直接INSERT）");
+			session.ClearDialogs();
+			var clearView = session.OpenView<SysExecMiscView, SysExecMiscViewModel>();
+			session.SetDialogResponder(request => request.Button == MessageBoxButton.YesNo ? MessageBoxResult.Yes : MessageBoxResult.OK);
+			await clearView.RunAsync("execute:ManualLockClear(SysSeqType=0が残ることの確認)", vm => vm.ManualLockClearCommand);
+
+			var afterClearType1 = await FetchLockRowsAsync(session);
+			session.Check("E-11 強制クリアでSysSeqType=1の行は消える", !afterClearType1.Any(x => x.Id == victimId), new { afterClearType1 });
+			var afterClear = await FetchRowsByTableNameAsync(session, tableName);
+			session.Check("E-11 強制クリア後もSysSeqType=0の行は残る", afterClear.Any(x => x.Id == lockId), new { afterClear });
+		}
+		finally {
+			await DeleteLockRowByIdAsync(lockId);
+			var afterDelete = await FetchRowsByTableNameAsync(session, tableName);
+			session.Check("E-11 テスト用行(SysSeqType=0)を削除した", !afterDelete.Any(x => x.Id == lockId), new { afterDelete });
+			session.SetDialogResponder(null);
+		}
+	}
+
+	// ==================================================================
 	// E-03: 管理メニューからの解除 (+ E-08: 監視の2f)
 	// ==================================================================
 
@@ -625,6 +748,75 @@ public static class ManualLockScenario {
 	}
 
 	// ==================================================================
+	// E-14: 監視無効時は自動解放されず強制クリアが唯一の回復手段
+	// ==================================================================
+
+	/// <summary>
+	/// 手動観測手順書§7のシナリオ読み替え版。E-03のコードをほぼ流用する。
+	/// 監視の実行フラグは発火の都度DBから読まれるため即時反映される（S1〜S5と違い再起動不要）。
+	/// </summary>
+	private static async Task RunE14Async(VmSession session, AutoExecConfig autoExecConfig) {
+		if (!autoExecConfig.IsEveryMinute) {
+			session.Note("E-14 スキップ", "S4(cron)が毎分実行になっていないため、既定間隔(5分)では"
+				+ "『自動解放されないこと』を短時間で確認できません。");
+			return;
+		}
+		var before = await FetchLockRowsAsync(session);
+		if (!session.Check("E-14 開始前に排他行が無い", before.Count == 0, new { before })) {
+			return;
+		}
+
+		var tableName = $"{FakeLockTablePrefix}-E14";
+		var beforeHist = await CountManualExecHistAsync(session, ManualLockClearTaskNameLiteral);
+
+		await SetAutoExecEnabledAsync("0");
+		session.Note("E-14 監視の実行フラグを0へ変更した(即時反映)", (object?)null);
+		var lockId = 0L;
+		try {
+			// ExpectedDuration=600のときの既定閾値はmax(600*2,15分)=20分。Vduを25分前にして
+			// 確実に閾値超過の状態を作る（手順書§7.3手順2と同じ）。
+			lockId = await InsertFakeLockRowAsync(tableName, "観測用", expectedDurationSeconds: 600, vduAgoSeconds: 25 * 60,
+				memo: "E-14: 監視無効時は自動解放されないことの確認用（直接INSERT）");
+			session.Note("E-14 テスト用排他行を直接INSERT(Vduを25分前に)", new { lockId });
+
+			// 監視無効の間は閾値を超えても解放されないはず。cronが毎分実行の前提で2〜3tick=約150秒待つ
+			// （待ちは極力短く。cronが毎分でない場合はケース冒頭でスキップ済み）。
+			var released = false;
+			for (var i = 0; i < 15 && !released; i++) {
+				await Task.Delay(10_000);
+				var rows = await FetchLockRowsAsync(session);
+				released = !rows.Any(x => x.Id == lockId);
+			}
+			session.Check("E-14 監視無効の間は約150秒待っても自動解放されない", !released, new { released });
+
+			var d = session.OpenView<SysExecMiscView, SysExecMiscViewModel>();
+			session.ClearDialogs();
+			session.SetDialogResponder(request => request.Button == MessageBoxButton.YesNo ? MessageBoxResult.Yes : MessageBoxResult.OK);
+			await d.RunAsync("execute:ManualLockClear(E-14)", vm => vm.ManualLockClearCommand);
+
+			var confirmDialogs = session.Dialogs.Where(x => x.Request.Button == MessageBoxButton.YesNo).ToList();
+			session.Check("E-14 強制クリアの確認ダイアログが出る", confirmDialogs.Count == 1, new { confirmDialogs.Count });
+
+			var afterClear = await FetchLockRowsAsync(session);
+			session.Check("E-14 強制クリアで排他行が消える(監視無効時の唯一の回復手段)", !afterClear.Any(x => x.Id == lockId), new { afterClear });
+
+			var afterHist = await CountManualExecHistAsync(session, ManualLockClearTaskNameLiteral);
+			session.Check("E-14 SysHistAutoexecにTaskName='マニュアル排他制御クリア'の行が増えている", afterHist > beforeHist, new { beforeHist, afterHist });
+
+			session.SetDialogResponder(null);
+		}
+		finally {
+			await SetAutoExecEnabledAsync("1");
+			session.Note("E-14 監視の実行フラグを1へ復元した", (object?)null);
+			// 強制クリアに至らなかった場合、監視を無効にしている間に作った行が残り後続ケースの前提を壊すため必ず消す。
+			if (lockId != 0 && (await FetchLockRowsAsync(session)).Any(x => x.Id == lockId)) {
+				await DeleteLockRowByIdAsync(lockId);
+				session.Note("E-14 後始末:残っていたテスト用行を削除した", lockId);
+			}
+		}
+	}
+
+	// ==================================================================
 	// E-07: Vdu前進中は解放しない
 	// ==================================================================
 
@@ -702,5 +894,72 @@ public static class ManualLockScenario {
 		session.Check("E-07 完了後に排他行が消えている(完走で解放される)", after.Count == 0, new { after });
 
 		session.SetDialogResponder(null);
+	}
+
+	// ==================================================================
+	// E-15: SeqNo=99が残った状態からの自動解放 (L-07)
+	// ==================================================================
+
+	/// <summary>
+	/// 手動観測手順書§8のシナリオ読み替え版。<c>ManualLockDb.Complete</c>内部
+	/// （SeqNo=99書き込み→履歴INSERT→行DELETEの3ステップ）にテスト用フックが無く、
+	/// その途中でプロセスを落とす窓を作れないため、「途中で落ちた結果の状態」をSQLiteへの
+	/// 直接INSERTで代替して作る（実際のクラッシュ再現ではない。手順書§8.1と同趣旨）。
+	/// 前提はE-07と同じS3/S5（閾値をmax(ExpectedDuration×2, S3分)まで短縮するため）。
+	/// </summary>
+	private static async Task RunE15Async(VmSession session, Switches switches) {
+		if (!switches.HasS3 || !switches.HasS5) {
+			session.Note("E-15 スキップ", "CV10_LOCK_MIN_THRESHOLD_MIN(S3)/CV10_LOCK_EXPECTED_SEC(S5)のいずれかが"
+				+ "未設定のため実行できません。閾値はmax(ExpectedDuration×2, S3分)のため、S5でExpectedDurationを"
+				+ "小さくしS3で下限を1分にしないと、短時間で閾値超過を作れません。");
+			return;
+		}
+
+		var tableName = $"{FakeLockTablePrefix}-E15";
+		// 前回実行が残した2b/2eで誤判定しないための基準点(E-01のCheckMonitorPairAsyncと同じ手法)。
+		var monitorBaselineId = (await FetchMonitorHistAsync(session)).Select(x => x.Id).DefaultIfEmpty(0).Max();
+
+		// ExpectedDuration=10のときの閾値はmax(10*2,S3分)。Vduを2分前にしておけば
+		// S3=1分の前提で確実に閾値超過となる（手順書§8.3手順1と同じ）。
+		var lockId = await InsertFakeLockRowAsync(tableName, "終了処理中(疑似)", expectedDurationSeconds: 10, vduAgoSeconds: 120,
+			memo: "E-15: SeqNo=99が残った状態からの自動解放の確認用（Completeの途中で落ちた状態のSQL代替、直接INSERT）",
+			seqNo: 99);
+		session.Note("E-15 SeqNo=99・Vduを2分前にしたテスト用行を直接INSERT", new { lockId });
+
+		try {
+			bool IsTarget(SysHistAutoexec x, string marker) =>
+				x.Id > monitorBaselineId
+				&& x.Memo.StartsWith(marker, StringComparison.Ordinal)
+				&& x.Memo.Contains(tableName, StringComparison.Ordinal);
+
+			var found = false;
+			List<SysHistAutoexec> recent = [];
+			for (var i = 0; i < 15 && !found; i++) {
+				await Task.Delay(10_000);
+				recent = await FetchMonitorHistAsync(session);
+				found = recent.Any(x => IsTarget(x, MonitorDetectedMarker)) && recent.Any(x => IsTarget(x, MonitorTimeoutMarker));
+			}
+
+			if (session.Check("E-15 監視ログに2b(検知)→2e(タイムアウト解放)の対が記録される", found,
+					new { recent = recent.Take(4).Select(x => new { x.Memo, x.ReturnCode }) })) {
+				var timeoutEntry = recent.First(x => IsTarget(x, MonitorTimeoutMarker));
+				session.Check("E-15 2e(タイムアウト解放)のMemoにSeqNo=99が含まれる",
+					timeoutEntry.Memo.Contains("SeqNo=99", StringComparison.Ordinal), new { timeoutEntry.Memo });
+			}
+			else {
+				session.Note("E-15 スキップ", "約150秒待っても2b→2eの対が記録されませんでした。"
+					+ "S3/S5の環境変数がCvServer起動前に設定されていたか確認してください。");
+			}
+
+			var after = await FetchLockRowsAsync(session);
+			session.Check("E-15 監視の解放で行が消えている", !after.Any(x => x.Id == lockId), new { after });
+		}
+		finally {
+			var remaining = await FetchLockRowsAsync(session);
+			if (remaining.Any(x => x.Id == lockId)) {
+				await DeleteLockRowByIdAsync(lockId);
+				session.Note("E-15 後始末:監視で解放されなかった行を直接DELETEで削除した", lockId);
+			}
+		}
 	}
 }

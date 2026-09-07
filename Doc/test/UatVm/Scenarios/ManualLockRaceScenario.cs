@@ -87,7 +87,11 @@ public static class ManualLockRaceScenario {
 
 	private static async Task RunBillingRoleAsync(VmSession session) {
 		var d = session.OpenView<BillingCalculationView, BillingCalculationViewModel>();
-		await d.WaitAsync("init:締日一覧の取得", vm => vm.ShimeItems.Count > 0);
+		// --hide-views指定時はView.Show()を呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
+		// InitCommandが走らず、ShimeItemsが空のままになる。ViewModel自身のInitCommand
+		// （BaseBillingCalculationViewModel.InitAsyncに[RelayCommand]が生成するIAsyncRelayCommand）を
+		// RunAsyncで明示実行し、完了を待つことで代替する。
+		await d.RunAsync("init:締日一覧の取得", vm => vm.InitCommand);
 		d.Input("対象(請求計算)", vm => {
 			vm.BillingMonth = BillingMonth;
 			vm.TorihikiCodeFrom = TokuiCode;
@@ -100,7 +104,11 @@ public static class ManualLockRaceScenario {
 
 	private static async Task RunPaymentRoleAsync(VmSession session) {
 		var d = session.OpenView<PaymentCalculationView, PaymentCalculationViewModel>();
-		await d.WaitAsync("init:締日一覧の取得", vm => vm.ShimeItems.Count > 0);
+		// --hide-views指定時はView.Show()を呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
+		// InitCommandが走らず、ShimeItemsが空のままになる。ViewModel自身のInitCommand
+		// （BaseBillingCalculationViewModel.InitAsyncに[RelayCommand]が生成するIAsyncRelayCommand）を
+		// RunAsyncで明示実行し、完了を待つことで代替する。
+		await d.RunAsync("init:締日一覧の取得", vm => vm.InitCommand);
 
 		var shiireRows = await session.QueryAsync<MasterShiire>($"SELECT * FROM {nameof(MasterShiire)} ORDER BY Id LIMIT 1");
 		if (shiireRows.Count == 0) {

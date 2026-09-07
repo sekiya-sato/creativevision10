@@ -66,7 +66,8 @@ function Get-RaceResult {
 	if (-not $EvidenceFile) {
 		return $null
 	}
-	$parsed = Get-Content -LiteralPath $EvidenceFile.FullName | ForEach-Object {
+	# Get-Contentが既定でANSIとして読むため、日本語(race:結果等)が一致しない。-Encoding utf8を付ける。
+	$parsed = Get-Content -LiteralPath $EvidenceFile.FullName -Encoding utf8 | ForEach-Object {
 		try { $_ | ConvertFrom-Json } catch { $null }
 	}
 	$note = $parsed | Where-Object { $_ -and $_.kind -eq 'note' -and $_.name -eq 'race:結果' } | Select-Object -Last 1
