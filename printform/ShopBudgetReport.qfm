@@ -171,16 +171,8 @@
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
-				<text id="Txt10" valign="middle" halign="center">
-					<position x="138" y="0" width="16" height="6"/>
-					<color transparent="1"/>
-					<border right="1"/>
-					<data calctype="static">é–îÃîÑè„</data>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
 				<text id="Txt11" valign="middle" halign="center">
-					<position x="154" y="0" width="16" height="6"/>
+					<position x="138" y="0" width="16" height="6"/>
 					<color transparent="1"/>
 					<border right="1"/>
 					<data calctype="static">Ãﬂ€ ﬂ∞îÑè„</data>
@@ -188,7 +180,7 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt12" valign="middle" halign="center">
-					<position x="170" y="0" width="16" height="6"/>
+					<position x="154" y="0" width="16" height="6"/>
 					<color transparent="1"/>
 					<border right="1"/>
 					<data calctype="static">æ∞ŸîÑè„</data>
@@ -196,7 +188,7 @@
 					<font size="80"/>
 				</text>
 				<text id="Txt13" valign="middle" halign="center">
-					<position x="186" y="0" width="16" height="6"/>
+					<position x="170" y="0" width="16" height="6"/>
 					<color transparent="1"/>
 					<border right="1"/>
 					<data calctype="static">ëçîÑè„</data>
@@ -295,7 +287,7 @@
 					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
 					<font size="80"/>
 				</text>
-				<text id="Txt25" valign="middle" halign="right">
+				<text id="Txt26" valign="middle" halign="right">
 					<position x="138" y="0" width="16" height="4"/>
 					<color transparent="1"/>
 					<border right="1"/>
@@ -303,7 +295,7 @@
 					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
 					<font size="80"/>
 				</text>
-				<text id="Txt26" valign="middle" halign="right">
+				<text id="Txt27" valign="middle" halign="right">
 					<position x="154" y="0" width="16" height="4"/>
 					<color transparent="1"/>
 					<border right="1"/>
@@ -311,7 +303,7 @@
 					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
 					<font size="80"/>
 				</text>
-				<text id="Txt27" valign="middle" halign="right">
+				<text id="Txt28" valign="middle" halign="right">
 					<position x="170" y="0" width="16" height="4"/>
 					<color transparent="1"/>
 					<border right="1"/>
@@ -319,18 +311,10 @@
 					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
 					<font size="80"/>
 				</text>
-				<text id="Txt28" valign="middle" halign="right">
-					<position x="186" y="0" width="16" height="4"/>
-					<color transparent="1"/>
-					<border right="1"/>
-					<data calctype="item" datasrc="item21"/>
-					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
-					<font size="80"/>
-				</text>
 				<text id="Txt30" valign="middle" halign="right">
 					<position x="210" y="0" width="7" height="4"/>
 					<color transparent="1"/>
-					<data calctype="item" datasrc="item23"/>
+					<data calctype="item" datasrc="item22"/>
 					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
 					<font size="80"/>
 				</text>
@@ -414,7 +398,7 @@
 			<position x="20" y="9" width="20" height="5"/>
 			<color transparent="1"/>
 			<border bottom="1"/>
-			<data calctype="item" datasrc="item26"/>
+			<data calctype="item" datasrc="item25"/>
 			<decode datatype="string" format=""/>
 		</text>
 		<text id="Txt44" halign="center">
@@ -428,7 +412,7 @@
 			<position x="49" y="9" width="20" height="5"/>
 			<color transparent="1"/>
 			<border bottom="1"/>
-			<data calctype="item" datasrc="item27"/>
+			<data calctype="item" datasrc="item26"/>
 			<decode datatype="string" format=""/>
 		</text>
 	</page>

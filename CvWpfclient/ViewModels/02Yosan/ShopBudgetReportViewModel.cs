@@ -13,11 +13,10 @@ namespace CvWpfclient.ViewModels._02Yosan;
 /// 売上・予算・客数・前年売上を順に UPDATE で貼り付けてから仕上げQUERYを流していた。
 /// cv10 では同じ組み立てを CTE (calendar → shops → budget/sales → han01 → cum) で再現している。
 /// 帳票は printform/ShopBudgetReport.qfm（旧 cvnet30prn_yosan.qfm のコピー）で、
-/// item1〜item27 が下記 SELECT の27列と1対1に対応するため、列の順序と個数は変更しないこと。
+/// item1〜item26 が下記 SELECT の26列と1対1に対応するため、列の順序と個数は変更しないこと。
 ///
 /// 旧システムに存在するが cv10 に対応するテーブル・列がないものは空欄/0固定にしている。
-/// ・社販売上 … 旧 取引区分 mod 10 = 4。cv10 の Tran01Tenuri.Kubun には社販がないため常に0
-/// ・客数     … 旧 HC$TRAN_KYAKU。cv10 相当の Tran04PosSeisan.KyakuSu は未運用のため常に0
+/// ・客数     … 売上・返品の伝票ヘッダ数を客数として集計する
 /// ・既存比   … 旧 得意先マスタ「開始日」から既存店/新店を判定。cv10 の MasterTokui に開店日相当がないため空欄
 /// ・商品外除外 … 旧 商品区分FLG=0 の明細絞り込み。cv10 は売上明細がJSON列のため集計に使えず未対応
 /// </summary>
@@ -93,15 +92,20 @@ WITH calendar(denDay, dayValue, youbi, prevDenDay, prevExtraDenDay, prevDayLabel
 {BuildCalendarValues(monthStart, daysInMonth)}
 ),
 shops AS (
-    -- 旧: HC$MASTER_YO_TENPO を店舗でGROUP BYし、得意先マスタに存在するものだけを出力対象にする
-    --     （画面の「※予算を組んだ店舗のみを出力します」に対応）
+    -- 当月に予算または売上・返品伝票がある店舗を出力対象にする。
     SELECT t.Id, t.Code, t.Name
     FROM MasterTokui t
+    INNER JOIN (
+        SELECT Id_Tenpo
+        FROM MasterYosanBrand
+        WHERE DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
+        UNION
+        SELECT Id_Tenpo
+        FROM Tran01Tenuri
+        WHERE DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
+          AND Kubun BETWEEN 10 AND 29
+    ) targetShops ON targetShops.Id_Tenpo = t.Id
     WHERE t.TenType = 6 {shopWhere}
-      AND EXISTS (
-          SELECT 1 FROM MasterYosanBrand y
-          WHERE y.Id_Tenpo = t.Id AND y.DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
-      )
 ),
 budget AS (
     -- 旧3: 予算くっつけ SU00（cv10 はブランド別予算をブランド横断で合計する）
@@ -122,14 +126,14 @@ tenuri AS (
                      UNION SELECT prevExtraDenDay FROM calendar WHERE prevExtraDenDay IS NOT NULL)
 ),
 sales AS (
-    -- 旧2: 売上金額・区分別売上金額くっつけ SU01〜SU05,SU20
+    -- 旧2: 売上金額・区分別売上金額くっつけ SU01,SU03〜SU05,SU20
     SELECT Id_Tenpo, DenDay,
-        SUM(CASE WHEN Kubun % 10 = 4 THEN 0 ELSE sgn * KingakuTotal END) AS su01,
-        SUM(CASE WHEN Kubun % 10 = 4 THEN sgn * KingakuTotal ELSE 0 END) AS su02,
+        SUM(sgn * KingakuTotal) AS su01,
         SUM(CASE WHEN Kubun % 10 = 0 THEN sgn * KingakuTotal ELSE 0 END) AS su03,
         SUM(CASE WHEN Kubun % 10 = 1 THEN sgn * KingakuTotal ELSE 0 END) AS su04,
         SUM(sgn * KingakuTotal) AS su05,
-        SUM(sgn * SuTotal) AS su20
+        SUM(sgn * SuTotal) AS su20,
+        SUM(CASE WHEN sgn <> 0 THEN 1 ELSE 0 END) AS su06
     FROM tenuri
     GROUP BY Id_Tenpo, DenDay
 ),
@@ -141,12 +145,11 @@ han01 AS (
         CASE WHEN c.prevDenDay IS NULL THEN 0 ELSE 1 END AS prevValid,
         COALESCE(b.su00, 0) AS su00,
         COALESCE(sa.su01, 0) AS su01,
-        COALESCE(sa.su02, 0) AS su02,
         COALESCE(sa.su03, 0) AS su03,
         COALESCE(sa.su04, 0) AS su04,
         COALESCE(sa.su05, 0) AS su05,
         COALESCE(sa.su20, 0) AS su20,
-        0 AS su06,
+        COALESCE(sa.su06, 0) AS su06,
         COALESCE(p1.su01, 0) + COALESCE(p2.su01, 0) AS su07raw
     FROM shops s
     CROSS JOIN calendar c
@@ -164,7 +167,7 @@ cum AS (
     FROM han01 h
 )";
 
-		// 旧8: 仕上げQUERY。列順は qfm の item1〜item27 に対応する。
+		// 旧8: 仕上げQUERY。列順は qfm の item1〜item26 に対応する。
 		// 前年比は旧 comp_str00（日次: 売上/前年売上）。旧クライアントは wrk_para[8] を空文字で渡すため累計版は使われない。
 		// 率は旧 TRUNC(x*100,1) に合わせ、1000倍してINTEGERへ切り捨てて10で割る（SQLiteのCASTは0方向切り捨て）。
 		if (IsByShop) {
@@ -188,7 +191,6 @@ SELECT
     CAST(su10 / 1000.0 AS INTEGER) AS yosanRuiSen,
     su11 - su10 AS yosanSai,
     CASE WHEN su10 <> 0 THEN CAST(su11 * 1000.0 / su10 AS INTEGER) / 10.0 ELSE 0 END AS yosanHi,
-    su02 AS shahanUri,
     su03 AS properUri,
     su04 AS saleUri,
     su05 AS souUri,
@@ -223,7 +225,6 @@ SELECT
     SUM(CAST(su10 / 1000.0 AS INTEGER)) AS yosanRuiSen,
     SUM(su11 - su10) AS yosanSai,
     CASE WHEN SUM(su10) <> 0 THEN CAST(SUM(su11) * 1000.0 / SUM(su10) AS INTEGER) / 10.0 ELSE 0 END AS yosanHi,
-    SUM(su02) AS shahanUri,
     SUM(su03) AS properUri,
     SUM(su04) AS saleUri,
     SUM(su05) AS souUri,

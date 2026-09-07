@@ -62,3 +62,25 @@
 - git diff --check：問題なし
 
 ---
+## [2026-09-07] 店舗予算表の予算なし店舗・客数集計対応
+### Agent
+- GPT-5.6 Terra : OpenAI : Codex
+- GPT-5.6 Luna : OpenAI : Codex
+- GPT-5.6 Sol : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- 当月に予算がなくても売上伝票がある店舗を店舗予算表へ出力し、客数を伝票数として表示する
+### 実施内容
+- 出力店舗を当月予算または売上・返品伝票のある店舗へ変更
+- 社販売上列をSQLから削除して以降を1列前詰め
+- 客数へ売上・返品伝票ヘッダ数を設定
+### 技術決定 Why
+- `Tran01Tenuri` は伝票ヘッダ単位のため、売上・返品伝票を各1客として数える
+### 確認
+- SQLの店舗別・全店別SELECTが各26列、社販売上列なしを確認
+- QFMはcp932でXML整形式、最大参照item26、item27参照なしを確認
+- `git diff --check`：問題なし
+- CvWpfclient build（--no-restore）：警告0、エラー0
+
+---
