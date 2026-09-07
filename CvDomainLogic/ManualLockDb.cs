@@ -152,6 +152,8 @@ public class ManualLockDb(ExDatabase db) {
 	/// <param name="expectedDurationSeconds">一連処理全体の予想処理秒数（<c>ExpectedDuration</c>）。個々の処理ステップの見込みではない</param>
 	/// <param name="memo">補足メモ</param>
 	public ManualLockResult TryBegin(string processName, string stepName, long expectedDurationSeconds, string memo = "") {
+		// テスト専用スイッチ（Step T7で削除）: 計画書§3 S1/S2/S5
+		expectedDurationSeconds = ManualLockTestKnobs.OverrideExpectedDuration(expectedDurationSeconds);
 		var vdate = Common.GetVdate();
 		var row = new SysSequence {
 			SysSeqType = (int)EmSysSeqType.ManualLock,
@@ -181,6 +183,9 @@ public class ManualLockDb(ExDatabase db) {
 			return new ManualLockResult(false, null, winner);
 		}
 
+		// テスト専用スイッチ（Step T7で削除）: 計画書§3 S1/S2/S5
+		// 後発が降りる経路（上のreturn）には効かせず、勝者確定後にのみ効かせる
+		ManualLockTestKnobs.SleepAtBegin();
 		// 4. 自分だけ（または自分が勝者）なので続行する
 		var handle = new ManualLockHandle(row.Id, processName, vdate, expectedDurationSeconds, _logger);
 		return new ManualLockResult(true, handle, null);
@@ -224,6 +229,11 @@ public class ManualLockDb(ExDatabase db) {
 			: $"{elapsedSeconds:0}秒経過 {stepName}: {appendMemo}";
 		var newMemo = AppendTruncatedMemo(row.Memo, appendText, MemoMaxLength);
 
+		// テスト専用スイッチ（Step T7で削除）: 計画書§3 S1/S2/S5
+		// UPDATE（Vdu前進）の後ではなく前に寝る: 後に寝ると監視から見て「前進直後に停滞」に見えてしまい、
+		// Vdu前進中の占有（計画書E-07、Vduが生きたまま長時間占有する状態）を作れないため、
+		// 前に寝ることで各ステップ間隔ごとにVduが前進する形にする
+		ManualLockTestKnobs.SleepAtProgress();
 		return _db.ExecuteDialect(
 			$"UPDATE {nameof(SysSequence)} SET ColumnName=@0, SeqNo=@1, Memo=@2, Vdu=@3 WHERE Id=@4",
 			stepName, seqNo, newMemo, vdate, row.Id);

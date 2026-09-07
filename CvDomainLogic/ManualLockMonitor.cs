@@ -67,18 +67,17 @@ public sealed record ManualLockMonitorTick(ManualLockMonitorState? NextState, Ma
 /// </para>
 /// </summary>
 public static class ManualLockMonitor {
-	/// <summary>異常判定の閾値の下限（分）。設計書§3.4。</summary>
-	private const int MinThresholdMinutes = 15;
-
 	/// <summary>
 	/// 異常とみなす閾値（UTC Ticks）を計算する（設計書§3.4）。
 	/// <c>閾値 = max(ExpectedDuration（秒）× 2, 15分)</c>
+	/// 下限はテスト時のみ<c>CV10_LOCK_MIN_THRESHOLD_MIN</c>で短縮できる（Step T7で削除、計画書§3 S3）。
 	/// </summary>
 	/// <param name="expectedDurationSeconds">一連処理全体の予想処理秒数（<see cref="SysSequence.ExpectedDuration"/>）</param>
 	public static long ComputeThresholdTicks(long expectedDurationSeconds) {
 		var expectedSeconds = Math.Max(expectedDurationSeconds, 0);
 		var doubledExpectedTicks = TimeSpan.FromSeconds(expectedSeconds).Ticks * 2;
-		var minTicks = TimeSpan.FromMinutes(MinThresholdMinutes).Ticks;
+		// テスト専用スイッチ（Step T7で削除）: 計画書§3 S1/S2/S5（S3の下限値。既定15分は本クラスから移設）
+		var minTicks = TimeSpan.FromMinutes(ManualLockTestKnobs.MinThresholdMinutes).Ticks;
 		return Math.Max(doubledExpectedTicks, minTicks);
 	}
 
