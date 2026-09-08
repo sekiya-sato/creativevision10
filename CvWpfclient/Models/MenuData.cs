@@ -151,7 +151,7 @@ public partial class MenuData : ObservableObject {
 				new("店ブランド予算マスタ(月)", typeof(Views._02Yosan.ShopBrandBudgetMasterView), addInfo:"店ブランド別の月毎の日予算を作成"),
 				new("店ブランド予算マスタメンテ", typeof(Views._02Yosan.MasterYosanBrandMenteView), addInfo:"MasterYosanBrand の日別予算レコードを直接編集"),
 				new("店舗予算表", typeof(Views._02Yosan.ShopBudgetReportView)),
-				new("日別店別予算表", typeof(Views._02Yosan.DailyShopBudgetReportView), addInfo:"日付→店舗順に予算･売上･差異･累計を印刷"),
+				new("店別売上表", typeof(Views._02Yosan.DailyShopBudgetQueryView), addInfo:"指定年月の日別売上・予算・予算比・前年比を店舗別に照会"),
 				new("店舗ブランド別予算実績対比", typeof(Views._02Yosan.ShopBrandBudgetVsActualView), addInfo:"店舗×ブランドの売上･粗利を月単位で予算実績対比"),
 			])),
 			new("▲ 販売員予算 ----", new([

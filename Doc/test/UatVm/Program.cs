@@ -15,6 +15,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["closingblock"] = ClosingChangeBlockScenario.RunAsync,
 	["taxmix"] = TaxMixScenario.RunAsync,
 	["material"] = MaterialPurchaseScenario.RunAsync,
+	["shopdailysales"] = ShopDailySalesQueryScenario.RunAsync,
 	["cancel"] = CancelDuringRebuildScenario.RunAsync,
 	["invoicepreflight"] = InvoicePreflightScenario.RunAsync,
 	["manuallock"] = ManualLockScenario.RunAsync,

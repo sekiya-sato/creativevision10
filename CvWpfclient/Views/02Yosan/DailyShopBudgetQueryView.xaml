@@ -1,0 +1,274 @@
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._02Yosan.DailyShopBudgetQueryView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._02Yosan"
+	Title="{Binding Title}"
+	Width="820" Height="600"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:DailyShopBudgetQueryViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="DailyShopBudgetColumnHeaderStyle"
+			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+			TargetType="DataGridColumnHeader">
+			<Setter Property="Background" Value="#FF1B2A4A" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="Padding" Value="8,6" />
+		</Style>
+	</helpers:BaseWindow.Resources>
+
+	<!--
+		Esc は条件パネル/結果パネルのどちらが表示中かで挙動を変える必要があるため、
+		InputBindings ではなく Window.PreviewKeyDown(コードビハインド)で一元的に振り分ける。
+	-->
+
+	<Grid>
+		<!--  ==================== 条件パネル ====================  -->
+		<Grid Visibility="{Binding IsResultVisible, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+
+			<materialDesign:ColorZone Grid.Row="0"
+				Padding="12,8"
+				materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+				<DockPanel>
+					<StackPanel Orientation="Horizontal">
+						<Button Margin="0,0,8,0"
+							Command="{Binding ExitCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="閉じる (Esc)">
+							<materialDesign:PackIcon Kind="ArrowLeft" />
+						</Button>
+						<materialDesign:PackIcon Width="28" Height="28"
+							VerticalAlignment="Center"
+							Kind="TableSearch" />
+						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							FontSize="20" FontWeight="SemiBold"
+							Text="{Binding Title}" />
+					</StackPanel>
+				</DockPanel>
+			</materialDesign:ColorZone>
+
+			<Grid Grid.Row="1"
+				Margin="24">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="140" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+
+				<!--  年月  -->
+				<TextBlock Grid.Row="0" Grid.Column="0"
+					Style="{StaticResource FormLabel}"
+					Text="年月" />
+				<TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3"
+					Width="200" Height="36"
+					HorizontalAlignment="Left"
+					helpers:YearMonthInputBehavior.IsEnabled="True"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding SelectedYearMonthString, UpdateSourceTrigger=PropertyChanged}" />
+
+				<!--  店舗  -->
+				<TextBlock Grid.Row="1" Grid.Column="0"
+					Style="{StaticResource FormLabel}"
+					Text="店舗" />
+				<TextBox Grid.Row="1" Grid.Column="1"
+					Width="200" Height="36"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeFromCommand}"
+					BorderThickness="0,0,0,1"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding ShopCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Grid.Row="1" Grid.Column="2"
+					Margin="8,0" VerticalAlignment="Center"
+					Text="～" />
+				<TextBox Grid.Row="1" Grid.Column="3"
+					Width="200" Height="36"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeToCommand}"
+					BorderThickness="0,0,0,1"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding ShopCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+
+				<!--  出力区分  -->
+				<TextBlock Grid.Row="2" Grid.Column="0"
+					Margin="0,10,0,10"
+					Style="{StaticResource FormLabel}"
+					Text="出力区分" />
+				<StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,10,0,10"
+					Orientation="Horizontal">
+					<RadioButton Margin="0,4"
+						Content="店舗別"
+						IsChecked="{Binding IsByShop}" />
+					<RadioButton Margin="16,4,0,4"
+						Content="日計(全店)"
+						IsChecked="{Binding IsByShop, Converter={StaticResource InverseBooleanConverter}}" />
+				</StackPanel>
+
+				<!--  注意書き  -->
+				<StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,8">
+					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="※直営店を対象に、指定年月の日別売上・予算・前年比を表示します。" TextWrapping="Wrap" />
+				</StackPanel>
+
+				<!--  実行ボタン  -->
+				<Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4"
+					Margin="0,24" HorizontalAlignment="Center"
+					Command="{Binding SearchCommand}"
+					IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+					Style="{StaticResource MaterialDesignFlatMidBgButton}"
+					ToolTip="検索">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="Magnify" />
+						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+							FontSize="20" Text="検索" />
+					</StackPanel>
+				</Button>
+			</Grid>
+		</Grid>
+
+		<!--  ==================== 結果パネル ====================  -->
+		<Grid Visibility="{Binding IsResultVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
+
+			<!--  ヘッダ帯: 戻る＋タイトル＋条件サマリ  -->
+			<materialDesign:ColorZone Grid.Row="0"
+				Padding="12,8"
+				materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+				<DockPanel>
+					<!--  年月移動＋CSV出力: 旧画面のボタン順(前月/今月/翌月/CSV出力)に合わせて右寄せで並べる  -->
+					<StackPanel DockPanel.Dock="Right"
+						Orientation="Horizontal">
+						<Button Margin="4,0"
+							Command="{Binding PrevMonthCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="前月 (F6)">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Kind="ChevronLeft" />
+								<TextBlock Margin="2,0,0,0" Text="前月" />
+							</StackPanel>
+						</Button>
+						<Button Margin="4,0"
+							Command="{Binding ThisMonthCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="今月 (F5)">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Kind="CalendarToday" />
+								<TextBlock Margin="2,0,0,0" Text="今月" />
+							</StackPanel>
+						</Button>
+						<Button Margin="4,0"
+							Command="{Binding NextMonthCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="翌月 (F7)">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Kind="ChevronRight" />
+								<TextBlock Margin="2,0,0,0" Text="翌月" />
+							</StackPanel>
+						</Button>
+						<Button Margin="16,0,0,0"
+							Command="{Binding ExportCsvCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="CSV出力">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Kind="FileDelimitedOutline" />
+								<TextBlock Margin="4,0,0,0" Text="CSV出力" />
+							</StackPanel>
+						</Button>
+					</StackPanel>
+
+					<StackPanel Orientation="Horizontal">
+						<Button Margin="0,0,8,0"
+							Command="{Binding BackToConditionsCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="条件へ戻る (Esc)">
+							<materialDesign:PackIcon Kind="ArrowLeft" />
+						</Button>
+						<materialDesign:PackIcon Width="28" Height="28"
+							VerticalAlignment="Center"
+							Kind="TableSearch" />
+						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							FontSize="20" FontWeight="SemiBold"
+							Text="{Binding Title}" />
+						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+							FontSize="14"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding ConditionSummary}" />
+					</StackPanel>
+				</DockPanel>
+			</materialDesign:ColorZone>
+
+			<!--  合計グリッド: 5行固定、縦スクロール無し、列ヘッダをここに表示する  -->
+			<DataGrid x:Name="TotalGrid"
+				Grid.Row="1"
+				materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="True"
+				AutoGeneratingColumn="TotalGrid_AutoGeneratingColumn" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False"
+				CanUserSortColumns="False" EnableRowVirtualization="False" FrozenColumnCount="2" GridLinesVisibility="All" HeadersVisibility="Column"
+				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				HorizontalScrollBarVisibility="Hidden" IsReadOnly="True"
+				ItemsSource="{Binding TotalTable.DefaultView}"
+				Loaded="TotalGrid_Loaded"
+				Style="{StaticResource MaterialDesignDataGrid}"
+				VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				VerticalScrollBarVisibility="Disabled">
+				<DataGrid.ColumnHeaderStyle>
+					<Style BasedOn="{StaticResource DailyShopBudgetColumnHeaderStyle}"
+						TargetType="DataGridColumnHeader" />
+				</DataGrid.ColumnHeaderStyle>
+			</DataGrid>
+
+			<!--  明細グリッド: 日付(1〜31)を縦スクロール、列ヘッダは合計グリッド側に出すので非表示  -->
+			<DataGrid x:Name="DetailGrid"
+				Grid.Row="2"
+				materialDesign:DataGridAssist.CellPadding="8,4"
+				AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
+				AutoGenerateColumns="True" AutoGeneratingColumn="DetailGrid_AutoGeneratingColumn" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False"
+				CanUserResizeColumns="False" CanUserSortColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="All" HeadersVisibility="None"
+				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				HorizontalScrollBarVisibility="Visible" IsReadOnly="True"
+				ItemsSource="{Binding ResultTable.DefaultView}"
+				Loaded="DetailGrid_Loaded"
+				Style="{StaticResource MaterialDesignDataGrid}"
+				VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				VerticalScrollBarVisibility="Visible" />
+
+			<!--  ステータス帯  -->
+			<Border Grid.Row="3"
+				Padding="12,6"
+				Background="{DynamicResource MaterialDesignToolBarBackground}">
+				<TextBlock VerticalAlignment="Center"
+					Foreground="{DynamicResource MaterialDesignBodyLight}"
+					Text="{Binding Message}"
+					TextTrimming="CharacterEllipsis" />
+			</Border>
+		</Grid>
+	</Grid>
+</helpers:BaseWindow>

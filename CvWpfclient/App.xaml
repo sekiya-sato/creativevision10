@@ -12,6 +12,7 @@
 			<helpers:LongToLocalDateTimeStringConverter x:Key="LongToLocalDateTimeStringConverter" />
 			<helpers:StringIsNotEmptyToVisibilityConverter x:Key="StringIsNotEmptyToVisibilityConverter" />
 			<helpers:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+			<helpers:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
 			<helpers:MultiplyValuesConverter x:Key="MultiplyValuesConverter" />
 			<helpers:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
 			<helpers:TranKubunBrushConverter x:Key="TranKubunBrushConverter" />
