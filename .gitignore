@@ -63,3 +63,4 @@ printform/data*.*
 .codex/
 .mcp.json
 .omo-*/
+CvServer/*.db
