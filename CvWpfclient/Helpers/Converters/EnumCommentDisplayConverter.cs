@@ -15,7 +15,10 @@ namespace CvWpfclient.Helpers;
 
 public sealed class EnumCommentDisplayConverter : IValueConverter {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
-		if (value is not Enum enumValue) return value?.ToString() ?? string.Empty;
+		if (value is not Enum enumValue) {
+			if (parameter is not Type { IsEnum: true } enumType || value is not IConvertible) return value?.ToString() ?? string.Empty;
+			enumValue = (Enum)Enum.ToObject(enumType, value);
+		}
 		var field = enumValue.GetType().GetField(enumValue.ToString());
 		var comment = field?.GetCustomAttributes(typeof(CommentAttribute), false).OfType<CommentAttribute>().FirstOrDefault();
 		return comment?.Content ?? enumValue.ToString();

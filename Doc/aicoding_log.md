@@ -1,3 +1,21 @@
+## [2026-09-08] 14:30 自動実行履歴の実行種別表示
+### Agent
+- GPT-5.6 Terra : OpenAI : Codex
+- GPT-5.6 Luna : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- 自動実行履歴で実行種別を日本語表示する
+### 実施内容
+- 一覧と詳細へ実行種別を追加
+- int値を `EmSysHistType` のCommentへ変換して表示
+### 技術決定 Why
+- DBモデルを変更せず、既存enumの表示定義を共通Converterから再利用する
+### 確認
+- XAML XML、CRLF、git diff --check：問題なし
+- 画面確認：ユーザー確認済み
+
+---
 ## [2026-09-08] 14:03 ストリーム処理の手動実行履歴
 ### Agent
 - GPT-5.6 Terra : OpenAI : Codex
