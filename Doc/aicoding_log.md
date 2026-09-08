@@ -1,3 +1,21 @@
+## [2026-09-08] システム管理マスタの後追加項目表示
+### Agent
+- GPT-5.6 Terra : OpenAI : Codex
+- GPT-5.6 Luna : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- システム管理マスタで後追加した税設定と原価方式を編集可能にする
+### 実施内容
+- `TaxRounding` と `CostMethod` の選択欄を既存フォームへ追加
+### 技術決定 Why
+- 既存の `Current` 保存経路と列挙型を直接使い、ViewModel・DBを変更しない
+### 確認
+- XAML XML、行定義、`git diff --check`：問題なし
+- 画面確認：ユーザー確認済み
+
+---
+
 ## [2026-09-08] 14:30 自動実行履歴の実行種別表示
 ### Agent
 - GPT-5.6 Terra : OpenAI : Codex
