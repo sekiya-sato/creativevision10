@@ -11,6 +11,7 @@ public partial class CoreService : ICoreService {
 	private readonly IConfiguration _configuration;
 	private readonly IWebHostEnvironment _env;
 	private readonly ExDatabase _db;
+	private readonly IServiceScopeFactory _scopeFactory;
 	// private readonly ISchedulerService _scheduler;
 	private readonly IHttpContextAccessor _httpContextAccessor;
 	private readonly AppGlobal _appGlobal;
@@ -20,17 +21,19 @@ public partial class CoreService : ICoreService {
 	private readonly Dictionary<CvFlag, Func<CvMsg, CallContext, Task<CvMsg>>> _handlers;
 
 	public CoreService(ILogger<CoreService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor,
-		ExDatabase db, PointOfSaleService pointOfSaleService, AppGlobal? appGlobal = null) {
+		ExDatabase db, IServiceScopeFactory scopeFactory, PointOfSaleService pointOfSaleService, AppGlobal? appGlobal = null) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
 		ArgumentNullException.ThrowIfNull(env);
 		ArgumentNullException.ThrowIfNull(httpContextAccessor);
 		ArgumentNullException.ThrowIfNull(db);
+		ArgumentNullException.ThrowIfNull(scopeFactory);
 		ArgumentNullException.ThrowIfNull(pointOfSaleService);
 		_logger = logger;
 		_configuration = configuration;
 		_env = env;
 		_db = db;
+		_scopeFactory = scopeFactory;
 		_pointOfSaleService = pointOfSaleService;
 		// _scheduler = scheduler;
 		_httpContextAccessor = httpContextAccessor;

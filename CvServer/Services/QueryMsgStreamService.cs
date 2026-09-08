@@ -1,9 +1,11 @@
 using CodeShare;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvBaseOracle;
 using CvDomainLogic;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 using ProtoBuf.Grpc;
 
 
@@ -48,6 +50,125 @@ public partial class CoreService {
 		}
 	}
 
+	private async IAsyncEnumerable<StreamMsg> WithManualExecHistoryAsync(
+		string taskName,
+		IAsyncEnumerable<StreamMsg> stream,
+		string? completionMemo,
+		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct) {
+		var startedAt = DateTime.Now;
+		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+		var historyId = InsertManualExecHistory(taskName, startedAt);
+		var returnCode = 0;
+		var memo = "処理正常終了";
+
+		try {
+			await using var enumerator = stream.GetAsyncEnumerator(ct);
+			while (true) {
+				StreamMsg msg;
+				try {
+					if (!await enumerator.MoveNextAsync()) {
+						break;
+					}
+					msg = enumerator.Current;
+				}
+				catch (OperationCanceledException) {
+					returnCode = -1;
+					memo = "処理キャンセル";
+					throw;
+				}
+				catch (Exception ex) {
+					returnCode = -1;
+					memo = $"処理異常終了: {ex.Message}";
+					throw;
+				}
+
+				if (msg.IsError || msg.Code != 0) {
+					returnCode = msg.Code == 0 ? -1 : msg.Code;
+					memo = $"処理異常終了: {msg.DataMsg}";
+				}
+				yield return msg;
+			}
+		}
+		finally {
+			if (ct.IsCancellationRequested && returnCode == 0) {
+				returnCode = -1;
+				memo = "処理キャンセル";
+			}
+			stopwatch.Stop();
+			UpdateManualExecHistory(historyId, DateTime.Now, stopwatch.Elapsed, returnCode,
+				string.IsNullOrWhiteSpace(completionMemo) ? memo : $"{memo}, {completionMemo}");
+		}
+	}
+
+	private long? InsertManualExecHistory(string taskName, DateTime startedAt) {
+		try {
+			using var scope = _scopeFactory.CreateScope();
+			var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+			var vdate = DateTime.Now.ToUniversalTime().Ticks;
+			var history = new SysHistAutoexec {
+				TaskName = NormalizeHistoryText(taskName, 100, "未設定"),
+				StartTime = startedAt.ToString("yyyyMMddHHmmss"),
+				ReturnCode = 0,
+				Memo = "処理開始",
+				SysHistType = (int)EmSysHistType.ManualExec,
+				Vdc = vdate,
+				Vdu = vdate,
+			};
+			db.Insert(history);
+			return history.Id;
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "ストリーム処理履歴の開始登録に失敗しました。 TaskName={TaskName}", taskName);
+			return null;
+		}
+	}
+
+	private void UpdateManualExecHistory(long? historyId, DateTime endedAt, TimeSpan elapsed, int returnCode, string memo) {
+		if (historyId is null) {
+			return;
+		}
+		try {
+			using var scope = _scopeFactory.CreateScope();
+			var db = scope.ServiceProvider.GetRequiredService<ExDatabase>();
+			var history = db.Fetch(typeof(SysHistAutoexec), "where Id=@0", historyId.Value).OfType<SysHistAutoexec>().FirstOrDefault();
+			if (history == null) {
+				_logger.LogWarning("ストリーム処理履歴が見つかりません。 Id={HistoryId}", historyId.Value);
+				return;
+			}
+			history.EndTime = endedAt.ToString("yyyyMMddHHmmss");
+			history.ElapsedTime = Math.Max(0, elapsed.TotalSeconds);
+			history.ReturnCode = returnCode;
+			history.Memo = NormalizeHistoryText(memo, 2000, "処理終了");
+			history.Vdu = DateTime.Now.ToUniversalTime().Ticks;
+			db.Update(history, ["EndTime", "ElapsedTime", "ReturnCode", "Memo", "Vdu"]);
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "ストリーム処理履歴の終了更新に失敗しました。 Id={HistoryId}", historyId);
+		}
+	}
+
+	private static string NormalizeHistoryText(string? value, int maxLength, string defaultValue) {
+		var text = string.IsNullOrWhiteSpace(value) ? defaultValue : value.Replace("\r", " ").Replace("\n", " ").Trim();
+		return text.Length <= maxLength ? text : text[..maxLength];
+	}
+
+	private static string GetStreamTaskName(CvFlag flag) => flag switch {
+		CvFlag.Msg050_Summary => "在庫集計",
+		CvFlag.Msg051_SummaryRealStock => "実在庫集計",
+		CvFlag.Msg052_SummaryUriKake => "売掛集計",
+		CvFlag.Msg053_SummaryKaiKake => "買掛集計",
+		CvFlag.Msg054_StocktakeStart => "棚卸開始",
+		CvFlag.Msg055_StocktakeFix => "棚卸確定",
+		CvFlag.Msg056_SummaryUriSei => "売上請求計算",
+		CvFlag.Msg057_SummaryKaiShi => "仕入支払計算",
+		CvFlag.Msg058_HhtDataUpdate => "HHTデータ更新",
+		CvFlag.Msg082_CostConsumptionApply => "消化仕入更新",
+		CvFlag.Msg085_CostLastPurchaseApply => "最終仕入原価更新",
+		CvFlag.Msg087_CostTotalAverageApply => "総平均原価更新",
+		CvFlag.Msg089_CostRevaluationApply => "評価替え",
+		_ => flag.ToString(),
+	};
+
 	/// <summary>
 	/// ストリーミングメッセージを処理する
 	/// </summary>
@@ -67,13 +188,14 @@ public partial class CoreService {
 		if (request.Flag is CvFlag.Msg040_ConvertDb) {
 			var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
 			if (param is ConvertDbParam convertDb) {
-				await foreach (var msg in HandleConvertDbStreamAsync(convertDb.IsInit, ct, request.Flag)) {
+				await foreach (var msg in WithManualExecHistoryAsync("DB変換", HandleConvertDbStreamAsync(convertDb.IsInit, ct, request.Flag), null, ct)) {
 					yield return msg;
 				}
 				yield break;
 			}
 			else if (param is ConvertSelectedDbParam convertSelected) {
-				await foreach (var msg in HandleConvertSelectedStreamAsync(convertSelected.SelectedTask, convertSelected.IsInit, ct, request.Flag)) {
+				var selectedTasks = string.Join(",", convertSelected.SelectedTask);
+				await foreach (var msg in WithManualExecHistoryAsync("選択DB変換", HandleConvertSelectedStreamAsync(convertSelected.SelectedTask, convertSelected.IsInit, ct, request.Flag), $"変換プログラム={selectedTasks}", ct)) {
 					yield return msg;
 				}
 				yield break;
@@ -89,7 +211,7 @@ public partial class CoreService {
 			or CvFlag.Msg056_SummaryUriSei
 			or CvFlag.Msg057_SummaryKaiShi
 			or CvFlag.Msg058_HhtDataUpdate) {
-			await foreach (var msg in HandleSummaryStreamAsync(ct, request)) {
+			await foreach (var msg in WithManualExecHistoryAsync(GetStreamTaskName(request.Flag), HandleSummaryStreamAsync(ct, request), null, ct)) {
 				yield return msg;
 			}
 			yield break;
@@ -100,7 +222,7 @@ public partial class CoreService {
 			or CvFlag.Msg085_CostLastPurchaseApply
 			or CvFlag.Msg087_CostTotalAverageApply
 			or CvFlag.Msg089_CostRevaluationApply) {
-			await foreach (var msg in HandleCostUpdateApplyStreamAsync(ct, request)) {
+			await foreach (var msg in WithManualExecHistoryAsync(GetStreamTaskName(request.Flag), HandleCostUpdateApplyStreamAsync(ct, request), null, ct)) {
 				yield return msg;
 			}
 			yield break;
