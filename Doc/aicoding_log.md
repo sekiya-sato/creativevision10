@@ -1,3 +1,34 @@
+## [2026-09-08] 上代一括変更 画面④確認（プレビュー・競合一覧・Timeline）Step8
+### Agent
+- Claude Opus-5 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- 設計書`Doc/spec/2026-09-05_上代一括変更_詳細設計.md` Step 8（画面④確認）を実装する
+### 実施内容
+- ④確認タブを内側`TabControl`（①②③の後）へ追加。プレビュー（カード表示）・競合一覧（DataGrid）・Timeline（ItemsControlの比例幅バー）の3ブロック
+- プレビュー: 対象Style数・SKU数（Step5のSKU数集計を再利用）・対象店舗数・適用期間・現在/変更後平均上代・平均値下率・展開見込行数・競合件数(C1〜C6)・原価割れ(C7)・最低販売価格違反(C8)。分母0でも例外・ゼロ除算にしない
+- 展開見込行数が`MasterConfig.JodaiExpandWarnRows`（既定20万）を超えると警告表示
+- 競合一覧: C1〜C8を種別・深刻度・件数・明細でDataGrid表示。C1/C2（エラー）があれば`DoFixCommand`のCanExecuteをfalseにして確定ボタンを無効化
+- 競合チェックコマンド`CheckConflictsCommand`を追加。C1/C2/C5は`JodaiScopeResolver.Resolve`、C7/C8は`JodaiPriceRule.IsBelowCost`/`IsBelowMinPrice`をそのまま使い、C4/C6はgRPCの`QueryListSqlParam`でDB参照する（設計書6.3）
+- Timeline: 選択商品×選択店舗の実効価格推移を`JodaiTimelineSegment`（開始日/終了日/価格/由来/通常上代へ戻る区間か/他伝票由来か）として算出。Scope期間の区間・期間外の通常上代区間・他伝票の確定済み`DerivedJodai`の重ね合わせをコマンド`BuildTimelineCommand`で構築し、描画（ItemsControl）はこのデータを見るだけにした
+- `Doc/test/UatVm/Scenarios/JodaiConfirmScenario.cs`を追加し`Program.cs`へ登録(`jodaiconfirm`)
+### 技術決定 Why
+- **SQLを1箇所に集約**: C4/C6の判定SQL（設計書2.8に例示済みのDerivedJodai問い合わせ）を`CvBase/JodaiConflictSql.cs`（新規）へ切り出した。`CvDomainLogic.JodaiConflictChecker`（サーバ側、NPoco経由）と`CvWpfclient`の画面（gRPC `QueryListSqlParam`経由）の両方が`JodaiConflictSql.BuildOtherSlipConflictSql`を呼ぶ形にし、二重管理をなくした。結果行の型`JodaiConflictSql.OtherSlipRow`も共有（`QueryListSqlParam.ItemType`はサーバ側で型解決するため、クライアント内の入れ子クラスではなく共有アセンブリに置く必要がある。既存の`ScalarCountRow`/`JodaiEffectiveRow`と同じ理由）
+- `BuildDenpyoAsync`（保存直前の明細組み立て）から`BuildJmeisaiCells`を抽出し、④確認タブの競合チェック（保存しない）と保存フローの両方が同じ組み立てロジックを共有するようにした（値は変えない、単純な抽出リファクタ）
+- C7/C8の判定はStep7で`CvBase.JodaiPriceRule`へ切り出し済みの`IsBelowCost`/`IsBelowMinPrice`をそのまま再利用（画面はCvDomainLogicを参照できないため）
+### 確認
+- `dotnet build creativevision10.slnx`：0警告0エラー
+- `Tests/TestServer/TestServer.exe`：898件成功
+- `Tests/TestSqlDialect/TestSqlDialect.exe`：141件成功
+- `dotnet build Doc/test/UatVm/UatVm.csproj`：0警告0エラー(既存TaxMixScenarioの無関係な警告3件のみ)
+- `UatVm.exe jodaibulkextract/jodaiscope/jodaipricematrix/jodaiconfirm --manage-server`: **このセッションの実行環境ではgRPC呼び出し(初期化時のFieldOptions読込)がハングし完走できなかった**。CvServerは正常起動するが、画面側の最初の非同期クエリが数分たっても完了しない。変更前の`jodaibulkextract`（無改修）でも同一のハングを再現したため、Step8の実装起因ではなくこのセッションのサンドボックス環境（ネットワーク/スレッド）固有の問題と判断した。同日21:59に別セッションで`jodaibulkextract`が23件成功(PASS)している記録が`Doc/test/UatVm/out/`に残っており、環境が正常な状態では動作することを示している。ビルド・ユニットテスト・コードレビューでの担保に留め、UatVm実機確認は持ち越し
+### 注意
+- 上記の理由により、`jodaiconfirm`シナリオ自体は今回未実行。次回、正常に動く環境でまず`jodaibulkextract`等の既存3本が通ることを確認してから`jodaiconfirm`を流すこと
+- 診断のため`Doc/test/UatVm/ViewDriver.cs`の`WaitAsync`既定タイムアウトを一時的に300秒へ変更したが、確認後60秒へ復元済み（`git diff`で無変更を確認済み）
+
+---
+
 ## [2026-09-08] 上代一括変更 画面③Price Matrix（動的Scope列・セル一括操作・原価割れ警告）Step7
 ### Agent
 - Claude Opus-5 : Anthropic : Claude Code

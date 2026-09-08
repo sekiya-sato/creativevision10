@@ -1116,6 +1116,268 @@
 								</materialDesign:Card>
 							</Grid>
 						</TabItem>
+
+						<!--  ================= ④ 確認（プレビュー・競合・Timeline。設計書2.8・2.9・5.5）=================  -->
+						<TabItem Header="④ 確認">
+							<Grid Margin="0,10,0,0">
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="*" />
+								</Grid.RowDefinitions>
+
+								<!--  プレビュー（設計書2.9）  -->
+								<materialDesign:Card Grid.Row="0"
+									Margin="0,0,0,8" Padding="12,8"
+									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
+									<StackPanel>
+										<DockPanel>
+											<Button DockPanel.Dock="Right"
+												Command="{Binding CheckConflictsCommand}"
+												IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+												Style="{StaticResource MaterialDesignOutlinedButton}"
+												ToolTip="プレビュー集計と競合（C1〜C8）を再計算します（設計書5.6「競合チェック」）">
+												<StackPanel Orientation="Horizontal">
+													<materialDesign:PackIcon Kind="Refresh" />
+													<TextBlock Margin="6,0,0,0" Text="競合チェック" />
+												</StackPanel>
+											</Button>
+											<TextBlock VerticalAlignment="Center"
+												FontWeight="SemiBold" Text="プレビュー（確定前シミュレーション）" />
+										</DockPanel>
+
+										<WrapPanel Margin="0,8,0,0" Orientation="Horizontal">
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="対象Style数" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewStyleCount, StringFormat={}{0:N0}}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="対象SKU数" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewSkuCount, StringFormat={}{0:N0}}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="対象店舗数" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewShopCount, StringFormat={}{0:N0}}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="適用期間" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewPeriodText}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="現在平均上代" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewAvgJodaiOld, StringFormat={}{0:N0}円}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="変更後平均上代" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewAvgJodaiNew, StringFormat={}{0:N0}円}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="平均値下率" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewAvgRateOffPercent, StringFormat={}{0:N2}%}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6"
+												ToolTip="MasterConfig.JodaiExpandWarnRows を超えると赤字で警告します（設計書2.9）">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="展開見込行数" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewExpandRows, StringFormat={}{0:N0}行}">
+														<TextBlock.Style>
+															<Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+																<Style.Triggers>
+																	<DataTrigger Binding="{Binding PreviewExpandRowsWarning}" Value="True">
+																		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
+																	</DataTrigger>
+																</Style.Triggers>
+															</Style>
+														</TextBlock.Style>
+													</TextBlock>
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="競合件数(C1〜C6)" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewConflictCount, StringFormat={}{0:N0}件}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="原価割れ件数(C7)" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewBelowCostCount, StringFormat={}{0:N0}件}" />
+												</StackPanel>
+											</materialDesign:Card>
+											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
+												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
+												<StackPanel>
+													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="最低価格違反(C8)" />
+													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewBelowMinPriceCount, StringFormat={}{0:N0}件}" />
+												</StackPanel>
+											</materialDesign:Card>
+										</WrapPanel>
+
+										<TextBlock Margin="0,4,0,0"
+											Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+											Text="C1/C2（エラー）があるため確定できません。「② 適用範囲」でScopeの重なりを見直してください。"
+											Visibility="{Binding HasBlockingConflicts, Converter={StaticResource BooleanToVisibilityConverter}}" />
+									</StackPanel>
+								</materialDesign:Card>
+
+								<!--  競合一覧（設計書2.8・5.5）  -->
+								<materialDesign:Card Grid.Row="1"
+									Margin="0,0,0,8" Padding="0"
+									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
+									<DataGrid MaxHeight="220"
+										materialDesign:DataGridAssist.CellPadding="8,4"
+										materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
+										AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
+										AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" GridLinesVisibility="All" HeadersVisibility="Column"
+										HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+										IsReadOnly="True" ItemsSource="{Binding ConflictRows}"
+										Style="{StaticResource MaterialDesignDataGrid}"
+										VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}">
+										<DataGrid.Columns>
+											<DataGridTextColumn Width="50"
+												Binding="{Binding KindLabel}"
+												Header="種別" />
+											<DataGridTextColumn Width="70"
+												Binding="{Binding SeverityLabel}"
+												Header="深刻度">
+												<DataGridTextColumn.CellStyle>
+													<Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+														<Style.Triggers>
+															<DataTrigger Binding="{Binding SeverityLabel}" Value="エラー">
+																<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
+																<Setter Property="FontWeight" Value="Bold" />
+															</DataTrigger>
+															<DataTrigger Binding="{Binding SeverityLabel}" Value="警告">
+																<Setter Property="Foreground" Value="#B8860B" />
+																<Setter Property="FontWeight" Value="Bold" />
+															</DataTrigger>
+														</Style.Triggers>
+													</Style>
+												</DataGridTextColumn.CellStyle>
+											</DataGridTextColumn>
+											<DataGridTextColumn Width="60"
+												Binding="{Binding Count, StringFormat={}{0:N0}}"
+												ElementStyle="{StaticResource DataGridRightTextBlock}"
+												Header="件数" />
+											<DataGridTextColumn Width="*" MinWidth="300"
+												Binding="{Binding Message}"
+												Header="明細" />
+										</DataGrid.Columns>
+										<DataGrid.ColumnHeaderStyle>
+											<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+												TargetType="DataGridColumnHeader" />
+										</DataGrid.ColumnHeaderStyle>
+									</DataGrid>
+								</materialDesign:Card>
+
+								<!--  Timeline（設計書5.5）  -->
+								<materialDesign:Card Grid.Row="2"
+									Padding="12"
+									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
+									<Grid>
+										<Grid.RowDefinitions>
+											<RowDefinition Height="Auto" />
+											<RowDefinition Height="*" />
+										</Grid.RowDefinitions>
+
+										<StackPanel Grid.Row="0"
+											Orientation="Horizontal">
+											<TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="Timeline（実効価格の推移）" />
+											<TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="商品:" />
+											<ComboBox Width="220" Margin="6,0,0,0"
+												DisplayMemberPath="Display"
+												ItemsSource="{Binding TimelineShohinOptions}"
+												SelectedItem="{Binding SelectedTimelineShohin, Mode=TwoWay}"
+												Style="{StaticResource FormComboBox}" />
+											<TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="店舗:" />
+											<ComboBox Width="220" Margin="6,0,0,0"
+												DisplayMemberPath="Display"
+												ItemsSource="{Binding TimelineTenpoOptions}"
+												SelectedItem="{Binding SelectedTimelineTenpo, Mode=TwoWay}"
+												Style="{StaticResource FormComboBox}" />
+											<Button Margin="16,0,0,0"
+												Command="{Binding BuildTimelineCommand}"
+												IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+												Style="{StaticResource MaterialDesignOutlinedButton}">
+												<TextBlock Text="表示" />
+											</Button>
+										</StackPanel>
+
+										<ItemsControl Grid.Row="1"
+											Margin="0,12,0,0"
+											ItemsSource="{Binding TimelineSegments}">
+											<ItemsControl.ItemsPanel>
+												<ItemsPanelTemplate>
+													<!--  期間の長さに比例した幅の区間を並べる（チャートライブラリは導入しない。タスク指示）  -->
+													<UniformGrid Columns="1" />
+												</ItemsPanelTemplate>
+											</ItemsControl.ItemsPanel>
+											<ItemsControl.ItemTemplate>
+												<DataTemplate>
+													<Grid Margin="0,2">
+														<Grid.ColumnDefinitions>
+															<ColumnDefinition Width="90" />
+															<ColumnDefinition Width="*" />
+															<ColumnDefinition Width="90" />
+														</Grid.ColumnDefinitions>
+														<TextBlock Grid.Column="0"
+															VerticalAlignment="Center" FontSize="11"
+															Text="{Binding DayFrom}" />
+														<Border Grid.Column="1"
+															Height="26" Padding="6,2"
+															Background="{DynamicResource MaterialDesignDivider}"
+															CornerRadius="4">
+															<Border.Style>
+																<Style TargetType="Border">
+																	<Style.Triggers>
+																		<DataTrigger Binding="{Binding IsFallback}" Value="True">
+																			<Setter Property="Background" Value="{DynamicResource MaterialDesignChipBackground}" />
+																		</DataTrigger>
+																		<DataTrigger Binding="{Binding IsOtherSlip}" Value="True">
+																			<Setter Property="BorderBrush" Value="#B8860B" />
+																			<Setter Property="BorderThickness" Value="0,2,0,2" />
+																		</DataTrigger>
+																	</Style.Triggers>
+																</Style>
+															</Border.Style>
+															<TextBlock VerticalAlignment="Center" FontSize="11"
+																Text="{Binding Source, StringFormat={}{0} }" />
+														</Border>
+														<TextBlock Grid.Column="2"
+															VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12" FontWeight="SemiBold"
+															Text="{Binding Jodai, StringFormat={}{0:N0}円}" />
+													</Grid>
+												</DataTemplate>
+											</ItemsControl.ItemTemplate>
+										</ItemsControl>
+									</Grid>
+								</materialDesign:Card>
+							</Grid>
+						</TabItem>
 					</TabControl>
 
 					<!--  操作ボタン（内側タブの外＝常時表示）  -->

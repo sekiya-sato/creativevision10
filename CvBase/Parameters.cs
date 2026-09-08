@@ -368,6 +368,19 @@ public sealed class JodaiEffectiveRow {
 }
 
 /// <summary>
+/// 上代一括変更（Scope）④確認タブのTimeline（設計書5.5）で、他伝票の確定済み<see cref="DerivedJodai"/>を
+/// 重ねて表示するための1行。<c>QueryListSqlParam.ItemType</c>はサーバ側で型解決するため、
+/// クライアント内の入れ子クラスではなく共有アセンブリ(CvBase)へ置く（<see cref="ScalarCountRow"/>と同じ理由）。
+/// </summary>
+public sealed class JodaiTimelineOtherSlipRow {
+	public long Id_Tenpo { get; set; }
+	public string DayFrom { get; set; } = string.Empty;
+	public string DayTo { get; set; } = string.Empty;
+	public int Jodai { get; set; }
+	public long Id_Tran { get; set; }
+}
+
+/// <summary>
 /// 出荷指示確定のパラメータ。対象の配分行に <c>KakuteiDay</c> を立てる。
 /// 有効在庫（実在庫 − 引当数）が1SKUでも負になる場合はサーバが1件も確定せず、
 /// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。

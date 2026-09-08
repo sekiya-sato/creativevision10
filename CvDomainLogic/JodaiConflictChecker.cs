@@ -68,24 +68,13 @@ public class JodaiConflictChecker {
 			return [];
 		}
 
-		var (dayFrom, dayTo) = OverallPeriod(tran);
+		var (dayFrom, dayTo) = JodaiConflictSql.OverallPeriod(tran.Jshop, tran.DayFrom, tran.DayTo);
 		var shohinIds = tran.Jmeisai.Select(c => c.Id_Shohin).Distinct().ToList();
 		var tenpoIds = tran.Jshop.Select(c => c.Id_Tenpo).Distinct().ToList();
-		// Jshopに0（全件ワイルドカード）を持つ既存形式の伝票は対象店舗を絞れないため、Id_Tenpo条件を外す
-		// （自伝票側が全件対象なら、他伝票のどの店舗指定とも重複しうる）。
-		var restrictTenpo = !tenpoIds.Contains(0);
 
-		var sql = @$"
-SELECT dj.Id_Shohin, sh.Code AS Code_Shohin, sh.Name AS Mei_Shohin, dj.Id_Tenpo, dj.Jodai, dj.Id_Tran
-  FROM {nameof(DerivedJodai)} dj
-  JOIN {nameof(MasterShohin)} sh ON sh.Id = dj.Id_Shohin
- WHERE dj.Id_Tran <> @0
-   AND dj.TaishoType = @1
-   AND dj.Id_Shohin IN ({string.Join(",", shohinIds)})
-   {(restrictTenpo ? $"AND dj.Id_Tenpo IN ({string.Join(",", tenpoIds)},0)" : "")}
-   AND dj.DayFrom <= @2 AND dj.DayTo >= @3
- ORDER BY dj.Id_Shohin, dj.Id_Tenpo";
-		var rows = _db.Fetch<OtherSlipRow>(sql, tran.Id, tran.TaishoType, dayTo, dayFrom);
+		// SQL組み立ては画面（④確認タブ）と共有する（CvBase.JodaiConflictSql。設計書6.3・タスク指示）。
+		var sql = JodaiConflictSql.BuildOtherSlipConflictSql(shohinIds, tenpoIds, properOnly: false);
+		var rows = _db.Fetch<JodaiConflictSql.OtherSlipRow>(sql, tran.Id, tran.TaishoType, dayTo, dayFrom);
 		if (rows.Count == 0) {
 			return [];
 		}
@@ -115,23 +104,13 @@ SELECT dj.Id_Shohin, sh.Code AS Code_Shohin, sh.Name AS Mei_Shohin, dj.Id_Tenpo,
 			return [];
 		}
 
-		var (dayFrom, dayTo) = OverallPeriod(tran);
+		var (dayFrom, dayTo) = JodaiConflictSql.OverallPeriod(tran.Jshop, tran.DayFrom, tran.DayTo);
 		var shohinIds = tran.Jmeisai.Select(c => c.Id_Shohin).Distinct().ToList();
 		var tenpoIds = tran.Jshop.Select(c => c.Id_Tenpo).Distinct().ToList();
-		var restrictTenpo = !tenpoIds.Contains(0);
 
-		var sql = @$"
-SELECT dj.Id_Shohin, sh.Code AS Code_Shohin, sh.Name AS Mei_Shohin, dj.Id_Tenpo, dj.Jodai, dj.Id_Tran
-  FROM {nameof(DerivedJodai)} dj
-  JOIN {nameof(MasterShohin)} sh ON sh.Id = dj.Id_Shohin
- WHERE dj.Id_Tran <> @0
-   AND dj.TaishoType = @1
-   AND dj.Kubun = {(int)EnumJodaiKubun.Proper}
-   AND dj.Id_Shohin IN ({string.Join(",", shohinIds)})
-   {(restrictTenpo ? $"AND dj.Id_Tenpo IN ({string.Join(",", tenpoIds)},0)" : "")}
-   AND dj.DayFrom <= @2 AND dj.DayTo >= @3
- ORDER BY dj.Id_Shohin, dj.Id_Tenpo";
-		var rows = _db.Fetch<OtherSlipRow>(sql, tran.Id, tran.TaishoType, dayTo, dayFrom);
+		// SQL組み立ては画面（④確認タブ）と共有する（CvBase.JodaiConflictSql。CheckOtherSlipConflictとの違いはproperOnly=trueだけ）。
+		var sql = JodaiConflictSql.BuildOtherSlipConflictSql(shohinIds, tenpoIds, properOnly: true);
+		var rows = _db.Fetch<JodaiConflictSql.OtherSlipRow>(sql, tran.Id, tran.TaishoType, dayTo, dayFrom);
 		if (rows.Count == 0) {
 			return [];
 		}
@@ -246,32 +225,6 @@ SELECT dj.Id_Shohin, sh.Code AS Code_Shohin, sh.Name AS Mei_Shohin, dj.Id_Tenpo,
 	public int GetJodaiMinPrice() {
 		var val = _db.FirstOrDefault<string>($"SELECT Val FROM {nameof(MasterConfig)} WHERE Name = @0", MasterConfig.NameJodaiMinPrice);
 		return int.TryParse(val, out var price) && price >= 0 ? price : 0;
-	}
-
-	/// <summary>
-	/// <paramref name="tran"/>の<c>Jshop</c>全行の適用期間（店舗別期間が空ならヘッダ既定期間へフォールバック。
-	/// <see cref="DerivedJodai.CreateSql"/>のR2と同じ規則）の和（最小DayFrom〜最大DayTo）を返す。
-	/// C4・C6の検出範囲を緩めに（見逃しなく）取るための全体幅であり、個々の店舗×商品の厳密な期間ではない。
-	/// </summary>
-	static (string DayFrom, string DayTo) OverallPeriod(TranJodai tran) {
-		var froms = new List<string>();
-		var tos = new List<string>();
-		foreach (var shop in tran.Jshop) {
-			froms.Add(string.IsNullOrEmpty(shop.DayFrom) ? tran.DayFrom : shop.DayFrom);
-			tos.Add(string.IsNullOrEmpty(shop.DayTo) ? tran.DayTo : shop.DayTo);
-		}
-		// yyyyMMdd固定長文字列なので序数比較がそのまま日付の大小比較になる（JodaiScopeResolver.PeriodsOverlapと同じ理由）。
-		return (froms.Min(StringComparer.Ordinal)!, tos.Max(StringComparer.Ordinal)!);
-	}
-
-	/// <summary>C4・C6の問い合わせ結果1行。</summary>
-	public class OtherSlipRow {
-		public long Id_Shohin { get; set; }
-		public string Code_Shohin { get; set; } = string.Empty;
-		public string Mei_Shohin { get; set; } = string.Empty;
-		public long Id_Tenpo { get; set; }
-		public int Jodai { get; set; }
-		public long Id_Tran { get; set; }
 	}
 
 	/// <summary>C7のマスタ原価まとめ取得の受け取り用。</summary>

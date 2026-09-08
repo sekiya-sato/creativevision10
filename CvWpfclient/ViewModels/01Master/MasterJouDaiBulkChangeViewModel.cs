@@ -656,6 +656,12 @@ LIMIT 500";
 		MeisaiRows = [];
 		ShopRows = [];
 		TargetSkuCount = 0;
+		ClearPreviewAndConflicts();
+		TimelineShohinOptions = [];
+		TimelineTenpoOptions = [];
+		SelectedTimelineShohin = null;
+		SelectedTimelineTenpo = null;
+		TimelineSegments = [];
 		NotifyCounts();
 	}
 
@@ -778,9 +784,13 @@ ORDER BY Code";
 				DayTo = miss.DayTo,
 			});
 		}
-		foreach (var row in rows) row.PropertyChanged += (_, _) => NotifyCounts();
+		foreach (var row in rows) row.PropertyChanged += (_, e) => {
+			NotifyCounts();
+			if (e.PropertyName == nameof(JodaiShopRow.IsTarget)) RefreshTimelineOptions();
+		};
 		ShopRows = [.. rows];
 		NotifyCounts();
+		RefreshTimelineOptions();
 	}
 
 	partial void OnEditTaishoTypeChanged(int value) {
@@ -795,12 +805,14 @@ ORDER BY Code";
 	void ShopAllOn() {
 		foreach (var row in ShopRows) row.IsTarget = true;
 		NotifyCounts();
+		RefreshTimelineOptions();
 	}
 
 	[RelayCommand]
 	void ShopAllOff() {
 		foreach (var row in ShopRows) row.IsTarget = false;
 		NotifyCounts();
+		RefreshTimelineOptions();
 	}
 
 	/// <summary>チェック済みの店舗へ期間をまとめて設定する（画面の「店舗セール期間設定」）。</summary>
@@ -846,6 +858,7 @@ ORDER BY Code";
 			// SKU数はDerivedShohinColSiz（色×サイズ展開）の件数。抽出結果と対応するIdだけを数える
 			TargetSkuCount = await CountSkuAsync(rows, ct);
 			NotifyCounts();
+			RefreshTimelineOptions();
 			var capped = TryGetMaxCount(out var max) && rows.Count >= max
 				? $" ※取得件数上限({max:N0})に達しています"
 				: string.Empty;
@@ -1178,6 +1191,325 @@ WHERE D.Id_Shohin IN (
 		Message = $"選択した {applied:N0} セルへ適用しました";
 	}
 
+	// ===== ④ 確認（プレビュー・競合・Timeline。設計書2.8・2.9・5.5）===============
+
+	[ObservableProperty] public partial int PreviewStyleCount { get; set; }
+	[ObservableProperty] public partial int PreviewSkuCount { get; set; }
+	[ObservableProperty] public partial int PreviewShopCount { get; set; }
+	[ObservableProperty] public partial string PreviewPeriodText { get; set; } = string.Empty;
+	[ObservableProperty] public partial int PreviewAvgJodaiOld { get; set; }
+	[ObservableProperty] public partial int PreviewAvgJodaiNew { get; set; }
+	[ObservableProperty] public partial decimal PreviewAvgRateOffPercent { get; set; }
+	[ObservableProperty] public partial long PreviewExpandRows { get; set; }
+	[ObservableProperty] public partial bool PreviewExpandRowsWarning { get; set; }
+	[ObservableProperty] public partial int PreviewConflictCount { get; set; }
+	[ObservableProperty] public partial int PreviewBelowCostCount { get; set; }
+	[ObservableProperty] public partial int PreviewBelowMinPriceCount { get; set; }
+
+	/// <summary>C1/C2（エラー）が1件でもあれば true。<see cref="CanFix"/>が確定ボタンを無効化する（設計書5.5）。</summary>
+	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(DoFixCommand))]
+	public partial bool HasBlockingConflicts { get; set; }
+
+	[ObservableProperty]
+	public partial ObservableCollection<JodaiConflictRow> ConflictRows { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<MasterOption> TimelineShohinOptions { get; set; } = [];
+
+	[ObservableProperty]
+	public partial MasterOption? SelectedTimelineShohin { get; set; }
+
+	[ObservableProperty]
+	public partial ObservableCollection<MasterOption> TimelineTenpoOptions { get; set; } = [];
+
+	[ObservableProperty]
+	public partial MasterOption? SelectedTimelineTenpo { get; set; }
+
+	/// <summary>
+	/// Timelineの区間データ（設計書5.5）。描画（横棒）はこのコレクションを見るだけにし、UatVmはこの
+	/// プロパティを直接検証する（「見た目そのものはUatVmでは観測できない」ためのタスク指示）。
+	/// </summary>
+	[ObservableProperty]
+	public partial ObservableCollection<JodaiTimelineSegment> TimelineSegments { get; set; } = [];
+
+	/// <summary>
+	/// 競合チェック（設計書5.6）。プレビュー集計（2.9）と競合一覧（2.8）をまとめて算出する。
+	/// <para>
+	/// C1/C2/C5は<see cref="JodaiScopeResolver"/>（伝票内のみで判定できる純粋関数）、C7/C8は
+	/// <see cref="JodaiPriceRule"/>（同じく純粋関数）をそのまま使う。C4/C6はDB参照が要るため、
+	/// <see cref="CvBase.JodaiConflictSql"/>が組み立てるSQLをgRPCの<c>QueryListSqlParam</c>で実行する
+	/// （設計書6.3。<c>CvDomainLogic.JodaiConflictChecker</c>と同じSQLを共有し、二重に書かない）。
+	/// </para>
+	/// </summary>
+	/// <summary>プレビュー集計・競合一覧をクリアする（<see cref="ClearEdit"/>・競合チェック開始時）。</summary>
+	void ClearPreviewAndConflicts() {
+		PreviewStyleCount = 0;
+		PreviewSkuCount = 0;
+		PreviewShopCount = 0;
+		PreviewPeriodText = string.Empty;
+		PreviewAvgJodaiOld = 0;
+		PreviewAvgJodaiNew = 0;
+		PreviewAvgRateOffPercent = 0m;
+		PreviewExpandRows = 0;
+		PreviewExpandRowsWarning = false;
+		PreviewConflictCount = 0;
+		PreviewBelowCostCount = 0;
+		PreviewBelowMinPriceCount = 0;
+		ConflictRows = [];
+		HasBlockingConflicts = false;
+	}
+
+	[RelayCommand]
+	async Task CheckConflicts(CancellationToken ct) {
+		ClearPreviewAndConflicts();
+		if (EditDayFrom == null || EditDayTo == null) {
+			Message = "適用期間を入力してから競合チェックしてください。";
+			return;
+		}
+		if (MeisaiRows.Count == 0 || ScopeRows.Count == 0) {
+			Message = "対象商品と適用範囲（Scope）を設定してから競合チェックしてください。";
+			return;
+		}
+		var shops = ShopRows.Where(x => x.IsTarget).ToList();
+		if (shops.Count == 0) {
+			Message = "対象店舗をチェックしてから競合チェックしてください。";
+			return;
+		}
+
+		try {
+			StartBusy("競合チェック中...");
+
+			var scopes = ScopeRows.Select(ToTranJodaiScope).ToList();
+			var candidateStores = ResolveCandidateStores(shops.Select(s => s.Id_Tenpo).ToHashSet());
+			var resolution = JodaiScopeResolver.Resolve(candidateStores, scopes);
+
+			await RecalcCellsAsync(onlyIfNotManuallyEdited: true, ct);
+			var jmeisai = BuildJmeisaiCells(scopes);
+			var jshop = resolution.Jshop;
+
+			// ---- プレビュー集計（設計書2.9）----
+			PreviewStyleCount = jmeisai.Select(m => m.Id_Shohin).Distinct().Count();
+			PreviewSkuCount = TargetSkuCount; // Step5で作ったSKU数の仕組みをそのまま再利用（タスク指示）
+			PreviewShopCount = jshop.Select(s => s.Id_Tenpo).Distinct().Count();
+			PreviewPeriodText = $"{scopes.Min(s => s.DayFrom)} ～ {scopes.Max(s => s.DayTo)}";
+			PreviewAvgJodaiOld = jmeisai.Count > 0 ? (int)Math.Round(jmeisai.Average(m => (double)m.JodaiOld), MidpointRounding.AwayFromZero) : 0;
+			PreviewAvgJodaiNew = jmeisai.Count > 0 ? (int)Math.Round(jmeisai.Average(m => (double)m.JodaiNew), MidpointRounding.AwayFromZero) : 0;
+			var sumOld = jmeisai.Sum(m => (long)m.JodaiOld);
+			var sumNew = jmeisai.Sum(m => (long)m.JodaiNew);
+			// 分母(sumOld)が0（明細なし・原価データ未整備など）でも例外・ゼロ除算にしない（タスク指示）。
+			PreviewAvgRateOffPercent = sumOld > 0 ? Math.Round((1m - (decimal)sumNew / sumOld) * 100m, 2, MidpointRounding.AwayFromZero) : 0m;
+			// Scope毎に「該当Jshop件数 × 該当Jmeisai件数」の積の総和（設計書2.9「Jshop件数×Scope内商品件数の合計」）
+			PreviewExpandRows = scopes.Sum(s => (long)jshop.Count(j => j.No_Scope == s.No) * jmeisai.Count(m => m.No_Scope == s.No));
+			var warnRows = await GetConfigIntAsync(MasterConfig.NameJodaiExpandWarnRows, 200000, ct);
+			PreviewExpandRowsWarning = warnRows > 0 && PreviewExpandRows > warnRows;
+
+			// ---- 競合一覧（設計書2.8・5.5）----
+			var rows = new List<JodaiConflictRow>();
+			AddGroupedConflictRows(rows, resolution.Conflicts, EnumJodaiConflictKind.ScopeOverlapSameRange);
+			AddGroupedConflictRows(rows, resolution.Conflicts, EnumJodaiConflictKind.ScopeDefinitionOverlap);
+			AddGroupedConflictRows(rows, resolution.Conflicts, EnumJodaiConflictKind.PriorityResolvedAcrossRangeType);
+
+			// C3: 伝票内・商品重複。Normalize()が自動解消するので件数だけ通知する（設計書2.8）。
+			var duplicateCount = new TranJodai { Jmeisai = [.. jmeisai] }.FindDuplicates().Count;
+			if (duplicateCount > 0) {
+				rows.Add(new JodaiConflictRow(EnumJodaiConflictKind.DuplicateItem, EnumJodaiConflictSeverity.Info,
+					duplicateCount, $"商品×Scopeの重複が{duplicateCount:N0}件あります。確定時に自動解消されます。"));
+			}
+
+			// C4/C6: DB参照が要るためgRPC QueryListSqlParamで取得する（設計書6.3。SQLはCvBase.JodaiConflictSqlを共有）。
+			var shohinIds = jmeisai.Select(m => m.Id_Shohin).Distinct().ToList();
+			var tenpoIds = jshop.Select(s => s.Id_Tenpo).Distinct().ToList();
+			var (dayFrom, dayTo) = JodaiConflictSql.OverallPeriod(jshop, ToDay(EditDayFrom.Value), ToDay(EditDayTo.Value));
+
+			var otherSlipRows = await FetchOtherSlipConflictsAsync(shohinIds, tenpoIds, properOnly: false, dayFrom, dayTo, ct);
+			if (otherSlipRows.Count > 0) {
+				var examples = otherSlipRows.Take(5).Select(c => $"{c.Code_Shohin} {c.Mei_Shohin}（店舗Id={c.Id_Tenpo}）{c.Jodai}円 [伝票Id={c.Id_Tran}]");
+				rows.Add(new JodaiConflictRow(EnumJodaiConflictKind.OtherSlipConflict, EnumJodaiConflictSeverity.Warning,
+					otherSlipRows.Count,
+					$"他の伝票の確定済み適用上代（DerivedJodai）と、同一商品×同一店舗×期間で重複しています（{otherSlipRows.Count}件）。"
+						+ $" 例: {string.Join("、", examples)}"));
+			}
+
+			var properRows = await FetchOtherSlipConflictsAsync(shohinIds, tenpoIds, properOnly: true, dayFrom, dayTo, ct);
+			if (properRows.Count > 0) {
+				var examples = properRows.Take(5).Select(c => $"{c.Code_Shohin} {c.Mei_Shohin}（店舗Id={c.Id_Tenpo}）恒久上代={c.Jodai}円 [伝票Id={c.Id_Tran}]");
+				rows.Add(new JodaiConflictRow(EnumJodaiConflictKind.ProperBaselineMismatch, EnumJodaiConflictSeverity.Warning,
+					properRows.Count,
+					$"期間内に恒久上代変更（Kubun=Proper）の伝票が別途有効です（{properRows.Count}件）。"
+						+ $" 例: {string.Join("、", examples)}"));
+			}
+
+			// C7/C8: 判定の中核はCvBase.JodaiPriceRule（Price Matrixのセル警告と同じ基準。CvDomainLogicのJodaiConflictCheckerも同じ関数を使う）。
+			var minPrice = await GetConfigIntAsync(MasterConfig.NameJodaiMinPrice, 0, ct);
+			var belowCost = jmeisai.Where(m => JodaiPriceRule.IsBelowCost(m.JodaiNew, m.TankaGenka)).ToList();
+			PreviewBelowCostCount = belowCost.Count;
+			if (belowCost.Count > 0) {
+				var examples = belowCost.Take(5).Select(m => $"{m.Code_Shohin} {m.Mei_Shohin} 新{m.JodaiNew}円<原価{m.TankaGenka}円");
+				rows.Add(new JodaiConflictRow(EnumJodaiConflictKind.BelowCost, EnumJodaiConflictSeverity.Warning,
+					belowCost.Count, $"原価割れの明細が{belowCost.Count}件あります。 例: {string.Join("、", examples)}"));
+			}
+
+			var belowMin = minPrice > 0 ? jmeisai.Where(m => JodaiPriceRule.IsBelowMinPrice(m.JodaiNew, minPrice)).ToList() : [];
+			PreviewBelowMinPriceCount = belowMin.Count;
+			if (belowMin.Count > 0) {
+				var examples = belowMin.Take(5).Select(m => $"{m.Code_Shohin} {m.Mei_Shohin} 新{m.JodaiNew}円<最低{minPrice}円");
+				rows.Add(new JodaiConflictRow(EnumJodaiConflictKind.BelowMinPrice, EnumJodaiConflictSeverity.Warning,
+					belowMin.Count, $"最低販売価格（{minPrice}円）を下回る明細が{belowMin.Count}件あります。 例: {string.Join("、", examples)}"));
+			}
+
+			ConflictRows = [.. rows.OrderBy(r => r.Severity).ThenBy(r => r.Kind)];
+			PreviewConflictCount = rows.Where(r => r.Kind != EnumJodaiConflictKind.BelowCost && r.Kind != EnumJodaiConflictKind.BelowMinPrice)
+				.Sum(r => r.Count);
+			HasBlockingConflicts = rows.Any(r => r.Severity == EnumJodaiConflictSeverity.Error);
+
+			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 競合チェック: 展開見込 {PreviewExpandRows:N0} 行 / 競合(C1〜C6) {PreviewConflictCount:N0} 件"
+				+ $" / 原価割れ {PreviewBelowCostCount:N0} 件 / 最低価格違反 {PreviewBelowMinPriceCount:N0} 件";
+		}
+		catch (OperationCanceledException) {
+			Message = "競合チェックを中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"競合チェック失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	/// <summary><paramref name="conflicts"/>のうち<paramref name="kind"/>の種別だけを1行へ集約する。</summary>
+	static void AddGroupedConflictRows(List<JodaiConflictRow> rows, IReadOnlyList<JodaiConflict> conflicts, EnumJodaiConflictKind kind) {
+		var items = conflicts.Where(c => c.Kind == kind).ToList();
+		if (items.Count == 0) return;
+		rows.Add(new JodaiConflictRow(kind, items[0].Severity, items.Count, string.Join("\n", items.Take(5).Select(c => c.Message))));
+	}
+
+	/// <summary>
+	/// C4（<paramref name="properOnly"/>=false）／C6（true）の判定行をgRPC <c>QueryListSqlParam</c>で取得する。
+	/// SQLは<see cref="JodaiConflictSql.BuildOtherSlipConflictSql"/>（<c>CvBase</c>）を<c>CvDomainLogic.JodaiConflictChecker</c>と
+	/// 共有する（設計書6.3。二重に書かない）。
+	/// </summary>
+	async Task<List<JodaiConflictSql.OtherSlipRow>> FetchOtherSlipConflictsAsync(
+		List<long> shohinIds, List<long> tenpoIds, bool properOnly, string dayFrom, string dayTo, CancellationToken ct) {
+		if (shohinIds.Count == 0) return [];
+		var sql = JodaiConflictSql.BuildOtherSlipConflictSql(shohinIds, tenpoIds, properOnly);
+		// JodaiConflictSql.BuildOtherSlipConflictSqlの契約どおり @0=自伝票Id @1=TaishoType @2=DayTo @3=DayFrom の順。
+		List<string> parameters = [
+			EditId.ToString(CultureInfo.InvariantCulture),
+			EditTaishoType.ToString(CultureInfo.InvariantCulture),
+			dayTo,
+			dayFrom,
+		];
+		return await QuerySqlListAsync<JodaiConflictSql.OtherSlipRow>(sql, parameters, ct);
+	}
+
+	/// <summary>
+	/// Timeline（設計書5.5）を作る。選択商品×選択店舗の実効価格推移を、Scope由来の区間 + 通常上代へ戻る区間 +
+	/// 他伝票の確定済み<see cref="DerivedJodai"/>の重ね合わせで表現する。表示範囲はScopeの最小開始日−30日〜
+	/// 最大終了日+30日（設計書5.5）。
+	/// </summary>
+	[RelayCommand]
+	async Task BuildTimeline(CancellationToken ct) {
+		TimelineSegments = [];
+		if (SelectedTimelineShohin == null || SelectedTimelineTenpo == null) {
+			Message = "Timeline表示には商品と店舗を選んでください。";
+			return;
+		}
+		if (ScopeRows.Count == 0) {
+			Message = "先に適用範囲（Scope）を設定してください。";
+			return;
+		}
+		var meisaiRow = MeisaiRows.FirstOrDefault(m => m.Id_Shohin == SelectedTimelineShohin.Id);
+		if (meisaiRow == null) {
+			Message = "選択した商品が対象明細に見つかりません。";
+			return;
+		}
+
+		try {
+			StartBusy("Timeline作成中...");
+
+			var scopes = ScopeRows.Select(ToTranJodaiScope).ToList();
+			var store = ResolveCandidateStores([SelectedTimelineTenpo.Id]).FirstOrDefault(s => s.Id == SelectedTimelineTenpo.Id);
+			var resolution = JodaiScopeResolver.Resolve(store == null ? [] : [store], scopes);
+			var ownScopeNos = resolution.Jshop.Where(j => j.Id_Tenpo == SelectedTimelineTenpo.Id).Select(j => j.No_Scope).ToHashSet();
+
+			// 選択店舗で実際に採用されたScopeの区間だけを、開始日順に並べる（設計書2.5の優先順位解決を経た結果）。
+			var ownSegments = scopes.Where(s => ownScopeNos.Contains(s.No))
+				.Select(s => (s.DayFrom, s.DayTo, Jodai: meisaiRow.Cells.FirstOrDefault(c => c.No_Scope == s.No)?.JodaiNew ?? meisaiRow.JodaiOld, s.Name))
+				.OrderBy(s => s.DayFrom, StringComparer.Ordinal)
+				.ToList();
+
+			var minFrom = ownSegments.Count > 0 ? ownSegments.Min(s => s.DayFrom) : ToDay(EditDayFrom ?? DateTime.Today);
+			var maxTo = ownSegments.Count > 0 ? ownSegments.Max(s => s.DayTo) : ToDay(EditDayTo ?? DateTime.Today);
+			var rangeFrom = ToDay((ParseDay(minFrom) ?? DateTime.Today).AddDays(-30));
+			var rangeTo = ToDay((ParseDay(maxTo) ?? DateTime.Today).AddDays(30));
+
+			var segments = new List<JodaiTimelineSegment>();
+			var cursor = rangeFrom;
+			foreach (var seg in ownSegments) {
+				if (string.CompareOrdinal(cursor, seg.DayFrom) < 0) {
+					// ギャップ=Scope期間外。通常上代へ戻る区間として明示する（設計書5.5）。
+					var gapTo = ToDay((ParseDay(seg.DayFrom) ?? DateTime.Today).AddDays(-1));
+					segments.Add(new JodaiTimelineSegment(cursor, gapTo, meisaiRow.JodaiOld, "通常上代", true, false, 0));
+				}
+				segments.Add(new JodaiTimelineSegment(seg.DayFrom, seg.DayTo, seg.Jodai, seg.Name, false, false, 0));
+				cursor = ToDay((ParseDay(seg.DayTo) ?? DateTime.Today).AddDays(1));
+			}
+			if (string.CompareOrdinal(cursor, rangeTo) <= 0) {
+				segments.Add(new JodaiTimelineSegment(cursor, rangeTo, meisaiRow.JodaiOld, "通常上代", true, false, 0));
+			}
+
+			// 他伝票の確定済みDerivedJodaiを重ねて表示する（設計書5.5）。全店(Id_Tenpo=0)指定も拾う。
+			List<string> parameters = [];
+			var shohinP = AddParameter(parameters, SelectedTimelineShohin.Id);
+			var tenpoP = AddParameter(parameters, SelectedTimelineTenpo.Id);
+			var taishoP = AddParameter(parameters, EditTaishoType);
+			var toP = AddParameter(parameters, rangeTo);
+			var fromP = AddParameter(parameters, rangeFrom);
+			var sql = $@"
+SELECT Id_Tenpo, DayFrom, DayTo, Jodai, Id_Tran
+FROM {nameof(DerivedJodai)}
+WHERE Id_Shohin = {shohinP} AND TaishoType = {taishoP}
+  AND (Id_Tenpo = {tenpoP} OR Id_Tenpo = 0)
+  AND DayFrom <= {toP} AND DayTo >= {fromP}
+ORDER BY DayFrom";
+			var others = await QuerySqlListAsync<JodaiTimelineOtherSlipRow>(sql, parameters, ct);
+			foreach (var o in others) {
+				segments.Add(new JodaiTimelineSegment(o.DayFrom, o.DayTo, o.Jodai, $"他伝票(Id={o.Id_Tran})", false, true, o.Id_Tran));
+			}
+
+			TimelineSegments = [.. segments.OrderBy(s => s.DayFrom, StringComparer.Ordinal)];
+			Message = $"Timeline: {SelectedTimelineShohin.Code} / {SelectedTimelineTenpo.Code} の区間 {TimelineSegments.Count:N0} 件"
+				+ $"（{rangeFrom}～{rangeTo}、他伝票 {others.Count:N0} 件）";
+		}
+		catch (OperationCanceledException) {
+			Message = "Timeline作成を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"Timeline作成失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	/// <summary>
+	/// Timeline用の選択肢（商品・店舗）を最新の<see cref="MeisaiRows"/>/<see cref="ShopRows"/>から作り直す。
+	/// 抽出・対象取得のたびに呼ぶ（設計書5.5「商品1件と店舗1件を選ぶ」の候補を最新に保つ）。
+	/// </summary>
+	void RefreshTimelineOptions() {
+		var prevShohin = SelectedTimelineShohin?.Id;
+		var prevTenpo = SelectedTimelineTenpo?.Id;
+		TimelineShohinOptions = new ObservableCollection<MasterOption>(
+			MeisaiRows.Select(m => new MasterOption(m.Id_Shohin, m.Code_Shohin, m.Mei_Shohin)));
+		TimelineTenpoOptions = new ObservableCollection<MasterOption>(
+			ShopRows.Where(s => s.IsTarget).Select(s => new MasterOption(s.Id_Tenpo, s.Code_Tenpo, s.Mei_Tenpo)));
+		SelectedTimelineShohin = TimelineShohinOptions.FirstOrDefault(o => o.Id == prevShohin) ?? TimelineShohinOptions.FirstOrDefault();
+		SelectedTimelineTenpo = TimelineTenpoOptions.FirstOrDefault(o => o.Id == prevTenpo) ?? TimelineTenpoOptions.FirstOrDefault();
+	}
+
 	// ===== 登録 ===================================================================
 
 	[RelayCommand]
@@ -1215,7 +1547,9 @@ WHERE D.Id_Shohin IN (
 		}
 	}
 
-	bool CanFix() => EditId > 0 && EditStatus == 0;
+	// C1/C2（エラー）が競合チェックで検出されていれば確定を禁止する（設計書5.5）。競合チェックを一度も
+	// 実行していない場合はHasBlockingConflicts=falseのままなので、現行どおり確定できる（後方互換）。
+	bool CanFix() => EditId > 0 && EditStatus == 0 && !HasBlockingConflicts;
 
 	/// <summary>
 	/// 確定する。Status=1 にして保存すると、サーバ側の DerivedDb が
@@ -1345,6 +1679,41 @@ WHERE D.Id_Shohin IN (
 	/// 超える場合も保存前に警告して中止する。
 	/// </para>
 	/// </summary>
+	/// <summary>
+	/// <see cref="MeisaiRows"/>（商品×セル）を<paramref name="scopes"/>を使って<see cref="TranJodaiMeisai"/>の
+	/// 明細一覧へ複製する（設計3.4・5.6）。<see cref="BuildDenpyoAsync"/>（保存直前）と
+	/// ④確認タブのプレビュー・競合チェック（設計2.8・2.9）の両方が同じ組み立てを使うための共通ヘルパ
+	/// （呼び出し前に<see cref="RecalcCellsAsync"/>で未編集セルを最新のScope設定へ揃えておくこと）。
+	/// </summary>
+	List<TranJodaiMeisai> BuildJmeisaiCells(List<TranJodaiScope> scopes) {
+		var jmeisai = new List<TranJodaiMeisai>();
+		foreach (var row in MeisaiRows) {
+			foreach (var cell in row.Cells) {
+				var scope = scopes.FirstOrDefault(s => s.No == cell.No_Scope);
+				if (scope == null) continue; // 削除されたScopeのセル残骸（通常は起きない）
+				jmeisai.Add(new TranJodaiMeisai {
+					No = 0, // Normalize()がScope内連番へ振り直す
+					Id_Shohin = row.Id_Shohin,
+					Code_Shohin = row.Code_Shohin,
+					Mei_Shohin = row.Mei_Shohin,
+					JodaiOld = row.JodaiOld,
+					JodaiNew = cell.JodaiNew,
+					RateOff = row.JodaiOld > 0
+						? Math.Round((1m - (decimal)cell.JodaiNew / row.JodaiOld) * 100m, 2, MidpointRounding.AwayFromZero)
+						: 0m,
+					PriceInTax = CalcPriceInTax(cell.JodaiNew),
+					DayTento = row.DayTento,
+					DayChange = ToDay(DateTime.Today),
+					Status = row.Status,
+					No_Scope = scope.No,
+					JodaiBase = cell.JodaiBase,
+					TankaGenka = row.TankaGenka,
+				});
+			}
+		}
+		return jmeisai;
+	}
+
 	async Task<TranJodai?> BuildDenpyoAsync(CancellationToken ct) {
 		if (EditDayFrom == null || EditDayTo == null) {
 			ShowBuildError("適用期間を入力してください。");
@@ -1410,31 +1779,7 @@ WHERE D.Id_Shohin IN (
 		// 手動編集していないセルは、保存直前にScopeの現在値で計算し直す（Scope編集を後から変えても保存時に
 		// 反映される、Step6以前と同じ後方互換の挙動を保つため。RecalcCellsAsyncのonlyIfNotManuallyEdited=true）。
 		await RecalcCellsAsync(onlyIfNotManuallyEdited: true, ct);
-		var jmeisai = new List<TranJodaiMeisai>();
-		foreach (var row in MeisaiRows) {
-			foreach (var cell in row.Cells) {
-				var scope = scopes.FirstOrDefault(s => s.No == cell.No_Scope);
-				if (scope == null) continue; // 削除されたScopeのセル残骸（通常は起きない）
-				jmeisai.Add(new TranJodaiMeisai {
-					No = 0, // Normalize()がScope内連番へ振り直す
-					Id_Shohin = row.Id_Shohin,
-					Code_Shohin = row.Code_Shohin,
-					Mei_Shohin = row.Mei_Shohin,
-					JodaiOld = row.JodaiOld,
-					JodaiNew = cell.JodaiNew,
-					RateOff = row.JodaiOld > 0
-						? Math.Round((1m - (decimal)cell.JodaiNew / row.JodaiOld) * 100m, 2, MidpointRounding.AwayFromZero)
-						: 0m,
-					PriceInTax = CalcPriceInTax(cell.JodaiNew),
-					DayTento = row.DayTento,
-					DayChange = ToDay(DateTime.Today),
-					Status = row.Status,
-					No_Scope = scope.No,
-					JodaiBase = cell.JodaiBase,
-					TankaGenka = row.TankaGenka,
-				});
-			}
-		}
+		var jmeisai = BuildJmeisaiCells(scopes);
 
 		var den = new TranJodai {
 			Id = EditId,
@@ -2268,3 +2613,35 @@ public partial class JodaiScopeRow : ObservableObject {
 		_ => "(全店)",
 	};
 }
+
+/// <summary>
+/// ④確認タブの競合一覧1行（設計書2.8・5.5）。<see cref="JodaiConflict"/>（<c>CvBase</c>）を種別・深刻度ごとに
+/// 集約し、実際の件数（<see cref="Count"/>）を持たせたもの。C1/C2/C5は<see cref="JodaiScopeResolver"/>の
+/// 検出インスタンス数、C3は<c>TranJodai.FindDuplicates()</c>の件数、C4/C6/C7/C8は該当明細・該当行の実数。
+/// </summary>
+/// <param name="Kind">競合種別（C1〜C8）。</param>
+/// <param name="Severity">深刻度。</param>
+/// <param name="Count">該当件数。</param>
+/// <param name="Message">代表例を含む利用者向けメッセージ。</param>
+public sealed record JodaiConflictRow(EnumJodaiConflictKind Kind, EnumJodaiConflictSeverity Severity, int Count, string Message) {
+	public string KindLabel => $"C{(int)Kind}";
+	public string SeverityLabel => Severity switch {
+		EnumJodaiConflictSeverity.Error => "エラー",
+		EnumJodaiConflictSeverity.Warning => "警告",
+		_ => "情報",
+	};
+}
+
+/// <summary>
+/// ④確認タブのTimeline（設計書5.5）の1区間。「いつ・どの商品が・どの店舗で・いくらになるか」を
+/// 直感的に確認するのが目的で、描画（横棒）はこのデータを見るだけにする。見た目そのものは自動検証できない
+/// ため、UatVmはこのプロパティ（<see cref="MasterJouDaiBulkChangeViewModel.TimelineSegments"/>）を直接検証する。
+/// </summary>
+/// <param name="DayFrom">区間の開始日（yyyyMMdd）。</param>
+/// <param name="DayTo">区間の終了日（yyyyMMdd）。</param>
+/// <param name="Jodai">この区間の適用上代。</param>
+/// <param name="Source">区間の由来（Scope名／"通常上代"／"他伝票(Id=...)"）。</param>
+/// <param name="IsFallback">true なら、どのScopeにも該当せず通常上代へ戻っている区間。</param>
+/// <param name="IsOtherSlip">true なら、他伝票の確定済み<see cref="DerivedJodai"/>由来の重ね合わせ区間。</param>
+/// <param name="Id_Tran"><paramref name="IsOtherSlip"/>=true のときの伝票Id。それ以外は0。</param>
+public sealed record JodaiTimelineSegment(string DayFrom, string DayTo, int Jodai, string Source, bool IsFallback, bool IsOtherSlip, long Id_Tran);
