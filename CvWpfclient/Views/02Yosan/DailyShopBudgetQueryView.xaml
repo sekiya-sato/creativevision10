@@ -151,7 +151,9 @@
 		</Grid>
 
 		<!--  ==================== 結果パネル ====================  -->
-		<Grid Visibility="{Binding IsResultVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+		<Grid x:Name="ResultPanel"
+			IsVisibleChanged="ResultPanel_IsVisibleChanged"
+			Visibility="{Binding IsResultVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
@@ -231,14 +233,14 @@
 				Grid.Row="1"
 				materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="True"
 				AutoGeneratingColumn="TotalGrid_AutoGeneratingColumn" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False"
-				CanUserSortColumns="False" EnableRowVirtualization="False" FrozenColumnCount="2" GridLinesVisibility="All" HeadersVisibility="Column"
+				CanUserSortColumns="False" EnableRowVirtualization="False" Focusable="False" FrozenColumnCount="2" GridLinesVisibility="All" HeadersVisibility="Column"
 				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-				HorizontalScrollBarVisibility="Hidden" IsReadOnly="True"
+				HorizontalScrollBarVisibility="Hidden" IsHitTestVisible="False" IsReadOnly="True" IsTabStop="False"
 				ItemsSource="{Binding TotalTable.DefaultView}"
 				Loaded="TotalGrid_Loaded"
 				Style="{StaticResource MaterialDesignDataGrid}"
 				VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-				VerticalScrollBarVisibility="Disabled">
+				VerticalScrollBarVisibility="Visible">
 				<DataGrid.ColumnHeaderStyle>
 					<Style BasedOn="{StaticResource DailyShopBudgetColumnHeaderStyle}"
 						TargetType="DataGridColumnHeader" />

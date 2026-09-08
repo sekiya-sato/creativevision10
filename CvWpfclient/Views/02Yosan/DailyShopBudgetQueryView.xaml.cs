@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace CvWpfclient.Views._02Yosan;
 
@@ -36,9 +37,9 @@ public partial class DailyShopBudgetQueryView : Helpers.BaseWindow {
 	readonly DataRowColumnIsDbNullConverter _dbNullConverter = new();
 	readonly ShopBudgetTotalCellConverter _totalCellConverter = new();
 
-	bool _syncingScroll;
 	ScrollViewer? _detailScrollViewer;
 	ScrollViewer? _totalScrollViewer;
+	bool _detailScrollHandlerAttached;
 
 	public DailyShopBudgetQueryView() {
 		InitializeComponent();
@@ -87,43 +88,59 @@ public partial class DailyShopBudgetQueryView : Helpers.BaseWindow {
 		}
 	}
 
-	void DetailGrid_Loaded(object sender, RoutedEventArgs e) {
-		_detailScrollViewer ??= FindScrollViewer((DataGrid)sender);
-		if (_detailScrollViewer != null) {
-			_detailScrollViewer.ScrollChanged -= DetailScrollViewer_ScrollChanged;
-			_detailScrollViewer.ScrollChanged += DetailScrollViewer_ScrollChanged;
+	void DetailGrid_Loaded(object sender, RoutedEventArgs e) => TryWireScrollSync();
+
+	void TotalGrid_Loaded(object sender, RoutedEventArgs e) => TryWireScrollSync();
+
+	/// <summary>
+	/// 結果パネル(ResultPanel)が Collapsed→Visible になった直後に発火する。Visible になった時点では
+	/// まだ当該フレームの measure/テンプレート展開が済んでいない場合があるため、
+	/// DispatcherPriority.Loaded で1フレーム遅延させてから配線を試みる。
+	/// </summary>
+	void ResultPanel_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) {
+		if (e.NewValue is not true) return;
+		Dispatcher.BeginInvoke(DispatcherPriority.Loaded, TryWireScrollSync);
+	}
+
+	/// <summary>
+	/// 明細グリッドの ScrollChanged (ルーテッドイベント、DataGrid自身に AddHandler で登録)を配線し、
+	/// 現在の明細横オフセットを合計グリッドへ初期同期する。
+	/// ScrollViewer がまだ展開されていない場合は何もしないが、null をキャッシュしないため
+	/// (DetailScrollViewer/TotalScrollViewer プロパティ側で毎回再取得を試みるため)次回呼び出しで取れる。
+	/// </summary>
+	void TryWireScrollSync() {
+		if (!_detailScrollHandlerAttached) {
+			DetailGrid.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(DetailGrid_ScrollChanged));
+			_detailScrollHandlerAttached = true;
+		}
+
+		var detailScrollViewer = DetailScrollViewer;
+		var totalScrollViewer = TotalScrollViewer;
+		if (detailScrollViewer != null && totalScrollViewer != null) {
+			// 初回同期: 検索直後など HorizontalChange==0 のケースでも合計グリッド側を明細グリッドに揃える。
+			totalScrollViewer.ScrollToHorizontalOffset(detailScrollViewer.HorizontalOffset);
 		}
 	}
 
-	void TotalGrid_Loaded(object sender, RoutedEventArgs e) {
-		_totalScrollViewer ??= FindScrollViewer((DataGrid)sender);
-		if (_totalScrollViewer != null) {
-			_totalScrollViewer.ScrollChanged -= TotalScrollViewer_ScrollChanged;
-			_totalScrollViewer.ScrollChanged += TotalScrollViewer_ScrollChanged;
+	/// <summary>明細グリッドの横スクロールを合計グリッドへ一方向に反映する（合計→明細の逆方向は無し）。</summary>
+	void DetailGrid_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+		if (e.HorizontalChange == 0) return;
+		TotalScrollViewer?.ScrollToHorizontalOffset(e.HorizontalOffset);
+	}
+
+	/// <summary>DetailGrid内のScrollViewer。null の間は毎回再取得を試みる(Collapsed直後は取得できないため)。</summary>
+	ScrollViewer? DetailScrollViewer {
+		get {
+			_detailScrollViewer ??= FindScrollViewer(DetailGrid);
+			return _detailScrollViewer;
 		}
 	}
 
-	/// <summary>明細グリッドの横スクロールを合計グリッドへ反映する（再入防止フラグ付き）。</summary>
-	void DetailScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-		if (_syncingScroll || _totalScrollViewer == null || e.HorizontalChange == 0) return;
-		_syncingScroll = true;
-		try {
-			_totalScrollViewer.ScrollToHorizontalOffset(e.HorizontalOffset);
-		}
-		finally {
-			_syncingScroll = false;
-		}
-	}
-
-	/// <summary>合計グリッドの横スクロールを明細グリッドへ反映する（再入防止フラグ付き）。</summary>
-	void TotalScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-		if (_syncingScroll || _detailScrollViewer == null || e.HorizontalChange == 0) return;
-		_syncingScroll = true;
-		try {
-			_detailScrollViewer.ScrollToHorizontalOffset(e.HorizontalOffset);
-		}
-		finally {
-			_syncingScroll = false;
+	/// <summary>TotalGrid内のScrollViewer。null の間は毎回再取得を試みる(Collapsed直後は取得できないため)。</summary>
+	ScrollViewer? TotalScrollViewer {
+		get {
+			_totalScrollViewer ??= FindScrollViewer(TotalGrid);
+			return _totalScrollViewer;
 		}
 	}
 
