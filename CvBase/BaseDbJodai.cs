@@ -392,40 +392,70 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	/// 対象店舗・対象明細の重複を取り除き、行Noと件数列を整える。<b>保存前に必ず呼ぶこと。</b>
 	/// <para>
 	/// <see cref="DerivedJodai"/> の uk1(Id_Tran, TaishoType, Id_Tenpo, Id_Shohin, DayFrom) はユニークキーなので、
-	/// <see cref="Jshop"/> に同じ店舗、<see cref="Jmeisai"/> に同じ商品が重複していると
-	/// 展開時に制約違反となり<b>トランザクションごと失敗する</b>（伝票の保存自体が通らない）。
+	/// <see cref="Jshop"/> に同じ Scope 内で同じ店舗、<see cref="Jmeisai"/> に同じ Scope 内で同じ商品が
+	/// 重複していると展開時に制約違反となり<b>トランザクションごと失敗する</b>（伝票の保存自体が通らない）。
+	/// 重複判定キーは <c>(No_Scope, Id_Tenpo)</c> / <c>(No_Scope, Id_Shohin)</c> の複合キーとする。
+	/// Scope が異なれば同じ店舗・商品が現れてよい（段階値下げ。設計 2.6）ため、単一キーのままでは
+	/// 正当な多段行まで重複扱いにしてしまう。既存伝票は <see cref="TranJodaiShop.No_Scope"/> /
+	/// <see cref="TranJodaiMeisai.No_Scope"/> が全て 0 なので、複合キーは実質 <c>(0, Id_Tenpo)</c> /
+	/// <c>(0, Id_Shohin)</c> となり、現行と同じ判定結果になる。
 	/// </para>
 	/// <para>
 	/// 重複時は<b>後の指定を残す</b>（＝最後に入力した内容が有効）。
 	/// 期間重複を「後の伝票が勝つ」で解決するのと同じ考え方に揃えている。
 	/// 利用者へ知らせたい場合は <see cref="FindDuplicates"/> を先に呼ぶこと。
 	/// </para>
+	/// <para>
+	/// <see cref="TranJodaiMeisai.No"/> は Scope 内での行番号（1始まり）に採番し直す。
+	/// <see cref="Jmeisai"/> 自体の並び順は変えない（安定性のため、Scope 別のカウンタで走査するだけ）。
+	/// </para>
 	/// </summary>
 	/// <returns>取り除いた重複の件数（対象店舗＋対象明細）</returns>
 	public int Normalize() {
-		var removed = RemoveDuplicates(Jshop, c => c.Id_Tenpo) + RemoveDuplicates(Jmeisai, c => c.Id_Shohin);
-		for (var i = 0; i < Jmeisai.Count; i++)
-			Jmeisai[i].No = i + 1;
+		var removed = RemoveDuplicates(Jshop, c => (c.No_Scope, c.Id_Tenpo)) + RemoveDuplicates(Jmeisai, c => (c.No_Scope, c.Id_Shohin));
+		var scopeSeq = new Dictionary<int, int>();
+		foreach (var meisai in Jmeisai) {
+			var no = scopeSeq.TryGetValue(meisai.No_Scope, out var last) ? last + 1 : 1;
+			scopeSeq[meisai.No_Scope] = no;
+			meisai.No = no;
+		}
 		ShopCnt = Jshop.Count;
 		MeisaiCnt = Jmeisai.Count;
+		ScopeCnt = Jscope.Count;
 		return removed;
 	}
 
 	/// <summary>
 	/// 重複している対象店舗・対象商品を利用者向けメッセージとして返す（<see cref="Normalize"/>の前の確認用）。
+	/// <para>
+	/// 判定キーは <see cref="Normalize"/> と同じ複合キー <c>(No_Scope, Id_Tenpo)</c> / <c>(No_Scope, Id_Shohin)</c>。
+	/// <c>No_Scope=0</c>（Scope未使用の既存伝票）のときは現行と同じメッセージ文言のままとし、
+	/// Scopeを使う伝票のときだけ末尾にScope情報（No と <see cref="Jscope"/> から引ける Name）を付す。
+	/// </para>
 	/// </summary>
 	/// <returns>重複が無ければ空リスト</returns>
 	public List<string> FindDuplicates() {
 		var messages = new List<string>();
-		foreach (var group in Jshop.GroupBy(c => c.Id_Tenpo).Where(g => g.Count() > 1)) {
+		foreach (var group in Jshop.GroupBy(c => (c.No_Scope, c.Id_Tenpo)).Where(g => g.Count() > 1)) {
 			var first = group.First();
-			messages.Add($"対象店舗が重複しています：{first.Code_Tenpo} {first.Mei_Tenpo}（{group.Count()}件）");
+			messages.Add($"対象店舗が重複しています：{first.Code_Tenpo} {first.Mei_Tenpo}{ScopeSuffix(first.No_Scope)}（{group.Count()}件）");
 		}
-		foreach (var group in Jmeisai.GroupBy(c => c.Id_Shohin).Where(g => g.Count() > 1)) {
+		foreach (var group in Jmeisai.GroupBy(c => (c.No_Scope, c.Id_Shohin)).Where(g => g.Count() > 1)) {
 			var first = group.First();
-			messages.Add($"対象商品が重複しています：{first.Code_Shohin} {first.Mei_Shohin}（{group.Count()}件）");
+			messages.Add($"対象商品が重複しています：{first.Code_Shohin} {first.Mei_Shohin}{ScopeSuffix(first.No_Scope)}（{group.Count()}件）");
 		}
 		return messages;
+	}
+
+	/// <summary>
+	/// <see cref="FindDuplicates"/> のメッセージに付すScope情報。<c>No_Scope=0</c>（Scope未使用）のときは
+	/// 空文字を返し、現行の（Scope概念導入前の）メッセージ文言をそのまま保つ。
+	/// </summary>
+	string ScopeSuffix(int noScope) {
+		if (noScope == 0)
+			return string.Empty;
+		var scope = Jscope.FirstOrDefault(s => s.No == noScope);
+		return scope is null ? $"（Scope{noScope}）" : $"（Scope{noScope}:{scope.Name}）";
 	}
 
 	/// <summary>
@@ -441,6 +471,55 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 			removed++;
 		}
 		return removed;
+	}
+
+	/// <summary>
+	/// 後方互換のための<b>メモリ上だけ</b>の正規化（設計 3.10）。<see cref="Normalize"/>とは別物であり、
+	/// こちらは保存前提の重複除去・採番ではなく、Scope概念導入前の既存伝票を画面へ読み込む際の
+	/// 補完専用。<b>DBは一切書き換えない</b>。呼び出し側が保存して初めて永続化される。
+	/// <para>
+	/// 対象は<see cref="Jscope"/>が空で、かつ<see cref="Jshop"/>または<see cref="Jmeisai"/>に要素がある伝票のみ。
+	/// それ以外（Jscopeが既にある、またはJshop/Jmeisaiが両方とも空の伝票）は何もしない。
+	/// </para>
+	/// <para>
+	/// Jscopeに<see cref="TranJodaiScope.No"/>=1の全店Scope（<see cref="EnumJodaiRangeType.All"/>、
+	/// <see cref="EnumJodaiIncExc.Include"/>）を1件補う。期間はヘッダの<see cref="DayFrom"/>/<see cref="DayTo"/>、
+	/// 丸めは<see cref="RoundUnit"/>/<see cref="RoundType"/>から写す。価格方式は
+	/// <see cref="CalcType"/>=0(金額指定)なら<see cref="EnumJodaiPriceMethod.FixedPrice"/>・
+	/// <see cref="TranJodaiScope.FixedPrice"/>=<see cref="CalcValue"/>、<see cref="CalcType"/>=1(率指定)なら
+	/// <see cref="EnumJodaiPriceMethod.RateOff"/>・<see cref="TranJodaiScope.RateOff"/>=<see cref="CalcRate"/>とする。
+	/// Nameは空だとPrice Matrixの列見出しが空になるため既定名（"全店"）を入れる。
+	/// <see cref="Jshop"/>/<see cref="Jmeisai"/>の全要素の<c>No_Scope</c>は1に振り直す。
+	/// </para>
+	/// <para>
+	/// 本メソッドは画面の読み込み経路への組み込み（配線）を行わない、純粋なメソッドとして追加する。
+	/// 展開SQL（<see cref="DerivedJodai.CreateSql"/>）は<c>ifnull</c>により配線無しでも現行動作を保つため、
+	/// 配線は画面改修（Step 5以降）と同時に行うのが安全という判断による。
+	/// </para>
+	/// </summary>
+	public void NormalizeLegacyScope() {
+		if (Jscope.Count > 0 || (Jshop.Count == 0 && Jmeisai.Count == 0))
+			return;
+		// CalcType 0:金額指定 / 1:率指定 は PriceMethod 0:固定額 / 1:値下率 と値まで一致するが、
+		// 別の列・別の意味なので EnumJodaiPriceMethod との直接比較はしない（設計 2.7 の互換規定）。
+		var isRateOff = CalcType == 1;
+		Jscope.Add(new TranJodaiScope {
+			No = 1,
+			Name = "全店",
+			RangeType = (int)EnumJodaiRangeType.All,
+			IncExc = (int)EnumJodaiIncExc.Include,
+			DayFrom = DayFrom,
+			DayTo = DayTo,
+			PriceMethod = isRateOff ? (int)EnumJodaiPriceMethod.RateOff : (int)EnumJodaiPriceMethod.FixedPrice,
+			FixedPrice = CalcValue,
+			RateOff = CalcRate,
+			RoundUnit = RoundUnit,
+			RoundType = RoundType,
+		});
+		foreach (var shop in Jshop)
+			shop.No_Scope = 1;
+		foreach (var meisai in Jmeisai)
+			meisai.No_Scope = 1;
 	}
 }
 
@@ -726,11 +805,12 @@ public sealed partial class TranJodaiShop : ObservableObject {
 [Comment("トランザクション：上代一括変更の明細サブテーブル TranJodai.Jmeisai にJSONで格納する 価格の粒度は商品マスタ単位")]
 public sealed partial class TranJodaiMeisai : ObservableObject {
 	/// <summary>
-	/// 行No
+	/// Scope（<see cref="No_Scope"/>）内での行No（1始まり）。伝票全体での通し番号ではない。
+	/// <para>採番は <see cref="TranJodai.Normalize"/> がScopeごとの連番として振り直す（設計 3.4）。</para>
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("行NO")]
-	[Comment("行No")]
+	[Comment("Scope内での行No（1始まり）。TranJodai.NormalizeがScopeごとの連番として振り直す")]
 	public partial int No { get; set; }
 	/// <summary>
 	/// 商品ユニークキー
@@ -930,6 +1010,14 @@ public partial class DerivedJodai : BaseDbClass, IDerivedClass {
 	/// Status=1(確定)以外は展開しないので、入力中・取消の伝票では0件になる。
 	/// json_extract は不正JSONに例外を投げるため json_valid() でガードする。
 	/// </para>
+	/// <para>
+	/// 末尾の <c>No_Scope</c> 等値結合は、<see cref="TranJodaiShop"/> と <see cref="TranJodaiMeisai"/> を
+	/// 同一 Scope 同士だけ掛け合わせるためのもの（Scope中間層。設計 2.1/4章）。
+	/// <b>既存伝票のJSONには <c>No_Scope</c> キー自体が無い</b>ため、両辺とも <c>json_extract</c> が
+	/// NULL を返し、<c>ifnull</c> で <c>0 = 0</c> となって結合が成立する。すなわち既存伝票は
+	/// 全店舗×全明細の直積のまま、現行と1行も違わずに展開される（後方互換。設計 3.10）。
+	/// 出力列・出力件数は変更前と完全に同一。
+	/// </para>
 	/// </summary>
 	[Ignore]
 	public static string CreateSql => @$"
@@ -950,6 +1038,8 @@ SELECT
   T.Id
 FROM {nameof(TranJodai)} T, json_each(T.Jshop) S, json_each(T.Jmeisai) M
 WHERE T.Status = 1 AND json_valid(T.Jshop) AND json_valid(T.Jmeisai)
+  AND ifnull(json_extract(S.value, '$.No_Scope'), 0)
+    = ifnull(json_extract(M.value, '$.No_Scope'), 0)
 ";
 	[Ignore]
 	public static string InsertSql => CreateSql + " AND T.Id = @0";
