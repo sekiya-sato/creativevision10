@@ -2,7 +2,7 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:share="clr-namespace:CvBase.Share;assembly=CvBase" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
+	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
 	Title="{Binding Title}"
 	Width="984" Height="816"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
@@ -425,29 +425,25 @@
 							Margin="15,0,0,0" VerticalAlignment="Center"
 							Content="消費税端数処理" />
 						<ComboBox Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="2"
-							Width="150" Height="30"
+							Width="150" Height="60"
 							Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
-							SelectedValue="{Binding Current.TaxRounding, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							SelectedValuePath="Tag"
-							Style="{StaticResource FormComboBox}">
-							<ComboBoxItem Tag="{x:Static share:EnumRounding.Round}">四捨五入</ComboBoxItem>
-							<ComboBoxItem Tag="{x:Static share:EnumRounding.Ceiling}">切上</ComboBoxItem>
-							<ComboBoxItem Tag="{x:Static share:EnumRounding.Floor}">切捨</ComboBoxItem>
-						</ComboBox>
+							DisplayMemberPath="Text"
+							ItemsSource="{Binding TaxRoundingItems}"
+							SelectedValue="{Binding Current.TaxRounding, Mode=TwoWay}"
+							SelectedValuePath="Value"
+							Style="{StaticResource FormComboBox}" />
 						<Label Grid.Row="13" Grid.Column="3"
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"
 							Content="原価方式" />
 						<ComboBox Grid.Row="13" Grid.Column="4" Grid.ColumnSpan="2"
-							Width="150" Height="30"
+							Width="150"  Height="60"
 							Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
-							SelectedValue="{Binding Current.CostMethod, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-							SelectedValuePath="Tag"
-							Style="{StaticResource FormComboBox}">
-							<ComboBoxItem Tag="{x:Static share:EnumCostMethod.Fixed}">固定原価</ComboBoxItem>
-							<ComboBoxItem Tag="{x:Static share:EnumCostMethod.LastPurchase}">最終仕入原価</ComboBoxItem>
-							<ComboBoxItem Tag="{x:Static share:EnumCostMethod.TotalAverage}">総平均原価</ComboBoxItem>
-						</ComboBox>
+							DisplayMemberPath="Text"
+							ItemsSource="{Binding CostMethodItems}"
+							SelectedValue="{Binding Current.CostMethod, Mode=TwoWay}"
+							SelectedValuePath="Value"
+							Style="{StaticResource FormComboBox}" />
 						<Label Grid.Row="14" Grid.Column="0"
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"

@@ -28,6 +28,25 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 
 	public IReadOnlyList<EnumShime> ShimeBiItems { get; } = Enum.GetValues<EnumShime>();
 
+	/// <summary>
+	/// 消費税端数処理の選択肢。ComboBoxItem の Tag は文字列/enum になり int の Current.TaxRounding と
+	/// 型が一致せず選択が復元されないため、int の Value を持つ項目リストで SelectedValue を照合する。
+	/// </summary>
+	public IReadOnlyList<IntChoiceItem> TaxRoundingItems { get; } = [
+		new((int)EnumRounding.Round, "四捨五入"),
+		new((int)EnumRounding.Ceiling, "切上"),
+		new((int)EnumRounding.Floor, "切捨"),
+	];
+
+	/// <summary>
+	/// 原価方式の選択肢。<see cref="TaxRoundingItems"/> と同じ理由で int の Value を持たせる。
+	/// </summary>
+	public IReadOnlyList<IntChoiceItem> CostMethodItems { get; } = [
+		new((int)EnumCostMethod.Fixed, "固定原価"),
+		new((int)EnumCostMethod.LastPurchase, "最終仕入原価"),
+		new((int)EnumCostMethod.TotalAverage, "総平均原価"),
+	];
+
 	string BuildPrintCsvData() {
 		var tax1 = GetTaxEntry(0);
 		var tax2 = GetTaxEntry(1);
@@ -165,3 +184,8 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 		Current.Address3 = PostalAddressSearchHelper.MergeAddress3(currentAddress1, currentAddress2, currentAddress3, item);
 	});
 }
+
+/// <summary>
+/// int値と表示名の組。ComboBox の SelectedValue / SelectedValuePath で使う。
+/// </summary>
+public sealed record IntChoiceItem(int Value, string Text);

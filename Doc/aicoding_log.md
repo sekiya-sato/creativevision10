@@ -1,3 +1,22 @@
+## [2026-09-08] システム管理マスタ選択項目の整数バインド修正
+### Agent
+- GPT-5.6 Terra : OpenAI : Codex
+- GPT-5.6 Sol : OpenAI : Codex
+### Editor
+- Codex
+### 目的
+- 後追加設定の選択値を表示・保存可能にする
+### Agent(修正)
+- Claude Opus-5 : Anthropic : Claude Code
+### 実施内容
+- TaxRounding/CostMethod を ItemsSource + DisplayMemberPath/SelectedValuePath 方式へ変更（VMに int 値リスト TaxRoundingItems/CostMethodItems を追加）
+### 技術決定 Why
+- ComboBoxItem の Tag は string/enum になり int プロパティと Equals 一致せず選択が復元されない。SelectedIndex は項目未生成時に -1 を書き戻す危険がある。得意先メンテの入金月(PayMonthItems)と同じ、値の型が一致する方式に統一
+### 確認
+- ビルド成功、画面確認待ち
+
+---
+
 ## [2026-09-08] システム管理マスタの後追加項目表示
 ### Agent
 - GPT-5.6 Terra : OpenAI : Codex
