@@ -270,6 +270,10 @@
 							<DataGridTextColumn Width="60"
 								Binding="{Binding DayOfWeek}"
 								Header="曜日" IsReadOnly="True" />
+							<DataGridTextColumn Width="110" Binding="{Binding EventName}" Header="イベント" IsReadOnly="True" />
+							<DataGridTextColumn Width="45" Binding="{Binding EventImportance}" Header="重要度" IsReadOnly="True" />
+							<DataGridTextColumn Width="70" Binding="{Binding EventCoefficient, StringFormat=F1}" Header="イベント係数" IsReadOnly="True" />
+							<DataGridTextColumn Width="70" Binding="{Binding Coefficient, StringFormat=F2}" Header="有効係数" IsReadOnly="True" />
 							<DataGridTextColumn Width="*"
 								Binding="{Binding SalesBudget, StringFormat={}{0:N0}}"
 								Header="売上予算" />
@@ -297,6 +301,10 @@
 							<DataGridTextColumn Width="60"
 								Binding="{Binding DayOfWeek}"
 								Header="曜日" IsReadOnly="True" />
+							<DataGridTextColumn Width="110" Binding="{Binding EventName}" Header="イベント" IsReadOnly="True" />
+							<DataGridTextColumn Width="45" Binding="{Binding EventImportance}" Header="重要度" IsReadOnly="True" />
+							<DataGridTextColumn Width="70" Binding="{Binding EventCoefficient, StringFormat=F1}" Header="イベント係数" IsReadOnly="True" />
+							<DataGridTextColumn Width="70" Binding="{Binding Coefficient, StringFormat=F2}" Header="有効係数" IsReadOnly="True" />
 							<DataGridTextColumn Width="*"
 								Binding="{Binding SalesBudget, StringFormat={}{0:N0}}"
 								Header="売上予算" />

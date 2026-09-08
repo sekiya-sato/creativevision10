@@ -82,7 +82,7 @@
 				<position offset="0" length="14"/>
 			</item>
 			<item id="item27">
-				<position offset="0" length="14"/>
+				<position offset="0" length="33"/>
 			</item>
 		</datarecord>
 		<file>
@@ -192,6 +192,14 @@
 					<color transparent="1"/>
 					<border right="1"/>
 					<data calctype="static">ëçîÑè„</data>
+					<decode datatype="string" format=""/>
+					<font size="80"/>
+				</text>
+				<text id="Txt46" valign="middle" halign="center">
+					<position x="186" y="0" width="24" height="6"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="static">&#x30A4;&#x30D9;&#x30F3;&#x30C8;</data>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
@@ -309,6 +317,14 @@
 					<border right="1"/>
 					<data calctype="item" datasrc="item20"/>
 					<decode datatype="number" format="MIN999,999,999,990&quot; &quot;"/>
+					<font size="80"/>
+				</text>
+				<text id="Txt47" valign="middle">
+					<position x="186" y="0" width="24" height="4"/>
+					<color transparent="1"/>
+					<border right="1"/>
+					<data calctype="item" datasrc="item27"/>
+					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
 				<text id="Txt30" valign="middle" halign="right">

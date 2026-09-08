@@ -82,6 +82,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	bool isApplyingHolidayDays;
 	bool isApplyingSelectedYearMonthString;
 	bool isRecalculatingTotals;
+	IReadOnlyDictionary<string, TranShopPromotion> shopEvents = new Dictionary<string, TranShopPromotion>();
 
 	protected override void OnExit() {
 		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
@@ -152,10 +153,10 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			row.GrossProfitBudget = 0;
 		}
 		else if (row.IsSaturday || row.IsSunday) {
-			row.Coefficient = SaturdaySundayCoefficient;
+			row.Coefficient = SaturdaySundayCoefficient * row.EventCoefficient;
 		}
 		else {
-			row.Coefficient = 1.0;
+			row.Coefficient = row.EventCoefficient;
 		}
 	}
 
@@ -172,14 +173,18 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			return;
 		}
 		if (!TryApplySelectedYearMonth()) return;
+		var targetShopId = SelectedShopId;
+		var targetBrandId = SelectedBrandId;
+		var targetYearMonth = SelectedYearMonth;
+		var targetYearMonthString = SelectedYearMonthString;
 
 		IsBusy = true;
 		try {
 			ct.ThrowIfCancellationRequested();
 			ClientLib.Cursor2Wait();
 
-			var (dateFrom, dateTo) = GetDateRange();
-			var where = $"Id_Tenpo = {SelectedShopId} AND Id_Brand = {SelectedBrandId} AND DenDay >= '{dateFrom}' AND DenDay <= '{dateTo}'";
+			var (dateFrom, dateTo) = GetDateRange(targetYearMonth);
+			var where = $"Id_Tenpo = {targetShopId} AND Id_Brand = {targetBrandId} AND DenDay >= '{dateFrom}' AND DenDay <= '{dateTo}'";
 			var param = new QueryListParam(
 				itemType: typeof(MasterYosanBrand),
 				where: where,
@@ -201,7 +206,13 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 				return;
 			}
 
-			GenerateDailyRows();
+			var events = await LoadShopEventsAsync(targetShopId, targetYearMonth, ct);
+			if (!IsCurrentBudgetTarget(targetShopId, targetBrandId, targetYearMonth, targetYearMonthString)) {
+				Message = "条件が変更されたため、予算読み込みを中止しました。";
+				return;
+			}
+			shopEvents = events;
+			GenerateDailyRows(events);
 			long total = 0;
 			long grossProfitTotal = 0;
 			foreach (var item in list) {
@@ -232,14 +243,38 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	}
 
 	[RelayCommand]
-	void CreateBudget() {
+	async Task CreateBudget(CancellationToken ct) {
 		if (SelectedShopId == 0) {
 			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		if (!TryApplySelectedYearMonth()) return;
-		GenerateDailyRows();
-		AutoAllocateBudget();
+		var targetShopId = SelectedShopId;
+		var targetBrandId = SelectedBrandId;
+		var targetYearMonth = SelectedYearMonth;
+		var targetYearMonthString = SelectedYearMonthString;
+		IsBusy = true;
+		try {
+			ct.ThrowIfCancellationRequested();
+			ClientLib.Cursor2Wait();
+			var events = await LoadShopEventsAsync(targetShopId, targetYearMonth, ct);
+			if (!IsCurrentBudgetTarget(targetShopId, targetBrandId, targetYearMonth, targetYearMonthString)) {
+				Message = "条件が変更されたため、予算作成を中止しました。";
+				return;
+			}
+			shopEvents = events;
+			AutoAllocateBudgetCore();
+		}
+		catch (OperationCanceledException) {
+			Message = "予算作成をキャンセルしました。";
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"予算作成失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+		finally {
+			IsBusy = false;
+			ClientLib.Cursor2Normal();
+		}
 	}
 
 	[RelayCommand]
@@ -354,15 +389,42 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	}
 
 	[RelayCommand]
-	void AutoAllocateBudget() {
+	async Task AutoAllocateBudget(CancellationToken ct) {
 		if (!TryApplySelectedYearMonth()) return;
+		var targetShopId = SelectedShopId;
+		var targetBrandId = SelectedBrandId;
+		var targetYearMonth = SelectedYearMonth;
+		var targetYearMonthString = SelectedYearMonthString;
+		IsBusy = true;
+		try {
+			ct.ThrowIfCancellationRequested();
+			ClientLib.Cursor2Wait();
+			var events = await LoadShopEventsAsync(targetShopId, targetYearMonth, ct);
+			if (!IsCurrentBudgetTarget(targetShopId, targetBrandId, targetYearMonth, targetYearMonthString)) {
+				Message = "条件が変更されたため、自動配分を中止しました。";
+				return;
+			}
+			shopEvents = events;
+			AutoAllocateBudgetCore();
+		}
+		catch (OperationCanceledException) {
+			Message = "自動配分をキャンセルしました。";
+		}
+		catch (Exception ex) {
+			MessageEx.ShowErrorDialog($"自動配分失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
+		finally {
+			IsBusy = false;
+			ClientLib.Cursor2Normal();
+		}
+	}
+
+	void AutoAllocateBudgetCore() {
 		if (MonthlyBudget <= 0 && MonthlyGrossProfitBudget <= 0) {
 			MessageEx.ShowWarningDialog("店舗月売上予算または店舗月粗利予算を入力してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-		if (DailyBudgets.Count == 0 || !HasDailyRowsForSelectedMonth()) {
-			GenerateDailyRows();
-		}
+		GenerateDailyRows(shopEvents);
 		var totalCoefficients = DailyBudgets.Sum(r => r.Coefficient);
 		if (totalCoefficients <= 0) {
 			MessageEx.ShowWarningDialog("按分可能な日がありません。", owner: ClientLib.GetActiveView(this));
@@ -429,7 +491,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		Message = string.Empty;
 	}
 
-	void GenerateDailyRows() {
+	void GenerateDailyRows(IReadOnlyDictionary<string, TranShopPromotion>? events = null) {
 		DailyBudgets.Clear();
 		var year = SelectedYearMonth.Year;
 		var month = SelectedYearMonth.Month;
@@ -444,8 +506,13 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 				IsHoliday = false,
 				Coefficient = 1.0
 			};
+			if (events != null && events.TryGetValue(date.ToString("yyyyMMdd", CultureInfo.InvariantCulture), out var shopEvent)) {
+				row.EventName = shopEvent.Mame ?? string.Empty;
+				row.EventImportance = GetEventImportanceName(shopEvent.Rank);
+				row.EventCoefficient = GetEventCoefficient(shopEvent.Rank);
+			}
 			if (row.IsSaturday || row.IsSunday) {
-				row.Coefficient = SaturdaySundayCoefficient;
+				row.Coefficient = SaturdaySundayCoefficient * row.EventCoefficient;
 			}
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 			DailyBudgets.Add(row);
@@ -453,6 +520,20 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		RefreshDailyBudgetViews();
 		ApplyHolidayDays();
 	}
+
+	async Task<IReadOnlyDictionary<string, TranShopPromotion>> LoadShopEventsAsync(long shopId, DateTime yearMonth, CancellationToken ct) {
+		var (dateFrom, dateTo) = GetDateRange(yearMonth);
+		var where = $"Id_Shop = {shopId} AND DenDay >= '{dateFrom}' AND DenDay <= '{dateTo}'";
+		var events = await CoreServiceClient.QueryListAsync<TranShopPromotion>(where, "DenDay", ct);
+		return events.Where(item => !string.IsNullOrWhiteSpace(item.DenDay)).ToDictionary(item => item.DenDay, StringComparer.Ordinal);
+	}
+
+	bool IsCurrentBudgetTarget(long shopId, long brandId, DateTime yearMonth, string yearMonthString) =>
+		SelectedShopId == shopId && SelectedBrandId == brandId && SelectedYearMonth == yearMonth && SelectedYearMonthString == yearMonthString;
+
+	static double GetEventCoefficient(int rank) => rank switch { 0 => 1.1, 1 => 1.3, 2 => 1.5, _ => 1.0 };
+
+	static string GetEventImportanceName(int rank) => rank switch { 0 => "低", 1 => "中", 2 => "高", _ => string.Empty };
 
 	void ApplyHolidayDays() {
 		var holidayDays = ParseHolidayDays(HolidayDaysText);
@@ -528,9 +609,11 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		await CoreServiceClient.DeleteBulkAsync(typeof(MasterYosanBrand), existing, "既存予算", ct);
 	}
 
-	(string dateFrom, string dateTo) GetDateRange() {
-		var year = SelectedYearMonth.Year;
-		var month = SelectedYearMonth.Month;
+	(string dateFrom, string dateTo) GetDateRange() => GetDateRange(SelectedYearMonth);
+
+	static (string dateFrom, string dateTo) GetDateRange(DateTime yearMonth) {
+		var year = yearMonth.Year;
+		var month = yearMonth.Month;
 		var daysInMonth = DateTime.DaysInMonth(year, month);
 		var from = new DateTime(year, month, 1);
 		var to = new DateTime(year, month, daysInMonth);
@@ -585,6 +668,15 @@ public partial class DailyBudgetRow : ObservableObject {
 
 	[ObservableProperty]
 	public partial double Coefficient { get; set; } = 1.0;
+
+	[ObservableProperty]
+	public partial string EventName { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string EventImportance { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial double EventCoefficient { get; set; } = 1.0;
 
 	[ObservableProperty]
 	public partial bool IsHoliday { get; set; }

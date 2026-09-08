@@ -13,7 +13,7 @@ namespace CvWpfclient.ViewModels._02Yosan;
 /// 売上・予算・客数・前年売上を順に UPDATE で貼り付けてから仕上げQUERYを流していた。
 /// cv10 では同じ組み立てを CTE (calendar → shops → budget/sales → han01 → cum) で再現している。
 /// 帳票は printform/ShopBudgetReport.qfm（旧 cvnet30prn_yosan.qfm のコピー）で、
-/// item1〜item26 が下記 SELECT の26列と1対1に対応するため、列の順序と個数は変更しないこと。
+/// item1〜item27 が下記 SELECT の27列と1対1に対応するため、列の順序と個数は変更しないこと。
 ///
 /// 旧システムに存在するが cv10 に対応するテーブル・列がないものは空欄/0固定にしている。
 /// ・客数     … 売上・返品の伝票ヘッダ数を客数として集計する
@@ -150,13 +150,20 @@ han01 AS (
         COALESCE(sa.su05, 0) AS su05,
         COALESCE(sa.su20, 0) AS su20,
         COALESCE(sa.su06, 0) AS su06,
-        COALESCE(p1.su01, 0) + COALESCE(p2.su01, 0) AS su07raw
+        COALESCE(p1.su01, 0) + COALESCE(p2.su01, 0) AS su07raw,
+        CASE p.Rank
+            WHEN 0 THEN p.Mame || '（低）'
+            WHEN 1 THEN p.Mame || '（中）'
+            WHEN 2 THEN p.Mame || '（高）'
+            ELSE ''
+        END AS shopPromotion
     FROM shops s
     CROSS JOIN calendar c
     LEFT JOIN budget b ON b.Id_Tenpo = s.Id AND b.DenDay = c.denDay
     LEFT JOIN sales sa ON sa.Id_Tenpo = s.Id AND sa.DenDay = c.denDay
     LEFT JOIN sales p1 ON p1.Id_Tenpo = s.Id AND p1.DenDay = c.prevDenDay
     LEFT JOIN sales p2 ON p2.Id_Tenpo = s.Id AND p2.DenDay = c.prevExtraDenDay
+    LEFT JOIN TranShopPromotion p ON p.Id_Shop = s.Id AND p.DenDay = c.denDay
 ),
 cum AS (
     -- 旧6: 累計計算 SU11(売上累計)/SU10(予算累計・円)/SU17(前年売上累計)
@@ -167,7 +174,7 @@ cum AS (
     FROM han01 h
 )";
 
-		// 旧8: 仕上げQUERY。列順は qfm の item1〜item26 に対応する。
+		// 旧8: 仕上げQUERY。列順は qfm の item1〜item27 に対応する。
 		// 前年比は旧 comp_str00（日次: 売上/前年売上）。旧クライアントは wrk_para[8] を空文字で渡すため累計版は使われない。
 		// 率は旧 TRUNC(x*100,1) に合わせ、1000倍してINTEGERへ切り捨てて10で割る（SQLiteのCASTは0方向切り捨て）。
 		if (IsByShop) {
@@ -199,7 +206,8 @@ SELECT
     su20 AS uriTensu,
     prevDayLabel AS zennenHizuke,
     '{prevStart.ToString(PrevDateLabelFormat, jp)}' AS zennenFrom,
-    '{prevEnd.ToString(PrevDateLabelFormat, jp)}' AS zennenTo
+    '{prevEnd.ToString(PrevDateLabelFormat, jp)}' AS zennenTo,
+    shopPromotion
 FROM cum
 ORDER BY Code, denDay";
 		}
@@ -233,7 +241,8 @@ SELECT
     SUM(su20) AS uriTensu,
     MAX(prevDayLabel) AS zennenHizuke,
     '{prevStart.ToString(PrevDateLabelFormat, jp)}' AS zennenFrom,
-    '{prevEnd.ToString(PrevDateLabelFormat, jp)}' AS zennenTo
+    '{prevEnd.ToString(PrevDateLabelFormat, jp)}' AS zennenTo,
+    '' AS shopPromotion
 FROM cum
 GROUP BY denDay
 ORDER BY denDay";
