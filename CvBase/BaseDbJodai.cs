@@ -34,6 +34,73 @@ public enum EnumJodaiTaisho : int {
 }
 
 /// <summary>
+/// Scope（適用範囲）の範囲種別（<see cref="TranJodaiScope.RangeType"/>）
+/// </summary>
+public enum EnumJodaiRangeType : int {
+	/// <summary>全店。対象系統の全店舗／全得意先が対象</summary>
+	[Comment("全店")]
+	All = 0,
+	/// <summary>価格グループ。<see cref="TranJodaiScope.GroupAxis"/>で示す軸で絞る</summary>
+	[Comment("価格グループ")]
+	PriceGroup = 1,
+	/// <summary>個別店舗。<see cref="TranJodaiScope.Id_Tenpo"/>で指定する1店舗</summary>
+	[Comment("個別店舗")]
+	Store = 2,
+}
+
+/// <summary>
+/// Scope（適用範囲）の対象・除外区分（<see cref="TranJodaiScope.IncExc"/>）
+/// </summary>
+public enum EnumJodaiIncExc : int {
+	/// <summary>対象。範囲に該当する店舗を含める</summary>
+	[Comment("対象")]
+	Include = 0,
+	/// <summary>除外。同一<see cref="TranJodaiScope.RangeType"/>内で対象より先に効く</summary>
+	[Comment("除外")]
+	Exclude = 1,
+}
+
+/// <summary>
+/// Scope（適用範囲）の価格グループ絞り込み軸（<see cref="TranJodaiScope.GroupAxis"/>）
+/// <para><see cref="TranJodaiScope.RangeType"/>=<see cref="EnumJodaiRangeType.PriceGroup"/>のとき、どの軸で絞るかを示す。</para>
+/// </summary>
+public enum EnumJodaiGroupAxis : int {
+	/// <summary>価格グループ軸。<see cref="MasterTokui.Id_PriceGroup"/>（区分C30）</summary>
+	[Comment("価格グループ")]
+	PriceGroup = 0,
+	/// <summary>地域軸。<see cref="MasterTokui.Id_PriceArea"/>（区分C31）</summary>
+	[Comment("地域")]
+	PriceArea = 1,
+	/// <summary>チャネル軸。<see cref="MasterTokui.Id_PriceChannel"/>（区分C32）</summary>
+	[Comment("チャネル")]
+	PriceChannel = 2,
+}
+
+/// <summary>
+/// Scope（適用範囲）の価格方式（<see cref="TranJodaiScope.PriceMethod"/>）
+/// </summary>
+public enum EnumJodaiPriceMethod : int {
+	/// <summary>固定額。<see cref="TranJodaiScope.FixedPrice"/>をそのまま使う</summary>
+	[Comment("固定額")]
+	FixedPrice = 0,
+	/// <summary>値下率。基準上代 × (1 - <see cref="TranJodaiScope.RateOff"/>/100)</summary>
+	[Comment("値下率")]
+	RateOff = 1,
+	/// <summary>値引額。基準上代 - <see cref="TranJodaiScope.Amount"/></summary>
+	[Comment("値引額")]
+	Amount = 2,
+	/// <summary>掛率。基準上代 × <see cref="TranJodaiScope.RateOn"/>/100</summary>
+	[Comment("掛率")]
+	RateOn = 3,
+	/// <summary>実効上代からの値下率。発効日時点の実効上代を基準にした<see cref="TranJodaiScope.RateOff"/></summary>
+	[Comment("実効上代からの値下率")]
+	RateOffFromEffective = 4,
+	/// <summary>価格ポイント。算出後に<see cref="TranJodaiScope.Id_PricePoint"/>の価格ポイント表の最近値へ寄せる</summary>
+	[Comment("価格ポイント")]
+	PricePoint = 5,
+}
+
+/// <summary>
 /// 上代一括変更 伝票
 /// <para>
 /// 対象店舗(<see cref="Jshop"/>)・対象明細(<see cref="Jmeisai"/>)・抽出条件(<see cref="Jcond"/>)を
@@ -138,51 +205,58 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	public partial CodeNameView VShain { get; set; } = new();
 	/// <summary>
 	/// 適用開始日（yyyyMMdd）。店舗個別指定がない場合の既定値
+	/// <para>新規Scope（<see cref="Jscope"/>）作成時の初期値としても使う。価格計算の正はScope側の値とする。</para>
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("開始日")]
-	[Comment("適用開始日（yyyyMMdd）。店舗個別指定がない場合の既定値")]
+	[Comment("適用開始日（yyyyMMdd）。店舗個別指定がない場合の既定値 新規Scope作成時の初期値。価格計算の正はScope側")]
 	public partial string DayFrom { get; set; } = "19010101";
 	/// <summary>
 	/// 適用終了日（yyyyMMdd）。プロパー(P)区分は "99991231"（無期限）
+	/// <para>新規Scope（<see cref="Jscope"/>）作成時の初期値としても使う。価格計算の正はScope側の値とする。</para>
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
 	[OldTableCommentAttr("終了日")]
-	[Comment("適用終了日（yyyyMMdd）。プロパー(P)区分は 99991231（無期限）")]
+	[Comment("適用終了日（yyyyMMdd）。プロパー(P)区分は 99991231（無期限） 新規Scope作成時の初期値。価格計算の正はScope側")]
 	public partial string DayTo { get; set; } = "99991231";
 	/// <summary>
 	/// 一括変更方法 0:金額指定 1:率(%)指定
+	/// <para>新規Scope（<see cref="Jscope"/>）作成時の初期値。価格計算の正はScope側の<see cref="TranJodaiScope.PriceMethod"/>とする。</para>
 	/// </summary>
 	[ObservableProperty]
-	[Comment("一括変更方法 0:金額指定 1:率(%)指定")]
+	[Comment("一括変更方法 0:金額指定 1:率(%)指定 新規Scope作成時の初期値。価格計算の正はScope側")]
 	public partial int CalcType { get; set; }
 	/// <summary>
 	/// 変更率(%) CalcType=1 のとき使用
+	/// <para>新規Scope（<see cref="Jscope"/>）作成時の初期値。価格計算の正はScope側の値とする。</para>
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("率")]
-	[Comment("変更率(%) CalcType=1 のとき使用")]
+	[Comment("変更率(%) CalcType=1 のとき使用 新規Scope作成時の初期値。価格計算の正はScope側")]
 	public partial decimal CalcRate { get; set; }
 	/// <summary>
 	/// 変更金額 CalcType=0 のとき使用
+	/// <para>新規Scope（<see cref="Jscope"/>）作成時の初期値。価格計算の正はScope側の値とする。</para>
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("金額")]
-	[Comment("変更金額 CalcType=0 のとき使用")]
+	[Comment("変更金額 CalcType=0 のとき使用 新規Scope作成時の初期値。価格計算の正はScope側")]
 	public partial int CalcValue { get; set; }
 	/// <summary>
 	/// 丸め単位 0:1円 1:10円 2:百円 3:千円
+	/// <para>新規Scope（<see cref="Jscope"/>）作成時の初期値。価格計算の正はScope側の<see cref="TranJodaiScope.RoundUnit"/>とする。</para>
 	/// </summary>
 	[ObservableProperty]
-	[Comment("丸め単位 0:1円 1:10円 2:百円 3:千円")]
+	[Comment("丸め単位 0:1円 1:10円 2:百円 3:千円 新規Scope作成時の初期値。価格計算の正はScope側")]
 	public partial int RoundUnit { get; set; }
 	/// <summary>
 	/// 丸め方法 0:切捨 1:四捨五入 2:切上
+	/// <para>新規Scope（<see cref="Jscope"/>）作成時の初期値。価格計算の正はScope側の<see cref="TranJodaiScope.RoundType"/>とする。</para>
 	/// </summary>
 	[ObservableProperty]
-	[Comment("丸め方法 0:切捨 1:四捨五入 2:切上")]
+	[Comment("丸め方法 0:切捨 1:四捨五入 2:切上 新規Scope作成時の初期値。価格計算の正はScope側")]
 	public partial int RoundType { get; set; }
 	/// <summary>
 	/// 状態 0:入力中 1:確定(展開済) 2:取消
@@ -258,6 +332,25 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[Comment("対象明細リスト（商品マスタ単位）")]
 	public partial List<TranJodaiMeisai> Jmeisai { get; set; } = [];
 	/// <summary>
+	/// 適用範囲（Scope）リスト
+	/// <para>
+	/// 範囲（全店／価格グループ／個別店舗）× 期間 × 価格ルールを1組にしたもの。<see cref="Jshop"/>の
+	/// <see cref="TranJodaiShop.No_Scope"/>、<see cref="Jmeisai"/>の<see cref="TranJodaiMeisai.No_Scope"/>から参照される。
+	/// 既存伝票のJSONに項目が無ければ空リストが入る（Step2で後方互換の正規化を行う）。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(ColumnType.Json)]
+	[Comment("適用範囲(Scope)リスト 範囲×期間×価格ルールを1組にしたもの 既存伝票のJSONに項目が無ければ空リスト")]
+	public partial List<TranJodaiScope> Jscope { get; set; } = [];
+	/// <summary>
+	/// 適用範囲数（<see cref="Jscope"/>を開かずに一覧表示するための非正規化列）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("適用範囲数（Jscopeを開かずに一覧表示するための非正規化列）")]
+	public partial int ScopeCnt { get; set; }
+	/// <summary>
 	/// ヘッダメモ
 	/// </summary>
 	[ObservableProperty]
@@ -265,13 +358,40 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	[OldTableCommentAttr("メモ")]
 	[Comment("ヘッダメモ")]
 	public partial string Memo { get; set; } = string.Empty;
+	/// <summary>
+	/// 承認日（yyyyMMdd）。空文字なら未承認
+	/// <para><see cref="MasterConfig.NameJodaiNeedApprove"/>が1のときだけ、確定操作時に入力を求める（既定は不要）。</para>
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("承認日（yyyyMMdd）。空文字なら未承認 MasterConfig.JodaiNeedApproveが1のときだけ確定操作時に入力を求める")]
+	public partial string ApproveDay { get; set; } = string.Empty;
+	/// <summary>
+	/// 承認社員Id
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
+	[Comment("承認社員Id")]
+	public partial long Id_ApproveShain { get; set; }
+	/// <summary>
+	/// 承認社員データ（時点値）
+	/// <para>
+	/// Tran系のV*列であり、伝票時点の監査値である。マスタが改名されても伝播しないため、
+	/// <see cref="CvDomainLogic.MasterCascadeDb"/>.VRulesへは登録しない（AGENTS.md 4章）。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("承認社員データ（時点値）")]
+	public partial CodeNameView VApproveShain { get; set; } = new();
 	[Ignore]
 	public Type DerivedClass => typeof(DerivedJodai);
 
 	/// <summary>
 	/// 対象店舗・対象明細の重複を取り除き、行Noと件数列を整える。<b>保存前に必ず呼ぶこと。</b>
 	/// <para>
-	/// <see cref="DerivedJodai"/> の uk1(Id_Tran, TaishoType, Id_Tenpo, Id_Shohin) はユニークキーなので、
+	/// <see cref="DerivedJodai"/> の uk1(Id_Tran, TaishoType, Id_Tenpo, Id_Shohin, DayFrom) はユニークキーなので、
 	/// <see cref="Jshop"/> に同じ店舗、<see cref="Jmeisai"/> に同じ商品が重複していると
 	/// 展開時に制約違反となり<b>トランザクションごと失敗する</b>（伝票の保存自体が通らない）。
 	/// </para>
@@ -325,6 +445,166 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 }
 
 /// <summary>
+/// 上代一括変更 適用範囲（Scope）（<see cref="TranJodai.Jscope"/>の要素）
+/// <para>
+/// Price Matrix の「列」かつ段階値下げの「段」。範囲（全店／価格グループ／個別店舗）× 期間 × 価格ルールを1組にしたもの。
+/// 物理テーブルは作らず、<see cref="TranJodai.Jscope"/>にJSON配列で格納する。
+/// </para>
+/// <para>
+/// 確定時に画面側で実店舗へ解決し、その結果を<see cref="TranJodaiShop"/>（<see cref="TranJodaiShop.No_Scope"/>）へ
+/// Snapshot する。展開SQL（<see cref="DerivedJodai.CreateSql"/>）はこの表を直接参照しない。
+/// </para>
+/// </summary>
+[SubTableDefine]
+[Comment("トランザクション：上代一括変更の適用範囲(Scope)サブテーブル TranJodai.JscopeにJSONで格納する 物理テーブルは作らない")]
+public sealed partial class TranJodaiScope : ObservableObject {
+	/// <summary>
+	/// 伝票内で一意なScope番号（1始まり）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("伝票内で一意なScope番号（1始まり）")]
+	public partial int No { get; set; }
+	/// <summary>
+	/// 表示名（例 "全国"、"OUTLET"、"EC"、"SALE 2nd"）。Price Matrixの列見出しに使う
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(40)]
+	[Comment("表示名（例 全国/OUTLET/EC/SALE 2nd）。Price Matrixの列見出しに使う")]
+	public partial string Name { get; set; } = string.Empty;
+	/// <summary>
+	/// 範囲種別（<see cref="EnumJodaiRangeType"/>）0:全店 1:価格グループ 2:個別店舗
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumJodaiRangeType))]
+	[Comment("範囲種別（EnumJodaiRangeType）0:全店 1:価格グループ 2:個別店舗")]
+	public partial int RangeType { get; set; }
+	/// <summary>
+	/// 対象・除外区分（<see cref="EnumJodaiIncExc"/>）0:対象 1:除外
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumJodaiIncExc))]
+	[Comment("対象・除外区分（EnumJodaiIncExc）0:対象 1:除外")]
+	public partial int IncExc { get; set; }
+	/// <summary>
+	/// 価格グループ絞り込み軸（<see cref="EnumJodaiGroupAxis"/>）。<see cref="RangeType"/>=1のとき使用
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumJodaiGroupAxis))]
+	[Comment("価格グループ絞り込み軸（EnumJodaiGroupAxis）0:価格グループ 1:地域 2:チャネル RangeType=1のとき使用")]
+	public partial int GroupAxis { get; set; }
+	/// <summary>
+	/// グループId。<see cref="RangeType"/>=1のとき、<see cref="GroupAxis"/>が示す軸の<see cref="MasterMeisho"/>.Id
+	/// </summary>
+	[ObservableProperty]
+	[Comment("グループId。RangeType=1のとき、GroupAxisが示す軸のMasterMeisho.Id")]
+	public partial long Id_Group { get; set; }
+	/// <summary>
+	/// グループコード（時点値）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(16)]
+	[Comment("グループコード（時点値）")]
+	public partial string Code_Group { get; set; } = string.Empty;
+	/// <summary>
+	/// グループ名（時点値）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(80)]
+	[Comment("グループ名（時点値）")]
+	public partial string Mei_Group { get; set; } = string.Empty;
+	/// <summary>
+	/// 対象店舗Id。<see cref="RangeType"/>=2のとき使用
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui), tenType: 6, additionalInfo: "TranJodai.TaishoType=1 のときは TenType in (1,3)")]
+	[Comment("対象店舗Id。RangeType=2のとき使用")]
+	public partial long Id_Tenpo { get; set; }
+	/// <summary>
+	/// 店舗CD（時点値）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(16)]
+	[Comment("店舗CD（時点値）")]
+	public partial string Code_Tenpo { get; set; } = string.Empty;
+	/// <summary>
+	/// 店舗名（時点値）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(80)]
+	[Comment("店舗名（時点値）")]
+	public partial string Mei_Tenpo { get; set; } = string.Empty;
+	/// <summary>
+	/// 適用開始日（yyyyMMdd）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("適用開始日（yyyyMMdd）")]
+	public partial string DayFrom { get; set; } = "19010101";
+	/// <summary>
+	/// 適用終了日（yyyyMMdd。Inclusive）。無期限は "99991231"
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("適用終了日（yyyyMMdd。Inclusive）。無期限は 99991231")]
+	public partial string DayTo { get; set; } = "99991231";
+	/// <summary>
+	/// 価格方式（<see cref="EnumJodaiPriceMethod"/>）0〜5
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(EnumJodaiPriceMethod))]
+	[Comment("価格方式（EnumJodaiPriceMethod）0固定額 1値下率 2値引額 3掛率 4実効上代からの値下率 5価格ポイント")]
+	public partial int PriceMethod { get; set; }
+	/// <summary>
+	/// 固定額。<see cref="PriceMethod"/>=0(固定額)のとき使用
+	/// </summary>
+	[ObservableProperty]
+	[Comment("固定額。PriceMethod=0(固定額)のとき使用")]
+	public partial int FixedPrice { get; set; }
+	/// <summary>
+	/// 値下率(%)。<see cref="PriceMethod"/>=1(値下率)・4(実効上代からの値下率)のとき使用
+	/// </summary>
+	[ObservableProperty]
+	[Comment("値下率(%)。PriceMethod=1(値下率)・4(実効上代からの値下率)のとき使用")]
+	public partial decimal RateOff { get; set; }
+	/// <summary>
+	/// 値引額。<see cref="PriceMethod"/>=2(値引額)のとき使用
+	/// </summary>
+	[ObservableProperty]
+	[Comment("値引額。PriceMethod=2(値引額)のとき使用")]
+	public partial int Amount { get; set; }
+	/// <summary>
+	/// 掛率(%)。<see cref="PriceMethod"/>=3(掛率)のとき使用
+	/// </summary>
+	[ObservableProperty]
+	[Comment("掛率(%)。PriceMethod=3(掛率)のとき使用")]
+	public partial decimal RateOn { get; set; }
+	/// <summary>
+	/// 丸め単位 0:1円 1:10円 2:百円 3:千円
+	/// </summary>
+	[ObservableProperty]
+	[Comment("丸め単位 0:1円 1:10円 2:百円 3:千円")]
+	public partial int RoundUnit { get; set; }
+	/// <summary>
+	/// 丸め方法 0:切捨 1:四捨五入 2:切上
+	/// </summary>
+	[ObservableProperty]
+	[Comment("丸め方法 0:切捨 1:四捨五入 2:切上")]
+	public partial int RoundType { get; set; }
+	/// <summary>
+	/// 価格ポイント表Id。<see cref="PriceMethod"/>=5(価格ポイント)のとき使用（<see cref="MasterMeisho"/> Kubun="PPT"）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("価格ポイント表Id。PriceMethod=5(価格ポイント)のとき使用（MasterMeisho Kubun=PPT）")]
+	public partial long Id_PricePoint { get; set; }
+	/// <summary>
+	/// 表示順・優先順位の同点解消（大きい方が優先）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("表示順・優先順位の同点解消（大きい方が優先）")]
+	public partial int Odr { get; set; }
+}
+
+/// <summary>
 /// 上代一括変更 抽出条件（<see cref="TranJodai.Jcond"/>の要素）
 /// </summary>
 [SubTableDefine]
@@ -370,6 +650,13 @@ public sealed partial class TranJodaiCond : ObservableObject {
 	[ObservableProperty]
 	[Comment("展開単位 0:商品")]
 	public partial int TenkaiTani { get; set; }
+	/// <summary>
+	/// 条件行の結合 0:AND 1:OR
+	/// <para>既存伝票のJSONに項目が無ければ 0(AND) が入る。</para>
+	/// </summary>
+	[ObservableProperty]
+	[Comment("条件行の結合 0:AND 1:OR 既存伝票のJSONに項目が無ければ0(AND)が入る")]
+	public partial int Ope { get; set; }
 }
 
 /// <summary>
@@ -420,6 +707,13 @@ public sealed partial class TranJodaiShop : ObservableObject {
 	[OldTableCommentAttr("終了日")]
 	[Comment("店舗別の適用終了日（yyyyMMdd）")]
 	public partial string DayTo { get; set; } = "99991231";
+	/// <summary>
+	/// この店舗行が属するScopeの<see cref="TranJodaiScope.No"/>
+	/// <para>既存伝票のJSONに項目が無ければ 0 が入る（暗黙の単一Scope扱い）。</para>
+	/// </summary>
+	[ObservableProperty]
+	[Comment("この店舗行が属するScopeのNo 既存伝票のJSONに項目が無ければ0が入る（暗黙の単一Scope扱い）")]
+	public partial int No_Scope { get; set; }
 }
 
 /// <summary>
@@ -511,6 +805,27 @@ public sealed partial class TranJodaiMeisai : ObservableObject {
 	[OldTableCommentAttr("状況")]
 	[Comment("状況 0:未確認 1:確認済")]
 	public partial int Status { get; set; }
+	/// <summary>
+	/// この価格セルが属するScopeの<see cref="TranJodaiScope.No"/>
+	/// <para>既存伝票のJSONに項目が無ければ 0 が入る（暗黙の単一Scope扱い）。</para>
+	/// </summary>
+	[ObservableProperty]
+	[Comment("この価格セルが属するScopeのNo 既存伝票のJSONに項目が無ければ0が入る（暗黙の単一Scope扱い）")]
+	public partial int No_Scope { get; set; }
+	/// <summary>
+	/// 価格計算に使った基準上代（<see cref="EnumJodaiPriceMethod.RateOffFromEffective"/>の実効上代Snapshot。通常は<see cref="JodaiOld"/>と同値）
+	/// <para>既存伝票のJSONに項目が無ければ 0 が入る。</para>
+	/// </summary>
+	[ObservableProperty]
+	[Comment("価格計算に使った基準上代(方式4の実効上代Snapshot。通常はJodaiOldと同値) 既存伝票のJSONに項目が無ければ0が入る")]
+	public partial int JodaiBase { get; set; }
+	/// <summary>
+	/// 原価割れ判定用の時点値（<see cref="MasterShohin.TankaGenka"/>のSnapshot）
+	/// <para>既存伝票のJSONに項目が無ければ 0 が入る。</para>
+	/// </summary>
+	[ObservableProperty]
+	[Comment("原価割れ判定用の時点値(MasterShohin.TankaGenkaのSnapshot) 既存伝票のJSONに項目が無ければ0が入る")]
+	public partial int TankaGenka { get; set; }
 }
 
 /// <summary>
@@ -530,7 +845,7 @@ public sealed partial class TranJodaiMeisai : ObservableObject {
 /// </para>
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
-[KeyDml("uk1", true, nameof(Id_Tran), nameof(TaishoType), nameof(Id_Tenpo), nameof(Id_Shohin))]
+[KeyDml("uk1", true, nameof(Id_Tran), nameof(TaishoType), nameof(Id_Tenpo), nameof(Id_Shohin), nameof(DayFrom))]
 [KeyDml("nk1", false, nameof(Id_Shohin), nameof(TaishoType), nameof(Id_Tenpo), nameof(DayFrom), nameof(DayTo))]
 [KeyDml("nk2", false, nameof(Id_Tran))]
 [KeyDml("nk3", false, nameof(DayTo))]

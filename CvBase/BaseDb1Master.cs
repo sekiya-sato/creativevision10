@@ -983,6 +983,26 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("適用上代(DerivedJodai)の保持日数")]
 	public const string NameJodaiKeepDays = "JodaiKeepDays";
 	/// <summary>
+	/// 上代確定時の承認者入力 0:不要 1:必要
+	/// </summary>
+	[Comment("上代確定時の承認者入力 0:不要 1:必要")]
+	public const string NameJodaiNeedApprove = "JodaiNeedApprove";
+	/// <summary>
+	/// 上代の最低販売価格 0:判定しない
+	/// </summary>
+	[Comment("上代の最低販売価格 0:判定しない")]
+	public const string NameJodaiMinPrice = "JodaiMinPrice";
+	/// <summary>
+	/// 上代一括変更の明細セル数上限(商品数×Scope数)
+	/// </summary>
+	[Comment("上代一括変更の明細セル数上限(商品数×Scope数)")]
+	public const string NameJodaiMaxCells = "JodaiMaxCells";
+	/// <summary>
+	/// 上代展開見込行数の警告閾値
+	/// </summary>
+	[Comment("上代展開見込行数の警告閾値")]
+	public const string NameJodaiExpandWarnRows = "JodaiExpandWarnRows";
+	/// <summary>
 	/// 自動実行ジョブ(スケジューラ)設定のカテゴリ
 	/// </summary>
 	[Comment("自動実行ジョブ(スケジューラ)設定のカテゴリ")]
@@ -1242,6 +1262,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 		var vdate = Common.GetVdate();
 		var candidates = new List<MasterConfig>() {
 			new MasterConfig { Category = CategorySystem, Name = NameJodaiKeepDays, Val = "90", Example = "30,60,90", Memo = "上代保持日数", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategorySystem, Name = NameJodaiNeedApprove, Val = "0", Example = "0,1", Memo = "上代確定時の承認者入力 0:不要 1:必要", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategorySystem, Name = NameJodaiMinPrice, Val = "0", Example = "0,1000", Memo = "上代の最低販売価格 0:判定しない", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategorySystem, Name = NameJodaiMaxCells, Val = "30000", Example = "10000,30000,50000", Memo = "上代一括変更の明細セル数上限(商品数×Scope数)", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategorySystem, Name = NameJodaiExpandWarnRows, Val = "200000", Example = "100000,200000", Memo = "上代展開見込行数の警告閾値", Vdc = vdate, Vdu = vdate },
 		};
 		foreach (var job in AutoExecJobDefaults) {
 			candidates.Add(new MasterConfig {

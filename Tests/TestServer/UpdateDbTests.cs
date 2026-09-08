@@ -42,7 +42,8 @@ public class SysPermissionProfileDefaultDataTests {
 
 /// <summary>
 /// MasterConfig一元化: CreateDefaultDataが「不足行のみ追加」方式であることの検証。
-/// JodaiKeepDays 1行 + 自動実行ジョブ8件×3行(実行フラグ・cron式・メール送信フラグ) + メール共通設定9行 = 34行が候補になる。
+/// JodaiKeepDays 1行 + 上代一括変更Step1b追加4行(JodaiNeedApprove/JodaiMinPrice/JodaiMaxCells/JodaiExpandWarnRows)
+/// + 自動実行ジョブ8件×3行(実行フラグ・cron式・メール送信フラグ) + メール共通設定9行 = 38行が候補になる。
 /// </summary>
 [TestClass]
 public class MasterConfigAutoExecDefaultDataTests {
@@ -65,15 +66,16 @@ public class MasterConfigAutoExecDefaultDataTests {
 	}
 
 	/// <summary>
-	/// 空のテーブルに対しては、JodaiKeepDays 1行 + 自動実行ジョブ8件×3行(実行フラグ・cron式・メール送信フラグ) + メール共通設定9行 = 34行を
+	/// 空のテーブルに対しては、JodaiKeepDays 1行 + 上代一括変更Step1b追加4行
+	/// + 自動実行ジョブ8件×3行(実行フラグ・cron式・メール送信フラグ) + メール共通設定9行 = 38行を
 	/// すべてInsertすること。
 	/// </summary>
 	[TestMethod]
-	public void CreateDefaultData_EmptyTable_InsertsThirtyFourRows() {
+	public void CreateDefaultData_EmptyTable_InsertsThirtyEightRows() {
 		var inserted = MasterConfig.CreateDefaultData(Db);
 
-		Assert.AreEqual(34, inserted.Count, "JodaiKeepDays 1行 + 自動実行ジョブ8件×3行 + メール共通設定9行 = 34行を挿入すること");
-		Assert.AreEqual(34, Db.Fetch<MasterConfig>("").Count);
+		Assert.AreEqual(38, inserted.Count, "JodaiKeepDays 1行 + 上代一括変更Step1b追加4行 + 自動実行ジョブ8件×3行 + メール共通設定9行 = 38行を挿入すること");
+		Assert.AreEqual(38, Db.Fetch<MasterConfig>("").Count);
 		Assert.AreEqual(33, Db.Fetch<MasterConfig>("WHERE Category = @0", MasterConfig.CategoryAutoExec).Count);
 	}
 
@@ -136,7 +138,7 @@ public class MasterConfigAutoExecDefaultDataTests {
 		var secondResult = MasterConfig.CreateDefaultData(Db);
 
 		Assert.AreEqual(0, secondResult.Count, "2回目は不足行が無いため空リストであること");
-		Assert.AreEqual(34, Db.Fetch<MasterConfig>("").Count, "2回目の呼び出しで行が増えないこと");
+		Assert.AreEqual(38, Db.Fetch<MasterConfig>("").Count, "2回目の呼び出しで行が増えないこと");
 	}
 
 	[TestMethod]
@@ -153,7 +155,7 @@ public class MasterConfigAutoExecDefaultDataTests {
 		var inserted = MasterConfig.CreateDefaultData(Db);
 		var existing = Db.FirstOrDefault<MasterConfig>("WHERE Name = @0", MasterConfig.NameAutoExecMailServerIp);
 
-		Assert.AreEqual(33, inserted.Count, "既存行を除く不足33行だけ追加すること");
+		Assert.AreEqual(37, inserted.Count, "既存行を除く不足37行だけ追加すること");
 		Assert.IsNotNull(existing);
 		Assert.AreEqual(existingValue, existing.Val, "既存値を上書きしないこと");
 		Assert.AreEqual("既存の設定例", existing.Example, "既存の設定例を上書きしないこと");
