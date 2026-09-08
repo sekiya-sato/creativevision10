@@ -309,6 +309,51 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	[ForeignKey(nameof(EnumSlipFormType))]
 	[Comment("伝票印字タイプ")]
 	public partial int SlipFormType { get; set; } = 0;
+	/// <summary>
+	/// 価格グループ
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunPriceGroup)]
+	[Comment("価格グループ")]
+	public partial long Id_PriceGroup { get; set; }
+	/// <summary>
+	/// 価格グループデータ
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("価格グループデータ")]
+	public partial CodeNameView VPriceGroup { get; set; } = new();
+	/// <summary>
+	/// 地域
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunPriceArea)]
+	[Comment("地域")]
+	public partial long Id_PriceArea { get; set; }
+	/// <summary>
+	/// 地域データ
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("地域データ")]
+	public partial CodeNameView VPriceArea { get; set; } = new();
+	/// <summary>
+	/// チャネル
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterMeisho), meishoKubun: MasterMeisho.KubunPriceChannel)]
+	[Comment("チャネル")]
+	public partial long Id_PriceChannel { get; set; }
+	/// <summary>
+	/// チャネルデータ
+	/// </summary>
+	[ObservableProperty]
+	[SerializedColumn]
+	[ColumnSizeDml(100)]
+	[Comment("チャネルデータ")]
+	public partial CodeNameView VPriceChannel { get; set; } = new();
 }
 
 /// <summary>

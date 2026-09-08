@@ -223,6 +223,15 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// <summary>入金/支払方法区分</summary>
 	[Comment("入金/支払方法区分")]
 	public const string KubunKin = "KIN";
+	/// <summary>価格グループ区分</summary>
+	[Comment("価格グループ区分")]
+	public const string KubunPriceGroup = "C30";
+	/// <summary>地域区分</summary>
+	[Comment("地域区分")]
+	public const string KubunPriceArea = "C31";
+	/// <summary>チャネル区分</summary>
+	[Comment("チャネル区分")]
+	public const string KubunPriceChannel = "C32";
 	/// <summary>商品マスター Jsub(名称リスト)の区分先頭文字(Kb='B01'～'B10')</summary>
 	[Comment("商品マスター 名称区分先頭文字")]
 	public const char KubunTopShohin = 'B';

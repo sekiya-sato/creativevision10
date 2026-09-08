@@ -236,6 +236,33 @@ from MasterTokui {query.AddWhereOrder()}
 		CurrentEdit.VPayMethod = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
 	}
 
+	// ---- 価格グループ (MasterMeisho) 選択 ----
+	[RelayCommand]
+	void DoSelectPriceGroup() {
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunPriceGroup}'", "Code", startPos: CurrentEdit.Id_PriceGroup);
+		if (meisho == null) return;
+		CurrentEdit.Id_PriceGroup = meisho.Id;
+		CurrentEdit.VPriceGroup = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
+	}
+
+	// ---- 地域 (MasterMeisho) 選択 ----
+	[RelayCommand]
+	void DoSelectPriceArea() {
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunPriceArea}'", "Code", startPos: CurrentEdit.Id_PriceArea);
+		if (meisho == null) return;
+		CurrentEdit.Id_PriceArea = meisho.Id;
+		CurrentEdit.VPriceArea = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
+	}
+
+	// ---- チャネル (MasterMeisho) 選択 ----
+	[RelayCommand]
+	void DoSelectPriceChannel() {
+		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunPriceChannel}'", "Code", startPos: CurrentEdit.Id_PriceChannel);
+		if (meisho == null) return;
+		CurrentEdit.Id_PriceChannel = meisho.Id;
+		CurrentEdit.VPriceChannel = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
+	}
+
 	// ---- 請求先 (MasterTokui 自テーブル) 選択 ----
 	[RelayCommand]
 	void DoSelectPaysaki() {
