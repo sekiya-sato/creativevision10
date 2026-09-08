@@ -999,19 +999,26 @@
 							</Grid>
 						</TabItem>
 
-						<!--  ================= ③ 価格 =================  -->
+						<!--  ================= ③ 価格 (Price Matrix) =================  -->
+						<!--
+							行=商品 / 列=Scope（設計書5.4）。Scope列はxaml.cs(RebuildScopeColumns)で実行時に
+							生成する。動的列生成はCvWpfclient/Views/03Hatchu/HachuHaibunInputView.xaml.cs
+							（配分クロス表: 行=入庫先/列=色サイズ）と同じ流儀（列インデックスで
+							Cells[i]を束縛し、ScopeRowsの増減に合わせてRebuildScopeColumnsで作り直す）に揃えた。
+							主入力手段ではなく確認・例外編集用（対象取得と一括計算が主入力）。
+						-->
 						<TabItem Header="③ 価格">
 							<Grid Margin="0,10,0,0">
-								<materialDesign:Card Padding="12,10"
-									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
-									<Grid>
-										<Grid.RowDefinitions>
-											<RowDefinition Height="Auto" />
-											<RowDefinition Height="*" />
-										</Grid.RowDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="*" />
+								</Grid.RowDefinitions>
 
-										<DockPanel Grid.Row="0"
-											Margin="0,0,0,6">
+								<materialDesign:Card Grid.Row="0"
+									Margin="0,0,0,8" Padding="12,8"
+									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
+									<StackPanel>
+										<DockPanel>
 											<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 												<Border Padding="8,2"
 													Background="{DynamicResource MaterialDesignDivider}"
@@ -1026,63 +1033,86 @@
 														Text="{Binding ExpandEstimate, StringFormat={}展開見込 {0:N0} 行}"
 														ToolTip="確定すると DerivedJodai にこの行数が作成されます" />
 												</Border>
+												<Button Margin="12,0,0,0"
+													Command="{Binding RecalcMatrixCommand}"
+													Style="{StaticResource MaterialDesignOutlinedButton}"
+													ToolTip="選択Scope（または全Scope）の価格ルールで全セルを再計算します（設計書5.6「一括計算」）">
+													<StackPanel Orientation="Horizontal">
+														<materialDesign:PackIcon Kind="Calculator" />
+														<TextBlock Margin="6,0,0,0" Text="一括計算" />
+													</StackPanel>
+												</Button>
 											</StackPanel>
 											<TextBlock VerticalAlignment="Center"
-												FontWeight="SemiBold" Text="対象明細（商品マスタ単位）" />
+												FontWeight="SemiBold" Text="Price Matrix（商品×Scope。確認・例外編集用）" />
 										</DockPanel>
 
-										<DataGrid Grid.Row="1"
-											d:ItemsSource="{d:SampleData ItemCount=5}"
-											helpers:DataGridCellEnterNavigation.IsEnabled="True" helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="8,4"
-											materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
-											AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
-											AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal" HeadersVisibility="Column"
-											HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-											ItemsSource="{Binding MeisaiRows}"
-											SelectedItem="{Binding SelectedMeisaiRow, Mode=TwoWay}"
-											Style="{StaticResource MaterialDesignDataGrid}"
-											VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
-											<DataGrid.Columns>
-												<DataGridTextColumn Width="50"
-													Binding="{Binding No}"
-													ElementStyle="{StaticResource DataGridRightTextBlock}"
-													Header="行" IsReadOnly="True" />
-												<DataGridTextColumn Width="120"
-													Binding="{Binding Code_Shohin}"
-													Header="商品CD" IsReadOnly="True" />
-												<DataGridTextColumn Width="*" MinWidth="160"
-													Binding="{Binding Mei_Shohin}"
-													Header="商品名" IsReadOnly="True" />
-												<DataGridTextColumn Width="95"
-													Binding="{Binding DayTento}"
-													Header="店頭投入日" IsReadOnly="True" />
-												<DataGridTextColumn Width="90"
-													Binding="{Binding DayChange}"
-													Header="変更日" IsReadOnly="True" />
-												<DataGridTextColumn Width="90"
-													Binding="{Binding JodaiOld, StringFormat={}{0:N0}}"
-													ElementStyle="{StaticResource DataGridRightTextBlock}"
-													Header="上代" IsReadOnly="True" />
-												<DataGridTextColumn Width="105"
-													Binding="{Binding JodaiNew, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
-													EditingElementStyle="{StaticResource DataGridRightTextBox}"
-													ElementStyle="{StaticResource DataGridRightTextBlock}"
-													Header="新販売価格" />
-												<DataGridTextColumn Width="85"
-													Binding="{Binding RateOff, StringFormat={}{0:N2}}"
-													ElementStyle="{StaticResource DataGridRightTextBlock}"
-													Header="新割引率" IsReadOnly="True" />
-												<DataGridTextColumn Width="95"
-													Binding="{Binding PriceInTax, StringFormat={}{0:N0}}"
-													ElementStyle="{StaticResource DataGridRightTextBlock}"
-													Header="税込価格" IsReadOnly="True" />
-											</DataGrid.Columns>
-											<DataGrid.ColumnHeaderStyle>
-												<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
-													TargetType="DataGridColumnHeader" />
-											</DataGrid.ColumnHeaderStyle>
-										</DataGrid>
-									</Grid>
+										<StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+											<TextBlock VerticalAlignment="Center"
+												Text="選択セルへ一括操作:" />
+											<ComboBox Width="130" Margin="8,0,0,0"
+												DisplayMemberPath="Name"
+												ItemsSource="{Binding BulkPriceMethodOptions}"
+												SelectedValue="{Binding BulkMethod, Mode=TwoWay}"
+												SelectedValuePath="Value"
+												Style="{StaticResource FormComboBox}" />
+											<TextBox Width="90" Margin="8,0,0,0"
+												Text="{Binding BulkValueText, UpdateSourceTrigger=PropertyChanged}"
+												Style="{StaticResource FormTextBox}"
+												ToolTip="方式により値下率(%)・値引額(円)・掛率(%)・固定額(円)の意味が変わります" />
+											<ComboBox Width="170" Margin="8,0,0,0"
+												DisplayMemberPath="Display"
+												ItemsSource="{Binding PricePointOptions}"
+												SelectedItem="{Binding BulkPricePoint, Mode=TwoWay}"
+												Style="{StaticResource FormComboBox}"
+												ToolTip="方式=価格ポイントのときのみ使用" />
+											<Button Margin="12,0,0,0"
+												Command="{Binding ApplyBulkOperationCommand}"
+												Style="{StaticResource MaterialDesignRaisedButton}">
+												<TextBlock Text="{Binding SelectedMatrixCellCount, StringFormat={}選択セルへ適用 ({0} 件)}" />
+											</Button>
+										</StackPanel>
+									</StackPanel>
+								</materialDesign:Card>
+
+								<materialDesign:Card Grid.Row="1"
+									Padding="0"
+									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
+									<DataGrid x:Name="PriceMatrixGrid"
+										helpers:DataGridCellEnterNavigation.IsEnabled="True" materialDesign:DataGridAssist.CellPadding="8,4"
+										materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
+										AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
+										AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FrozenColumnCount="4" GridLinesVisibility="All" HeadersVisibility="Column"
+										HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+										ItemsSource="{Binding MeisaiRows}"
+										Loaded="PriceMatrixGrid_Loaded"
+										SelectedCellsChanged="PriceMatrixGrid_SelectedCellsChanged"
+										SelectedItem="{Binding SelectedMeisaiRow, Mode=TwoWay}"
+										SelectionMode="Extended" SelectionUnit="Cell"
+										Style="{StaticResource MaterialDesignDataGrid}"
+										VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+										VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+										<DataGrid.Columns>
+											<DataGridTextColumn Width="120"
+												Binding="{Binding Code_Shohin}"
+												Header="商品CD" IsReadOnly="True" />
+											<DataGridTextColumn Width="*" MinWidth="160"
+												Binding="{Binding Mei_Shohin}"
+												Header="商品名" IsReadOnly="True" />
+											<DataGridTextColumn Width="90"
+												Binding="{Binding JodaiOld, StringFormat={}{0:N0}}"
+												ElementStyle="{StaticResource DataGridRightTextBlock}"
+												Header="通常上代" IsReadOnly="True" />
+											<DataGridTextColumn Width="90"
+												Binding="{Binding TankaGenka, StringFormat={}{0:N0}}"
+												ElementStyle="{StaticResource DataGridRightTextBlock}"
+												Header="原価" IsReadOnly="True" />
+										</DataGrid.Columns>
+										<DataGrid.ColumnHeaderStyle>
+											<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+												TargetType="DataGridColumnHeader" />
+										</DataGrid.ColumnHeaderStyle>
+									</DataGrid>
 								</materialDesign:Card>
 							</Grid>
 						</TabItem>

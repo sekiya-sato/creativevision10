@@ -181,4 +181,22 @@ public static class JodaiPriceRule {
 
 	/// <summary>負値を0へ切り上げる（マイナス上代を作らないための共通下限）。</summary>
 	private static int ClampNonNegative(int value) => Math.Max(0, value);
+
+	/// <summary>
+	/// C7（原価割れ）の判定。<c>JodaiConflictChecker.CheckBelowCost</c>（CvDomainLogic）と
+	/// <c>CvWpfclient</c>のPrice Matrix（設計書5.4のセル背景警告）が同じ基準を共有するための純粋関数。
+	/// <c>CvWpfclient</c>は<c>CvDomainLogic</c>を参照できない（層1.5はサーバ側）ため、判定の中核だけを
+	/// 双方が参照できる<c>CvBase</c>（層1）へ切り出した。
+	/// </summary>
+	/// <param name="jodaiNew">新上代（判定対象）。</param>
+	/// <param name="cost">原価（<see cref="TranJodaiMeisai.TankaGenka"/>の時点値、無ければ<see cref="MasterShohin.TankaGenka"/>）。</param>
+	public static bool IsBelowCost(int jodaiNew, int cost) => jodaiNew < cost;
+
+	/// <summary>
+	/// C8（最低販売価格違反）の判定。<paramref name="minPrice"/>が0以下（未設定）なら判定しない
+	/// （設計書2.8「0 なら判定しない」）。<see cref="IsBelowCost"/>と同じ理由でCvBaseに置く。
+	/// </summary>
+	/// <param name="jodaiNew">新上代（判定対象）。</param>
+	/// <param name="minPrice"><see cref="MasterConfig.NameJodaiMinPrice"/>の設定値。0以下なら判定しない。</param>
+	public static bool IsBelowMinPrice(int jodaiNew, int minPrice) => minPrice > 0 && jodaiNew < minPrice;
 }

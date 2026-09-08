@@ -182,7 +182,9 @@ SELECT dj.Id_Shohin, sh.Code AS Code_Shohin, sh.Name AS Mei_Shohin, dj.Id_Tenpo,
 		var violations = new List<(TranJodaiMeisai Meisai, int Cost)>();
 		foreach (var meisai in tran.Jmeisai) {
 			var cost = meisai.TankaGenka > 0 ? meisai.TankaGenka : masterCost.GetValueOrDefault(meisai.Id_Shohin, 0);
-			if (meisai.JodaiNew < cost) {
+			// 判定の中核はJodaiPriceRule.IsBelowCostへ共有する（CvWpfclientのPrice Matrixセル警告と同じ基準にするため。
+			// CvWpfclientはCvDomainLogicを参照できないので、双方が参照できるCvBase側へ切り出した）。
+			if (JodaiPriceRule.IsBelowCost(meisai.JodaiNew, cost)) {
 				violations.Add((meisai, cost));
 			}
 		}
@@ -220,7 +222,8 @@ SELECT dj.Id_Shohin, sh.Code AS Code_Shohin, sh.Name AS Mei_Shohin, dj.Id_Tenpo,
 			return [];
 		}
 
-		var violations = tran.Jmeisai.Where(c => c.JodaiNew < minPrice).ToList();
+		// 判定の中核はJodaiPriceRule.IsBelowMinPriceへ共有する（CheckBelowCostと同じ理由）。
+		var violations = tran.Jmeisai.Where(c => JodaiPriceRule.IsBelowMinPrice(c.JodaiNew, minPrice)).ToList();
 		if (violations.Count == 0) {
 			return [];
 		}

@@ -1,3 +1,33 @@
+## [2026-09-08] 上代一括変更 画面③Price Matrix（動的Scope列・セル一括操作・原価割れ警告）Step7
+### Agent
+- Claude Opus-5 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- 設計書`Doc/spec/2026-09-05_上代一括変更_詳細設計.md` Step 7（画面③ Price Matrix）を実装する
+### 実施内容
+- ③価格タブを Price Matrix（行=商品／列=Scope／セル=JodaiNew）へ作り替え。固定列は商品CD/商品名/通常上代/原価
+- Scope列を実行時に生成。`ScopeRows`の増減とプロパティ変更を購読して列を作り直す
+- セルの複数選択→一括操作（率・額・固定・価格ポイント）。算出は`JodaiPriceRule.Calculate()`
+- 原価割れ(C7)・最低販売価格違反(C8)のセルを背景色で警告。判定は`JodaiPriceRule.IsBelowCost`/`IsBelowMinPrice`へ切り出し、`CvDomainLogic.JodaiConflictChecker`と同一基準を共有する
+- `Doc/test/UatVm/Scenarios/JodaiPriceMatrixScenario.cs`を追加し`Program.cs`へ登録(`jodaipricematrix`)
+### 技術決定 Why
+- C7/C8の判定述語を`CvBase`へ置いた。`CvWpfclient.csproj`は`CvDomainLogic`を参照していないため（`CodeShare`/`CvAsset`/`CvBase`のみ）、画面とサーバ側で同一基準を共有するには双方が参照できる層1へ切り出すしかない
+- Scope列の見出しテンプレートはXAMLリソースではなくコードで組み立てる。`DataGrid.Resources`／`Window.Resources`のどちらに置いても`FindResource`で解決できず、`ResourceReferenceKeyNotFoundException`で画面のロードごと落ちた。列生成自体がコード側の処理なので、テンプレートもコード側に閉じるほうが依存が少なく壊れにくい
+- 背景色そのものはUatVmでは観測できないため、判定結果を`JodaiPriceCell.IsCostViolation`/`IsMinPriceViolation`として公開し、UatVmはそちらを検証する
+### 確認
+- `dotnet build creativevision10.slnx`：0警告0エラー
+- `Tests/TestServer/TestServer.exe`：898件成功
+- `Tests/TestSqlDialect/TestSqlDialect.exe`：141件成功
+- `UatVm.exe jodaipricematrix --manage-server`：39件成功(PASS)
+- `UatVm.exe jodaiscope --manage-server`：41件成功(PASS、回帰なし)
+- `UatVm.exe jodaibulkextract --manage-server`：23件成功(PASS、回帰なし)
+### 注意
+- UatVmは`Doc/test/UatVm/bin/`配下に`CreativeVision10`のコピーを持つ。`creativevision10.slnx`のビルドだけでは更新されないため、画面を直したら`dotnet build Doc/test/UatVm/UatVm.csproj`も実行してから流すこと
+- `--manage-server`実行が異常終了するとCvServerが残り、次のビルドが`MSB3021`で失敗する。残っていれば停止してからビルドすること
+
+---
+
 ## [2026-09-08] 上代一括変更 画面②適用範囲（Scope編集・内側タブ・No_Scope展開・段階値下げ）Step6
 ### Agent
 - Claude Opus-5 : Anthropic : Claude Code

@@ -8,6 +8,7 @@ using CvWpfclient.Helpers;
 using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.Windows;
 
@@ -153,6 +154,21 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 		new((int)EnumJodaiPriceMethod.PricePoint, "5 価格ポイント"),
 	];
 
+	// ===== タブ2: ③ 価格（Price Matrix）固定選択肢 =================================
+
+	/// <summary>
+	/// セル一括操作（設計書5.4）の方式選択肢。<see cref="PriceMethodOptions"/>から
+	/// 方式4（実効上代からの値下率）だけを除いたもの。方式4は発効日時点の実効上代解決（非同期DBアクセス）が
+	/// 要り、セル単位の即時プレビューにそぐわないため対象外とする（「一括計算」で扱う）。
+	/// </summary>
+	public IReadOnlyList<CodeOption> BulkPriceMethodOptions { get; } = [
+		new((int)EnumJodaiPriceMethod.FixedPrice, "固定額"),
+		new((int)EnumJodaiPriceMethod.RateOff, "値下率(%)"),
+		new((int)EnumJodaiPriceMethod.Amount, "値引額(円)"),
+		new((int)EnumJodaiPriceMethod.RateOn, "掛率(%)"),
+		new((int)EnumJodaiPriceMethod.PricePoint, "価格ポイント"),
+	];
+
 	// ===== 画面状態 ===============================================================
 
 	[ObservableProperty]
@@ -276,6 +292,27 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial ObservableCollection<JodaiScopeRow> ScopeRows { get; set; } = [];
 
+	/// <summary>
+	/// <see cref="ScopeRows"/>が丸ごと差し替えられた（<see cref="ResetScopeRows"/>・<see cref="LoadEditAsync"/>）
+	/// 直後の購読先。Scopeの増減（<see cref="AddScopeRow"/>等、コレクションへの直接Add/Remove）は
+	/// プロパティの再代入を経ないため、<see cref="CollectionChanged"/>を別途購読して拾う必要がある。
+	/// </summary>
+	ObservableCollection<JodaiScopeRow>? subscribedScopeRows;
+
+	/// <summary>
+	/// <see cref="ScopeRows"/>の増減・差し替えに合わせて Price Matrix（③価格タブ）の
+	/// <see cref="JodaiMeisaiRow.Cells"/>を再同期する（設計書5.4「Jscope の変更でリビルド」）。
+	/// 値そのものの再計算はしない（既存セルの値は温存する）。
+	/// </summary>
+	partial void OnScopeRowsChanged(ObservableCollection<JodaiScopeRow> value) {
+		if (subscribedScopeRows != null) subscribedScopeRows.CollectionChanged -= ScopeRows_CollectionChanged;
+		subscribedScopeRows = value;
+		subscribedScopeRows.CollectionChanged += ScopeRows_CollectionChanged;
+		SyncAllRowsCells();
+	}
+
+	void ScopeRows_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => SyncAllRowsCells();
+
 	[ObservableProperty]
 	public partial JodaiScopeRow? SelectedScopeRow { get; set; }
 
@@ -302,6 +339,13 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	int cachedJodaiMaxCells = 30000;
 
 	/// <summary>
+	/// <see cref="MasterConfig.NameJodaiMinPrice"/>のキャッシュ値（設計3.8・2.8のC8）。
+	/// Price Matrix（③価格タブ）のセル背景警告に使う。0なら判定しない。
+	/// <c>JodaiConflictChecker.GetJodaiMinPrice</c>（CvDomainLogic）と同じ既定（未設定・不正値は0）。
+	/// </summary>
+	int cachedJodaiMinPrice;
+
+	/// <summary>
 	/// <see cref="LoadEditAsync"/>で読み込んだ直後の<c>Jshop</c>。<see cref="BuildDenpyoAsync"/>で
 	/// 解決結果とマージし、店舗ごとの期間微調整（設計書3.3・U5）を保存のたびに失わないようにする。
 	/// </summary>
@@ -324,6 +368,38 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 
 	[ObservableProperty]
 	public partial JodaiMeisaiRow? SelectedMeisaiRow { get; set; }
+
+	// ===== タブ2: ③ 価格（Price Matrix）============================================
+
+	/// <summary>Price Matrixで選択中のセル数（画面表示・一括操作ボタンのCanExecute用）。</summary>
+	[ObservableProperty]
+	public partial int SelectedMatrixCellCount { get; set; }
+
+	/// <summary>セル一括操作（設計書5.4）の方式。既定は値下率。</summary>
+	[ObservableProperty]
+	public partial int BulkMethod { get; set; } = (int)EnumJodaiPriceMethod.RateOff;
+
+	/// <summary>セル一括操作の値（方式により率/額/固定額の意味が変わる）。</summary>
+	[ObservableProperty]
+	public partial string BulkValueText { get; set; } = "30";
+
+	/// <summary>セル一括操作で方式=価格ポイントのときに使う価格ポイント表。</summary>
+	[ObservableProperty]
+	public partial MasterOption? BulkPricePoint { get; set; }
+
+	/// <summary>
+	/// Price Matrix（<see cref="MasterJouDaiBulkChangeView"/>のDataGrid）で選択中のセル
+	/// （商品行×Scope）。<c>DataGrid.SelectedCells</c>はバインドできないため、View側の
+	/// <c>SelectedCellsChanged</c>イベントから<see cref="SetSelectedMatrixCells"/>経由で受け取る。
+	/// </summary>
+	List<(JodaiMeisaiRow Row, int No_Scope)> selectedMatrixCells = [];
+
+	/// <summary>View側から選択セルの一覧を受け取る（コードビハインドはUI固有の取得のみ担当し、業務ロジックは持たない）。</summary>
+	public void SetSelectedMatrixCells(IReadOnlyList<(JodaiMeisaiRow Row, int No_Scope)> cells) {
+		selectedMatrixCells = [.. cells];
+		SelectedMatrixCellCount = selectedMatrixCells.Count;
+		ApplyBulkOperationCommand.NotifyCanExecuteChanged();
+	}
 
 	/// <summary>対象SKU数（DerivedShohinColSiz＝色×サイズ展開の件数）。抽出後、確定前に表示する。</summary>
 	[ObservableProperty]
@@ -377,6 +453,7 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 			await LoadJsubFieldOptionsAsync(ct);
 			taxRate = await AppGlobal.LogicGetTax(1, ToDay(DateTime.Today));
 			cachedJodaiMaxCells = await GetConfigIntAsync(MasterConfig.NameJodaiMaxCells, 30000, ct);
+			cachedJodaiMinPrice = await GetConfigIntAsync(MasterConfig.NameJodaiMinPrice, 0, ct);
 			await LoadListAsync(ct);
 			Message = "検索画面で伝票を選ぶか、[新規] で上代変更を作成してください";
 		}
@@ -513,22 +590,37 @@ LIMIT 500";
 		if (CondRows.Count == 0) CondRows.Add(new JodaiCondRow { No = 1, Field = FieldOptions[0] });
 		ZaikoJoken = den.Jcond.FirstOrDefault()?.ZaikoJoken ?? 0;
 
-		MeisaiRows = [.. den.Jmeisai.Select(m => new JodaiMeisaiRow {
-			No = m.No,
-			Id_Shohin = m.Id_Shohin,
-			Code_Shohin = m.Code_Shohin,
-			Mei_Shohin = m.Mei_Shohin,
-			DayTento = m.DayTento,
-			DayChange = m.DayChange,
-			JodaiOld = m.JodaiOld,
-			JodaiNew = m.JodaiNew,
-			RateOff = m.RateOff,
-			PriceInTax = m.PriceInTax,
-			Status = m.Status,
-			TankaGenka = m.TankaGenka,
+		// 既存伝票のJmeisaiは「商品×Scope」のセル単位（設計3.4）。商品(Id_Shohin)ごとにグループ化し、
+		// Price Matrix（③価格タブ）が期待する「商品1行×Scopeごとのセル」の形へ復元する。
+		MeisaiRows = [.. den.Jmeisai.GroupBy(m => m.Id_Shohin).Select(g => {
+			var first = g.First();
+			var row = new JodaiMeisaiRow {
+				No = first.No,
+				Id_Shohin = first.Id_Shohin,
+				Code_Shohin = first.Code_Shohin,
+				Mei_Shohin = first.Mei_Shohin,
+				DayTento = first.DayTento,
+				DayChange = first.DayChange,
+				JodaiOld = first.JodaiOld,
+				JodaiNew = first.JodaiNew,
+				RateOff = first.RateOff,
+				PriceInTax = first.PriceInTax,
+				Status = first.Status,
+				TankaGenka = first.TankaGenka,
+			};
+			// ApplyComputedValueで積む（IsManuallyEditedはfalseのまま。既存伝票の再保存時、Matrixを
+			// 一切触らなければ現行どおりScopeの現在値で再計算される後方互換を保つため）
+			row.Cells = [.. g.Select(m => {
+				var cell = new JodaiPriceCell(row) { No_Scope = m.No_Scope };
+				cell.ApplyComputedValue(m.JodaiNew, m.JodaiBase);
+				return cell;
+			})];
+			return row;
 		})];
 
 		ScopeRows = [.. den.Jscope.Select(ToScopeRow)];
+		// 復元したCellsをScopeの並び順へ揃える（値は温存。既存伝票の読み込みからMatrixを復元する）
+		SyncAllRowsCells();
 		// 保存直前(BuildDenpyoAsync)で解決結果とマージし、店舗ごとの期間微調整(設計3.3・U5)を残すための元値
 		loadedJshop = [.. den.Jshop];
 
@@ -749,6 +841,8 @@ ORDER BY Code";
 			}
 			MeisaiRows = [.. rows];
 			ApplyCalc();
+			// Price Matrix（③価格タブ）のセルをScope数ぶん複製し（設計5.6「対象取得」）、初期値を計算する
+			await RecalcCellsAsync(onlyIfNotManuallyEdited: false, ct);
 			// SKU数はDerivedShohinColSiz（色×サイズ展開）の件数。抽出結果と対応するIdだけを数える
 			TargetSkuCount = await CountSkuAsync(rows, ct);
 			NotifyCounts();
@@ -949,6 +1043,140 @@ WHERE D.Id_Shohin IN (
 	}
 
 	int CalcPriceInTax(int price) => (int)Math.Round(price * (100.0 + taxRate) / 100.0, MidpointRounding.AwayFromZero);
+
+	// ===== ③ 価格（Price Matrix）==================================================
+
+	readonly Dictionary<long, IReadOnlyList<int>> pricePointCache = [];
+
+	/// <summary>
+	/// 価格ポイント表（<see cref="EnumJodaiPriceMethod.PricePoint"/>用）のCSVを配列へ解釈してキャッシュする。
+	/// <see cref="PricePointOptions"/>は<see cref="Init"/>で読み込んだあと変わらないため、Id単位でキャッシュしてよい。
+	/// </summary>
+	IReadOnlyList<int> PricePointsFor(long idPricePoint) {
+		if (idPricePoint <= 0) return [];
+		if (pricePointCache.TryGetValue(idPricePoint, out var cached)) return cached;
+		var csv = PricePointOptions.FirstOrDefault(o => o.Id == idPricePoint)?.Name;
+		var parsed = JodaiPriceRule.ParsePricePoints(csv);
+		pricePointCache[idPricePoint] = parsed;
+		return parsed;
+	}
+
+	/// <summary>
+	/// 全<see cref="MeisaiRows"/>の<see cref="JodaiMeisaiRow.Cells"/>を<see cref="ScopeRows"/>へ同期する
+	/// （設計書5.4「Scope 列は Jscope の変更でリビルド」）。既存セルの値は<c>No_Scope</c>が一致すれば温存し、
+	/// 新しいScopeのぶんだけ簡易既定値（<see cref="DefaultCellValue"/>）で追加する。値の正式な再計算は
+	/// 呼び出し側が別途<see cref="RecalcCellsAsync"/>を呼ぶこと（対象取得直後・一括計算ボタン）。
+	/// </summary>
+	void SyncAllRowsCells() {
+		foreach (var row in MeisaiRows) {
+			row.SyncCells(ScopeRows, cachedJodaiMinPrice, scope => DefaultCellValue(row, scope));
+		}
+	}
+
+	/// <summary>
+	/// セル追加時の簡易既定値。方式4（実効上代からの値下率）は発効日時点の実効上代解決に非同期DBアクセスが
+	/// 要るため、ここでは通常上代（<see cref="JodaiMeisaiRow.JodaiOld"/>）を基準に近似する。
+	/// 正式な値は<see cref="RecalcCellsAsync"/>（「一括計算」）で確定する。
+	/// </summary>
+	int DefaultCellValue(JodaiMeisaiRow row, JodaiScopeRow scope) => JodaiPriceRule.Calculate(
+		(EnumJodaiPriceMethod)scope.PriceMethod, row.JodaiOld, scope.FixedPrice, scope.RateOff, scope.Amount,
+		scope.RateOn, scope.RoundUnit, scope.RoundType, PricePointsFor(scope.Id_PricePoint));
+
+	/// <summary>
+	/// 「一括計算」（設計書5.6）。選択Scope（または全Scope）の価格ルールで、全商品×全Scopeのセルを
+	/// 再計算する。方式4のセルがあれば、発効日時点の実効上代を一括解決してから使う
+	/// （<see cref="BuildDenpyoAsync"/>が以前行っていたのと同じ解決方法）。
+	/// </summary>
+	[RelayCommand]
+	async Task RecalcMatrix(CancellationToken ct) {
+		if (MeisaiRows.Count == 0) {
+			MessageEx.ShowWarningDialog("先に [明細取得] で対象商品を表示してください。", owner: ActiveWindow);
+			return;
+		}
+		if (ScopeRows.Count == 0) return;
+		try {
+			StartBusy("Price Matrix 再計算中...");
+			// 「一括計算」は明示操作なので、手動編集済みセルも含めて全セルを上書きする
+			await RecalcCellsAsync(onlyIfNotManuallyEdited: false, ct);
+			Message = $"Price Matrix を商品 {MeisaiRows.Count:N0} 件 × Scope {ScopeRows.Count:N0} 件で再計算しました";
+		}
+		catch (OperationCanceledException) {
+			Message = "再計算を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"再計算失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	/// <summary>
+	/// Scope価格ルールでセルを再計算する。<paramref name="onlyIfNotManuallyEdited"/>=trueのときは
+	/// <see cref="JodaiPriceCell.IsManuallyEdited"/>が立っているセル（手動編集・セル一括操作の結果）を
+	/// 温存する。<see cref="BuildDenpyoAsync"/>（保存直前）はtrueで呼び、手動編集していないセルは
+	/// 現行どおり保存直前に最新のScope設定で計算し直す（Scope編集を後から変えても反映される後方互換）。
+	/// <see cref="RecalcMatrix"/>（「一括計算」ボタン）はfalseで呼び、全セルを明示的に上書きする。
+	/// </summary>
+	async Task RecalcCellsAsync(bool onlyIfNotManuallyEdited, CancellationToken ct) {
+		// 先にセルの構成（数・順序）をScopeへ揃えておく（Scope追加直後にまだCellsが無い行があるため）
+		SyncAllRowsCells();
+
+		var effectiveScopes = ScopeRows.Where(s => s.PriceMethod == (int)EnumJodaiPriceMethod.RateOffFromEffective).ToList();
+		Dictionary<(long Shohin, string Day), int> effectiveMap = [];
+		if (effectiveScopes.Count > 0) {
+			var keys = MeisaiRows.SelectMany(m => effectiveScopes.Select(s => (m.Id_Shohin, s.DayFrom)));
+			effectiveMap = await ResolveEffectiveJodaiAsync(keys, ct);
+		}
+
+		foreach (var row in MeisaiRows) {
+			foreach (var cell in row.Cells) {
+				if (onlyIfNotManuallyEdited && cell.IsManuallyEdited) continue;
+				var scope = ScopeRows.FirstOrDefault(s => s.No == cell.No_Scope);
+				if (scope == null) continue; // SyncAllRowsCells直後なので通常は起きない
+				var method = (EnumJodaiPriceMethod)scope.PriceMethod;
+				var baseJodai = method == EnumJodaiPriceMethod.RateOffFromEffective
+					? effectiveMap.GetValueOrDefault((row.Id_Shohin, scope.DayFrom), row.JodaiOld)
+					: row.JodaiOld;
+				cell.ApplyComputedValue(
+					JodaiPriceRule.Calculate(method, baseJodai, scope.FixedPrice, scope.RateOff, scope.Amount, scope.RateOn,
+						scope.RoundUnit, scope.RoundType, PricePointsFor(scope.Id_PricePoint)),
+					baseJodai);
+			}
+		}
+	}
+
+	bool CanApplyBulkOperation() => selectedMatrixCells.Count > 0;
+
+	/// <summary>
+	/// セル一括操作（設計書5.4「30% OFF / 40% OFF / −1,000円 / 固定 7,900円 / 価格ポイント適用」）。
+	/// 値をボタンへ焼き込まず、方式と値を選んで選択セルへ適用する形にしている。丸めは各セルが属する
+	/// Scope自身の設定（<see cref="JodaiScopeRow.RoundUnit"/>/<see cref="JodaiScopeRow.RoundType"/>）に従う。
+	/// <para>方式4（実効上代からの値下率）は対象外（<see cref="BulkPriceMethodOptions"/>参照）。</para>
+	/// </summary>
+	[RelayCommand(CanExecute = nameof(CanApplyBulkOperation))]
+	void ApplyBulkOperation() {
+		var method = (EnumJodaiPriceMethod)BulkMethod;
+		var rateOff = method == EnumJodaiPriceMethod.RateOff ? ParseDecimal(BulkValueText) : 0m;
+		var amount = method == EnumJodaiPriceMethod.Amount ? ParseInt(BulkValueText) : 0;
+		var fixedPrice = method == EnumJodaiPriceMethod.FixedPrice ? ParseInt(BulkValueText) : 0;
+		var rateOn = method == EnumJodaiPriceMethod.RateOn ? ParseDecimal(BulkValueText) : 0m;
+		var idPricePoint = BulkPricePoint?.Id ?? 0;
+
+		var applied = 0;
+		foreach (var (row, noScope) in selectedMatrixCells) {
+			var scope = ScopeRows.FirstOrDefault(s => s.No == noScope);
+			var cell = row.Cells.FirstOrDefault(c => c.No_Scope == noScope);
+			if (scope == null || cell == null) continue;
+			cell.JodaiBase = row.JodaiOld;
+			cell.JodaiNew = JodaiPriceRule.Calculate(
+				method, row.JodaiOld, fixedPrice, rateOff, amount, rateOn,
+				scope.RoundUnit, scope.RoundType, PricePointsFor(idPricePoint));
+			applied++;
+		}
+		Message = $"選択した {applied:N0} セルへ適用しました";
+	}
 
 	// ===== 登録 ===================================================================
 
@@ -1176,51 +1404,33 @@ WHERE D.Id_Shohin IN (
 			? new TranJodaiShop { Id_Tenpo = r.Id_Tenpo, Code_Tenpo = r.Code_Tenpo, Mei_Tenpo = r.Mei_Tenpo, DayFrom = prev.DayFrom, DayTo = prev.DayTo, No_Scope = r.No_Scope }
 			: r).ToList();
 
-		// 方式4（実効上代からの値下率）が使われているScopeがあれば、発効日時点の実効上代を一括解決する
-		var effectiveScopes = scopes.Where(s => s.PriceMethod == (int)EnumJodaiPriceMethod.RateOffFromEffective).ToList();
-		Dictionary<(long Shohin, string Day), int> effectiveMap = [];
-		if (effectiveScopes.Count > 0) {
-			var keys = MeisaiRows.SelectMany(m => effectiveScopes.Select(s => (m.Id_Shohin, s.DayFrom)));
-			effectiveMap = await ResolveEffectiveJodaiAsync(keys, ct);
-		}
-
-		var pricePointCache = new Dictionary<long, IReadOnlyList<int>>();
-		IReadOnlyList<int> PricePointsFor(long idPricePoint) {
-			if (idPricePoint <= 0) return [];
-			if (pricePointCache.TryGetValue(idPricePoint, out var cached)) return cached;
-			var csv = PricePointOptions.FirstOrDefault(o => o.Id == idPricePoint)?.Name;
-			var parsed = JodaiPriceRule.ParsePricePoints(csv);
-			pricePointCache[idPricePoint] = parsed;
-			return parsed;
-		}
-
-		// Jmeisaiを「商品×Scope」のセルへ複製する（設計3.4・5.6）
+		// Jmeisaiを「商品×Scope」のセルへ複製する（設計3.4・5.6）。
+		// Price Matrix（③価格タブ）で手動編集・セル一括操作したセル（IsManuallyEdited）はその値をそのまま使う
+		// （設計書「主入力手段ではなく確認・例外編集用」。保存の瞬間に例外価格を上書きしないため）。
+		// 手動編集していないセルは、保存直前にScopeの現在値で計算し直す（Scope編集を後から変えても保存時に
+		// 反映される、Step6以前と同じ後方互換の挙動を保つため。RecalcCellsAsyncのonlyIfNotManuallyEdited=true）。
+		await RecalcCellsAsync(onlyIfNotManuallyEdited: true, ct);
 		var jmeisai = new List<TranJodaiMeisai>();
 		foreach (var row in MeisaiRows) {
-			foreach (var scope in scopes) {
-				var method = (EnumJodaiPriceMethod)scope.PriceMethod;
-				var baseJodai = method == EnumJodaiPriceMethod.RateOffFromEffective
-					? effectiveMap.GetValueOrDefault((row.Id_Shohin, scope.DayFrom), row.JodaiOld)
-					: row.JodaiOld;
-				var newPrice = JodaiPriceRule.Calculate(
-					method, baseJodai, scope.FixedPrice, scope.RateOff, scope.Amount, scope.RateOn,
-					scope.RoundUnit, scope.RoundType, PricePointsFor(scope.Id_PricePoint));
+			foreach (var cell in row.Cells) {
+				var scope = scopes.FirstOrDefault(s => s.No == cell.No_Scope);
+				if (scope == null) continue; // 削除されたScopeのセル残骸（通常は起きない）
 				jmeisai.Add(new TranJodaiMeisai {
 					No = 0, // Normalize()がScope内連番へ振り直す
 					Id_Shohin = row.Id_Shohin,
 					Code_Shohin = row.Code_Shohin,
 					Mei_Shohin = row.Mei_Shohin,
 					JodaiOld = row.JodaiOld,
-					JodaiNew = newPrice,
+					JodaiNew = cell.JodaiNew,
 					RateOff = row.JodaiOld > 0
-						? Math.Round((1m - (decimal)newPrice / row.JodaiOld) * 100m, 2, MidpointRounding.AwayFromZero)
+						? Math.Round((1m - (decimal)cell.JodaiNew / row.JodaiOld) * 100m, 2, MidpointRounding.AwayFromZero)
 						: 0m,
-					PriceInTax = CalcPriceInTax(newPrice),
+					PriceInTax = CalcPriceInTax(cell.JodaiNew),
 					DayTento = row.DayTento,
 					DayChange = ToDay(DateTime.Today),
 					Status = row.Status,
 					No_Scope = scope.No,
-					JodaiBase = baseJodai,
+					JodaiBase = cell.JodaiBase,
 					TankaGenka = row.TankaGenka,
 				});
 			}
@@ -1836,6 +2046,120 @@ public partial class JodaiMeisaiRow : ObservableObject {
 	/// <summary>原価割れ判定用の時点値（<see cref="MasterShohin.TankaGenka"/>のSnapshot。設計3.4）。</summary>
 	[ObservableProperty]
 	public partial int TankaGenka { get; set; }
+
+	/// <summary>
+	/// 最低販売価格（<see cref="MasterConfig.NameJodaiMinPrice"/>）。<see cref="SyncCells"/>のたびに
+	/// ViewModelのキャッシュ値で更新する（設計2.8のC8。0なら判定しない）。
+	/// </summary>
+	[ObservableProperty]
+	public partial int MinSellingPrice { get; set; }
+
+	/// <summary>
+	/// Price Matrix（③価格タブ、設計書5.4）の1行ぶんのセル。<see cref="JodaiScopeRow"/>と同じ並び順を保つ
+	/// （画面側は列インデックスで<c>Cells[i]</c>を束縛するため。<see cref="DailyShopBudgetQueryViewModel"/>や
+	/// <see cref="HachuHaibunInputView.xaml.cs"/>の動的列と同じ流儀）。
+	/// </summary>
+	[ObservableProperty]
+	public partial ObservableCollection<JodaiPriceCell> Cells { get; set; } = [];
+
+	/// <summary>
+	/// <paramref name="scopes"/>と同じ並び順・同じ個数へ<see cref="Cells"/>を揃える。既存セルは
+	/// <see cref="JodaiPriceCell.No_Scope"/>が一致すれば値をそのまま温存し（手動編集・一括操作の結果を失わないため）、
+	/// 新しいScopeのぶんだけ<paramref name="defaultValue"/>で作る。無くなったScopeのセルは捨てる。
+	/// </summary>
+	public void SyncCells(IEnumerable<JodaiScopeRow> scopes, int minSellingPrice, Func<JodaiScopeRow, int> defaultValue) {
+		MinSellingPrice = minSellingPrice;
+		var existing = Cells.ToDictionary(c => c.No_Scope);
+		var rebuilt = new ObservableCollection<JodaiPriceCell>();
+		foreach (var scope in scopes) {
+			if (existing.TryGetValue(scope.No, out var cell)) {
+				rebuilt.Add(cell);
+			}
+			else {
+				var newCell = new JodaiPriceCell(this) { No_Scope = scope.No };
+				newCell.ApplyComputedValue(defaultValue(scope), JodaiOld);
+				rebuilt.Add(newCell);
+			}
+		}
+		Cells = rebuilt;
+		foreach (var cell in Cells) RefreshCellViolation(cell);
+	}
+
+	/// <summary>
+	/// セルの原価割れ・最低販売価格違反フラグ（設計2.8のC7/C8）を、判定の中核である
+	/// <see cref="JodaiPriceRule.IsBelowCost"/>/<see cref="JodaiPriceRule.IsBelowMinPrice"/>で更新する。
+	/// <c>JodaiConflictChecker.CheckBelowCost</c>/<c>CheckBelowMinPrice</c>（CvDomainLogic）と同じ基準
+	/// （<c>CvWpfclient</c>は<c>CvDomainLogic</c>を参照できないため、判定の中核だけを<c>CvBase</c>で共有する）。
+	/// </summary>
+	public void RefreshCellViolation(JodaiPriceCell cell) {
+		cell.IsCostViolation = JodaiPriceRule.IsBelowCost(cell.JodaiNew, TankaGenka);
+		cell.IsMinPriceViolation = JodaiPriceRule.IsBelowMinPrice(cell.JodaiNew, MinSellingPrice);
+	}
+}
+
+/// <summary>
+/// Price Matrix（設計書5.4）の1セル（商品×Scope）。<see cref="JodaiMeisaiRow.Cells"/>の要素。
+/// </summary>
+public partial class JodaiPriceCell : ObservableObject {
+	readonly JodaiMeisaiRow owner;
+
+	/// <summary>
+	/// <see cref="ApplyComputedValue"/>実行中だけtrueにする再入防止フラグ。この間は
+	/// <see cref="OnJodaiNewChanged"/>が<see cref="IsManuallyEdited"/>を立てないようにする。
+	/// </summary>
+	bool suppressManualFlag;
+
+	public JodaiPriceCell(JodaiMeisaiRow owner) => this.owner = owner;
+
+	/// <summary><see cref="TranJodaiScope.No"/>（伝票内で一意なScope番号）。</summary>
+	[ObservableProperty]
+	public partial int No_Scope { get; set; }
+
+	/// <summary>このセルの新上代。DataGridから直接編集できる（設計書5.4「確認・例外編集用」）。</summary>
+	[ObservableProperty]
+	public partial int JodaiNew { get; set; }
+
+	/// <summary>方式4（実効上代からの値下率）の基準額。参考値であり、保存時に<see cref="TranJodaiMeisai.JodaiBase"/>へそのまま渡す。</summary>
+	[ObservableProperty]
+	public partial int JodaiBase { get; set; }
+
+	/// <summary>原価割れ（設計2.8 C7）。DataGridセルの背景警告に使う。</summary>
+	[ObservableProperty]
+	public partial bool IsCostViolation { get; set; }
+
+	/// <summary>最低販売価格違反（設計2.8 C8）。DataGridセルの背景警告に使う。</summary>
+	[ObservableProperty]
+	public partial bool IsMinPriceViolation { get; set; }
+
+	/// <summary>
+	/// 手動編集フラグ。DataGridでの直接編集・セル一括操作（設計5.4）で立つ。
+	/// <see cref="MasterJouDaiBulkChangeViewModel.BuildDenpyoAsync"/>は、保存直前にこのフラグが立っていない
+	/// セルだけをScopeの現在値で再計算し直す（Scope設定を後から変えた場合に、現行どおり最新ルールで
+	/// 確定される後方互換を保つため）。立っているセルは「例外編集」として温存し、上書きしない。
+	/// </summary>
+	[ObservableProperty]
+	public partial bool IsManuallyEdited { get; set; }
+
+	partial void OnJodaiNewChanged(int value) {
+		owner.RefreshCellViolation(this);
+		if (!suppressManualFlag) IsManuallyEdited = true;
+	}
+
+	/// <summary>
+	/// Scope価格ルールによる自動計算（対象取得直後の既定値・一括計算・保存直前の未編集セル再計算）で使う。
+	/// 手動編集フラグは立てない（むしろfalseへ戻す。再計算した以上は「例外」ではなくなるため）。
+	/// </summary>
+	public void ApplyComputedValue(int jodaiNew, int jodaiBase) {
+		suppressManualFlag = true;
+		try {
+			JodaiBase = jodaiBase;
+			JodaiNew = jodaiNew;
+		}
+		finally {
+			suppressManualFlag = false;
+		}
+		IsManuallyEdited = false;
+	}
 }
 
 /// <summary>適用範囲（Scope）の1行。<see cref="TranJodai.Jscope"/>の編集用（設計書5.3）。</summary>
