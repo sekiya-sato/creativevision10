@@ -126,6 +126,29 @@ public sealed class VmSession {
 	}
 
 	/// <summary>
+	/// ドメインオブジェクトを新規登録する。ViewModelと同じgRPC経路（<c>Msg201_Op_Execute</c>／`InsertParam`）を使う。
+	/// </summary>
+	/// <remarks>
+	/// 画面のBuildDenpyo相当の検証・正規化を経ない生の登録なので、既存伝票（Scope概念導入前のJscope空など）の
+	/// 状態を直接作り込みたいテスト専用の用途に限って使うこと。
+	/// </remarks>
+	public async Task<T> InsertAsync<T>(T item) where T : BaseDbClass {
+		var coreService = AppGlobal.GetGrpcService<ICoreService>();
+		var message = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg201_Op_Execute,
+			DataType = typeof(InsertParam),
+			DataMsg = Common.SerializeObject(new InsertParam(typeof(T), Common.SerializeObject(item))),
+		};
+		var reply = await coreService.QueryMsgAsync(message, AppGlobal.GetDefaultCallContext());
+		if (reply.Code < 0) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバInsertでエラーが発生しました");
+		}
+		return (T)(Common.DeserializeObject(reply.DataMsg ?? "null", reply.DataType)
+			?? throw new InvalidOperationException("登録結果を読み取れませんでした。"));
+	}
+
+	/// <summary>
 	/// ドメインオブジェクトを更新する。ViewModelと同じgRPC経路（<c>Msg201_Op_Execute</c>／`UpdateParam`）を使う。
 	/// </summary>
 	/// <remarks>

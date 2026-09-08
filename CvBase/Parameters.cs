@@ -353,6 +353,21 @@ public sealed class ScalarCountRow {
 }
 
 /// <summary>
+/// 上代一括変更（Scope）方式4（実効上代からの値下率）の基準額解決用の1行。
+/// <para>
+/// <see cref="DerivedJodai.FinalJodaiSql"/>を商品×日付×対象の組み合わせぶんUNION ALLしたSQLの結果を
+/// 受け取るための汎用スカラー行。<c>QueryListSqlParam.ItemType</c>はサーバ側で型解決するため、
+/// クライアント内の入れ子クラスではなく共有アセンブリ(CvBase)へ置く（<see cref="ScalarCountRow"/>と同じ理由）。
+/// </para>
+/// </summary>
+public sealed class JodaiEffectiveRow {
+	public long Id_Shohin { get; set; }
+	public long Id_Tenpo { get; set; }
+	public string Day { get; set; } = string.Empty;
+	public int Eff { get; set; }
+}
+
+/// <summary>
 /// 出荷指示確定のパラメータ。対象の配分行に <c>KakuteiDay</c> を立てる。
 /// 有効在庫（実在庫 − 引当数）が1SKUでも負になる場合はサーバが1件も確定せず、
 /// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。

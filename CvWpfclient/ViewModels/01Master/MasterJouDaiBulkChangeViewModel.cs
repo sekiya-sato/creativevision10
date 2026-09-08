@@ -125,6 +125,34 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 		new(1, "OR"),
 	];
 
+	// ===== ② 適用範囲（Scope）固定選択肢 ==========================================
+
+	public IReadOnlyList<CodeOption> RangeTypeOptions { get; } = [
+		new((int)EnumJodaiRangeType.All, "0 全店"),
+		new((int)EnumJodaiRangeType.PriceGroup, "1 価格グループ"),
+		new((int)EnumJodaiRangeType.Store, "2 個別店舗"),
+	];
+
+	public IReadOnlyList<CodeOption> GroupAxisOptions { get; } = [
+		new((int)EnumJodaiGroupAxis.PriceGroup, "0 価格グループ"),
+		new((int)EnumJodaiGroupAxis.PriceArea, "1 地域"),
+		new((int)EnumJodaiGroupAxis.PriceChannel, "2 チャネル"),
+	];
+
+	public IReadOnlyList<CodeOption> IncExcOptions { get; } = [
+		new((int)EnumJodaiIncExc.Include, "0 対象"),
+		new((int)EnumJodaiIncExc.Exclude, "1 除外"),
+	];
+
+	public IReadOnlyList<CodeOption> PriceMethodOptions { get; } = [
+		new((int)EnumJodaiPriceMethod.FixedPrice, "0 固定額"),
+		new((int)EnumJodaiPriceMethod.RateOff, "1 値下率"),
+		new((int)EnumJodaiPriceMethod.Amount, "2 値引額"),
+		new((int)EnumJodaiPriceMethod.RateOn, "3 掛率"),
+		new((int)EnumJodaiPriceMethod.RateOffFromEffective, "4 実効上代からの値下率"),
+		new((int)EnumJodaiPriceMethod.PricePoint, "5 価格ポイント"),
+	];
+
 	// ===== 画面状態 ===============================================================
 
 	[ObservableProperty]
@@ -243,6 +271,49 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial string MaxCountText { get; set; } = "1000";
 
+	// ===== タブ2: ② 適用範囲（Scope） =============================================
+
+	[ObservableProperty]
+	public partial ObservableCollection<JodaiScopeRow> ScopeRows { get; set; } = [];
+
+	[ObservableProperty]
+	public partial JodaiScopeRow? SelectedScopeRow { get; set; }
+
+	[ObservableProperty]
+	public partial ObservableCollection<MasterOption> PriceGroupOptions { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<MasterOption> PriceAreaOptions { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<MasterOption> PriceChannelOptions { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<MasterOption> PricePointOptions { get; set; } = [];
+
+	/// <summary>Scope（RangeType=個別店舗）の店舗選択肢。<see cref="EditTaishoType"/>により対象系統が変わる。</summary>
+	[ObservableProperty]
+	public partial ObservableCollection<MasterOption> ScopeStoreOptions { get; set; } = [];
+
+	/// <summary>
+	/// <see cref="MasterConfig.NameJodaiMaxCells"/>のキャッシュ値（画面操作時の簡易チェック用）。
+	/// 保存直前の最終判定は <see cref="BuildDenpyoAsync"/> で都度DBから読み直す。
+	/// </summary>
+	int cachedJodaiMaxCells = 30000;
+
+	/// <summary>
+	/// <see cref="LoadEditAsync"/>で読み込んだ直後の<c>Jshop</c>。<see cref="BuildDenpyoAsync"/>で
+	/// 解決結果とマージし、店舗ごとの期間微調整（設計書3.3・U5）を保存のたびに失わないようにする。
+	/// </summary>
+	List<TranJodaiShop> loadedJshop = [];
+
+	/// <summary>
+	/// <see cref="LoadShopRowsAsync"/>で取得した<see cref="MasterTokui"/>本体のキャッシュ（価格グループ3軸を含む）。
+	/// <see cref="JodaiScopeResolver.Resolve"/>に渡す店舗一覧はこのキャッシュから作る
+	/// （<see cref="JodaiShopRow"/>はUI表示専用で価格グループ列を持たないため）。
+	/// </summary>
+	List<MasterTokui> shopMasters = [];
+
 	// ===== タブ2: 対象店舗 / 明細 =================================================
 
 	[ObservableProperty]
@@ -282,6 +353,7 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 
 	public MasterJouDaiBulkChangeViewModel() {
 		ResetCondRows();
+		ResetScopeRows();
 	}
 
 	// ===== 初期化 =================================================================
@@ -294,8 +366,17 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 				await LoadMeishoOptionsAsync(MasterMeisho.KubunSale, ct));
 			ShainOptions = new ObservableCollection<MasterOption>(
 				await LoadOptionsAsync<MasterShain>("MasterShain", string.Empty, ct));
+			PriceGroupOptions = new ObservableCollection<MasterOption>(
+				await LoadMeishoOptionsAsync(MasterMeisho.KubunPriceGroup, ct));
+			PriceAreaOptions = new ObservableCollection<MasterOption>(
+				await LoadMeishoOptionsAsync(MasterMeisho.KubunPriceArea, ct));
+			PriceChannelOptions = new ObservableCollection<MasterOption>(
+				await LoadMeishoOptionsAsync(MasterMeisho.KubunPriceChannel, ct));
+			PricePointOptions = new ObservableCollection<MasterOption>(
+				await LoadMeishoOptionsAsync(MasterMeisho.KubunPricePoint, ct));
 			await LoadJsubFieldOptionsAsync(ct);
 			taxRate = await AppGlobal.LogicGetTax(1, ToDay(DateTime.Today));
+			cachedJodaiMaxCells = await GetConfigIntAsync(MasterConfig.NameJodaiMaxCells, 30000, ct);
 			await LoadListAsync(ct);
 			Message = "検索画面で伝票を選ぶか、[新規] で上代変更を作成してください";
 		}
@@ -399,6 +480,9 @@ LIMIT 500";
 		var sql = $"SELECT * FROM {nameof(TranJodai)} WHERE Id = {AddParameter(parameters, id)}";
 		var list = await QuerySqlListAsync<TranJodai>(sql, parameters, ct);
 		var den = list.FirstOrDefault() ?? throw new InvalidOperationException($"伝票が見つかりません（Id={id}）");
+		// Scope概念導入前の既存伝票（Jscopeが空）は、メモリ上でだけ全店Scope1件を補う（設計3.10）。
+		// DBは一切書き換わらない。保存して初めて永続化される
+		den.NormalizeLegacyScope();
 
 		EditId = den.Id;
 		editVdu = den.Vdu;
@@ -441,7 +525,12 @@ LIMIT 500";
 			RateOff = m.RateOff,
 			PriceInTax = m.PriceInTax,
 			Status = m.Status,
+			TankaGenka = m.TankaGenka,
 		})];
+
+		ScopeRows = [.. den.Jscope.Select(ToScopeRow)];
+		// 保存直前(BuildDenpyoAsync)で解決結果とマージし、店舗ごとの期間微調整(設計3.3・U5)を残すための元値
+		loadedJshop = [.. den.Jshop];
 
 		await LoadShopRowsAsync(den.Jshop, ct);
 		// ExpandCnt 列は当てにならないので実際の DerivedJodai を数える
@@ -470,6 +559,8 @@ LIMIT 500";
 		SelectedSale = null;
 		ZaikoJoken = 0;
 		ResetCondRows();
+		ResetScopeRows();
+		loadedJshop = [];
 		MeisaiRows = [];
 		ShopRows = [];
 		TargetSkuCount = 0;
@@ -479,6 +570,33 @@ LIMIT 500";
 	void ResetCondRows() {
 		CondRows = [new JodaiCondRow { No = 1, Field = FieldOptions[0] }];
 	}
+
+	/// <summary>
+	/// Scope一覧を「全店 / 対象 / ヘッダ既定期間 / ヘッダ既定価格ルール」の1件だけに戻す
+	/// （設計書5.3「現行と同じ操作感」）。
+	/// </summary>
+	void ResetScopeRows() {
+		ScopeRows = [ToScopeRow(DefaultHeaderScope())];
+	}
+
+	/// <summary>
+	/// ヘッダの現在値（<see cref="CalcType"/>等）から、新規Scope1件ぶんの既定値を作る
+	/// （設計3.6「新規Scope作成時の初期値」）。<see cref="TranJodai.NormalizeLegacyScope"/>の
+	/// 補完ロジックと同じ変換規則（CalcType0→固定額 / 1→値下率）に揃える。
+	/// </summary>
+	TranJodaiScope DefaultHeaderScope() => new() {
+		No = 1,
+		Name = "全店",
+		RangeType = (int)EnumJodaiRangeType.All,
+		IncExc = (int)EnumJodaiIncExc.Include,
+		DayFrom = ToDay(EditDayFrom ?? DateTime.Today),
+		DayTo = EditKubun == (int)EnumJodaiKubun.Proper ? "99991231" : ToDay(EditDayTo ?? DateTime.Today.AddMonths(1)),
+		PriceMethod = CalcType == 1 ? (int)EnumJodaiPriceMethod.RateOff : (int)EnumJodaiPriceMethod.FixedPrice,
+		FixedPrice = ParseInt(CalcValueText),
+		RateOff = ParseDecimal(CalcRateText),
+		RoundUnit = RoundUnit,
+		RoundType = RoundType,
+	};
 
 	/// <summary>抽出条件行を追加する（末尾に1行）。</summary>
 	[RelayCommand]
@@ -531,7 +649,19 @@ LIMIT 500";
 		var where = EditTaishoType == (int)EnumJodaiTaisho.Honbu
 			? "WHERE TenType IN (1, 3)"
 			: "WHERE TenType = 6";
-		var options = await LoadOptionsAsync<MasterTokui>("MasterTokui", where, ct);
+		// 価格グループ3軸(Id_PriceGroup/Area/Channel)も併せて取得し、JodaiScopeResolver.Resolveへ渡す
+		// 店舗本体としてキャッシュする(JodaiShopRowはUI表示専用で3軸を持たないため)。
+		List<string> masterParams = [];
+		var mastersSql = $@"
+SELECT Id, Vdc, Vdu, Code, Name, Ryaku, Kana, TenType, Id_PriceGroup, Id_PriceArea, Id_PriceChannel
+FROM MasterTokui
+{where}
+ORDER BY Code";
+		shopMasters = await QuerySqlListAsync<MasterTokui>(mastersSql, masterParams, ct);
+		ScopeStoreOptions = new ObservableCollection<MasterOption>(
+			shopMasters.Select(m => new MasterOption(m.Id, m.Code ?? string.Empty, m.Name ?? string.Empty)));
+
+		var options = shopMasters.Select(m => new MasterOption(m.Id, m.Code ?? string.Empty, m.Name ?? string.Empty)).ToList();
 		var selectedMap = selected.ToDictionary(x => x.Id_Tenpo, x => x);
 		var rows = options.Select(o => {
 			selectedMap.TryGetValue(o.Id, out var hit);
@@ -564,6 +694,8 @@ LIMIT 500";
 	partial void OnEditTaishoTypeChanged(int value) {
 		// 系統を切り替えたら対象候補が全く別物になるので選択を捨てる
 		if (ShopRows.Count > 0) ShopRows = [];
+		shopMasters = [];
+		ScopeStoreOptions = [];
 		NotifyCounts();
 	}
 
@@ -609,6 +741,10 @@ LIMIT 500";
 				NotifyCounts();
 				MessageEx.ShowInformationDialog("該当する商品がありませんでした。", owner: ActiveWindow);
 				Message = "該当する商品がありません";
+				return;
+			}
+			// 商品数×Scope数の上限判定（設計3.11）。抽出時点で超えるなら実行前に警告して中止する
+			if (!CheckMaxCellsCached(rows.Count, Math.Max(ScopeRows.Count, 1))) {
 				return;
 			}
 			MeisaiRows = [.. rows];
@@ -732,6 +868,7 @@ LIMIT {maxCount}";
 			RateOff = 0m,
 			PriceInTax = CalcPriceInTax(m.TankaJodai),
 			Status = 0,
+			TankaGenka = m.TankaGenka,
 		})];
 	}
 
@@ -817,9 +954,8 @@ WHERE D.Id_Shohin IN (
 
 	[RelayCommand]
 	async Task DoRegister(CancellationToken ct) {
-		var den = BuildDenpyo(out var error);
+		var den = await BuildDenpyoAsync(ct);
 		if (den == null) {
-			MessageEx.ShowWarningDialog(error, owner: ActiveWindow);
 			return;
 		}
 		var confirm = EditId > 0
@@ -859,9 +995,8 @@ WHERE D.Id_Shohin IN (
 	/// </summary>
 	[RelayCommand(CanExecute = nameof(CanFix))]
 	async Task DoFix(CancellationToken ct) {
-		var den = BuildDenpyo(out var error);
+		var den = await BuildDenpyoAsync(ct);
 		if (den == null) {
-			MessageEx.ShowWarningDialog(error, owner: ActiveWindow);
 			return;
 		}
 		var estimate = (long)den.ShopCnt * den.MeisaiCnt;
@@ -905,9 +1040,8 @@ WHERE D.Id_Shohin IN (
 		if (MessageEx.ShowQuestionDialog(
 				$"伝票No {EditId:N0} を取消します。\n展開済みの適用上代 {EditExpandCnt:N0} 行が削除され、価格は商品マスタの定価に戻ります。\nよろしいですか？",
 				owner: ActiveWindow) != MessageBoxResult.Yes) return;
-		var den = BuildDenpyo(out var error);
+		var den = await BuildDenpyoAsync(ct);
 		if (den == null) {
-			MessageEx.ShowWarningDialog(error, owner: ActiveWindow);
 			return;
 		}
 		den.Status = 2;
@@ -948,9 +1082,8 @@ WHERE D.Id_Shohin IN (
 		if (MessageEx.ShowQuestionDialog(
 				$"伝票No {EditId:N0} を送信済みにします。\n（値札・棚札の差し替えが完了した記録です。価格自体はPOSがサーバから直接引きます）\nよろしいですか？",
 				owner: ActiveWindow) != MessageBoxResult.Yes) return;
-		var den = BuildDenpyo(out var error);
+		var den = await BuildDenpyoAsync(ct);
 		if (den == null) {
-			MessageEx.ShowWarningDialog(error, owner: ActiveWindow);
 			return;
 		}
 		den.SendFlg = 2;
@@ -974,30 +1107,123 @@ WHERE D.Id_Shohin IN (
 		}
 	}
 
-	/// <summary>画面の入力から伝票を組み立てる。検証に失敗したら null と理由を返す。</summary>
-	TranJodai? BuildDenpyo(out string error) {
-		error = string.Empty;
+	/// <summary>
+	/// 画面の入力から伝票を組み立てる。検証に失敗したら null と理由を返す。
+	/// <para>
+	/// Scope対応（設計3.4・3.11・2.5・2.8）: <see cref="Jmeisai"/>は「商品×Scope」のセルへ複製し、
+	/// 各セルの<c>JodaiNew</c>は<see cref="JodaiPriceRule.Calculate"/>で算出する。<see cref="Jshop"/>は
+	/// <see cref="JodaiScopeResolver.Resolve"/>で店舗ごとの採用Scopeを決めてから作る。
+	/// C1/C2（エラー競合）があれば保存を中止する。商品数×Scope数が<see cref="MasterConfig.NameJodaiMaxCells"/>を
+	/// 超える場合も保存前に警告して中止する。
+	/// </para>
+	/// </summary>
+	async Task<TranJodai?> BuildDenpyoAsync(CancellationToken ct) {
 		if (EditDayFrom == null || EditDayTo == null) {
-			error = "適用期間を入力してください。";
+			ShowBuildError("適用期間を入力してください。");
 			return null;
 		}
 		if (ToDay(EditDayFrom.Value).CompareTo(ToDay(EditDayTo.Value)) > 0) {
-			error = "適用期間の開始日が終了日より後になっています。";
+			ShowBuildError("適用期間の開始日が終了日より後になっています。");
 			return null;
 		}
 		var shops = ShopRows.Where(x => x.IsTarget).ToList();
 		if (shops.Count == 0) {
-			error = "対象を1件以上チェックしてください。";
+			ShowBuildError("対象を1件以上チェックしてください。");
 			return null;
 		}
 		if (MeisaiRows.Count == 0) {
-			error = "[明細取得] で対象商品を表示してください。";
+			ShowBuildError("[明細取得] で対象商品を表示してください。");
+			return null;
+		}
+		if (ScopeRows.Count == 0) {
+			ShowBuildError("適用範囲（Scope）を1件以上登録してください。");
+			return null;
+		}
+		var badScopePeriod = ScopeRows.FirstOrDefault(s => string.Compare(s.DayFrom, s.DayTo, StringComparison.Ordinal) > 0);
+		if (badScopePeriod != null) {
+			ShowBuildError($"Scope#{badScopePeriod.No}「{badScopePeriod.Name}」の期間が逆転しています（{badScopePeriod.DayFrom}～{badScopePeriod.DayTo}）。");
 			return null;
 		}
 		var badPeriod = shops.FirstOrDefault(s => string.Compare(s.DayFrom, s.DayTo, StringComparison.Ordinal) > 0);
 		if (badPeriod != null) {
-			error = $"対象 {badPeriod.Code_Tenpo} {badPeriod.Mei_Tenpo} の期間が逆転しています（{badPeriod.DayFrom}～{badPeriod.DayTo}）。";
+			ShowBuildError($"対象 {badPeriod.Code_Tenpo} {badPeriod.Mei_Tenpo} の期間が逆転しています（{badPeriod.DayFrom}～{badPeriod.DayTo}）。");
 			return null;
+		}
+
+		var scopes = ScopeRows.Select(ToTranJodaiScope).ToList();
+
+		// 商品数×Scope数の上限（設計3.11）。保存直前はDBの最新値で最終判定する
+		if (!await CheckMaxCellsAsync(MeisaiRows.Count, scopes.Count, ct)) {
+			ShowBuildError("商品数×Scope数の上限を超えるため保存を中止しました。");
+			return null;
+		}
+
+		// 店舗をScopeへ解決する（設計2.5・2.6）。マスタから消えた店舗は価格グループ3軸未設定とみなす
+		var candidateStores = ResolveCandidateStores(shops.Select(s => s.Id_Tenpo).ToHashSet());
+		var resolution = JodaiScopeResolver.Resolve(candidateStores, scopes);
+		var errorConflicts = resolution.Conflicts.Where(c => c.Severity == EnumJodaiConflictSeverity.Error).ToList();
+		if (errorConflicts.Count > 0) {
+			var head = string.Join("\n", errorConflicts.Take(5).Select(c => c.Message));
+			var more = errorConflicts.Count > 5 ? $"\n… 他 {errorConflicts.Count - 5} 件" : string.Empty;
+			MessageEx.ShowErrorDialog($"Scopeの競合があるため確定できません。\n{head}{more}", owner: ActiveWindow);
+			ShowBuildError("Scopeの競合（C1/C2）があるため保存を中止しました。「解決結果を確認」で内容を見直してください。", showDialog: false);
+			return null;
+		}
+
+		// 店舗ごとの期間微調整（設計3.3・U5）: 直前に読み込んだJshopに同じ(店舗,Scope)があれば、その期間を残す
+		var previousByKey = loadedJshop.ToDictionary(x => (x.Id_Tenpo, x.No_Scope));
+		var jshop = resolution.Jshop.Select(r => previousByKey.TryGetValue((r.Id_Tenpo, r.No_Scope), out var prev)
+			? new TranJodaiShop { Id_Tenpo = r.Id_Tenpo, Code_Tenpo = r.Code_Tenpo, Mei_Tenpo = r.Mei_Tenpo, DayFrom = prev.DayFrom, DayTo = prev.DayTo, No_Scope = r.No_Scope }
+			: r).ToList();
+
+		// 方式4（実効上代からの値下率）が使われているScopeがあれば、発効日時点の実効上代を一括解決する
+		var effectiveScopes = scopes.Where(s => s.PriceMethod == (int)EnumJodaiPriceMethod.RateOffFromEffective).ToList();
+		Dictionary<(long Shohin, string Day), int> effectiveMap = [];
+		if (effectiveScopes.Count > 0) {
+			var keys = MeisaiRows.SelectMany(m => effectiveScopes.Select(s => (m.Id_Shohin, s.DayFrom)));
+			effectiveMap = await ResolveEffectiveJodaiAsync(keys, ct);
+		}
+
+		var pricePointCache = new Dictionary<long, IReadOnlyList<int>>();
+		IReadOnlyList<int> PricePointsFor(long idPricePoint) {
+			if (idPricePoint <= 0) return [];
+			if (pricePointCache.TryGetValue(idPricePoint, out var cached)) return cached;
+			var csv = PricePointOptions.FirstOrDefault(o => o.Id == idPricePoint)?.Name;
+			var parsed = JodaiPriceRule.ParsePricePoints(csv);
+			pricePointCache[idPricePoint] = parsed;
+			return parsed;
+		}
+
+		// Jmeisaiを「商品×Scope」のセルへ複製する（設計3.4・5.6）
+		var jmeisai = new List<TranJodaiMeisai>();
+		foreach (var row in MeisaiRows) {
+			foreach (var scope in scopes) {
+				var method = (EnumJodaiPriceMethod)scope.PriceMethod;
+				var baseJodai = method == EnumJodaiPriceMethod.RateOffFromEffective
+					? effectiveMap.GetValueOrDefault((row.Id_Shohin, scope.DayFrom), row.JodaiOld)
+					: row.JodaiOld;
+				var newPrice = JodaiPriceRule.Calculate(
+					method, baseJodai, scope.FixedPrice, scope.RateOff, scope.Amount, scope.RateOn,
+					scope.RoundUnit, scope.RoundType, PricePointsFor(scope.Id_PricePoint));
+				jmeisai.Add(new TranJodaiMeisai {
+					No = 0, // Normalize()がScope内連番へ振り直す
+					Id_Shohin = row.Id_Shohin,
+					Code_Shohin = row.Code_Shohin,
+					Mei_Shohin = row.Mei_Shohin,
+					JodaiOld = row.JodaiOld,
+					JodaiNew = newPrice,
+					RateOff = row.JodaiOld > 0
+						? Math.Round((1m - (decimal)newPrice / row.JodaiOld) * 100m, 2, MidpointRounding.AwayFromZero)
+						: 0m,
+					PriceInTax = CalcPriceInTax(newPrice),
+					DayTento = row.DayTento,
+					DayChange = ToDay(DateTime.Today),
+					Status = row.Status,
+					No_Scope = scope.No,
+					JodaiBase = baseJodai,
+					TankaGenka = row.TankaGenka,
+				});
+			}
 		}
 
 		var den = new TranJodai {
@@ -1032,26 +1258,9 @@ WHERE D.Id_Shohin IN (
 				TenkaiTani = 0,
 				Ope = c.Ope,
 			})],
-			Jshop = [.. shops.Select(s => new TranJodaiShop {
-				Id_Tenpo = s.Id_Tenpo,
-				Code_Tenpo = s.Code_Tenpo,
-				Mei_Tenpo = s.Mei_Tenpo,
-				DayFrom = s.DayFrom,
-				DayTo = EditKubun == (int)EnumJodaiKubun.Proper ? "99991231" : s.DayTo,
-			})],
-			Jmeisai = [.. MeisaiRows.Select(m => new TranJodaiMeisai {
-				No = m.No,
-				Id_Shohin = m.Id_Shohin,
-				Code_Shohin = m.Code_Shohin,
-				Mei_Shohin = m.Mei_Shohin,
-				JodaiOld = m.JodaiOld,
-				JodaiNew = m.JodaiNew,
-				RateOff = m.RateOff,
-				PriceInTax = m.PriceInTax,
-				DayTento = m.DayTento,
-				DayChange = m.DayChange,
-				Status = m.Status,
-			})],
+			Jshop = jshop,
+			Jmeisai = jmeisai,
+			Jscope = scopes,
 		};
 
 		// 重複したまま確定すると DerivedJodai のユニークキー違反で保存自体が失敗するので、必ず取り除く
@@ -1062,12 +1271,21 @@ WHERE D.Id_Shohin IN (
 			if (MessageEx.ShowQuestionDialog(
 					$"重複があります。後に指定した内容を残して取り除きます。続行しますか？\n{head}{more}",
 					owner: ActiveWindow) != MessageBoxResult.Yes) {
-				error = "重複があるため登録を中止しました。";
+				ShowBuildError("重複があるため登録を中止しました。", showDialog: false);
 				return null;
 			}
 		}
 		den.Normalize();
 		return den;
+	}
+
+	/// <summary>
+	/// <see cref="BuildDenpyoAsync"/>の検証失敗を利用者へ知らせる。<paramref name="showDialog"/>=falseは
+	/// 呼び出し元が既に別のダイアログ（重複確認・競合エラー）を出している場合に、二重表示を避けるために使う。
+	/// </summary>
+	void ShowBuildError(string message, bool showDialog = true) {
+		Message = message;
+		if (showDialog) MessageEx.ShowWarningDialog(message, owner: ActiveWindow);
 	}
 
 	/// <summary>伝票を新規登録または更新し、サーバが返した最新の伝票を返す。</summary>
@@ -1104,6 +1322,262 @@ WHERE D.Id_Shohin IN (
 		sql = $"SELECT Id, Vdc, Vdu, Id_Tran FROM {nameof(DerivedJodai)} WHERE Id_Tran = {AddParameter(parameters, EditId)}";
 		var rows = await QuerySqlListAsync<DerivedJodai>(sql, parameters, ct);
 		EditExpandCnt = rows.Count;
+	}
+
+	// ===== ② 適用範囲（Scope）====================================================
+
+	static JodaiScopeRow ToScopeRow(TranJodaiScope s) => new() {
+		No = s.No,
+		Name = s.Name,
+		RangeType = s.RangeType,
+		IncExc = s.IncExc,
+		GroupAxis = s.GroupAxis,
+		Id_Group = s.Id_Group,
+		Code_Group = s.Code_Group,
+		Mei_Group = s.Mei_Group,
+		Id_Tenpo = s.Id_Tenpo,
+		Code_Tenpo = s.Code_Tenpo,
+		Mei_Tenpo = s.Mei_Tenpo,
+		DayFrom = s.DayFrom,
+		DayTo = s.DayTo,
+		PriceMethod = s.PriceMethod,
+		FixedPrice = s.FixedPrice,
+		RateOff = s.RateOff,
+		Amount = s.Amount,
+		RateOn = s.RateOn,
+		RoundUnit = s.RoundUnit,
+		RoundType = s.RoundType,
+		Id_PricePoint = s.Id_PricePoint,
+		Odr = s.Odr,
+	};
+
+	static TranJodaiScope ToTranJodaiScope(JodaiScopeRow r) => new() {
+		No = r.No,
+		Name = r.Name,
+		RangeType = r.RangeType,
+		IncExc = r.IncExc,
+		GroupAxis = r.GroupAxis,
+		Id_Group = r.Id_Group,
+		Code_Group = r.Code_Group,
+		Mei_Group = r.Mei_Group,
+		Id_Tenpo = r.Id_Tenpo,
+		Code_Tenpo = r.Code_Tenpo,
+		Mei_Tenpo = r.Mei_Tenpo,
+		DayFrom = r.DayFrom,
+		DayTo = r.DayTo,
+		PriceMethod = r.PriceMethod,
+		FixedPrice = r.FixedPrice,
+		RateOff = r.RateOff,
+		Amount = r.Amount,
+		RateOn = r.RateOn,
+		RoundUnit = r.RoundUnit,
+		RoundType = r.RoundType,
+		Id_PricePoint = r.Id_PricePoint,
+		Odr = r.Odr,
+	};
+
+	int NextScopeNo() => ScopeRows.Count == 0 ? 1 : ScopeRows.Max(r => r.No) + 1;
+
+	void RenumberScopeRows() {
+		var no = 0;
+		foreach (var row in ScopeRows) row.No = ++no;
+	}
+
+	/// <summary>Scope行を1件追加する（既定値は全店/対象/ヘッダ既定期間・価格ルール）。</summary>
+	[RelayCommand]
+	void AddScopeRow() {
+		if (!CheckMaxCellsCached(MeisaiRows.Count, ScopeRows.Count + 1)) return;
+		var scope = DefaultHeaderScope();
+		scope.No = NextScopeNo();
+		scope.Name = $"Scope{scope.No}";
+		ScopeRows.Add(ToScopeRow(scope));
+	}
+
+	/// <summary>Scope行を削除する。最後の1件は残す（Price Matrixの列が0にならないように）。</summary>
+	[RelayCommand]
+	void RemoveScopeRow(JodaiScopeRow? row) {
+		if (row == null || ScopeRows.Count <= 1) return;
+		ScopeRows.Remove(row);
+		RenumberScopeRows();
+		if (SelectedScopeRow == row) SelectedScopeRow = null;
+	}
+
+	/// <summary>
+	/// 「段を追加」：選択中のScopeの範囲・価格ルールを引き継ぎ、期間だけ後ろにずらした行を複製する
+	/// （段階値下げの入力を1操作にする。設計書5.3）。ずらし方は「元のDayToの翌日から、元と同じ日数」。
+	/// </summary>
+	[RelayCommand]
+	void AddScopeStage() {
+		var src = SelectedScopeRow ?? ScopeRows.LastOrDefault();
+		if (src == null) {
+			MessageEx.ShowWarningDialog("複製元のScopeがありません。先にScopeを1件追加してください。", owner: ActiveWindow);
+			return;
+		}
+		if (ParseDay(src.DayFrom) is not { } from || ParseDay(src.DayTo) is not { } to || from > to) {
+			MessageEx.ShowWarningDialog("複製元Scopeの開始日・終了日が不正です。", owner: ActiveWindow);
+			return;
+		}
+		if (!CheckMaxCellsCached(MeisaiRows.Count, ScopeRows.Count + 1)) return;
+
+		var days = (to - from).Days + 1;
+		var newFrom = to.AddDays(1);
+		var newTo = newFrom.AddDays(days - 1);
+		var clone = ToTranJodaiScope(src);
+		clone.No = NextScopeNo();
+		clone.DayFrom = ToDay(newFrom);
+		clone.DayTo = ToDay(newTo);
+		var row = ToScopeRow(clone);
+		ScopeRows.Add(row);
+		SelectedScopeRow = row;
+		Message = $"Scope#{src.No}を複製し、期間を{row.DayFrom}～{row.DayTo}にずらしました";
+	}
+
+	/// <summary>
+	/// 「解決結果を確認」：現在のScope一覧を実店舗へ解決し（<see cref="JodaiScopeResolver.Resolve"/>）、
+	/// 店舗→採用Scopeの対応と検出した競合（C1・C2・C5）を提示する（設計書2.5・5.3）。
+	/// </summary>
+	[RelayCommand]
+	async Task ResolveScope(CancellationToken ct) {
+		try {
+			StartBusy("解決結果を確認中...");
+			if (shopMasters.Count == 0) {
+				await LoadShopRowsAsync(loadedJshop, ct);
+			}
+			var checkedIds = ShopRows.Where(x => x.IsTarget).Select(x => x.Id_Tenpo).ToHashSet();
+			var stores = ResolveCandidateStores(checkedIds);
+			var scopes = ScopeRows.Select(ToTranJodaiScope).ToList();
+			var resolution = JodaiScopeResolver.Resolve(stores, scopes);
+			ShowResolutionDialog(resolution);
+		}
+		catch (OperationCanceledException) {
+			Message = "解決確認を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"解決確認失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	/// <summary>
+	/// <paramref name="checkedIds"/>の対象店舗を<see cref="shopMasters"/>から解決用の<see cref="MasterTokui"/>へ変換する。
+	/// マスタから消えた店舗（<see cref="shopMasters"/>に無い）は価格グループ3軸を未設定(0)とみなす合成行を作る
+	/// （グループScopeには該当しないが、個別店舗Scope・全店Scopeの判定には支障が無い）。
+	/// </summary>
+	List<MasterTokui> ResolveCandidateStores(IReadOnlyCollection<long> checkedIds) {
+		var byId = shopMasters.ToDictionary(m => m.Id);
+		var result = new List<MasterTokui>();
+		foreach (var shop in ShopRows.Where(x => checkedIds.Contains(x.Id_Tenpo))) {
+			result.Add(byId.TryGetValue(shop.Id_Tenpo, out var master)
+				? master
+				: new MasterTokui { Id = shop.Id_Tenpo, Code = shop.Code_Tenpo, Name = shop.Mei_Tenpo });
+		}
+		return result;
+	}
+
+	void ShowResolutionDialog(JodaiScopeResolution resolution) {
+		var lines = new List<string>();
+		var byScope = resolution.Jshop.GroupBy(x => x.No_Scope).OrderBy(g => g.Key);
+		lines.Add("【店舗 → 採用Scope】");
+		foreach (var group in byScope) {
+			var scopeName = ScopeRows.FirstOrDefault(s => s.No == group.Key)?.Name ?? $"Scope{group.Key}";
+			lines.Add($"Scope#{group.Key}「{scopeName}」: {group.Count():N0} 店舗");
+		}
+		var storesWithMultiple = resolution.Jshop.GroupBy(x => x.Id_Tenpo).Where(g => g.Count() > 1).ToList();
+		if (storesWithMultiple.Count > 0) {
+			lines.Add(string.Empty);
+			lines.Add("【複数Scopeに該当した店舗（段階値下げ等で期間が重ならないため正常）】");
+			foreach (var g in storesWithMultiple.Take(20)) {
+				lines.Add($"{g.First().Code_Tenpo} {g.First().Mei_Tenpo}: Scope#{string.Join(",", g.Select(x => x.No_Scope))}");
+			}
+		}
+		foreach (var severity in new[] { EnumJodaiConflictSeverity.Error, EnumJodaiConflictSeverity.Warning, EnumJodaiConflictSeverity.Info }) {
+			var items = resolution.Conflicts.Where(c => c.Severity == severity).ToList();
+			if (items.Count == 0) continue;
+			lines.Add(string.Empty);
+			lines.Add($"【{SeverityLabel(severity)}　{items.Count:N0}件】");
+			foreach (var c in items.Take(20)) lines.Add(c.Message);
+		}
+		var text = string.Join("\n", lines);
+		if (resolution.Conflicts.Any(c => c.Severity == EnumJodaiConflictSeverity.Error)) {
+			MessageEx.ShowErrorDialog(text, owner: ActiveWindow);
+		}
+		else if (resolution.Conflicts.Count > 0) {
+			MessageEx.ShowWarningDialog(text, owner: ActiveWindow);
+		}
+		else {
+			MessageEx.ShowInformationDialog(text, owner: ActiveWindow);
+		}
+		Message = $"解決結果: 店舗×Scope {resolution.Jshop.Count:N0} 行、競合 {resolution.Conflicts.Count:N0} 件";
+	}
+
+	static string SeverityLabel(EnumJodaiConflictSeverity severity) => severity switch {
+		EnumJodaiConflictSeverity.Error => "エラー",
+		EnumJodaiConflictSeverity.Warning => "警告",
+		_ => "情報",
+	};
+
+	/// <summary>
+	/// 商品数×Scope数がキャッシュ済みの<see cref="cachedJodaiMaxCells"/>を超えるかを判定する（設計3.11）。
+	/// 画面操作（抽出・Scope追加）時の即時チェック用。保存直前の最終判定は<see cref="CheckMaxCellsAsync"/>を使う。
+	/// </summary>
+	bool CheckMaxCellsCached(int styleCount, int scopeCount) {
+		var cells = (long)styleCount * Math.Max(scopeCount, 1);
+		if (cells <= cachedJodaiMaxCells) return true;
+		MessageEx.ShowWarningDialog(
+			$"商品数×Scope数（{styleCount:N0}×{scopeCount:N0}={cells:N0}）が上限（{cachedJodaiMaxCells:N0}）を超えるため中止しました。伝票を分けてください。",
+			owner: ActiveWindow);
+		return false;
+	}
+
+	/// <summary>保存直前の最終判定。DBの<see cref="MasterConfig.NameJodaiMaxCells"/>を読み直す。</summary>
+	async Task<bool> CheckMaxCellsAsync(int styleCount, int scopeCount, CancellationToken ct) {
+		cachedJodaiMaxCells = await GetConfigIntAsync(MasterConfig.NameJodaiMaxCells, 30000, ct);
+		return CheckMaxCellsCached(styleCount, scopeCount);
+	}
+
+	/// <summary>
+	/// <see cref="MasterConfig"/>の設定値(整数)を読む。未設定・不正値・行が無い場合は<paramref name="fallback"/>を返す
+	/// （<see cref="JodaiDb.GetKeepDays"/>と同じ方針。設計3.11・3.8）。
+	/// </summary>
+	async Task<int> GetConfigIntAsync(string name, int fallback, CancellationToken ct) {
+		List<string> parameters = [];
+		var sql = $"SELECT Id, Vdc, Vdu, Name, Val FROM {nameof(MasterConfig)} WHERE Name = {AddParameter(parameters, name)}";
+		var list = await QuerySqlListAsync<MasterConfig>(sql, parameters, ct);
+		var val = list.FirstOrDefault()?.Val;
+		return int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) && v >= 0 ? v : fallback;
+	}
+
+	/// <summary>
+	/// 価格方式4（実効上代からの値下率）で必要になる、発効日時点の実効上代を解決する。
+	/// <see cref="DerivedJodai.FinalJodaiSql"/>を商品×日付ぶんUNION ALLした1本のSQLで一括取得する
+	/// （行ごとに個別クエリを投げるとラウンドトリップが商品数×該当Scope数だけ発生するため）。
+	/// <para>
+	/// 対象(Id_Tenpo)は<see cref="EditTaishoType"/>の全件(0)で解決する。価格グループ・個別店舗Scopeでは
+	/// 店舗ごとに実効上代が異なり得るが、Scopeの価格ルールは「商品×Scope」の1セルにつき1つの値しか
+	/// 持てないため、全件(0)基準への近似とする（設計2.7の「伝票作成時点で解決した実効上代」を、
+	/// 店舗非依存の近似値で満たす）。
+	/// </para>
+	/// </summary>
+	async Task<Dictionary<(long Shohin, string Day), int>> ResolveEffectiveJodaiAsync(
+		IEnumerable<(long Shohin, string Day)> keys, CancellationToken ct) {
+		var keyList = keys.Distinct().ToList();
+		if (keyList.Count == 0) return [];
+
+		List<string> parameters = [];
+		var unions = keyList.Select(k => {
+			var shohinParam = AddParameter(parameters, k.Shohin);
+			var tenpoParam = AddParameter(parameters, 0);
+			var dayParam = AddParameter(parameters, k.Day);
+			var taishoParam = AddParameter(parameters, EditTaishoType);
+			var eff = DerivedJodai.FinalJodaiSql(shohinParam, taishoParam, tenpoParam, dayParam, "sh");
+			return $"SELECT {shohinParam} AS Id_Shohin, {tenpoParam} AS Id_Tenpo, {dayParam} AS Day, {eff} AS Eff FROM MasterShohin sh WHERE sh.Id = {shohinParam}";
+		});
+		var sql = string.Join("\nUNION ALL\n", unions);
+		var list = await QuerySqlListAsync<JodaiEffectiveRow>(sql, parameters, ct);
+		return list.ToDictionary(x => (x.Id_Shohin, x.Day), x => x.Eff);
 	}
 
 	// ===== 選択ダイアログ =========================================================
@@ -1358,4 +1832,115 @@ public partial class JodaiMeisaiRow : ObservableObject {
 
 	[ObservableProperty]
 	public partial int Status { get; set; }
+
+	/// <summary>原価割れ判定用の時点値（<see cref="MasterShohin.TankaGenka"/>のSnapshot。設計3.4）。</summary>
+	[ObservableProperty]
+	public partial int TankaGenka { get; set; }
+}
+
+/// <summary>適用範囲（Scope）の1行。<see cref="TranJodai.Jscope"/>の編集用（設計書5.3）。</summary>
+public partial class JodaiScopeRow : ObservableObject {
+	[ObservableProperty]
+	public partial int No { get; set; }
+
+	[ObservableProperty]
+	public partial string Name { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(GroupOrStoreDisplay))]
+	public partial int RangeType { get; set; }
+
+	[ObservableProperty]
+	public partial int IncExc { get; set; }
+
+	[ObservableProperty]
+	public partial int GroupAxis { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(GroupOrStoreDisplay))]
+	public partial long Id_Group { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(GroupOrStoreDisplay))]
+	public partial string Code_Group { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(GroupOrStoreDisplay))]
+	public partial string Mei_Group { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(GroupOrStoreDisplay))]
+	public partial long Id_Tenpo { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(GroupOrStoreDisplay))]
+	public partial string Code_Tenpo { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(GroupOrStoreDisplay))]
+	public partial string Mei_Tenpo { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string DayFrom { get; set; } = "19010101";
+
+	[ObservableProperty]
+	public partial string DayTo { get; set; } = "99991231";
+
+	[ObservableProperty]
+	public partial int PriceMethod { get; set; }
+
+	[ObservableProperty]
+	public partial int FixedPrice { get; set; }
+
+	[ObservableProperty]
+	public partial decimal RateOff { get; set; }
+
+	[ObservableProperty]
+	public partial int Amount { get; set; }
+
+	[ObservableProperty]
+	public partial decimal RateOn { get; set; }
+
+	[ObservableProperty]
+	public partial int RoundUnit { get; set; }
+
+	[ObservableProperty]
+	public partial int RoundType { get; set; }
+
+	[ObservableProperty]
+	public partial long Id_PricePoint { get; set; }
+
+	[ObservableProperty]
+	public partial int Odr { get; set; }
+
+	MasterJouDaiBulkChangeViewModel.MasterOption? selectedGroupOrStoreOption;
+
+	/// <summary>
+	/// XAML側の「グループ/店舗」ComboBoxの選択（<see cref="RangeType"/>によりItemsSourceを切り替える）。
+	/// 選択に応じて<see cref="Id_Group"/>/<see cref="Id_Tenpo"/>とそのコード・名称(時点値)を更新する。
+	/// </summary>
+	public MasterJouDaiBulkChangeViewModel.MasterOption? SelectedGroupOrStoreOption {
+		get => selectedGroupOrStoreOption;
+		set {
+			selectedGroupOrStoreOption = value;
+			if (RangeType == (int)EnumJodaiRangeType.Store) {
+				Id_Tenpo = value?.Id ?? 0;
+				Code_Tenpo = value?.Code ?? string.Empty;
+				Mei_Tenpo = value?.Name ?? string.Empty;
+			}
+			else {
+				Id_Group = value?.Id ?? 0;
+				Code_Group = value?.Code ?? string.Empty;
+				Mei_Group = value?.Name ?? string.Empty;
+			}
+			OnPropertyChanged();
+		}
+	}
+
+	/// <summary>読み取り専用セル表示用（範囲種別に応じて全店/グループ名/店舗名を出す）。</summary>
+	public string GroupOrStoreDisplay => RangeType switch {
+		(int)EnumJodaiRangeType.PriceGroup => string.IsNullOrEmpty(Code_Group) ? "(未選択)" : $"{Code_Group} {Mei_Group}",
+		(int)EnumJodaiRangeType.Store => string.IsNullOrEmpty(Code_Tenpo) ? "(未選択)" : $"{Code_Tenpo} {Mei_Tenpo}",
+		_ => "(全店)",
+	};
 }

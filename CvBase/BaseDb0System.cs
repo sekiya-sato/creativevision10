@@ -232,6 +232,9 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// <summary>チャネル区分</summary>
 	[Comment("チャネル区分")]
 	public const string KubunPriceChannel = "C32";
+	/// <summary>価格ポイント表区分（コード=表名、名称=価格の並びCSV。TranJodaiScope.Id_PricePointが参照）</summary>
+	[Comment("価格ポイント表区分")]
+	public const string KubunPricePoint = "PPT";
 	/// <summary>商品マスター Jsub(名称リスト)の区分先頭文字(Kb='B01'～'B10')</summary>
 	[Comment("商品マスター 名称区分先頭文字")]
 	public const char KubunTopShohin = 'B';

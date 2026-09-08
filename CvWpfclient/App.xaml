@@ -21,6 +21,13 @@
 			<helpers:LoginRoleDisplayConverter x:Key="LoginRoleDisplayConverter" />
 			<helpers:ConsumptionRatePercentConverter x:Key="ConsumptionRatePercentConverter" />
 			<helpers:JodaiOpeDisplayConverter x:Key="JodaiOpeDisplayConverter" />
+			<helpers:JodaiRangeTypeDisplayConverter x:Key="JodaiRangeTypeDisplayConverter" />
+			<helpers:JodaiGroupAxisDisplayConverter x:Key="JodaiGroupAxisDisplayConverter" />
+			<helpers:JodaiIncExcDisplayConverter x:Key="JodaiIncExcDisplayConverter" />
+			<helpers:JodaiPriceMethodDisplayConverter x:Key="JodaiPriceMethodDisplayConverter" />
+			<helpers:JodaiRoundUnitDisplayConverter x:Key="JodaiRoundUnitDisplayConverter" />
+			<helpers:JodaiRoundTypeDisplayConverter x:Key="JodaiRoundTypeDisplayConverter" />
+			<helpers:JodaiIsPriceGroupConverter x:Key="JodaiIsPriceGroupConverter" />
 			<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Resources/UIColors.xaml" />

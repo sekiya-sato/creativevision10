@@ -1,3 +1,36 @@
+## [2026-09-08] 上代一括変更 画面②適用範囲（Scope編集・内側タブ・No_Scope展開・段階値下げ）Step6
+### Agent
+- Claude Opus-5 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- 設計書`Doc/spec/2026-09-05_上代一括変更_詳細設計.md` Step 6（画面②適用範囲）を実装する
+### 実施内容
+- 「修正・登録画面」タブの中身を内側`TabControl`（①対象商品／②適用範囲／③価格）へ組み替え。伝票ヘッダと操作ボタンはタブの外に残し、`ITranInputTab`は実装せず（Escの挙動は現状維持）
+- ①対象商品＝Step5の抽出条件Card。②適用範囲＝新規のScope一覧DataGrid＋（旧）一括変更条件Card（「新規Scope作成時の既定値」に改称）＋対象店舗Card（移設）。③価格＝旧明細Cardをそのまま移設（Price Matrix化はStep7）
+- `JodaiScopeRow`（VM内, `ObservableObject`）を追加し`ScopeRows`を編集。範囲種別・軸・対象/除外・価格方式は`EnumJodaiRangeType`/`EnumJodaiGroupAxis`/`EnumJodaiIncExc`/`EnumJodaiPriceMethod`（Step1b定義）をそのまま使用。グループ/店舗選択は「解決結果を確認」ダイアログでも使う`ScopeStoreOptions`/`PriceGroupOptions`等をXAMLのStyle.Triggersで軸により切替
+- 初期状態はScope1件（全店/対象/ヘッダ既定期間・価格ルール）。「Scope追加」「段を追加」（元のDayToの翌日から同じ日数で複製）「Scope削除」「解決結果を確認」（`JodaiScopeResolver.Resolve()`を呼び、店舗→採用Scopeと競合をSeverity別に提示）を実装
+- `LoadEditAsync`で`den.NormalizeLegacyScope()`を呼び、Scope空の既存伝票を画面へ全店Scope1件で載せる（DB不変更）
+- `BuildDenpyo`を`BuildDenpyoAsync`化。`Jmeisai`を「商品×Scope」へ複製し`JodaiPriceRule.Calculate()`で`JodaiNew`/`JodaiBase`/`TankaGenka`を設定。`Jshop`は`JodaiScopeResolver.Resolve()`の結果を採用しつつ、読込時点の`Jshop`と(Id_Tenpo,No_Scope)一致する行は期間を保持（設計3.3の店舗別微調整を維持）。C1/C2（エラー）があれば保存中止。`MasterConfig.JodaiMaxCells`（商品数×Scope数）を抽出時・Scope追加時・保存直前の3箇所でチェックし超過時は中止
+- 方式4（実効上代からの値下率）は`DerivedJodai.FinalJodaiSql`を商品×日付ぶんUNION ALLする1本のSQLで一括解決（店舗非依存、対象系統全件0基準の近似）
+- `CvBase/BaseDb0System.cs`に`MasterMeisho.KubunPricePoint="PPT"`を追加。`CvBase/Parameters.cs`に`JodaiEffectiveRow`（方式4解決用スカラー行）を追加。`Doc/test/UatVm/VmSession.cs`に`InsertAsync<T>`を追加（既存伝票の直接投入用）
+- `CvWpfclient/Helpers/Converters/JodaiScopeDisplayConverters.cs`を追加し`App.xaml`へ登録（Scope表示用コンバータ7種）
+- `Doc/test/UatVm/Scenarios/JodaiScopeScenario.cs`を追加し`Program.cs`へ登録(`jodaiscope`)
+### 技術決定 Why
+- 「グループ/店舗」選択はXAMLの`Style.Triggers`（`RangeType`/`GroupAxis`によるItemsSource切替）で実現し、行ごとに複数の選択肢参照を持たせる複雑さを避けた。選択反映は`JodaiScopeRow.SelectedGroupOrStoreOption`が`Id_Group`/`Id_Tenpo`とコード・名称(時点値)を同時更新する
+- 「対象店舗」Cardは設計書5.1の表には明記が無いが、店舗選択(IsTarget)がScope解決の入力になる（設計3.3・5.6）ため②適用範囲タブに配置した（判断1件目）
+- 店舗ごとの期間微調整(設計3.3・U5)は、保存のたびにResolverの出力を全面上書きせず、直前に読み込んだ`Jshop`の(Id_Tenpo,No_Scope)一致行から期間を引き継ぐ方式とした
+- 方式4の基準額（実効上代）は店舗別に異なり得るが、Scope1セルにつき1つの値しか持てないため、対象系統の全件(0)基準への近似とした（判断2件目。厳密な店舗別実効上代の反映はStep8以降で要検討）
+### 確認
+- `dotnet build creativevision10.slnx`：0警告0エラー
+- `Tests/TestServer/TestServer.exe`：898件成功
+- `Tests/TestSqlDialect/TestSqlDialect.exe`：141件成功
+- `Doc/test/UatVm/.../UatVm.exe jodaibulkextract --manage-server`：23件成功(PASS、回帰確認)
+- `Doc/test/UatVm/.../UatVm.exe jodaiscope --manage-server`：30件成功(PASS)。Scope1件展開の後方互換一致・段追加の日付シフト・段階値下げ3段展開・Scope重複競合(C1/C2)での登録中止・JodaiMaxCells超過中止・既存伝票(Jscope空)読込時の全店Scope1件補完を確認
+- テスト実行で書き換えた`MasterConfig.JodaiMaxCells`は事後に`30000`へ復元済み（cv-sqlite MCPで確認）
+
+---
+
 ## [2026-09-08] 上代一括変更 画面①対象商品（抽出条件拡張・可変行・AND/OR・Style/SKU数）Step5
 ### Agent
 - Claude Opus-5 : Anthropic : Claude Code
