@@ -1,0 +1,6 @@
+{
+    // Markdown PDF 拡張機能で使用する印刷用スタイル ctl+shift+p で `Markdown PDF export`
+    "markdown-pdf.styles": [
+        ".vscode/markdown-print.css"
+    ]
+}

@@ -64,3 +64,4 @@ printform/data*.*
 .mcp.json
 .omo-*/
 CvServer/*.db
+Doc/spec/*.pdf
