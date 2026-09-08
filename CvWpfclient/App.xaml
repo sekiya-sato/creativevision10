@@ -20,6 +20,7 @@
 			<helpers:IdCodeNameDisplayConverter x:Key="IdCodeNameDisplayConverter" />
 			<helpers:LoginRoleDisplayConverter x:Key="LoginRoleDisplayConverter" />
 			<helpers:ConsumptionRatePercentConverter x:Key="ConsumptionRatePercentConverter" />
+			<helpers:JodaiOpeDisplayConverter x:Key="JodaiOpeDisplayConverter" />
 			<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Resources/UIColors.xaml" />

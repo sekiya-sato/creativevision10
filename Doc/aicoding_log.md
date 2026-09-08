@@ -1,3 +1,30 @@
+## [2026-09-08] 上代一括変更 画面①対象商品（抽出条件拡張・可変行・AND/OR・Style/SKU数）Step5
+### Agent
+- Claude Opus-5 : Anthropic : Claude Code
+### Editor
+- Claude Code
+### 目的
+- 設計書`Doc/spec/2026-09-05_上代一括変更_詳細設計.md` Step 5（画面①対象商品）を実装する
+### 実施内容
+- 抽出条件の検索項目を拡張: 素材/原産国/発売日(店頭投入日)/現在上代(数値比較)/商品分類(Jsub)の枠。仕入先は実装せず理由をコードコメントに残した
+- `FieldOptionsStatic`(static)を廃止し`FieldOptions`(非static、Jsubの枠を`MasterMeisho`から動的読込)へ変更。XAMLは`DataGridComboBoxColumn`から`DataGridTemplateColumn`+`ComboBox`(`DataContext.FieldOptions`を`AncestorType=DataGrid`経由参照)へ置換
+- 抽出条件行を可変化(初期1行、追加/削除コマンド、3行決め打ちパディング廃止)
+- `TranJodaiCond.Ope`(AND/OR)に対応。1行が生む`>=`/`<=`は必ず1単位で括弧化し、行同士は左結合で明示的に括弧を入れて畳み込む。1行目のOpeは無視(UI側も1行目は無効化/空表示)
+- 対象Style数(MeisaiRows件数)/SKU数(`DerivedShohinColSiz`件数)を表示。SKU数は件数が多くても`IN`にIdを直接並べず、抽出条件のWHERE句をサブクエリとして再利用
+- `CvBase/Parameters.cs`にスカラーCOUNT受け取り用共有DTO`ScalarCountRow`を追加(`QueryListSqlParam.ItemType`はサーバ側で型解決するため、クライアント内の入れ子クラスは使えないことが判明したため)
+- `Doc/test/UatVm/Scenarios/JodaiBulkExtractScenario.cs`を追加し`Program.cs`へ登録(`jodaibulkextract`)
+### 技術決定 Why
+- 数値項目は`CAST(@x AS INTEGER)`で比較し文字列比較による桁ズレ("9800">"12800")を避ける
+- Jsubの枠は`MasterMeisho`の`Kubun='IDX'`かつ`Code IN('B01'..'B10')`に登録済みの行だけを検索項目にし、固定名でハードコードしない(`MasterTokuiMenteViewModel.DoGetKubun`に倣う)
+- Jsubの`json_each`はNULL安全だが不正JSON文字列では例外になるため`json_valid()`ガードを併用(`MasterCascadeDb`と同じ考え方)
+### 確認
+- `dotnet build creativevision10.slnx`：0警告0エラー
+- `Tests/TestServer/TestServer.exe`：898件成功
+- `Tests/TestSqlDialect/TestSqlDialect.exe`：141件成功
+- `Doc/test/UatVm/.../UatVm.exe jodaibulkextract --manage-server`：23件成功(PASS)
+
+---
+
 ## [2026-09-08] 店舗イベントを使う日別予算配分と店舗予算票
 ### Agent
 - GPT-5.6 Terra : OpenAI : Codex

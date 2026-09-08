@@ -46,8 +46,17 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	/// <summary>コード値と表示名の組（区分・丸め方法などの固定選択肢）。</summary>
 	public sealed record CodeOption(int Value, string Name);
 
-	/// <summary>抽出条件の検索項目。<see cref="Column"/> は商品検索SQLの列式。</summary>
-	public sealed record FieldOption(string Name, string Column);
+	/// <summary>
+	/// 抽出条件の検索項目。<see cref="Column"/> は商品検索SQLの列式。
+	/// <see cref="IsNumeric"/> が true の項目は数値としてパラメータ化して比較する（文字列比較にすると
+	/// "9800" &gt; "12800" のように桁数で逆転するため）。
+	/// <see cref="JsubKb"/> が設定されている項目は <see cref="MasterShohin.Jsub"/>（商品分類の枠）に対する
+	/// 条件で、<see cref="Column"/> は使わず <c>json_each</c> の EXISTS で組み立てる。
+	/// </summary>
+	public sealed record FieldOption(string Name, string Column, bool IsNumeric = false, string? JsubKb = null) {
+		/// <summary>「(未指定)」以外で、実際に条件を構成できる項目か。</summary>
+		public bool IsSelectable => !string.IsNullOrEmpty(Column) || !string.IsNullOrEmpty(JsubKb);
+	}
 
 	// ===== 固定選択肢 =============================================================
 
@@ -79,10 +88,16 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	];
 
 	/// <summary>
-	/// 抽出条件の検索項目。<b>DataGridComboBoxColumn は視覚ツリーの外にあり DataContext を辿れない</b>ため、
-	/// 列の ItemsSource から <c>x:Static</c> で直接参照できるよう静的に公開する。
+	/// 抽出条件の検索項目の固定分。商品分類(<c>Jsub</c>)の枠は <see cref="MasterMeisho"/> の登録内容に
+	/// よって増減するため、ここには含めず <see cref="LoadJsubFieldOptionsAsync"/> で動的に追加する。
 	/// </summary>
-	public static IReadOnlyList<FieldOption> FieldOptionsStatic { get; } = [
+	/// <remarks>
+	/// 【仕入先は実装しない】設計書 5.2 は「仕入先 Sir.Code」を挙げているが、<see cref="MasterShohin"/> には
+	/// 一般の仕入先への外部キーが無い。あるのは <c>Id_ConsignmentShiire</c>（消化仕入専用）のみで、
+	/// 他は <c>Jgenka</c> サブテーブル内（原価4項目設計により「新しい原価解決には使用しない」とされた
+	/// 移行保持データ）。実装せず検索項目にも追加しない。設計書は別途更新される。
+	/// </remarks>
+	static readonly IReadOnlyList<FieldOption> BaseFieldOptions = [
 		new("(未指定)", ""),
 		new("商品CD", "M.Code"),
 		new("メーカー品番", "M.MakerHin"),
@@ -90,9 +105,25 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 		new("アイテム", "Item.Code"),
 		new("メーカー", "Mkr.Code"),
 		new("シーズン", "Sea.Code"),
+		new("素材", "Szi.Code"),
+		new("原産国", "Gen.Code"),
+		new("発売日(店頭投入日)", "M.DayTento"),
+		new("現在上代", "M.TankaJodai", IsNumeric: true),
 	];
 
-	public IReadOnlyList<FieldOption> FieldOptions => FieldOptionsStatic;
+	/// <summary>
+	/// 抽出条件の検索項目。<b>DataGridComboBoxColumn は視覚ツリーの外にあり DataContext を辿れない</b>ため、
+	/// XAML 側は <c>DataGridTemplateColumn</c> + <c>ComboBox</c> から
+	/// <c>DataContext.FieldOptions, RelativeSource={RelativeSource AncestorType=DataGrid}</c> で参照する。
+	/// これにより Jsub の枠のように実行時に増減する選択肢を持てる。
+	/// </summary>
+	[ObservableProperty]
+	public partial ObservableCollection<FieldOption> FieldOptions { get; set; } = new(BaseFieldOptions);
+
+	public IReadOnlyList<CodeOption> OpeOptions { get; } = [
+		new(0, "AND"),
+		new(1, "OR"),
+	];
 
 	// ===== 画面状態 ===============================================================
 
@@ -223,6 +254,10 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial JodaiMeisaiRow? SelectedMeisaiRow { get; set; }
 
+	/// <summary>対象SKU数（DerivedShohinColSiz＝色×サイズ展開の件数）。抽出後、確定前に表示する。</summary>
+	[ObservableProperty]
+	public partial int TargetSkuCount { get; set; }
+
 	/// <summary>店舗別期間の一括設定用。</summary>
 	[ObservableProperty]
 	public partial DateTime? ShopDayFrom { get; set; } = DateTime.Today;
@@ -259,6 +294,7 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 				await LoadMeishoOptionsAsync(MasterMeisho.KubunSale, ct));
 			ShainOptions = new ObservableCollection<MasterOption>(
 				await LoadOptionsAsync<MasterShain>("MasterShain", string.Empty, ct));
+			await LoadJsubFieldOptionsAsync(ct);
 			taxRate = await AppGlobal.LogicGetTax(1, ToDay(DateTime.Today));
 			await LoadListAsync(ct);
 			Message = "検索画面で伝票を選ぶか、[新規] で上代変更を作成してください";
@@ -387,8 +423,10 @@ LIMIT 500";
 			Field = FieldOptions.FirstOrDefault(f => f.Name == c.Field) ?? FieldOptions[0],
 			CdFrom = c.CdFrom,
 			CdTo = c.CdTo,
+			Ope = c.Ope,
 		})];
-		while (CondRows.Count < 3) CondRows.Add(new JodaiCondRow { No = CondRows.Count + 1, Field = FieldOptions[0] });
+		// 既存伝票の行数をそのまま表示する（3行への埋め直しはしない）。0件なら1行だけ用意する
+		if (CondRows.Count == 0) CondRows.Add(new JodaiCondRow { No = 1, Field = FieldOptions[0] });
 		ZaikoJoken = den.Jcond.FirstOrDefault()?.ZaikoJoken ?? 0;
 
 		MeisaiRows = [.. den.Jmeisai.Select(m => new JodaiMeisaiRow {
@@ -408,6 +446,7 @@ LIMIT 500";
 		await LoadShopRowsAsync(den.Jshop, ct);
 		// ExpandCnt 列は当てにならないので実際の DerivedJodai を数える
 		await ReloadExpandCountAsync(ct);
+		TargetSkuCount = await CountSkuAsync(MeisaiRows.ToList(), ct);
 		NotifyCounts();
 	}
 
@@ -433,15 +472,35 @@ LIMIT 500";
 		ResetCondRows();
 		MeisaiRows = [];
 		ShopRows = [];
+		TargetSkuCount = 0;
 		NotifyCounts();
 	}
 
 	void ResetCondRows() {
-		CondRows = [
-			new JodaiCondRow { No = 1, Field = FieldOptions[0] },
-			new JodaiCondRow { No = 2, Field = FieldOptions[0] },
-			new JodaiCondRow { No = 3, Field = FieldOptions[0] },
-		];
+		CondRows = [new JodaiCondRow { No = 1, Field = FieldOptions[0] }];
+	}
+
+	/// <summary>抽出条件行を追加する（末尾に1行）。</summary>
+	[RelayCommand]
+	void AddCondRow() {
+		CondRows.Add(new JodaiCondRow { No = CondRows.Count + 1, Field = FieldOptions[0] });
+	}
+
+	/// <summary>抽出条件行を削除する。最後の1行は残す（画面から条件行が無くなるのを避ける）。</summary>
+	[RelayCommand]
+	void RemoveCondRow(JodaiCondRow? row) {
+		if (row == null || CondRows.Count <= 1) return;
+		CondRows.Remove(row);
+		RenumberCondRows();
+	}
+
+	/// <summary>
+	/// 行Noを1から振り直す。1行目のNoは「繋ぐ相手がいないので1行目のOpeを無視する」判定
+	/// （<see cref="LoadMeisaiRowsAsync"/> 側のXAML表示上の無効化）に使うため、削除後は必ず詰め直す。
+	/// </summary>
+	void RenumberCondRows() {
+		var no = 0;
+		foreach (var row in CondRows) row.No = ++no;
 	}
 
 	// ===== 対象店舗 ===============================================================
@@ -545,17 +604,22 @@ LIMIT 500";
 			StartBusy("対象商品取得中...");
 			var rows = await LoadMeisaiRowsAsync(ct);
 			if (rows.Count == 0) {
+				MeisaiRows = [];
+				TargetSkuCount = 0;
+				NotifyCounts();
 				MessageEx.ShowInformationDialog("該当する商品がありませんでした。", owner: ActiveWindow);
 				Message = "該当する商品がありません";
 				return;
 			}
 			MeisaiRows = [.. rows];
 			ApplyCalc();
+			// SKU数はDerivedShohinColSiz（色×サイズ展開）の件数。抽出結果と対応するIdだけを数える
+			TargetSkuCount = await CountSkuAsync(rows, ct);
 			NotifyCounts();
 			var capped = TryGetMaxCount(out var max) && rows.Count >= max
 				? $" ※取得件数上限({max:N0})に達しています"
 				: string.Empty;
-			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 対象商品 {rows.Count:N0} 件{capped}";
+			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 対象商品 {rows.Count:N0} 件{capped}（Style {rows.Count:N0} / SKU {TargetSkuCount:N0}）";
 		}
 		catch (OperationCanceledException) {
 			Message = "取得を中断しました";
@@ -569,28 +633,87 @@ LIMIT 500";
 		}
 	}
 
-	async Task<List<JodaiMeisaiRow>> LoadMeisaiRowsAsync(CancellationToken ct) {
+	/// <summary>
+	/// 抽出条件行から WHERE 句を組み立てる。
+	/// <para>
+	/// 【括弧の入れ方】1行が生む &gt;= と &lt;= は必ず1単位として括弧でくくる（<c>(col &gt;= @a AND col &lt;= @b)</c>）。
+	/// 行同士は左結合で、各行の <see cref="JodaiCondRow.Ope"/> がその行を直前までの式にどう繋ぐかを決める。
+	/// SQLのAND/OR優先順位に振り回されないよう、都度 <c>((直前までの式) AND/OR (この行の式))</c> の形に
+	/// 明示的に括弧を入れて畳み込む。1行目（＝最初に条件を持つ行）の Ope は繋ぐ相手が無いため無視する。
+	/// </para>
+	/// <para>
+	/// 【在庫条件】<see cref="ZaikoJoken"/>=1 の EXISTS は常に最後に AND で繋ぐ（現行の意味を変えない）。
+	/// </para>
+	/// </summary>
+	(string Where, List<string> Parameters) BuildCondWhere() {
 		List<string> parameters = [];
-		List<string> clauses = [];
+		string? acc = null;
 		foreach (var cond in CondRows) {
-			if (string.IsNullOrEmpty(cond.Field?.Column)) continue;
-			if (!string.IsNullOrWhiteSpace(cond.CdFrom))
-				clauses.Add($"{cond.Field.Column} >= {AddParameter(parameters, cond.CdFrom.Trim())}");
-			if (!string.IsNullOrWhiteSpace(cond.CdTo))
-				clauses.Add($"{cond.Field.Column} <= {AddParameter(parameters, cond.CdTo.Trim())}");
+			var rowClause = BuildCondRowClause(cond, parameters);
+			if (rowClause == null) continue;
+			acc = acc == null
+				? rowClause
+				: $"({acc} {(cond.Ope == 1 ? "OR" : "AND")} {rowClause})";
 		}
-		if (ZaikoJoken == 1)
-			clauses.Add("EXISTS (SELECT 1 FROM SummaryRealStock Z WHERE Z.Id_Shohin = M.Id AND Z.Su > 0)");
-		var where = clauses.Count == 0 ? string.Empty : $"WHERE {string.Join(" AND ", clauses)}";
+		if (ZaikoJoken == 1) {
+			const string zaiko = "EXISTS (SELECT 1 FROM SummaryRealStock Z WHERE Z.Id_Shohin = M.Id AND Z.Su > 0)";
+			acc = acc == null ? zaiko : $"{acc} AND {zaiko}";
+		}
+		return (acc == null ? string.Empty : $"WHERE {acc}", parameters);
+	}
+
+	/// <summary>条件行1行分の式を作る。条件が無い行（Field未指定またはFROM/TOとも空）は null を返す。</summary>
+	static string? BuildCondRowClause(JodaiCondRow cond, List<string> parameters) {
+		var field = cond.Field;
+		if (field == null || !field.IsSelectable) return null;
+		var from = string.IsNullOrWhiteSpace(cond.CdFrom) ? null : cond.CdFrom.Trim();
+		var to = string.IsNullOrWhiteSpace(cond.CdTo) ? null : cond.CdTo.Trim();
+		if (from == null && to == null) return null;
+
+		if (!string.IsNullOrEmpty(field.JsubKb)) {
+			// 商品分類(Jsub)の枠。MasterShohin.Jsub は [{Kb,Sid,Cd,Mei,Kbname}, ...] のJSON配列なので、
+			// 対象の枠(Kb)を絞ったうえで、その1要素のCdを範囲比較する。従来どおり数値ではなく文字列比較でよい
+			// （枠のコード値はマスタのCode文字列であり、桁揃えの数値ではないため）。
+			var kbParam = AddParameter(parameters, field.JsubKb);
+			var sub = $"json_extract(J.value,'$.Kb') = {kbParam}";
+			if (from != null) sub += $" AND json_extract(J.value,'$.Cd') >= {AddParameter(parameters, from)}";
+			if (to != null) sub += $" AND json_extract(J.value,'$.Cd') <= {AddParameter(parameters, to)}";
+			// M.Jsub が null または不正JSONの商品もある（未分類）。json_each(NULL) は0件で安全だが、
+			// 不正な非NULL文字列は json_each がエラーになるため、CvDomainLogic/MasterCascadeDb.SafeJsonColumn
+			// と同じ考え方で json_valid() ガードを掛けてから渡す
+			return $"EXISTS (SELECT 1 FROM json_each(CASE WHEN M.Jsub IS NOT NULL AND json_valid(M.Jsub) THEN M.Jsub ELSE '[]' END) J WHERE {sub})";
+		}
+
+		List<string> subs = [];
+		if (from != null) {
+			subs.Add(field.IsNumeric
+				? $"{field.Column} >= CAST({AddParameter(parameters, from)} AS INTEGER)"
+				: $"{field.Column} >= {AddParameter(parameters, from)}");
+		}
+		if (to != null) {
+			subs.Add(field.IsNumeric
+				? $"{field.Column} <= CAST({AddParameter(parameters, to)} AS INTEGER)"
+				: $"{field.Column} <= {AddParameter(parameters, to)}");
+		}
+		return $"({string.Join(" AND ", subs)})";
+	}
+
+	const string MeisaiJoins = @"
+     LEFT JOIN MasterMeisho Brd  ON Brd.Id  = M.Id_Brand
+     LEFT JOIN MasterMeisho Item ON Item.Id = M.Id_Item
+     LEFT JOIN MasterMeisho Mkr  ON Mkr.Id  = M.Id_Maker
+     LEFT JOIN MasterMeisho Sea  ON Sea.Id  = M.Id_Season
+     LEFT JOIN MasterMeisho Szi  ON Szi.Id  = M.Id_Material
+     LEFT JOIN MasterMeisho Gen  ON Gen.Id  = M.Id_Country";
+
+	async Task<List<JodaiMeisaiRow>> LoadMeisaiRowsAsync(CancellationToken ct) {
+		var (where, parameters) = BuildCondWhere();
 		TryGetMaxCount(out var maxCount);
 		var sql = $@"
 SELECT M.Id, M.Vdc, M.Vdu, M.Code, M.Name, M.Ryaku, M.Kana, M.MakerHin,
        M.TankaJodai, M.TankaJodaiOrg, M.TankaGenka, M.DayTento
 FROM MasterShohin M
-     LEFT JOIN MasterMeisho Brd  ON Brd.Id  = M.Id_Brand
-     LEFT JOIN MasterMeisho Item ON Item.Id = M.Id_Item
-     LEFT JOIN MasterMeisho Mkr  ON Mkr.Id  = M.Id_Maker
-     LEFT JOIN MasterMeisho Sea  ON Sea.Id  = M.Id_Season
+{MeisaiJoins}
 {where}
 ORDER BY M.Code
 LIMIT {maxCount}";
@@ -610,6 +733,38 @@ LIMIT {maxCount}";
 			PriceInTax = CalcPriceInTax(m.TankaJodai),
 			Status = 0,
 		})];
+	}
+
+	/// <summary>
+	/// 抽出された商品のSKU数（<see cref="DerivedShohinColSiz"/>＝色×サイズ展開行の件数）を数える。
+	/// <para>
+	/// 【20000件対策】<c>rows</c> の Id を直接 <c>IN (@0,@1,...)</c> に並べる方式は、件数が万単位になると
+	/// パラメータ数がそれに比例して増え、SQLiteの変数上限（既定 SQLITE_MAX_VARIABLE_NUMBER=32766）に
+	/// 接近するうえ、SQL文字列・パラメータ配列がそのまま通信されるため肥大化する。
+	/// そこで <see cref="LoadMeisaiRowsAsync"/> と同じ抽出条件(WHERE句)をサブクエリとして再利用し、
+	/// パラメータ数を条件行数程度（抽出件数に依存しない）に抑える。抽出結果と完全に対応させるため
+	/// ORDER BY / LIMIT も同じ条件で揃える。
+	/// </para>
+	/// </summary>
+	async Task<int> CountSkuAsync(List<JodaiMeisaiRow> rows, CancellationToken ct) {
+		if (rows.Count == 0) return 0;
+		var (where, parameters) = BuildCondWhere();
+		TryGetMaxCount(out var maxCount);
+		var sql = $@"
+SELECT COUNT(*) AS Cnt
+FROM {nameof(DerivedShohinColSiz)} D
+WHERE D.Id_Shohin IN (
+    SELECT M.Id
+    FROM MasterShohin M
+{MeisaiJoins}
+{where}
+    ORDER BY M.Code
+    LIMIT {maxCount}
+)";
+		// QueryListSqlParam.ItemTypeはサーバ側で型解決するため、クライアント内の入れ子クラスではなく
+		// 共有アセンブリ(CvBase)のScalarCountRowを使う(CvServerはCvWpfclientを参照しないため)。
+		var list = await QuerySqlListAsync<ScalarCountRow>(sql, parameters, ct);
+		return list.FirstOrDefault()?.Cnt ?? 0;
 	}
 
 	// ===== 一括計算 ===============================================================
@@ -868,13 +1023,14 @@ LIMIT {maxCount}";
 			FixDay = EditStatus == 1 ? ToDay(DateTime.Today) : string.Empty,
 			SendFlg = EditSendFlg,
 			Memo = EditMemo,
-			Jcond = [.. CondRows.Where(c => !string.IsNullOrEmpty(c.Field?.Column)).Select((c, i) => new TranJodaiCond {
+			Jcond = [.. CondRows.Where(c => c.Field != null && c.Field.IsSelectable).Select((c, i) => new TranJodaiCond {
 				No = i + 1,
 				Field = c.Field!.Name,
 				CdFrom = c.CdFrom,
 				CdTo = c.CdTo,
 				ZaikoJoken = ZaikoJoken,
 				TenkaiTani = 0,
+				Ope = c.Ope,
 			})],
 			Jshop = [.. shops.Select(s => new TranJodaiShop {
 				Id_Tenpo = s.Id_Tenpo,
@@ -995,6 +1151,35 @@ ORDER BY Code";
 		return [.. list.Select(x => new MasterOption(x.Id, x.Code ?? string.Empty, x.Name ?? string.Empty))];
 	}
 
+	/// <summary>
+	/// 商品分類(<see cref="MasterShohin.Jsub"/>)の枠を抽出条件の検索項目として追加する。
+	/// <para>
+	/// <c>Jsub</c> の区分キー(<c>Kb</c>)は <c>B01</c>〜<c>B10</c> の利用者自由枠であり
+	/// （<see cref="MasterMeisho.KubunTopShohin"/>='B'）、「大分類=B01」のような固定割当は無い。
+	/// そのため <see cref="MasterMeisho"/> の <c>Kubun='IDX'</c> かつ <c>Code IN ('B01'..'B10')</c> の行、
+	/// すなわち実際に登録されている枠だけを、その名称で検索項目に並べる。
+	/// <see cref="MasterTokuiMenteViewModel.DoGetKubun"/>（得意先の C01〜C10 で同じことをしている）に倣う。
+	/// </para>
+	/// </summary>
+	async Task LoadJsubFieldOptionsAsync(CancellationToken ct) {
+		List<string> parameters = [];
+		var codes = Enumerable.Range(1, 10).Select(i => $"{MasterMeisho.KubunTopShohin}{i:D2}");
+		var placeholders = codes.Select(c => AddParameter(parameters, c)).ToList();
+		var kubunParam = AddParameter(parameters, MasterMeisho.KubunIndex);
+		var sql = $@"
+SELECT Id, Vdc, Vdu, Code, Name, Ryaku, Kana
+FROM MasterMeisho
+WHERE Kubun = {kubunParam} AND Code IN ({string.Join(",", placeholders)})
+ORDER BY Code";
+		var list = await QuerySqlListAsync<MasterMeisho>(sql, parameters, ct);
+		var jsubOptions = list.Select(x => new FieldOption(
+			string.IsNullOrEmpty(x.Name) ? (x.Code ?? string.Empty) : x.Name,
+			string.Empty,
+			IsNumeric: false,
+			JsubKb: x.Code));
+		FieldOptions = new ObservableCollection<FieldOption>([.. BaseFieldOptions, .. jsubOptions]);
+	}
+
 	async Task<List<MasterOption>> LoadMeishoOptionsAsync(string kubun, CancellationToken ct) {
 		List<string> parameters = [];
 		var sql = $@"
@@ -1112,6 +1297,10 @@ public partial class JodaiCondRow : ObservableObject {
 
 	[ObservableProperty]
 	public partial string CdTo { get; set; } = string.Empty;
+
+	/// <summary>この行と直前までの式との結合。0:AND 1:OR。1行目は繋ぐ相手が無いため無視される。</summary>
+	[ObservableProperty]
+	public partial int Ope { get; set; }
 }
 
 /// <summary>対象店舗（または卸先）の1行。期間は店舗ごとに持つ。</summary>

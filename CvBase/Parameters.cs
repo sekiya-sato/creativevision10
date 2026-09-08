@@ -341,6 +341,18 @@ public sealed class HhtTargetCountRow {
 }
 
 /// <summary>
+/// <c>COUNT(*)</c> の結果1件を受け取るための汎用スカラー行。
+/// <para>
+/// <see cref="HhtTargetCountRow"/> と同じ理由（<c>QueryListSqlParam.ItemType</c> はサーバ側で型解決するため、
+/// クライアント内の入れ子クラスではなく共有アセンブリ(CvBase)へ置く必要がある）で、
+/// 特定業務に紐付かない汎用のCOUNT受け取り用としてここに置く。
+/// </para>
+/// </summary>
+public sealed class ScalarCountRow {
+	public int Cnt { get; set; }
+}
+
+/// <summary>
 /// 出荷指示確定のパラメータ。対象の配分行に <c>KakuteiDay</c> を立てる。
 /// 有効在庫（実在庫 − 引当数）が1SKUでも負になる場合はサーバが1件も確定せず、
 /// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。
