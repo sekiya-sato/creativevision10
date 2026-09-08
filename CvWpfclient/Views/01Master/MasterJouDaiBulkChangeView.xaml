@@ -1,4 +1,4 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterJouDaiBulkChangeView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterJouDaiBulkChangeView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
@@ -256,6 +256,7 @@
 								<RowDefinition Height="Auto" />
 								<RowDefinition Height="Auto" />
 								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
 							</Grid.RowDefinitions>
 
 							<TextBlock Grid.Row="0" Grid.Column="0"
@@ -359,12 +360,43 @@
 								Margin="0,4"
 								Style="{StaticResource FormTextBox}"
 								Text="{Binding EditMemo, UpdateSourceTrigger=PropertyChanged}" />
+
+							<TextBlock Grid.Row="3" Grid.Column="0"
+								Style="{StaticResource FormLabel}"
+								Text="承認者" />
+							<Grid Grid.Row="3" Grid.Column="1"
+								Margin="0,0,16,0">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<ComboBox Margin="0,4"
+									DisplayMemberPath="Display"
+									ItemsSource="{Binding ShainOptions}"
+									SelectedItem="{Binding SelectedApproveShain, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}"
+									ToolTip="任意の運用記録。MasterConfig.JodaiNeedApprove=1のときだけ確定操作時に入力を求めます（設計書2.10）" />
+								<Button Grid.Column="1"
+									Command="{Binding SelectApproveShainDialogCommand}"
+									Content="&lt;&lt;"
+									Style="{StaticResource BudgetActionButtonStyle}"
+									ToolTip="承認者を検索して選択" />
+							</Grid>
+
+							<TextBlock Grid.Row="3" Grid.Column="2"
+								Style="{StaticResource FormLabel}"
+								Text="承認日" />
+							<TextBlock Grid.Row="3" Grid.Column="3"
+								Margin="0,4" VerticalAlignment="Center"
+								Text="{Binding ApproveDayText}"
+								ToolTip="確定操作で承認者が入力されている場合に自動で記録されます" />
 						</Grid>
 					</materialDesign:Card>
 
 					<!--  内側タブ：① 対象商品 ② 適用範囲 ③ 価格（設計書5.1。前進・後退の強制はしない）  -->
 					<TabControl Grid.Row="1"
 						Margin="0,8,0,0"
+						SelectedIndex="{Binding SelectedInnerTabIndex, Mode=TwoWay}"
 						Style="{StaticResource MaterialDesignTabControl}">
 
 						<!--  ================= ① 対象商品 =================  -->
@@ -634,15 +666,9 @@
 										<StackPanel Grid.Row="1" Grid.RowSpan="2" Grid.Column="4"
 											VerticalAlignment="Center">
 											<TextBox MinWidth="90"
-												Margin="0,0,0,6"
 												Style="{StaticResource NumericFormTextBox}"
 												Text="{Binding CalcValueText, UpdateSourceTrigger=PropertyChanged}"
-												ToolTip="変更方法が「金額指定」のとき、新販売価格に一律で設定する金額" />
-											<Button Command="{Binding ApplyCalcAllCommand}"
-												Style="{StaticResource MaterialDesignOutlinedButton}"
-												ToolTip="明細の新販売価格をまとめて再計算（旧Scope1件運用の互換用）">
-												<TextBlock FontSize="15" Text="変更" />
-											</Button>
+												ToolTip="変更方法が「金額指定」のとき、新Scope作成時の既定の固定額" />
 										</StackPanel>
 									</Grid>
 								</materialDesign:Card>

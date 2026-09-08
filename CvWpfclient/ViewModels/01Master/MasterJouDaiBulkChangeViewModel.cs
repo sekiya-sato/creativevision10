@@ -174,6 +174,13 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial int SelectedTabIndex { get; set; }
 
+	/// <summary>
+	/// 内側タブ（① 対象商品／② 適用範囲／③ 価格／④ 確認）の選択位置。<see cref="DoFix"/>がC1/C2の
+	/// エラー競合で確定を中止したとき、④確認タブ（Index=3）へ誘導するために使う。
+	/// </summary>
+	[ObservableProperty]
+	public partial int SelectedInnerTabIndex { get; set; }
+
 	[ObservableProperty]
 	public partial string Message { get; set; } = string.Empty;
 
@@ -226,6 +233,19 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 
 	[ObservableProperty]
 	public partial MasterOption? SelectedShain { get; set; }
+
+	/// <summary>
+	/// 承認者（設計書2.10・3.6）。任意の運用記録であり<see cref="EditStatus"/>の遷移のゲートにはしない。
+	/// <see cref="MasterConfig.NameJodaiNeedApprove"/>が1のときだけ、確定操作（<see cref="DoFix"/>）で
+	/// 入力を求める。社員の選択は<see cref="SelectedShain"/>（入力者）と同じ仕組み（<see cref="ShainOptions"/>・
+	/// <see cref="SelectShainDialog"/>と対になる<see cref="SelectApproveShainDialog"/>）に倣う。
+	/// </summary>
+	[ObservableProperty]
+	public partial MasterOption? SelectedApproveShain { get; set; }
+
+	/// <summary>承認日の表示用テキスト（<see cref="TranJodai.ApproveDay"/>が空文字なら「未承認」）。</summary>
+	[ObservableProperty]
+	public partial string ApproveDayText { get; set; } = "未承認";
 
 	[ObservableProperty]
 	public partial DateTime? EditDayFrom { get; set; } = DateTime.Today;
@@ -578,6 +598,9 @@ LIMIT 500";
 		RoundType = den.RoundType;
 		SelectedSale = den.Id_Sale > 0 ? FindOrAdd(SaleOptions, den.Id_Sale, den.VSale.Cd, den.VSale.Mei) : null;
 		SelectedShain = den.Id_Shain > 0 ? FindOrAdd(ShainOptions, den.Id_Shain, den.VShain.Cd, den.VShain.Mei) : null;
+		SelectedApproveShain = den.Id_ApproveShain > 0
+			? FindOrAdd(ShainOptions, den.Id_ApproveShain, den.VApproveShain.Cd, den.VApproveShain.Mei) : null;
+		ApproveDayText = FormatApproveDay(den.ApproveDay);
 
 		CondRows = [.. den.Jcond.Select(c => new JodaiCondRow {
 			No = c.No,
@@ -602,9 +625,6 @@ LIMIT 500";
 				DayTento = first.DayTento,
 				DayChange = first.DayChange,
 				JodaiOld = first.JodaiOld,
-				JodaiNew = first.JodaiNew,
-				RateOff = first.RateOff,
-				PriceInTax = first.PriceInTax,
 				Status = first.Status,
 				TankaGenka = first.TankaGenka,
 			};
@@ -649,6 +669,9 @@ LIMIT 500";
 		RoundUnit = 2;
 		RoundType = 0;
 		SelectedSale = null;
+		// SelectedShain（入力者）と同じ流儀で、承認者の選択自体は新規作成をまたいで残す（連続入力の便宜）。
+		// 承認日の表示だけは新規伝票なので必ず「未承認」へ戻す
+		ApproveDayText = "未承認";
 		ZaikoJoken = 0;
 		ResetCondRows();
 		ResetScopeRows();
@@ -852,7 +875,6 @@ ORDER BY Code";
 				return;
 			}
 			MeisaiRows = [.. rows];
-			ApplyCalc();
 			// Price Matrix（③価格タブ）のセルをScope数ぶん複製し（設計5.6「対象取得」）、初期値を計算する
 			await RecalcCellsAsync(onlyIfNotManuallyEdited: false, ct);
 			// SKU数はDerivedShohinColSiz（色×サイズ展開）の件数。抽出結果と対応するIdだけを数える
@@ -971,9 +993,6 @@ LIMIT {maxCount}";
 			DayTento = m.DayTento,
 			DayChange = today,
 			JodaiOld = m.TankaJodai,
-			JodaiNew = m.TankaJodai,
-			RateOff = 0m,
-			PriceInTax = CalcPriceInTax(m.TankaJodai),
 			Status = 0,
 			TankaGenka = m.TankaGenka,
 		})];
@@ -1009,50 +1028,6 @@ WHERE D.Id_Shohin IN (
 		// 共有アセンブリ(CvBase)のScalarCountRowを使う(CvServerはCvWpfclientを参照しないため)。
 		var list = await QuerySqlListAsync<ScalarCountRow>(sql, parameters, ct);
 		return list.FirstOrDefault()?.Cnt ?? 0;
-	}
-
-	// ===== 一括計算 ===============================================================
-
-	/// <summary>率または金額と丸め条件から、全明細の新販売価格を計算し直す。</summary>
-	[RelayCommand]
-	void ApplyCalcAll() {
-		if (MeisaiRows.Count == 0) {
-			MessageEx.ShowWarningDialog("先に [明細取得] で対象商品を表示してください。", owner: ActiveWindow);
-			return;
-		}
-		ApplyCalc();
-		Message = CalcType == 1
-			? $"上代から {ParseDecimal(CalcRateText):0.00}% OFF（{RoundUnitName(RoundUnit)} {RoundTypeName(RoundType)}）で {MeisaiRows.Count:N0} 件を再計算しました"
-			: $"新販売価格を {ParseInt(CalcValueText):N0} 円に設定しました（{MeisaiRows.Count:N0} 件）";
-	}
-
-	void ApplyCalc() {
-		var rate = ParseDecimal(CalcRateText);
-		var value = ParseInt(CalcValueText);
-		var today = ToDay(DateTime.Today);
-		foreach (var row in MeisaiRows) {
-			row.JodaiNew = CalcType == 1
-				? ApplyRound((double)row.JodaiOld * (1.0 - (double)rate / 100.0), RoundUnit, RoundType)
-				: value;
-			row.RateOff = row.JodaiOld > 0
-				? Math.Round((1m - (decimal)row.JodaiNew / row.JodaiOld) * 100m, 2, MidpointRounding.AwayFromZero)
-				: 0m;
-			row.PriceInTax = CalcPriceInTax(row.JodaiNew);
-			row.DayChange = today;
-		}
-	}
-
-	/// <summary>丸め単位と丸め方法を適用する。単位0=1円/1=10円/2=百円/3=千円。</summary>
-	static int ApplyRound(double value, int unit, int type) {
-		var scale = unit switch { 1 => 10.0, 2 => 100.0, 3 => 1000.0, _ => 1.0 };
-		var quotient = value / scale;
-		var rounded = type switch {
-			1 => Math.Round(quotient, MidpointRounding.AwayFromZero),
-			2 => Math.Ceiling(quotient),
-			_ => Math.Floor(quotient),
-		};
-		var result = rounded * scale;
-		return result < 0 ? 0 : (int)result;
 	}
 
 	int CalcPriceInTax(int price) => (int)Math.Round(price * (100.0 + taxRate) / 100.0, MidpointRounding.AwayFromZero);
@@ -1529,6 +1504,7 @@ ORDER BY DayFrom";
 			EditId = saved.Id;
 			editVdu = saved.Vdu;
 			EditStatus = saved.Status;
+			ApproveDayText = FormatApproveDay(saved.ApproveDay);
 			// ExpandCnt 列は保存では更新されないので、実際の DerivedJodai を数え直す
 			await ReloadExpandCountAsync(ct);
 			await LoadListAsync(ct);
@@ -1552,20 +1528,74 @@ ORDER BY DayFrom";
 	bool CanFix() => EditId > 0 && EditStatus == 0 && !HasBlockingConflicts;
 
 	/// <summary>
-	/// 確定する。Status=1 にして保存すると、サーバ側の DerivedDb が
-	/// <see cref="DerivedJodai"/> へ展開する（この画面から展開処理は呼ばない）。
+	/// 確定する。設計書5.6のとおり「競合チェック → プレビュー確認 → <see cref="TranJodai.Jshop"/>へ
+	/// Snapshot → <see cref="TranJodai.Status"/>=1で保存」の順で1操作にまとめる。
+	/// <para>
+	/// 【競合チェック】利用者が④確認タブで事前に実行済みかどうかに関わらず、確定操作の中で必ず
+	/// 最新の状態へ<see cref="CheckConflicts"/>を実行し直す（画面を触った後にチェックし忘れたまま
+	/// 確定できてしまうのを防ぐため）。C1/C2（エラー）があれば④確認タブへ誘導して中止する。
+	/// </para>
+	/// <para>
+	/// 【承認】<see cref="MasterConfig.NameJodaiNeedApprove"/>が1のときだけ、<see cref="SelectedApproveShain"/>の
+	/// 入力を求める（設計書2.10。既定0では求めない）。承認自体は<see cref="EditStatus"/>の遷移のゲートには
+	/// せず、任意の運用記録として<see cref="BuildDenpyoAsync"/>が組み立てる。
+	/// </para>
+	/// <para>
+	/// 【中止できる導線】プレビュー・警告件数を添えた確認ダイアログ（既存の<see cref="MessageEx.ShowQuestionDialog"/>
+	/// の流儀）で「いいえ」を選べばここで必ず中止できる。
+	/// </para>
+	/// <para>
+	/// 【Jshopへのスナップショット】<see cref="BuildDenpyoAsync"/>内で<see cref="JodaiScopeResolver.Resolve"/>が
+	/// 解決した結果をそのまま<c>den.Jshop</c>へ積んでいる（Step6で実装済み）。サーバ側のDerivedDbが
+	/// Status=1保存と同一トランザクションで<see cref="DerivedJodai"/>へ展開する（この画面から展開処理は呼ばない）。
+	/// </para>
 	/// </summary>
 	[RelayCommand(CanExecute = nameof(CanFix))]
 	async Task DoFix(CancellationToken ct) {
+		// ---- 競合チェック（設計書5.6の1手目）----
+		await CheckConflicts(ct);
+		if (HasBlockingConflicts) {
+			MessageEx.ShowErrorDialog(
+				"競合（C1/C2）があるため確定できません。「④ 確認」タブの競合一覧を見直してください。",
+				owner: ActiveWindow);
+			SelectedInnerTabIndex = 3; // ④確認タブへ誘導
+			Message = "確定を中止しました（C1/C2の競合があります）";
+			return;
+		}
+
+		// ---- 承認ゲート（設計書2.10・3.8。既定0では求めない）----
+		var needApprove = await GetConfigIntAsync(MasterConfig.NameJodaiNeedApprove, 0, ct);
+		if (needApprove == 1 && SelectedApproveShain == null) {
+			MessageEx.ShowWarningDialog(
+				"承認者の入力が必要です（MasterConfig.JodaiNeedApprove=1）。ヘッダで承認者を選択してから確定してください。",
+				owner: ActiveWindow);
+			Message = "確定を中止しました（承認者未入力）";
+			return;
+		}
+
 		var den = await BuildDenpyoAsync(ct);
 		if (den == null) {
 			return;
 		}
-		var estimate = (long)den.ShopCnt * den.MeisaiCnt;
-		if (MessageEx.ShowQuestionDialog(
-				$"伝票No {EditId:N0} を確定します。\n適用上代 {estimate:N0} 行が作成され、売上・POS・在庫評価に反映されます。\nよろしいですか？",
-				owner: ActiveWindow) != MessageBoxResult.Yes) return;
 
+		// ---- プレビュー確認（設計書5.6の2手目。中止できる導線を必ず残す）----
+		var estimate = (long)den.ShopCnt * den.MeisaiCnt;
+		var warnings = new List<string>();
+		if (PreviewConflictCount > 0) warnings.Add($"警告(C4〜C6) {PreviewConflictCount:N0}件");
+		if (PreviewBelowCostCount > 0) warnings.Add($"原価割れ {PreviewBelowCostCount:N0}件");
+		if (PreviewBelowMinPriceCount > 0) warnings.Add($"最低価格違反 {PreviewBelowMinPriceCount:N0}件");
+		if (PreviewExpandRowsWarning) warnings.Add($"展開見込 {PreviewExpandRows:N0}行(閾値超過)");
+		var warningText = warnings.Count > 0
+			? $"\n※ {string.Join(" / ", warnings)}（「④ 確認」タブで詳細を確認できます）"
+			: string.Empty;
+		if (MessageEx.ShowQuestionDialog(
+				$"伝票No {EditId:N0} を確定します。\n適用上代 {estimate:N0} 行が作成され、売上・POS・在庫評価に反映されます。{warningText}\nよろしいですか？",
+				owner: ActiveWindow) != MessageBoxResult.Yes) {
+			Message = "確定を中止しました";
+			return;
+		}
+
+		// ---- Jshopスナップショット済みのdenをStatus=1で保存（設計書5.6の3・4手目）----
 		den.Status = 1;
 		den.FixDay = ToDay(DateTime.Today);
 		// 価格が変わったので値札・棚札の差し替えが必要。確定のたびに未送信へ戻す
@@ -1577,6 +1607,7 @@ ORDER BY DayFrom";
 			editVdu = saved.Vdu;
 			EditStatus = saved.Status;
 			EditSendFlg = saved.SendFlg;
+			ApproveDayText = FormatApproveDay(saved.ApproveDay);
 			await ReloadExpandCountAsync(ct);
 			await LoadListAsync(ct);
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 伝票No {saved.Id:N0} を確定しました（展開 {EditExpandCnt:N0} 行）";
@@ -1612,6 +1643,7 @@ ORDER BY DayFrom";
 			var saved = await SaveDenpyoAsync(den, ct);
 			editVdu = saved.Vdu;
 			EditStatus = saved.Status;
+			ApproveDayText = FormatApproveDay(saved.ApproveDay);
 			await ReloadExpandCountAsync(ct);
 			await LoadListAsync(ct);
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 伝票No {saved.Id:N0} を取消しました";
@@ -1654,6 +1686,7 @@ ORDER BY DayFrom";
 			var saved = await SaveDenpyoAsync(den, ct);
 			editVdu = saved.Vdu;
 			EditSendFlg = saved.SendFlg;
+			ApproveDayText = FormatApproveDay(saved.ApproveDay);
 			await LoadListAsync(ct);
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 伝票No {saved.Id:N0} を送信済みにしました";
 		}
@@ -1792,6 +1825,10 @@ ORDER BY DayFrom";
 			Title = EditTitle,
 			Id_Shain = SelectedShain?.Id ?? 0,
 			VShain = new CodeNameView(SelectedShain?.Id ?? 0, SelectedShain?.Code ?? string.Empty, SelectedShain?.Name ?? string.Empty),
+			// 承認は任意の運用記録（設計書2.10）。承認者が選ばれていれば保存のたびに承認日を今日で記録する
+			Id_ApproveShain = SelectedApproveShain?.Id ?? 0,
+			VApproveShain = new CodeNameView(SelectedApproveShain?.Id ?? 0, SelectedApproveShain?.Code ?? string.Empty, SelectedApproveShain?.Name ?? string.Empty),
+			ApproveDay = SelectedApproveShain != null ? ToDay(DateTime.Today) : string.Empty,
 			DayFrom = ToDay(EditDayFrom.Value),
 			// プロパー(P)は無期限オーバーレイとして扱うので終了日を 99991231 に寄せる
 			DayTo = EditKubun == (int)EnumJodaiKubun.Proper ? "99991231" : ToDay(EditDayTo.Value),
@@ -2153,6 +2190,15 @@ ORDER BY DayFrom";
 		SelectedShain = FindOrAdd(ShainOptions, selected.Id, selected.Code, selected.Name);
 	}
 
+	/// <summary>承認者選択（設計書2.10）。<see cref="SelectShainDialog"/>（入力者）と同じ仕組み。</summary>
+	[RelayCommand]
+	void SelectApproveShainDialog() {
+		var selected = PrintPdfHelper.ShowSelectDialog<MasterShain>(this, typeof(MasterShain), "", "Code",
+			startPos: SelectedApproveShain?.Id ?? 0);
+		if (selected == null) return;
+		SelectedApproveShain = FindOrAdd(ShainOptions, selected.Id, selected.Code, selected.Name);
+	}
+
 	// ===== 共通ヘルパ =============================================================
 
 	void NotifyCounts() {
@@ -2240,6 +2286,10 @@ ORDER BY Odr, Code";
 		DateTime.TryParseExact(day, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value)
 			? value : null;
 
+	/// <summary>承認日（<see cref="TranJodai.ApproveDay"/>）の表示用テキスト。空文字なら「未承認」。</summary>
+	static string FormatApproveDay(string? day) =>
+		string.IsNullOrEmpty(day) ? "未承認" : ParseDay(day) is { } d ? d.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) : day;
+
 	static decimal ParseDecimal(string? text) =>
 		decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) ? value : 0m;
 
@@ -2261,10 +2311,6 @@ ORDER BY Odr, Code";
 	internal static string KubunToName(int kubun) => kubun == (int)EnumJodaiKubun.Proper ? "プロパー" : "セール";
 
 	internal static string TaishoToName(int taisho) => taisho == (int)EnumJodaiTaisho.Honbu ? "本部売上" : "店舗";
-
-	static string RoundUnitName(int unit) => unit switch { 1 => "10円", 2 => "百円", 3 => "千円", _ => "1円" };
-
-	static string RoundTypeName(int type) => type switch { 1 => "四捨五入", 2 => "切上", _ => "切捨" };
 
 	void StartBusy(string message) {
 		IsBusy = true;
@@ -2375,15 +2421,6 @@ public partial class JodaiMeisaiRow : ObservableObject {
 
 	[ObservableProperty]
 	public partial int JodaiOld { get; set; }
-
-	[ObservableProperty]
-	public partial int JodaiNew { get; set; }
-
-	[ObservableProperty]
-	public partial decimal RateOff { get; set; }
-
-	[ObservableProperty]
-	public partial int PriceInTax { get; set; }
 
 	[ObservableProperty]
 	public partial int Status { get; set; }

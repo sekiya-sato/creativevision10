@@ -20,6 +20,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["jodaiscope"] = JodaiScopeScenario.RunAsync,
 	["jodaipricematrix"] = JodaiPriceMatrixScenario.RunAsync,
 	["jodaiconfirm"] = JodaiConfirmScenario.RunAsync,
+	["jodaiconfirmflow"] = JodaiConfirmFlowScenario.RunAsync,
 	["cancel"] = CancelDuringRebuildScenario.RunAsync,
 	["invoicepreflight"] = InvoicePreflightScenario.RunAsync,
 	["manuallock"] = ManualLockScenario.RunAsync,
