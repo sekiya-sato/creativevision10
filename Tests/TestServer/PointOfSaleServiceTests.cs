@@ -10,6 +10,7 @@ using CvServer.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -26,6 +27,7 @@ public class PointOfSaleServiceTests {
 	private SqliteConnection? _anchorConnection;
 	private PointOfSaleService? _service;
 	private CoreService? _coreService;
+	private ServiceProvider? _scopeFactoryProvider;
 	private long _storeId;
 	private long _warehouseId;
 	private long _staffId;
@@ -54,12 +56,14 @@ public class PointOfSaleServiceTests {
 		_warehouseId = InsertTokui("WAREHOUSE", "倉庫", tenType: 0, taxRounding: EnumRounding.Round);
 		_staffId = InsertStaff();
 		_service = new PointOfSaleService(Db, NullLogger<PointOfSaleService>.Instance);
+		_scopeFactoryProvider = new ServiceCollection().BuildServiceProvider();
 		_coreService = new CoreService(
 			NullLogger<CoreService>.Instance,
 			new ConfigurationBuilder().AddInMemoryCollection([]).Build(),
 			new FakeWebHostEnvironment(),
 			new HttpContextAccessor(),
 			Db,
+			_scopeFactoryProvider.GetRequiredService<IServiceScopeFactory>(),
 			Service);
 	}
 
@@ -68,6 +72,7 @@ public class PointOfSaleServiceTests {
 		_db?.Close();
 		(_db?.Connection as SqliteConnection)?.Close();
 		_anchorConnection?.Close();
+		_scopeFactoryProvider?.Dispose();
 	}
 
 	[TestMethod]

@@ -11,6 +11,7 @@ using CvServer.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -41,6 +42,7 @@ public class ManualLockHandlerTests {
 	private SqliteConnection? _anchorConnection;
 	private CoreService? _service;
 	private HttpContextAccessor? _httpContextAccessor;
+	private ServiceProvider? _scopeFactoryProvider;
 
 	[TestInitialize]
 	public void Initialize() {
@@ -61,12 +63,14 @@ public class ManualLockHandlerTests {
 		Db.CreateTable(typeof(SysHistJwt), true, false);
 
 		_httpContextAccessor = new HttpContextAccessor();
+		_scopeFactoryProvider = new ServiceCollection().BuildServiceProvider();
 		_service = new CoreService(
 			NullLogger<CoreService>.Instance,
 			new ConfigurationBuilder().AddInMemoryCollection([]).Build(),
 			new FakeWebHostEnvironment(),
 			_httpContextAccessor,
 			_db,
+			_scopeFactoryProvider.GetRequiredService<IServiceScopeFactory>(),
 			new PointOfSaleService(_db, NullLogger<PointOfSaleService>.Instance));
 	}
 
@@ -75,6 +79,7 @@ public class ManualLockHandlerTests {
 		_db?.Close();
 		(_db?.Connection as SqliteConnection)?.Close();
 		_anchorConnection?.Close();
+		_scopeFactoryProvider?.Dispose();
 	}
 
 	private ExDatabaseSqlite Db => _db ?? throw new AssertFailedException("Database not initialized");

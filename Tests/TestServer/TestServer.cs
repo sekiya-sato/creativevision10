@@ -56,12 +56,13 @@ public class CoreServiceTests {
 		var appInit = new AppGlobal();
 		appInit.InitAsync(_db).Wait();
 		// サービスを作成
-		_service = new CoreService(logger, config, env, httpAccessor, _db,
-			new PointOfSaleService(_db, NullLogger<PointOfSaleService>.Instance));
-		_scheduler = new NCrontab.Scheduler.Scheduler(NullLogger<NCrontab.Scheduler.Scheduler>.Instance);
 		_serviceProvider = new ServiceCollection()
 			.AddSingleton<ExDatabase>(_db)
 			.BuildServiceProvider();
+		_service = new CoreService(logger, config, env, httpAccessor, _db,
+			_serviceProvider.GetRequiredService<IServiceScopeFactory>(),
+			new PointOfSaleService(_db, NullLogger<PointOfSaleService>.Instance));
+		_scheduler = new NCrontab.Scheduler.Scheduler(NullLogger<NCrontab.Scheduler.Scheduler>.Instance);
 		_schedulerService = new SchedulerService(schedulerLogger, _scheduler, _serviceProvider.GetRequiredService<IServiceScopeFactory>(), config, env);
 	}
 

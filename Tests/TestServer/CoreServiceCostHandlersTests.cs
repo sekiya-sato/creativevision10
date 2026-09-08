@@ -8,6 +8,7 @@ using CvServer.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -50,12 +51,14 @@ public class CoreServiceCostHandlersTests {
 	[TestMethod]
 	public void QueryMsgAsync側の7ハンドラがすべて登録されている() {
 		using var db = CreateInMemoryDb();
+		using var scopeFactoryProvider = new ServiceCollection().BuildServiceProvider();
 		var coreService = new CoreService(
 			NullLogger<CoreService>.Instance,
 			new ConfigurationBuilder().AddInMemoryCollection([]).Build(),
 			new FakeWebHostEnvironment(),
 			new HttpContextAccessor(),
 			db,
+			scopeFactoryProvider.GetRequiredService<IServiceScopeFactory>(),
 			new PointOfSaleService(db, NullLogger<PointOfSaleService>.Instance));
 
 		var handlersField = typeof(CoreService).GetField("_handlers", BindingFlags.Instance | BindingFlags.NonPublic)
