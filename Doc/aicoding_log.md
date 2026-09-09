@@ -1,3 +1,17 @@
+## [2026-09-09] UAT-01 再実行ランナーの現行判定修正
+### 目的
+- 現行の消費税率解決と買掛残高の符号に合わせ、UAT-01を再実行する。
+### 実施内容
+- 税率1を`TaxRateResolver.ResolveTaxRatePercent`で伝票月時点に解決する。
+- 買掛・支払残高を`TotalShiire - TotalOut`（未払を正）で検証する。
+### 確認
+- 隔離DBでUAT-01ランナーを実行し、発注・仕入・返品・在庫・支払・冪等性の全判定がPASS。
+- `dotnet build Doc/test/UAT01/UAT01Runner.csproj --no-restore`成功（既存のPkcs競合警告1件）。
+### 注意
+- 起動中の現行DBは使用していない。PDF/WPF目視は未実施。
+
+---
+
 ## [2026-09-09] summaryreconcile 在庫Rebuild明細検証
 ### 目的
 - 202607シードの`Jmeisai`欠落を解消し、UAT-07の在庫Rebuild前提を自動検証する。

@@ -78,7 +78,7 @@ void PartialEndFlag<T>(long id, int flag) where T : BaseDbClass {
 }
 
 var sys = db.Single<MasterSysman>("where Id=@0", 1);
-var taxRate = sys.Jsub?.Where(x => x.Id == 1).OrderByDescending(x => x.DateFrom).FirstOrDefault()?.TaxNewRate ?? 10;
+var taxRate = TaxRateResolver.ResolveTaxRatePercent(sys, 1, Month + "01");
 AssertThat(taxRate == 10, "MasterSysman tax1 current new rate is 10 percent");
 Console.WriteLine($"DB={dbPath} month={Month} taxRate={taxRate}");
 var employee = db.Fetch<MasterShain>("order by Id").First();
@@ -262,9 +262,9 @@ var expectedTax = db.Fetch<Tran03Shiire>("where Id_Shiire=@0 and KakeDay like @1
     .Sum(x => x.Kubun == (int)EnumShiire.Henpin ? (x.Tax1 + x.Tax2 + x.Tax3) * x.CalcFlag : x.Tax1 + x.Tax2 + x.Tax3);
 var expectedTotal = purchaseNet - returnNet + expectedTax;
 AssertThat(kake.Shiire == purchaseNet && kake.Henpin == returnNet && kake.Tax1 + kake.Tax2 + kake.Tax3 == expectedTax
-    && kake.TotalShiire == expectedTotal && kake.TotalOut == 5000 && kake.Balance == 5000 - expectedTotal,
+    && kake.TotalShiire == expectedTotal && kake.TotalOut == 5000 && kake.Balance == expectedTotal - 5000,
     "accounts payable reflects the 5000 payment and final balance");
-AssertThat(shi.TotalOut == 5000 && shi.TotalShiire == expectedTotal && shi.Balance == 5000 - expectedTotal
+AssertThat(shi.TotalOut == 5000 && shi.TotalShiire == expectedTotal && shi.Balance == expectedTotal - 5000
     && shi.ShiharaiYoteiDay == "20260930", "payment summary reflects payment and final balance");
 
 var snapshotKake = string.Join("|", new object[] { kake.Shiire, kake.Henpin, kake.Tax1 + kake.Tax2 + kake.Tax3, kake.TotalShiire, kake.TotalOut, kake.Balance });
