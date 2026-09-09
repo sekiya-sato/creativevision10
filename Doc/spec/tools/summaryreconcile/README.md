@@ -1,4 +1,4 @@
-# summaryreconcile — 請求計算・支払計算の実DB突合ハーネス（UAT-05/06 再現）
+# summaryreconcile — 請求計算・支払計算・在庫Rebuildの実DB突合ハーネス（UAT-05/06/07 再現）
 
 請求計算・支払計算（`SummaryDb.CalcSummary*`）を実DBに対して走らせ、生成された
 `SummaryUriSei` / `SummaryKaiShi` を **請求台帳（発行控え）** / **支払台帳（発行控え）** の
@@ -28,7 +28,8 @@ dotnet run --project tools/summaryreconcile -- <command> [dbPath]
 | `idempotent` | 計算を2回実行しSummaryスナップショットが一致するか | D-02 Rebuild冪等性 / D-03 請求書番号・再発行世代の維持 |
 | `closingcheck` | 締日を99→20に変更→締日変更検査SQLで不一致検出→送信ブロック→締日を99へ復元 | Rebuild時の締日変更ブロック（`SummaryRebuildClosingCheck`） |
 | `paysakicheck` | 親子関係(`Id_Paysaki`)と締日不一致を投入→計算画面の実行前警告とマスターメンテ保存後警告を検査→`Id_Paysaki`・締日を復元 | E7 親子締日ワーニング（`PaysakiClosingCheck`） |
-| `all` | seed → show → idempotent → closingcheck → paysakicheck を順に実行 | 上記すべて |
+| `stockrebuild` | 明細付きのテスト仕入10・売上4を投入→202607の在庫Rebuild→年月在庫/現在庫を突合 | UAT-07 在庫Rebuildの明細欠落防止 |
+| `all` | seed → show → idempotent → closingcheck → paysakicheck → stockrebuild を順に実行 | 上記すべて |
 
 ## テストデータ仕様（テスト月 202607 = 既存取引ゼロのクリーンルーム）
 
@@ -43,6 +44,7 @@ dotnet run --project tools/summaryreconcile -- <command> [dbPath]
 | 仕入/支払 | 仕入先 005 | 仕入50,000/税5,000・支払 現金60,000（支払超過／過払い） |
 | 仕入/支払 | 仕入先 006 | 仕入30,000/税3,000・支払 相殺33,000（現金支払なし・全額相殺） |
 | 仕入/支払 | 仕入先 007 | 仕入40,000/税4,000・支払 現金20,000+相殺20,000+手数料4,000（複数明細） |
+| 在庫Rebuild | テスト専用SKU | 仕入10・売上4（いずれも金額0、`Jmeisai`あり） |
 
 実運用の仕入/支払移行データがほぼ無い（[完成度チェックリスト:392](../../Doc/spec/2026-08-18_CV10機能完成度チェックリスト.md)）ため、005〜007は支払側の境界パターン（過払い・全額相殺・複数明細決済）を補うテスト伝票として追加した。
 

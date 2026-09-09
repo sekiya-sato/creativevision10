@@ -1,3 +1,17 @@
+## [2026-09-09] summaryreconcile 在庫Rebuild明細検証
+### 目的
+- 202607シードの`Jmeisai`欠落を解消し、UAT-07の在庫Rebuild前提を自動検証する。
+### 実施内容
+- `summaryreconcile`へ金額0・明細付きの専用仕入10/売上4を追加し、年月在庫（入庫10、出庫4、在庫6）と現在庫（在庫6）を突合する`stockrebuild`を追加した。
+- `all`へ同検証を組み込み、専用SKUの集計行だけを`Clean`で除去する。
+### 確認
+- DBコピーで`summaryreconcile.exe stockrebuild <copy>`がPASS。`all`は例外なく完走し、`stockrebuild=PASS`。
+- `dotnet build Doc/spec/tools/summaryreconcile/summaryreconcile.csproj --no-restore`、`git diff --check`が成功。
+### 注意
+- 既存DBの保存締日不一致により`closingcheck=FAIL`となる場合がある。本変更の在庫Rebuild検証とは無関係。
+
+---
+
 ## [2026-09-09] 上代一括変更 Doc更新 Step10
 ### Agent
 - Claude Opus-5 : Anthropic : Claude Code

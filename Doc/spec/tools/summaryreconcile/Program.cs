@@ -13,7 +13,8 @@ using Microsoft.Data.Sqlite;
 //   idempotent    計算を2回実行し Summary スナップショットが一致するか（D-02 Rebuild冪等性・D-03 番号維持）
 //   closingcheck  締日を変更→締日変更検査SQLで不一致検出→送信ブロック→締日を復元（Rebuild時の締日変更ブロック）
 //   paysakicheck  親子（請求先/支払先↔得意先/仕入先）の締日不一致データを投入し、実DBで警告が発火するか（E7）。検査後に復元
-//   all           seed → show → idempotent → closingcheck → paysakicheck を順に実行
+//   stockrebuild  202607の明細付き仕入・売上を在庫Rebuildし、年月/現在庫を突合
+//   all           seed → show → idempotent → closingcheck → paysakicheck → stockrebuild を順に実行
 //   dbPath        省略時 C:\gitroot\new2022\cv10\CvServer\server-user163.db
 //
 // 前提: dbPath は開発用DB。実運用DBには使わない。実行前にバックアップ推奨（refer/back/）。
@@ -26,6 +27,8 @@ const string DFrom = "20260701";
 const string DTo = "20260731";
 const int ShimeMatched = 99;   // テスト取引先の実マスタ締日（末日）
 const int ShimeChanged = 20;   // 締日変更検査を発火させる別締日
+const long StockSoko = 0, StockShohin = 999900001, StockCol = 999900002, StockSiz = 999900003;
+const int StockPurchaseSu = 10, StockSalesSu = 4;
 
 // KIN 区分マスタ Id（開発DB server-user163.db の実値）
 const long KinCash = 11783, KinFee = 11782, KinOffset = 11785;
@@ -58,6 +61,8 @@ void Clean() {
     db.Execute("DELETE FROM SummaryKaiKake WHERE DenMonth=@0", Month);
     db.Execute("DELETE FROM SummaryUriSei  WHERE DenDay=@0", DTo);
     db.Execute("DELETE FROM SummaryKaiShi  WHERE DenDay=@0", DTo);
+    db.Execute($"DELETE FROM SummaryStock WHERE SumMonth='{Month}' AND Id_Soko={StockSoko} AND Id_Shohin={StockShohin} AND Id_Col={StockCol} AND Id_Siz={StockSiz}");
+    db.Execute($"DELETE FROM SummaryRealStock WHERE Id_Soko={StockSoko} AND Id_Shohin={StockShohin} AND Id_Col={StockCol} AND Id_Siz={StockSiz}");
 }
 
 // テスト取引先の実マスタは全件が請求単位(TaxCalcUnit=Billing、実データの前提。仕様1.1)であり、
@@ -65,8 +70,9 @@ void Clean() {
 // CalcSummaryUriKake/UriSei/KaiKake/KaiShiが締請求期間でTaxableAmount1×税率を1回丸めて計算する(仕様3.4)。
 // 引数のtaxは元々ヘッダへ直接入れていた税額(10%固定)で、いまはSummary側の計算結果と突き合わせる
 // 目安値としてShow()の表示だけに使う。
-Tran00Uriage Uri(string day, long id, EnumUri00 k, int total, int tax) { var t = new Tran00Uriage { DenDay = day, KakeDay = day, Id_Tokui = id, Total = total, KingakuTotal = total, TaxableAmount1 = total, IsPay = 1 }; t.EnKubun = k; return t; }
-Tran03Shiire Shi(string day, long id, EnumShiire k, int total, int tax) { var t = new Tran03Shiire { DenDay = day, KakeDay = day, Id_Shiire = id, Total = total, KingakuTotal = total, TaxableAmount1 = total, IsPay = 1 }; t.EnKubun = k; return t; }
+Tran00Uriage Uri(string day, long id, EnumUri00 k, int total, int tax, List<Tran99Meisai>? meisai = null) { var t = new Tran00Uriage { DenDay = day, KakeDay = day, Id_Tokui = id, Total = total, KingakuTotal = total, TaxableAmount1 = total, IsPay = 1, Jmeisai = meisai }; t.EnKubun = k; return t; }
+Tran03Shiire Shi(string day, long id, EnumShiire k, int total, int tax, List<Tran99Meisai>? meisai = null) { var t = new Tran03Shiire { DenDay = day, KakeDay = day, Id_Shiire = id, Total = total, KingakuTotal = total, TaxableAmount1 = total, IsPay = 1, Jmeisai = meisai }; t.EnKubun = k; return t; }
+List<Tran99Meisai> StockMeisai(int su) => [new() { No = 1, Id_Shohin = StockShohin, Id_Col = StockCol, Id_Siz = StockSiz, Su = su }];
 List<TranKinMeisai> Kin((long id, int kin)[] m) => [.. m.Select((x, i) => new TranKinMeisai { No = i + 1, Id_Kin = x.id, Kingaku = x.kin })];
 Tran06Nyukin Nyu(string day, long id, (long, int)[] m) => new() { KakeDay = day, Id_Torisaki = id, KingakuTotal = m.Sum(x => x.Item2), Jmeisai = Kin(m) };
 Tran07Shiharai Sih(string day, long id, (long, int)[] m) => new() { KakeDay = day, Id_Torisaki = id, KingakuTotal = m.Sum(x => x.Item2), Jmeisai = Kin(m) };
@@ -79,6 +85,7 @@ void Seed() {
     db.Insert(Nyu("20260725", tokui1, [(KinCash, 50000), (KinFee, 440)]));
     db.Insert(Uri("20260710", tokui2, EnumUri00.Uriage, 30000, 3000));
     db.Insert(Nyu("20260728", tokui2, [(KinCash, 33000)]));
+    db.Insert(Uri("20260729", tokui1, EnumUri00.Uriage, 0, 0, StockMeisai(StockSalesSu)));
     db.Insert(Shi("20260706", shiire1, EnumShiire.Shiire, 80000, 8000));
     db.Insert(Shi("20260714", shiire1, EnumShiire.Henpin, 10000, 1000));
     db.Insert(Sih("20260726", shiire1, [(KinCash, 50000), (KinOffset, 20000)]));
@@ -89,6 +96,7 @@ void Seed() {
     db.Insert(Sih("20260727", shiire4, [(KinOffset, 33000)])); // 相殺のみ：現金支払なしで全額相殺、残高0
     db.Insert(Shi("20260711", shiire5, EnumShiire.Shiire, 40000, 4000));
     db.Insert(Sih("20260727", shiire5, [(KinCash, 20000), (KinOffset, 20000), (KinFee, 4000)])); // 複数明細支払：現金+相殺+手数料の3明細、残高0
+    db.Insert(Shi("20260730", shiire1, EnumShiire.Shiire, 0, 0, StockMeisai(StockPurchaseSu)));
 }
 
 void Calc() {
@@ -147,6 +155,25 @@ bool Idempotent() {
     Console.WriteLine($"1回目/2回目のスナップショット一致: {(same ? "PASS" : "FAIL")}");
     if (!same) foreach (var d in first.Zip(second).Where(z => z.First != z.Second)) Console.WriteLine($"  DIFF: {d.First}  <>  {d.Second}");
     return same;
+}
+
+async Task<bool> StockRebuild() {
+    Console.WriteLine("\n----- stockrebuild (202607 在庫Rebuild明細) -----");
+    Clean();
+    Seed();
+    var ok = true;
+    await foreach (var progress in summaryDb.SummaryAllAsyncStream(new CalcDateTermParameter(Month, Month))) {
+        Console.WriteLine($"{progress.StepName}: {(progress.IsError ? progress.ErrorMessage : "PASS")}");
+        ok &= !progress.IsError;
+    }
+
+    var monthly = db.Single<SummaryStock>("where SumMonth=@0 AND Id_Soko=@1 AND Id_Shohin=@2 AND Id_Col=@3 AND Id_Siz=@4", Month, StockSoko, StockShohin, StockCol, StockSiz);
+    var real = db.Single<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3", StockSoko, StockShohin, StockCol, StockSiz);
+    ok &= monthly.Su == StockPurchaseSu - StockSalesSu && monthly.InQty == StockPurchaseSu && monthly.OutQty == StockSalesSu;
+    ok &= real.Su == StockPurchaseSu - StockSalesSu;
+    Console.WriteLine($"年月在庫: Su={monthly.Su} In={monthly.InQty} Out={monthly.OutQty} / 現在庫: Su={real.Su}");
+    Console.WriteLine($"在庫Rebuild明細(202607): {(ok ? "PASS" : "FAIL")}");
+    return ok;
 }
 
 bool ClosingCheck() {
@@ -276,12 +303,14 @@ switch (command) {
     case "idempotent": Idempotent(); break;
     case "closingcheck": ClosingCheck(); break;
     case "paysakicheck": PaysakiCheck(); break;
+    case "stockrebuild": await StockRebuild(); break;
     case "all":
         Clean(); Seed(); Calc(); Show();
         var i = Idempotent();
         var cc = ClosingCheck();
         var pc = PaysakiCheck();
-        Console.WriteLine($"\n=== ALL: idempotent={(i ? "PASS" : "FAIL")} closingcheck={(cc ? "PASS" : "FAIL")} paysakicheck={(pc ? "PASS" : "FAIL")} ===");
+        var sr = await StockRebuild();
+        Console.WriteLine($"\n=== ALL: idempotent={(i ? "PASS" : "FAIL")} closingcheck={(cc ? "PASS" : "FAIL")} paysakicheck={(pc ? "PASS" : "FAIL")} stockrebuild={(sr ? "PASS" : "FAIL")} ===");
         break;
     default: Console.WriteLine($"unknown command: {command}"); break;
 }
