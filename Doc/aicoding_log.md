@@ -1,3 +1,13 @@
+## [2026-09-10] UAT-10 原価4項目のVM駆動検証
+### 実施内容
+- 隔離SQLiteに専用の通常商品・消化仕入商品・諸掛・仕入/返品・売上/返品を投入するシナリオを追加した。
+- 消化仕入、諸掛確認、総平均原価5004円、評価替え80%で4003円、履歴取消後の5004円復元を実ViewModel経路で検証した。
+### 確認
+- `UatVm.exe costuat --sqlite ... --manage-server --hide-views`で7判定すべてPASS。
+- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
+
+---
+
 ## [2026-09-10] UatVm 隔離SQLite指定
 ### 実施内容
 - `--sqlite`でCvServerとSeederへ同じテストDBを渡せるようにした。
