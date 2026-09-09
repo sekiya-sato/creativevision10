@@ -11,10 +11,10 @@ using System.Text;
 namespace CvWpfclient.ViewModels._30HHT;
 
 public partial class HhtMasterDataCreateViewModel : Helpers.BaseViewModel {
-	private const string DefaultOutputPath = @"C:\hht\hksnds1";
+	private const string DefaultOutputPath = @"C:\hht\hksnds1.txt";
 
 	[ObservableProperty]
-	public partial bool IsCsvFormat { get; set; } = true;
+	public partial bool IsCsvFormat { get; set; }
 
 	[ObservableProperty]
 	public partial bool IsFixedLengthFormat { get; set; }
@@ -25,7 +25,7 @@ public partial class HhtMasterDataCreateViewModel : Helpers.BaseViewModel {
 	[RelayCommand]
 	private void Init() {
 		OutputPath = DefaultOutputPath;
-		IsCsvFormat = true;
+		IsFixedLengthFormat = true;
 	}
 
 	partial void OnIsCsvFormatChanged(bool value) {

@@ -53,7 +53,7 @@ public partial class HhtProcess {
 		foreach (var item in source) {
 			masters.Add(CreateMasterHht(
 				"TAN",
-				(item.Code ?? string.Empty).PadLeft(6, '0') + "  ",
+				(item.Code ?? string.Empty).PadLeft(6, '0') + " _",
 				Sanitize(SelectName(item, null, OutMasterMei)),
 				string.Empty));
 		}
