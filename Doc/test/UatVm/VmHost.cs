@@ -42,6 +42,8 @@ public static class VmHost {
 		/// 実DBへ直接書くため、サーバーが動いていない状態で実行する必要がある。
 		/// </summary>
 		public Action<string>? Seed { get; set; }
+		/// <summary>テスト専用SQLite。未指定時は従来の開発DBを使う。</summary>
+		public string? SqlitePath { get; set; }
 	}
 
 	/// <summary>
@@ -131,7 +133,7 @@ public static class VmHost {
 		// 網羅データの投入は、CvServerがDBを開く前に済ませる。
 		if (options.Seed != null) {
 			var repoRootForSeed = Directory.GetParent(baseDir)?.FullName ?? baseDir;
-			var dbPath = Path.Combine(repoRootForSeed, "CvServer", "server-user163.db");
+			var dbPath = options.SqlitePath ?? Path.Combine(repoRootForSeed, "CvServer", "server-user163.db");
 			try {
 				Boot(baseDir, "シード投入 開始");
 				options.Seed(dbPath);
@@ -157,7 +159,7 @@ public static class VmHost {
 				server = CvServerProcess.Start(repoRoot, url, message => {
 					Boot(baseDir, message);
 					evidence.Write("server", message);
-				});
+				}, options.SqlitePath);
 			}
 			catch (Exception ex) {
 				Boot(baseDir, $"CvServer 起動失敗: {ex.Message}");

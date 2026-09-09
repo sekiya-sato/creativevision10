@@ -54,7 +54,7 @@ public sealed class CvServerProcess : IDisposable {
 	/// <param name="url">待ち受けURL（例: http://127.0.0.1:5002）。</param>
 	/// <param name="trace">経過の記録先。</param>
 	/// <param name="timeoutSeconds">待ち受け開始を待つ秒数。</param>
-	public static CvServerProcess Start(string repoRoot, string url, Action<string> trace, int timeoutSeconds = 120) {
+	public static CvServerProcess Start(string repoRoot, string url, Action<string> trace, string? sqlitePath = null, int timeoutSeconds = 120) {
 		var serverDir = Path.Combine(repoRoot, "CvServer");
 		var dll = Path.Combine(serverDir, "bin", "Debug", "net10.0", "CvServer.dll");
 		if (!File.Exists(dll)) {
@@ -75,6 +75,7 @@ public sealed class CvServerProcess : IDisposable {
 			["ASPNETCORE_ENVIRONMENT"] = "Development",
 			["Kestrel__Endpoints__Http__Url"] = url,
 		};
+		if (!string.IsNullOrWhiteSpace(sqlitePath)) environment["ConnectionStrings__sqlite"] = sqlitePath;
 
 		var processId = CreateProcessInNewGroup(
 			commandLine: $"dotnet \"{dll}\"",

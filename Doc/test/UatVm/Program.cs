@@ -56,6 +56,7 @@ if (string.IsNullOrEmpty(name) || !scenarios.TryGetValue(name, out var scenario)
 	Console.Error.WriteLine("  --code <code>      対象取引先コード（billing）");
 	Console.Error.WriteLine("  --no-execute       更新を伴う実行を省き、入力検証だけ行う");
 	Console.Error.WriteLine("  --no-seed          網羅データの投入を省く（前回投入済みを再利用）");
+	Console.Error.WriteLine("  --sqlite <path>    テスト用SQLite（共有開発DBを変更しない）");
 	Console.Error.WriteLine("  --hide-views       Viewを表示しない");
 	Console.Error.WriteLine("  --fire-at <HH:mm:ss> 同日の壁時計時刻まで待ってから実行する（manuallockrace）");
 	Console.Error.WriteLine("  --race-label <名前>  証跡・記録上の自分の名前、例 A/B（manuallockrace、既定は請求計算役、Bのみ支払計算役）");
@@ -94,6 +95,7 @@ var options = new VmHost.Options {
 	ShowViews = !Flag("--hide-views"),
 	ManageServer = Flag("--manage-server"),
 	Seed = Flag("--no-seed") ? null : seeders.GetValueOrDefault(name),
+	SqlitePath = Option("--sqlite"),
 };
 
 // manuallockrace は同一秒に2プロセスが起動しうるため、既定の証跡ファイル名(<scenario>-<yyyyMMdd-HHmmss>.jsonl)
