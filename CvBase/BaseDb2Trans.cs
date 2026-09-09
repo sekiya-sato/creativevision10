@@ -2528,13 +2528,13 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("数量 6桁 先頭に0か-、5桁数値を格納する。")]
-	public partial int Su { get; set; } = 9;
+	public partial int Su { get; set; } = 0;
 	/// <summary>
 	/// 単価 9桁数値を格納する。
 	/// </summary>
 	[ObservableProperty]
 	[Comment("単価 9桁数値を格納する。")]
-	public partial int Tanka { get; set; } = 9;
+	public partial int Tanka { get; set; } = 0;
 	/// <summary>
 	/// 取引先 文字 8 前'0'埋め
 	/// </summary>
@@ -2554,7 +2554,7 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 	/// </summary>
 	[ObservableProperty]
 	[Comment("1取込ファイルの総件数 5桁数値")]
-	public partial int TotalCnt { get; set; } = 9;
+	public partial int TotalCnt { get; set; } = 0;
 	/// <summary>
 	/// 予備空白	文字	6
 	/// </summary>

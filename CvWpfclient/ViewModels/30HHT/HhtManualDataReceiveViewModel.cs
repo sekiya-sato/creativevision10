@@ -1,4 +1,4 @@
-using CodeShare;
+﻿using CodeShare;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
@@ -15,6 +15,9 @@ namespace CvWpfclient.ViewModels._30HHT;
 public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 	private const string DefaultInputDirectory = @"C:\hht\";
 	private const int ExpectedFieldCount = 16;
+	/// <summary>区分(VULCANタイプ)の有効範囲 1:売上 - 12:客数</summary>
+	private const int MinType0 = 1;
+	private const int MaxType0 = 12;
 
 	[ObservableProperty]
 	public partial string InputDirectory { get; set; } = string.Empty;
@@ -51,7 +54,8 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 				return;
 			}
 
-			var records = await LoadRecordsAsync(filePaths, ct);
+			var backupNames = BuildBackupNames(filePaths);
+			var records = await LoadRecordsAsync(filePaths, backupNames, ct);
 			if (records.Count == 0) {
 				MessageEx.ShowErrorDialog("対象ファイルに取込対象データがありません。", owner: ClientLib.GetActiveView(this));
 				return;
@@ -71,12 +75,12 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 				MessageEx.ShowErrorDialog($"HHTデータ受信エラー: {detail} ({reply.Code})", owner: ClientLib.GetActiveView(this));
 				return;
 			}
-			var retData = Common.DeserializeObject(reply.DataMsg, reply.DataType);
-			int count = 0;
+			var count = records.Count;
 			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
-				// ListData = new ObservableCollection<T>(list.Cast<T>());
 				count = list.Count;
 			}
+			// 登録が成功してから入力ファイルをbackディレクトリへ移動する(失敗時は入力先に残す)
+			MoveToBackDirectory(filePaths, backupNames);
 			var fileNames = string.Join(",", filePaths.Select(Path.GetFileName));
 			MessageEx.ShowInformationDialog($"完了しました({count}件,{fileNames})", owner: ClientLib.GetActiveView(this));
 		}
@@ -94,28 +98,44 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		}
 	}
 
-	private static async Task<List<TranVulcanHht>> LoadRecordsAsync(IEnumerable<string> filePaths, CancellationToken ct) {
+	/// <summary>
+	/// 入力ファイルごとのバックアップ名(受信日時_ファイル連番.txt)を決める。
+	/// </summary>
+	private static Dictionary<string, string> BuildBackupNames(IEnumerable<string> filePaths) {
+		var stamp = DateTime.Now.ToDtStrDateTimeShort();
+		var backupNames = new Dictionary<string, string>();
+		var fileCnt = 1;
+		foreach (var filePath in filePaths) {
+			backupNames.Add(filePath, $"{stamp}_{fileCnt:D3}.txt");
+			fileCnt++;
+		}
+		return backupNames;
+	}
+
+	private static async Task<List<TranVulcanHht>> LoadRecordsAsync(IEnumerable<string> filePaths, IReadOnlyDictionary<string, string> backupNames, CancellationToken ct) {
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		var encoding = Encoding.GetEncoding("shift_jis");
 		List<TranVulcanHht> records = [];
-		var backupPaths = new Dictionary<string, string>();
-		var fileCnt = 1;
 		foreach (var filePath in filePaths) {
 			ct.ThrowIfCancellationRequested();
 			var fileName = Path.GetFileName(filePath);
 			var lines = await File.ReadAllLinesAsync(filePath, encoding, ct);
-			backupPaths.Add(filePath, $"{DateTime.Now.ToDtStrDateTimeShort()}_{fileCnt:D3}.txt");
 			for (var index = 0; index < lines.Length; index++) {
 				ct.ThrowIfCancellationRequested();
 				var line = lines[index];
 				if (string.IsNullOrWhiteSpace(line)) {
 					continue;
 				}
-				records.Add(ParseRecord(line, fileName, index + 1, backupPaths[filePath]));
-				fileCnt++;
+				records.Add(ParseRecord(line, fileName, index + 1, backupNames[filePath]));
 			}
 		}
-		// 全て正常終了したら、ファイルをbackディレクトリに移動
+		return records;
+	}
+
+	/// <summary>
+	/// 入力ファイルをbackディレクトリへ移動する。DB登録が成功した後にのみ呼ぶ。
+	/// </summary>
+	private static void MoveToBackDirectory(IEnumerable<string> filePaths, IReadOnlyDictionary<string, string> backupNames) {
 		foreach (var filePath in filePaths) {
 			var directory = Path.GetDirectoryName(filePath);
 			if (directory == null) {
@@ -125,13 +145,12 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 			if (!Directory.Exists(backDirectory)) {
 				Directory.CreateDirectory(backDirectory);
 			}
-			var destPath = Path.Combine(backDirectory, backupPaths[filePath]);
+			var destPath = Path.Combine(backDirectory, backupNames[filePath]);
 			if (File.Exists(destPath)) {
 				File.Delete(destPath);
 			}
 			File.Move(filePath, destPath);
 		}
-		return records;
 	}
 
 	private static TranVulcanHht ParseRecord(string line, string fileName, int lineNo, string backupName) {
@@ -148,7 +167,7 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		}
 		var newRec = new TranVulcanHht {
 			// field名は、VULCAN定義に従う
-			Type0 = GetInt(fields, 0, 1, "区分", fileName, lineNo),
+			Type0 = GetType0(fields, 0, "区分", fileName, lineNo),
 			HhtNo = GetInt(fields, 1, 3, "HTNO", fileName, lineNo),
 			Serial = GetInt(fields, 2, 5, "シリアル", fileName, lineNo),
 			DenDay = GetString(fields, 3, 8, "日付", fileName, lineNo),
@@ -229,12 +248,6 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		var value = fields[index].Trim();
 		if (string.IsNullOrEmpty(value))
 			return 0;
-		if (value.Length == 1) {
-			var ret = Hex2Digit(value);
-			if (ret >= 0) {
-				return ret;
-			}
-		}
 		ValidateDigits(value, maxDigits, fieldName, fileName, lineNo);
 		if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result)) {
 			throw CreateFieldError(fileName, lineNo, fieldName, "数値に変換できません。");
@@ -292,13 +305,15 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 		}
 	}
 	/// <summary>
-	/// Valucanの区分フィールドは、1桁の16進数で表現されるため、16進数として変換を試みる。変換できない場合は-1を返す。
+	/// VULCANの区分フィールドは 1-9,A-C の1桁16進数で表現されるため、16進数として 1-12 の数値へ変換する。
+	/// 16進変換はこの区分フィールド専用で、他の数値項目には適用しない(A-Fが混入した際に黙って数値化されるのを防ぐ)。
 	/// </summary>
-	/// <param name="value"></param>
-	/// <returns></returns>
-	private static int Hex2Digit(string value) {
-		if (!int.TryParse(value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var result)) {
-			return -1;
+	private static int GetType0(IReadOnlyList<string> fields, int index, string fieldName, string fileName, int lineNo) {
+		var value = fields[index].Trim();
+		if (value.Length != 1
+			|| !int.TryParse(value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var result)
+			|| result < MinType0 || result > MaxType0) {
+			throw CreateFieldError(fileName, lineNo, fieldName, $"1-9,A-C({MinType0}-{MaxType0})のいずれかを指定してください。値={value}");
 		}
 		return result;
 	}
