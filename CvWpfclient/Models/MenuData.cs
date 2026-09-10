@@ -133,8 +133,7 @@ public partial class MenuData : ObservableObject {
 				new("上代一括変更", typeof(Views._01Master.MasterJouDaiBulkChangeView), addInfo:"店舗･期間つきの販売価格をTranJodaiで登録し確定でDerivedJodaiへ展開"),
 				new("生地付属マスターメンテ", typeof(Views._01Master.MasterMaterialMenteView), addInfo:"生地・付属品マスタメンテ画面"),
 			])),
-			new("▲ 顧客・イベント ----", new([
-				new("顧客マスタメンテ", typeof(Views._01Master.MasterEndCustomerMenteView), addInfo:"顧客マスタメンテ画面"),
+			new("▲ イベント ----", new([
 				new("得意先イベントメンテ", typeof(Views._01Master.TranTokuiPromotionMenteView), addInfo:"得意先、日付別のイベント名と重要度を登録"),
 				new("店舗イベントメンテ", typeof(Views._01Master.TranShopPromotionMenteView), addInfo:"店舗、日付別のイベント名と重要度を登録"),
 			])),
@@ -335,7 +334,6 @@ public partial class MenuData : ObservableObject {
 				new("投入売上在庫表", typeof(Views._20UriageAnalysis.InputSalesStockReportView), addInfo:"品番別に投入(仕入)･売上･在庫･消化率を並べて印刷"),
 				new("ベスト表", typeof(Views._20UriageAnalysis.BestSalesReportView), addInfo:"売上を品番別に順位付けし構成比･累計構成比を印刷"),
 				new("商品消化率表", typeof(Views._20UriageAnalysis.ShohinTurnoverRateReportView), addInfo:"商品別に消化率と値入率を印刷。分母は売上+在庫/投入を選択"),
-				new("セット売上分析表", typeof(Views._20UriageAnalysis.SetSalesAnalysisReportView), addInfo:"未実装 セット定義テーブルが無く分析の切り口も未確定"),
 				new("店別売上日報", typeof(Views._20UriageAnalysis.ShopSalesDailyView), addInfo:"店舗×日で伝票数･数量･金額･消費税･値引･客単価を印刷"),
 				new("店舗別売上日計表", typeof(Views._20UriageAnalysis.ShopSalesDailySummaryView), addInfo:"日計を売上･返品･値引へ分解して純売上と累計を印刷"),
 				new("売上速報", typeof(Views._20UriageAnalysis.SalesQuickReportView), addInfo:"指定日の全店売上を当日･累計･予算比･前年比で1枚に印刷"),
@@ -402,8 +400,6 @@ public partial class MenuData : ObservableObject {
 				new("HHT手動データ受信", typeof(Views._30HHT.HhtManualDataReceiveView), addInfo:"受信フォルダ内の HHT データを手動取込"),
 				new("HHTエラーデータ修正入力", typeof(Views._30HHT.HhtErrorDataInputView), addInfo:"変換エラーのHHTデータを確認・修正"),
 				new("HHTデータ更新", typeof(Views._30HHT.HhtDataUpdateView), addInfo:"受信済みHHTデータを伝票へ展開"),
-				new("HHT未更新データ印刷", typeof(Views._30HHT.HhtUnupdatedDataPrintView), addInfo:"準備中"),
-				new("HHT未更新データ一括削除", typeof(Views._30HHT.HhtUnupdatedDataDeleteView), addInfo:"準備中"),
 				new("出荷指示明細書印刷", typeof(Views._30HHT.ShippingConfirmDetailPrintView), addInfo:"準備中"),
 				new("移動明細書印刷", typeof(Views._30HHT.IdoDetailBookPrintView), addInfo:"準備中"),
 				new("即時移動明細書", typeof(Views._30HHT.IdoSokuDetailBookPrintView), addInfo:"準備中"),
@@ -419,7 +415,7 @@ public partial class MenuData : ObservableObject {
 		 * 32 顧客管理
 		 * ================================================================ */
 		new("■ 顧客管理", new([
-			new("顧客マスタ", typeof(Views._32LoyalCustomer.CustomerMasterView), addInfo:"準備中"),
+			new("顧客マスタメンテ", typeof(Views._01Master.MasterEndCustomerMenteView), addInfo:"顧客マスタメンテ画面"),
 			new("顧客カルテ", typeof(Views._32LoyalCustomer.EndCustomerProfileView), addInfo:"準備中"),
 			new("▲ ポイント ----", new([
 				new("ポイントマスタ（ベース）（管理者用)", typeof(Views._32LoyalCustomer.PointMasterBaseAdminView), addInfo:"準備中"),

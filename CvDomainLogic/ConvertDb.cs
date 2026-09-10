@@ -500,6 +500,7 @@ WHERE EXISTS (select 1 from {tmp} t where t.Code = {table}.Code)");
 				Name = getString(rec, "名前"),
 				Kana = getString(rec, "フリガナ"),
 				Mail = getString(rec, "メール"),
+				IsHhtNot = getDataInt(rec, "出力FLG"),
 				VTenpo = new() {
 					Cd = getString(rec, "店舗CD"), // 残りはCnvAfterMaster()でセット
 				},
@@ -838,6 +839,7 @@ OR (Kubun ='{MasterMeisho.KubunSeason}' and Code =@3) OR (Kubun ='{MasterMeisho.
 				IsPay = getDataInt(rec, "請求印刷"),
 				TaxRounding = NormalizeTaxRounding(getDataInt(rec, "消費税端数")),
 				TaxCalcUnit = NormalizeTaxCalcUnit(getDataInt(rec, "消費税計算方法")),
+				IsHhtNot = (getDataInt(rec, "POS区分") ==0? 0: 1),
 				SlipFormType = getDataInt(rec, "伝票発行区分"),
 				Jdetail = new MasterToriDetail() {
 					BankAccount1 = getString(rec, "振込先1"),
