@@ -322,7 +322,69 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 				Mei_Shain = shain?.Name ?? string.Empty,
 			});
 		}
+		ApplyResolvedJodai(group, cache, meisai, kakeRitsu);
 		return meisai;
+	}
+
+	/// <summary>
+	/// 上代一括変更(<see cref="DerivedJodai"/>)の適用価格を明細へ反映する。
+	/// <para>
+	/// <see cref="LoadSkuCache"/> は商品マスタの定価(<see cref="MasterShohin.TankaJodai"/>)しか読まないため、
+	/// セール等のオーバーレイが効いている期間のHHTデータを取り込むと定価が載ってしまう。
+	/// 各入力画面(<c>SelectShohinViewModel</c> / <c>InputBarcodeViewModel</c>)と同じ判定軸で解決し直す。
+	/// </para>
+	/// <para>
+	/// 適用行が無ければ <see cref="JodaiDb.ResolveJodaiList"/> が定価を返すので、従来の取込結果は変わらない。
+	/// 金額(<c>Kingaku</c>)はHHT機から来た単価(<c>Tanka</c>)で決まるため、ここでは動かさない。
+	/// </para>
+	/// </summary>
+	/// <param name="kakeRitsu">掛率(%)。0より大きい区分だけ 下代 = 上代 × 掛率 を引き直す。</param>
+	private void ApplyResolvedJodai(HhtSlipGroup group, HhtMasterCache cache, List<Tran99Meisai> meisai, decimal kakeRitsu) {
+		if (meisai.Count == 0) {
+			return;
+		}
+		var (taisho, idTenpo, day) = ResolveJodaiAxis(group, cache);
+		var map = new JodaiDb(_db).ResolveJodaiList(meisai.Select(x => x.Id_Shohin), taisho, idTenpo, day);
+		foreach (var m in meisai) {
+			if (!map.TryGetValue(m.Id_Shohin, out var jodai)) {
+				continue;
+			}
+			m.Jodai = jodai;
+			if (kakeRitsu > 0) {
+				m.Gedai = (int)Math.Round(jodai * kakeRitsu / 100m, MidpointRounding.AwayFromZero);
+			}
+		}
+	}
+
+	/// <summary>
+	/// 上代を解決する判定軸(対象系統・対象Id・判定日)を伝票区分から決める。
+	/// <para>
+	/// 店舗売上/返品は店舗系統＋当該店舗、卸売上/卸返品は本部系統＋当該得意先、
+	/// それ以外(仕入・発注・棚卸・入出庫・移動)は対象を特定できないので本部系統の全件行(0)を使う。
+	/// 各入力画面が <c>SelectShohinViewModel</c> へ渡している軸と同じ規則である。
+	/// </para>
+	/// <para>
+	/// コードがマスタに無い場合は 0(全件行)へ落とす。未登録そのものは <see cref="BuildSlip"/> 側が
+	/// E010/E012 として検出するので、ここでエラーを二重に積まない。
+	/// </para>
+	/// </summary>
+	private static (EnumJodaiTaisho Taisho, long IdTenpo, string Day) ResolveJodaiAxis(HhtSlipGroup group, HhtMasterCache cache) {
+		var head = group.Rows[0];
+		var day = head.DenDay;
+		switch (group.Type0) {
+			case TypeUriage:
+			case TypeHenpin: {
+				var tenpo = ResolveTokui(cache, head.Shop, [(int)EnumTokui._0_Soko, (int)EnumTokui._6_Tenpo], out _);
+				return (EnumJodaiTaisho.Tenpo, tenpo?.Id ?? 0, day);
+			}
+			case TypeOroshi:
+			case TypeOroshiHenpin: {
+				var tokui = ResolveTokui(cache, head.ToriSaki, [(int)EnumTokui._1_Oroshi, (int)EnumTokui._3_UriShi], out _);
+				return (EnumJodaiTaisho.Honbu, tokui?.Id ?? 0, day);
+			}
+			default:
+				return (EnumJodaiTaisho.Honbu, 0, day);
+		}
 	}
 
 	/// <summary>

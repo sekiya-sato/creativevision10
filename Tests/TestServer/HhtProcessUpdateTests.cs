@@ -498,6 +498,75 @@ public class HhtProcessUpdateTests {
 
 	#endregion
 
+	#region 上代一括変更(DerivedJodai)の反映
+
+	/// <summary>店舗売上でDerivedJodaiの適用行があれば、明細のJodaiは定価ではなく適用上代になる</summary>
+	[TestMethod]
+	public void UpdateVulcan2Tran_TenpoUriage_WithDerivedJodai_AppliesOverlayPrice() {
+		InsertDerivedJodai(EnumJodaiTaisho.Tenpo, _idTenpo, "20260101", "20260228", jodai: 800);
+		InsertVulcan(type0: 1, serial: 1, shop: TenpoCode, denDay: "20260130", denNo: "9990000000001", jan1: Jan1Ok);
+
+		Run();
+
+		var meisai = Db.Fetch<Tran01Tenuri>().Single().Jmeisai!.Single();
+		Assert.AreEqual(800, meisai.Jodai, "対象=Tenpo・当該店舗・伝票日に合致するDerivedJodaiが定価より優先される");
+	}
+
+	/// <summary>卸売上でDerivedJodaiの適用行があれば、Jodaiが適用上代になり、Gedaiもそこから掛率で引き直される</summary>
+	[TestMethod]
+	public void UpdateVulcan2Tran_Oroshi_WithDerivedJodai_AppliesOverlayPriceAndRecalculatesGedai() {
+		InsertDerivedJodai(EnumJodaiTaisho.Honbu, _idTokui, "20260101", "20260228", jodai: 800);
+		InsertVulcan(type0: 9, serial: 1, shop: SokoCode, toriSaki: TokuiCode,
+			denNo: "00001234", jan1: Jan1Ok, su: 2, tanka: 500, kakeRitsu: "00650");
+
+		Run();
+
+		var meisai = Db.Fetch<Tran00Uriage>().Single().Jmeisai!.Single();
+		Assert.AreEqual(800, meisai.Jodai, "対象=Honbu・当該得意先の適用行が定価より優先される");
+		Assert.AreEqual(520, meisai.Gedai, "下代 = 適用上代800 × 掛率65.0%");
+	}
+
+	/// <summary>卸売上でId_Tenpo=0(全件行)のDerivedJodaiがあれば、得意先を問わず適用される</summary>
+	[TestMethod]
+	public void UpdateVulcan2Tran_Oroshi_WithWildcardDerivedJodai_AppliesToAnyTokui() {
+		InsertDerivedJodai(EnumJodaiTaisho.Honbu, idTenpo: 0, "20260101", "20260228", jodai: 700);
+		InsertVulcan(type0: 9, serial: 1, shop: SokoCode, toriSaki: TokuiCode,
+			denNo: "00001234", jan1: Jan1Ok, su: 2, tanka: 500, kakeRitsu: "00650");
+
+		Run();
+
+		var meisai = Db.Fetch<Tran00Uriage>().Single().Jmeisai!.Single();
+		Assert.AreEqual(700, meisai.Jodai);
+		Assert.AreEqual(455, meisai.Gedai, "下代 = 適用上代700 × 掛率65.0%");
+	}
+
+	/// <summary>適用行が無ければ従来どおり商品マスタのTankaJodaiがJodaiに載る（回帰防止）</summary>
+	[TestMethod]
+	public void UpdateVulcan2Tran_TenpoUriage_NoDerivedJodai_UsesMasterTankaJodai() {
+		InsertVulcan(type0: 1, serial: 1, shop: TenpoCode, denDay: "20260130", denNo: "9990000000001", jan1: Jan1Ok);
+
+		Run();
+
+		var meisai = Db.Fetch<Tran01Tenuri>().Single().Jmeisai!.Single();
+		Assert.AreEqual(TankaJodai, meisai.Jodai, "適用行が無ければ商品マスタの定価がそのまま載る");
+	}
+
+	/// <summary>伝票日がDerivedJodaiの期間外なら適用されず、商品マスタの定価に戻る</summary>
+	[TestMethod]
+	public void UpdateVulcan2Tran_Oroshi_DerivedJodaiOutsideDateRange_NotApplied() {
+		InsertDerivedJodai(EnumJodaiTaisho.Honbu, _idTokui, "20260201", "20260228", jodai: 800);
+		InsertVulcan(type0: 9, serial: 1, denDay: "20260130", shop: SokoCode, toriSaki: TokuiCode,
+			denNo: "00001234", jan1: Jan1Ok, su: 2, tanka: 500, kakeRitsu: "00650");
+
+		Run();
+
+		var meisai = Db.Fetch<Tran00Uriage>().Single().Jmeisai!.Single();
+		Assert.AreEqual(TankaJodai, meisai.Jodai, "伝票日(20260130)がDerivedJodaiの期間(20260201-20260228)外なので適用されない");
+		Assert.AreEqual(650, meisai.Gedai, "下代は従来通り 定価1000 × 掛率65.0%");
+	}
+
+	#endregion
+
 	#region 準備
 
 	private HhtProcess.HhtUpdateResult Run() =>
@@ -511,7 +580,7 @@ public class HhtProcessUpdateTests {
 			typeof(Tran05Ido), typeof(Tran10IdoOut), typeof(Tran11IdoIn), typeof(Tran12Jyuchu),
 			typeof(Tran13Hachu), typeof(Tran60Tana),
 			typeof(MasterTokui), typeof(MasterShiire), typeof(MasterShain), typeof(MasterShohin),
-			typeof(MasterEndCustomer), typeof(MasterSysman), typeof(DerivedShohinColSiz),
+			typeof(MasterEndCustomer), typeof(MasterSysman), typeof(DerivedShohinColSiz), typeof(DerivedJodai),
 			typeof(SummaryStock), typeof(SummaryRealStock), typeof(SummaryUriKake), typeof(SummaryKaiKake),
 			typeof(Tran06Nyukin), typeof(Tran07Shiharai), typeof(MasterMeisho),
 		}) {
@@ -562,6 +631,20 @@ public class HhtProcessUpdateTests {
 		Db.Insert(new MasterTokui { Code = code, Name = $"取引先{code}", TenType = tenType, IsZaiko = isZaiko, TaxCalcUnit = taxCalcUnit });
 		return Db.Single<MasterTokui>("where Code=@0", code).Id;
 	}
+
+	/// <summary>上代一括変更(DerivedJodai)の適用行を直接投入する。TranJodai経由の展開は使わず、展開結果だけを再現する</summary>
+	private void InsertDerivedJodai(EnumJodaiTaisho taisho, long idTenpo, string dayFrom, string dayTo, int jodai) =>
+		Db.Insert(new DerivedJodai {
+			TaishoType = (int)taisho,
+			Id_Tenpo = idTenpo,
+			Id_Shohin = _idShohin,
+			DayFrom = dayFrom,
+			DayTo = dayTo,
+			Kubun = (int)EnumJodaiKubun.Sale,
+			Jodai = jodai,
+			Id_Tran = 999,
+			Priority = 999,
+		});
 
 	private void InsertVulcan(
 		int type0,
