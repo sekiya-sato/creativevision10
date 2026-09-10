@@ -109,6 +109,48 @@ public static class JuchuShippingScenario {
 		var confirmed = (await session.QueryAsync<TranHaibun>("where Id=@0", corrected.Id.ToString())).Single();
 		if (!session.Check("UAT-02 配分が確定される", !string.IsNullOrEmpty(confirmed.KakuteiDay), new { confirmed.Id, confirmed.KakuteiDay })) return;
 
+		var stockBeforeCancel = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
+			seeded.WarehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).Single();
+		var salesBeforeCancel = await session.QueryAsync<Tran00Uriage>("where RelateNo1=@0", orderId.ToString());
+		var cancel = session.OpenView<ShippingConfirmListView, ShippingConfirmListViewModel>();
+		cancel.Input("UAT-02:確定取消の滞留検索条件", vm => {
+			vm.ViewKind = "滞留";
+			vm.KakuteiFromText = DenDay;
+			vm.KakuteiToText = DenDay;
+			vm.SokoCode = seeded.WarehouseCode;
+			vm.TokuiCode = seeded.TokuiCode;
+			vm.StagnationDaysText = "0";
+			vm.MaxCountText = "500";
+		}, new { DenDay, seeded.WarehouseCode, seeded.TokuiCode });
+		await cancel.RunAsync("UAT-02:確定取消の滞留検索", vm => vm.SearchCommand);
+		var cancelRow = cancel.Vm.Rows.SingleOrDefault(x => x.Id == corrected.Id);
+		if (!session.Check("UAT-02 確定済み未出荷配分が滞留一覧に出る", cancelRow != null,
+			new { corrected.Id, rows = cancel.Vm.Rows.Count, cancel.Vm.Message })) return;
+		cancelRow!.IsChecked = true;
+		await cancel.RunAsync("UAT-02:出荷確定取消", vm => vm.CancelConfirmCommand);
+
+		var canceled = (await session.QueryAsync<TranHaibun>("where Id=@0", corrected.Id.ToString())).Single();
+		var stockAfterCancel = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
+			seeded.WarehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).Single();
+		var salesAfterCancel = await session.QueryAsync<Tran00Uriage>("where RelateNo1=@0", orderId.ToString());
+		if (!session.Check("UAT-02 確定取消で未確定へ復帰", canceled is { EndFlag: 0, RelateNo2: 0 } && string.IsNullOrEmpty(canceled.KakuteiDay),
+			new { canceled.Id, canceled.EndFlag, canceled.RelateNo2, canceled.KakuteiDay })) return;
+		if (!session.Check("UAT-02 確定取消で在庫・引当を維持", stockAfterCancel.Su == stockBeforeCancel.Su
+			&& stockAfterCancel.ReserveQty == stockBeforeCancel.ReserveQty,
+			new { before = new { stockBeforeCancel.Su, stockBeforeCancel.ReserveQty }, after = new { stockAfterCancel.Su, stockAfterCancel.ReserveQty } })) return;
+		if (!session.Check("UAT-02 確定取消で売上を作成しない", salesBeforeCancel.Count == 0 && salesAfterCancel.Count == 0,
+			new { before = salesBeforeCancel.Count, after = salesAfterCancel.Count })) return;
+
+		await confirm.RunAsync("UAT-02:取消後の確定検索", vm => vm.SearchCommand);
+		confirmRow = confirm.Vm.Rows.SingleOrDefault(x => x.Id == corrected.Id);
+		if (!session.Check("UAT-02 取消後の配分を再指示できる", confirmRow != null,
+			new { corrected.Id, rows = confirm.Vm.Rows.Count, confirm.Vm.Message })) return;
+		confirmRow!.IsChecked = true;
+		await confirm.RunAsync("UAT-02:取消後の出荷再確定", vm => vm.ConfirmSelectedCommand);
+		var reconfirmed = (await session.QueryAsync<TranHaibun>("where Id=@0", corrected.Id.ToString())).Single();
+		if (!session.Check("UAT-02 取消後に再確定される", !string.IsNullOrEmpty(reconfirmed.KakuteiDay),
+			new { reconfirmed.Id, reconfirmed.KakuteiDay })) return;
+
 		var shipping = session.OpenView<ShippingInputView, ShippingInputViewModel>();
 		shipping.Input("UAT-02:出荷検索条件", vm => {
 			vm.KakuteiFromText = DenDay;
