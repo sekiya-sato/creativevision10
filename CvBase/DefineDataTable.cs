@@ -137,7 +137,7 @@ public class DefineDataTable {
 
 		var tableTypes = TableTypes;
 		foreach (var tableType in tableTypes) {
-			/* if (typeof(IDerivedClass).IsAssignableFrom(tableType)) {} */
+			PreAdjustTable(db, tableType);
 			if (!db.CreateTable(tableType, isForce)) {
 				_logger.LogError("テーブルの作成に失敗しました。テーブル名: {TableName}", tableType.Name);
 				return false;
@@ -159,6 +159,21 @@ public class DefineDataTable {
 		//summaryDb.CalcSummaryRealStock(DateTime.Now.ToString("yyyyMM"));
 
 		return ret;
+	}
+	/// <summary>
+	/// テーブル作成前に、テーブル定義を調整する
+	/// </summary>
+	/// <param name="db"></param>
+	/// <param name="tableType"></param>
+	void PreAdjustTable(ExDatabase db, Type tableType) {
+		/* if (typeof(IDerivedClass).IsAssignableFrom(tableType)) {} */
+		if (tableType == typeof(SysSequence)) {
+			var latestDb = db.FirstOrDefault<SysUpdateDb>("order by DbVersion desc");
+			if (latestDb?.DbVersion <= 26_09_03_01) {
+				_logger.LogWarning($"DBバージョン{latestDb?.DbVersion}のため、SysSequenceを現行定義で再作成します。");
+				db.DropTable<SysSequence>();
+			}
+		}
 	}
 	/// <summary>
 	/// データがないとき、最低限の初期データを作成する
