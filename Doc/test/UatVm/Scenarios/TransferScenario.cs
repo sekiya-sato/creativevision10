@@ -1,6 +1,8 @@
 using CvAsset;
 using CvBase;
+using CvWpfclient.ViewModels._00System;
 using CvWpfclient.ViewModels._08Zaiko;
+using CvWpfclient.Views._00System;
 using CvWpfclient.Views._08Zaiko;
 using UatVm.Seed;
 
@@ -49,6 +51,7 @@ public static class TransferScenario {
 		await cancel.RunAsync("UAT-03:未受積送取消", vm => vm.DoDeleteOnDetailTabCommand);
 		await CheckStock(session, seeded, "UAT-03 未受積送取消", sourceSu: 15, destinationSu: 5, destinationTransit: 0);
 		session.Check("UAT-03 即時移動は削除済み", (await session.QueryAsync<Tran05Ido>("where Id=@0", sokuId.ToString())).Count == 0, new { sokuId });
+		await CheckRebuildAsync(session, seeded);
 		session.SetDialogResponder(null);
 	}
 
@@ -84,17 +87,42 @@ public static class TransferScenario {
 	private static async Task CheckStock(VmSession session, TransferSeeder.Result seeded, string name, int sourceSu, int destinationSu, int destinationTransit) {
 		var source = await Stock(session, seeded, seeded.SourceWarehouseId);
 		var destination = await Stock(session, seeded, seeded.DestinationWarehouseId);
-		session.Check(name, source.Su == sourceSu && destination.Su == destinationSu && destination.TransitQty == destinationTransit,
+		session.Check(name, source.RealSu == sourceSu && source.MonthlySu == sourceSu
+			&& destination.RealSu == destinationSu && destination.MonthlySu == destinationSu
+			&& destination.TransitQty == destinationTransit,
 			new { source, destination, sourceSu, destinationSu, destinationTransit });
+	}
+
+	private static async Task CheckRebuildAsync(VmSession session, TransferSeeder.Result seeded) {
+		var sourceBefore = await Stock(session, seeded, seeded.SourceWarehouseId);
+		var destinationBefore = await Stock(session, seeded, seeded.DestinationWarehouseId);
+		var rebuild = session.OpenView<StockKakeUpdateView, StockKakeUpdateViewModel>();
+		await rebuild.RunAsync("UAT-03:在庫Rebuild初期化", vm => vm.InitCommand);
+		rebuild.Input("UAT-03:在庫Rebuild対象", vm => {
+			vm.YearMonthFrom = "2026/09";
+			vm.YearMonthTo = "2026/09";
+			vm.UpdateTarget = "在庫のみ";
+		}, new { Month = "2026/09", UpdateTarget = "在庫のみ" });
+		await rebuild.RunAsync("UAT-03:在庫Rebuild", vm => vm.ExecuteCommand);
+		session.Check("UAT-03 在庫Rebuild完了", rebuild.Vm.ProgressValue == 100
+			&& rebuild.Vm.StatusMessage.Contains("完了", StringComparison.Ordinal),
+			new { rebuild.Vm.ProgressValue, rebuild.Vm.StatusMessage });
+
+		var sourceAfter = await Stock(session, seeded, seeded.SourceWarehouseId);
+		var destinationAfter = await Stock(session, seeded, seeded.DestinationWarehouseId);
+		session.Check("UAT-03 Rebuild後も移動元の月次・実在庫が一致", sourceAfter == sourceBefore,
+			new { before = sourceBefore, after = sourceAfter });
+		session.Check("UAT-03 Rebuild後も移動先の月次・実在庫が一致", destinationAfter == destinationBefore,
+			new { before = destinationBefore, after = destinationAfter });
 	}
 
 	private static async Task<StockValue> Stock(VmSession session, TransferSeeder.Result seeded, long warehouseId) {
 		var real = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
 			warehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).FirstOrDefault();
-		var monthly = (await session.QueryAsync<SummaryStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
-			warehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).FirstOrDefault();
-		return new StockValue(real?.Su ?? 0, monthly?.TransitQty ?? 0);
+		var monthly = (await session.QueryAsync<SummaryStock>("where SumMonth=@0 AND Id_Soko=@1 AND Id_Shohin=@2 AND Id_Col=@3 AND Id_Siz=@4",
+			TransferSeeder.ScenarioDay[..6], warehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).FirstOrDefault();
+		return new StockValue(real?.Su ?? 0, monthly?.Su ?? 0, monthly?.TransitQty ?? 0);
 	}
 
-	private sealed record StockValue(int Su, int TransitQty);
+	private sealed record StockValue(int RealSu, int MonthlySu, int TransitQty);
 }

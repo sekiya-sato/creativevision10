@@ -1,3 +1,12 @@
+## [2026-09-10] UAT-03 在庫Rebuild一致
+### 実施内容
+- 即時移動、積送受入、未受取消後に在庫Rebuildを実行し、専用SKUの月次・実在庫を再照合した。
+### 確認
+- 隔離SQLiteの`UatVm.exe transfer --sqlite ... --manage-server --hide-views`で11判定すべてPASS。
+- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
+
+---
+
 ## [2026-09-10] UAT-02 在庫割れ・欠品のVM駆動検証
 ### 実施内容
 - 受注10・在庫8で配分10の確定が原子的に拒否されることを確認し、配分8へ訂正した。
