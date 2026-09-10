@@ -1,3 +1,13 @@
+## [2026-09-10] UAT-02 全量欠品・強制完了のVM駆動検証
+### 実施内容
+- 既存受注の残4から在庫2を再配分・確定し、滞留一覧画面の強制完了を実行した。
+- 実出荷0・欠品2・伝票未作成、在庫2維持・引当0、受注残4を検証した。
+### 確認
+- 隔離SQLiteの`UatVm.exe juchushipping --sqlite ... --manage-server --hide-views`で22判定すべてPASS。
+- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
+
+---
+
 ## [2026-09-10] UAT-03 在庫Rebuild一致
 ### 実施内容
 - 即時移動、積送受入、未受取消後に在庫Rebuildを実行し、専用SKUの月次・実在庫を再照合した。

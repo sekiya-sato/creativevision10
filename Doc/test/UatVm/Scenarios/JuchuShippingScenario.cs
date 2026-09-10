@@ -141,9 +141,71 @@ public static class JuchuShippingScenario {
 
 		await allocated.RunAsync("UAT-02:出荷後の受注残再検索", vm => vm.DoSearchCommand);
 		var afterOrder = allocated.Vm.SearchRows.SingleOrDefault(x => x.Id == orderId);
-		session.Check("UAT-02 出荷後の受注残は4", afterOrder is { ShukkaSu: ShippingQuantity, HaibunSu: 0 }
+		if (!session.Check("UAT-02 出荷後の受注残は4", afterOrder is { ShukkaSu: ShippingQuantity, HaibunSu: 0 }
 			&& afterOrder.ZanSu == OrderQuantity - ShippingQuantity,
-			new { afterOrder?.ShukkaSu, afterOrder?.HaibunSu, afterOrder?.ZanSu });
+			new { afterOrder?.ShukkaSu, afterOrder?.HaibunSu, afterOrder?.ZanSu })) return;
+
+		allocated.Input("UAT-02:全量欠品用の受注残を再読込", vm => {
+			vm.SelectedTabIndex = 0;
+			vm.SelectedSearchRow = afterOrder;
+		}, new { orderId, afterOrder?.ZanSu });
+		await allocated.RunAsync("UAT-02:全量欠品用の配分入力へ", vm => vm.GoToEditCommand);
+		allocated.Input("UAT-02:在庫2を全量欠品用に配分", vm => {
+			vm.ShijiDay = DateTime.Parse(DenDay);
+			vm.NouhinDay = DateTime.Parse(DenDay);
+			vm.MeisaiRows.Single().Su = seeded.InitialStock - ShippingQuantity;
+		}, new { quantity = seeded.InitialStock - ShippingQuantity });
+		await allocated.RunAsync("UAT-02:全量欠品用の配分登録", vm => vm.DoRegisterCommand);
+		var allShortage = (await session.QueryAsync<TranHaibun>(
+			"where RelateNo1=@0 AND EndFlag=0 AND ifnull(KakuteiDay,'')=''", orderId.ToString())).Single();
+		if (!session.Check("UAT-02 全量欠品用に在庫2を引当", allShortage.Su == seeded.InitialStock - ShippingQuantity,
+			new { allShortage.Id, allShortage.Su })) return;
+
+		await confirm.RunAsync("UAT-02:全量欠品用の確定検索", vm => vm.SearchCommand);
+		confirmRow = confirm.Vm.Rows.SingleOrDefault(x => x.Id == allShortage.Id);
+		if (!session.Check("UAT-02 全量欠品用の配分が確定一覧に出る", confirmRow != null,
+			new { allShortage.Id, rows = confirm.Vm.Rows.Count })) return;
+		confirmRow!.IsChecked = true;
+		await confirm.RunAsync("UAT-02:全量欠品用の出荷確定", vm => vm.ConfirmSelectedCommand);
+		var allShortageConfirmed = (await session.QueryAsync<TranHaibun>("where Id=@0", allShortage.Id.ToString())).Single();
+		if (!session.Check("UAT-02 全量欠品用の配分が確定される", !string.IsNullOrEmpty(allShortageConfirmed.KakuteiDay),
+			new { allShortageConfirmed.Id, allShortageConfirmed.KakuteiDay })) return;
+
+		var stagnation = session.OpenView<ShippingConfirmListView, ShippingConfirmListViewModel>();
+		stagnation.Input("UAT-02:滞留検索条件", vm => {
+			vm.ViewKind = "滞留";
+			vm.KakuteiFromText = DenDay;
+			vm.KakuteiToText = DenDay;
+			vm.SokoCode = seeded.WarehouseCode;
+			vm.TokuiCode = seeded.TokuiCode;
+			vm.StagnationDaysText = "0";
+			vm.MaxCountText = "500";
+		}, new { DenDay, seeded.WarehouseCode, seeded.TokuiCode });
+		await stagnation.RunAsync("UAT-02:滞留検索", vm => vm.SearchCommand);
+		var stagnationRow = stagnation.Vm.Rows.SingleOrDefault(x => x.Id == allShortage.Id);
+		if (!session.Check("UAT-02 確定済み未処理が滞留一覧に出る", stagnationRow != null,
+			new { allShortage.Id, rows = stagnation.Vm.Rows.Count, stagnation.Vm.Message })) return;
+		stagnationRow!.IsChecked = true;
+		await stagnation.RunAsync("UAT-02:全量欠品で強制完了", vm => vm.ForceCompleteCommand);
+
+		var forceCompleted = (await session.QueryAsync<TranHaibun>("where Id=@0", allShortage.Id.ToString())).Single();
+		var salesAfterForce = await session.QueryAsync<Tran00Uriage>("where RelateNo1=@0", orderId.ToString());
+		var stockAfterForce = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
+			seeded.WarehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).Single();
+		session.Check("UAT-02 強制完了で実出荷0・全量欠品2・伝票なし", forceCompleted is { EndFlag: 1, JitsuSu: 0 }
+			&& forceCompleted.ShortSu == seeded.InitialStock - ShippingQuantity && forceCompleted.RelateNo2 == 0
+			&& salesAfterForce.Count == sales.Count,
+			new { forceCompleted.EndFlag, forceCompleted.JitsuSu, forceCompleted.ShortSu, forceCompleted.RelateNo2,
+				salesBefore = sales.Count, salesAfter = salesAfterForce.Count });
+		session.Check("UAT-02 強制完了で在庫2を維持し引当解除", stockAfterForce.Su == seeded.InitialStock - ShippingQuantity
+			&& stockAfterForce.ReserveQty == 0, new { stockAfterForce.Su, stockAfterForce.ReserveQty });
+
+		allocated.Input("UAT-02:強制完了後の受注残再検索", vm => vm.SelectedTabIndex = 0, new { orderId });
+		await allocated.RunAsync("UAT-02:強制完了後の受注残再検索", vm => vm.DoSearchCommand);
+		var afterForceOrder = allocated.Vm.SearchRows.SingleOrDefault(x => x.Id == orderId);
+		session.Check("UAT-02 強制完了後も受注残は4", afterForceOrder is { ShukkaSu: ShippingQuantity, HaibunSu: 0 }
+			&& afterForceOrder.ZanSu == OrderQuantity - ShippingQuantity,
+			new { afterForceOrder?.ShukkaSu, afterForceOrder?.HaibunSu, afterForceOrder?.ZanSu });
 		session.SetDialogResponder(null);
 	}
 
