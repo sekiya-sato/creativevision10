@@ -131,6 +131,19 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[ForeignKey(nameof(SysPermissionProfile))]
 	[Comment("権限プロファイルId")]
 	public partial long Id_PermissionProfile { get; set; }
+	/// <summary>
+	/// Hhtマスタ除外フラグ
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsHhtNot))]
+	[Comment("Hhtマスタ除外？ しない=0, する=1")]
+	public partial int IsHhtNot { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsHhtNot {
+		get => (EnumYesNo)IsHhtNot;
+		set => IsHhtNot = (int)value;
+	}
 }
 
 /// <summary>

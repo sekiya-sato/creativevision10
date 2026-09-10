@@ -202,6 +202,19 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	[ForeignKey(nameof(EnumRounding))]
 	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
+	/// <summary>
+	/// Hhtマスタ除外フラグ
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsHhtNot))]
+	[Comment("Hhtマスタ除外？ しない=0, する=1")]
+	public partial int IsHhtNot { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsHhtNot {
+		get => (EnumYesNo)IsHhtNot;
+		set => IsHhtNot = (int)value;
+	}
 }
 /// <summary>
 /// 取引先詳細

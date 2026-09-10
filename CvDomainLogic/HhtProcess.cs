@@ -25,10 +25,10 @@ public partial class HhtProcess {
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 		List<MasterHht> masters = new();
-		var sir = _db.Fetch<MasterShiire>();
-		var sok = _db.Fetch<MasterTokui>("where IsZaiko=1 and TenType in (0,6)");
-		var tan = _db.Fetch<MasterShain>();
-		var tok = _db.Fetch<MasterTokui>("where TenType not in (6)");
+		var sir = _db.Fetch<MasterShiire>("where IsHhtNot=0");
+		var sok = _db.Fetch<MasterTokui>("where IsZaiko=1 and TenType in (0,6) and IsHhtNot=0");
+		var tan = _db.Fetch<MasterShain>("where IsHhtNot=0");
+		var tok = _db.Fetch<MasterTokui>("where TenType not in (6) and IsHhtNot=0");
 
 		AddTorihikiMasters(masters, sir, "SIR", OutMasterMei);
 		AddTorihikiMasters(masters, sok, "SOK", OutMasterMei);

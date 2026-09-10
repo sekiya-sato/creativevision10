@@ -465,6 +465,19 @@
 									materialDesign:HintAssist.Hint="事業者登録番号"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.TaxRegistrationNumber}" />
+
+								<!--  Hht除外  -->
+								<TextBlock Grid.Row="18"
+									Style="{StaticResource FormLabel}"
+									Text="Hht除外" />
+								<ComboBox Grid.Row="18" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="Hht除外"
+									SelectedIndex="{Binding CurrentEdit.IsHhtNot, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBoxItem Content="しない" />
+									<ComboBoxItem Content="する" />
+								</ComboBox>
 							</Grid>
 						</ScrollViewer>
 					</TabItem>
