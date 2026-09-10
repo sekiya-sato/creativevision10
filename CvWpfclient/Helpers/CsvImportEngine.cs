@@ -54,6 +54,13 @@ public static class CsvImportEngine {
 	public static string GetTableName(Type type) =>
 		type.GetCustomAttribute<TableNameAttribute>()?.Value ?? type.Name;
 
+	/// <summary>
+	/// モデル型に定義された一意キーの列名。<see cref="KeyDmlAttribute"/> のうち <c>IsUnique=true</c> の
+	/// 最初の1件を採用する（更新専用CSV取込の検索キーに使う）。定義が無ければ <c>null</c>。
+	/// </summary>
+	public static string[]? GetUniqueKeyColumnNames(Type modelType) =>
+		modelType.GetCustomAttributes<KeyDmlAttribute>().FirstOrDefault(x => x.IsUnique)?.ColNames;
+
 	/// <summary>旧Oracle名の <c>HC$</c> 接頭辞を落として照合キーにする。</summary>
 	public static string NormalizeTableKey(string tableName) {
 		var normalized = tableName.Trim();

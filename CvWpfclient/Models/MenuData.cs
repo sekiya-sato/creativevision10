@@ -140,7 +140,8 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ データ取込 ----", new([
 				new("取込レイアウト作成", typeof(Views._01Master.ImportTemplateCreateView), addInfo:"テーブル列定義からUTF-8 CSV取込レイアウトを作成"),
-				new("外部CSVマスタ取込", typeof(Views._01Master.ExternalCsvImportView), addInfo:"取込レイアウトCSVを検証してInsertBulkParamで登録"),
+				new("外部CSVマスタ新規取込", typeof(Views._01Master.ExternalCsvImportView), addInfo:"取込レイアウトCSVを検証してInsertBulkParamで登録"),
+				new("外部CSVマスタ既存行更新", typeof(Views._01Master.ExternalCsvUpdateView), addInfo:"取込レイアウトCSVのユニークキーで既存行のみ更新。CSVにある列だけ上書き（新規登録は不可）"),
 			])),
 		])),
 		/* ================================================================
