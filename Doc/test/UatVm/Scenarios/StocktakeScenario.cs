@@ -1,3 +1,4 @@
+using CvAsset;
 using CvBase;
 using CvWpfclient.ViewModels._08Zaiko;
 using CvWpfclient.ViewModels._31Monthly;
@@ -8,10 +9,12 @@ using UatVm.Seed;
 
 namespace UatVm.Scenarios;
 
-/// <summary>UAT-04 棚卸開始、実棚入力、確定調整の在庫遷移を検証する。</summary>
+/// <summary>UAT-04 棚卸開始、実棚入力、確定、入力訂正、再確定の在庫遷移を検証する。</summary>
 public static class StocktakeScenario {
 	private const int ActualQty = 7;
+	private const int CorrectedActualQty = 8;
 	private const int AdjustQty = ActualQty - StocktakeSeeder.InitialStock;
+	private const int CorrectedAdjustQty = CorrectedActualQty - StocktakeSeeder.InitialStock;
 	private const string StocktakeNo = "UATVM-ST-01";
 	private static StocktakeSeeder.Result? _seeded;
 
@@ -59,6 +62,37 @@ public static class StocktakeScenario {
 			new { afterFix.Monthly });
 		session.Check("UAT-04 確定後の実在庫", afterFix.Real?.Su == ActualQty, new { afterFix.Real });
 		session.Check("UAT-04 確定済表示", fix.Vm.Rows.Single(row => row.Id_Soko == seeded.WarehouseId).StatusText == "確定済",
+			new { rows = fix.Vm.Rows.Select(row => new { row.Id_Soko, row.StatusText }) });
+
+		var stocktake = (await session.QueryAsync<Tran60Tana>("where Id_Soko=@0 AND DenDay=@1", seeded.WarehouseId.ToString(), StocktakeSeeder.StocktakeDay)).Single();
+		input.Input("UAT-04:実棚8へ訂正", vm => {
+			vm.SelectedTabIndex = 1;
+			vm.Current = stocktake;
+			vm.CurrentEdit = Common.CloneObject(stocktake);
+			vm.EditMeisai.Single().Su = CorrectedActualQty;
+		}, new { CorrectedActualQty });
+		await input.RunAsync("UAT-04:過去棚卸伝票修正", vm => vm.DoUpdateOnDetailTabCommand);
+
+		await LoadTargetAsync(fix, seeded.WarehouseId);
+		session.Check("UAT-04 過去棚卸伝票修正で再確定要", fix.Vm.Rows.Single(row => row.Id_Soko == seeded.WarehouseId).StatusText == "再確定要",
+			new { rows = fix.Vm.Rows.Select(row => new { row.Id_Soko, row.StatusText }) });
+		await fix.RunAsync("UAT-04:棚卸再確定", vm => vm.ExecuteCommand);
+
+		var adjustmentsAfterRefix = await session.QueryAsync<Tran61Chosei>("where Id_Soko=@0 AND TanaMonth=@1", seeded.WarehouseId.ToString(), StocktakeSeeder.SumMonth);
+		var replacement = adjustmentsAfterRefix.SingleOrDefault();
+		var afterRefix = await Stock(session, seeded);
+		session.Check("UAT-04 再確定で棚卸調整を置換", adjustmentsAfterRefix.Count == 1
+			&& replacement?.Id != adjustment?.Id
+			&& replacement?.SuTotal == CorrectedAdjustQty
+			&& (replacement.Jmeisai ?? []).SingleOrDefault()?.Su == CorrectedAdjustQty,
+			new { oldId = adjustment?.Id, replacement, adjustmentCount = adjustmentsAfterRefix.Count });
+		session.Check("UAT-04 再確定後の月次在庫", afterRefix.Monthly?.BookQty == StocktakeSeeder.InitialStock
+			&& afterRefix.Monthly.ActualQty == CorrectedActualQty
+			&& afterRefix.Monthly.AdjustQty == CorrectedAdjustQty,
+			new { afterRefix.Monthly });
+		session.Check("UAT-04 再確定で二重計上しない", afterRefix.Real?.Su == CorrectedActualQty,
+			new { afterRefix.Real, adjustmentCount = adjustmentsAfterRefix.Count });
+		session.Check("UAT-04 再確定後は確定済", fix.Vm.Rows.Single(row => row.Id_Soko == seeded.WarehouseId).StatusText == "確定済",
 			new { rows = fix.Vm.Rows.Select(row => new { row.Id_Soko, row.StatusText }) });
 		session.SetDialogResponder(null);
 	}
