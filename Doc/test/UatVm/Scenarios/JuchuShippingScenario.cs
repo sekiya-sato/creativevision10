@@ -16,6 +16,7 @@ public static class JuchuShippingScenario {
 	private const int OrderQuantity = 10;
 	private const int AllocationQuantity = 8;
 	private const int ShippingQuantity = 6;
+	private const int ConcurrencyQuantity = 1;
 	private static JuchuShippingSeeder.Result? _seeded;
 
 	public static void Seeder(string dbPath) =>
@@ -245,9 +246,111 @@ public static class JuchuShippingScenario {
 		allocated.Input("UAT-02:強制完了後の受注残再検索", vm => vm.SelectedTabIndex = 0, new { orderId });
 		await allocated.RunAsync("UAT-02:強制完了後の受注残再検索", vm => vm.DoSearchCommand);
 		var afterForceOrder = allocated.Vm.SearchRows.SingleOrDefault(x => x.Id == orderId);
-		session.Check("UAT-02 強制完了後も受注残は4", afterForceOrder is { ShukkaSu: ShippingQuantity, HaibunSu: 0 }
+		if (!session.Check("UAT-02 強制完了後も受注残は4", afterForceOrder is { ShukkaSu: ShippingQuantity, HaibunSu: 0 }
 			&& afterForceOrder.ZanSu == OrderQuantity - ShippingQuantity,
-			new { afterForceOrder?.ShukkaSu, afterForceOrder?.HaibunSu, afterForceOrder?.ZanSu });
+			new { afterForceOrder?.ShukkaSu, afterForceOrder?.HaibunSu, afterForceOrder?.ZanSu })) return;
+
+		allocated.Input("UAT-02:競合確認用の受注残を読込", vm => {
+			vm.SelectedTabIndex = 0;
+			vm.SelectedSearchRow = afterForceOrder;
+		}, new { orderId, afterForceOrder!.ZanSu });
+		await allocated.RunAsync("UAT-02:競合確認用の配分入力へ", vm => vm.GoToEditCommand);
+		allocated.Input("UAT-02:競合確認用に1点配分", vm => {
+			vm.ShijiDay = DateTime.Parse(DenDay);
+			vm.NouhinDay = DateTime.Parse(DenDay);
+			vm.MeisaiRows.Single().Su = ConcurrencyQuantity;
+		}, new { ConcurrencyQuantity });
+		await allocated.RunAsync("UAT-02:競合確認用の配分登録", vm => vm.DoRegisterCommand);
+		var concurrencyAllocation = (await session.QueryAsync<TranHaibun>(
+			"where RelateNo1=@0 AND EndFlag=0 AND ifnull(KakuteiDay,'')=''", orderId.ToString())).Single();
+		if (!session.Check("UAT-02 競合確認用に1点を引当", concurrencyAllocation.Su == ConcurrencyQuantity,
+			new { concurrencyAllocation.Id, concurrencyAllocation.Su, ConcurrencyQuantity })) return;
+
+		await confirm.RunAsync("UAT-02:競合確認用の確定検索", vm => vm.SearchCommand);
+		confirmRow = confirm.Vm.Rows.SingleOrDefault(x => x.Id == concurrencyAllocation.Id);
+		if (!session.Check("UAT-02 競合確認用配分が確定一覧に出る", confirmRow != null,
+			new { concurrencyAllocation.Id, rows = confirm.Vm.Rows.Count })) return;
+		confirmRow!.IsChecked = true;
+		await confirm.RunAsync("UAT-02:競合確認用の出荷確定", vm => vm.ConfirmSelectedCommand);
+
+		await shipping.RunAsync("UAT-02:競合前の出荷検索", vm => vm.SearchCommand);
+		var staleShippingRow = shipping.Vm.Rows.SingleOrDefault(x => x.Id == concurrencyAllocation.Id);
+		if (!session.Check("UAT-02 競合前のVduを出荷一覧へ保持", staleShippingRow != null,
+			new { concurrencyAllocation.Id, rows = shipping.Vm.Rows.Count })) return;
+		var staleVdu = staleShippingRow!.Vdu;
+		var salesBeforeConflict = await session.QueryAsync<Tran00Uriage>("where RelateNo1=@0", orderId.ToString());
+		var stockBeforeConflict = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
+			seeded.WarehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).Single();
+
+		await cancel.RunAsync("UAT-02:他端末で確定取消検索", vm => vm.SearchCommand);
+		var concurrentCancelRow = cancel.Vm.Rows.SingleOrDefault(x => x.Id == concurrencyAllocation.Id);
+		if (!session.Check("UAT-02 他端末で確定取消対象を取得", concurrentCancelRow != null,
+			new { concurrencyAllocation.Id, rows = cancel.Vm.Rows.Count })) return;
+		concurrentCancelRow!.IsChecked = true;
+		await cancel.RunAsync("UAT-02:他端末で出荷確定取消", vm => vm.CancelConfirmCommand);
+		await confirm.RunAsync("UAT-02:他端末で再確定検索", vm => vm.SearchCommand);
+		var concurrentConfirmRow = confirm.Vm.Rows.SingleOrDefault(x => x.Id == concurrencyAllocation.Id);
+		if (!session.Check("UAT-02 他端末で再確定対象を取得", concurrentConfirmRow != null,
+			new { concurrencyAllocation.Id, rows = confirm.Vm.Rows.Count })) return;
+		concurrentConfirmRow!.IsChecked = true;
+		await confirm.RunAsync("UAT-02:他端末で出荷再確定", vm => vm.ConfirmSelectedCommand);
+		var concurrentUpdated = (await session.QueryAsync<TranHaibun>("where Id=@0", concurrencyAllocation.Id.ToString())).Single();
+		var stockAfterConcurrentUpdate = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
+			seeded.WarehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).Single();
+		if (!session.Check("UAT-02 他端末の取消・再確定でVduのみ進む", concurrentUpdated.Vdu != staleVdu
+			&& !string.IsNullOrEmpty(concurrentUpdated.KakuteiDay) && concurrentUpdated.EndFlag == 0
+			&& stockAfterConcurrentUpdate.Su == stockBeforeConflict.Su
+			&& stockAfterConcurrentUpdate.ReserveQty == stockBeforeConflict.ReserveQty,
+			new { staleVdu, concurrentUpdated.Vdu, concurrentUpdated.KakuteiDay, concurrentUpdated.EndFlag,
+				before = new { stockBeforeConflict.Su, stockBeforeConflict.ReserveQty },
+				after = new { stockAfterConcurrentUpdate.Su, stockAfterConcurrentUpdate.ReserveQty } })) return;
+
+		staleShippingRow.JitsuSu = ConcurrencyQuantity;
+		staleShippingRow.IsChecked = true;
+		await shipping.RunAsync("UAT-02:古いVduで出荷実行", vm => vm.ExecuteCommand);
+		var rejectedConflict = (await session.QueryAsync<TranHaibun>("where Id=@0", concurrencyAllocation.Id.ToString())).Single();
+		var salesAfterConflict = await session.QueryAsync<Tran00Uriage>("where RelateNo1=@0", orderId.ToString());
+		var stockAfterConflict = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
+			seeded.WarehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).Single();
+		if (!session.Check("UAT-02 競合時は出荷せず一覧を破棄", shipping.Vm.Rows.Count == 0 && shipping.Vm.CheckedCount == 0
+			&& shipping.Vm.Message.Contains("他端末で更新", StringComparison.Ordinal),
+			new { rows = shipping.Vm.Rows.Count, shipping.Vm.CheckedCount, shipping.Vm.Message })) return;
+		if (!session.Check("UAT-02 競合時は配分・売上・在庫・引当を更新しない", rejectedConflict is { EndFlag: 0, RelateNo2: 0, JitsuSu: 0, ShortSu: 0 }
+			&& rejectedConflict.Vdu == concurrentUpdated.Vdu
+			&& salesAfterConflict.Count == salesBeforeConflict.Count
+			&& stockAfterConflict.Su == stockBeforeConflict.Su && stockAfterConflict.ReserveQty == stockBeforeConflict.ReserveQty,
+			new { rejectedConflict.EndFlag, rejectedConflict.RelateNo2, rejectedConflict.JitsuSu, rejectedConflict.ShortSu,
+				rejectedConflict.Vdu, salesBefore = salesBeforeConflict.Count, salesAfter = salesAfterConflict.Count,
+				stockBefore = new { stockBeforeConflict.Su, stockBeforeConflict.ReserveQty },
+				stockAfter = new { stockAfterConflict.Su, stockAfterConflict.ReserveQty } })) return;
+
+		await shipping.RunAsync("UAT-02:競合後の出荷再検索", vm => vm.SearchCommand);
+		var reloadedShippingRow = shipping.Vm.Rows.SingleOrDefault(x => x.Id == concurrencyAllocation.Id);
+		if (!session.Check("UAT-02 再検索で最新Vduを読込", reloadedShippingRow?.Vdu == concurrentUpdated.Vdu,
+			new { expected = concurrentUpdated.Vdu, actual = reloadedShippingRow?.Vdu, rows = shipping.Vm.Rows.Count })) return;
+		reloadedShippingRow!.JitsuSu = ConcurrencyQuantity;
+		reloadedShippingRow.IsChecked = true;
+		await shipping.RunAsync("UAT-02:最新Vduで出荷再実行", vm => vm.ExecuteCommand);
+
+		var shippedAfterReload = (await session.QueryAsync<TranHaibun>("where Id=@0", concurrencyAllocation.Id.ToString())).Single();
+		var salesAfterReload = await session.QueryAsync<Tran00Uriage>("where RelateNo1=@0", orderId.ToString());
+		var stockAfterReload = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
+			seeded.WarehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).Single();
+		if (!session.Check("UAT-02 最新Vduで1点を出荷", shippedAfterReload is { EndFlag: 1, JitsuSu: ConcurrencyQuantity, ShortSu: 0 }
+			&& shippedAfterReload.RelateNo2 > 0 && salesAfterReload.Count == salesBeforeConflict.Count + 1
+			&& salesAfterReload.Sum(x => x.Jmeisai?.Sum(m => m.Su) ?? 0) == ShippingQuantity + ConcurrencyQuantity,
+			new { shippedAfterReload.EndFlag, shippedAfterReload.JitsuSu, shippedAfterReload.ShortSu, shippedAfterReload.RelateNo2,
+				salesBefore = salesBeforeConflict.Count, salesAfter = salesAfterReload.Count })) return;
+		if (!session.Check("UAT-02 再実行後は在庫1・引当0", stockAfterReload.Su == stockBeforeConflict.Su - ConcurrencyQuantity
+			&& stockAfterReload.ReserveQty == 0,
+			new { before = new { stockBeforeConflict.Su, stockBeforeConflict.ReserveQty }, after = new { stockAfterReload.Su, stockAfterReload.ReserveQty } })) return;
+
+		allocated.Input("UAT-02:競合再実行後の受注残再検索", vm => vm.SelectedTabIndex = 0, new { orderId });
+		await allocated.RunAsync("UAT-02:競合再実行後の受注残再検索", vm => vm.DoSearchCommand);
+		var afterConcurrencyOrder = allocated.Vm.SearchRows.SingleOrDefault(x => x.Id == orderId);
+		session.Check("UAT-02 競合再実行後の受注残は3", afterConcurrencyOrder is { ShukkaSu: ShippingQuantity + ConcurrencyQuantity, HaibunSu: 0 }
+			&& afterConcurrencyOrder.ZanSu == OrderQuantity - ShippingQuantity - ConcurrencyQuantity,
+			new { afterConcurrencyOrder?.ShukkaSu, afterConcurrencyOrder?.HaibunSu, afterConcurrencyOrder?.ZanSu });
 		session.SetDialogResponder(null);
 	}
 

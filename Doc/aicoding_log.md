@@ -1,3 +1,13 @@
+## [2026-09-10] UAT-02 出荷競合・再読込のVM駆動検証
+### 実施内容
+- 出荷一覧取得後、別画面で確定取消・再確定してVdu競合を発生させた。
+- 競合時の全件未処理・一覧破棄と、再検索後の最新Vduによる再実行成功を検証した。
+### 確認
+- 隔離SQLiteの`UatVm.exe juchushipping --url http://127.0.0.1:5004 --sqlite ... --manage-server --hide-views`で40判定すべてPASS。
+- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore --no-dependencies`成功（既存TaxMix警告3件）。
+
+---
+
 ## [2026-09-10] UAT-02 出荷確定取消のVM駆動検証
 ### 実施内容
 - 滞留一覧から確定済み・未出荷の配分を取消し、未確定へ戻した。
