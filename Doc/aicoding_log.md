@@ -1,3 +1,13 @@
+## [2026-09-10] UAT-01 新規商品登録から仕入のVM駆動検証
+### 実施内容
+- 商品マスタ画面で色サイズJAN付き商品を登録し、発注10→仕入4→仕入6を実行した。
+- 派生SKU、発注残6→0・自動完了、在庫10、買掛10,000・税1,000・残11,000を検証した。
+### 確認
+- 隔離SQLiteの`UatVm uat01screen --sqlite ... --manage-server --hide-views`で11判定すべてPASS。
+- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
+
+---
+
 ## [2026-09-10] UAT-02 移動伝票のVM駆動検証
 ### 実施内容
 - 直営店（TenType=6）向け受注を配分・確定・出荷し、移動出庫を作成した。
