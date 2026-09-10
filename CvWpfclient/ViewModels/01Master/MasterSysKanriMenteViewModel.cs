@@ -77,12 +77,14 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 			FormatTaxValue(tax3?.TaxRate),
 			FormatYmdText(tax3?.DateFrom),
 			FormatTaxValue(tax3?.TaxNewRate),
+			NormalizePrintText(TaxRoundingItems.FirstOrDefault(item => item.Value == Current.TaxRounding)?.Text),
+			NormalizePrintText(CostMethodItems.FirstOrDefault(item => item.Value == Current.CostMethod)?.Text),
+			NormalizePrintText(Current.VSoko?.Cd),
+			NormalizePrintText(Current.VSoko?.Mei),
 			NormalizePrintText(Current.Hp),
 			NormalizePrintText(Current.TaxRegistrationNumber),
 			FormatDateTimeText(Current.VdateC),
 			FormatDateTimeText(Current.VdateU),
-			NormalizePrintText(Current.VSoko?.Cd),
-			NormalizePrintText(Current.VSoko?.Mei),
 		];
 
 		return string.Join(",", fields.Select(EscapeCsvField)) + "\r\n";

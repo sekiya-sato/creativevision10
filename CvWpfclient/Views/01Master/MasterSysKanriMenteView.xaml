@@ -425,7 +425,7 @@
 							Margin="15,0,0,0" VerticalAlignment="Center"
 							Content="消費税端数処理" />
 						<ComboBox Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="2"
-							Width="150" Height="60"
+							Width="150" Height="52"
 							Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
 							DisplayMemberPath="Text"
 							ItemsSource="{Binding TaxRoundingItems}"
@@ -437,7 +437,7 @@
 							Margin="15,0,0,0" VerticalAlignment="Center"
 							Content="原価方式" />
 						<ComboBox Grid.Row="13" Grid.Column="4" Grid.ColumnSpan="2"
-							Width="150"  Height="60"
+							Width="150"  Height="52"
 							Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
 							DisplayMemberPath="Text"
 							ItemsSource="{Binding CostMethodItems}"
