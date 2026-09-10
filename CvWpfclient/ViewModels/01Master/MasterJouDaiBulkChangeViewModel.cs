@@ -174,12 +174,30 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial int SelectedTabIndex { get; set; }
 
+	/// <summary>内側タブ（① 対象商品／② 適用範囲／③ 価格／④ 確認）の総数。</summary>
+	const int InnerTabCount = 4;
+
 	/// <summary>
 	/// 内側タブ（① 対象商品／② 適用範囲／③ 価格／④ 確認）の選択位置。<see cref="DoFix"/>がC1/C2の
 	/// エラー競合で確定を中止したとき、④確認タブ（Index=3）へ誘導するために使う。
 	/// </summary>
 	[ObservableProperty]
 	public partial int SelectedInnerTabIndex { get; set; }
+
+	partial void OnSelectedInnerTabIndexChanged(int value) {
+		GoPrevStepCommand.NotifyCanExecuteChanged();
+		GoNextStepCommand.NotifyCanExecuteChanged();
+	}
+
+	/// <summary>内側タブを1つ戻る（下部ボタン列「◀ 前へ」）。</summary>
+	[RelayCommand(CanExecute = nameof(CanGoPrevStep))]
+	void GoPrevStep() => SelectedInnerTabIndex--;
+	bool CanGoPrevStep() => SelectedInnerTabIndex > 0;
+
+	/// <summary>内側タブを1つ進める（下部ボタン列「次へ ▶」）。</summary>
+	[RelayCommand(CanExecute = nameof(CanGoNextStep))]
+	void GoNextStep() => SelectedInnerTabIndex++;
+	bool CanGoNextStep() => SelectedInnerTabIndex < InnerTabCount - 1;
 
 	[ObservableProperty]
 	public partial string Message { get; set; } = string.Empty;
@@ -329,9 +347,13 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 		subscribedScopeRows = value;
 		subscribedScopeRows.CollectionChanged += ScopeRows_CollectionChanged;
 		SyncAllRowsCells();
+		OnPropertyChanged(nameof(ScopeCount));
 	}
 
-	void ScopeRows_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => SyncAllRowsCells();
+	void ScopeRows_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+		SyncAllRowsCells();
+		OnPropertyChanged(nameof(ScopeCount));
+	}
 
 	[ObservableProperty]
 	public partial JodaiScopeRow? SelectedScopeRow { get; set; }
@@ -435,6 +457,15 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	public int TargetShopCount => ShopRows.Count(x => x.IsTarget);
 	public int MeisaiCount => MeisaiRows.Count;
 	public long ExpandEstimate => (long)Math.Max(TargetShopCount, 0) * MeisaiRows.Count;
+
+	/// <summary>適用範囲（Scope）の件数。常時表示サマリバー・②タブ見出しバッジ用。</summary>
+	public int ScopeCount => ScopeRows.Count;
+
+	/// <summary>④確認タブの競合一覧の件数。常時表示サマリバー・④タブ見出しバッジ用（C1〜C8すべてを含む）。</summary>
+	public int ConflictCount => ConflictRows.Count;
+
+	/// <summary>競合が1件でもあるか。常時表示サマリバーの強調表示に使う（DataTriggerはint比較ができないためbool化）。</summary>
+	public bool HasConflicts => ConflictCount > 0;
 
 	// ===== マスタ選択肢 ===========================================================
 
@@ -549,6 +580,23 @@ LIMIT 500";
 	}
 
 	bool CanGoToEdit() => SelectedListRow != null;
+
+	/// <summary>修正・登録画面から検索画面へ戻る（Escキー用ではなく、下部ボタン専用）。</summary>
+	[RelayCommand]
+	void BackToSearch() => SelectedTabIndex = 0;
+
+	/// <summary>ヘッダの「画面を閉じる」ボタン専用。<see cref="OnExit"/> の上書きに関わらず必ずウィンドウを閉じる。</summary>
+	[RelayCommand]
+	void CloseWindow() => base.OnExit();
+
+	/// <summary>修正・登録画面表示中の Esc / <see cref="BaseViewModel.ExitCommand"/> は検索画面へ戻すだけにする。</summary>
+	protected override void OnExit() {
+		if (SelectedTabIndex == 1) {
+			SelectedTabIndex = 0;
+			return;
+		}
+		base.OnExit();
+	}
 
 	[RelayCommand(CanExecute = nameof(CanGoToEdit))]
 	async Task GoToEdit(CancellationToken ct) {
@@ -1187,6 +1235,8 @@ WHERE D.Id_Shohin IN (
 	public partial bool HasBlockingConflicts { get; set; }
 
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ConflictCount))]
+	[NotifyPropertyChangedFor(nameof(HasConflicts))]
 	public partial ObservableCollection<JodaiConflictRow> ConflictRows { get; set; } = [];
 
 	[ObservableProperty]
@@ -2205,6 +2255,9 @@ ORDER BY DayFrom";
 		OnPropertyChanged(nameof(TargetShopCount));
 		OnPropertyChanged(nameof(MeisaiCount));
 		OnPropertyChanged(nameof(ExpandEstimate));
+		OnPropertyChanged(nameof(ScopeCount));
+		OnPropertyChanged(nameof(ConflictCount));
+		OnPropertyChanged(nameof(HasConflicts));
 	}
 
 	static MasterOption FindOrAdd(ObservableCollection<MasterOption> options, long id, string? code, string? name) {

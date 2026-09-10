@@ -53,9 +53,9 @@
 				</StackPanel>
 				<StackPanel Orientation="Horizontal">
 					<Button Margin="0,0,8,0"
-						Command="{Binding ExitCommand}"
+						Command="{Binding CloseWindowCommand}"
 						Style="{StaticResource ToolCommandButton}"
-						ToolTip="閉じる (Esc)">
+						ToolTip="画面を閉じる">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>
 					<materialDesign:PackIcon Width="26" Height="26"
@@ -143,6 +143,7 @@
 						Margin="0,8,0,0" Padding="0"
 						materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
 						<DataGrid d:ItemsSource="{d:SampleData ItemCount=5}"
+							helpers:DataGridDoubleClick.Command="{Binding GoToEditCommand}"
 							helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
 							AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
 							AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" GridLinesVisibility="Horizontal" HeadersVisibility="Column"
@@ -235,6 +236,7 @@
 				<Grid Margin="0,10,0,0">
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="*" />
 						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
@@ -264,6 +266,7 @@
 								Text="P/S区分" />
 							<ComboBox Grid.Row="0" Grid.Column="1"
 								Margin="0,4,16,4"
+								TabIndex="0"
 								DisplayMemberPath="Name"
 								ItemsSource="{Binding KubunOptions}"
 								SelectedValue="{Binding EditKubun, Mode=TwoWay}"
@@ -276,6 +279,7 @@
 								Text="対象" />
 							<ComboBox Grid.Row="0" Grid.Column="3"
 								Margin="0,4,16,4"
+								TabIndex="1"
 								DisplayMemberPath="Name"
 								ItemsSource="{Binding TaishoOptions}"
 								SelectedValue="{Binding EditTaishoType, Mode=TwoWay}"
@@ -292,12 +296,14 @@
 									<ColumnDefinition Width="Auto" />
 								</Grid.ColumnDefinitions>
 								<ComboBox Margin="0,4"
+									TabIndex="2"
 									DisplayMemberPath="Display"
 									ItemsSource="{Binding SaleOptions}"
 									SelectedItem="{Binding SelectedSale, Mode=TwoWay}"
 									Style="{StaticResource FormComboBox}"
 									ToolTip="名称マスタの区分 SLE" />
 								<Button Grid.Column="1"
+									TabIndex="3"
 									Command="{Binding SelectSaleDialogCommand}"
 									Content="&lt;&lt;"
 									Style="{StaticResource BudgetActionButtonStyle}"
@@ -309,6 +315,7 @@
 								Text="タイトル" />
 							<TextBox Grid.Row="1" Grid.Column="1"
 								Margin="0,4,16,4"
+								TabIndex="4"
 								Style="{StaticResource FormTextBox}"
 								Text="{Binding EditTitle, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -317,6 +324,7 @@
 								Text="開始日" />
 							<DatePicker Grid.Row="1" Grid.Column="3"
 								Margin="0,4,16,4"
+								TabIndex="5"
 								helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 								SelectedDate="{Binding EditDayFrom, Mode=TwoWay}"
 								Style="{StaticResource FormDatePicker}"
@@ -327,6 +335,7 @@
 								Text="終了日" />
 							<DatePicker Grid.Row="1" Grid.Column="5"
 								Margin="0,4"
+								TabIndex="6"
 								helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 								SelectedDate="{Binding EditDayTo, Mode=TwoWay}"
 								Style="{StaticResource FormDatePicker}" />
@@ -341,11 +350,13 @@
 									<ColumnDefinition Width="Auto" />
 								</Grid.ColumnDefinitions>
 								<ComboBox Margin="0,4"
+									TabIndex="7"
 									DisplayMemberPath="Display"
 									ItemsSource="{Binding ShainOptions}"
 									SelectedItem="{Binding SelectedShain, Mode=TwoWay}"
 									Style="{StaticResource FormComboBox}" />
 								<Button Grid.Column="1"
+									TabIndex="8"
 									Command="{Binding SelectShainDialogCommand}"
 									Content="&lt;&lt;"
 									Style="{StaticResource BudgetActionButtonStyle}"
@@ -358,6 +369,7 @@
 								Text="備考" />
 							<TextBox Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3"
 								Margin="0,4"
+								TabIndex="9"
 								Style="{StaticResource FormTextBox}"
 								Text="{Binding EditMemo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -371,12 +383,14 @@
 									<ColumnDefinition Width="Auto" />
 								</Grid.ColumnDefinitions>
 								<ComboBox Margin="0,4"
+									TabIndex="10"
 									DisplayMemberPath="Display"
 									ItemsSource="{Binding ShainOptions}"
 									SelectedItem="{Binding SelectedApproveShain, Mode=TwoWay}"
 									Style="{StaticResource FormComboBox}"
 									ToolTip="任意の運用記録。MasterConfig.JodaiNeedApprove=1のときだけ確定操作時に入力を求めます（設計書2.10）" />
 								<Button Grid.Column="1"
+									TabIndex="11"
 									Command="{Binding SelectApproveShainDialogCommand}"
 									Content="&lt;&lt;"
 									Style="{StaticResource BudgetActionButtonStyle}"
@@ -393,14 +407,69 @@
 						</Grid>
 					</materialDesign:Card>
 
+					<!--  常時表示サマリバー（内側タブの外＝設計書5.1）  -->
+					<materialDesign:Card Grid.Row="1"
+						Margin="0,8,0,0" Padding="12,6"
+						materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="8">
+						<StackPanel Orientation="Horizontal">
+							<TextBlock VerticalAlignment="Center"
+								Style="{StaticResource StatusTextBlockStyle}"
+								Text="{Binding MeisaiCount, StringFormat={}対象商品 {0:N0} 件}" />
+							<TextBlock Margin="10,0"
+								VerticalAlignment="Center"
+								Style="{StaticResource StatusTextBlockStyle}"
+								Text="｜" />
+							<TextBlock VerticalAlignment="Center"
+								Style="{StaticResource StatusTextBlockStyle}"
+								Text="{Binding ScopeCount, StringFormat={}適用範囲 {0:N0} 件}" />
+							<TextBlock Margin="10,0"
+								VerticalAlignment="Center"
+								Style="{StaticResource StatusTextBlockStyle}"
+								Text="｜" />
+							<TextBlock VerticalAlignment="Center"
+								Style="{StaticResource StatusTextBlockStyle}"
+								Text="{Binding ExpandEstimate, StringFormat={}展開見込 {0:N0} 行}"
+								ToolTip="確定すると DerivedJodai にこの行数が作成されます" />
+							<TextBlock Margin="10,0"
+								VerticalAlignment="Center"
+								Style="{StaticResource StatusTextBlockStyle}"
+								Text="｜" />
+							<TextBlock VerticalAlignment="Center"
+								Text="{Binding ConflictCount, StringFormat={}競合 {0:N0} 件}">
+								<TextBlock.Style>
+									<Style BasedOn="{StaticResource StatusTextBlockStyle}" TargetType="TextBlock">
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding HasConflicts}" Value="True">
+												<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
+												<Setter Property="FontWeight" Value="Bold" />
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</TextBlock.Style>
+							</TextBlock>
+						</StackPanel>
+					</materialDesign:Card>
+
 					<!--  内側タブ：① 対象商品 ② 適用範囲 ③ 価格（設計書5.1。前進・後退の強制はしない）  -->
-					<TabControl Grid.Row="1"
+					<TabControl Grid.Row="2"
 						Margin="0,8,0,0"
 						SelectedIndex="{Binding SelectedInnerTabIndex, Mode=TwoWay}"
 						Style="{StaticResource MaterialDesignTabControl}">
 
 						<!--  ================= ① 対象商品 =================  -->
-						<TabItem Header="① 対象商品">
+						<TabItem>
+							<TabItem.Header>
+								<StackPanel Orientation="Horizontal">
+									<TextBlock VerticalAlignment="Center"
+										Text="① 対象商品" />
+									<Border Margin="6,0,0,0" Padding="6,1"
+										Background="{DynamicResource MaterialDesignDivider}"
+										CornerRadius="8">
+										<TextBlock FontSize="11" FontWeight="SemiBold"
+											Text="{Binding DataContext.MeisaiCount, RelativeSource={RelativeSource AncestorType=TabControl}, StringFormat={}{0:N0}}" />
+									</Border>
+								</StackPanel>
+							</TabItem.Header>
 							<Grid Margin="0,10,0,0">
 								<materialDesign:Card Padding="14,12"
 									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
@@ -411,7 +480,7 @@
 										</Grid.ColumnDefinitions>
 										<Grid.RowDefinitions>
 											<RowDefinition Height="Auto" />
-											<RowDefinition Height="Auto" />
+											<RowDefinition Height="*" />
 											<RowDefinition Height="Auto" />
 										</Grid.RowDefinitions>
 
@@ -437,7 +506,7 @@
 										</DockPanel>
 
 										<DataGrid Grid.Row="1" Grid.Column="0"
-											MaxHeight="260"
+											MinHeight="160"
 											Margin="0,0,12,0"
 											materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,4" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
 											GridLinesVisibility="Horizontal" HeadersVisibility="Column"
@@ -591,11 +660,24 @@
 						</TabItem>
 
 						<!--  ================= ② 適用範囲（Scope） =================  -->
-						<TabItem Header="② 適用範囲">
+						<TabItem>
+							<TabItem.Header>
+								<StackPanel Orientation="Horizontal">
+									<TextBlock VerticalAlignment="Center"
+										Text="② 適用範囲" />
+									<Border Margin="6,0,0,0" Padding="6,1"
+										Background="{DynamicResource MaterialDesignDivider}"
+										CornerRadius="8">
+										<TextBlock FontSize="11" FontWeight="SemiBold"
+											Text="{Binding DataContext.ScopeCount, RelativeSource={RelativeSource AncestorType=TabControl}, StringFormat={}{0:N0}}" />
+									</Border>
+								</StackPanel>
+							</TabItem.Header>
 							<Grid Margin="0,10,0,0">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="2*" />
+									<RowDefinition Height="Auto" />
 									<RowDefinition Height="1*" />
 								</Grid.RowDefinitions>
 
@@ -731,7 +813,7 @@
 													Binding="{Binding No}"
 													ElementStyle="{StaticResource DataGridRightTextBlock}"
 													Header="No" IsReadOnly="True" />
-												<DataGridTextColumn Width="110"
+												<DataGridTextColumn Width="*" MinWidth="110"
 													Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 													Header="表示名" />
 												<DataGridTemplateColumn Width="100"
@@ -769,7 +851,7 @@
 														</DataTemplate>
 													</DataGridTemplateColumn.CellEditingTemplate>
 												</DataGridTemplateColumn>
-												<DataGridTemplateColumn Width="150"
+												<DataGridTemplateColumn Width="*" MinWidth="150"
 													Header="グループ or 店舗">
 													<DataGridTemplateColumn.CellTemplate>
 														<DataTemplate>
@@ -931,8 +1013,13 @@
 									</Grid>
 								</materialDesign:Card>
 
+								<GridSplitter Grid.Row="2"
+									Height="6"
+									HorizontalAlignment="Stretch" VerticalAlignment="Center"
+									ResizeBehavior="PreviousAndNext" />
+
 								<!--  対象店舗（Scope解決の候補選択。設計書3.3・U5）  -->
-								<materialDesign:Card Grid.Row="2"
+								<materialDesign:Card Grid.Row="3"
 									Margin="0,8,0,0" Padding="12,10"
 									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
 									<Grid>
@@ -954,40 +1041,55 @@
 												FontWeight="SemiBold" Text="対象店舗（Scope解決の候補。チェックした店舗だけがResolveの対象になります）" />
 										</DockPanel>
 
-										<WrapPanel Grid.Row="1"
+										<Grid Grid.Row="1"
 											Margin="0,0,0,6">
-											<Button Margin="0,0,6,0"
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="Auto" />
+												<ColumnDefinition Width="Auto" />
+												<ColumnDefinition Width="Auto" />
+												<ColumnDefinition Width="*" />
+												<ColumnDefinition Width="Auto" />
+												<ColumnDefinition Width="Auto" />
+												<ColumnDefinition Width="Auto" />
+											</Grid.ColumnDefinitions>
+											<Button Grid.Column="0"
+												Margin="0,0,6,0"
 												Command="{Binding LoadShopsCommand}"
 												Style="{StaticResource MaterialDesignOutlinedButton}"
 												ToolTip="対象区分に応じた対象候補を読み込む">
 												<TextBlock FontSize="14" Text="一覧取得" />
 											</Button>
-											<Button Margin="0,0,6,0"
+											<Button Grid.Column="1"
+												Margin="0,0,6,0"
 												Command="{Binding ShopAllOnCommand}"
 												Style="{StaticResource MaterialDesignOutlinedButton}">
 												<TextBlock FontSize="14" Text="全てON" />
 											</Button>
-											<Button Margin="0,0,12,0"
+											<Button Grid.Column="2"
+												Margin="0,0,12,0"
 												Command="{Binding ShopAllOffCommand}"
 												Style="{StaticResource MaterialDesignOutlinedButton}">
 												<TextBlock FontSize="14" Text="全てOFF" />
 											</Button>
-											<DatePicker Width="130"
+											<DatePicker Grid.Column="4"
+												Width="130"
 												Margin="0,0,4,0"
 												helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 												SelectedDate="{Binding ShopDayFrom, Mode=TwoWay}"
 												Style="{StaticResource FormDatePicker}" />
-											<DatePicker Width="130"
+											<DatePicker Grid.Column="5"
+												Width="130"
 												Margin="0,0,6,0"
 												helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 												SelectedDate="{Binding ShopDayTo, Mode=TwoWay}"
 												Style="{StaticResource FormDatePicker}" />
-											<Button Command="{Binding ApplyShopPeriodCommand}"
+											<Button Grid.Column="6"
+												Command="{Binding ApplyShopPeriodCommand}"
 												Style="{StaticResource MaterialDesignOutlinedButton}"
 												ToolTip="チェック済みの対象へ期間をまとめて設定（Scope1件の互換運用向け。手動の期間微調整は保存時に維持されます）">
 												<TextBlock FontSize="14" Text="期間設定" />
 											</Button>
-										</WrapPanel>
+										</Grid>
 
 										<DataGrid Grid.Row="2"
 											d:ItemsSource="{d:SampleData ItemCount=5}"
@@ -1144,12 +1246,43 @@
 						</TabItem>
 
 						<!--  ================= ④ 確認（プレビュー・競合・Timeline。設計書2.8・2.9・5.5）=================  -->
-						<TabItem Header="④ 確認">
+						<TabItem>
+							<TabItem.Header>
+								<StackPanel Orientation="Horizontal">
+									<TextBlock VerticalAlignment="Center"
+										Text="④ 確認" />
+									<Border Margin="6,0,0,0" Padding="6,1"
+										CornerRadius="8">
+										<Border.Style>
+											<Style TargetType="Border">
+												<Setter Property="Background" Value="{DynamicResource MaterialDesignDivider}" />
+												<Style.Triggers>
+													<DataTrigger Binding="{Binding DataContext.HasConflicts, RelativeSource={RelativeSource AncestorType=TabControl}}" Value="True">
+														<Setter Property="Background" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</Border.Style>
+										<TextBlock FontSize="11" FontWeight="SemiBold"
+											Text="{Binding DataContext.ConflictCount, RelativeSource={RelativeSource AncestorType=TabControl}, StringFormat={}競合 {0:N0}}">
+											<TextBlock.Style>
+												<Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+													<Style.Triggers>
+														<DataTrigger Binding="{Binding DataContext.HasConflicts, RelativeSource={RelativeSource AncestorType=TabControl}}" Value="True">
+															<Setter Property="Foreground" Value="White" />
+														</DataTrigger>
+													</Style.Triggers>
+												</Style>
+											</TextBlock.Style>
+										</TextBlock>
+									</Border>
+								</StackPanel>
+							</TabItem.Header>
 							<Grid Margin="0,10,0,0">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
-									<RowDefinition Height="Auto" />
 									<RowDefinition Height="*" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<!--  プレビュー（設計書2.9）  -->
@@ -1274,7 +1407,7 @@
 								<materialDesign:Card Grid.Row="1"
 									Margin="0,0,0,8" Padding="0"
 									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
-									<DataGrid MaxHeight="220"
+									<DataGrid MinHeight="160"
 										materialDesign:DataGridAssist.CellPadding="8,4"
 										materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
 										AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
@@ -1407,7 +1540,7 @@
 					</TabControl>
 
 					<!--  操作ボタン（内側タブの外＝常時表示）  -->
-					<Grid Grid.Row="2"
+					<Grid Grid.Row="3"
 						Margin="0,10,0,4">
 						<StackPanel HorizontalAlignment="Left" VerticalAlignment="Center">
 							<TextBlock Style="{StaticResource StatusTextBlockStyle}"
@@ -1417,6 +1550,19 @@
 						</StackPanel>
 						<StackPanel HorizontalAlignment="Right"
 							Orientation="Horizontal">
+							<Button Command="{Binding GoPrevStepCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="内側タブを1つ戻る">
+								<TextBlock FontSize="16" Text="◀ 前へ" />
+							</Button>
+							<Button Margin="8,0,0,0"
+								Command="{Binding GoNextStepCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="内側タブを1つ進める">
+								<TextBlock FontSize="16" Text="次へ ▶" />
+							</Button>
+							<Border Width="1" Margin="12,4"
+								Background="{DynamicResource MaterialDesignDivider}" />
 							<Button Command="{Binding DoMarkSentCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
 								ToolTip="値札･棚札の差し替えが完了したことを記録する（価格配信ではありません）">
@@ -1453,10 +1599,10 @@
 								</StackPanel>
 							</Button>
 							<Button Margin="12,0,0,0"
-								Command="{Binding ExitCommand}"
+								Command="{Binding BackToSearchCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
-								ToolTip="閉じる (Esc)">
-								<TextBlock FontSize="16" Text="戻る(ESC)" />
+								ToolTip="検索画面へ戻る (Esc)">
+								<TextBlock FontSize="16" Text="検索画面へ戻る(ESC)" />
 							</Button>
 						</StackPanel>
 					</Grid>
