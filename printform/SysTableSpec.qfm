@@ -258,17 +258,10 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt09" valign="middle">
-					<position x="101" y="0" width="49" height="4"/>
+					<position x="79" y="0" width="71" height="4"/>
 					<color transparent="1"/>
 					<border left="1"/>
 					<data calctype="item" datasrc="item6"/>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
-				<text id="Txt19" valign="middle">
-					<position x="79" y="0" width="21" height="4"/>
-					<color transparent="1"/>
-					<data calctype="item" datasrc="item7"/>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
@@ -327,7 +320,6 @@ function OnFormLoad() {
 				<text id="Txt38" valign="middle">
 					<position x="101" y="0" width="49" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
-					<border left="1"/>
 					<data calctype="static">ê‡ñæ</data>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
