@@ -1,3 +1,13 @@
+## [2026-09-10] UAT-02 移動伝票のVM駆動検証
+### 実施内容
+- 直営店（TenType=6）向け受注を配分・確定・出荷し、移動出庫を作成した。
+- RelateNo2、引当解除、出庫元在庫、売上未作成、受注残未消化を検証した。
+### 確認
+- 隔離SQLiteの`UatVm.exe juchushipping --url http://127.0.0.1:5005 --sqlite ... --manage-server --hide-views`で50判定すべてPASS。
+- `dotnet build Doc/test/UatVmSeed/UatVmSeed.csproj --no-restore`、`dotnet build Doc/test/UatVm/UatVm.csproj --no-restore --no-dependencies`成功（既存TaxMix警告3件）。
+
+---
+
 ## [2026-09-10] UAT-02 出荷競合・再読込のVM駆動検証
 ### 実施内容
 - 出荷一覧取得後、別画面で確定取消・再確定してVdu競合を発生させた。

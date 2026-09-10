@@ -11,6 +11,7 @@ namespace UatVm.Seed;
 public static class JuchuShippingSeeder {
 	public const string WarehouseCode = "UATVM-JS-SK";
 	public const string TokuiCode = "UATVM-JS-TK";
+	public const string DirectStoreCode = "UATVM-JS-TS";
 	public const string ShohinCode = "UATVM-JS-P01";
 	public const string JanCode = "UATVMJS0001";
 	public const int InitialStock = 8;
@@ -18,6 +19,7 @@ public static class JuchuShippingSeeder {
 
 	public sealed record Result(
 		long WarehouseId, string WarehouseCode, long TokuiId, string TokuiCode,
+		long DirectStoreId, string DirectStoreCode,
 		long EmployeeId, string EmployeeCode, long ShohinId, string ShohinCode,
 		long SkuId, long Id_Col, long Id_Siz, int InitialStock) {
 		public long WholesalerId => TokuiId;
@@ -45,6 +47,7 @@ public static class JuchuShippingSeeder {
 
 		var warehouse = EnsureTokui(db, WarehouseCode, "UAT-VM 受注出荷倉庫", 0, employee, trace);
 		var tokui = EnsureTokui(db, TokuiCode, "UAT-VM 受注出荷卸先", 1, employee, trace);
+		var directStore = EnsureTokui(db, DirectStoreCode, "UAT-VM 受注出荷直営店", 6, employee, trace);
 		var product = EnsureShohin(db, warehouse, color, size, employee, trace);
 		// SeederはCvServerのWriteEffectRunnerを通らないため、Jcolsiz由来のSKUを明示的に再構築する。
 		db.Execute("DELETE FROM DerivedShohinColSiz WHERE Id_Shohin=@0", product.Id);
@@ -52,7 +55,7 @@ public static class JuchuShippingSeeder {
 		var sku = db.Fetch<DerivedShohinColSiz>("where Id_Shohin=@0 order by Id", product.Id).FirstOrDefault()
 			?? throw new InvalidOperationException("専用SKUを作成できませんでした。");
 
-		CleanPendingScenario(db, warehouse.Id, tokui.Id, product.Id, sku.Id_Col, sku.Id_Siz, trace);
+		CleanPendingScenario(db, warehouse.Id, tokui.Id, directStore.Id, product.Id, sku.Id_Col, sku.Id_Siz, trace);
 		// 再実行時は専用伝票だけを除去し、通常の仕入伝票経路で在庫を再構築する。
 		db.Execute("DELETE FROM Tran03Shiire WHERE Id_Soko=@0", warehouse.Id);
 		var receipt = new Tran03Shiire {
@@ -70,21 +73,22 @@ public static class JuchuShippingSeeder {
 			db.CompleteTransaction();
 		} catch { db.AbortTransaction(); throw; }
 		new SummaryDb(db).CalcTran2SummaryStock(nameof(Tran03Shiire), nameof(ITranSoko.Id_Soko), receipt.Id, false);
-		trace($"UAT-02専用データ: 倉庫={warehouse.Code} 卸先={tokui.Code} SKU={sku.Id} 在庫={InitialStock}");
-		return new Result(warehouse.Id, warehouse.Code, tokui.Id, tokui.Code, employee.Id, employee.Code,
+		trace($"UAT-02専用データ: 倉庫={warehouse.Code} 卸先={tokui.Code} 直営店={directStore.Code} SKU={sku.Id} 在庫={InitialStock}");
+		return new Result(warehouse.Id, warehouse.Code, tokui.Id, tokui.Code, directStore.Id, directStore.Code, employee.Id, employee.Code,
 			product.Id, product.Code, sku.Id, sku.Id_Col, sku.Id_Siz, InitialStock);
 	}
 
-	private static void CleanPendingScenario(ExDatabaseSqlite db, long warehouseId, long tokuiId, long shohinId, long idCol, long idSiz, Action<string> trace) {
-		var orders = db.Fetch<Tran12Jyuchu>("where Id_Soko=@0 AND Id_Tokui=@1 AND DenDay=@2", warehouseId, tokuiId, "20260905");
+	private static void CleanPendingScenario(ExDatabaseSqlite db, long warehouseId, long tokuiId, long directStoreId, long shohinId, long idCol, long idSiz, Action<string> trace) {
+		var orders = db.Fetch<Tran12Jyuchu>("where Id_Soko=@0 AND Id_Tokui IN (@1,@2) AND DenDay=@3", warehouseId, tokuiId, directStoreId, "20260905");
 		var ids = orders.Count == 0 ? string.Empty : string.Join(",", orders.Select(x => x.Id));
 		var sales = ids.Length == 0 ? 0 : db.Execute($"DELETE FROM Tran00Uriage WHERE RelateNo1 IN ({ids})");
 		var haibun = ids.Length == 0 ? 0 : db.Execute($"DELETE FROM TranHaibun WHERE RelateNo1 IN ({ids})");
 		var juchu = ids.Length == 0 ? 0 : db.Execute($"DELETE FROM Tran12Jyuchu WHERE Id IN ({ids})");
+		var ido = db.Execute("DELETE FROM Tran10IdoOut WHERE Id_Soko=@0 AND Id_Ido=@1 AND Memo=@2", warehouseId, directStoreId, "配分出荷");
 		var real = db.Execute("DELETE FROM SummaryRealStock WHERE Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3", warehouseId, shohinId, idCol, idSiz);
 		var monthly = db.Execute("DELETE FROM SummaryStock WHERE Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3", warehouseId, shohinId, idCol, idSiz);
 		new SummaryDb(db).CalcReserveQtyAll();
-		trace($"UAT-02を掃除 売上={sales} 受注={juchu} 配分={haibun} 在庫={real}/{monthly}");
+		trace($"UAT-02を掃除 売上={sales} 移動={ido} 受注={juchu} 配分={haibun} 在庫={real}/{monthly}");
 	}
 
 	private static MasterTokui EnsureTokui(ExDatabaseSqlite db, string code, string name, int tenType, MasterShain employee, Action<string> trace) {

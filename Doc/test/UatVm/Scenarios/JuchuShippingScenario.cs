@@ -348,9 +348,106 @@ public static class JuchuShippingScenario {
 		allocated.Input("UAT-02:競合再実行後の受注残再検索", vm => vm.SelectedTabIndex = 0, new { orderId });
 		await allocated.RunAsync("UAT-02:競合再実行後の受注残再検索", vm => vm.DoSearchCommand);
 		var afterConcurrencyOrder = allocated.Vm.SearchRows.SingleOrDefault(x => x.Id == orderId);
-		session.Check("UAT-02 競合再実行後の受注残は3", afterConcurrencyOrder is { ShukkaSu: ShippingQuantity + ConcurrencyQuantity, HaibunSu: 0 }
+		if (!session.Check("UAT-02 競合再実行後の受注残は3", afterConcurrencyOrder is { ShukkaSu: ShippingQuantity + ConcurrencyQuantity, HaibunSu: 0 }
 			&& afterConcurrencyOrder.ZanSu == OrderQuantity - ShippingQuantity - ConcurrencyQuantity,
-			new { afterConcurrencyOrder?.ShukkaSu, afterConcurrencyOrder?.HaibunSu, afterConcurrencyOrder?.ZanSu });
+			new { afterConcurrencyOrder?.ShukkaSu, afterConcurrencyOrder?.HaibunSu, afterConcurrencyOrder?.ZanSu })) return;
+
+		const int TransferQuantity = 1;
+		order.Input("UAT-02:移動伝票用受注入力", vm => {
+			vm.SelectedTabIndex = 1;
+			vm.CurrentEdit = new Tran12Jyuchu {
+				DenDay = DenDay.Replace("/", string.Empty),
+				NouhinDay = DenDay.Replace("/", string.Empty),
+				Id_Tokui = seeded.DirectStoreId,
+				VTokui = new CodeNameView(seeded.DirectStoreId, seeded.DirectStoreCode, "UAT-VM 受注出荷直営店"),
+				Id_Soko = seeded.WarehouseId,
+				VSoko = new CodeNameView(seeded.WarehouseId, seeded.WarehouseCode, "UAT-VM 受注出荷倉庫"),
+				Id_Shain = seeded.EmployeeId,
+				VShain = new CodeNameView(seeded.EmployeeId, seeded.EmployeeCode, string.Empty),
+				Kubun = (int)EnumJuchu.Juchu,
+				Rate = 100,
+				Jmeisai = [new Tran99Meisai {
+					No = 1, Id_Shohin = seeded.ShohinId, Id_Col = seeded.Id_Col, Id_Siz = seeded.Id_Siz,
+					JanCode = JuchuShippingSeeder.JanCode, Su = TransferQuantity, Tanka = 2000,
+					Kingaku = TransferQuantity * 2000, Jodai = 2000, Gedai = 1000, Id_Tax = 1,
+				}],
+			};
+		}, new { seeded.DirectStoreCode, seeded.WarehouseCode, TransferQuantity });
+		await order.RunAsync("UAT-02:移動伝票用受注登録", vm => vm.DoInsertOnDetailTabCommand);
+		var transferOrderId = order.Vm.CurrentEdit.Id;
+		if (!session.Check("UAT-02 直営店向け受注が採番される", transferOrderId > 0, new { transferOrderId })) return;
+
+		allocated.Input("UAT-02:移動伝票用配分検索条件", vm => {
+			vm.SelectedTabIndex = 0;
+			vm.JuchuDayFrom = DateTime.Parse(DenDay);
+			vm.JuchuDayTo = DateTime.Parse(DenDay);
+			vm.CondTokuiDisplay = seeded.DirectStoreCode;
+		}, new { DenDay, seeded.DirectStoreCode });
+		await allocated.RunAsync("UAT-02:移動伝票用配分検索", vm => vm.DoSearchCommand);
+		allocated.Vm.SelectedSearchRow = allocated.Vm.SearchRows.SingleOrDefault(x => x.Id == transferOrderId);
+		if (!session.Check("UAT-02 直営店向け受注が配分一覧に出る", allocated.Vm.SelectedSearchRow != null, new { transferOrderId })) return;
+		await allocated.RunAsync("UAT-02:移動伝票用配分入力へ", vm => vm.GoToEditCommand);
+		allocated.Input("UAT-02:移動伝票用配分", vm => {
+			vm.ShijiDay = DateTime.Parse(DenDay);
+			vm.NouhinDay = DateTime.Parse(DenDay);
+			vm.MeisaiRows.Single().Su = TransferQuantity;
+		}, new { TransferQuantity });
+		await allocated.RunAsync("UAT-02:移動伝票用配分登録", vm => vm.DoRegisterCommand);
+		var transferAllocation = (await session.QueryAsync<TranHaibun>("where RelateNo1=@0", transferOrderId.ToString())).Single();
+		if (!session.Check("UAT-02 直営店向け配分を登録", transferAllocation.Su == TransferQuantity && transferAllocation.Id_Tenpo == seeded.DirectStoreId,
+			new { transferAllocation.Id, transferAllocation.Su, transferAllocation.Id_Tenpo, seeded.DirectStoreId })) return;
+
+		confirm.Input("UAT-02:移動伝票用確定検索条件", vm => {
+			vm.DenDayFromText = DenDay;
+			vm.DenDayToText = DenDay;
+			vm.KakuteiDayText = DenDay;
+			vm.SokoCode = seeded.WarehouseCode;
+			vm.MaxCountText = "500";
+		}, new { DenDay, seeded.WarehouseCode });
+		await confirm.RunAsync("UAT-02:移動伝票用出荷確定検索", vm => vm.SearchCommand);
+		confirmRow = confirm.Vm.Rows.SingleOrDefault(x => x.Id == transferAllocation.Id);
+		if (!session.Check("UAT-02 直営店向け配分が確定一覧に出る", confirmRow != null, new { transferAllocation.Id, rows = confirm.Vm.Rows.Count })) return;
+		confirmRow!.IsChecked = true;
+		await confirm.RunAsync("UAT-02:移動伝票用出荷確定", vm => vm.ConfirmSelectedCommand);
+
+		shipping.Input("UAT-02:移動伝票用出荷検索条件", vm => {
+			vm.KakuteiFromText = DenDay;
+			vm.KakuteiToText = DenDay;
+			vm.DenDayText = DenDay;
+			vm.SokoCode = seeded.WarehouseCode;
+			vm.MaxCountText = "500";
+			SetShippingEmployee(vm, seeded.EmployeeId, seeded.EmployeeCode);
+		}, new { DenDay, seeded.WarehouseCode, seeded.EmployeeCode });
+		await shipping.RunAsync("UAT-02:移動伝票用出荷検索", vm => vm.SearchCommand);
+		var transferShippingRow = shipping.Vm.Rows.SingleOrDefault(x => x.Id == transferAllocation.Id);
+		if (!session.Check("UAT-02 直営店向け配分が出荷一覧に出る", transferShippingRow != null,
+			new { transferAllocation.Id, rows = shipping.Vm.Rows.Count, shipping.Vm.Message })) return;
+		transferShippingRow!.JitsuSu = TransferQuantity;
+		transferShippingRow.IsChecked = true;
+		await shipping.RunAsync("UAT-02:移動伝票用出荷実行", vm => vm.ExecuteCommand);
+
+		var transferCompleted = (await session.QueryAsync<TranHaibun>("where Id=@0", transferAllocation.Id.ToString())).Single();
+		var idoOut = (await session.QueryAsync<Tran10IdoOut>("where Id=@0", transferCompleted.RelateNo2.ToString())).SingleOrDefault();
+		var transferSales = await session.QueryAsync<Tran00Uriage>("where RelateNo1=@0", transferOrderId.ToString());
+		var stockAfterTransfer = (await session.QueryAsync<SummaryRealStock>("where Id_Soko=@0 AND Id_Shohin=@1 AND Id_Col=@2 AND Id_Siz=@3",
+			seeded.WarehouseId.ToString(), seeded.ShohinId.ToString(), seeded.Id_Col.ToString(), seeded.Id_Siz.ToString())).Single();
+		if (!session.Check("UAT-02 直営店出荷は移動伝票へ紐付き完了・引当解除", transferCompleted is { EndFlag: 1, JitsuSu: TransferQuantity, ShortSu: 0 }
+			&& transferCompleted.RelateNo2 > 0 && stockAfterTransfer.ReserveQty == 0,
+			new { transferCompleted.EndFlag, transferCompleted.JitsuSu, transferCompleted.ShortSu, transferCompleted.RelateNo2, stockAfterTransfer.ReserveQty })) return;
+		if (!session.Check("UAT-02 移動出庫は出庫元・直営店・数量を保持", idoOut is { Id_Soko: var source, Id_Ido: var destination, SuTotal: TransferQuantity }
+			&& source == seeded.WarehouseId && destination == seeded.DirectStoreId && idoOut.Jmeisai?.SingleOrDefault()?.Su == TransferQuantity,
+			new { idoOut?.Id, idoOut?.Id_Soko, idoOut?.Id_Ido, idoOut?.SuTotal, su = idoOut?.Jmeisai?.SingleOrDefault()?.Su })) return;
+		if (!session.Check("UAT-02 直営店出荷は売上伝票を作成しない", transferSales.Count == 0, new { transferOrderId, sales = transferSales.Count })) return;
+		if (!session.Check("UAT-02 移動出庫で出庫元在庫0", stockAfterTransfer.Su == 0, new { stockAfterTransfer.Su, stockAfterTransfer.ReserveQty })) return;
+
+		allocated.Input("UAT-02:移動伝票後の受注残再検索", vm => {
+			vm.SelectedTabIndex = 0;
+			vm.CondTokuiDisplay = seeded.DirectStoreCode;
+		}, new { transferOrderId });
+		await allocated.RunAsync("UAT-02:移動伝票後の受注残再検索", vm => vm.DoSearchCommand);
+		var afterTransferOrder = allocated.Vm.SearchRows.SingleOrDefault(x => x.Id == transferOrderId);
+		session.Check("UAT-02 移動伝票では受注残を消化しない", afterTransferOrder is { ShukkaSu: 0, HaibunSu: 0, ZanSu: TransferQuantity },
+			new { afterTransferOrder?.ShukkaSu, afterTransferOrder?.HaibunSu, afterTransferOrder?.ZanSu });
 		session.SetDialogResponder(null);
 	}
 
