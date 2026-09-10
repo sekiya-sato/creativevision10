@@ -21,6 +21,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["stocktake"] = StocktakeScenario.RunAsync,
 	["costuat"] = CostUatScenario.RunAsync,
 	["uat01screen"] = Uat01ScreenScenario.RunAsync,
+	["uat08opening"] = OpeningBalanceUatScenario.RunAsync,
 	["shopdailysales"] = ShopDailySalesQueryScenario.RunAsync,
 	["jodaibulkextract"] = JodaiBulkExtractScenario.RunAsync,
 	["jodaiscope"] = JodaiScopeScenario.RunAsync,
@@ -50,6 +51,7 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["stocktake"] = StocktakeScenario.Seeder,
 	["costuat"] = CostUatScenario.Seeder,
 	["uat01screen"] = Uat01ScreenScenario.Seeder,
+	["uat08opening"] = OpeningBalanceUatScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
