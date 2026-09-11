@@ -216,4 +216,37 @@
 			</Trigger>
 		</Style.Triggers>
 	</Style>
+
+	<!--  MainMenu 右クリックメニュー。ContextMenuはPopupで背後が透けるため、ダッシュボードカードとは別の不透明専用キーを使う。
+	     背景/枠/ホバーはメインテーマ(緑/橙/紫/赤)に追従し、Dark切替はUIColors.Dark.xamlの上書きに追従する  -->
+	<Style x:Key="MainMenuContextMenu"
+		BasedOn="{StaticResource {x:Type ContextMenu}}"
+		TargetType="ContextMenu">
+		<Setter Property="Background" Value="{DynamicResource MainMenuContextMenuBackgroundBrush}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource MainMenuContextMenuBorderBrush}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="Foreground" Value="{DynamicResource MainMenuContextMenuForegroundBrush}" />
+		<Setter Property="Padding" Value="4" />
+	</Style>
+	<Style x:Key="MainMenuContextMenuItem"
+		BasedOn="{StaticResource {x:Type MenuItem}}"
+		TargetType="MenuItem">
+		<Setter Property="Foreground" Value="{DynamicResource MainMenuContextMenuForegroundBrush}" />
+		<Setter Property="FontSize" Value="14" />
+		<Setter Property="Padding" Value="12,6" />
+		<Style.Triggers>
+			<Trigger Property="IsHighlighted" Value="True">
+				<Setter Property="Background" Value="{DynamicResource MainMenuContextMenuHoverBackgroundBrush}" />
+			</Trigger>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter Property="Background" Value="{DynamicResource MainMenuContextMenuHoverBackgroundBrush}" />
+			</Trigger>
+		</Style.Triggers>
+	</Style>
+	<Style x:Key="MainMenuContextMenuSeparator"
+		BasedOn="{StaticResource {x:Type Separator}}"
+		TargetType="Separator">
+		<Setter Property="Background" Value="{DynamicResource MainMenuContextMenuBorderBrush}" />
+		<Setter Property="Margin" Value="4,4" />
+	</Style>
 </ResourceDictionary>

@@ -71,6 +71,15 @@
 		Color="#1FFFFFFF" />
 	<SolidColorBrush x:Key="MainMenuDashboardCardBorderBrush"
 		Color="#33FFFFFF" />
+	<!--  MainMenu 右クリックメニュー専用の不透明色(Dark)  -->
+	<SolidColorBrush x:Key="MainMenuContextMenuBackgroundBrush"
+		Color="#1C2940" />
+	<SolidColorBrush x:Key="MainMenuContextMenuBorderBrush"
+		Color="#101726" />
+	<SolidColorBrush x:Key="MainMenuContextMenuHoverBackgroundBrush"
+		Color="#182337" />
+	<SolidColorBrush x:Key="MainMenuContextMenuForegroundBrush"
+		Color="#E0E0E0" />
 	<SolidColorBrush x:Key="MainMenuWindowButtonHoverBackgroundBrush"
 		Color="#FFF4F6F8" />
 	<SolidColorBrush x:Key="MinimizeWindowButtonBackgroundBrush"

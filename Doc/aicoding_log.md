@@ -1,3 +1,14 @@
+## [2026-09-11] メインメニュー右クリックメニューの追加
+### 実施内容
+- メインメニュー画面のクライアント領域右クリックに、VersionUp/環境設定/RefreshToken/ログイン/テーマ切替/メニューのみ/小Window/終了の8項目のコンテキストメニューを追加した。既存のRelayCommandへバインドするだけで、ViewModelは変更していない。
+- 上部120px（WindowChrome CaptionHeight）はOS標準のシステムメニューのまま残す仕様とした。下部の既存ボタン群とF9〜F12のInputBindingsも維持した。
+- ContextMenuは独立Popupのため、半透明カード用の`MainMenuDashboardCardBackgroundBrush`では背後が透ける。専用の不透明キー（`MainMenuContextMenu{Background,Border,HoverBackground,Foreground}Brush`）を新設し、緑/橙/紫/赤の各メインテーマとDark切替に追従させた。色は各テーマの既存GradientStopから採取した。
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`成功（0エラー0警告）。
+- 実行して右クリック表示と不透過の配色を確認した。
+
+---
+
 ## [2026-09-10] 旧DBのSysSequence再作成による移行停止回避
 ### 実施内容
 - DBバージョンが26090301の場合だけ、SysSequenceを削除して現行定義で再作成する処理を追加した。

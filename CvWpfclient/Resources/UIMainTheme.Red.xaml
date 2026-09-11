@@ -14,4 +14,11 @@
 		Color="#1EFFF0F0" />
 	<SolidColorBrush x:Key="MainMenuDashboardCardBorderBrush"
 		Color="#55F87171" />
+	<!--  MainMenu 右クリックメニュー専用の不透明色。CvnetMainBackgroundBrushのグラデーション色をベースにする  -->
+	<SolidColorBrush x:Key="MainMenuContextMenuBackgroundBrush"
+		Color="#DC2626" />
+	<SolidColorBrush x:Key="MainMenuContextMenuBorderBrush"
+		Color="#7F1D1D" />
+	<SolidColorBrush x:Key="MainMenuContextMenuHoverBackgroundBrush"
+		Color="#BB2323" />
 </ResourceDictionary>
