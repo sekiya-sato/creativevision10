@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 CostFourItemsCoverageTests は、原価4項目（詳細設計 `Doc/spec/2026-09-05_原価4項目_詳細設計.md` §11.2）の
 「漏れ検知」を目的とした2本の方言テストです。

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DatePickerTodayButtonBehavior は DatePicker のカレンダーポップアップへ「今日」ボタンを追加する添付プロパティ Behavior です。
 

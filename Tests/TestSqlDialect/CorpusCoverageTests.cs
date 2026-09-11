@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 CorpusCoverageTests は、実際に使われているSQL全件のうち何割が各方言へ変換できるかを固定します。
 

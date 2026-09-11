@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 JsonBuildRule はJSONを組み立てる関数を写像します（ルール B04 系）。
 

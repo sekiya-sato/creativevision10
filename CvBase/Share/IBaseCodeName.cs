@@ -1,4 +1,4 @@
-
+﻿
 namespace CvBase.Share;
 
 /// <summary>

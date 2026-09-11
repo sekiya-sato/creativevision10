@@ -1,4 +1,4 @@
-using CvBaseSqlite;
+﻿using CvBaseSqlite;
 using Microsoft.Data.Sqlite;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;

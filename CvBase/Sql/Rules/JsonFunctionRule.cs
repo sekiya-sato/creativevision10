@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 JsonFunctionRule は引数1個のJSON関数を対象DBの表現へ置き換えます（ルール B03 / B04）。
 

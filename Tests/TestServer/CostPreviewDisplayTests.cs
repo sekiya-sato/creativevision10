@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using CvBase.Share;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;

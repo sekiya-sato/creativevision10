@@ -1,4 +1,4 @@
-/*
+﻿/*
  * MessageBoxWPF
  * Alternative MessageBox for WPF.
  * https://github.com/mikihiro-t/MessageBoxWPF/

@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._00System;
+﻿namespace CvWpfclient.Views._00System;
 
 /// <summary>
 /// SysLoginView.xaml の相互作用ロジック

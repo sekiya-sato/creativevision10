@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 TranKubunBrushConverter は伝票の取引区分(Kubun)に応じて総合計などの前景色ブラシを返す IValueConverter です。
 返品系(20-29)は赤、それ以外(通常10-19 を含む)は既定色(UnsetValue=継承色)を返します。

@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 /// <summary>
 /// 上代一括変更（Scope）の価格方式6種＋丸め＋価格ポイントを計算する純粋クラス。

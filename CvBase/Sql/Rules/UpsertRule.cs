@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 UpsertRule は SQLite の UPSERT を MariaDB の構文へ置き換えます（ルール C04）。
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 StrftimeRule は `strftime(書式, 対象)` を対象DBの日付整形へ置き換えます（ルール B05）。
 

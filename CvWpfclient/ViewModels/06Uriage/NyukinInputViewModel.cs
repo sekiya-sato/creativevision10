@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.Input;
 using CvBase;
 
 namespace CvWpfclient.ViewModels._06Uriage;

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 PostgreSqlDialect は SQLite 方言のSQLを PostgreSQL 向けへ変換します。
 

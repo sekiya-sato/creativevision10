@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlCorpus は CvWpfclient のソースから SQL の文字列リテラルを収集します。
 

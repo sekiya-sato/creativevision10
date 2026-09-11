@@ -1,4 +1,4 @@
-using CvWpfclient.ViewModels.Sub;
+﻿using CvWpfclient.ViewModels.Sub;
 using System.ComponentModel;
 using System.Windows;
 

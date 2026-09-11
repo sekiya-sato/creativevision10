@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 StringIsNotEmptyToVisibilityConverter は空白以外の文字列を Visible、空または null を Collapsed へ変換する IValueConverter です。
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 JodaiOpeDisplayConverter は上代一括変更の抽出条件行(TranJodaiCond.Ope)の 0/1 を
 「AND」「OR」の表示文字列へ変換する IValueConverter です。

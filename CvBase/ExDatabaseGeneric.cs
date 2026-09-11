@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 public partial class ExDatabase {
 	public string GetSqlCreateTable<T>() {

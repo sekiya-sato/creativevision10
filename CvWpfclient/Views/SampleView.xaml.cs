@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views;
+﻿namespace CvWpfclient.Views;
 
 /// <summary>
 /// ViewOrg.xaml の相互作用ロジック

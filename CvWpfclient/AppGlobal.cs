@@ -1,4 +1,4 @@
-global using MsgBoxResult = System.Windows.MessageBoxResult;
+﻿global using MsgBoxResult = System.Windows.MessageBoxResult;
 using CvBase.Share;
 using CvBase.Sql;
 using CvWpfclient.Helpers;

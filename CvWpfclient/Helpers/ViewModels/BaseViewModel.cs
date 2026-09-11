@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseViewModel は初期化・終了・キャンセルコマンドの実行、および実行中の非同期コマンド管理を提供する ViewModel の共通基底クラスです。
 

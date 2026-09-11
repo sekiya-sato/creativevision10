@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlDialectDetectionTests は未対応構文の検出（T5）とバージョン検証を確認します。
 

@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterSysKanriMenteView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterSysKanriMenteView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -437,7 +437,7 @@
 							Margin="15,0,0,0" VerticalAlignment="Center"
 							Content="原価方式" />
 						<ComboBox Grid.Row="13" Grid.Column="4" Grid.ColumnSpan="2"
-							Width="150"  Height="52"
+							Width="150" Height="52"
 							Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
 							DisplayMemberPath="Text"
 							ItemsSource="{Binding CostMethodItems}"

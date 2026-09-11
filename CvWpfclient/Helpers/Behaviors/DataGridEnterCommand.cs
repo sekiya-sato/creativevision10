@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DataGridEnterCommand は DataGrid で Enter キーを押したとき、指定した ButtonBase を実行する添付プロパティです。
 

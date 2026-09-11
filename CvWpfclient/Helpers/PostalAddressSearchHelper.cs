@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 PostalAddressSearchHelper は郵便番号検索サービスを呼び出し、選択した住所を ViewModel の住所項目へ反映する処理を共通化します。
 

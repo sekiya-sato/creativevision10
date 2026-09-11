@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._20UriageAnalysis;
+﻿namespace CvWpfclient.Views._20UriageAnalysis;
 
 public partial class HinbanSalesTrendReportView : Helpers.BaseWindow {
 	public HinbanSalesTrendReportView() {

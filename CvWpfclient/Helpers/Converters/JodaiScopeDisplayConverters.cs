@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 上代一括変更 ② 適用範囲（Scope）DataGridの読み取り専用セル表示用コンバータ群。
 CvBase の EnumJodaiRangeType / EnumJodaiGroupAxis / EnumJodaiIncExc / EnumJodaiPriceMethod の値を

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 PasswordBoxAssistant は通常 Binding できない PasswordBox.Password を双方向データバインディングする添付プロパティです。
 

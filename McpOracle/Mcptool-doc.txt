@@ -2,10 +2,10 @@
 
 dotnet publish McpOracle/McpOracle.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=None -o C:\gitroot\tools\McpOracle
 
-# MCPサーバとして登録する Claude例
+# MCPサーバとして登録する Claude例  %APPDATA%\Claude\claude_desktop_config.json
    "mcpServers": {
       "cv-oracle": {
-         "command": "C:\gitroot\tools\McpOracle\McpOracle.exe",
+         "command": "C:\\gitroot\\tools\\McpOracle\\McpOracle.exe",
          "args": ["Data Source=IPアドレス/DB名;User Id=ユーザ名;Password=パスワード;"]
       }
    }

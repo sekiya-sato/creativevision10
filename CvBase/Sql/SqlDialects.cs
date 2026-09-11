@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlDialects は方言インスタンスの取得口です。
 

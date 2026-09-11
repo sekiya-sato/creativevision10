@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._00System;
+﻿namespace CvWpfclient.Views._00System;
 /// <summary>
 /// SettingSystemView.xaml の相互作用ロジック
 /// </summary>

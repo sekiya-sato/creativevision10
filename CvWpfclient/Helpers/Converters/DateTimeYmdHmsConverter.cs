@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DateTimeYmdHmsConverter は yyyyMMddHHmmss 形式の文字列または DateTime を yyyy/MM/dd HH:mm:ss 表示へ変換する IValueConverter です。
 

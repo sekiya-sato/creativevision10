@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseWindow は ViewModel の初期化・終了処理、Esc による閉じる操作、最小サイズ、および所有者 Window の連携を提供する WPF Window 基底クラスです。
 

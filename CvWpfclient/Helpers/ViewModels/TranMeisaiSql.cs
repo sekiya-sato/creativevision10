@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 TranMeisaiSql は、伝票テーブルの明細JSON列 `Jmeisai` を SQLite の json_each で展開して
 `Tran99Meisai` の各項目を取り出す SQL 断片を組み立てるヘルパーです。

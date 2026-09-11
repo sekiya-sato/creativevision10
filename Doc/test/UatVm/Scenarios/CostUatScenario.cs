@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using CvBase.Share;
 using CvWpfclient.ViewModels._31Monthly;
 using CvWpfclient.Views._31Monthly;

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseQueryViewModel は「条件を入力して検索し、結果を DataGrid に表示する」照会画面の共通基底クラスです。
 帳票(BaseReportViewModel)がPDF出力を前提にするのに対し、こちらは画面表示が目的です。

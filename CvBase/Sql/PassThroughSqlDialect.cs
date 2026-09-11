@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 PassThroughSqlDialect は何も変換しない方言です。
 

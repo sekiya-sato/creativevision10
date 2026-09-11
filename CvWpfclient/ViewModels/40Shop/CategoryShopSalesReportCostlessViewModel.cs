@@ -1,4 +1,4 @@
-namespace CvWpfclient.ViewModels._40Shop;
+﻿namespace CvWpfclient.ViewModels._40Shop;
 
 /// <summary>
 /// 分類別店別売上報告（原価無）。店舗へ配布する版で、値入率を出さない。

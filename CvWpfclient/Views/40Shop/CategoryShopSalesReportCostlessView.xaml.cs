@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._40Shop;
+﻿namespace CvWpfclient.Views._40Shop;
 
 public partial class CategoryShopSalesReportCostlessView : Helpers.BaseWindow {
 	public CategoryShopSalesReportCostlessView() {

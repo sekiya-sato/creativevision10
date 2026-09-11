@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._02Yosan;
+﻿namespace CvWpfclient.Views._02Yosan;
 
 /// <summary>
 /// MasterYosanHanbaiMenteView.xaml の相互作用ロジック

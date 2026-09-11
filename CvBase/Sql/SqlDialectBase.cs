@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlDialectBase はルールを1回走査で適用する変換器の共通実装です。
 

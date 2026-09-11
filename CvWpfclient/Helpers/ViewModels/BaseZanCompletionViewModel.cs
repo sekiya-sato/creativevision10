@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseZanCompletionViewModel は残完了設定画面（発注残完了設定 / 受注残完了設定）の共通基底クラスです。
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DdlSnapshotTests は3DBのDDL生成を突き合わせます（T6）。
 

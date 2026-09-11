@@ -1,4 +1,4 @@
-namespace McpSql;
+﻿namespace McpSql;
 
 /// <summary>
 /// トークン種別

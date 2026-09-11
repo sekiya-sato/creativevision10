@@ -1,4 +1,4 @@
-using CvBase.Share;
+﻿using CvBase.Share;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
 

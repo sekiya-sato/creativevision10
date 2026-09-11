@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 ConsumptionRatePercentConverter は MasterShohin.ConsumptionRateBasisPoints（1/100%単位。6500=65.00%）と
 編集画面の%入力欄（"65.00"）を相互変換する IValueConverter です。

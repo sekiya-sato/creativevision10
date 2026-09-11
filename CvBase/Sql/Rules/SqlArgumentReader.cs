@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlArgumentReader は変換ルールが関数の引数を読むための小さな補助です。
 

@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._00System;
+﻿namespace CvWpfclient.Views._00System;
 
 /// <summary>
 /// DB定義書出力画面

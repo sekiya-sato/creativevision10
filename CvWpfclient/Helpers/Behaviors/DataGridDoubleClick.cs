@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DataGridのダブルクリック時に、選択中の行を引数としてICommandを実行するための添付プロパティ
 

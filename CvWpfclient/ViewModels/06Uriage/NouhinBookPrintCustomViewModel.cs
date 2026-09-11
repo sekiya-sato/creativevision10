@@ -1,4 +1,4 @@
-namespace CvWpfclient.ViewModels._06Uriage;
+﻿namespace CvWpfclient.ViewModels._06Uriage;
 
 /// <summary>
 /// 納品書印刷（専用伝票）。抽出条件・SQL・発行済み更新は納品書印刷と全く同じで、

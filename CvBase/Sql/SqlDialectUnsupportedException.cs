@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlDialectUnsupportedException は、SQLite固有構文をこの方言へ変換できなかったときに投げます。
 

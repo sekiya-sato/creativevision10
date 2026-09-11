@@ -1,4 +1,4 @@
-namespace CvServer;
+﻿namespace CvServer;
 
 /// <summary>
 /// PrintServer 設定の相対パスを ContentRoot 基準の絶対パスへ解決する。

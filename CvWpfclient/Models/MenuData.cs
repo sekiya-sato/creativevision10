@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CvBase;
 using CvBase.Share;
 using System.Collections.ObjectModel;

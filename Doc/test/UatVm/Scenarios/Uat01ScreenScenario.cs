@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CvAsset;
 using CvBase;
 using CvBase.Share;

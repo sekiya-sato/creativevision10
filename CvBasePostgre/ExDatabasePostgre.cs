@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using NPoco;
 using NPoco.DatabaseTypes;
 using Npgsql;

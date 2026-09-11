@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._02Yosan;
+﻿namespace CvWpfclient.Views._02Yosan;
 
 /// <summary>
 /// MasterYosanBrandMenteView.xaml の相互作用ロジック

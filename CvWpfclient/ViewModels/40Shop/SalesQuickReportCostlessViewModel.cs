@@ -1,4 +1,4 @@
-namespace CvWpfclient.ViewModels._40Shop;
+﻿namespace CvWpfclient.ViewModels._40Shop;
 
 /// <summary>
 /// 売上速報（原価無）。店舗へ配布する版で、粗利額と粗利率を出さない。

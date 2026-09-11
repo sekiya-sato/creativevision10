@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 CategoryBDateRuleTests は カテゴリB の日付・整形ルール（B05〜B08）を検証します。
 

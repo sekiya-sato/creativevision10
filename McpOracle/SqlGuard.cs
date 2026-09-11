@@ -1,4 +1,4 @@
-namespace McpOracle;
+﻿namespace McpOracle;
 
 /// <summary>単文かつ読み取り専用 SQL かを判定する軽量な字句検証器。</summary>
 static class SqlGuard {

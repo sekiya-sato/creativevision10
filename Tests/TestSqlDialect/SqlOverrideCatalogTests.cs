@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlOverrideCatalogTests は QueryKey オーバーライド機構を検証します。
 

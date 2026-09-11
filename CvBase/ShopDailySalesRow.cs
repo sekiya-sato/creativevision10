@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 /// <summary>
 /// 店別売上表(DailyShopBudgetQueryViewModel)が使う「店舗×日」の集計結果1行。

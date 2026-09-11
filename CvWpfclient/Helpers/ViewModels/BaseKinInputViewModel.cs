@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseKinInputViewModel は入金(Tran06Nyukin)・支払(Tran07Shiharai)の伝票入力画面の共通基底クラスです。
 

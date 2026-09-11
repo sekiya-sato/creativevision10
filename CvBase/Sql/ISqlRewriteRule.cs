@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 ISqlRewriteRule は SQLite 方言の1構文を対象DBの表現へ差し替えるルールです。
 

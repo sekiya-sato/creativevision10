@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views.Sub;
+﻿namespace CvWpfclient.Views.Sub;
 
 public partial class SelectMultiWinView : Helpers.BaseWindow {
 	public SelectMultiWinView() {

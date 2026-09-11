@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 LongToLocalDateTimeStringConverter は ticks をローカル時刻の文字列へ変換し、必要に応じて Binding の ConverterParameter で表示書式を指定する IValueConverter です。
 

@@ -1,4 +1,4 @@
-namespace CvWpfclient.ViewModels._40Shop;
+﻿namespace CvWpfclient.ViewModels._40Shop;
 
 /// <summary>
 /// 汎用在庫表（原価無）。店舗へ配布する版で、原価単価と原価金額を出さない。

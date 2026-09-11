@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 CoreServiceClient は、CvWpfclient 内で共通する ICoreService の一覧照会と実行要求を提供します。
  */

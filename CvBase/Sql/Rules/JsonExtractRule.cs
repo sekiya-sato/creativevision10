@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 JsonExtractRule は `json_extract(X,'$.Prop')` を対象DBの表現へ置き換えます（ルール B01）。
 

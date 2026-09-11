@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using CvWpfclient.ViewModels._00System;
 using CvWpfclient.Views._00System;
 using System.Windows;

@@ -1,4 +1,4 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterJouDaiBulkChangeView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._01Master.MasterJouDaiBulkChangeView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._01Master"
@@ -266,26 +266,24 @@
 								Text="P/S区分" />
 							<ComboBox Grid.Row="0" Grid.Column="1"
 								Margin="0,4,16,4"
-								TabIndex="0"
 								DisplayMemberPath="Name"
 								ItemsSource="{Binding KubunOptions}"
 								SelectedValue="{Binding EditKubun, Mode=TwoWay}"
 								SelectedValuePath="Value"
 								Style="{StaticResource FormComboBox}"
-								ToolTip="プロパーは無期限(終了日 99991231)のオーバーレイとして登録されます" />
+								TabIndex="0" ToolTip="プロパーは無期限(終了日 99991231)のオーバーレイとして登録されます" />
 
 							<TextBlock Grid.Row="0" Grid.Column="2"
 								Style="{StaticResource FormLabel}"
 								Text="対象" />
 							<ComboBox Grid.Row="0" Grid.Column="3"
 								Margin="0,4,16,4"
-								TabIndex="1"
 								DisplayMemberPath="Name"
 								ItemsSource="{Binding TaishoOptions}"
 								SelectedValue="{Binding EditTaishoType, Mode=TwoWay}"
 								SelectedValuePath="Value"
 								Style="{StaticResource FormComboBox}"
-								ToolTip="店舗用は直営店(TenType=6)、本部売上用は卸先・売仕店(TenType=1,3)が対象になります" />
+								TabIndex="1" ToolTip="店舗用は直営店(TenType=6)、本部売上用は卸先・売仕店(TenType=1,3)が対象になります" />
 
 							<TextBlock Grid.Row="0" Grid.Column="4"
 								Style="{StaticResource FormLabel}"
@@ -296,18 +294,16 @@
 									<ColumnDefinition Width="Auto" />
 								</Grid.ColumnDefinitions>
 								<ComboBox Margin="0,4"
-									TabIndex="2"
 									DisplayMemberPath="Display"
 									ItemsSource="{Binding SaleOptions}"
 									SelectedItem="{Binding SelectedSale, Mode=TwoWay}"
 									Style="{StaticResource FormComboBox}"
-									ToolTip="名称マスタの区分 SLE" />
+									TabIndex="2" ToolTip="名称マスタの区分 SLE" />
 								<Button Grid.Column="1"
-									TabIndex="3"
 									Command="{Binding SelectSaleDialogCommand}"
 									Content="&lt;&lt;"
 									Style="{StaticResource BudgetActionButtonStyle}"
-									ToolTip="セールCDを検索して選択" />
+									TabIndex="3" ToolTip="セールCDを検索して選択" />
 							</Grid>
 
 							<TextBlock Grid.Row="1" Grid.Column="0"
@@ -315,8 +311,8 @@
 								Text="タイトル" />
 							<TextBox Grid.Row="1" Grid.Column="1"
 								Margin="0,4,16,4"
-								TabIndex="4"
 								Style="{StaticResource FormTextBox}"
+								TabIndex="4"
 								Text="{Binding EditTitle, UpdateSourceTrigger=PropertyChanged}" />
 
 							<TextBlock Grid.Row="1" Grid.Column="2"
@@ -324,21 +320,20 @@
 								Text="開始日" />
 							<DatePicker Grid.Row="1" Grid.Column="3"
 								Margin="0,4,16,4"
-								TabIndex="5"
 								helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 								SelectedDate="{Binding EditDayFrom, Mode=TwoWay}"
 								Style="{StaticResource FormDatePicker}"
-								ToolTip="店舗別に期間を変える場合は下の対象一覧で個別に設定します" />
+								TabIndex="5" ToolTip="店舗別に期間を変える場合は下の対象一覧で個別に設定します" />
 
 							<TextBlock Grid.Row="1" Grid.Column="4"
 								Style="{StaticResource FormLabel}"
 								Text="終了日" />
 							<DatePicker Grid.Row="1" Grid.Column="5"
 								Margin="0,4"
-								TabIndex="6"
 								helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
 								SelectedDate="{Binding EditDayTo, Mode=TwoWay}"
-								Style="{StaticResource FormDatePicker}" />
+								Style="{StaticResource FormDatePicker}"
+								TabIndex="6" />
 
 							<TextBlock Grid.Row="2" Grid.Column="0"
 								Style="{StaticResource FormLabel}"
@@ -350,17 +345,16 @@
 									<ColumnDefinition Width="Auto" />
 								</Grid.ColumnDefinitions>
 								<ComboBox Margin="0,4"
-									TabIndex="7"
 									DisplayMemberPath="Display"
 									ItemsSource="{Binding ShainOptions}"
 									SelectedItem="{Binding SelectedShain, Mode=TwoWay}"
-									Style="{StaticResource FormComboBox}" />
+									Style="{StaticResource FormComboBox}"
+									TabIndex="7" />
 								<Button Grid.Column="1"
-									TabIndex="8"
 									Command="{Binding SelectShainDialogCommand}"
 									Content="&lt;&lt;"
 									Style="{StaticResource BudgetActionButtonStyle}"
-									ToolTip="入力者を検索して選択" />
+									TabIndex="8" ToolTip="入力者を検索して選択" />
 							</Grid>
 
 							<TextBlock Grid.Row="2" Grid.Column="2"
@@ -369,8 +363,8 @@
 								Text="備考" />
 							<TextBox Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3"
 								Margin="0,4"
-								TabIndex="9"
 								Style="{StaticResource FormTextBox}"
+								TabIndex="9"
 								Text="{Binding EditMemo, UpdateSourceTrigger=PropertyChanged}" />
 
 							<TextBlock Grid.Row="3" Grid.Column="0"
@@ -383,18 +377,16 @@
 									<ColumnDefinition Width="Auto" />
 								</Grid.ColumnDefinitions>
 								<ComboBox Margin="0,4"
-									TabIndex="10"
 									DisplayMemberPath="Display"
 									ItemsSource="{Binding ShainOptions}"
 									SelectedItem="{Binding SelectedApproveShain, Mode=TwoWay}"
 									Style="{StaticResource FormComboBox}"
-									ToolTip="任意の運用記録。MasterConfig.JodaiNeedApprove=1のときだけ確定操作時に入力を求めます（設計書2.10）" />
+									TabIndex="10" ToolTip="任意の運用記録。MasterConfig.JodaiNeedApprove=1のときだけ確定操作時に入力を求めます（設計書2.10）" />
 								<Button Grid.Column="1"
-									TabIndex="11"
 									Command="{Binding SelectApproveShainDialogCommand}"
 									Content="&lt;&lt;"
 									Style="{StaticResource BudgetActionButtonStyle}"
-									ToolTip="承認者を検索して選択" />
+									TabIndex="11" ToolTip="承認者を検索して選択" />
 							</Grid>
 
 							<TextBlock Grid.Row="3" Grid.Column="2"
@@ -415,31 +407,30 @@
 							<TextBlock VerticalAlignment="Center"
 								Style="{StaticResource StatusTextBlockStyle}"
 								Text="{Binding MeisaiCount, StringFormat={}対象商品 {0:N0} 件}" />
-							<TextBlock Margin="10,0"
-								VerticalAlignment="Center"
+							<TextBlock Margin="10,0" VerticalAlignment="Center"
 								Style="{StaticResource StatusTextBlockStyle}"
 								Text="｜" />
 							<TextBlock VerticalAlignment="Center"
 								Style="{StaticResource StatusTextBlockStyle}"
 								Text="{Binding ScopeCount, StringFormat={}適用範囲 {0:N0} 件}" />
-							<TextBlock Margin="10,0"
-								VerticalAlignment="Center"
+							<TextBlock Margin="10,0" VerticalAlignment="Center"
 								Style="{StaticResource StatusTextBlockStyle}"
 								Text="｜" />
 							<TextBlock VerticalAlignment="Center"
 								Style="{StaticResource StatusTextBlockStyle}"
 								Text="{Binding ExpandEstimate, StringFormat={}展開見込 {0:N0} 行}"
 								ToolTip="確定すると DerivedJodai にこの行数が作成されます" />
-							<TextBlock Margin="10,0"
-								VerticalAlignment="Center"
+							<TextBlock Margin="10,0" VerticalAlignment="Center"
 								Style="{StaticResource StatusTextBlockStyle}"
 								Text="｜" />
 							<TextBlock VerticalAlignment="Center"
 								Text="{Binding ConflictCount, StringFormat={}競合 {0:N0} 件}">
 								<TextBlock.Style>
-									<Style BasedOn="{StaticResource StatusTextBlockStyle}" TargetType="TextBlock">
+									<Style BasedOn="{StaticResource StatusTextBlockStyle}"
+										TargetType="TextBlock">
 										<Style.Triggers>
-											<DataTrigger Binding="{Binding HasConflicts}" Value="True">
+											<DataTrigger Binding="{Binding HasConflicts}"
+												Value="True">
 												<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
 												<Setter Property="FontWeight" Value="Bold" />
 											</DataTrigger>
@@ -524,10 +515,12 @@
 															<!--  1行目は繋ぐ相手が無いため空表示にする（誤解防止）  -->
 															<TextBlock Margin="4,0" VerticalAlignment="Center">
 																<TextBlock.Style>
-																	<Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+																	<Style BasedOn="{StaticResource {x:Type TextBlock}}"
+																		TargetType="TextBlock">
 																		<Setter Property="Text" Value="{Binding Ope, Converter={StaticResource JodaiOpeDisplayConverter}}" />
 																		<Style.Triggers>
-																			<DataTrigger Binding="{Binding No}" Value="1">
+																			<DataTrigger Binding="{Binding No}"
+																				Value="1">
 																				<Setter Property="Text" Value="" />
 																			</DataTrigger>
 																		</Style.Triggers>
@@ -543,9 +536,11 @@
 																SelectedValue="{Binding Ope, Mode=TwoWay}"
 																SelectedValuePath="Value">
 																<ComboBox.Style>
-																	<Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
+																	<Style BasedOn="{StaticResource {x:Type ComboBox}}"
+																		TargetType="ComboBox">
 																		<Style.Triggers>
-																			<DataTrigger Binding="{Binding No}" Value="1">
+																			<DataTrigger Binding="{Binding No}"
+																				Value="1">
 																				<Setter Property="IsEnabled" Value="False" />
 																			</DataTrigger>
 																		</Style.Triggers>
@@ -565,9 +560,11 @@
 													</DataGridTemplateColumn.CellTemplate>
 													<DataGridTemplateColumn.CellEditingTemplate>
 														<DataTemplate>
-															<!--  FieldOptionsはJsubの枠を実行時に読み込むため非static。DataGridComboBoxColumnは
-															      視覚ツリーの外にありDataContextを辿れないため、ここはTemplateColumn+ComboBoxで
-															      DataContext.FieldOptionsをAncestorType=DataGrid経由で参照する  -->
+															<!--
+																FieldOptionsはJsubの枠を実行時に読み込むため非static。DataGridComboBoxColumnは
+																視覚ツリーの外にありDataContextを辿れないため、ここはTemplateColumn+ComboBoxで
+																DataContext.FieldOptionsをAncestorType=DataGrid経由で参照する
+															-->
 															<ComboBox DisplayMemberPath="Name"
 																ItemsSource="{Binding DataContext.FieldOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
 																SelectedItem="{Binding Field, Mode=TwoWay}" />
@@ -844,8 +841,8 @@
 													<DataGridTemplateColumn.CellEditingTemplate>
 														<DataTemplate>
 															<ComboBox DisplayMemberPath="Name"
-																ItemsSource="{Binding DataContext.GroupAxisOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
 																IsEnabled="{Binding RangeType, Converter={StaticResource JodaiIsPriceGroupConverter}}"
+																ItemsSource="{Binding DataContext.GroupAxisOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
 																SelectedValue="{Binding GroupAxis, Mode=TwoWay}"
 																SelectedValuePath="Value" />
 														</DataTemplate>
@@ -861,8 +858,10 @@
 													</DataGridTemplateColumn.CellTemplate>
 													<DataGridTemplateColumn.CellEditingTemplate>
 														<DataTemplate>
-															<!--  ItemsSourceはRangeType/GroupAxisにより切り替える（価格グループ3軸 or 店舗）。
-															      Id_Group/Id_Tenpoとコード・名称(時点値)の同時更新はJodaiScopeRow.SelectedGroupOrStoreOptionが行う  -->
+															<!--
+																ItemsSourceはRangeType/GroupAxisにより切り替える（価格グループ3軸 or 店舗）。
+																Id_Group/Id_Tenpoとコード・名称(時点値)の同時更新はJodaiScopeRow.SelectedGroupOrStoreOptionが行う
+															-->
 															<ComboBox DisplayMemberPath="Display"
 																SelectedItem="{Binding SelectedGroupOrStoreOption, Mode=TwoWay}">
 																<ComboBox.Style>
@@ -883,10 +882,12 @@
 																				</MultiDataTrigger.Conditions>
 																				<Setter Property="ItemsSource" Value="{Binding DataContext.PriceChannelOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
 																			</MultiDataTrigger>
-																			<DataTrigger Binding="{Binding RangeType}" Value="2">
+																			<DataTrigger Binding="{Binding RangeType}"
+																				Value="2">
 																				<Setter Property="ItemsSource" Value="{Binding DataContext.ScopeStoreOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
 																			</DataTrigger>
-																			<DataTrigger Binding="{Binding RangeType}" Value="0">
+																			<DataTrigger Binding="{Binding RangeType}"
+																				Value="0">
 																				<Setter Property="IsEnabled" Value="False" />
 																			</DataTrigger>
 																		</Style.Triggers>
@@ -965,8 +966,7 @@
 															<ComboBox DisplayMemberPath="Display"
 																ItemsSource="{Binding DataContext.PricePointOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
 																SelectedValue="{Binding Id_PricePoint, Mode=TwoWay}"
-																SelectedValuePath="Id"
-																ToolTip="価格方式=価格ポイントのとき使用" />
+																SelectedValuePath="Id" ToolTip="価格方式=価格ポイントのとき使用" />
 														</DataTemplate>
 													</DataGridTemplateColumn.CellEditingTemplate>
 												</DataGridTemplateColumn>
@@ -1167,7 +1167,8 @@
 													ToolTip="選択Scope（または全Scope）の価格ルールで全セルを再計算します（設計書5.6「一括計算」）">
 													<StackPanel Orientation="Horizontal">
 														<materialDesign:PackIcon Kind="Calculator" />
-														<TextBlock Margin="6,0,0,0" Text="一括計算" />
+														<TextBlock Margin="6,0,0,0"
+															Text="一括計算" />
 													</StackPanel>
 												</Button>
 											</StackPanel>
@@ -1175,20 +1176,24 @@
 												FontWeight="SemiBold" Text="Price Matrix（商品×Scope。確認・例外編集用）" />
 										</DockPanel>
 
-										<StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+										<StackPanel Margin="0,8,0,0"
+											Orientation="Horizontal">
 											<TextBlock VerticalAlignment="Center"
 												Text="選択セルへ一括操作:" />
-											<ComboBox Width="130" Margin="8,0,0,0"
+											<ComboBox Width="130"
+												Margin="8,0,0,0"
 												DisplayMemberPath="Name"
 												ItemsSource="{Binding BulkPriceMethodOptions}"
 												SelectedValue="{Binding BulkMethod, Mode=TwoWay}"
 												SelectedValuePath="Value"
 												Style="{StaticResource FormComboBox}" />
-											<TextBox Width="90" Margin="8,0,0,0"
-												Text="{Binding BulkValueText, UpdateSourceTrigger=PropertyChanged}"
+											<TextBox Width="90"
+												Margin="8,0,0,0"
 												Style="{StaticResource FormTextBox}"
+												Text="{Binding BulkValueText, UpdateSourceTrigger=PropertyChanged}"
 												ToolTip="方式により値下率(%)・値引額(円)・掛率(%)・固定額(円)の意味が変わります" />
-											<ComboBox Width="170" Margin="8,0,0,0"
+											<ComboBox Width="170"
+												Margin="8,0,0,0"
 												DisplayMemberPath="Display"
 												ItemsSource="{Binding PricePointOptions}"
 												SelectedItem="{Binding BulkPricePoint, Mode=TwoWay}"
@@ -1207,14 +1212,13 @@
 									Padding="0"
 									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
 									<DataGrid x:Name="PriceMatrixGrid"
-										helpers:DataGridCellEnterNavigation.IsEnabled="True" materialDesign:DataGridAssist.CellPadding="8,4"
-										materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
+										helpers:DataGridCellEnterNavigation.IsEnabled="True" materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
 										AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
-										AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FrozenColumnCount="4" GridLinesVisibility="All" HeadersVisibility="Column"
+										AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FrozenColumnCount="4" GridLinesVisibility="All"
+										HeadersVisibility="Column"
 										HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 										ItemsSource="{Binding MeisaiRows}"
-										Loaded="PriceMatrixGrid_Loaded"
-										SelectedCellsChanged="PriceMatrixGrid_SelectedCellsChanged"
+										Loaded="PriceMatrixGrid_Loaded" SelectedCellsChanged="PriceMatrixGrid_SelectedCellsChanged"
 										SelectedItem="{Binding SelectedMeisaiRow, Mode=TwoWay}"
 										SelectionMode="Extended" SelectionUnit="Cell"
 										Style="{StaticResource MaterialDesignDataGrid}"
@@ -1257,7 +1261,8 @@
 											<Style TargetType="Border">
 												<Setter Property="Background" Value="{DynamicResource MaterialDesignDivider}" />
 												<Style.Triggers>
-													<DataTrigger Binding="{Binding DataContext.HasConflicts, RelativeSource={RelativeSource AncestorType=TabControl}}" Value="True">
+													<DataTrigger Binding="{Binding DataContext.HasConflicts, RelativeSource={RelativeSource AncestorType=TabControl}}"
+														Value="True">
 														<Setter Property="Background" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
 													</DataTrigger>
 												</Style.Triggers>
@@ -1266,9 +1271,11 @@
 										<TextBlock FontSize="11" FontWeight="SemiBold"
 											Text="{Binding DataContext.ConflictCount, RelativeSource={RelativeSource AncestorType=TabControl}, StringFormat={}競合 {0:N0}}">
 											<TextBlock.Style>
-												<Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+												<Style BasedOn="{StaticResource {x:Type TextBlock}}"
+													TargetType="TextBlock">
 													<Style.Triggers>
-														<DataTrigger Binding="{Binding DataContext.HasConflicts, RelativeSource={RelativeSource AncestorType=TabControl}}" Value="True">
+														<DataTrigger Binding="{Binding DataContext.HasConflicts, RelativeSource={RelativeSource AncestorType=TabControl}}"
+															Value="True">
 															<Setter Property="Foreground" Value="White" />
 														</DataTrigger>
 													</Style.Triggers>
@@ -1291,80 +1298,107 @@
 									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
 									<StackPanel>
 										<DockPanel>
-											<Button DockPanel.Dock="Right"
-												Command="{Binding CheckConflictsCommand}"
+											<Button Command="{Binding CheckConflictsCommand}"
+												DockPanel.Dock="Right"
 												IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
 												Style="{StaticResource MaterialDesignOutlinedButton}"
 												ToolTip="プレビュー集計と競合（C1〜C8）を再計算します（設計書5.6「競合チェック」）">
 												<StackPanel Orientation="Horizontal">
 													<materialDesign:PackIcon Kind="Refresh" />
-													<TextBlock Margin="6,0,0,0" Text="競合チェック" />
+													<TextBlock Margin="6,0,0,0"
+														Text="競合チェック" />
 												</StackPanel>
 											</Button>
 											<TextBlock VerticalAlignment="Center"
 												FontWeight="SemiBold" Text="プレビュー（確定前シミュレーション）" />
 										</DockPanel>
 
-										<WrapPanel Margin="0,8,0,0" Orientation="Horizontal">
+										<WrapPanel Margin="0,8,0,0"
+											Orientation="Horizontal">
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="対象Style数" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewStyleCount, StringFormat={}{0:N0}}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="対象Style数" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewStyleCount, StringFormat={}{0:N0}}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="対象SKU数" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewSkuCount, StringFormat={}{0:N0}}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="対象SKU数" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewSkuCount, StringFormat={}{0:N0}}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="対象店舗数" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewShopCount, StringFormat={}{0:N0}}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="対象店舗数" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewShopCount, StringFormat={}{0:N0}}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="適用期間" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewPeriodText}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="適用期間" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewPeriodText}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="現在平均上代" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewAvgJodaiOld, StringFormat={}{0:N0}円}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="現在平均上代" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewAvgJodaiOld, StringFormat={}{0:N0}円}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="変更後平均上代" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewAvgJodaiNew, StringFormat={}{0:N0}円}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="変更後平均上代" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewAvgJodaiNew, StringFormat={}{0:N0}円}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="平均値下率" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewAvgRateOffPercent, StringFormat={}{0:N2}%}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="平均値下率" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewAvgRateOffPercent, StringFormat={}{0:N2}%}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
-												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6"
-												ToolTip="MasterConfig.JodaiExpandWarnRows を超えると赤字で警告します（設計書2.9）">
+												materialDesign:ElevationAssist.Elevation="Dp0" ToolTip="MasterConfig.JodaiExpandWarnRows を超えると赤字で警告します（設計書2.9）" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="展開見込行数" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewExpandRows, StringFormat={}{0:N0}行}">
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="展開見込行数" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewExpandRows, StringFormat={}{0:N0}行}">
 														<TextBlock.Style>
-															<Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+															<Style BasedOn="{StaticResource {x:Type TextBlock}}"
+																TargetType="TextBlock">
 																<Style.Triggers>
-																	<DataTrigger Binding="{Binding PreviewExpandRowsWarning}" Value="True">
+																	<DataTrigger Binding="{Binding PreviewExpandRowsWarning}"
+																		Value="True">
 																		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
 																	</DataTrigger>
 																</Style.Triggers>
@@ -1376,22 +1410,31 @@
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="競合件数(C1〜C6)" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewConflictCount, StringFormat={}{0:N0}件}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="競合件数(C1〜C6)" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewConflictCount, StringFormat={}{0:N0}件}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="原価割れ件数(C7)" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewBelowCostCount, StringFormat={}{0:N0}件}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="原価割れ件数(C7)" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewBelowCostCount, StringFormat={}{0:N0}件}" />
 												</StackPanel>
 											</materialDesign:Card>
 											<materialDesign:Card Margin="0,0,8,8" Padding="10,6"
 												materialDesign:ElevationAssist.Elevation="Dp0" UniformCornerRadius="6">
 												<StackPanel>
-													<TextBlock FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Text="最低価格違反(C8)" />
-													<TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding PreviewBelowMinPriceCount, StringFormat={}{0:N0}件}" />
+													<TextBlock FontSize="11"
+														Foreground="{DynamicResource MaterialDesignBodyLight}"
+														Text="最低価格違反(C8)" />
+													<TextBlock FontSize="16" FontWeight="SemiBold"
+														Text="{Binding PreviewBelowMinPriceCount, StringFormat={}{0:N0}件}" />
 												</StackPanel>
 											</materialDesign:Card>
 										</WrapPanel>
@@ -1408,12 +1451,12 @@
 									Margin="0,0,0,8" Padding="0"
 									materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8">
 									<DataGrid MinHeight="160"
-										materialDesign:DataGridAssist.CellPadding="8,4"
-										materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
+										materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6"
 										AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
 										AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" GridLinesVisibility="All" HeadersVisibility="Column"
 										HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-										IsReadOnly="True" ItemsSource="{Binding ConflictRows}"
+										IsReadOnly="True"
+										ItemsSource="{Binding ConflictRows}"
 										Style="{StaticResource MaterialDesignDataGrid}"
 										VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}">
 										<DataGrid.Columns>
@@ -1424,13 +1467,16 @@
 												Binding="{Binding SeverityLabel}"
 												Header="深刻度">
 												<DataGridTextColumn.CellStyle>
-													<Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+													<Style BasedOn="{StaticResource {x:Type DataGridCell}}"
+														TargetType="DataGridCell">
 														<Style.Triggers>
-															<DataTrigger Binding="{Binding SeverityLabel}" Value="エラー">
+															<DataTrigger Binding="{Binding SeverityLabel}"
+																Value="エラー">
 																<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
 																<Setter Property="FontWeight" Value="Bold" />
 															</DataTrigger>
-															<DataTrigger Binding="{Binding SeverityLabel}" Value="警告">
+															<DataTrigger Binding="{Binding SeverityLabel}"
+																Value="警告">
 																<Setter Property="Foreground" Value="#B8860B" />
 																<Setter Property="FontWeight" Value="Bold" />
 															</DataTrigger>
@@ -1465,15 +1511,20 @@
 
 										<StackPanel Grid.Row="0"
 											Orientation="Horizontal">
-											<TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="Timeline（実効価格の推移）" />
-											<TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="商品:" />
-											<ComboBox Width="220" Margin="6,0,0,0"
+											<TextBlock VerticalAlignment="Center"
+												FontWeight="SemiBold" Text="Timeline（実効価格の推移）" />
+											<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+												Text="商品:" />
+											<ComboBox Width="220"
+												Margin="6,0,0,0"
 												DisplayMemberPath="Display"
 												ItemsSource="{Binding TimelineShohinOptions}"
 												SelectedItem="{Binding SelectedTimelineShohin, Mode=TwoWay}"
 												Style="{StaticResource FormComboBox}" />
-											<TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="店舗:" />
-											<ComboBox Width="220" Margin="6,0,0,0"
+											<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+												Text="店舗:" />
+											<ComboBox Width="220"
+												Margin="6,0,0,0"
 												DisplayMemberPath="Display"
 												ItemsSource="{Binding TimelineTenpoOptions}"
 												SelectedItem="{Binding SelectedTimelineTenpo, Mode=TwoWay}"
@@ -1504,30 +1555,36 @@
 															<ColumnDefinition Width="90" />
 														</Grid.ColumnDefinitions>
 														<TextBlock Grid.Column="0"
-															VerticalAlignment="Center" FontSize="11"
+															VerticalAlignment="Center"
+															FontSize="11"
 															Text="{Binding DayFrom}" />
 														<Border Grid.Column="1"
-															Height="26" Padding="6,2"
+															Height="26"
+															Padding="6,2"
 															Background="{DynamicResource MaterialDesignDivider}"
 															CornerRadius="4">
 															<Border.Style>
 																<Style TargetType="Border">
 																	<Style.Triggers>
-																		<DataTrigger Binding="{Binding IsFallback}" Value="True">
+																		<DataTrigger Binding="{Binding IsFallback}"
+																			Value="True">
 																			<Setter Property="Background" Value="{DynamicResource MaterialDesignChipBackground}" />
 																		</DataTrigger>
-																		<DataTrigger Binding="{Binding IsOtherSlip}" Value="True">
+																		<DataTrigger Binding="{Binding IsOtherSlip}"
+																			Value="True">
 																			<Setter Property="BorderBrush" Value="#B8860B" />
 																			<Setter Property="BorderThickness" Value="0,2,0,2" />
 																		</DataTrigger>
 																	</Style.Triggers>
 																</Style>
 															</Border.Style>
-															<TextBlock VerticalAlignment="Center" FontSize="11"
-																Text="{Binding Source, StringFormat={}{0} }" />
+															<TextBlock VerticalAlignment="Center"
+																FontSize="11"
+																Text="{Binding Source, StringFormat={}{0}}" />
 														</Border>
 														<TextBlock Grid.Column="2"
-															VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12" FontWeight="SemiBold"
+															HorizontalAlignment="Right" VerticalAlignment="Center"
+															FontSize="12" FontWeight="SemiBold"
 															Text="{Binding Jodai, StringFormat={}{0:N0}円}" />
 													</Grid>
 												</DataTemplate>
@@ -1561,7 +1618,8 @@
 								ToolTip="内側タブを1つ進める">
 								<TextBlock FontSize="16" Text="次へ ▶" />
 							</Button>
-							<Border Width="1" Margin="12,4"
+							<Border Width="1"
+								Margin="12,4"
 								Background="{DynamicResource MaterialDesignDivider}" />
 							<Button Command="{Binding DoMarkSentCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 JsonEachKeyRule は `json_each` の別名に対する `.key` 参照を行番号列へ読み替えます（ルール B02 の一部）。
 

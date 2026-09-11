@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 ISqlDialect はクライアント由来SQLを接続先DBの方言へ変換する入口です。
 

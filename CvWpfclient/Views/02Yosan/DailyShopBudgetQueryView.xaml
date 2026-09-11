@@ -167,15 +167,15 @@
 				materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 				<DockPanel>
 					<!--  年月移動＋CSV出力: 旧画面のボタン順(前月/今月/翌月/CSV出力)に合わせて右寄せで並べる  -->
-					<StackPanel DockPanel.Dock="Right"
-						Orientation="Horizontal">
+					<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
 						<Button Margin="4,0"
 							Command="{Binding PrevMonthCommand}"
 							Style="{StaticResource ToolCommandButton}"
 							ToolTip="前月 (F6)">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Kind="ChevronLeft" />
-								<TextBlock Margin="2,0,0,0" Text="前月" />
+								<TextBlock Margin="2,0,0,0"
+									Text="前月" />
 							</StackPanel>
 						</Button>
 						<Button Margin="4,0"
@@ -184,7 +184,8 @@
 							ToolTip="今月 (F5)">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Kind="CalendarToday" />
-								<TextBlock Margin="2,0,0,0" Text="今月" />
+								<TextBlock Margin="2,0,0,0"
+									Text="今月" />
 							</StackPanel>
 						</Button>
 						<Button Margin="4,0"
@@ -193,7 +194,8 @@
 							ToolTip="翌月 (F7)">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Kind="ChevronRight" />
-								<TextBlock Margin="2,0,0,0" Text="翌月" />
+								<TextBlock Margin="2,0,0,0"
+									Text="翌月" />
 							</StackPanel>
 						</Button>
 						<Button Margin="16,0,0,0"
@@ -202,7 +204,8 @@
 							ToolTip="CSV出力">
 							<StackPanel Orientation="Horizontal">
 								<materialDesign:PackIcon Kind="FileDelimitedOutline" />
-								<TextBlock Margin="4,0,0,0" Text="CSV出力" />
+								<TextBlock Margin="4,0,0,0"
+									Text="CSV出力" />
 							</StackPanel>
 						</Button>
 					</StackPanel>

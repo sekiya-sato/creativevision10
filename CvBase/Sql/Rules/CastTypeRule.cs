@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 CastTypeRule は `CAST(x AS <型>)` の型名を対象DBの型名へ置き換えます（ルール A02）。
 

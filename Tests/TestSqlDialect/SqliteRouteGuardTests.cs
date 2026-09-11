@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqliteRouteGuardTests は「既存のSQLite実行経路を壊さない」ことを機械的に固定します。
 

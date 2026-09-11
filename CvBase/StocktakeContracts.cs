@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 /// <summary>
 /// 店舗1件の棚卸の進行状況。棚卸開始処理・棚卸確定処理の画面が店舗一覧に出す(設計書2.5)。

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 ViewModelMessages は CommunityToolkit.Mvvm.Messaging で選択した数値または文字列を ViewModel 間で通知するメッセージ型を定義します。
 

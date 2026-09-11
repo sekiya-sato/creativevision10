@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 NumericSignBrushConverter は数値の正負に応じて前景色ブラシを返し、負数・ゼロ・正数を視覚的に区別する IValueConverter です。
 

@@ -1,4 +1,4 @@
-#if PRINT_ENABLE
+﻿#if PRINT_ENABLE
 using jp.axissoft.printstream;
 #endif
 

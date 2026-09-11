@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._05Shiire;
+﻿namespace CvWpfclient.Views._05Shiire;
 
 /// <summary>
 /// MaterialInputView.xaml の相互作用ロジック

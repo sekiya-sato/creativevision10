@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseLightMenteViewModel は詳細データの非同期読み込みと更新日時照合を備えた軽量なマスタ保守画面用 ViewModel 基底クラス群です。
 

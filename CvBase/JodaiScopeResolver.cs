@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 /// <summary>
 /// Scope（適用範囲）の競合種別。C1〜C8は設計書2.8の番号に対応する。

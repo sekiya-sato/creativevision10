@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseTranInputViewModel は伝票入力画面（発注/受注/仕入/売上 等）の共通 ViewModel 基底クラスです。
 明細コレクション(EditMeisai)の管理・合計集計(UpdateTotals)・明細行操作(追加/削除/採番)・

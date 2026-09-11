@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 IfnullRule は SQLite の `ifnull(a,b)` を `coalesce(a,b)` へ置き換えます（ルール A01）。
 

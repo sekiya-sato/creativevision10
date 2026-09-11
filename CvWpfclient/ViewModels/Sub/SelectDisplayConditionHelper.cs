@@ -1,4 +1,4 @@
-using CvAsset;
+﻿using CvAsset;
 using CvBase;
 using CvWpfclient.Helpers;
 using System.Globalization;

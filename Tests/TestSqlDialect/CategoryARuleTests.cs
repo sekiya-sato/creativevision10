@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 CategoryARuleTests は カテゴリA の変換ルール（T2）を検証します。
 

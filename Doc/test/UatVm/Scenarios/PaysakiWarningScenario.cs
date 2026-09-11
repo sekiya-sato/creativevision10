@@ -1,4 +1,4 @@
-using CvWpfclient.ViewModels._31Monthly;
+﻿using CvWpfclient.ViewModels._31Monthly;
 using CvWpfclient.Views._31Monthly;
 using System.Windows;
 using UatVm.Seed;

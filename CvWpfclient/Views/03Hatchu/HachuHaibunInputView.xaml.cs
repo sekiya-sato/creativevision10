@@ -1,4 +1,4 @@
-using CvWpfclient.ViewModels._03Hatchu;
+﻿using CvWpfclient.ViewModels._03Hatchu;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;

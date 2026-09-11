@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlTokenizer は SQLite 方言の SQL を字句列へ分解します。
 

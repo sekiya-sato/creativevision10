@@ -1,4 +1,4 @@
-namespace CvBase.Share;
+﻿namespace CvBase.Share;
 
 /// <summary>
 /// サーババージョン情報

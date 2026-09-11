@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 FocusHelper は添付プロパティ IsEnterToNext を持ち、Enter キー押下時に次のフォーカス可能要素へ移動します。
 TextBox.AcceptsReturn が true の場合は改行入力を優先し、フォーカス移動しません。

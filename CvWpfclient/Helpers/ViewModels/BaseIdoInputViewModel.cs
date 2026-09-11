@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseIdoInputViewModel は倉庫間移動の伝票入力画面（即時移動 / 積送出庫 / 積送入庫）の共通基底クラスです。
 

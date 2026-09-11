@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 ShopBudgetTotalCellConverter は DailyShopBudgetQueryView の合計グリッド専用の表示整形コンバータです。
 合計 DataTable(TotalTable) は5行(売上計/予算計/予算比/前年売上計/前年売上比)を持ち、店舗列は

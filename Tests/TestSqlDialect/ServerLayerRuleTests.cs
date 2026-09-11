@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 ServerLayerRuleTests は、サーバ側SQL（CvDomainLogic / CvBase）に現れる構文の変換を検証します。
 

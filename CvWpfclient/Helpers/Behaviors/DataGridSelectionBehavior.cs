@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DataGridSelectionBehavior は選択行への自動スクロール、選択通知受信時のフォーカス、識別子による行選択、および選択行への CurrentCell 追随を行う添付プロパティ群です。
 

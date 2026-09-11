@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using Microsoft.Data.Sqlite;
 using NPoco;
 using System.Data;

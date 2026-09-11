@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlRewriteContext は変換ルールが字句列を編集するための作業領域です。
 

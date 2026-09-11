@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 LoginRoleDisplayConverter は SysLogin.Id_Role（EnumLoginRole または数値）を、画面表示用のロール名へ変換する IValueConverter です。
 

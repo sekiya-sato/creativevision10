@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 InverseBooleanToVisibilityConverter は bool 値を反転した上で Visibility へ変換する IValueConverter です。
 （true→Collapsed、false→Visible）。条件パネルと結果パネルのように、片方が真の間はもう片方を隠す

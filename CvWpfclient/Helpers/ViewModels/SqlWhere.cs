@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlWhere は SQL の WHERE 句組み立てに関する純粋な処理を集めた静的ヘルパーです。
 

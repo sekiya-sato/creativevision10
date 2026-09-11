@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 /// <summary>
 /// 親（請求先／支払先＝<c>Id_Paysaki</c>）と子（得意先／仕入先）の締日不一致を検出するためのSQL結果行。

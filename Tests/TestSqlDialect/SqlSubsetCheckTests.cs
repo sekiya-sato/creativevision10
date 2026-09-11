@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlSubsetCheckTests は、CvWpfclient のSQLが方言変換の対象範囲に収まっているかを検査します（T4）。
 

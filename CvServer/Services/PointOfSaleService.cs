@@ -1,4 +1,4 @@
-using CodeShare;
+﻿using CodeShare;
 using CvBase;
 using CvBase.Share;
 using CvDomainLogic;

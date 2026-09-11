@@ -1,4 +1,4 @@
-using CvWpfclient.Helpers;
+﻿using CvWpfclient.Helpers;
 using CvWpfclient.Services;
 using CvWpfclient.ViewModels;
 using System.ComponentModel;

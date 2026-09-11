@@ -1,4 +1,4 @@
-using CodeShare;
+﻿using CodeShare;
 
 namespace CvWpfclient.ViewModels._31Monthly;
 

@@ -1,4 +1,4 @@
-using CvWpfclient.ViewModels._05Shiire;
+﻿using CvWpfclient.ViewModels._05Shiire;
 using System.Windows.Input;
 
 namespace CvWpfclient.Views._05Shiire;

@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using NPoco;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;

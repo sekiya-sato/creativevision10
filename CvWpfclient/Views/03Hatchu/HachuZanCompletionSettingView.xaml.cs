@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._03Hatchu;
+﻿namespace CvWpfclient.Views._03Hatchu;
 
 public partial class HachuZanCompletionSettingView : Helpers.BaseWindow {
 	public HachuZanCompletionSettingView() {

@@ -1,4 +1,4 @@
-namespace CvWpfclient.ViewModels._40Shop;
+﻿namespace CvWpfclient.ViewModels._40Shop;
 
 /// <summary>
 /// 棚卸明細表（原価無）。店舗へ配布する版で、原価単価と差異金額を出さない。

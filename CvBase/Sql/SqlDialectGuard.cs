@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlDialectGuard は、組み立てたSQLが PostgreSQL / MariaDB へ移せる形かを検査します。
 

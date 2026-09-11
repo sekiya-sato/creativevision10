@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 JuliandayDiffRule は `julianday(A) - julianday(B)` を日数差へ置き換えます（ルール B08）。
 

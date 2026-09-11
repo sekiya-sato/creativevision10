@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 EnumCommentDisplayConverter は enum 値を、そのメンバーに付与された [Comment] 属性の文言へ変換する IValueConverter です。
 属性が無い値は enum の ToString() をそのまま返します。

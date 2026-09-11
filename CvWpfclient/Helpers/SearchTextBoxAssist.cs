@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SearchTextBoxAssist は SearchTextBox 風 TextBox テンプレートへ検索コマンドとボタン背景色を設定する添付プロパティです。
 

@@ -1,4 +1,4 @@
-namespace CvPrints;
+﻿namespace CvPrints;
 
 public interface IPrintService {
 	Task<PrintResult> ExecutePrintAsync(PrintContext context);

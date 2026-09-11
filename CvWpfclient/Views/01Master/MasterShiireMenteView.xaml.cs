@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._01Master;
+﻿namespace CvWpfclient.Views._01Master;
 
 /// <summary>
 /// MasterShiireMenteView.xaml の相互作用ロジック

@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 /// <summary>
 /// マニュアル排他制御の照会結果1行分（詳細設計 §2.5.2 の表に対応）。

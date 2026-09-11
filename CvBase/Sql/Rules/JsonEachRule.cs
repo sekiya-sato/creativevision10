@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 JsonEachRule は FROM句の `json_each(X) alias` を対象DBの行展開へ置き換えます（ルール B02）。
 

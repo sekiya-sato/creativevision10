@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 PrintfRule は `printf(書式, 値...)` をゼロ埋め整形へ置き換えます（ルール B06）。
 

@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._32LoyalCustomer;
+﻿namespace CvWpfclient.Views._32LoyalCustomer;
 
 public partial class PointMasterBonusView : Helpers.BaseWindow {
 	public PointMasterBonusView() {

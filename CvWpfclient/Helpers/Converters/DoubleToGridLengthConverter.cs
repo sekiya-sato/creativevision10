@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DoubleToGridLengthConverter は正の double 値を GridLength へ変換し、それ以外を Auto 幅として返す IValueConverter です。
 

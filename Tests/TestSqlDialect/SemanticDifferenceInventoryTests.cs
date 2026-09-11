@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SemanticDifferenceInventoryTests は、方言変換では直せない意味差の箇所を棚卸しします（Phase 7 の入口）。
 

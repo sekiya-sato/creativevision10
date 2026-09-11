@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using CvWpfclient.Helpers;
 
 namespace CvWpfclient.ViewModels._03Hatchu;

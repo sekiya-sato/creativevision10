@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseReportViewModel は「パラメータ入力 → SQL構築 → qfmフォームでPDF出力」型の帳票画面に共通する
 状態・検証・SQLパラメータ採番を提供する ViewModel 基底クラスです。

@@ -1,4 +1,4 @@
-namespace CvWpfclient.Models;
+﻿namespace CvWpfclient.Models;
 
 public sealed class ClientSettingsDocument {
 	public ClientConnectionString ConnectionStrings { get; set; } = new();

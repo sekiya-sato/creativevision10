@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 "yyyyMMdd" 形式の string と DateTime? の相互変換を行う IValueConverter
 

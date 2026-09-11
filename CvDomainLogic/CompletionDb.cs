@@ -1,4 +1,4 @@
-using CvAsset;
+﻿using CvAsset;
 using CvBase;
 
 namespace CvDomainLogic;

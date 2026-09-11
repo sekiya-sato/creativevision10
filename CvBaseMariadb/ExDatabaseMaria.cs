@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using MySqlConnector;
 using System.Data;
 using System.Data.Common;

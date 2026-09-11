@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 MariaSqlDialect は SQLite 方言のSQLを MariaDB 向けへ変換します。
 

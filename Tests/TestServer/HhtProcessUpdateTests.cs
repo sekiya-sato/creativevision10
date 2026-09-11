@@ -1,4 +1,4 @@
-using CvBase.Share;
+﻿using CvBase.Share;
 using CvBase;
 using CvBaseSqlite;
 using CvDomainLogic;

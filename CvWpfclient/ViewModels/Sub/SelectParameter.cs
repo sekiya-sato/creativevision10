@@ -1,4 +1,4 @@
-namespace CvWpfclient.ViewModels.Sub;
+﻿namespace CvWpfclient.ViewModels.Sub;
 
 public sealed record class SelectParameter {
 	public long? FromId { get; set; }

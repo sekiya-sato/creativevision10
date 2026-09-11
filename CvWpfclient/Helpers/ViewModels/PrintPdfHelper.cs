@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 PrintPdfHelper は「サーバへ PrintOperation を投げて PDF を生成し、WebPdfView で表示する」までの
 共通パイプラインを提供する静的ヘルパーです。

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqliteIdentityTests は「SQLiteでは変換が1行も走らない」ことを検証します（T3 / 保証G1）。
 

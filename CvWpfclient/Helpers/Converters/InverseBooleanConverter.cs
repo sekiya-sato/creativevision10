@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 InverseBooleanConverter は bool 値を反転して返す IValueConverter です。
 

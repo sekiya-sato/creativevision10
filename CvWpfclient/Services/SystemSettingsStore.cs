@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using CvWpfclient.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;

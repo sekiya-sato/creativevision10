@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseMatchingViewModel は消込画面（入金消込 / 支払消込）の共通基底クラスです。
 

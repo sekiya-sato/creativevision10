@@ -1,4 +1,4 @@
-namespace CvBase.Share;
+﻿namespace CvBase.Share;
 
 /// <summary>
 /// 性別 [property: ColumnSizeDml(ctype:ColumnType.Enum)]

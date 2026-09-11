@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlTokenizerTests は字句解析器の不変条件（T1）を検証します。
 

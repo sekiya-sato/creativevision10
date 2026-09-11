@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.IO;
 using CvBase;
 using CvWpfclient.ViewModels._00System;

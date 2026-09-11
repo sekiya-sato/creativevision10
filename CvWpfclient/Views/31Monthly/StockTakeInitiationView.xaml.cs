@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._31Monthly;
+﻿namespace CvWpfclient.Views._31Monthly;
 
 public partial class StockTakeInitiationView : Helpers.BaseWindow {
 	public StockTakeInitiationView() {

@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 BaseShippingConfirmViewModel は出荷指示確定画面（出荷指示確定(商品) / 出荷指示確定(得意先)）の共通基底です。
 旧CV.netの「出荷指示確定」に相当します。

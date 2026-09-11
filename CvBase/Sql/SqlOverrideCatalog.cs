@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlOverrideCatalog は、方言ごとに手書きSQLを差し替えるための登録表です。
 

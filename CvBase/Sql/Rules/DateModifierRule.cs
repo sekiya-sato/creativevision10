@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DateModifierRule は SQLite の `date(対象, 修飾子...)` を日付加減算へ置き換えます（ルール B07）。
 

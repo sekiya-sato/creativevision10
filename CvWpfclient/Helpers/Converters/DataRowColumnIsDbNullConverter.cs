@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 DataRowColumnIsDbNullConverter は DataRowView と列名(ConverterParameter)を受け取り、
 その列の値が DBNull(または null)かどうかを bool で返す IValueConverter です。

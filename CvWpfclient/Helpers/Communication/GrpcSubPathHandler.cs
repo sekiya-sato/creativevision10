@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 GrpcSubPathHandler は gRPC 要求 URI にサブパスを付加し、サブパス配下で公開されたサーバーへ接続可能にする HTTP ハンドラーです。
 

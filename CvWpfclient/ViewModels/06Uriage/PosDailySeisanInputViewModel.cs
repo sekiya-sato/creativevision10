@@ -1,4 +1,4 @@
-namespace CvWpfclient.ViewModels._06Uriage;
+﻿namespace CvWpfclient.ViewModels._06Uriage;
 
 /// <summary>
 /// POS日別精算入力 — **仕様確定待ちのため未実装**（Phase 10 で意図的に保留）。

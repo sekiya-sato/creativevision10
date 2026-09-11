@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 /// <summary>
 /// C4（他伝票との競合）・C6（恒久上代変更との基準不整合）の判定SQLを1箇所に集約する（設計書2.8・6.3）。

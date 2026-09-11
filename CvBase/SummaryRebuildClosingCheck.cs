@@ -1,4 +1,4 @@
-using CodeShare;
+﻿using CodeShare;
 using System.Globalization;
 
 namespace CvBase;

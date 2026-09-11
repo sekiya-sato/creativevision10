@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 MultiplyValuesConverter は複数の数値を乗算し、MultiBinding の表示値として返す IMultiValueConverter です。
 

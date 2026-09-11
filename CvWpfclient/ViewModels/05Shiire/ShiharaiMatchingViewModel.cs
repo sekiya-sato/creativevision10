@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 
 namespace CvWpfclient.ViewModels._05Shiire;
 

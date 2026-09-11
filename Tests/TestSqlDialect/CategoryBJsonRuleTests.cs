@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 CategoryBJsonRuleTests は カテゴリB のJSON変換ルール（B01〜B04）を検証します。
 

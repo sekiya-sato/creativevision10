@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 NullsOrderRule は PostgreSQL の `ORDER BY` へ `NULLS FIRST` を付けます（ルール A04）。
 

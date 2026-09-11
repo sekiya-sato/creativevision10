@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._08Zaiko;
+﻿namespace CvWpfclient.Views._08Zaiko;
 
 public partial class SokoSummaryReportView : Helpers.BaseWindow {
 	public SokoSummaryReportView() {

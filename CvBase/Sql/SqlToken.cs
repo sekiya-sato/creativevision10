@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqlToken は SqlTokenizer が返す字句1個分の情報です。
 

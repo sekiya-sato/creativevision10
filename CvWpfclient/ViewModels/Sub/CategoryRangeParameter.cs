@@ -1,4 +1,4 @@
-namespace CvWpfclient.ViewModels.Sub;
+﻿namespace CvWpfclient.ViewModels.Sub;
 
 /// <summary>
 /// カテゴリ選択 + Id範囲 + 件数、の一覧取得条件。呼び出し元がCategoryListを渡して構築する。

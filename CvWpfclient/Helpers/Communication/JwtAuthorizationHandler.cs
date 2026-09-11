@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 JwtAuthorizationHandler は gRPC クライアントの HTTP パイプラインに参加し、認証ヘッダーを既存の CallContext 側へ委譲する空の中継ハンドラーです。
 

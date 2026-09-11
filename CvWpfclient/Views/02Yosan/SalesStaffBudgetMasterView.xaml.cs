@@ -1,4 +1,4 @@
-namespace CvWpfclient.Views._02Yosan;
+﻿namespace CvWpfclient.Views._02Yosan;
 
 public partial class SalesStaffBudgetMasterView : Helpers.BaseWindow {
 	public SalesStaffBudgetMasterView() {

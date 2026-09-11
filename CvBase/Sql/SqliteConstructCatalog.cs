@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 SqliteConstructCatalog は「クライアントSQLに現れる SQLite 固有構文」の目録です。
 

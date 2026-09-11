@@ -1,4 +1,4 @@
-namespace CvBase;
+﻿namespace CvBase;
 
 /// <summary>
 /// distinct なカテゴリ名など、単一文字列列のSQL結果行。

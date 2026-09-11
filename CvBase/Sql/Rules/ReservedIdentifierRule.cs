@@ -1,4 +1,4 @@
-/*
+﻿/*
 # description
 ReservedIdentifierRule は、対象DBの予約語と衝突する列名を引用します（ルール A03）。
 

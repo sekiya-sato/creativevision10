@@ -1,4 +1,4 @@
-using CvWpfclient.Helpers;
+﻿using CvWpfclient.Helpers;
 
 namespace CvWpfclient.Views.Sub;
 

@@ -1,4 +1,4 @@
-using CvBase;
+﻿using CvBase;
 using CvBaseSqlite;
 using CvDomainLogic;
 using Microsoft.Data.Sqlite;
