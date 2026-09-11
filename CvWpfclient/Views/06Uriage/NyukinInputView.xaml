@@ -86,6 +86,17 @@
 										Text="入金詳細" />
 								</StackPanel>
 							</Button>
+							<Button Margin="8,0,0,0"
+								Command="{Binding GoToNewCommand}"
+								Style="{StaticResource MaterialDesignRaisedButton}"
+								ToolTip="新規入金を入力する">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="PlusBox" />
+									<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+										Text="新規登録" />
+								</StackPanel>
+							</Button>
 						</StackPanel>
 					</DockPanel>
 

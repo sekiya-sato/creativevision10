@@ -178,6 +178,13 @@ public abstract partial class BaseIdoInputViewModel<TDen> : BaseTranInputViewMod
 		Jmeisai = [],
 	};
 
+	/// <summary>一覧の選択状態に関わらず、新規伝票を作って詳細タブを開く。</summary>
+	[RelayCommand]
+	void GoToNew() {
+		Current = CreateNewDenpyo();
+		SelectedTabIndex = 1;
+	}
+
 	[RelayCommand]
 	void GoToList() {
 		SelectedTabIndex = 0;

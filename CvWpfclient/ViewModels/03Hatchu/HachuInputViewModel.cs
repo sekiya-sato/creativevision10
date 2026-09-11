@@ -242,13 +242,23 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 	void GoToDetail(Tran13Hachu? item) {
 		if (item != null && item.Id > 0 && !ReferenceEquals(Current, item)) Current = item;
 		if (Current.Id <= 0) {
-			Current = new Tran13Hachu {
-				DenDay = DateTime.Now.ToString("yyyyMMdd"),
-				Kubun = (int)EnumHachu.Hachu,
-				Rate = 100,
-				Jmeisai = [],
-			};
+			Current = CreateNewDenpyo();
 		}
+		SelectedTabIndex = 1;
+	}
+
+	/// <summary>新規伝票の既定値。</summary>
+	protected virtual Tran13Hachu CreateNewDenpyo() => new() {
+		DenDay = DateTime.Now.ToString("yyyyMMdd"),
+		Kubun = (int)EnumHachu.Hachu,
+		Rate = 100,
+		Jmeisai = [],
+	};
+
+	/// <summary>一覧の選択状態に関わらず、新規伝票を作って詳細タブを開く。</summary>
+	[RelayCommand]
+	void GoToNew() {
+		Current = CreateNewDenpyo();
 		SelectedTabIndex = 1;
 	}
 

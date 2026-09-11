@@ -204,13 +204,23 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 	void GoToDetail(Tran12Jyuchu? item) {
 		if (item != null && item.Id > 0 && !ReferenceEquals(Current, item)) Current = item;
 		if (Current.Id <= 0) {
-			Current = new Tran12Jyuchu {
-				DenDay = DateTime.Now.ToString("yyyyMMdd"),
-				Kubun = (int)EnumJuchu.Juchu,
-				Rate = 100,
-				Jmeisai = [],
-			};
+			Current = CreateNewDenpyo();
 		}
+		SelectedTabIndex = 1;
+	}
+
+	/// <summary>新規伝票の既定値。</summary>
+	protected virtual Tran12Jyuchu CreateNewDenpyo() => new() {
+		DenDay = DateTime.Now.ToString("yyyyMMdd"),
+		Kubun = (int)EnumJuchu.Juchu,
+		Rate = 100,
+		Jmeisai = [],
+	};
+
+	/// <summary>一覧の選択状態に関わらず、新規伝票を作って詳細タブを開く。</summary>
+	[RelayCommand]
+	void GoToNew() {
+		Current = CreateNewDenpyo();
 		SelectedTabIndex = 1;
 	}
 

@@ -1,3 +1,15 @@
+## [2026-09-11] 伝票入力画面への「新規登録」ボタン追加
+### 実施内容
+- 受注・売上など伝票入力12画面には「新規」に相当するボタンが無く、一覧が0件のときだけ「〜詳細」ボタンが新規伝票を開く仕様だった。一覧に既存伝票があると新規入力できないため、「〜詳細」の右隣に「新規登録」ボタンを追加した。
+- ViewModel側は各画面の`GoToDetail`内にインライン記述されていた新規伝票の初期化を`CreateNewDenpyo()`へ切り出し（`BaseIdoInputViewModel`の既存メソッド名に統一）、`[RelayCommand] GoToNew()`で`Current = CreateNewDenpyo(); SelectedTabIndex = 1;`とした。`GoToDetail`の挙動は変えていない。
+- 対象View12本: HachuInput / JuchuInput / MaterialInput / ShiharaiInput / ShiireInput / NyukinInput / ShopUriageInput / ShukkaUriageInput / IdoInputOut / IdoInputSoku / IdoInputUke / StockInput。ViewModel9本（基底2本 + 個別7本）。
+- 出荷売上入力（`ShukkaUriageInputViewModel`）は元々`GoToDetail`に新規初期化が無く、白紙の新規作成を想定していない画面だった。他画面に揃えて`CreateNewDenpyo()`を新設した。運用上この画面で白紙入力を許すかは要確認。
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj`成功（0エラー0警告）。
+- UatVmに`denpyonew`シナリオを追加。受注・店舗売上・棚卸・入金の4画面で、一覧に既存伝票がある状態から`GoToNewCommand`→詳細タブ遷移・`Current.Id==0`・伝票日付が当日・明細が空・`GoToListCommand`で一覧へ復帰、を24判定すべてPASS（終了コード0）。DBへの書き込みは行っていない。
+
+---
+
 ## [2026-09-11] メインメニュー右クリックメニューの追加
 ### 実施内容
 - メインメニュー画面のクライアント領域右クリックに、VersionUp/環境設定/RefreshToken/ログイン/テーマ切替/メニューのみ/小Window/終了の8項目のコンテキストメニューを追加した。既存のRelayCommandへバインドするだけで、ViewModelは変更していない。

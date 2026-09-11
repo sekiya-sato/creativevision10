@@ -243,6 +243,24 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		if (Current.Id > 0) SelectedTabIndex = 1;
 	}
 
+	// 出荷・売上はこれまで一覧選択(既存伝票)経由でしか詳細タブへ入れず、GoToDetail に新規伝票の
+	// インライン初期化は無かった(受注からの変換等、白紙の新規作成を前提にしない画面のため)。
+	// GoToNew 追加に伴い、他画面(仕入・受注等)の新規既定値に揃えて最小限の初期値を与える。
+	/// <summary>新規伝票の既定値。</summary>
+	protected virtual Tran00Uriage CreateNewDenpyo() => new() {
+		DenDay = DateTime.Now.ToString("yyyyMMdd"),
+		KakeDay = DateTime.Now.ToString("yyyyMMdd"),
+		Kubun = (int)EnumUri00.Uriage,
+		Jmeisai = [],
+	};
+
+	/// <summary>一覧の選択状態に関わらず、新規伝票を作って詳細タブを開く。</summary>
+	[RelayCommand]
+	void GoToNew() {
+		Current = CreateNewDenpyo();
+		SelectedTabIndex = 1;
+	}
+
 	[RelayCommand]
 	void GoToList() {
 		SelectedTabIndex = 0;

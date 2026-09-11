@@ -135,11 +135,21 @@ public abstract partial class BaseKinInputViewModel<TDen> : BasePlainLightMenteV
 	void GoToDetail(TDen? item) {
 		if (item != null && item.Id > 0 && !ReferenceEquals(Current, item)) Current = item;
 		if (Current.Id <= 0) {
-			Current = new TDen {
-				KakeDay = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture),
-				Jmeisai = [],
-			};
+			Current = CreateNewDenpyo();
 		}
+		SelectedTabIndex = 1;
+	}
+
+	/// <summary>新規伝票の既定値。派生で初期値を足す場合は override する。</summary>
+	protected virtual TDen CreateNewDenpyo() => new() {
+		KakeDay = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture),
+		Jmeisai = [],
+	};
+
+	/// <summary>一覧の選択状態に関わらず、新規伝票を作って詳細タブを開く。</summary>
+	[RelayCommand]
+	void GoToNew() {
+		Current = CreateNewDenpyo();
 		SelectedTabIndex = 1;
 	}
 
