@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CvWpfclient.ViewModels._01Master;
 
@@ -105,9 +106,10 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 			outputDataRows.Clear();
 
 			var fromTicks = ToLocalDateStartUtcTicks(SelectedDate);
+			var orderByClause = BuildOrderByClause();
 			var query = new QueryListSqlParam(
 				table.ModelType,
-				$"select * from {table.TableName} where Vdu >= @0 order by Vdu, Id",
+				$"select * from {table.TableName} where Vdu >= @0 order by {orderByClause}",
 				[fromTicks.ToString(CultureInfo.InvariantCulture)]);
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new CvMsg {
@@ -130,7 +132,7 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 			}
 
 			isDataLoaded = true;
-			Message = $"{SelectedDate:yyyy/MM/dd} 以降に更新されたデータを {outputDataRows.Count:N0} 件取得しました。";
+			Message = $"{SelectedDate:yyyy/MM/dd} 以降に更新されたデータを {outputDataRows.Count:N0} 件取得しました。(order by {orderByClause})";
 		}
 		catch (OperationCanceledException) {
 			Message = "データ取得をキャンセルしました。";
@@ -184,6 +186,18 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 		catch (Exception ex) {
 			MessageEx.ShowErrorDialog($"ファイル作成失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
 		}
+	}
+
+	private string BuildOrderByClause() {
+		var keys = ColumnList
+			.Where(x => x.SortOrder > 0)
+			.OrderBy(x => x.SortOrder)
+			.ThenBy(x => x.No)
+			.Where(x => Regex.IsMatch(x.ColumnName, "^[A-Za-z_][A-Za-z0-9_]*$"))
+			.Select(x => x.SortDescending ? $"{x.ColumnName} desc" : x.ColumnName)
+			.ToList();
+
+		return keys.Count == 0 ? "Vdu, Id" : string.Join(", ", keys);
 	}
 
 	private async Task LoadTablesAsync(CancellationToken ct) {
@@ -423,6 +437,20 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 public sealed partial class ImportTemplateColumnRow : ObservableObject {
 	[ObservableProperty]
 	public partial bool IsSelected { get; set; }
+
+	[ObservableProperty]
+	public partial int SortOrder { get; set; } // 0 = ソートに使わない
+
+	// DataGrid 表示用。空欄・不正入力は 0 (ソートに使わない) として扱う
+	public string SortOrderText {
+		get => SortOrder == 0 ? string.Empty : SortOrder.ToString(CultureInfo.InvariantCulture);
+		set => SortOrder = int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var order) && order > 0 ? order : 0;
+	}
+
+	partial void OnSortOrderChanged(int value) => OnPropertyChanged(nameof(SortOrderText));
+
+	[ObservableProperty]
+	public partial bool SortDescending { get; set; }
 
 	public int No { get; set; }
 	public string ColumnName { get; set; } = string.Empty;
