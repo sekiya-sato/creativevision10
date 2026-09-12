@@ -27,6 +27,7 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 	protected override PrintByCsvParam? PrintByCsvParam => Current.Id > 0 ? new(BuildPrintCsvData()) : null;
 
 	public IReadOnlyList<EnumShime> ShimeBiItems { get; } = Enum.GetValues<EnumShime>();
+	public IReadOnlyList<EnumPermissionDefaultMode> PermissionDefaultModeItems { get; } = Enum.GetValues<EnumPermissionDefaultMode>();
 
 	/// <summary>
 	/// 消費税端数処理の選択肢。ComboBoxItem の Tag は文字列/enum になり int の Current.TaxRounding と
@@ -85,6 +86,7 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 			NormalizePrintText(Current.TaxRegistrationNumber),
 			FormatDateTimeText(Current.VdateC),
 			FormatDateTimeText(Current.VdateU),
+			FormatPermissionDefaultModeText(Current.EnPermissionDefaultMode),
 		];
 
 		return string.Join(",", fields.Select(EscapeCsvField)) + "\r\n";
@@ -118,6 +120,13 @@ public partial class MasterSysKanriMenteViewModel : Helpers.BaseMenteViewModel<M
 	static string FormatShimeBiText(int shimeBi) => shimeBi switch {
 		(int)EnumShime.DayLast => "末日",
 		>= 1 and <= 31 => $"{shimeBi:00}日",
+		_ => string.Empty,
+	};
+
+	static string FormatPermissionDefaultModeText(EnumPermissionDefaultMode mode) => mode switch {
+		EnumPermissionDefaultMode.Audit => "監査のみ",
+		EnumPermissionDefaultMode.Warn => "警告付き許可",
+		EnumPermissionDefaultMode.Deny => "不可",
 		_ => string.Empty,
 	};
 

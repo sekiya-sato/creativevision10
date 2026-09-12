@@ -539,6 +539,21 @@
 					<decode datatype="string" format=""/>
 					<font size="75"/>
 				</text>
+				<text id="LblPermissionDefaultMode" valign="middle">
+					<position x="69" y="113" width="22" height="4"/>
+					<color transparent="1"/>
+					<data calctype="static">ã∆ñ±å†å¿ä˘íËÉ|ÉäÉVÅ[</data>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>
+				<text id="ValPermissionDefaultMode">
+					<position x="92" y="113" width="30" height="4"/>
+					<color transparent="1"/>
+					<border bottom="1"/>
+					<data calctype="item" datasrc="item33"/>
+					<decode datatype="string" format=""/>
+					<font size="75"/>
+				</text>
 			</record>
 		</region>
 	</page>

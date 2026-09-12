@@ -149,6 +149,7 @@
 							<RowDefinition Height="Auto" MinHeight="38" />
 							<RowDefinition Height="Auto" MinHeight="38" />
 							<RowDefinition Height="Auto" MinHeight="38" />
+							<RowDefinition Height="Auto" MinHeight="38" />
 						</Grid.RowDefinitions>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="Auto" MinWidth="80" />
@@ -466,13 +467,30 @@
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.TaxRegistrationNumber}"
 							TextWrapping="Wrap" />
+						<Label Grid.Row="15" Grid.Column="3"
+							Height="30"
+							Margin="0,0,0,0" VerticalAlignment="Center"
+							Content="業務権限既定ポリシー" />
+						<ComboBox Grid.Row="15" Grid.Column="4" Grid.ColumnSpan="2"
+							Width="180" Height="52"
+							Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+							ItemsSource="{Binding PermissionDefaultModeItems}"
+							SelectedItem="{Binding Current.EnPermissionDefaultMode, Mode=TwoWay}"
+							Style="{StaticResource FormComboBox}">
+							<ComboBox.ItemTemplate>
+								<DataTemplate>
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+										Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+								</DataTemplate>
+							</ComboBox.ItemTemplate>
+						</ComboBox>
 						<Label Grid.Row="7" Grid.Column="5"
 							Height="30"
-							Margin="15,0,0,0" VerticalAlignment="Center"
+							Margin="0,0,0,0" VerticalAlignment="Center"
 							Content="登録日" />
 						<Label Grid.Row="8" Grid.Column="5"
 							Height="30"
-							Margin="15,0,0,0" VerticalAlignment="Center"
+							Margin="0,0,0,0" VerticalAlignment="Center"
 							Content="修正日" />
 						<Label Grid.Row="7" Grid.Column="6" Grid.ColumnSpan="2"
 							Height="30"
