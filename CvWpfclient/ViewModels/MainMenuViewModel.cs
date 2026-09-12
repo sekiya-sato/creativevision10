@@ -163,7 +163,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 			return;
 		}
 
-		MenuItems = MenuData.CreateDefault();
+		MenuItems = (AppGlobal.DebugMode) ? MenuData.CreateDefault4Debug() : MenuData.CreateDefault();
 		IsMenuReady = true;
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {

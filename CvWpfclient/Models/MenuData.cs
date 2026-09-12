@@ -55,6 +55,17 @@ public partial class MenuData : ObservableObject {
 	/// 常に全メニューを返す(設計書 9.1節)。
 	/// </summary>
 	public static ObservableCollection<MenuData> CreateDefault() => CreateAll();
+	public static ObservableCollection<MenuData> CreateDefault4Debug() {
+		var menu = CreateAll();
+		// デバッグ用に、ロール別メニューを削除する。
+		if (menu.Count>2 && menu[0].Header == "■ 店舗業務") {
+			menu.RemoveAt(0);
+		}
+		if (menu.Count > 2 && menu[0].Header == "■ 倉庫業務") {
+			menu.RemoveAt(0);
+		}
+		return menu;
+	}
 
 	/// <summary>
 	/// <paramref name="viewType"/>の名前空間・型名からFunctionIdを機械的に導出する(設計書 10.2節)。
