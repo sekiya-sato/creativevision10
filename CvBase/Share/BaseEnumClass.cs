@@ -225,69 +225,114 @@ public enum EnumLoginRole : int {
 }
 
 /// <summary>
-/// 担当区分（人の業務上の立場）。MasterShain.ResponsibilityScope / SysPermissionProfile.ResponsibilityScope
-/// 値は担当範囲の広い順に大きくなる（比較で「これ以上の立場か」を判定できる）
+/// 責任Role区分（MasterResponsibilityRole.RoleCategory）。何を担当するかを表す静的分類が、
+/// 業態を問わない基幹機能か、特定ビジネスモデル固有かを区別する（担当者Role・Scope・権限判定 詳細設計 §5.1）。
 /// </summary>
-public enum EnumResponsibilityScope : int {
+[Comment("Role区分")]
+public enum EnumResponsibilityRoleCategory : int {
 	/// <summary>
-	/// 未設定（移行直後の既定値）
+	/// 基幹機能。業態を問わず存在するRole。
 	/// </summary>
-	Unset = 0,
+	[Comment("基幹機能")]
+	Core = 0,
 	/// <summary>
-	/// 店舗スタッフ
+	/// 特定ビジネスモデル固有のRole。
 	/// </summary>
-	StoreStaff = 1,
-	/// <summary>
-	/// 店舗責任者
-	/// </summary>
-	StoreManager = 2,
-	/// <summary>
-	/// エリアマネージャ
-	/// </summary>
-	AreaManager = 3,
-	/// <summary>
-	/// 外部Role:顧客
-	/// </summary>
-	EndCustomer = 10,
-	/// <summary>
-	/// 外部Role:仕入先
-	/// </summary>
-	Supplier = 11,
-	/// <summary>
-	/// 外部Role:得意先
-	/// </summary>
-	BusinessCustomer = 12,
-	/// <summary>
-	/// 外部Role:その他System
-	/// </summary>
-	ExternalSystem = 20,
-	/// <summary>
-	/// 外部Role:AI Agent
-	/// </summary>
-	AiAgent = 30,
-	/// <summary>
-	/// 全社担当者
-	/// </summary>
-	CorporateUser = 90,
+	[Comment("ビジネスモデル固有")]
+	BusinessModel = 1
 }
-public enum EnumResponsibilityExternalScope : int {
-	Warehouse = 21,
-	Ecommerce = 22,
+
+/// <summary>
+/// 担当範囲区分（MasterShainResponsibilityScope.ScopeKubun）。責任Role割当ごとに、どこまで担当するかを表す
+/// （担当者Role・Scope・権限判定 詳細設計 §5.3、§7）。値0は予約し使わない。
+/// </summary>
+[Comment("担当範囲区分")]
+public enum EnumScopeKubun : int {
+	/// <summary>
+	/// ブランド。`MasterMeisho`（`Kubun='BRD'`）に対応。
+	/// </summary>
+	[Comment("ブランド")]
+	Brand = 1,
+	/// <summary>
+	/// エリア。`MasterMeisho`（新設`Kubun='SCA'`）に対応。
+	/// </summary>
+	[Comment("エリア")]
+	Area = 2,
+	/// <summary>
+	/// 店舗。`MasterTokui`（`TenType=6`直営店）に対応。
+	/// </summary>
+	[Comment("店舗")]
+	Store = 3,
+	/// <summary>
+	/// 倉庫。`MasterTokui`（`TenType=0`倉庫）に対応。
+	/// </summary>
+	[Comment("倉庫")]
+	Warehouse = 4,
+	/// <summary>
+	/// 得意先。`MasterTokui`（`TenType=1`卸先）に対応。
+	/// </summary>
+	[Comment("得意先")]
+	Customer = 5,
+	/// <summary>
+	/// 得意先グループ。`MasterMeisho`（新設`Kubun='SCG'`）に対応。
+	/// </summary>
+	[Comment("得意先グループ")]
+	CustomerGroup = 6,
+	/// <summary>
+	/// 仕入先。`MasterShiire`に対応。
+	/// </summary>
+	[Comment("仕入先")]
+	Supplier = 7,
+	/// <summary>
+	/// 部門。`MasterMeisho`（`Kubun='BMN'`）に対応。
+	/// </summary>
+	[Comment("部門")]
+	Bumon = 8,
+	/// <summary>
+	/// 商品カテゴリ。`MasterMeisho`（`Kubun='ITM'`）に対応。
+	/// </summary>
+	[Comment("商品カテゴリ")]
+	ProductCategory = 9,
+	/// <summary>
+	/// シーズン。`MasterMeisho`（`Kubun='SZN'`）に対応。
+	/// </summary>
+	[Comment("シーズン")]
+	Season = 10,
+	/// <summary>
+	/// 全社（無制限）。この値が1件あれば無条件でScope一致とみなす。
+	/// </summary>
+	[Comment("全社")]
+	All = 99
 }
 
 /// <summary>
 /// 権限の操作種別。SysPermissionProfileDetail.PermissionType
-/// 操作ログのActionType（ユーザ操作ログ基盤計画書 §2.4）のうち、権限判定に使う種別に絞った部分集合
+/// View＝その画面を開ける（メニュー起動可）。Edit＝開いた画面で修正・追加・削除ができる
+/// （担当者Role・Scope・権限判定 詳細設計 §5.4）。値0は予約し使わない。
 /// </summary>
-public enum EnumPermissionType : int {
-	View = 1,
-	Create = 2,
-	Update = 3,
-	Delete = 4,
-	Execute = 5,
-	Approve = 6,
-	Export = 7,
-	Configure = 8,
+public enum EnumPermissionType : int { View = 1, Edit = 2 }
+
+/// <summary>
+/// 未登録FunctionIdの既定ポリシー（MasterSysman.PermissionDefaultMode）。
+/// 担当者Role・Scope・権限判定 詳細設計 §5.6、§9.3。
+/// </summary>
+[Comment("業務権限の既定ポリシー")]
+public enum EnumPermissionDefaultMode : int {
+	/// <summary>
+	/// 監査のみ。可・記録のみ。
+	/// </summary>
+	[Comment("監査のみ")]
+	Audit = 0,
+	/// <summary>
+	/// 警告付き許可。可・警告ログ。
+	/// </summary>
+	[Comment("警告付き許可")]
+	Warn = 1,
+	/// <summary>
+	/// 不可。
+	/// </summary>
+	[Comment("不可")]
+	Deny = 2
 }
 
 [Comment("SQL方言")]

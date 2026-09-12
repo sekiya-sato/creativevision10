@@ -112,19 +112,6 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 	[Comment("有効期限 yyyyMMdd (この期限を過ぎた場合はログイン無効) ただし今のところは未使用")]
 	public partial string ExpireDate { get; set; } = string.Empty;
 	/// <summary>
-	/// 担当区分 0=未設定 1=店舗スタッフ 2=店舗責任者 3=エリアマネージャ 4=全社担当者
-	/// </summary>
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(EnResponsibilityScope))]
-	[Comment("担当区分 0=未設定 1=店舗スタッフ 2=店舗責任者 3=エリアマネージャ 4=全社担当者")]
-	public partial int ResponsibilityScope { get; set; }
-	[Ignore]
-	[JsonIgnore]
-	public EnumResponsibilityScope EnResponsibilityScope {
-		get => (EnumResponsibilityScope)ResponsibilityScope;
-		set => ResponsibilityScope = (int)value;
-	}
-	/// <summary>
 	/// 権限プロファイルId
 	/// </summary>
 	[ObservableProperty]
@@ -144,6 +131,171 @@ public sealed partial class MasterShain : BaseDbClass, IBaseCodeName {
 		get => (EnumYesNo)IsHhtNot;
 		set => IsHhtNot = (int)value;
 	}
+}
+
+/// <summary>
+/// マスター：責任Role標準台帳
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uq1", true, nameof(Code))]
+[Comment("マスター：責任Role標準台帳 何を担当するかを表す静的分類。権限を持たない")]
+public sealed partial class MasterResponsibilityRole : BaseDbClass, IBaseCodeName {
+	/// <summary>
+	/// コード
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(12)]
+	[Comment("コード 例 P03")]
+	public partial string Code { get; set; } = string.Empty;
+	/// <summary>
+	/// 名前
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(60)]
+	[Comment("名前 例 Merchandiser")]
+	public partial string Name { get; set; } = string.Empty;
+	/// <summary>
+	/// 略称
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(100)]
+	[Comment("略称")]
+	public partial string Ryaku { get; set; } = string.Empty;
+	/// <summary>
+	/// 日本語名(既存Kana列を転用)
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(100)]
+	[Comment("日本語名(既存Kana列を転用)")]
+	public partial string Kana { get; set; } = string.Empty;
+	/// <summary>
+	/// Role区分 0=Core 1=BusinessModel
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnRoleCategory))]
+	[Comment("Role区分 0=Core 1=BusinessModel")]
+	public partial int RoleCategory { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumResponsibilityRoleCategory EnRoleCategory {
+		get => (EnumResponsibilityRoleCategory)RoleCategory;
+		set => RoleCategory = (int)value;
+	}
+	/// <summary>
+	/// 表示順
+	/// </summary>
+	[ObservableProperty]
+	[Comment("表示順")]
+	public partial int Odr { get; set; }
+	/// <summary>
+	/// 使用可能か
+	/// </summary>
+	[ObservableProperty]
+	[Comment("使用可能か")]
+	public partial bool IsActive { get; set; } = true;
+
+	/// <summary>
+	/// 初期データ（ペルソナ仕様P01〜P22。担当者Role・Scope・権限判定 詳細設計 §6）
+	/// </summary>
+	static readonly List<MasterResponsibilityRole> DefaultData =
+	[
+		new MasterResponsibilityRole { Id = 1, Code = "P01", Name = "Executive", Kana = "経営責任者", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 1, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 2, Code = "P02", Name = "BusinessController", Kana = "事業統括", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 2, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 3, Code = "P03", Name = "Merchandiser", Kana = "MD", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 3, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 4, Code = "P04", Name = "Buyer", Kana = "バイヤー", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 4, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 5, Code = "P05", Name = "ProductPlanner", Kana = "商品企画", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 5, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 6, Code = "P06", Name = "ProductionManager", Kana = "生産管理", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 6, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 7, Code = "P07", Name = "Procurement", Kana = "調達", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 7, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 8, Code = "P08", Name = "WholesaleSales", Kana = "卸営業", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 8, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 9, Code = "P09", Name = "WholesaleManager", Kana = "卸営業責任者", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 9, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 10, Code = "P10", Name = "SalesAdministration", Kana = "営業事務", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 10, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 11, Code = "P11", Name = "InventoryController", Kana = "在庫管理", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 11, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 12, Code = "P12", Name = "Distributor", Kana = "店舗配分担当", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 12, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 13, Code = "P13", Name = "WarehouseManager", Kana = "倉庫責任者", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 13, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 14, Code = "P14", Name = "WarehouseOperator", Kana = "倉庫作業担当", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 14, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 15, Code = "P15", Name = "AreaManager", Kana = "エリアマネージャ", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 15, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 16, Code = "P16", Name = "StoreManager", Kana = "店舗責任者", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 16, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 17, Code = "P17", Name = "StoreStaff", Kana = "店舗スタッフ", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 17, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 18, Code = "P18", Name = "ECManager", Kana = "EC責任者", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 18, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 19, Code = "P19", Name = "ECOperations", Kana = "EC運用担当", RoleCategory = (int)EnumResponsibilityRoleCategory.BusinessModel, Odr = 19, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 20, Code = "P20", Name = "Accounting", Kana = "経理", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 20, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 21, Code = "P21", Name = "SystemAdministrator", Kana = "システム管理", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 21, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new MasterResponsibilityRole { Id = 22, Code = "P22", Name = "MasterDataAdministrator", Kana = "マスター管理", RoleCategory = (int)EnumResponsibilityRoleCategory.Core, Odr = 22, IsActive = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+	];
+
+	/// <summary>
+	/// 責任Role標準台帳の初期データを投入する（件数0のときだけ動作。既存DBは変更しない）
+	/// </summary>
+	public static void CreateDefaultData(ExDatabase db) {
+		var tableCnt = db.GetTableCounts(nameof(MasterResponsibilityRole));
+		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {
+			db.InsertBulk<MasterResponsibilityRole>(DefaultData);
+		}
+	}
+}
+
+/// <summary>
+/// マスター：社員の責任Role割当 兼務は複数行で表現する
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uq1", true, nameof(Id_Shain), nameof(Id_ResponsibilityRole))]
+[Comment("マスター：社員の責任Role割当 兼務は複数行で表現する")]
+public sealed partial class MasterShainResponsibility : BaseDbClass {
+	/// <summary>
+	/// 社員Id
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShain))]
+	[Comment("社員Id")]
+	public partial long Id_Shain { get; set; }
+	/// <summary>
+	/// 責任RoleId
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterResponsibilityRole))]
+	[Comment("責任RoleId")]
+	public partial long Id_ResponsibilityRole { get; set; }
+	/// <summary>
+	/// 使用可能か(異動時にfalseへ。行は残す)
+	/// </summary>
+	[ObservableProperty]
+	[Comment("使用可能か(異動時にfalseへ。行は残す)")]
+	public partial bool IsActive { get; set; } = true;
+}
+
+/// <summary>
+/// マスター：責任Role割当ごとのScope行 どこまで担当するかを表す
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uq1", true, nameof(Id_ShainResponsibility), nameof(ScopeKubun), nameof(TargetId))]
+[Comment("マスター：責任Role割当ごとのScope行 どこまで担当するかを表す")]
+public sealed partial class MasterShainResponsibilityScope : BaseDbClass {
+	/// <summary>
+	/// 責任Role割当Id
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShainResponsibility))]
+	[Comment("責任Role割当Id")]
+	public partial long Id_ShainResponsibility { get; set; }
+	/// <summary>
+	/// Scope区分 1=Brand 2=Area 3=Store 4=Warehouse 5=Customer 6=CustomerGroup 7=Supplier 8=Bumon 9=ProductCategory 10=Season 99=All
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnScopeKubun))]
+	[Comment("Scope区分 1=Brand 2=Area 3=Store 4=Warehouse 5=Customer 6=CustomerGroup 7=Supplier 8=Bumon 9=ProductCategory 10=Season 99=All")]
+	public partial int ScopeKubun { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumScopeKubun EnScopeKubun {
+		get => (EnumScopeKubun)ScopeKubun;
+		set => ScopeKubun = (int)value;
+	}
+	/// <summary>
+	/// 対象Id。ScopeKubun=All(99)のときは0固定で未使用
+	/// </summary>
+	[ObservableProperty]
+	[Comment("対象Id。ScopeKubun=All(99)のときは0固定で未使用")]
+	public partial long TargetId { get; set; }
 }
 
 /// <summary>

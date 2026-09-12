@@ -33,6 +33,9 @@ public class DefineDataTable {
 
 			// マスタテーブル2
 			typeof(MasterShain),
+			typeof(MasterResponsibilityRole),
+			typeof(MasterShainResponsibility),
+			typeof(MasterShainResponsibilityScope),
 			typeof(MasterEndCustomer),
 			typeof(MasterEndCustomerAccount),
 			typeof(MasterShohin),
@@ -130,6 +133,8 @@ public class DefineDataTable {
 	/// <param name="isForce">強制的に作成するかどうか</param>
 	/// <returns>初期化が成功したかどうか</returns>
 	public async Task<bool> InitializeAsync(ExDatabase db, bool isForce, CancellationToken ct = default) {
+		// DDLで表が増える前に一度だけ判定する。既存表のデータが空でも新規DBとは扱わない。
+		var isNewDatabase = db.GetUserTableNames().Count == 0;
 		var ret = false;
 		// SQLiteのバージョンは 3.49.1 以降 (2025/05/27) select sqlite_version();
 
@@ -144,13 +149,16 @@ public class DefineDataTable {
 			}
 		}
 		ret = true;
-		// DBがなにもない場合、初期データを作成する
-		InitializeDatabase(db);
+		var initialShain = isNewDatabase ? CreateInitialData(db) : null;
 		// 個別の初期化処理
 		MasterShipping.CreateDefaultData(db);
+		MasterResponsibilityRole.CreateDefaultData(db);
 		SysPermissionProfile.CreateDefaultData(db);
 		MasterConfig.CreateDefaultData(db);
-		MasterMeisho.CreateDefaultData(db);
+		MasterMeisho.CreateDefaultData(db, isNewDatabase);
+		if (isNewDatabase && initialShain != null) {
+			CreateSampleData(db, initialShain);
+		}
 
 		// DBの整合性を管理
 		await UpdateDb.WriteVersionInfoAsync(db, ct);
@@ -176,14 +184,10 @@ public class DefineDataTable {
 		}
 	}
 	/// <summary>
-	/// データがないとき、最低限の初期データを作成する
+	/// 新規DBに管理者・ログイン・会社設定を作成し、サンプルの担当社員へ引き継ぐ。
 	/// </summary>
 	/// <param name="db"></param>
-	public void InitializeDatabase(ExDatabase db) {
-		var dblist = db.GetTableCounts();
-		var totalcnt = dblist.Sum(c => c.Item3);
-		if (totalcnt > 0)
-			return;
+	static MasterShain CreateInitialData(ExDatabase db) {
 		// ログインデータなど最低限のデータを作成する
 		var now = DateTime.Now;
 		var shain = new MasterShain { Code = "0001", Name = "管理者", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() };
@@ -216,6 +220,13 @@ public class DefineDataTable {
 
 		};
 		db.Insert<MasterSysman>(sysman);
+		return shain;
+	}
+
+	/// <summary>
+	/// 起動時に実表がなかったDBだけに、標準データ投入後のサンプルを作成する。
+	/// </summary>
+	static void CreateSampleData(ExDatabase db, MasterShain shain) {
 		var meishoList = new List<MasterMeisho> {
 			new MasterMeisho { Kubun = MasterMeisho.KubunBrand, KubunName = "ブランド", Code = "01", Name = "NewBrand", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = MasterMeisho.KubunItem, KubunName = "アイテム", Code = "01", Name = "NewItem", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
@@ -224,31 +235,35 @@ public class DefineDataTable {
 			new MasterMeisho { Kubun = MasterMeisho.KubunSale, KubunName = "セール", Code = "0001", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 		};
 		db.InsertBulk<MasterMeisho>(meishoList);
+		var brand = meishoList.Single(c => c.Kubun == MasterMeisho.KubunBrand);
+		var item = meishoList.Single(c => c.Kubun == MasterMeisho.KubunItem);
+		var color = meishoList.Single(c => c.Kubun == MasterMeisho.KubunColor);
+		var size = meishoList.Single(c => c.Kubun == MasterMeisho.KubunSize);
 		var shohin = new MasterShohin {
 			Code = "0001",
 			Name = "サンプル商品",
-			Id_Brand = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand)?.Id ?? 0,
+			Id_Brand = brand.Id,
 			VBrand = new CodeNameView {
-				Sid = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand)?.Id ?? 0,
-				Cd = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand)?.Code ?? string.Empty,
-				Mei = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunBrand)?.Name ?? string.Empty
+				Sid = brand.Id,
+				Cd = brand.Code,
+				Mei = brand.Name
 			},
-			Id_Item = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem)?.Id ?? 0,
+			Id_Item = item.Id,
 			VItem = new CodeNameView {
-				Sid = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem)?.Id ?? 0,
-				Cd = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem)?.Code ?? string.Empty,
-				Mei = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunItem)?.Name ?? string.Empty
+				Sid = item.Id,
+				Cd = item.Code,
+				Mei = item.Name
 			},
 			TankaGenka = 1000,
 			TankaJodai = 2000,
 			TankaJodaiOrg = 2000,
 			Jcolsiz = [new MasterShohinColSiz {
-				Id_Col = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunColor)?.Id ?? 0,
-				Code_Col = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunColor)?.Code ?? string.Empty,
-				Mei_Col = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunColor)?.Name ?? string.Empty,
-				Id_Siz = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunSize)?.Id ?? 0,
-				Code_Siz = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunSize)?.Code ?? string.Empty,
-				Mei_Siz = meishoList.FirstOrDefault(c => c.Kubun == MasterMeisho.KubunSize)?.Name ?? string.Empty
+				Id_Col = color.Id,
+				Code_Col = color.Code,
+				Mei_Col = color.Name,
+				Id_Siz = size.Id,
+				Code_Siz = size.Code,
+				Mei_Siz = size.Name
 			}],
 			Vdc = Common.GetVdate(),
 			Vdu = Common.GetVdate()

@@ -239,7 +239,6 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
-									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<TextBlock Grid.Row="1"
@@ -332,27 +331,10 @@
 								</DockPanel>
 
 								<TextBlock Grid.Row="9"
-									Style="{StaticResource FormLabel}"
-									Text="担当区分" />
-								<ComboBox Grid.Row="9" Grid.Column="1"
-									Width="220"
-									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="担当区分"
-									SelectedValue="{Binding CurrentEdit.ResponsibilityScope, Mode=TwoWay}"
-									SelectedValuePath="Tag"
-									Style="{StaticResource FormComboBox}">
-									<ComboBoxItem Content="未設定" Tag="0" />
-									<ComboBoxItem Content="店舗スタッフ" Tag="1" />
-									<ComboBoxItem Content="店舗責任者" Tag="2" />
-									<ComboBoxItem Content="エリアマネージャ" Tag="3" />
-									<ComboBoxItem Content="全社担当者" Tag="4" />
-								</ComboBox>
-
-								<TextBlock Grid.Row="10"
 									d:Visibility="Visible"
 									Style="{StaticResource FormLabel}"
 									Text="権限プロファイルId" Visibility="Collapsed" />
-								<TextBox Grid.Row="10" Grid.Column="1"
+								<TextBox Grid.Row="9" Grid.Column="1"
 									Width="180"
 									HorizontalAlignment="Left"
 									d:Visibility="Visible" materialDesign:HintAssist.Hint="権限プロファイルId"
@@ -361,10 +343,10 @@
 									Visibility="Collapsed" />
 
 								<!--  Hht除外  -->
-								<TextBlock Grid.Row="11"
+								<TextBlock Grid.Row="10"
 									Style="{StaticResource FormLabel}"
 									Text="Hht除外" />
-								<ComboBox Grid.Row="11" Grid.Column="1"
+								<ComboBox Grid.Row="10" Grid.Column="1"
 									Width="220"
 									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="Hht除外"
@@ -374,7 +356,7 @@
 									<ComboBoxItem Content="する" />
 								</ComboBox>
 
-								<TextBlock Grid.Row="12" Grid.Column="1"
+								<TextBlock Grid.Row="11" Grid.Column="1"
 									Margin="20"
 									Foreground="{DynamicResource MaterialDesignBody}"
 									TextWrapping="Wrap">

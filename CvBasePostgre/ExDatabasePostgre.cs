@@ -152,6 +152,9 @@ public sealed class ExDatabasePostgre : ExDatabase {
 		};
 	}
 
+	public override IReadOnlyList<string> GetUserTableNames() =>
+		Fetch<string>("select table_name from information_schema.tables where table_schema=current_schema() and table_type='BASE TABLE' order by table_name");
+
 	public override List<Tuple<string, string, long>> GetTableCounts(string tableName = "") {
 		var sql = """
 select t.table_schema, t.table_name,
@@ -159,12 +162,14 @@ select t.table_schema, t.table_name,
   from information_schema.tables t
  where t.table_schema=current_schema()
    and t.table_type='BASE TABLE'
-   and t.table_name not like 'sys%'
 """;
 		var args = Array.Empty<object>();
 		if (!string.IsNullOrWhiteSpace(tableName)) {
 			sql += " and t.table_name=@0";
 			args = [NormalizeIdentifier(tableName.Split('.').Last())];
+		}
+		else {
+			sql += " and t.table_name not like 'sys%'";
 		}
 		sql += " order by t.table_name";
 

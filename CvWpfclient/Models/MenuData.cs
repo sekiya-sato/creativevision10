@@ -26,10 +26,15 @@ public partial class MenuData : ObservableObject {
 	public int InitParam { get; set; }
 
 	/// <summary>
-	/// 表示を許可するロール。null または空は全ロール共通として扱う。
-	/// SysLogin.Id_Role に対応する。
+	/// 権限判定用のFunctionId。明示指定が無ければ<see cref="DeriveFunctionId"/>で自動導出する。
 	/// </summary>
-	public IReadOnlyList<EnumLoginRole>? AllowedRoles { get; init; }
+	public string? FunctionId { get; init; }
+
+	/// <summary>
+	/// Scope対象画面(<see cref="IsScopeTargetView"/>がtrueの画面)がどのScope種別を見るかの宣言。
+	/// null/空の間はScope判定をスキップする(設計書 8.4節)。この Step では値を設定しない。
+	/// </summary>
+	public IReadOnlyList<EnumScopeKubun>? EditScopeKubuns { get; init; }
 
 	public MenuData() {
 	}
@@ -46,38 +51,41 @@ public partial class MenuData : ObservableObject {
 	}
 
 	/// <summary>
-	/// 指定ロールで表示してよいメニューかを返す
+	/// メニューを作成する。10.0では<c>AllowedRoles</c>によるロール別フィルタを廃止したため、
+	/// 常に全メニューを返す(設計書 9.1節)。
 	/// </summary>
-	public bool IsVisibleFor(EnumLoginRole role) =>
-		AllowedRoles == null || AllowedRoles.Count == 0 || AllowedRoles.Contains(role);
+	public static ObservableCollection<MenuData> CreateDefault() => CreateAll();
 
 	/// <summary>
-	/// 標準ロール(ロール未設定)のメニューを作成する
+	/// <paramref name="viewType"/>の名前空間・型名からFunctionIdを機械的に導出する(設計書 10.2節)。
+	/// 名前空間の末尾セグメントが"_"+数字2桁+文字列の形(例:"_06Uriage")でない場合、
+	/// または型名が"View"で終わらない場合はnullを返す(Views/Sub配下、CvWpfclient.Views直下のMainMenuView等)。
 	/// </summary>
-	public static ObservableCollection<MenuData> CreateDefault() => CreateDefault(EnumLoginRole.Standard);
-
-	/// <summary>
-	/// ログインロールに応じたメニューを作成する。
-	/// ロール別メニューは標準業務メニューへのショートカットであり、標準業務メニュー側の機能は削っていない。
-	/// </summary>
-	public static ObservableCollection<MenuData> CreateDefault(EnumLoginRole role) => FilterByRole(CreateAll(), role);
-
-	/// <summary>
-	/// AllowedRoles に合致しないノードを再帰的に取り除く
-	/// </summary>
-	private static ObservableCollection<MenuData> FilterByRole(ObservableCollection<MenuData> items, EnumLoginRole role) {
-		var result = new ObservableCollection<MenuData>();
-		foreach (var item in items) {
-			if (!item.IsVisibleFor(role)) {
-				continue;
-			}
-			if (item.SubItems != null) {
-				item.SubItems = FilterByRole(item.SubItems, role);
-			}
-			result.Add(item);
+	public static string? DeriveFunctionId(Type viewType) {
+		var ns = viewType.Namespace;
+		if (string.IsNullOrEmpty(ns)) {
+			return null;
 		}
-		return result;
+		var lastSegment = ns.Split('.')[^1];
+		var match = System.Text.RegularExpressions.Regex.Match(lastSegment, @"^_(\d{2}[A-Za-z].*)$");
+		if (!match.Success) {
+			return null;
+		}
+		if (!viewType.Name.EndsWith("View", StringComparison.Ordinal)) {
+			return null;
+		}
+		var areaCode = match.Groups[1].Value;
+		var shortName = viewType.Name[..^"View".Length];
+		return $"{areaCode}.{shortName}";
 	}
+
+	/// <summary>
+	/// Scope判定(設計書 8.3節)の対象画面かどうかを、ViewTypeの型名接尾辞から機械的に判定する。
+	/// 型名が"MenteView"または"InputView"で終わる画面のみ対象。
+	/// </summary>
+	public static bool IsScopeTargetView(Type viewType) =>
+		viewType.Name.EndsWith("MenteView", StringComparison.Ordinal) ||
+		viewType.Name.EndsWith("InputView", StringComparison.Ordinal);
 
 	/// <summary>
 	/// 全ロール分のメニュー定義。構成は .omo/2026-08-新メニュー案.md に準拠する。
@@ -98,7 +106,7 @@ public partial class MenuData : ObservableObject {
 			new("売上速報(原価無)", typeof(Views._40Shop.SalesQuickReportCostlessView), addInfo:"売上速報の店舗配布版。粗利･粗利率を出さない"),
 			new("売上週報･月報(原価無)", typeof(Views._40Shop.SalesWeeklyMonthlyReportCostlessView), addInfo:"売上週報･月報の店舗配布版。粗利･粗利率を出さない"),
 			new("分類別店別売上報告(原価無)", typeof(Views._40Shop.CategoryShopSalesReportCostlessView), addInfo:"分類別店別売上報告の店舗配布版。値入率を出さない"),
-		])) { AllowedRoles = [EnumLoginRole.Shop] },
+		])),
 		// 倉庫担当向けの一覧は新メニュー案に記載が無いため、在庫・移動・出荷の既存機能から暫定構成している。
 		new("■ 倉庫業務", new([
 			new("在庫問合せ", typeof(Views._08Zaiko.ZaikoQueryView), addInfo:"商品・色・倉庫条件から現在庫を照会"),
@@ -111,7 +119,7 @@ public partial class MenuData : ObservableObject {
 			new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
 			new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中 確定した配分をピッキングリストとして印刷"),
 			new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
-		])) { AllowedRoles = [EnumLoginRole.Warehouse] },
+		])),
 		/* ================================================================
 		 * 01 マスター
 		 * ================================================================ */

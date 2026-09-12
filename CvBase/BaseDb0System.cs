@@ -133,6 +133,20 @@ public sealed partial class MasterSysman : BaseDbHasAddress {
 	[ForeignKey(nameof(EnumCostMethod))]
 	[Comment("原価方式 0=固定原価、1=最終仕入原価、2=総平均原価")]
 	public partial int CostMethod { get; set; } = 0;
+	/// <summary>
+	/// 未登録FunctionIdの既定ポリシー（担当者Role・Scope・権限判定 詳細設計 §5.6、§9.3）。
+	/// 0=Audit(可・記録のみ)、1=Warn(可・警告ログ)、2=Deny(不可)
+	/// </summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnPermissionDefaultMode))]
+	[Comment("業務権限の既定ポリシー 0=Audit 1=Warn 2=Deny")]
+	public partial int PermissionDefaultMode { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumPermissionDefaultMode EnPermissionDefaultMode {
+		get => (EnumPermissionDefaultMode)PermissionDefaultMode;
+		set => PermissionDefaultMode = (int)value;
+	}
 }
 /// <summary>
 /// 消費税率テーブル(Id 1-3)
@@ -235,6 +249,12 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// <summary>価格ポイント表区分（コード=表名、名称=価格の並びCSV。TranJodaiScope.Id_PricePointが参照）</summary>
 	[Comment("価格ポイント表区分")]
 	public const string KubunPricePoint = "PPT";
+	/// <summary>担当エリア区分（担当者Role・Scope・権限判定 詳細設計 §7.1。上代用の地域区分C31とは別物）</summary>
+	[Comment("担当エリア区分")]
+	public const string KubunScopeArea = "SCA";
+	/// <summary>担当得意先グループ区分（担当者Role・Scope・権限判定 詳細設計 §7.1。上代用の価格グループ区分C30とは別物）</summary>
+	[Comment("担当得意先グループ区分")]
+	public const string KubunScopeCustomerGroup = "SCG";
 	/// <summary>商品マスター Jsub(名称リスト)の区分先頭文字(Kb='B01'～'B10')</summary>
 	[Comment("商品マスター 名称区分先頭文字")]
 	public const char KubunTopShohin = 'B';
@@ -308,7 +328,7 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 	/// </summary>
 	/// <param name="db"></param>
 	/// <returns></returns>
-	public static List<MasterMeisho> CreateDefaultData(ExDatabase db) {
+	public static List<MasterMeisho> CreateDefaultData(ExDatabase db, bool isNewDatabase = false) {
 		var initData = new List<MasterMeisho>() {
 			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "IDX", Name = "名称区分インデックス", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "BRD", Name = "ブランド", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
@@ -317,11 +337,6 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "SIZ", Name = "サイズ", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "SLE", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "CHR", Name = "調整理由", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "BRD", KubunName = "ブランド", Code = "01", Name = "NewBrand", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "ITM", KubunName = "アイテム", Code = "01", Name = "NewItem", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "COL", KubunName = "カラー", Code = "01", Name = "NewColor", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "SIZ", KubunName = "サイズ", Code = "01", Name = "NewSize", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-			new MasterMeisho { Kubun = "SLE", KubunName = "セール", Code = "0001", Name = "セール", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			// 調整理由（在庫強制調整）。コード10〜19=加算(+)/20〜29=減算(−)。ChoseiRiyu.CalcFlag を参照
 			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "10", Name = "入庫", Odr = 10, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "20", Name = "紛失", Odr = 20, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
@@ -330,6 +345,30 @@ public sealed partial class MasterMeisho : BaseDbClass, IBaseCodeName {
 			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "23", Name = "検品ミス", Odr = 23, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 			new MasterMeisho { Kubun = "CHR", KubunName = "調整理由", Code = "29", Name = "その他", Odr = 29, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 		};
+		// 新規DBでは過去Migrationを流さないため、その標準データも現行セットとして用意する。
+		// 既存DBへは各Migrationが投入するので、ここで先行追加しない。
+		if (isNewDatabase) {
+			initData.AddRange([
+				new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = "KIJ", Name = "資材区分", Ryaku = "Material", Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+				new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = KubunPriceGroup, Name = "価格グループ", Odr = 30, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+				new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = KubunPriceArea, Name = "地域", Odr = 31, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+				new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = KubunPriceChannel, Name = "チャネル", Odr = 32, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+				new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = KubunScopeArea, Name = "担当エリア区分", Odr = 40, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+				new MasterMeisho { Kubun = KubunIndex, KubunName = "名称区分", Code = KubunScopeCustomerGroup, Name = "担当得意先グループ区分", Odr = 41, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+			]);
+			var materialRows = new (string Code, string Name, string Ryaku, int Odr)[] {
+				("01", "布帛", "Woven", 1), ("02", "ニット", "Knit", 2), ("03", "裏地", "Lining", 3),
+				("04", "芯地", "Interlining", 4), ("05", "中綿", "Padding", 5), ("06", "ボタン", "Button", 6),
+				("07", "ファスナー", "Zipper", 7), ("08", "ホック・スナップ", "Snap", 8), ("09", "バックル・金具", "Hardware", 9),
+				("10", "ハトメ・リベット", "Eyelet", 10), ("11", "ゴム", "Elastic", 11), ("12", "テープ", "Tape", 12),
+				("13", "紐・コード", "Cord", 13), ("14", "レース", "Lace", 14), ("15", "リブ", "Rib", 15),
+				("16", "縫製糸", "Thread", 16), ("17", "装飾品", "Decor", 17), ("18", "ネーム・ラベル", "Label", 18),
+				("19", "下げ札", "Tag", 19), ("20", "包装資材", "Packing", 20), ("99", "その他", "Other", 99),
+			};
+			foreach (var row in materialRows) {
+				initData.Add(new MasterMeisho { Kubun = "KIJ", KubunName = "資材区分", Code = row.Code, Name = row.Name, Ryaku = row.Ryaku, Odr = row.Odr, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() });
+			}
+		}
 		var tableCnt = db.GetTableCounts(nameof(MasterMeisho));
 		if (tableCnt?.FirstOrDefault()?.Item3 == 0) {
 			db.InsertBulk<MasterMeisho>(initData);

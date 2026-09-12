@@ -163,7 +163,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 			return;
 		}
 
-		MenuItems = MenuData.CreateDefault(AppGlobal.CurrentRole);
+		MenuItems = MenuData.CreateDefault();
 		IsMenuReady = true;
 		var window = ClientLib.GetActiveView(this);
 		if (window != null) {
@@ -391,7 +391,7 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		}
 		AppGlobal.CurrentRole = role;
 		SelectedMenu = null;
-		MenuItems = MenuData.CreateDefault(role);
+		MenuItems = MenuData.CreateDefault();
 		IsMenuReady = true;
 	}
 

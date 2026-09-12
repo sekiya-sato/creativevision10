@@ -1,3 +1,22 @@
+## [2026-09-12] 担当者Role・Scope・業務権限の基盤実装（10.0）
+### 実施内容
+- [担当者Role・Scope・権限判定 詳細設計](spec/2026-09-12_担当者Role・Scope・権限判定_詳細設計.md)の10.0スコープ（テーブル定義・基盤のみ。判定処理は10.2以降）を実装した。チェックリストの未決事項`D-10`への回答にあたる。
+- 前身設計（2026-08-28、commit `e5f59e6`）が入れた`MasterShain.ResponsibilityScope`・`SysPermissionProfile`系は判定処理が一度も実装されず業務ロジックからの参照がゼロだったため、加算ではなく全面改定とした。
+- 本設計の権限は**業務権限**（どの業務メニューを開けるか、開いた画面が参照のみか編集可か）であり、`SysLogin`のログイン可否という**システム権限**とは別物として分離した。判定はクライアント側で完結し、サーバ側に強制ポイントを置かない。
+- `CvBase`: `EnumResponsibilityScope`/`EnumResponsibilityExternalScope`を削除、`EnumPermissionType`を`View`/`Edit`の2値へ縮小、`EnumResponsibilityRoleCategory`/`EnumScopeKubun`/`EnumPermissionDefaultMode`を追加。`MasterResponsibilityRole`（P01〜P22の22件）/`MasterShainResponsibility`（兼務）/`MasterShainResponsibilityScope`（担当範囲）の3テーブルを新設。`MasterShain.ResponsibilityScope`と`SysPermissionProfile.ResponsibilityScope`/`IsDefault`を削除。`MasterSysman.PermissionDefaultMode`（未登録FunctionIdの既定ポリシー）と`MasterMeisho`の`SCA`/`SCG`定数を追加。
+- `CvWpfclient`: `MenuData`から`AllowedRoles`/`IsVisibleFor`/`FilterByRole`を削除し、`FunctionId`/`EditScopeKubuns`プロパティと`DeriveFunctionId`/`IsScopeTargetView`の静的メソッドを追加した。FunctionIdは`ViewType`の名前空間・型名から機械導出し、台帳を二重定義しない。Scope判定の対象は`*MenteView`19画面と`*InputView`20画面のみ。
+- **10.0では判定処理を一切呼び出さない**ため、全メニュー・全機能が従来どおり使用可能。`AllowedRoles`削除後も代替フィルタを入れていない。
+- マイグレーション`26_09_12_01`〜`05`を追加。`26_09_12_03`は、新規DBでは`WriteVersionInfoAsync`がSQLを実行しない一方で`CreateDefaultData`が先に走るという順序を利用し、既存DBにだけ新プロファイル・明細を投入する構成とした。
+- 実DB検証で`ALTER TABLE SysPermissionProfile DROP COLUMN ResponsibilityScope`が旧インデックス`SysPermissionProfile_nk2`の残存により失敗することが判明したため、`DROP INDEX IF EXISTS SysPermissionProfile_nk2;`を同マイグレーションの先頭に追加した（`26_09_08_04`の前例に倣う）。`MasterShain.ResponsibilityScope`と`IsDefault`には同種の索引が無いことをgit履歴で確認済み。
+### 確認
+- `C:\gitroot\UT\vscmd.bat dotnet build creativevision10.slnx`成功（0エラー0警告）。
+- `DdlSnapshotTests`7件・`UpdateDbTests`15件・`MasterCascadeDbTests`23件すべてPASS。`UpdateDbTests`の権限明細件数アサートを11→17へ更新した。
+- 新規SQLiteで初期化し、3テーブル作成・Role22件・プロファイル4件・明細17件ちょうど（マイグレーションのINSERTと二重にならないこと）・旧3列の消滅・`PermissionDefaultMode=0`・`SysUpdateDb`最新`26_09_12_05`を実測確認した。
+- 実DB（`server-user163.db`、1824社員）のコピーで`01`〜`05`の適用を確認。`ResponsibilityScope`列・`SysPermissionProfile_nk2`索引・`IsDefault`列の消滅、新4プロファイル・17明細の投入、`MasterShain`1824件/`Tran00Uriage`50315件/`Tran13Hachu`6694件が無変化であることを確認した。旧`ResponsibilityScope`値1/2/3/90を持つ社員が実データに存在しなかったため、人工データで1→P17・2→P16・3→P15・90→P02の移行と`Id_Tenpo`/`Id_Bumon`からのScope行生成を別途検証した。
+- **既存の不具合を検出（本件では未修正）**: `DefineDataTable.InitializeAsync`は`InitializeDatabase(db)`が`MasterMeisho`へ5行を無条件投入した後に`MasterMeisho.CreateDefaultData(db)`を呼ぶため、件数0ガードにより名称マスタのIDXカタログ（`BRD`/`ITM`/`COL`/`SIZ`/`SLE`/`CHR`/`KIJ`/`C30`〜`C32`、および今回の`SCA`/`SCG`）が新規DBでは作られない。DB初期化・マイグレーションを扱う別タスクの範囲のため本件では触れていない。
+
+---
+
 ## [2026-09-11] 伝票入力画面への「新規登録」ボタン追加
 ### 実施内容
 - 受注・売上など伝票入力12画面には「新規」に相当するボタンが無く、一覧が0件のときだけ「〜詳細」ボタンが新規伝票を開く仕様だった。一覧に既存伝票があると新規入力できないため、「〜詳細」の右隣に「新規登録」ボタンを追加した。

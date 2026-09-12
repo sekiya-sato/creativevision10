@@ -10,6 +10,119 @@ using System.Threading.Tasks;
 namespace Tests.CvServer;
 
 [TestClass]
+public sealed class DefineDataTableInitializationTests {
+	private ExDatabaseSqlite? _db;
+	private ExDatabaseSqlite Db => _db ?? throw new AssertFailedException("Database not initialized");
+
+	[TestInitialize]
+	public void Initialize() {
+		var connection = new SqliteConnection("Data Source=:memory:");
+		connection.Open();
+		_db = new ExDatabaseSqlite(connection);
+	}
+
+	[TestCleanup]
+	public void Cleanup() {
+		_db?.Close();
+		_db?.Dispose();
+	}
+
+	[TestMethod]
+	public void GetUserTableNames_空DBでは実表がない() {
+		Assert.IsEmpty(Db.GetUserTableNames());
+	}
+
+	[TestMethod]
+	public void GetUserTableNames_Sys表を含み内部表とビューを除外する() {
+		Db.Execute("CREATE TABLE SysTest (Id INTEGER PRIMARY KEY AUTOINCREMENT)");
+		Db.Execute("CREATE TABLE MasterTest (Id INTEGER PRIMARY KEY)");
+		Db.Execute("CREATE VIEW MasterTestView AS SELECT Id FROM MasterTest");
+
+		var tables = Db.GetUserTableNames();
+
+		Assert.HasCount(2, tables);
+		Assert.Contains("SysTest", tables);
+		Assert.Contains("MasterTest", tables);
+		Assert.DoesNotContain("sqlite_sequence", tables);
+		Assert.DoesNotContain("MasterTestView", tables);
+	}
+
+	[TestMethod]
+	public void GetUserTableNames_照会失敗を空の一覧として返さない() {
+		Db.Connection.Dispose();
+
+		Assert.ThrowsExactly<InvalidOperationException>(() => Db.GetUserTableNames());
+	}
+
+	[TestMethod]
+	public async Task InitializeAsync_新規DBに標準データと参照が有効なサンプルを投入する() {
+		var result = await new DefineDataTable().InitializeAsync(Db, false);
+
+		Assert.IsTrue(result);
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterShain"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM SysLogin"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterSysman"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterShohin"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM DerivedShohinColSiz"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterEndCustomer"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterShiire"));
+		Assert.AreEqual(2L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterTokui"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM SysUpdateDb"));
+		Assert.AreEqual(45L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterMeisho"));
+		Assert.AreEqual(6L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterMeisho WHERE Kubun='IDX' AND Code IN ('KIJ','C30','C31','C32','SCA','SCG')"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterShohin s JOIN MasterMeisho b ON b.Id=s.Id_Brand AND b.Kubun='BRD' JOIN MasterMeisho i ON i.Id=s.Id_Item AND i.Kubun='ITM'"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM DerivedShohinColSiz d JOIN MasterMeisho c ON c.Id=d.Id_Col AND c.Kubun='COL' JOIN MasterMeisho s ON s.Id=d.Id_Siz AND s.Kubun='SIZ'"));
+		Assert.AreEqual(2L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterTokui t JOIN MasterShain s ON s.Id=t.Id_Shain"));
+	}
+
+	[TestMethod]
+	public async Task InitializeAsync_再起動でデータを重複投入せず既存値を保持する() {
+		var initializer = new DefineDataTable();
+		Assert.IsTrue(await initializer.InitializeAsync(Db, false));
+		Db.Execute("UPDATE MasterShohin SET Name=@0", "運用中の商品");
+		Db.Execute("UPDATE MasterConfig SET Val=@0 WHERE Name=@1", "123", MasterConfig.NameJodaiKeepDays);
+
+		Assert.IsTrue(await initializer.InitializeAsync(Db, false));
+
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterShohin"));
+		Assert.AreEqual("運用中の商品", Db.ExecuteScalar<string>("SELECT Name FROM MasterShohin"));
+		Assert.AreEqual("123", Db.ExecuteScalar<string>("SELECT Val FROM MasterConfig WHERE Name=@0", MasterConfig.NameJodaiKeepDays));
+		Assert.AreEqual(45L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterMeisho"));
+		Assert.AreEqual(1L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM SysUpdateDb"));
+	}
+
+	[TestMethod]
+	[DataRow(false)]
+	[DataRow(true)]
+	public async Task InitializeAsync_空の既存表があればサンプルも初回データも投入しない(bool systemTableOnly) {
+		Assert.IsTrue(Db.CreateTable(systemTableOnly ? typeof(SysUpdateDb) : typeof(MasterShohin)));
+
+		Assert.IsTrue(await new DefineDataTable().InitializeAsync(Db, false));
+
+		Assert.AreEqual(0L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterShohin"));
+		Assert.AreEqual(0L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterTokui"));
+		Assert.AreEqual(0L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterShain"));
+		Assert.AreEqual(0L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM SysLogin"));
+		Assert.AreEqual(0L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterMeisho WHERE Kubun='BRD'"));
+	}
+
+	[TestMethod]
+	public void CreateDefaultData_新規用標準名称はサンプル名称を含めず既存行を補完しない() {
+		Assert.IsTrue(Db.CreateTable(typeof(MasterMeisho)));
+		var inserted = MasterMeisho.CreateDefaultData(Db, true);
+
+		Assert.HasCount(40, inserted);
+		Assert.AreEqual(21L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterMeisho WHERE Kubun='KIJ'"));
+		Assert.AreEqual(0L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterMeisho WHERE Kubun IN ('BRD','ITM','COL','SIZ','SLE')"));
+		Db.Execute("DELETE FROM MasterMeisho WHERE Kubun='CHR' AND Code='10'");
+
+		Assert.IsEmpty(MasterMeisho.CreateDefaultData(Db, true));
+		Assert.AreEqual(39L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterMeisho"));
+		Assert.AreEqual(0L, Db.ExecuteScalar<long>("SELECT COUNT(*) FROM MasterMeisho WHERE Kubun='CHR' AND Code='10'"));
+	}
+}
+
+[TestClass]
 public class SysPermissionProfileDefaultDataTests {
 	private ExDatabaseSqlite? _db;
 
@@ -35,7 +148,7 @@ public class SysPermissionProfileDefaultDataTests {
 		SysPermissionProfile.CreateDefaultData(Db);
 
 		Assert.AreEqual(4, Db.Fetch<SysPermissionProfile>("").Count, "標準プロファイル4件を登録する");
-		Assert.AreEqual(11, Db.Fetch<SysPermissionProfileDetail>("").Count, "標準権限明細11件を登録する");
+		Assert.AreEqual(17, Db.Fetch<SysPermissionProfileDetail>("").Count, "標準権限明細17件を登録する");
 	}
 
 }

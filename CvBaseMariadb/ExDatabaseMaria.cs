@@ -101,18 +101,23 @@ public partial class ExDatabaseMaria : ExDatabase {
 		CommandTimeout = timeoutSec;
 	}
 
+	public override IReadOnlyList<string> GetUserTableNames() =>
+		Fetch<string>("select table_name from information_schema.tables where table_schema=database() and table_type='BASE TABLE' order by table_name");
+
 	public override List<Tuple<string, string, long>> GetTableCounts(string tableName = "") {
 		var sql = """
 select table_name, coalesce(table_comment, '') table_comment
   from information_schema.tables
  where table_schema=database()
    and table_type='BASE TABLE'
-   and table_name not like 'Sys%'
 """;
 		var args = Array.Empty<object>();
 		if (!string.IsNullOrWhiteSpace(tableName)) {
 			sql += " and table_name=@0";
 			args = [tableName.Split('.').Last().Trim('`')];
+		}
+		else {
+			sql += " and table_name not like 'Sys%'";
 		}
 		sql += " order by table_name";
 

@@ -59,6 +59,53 @@ public class UpdateDb {
 		new (26_09_08_03,"ALTER TABLE TranJodai ADD COLUMN Jscope TEXT NOT NULL DEFAULT '[]';ALTER TABLE TranJodai ADD COLUMN ScopeCnt NUMBER not null default 0;ALTER TABLE TranJodai ADD COLUMN ApproveDay TEXT NOT NULL DEFAULT '';ALTER TABLE TranJodai ADD COLUMN Id_ApproveShain NUMBER not null default 0;ALTER TABLE TranJodai ADD COLUMN VApproveShain TEXT NOT NULL DEFAULT '{}';","上代一括変更 Step1b TranJodaiへ適用範囲(Jscope)・件数・承認3列を追加 既存伝票はJscope=[]・承認未設定のまま"),
 		new (26_09_08_04,"DROP INDEX IF EXISTS DerivedJodai_uk1;CREATE unique INDEX IF NOT EXISTS DerivedJodai_uk1 ON DerivedJodai(Id_Tran,TaishoType,Id_Tenpo,Id_Shohin,DayFrom);","上代一括変更 Step1b DerivedJodaiのuk1にDayFromを追加する 段階値下げで同一店舗×同一商品が複数期間の行になるため DefineDataTable.InitializeAsyncはCreateTableを先に済ませてからマイグレーションを流すのでDROPだけでは次回起動まで一意制約が欠落する ここで作り直す SQLはExDatabase.CreateIndexの生成文と同一"),
 		new (26_09_10_01,"ALTER TABLE MasterShain ADD COLUMN IsHhtNot NUMBER not null default 0;ALTER TABLE MasterTokui ADD COLUMN IsHhtNot NUMBER not null default 0;ALTER TABLE MasterShiire ADD COLUMN IsHhtNot NUMBER not null default 0;","MasterShain MasterTokui MasterShiire へHhtマスタ除外フラグを追加 既存行は全て対象(0)"),
+		new (26_09_12_01,
+			"INSERT INTO MasterShainResponsibility (Vdc,Vdu,Id_Shain,Id_ResponsibilityRole,IsActive) SELECT s.Vdu, s.Vdu, s.Id, r.Id, 1 FROM MasterShain s JOIN MasterResponsibilityRole r ON r.Code = CASE s.ResponsibilityScope WHEN 1 THEN 'P17' WHEN 2 THEN 'P16' WHEN 3 THEN 'P15' WHEN 90 THEN 'P02' END WHERE s.ResponsibilityScope IN (1,2,3,90);",
+			"MasterShain.ResponsibilityScope からMasterShainResponsibilityへ移行(決定事項C-1)"),
+		new (26_09_12_02,
+			"INSERT INTO MasterShainResponsibilityScope (Vdc,Vdu,Id_ShainResponsibility,ScopeKubun,TargetId) SELECT msr.Vdu, msr.Vdu, msr.Id, 3, s.Id_Tenpo FROM MasterShain s JOIN MasterShainResponsibility msr ON msr.Id_Shain=s.Id WHERE s.Id_Tenpo<>0;" +
+			"INSERT INTO MasterShainResponsibilityScope (Vdc,Vdu,Id_ShainResponsibility,ScopeKubun,TargetId) SELECT msr.Vdu, msr.Vdu, msr.Id, 8, s.Id_Bumon FROM MasterShain s JOIN MasterShainResponsibility msr ON msr.Id_Shain=s.Id WHERE s.Id_Bumon<>0;",
+			"既存Id_Tenpo・Id_BumonをScope行へ複製 列自体は残す"),
+		new (26_09_12_03,
+			"DROP INDEX IF EXISTS SysPermissionProfile_nk2;" +
+			"ALTER TABLE MasterShain DROP COLUMN ResponsibilityScope;" +
+			"ALTER TABLE SysPermissionProfile DROP COLUMN ResponsibilityScope;" +
+			"ALTER TABLE SysPermissionProfile DROP COLUMN IsDefault;" +
+			"DELETE FROM SysPermissionProfileDetail WHERE Id_PermissionProfile IN (SELECT Id FROM SysPermissionProfile WHERE Code IN ('CorporateUserDefault','AreaManagerDefault','StoreManagerDefault','StoreStaffDefault'));" +
+			"DELETE FROM SysPermissionProfile WHERE Code IN ('CorporateUserDefault','AreaManagerDefault','StoreManagerDefault','StoreStaffDefault');" +
+			"INSERT INTO SysPermissionProfile (Id,Vdc,Vdu,Code,Name,Memo,IsActive,ProfileVersion) VALUES " +
+			"(1,strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,'FullAccess','全機能標準権限','',1,1)," +
+			"(2,strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,'StoreOperationStandard','店舗業務標準権限','',1,1)," +
+			"(3,strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,'WarehouseOperationStandard','倉庫業務標準権限','',1,1)," +
+			"(4,strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,'ReadOnlyStandard','参照専用標準権限','',1,1);" +
+			"INSERT INTO SysPermissionProfileDetail (Vdc,Vdu,Id_PermissionProfile,FunctionId,PermissionType,IsAllowed) VALUES " +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,2,'06Uriage.ShopUriageInput',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,2,'06Uriage.ShopUriageInput',2,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,2,'08Zaiko.ZaikoQuery',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,2,'08Zaiko.StockForceInput',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,2,'08Zaiko.StockForceInput',2,0)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,3,'08Zaiko.IdoInputSoku',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,3,'08Zaiko.IdoInputSoku',2,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,3,'08Zaiko.ZaikoQuery',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,1,'06Uriage.ShopUriageInput',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,1,'06Uriage.ShopUriageInput',2,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,1,'08Zaiko.StockForceInput',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,1,'08Zaiko.StockForceInput',2,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,1,'20UriageAnalysis.SalesQuickReport',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,1,'07Haibun.ShopHaibunInput',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,1,'07Haibun.ShopHaibunInput',2,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,4,'08Zaiko.ZaikoQuery',1,1)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,4,'20UriageAnalysis.SalesQuickReport',1,1);",
+			"旧SysPermissionProfileクラスが持っていたKeyDml(\"nk2\",false,nameof(ResponsibilityScope))由来のSysPermissionProfile_nk2インデックスは現行クラス定義に存在せずCreateIndexはIF NOT EXISTSで追加専用のため実DBに残ったままとなり、DROP COLUMN ResponsibilityScopeがこのインデックスを参照して失敗するので先に落とす。" +
+			"旧列削除、旧4プロファイル・11明細を破棄。CreateDefaultDataは新規DBでのみ動作し既存DBでは件数≠0のためスキップされるので、ここで新4プロファイル・17明細(15.2節)を直接INSERTする(新規DBはWriteVersionInfoAsyncがSQLを実行しないため本行は走らずCreateDefaultData投入分と重複しない)"),
+		new (26_09_12_04,
+			"INSERT INTO MasterMeisho (Vdc,Vdu,Kubun,KubunName,Code,Name,Ryaku,Kana,Odr) VALUES " +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,'IDX','名称区分','SCA','担当エリア区分','','',40)," +
+			"(strftime('%s','now')*10000000+621355968000000000,strftime('%s','now')*10000000+621355968000000000,'IDX','名称区分','SCG','担当得意先グループ区分','','',41);",
+			"SCA/SCGのIDX行を追加(7.1節)"),
+		new (26_09_12_05,
+			"ALTER TABLE MasterSysman ADD COLUMN PermissionDefaultMode NUMBER not null default 0;",
+			"業務権限の既定ポリシー列を追加(5.6節、決定事項C-9) MasterSysmanは1行のみのためdefault 0(Audit)がそのまま既存行に入る"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

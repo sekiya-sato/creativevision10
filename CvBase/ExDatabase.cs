@@ -268,6 +268,15 @@ public partial class ExDatabase : Database {
 	}
 
 	/// <summary>
+	/// 接続先の実表名を取得する。Sys表を含み、DB内部表・ビューを除く。照会失敗は呼出元へ通知する。
+	/// </summary>
+	public virtual IReadOnlyList<string> GetUserTableNames() {
+		if (DatabaseType != NPoco.DatabaseType.SQLite)
+			throw new NotSupportedException("実表一覧の取得は接続先プロバイダーで実装してください。");
+		return Fetch<string>("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
+	}
+
+	/// <summary>
 	/// テーブルが存在するかどうか
 	/// </summary>
 	/// <param name="tableName"></param>
