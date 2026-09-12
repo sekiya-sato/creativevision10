@@ -1,3 +1,13 @@
+﻿## [2026-09-12] DB初期化・標準データ・サンプルデータの分離（Step 3）
+### 実施内容
+- DDL前に実表一覧を取得し、実表0件のときだけ新規DBフラグを保持するようにした。`Sys*`表を含み、SQLite内部表・ビューは除外する。SQLite/MariaDB/PostgreSQLで実装し、名前指定時の`GetTableCounts`が`Sys*`表を除外する不整合も修正した。
+- `DefineDataTable`の初期データを管理者・ログイン・会社設定と、新規DB限定のサンプルデータへ分離した。標準データを先に投入し、サンプル名称は`MasterMeisho.CreateDefaultData`から除外した。
+- 新規DBは過去Migrationを実行しないため、現行標準名称へKIJ、C30〜C32、SCA、SCGを追加した。既存DBではMigration側の投入責務を維持する。
+### 確認
+- `dotnet test --project Tests/TestServer/TestServer.csproj` 成功（911件、失敗0、スキップ0）。実表一覧、新規DBの標準・サンプル投入、再起動時の不変性、既存空表でのサンプル非投入を確認した。
+
+---
+
 ## [2026-09-12] 担当者Role・Scope・業務権限の基盤実装（10.0）
 ### 実施内容
 - [担当者Role・Scope・権限判定 詳細設計](spec/2026-09-12_担当者Role・Scope・権限判定_詳細設計.md)の10.0スコープ（テーブル定義・基盤のみ。判定処理は10.2以降）を実装した。チェックリストの未決事項`D-10`への回答にあたる。

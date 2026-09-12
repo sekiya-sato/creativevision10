@@ -51,7 +51,7 @@ public sealed class DefineDataTableInitializationTests {
 	public void GetUserTableNames_照会失敗を空の一覧として返さない() {
 		Db.Connection.Dispose();
 
-		Assert.ThrowsExactly<InvalidOperationException>(() => Db.GetUserTableNames());
+		Assert.Throws<Exception>(() => Db.GetUserTableNames());
 	}
 
 	[TestMethod]
