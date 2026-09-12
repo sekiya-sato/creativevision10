@@ -29,6 +29,7 @@ public sealed partial class SummaryUriKake : BaseDbClass {
 	/// 前期間までの累計残高。DB上には作らず帳票SQLが SUM(TotalSales - TotalIn) で埋める
 	/// </summary>
 	[ObservableProperty]
+	[Comment("前期間までの累計残高としてSUM(TotalSales - TotalIn)を計算")]
 	[ResultColumn]
 	public partial long PreviousBalance { get; set; } = 0;
 	/// <summary>
@@ -212,6 +213,7 @@ public sealed partial class SummaryUriSei : BaseDbClass {
 	/// 前期間までの累計残高。DB上には作らず帳票SQLが SUM(TotalSales - TotalIn) で埋める
 	/// </summary>
 	[ObservableProperty]
+	[Comment("前期間までの累計残高としてSUM(TotalSales - TotalIn)を計算")]
 	[ResultColumn]
 	public partial long PreviousBalance { get; set; } = 0;
 	/// <summary>
@@ -361,6 +363,7 @@ public sealed partial class SummaryKaiKake : BaseDbClass {
 	/// 前期間までの累計残高。DB上には作らず帳票SQLが SUM(TotalShiire - TotalOut) で埋める
 	/// </summary>
 	[ObservableProperty]
+	[Comment("前期間までの累計残高としてSUM(TotalSales - TotalIn)を計算")]
 	[ResultColumn]
 	public partial long PreviousBalance { get; set; } = 0;
 	/// <summary>
@@ -532,6 +535,7 @@ public sealed partial class SummaryKaiShi : BaseDbClass {
 	/// 前期間までの累計残高。DB上には作らず帳票SQLが SUM(TotalShiire - TotalOut) で埋める
 	/// </summary>
 	[ObservableProperty]
+	[Comment("前期間までの累計残高としてSUM(TotalSales - TotalIn)を計算")]
 	[ResultColumn]
 	public partial long PreviousBalance { get; set; } = 0;
 	/// <summary>
