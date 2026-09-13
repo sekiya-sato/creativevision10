@@ -4,7 +4,8 @@ SqlDialectBase はルールを1回走査で適用する変換器の共通実装�
 
 処理は次の順です。
 1. モードが Off なら何もせず引数を返す。
-2. 字句列を左から右へ1回走査し、各位置でルールを順に試す。
+2. 字句列を右から左へ1回走査し、各位置でルールを順に試す
+   （入れ子の内側を先に変換済みにするため。理由は TranslateCore 内のコメントを参照）。
 3. 1つも差し替えが起きなければ引数の参照をそのまま返す（無駄な文字列生成をしない）。
 4. 変換後にSQLite固有構文が残っていれば、Strictなら例外、Autoなら Findings として返す。
 
@@ -14,6 +15,7 @@ SqlDialectBase はルールを1回走査で適用する変換器の共通実装�
 # example
 sealed class MyDialect() : SqlDialectBase("Postgre", [new IfnullRule()]) { }
  */
+using CvBase.Share;
 using Microsoft.Extensions.Logging;
 
 namespace CvBase.Sql;
@@ -112,10 +114,11 @@ public abstract class SqlDialectBase : ISqlDialect {
 public static class SqlDialectOptions {
 
 	/// <summary>
-	/// 動作モード。既定は <see cref="SqlDialectMode.Auto"/>。
+	/// 動作モード。既定は <see cref="SqlDialectMode.Auto"/>（CvServer起動前・単体テスト用の初期値）。
 	/// <para>
-	/// 設定 <c>Database:SqlTranslation</c> で切り替える。<c>Off</c> は障害時の退避用で、
-	/// 全プロバイダーが恒等変換に落ちる。
+	/// CvServer は起動時に設定 <c>Database:SqlTranslation</c> を読み、明示されていれば
+	/// それを、未設定なら <see cref="ResolveMode"/> のプロバイダー既定を設定する。
+	/// <c>Off</c> は障害時の退避用で、全プロバイダーが恒等変換に落ちる。
 	/// </para>
 	/// </summary>
 	public static SqlDialectMode Mode { get; set; } = SqlDialectMode.Auto;
@@ -138,4 +141,21 @@ public static class SqlDialectOptions {
 			"STRICT" => SqlDialectMode.Strict,
 			_ => SqlDialectMode.Auto,
 		};
+
+	/// <summary>
+	/// 設定が明示されていない場合の既定モード（設計書 §4.4）。
+	/// SQLiteは現行運用を止めないため Auto、PostgreSQL / MariaDB は変換漏れに
+	/// 気付けるよう Strict とする。
+	/// </summary>
+	public static SqlDialectMode DefaultModeFor(EnumSqlDialect provider) =>
+		provider == EnumSqlDialect.Sqlite ? SqlDialectMode.Auto : SqlDialectMode.Strict;
+
+	/// <summary>
+	/// 設定値からモードを決める。<paramref name="configuredValue"/> が明示されていれば
+	/// それを優先し（<see cref="ParseMode"/>）、未設定（null・空白）なら
+	/// <paramref name="provider"/> に応じた既定（<see cref="DefaultModeFor"/>）を使う。
+	/// CvServer はこれを呼ぶだけにし、既定値の決定はここへ集約する。
+	/// </summary>
+	public static SqlDialectMode ResolveMode(EnumSqlDialect provider, string? configuredValue) =>
+		string.IsNullOrWhiteSpace(configuredValue) ? DefaultModeFor(provider) : ParseMode(configuredValue);
 }

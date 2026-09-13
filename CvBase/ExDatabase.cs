@@ -25,8 +25,12 @@ public partial class ExDatabase : Database {
 	/// <summary>
 	/// クライアント由来SQLの方言変換。既定は恒等変換で、プロバイダーが上書きする。
 	/// <para>
-	/// 変換を差すのは CvServer の HandlerClass のクライアントSQL受け口だけである。
-	/// このクラスおよび CvDomainLogic 内部のSQLは変換器を通さない。
+	/// 変換を差す経路は2つだけである。
+	/// 1つは CvServer の HandlerClass のクライアントSQL受け口
+	/// （HandleQueryOne / HandleQueryList / HandleQueryListSql）。
+	/// もう1つはこのクラスの <c>ExecuteDialect</c> / <c>FetchDialect</c> / <c>TranslateDialect</c> で、
+	/// CvDomainLogic のJSON配列再構築とUPSERTがここを通る。
+	/// これら以外のSQLは変換器を通さず、必要な箇所へDB別分岐を置く。
 	/// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` を参照する。
 	/// </para>
 	/// </summary>

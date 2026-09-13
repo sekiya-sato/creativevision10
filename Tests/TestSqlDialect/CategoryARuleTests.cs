@@ -137,6 +137,17 @@ public sealed class CategoryARuleTests {
 		Assert.AreEqual(sql, SqlDialects.Maria.Translate(sql));
 	}
 
+	[TestMethod]
+	public void A03_OFFSETは直前の字句で判定する() {
+		// 直前が数値・パラメータなら LIMIT ... OFFSET 句のキーワードなので引用しない
+		Assert.AreEqual("LIMIT 10 OFFSET 5", SqlDialects.Maria.Translate("LIMIT 10 OFFSET 5"));
+		Assert.AreEqual("LIMIT 10 OFFSET @p0", SqlDialects.Maria.Translate("LIMIT 10 OFFSET @p0"));
+		// 直前が select / . / ( などなら列名なので引用する
+		Assert.AreEqual("select `Offset` from T", SqlDialects.Maria.Translate("select Offset from T"));
+		Assert.AreEqual("T.`Offset`", SqlDialects.Maria.Translate("T.Offset"));
+		Assert.AreEqual("ifnull(`Offset`,0)", SqlDialects.Maria.Translate("ifnull(Offset,0)"));
+	}
+
 	// ---- A04 NULLS FIRST ----
 
 	[TestMethod]
@@ -181,6 +192,62 @@ public sealed class CategoryARuleTests {
 	public void A04_MariaDBには付けない() {
 		SqlDialectOptions.EnableNullsFirst = true;
 		const string sql = "select a from T order by Code";
+		Assert.AreEqual(sql, SqlDialects.Maria.Translate(sql));
+	}
+
+	// ---- A05 group_concat ----
+
+	[TestMethod]
+	public void A05_PostgreSQLは2引数形をstring_aggにする() {
+		Assert.AreEqual("select string_agg((X.Line)::text, ' / ') from T",
+			SqlDialects.Postgre.Translate("select group_concat(X.Line, ' / ') from T"));
+	}
+
+	[TestMethod]
+	public void A05_PostgreSQLは1引数形もstring_aggにする() {
+		Assert.AreEqual("select string_agg((X.Line)::text, ',') from T",
+			SqlDialects.Postgre.Translate("select group_concat(X.Line) from T"));
+	}
+
+	[TestMethod]
+	public void A05_MariaDBは2引数形をSEPARATOR形にする() {
+		Assert.AreEqual("select GROUP_CONCAT(X.Line SEPARATOR ' / ') from T",
+			SqlDialects.Maria.Translate("select group_concat(X.Line, ' / ') from T"));
+	}
+
+	[TestMethod]
+	public void A05_MariaDBは1引数形を書き換えない() {
+		const string sql = "select group_concat(X.Line) from T";
+		Assert.AreEqual(sql, SqlDialects.Maria.Translate(sql));
+	}
+
+	[TestMethod]
+	public void A05_MariaDBは1引数形を未対応構文として報告しない() {
+		Assert.AreEqual(0, SqlDialects.Maria.Inspect("select group_concat(X.Line) from T").Count);
+	}
+
+	[TestMethod]
+	public void A05_DISTINCT付きは変換しない() {
+		// PostgreSQL は string_agg(DISTINCT X::text, sep) のようにDISTINCTがキャストの外へ出るため
+		// 素直な写像にならない。壊れたSQLを作らず、未対応構文として報告する。
+		const string sql = "select group_concat(distinct X.Line, ' / ') from T";
+		Assert.AreEqual(sql, SqlDialects.Postgre.Translate(sql));
+		Assert.AreEqual(1, SqlDialects.Postgre.Inspect(sql).Count);
+		Assert.AreEqual(sql, SqlDialects.Maria.Translate(sql));
+	}
+
+	[TestMethod]
+	public void A05_集約内ORDERBY付きは変換しない() {
+		const string sql = "select group_concat(X.Line order by X.Line) from T";
+		Assert.AreEqual(sql, SqlDialects.Postgre.Translate(sql));
+		Assert.AreEqual(1, SqlDialects.Postgre.Inspect(sql).Count);
+		Assert.AreEqual(sql, SqlDialects.Maria.Translate(sql));
+	}
+
+	[TestMethod]
+	public void A05_括弧が続かない語は書き換えない() {
+		const string sql = "select group_concat from T";
+		Assert.AreEqual(sql, SqlDialects.Postgre.Translate(sql));
 		Assert.AreEqual(sql, SqlDialects.Maria.Translate(sql));
 	}
 

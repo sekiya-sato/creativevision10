@@ -6,9 +6,12 @@ CV10 は SQL の組み立てを CvWpfclient 側でも行うため、ソース上
 SQLite 以外へ接続するときだけ、この実装がSQLを書き換えます。
 SQLite では PassThroughSqlDialect が引数の参照をそのまま返し、変換処理は1行も走りません。
 
-変換を差すのは CvServer の HandlerClass のクライアントSQL受け口だけです
-（HandleQueryOne / HandleQueryList / HandleQueryListSql）。
-CvBase / CvDomainLogic 内部のSQLは変換器を通さず、必要な箇所へDB別分岐を置きます。
+変換を差す入口は次の2経路だけです。
+1. クライアント由来SQLの受け口: CvServer の HandlerClass 3点
+   （HandleQueryOne / HandleQueryList / HandleQueryListSql）。
+2. サーバ層のSQL: ExDatabase.ExecuteDialect / FetchDialect / TranslateDialect。
+   CvDomainLogic のJSON配列再構築やUPSERTなど、DB間で構文が異なる箇所がこれ経由で通す。
+それ以外（Execute / Fetch を直接呼ぶコードなど）は変換器を通さない。
 
 # example
 var sql = _db.Dialect.Translate(querySql.Sql ?? string.Empty);

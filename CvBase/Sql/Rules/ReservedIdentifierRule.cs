@@ -10,8 +10,11 @@ PostgreSQL は非引用識別子を小文字へ畳むため、引用する際も
 （`CvBasePostgre` がDDLを小文字で作るのと揃える）。MariaDB はバッククォートで
 大文字小文字をそのまま保ちます。
 
-`LIMIT n OFFSET m` の `OFFSET` を列名と誤認しないよう、直後が数値・パラメータの場合は
-句のキーワードとみなして引用しません。
+`LIMIT n OFFSET m` の `OFFSET` を列名と誤認しないよう、直前の実字句で判定します。
+直前が数値・パラメータ・閉じ括弧なら句のキーワードとみなして引用しません。
+直前が `select` `,` `.` `(` などであれば列名とみなして引用します
+（`LIMIT 10 OFFSET SomeColumn` のように OFFSET の後ろに列名が続く形もあるため、
+後方ではなく前方で判定します）。
 
 # example
 PostgreSQL: ifnull(s.Offset, 0)  ->  ifnull(s."offset", 0)
@@ -55,16 +58,21 @@ public sealed class ReservedIdentifierRule : ISqlRewriteRule {
 		if (token.Kind != SqlTokenKind.Word || !_targets.Contains(token.Text))
 			return false;
 
-		// LIMIT n OFFSET m の句キーワードは列名ではない
-		var next = context.NextCode(index);
-		if (next >= 0) {
-			var following = context.Tokens[next];
-			if (following.Kind is SqlTokenKind.Number or SqlTokenKind.Parameter)
-				return false;
-		}
 		// 関数呼び出しの形なら列名ではない
+		var next = context.NextCode(index);
 		if (next >= 0 && context.Tokens[next].IsOperator("("))
 			return false;
+
+		// LIMIT n OFFSET m の句キーワードは列名ではない。
+		// OFFSET の直後には列名・式も続き得るため、直前の実字句で判定する。
+		if (token.IsWord("offset")) {
+			var prev = context.PrevCode(index);
+			if (prev >= 0) {
+				var preceding = context.Tokens[prev];
+				if (preceding.Kind is SqlTokenKind.Number or SqlTokenKind.Parameter || preceding.IsOperator(")"))
+					return false;
+			}
+		}
 
 		context.Replace(index, _quote(token.Text));
 		return true;

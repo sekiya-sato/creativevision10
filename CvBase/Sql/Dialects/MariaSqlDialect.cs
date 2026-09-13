@@ -34,6 +34,7 @@ public sealed class MariaSqlDialect : SqlDialectBase {
 	/// 変換ルール。Phase 3 以降で B01〜B08 を追加する。
 	/// </summary>
 	static IEnumerable<ISqlRewriteRule> BuildRules() => [
+		GroupConcatRule.ForMaria(),
 		JsonExtractRule.ForMaria(),
 		JsonEachRule.ForMaria(),
 		new JsonEachKeyRule(),
@@ -55,10 +56,18 @@ public sealed class MariaSqlDialect : SqlDialectBase {
 	/// <c>json_group_array</c> は MariaDB では <c>JSON_ARRAYAGG</c> で名前が違い、
 	/// さらに順序保証が異なるためここには含めない（サーバ層で個別に対応する）。
 	/// </para>
+	/// <para>
+	/// <c>A05-GroupConcat</c> は1引数形（既定セパレータ <c>,</c> が同じ）と、
+	/// 2引数形を <see cref="Rules.GroupConcatRule"/> が <c>SEPARATOR</c> 形へ差し替えた結果の
+	/// 両方がここに当たる（差し替え後も関数名は同じなので目録の語句一致で再び拾われる）。
+	/// その代わり DISTINCT 付きなど変換できない形も MariaDB では報告されない。
+	/// これは PostgreSQL 側が同じ構文を報告するため、開発時の自己検査では気付ける。
+	/// </para>
 	/// </summary>
 	protected override IReadOnlySet<string> NativeConstructIds { get; } =
 		new HashSet<string>([
 			"A01-Ifnull",
+			"A05-GroupConcat",
 			"B03-JsonValid",
 			"B04-JsonObject",
 			"B04-JsonSet",

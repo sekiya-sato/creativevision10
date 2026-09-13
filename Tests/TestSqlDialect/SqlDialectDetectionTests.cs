@@ -129,6 +129,28 @@ public sealed class SqlDialectDetectionTests {
 	}
 
 	[TestMethod]
+	public void 既定モードはプロバイダーごとに決まる() {
+		Assert.AreEqual(SqlDialectMode.Auto, SqlDialectOptions.DefaultModeFor(EnumSqlDialect.Sqlite));
+		Assert.AreEqual(SqlDialectMode.Strict, SqlDialectOptions.DefaultModeFor(EnumSqlDialect.Postgre));
+		Assert.AreEqual(SqlDialectMode.Strict, SqlDialectOptions.DefaultModeFor(EnumSqlDialect.MariaDb));
+	}
+
+	[TestMethod]
+	public void 設定が明示されていれば既定より優先する() {
+		Assert.AreEqual(SqlDialectMode.Off, SqlDialectOptions.ResolveMode(EnumSqlDialect.Sqlite, "Off"));
+		Assert.AreEqual(SqlDialectMode.Auto, SqlDialectOptions.ResolveMode(EnumSqlDialect.Postgre, "Auto"));
+		Assert.AreEqual(SqlDialectMode.Strict, SqlDialectOptions.ResolveMode(EnumSqlDialect.Sqlite, "Strict"));
+	}
+
+	[TestMethod]
+	public void 設定が未設定ならプロバイダー既定を使う() {
+		Assert.AreEqual(SqlDialectMode.Auto, SqlDialectOptions.ResolveMode(EnumSqlDialect.Sqlite, null));
+		Assert.AreEqual(SqlDialectMode.Auto, SqlDialectOptions.ResolveMode(EnumSqlDialect.Sqlite, "  "));
+		Assert.AreEqual(SqlDialectMode.Strict, SqlDialectOptions.ResolveMode(EnumSqlDialect.Postgre, null));
+		Assert.AreEqual(SqlDialectMode.Strict, SqlDialectOptions.ResolveMode(EnumSqlDialect.MariaDb, ""));
+	}
+
+	[TestMethod]
 	public void モード文字列を解釈できる() {
 		Assert.AreEqual(SqlDialectMode.Off, SqlDialectOptions.ParseMode("Off"));
 		Assert.AreEqual(SqlDialectMode.Strict, SqlDialectOptions.ParseMode(" strict "));

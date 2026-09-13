@@ -54,6 +54,9 @@ public static class SqliteConstructCatalog {
 	public static IReadOnlyList<SqliteConstruct> All { get; } = [
 		new("A01-Ifnull", "ifnull", SqliteConstructCategory.FunctionMapping,
 			"PGは COALESCE。MariaDBは同名で可"),
+		new("A05-GroupConcat", "group_concat", SqliteConstructCategory.FunctionMapping,
+			"1引数はMariaDBが既定セパレータ','で同じなので無変換。PGは同名関数が無く string_agg へ。" +
+			"2引数はPGが string_agg(expr::text, sep)、MariaDBが GROUP_CONCAT(expr SEPARATOR sep)"),
 		new("B01-JsonExtract", "json_extract", SqliteConstructCategory.Json,
 			"パスは全て単一階層 $.Prop。PGは ->>、MariaDBは JSON_VALUE"),
 		new("B02-JsonEach", "json_each", SqliteConstructCategory.Json,

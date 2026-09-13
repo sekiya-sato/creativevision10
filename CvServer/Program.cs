@@ -94,10 +94,10 @@ https://github.com/thomasgalliker/NCrontab.Scheduler/blob/develop/Samples/NCront
 builder.Services.AddControllers();
  */
 var databaseProvider = builder.Configuration["Database:Provider"]?.Trim() ?? nameof(EnumSqlDialect.Sqlite);
-var (connectionStringName, isSqlite) = databaseProvider.ToUpperInvariant() switch {
-	"SQLITE" => ("sqlite", true),
-	"POSTGRES" => ("postgres", false),
-	"MARIADB" => ("mariadb", false),
+var (connectionStringName, isSqlite, sqlDialectProvider) = databaseProvider.ToUpperInvariant() switch {
+	"SQLITE" => ("sqlite", true, EnumSqlDialect.Sqlite),
+	"POSTGRES" => ("postgres", false, EnumSqlDialect.Postgre),
+	"MARIADB" => ("mariadb", false, EnumSqlDialect.MariaDb),
 	_ => throw new InvalidOperationException(
 		$"Database:Provider '{databaseProvider}' is invalid. Use Sqlite, Postgre, or MariaDb.")
 };
@@ -113,9 +113,12 @@ builder.Services.AddScoped<ExDatabase>(sp => {
 });
 // SQL方言変換の動作モード。Auto=変換して未対応構文は警告 / Strict=未対応構文で例外 / Off=変換しない
 // Off は障害時の退避用で、全プロバイダーが恒等変換に落ちる。
-// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` を参照する。
+// 設定 Database:SqlTranslation が明示されていればそれを優先し、未設定なら
+// プロバイダー既定（Sqlite=Auto、PostgreSQL/MariaDB=Strict）を使う。既定値の決定ロジックは
+// SqlDialectOptions.ResolveMode 側に置く（テストしやすくするため）。
+// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` §4.4 を参照する。
 CvBase.Sql.SqlDialectOptions.Mode =
-	CvBase.Sql.SqlDialectOptions.ParseMode(builder.Configuration["Database:SqlTranslation"]);
+	CvBase.Sql.SqlDialectOptions.ResolveMode(sqlDialectProvider, builder.Configuration["Database:SqlTranslation"]);
 // ルール A04(PostgreSQL の ORDER BY へ NULLS FIRST を付ける) は既定で無効。
 // ORDER BY 句へ手を入れる唯一のルールなので、3DB差分テストで必要性を確認してから有効化する。
 CvBase.Sql.SqlDialectOptions.EnableNullsFirst =
