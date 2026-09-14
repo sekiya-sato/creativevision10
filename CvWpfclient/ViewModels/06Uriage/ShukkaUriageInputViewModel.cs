@@ -20,7 +20,12 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	[NotifyCanExecuteChangedFor(nameof(DoUpdateOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoDeleteOnDetailTabCommand))]
 	[NotifyCanExecuteChangedFor(nameof(DoInsertOnDetailTabCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoPrintListCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoPrintDetailCommand))]
 	public partial int SelectedTabIndex { get; set; }
+
+	/// <summary>帳票ファイル名の接頭辞。`{接頭辞}_header.qfm` / `{接頭辞}_detail.qfm` を使う</summary>
+	protected virtual string FormFilePrefix => "ShukkaUriageInput";
 
 	public override string DetailStatusText => CurrentEdit.Id > 0
 		? $"売上 No. {CurrentEdit.Id:N0}"
@@ -289,6 +294,164 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected), IncludeCancelCommand = true)]
 	async Task DoInsertOnDetailTab(CancellationToken ct) {
 		await DoInsert(ct);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
+	async Task DoPrintList(CancellationToken ct) {
+		var query = CreateListQueryParam();
+		await RunPrintPdfAsync($"{FormFilePrefix}_header.qfm", null, new QueryListSqlParam(typeof(Tran00Uriage), BuildListPrintSql(query), query.Parameters), ct);
+	}
+
+	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
+	async Task DoPrintDetail(CancellationToken ct) {
+		var query = CreateListQueryParam();
+		await RunPrintPdfAsync($"{FormFilePrefix}_detail.qfm", null, new QueryListSqlParam(typeof(Tran00Uriage), BuildDetailPrintSql(query), query.Parameters), ct);
+	}
+
+	// 帳票CSVは旧cvnet(SubDIgInp00.crs)のSELECT列順を踏襲する。
+	// 旧cvnetにのみ存在する項目は空欄とし、全列に一意な itemN 別名を付ける。
+	// 伝票処理区分は旧cvnetの v_denkbn 既定値(0)を固定出力する(出荷売上は常に0)。
+	const int DenpyoShoriKubun = 0;
+
+	static string KubunNameSql(string prefix) =>
+		$"case {prefix}Kubun when 10 then '売上' when 11 then 'セール売上' when 20 then '返品' when 21 then 'セール返品' when 30 then '値引' when 99 then 'その他' else cast({prefix}Kubun as text) end";
+
+	static string KubunLabelSql(string prefix) => $"(cast({prefix}Kubun as text) || ' ' || {KubunNameSql(prefix)})";
+	static string VCd(string column) => $"ifnull(json_extract({column},'$.Cd'),'')";
+	static string VMei(string column) => $"ifnull(json_extract({column},'$.Mei'),'')";
+	// PrintStream は全角1文字だけの値を描画しないため（色名「黒」など）、1文字の名称に半角空白を足して回避する。
+	static string Pad1(string expr) => $"case when length({expr})=1 then {expr}||' ' else {expr} end";
+
+	static string BuildListPrintSql(QueryListParam query) {
+		return $@"
+select
+Id as item1,
+'' as item2,
+'' as item3,
+'出荷売上伝票一覧' as item4,
+ifnull(ManualNo,'') as item5,
+DenDay as item6,
+KakeDay as item7,
+Kubun as item8,
+{VCd("VShain")} as item9,
+{VCd("VSoko")} as item10,
+{VCd("VTokui")} as item11,
+Rate as item12,
+'' as item13,
+SuTotal as item14,
+KingakuTotal as item15,
+'' as item16,
+(Tax1+Tax2+Tax3) as item17,
+JodaiTotal as item18,
+GedaiTotal as item19,
+{Pad1("ifnull(Memo,'')")} as item20,
+'' as item21,
+{DenpyoShoriKubun} as item22,
+'' as item23,
+RelateNo1 as item24,
+RelateNo2 as item25,
+'' as item26,
+'' as item27,
+'' as item28,
+{Pad1(VMei("VShain"))} as item29,
+{Pad1(VMei("VTokui"))} as item30,
+{Pad1(VMei("VSoko"))} as item31,
+'' as item32,
+'' as item33,
+TaxCalcUnit as item34,
+TaxRounding as item35,
+'' as item36,
+'' as item37,
+'' as item38,
+'' as item39,
+'' as item40,
+'' as item41,
+{KubunLabelSql("")} as item42,
+'' as item43,
+'' as item44
+from Tran00Uriage {query.AddWhereOrder()}
+";
+	}
+
+	static string BuildDetailPrintSql(QueryListParam query) {
+		var denpyoSub = $"select * from Tran00Uriage {query.AddWhereOrder()}";
+		const string M = "json_extract(m.value,";
+		return $@"
+select
+h.Id as item1,
+'' as item2,
+'' as item3,
+'出荷売上伝票明細' as item4,
+ifnull(h.ManualNo,'') as item5,
+h.DenDay as item6,
+h.KakeDay as item7,
+h.Kubun as item8,
+{VCd("h.VShain")} as item9,
+{VCd("h.VSoko")} as item10,
+{VCd("h.VTokui")} as item11,
+h.Rate as item12,
+'' as item13,
+h.SuTotal as item14,
+h.KingakuTotal as item15,
+'' as item16,
+(h.Tax1+h.Tax2+h.Tax3) as item17,
+h.JodaiTotal as item18,
+h.GedaiTotal as item19,
+{Pad1("ifnull(h.Memo,'')")} as item20,
+'' as item21,
+{DenpyoShoriKubun} as item22,
+'' as item23,
+h.RelateNo1 as item24,
+h.RelateNo2 as item25,
+'' as item26,
+'' as item27,
+'' as item28,
+{Pad1(VMei("h.VShain"))} as item29,
+{Pad1(VMei("h.VTokui"))} as item30,
+{Pad1(VMei("h.VSoko"))} as item31,
+'' as item32,
+'' as item33,
+h.TaxCalcUnit as item34,
+h.TaxRounding as item35,
+'' as item36,
+'' as item37,
+'' as item38,
+'' as item39,
+'' as item40,
+'' as item41,
+cast(ifnull({M}'$.Kubun'),0) as int) as item42,
+ifnull({M}'$.Code_Shohin'),'') as item43,
+ifnull({M}'$.Code_Col'),'') as item44,
+ifnull({M}'$.Code_Siz'),'') as item45,
+{Pad1($"ifnull({M}'$.Mei_Shohin'),'')")} as item46,
+ifnull({M}'$.Su'),0) as item47,
+ifnull({M}'$.Tanka'),0) as item48,
+ifnull({M}'$.Kingaku'),0) as item49,
+'' as item50,
+ifnull({M}'$.Tax'),0) as item51,
+ifnull({M}'$.Jodai'),0) as item52,
+(cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int)) as item53,
+ifnull({M}'$.Gedai'),0) as item54,
+(cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int)) as item55,
+{Pad1($"ifnull({M}'$.Memo'),'')")} as item56,
+'' as item57,
+'' as item58,
+'' as item59,
+ifnull({M}'$.JanCode'),'') as item60,
+'' as item61,
+'' as item62,
+'' as item63,
+{Pad1($"ifnull({M}'$.Mei_Col'),'')")} as item64,
+{Pad1($"ifnull({M}'$.Mei_Siz'),'')")} as item65,
+ifnull({M}'$.Jodai'),0) as item66,
+{KubunLabelSql("h.")} as item67,
+cast(ifnull({M}'$.No'),0) as int) as item68,
+'' as item69,
+'' as item70
+from ({denpyoSub}) h
+cross join json_each(h.Jmeisai) m
+order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
+";
 	}
 
 	// 基底フック: 出荷売上の新規行はヘッダ区分で作る。

@@ -1,4 +1,19 @@
-﻿## [2026-09-14] 生地・付属仕入入力画面 印刷帳票の旧cvnetフォーマット差し替え
+﻿## [2026-09-14] 出荷・売上入力画面 印刷帳票の新設（旧cvnetフォーマット準拠）
+### 実施内容
+- 他の伝票入力画面と異なり `ShukkaUriageInputView` には印刷ボタン自体が無かったため、View（一覧タブのツールバーに「一覧印刷」「明細印刷」ボタン）・ViewModel（`FormFilePrefix`、`DoPrintList`/`DoPrintDetail`、`BuildListPrintSql`/`BuildDetailPrintSql`）を新設した。既存の `ShiireInputView` と同じ構成（一覧タブ選択時のみ活性）に合わせた。
+- `printform/ShukkaUriageInput_header.qfm` / `_detail.qfm` を旧cvnetの `cvnet00prn_header.qfm` / `cvnet00prn_detail.qfm`（cp932・LF、`.gitattributes` の `*.qfm text eol=lf` に合わせ改行はLFへ変換）で差し替え、`HEAD*` 見出しを `calctype="static"` の固定文字列へ変換した（伝票No/売上日/伝票区分/取引区分/掛率/SYSFLG/送信FLG/数量計/金額計/上代合計/下代合計/店舗/倉庫/入力者/消費税計/手入力No/関連No1/関連No2/メモ、明細は行No/商品CD/商品名/色/サイズ/数量/単価/上代単価/下代単価/関連伝票No/消費税/金額/上代金額/下代金額を追加）。帳票タイトルは `item4` 束縛（`ShiireInput` と同じ方式）。
+- 供給された旧qfmは実運用版より古く、`d_sql.txt`（一覧44列/明細70列、現行 `SubDIgInp00.crs` の非コメントSQLと一致＝正典）に対して `itemN` のズレが多数あった。`tools/qfmprint` を数値プレースホルダ（`itemN`→"N"文字列）でプローブ描画し、スロット位置と `datasrc` を全数実測した上で `<text id="TxtNN">` スコープで修正した（一覧: item39→42・item37→40・item38→41・item26→29・item27→30・item28→31／明細: 上記6件相当に加え明細行テーブル16件、詳細は差分参照）。
+- `BuildListPrintSql`(44列)/`BuildDetailPrintSql`(70列)を `d_sql.txt` の列順に合わせて新規実装した。V*列は `json_extract` でコード・名称を別列化、取引区分名は `KubunLabelSql`（画面の `KubunOptions` 表記に合わせた `"CD 名称"`）で算出。CV10に対応列が無い旧項目（外税/内税消費税の内訳、掛率2、MOD_SEQ、消費税率、納品先CD/名、担当者CD/名、セール掛率、消費税CD、下代桁切指定・端数区分・計算FLG、最終締日、SYSFLG、送信FLG、明細の商品シリアル・関連伝票NO・原価FLG・関連商品CD・HHT_SEQ_NO等）は空欄で出す。名称列は1文字値がPrintStreamで描画されない問題に対し `Pad1` で回避した。
+- 伝票区分（旧`伝票処理区分`）は旧 `.crs` の既定値(`Form1.v_denkbn=0`)を定数 `DenpyoShoriKubun=0` として固定出力した。
+
+### 検証
+- `tools/qfmprint` で旧qfmのプローブ描画（数値プレースホルダ版）により全 `HEADn`/`itemN` とスロット位置の対応を実測し、`d_sql.txt` の列名・実データ`data.pdf`（一覧・明細とも）と突合して列順のズレを洗い出した。
+- 修正後のqfmを、静的キャプション適用後の新item番号に対応した実データ形状のプローブで再描画し、`data.pdf` の実レコード（伝票No 9176129等）とレイアウト・見出しが一致することを確認した。
+- cv-sqlite で新SQL(44列/70列)を実データ(`Tran00Uriage.Id=50313`、明細2行)に対して実行し、列数44/70・列名の一意性・値を確認した。結果を実データ形状のCSVへ変換のうえ `tools/qfmprint` で最終qfmを描画し、`wk_spool_headerdetail/data.pdf` の対応レコード（旧SEQ_NO=9178289相当、CV10側Id=50313）と値が一致することを確認した。
+- `git diff --check` 済み。`dotnet build CvWpfclient/CvWpfclient.csproj` 0警告0エラー。
+- 画面(F6→gRPC→サーバ)経由の実出力は未実施（残余リスクとして残す）。明細の「関連伝票No」「摘要」相当（CV10 `Tran99Meisai` に対応フィールドが無い）は空欄仕様とした。
+
+## [2026-09-14] 生地・付属仕入入力画面 印刷帳票の旧cvnetフォーマット差し替え
 ### 実施内容
 - `printform/MaterialInput_header.qfm` / `MaterialInput_detail.qfm` を旧cvnetの `cvnet02prn_header.qfm` / `cvnet02prn_detail.qfm`（cp932・LF、`.gitattributes` の `*.qfm text eol=lf` に合わせ改行はLFへ変換）で差し替え、`HEAD*` 見出しを `calctype="static"` の固定文字列へ変換した（伝票No/仕入日/取引区分/送信FLG/仕入先/倉庫/手入力No/関連No1/掛計上日/掛率/最終締日/SYSFLG/数量計/金額計/消費税計/入力者/関連No2/メモ）。
 - 明細qfmの `Rec03`/`Rec04`（明細行テーブル）は旧qfmでは来勘・サイズCD・消費税計算方法・下代金額等（`d_sql.txt` の実列と対応しない古いバージョンの束縛）だったため流用せず、目標spool `wk_spool_headerdetail/data.pdf` の実際の列構成（行No/商品CD/商品名/関連商品CD/摘要/単価/数量/金額/消費税）で新規に組んだ（ユーザー確認済み）。関連商品CDは `Tran99MaterialMeisai.Code_Shohin`（諸掛費用負担商品）を充当した（ユーザー確認済み）。
