@@ -1,4 +1,26 @@
-﻿## [2026-09-12] DB初期化・標準データ・サンプルデータの分離（Step 3）
+﻿## [2026-09-14] 発注入力画面 印刷帳票の旧cvnetフォーマット差し替え
+### 実施内容
+- `printform/HachuInput_header.qfm` / `HachuInput_detail.qfm` を旧cvnetの `cvnet13prn_header.qfm` / `cvnet13prn_detail.qfm` （cp932・CRLF）で差し替えたうえで、CV10向けに次の調整を入れた。
+  - 列見出しは旧cvnetが `data.txt` 先頭の `H` レコード（`HEAD1..91`）で流し込んでいたが、CV10 の `PrintPdfService` → `WriteDynamicCsv` はヘッダ行を出力しないため見出しが全て空欄になる。`HEAD*` 束縛の見出し（header 22件 / detail 39件）を `calctype="static"` の固定文字列へ変換した。帳票タイトルは CSV 4列目（`item4`）束縛に変更した。
+  - 供給された旧qfmは旧CRSの `#29919 関連伝票NO2 取得位置移動` にSQL列が追随しておらず、`datasrc` が1〜2列ずれていた。旧 `data.pdf` とローカル実描画の突合で特定し、header 4箇所（仕入先名・入庫先名・入力者名・関連No2）、detail 11箇所（取引区分名・仕入先名・入庫先名・入力者名・関連No2・行No・色名・サイズ名・完了FLG名・メーカー品番・仕入区分）を修正した。
+- `HachuInputViewModel` の `BuildListPrintSql`（39列）/ `BuildDetailPrintSql`（68列）を旧cvnetのSELECT列順へ全面的に書き換えた。`PrintPdfService` が結果列名を `Dictionary` キーにするため、全SELECT列へ列順どおりの `as itemN` を付けている。
+- 旧cvnetにありCV10に無い項目（手入力伝票NO・関連No2・SYSFLG・送信FLG・連携・掛計上FLG・MOD_SEQ・消費税CD・消費税計算方法・内税消費税・原価FLG・商品シリアル）は空欄で出力する。掛計上日は qfm 側スクリプトが `19010101` のとき列を非表示にするため、同値を固定出力している。
+### 仕様上の対応付け
+- 入庫先（旧 取引先CD2／得意先名）は CV10 の倉庫 `VSoko` のコード・名称を割り当てた。旧データでも取引先CD2と倉庫CDは同値だった。
+- 消費税計は `Tax1+Tax2+Tax3`。CV10 は税率別に分割済みのため合算する。
+- 明細の完了FLG・完了名は CV10 が伝票単位でしか持たないため `Tran13Hachu.EndFlag` を明細行へ繰り返す。
+- メーカー品番・仕入区分は `MasterShohin` を明細の `Id_Shohin` で left join して取得する。仕入区分は CV10 の `PurchaseType`（0=通常仕入 / 3=消化仕入）で、旧の 1買取/2委託/3消化 とはコード体系が異なる。
+### 確認
+- `dotnet build CvWpfclient/CvWpfclient.csproj` 成功（0 警告 / 0 エラー）。
+- `.agents/skills/author-printstream-qfm/tools/qfmprint` で両qfmを実PDF描画し、見出し・列対応・負値・日付書式・改ページを旧 `data.pdf` と突合した。
+- cv-sqlite MCP で両帳票SQLを実データへ実行し、列数（39 / 68）・列名の一意性・値を確認した。
+### 残余リスク・未実施
+- 画面（F6→gRPC→サーバ）からの実PDF出力は未実施。サーバ経由のCSV生成と本番フォント環境での描画は未確認。
+- qfm の末尾タブによる `git diff --check` の trailing whitespace 警告は、差し替え元の旧qfmに元から存在するものでそのまま残している。
+
+---
+
+## [2026-09-12] DB初期化・標準データ・サンプルデータの分離（Step 3）
 ### 実施内容
 - DDL前に実表一覧を取得し、実表0件のときだけ新規DBフラグを保持するようにした。`Sys*`表を含み、SQLite内部表・ビューは除外する。SQLite/MariaDB/PostgreSQLで実装し、名前指定時の`GetTableCounts`が`Sys*`表を除外する不整合も修正した。
 - `DefineDataTable`の初期データを管理者・ログイン・会社設定と、新規DB限定のサンプルデータへ分離した。標準データを先に投入し、サンプル名称は`MasterMeisho.CreateDefaultData`から除外した。

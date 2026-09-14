@@ -304,33 +304,77 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 		await RunPrintPdfAsync("HachuInput_detail.qfm", null, new QueryListSqlParam(typeof(Tran13Hachu), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
-	const string KubunLabel = "case Kubun when 10 then '発注' when 11 then '追加発注' when 15 then '自動発注' when 20 then '返品' when 30 then '値引' when 99 then 'その他' else cast(Kubun as text) end";
+	// 帳票CSVは旧cvnet(SubDIgInp13.crs)のSELECT列順をそのまま踏襲する。
+	// 列順は printform/HachuInput_header.qfm(39列) / HachuInput_detail.qfm(68列) の item1..itemN と 1:1 で対応する。
+	// PrintPdfService は SQL の結果列名をそのまま Dictionary のキーにするため、同名列があるとCSV化で壊れる。
+	// そのため全SELECT列に `as itemN` を付け、列順・一意性を固定している。
+	// 旧cvnetにあってCV10に存在しない項目（手入力伝票NO・関連No2・SYSFLG・送信FLG・連携など）は空欄で出す。
 
-	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
-	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
+	/// <summary>伝票処理区分。旧cvnet では発注は 13 固定。</summary>
+	const int DenpyoShoriKubun = 13;
 
-	static string DetailCodeNameSql(string value, string code, string name) => Helpers.CodeNameDisplay.Sql(value, code, name);
+	/// <summary>掛計上日の未設定値。qfm 側スクリプトはこの値のとき掛計上日列を非表示にする。</summary>
+	const string KakeDayNone = "19010101";
 
-	static string MeisaiKubunLabelSql(string jsonExtractPrefix) =>
-		$"case cast(ifnull({jsonExtractPrefix}'$.Kubun'),0) as int) when 1 then 'S セール' else 'P プロパー' end";
+	/// <summary>区分名（発注/返品 など）。<paramref name="p"/> はテーブル別名（"" または "h."）。</summary>
+	static string KubunNameSql(string p) =>
+		$"case {p}Kubun when 10 then '発注' when 11 then '追加発注' when 15 then '自動発注' when 20 then '返品' when 30 then '値引' when 99 then 'その他' else cast({p}Kubun as text) end";
+
+	/// <summary>旧帳票の「取引区分名」= 「区分コード 区分名」形式。</summary>
+	static string KubunLabelSql(string p) => $"(cast({p}Kubun as text) || ' ' || {KubunNameSql(p)})";
+
+	/// <summary>V*列(CodeNameView JSON)のコード。</summary>
+	static string VCd(string column) => $"ifnull(json_extract({column},'$.Cd'),'')";
+
+	/// <summary>V*列(CodeNameView JSON)の名称。</summary>
+	static string VMei(string column) => $"ifnull(json_extract({column},'$.Mei'),'')";
+
+	/// <summary>仕入区分（MasterShohin.PurchaseType）を「コード 名称」で出す。</summary>
+	const string ShiireKubunLabelSql =
+		"case s.PurchaseType when 0 then '0 通常仕入' when 3 then '3 消化仕入' else ifnull(cast(s.PurchaseType as text),'') end";
 
 	static string BuildListPrintSql(QueryListParam query) {
 		return $@"
-select Id,
-DenDay,
-{KubunLabel} KubunText,
-{CodeNameViewSql("VShiire")} Shiire,
-{CodeNameViewSql("VSoko")} Soko,
-{CodeNameViewSql("VShain")} Shain,
-RelateNo1,
-Rate,
-SuTotal,
-KingakuTotal,
-(Tax1+Tax2+Tax3) Tax,
-Total,
-JodaiTotal,
-GedaiTotal,
-ifnull(Memo,'') Memo
+select
+Id as item1,
+'' as item2,
+'' as item3,
+'発注伝票一覧' as item4,
+'' as item5,
+DenDay as item6,
+ifnull(NouhinDay,'') as item7,
+Kubun as item8,
+{VCd("VShain")} as item9,
+{VCd("VSoko")} as item10,
+{VCd("VShiire")} as item11,
+Rate as item12,
+'' as item13,
+SuTotal as item14,
+KingakuTotal as item15,
+'' as item16,
+(Tax1+Tax2+Tax3) as item17,
+JodaiTotal as item18,
+GedaiTotal as item19,
+ifnull(Memo,'') as item20,
+'' as item21,
+{DenpyoShoriKubun} as item22,
+'' as item23,
+{VCd("VSoko")} as item24,
+RelateNo1 as item25,
+'{KakeDayNone}' as item26,
+'' as item27,
+'' as item28,
+{VMei("VShain")} as item29,
+{VMei("VShiire")} as item30,
+{VMei("VSoko")} as item31,
+'' as item32,
+'' as item33,
+TaxRounding as item34,
+'' as item35,
+'' as item36,
+{KubunLabelSql("")} as item37,
+'発注' as item38,
+'' as item39
 from Tran13Hachu {query.AddWhereOrder()}
 ";
 	}
@@ -339,33 +383,78 @@ from Tran13Hachu {query.AddWhereOrder()}
 		var denpyoSub = $"select * from Tran13Hachu {query.AddWhereOrder()}";
 		const string M = "json_extract(m.value,";
 		return $@"
-select h.Id,
-h.DenDay,
-{KubunLabel} KubunText,
-{CodeNameViewSql("h.VShiire")} Shiire,
-{CodeNameViewSql("h.VSoko")} Soko,
-{CodeNameViewSql("h.VShain")} Shain,
-h.RelateNo1,
-h.Rate,
-h.SuTotal,
-h.KingakuTotal,
-(h.Tax1+h.Tax2+h.Tax3) Tax,
-h.Total,
-{M}'$.No') No,
-{MeisaiKubunLabelSql(M)} MeisaiKubunText,
-{DetailCodeNameSql($"{M}'$.Id_Shohin')", $"{M}'$.Code_Shohin')", $"{M}'$.Mei_Shohin')")} Shohin,
-{DetailCodeNameSql($"{M}'$.Id_Col')", $"{M}'$.Code_Col')", $"{M}'$.Mei_Col')")} Col,
-{DetailCodeNameSql($"{M}'$.Id_Siz')", $"{M}'$.Code_Siz')", $"{M}'$.Mei_Siz')")} Siz,
-ifnull({M}'$.Su'),0) Su,
-ifnull({M}'$.Tanka'),0) Tanka,
-ifnull({M}'$.Kingaku'),0) Kingaku,
-ifnull({M}'$.Jodai'),0) Jodai,
-cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int) JodaiKingaku,
-ifnull({M}'$.Gedai'),0) Gedai,
-cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int) GedaiKingaku,
-{DetailCodeNameSql($"{M}'$.Id_Shain')", $"{M}'$.Code_Shain')", $"{M}'$.Mei_Shain')")} MeisaiShain,
-ifnull({M}'$.Memo'),'') Memo
-from ({denpyoSub}) h, json_each(h.Jmeisai) m
+select
+h.Id as item1,
+'' as item2,
+'' as item3,
+'発注伝票明細' as item4,
+'' as item5,
+h.DenDay as item6,
+ifnull(h.NouhinDay,'') as item7,
+h.Kubun as item8,
+{VCd("h.VShain")} as item9,
+{VCd("h.VSoko")} as item10,
+{VCd("h.VShiire")} as item11,
+h.Rate as item12,
+'' as item13,
+h.SuTotal as item14,
+h.KingakuTotal as item15,
+'' as item16,
+(h.Tax1+h.Tax2+h.Tax3) as item17,
+h.JodaiTotal as item18,
+h.GedaiTotal as item19,
+ifnull(h.Memo,'') as item20,
+'' as item21,
+{DenpyoShoriKubun} as item22,
+'' as item23,
+{VCd("h.VSoko")} as item24,
+h.RelateNo1 as item25,
+'{KakeDayNone}' as item26,
+'' as item27,
+'' as item28,
+{VMei("h.VShain")} as item29,
+{VMei("h.VShiire")} as item30,
+{VMei("h.VSoko")} as item31,
+'' as item32,
+'' as item33,
+h.TaxRounding as item34,
+'' as item35,
+'' as item36,
+ifnull({M}'$.Kubun'),0) as item37,
+ifnull({M}'$.Code_Shohin'),'') as item38,
+ifnull({M}'$.Code_Col'),'') as item39,
+ifnull({M}'$.Code_Siz'),'') as item40,
+ifnull({M}'$.Mei_Shohin'),'') as item41,
+ifnull({M}'$.Su'),0) as item42,
+ifnull({M}'$.Tanka'),0) as item43,
+ifnull({M}'$.Kingaku'),0) as item44,
+'' as item45,
+ifnull({M}'$.Tax'),0) as item46,
+ifnull({M}'$.Jodai'),0) as item47,
+(cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int)) as item48,
+ifnull({M}'$.Gedai'),0) as item49,
+(cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int)) as item50,
+ifnull({M}'$.Memo'),'') as item51,
+'' as item52,
+'' as item53,
+'' as item54,
+'' as item55,
+ifnull({M}'$.JanCode'),'') as item56,
+'' as item57,
+h.EndFlag as item58,
+'' as item59,
+ifnull({M}'$.Mei_Col'),'') as item60,
+ifnull({M}'$.Mei_Siz'),'') as item61,
+{KubunLabelSql("h.")} as item62,
+cast(ifnull({M}'$.No'),0) as int) as item63,
+case h.EndFlag when 1 then '完了' else '未完' end as item64,
+ifnull(s.MakerHin,'') as item65,
+{ShiireKubunLabelSql} as item66,
+'発注' as item67,
+'' as item68
+from ({denpyoSub}) h
+cross join json_each(h.Jmeisai) m
+left join MasterShohin s on s.Id = cast(ifnull({M}'$.Id_Shohin'),0) as int)
 order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 ";
 	}
