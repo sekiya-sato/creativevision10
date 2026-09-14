@@ -1,4 +1,25 @@
-﻿## [2026-09-14] 出荷・売上入力画面 印刷帳票の新設（旧cvnetフォーマット準拠）
+﻿## [2026-09-14] 店舗売上入力画面 印刷帳票の旧cvnetフォーマット差し替え
+### 実施内容
+- `printform/ShopUriageInput_header.qfm` / `_detail.qfm` を旧cvnetの `cvnet01prn_header.qfm` / `cvnet01prn_detail.qfm`（cp932・LF、`.gitattributes` の `*.qfm text eol=lf` に合わせ改行はLFへ変換）で差し替えた。
+- 現行 `SubDIgInp01.crs` の非コメントSQL（`OnQueryPrint`/`OnQueryDetailPrint`）と `d_sql.txt`（一覧53列/明細80列）を突き合わせた結果、供給された旧qfmの `itemN` 束縛にズレは無く（一覧qfmはitem1〜45、明細qfmはitem1〜72までを実際に使用）、位置ズレ修正は不要だった。
+- `HEAD*` 見出しは、実際のspool `data.txt` に `H` レコードが1行も無い（旧cvnetの実運用でも見出しは供給されていなかった）ことを確認したうえで、`HEADn` ラベルの座標と同位置にある `itemN` 値の座標を機械的に突き合わせて対応列名を実測し、`calctype="static"` の固定文字列へ変換した（一覧: 伝票No/計上日/伝票区分/店種区分/取引先/掛率1/拡張項目01〜03/数量合計/金額合計/上代合計/下代合計/関連伝票No・No2/入力社員/メモ/CUST01/CUST02/消費税、明細は上記相当に加え明細行部の下代端数区分/年代/下代計算FLG/下代桁切指定/明細区分/商品CD/数量/金額/消費税/商品名/色CD/単価/内税消費税/HHT_SEQ_NO/関連商品CD）。帳票タイトルは `item4` 束縛（他画面と同じ方式）。
+- `BuildListPrintSql`(45列)/`BuildDetailPrintSql`(72列)を `d_sql.txt` の列順に合わせて全面書き換えし、全列へ `itemN` 別名を付けた。V*列は `json_extract` でコード・名称を別列化。CV10に対応列が無い旧項目（外税/内税消費税の内訳、掛率2、伝票処理区分、MOD_SEQ、関連伝票NO2、CUST01/02、拡張項目01〜03、消費税率、担当者CD、手入力伝票NO、SYSFLG、送信FLG、セール掛率、消費税CD、消費税計算方法、MEMO2、店種区分、下代桁切指定・端数区分・計算FLG、最終締日、年代、取引詳細名、購入者名、明細の商品シリアル・関連伝票NO/行NO・原価FLG・関連商品CD・HHT_SEQ_NO等）は空欄で出す。ユーザー確認済みの方針: 内税/外税消費税は税合計(`Tax1+Tax2+Tax3`、明細は`Tax`)を外税消費税列へ、掛計上日はDenDay流用、消費税端数はTaxRoundingをそのまま出力。
+- 不要になった旧ヘルパー（`KubunLabel`定数、`CodeNameViewSql`、`DetailCodeNameSql`）を削除した。
+
+### 検証
+- cv-sqlite で新SQL(45列/72列)を実データに対して実行し、列数・列名(item1〜N)の一意性・値を確認した。
+- `tools/qfmprint` で差し替え後の両qfmをプローブ描画し、`IsSuccess=True` でPDF生成されることを確認した（構造的な妥当性確認）。
+- `git diff --check` 済み。`dotnet build creativevision10.slnx` 0警告0エラー。
+- **残余リスク**: 本セッションの実行環境に `pdftoppm`/poppler-data が無く、旧 `data.pdf`・自前プローブPDFとも日本語CID文字がテキスト層抽出・画像化できず、レイアウトの目視突合ができなかった（過去の同種作業ログでは目視確認できていたため、環境差と思われる）。見出し対応表はHEAD/item座標の機械突合とSQL列名（`d_sql.txt`が正典）のクロスチェックで代替した。画面(F6→gRPC→サーバ)経由の実出力、および目視でのレイアウト最終確認は未実施。
+
+### 追記: 明細印刷の実画面確認で発覚した誤りの修正
+- ユーザーが実際に画面(F6→gRPC→サーバ)から明細印刷を行ったところ、明細行部（商品CD/商品名/色/サイズ/数量/単価等）が完全に破綻して表示された（例: 商品CDがカンマ区切りの金額として描画される等）。原因は、上記の「残余リスク」で述べた通り目視突合ができなかったため、`d_sql.txt`（正典のはずのCRS列順）をそのまま `item45`〜`item72` の割当根拠にしたが、この特定の明細行部(`Rec03`/`Rec04`)は実際には別の並びに差し替わっており、CRS列順との対応が崩れていた（ヘッダ一覧部の `item1`〜`item45` は結果的にCRS列順のままで問題なかった）。
+- 本セッション中に winget で poppler（`pdftoppm`/`pdftotext` + poppler-data の Adobe-Japan1 CMap）を導入し、旧 `data.pdf` のテキスト層抽出が可能になった。これにより `refer/printwrk/ShopUriageInputView/wk_spool_headerdetail/data.pdf` の実レイアウトと `data.txt` の実データ（SEQ_NO=9178140）を列名単位で突合し、明細行部の真の `itemN` 対応（`item45`=サイズCD, `item46`=商品CD, `item47`=色CD, `item49`=商品名, `item50`=数量, `item51`=単価, `item52`=金額, `item54`=消費税, `item55`=上代単価, `item56`=上代金額, `item57`=下代単価, `item58`=下代金額, `item59`=摘要, `item68`=色名, `item69`=サイズ名, `item71`=行No）を実測し直した。
+- [ShopUriageInput_detail.qfm](printform/ShopUriageInput_detail.qfm) の `Rec04`（明細行見出し）14箇所の static 文字列と、[ShopUriageInputViewModel.cs](CvWpfclient/ViewModels/06Uriage/ShopUriageInputViewModel.cs) の `BuildDetailPrintSql` の `item45`〜`item72` を実測結果に合わせて修正した。
+- `tools/qfmprint` のプローブ描画（今回から `pdftotext -layout` で読み取り可能）で見出し配置が参照PDFと一致することを確認、cv-sqlite で実データ(`OldSeqNo=9178277`)を新SQLに通し値が正しく載ることを確認した。`dotnet build creativevision10.slnx` 0警告0エラー。
+- **未対応で残る既知の問題**: ヘッダ一覧部(`Rec01`/`Rec02`)の見出し文言は今回未着手で、`CUST01`/`CUST02`のように旧列名をそのまま見出しにしている箇所や、`item27`(幅3単位)と`item44`が隣接して詰まって見える箇所がある。値は空欄のため実害は無いが、見出し文言の整備は別途対応が必要。
+
+## [2026-09-14] 出荷・売上入力画面 印刷帳票の新設（旧cvnetフォーマット準拠）
 ### 実施内容
 - 他の伝票入力画面と異なり `ShukkaUriageInputView` には印刷ボタン自体が無かったため、View（一覧タブのツールバーに「一覧印刷」「明細印刷」ボタン）・ViewModel（`FormFilePrefix`、`DoPrintList`/`DoPrintDetail`、`BuildListPrintSql`/`BuildDetailPrintSql`）を新設した。既存の `ShiireInputView` と同じ構成（一覧タブ選択時のみ活性）に合わせた。
 - `printform/ShukkaUriageInput_header.qfm` / `_detail.qfm` を旧cvnetの `cvnet00prn_header.qfm` / `cvnet00prn_detail.qfm`（cp932・LF、`.gitattributes` の `*.qfm text eol=lf` に合わせ改行はLFへ変換）で差し替え、`HEAD*` 見出しを `calctype="static"` の固定文字列へ変換した（伝票No/売上日/伝票区分/取引区分/掛率/SYSFLG/送信FLG/数量計/金額計/上代合計/下代合計/店舗/倉庫/入力者/消費税計/手入力No/関連No1/関連No2/メモ、明細は行No/商品CD/商品名/色/サイズ/数量/単価/上代単価/下代単価/関連伝票No/消費税/金額/上代金額/下代金額を追加）。帳票タイトルは `item4` 束縛（`ShiireInput` と同じ方式）。

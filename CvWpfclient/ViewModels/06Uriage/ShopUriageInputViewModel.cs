@@ -272,7 +272,11 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 	}
 
 	// ---- 印刷 ------------------------------------------------------------
-	// qfm 側にタイトルと列見出しを持たせ、SQL は画面入力項目に対応するデータ列だけを返す。
+	// qfm (旧cvnet cvnet01prn_header/detail.qfm を移植) は列見出しをstatic textに持ち、
+	// item1..itemN は旧cvnet SubDIgInp01.crs の OnQueryPrint/OnQueryDetailPrint が組み立てる
+	// d_sql.txt の列順と完全一致させている。CV10に対応列が無い旧項目は '' で空欄にする
+	// (旧内税/外税消費税はCV10がTax1/2/3の税率別集計のみのため合計を外税消費税列へ、
+	//  掛計上日はCV10にこの伝票専用列が無いためDenDayを流用、消費税端数はTaxRoundingをそのまま出力)。
 
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoPrintList(CancellationToken ct) {
@@ -286,62 +290,140 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 		await RunPrintPdfAsync("ShopUriageInput_detail.qfm", null, new QueryListSqlParam(typeof(Tran01Tenuri), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
-	// DenDay は qfm 側で yyyy/MM/dd 表示にするため、SQL では yyyyMMdd のまま返す。
-	const string KubunLabel = "case Kubun when 10 then '売上' when 11 then '売上セール' when 20 then '返品' when 21 then '返品セール' else cast(Kubun as text) end";
-
-	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
-	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
-
-	static string DetailCodeNameSql(string value, string code, string name) => Helpers.CodeNameDisplay.Sql(value, code, name);
-
-	/// <summary>店舗売上伝票印刷 SQL。見出しは qfm の static text に持たせ、ここではデータ列だけを返す。</summary>
+	/// <summary>店舗売上伝票一覧印刷 SQL（cvnet01prn_header.qfm item1..item45 に対応）。</summary>
 	static string BuildListPrintSql(QueryListParam query) {
 		return $@"
-select Id,
-DenDay,
-{KubunLabel} KubunText,
-{CodeNameViewSql("VTenpo")} Tenpo,
-{CodeNameViewSql("VSoko")} Soko,
-{CodeNameViewSql("VShain")} Shain,
-{CodeNameViewSql("VCustomer")} Customer,
-SuTotal,
-KingakuTotal,
-JodaiTotal,
-GedaiTotal,
-ifnull(Memo,'') Memo
+select
+OldSeqNo item1,
+'' item2,
+'' item3,
+'店舗売上伝票一覧' item4,
+ifnull(Code_Customer,'') item5,
+DenDay item6,
+DenDay item7,
+Kubun item8,
+ifnull(json_extract(VShain,'$.Cd'),'') item9,
+ifnull(json_extract(VSoko,'$.Cd'),'') item10,
+ifnull(json_extract(VTenpo,'$.Cd'),'') item11,
+Rate item12,
+'' item13,
+SuTotal item14,
+KingakuTotal item15,
+'' item16,
+Tax1 + Tax2 + Tax3 item17,
+JodaiTotal item18,
+GedaiTotal item19,
+ifnull(Memo,'') item20,
+'' item21,
+'' item22,
+'' item23,
+RelateNo1 item24,
+'' item25,
+'' item26,
+'' item27,
+'' item28,
+'' item29,
+'' item30,
+'' item31,
+'' item32,
+'' item33,
+'' item34,
+'' item35,
+ifnull(json_extract(VShain,'$.Mei'),'') item36,
+ifnull(json_extract(VTenpo,'$.Mei'),'') item37,
+ifnull(json_extract(VSoko,'$.Mei'),'') item38,
+'' item39,
+'' item40,
+'' item41,
+TaxRounding item42,
+'' item43,
+'' item44,
+'' item45
 from Tran01Tenuri {query.AddWhereOrder()}
 ";
 	}
 
 	/// <summary>
-	/// 店舗売上伝票明細印刷 SQL。対象伝票を一覧条件で絞り、Jmeisai を json_each で明細行へ展開する。
+	/// 店舗売上伝票明細印刷 SQL（cvnet01prn_detail.qfm item1..item72 に対応）。
+	/// 対象伝票を一覧条件で絞り、Jmeisai を json_each で明細行へ展開する。
 	/// </summary>
 	static string BuildDetailPrintSql(QueryListParam query) {
 		var denpyoSub = $"select * from Tran01Tenuri {query.AddWhereOrder()}";
 		const string M = "json_extract(m.value,";
-		var detailKubunLabel = $"case cast(ifnull({M}'$.Kubun'),0) as int) when 1 then 'S セール' else 'P プロパー' end";
 		return $@"
-select h.Id,
-h.DenDay,
-{KubunLabel} KubunText,
-{CodeNameViewSql("h.VTenpo")} Tenpo,
-{CodeNameViewSql("h.VSoko")} Soko,
-{CodeNameViewSql("h.VShain")} Shain,
-{CodeNameViewSql("h.VCustomer")} Customer,
-{M}'$.No') No,
-{detailKubunLabel} MeisaiKubunText,
-{DetailCodeNameSql($"{M}'$.Id_Shohin')", $"{M}'$.Code_Shohin')", $"{M}'$.Mei_Shohin')")} Shohin,
-{DetailCodeNameSql($"{M}'$.Id_Col')", $"{M}'$.Code_Col')", $"{M}'$.Mei_Col')")} Col,
-{DetailCodeNameSql($"{M}'$.Id_Siz')", $"{M}'$.Code_Siz')", $"{M}'$.Mei_Siz')")} Siz,
-ifnull({M}'$.Su'),0) Su,
-ifnull({M}'$.Tanka'),0) Tanka,
-ifnull({M}'$.Kingaku'),0) Kingaku,
-ifnull({M}'$.Jodai'),0) Jodai,
-cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int) JodaiKingaku,
-ifnull({M}'$.Gedai'),0) Gedai,
-cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int) GedaiKingaku,
-{DetailCodeNameSql($"{M}'$.Id_Shain')", $"{M}'$.Code_Shain')", $"{M}'$.Mei_Shain')")} MeisaiShain,
-ifnull({M}'$.Memo'),'') Memo
+select
+h.OldSeqNo item1,
+'' item2,
+'' item3,
+'店舗売上伝票明細' item4,
+ifnull(h.Code_Customer,'') item5,
+h.DenDay item6,
+h.DenDay item7,
+h.Kubun item8,
+ifnull(json_extract(h.VShain,'$.Cd'),'') item9,
+ifnull(json_extract(h.VSoko,'$.Cd'),'') item10,
+ifnull(json_extract(h.VTenpo,'$.Cd'),'') item11,
+h.Rate item12,
+'' item13,
+h.SuTotal item14,
+h.KingakuTotal item15,
+'' item16,
+h.Tax1 + h.Tax2 + h.Tax3 item17,
+h.JodaiTotal item18,
+h.GedaiTotal item19,
+ifnull(h.Memo,'') item20,
+'' item21,
+'' item22,
+'' item23,
+h.RelateNo1 item24,
+'' item25,
+'' item26,
+'' item27,
+'' item28,
+'' item29,
+'' item30,
+'' item31,
+'' item32,
+'' item33,
+'' item34,
+'' item35,
+ifnull(json_extract(h.VShain,'$.Mei'),'') item36,
+ifnull(json_extract(h.VTenpo,'$.Mei'),'') item37,
+ifnull(json_extract(h.VSoko,'$.Mei'),'') item38,
+'' item39,
+'' item40,
+'' item41,
+h.TaxRounding item42,
+'' item43,
+'' item44,
+ifnull({M}'$.Code_Siz'),'') item45,
+ifnull({M}'$.Code_Shohin'),'') item46,
+ifnull({M}'$.Code_Col'),'') item47,
+'' item48,
+ifnull({M}'$.Mei_Shohin'),'') item49,
+ifnull({M}'$.Su'),0) item50,
+ifnull({M}'$.Tanka'),0) item51,
+ifnull({M}'$.Kingaku'),0) item52,
+'' item53,
+ifnull({M}'$.Tax'),0) item54,
+ifnull({M}'$.Jodai'),0) item55,
+cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int) item56,
+ifnull({M}'$.Gedai'),0) item57,
+cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int) item58,
+ifnull({M}'$.Memo'),'') item59,
+'' item60,
+'' item61,
+'' item62,
+'' item63,
+'' item64,
+'' item65,
+'' item66,
+'' item67,
+ifnull({M}'$.Mei_Col'),'') item68,
+ifnull({M}'$.Mei_Siz'),'') item69,
+'' item70,
+ifnull({M}'$.No'),0) item71,
+'' item72
 from ({denpyoSub}) h, json_each(h.Jmeisai) m
 order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 ";
