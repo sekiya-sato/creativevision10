@@ -63,7 +63,7 @@ DB 列・migration、既存 gRPC 契約拡張、複数 View/ViewModel、在庫�
 ## 6. 技術・編集規約
 
 - .NET 10 / C# 14 / protobuf-net.Grpc / WPF（CommunityToolkit MVVM）/ SQLite 3.38+。
-- 改行は CRLF。`printform/*.qfm` は cp932、それ以外の日本語テキストは UTF-8。
+- 改行は CRLF。ただし `printform/*.qfm` は LF。`printform/*.qfm` は cp932、それ以外の日本語テキストは UTF-8。
 - C# は `.editorconfig`、XAML は `Settings.XamlStyler` に従い、file-scoped namespace を優先する。
 - PowerShell は UTF-8 入出力を明示する。
 - build 等では `DOTNET_ENVIRONMENT=Development` / `ASPNETCORE_ENVIRONMENT=Development` を使用する。
