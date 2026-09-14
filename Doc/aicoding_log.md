@@ -1,4 +1,21 @@
-﻿## [2026-09-14] 受注入力画面 印刷帳票の旧cvnetフォーマット差し替え
+﻿## [2026-09-14] 仕入入力画面 印刷帳票の旧cvnetフォーマット差し替え
+### 実施内容
+- `ShiireInput_header.qfm` / `ShiireInput_detail.qfm` を参考QFM（cp932・CRLF）で差し替え、`HEAD*` 見出しを固定文字列化、帳票タイトルを `item4` 束縛に変更した。
+- 旧 `d_sql.txt` の列順に合わせ、一覧SQLを42列、明細SQLを71列とし、全列へ `itemN` 別名を付与した。`V*` はコード・名称を別列化し、明細は `json_each(Jmeisai)` で展開した。
+- CV10にない関連No2、来勘FLG、在庫計上FLG、SYSFLG、送信FLG、明細原価FLG、経費金額等は空欄とした。メーカー品番・仕入区分は `MasterShohin` から取得する。
+
+### 検証
+- 参考spoolの `data.txt` で一覧・明細PDFをローカル描画し、タイトル、日付、コード・名称、数量、金額、メーカー品番、仕入区分の配置を旧PDFと突合した。
+- QFMはXML整形式、cp932、CRLF、`HEAD*` 参照0件、`itemN` 定義数（42/71）を確認した。
+
+### 追記: 明細帳票の伝票グループ化不具合の修正
+- 明細PDFで伝票ヘッダが1回しか出力されず（しかも最終伝票の値）、全伝票の明細が連続してしまう不具合を修正した。原因は `Rec02`（伝票ヘッダ行）が `recordtype="1"` のままで、キーブレイク時に出力するための `grouplevel` / `breaktype` を持っていなかったこと。`JuchuInput_detail.qfm` / `HenpinInput_detail.qfm` / `StockInputView_detail.qfm` と同じ前例に合わせ `grouplevel="1" breaktype="2"`（`recordtype` なし）へ変更した。`<group level="1" pagechange="0"/>` は据え置きで、伝票ごとに改ページせず1ページに連続出力する。
+- 掛率(item12)の `decode format` が空になっていたため、旧qfmと同じ `@"%"` を復元した。
+- 消費税率(item28)は CV10 に伝票単位の税率が無く値が常に空で `%` だけが描画されていたため、見出し `Txt128` と値 `Txt129` のセルを削除した（CV10にない項目は出さない方針）。
+- PrintStream は全角1文字だけの値を描画しない（色名「黒」「赤」「白」が消える）ことを実測で確認した。明細SQLに `Pad1` を追加し、担当名・仕入先名・倉庫名・メモ・商品名・明細メモ・色名・サイズ名が1文字のときだけ半角空白を付けて回避する。
+- 作業ツリーで LF になっていた `ShiireInput_header.qfm` / `ShiireInput_detail.qfm` を CRLF へ戻した（`.gitattributes` は `*.qfm text eol=crlf`）。
+- 検証は `tools/qfmprint` で、旧spoolの `data.txt`（2伝票×4明細）と CV10 実データ形状のCSV（4伝票・負数量・1文字色名を含む）を描画して実施。`CvWpfclient` のビルドは 0 警告 0 エラー。画面(F6→gRPC→サーバ)経由の実出力は未実施。
+## [2026-09-14] 受注入力画面 印刷帳票の旧cvnetフォーマット差し替え
 ### 実施内容
 - `printform/JuchuInput_header.qfm` / `JuchuInput_detail.qfm` を旧cvnetの `cvnet12prn_header.qfm` / `cvnet12prn_detail.qfm` （cp932・CRLF）で差し替えた。発注（cvnet13prn）と違い、この2本は見出しが最初から `calctype="static"` で `HEAD*` 束縛も `<prefix>` も `<script>` も持たないため、見出しの static 化は不要だった。
 - プローブ描画（`.agents/skills/upgrade-cvnet-print-form/scripts/make_probe_data.pl` + `tools/qfmprint`）で全スロットを実測し、`datasrc="itemN"` が `wk_spool_*/d_sql.txt` の列番号（header 45列 / headerdetail 76列）と完全に一致していることを確認した。発注で見つかった datasrc のズレはこの帳票には無く、qfm の `datasrc` 修正は 0 件。

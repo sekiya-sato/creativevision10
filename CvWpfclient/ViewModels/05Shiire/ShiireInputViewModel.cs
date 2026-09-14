@@ -294,37 +294,68 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 		await RunPrintPdfAsync($"{FormFilePrefix}_detail.qfm", null, new QueryListSqlParam(typeof(Tran03Shiire), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
-	const string KubunLabel = "case Kubun when 10 then '仕入' when 20 then '仕入返品' when 30 then '値引' when 99 then 'その他' else cast(Kubun as text) end";
-	const string IsPayLabel = "case IsPay when 1 then '支払済' else '未払' end";
+	// 帳票CSVは旧cvnet(SubDIgInp03.crs)のSELECT列順を踏襲する。
+	// 旧cvnetにのみ存在する項目は空欄とし、全列に一意な itemN 別名を付ける。
+	const int DenpyoShoriKubun = 3;
+	const string ShimeDayNone = "19010101";
 
-	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
-	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
+	static string KubunNameSql(string prefix) =>
+		$"case {prefix}Kubun when 10 then '仕入' when 20 then '仕入返品' when 30 then '値引' when 99 then 'その他' else cast({prefix}Kubun as text) end";
 
-	static string DetailCodeNameSql(string value, string code, string name) => Helpers.CodeNameDisplay.Sql(value, code, name);
-
-	static string MeisaiKubunLabelSql(string jsonExtractPrefix) =>
-		$"case cast(ifnull({jsonExtractPrefix}'$.Kubun'),0) as int) when 1 then 'S セール' else 'P プロパー' end";
+	static string KubunLabelSql(string prefix) => $"(cast({prefix}Kubun as text) || ' ' || {KubunNameSql(prefix)})";
+	static string IsPayLabelSql(string prefix) => $"case {prefix}IsPay when 1 then '1 する' else '0 しない' end";
+	static string VCd(string column) => $"ifnull(json_extract({column},'$.Cd'),'')";
+	static string VMei(string column) => $"ifnull(json_extract({column},'$.Mei'),'')";
+	// PrintStream は全角1文字だけの値を描画しないため（色名「黒」など）、1文字の名称に半角空白を足して回避する。
+	static string Pad1(string expr) => $"case when length({expr})=1 then {expr}||' ' else {expr} end";
+	const string ShiireKubunLabelSql =
+		"case s.PurchaseType when 0 then '0 通常仕入' when 3 then '3 消化仕入' else ifnull(cast(s.PurchaseType as text),'') end";
 
 	static string BuildListPrintSql(QueryListParam query) {
 		return $@"
-select Id,
-DenDay,
-KakeDay,
-{KubunLabel} KubunText,
-{IsPayLabel} IsPayText,
-{CodeNameViewSql("VShiire")} Shiire,
-{CodeNameViewSql("VSoko")} Soko,
-{CodeNameViewSql("VShain")} Shain,
-ManualNo,
-RelateNo1,
-Rate,
-SuTotal,
-KingakuTotal,
-(Tax1+Tax2+Tax3) Tax,
-Total,
-JodaiTotal,
-GedaiTotal,
-ifnull(Memo,'') Memo
+select
+Id as item1,
+'' as item2,
+'' as item3,
+'商品仕入伝票一覧' as item4,
+ifnull(ManualNo,'') as item5,
+DenDay as item6,
+KakeDay as item7,
+Kubun as item8,
+{VCd("VShain")} as item9,
+{VCd("VSoko")} as item10,
+{VCd("VShiire")} as item11,
+Rate as item12,
+(TaxableAmount1+TaxableAmount2+TaxableAmount3) as item13,
+SuTotal as item14,
+KingakuTotal as item15,
+'' as item16,
+(Tax1+Tax2+Tax3) as item17,
+JodaiTotal as item18,
+GedaiTotal as item19,
+ifnull(Memo,'') as item20,
+IsPay as item21,
+{DenpyoShoriKubun} as item22,
+'' as item23,
+RelateNo1 as item24,
+'' as item25,
+'' as item26,
+'' as item27,
+'' as item28,
+{VMei("VShain")} as item29,
+{VMei("VShiire")} as item30,
+{VMei("VSoko")} as item31,
+'' as item32,
+TaxCalcUnit as item33,
+TaxRounding as item34,
+case IsPay when 1 then '○' else '' end as item35,
+'{ShimeDayNone}' as item36,
+'' as item37,
+'' as item38,
+{KubunLabelSql("")} as item39,
+{IsPayLabelSql("")} as item40,
+'' as item41,
+'' as item42
 from Tran03Shiire {query.AddWhereOrder()}
 ";
 	}
@@ -333,36 +364,81 @@ from Tran03Shiire {query.AddWhereOrder()}
 		var denpyoSub = $"select * from Tran03Shiire {query.AddWhereOrder()}";
 		const string M = "json_extract(m.value,";
 		return $@"
-select h.Id,
-h.DenDay,
-h.KakeDay,
-{KubunLabel} KubunText,
-{IsPayLabel} IsPayText,
-{CodeNameViewSql("h.VShiire")} Shiire,
-{CodeNameViewSql("h.VSoko")} Soko,
-{CodeNameViewSql("h.VShain")} Shain,
-h.ManualNo,
-h.RelateNo1,
-h.Rate,
-h.SuTotal,
-h.KingakuTotal,
-(h.Tax1+h.Tax2+h.Tax3) Tax,
-h.Total,
-{M}'$.No') No,
-{MeisaiKubunLabelSql(M)} MeisaiKubunText,
-{DetailCodeNameSql($"{M}'$.Id_Shohin')", $"{M}'$.Code_Shohin')", $"{M}'$.Mei_Shohin')")} Shohin,
-{DetailCodeNameSql($"{M}'$.Id_Col')", $"{M}'$.Code_Col')", $"{M}'$.Mei_Col')")} Col,
-{DetailCodeNameSql($"{M}'$.Id_Siz')", $"{M}'$.Code_Siz')", $"{M}'$.Mei_Siz')")} Siz,
-ifnull({M}'$.Su'),0) Su,
-ifnull({M}'$.Tanka'),0) Tanka,
-ifnull({M}'$.Kingaku'),0) Kingaku,
-ifnull({M}'$.Jodai'),0) Jodai,
-cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int) JodaiKingaku,
-ifnull({M}'$.Gedai'),0) Gedai,
-cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int) GedaiKingaku,
-{DetailCodeNameSql($"{M}'$.Id_Shain')", $"{M}'$.Code_Shain')", $"{M}'$.Mei_Shain')")} MeisaiShain,
-ifnull({M}'$.Memo'),'') Memo
-from ({denpyoSub}) h, json_each(h.Jmeisai) m
+select
+h.Id as item1,
+'' as item2,
+'' as item3,
+'商品仕入伝票明細' as item4,
+ifnull(h.ManualNo,'') as item5,
+h.DenDay as item6,
+h.KakeDay as item7,
+h.Kubun as item8,
+{VCd("h.VShain")} as item9,
+{VCd("h.VSoko")} as item10,
+{VCd("h.VShiire")} as item11,
+h.Rate as item12,
+(h.TaxableAmount1+h.TaxableAmount2+h.TaxableAmount3) as item13,
+h.SuTotal as item14,
+h.KingakuTotal as item15,
+'' as item16,
+(h.Tax1+h.Tax2+h.Tax3) as item17,
+h.JodaiTotal as item18,
+h.GedaiTotal as item19,
+{Pad1("ifnull(h.Memo,'')")} as item20,
+h.IsPay as item21,
+{DenpyoShoriKubun} as item22,
+'' as item23,
+h.RelateNo1 as item24,
+'' as item25,
+'' as item26,
+'' as item27,
+'' as item28,
+{Pad1(VMei("h.VShain"))} as item29,
+{Pad1(VMei("h.VShiire"))} as item30,
+{Pad1(VMei("h.VSoko"))} as item31,
+'' as item32,
+h.TaxCalcUnit as item33,
+h.TaxRounding as item34,
+case h.IsPay when 1 then '○' else '' end as item35,
+'{ShimeDayNone}' as item36,
+'' as item37,
+'' as item38,
+ifnull({M}'$.Kubun'),0) as item39,
+ifnull({M}'$.Code_Shohin'),'') as item40,
+'' as item41,
+ifnull({M}'$.Code_Col'),'') as item42,
+ifnull({M}'$.Code_Siz'),'') as item43,
+{Pad1($"ifnull({M}'$.Mei_Shohin'),'')")} as item44,
+ifnull({M}'$.Su'),0) as item45,
+ifnull({M}'$.Tanka'),0) as item46,
+ifnull({M}'$.Kingaku'),0) as item47,
+'' as item48,
+ifnull({M}'$.Tax'),0) as item49,
+ifnull({M}'$.Jodai'),0) as item50,
+(cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Jodai'),0) as int)) as item51,
+ifnull({M}'$.Gedai'),0) as item52,
+(cast(ifnull({M}'$.Su'),0) as int) * cast(ifnull({M}'$.Gedai'),0) as int)) as item53,
+{Pad1($"ifnull({M}'$.Memo'),'')")} as item54,
+'' as item55,
+'' as item56,
+'' as item57,
+'' as item58,
+ifnull({M}'$.JanCode'),'') as item59,
+'' as item60,
+'' as item61,
+{Pad1($"ifnull({M}'$.Mei_Col'),'')")} as item62,
+{Pad1($"ifnull({M}'$.Mei_Siz'),'')")} as item63,
+{KubunLabelSql("h.")} as item64,
+{IsPayLabelSql("h.")} as item65,
+'' as item66,
+cast(ifnull({M}'$.No'),0) as int) as item67,
+ifnull(s.MakerHin,'') as item68,
+'' as item69,
+{ShiireKubunLabelSql} as item70,
+ifnull({M}'$.TaxRate'),0) as item71
+from ({denpyoSub}) h
+cross join json_each(h.Jmeisai) m
+left join MasterShohin s on s.Id = cast(ifnull({M}'$.Id_Shohin'),0) as int)
 order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 ";
 	}
