@@ -315,29 +315,57 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 	}
 
 	const string KubunLabel = "case Kubun when 10 then '仕入' when 20 then '仕入返品' when 30 then '値引' when 99 then 'その他' else cast(Kubun as text) end";
-	const string IsPayLabel = "case IsPay when 1 then '支払済' else '未払' end";
 
-	// 画面の V*列共通表示と同じ「(Id) コード 名称」で帳票CSVへ出す（書式定義は CodeNameDisplay 側の1箇所）
-	static string CodeNameViewSql(string column) => Helpers.CodeNameDisplay.SqlFromVColumn(column);
-
-	static string DetailCodeNameSql(string value, string code, string name) => Helpers.CodeNameDisplay.Sql(value, code, name);
+	/// <summary>
+	/// 旧cvnet帳票(SubDIgInp02.crs OnQueryPrint/OnQueryDetailPrint)の列順を踏襲した item1-38（ヘッダ部）。
+	/// 旧にありCV10に無い項目（倉庫CD/名、掛率1、内税消費税、上代・下代合計、伝票処理区分、MOD_SEQ、
+	/// 関連伝票NO/NO2、来勘FLG、消費税率、消費税CD、最終締日、SYSFLG、送信FLG）は空欄で出す。
+	/// printform/MaterialInput_header.qfm・MaterialInput_detail.qfm の itemN 束縛と対応させること。
+	/// </summary>
+	static string HeaderItemColumns(string title) => $@"
+h.Id item1,
+'' item2,
+'' item3,
+'{title}' item4,
+h.ManualNo item5,
+h.DenDay item6,
+h.KakeDay item7,
+h.Kubun item8,
+json_extract(h.VShain,'$.Cd') item9,
+'' item10,
+json_extract(h.VShiire,'$.Cd') item11,
+'' item12,
+'' item13,
+h.SuTotal item14,
+h.KingakuTotal item15,
+'' item16,
+(h.Tax1+h.Tax2+h.Tax3) item17,
+'' item18,
+'' item19,
+ifnull(h.Memo,'') item20,
+h.IsPay item21,
+'' item22,
+'' item23,
+'' item24,
+'' item25,
+'' item26,
+'' item27,
+json_extract(h.VShain,'$.Mei') item28,
+json_extract(h.VShiire,'$.Mei') item29,
+'' item30,
+'' item31,
+h.TaxCalcUnit item32,
+h.TaxRounding item33,
+(case when h.IsPay=1 then '○' else '' end) item34,
+'' item35,
+'' item36,
+'' item37,
+({KubunLabel.Replace("Kubun", "h.Kubun")}) item38";
 
 	static string BuildListPrintSql(QueryListParam query) {
 		return $@"
-select Id,
-DenDay,
-KakeDay,
-{KubunLabel} KubunText,
-{IsPayLabel} IsPayText,
-{CodeNameViewSql("VShiire")} Shiire,
-{CodeNameViewSql("VShain")} Shain,
-ManualNo,
-SuTotal,
-KingakuTotal,
-(Tax1+Tax2+Tax3) Tax,
-Total,
-ifnull(Memo,'') Memo
-from Tran02Material {query.AddWhereOrder()}
+select {HeaderItemColumns("生地・付属仕入伝票一覧")}
+from Tran02Material h {query.AddWhereOrder()}
 ";
 	}
 
@@ -345,25 +373,16 @@ from Tran02Material {query.AddWhereOrder()}
 		var denpyoSub = $"select * from Tran02Material {query.AddWhereOrder()}";
 		const string M = "json_extract(m.value,";
 		return $@"
-select h.Id,
-h.DenDay,
-h.KakeDay,
-{KubunLabel} KubunText,
-{IsPayLabel} IsPayText,
-{CodeNameViewSql("h.VShiire")} Shiire,
-{CodeNameViewSql("h.VShain")} Shain,
-h.ManualNo,
-h.SuTotal,
-h.KingakuTotal,
-(h.Tax1+h.Tax2+h.Tax3) Tax,
-h.Total,
-{M}'$.No') No,
-{DetailCodeNameSql($"{M}'$.Id_Material')", $"{M}'$.Code_Material')", $"{M}'$.Mei_Material')")} Material,
-ifnull({M}'$.Su'),0) Su,
-ifnull({M}'$.Tanka'),0) Tanka,
-ifnull({M}'$.Kingaku'),0) Kingaku,
-ifnull({M}'$.Tax'),0) Tax,
-ifnull({M}'$.Memo'),'') Memo
+select {HeaderItemColumns("生地・付属仕入伝票明細")},
+{M}'$.No') item39,
+{M}'$.Code_Material') item40,
+{M}'$.Mei_Material') item41,
+{M}'$.Code_Shohin') item42,
+ifnull({M}'$.Memo'),'') item43,
+ifnull({M}'$.Tanka'),0) item44,
+ifnull({M}'$.Su'),0) item45,
+ifnull({M}'$.Kingaku'),0) item46,
+ifnull({M}'$.Tax'),0) item47
 from ({denpyoSub}) h, json_each(h.Jmeisai) m
 order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 ";

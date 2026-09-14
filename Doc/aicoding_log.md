@@ -1,4 +1,19 @@
-﻿## [2026-09-14] 仕入入力画面 印刷帳票の旧cvnetフォーマット差し替え
+﻿## [2026-09-14] 生地・付属仕入入力画面 印刷帳票の旧cvnetフォーマット差し替え
+### 実施内容
+- `printform/MaterialInput_header.qfm` / `MaterialInput_detail.qfm` を旧cvnetの `cvnet02prn_header.qfm` / `cvnet02prn_detail.qfm`（cp932・LF、`.gitattributes` の `*.qfm text eol=lf` に合わせ改行はLFへ変換）で差し替え、`HEAD*` 見出しを `calctype="static"` の固定文字列へ変換した（伝票No/仕入日/取引区分/送信FLG/仕入先/倉庫/手入力No/関連No1/掛計上日/掛率/最終締日/SYSFLG/数量計/金額計/消費税計/入力者/関連No2/メモ）。
+- 明細qfmの `Rec03`/`Rec04`（明細行テーブル）は旧qfmでは来勘・サイズCD・消費税計算方法・下代金額等（`d_sql.txt` の実列と対応しない古いバージョンの束縛）だったため流用せず、目標spool `wk_spool_headerdetail/data.pdf` の実際の列構成（行No/商品CD/商品名/関連商品CD/摘要/単価/数量/金額/消費税）で新規に組んだ（ユーザー確認済み）。関連商品CDは `Tran99MaterialMeisai.Code_Shohin`（諸掛費用負担商品）を充当した（ユーザー確認済み）。
+- 明細qfmの共有ヘッダ行に残っていた `datasrc="item61"` は他ファイルと不整合（同じ位置が一覧qfmでは `item37`=送信FLG）だったため `item37` へ修正した。
+- ヘッダ部の「伝票区分」スロット(旧`item22`=伝票処理区分、CV10に対応なく常に空欄)を、算出済みで未使用だった `item38`(取引区分名 "10 仕入" 相当)へ差し替え、見出しも「取引区分」に変更した。
+- `MaterialInputViewModel.BuildListPrintSql`(38列)/`BuildDetailPrintSql`(47列)を旧SQL(`SubDIgInp02.crs` の `col_list`)の列順に合わせて全面書き換え、全列へ `itemN` 別名を付けた。V*列は `json_extract` でコード・名称を別列化。
+- CV10に対応列が無い旧項目（倉庫CD/名、掛率1、内税消費税、上代・下代合計、伝票処理区分、MOD_SEQ、関連伝票NO/NO2、来勘FLG、消費税率、消費税CD、最終締日、SYSFLG、送信FLG、明細の色CD/サイズCD等）は空欄で出す。消費税計は `Tax1+Tax2+Tax3`、消費税計算方法/端数は `TaxCalcUnit`/`TaxRounding` の数値をそのまま出力（ラベル化は未実施）。
+
+### 検証
+- `tools/qfmprint` で旧qfmのプローブ描画により `HEADn`/`itemN` とスロット位置の対応を実測し、`d_sql.txt`・実データ`data.txt`の1行と突合して列順の一致を確認した。
+- cv-sqlite で新SQL(38列/47列)を実データ(`Tran02Material.Id=1729`)に対して実行し、結果を実データ形状のCSVへ変換のうえ `tools/qfmprint` で最終qfmを描画、明細行(行No/商品CD/商品名/関連商品CD/単価/数量/金額/消費税)が期待どおり表示されることを確認した。
+- `git diff --check` 済み。`dotnet build creativevision10.slnx` 0警告0エラー。
+- 画面(F6→gRPC→サーバ)経由の実出力、担当名(VShain)が非空のケースでの仕入先セルとの隣接表示崩れ、消費税計算方法/端数の文字ラベル化は未実施・未確認（残余リスクとして残す）。
+
+## [2026-09-14] 仕入入力画面 印刷帳票の旧cvnetフォーマット差し替え
 ### 実施内容
 - `ShiireInput_header.qfm` / `ShiireInput_detail.qfm` を参考QFM（cp932・CRLF）で差し替え、`HEAD*` 見出しを固定文字列化、帳票タイトルを `item4` 束縛に変更した。
 - 旧 `d_sql.txt` の列順に合わせ、一覧SQLを42列、明細SQLを71列とし、全列へ `itemN` 別名を付与した。`V*` はコード・名称を別列化し、明細は `json_each(Jmeisai)` で展開した。
