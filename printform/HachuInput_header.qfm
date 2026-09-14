@@ -767,14 +767,6 @@ function OnFormLoad() {
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
-				<text id="Txt14">
-					<position x="4" y="8" width="40" height="4"/>
-					<color transparent="1"/>
-					<border bottom="1"/>
-					<data calctype="static">éËì¸óÕNo</data>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
 				<text id="Txt15" halign="right">
 					<position x="198" y="0" width="20" height="4"/>
 					<color transparent="1"/>
@@ -790,7 +782,7 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt17">
-					<position x="128" y="8" width="90" height="4"/>
+					<position x="73" y="8" width="90" height="4"/>
 					<color transparent="1"/>
 					<border bottom="1"/>
 					<data calctype="static">ÉÅÉÇ</data>
@@ -805,39 +797,10 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt19">
-					<position x="44" y="8" width="40" height="4"/>
+					<position x="4" y="8" width="40" height="4"/>
 					<color transparent="1"/>
 					<border bottom="1"/>
 					<data calctype="static">ä÷òANo1</data>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
-				<text id="Txt20">
-					<position x="84" y="8" width="40" height="4"/>
-					<color transparent="1"/>
-					<border bottom="1"/>
-					<data calctype="static">ä÷òANo2</data>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
-				<text id="Txt21">
-					<position x="74" y="0" width="16" height="4"/>
-					<color transparent="1"/>
-					<data calctype="static">ì`ï[ãÊï™</data>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
-				<text id="Txt23">
-					<position x="134" y="0" width="12" height="4"/>
-					<color transparent="1"/>
-					<data calctype="static">SYSFLG</data>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
-				<text id="Txt24">
-					<position x="146" y="0" width="12" height="4"/>
-					<color transparent="1"/>
-					<data calctype="static">ëóêMFLG</data>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
@@ -915,18 +878,10 @@ function OnFormLoad() {
 					<font size="80"/>
 				</text>
 				<text id="Txt31">
-					<position x="44" y="8" width="40" height="4"/>
+					<position x="4" y="8" width="40" height="4"/>
 					<color transparent="1"/>
 					<border top="1" bottom="1"/>
 					<data calctype="item" datasrc="item25"/>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
-				<text id="Txt32">
-					<position x="84" y="8" width="40" height="4"/>
-					<color transparent="1"/>
-					<border top="1" bottom="1"/>
-					<data calctype="item" datasrc="item28"/>
 					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
@@ -962,14 +917,6 @@ function OnFormLoad() {
 					<decode datatype="number" format="MIL999,999,990&quot; &quot;"/>
 					<font size="80"/>
 				</text>
-				<text id="Txt39">
-					<position x="134" y="0" width="12" height="4"/>
-					<color transparent="1"/>
-					<border top="1" bottom="1"/>
-					<data calctype="item" datasrc="item35"/>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
 				<text id="Txt40" halign="right">
 					<position x="162" y="4" width="16" height="4"/>
 					<color transparent="1"/>
@@ -978,24 +925,8 @@ function OnFormLoad() {
 					<decode datatype="number" format="MIL999,999,990&quot; &quot;"/>
 					<font size="80"/>
 				</text>
-				<text id="Txt41">
-					<position x="146" y="0" width="12" height="4"/>
-					<color transparent="1"/>
-					<border top="1" bottom="1"/>
-					<data calctype="item" datasrc="item36"/>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
-				<text id="Txt42">
-					<position x="4" y="8" width="40" height="4"/>
-					<color transparent="1"/>
-					<border top="1" bottom="1"/>
-					<data calctype="item" datasrc="item5"/>
-					<decode datatype="string" format=""/>
-					<font size="80"/>
-				</text>
 				<text id="Txt43">
-					<position x="128" y="8" width="90" height="4"/>
+					<position x="73" y="8" width="145" height="4"/>
 					<color transparent="1"/>
 					<border top="1" bottom="1"/>
 					<data calctype="item" datasrc="item20"/>
@@ -1008,14 +939,6 @@ function OnFormLoad() {
 					<border bottom="1"/>
 					<data calctype="item" datasrc="item18"/>
 					<decode datatype="number" format="MIL999,999,990&quot; &quot;"/>
-					<font size="80"/>
-				</text>
-				<text id="Txt45">
-					<position x="74" y="0" width="16" height="4"/>
-					<color transparent="1"/>
-					<border top="1" bottom="1"/>
-					<data calctype="item" datasrc="item22"/>
-					<decode datatype="string" format=""/>
 					<font size="80"/>
 				</text>
 				<text id="Txt46">
