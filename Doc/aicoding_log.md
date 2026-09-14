@@ -1,4 +1,24 @@
-﻿## [2026-09-14] 発注入力画面 印刷帳票の旧cvnetフォーマット差し替え
+﻿## [2026-09-14] 受注入力画面 印刷帳票の旧cvnetフォーマット差し替え
+### 実施内容
+- `printform/JuchuInput_header.qfm` / `JuchuInput_detail.qfm` を旧cvnetの `cvnet12prn_header.qfm` / `cvnet12prn_detail.qfm` （cp932・CRLF）で差し替えた。発注（cvnet13prn）と違い、この2本は見出しが最初から `calctype="static"` で `HEAD*` 束縛も `<prefix>` も `<script>` も持たないため、見出しの static 化は不要だった。
+- プローブ描画（`.agents/skills/upgrade-cvnet-print-form/scripts/make_probe_data.pl` + `tools/qfmprint`）で全スロットを実測し、`datasrc="itemN"` が `wk_spool_*/d_sql.txt` の列番号（header 45列 / headerdetail 76列）と完全に一致していることを確認した。発注で見つかった datasrc のズレはこの帳票には無く、qfm の `datasrc` 修正は 0 件。
+- qfm の調整は1箇所のみ。明細の「明細納品日」(`Txt93` / item64) は CV10 の明細JSONに納品日が無く常に空欄になるが、旧qfmの日付編集 `format="S0.4/S4.2/S6.2"` があると空値でも `//` が描画されてしまうため、この `<decode format>` を空にした。伝票の「納品日」(item7) は CV10 に `NouhinDay` があるので旧仕様の日付編集のまま残している（値が無い伝票では `//` が出る）。
+- `JuchuInputViewModel` の `BuildListPrintSql`(45列) / `BuildDetailPrintSql`(76列) を旧cvnet `SubDIgInp12.crs` のSELECT列順へ書き換えた。`PrintPdfService` が結果列名を `Dictionary` のキーにするため、全SELECT列へ列順どおりの `as itemN` を付けている。
+- 旧の画面表示用ヘルパー（`KubunLabel` / `CodeNameViewSql` / `DetailCodeNameSql` / `MeisaiKubunLabelSql`）は旧帳票の「コードと名称を別列」という形と合わないため印刷SQLから外し、発注と同じ `VCd` / `VMei` / `KubunNameSql` / `KubunLabelSql` に置き換えた。
+
+### 旧項目のCV10対応
+- 伝票処理区分(item22)は旧cvnetの受注固定値 `12`。取引区分名(item42/item69)は `「区分コード 区分名」` 形式。
+- 消費税(item17)は `Tax1+Tax2+Tax3`、明細の消費税(item51)は明細JSONの `Tax`。上代金額/下代金額(item53/item55)は `数量 × 上代(下代)単価`。
+- CV10に無い項目は空欄で出す。作成日時・更新日時・外税対象金額・内税消費税・掛率2・MOD_SEQ・関連伝票NO2・展示会CD/展示会・手入力伝票NO・納品先CD/納品先名・担当者CD/担当者名・SYSFLG・送信FLG・セール掛率・消費税CD・消費税計算方法・下代桁切指定/端数区分/計算FLG、明細側の内税消費税・商品シリアル・関連伝票NO/行NO・原価FLG・明細承認FLG・上代・スワッチ頁/位置。
+- 関連伝票NO2 と 手入力伝票NO は `Tran12Jyuchu.Jdetail` の `Yobi1` / `Yobi2` に旧値が移行されている形跡があるが、`Yobi1/Yobi2` は汎用予備項目で受注入力画面にも出ていないため、意味が保証されないと判断して空欄にした（ユーザー確認済み）。
+- 明細納品日は CV10 に明細単位の値が無いため空欄。明細の完了FLG(item63)と完了FLG名(item71)は伝票単位の `EndFlag` を明細行へ繰り返す（発注帳票と同じ扱い・ユーザー確認済み）。
+
+### 検証
+- cv-sqlite で明細SQL（76列）を旧伝票 `OldSeqNo=9178275` に対して実行し、列数・列名の一意性と、商品CD・色/サイズ・数量・単価・金額・取引区分名・完了FLG名が旧 `data.pdf` と一致することを確認した。
+- 旧 `wk_spool_header` / `wk_spool_headerdetail` の `data.pdf` と、CV10のSQLが出す形（負値・空欄・複数明細）で描画したPDFを突合し、レイアウト一致を確認した。
+- `CvWpfclient` は `-t:Compile` でエラー0。アプリ起動中のため出力コピーを伴う通常ビルドは未実施。画面（F6→gRPC→サーバ）からの実出力は未確認。
+
+## [2026-09-14] 発注入力画面 印刷帳票の旧cvnetフォーマット差し替え
 ### 実施内容
 - `printform/HachuInput_header.qfm` / `HachuInput_detail.qfm` を旧cvnetの `cvnet13prn_header.qfm` / `cvnet13prn_detail.qfm` （cp932・CRLF）で差し替えたうえで、CV10向けに次の調整を入れた。
   - 列見出しは旧cvnetが `data.txt` 先頭の `H` レコード（`HEAD1..91`）で流し込んでいたが、CV10 の `PrintPdfService` → `WriteDynamicCsv` はヘッダ行を出力しないため見出しが全て空欄になる。`HEAD*` 束縛の見出し（header 22件 / detail 39件）を `calctype="static"` の固定文字列へ変換した。帳票タイトルは CSV 4列目（`item4`）束縛に変更した。
