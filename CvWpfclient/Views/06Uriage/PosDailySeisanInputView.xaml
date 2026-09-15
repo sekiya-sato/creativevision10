@@ -13,5 +13,511 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:PosDailySeisanInputViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoUpdateCommand}"
+			Gesture="F2" />
+		<KeyBinding Command="{Binding DoDeleteCommand}"
+			Gesture="F3" />
+		<KeyBinding Command="{Binding DoInsertCommand}"
+			Gesture="F4" />
+		<KeyBinding Command="{Binding DoListCommand}"
+			Gesture="F5" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding DoUpdateCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="修正 (F2)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Pencil" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="修正" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoDeleteCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="削除 (F3)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Delete" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="削除" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoInsertCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="追加 (F4)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Plus" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="追加" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="CashRegister" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoListCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="一覧取得" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<!--  検索条件エリア  -->
+		<materialDesign:Card Grid.Row="1"
+			Margin="12,10,12,0" Padding="12"
+			materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock Style="{StaticResource FormLabel}"
+					Text="営業日" />
+				<DatePicker Width="150"
+					Margin="0,4"
+					helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="From" IsTodayHighlighted="False"
+					SelectedDate="{Binding SearchFromDenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+					Style="{StaticResource FormDatePicker}" />
+				<TextBlock Margin="8,0" VerticalAlignment="Center"
+					Text="～" />
+				<DatePicker Width="150"
+					Margin="0,4"
+					helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="To" IsTodayHighlighted="False"
+					SelectedDate="{Binding SearchToDenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+					Style="{StaticResource FormDatePicker}" />
+
+				<TextBlock Margin="24,0,0,0"
+					Style="{StaticResource FormLabel}"
+					Text="店舗" />
+				<TextBox Width="180" Height="40"
+					Margin="0,4" VerticalAlignment="Center"
+					helpers:SearchTextBoxAssist.Command="{Binding DoSelectSearchTenpoCommand}"
+					materialDesign:HintAssist.Hint="店舗"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding SearchTenpoName, Mode=OneWay}" />
+			</StackPanel>
+		</materialDesign:Card>
+
+		<Grid Grid.Row="2"
+			Margin="12">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="52*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="48*" />
+			</Grid.ColumnDefinitions>
+
+			<materialDesign:Card Grid.Column="0"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel>
+							<TextBlock VerticalAlignment="Center"
+								DockPanel.Dock="Right" FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+							<TextBlock VerticalAlignment="Center"
+								FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Message}"
+								TextTrimming="CharacterEllipsis" />
+						</DockPanel>
+					</Border>
+
+					<DataGrid x:Name="PosDailySeisanGrid"
+						Grid.Row="1"
+						d:ItemsSource="{d:SampleData ItemCount=5}"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding ListData}"
+						SelectedItem="{Binding Current}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="110"
+								Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+								Header="営業日" />
+							<DataGridTextColumn Width="180"
+								Binding="{Binding VTenpo.Mei}"
+								Header="店舗" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding RegisterNo}"
+								Header="レジ" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding SeisanCnt}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="精算回数" />
+							<DataGridTextColumn Width="140"
+								Binding="{Binding VShain.Mei}"
+								Header="担当者" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding KyakuSu, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="客数" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding RealAmount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="現金残" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding CalcAmount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="計算残" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding AmountDiff, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="差異" />
+							<DataGridTextColumn Width="200"
+								Binding="{Binding Memo}"
+								Header="メモ" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="Transparent" />
+
+			<materialDesign:Card Grid.Column="2"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<TabControl Style="{StaticResource MaterialDesignTabControl}">
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="InformationOutline" />
+								<TextBlock Text="基本" />
+							</StackPanel>
+						</TabItem.Header>
+						<ScrollViewer Padding="10,10,20,20"
+							VerticalScrollBarVisibility="Auto">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="120" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+
+								<TextBlock Grid.Row="0"
+									Style="{StaticResource FormLabel}"
+									Text="営業日" />
+								<DatePicker Grid.Row="0" Grid.Column="1"
+									Width="180"
+									Margin="0,4" HorizontalAlignment="Left"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="営業日" IsTodayHighlighted="False"
+									SelectedDate="{Binding CurrentEdit.DenDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									Style="{StaticResource FormDatePicker}" />
+
+								<TextBlock Grid.Row="1"
+									Style="{StaticResource FormLabel}"
+									Text="店舗Id" />
+								<DockPanel Grid.Row="1" Grid.Column="1"
+									Margin="0,4">
+									<TextBox Width="120" Height="36"
+										HorizontalContentAlignment="Left"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectTenpoCommand}"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VTenpo, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
+								</DockPanel>
+
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="レジ番号" />
+								<TextBox Grid.Row="2" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="レジ番号" MaxLength="8"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.RegisterNo, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="3"
+									Style="{StaticResource FormLabel}"
+									Text="担当者Id" />
+								<DockPanel Grid.Row="3" Grid.Column="1"
+									Margin="0,4">
+									<TextBox Width="120" Height="36"
+										HorizontalContentAlignment="Left"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
+								</DockPanel>
+
+								<TextBlock Grid.Row="4"
+									Style="{StaticResource FormLabel}"
+									Text="精算回数" />
+								<TextBox Grid.Row="4" Grid.Column="1"
+									Width="100"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="精算回数" IsReadOnly="True"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.SeisanCnt}" />
+
+								<TextBlock Grid.Row="5"
+									Style="{StaticResource FormLabel}"
+									Text="客数" />
+								<TextBox Grid.Row="5" Grid.Column="1"
+									Width="100"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="客数"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.KyakuSu, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="6"
+									Style="{StaticResource FormLabel}"
+									Text="釣銭準備金" />
+								<TextBox Grid.Row="6" Grid.Column="1"
+									Width="140"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="釣銭準備金"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.JunbiAmount, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="7"
+									Style="{StaticResource FormLabel}"
+									Text="計算残" />
+								<TextBox Grid.Row="7" Grid.Column="1"
+									Width="140"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="計算残"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.CalcAmount, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="8"
+									Style="{StaticResource FormLabel}"
+									Text="現金残" />
+								<TextBox Grid.Row="8" Grid.Column="1"
+									Width="140"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="現金残" IsReadOnly="True"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.RealAmount}" />
+
+								<TextBlock Grid.Row="9"
+									Style="{StaticResource FormLabel}"
+									Text="差異" />
+								<TextBox Grid.Row="9" Grid.Column="1"
+									Width="140"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="差異" IsReadOnly="True"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.AmountDiff}" />
+
+								<TextBlock Grid.Row="10"
+									Style="{StaticResource FormLabel}"
+									Text="メモ" />
+								<TextBox Grid.Row="10" Grid.Column="1"
+									MinHeight="60"
+									materialDesign:HintAssist.Hint="メモ" AcceptsReturn="True"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Memo, UpdateSourceTrigger=PropertyChanged}"
+									TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+							</Grid>
+						</ScrollViewer>
+					</TabItem>
+
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="CashMultiple" />
+								<TextBlock Text="金種" />
+							</StackPanel>
+						</TabItem.Header>
+						<ScrollViewer Padding="10,10,20,20"
+							VerticalScrollBarVisibility="Auto">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="120" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+
+								<TextBlock Grid.Row="0"
+									Style="{StaticResource FormLabel}"
+									Text="1万円札" />
+								<TextBox Grid.Row="0" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="1万円札"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai10000, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="1"
+									Style="{StaticResource FormLabel}"
+									Text="5千円札" />
+								<TextBox Grid.Row="1" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="5千円札"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai5000, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="2千円札" />
+								<TextBox Grid.Row="2" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="2千円札"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai2000, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="3"
+									Style="{StaticResource FormLabel}"
+									Text="千円札" />
+								<TextBox Grid.Row="3" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="千円札"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai1000, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="4"
+									Style="{StaticResource FormLabel}"
+									Text="500円玉" />
+								<TextBox Grid.Row="4" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="500円玉"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai500, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="5"
+									Style="{StaticResource FormLabel}"
+									Text="100円玉" />
+								<TextBox Grid.Row="5" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="100円玉"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai100, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="6"
+									Style="{StaticResource FormLabel}"
+									Text="50円玉" />
+								<TextBox Grid.Row="6" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="50円玉"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai50, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="7"
+									Style="{StaticResource FormLabel}"
+									Text="10円玉" />
+								<TextBox Grid.Row="7" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="10円玉"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai10, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="8"
+									Style="{StaticResource FormLabel}"
+									Text="5円玉" />
+								<TextBox Grid.Row="8" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="5円玉"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai5, UpdateSourceTrigger=PropertyChanged}" />
+
+								<TextBlock Grid.Row="9"
+									Style="{StaticResource FormLabel}"
+									Text="1円玉" />
+								<TextBox Grid.Row="9" Grid.Column="1"
+									Width="120"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="1円玉"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Mai1, UpdateSourceTrigger=PropertyChanged}" />
+							</Grid>
+						</ScrollViewer>
+					</TabItem>
+				</TabControl>
+			</materialDesign:Card>
+		</Grid>
+	</Grid>
 </helpers:BaseWindow>

@@ -272,7 +272,7 @@ public partial class MenuData : ObservableObject {
 		new("■ 売上", new([
 			new("出荷・売上入力", typeof(Views._06Uriage.ShukkaUriageInputView), addInfo:"出荷売上入力"),
 			new("店舗売上入力", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"店舗売上入力"),
-			new("POS日別精算入力", typeof(Views._06Uriage.PosDailySeisanInputView), addInfo:"未実装 日別精算を保存するテーブルが無く仕様確定待ち"),
+			new("POS日別精算入力", typeof(Views._06Uriage.PosDailySeisanInputView)),
 			new("▲ 帳票・納品書 ----", new([
 				new("売上金種Viewer", typeof(Views._06Uriage.UriageCashTypeReportView), addInfo:"POS決済内訳を金種別に集計し売上金額との差額を確認"),
 				new("品番別売上チェックリスト", typeof(Views._06Uriage.HinbanUriageCheckListView), addInfo:"卸･店舗売上明細を品番別に集計して数量･金額･上代･平均単価を印刷"),

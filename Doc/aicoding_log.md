@@ -1,4 +1,34 @@
-﻿## [2026-09-14] 店舗売上入力画面 印刷帳票の旧cvnetフォーマット差し替え
+﻿## [2026-09-15] POS日別精算入力画面（Tran04PosSeisan メンテ）の新規実装
+
+### 実施内容
+- `PosDailySeisanInputView` / `PosDailySeisanInputViewModel` は「精算を保存するテーブルが無く仕様確定待ち」という理由で空スタブのまま保留されていたが、`Tran04PosSeisan`（`CvBase/BaseDb4Pos.cs`）が既に定義・`DefineDataTable.TableTypes` 登録済みであり保留理由が失効していたため、一覧表示・新規登録・修正・削除ができるメンテ画面として実装した。ViewModel に残っていた保留理由のXMLコメントは削除した。
+- ViewModel は `BaseMenteViewModel<Tran04PosSeisan>` を継承。`BaseTranInputViewModel` は `TranAllHeader`＋明細前提で `Tran04PosSeisan`（明細を持たない単票）に適合しないため採用しなかった。構造は `TranShopPromotionMenteViewModel` に合わせた。
+- 保存経路はユーザー判断により**汎用CRUD一本**（`Msg101_Op_Query` / `Msg201_Op_Execute` + `InsertParam`/`UpdateParam`/`DeleteParam`）とした。`Tran04PosSeisan` は `BaseDbClass` 継承かつ `TableTypes` 登録済みのため**サーバ側の追加実装は不要**。POS端末用の専用RPC `Msg073_PosSaveSeisan`（INSERT専用、金額と `SeisanCnt` をサーバ算出）は本画面からは使用していない。
+- 一覧は基底既定の型付き `QueryListParam` 経路を使用し、生SQLは書いていない。`VTenpo`/`VShain`/`Jsummary` が `[SerializedColumn]`（JSON）であり、型付き経路でないと正しくデシリアライズされないため。`ListOrder` は `DenDay DESC, Id_Tenpo, RegisterNo, SeisanCnt`。
+- 検索条件は営業日From/To（パラメータ化）と店舗Id。数値列の `Id_Tenpo` は基底 `BuildSelectCodeWhere` と同様にリテラル埋め込みとした（`AddSqlParameter` は値を文字列化するため、PostgreSQL 等で `bigint = text` の型不一致になる）。
+- 金額はユーザー判断により**金種枚数からの自動算出**とした。`RealAmount` = Σ(`Mai*` × 額面)、`AmountDiff` = `RealAmount` - `CalcAmount` を `CurrentEdit.PropertyChanged` 購読で再計算し、画面上は両項目を読取専用にした。`CalcAmount` / `JunbiAmount` はユーザー入力値。
+- `SeisanCnt` は新規登録時に同一（`DenDay`, `Id_Tenpo`, `RegisterNo`）の最大値＋1 を採番する。`CreateInsertParam` が同期メソッドのため DB 照会はせず `ListData` から算出している。
+- `Jsummary`（精算時点の売上集計スナップショット）は画面の編集対象外とし、修正時も既存値をそのまま保持する。
+- View は `TranShopPromotionMenteView` の構造（F2修正/F3削除/F4追加/F5一覧の `InputBindings`、`materialDesign:ColorZone` ツールバー、左右2ペイン＋`GridSplitter`、左 `DataGrid` ＋ 右 `TabControl`）を踏襲し、「基本」「金種」の2タブ構成とした。新規のスタイル・Converter は追加していない。
+- `MenuData.cs` の「POS日別精算入力」エントリから、実態と矛盾していた `addInfo:"未実装 日別精算を保存するテーブルが無く仕様確定待ち"` を削除した。
+
+### 検証
+- `dotnet build CvWpfclient/CvWpfclient.csproj` 0警告0エラー。
+- `git diff --check` clean。変更は `MenuData.cs` / `PosDailySeisanInputViewModel.cs` / `PosDailySeisanInputView.xaml` の3ファイルのみ。
+
+### 追記: 実機起動で発覚した2件の修正
+- ユーザーが実機で一覧取得したところ `SQLite Error 1: 'no such column: RegisterNo'` で失敗した。`Tran04PosSeisan` の物理テーブル（`CvServer/server-user163.db`）を直接確認したところ、クラス定義にある `RegisterNo` 列が存在せず、インデックス `Tran04PosSeisan_nk1` も `(DenDay,Id_Tenpo)` のままで `RegisterNo` が入っていなかった（クラス側は `KeyDml("nk1", false, [DenDay, Id_Tenpo, RegisterNo])`）。画面側の不具合ではなくスキーマ移行漏れ。同テーブルの他の列（Id/Vdc/Vdu/DenDay/Id_Tenpo/VTenpo/Id_Shain/VShain/SeisanCnt/KyakuSu/Mai10000〜Mai1/JunbiAmount/RealAmount/CalcAmount/AmountDiff/Jsummary/Memo）は定義と一致しておりズレは無かった。
+- `CvBase/UpdateDb.cs` の `versions` に `26_09_15_01` を1行追加し、`ALTER TABLE Tran04PosSeisan ADD COLUMN RegisterNo TEXT NOT NULL DEFAULT '';` と、`DROP INDEX IF EXISTS Tran04PosSeisan_nk1;CREATE INDEX IF NOT EXISTS Tran04PosSeisan_nk1 ON Tran04PosSeisan(DenDay,Id_Tenpo,RegisterNo);` を実行するようにした。`ExDatabase.CreateIndex` は `IF NOT EXISTS` の追加専用で既存インデックスの列変更ができないため、DROP してから作り直す（`26_09_08_04` と同じ理由・同じ書式）。既存行の `RegisterNo` は `''` になる。
+- 「基本」タブの編集フォームで「メモ」が「差異」と重なって表示された。`Grid.RowDefinitions` が10行（0〜9）しか無いのに「メモ」が `Grid.Row="10"` を使っており、WPF が最終行へクランプしていたのが原因。`RowDefinition` を1行追加して解消した。「金種」タブは10行/10項目で整合しており修正不要。
+- なお「店舗Id」「担当者Id」がIdの数値入力欄になっている点は、`MenteSearchTextBox`（Id入力＋選択ダイアログ）＋ `MasterRefText`（名称表示）という他メンテ画面と共通のパターンであり不具合ではない。
+
+### 残余リスク・未実施
+- **CvServer 再起動による移行適用後の、実機での画面動作確認（一覧取得・登録・修正・削除・レイアウト見切れ）は未実施。** XAMLコンパイルとビルドが通ることのみ確認している。
+- **`SeisanCnt` の採番は `ListData` に依存する。** 検索条件で対象日を除外した状態や `MaxCount` で打ち切られた状態で新規登録すると、既存レコードと同じ `SeisanCnt` が採番されうる。`KeyDml("nk1", ...)` は非ユニークのため DB エラーにはならず重複が静かに成立する。厳密な採番が必要ならサーバ側での採番（専用RPC相当）への切り替えが必要。
+- **汎用CRUD経路は POS 端末側の精算確定ロジックをバイパスする。** 本画面からの登録・修正・削除は、サーバ側の金額算出・`SeisanCnt` 採番・`V*` スナップショット設定を経由しない。事務所からの照会・補正用という位置づけを前提としている。
+- 新規レコードの `DenDay` はエンティティ既定値 `19010101` のまま `DatePicker` に表示される。登録時の検証で8桁妥当性は見るが、既定日付の扱いは要確認。
+
+## [2026-09-14] 店舗売上入力画面 印刷帳票の旧cvnetフォーマット差し替え
 ### 実施内容
 - `printform/ShopUriageInput_header.qfm` / `_detail.qfm` を旧cvnetの `cvnet01prn_header.qfm` / `cvnet01prn_detail.qfm`（cp932・LF、`.gitattributes` の `*.qfm text eol=lf` に合わせ改行はLFへ変換）で差し替えた。
 - 現行 `SubDIgInp01.crs` の非コメントSQL（`OnQueryPrint`/`OnQueryDetailPrint`）と `d_sql.txt`（一覧53列/明細80列）を突き合わせた結果、供給された旧qfmの `itemN` 束縛にズレは無く（一覧qfmはitem1〜45、明細qfmはitem1〜72までを実際に使用）、位置ズレ修正は不要だった。
