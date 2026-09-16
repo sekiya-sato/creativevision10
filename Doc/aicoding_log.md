@@ -1,4 +1,15 @@
-﻿## [2026-09-15] POS日別精算入力画面（Tran04PosSeisan メンテ）の新規実装
+﻿## [2026-09-16] POS日別精算入力画面 印刷機能の追加
+
+### 実施内容
+- `PosDailySeisanInputView`/`PosDailySeisanInputViewModel` に印刷ボタン（F6）を追加した。他画面が持つ `FormFile`/`PrintBySqlParam` の仕組みに合わせ、`Tran04PosSeisan` を1行1帳票行として出力する `PosDailySeisanInput.qfm` を新規作成した（旧cvnet移植ではなく新規様式、13列: 営業日/店舗CD/店舗名/レジNo/精算回数/社員CD/社員名/客数/準備金/実金額/計算金額/差異/メモ）。
+- `CurrentEdit` のフィールド初期化子では `OnCurrentEditChanged` が呼ばれず初期インスタンスが購読されない問題に対し、コンストラクタで `OnCurrentEditChangedCore` を明示呼び出しするよう修正した。
+
+### 検証
+- `dotnet build creativevision10.slnx` 0警告0エラー、`git diff --check` clean。
+- qfm は `printform/*.qfm` の規約通り LF・cp932 で作成した。
+- 画面(F6→gRPC→サーバ)経由の実出力、PDFレイアウトの目視確認は未実施。
+
+## [2026-09-15] POS日別精算入力画面（Tran04PosSeisan メンテ）の新規実装
 
 ### 実施内容
 - `PosDailySeisanInputView` / `PosDailySeisanInputViewModel` は「精算を保存するテーブルが無く仕様確定待ち」という理由で空スタブのまま保留されていたが、`Tran04PosSeisan`（`CvBase/BaseDb4Pos.cs`）が既に定義・`DefineDataTable.TableTypes` 登録済みであり保留理由が失効していたため、一覧表示・新規登録・修正・削除ができるメンテ画面として実装した。ViewModel に残っていた保留理由のXMLコメントは削除した。

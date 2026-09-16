@@ -42,6 +42,11 @@ public partial class PosDailySeisanInputViewModel : Helpers.BaseMenteViewModel<T
 
 	bool recalculating;
 
+	public PosDailySeisanInputViewModel() {
+		// CurrentEdit のフィールド初期化子では OnCurrentEditChanged が呼ばれず初期インスタンスが購読されないため、ここで購読する
+		OnCurrentEditChangedCore(null, CurrentEdit);
+	}
+
 	protected override string? ListOrder => "DenDay DESC, Id_Tenpo, RegisterNo, SeisanCnt";
 
 	protected override string? ListWhere {
@@ -62,6 +67,32 @@ public partial class PosDailySeisanInputViewModel : Helpers.BaseMenteViewModel<T
 
 			SelectCodeWhereParameters = [.. parameters];
 			return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+		}
+	}
+
+	protected override string? FormFile => "PosDailySeisanInput.qfm";
+
+	protected override QueryListSqlParam? PrintBySqlParam {
+		get {
+			var query = CreateListQueryParam();
+			var sql = @$"
+select
+substr(DenDay,1,4) || '/' || substr(DenDay,5,2) || '/' || substr(DenDay,7,2) DenDayDisp,
+ifnull(json_extract(VTenpo,'$.Cd'),'') TenpoCd,
+ifnull(json_extract(VTenpo,'$.Mei'),'') TenpoMei,
+RegisterNo,
+SeisanCnt,
+ifnull(json_extract(VShain,'$.Cd'),'') ShainCd,
+ifnull(json_extract(VShain,'$.Mei'),'') ShainMei,
+KyakuSu,
+JunbiAmount,
+RealAmount,
+CalcAmount,
+AmountDiff,
+Memo
+from Tran04PosSeisan {query.AddWhereOrder()}
+";
+			return new QueryListSqlParam(typeof(Tran04PosSeisan), sql, query.Parameters);
 		}
 	}
 
