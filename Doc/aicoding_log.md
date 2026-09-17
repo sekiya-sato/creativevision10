@@ -1,4 +1,30 @@
-﻿## [2026-09-17] 配分帳票 刷新 Step 1: 滞留・欠品例外（出荷指示一覧）PDF帳票の新規実装
+﻿## [2026-09-17] 配分帳票 刷新 Step 2: 出荷指示明細書の新規実装
+
+### 実施内容
+- 配分4帳票の2本目（区分D=新規）。空スタブだった `ShippingConfirmDetailPrintView` / `ShippingConfirmDetailPrintViewModel` を実装し、`MenuData.cs` の当該エントリから `準備中` を外した。
+- `printform/ShippingInstructionDetail_header.qfm`（12列）と `ShippingInstructionDetail_detail.qfm`（19列）を新規作成。単一の印刷ボタン(F6)から header → detail の順に `PrintPdfHelper.RunPrintPdfAsync` を2回呼ぶ（同ヘルパは1呼出1帳票のため）。
+- 絞込条件は 区分(`EnumHaibun`)／出庫倉庫コード範囲／出荷先コード範囲／配分指示日範囲／確定済みのみ(既定ON)。
+
+### 判断・仕様
+- **伝票キー**: `TranHaibun` は伝票NO列を持たないため、仮想ヘッダキー `HaibunHeaderKey` から `DenDay(8) + Kubun(1) + Id_Soko(6) + Id_Tenpo(6) + RelateNo1(6)` の27桁固定長・数字のみで組み立てた。CODE39 が扱える文字種に収まる。実値例 `202609052002818002819000005`。
+- header 側は仮想ヘッダキーの6列で `GROUP BY` し、伝票計（数量計・上代金額計）を集計する。`Id_Shain` は `MAX()` で取り、bare column を避けた。
+- **上代金額 = `Su` × `Jodai`**。`TranHaibun.Jodai` は `[Comment("上代")]` と `OldTableCommentAttr("上代金額")` が食い違うが、`ShopHaibunInputViewModel` の登録処理が `Tanka = jodai` / `Kingaku = Su * jodai` / `Jodai = jodai` と書いており、`Jodai` は単価であることを確認した（`Gedai` も `TankaGenka` で単価）。
+- **入庫部門**は旧CVnetでは空欄だったが、CV10では `Id_Tenpo` のコード・名称を印字する（旧の空欄は踏襲しない）。
+- 旧の「印刷区分(通常/再発行)」「伝票NO範囲」「原価FLG」「JAN2段目」はスコープ外。伝票NOが存在しない、再発行の管理データが無い等の理由による。
+- 抽出条件はSQLの定数列として全行に乗せる方式（Step 1 と統一）。0件時は警告ダイアログで印刷中止。
+
+### 検証
+- **header / detail 両方の帳票SQLを `cv-sqlite` で実行し、SQLエラーが無いこと・データが取得できることを確認**。header 12列・detail 19列を取得、倉庫/出荷先/社員/商品/`DerivedShohinColSiz` の結合がすべて解決。上代金額計 12000 = 数量6 × 単価2000 で単価解釈の整合も確認した。
+- SELECT列順 = qfm `itemN` が header 12対12・detail 19対19 で一致。
+- qfm は cp932・LF・XML妥当、`grouplevel` の出現値は 1 のみで 0 が無いこと、CODE39 バーコード（`type="0"`）が伝票キーと出庫部門の2本入っていることを確認。
+- `dotnet build CvWpfclient/CvWpfclient.csproj` 成功、`git diff --check` clean。
+
+### 未実施・残余リスク
+- 実PDF出力によるレイアウト・バーコード可読性の確認は未実施。
+- `TranHaibun` の実データが1件のみのため、複数ヘッダキーにまたがる改ページと伝票計の実挙動は未確認。
+- header SQL の `soko.Code` 等は `GROUP BY` 対象外の bare column（`Id_Soko`/`Id_Tenpo` に関数従属のため SQLite では決定的）。10.2 以降で PostgreSQL / MariaDB を本格対応する際は `ONLY_FULL_GROUP_BY` 相当の制約に触れるため見直しが要る。
+
+## [2026-09-17] 配分帳票 刷新 Step 1: 滞留・欠品例外（出荷指示一覧）PDF帳票の新規実装
 
 ### 実施内容
 - `Doc/spec/2026-09-16_CV10次世代帳票_Phase0帳票台帳・再評価.md` 4.5 配分の4帳票（区分D=新規）のうち1本目。画面・検索・CSV出力は実装済みで qfm 帳票だけが未実装だった（コード中に「PDF帳票は別途qfmが要るためCSVで代替」のコメントあり）。

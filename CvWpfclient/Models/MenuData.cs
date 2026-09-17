@@ -249,7 +249,7 @@ public partial class MenuData : ObservableObject {
 				new("出荷指示確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"商品基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
 				new("出荷指示確定(得意先)", typeof(Views._07Haibun.ShippingConfirmTokuiView), addInfo:"得意先基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
 				new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
-				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中 確定した配分をピッキングリストとして印刷"),
+				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"確定した配分をピッキングリストとして印刷"),
 				new("滞留・欠品例外(出荷指示一覧)", typeof(Views._07Haibun.ShippingConfirmListView), addInfo:"確定済みかつ未出荷の滞留を検出し確定取消/強制完了。欠品実績も照会"),
 				new("納入一覧表", typeof(Views._07Haibun.ShippingListReportView), addInfo:"準備中 商品×出荷先で種まき用の数量表を印刷"),
 			])),
