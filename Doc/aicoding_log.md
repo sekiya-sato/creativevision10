@@ -1,4 +1,28 @@
-﻿## [2026-09-16] POS日別精算入力画面 印刷機能の追加
+﻿## [2026-09-17] 配分帳票 刷新 Step 1: 滞留・欠品例外（出荷指示一覧）PDF帳票の新規実装
+
+### 実施内容
+- `Doc/spec/2026-09-16_CV10次世代帳票_Phase0帳票台帳・再評価.md` 4.5 配分の4帳票（区分D=新規）のうち1本目。画面・検索・CSV出力は実装済みで qfm 帳票だけが未実装だった（コード中に「PDF帳票は別途qfmが要るためCSVで代替」のコメントあり）。
+- `ShippingConfirmListViewModel` に `DoOutputPdfCommand`（F6）・`BuildPrintSqlParam`・`BuildConditionText` を追加し、WHERE句構築を `BuildWhere()` へ切り出して画面検索と印刷でSQLを共用した。既存の `ExportCsv` は残置。
+- `printform/ShippingStagnationList.qfm` を新規作成。出力項目は既存 `BuildCsv()` の12列と同一（確定日/納品予定日/経過日数/予定日超過/倉庫/出荷先/種別/商品/色サイズ/指示数/実数量/欠品）＋帳票ヘッダの抽出条件表示用の定数列1本で計13列。
+
+### 判断・仕様
+- **印刷SQLの並び順のみ画面と変えた**（画面 `KakuteiDay, Id_Soko, Id_Tenpo, Id` → 印刷 `Id_Soko, Id_Tenpo, KakuteiDay, Id`）。qfmのグループ小計はキー変化での区切りで動くため、確定日優先のままでは同じ倉庫/出荷先が日付をまたぐたびに小計が分断され「倉庫ごとの合計」にならない。`DeliveryScheduleTable` も同様にグループキーを先頭に置いている。
+- **抽出条件（モード・期間・倉庫・出荷先）はSQLの定数列として全行に乗せる方式**とした。qfm には実行時に決まる値を渡す手段が無いため。配分帳票の残り3本でも同方式で統一する。
+- グループ階層は level 1=総合計（定数列）/ 2=倉庫 / 3=出荷先。当初 総合計を `grouplevel="0"` で書いていたが、`Doc/spec/PrintStream_qfmフォーマット仕様.md` 3.4 の観測値は `group level` が 1/2/3/4 のみで **0 は 0 件**であり前例のない発明値だったため、定数列を最上位グループにする形へ修正した。
+- 旧CVnetの 伝票NO・送信?・区分2・メモ は今回スコープ外。`TranHaibun` は伝票NO列を持たず（仮想ヘッダキー `HaibunHeaderKey` で括る設計）、現行画面の検索結果に対応する列が無いため。
+- 0件時は空白PDFを出さず、既存 `ExportCsv` と同じく警告ダイアログを出して印刷を中止する。
+
+### 検証
+- **帳票SQLを `cv-sqlite` で実際に実行し、SQLエラーが無いこと・データが取得できることを確認**（13列取得、倉庫/出荷先/商品/`DerivedShohinColSiz` の4結合すべて解決）。
+- SELECT列順 = CSV列順 = qfm `itemN` が13対13で一致することを確認。
+- qfm は cp932・LF・XML妥当、`grouplevel` / `group level` の出現値が 1/2/3 のみで 0 が無いことを確認。
+- `dotnet build CvWpfclient/CvWpfclient.csproj` 成功、`git diff --check` clean。
+
+### 未実施・残余リスク
+- 画面(F6→gRPC→サーバ)経由の実PDF出力と、2段グループ小計・総合計・条件行のレイアウト目視確認は未実施。
+- `TranHaibun` の実データがUAT由来の1件のみのため、複数伝票・複数SKU・欠品ありでのグループ改行と小計の挙動は未確認。
+
+## [2026-09-16] POS日別精算入力画面 印刷機能の追加
 
 ### 実施内容
 - `PosDailySeisanInputView`/`PosDailySeisanInputViewModel` に印刷ボタン（F6）を追加した。他画面が持つ `FormFile`/`PrintBySqlParam` の仕組みに合わせ、`Tran04PosSeisan` を1行1帳票行として出力する `PosDailySeisanInput.qfm` を新規作成した（旧cvnet移植ではなく新規様式、13列: 営業日/店舗CD/店舗名/レジNo/精算回数/社員CD/社員名/客数/準備金/実金額/計算金額/差異/メモ）。

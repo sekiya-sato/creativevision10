@@ -16,6 +16,8 @@
 	<helpers:BaseWindow.InputBindings>
 		<KeyBinding Command="{Binding SearchCommand}"
 			Gesture="F5" />
+		<KeyBinding Command="{Binding DoOutputPdfCommand}"
+			Gesture="F6" />
 		<KeyBinding Command="{Binding ExitCommand}"
 			Gesture="Esc" />
 	</helpers:BaseWindow.InputBindings>
@@ -152,6 +154,16 @@
 						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
 							Kind="FileDelimitedOutline" />
 						<TextBlock FontSize="16" Text="CSV出力" />
+					</StackPanel>
+				</Button>
+				<Button Margin="12,0,0,0"
+					Command="{Binding DoOutputPdfCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="印刷 (F6)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+							Kind="Printer" />
+						<TextBlock FontSize="16" Text="印刷" />
 					</StackPanel>
 				</Button>
 				<Button Margin="12,0,0,0"

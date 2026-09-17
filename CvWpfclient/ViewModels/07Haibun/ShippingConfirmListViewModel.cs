@@ -131,6 +131,23 @@ public partial class ShippingConfirmListViewModel : BaseQueryViewModel {
 	}
 
 	async Task<List<TranHaibun>> LoadCandidatesAsync(string dayFrom, string dayTo, int maxCount, CancellationToken ct) {
+		var (where, parameters) = BuildWhere(dayFrom, dayTo);
+		var sql = $@"
+SELECT h.*
+FROM {nameof(TranHaibun)} h
+LEFT JOIN {nameof(MasterTokui)} soko ON soko.Id = h.Id_Soko
+LEFT JOIN {nameof(MasterTokui)} ten ON ten.Id = h.Id_Tenpo
+WHERE {where}
+ORDER BY h.KakuteiDay, h.Id_Soko, h.Id_Tenpo, h.Id
+LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
+		return await QuerySqlListAsync<TranHaibun>(sql, parameters, ct);
+	}
+
+	/// <summary>
+	/// 検索条件からWHERE句とバインドパラメータを組み立てる。画面一覧の検索(<see cref="LoadCandidatesAsync"/>)と
+	/// PDF印刷(<see cref="BuildPrintSqlParam"/>)の両方で共用し、SQLの二重定義を避ける。
+	/// </summary>
+	(string where, List<string> parameters) BuildWhere(string dayFrom, string dayTo) {
 		var todayYmd = DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
 		List<string> parameters = [dayFrom, dayTo];
 		string where;
@@ -155,16 +172,7 @@ public partial class ShippingConfirmListViewModel : BaseQueryViewModel {
 		}
 		where += RangeEq(parameters, "soko.Code", SokoCode);
 		where += RangeEq(parameters, "ten.Code", TokuiCode);
-
-		var sql = $@"
-SELECT h.*
-FROM {nameof(TranHaibun)} h
-LEFT JOIN {nameof(MasterTokui)} soko ON soko.Id = h.Id_Soko
-LEFT JOIN {nameof(MasterTokui)} ten ON ten.Id = h.Id_Tenpo
-WHERE {where}
-ORDER BY h.KakuteiDay, h.Id_Soko, h.Id_Tenpo, h.Id
-LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
-		return await QuerySqlListAsync<TranHaibun>(sql, parameters, ct);
+		return (where, parameters);
 	}
 
 	async Task<List<ShippingStagnationRow>> ComposeRowsAsync(List<TranHaibun> candidates, CancellationToken ct) {
@@ -303,6 +311,97 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 	static string CsvField(string value) {
 		var v = (value ?? string.Empty).Replace("\r\n", " ").Replace('\n', ' ').Replace('\r', ' ');
 		return v.Contains(',') || v.Contains('"') ? $"\"{v.Replace("\"", "\"\"")}\"" : v;
+	}
+
+	/// <summary>印刷フォーム(qfm)ファイル名</summary>
+	static string FormFile => "ShippingStagnationList.qfm";
+
+	/// <summary>
+	/// 表示中の検索条件でPDF帳票(倉庫→出荷先の2段グループ・小計、総合計)を出力する。
+	/// <para>
+	/// 0件のときに空白PDFを出さないよう、ExportCsv と同じ「先に検索してください」ガードで印刷自体を中止する
+	/// （画面の Rows が現在の検索条件に対する最新の結果である前提）。qfm 側には0件時の専用メッセージは実装していない。
+	/// </para>
+	/// </summary>
+	[RelayCommand(IncludeCancelCommand = true)]
+	async Task DoOutputPdf(CancellationToken ct) {
+		if (IsBusy) return;
+		if (Rows.Count == 0) {
+			MessageEx.ShowWarningDialog("出力する明細がありません。先に検索してください。", owner: ActiveWindow);
+			return;
+		}
+		if (!TryParseDate(KakuteiFromText, out var from)) return;
+		if (!TryParseDate(KakuteiToText, out var to)) return;
+		if (from > to) {
+			MessageEx.ShowWarningDialog("確定日の開始日が終了日より後になっています。", owner: ActiveWindow);
+			return;
+		}
+
+		StartBusy("PDF出力中...");
+		try {
+			var sqlParam = BuildPrintSqlParam(from, to);
+			await PrintPdfHelper.RunPrintPdfAsync(this, ActiveWindow, m => Message = m, FormFile, null, sqlParam, ct);
+		}
+		catch (OperationCanceledException) {
+			Message = "PDF出力を中断しました";
+		}
+		catch (Exception ex) {
+			Message = $"PDF出力に失敗しました。{ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
+		finally {
+			FinishBusy();
+		}
+	}
+
+	/// <summary>
+	/// 印刷用SQLを組み立てる。WHERE句は画面検索(<see cref="BuildWhere"/>)を再利用し、絞込結果を一致させる。
+	/// <para>
+	/// 並び順のみ画面（KakuteiDay, Id_Soko, Id_Tenpo, Id）と異なり、倉庫→出荷先を先頭に置く
+	/// （<c>Id_Soko, Id_Tenpo, KakuteiDay, Id</c>）。qfmのグループ小計は「キー変化での区切り」で動くため、
+	/// 画面と同じ確定日優先の並びのままでは同じ倉庫/出荷先が日付をまたいで何度も現れるたびに小計が分断され、
+	/// 「倉庫ごとの合計」という小計本来の意味にならない。この並び順変更は判断が必要な点として作業ログ・報告に明記する。
+	/// </para>
+	/// </summary>
+	QueryListSqlParam BuildPrintSqlParam(DateTime from, DateTime to) {
+		var (where, parameters) = BuildWhere(ToDenDay(from), ToDenDay(to));
+		var todayYmd = AddSqlParameter(parameters, DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
+		var todayIso = AddSqlParameter(parameters, DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+		var condition = AddSqlParameter(parameters, BuildConditionText(from, to));
+
+		// SELECT列順・別名は ShippingStagnationList.qfm の item1..item13 と厳密に一致させる。
+		// item1..12 は画面CSV(BuildCsv)と同じ12列。item13(ConditionDisp)はqfm側の帳票ヘッダ(抽出条件表示)専用の追加列で、
+		// CSVには存在しない（qfmには実行時に決まる値を渡す手段が無いため、全行へ同じ値を乗せている）。
+		var sql = $@"
+SELECT
+substr(h.KakuteiDay,1,4) || '/' || substr(h.KakuteiDay,5,2) || '/' || substr(h.KakuteiDay,7,2) KakuteiDayDisp,
+CASE WHEN ifnull(h.NouhinDay,'') = '' THEN '' ELSE substr(h.NouhinDay,1,4) || '/' || substr(h.NouhinDay,5,2) || '/' || substr(h.NouhinDay,7,2) END NouhinDayDisp,
+CAST(MAX(CAST(julianday({todayIso}) - julianday(substr(h.KakuteiDay,1,4) || '-' || substr(h.KakuteiDay,5,2) || '-' || substr(h.KakuteiDay,7,2)) AS INTEGER), 0) AS TEXT) ElapsedDaysDisp,
+CASE WHEN ifnull(h.NouhinDay,'') <> '' AND h.NouhinDay < {todayYmd} THEN '超過' ELSE '' END OverdueDisp,
+{CodeNameDisplay.Sql("soko.Id", "soko.Code", "soko.Name")} SokoDisp,
+{CodeNameDisplay.Sql("ten.Id", "ten.Code", "ten.Name")} TenpoDisp,
+CASE WHEN ten.TenType IN (1,3) THEN '出荷売上' ELSE '移動' END DenKindDisp,
+{CodeNameDisplay.Sql("sh.Id", "sh.Code", "sh.Name")} ShohinDisp,
+trim(trim(ifnull(sku.Code_Col,'') || ' ' || ifnull(sku.Mei_Col,'')) || ' / ' || trim(ifnull(sku.Code_Siz,'') || ' ' || ifnull(sku.Mei_Siz,''))) ColSizDisp,
+h.Su Su,
+h.JitsuSu JitsuSu,
+h.ShortSu ShortSu,
+{condition} ConditionDisp
+FROM {nameof(TranHaibun)} h
+LEFT JOIN {nameof(MasterTokui)} soko ON soko.Id = h.Id_Soko
+LEFT JOIN {nameof(MasterTokui)} ten ON ten.Id = h.Id_Tenpo
+LEFT JOIN {nameof(MasterShohin)} sh ON sh.Id = h.Id_Shohin
+LEFT JOIN {nameof(DerivedShohinColSiz)} sku ON sku.Id_Shohin = h.Id_Shohin AND sku.Id_Col = h.Id_Col AND sku.Id_Siz = h.Id_Siz
+WHERE {where}
+ORDER BY h.Id_Soko, h.Id_Tenpo, h.KakuteiDay, h.Id";
+		return new QueryListSqlParam(typeof(object), sql, [.. parameters]);
+	}
+
+	string BuildConditionText(DateTime from, DateTime to) {
+		var overdue = IsStagnation && OverdueOnly ? "（予定日超過のみ）" : string.Empty;
+		var soko = string.IsNullOrWhiteSpace(SokoCode) ? "指定なし" : SokoCode.Trim();
+		var tokui = string.IsNullOrWhiteSpace(TokuiCode) ? "指定なし" : TokuiCode.Trim();
+		return $"モード:{ViewKind}{overdue} 対象期間:{from:yyyy/MM/dd}〜{to:yyyy/MM/dd} 倉庫:{soko} 出荷先:{tokui}";
 	}
 
 	[RelayCommand]
