@@ -3,7 +3,7 @@
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._07Haibun"
-	Title="納入一覧表"
+	Title="{Binding Title}"
 	Width="{StaticResource StandardWindowWidth}"
 	Height="{StaticResource StandardWindowHeight}"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
@@ -13,5 +13,201 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:ShippingListReportViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoOutputPdfCommand}"
+			Gesture="F6" />
+		<KeyBinding Command="{Binding ExitCommand}"
+			Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<Button Margin="0,0,8,0"
+					Command="{Binding ExitCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="閉じる (Esc)">
+					<materialDesign:PackIcon Kind="ArrowLeft" />
+				</Button>
+				<materialDesign:PackIcon Width="26" Height="26"
+					VerticalAlignment="Center"
+					Kind="TruckDelivery" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="18" FontWeight="SemiBold"
+					Text="{Binding Title}" />
+				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+					Opacity="0.8" Text="品番×出庫倉庫×表示基準ごとに改ページし、得意先×色/サイズのマトリクスで配分数を印刷します（ピッキング用の種まき一覧）。" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<ScrollViewer Grid.Row="1"
+			Margin="12"
+			VerticalScrollBarVisibility="Auto">
+			<StackPanel MaxWidth="900" HorizontalAlignment="Left">
+				<TextBlock Margin="0,0,0,6"
+					FontSize="16" FontWeight="SemiBold" Text="絞込条件" />
+
+				<UniformGrid Columns="2" Rows="1">
+					<StackPanel Margin="0,0,16,12" Orientation="Horizontal">
+						<TextBlock Width="110" VerticalAlignment="Center"
+							Text="表示基準" />
+						<ComboBox Width="150"
+							ItemsSource="{Binding DisplayBasisKindList}"
+							SelectedItem="{Binding DisplayBasisKind}"
+							Style="{StaticResource FormComboBox}" />
+					</StackPanel>
+					<StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+						<TextBlock Width="110" VerticalAlignment="Center"
+							Text="出力数量方式" />
+						<ComboBox Width="150"
+							ItemsSource="{Binding QuantityModeKindList}"
+							SelectedItem="{Binding QuantityModeKind}"
+							Style="{StaticResource FormComboBox}" />
+					</StackPanel>
+				</UniformGrid>
+
+				<StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+					<TextBlock Width="110" VerticalAlignment="Center"
+						Text="商品コード範囲" />
+					<Button Width="60"
+						Command="{Binding SelectShohinFromCommand}"
+						Content="選択"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBox Width="140" Height="32"
+						Margin="8,0,0,0"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding ShohinCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Margin="8,0" VerticalAlignment="Center"
+						Text="～" />
+					<Button Width="60"
+						Command="{Binding SelectShohinToCommand}"
+						Content="選択"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBox Width="140" Height="32"
+						Margin="8,0,0,0"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding ShohinCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+				</StackPanel>
+
+				<StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+					<TextBlock Width="110" VerticalAlignment="Center"
+						Text="配分指示日" />
+					<TextBox Width="140" Height="32"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding DenDayFromText, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Margin="8,0" VerticalAlignment="Center"
+						Text="～" />
+					<TextBox Width="140" Height="32"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding DenDayToText, UpdateSourceTrigger=PropertyChanged}" />
+				</StackPanel>
+
+				<StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+					<TextBlock Width="110" VerticalAlignment="Center"
+						Text="納品日" />
+					<TextBox Width="140" Height="32"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding NouhinDayFromText, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Margin="8,0" VerticalAlignment="Center"
+						Text="～" />
+					<TextBox Width="140" Height="32"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding NouhinDayToText, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+						Opacity="0.7" Text="(空欄可)" />
+				</StackPanel>
+
+				<StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+					<TextBlock Width="110" VerticalAlignment="Center"
+						Text="出庫倉庫コード" />
+					<Button Width="60"
+						Command="{Binding SelectSokoCommand}"
+						Content="選択"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBox Width="140" Height="32"
+						Margin="8,0,0,0"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding SokoCode, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+						Opacity="0.7" Text="(空欄=全倉庫)" />
+				</StackPanel>
+
+				<StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+					<TextBlock Width="110" VerticalAlignment="Center"
+						Text="得意先コード範囲" />
+					<Button Width="60"
+						Command="{Binding SelectTokuiFromCommand}"
+						Content="選択"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBox Width="140" Height="32"
+						Margin="8,0,0,0"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding TokuiCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Margin="8,0" VerticalAlignment="Center"
+						Text="～" />
+					<Button Width="60"
+						Command="{Binding SelectTokuiToCommand}"
+						Content="選択"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBox Width="140" Height="32"
+						Margin="8,0,0,0"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding TokuiCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+				</StackPanel>
+
+				<StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+					<TextBlock Width="110" VerticalAlignment="Center"
+						Text="区分" />
+					<ComboBox Width="200"
+						ItemsSource="{Binding KubunKindList}"
+						SelectedItem="{Binding KubunKind}"
+						Style="{StaticResource FormComboBox}" />
+				</StackPanel>
+
+				<StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+					<Button Command="{Binding DoOutputPdfCommand}"
+						IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+						Style="{StaticResource MaterialDesignFlatMidBgButton}"
+						ToolTip="印刷 (F6)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Printer" />
+							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+								FontSize="16" Text="印刷" />
+						</StackPanel>
+					</Button>
+					<Button Margin="12,0,0,0"
+						Command="{Binding ClearConditionsCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}">
+						<TextBlock FontSize="16" Text="条件クリア" />
+					</Button>
+				</StackPanel>
+			</StackPanel>
+		</ScrollViewer>
+
+		<Border Grid.Row="2"
+			Padding="12,8"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<DockPanel>
+				<Button Command="{Binding ExitCommand}"
+					DockPanel.Dock="Right"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="閉じる (Esc)">
+					<TextBlock FontSize="16" Text="閉じる" />
+				</Button>
+				<TextBlock VerticalAlignment="Center"
+					Text="{Binding Message}"
+					TextWrapping="Wrap" />
+			</DockPanel>
+		</Border>
+	</Grid>
 </helpers:BaseWindow>
