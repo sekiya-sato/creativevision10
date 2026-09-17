@@ -124,21 +124,21 @@
 					<font size="90"/>
 				</text>
 				<text id="H9" halign="right">
-					<position x="176" y="0" width="10" height="4"/>
+					<position x="176" y="0" width="13" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">éÛíçêî</data>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>
 				<text id="H10" halign="right">
-					<position x="186" y="0" width="10" height="4"/>
+					<position x="189" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">ó\íËêî</data>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>
 				<text id="H11" halign="right">
-					<position x="196" y="0" width="10" height="4"/>
+					<position x="203" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">ämíËêî</data>
 					<decode datatype="string" format=""/>
@@ -206,21 +206,21 @@
 					<font size="90"/>
 				</text>
 				<text id="V9" halign="right">
-					<position x="176" y="0" width="10" height="4"/>
+					<position x="176" y="0" width="13" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item9"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90"/>
 				</text>
 				<text id="V10" halign="right">
-					<position x="186" y="0" width="10" height="4"/>
+					<position x="189" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item10"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90"/>
 				</text>
 				<text id="V11" halign="right">
-					<position x="196" y="0" width="10" height="4"/>
+					<position x="203" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item11"/>
 					<decode datatype="number" format="MI999,999,990"/>
@@ -239,21 +239,21 @@
 					<font size="90"/>
 				</text>
 				<text id="Txt2" halign="right">
-					<position x="176" y="0" width="10" height="4"/>
+					<position x="176" y="0" width="13" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item9"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90"/>
 				</text>
 				<text id="Txt3" halign="right">
-					<position x="186" y="0" width="10" height="4"/>
+					<position x="189" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item10"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90"/>
 				</text>
 				<text id="Txt4" halign="right">
-					<position x="196" y="0" width="10" height="4"/>
+					<position x="203" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item11"/>
 					<decode datatype="number" format="MI999,999,990"/>
@@ -272,21 +272,21 @@
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt6" halign="right">
-					<position x="176" y="0" width="10" height="4"/>
+					<position x="176" y="0" width="13" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item9"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt7" halign="right">
-					<position x="186" y="0" width="10" height="4"/>
+					<position x="189" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item10"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt8" halign="right">
-					<position x="196" y="0" width="10" height="4"/>
+					<position x="203" y="0" width="14" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item11"/>
 					<decode datatype="number" format="MI999,999,990"/>

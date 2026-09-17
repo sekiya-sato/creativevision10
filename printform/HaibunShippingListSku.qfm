@@ -33,14 +33,14 @@
 			<font size="120" style="1"/>
 		</text>
 		<text id="TxtDate" valign="middle">
-			<position x="142" y="0" width="32" height="5"/>
+			<position x="105" y="0" width="32" height="5"/>
 			<color transparent="1"/>
 			<data calctype="date"/>
 			<decode datatype="date" format="&quot;作成日時: &quot;YYYY/MM/DD HH24:MI:SS"/>
 			<font size="80"/>
 		</text>
 		<text id="TxtPage" valign="middle" halign="right">
-			<position x="174" y="0" width="9" height="5"/>
+			<position x="138" y="0" width="9" height="5"/>
 			<color transparent="1"/>
 			<data calctype="page"/>
 			<decode datatype="number" format="&quot;P.&quot;0999"/>
@@ -66,35 +66,35 @@
 				<color base="c8ffc8" transparent="0"/>
 				<border bottom="1"/>
 				<text id="H1">
-					<position x="16" y="0" width="80" height="4"/>
+					<position x="16" y="0" width="35" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">商品</data>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>
 				<text id="H2">
-					<position x="96" y="0" width="40" height="4"/>
+					<position x="51" y="0" width="20" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">色/サイズ</data>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>
 				<text id="H3" halign="right">
-					<position x="136" y="0" width="15" height="4"/>
+					<position x="71" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">受注数</data>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>
 				<text id="H4" halign="right">
-					<position x="151" y="0" width="15" height="4"/>
+					<position x="88" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">予定数量</data>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>
 				<text id="H5" halign="right">
-					<position x="166" y="0" width="17" height="4"/>
+					<position x="105" y="0" width="18" height="4"/>
 					<color transparent="1"/>
 					<data calctype="static">確定数量</data>
 					<decode datatype="string" format=""/>
@@ -144,35 +144,35 @@
 				<color transparent="1"/>
 				<border bottom="1"/>
 				<text id="V3">
-					<position x="16" y="0" width="80" height="4"/>
+					<position x="16" y="0" width="35" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item3"/>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>
 				<text id="V4">
-					<position x="96" y="0" width="40" height="4"/>
+					<position x="51" y="0" width="20" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item4"/>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>
 				<text id="V5" halign="right">
-					<position x="136" y="0" width="15" height="4"/>
+					<position x="71" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item5"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90"/>
 				</text>
 				<text id="V6" halign="right">
-					<position x="151" y="0" width="15" height="4"/>
+					<position x="88" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item6"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90"/>
 				</text>
 				<text id="V7" halign="right">
-					<position x="166" y="0" width="17" height="4"/>
+					<position x="105" y="0" width="18" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item7"/>
 					<decode datatype="number" format="MI999,999,990"/>
@@ -191,21 +191,21 @@
 					<font size="90"/>
 				</text>
 				<text id="Txt6" halign="right">
-					<position x="136" y="0" width="15" height="4"/>
+					<position x="71" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item5"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90"/>
 				</text>
 				<text id="Txt7" halign="right">
-					<position x="151" y="0" width="15" height="4"/>
+					<position x="88" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item6"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90"/>
 				</text>
 				<text id="Txt8" halign="right">
-					<position x="166" y="0" width="17" height="4"/>
+					<position x="105" y="0" width="18" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item7"/>
 					<decode datatype="number" format="MI999,999,990"/>
@@ -224,21 +224,21 @@
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt10" halign="right">
-					<position x="136" y="0" width="15" height="4"/>
+					<position x="71" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item5"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt11" halign="right">
-					<position x="151" y="0" width="15" height="4"/>
+					<position x="88" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item6"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt12" halign="right">
-					<position x="166" y="0" width="17" height="4"/>
+					<position x="105" y="0" width="18" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item7"/>
 					<decode datatype="number" format="MI999,999,990"/>
@@ -257,21 +257,21 @@
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt14" halign="right">
-					<position x="136" y="0" width="15" height="4"/>
+					<position x="71" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item5"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt15" halign="right">
-					<position x="151" y="0" width="15" height="4"/>
+					<position x="88" y="0" width="17" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item6"/>
 					<decode datatype="number" format="MI999,999,990"/>
 					<font size="90" style="1"/>
 				</text>
 				<text id="Txt16" halign="right">
-					<position x="166" y="0" width="17" height="4"/>
+					<position x="105" y="0" width="18" height="4"/>
 					<color transparent="1"/>
 					<data calctype="sum" datasrc="item7"/>
 					<decode datatype="number" format="MI999,999,990"/>
