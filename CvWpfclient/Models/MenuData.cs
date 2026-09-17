@@ -252,6 +252,7 @@ public partial class MenuData : ObservableObject {
 				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"確定した配分をピッキングリストとして印刷"),
 				new("滞留・欠品例外(出荷指示一覧)", typeof(Views._07Haibun.ShippingConfirmListView), addInfo:"確定済みかつ未出荷の滞留を検出し確定取消/強制完了。欠品実績も照会"),
 				new("納入一覧表", typeof(Views._07Haibun.ShippingListReportView), addInfo:"品番×倉庫×表示基準ごとに改ページし、得意先×色/サイズのマトリクスで配分数を印刷"),
+				new("配分出荷リスト", typeof(Views._07Haibun.HaibunShippingListReportView), addInfo:"出力単位(伝票毎/商品毎/SKU毎/商品得意先毎)を切り替えて受注数・予定数量・確定数量を印刷"),
 			])),
 			new("▲ 配分照会 ----", new([
 				new("配分問合わせ", typeof(Views._07Haibun.HaibunQueryView), addInfo:"出庫側から商品別の配分数を倉庫×色サイズで展開"),

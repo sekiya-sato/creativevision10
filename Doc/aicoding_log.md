@@ -1,4 +1,36 @@
-﻿## [2026-09-17] 配分帳票 刷新 Step 3: 納入一覧表の新規実装
+﻿## [2026-09-17] 配分帳票 刷新 Step 4: 配分出荷リスト（通常4形式）の新規実装
+
+### 実施内容
+- 配分4帳票の4本目（区分D=新規）。CV10に画面自体が無かったため、`HaibunShippingListReportView` / `HaibunShippingListReportViewModel` を新規作成し、`MenuData.cs`「▲ 出荷」へ「配分出荷リスト」を追加登録した。
+- **出力単位を表示モードとして1画面に統合**し、qfm を形式ごとに4本作成した。
+  - `HaibunShippingListDen.qfm`（伝票毎、12列）: 仮想ヘッダキー単位の明細。ソートキー(伝票キー/得意先/配分指示日/納品日)を選択可。伝票計＋総合計。
+  - `HaibunShippingListHin.qfm`（商品毎、7列）: ブランド→アイテム→商品の階層。アイテム計・ブランド計・総合計。
+  - `HaibunShippingListSku.qfm`（SKU毎、8列）: 上記に色・サイズを追加。
+  - `HaibunShippingListHinTok.qfm`（商品得意先毎、8列）: 色サイズ列を得意先列に置換。
+- 絞込条件は 配分指示日範囲／納品日範囲／倉庫／得意先／商品／ブランド／アイテム／展示会／メーカーの各範囲、区分(`EnumHaibun`)、印刷区分(残のみ=未出荷 `EndFlag=0` / 全て)、出力単位、伝票毎のときだけ有効なソートキー。
+
+### 判断・仕様
+- **マトリクス形式2種は今回スコープ外**。qfmに動的列生成の仕組みが無く、Phase 0 の H10「旧7形式の一括移植はしない」に沿って利用実績を見て判断する方針で確定済み。
+- **確定数量 = `KakuteiDay` が空でなければ `JitsuSu`、未確定なら 0**。`JitsuSu` は出荷実績のため未確定時は 0 が妥当と解釈した。
+- **受注数** = `RelateNo1` が指す `Tran12Jyuchu.Jmeisai`（明細JSON）から同一SKU(`Id_Shohin`/`Id_Col`/`Id_Siz`)の `Su` を合算する相関サブクエリ。`json_valid()` でガードした（AGENTS.md 7.1）。受注配分以外の区分は元伝票が無いため常に 0。
+- 旧の「受注日 or 受注納品日範囲」は絞込条件として実装しなかった。受注結合を WHERE 条件に使うと受注配分以外の区分の行が全滅するため、受注数集計目的の相関サブクエリに留めた。
+- 展示会/ブランド/アイテム/メーカー範囲は `MasterShohin` に `Id_Tenji`/`Id_Brand`/`Id_Item`/`Id_Maker` が揃っていたため4つとも実装した。
+- 総合計は Step 1 と同じく、全行同値の抽出条件列を最上位グループ(level 1)にして表現する。`grouplevel` は 1/2/3 のみで 0 は使っていない。
+
+### 検証
+- **4形式すべての帳票SQLを `cv-sqlite` で実行し、SQLエラーが無いこと・データが取得できることを確認**。特に受注数の相関サブクエリ（`json_each` + `json_extract`）を実データで検算し、受注数6／予定数量6／確定数量6 が一致することを確認した。品番別の `VBrand`/`VItem` 展開は値が未設定でも NULL 安全に空文字となることを確認。
+- SELECT列順 = qfm `itemN` が4形式とも一致（Den 12・Hin 7・Sku 8・HinTok 8）。
+- qfm は cp932・XML妥当、`grouplevel`/`group level` に 0 が無いことを確認。新規 `.cs`/`.xaml` は UTF-8 BOM + CRLF。
+- `dotnet build CvWpfclient/CvWpfclient.csproj` 成功（0警告0エラー）、`git diff --check` clean。
+
+### 未実施・残余リスク
+- 実PDF出力によるレイアウト目視確認は未実施（Step 1〜3 は qfmprint ハーネスで確認済みだが本形式は未実施）。
+- `TranHaibun` の実データが1件のみのため、複数ブランド・アイテムにまたがる多段小計の集計結果自体は未検証（SQL構造と GROUP BY / ORDER BY の整合性のみ確認）。
+
+### 補足: qfm の改行コードについて
+`.gitattributes` は `*.qfm text eol=lf` を指定し AGENTS.md も「`printform/*.qfm` は LF」と記すが、**実際には既存の `IdoInputOut_detail.qfm` を含め全 qfm が CRLF で格納されている**ことを確認した（`git cat-file blob` をバイト単位で確認）。本 Step の qfm も既存に合わせ CRLF のままとした。規約と実態の差異として報告する。
+
+## [2026-09-17] 配分帳票 刷新 Step 3: 納入一覧表の新規実装
 
 ### 実施内容
 - 配分4帳票の3本目（区分D=新規）。空スタブだった `ShippingListReportView` / `ShippingListReportViewModel` を実装し、`MenuData.cs` の当該エントリから `準備中` を外した。
