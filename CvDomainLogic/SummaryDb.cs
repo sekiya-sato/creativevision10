@@ -186,7 +186,7 @@ public class SummaryDb {
 		}
 		return string.Join(",\n\t\t", parts);
 	}
-	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(CalcDateTermParameter param) {
+	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(CalcDateTermParameter param, int isAutoExec = (int)EmSysHistType.ManualExec) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
 			("Summary : SummaryStock", CalcSummaryStockRange)
 		];
@@ -200,7 +200,8 @@ public class SummaryDb {
 			"処理終了",
 			new ManualLockDb(_db),
 			ProcessNameSummaryAll,
-			ExpectedDurationSummaryAllSeconds);
+			ExpectedDurationSummaryAllSeconds,
+			isAutoExec);
 	}
 	/// <summary>
 	/// 指定年月範囲のSummaryStockとSummaryRealStockをTranテーブルから再作成する
@@ -759,7 +760,7 @@ WHERE SumMonth <= @0;
 			ProcessNameSummaryReal,
 			ExpectedDurationSummaryRealSeconds);
 	}
-	public IAsyncEnumerable<StreamStepProgress> SummaryUriKakeAsyncStream(CalcDateTermParameter param) {
+	public IAsyncEnumerable<StreamStepProgress> SummaryUriKakeAsyncStream(CalcDateTermParameter param, int isAutoExec = (int)EmSysHistType.ManualExec) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
 			("Summary : CalcSummaryUriKake", p => CalcSummaryUriKake(p.DateYymmFrom, p.DateYymmTo)),
 		];
@@ -773,9 +774,10 @@ WHERE SumMonth <= @0;
 			"処理終了",
 			new ManualLockDb(_db),
 			ProcessNameSummaryUriKake,
-			ExpectedDurationSummaryKakeSeconds);
+			ExpectedDurationSummaryKakeSeconds,
+			isAutoExec);
 	}
-	public IAsyncEnumerable<StreamStepProgress> SummaryKaiKakeAsyncStream(CalcDateTermParameter param) {
+	public IAsyncEnumerable<StreamStepProgress> SummaryKaiKakeAsyncStream(CalcDateTermParameter param, int isAutoExec = (int)EmSysHistType.ManualExec) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
 			("Summary : CalcSummaryKaiKake", p => CalcSummaryKaiKake(p.DateYymmFrom, p.DateYymmTo)),
 		];
@@ -789,7 +791,8 @@ WHERE SumMonth <= @0;
 			"処理終了",
 			new ManualLockDb(_db),
 			ProcessNameSummaryKaiKake,
-			ExpectedDurationSummaryKakeSeconds);
+			ExpectedDurationSummaryKakeSeconds,
+			isAutoExec);
 	}
 	/// <summary>
 	/// 請求残をストリーミングで再作成する。<c>param.Shime == 0</c>は「すべての締日」を意味し(4.3)、

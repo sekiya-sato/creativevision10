@@ -1,5 +1,6 @@
 ﻿using CodeShare;
 using CvBase;
+using CvBase.Share;
 using CvDomainLogic;
 using NCrontab;
 using NCrontab.Scheduler;
@@ -131,6 +132,13 @@ public class SchedulerService : ISchedulerService {
 	private readonly object _manualLockMonitorGate = new();
 
 	private sealed record AutoexecTaskResult(int ReturnCode, int Count, string Memo);
+
+	/// <summary>
+	/// 自動実行から呼び出すドメイン処理へ渡す実行種別（<see cref="EmSysHistType.AutoExec"/>＝0）。
+	/// ドメイン側(<c>ManualLockDb.Complete</c>)が書く<see cref="SysHistAutoexec"/>行を「自動実行」として
+	/// 記録させるために渡す。画面(gRPC)経由の呼び出しは既定値の1＝手動実行のままになる。
+	/// </summary>
+	private const int AutoExecHistType = (int)EmSysHistType.AutoExec;
 
 	/// <summary>
 	/// 再集計の区分（在庫/売掛/買掛）ごとの実行定義
@@ -959,7 +967,7 @@ public class SchedulerService : ISchedulerService {
 
 			var summaryDb = new SummaryDb(db);
 			var param = new CalcDateTermParameter(yyyymm, yyyymm);
-			await foreach (var step in summaryDb.SummaryAllAsyncStream(param).WithCancellation(cancellationToken)) {
+			await foreach (var step in summaryDb.SummaryAllAsyncStream(param, AutoExecHistType).WithCancellation(cancellationToken)) {
 				if (step.IsCompleted) {
 					memo = $"集計完了: yyyymm={yyyymm}, Duration={step.ErrorMessage}";
 					_logger.LogInformation("集計完了: TaskName={TaskName}, Duration={Duration}",
@@ -997,9 +1005,9 @@ public class SchedulerService : ISchedulerService {
 		var currentKakeMonth = ClosingMonthCalculator.CalculateKakeMonth(now, shime);
 		string[] months = [ClosingMonthCalculator.AddMonths(currentKakeMonth, -1), currentKakeMonth];
 		ResummaryGroup[] groups = [
-			new("在庫", summaryDb.SummaryAllAsyncStream),
-			new("売掛", summaryDb.SummaryUriKakeAsyncStream),
-			new("買掛", summaryDb.SummaryKaiKakeAsyncStream),
+			new("在庫", p => summaryDb.SummaryAllAsyncStream(p, AutoExecHistType)),
+			new("売掛", p => summaryDb.SummaryUriKakeAsyncStream(p, AutoExecHistType)),
+			new("買掛", p => summaryDb.SummaryKaiKakeAsyncStream(p, AutoExecHistType)),
 		];
 
 		_logger.LogInformation(

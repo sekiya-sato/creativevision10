@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CvBase.Share;
+using Microsoft.Extensions.Logging;
 
 namespace CvDomainLogic;
 
@@ -31,6 +32,7 @@ internal static class StreamStepProgressRunner {
 	/// 両方指定されたときだけ排他を取る
 	/// </param>
 	/// <param name="lockExpectedDurationSeconds">一連処理全体の予想処理秒数（<c>ExpectedDuration</c>）</param>
+	/// <param name="isAutoExec">実行種別（<see cref="EmSysHistType"/>と同じ値域。0:自動実行、1:手動実行）。既定は1＝手動実行で、自動実行(<c>SchedulerService</c>)経由の呼び出しだけが0を渡す</param>
 	public static async IAsyncEnumerable<StreamStepProgress> Run<TArg>(
 		IReadOnlyList<(string Name, Func<TArg, int> Action)> steps,
 		TArg argument,
@@ -40,7 +42,8 @@ internal static class StreamStepProgressRunner {
 		string endMessage,
 		ManualLockDb? manualLockDb = null,
 		string? lockProcessName = null,
-		long lockExpectedDurationSeconds = 0) {
+		long lockExpectedDurationSeconds = 0,
+		int isAutoExec = (int)EmSysHistType.ManualExec) {
 
 		ManualLockHandle? lockHandle = null;
 		if (manualLockDb != null && lockProcessName != null) {
@@ -115,7 +118,7 @@ internal static class StreamStepProgressRunner {
 
 			if (lockHandle != null) {
 				// 1c: 全ステップ終了後に終了を記録する（設計書§2.3）。ここへ到達したときだけが正常終了である
-				manualLockDb!.Complete(lockHandle, hadError ? 1 : 0, totalCount);
+				manualLockDb!.Complete(lockHandle, hadError ? 1 : 0, totalCount, isAutoExec: isAutoExec);
 			}
 
 			yield return new StreamStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s",

@@ -265,7 +265,7 @@ public class ManualLockDb(ExDatabase db) {
 	/// 先に書くのは、この後の履歴書き込み中にプロセスが落ちても、
 	/// 「終了処理まで到達していた」ことを監視タスクとログから読み取れるようにするため
 	/// （<c>SeqNo=99</c>まで進んでいれば、単なる異常終了ではなく終了処理中の異常だったと分かる）</description></item>
-	/// <item><description><c>SysHistAutoexec</c>へログを1行追加する（<c>SysHistType=1</c>、手動実行）</description></item>
+	/// <item><description><c>SysHistAutoexec</c>へログを1行追加する（<c>SysHistType</c>は<paramref name="isAutoExec"/>の値。既定は1＝手動実行）</description></item>
 	/// <item><description><c>SysSequence</c>の行を削除して開放する</description></item>
 	/// </list>
 	/// <para>
@@ -278,7 +278,12 @@ public class ManualLockDb(ExDatabase db) {
 	/// <param name="returnCode">実行結果コード（0:成功、0以外:エラーコード）</param>
 	/// <param name="count">処理件数</param>
 	/// <param name="memo">終了時に追記する補足メモ</param>
-	public void Complete(ManualLockHandle handle, int returnCode, int count, string memo = "") {
+	/// <param name="isAutoExec">
+	/// 実行種別（<see cref="EmSysHistType"/>と同じ値域。0:自動実行、1:手動実行）。既定は1＝手動実行。
+	/// 自動実行(<c>SchedulerService</c>)から呼ばれる経路だけが0を渡す。サーバ内で完結する情報のため
+	/// gRPC契約には載せず、内部メソッドの引数として伝播させる（2026-09-18）。
+	/// </param>
+	public void Complete(ManualLockHandle handle, int returnCode, int count, string memo = "", int isAutoExec = (int)EmSysHistType.ManualExec) {
 		ArgumentNullException.ThrowIfNull(handle);
 		var vdate = Common.GetVdate();
 		var row = _db.FetchDialect<SysSequence>(
@@ -300,7 +305,7 @@ public class ManualLockDb(ExDatabase db) {
 		// 2. SysHistAutoexecへログを追加する
 		var startVdc = row?.Vdc ?? handle.Vdc;
 		var history = new SysHistAutoexec {
-			SysHistType = (int)EmSysHistType.ManualExec,
+			SysHistType = isAutoExec,
 			TaskName = NormalizeTaskName(handle.TableName),
 			StartTime = FormatHistoryDateTime(startVdc),
 			EndTime = FormatHistoryDateTime(vdate),

@@ -141,6 +141,22 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
+	public async Task SummaryUriKakeAsyncStream_AutoExec_AddsAutoExecHistory() {
+		// 自動実行(SchedulerService)から呼ぶ経路はisAutoExec=0を渡し、履歴の実行種別が「自動実行」になる
+		var db = PrepareUriKakeTables();
+		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
+
+		var summaryDb = new SummaryDb(db);
+		await foreach (var p in summaryDb.SummaryUriKakeAsyncStream(new CalcDateTermParameter("202607", "202607"), (int)EmSysHistType.AutoExec)) {
+			Assert.IsFalse(p.IsError);
+		}
+
+		var histories = db.Fetch<SysHistAutoexec>();
+		Assert.AreEqual(1, histories.Count);
+		Assert.AreEqual((int)EmSysHistType.AutoExec, histories[0].SysHistType, "自動実行として記録される");
+		Assert.AreEqual("売掛再集計", histories[0].TaskName);
+	}
+	[TestMethod]
 	public void CalcSummaryUriKake_DoesNotDoubleCountTaxWithTotal() {
 		// 回帰テスト(仕様3.8): 伝票のTotalは税込(|KingakuTotal|+Tax1)なので、UriageをTotalで積んでからTax1を
 		// 加算すると消費税が二重計上になる。税抜1000・消費税100の売上1件だけなら Uriage=1000 / Tax1=100 /
