@@ -75,6 +75,15 @@ public interface ITranReserve {
 [Comment("トランザクション：伝票の入出庫区分・売上仕入区分などの共通コード定義 実テーブルを持たない")]
 public class TranCalcBase {
 	/// <summary>
+	/// 取引区分(Kubun)から計算フラグを得る。20〜39（返品・値引）が −1、それ以外は +1。
+	/// <para>
+	/// 在庫調整(<see cref="Tran61Chosei"/>)はこの規則に従わない。調整の符号は調整理由
+	/// (<see cref="ChoseiRiyu.CalcFlag(int)"/>)が決め、明細 Su に符号付きで格納される。
+	/// </para>
+	/// </summary>
+	public static int GetKubunCalcFlag(int kubun) => kubun is >= 20 and <= 39 ? -1 : 1;
+
+	/// <summary>
 	/// 在庫、入庫、出庫、移動中のフラグを取得する
 	/// </summary>
 	/// <param name="tableName"></param>
@@ -736,6 +745,11 @@ public sealed partial class Tran60Tana : TranAllHeader {
 public sealed partial class Tran61Chosei : TranAllHeader, ITranSoko {
 	/// <summary>
 	/// 調整区分（<see cref="EnumChosei"/>）
+	/// <para>
+	/// 他伝票と異なり <see cref="TranCalcBase.GetKubunCalcFlag(int)"/> は適用しない。符号は
+	/// 調整理由(Id_Riyu / <see cref="ChoseiRiyu.CalcFlag(int)"/>)が決め、明細 Su に符号付きで
+	/// 格納されるため、CalcFlag は 1 固定とする。
+	/// </para>
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnKubun))]
@@ -856,8 +870,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("区分（2桁 10-19、20-29、30、99）")]
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
-		// Kubun が変更された後に実行される
-		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
+		CalcFlag = TranCalcBase.GetKubunCalcFlag(value);
 	}
 
 	[Ignore]
@@ -1082,8 +1095,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("区分（2桁 10-19、20-29、30、99）")]
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
-		// Kubun が変更された後に実行される
-		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
+		CalcFlag = TranCalcBase.GetKubunCalcFlag(value);
 	}
 
 	[Ignore]
@@ -1243,8 +1255,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("区分（2桁 10-19、20-29、30、99）")]
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
-		// Kubun が変更された後に実行される
-		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
+		CalcFlag = TranCalcBase.GetKubunCalcFlag(value);
 	}
 	[Ignore]
 	[JsonIgnore]
@@ -1483,8 +1494,7 @@ public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	[Comment("区分（2桁 10-19、20-29、30、99）")]
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
-		// Kubun が変更された後に実行される
-		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
+		CalcFlag = TranCalcBase.GetKubunCalcFlag(value);
 	}
 	[Ignore]
 	[JsonIgnore]
@@ -1920,8 +1930,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	[Comment("区分（2桁 10-19、20-29、30、99）")]
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
-		// Kubun が変更された後に実行される
-		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
+		CalcFlag = TranCalcBase.GetKubunCalcFlag(value);
 	}
 	[Ignore]
 	[JsonIgnore]
@@ -2080,8 +2089,7 @@ public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	[Comment("区分（2桁 10-19、20-29、30、99）")]
 	public partial int Kubun { get; set; } = 10;
 	partial void OnKubunChanged(int value) {
-		// Kubun が変更された後に実行される
-		CalcFlag = (value >= 20 && value <= 39) ? -1 : 1;
+		CalcFlag = TranCalcBase.GetKubunCalcFlag(value);
 	}
 	[Ignore]
 	[JsonIgnore]
