@@ -83,7 +83,8 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(200 + 100 + 29, row.Henpin);
 		Assert.AreEqual(300 + 39, row.Nebiki);
 		Assert.AreEqual(700, row.Sonota, "区分99は独立してSonotaへ分離集計する");
-		Assert.AreEqual(100 + 50 - 20 - 10 + 30 + 70 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax1);
+		// 値引(Kubun30-39)も返品と同じくCalcFlagで税額を反転する(2026-09-19修正)。Nebiki(kubun30)とkubun39は-符号。
+		Assert.AreEqual(100 + 50 - 20 - 10 - 30 + 70 + 40 + 1 - 2 - 3 + 4 + 5, row.Tax1);
 		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Sonota + row.Tax1, row.TotalSales);
 		Assert.AreEqual(row.TotalSales, row.Balance, "受取が無いので当月分の純増減がそのままBalance(正=未回収)になる");
 	}
@@ -410,10 +411,11 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(1000, row.Uriage);
 		Assert.AreEqual(200, row.Henpin);
 		Assert.AreEqual(100, row.Nebiki);
-		Assert.AreEqual(90, row.Tax1);
-		Assert.AreEqual(790, row.TotalSales);
+		// 値引(Nebiki, Kubun30-39)の税額もCalcFlagで反転するため(2026-09-19修正)、Tax1は100-20-10=70。
+		Assert.AreEqual(70, row.Tax1);
+		Assert.AreEqual(770, row.TotalSales);
 		Assert.AreEqual(340, row.TotalIn);
-		Assert.AreEqual(450, row.Balance, "正=未回収");
+		Assert.AreEqual(430, row.Balance, "正=未回収");
 		Assert.AreEqual("1-20260731-01", row.SeikyuNo);
 		Assert.AreEqual(1, row.Renban);
 		Assert.AreEqual("20260731", row.NyukinYoteiDay);
@@ -476,9 +478,10 @@ public class SummaryKakeDbTests {
 
 		Assert.AreEqual(1000, row.Uriage, "売上金額に区分99を含めてはいけない");
 		Assert.AreEqual(300, row.Sonota, "区分99は独立してSonotaへ分離集計する");
-		Assert.AreEqual(120, row.Tax1);
+		// 値引(Nebiki, Kubun30-39)の税額もCalcFlagで反転するため(2026-09-19修正)、Tax1は100-20-10+30=100。
+		Assert.AreEqual(100, row.Tax1);
 		Assert.AreEqual(row.Uriage - row.Henpin - row.Nebiki + row.Sonota + row.Tax1, row.TotalSales);
-		Assert.AreEqual(1000 - 200 - 100 + 300 + 120, row.TotalSales);
+		Assert.AreEqual(1000 - 200 - 100 + 300 + 100, row.TotalSales);
 	}
 
 	[TestMethod]
@@ -570,7 +573,8 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(200 + 29, row.Henpin);
 		Assert.AreEqual(100 + 39, row.Nebiki);
 		Assert.AreEqual(400, row.Sonota, "区分99は独立してSonotaへ分離集計する");
-		Assert.AreEqual(100 - 20 + 10 + 40 + 40 + 1 - 2 + 3 + 4 + 5, row.Tax1);
+		// 値引(Kubun30-39)も返品と同じくCalcFlagで税額を反転する(2026-09-19修正)。Nebiki(kubun30)とkubun39は-符号。
+		Assert.AreEqual(100 - 20 - 10 + 40 + 40 + 1 - 2 - 3 + 4 + 5, row.Tax1);
 		Assert.AreEqual(row.Shiire - row.Henpin - row.Nebiki + row.Sonota + row.Tax1, row.TotalShiire);
 		Assert.AreEqual(600, row.Cash);
 		Assert.AreEqual(50, row.Offset);
@@ -771,10 +775,11 @@ public class SummaryKakeDbTests {
 		Assert.AreEqual(1000, row.Shiire);
 		Assert.AreEqual(200, row.Henpin);
 		Assert.AreEqual(100, row.Nebiki);
-		Assert.AreEqual(90, row.Tax1);
-		Assert.AreEqual(790, row.TotalShiire);
+		// 値引(Nebiki, Kubun30-39)の税額もCalcFlagで反転するため(2026-09-19修正)、Tax1は100-20-10=70。
+		Assert.AreEqual(70, row.Tax1);
+		Assert.AreEqual(770, row.TotalShiire);
 		Assert.AreEqual(340, row.TotalOut);
-		Assert.AreEqual(450, row.Balance, "正=未払");
+		Assert.AreEqual(430, row.Balance, "正=未払");
 		Assert.AreEqual("20260731", row.ShiharaiYoteiDay);
 		Assert.IsNull(db.FirstOrDefault<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 2, "20260731"));
 	}

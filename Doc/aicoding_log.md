@@ -1,4 +1,20 @@
-﻿## [2026-09-18] 自動実行から呼ぶ再集計の履歴を「自動実行」として記録する
+﻿## [2026-09-19] 値引(Kubun 30-39)の消費税額符号を返品と同じくCalcFlagで反転する
+
+### 実施内容
+`SummaryDb.SignExpr`（税列 SlipTaxN/BillingRawN/TaxableAmountN 専用の符号式）が返品(`Kubun` 20-29)だけを反転し、値引(30-39)は反転しない実装になっていた。本体金額側は区分別バケット(Uriage/Henpin/Nebiki)で値引もちゃんと減算されるのに対し、税額側だけ値引ぶんが反転されず加算のままという非対称があり、当初仕様のミスと判断して修正した。C#側 `TranCalcBase.GetKubunCalcFlag`（20-39で`CalcFlag=-1`）とSQL側の反転範囲を一致させた。
+
+- `CvDomainLogic/SummaryDb.cs` の `SignExpr` を `Kubun BETWEEN 20 AND 29` から `BETWEEN 20 AND 39` へ修正し、XML docコメントを実装に合わせて書き直した。
+- `Doc/spec/archive/2026-09-01_消費税計算単位・端数処理_全体設計.md` を改訂し、「値引30-39は反転しない」としていた記述を「返品・値引とも20-39で反転する」へ修正。Total式(§3.8)の説明にも値引ぶんの税額が符号反転される旨を補足した。
+- `Tests/TestServer/SummaryKakeDbTests.cs` の5件が旧挙動(値引の税額非反転)を前提にした期待値だったため、新挙動に合わせて修正した（`CalcSummaryUriKake_SeparatesSonotaAndUsesPositiveBalanceForUnrecovered` / `CalcSummaryUriSei_CalculatesPeriodBreakdownBalanceAndDueDay` / `CalcSummaryUriSei_SeparatesKubun99AsSonotaWithoutFoldingIntoUriage` / `CalcSummaryKaiKake_SeparatesSonotaAndUsesPositiveBalanceForUnpaid` / `CalcSummaryKaiShi_CalculatesPeriodBreakdownBalanceAndDueDay`）。
+
+### 影響
+実データでは `Tran02Material` Id=1732（`KakeDay`=2026-07-15、`Id_Shiire`=502、課税対象額1000/税100）の1件のみが該当し、買掛残が1,100円過大になっていた。**対象範囲（この取引先・期間を含む集計済み期間）の再集計が必要。**
+
+### 未実施・残余リスク
+- 実データへの再集計適用は未実施（範囲特定と実行はユーザー側判断）。
+- `Doc/spec` 配下に同種の「返品20-29のみ反転」という記述を持つ他の設計書（`archive/2026-08-18_請求計算・支払計算_詳細設計.md` 等）が見つかったが、旧世代の設計書であり本件では未修正。要確認。
+
+## [2026-09-18] 自動実行から呼ぶ再集計の履歴を「自動実行」として記録する
 
 ### 実施内容
 自動実行タスクから呼ばれた「在庫・掛再集計」等が、自動実行履歴画面で実行種別「手動実行」と表示されていた問題を修正した。`ManualLockDb.Complete` が `SysHistType` を `EmSysHistType.ManualExec` 固定で書いていたのが原因。自動実行はサーバ内で完結するため gRPC 契約（`CvFlag`）は変更せず、内部メソッドの引数として実行種別を伝播させた。

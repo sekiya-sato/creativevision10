@@ -139,10 +139,12 @@ public class SummaryDb {
 	}
 
 	/// <summary>
-	/// 符号込みの明細金額式。返品(<c>Kubun</c> 20-29)はヘッダ<c>CalcFlag</c>で符号反転する
-	/// (値引 30-39 は反転しない。既存挙動をそのまま維持する)。
+	/// 税列(SlipTaxN/BillingRawN/TaxableAmountN)専用の符号式。返品・値引(<c>Kubun</c> 20-39)は
+	/// ともにヘッダ<c>CalcFlag</c>で符号反転する。C#側 <see cref="TranCalcBase.GetKubunCalcFlag"/> の
+	/// 反転範囲(20-39でCalcFlag=-1)と一致させている。本体金額(Uriage/Henpin/Nebikiの区分別バケット)は
+	/// この式と別に符号処理されるため、ここでは税列のみを対象とする。
 	/// </summary>
-	private static string SignExpr(string alias) => $"(CASE WHEN {alias}.Kubun BETWEEN 20 AND 29 THEN {alias}.CalcFlag ELSE 1 END)";
+	private static string SignExpr(string alias) => $"(CASE WHEN {alias}.Kubun BETWEEN 20 AND 39 THEN {alias}.CalcFlag ELSE 1 END)";
 
 	/// <summary>
 	/// 税区分1-3ぶんの SlipTaxN(伝票単位・丸め済) / BillingRawN(請求単位・丸め前) / TaxableAmountN(課税対象額)の
