@@ -10,7 +10,7 @@
 ## 使い方
 
 ```bash
-dotnet run --project taxmix.csproj -- <command> [dbPath]
+dotnet run --project "Doc/spec/tools/taxmix/taxmix.csproj" -- <command> [dbPath]
 ```
 
 | command | 内容 |
@@ -22,7 +22,7 @@ dotnet run --project taxmix.csproj -- <command> [dbPath]
 `dbPath` 省略時は `C:\gitroot\new2022\cv10\CvServer\server-user163.db`。
 
 伝票はDBへ投入せず、実DBの `MasterSysman.Jsub` と `MasterShohin.Id_Tax` を読んでメモリ上で検証する
-（`TranTaxRebuildDb.ApplyMeisaiTax` は伝票税額再更新の本体と同じコード）。DBは読み取りのみで変更しない。
+（`TranTaxRebuildDb.ApplyMeisaiTax` は伝票税額再更新の本体と同じコード）。処理内容はSELECTのみだが、接続はReadWriteモードで開くため専用コピーでの実行を推奨する。
 
 ## 前提
 

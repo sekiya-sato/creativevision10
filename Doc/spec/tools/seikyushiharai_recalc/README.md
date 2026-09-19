@@ -28,9 +28,9 @@ dotnet run --project "Doc/spec/tools/seikyushiharai_recalc" -- <mode> [dbPath]
 
 | mode | 内容 |
 |---|---|
-| `plan`（既定） | 請求計算・支払計算の実行対象（締日×月の一覧・件数）を表示するだけで、DBは一切更新しない |
+| `plan`（既定） | 請求計算・支払計算の実行対象（締日×月の一覧・件数）を表示する。起動時のDB初期化でMigration／バージョン情報更新が走る可能性がある |
 | `run` | 対象すべてに `CalcSummaryUriSei` / `CalcSummaryKaiShi` を実行する |
-| `kake-plan` | 売掛残・買掛残の対象期間（年月レンジ）を表示するだけで、DBは一切更新しない |
+| `kake-plan` | 売掛残・買掛残の対象期間（年月レンジ）を表示する。起動時のDB初期化でMigration／バージョン情報更新が走る可能性がある |
 | `kake-run` | 全期間に対して `CalcSummaryUriKake` / `CalcSummaryKaiKake` を1回ずつ実行する |
 
 `run` は各(締日, 月)ごとに個別に実行し、1件失敗しても残りは継続する。終了時に成功/失敗件数と
@@ -40,7 +40,7 @@ dotnet run --project "Doc/spec/tools/seikyushiharai_recalc" -- <mode> [dbPath]
 `CalcSummary*Kake` 自身が同じ値でクランプするため、これが全期間の下限になる）。
 上限は集計元伝票の `KakeDay`（売掛: `Tran00Uriage`/`Tran06Nyukin`、
 買掛: `Tran03Shiire`/`Tran02Material`/`Tran07Shiharai`）と既存 `Summary*Kake.DenMonth` の
-最大月に、締日が月末でないときの翌月繰り上がりを見込んで1ヶ月足したもの。
+最大月に、締日にかかわらず1ヶ月足したもの。
 
 `CalcSummary*Kake` の戻り値は挿入件数のみ(削除件数は含まない)。
 
