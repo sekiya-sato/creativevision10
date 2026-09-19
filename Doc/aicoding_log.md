@@ -8,11 +8,16 @@
 - `Tests/TestServer/SummaryKakeDbTests.cs` の5件が旧挙動(値引の税額非反転)を前提にした期待値だったため、新挙動に合わせて修正した（`CalcSummaryUriKake_SeparatesSonotaAndUsesPositiveBalanceForUnrecovered` / `CalcSummaryUriSei_CalculatesPeriodBreakdownBalanceAndDueDay` / `CalcSummaryUriSei_SeparatesKubun99AsSonotaWithoutFoldingIntoUriage` / `CalcSummaryKaiKake_SeparatesSonotaAndUsesPositiveBalanceForUnpaid` / `CalcSummaryKaiShi_CalculatesPeriodBreakdownBalanceAndDueDay`）。
 
 ### 影響
-実データでは `Tran02Material` Id=1732（`KakeDay`=2026-07-15、`Id_Shiire`=502、課税対象額1000/税100）の1件のみが該当し、買掛残が1,100円過大になっていた。**対象範囲（この取引先・期間を含む集計済み期間）の再集計が必要。**
+旧実装で誤った値が焼き付いている集計行は現時点で存在しない。`SignExpr` の対象となる `Kubun`=30-39 の伝票は `Tran02Material` の41件のみで、うち税額が非0なのは Id=1732（`KakeDay`=2026-07-15、`Id_Shiire`=502、課税対象額1000/税100）の1件だけ。この伝票は Id=1730-1733 の区分10/20/30/99を1件ずつ揃えた買掛集計の検証用データであり、実業務データではない。さらに `SummaryKaiKake` に `Id_Shiire`=502 の行は全期間で存在しない。
+
+仮にこの伝票が集計された場合の旧新差は `Tax1` 4700→4500、`TaxableAmount1` 27000→25000、`TotalShiire` 29700→29500（符号が+から-へ振れるため差は寄与額の2倍になる）。
+
+### 再集計の判断
+**再集計は実施しない**（2026-09-19 ユーザー判断）。誤った集計行が存在しないため修正効果が無い一方、`CalcSummaryKaiKake` は対象年月を `DELETE` してから再作成する方式のため、2026/06-07 を再集計すると既存の `SummaryKaiKake` 202607 の5行（`Id_Shiire` 1/2/5/6/7、これもシード済みテストデータ）が消えて `Id_Shiire`=502 の1行に置き換わり、テストデータの破壊だけが起きる。次回の通常再集計から新仕様で計算される。
 
 ### 未実施・残余リスク
-- 実データへの再集計適用は未実施（範囲特定と実行はユーザー側判断）。
-- `Doc/spec` 配下に同種の「返品20-29のみ反転」という記述を持つ他の設計書（`archive/2026-08-18_請求計算・支払計算_詳細設計.md` 等）が見つかったが、旧世代の設計書であり本件では未修正。要確認。
+- 実データへの再集計は上記の判断により未実施。
+- `Doc/spec/archive/2026-08-18_請求計算・支払計算_詳細設計.md` にも同種の「税額は返品20-29のみ反転」という記述があったため、あわせて2026-09-19改訂として注記を追記した。旧記述は歴史的記録として残している。
 
 ## [2026-09-18] 自動実行から呼ぶ再集計の履歴を「自動実行」として記録する
 
