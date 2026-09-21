@@ -93,7 +93,7 @@ public abstract partial class NouhinBookPrintLegacyViewModel : Helpers.BaseRepor
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
-			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Other, "その他"));
+			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Tax, "消費税"));
 
 		// item1..9 = ヘッダ（明細各行に同値を繰り返す） / item10..16 = 明細
 		var sql = $@"

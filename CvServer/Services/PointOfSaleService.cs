@@ -48,7 +48,7 @@ public sealed class PointOfSaleService {
 			context.CancellationToken.ThrowIfCancellationRequested();
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			var original = FindById<Tran01Tenuri>(request.SaleId) ?? throw new InvalidOperationException($"売上が見つかりません: Id={request.SaleId}");
-			if (original.Kubun is < 10 or > 11) throw new InvalidOperationException("取消対象は売上伝票のみです。");
+			if (original.Kubun is not 10 and not 11 and not 14) throw new InvalidOperationException("取消対象は売上伝票のみです。");
 			var cancelId = original.PosClientSaleId + ":C";
 			var alreadyCancelled = _db.Fetch(typeof(Tran01Tenuri), "where PosClientSaleId=@0", cancelId).OfType<Tran01Tenuri>().FirstOrDefault();
 			if (alreadyCancelled != null) throw new InvalidOperationException("この売上は既に取消されています。");
@@ -58,7 +58,8 @@ public sealed class PointOfSaleService {
 				Vdc = now,
 				Vdu = now,
 				DenDay = DateTime.Today.ToString("yyyyMMdd"),
-				Kubun = (int)EnumUri01.Henpin,
+				// 社販売上(14)の取消は社販返品(24)にする。10/11は従来通りP返品(20)固定(11→21への変更は今回対象外)。
+				Kubun = original.Kubun == (int)EnumUri01.UriShahan ? (int)EnumUri01.HenShahan : (int)EnumUri01.Henpin,
 				Id_Tenpo = original.Id_Tenpo,
 				VTenpo = original.VTenpo,
 				Id_Soko = original.Id_Soko,
@@ -226,7 +227,7 @@ public sealed class PointOfSaleService {
 		if (request.StoreId <= 0 || request.WarehouseId <= 0 || request.StaffId <= 0) throw new InvalidOperationException("店舗、倉庫、担当者を指定してください。");
 		if (request.Lines.Count == 0 || request.Lines.Any(line => line.ProductId <= 0 || line.Quantity <= 0)) throw new InvalidOperationException("売上明細が不正です。");
 		if (request.Payment.CashAmount < 0 || request.Payment.CardAmount < 0 || request.Payment.OtherAmount < 0) throw new InvalidOperationException("金種金額は0以上で入力してください。");
-		if (request.Kubun is not 10 and not 11 and not 20 and not 21) throw new InvalidOperationException("伝票区分が不正です。");
+		if (request.Kubun is not 10 and not 11 and not 14 and not 20 and not 21 and not 24) throw new InvalidOperationException("伝票区分が不正です。");
 	}
 	private static PosCheckoutResponse CreateResponse(Tran01Tenuri sale, bool duplicate, string message) {
 		var payment = sale.JposPayment ?? new PosPaymentDetail();

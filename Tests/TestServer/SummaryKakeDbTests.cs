@@ -65,7 +65,7 @@ public class SummaryKakeDbTests {
 		db.Insert(CreateUriage("20260712", 1, EnumUri00.Henpin, 200, 20));
 		db.Insert(CreateUriage("20260713", 1, EnumUri00.HenSale, 100, 10));
 		db.Insert(CreateUriage("20260714", 1, EnumUri00.Nebiki, 300, 30));
-		db.Insert(CreateUriage("20260715", 1, EnumUri00.Other, 700, 70));
+		db.Insert(CreateUriage("20260715", 1, EnumUri00.Tax, 700, 70));
 		var range40 = CreateUriage("20260716", 1, EnumUri00.Uriage, 400, 40);
 		range40.Kubun = 40;
 		db.Insert(range40);
@@ -471,7 +471,7 @@ public class SummaryKakeDbTests {
 		db.Insert(CreateBillingUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
 		db.Insert(CreateBillingUriage("20260711", 1, EnumUri00.Henpin, 200, 20));
 		db.Insert(CreateBillingUriage("20260712", 1, EnumUri00.Nebiki, 100, 10));
-		db.Insert(CreateBillingUriage("20260713", 1, EnumUri00.Other, 300, 30));
+		db.Insert(CreateBillingUriage("20260713", 1, EnumUri00.Tax, 300, 30));
 
 		summaryDb.CalcSummaryUriSei("202607", 99);
 		var row = db.Single<SummaryUriSei>("where Id_Tokui=@0 and DenDay=@1", 1, "20260731");

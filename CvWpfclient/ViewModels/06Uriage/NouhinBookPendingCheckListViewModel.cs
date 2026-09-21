@@ -60,7 +60,7 @@ public partial class NouhinBookPendingCheckListViewModel : Helpers.BaseReportVie
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
-			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Other, "その他"));
+			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Tax, "消費税"));
 
 		var sql = $@"
 SELECT

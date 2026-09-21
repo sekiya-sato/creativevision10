@@ -88,7 +88,7 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 		var kubunLabel = TranMeisaiSql.KubunLabel("u.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
-			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Other, "その他"));
+			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Tax, "消費税"));
 		// 税率別内訳(taxable10/tax10/taxable8/tax8/taxExempt)は、明細JSONを丸め直さず
 		// SummaryUriSei.Tax1/2/3・TaxableAmount1/2/3（請求期間で1回だけ丸め済み。3.4/3.5）をそのまま使う。
 		// taxExempt は「請求書の課税対象額に含まれない金額」= 税抜売上合計 − 税区分1-3の課税対象額合計。

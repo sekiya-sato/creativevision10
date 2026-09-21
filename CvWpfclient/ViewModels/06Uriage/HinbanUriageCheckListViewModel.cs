@@ -94,11 +94,13 @@ public partial class HinbanUriageCheckListViewModel : Helpers.BaseReportViewMode
 
 		List<string> sources = [];
 		if (IncludeOroshi) {
-			var filter = IncludeHenpin ? "" : $" AND h.Kubun IN ({(int)EnumUri00.Uriage},{(int)EnumUri00.UriSale})";
+			// 売上帯(10-19)で絞る。区分を離散列挙すると帯に区分が追加されたとき静かに漏れるため。
+			var filter = IncludeHenpin ? "" : " AND h.Kubun BETWEEN 10 AND 19";
 			sources.Add(Source("Tran00Uriage", "A", filter));
 		}
 		if (IncludeShop) {
-			var filter = IncludeHenpin ? "" : $" AND h.Kubun IN ({(int)EnumUri01.Uriage},{(int)EnumUri01.UriSale})";
+			// 売上帯(10-19)で絞る。社販売上(14)もここに含まれる。
+			var filter = IncludeHenpin ? "" : " AND h.Kubun BETWEEN 10 AND 19";
 			sources.Add(Source("Tran01Tenuri", "B", filter));
 		}
 

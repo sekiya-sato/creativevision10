@@ -10,7 +10,7 @@ namespace CvWpfclient.ViewModels._20UriageAnalysis;
 /// 取引区分ごとに「純売上・返品・値引」へ分解して日計を出す。締めの突合に使う。
 ///
 /// 純売上 = 売上(Kubun 10,11) − 返品(Kubun 20,21)。値引は Nebiki00Total の合計。
-/// 取引区分は EnumUri01（10=売上 11=売上SALE 20=返品 21=返品SALE 99=その他）。
+/// 取引区分は EnumUri01（10=P売上 11=S売上 14=社販売上 20=P返品 21=S返品 24=社販返品 99=消費税）。
 /// </summary>
 public partial class ShopSalesDailySummaryViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "店舗別売上日計表";
@@ -55,8 +55,10 @@ public partial class ShopSalesDailySummaryViewModel : Helpers.BaseReportViewMode
 
 		var shopCode = IsByShop ? TranMeisaiSql.HeaderCode("VTenpo") : "''";
 		var shopName = IsByShop ? TranMeisaiSql.HeaderName("VTenpo") : "'全店'";
-		var uriKubun = $"{(int)EnumUri01.Uriage},{(int)EnumUri01.UriSale}";
-		var henKubun = $"{(int)EnumUri01.Henpin},{(int)EnumUri01.HenSale}";
+		// 区分は帯で判定する。離散列挙すると帯に区分が追加されたとき静かに漏れるため。
+		// 売上帯(10-19)には社販売上(14)、返品帯(20-29)には社販返品(24)が含まれる。
+		const string uriKubun = "h.Kubun BETWEEN 10 AND 19";
+		const string henKubun = "h.Kubun BETWEEN 20 AND 29";
 
 		var sql = $@"
 WITH agg AS (
@@ -67,8 +69,8 @@ WITH agg AS (
         {shopCode} AS shopCode,
         {shopName} AS shopName,
         COUNT(*) AS denCount,
-        SUM(CASE WHEN h.Kubun IN ({uriKubun}) THEN h.KingakuTotal ELSE 0 END) AS uriKingaku,
-        SUM(CASE WHEN h.Kubun IN ({henKubun}) THEN h.KingakuTotal ELSE 0 END) AS henKingaku,
+        SUM(CASE WHEN {uriKubun} THEN h.KingakuTotal ELSE 0 END) AS uriKingaku,
+        SUM(CASE WHEN {henKubun} THEN h.KingakuTotal ELSE 0 END) AS henKingaku,
         SUM(h.Nebiki00Total) AS nebiki,
         SUM(h.Tax1+h.Tax2+h.Tax3)           AS tax,
         SUM(h.KingakuTotal)  AS netKingaku

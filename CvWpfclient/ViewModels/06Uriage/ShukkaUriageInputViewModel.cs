@@ -39,7 +39,7 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		new(EnumUri00.Henpin, "返品"),
 		new(EnumUri00.HenSale, "セール返品"),
 		new(EnumUri00.Nebiki, "値引"),
-		new(EnumUri00.Other, "その他"),
+		new(EnumUri00.Tax, "消費税"),
 	];
 
 	public IReadOnlyList<YesNoOption> IsPayOptions { get; } = [
@@ -314,7 +314,7 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 	const int DenpyoShoriKubun = 0;
 
 	static string KubunNameSql(string prefix) =>
-		$"case {prefix}Kubun when 10 then '売上' when 11 then 'セール売上' when 20 then '返品' when 21 then 'セール返品' when 30 then '値引' when 99 then 'その他' else cast({prefix}Kubun as text) end";
+		$"case {prefix}Kubun when 10 then '売上' when 11 then 'セール売上' when 20 then '返品' when 21 then 'セール返品' when 30 then '値引' when 99 then '消費税' else cast({prefix}Kubun as text) end";
 
 	static string KubunLabelSql(string prefix) => $"(cast({prefix}Kubun as text) || ' ' || {KubunNameSql(prefix)})";
 	static string VCd(string column) => $"ifnull(json_extract({column},'$.Cd'),'')";

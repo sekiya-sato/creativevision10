@@ -354,11 +354,11 @@ public sealed partial class Tran99Meisai : ObservableObject {
 	[Comment("行No")]
 	public partial int No { get; set; }
 	/// <summary>
-	/// 区分（Max2桁 0:Pプロパー 1:Sセール 2:社販）
+	/// 区分（Max2桁 0:Pプロパー 1:Sセール）
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("明細取引区分")]
-	[Comment("区分（Max2桁 0:Pプロパー 1:Sセール 2:社販）")]
+	[Comment("区分（Max2桁 0:Pプロパー 1:Sセール）")]
 	public partial int Kubun { get; set; } = 0;
 	/// <summary>
 	/// 商品ユニークキー
@@ -779,7 +779,7 @@ public sealed partial class Tran61Chosei : TranAllHeader, ITranSoko {
 }
 
 /// <summary>
-/// 在庫調整の区分（<see cref="Tran61Chosei.Kubun"/>）
+/// 在庫調整の区分 CalcFlgは依存しない（<see cref="Tran61Chosei.Kubun"/>）
 /// </summary>
 public enum EnumChosei : int {
 	/// <summary>棚卸確定処理が作った調整。実棚数と帳簿在庫の差を埋める</summary>
@@ -1019,8 +1019,8 @@ public enum EnumUri00 : int {
 	HenSale = 21,
 	[Comment("値引")]
 	Nebiki = 30,
-	[Comment("その他")]
-	Other = 99
+	[Comment("消費税")]
+	Tax = 99
 }
 
 
@@ -1183,16 +1183,20 @@ public sealed class PosPaymentDetail {
 	public int ChangeAmount { get; init; }
 }
 public enum EnumUri01 : int {
-	[Comment("売上")]
+	[Comment("P売上")]
 	Uriage = 10,
-	[Comment("売上SALE")]
+	[Comment("S売上")]
 	UriSale = 11,
-	[Comment("返品")]
+	[Comment("社販売上")]
+	UriShahan = 14,
+	[Comment("P返品")]
 	Henpin = 20,
-	[Comment("返品SALE")]
+	[Comment("S返品")]
 	HenSale = 21,
-	[Comment("その他")]
-	Other = 99
+	[Comment("社販返品")]
+	HenShahan = 24,
+	[Comment("消費税")]
+	Tax = 99
 }
 
 /// <summary>

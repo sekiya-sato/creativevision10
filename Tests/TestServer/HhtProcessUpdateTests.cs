@@ -348,14 +348,40 @@ public class HhtProcessUpdateTests {
 		StringAssert.Contains(Db.Fetch<TranVulcanHht>().Single().ErrorMsg, "E002");
 	}
 
-	/// <summary>社販(販売区分=2)は未対応なので E015</summary>
+	/// <summary>卸売上(EnumUri00に社販区分が無い)の社販は未対応なので E015</summary>
 	[TestMethod]
-	public void UpdateVulcan2Tran_Shahan_ReportsE015() {
+	public void UpdateVulcan2Tran_ShahanOroshi_ReportsE015() {
 		InsertVulcan(type0: 9, serial: 1, shop: SokoCode, toriSaki: TokuiCode, jan1: Jan1Ok, hanKubun: 2);
 
 		Run();
 
 		StringAssert.Contains(Db.Fetch<TranVulcanHht>().Single().ErrorMsg, "E015");
+	}
+
+	/// <summary>店舗売上の社販(販売区分=2)は対応済みで、区分14(UriShahan)になりエラーは出ない</summary>
+	[TestMethod]
+	public void UpdateVulcan2Tran_ShahanTenpoUriage_SetsKubun14WithoutError() {
+		InsertVulcan(type0: 1, serial: 1, shop: TenpoCode, denNo: "9990000000001", jan1: Jan1Ok, hanKubun: 2);
+
+		var result = Run();
+
+		Assert.AreEqual(1, result.SlipCount);
+		var row = Db.Fetch<TranVulcanHht>().Single();
+		Assert.AreEqual(string.Empty, row.ErrorMsg);
+		Assert.AreEqual((int)EnumUri01.UriShahan, Db.Fetch<Tran01Tenuri>().Single().Kubun);
+	}
+
+	/// <summary>店舗返品の社販(販売区分=2)は対応済みで、区分24(HenShahan)になりエラーは出ない</summary>
+	[TestMethod]
+	public void UpdateVulcan2Tran_ShahanTenpoHenpin_SetsKubun24WithoutError() {
+		InsertVulcan(type0: 2, serial: 1, shop: TenpoCode, denNo: "9990000000001", jan1: Jan1Ok, hanKubun: 2);
+
+		var result = Run();
+
+		Assert.AreEqual(1, result.SlipCount);
+		var row = Db.Fetch<TranVulcanHht>().Single();
+		Assert.AreEqual(string.Empty, row.ErrorMsg);
+		Assert.AreEqual((int)EnumUri01.HenShahan, Db.Fetch<Tran01Tenuri>().Single().Kubun);
 	}
 
 	/// <summary>卸売に倉庫コードを渡したら店種区分の不一致 E013</summary>

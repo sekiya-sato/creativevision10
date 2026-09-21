@@ -216,10 +216,10 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		if (!IsValidYmd(head.DenDay)) {
 			errors.Add($"E002 日付が不正です ({head.DenDay})");
 		}
-		// 社販は CV10 の EnumUri00/EnumUri01 に対応する区分がないため一旦エラーにする。
-		// ToDo: 区分に社販を追加したらここで Kubun へ割り当てる（決定 12-C）
-		if (head.HanKubun == HanShahan && group.Type0 is TypeUriage or TypeHenpin or TypeOroshi or TypeOroshiHenpin) {
-			errors.Add("E015 販売区分=2(社販)は未対応です");
+		// 卸売上(EnumUri00)には社販区分が無いためエラーにする。店舗売上(EnumUri01)は
+		// UriShahan(14)/HenShahan(24) が追加されたため対応済み(ResolveUriKubunTenuri)。
+		if (head.HanKubun == HanShahan && group.Type0 is TypeOroshi or TypeOroshiHenpin) {
+			errors.Add("E015 販売区分=2(社販)は卸売上では未対応です");
 		}
 
 		var shain = ResolveShain(cache, head.Tanto, errors);
@@ -422,7 +422,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 			VSoko = ToView(tenpo),
 			Id_Tenpo = tenpo.Id,
 			VTenpo = ToView(tenpo),
-			Kubun = ResolveUriKubun(group.Type0, head.HanKubun),
+			Kubun = ResolveUriKubunTenuri(group.Type0, head.HanKubun),
 			Code_Customer = (head.DenNo ?? string.Empty).Trim(),
 			Memo = BuildMemo(group),
 		};
@@ -461,7 +461,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 			VTokui = ToView(tokui),
 			// 掛計上する。IsPay=0 の伝票は売掛集計へ入らない(SummaryDb.KakeDenWhere)
 			IsPay = (int)EnumYesNo.Yes,
-			Kubun = ResolveUriKubun(group.Type0, head.HanKubun),
+			Kubun = ResolveUriKubunUriage(group.Type0, head.HanKubun),
 			ManualNo = (head.DenNo ?? string.Empty).Trim(),
 			Memo = BuildMemo(group),
 		};
@@ -752,10 +752,31 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 	}
 
 	/// <summary>
-	/// 売上・返品の区分。プロパー/セールで 10/11・20/21 に分ける。
-	/// <see cref="EnumUri00"/>（本部売上）と <see cref="EnumUri01"/>（店舗売上）は同じ値なので共通で扱う。
+	/// 店舗売上(<see cref="Tran01Tenuri"/>)の売上・返品区分。プロパー/セール/社販で
+	/// 10/11/14・20/21/24 に分ける。<see cref="EnumUri01"/> は社販(14/24)を持つため
+	/// <see cref="EnumUri00"/>（本部売上。社販の区分なし）とは値集合が異なり、共通化できない。
+	/// <see cref="HanShahan"/> はセールと排他(<see cref="HanKubun"/> は単一値)なので isSale とは独立に判定する。
 	/// </summary>
-	private static int ResolveUriKubun(int type0, int hanKubun) {
+	private static int ResolveUriKubunTenuri(int type0, int hanKubun) {
+		var isHenpin = IsHenpin(type0);
+		if (hanKubun == HanShahan) {
+			return isHenpin ? (int)EnumUri01.HenShahan : (int)EnumUri01.UriShahan;
+		}
+		var isSale = hanKubun == HanSale;
+		return (isHenpin, isSale) switch {
+			(false, false) => (int)EnumUri01.Uriage,
+			(false, true) => (int)EnumUri01.UriSale,
+			(true, false) => (int)EnumUri01.Henpin,
+			(true, true) => (int)EnumUri01.HenSale,
+		};
+	}
+
+	/// <summary>
+	/// 卸売上(<see cref="Tran00Uriage"/>)の売上・返品区分。プロパー/セールで 10/11・20/21 に分ける。
+	/// <see cref="EnumUri00"/> には社販区分が無いため、呼び出し元(<see cref="BuildSlip"/> の E015)で
+	/// 社販は事前にエラーにしており、ここへは渡ってこない前提。
+	/// </summary>
+	private static int ResolveUriKubunUriage(int type0, int hanKubun) {
 		var isHenpin = IsHenpin(type0);
 		var isSale = hanKubun == HanSale;
 		return (isHenpin, isSale) switch {

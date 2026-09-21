@@ -159,14 +159,14 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 		var costAsOfCache = new Dictionary<(long ShohinId, string Day), long>();
 
 		foreach (var header in headers) {
-			// 対象Kubunは範囲比較を使わず明示列挙する（設計書§4.3）。10・11=仕入生成、20・21=仕入返品生成、
-			// 30・99=値引・その他(消化仕入対象外だが、消化仕入対象商品を含んでいればエラー)。
-			var isTargetKubun = header.Kubun is 10 or 11 or 20 or 21;
+			// 対象Kubunは範囲比較を使わず明示列挙する（設計書§4.3）。10・11・14(社販)=仕入生成、
+			// 20・21・24(社販)=仕入返品生成、30=値引・99=消費税(消化仕入対象外だが、消化仕入対象商品を含んでいればエラー)。
+			var isTargetKubun = header.Kubun is 10 or 11 or 14 or 20 or 21 or 24;
 			var isErrorKubun = header.Kubun is 30 or 99;
 			if (!isTargetKubun && !isErrorKubun) {
-				continue; // 未定義のKubun。EnumUri00/EnumUri01の定義に無い値のため防御的にスキップする
+				continue; // 未定義のKubun。EnumUri00/EnumUri01の定義に無い値のため防御的にスキップする(現時点で該当なし)
 			}
-			var sign = header.Kubun is 10 or 11 ? 1 : -1;
+			var sign = header.Kubun is 10 or 11 or 14 ? 1 : -1;
 
 			// このヘッダが消化仕入と無関係(消化仕入対象商品の明細を1行も含まない)なら、他の明細の
 			// 商品ID=0等を含め一切エラーにしない(通常売上の大多数を誤って対象にしないため)。
@@ -687,7 +687,8 @@ SELECT {(int)EnumConsumptionSourceType.Tenuri}, t.Id,
        CAST(json_extract(j.value, '$.No') AS INTEGER), t.Vdu
 FROM {nameof(Tran01Tenuri)} AS t CROSS JOIN json_each(t.Jmeisai) AS j
 JOIN {nameof(MasterShohin)} AS ms ON ms.Id = CAST(json_extract(j.value, '$.Id_Shohin') AS INTEGER)
-WHERE t.DenDay BETWEEN @0 AND @1 AND t.Kubun IN (10, 11, 20, 21)
+-- 店舗売上は社販(14/24)も消化仕入の対象。ProcessSalesTableのisTargetKubunと同じ集合にする(設計書§4.3)
+WHERE t.DenDay BETWEEN @0 AND @1 AND t.Kubun IN (10, 11, 14, 20, 21, 24)
   AND ms.PurchaseType = {(int)EnumPurchaseType.Consumption}
   AND json_type(t.Jmeisai) = 'array'
 ";

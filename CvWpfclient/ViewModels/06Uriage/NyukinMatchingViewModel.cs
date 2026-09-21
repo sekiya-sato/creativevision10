@@ -49,7 +49,7 @@ public partial class NyukinMatchingViewModel : Helpers.BaseMatchingViewModel<Tra
 		EnumUri00.Henpin => "返品",
 		EnumUri00.HenSale => "返品(ｾｰﾙ)",
 		EnumUri00.Nebiki => "値引",
-		EnumUri00.Other => "その他",
+		EnumUri00.Tax => "消費税",
 		_ => den.Kubun.ToString(System.Globalization.CultureInfo.InvariantCulture),
 	};
 

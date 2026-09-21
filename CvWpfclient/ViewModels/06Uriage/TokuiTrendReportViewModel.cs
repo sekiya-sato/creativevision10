@@ -67,9 +67,10 @@ public partial class TokuiTrendReportViewModel : Helpers.BaseReportViewModel {
 		var tokuiWhere = BuildCodeRangeWhere(parameters, "Code", TokuiCodeFrom, TokuiCodeTo);
 
 		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
+		// 売上帯(10-19)で絞る。区分を離散列挙すると帯に区分が追加されたとき静かに漏れるため。
 		var kubunFilter = IncludeHenpin
 			? ""
-			: $" AND h.Kubun IN ({(int)EnumUri00.Uriage},{(int)EnumUri00.UriSale})";
+			: " AND h.Kubun BETWEEN 10 AND 19";
 		var activeOnly = IsActiveOnly ? "WHERE total != 0 OR su != 0" : "";
 
 		// startDate は検証済みの DateTime 由来なのでSQLへ直接埋め込んでよい。

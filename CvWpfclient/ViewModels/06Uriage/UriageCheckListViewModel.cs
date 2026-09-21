@@ -61,11 +61,13 @@ public partial class UriageCheckListViewModel : Helpers.BaseReportViewModel {
 		var oroshiKubun = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
-			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Other, "その他"));
+			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Tax, "消費税"));
 		var shopKubun = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumUri01.Uriage, "売上"), ((int)EnumUri01.UriSale, "売上SALE"),
+			((int)EnumUri01.UriShahan, "社販売上"),
 			((int)EnumUri01.Henpin, "返品"), ((int)EnumUri01.HenSale, "返品SALE"),
-			((int)EnumUri01.Other, "その他"));
+			((int)EnumUri01.HenShahan, "社販返品"),
+			((int)EnumUri01.Tax, "消費税"));
 
 		// @n プレースホルダは出現順の採番なので、SQL片を組む時点で毎回採番し直す。
 		string Source(string table, string vTokui, string sourceLabel, string kubunLabel) {

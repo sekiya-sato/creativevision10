@@ -168,6 +168,37 @@ public class PointOfSaleServiceTests {
 	}
 
 	[TestMethod]
+	public async Task CheckoutAsync_社販売上区分14でチェックアウトできる() {
+		var productId = InsertProduct("SHAHAN", 1000, idTax: 1);
+		var request = Request("shahan-sale", 1100, Line(productId)) with {
+			Kubun = (int)EnumUri01.UriShahan,
+		};
+
+		var response = await Service.CheckoutAsync(request);
+
+		Assert.IsTrue(response.IsSuccess);
+		var slip = Db.Single<Tran01Tenuri>("where Id=@0", response.SaleId);
+		Assert.AreEqual((int)EnumUri01.UriShahan, slip.Kubun);
+	}
+
+	[TestMethod]
+	public async Task CancelSaleAsync_社販売上区分14の取消は区分24になる() {
+		var productId = InsertProduct("SHAHAN-CANCEL", 1000, idTax: 1);
+		var checkout = await Service.CheckoutAsync(Request("shahan-cancel-source", 1100, Line(productId)) with {
+			Kubun = (int)EnumUri01.UriShahan,
+		});
+
+		var response = await Service.CancelSaleAsync(new PosCancelSaleRequest {
+			SaleId = checkout.SaleId,
+			StaffId = _staffId,
+		});
+
+		Assert.IsTrue(response.IsSuccess);
+		var cancelled = Db.Single<Tran01Tenuri>("where Id=@0", response.CancelSaleId);
+		Assert.AreEqual((int)EnumUri01.HenShahan, cancelled.Kubun);
+	}
+
+	[TestMethod]
 	public async Task CheckoutAsync_POS返品も税額を正値で保持して返品区分で確定する() {
 		var productId = InsertProduct("RETURN", 1000, idTax: 1);
 		var request = Request("return-sale", 1100, Line(productId)) with {

@@ -33,9 +33,13 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 	SelectInputParameter? selectParam;
 
 	public sealed record KubunOption(EnumUri01 Value, string Name);
+	// セール(11/21)はここに含めない。セールは明細区分側のトグルで表現する既存設計のため。
+	// 社販(14/24)はプロパー扱いだがセールとは別概念のため、ヘッダ区分として選択肢に加える。
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
 		new(EnumUri01.Uriage, "売上"),
 		new(EnumUri01.Henpin, "返品"),
+		new(EnumUri01.UriShahan, "社販売上"),
+		new(EnumUri01.HenShahan, "社販返品"),
 	];
 
 	public IReadOnlyList<MeisaiKubunOption> MeisaiKubunOptions { get; } = [
@@ -184,11 +188,18 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 		CurrentEdit.Total = Math.Abs(CurrentEdit.KingakuTotal) + totals.TaxTotal;
 	}
 
+	// 社販(14/24)はプロパー扱いであってセールではないため、ここには含めない。
 	static bool IsHeaderSaleKubun(int kubun) =>
 		kubun is (int)EnumUri01.UriSale or (int)EnumUri01.HenSale;
 
+	// セール明細の有無に応じて売上系(10/11)・返品系(20/21)を正規化する。
+	// 社販(14/24)はプロパー扱いのため、セール明細が含まれていても 11/21 に化けさせず、そのまま保持する。
+	// 消費税(99)はこの画面(店舗売上入力)からは新規作成されず、POS確定(PointOfSaleService)も
+	// 10/11/20/21 のみを発行するため実運用では発生しない。念のため既存の既定(売上10)を維持する。
 	static int NormalizeHeaderKubun(int kubun) =>
 		kubun switch {
+			(int)EnumUri01.UriShahan => (int)EnumUri01.UriShahan,
+			(int)EnumUri01.HenShahan => (int)EnumUri01.HenShahan,
 			(int)EnumUri01.Henpin or (int)EnumUri01.HenSale => (int)EnumUri01.Henpin,
 			_ => (int)EnumUri01.Uriage,
 		};
@@ -210,6 +221,7 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 		UpdateTotals();
 	}
 
+	// 社販(14/24)は明細区分では第3の値を持たず、業務決定によりプロパー(0)に寄せる(_ に落ちる)。
 	static int NormalizeMeisaiKubun(int kubun) =>
 		kubun switch {
 			SaleMeisaiKubun or (int)EnumUri01.UriSale or (int)EnumUri01.HenSale => SaleMeisaiKubun,

@@ -205,6 +205,10 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 			for (var i = 0; i < lines.Count; i++) {
 				var line = lines[i];
 				var lineNo = line.No > 0 ? line.No : i + 1;
+				// Tran02Material.KubunはEnumUri00/01とは別体系で10/20/30/99の4値のみ(11/21相当のセール区分は無い)。
+				// 社販売上(EnumUri01.UriShahan=14)/社販返品(EnumUri01.HenShahan=24)はTran01Tenuri側のKubunであり
+				// Tran02Materialには現れないため、ここでのisTargetKubun/isOutOfScopeKubunの対象外(暗黙スキップ)は
+				// そのままで問題ない。社販を諸掛対象に含めるかは別途業務判断が必要なため、ここではコード変更しない。
 				var isTargetKubun = header.Kubun is 10 or 20;
 				var isOutOfScopeKubun = header.Kubun is 30 or 99;
 				var severity = EnumSundryCheckSeverity.Info;

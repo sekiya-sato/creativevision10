@@ -67,7 +67,7 @@ public partial class TokuiLedgerViewModel : Helpers.BaseReportViewModel {
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumUri00.Uriage, "売上"), ((int)EnumUri00.UriSale, "売上SALE"),
 			((int)EnumUri00.Henpin, "返品"), ((int)EnumUri00.HenSale, "返品SALE"),
-			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Other, "その他"));
+			((int)EnumUri00.Nebiki, "値引"), ((int)EnumUri00.Tax, "消費税"));
 
 		// 消込済(EndFlag=1)の売上伝票はメモ欄の先頭へ `*` を出す。qfm には列を追加しない。
 		var memoWithMark = TranMeisaiSql.MemoWithKesikomiMark("h.EndFlag", "h.Memo");

@@ -81,7 +81,7 @@ void Seed() {
     db.Insert(Uri("20260705", tokui1, EnumUri00.Uriage, 100000, 10000));
     db.Insert(Uri("20260712", tokui1, EnumUri00.Henpin, 20000, 2000));
     db.Insert(Uri("20260718", tokui1, EnumUri00.Nebiki, 5000, 500));
-    db.Insert(Uri("20260720", tokui1, EnumUri00.Other, 8000, 800)); // E11: 区分99=その他売上、請求一覧の算式でのみ分離集計
+    db.Insert(Uri("20260720", tokui1, EnumUri00.Tax, 8000, 800)); // E11: 区分99=消費税、請求一覧の算式でのみ分離集計
     db.Insert(Nyu("20260725", tokui1, [(KinCash, 50000), (KinFee, 440)]));
     db.Insert(Uri("20260710", tokui2, EnumUri00.Uriage, 30000, 3000));
     db.Insert(Nyu("20260728", tokui2, [(KinCash, 33000)]));
