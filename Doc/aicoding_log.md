@@ -1,4 +1,35 @@
-﻿## [2026-09-21] 売上区分に社販を追加し区分99を消費税へ改名する
+﻿## [2026-09-21] 仕入区分に消化仕入を追加し生地・付属仕入の区分enumを分離する
+
+### 実施内容
+マイグレーション `26_09_21_01` を追加し、既存の自動生成消化仕入伝票の区分を 10/20 から **15/25** へ一括変換した。これに伴い、以下の実装を修正した。
+
+**enum拡張:**
+- `EnumShiire`（商品仕入）に消化仕入区分を追加: `SoldOnShiire=15`（消化仕入）、`SoldOnHenpin=25`（消化仕入返品）。
+- **新規** `EnumMaterialShiire`（生地・付属仕入専用）を定義: 消化仕入なし。`Tran02Material.EnKubun` の型を `EnumShiire` から `EnumMaterialShiire` へ変更。
+
+**コード修正（すべて未コミット、ビルド成功）:**
+- 消化仕入生成 `CostUpdateDbConsumption.cs:569` で生成区分を 10/20 から **15/25** へ変更。
+- 仕入入力画面 `ShiireInputViewModel.cs` に区分15/25を追加、`NormalizeIsStockForKubun` メソッドで15/25選択時に `IsStock=0` へ揃える。
+- 生地・付属仕入入力 `MaterialInputViewModel.cs` の `KubunOption` 型を `EnumMaterialShiire` へ変更。
+- 仕入元帳・支払消込・支払残明細・仕入伝票印刷に 15/25 の表示ラベルを追加。
+- 帳票フィルタを離散列挙から帯域へ変更（`ShiireTrendReport` / `BrandShiireKingakuTable` / `HinbanShiireCheckList`）: `Kubun = 10` を `Kubun BETWEEN 10 AND 19` へ。消化仕入15が仕入帯に入るため結果は従来と同じだが、離散列挙だと区分追加で静かに漏れるため。
+- 消化仕入の対象売上を抽出する `CostUpdateDbConsumption.FetchConsumptionTargetKeys` の SQL は変更していない。ここで列挙している `Kubun` は売上側（`EnumUri00` / `EnumUri01`）であって仕入区分ではなく、15/25 は売上区分に存在しないため。
+
+**DB変更:**
+- マイグレーション `26_09_21_01`：`GeneratedKind=1` の既存行を `Kubun` 10→15 / 20→25 へ UPDATE。同時にユーザーが手入力した区分15/25（`GeneratedKind=0`）と区別可能な設計。
+- `CalcFlag` は 15=+1 / 25=-1 で従来の 10/20 と同符号のため再計算不要。
+
+### 影響
+- 既存の自動生成消化仕入（マイグレーション対象）は区分 15/25 へ変換。イレギュラーな後付け起票分（手入力・`GeneratedKind=0`）は並存可能。
+- 買掛集計は帯域判定（10-19 / 20-29）で消化仕入15/25を自動吸収。`SummaryDb.cs` は帯域判定により自動対応。再計算なし。
+
+### 未実施・残余リスク
+- `Tran02Material`（生地・付属仕入）は `EnumMaterialShiire` （消化仕入なし）への型統一完了。既存データは互換。
+- 既存の消化仕入を区分15/25へ変換する `26_09_21_01` マイグレーションは確認済み。本番環境への適用は別途実行。
+- コード側の離散列挙（`Kubun IN (10, 20)` 形）は `IsStock=1` を併記しているため消化仕入（`IsStock=0`）に到達しない。SQL コメント更新のみで SQL 自体は変更せず。
+- 区分99の集計列 `Sonota` は改名しない（将来の区分追加時の受け皿として残す）。既存データの再集計も不要。
+
+## [2026-09-21] 売上区分に社販を追加し区分99を消費税へ改名する
 
 ### 実施内容
 `EnumUri01`（店舗売上）に社販区分 `UriShahan=14`（社販売上）と `HenShahan=24`（社販返品）を追加した。これに伴い、以下の実装を修正した。

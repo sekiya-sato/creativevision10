@@ -1404,12 +1404,30 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 public enum EnumShiire : int {
 	[Comment("仕入")]
 	Shiire = 10,
+	[Comment("消化仕入")]
+	SoldOnShiire = 15,
+	[Comment("仕入返品")]
+	Henpin = 20,
+	[Comment("消化仕入返品")]
+	SoldOnHenpin = 25,
+	[Comment("値引")]
+	Nebiki = 30,
+	[Comment("消費税")]
+	Tax = 99
+}
+
+/// <summary>
+/// 生地・付属仕入（<see cref="Tran02Material.Kubun"/>）の区分。商品仕入（<see cref="EnumShiire"/>）と異なり消化仕入の区分は持たない。
+/// </summary>
+public enum EnumMaterialShiire : int {
+	[Comment("仕入")]
+	Shiire = 10,
 	[Comment("仕入返品")]
 	Henpin = 20,
 	[Comment("値引")]
 	Nebiki = 30,
-	[Comment("その他")]
-	Other = 99
+	[Comment("消費税")]
+	Tax = 99
 }
 
 /// <summary>
@@ -1417,12 +1435,13 @@ public enum EnumShiire : int {
 /// <para>
 /// 買掛集計（<see cref="SummaryDb.CalcSummaryKaiKake"/> / <see cref="SummaryDb.CalcSummaryKaiShi"/>）は
 /// <see cref="Tran03Shiire"/> と合算して <c>Id_Shiire</c> 軸に積む。区分ごとの振り分けは
-/// <see cref="EnumShiire"/> と同じだが、区分99（その他）は仕入ではなく消費税(<c>Tax</c>)へ全額を積む点が
+/// <see cref="EnumMaterialShiire"/>（<see cref="Tran03Shiire"/> 用の<see cref="EnumShiire"/>とは別enum。消化仕入は無い）
+/// で振り分け、区分99（消費税）は仕入ではなく消費税(<c>Tax</c>)へ全額を積む点が
 /// <see cref="Tran03Shiire"/> と異なる（生地・付属の税調整目的の伝票として使うため）。
 /// <see cref="Tran03Shiire"/>/<see cref="TranAllHeader"/> が前提とする倉庫実在庫連動
 /// （<see cref="ITranSoko"/>/<see cref="ITranDetail"/>、色・サイズ別の <c>SuTotal</c> 等）は対象外のため、
 /// それらのインターフェースは実装せず <see cref="TranCalcBase.GetCalcSoko"/> にも登録しない（在庫計算対象外）。
-/// 区分（<see cref="Kubun"/>）は <see cref="EnumShiire"/> をそのまま流用し、買掛集計（<see cref="ITranTax"/>）へは
+/// 区分（<see cref="Kubun"/>）は <see cref="Tran03Shiire"/> と別の専用enum <see cref="EnumMaterialShiire"/> を使い、買掛集計（<see cref="ITranTax"/>）へは
 /// <see cref="Tran03Shiire"/> と同じ軸（<c>KakeDay</c> / <c>Id_Shiire</c>）で合算される。
 /// </para>
 /// </summary>
@@ -1502,8 +1521,8 @@ public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	}
 	[Ignore]
 	[JsonIgnore]
-	public EnumShiire EnKubun {
-		get => (EnumShiire)Kubun;
+	public EnumMaterialShiire EnKubun {
+		get => (EnumMaterialShiire)Kubun;
 		set => Kubun = (int)value;
 	}
 	/// <summary>

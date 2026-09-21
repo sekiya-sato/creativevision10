@@ -52,11 +52,16 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 
 	SelectInputParameter? selectParam;
 
+	// 消化仕入(15/25)は通常は消化仕入更新(CostUpdateDbConsumption)が自動生成する(GeneratedKind=1)。
+	// イレギュラーで後付けの起票が必要になる場合があるため、選択肢としては残す。
+	// 手入力分は GeneratedKind=0 になるため、消化仕入更新の再生成・削除対象(GeneratedKind=1限定)には含まれない。
 	public virtual IReadOnlyList<KubunOption> KubunOptions { get; } = [
 		new(EnumShiire.Shiire, "仕入"),
+		new(EnumShiire.SoldOnShiire, "消化仕入"),
 		new(EnumShiire.Henpin, "仕入返品"),
+		new(EnumShiire.SoldOnHenpin, "消化仕入返品"),
 		new(EnumShiire.Nebiki, "値引"),
-		new(EnumShiire.Other, "その他"),
+		new(EnumShiire.Tax, "消費税"),
 	];
 
 	public IReadOnlyList<MeisaiKubunOption> MeisaiKubunOptions { get; } = [
@@ -179,12 +184,21 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 		// Tax1/2/3 は UpdateHeaderTotals の出力であって入力ではない。監視すると自己再入になるため含めない。
 		if (e.PropertyName is nameof(Tran03Shiire.Kubun)
 			or nameof(Tran03Shiire.TaxCalcUnit) or nameof(Tran03Shiire.TaxRounding)) {
+			if (e.PropertyName == nameof(Tran03Shiire.Kubun)) NormalizeIsStockForKubun();
 			UpdateHeaderTotals();
 		}
 		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
 		else if (e.PropertyName is nameof(Tran03Shiire.DenDay)) {
 			_ = RecalcAllMeisaiTaxAsync();
 		}
+	}
+
+	// 消化仕入(15/25)は在庫を動かさない(消化仕入更新が自動生成する分と同じ扱い)。
+	// 自動生成分は IsStock=0 で作られるが、この画面から手入力で区分を選んだ場合は既定値 1 のまま
+	// 保存されてしまうため、区分変更のたびにここで揃える。それ以外の区分では 1(在庫加算する)に戻す。
+	void NormalizeIsStockForKubun() {
+		var kubun = (EnumShiire)CurrentEdit.Kubun;
+		CurrentEdit.IsStock = kubun is EnumShiire.SoldOnShiire or EnumShiire.SoldOnHenpin ? 0 : 1;
 	}
 
 	// 基底フック: 明細集計後に消費税・総合計を再計算する。
@@ -300,7 +314,7 @@ public partial class ShiireInputViewModel : Helpers.BaseTranInputViewModel<Tran0
 	const string ShimeDayNone = "19010101";
 
 	static string KubunNameSql(string prefix) =>
-		$"case {prefix}Kubun when 10 then '仕入' when 20 then '仕入返品' when 30 then '値引' when 99 then 'その他' else cast({prefix}Kubun as text) end";
+		$"case {prefix}Kubun when 10 then '仕入' when 15 then '消化仕入' when 20 then '仕入返品' when 25 then '消化仕入返品' when 30 then '値引' when 99 then '消費税' else cast({prefix}Kubun as text) end";
 
 	static string KubunLabelSql(string prefix) => $"(cast({prefix}Kubun as text) || ' ' || {KubunNameSql(prefix)})";
 	static string IsPayLabelSql(string prefix) => $"case {prefix}IsPay when 1 then '1 する' else '0 しない' end";

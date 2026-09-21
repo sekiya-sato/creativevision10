@@ -4,6 +4,7 @@ using CvDomainLogic;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -528,6 +529,77 @@ public class UpdateDbManualLockTests {
 
 		var applied = await Db.FirstOrDefaultAsync<SysUpdateDb>($"where DbVersion = {26_09_06_02}");
 		Assert.IsNotNull(applied, "26_09_06_02の適用行が残ること");
+		Assert.IsTrue(string.IsNullOrEmpty(applied!.Memo) || !applied.Memo!.Contains("Error", StringComparison.OrdinalIgnoreCase), $"バージョンアップSQLがエラーなく実行されること: {applied.Memo}");
+	}
+}
+
+/// <summary>
+/// 売上区分改定(2026-09-21)の <see cref="UpdateDb"/> 新バージョン(26_09_21_01)適用検証。
+/// 消化仕入更新で自動生成されたTran03Shiire(GeneratedKind=1)のKubunを共用値10/20から
+/// 専用値15(消化仕入)/25(消化仕入返品)へ移行し、手入力(GeneratedKind=0)の10/20は変更しないことを確認する。
+/// </summary>
+[TestClass]
+public class UpdateDbConsumptionKubunTests {
+	private ExDatabaseSqlite? _db;
+
+	private ExDatabaseSqlite Db => _db ?? throw new AssertFailedException("Database not initialized");
+
+	[TestInitialize]
+	public void Initialize() {
+		var connection = new SqliteConnection("Data Source=:memory:");
+		connection.Open();
+		_db = new ExDatabaseSqlite(connection);
+		Db.CreateTable(typeof(SysUpdateDb), true, false);
+		// 本マイグレーションはKubun/GeneratedKind列が既に存在する前提のUPDATEのため、現行スキーマで作成する
+		Db.CreateTable(typeof(Tran03Shiire), true, false);
+	}
+
+	[TestCleanup]
+	public void Cleanup() {
+		_db?.Close();
+		(_db?.Connection as SqliteConnection)?.Close();
+	}
+
+	private long InsertShiireRow(int kubun, int generatedKind) {
+		var meisai = new List<Tran99Meisai> { new() { No = 1, Id_Shohin = 1, Su = 1, Tanka = 100, Kingaku = 100 } };
+		var header = new Tran03Shiire {
+			DenDay = "20260910", KakeDay = "20260910", Id_Soko = 1, IsStock = 1, IsPay = 1,
+			GeneratedKind = generatedKind, Jmeisai = meisai, Vdc = 1, Vdu = 1,
+		};
+		header.Kubun = kubun;
+		Db.Insert(header);
+		return header.Id;
+	}
+
+	/// <summary>
+	/// バージョン26_09_15_01(直前バージョン)まで適用済みのDBに対して更新をかけると、
+	/// 26_09_21_01のUPDATEが実行され、GeneratedKind=1のKubun=10/20行だけが15/25へ書き換わり、
+	/// GeneratedKind=0の10/20行は変化しないこと。
+	/// </summary>
+	[TestMethod]
+	public async Task WriteVersionInfoAsync_直前バージョンから適用_消化仕入生成行のKubunが専用値へ移行される() {
+		var idGeneratedShiire = InsertShiireRow(kubun: 10, generatedKind: 1);
+		var idGeneratedHenpin = InsertShiireRow(kubun: 20, generatedKind: 1);
+		var idManualShiire = InsertShiireRow(kubun: 10, generatedKind: 0);
+		var idManualHenpin = InsertShiireRow(kubun: 20, generatedKind: 0);
+
+		await Db.InsertAsync(new SysUpdateDb {
+			DbVersion = 26_09_15_01,
+			DateStart = DateTime.Now.ToString("yyyyMMddHHmmss"),
+			Sql = "",
+			Memo = "テスト用の直前バージョン",
+			PreVersion = 26_09_15_01,
+		});
+
+		await UpdateDb.WriteVersionInfoAsync(Db);
+
+		Assert.AreEqual(15, Db.Single<Tran03Shiire>("WHERE Id=@0", idGeneratedShiire).Kubun, "GeneratedKind=1のKubun=10行は15(消化仕入)へ移行すること");
+		Assert.AreEqual(25, Db.Single<Tran03Shiire>("WHERE Id=@0", idGeneratedHenpin).Kubun, "GeneratedKind=1のKubun=20行は25(消化仕入返品)へ移行すること");
+		Assert.AreEqual(10, Db.Single<Tran03Shiire>("WHERE Id=@0", idManualShiire).Kubun, "GeneratedKind=0の10行は変化しないこと");
+		Assert.AreEqual(20, Db.Single<Tran03Shiire>("WHERE Id=@0", idManualHenpin).Kubun, "GeneratedKind=0の20行は変化しないこと");
+
+		var applied = await Db.FirstOrDefaultAsync<SysUpdateDb>($"where DbVersion = {26_09_21_01}");
+		Assert.IsNotNull(applied, "26_09_21_01の適用行が残ること");
 		Assert.IsTrue(string.IsNullOrEmpty(applied!.Memo) || !applied.Memo!.Contains("Error", StringComparison.OrdinalIgnoreCase), $"バージョンアップSQLがエラーなく実行されること: {applied.Memo}");
 	}
 }

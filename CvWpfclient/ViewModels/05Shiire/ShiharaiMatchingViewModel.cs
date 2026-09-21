@@ -43,9 +43,11 @@ public partial class ShiharaiMatchingViewModel : Helpers.BaseMatchingViewModel<T
 	// 仕入の区分は EnumShiire。20-39 は CalcFlag=-1 なので金額はマイナスになる。
 	protected override string GetDenKubunText(Tran03Shiire den) => den.EnKubun switch {
 		EnumShiire.Shiire => "仕入",
+		EnumShiire.SoldOnShiire => "消化仕入",
 		EnumShiire.Henpin => "仕入返品",
+		EnumShiire.SoldOnHenpin => "消化仕入返品",
 		EnumShiire.Nebiki => "値引",
-		EnumShiire.Other => "その他",
+		EnumShiire.Tax => "消費税",
 		_ => den.Kubun.ToString(System.Globalization.CultureInfo.InvariantCulture),
 	};
 

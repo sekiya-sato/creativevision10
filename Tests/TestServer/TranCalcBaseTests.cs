@@ -15,6 +15,8 @@ public class TranCalcBaseTests {
 	[DataRow(14, 1, DisplayName = "社販売上(UriShahan)は+1")]
 	[DataRow(24, -1, DisplayName = "社販返品(HenShahan)は-1")]
 	[DataRow(99, 1, DisplayName = "税区分は+1")]
+	[DataRow(15, 1, DisplayName = "消化仕入(SoldOnShiire)は+1")]
+	[DataRow(25, -1, DisplayName = "消化仕入返品(SoldOnHenpin)は-1")]
 	public void GetKubunCalcFlag_ReturnsSignByKubunRange(int kubun, int expected) {
 		Assert.AreEqual(expected, TranCalcBase.GetKubunCalcFlag(kubun));
 	}

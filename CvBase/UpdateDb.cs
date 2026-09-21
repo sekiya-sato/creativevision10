@@ -110,6 +110,9 @@ public class UpdateDb {
 			"ALTER TABLE Tran04PosSeisan ADD COLUMN RegisterNo TEXT NOT NULL DEFAULT '';" +
 			"DROP INDEX IF EXISTS Tran04PosSeisan_nk1;CREATE INDEX IF NOT EXISTS Tran04PosSeisan_nk1 ON Tran04PosSeisan(DenDay,Id_Tenpo,RegisterNo);",
 			"Tran04PosSeisanのレジ番号列を実DBへ反映する クラス定義には既にRegisterNoとKeyDml(\"nk1\",false,[DenDay,Id_Tenpo,RegisterNo])があるが既存DBには列もインデックス列追加も入っておらずPOS日別精算入力の一覧が'no such column: RegisterNo'で失敗する 既存行はレジ番号未設定('')になる CreateIndexはIF NOT EXISTSで追加専用のためインデックスはDROPしてから作り直す(26_09_08_04と同じ理由) SQLはExDatabase.CreateIndexの生成文と同一"),
+		new (26_09_21_01,
+			"UPDATE Tran03Shiire SET Kubun = 15 WHERE GeneratedKind = 1 AND Kubun = 10;UPDATE Tran03Shiire SET Kubun = 25 WHERE GeneratedKind = 1 AND Kubun = 20;",
+			"消化仕入更新で自動生成されたTran03Shiire(GeneratedKind=1)のKubunを共用値10/20から専用値15(消化仕入)/25(消化仕入返品)へ移行する 対象は既存のGeneratedKind=1行のみで手入力の10/20は変更しない CalcFlagはTranCalcBase.GetKubunCalcFlagにより15→+1・25→-1で従来の10→+1・20→-1と同符号のため本マイグレーションでの再計算は不要"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

@@ -124,20 +124,20 @@ public static class MaterialSeeder {
 	private static void InsertMaterial(ExDatabaseSqlite db, long shiireId, Action<string> trace) {
 		try {
 			db.BeginTransaction(IsolationLevel.Serializable);
-			Insert(db, shiireId, EnumShiire.Shiire, Shiire, ShiireTax);
-			Insert(db, shiireId, EnumShiire.Henpin, Henpin, HenpinTax);
-			Insert(db, shiireId, EnumShiire.Nebiki, Nebiki, NebikiTax);
-			Insert(db, shiireId, EnumShiire.Other, Other, 0); // その他は税0で投入、Total全額が集計側でTaxへ積まれることを確認する
+			Insert(db, shiireId, EnumMaterialShiire.Shiire, Shiire, ShiireTax);
+			Insert(db, shiireId, EnumMaterialShiire.Henpin, Henpin, HenpinTax);
+			Insert(db, shiireId, EnumMaterialShiire.Nebiki, Nebiki, NebikiTax);
+			Insert(db, shiireId, EnumMaterialShiire.Tax, Other, 0); // 消費税は税0で投入、Total全額が集計側でTaxへ積まれることを確認する
 			db.CompleteTransaction();
 		}
 		catch {
 			db.AbortTransaction();
 			throw;
 		}
-		trace($"生地・付属仕入を4件投入（仕入={Shiire:N0} 返品={Henpin:N0} 値引={Nebiki:N0} その他={Other:N0}）");
+		trace($"生地・付属仕入を4件投入（仕入={Shiire:N0} 返品={Henpin:N0} 値引={Nebiki:N0} 消費税={Other:N0}）");
 	}
 
-	private static void Insert(ExDatabaseSqlite db, long shiireId, EnumShiire kubun, int total, int tax) {
+	private static void Insert(ExDatabaseSqlite db, long shiireId, EnumMaterialShiire kubun, int total, int tax) {
 		// 集計SQL（CalcSummaryKaiShi）はShiire/Henpin/Nebiki/Sonota99をヘッダKingakuTotal(税抜)からSUMし、
 		// 消費税(Tax1)は伝票単位(TaxCalcUnit=Slip)ぶんをヘッダTax1からそのまま合算する（仕様3.5）。
 		// このシードは「税額は伝票が確定済み」ケース(伝票単位)を検証するため、任意の税額をTax1へそのまま入れ、
@@ -150,7 +150,7 @@ public static class MaterialSeeder {
 			Id_Shiire = shiireId,
 			KingakuTotal = total,
 			TaxCalcUnit = (int)EnumTaxCalcUnit.Slip,
-			TaxableAmount1 = kubun == EnumShiire.Other ? 0 : total,
+			TaxableAmount1 = kubun == EnumMaterialShiire.Tax ? 0 : total,
 			Tax1 = tax,
 			Total = total + tax,
 			IsPay = 1,

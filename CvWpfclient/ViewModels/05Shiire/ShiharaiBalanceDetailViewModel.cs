@@ -63,8 +63,8 @@ public partial class ShiharaiBalanceDetailViewModel : Helpers.BaseReportViewMode
 			"(SELECT ifnull(SUM(pb.TotalShiire - pb.TotalOut),0) FROM SummaryKaiShi pb WHERE pb.Id_Shiire = k.Id_Shiire AND pb.DayTo < k.DayFrom)";
 		var activeOnly = IsActiveOnly ? $"AND (k.TotalShiire != 0 OR ({PrevBalanceExpr} + k.Balance) != 0)" : "";
 		var kubunLabel = TranMeisaiSql.KubunLabel("v.Kubun",
-			((int)EnumShiire.Shiire, "仕入"), ((int)EnumShiire.Henpin, "仕入返品"),
-			((int)EnumShiire.Nebiki, "値引"), ((int)EnumShiire.Other, "その他"));
+			((int)EnumShiire.Shiire, "仕入"), ((int)EnumShiire.SoldOnShiire, "消化仕入"), ((int)EnumShiire.Henpin, "仕入返品"),
+			((int)EnumShiire.SoldOnHenpin, "消化仕入返品"), ((int)EnumShiire.Nebiki, "値引"), ((int)EnumShiire.Tax, "消費税"));
 
 		var shiharaiPart = IncludeShiharai ? @"
     UNION ALL

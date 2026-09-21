@@ -133,11 +133,11 @@ public class CostPreviewDisplayTests {
 	}
 
 	[TestMethod]
-	public void FormatShiireKubun_10仕入20仕入返品30値引99その他() {
+	public void FormatShiireKubun_10仕入20仕入返品30値引99消費税() {
 		Assert.AreEqual("仕入", CostPreviewDisplay.FormatShiireKubun(10));
 		Assert.AreEqual("仕入返品", CostPreviewDisplay.FormatShiireKubun(20));
 		Assert.AreEqual("値引", CostPreviewDisplay.FormatShiireKubun(30));
-		Assert.AreEqual("その他", CostPreviewDisplay.FormatShiireKubun(99));
+		Assert.AreEqual("消費税", CostPreviewDisplay.FormatShiireKubun(99));
 	}
 
 	[TestMethod]

@@ -566,7 +566,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 				Id_Shiire = key.IdShiire,
 				VShiire = vShiire,
 				IsPay = 1,
-				Kubun = first.Sign > 0 ? (int)EnumShiire.Shiire : (int)EnumShiire.Henpin,
+				Kubun = first.Sign > 0 ? (int)EnumShiire.SoldOnShiire : (int)EnumShiire.SoldOnHenpin,
 				IsStock = 0,
 				GeneratedKind = (int)EnumGeneratedKind.ConsumptionPurchase,
 				TaxCalcUnit = shiire?.TaxCalcUnit ?? 0,

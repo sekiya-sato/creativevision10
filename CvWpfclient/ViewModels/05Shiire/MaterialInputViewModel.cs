@@ -21,7 +21,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// </para>
 /// </summary>
 public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewModel<Tran02Material>, ITranInputTab {
-	public sealed record KubunOption(EnumShiire Value, string Name);
+	public sealed record KubunOption(EnumMaterialShiire Value, string Name);
 	public sealed record IsPayOption(EnumYesNo Value, string Name);
 
 	[ObservableProperty]
@@ -40,10 +40,10 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 	SelectInputParameter? selectParam;
 
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
-		new(EnumShiire.Shiire, "仕入"),
-		new(EnumShiire.Henpin, "仕入返品"),
-		new(EnumShiire.Nebiki, "値引"),
-		new(EnumShiire.Other, "その他(消費税へ計上)"),
+		new(EnumMaterialShiire.Shiire, "仕入"),
+		new(EnumMaterialShiire.Henpin, "仕入返品"),
+		new(EnumMaterialShiire.Nebiki, "値引"),
+		new(EnumMaterialShiire.Tax, "消費税"),
 	];
 
 	public IReadOnlyList<IsPayOption> IsPayOptions { get; } = [
@@ -261,7 +261,7 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 	protected virtual Tran02Material CreateNewDenpyo() => new() {
 		DenDay = DateTime.Now.ToString("yyyyMMdd"),
 		KakeDay = DateTime.Now.ToString("yyyyMMdd"),
-		Kubun = (int)EnumShiire.Shiire,
+		Kubun = (int)EnumMaterialShiire.Shiire,
 		Jmeisai = [],
 	};
 
@@ -314,7 +314,7 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 		await RunPrintPdfAsync("MaterialInput_detail.qfm", null, new QueryListSqlParam(typeof(Tran02Material), BuildDetailPrintSql(query), query.Parameters), ct);
 	}
 
-	const string KubunLabel = "case Kubun when 10 then '仕入' when 20 then '仕入返品' when 30 then '値引' when 99 then 'その他' else cast(Kubun as text) end";
+	const string KubunLabel = "case Kubun when 10 then '仕入' when 20 then '仕入返品' when 30 then '値引' when 99 then '消費税' else cast(Kubun as text) end";
 
 	/// <summary>
 	/// 旧cvnet帳票(SubDIgInp02.crs OnQueryPrint/OnQueryDetailPrint)の列順を踏襲した item1-38（ヘッダ部）。

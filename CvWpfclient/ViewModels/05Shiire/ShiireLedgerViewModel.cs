@@ -63,8 +63,8 @@ public partial class ShiireLedgerViewModel : Helpers.BaseReportViewModel {
 		// 仕入の買掛計上額は総合計(Total)。未計算の伝票が混ざる場合は 明細金額+消費税 で代替する。
 		const string ShiireKingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
-			((int)EnumShiire.Shiire, "仕入"), ((int)EnumShiire.Henpin, "仕入返品"),
-			((int)EnumShiire.Nebiki, "値引"), ((int)EnumShiire.Other, "その他"));
+			((int)EnumShiire.Shiire, "仕入"), ((int)EnumShiire.SoldOnShiire, "消化仕入"), ((int)EnumShiire.Henpin, "仕入返品"),
+			((int)EnumShiire.SoldOnHenpin, "消化仕入返品"), ((int)EnumShiire.Nebiki, "値引"), ((int)EnumShiire.Tax, "消費税"));
 
 		// 消込済(EndFlag=1)の仕入伝票はメモ欄の先頭へ `*` を出す。qfm には列を追加しない。
 		var memoWithMark = TranMeisaiSql.MemoWithKesikomiMark("h.EndFlag", "h.Memo");

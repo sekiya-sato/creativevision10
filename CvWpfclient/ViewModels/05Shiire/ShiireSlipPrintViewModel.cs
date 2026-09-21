@@ -62,9 +62,11 @@ public partial class ShiireSlipPrintViewModel : Helpers.BaseReportViewModel {
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
 		new(null, "全て"),
 		new((int)EnumShiire.Shiire, "仕入"),
+		new((int)EnumShiire.SoldOnShiire, "消化仕入"),
 		new((int)EnumShiire.Henpin, "仕入返品"),
+		new((int)EnumShiire.SoldOnHenpin, "消化仕入返品"),
 		new((int)EnumShiire.Nebiki, "値引"),
-		new((int)EnumShiire.Other, "その他"),
+		new((int)EnumShiire.Tax, "消費税"),
 	];
 
 	[ObservableProperty]
@@ -107,7 +109,7 @@ public partial class ShiireSlipPrintViewModel : Helpers.BaseReportViewModel {
 	// 明細JSON(Jmeisai)の各値。ShiireInput の明細印刷SQLと同じ抽出規則。
 	const string M = "json_extract(m.value,";
 	// 取引区分(Kubun)ラベル。ShiireInput.KubunLabel と同義(ここでは h. 修飾)。
-	const string KubunLabel = "case h.Kubun when 10 then '仕入' when 20 then '仕入返品' when 30 then '値引' when 99 then 'その他' else cast(h.Kubun as text) end";
+	const string KubunLabel = "case h.Kubun when 10 then '仕入' when 15 then '消化仕入' when 20 then '仕入返品' when 25 then '消化仕入返品' when 30 then '値引' when 99 then '消費税' else cast(h.Kubun as text) end";
 
 	/// <summary>
 	/// ShiireSlipPrint.qfm の item1..item46 に対応する 46 列を、明細1行=CSV1行で SELECT する。

@@ -76,7 +76,8 @@ public partial class BrandShiireKingakuTableViewModel : Helpers.BaseReportViewMo
 		var dayTo = AddSqlParameter(parameters, ToDenDay(new DateTime(end.Year, end.Month, DateTime.DaysInMonth(end.Year, end.Month))));
 		var shiireWhere = BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VShiire"), ShiireCodeFrom, ShiireCodeTo);
 		var brandWhere = BuildCodeRangeWhere(parameters, "br.Code", BrandCodeFrom, BrandCodeTo);
-		var kubunFilter = IncludeHenpin ? "" : $" AND h.Kubun = {(int)EnumShiire.Shiire}";
+		// 仕入帯(10-19)で絞る。区分を離散列挙すると帯に区分が追加されたとき静かに漏れるため。消化仕入(15)もここに含まれる。
+		var kubunFilter = IncludeHenpin ? "" : " AND h.Kubun BETWEEN 10 AND 19";
 
 		// ブランド計のときは年月キーを潰して期間合計にする
 		var ymKey = IsByMonth ? "substr(h.DenDay,1,6)" : "''";

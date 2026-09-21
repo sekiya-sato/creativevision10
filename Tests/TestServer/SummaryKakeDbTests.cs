@@ -554,7 +554,7 @@ public class SummaryKakeDbTests {
 		db.Insert(CreateShiire("20260710", 1, EnumShiire.Shiire, 1000, 100));
 		db.Insert(CreateShiire("20260711", 1, EnumShiire.Henpin, 200, 20));
 		db.Insert(CreateShiire("20260712", 1, EnumShiire.Nebiki, 100, 10));
-		db.Insert(CreateShiire("20260713", 1, EnumShiire.Other, 400, 40));
+		db.Insert(CreateShiire("20260713", 1, EnumShiire.Tax, 400, 40));
 		db.Insert(CreateShiharai("20260714", 1, [(KinCash, 600), (KinOffset, 50)]));
 		var range40 = CreateShiire("20260715", 1, EnumShiire.Shiire, 400, 40);
 		range40.Kubun = 40;
@@ -807,7 +807,7 @@ public class SummaryKakeDbTests {
 		var summaryDb = new SummaryDb(db);
 		db.Insert(new MasterShiire { Code = "A001", Shime1 = 99, PayMonth = 0, PayDay = 0 });
 		db.Insert(CreateBillingShiire("20260710", 1, EnumShiire.Shiire, 1000, 0));
-		db.Insert(CreateBillingShiire("20260711", 1, EnumShiire.Other, 300, 0));
+		db.Insert(CreateBillingShiire("20260711", 1, EnumShiire.Tax, 300, 0));
 
 		summaryDb.CalcSummaryKaiShi("202607", 99, "A001", "A999");
 		var row = db.Single<SummaryKaiShi>("where Id_Shiire=@0 and DenDay=@1", 1, "20260731");

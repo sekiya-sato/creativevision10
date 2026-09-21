@@ -85,7 +85,8 @@ public partial class HinbanShiireCheckListViewModel : Helpers.BaseReportViewMode
 		where += BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VSoko"), SokoCodeFrom, SokoCodeTo);
 		where += BuildCodeRangeWhere(parameters, TranMeisaiSql.Str("Code_Shohin"), ShohinCodeFrom, ShohinCodeTo);
 		if (!IncludeHenpin) {
-			where += $" AND h.Kubun = {(int)EnumShiire.Shiire}";
+			// 仕入帯(10-19)で絞る。区分を離散列挙すると帯に区分が追加されたとき静かに漏れるため。消化仕入(15)もここに含まれる。
+			where += " AND h.Kubun BETWEEN 10 AND 19";
 		}
 
 		// 色サイズを潰す場合は集計キーを空文字にして GROUP BY で1本にまとめる。

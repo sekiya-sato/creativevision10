@@ -65,7 +65,8 @@ public partial class ShiireTrendReportViewModel : Helpers.BaseReportViewModel {
 		var shiireWhere = BuildCodeRangeWhere(parameters, "Code", ShiireCodeFrom, ShiireCodeTo);
 
 		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
-		var kubunFilter = IncludeHenpin ? "" : $" AND h.Kubun = {(int)EnumShiire.Shiire}";
+		// 仕入帯(10-19)で絞る。区分を離散列挙すると帯に区分が追加されたとき静かに漏れるため。消化仕入(15)もここに含まれる。
+		var kubunFilter = IncludeHenpin ? "" : " AND h.Kubun BETWEEN 10 AND 19";
 		var activeOnly = IsActiveOnly ? "WHERE total != 0 OR su != 0" : "";
 
 		// 出力対象の年月（開始年月から months ヶ月）を再帰CTEで作る。

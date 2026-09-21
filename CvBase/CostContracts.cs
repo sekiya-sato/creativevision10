@@ -209,7 +209,7 @@ public sealed class SundryChargeDetailRow {
 	public long DenNo { get; set; }
 	/// <summary>伝票日 yyyyMMdd。</summary>
 	public string DenDay { get; set; } = string.Empty;
-	/// <summary>取引区分（<c>EnumShiire</c>: 10=仕入、20=仕入返品、30=値引、99=その他）。</summary>
+	/// <summary>取引区分（<c>EnumMaterialShiire</c>: 10=仕入、20=仕入返品、30=値引、99=消費税）。</summary>
 	public int Kubun { get; set; }
 	/// <summary>仕入先Id。</summary>
 	public long Id_Shiire { get; set; }

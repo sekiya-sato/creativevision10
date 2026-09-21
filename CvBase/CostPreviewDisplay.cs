@@ -188,14 +188,14 @@ public static class CostPreviewDisplay {
 	};
 
 	/// <summary>
-	/// 生地・付属仕入(<see cref="Tran02Material"/>)の取引区分(<see cref="EnumShiire"/>: 10=仕入、20=仕入返品、
-	/// 30=値引、99=その他)の表示文言。諸掛確認画面（原価4項目 詳細設計 §8.2）の「取引区分」列で使う。
+	/// 生地・付属仕入(<see cref="Tran02Material"/>)の取引区分(<see cref="EnumMaterialShiire"/>: 10=仕入、20=仕入返品、
+	/// 30=値引、99=消費税)の表示文言。諸掛確認画面（原価4項目 詳細設計 §8.2）の「取引区分」列で使う。
 	/// </summary>
 	public static string FormatShiireKubun(int kubun) => kubun switch {
-		(int)EnumShiire.Shiire => "仕入",
-		(int)EnumShiire.Henpin => "仕入返品",
-		(int)EnumShiire.Nebiki => "値引",
-		(int)EnumShiire.Other => "その他",
+		(int)EnumMaterialShiire.Shiire => "仕入",
+		(int)EnumMaterialShiire.Henpin => "仕入返品",
+		(int)EnumMaterialShiire.Nebiki => "値引",
+		(int)EnumMaterialShiire.Tax => "消費税",
 		_ => $"不明({kubun})",
 	};
 

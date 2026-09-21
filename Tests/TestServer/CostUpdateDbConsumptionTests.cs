@@ -278,8 +278,8 @@ public class CostUpdateDbConsumptionTests {
 		Assert.IsTrue(result.IsSuccess, result.Message);
 		var generated = Db.Fetch<Tran03Shiire>("WHERE GeneratedKind=@0", (int)EnumGeneratedKind.ConsumptionPurchase);
 		Assert.AreEqual(2, generated.Count);
-		Assert.IsTrue(generated.Any(g => g.Kubun == (int)EnumShiire.Shiire && g.CalcFlag == 1));
-		Assert.IsTrue(generated.Any(g => g.Kubun == (int)EnumShiire.Henpin && g.CalcFlag == -1));
+		Assert.IsTrue(generated.Any(g => g.Kubun == (int)EnumShiire.SoldOnShiire && g.CalcFlag == 1));
+		Assert.IsTrue(generated.Any(g => g.Kubun == (int)EnumShiire.SoldOnHenpin && g.CalcFlag == -1));
 	}
 
 	[TestMethod]
@@ -732,7 +732,7 @@ public class CostUpdateDbConsumptionTests {
 		Assert.IsTrue(result.IsSuccess, result.Message);
 		var generated = Db.Fetch<Tran03Shiire>("WHERE GeneratedKind=@0", (int)EnumGeneratedKind.ConsumptionPurchase);
 		Assert.AreEqual(1, generated.Count);
-		Assert.AreEqual((int)EnumShiire.Henpin, generated[0].Kubun);
+		Assert.AreEqual((int)EnumShiire.SoldOnHenpin, generated[0].Kubun);
 		Assert.AreEqual(-1, generated[0].CalcFlag);
 		// 課税対象額・税額は符号を持たず正値のまま保持する。符号はヘッダCalcFlagだけで表現する
 		Assert.AreEqual(100L, generated[0].TaxableAmount1);

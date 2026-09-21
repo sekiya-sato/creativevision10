@@ -140,7 +140,7 @@ public partial class CostUpdateDb {
 		var plans = new Dictionary<long, LastPurchasePlan>();
 
 		// 対象(設計書§5.1): IsStock=1、Kubun=10、明細数量>0、商品ID>0、MasterShohin.IsZaiko=1。
-		// 仕入返品(20)・値引(30)・その他(99)・消化仕入(IsStock=0)は対象外。
+		// 仕入返品(20)・値引(30)・消費税(99)は対象外。消化仕入(15/25)はIsStock=0のため本条件に到達しない。
 		var sql = $@"
 SELECT CAST(json_extract(j.value, '$.Id_Shohin') AS INTEGER) AS Id_Shohin,
        h.Id AS ShiireId, h.DenDay,
@@ -372,7 +372,8 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 	/// 対象期間に総平均原価更新の対象となる商品Idを抽出する（設計書§6.1）。
 	/// <c>MasterShohin.IsZaiko=1</c>かつ、対象期間に<c>IsStock=1</c>、<c>IsPay=1</c>、<c>Kubun</c>が
 	/// 10（仕入）または20（仕入返品）の商品仕入がある商品。<c>Tran03Shiire.EnumShiire</c>の実在値は
-	/// 10/20/30/99の4つだけのため、<c>10..29</c>のような範囲表現は使わず実在値を列挙する（設計書§6.1）。
+	/// 10/15/20/25/30/99の6つで、うち消化仕入(15)・消化仕入返品(25)はIsStock=0のため本条件には到達しない。
+	/// <c>10..29</c>のような範囲表現は使わず実在値を列挙する（設計書§6.1）。
 	/// </summary>
 	private List<long> FetchTotalAverageTargetIds(ClosingMonthCalculator.KakeMonthPeriod period) {
 		var sql = $@"
