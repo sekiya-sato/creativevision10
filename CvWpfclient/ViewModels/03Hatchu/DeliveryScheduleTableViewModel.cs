@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvBase;
 using CvWpfclient.Helpers;
@@ -73,7 +73,8 @@ public partial class DeliveryScheduleTableViewModel : Helpers.BaseReportViewMode
 		// 納品予定日が入っている発注だけを対象にする。取引区分は発注/追加発注/自動発注をまとめて対象にする。
 		var clauses = new List<string> {
 			"ifnull(h.NouhinDay,'') <> ''",
-			$"h.Kubun IN ({(int)EnumHachu.Hachu},{(int)EnumHachu.Tsuika},{(int)EnumHachu.Jido})",
+			// 発注帯(10-19)。追加発注(11)・自動発注(15)を含む。区分を離散指定すると帯に区分が追加されたとき静かに漏れるため。
+			"h.Kubun BETWEEN 10 AND 19",
 		};
 		if (from.HasValue) clauses.Add($"h.NouhinDay >= {AddSqlParameter(parameters, ToDenDay(from.Value))}");
 		if (to.HasValue) clauses.Add($"h.NouhinDay <= {AddSqlParameter(parameters, ToDenDay(to.Value))}");

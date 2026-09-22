@@ -117,6 +117,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	public IReadOnlyList<JuchuKubunOption> KubunOptions { get; } = [
 		new(null, "(全て)"),
 		new((int)EnumJuchu.Juchu, "10 受注"),
+		new((int)EnumJuchu.FollowUpJuchu, "11 追加受注"),
 		new((int)EnumJuchu.Henpin, "20 受注返品"),
 		new((int)EnumJuchu.Nebiki, "30 値引"),
 		new((int)EnumJuchu.Other, "99 その他"),
@@ -344,6 +345,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	/// <summary>受注選択ダイアログへ渡す区分の表示名。</summary>
 	static readonly Dictionary<int, string> JuchuKubunLabels = new() {
 		[(int)EnumJuchu.Juchu] = "受注",
+		[(int)EnumJuchu.FollowUpJuchu] = "追加受注",
 		[(int)EnumJuchu.Henpin] = "受注返品",
 		[(int)EnumJuchu.Nebiki] = "値引",
 		[(int)EnumJuchu.Other] = "その他",
@@ -989,6 +991,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	/// <summary>受注ヘッダの取引区分(<see cref="EnumJuchu"/>)を「10 受注」形式で表示する。</summary>
 	internal static string FormatJuchuKubun(int kubun) => (EnumJuchu)kubun switch {
 		EnumJuchu.Juchu => "10 受注",
+		EnumJuchu.FollowUpJuchu => "11 追加受注",
 		EnumJuchu.Henpin => "20 受注返品",
 		EnumJuchu.Nebiki => "30 値引",
 		EnumJuchu.Other => "99 その他",

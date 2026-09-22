@@ -114,6 +114,8 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 	public IReadOnlyList<CodeLabelOption> KubunOptions { get; } = [
 		new(null, "(全て)"),
 		new((int)EnumHachu.Hachu, "10 発注"),
+		new((int)EnumHachu.Tsuika, "11 追加発注"),
+		new((int)EnumHachu.Jido, "15 自動発注"),
 		new((int)EnumHachu.Henpin, "20 返品"),
 		new((int)EnumHachu.Nebiki, "30 値引"),
 		new((int)EnumHachu.Other, "99 その他"),
@@ -348,6 +350,8 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 	/// </summary>
 	static readonly Dictionary<int, string> HachuKubunLabels = new() {
 		[(int)EnumHachu.Hachu] = "発注",
+		[(int)EnumHachu.Tsuika] = "追加発注",
+		[(int)EnumHachu.Jido] = "自動発注",
 		[(int)EnumHachu.Henpin] = "返品",
 		[(int)EnumHachu.Nebiki] = "値引",
 		[(int)EnumHachu.Other] = "その他",
@@ -884,6 +888,8 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 	/// <summary>発注ヘッダの取引区分(<see cref="EnumHachu"/>)を「10 発注」形式で表示する。</summary>
 	internal static string FormatHachuKubun(int kubun) => (EnumHachu)kubun switch {
 		EnumHachu.Hachu => "10 発注",
+		EnumHachu.Tsuika => "11 追加発注",
+		EnumHachu.Jido => "15 自動発注",
 		EnumHachu.Henpin => "20 返品",
 		EnumHachu.Nebiki => "30 値引",
 		EnumHachu.Other => "99 その他",

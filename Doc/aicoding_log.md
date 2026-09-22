@@ -1,4 +1,30 @@
-﻿## [2026-09-21] 仕入区分に消化仕入を追加し生地・付属仕入の区分enumを分離する
+﻿## [2026-09-22] 受注に追加受注を追加し受注・発注の帳票フィルタを帯へ揃える
+
+### 実施内容
+`EnumJuchu` に `FollowUpJuchu=11`（追加受注）を追加した。これに伴い、受注と発注の画面・帳票を実態へ揃えた。
+
+**受注（EnumJuchu: 10 受注 / 11 追加受注 / 20 受注返品 / 30 値引 / 99 その他）:**
+- `JuchuInputViewModel` の区分選択肢と `KubunNameSql` に追加受注を追加した。
+- `JuchuHaibunInputViewModel` の選択肢・ラベル辞書・`FormatJuchuKubun` の3箇所に追加受注を追加した。
+- 受注帳票7本（`TokuiSakiUriageYoteiTable` / `TokuiSakiJuchuTable` / `TantoTenjiJuchuGoukeiTable` / `ShouhinJuchuTable` / `ShouhinJuchuSummaryTable` / `JuchuZanKanriTable` / `JuchuBestTable`）の `h.Kubun = 10` を `h.Kubun BETWEEN 10 AND 19` へ変更した。あわせて3本の doc comment「受注(Kubun=10)のみ」を受注帯の記述へ直した。
+
+**発注（EnumHachu: 10 発注 / 11 追加発注 / 15 自動発注 / 20 発注返品 / 30 値引 / 99 その他）:**
+- 発注帳票6本（`HachuForm` / `SupplierHachuTable` / `HachuZanKanriTable` / `ShohinHachuTable` / `ShohinHachuSummaryTable` / `PendingShiireList`）の `h.Kubun = 10` を `h.Kubun BETWEEN 10 AND 19` へ変更した。
+- `DeliveryScheduleTable` の `h.Kubun IN (10,11,15)` という3値列挙も他と書き方を揃えて帯へ変更した。
+- `HachuHaibunInputViewModel` の選択肢・ラベル辞書・`FormatHachuKubun` に追加発注(11)・自動発注(15)を追加した。`HachuInputViewModel` は元から両方を持っていた。
+
+区分を離散指定していると、帯の中に区分が追加されたときその区分が静かに抽出条件から漏れる。売上・仕入で採った方針（commit 87c4b13e / b01fa961）と同じく帯で書く形に揃えた。
+
+### 影響
+- これまで追加受注(11)・追加発注(11)・自動発注(15)は、上記13本の帳票の集計から漏れていた。帯化により計上されるようになる。特に `PendingShiireList`（入荷予定）では自動発注が入荷対象から外れていた。「返品・値引は入荷対象ではない」という元の意図は帯(10-19)で維持している。
+- 更新処理は変更していない。受注残 `CompletionDb` と `WriteEffectRunner` は `Kubun` で絞っておらず、数量・金額の符号はヘッダの `CalcFlag`（`20-39` が -1）で決まるため、11 は +1 で受注として正しく積まれる。
+- `CalcFlag` の算出式 `TranCalcBase.GetKubunCalcFlag` は変更していない。
+
+### 未実施・残余リスク
+- 実画面での動作確認は未実施（ビルドと TestServer 922件のみ）。
+- `DeliveryScheduleTable` は帯化により、将来 16-19 の区分が増えた場合も自動で納品予定の対象になる。除外したい区分が出たときは個別に条件を足す必要がある。
+
+## [2026-09-21] 仕入区分に消化仕入を追加し生地・付属仕入の区分enumを分離する
 
 ### 実施内容
 マイグレーション `26_09_21_01` を追加し、既存の自動生成消化仕入伝票の区分を 10/20 から **15/25** へ一括変換した。これに伴い、以下の実装を修正した。

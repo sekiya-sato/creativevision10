@@ -2067,6 +2067,8 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 public enum EnumJuchu : int {
 	[Comment("受注")]
 	Juchu = 10,
+	[Comment("追加受注")]
+	FollowUpJuchu = 11,
 	[Comment("受注返品")]
 	Henpin = 20,
 	[Comment("値引")]

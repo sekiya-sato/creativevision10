@@ -36,6 +36,7 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 
 	public IReadOnlyList<KubunOption> KubunOptions { get; } = [
 		new(EnumJuchu.Juchu, "受注"),
+		new(EnumJuchu.FollowUpJuchu, "追加受注"),
 		new(EnumJuchu.Henpin, "受注返品"),
 	];
 
@@ -277,7 +278,7 @@ public partial class JuchuInputViewModel : Helpers.BaseTranInputViewModel<Tran12
 
 	/// <summary>区分名（受注/返品 など）。<paramref name="p"/> はテーブル別名（"" または "h."）。</summary>
 	static string KubunNameSql(string p) =>
-		$"case {p}Kubun when 10 then '受注' when 20 then '返品' when 30 then '値引' when 99 then 'その他' else cast({p}Kubun as text) end";
+		$"case {p}Kubun when 10 then '受注' when 11 then '追加受注' when 20 then '返品' when 30 then '値引' when 99 then 'その他' else cast({p}Kubun as text) end";
 
 	/// <summary>旧帳票の「取引区分名」= 「区分コード 区分名」形式。</summary>
 	static string KubunLabelSql(string p) => $"(cast({p}Kubun as text) || ' ' || {KubunNameSql(p)})";

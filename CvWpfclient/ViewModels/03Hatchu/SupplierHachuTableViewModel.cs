@@ -50,7 +50,8 @@ public partial class SupplierHachuTableViewModel : Helpers.BaseReportViewModel {
 		var where = $"h.DenDay >= {AddSqlParameter(parameters, ToDenDay(from))}"
 			+ $" AND h.DenDay <= {AddSqlParameter(parameters, ToDenDay(to))}";
 		where += BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VShiire"), ShiireCodeFrom, ShiireCodeTo);
-		if (!IncludeHenpin) where += " AND h.Kubun = 10";
+		// 発注帯(10-19)で絞る。区分を離散指定すると帯に区分が追加されたとき静かに漏れるため。追加発注(11)・自動発注(15)もここに含まれる。
+		if (!IncludeHenpin) where += " AND h.Kubun BETWEEN 10 AND 19";
 
 		var sql = $@"
 SELECT

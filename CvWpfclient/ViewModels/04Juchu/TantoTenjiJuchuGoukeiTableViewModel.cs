@@ -74,7 +74,7 @@ public partial class TantoTenjiJuchuGoukeiTableViewModel : Helpers.BaseReportVie
 		List<string> parameters = [];
 		var where = $"h.DenDay >= {AddSqlParameter(parameters, ToDenDay(from))}"
 			+ $" AND h.DenDay <= {AddSqlParameter(parameters, ToDenDay(to))}"
-			+ " AND h.Kubun = 10";
+			+ " AND h.Kubun BETWEEN 10 AND 19";  // 受注帯(10-19)で絞る。区分を離散指定すると帯に区分が追加されたとき静かに漏れるため。追加受注(11)もここに含まれる。
 		var shainWhere = BuildCodeRangeWhere(parameters, "ifnull(sn.Code,'')", ShainCodeFrom, ShainCodeTo);
 		var tenjiWhere = BuildCodeRangeWhere(parameters, "ifnull(tj.Code,'')", TenjiCodeFrom, TenjiCodeTo);
 		// 展示会未設定を含めない場合は内部結合相当にする

@@ -60,7 +60,8 @@ public partial class PendingShiireListViewModel : Helpers.BaseReportViewModel {
 		var where = $"h.DenDay >= {AddSqlParameter(parameters, ToDenDay(from))}"
 			+ $" AND h.DenDay <= {AddSqlParameter(parameters, ToDenDay(to))}"
 			+ BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VShiire"), ShiireCodeFrom, ShiireCodeTo)
-			+ " AND h.Kubun = 10";   // 発注のみ（返品･値引は入荷対象ではない）
+			// 発注帯(10-19)。返品･値引は入荷対象ではないため除外。追加発注(11)・自動発注(15)は入荷対象に含まれる。
+			+ " AND h.Kubun BETWEEN 10 AND 19";
 
 		var skuKey = IsBySku ? TranMeisaiSql.Num("Id_Shohin") : "0";
 		var colKey = IsBySku ? TranMeisaiSql.Num("Id_Col") : "0";

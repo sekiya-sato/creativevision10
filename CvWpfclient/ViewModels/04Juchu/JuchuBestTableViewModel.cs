@@ -63,7 +63,7 @@ public partial class JuchuBestTableViewModel : Helpers.BaseReportViewModel {
 		var where = $"h.DenDay >= {AddSqlParameter(parameters, ToDenDay(from))}"
 			+ $" AND h.DenDay <= {AddSqlParameter(parameters, ToDenDay(to))}"
 			+ BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VTokui"), TokuiCodeFrom, TokuiCodeTo)
-			+ " AND h.Kubun = 10";
+			+ " AND h.Kubun BETWEEN 10 AND 19";  // 受注帯(10-19)で絞る。区分を離散指定すると帯に区分が追加されたとき静かに漏れるため。追加受注(11)もここに含まれる。
 
 		var colName = IsByColorSize ? TranMeisaiSql.Str("Mei_Col") : "''";
 		var sizName = IsByColorSize ? TranMeisaiSql.Str("Mei_Siz") : "''";

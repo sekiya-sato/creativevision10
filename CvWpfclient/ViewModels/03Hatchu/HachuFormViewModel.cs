@@ -59,7 +59,8 @@ public partial class HachuFormViewModel : Helpers.BaseReportViewModel {
 			+ BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VShiire"), ShiireCodeFrom, ShiireCodeTo);
 		if (long.TryParse(DenNoFrom.Trim(), out var noFrom)) where += $" AND h.Id >= {noFrom}";
 		if (long.TryParse(DenNoTo.Trim(), out var noTo)) where += $" AND h.Id <= {noTo}";
-		if (IsHachuOnly) where += " AND h.Kubun = 10";
+		// 発注帯(10-19)で絞る。区分を離散指定すると帯に区分が追加されたとき静かに漏れるため。追加発注(11)・自動発注(15)もここに含まれる。
+		if (IsHachuOnly) where += " AND h.Kubun BETWEEN 10 AND 19";
 
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
 			((int)EnumHachu.Hachu, "発注"),

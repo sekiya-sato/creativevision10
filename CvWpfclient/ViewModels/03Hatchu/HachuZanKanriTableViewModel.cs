@@ -66,7 +66,8 @@ public partial class HachuZanKanriTableViewModel : Helpers.BaseReportViewModel {
 		var where = $"h.DenDay >= {AddSqlParameter(parameters, ToDenDay(from))}"
 			+ $" AND h.DenDay <= {AddSqlParameter(parameters, ToDenDay(to))}"
 			+ BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VShiire"), ShiireCodeFrom, ShiireCodeTo)
-			+ " AND h.Kubun = 10";
+			// 発注帯(10-19)で絞る。区分を離散指定すると帯に区分が追加されたとき静かに漏れるため。追加発注(11)・自動発注(15)もここに含まれる。
+			+ " AND h.Kubun BETWEEN 10 AND 19";
 
 		// 基準日はクライアント日付を埋め込む（サーバのタイムゾーンに依存させない）
 		var today = DateTime.Today.ToString("yyyy-MM-dd");

@@ -25,7 +25,7 @@ public partial class TokuiSakiJuchuTableViewModel : Helpers.BaseReportViewModel 
 	[ObservableProperty]
 	public partial string TokuiCodeTo { get; set; } = string.Empty;
 
-	/// <summary>true=返品･値引も含める / false=受注(Kubun=10)のみ。</summary>
+	/// <summary>true=返品･値引も含める / false=受注帯(Kubun 10-19。追加受注を含む)のみ。</summary>
 	[ObservableProperty]
 	public partial bool IncludeHenpin { get; set; } = true;
 
@@ -49,7 +49,7 @@ public partial class TokuiSakiJuchuTableViewModel : Helpers.BaseReportViewModel 
 		var where = $"h.DenDay >= {AddSqlParameter(parameters, ToDenDay(from))}"
 			+ $" AND h.DenDay <= {AddSqlParameter(parameters, ToDenDay(to))}";
 		where += BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VTokui"), TokuiCodeFrom, TokuiCodeTo);
-		if (!IncludeHenpin) where += " AND h.Kubun = 10";
+		if (!IncludeHenpin) where += " AND h.Kubun BETWEEN 10 AND 19";  // 受注帯(10-19)で絞る。区分を離散指定すると帯に区分が追加されたとき静かに漏れるため。追加受注(11)もここに含まれる。
 
 		var sql = $@"
 SELECT
