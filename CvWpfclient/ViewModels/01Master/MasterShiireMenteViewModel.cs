@@ -20,6 +20,8 @@ public partial class MasterShiireMenteViewModel : Helpers.BaseCodeNameLightMente
 	protected override string? SelectCodeDisplayName => "仕入先";
 	protected override string? FormFile => "MasterShiireMente.qfm";
 	public IReadOnlyList<EnumShime> ShimeBiItems { get; } = Enum.GetValues<EnumShime>();
+	public IReadOnlyList<EnumTaxCalcUnit> TaxCalcUnitItems { get; } = Enum.GetValues<EnumTaxCalcUnit>();
+	public IReadOnlyList<EnumRounding> TaxRoundingItems { get; } = Enum.GetValues<EnumRounding>();
 	public IReadOnlyList<PayMonthItem> PayMonthItems { get; } = [
 		new(0, "当月"),
 		new(1, "翌月"),

@@ -419,6 +419,8 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<TextBlock Grid.Row="0"
@@ -539,6 +541,42 @@
 									<TextBlock Style="{StaticResource MasterRefText}"
 										Text="{Binding CurrentEdit.VPaysaki, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
+
+								<!--  税計算単位  -->
+								<TextBlock Grid.Row="8"
+									Style="{StaticResource FormLabel}"
+									Text="税計算単位" />
+								<ComboBox Grid.Row="8" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="税計算単位"
+									ItemsSource="{Binding TaxCalcUnitItems}"
+									SelectedItem="{Binding CurrentEdit.EnTaxCalcUnit, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+
+								<!--  消費税端数処理  -->
+								<TextBlock Grid.Row="9"
+									Style="{StaticResource FormLabel}"
+									Text="消費税端数処理" />
+								<ComboBox Grid.Row="9" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="消費税端数処理"
+									ItemsSource="{Binding TaxRoundingItems}"
+									SelectedItem="{Binding CurrentEdit.EnTaxRounding, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
 							</Grid>
 						</ScrollViewer>
 					</TabItem>
