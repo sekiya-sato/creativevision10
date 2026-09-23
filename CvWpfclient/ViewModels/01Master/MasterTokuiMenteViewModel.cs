@@ -23,6 +23,10 @@ public partial class MasterTokuiMenteViewModel : Helpers.BaseCodeNameLightMenteV
 	protected override string? SelectCodeDisplayName => "得意先";
 	protected override string? FormFile => "MasterTokuiMente.qfm";
 	public IReadOnlyList<EnumShime> ShimeBiItems { get; } = Enum.GetValues<EnumShime>();
+	public IReadOnlyList<EnumTaxCalcUnit> TaxCalcUnitItems { get; } = Enum.GetValues<EnumTaxCalcUnit>();
+	public IReadOnlyList<EnumRounding> TaxRoundingItems { get; } = Enum.GetValues<EnumRounding>();
+	public IReadOnlyList<EnumTaxPriceType> TaxPriceTypeItems { get; } = Enum.GetValues<EnumTaxPriceType>();
+	public IReadOnlyList<EnumSlipFormType> SlipFormTypeItems { get; } = Enum.GetValues<EnumSlipFormType>();
 	public IReadOnlyList<PayMonthItem> PayMonthItems { get; } = [
 		new(0, "当月"),
 		new(1, "翌月"),

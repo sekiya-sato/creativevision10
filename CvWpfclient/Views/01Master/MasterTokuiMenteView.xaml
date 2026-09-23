@@ -508,6 +508,10 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<!--  メールアドレス  -->
@@ -647,6 +651,78 @@
 									<TextBlock Style="{StaticResource MasterRefText}"
 										Text="{Binding CurrentEdit.VPaysaki, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
+
+								<!--  税計算単位  -->
+								<TextBlock Grid.Row="9"
+									Style="{StaticResource FormLabel}"
+									Text="税計算単位" />
+								<ComboBox Grid.Row="9" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="税計算単位"
+									ItemsSource="{Binding TaxCalcUnitItems}"
+									SelectedItem="{Binding CurrentEdit.EnTaxCalcUnit, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+
+								<!--  消費税端数処理  -->
+								<TextBlock Grid.Row="10"
+									Style="{StaticResource FormLabel}"
+									Text="消費税端数処理" />
+								<ComboBox Grid.Row="10" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="消費税端数処理"
+									ItemsSource="{Binding TaxRoundingItems}"
+									SelectedItem="{Binding CurrentEdit.EnTaxRounding, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+
+								<!--  外税内税区分  -->
+								<TextBlock Grid.Row="11"
+									Style="{StaticResource FormLabel}"
+									Text="外税内税区分" />
+								<ComboBox Grid.Row="11" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="外税内税区分"
+									ItemsSource="{Binding TaxPriceTypeItems}"
+									SelectedItem="{Binding CurrentEdit.EnTaxPriceType, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+
+								<!--  伝票印字タイプ  -->
+								<TextBlock Grid.Row="12"
+									Style="{StaticResource FormLabel}"
+									Text="伝票印字タイプ" />
+								<ComboBox Grid.Row="12" Grid.Column="1"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="伝票印字タイプ"
+									ItemsSource="{Binding SlipFormTypeItems}"
+									SelectedItem="{Binding CurrentEdit.EnSlipFormType, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
 							</Grid>
 						</ScrollViewer>
 					</TabItem>

@@ -192,16 +192,30 @@ public partial class MasterTorihiki : BaseDbHasAddress, IBaseCodeName {
 	/// 税計算単位 0=請求、1=伝票
 	/// </summary>
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnTaxCalcUnit))]
 	[ForeignKey(nameof(EnumTaxCalcUnit))]
 	[Comment("税計算単位 0=請求、1=伝票")]
 	public partial int TaxCalcUnit { get; set; } = 0;
+	[Ignore]
+	[JsonIgnore]
+	public EnumTaxCalcUnit EnTaxCalcUnit {
+		get => (EnumTaxCalcUnit)TaxCalcUnit;
+		set => TaxCalcUnit = (int)value;
+	}
 	/// <summary>
 	/// 消費税端数処理 0=四捨五入、1=切上、2=切捨
 	/// </summary>
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnTaxRounding))]
 	[ForeignKey(nameof(EnumRounding))]
 	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
+	[Ignore]
+	[JsonIgnore]
+	public EnumRounding EnTaxRounding {
+		get => (EnumRounding)TaxRounding;
+		set => TaxRounding = (int)value;
+	}
 	/// <summary>
 	/// Hhtマスタ除外フラグ
 	/// </summary>
@@ -312,16 +326,30 @@ public sealed partial class MasterTokui : MasterTorihiki {
 	/// 外税内税区分 0=外税、1=内税 ※伝票印字の表現のみに使用 主に店舗
 	/// </summary>
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnTaxPriceType))]
 	[ForeignKey(nameof(EnumTaxPriceType))]
 	[Comment("外税内税区分 0=外税 1=内税 ※伝票印字の表現のみに使用 主に店舗")]
 	public partial int TaxPriceType { get; set; } = 0;
+	[Ignore]
+	[JsonIgnore]
+	public EnumTaxPriceType EnTaxPriceType {
+		get => (EnumTaxPriceType)TaxPriceType;
+		set => TaxPriceType = (int)value;
+	}
 	/// <summary>
 	/// 伝票印字タイプ
 	/// </summary>
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnSlipFormType))]
 	[ForeignKey(nameof(EnumSlipFormType))]
 	[Comment("伝票印字タイプ")]
 	public partial int SlipFormType { get; set; } = 0;
+	[Ignore]
+	[JsonIgnore]
+	public EnumSlipFormType EnSlipFormType {
+		get => (EnumSlipFormType)SlipFormType;
+		set => SlipFormType = (int)value;
+	}
 	/// <summary>
 	/// 価格グループ
 	/// </summary>

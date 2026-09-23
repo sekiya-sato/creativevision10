@@ -1,4 +1,15 @@
-﻿## [2026-09-22] 受注に追加受注を追加し受注・発注の帳票フィルタを帯へ揃える
+﻿## [2026-09-24] 得意先マスタ画面へ税・伝票関連の4項目を追加し、顧客マスタの性別表示を修正
+
+### 実施内容
+- `MasterEndCustomerMenteViewModel` の一覧 SQL で性別名称が `EnumGender` と逆（1=男性,2=女性）だったため、定義どおり 1=女性,2=男性 に修正した（commit 済）。
+- 得意先マスタ画面に入力欄が無かった `TaxCalcUnit`（税計算単位）/ `TaxRounding`（消費税端数処理）/ `TaxPriceType`（外税内税区分）/ `SlipFormType`（伝票印字タイプ）の ComboBox を「税・請求」タブへ追加した。
+  - 選択肢は `Enum.GetValues<T>()`、表示は `EnumCommentDisplayConverter`（`[Comment]`）で enum から生成する。
+  - `MasterTorihiki` / `MasterTokui` に `EnShime1` と同形の `[Ignore][JsonIgnore]` enum ラッパー `EnTaxCalcUnit` / `EnTaxRounding` / `EnTaxPriceType` / `EnSlipFormType` を追加した。DB 列・保存経路は変更なし。
+
+### 検証
+- `CvWpfclient` build 成功、`git diff --check` 問題なし。画面の実行確認は未実施。
+
+## [2026-09-22] 受注に追加受注を追加し受注・発注の帳票フィルタを帯へ揃える
 
 ### 実施内容
 `EnumJuchu` に `FollowUpJuchu=11`（追加受注）を追加した。これに伴い、受注と発注の画面・帳票を実態へ揃えた。
