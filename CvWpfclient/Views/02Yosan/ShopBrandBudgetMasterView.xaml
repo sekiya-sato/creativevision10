@@ -231,29 +231,29 @@
 							<ColumnDefinition Width="*" />
 							<ColumnDefinition Width="*" />
 						</Grid.ColumnDefinitions>
-						<TextBlock Grid.Column="0" VerticalAlignment="Center" FontWeight="SemiBold" Text="月計" />
-						<TextBlock Grid.Column="4" Margin="16,0,0,0" VerticalAlignment="Center" TextAlignment="Right">
+						<TextBlock Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Text="月計" />
+						<TextBlock Grid.Column="4" Margin="16,0,0,0" VerticalAlignment="Center" FontWeight="Bold" TextAlignment="Right">
 							<TextBlock.Text>
 								<MultiBinding StringFormat="粗利配分残: {0:N0} 千円">
 									<Binding Path="RemainingGrossProfitBudget" />
 								</MultiBinding>
 							</TextBlock.Text>
 						</TextBlock>
-						<TextBlock Grid.Column="2" Margin="16,0,0,0" VerticalAlignment="Center" TextAlignment="Right">
+						<TextBlock Grid.Column="2" Margin="16,0,0,0" VerticalAlignment="Center" FontWeight="Bold" TextAlignment="Right">
 							<TextBlock.Text>
 								<MultiBinding StringFormat="粗利合計: {0:N0} 千円">
 									<Binding Path="TotalGrossProfitBudget" />
 								</MultiBinding>
 							</TextBlock.Text>
 						</TextBlock>
-						<TextBlock Grid.Column="3" Margin="16,0,0,0" VerticalAlignment="Center" TextAlignment="Right">
+						<TextBlock Grid.Column="3" Margin="16,0,0,0" VerticalAlignment="Center" FontWeight="Bold" TextAlignment="Right">
 							<TextBlock.Text>
 								<MultiBinding StringFormat="売上配分残: {0:N0} 千円">
 									<Binding Path="RemainingBudget" />
 								</MultiBinding>
 							</TextBlock.Text>
 						</TextBlock>
-						<TextBlock Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" TextAlignment="Right">
+						<TextBlock Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" FontWeight="Bold" TextAlignment="Right">
 							<TextBlock.Text>
 								<MultiBinding StringFormat="売上合計: {0:N0} 千円">
 									<Binding Path="TotalBudget" />
@@ -278,7 +278,7 @@
 						<Style x:Key="BudgetNumericEdit" TargetType="TextBox">
 							<Setter Property="TextAlignment" Value="Right" />
 						</Style>
-						<Style x:Key="BudgetNumericHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}" TargetType="DataGridColumnHeader">
+						<Style x:Key="BudgetNumericHeader" BasedOn="{StaticResource MenteDataGridColumnHeader}" TargetType="DataGridColumnHeader">
 							<Setter Property="HorizontalContentAlignment" Value="Right" />
 							<Setter Property="Padding" Value="0,0,8,0" />
 						</Style>
@@ -329,6 +329,9 @@
 							HeaderStyle="{StaticResource BudgetNumericHeader}"
 								Header="粗利累計" IsReadOnly="True" />
 						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}" TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
 					</DataGrid>
 				</Grid>
 			</Grid>
