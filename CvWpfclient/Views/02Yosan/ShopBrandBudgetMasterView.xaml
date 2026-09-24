@@ -23,7 +23,6 @@
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
-			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 
 		<materialDesign:ColorZone Grid.Row="0"
@@ -162,7 +161,7 @@
 				Orientation="Horizontal">
 				<Button Command="{Binding CreateBudgetCommand}"
 					Style="{StaticResource BudgetActionButtonStyle}"
-					ToolTip="予算作成">
+					ToolTip="月売上・月粗利予算を、土日指数・休業日・イベント係数に応じて日別に配分し直します。編集中の日別予算は上書きされます。登録は予算保存で行います。">
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon VerticalAlignment="Center"
 							Kind="Calendar" />
@@ -172,7 +171,7 @@
 				</Button>
 				<Button Command="{Binding LoadBudgetCommand}"
 					Style="{StaticResource BudgetActionButtonStyle}"
-					ToolTip="予算読込">
+					ToolTip="選択した年月・店舗・ブランドの登録済み日別予算を読み込みます。データがある場合、画面上の未保存の編集は置き換わります。">
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon VerticalAlignment="Center"
 							Kind="DatabaseRefresh" />
@@ -182,42 +181,22 @@
 				</Button>
 				<Button Command="{Binding SaveBudgetCommand}"
 					Style="{StaticResource BudgetActionButtonStyle}"
-					ToolTip="予算決定">
+					ToolTip="画面の日別予算を登録します。同じ年月・店舗・ブランドの登録済み予算は洗い替えます。">
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon VerticalAlignment="Center"
 							Kind="ContentSave" />
 						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-							Text="予算決定" />
+							Text="予算保存" />
 					</StackPanel>
 				</Button>
 				<Button Command="{Binding DeleteBudgetCommand}"
 					Style="{StaticResource BudgetActionButtonStyle}"
-					ToolTip="予算削除">
+					ToolTip="選択した年月・店舗・ブランドの登録済み予算を削除し、画面上の予算もクリアします。">
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon VerticalAlignment="Center"
 							Kind="Delete" />
 						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
 							Text="予算削除" />
-					</StackPanel>
-				</Button>
-				<Button Command="{Binding AutoAllocateBudgetCommand}"
-					Style="{StaticResource BudgetActionButtonStyle}"
-					ToolTip="自動予算配分">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="Calculator" />
-						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-							Text="自動配分" />
-					</StackPanel>
-				</Button>
-				<Button Command="{Binding RecalculateTotalsCommand}"
-					Style="{StaticResource BudgetActionButtonStyle}"
-					ToolTip="累計再計算">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="Sigma" />
-						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-							Text="累計再計算" />
 					</StackPanel>
 				</Button>
 			</StackPanel>
@@ -228,6 +207,7 @@
 			materialDesign:ElevationAssist.Elevation="Dp2">
 			<Grid>
 				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="*" />
 				</Grid.RowDefinitions>
@@ -240,98 +220,113 @@
 							Text="{Binding Message}" />
 					</DockPanel>
 				</Border>
-				<Grid Grid.Row="1"
+				<Border Grid.Row="1"
+					Padding="12,8"
+					Background="{DynamicResource MaterialDesignToolBarBackground}">
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="*" />
+						</Grid.ColumnDefinitions>
+						<TextBlock Grid.Column="0" VerticalAlignment="Center" FontWeight="SemiBold" Text="月計" />
+						<TextBlock Grid.Column="4" Margin="16,0,0,0" VerticalAlignment="Center" TextAlignment="Right">
+							<TextBlock.Text>
+								<MultiBinding StringFormat="粗利配分残: {0:N0} 千円">
+									<Binding Path="RemainingGrossProfitBudget" />
+								</MultiBinding>
+							</TextBlock.Text>
+						</TextBlock>
+						<TextBlock Grid.Column="2" Margin="16,0,0,0" VerticalAlignment="Center" TextAlignment="Right">
+							<TextBlock.Text>
+								<MultiBinding StringFormat="粗利合計: {0:N0} 千円">
+									<Binding Path="TotalGrossProfitBudget" />
+								</MultiBinding>
+							</TextBlock.Text>
+						</TextBlock>
+						<TextBlock Grid.Column="3" Margin="16,0,0,0" VerticalAlignment="Center" TextAlignment="Right">
+							<TextBlock.Text>
+								<MultiBinding StringFormat="売上配分残: {0:N0} 千円">
+									<Binding Path="RemainingBudget" />
+								</MultiBinding>
+							</TextBlock.Text>
+						</TextBlock>
+						<TextBlock Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" TextAlignment="Right">
+							<TextBlock.Text>
+								<MultiBinding StringFormat="売上合計: {0:N0} 千円">
+									<Binding Path="TotalBudget" />
+								</MultiBinding>
+							</TextBlock.Text>
+						</TextBlock>
+					</Grid>
+				</Border>
+				<Grid Grid.Row="2"
 					Margin="8">
-					<Grid.RowDefinitions>
-						<RowDefinition Height="Auto" />
-						<RowDefinition Height="*" />
-					</Grid.RowDefinitions>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*" />
-						<ColumnDefinition Width="12" />
-						<ColumnDefinition Width="*" />
-					</Grid.ColumnDefinitions>
-					<TextBlock Grid.Row="0" Grid.Column="0"
-						Margin="0,0,0,4"
-						FontWeight="SemiBold" Text="1-15日" />
-					<TextBlock Grid.Row="0" Grid.Column="2"
-						Margin="0,0,0,4"
-						FontWeight="SemiBold" Text="16日以降" />
-					<DataGrid Grid.Row="1" Grid.Column="0"
+					<DataGrid
 						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" FrozenColumnCount="1" IsReadOnly="False"
-						ItemsSource="{Binding FirstHalfDailyBudgets}"
+						ItemsSource="{Binding DailyBudgets}"
 						SelectedItem="{Binding SelectedDailyBudgetRow}"
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True">
+					<DataGrid.Resources>
+						<Style x:Key="BudgetNumericText" TargetType="TextBlock">
+							<Setter Property="TextAlignment" Value="Right" />
+							<Setter Property="Padding" Value="0,0,8,0" />
+						</Style>
+						<Style x:Key="BudgetNumericEdit" TargetType="TextBox">
+							<Setter Property="TextAlignment" Value="Right" />
+						</Style>
+						<Style x:Key="BudgetNumericHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}" TargetType="DataGridColumnHeader">
+							<Setter Property="HorizontalContentAlignment" Value="Right" />
+							<Setter Property="Padding" Value="0,0,8,0" />
+						</Style>
+					</DataGrid.Resources>
 						<DataGrid.Columns>
-							<DataGridTextColumn Width="60"
+						<DataGridTextColumn Width="70"
 								Binding="{Binding Day}"
 								Header="日付" IsReadOnly="True" />
-							<DataGridTextColumn Width="60"
+						<DataGridTextColumn Width="70"
 								Binding="{Binding DayOfWeek}"
 								Header="曜日" IsReadOnly="True" />
-							<DataGridTextColumn Width="110"
+						<DataGridTextColumn Width="180"
 								Binding="{Binding EventName}"
 								Header="イベント" IsReadOnly="True" />
-							<DataGridTextColumn Width="45"
+						<DataGridTextColumn Width="76"
 								Binding="{Binding EventImportance}"
 								Header="重要度" IsReadOnly="True" />
-							<DataGridTextColumn Width="70"
+						<DataGridTextColumn Width="100"
 								Binding="{Binding EventCoefficient, StringFormat=F1}"
+							ElementStyle="{StaticResource BudgetNumericText}"
+							HeaderStyle="{StaticResource BudgetNumericHeader}"
 								Header="イベント係数" IsReadOnly="True" />
-							<DataGridTextColumn Width="70"
+						<DataGridTextColumn Width="100"
 								Binding="{Binding Coefficient, StringFormat=F2}"
+							ElementStyle="{StaticResource BudgetNumericText}"
+							HeaderStyle="{StaticResource BudgetNumericHeader}"
 								Header="有効係数" IsReadOnly="True" />
-							<DataGridTextColumn Width="*"
+						<DataGridTextColumn Width="140"
 								Binding="{Binding SalesBudget, StringFormat={}{0:N0}}"
+								EditingElementStyle="{StaticResource BudgetNumericEdit}"
+								ElementStyle="{StaticResource BudgetNumericText}"
+							HeaderStyle="{StaticResource BudgetNumericHeader}"
 								Header="売上予算" />
-							<DataGridTextColumn Width="*"
+						<DataGridTextColumn Width="140"
 								Binding="{Binding GrossProfitBudget, StringFormat={}{0:N0}}"
+								EditingElementStyle="{StaticResource BudgetNumericEdit}"
+								ElementStyle="{StaticResource BudgetNumericText}"
+							HeaderStyle="{StaticResource BudgetNumericHeader}"
 								Header="粗利予算" />
-							<DataGridTextColumn Width="*"
+						<DataGridTextColumn Width="140"
 								Binding="{Binding RunningTotal, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource BudgetNumericText}"
+							HeaderStyle="{StaticResource BudgetNumericHeader}"
 								Header="売上累計" IsReadOnly="True" />
-							<DataGridTextColumn Width="*"
+						<DataGridTextColumn Width="140"
 								Binding="{Binding RunningGrossProfitTotal, StringFormat={}{0:N0}}"
-								Header="粗利累計" IsReadOnly="True" />
-						</DataGrid.Columns>
-					</DataGrid>
-					<DataGrid Grid.Row="1" Grid.Column="2"
-						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" FrozenColumnCount="1" IsReadOnly="False"
-						ItemsSource="{Binding SecondHalfDailyBudgets}"
-						SelectedItem="{Binding SelectedDailyBudgetRow}"
-						Style="{StaticResource MaterialDesignDataGrid}"
-						VirtualizingPanel.IsVirtualizing="True">
-						<DataGrid.Columns>
-							<DataGridTextColumn Width="60"
-								Binding="{Binding Day}"
-								Header="日付" IsReadOnly="True" />
-							<DataGridTextColumn Width="60"
-								Binding="{Binding DayOfWeek}"
-								Header="曜日" IsReadOnly="True" />
-							<DataGridTextColumn Width="110"
-								Binding="{Binding EventName}"
-								Header="イベント" IsReadOnly="True" />
-							<DataGridTextColumn Width="45"
-								Binding="{Binding EventImportance}"
-								Header="重要度" IsReadOnly="True" />
-							<DataGridTextColumn Width="70"
-								Binding="{Binding EventCoefficient, StringFormat=F1}"
-								Header="イベント係数" IsReadOnly="True" />
-							<DataGridTextColumn Width="70"
-								Binding="{Binding Coefficient, StringFormat=F2}"
-								Header="有効係数" IsReadOnly="True" />
-							<DataGridTextColumn Width="*"
-								Binding="{Binding SalesBudget, StringFormat={}{0:N0}}"
-								Header="売上予算" />
-							<DataGridTextColumn Width="*"
-								Binding="{Binding GrossProfitBudget, StringFormat={}{0:N0}}"
-								Header="粗利予算" />
-							<DataGridTextColumn Width="*"
-								Binding="{Binding RunningTotal, StringFormat={}{0:N0}}"
-								Header="売上累計" IsReadOnly="True" />
-							<DataGridTextColumn Width="*"
-								Binding="{Binding RunningGrossProfitTotal, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource BudgetNumericText}"
+							HeaderStyle="{StaticResource BudgetNumericHeader}"
 								Header="粗利累計" IsReadOnly="True" />
 						</DataGrid.Columns>
 					</DataGrid>
@@ -339,43 +334,5 @@
 			</Grid>
 		</materialDesign:Card>
 
-		<Border Grid.Row="4"
-			Padding="12,8"
-			Background="{DynamicResource MaterialDesignToolBarBackground}">
-			<DockPanel>
-				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					DockPanel.Dock="Right">
-					<TextBlock.Text>
-						<MultiBinding StringFormat="粗利配分残: {0:N0} 千円">
-							<Binding Path="RemainingGrossProfitBudget" />
-						</MultiBinding>
-					</TextBlock.Text>
-				</TextBlock>
-				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					DockPanel.Dock="Right">
-					<TextBlock.Text>
-						<MultiBinding StringFormat="粗利合計: {0:N0} 千円">
-							<Binding Path="TotalGrossProfitBudget" />
-						</MultiBinding>
-					</TextBlock.Text>
-				</TextBlock>
-				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					DockPanel.Dock="Right">
-					<TextBlock.Text>
-						<MultiBinding StringFormat="売上配分残: {0:N0} 千円">
-							<Binding Path="RemainingBudget" />
-						</MultiBinding>
-					</TextBlock.Text>
-				</TextBlock>
-				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					DockPanel.Dock="Right">
-					<TextBlock.Text>
-						<MultiBinding StringFormat="売上合計: {0:N0} 千円">
-							<Binding Path="TotalBudget" />
-						</MultiBinding>
-					</TextBlock.Text>
-				</TextBlock>
-			</DockPanel>
-		</Border>
 	</Grid>
 </helpers:BaseWindow>

@@ -91,10 +91,6 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		ClientLib.Exit(this);
 	}
 
-	public ObservableCollection<DailyBudgetRow> FirstHalfDailyBudgets { get; } = [];
-
-	public ObservableCollection<DailyBudgetRow> SecondHalfDailyBudgets { get; } = [];
-
 	partial void OnSelectedYearMonthChanged(DateTime value) {
 		if (isApplyingSelectedYearMonthString) return;
 		SelectedYearMonthString = value.ToString("yyyy/MM", CultureInfo.InvariantCulture);
@@ -130,7 +126,6 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		foreach (var row in value) {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 		}
-		RefreshDailyBudgetViews();
 		RecalculateTotals();
 	}
 
@@ -369,7 +364,6 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			await DeleteExistingBudgets(ct);
 			DailyBudgets.Clear();
-			RefreshDailyBudgetViews();
 			MonthlyBudget = 0;
 			MonthlyGrossProfitBudget = 0;
 			RecalculateTotals();
@@ -381,37 +375,6 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		}
 		catch (Exception ex) {
 			MessageEx.ShowErrorDialog($"予算削除失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
-		}
-		finally {
-			IsBusy = false;
-			ClientLib.Cursor2Normal();
-		}
-	}
-
-	[RelayCommand]
-	async Task AutoAllocateBudget(CancellationToken ct) {
-		if (!TryApplySelectedYearMonth()) return;
-		var targetShopId = SelectedShopId;
-		var targetBrandId = SelectedBrandId;
-		var targetYearMonth = SelectedYearMonth;
-		var targetYearMonthString = SelectedYearMonthString;
-		IsBusy = true;
-		try {
-			ct.ThrowIfCancellationRequested();
-			ClientLib.Cursor2Wait();
-			var events = await LoadShopEventsAsync(targetShopId, targetYearMonth, ct);
-			if (!IsCurrentBudgetTarget(targetShopId, targetBrandId, targetYearMonth, targetYearMonthString)) {
-				Message = "条件が変更されたため、自動配分を中止しました。";
-				return;
-			}
-			shopEvents = events;
-			AutoAllocateBudgetCore();
-		}
-		catch (OperationCanceledException) {
-			Message = "自動配分をキャンセルしました。";
-		}
-		catch (Exception ex) {
-			MessageEx.ShowErrorDialog($"自動配分失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
 		}
 		finally {
 			IsBusy = false;
@@ -435,10 +398,9 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			row.GrossProfitBudget = (long)Math.Round(MonthlyGrossProfitBudget * row.Coefficient / totalCoefficients);
 		}
 		RecalculateTotals();
-		Message = "予算を自動配分しました。";
+		Message = "日別予算を作成しました。";
 	}
 
-	[RelayCommand]
 	void RecalculateTotals() {
 		long runningTotal = 0;
 		long runningGrossProfitTotal = 0;
@@ -481,7 +443,6 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	[RelayCommand]
 	void ClearAll() {
 		DailyBudgets.Clear();
-		RefreshDailyBudgetViews();
 		MonthlyBudget = 0;
 		MonthlyGrossProfitBudget = 0;
 		TotalBudget = 0;
@@ -517,7 +478,6 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 			DailyBudgets.Add(row);
 		}
-		RefreshDailyBudgetViews();
 		ApplyHolidayDays();
 	}
 
@@ -548,19 +508,6 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			isApplyingHolidayDays = false;
 		}
 		RecalculateTotals();
-	}
-
-	void RefreshDailyBudgetViews() {
-		FirstHalfDailyBudgets.Clear();
-		SecondHalfDailyBudgets.Clear();
-		foreach (var row in DailyBudgets) {
-			if (row.Day <= 15) {
-				FirstHalfDailyBudgets.Add(row);
-			}
-			else {
-				SecondHalfDailyBudgets.Add(row);
-			}
-		}
 	}
 
 	static HashSet<int> ParseHolidayDays(string text) {
