@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CvBase.Share;
+using Newtonsoft.Json;
 using NPoco;
 
 namespace CvBase;
@@ -33,8 +35,16 @@ public sealed partial class TranTokuiPromotion : BaseDbClass {
 	/// 重要度 0=低, 1=中, 2=高
 	/// </summary>
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnRank))]
+	[ForeignKey(nameof(EnumPromotionRank))]
 	[Comment("重要度 0=低、 1=中、 2=高")]
 	public partial int Rank { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumPromotionRank EnRank {
+		get => (EnumPromotionRank)Rank;
+		set => Rank = (int)value;
+	}
 	/// <summary>
 	/// 得意先コード（一覧表示用）
 	/// </summary>
@@ -47,12 +57,6 @@ public sealed partial class TranTokuiPromotion : BaseDbClass {
 	[ObservableProperty]
 	[ResultColumn]
 	public partial string TokuiName { get; set; } = string.Empty;
-	/// <summary>
-	/// 重要度名（一覧表示用）
-	/// </summary>
-	[ObservableProperty]
-	[ResultColumn]
-	public partial string RankName { get; set; } = string.Empty;
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -85,8 +89,16 @@ public sealed partial class TranShopPromotion : BaseDbClass {
 	/// 重要度 0=低, 1=中, 2=高
 	/// </summary>
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnRank))]
+	[ForeignKey(nameof(EnumPromotionRank))]
 	[Comment("重要度 0=低、 1=中、 2=高")]
 	public partial int Rank { get; set; }
+	[Ignore]
+	[JsonIgnore]
+	public EnumPromotionRank EnRank {
+		get => (EnumPromotionRank)Rank;
+		set => Rank = (int)value;
+	}
 	/// <summary>
 	/// 店舗コード（一覧表示用）
 	/// </summary>
@@ -99,12 +111,6 @@ public sealed partial class TranShopPromotion : BaseDbClass {
 	[ObservableProperty]
 	[ResultColumn]
 	public partial string ShopName { get; set; } = string.Empty;
-	/// <summary>
-	/// 重要度名（一覧表示用）
-	/// </summary>
-	[ObservableProperty]
-	[ResultColumn]
-	public partial string RankName { get; set; } = string.Empty;
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]

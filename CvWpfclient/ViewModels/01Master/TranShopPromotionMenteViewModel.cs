@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
 using CvBase;
+using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.ViewModels.Sub;
 using System.Globalization;
@@ -10,18 +11,12 @@ using System.Globalization;
 namespace CvWpfclient.ViewModels._01Master;
 
 public partial class TranShopPromotionMenteViewModel : Helpers.BaseMenteViewModel<TranShopPromotion> {
-	public sealed record RankOption(int Value, string Name);
-
 	[ObservableProperty]
 	public partial string Title { get; set; } = "店舗イベントメンテ";
 
 	TranPromotionSearchParameter? selectParam;
 
-	public IReadOnlyList<RankOption> RankOptions { get; } = [
-		new(0, "低"),
-		new(1, "中"),
-		new(2, "高")
-	];
+	public IReadOnlyList<EnumPromotionRank> RankOptions { get; } = Enum.GetValues<EnumPromotionRank>();
 
 	protected override string? ListOrder => "P.DenDay DESC, P.Id_Shop, P.Id DESC";
 	protected override int? ListMaxCount => selectParam?.MaxCount;
@@ -39,8 +34,7 @@ select
 	P.Mame,
 	P.Rank,
 	ifnull(T.Code, '') ShopCode,
-	ifnull(T.Name, '') ShopName,
-	case P.Rank when 0 then '低' when 1 then '中' when 2 then '高' else '' end RankName
+	ifnull(T.Name, '') ShopName
 from TranShopPromotion P
 left join MasterTokui T on T.Id = P.Id_Shop
 {query.AddWhereOrder()}
@@ -94,16 +88,6 @@ left join MasterTokui T on T.Id = P.Id_Shop
 		return base.CreateUpdateParam();
 	}
 
-	protected override void AfterInsert(TranShopPromotion item) {
-		ApplyDisplayColumns(item);
-		base.AfterInsert(item);
-	}
-
-	protected override void AfterUpdate(TranShopPromotion item) {
-		ApplyDisplayColumns(Current);
-		base.AfterUpdate(item);
-	}
-
 	protected override string GetInsertConfirmMessage() => $"追加しますか？ (店舗Id={CurrentEdit.Id_Shop}, 日付={CurrentEdit.DenDay})";
 
 	protected override string GetUpdateConfirmMessage() => $"修正しますか？ (店舗Id={CurrentEdit.Id_Shop}, 日付={CurrentEdit.DenDay}, Id={CurrentEdit.Id})";
@@ -144,14 +128,12 @@ left join MasterTokui T on T.Id = P.Id_Shop
 		}
 
 		CurrentEdit.DenDay = denDay.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-		ApplyDisplayColumns(CurrentEdit);
 		return true;
 	}
 
 	void NormalizeCurrentEdit() {
 		CurrentEdit.DenDay = (CurrentEdit.DenDay ?? string.Empty).Trim();
 		CurrentEdit.Mame = (CurrentEdit.Mame ?? string.Empty).Trim();
-		CurrentEdit.RankName = GetRankName(CurrentEdit.Rank);
 	}
 
 	static string? BuildWhereClause(TranPromotionSearchParameter? param) {
@@ -183,17 +165,5 @@ left join MasterTokui T on T.Id = P.Id_Shop
 			MaxCount = param?.MaxCount,
 			DisplayName = string.IsNullOrWhiteSpace(param?.DisplayName) ? "店舗イベント" : param.DisplayName,
 			TargetIdLabel = "店舗Id"
-		};
-
-	static void ApplyDisplayColumns(TranShopPromotion item) {
-		item.RankName = GetRankName(item.Rank);
-	}
-
-	static string GetRankName(int rank) =>
-		rank switch {
-			0 => "低",
-			1 => "中",
-			2 => "高",
-			_ => string.Empty
 		};
 }

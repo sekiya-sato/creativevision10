@@ -166,7 +166,7 @@
 								Binding="{Binding Mame}"
 								Header="イベント名" />
 							<DataGridTextColumn Width="90"
-								Binding="{Binding RankName}"
+								Binding="{Binding EnRank, Converter={StaticResource EnumCommentDisplayConverter}}"
 								Header="重要度" />
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>
@@ -266,11 +266,17 @@
 								<ComboBox Grid.Row="4" Grid.Column="1"
 									Width="180"
 									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="重要度" DisplayMemberPath="Name"
+									materialDesign:HintAssist.Hint="重要度"
 									ItemsSource="{Binding RankOptions}"
-									SelectedValue="{Binding CurrentEdit.Rank, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-									SelectedValuePath="Value"
-									Style="{StaticResource FormComboBox}" />
+									SelectedItem="{Binding CurrentEdit.EnRank, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
 
 								<TextBlock Grid.Row="5"
 									Style="{StaticResource FormLabel}" />

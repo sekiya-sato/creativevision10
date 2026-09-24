@@ -699,3 +699,25 @@ public enum EmSysHistType : int {
 	[Comment("手動実行")]
 	ManualExec = 1
 }
+
+/// <summary>
+/// イベントデータの重要度
+/// </summary>
+[Comment("重要度")]
+public enum EnumPromotionRank : int {
+	/// <summary>
+	/// 低
+	/// </summary>
+	[Comment("低")]
+	Low = 0,
+	/// <summary>
+	/// 中
+	/// </summary>
+	[Comment("中")]
+	Middle = 1,
+	/// <summary>
+	/// 高
+	/// </summary>
+	[Comment("高")]
+	High = 2
+}

@@ -1,4 +1,14 @@
-﻿## [2026-09-24] 得意先マスタ画面へ税・伝票関連の4項目を追加し、顧客マスタの性別表示を修正
+﻿## [2026-09-24] 店舗・得意先イベントの重要度を enum 化
+
+### 実施内容
+- `EnumPromotionRank`（0=低 / 1=中 / 2=高）を追加し、`TranShopPromotion.Rank` / `TranTokuiPromotion.Rank` に `[ForeignKey(nameof(EnumPromotionRank))]` と `EnRank` ラッパーを付けた。DB 列は int のまま。
+- 両メンテ画面の固定 `RankOptions` と SQL `CASE` による `RankName` を廃止し、選択肢・一覧表示とも `Enum.GetValues` + `EnumCommentDisplayConverter` で enum 由来にした。`RankName`（ResultColumn）は参照が無くなったため削除。
+- 他マスタ画面の enum・入力欄チェックでは他に不一致なし。社員マスタの権限プロファイルは権限仕様未決のため非表示のまま。
+
+### 検証
+- ソリューション build 成功、`git diff --check` 問題なし。画面の実行確認は未実施。
+
+## [2026-09-24] 得意先マスタ画面へ税・伝票関連の4項目を追加し、顧客マスタの性別表示を修正
 
 ### 実施内容
 - `MasterEndCustomerMenteViewModel` の一覧 SQL で性別名称が `EnumGender` と逆（1=男性,2=女性）だったため、定義どおり 1=女性,2=男性 に修正した（commit 済）。
