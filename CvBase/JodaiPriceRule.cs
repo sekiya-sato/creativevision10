@@ -22,8 +22,7 @@ public static class JodaiPriceRule {
 	/// 価格方式1種類ぶんの新価格を計算する。
 	/// <para>
 	/// 方式0〜4は算出後に<paramref name="roundUnit"/>×<paramref name="roundType"/>で丸める。
-	/// ただし<see cref="EnumJodaiPriceMethod.FixedPrice"/>（固定額）だけは現行
-	/// <c>MasterJouDaiBulkChangeViewModel.ApplyCalc</c>（<c>CalcType=0</c>の分岐）と同様、
+	/// ただし<see cref="EnumJodaiPriceMethod.FixedPrice"/>（固定額）だけは
 	/// 丸めを適用しない（利用者が入力した確定額をそのまま使う）。設計書2.7の文面は
 	/// 「丸めは全方式共通」とあるが、現行の伝票を1円たりとも変えないことを最優先するため、
 	/// 実装済みの現行挙動（固定額は丸めない）に合わせた。詳細は本メソッドの呼び出し元の報告を参照。
@@ -68,7 +67,7 @@ public static class JodaiPriceRule {
 		IReadOnlyList<int>? pricePoints = null) {
 		switch (method) {
 			case EnumJodaiPriceMethod.FixedPrice:
-				// 利用者が入力した確定額をそのまま使う。丸めない（現行ApplyCalcのCalcType=0分岐と同じ）。
+				// 利用者が入力した確定額をそのまま使う。丸めない。
 				return ClampNonNegative(fixedPrice);
 			case EnumJodaiPriceMethod.RateOff:
 			case EnumJodaiPriceMethod.RateOffFromEffective:

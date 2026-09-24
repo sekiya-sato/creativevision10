@@ -77,6 +77,7 @@ printstream
 ├─ datadesc (src="file")
 │  ├─ datarecord
 │  │  ├─ item ×N            ← 論理項目。CSV 列順と一致
+│  │  │  └─ group (任意)     ← この項目をキーに集計・改ページ。record側のgrouplevelから参照される
 │  │  └─ prefix ×N          ← 複数レコード様式のとき（任意）
 │  └─ file
 │     └─ path (datatype="csv" target="data.txt")
@@ -128,6 +129,8 @@ printstream
 - `position @length` … 想定データ長（表示幅ではない）。目安: コード 10〜12 / 日時文字列 14 / 名称 60〜120 / 電話 20〜30 / メモ 100+。
 
 > **鉄則**: `item` の定義順・CSV の列順・`datasrc="itemN"` の対応を必ず一致させる。
+
+- `item` は子要素として `<group level="N" pagechange="0|1"/>` を持てる（任意）。集計・改ページのキーにする項目の `item` 内に置く。詳細は §3.4。
 
 ### 2.3 prefix（複数レコード様式 CSV）— 任意 `[M]`
 
@@ -211,8 +214,12 @@ CHM のレコード種別 `[C]`:
 
 ### 3.4 group（集計・改ページグループ）`[C+M]`
 
+`<group>` は `record`/`region` 側の子要素ではなく、**`datadesc/datarecord` 内の集計キーとなる `item` の子要素**として置く。コーパス全件で `item` 直下にのみ出現する。
+
 ```xml
-<group level="1" pagechange="1"/>
+<item id="item1">
+    <group level="2" pagechange="0"/>
+</item>
 ```
 
 | 属性 | 観測値（件数） | 意味 |
@@ -220,6 +227,7 @@ CHM のレコード種別 `[C]`:
 | `level` | `1`(1744)/`2`(1029)/`3`(430)/`4`(155) | 集計階層。1 が最上位。最大 4 階層まで観測。 `[M]` |
 | `pagechange` | `1`(1843)/`0`(1515) | `1`=グループ切替で改ページ。`0`=改ページしない。 `[M]` |
 
+- この `item` 側の `group level` と、§3.3 の `record` 側の `grouplevel`/`breaktype` 属性が対応することで、キーブレイク時の中計・改ページが機能する（`record grouplevel="N"` は `group level="N"` の項目が変化した際に出力される）。
 - 例: `MasterPrintBarcode002.qfm` は `group level="1" pagechange="1"` で 1 グループ 1 ページ。詰めて出す帳票は `pagechange="0"`。
 
 ---

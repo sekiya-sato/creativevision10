@@ -55,7 +55,7 @@ public enum EnumJodaiIncExc : int {
 	/// <summary>対象。範囲に該当する店舗を含める</summary>
 	[Comment("対象")]
 	Include = 0,
-	/// <summary>除外。同一<see cref="TranJodaiScope.RangeType"/>内で対象より先に効く</summary>
+	/// <summary>除外。対象より優先度が高い（<see cref="TranJodaiScope.RangeType"/>に次ぐグローバルな比較キー）</summary>
 	[Comment("除外")]
 	Exclude = 1,
 }
