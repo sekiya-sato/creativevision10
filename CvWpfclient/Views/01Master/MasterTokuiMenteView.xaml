@@ -352,7 +352,7 @@
 								<!--  納品リードタイム日数  -->
 								<TextBlock Grid.Row="9"
 									Style="{StaticResource FormLabel}"
-									Text="納品リードタイム日数" />
+									Text="納品リード&#10;タイム日数" />
 								<TextBox Grid.Row="9" Grid.Column="1"
 									materialDesign:HintAssist.Hint="納品リードタイム日数"
 									Style="{StaticResource FormTextBox}"

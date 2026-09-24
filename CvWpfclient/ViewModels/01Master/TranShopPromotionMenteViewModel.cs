@@ -121,8 +121,8 @@ left join MasterTokui T on T.Id = P.Id_Shop
 			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
 			return false;
 		}
-		if (CurrentEdit.Rank < 0 || CurrentEdit.Rank > 2) {
-			Message = "重要度は 0=低, 1=中, 2=高 から選択してください";
+		if (!Enum.IsDefined(CurrentEdit.EnRank)) {
+			Message = "重要度を選択してください";
 			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
 			return false;
 		}
