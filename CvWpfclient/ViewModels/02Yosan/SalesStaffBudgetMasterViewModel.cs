@@ -74,10 +74,6 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 	bool isApplyingSelectedYearMonthString;
 	bool isRecalculatingTotals;
 
-	public ObservableCollection<DailyBudgetRow> FirstHalfDailyBudgets { get; } = [];
-
-	public ObservableCollection<DailyBudgetRow> SecondHalfDailyBudgets { get; } = [];
-
 	protected override void OnExit() {
 		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
@@ -113,7 +109,6 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 		foreach (var row in value) {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 		}
-		RefreshDailyBudgetViews();
 		RecalculateTotals();
 	}
 
@@ -304,7 +299,6 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			await DeleteExistingBudgets(ct);
 			DailyBudgets.Clear();
-			RefreshDailyBudgetViews();
 			MonthlyBudget = 0;
 			MonthlyGrossProfitBudget = 0;
 			RecalculateTotals();
@@ -323,7 +317,6 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 		}
 	}
 
-	[RelayCommand]
 	void AutoAllocateBudget() {
 		if (!TryApplySelectedYearMonth()) return;
 		if (MonthlyBudget <= 0 && MonthlyGrossProfitBudget <= 0) {
@@ -343,10 +336,9 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 			row.GrossProfitBudget = (long)Math.Round(MonthlyGrossProfitBudget * row.Coefficient / totalCoefficients);
 		}
 		RecalculateTotals();
-		Message = "予算を自動配分しました。";
+		Message = "日別予算を作成しました。";
 	}
 
-	[RelayCommand]
 	void RecalculateTotals() {
 		long runningTotal = 0;
 		long runningGrossProfitTotal = 0;
@@ -380,7 +372,6 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 	[RelayCommand]
 	void ClearAll() {
 		DailyBudgets.Clear();
-		RefreshDailyBudgetViews();
 		MonthlyBudget = 0;
 		MonthlyGrossProfitBudget = 0;
 		TotalBudget = 0;
@@ -411,7 +402,6 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 			DailyBudgets.Add(row);
 		}
-		RefreshDailyBudgetViews();
 		ApplyHolidayDays();
 	}
 
@@ -428,19 +418,6 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 			isApplyingHolidayDays = false;
 		}
 		RecalculateTotals();
-	}
-
-	void RefreshDailyBudgetViews() {
-		FirstHalfDailyBudgets.Clear();
-		SecondHalfDailyBudgets.Clear();
-		foreach (var row in DailyBudgets) {
-			if (row.Day <= 15) {
-				FirstHalfDailyBudgets.Add(row);
-			}
-			else {
-				SecondHalfDailyBudgets.Add(row);
-			}
-		}
 	}
 
 	static HashSet<int> ParseHolidayDays(string text) {
