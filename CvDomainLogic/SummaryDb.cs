@@ -35,8 +35,8 @@ public class SummaryDb {
 	// 実測に応じて調整してよい（監視タスクの異常判定は max(ExpectedDuration×2, 15分) のため、
 	// 過小でも15分の下限がある）。
 
-	/// <summary>在庫・掛再集計(<see cref="SummaryAllAsyncStream"/>)。全期間・全テーブルを走るため最も規模が大きい</summary>
-	private const string ProcessNameSummaryAll = "在庫・掛再集計";
+	/// <summary>在庫再集計(<see cref="SummaryAllAsyncStream"/>)。全期間・全テーブルを走るため最も規模が大きい</summary>
+	private const string ProcessNameSummaryAll = "在庫再集計";
 	/// <summary>現在庫再集計(<see cref="SummaryRealAsyncStream"/>)。単一月の在庫集計のみ</summary>
 	private const string ProcessNameSummaryReal = "現在庫再集計";
 	/// <summary>売掛再集計(<see cref="SummaryUriKakeAsyncStream"/>)。指定期間の売掛集計のみ</summary>
@@ -188,9 +188,13 @@ public class SummaryDb {
 		}
 		return string.Join(",\n\t\t", parts);
 	}
+	/// <summary>ステップ名(進捗・排他メモ)に付ける対象年月。単月は「202609」、範囲は「202608-202609」</summary>
+	private static string FormatYymmTerm(CalcDateTermParameter param) =>
+		param.DateYymmFrom == param.DateYymmTo ? param.DateYymmFrom : $"{param.DateYymmFrom}-{param.DateYymmTo}";
+
 	public IAsyncEnumerable<StreamStepProgress> SummaryAllAsyncStream(CalcDateTermParameter param, int isAutoExec = (int)EmSysHistType.ManualExec) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
-			("Summary : SummaryStock", CalcSummaryStockRange)
+			($"Summary : SummaryStock {FormatYymmTerm(param)}", CalcSummaryStockRange)
 		];
 
 		return StreamStepProgressRunner.Run(
@@ -764,7 +768,7 @@ WHERE SumMonth <= @0;
 	}
 	public IAsyncEnumerable<StreamStepProgress> SummaryUriKakeAsyncStream(CalcDateTermParameter param, int isAutoExec = (int)EmSysHistType.ManualExec) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
-			("Summary : CalcSummaryUriKake", p => CalcSummaryUriKake(p.DateYymmFrom, p.DateYymmTo)),
+			($"Summary : CalcSummaryUriKake {FormatYymmTerm(param)}", p => CalcSummaryUriKake(p.DateYymmFrom, p.DateYymmTo)),
 		];
 
 		return StreamStepProgressRunner.Run(
@@ -781,7 +785,7 @@ WHERE SumMonth <= @0;
 	}
 	public IAsyncEnumerable<StreamStepProgress> SummaryKaiKakeAsyncStream(CalcDateTermParameter param, int isAutoExec = (int)EmSysHistType.ManualExec) {
 		(string Name, Func<CalcDateTermParameter, int> Action)[] steps = [
-			("Summary : CalcSummaryKaiKake", p => CalcSummaryKaiKake(p.DateYymmFrom, p.DateYymmTo)),
+			($"Summary : CalcSummaryKaiKake {FormatYymmTerm(param)}", p => CalcSummaryKaiKake(p.DateYymmFrom, p.DateYymmTo)),
 		];
 
 		return StreamStepProgressRunner.Run(
