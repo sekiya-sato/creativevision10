@@ -635,7 +635,8 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 
 		TranHaibun? first = loadedEditableRows.FirstOrDefault();
 		ShijiDay = FromYmd8(first?.DenDay) ?? DateTime.Today;
-		NouhinDay = FromYmd8(first?.NouhinDay) ?? FromYmd8(targetHachu.DenDay) ?? DateTime.Today;
+		// 未配分時は発注の納品予定日を優先し、空なら発注日を初期値にする
+		NouhinDay = FromYmd8(first?.NouhinDay) ?? FromYmd8(targetHachu.NouhinDay) ?? FromYmd8(targetHachu.DenDay) ?? DateTime.Today;
 		Memo = first?.Memo ?? string.Empty;
 		if (first is { Id_Shain: > 0 }) {
 			Id_Shain = first.Id_Shain;

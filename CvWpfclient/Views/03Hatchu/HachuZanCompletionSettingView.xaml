@@ -200,12 +200,12 @@
 						</DataGridTextColumn.ElementStyle>
 					</DataGridTextColumn>
 					<DataGridTextColumn Width="100"
-						Binding="{Binding DenDay}"
+						Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
 						Header="発注日" IsReadOnly="True" />
-					<DataGridTextColumn Width="300"
+					<DataGridTextColumn Width="280"
 						Binding="{Binding ToriDisplay}"
 						Header="仕入先" IsReadOnly="True" />
-					<DataGridTextColumn Width="100"
+					<DataGridTextColumn Width="120"
 						Binding="{Binding RelateNo1}"
 						Header="関連伝票No" IsReadOnly="True" />
 					<DataGridTextColumn Width="90"
