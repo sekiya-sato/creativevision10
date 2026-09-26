@@ -93,6 +93,15 @@ public abstract partial class BaseZanCompletionViewModel<TDen> : BaseQueryViewMo
 	/// <summary>実績側に足す追加の絞り込み。受注は出荷先の店種区分で絞る</summary>
 	protected virtual string ActualExtraJoin => string.Empty;
 
+	/// <summary>
+	/// 実績側の突合(<c>a.RelateNo1 = h.Id</c>)に足す追加条件。既定は空（発注側は変えない）。
+	/// <para>
+	/// 受注側は <c>RelateNo1</c> だけでは旧データの偶然の一致（別の得意先・別時期の売上が
+	/// 同じIdの受注へ誤合算される）を排除できないため、得意先一致と日付の前後関係を追加する。
+	/// </para>
+	/// </summary>
+	protected virtual string ActualExtraMatchCondition => string.Empty;
+
 	/// <summary>画面に出す日付の名称（「発注日」「受注日」）</summary>
 	protected abstract string DenDayLabel { get; }
 
@@ -197,7 +206,7 @@ public abstract partial class BaseZanCompletionViewModel<TDen> : BaseQueryViewMo
       SELECT SUM({MeisaiNum("Su")} * a.CalcFlag)
       FROM {ActualTableName} a, json_each(a.Jmeisai) m
       {ActualExtraJoin}
-      WHERE a.RelateNo1 = h.Id AND json_valid(a.Jmeisai)
+      WHERE a.RelateNo1 = h.Id{ActualExtraMatchCondition} AND json_valid(a.Jmeisai)
         AND {MeisaiNum("Id_Shohin")} = zan.Id_Shohin
         AND {MeisaiNum("Id_Col")}    = zan.Id_Col
         AND {MeisaiNum("Id_Siz")}    = zan.Id_Siz
@@ -216,7 +225,7 @@ public abstract partial class BaseZanCompletionViewModel<TDen> : BaseQueryViewMo
   SELECT SUM({MeisaiNum("Su")} * a.CalcFlag)
   FROM {ActualTableName} a, json_each(a.Jmeisai) m
   {ActualExtraJoin}
-  WHERE a.RelateNo1 = h.Id AND json_valid(a.Jmeisai)
+  WHERE a.RelateNo1 = h.Id{ActualExtraMatchCondition} AND json_valid(a.Jmeisai)
 ), 0)";
 
 		List<string> parameters = [dayFrom, dayTo];

@@ -77,7 +77,8 @@ public partial class JuchuZanKanriTableViewModel : Helpers.BaseReportViewModel {
 		var sql = $@"
 WITH juchu AS (
     SELECT
-        h.Id     AS denNo,
+        h.Id       AS denNo,
+        h.Id_Tokui AS idTokui,
         h.DenDay AS denDay,
         {TranMeisaiSql.HeaderCode("VTokui")} AS tokuiCode,
         {TranMeisaiSql.HeaderName("VTokui")} AS tokuiName,
@@ -88,11 +89,17 @@ WITH juchu AS (
     FROM Tran12Jyuchu h
     WHERE {where}
 ),
+-- RelateNo1 だけでは旧データ（別得意先・受注より前の売上）が同じIdへ偶然一致するため、
+-- 得意先一致(Id_Tokui)と売上日が受注日以降であることを追加で確認する。
+-- 金額・数量は売上側もヘッダ CalcFlag で符号を付ける（返品売上は減算）。
 uriage AS (
-    SELECT RelateNo1 AS denNo, SUM(SuTotal) AS uriageSu, MAX(DenDay) AS lastUriageDay
-    FROM Tran00Uriage
-    WHERE RelateNo1 > 0
-    GROUP BY RelateNo1
+    SELECT
+        j.denNo AS denNo,
+        (SELECT SUM(u.SuTotal * u.CalcFlag) FROM Tran00Uriage u
+         WHERE u.RelateNo1 = j.denNo AND u.Id_Tokui = j.idTokui AND u.DenDay >= j.denDay) AS uriageSu,
+        (SELECT MAX(u.DenDay) FROM Tran00Uriage u
+         WHERE u.RelateNo1 = j.denNo AND u.Id_Tokui = j.idTokui AND u.DenDay >= j.denDay) AS lastUriageDay
+    FROM juchu j
 ),
 joined AS (
     SELECT

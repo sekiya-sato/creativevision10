@@ -1,4 +1,19 @@
-﻿## [2026-09-26] 予算・発注UAT結果を受けた画面修正
+﻿## [2026-09-26] 受注UAT結果を受けた集計符号・残突合の修正
+
+### 実施内容
+- 返品符号(CalcFlag)未適用: `ShouhinJuchuTableViewModel`/`ShouhinJuchuSummaryTableViewModel`（明細JSON集計のSu/Kingaku）、`TokuiSakiJuchuTableViewModel`（ヘッダSuTotal/KingakuTotal/Tax/JodaiTotal/かけ率）で、返品(Kubun=20)を「返品等を含める」表示にすると数量・金額が減算されず加算されていた不具合を、`h.CalcFlag` を掛けて修正した。`JuchuZanKanriTableViewModel`/`TokuiSakiUriageYoteiTableViewModel`のTran00Uriage合算にも売上側CalcFlagを追加した。`JuchuZanCompletionSettingViewModel`(BaseZanCompletionViewModel)は元々CalcFlag適用済みのため対象外。`TantoTenjiJuchuGoukeiTableViewModel`/`JuchuBestTableViewModel`は常にKubun 10-19に絞るため実害なし（変更なし）。`NouhinYoteiTableViewModel`と`JuchuInputViewModel`の一覧・明細印刷SQL（旧cvnet形式のCSV踏襲）は集計を伴わない生データ表示のため、符号変更の要否は判断保留として変更していない。
+- RelateNo1突合の誤一致: `Tran00Uriage.RelateNo1=受注Id`だけの突合では、無関係な旧データ（別得意先・受注日より前の売上）が同Idの受注へ誤って合算される事例（受注Id=8）を確認。`BaseZanCompletionViewModel`に既定空文字の`ActualExtraMatchCondition`（仮想プロパティ）を追加し、`JuchuZanCompletionSettingViewModel`だけで`a.Id_Tokui = h.Id_Tokui AND a.DenDay >= h.DenDay`を追加する形にした（発注側`HachuZanCompletionSettingViewModel`は既定のまま変更なし）。`JuchuZanKanriTableViewModel`/`TokuiSakiUriageYoteiTableViewModel`のTran00Uriage突合も同条件の相関サブクエリへ変更した。
+
+### 検証
+- `CvWpfclient` build成功（警告0、エラー0）。`git diff --check`異常なし。
+- cv-sqlite MCPで2026/07 UATデータ（`UATJ-`、受注9件、返品Id=9 Kubun=20）を独立集計し、修正前後の差分を確認（UATJ-P02: 返品を含む集計が18→12(受注のみと同じ符号方向)に是正、得意先別受注表のUATJ-TK2も18/22,000円→12/16,000円に是正）。受注Id=8への旧売上混入も、修正後は該当なし(旧: uriageSu=7→新: 0、残数-1→6)に是正されたことを確認。
+- 既存`Doc/test/uat20260926/jyuchu/ReportRunner`をCvServer(Development, https://127.0.0.1:5012)へ再実行し、28帳票すべて生成成功（新規タイムスタンプフォルダに出力、既存run.jsonは上書きしていない）。生成CSVで上記の是正結果（UATJ-TK2の得意先別受注表、UATJ-P02の商品別受注表・集計表、受注No.8の受注残管理表・得意先別売上予定表）を実データで確認した。検証用CvServerはPDF確認後にプロセス終了（通常終了経路が使えずtaskkill /Fで強制終了。DB更新なし、リモートUAT時と同じ既知の制約）。
+
+### 残余リスク・未実施
+- `NouhinYoteiTableViewModel`と`JuchuInputViewModel`の一覧・明細印刷SQLは、符号を付けるべきか（Uriage側`NouhinBookPrintR2ViewModel`は同種の生データ表示でもCalcFlagを掛けている）判断保留。
+- 受注残完了設定の完了実行(`ExecuteCompletionCommand`、DB更新)は本修正の検証範囲外（読み取り確認のみ）。
+
+## [2026-09-26] 予算・発注UAT結果を受けた画面修正
 
 ### 実施内容
 - 予算(667b50ef): 販売員予算マスタメンテ一覧の販売員列を `VShain` のコード・名称表示に変更。両予算マスタメンテの日付欄で文字数カウンタが下段ラベルに重なる問題を非表示で解消。店ブランド予算マスタ(月)のブランド名表示幅を拡張。項目名を「土日係数」「休業日」に統一した。

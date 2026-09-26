@@ -34,6 +34,14 @@ public partial class JuchuZanCompletionSettingViewModel : BaseZanCompletionViewM
 		$"INNER JOIN {nameof(MasterTokui)} at ON at.Id = a.Id_Tokui "
 		+ $"AND at.TenType IN ({TranCalcBase.ShukkaTenTypes})";
 
+	/// <summary>
+	/// <c>RelateNo1</c> だけでは旧データ（別得意先・受注より前の売上）が同じIdへ偶然一致するため、
+	/// 得意先一致(<c>Id_Tokui</c>)と売上日が受注日以降であることを追加で確認する。
+	/// </summary>
+	protected override string ActualExtraMatchCondition =>
+		$" AND a.{nameof(Tran00Uriage.Id_Tokui)} = h.{nameof(Tran12Jyuchu.Id_Tokui)}"
+		+ $" AND a.DenDay >= h.DenDay";
+
 	protected override (long Id, string Code, string Name)? PickToriMaster(long startPos) {
 		var picked = PrintPdfHelper.ShowSelectDialog<MasterTokui>(this, typeof(MasterTokui), "", "Code", startPos);
 		return picked == null ? null : (picked.Id, picked.Code ?? string.Empty, picked.Name ?? string.Empty);
