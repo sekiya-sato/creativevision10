@@ -80,8 +80,8 @@ WITH meisai AS (
         {TranMeisaiSql.Str("Mei_Shohin")}  AS shohinName,
         {colCode} AS colCode, {colName} AS colName,
         {sizCode} AS sizCode, {sizName} AS sizName,
-        {TranMeisaiSql.Num("Su")}      AS su,
-        {TranMeisaiSql.Num("Kingaku")} AS kingaku,
+        h.CalcFlag * {TranMeisaiSql.Num("Su")}      AS su,
+        h.CalcFlag * {TranMeisaiSql.Num("Kingaku")} AS kingaku,
         {TranMeisaiSql.Num("Jodai")}   AS jodai,
         h.Id AS denNo, h.DenDay AS denDay
     FROM Tran12Jyuchu h, {TranMeisaiSql.From}

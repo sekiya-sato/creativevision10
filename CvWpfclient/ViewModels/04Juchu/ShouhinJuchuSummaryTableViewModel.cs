@@ -70,8 +70,8 @@ WITH meisai AS (
          WHERE s.Id = {TranMeisaiSql.Num("Id_Shohin")}) AS idCat,
         {TranMeisaiSql.Str("Code_Shohin")} AS shohinCode,
         {TranMeisaiSql.Str("Mei_Shohin")}  AS shohinName,
-        {TranMeisaiSql.Num("Su")}      AS su,
-        {TranMeisaiSql.Num("Kingaku")} AS kingaku,
+        h.CalcFlag * {TranMeisaiSql.Num("Su")}      AS su,
+        h.CalcFlag * {TranMeisaiSql.Num("Kingaku")} AS kingaku,
         {TranMeisaiSql.Num("Jodai")}   AS jodai,
         h.Id AS denNo
     FROM Tran12Jyuchu h, {TranMeisaiSql.From}

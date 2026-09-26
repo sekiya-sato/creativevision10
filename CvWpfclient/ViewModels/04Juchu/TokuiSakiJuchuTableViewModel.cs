@@ -56,13 +56,13 @@ SELECT
     {TranMeisaiSql.HeaderCode("VTokui")} AS tokuiCode,
     {TranMeisaiSql.HeaderName("VTokui")} AS tokuiName,
     COUNT(*)                             AS denCount,
-    SUM(h.SuTotal)                       AS su,
-    SUM(h.KingakuTotal)                  AS kingaku,
-    SUM(h.Tax1+h.Tax2+h.Tax3)                           AS tax,
-    SUM(CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END) AS total,
-    SUM(h.JodaiTotal)                    AS jodaiTotal,
-    CASE WHEN SUM(h.JodaiTotal) != 0
-         THEN ROUND(CAST(SUM(h.KingakuTotal) AS REAL) / SUM(h.JodaiTotal) * 100, 1)
+    SUM(h.CalcFlag*h.SuTotal)                       AS su,
+    SUM(h.CalcFlag*h.KingakuTotal)                  AS kingaku,
+    SUM(h.CalcFlag*(h.Tax1+h.Tax2+h.Tax3))                           AS tax,
+    SUM(h.CalcFlag*CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END) AS total,
+    SUM(h.CalcFlag*h.JodaiTotal)                    AS jodaiTotal,
+    CASE WHEN SUM(h.CalcFlag*h.JodaiTotal) != 0
+         THEN ROUND(CAST(SUM(h.CalcFlag*h.KingakuTotal) AS REAL) / SUM(h.CalcFlag*h.JodaiTotal) * 100, 1)
          ELSE 0 END                      AS kakeRatio,
     {TranMeisaiSql.DateLabel("MAX(h.DenDay)")} AS lastDay
 FROM Tran12Jyuchu h
