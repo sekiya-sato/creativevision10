@@ -71,8 +71,8 @@ actual AS (
     SELECT
         t.Id_Shain AS idShain,
         COUNT(*)            AS denCount,
-        SUM(h.SuTotal)      AS su,
-        SUM(h.KingakuTotal) AS kingaku,
+        SUM(h.CalcFlag*h.SuTotal)      AS su,
+        SUM(h.CalcFlag*h.KingakuTotal) AS kingaku,
         COUNT(DISTINCT h.Id_Tokui) AS toriCount
     FROM Tran00Uriage h
     JOIN MasterTokui t ON t.Id = h.Id_Tokui AND t.TenType = 1
@@ -83,8 +83,8 @@ actual AS (
     SELECT
         COALESCE(NULLIF({TranMeisaiSql.Num("Id_Shain")}, 0), h.Id_Shain) AS idShain,
         COUNT(DISTINCT h.Id)              AS denCount,
-        SUM({TranMeisaiSql.Num("Su")})      AS su,
-        SUM({TranMeisaiSql.Num("Kingaku")}) AS kingaku,
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Su")})      AS su,
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Kingaku")}) AS kingaku,
         COUNT(DISTINCT h.Id_Tenpo)        AS toriCount
     FROM Tran01Tenuri h, {TranMeisaiSql.From}
     WHERE {TranMeisaiSql.Guard}

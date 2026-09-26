@@ -82,10 +82,10 @@ monthly AS (
         h.Id_Tokui           AS idTokui,
         substr(h.DenDay,1,6) AS ym,
         COUNT(*)             AS denCount,
-        SUM(h.SuTotal)       AS su,
-        SUM(h.KingakuTotal)  AS kingaku,
-        SUM(h.JodaiTotal)    AS jodaiTotal,
-        SUM(h.GedaiTotal)    AS gedaiTotal
+        SUM(h.CalcFlag*h.SuTotal)       AS su,
+        SUM(h.CalcFlag*h.KingakuTotal)  AS kingaku,
+        SUM(h.CalcFlag*h.JodaiTotal)    AS jodaiTotal,
+        SUM(h.CalcFlag*h.GedaiTotal)    AS gedaiTotal
     FROM Tran00Uriage h
     WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}
     GROUP BY h.Id_Tokui, substr(h.DenDay,1,6)

@@ -62,14 +62,14 @@ periods AS (
 ),
 oroshi AS (
     SELECT substr(DenDay,1,6) AS ym,
-           COUNT(*) AS denCount, SUM(SuTotal) AS su, SUM(KingakuTotal) AS kingaku
+           COUNT(*) AS denCount, SUM(CalcFlag*SuTotal) AS su, SUM(CalcFlag*KingakuTotal) AS kingaku
     FROM Tran00Uriage
     WHERE DenDay >= {dayFrom} AND DenDay <= {dayTo}
     GROUP BY substr(DenDay,1,6)
 ),
 shop AS (
     SELECT substr(DenDay,1,6) AS ym,
-           COUNT(*) AS denCount, SUM(SuTotal) AS su, SUM(KingakuTotal) AS kingaku
+           COUNT(*) AS denCount, SUM(CalcFlag*SuTotal) AS su, SUM(CalcFlag*KingakuTotal) AS kingaku
     FROM Tran01Tenuri
     WHERE DenDay >= {dayFrom} AND DenDay <= {dayTo}
     GROUP BY substr(DenDay,1,6)

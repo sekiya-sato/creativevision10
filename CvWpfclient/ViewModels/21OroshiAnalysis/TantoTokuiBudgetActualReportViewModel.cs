@@ -83,8 +83,8 @@ actual AS (
         t.Code     AS tokuiCode,
         t.Name     AS tokuiName,
         COUNT(*)            AS denCount,
-        SUM(h.SuTotal)      AS su,
-        SUM(h.KingakuTotal) AS jisseki
+        SUM(h.CalcFlag*h.SuTotal)      AS su,
+        SUM(h.CalcFlag*h.KingakuTotal) AS jisseki
     FROM Tran00Uriage h
     JOIN MasterTokui t ON t.Id = h.Id_Tokui AND t.TenType = 1
     WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}

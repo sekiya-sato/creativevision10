@@ -60,13 +60,13 @@ periods AS (
     FROM seq
 ),
 oroshi AS (
-    SELECT substr(DenDay,1,6) AS ym, SUM(SuTotal) AS su, SUM(KingakuTotal) AS kingaku
+    SELECT substr(DenDay,1,6) AS ym, SUM(CalcFlag*SuTotal) AS su, SUM(CalcFlag*KingakuTotal) AS kingaku
     FROM Tran00Uriage
     WHERE DenDay >= {dayFrom} AND DenDay <= {dayTo}
     GROUP BY substr(DenDay,1,6)
 ),
 shop AS (
-    SELECT substr(DenDay,1,6) AS ym, SUM(SuTotal) AS su, SUM(KingakuTotal) AS kingaku
+    SELECT substr(DenDay,1,6) AS ym, SUM(CalcFlag*SuTotal) AS su, SUM(CalcFlag*KingakuTotal) AS kingaku
     FROM Tran01Tenuri
     WHERE DenDay >= {dayFrom} AND DenDay <= {dayTo}
     GROUP BY substr(DenDay,1,6)

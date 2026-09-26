@@ -87,10 +87,10 @@ monthly AS (
         ts.idShain           AS idShain,
         substr(h.DenDay,1,6) AS ym,
         COUNT(*)             AS denCount,
-        SUM(h.SuTotal)       AS su,
-        SUM(h.KingakuTotal)  AS kingaku,
-        SUM(h.JodaiTotal)    AS jodaiTotal,
-        SUM(h.GedaiTotal)    AS gedaiTotal,
+        SUM(h.CalcFlag*h.SuTotal)       AS su,
+        SUM(h.CalcFlag*h.KingakuTotal)  AS kingaku,
+        SUM(h.CalcFlag*h.JodaiTotal)    AS jodaiTotal,
+        SUM(h.CalcFlag*h.GedaiTotal)    AS gedaiTotal,
         COUNT(DISTINCT h.Id_Tokui) AS tokuiCount
     FROM Tran00Uriage h
     JOIN tokui_shain ts ON ts.idTokui = h.Id_Tokui

@@ -60,7 +60,7 @@ public partial class TokuiSalesDailyReportViewModel : Helpers.BaseReportViewMode
 
 		var tokuiCode = IsByTokui ? TranMeisaiSql.HeaderCode("VTokui") : "''";
 		var tokuiName = IsByTokui ? TranMeisaiSql.HeaderName("VTokui") : "'全得意先'";
-		var having = IsActiveOnly ? "HAVING SUM(h.KingakuTotal) != 0 OR SUM(h.SuTotal) != 0" : "";
+		var having = IsActiveOnly ? "HAVING SUM(h.CalcFlag*h.KingakuTotal) != 0 OR SUM(h.CalcFlag*h.SuTotal) != 0" : "";
 
 		var sql = $@"
 WITH agg AS (
@@ -71,12 +71,12 @@ WITH agg AS (
         {tokuiCode} AS tokuiCode,
         {tokuiName} AS tokuiName,
         COUNT(*)             AS denCount,
-        SUM(h.SuTotal)       AS su,
-        SUM(h.KingakuTotal)  AS kingaku,
-        SUM(h.Tax1+h.Tax2+h.Tax3)           AS tax,
-        SUM(h.Nebiki00Total) AS nebiki,
-        SUM(h.JodaiTotal)    AS jodaiTotal,
-        SUM(h.GedaiTotal)    AS gedaiTotal
+        SUM(h.CalcFlag*h.SuTotal)       AS su,
+        SUM(h.CalcFlag*h.KingakuTotal)  AS kingaku,
+        SUM(h.CalcFlag*(h.Tax1+h.Tax2+h.Tax3))           AS tax,
+        SUM(h.CalcFlag*h.Nebiki00Total) AS nebiki,
+        SUM(h.CalcFlag*h.JodaiTotal)    AS jodaiTotal,
+        SUM(h.CalcFlag*h.GedaiTotal)    AS gedaiTotal
     FROM Tran00Uriage h
     WHERE {where}
     GROUP BY h.DenDay, {tokuiCode}, {tokuiName}

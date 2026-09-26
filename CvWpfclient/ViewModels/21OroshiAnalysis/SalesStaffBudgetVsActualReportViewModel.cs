@@ -94,8 +94,8 @@ actual AS (
     SELECT
         COALESCE(NULLIF({TranMeisaiSql.Num("Id_Shain")}, 0), h.Id_Shain) AS idShain,
         substr(h.DenDay,1,6) AS ym,
-        SUM({TranMeisaiSql.Num("Su")})      AS su,
-        SUM({TranMeisaiSql.Num("Kingaku")}) AS jisseki
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Su")})      AS su,
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Kingaku")}) AS jisseki
     FROM Tran01Tenuri h, {TranMeisaiSql.From}
     WHERE {TranMeisaiSql.Guard}
       AND h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}

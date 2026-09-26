@@ -1,4 +1,15 @@
-﻿## [2026-09-26] 発注帳票の返品符号(CalcFlag)適用
+﻿## [2026-09-26] 卸分析帳票(21OroshiAnalysis)の返品符号(CalcFlag)適用
+
+### 実施内容
+- 得意先別売上日報/月報、担当者別売上半期、個人別売上ランキング、販売員予算実績、担当得意先予算実績、半期報告、卸店売上実績の8帳票で、Tran00Uriage/Tran01Tenuriを直接合算するSUM（SuTotal/KingakuTotal/JodaiTotal/GedaiTotal/Tax/Nebiki00Total、明細JSONのSu/Kingaku、得意先別売上日報のHAVING）に `CalcFlag` を掛け、返品(Kubun=20/21)が売上に加算されないようにした。件数(COUNT)、予算(UriYosan)、符号付きCTE列の外側再集計・累計は変更なし。全社受払表(SummaryStock)は対象外。
+
+### 検証
+- `CvWpfclient` build成功（警告0、エラー0）。`git diff --check`異常なし。
+- cv-sqlite: 開発DB全期間で、売上は数量88,781→88,613・金額234,166,163→233,631,003、店売は数量6,578,969→6,509,877・金額19,440,770,442→19,172,332,640（返品分の2倍が減少）。店売返品の明細JSON Suも正値保存でCalcFlag適用後に負となることを確認。
+
+### 残余リスク・未実施
+- 帳票出力（PDF/CSV）での画面確認は未実施。
+## [2026-09-26] 発注帳票の返品符号(CalcFlag)適用
 
 ### 実施内容
 - 受注UATで判明した返品符号未適用(受注側74868e18)と同型の不具合を発注メニューで修正。`SupplierHachuTableViewModel`（ヘッダSuTotal/KingakuTotal/Tax/Total/JodaiTotal/原価率）、`ShohinHachuTableViewModel`/`ShohinHachuSummaryTableViewModel`（明細JSONのSu/Kingaku）に `h.CalcFlag` を掛け、「返品等を含める」時に返品(Kubun=20)が加算されないようにした。
