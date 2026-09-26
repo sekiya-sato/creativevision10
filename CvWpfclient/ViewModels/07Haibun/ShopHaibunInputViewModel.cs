@@ -125,7 +125,7 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 	async Task DoSearch(CancellationToken ct) {
 		var win = new Views.Sub.ShopHaibunSearchParamView();
 		if (win.DataContext is not ShopHaibunSearchParamViewModel vm) return;
-		vm.Initialize(searchParam ?? new ShopHaibunSearchParameter { MaxCount = AppGlobal.Limit });
+		vm.Initialize(searchParam ?? await CreateDefaultSearchParamAsync());
 		if (ClientLib.ShowDialogView(win, this, true) != true) {
 			searchParam = vm.Parameter;
 			Message = "一覧取得を中断しました";
@@ -167,6 +167,18 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 		finally {
 			FinishBusy();
 		}
+	}
+
+	/// <summary>初回の検索条件。配分元倉庫は MasterSysman の標準倉庫を初期値とする。</summary>
+	static async Task<ShopHaibunSearchParameter> CreateDefaultSearchParamAsync() {
+		var param = new ShopHaibunSearchParameter { MaxCount = AppGlobal.Limit };
+		var sysman = await AppGlobal.LogicGetSysman();
+		if (sysman.Id_Soko > 0) {
+			param.Id_Soko = sysman.Id_Soko;
+			param.SokoCode = sysman.VSoko?.Cd ?? string.Empty;
+			param.SokoName = sysman.VSoko?.Mei ?? string.Empty;
+		}
+		return param;
 	}
 
 	/// <summary>配分画面へ。選択商品の SKU（商品+色+サイズ）を確定し、店舗×SKU の入力状態を構築する。</summary>
