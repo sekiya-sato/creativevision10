@@ -36,6 +36,9 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["manuallockrestart1"] = ManualLockRestartScenario.RunAsync,
 	["manuallockrestart2"] = ManualLockRestartScenario.RunAsync2,
 	["denpyonew"] = DenpyoNewButtonScenario.RunAsync,
+	["yosan20260926"] = YosanScreenScenario.RunAsync,
+	["hachu20260926"] = HachuScreenScenario.RunAsync,
+	["jyuchu20260926"] = JyuchuScreenScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
@@ -53,6 +56,7 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["costuat"] = CostUatScenario.Seeder,
 	["uat01screen"] = Uat01ScreenScenario.Seeder,
 	["uat08opening"] = OpeningBalanceUatScenario.Seeder,
+	["jyuchu20260926"] = JyuchuScreenScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
