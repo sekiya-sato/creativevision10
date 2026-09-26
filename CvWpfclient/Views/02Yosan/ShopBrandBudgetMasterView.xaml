@@ -58,9 +58,9 @@
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="200" />
 					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="280" />
+					<ColumnDefinition Width="260" />
 					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="200" />
+					<ColumnDefinition Width="260" />
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="150" />
 				</Grid.ColumnDefinitions>
@@ -109,7 +109,7 @@
 				</DockPanel>
 				<TextBlock Grid.Row="0" Grid.Column="6"
 					Margin="16,0,8,0" VerticalAlignment="Center"
-					Text="土日指数" />
+					Text="土日係数" />
 				<TextBox Grid.Row="0" Grid.Column="7"
 					VerticalAlignment="Center"
 					Text="{Binding SaturdaySundayCoefficient, StringFormat=F1, UpdateSourceTrigger=PropertyChanged}" />
@@ -161,7 +161,7 @@
 				Orientation="Horizontal">
 				<Button Command="{Binding CreateBudgetCommand}"
 					Style="{StaticResource BudgetActionButtonStyle}"
-					ToolTip="月売上・月粗利予算を、土日指数・休業日・イベント係数に応じて日別に配分し直します。編集中の日別予算は上書きされます。登録は予算保存で行います。">
+					ToolTip="月売上・月粗利予算を、土日係数・休業日・イベント係数に応じて日別に配分し直します。編集中の日別予算は上書きされます。登録は予算保存で行います。">
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon VerticalAlignment="Center"
 							Kind="Calendar" />

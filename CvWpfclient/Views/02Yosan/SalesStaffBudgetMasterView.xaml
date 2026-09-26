@@ -126,7 +126,7 @@
 						Text="千円" />
 					<TextBlock Grid.Column="6"
 						Margin="32,0,8,0" VerticalAlignment="Center"
-						Text="休日" />
+						Text="休業日" />
 					<TextBox Grid.Column="7"
 						VerticalAlignment="Center"
 						materialDesign:HintAssist.Hint="例 7 8 10 22"
@@ -142,7 +142,7 @@
 				Orientation="Horizontal">
 				<Button Command="{Binding CreateBudgetCommand}"
 					Style="{StaticResource BudgetActionButtonStyle}"
-					ToolTip="販売員月売上・月粗利予算を、土日係数・休日に応じて日別に配分し直します。編集中の日別予算は上書きされます。登録は予算保存で行います。">
+					ToolTip="販売員月売上・月粗利予算を、土日係数・休業日に応じて日別に配分し直します。編集中の日別予算は上書きされます。登録は予算保存で行います。">
 					<StackPanel Orientation="Horizontal">
 						<materialDesign:PackIcon VerticalAlignment="Center"
 							Kind="Calendar" />

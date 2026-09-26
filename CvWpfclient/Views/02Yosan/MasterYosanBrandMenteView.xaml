@@ -255,6 +255,7 @@
 									Width="180"
 									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="yyyyMMdd" MaxLength="8"
+									materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.DenDay, UpdateSourceTrigger=PropertyChanged}" />
 

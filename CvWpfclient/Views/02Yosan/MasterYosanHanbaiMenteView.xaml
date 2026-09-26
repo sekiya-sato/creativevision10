@@ -153,9 +153,9 @@
 							<DataGridTextColumn Width="120"
 								Binding="{Binding DenDay}"
 								Header="日付" />
-							<DataGridTextColumn Width="110"
-								Binding="{Binding Id_Shain}"
-								Header="販売員Id" />
+							<DataGridTextColumn Width="200"
+								Binding="{Binding VShain, Converter={StaticResource CodeNameViewDisplayConverter}, Mode=OneWay}"
+								Header="販売員" SortMemberPath="VShain.Cd" />
 							<DataGridTextColumn Width="130"
 								Binding="{Binding UriYosan, StringFormat={}{0:N0}}"
 								Header="売上予算" />
@@ -236,6 +236,7 @@
 									Width="180"
 									HorizontalAlignment="Left"
 									materialDesign:HintAssist.Hint="yyyyMMdd" MaxLength="8"
+									materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.DenDay, UpdateSourceTrigger=PropertyChanged}" />
 
