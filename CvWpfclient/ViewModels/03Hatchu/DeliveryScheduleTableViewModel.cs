@@ -106,7 +106,7 @@ WITH hachu AS (
     WHERE {where}
 ),
 nyuka AS (
-    SELECT RelateNo1 AS denNo, SUM(SuTotal) AS nyukaSu
+    SELECT RelateNo1 AS denNo, SUM(CalcFlag*SuTotal) AS nyukaSu
     FROM Tran03Shiire
     WHERE RelateNo1 > 0
     GROUP BY RelateNo1

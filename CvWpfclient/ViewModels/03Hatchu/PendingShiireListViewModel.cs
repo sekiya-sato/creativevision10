@@ -95,7 +95,7 @@ nyuka AS (
     SELECT
         h.RelateNo1 AS denNo,
         {skuKey} AS idShohin, {colKey} AS idCol, {sizKey} AS idSiz,
-        {TranMeisaiSql.Num("Su")} AS su
+        h.CalcFlag * {TranMeisaiSql.Num("Su")} AS su
     FROM Tran03Shiire h, {TranMeisaiSql.From}
     WHERE {TranMeisaiSql.Guard}
       AND h.RelateNo1 > 0
