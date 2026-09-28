@@ -93,7 +93,7 @@ Reference folders and existing projects: [READ-ONLY] [REFERENCE-ONLY] [NOT INCLU
 6. **Git-Commit**: When committing, follow the Git-Commit section.
 
 ## Write-Log
-- **Log**: Append to `Doc/aicoding_log.md`. Archive to `aicoding_log_[NNN].md` if > 800 lines.
+- **Log**: Append to `Doc/aicoding_log.md`. If > 800 lines, move only important decisions (spec/business meaning, bulk data operations, design invariants/rejected options, operational constraints) from old entries to `Doc/spec/2026-09-28_設計判断記録.md` or the relevant spec, then delete the rest. Do not create numbered archives.
 - **Log Format**: Folow "Log-Format" section below.**Insert at the top.**
 '''
 ## [YYYY-MM-DD] hh:mm 作業タイトル

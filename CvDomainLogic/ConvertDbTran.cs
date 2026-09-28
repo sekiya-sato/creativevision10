@@ -48,7 +48,7 @@ public partial class ConvertDb {
 					},
 					Jmeisai = meisaiList,
 					// 旧「掛計上FLG」は移行データで全件0のまま業務上意味を持たず、2026-08-16に売掛から除外しない方針を確定した
-					// （ユーザーが移行済み50,311件を1へ一括更新済み。Doc/aicoding_log_013.md参照）。再変換でも同じ値になるようここで固定する。
+					// （ユーザーが移行済み50,311件を1へ一括更新済み。Doc/spec/2026-09-28_設計判断記録.md 4.1参照）。再変換でも同じ値になるようここで固定する。
 					IsPay = 1,
 					Id_Shain = shain.Sid,
 					VShain = shain,

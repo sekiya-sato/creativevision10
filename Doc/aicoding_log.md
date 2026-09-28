@@ -1,4 +1,14 @@
-﻿## [2026-09-26] 卸分析帳票(21OroshiAnalysis)の返品符号(CalcFlag)適用
+﻿## [2026-09-28] 作業ログアーカイブの整理と退避ルール変更
+
+### 実施内容
+- `Doc/aicoding_log_009〜020.md` から重要判断33件を抽出し `Doc/spec/2026-09-28_設計判断記録.md` を新設した。001〜008（2026-06以前）は抽出せず、001〜020 の20ファイルを削除した。
+- `AGENTS.md` §9 と `.github/copilot-instructions.md` の退避ルールを「重要判断だけ設計判断記録/該当仕様書へ移し残りは削除、番号付きアーカイブは作らない」へ変更した。
+- `ConvertDbTran.cs` のコメントと R2 適格返還請求書詳細設計の旧ログ参照を差し替えた。
+
+### 検証
+- `rg "aicoding_log_[0-9]"` で追跡対象内の参照残りなし、`git diff --check` 実施。
+
+## [2026-09-26] 卸分析帳票(21OroshiAnalysis)の返品符号(CalcFlag)適用
 
 ### 実施内容
 - 得意先別売上日報/月報、担当者別売上半期、個人別売上ランキング、販売員予算実績、担当得意先予算実績、半期報告、卸店売上実績の8帳票で、Tran00Uriage/Tran01Tenuriを直接合算するSUM（SuTotal/KingakuTotal/JodaiTotal/GedaiTotal/Tax/Nebiki00Total、明細JSONのSu/Kingaku、得意先別売上日報のHAVING）に `CalcFlag` を掛け、返品(Kubun=20/21)が売上に加算されないようにした。件数(COUNT)、予算(UriYosan)、符号付きCTE列の外側再集計・累計は変更なし。全社受払表(SummaryStock)は対象外。
