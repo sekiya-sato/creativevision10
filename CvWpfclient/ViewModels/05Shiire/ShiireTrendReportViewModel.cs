@@ -93,10 +93,10 @@ monthly AS (
     SELECT
         h.Id_Shiire AS idTori,
         substr(h.DenDay,1,6) AS ym,
-        SUM(h.SuTotal)      AS su,
-        SUM(h.KingakuTotal) AS kingaku,
-        SUM(h.Tax1+h.Tax2+h.Tax3)          AS tax,
-        SUM({Kingaku})      AS total,
+        SUM(h.CalcFlag*h.SuTotal)      AS su,
+        SUM(h.CalcFlag*h.KingakuTotal) AS kingaku,
+        SUM(h.CalcFlag*(h.Tax1+h.Tax2+h.Tax3))          AS tax,
+        SUM(h.CalcFlag*{Kingaku})      AS total,
         COUNT(*)            AS denCount
     FROM Tran03Shiire h
     WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}{kubunFilter}

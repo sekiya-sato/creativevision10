@@ -8,7 +8,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// <summary>
 /// 品番別仕入チェックリスト。指定期間の仕入伝票明細を品番(商品×色×サイズ)別に集計し、
 /// 数量・金額・上代・伝票数・最終仕入日・平均単価を印字する。
-/// 仕入返品(Kubun=20)は数量・金額がマイナス計上されるため、含める/除外するを選べる。
+/// 仕入返品(Kubun=20)はプラスで登録され、ヘッダ CalcFlag(-1)で符号を付けて集計するため、含める/除外するを選べる。
 /// </summary>
 public partial class HinbanShiireCheckListViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "品番別仕入チェックリスト";
@@ -104,8 +104,8 @@ WITH meisai AS (
         {colName} AS colName,
         {sizCode} AS sizCode,
         {sizName} AS sizName,
-        {TranMeisaiSql.Num("Su")}      AS su,
-        {TranMeisaiSql.Num("Kingaku")} AS kingaku,
+        h.CalcFlag * {TranMeisaiSql.Num("Su")}      AS su,
+        h.CalcFlag * {TranMeisaiSql.Num("Kingaku")} AS kingaku,
         {TranMeisaiSql.Num("Jodai")}   AS jodai,
         h.Id     AS denNo,
         h.DenDay AS denDay

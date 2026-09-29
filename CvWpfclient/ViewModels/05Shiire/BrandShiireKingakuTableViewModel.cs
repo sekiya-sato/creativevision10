@@ -91,8 +91,8 @@ WITH meisai AS (
         {ymKey} AS ym,
         (SELECT s.Id_Brand FROM MasterShohin s
          WHERE s.Id = {TranMeisaiSql.Num("Id_Shohin")}) AS idBrand,
-        {TranMeisaiSql.Num("Su")}      AS su,
-        {TranMeisaiSql.Num("Kingaku")} AS kingaku,
+        h.CalcFlag * {TranMeisaiSql.Num("Su")}      AS su,
+        h.CalcFlag * {TranMeisaiSql.Num("Kingaku")} AS kingaku,
         {TranMeisaiSql.Num("Jodai")}   AS jodai,
         h.Id AS denNo
     FROM Tran03Shiire h, {TranMeisaiSql.From}
