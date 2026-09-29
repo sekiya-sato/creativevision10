@@ -39,6 +39,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["yosan20260926"] = YosanScreenScenario.RunAsync,
 	["hachu20260926"] = HachuScreenScenario.RunAsync,
 	["jyuchu20260926"] = JyuchuScreenScenario.RunAsync,
+	["shiire20260926"] = ShiireScreenScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
