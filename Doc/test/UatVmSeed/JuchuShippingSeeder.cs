@@ -38,12 +38,7 @@ public static class JuchuShippingSeeder {
 		using var connection = new SqliteConnection(cs);
 		connection.Open();
 		var db = new ExDatabaseSqlite(connection) { KeepConnectionAlive = true };
-		// シードはCvServer起動（UpdateDbのマイグレーション）より前に走る。引当の再計算が新しい列を読むので、
-		// 未適用の複製DBでは先に列だけ追加しておく（配分再設計 Step 4 の TranHaibun.ArrivedSu。UpdateDb 26_10_03_01 と同じ定義）
-		if (db.Fetch<string>("SELECT name FROM pragma_table_info('TranHaibun') WHERE name = 'ArrivedSu'").Count == 0) {
-			db.Execute("ALTER TABLE TranHaibun ADD COLUMN ArrivedSu NUMBER not null default 0");
-			trace("TranHaibun.ArrivedSu を追加（マイグレーション前の複製DB）");
-		}
+		SeedSchema.ApplyMigrations(db, trace);
 		var employee = db.Fetch<MasterShain>("order by Id").FirstOrDefault()
 			?? throw new InvalidOperationException("社員マスタがありません。");
 		var color = db.Fetch<MasterMeisho>("where Kubun=@0 order by Id", "COL").FirstOrDefault()

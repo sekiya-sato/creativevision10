@@ -35,6 +35,7 @@ public static class StocktakeSeeder {
 		using var connection = new SqliteConnection(cs);
 		connection.Open();
 		var db = new ExDatabaseSqlite(connection) { KeepConnectionAlive = true };
+		SeedSchema.ApplyMigrations(db, trace);
 		var color = db.Fetch<MasterMeisho>("where Kubun=@0 order by Id", "COL").FirstOrDefault()
 			?? throw new InvalidOperationException("色マスタがありません。");
 		var size = db.Fetch<MasterMeisho>("where Kubun=@0 order by Id", "SIZ").FirstOrDefault()

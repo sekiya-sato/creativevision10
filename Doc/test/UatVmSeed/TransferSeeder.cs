@@ -42,6 +42,7 @@ public static class TransferSeeder {
 		using var connection = new SqliteConnection(cs);
 		connection.Open();
 		var db = new ExDatabaseSqlite(connection) { KeepConnectionAlive = true };
+		SeedSchema.ApplyMigrations(db, trace);
 		var employee = db.Fetch<MasterShain>("order by Id").FirstOrDefault()
 			?? throw new InvalidOperationException("社員マスタがありません。");
 		var color = db.Fetch<MasterMeisho>("where Kubun=@0 order by Id", "COL").FirstOrDefault()
