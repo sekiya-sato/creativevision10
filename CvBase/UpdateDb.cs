@@ -122,6 +122,22 @@ public class UpdateDb {
 			"ALTER TABLE TranHaibun ADD COLUMN LimitDay TEXT not null default '';" +
 			"ALTER TABLE TranHaibun ADD COLUMN EndReason NUMBER not null default 0;",
 			"配分再設計Step5 取置配分(区分6)の顧客・期限日・完了理由の列を追加 既存の区分6は取置画面が無かったため0件の想定で既存行はすべて0/空文字(通常)になる Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md 3.1"),
+		new (26_10_03_03,
+			// 配分確定(商品)/(得意先) → 配分確定。同じプロファイル×操作種別で両方あれば許可を優先し、同じ値なら(商品)を採る
+			"INSERT INTO SysPermissionProfileDetail (Vdc,Vdu,Id_PermissionProfile,FunctionId,PermissionType,IsAllowed) " +
+			"SELECT o.Vdc,o.Vdu,o.Id_PermissionProfile,'07Haibun.HaibunCommit',o.PermissionType,o.IsAllowed FROM SysPermissionProfileDetail o " +
+			"WHERE o.FunctionId IN ('07Haibun.ShippingConfirmShohin','07Haibun.ShippingConfirmTokui') " +
+			"AND NOT EXISTS (SELECT 1 FROM SysPermissionProfileDetail n WHERE n.Id_PermissionProfile=o.Id_PermissionProfile AND n.PermissionType=o.PermissionType AND n.FunctionId='07Haibun.HaibunCommit') " +
+			"AND NOT EXISTS (SELECT 1 FROM SysPermissionProfileDetail o2 WHERE o2.Id_PermissionProfile=o.Id_PermissionProfile AND o2.PermissionType=o.PermissionType " +
+			"AND o2.FunctionId IN ('07Haibun.ShippingConfirmShohin','07Haibun.ShippingConfirmTokui') AND o2.Id<>o.Id " +
+			"AND (o2.IsAllowed > o.IsAllowed OR (o2.IsAllowed = o.IsAllowed AND o2.FunctionId < o.FunctionId)));" +
+			// 店舗配分入力 → 仕入配分入力(商品別)（初回配分の後継）
+			"INSERT INTO SysPermissionProfileDetail (Vdc,Vdu,Id_PermissionProfile,FunctionId,PermissionType,IsAllowed) " +
+			"SELECT o.Vdc,o.Vdu,o.Id_PermissionProfile,'07Haibun.PurchaseReceiptAllocationInput',o.PermissionType,o.IsAllowed FROM SysPermissionProfileDetail o " +
+			"WHERE o.FunctionId = '07Haibun.ShopHaibunInput' " +
+			"AND NOT EXISTS (SELECT 1 FROM SysPermissionProfileDetail n WHERE n.Id_PermissionProfile=o.Id_PermissionProfile AND n.PermissionType=o.PermissionType AND n.FunctionId='07Haibun.PurchaseReceiptAllocationInput');" +
+			"DELETE FROM SysPermissionProfileDetail WHERE FunctionId IN ('07Haibun.ShippingConfirmShohin','07Haibun.ShippingConfirmTokui','07Haibun.ShopHaibunInput');",
+			"配分再設計Step6 削除・統合した画面の権限明細を後継画面の機能IDへ付け替える 配分確定(商品)/(得意先)→配分確定(07Haibun.HaibunCommit)は同じプロファイル×操作種別で食い違えば許可を優先(判断2) 店舗配分入力→仕入配分入力(商品別) 後継の明細が既にあればそちらを残す 一意キー(uq1)に当たらないようINSERT…SELECTで足してから旧IDを消す IsAllowedはPostgreSQLでbooleanのため数値と比べず列同士で比べる Doc/spec/2026-10-03_配分再設計_Step6_メニュー整理・旧画面削除_詳細設計.md 5.2"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

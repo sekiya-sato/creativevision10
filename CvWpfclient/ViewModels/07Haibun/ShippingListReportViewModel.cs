@@ -36,7 +36,8 @@ public partial class ShippingListReportViewModel : Helpers.BaseQueryViewModel {
 	public IReadOnlyList<string> QuantityModeKindList { get; } = QuantityModeKinds;
 
 	/// <summary>区分(EnumHaibun)選択肢。先頭は「指定なし」</summary>
-	public IReadOnlyList<string> KubunKindList { get; } = ["指定なし", .. Enum.GetNames<EnumHaibun>()];
+	/// <summary>区分の選択肢。出荷・移動する配分（仕入・在庫・受注）の日本語名。取置は対象にしない（配分再設計 Step 6 判断 3）</summary>
+	public IReadOnlyList<string> KubunKindList { get; } = ["指定なし", .. HaibunKubunNames.ShippingKubun.Select(HaibunKubunNames.Name)];
 
 	[ObservableProperty]
 	public partial string DisplayBasisKind { get; set; } = DisplayBasisKinds[0];
@@ -171,7 +172,8 @@ public partial class ShippingListReportViewModel : Helpers.BaseQueryViewModel {
 
 	async Task<List<TranHaibun>> LoadCandidatesAsync(DateTime denFrom, DateTime denTo, DateTime? nouhinFrom, DateTime? nouhinTo, CancellationToken ct) {
 		List<string> parameters = [ToDenDay(denFrom), ToDenDay(denTo)];
-		var where = "h.DenDay BETWEEN @0 AND @1";
+		// 取置は倉庫から出荷しないので納入一覧表に出さない
+		var where = $"h.DenDay BETWEEN @0 AND @1 AND h.Kubun <> {(int)EnumHaibun.Reservation}";
 		if (nouhinFrom is not null) {
 			where += $" AND h.NouhinDay >= {AddSqlParameter(parameters, ToDenDay(nouhinFrom.Value))}";
 		}
@@ -183,8 +185,9 @@ public partial class ShippingListReportViewModel : Helpers.BaseQueryViewModel {
 		if (!string.IsNullOrWhiteSpace(SokoCode)) {
 			where += $" AND soko.Code = {AddSqlParameter(parameters, SokoCode.Trim())}";
 		}
-		if (KubunKind != "指定なし" && Enum.TryParse<EnumHaibun>(KubunKind, out var kubun)) {
-			where += $" AND h.Kubun = {AddSqlParameter(parameters, (int)kubun)}";
+		var kubun = HaibunKubunNames.ShippingKubun.FirstOrDefault(k => HaibunKubunNames.Name(k) == KubunKind, -1);
+		if (kubun >= 0) {
+			where += $" AND h.Kubun = {AddSqlParameter(parameters, kubun)}";
 		}
 
 		// 「品番×出庫倉庫×表示基準」でグルーピングするため、並び順もその順に揃える。

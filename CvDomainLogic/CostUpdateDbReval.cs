@@ -139,15 +139,15 @@ public partial class CostUpdateDb {
 	};
 
 	/// <summary>
-	/// <c>CvWpfclient/ViewModels/07Haibun/ShopHaibunInputViewModel.cs</c>の<c>JsonCd</c>と同じ形の
-	/// JSON列アクセス式を組み立てる（設計書§16.4「既存のAddCodeRange + JsonCd()と同じSQL構築を使う」。
-	/// <c>CvWpfclient</c>を参照できないため、同等のヘルパーとして本ファイルへ複製する）。
+	/// V*列（CodeNameView のJSON）の <c>Cd</c> を取り出すSQL式を組み立てる。不正JSONは空として扱う。
+	/// （設計書§16.4「既存のAddCodeRange + JsonCd()と同じSQL構築を使う」。複製元だった旧 店舗配分入力は
+	/// 配分再設計 Step 6 で削除したので、現在はこのファイルが出典）。
 	/// </summary>
 	private static string JsonCdColumn(string column) =>
 		$"IFNULL(json_extract(CASE WHEN json_valid({column}) THEN {column} ELSE '{{}}' END, '$.Cd'), '')";
 
 	/// <summary>
-	/// <c>ShopHaibunInputViewModel.AddCodeRange</c>と同じ形で、1項目のFrom～To条件節を積む。
+	/// 1項目のFrom～To条件節を積む（空の側は条件にしない）。
 	/// </summary>
 	private static void AddCondRange(List<string> clauses, List<object> args, string column, string? from, string? to) {
 		var normalizedFrom = (from ?? string.Empty).Trim();

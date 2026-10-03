@@ -146,15 +146,15 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <summary>
 	///	関連No1 = <b>元伝票のId</b>（配分の入力元）。
 	/// <para>
-	/// 受注配分なら <see cref="Tran12Jyuchu"/>.Id、初回配分なら <see cref="Tran13Hachu"/>.Id。
-	/// 在庫からの配分（在庫品配分・取置・移動指示）は元伝票が無いので 0。
+	/// 受注配分なら <see cref="Tran12Jyuchu"/>.Id、仕入配分なら <see cref="Tran13Hachu"/>.Id。
+	/// 在庫からの配分（在庫配分・取置配分）は元伝票が無いので 0。
 	/// システム全体で一貫した「RelateNo1 = 元伝票Id」規約
 	/// （Tran03Shiire←発注 / Tran00Uriage←受注 / Tran11IdoIn←積送出庫）に揃えている。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
-	[Comment("関連No1 = 元伝票のId（配分の入力元）。 受注配分なら Tran12Jyuchu.Id、初回配分なら Tran13Hachu.Id。 在庫からの配分（在庫品配分・取置・移動指示）は元伝票が無いので 0。")]
+	[Comment("関連No1 = 元伝票のId（配分の入力元）。 受注配分なら Tran12Jyuchu.Id、仕入配分なら Tran13Hachu.Id。 在庫からの配分（在庫配分・取置配分）は元伝票が無いので 0。")]
 	public partial int RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2 = <b>配分確定で作成した伝票のId</b>（配分の出力先）。
@@ -278,8 +278,8 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 /// <summary>
 /// 配分区分（<see cref="TranHaibun.Kubun"/>）。
 /// <para>
-/// 0 / 1 は既存の店舗配分入力(ShopHaibunInputViewModel)が使っていた値なので<b>変更しないこと</b>。
-/// 2 以降を新しい配分画面へ割り当てている。設計の背景は `.omo/2026-07-31_haibun_design.md` を参照。
+/// 値は既存データの区分なので<b>変更しないこと</b>。画面・帳票の名前は <see cref="HaibunKubunNames"/> を使う。
+/// 設計の背景は `.omo/2026-07-31_haibun_design.md` を参照。
 /// </para>
 /// <para>
 /// 引当対象は未完了の全区分。仕入配分(<see cref="Hatsukai"/>=0)は入荷前の振り分けなので、入荷済み数
@@ -298,23 +298,63 @@ public enum EnumHaibun : int {
 	[Comment("受注配分")]
 	Juchu = 2,
 	/// <summary>得意先別配分（得意先を軸に商品を振り分ける）。RelateNo1 = 0 または 受注Id</summary>
-	[Comment("得意先別配分")]
+	[Comment("得意先別配分（廃止。新規作成不可）")]
+	[Obsolete(HaibunKubunNames.ObsoleteMessage)]
 	Tokui = 3,
 	/// <summary>店舗出荷依頼（店舗側から本部倉庫へ出荷を依頼する）。RelateNo1 = 0</summary>
-	[Comment("店舗出荷依頼")]
+	[Comment("店舗出荷依頼（廃止。新規作成不可）")]
+	[Obsolete(HaibunKubunNames.ObsoleteMessage)]
 	ShopRequest = 4,
 	/// <summary>在庫品配分（滞留在庫などを対象に配分する）。RelateNo1 = 0</summary>
-	[Comment("在庫品配分")]
+	[Comment("在庫品配分（廃止。新規作成不可）")]
+	[Obsolete(HaibunKubunNames.ObsoleteMessage)]
 	ZaikoHin = 5,
 	/// <summary>
 	/// 取置配分（店舗が一般顧客向けに店舗在庫を確保する）。RelateNo1 = 0、Id_Soko = Id_Tenpo、顧客と期限日が必須。
 	/// 配分確定の対象外で、店舗売上への変換・取消・期限切れで完了する（Step 5）
 	/// </summary>
-	[Comment("取置")]
+	[Comment("取置配分")]
 	Reservation = 6,
 	/// <summary>移動指示（倉庫間の移動を指示する）。RelateNo1 = 0</summary>
-	[Comment("移動指示")]
+	[Comment("移動指示（廃止。新規作成不可）")]
+	[Obsolete(HaibunKubunNames.ObsoleteMessage)]
 	IdoShiji = 7,
+}
+
+/// <summary>
+/// 配分区分の表示名の唯一の出典。画面の選択肢・帳票の SQL（CASE 式）はここから作る。
+/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step6_メニュー整理・旧画面削除_詳細設計.md` 6.1。
+/// </summary>
+public static class HaibunKubunNames {
+	/// <summary>廃止区分に付ける <see cref="ObsoleteAttribute"/> の文言</summary>
+	public const string ObsoleteMessage = "配分再設計で廃止した区分。新規作成は不可で、既存データの表示のためだけに残す";
+
+	/// <summary>
+	/// 区分 → 表示名。廃止区分は既存データが残っていたときの表示のためだけに持つ。
+	/// </summary>
+	public static readonly IReadOnlyDictionary<int, string> All = new Dictionary<int, string> {
+		[0] = "仕入配分",
+		[1] = "在庫配分",
+		[2] = "受注配分",
+		[3] = "得意先別配分(廃止)",
+		[4] = "店舗出荷依頼(廃止)",
+		[5] = "在庫品配分(廃止)",
+		[6] = "取置配分",
+		[7] = "移動指示(廃止)",
+	};
+
+	/// <summary>倉庫から出荷・移動する配分の区分（出荷系の帳票の絞込に出す。取置と廃止区分は含めない）</summary>
+	public static readonly IReadOnlyList<int> ShippingKubun = [0, 1, 2];
+
+	/// <summary>区分の表示名。未定義の値は数字のまま</summary>
+	public static string Name(int kubun) => All.TryGetValue(kubun, out var name) ? name : kubun.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+	/// <summary>
+	/// SQL で区分名を出す CASE 式（SQLite 正典。どの方言でもそのまま動く標準 SQL）。
+	/// </summary>
+	/// <param name="column">区分の列（例: <c>h.Kubun</c>）</param>
+	public static string CaseSql(string column) =>
+		$"CASE {column} {string.Join(" ", All.Select(kv => $"WHEN {kv.Key} THEN '{kv.Value}'"))} ELSE cast({column} as text) END";
 }
 
 /// <summary>

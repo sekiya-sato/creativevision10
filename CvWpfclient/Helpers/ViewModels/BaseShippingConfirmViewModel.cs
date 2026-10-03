@@ -1,6 +1,6 @@
 ﻿/*
 # description
-BaseShippingConfirmViewModel は配分確定画面（配分確定(商品) / 配分確定(得意先)）の共通基底です。
+BaseShippingConfirmViewModel は配分確定画面（HaibunCommitViewModel。並び順は商品順／出荷先順）の基底です。
 旧CV.netの「出荷指示確定」と「出荷処理」を1画面にまとめたものです（決定 D8：確定で即伝票作成）。
 
 配分(TranHaibun)の未完了行を一覧し、選んだ行の確定数を入れて確定します。
@@ -75,7 +75,7 @@ public sealed partial class ShippingConfirmRow : ObservableObject {
 /// <summary>配分確定画面の共通基底</summary>
 public abstract partial class BaseShippingConfirmViewModel : BaseQueryViewModel {
 
-	/// <summary>一覧の並び順。商品別 / 得意先別で上書きする（TranHaibun のエイリアスは h）</summary>
+	/// <summary>一覧の並び順（TranHaibun のエイリアスは h）。配分確定画面の並び順の選択から返す</summary>
 	protected abstract string SortOrderSql { get; }
 
 	[ObservableProperty]

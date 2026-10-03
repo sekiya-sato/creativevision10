@@ -81,7 +81,7 @@ public static class PurchaseReceiptAllocationScenario {
 			new { rows = rows.Select(h => new { h.Id_Tenpo, h.ArrivedSu }) });
 
 		// 配分確定画面：入荷済列と確定数の初期値
-		var confirm = session.OpenView<ShippingConfirmShohinView, ShippingConfirmShohinViewModel>();
+		var confirm = session.OpenView<HaibunCommitView, HaibunCommitViewModel>();
 		confirm.Input("配分確定:検索条件", vm => {
 			vm.DenDayFromText = DenDay;
 			vm.DenDayToText = DenDay;

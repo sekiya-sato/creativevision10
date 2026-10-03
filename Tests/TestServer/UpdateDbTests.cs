@@ -603,3 +603,78 @@ public class UpdateDbConsumptionKubunTests {
 		Assert.IsTrue(string.IsNullOrEmpty(applied!.Memo) || !applied.Memo!.Contains("Error", StringComparison.OrdinalIgnoreCase), $"バージョンアップSQLがエラーなく実行されること: {applied.Memo}");
 	}
 }
+
+/// <summary>
+/// 配分再設計 Step 6 の <see cref="UpdateDb"/> 26_10_03_03 適用検証。削除・統合した画面の権限明細を後継画面の機能IDへ付け替える。
+/// 配分確定(商品)/(得意先) が同じプロファイル×操作種別で食い違えば許可を優先し、後継の明細が既にあればそちらを残す。
+/// </summary>
+[TestClass]
+public class UpdateDbHaibunPermissionTests {
+	private ExDatabaseSqlite? _db;
+
+	private ExDatabaseSqlite Db => _db ?? throw new AssertFailedException("Database not initialized");
+
+	[TestInitialize]
+	public void Initialize() {
+		var connection = new SqliteConnection("Data Source=:memory:");
+		connection.Open();
+		_db = new ExDatabaseSqlite(connection);
+		Db.CreateTable(typeof(SysUpdateDb), true, false);
+		Db.CreateTable(typeof(SysPermissionProfileDetail), true, false);
+	}
+
+	[TestCleanup]
+	public void Cleanup() {
+		_db?.Close();
+		(_db?.Connection as SqliteConnection)?.Close();
+	}
+
+	private void Insert(long profile, string functionId, CvBase.Share.EnumPermissionType type, bool allowed) =>
+		Db.Insert(new SysPermissionProfileDetail { Id_PermissionProfile = profile, FunctionId = functionId, PermissionType = (int)type, IsAllowed = allowed, Vdc = 1, Vdu = 1 });
+
+	private bool? Allowed(long profile, string functionId, CvBase.Share.EnumPermissionType type) =>
+		Db.Fetch<SysPermissionProfileDetail>("WHERE Id_PermissionProfile=@0 AND FunctionId=@1 AND PermissionType=@2", profile, functionId, (int)type)
+			.Select(x => (bool?)x.IsAllowed).SingleOrDefault();
+
+	[TestMethod]
+	public async Task WriteVersionInfoAsync_直前バージョンから適用_旧画面の権限が後継画面へ移る() {
+		const string shohin = "07Haibun.ShippingConfirmShohin";
+		const string tokui = "07Haibun.ShippingConfirmTokui";
+		const string commit = "07Haibun.HaibunCommit";
+		// プロファイル1: 表示は(商品)禁止・(得意先)許可 → 許可を優先。編集は両方許可 → 1行
+		Insert(1, shohin, CvBase.Share.EnumPermissionType.View, false);
+		Insert(1, tokui, CvBase.Share.EnumPermissionType.View, true);
+		Insert(1, shohin, CvBase.Share.EnumPermissionType.Edit, true);
+		Insert(1, tokui, CvBase.Share.EnumPermissionType.Edit, true);
+		// プロファイル2: (商品)禁止だけ → 禁止のまま移る
+		Insert(2, shohin, CvBase.Share.EnumPermissionType.View, false);
+		// プロファイル3: 後継の明細が既にある → 既存を残す
+		Insert(3, commit, CvBase.Share.EnumPermissionType.View, false);
+		Insert(3, tokui, CvBase.Share.EnumPermissionType.View, true);
+		// 店舗配分入力 → 仕入配分入力(商品別)
+		Insert(1, "07Haibun.ShopHaibunInput", CvBase.Share.EnumPermissionType.View, true);
+		Insert(1, "07Haibun.ShopHaibunInput", CvBase.Share.EnumPermissionType.Edit, false);
+
+		await Db.InsertAsync(new SysUpdateDb {
+			DbVersion = 26_10_03_02,
+			DateStart = DateTime.Now.ToString("yyyyMMddHHmmss"),
+			Sql = "",
+			Memo = "テスト用の直前バージョン",
+			PreVersion = 26_10_03_02,
+		});
+
+		await UpdateDb.WriteVersionInfoAsync(Db);
+
+		var applied = await Db.FirstOrDefaultAsync<SysUpdateDb>($"where DbVersion = {26_10_03_03}");
+		Assert.IsNotNull(applied, "26_10_03_03の適用行が残ること");
+		Assert.IsTrue(string.IsNullOrEmpty(applied!.Memo) || !applied.Memo!.Contains("Error", StringComparison.OrdinalIgnoreCase), $"バージョンアップSQLがエラーなく実行されること: {applied.Memo}");
+		Assert.AreEqual(true, Allowed(1, commit, CvBase.Share.EnumPermissionType.View), "食い違いは許可を優先");
+		Assert.AreEqual(true, Allowed(1, commit, CvBase.Share.EnumPermissionType.Edit));
+		Assert.AreEqual(false, Allowed(2, commit, CvBase.Share.EnumPermissionType.View));
+		Assert.AreEqual(false, Allowed(3, commit, CvBase.Share.EnumPermissionType.View), "後継の明細が既にあればそちらを残す");
+		Assert.AreEqual(true, Allowed(1, "07Haibun.PurchaseReceiptAllocationInput", CvBase.Share.EnumPermissionType.View));
+		Assert.AreEqual(false, Allowed(1, "07Haibun.PurchaseReceiptAllocationInput", CvBase.Share.EnumPermissionType.Edit));
+		Assert.AreEqual(0, Db.Fetch<SysPermissionProfileDetail>("WHERE FunctionId IN (@0,@1,@2)", shohin, tokui, "07Haibun.ShopHaibunInput").Count, "旧機能IDの明細は消す");
+		Assert.AreEqual(6, Db.Fetch<SysPermissionProfileDetail>("").Count);
+	}
+}

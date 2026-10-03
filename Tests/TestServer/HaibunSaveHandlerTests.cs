@@ -174,7 +174,9 @@ public class HaibunSaveHandlerTests {
 		await SaveAsync([], [NewRow(5)]);
 		var loaded = AllRows();
 
+#pragma warning disable CS0618 // 廃止区分を含む保存が拒否されることを確かめる
 		var reply = await SaveAsync(loaded, [NewRow(3), NewRow(2, kubun: EnumHaibun.IdoShiji)]);
+#pragma warning restore CS0618
 
 		Assert.AreEqual(CvMsgErrorCode.InvalidParameter, reply.Code);
 		Assert.AreEqual(5, AllRows().Single().Su, "廃止区分を含むと何も書かれない");

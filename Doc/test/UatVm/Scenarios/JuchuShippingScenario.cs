@@ -76,7 +76,7 @@ public static class JuchuShippingScenario {
 			new { beforeConfirm.Id, beforeConfirm.Su, beforeConfirm.RelateNo1, beforeConfirm.EndFlag })) return;
 
 		// 決定 D8: 配分確定で確定数を入れ、その場で出荷売上／移動伝票を作る（出荷処理入力・確定取消は廃止）
-		var confirm = session.OpenView<ShippingConfirmShohinView, ShippingConfirmShohinViewModel>();
+		var confirm = session.OpenView<HaibunCommitView, HaibunCommitViewModel>();
 		confirm.Input("UAT-02:確定検索条件", vm => {
 			vm.DenDayFromText = DenDay;
 			vm.DenDayToText = DenDay;

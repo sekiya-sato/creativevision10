@@ -222,8 +222,8 @@ public sealed partial class SysPermissionProfile : BaseDbClass {
 		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "08Zaiko.StockForceInput", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "08Zaiko.StockForceInput", PermissionType = (int)EnumPermissionType.Edit, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "20UriageAnalysis.SalesQuickReport", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "07Haibun.ShopHaibunInput", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
-		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "07Haibun.ShopHaibunInput", PermissionType = (int)EnumPermissionType.Edit, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "07Haibun.PurchaseReceiptAllocationInput", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
+		new SysPermissionProfileDetail { Id_PermissionProfile = 1, FunctionId = "07Haibun.PurchaseReceiptAllocationInput", PermissionType = (int)EnumPermissionType.Edit, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 		new SysPermissionProfileDetail { Id_PermissionProfile = 4, FunctionId = "08Zaiko.ZaikoQuery", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 		new SysPermissionProfileDetail { Id_PermissionProfile = 4, FunctionId = "20UriageAnalysis.SalesQuickReport", PermissionType = (int)EnumPermissionType.View, IsAllowed = true, Vdc = Common.GetVdate(), Vdu = Common.GetVdate() },
 	];

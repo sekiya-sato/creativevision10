@@ -35,17 +35,13 @@ public sealed partial class ShippingConfirmDetailPrintViewModel : BaseReportView
 
 	public sealed record KubunFilterOption(int Value, string Name);
 
-	/// <summary>区分の絞込（EnumHaibun）。-1は「すべて」</summary>
+	/// <summary>
+	/// 区分の絞込。-1は「すべて」。出荷・移動する配分（仕入・在庫・受注）だけを出す。
+	/// 取置は倉庫から出荷しないので、「すべて」でも対象にしない（配分再設計 Step 6 判断 3）
+	/// </summary>
 	public IReadOnlyList<KubunFilterOption> KubunOptions { get; } = [
 		new(-1, "すべて"),
-		new((int)EnumHaibun.Hatsukai, "初回配分"),
-		new((int)EnumHaibun.Zaiko, "在庫配分"),
-		new((int)EnumHaibun.Juchu, "受注配分"),
-		new((int)EnumHaibun.Tokui, "得意先別配分"),
-		new((int)EnumHaibun.ShopRequest, "店舗出荷依頼"),
-		new((int)EnumHaibun.ZaikoHin, "在庫品配分"),
-		new((int)EnumHaibun.Reservation, "取置"),
-		new((int)EnumHaibun.IdoShiji, "移動指示"),
+		.. HaibunKubunNames.ShippingKubun.Select(k => new KubunFilterOption(k, HaibunKubunNames.Name(k))),
 	];
 
 	[ObservableProperty]
@@ -166,7 +162,8 @@ LIMIT 1";
 	/// </summary>
 	(string where, List<string> parameters) BuildWhere(DateTime from, DateTime to) {
 		List<string> parameters = [ToDenDay(from), ToDenDay(to)];
-		var where = "h.DenDay BETWEEN @0 AND @1";
+		// 取置はピッキングしない（店舗の在庫を押さえるだけ）ので印刷しない
+		var where = $"h.DenDay BETWEEN @0 AND @1 AND h.Kubun <> {(int)EnumHaibun.Reservation}";
 		if (SelectedKubun >= 0) {
 			where += $" AND h.Kubun = {SqlWhere.AddParameter(parameters, SelectedKubun)}";
 		}
@@ -272,10 +269,7 @@ ORDER BY h.Id_Soko, h.Id_Tenpo, h.DenDay, h.Kubun, h.RelateNo1, h.Id";
 	static string KeyTextSql(string alias) =>
 		$"({alias}.DenDay || cast({alias}.Kubun as text) || substr('000000'||{alias}.Id_Soko,-6,6) || substr('000000'||{alias}.Id_Tenpo,-6,6) || substr('000000'||{alias}.RelateNo1,-6,6))";
 
-	static string KubunLabelSql(string alias) => $@"CASE {alias}.Kubun
-WHEN 0 THEN '初回配分' WHEN 1 THEN '在庫配分' WHEN 2 THEN '受注配分' WHEN 3 THEN '得意先別配分'
-WHEN 4 THEN '店舗出荷依頼' WHEN 5 THEN '在庫品配分' WHEN 6 THEN '取置' WHEN 7 THEN '移動指示'
-ELSE cast({alias}.Kubun as text) END";
+	static string KubunLabelSql(string alias) => HaibunKubunNames.CaseSql($"{alias}.Kubun");
 
 	string BuildConditionText(DateTime from, DateTime to) {
 		var kubun = SelectedKubun < 0 ? "すべて" : (KubunOptions.FirstOrDefault(x => x.Value == SelectedKubun)?.Name ?? SelectedKubun.ToString(CultureInfo.InvariantCulture));

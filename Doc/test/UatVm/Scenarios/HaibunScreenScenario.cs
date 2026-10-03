@@ -38,24 +38,28 @@ public static class HaibunScreenScenario {
 		await session.InsertAsync(NewHaibun(seeded, seeded.TokuiId, OldDenDay, 1));
 		session.Check("配分3行を登録", toTokui.Id > 0 && toDirect.Id > 0, new { Tokui = toTokui.Id, Direct = toDirect.Id });
 
-		// 配分確定(商品)
-		var shohin = session.OpenView<ShippingConfirmShohinView, ShippingConfirmShohinViewModel>();
+		// 配分確定（商品順）
+		var shohin = session.OpenView<HaibunCommitView, HaibunCommitViewModel>();
 		InputConfirmConditions(shohin, seeded);
-		await shohin.RunAsync("配分確定(商品):検索", vm => vm.SearchCommand);
+		await shohin.RunAsync("配分確定(商品順):検索", vm => vm.SearchCommand);
 		var row = shohin.Vm.Rows.SingleOrDefault(x => x.Id == toTokui.Id);
-		if (!session.Check("配分確定(商品):3行表示", shohin.Vm.Rows.Count == 3 && row != null, new { rows = shohin.Vm.Rows.Count })) return;
-		shohin.Input("配分確定(商品):確定数3（欠品2）", vm => {
+		if (!session.Check("配分確定(商品順):3行表示", shohin.Vm.Rows.Count == 3 && row != null, new { rows = shohin.Vm.Rows.Count })) return;
+		shohin.Input("配分確定(商品順):確定数3（欠品2）", vm => {
 			row!.KakuteiSu = 3;
 			row.IsChecked = true;
 		});
-		session.Check("配分確定(商品):欠品2を表示", row!.ShortSu == 2, new { row.KakuteiSu, row.ShortSu });
+		session.Check("配分確定(商品順):欠品2を表示", row!.ShortSu == 2, new { row.KakuteiSu, row.ShortSu });
 		await CaptureAsync(session, shohin.View, screens, "01_HaibunCommitShohin");
 
-		// 配分確定(得意先)
-		var tokui = session.OpenView<ShippingConfirmTokuiView, ShippingConfirmTokuiViewModel>();
+		// 配分確定（出荷先順）
+		var tokui = session.OpenView<HaibunCommitView, HaibunCommitViewModel>();
 		InputConfirmConditions(tokui, seeded);
-		await tokui.RunAsync("配分確定(得意先):検索", vm => vm.SearchCommand);
-		session.Check("配分確定(得意先):3行表示", tokui.Vm.Rows.Count == 3, new { rows = tokui.Vm.Rows.Count });
+		tokui.Input("配分確定(出荷先順):並び順", vm => vm.SortKind = HaibunCommitViewModel.SortTenpo);
+		await tokui.RunAsync("配分確定(出荷先順):検索", vm => vm.SearchCommand);
+		var tenpoOrder = tokui.Vm.Rows.Select(x => x.TenpoDisplay).ToList();
+		session.Check("配分確定(出荷先順):3行表示・出荷先ごとにまとまる",
+			tokui.Vm.Rows.Count == 3 && tenpoOrder.Distinct().Count() == tenpoOrder.Select((t, i) => i == 0 || tenpoOrder[i - 1] != t).Count(b => b),
+			new { rows = tokui.Vm.Rows.Count, tenpoOrder });
 		await CaptureAsync(session, tokui.View, screens, "02_HaibunCommitTokui");
 
 		// 滞留（未確定のまま指示日からN日）
@@ -73,7 +77,7 @@ public static class HaibunScreenScenario {
 		await CaptureAsync(session, list.View, screens, "03_StagnationList");
 
 		// 確定（欠品あり）→ 欠品実績
-		await shohin.RunAsync("配分確定(商品):確定数3で確定", vm => vm.ConfirmSelectedCommand);
+		await shohin.RunAsync("配分確定(商品順):確定数3で確定", vm => vm.ConfirmSelectedCommand);
 		var committed = (await session.QueryAsync<TranHaibun>("where Id=@0", toTokui.Id.ToString())).Single();
 		session.Check("配分確定:完了・欠品2", committed is { EndFlag: 1, JitsuSu: 3, ShortSu: 2 } && committed.RelateNo2 > 0,
 			new { committed.EndFlag, committed.JitsuSu, committed.ShortSu, committed.RelateNo2 });

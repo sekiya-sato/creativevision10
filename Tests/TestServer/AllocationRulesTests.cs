@@ -72,7 +72,9 @@ public class AllocationRulesTests {
 		reservation.DenDay = "20261001";
 		reservation.LimitDay = "20261008";
 		Assert.IsNull(AllocationRules.ValidateNewRow(reservation), "取置は作成できる");
+#pragma warning disable CS0618 // 廃止区分が作成できないことを確かめる
 		foreach (var kubun in new[] { EnumHaibun.Tokui, EnumHaibun.ShopRequest, EnumHaibun.ZaikoHin, EnumHaibun.IdoShiji }) {
+#pragma warning restore CS0618
 			Assert.IsNotNull(AllocationRules.ValidateNewRow(Row(kubun: (int)kubun)), $"{kubun} は廃止区分（決定 D2）");
 		}
 		Assert.IsNotNull(AllocationRules.ValidateNewRow(Row(su: 0)));
@@ -84,12 +86,30 @@ public class AllocationRulesTests {
 	}
 
 	[TestMethod]
+	public void HaibunKubunNames_UseCurrentNamesAndKeepObsoleteForDisplay() {
+		Assert.AreEqual("仕入配分", HaibunKubunNames.Name((int)EnumHaibun.Hatsukai));
+		Assert.AreEqual("取置配分", HaibunKubunNames.Name((int)EnumHaibun.Reservation));
+		Assert.AreEqual("移動指示(廃止)", HaibunKubunNames.Name(7));
+		Assert.AreEqual("9", HaibunKubunNames.Name(9));
+		CollectionAssert.AreEqual(new[] { 0, 1, 2 }, HaibunKubunNames.ShippingKubun.ToArray(), "出荷帳票の絞込は取置と廃止区分を出さない");
+		// すべての enum 値に名前がある
+		foreach (var value in System.Enum.GetValues<EnumHaibun>()) {
+			Assert.IsTrue(HaibunKubunNames.All.ContainsKey((int)value), value.ToString());
+		}
+		var sql = HaibunKubunNames.CaseSql("h.Kubun");
+		StringAssert.StartsWith(sql, "CASE h.Kubun WHEN 0 THEN '仕入配分'");
+		StringAssert.EndsWith(sql, "ELSE cast(h.Kubun as text) END");
+	}
+
+	[TestMethod]
 	public void IsCommittableKubun_ExcludesReservation() {
 		Assert.IsTrue(AllocationRules.IsCommittableKubun((int)EnumHaibun.Hatsukai));
 		Assert.IsTrue(AllocationRules.IsCommittableKubun((int)EnumHaibun.Zaiko));
 		Assert.IsTrue(AllocationRules.IsCommittableKubun((int)EnumHaibun.Juchu));
 		Assert.IsFalse(AllocationRules.IsCommittableKubun((int)EnumHaibun.Reservation));
+#pragma warning disable CS0618 // 廃止区分は確定できない
 		Assert.IsFalse(AllocationRules.IsCommittableKubun((int)EnumHaibun.Tokui));
+#pragma warning restore CS0618
 	}
 
 	[TestMethod]

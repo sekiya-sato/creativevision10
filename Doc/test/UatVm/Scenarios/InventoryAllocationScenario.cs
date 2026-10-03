@@ -98,7 +98,7 @@ public static class InventoryAllocationScenario {
 			new { tk = new { tkSaved.Tanka, tkSaved.Jodai }, ts = new { tsSaved!.Tanka, tsSaved.Jodai } });
 
 		// 配分確定で、卸先は出荷売上、直営店は移動出庫になる
-		var confirm = session.OpenView<ShippingConfirmShohinView, ShippingConfirmShohinViewModel>();
+		var confirm = session.OpenView<HaibunCommitView, HaibunCommitViewModel>();
 		confirm.Input("配分確定:検索条件", vm => {
 			vm.DenDayFromText = DenDay;
 			vm.DenDayToText = DenDay;
