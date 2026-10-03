@@ -242,6 +242,7 @@ public partial class MenuData : ObservableObject {
 				new("在庫配分入力", typeof(Views._07Haibun.InventoryAllocationInputView), addInfo:"倉庫の有効在庫を倉庫・卸先・売仕店・直営店へ同数・比率で振り分け。滞留品の抽出・店舗出荷依頼・移動指示を含む"),
 				new("受注配分入力(伝票別)", typeof(Views._07Haibun.JuchuHaibunInputView), addInfo:"受注伝票を選び受注残をSKU別に配分。有効在庫は参照表示"),
 				new("受注配分入力(商品別)", typeof(Views._07Haibun.SalesOrderAllocationInputView), addInfo:"倉庫・商品を選び得意先×SKUで受注残へまとめて配分。受注日の古い受注から割り付け"),
+				new("取置配分入力", typeof(Views._07Haibun.CustomerReservationAllocationInputView), addInfo:"直営店の在庫を一般顧客向けに取り置き(引当)。店舗売上への変換・取消。期限切れは翌日に自動取消"),
 				new("配分データメンテ", typeof(Views._07Haibun.HaibunDataMenteView), addInfo:"準備中 管理者用。確定日･欠品数･完了FLGを直接修正する"),
 				new("配分関連メンテナンス", typeof(Views._07Haibun.HaibunMenteView), addInfo:"1.1以降 自動補充の対象店舗･優先順位を設定する"),
 			])),
@@ -259,7 +260,6 @@ public partial class MenuData : ObservableObject {
 				new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
 			])),
 			new("▲ 補充・移動指示 ----", new([
-				new("取置入力", typeof(Views._07Haibun.ReservationInputView), addInfo:"準備中 得意先･顧客向けに在庫を確保する(引当対象)"),
 				new("自動発注・補充対象除外品設定", typeof(Views._07Haibun.AutoHachuHojunExcludeSettingView), addInfo:"1.1以降 自動補充はRelease後対応"),
 				new("在庫基準自動補充メンテナンス", typeof(Views._07Haibun.ZaikoAutoHojunMenteView), addInfo:"1.1以降 自動補充はRelease後対応"),
 			])),

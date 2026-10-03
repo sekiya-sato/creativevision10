@@ -1375,6 +1375,26 @@ public sealed partial class MasterConfig : BaseDbClass {
 	/// </summary>
 	[Comment("マニュアル排他制御監視タスクの既定の実行フラグ")]
 	public const string AutoExecEnabledManualLockMonitor = ValAutoExecEnabled;
+	/// <summary>
+	/// 取置期限切れ自動取消タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("取置期限切れ自動取消タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdReservationExpire = "c9d0e1f2-a3b4-5678-2345-789012345678";
+	/// <summary>
+	/// 取置期限切れ自動取消タスクの表示名
+	/// </summary>
+	[Comment("取置期限切れ自動取消タスクの表示名")]
+	public const string AutoExecTaskNameReservationExpire = "取置期限切れ自動取消 期限日を過ぎた取置配分を取り消して引当を解除するタスク";
+	/// <summary>
+	/// 取置期限切れ自動取消タスクの既定cron式（毎日0:50。期限日の翌日に取り消す）
+	/// </summary>
+	[Comment("取置期限切れ自動取消タスクの既定cron式")]
+	public const string AutoExecCronReservationExpire = "50 0 * * *";
+	/// <summary>
+	/// 取置期限切れ自動取消タスクの既定の実行フラグ（決定 D5 の自動取消のため既定で有効）
+	/// </summary>
+	[Comment("取置期限切れ自動取消タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledReservationExpire = ValAutoExecEnabled;
 	/// <summary>自動実行ジョブ1件の既定定義（TaskId・表示名・既定cron式・既定の実行フラグ・メール送信フラグ）</summary>
 	public sealed record AutoExecJobDefault(string TaskId, string TaskName, string Cron, string Enabled, string IsSendMail);
 	/// <summary>自動実行ジョブの既定定義一覧。MasterConfig の初期データと SchedulerService のジョブ定義の唯一の出典。</summary>
@@ -1387,6 +1407,7 @@ public sealed partial class MasterConfig : BaseDbClass {
 		new(AutoExecTaskIdMasterVColumnResync, AutoExecTaskNameMasterVColumnResync, AutoExecCronMasterVColumnResync, AutoExecEnabledMasterVColumnResync, ValAutoExecDisabled),
 		new(AutoExecTaskIdTranTaxRebuild, AutoExecTaskNameTranTaxRebuild, AutoExecCronTranTaxRebuild, AutoExecEnabledTranTaxRebuild, ValAutoExecDisabled),
 		new(AutoExecTaskIdManualLockMonitor, AutoExecTaskNameManualLockMonitor, AutoExecCronManualLockMonitor, AutoExecEnabledManualLockMonitor, ValAutoExecDisabled),
+		new(AutoExecTaskIdReservationExpire, AutoExecTaskNameReservationExpire, AutoExecCronReservationExpire, AutoExecEnabledReservationExpire, ValAutoExecDisabled),
 	];
 	/// <summary>TaskId(Guid文字列)から実行フラグ設定名を組み立てる。CvDomainLogic の SchedulerJobConfigDb と同じ規則（先頭8桁）。</summary>
 	public static string AutoExecEnabledName(string taskId) => NameAutoExecEnabledPrefix + AutoExecTaskIdPrefix(taskId);

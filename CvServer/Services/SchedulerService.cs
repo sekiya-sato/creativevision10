@@ -62,6 +62,8 @@ public class SchedulerService : ISchedulerService {
 	public const string TranTaxRebuildTaskName = MasterConfig.AutoExecTaskNameTranTaxRebuild;
 	public const string ManualLockMonitorCronExpression = MasterConfig.AutoExecCronManualLockMonitor;
 	public const string ManualLockMonitorTaskName = MasterConfig.AutoExecTaskNameManualLockMonitor;
+	public const string ReservationExpireCronExpression = MasterConfig.AutoExecCronReservationExpire;
+	public const string ReservationExpireTaskName = MasterConfig.AutoExecTaskNameReservationExpire;
 
 	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWalCheckpoint);
 	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWorkFileCleanup);
@@ -71,6 +73,7 @@ public class SchedulerService : ISchedulerService {
 	public static readonly Guid MasterVColumnResyncTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdMasterVColumnResync);
 	public static readonly Guid TranTaxRebuildTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdTranTaxRebuild);
 	public static readonly Guid ManualLockMonitorTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdManualLockMonitor);
+	public static readonly Guid ReservationExpireTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdReservationExpire);
 
 	/// <summary>ジョブを識別するキー（<see cref="MasterConfig"/> の Name に使う固定文字列）</summary>
 	public const string JobKeyWalCheckpoint = "WalCheckpoint";
@@ -81,6 +84,7 @@ public class SchedulerService : ISchedulerService {
 	public const string JobKeyMasterVColumnResync = "MasterVColumnResync";
 	public const string JobKeyTranTaxRebuild = "TranTaxRebuild";
 	public const string JobKeyManualLockMonitor = "ManualLockMonitor";
+	public const string JobKeyReservationExpire = "ReservationExpire";
 
 	/// <summary>システムジョブ1件の定義（TaskId・設定キー・名称・既定cron・既定の実行フラグ・起動間隔チェックの有無）</summary>
 	public sealed record SchedulerJobDefinition(
@@ -106,6 +110,7 @@ public class SchedulerService : ISchedulerService {
 		new(TranTaxRebuildTaskId, JobKeyTranTaxRebuild, TranTaxRebuildTaskName, TranTaxRebuildCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledTranTaxRebuild), IsSendMailDefault(TranTaxRebuildTaskId), true),
 		// CheckMinInterval は必ずfalse: 監視タスクは5分毎cronであり、MinIntervalMinutes(60分)の下限チェック対象にすると弾かれてしまう。
 		new(ManualLockMonitorTaskId, JobKeyManualLockMonitor, ManualLockMonitorTaskName, ManualLockMonitorCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledManualLockMonitor), IsSendMailDefault(ManualLockMonitorTaskId), false),
+		new(ReservationExpireTaskId, JobKeyReservationExpire, ReservationExpireTaskName, ReservationExpireCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledReservationExpire), IsSendMailDefault(ReservationExpireTaskId), false),
 	];
 
 	/// <summary>MasterConfigの実行フラグ値(1/0)を bool に変換する</summary>
@@ -266,6 +271,15 @@ public class SchedulerService : ISchedulerService {
 	public SchedulerResult RegisterJodaiPurgeTask() {
 		var def = FindDefinition(JobKeyJodaiPurge);
 		return RegisterSystemJob(def, (db, ct) => ExecuteJodaiPurgeCoreAsync(db, def.TaskName, ct));
+	}
+
+	/// <summary>
+	/// 期限日を過ぎた取置配分を自動で取り消すタスクを登録する（決定 D5、Step 5 4.4）。
+	/// 期限日の当日までは有効で、翌日の実行で取消（<see cref="EnumHaibunEndReason.Expired"/>）になる。
+	/// </summary>
+	public SchedulerResult RegisterReservationExpireTask() {
+		var def = FindDefinition(JobKeyReservationExpire);
+		return RegisterSystemJob(def, (db, ct) => ExecuteReservationExpireCoreAsync(db, def.TaskName, ct));
 	}
 
 	/// <summary>
@@ -1110,6 +1124,31 @@ public class SchedulerService : ISchedulerService {
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "適用上代の期限切れ削除に失敗しました: TaskName={TaskName}", taskName);
+			return Task.FromResult(new AutoexecTaskResult(InternalError, 0, $"例外: {ex.Message}"));
+		}
+	}
+
+	/// <summary>
+	/// 期限日を過ぎた取置配分を取り消す。取消と引当の引き直しを1トランザクションで行う。
+	/// </summary>
+	private Task<AutoexecTaskResult> ExecuteReservationExpireCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+
+		try {
+			db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var expired = new ReservationDb(db).ExpireOverdue(DateTime.Today);
+			db.CompleteTransaction();
+			var memo = $"取置期限切れ自動取消: 取消={expired}";
+			_logger.LogInformation("取置期限切れ自動取消: TaskName={TaskName}, Expired={Expired}", taskName, expired);
+			return Task.FromResult(new AutoexecTaskResult(Success, expired, memo));
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			db.AbortTransaction();
+			throw;
+		}
+		catch (Exception ex) {
+			db.AbortTransaction();
+			_logger.LogError(ex, "取置期限切れ自動取消に失敗しました: TaskName={TaskName}", taskName);
 			return Task.FromResult(new AutoexecTaskResult(InternalError, 0, $"例外: {ex.Message}"));
 		}
 	}

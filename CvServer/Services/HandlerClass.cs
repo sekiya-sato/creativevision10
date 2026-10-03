@@ -556,6 +556,8 @@ public partial class CoreService {
 			PartialUpdateParam partialUpdate => HandlePartialUpdate(request.Flag, partialUpdate),
 			HaibunSaveParam haibunSave => HandleHaibunSave(request.Flag, haibunSave),
 			HaibunCommitParam haibunCommit => HandleHaibunCommit(request.Flag, haibunCommit),
+			ReservationConvertParam reservationConvert => HandleReservationConvert(request.Flag, reservationConvert),
+			ReservationCancelParam reservationCancel => HandleReservationCancel(request.Flag, reservationCancel),
 			OpeningBalanceImportParam opening => HandleOpeningBalanceImport(request.Flag, opening),
 			_ => throw new NotImplementedException(),
 		};
@@ -719,6 +721,81 @@ public partial class CoreService {
 		catch (Exception ex) {
 			_db.AbortTransaction();
 			return CreateExceptionResponse(flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 取置の売上変換。店舗×顧客ごとに店舗売上を作り、取置を完了（売上変換）にする（<see cref="ReservationDb.Convert"/>）。
+	/// 競合 → <see cref="CvMsgErrorCode.ConcurrentUpdate"/>、取置以外の行 → <see cref="CvMsgErrorCode.InvalidParameter"/>。
+	/// </summary>
+	private CvMsg HandleReservationConvert(CvFlag flag, ReservationConvertParam convert) {
+		var rows = convert.Rows ?? [];
+		_logger.LogInformation("パラメータ ReservationConvertParam 件数={Count} 売上日={DenDay} 社員={IdShain}",
+			rows.Length, convert.DenDay, convert.IdShain);
+		if (string.IsNullOrWhiteSpace(convert.DenDay)) {
+			const string noDay = "売上日を指定してください。";
+			return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, noDay, typeof(string), noDay);
+		}
+		var idShain = convert.IdShain > 0 ? convert.IdShain : ResolveLoginShainId();
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var (slipIds, count) = new ReservationDb(_db).Convert(
+				[.. rows.Select(r => (r.Id, r.ExpectedVdu))], convert.DenDay, idShain, out var outcome);
+			if (ReservationErrorResponse(flag, outcome) is CvMsg error) {
+				_db.AbortTransaction();
+				return error;
+			}
+			_db.CompleteTransaction();
+			_logger.LogInformation("取置 売上変換={Count} 伝票作成={Slips}", count, slipIds.Count);
+			return CreateSuccessResponse(flag, typeof(ReservationConvertResult),
+				Common.SerializeObject(new ReservationConvertResult([.. slipIds], count)));
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 取置の取消。伝票は作らずに完了（取消）にする（<see cref="ReservationDb.Cancel"/>）。
+	/// 競合 → <see cref="CvMsgErrorCode.ConcurrentUpdate"/>、取置以外の行 → <see cref="CvMsgErrorCode.InvalidParameter"/>。
+	/// </summary>
+	private CvMsg HandleReservationCancel(CvFlag flag, ReservationCancelParam cancel) {
+		var rows = cancel.Rows ?? [];
+		_logger.LogInformation("パラメータ ReservationCancelParam 件数={Count} 取消日={CancelDay}", rows.Length, cancel.CancelDay);
+		if (string.IsNullOrWhiteSpace(cancel.CancelDay)) {
+			const string noDay = "取消日を指定してください。";
+			return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, noDay, typeof(string), noDay);
+		}
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var count = new ReservationDb(_db).Cancel([.. rows.Select(r => (r.Id, r.ExpectedVdu))], cancel.CancelDay, out var outcome);
+			if (ReservationErrorResponse(flag, outcome) is CvMsg error) {
+				_db.AbortTransaction();
+				return error;
+			}
+			_db.CompleteTransaction();
+			_logger.LogInformation("取置 取消={Count}", count);
+			return CreateSuccessResponse(flag, typeof(ReservationCancelResult),
+				Common.SerializeObject(new ReservationCancelResult(count)));
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>取置の売上変換・取消が検証で止まったときの応答。成功なら null。</summary>
+	private CvMsg? ReservationErrorResponse(CvFlag flag, ReservationOutcome outcome) {
+		switch (outcome) {
+			case ReservationOutcome.Conflict:
+				_logger.LogInformation("取置 競合検知");
+				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, typeof(string), string.Empty);
+			case ReservationOutcome.InvalidKubun:
+				const string invalidKubun = "取置以外の配分が含まれています。";
+				return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, invalidKubun, typeof(string), invalidKubun);
+			default:
+				return null;
 		}
 	}
 

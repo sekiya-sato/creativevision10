@@ -222,6 +222,29 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[Comment("入荷済み数（仕入配分=区分0だけが使う）。発注×SKUの仕入数から確定済み分を引いた残りを店舗コード順に割り当てた値で、区分0はこの数だけが引当・確定の対象。")]
 	public partial int ArrivedSu { get; set; }
 	/// <summary>
+	/// 取置の顧客（<see cref="MasterEndCustomer"/>.Id）。取置配分＝区分 <see cref="EnumHaibun.Reservation"/>(6) だけが使い、ほかは 0。
+	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` 3章を参照する。
+	/// </summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterEndCustomer))]
+	[Comment("取置の顧客Id（MasterEndCustomer.Id）。取置配分(区分6)だけが使い、ほかは0。")]
+	public partial long Id_Customer { get; set; }
+	/// <summary>
+	/// 取置の期限日 yyyyMMdd。取置配分(区分6)だけが使い、ほかは空文字。
+	/// 期限日当日までは有効で、翌日に日次タスクが自動取消する（<see cref="EnumHaibunEndReason.Expired"/>）。
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("取置の期限日 yyyyMMdd。取置配分(区分6)だけが使う。期限日の翌日に自動取消される。")]
+	public partial string LimitDay { get; set; } = string.Empty;
+	/// <summary>
+	/// 完了の理由（<see cref="EnumHaibunEndReason"/>）。未完了と、配分確定で完了した行は 0。
+	/// 取置配分(区分6)だけが 1〜3 を使う。
+	/// </summary>
+	[ObservableProperty]
+	[Comment("完了の理由。0=通常(未完了・配分確定) 1=売上変換 2=取消 3=期限切れ。区分6(取置)だけが1〜3を使う。")]
+	public partial int EndReason { get; set; }
+	/// <summary>
 	/// 入力社員Id
 	/// </summary>
 	[ObservableProperty]
@@ -283,12 +306,33 @@ public enum EnumHaibun : int {
 	/// <summary>在庫品配分（滞留在庫などを対象に配分する）。RelateNo1 = 0</summary>
 	[Comment("在庫品配分")]
 	ZaikoHin = 5,
-	/// <summary>取置（特定の得意先・顧客向けに在庫を確保する）。RelateNo1 = 0</summary>
+	/// <summary>
+	/// 取置配分（店舗が一般顧客向けに店舗在庫を確保する）。RelateNo1 = 0、Id_Soko = Id_Tenpo、顧客と期限日が必須。
+	/// 配分確定の対象外で、店舗売上への変換・取消・期限切れで完了する（Step 5）
+	/// </summary>
 	[Comment("取置")]
 	Reservation = 6,
 	/// <summary>移動指示（倉庫間の移動を指示する）。RelateNo1 = 0</summary>
 	[Comment("移動指示")]
 	IdoShiji = 7,
+}
+
+/// <summary>
+/// 配分の完了の理由（<see cref="TranHaibun.EndReason"/>）。取置配分(区分6)の終わり方を区別する（決定 D5）。
+/// </summary>
+public enum EnumHaibunEndReason : int {
+	/// <summary>未完了、または配分確定で完了した</summary>
+	[Comment("通常")]
+	Normal = 0,
+	/// <summary>取置を店舗売上へ変換した（<see cref="TranHaibun.RelateNo2"/> = <see cref="Tran01Tenuri"/>.Id）</summary>
+	[Comment("売上変換")]
+	Converted = 1,
+	/// <summary>取置を取り消した</summary>
+	[Comment("取消")]
+	Cancelled = 2,
+	/// <summary>期限切れで自動取消した</summary>
+	[Comment("期限切れ")]
+	Expired = 3,
 }
 
 /// <summary>

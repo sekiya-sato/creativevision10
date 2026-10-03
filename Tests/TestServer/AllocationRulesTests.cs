@@ -62,9 +62,16 @@ public class AllocationRulesTests {
 		static TranHaibun Row(int kubun = (int)EnumHaibun.Zaiko, int su = 1, long soko = 1, long tenpo = 2, long shohin = 3, int relateNo1 = 9) =>
 			new() { Kubun = kubun, Su = su, Id_Soko = soko, Id_Tenpo = tenpo, Id_Shohin = shohin, RelateNo1 = relateNo1 };
 
-		foreach (var kubun in new[] { EnumHaibun.Hatsukai, EnumHaibun.Zaiko, EnumHaibun.Juchu, EnumHaibun.Reservation }) {
+		foreach (var kubun in new[] { EnumHaibun.Hatsukai, EnumHaibun.Zaiko, EnumHaibun.Juchu }) {
 			Assert.IsNull(AllocationRules.ValidateNewRow(Row(kubun: (int)kubun)), $"{kubun} は作成できる");
 		}
+		// 取置は顧客・期限日・出庫元=店舗・元伝票なしが要る（Step 5。詳細は ReservationTests）
+		Assert.IsNotNull(AllocationRules.ValidateNewRow(Row(kubun: (int)EnumHaibun.Reservation)));
+		var reservation = Row(kubun: (int)EnumHaibun.Reservation, tenpo: 1, relateNo1: 0);
+		reservation.Id_Customer = 5;
+		reservation.DenDay = "20261001";
+		reservation.LimitDay = "20261008";
+		Assert.IsNull(AllocationRules.ValidateNewRow(reservation), "取置は作成できる");
 		foreach (var kubun in new[] { EnumHaibun.Tokui, EnumHaibun.ShopRequest, EnumHaibun.ZaikoHin, EnumHaibun.IdoShiji }) {
 			Assert.IsNotNull(AllocationRules.ValidateNewRow(Row(kubun: (int)kubun)), $"{kubun} は廃止区分（決定 D2）");
 		}

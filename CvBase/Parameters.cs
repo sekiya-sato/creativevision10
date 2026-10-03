@@ -422,6 +422,41 @@ public sealed record HaibunCommitRow(long Id, long ExpectedVdu, int KakuteiSu);
 public sealed record HaibunCommitResult(long[] CreatedSlipIds, int CommittedCount, int ShortageRowCount);
 
 /// <summary>
+/// 取置配分（区分6）の操作対象1行。<see cref="ExpectedVdu"/> が現在値と食い違えば全体を処理しない。
+/// </summary>
+/// <param name="Id">配分行のId</param>
+/// <param name="ExpectedVdu">一覧取得時点のVdu</param>
+public sealed record ReservationRowRef(long Id, long ExpectedVdu);
+
+/// <summary>
+/// 取置の売上変換。店舗×顧客ごとに店舗売上（<c>Tran01Tenuri</c>）を作り、取置を完了（売上変換）にする。
+/// 1件でも区分6以外・完了済み・Vdu不一致があれば何も書かない。
+/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` 4.2 を参照する。
+/// </summary>
+/// <param name="Rows">変換する取置</param>
+/// <param name="DenDay">売上日 yyyyMMdd</param>
+/// <param name="IdShain">入力社員Id。0 ならサーバがログイン中の社員を使う</param>
+public sealed record ReservationConvertParam(ReservationRowRef[] Rows, string DenDay, long IdShain);
+
+/// <summary>取置の売上変換の結果</summary>
+/// <param name="CreatedSlipIds">作成した店舗売上のId</param>
+/// <param name="ConvertedCount">売上変換した取置の行数</param>
+public sealed record ReservationConvertResult(long[] CreatedSlipIds, int ConvertedCount);
+
+/// <summary>
+/// 取置の取消。伝票は作らずに完了（取消）にして引当を解除する。
+/// 1件でも区分6以外・完了済み・Vdu不一致があれば何も書かない。
+/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` 4.3 を参照する。
+/// </summary>
+/// <param name="Rows">取り消す取置</param>
+/// <param name="CancelDay">取消日 yyyyMMdd（完了日として確定日に入れる）</param>
+public sealed record ReservationCancelParam(ReservationRowRef[] Rows, string CancelDay);
+
+/// <summary>取置の取消の結果</summary>
+/// <param name="CancelledCount">取り消した取置の行数</param>
+public sealed record ReservationCancelResult(int CancelledCount);
+
+/// <summary>
 /// 配分確定で有効在庫を割った1SKU。画面へ返すワイヤ用DTO
 /// （ドメインの <c>ShippingConfirmError</c> はサーバ専用のためここへ詰め替える）。
 /// </summary>

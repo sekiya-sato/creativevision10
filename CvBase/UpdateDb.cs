@@ -117,6 +117,11 @@ public class UpdateDb {
 			"ALTER TABLE TranHaibun ADD COLUMN ArrivedSu NUMBER not null default 0;" +
 			"UPDATE TranHaibun SET ArrivedSu = Su WHERE Kubun = 0 AND RelateNo1 = 0 AND EndFlag = 0;",
 			"配分再設計Step4 仕入配分(区分0)の入荷済み数列を追加 発注に紐付かない既存の初回配分(RelateNo1=0)は入荷を判定できないため入荷済み扱い(ArrivedSu=Su)にして確定できる状態を保つ(判断3) 発注に紐付く行の入荷済み数と引当数は全件再集計(ArrivalDb.RecalcAll→CalcReserveQtyAll)または次の仕入・保存・確定で計算される Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md 3.5"),
+		new (26_10_03_02,
+			"ALTER TABLE TranHaibun ADD COLUMN Id_Customer NUMBER not null default 0;" +
+			"ALTER TABLE TranHaibun ADD COLUMN LimitDay TEXT not null default '';" +
+			"ALTER TABLE TranHaibun ADD COLUMN EndReason NUMBER not null default 0;",
+			"配分再設計Step5 取置配分(区分6)の顧客・期限日・完了理由の列を追加 既存の区分6は取置画面が無かったため0件の想定で既存行はすべて0/空文字(通常)になる Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md 3.1"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

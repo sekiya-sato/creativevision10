@@ -176,8 +176,8 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 			}
 		}
 		else {
-			// 欠品実績（完了かつ欠品）
-			where = "h.EndFlag = 1 AND h.ShortSu > 0 AND h.KakuteiDay BETWEEN @0 AND @1";
+			// 欠品実績（完了かつ欠品）。取置の取消・期限切れも欠品数を持つが、出荷の欠品ではないので除く（取置画面で見る。Step 5 判断 6）
+			where = $"h.EndFlag = 1 AND h.ShortSu > 0 AND h.Kubun <> {(int)EnumHaibun.Reservation} AND h.KakuteiDay BETWEEN @0 AND @1";
 		}
 		where += RangeEq(parameters, "soko.Code", SokoCode);
 		where += RangeEq(parameters, "ten.Code", TokuiCode);

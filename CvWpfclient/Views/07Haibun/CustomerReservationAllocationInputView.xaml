@@ -1,0 +1,407 @@
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._07Haibun.CustomerReservationAllocationInputView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._07Haibun"
+	Title="取置配分入力"
+	Width="1366" Height="820"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="14"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:CustomerReservationAllocationInputViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoSearchCommand}"
+			Gesture="F5" />
+		<KeyBinding Command="{Binding DoRegisterCommand}"
+			Gesture="F6" />
+		<KeyBinding Command="{Binding ExitCommand}"
+			Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="26" Height="26"
+					VerticalAlignment="Center"
+					Kind="BookmarkCheck" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="18" FontWeight="SemiBold"
+					Text="取置配分入力" />
+				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+					Opacity="0.8" Text="直営店の在庫を一般顧客向けに取り置き、店舗売上への変換・取消を行います。期限切れは翌日に自動で取り消されます。" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<!--  POS との二重計上の注意（D10）  -->
+		<Border Grid.Row="1"
+			Padding="12,6"
+			Background="#FFF4E5" BorderBrush="#F0A040" BorderThickness="0,0,0,1">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon VerticalAlignment="Center"
+					Foreground="#C06000" Kind="AlertOutline" />
+				<TextBlock x:Name="PosNoticeText"
+					Margin="8,0,0,0" VerticalAlignment="Center"
+					FontWeight="SemiBold" Foreground="#8A4500"
+					Text="{x:Static vm:CustomerReservationAllocationInputViewModel.PosNotice}" />
+			</StackPanel>
+		</Border>
+
+		<Border Grid.Row="2"
+			Padding="12,8"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<WrapPanel Orientation="Horizontal">
+				<StackPanel Margin="0,4,20,4"
+					Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="店舗" />
+					<Button Width="64"
+						Command="{Binding SelectTenpoCommand}"
+						Content="選択"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBox Width="140"
+						Margin="8,0,0,0"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding TenpoCode, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Width="190"
+						Margin="8,0,0,0" VerticalAlignment="Center"
+						Text="{Binding TenpoName}"
+						TextTrimming="CharacterEllipsis" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4"
+					Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="顧客" />
+					<TextBox Width="150"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding CustomerFilter, UpdateSourceTrigger=PropertyChanged}"
+						ToolTip="コード・名前・カナの部分一致" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4"
+					Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="状態" />
+					<ComboBox Width="150"
+						ItemsSource="{Binding StatusKinds}"
+						SelectedIndex="{Binding StatusIndex}" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4"
+					Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="取置日" />
+					<DatePicker Width="140"
+						helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+						SelectedDate="{Binding DenDayFrom, Mode=TwoWay}"
+						Style="{StaticResource FormDatePicker}" />
+					<TextBlock Margin="6,0" VerticalAlignment="Center"
+						Text="～" />
+					<DatePicker Width="140"
+						helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+						SelectedDate="{Binding DenDayTo, Mode=TwoWay}"
+						Style="{StaticResource FormDatePicker}" />
+				</StackPanel>
+				<Button Margin="0,4"
+					Command="{Binding DoSearchCommand}"
+					IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+					Style="{StaticResource MaterialDesignFlatMidBgButton}"
+					ToolTip="検索 (F5)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="Magnify" />
+						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+							FontSize="16" Text="検索" />
+					</StackPanel>
+				</Button>
+			</WrapPanel>
+		</Border>
+
+		<DockPanel Grid.Row="3"
+			Margin="12,8,12,4">
+			<WrapPanel Margin="0,0,0,6"
+				DockPanel.Dock="Top" Orientation="Horizontal">
+				<Button Margin="0,2,8,2"
+					Command="{Binding CheckAllCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}">
+					<TextBlock Text="全選択" />
+				</Button>
+				<Button Margin="0,2,16,2"
+					Command="{Binding UncheckAllCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}">
+					<TextBlock Text="全解除" />
+				</Button>
+				<StackPanel Margin="0,2,8,2"
+					Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="売上日" />
+					<DatePicker Width="140"
+						helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+						SelectedDate="{Binding UriDay, Mode=TwoWay}"
+						Style="{StaticResource FormDatePicker}" />
+				</StackPanel>
+				<Button Margin="0,2,16,2"
+					Command="{Binding DoConvertCommand}"
+					Style="{StaticResource MaterialDesignFlatMidBgButton}"
+					ToolTip="チェックした取置を店舗売上にする（店舗×顧客ごとに1伝票）">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="CashRegister" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="売上変換" />
+					</StackPanel>
+				</Button>
+				<Button Margin="0,2,16,2"
+					Command="{Binding CancelReservationCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="チェックした取置を取り消して引当を解除する">
+					<TextBlock Text="取消" />
+				</Button>
+				<StackPanel Margin="0,2,8,2"
+					Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="新期限" />
+					<DatePicker Width="140"
+						helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+						SelectedDate="{Binding NewLimitDay, Mode=TwoWay}"
+						Style="{StaticResource FormDatePicker}" />
+				</StackPanel>
+				<Button Margin="0,2,16,2"
+					Command="{Binding ChangeLimitCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="チェックした1行の期限日を変える">
+					<TextBlock Text="期限変更" />
+				</Button>
+				<StackPanel Margin="0,2,8,2"
+					Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="新数量" />
+					<TextBox Width="70"
+						HorizontalContentAlignment="Right"
+						Style="{StaticResource FormTextBox}"
+						Text="{Binding NewSu, UpdateSourceTrigger=PropertyChanged}" />
+				</StackPanel>
+				<Button Margin="0,2"
+					Command="{Binding ChangeQtyCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="チェックした1行の取置数を変える">
+					<TextBlock Text="数量変更" />
+				</Button>
+			</WrapPanel>
+			<DataGrid x:Name="ReservationGrid"
+				AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+				EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+				ItemsSource="{Binding Rows}"
+				SelectionMode="Single">
+				<DataGrid.RowStyle>
+					<Style BasedOn="{StaticResource {x:Type DataGridRow}}"
+						TargetType="DataGridRow">
+						<Style.Triggers>
+							<DataTrigger Binding="{Binding IsNearLimit}"
+								Value="True">
+								<Setter Property="Background" Value="#FFE8C8" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding IsOverdue}"
+								Value="True">
+								<Setter Property="Background" Value="#FFD0D0" />
+							</DataTrigger>
+							<DataTrigger Binding="{Binding IsOpen}"
+								Value="False">
+								<Setter Property="Opacity" Value="0.6" />
+							</DataTrigger>
+						</Style.Triggers>
+					</Style>
+				</DataGrid.RowStyle>
+				<DataGrid.Columns>
+					<DataGridTemplateColumn Width="60"
+						Header="選択">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<CheckBox HorizontalAlignment="Center"
+									IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}"
+									IsEnabled="{Binding IsOpen}" />
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+					<DataGridTextColumn Width="165"
+						Binding="{Binding CustomerDisplay}"
+						Header="顧客" IsReadOnly="True" />
+					<DataGridTextColumn Width="190"
+						Binding="{Binding ShohinDisplay}"
+						Header="商品" IsReadOnly="True" />
+					<DataGridTextColumn Width="120"
+						Binding="{Binding ColSizDisplay}"
+						Header="色サイズ" IsReadOnly="True" />
+					<DataGridTextColumn Width="75"
+						Binding="{Binding Su, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource DataGridRightTextBlock}"
+						Header="数量" IsReadOnly="True" />
+					<DataGridTextColumn Width="110"
+						Binding="{Binding DenDayDisp}"
+						Header="取置日" IsReadOnly="True" />
+					<DataGridTextColumn Width="110"
+						Binding="{Binding LimitDayDisp}"
+						Header="期限日" IsReadOnly="True" />
+					<DataGridTextColumn Width="85"
+						Binding="{Binding RemainDaysDisp}"
+						ElementStyle="{StaticResource DataGridRightTextBlock}"
+						Header="残日数" IsReadOnly="True" />
+					<DataGridTextColumn Width="95"
+						Binding="{Binding StatusText}"
+						Header="状態" IsReadOnly="True" />
+					<DataGridTextColumn Width="110"
+						Binding="{Binding EndDayDisp}"
+						Header="完了日" IsReadOnly="True" />
+					<DataGridTextColumn Width="100"
+						Binding="{Binding SlipDisp}"
+						ElementStyle="{StaticResource DataGridRightTextBlock}"
+						Header="売上伝票" IsReadOnly="True" />
+					<DataGridTextColumn Width="100"
+						Binding="{Binding Memo}"
+						Header="メモ" IsReadOnly="True" />
+				</DataGrid.Columns>
+			</DataGrid>
+		</DockPanel>
+
+		<!--  登録  -->
+		<Border Grid.Row="4"
+			Margin="12,4,12,8" Padding="12,8"
+			Background="{DynamicResource MaterialDesignPaper}"
+			BorderBrush="{DynamicResource MaterialDesignDivider}"
+			BorderThickness="1" CornerRadius="4">
+			<StackPanel>
+				<TextBlock Margin="0,0,0,4"
+					FontSize="16" FontWeight="SemiBold" Text="取置登録" />
+				<WrapPanel Orientation="Horizontal">
+					<StackPanel Margin="0,4,20,4"
+						Orientation="Horizontal">
+						<TextBlock Style="{StaticResource FormLabel}"
+							Text="顧客" />
+						<Button Width="64"
+							Command="{Binding SelectCustomerCommand}"
+							Content="選択"
+							Style="{StaticResource MaterialDesignOutlinedButton}"
+							ToolTip="この店舗の顧客から選ぶ（ほかの店舗の顧客はコードを入力）" />
+						<TextBox Width="140"
+							Margin="8,0,0,0"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding EntryCustomerCode, UpdateSourceTrigger=PropertyChanged}" />
+						<TextBlock Width="150"
+							Margin="8,0,0,0" VerticalAlignment="Center"
+							Text="{Binding EntryCustomerName}"
+							TextTrimming="CharacterEllipsis" />
+					</StackPanel>
+					<StackPanel Margin="0,4,20,4"
+						Orientation="Horizontal">
+						<TextBlock Style="{StaticResource FormLabel}"
+							Text="商品" />
+						<Button Width="64"
+							Command="{Binding SelectShohinCommand}"
+							Content="選択"
+							Style="{StaticResource MaterialDesignOutlinedButton}" />
+						<TextBox Width="150"
+							Margin="8,0,0,0"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding EntryShohinCode, UpdateSourceTrigger=PropertyChanged}"
+							ToolTip="コードを入力して Enter で色サイズを読み込む">
+							<TextBox.InputBindings>
+								<KeyBinding Key="Enter"
+									Command="{Binding LoadEntryShohinCommand}" />
+							</TextBox.InputBindings>
+						</TextBox>
+						<TextBlock Width="170"
+							Margin="8,0,0,0" VerticalAlignment="Center"
+							Text="{Binding EntryShohinName}"
+							TextTrimming="CharacterEllipsis" />
+					</StackPanel>
+					<StackPanel Margin="0,4,20,4"
+						Orientation="Horizontal">
+						<TextBlock Style="{StaticResource FormLabel}"
+							Text="色サイズ" />
+						<ComboBox Width="300"
+							DisplayMemberPath="ListDisplay"
+							ItemsSource="{Binding EntrySkus}"
+							SelectedItem="{Binding EntrySku}" />
+					</StackPanel>
+				</WrapPanel>
+				<WrapPanel Orientation="Horizontal">
+					<StackPanel Margin="0,4,20,4"
+						Orientation="Horizontal">
+						<TextBlock Style="{StaticResource FormLabel}"
+							Text="数量" />
+						<TextBox Width="70"
+							HorizontalContentAlignment="Right"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding EntrySu, UpdateSourceTrigger=PropertyChanged}" />
+					</StackPanel>
+					<StackPanel Margin="0,4,20,4"
+						Orientation="Horizontal">
+						<TextBlock Style="{StaticResource FormLabel}"
+							Text="取置日" />
+						<DatePicker Width="140"
+							helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+							SelectedDate="{Binding EntryDenDay, Mode=TwoWay}"
+							Style="{StaticResource FormDatePicker}" />
+					</StackPanel>
+					<StackPanel Margin="0,4,20,4"
+						Orientation="Horizontal">
+						<TextBlock Style="{StaticResource FormLabel}"
+							Text="期限日" />
+						<DatePicker Width="140"
+							helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+							SelectedDate="{Binding EntryLimitDay, Mode=TwoWay}"
+							Style="{StaticResource FormDatePicker}"
+							ToolTip="初期値は取置日の1週間後。期限日の翌日に自動で取り消される" />
+					</StackPanel>
+					<StackPanel Margin="0,4,20,4"
+						Orientation="Horizontal">
+						<TextBlock Style="{StaticResource FormLabel}"
+							Text="メモ" />
+						<TextBox Width="200"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding EntryMemo, UpdateSourceTrigger=PropertyChanged}" />
+					</StackPanel>
+					<Button Margin="0,4"
+						Command="{Binding DoRegisterCommand}"
+						Style="{StaticResource MaterialDesignFlatMidBgButton}"
+						ToolTip="取置登録 (F6)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="ContentSave" />
+							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+								FontSize="16" Text="取置登録" />
+						</StackPanel>
+					</Button>
+				</WrapPanel>
+			</StackPanel>
+		</Border>
+
+		<Border Grid.Row="5"
+			Padding="12,8"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<DockPanel>
+				<Button Command="{Binding ExitCommand}"
+					DockPanel.Dock="Right"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="閉じる (Esc)">
+					<TextBlock FontSize="16" Text="閉じる" />
+				</Button>
+				<TextBlock VerticalAlignment="Center"
+					Text="{Binding Message}"
+					TextWrapping="Wrap" />
+			</DockPanel>
+		</Border>
+	</Grid>
+</helpers:BaseWindow>

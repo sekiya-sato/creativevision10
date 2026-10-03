@@ -361,10 +361,10 @@ public class CoreServiceTests {
 	/// TaskId・JobKeyが全件ユニークであること
 	/// </summary>
 	[TestMethod]
-	public void SystemJobDefinitions_HasSevenUniqueEntries() {
+	public void SystemJobDefinitions_HasNineUniqueEntries() {
 		var defs = SchedulerService.SystemJobDefinitions;
 
-		Assert.AreEqual(8, defs.Count);
+		Assert.AreEqual(9, defs.Count);
 		Assert.AreEqual(defs.Count, defs.Select(d => d.TaskId).Distinct().Count(), "TaskIdが重複している");
 		Assert.AreEqual(defs.Count, defs.Select(d => d.JobKey).Distinct().Count(), "JobKeyが重複している");
 	}

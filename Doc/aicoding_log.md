@@ -1,4 +1,22 @@
-﻿## [2026-10-03] 配分再設計 Step 4：仕入配分の入荷割当・仕入配分入力
+﻿## [2026-10-03] 配分再設計 Step 5：取置配分入力
+
+### 実施内容
+- `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` を作成し承認を得た（3列追加、在庫不足は警告のみ、売上変換の単価は取置日の上代、期限翌日0:50の自動取消を既定有効、在庫拠点は店舗自身、欠品実績から区分6を除外）。
+- `TranHaibun` に Id_Customer / LimitDay / EndReason と `EnumHaibunEndReason`、migration（UpdateDb 26_10_03_02）。区分6の入力検査（顧客・期限日・出庫元=店舗・元伝票なし）を `AllocationRules` に追加。
+- `CvDomainLogic/ReservationDb.cs`：売上変換（店舗×顧客ごとに Tran01Tenuri P売上、税は POS と同じ伝票単位・店舗端数処理、在庫計上、引当解除）、取消、期限切れ自動取消。API `ReservationConvertParam` / `ReservationCancelParam`、日次タスク「取置期限切れ自動取消」（MasterConfig 既定・SchedulerService・Program）。
+- 新画面 `CustomerReservationAllocationInput`（一覧・売上変換・取消・期限変更・数量変更・取置登録、POS二重計上の注意、在庫超過の警告）。メニューの配分グループへ追加し、雛形 `ReservationInput*` を削除。滞留・欠品例外の欠品実績から区分6を除外。
+- 取消コマンドを `DoCancelCommand` にすると BaseWindow が閉じるときに実行してしまうため `CancelReservationCommand` にした（UATで画面終了が止まって判明）。設計判断記録 2.10 を追記。
+- 作業ログが800行を超えたため、2026-09-09〜10 の UAT 検証記録（判断を含まない検証結果のみ）を削除した。
+
+### 検証
+- ソリューションbuild成功（警告0）。TestServer 969件成功（ReservationTests 15件を追加。ジョブ数の増加に合わせて既存3件を更新）。
+- 開発DB複製で `UatVm haibunreservation` 20判定PASS（登録・期限初期値・在庫超過警告・期限3日以内の色・期限変更・数量変更・売上変換で店舗売上・取消・期限切れ自動取消・状態表示・欠品実績に出ない、JPG2枚の表示崩れなし）。JPGで列の押し縮めと入力欄の切れを見つけ修正。複製DBは削除。
+
+### 残余リスク・未実施
+- 独立レビューは実行中にcommitの指示があったため、指摘の反映は次のcommitで行う。
+- POS で同じ商品を会計すると二重計上になる（連携は1.1以降、運用で防ぐ）。PostgreSQL/MariaDB では未実行。
+
+## [2026-10-03] 配分再設計 Step 4：仕入配分の入荷割当・仕入配分入力
 
 ### 実施内容
 - `Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md` を作成し承認を得た（ArrivedSu列方式、部分入荷は店舗コード順、紐付かない既存は入荷済み扱い、商品別新設＋伝票別、同一倉庫の仕入のみ、入荷済み超過の確定はエラー）。
@@ -661,158 +679,5 @@ Step 4 の作業ログに「全 qfm が CRLF で格納されている」と記�
 ### 確認
 - `dotnet build CvWpfclient/CvWpfclient.csproj`成功（0エラー0警告）。
 - 実行して右クリック表示と不透過の配色を確認した。
-
----
-
-## [2026-09-10] 旧DBのSysSequence再作成による移行停止回避
-### 実施内容
-- DBバージョンが26090301の場合だけ、SysSequenceを削除して現行定義で再作成する処理を追加した。
-### 確認
-- 実行環境ログで、SysSeqType未追加のSysSequenceインデックス作成失敗がUpdateDb実行前に発生することを確認した。
-
----
-
-## [2026-09-10] UAT-08 期首残高登録後のVM駆動検証
-### 実施内容
-- 期首売掛・請求・買掛・支払残を残高登録画面で投入し、代表取引後の売掛/買掛再作成を2回実行した。
-- 期首4行の凍結、当期純増減、税・合計・掛フラグ、帳票前残、再実行不変を検証した。
-### 確認
-- 隔離SQLiteの`UatVm uat08opening --sqlite ... --manage-server --hide-views`で25判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-01 新規商品登録から仕入のVM駆動検証
-### 実施内容
-- 商品マスタ画面で色サイズJAN付き商品を登録し、発注10→仕入4→仕入6を実行した。
-- 派生SKU、発注残6→0・自動完了、在庫10、買掛10,000・税1,000・残11,000を検証した。
-### 確認
-- 隔離SQLiteの`UatVm uat01screen --sqlite ... --manage-server --hide-views`で11判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-02 移動伝票のVM駆動検証
-### 実施内容
-- 直営店（TenType=6）向け受注を配分・確定・出荷し、移動出庫を作成した。
-- RelateNo2、引当解除、出庫元在庫、売上未作成、受注残未消化を検証した。
-### 確認
-- 隔離SQLiteの`UatVm.exe juchushipping --url http://127.0.0.1:5005 --sqlite ... --manage-server --hide-views`で50判定すべてPASS。
-- `dotnet build Doc/test/UatVmSeed/UatVmSeed.csproj --no-restore`、`dotnet build Doc/test/UatVm/UatVm.csproj --no-restore --no-dependencies`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-02 出荷競合・再読込のVM駆動検証
-### 実施内容
-- 出荷一覧取得後、別画面で確定取消・再確定してVdu競合を発生させた。
-- 競合時の全件未処理・一覧破棄と、再検索後の最新Vduによる再実行成功を検証した。
-### 確認
-- 隔離SQLiteの`UatVm.exe juchushipping --url http://127.0.0.1:5004 --sqlite ... --manage-server --hide-views`で40判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore --no-dependencies`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-02 出荷確定取消のVM駆動検証
-### 実施内容
-- 滞留一覧から確定済み・未出荷の配分を取消し、未確定へ戻した。
-- 在庫8・引当8と売上0を維持し、確定画面で再指示・再確定できることを検証した。
-### 確認
-- 隔離SQLiteの`UatVm.exe juchushipping --url http://127.0.0.1:5004 --sqlite ... --manage-server --hide-views`で28判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore --no-dependencies`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-02 全量欠品・強制完了のVM駆動検証
-### 実施内容
-- 既存受注の残4から在庫2を再配分・確定し、滞留一覧画面の強制完了を実行した。
-- 実出荷0・欠品2・伝票未作成、在庫2維持・引当0、受注残4を検証した。
-### 確認
-- 隔離SQLiteの`UatVm.exe juchushipping --sqlite ... --manage-server --hide-views`で22判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-03 在庫Rebuild一致
-### 実施内容
-- 即時移動、積送受入、未受取消後に在庫Rebuildを実行し、専用SKUの月次・実在庫を再照合した。
-### 確認
-- 隔離SQLiteの`UatVm.exe transfer --sqlite ... --manage-server --hide-views`で11判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-02 在庫割れ・欠品のVM駆動検証
-### 実施内容
-- 受注10・在庫8で配分10の確定が原子的に拒否されることを確認し、配分8へ訂正した。
-- 実出荷6・欠品2で売上6、在庫2、引当0、受注残4となることを検証した。
-### 確認
-- 隔離SQLiteの`UatVm.exe juchushipping --sqlite ... --manage-server --hide-views`で15判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-04 過去棚卸訂正と再確定
-### 実施内容
-- 初回確定後に棚卸入力画面で実棚7を8へ訂正し、棚卸確定画面の再確定要表示を検証した。
-- 再確定で調整伝票-3が-2へ置換され、調整1件・実在庫8となり二重計上しないことを確認した。
-### 確認
-- 隔離SQLiteの`UatVm.exe stocktake --sqlite ... --manage-server --hide-views`で11判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UAT-06 支払境界のVM駆動検証
-### 実施内容
-- 隔離SQLiteへ過払い・全額相殺・現金/相殺/手数料の専用仕入・支払を投入した。
-- 支払計算画面で2026/07末締めを実行し、005〜007相当の支払残と再実行不変を検証した。
-### 確認
-- `UatVm.exe uat06payment --sqlite ... --manage-server --hide-views`で59判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功。
-
----
-
-## [2026-09-10] UAT-10 原価4項目のVM駆動検証
-### 実施内容
-- 隔離SQLiteに専用の通常商品・消化仕入商品・諸掛・仕入/返品・売上/返品を投入するシナリオを追加した。
-- 消化仕入、諸掛確認、総平均原価5004円、評価替え80%で4003円、履歴取消後の5004円復元を実ViewModel経路で検証した。
-### 確認
-- `UatVm.exe costuat --sqlite ... --manage-server --hide-views`で7判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功（既存TaxMix警告3件）。
-
----
-
-## [2026-09-10] UatVm 隔離SQLite指定
-### 実施内容
-- `--sqlite`でCvServerとSeederへ同じテストDBを渡せるようにした。
-### 確認
-- リハーサルDBコピーでCvServerの起動・正規終了を確認した。
-
----
-
-## [2026-09-09] UAT-04 棚卸のVM駆動検証
-### 目的
-- 棚卸開始、実棚入力、確定調整の在庫遷移を自動検証する。
-### 実施内容
-- 専用倉庫・SKU・帳簿在庫10を用意し、実棚7で確定する。
-- 調整伝票-3、月次在庫（帳簿10・実棚7）、実在庫7を確認する。
-### 確認
-- `UatVm.exe stocktake --manage-server`で6判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功。
-### 注意
-- 開始処理は帳簿在庫のみ保存し、実棚は確定時に棚卸伝票から集計される。
-
----
-
-## [2026-09-09] UAT-03 店舗間移動のVM駆動検証
-### 目的
-- 即時移動、積送出庫、全量受入、未受積送取消の在庫遷移を自動検証する。
-### 実施内容
-- 専用元先倉庫・SKU・初期在庫20を用意し、移動3・積送5・取消2を実行する。
-- 各状態の実在庫と積送中在庫、受入の出庫伝票紐付けを確認する。
-### 確認
-- `UatVm.exe transfer --manage-server`で8判定すべてPASS。
-- `dotnet build Doc/test/UatVm/UatVm.csproj --no-restore`成功。
-### 注意
-- 移動受の出庫選択ダイアログは無人化対象外とし、全量受入の既存登録経路を検証する。
 
 ---

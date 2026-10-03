@@ -62,8 +62,48 @@ public static class AllocationRules {
 		if (row.Kubun == (int)EnumHaibun.Hatsukai && row.RelateNo1 <= 0) {
 			return "仕入配分は発注に紐付けて登録してください。";
 		}
+		if (row.Kubun == (int)EnumHaibun.Reservation) {
+			return ValidateReservation(row);
+		}
 		return null;
 	}
+
+	/// <summary>
+	/// 取置配分(区分6)の入力検査（Step 5 4.1）。顧客・期限日が必須で、在庫は店舗自身（出庫元 = 店舗）で押さえる。
+	/// 有効在庫の不足は保存を止めない（判断 2。画面で警告する）。
+	/// </summary>
+	static string? ValidateReservation(TranHaibun row) {
+		if (row.Id_Customer <= 0) {
+			return "取置は顧客を指定して登録してください。";
+		}
+		if (!IsYmd(row.DenDay) || !IsYmd(row.LimitDay)) {
+			return "取置日・期限日を yyyyMMdd で指定してください。";
+		}
+		if (string.CompareOrdinal(row.LimitDay, row.DenDay) < 0) {
+			return "期限日は取置日以降の日付にしてください。";
+		}
+		if (row.Id_Soko != row.Id_Tenpo) {
+			return "取置は店舗自身の在庫で登録してください（出庫元と店舗を同じにする）。";
+		}
+		if (row.RelateNo1 != 0) {
+			return "取置に元伝票は紐付けられません。";
+		}
+		return null;
+	}
+
+	/// <summary>yyyyMMdd の実在する日付か</summary>
+	static bool IsYmd(string? s) =>
+		s is { Length: 8 } && DateTime.TryParseExact(s, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
+			System.Globalization.DateTimeStyles.None, out _);
+
+	/// <summary>
+	/// 取置の期限日の初期値（取置日の1週間後。決定 D11）。取置日が yyyyMMdd でなければ空文字。
+	/// </summary>
+	public static string DefaultLimitDay(string denDay) =>
+		DateTime.TryParseExact(denDay, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
+			System.Globalization.DateTimeStyles.None, out var d)
+			? d.AddDays(7).ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture)
+			: string.Empty;
 
 	/// <summary>
 	/// 新しく登録する行の状態列を初期値（未確定・未送信・未完了）に揃える。
@@ -78,6 +118,7 @@ public static class AllocationRules {
 		row.RelateNo2 = 0;
 		row.SendFlg = 0;
 		row.ArrivedSu = 0;
+		row.EndReason = (int)EnumHaibunEndReason.Normal;
 	}
 
 	/// <summary>確定数を 0〜指示数 に収める</summary>
