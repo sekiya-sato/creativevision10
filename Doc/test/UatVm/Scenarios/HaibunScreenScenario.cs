@@ -126,7 +126,7 @@ public static class HaibunScreenScenario {
 		});
 
 	/// <summary>描画を落ち着かせてからJPG保存と表示崩れ判定を行う。崩れは1件ずつ判定に残す</summary>
-	static async Task CaptureAsync(VmSession session, Window view, string directory, string name) {
+	internal static async Task CaptureAsync(VmSession session, Window view, string directory, string name) {
 		await Application.Current.Dispatcher.InvokeAsync(view.UpdateLayout, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 		await Task.Delay(300);
 		await Application.Current.Dispatcher.InvokeAsync(() => {

@@ -88,7 +88,7 @@ public static class ScreenLayoutCheck {
 				}
 			}
 			if (element is TextBlock tb && !string.IsNullOrEmpty(tb.Text) && tb.TextWrapping == TextWrapping.NoWrap) {
-				var need = MeasureText(tb.Text, tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch, tb.FontSize, pixelsPerDip)
+				var need = MeasureText(tb, tb.Text, tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch, tb.FontSize, pixelsPerDip)
 					+ tb.Padding.Left + tb.Padding.Right;
 				var available = Math.Min(tb.ActualWidth, VisibleWidth(tb, root, bounds));
 				// セル内の TextBlock は文字幅のまま配置され、セルの枠(LayoutClip)で切られるので両方を見る
@@ -97,7 +97,7 @@ public static class ScreenLayoutCheck {
 				}
 			}
 			if (element is TextBox box && !string.IsNullOrEmpty(box.Text) && box.TextWrapping == TextWrapping.NoWrap) {
-				var need = MeasureText(box.Text, box.FontFamily, box.FontStyle, box.FontWeight, box.FontStretch, box.FontSize, pixelsPerDip)
+				var need = MeasureText(box, box.Text, box.FontFamily, box.FontStyle, box.FontWeight, box.FontStretch, box.FontSize, pixelsPerDip)
 					+ box.Padding.Left + box.Padding.Right + box.BorderThickness.Left + box.BorderThickness.Right + 4;
 				if (need > box.ActualWidth + 1.0) {
 					issues.Add(Make("入力値切れ", box, bounds, need));
@@ -165,9 +165,10 @@ public static class ScreenLayoutCheck {
 		return visible.IsEmpty || visible.Width + 1 < inPresenter.Width ? double.MaxValue : visible.Width;
 	}
 
-	static double MeasureText(string text, FontFamily family, FontStyle style, FontWeight weight, FontStretch stretch, double size, double pixelsPerDip) {
+	/// <summary>要素と同じ文字描画方式（Display / Ideal）で文字幅を測る。方式が違うと数pxずれて誤検知になる</summary>
+	static double MeasureText(DependencyObject owner, string text, FontFamily family, FontStyle style, FontWeight weight, FontStretch stretch, double size, double pixelsPerDip) {
 		var formatted = new FormattedText(text, System.Globalization.CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-			new Typeface(family, style, weight, stretch), size, Brushes.Black, pixelsPerDip);
+			new Typeface(family, style, weight, stretch), size, Brushes.Black, null, TextOptions.GetTextFormattingMode(owner), pixelsPerDip);
 		return formatted.WidthIncludingTrailingWhitespace;
 	}
 
