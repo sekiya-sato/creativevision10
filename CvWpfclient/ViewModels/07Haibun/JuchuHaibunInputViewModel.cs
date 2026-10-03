@@ -471,22 +471,8 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 
 		StartBusy("配分データ登録中...");
 		try {
-			// 洗い替え: 読込済みの編集対象を削除してから一括Insertする
-			await DeleteHaibunRowsAsync(loadedEditableRows, ct);
-
-			if (newRecords.Count > 0) {
-				var coreService = AppGlobal.GetGrpcService<ICoreService>();
-				var insertMsg = new CvMsg {
-					Code = 0,
-					Flag = CvFlag.Msg201_Op_Execute,
-					DataType = typeof(InsertBulkParam),
-					DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranHaibun), JsonConvert.SerializeObject(newRecords))),
-				};
-				CvMsg insertReply = await coreService.QueryMsgAsync(insertMsg, AppGlobal.GetDefaultCallContext(ct));
-				if (insertReply.Code < 0) {
-					throw new InvalidOperationException($"登録に失敗しました: {insertReply.Option ?? insertReply.DataMsg}");
-				}
-			}
+			// 洗い替え: 読込済みの編集対象の削除と一括登録をサーバが1トランザクションで行う
+			await CoreServiceClient.SaveHaibunAsync(loadedEditableRows, newRecords, "配分", ct);
 
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分を {newRecords.Count:N0} 件登録しました";
 			await LoadEntryAsync(targetJuchu.Id, ct);
@@ -729,7 +715,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	/// <summary>
 	/// 配分先・出庫元が決まらない受注、および出荷先が卸先・売仕店でない受注を知らせる。
 	/// <para>
-	/// 卸先(1)・売仕店(3)以外へ配分すると、出荷処理は移動伝票を作るため受注残が消化されない（決定 I4）。
+	/// 卸先(1)・売仕店(3)以外へ配分すると、配分確定は移動伝票を作るため受注残が消化されない（決定 I4）。
 	/// 配分自体は作れるので警告だけ出す。
 	/// </para>
 	/// </summary>
@@ -746,14 +732,14 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 		if (tenType is (int)EnumTokui._1_Oroshi or (int)EnumTokui._3_UriShi) return;
 		MessageEx.ShowWarningDialog(
 			$"この受注の得意先は卸先・売仕店ではありません（店種区分 {tenType}）。\n"
-			+ "出荷処理では移動伝票が作られ、受注残は消化されません。",
+			+ "配分確定では移動伝票が作られ、受注残は消化されません。",
 			owner: ActiveWindow);
 	}
 
 	/// <summary>修正できる配分（未送信・未確定・未完了）を取得する。Id/Vdu は洗い替え削除に使う。</summary>
 	Task<List<TranHaibun>> LoadEditableHaibunAsync(long juchuId, CancellationToken ct) =>
 		QueryListAsync<TranHaibun>(
-			$"Kubun = {KubunJuchu} AND RelateNo1 = {juchuId} AND SendFlg = 0 AND KakuteiDay = '' AND EndFlag = 0",
+			$"Kubun = {KubunJuchu} AND RelateNo1 = {juchuId} AND {TranHaibun.EditableWhereSql}",
 			"Id_Shohin, Id_Col, Id_Siz, Id", ct);
 
 	/// <summary>
@@ -866,9 +852,9 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 		Id_Shain = Id_Shain,
 	};
 
-	/// <summary>既存配分を1往復でまとめて削除する。1件でも競合すればサーバ側で何も削除されない</summary>
+	/// <summary>既存配分を1往復でまとめて削除する。1件でも競合・修正不可があればサーバ側で何も削除されない</summary>
 	Task DeleteHaibunRowsAsync(IReadOnlyCollection<TranHaibun> rows, CancellationToken ct) =>
-		CoreServiceClient.DeleteBulkAsync(typeof(TranHaibun), rows, "既存配分", ct);
+		CoreServiceClient.SaveHaibunAsync(rows, [], "既存配分", ct);
 
 	// ===== 画面状態の更新 =====
 

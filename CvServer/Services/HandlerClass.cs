@@ -554,9 +554,8 @@ public partial class CoreService {
 			DeleteByIdParam deleteById => HandleDeleteById(request.Flag, deleteById),
 			DeleteBulkParam deleteBulk => HandleBulkDelete(request.Flag, deleteBulk),
 			PartialUpdateParam partialUpdate => HandlePartialUpdate(request.Flag, partialUpdate),
-			ShippingConfirmParam confirm => HandleShippingConfirm(request.Flag, confirm),
-			ShippingCancelParam cancel => HandleShippingCancel(request.Flag, cancel),
-			ShippingCreateParam create => HandleShippingCreate(request.Flag, create),
+			HaibunSaveParam haibunSave => HandleHaibunSave(request.Flag, haibunSave),
+			HaibunCommitParam haibunCommit => HandleHaibunCommit(request.Flag, haibunCommit),
 			OpeningBalanceImportParam opening => HandleOpeningBalanceImport(request.Flag, opening),
 			_ => throw new NotImplementedException(),
 		};
@@ -589,49 +588,67 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// 出荷指示確定。対象の配分に <c>KakuteiDay</c> を立てる。有効在庫（実在庫 − 引当数）が
-	/// 1SKUでも負になる場合は <see cref="ShippingDb.ConfirmShipping"/> が全件拒否するので、
-	/// 割れたSKUを <see cref="ShippingShortageDto"/> 配列で返して1件も確定しない。
+	/// 配分の洗い替え保存。修正できる既存行の削除・新しい行の登録・引当の引き直しを1トランザクションで行う。
+	/// <para>
+	/// 書き込む前に全行を検証し、1件でも次に当たれば何も書かずに返す。
+	/// 新しい行の入力違反 → <see cref="CvMsgErrorCode.InvalidParameter"/>、
+	/// 既存行が無い・Vdu不一致 → <see cref="CvMsgErrorCode.ConcurrentUpdate"/>、
+	/// 既存行が修正できない状態（確定済み・送信済み・完了） → <see cref="CvMsgErrorCode.InvalidParameter"/>。
+	/// </para>
+	/// <para>
+	/// 引当数は削除・登録後の <see cref="TranHaibun"/> から引き直すため、キーを溜めて最後に一度だけ処理する
+	/// （<see cref="HandleBulkInsert"/> / <see cref="HandleBulkDelete"/> と同じ理由）。
+	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 4.2 を参照する。
+	/// </para>
 	/// </summary>
-	private CvMsg HandleShippingConfirm(CvFlag flag, ShippingConfirmParam confirm) {
-		_logger.LogInformation("パラメータ ShippingConfirmParam 件数={Count} 確定日={KakuteiDay}",
-			confirm.HaibunIds?.Length ?? 0, confirm.KakuteiDay);
+	private CvMsg HandleHaibunSave(CvFlag flag, HaibunSaveParam save) {
+		// 同じIdを2回渡されると2件目が「行が無い」と判定されるので、先に除いておく
+		var replaceRows = (save.ReplaceRows ?? []).Where(r => r.Id > 0).DistinctBy(r => r.Id).ToList();
+		var newRows = (save.NewRows ?? []).ToList();
+		_logger.LogInformation("パラメータ HaibunSaveParam 削除={ReplaceCount} 登録={NewCount}", replaceRows.Count, newRows.Count);
 
-		var shippingDb = new ShippingDb(_db);
-		try {
-			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-			var confirmed = shippingDb.ConfirmShipping(confirm.HaibunIds ?? [], confirm.KakuteiDay, out var errors);
-			if (errors.Count > 0) {
-				// 有効在庫割れは1件も確定していない。書いていないが念のため戻す
-				_db.AbortTransaction();
-				var dto = errors
-					.Select(e => new ShippingShortageDto(e.Id_Soko, e.Id_Shohin, e.Id_Col, e.Id_Siz, e.Shiji, e.Yuko))
-					.ToArray();
-				_logger.LogInformation("出荷指示確定 有効在庫割れ {Count}SKU", dto.Length);
-				return CreateErrorResponse(flag, CvMsgErrorCode.ShippingUnavailable, "有効在庫が不足しています",
-					typeof(ShippingShortageDto[]), Common.SerializeObject(dto));
+		foreach (var row in newRows) {
+			if (AllocationRules.ValidateNewRow(row) is string invalid) {
+				return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, invalid, typeof(string), invalid);
 			}
-			_db.CompleteTransaction();
-			_logger.LogInformation("出荷指示確定 確定={Confirmed}", confirmed);
-			return CreateSuccessResponse(flag, typeof(ShippingConfirmResult), Common.SerializeObject(new ShippingConfirmResult(confirmed)));
 		}
-		catch (Exception ex) {
-			_db.AbortTransaction();
-			return CreateExceptionResponse(flag, ex, typeof(string), ex.Message);
-		}
-	}
-
-	/// <summary>出荷指示確定の取消。まだ伝票を作っていない確定済み行の <c>KakuteiDay</c> を空へ戻す。</summary>
-	private CvMsg HandleShippingCancel(CvFlag flag, ShippingCancelParam cancel) {
-		_logger.LogInformation("パラメータ ShippingCancelParam 件数={Count}", cancel.HaibunIds?.Length ?? 0);
-
-		var shippingDb = new ShippingDb(_db);
+		var itemType = typeof(TranHaibun);
+		var reserveKeys = new HashSet<ReserveKey>();
+		var effects = WriteEffectResult.Empty;
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-			var canceled = shippingDb.CancelConfirm(cancel.HaibunIds ?? []);
+			var targets = new List<TranHaibun>(replaceRows.Count);
+			foreach (var row in replaceRows) {
+				if (FetchExistingBaseDbItem(itemType, row.Id) is not TranHaibun item || item.Vdu != row.ExpectedVdu) {
+					_db.AbortTransaction();
+					_logger.LogInformation("配分保存 競合検知 Id={Id} ExpectedVdu={ExpectedVdu}", row.Id, row.ExpectedVdu);
+					return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, typeof(string), $"Id={row.Id}");
+				}
+				if (!AllocationRules.IsEditable(item)) {
+					_db.AbortTransaction();
+					const string notEditable = "確定済み・送信済みの配分は変更できません。再取得してください。";
+					_logger.LogInformation("配分保存 修正不可 Id={Id}", row.Id);
+					return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, notEditable, typeof(string), notEditable);
+				}
+				targets.Add(item);
+			}
+			foreach (var item in targets) {
+				Effects.Before(WriteOp.Delete, itemType, item);
+				_db.Delete(item);
+				effects = effects.Add(Effects.After(WriteOp.Delete, itemType, item, item, 0, reserveKeys));
+			}
+			foreach (var item in newRows) {
+				AllocationRules.NormalizeNewRow(item);
+				var vdate = SetCreatedAuditValues(itemType, item);
+				_db.Insert(item);
+				effects = effects.Add(Effects.After(WriteOp.Insert, itemType, item, null, vdate, reserveKeys));
+			}
+			effects = effects.Add(new WriteEffectResult(0, Effects.FlushReserve(reserveKeys), 0, 0));
+			LogEffects(itemType, effects);
 			_db.CompleteTransaction();
-			_logger.LogInformation("出荷指示確定取消 取消={Canceled}", canceled);
-			return CreateSuccessResponse(flag, typeof(ShippingCancelResult), Common.SerializeObject(new ShippingCancelResult(canceled)));
+			_logger.LogInformation("配分保存 削除={Deleted} 登録={Inserted}", targets.Count, newRows.Count);
+			return CreateSuccessResponse(flag, typeof(HaibunSaveResult),
+				Common.SerializeObject(new HaibunSaveResult(targets.Count, newRows.Count)));
 		}
 		catch (Exception ex) {
 			_db.AbortTransaction();
@@ -640,29 +657,53 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// 出荷処理。確定済み配分に実数量を入れ、出荷売上／移動伝票を作成して <c>EndFlag=1</c>（引当解除）にする。
-	/// 楽観排他は <see cref="ShippingDb.ProcessShipping"/> が先に全行を検証し、競合なら何も書かずに返すので
-	/// ここでトランザクションを戻して再取得を促す。
+	/// 配分確定。確定数を反映し、出荷売上／移動伝票を作成して <c>EndFlag=1</c>（引当解除）にする（決定 D8）。
+	/// <para>
+	/// <see cref="ShippingDb.Commit"/> が先に全行を検証し、問題があれば何も書かずに返すので、ここでトランザクションを戻す。
+	/// 競合 → <see cref="CvMsgErrorCode.ConcurrentUpdate"/>、確定できない区分 → <see cref="CvMsgErrorCode.InvalidParameter"/>、
+	/// 有効在庫割れ → <see cref="CvMsgErrorCode.ShippingUnavailable"/>（割れた倉庫+SKUを <see cref="ShippingShortageDto"/> 配列で返す）。
+	/// </para>
 	/// </summary>
-	private CvMsg HandleShippingCreate(CvFlag flag, ShippingCreateParam create) {
-		var rows = create.Rows ?? [];
-		_logger.LogInformation("パラメータ ShippingCreateParam 件数={Count} 伝票日={DenDay} 社員={IdShain}",
-			rows.Length, create.DenDay, create.IdShain);
+	private CvMsg HandleHaibunCommit(CvFlag flag, HaibunCommitParam commit) {
+		var rows = commit.Rows ?? [];
+		_logger.LogInformation("パラメータ HaibunCommitParam 件数={Count} 確定日={DenDay} 社員={IdShain}",
+			rows.Length, commit.DenDay, commit.IdShain);
+		if (string.IsNullOrWhiteSpace(commit.DenDay)) {
+			const string noDay = "確定日を指定してください。";
+			return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, noDay, typeof(string), noDay);
+		}
 
+		// 入力社員は画面で指定されなければログイン中の社員（JWTから解決）を使う
+		var idShain = commit.IdShain > 0 ? commit.IdShain : ResolveLoginShainId();
 		var shippingDb = new ShippingDb(_db);
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-			var created = shippingDb.ProcessShipping(
-				[.. rows.Select(r => (r.Id, r.ExpectedVdu, r.JitsuSu))], create.DenDay, create.IdShain, out var conflict);
-			if (conflict) {
-				_db.AbortTransaction();
-				_logger.LogInformation("出荷処理 競合検知");
-				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, typeof(string), string.Empty);
+			var result = shippingDb.Commit(
+				[.. rows.Select(r => (r.Id, r.ExpectedVdu, r.KakuteiSu))], commit.DenDay, idShain,
+				out var outcome, out var shortages);
+			switch (outcome) {
+				case CommitOutcome.Conflict:
+					_db.AbortTransaction();
+					_logger.LogInformation("配分確定 競合検知");
+					return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, typeof(string), string.Empty);
+				case CommitOutcome.InvalidKubun:
+					_db.AbortTransaction();
+					const string invalidKubun = "確定できない配分区分（取置など）が含まれています。";
+					return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, invalidKubun, typeof(string), invalidKubun);
+				case CommitOutcome.Shortage:
+					_db.AbortTransaction();
+					var dto = shortages
+						.Select(e => new ShippingShortageDto(e.Id_Soko, e.Id_Shohin, e.Id_Col, e.Id_Siz, e.Shiji, e.Yuko))
+						.ToArray();
+					_logger.LogInformation("配分確定 有効在庫割れ {Count}SKU", dto.Length);
+					return CreateErrorResponse(flag, CvMsgErrorCode.ShippingUnavailable, "有効在庫が不足しています",
+						typeof(ShippingShortageDto[]), Common.SerializeObject(dto));
 			}
 			_db.CompleteTransaction();
-			_logger.LogInformation("出荷処理 伝票作成={Slips} 引当解除={Released}", created.Count, rows.Length);
-			return CreateSuccessResponse(flag, typeof(ShippingCreateResult),
-				Common.SerializeObject(new ShippingCreateResult([.. created], rows.Length)));
+			_logger.LogInformation("配分確定 確定={Committed} 伝票作成={Slips} 欠品行={Shortage}",
+				result.CommittedCount, result.CreatedSlipIds.Count, result.ShortageRowCount);
+			return CreateSuccessResponse(flag, typeof(HaibunCommitResult), Common.SerializeObject(
+				new HaibunCommitResult([.. result.CreatedSlipIds], result.CommittedCount, result.ShortageRowCount)));
 		}
 		catch (Exception ex) {
 			_db.AbortTransaction();

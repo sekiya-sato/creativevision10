@@ -9,8 +9,10 @@ using System.Globalization;
 namespace CvWpfclient.ViewModels._07Haibun;
 
 /// <summary>
-/// 出荷指示明細書印刷。確定済み配分(<see cref="TranHaibun"/>)を仮想ヘッダキー
+/// 出荷指示明細書印刷。未完了の配分(<see cref="TranHaibun"/>)を仮想ヘッダキー
 /// (<see cref="HaibunHeaderKey"/>)単位でグルーピングし、ピッキングリストとして印刷する。
+/// 決定 D8（確定で即伝票作成）で業務の流れが「配分 → ピッキングリスト → 配分確定」になったため、
+/// 既定の対象は確定前（未完了）の配分とする。
 /// 旧CV.netの「出荷指示明細書」に相当する（配分の新規実装4帳票の1本）。
 /// <para>
 /// <see cref="TranHaibun"/> はヘッダ実テーブルを持たず1行=1SKUのため、伝票の括りは
@@ -67,9 +69,12 @@ public sealed partial class ShippingConfirmDetailPrintViewModel : BaseReportView
 	[ObservableProperty]
 	public partial string DenDayToText { get; set; } = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
 
-	/// <summary>確定済みのみを対象にする。旧仕様「配分確定済み伝票のみ出力」を踏襲し既定ON。</summary>
+	/// <summary>
+	/// 未完了（EndFlag=0、まだ確定していない）配分のみを対象にする。既定ON。
+	/// 確定するとその場で伝票が作られるため、ピッキングリストは確定前の配分を出す（決定 D8）。
+	/// </summary>
 	[ObservableProperty]
-	public partial bool KakuteiOnly { get; set; } = true;
+	public partial bool MikanryoOnly { get; set; } = true;
 
 	// BaseReportViewModel の抽象契約を満たすための既定フォーム（DoOutputPdf自体はUIから使わない。DoPrintが本体）。
 	protected override string FormFileName => $"{FormPrefix}_detail.qfm";
@@ -98,7 +103,7 @@ public sealed partial class ShippingConfirmDetailPrintViewModel : BaseReportView
 		TenpoCodeTo = string.Empty;
 		DenDayFromText = DateTime.Now.AddMonths(-1).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
 		DenDayToText = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
-		KakuteiOnly = true;
+		MikanryoOnly = true;
 		Message = "検索条件をクリアしました";
 	}
 
@@ -165,8 +170,8 @@ LIMIT 1";
 		if (SelectedKubun >= 0) {
 			where += $" AND h.Kubun = {SqlWhere.AddParameter(parameters, SelectedKubun)}";
 		}
-		if (KakuteiOnly) {
-			where += " AND ifnull(h.KakuteiDay,'') <> ''";
+		if (MikanryoOnly) {
+			where += " AND h.EndFlag = 0";
 		}
 		where += SqlWhere.CodeRange(parameters, "soko.Code", SokoCodeFrom, SokoCodeTo);
 		where += SqlWhere.CodeRange(parameters, "ten.Code", TenpoCodeFrom, TenpoCodeTo);
@@ -276,7 +281,7 @@ ELSE cast({alias}.Kubun as text) END";
 		var kubun = SelectedKubun < 0 ? "すべて" : (KubunOptions.FirstOrDefault(x => x.Value == SelectedKubun)?.Name ?? SelectedKubun.ToString(CultureInfo.InvariantCulture));
 		var soko = BuildRangeText(SokoCodeFrom, SokoCodeTo);
 		var tenpo = BuildRangeText(TenpoCodeFrom, TenpoCodeTo);
-		var kakutei = KakuteiOnly ? "確定済みのみ" : "全て";
+		var kakutei = MikanryoOnly ? "未完了のみ" : "全て";
 		return $"区分:{kubun} 配分指示日:{from:yyyy/MM/dd}〜{to:yyyy/MM/dd} 出庫倉庫:{soko} 出荷先:{tenpo} {kakutei}";
 	}
 

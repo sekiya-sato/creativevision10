@@ -41,7 +41,7 @@
 					FontSize="18" FontWeight="SemiBold"
 					Text="{Binding Title}" />
 				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					Opacity="0.8" Text="未確定の配分を確定(KakuteiDay)します。有効在庫割れは1件も確定しません。" />
+					Opacity="0.8" Text="確定数を入れて確定すると出荷売上／移動伝票を作成します。有効在庫割れは1件も確定しません。確定後は取り消せません。" />
 			</StackPanel>
 		</materialDesign:ColorZone>
 
@@ -112,12 +112,6 @@
 						Margin="8,0,0,0"
 						Style="{StaticResource MaterialDesignTextBox}"
 						Text="{Binding TokuiCode, UpdateSourceTrigger=PropertyChanged}" />
-					<TextBlock Margin="24,0,8,0" VerticalAlignment="Center"
-						Text="表示" />
-					<ComboBox Width="140"
-						ItemsSource="{Binding ViewKinds}"
-						SelectedItem="{Binding ViewKind}"
-						Style="{StaticResource FormComboBox}" />
 				</StackPanel>
 
 				<StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
@@ -141,7 +135,7 @@
 						</StackPanel>
 					</Button>
 					<TextBlock Margin="24,0,8,0" VerticalAlignment="Center"
-						Text="確定日" />
+						Text="確定日(伝票日)" />
 					<TextBox Width="150" Height="32"
 						Style="{StaticResource MaterialDesignTextBox}"
 						Text="{Binding KakuteiDayText, UpdateSourceTrigger=PropertyChanged}" />
@@ -149,30 +143,13 @@
 						Command="{Binding ConfirmSelectedCommand}"
 						IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
 						Style="{StaticResource MaterialDesignFlatMidBgButton}"
-						ToolTip="選択した未確定を確定する (F6)">
+						ToolTip="選択した行を確定数で確定し伝票を作成する (F6)">
 						<StackPanel Orientation="Horizontal">
 							<materialDesign:PackIcon VerticalAlignment="Center"
 								Kind="CheckDecagram" />
 							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
 								FontSize="16" Text="確定実行" />
 						</StackPanel>
-					</Button>
-					<Button Margin="12,0,0,0"
-						Command="{Binding CancelSelectedCommand}"
-						IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-						Style="{StaticResource MaterialDesignOutlinedButton}"
-						ToolTip="選択した確定済みの確定を取り消す">
-						<TextBlock FontSize="16" Text="確定取消" />
-					</Button>
-					<Button Margin="12,0,0,0"
-						Command="{Binding CheckAllCommand}"
-						Style="{StaticResource MaterialDesignOutlinedButton}">
-						<TextBlock FontSize="16" Text="全チェック" />
-					</Button>
-					<Button Margin="12,0,0,0"
-						Command="{Binding UncheckAllCommand}"
-						Style="{StaticResource MaterialDesignOutlinedButton}">
-						<TextBlock FontSize="16" Text="全解除" />
 					</Button>
 					<Button Margin="12,0,0,0"
 						Command="{Binding ClearConditionsCommand}"
@@ -187,15 +164,38 @@
 			Margin="12">
 			<StackPanel Margin="0,0,0,6"
 				DockPanel.Dock="Top" Orientation="Horizontal">
-				<TextBlock FontSize="16" FontWeight="SemiBold" Text="配分（出荷指示確定対象）" />
+				<TextBlock VerticalAlignment="Center"
+					FontSize="16" FontWeight="SemiBold" Text="配分（確定対象）" />
 				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 					Text="{Binding CheckedCount, StringFormat='チェック {0:N0} 件'}" />
+				<Button Margin="12,0,0,0"
+					Command="{Binding SetKakuteiToShijiCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="チェックした行の確定数を指示数（全量出荷）にする">
+					<TextBlock FontSize="16" Text="確定数=指示数" />
+				</Button>
+				<Button Margin="12,0,0,0"
+					Command="{Binding SetKakuteiToZeroCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="チェックした行の確定数を0（全量欠品）にする">
+					<TextBlock FontSize="16" Text="確定数=0" />
+				</Button>
+				<Button Margin="12,0,0,0"
+					Command="{Binding CheckAllCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}">
+					<TextBlock FontSize="16" Text="全チェック" />
+				</Button>
+				<Button Margin="12,0,0,0"
+					Command="{Binding UncheckAllCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}">
+					<TextBlock FontSize="16" Text="全解除" />
+				</Button>
 			</StackPanel>
 			<DataGrid AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="False"
 				ItemsSource="{Binding Rows}"
 				SelectionMode="Single" SelectionUnit="FullRow" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 				<DataGrid.Columns>
-					<DataGridTemplateColumn Width="50"
+					<DataGridTemplateColumn Width="60"
 						Header="選択">
 						<DataGridTemplateColumn.CellTemplate>
 							<DataTemplate>
@@ -204,30 +204,46 @@
 							</DataTemplate>
 						</DataGridTemplateColumn.CellTemplate>
 					</DataGridTemplateColumn>
-					<DataGridTextColumn Width="80"
-						Binding="{Binding StatusDisplay}"
-						Header="状態" IsReadOnly="True" />
-					<DataGridTextColumn Width="100"
+					<DataGridTextColumn Width="110"
 						Binding="{Binding DenDay}"
 						Header="指示日" IsReadOnly="True" />
-					<DataGridTextColumn Width="200"
+					<DataGridTextColumn Width="160"
 						Binding="{Binding SokoDisplay}"
 						Header="倉庫" IsReadOnly="True" />
-					<DataGridTextColumn Width="220"
+					<DataGridTextColumn Width="180"
 						Binding="{Binding TenpoDisplay}"
 						Header="出荷先" IsReadOnly="True" />
-					<DataGridTextColumn Width="80"
+					<DataGridTextColumn Width="90"
 						Binding="{Binding DenKindDisplay}"
 						Header="種別" IsReadOnly="True" />
-					<DataGridTextColumn Width="220"
+					<DataGridTextColumn Width="180"
 						Binding="{Binding ShohinDisplay}"
 						Header="商品" IsReadOnly="True" />
-					<DataGridTextColumn Width="160"
+					<DataGridTextColumn Width="120"
 						Binding="{Binding ColSizDisplay}"
 						Header="色/サイズ" IsReadOnly="True" />
-					<DataGridTextColumn Width="80"
+					<DataGridTextColumn Width="75"
 						Binding="{Binding Su, StringFormat={}{0:N0}}"
 						Header="指示数" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="75"
+						Binding="{Binding KakuteiSu, UpdateSourceTrigger=PropertyChanged}"
+						Header="確定数">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+								<Setter Property="ToolTip" Value="出荷・移動する数（0〜指示数）。指示数との差は欠品" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="65"
+						Binding="{Binding ShortSu, StringFormat={}{0:N0}}"
+						Header="欠品" IsReadOnly="True">
 						<DataGridTextColumn.ElementStyle>
 							<Style TargetType="TextBlock">
 								<Setter Property="HorizontalAlignment" Value="Right" />

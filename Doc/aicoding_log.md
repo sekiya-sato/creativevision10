@@ -1,4 +1,23 @@
-﻿## [2026-09-29] 仕入帳票(05Shiire)の返品符号(CalcFlag)適用
+﻿## [2026-10-03] 配分再設計 Step 1：保存の原子化・確定で即伝票作成
+
+### 実施内容
+- 配分再設計の基本設計と Step 1 詳細設計を `Doc/spec/2026-10-03_配分再設計_*.md` に作成し、利用者承認（D1〜D11）を反映した。
+- `HaibunSaveParam` を追加し、配分入力3画面（受注・発注・店舗）の洗い替えを1トランザクション化。修正可能条件をサーバで強制し、店舗配分入力が確定済み・未送信の指示を消し得た不具合を是正した。
+- `HaibunCommitParam` / `ShippingDb.Commit` を追加し、確定数反映・在庫検査・伝票作成・引当解除を1段階にした。旧 `ShippingConfirm/Cancel/CreateParam`、`ConfirmShipping/CancelConfirm/ProcessShipping`、出荷処理入力画面を削除した。在庫検査と制約は `CvDomainLogic/AllocationRules.cs` に集約した。
+- 出荷指示確定を「配分確定(商品/得意先)」に変更（確定数・欠品列、一括設定、取消削除、取置除外）。滞留・欠品例外は未確定滞留＋指示取消（確定数0）、出荷指示明細書は未完了配分を既定対象に変更した。`ShippingStagnationList.qfm` の見出し「確定日」を「基準日」にした。
+- UAT-02（`JuchuShippingScenario`）を新しい流れに書き換え、設計判断記録 2.8 を追記した。
+- 独立レビューの指摘で、旧状態（確定済み・未出荷）行の確定時に保存済み引当が古く偽の在庫割れになる問題を修正（検査前に対象キーの引当を引き直す）。確定日空の防御、受注配分の修正対象条件の定数化も実施。
+- 画面UATシナリオ `haibunscreen`（`Doc/test/UatVm/Scenarios/HaibunScreenScenario.cs`）と、JPG保存・表示崩れ自動判定 `Doc/test/UatVm/ScreenLayoutCheck.cs` を追加。検出した崩れを修正した：配分確定は一括ボタンを一覧見出し行へ移し（「条件クリア」が右端で切れていた）列幅を窓幅に収めた（確定数・欠品が横スクロール外だった）。滞留・欠品例外は条件行をWrapPanel化（「検索実行」が窓外）し、列見出し・日付・種別・色サイズが切れない列幅にした。
+
+### 検証
+- `CvServer`・`CvWpfclient`・`UatVm` build成功。`dotnet test --project Tests/TestServer/TestServer.csproj` 941件成功（新規 AllocationRules 11件・HaibunSaveHandler 6件・Commit 8件を含む）。
+- 開発DBの複製（隔離SQLite）で `UatVm.exe juchushipping --manage-server --hide-views` 37判定すべてPASS（在庫割れ拒否、欠品確定、指示取消、洗い替え競合、直営店向け移動伝票）。複製DBは検証後に削除。
+- 同じく `UatVm.exe haibunscreen --manage-server`（View表示あり）で14判定すべてPASS。配分確定(商品/得意先)・確定後・滞留・欠品実績・出荷指示明細書の6画面をJPG保存（`Doc/test/uat20261003/haibun/screens/`、git管理外）し目視確認。
+
+### 残余リスク・未実施
+- 倉庫・出荷先・商品などコード＋名称の長い列は列幅で切れる（判定上は記録のみ）。物流連携（SendFlg）は未実装のまま。PostgreSQL/MariaDB での実行は未確認（新規SQLはSQLite方言の単純なUPDATE/SELECTのみ）。
+
+## [2026-09-29] 仕入帳票(05Shiire)の返品符号(CalcFlag)適用
 
 ### 実施内容
 - 仕入メニュー UAT で、品番別仕入チェックリスト、ブランド別仕入金額表、仕入先別仕入推移表の「返品･値引も含める」が返品(Kubun=20、プラス保存)を加算していることを確認した。

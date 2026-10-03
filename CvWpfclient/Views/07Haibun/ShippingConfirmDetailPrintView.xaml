@@ -149,8 +149,8 @@
 				Margin="0,10,0,10"
 				Orientation="Horizontal">
 				<CheckBox Margin="0,4"
-					Content="確定済みのみ"
-					IsChecked="{Binding KakuteiOnly}" />
+					Content="未完了のみ"
+					IsChecked="{Binding MikanryoOnly}" />
 			</StackPanel>
 
 			<!--  注意書き  -->

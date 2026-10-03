@@ -381,58 +381,56 @@ public sealed class JodaiTimelineOtherSlipRow {
 }
 
 /// <summary>
-/// 出荷指示確定のパラメータ。対象の配分行に <c>KakuteiDay</c> を立てる。
-/// 有効在庫（実在庫 − 引当数）が1SKUでも負になる場合はサーバが1件も確定せず、
+/// 配分の洗い替え保存。<see cref="ReplaceRows"/> を削除して <see cref="NewRows"/> を登録し、引当を引き直すまでを
+/// サーバが1トランザクションで行う（1件でも競合・修正不可・入力違反があれば何も書かない）。
+/// <para>
+/// <see cref="ReplaceRows"/> は修正できる状態（<see cref="TranHaibun.EditableWhereSql"/>）の行に限る。
+/// <see cref="NewRows"/> の状態列（確定日・実数量・欠品・完了・関連No2・送信）はサーバが初期値に揃える。
+/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 4.2 を参照する。
+/// </para>
+/// </summary>
+/// <param name="ReplaceRows">削除する既存行（Idと読込時点のVdu）</param>
+/// <param name="NewRows">登録する行</param>
+public sealed record HaibunSaveParam(DeleteBulkRow[] ReplaceRows, TranHaibun[] NewRows);
+
+/// <summary>配分の洗い替え保存の結果</summary>
+/// <param name="DeletedCount">削除した行数</param>
+/// <param name="InsertedCount">登録した行数</param>
+public sealed record HaibunSaveResult(int DeletedCount, int InsertedCount);
+
+/// <summary>
+/// 配分確定のパラメータ。確定数を反映し、出荷売上／移動伝票を作成して <c>EndFlag=1</c>（引当解除）にする（決定 D8）。
+/// 有効在庫が1SKUでも割れる場合はサーバが1件も確定せず、
 /// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。
-/// 仕様は `Doc/spec/archive/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 4.3 を参照する。
 /// </summary>
-/// <param name="HaibunIds">確定する配分行のId</param>
-/// <param name="KakuteiDay">確定日 yyyyMMdd</param>
-public sealed record ShippingConfirmParam(long[] HaibunIds, string KakuteiDay);
+/// <param name="Rows">確定する行（Id・楽観排他用Vdu・確定数）</param>
+/// <param name="DenDay">確定日 兼 生成する伝票の在庫計上日 yyyyMMdd</param>
+/// <param name="IdShain">入力社員Id。0 ならサーバがログイン中の社員を使う</param>
+public sealed record HaibunCommitParam(HaibunCommitRow[] Rows, string DenDay, long IdShain);
 
-/// <summary>
-/// 出荷指示確定の取消パラメータ。まだ伝票を作っていない確定済み行(<c>RelateNo2=0</c>)の <c>KakuteiDay</c> を空へ戻す。
-/// </summary>
-/// <param name="HaibunIds">取り消す配分行のId</param>
-public sealed record ShippingCancelParam(long[] HaibunIds);
-
-/// <summary>
-/// 出荷処理のパラメータ。確定済み配分に実数量を入れ、出荷売上／移動伝票を作成し <c>EndFlag=1</c>（引当解除）にする。
-/// </summary>
-/// <param name="Rows">出荷処理する行（Id・楽観排他用Vdu・実数量）</param>
-/// <param name="DenDay">生成する伝票の在庫計上日 yyyyMMdd</param>
-/// <param name="IdShain">入力社員Id</param>
-public sealed record ShippingCreateParam(ShippingCreateRow[] Rows, string DenDay, long IdShain);
-
-/// <summary>出荷処理の1行分。実数量は 0〜指示数(Su) にサーバ側でクランプし、欠品は Su − 実数量。</summary>
+/// <summary>配分確定の1行分。確定数は 0〜指示数(Su) にサーバ側で収め、欠品は Su − 確定数。0 は全量欠品（伝票なしで完了）。</summary>
 /// <param name="Id">配分行のId</param>
 /// <param name="ExpectedVdu">一覧取得時点のVdu。1件でも現在値と不一致なら全体を処理しない</param>
-/// <param name="JitsuSu">実数量（出荷数）</param>
-public sealed record ShippingCreateRow(long Id, long ExpectedVdu, int JitsuSu);
+/// <param name="KakuteiSu">確定数（出荷・移動する数）</param>
+public sealed record HaibunCommitRow(long Id, long ExpectedVdu, int KakuteiSu);
 
-/// <summary>出荷指示確定の結果</summary>
-/// <param name="ConfirmedCount">確定した配分行数</param>
-public sealed record ShippingConfirmResult(int ConfirmedCount);
-
-/// <summary>出荷指示確定取消の結果</summary>
-/// <param name="CanceledCount">取り消した配分行数</param>
-public sealed record ShippingCancelResult(int CanceledCount);
-
-/// <summary>出荷処理の結果</summary>
-/// <param name="CreatedSlipIds">作成した伝票Id（全量欠品の行は伝票を作らない）</param>
-/// <param name="ReleasedCount">完了(EndFlag=1)にして引当解除した配分行数</param>
-public sealed record ShippingCreateResult(long[] CreatedSlipIds, int ReleasedCount);
+/// <summary>配分確定の結果</summary>
+/// <param name="CreatedSlipIds">作成した伝票Id（全量欠品の伝票単位は伝票を作らない）</param>
+/// <param name="CommittedCount">完了(EndFlag=1)にした配分行数</param>
+/// <param name="ShortageRowCount">欠品(ShortSu&gt;0)のあった配分行数</param>
+public sealed record HaibunCommitResult(long[] CreatedSlipIds, int CommittedCount, int ShortageRowCount);
 
 /// <summary>
-/// 出荷指示確定で有効在庫を割った1SKU。画面へ返すワイヤ用DTO
+/// 配分確定で有効在庫を割った1SKU。画面へ返すワイヤ用DTO
 /// （ドメインの <c>ShippingConfirmError</c> はサーバ専用のためここへ詰め替える）。
 /// </summary>
 /// <param name="Id_Soko">出庫元倉庫</param>
 /// <param name="Id_Shohin">商品</param>
 /// <param name="Id_Col">色</param>
 /// <param name="Id_Siz">サイズ</param>
-/// <param name="Shiji">確定しようとした指示数の合計</param>
-/// <param name="Yuko">確定前の有効在庫（実在庫 − 引当数）</param>
+/// <param name="Shiji">確定しようとした確定数の合計</param>
+/// <param name="Yuko">確定前の有効在庫（実在庫 − 確定対象以外の引当数）</param>
 public sealed record ShippingShortageDto(long Id_Soko, long Id_Shohin, long Id_Col, long Id_Siz, int Shiji, int Yuko);
 
 /// <summary>

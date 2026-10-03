@@ -88,6 +88,35 @@ internal static class CoreServiceClient {
 			: targets.Length;
 	}
 
+	/// <summary>
+	/// 配分（<see cref="TranHaibun"/>）の洗い替え保存。既存行の削除・新しい行の登録・引当の引き直しを
+	/// サーバが1往復・1トランザクションで行う（<see cref="HaibunSaveParam"/>）。
+	/// <para>
+	/// 1件でも競合・修正不可（確定済み・送信済み）・入力違反があればサーバは何も書かない。
+	/// 失敗は例外にして呼び出し元に再取得させる。
+	/// </para>
+	/// </summary>
+	/// <param name="replaceRows">削除する既存行（Idと読込時点のVduを使う）</param>
+	/// <param name="newRows">登録する行</param>
+	/// <param name="label">エラーメッセージに出す対象の呼び名</param>
+	/// <param name="ct">キャンセルトークン</param>
+	internal static async Task<HaibunSaveResult> SaveHaibunAsync(
+		IEnumerable<TranHaibun> replaceRows, IEnumerable<TranHaibun> newRows, string label, CancellationToken ct) {
+		DeleteBulkRow[] targets = [.. replaceRows.Where(x => x.Id > 0).Select(x => new DeleteBulkRow(x.Id, x.Vdu))];
+		TranHaibun[] inserts = [.. newRows];
+		var reply = await SendExecuteAsync(new HaibunSaveParam(targets, inserts), ct);
+		if (reply.Code == CvMsgErrorCode.InvalidParameter) {
+			throw new InvalidOperationException($"{label}を保存できません。{reply.Option}");
+		}
+		if (reply.Code < 0) {
+			var detail = string.IsNullOrEmpty(reply.Option) ? reply.DataMsg : reply.Option;
+			throw new InvalidOperationException(
+				$"{label}の保存に失敗しました。他端末で更新された可能性があります。再取得してください。{detail}");
+		}
+		return Common.DeserializeObject(reply.DataMsg ?? string.Empty, typeof(HaibunSaveResult)) as HaibunSaveResult
+			?? new HaibunSaveResult(targets.Length, inserts.Length);
+	}
+
 	static async Task<List<T>> QueryListCoreAsync<T>(object parameter, Type parameterType, CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
 		var message = new CvMsg {

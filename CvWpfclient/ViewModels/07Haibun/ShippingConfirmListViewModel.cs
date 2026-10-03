@@ -18,9 +18,10 @@ namespace CvWpfclient.ViewModels._07Haibun;
 public sealed partial class ShippingStagnationRow : ObservableObject {
 	public long Id { get; set; }
 	public long Vdu { get; set; }
-	public string KakuteiDayDisplay { get; set; } = string.Empty;
+	/// <summary>基準日。滞留モードは指示日、欠品実績モードは確定日</summary>
+	public string BaseDayDisplay { get; set; } = string.Empty;
 	public string NouhinDayDisplay { get; set; } = string.Empty;
-	/// <summary>確定日からの経過日数（今日 − 確定日）</summary>
+	/// <summary>基準日からの経過日数（今日 − 基準日）</summary>
 	public int ElapsedDays { get; set; }
 	/// <summary>納品予定日を過ぎているか</summary>
 	public bool IsOverdue { get; set; }
@@ -42,12 +43,14 @@ public sealed partial class ShippingStagnationRow : ObservableObject {
 }
 
 /// <summary>
-/// 滞留・欠品例外画面。確定済みなのに出荷処理されず放置された配分（滞留）を検出し、
-/// 例外操作（確定取消／強制完了）を行う。欠品実績の照会も兼ねる。
+/// 滞留・欠品例外画面。未確定のまま放置された配分（滞留）を検出し、指示取消（全量欠品で完了）を行う。
+/// 欠品実績の照会も兼ねる。
 /// <para>
-/// 旧CV.netの「出荷指示一覧（確定済みかつ未完了の滞留を検出）」に相当する。仕様と決定は
-/// `Doc/spec/archive/2026-08-18_I7_滞留・欠品例外_詳細設計.md` を参照する。サーバは I2/I3 の
-/// `ShippingCancelParam`（確定取消）／`ShippingCreateParam`（実数量0＝全量欠品で強制完了）を再利用し、変更しない。
+/// 決定 D8（確定で即伝票作成）で「確定済み・未出荷」の中間状態が無くなったため、滞留は
+/// 「未確定のまま指示日から N 日経過、または納品予定日超過」とする（取置は対象外）。
+/// 指示取消は配分確定（<c>HaibunCommitParam</c>）を確定数0で送り、伝票を作らず完了・引当解除する。
+/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 5.4、
+/// 旧仕様は `Doc/spec/archive/2026-08-18_I7_滞留・欠品例外_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 public partial class ShippingConfirmListViewModel : BaseQueryViewModel {
@@ -60,11 +63,16 @@ public partial class ShippingConfirmListViewModel : BaseQueryViewModel {
 
 	bool IsStagnation => ViewKind == "滞留";
 
+	/// <summary>基準日の範囲（開始）。滞留モードは指示日、欠品実績モードは確定日で絞る</summary>
 	[ObservableProperty]
-	public partial string KakuteiFromText { get; set; } = DateTime.Now.AddMonths(-3).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+	public partial string DayFromText { get; set; } = DateTime.Now.AddMonths(-3).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
 
+	/// <summary>基準日の範囲（終了）</summary>
 	[ObservableProperty]
-	public partial string KakuteiToText { get; set; } = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+	public partial string DayToText { get; set; } = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+
+	/// <summary>基準日の列。滞留は指示日、欠品実績は確定日</summary>
+	string BaseDayColumn => IsStagnation ? "h.DenDay" : "h.KakuteiDay";
 
 	[ObservableProperty]
 	public partial string SokoCode { get; set; } = string.Empty;
@@ -72,7 +80,7 @@ public partial class ShippingConfirmListViewModel : BaseQueryViewModel {
 	[ObservableProperty]
 	public partial string TokuiCode { get; set; } = string.Empty;
 
-	/// <summary>滞留とみなす確定日からの経過日数（既定3日）</summary>
+	/// <summary>滞留とみなす指示日からの経過日数（既定3日）</summary>
 	[ObservableProperty]
 	public partial string StagnationDaysText { get; set; } = "3";
 
@@ -88,12 +96,12 @@ public partial class ShippingConfirmListViewModel : BaseQueryViewModel {
 
 	protected override void Init() {
 		Title = QueryTitle;
-		Message = "確定日の範囲・滞留日数を指定して［検索実行］を押してください。";
+		Message = "基準日（滞留:指示日 / 欠品実績:確定日）の範囲・滞留日数を指定して［検索実行］を押してください。";
 	}
 
 	protected override void OnClearConditions() {
-		KakuteiFromText = DateTime.Now.AddMonths(-3).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
-		KakuteiToText = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+		DayFromText = DateTime.Now.AddMonths(-3).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+		DayToText = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
 		SokoCode = string.Empty;
 		TokuiCode = string.Empty;
 		StagnationDaysText = "3";
@@ -111,10 +119,10 @@ public partial class ShippingConfirmListViewModel : BaseQueryViewModel {
 	void SelectTokui() { var c = SelectTokuiCode(); if (c != null) TokuiCode = c; }
 
 	protected override async Task OnSearchAsync(CancellationToken ct) {
-		if (!TryParseDate(KakuteiFromText, out var from)) return;
-		if (!TryParseDate(KakuteiToText, out var to)) return;
+		if (!TryParseDate(DayFromText, out var from)) return;
+		if (!TryParseDate(DayToText, out var to)) return;
 		if (from > to) {
-			MessageEx.ShowWarningDialog("確定日の開始日が終了日より後になっています。", owner: ActiveWindow);
+			MessageEx.ShowWarningDialog("基準日の開始日が終了日より後になっています。", owner: ActiveWindow);
 			return;
 		}
 		if (!TryGetMaxCount(out var maxCount)) return;
@@ -138,7 +146,7 @@ FROM {nameof(TranHaibun)} h
 LEFT JOIN {nameof(MasterTokui)} soko ON soko.Id = h.Id_Soko
 LEFT JOIN {nameof(MasterTokui)} ten ON ten.Id = h.Id_Tenpo
 WHERE {where}
-ORDER BY h.KakuteiDay, h.Id_Soko, h.Id_Tenpo, h.Id
+ORDER BY {BaseDayColumn}, h.Id_Soko, h.Id_Tenpo, h.Id
 LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		return await QuerySqlListAsync<TranHaibun>(sql, parameters, ct);
 	}
@@ -152,18 +160,19 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		List<string> parameters = [dayFrom, dayTo];
 		string where;
 		if (IsStagnation) {
-			// 確定済み・未処理（滞留候補）
-			where = "h.EndFlag = 0 AND ifnull(h.KakuteiDay,'') <> '' AND h.KakuteiDay BETWEEN @0 AND @1";
+			// 未確定のまま残っている配分（滞留候補）。取置は期限で管理するため対象外。
+			// 旧状態「確定済み・未出荷」も EndFlag=0 なのでここに含まれる
+			where = $"h.EndFlag = 0 AND h.Kubun <> {(int)EnumHaibun.Reservation} AND h.DenDay BETWEEN @0 AND @1";
 			if (OverdueOnly) {
 				where += $" AND ifnull(h.NouhinDay,'') <> '' AND h.NouhinDay < {AddSqlParameter(parameters, todayYmd)}";
 			}
 			else {
-				// 経過日数≥閾値（確定日 ≤ 今日−閾値）または 納品予定日超過
+				// 経過日数≥閾値（指示日 ≤ 今日−閾値）または 納品予定日超過
 				var days = ParseStagnationDays();
 				var thresholdYmd = DateTime.Today.AddDays(-days).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
 				var th = AddSqlParameter(parameters, thresholdYmd);
 				var today = AddSqlParameter(parameters, todayYmd);
-				where += $" AND (h.KakuteiDay <= {th} OR (ifnull(h.NouhinDay,'') <> '' AND h.NouhinDay < {today}))";
+				where += $" AND (h.DenDay <= {th} OR (ifnull(h.NouhinDay,'') <> '' AND h.NouhinDay < {today}))";
 			}
 		}
 		else {
@@ -188,9 +197,9 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 			return new ShippingStagnationRow {
 				Id = h.Id,
 				Vdu = h.Vdu,
-				KakuteiDayDisplay = FormatDay(h.KakuteiDay),
+				BaseDayDisplay = FormatDay(IsStagnation ? h.DenDay : h.KakuteiDay),
 				NouhinDayDisplay = FormatDay(h.NouhinDay),
-				ElapsedDays = ElapsedDaysFrom(h.KakuteiDay, today),
+				ElapsedDays = ElapsedDaysFrom(IsStagnation ? h.DenDay : h.KakuteiDay, today),
 				IsOverdue = IsOverdueDay(h.NouhinDay, today),
 				SokoDisplay = FormatTokui(h.Id_Soko, tokuiMap),
 				TenpoDisplay = FormatTokui(h.Id_Tenpo, tokuiMap),
@@ -204,63 +213,37 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		})];
 	}
 
-	/// <summary>チェックした滞留の確定を取り消す（未確定へ戻し再指示できるようにする）</summary>
-	[RelayCommand(IncludeCancelCommand = true)]
-	async Task CancelConfirm(CancellationToken ct) {
-		if (IsBusy || !IsStagnation) return;
-		var targets = Rows.Where(r => r.IsChecked).ToList();
-		if (targets.Count == 0) {
-			MessageEx.ShowWarningDialog("確定取消する行を選択してください。", owner: ActiveWindow);
-			return;
-		}
-		if (MessageEx.ShowQuestionDialog($"{targets.Count:N0} 件の確定を取り消しますか。（未確定へ戻ります）", owner: ActiveWindow) != MessageBoxResult.Yes) return;
-
-		StartBusy("確定取消中...");
-		try {
-			var param = new ShippingCancelParam([.. targets.Select(r => r.Id)]);
-			var reply = await SendExecuteAsync(param, ct);
-			if (HandleError(reply, "確定取消")) return;
-			var result = Common.DeserializeObject(reply.DataMsg ?? "", typeof(ShippingCancelResult)) as ShippingCancelResult;
-			await OnSearchAsync(ct);
-			Message = $"{result?.CanceledCount ?? 0:N0} 件の確定を取り消しました。";
-			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
-		}
-		catch (OperationCanceledException) { Message = "確定取消を中断しました"; }
-		catch (Exception ex) {
-			Message = $"確定取消に失敗しました。{ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-		}
-		finally { FinishBusy(); }
-	}
-
-	/// <summary>チェックした滞留を強制完了する（出荷せず全量欠品で EndFlag=1・引当解除）</summary>
+	/// <summary>
+	/// チェックした滞留を指示取消する（出荷せず全量欠品で EndFlag=1・引当解除）。
+	/// 配分確定を確定数0で送るので、伝票は作られない。
+	/// </summary>
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task ForceComplete(CancellationToken ct) {
 		if (IsBusy || !IsStagnation) return;
 		var targets = Rows.Where(r => r.IsChecked).ToList();
 		if (targets.Count == 0) {
-			MessageEx.ShowWarningDialog("強制完了する行を選択してください。", owner: ActiveWindow);
+			MessageEx.ShowWarningDialog("指示取消する行を選択してください。", owner: ActiveWindow);
 			return;
 		}
 		if (MessageEx.ShowQuestionDialog(
-			$"{targets.Count:N0} 件を強制完了しますか。\n出荷せず完了（全量欠品）にし、引当を解除します。取り消せません。",
+			$"{targets.Count:N0} 件を指示取消しますか。\n出荷せず完了（全量欠品）にし、引当を解除します。取り消せません。",
 			owner: ActiveWindow) != MessageBoxResult.Yes) return;
 
-		StartBusy("強制完了中...");
+		StartBusy("指示取消中...");
 		try {
-			// 実数量0で出荷処理する。ProcessShipping は伝票を作らず EndFlag=1・引当解除だけ行う
-			ShippingCreateRow[] rows = [.. targets.Select(r => new ShippingCreateRow(r.Id, r.Vdu, 0))];
-			var param = new ShippingCreateParam(rows, ToDenDay(DateTime.Today), 0);
+			// 確定数0で配分確定する。伝票を作らず EndFlag=1・引当解除だけ行われる。入力社員は0で送りサーバがログイン社員を使う
+			HaibunCommitRow[] rows = [.. targets.Select(r => new HaibunCommitRow(r.Id, r.Vdu, 0))];
+			var param = new HaibunCommitParam(rows, ToDenDay(DateTime.Today), 0);
 			var reply = await SendExecuteAsync(param, ct);
-			if (HandleError(reply, "強制完了")) return;
-			var result = Common.DeserializeObject(reply.DataMsg ?? "", typeof(ShippingCreateResult)) as ShippingCreateResult;
+			if (HandleError(reply, "指示取消")) return;
+			var result = Common.DeserializeObject(reply.DataMsg ?? "", typeof(HaibunCommitResult)) as HaibunCommitResult;
 			await OnSearchAsync(ct);
-			Message = $"{result?.ReleasedCount ?? 0:N0} 件を強制完了し、引当を解除しました（伝票は作成していません）。";
+			Message = $"{result?.CommittedCount ?? 0:N0} 件を指示取消し、引当を解除しました（伝票は作成していません）。";
 			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
 		}
-		catch (OperationCanceledException) { Message = "強制完了を中断しました"; }
+		catch (OperationCanceledException) { Message = "指示取消を中断しました"; }
 		catch (Exception ex) {
-			Message = $"強制完了に失敗しました。{ex.Message}";
+			Message = $"指示取消に失敗しました。{ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
 		finally { FinishBusy(); }
@@ -291,12 +274,12 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 	}
 
 	string BuildCsv() {
-		string[] headers = ["確定日", "納品予定日", "経過日数", "予定日超過", "倉庫", "出荷先", "種別", "商品", "色/サイズ", "指示数", "実数量", "欠品"];
+		string[] headers = [IsStagnation ? "指示日" : "確定日", "納品予定日", "経過日数", "予定日超過", "倉庫", "出荷先", "種別", "商品", "色/サイズ", "指示数", "実数量", "欠品"];
 		var sb = new StringBuilder();
 		sb.AppendLine(string.Join(",", headers.Select(CsvField)));
 		foreach (var r in Rows) {
 			string[] cells = [
-				r.KakuteiDayDisplay, r.NouhinDayDisplay, r.ElapsedDays.ToString(CultureInfo.InvariantCulture),
+				r.BaseDayDisplay, r.NouhinDayDisplay, r.ElapsedDays.ToString(CultureInfo.InvariantCulture),
 				r.IsOverdue ? "超過" : "", r.SokoDisplay, r.TenpoDisplay, r.DenKindDisplay,
 				r.ShohinDisplay, r.ColSizDisplay,
 				r.Su.ToString(CultureInfo.InvariantCulture),
@@ -330,10 +313,10 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 			MessageEx.ShowWarningDialog("出力する明細がありません。先に検索してください。", owner: ActiveWindow);
 			return;
 		}
-		if (!TryParseDate(KakuteiFromText, out var from)) return;
-		if (!TryParseDate(KakuteiToText, out var to)) return;
+		if (!TryParseDate(DayFromText, out var from)) return;
+		if (!TryParseDate(DayToText, out var to)) return;
 		if (from > to) {
-			MessageEx.ShowWarningDialog("確定日の開始日が終了日より後になっています。", owner: ActiveWindow);
+			MessageEx.ShowWarningDialog("基準日の開始日が終了日より後になっています。", owner: ActiveWindow);
 			return;
 		}
 
@@ -357,8 +340,8 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 	/// <summary>
 	/// 印刷用SQLを組み立てる。WHERE句は画面検索(<see cref="BuildWhere"/>)を再利用し、絞込結果を一致させる。
 	/// <para>
-	/// 並び順のみ画面（KakuteiDay, Id_Soko, Id_Tenpo, Id）と異なり、倉庫→出荷先を先頭に置く
-	/// （<c>Id_Soko, Id_Tenpo, KakuteiDay, Id</c>）。qfmのグループ小計は「キー変化での区切り」で動くため、
+	/// 並び順のみ画面（基準日, Id_Soko, Id_Tenpo, Id）と異なり、倉庫→出荷先を先頭に置く
+	/// （<c>Id_Soko, Id_Tenpo, 基準日, Id</c>）。基準日は滞留モードが指示日、欠品実績モードが確定日。qfmのグループ小計は「キー変化での区切り」で動くため、
 	/// 画面と同じ確定日優先の並びのままでは同じ倉庫/出荷先が日付をまたいで何度も現れるたびに小計が分断され、
 	/// 「倉庫ごとの合計」という小計本来の意味にならない。この並び順変更は判断が必要な点として作業ログ・報告に明記する。
 	/// </para>
@@ -368,15 +351,17 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		var todayYmd = AddSqlParameter(parameters, DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
 		var todayIso = AddSqlParameter(parameters, DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
 		var condition = AddSqlParameter(parameters, BuildConditionText(from, to));
+		// item1(KakuteiDayDisp)は帳票上「基準日」。滞留モードは指示日、欠品実績モードは確定日を出す
+		var day = BaseDayColumn;
 
 		// SELECT列順・別名は ShippingStagnationList.qfm の item1..item13 と厳密に一致させる。
 		// item1..12 は画面CSV(BuildCsv)と同じ12列。item13(ConditionDisp)はqfm側の帳票ヘッダ(抽出条件表示)専用の追加列で、
 		// CSVには存在しない（qfmには実行時に決まる値を渡す手段が無いため、全行へ同じ値を乗せている）。
 		var sql = $@"
 SELECT
-substr(h.KakuteiDay,1,4) || '/' || substr(h.KakuteiDay,5,2) || '/' || substr(h.KakuteiDay,7,2) KakuteiDayDisp,
+substr({day},1,4) || '/' || substr({day},5,2) || '/' || substr({day},7,2) KakuteiDayDisp,
 CASE WHEN ifnull(h.NouhinDay,'') = '' THEN '' ELSE substr(h.NouhinDay,1,4) || '/' || substr(h.NouhinDay,5,2) || '/' || substr(h.NouhinDay,7,2) END NouhinDayDisp,
-CAST(MAX(CAST(julianday({todayIso}) - julianday(substr(h.KakuteiDay,1,4) || '-' || substr(h.KakuteiDay,5,2) || '-' || substr(h.KakuteiDay,7,2)) AS INTEGER), 0) AS TEXT) ElapsedDaysDisp,
+CAST(MAX(CAST(julianday({todayIso}) - julianday(substr({day},1,4) || '-' || substr({day},5,2) || '-' || substr({day},7,2)) AS INTEGER), 0) AS TEXT) ElapsedDaysDisp,
 CASE WHEN ifnull(h.NouhinDay,'') <> '' AND h.NouhinDay < {todayYmd} THEN '超過' ELSE '' END OverdueDisp,
 {CodeNameDisplay.Sql("soko.Id", "soko.Code", "soko.Name")} SokoDisp,
 {CodeNameDisplay.Sql("ten.Id", "ten.Code", "ten.Name")} TenpoDisp,
@@ -393,7 +378,7 @@ LEFT JOIN {nameof(MasterTokui)} ten ON ten.Id = h.Id_Tenpo
 LEFT JOIN {nameof(MasterShohin)} sh ON sh.Id = h.Id_Shohin
 LEFT JOIN {nameof(DerivedShohinColSiz)} sku ON sku.Id_Shohin = h.Id_Shohin AND sku.Id_Col = h.Id_Col AND sku.Id_Siz = h.Id_Siz
 WHERE {where}
-ORDER BY h.Id_Soko, h.Id_Tenpo, h.KakuteiDay, h.Id";
+ORDER BY h.Id_Soko, h.Id_Tenpo, {day}, h.Id";
 		return new QueryListSqlParam(typeof(object), sql, [.. parameters]);
 	}
 
@@ -401,7 +386,8 @@ ORDER BY h.Id_Soko, h.Id_Tenpo, h.KakuteiDay, h.Id";
 		var overdue = IsStagnation && OverdueOnly ? "（予定日超過のみ）" : string.Empty;
 		var soko = string.IsNullOrWhiteSpace(SokoCode) ? "指定なし" : SokoCode.Trim();
 		var tokui = string.IsNullOrWhiteSpace(TokuiCode) ? "指定なし" : TokuiCode.Trim();
-		return $"モード:{ViewKind}{overdue} 対象期間:{from:yyyy/MM/dd}〜{to:yyyy/MM/dd} 倉庫:{soko} 出荷先:{tokui}";
+		var baseDay = IsStagnation ? "指示日" : "確定日";
+		return $"モード:{ViewKind}{overdue} 基準日({baseDay}):{from:yyyy/MM/dd}〜{to:yyyy/MM/dd} 倉庫:{soko} 出荷先:{tokui}";
 	}
 
 	[RelayCommand]

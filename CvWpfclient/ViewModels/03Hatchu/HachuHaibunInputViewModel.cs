@@ -438,22 +438,8 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 
 		StartBusy("配分データ登録中...");
 		try {
-			// 洗い替え: 読込済みの既存配分を削除してから一括Insertする。
-			await DeleteHaibunRowsAsync(loadedEditableRows, ct);
-
-			if (newRecords.Count > 0) {
-				var coreService = AppGlobal.GetGrpcService<ICoreService>();
-				var insertMsg = new CvMsg {
-					Code = 0,
-					Flag = CvFlag.Msg201_Op_Execute,
-					DataType = typeof(InsertBulkParam),
-					DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranHaibun), JsonConvert.SerializeObject(newRecords))),
-				};
-				CvMsg insertReply = await coreService.QueryMsgAsync(insertMsg, AppGlobal.GetDefaultCallContext(ct));
-				if (insertReply.Code < 0) {
-					throw new InvalidOperationException($"登録に失敗しました: {insertReply.Option ?? insertReply.DataMsg}");
-				}
-			}
+			// 洗い替え: 読込済みの既存配分の削除と一括登録をサーバが1トランザクションで行う
+			await CoreServiceClient.SaveHaibunAsync(loadedEditableRows, newRecords, "配分", ct);
 
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分を {newRecords.Count:N0} 件登録しました";
 			await LoadEntryAsync(targetHachu.Id, ct);
@@ -652,10 +638,10 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		RefreshGrandTotal();
 	}
 
-	/// <summary>修正できる配分（未送信かつ未確定）を取得する。Id/Vdu は洗い替え削除に使う。</summary>
+	/// <summary>修正できる配分（未送信かつ未確定かつ未完了）を取得する。Id/Vdu は洗い替え削除に使う。</summary>
 	Task<List<TranHaibun>> LoadEditableHaibunAsync(long hachuId, CancellationToken ct) =>
 		QueryListAsync<TranHaibun>(
-			$"Kubun = {KubunHatsukai} AND RelateNo1 = {hachuId} AND SendFlg = 0 AND KakuteiDay = ''",
+			$"Kubun = {KubunHatsukai} AND RelateNo1 = {hachuId} AND {TranHaibun.EditableWhereSql}",
 			"Id_Tenpo, Id_Shohin, Id_Col, Id_Siz, Id", ct);
 
 	async Task<Dictionary<long, MasterShohin>> LoadShohinMapAsync(IEnumerable<long> shohinIds, CancellationToken ct) {
@@ -745,9 +731,9 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		return records;
 	}
 
-	/// <summary>既存配分を1往復でまとめて削除する。1件でも競合すればサーバ側で何も削除されない</summary>
+	/// <summary>既存配分を1往復でまとめて削除する。1件でも競合・修正不可があればサーバ側で何も削除されない</summary>
 	Task DeleteHaibunRowsAsync(IReadOnlyCollection<TranHaibun> rows, CancellationToken ct) =>
-		CoreServiceClient.DeleteBulkAsync(typeof(TranHaibun), rows, "既存配分", ct);
+		CoreServiceClient.SaveHaibunAsync(rows, [], "既存配分", ct);
 
 	// ===== 画面状態の更新 =====
 

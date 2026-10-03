@@ -73,7 +73,7 @@
 				<text id="H1">
 					<position x="0" y="0" width="16" height="4"/>
 					<color transparent="1"/>
-					<data calctype="static">Šm’è“ú</data>
+					<data calctype="static">Šî€“ú</data>
 					<decode datatype="string" format=""/>
 					<font size="90"/>
 				</text>

@@ -127,8 +127,8 @@ public partial class MenuData : ObservableObject {
 			new("移動未受リスト", typeof(Views._08Zaiko.IdoUnreceivedListView), addInfo:"出庫済みで入庫未済の移動をSKU別に列挙"),
 			new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"倉庫の棚卸データをTran60Tanaへ登録"),
 			new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中 倉庫の有効在庫を見て店舗から出荷希望数を入力"),
-			new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
-			new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"準備中 確定した配分をピッキングリストとして印刷"),
+			new("配分確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"確定数を入力し出荷売上/移動伝票を作成(引当解除)。有効在庫割れはエラー"),
+			new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"未確定の配分をピッキングリストとして印刷"),
 			new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
 		])),
 		/* ================================================================
@@ -246,11 +246,10 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ 出荷 ----", new([
 				new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中 倉庫の有効在庫を見て店舗から出荷希望数を入力"),
-				new("出荷指示確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"商品基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
-				new("出荷指示確定(得意先)", typeof(Views._07Haibun.ShippingConfirmTokuiView), addInfo:"得意先基準で配分を確定しKakuteiDayを立てる。有効在庫割れはエラー"),
-				new("出荷処理入力", typeof(Views._07Haibun.ShippingInputView), addInfo:"確定済み配分から出荷売上/移動伝票を作成しEndFlagを立てる(引当解除)"),
-				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"確定した配分をピッキングリストとして印刷"),
-				new("滞留・欠品例外(出荷指示一覧)", typeof(Views._07Haibun.ShippingConfirmListView), addInfo:"確定済みかつ未出荷の滞留を検出し確定取消/強制完了。欠品実績も照会"),
+				new("配分確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"商品基準で確定数を入力し出荷売上/移動伝票を作成(引当解除)。有効在庫割れはエラー"),
+				new("配分確定(得意先)", typeof(Views._07Haibun.ShippingConfirmTokuiView), addInfo:"得意先基準で確定数を入力し出荷売上/移動伝票を作成(引当解除)。有効在庫割れはエラー"),
+				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"未確定の配分をピッキングリストとして印刷"),
+				new("滞留・欠品例外(出荷指示一覧)", typeof(Views._07Haibun.ShippingConfirmListView), addInfo:"未確定のまま放置された配分を検出し指示取消(全量欠品で完了)。欠品実績も照会"),
 				new("納入一覧表", typeof(Views._07Haibun.ShippingListReportView), addInfo:"品番×倉庫×表示基準ごとに改ページし、得意先×色/サイズのマトリクスで配分数を印刷"),
 				new("配分出荷リスト", typeof(Views._07Haibun.HaibunShippingListReportView), addInfo:"出力単位(伝票毎/商品毎/SKU毎/商品得意先毎)を切り替えて受注数・予定数量・確定数量を印刷"),
 			])),
@@ -411,7 +410,7 @@ public partial class MenuData : ObservableObject {
 		/* ================================================================
 		 * 31 外部連携 : 旧「HHT / POS連携」「物流」を統合
 		 * 2026-08-17 の決定 I6「ハンディは無し」は、配分→出荷のフローでハンディ読取に依存しない
-		 * （伝票作成は「出荷処理入力」に一本化する）という意味であり、HHT連携機能そのものは残す。
+		 * （伝票作成は配分確定に一本化する。2026-10-03 決定 D8 で出荷処理入力は配分確定へ統合）という意味であり、HHT連携機能そのものは残す。
 		 * POS は専用画面が未作成のため小分類を作っていない(POS日別精算入力/売上金種Viewerは「売上」配下)
 		 * ================================================================ */
 		new("■ 外部連携", new([

@@ -266,23 +266,8 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 
 		StartBusy("配分データ登録中...");
 		try {
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-
-			// 洗い替え: 読込済みの未送信指示を1往復でまとめて削除（行単位の楽観ロック付き）
-			await CoreServiceClient.DeleteBulkAsync(typeof(TranHaibun), loadedEditableRows, "既存指示", ct);
-
-			if (newRecords.Count > 0) {
-				var insertMsg = new CvMsg {
-					Code = 0,
-					Flag = CvFlag.Msg201_Op_Execute,
-					DataType = typeof(InsertBulkParam),
-					DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranHaibun), JsonConvert.SerializeObject(newRecords))),
-				};
-				CvMsg insertReply = await coreService.QueryMsgAsync(insertMsg, AppGlobal.GetDefaultCallContext(ct));
-				if (insertReply.Code < 0) {
-					throw new InvalidOperationException($"登録に失敗しました: {insertReply.Option ?? insertReply.DataMsg}");
-				}
-			}
+			// 洗い替え: 読込済みの修正可能な指示の削除と一括登録をサーバが1トランザクションで行う（行単位の楽観ロック付き）
+			await CoreServiceClient.SaveHaibunAsync(loadedEditableRows, newRecords, "配分指示", ct);
 
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分指示を {newRecords.Count:N0} 件登録しました";
 			if (SelectedSearchRow != null) {
@@ -485,9 +470,10 @@ public partial class ShopHaibunInputViewModel : BaseViewModel {
 		Dictionary<SkuKey, int> shijiMap = await LoadSkuTotalsAsync(SkuShijiSql(row.Id, param.Id_Soko), ct);
 		Dictionary<SkuKey, int> nyukaMap = await LoadSkuTotalsAsync(SkuNyukaSql(row.Id, param.Id_Soko), ct);
 
-		// 既存の未送信指示（修正対象）
+		// 既存の修正可能な指示（未送信かつ未確定かつ未完了）。確定済み・完了の指示を洗い替えで消さないよう、
+		// サーバが保存時に強制する条件（TranHaibun.EditableWhereSql）と揃える
 		loadedEditableRows = await QueryListAsync<TranHaibun>(
-			$"Id_Soko = {param.Id_Soko} AND Id_Shohin = {row.Id} AND Kubun = {param.Kubun} AND SendFlg = 0",
+			$"Id_Soko = {param.Id_Soko} AND Id_Shohin = {row.Id} AND Kubun = {param.Kubun} AND {TranHaibun.EditableWhereSql}",
 			"Id_Tenpo, Id_Col, Id_Siz, Id", ct);
 
 		// 修正対象分を差し引いた「他指示数」を SKU サマリへ設定

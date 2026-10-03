@@ -47,14 +47,14 @@
 					FontSize="18" FontWeight="SemiBold"
 					Text="{Binding Title}" />
 				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					Opacity="0.8" Text="確定済みなのに出荷処理されない滞留を検出し、確定取消／強制完了で例外処理します。" />
+					Opacity="0.8" Text="未確定のまま放置された配分（滞留）を検出し、指示取消（全量欠品で完了）します。欠品実績も照会できます。" />
 			</StackPanel>
 		</materialDesign:ColorZone>
 
 		<Border Grid.Row="1"
 			Padding="12"
 			Background="{DynamicResource MaterialDesignPaper}">
-			<StackPanel Orientation="Horizontal">
+			<WrapPanel Orientation="Horizontal">
 				<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
 					Text="表示" />
 				<ComboBox Width="120"
@@ -62,15 +62,16 @@
 					SelectedItem="{Binding ViewKind}"
 					Style="{StaticResource FormComboBox}" />
 				<TextBlock Margin="24,0,8,0" VerticalAlignment="Center"
-					Text="確定日" />
+					Text="基準日"
+					ToolTip="滞留は指示日、欠品実績は確定日で絞り込みます" />
 				<TextBox Width="140" Height="32"
 					Style="{StaticResource MaterialDesignTextBox}"
-					Text="{Binding KakuteiFromText, UpdateSourceTrigger=PropertyChanged}" />
+					Text="{Binding DayFromText, UpdateSourceTrigger=PropertyChanged}" />
 				<TextBlock Margin="8,0" VerticalAlignment="Center"
 					Text="～" />
 				<TextBox Width="140" Height="32"
 					Style="{StaticResource MaterialDesignTextBox}"
-					Text="{Binding KakuteiToText, UpdateSourceTrigger=PropertyChanged}" />
+					Text="{Binding DayToText, UpdateSourceTrigger=PropertyChanged}" />
 				<TextBlock Margin="24,0,8,0" VerticalAlignment="Center"
 					Text="倉庫" />
 				<Button Width="60"
@@ -107,7 +108,7 @@
 							FontSize="16" Text="検索実行" />
 					</StackPanel>
 				</Button>
-			</StackPanel>
+			</WrapPanel>
 		</Border>
 
 		<DockPanel Grid.Row="2"
@@ -118,13 +119,6 @@
 				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 					Text="{Binding CheckedCount, StringFormat='チェック {0:N0} 件'}" />
 				<Button Margin="24,0,0,0"
-					Command="{Binding CancelConfirmCommand}"
-					IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-					Style="{StaticResource MaterialDesignOutlinedButton}"
-					ToolTip="選択した滞留の確定を取り消して未確定へ戻す">
-					<TextBlock FontSize="16" Text="確定取消" />
-				</Button>
-				<Button Margin="12,0,0,0"
 					Command="{Binding ForceCompleteCommand}"
 					IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
 					Style="{StaticResource MaterialDesignFlatMidBgButton}"
@@ -133,7 +127,7 @@
 						<materialDesign:PackIcon VerticalAlignment="Center"
 							Kind="CloseBoxOutline" />
 						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-							FontSize="16" Text="強制完了" />
+							FontSize="16" Text="指示取消" />
 					</StackPanel>
 				</Button>
 				<Button Margin="24,0,0,0"
@@ -176,7 +170,7 @@
 				ItemsSource="{Binding Rows}"
 				SelectionMode="Single" SelectionUnit="FullRow" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 				<DataGrid.Columns>
-					<DataGridTemplateColumn Width="50"
+					<DataGridTemplateColumn Width="60"
 						Header="選択">
 						<DataGridTemplateColumn.CellTemplate>
 							<DataTemplate>
@@ -185,13 +179,13 @@
 							</DataTemplate>
 						</DataGridTemplateColumn.CellTemplate>
 					</DataGridTemplateColumn>
-					<DataGridTextColumn Width="100"
-						Binding="{Binding KakuteiDayDisplay}"
-						Header="確定日" IsReadOnly="True" />
-					<DataGridTextColumn Width="100"
+					<DataGridTextColumn Width="105"
+						Binding="{Binding BaseDayDisplay}"
+						Header="基準日" IsReadOnly="True" />
+					<DataGridTextColumn Width="105"
 						Binding="{Binding NouhinDayDisplay}"
 						Header="納品予定日" IsReadOnly="True" />
-					<DataGridTextColumn Width="80"
+					<DataGridTextColumn Width="85"
 						Binding="{Binding ElapsedDays, StringFormat={}{0:N0}日}"
 						Header="経過日数" IsReadOnly="True">
 						<DataGridTextColumn.ElementStyle>
@@ -200,26 +194,26 @@
 							</Style>
 						</DataGridTextColumn.ElementStyle>
 					</DataGridTextColumn>
-					<DataGridTextColumn Width="100"
+					<DataGridTextColumn Width="105"
 						Binding="{Binding OverdueDisplay}"
 						ElementStyle="{StaticResource OverdueTextBlock}"
 						Header="予定日超過" IsReadOnly="True" />
-					<DataGridTextColumn Width="170"
+					<DataGridTextColumn Width="110"
 						Binding="{Binding SokoDisplay}"
 						Header="倉庫" IsReadOnly="True" />
-					<DataGridTextColumn Width="190"
+					<DataGridTextColumn Width="125"
 						Binding="{Binding TenpoDisplay}"
 						Header="出荷先" IsReadOnly="True" />
-					<DataGridTextColumn Width="80"
+					<DataGridTextColumn Width="95"
 						Binding="{Binding DenKindDisplay}"
 						Header="種別" IsReadOnly="True" />
-					<DataGridTextColumn Width="190"
+					<DataGridTextColumn Width="115"
 						Binding="{Binding ShohinDisplay}"
 						Header="商品" IsReadOnly="True" />
-					<DataGridTextColumn Width="150"
+					<DataGridTextColumn Width="120"
 						Binding="{Binding ColSizDisplay}"
 						Header="色/サイズ" IsReadOnly="True" />
-					<DataGridTextColumn Width="80"
+					<DataGridTextColumn Width="75"
 						Binding="{Binding Su, StringFormat={}{0:N0}}"
 						Header="指示数" IsReadOnly="True">
 						<DataGridTextColumn.ElementStyle>
@@ -228,7 +222,7 @@
 							</Style>
 						</DataGridTextColumn.ElementStyle>
 					</DataGridTextColumn>
-					<DataGridTextColumn Width="80"
+					<DataGridTextColumn Width="75"
 						Binding="{Binding JitsuSu, StringFormat={}{0:N0}}"
 						Header="実数量" IsReadOnly="True">
 						<DataGridTextColumn.ElementStyle>
@@ -237,7 +231,7 @@
 							</Style>
 						</DataGridTextColumn.ElementStyle>
 					</DataGridTextColumn>
-					<DataGridTextColumn Width="80"
+					<DataGridTextColumn Width="60"
 						Binding="{Binding ShortSu, StringFormat={}{0:N0}}"
 						Header="欠品" IsReadOnly="True">
 						<DataGridTextColumn.ElementStyle>

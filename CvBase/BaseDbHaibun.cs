@@ -13,6 +13,15 @@ namespace CvBase;
 [Comment("トランザクション：配分データ 倉庫からの移動指示：日付、配分CD、倉庫Id、[商品Id、色サイズ、予定数量、実数量、完了FLG]")]
 public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <summary>
+	/// 修正（洗い替えでの削除）できる行の条件。エイリアスなしの列名で書く。
+	/// <para>
+	/// 配分入力画面が修正対象を読み込む条件と、サーバが保存時に強制する条件
+	/// （<c>AllocationRules.IsEditable</c>）を一致させるため、両方がこの定数を基準にする。
+	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 2章を参照する。
+	/// </para>
+	/// </summary>
+	public const string EditableWhereSql = "SendFlg = 0 AND EndFlag = 0 AND ifnull(KakuteiDay,'') = ''";
+	/// <summary>
 	/// 日付 yyyyMMdd 8桁の文字列で表現
 	/// </summary>
 	[ObservableProperty]
@@ -61,8 +70,9 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <summary>
 	/// 送信フラグ 0:未送信 1:送信中 2:送信済み
 	/// <para>
-	/// 物流システムへの連携状態。**確定済みかどうかは <see cref="KakuteiDay"/> で判定する**。
-	/// 修正可能なのは `SendFlg = 0` かつ `KakuteiDay` が空の行だけ。
+	/// 物流システムへの連携状態。**確定済みかどうかは <see cref="EndFlag"/>（と <see cref="KakuteiDay"/>）で判定する**。
+	/// 修正可能なのは <see cref="EditableWhereSql"/>（`SendFlg = 0` かつ未完了かつ `KakuteiDay` が空）の行だけで、
+	/// 配分保存（<c>HaibunSaveParam</c>）はサーバ側でこの条件を強制する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -168,6 +178,11 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
 	/// 確定日 yyyyMMdd 8桁の文字列で表現。空文字なら未確定。
+	/// <para>
+	/// 決定 D8 により確定と伝票作成は同時なので、確定日は生成した伝票の伝票日と同じになる。
+	/// 旧2段階方式で「確定済み・未出荷」（確定日あり・<see cref="EndFlag"/>=0）のまま残った行は、
+	/// 配分確定で未確定と同じに扱い、確定日を上書きする。
+	/// </para>
 	/// </summary>
 	[ObservableProperty]
 	[ColumnSizeDml(8)]
@@ -175,7 +190,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[Comment("確定日 yyyyMMdd 8桁の文字列で表現。空文字なら未確定。")]
 	public partial string KakuteiDay { get; set; } = string.Empty;
 	/// <summary>
-	/// 実数量（確定時に実際に出荷・移動した数）。未確定のうちは 0。
+	/// 実数量（配分確定で入力した確定数＝実際に出荷・移動した数）。未確定のうちは 0。
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("実数量")]
@@ -184,10 +199,10 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <summary>
 	/// 欠品数（指示に対して倉庫が出荷できなかった数）。未確定のうちは 0。
 	/// <para>
-	/// <see cref="Su"/>（指示数）はユーザーが配分入力で設定し、倉庫へ送信される。倉庫から戻されるデータで
-	/// <see cref="JitsuSu"/>（出荷数）と本列が設定され、<c>Su = JitsuSu + ShortSu</c> が成立する。
-	/// この状態かつ <see cref="KakuteiDay"/> に有効な日付があるものを確定とみなす。完了は <see cref="EndFlag"/>=1。
-	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.1.2 を参照する。
+	/// <see cref="Su"/>（指示数）はユーザーが配分入力で設定する。配分確定で確定数を入れると
+	/// <see cref="JitsuSu"/>（出荷数）と本列が設定され、<c>Su = JitsuSu + ShortSu</c> が成立し、同時に伝票作成・完了（<see cref="EndFlag"/>=1）となる。
+	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 2章を参照する
+	/// （旧仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.1.2）。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]

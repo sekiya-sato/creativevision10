@@ -1,15 +1,18 @@
 ﻿/*
 # description
-BaseShippingConfirmViewModel は出荷指示確定画面（出荷指示確定(商品) / 出荷指示確定(得意先)）の共通基底です。
-旧CV.netの「出荷指示確定」に相当します。
+BaseShippingConfirmViewModel は配分確定画面（配分確定(商品) / 配分確定(得意先)）の共通基底です。
+旧CV.netの「出荷指示確定」と「出荷処理」を1画面にまとめたものです（決定 D8：確定で即伝票作成）。
 
-配分(TranHaibun)の未完了行を一覧し、選んだ行を確定(KakuteiDayを立てる)または確定取消します。
-- 確定: 未確定(KakuteiDay空)の選択行を ShippingConfirmParam でサーバへ送る。有効在庫（実在庫 − 引当数）が
-  1SKUでも負になる場合はサーバが1件も確定せず、割れたSKUを ShippingShortageDto[] で返す。
-- 取消: 確定済み(伝票未作成)の選択行を ShippingCancelParam で KakuteiDay=空 へ戻す。
+配分(TranHaibun)の未完了行を一覧し、選んだ行の確定数を入れて確定します。
+- 確定: 選択行を HaibunCommitParam(Id, Vdu, 確定数) でサーバへ送る。サーバは確定数を反映し、
+  出荷売上／移動伝票を作って EndFlag=1（引当解除）にする。確定数0の行は全量欠品として伝票なしで完了する。
+  有効在庫が1SKUでも割れる場合はサーバが1件も確定せず、割れたSKUを ShippingShortageDto[] で返す。
+- 確定取消は無い（決定 D9）。訂正は作成された伝票側で行う。
+- 取置配分(Kubun=6)は店舗売上へ変換する別画面で扱うため、一覧に出さない。
 
 商品別/得意先別の違いは並び順(SortOrderSql)だけで、データ源(TranHaibun の EndFlag=0)は同じです。
-サーバ側ロジックは CvDomainLogic/ShippingDb、詳細は Doc/spec/archive/2026-08-18_I2I3_出荷指示確定・出荷処理_詳細設計.md。
+サーバ側ロジックは CvDomainLogic/ShippingDb.Commit、詳細は
+Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md。
 
 一覧の列は既存の照会画面(ZaikoQuery)と同じく、テーブル単位に型付きで取得してクライアントで合成します
 （サーバの QueryListSqlParam はDBマップ型しか返せないため、クライアント専用POCOは使いません）。
@@ -26,7 +29,7 @@ using System.Windows;
 
 namespace CvWpfclient.Helpers;
 
-/// <summary>出荷指示確定の一覧1行</summary>
+/// <summary>配分確定の一覧1行</summary>
 public sealed partial class ShippingConfirmRow : ObservableObject {
 	public long Id { get; set; }
 	public long Vdu { get; set; }
@@ -42,15 +45,25 @@ public sealed partial class ShippingConfirmRow : ObservableObject {
 	public int Su { get; set; }
 	/// <summary>参考: 確定前の有効在庫（実在庫 − 引当数）</summary>
 	public int Yuko { get; set; }
-	/// <summary>確定済みか（KakuteiDayが有効）</summary>
-	public bool IsConfirmed { get; set; }
-	public string StatusDisplay => IsConfirmed ? "確定済み" : "未確定";
+
+	/// <summary>確定数（出荷・移動する数）。既定は指示数（全量出荷）。0〜Su に収める。0 は全量欠品</summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ShortSu))]
+	public partial int KakuteiSu { get; set; }
+
+	/// <summary>欠品数 = 指示数 − 確定数</summary>
+	public int ShortSu => Math.Max(Su - KakuteiSu, 0);
+
+	partial void OnKakuteiSuChanged(int value) {
+		var clamped = Math.Clamp(value, 0, Math.Max(Su, 0));
+		if (clamped != value) KakuteiSu = clamped;
+	}
 
 	[ObservableProperty]
 	public partial bool IsChecked { get; set; }
 }
 
-/// <summary>出荷指示確定画面の共通基底</summary>
+/// <summary>配分確定画面の共通基底</summary>
 public abstract partial class BaseShippingConfirmViewModel : BaseQueryViewModel {
 
 	/// <summary>一覧の並び順。商品別 / 得意先別で上書きする（TranHaibun のエイリアスは h）</summary>
@@ -71,14 +84,9 @@ public abstract partial class BaseShippingConfirmViewModel : BaseQueryViewModel 
 	[ObservableProperty]
 	public partial string TokuiCode { get; set; } = string.Empty;
 
-	/// <summary>確定日（確定実行に使う）。既定は本日</summary>
+	/// <summary>確定日 兼 生成する伝票の在庫計上日。既定は本日</summary>
 	[ObservableProperty]
 	public partial string KakuteiDayText { get; set; } = DateTime.Now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
-
-	public IReadOnlyList<string> ViewKinds { get; } = ["未確定のみ", "確定済みも表示"];
-
-	[ObservableProperty]
-	public partial string ViewKind { get; set; } = "未確定のみ";
 
 	[ObservableProperty]
 	public partial ObservableCollection<ShippingConfirmRow> Rows { get; set; } = [];
@@ -97,7 +105,6 @@ public abstract partial class BaseShippingConfirmViewModel : BaseQueryViewModel 
 		SokoCode = string.Empty;
 		ShohinCode = string.Empty;
 		TokuiCode = string.Empty;
-		ViewKind = "未確定のみ";
 		DetachRows(Rows);
 		Rows = [];
 		UpdateCounts();
@@ -127,20 +134,18 @@ public abstract partial class BaseShippingConfirmViewModel : BaseQueryViewModel 
 		Rows = [.. rows];
 		AttachRows(Rows);
 		UpdateCounts();
-		Message = Rows.Count == 0 ? "該当する配分がありません。" : $"{Rows.Count:N0} 件を取得しました。（{ViewKind}）";
+		Message = Rows.Count == 0 ? "該当する配分がありません。" : $"{Rows.Count:N0} 件を取得しました。";
 	}
 
-	/// <summary>配分(TranHaibun)の未完了行を取得する。並び順はサブクラス（商品別/得意先別）で変える</summary>
+	/// <summary>配分(TranHaibun)の未完了行を取得する（取置を除く）。並び順はサブクラス（商品別/得意先別）で変える</summary>
 	async Task<List<TranHaibun>> LoadCandidatesAsync(string dayFrom, string dayTo, int maxCount, CancellationToken ct) {
 		List<string> parameters = [dayFrom, dayTo];
-		var where = "h.EndFlag = 0 AND h.DenDay BETWEEN @0 AND @1";
+		// 取置配分は店舗売上へ変換する別経路なので、ここでは確定対象にしない。
+		// 旧状態「確定済み・未出荷」(KakuteiDay有効・EndFlag=0)も未確定と同じく確定対象に含める
+		var where = $"h.EndFlag = 0 AND h.Kubun <> {(int)EnumHaibun.Reservation} AND h.DenDay BETWEEN @0 AND @1";
 		where += RangeEq(parameters, "soko.Code", SokoCode);
 		where += RangeEq(parameters, "sh.Code", ShohinCode);
 		where += RangeEq(parameters, "ten.Code", TokuiCode);
-		// 「未確定のみ」は KakuteiDay 空の行だけ。確定取消も見たいときは「確定済みも表示」
-		if (ViewKind == "未確定のみ") {
-			where += " AND ifnull(h.KakuteiDay,'') = ''";
-		}
 		var sql = $@"
 SELECT h.*
 FROM {nameof(TranHaibun)} h
@@ -178,7 +183,7 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 				ColSizDisplay = skuMap.GetValueOrDefault(new SkuKey(h.Id_Shohin, h.Id_Col, h.Id_Siz), $"{h.Id_Col}/{h.Id_Siz}"),
 				Su = h.Su,
 				Yuko = yukoMap.GetValueOrDefault(new SkuKey2(h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz)),
-				IsConfirmed = !string.IsNullOrEmpty(h.KakuteiDay),
+				KakuteiSu = h.Su,
 			};
 		})];
 	}
@@ -221,24 +226,38 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		return rows.ToDictionary(x => new SkuKey2(x.Id_Soko, x.Id_Shohin, x.Id_Col, x.Id_Siz), x => x.Su - x.ReserveQty);
 	}
 
-	/// <summary>チェックした未確定行を確定する。有効在庫割れは1件も確定せず、割れたSKUを一覧表示する</summary>
+	/// <summary>
+	/// チェックした行を確定数で確定し、伝票を作る。有効在庫割れは1件も確定せず、割れたSKUを一覧表示する
+	/// </summary>
 	[RelayCommand(IncludeCancelCommand = true)]
 	protected async Task ConfirmSelected(CancellationToken ct) {
 		if (IsBusy) return;
 		if (!TryParseDate(KakuteiDayText, out var kakuteiDay)) return;
-		var targets = Rows.Where(r => r.IsChecked && !r.IsConfirmed).ToList();
+		var targets = Rows.Where(r => r.IsChecked).ToList();
 		if (targets.Count == 0) {
-			MessageEx.ShowWarningDialog("確定する未確定の行を選択してください。", owner: ActiveWindow);
+			MessageEx.ShowWarningDialog("確定する行を選択してください。", owner: ActiveWindow);
 			return;
 		}
-		if (MessageEx.ShowQuestionDialog($"{targets.Count:N0} 件を確定しますか。", owner: ActiveWindow) != MessageBoxResult.Yes) return;
+		var shortRows = targets.Count(r => r.KakuteiSu < r.Su);
+		var zeroRows = targets.Count(r => r.KakuteiSu == 0);
+		var question = $"{targets.Count:N0} 件（確定数 合計 {targets.Sum(r => r.KakuteiSu):N0} 点）を確定し、出荷売上／移動伝票を作成します。"
+			+ (shortRows > 0 ? $"\n欠品のある行が {shortRows:N0} 件（うち全量欠品 {zeroRows:N0} 件）あります。" : string.Empty)
+			+ "\n確定後は取り消せません。よろしいですか？";
+		if (MessageEx.ShowQuestionDialog(question, owner: ActiveWindow) != MessageBoxResult.Yes) return;
 
 		StartBusy("確定中...");
 		try {
-			var param = new ShippingConfirmParam([.. targets.Select(r => r.Id)], ToDenDay(kakuteiDay));
+			HaibunCommitRow[] rows = [.. targets.Select(r => new HaibunCommitRow(r.Id, r.Vdu, r.KakuteiSu))];
+			// 入力社員は0で送り、サーバがログイン中の社員を使う
+			var param = new HaibunCommitParam(rows, ToDenDay(kakuteiDay), 0);
 			var reply = await SendExecuteAsync(param, ct);
 			if (reply.Code == CvMsgErrorCode.ShippingUnavailable) {
 				ShowShortage(reply);
+				return;
+			}
+			if (reply.Code == CvMsgErrorCode.ConcurrentUpdate) {
+				Message = "他端末で更新されたため確定していません。再検索してください。";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
 				return;
 			}
 			if (reply.Code < 0) {
@@ -247,8 +266,10 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 				return;
 			}
+			var result = Common.DeserializeObject(reply.DataMsg ?? "", typeof(HaibunCommitResult)) as HaibunCommitResult;
 			await OnSearchAsync(ct);
-			Message = $"{targets.Count:N0} 件を確定しました。";
+			Message = $"{result?.CommittedCount ?? targets.Count:N0} 件を確定し、伝票を {result?.CreatedSlipIds.Length ?? 0:N0} 件作成しました。"
+				+ (result is { ShortageRowCount: > 0 } ? $"（欠品 {result.ShortageRowCount:N0} 件）" : string.Empty);
 			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
 		}
 		catch (OperationCanceledException) { Message = "確定を中断しました"; }
@@ -259,38 +280,16 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		finally { FinishBusy(); }
 	}
 
-	/// <summary>チェックした確定済み行の確定を取り消す（伝票作成済みはサーバ側で対象外）</summary>
-	[RelayCommand(IncludeCancelCommand = true)]
-	protected async Task CancelSelected(CancellationToken ct) {
-		if (IsBusy) return;
-		var targets = Rows.Where(r => r.IsChecked && r.IsConfirmed).ToList();
-		if (targets.Count == 0) {
-			MessageEx.ShowWarningDialog("取消する確定済みの行を選択してください。", owner: ActiveWindow);
-			return;
-		}
-		if (MessageEx.ShowQuestionDialog($"{targets.Count:N0} 件の確定を取り消しますか。", owner: ActiveWindow) != MessageBoxResult.Yes) return;
+	/// <summary>チェックした行の確定数を指示数（全量出荷）へ戻す</summary>
+	[RelayCommand]
+	protected void SetKakuteiToShiji() {
+		foreach (var row in Rows.Where(r => r.IsChecked)) row.KakuteiSu = row.Su;
+	}
 
-		StartBusy("確定取消中...");
-		try {
-			var param = new ShippingCancelParam([.. targets.Select(r => r.Id)]);
-			var reply = await SendExecuteAsync(param, ct);
-			if (reply.Code < 0) {
-				var detail = string.IsNullOrEmpty(reply.Option) ? reply.DataMsg : reply.Option;
-				Message = $"確定取消に失敗しました。{detail}";
-				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-				return;
-			}
-			var result = Common.DeserializeObject(reply.DataMsg ?? "", typeof(ShippingCancelResult)) as ShippingCancelResult;
-			await OnSearchAsync(ct);
-			Message = $"{result?.CanceledCount ?? 0:N0} 件の確定を取り消しました。";
-			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
-		}
-		catch (OperationCanceledException) { Message = "確定取消を中断しました"; }
-		catch (Exception ex) {
-			Message = $"確定取消に失敗しました。{ex.Message}";
-			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-		}
-		finally { FinishBusy(); }
+	/// <summary>チェックした行の確定数を0（全量欠品）にする</summary>
+	[RelayCommand]
+	protected void SetKakuteiToZero() {
+		foreach (var row in Rows.Where(r => r.IsChecked)) row.KakuteiSu = 0;
 	}
 
 	[RelayCommand]
@@ -302,7 +301,7 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 	void ShowShortage(CvMsg reply) {
 		var dto = Common.DeserializeObject(reply.DataMsg ?? "[]", typeof(ShippingShortageDto[])) as ShippingShortageDto[] ?? [];
 		var lines = dto.Take(30).Select(e =>
-			$"倉庫{e.Id_Soko} 商品{e.Id_Shohin} 色{e.Id_Col} サイズ{e.Id_Siz}: 指示{e.Shiji} / 有効{e.Yuko}");
+			$"倉庫{e.Id_Soko} 商品{e.Id_Shohin} 色{e.Id_Col} サイズ{e.Id_Siz}: 確定数{e.Shiji} / 有効{e.Yuko}");
 		var more = dto.Length > 30 ? $"\n… 他 {dto.Length - 30} 件" : string.Empty;
 		Message = $"有効在庫が不足しているため1件も確定していません（{dto.Length} SKU）。";
 		MessageEx.ShowErrorDialog(Message + "\n\n" + string.Join("\n", lines) + more, owner: ActiveWindow);

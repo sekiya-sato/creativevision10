@@ -420,8 +420,10 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// 引当数として積む数量の式。未確定(<see cref="TranHaibun.KakuteiDay"/> が空)は指示数
 	/// <see cref="TranHaibun.Su"/>、確定済みは確定数 <see cref="TranHaibun.JitsuSu"/> を積む。
 	/// <para>
-	/// 確定時に倉庫から <see cref="TranHaibun.JitsuSu"/> / <see cref="TranHaibun.ShortSu"/> が返り
-	/// <c>Su = JitsuSu + ShortSu</c> が成立する。欠品分は出荷されないため、確定と同時に引当から外れる。
+	/// 配分確定で <see cref="TranHaibun.JitsuSu"/> / <see cref="TranHaibun.ShortSu"/> が設定され
+	/// <c>Su = JitsuSu + ShortSu</c> が成立する。決定 D8 で確定と同時に完了(EndFlag=1)になるため、
+	/// 確定済みの数量を積むのは旧2段階方式で残った「確定済み・未出荷」の行だけである。
+	/// <c>AllocationRules.ReservedQty</c> は確定時の在庫検査でこの式と同じ値を使う。
 	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2c を参照する。
 	/// </para>
 	/// </summary>

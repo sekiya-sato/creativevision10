@@ -602,46 +602,56 @@ public class SummaryDbTests {
 	}
 
 	/// <summary>
-	/// 出荷指示確定は有効在庫を割ると1件も確定しない。旧CV.netの
-	/// 「有効在庫数 − 入力した予指示が正の場合のみ確定できる」に対応する（仕様 5.2.4 / I3）。
+	/// 配分確定は有効在庫を割ると1件も確定しない（Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md 3.3）。
+	/// 確定数を減らして欠品にすれば、残りの在庫の範囲で確定できる。
 	/// </summary>
 	[TestMethod]
-	public void ConfirmShipping_RejectsAllWhenAvailableStockGoesNegative() {
+	public void Commit_RejectsAllWhenAvailableStockGoesNegative() {
 		var db = PrepareShippingTables();
 		var summaryDb = new SummaryDb(db);
 		var shippingDb = new ShippingDb(db);
-		// 実在庫5に対して8を配分すると有効在庫が -3 になる
+		// 実在庫5に対して8を配分する
 		var purchase = CreatePurchase("20260810", 1, 5, EnumShiire.Shiire);
 		db.Insert(purchase);
 		ApplyImmediate(summaryDb, purchase, false);
 		var haibun = CreateHaibun("20260815", 1, 8);
 		db.Insert(haibun);
 		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
+		var vdu = db.Single<TranHaibun>("where Id=@0", haibun.Id).Vdu;
 
-		var cnt = shippingDb.ConfirmShipping([haibun.Id], "20260816", out var errors);
+		var result = shippingDb.Commit([(haibun.Id, vdu, 8)], "20260816", 1, out var outcome, out var errors);
 
-		Assert.AreEqual(0, cnt);
+		Assert.AreEqual(CommitOutcome.Shortage, outcome);
+		Assert.AreEqual(0, result.CreatedSlipIds.Count);
 		Assert.AreEqual(1, errors.Count);
-		Assert.AreEqual(-3, errors[0].Yuko);
 		Assert.AreEqual(8, errors[0].Shiji);
-		Assert.AreEqual("", db.Single<TranHaibun>("where Id=@0", haibun.Id).KakuteiDay, "1件も確定しない");
+		Assert.AreEqual(5, errors[0].Yuko, "自分の引当分を除いた有効在庫");
+		var rejected = db.Single<TranHaibun>("where Id=@0", haibun.Id);
+		Assert.AreEqual("", rejected.KakuteiDay, "1件も確定しない");
+		Assert.AreEqual(0, rejected.EndFlag);
+		AssertRealReserve(db, 1, 8);
 
-		// 在庫を積み増すと確定できる
-		var extra = CreatePurchase("20260811", 1, 3, EnumShiire.Shiire);
-		db.Insert(extra);
-		ApplyImmediate(summaryDb, extra, false);
+		// 確定数5（欠品3）なら在庫の範囲内なので確定できる
+		result = shippingDb.Commit([(haibun.Id, vdu, 5)], "20260816", 1, out outcome, out _);
 
-		Assert.AreEqual(1, shippingDb.ConfirmShipping([haibun.Id], "20260816", out var ok));
-		Assert.AreEqual(0, ok.Count);
-		Assert.AreEqual("20260816", db.Single<TranHaibun>("where Id=@0", haibun.Id).KakuteiDay);
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		Assert.AreEqual(1, result.CreatedSlipIds.Count);
+		Assert.AreEqual(1, result.ShortageRowCount);
+		var after = db.Single<TranHaibun>("where Id=@0", haibun.Id);
+		Assert.AreEqual("20260816", after.KakuteiDay);
+		Assert.AreEqual(5, after.JitsuSu);
+		Assert.AreEqual(3, after.ShortSu);
+		Assert.AreEqual(1, after.EndFlag);
+		AssertRealReserve(db, 1, 0);
+		AssertRealStock(db, 1, 0);
 	}
 
 	/// <summary>
-	/// 出荷処理は仮想ヘッダ単位で伝票を作る。出荷先の店種区分で出荷売上と移動出庫に分かれ、
-	/// 伝票Idを RelateNo2 へ書いて EndFlag=1 で引当を解除する（仕様 I2 / I4 / I5）。
+	/// 配分確定は確定数を反映してから仮想ヘッダ単位で伝票を作る。出荷先の店種区分で出荷売上と移動出庫に分かれ、
+	/// 伝票Idを RelateNo2 へ書いて EndFlag=1 で引当を解除する（決定 D8 / I2 / I4 / I5）。
 	/// </summary>
 	[TestMethod]
-	public void CreateShippingSlips_SplitsByTenTypeAndReleasesReserve() {
+	public void Commit_SplitsByTenTypeAndReleasesReserve() {
 		var db = PrepareShippingTables();
 		var summaryDb = new SummaryDb(db);
 		var shippingDb = new ShippingDb(db);
@@ -661,88 +671,65 @@ public class SummaryDbTests {
 		summaryDb.CalcHaibun2Reserve(ReserveKey.From(toOroshi));
 		AssertRealReserve(db, 1, 14);
 
-		shippingDb.ConfirmShipping([toOroshi.Id, toChokuei.Id], "20260816", out _);
-		// 倉庫から確定数が返る。卸先は8出荷2欠品、直営店は全量出荷
-		db.Execute("update TranHaibun set JitsuSu=8, ShortSu=2 where Id=@0", toOroshi.Id);
-		db.Execute("update TranHaibun set JitsuSu=4 where Id=@0", toChokuei.Id);
+		// 卸先は8出荷2欠品、直営店は全量出荷
+		var result = shippingDb.Commit([
+			(toOroshi.Id, VduOf(db, toOroshi.Id), 8),
+			(toChokuei.Id, VduOf(db, toChokuei.Id), 4),
+		], "20260817", 1, out var outcome, out _);
 
-		var created = shippingDb.CreateShippingSlips([toOroshi.Id, toChokuei.Id], "20260817", idShain: 1);
-
-		Assert.AreEqual(2, created.Count, "出荷先ごとに1伝票");
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		Assert.AreEqual(2, result.CreatedSlipIds.Count, "出荷先ごとに1伝票");
+		Assert.AreEqual(2, result.CommittedCount);
+		Assert.AreEqual(1, result.ShortageRowCount);
 		var uriage = db.Single<Tran00Uriage>("where Id_Tokui=@0", oroshiId);
 		Assert.AreEqual(8, uriage.SuTotal, "卸先は出荷売上。欠品2は出荷しない");
+		Assert.AreEqual("20260817", uriage.DenDay, "伝票日は確定日");
 		var ido = db.Single<Tran10IdoOut>("where Id_Ido=@0", chokueiId);
 		Assert.AreEqual(4, ido.SuTotal, "直営店は移動出庫");
 
-		Assert.AreEqual(1, db.Single<TranHaibun>("where Id=@0", toOroshi.Id).EndFlag);
-		Assert.AreEqual((int)uriage.Id, db.Single<TranHaibun>("where Id=@0", toOroshi.Id).RelateNo2);
+		var oroshiRow = db.Single<TranHaibun>("where Id=@0", toOroshi.Id);
+		Assert.AreEqual(1, oroshiRow.EndFlag);
+		Assert.AreEqual((int)uriage.Id, oroshiRow.RelateNo2);
+		Assert.AreEqual(8, oroshiRow.JitsuSu);
+		Assert.AreEqual(2, oroshiRow.ShortSu);
 		AssertRealReserve(db, 1, 0);
 		// 仕入100 − 出荷売上8 − 移動出庫4
 		AssertRealStock(db, 1, 88);
+		var incremental = GetReserveSnapshot(db);
+		summaryDb.CalcReserveQtyAll();
+		CollectionAssert.AreEqual(incremental, GetReserveSnapshot(db), "通常更新値とRebuild値は一致する");
 	}
 
-	/// <summary>全量欠品の行は伝票を作らずに完了だけ立てて引当から外す</summary>
+	/// <summary>
+	/// 確定数0（全量欠品）は伝票を作らずに完了だけ立てて引当から外す。在庫が無くても在庫検査で止めない（指示取消）。
+	/// </summary>
 	[TestMethod]
-	public void CreateShippingSlips_AllShortage_ReleasesReserveWithoutSlip() {
+	public void Commit_ZeroQty_CompletesWithoutSlipEvenWithoutStock() {
 		var db = PrepareShippingTables();
 		var summaryDb = new SummaryDb(db);
 		var shippingDb = new ShippingDb(db);
 		var oroshiId = InsertTokui(db, "T011", "卸先", tenType: 1);
-		var purchase = CreatePurchase("20260810", 1, 50, EnumShiire.Shiire);
-		db.Insert(purchase);
-		ApplyImmediate(summaryDb, purchase, false);
 		var haibun = CreateHaibun("20260815", 1, 6);
 		haibun.Id_Tenpo = oroshiId;
 		db.Insert(haibun);
 		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
-		shippingDb.ConfirmShipping([haibun.Id], "20260816", out _);
-		db.Execute("update TranHaibun set JitsuSu=0, ShortSu=6 where Id=@0", haibun.Id);
 
-		var created = shippingDb.CreateShippingSlips([haibun.Id], "20260817", idShain: 1);
+		var result = shippingDb.Commit([(haibun.Id, VduOf(db, haibun.Id), 0)], "20260817", 1, out var outcome, out _);
 
-		Assert.AreEqual(0, created.Count, "出荷数0なら伝票を作らない");
-		Assert.AreEqual(1, db.Single<TranHaibun>("where Id=@0", haibun.Id).EndFlag);
-		AssertRealReserve(db, 1, 0);
-		AssertRealStock(db, 1, 50, "在庫は動かない");
-	}
-
-	/// <summary>
-	/// 出荷処理入力(ProcessShipping)は、確定済み配分に実数量を入れてから伝票を作る。
-	/// ハンディ廃止(決定 I6)により実数量・欠品は画面で確定する。JitsuSu=8/ShortSu=2 で出荷売上8。
-	/// </summary>
-	[TestMethod]
-	public void ProcessShipping_SetsJitsuSuAndCreatesSlips() {
-		var db = PrepareShippingTables();
-		var summaryDb = new SummaryDb(db);
-		var shippingDb = new ShippingDb(db);
-		var oroshiId = InsertTokui(db, "T011", "卸先", tenType: 1);
-		var purchase = CreatePurchase("20260810", 1, 100, EnumShiire.Shiire);
-		db.Insert(purchase);
-		ApplyImmediate(summaryDb, purchase, false);
-		var haibun = CreateHaibun("20260815", 1, 10);
-		haibun.Id_Tenpo = oroshiId;
-		db.Insert(haibun);
-		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
-		shippingDb.ConfirmShipping([haibun.Id], "20260816", out _);
-		var vdu = db.Single<TranHaibun>("where Id=@0", haibun.Id).Vdu;
-
-		// 実数量8（欠品2）で出荷処理
-		var created = shippingDb.ProcessShipping([(haibun.Id, vdu, 8)], "20260817", idShain: 1, out var conflict);
-
-		Assert.IsFalse(conflict);
-		Assert.AreEqual(1, created.Count);
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		Assert.AreEqual(0, result.CreatedSlipIds.Count, "確定数0なら伝票を作らない");
 		var after = db.Single<TranHaibun>("where Id=@0", haibun.Id);
-		Assert.AreEqual(8, after.JitsuSu);
-		Assert.AreEqual(2, after.ShortSu);
-		Assert.AreEqual(1, after.EndFlag, "完了して引当解除");
-		Assert.AreEqual(8, db.Single<Tran00Uriage>("where Id_Tokui=@0", oroshiId).SuTotal, "卸先は出荷売上8");
+		Assert.AreEqual(1, after.EndFlag);
+		Assert.AreEqual(0, after.JitsuSu);
+		Assert.AreEqual(6, after.ShortSu);
+		Assert.AreEqual(0, after.RelateNo2);
+		Assert.AreEqual(0, db.Fetch<Tran00Uriage>("").Count);
 		AssertRealReserve(db, 1, 0);
-		AssertRealStock(db, 1, 92, "仕入100 − 出荷8");
 	}
 
-	/// <summary>実数量は指示数(Su)を超えないようサーバ側でクランプする。欠品は Su − 実数量。</summary>
+	/// <summary>確定数は指示数(Su)を超えないようサーバ側で収める。欠品は Su − 確定数。</summary>
 	[TestMethod]
-	public void ProcessShipping_ClampsJitsuSuToShiji() {
+	public void Commit_ClampsKakuteiSuToShiji() {
 		var db = PrepareShippingTables();
 		var summaryDb = new SummaryDb(db);
 		var shippingDb = new ShippingDb(db);
@@ -754,21 +741,19 @@ public class SummaryDbTests {
 		haibun.Id_Tenpo = oroshiId;
 		db.Insert(haibun);
 		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
-		shippingDb.ConfirmShipping([haibun.Id], "20260816", out _);
-		var vdu = db.Single<TranHaibun>("where Id=@0", haibun.Id).Vdu;
 
-		// 指示数10を超える99を入れても指示数へクランプし、欠品は0
-		shippingDb.ProcessShipping([(haibun.Id, vdu, 99)], "20260817", idShain: 1, out var conflict);
+		shippingDb.Commit([(haibun.Id, VduOf(db, haibun.Id), 99)], "20260817", 1, out var outcome, out _);
 
-		Assert.IsFalse(conflict);
+		Assert.AreEqual(CommitOutcome.Success, outcome);
 		var after = db.Single<TranHaibun>("where Id=@0", haibun.Id);
 		Assert.AreEqual(10, after.JitsuSu);
 		Assert.AreEqual(0, after.ShortSu);
+		AssertRealStock(db, 1, 90);
 	}
 
-	/// <summary>一覧取得時点と違うVduを渡すと競合。何も書かずに concurrencyConflict=true を返す。</summary>
+	/// <summary>一覧取得時点と違うVdu・完了済みの行が1件でもあれば競合。何も書かない。</summary>
 	[TestMethod]
-	public void ProcessShipping_ConcurrencyConflict_WritesNothing() {
+	public void Commit_ConcurrencyConflict_WritesNothing() {
 		var db = PrepareShippingTables();
 		var summaryDb = new SummaryDb(db);
 		var shippingDb = new ShippingDb(db);
@@ -778,21 +763,152 @@ public class SummaryDbTests {
 		ApplyImmediate(summaryDb, purchase, false);
 		var haibun = CreateHaibun("20260815", 1, 10);
 		haibun.Id_Tenpo = oroshiId;
+		var done = CreateHaibun("20260815", 1, 3, endFlag: 1, kakuteiDay: "20260814", jitsuSu: 3);
+		done.Id_Tenpo = oroshiId;
 		db.Insert(haibun);
+		db.Insert(done);
 		summaryDb.CalcHaibun2Reserve(ReserveKey.From(haibun));
-		shippingDb.ConfirmShipping([haibun.Id], "20260816", out _);
-		var vdu = db.Single<TranHaibun>("where Id=@0", haibun.Id).Vdu;
+		var vdu = VduOf(db, haibun.Id);
 
-		// 一覧取得時点と違うVduを渡すと競合。何も書かない
-		var created = shippingDb.ProcessShipping([(haibun.Id, vdu + 1, 8)], "20260817", idShain: 1, out var conflict);
+		// Vdu不一致
+		shippingDb.Commit([(haibun.Id, vdu + 1, 8)], "20260817", 1, out var outcome, out _);
+		Assert.AreEqual(CommitOutcome.Conflict, outcome);
+		// 完了済みの行が混ざる
+		shippingDb.Commit([(haibun.Id, vdu, 8), (done.Id, VduOf(db, done.Id), 3)], "20260817", 1, out outcome, out _);
+		Assert.AreEqual(CommitOutcome.Conflict, outcome);
 
-		Assert.IsTrue(conflict);
-		Assert.AreEqual(0, created.Count);
 		var after = db.Single<TranHaibun>("where Id=@0", haibun.Id);
-		Assert.AreEqual(0, after.JitsuSu, "実数量は書かれていない");
+		Assert.AreEqual(0, after.JitsuSu, "確定数は書かれていない");
 		Assert.AreEqual(0, after.EndFlag, "完了していない");
-		Assert.AreEqual("20260816", after.KakuteiDay, "確定は残る");
+		Assert.AreEqual("", after.KakuteiDay);
+		Assert.AreEqual(0, db.Fetch<Tran00Uriage>("").Count);
 		AssertRealReserve(db, 1, 10);
+	}
+
+	/// <summary>取置配分は店舗売上へ変換する別経路なので、配分確定では扱わない（何も書かない）</summary>
+	[TestMethod]
+	public void Commit_Reservation_IsRejected() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var purchase = CreatePurchase("20260810", 1, 100, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var reservation = CreateHaibun("20260815", 1, 2, kubun: EnumHaibun.Reservation);
+		db.Insert(reservation);
+
+		shippingDb.Commit([(reservation.Id, VduOf(db, reservation.Id), 2)], "20260817", 1, out var outcome, out _);
+
+		Assert.AreEqual(CommitOutcome.InvalidKubun, outcome);
+		Assert.AreEqual(0, db.Single<TranHaibun>("where Id=@0", reservation.Id).EndFlag);
+	}
+
+	/// <summary>
+	/// 仕入配分(初回配分 Kubun=0)は引当に入らないが、確定時は自分の確定数を必ず在庫から差し引いて検査する。
+	/// 旧 ConfirmShipping は「実在庫 − 引当数」だけを見ていたため、在庫が足りなくても確定できていた（P6）。
+	/// </summary>
+	[TestMethod]
+	public void Commit_HatsukaiQtyIsCheckedAgainstStock() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var purchase = CreatePurchase("20260810", 1, 5, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var hatsukai = CreateHaibun("20260815", 1, 8, kubun: EnumHaibun.Hatsukai);
+		db.Insert(hatsukai);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(hatsukai));
+		AssertRealReserve(db, 1, 0);
+
+		shippingDb.Commit([(hatsukai.Id, VduOf(db, hatsukai.Id), 8)], "20260817", 1, out var outcome, out var errors);
+
+		Assert.AreEqual(CommitOutcome.Shortage, outcome);
+		Assert.AreEqual(5, errors[0].Yuko);
+		Assert.AreEqual(8, errors[0].Shiji);
+	}
+
+	/// <summary>
+	/// 旧状態「確定済み・未出荷」(KakuteiDay有効・EndFlag=0)の行も確定でき、確定日は上書きされる（移行時の扱い）。
+	/// </summary>
+	[TestMethod]
+	public void Commit_LegacyConfirmedRow_CanBeCommitted() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var purchase = CreatePurchase("20260810", 1, 10, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var legacy = CreateHaibun("20260815", 1, 10, kakuteiDay: "20260816");
+		db.Insert(legacy);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(legacy));
+
+		var result = shippingDb.Commit([(legacy.Id, VduOf(db, legacy.Id), 10)], "20260820", 1, out var outcome, out _);
+
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		Assert.AreEqual(1, result.CreatedSlipIds.Count);
+		var after = db.Single<TranHaibun>("where Id=@0", legacy.Id);
+		Assert.AreEqual("20260820", after.KakuteiDay);
+		Assert.AreEqual(1, after.EndFlag);
+		AssertRealStock(db, 1, 0);
+		AssertRealReserve(db, 1, 0);
+	}
+
+	/// <summary>
+	/// 旧 ConfirmShipping は KakuteiDay を立てるだけで引当を引き直さなかったため、「確定済み・未出荷」行のキーには
+	/// 未確定時の引当数(Su)が残っていることがある。配分確定は検査前に引き直すので、偽の在庫割れにならない。
+	/// </summary>
+	[TestMethod]
+	public void Commit_LegacyConfirmedRowWithStaleReserve_IsNotFalseShortage() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var purchase = CreatePurchase("20260810", 1, 10, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var legacy = CreateHaibun("20260815", 1, 10);
+		db.Insert(legacy);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(legacy));
+		// 旧方式の確定: KakuteiDay だけを立て、引当は引き直さない（保存済み引当10が残る）
+		db.Execute("update TranHaibun set KakuteiDay='20260816' where Id=@0", legacy.Id);
+		AssertRealReserve(db, 1, 10);
+
+		var result = shippingDb.Commit([(legacy.Id, VduOf(db, legacy.Id), 10)], "20260820", 1, out var outcome, out var errors);
+
+		Assert.AreEqual(CommitOutcome.Success, outcome, string.Join(",", errors));
+		Assert.AreEqual(1, result.CreatedSlipIds.Count);
+		AssertRealStock(db, 1, 0);
+		AssertRealReserve(db, 1, 0);
+	}
+
+	/// <summary>同じ倉庫+SKUの複数行は合計で在庫検査し、確定対象外の引当も差し引く</summary>
+	[TestMethod]
+	public void Commit_SameSkuRowsAreSummedWithOtherReserve() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		var purchase = CreatePurchase("20260810", 1, 10, EnumShiire.Shiire);
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		var a = CreateHaibun("20260815", 1, 4);
+		var b = CreateHaibun("20260815", 1, 4);
+		var other = CreateHaibun("20260815", 1, 3);
+		db.Insert(a);
+		db.Insert(b);
+		db.Insert(other);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(a));
+		AssertRealReserve(db, 1, 11);
+
+		// 実在庫10 − 対象外引当3 = 7 に対し 4+4=8 → 割れ
+		shippingDb.Commit([(a.Id, VduOf(db, a.Id), 4), (b.Id, VduOf(db, b.Id), 4)], "20260820", 1, out var outcome, out var errors);
+		Assert.AreEqual(CommitOutcome.Shortage, outcome);
+		Assert.AreEqual(8, errors.Single().Shiji);
+		Assert.AreEqual(7, errors.Single().Yuko);
+
+		// 片方を3にすれば 7 で足りる
+		shippingDb.Commit([(a.Id, VduOf(db, a.Id), 4), (b.Id, VduOf(db, b.Id), 3)], "20260820", 1, out outcome, out _);
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		AssertRealStock(db, 1, 3);
+		AssertRealReserve(db, 1, 3); // 対象外の引当3だけが残る
 	}
 
 	/// <summary>
@@ -1704,6 +1820,9 @@ public class SummaryDbTests {
 			.Select(x => $"R:{x.Id_Soko}:{x.Id_Shohin}:{x.Id_Col}:{x.Id_Siz}:{x.ReserveQty}");
 		return monthly.Concat(real).ToArray();
 	}
+
+	/// <summary>DB上の配分行の現在のVdu（確定の楽観排他に渡す値）</summary>
+	private static long VduOf(ExDatabaseSqlite db, long id) => db.Single<TranHaibun>("where Id=@0", id).Vdu;
 
 	/// <summary>
 	/// 引当テスト用の配分行。既定は在庫配分(引当対象)・未確定とする。
