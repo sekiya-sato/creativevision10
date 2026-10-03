@@ -119,6 +119,20 @@ public partial class CustomerReservationAllocationInputViewModel : BaseViewModel
 
 	bool CanOperate() => !IsBusy && idTenpo > 0;
 
+	/// <summary>
+	/// 店舗を変えたら、検索するまで前の店舗の一覧・在庫で操作させない
+	/// （内部の店舗Idは検索で確定する。古いIdのまま登録すると前の店舗に取置が入る）
+	/// </summary>
+	partial void OnTenpoCodeChanged(string value) {
+		if (idTenpo == 0) return;
+		idTenpo = 0;
+		Rows = [];
+		EntrySkus = [];
+		EntrySku = null;
+		Message = "店舗が変わりました。［検索］を押してください。";
+		NotifyCommands();
+	}
+
 	partial void OnIsBusyChanged(bool value) => NotifyCommands();
 
 	void NotifyCommands() {
@@ -264,6 +278,7 @@ public partial class CustomerReservationAllocationInputViewModel : BaseViewModel
 			MessageEx.ShowWarningDialog("期限日は取置日以降の日付にしてください。", owner: ActiveWindow);
 			return;
 		}
+		if (!ConfirmPastLimit(limit)) return;
 		await SaveAsync(row.Source, replaced, $"期限日を {limit:yyyy/MM/dd} に変更しました。", ct);
 	}
 
@@ -302,6 +317,7 @@ public partial class CustomerReservationAllocationInputViewModel : BaseViewModel
 			MessageEx.ShowWarningDialog("期限日は取置日以降の日付にしてください。", owner: ActiveWindow);
 			return;
 		}
+		if (!ConfirmPastLimit(limitDay)) return;
 		if (EntrySu <= 0) {
 			MessageEx.ShowWarningDialog("取置数は1以上を入力してください。", owner: ActiveWindow);
 			return;
@@ -328,7 +344,7 @@ public partial class CustomerReservationAllocationInputViewModel : BaseViewModel
 			var sku = EntrySku;
 			var yuko = await LoadYukoAsync(entryShohin.Id, sku.Id_Col, sku.Id_Siz, ct);
 			if (EntrySu > yuko && !ConfirmShortage(yuko, EntrySu)) return;
-			var question = $"{customer.Name} 様の取置 {entryShohin.Name} {sku.Display} {EntrySu:N0} 点（期限 {limitDay:yyyy/MM/dd}）を登録します。よろしいですか？";
+			var question = $"{TenpoName} で {customer.Name} 様の取置 {entryShohin.Name} {sku.Display} {EntrySu:N0} 点（期限 {limitDay:yyyy/MM/dd}）を登録します。よろしいですか？";
 			if (MessageEx.ShowQuestionDialog(question, owner: ActiveWindow) != MessageBoxResult.Yes) return;
 
 			var denYmd = ToYmd8(denDay);
@@ -547,6 +563,11 @@ public partial class CustomerReservationAllocationInputViewModel : BaseViewModel
 		}
 		return rows[0];
 	}
+
+	/// <summary>期限日が今日より前なら、次の自動取消（翌日0:50）で取り消されることを確認する</summary>
+	bool ConfirmPastLimit(DateTime limit) => limit.Date >= DateTime.Today || MessageEx.ShowQuestionDialog(
+		$"期限日 {limit:yyyy/MM/dd} は今日より前です。次の自動取消で期限切れとして取り消されます。よろしいですか？",
+		owner: ActiveWindow) == MessageBoxResult.Yes;
 
 	bool ConfirmShortage(int yuko, int su) => MessageEx.ShowQuestionDialog(
 		$"店舗の有効在庫（{yuko:N0}）を超えて {su:N0} 点を取り置こうとしています。\n在庫が足りないまま取り置くと、売上変換時に店舗在庫がマイナスになります。登録しますか？",

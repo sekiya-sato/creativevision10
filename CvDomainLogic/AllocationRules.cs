@@ -92,7 +92,7 @@ public static class AllocationRules {
 	}
 
 	/// <summary>yyyyMMdd の実在する日付か</summary>
-	static bool IsYmd(string? s) =>
+	public static bool IsYmd(string? s) =>
 		s is { Length: 8 } && DateTime.TryParseExact(s, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
 			System.Globalization.DateTimeStyles.None, out _);
 

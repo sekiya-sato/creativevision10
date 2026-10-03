@@ -50,6 +50,8 @@ public class ReservationTests {
 			typeof(SysSequence), typeof(SysHistAutoexec), typeof(MasterSysman), typeof(MasterTokui), typeof(MasterShohin),
 			typeof(MasterEndCustomer), typeof(MasterShain), typeof(DerivedShohinColSiz), typeof(SummaryStock), typeof(SummaryRealStock),
 			typeof(TranHaibun), typeof(Tran01Tenuri), typeof(Tran03Shiire),
+			// 在庫の全件再集計（SummaryAllAsyncStream）が読む伝票テーブル
+			typeof(Tran00Uriage), typeof(Tran05Ido), typeof(Tran10IdoOut), typeof(Tran11IdoIn), typeof(Tran60Tana), typeof(Tran61Chosei),
 		}) {
 			Db.CreateTable(t, true, false);
 		}
@@ -255,6 +257,52 @@ public class ReservationTests {
 		var before = Db.Fetch<SummaryRealStock>("order by Id_Soko").Select(x => $"{x.Id_Soko}:{x.Su}:{x.ReserveQty}").ToArray();
 		new SummaryDb(Db).CalcReserveQtyAll();
 		CollectionAssert.AreEqual(before, Db.Fetch<SummaryRealStock>("order by Id_Soko").Select(x => $"{x.Id_Soko}:{x.Su}:{x.ReserveQty}").ToArray());
+	}
+
+	[TestMethod]
+	public async Task Convert_StockMatchesFullRebuild() {
+		Stock(_storeId, 10);
+		await SaveAsync([], [NewReservation(3), NewReservation(2, customerId: _otherCustomerId), NewReservation(1)]);
+		var rows = AllRows();
+		await ExecuteAsync(new ReservationConvertParam([Ref(rows[0]), Ref(rows[1])], "20261005", 1));
+		await ExecuteAsync(new ReservationCancelParam([Ref(rows[2])], "20261005"));
+		string[] Snapshot() => [
+			.. Db.Fetch<SummaryStock>("order by SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz")
+				.Select(x => $"M:{x.SumMonth}:{x.Id_Soko}:{x.Su}:{x.InQty}:{x.OutQty}:{x.ReserveQty}"),
+			.. Db.Fetch<SummaryRealStock>("order by Id_Soko, Id_Shohin, Id_Col, Id_Siz")
+				.Select(x => $"R:{x.Id_Soko}:{x.Su}:{x.ReserveQty}"),
+		];
+		var incremental = Snapshot();
+		Assert.AreEqual(5, Real(_storeId)!.Su);
+
+		await foreach (var progress in new SummaryDb(Db).SummaryAllAsyncStream(new CalcDateTermParameter("202609", "202610"))) {
+			Assert.IsFalse(progress.IsError, $"{progress.StepName}: {progress.ErrorMessage}");
+		}
+
+		CollectionAssert.AreEqual(incremental, Snapshot(), "売上変換の在庫・引当は全件再集計と一致する");
+	}
+
+	[TestMethod]
+	public async Task Convert_SokoDiffersFromTenpo_IsRejected() {
+		// 汎用の書き込み経路から入った出庫元≠店舗の取置は変換しない（伝票の在庫拠点と引当の拠点がずれるため）
+		var odd = NewReservation(1);
+		odd.Id_Soko = _otherStoreId;
+		Db.Insert(odd);
+
+		var reply = await ExecuteAsync(new ReservationConvertParam([Ref(Row(odd.Id))], "20261005", 1));
+
+		Assert.AreEqual((int)CvMsgErrorCode.InvalidParameter, reply.Code);
+		Assert.AreEqual(0, Db.Fetch<Tran01Tenuri>("").Count);
+	}
+
+	[TestMethod]
+	public async Task Convert_InvalidDenDay_IsRejected() {
+		await SaveAsync([], [NewReservation(1)]);
+
+		var reply = await ExecuteAsync(new ReservationConvertParam([Ref(AllRows().Single())], "20261332", 1));
+
+		Assert.AreEqual((int)CvMsgErrorCode.InvalidParameter, reply.Code);
+		Assert.AreEqual(0, AllRows().Single().EndFlag);
 	}
 
 	[TestMethod]

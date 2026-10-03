@@ -732,8 +732,8 @@ public partial class CoreService {
 		var rows = convert.Rows ?? [];
 		_logger.LogInformation("パラメータ ReservationConvertParam 件数={Count} 売上日={DenDay} 社員={IdShain}",
 			rows.Length, convert.DenDay, convert.IdShain);
-		if (string.IsNullOrWhiteSpace(convert.DenDay)) {
-			const string noDay = "売上日を指定してください。";
+		if (!AllocationRules.IsYmd(convert.DenDay)) {
+			const string noDay = "売上日を yyyyMMdd で指定してください。";
 			return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, noDay, typeof(string), noDay);
 		}
 		var idShain = convert.IdShain > 0 ? convert.IdShain : ResolveLoginShainId();
@@ -763,8 +763,8 @@ public partial class CoreService {
 	private CvMsg HandleReservationCancel(CvFlag flag, ReservationCancelParam cancel) {
 		var rows = cancel.Rows ?? [];
 		_logger.LogInformation("パラメータ ReservationCancelParam 件数={Count} 取消日={CancelDay}", rows.Length, cancel.CancelDay);
-		if (string.IsNullOrWhiteSpace(cancel.CancelDay)) {
-			const string noDay = "取消日を指定してください。";
+		if (!AllocationRules.IsYmd(cancel.CancelDay)) {
+			const string noDay = "取消日を yyyyMMdd で指定してください。";
 			return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, noDay, typeof(string), noDay);
 		}
 		try {
@@ -792,7 +792,7 @@ public partial class CoreService {
 				_logger.LogInformation("取置 競合検知");
 				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, typeof(string), string.Empty);
 			case ReservationOutcome.InvalidKubun:
-				const string invalidKubun = "取置以外の配分が含まれています。";
+				const string invalidKubun = "取置以外の配分、または出庫元が店舗と異なる取置が含まれています。";
 				return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, invalidKubun, typeof(string), invalidKubun);
 			default:
 				return null;

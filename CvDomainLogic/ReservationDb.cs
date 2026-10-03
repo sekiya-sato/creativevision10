@@ -11,7 +11,7 @@ public enum ReservationOutcome {
 	Success,
 	/// <summary>対象行が無い・完了済み・Vdu不一致。何も書いていない</summary>
 	Conflict,
-	/// <summary>取置(区分6)以外の行を含む。何も書いていない</summary>
+	/// <summary>取置(区分6)以外の行、または出庫元が店舗と異なる取置を含む。何も書いていない</summary>
 	InvalidKubun,
 }
 
@@ -208,7 +208,9 @@ public class ReservationDb(ExDatabase db) {
 				outcome = ReservationOutcome.Conflict;
 				return [];
 			}
-			if (h.Kubun != (int)EnumHaibun.Reservation) {
+			// 出庫元≠店舗の取置は保存時の検査では作られないが、汎用の書き込み経路から入ると
+			// 伝票の在庫拠点（店舗）と引当を外す拠点（Id_Soko）がずれるので扱わない
+			if (h.Kubun != (int)EnumHaibun.Reservation || h.Id_Soko != h.Id_Tenpo) {
 				outcome = ReservationOutcome.InvalidKubun;
 				return [];
 			}
