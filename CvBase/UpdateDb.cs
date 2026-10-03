@@ -113,6 +113,10 @@ public class UpdateDb {
 		new (26_09_21_01,
 			"UPDATE Tran03Shiire SET Kubun = 15 WHERE GeneratedKind = 1 AND Kubun = 10;UPDATE Tran03Shiire SET Kubun = 25 WHERE GeneratedKind = 1 AND Kubun = 20;",
 			"消化仕入更新で自動生成されたTran03Shiire(GeneratedKind=1)のKubunを共用値10/20から専用値15(消化仕入)/25(消化仕入返品)へ移行する 対象は既存のGeneratedKind=1行のみで手入力の10/20は変更しない CalcFlagはTranCalcBase.GetKubunCalcFlagにより15→+1・25→-1で従来の10→+1・20→-1と同符号のため本マイグレーションでの再計算は不要"),
+		new (26_10_03_01,
+			"ALTER TABLE TranHaibun ADD COLUMN ArrivedSu NUMBER not null default 0;" +
+			"UPDATE TranHaibun SET ArrivedSu = Su WHERE Kubun = 0 AND RelateNo1 = 0 AND EndFlag = 0;",
+			"配分再設計Step4 仕入配分(区分0)の入荷済み数列を追加 発注に紐付かない既存の初回配分(RelateNo1=0)は入荷を判定できないため入荷済み扱い(ArrivedSu=Su)にして確定できる状態を保つ(判断3) 発注に紐付く行の入荷済み数と引当数は全件再集計(ArrivalDb.RecalcAll→CalcReserveQtyAll)または次の仕入・保存・確定で計算される Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md 3.5"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

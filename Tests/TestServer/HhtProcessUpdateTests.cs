@@ -609,6 +609,8 @@ public class HhtProcessUpdateTests {
 			typeof(MasterEndCustomer), typeof(MasterSysman), typeof(DerivedShohinColSiz), typeof(DerivedJodai),
 			typeof(SummaryStock), typeof(SummaryRealStock), typeof(SummaryUriKake), typeof(SummaryKaiKake),
 			typeof(Tran06Nyukin), typeof(Tran07Shiharai), typeof(MasterMeisho),
+			// 仕入の取込は紐付く発注の仕入配分の入荷割当を計算し直す（配分再設計 Step 4）
+			typeof(TranHaibun),
 		}) {
 			Db.CreateTable(t, true, false);
 		}

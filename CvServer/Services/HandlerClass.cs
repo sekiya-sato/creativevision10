@@ -644,9 +644,14 @@ public partial class CoreService {
 				effects = effects.Add(Effects.After(WriteOp.Insert, itemType, item, null, vdate, reserveKeys));
 			}
 			effects = effects.Add(new WriteEffectResult(0, Effects.FlushReserve(reserveKeys), 0, 0));
+			// 仕入配分(区分0)は入荷済み数で引当・確定するので、削除・登録した発注の入荷割当を計算し直す（引当も引き直す）
+			var hachuIds = targets.Concat(newRows)
+				.Where(x => x.Kubun == (int)EnumHaibun.Hatsukai && x.RelateNo1 > 0)
+				.Select(x => (long)x.RelateNo1);
+			var arrived = new ArrivalDb(_db).Recalc(hachuIds);
 			LogEffects(itemType, effects);
 			_db.CompleteTransaction();
-			_logger.LogInformation("配分保存 削除={Deleted} 登録={Inserted}", targets.Count, newRows.Count);
+			_logger.LogInformation("配分保存 削除={Deleted} 登録={Inserted} 入荷割当更新={Arrived}", targets.Count, newRows.Count, arrived);
 			return CreateSuccessResponse(flag, typeof(HaibunSaveResult),
 				Common.SerializeObject(new HaibunSaveResult(targets.Count, newRows.Count)));
 		}
@@ -690,6 +695,12 @@ public partial class CoreService {
 					_db.AbortTransaction();
 					const string invalidKubun = "確定できない配分区分（取置など）が含まれています。";
 					return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, invalidKubun, typeof(string), invalidKubun);
+				case CommitOutcome.NotArrived:
+					_db.AbortTransaction();
+					var notArrived = $"入荷済み数を超えて確定しようとした仕入配分が {shippingDb.NotArrivedRows.Count:N0} 件あります（"
+						+ string.Join("、", shippingDb.NotArrivedRows.Take(5).Select(h => $"Id{h.Id} 入荷済{h.ArrivedSu}"))
+						+ "）。再検索して確定数を入荷済み以下にしてください。";
+					return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, notArrived, typeof(string), notArrived);
 				case CommitOutcome.Shortage:
 					_db.AbortTransaction();
 					var dto = shortages

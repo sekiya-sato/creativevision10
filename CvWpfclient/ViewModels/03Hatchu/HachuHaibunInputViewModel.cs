@@ -571,6 +571,10 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 			.GroupBy(x => new CellKey(x.Id_Tenpo, x.Id_Shohin, x.Id_Col, x.Id_Siz))
 			.ToDictionary(g => g.Key, g => g.Sum(x => x.Su));
 
+		// SKU別の入荷数（この発注に紐付く、発注倉庫への仕入。仕入返品は差し引く）。
+		// 仕入配分は入荷済みの数だけが引当・確定の対象になる（配分再設計 Step 4）
+		Dictionary<CellKey, int> nyukaMap = await LoadNyukaMapAsync(hachuId, targetHachu.Id_Soko, ct);
+
 		// 商品行と SKU サマリを構築
 		Dictionary<long, MasterShohin> shohinMap = await LoadShohinMapAsync(skus.Select(x => x.Id_Shohin), ct);
 		ObservableCollection<HachuHaibunShohinRow> shohinRows = [];
@@ -579,7 +583,9 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 			HachuMeisaiSku head = group.First();
 			var shohinRow = new HachuHaibunShohinRow(group.Key, head.Code_Shohin, head.Mei_Shohin, shohin);
 			foreach (HachuMeisaiSku sku in SortSkus(group)) {
-				shohinRow.Skus.Add(new HachuHaibunSkuSummary(sku));
+				shohinRow.Skus.Add(new HachuHaibunSkuSummary(sku) {
+					NyukaSu = nyukaMap.GetValueOrDefault(new CellKey(0, sku.Id_Shohin, sku.Id_Col, sku.Id_Siz)),
+				});
 			}
 			shohinRows.Add(shohinRow);
 		}
@@ -636,6 +642,23 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		SelectedShohin = shohinRows.FirstOrDefault();
 		SelectedCellInfo = string.Empty;
 		RefreshGrandTotal();
+	}
+
+	/// <summary>発注に紐付く仕入（発注倉庫分）のSKU別入荷数。キーの入庫先は0固定</summary>
+	async Task<Dictionary<CellKey, int>> LoadNyukaMapAsync(long hachuId, long idSoko, CancellationToken ct) {
+		List<string> parameters = [];
+		string sql = $"""
+			SELECT 0 AS Id, 0 AS Vdc, 0 AS Vdu, 0 AS Id_Soko,
+				CAST(IFNULL(json_extract(m.value, '$.Id_Shohin'), 0) AS INTEGER) AS Id_Shohin,
+				CAST(IFNULL(json_extract(m.value, '$.Id_Col'), 0) AS INTEGER) AS Id_Col,
+				CAST(IFNULL(json_extract(m.value, '$.Id_Siz'), 0) AS INTEGER) AS Id_Siz,
+				SUM(CAST(IFNULL(json_extract(m.value, '$.Su'), 0) AS INTEGER) * S.CalcFlag) AS Su
+			FROM Tran03Shiire S, json_each(CASE WHEN json_valid(S.Jmeisai) THEN S.Jmeisai ELSE '[]' END) AS m
+			WHERE S.CalcFlag <> 0 AND S.RelateNo1 = {AddParameter(parameters, hachuId)} AND S.Id_Soko = {AddParameter(parameters, idSoko)}
+			GROUP BY 5, 6, 7
+			""";
+		List<SummaryRealStock> rows = await CoreServiceClient.QuerySqlListAsync<SummaryRealStock>(sql, parameters, ct);
+		return rows.ToDictionary(x => new CellKey(0, x.Id_Shohin, x.Id_Col, x.Id_Siz), x => x.Su);
 	}
 
 	/// <summary>修正できる配分（未送信かつ未確定かつ未完了）を取得する。Id/Vdu は洗い替え削除に使う。</summary>
@@ -991,6 +1014,9 @@ public sealed partial class HachuHaibunSkuSummary(HachuMeisaiSku sku) : Observab
 
 	/// <summary>発注数</summary>
 	public int HachuSu => sku.HachuSu;
+
+	/// <summary>入荷数（この発注に紐付く仕入。仕入配分はこの範囲だけが引当・確定の対象）</summary>
+	public int NyukaSu { get; init; }
 
 	/// <summary>全入庫先の配分合計（旧システムの「計」）</summary>
 	[ObservableProperty]

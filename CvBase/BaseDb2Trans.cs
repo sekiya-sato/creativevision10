@@ -67,6 +67,8 @@ public interface ITranReserve {
 	public int Su { get; set; }
 	/// <summary>0=未入庫(引当中) / 1=入庫済み(引当解除)</summary>
 	public int EndFlag { get; set; }
+	/// <summary>入荷済み数。仕入配分(区分0)はこの数だけを引当に積む</summary>
+	public int ArrivedSu { get; set; }
 }
 
 /// <summary>

@@ -184,6 +184,8 @@ public partial class HhtProcess {
 		// 発注残の自動完了。仕入が RelateNo1 で紐付く発注を再判定する
 		if (shiireRelateIds.Count > 0) {
 			new CompletionDb(_db).CalcHachuEndFlag(shiireRelateIds);
+			// 仕入配分(区分0)の入荷済み数と引当を計算し直す（画面からの仕入保存と同じ）
+			new ArrivalDb(_db).Recalc(shiireRelateIds);
 		}
 		// 売掛・買掛は月次一括の引き直しなので、対象年月の範囲でまとめて1回だけ呼ぶ
 		if (uriMonths.Count > 0) {

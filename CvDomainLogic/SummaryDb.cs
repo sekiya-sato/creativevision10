@@ -399,6 +399,9 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// </para>
 	/// </summary>
 	public int CalcReserveQtyAll() {
+		// 仕入配分(区分0)の引当は入荷済み数(ArrivedSu)なので、先に全件の入荷割当を計算し直す。
+		// 引当はこのあと全件で引き直すため、入荷割当側では引当を再計算しない
+		new ArrivalDb(_db).RecalcAll(recalcReserve: false);
 		var vdate = Common.GetVdate();
 		var shime = GetOwnClosingDay();
 		var cnt = ExecuteAndCounts(CreateReserveMonthSql(vdate, shime, "ReserveQty <> 0", ReserveTargetWhere),
@@ -408,16 +411,17 @@ WHERE SumMonth BETWEEN @0 AND @1
 		return cnt;
 	}
 	/// <summary>
-	/// 引当対象行の共通条件。<see cref="TranHaibun.EndFlag"/>=0（未入庫）かつ
-	/// <see cref="TranHaibun.Kubun"/> が <see cref="EnumHaibun.Hatsukai"/>(0) 以外であること。
+	/// 引当対象行の共通条件。<see cref="TranHaibun.EndFlag"/>=0（未完了）の全区分。
 	/// <para>
-	/// 初回配分は入荷前に入荷予定を店舗へ振り分けるものであり、現物在庫を押さえないため引当対象外とする。
-	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2 を参照する。
+	/// 仕入配分(区分0)は入荷前の振り分けなので、数量側(<see cref="ReserveQtySumExpr"/>)で入荷済み数
+	/// <see cref="TranHaibun.ArrivedSu"/> だけを積む（入荷前は0）。Step 4 以前は区分0を条件で一律に除外していた。
+	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md` 3.3 を参照する。
 	/// </para>
 	/// </summary>
-	public static readonly string ReserveTargetWhere = $"h.EndFlag = 0 AND h.Kubun <> {(int)EnumHaibun.Hatsukai}";
+	public static readonly string ReserveTargetWhere = "h.EndFlag = 0";
 	/// <summary>
-	/// 引当数として積む数量の式。未確定(<see cref="TranHaibun.KakuteiDay"/> が空)は指示数
+	/// 引当数として積む数量の式。仕入配分(区分0)は入荷済み数 <see cref="TranHaibun.ArrivedSu"/>、
+	/// それ以外は未確定(<see cref="TranHaibun.KakuteiDay"/> が空)なら指示数
 	/// <see cref="TranHaibun.Su"/>、確定済みは確定数 <see cref="TranHaibun.JitsuSu"/> を積む。
 	/// <para>
 	/// 配分確定で <see cref="TranHaibun.JitsuSu"/> / <see cref="TranHaibun.ShortSu"/> が設定され
@@ -427,7 +431,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2c を参照する。
 	/// </para>
 	/// </summary>
-	public const string ReserveQtySumExpr = "SUM(CASE WHEN ifnull(h.KakuteiDay, '') = '' THEN h.Su ELSE h.JitsuSu END)";
+	public const string ReserveQtySumExpr = "SUM(CASE WHEN h.Kubun = 0 THEN h.ArrivedSu WHEN ifnull(h.KakuteiDay, '') = '' THEN h.Su ELSE h.JitsuSu END)";
 	/// <summary>
 	/// SummaryStock(月次)の引当数を TranHaibun から引き直すSQL。「対象を0クリア」→「集計値を反映」の2文。
 	/// 引当が0になったキーに0行を作らないよう HAVING で除外し、在庫実績が無いキーはINSERTで新規作成する。

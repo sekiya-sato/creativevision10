@@ -46,6 +46,15 @@ public sealed partial class ShippingConfirmRow : ObservableObject {
 	/// <summary>参考: 確定前の有効在庫（実在庫 − 引当数）</summary>
 	public int Yuko { get; set; }
 
+	/// <summary>入荷済み数の表示。仕入配分(区分0)だけ出し、ほかの区分は空欄（区分0は入荷済み以下でしか確定できない）</summary>
+	public string ArrivedDisplay { get; set; } = string.Empty;
+
+	/// <summary>確定できる最大数。仕入配分は min(指示数, 入荷済み)、ほかは指示数</summary>
+	public int MaxCommitSu { get; set; }
+
+	/// <summary>仕入配分(区分0)か</summary>
+	public bool IsReceiptAllocation { get; set; }
+
 	/// <summary>確定数（出荷・移動する数）。既定は指示数（全量出荷）。0〜Su に収める。0 は全量欠品</summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(ShortSu))]
@@ -183,7 +192,11 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 				ColSizDisplay = skuMap.GetValueOrDefault(new SkuKey(h.Id_Shohin, h.Id_Col, h.Id_Siz), $"{h.Id_Col}/{h.Id_Siz}"),
 				Su = h.Su,
 				Yuko = yukoMap.GetValueOrDefault(new SkuKey2(h.Id_Soko, h.Id_Shohin, h.Id_Col, h.Id_Siz)),
-				KakuteiSu = h.Su,
+				// 仕入配分は入荷済みの数までしか確定できないので、初期値を入荷済みまでにする（Step 4 4.3）
+				KakuteiSu = h.Kubun == (int)EnumHaibun.Hatsukai ? Math.Min(h.Su, h.ArrivedSu) : h.Su,
+				MaxCommitSu = h.Kubun == (int)EnumHaibun.Hatsukai ? Math.Min(h.Su, h.ArrivedSu) : h.Su,
+				IsReceiptAllocation = h.Kubun == (int)EnumHaibun.Hatsukai,
+				ArrivedDisplay = h.Kubun == (int)EnumHaibun.Hatsukai ? h.ArrivedSu.ToString("N0", CultureInfo.InvariantCulture) : string.Empty,
 			};
 		})];
 	}
@@ -240,8 +253,11 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		}
 		var shortRows = targets.Count(r => r.KakuteiSu < r.Su);
 		var zeroRows = targets.Count(r => r.KakuteiSu == 0);
+		// 仕入配分の未入荷分は確定すると欠品として完了し、後から入荷しても割り当たらない（Step 4 4.3）
+		var unarrived = targets.Count(r => r.IsReceiptAllocation && r.MaxCommitSu < r.Su);
 		var question = $"{targets.Count:N0} 件（確定数 合計 {targets.Sum(r => r.KakuteiSu):N0} 点）を確定し、出荷売上／移動伝票を作成します。"
 			+ (shortRows > 0 ? $"\n欠品のある行が {shortRows:N0} 件（うち全量欠品 {zeroRows:N0} 件）あります。" : string.Empty)
+			+ (unarrived > 0 ? $"\n未入荷分のある仕入配分が {unarrived:N0} 件あります。確定すると未入荷分は欠品で完了し、後から入荷しても割り当たりません。入荷を待つ場合はチェックを外してください。" : string.Empty)
 			+ "\n確定後は取り消せません。よろしいですか？";
 		if (MessageEx.ShowQuestionDialog(question, owner: ActiveWindow) != MessageBoxResult.Yes) return;
 
@@ -280,10 +296,10 @@ LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}";
 		finally { FinishBusy(); }
 	}
 
-	/// <summary>チェックした行の確定数を指示数（全量出荷）へ戻す</summary>
+	/// <summary>チェックした行の確定数を確定できる最大数（指示数。仕入配分は入荷済みまで）へ戻す</summary>
 	[RelayCommand]
 	protected void SetKakuteiToShiji() {
-		foreach (var row in Rows.Where(r => r.IsChecked)) row.KakuteiSu = row.Su;
+		foreach (var row in Rows.Where(r => r.IsChecked)) row.KakuteiSu = row.MaxCommitSu;
 	}
 
 	/// <summary>チェックした行の確定数を0（全量欠品）にする</summary>

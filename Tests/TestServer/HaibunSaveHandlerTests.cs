@@ -181,6 +181,17 @@ public class HaibunSaveHandlerTests {
 	}
 
 	[TestMethod]
+	public async Task Save_ReceiptAllocationWithoutOrder_IsRejected() {
+		var row = NewRow(3, kubun: EnumHaibun.Hatsukai);
+		row.RelateNo1 = 0;
+
+		var reply = await SaveAsync([], [row]);
+
+		Assert.AreEqual(CvMsgErrorCode.InvalidParameter, reply.Code, "仕入配分は発注Id必須（Step 4）");
+		Assert.AreEqual(0, AllRows().Length);
+	}
+
+	[TestMethod]
 	public async Task Save_EmptyNewRows_DeletesOnly() {
 		await SaveAsync([], [NewRow(5)]);
 

@@ -58,6 +58,10 @@ public static class AllocationRules {
 		if (!IsCreatableKubun(row.Kubun)) {
 			return $"配分区分 {row.Kubun} は新規に登録できません。";
 		}
+		// 仕入配分は発注の入荷数で引当・確定を判定するため、発注に紐付かない行は作らせない（Step 4 3.4）
+		if (row.Kubun == (int)EnumHaibun.Hatsukai && row.RelateNo1 <= 0) {
+			return "仕入配分は発注に紐付けて登録してください。";
+		}
 		return null;
 	}
 
@@ -73,6 +77,7 @@ public static class AllocationRules {
 		row.ShortSu = 0;
 		row.RelateNo2 = 0;
 		row.SendFlg = 0;
+		row.ArrivedSu = 0;
 	}
 
 	/// <summary>確定数を 0〜指示数 に収める</summary>
@@ -80,20 +85,31 @@ public static class AllocationRules {
 
 	/// <summary>
 	/// 引当数へ積んでいる数量。<c>SummaryDb.ReserveTargetWhere</c> / <c>SummaryDb.ReserveQtySumExpr</c> と同じ式で、
-	/// 仕入配分(0)と完了行は0、未確定は指示数、確定済み（旧状態）は実数量。
+	/// 完了行は0、仕入配分(0)は入荷済み数、それ以外は未確定なら指示数、確定済み（旧状態）なら実数量。
 	/// </summary>
 	public static int ReservedQty(TranHaibun row) {
-		if (row.EndFlag != 0 || row.Kubun == (int)EnumHaibun.Hatsukai) {
+		if (row.EndFlag != 0) {
 			return 0;
+		}
+		if (row.Kubun == (int)EnumHaibun.Hatsukai) {
+			return row.ArrivedSu;
 		}
 		return string.IsNullOrEmpty(row.KakuteiDay) ? row.Su : row.JitsuSu;
 	}
 
 	/// <summary>
+	/// 入荷済み数を超えて確定しようとしている仕入配分(区分0)の行を返す（空なら確定できる）。
+	/// </summary>
+	/// <param name="rows">確定対象の行（入荷割当を計算し直した直後の値）</param>
+	/// <param name="commitSu">行Id → 確定数</param>
+	public static IReadOnlyList<TranHaibun> FindNotArrived(IEnumerable<TranHaibun> rows, IReadOnlyDictionary<long, int> commitSu) =>
+		[.. rows.Where(r => r.Kubun == (int)EnumHaibun.Hatsukai && commitSu.GetValueOrDefault(r.Id) > r.ArrivedSu)];
+
+	/// <summary>
 	/// 確定時の在庫検査。有効在庫を割る倉庫+SKUを返す（空なら確定できる）。
 	/// <para>
 	/// <c>有効在庫(確定前) = 実在庫 − (引当数 − 確定対象の引当分)</c> とし、<c>有効在庫(確定前) − 確定数 &lt; 0</c> を割れとする。
-	/// 仕入配分(0)は引当に入っていないので確定数として必ず差し引かれ、欠品になる数は在庫を使わないので差し引かない。
+	/// 確定数は自分の引当分（仕入配分は入荷済み数）を除いた有効在庫から差し引き、欠品になる数は在庫を使わないので差し引かない。
 	/// 確定数0（全量欠品）の倉庫+SKUは検査しない。
 	/// </para>
 	/// </summary>

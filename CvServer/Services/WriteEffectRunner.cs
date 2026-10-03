@@ -82,6 +82,8 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 		// TaxCalcUnit/TaxRounding は伝票作成時点のマスタ値のスナップショット(監査値)。
 		// 部分更新で書き換えられると過去伝票の税額が再現できなくなるため禁止する(Doc/spec/2026-09-01 2.2)。
 		"TaxCalcUnit", "TaxRounding",
+		// 仕入配分の入荷済み数は ArrivalDb だけが計算して書く。部分更新では引当が引き直されない(配分再設計 Step 4)
+		"ArrivedSu",
 	];
 
 	/// <summary>
@@ -149,6 +151,14 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 		// 発注残・受注残の自動完了。仕入・出荷が RelateNo1 で紐付く伝票を再判定する。
 		// 完了は立てるだけで、実績が減っても自動では戻さない(仕様 4.3.1)
 		var completion = CalcCompletion(itemType, item, org);
+
+		// 仕入は紐付く発注の仕入配分(区分0)の入荷済み数を変える。更新前後の発注を両方計算し直す（引当も引き直す）
+		if (item is Tran03Shiire) {
+			var hachuIds = new HashSet<long>();
+			AddRelateNo(hachuIds, item);
+			AddRelateNo(hachuIds, org);
+			new ArrivalDb(_db).Recalc(hachuIds);
+		}
 
 		// 引当数はキー単位の引き直しなので、倉庫・SKU・日付が変わった場合に備えて修正前後の両方を対象にする。
 		// 削除では削除後の TranHaibun から引き直すため、削除された行のキーを渡す

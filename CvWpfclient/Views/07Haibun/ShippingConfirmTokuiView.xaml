@@ -171,7 +171,7 @@
 				<Button Margin="12,0,0,0"
 					Command="{Binding SetKakuteiToShijiCommand}"
 					Style="{StaticResource MaterialDesignOutlinedButton}"
-					ToolTip="チェックした行の確定数を指示数（全量出荷）にする">
+					ToolTip="チェックした行の確定数を指示数（全量出荷。仕入配分は入荷済みまで）にする">
 					<TextBlock FontSize="16" Text="確定数=指示数" />
 				</Button>
 				<Button Margin="12,0,0,0"
@@ -207,19 +207,19 @@
 					<DataGridTextColumn Width="110"
 						Binding="{Binding DenDay}"
 						Header="指示日" IsReadOnly="True" />
-					<DataGridTextColumn Width="160"
+					<DataGridTextColumn Width="130"
 						Binding="{Binding SokoDisplay}"
 						Header="倉庫" IsReadOnly="True" />
-					<DataGridTextColumn Width="180"
+					<DataGridTextColumn Width="165"
 						Binding="{Binding TenpoDisplay}"
 						Header="出荷先" IsReadOnly="True" />
 					<DataGridTextColumn Width="90"
 						Binding="{Binding DenKindDisplay}"
 						Header="種別" IsReadOnly="True" />
-					<DataGridTextColumn Width="180"
+					<DataGridTextColumn Width="165"
 						Binding="{Binding ShohinDisplay}"
 						Header="商品" IsReadOnly="True" />
-					<DataGridTextColumn Width="120"
+					<DataGridTextColumn Width="110"
 						Binding="{Binding ColSizDisplay}"
 						Header="色/サイズ" IsReadOnly="True" />
 					<DataGridTextColumn Width="75"
@@ -228,6 +228,16 @@
 						<DataGridTextColumn.ElementStyle>
 							<Style TargetType="TextBlock">
 								<Setter Property="HorizontalAlignment" Value="Right" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="80"
+						Binding="{Binding ArrivedDisplay}"
+						Header="入荷済" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+								<Setter Property="ToolTip" Value="仕入配分の入荷済み数。仕入配分はこの数までしか確定できない" />
 							</Style>
 						</DataGridTextColumn.ElementStyle>
 					</DataGridTextColumn>

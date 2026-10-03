@@ -32,6 +32,10 @@
 					Text="{Binding HachuSu, StringFormat={}発注 {0:N0}}" />
 				<TextBlock HorizontalAlignment="Right"
 					FontSize="11"
+					Text="{Binding NyukaSu, StringFormat={}入荷 {0:N0}}"
+					ToolTip="この発注に紐付く仕入数。仕入配分は入荷済みの数だけが引当・確定の対象" />
+				<TextBlock HorizontalAlignment="Right"
+					FontSize="11"
 					Text="{Binding NokoriSu, StringFormat={}残 {0:N0}}" />
 				<TextBlock HorizontalAlignment="Right"
 					FontSize="11" FontWeight="SemiBold"

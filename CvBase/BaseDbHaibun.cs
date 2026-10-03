@@ -210,6 +210,18 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[Comment("欠品数（指示に対して倉庫が出荷できなかった数）。未確定のうちは 0。倉庫から戻されるデータで JitsuSu とともに設定され Su = JitsuSu + ShortSu が成立する。")]
 	public partial int ShortSu { get; set; }
 	/// <summary>
+	/// 入荷済み数（仕入配分＝区分 <see cref="EnumHaibun.Hatsukai"/>(0) だけが使う）。0〜<see cref="Su"/>。
+	/// <para>
+	/// 発注(<see cref="RelateNo1"/>)×SKU の仕入数から確定済みの配分ぶんを引いた残りを、未完了の仕入配分へ
+	/// 配分先の店舗コード順に割り当てた値（<c>ArrivalDb.Recalc</c>）。区分0はこの数だけが引当・確定の対象になる。
+	/// 仕入・配分保存・配分確定・全件再集計のたびに再計算する。ほかの区分では使わない（0 のまま）。
+	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md` 3章を参照する。
+	/// </para>
+	/// </summary>
+	[ObservableProperty]
+	[Comment("入荷済み数（仕入配分=区分0だけが使う）。発注×SKUの仕入数から確定済み分を引いた残りを店舗コード順に割り当てた値で、区分0はこの数だけが引当・確定の対象。")]
+	public partial int ArrivedSu { get; set; }
+	/// <summary>
 	/// 入力社員Id
 	/// </summary>
 	[ObservableProperty]
@@ -220,10 +232,9 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <summary>
 	/// 入庫済FLG。0=未入庫（引当中） / 1=振り分け後入庫済み（引当解除）。
 	/// <para>
-	/// この値が0で、かつ <see cref="Kubun"/> が <see cref="EnumHaibun.Hatsukai"/>(0) 以外の行の
-	/// <see cref="Su"/> だけが <see cref="SummaryStock.ReserveQty"/> /
-	/// <see cref="SummaryRealStock.ReserveQty"/>（引当数）へ集計される。
-	/// 初回配分は入荷前の振り分けであり現物を押さえないため引当対象外とする。
+	/// この値が0の行が <see cref="SummaryStock.ReserveQty"/> / <see cref="SummaryRealStock.ReserveQty"/>（引当数）へ集計される。
+	/// 数量は、仕入配分(<see cref="EnumHaibun.Hatsukai"/>=0)は入荷済み数 <see cref="ArrivedSu"/>、それ以外は <see cref="Su"/>
+	/// （配分再設計 Step 4。以前は区分0を引当対象外としていた）。
 	/// 追加・修正・削除、およびこの列の部分更新のたびに、対象の倉庫+SKU の引当数が引き直される。
 	/// <see cref="KakuteiDay"/>（配分確定）と <see cref="SendFlg"/>（物流連携）は引当の判定に使わない。
 	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
@@ -231,7 +242,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// </summary>
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(EnEndFlag))]
-	[Comment("入庫済FLG。0=未入庫（引当中） / 1=振り分け後入庫済み（引当解除）。 この値が0で、かつ Kubun が 0:初回配分 以外の行の Su だけが SummaryStock.ReserveQty / SummaryRealStock.ReserveQty（引当数）へ集計される。")]
+	[Comment("完了FLG。0=未完了（引当中） / 1=完了（引当解除）。この値が0の行が引当数へ集計される。数量は仕入配分(Kubun=0)は入荷済み数ArrivedSu、それ以外はSu。")]
 	public partial int EndFlag { get; set; }
 	[Ignore]
 	[JsonIgnore]
@@ -248,14 +259,14 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 /// 2 以降を新しい配分画面へ割り当てている。設計の背景は `.omo/2026-07-31_haibun_design.md` を参照。
 /// </para>
 /// <para>
-/// <b>引当対象は <see cref="Hatsukai"/>(0) 以外のすべて</b>。判定は <c>Kubun != 0</c> の一点で行う。
-/// 初回配分は入荷前に入荷予定を振り分けるものであり、現物在庫を押さえないため引当数へ算入しない。
-/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
+/// 引当対象は未完了の全区分。仕入配分(<see cref="Hatsukai"/>=0)は入荷前の振り分けなので、入荷済み数
+/// （<see cref="TranHaibun.ArrivedSu"/>）の分だけを引当に積む。区分の整理（0/1/2/6 を使い、3/4/5/7 は廃止）は
+/// `Doc/spec/2026-10-03_配分再設計_基本設計.md` 4.2、入荷割当は同 Step4 詳細設計を参照する。
 /// </para>
 /// </summary>
 public enum EnumHaibun : int {
-	/// <summary>初回配分（発売時に入荷予定を店舗へ振り分ける）。RelateNo1 = 発注Id。<b>引当対象外</b></summary>
-	[Comment("初回配分（引当対象外）")]
+	/// <summary>仕入配分（旧 初回配分。発注の入荷予定を店舗へ振り分ける）。RelateNo1 = 発注Id（必須）。入荷済み数だけが引当対象</summary>
+	[Comment("仕入配分（入荷済み数だけが引当対象）")]
 	Hatsukai = 0,
 	/// <summary>在庫配分（倉庫の現在庫を店舗へ振り分ける）。RelateNo1 = 0</summary>
 	[Comment("在庫配分")]
@@ -289,8 +300,8 @@ public enum EnumHaibun : int {
 /// <see cref="RelateNo1"/>（元伝票Id）の6列で、旧CV.netの配分伝票NO（1出庫元 ⇒ 1出荷先）と同じ括りになる。
 /// </para>
 /// <para>
-/// <b>キーを削ってはいけない。</b> <see cref="Kubun"/> は引当対象の判定そのもの
-/// （<c>Kubun &lt;&gt; 0</c> が引当対象）で、<see cref="RelateNo1"/> は受注・受注残の自動完了判定に使う。
+/// <b>キーを削ってはいけない。</b> <see cref="Kubun"/> は引当数量の判定（区分0は入荷済み数）と伝票の紐付けに使い、
+/// <see cref="RelateNo1"/> は元伝票（受注・発注）の特定と受注残の自動完了判定に使う。
 /// この2列を落とすと1ヘッダから元伝票を特定できなくなる。
 /// </para>
 /// <para>

@@ -23,6 +23,8 @@ public enum CommitOutcome {
 	InvalidKubun,
 	/// <summary>有効在庫を割る倉庫+SKUがある。何も書いていない</summary>
 	Shortage,
+	/// <summary>仕入配分(区分0)の確定数が入荷済み数を超える。何も書いていない（呼び出し元が戻す）</summary>
+	NotArrived,
 }
 
 /// <summary>
@@ -39,6 +41,9 @@ public enum CommitOutcome {
 /// </summary>
 public class ShippingDb(ExDatabase db) {
 	private readonly ExDatabase _db = db;
+
+	/// <summary><see cref="CommitOutcome.NotArrived"/> のとき、入荷済み数を超えて確定しようとした行</summary>
+	public IReadOnlyList<TranHaibun> NotArrivedRows { get; private set; } = [];
 
 	/// <summary>
 	/// 伝票作成。確定数を反映済み（<see cref="TranHaibun.KakuteiDay"/> 有効）の配分から伝票を作り、引当を解除する。
@@ -165,7 +170,23 @@ public class ShippingDb(ExDatabase db) {
 				return ([], 0, 0);
 			}
 		}
+		// 仕入配分(区分0)は入荷済み数の範囲でしか確定できない。判定の直前に、対象の発注の入荷割当を計算し直す
+		// （入荷割当は入荷済み数と Vdu を書き換えるが、失敗時は呼び出し元がトランザクションごと戻す）
+		var hachuIds = current.Values.Where(x => x.Kubun == (int)EnumHaibun.Hatsukai && x.RelateNo1 > 0)
+			.Select(x => (long)x.RelateNo1).Distinct().ToList();
+		var arrival = new ArrivalDb(_db);
+		if (hachuIds.Count > 0 && arrival.Recalc(hachuIds) > 0) {
+			current = _db.Fetch<TranHaibun>(
+				$"where Id in ({string.Join(",", targets.Select(r => r.Id))}) and EndFlag = 0")
+				.ToDictionary(x => x.Id);
+		}
 		var commitSu = targets.ToDictionary(r => r.Id, r => AllocationRules.ClampCommitSu(r.KakuteiSu, current[r.Id].Su));
+		var notArrived = AllocationRules.FindNotArrived(current.Values, commitSu);
+		if (notArrived.Count > 0) {
+			outcome = CommitOutcome.NotArrived;
+			NotArrivedRows = notArrived;
+			return ([], 0, 0);
+		}
 		// 旧2段階方式の確定(KakuteiDayのUPDATEのみ)は引当を引き直していなかったため、「確定済み・未出荷」行のキーでは
 		// 保存済みの引当数が式(AllocationRules.ReservedQty)とずれている可能性がある。検査の前に対象キーを引き直して揃える。
 		// 引き直しは冪等で、在庫割れで戻す場合も呼び出し元がトランザクションごと戻す
@@ -185,6 +206,11 @@ public class ShippingDb(ExDatabase db) {
 				denDay, su, h.Su - su, id);
 		}
 		var created = CreateShippingSlips(commitSu.Keys, denDay, idShain);
+		// 確定で消費した入荷数を差し引いて、残りの入荷を同じ発注のほかの仕入配分へ割り当て直す
+		// （欠品で確定した行の余りが、次の優先順位の行へ回る）
+		if (hachuIds.Count > 0) {
+			arrival.Recalc(hachuIds);
+		}
 		return (created, commitSu.Count, commitSu.Count(kv => kv.Value < current[kv.Key].Su));
 	}
 
@@ -236,7 +262,9 @@ public class ShippingDb(ExDatabase db) {
 			Id_Soko = key.Id_Soko,
 			Id_Tokui = key.Id_Tenpo,
 			Id_Shain = idShain,
-			RelateNo1 = key.RelateNo1,
+			// 出荷売上の RelateNo1 は受注Id（受注残の消化・自動完了に使う規約）。受注配分(区分2)以外の配分は
+			// RelateNo1 に発注Id等を持つので、そのまま入れると無関係な受注の残を減らしてしまう（Step 4 レビュー指摘）
+			RelateNo1 = key.Kubun == (int)EnumHaibun.Juchu ? key.RelateNo1 : 0,
 			IsPay = 1,
 			SuTotal = meisai.Sum(x => x.Su),
 			KingakuTotal = meisai.Sum(x => x.Kingaku),

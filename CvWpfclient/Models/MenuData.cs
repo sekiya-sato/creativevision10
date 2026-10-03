@@ -184,7 +184,7 @@ public partial class MenuData : ObservableObject {
 		 * ================================================================ */
 		new("■ 発注", new([
 			new("発注入力", typeof(Views._03Hatchu.HachuInputView), addInfo:"仕入先に対する発注入力"),
-			new("発注配分入力", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"発注(入荷予定)を入庫先へ色サイズ別に振り分けて配分データを作成"),
+			new("発注配分入力", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"仕入配分入力(伝票別)と同じ画面。発注(入荷予定)を入庫先へ色サイズ別に振り分ける"),
 			new("▲ 発注残管理 ----", new([
 				new("納品予定照会", typeof(Views._03Hatchu.DeliveryScheduleInquiryView), addInfo:"発注ヘッダの納品予定日で入荷予定・納期遅れを照会"),
 				new("納品予定表", typeof(Views._03Hatchu.DeliveryScheduleTableView), addInfo:"発注を納品予定日順に印刷(仕入先別・入荷数/残数・納期遅れ日数)。納期遅れは納品日とEndFlagで判定"),
@@ -237,7 +237,8 @@ public partial class MenuData : ObservableObject {
 		 * ================================================================ */
 		new("■ 配分・出荷", new([
 			new("▲ 配分 ----", new([
-				new("店舗配分入力(初回)", typeof(Views._07Haibun.ShopHaibunInputView), addInfo:"入荷予定をSKU×店舗へ振り分ける初回配分。在庫からの配分は在庫配分入力"),
+				new("仕入配分入力(商品別)", typeof(Views._07Haibun.PurchaseReceiptAllocationInputView), addInfo:"倉庫・商品の未完了の発注の入荷予定を配分先×SKUへ振り分け。入荷した数だけ引当・確定できる"),
+				new("仕入配分入力(伝票別)", typeof(Views._03Hatchu.HachuHaibunInputView), addInfo:"発注1件の入荷予定を入庫先へ色サイズ別に振り分け。入荷した数だけ引当・確定できる"),
 				new("在庫配分入力", typeof(Views._07Haibun.InventoryAllocationInputView), addInfo:"倉庫の有効在庫を倉庫・卸先・売仕店・直営店へ同数・比率で振り分け。滞留品の抽出・店舗出荷依頼・移動指示を含む"),
 				new("受注配分入力(伝票別)", typeof(Views._07Haibun.JuchuHaibunInputView), addInfo:"受注伝票を選び受注残をSKU別に配分。有効在庫は参照表示"),
 				new("受注配分入力(商品別)", typeof(Views._07Haibun.SalesOrderAllocationInputView), addInfo:"倉庫・商品を選び得意先×SKUで受注残へまとめて配分。受注日の古い受注から割り付け"),

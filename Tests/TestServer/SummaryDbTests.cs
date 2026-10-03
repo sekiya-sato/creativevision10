@@ -804,8 +804,9 @@ public class SummaryDbTests {
 	}
 
 	/// <summary>
-	/// 仕入配分(初回配分 Kubun=0)は引当に入らないが、確定時は自分の確定数を必ず在庫から差し引いて検査する。
-	/// 旧 ConfirmShipping は「実在庫 − 引当数」だけを見ていたため、在庫が足りなくても確定できていた（P6）。
+	/// 仕入配分(Kubun=0)も確定時は自分の確定数を必ず在庫から差し引いて検査する（P6）。
+	/// 発注に紐付かない既存の初回配分は migration で入荷済み扱い(ArrivedSu=Su)になるので、それを再現する。
+	/// 入荷済み8が引当に入っても、自分の引当分は検査で差し引くので有効在庫(確定前)は実在庫5になる。
 	/// </summary>
 	[TestMethod]
 	public void Commit_HatsukaiQtyIsCheckedAgainstStock() {
@@ -816,9 +817,10 @@ public class SummaryDbTests {
 		db.Insert(purchase);
 		ApplyImmediate(summaryDb, purchase, false);
 		var hatsukai = CreateHaibun("20260815", 1, 8, kubun: EnumHaibun.Hatsukai);
+		hatsukai.ArrivedSu = 8;
 		db.Insert(hatsukai);
 		summaryDb.CalcHaibun2Reserve(ReserveKey.From(hatsukai));
-		AssertRealReserve(db, 1, 0);
+		AssertRealReserve(db, 1, 8);
 
 		shippingDb.Commit([(hatsukai.Id, VduOf(db, hatsukai.Id), 8)], "20260817", 1, out var outcome, out var errors);
 
@@ -1819,6 +1821,158 @@ public class SummaryDbTests {
 		var real = db.Fetch<SummaryRealStock>("order by Id_Soko, Id_Shohin, Id_Col, Id_Siz")
 			.Select(x => $"R:{x.Id_Soko}:{x.Id_Shohin}:{x.Id_Col}:{x.Id_Siz}:{x.ReserveQty}");
 		return monthly.Concat(real).ToArray();
+	}
+
+	// ===== 仕入配分の入荷割当（配分再設計 Step 4） =====
+
+	/// <summary>発注に紐付く仕入を登録し、在庫と入荷割当を反映する（画面の仕入保存と同じ順序）</summary>
+	private static void ReceivePurchase(ExDatabaseSqlite db, SummaryDb summaryDb, long hachuId, long idSoko, int su, EnumShiire kubun = EnumShiire.Shiire) {
+		var purchase = CreatePurchase("20260901", idSoko, su, kubun);
+		purchase.RelateNo1 = hachuId;
+		db.Insert(purchase);
+		ApplyImmediate(summaryDb, purchase, false);
+		new ArrivalDb(db).Recalc([hachuId]);
+	}
+
+	private static TranHaibun CreateReceiptAllocation(long hachuId, long idTenpo, int su) {
+		var h = CreateHaibun("20260901", 1, su, kubun: EnumHaibun.Hatsukai);
+		h.RelateNo1 = (int)hachuId;
+		h.Id_Tenpo = idTenpo;
+		return h;
+	}
+
+	private static int ArrivedOf(ExDatabaseSqlite db, long id) => db.Single<TranHaibun>("where Id=@0", id).ArrivedSu;
+
+	/// <summary>
+	/// 部分入荷は配分先の店舗コード順に入荷済み数を割り当て、その分だけが引当に入る。
+	/// 追加の仕入で残りが割り当たり、仕入返品で減る。別の倉庫への仕入は数えない。
+	/// </summary>
+	[TestMethod]
+	public void Arrival_PartialReceipt_FillsByTenpoCodeOrderAndFollowsReturns() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		const long hachuId = 777;
+		var tenpoB = InsertTokui(db, "T002", "店舗B", tenType: 6);
+		var tenpoA = InsertTokui(db, "T001", "店舗A", tenType: 6);
+		// 行は B を先に作るが、割当は店舗コード順（A→B）
+		var toB = CreateReceiptAllocation(hachuId, tenpoB, 4);
+		var toA = CreateReceiptAllocation(hachuId, tenpoA, 6);
+		db.Insert(toB);
+		db.Insert(toA);
+		summaryDb.CalcHaibun2Reserve(ReserveKey.From(toA));
+		AssertRealReserve(db, 1, 0);
+
+		ReceivePurchase(db, summaryDb, hachuId, idSoko: 1, su: 5);
+		Assert.AreEqual(5, ArrivedOf(db, toA.Id), "店舗コードの若いAから割り当てる");
+		Assert.AreEqual(0, ArrivedOf(db, toB.Id));
+		AssertRealReserve(db, 1, 5);
+
+		ReceivePurchase(db, summaryDb, hachuId, idSoko: 2, su: 9);
+		Assert.AreEqual(5, ArrivedOf(db, toA.Id), "別の倉庫への仕入は数えない");
+
+		ReceivePurchase(db, summaryDb, hachuId, idSoko: 1, su: 5);
+		Assert.AreEqual(6, ArrivedOf(db, toA.Id));
+		Assert.AreEqual(4, ArrivedOf(db, toB.Id));
+		AssertRealReserve(db, 1, 10);
+
+		ReceivePurchase(db, summaryDb, hachuId, idSoko: 1, su: 3, EnumShiire.Henpin);
+		Assert.AreEqual(6, ArrivedOf(db, toA.Id));
+		Assert.AreEqual(1, ArrivedOf(db, toB.Id), "仕入返品で入荷済みが減る（後ろの優先順位から）");
+		AssertRealReserve(db, 1, 7);
+
+		var incremental = GetReserveSnapshot(db);
+		summaryDb.CalcReserveQtyAll();
+		CollectionAssert.AreEqual(incremental, GetReserveSnapshot(db), "通常更新値とRebuild値は一致する");
+	}
+
+	/// <summary>
+	/// 仕入配分は入荷済み数を超えて確定できない（何も書かない）。確定で消費した入荷数は差し引かれ、
+	/// 欠品で余った入荷は次の優先順位の行へ回る。
+	/// </summary>
+	[TestMethod]
+	public void Arrival_CommitWithinArrivedAndLeftoverMovesToNextRow() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		const long hachuId = 888;
+		var tenpoA = InsertTokui(db, "T001", "店舗A", tenType: 6);
+		var tenpoB = InsertTokui(db, "T002", "店舗B", tenType: 6);
+		var toA = CreateReceiptAllocation(hachuId, tenpoA, 6);
+		var toB = CreateReceiptAllocation(hachuId, tenpoB, 4);
+		db.Insert(toA);
+		db.Insert(toB);
+		ReceivePurchase(db, summaryDb, hachuId, idSoko: 1, su: 5);
+		Assert.AreEqual(5, ArrivedOf(db, toA.Id));
+
+		// 入荷済み5を超える6は確定できない
+		shippingDb.Commit([(toA.Id, VduOf(db, toA.Id), 6)], "20260905", 1, out var outcome, out _);
+		Assert.AreEqual(CommitOutcome.NotArrived, outcome);
+		Assert.AreEqual(1, shippingDb.NotArrivedRows.Count);
+		Assert.AreEqual(0, db.Single<TranHaibun>("where Id=@0", toA.Id).EndFlag, "何も確定しない");
+
+		// 入荷済みのうち3だけ確定（欠品3）。余った入荷2はBへ回る
+		var result = shippingDb.Commit([(toA.Id, VduOf(db, toA.Id), 3)], "20260905", 1, out outcome, out _);
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		Assert.AreEqual(1, result.CreatedSlipIds.Count, "直営店向けは移動伝票");
+		Assert.AreEqual(2, ArrivedOf(db, toB.Id), "欠品で余った入荷はBへ回る");
+		AssertRealReserve(db, 1, 2);
+		AssertRealStock(db, 1, 2, "入荷5 − 移動3");
+
+		// 確定済み3を差し引いた残りで割り当てる。追加の仕入5 → 入荷計10 − 消費3 = 7 → Bは上限4
+		ReceivePurchase(db, summaryDb, hachuId, idSoko: 1, su: 5);
+		Assert.AreEqual(4, ArrivedOf(db, toB.Id));
+		shippingDb.Commit([(toB.Id, VduOf(db, toB.Id), 4)], "20260906", 1, out outcome, out _);
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		AssertRealReserve(db, 1, 0);
+		AssertRealStock(db, 1, 3, "入荷10 − 移動3 − 移動4");
+	}
+
+	/// <summary>
+	/// 仕入配分を卸先へ確定しても、出荷売上の RelateNo1（受注Idの規約）に発注Idを入れない。
+	/// 入れると同じ値のIdの受注の残を誤って消化する（Step 4 レビュー指摘）。指示取消（確定数0）の入荷は次の行へ回る。
+	/// </summary>
+	[TestMethod]
+	public void Arrival_WholesalerCommitDoesNotLinkOrderAndZeroCommitMovesArrival() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var shippingDb = new ShippingDb(db);
+		const long hachuId = 999;
+		var oroshi = InsertTokui(db, "T001", "卸先", tenType: 1);
+		var tenpo = InsertTokui(db, "T002", "店舗", tenType: 6);
+		var toOroshi = CreateReceiptAllocation(hachuId, oroshi, 3);
+		var toTenpo = CreateReceiptAllocation(hachuId, tenpo, 4);
+		db.Insert(toOroshi);
+		db.Insert(toTenpo);
+		ReceivePurchase(db, summaryDb, hachuId, idSoko: 1, su: 5);
+		Assert.AreEqual(3, ArrivedOf(db, toOroshi.Id));
+		Assert.AreEqual(2, ArrivedOf(db, toTenpo.Id));
+
+		shippingDb.Commit([(toOroshi.Id, VduOf(db, toOroshi.Id), 3)], "20260905", 1, out var outcome, out _);
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		var uriage = db.Single<Tran00Uriage>("where Id_Tokui=@0", oroshi);
+		Assert.AreEqual(0, uriage.RelateNo1, "仕入配分の出荷売上は受注に紐付けない");
+
+		// 店舗を指示取消（確定数0）しても、入荷2は消費されないので再割当の対象に残る（行は完了するので割当先は無い）
+		shippingDb.Commit([(toTenpo.Id, VduOf(db, toTenpo.Id), 0)], "20260905", 1, out outcome, out _);
+		Assert.AreEqual(CommitOutcome.Success, outcome);
+		var again = CreateReceiptAllocation(hachuId, tenpo, 4);
+		db.Insert(again);
+		new ArrivalDb(db).Recalc([hachuId]);
+		Assert.AreEqual(2, ArrivedOf(db, again.Id), "指示取消で使わなかった入荷は、新しい仕入配分へ回る");
+		AssertRealReserve(db, 1, 2);
+	}
+
+	/// <summary>発注に紐付かない仕入配分は入荷割当の対象外（migrationで入荷済み扱いにした値をそのまま使う）</summary>
+	[TestMethod]
+	public void Arrival_UnlinkedHatsukaiKeepsArrivedSu() {
+		var db = PrepareShippingTables();
+		var summaryDb = new SummaryDb(db);
+		var legacy = CreateHaibun("20260901", 1, 3, kubun: EnumHaibun.Hatsukai);
+		legacy.ArrivedSu = 3;
+		db.Insert(legacy);
+		summaryDb.CalcReserveQtyAll();
+		Assert.AreEqual(3, ArrivedOf(db, legacy.Id));
+		AssertRealReserve(db, 1, 3);
 	}
 
 	/// <summary>DB上の配分行の現在のVdu（確定の楽観排他に渡す値）</summary>

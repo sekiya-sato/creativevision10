@@ -59,8 +59,8 @@ public class AllocationRulesTests {
 
 	[TestMethod]
 	public void ValidateNewRow_RejectsObsoleteKubunAndInvalidValues() {
-		static TranHaibun Row(int kubun = (int)EnumHaibun.Zaiko, int su = 1, long soko = 1, long tenpo = 2, long shohin = 3) =>
-			new() { Kubun = kubun, Su = su, Id_Soko = soko, Id_Tenpo = tenpo, Id_Shohin = shohin };
+		static TranHaibun Row(int kubun = (int)EnumHaibun.Zaiko, int su = 1, long soko = 1, long tenpo = 2, long shohin = 3, int relateNo1 = 9) =>
+			new() { Kubun = kubun, Su = su, Id_Soko = soko, Id_Tenpo = tenpo, Id_Shohin = shohin, RelateNo1 = relateNo1 };
 
 		foreach (var kubun in new[] { EnumHaibun.Hatsukai, EnumHaibun.Zaiko, EnumHaibun.Juchu, EnumHaibun.Reservation }) {
 			Assert.IsNull(AllocationRules.ValidateNewRow(Row(kubun: (int)kubun)), $"{kubun} は作成できる");
@@ -72,6 +72,8 @@ public class AllocationRulesTests {
 		Assert.IsNotNull(AllocationRules.ValidateNewRow(Row(soko: 0)));
 		Assert.IsNotNull(AllocationRules.ValidateNewRow(Row(tenpo: 0)));
 		Assert.IsNotNull(AllocationRules.ValidateNewRow(Row(shohin: 0)));
+		Assert.IsNotNull(AllocationRules.ValidateNewRow(Row(kubun: (int)EnumHaibun.Hatsukai, relateNo1: 0)), "仕入配分は発注Id必須（Step 4）");
+		Assert.IsNull(AllocationRules.ValidateNewRow(Row(kubun: (int)EnumHaibun.Zaiko, relateNo1: 0)), "在庫配分は発注Id不要");
 	}
 
 	[TestMethod]
@@ -117,7 +119,8 @@ public class AllocationRulesTests {
 	[TestMethod]
 	public void ReservedQty_MatchesReserveFormula() {
 		Assert.AreEqual(7, AllocationRules.ReservedQty(new TranHaibun { Kubun = (int)EnumHaibun.Zaiko, Su = 7 }));
-		Assert.AreEqual(0, AllocationRules.ReservedQty(new TranHaibun { Kubun = (int)EnumHaibun.Hatsukai, Su = 7 }), "仕入配分は引当外");
+		Assert.AreEqual(0, AllocationRules.ReservedQty(new TranHaibun { Kubun = (int)EnumHaibun.Hatsukai, Su = 7 }), "仕入配分は入荷前は引当0");
+		Assert.AreEqual(3, AllocationRules.ReservedQty(new TranHaibun { Kubun = (int)EnumHaibun.Hatsukai, Su = 7, ArrivedSu = 3 }), "仕入配分は入荷済み数だけ引当");
 		Assert.AreEqual(0, AllocationRules.ReservedQty(new TranHaibun { Kubun = (int)EnumHaibun.Zaiko, Su = 7, EndFlag = 1 }), "完了は引当外");
 		Assert.AreEqual(4, AllocationRules.ReservedQty(new TranHaibun { Kubun = (int)EnumHaibun.Zaiko, Su = 7, KakuteiDay = "20260801", JitsuSu = 4 }),
 			"確定済み（旧状態）は実数量");
