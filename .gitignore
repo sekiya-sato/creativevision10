@@ -66,3 +66,5 @@ printform/data*.*
 CvServer/*.db
 Doc/spec/*.pdf
 Doc/test/uat202*/
+.tmp*/
+
