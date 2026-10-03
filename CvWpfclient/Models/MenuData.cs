@@ -401,7 +401,7 @@ public partial class MenuData : ObservableObject {
 				new("評価替", typeof(Views._31Monthly.CostRevaluationView), addInfo:"条件で抽出した在庫商品の原価を率または金額で引き下げ、月末または期末の原価履歴として確定する"),
 			])),
 			new("▲ その他更新 ----", new([
-				new("積送中クリア", typeof(Views._31Monthly.InTransitClearView), addInfo:"準備中"),
+				new("積送中クリア", typeof(Views._31Monthly.InTransitClearView), addInfo:"選択倉庫の正負の積送残を移動受でクリアする（移動・HHT更新停止中に実行）"),
 				new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteView), addInfo:"準備中"),
 				new("残高登録処理", typeof(Views._31Monthly.BalanceRegistrationView), addInfo:"期首の売掛/請求/買掛/支払残をテンプレートCSVで投入。期首前の年月で登録し再計算から凍結される"),
 			])),
