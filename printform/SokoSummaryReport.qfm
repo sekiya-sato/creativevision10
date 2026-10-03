@@ -56,49 +56,49 @@
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H5" valign="middle">
+				<text id="H5" valign="middle" halign="right">
 					<position x="70" y="0" width="9" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">SKU数</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H6" valign="middle">
+				<text id="H6" valign="middle" halign="right">
 					<position x="79" y="0" width="12" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">在庫数</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H7" valign="middle">
+				<text id="H7" valign="middle" halign="right">
 					<position x="91" y="0" width="16" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">原価金額</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H8" valign="middle">
+				<text id="H8" valign="middle" halign="right">
 					<position x="107" y="0" width="16" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">上代金額</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H9" valign="middle">
+				<text id="H9" valign="middle" halign="right">
 					<position x="123" y="0" width="9" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">原価率</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H10" valign="middle">
+				<text id="H10" valign="middle" halign="right">
 					<position x="132" y="0" width="9" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">倉庫計</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H11" valign="middle">
+				<text id="H11" valign="middle" halign="right">
 					<position x="141" y="0" width="9" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">構成比</data>
@@ -142,28 +142,28 @@
 					<position x="70" y="0" width="9" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item5"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format=","/>
 					<font size="62"/>
 				</text>
 				<text id="V6" halign="right">
 					<position x="79" y="0" width="12" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item6"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format=","/>
 					<font size="62"/>
 				</text>
 				<text id="V7" halign="right">
 					<position x="91" y="0" width="16" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item7"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V8" halign="right">
 					<position x="107" y="0" width="16" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item8"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V9" halign="right">
@@ -177,7 +177,7 @@
 					<position x="132" y="0" width="9" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item10"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V11" halign="right">
@@ -190,7 +190,7 @@
 			</record>
 		</region>
 		<text id="TxtTitle" valign="middle" halign="center">
-			<position x="41" y="0" width="68" height="7"/>
+			<position x="41" y="0" width="56" height="7"/>
 			<color base="97f2ff" transparent="0"/>
 			<border bottom="10"/>
 			<data calctype="static">倉庫別在庫集計表</data>

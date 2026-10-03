@@ -85,21 +85,21 @@
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H9" valign="middle">
+				<text id="H9" valign="middle" halign="right">
 					<position x="114" y="0" width="9" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">数量</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H10" valign="middle">
+				<text id="H10" valign="middle" halign="right">
 					<position x="123" y="0" width="11" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">単価</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H11" valign="middle">
+				<text id="H11" valign="middle" halign="right">
 					<position x="134" y="0" width="12" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">金額</data>
@@ -178,21 +178,21 @@
 					<position x="114" y="0" width="9" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item9"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format=","/>
 					<font size="62"/>
 				</text>
 				<text id="V10" halign="right">
 					<position x="123" y="0" width="11" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item10"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V11" halign="right">
 					<position x="134" y="0" width="12" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item11"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V12">
@@ -205,7 +205,7 @@
 			</record>
 		</region>
 		<text id="TxtTitle" valign="middle" halign="center">
-			<position x="41" y="0" width="68" height="7"/>
+			<position x="41" y="0" width="56" height="7"/>
 			<color base="97f2ff" transparent="0"/>
 			<border bottom="10"/>
 			<data calctype="static">売上チェックリスト</data>

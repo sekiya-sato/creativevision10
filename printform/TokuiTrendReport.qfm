@@ -49,56 +49,56 @@
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H4" valign="middle">
+				<text id="H4" valign="middle" halign="right">
 					<position x="46" y="0" width="10" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">数量</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H5" valign="middle">
+				<text id="H5" valign="middle" halign="right">
 					<position x="56" y="0" width="15" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">売上金額</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H6" valign="middle">
+				<text id="H6" valign="middle" halign="right">
 					<position x="71" y="0" width="12" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">消費税</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H7" valign="middle">
+				<text id="H7" valign="middle" halign="right">
 					<position x="83" y="0" width="15" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">総額</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H8" valign="middle">
+				<text id="H8" valign="middle" halign="right">
 					<position x="98" y="0" width="8" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">伝票数</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H9" valign="middle">
+				<text id="H9" valign="middle" halign="right">
 					<position x="106" y="0" width="16" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">累計</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H10" valign="middle">
+				<text id="H10" valign="middle" halign="right">
 					<position x="122" y="0" width="16" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">前年同月</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H11" valign="middle">
+				<text id="H11" valign="middle" halign="right">
 					<position x="138" y="0" width="12" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">前年比</data>
@@ -135,49 +135,49 @@
 					<position x="46" y="0" width="10" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item4"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format=","/>
 					<font size="62"/>
 				</text>
 				<text id="V5" halign="right">
 					<position x="56" y="0" width="15" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item5"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V6" halign="right">
 					<position x="71" y="0" width="12" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item6"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V7" halign="right">
 					<position x="83" y="0" width="15" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item7"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V8" halign="right">
 					<position x="98" y="0" width="8" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item8"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format=","/>
 					<font size="62"/>
 				</text>
 				<text id="V9" halign="right">
 					<position x="106" y="0" width="16" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item9"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V10" halign="right">
 					<position x="122" y="0" width="16" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item10"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 				<text id="V11" halign="right">
@@ -190,7 +190,7 @@
 			</record>
 		</region>
 		<text id="TxtTitle" valign="middle" halign="center">
-			<position x="41" y="0" width="68" height="7"/>
+			<position x="41" y="0" width="56" height="7"/>
 			<color base="97f2ff" transparent="0"/>
 			<border bottom="10"/>
 			<data calctype="static">得意先別売上推移表</data>

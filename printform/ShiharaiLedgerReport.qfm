@@ -54,28 +54,28 @@
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H5" valign="middle">
+				<text id="H5" valign="middle" halign="right">
 					<position x="82" y="0" width="15" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">édì¸äz</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H6" valign="middle">
+				<text id="H6" valign="middle" halign="right">
 					<position x="97" y="0" width="12" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">è¡îÔê≈</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H7" valign="middle">
+				<text id="H7" valign="middle" halign="right">
 					<position x="109" y="0" width="15" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">éxï•äz</data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H8" valign="middle">
+				<text id="H8" valign="middle" halign="right">
 					<position x="124" y="0" width="13" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">écçÇ</data>
@@ -160,7 +160,7 @@
 			</record>
 		</region>
 		<text id="TxtTitle" valign="middle" halign="center">
-			<position x="41" y="0" width="68" height="7"/>
+			<position x="41" y="0" width="56" height="7"/>
 			<color base="97f2ff" transparent="0"/>
 			<border bottom="10"/>
 			<data calctype="static">éxï•ë‰í†Åiî≠çsçTÇ¶Åj</data>

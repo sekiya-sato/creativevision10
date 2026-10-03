@@ -31,7 +31,7 @@
 	<page orientation="portrait" cpi="10" lpi="6" compatibility="3.0.0" id="Form1" tree="1">
 		<position x="8" y="8" width="156" height="272"/>
 		<text id="TxtTitle" valign="middle" halign="center">
-			<position x="41" y="0" width="68" height="7"/>
+			<position x="41" y="0" width="56" height="7"/>
 			<color base="97f2ff" transparent="0"/>
 			<border bottom="10"/>
 			<data calctype="static">êøãÅèë</data>
@@ -105,7 +105,7 @@
 			<position x="104" y="8" width="22" height="5"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item5"/>
-			<decode datatype="string" format=""/>
+			<decode datatype="number" format="MI999,999,990"/>
 			<font size="90"/>
 		</text>
 		<text id="HL6" valign="middle">
@@ -119,7 +119,7 @@
 			<position x="104" y="14" width="22" height="5"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item6"/>
-			<decode datatype="string" format=""/>
+			<decode datatype="number" format="MI999,999,990"/>
 			<font size="90"/>
 		</text>
 		<text id="HL7" valign="middle">
@@ -133,7 +133,7 @@
 			<position x="104" y="20" width="22" height="5"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item7"/>
-			<decode datatype="string" format=""/>
+			<decode datatype="number" format="MI999,999,990"/>
 			<font size="90"/>
 		</text>
 		<text id="HL8" valign="middle">
@@ -147,7 +147,7 @@
 			<position x="104" y="26" width="22" height="5"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item8"/>
-			<decode datatype="string" format=""/>
+			<decode datatype="number" format="MI999,999,990"/>
 			<font size="90"/>
 		</text>
 		<text id="HL9" valign="middle">
@@ -161,7 +161,7 @@
 			<position x="104" y="32" width="22" height="5"/>
 			<color transparent="1"/>
 			<data calctype="item" datasrc="item9"/>
-			<decode datatype="string" format=""/>
+			<decode datatype="number" format="MI999,999,990"/>
 			<font size="90"/>
 		</text>
 		<text id="HL10" valign="middle">
@@ -283,14 +283,14 @@
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H4" valign="middle">
+				<text id="H4" valign="middle" halign="right">
 					<position x="64" y="0" width="22" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">êîó </data>
 					<decode datatype="string" format=""/>
 					<font size="62"/>
 				</text>
-				<text id="H5" valign="middle">
+				<text id="H5" valign="middle" halign="right">
 					<position x="86" y="0" width="64" height="4"/>
 					<color base="c8ffc8" transparent="0"/>
 					<data calctype="static">ã‡äz</data>
@@ -327,14 +327,14 @@
 					<position x="64" y="0" width="22" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item13"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format=","/>
 					<font size="62"/>
 				</text>
 				<text id="V5" halign="right">
 					<position x="86" y="0" width="64" height="4"/>
 					<color transparent="1"/>
 					<data calctype="item" datasrc="item14"/>
-					<decode datatype="string" format=""/>
+					<decode datatype="number" format="MI999,999,990"/>
 					<font size="62"/>
 				</text>
 			</record>
