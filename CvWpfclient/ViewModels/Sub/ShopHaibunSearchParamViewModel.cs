@@ -27,9 +27,12 @@ public sealed record class ShopHaibunSearchParameter {
 public partial class ShopHaibunSearchParamViewModel : BaseViewModel {
 	public sealed record HaibunKubunOption(int Value, string Name);
 
+	/// <summary>
+	/// 配分区分。在庫配分は在庫配分入力（InventoryAllocationInput）へ移したので、店舗配分入力は初回配分だけを扱う
+	/// （`Doc/spec/2026-10-03_配分再設計_Step3_在庫配分入力_詳細設計.md`）。
+	/// </summary>
 	public IReadOnlyList<HaibunKubunOption> KubunOptions { get; } = [
 		new(0, "初回配分"),
-		new(1, "在庫配分"),
 	];
 
 	[ObservableProperty]
@@ -37,6 +40,8 @@ public partial class ShopHaibunSearchParamViewModel : BaseViewModel {
 
 	public void Initialize(ShopHaibunSearchParameter? param) {
 		Parameter = param ?? new ShopHaibunSearchParameter();
+		// 以前の条件に在庫配分が残っていても初回配分に戻す
+		Parameter.Kubun = 0;
 	}
 
 	[RelayCommand]

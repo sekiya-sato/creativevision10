@@ -126,7 +126,7 @@ public partial class MenuData : ObservableObject {
 			new("移動受入力", typeof(Views._08Zaiko.IdoInputUkeView), addInfo:"積送中在庫を移動先へ実入庫。未受の出庫伝票から取込可"),
 			new("移動未受リスト", typeof(Views._08Zaiko.IdoUnreceivedListView), addInfo:"出庫済みで入庫未済の移動をSKU別に列挙"),
 			new("棚卸入力", typeof(Views._08Zaiko.StockInputView), addInfo:"倉庫の棚卸データをTran60Tanaへ登録"),
-			new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中 倉庫の有効在庫を見て店舗から出荷希望数を入力"),
+			new("在庫配分入力", typeof(Views._07Haibun.InventoryAllocationInputView), addInfo:"倉庫の有効在庫を倉庫・卸先・売仕店・直営店へSKU単位で振り分け（店舗出荷依頼・移動指示を含む）"),
 			new("配分確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"確定数を入力し出荷売上/移動伝票を作成(引当解除)。有効在庫割れはエラー"),
 			new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"未確定の配分をピッキングリストとして印刷"),
 			new("有効在庫問合わせ", typeof(Views._07Haibun.YukoZaikoQueryView), addInfo:"商品別に有効在庫(実在庫-引当数)･引当･在庫を照会"),
@@ -237,15 +237,14 @@ public partial class MenuData : ObservableObject {
 		 * ================================================================ */
 		new("■ 配分・出荷", new([
 			new("▲ 配分 ----", new([
-				new("店舗配分入力", typeof(Views._07Haibun.ShopHaibunInputView), addInfo:"入荷予定･現在庫をSKU×店舗へ振り分けてTranHaibunを作成"),
+				new("店舗配分入力(初回)", typeof(Views._07Haibun.ShopHaibunInputView), addInfo:"入荷予定をSKU×店舗へ振り分ける初回配分。在庫からの配分は在庫配分入力"),
+				new("在庫配分入力", typeof(Views._07Haibun.InventoryAllocationInputView), addInfo:"倉庫の有効在庫を倉庫・卸先・売仕店・直営店へ同数・比率で振り分け。滞留品の抽出・店舗出荷依頼・移動指示を含む"),
 				new("受注配分入力(伝票別)", typeof(Views._07Haibun.JuchuHaibunInputView), addInfo:"受注伝票を選び受注残をSKU別に配分。有効在庫は参照表示"),
 				new("受注配分入力(商品別)", typeof(Views._07Haibun.SalesOrderAllocationInputView), addInfo:"倉庫・商品を選び得意先×SKUで受注残へまとめて配分。受注日の古い受注から割り付け"),
-				new("在庫品配分", typeof(Views._07Haibun.ZaikoHinHaibunView), addInfo:"準備中 倉庫の有効在庫を一括で店舗へ配分する"),
 				new("配分データメンテ", typeof(Views._07Haibun.HaibunDataMenteView), addInfo:"準備中 管理者用。確定日･欠品数･完了FLGを直接修正する"),
 				new("配分関連メンテナンス", typeof(Views._07Haibun.HaibunMenteView), addInfo:"1.1以降 自動補充の対象店舗･優先順位を設定する"),
 			])),
 			new("▲ 出荷 ----", new([
-				new("店舗出荷依頼", typeof(Views._07Haibun.ShopShippingRequestView), addInfo:"準備中 倉庫の有効在庫を見て店舗から出荷希望数を入力"),
 				new("配分確定(商品)", typeof(Views._07Haibun.ShippingConfirmShohinView), addInfo:"商品基準で確定数を入力し出荷売上/移動伝票を作成(引当解除)。有効在庫割れはエラー"),
 				new("配分確定(得意先)", typeof(Views._07Haibun.ShippingConfirmTokuiView), addInfo:"得意先基準で確定数を入力し出荷売上/移動伝票を作成(引当解除)。有効在庫割れはエラー"),
 				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"未確定の配分をピッキングリストとして印刷"),
@@ -260,8 +259,6 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ 補充・移動指示 ----", new([
 				new("取置入力", typeof(Views._07Haibun.ReservationInputView), addInfo:"準備中 得意先･顧客向けに在庫を確保する(引当対象)"),
-				new("移動指示(SKU)", typeof(Views._07Haibun.IdoInstructionSkuView), addInfo:"準備中"),
-				new("移動指示(商品)", typeof(Views._07Haibun.IdoInstructionShohinView), addInfo:"準備中"),
 				new("自動発注・補充対象除外品設定", typeof(Views._07Haibun.AutoHachuHojunExcludeSettingView), addInfo:"1.1以降 自動補充はRelease後対応"),
 				new("在庫基準自動補充メンテナンス", typeof(Views._07Haibun.ZaikoAutoHojunMenteView), addInfo:"1.1以降 自動補充はRelease後対応"),
 			])),

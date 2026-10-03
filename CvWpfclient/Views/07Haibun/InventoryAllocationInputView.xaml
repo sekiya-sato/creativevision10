@@ -1,0 +1,493 @@
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._07Haibun.InventoryAllocationInputView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._07Haibun"
+	Title="在庫配分入力"
+	Width="1280" Height="800"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="14"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:InventoryAllocationInputViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<helpers:BaseWindow.Resources>
+		<!--  SKU 列の見出し。幅は列側(SkuColumnWidth)で決める  -->
+		<DataTemplate x:Key="SkuColumnHeaderTemplate">
+			<StackPanel>
+				<TextBlock HorizontalAlignment="Center"
+					FontWeight="SemiBold"
+					Text="{Binding Code_Col}"
+					ToolTip="{Binding ColDisplay}" />
+				<TextBlock HorizontalAlignment="Center"
+					FontWeight="SemiBold"
+					Text="{Binding Code_Siz}"
+					ToolTip="{Binding SizDisplay}" />
+				<Separator Margin="0,2"
+					Opacity="0.4" />
+				<TextBlock HorizontalAlignment="Right"
+					FontSize="11"
+					Text="{Binding YukoSu, StringFormat={}在庫 {0:N0}}"
+					ToolTip="有効在庫（実在庫 − 引当 ＋ 読み込んだ自分の配分）" />
+				<TextBlock HorizontalAlignment="Right"
+					FontSize="11" FontWeight="SemiBold"
+					Text="{Binding HaibunTotalSu, StringFormat={}配分 {0:N0}}" />
+				<TextBlock HorizontalAlignment="Right"
+					FontSize="11"
+					Text="{Binding AfterSu, StringFormat={}後 {0:N0}}"
+					ToolTip="配分後在庫（有効在庫 − 配分）。マイナスは確定時に在庫不足になる">
+					<TextBlock.Style>
+						<Style TargetType="TextBlock">
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding IsShort}"
+									Value="True">
+									<Setter Property="Foreground" Value="Red" />
+									<Setter Property="FontWeight" Value="Bold" />
+								</DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</TextBlock.Style>
+				</TextBlock>
+			</StackPanel>
+		</DataTemplate>
+	</helpers:BaseWindow.Resources>
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoRegisterCommand}"
+			Gesture="F2" />
+		<KeyBinding Command="{Binding DoSearchCommand}"
+			Gesture="F5" />
+		<KeyBinding Command="{Binding GoToEditCommand}"
+			Gesture="F6" />
+		<KeyBinding Command="{Binding GoToSearchCommand}"
+			Gesture="Shift+F1" />
+		<KeyBinding Command="{Binding ExitCommand}"
+			Gesture="Esc" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="26" Height="26"
+					VerticalAlignment="Center"
+					Kind="Warehouse" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="18" FontWeight="SemiBold"
+					Text="在庫配分入力" />
+				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+					Opacity="0.8" Text="倉庫の有効在庫を、倉庫・卸先・売仕店・直営店へSKU単位で振り分けます。" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<TabControl Grid.Row="1"
+			SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
+			Style="{StaticResource MaterialDesignTabControl}">
+
+			<!--  ================= タブ1: 商品一覧 =================  -->
+			<TabItem Height="0"
+				d:Header="d:商品一覧" d:Height="40" Header="">
+				<DockPanel Margin="12">
+					<Border Padding="12,8"
+						Background="{DynamicResource MaterialDesignPaper}"
+						DockPanel.Dock="Top">
+						<WrapPanel Orientation="Horizontal">
+							<StackPanel Margin="0,4,20,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
+									Text="配分元倉庫" />
+								<Button Width="64"
+									Command="{Binding SelectSokoCommand}"
+									Content="選択"
+									Style="{StaticResource MaterialDesignOutlinedButton}" />
+								<TextBox Width="140"
+									Margin="8,0,0,0"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding SokoCode, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Width="150"
+									Margin="8,0,0,0" VerticalAlignment="Center"
+									Text="{Binding SokoName}"
+									TextTrimming="CharacterEllipsis" />
+							</StackPanel>
+							<StackPanel Margin="0,4,20,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
+									Text="ブランド" />
+								<TextBox Width="100"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding BrandFrom, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Margin="6,0" VerticalAlignment="Center"
+									Text="～" />
+								<TextBox Width="100"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding BrandTo, UpdateSourceTrigger=PropertyChanged}" />
+							</StackPanel>
+							<StackPanel Margin="0,4,20,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
+									Text="アイテム" />
+								<TextBox Width="100"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding ItemFrom, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Margin="6,0" VerticalAlignment="Center"
+									Text="～" />
+								<TextBox Width="100"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding ItemTo, UpdateSourceTrigger=PropertyChanged}" />
+							</StackPanel>
+							<StackPanel Margin="0,4,20,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
+									Text="商品" />
+								<TextBox Width="130"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding ShohinCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Margin="6,0" VerticalAlignment="Center"
+									Text="～" />
+								<TextBox Width="130"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding ShohinCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+							</StackPanel>
+							<StackPanel Margin="0,4,20,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
+									Text="商品名" />
+								<TextBox Width="160"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding ShohinName, UpdateSourceTrigger=PropertyChanged}" />
+							</StackPanel>
+							<CheckBox Margin="0,4,20,4" VerticalAlignment="Center"
+								Content="在庫ありのみ"
+								IsChecked="{Binding ZaikoOnly}" />
+							<StackPanel Margin="0,4,20,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
+									Text="滞留日数≥"
+									ToolTip="入力すると最終売上日からこの日数以上経った商品だけを出します（在庫品配分）" />
+								<TextBox Width="70"
+									HorizontalContentAlignment="Right"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding StagnationDaysText, UpdateSourceTrigger=PropertyChanged}" />
+							</StackPanel>
+							<StackPanel Margin="0,4,20,4"
+								Orientation="Horizontal">
+								<TextBlock Style="{StaticResource FormLabel}"
+									Text="件数上限" />
+								<TextBox Width="80"
+									HorizontalContentAlignment="Right"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding MaxCount, UpdateSourceTrigger=PropertyChanged}" />
+							</StackPanel>
+							<Button Margin="0,4,12,4"
+								Command="{Binding DoSearchCommand}"
+								IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+								Style="{StaticResource MaterialDesignFlatMidBgButton}"
+								ToolTip="検索 (F5)">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Magnify" />
+									<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+										FontSize="16" Text="検索" />
+								</StackPanel>
+							</Button>
+							<Button Margin="0,4"
+								Command="{Binding GoToEditCommand}"
+								Style="{StaticResource MaterialDesignFlatMidBgButton}"
+								ToolTip="選択した商品の配分入力へ (F6)">
+								<TextBlock FontSize="16" Text="配分入力へ" />
+							</Button>
+						</WrapPanel>
+					</Border>
+					<DataGrid Margin="0,8,0,0"
+						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
+						ItemsSource="{Binding SearchRows}"
+						SelectedItem="{Binding SelectedSearchRow, Mode=TwoWay}"
+						SelectionMode="Single" SelectionUnit="FullRow">
+						<DataGrid.InputBindings>
+							<MouseBinding Command="{Binding GoToEditCommand}"
+								Gesture="LeftDoubleClick" />
+						</DataGrid.InputBindings>
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="140"
+								Binding="{Binding Code}"
+								Header="商品" />
+							<DataGridTextColumn Width="240"
+								Binding="{Binding Name}"
+								Header="商品名" />
+							<DataGridTextColumn Width="170"
+								Binding="{Binding BrandDisplay}"
+								Header="ブランド" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Jodai, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="上代" />
+							<DataGridTextColumn Width="85"
+								Binding="{Binding RealSu, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="実在庫" />
+							<DataGridTextColumn Width="75"
+								Binding="{Binding ReserveQty, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="引当" />
+							<DataGridTextColumn Width="95"
+								Binding="{Binding YukoSu, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="有効在庫" />
+							<DataGridTextColumn Width="105"
+								Binding="{Binding ZaikoHaibunSu, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="未確定配分" />
+							<DataGridTextColumn Width="105"
+								Binding="{Binding RecentSales, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="4週売上" />
+							<DataGridTextColumn Width="115"
+								Binding="{Binding LastSalesDisplay}"
+								Header="最終売上日" />
+						</DataGrid.Columns>
+					</DataGrid>
+				</DockPanel>
+			</TabItem>
+
+			<!--  ================= タブ2: 配分入力 =================  -->
+			<TabItem Height="0"
+				d:Header="d:配分入力" d:Height="40" Header="">
+				<DockPanel Margin="12">
+					<Border Padding="12,8"
+						Background="{DynamicResource MaterialDesignPaper}"
+						DockPanel.Dock="Top">
+						<StackPanel>
+							<WrapPanel Orientation="Horizontal">
+								<Button Margin="0,4,12,4"
+									Command="{Binding GoToSearchCommand}"
+									Style="{StaticResource MaterialDesignOutlinedButton}"
+									ToolTip="商品一覧へ戻る (Shift+F1)">
+									<TextBlock FontSize="16" Text="一覧へ" />
+								</Button>
+								<TextBlock Margin="0,4,20,4" VerticalAlignment="Center"
+									FontSize="16" FontWeight="SemiBold"
+									Text="{Binding TargetDisplay}" />
+								<StackPanel Margin="0,4,20,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="指示日" />
+									<DatePicker Width="140"
+										helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+										SelectedDate="{Binding ShijiDay, Mode=TwoWay}"
+										Style="{StaticResource FormDatePicker}" />
+								</StackPanel>
+								<StackPanel Margin="0,4,20,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="納品日" />
+									<DatePicker Width="140"
+										helpers:DatePickerTodayButtonBehavior.IsEnabled="True"
+										SelectedDate="{Binding NouhinDay, Mode=TwoWay}"
+										Style="{StaticResource FormDatePicker}" />
+								</StackPanel>
+								<StackPanel Margin="0,4,20,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="担当者" />
+									<Button Width="64"
+										Command="{Binding SelectShainCommand}"
+										Content="選択"
+										Style="{StaticResource MaterialDesignOutlinedButton}" />
+									<TextBlock Width="160"
+										Margin="8,0,0,0" VerticalAlignment="Center"
+										Text="{Binding ShainDisplay}"
+										TextTrimming="CharacterEllipsis" />
+								</StackPanel>
+								<StackPanel Margin="0,4,20,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="メモ" />
+									<TextBox Width="180"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" />
+								</StackPanel>
+							</WrapPanel>
+							<WrapPanel Margin="0,4,0,0"
+								Orientation="Horizontal">
+								<StackPanel Margin="0,4,16,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="方式" />
+									<ComboBox Width="90"
+										ItemsSource="{Binding Modes}"
+										SelectedItem="{Binding Mode}"
+										Style="{StaticResource FormComboBox}" />
+									<TextBlock Margin="12,0,6,0" VerticalAlignment="Center"
+										Text="同数" />
+									<TextBox Width="60"
+										HorizontalContentAlignment="Right"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding SameQty, UpdateSourceTrigger=PropertyChanged}" />
+								</StackPanel>
+								<StackPanel Margin="0,4,16,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="比率の基準" />
+									<ComboBox Width="110"
+										ItemsSource="{Binding Bases}"
+										SelectedItem="{Binding Basis}"
+										Style="{StaticResource FormComboBox}" />
+									<ComboBox Width="130"
+										Margin="8,0,0,0"
+										ItemsSource="{Binding Scopes}"
+										SelectedItem="{Binding Scope}"
+										Style="{StaticResource FormComboBox}"
+										ToolTip="売上実績の対象" />
+								</StackPanel>
+								<StackPanel Margin="0,4,16,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="売上期間" />
+									<DatePicker Width="140"
+										SelectedDate="{Binding SalesFrom, Mode=TwoWay}"
+										Style="{StaticResource FormDatePicker}" />
+									<TextBlock Margin="6,0" VerticalAlignment="Center"
+										Text="～" />
+									<DatePicker Width="140"
+										SelectedDate="{Binding SalesTo, Mode=TwoWay}"
+										Style="{StaticResource FormDatePicker}" />
+								</StackPanel>
+								<StackPanel Margin="0,4,16,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="端数" />
+									<ComboBox Width="110"
+										ItemsSource="{Binding Roundings}"
+										SelectedItem="{Binding Rounding}"
+										Style="{StaticResource FormComboBox}" />
+								</StackPanel>
+								<StackPanel Margin="0,4,16,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="総数" />
+									<ComboBox Width="120"
+										ItemsSource="{Binding TotalModes}"
+										SelectedItem="{Binding TotalMode}"
+										Style="{StaticResource FormComboBox}" />
+									<TextBox Width="70"
+										Margin="8,0,0,0"
+										HorizontalContentAlignment="Right"
+										Style="{StaticResource FormTextBox}"
+										Text="{Binding TotalQty, UpdateSourceTrigger=PropertyChanged}"
+										ToolTip="総数を「入力した数」にしたときのSKUごとの数" />
+								</StackPanel>
+								<StackPanel Margin="0,4,16,4"
+									Orientation="Horizontal">
+									<TextBlock Style="{StaticResource FormLabel}"
+										Text="対象" />
+									<ComboBox Width="130"
+										ItemsSource="{Binding Targets}"
+										SelectedItem="{Binding Target}"
+										Style="{StaticResource FormComboBox}" />
+								</StackPanel>
+								<Button Margin="0,4,12,4"
+									Command="{Binding CalcRatioCommand}"
+									Style="{StaticResource MaterialDesignOutlinedButton}"
+									ToolTip="比率の基準から各行の比率(%)を計算する">
+									<TextBlock FontSize="16" Text="比率を計算" />
+								</Button>
+								<Button Margin="0,4,12,4"
+									Command="{Binding ApplyAllocationCommand}"
+									Style="{StaticResource MaterialDesignFlatMidBgButton}"
+									ToolTip="同数または比率で配分数を入れる（既存の入力は上書き）">
+									<TextBlock FontSize="16" Text="按分実行" />
+								</Button>
+							</WrapPanel>
+						</StackPanel>
+					</Border>
+					<StackPanel Margin="0,8,0,6"
+						DockPanel.Dock="Top" Orientation="Horizontal">
+						<TextBlock VerticalAlignment="Center"
+							FontSize="16" FontWeight="SemiBold" Text="配分先 × SKU" />
+						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+							FontWeight="SemiBold"
+							Text="{Binding GrandTotalSu, StringFormat='配分 {0:N0}'}" />
+						<Button Margin="24,0,0,0"
+							Command="{Binding AddDestinationsCommand}"
+							Style="{StaticResource MaterialDesignOutlinedButton}"
+							ToolTip="配分先（倉庫・卸先・売仕店・直営店）を追加・削除する">
+							<TextBlock FontSize="16" Text="配分先の追加・削除" />
+						</Button>
+						<Button Margin="12,0,0,0"
+							Command="{Binding LoadPreviousDestinationsCommand}"
+							Style="{StaticResource MaterialDesignOutlinedButton}"
+							ToolTip="この商品（無ければ同じブランド）の直近の配分の配分先を追加する">
+							<TextBlock FontSize="16" Text="前回の配分先を読込" />
+						</Button>
+						<Button Margin="12,0,0,0"
+							Command="{Binding ClearAllCommand}"
+							Style="{StaticResource MaterialDesignOutlinedButton}">
+							<TextBlock FontSize="16" Text="0クリア" />
+						</Button>
+						<Button Margin="12,0,0,0"
+							Command="{Binding DoRegisterCommand}"
+							Style="{StaticResource MaterialDesignFlatMidBgButton}"
+							ToolTip="登録 (F2)">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="ContentSave" />
+								<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+									FontSize="16" Text="登録" />
+							</StackPanel>
+						</Button>
+					</StackPanel>
+					<DataGrid x:Name="AllocationGrid"
+						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False"
+						CurrentCellChanged="AllocationGrid_CurrentCellChanged"
+						EnableRowVirtualization="True" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+						ItemsSource="{Binding Rows}"
+						SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+						SelectionUnit="CellOrRowHeader">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="260"
+								Binding="{Binding TenpoDisplay}"
+								Header="配分先" IsReadOnly="True" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding KindDisplay}"
+								Header="種別" IsReadOnly="True" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding RatioText, UpdateSourceTrigger=LostFocus}"
+								EditingElementStyle="{StaticResource DataGridRightTextBox}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="比率%" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding TotalSu, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="合計" IsReadOnly="True" />
+						</DataGrid.Columns>
+					</DataGrid>
+				</DockPanel>
+			</TabItem>
+		</TabControl>
+
+		<Border Grid.Row="2"
+			Padding="12,8"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<DockPanel>
+				<Button Command="{Binding ExitCommand}"
+					DockPanel.Dock="Right"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="閉じる (Esc)">
+					<TextBlock FontSize="16" Text="閉じる" />
+				</Button>
+				<TextBlock VerticalAlignment="Center"
+					Text="{Binding Message}"
+					TextWrapping="Wrap" />
+			</DockPanel>
+		</Border>
+	</Grid>
+</helpers:BaseWindow>
