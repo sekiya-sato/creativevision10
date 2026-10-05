@@ -100,6 +100,10 @@ public class DefineDataTable {
 			typeof(TranConsumptionPurchaseLink),
 			typeof(TranGenkaReval),
 
+			// 物流連携の送受信履歴 (WMS連携 仕様 3.4)
+			typeof(TranLogisticsBatch),
+			typeof(TranLogisticsLine),
+
 			/* Product: 以下のテーブルは、優先順位低いが、いずれ作成する予定
 			自動補充設定 (売上/在庫)
 				MasterAutoSupply

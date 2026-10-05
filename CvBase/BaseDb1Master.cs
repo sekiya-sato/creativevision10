@@ -1168,6 +1168,21 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("上代展開見込行数の警告閾値")]
 	public const string NameJodaiExpandWarnRows = "JodaiExpandWarnRows";
 	/// <summary>
+	/// 物流連携(WMS)設定のカテゴリ
+	/// </summary>
+	[Comment("物流連携(WMS)設定のカテゴリ")]
+	public const string CategoryLogistics = "物流連携";
+	/// <summary>連携先コード。ファイル名・履歴に付く</summary>
+	public const string NameLogisticsLinkCode = "LogisticsLinkCode";
+	/// <summary>サーバ上の連携フォルダ。空なら物流連携を使用不可とする</summary>
+	public const string NameLogisticsBaseFolder = "LogisticsBaseFolder";
+	/// <summary>対象倉庫のコード（カンマ区切り。MasterTokui.TenType=0）</summary>
+	public const string NameLogisticsTargetSoko = "LogisticsTargetSoko";
+	/// <summary>送受信ファイルの文字コード shift_jis / utf-8</summary>
+	public const string NameLogisticsEncoding = "LogisticsEncoding";
+	/// <summary>ファイル形式の識別子</summary>
+	public const string NameLogisticsFileFormat = "LogisticsFileFormat";
+	/// <summary>
 	/// 自動実行ジョブ(スケジューラ)設定のカテゴリ
 	/// </summary>
 	[Comment("自動実行ジョブ(スケジューラ)設定のカテゴリ")]
@@ -1492,6 +1507,13 @@ public sealed partial class MasterConfig : BaseDbClass {
 			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailFromAddr, Val = "", Example = "例: sender@example.jp（送信元）", Memo = "自動実行結果メールの送信元アドレス", Vdc = vdate, Vdu = vdate },
 			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailFromName, Val = "", Example = "例: 自動実行通知（省略可）", Memo = "自動実行結果メールの送信元表示名。空欄ならアドレスのみで送信する", Vdc = vdate, Vdu = vdate },
 			new MasterConfig { Category = CategoryAutoExec, Name = NameAutoExecMailToAddr, Val = "", Example = "例: admin@example.jp（送信先）", Memo = "自動実行結果メールの送信先アドレス", Vdc = vdate, Vdu = vdate },
+		]);
+		candidates.AddRange([
+			new MasterConfig { Category = CategoryLogistics, Name = NameLogisticsLinkCode, Val = "WMS", Example = "例: WMS（英数字）", Memo = "物流連携の連携先コード。ファイル名・履歴に付く", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryLogistics, Name = NameLogisticsBaseFolder, Val = "", Example = @"例: D:\cv10\logistics（サーバ上のフォルダ）", Memo = "物流連携の連携フォルダ。配下に send/send_bak/recv/recv_bak/work を作る。空なら物流連携は使用不可", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryLogistics, Name = NameLogisticsTargetSoko, Val = "", Example = "例: 0001,0002（倉庫コードをカンマ区切り）", Memo = "物流連携の対象倉庫（得意先マスタの倉庫 TenType=0 のコード）", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryLogistics, Name = NameLogisticsEncoding, Val = "shift_jis", Example = "shift_jis,utf-8", Memo = "物流連携の送受信ファイルの文字コード", Vdc = vdate, Vdu = vdate },
+			new MasterConfig { Category = CategoryLogistics, Name = NameLogisticsFileFormat, Val = "cv10-v1", Example = "cv10-v1", Memo = "物流連携のファイル形式", Vdc = vdate, Vdu = vdate },
 		]);
 
 		var existingNames = new HashSet<string>(db.Fetch<string>($"SELECT Name FROM {nameof(MasterConfig)}"));

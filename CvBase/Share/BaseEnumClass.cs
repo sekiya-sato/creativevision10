@@ -721,3 +721,111 @@ public enum EnumPromotionRank : int {
 	[Comment("高")]
 	High = 2
 }
+
+/// <summary>
+/// 物流連携の方向（`TranLogisticsBatch.Direction`）
+/// </summary>
+[Comment("物流連携の方向")]
+public enum EnumLogisticsDirection : int {
+	/// <summary>
+	/// 送信（マスタ・出荷指示・入荷予定・在庫）
+	/// </summary>
+	[Comment("送信")]
+	Send = 1,
+	/// <summary>
+	/// 受信（出荷確定・欠品・入荷確定・棚卸）
+	/// </summary>
+	[Comment("受信")]
+	Receive = 2,
+}
+
+/// <summary>
+/// 物流連携 送信バッチの状態（`TranLogisticsBatch.Status`、Direction=送信）
+/// </summary>
+[Comment("物流連携 送信バッチの状態")]
+public enum EnumLogisticsSendStatus : int {
+	/// <summary>
+	/// 作成中（DB確保済み・ファイル未配置）
+	/// </summary>
+	[Comment("作成中")]
+	Creating = 0,
+	/// <summary>
+	/// 配置済み（送信フォルダへ配置した。仮実装では送達済みとみなす）
+	/// </summary>
+	[Comment("配置済み")]
+	Placed = 1,
+	/// <summary>
+	/// 配置失敗（再出力または取消が必要）
+	/// </summary>
+	[Comment("配置失敗")]
+	PlaceFailed = 8,
+	/// <summary>
+	/// 取消（対象の送信フラグを戻した）
+	/// </summary>
+	[Comment("取消")]
+	Canceled = 9,
+}
+
+/// <summary>
+/// 物流連携 受信バッチの状態（`TranLogisticsBatch.Status`、Direction=受信）
+/// </summary>
+[Comment("物流連携 受信バッチの状態")]
+public enum EnumLogisticsReceiveStatus : int {
+	/// <summary>
+	/// 取込済み（検査済み・未反映）
+	/// </summary>
+	[Comment("取込済み")]
+	Imported = 0,
+	/// <summary>
+	/// 反映済み（全行が適用済み・除外）
+	/// </summary>
+	[Comment("反映済み")]
+	Applied = 1,
+	/// <summary>
+	/// 一部エラー（エラー行が残っている）
+	/// </summary>
+	[Comment("一部エラー")]
+	PartialError = 2,
+	/// <summary>
+	/// 取込失敗（種別判定不能・読込不能）
+	/// </summary>
+	[Comment("取込失敗")]
+	ImportFailed = 8,
+	/// <summary>
+	/// 取消
+	/// </summary>
+	[Comment("取消")]
+	Canceled = 9,
+}
+
+/// <summary>
+/// 物流連携 行の状態（`TranLogisticsLine.Status`）
+/// </summary>
+[Comment("物流連携 行の状態")]
+public enum EnumLogisticsLineStatus : int {
+	/// <summary>
+	/// 未処理（送信行は送信済みの記録、受信行は未反映）
+	/// </summary>
+	[Comment("未処理")]
+	Pending = 0,
+	/// <summary>
+	/// 適用済み（受信行を反映した）
+	/// </summary>
+	[Comment("適用済み")]
+	Applied = 1,
+	/// <summary>
+	/// エラー
+	/// </summary>
+	[Comment("エラー")]
+	Error = 2,
+	/// <summary>
+	/// 除外（反映しない）
+	/// </summary>
+	[Comment("除外")]
+	Excluded = 3,
+	/// <summary>
+	/// 訂正済み（訂正版へ置き換えた）
+	/// </summary>
+	[Comment("訂正済み")]
+	Corrected = 4,
+}
