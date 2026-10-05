@@ -418,9 +418,9 @@ public partial class MenuData : ObservableObject {
 				new("HHT手動データ受信", typeof(Views._30HHT.HhtManualDataReceiveView), addInfo:"受信フォルダ内の HHT データを手動取込"),
 				new("HHTエラーデータ修正入力", typeof(Views._30HHT.HhtErrorDataInputView), addInfo:"変換エラーのHHTデータを確認・修正"),
 				new("HHTデータ更新", typeof(Views._30HHT.HhtDataUpdateView), addInfo:"受信済みHHTデータを伝票へ展開"),
-				new("出荷指示明細書印刷", typeof(Views._30HHT.ShippingConfirmDetailPrintView), addInfo:"準備中"),
-				new("移動明細書印刷", typeof(Views._30HHT.IdoDetailBookPrintView), addInfo:"準備中"),
-				new("即時移動明細書", typeof(Views._30HHT.IdoSokuDetailBookPrintView), addInfo:"準備中"),
+				new("出荷指示明細書印刷", typeof(Views._30HHT.ShippingConfirmDetailPrintView), addInfo:"受信済みHHTデータを伝票NO単位の明細書で印刷"),
+				new("移動明細書印刷", typeof(Views._30HHT.IdoDetailBookPrintView), addInfo:"積送移動の移動明細書を印刷（通常発行で発行済みにする）"),
+				new("即時移動明細書", typeof(Views._30HHT.IdoSokuDetailBookPrintView), addInfo:"即時移動の明細書を印刷（通常発行で発行済みにする）"),
 			])),
 			new("▲ 物流連携 ----", new([
 				new("マスタデータ作成", typeof(Views._41Logistics.LogisticsMasterDataCreateView)),

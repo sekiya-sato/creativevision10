@@ -48,6 +48,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["haibunreservation"] = CustomerReservationScenario.RunAsync,
 	["haibunflow"] = HaibunFlowScenario.RunAsync,
 	["logisticsflow"] = LogisticsFlowScenario.RunAsync,
+	["hhtprint"] = HhtPrintScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。

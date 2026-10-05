@@ -1,3 +1,17 @@
+## [2026-10-05] HHT：出荷指示明細書・移動明細書・即時移動明細書の印刷
+
+### 実施内容
+- 旧CV `SubDlg_08prn_hht02` / `hhtlist05` / `hhtlist06`（即時移動は旧メニュー上 hhtlist06）を調査し、`Doc/spec/2026-10-05_HHT明細書印刷3画面_仕様.md` を作成。利用者決定: 出荷指示は `TranVulcanHht`、印刷済管理は列追加で再現、帳票はA4縦のみ。
+- `Tran05Ido` / `Tran10IdoOut` に `IsPrint` を追加（UpdateDb 26_10_05_01）。旧印刷FLGはビット値のため `OldTableCommentAttr` は付けない。
+- 3画面の View/VM を実装（移動2画面は共通基底 `BaseIdoDetailBookPrintViewModel`、通常発行で PartialUpdate、再発行は更新なし）。帳票は旧 `cvnet60prn02.qfm` を `printform/IdoDetailBook.qfm` として3画面共用（34列）。メニューの準備中表示を更新。
+- UatVm シナリオ `hhtprint` を追加。UAT で見つかった、出荷指示の JAN 引当（Jan1のみ照合）を HhtProcessUpdateMap と同じ照合に修正。
+
+### 検証
+- CvWpfclient / CvServer build エラー0。UatVm `hhtprint` 24/24 PASS（開発DB複製）: 3画面JPGレイアウト判定問題なし、PDF生成・目視、通常発行→IsPrint=1、再発行で不変、再通常発行は0件。
+
+### 残余リスク・未実施
+- PostgreSQL/MariaDB 未実施。コード範囲・区分「すべて」・複数ページ伝票の印刷は未確認。印刷成否を判定できないため、PDF表示後に発行済みにする（失敗時は再発行で対応）。
+
 ## [2026-10-05] WMS連携（物流）：旧AMS連携調査・仕様・L01〜L04 実装
 
 ### 実施内容

@@ -1825,6 +1825,12 @@ public sealed partial class Tran05Ido : TranAllHeader, ITranIdo, ITranSoko {
 	[OldTableCommentAttr("手入力伝票NO")]
 	[Comment("手入力No")]
 	public partial string ManualNo { get; set; } = string.Empty;
+	/// <summary>
+	/// 即時移動明細書発行済FLG。HHT 即時移動明細書の通常発行で立てる。
+	/// </summary>
+	[ObservableProperty]
+	[Comment("即時移動明細書発行済FLG。HHT 即時移動明細書の通常発行で立てる。")]
+	public partial int IsPrint { get; set; }
 }
 
 /// <summary>
@@ -1872,6 +1878,12 @@ public sealed partial class Tran10IdoOut : TranAllHeader, ITranIdo, ITranSoko {
 	[OldTableCommentAttr("手入力伝票NO")]
 	[Comment("手入力No")]
 	public partial string ManualNo { get; set; } = string.Empty;
+	/// <summary>
+	/// 移動明細書発行済FLG。HHT 移動明細書の通常発行で立てる。
+	/// </summary>
+	[ObservableProperty]
+	[Comment("移動明細書発行済FLG。HHT 移動明細書の通常発行で立てる。")]
+	public partial int IsPrint { get; set; }
 }
 /// <summary>
 /// 積送移動 11 (倉庫 出, 移動先 入) 実
