@@ -559,6 +559,16 @@ public partial class CoreService {
 			ReservationConvertParam reservationConvert => HandleReservationConvert(request.Flag, reservationConvert),
 			ReservationCancelParam reservationCancel => HandleReservationCancel(request.Flag, reservationCancel),
 			OpeningBalanceImportParam opening => HandleOpeningBalanceImport(request.Flag, opening),
+			LogisticsSettingsQueryParam => HandleLogisticsSettings(request.Flag),
+			LogisticsMasterParam logisticsMaster => HandleLogisticsMaster(request.Flag, logisticsMaster),
+			LogisticsSendQueryParam logisticsSendQuery => HandleLogisticsSendQuery(request.Flag, logisticsSendQuery),
+			LogisticsSendParam logisticsSend => HandleLogisticsSend(request.Flag, logisticsSend),
+			LogisticsBatchActionParam logisticsBatchAction => HandleLogisticsBatchAction(request.Flag, logisticsBatchAction),
+			LogisticsBatchQueryParam logisticsBatchQuery => HandleLogisticsBatchQuery(request.Flag, logisticsBatchQuery),
+			LogisticsLineQueryParam logisticsLineQuery => HandleLogisticsLineQuery(request.Flag, logisticsLineQuery),
+			LogisticsReceiveFilesQueryParam => HandleLogisticsReceiveFiles(request.Flag),
+			LogisticsReceiveImportParam logisticsReceiveImport => HandleLogisticsReceiveImport(request.Flag, logisticsReceiveImport),
+			LogisticsRecheckParam logisticsRecheck => HandleLogisticsRecheck(request.Flag, logisticsRecheck),
 			_ => throw new NotImplementedException(),
 		};
 	}

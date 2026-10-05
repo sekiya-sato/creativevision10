@@ -193,3 +193,116 @@ public static class LogisticsFileFormat {
 		return result;
 	}
 }
+
+/// <summary>物流連携の設定照会（画面の初期表示用）</summary>
+public sealed record LogisticsSettingsQueryParam();
+
+/// <summary>物流連携の対象倉庫1件（照会結果）</summary>
+public sealed record LogisticsSokoInfo(long Id, string Code, string Name);
+
+/// <summary>物流連携の設定照会結果</summary>
+/// <param name="Settings">設定値</param>
+/// <param name="UnusableReason">使用できない理由。使用できれば空文字</param>
+/// <param name="Soko">対象倉庫（コードが倉庫マスタに無いものは含まない）</param>
+public sealed record LogisticsSettingsInfo(LogisticsSettings Settings, string UnusableReason, LogisticsSokoInfo[] Soko);
+
+/// <summary>
+/// L01 マスタデータ作成。自動実行からも同じ値で呼べるよう画面固有の値を持たない（仕様 6.1）。
+/// </summary>
+/// <param name="Kinds">種別（<see cref="LogisticsDataKind.MasterKinds"/>）</param>
+/// <param name="IsFull">true=全件 false=差分</param>
+/// <param name="SinceVdu">差分の基準（Vdu。UTC Ticks）。0なら前回成功した同種別バッチの作成時刻</param>
+/// <param name="PreviewOnly">true=件数と警告だけ返しファイルを作らない</param>
+/// <param name="IdShain">実行者。0ならログイン社員（自動実行は0のまま）</param>
+/// <param name="ExecType">0=自動 1=手動</param>
+public sealed record LogisticsMasterParam(string[] Kinds, bool IsFull, long SinceVdu, bool PreviewOnly, long IdShain, int ExecType = 1);
+
+/// <summary>種別ごとの実行結果</summary>
+/// <param name="Kind">種別</param>
+/// <param name="Count">データ行数</param>
+/// <param name="BatchId">作成したバッチId（プレビュー・0件は0）</param>
+/// <param name="FileName">配置したファイル名（プレビュー・0件は空）</param>
+public sealed record LogisticsKindResult(string Kind, int Count, long BatchId, string FileName);
+
+/// <summary>物流連携の実行結果（画面表示と自動実行の結果メールで共用）</summary>
+/// <param name="Kinds">種別ごとの結果</param>
+/// <param name="Warnings">警告（実行は継続した）</param>
+/// <param name="Message">要約</param>
+public sealed record LogisticsRunResult(LogisticsKindResult[] Kinds, string[] Warnings, string Message);
+
+/// <summary>L02 送信対象の照会（DBを変えない）</summary>
+/// <param name="Kind">種別（<see cref="LogisticsDataKind.SendKinds"/>）</param>
+/// <param name="ToDay">指定日 yyyyMMdd。出荷指示は納品日（空なら指示日）、入荷予定は計上日がこの日以前</param>
+/// <param name="SokoIds">倉庫の絞込（空なら設定の対象倉庫すべて）</param>
+public sealed record LogisticsSendQueryParam(string Kind, string ToDay, long[] SokoIds);
+
+/// <summary>
+/// L02 送信対象の1行。出荷指示は配分1行、入荷予定は元伝票の明細1行、在庫は倉庫×SKU。
+/// 選択は <see cref="RefId"/> 単位（入荷予定は伝票単位）。
+/// </summary>
+public sealed record LogisticsSendCandidate(string RefTable, long RefId, int RefNo, string Kubun, string Day, string SokoCode, string SokoName,
+	string PartnerCode, string PartnerName, string ShohinCode, string ColCode, string SizCode, string Jan, int Su, int Su2, string Memo);
+
+/// <summary>
+/// L02 送信ファイル作成。自動実行からも同じ値で呼べる（RefIds 空＝対象すべて）。
+/// </summary>
+/// <param name="Kind">種別（<see cref="LogisticsDataKind.SendKinds"/>）</param>
+/// <param name="ToDay">指定日 yyyyMMdd</param>
+/// <param name="SokoIds">倉庫の絞込（空なら対象倉庫すべて）</param>
+/// <param name="RefIds">送る行の参照Id（出荷指示=配分Id、入荷予定=元伝票Id）。空なら照会結果すべて</param>
+/// <param name="IdShain">実行者。0ならログイン社員</param>
+/// <param name="ExecType">0=自動 1=手動</param>
+public sealed record LogisticsSendParam(string Kind, string ToDay, long[] SokoIds, long[] RefIds, long IdShain, int ExecType = 1);
+
+/// <summary>送信バッチへの操作</summary>
+public enum EnumLogisticsBatchAction {
+	/// <summary>再出力（保存済みの送信行から同じファイル名で配置し直す）</summary>
+	Rewrite = 1,
+	/// <summary>送信取消（未受領を確認したバッチの送信フラグを戻す）</summary>
+	Cancel = 2,
+}
+
+/// <summary>L04 送信バッチの再出力・取消</summary>
+public sealed record LogisticsBatchActionParam(long BatchId, EnumLogisticsBatchAction Action, long IdShain, int ExecType = 1);
+
+/// <summary>L04 バッチ一覧の照会</summary>
+/// <param name="Direction">0=すべて 1=送信 2=受信</param>
+/// <param name="Kind">種別（空ならすべて）</param>
+/// <param name="FromDay">作成日 yyyyMMdd（空なら制限なし）</param>
+/// <param name="ToDay">作成日 yyyyMMdd（空なら制限なし）</param>
+/// <param name="ProblemOnly">true=配置失敗・未反映・エラーのあるバッチだけ</param>
+public sealed record LogisticsBatchQueryParam(int Direction, string Kind, string FromDay, string ToDay, bool ProblemOnly);
+
+/// <summary>L04 バッチ一覧の1行</summary>
+/// <param name="Batch">バッチ</param>
+/// <param name="ChangedAfterSend">送信後に元データが変更・削除された行数（送信のみ）</param>
+public sealed record LogisticsBatchRow(TranLogisticsBatch Batch, int ChangedAfterSend);
+
+/// <summary>L04 行一覧の照会</summary>
+public sealed record LogisticsLineQueryParam(long BatchId);
+
+/// <summary>L03 受信フォルダの未取込ファイル一覧の照会</summary>
+public sealed record LogisticsReceiveFilesQueryParam();
+
+/// <summary>受信フォルダのファイル1件</summary>
+/// <param name="FileName">ファイル名</param>
+/// <param name="Kind">ファイル名から判定した種別（判定できなければ空）</param>
+/// <param name="Size">バイト数</param>
+/// <param name="LastWrite">更新日時（ローカル yyyy/MM/dd HH:mm:ss）</param>
+public sealed record LogisticsReceiveFileInfo(string FileName, string Kind, long Size, string LastWrite);
+
+/// <summary>画面で選んだ利用者PCのファイル（内容をそのまま渡す）</summary>
+public sealed record LogisticsUploadFile(string FileName, byte[] Content);
+
+/// <summary>
+/// L03 取込・検査。受信フォルダのファイル（FileNames）と画面で選んだファイル（Uploads）を取り込む。
+/// 自動実行は FileNames・Uploads とも空（受信フォルダのすべて）で呼ぶ。
+/// </summary>
+/// <param name="FileNames">受信フォルダから取り込むファイル名（空なら受信フォルダのすべて。ただし Uploads があればフォルダは読まない）</param>
+/// <param name="Uploads">利用者PCのファイル</param>
+/// <param name="IdShain">実行者。0ならログイン社員</param>
+/// <param name="ExecType">0=自動 1=手動</param>
+public sealed record LogisticsReceiveImportParam(string[] FileNames, LogisticsUploadFile[] Uploads, long IdShain, int ExecType = 1);
+
+/// <summary>L03 受信行の再検査（マスタ修正後など）。未処理・エラーの行を検査し直す</summary>
+public sealed record LogisticsRecheckParam(long BatchId, long IdShain, int ExecType = 1);
