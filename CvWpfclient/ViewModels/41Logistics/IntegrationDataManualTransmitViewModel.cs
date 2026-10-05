@@ -72,7 +72,10 @@ public partial class IntegrationDataManualTransmitViewModel : LogisticsViewModel
 		UnselectAllCommand.NotifyCanExecuteChanged();
 	}
 
-	partial void OnKindChanged(string value) => ClearCandidates();
+	partial void OnKindChanged(string value) {
+		ResultText = string.Empty;
+		ClearCandidates();
+	}
 
 	partial void OnTargetDateChanged(DateTime? value) => ClearCandidates();
 

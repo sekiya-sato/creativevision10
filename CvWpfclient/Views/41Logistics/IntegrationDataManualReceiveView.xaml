@@ -112,7 +112,7 @@
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True">
 						<DataGrid.Columns>
-							<DataGridTemplateColumn Width="64"
+							<DataGridTemplateColumn Width="64" MinWidth="64"
 								Header="取込">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -124,14 +124,14 @@
 							<DataGridTextColumn Width="*" MinWidth="260"
 								Binding="{Binding FileName}"
 								Header="ファイル名" IsReadOnly="True" />
-							<DataGridTextColumn Width="120"
+							<DataGridTextColumn Width="120" MinWidth="120"
 								Binding="{Binding KindName}"
 								Header="種別" IsReadOnly="True" />
-							<DataGridTextColumn Width="110"
+							<DataGridTextColumn Width="110" MinWidth="110"
 								Binding="{Binding Size, StringFormat={}{0:N0}}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="サイズ" IsReadOnly="True" />
-							<DataGridTextColumn Width="180"
+							<DataGridTextColumn Width="180" MinWidth="180"
 								Binding="{Binding LastWrite}"
 								Header="更新日時" IsReadOnly="True" />
 						</DataGrid.Columns>
@@ -198,37 +198,37 @@
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
-							<DataGridTextColumn Width="64"
+							<DataGridTextColumn Width="64" MinWidth="64"
 								Binding="{Binding LineNo}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="行No" />
-							<DataGridTextColumn Width="105"
+							<DataGridTextColumn Width="125" MinWidth="125"
 								Binding="{Binding StatusName}"
 								Header="状態" />
-							<DataGridTextColumn Width="70"
+							<DataGridTextColumn Width="70" MinWidth="70"
 								Binding="{Binding ErrorCode}"
 								Header="コード" />
-							<DataGridTextColumn Width="220"
+							<DataGridTextColumn Width="180" MinWidth="180"
 								Binding="{Binding ErrorMsg}"
 								Header="エラー・警告" />
-							<DataGridTextColumn Width="80"
+							<DataGridTextColumn Width="80" MinWidth="80"
 								Binding="{Binding Su, StringFormat={}{0:N0}}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="数量" />
-							<DataGridTextColumn Width="80"
+							<DataGridTextColumn Width="80" MinWidth="80"
 								Binding="{Binding Su2, StringFormat={}{0:N0}}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="欠品数" />
-							<DataGridTextColumn Width="100"
+							<DataGridTextColumn Width="90" MinWidth="90"
 								Binding="{Binding WorkDay}"
 								Header="作業日" />
-							<DataGridTextColumn Width="150"
+							<DataGridTextColumn Width="130" MinWidth="130"
 								Binding="{Binding RefText}"
 								Header="参照" />
-							<DataGridTextColumn Width="150"
+							<DataGridTextColumn Width="130" MinWidth="130"
 								Binding="{Binding TargetText}"
 								Header="生成伝票" />
-							<DataGridTextColumn Width="*" MinWidth="180"
+							<DataGridTextColumn Width="*" MinWidth="120"
 								Binding="{Binding RawText}"
 								Header="原文" />
 						</DataGrid.Columns>

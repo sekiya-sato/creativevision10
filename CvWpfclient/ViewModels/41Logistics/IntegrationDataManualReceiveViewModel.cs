@@ -57,7 +57,8 @@ public partial class IntegrationDataManualReceiveViewModel : LogisticsViewModelB
 
 	bool CanClearUploads() => !IsProcessing && HasUploads;
 
-	bool CanRecheck() => CanRunBase && SelectedBatch != null;
+	// 反映済みのバッチ（未処理・エラーの行が無い）は再検査の対象が無いので押せないようにする
+	bool CanRecheck() => CanRunBase && SelectedBatch != null && Lines.Any(l => l.Status is (int)EnumLogisticsLineStatus.Pending or (int)EnumLogisticsLineStatus.Error);
 
 	bool CanApply() => CanRunBase && SelectedBatch != null && PendingCount > 0;
 
@@ -231,6 +232,7 @@ public partial class IntegrationDataManualReceiveViewModel : LogisticsViewModelB
 		LineSummaryText = Lines.Count == 0
 			? string.Empty
 			: $"全 {Lines.Count:N0}行　未処理 {PendingCount:N0}　エラー {Lines.Count(l => l.IsError):N0}　警告 {Lines.Count(l => l.IsWarning):N0}　適用済み {Lines.Count(l => l.Status == (int)EnumLogisticsLineStatus.Applied):N0}";
+		RefreshCommands();
 	}
 
 	void UpdateUploadText() {

@@ -164,7 +164,7 @@
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
-							<DataGridTemplateColumn Width="64"
+							<DataGridTemplateColumn Width="56" MinWidth="56"
 								Header="送信">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -174,36 +174,36 @@
 									</DataTemplate>
 								</DataGridTemplateColumn.CellTemplate>
 							</DataGridTemplateColumn>
-							<DataGridTextColumn Width="90"
+							<DataGridTextColumn Width="110" MinWidth="110"
 								Binding="{Binding KubunText}"
 								Header="区分" IsReadOnly="True" />
-							<DataGridTextColumn Width="95"
+							<DataGridTextColumn Width="90" MinWidth="90"
 								Binding="{Binding DayText}"
 								Header="日付" IsReadOnly="True" />
-							<DataGridTextColumn Width="130"
+							<DataGridTextColumn Width="110" MinWidth="110"
 								Binding="{Binding SokoText}"
 								Header="倉庫" IsReadOnly="True" />
-							<DataGridTextColumn Width="150"
+							<DataGridTextColumn Width="140" MinWidth="140"
 								Binding="{Binding PartnerText}"
 								Header="出荷先/取引先" IsReadOnly="True" />
-							<DataGridTextColumn Width="150"
+							<DataGridTextColumn Width="150" MinWidth="150"
 								Binding="{Binding SkuText}"
 								Header="商品・色・サイズ" IsReadOnly="True" />
-							<DataGridTextColumn Width="120"
+							<DataGridTextColumn Width="120" MinWidth="120"
 								Binding="{Binding Jan}"
 								Header="JAN" IsReadOnly="True" />
-							<DataGridTextColumn Width="80"
+							<DataGridTextColumn Width="64" MinWidth="64"
 								Binding="{Binding Su, StringFormat={}{0:N0}}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="数量" IsReadOnly="True" />
-							<DataGridTextColumn Width="84"
+							<DataGridTextColumn Width="70" MinWidth="70"
 								Binding="{Binding Su2Text}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="積送中" IsReadOnly="True" />
 							<DataGridTextColumn Width="*" MinWidth="80"
 								Binding="{Binding Memo}"
 								Header="メモ" IsReadOnly="True" />
-							<DataGridTextColumn Width="200"
+							<DataGridTextColumn Width="150" MinWidth="150"
 								Binding="{Binding RefText}"
 								Header="参照" IsReadOnly="True" />
 						</DataGrid.Columns>

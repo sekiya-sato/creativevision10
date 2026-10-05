@@ -401,9 +401,13 @@ public partial class LogisticsLinkDb {
 			.GroupBy(l => (l.RefTable, l.RefId)).Select(g => g.First()).ToList();
 		var changed = 0;
 		foreach (var table in refs.GroupBy(r => r.RefTable)) {
-			var current = _db.Fetch<IdVdu>(
-				$"SELECT Id, Vdu FROM {table.Key} WHERE Id IN ({string.Join(",", table.Select(r => r.RefId))})").ToDictionary(x => x.Id, x => x.Vdu);
-			changed += table.Count(r => !current.TryGetValue(r.RefId, out var vdu) || vdu != r.RefVdu);
+			var ids = string.Join(",", table.Select(r => r.RefId));
+			var current = _db.Fetch<IdVdu>($"SELECT Id, Vdu FROM {table.Key} WHERE Id IN ({ids})").ToDictionary(x => x.Id, x => x.Vdu);
+			// 入荷が済んだ元伝票（発注の完了・移動の受入）は、入荷確定の反映で Vdu が変わるのが正常なので数えない
+			var finished = table.Key == nameof(Tran13Hachu)
+				? _db.Fetch<IdVdu>($"SELECT Id, Vdu FROM {nameof(Tran13Hachu)} WHERE Id IN ({ids}) AND EndFlag <> 0").Select(x => x.Id).ToHashSet()
+				: _db.Fetch<IdVdu>($"SELECT RelateNo1 AS Id, Vdu FROM {nameof(Tran11IdoIn)} WHERE RelateNo1 IN ({ids})").Select(x => x.Id).ToHashSet();
+			changed += table.Count(r => !finished.Contains(r.RefId) && (!current.TryGetValue(r.RefId, out var vdu) || vdu != r.RefVdu));
 		}
 		return changed;
 	}

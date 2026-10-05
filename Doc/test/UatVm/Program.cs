@@ -47,6 +47,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["haibunreceipt"] = PurchaseReceiptAllocationScenario.RunAsync,
 	["haibunreservation"] = CustomerReservationScenario.RunAsync,
 	["haibunflow"] = HaibunFlowScenario.RunAsync,
+	["logisticsflow"] = LogisticsFlowScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
@@ -72,6 +73,7 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["haibunreceipt"] = PurchaseReceiptAllocationScenario.Seeder,
 	["haibunreservation"] = CustomerReservationScenario.Seeder,
 	["haibunflow"] = HaibunFlowScenario.Seeder,
+	["logisticsflow"] = LogisticsFlowScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
