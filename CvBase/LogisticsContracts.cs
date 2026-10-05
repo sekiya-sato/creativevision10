@@ -306,3 +306,29 @@ public sealed record LogisticsReceiveImportParam(string[] FileNames, LogisticsUp
 
 /// <summary>L03 受信行の再検査（マスタ修正後など）。未処理・エラーの行を検査し直す</summary>
 public sealed record LogisticsRecheckParam(long BatchId, long IdShain, int ExecType = 1);
+
+/// <summary>
+/// L03 反映。未処理の行を伝票（まとめ単位）ごとに1トランザクションで反映する。反映前に再検査する。
+/// </summary>
+/// <param name="BatchId">受信バッチId</param>
+/// <param name="IdShain">実行者。0ならログイン社員</param>
+/// <param name="ExecType">0=自動 1=手動</param>
+public sealed record LogisticsApplyParam(long BatchId, long IdShain, int ExecType = 1);
+
+/// <summary>受信行への操作</summary>
+public enum EnumLogisticsLineAction {
+	/// <summary>除外（反映しない）</summary>
+	Exclude = 1,
+	/// <summary>訂正版の追加（元行を訂正済みにし、訂正した項目で新しい行を追加して検査する）</summary>
+	Correct = 2,
+}
+
+/// <summary>
+/// L04 受信行の除外・訂正版追加。原文は変更しない。
+/// </summary>
+/// <param name="LineId">対象行Id（未処理・エラーの受信行）</param>
+/// <param name="Action">操作</param>
+/// <param name="Fields">訂正版の全項目（<see cref="LogisticsFileFormat.Columns"/> の順）。除外では使わない</param>
+/// <param name="Reason">理由（除外・訂正の記録）</param>
+/// <param name="IdShain">実行者。0ならログイン社員</param>
+public sealed record LogisticsLineActionParam(long LineId, EnumLogisticsLineAction Action, string[] Fields, string Reason, long IdShain);

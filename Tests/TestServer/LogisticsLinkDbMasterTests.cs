@@ -62,6 +62,7 @@ public abstract class LogisticsTestBase {
 		typeof(TranLogisticsBatch), typeof(TranLogisticsLine), typeof(SysSequence), typeof(SysHistAutoexec),
 		typeof(TranHaibun), typeof(Tran00Uriage), typeof(Tran03Shiire), typeof(Tran10IdoOut), typeof(Tran11IdoIn), typeof(Tran13Hachu),
 		typeof(Tran60Tana), typeof(SummaryStock), typeof(SummaryRealStock), typeof(DerivedShohinColSiz),
+		typeof(MasterShain), typeof(MasterMeisho), typeof(SummaryUriKake), typeof(SummaryKaiKake), typeof(Tran06Nyukin), typeof(Tran07Shiharai), typeof(Tran02Material), typeof(Tran05Ido),
 	];
 
 	protected void SetConfig(string name, string val) =>
@@ -167,7 +168,7 @@ public class LogisticsLinkDbMasterTests : LogisticsTestBase {
 		SetConfig(MasterConfig.NameLogisticsBaseFolder, Folder);
 		var other = new ManualLockDb(Db).TryBegin("原価更新", "step", 60);
 		Assert.IsTrue(other.IsAcquired);
-		Assert.ThrowsExactly<System.InvalidOperationException>(() =>
+		Assert.ThrowsExactly<LogisticsUserException>(() =>
 			Logistics.CreateMasterFiles(new LogisticsMasterParam([LogisticsDataKind.PD], true, 0, false, 0), 0));
 	}
 

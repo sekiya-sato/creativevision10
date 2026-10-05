@@ -60,25 +60,43 @@ public partial class LogisticsLinkDb(ExDatabase db) {
 	}
 
 	/// <summary>
-	/// マニュアル排他を取って処理を実行し、終了時に実行履歴を残す。排他が取れなければ <see cref="InvalidOperationException"/>。
+	/// マニュアル排他を取って処理を実行し、終了時に実行履歴を残す。排他が取れなければ <see cref="LogisticsUserException"/>。
+	/// 実行中は <see cref="ReportProgress"/> で生存を示す（監視タスクに消されないため）。
 	/// </summary>
 	internal T RunLocked<T>(string stepName, int execType, Func<T> body, Func<T, int> count) {
 		var lockDb = new ManualLockDb(_db);
 		var begin = lockDb.TryBegin(LockProcessName, stepName, LockExpectedSeconds);
 		if (!begin.IsAcquired || begin.Handle is null) {
-			throw new InvalidOperationException($"他の処理（{begin.Blocker?.TableName} {begin.Blocker?.ColumnName}）が実行中です。終了後に実行してください。");
+			throw new LogisticsUserException($"他の処理（{begin.Blocker?.TableName} {begin.Blocker?.ColumnName}）が実行中です。終了後に実行してください。");
 		}
 		using var handle = begin.Handle;
+		_lock = (lockDb, handle);
 		try {
 			var result = body();
 			lockDb.Complete(handle, 0, count(result), stepName, execType);
 			return result;
 		}
 		catch (Exception ex) {
-			lockDb.Complete(handle, -1, 0, $"{stepName} {ex.GetType().Name}: {ex.Message}", execType);
+			lockDb.Complete(handle, -1, 0, $"{stepName} {SafeMessage(ex)}", execType);
 			throw;
 		}
+		finally {
+			_lock = null;
+		}
 	}
+
+	private (ManualLockDb Db, ManualLockHandle Handle)? _lock;
+
+	/// <summary>排他の進捗を書き、生存を示す（排他中でなければ何もしない）</summary>
+	internal void ReportProgress(string stepName, long seqNo) {
+		if (_lock is { } l) {
+			l.Db.Progress(l.Handle, stepName, seqNo);
+		}
+	}
+
+	/// <summary>履歴・行へ残す例外の要約。ファイル系の例外はパスを含み得るので型名だけにする</summary>
+	internal static string SafeMessage(Exception ex) =>
+		ex is IOException or UnauthorizedAccessException ? ex.GetType().Name : $"{ex.GetType().Name}: {ex.Message}";
 
 	/// <summary>文字コード</summary>
 	internal static Encoding GetEncoding(LogisticsSettings settings) {
@@ -154,9 +172,9 @@ public partial class LogisticsLinkDb(ExDatabase db) {
 			UpdateBatchStatus(batch, (int)EnumLogisticsSendStatus.Placed, string.Empty);
 			return true;
 		}
-		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+		catch (Exception ex) {
 			_logger.LogWarning(ex, "物流連携 ファイル配置失敗 Batch={BatchId} File={FileName}", batch.Id, batch.FileName);
-			UpdateBatchStatus(batch, (int)EnumLogisticsSendStatus.PlaceFailed, $"ファイル配置失敗: {ex.GetType().Name}");
+			UpdateBatchStatus(batch, (int)EnumLogisticsSendStatus.PlaceFailed, $"ファイル配置失敗: {SafeMessage(ex)}");
 			return false;
 		}
 	}
@@ -167,3 +185,6 @@ public partial class LogisticsLinkDb(ExDatabase db) {
 			"where Direction = @0 and DataKind = @1 and Status = @2 order by Id desc",
 			(int)EnumLogisticsDirection.Send, kind, (int)EnumLogisticsSendStatus.Placed).FirstOrDefault()?.Vdc ?? 0;
 }
+
+/// <summary>物流連携で利用者が対処できる失敗（設定不備・他処理の実行中・競合など）。画面へメッセージだけ返す</summary>
+public sealed class LogisticsUserException(string message) : Exception(message);

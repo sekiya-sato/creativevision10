@@ -29,7 +29,7 @@ public partial class CoreService {
 			var result = body(new LogisticsLinkDb(_db), ResolveLoginShainId());
 			return CreateSuccessResponse(flag, typeof(TResult), Common.SerializeObject(result));
 		}
-		catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) {
+		catch (Exception ex) when (ex is ArgumentException or LogisticsUserException) {
 			return CreateErrorResponse(flag, CvMsgErrorCode.InvalidParameter, ex.Message, typeof(string), ex.Message);
 		}
 		catch (Exception ex) {
@@ -77,4 +77,14 @@ public partial class CoreService {
 	private CvMsg HandleLogisticsRecheck(CvFlag flag, LogisticsRecheckParam param) =>
 		RunLogistics(flag, $"受信再検査 {param.BatchId}",
 			(logistics, loginShain) => logistics.RecheckBatch(param, param.IdShain > 0 ? param.IdShain : loginShain));
+
+	/// <summary>L03 反映（伝票単位のトランザクションは処理本体が張る）</summary>
+	private CvMsg HandleLogisticsApply(CvFlag flag, LogisticsApplyParam param) =>
+		RunLogistics(flag, $"受信反映 {param.BatchId}",
+			(logistics, loginShain) => logistics.ApplyReceiveBatch(param, param.IdShain > 0 ? param.IdShain : loginShain));
+
+	/// <summary>L04 受信行の除外・訂正版追加</summary>
+	private CvMsg HandleLogisticsLineAction(CvFlag flag, LogisticsLineActionParam param) =>
+		RunLogistics(flag, $"受信行操作 {param.Action} {param.LineId}",
+			(logistics, loginShain) => logistics.ExecuteLineAction(param, param.IdShain > 0 ? param.IdShain : loginShain));
 }

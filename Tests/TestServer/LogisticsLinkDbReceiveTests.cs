@@ -11,27 +11,7 @@ namespace Tests.CvServer;
 /// L03 連携データ手動受信の取込・検査（仕様 4.1〜4.3）。反映は別テスト。
 /// </summary>
 [TestClass]
-public class LogisticsLinkDbReceiveTests : LogisticsTestBase {
-	protected long TenpoId;
-	protected long ShohinId;
-
-	[TestInitialize]
-	public void Initialize() {
-		TenpoId = InsertTokui("T01", "直営店", 6);
-		var shohin = new MasterShohin {
-			Code = "A001",
-			Name = "商品A",
-			Jcolsiz = [
-				new MasterShohinColSiz { Id_Col = 1, Code_Col = "01", Id_Siz = 2, Code_Siz = "M", Jan1 = "4900000000011" },
-				new MasterShohinColSiz { Id_Col = 1, Code_Col = "01", Id_Siz = 3, Code_Siz = "L", Jan1 = "4900000000028" },
-			],
-		};
-		Db.Insert(shohin);
-		ShohinId = shohin.Id;
-		Db.Insert(new DerivedShohinColSiz { Id_Shohin = ShohinId, Code = "A001", Id_Col = 1, Code_Col = "01", Id_Siz = 2, Code_Siz = "M", Jan1 = "4900000000011" });
-		Db.Insert(new DerivedShohinColSiz { Id_Shohin = ShohinId, Code = "A001", Id_Col = 1, Code_Col = "01", Id_Siz = 3, Code_Siz = "L", Jan1 = "4900000000028" });
-	}
-
+public class LogisticsLinkDbReceiveTests : LogisticsReceiveTestBase {
 	[TestMethod]
 	public void ImportReceiveFiles_出荷確定を取り込み検査して原文を退避し同じ内容は二重に取り込まない() {
 		var a = SendHaibun(su: 3);
@@ -156,6 +136,29 @@ public class LogisticsLinkDbReceiveTests : LogisticsTestBase {
 		Assert.AreEqual((int)EnumLogisticsLineStatus.Pending, lines[2].Status, "マスタ追加後の再検査で解消");
 		Assert.AreEqual(77, lines[2].Id_Shohin);
 		Assert.AreEqual("E30", lines[0].ErrorCode);
+	}
+}
+
+/// <summary>受信系テストの共通準備（店舗・商品SKU）と取込ヘルパ</summary>
+public abstract class LogisticsReceiveTestBase : LogisticsTestBase {
+	protected long TenpoId;
+	protected long ShohinId;
+
+	[TestInitialize]
+	public void InitializeReceive() {
+		TenpoId = InsertTokui("T01", "直営店", 6);
+		var shohin = new MasterShohin {
+			Code = "A001",
+			Name = "商品A",
+			Jcolsiz = [
+				new MasterShohinColSiz { Id_Col = 1, Code_Col = "01", Id_Siz = 2, Code_Siz = "M", Jan1 = "4900000000011" },
+				new MasterShohinColSiz { Id_Col = 1, Code_Col = "01", Id_Siz = 3, Code_Siz = "L", Jan1 = "4900000000028" },
+			],
+		};
+		Db.Insert(shohin);
+		ShohinId = shohin.Id;
+		Db.Insert(new DerivedShohinColSiz { Id_Shohin = ShohinId, Code = "A001", Id_Col = 1, Code_Col = "01", Id_Siz = 2, Code_Siz = "M", Jan1 = "4900000000011" });
+		Db.Insert(new DerivedShohinColSiz { Id_Shohin = ShohinId, Code = "A001", Id_Col = 1, Code_Col = "01", Id_Siz = 3, Code_Siz = "L", Jan1 = "4900000000028" });
 	}
 
 	// ---- helpers ----

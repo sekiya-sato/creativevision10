@@ -424,9 +424,9 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ 物流連携 ----", new([
 				new("マスタデータ作成", typeof(Views._41Logistics.LogisticsMasterDataCreateView)),
-				new("連携データ手動送信", typeof(Views._41Logistics.IntegrationDataManualTransmitView), addInfo:"準備中 配分の指示数を倉庫へ送信する(TranHaibun.SendFlg)"),
-				new("連携データ手動受信", typeof(Views._41Logistics.IntegrationDataManualReceiveView), addInfo:"準備中 倉庫から確定数･欠品数を受信する(JitsuSu/ShortSu)"),
-				new("連携エラーデータ照会", typeof(Views._41Logistics.IntegrationErrorDataQueryView), addInfo:"準備中"),
+				new("連携データ手動送信", typeof(Views._41Logistics.IntegrationDataManualTransmitView), addInfo:"出荷指示(配分)・入荷予定・在庫を倉庫へ送信する(TranHaibun.SendFlg)"),
+				new("連携データ手動受信", typeof(Views._41Logistics.IntegrationDataManualReceiveView), addInfo:"倉庫から出荷確定・欠品・入荷確定・棚卸を受信して反映する"),
+				new("連携エラーデータ照会", typeof(Views._41Logistics.IntegrationErrorDataQueryView), addInfo:"送受信履歴の照会と再出力・送信取消・除外・訂正版追加"),
 			])),
 		])),
 		/* ================================================================

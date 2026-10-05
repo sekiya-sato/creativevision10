@@ -1,17 +1,478 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._41Logistics.IntegrationErrorDataQueryView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._41Logistics"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._41Logistics"
 	Title="連携エラーデータ照会"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	Width="{StaticResource StandardWindowWidth}" Height="{StaticResource StandardWindowHeight}"
+	MinWidth="1000" MinHeight="700"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	ResizeMode="CanResize" TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:IntegrationErrorDataQueryViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+	<helpers:BaseWindow.Resources>
+		<SolidColorBrush x:Key="LogisticsErrorForegroundBrush"
+			Color="#D32F2F" />
+		<SolidColorBrush x:Key="LogisticsWarningForegroundBrush"
+			Color="#E65100" />
+		<SolidColorBrush x:Key="LogisticsInactiveForegroundBrush"
+			Color="#9E9E9E" />
+		<Style x:Key="LogisticsBatchRowStyle"
+			BasedOn="{StaticResource MaterialDesignDataGridRow}"
+			TargetType="DataGridRow">
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding IsProblem}"
+					Value="True">
+					<Setter Property="Foreground" Value="{StaticResource LogisticsErrorForegroundBrush}" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+		<Style x:Key="LogisticsLineRowStyle"
+			BasedOn="{StaticResource MaterialDesignDataGridRow}"
+			TargetType="DataGridRow">
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding IsInactive}"
+					Value="True">
+					<Setter Property="Foreground" Value="{StaticResource LogisticsInactiveForegroundBrush}" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding IsWarning}"
+					Value="True">
+					<Setter Property="Foreground" Value="{StaticResource LogisticsWarningForegroundBrush}" />
+				</DataTrigger>
+				<DataTrigger Binding="{Binding IsError}"
+					Value="True">
+					<Setter Property="Foreground" Value="{StaticResource LogisticsErrorForegroundBrush}" />
+					<Setter Property="FontWeight" Value="SemiBold" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+		<Style x:Key="LogisticsFieldTextBoxStyle"
+			TargetType="TextBox">
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding IsChanged}"
+					Value="True">
+					<Setter Property="FontWeight" Value="SemiBold" />
+					<Setter Property="Foreground" Value="{StaticResource LogisticsWarningForegroundBrush}" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+	</helpers:BaseWindow.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="14,10"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="30" Height="30"
+					VerticalAlignment="Center"
+					Kind="FileAlertOutline" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold" Text="物流連携 連携エラーデータ照会" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+		<Grid Grid.Row="1"
+			Margin="18,14">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="2*" />
+				<RowDefinition Height="3*" />
+			</Grid.RowDefinitions>
+			<!--  検索条件  -->
+			<materialDesign:Card Grid.Row="0"
+				Padding="16,8"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<StackPanel>
+					<Grid IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="110" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="190" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="160" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="160" />
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<TextBlock Grid.Column="0"
+							Style="{StaticResource FormLabel}"
+							Text="方向" />
+						<ComboBox Grid.Column="1"
+							VerticalAlignment="Center"
+							DisplayMemberPath="Value"
+							ItemsSource="{Binding DirectionOptions}"
+							SelectedValue="{Binding Direction, Mode=TwoWay}"
+							SelectedValuePath="Key" />
+						<TextBlock Grid.Column="2"
+							Margin="16,0,8,0"
+							Style="{StaticResource FormLabel}"
+							Text="種別" />
+						<ComboBox Grid.Column="3"
+							VerticalAlignment="Center"
+							DisplayMemberPath="Value"
+							ItemsSource="{Binding KindOptions}"
+							SelectedValue="{Binding Kind, Mode=TwoWay}"
+							SelectedValuePath="Key" />
+						<TextBlock Grid.Column="4"
+							Margin="16,0,8,0"
+							Style="{StaticResource FormLabel}"
+							Text="作成日" />
+						<DatePicker Grid.Column="5"
+							materialDesign:HintAssist.Hint="開始日"
+							SelectedDate="{Binding FromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource FormDatePicker}" />
+						<TextBlock Grid.Column="6"
+							Margin="8,0" VerticalAlignment="Center"
+							Text="～" />
+						<DatePicker Grid.Column="7"
+							materialDesign:HintAssist.Hint="終了日"
+							SelectedDate="{Binding ToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource FormDatePicker}" />
+						<CheckBox Grid.Column="8"
+							Margin="16,0,8,0" VerticalAlignment="Center"
+							Content="問題のあるものだけ"
+							IsChecked="{Binding ProblemOnly, Mode=TwoWay}" />
+						<Button Grid.Column="9"
+							Width="110" Height="38"
+							Command="{Binding SearchCommand}"
+							Content="検索"
+							Style="{StaticResource MaterialDesignRaisedButton}" />
+					</Grid>
+					<TextBlock Margin="0,6,0,0"
+						FontWeight="SemiBold"
+						Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="{Binding UnusableReason}" TextWrapping="Wrap"
+						Visibility="{Binding HasUnusableReason, Converter={StaticResource BooleanToVisibilityConverter}}" />
+				</StackPanel>
+			</materialDesign:Card>
+			<!--  バッチ一覧  -->
+			<materialDesign:Card Grid.Row="1"
+				Margin="0,12,0,0" Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8"
+				Visibility="{Binding IsCorrecting, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,4"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel LastChildFill="True">
+							<StackPanel DockPanel.Dock="Right"
+								Orientation="Horizontal">
+								<Button Height="32"
+									Margin="0,0,8,0" Padding="12,0"
+									Command="{Binding RewriteCommand}"
+									Content="再出力"
+									Style="{StaticResource MaterialDesignOutlinedButton}"
+									ToolTip="配置に失敗した送信バッチを同じファイル名で配置し直す" />
+								<Button Height="32"
+									Margin="0,0,8,0" Padding="12,0"
+									Command="{Binding CancelSendCommand}"
+									Content="送信取消"
+									Style="{StaticResource MaterialDesignOutlinedButton}"
+									ToolTip="連携先が受け取っていないことを確認済みの場合だけ" />
+								<Button Height="32"
+									Padding="12,0"
+									Command="{Binding RecheckCommand}"
+									Content="再検査"
+									Style="{StaticResource MaterialDesignOutlinedButton}"
+									ToolTip="受信バッチの未処理・エラー行を検査し直す" />
+							</StackPanel>
+							<TextBlock VerticalAlignment="Center"
+								FontWeight="SemiBold" Text="バッチ" />
+							<TextBlock Margin="12,0,8,0" VerticalAlignment="Center"
+								FontSize="14"
+								Text="{Binding BatchSummaryText}" />
+						</DockPanel>
+					</Border>
+					<DataGrid Grid.Row="1"
+						materialDesign:DataGridAssist.CellPadding="8,3" materialDesign:DataGridAssist.ColumnHeaderPadding="8,5" AutoGenerateColumns="False" CanUserAddRows="False"
+						CanUserDeleteRows="False" EnableColumnVirtualization="True" EnableRowVirtualization="True" FontSize="14" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True"
+						ItemsSource="{Binding Batches}"
+						RowStyle="{StaticResource LogisticsBatchRowStyle}"
+						ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+						SelectedItem="{Binding SelectedBatch, Mode=TwoWay}"
+						SelectionMode="Single"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="70"
+								Binding="{Binding Id}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="Id" />
+							<DataGridTextColumn Width="60"
+								Binding="{Binding DirectionName}"
+								Header="方向" />
+							<DataGridTextColumn Width="120"
+								Binding="{Binding KindName}"
+								Header="種別" />
+							<DataGridTextColumn Width="230"
+								Binding="{Binding FileName}"
+								Header="ファイル名" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding StatusName}"
+								Header="状態" />
+							<DataGridTextColumn Width="72"
+								Binding="{Binding RowCount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="行数" />
+							<DataGridTextColumn Width="72"
+								Binding="{Binding OkCount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="正常" />
+							<DataGridTextColumn Width="72"
+								Binding="{Binding ErrorCount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="エラー" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding ChangedAfterSendText}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="送信後変更" />
+							<DataGridTextColumn Width="160"
+								Binding="{Binding CreatedText}"
+								Header="作成日時" />
+							<DataGridTextColumn Width="*" MinWidth="120"
+								Binding="{Binding Memo}"
+								Header="メモ" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+			<!--  訂正版の編集パネル（編集中はバッチ一覧の位置に表示する）  -->
+			<materialDesign:Card Grid.Row="1"
+				Margin="0,12,0,0" Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8"
+				Visibility="{Binding IsCorrecting, Converter={StaticResource BooleanToVisibilityConverter}}">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,4"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel LastChildFill="True">
+							<StackPanel DockPanel.Dock="Right"
+								Orientation="Horizontal">
+								<Button Height="32"
+									Margin="0,0,8,0" Padding="12,0"
+									Command="{Binding CommitCorrectionCommand}"
+									Content="訂正版を追加"
+									Style="{StaticResource MaterialDesignRaisedButton}" />
+								<Button Height="32"
+									Padding="12,0"
+									Command="{Binding CancelCorrectionCommand}"
+									Content="取りやめ"
+									Style="{StaticResource MaterialDesignOutlinedButton}" />
+							</StackPanel>
+							<TextBlock VerticalAlignment="Center"
+								FontWeight="SemiBold"
+								Text="{Binding CorrectionTitle}"
+								TextTrimming="CharacterEllipsis" />
+						</DockPanel>
+					</Border>
+					<ScrollViewer Grid.Row="1"
+						HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+						<ItemsControl Margin="12,6"
+							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}" ItemsSource="{Binding CorrectionFields}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<Grid Width="280"
+										Margin="0,2,12,2">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="100" />
+											<ColumnDefinition Width="*" />
+										</Grid.ColumnDefinitions>
+										<TextBlock Grid.Column="0"
+											VerticalAlignment="Center"
+											FontSize="14"
+											Text="{Binding Header}"
+											TextTrimming="CharacterEllipsis" />
+										<TextBox Grid.Column="1"
+											Height="28"
+											FontSize="14"
+											Style="{StaticResource LogisticsFieldTextBoxStyle}"
+											Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+											ToolTip="{Binding Original}" />
+									</Grid>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</ScrollViewer>
+				</Grid>
+			</materialDesign:Card>
+			<!--  行一覧  -->
+			<Grid Grid.Row="2"
+				Margin="0,12,0,0">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<materialDesign:Card Grid.Column="0"
+					Padding="0"
+					materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
+						<Border Grid.Row="0"
+							Padding="12,4"
+							Background="{DynamicResource MaterialDesignToolBarBackground}"
+							CornerRadius="8,8,0,0">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="220" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<TextBlock Grid.Column="0"
+									VerticalAlignment="Center"
+									FontWeight="SemiBold" Text="行" />
+								<TextBlock Grid.Column="1"
+									Margin="12,0,8,0" VerticalAlignment="Center"
+									FontSize="14"
+									Text="{Binding LineSummaryText}" TextTrimming="CharacterEllipsis" />
+								<TextBlock Grid.Column="2"
+									Margin="0,0,8,0" VerticalAlignment="Center"
+									FontSize="14" Text="理由" />
+								<TextBox Grid.Column="3"
+									VerticalAlignment="Center"
+									materialDesign:HintAssist.Hint="除外・訂正の理由" FontSize="14"
+									IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+									Text="{Binding Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								<StackPanel Grid.Column="4"
+									Margin="8,0,0,0"
+									Orientation="Horizontal">
+									<Button Height="32"
+										Margin="0,0,8,0" Padding="12,0"
+										Command="{Binding ExcludeCommand}"
+										Content="除外"
+										Style="{StaticResource MaterialDesignOutlinedButton}"
+										ToolTip="選んだ行を反映しない（理由が必要）" />
+									<Button Height="32"
+										Padding="12,0"
+										Command="{Binding BeginCorrectionCommand}"
+										Content="訂正版を作成"
+										Style="{StaticResource MaterialDesignOutlinedButton}"
+										ToolTip="選んだ行の項目を直した訂正版を追加する（原文は変更しない）" />
+								</StackPanel>
+							</Grid>
+						</Border>
+						<DataGrid Grid.Row="1"
+							materialDesign:DataGridAssist.CellPadding="8,3" materialDesign:DataGridAssist.ColumnHeaderPadding="8,5" AutoGenerateColumns="False" CanUserAddRows="False"
+							CanUserDeleteRows="False" EnableColumnVirtualization="True" EnableRowVirtualization="True" FontSize="14" GridLinesVisibility="Horizontal"
+							HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+							IsReadOnly="True"
+							ItemsSource="{Binding Lines}"
+							RowStyle="{StaticResource LogisticsLineRowStyle}"
+							ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+							SelectedItem="{Binding SelectedLine, Mode=TwoWay}"
+							SelectionMode="Single"
+							Style="{StaticResource MaterialDesignDataGrid}"
+							VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+							<DataGrid.Columns>
+								<DataGridTextColumn Width="64"
+									Binding="{Binding LineNo}"
+									ElementStyle="{StaticResource DataGridRightTextBlock}"
+									Header="行No" />
+								<DataGridTextColumn Width="105"
+									Binding="{Binding StatusName}"
+									Header="状態" />
+								<DataGridTextColumn Width="70"
+									Binding="{Binding ErrorCode}"
+									Header="コード" />
+								<DataGridTextColumn Width="220"
+									Binding="{Binding ErrorMsg}"
+									Header="エラー・警告" />
+								<DataGridTextColumn Width="80"
+									Binding="{Binding Su, StringFormat={}{0:N0}}"
+									ElementStyle="{StaticResource DataGridRightTextBlock}"
+									Header="数量" />
+								<DataGridTextColumn Width="80"
+									Binding="{Binding Su2, StringFormat={}{0:N0}}"
+									ElementStyle="{StaticResource DataGridRightTextBlock}"
+									Header="数量2" />
+								<DataGridTextColumn Width="100"
+									Binding="{Binding WorkDay}"
+									Header="作業日" />
+								<DataGridTextColumn Width="150"
+									Binding="{Binding RefText}"
+									Header="参照" />
+								<DataGridTextColumn Width="150"
+									Binding="{Binding TargetText}"
+									Header="生成伝票" />
+								<DataGridTextColumn Width="*" MinWidth="180"
+									Binding="{Binding RawText}"
+									Header="原文" />
+							</DataGrid.Columns>
+							<DataGrid.ColumnHeaderStyle>
+								<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+									TargetType="DataGridColumnHeader" />
+							</DataGrid.ColumnHeaderStyle>
+						</DataGrid>
+					</Grid>
+				</materialDesign:Card>
+			</Grid>
+		</Grid>
+		<Border Grid.Row="2"
+			Padding="18,10"
+			Background="{DynamicResource MaterialDesignPaper}">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+				<ProgressBar Grid.Row="0" Grid.ColumnSpan="2"
+					Height="4"
+					Margin="0,0,0,8"
+					IsIndeterminate="True"
+					Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+				<StackPanel Grid.Row="1" Grid.Column="0"
+					Margin="0,0,12,0" VerticalAlignment="Center">
+					<TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+					<TextBlock Margin="0,2,0,0"
+						FontSize="13"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="{Binding ResultText}" TextTrimming="CharacterEllipsis"
+						ToolTip="{Binding ResultText}" />
+				</StackPanel>
+				<Button Grid.Row="1" Grid.Column="1"
+					Width="128" Height="38"
+					Command="{Binding ExitCommand}"
+					Content="閉じる"
+					Style="{StaticResource MaterialDesignOutlinedButton}" />
+			</Grid>
+		</Border>
+	</Grid>
 </helpers:BaseWindow>

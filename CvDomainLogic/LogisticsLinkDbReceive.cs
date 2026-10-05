@@ -155,6 +155,12 @@ public partial class LogisticsLinkDb {
 	private int CountLines(long batchId, EnumLogisticsLineStatus status) =>
 		_db.ExecuteScalar<int>($"SELECT COUNT(*) FROM {nameof(TranLogisticsLine)} WHERE Id_Batch = @0 AND Status = @1", batchId, (int)status);
 
+	/// <summary>棚番（伝票の TanaNo は8桁まで。まとめ・重複判定も切り詰めた値で行う）</summary>
+	internal static string TanaNo(string? raw) {
+		var t = (raw ?? string.Empty).Trim();
+		return t.Length > 8 ? t[..8] : t;
+	}
+
 	internal TranLogisticsBatch RequireReceiveBatch(long batchId) {
 		var batch = _db.Fetch<TranLogisticsBatch>("where Id = @0", batchId).FirstOrDefault()
 			?? throw new ArgumentException($"バッチ {batchId} がありません。");
@@ -400,6 +406,11 @@ public partial class LogisticsLinkDb {
 				.Select(x => x.RelateNo1).ToHashSet();
 			var sent = SentRefKeys();
 			var pendingIdo = LoadPendingRefIds(nameof(Tran10IdoOut), idoIds);
+			var pendingHachu = LoadPendingRefIds(nameof(Tran13Hachu), hachuIds);
+			var appliedHachu = LoadAppliedLines(nameof(Tran13Hachu), hachuIds)
+				.Select(l => (l.RefId, l.WorkDay, l.Id_Shohin, l.Id_Col, l.Id_Siz, l.Su)).ToHashSet();
+			var shiireReceived = owner.LoadShiireReceived(hachuIds);
+			var hachuRest = new Dictionary<(long, long, long, long), int>();
 			foreach (var line in Active.ToList()) {
 				var kubun = F(line, "区分");
 				if (kubun is not ("10" or "20")) {
@@ -427,6 +438,10 @@ public partial class LogisticsLinkDb {
 					}
 					if (x.EndFlag != 0) {
 						SetError(line, "E21", "発注は完了済みです。");
+						continue;
+					}
+					if (pendingHachu.Contains(id)) {
+						SetError(line, "E13", "同じ発注の未反映の受信が他のバッチにあります。先に反映または除外してください。");
 						continue;
 					}
 					meisai = x.Jmeisai ?? [];
@@ -471,9 +486,31 @@ public partial class LogisticsLinkDb {
 					continue;
 				}
 				line.Su = su;
+				if (kubun == "20") {
+					// 分割入荷は受けるが、同じ発注・入荷日・SKU・数量が反映済みなら重複受信とみなす（内容の違う再送で二重計上しない）
+					if (appliedHachu.Contains((id, line.WorkDay, sku.Id_Shohin, sku.Id_Col, sku.Id_Siz, su))) {
+						SetError(line, "E14", "同じ発注・入荷日・SKU・数量の入荷が反映済みです（重複受信の可能性）。分割入荷なら除外せず連携先に確認してください。");
+						continue;
+					}
+					var key = (id, sku.Id_Shohin, sku.Id_Col, sku.Id_Siz);
+					if (!hachuRest.TryGetValue(key, out var rest)) {
+						rest = meisai.Where(m => (m.Id_Shohin, m.Id_Col, m.Id_Siz) == (sku.Id_Shohin, sku.Id_Col, sku.Id_Siz)).Sum(m => m.Su)
+							- shiireReceived.GetValueOrDefault(key);
+					}
+					hachuRest[key] = rest - su;
+					var inSource = meisai.Any(m => (m.Id_Shohin, m.Id_Col, m.Id_Siz) == (sku.Id_Shohin, sku.Id_Col, sku.Id_Siz));
+					if (inSource && su > rest) {
+						SetWarning(line, "W21", $"発注残 {Math.Max(rest, 0)} を超える入荷です（反映は行います）。");
+					}
+				}
 				if (!meisai.Any(m => (m.Id_Shohin, m.Id_Col, m.Id_Siz) == (sku.Id_Shohin, sku.Id_Col, sku.Id_Siz))) {
 					SetWarning(line, "W20", "元伝票に無いSKUです。");
 				}
+			}
+			// 同じ移動出庫の入荷日違いは1回の移動受にできないため検査で止める
+			foreach (var split in Active.Where(l => l.RefTable == nameof(Tran10IdoOut)).GroupBy(l => l.RefId)
+				.Where(g => g.Select(l => l.WorkDay).Distinct().Count() > 1).SelectMany(g => g).ToList()) {
+				SetError(split, "E13", "同じ移動の入荷日が複数あります（移動受は1回だけです）。");
 			}
 			PropagateGroupErrors(l => l.RefId > 0 ? $"{l.WorkDay}|{l.RefTable}|{l.RefId}" : null);
 		}
@@ -506,12 +543,43 @@ public partial class LogisticsLinkDb {
 				}
 				line.Su = su;
 			}
-			foreach (var dup in Active.GroupBy(l => (l.Id_Soko, l.WorkDay, F(l, "棚番"), l.Id_Shohin, l.Id_Col, l.Id_Siz))
+			foreach (var dup in Active.GroupBy(l => (l.Id_Soko, l.WorkDay, TanaNo(F(l, "棚番")), l.Id_Shohin, l.Id_Col, l.Id_Siz))
 				.Where(g => g.Count() > 1).SelectMany(g => g).ToList()) {
 				SetError(dup, "E30", "同じ倉庫・棚卸日・棚番・SKUがファイル内に複数あります。");
 			}
-			PropagateGroupErrors(l => l.Id_Soko > 0 ? $"{l.WorkDay}|{l.Id_Soko}|{F(l, "棚番")}" : null);
+			// 同じ倉庫・棚卸日・棚番の棚卸データが既にある（前回の受信・HHT・手入力）か、他のバッチで未反映なら重複とみなす
+			var keys = Active.Select(l => (l.Id_Soko, l.WorkDay, Tana: TanaNo(F(l, "棚番")))).Distinct().ToList();
+			if (keys.Count > 0) {
+				var existing = _db.Fetch<Tran60Tana>(
+					$"where Id_Soko in ({string.Join(",", keys.Select(k => k.Id_Soko).Distinct())}) and DenDay in ({string.Join(",", keys.Select((_, i) => "@" + i))})",
+					[.. keys.Select(k => (object)k.WorkDay)])
+					.Select(t => (t.Id_Soko, t.DenDay, t.TanaNo)).ToHashSet();
+				var pending = _db.Fetch<TranLogisticsLine>(
+					$"where Status = @0 AND Id_Batch <> @1 AND Id_Soko in ({string.Join(",", keys.Select(k => k.Id_Soko).Distinct())}) "
+					+ $"AND Id_Batch IN (SELECT Id FROM {nameof(TranLogisticsBatch)} WHERE Direction = @2 AND DataKind = @3 AND Status NOT IN (@4, @5))",
+					(int)EnumLogisticsLineStatus.Pending, batch.Id, (int)EnumLogisticsDirection.Receive, LogisticsDataKind.INVENTORY,
+					(int)EnumLogisticsReceiveStatus.ImportFailed, (int)EnumLogisticsReceiveStatus.Canceled)
+					.Select(l => (l.Id_Soko, l.WorkDay, TanaNo(LogisticsFileFormat.Parse(LogisticsDataKind.INVENTORY, l.RawText).FirstOrDefault()?.Fields
+						.ElementAtOrDefault(LogisticsFileFormat.ColumnIndex(LogisticsDataKind.INVENTORY, "棚番")) ?? string.Empty))).ToHashSet();
+				foreach (var line in Active.ToList()) {
+					var key = (line.Id_Soko, line.WorkDay, TanaNo(F(line, "棚番")));
+					if (existing.Contains(key)) {
+						SetError(line, "E31", "同じ倉庫・棚卸日・棚番の棚卸データが既にあります（重複受信の可能性）。");
+					}
+					else if (pending.Contains(key)) {
+						SetError(line, "E31", "同じ倉庫・棚卸日・棚番の未反映の受信が他のバッチにあります。");
+					}
+				}
+			}
+			PropagateGroupErrors(l => l.Id_Soko > 0 ? $"{l.WorkDay}|{l.Id_Soko}|{TanaNo(F(l, "棚番"))}" : null);
 		}
+
+		/// <summary>反映済みの受信行（同じ参照）</summary>
+		private List<TranLogisticsLine> LoadAppliedLines(string refTable, List<long> ids) =>
+			ids.Count == 0 ? [] : _db.Fetch<TranLogisticsLine>(
+				$"where RefTable = @0 AND RefId IN ({string.Join(",", ids.Distinct())}) AND Status = @1 "
+				+ $"AND Id_Batch IN (SELECT Id FROM {nameof(TranLogisticsBatch)} WHERE Direction = @2)",
+				refTable, (int)EnumLogisticsLineStatus.Applied, (int)EnumLogisticsDirection.Receive);
 
 		/// <summary>取消していない送信バッチで送った数（参照Idごとの最新）</summary>
 		private Dictionary<long, int> LoadSentSu(string refTable, List<long> ids) {

@@ -569,6 +569,8 @@ public partial class CoreService {
 			LogisticsReceiveFilesQueryParam => HandleLogisticsReceiveFiles(request.Flag),
 			LogisticsReceiveImportParam logisticsReceiveImport => HandleLogisticsReceiveImport(request.Flag, logisticsReceiveImport),
 			LogisticsRecheckParam logisticsRecheck => HandleLogisticsRecheck(request.Flag, logisticsRecheck),
+			LogisticsApplyParam logisticsApply => HandleLogisticsApply(request.Flag, logisticsApply),
+			LogisticsLineActionParam logisticsLineAction => HandleLogisticsLineAction(request.Flag, logisticsLineAction),
 			_ => throw new NotImplementedException(),
 		};
 	}

@@ -54,7 +54,7 @@ public partial class LogisticsLinkDb {
 						$"UPDATE {nameof(TranHaibun)} SET SendFlg = 1, Vdu = @0 WHERE Id IN ({string.Join(",", haibunIds)}) AND {TranHaibun.EditableWhereSql}",
 						vdate);
 					if (reserved != haibunIds.Count) {
-						throw new InvalidOperationException("対象の配分が他で更新されました。もう一度照会してください。");
+						throw new LogisticsUserException("対象の配分が他で更新されました。もう一度照会してください。");
 					}
 				}
 				if (param.Kind != LogisticsDataKind.ZAIKO) {
@@ -111,8 +111,9 @@ public partial class LogisticsLinkDb {
 			var haibunIds = lines.Where(l => l.RefTable == nameof(TranHaibun)).Select(l => l.RefId).ToList();
 			switch (param.Action) {
 				case EnumLogisticsBatchAction.Rewrite: {
-					if (batch.Status != (int)EnumLogisticsSendStatus.PlaceFailed) {
-						throw new ArgumentException("再出力できるのは配置失敗のバッチだけです。");
+					// 作成中(0)のまま残ったバッチ（DB確保後の異常終了など）も再出力・取消で回復できるようにする
+					if (batch.Status is not ((int)EnumLogisticsSendStatus.PlaceFailed or (int)EnumLogisticsSendStatus.Creating)) {
+						throw new ArgumentException("再出力できるのは配置失敗・作成中のバッチだけです。");
 					}
 					var text = string.Concat(new[] { LogisticsFileFormat.BuildLine(LogisticsFileFormat.Columns(batch.DataKind)) }
 						.Concat(lines.Select(l => l.RawText)).Select(l => l + "\r\n"));
@@ -124,8 +125,8 @@ public partial class LogisticsLinkDb {
 						placed ? "再出力しました。" : "ファイルを配置できませんでした。");
 				}
 				case EnumLogisticsBatchAction.Cancel: {
-					if (batch.Status is not ((int)EnumLogisticsSendStatus.PlaceFailed or (int)EnumLogisticsSendStatus.Placed)) {
-						throw new ArgumentException("取消できるのは配置済み・配置失敗のバッチだけです。");
+					if (batch.Status is not ((int)EnumLogisticsSendStatus.PlaceFailed or (int)EnumLogisticsSendStatus.Placed or (int)EnumLogisticsSendStatus.Creating)) {
+						throw new ArgumentException("取消できるのは作成中・配置済み・配置失敗のバッチだけです。");
 					}
 					_db.BeginTransaction();
 					try {
@@ -315,7 +316,7 @@ public partial class LogisticsLinkDb {
 			.Select(l => (l.RefTable, l.RefId)).ToHashSet();
 
 	/// <summary>発注に紐付く仕入数（CalcFlag を掛けた符号付き）を発注×SKUで集計する</summary>
-	private Dictionary<(long, long, long, long), int> LoadShiireReceived(IEnumerable<long> hachuIds) {
+	internal Dictionary<(long, long, long, long), int> LoadShiireReceived(IEnumerable<long> hachuIds) {
 		var ids = hachuIds.Distinct().ToList();
 		var result = new Dictionary<(long, long, long, long), int>();
 		if (ids.Count == 0) {
@@ -343,9 +344,15 @@ public partial class LogisticsLinkDb {
 		if (list.Count == 0) {
 			return result;
 		}
-		foreach (var s in _db.Fetch<MasterShohin>($"where Id IN ({string.Join(",", list)})")) {
-			foreach (var k in s.Jcolsiz ?? []) {
-				result[(s.Id, k.Id_Col, k.Id_Siz)] = (s.Code, k.Code_Col, k.Code_Siz, k.Jan1);
+		// 正典は SKU 展開済みの派生マスタ（受信の SKU 解決と同じ）。派生に無いものだけ商品マスタの色・サイズから補う
+		foreach (var chunk in list.Chunk(500)) {
+			foreach (var d in _db.Fetch<DerivedShohinColSiz>($"where Id_Shohin IN ({string.Join(",", chunk)})")) {
+				result.TryAdd((d.Id_Shohin, d.Id_Col, d.Id_Siz), (d.Code, d.Code_Col, d.Code_Siz, d.Jan1));
+			}
+			foreach (var s in _db.Fetch<MasterShohin>($"where Id IN ({string.Join(",", chunk)})")) {
+				foreach (var k in s.Jcolsiz ?? []) {
+					result.TryAdd((s.Id, k.Id_Col, k.Id_Siz), (s.Code, k.Code_Col, k.Code_Siz, k.Jan1));
+				}
 			}
 		}
 		return result;
