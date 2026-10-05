@@ -169,7 +169,7 @@ public partial class MenuData : ObservableObject {
 			new("▲ 店舗予算 ----", new([
 				new("店ブランド予算マスタ(月)", typeof(Views._02Yosan.ShopBrandBudgetMasterView), addInfo:"店ブランド別の月毎の日予算を作成"),
 				new("店ブランド予算マスタメンテ", typeof(Views._02Yosan.MasterYosanBrandMenteView), addInfo:"MasterYosanBrand の日別予算レコードを直接編集"),
-				new("店舗予算表", typeof(Views._02Yosan.ShopBudgetReportView)),
+				new("店舗予算表", typeof(Views._02Yosan.ShopBudgetReportView), addInfo:"店舗別または全店の日別売上･予算･達成率･前年売上･累計を印刷"),
 				new("店別売上照会", typeof(Views._02Yosan.DailyShopBudgetQueryView), addInfo:"指定年月の日別売上・予算・予算比・前年比を店舗別に照会"),
 				new("店舗ブランド別予算実績対比", typeof(Views._02Yosan.ShopBrandBudgetVsActualView), addInfo:"店舗×ブランドの売上･粗利を月単位で予算実績対比"),
 			])),
@@ -271,7 +271,7 @@ public partial class MenuData : ObservableObject {
 		new("■ 売上", new([
 			new("出荷・売上入力", typeof(Views._06Uriage.ShukkaUriageInputView), addInfo:"出荷売上入力"),
 			new("店舗売上入力", typeof(Views._06Uriage.ShopUriageInputView), addInfo:"店舗売上入力"),
-			new("POS日別精算入力", typeof(Views._06Uriage.PosDailySeisanInputView)),
+			new("POS日別精算入力", typeof(Views._06Uriage.PosDailySeisanInputView), addInfo:"営業日･店舗･レジ別のPOS精算データと現金の金種枚数を入力・修正"),
 			new("▲ 帳票・納品書 ----", new([
 				new("売上金種Viewer", typeof(Views._06Uriage.UriageCashTypeReportView), addInfo:"POS決済内訳を金種別に集計し売上金額との差額を確認"),
 				new("品番別売上チェックリスト", typeof(Views._06Uriage.HinbanUriageCheckListView), addInfo:"卸･店舗売上明細を品番別に集計して数量･金額･上代･平均単価を印刷"),
@@ -332,7 +332,7 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ 買掛・支払 ----", new([
 				new("支払計算", typeof(Views._31Monthly.PaymentCalculationView), addInfo:"締日･支払月･仕入先範囲を指定してSummaryKaiShiを作成する"),
-				new("支払入力", typeof(Views._05Shiire.ShiharaiInputView)),
+				new("支払入力", typeof(Views._05Shiire.ShiharaiInputView), addInfo:"仕入先への支払を金種別明細で入力(買掛の減算)"),
 				new("支払消込", typeof(Views._05Shiire.ShiharaiMatchingView), addInfo:"支払先単位に仕入を一覧し伝票単位で消込(EndFlag)。支払は区分別集計で金額を突合"),
 				new("仕入先元帳", typeof(Views._05Shiire.ShiireLedgerView), addInfo:"仕入先別に繰越残高･仕入･支払･差引残高を日付順に印刷"),
 				new("買掛金管理表", typeof(Views._05Shiire.KaikakeBalanceReportView), addInfo:"仕入先別に前月残･当月仕入･当月支払･当月残を印刷(締め処理の集計結果)"),
@@ -386,18 +386,15 @@ public partial class MenuData : ObservableObject {
 		 * 30 月次・更新処理 : 請求計算/支払計算は「掛管理（請求・支払）」へ移動済み
 		 * ================================================================ */
 		new("■ 月次・更新処理", new([
-			new("締日更新", typeof(Views._31Monthly.ShimebiUpdateView), addInfo:"1.1以降 1.0では伝票の遡及制御を有効日数のワーニングで行う"),
-				/* 月間データ集計 Views._31Monthly.MonthlyDataSummaryView 夜間の自動実行処理で対応するため不要 旧システムでは月の分析データを集計するために使用 */
-				/* 在庫累計更新 Views._31Monthly.StockRuikeiUpdateView cv10ではSummaryRealStock SummaryStock で足りているため不要 旧システムでは増えた過去在庫データを集計し縮小するために使用 */
 			new("▲ 棚卸更新 ----", new([
 				new("棚卸開始処理", typeof(Views._31Monthly.StockTakeInitiationView), addInfo:"棚卸年月末時点の帳簿在庫を保存し棚卸中に動かないようにする。差異調査後は再実行する"),
 				new("棚卸確定処理", typeof(Views._31Monthly.StockTakeFinalizationView), addInfo:"実棚数と帳簿在庫の差を在庫調整伝票(Tran61Chosei)にして在庫へ反映する。再確定可"),
 			])),
 			new("▲ 原価・評価 ----", new([
 				new("諸掛確認", typeof(Views._31Monthly.SundryChargesUpdateView), addInfo:"入力済みの諸掛を確認する。更新処理は持たない"),
-				new("最終仕入原価更新", typeof(Views._31Monthly.LastPurchaseCostRefreshView)),
-				new("総平均原価更新", typeof(Views._31Monthly.TotalAverageCostUpdateView)),
-				new("消化仕入更新", typeof(Views._31Monthly.ConsumptionPurchaseUpdateView)),
+				new("最終仕入原価更新", typeof(Views._31Monthly.LastPurchaseCostRefreshView), addInfo:"対象月の最終仕入単価から商品別の原価を計算し、月末の原価履歴として確定する"),
+				new("総平均原価更新", typeof(Views._31Monthly.TotalAverageCostUpdateView), addInfo:"前月在庫と当月仕入･諸掛から商品別の平均原価を計算し、月末の原価履歴として確定する"),
+				new("消化仕入更新", typeof(Views._31Monthly.ConsumptionPurchaseUpdateView), addInfo:"対象月の消化仕入対象売上から仕入金額を計算し、仕入伝票を作成する"),
 				new("評価替", typeof(Views._31Monthly.CostRevaluationView), addInfo:"条件で抽出した在庫商品の原価を率または金額で引き下げ、月末または期末の原価履歴として確定する"),
 			])),
 			new("▲ その他更新 ----", new([
@@ -423,7 +420,7 @@ public partial class MenuData : ObservableObject {
 				new("即時移動明細書", typeof(Views._30HHT.IdoSokuDetailBookPrintView), addInfo:"即時移動の明細書を印刷（通常発行で発行済みにする）"),
 			])),
 			new("▲ 物流連携 ----", new([
-				new("マスタデータ作成", typeof(Views._41Logistics.LogisticsMasterDataCreateView)),
+				new("マスタデータ作成", typeof(Views._41Logistics.LogisticsMasterDataCreateView), addInfo:"物流連携用の商品SKU･場所マスタを全件または差分で送信フォルダへ出力"),
 				new("連携データ手動送信", typeof(Views._41Logistics.IntegrationDataManualTransmitView), addInfo:"出荷指示(配分)・入荷予定・在庫を倉庫へ送信する(TranHaibun.SendFlg)"),
 				new("連携データ手動受信", typeof(Views._41Logistics.IntegrationDataManualReceiveView), addInfo:"倉庫から出荷確定・欠品・入荷確定・棚卸を受信して反映する"),
 				new("連携エラーデータ照会", typeof(Views._41Logistics.IntegrationErrorDataQueryView), addInfo:"送受信履歴の照会と再出力・送信取消・除外・訂正版追加"),
