@@ -77,7 +77,7 @@ dotnet run --project "Doc/spec/tools/summaryreconcile" -- <command> [dbPath]
    `paysakicheck=PASS`（親子締日不一致で警告発火）を確認。
 5. 帳票PDFの目視確認は 2026-08-21 に完了（本ツールはSQL層の突合まで。PDFは
    `.agents/skills/author-printstream-qfm/tools/qfmprint` でローカル描画し、テキスト層で突合した。
-   手順・結果・指摘は [請求・支払帳票PDF目視確認_結果](../../archive/2026-08-21_請求・支払帳票PDF目視確認_結果.md)）。
+   手順・結果・指摘は 旧 `2026-08-21_請求・支払帳票PDF目視確認_結果.md`（2026-10-05 削除、git 履歴で参照可））。
    WPFクライアント実操作での確認（ダイアログ表示・PDFビューア）は Mini-UAT(D-09) の範囲。
 
 ## paysakicheck の投入データ（E7 親子締日ワーニング）

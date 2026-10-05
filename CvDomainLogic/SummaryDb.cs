@@ -893,7 +893,7 @@ WHERE SumMonth <= @0;
 	/// 期首年月より前の集計行を削除・上書きしない。期首残高行は「期首直前の1期間の実績行」として
 	/// 置かれ、繰越はテーブルに持たず、帳票側の <c>PreviousBalance</c>(<c>SUM(TotalSales - TotalIn)</c> 等)
 	/// に自然に含まれる形で参照される。仕様は
-	/// `Doc/spec/archive/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 4.2 を参照する。
+	/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 4.2 を参照する。
 	/// </para>
 	/// </summary>
 	private string GetFiscalStartDate() {

@@ -1,6 +1,6 @@
 ﻿# DB初期化・Migration・初期データ 詳細設計（2026-09-12）
 
-状態: **Step 1 詳細設計。実装は承認後の Step 2 以降で行う。**
+状態: **実装済み（2026-09-12、Step 3 の検証補完は `4c08a5b5`）。** 新規DB判定は `CvBase/DefineDataTable.cs` の `isNewDatabase`。9章の Step 2 以降の記述は着手前の計画として残す。
 
 ## 1. 決定事項
 

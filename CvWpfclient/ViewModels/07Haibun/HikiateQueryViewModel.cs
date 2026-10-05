@@ -9,7 +9,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// 引当数の定義は <c>SummaryDb.ReserveTargetWhere</c>（<c>EndFlag=0</c> の全区分）／
 /// <c>ReserveQtySumExpr</c>（仕入配分=入荷済み数 ArrivedSu／ほかは未確定=Su・確定済み=JitsuSu）に集約済みで、結果は
 /// <see cref="SummaryRealStock.ReserveQty"/> へ materialize 済み。ここでは再集計せず列を読む。
-/// 仕様は `Doc/spec/archive/2026-08-18_I9_配分照会3画面_詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/2026-08-18_I9_配分照会3画面_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 public sealed class HikiateQueryViewModel : BaseHaibunInquiryViewModel {

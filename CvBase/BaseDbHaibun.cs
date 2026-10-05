@@ -391,8 +391,8 @@ public enum EnumHaibunEndReason : int {
 /// <para>
 /// 出荷処理（<c>ShippingDb.CreateShippingSlips</c>）が 1キー=1伝票 で出荷売上／移動出庫を作る。
 /// 配分データメンテ・出荷指示明細書印刷・納入一覧表のヘッダ表示もこのキーが単位になる。
-/// 構造化（ヘッダ実テーブル化）の検討経緯は
-/// `Doc/spec/archive/2026-08-24_TranHaibun_ヘッダ明細構造化_調査.md` を参照する。
+/// 構造化（ヘッダ実テーブル化）を採らない判断と再検討条件は
+/// `Doc/spec/2026-09-28_設計判断記録.md` 2.13 を参照する。
 /// </para>
 /// </summary>
 public readonly record struct HaibunHeaderKey(string DenDay, string NouhinDay, long Id_Soko, long Id_Tenpo, int Kubun, int RelateNo1) {

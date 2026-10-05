@@ -17,7 +17,7 @@ Visual Studio 2026 の DTE (Development Tools Environment) に接続し、
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Register-VSBookmark.ps1 .\CvBase\UpdateDb.cs 16
 
 .EXAMPLE
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Register-VSBookmark.ps1 .\Doc\spec\2026-08-27_Mini-UAT自動化計画_VM駆動ハーネス.md 22
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Register-VSBookmark.ps1 .\Doc\test\2026-08-27_Mini-UAT自動化計画_VM駆動ハーネス.md 22
 
 .EXAMPLE
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Register-VSBookmark.ps1 .\CvBase\DefineDataTable.cs 160

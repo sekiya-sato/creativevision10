@@ -315,7 +315,7 @@ public record StocktakeParameter(string FallbackMonth, long IdShain, long[] Soko
 /// <summary>
 /// HHTデータ更新のパラメータ。<see cref="TranVulcanHht"/> を Tran系各テーブルへ展開する。
 /// <para>
-/// 仕様は `Doc/spec/archive/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 /// <param name="DateFrom">対象日付From yyyyMMdd。空なら下限なし</param>
@@ -474,7 +474,7 @@ public sealed record ShippingShortageDto(long Id_Soko, long Id_Shohin, long Id_C
 /// 対象日付の既存行を <paramref name="OwnerIds"/> の取引先ぶんだけ削除してから登録し直す（洗い替え）。
 /// 削除と登録は1トランザクションで行う。<c>InsertBulkParam</c> は Insert のみで一意キー(uk1)違反になるため
 /// 再取込に使えず、行単位の Delete では原子性が保てないので専用パラメータを設けている。
-/// 仕様は `Doc/spec/archive/2026-08-21_残高登録処理_詳細設計.md` を参照する。
+/// 仕様は `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` を参照する。
 /// </para>
 /// </summary>
 /// <param name="TableName">対象テーブル名。<c>OpeningBalanceCsv.AllowedTableNames</c> の4種のみ</param>
