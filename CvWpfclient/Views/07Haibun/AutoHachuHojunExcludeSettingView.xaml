@@ -1,17 +1,156 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._07Haibun.AutoHachuHojunExcludeSettingView"
-	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._07Haibun"
 	Title="自動発注・補充対象除外品設定"
 	Width="{StaticResource StandardWindowWidth}"
 	Height="{StaticResource StandardWindowHeight}"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
-	mc:Ignorable="d">
+	TextOptions.TextFormattingMode="Display">
 	<helpers:BaseWindow.DataContext>
 		<vm:AutoHachuHojunExcludeSettingViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="SettingCellText" TargetType="TextBlock">
+			<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+			<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+	</helpers:BaseWindow.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<materialDesign:ColorZone Padding="12,8"
+			Mode="PrimaryMid">
+			<TextBlock FontSize="18"
+				FontWeight="SemiBold"
+				Text="自動発注・補充対象除外品設定" />
+		</materialDesign:ColorZone>
+		<Grid Grid.Row="1"
+			Margin="12"
+			IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="360" />
+			</Grid.ColumnDefinitions>
+			<Grid Margin="0,0,12,0">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
+				<WrapPanel Margin="0,0,0,8">
+					<Button Margin="0,0,8,0"
+						Command="{Binding RefreshCommand}"
+						Content="一覧更新"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<Button Command="{Binding LoadSelectedCommand}"
+						Content="選択行を読込"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+				</WrapPanel>
+				<DataGrid Grid.Row="1"
+					AutoGenerateColumns="False"
+					CanUserAddRows="False"
+					IsReadOnly="True"
+					SelectionMode="Single"
+					ItemsSource="{Binding Rows}"
+					SelectedItem="{Binding SelectedRow}"
+					ColumnHeaderStyle="{StaticResource MenteDataGridColumnHeader}">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="倉庫"
+							Binding="{Binding SokoDisplay}" ElementStyle="{StaticResource SettingCellText}"
+							Width="170" />
+						<DataGridTextColumn Header="商品"
+							Binding="{Binding ShohinDisplay}" ElementStyle="{StaticResource SettingCellText}"
+							Width="220" />
+						<DataGridTextColumn Header="色 / サイズ"
+							Binding="{Binding SkuDisplay}" ElementStyle="{StaticResource SettingCellText}"
+							Width="180" />
+						<DataGridCheckBoxColumn Header="除外"
+							Binding="{Binding FlagValue}"
+							Width="70" />
+					</DataGrid.Columns>
+				</DataGrid>
+			</Grid>
+			<materialDesign:Card Grid.Column="1"
+				Padding="12">
+				<ScrollViewer VerticalScrollBarVisibility="Auto">
+					<StackPanel>
+						<TextBlock Margin="0,0,0,8"
+							FontWeight="SemiBold"
+							Text="{Binding EditStatus}" />
+						<StackPanel Margin="0,4"
+							Orientation="Horizontal">
+							<Button Command="{Binding SelectSokoCommand}"
+								Content="倉庫選択"
+								Style="{StaticResource MaterialDesignOutlinedButton}" />
+							<TextBlock Margin="12,0"
+								VerticalAlignment="Center"
+								Text="{Binding Soko.Code}" />
+							<TextBlock VerticalAlignment="Center"
+								Text="{Binding Soko.Name}"
+								TextTrimming="CharacterEllipsis" />
+						</StackPanel>
+						<Button Margin="0,8,0,4"
+							HorizontalAlignment="Left"
+							Command="{Binding SelectShohinCommand}"
+							Content="商品選択"
+							Style="{StaticResource MaterialDesignOutlinedButton}" />
+						<TextBlock Text="{Binding Shohin.Code}" />
+						<TextBlock Margin="0,0,0,8"
+							Text="{Binding Shohin.Name}"
+							TextWrapping="Wrap" />
+						<TextBlock Style="{StaticResource FormLabel}" Text="色 / サイズ" />
+						<ComboBox Margin="0,8"
+							AutomationProperties.Name="色 / サイズ"
+							ItemsSource="{Binding Skus}"
+							SelectedItem="{Binding SelectedSku}"
+							Style="{StaticResource MaterialDesignOutlinedComboBox}">
+							<ComboBox.ItemTemplate>
+								<DataTemplate>
+									<TextBlock TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}">
+										<Run Text="{Binding Code_Col}" />
+										<Run Text=" " />
+										<Run Text="{Binding Mei_Col}" />
+										<Run Text=" / " />
+										<Run Text="{Binding Code_Siz}" />
+										<Run Text=" " />
+										<Run Text="{Binding Mei_Siz}" />
+									</TextBlock>
+								</DataTemplate>
+							</ComboBox.ItemTemplate>
+						</ComboBox>
+						<CheckBox Margin="0,12"
+							Content="除外"
+							IsChecked="{Binding FlagValue}" />
+						<WrapPanel>
+							<Button Margin="0,0,8,0"
+								Command="{Binding NewCommand}"
+								Content="新規"
+								Style="{StaticResource MaterialDesignOutlinedButton}" />
+							<Button Command="{Binding SaveCommand}"
+								Content="保存"
+								Style="{StaticResource MaterialDesignRaisedButton}" />
+						</WrapPanel>
+					</StackPanel>
+				</ScrollViewer>
+			</materialDesign:Card>
+		</Grid>
+		<DockPanel Grid.Row="2"
+			Margin="12,0,12,12">
+			<Button DockPanel.Dock="Right"
+				Command="{Binding ExitCommand}"
+				Content="閉じる"
+				Style="{StaticResource MaterialDesignOutlinedButton}" />
+			<TextBlock Margin="0,0,12,0"
+				VerticalAlignment="Center"
+				Text="{Binding Message}"
+				TextWrapping="Wrap" />
+		</DockPanel>
+	</Grid>
 </helpers:BaseWindow>

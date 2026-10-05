@@ -1,11 +1,6 @@
-﻿using CodeShare;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CvAsset;
-using CvBase;
-using System.Diagnostics;
+﻿namespace CvWpfclient.ViewModels._07Haibun;
 
-namespace CvWpfclient.ViewModels._07Haibun;
-
-public partial class AutoHachuHojunExcludeSettingViewModel : Helpers.BaseViewModel {
+public partial class AutoHachuHojunExcludeSettingViewModel : AutoReplenishSettingViewModel {
+	protected override bool IsStockSetting => false;
+	public AutoHachuHojunExcludeSettingViewModel() => FlagValue = true;
 }

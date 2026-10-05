@@ -77,6 +77,9 @@ public class DefineDataTable {
 			// 配分テーブル
 			typeof(TranHaibun),
 			typeof(TranHoju),
+			typeof(MasterAutoReplenishStock),
+			typeof(MasterAutoReplenishExclude),
+			typeof(TranAutoReplenishBatch),
 			// 上代一括変更テーブル (DerivedJodai は TranJodai の IDerivedOrigin 経由で自動展開される)
 			typeof(TranJodai),
 			typeof(DerivedJodai),
@@ -147,7 +150,8 @@ public class DefineDataTable {
 		var tableTypes = TableTypes;
 		foreach (var tableType in tableTypes) {
 			PreAdjustTable(db, tableType);
-			if (!db.CreateTable(tableType, isForce)) {
+			// 補充の新索引はId_Batch移行後に作る（旧表にはまだ列がない）。
+			if (!db.CreateTable(tableType, isForce, isCreateIndex: tableType != typeof(TranHoju))) {
 				_logger.LogError("テーブルの作成に失敗しました。テーブル名: {TableName}", tableType.Name);
 				return false;
 			}
@@ -166,6 +170,10 @@ public class DefineDataTable {
 
 		// DBの整合性を管理
 		await UpdateDb.WriteVersionInfoAsync(db, ct);
+		if (!db.CreateTable(typeof(TranHoju))) {
+			_logger.LogError("補充テーブルの移行後の索引作成に失敗しました。");
+			return false;
+		}
 		// 他、追加処理
 		//var summaryDb = new CvDomainLogic.SummaryDb(db);
 		//summaryDb.CalcSummaryRealStock(DateTime.Now.ToString("yyyyMM"));

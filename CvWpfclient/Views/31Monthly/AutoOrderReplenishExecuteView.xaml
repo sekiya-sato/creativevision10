@@ -1,4 +1,4 @@
-﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._31Monthly.AutoOrderReplenishExecuteView"
+<helpers:BaseWindow x:Class="CvWpfclient.Views._31Monthly.AutoOrderReplenishExecuteView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
 	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -6,6 +6,7 @@
 	Title="自動発注・補充の実行"
 	Width="{StaticResource StandardWindowWidth}"
 	Height="{StaticResource StandardWindowHeight}"
+	MinWidth="850" MinHeight="600"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display"
@@ -13,5 +14,111 @@
 	<helpers:BaseWindow.DataContext>
 		<vm:AutoOrderReplenishExecuteViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+		<materialDesign:ColorZone Padding="18,12" Mode="PrimaryMid">
+			<TextBlock FontSize="20" FontWeight="SemiBold" Text="自動発注・補充" />
+		</materialDesign:ColorZone>
+		<materialDesign:Card Grid.Row="1" Margin="16,12" Padding="14">
+			<StackPanel>
+				<WrapPanel>
+					<Button Margin="0,0,12,8" Command="{Binding SelectWarehouseCommand}" Content="補充元倉庫選択" Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBlock Margin="0,8,18,8" Text="{Binding WarehouseText}" />
+					<TextBlock Margin="0,8,8,8" Text="基準日" />
+					<TextBlock Margin="0,8,18,8" Text="{Binding BasisDayText}" />
+					<Button Margin="0,0,12,8" Command="{Binding PreviewCommand}" Content="補充候補計算" Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<Button Margin="0,0,0,8" Command="{Binding LoadHistoryCommand}" Content="履歴取得" Style="{StaticResource MaterialDesignOutlinedButton}" />
+				</WrapPanel>
+				<TextBlock Text="店舗の基準在庫と配分による倉庫不足を補います。数量は設定に基づき計算します。補充保存の後、確定で配分指示と発注を作成します。" TextWrapping="Wrap" />
+			</StackPanel>
+		</materialDesign:Card>
+		<TabControl Grid.Row="2" Margin="16,0,16,12">
+			<TabItem Header="補充内訳">
+				<DataGrid AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+					IsReadOnly="True" ItemsSource="{Binding Rows}"
+					EnableRowVirtualization="True" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+					ScrollViewer.VerticalScrollBarVisibility="Auto" Style="{StaticResource MaterialDesignDataGrid}">
+					<DataGrid.Columns>
+						<DataGridTextColumn Width="90" Binding="{Binding ShopCode}" Header="店舗コード" />
+						<DataGridTextColumn Width="140" Binding="{Binding ShopName}" Header="店舗・倉庫" />
+						<DataGridTextColumn Width="120" Binding="{Binding ProductCode}" Header="商品コード" />
+						<DataGridTextColumn Width="180" Binding="{Binding ProductName}" Header="商品名" />
+						<DataGridTextColumn Width="70" Binding="{Binding ColorCode}" Header="色" />
+						<DataGridTextColumn Width="70" Binding="{Binding SizeCode}" Header="サイズ" />
+						<DataGridTextColumn Width="85" Binding="{Binding Row.TransferSu, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="店舗配分" />
+						<DataGridTextColumn Width="95" Binding="{Binding Row.CoveredSu, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="既存供給" />
+						<DataGridTextColumn Width="85" Binding="{Binding Row.Su, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="追加発注" />
+						<DataGridTextColumn Width="85" Binding="{Binding RealSu, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="実在庫" />
+						<DataGridTextColumn Width="85" Binding="{Binding ReserveQty, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="引当" />
+						<DataGridTextColumn Width="85" Binding="{Binding TargetSu, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="基準在庫" />
+						<DataGridTextColumn Width="85" Binding="{Binding IncomingSu, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="入荷待ち" />
+						<DataGridTextColumn Width="85" Binding="{Binding TransitSu, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="積送中" />
+						<DataGridTextColumn Width="85" Binding="{Binding Row.DemandSu, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="必要数" />
+						<DataGridTextColumn Width="90" Binding="{Binding Row.Tanka, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="単価" />
+						<DataGridTextColumn Width="100" Binding="{Binding Row.Kingaku, StringFormat={}{0:N0}}" ElementStyle="{StaticResource DataGridRightTextBlock}" Header="発注金額" />
+						<DataGridTextColumn Width="140" Binding="{Binding ShiireName}" Header="仕入先" />
+						<DataGridTextColumn Width="120" Binding="{Binding Row.NouhinDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}" Header="納品予定日" />
+						<DataGridTextColumn Width="100" Binding="{Binding Row.GeneratedHachuId}" Header="生成発注No." />
+						<DataGridTextColumn Width="220" Binding="{Binding Reason}" Header="対象外・警告" />
+					</DataGrid.Columns>
+					<DataGrid.ColumnHeaderStyle>
+						<Style BasedOn="{StaticResource MenteDataGridColumnHeader}" TargetType="DataGridColumnHeader" />
+					</DataGrid.ColumnHeaderStyle>
+				</DataGrid>
+			</TabItem>
+			<TabItem Header="補充履歴">
+				<Grid>
+					<Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+					<DataGrid AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
+						ItemsSource="{Binding HistoryRows}" SelectedItem="{Binding SelectedHistory, Mode=TwoWay}"
+						Style="{StaticResource MaterialDesignDataGrid}">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="100" Binding="{Binding Id}" Header="補充No." />
+							<DataGridTextColumn Width="130" Binding="{Binding DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}" Header="基準日" />
+							<DataGridTemplateColumn Width="120" Header="状態">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<TextBlock><TextBlock.Style><Style TargetType="TextBlock">
+											<Setter Property="Text" Value="取消済" />
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding Status}" Value="0"><Setter Property="Text" Value="未確定" /></DataTrigger>
+												<DataTrigger Binding="{Binding Status}" Value="1"><Setter Property="Text" Value="確定済" /></DataTrigger>
+											</Style.Triggers>
+										</Style></TextBlock.Style></TextBlock>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="130" Binding="{Binding KakuteiDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}" Header="確定日" />
+						</DataGrid.Columns>
+					</DataGrid>
+					<Button Grid.Row="1" Margin="8" HorizontalAlignment="Right"
+						Command="{Binding LoadCommand}" Content="補充読込" Style="{StaticResource MaterialDesignOutlinedButton}" />
+				</Grid>
+			</TabItem>
+		</TabControl>
+		<Border Grid.Row="3" Padding="16,10" Background="{DynamicResource MaterialDesignPaper}">
+			<Grid><Grid.RowDefinitions>
+				<RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
+				<ProgressBar Height="4" IsIndeterminate="True" Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+				<TextBlock Grid.Row="1" Margin="0,8,0,4" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+				<ScrollViewer Grid.Row="2" MaxHeight="100" VerticalScrollBarVisibility="Auto">
+					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}" Text="{Binding ErrorText}" TextWrapping="Wrap" />
+				</ScrollViewer>
+				<WrapPanel Grid.Row="3" Margin="0,8,0,0">
+					<TextBlock Margin="0,8,16,8" Text="{Binding BatchText}" />
+					<TextBlock Margin="0,8,16,8" Text="{Binding SummaryText}" />
+					<Button Margin="0,0,8,8" Command="{Binding SaveCommand}" Content="補充保存" Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<Button Margin="0,0,8,8" Command="{Binding CommitCommand}" Content="補充確定" Style="{StaticResource MaterialDesignRaisedButton}" />
+					<Button Margin="0,0,8,8" Command="{Binding CancelCommand}" Content="補充取消" Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<Button Margin="0,0,0,8" Command="{Binding ExitCommand}" Content="閉じる" Style="{StaticResource MaterialDesignOutlinedButton}" />
+				</WrapPanel>
+			</Grid>
+		</Border>
+	</Grid>
 </helpers:BaseWindow>

@@ -261,8 +261,8 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ 補充(1.1以降) ----", new([
 				new("配分関連メンテナンス", typeof(Views._07Haibun.HaibunMenteView), addInfo:"1.1以降 自動補充の対象店舗･優先順位を設定する"),
-				new("自動発注・補充対象除外品設定", typeof(Views._07Haibun.AutoHachuHojunExcludeSettingView), addInfo:"1.1以降 自動補充はRelease後対応"),
-				new("在庫基準自動補充メンテナンス", typeof(Views._07Haibun.ZaikoAutoHojunMenteView), addInfo:"1.1以降 自動補充はRelease後対応"),
+				new("自動発注・補充対象除外品設定", typeof(Views._07Haibun.AutoHachuHojunExcludeSettingView), addInfo:"補充元倉庫・商品・色サイズごとに自動補充の除外を設定する"),
+				new("在庫基準自動補充メンテナンス", typeof(Views._07Haibun.ZaikoAutoHojunMenteView), addInfo:"直営店のSKU別基準在庫・補充元倉庫・優先順位を設定する"),
 			])),
 		])),
 		/* ================================================================
@@ -402,7 +402,7 @@ public partial class MenuData : ObservableObject {
 			])),
 			new("▲ その他更新 ----", new([
 				new("積送中クリア", typeof(Views._31Monthly.InTransitClearView), addInfo:"選択倉庫の正負の積送残を移動受でクリアする（移動・HHT更新停止中に実行）"),
-				new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteView), addInfo:"準備中"),
+				new("自動発注・補充の実行", typeof(Views._31Monthly.AutoOrderReplenishExecuteView), addInfo:"店舗基準在庫と配分不足から補充データを作り、確定で配分指示・仕入先発注を作成する"),
 				new("残高登録処理", typeof(Views._31Monthly.BalanceRegistrationView), addInfo:"期首の売掛/請求/買掛/支払残をテンプレートCSVで投入。期首前の年月で登録し再計算から凍結される"),
 			])),
 		])),

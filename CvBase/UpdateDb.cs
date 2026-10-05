@@ -141,6 +141,16 @@ public class UpdateDb {
 		new (26_10_05_01,
 			"ALTER TABLE Tran05Ido ADD COLUMN IsPrint NUMBER not null default 0;ALTER TABLE Tran10IdoOut ADD COLUMN IsPrint NUMBER not null default 0;",
 			"HHT 移動明細書/即時移動明細書の発行済FLGを追加 旧印刷FLG(bit1/bit2)相当 既存伝票は未発行(0)"),
+		new (26_10_05_02,
+			"ALTER TABLE TranHoju ADD COLUMN Id_Batch NUMBER not null default 0;" +
+			"ALTER TABLE TranHoju ADD COLUMN Id_Tenpo NUMBER not null default 0;" +
+			"ALTER TABLE TranHoju ADD COLUMN DemandSu NUMBER not null default 0;" +
+			"ALTER TABLE TranHoju ADD COLUMN TransferSu NUMBER not null default 0;" +
+			"ALTER TABLE TranHoju ADD COLUMN CoveredSu NUMBER not null default 0;" +
+			"ALTER TABLE TranHoju ADD COLUMN GeneratedHachuId NUMBER not null default 0;" +
+			"ALTER TABLE TranHoju ADD COLUMN GeneratedHaibunId NUMBER not null default 0;" +
+			"CREATE INDEX IF NOT EXISTS TranHoju_nk2 ON TranHoju(Id_Batch);",
+			"自動発注・補充の店舗別数量とlong生成リンクを追加 新規設定2表と実行バッチはDefineDataTableが作成 既存補充Id_Batch=0は新確定対象外"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

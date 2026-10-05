@@ -555,6 +555,7 @@ public partial class CoreService {
 			DeleteBulkParam deleteBulk => HandleBulkDelete(request.Flag, deleteBulk),
 			PartialUpdateParam partialUpdate => HandlePartialUpdate(request.Flag, partialUpdate),
 			HaibunSaveParam haibunSave => HandleHaibunSave(request.Flag, haibunSave),
+			AutoReplenishParam autoReplenish => HandleAutoReplenish(request.Flag, autoReplenish),
 			HaibunCommitParam haibunCommit => HandleHaibunCommit(request.Flag, haibunCommit),
 			ReservationConvertParam reservationConvert => HandleReservationConvert(request.Flag, reservationConvert),
 			ReservationCancelParam reservationCancel => HandleReservationCancel(request.Flag, reservationCancel),

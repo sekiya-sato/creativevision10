@@ -1,11 +1,5 @@
-﻿using CodeShare;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CvAsset;
-using CvBase;
-using System.Diagnostics;
+﻿namespace CvWpfclient.ViewModels._07Haibun;
 
-namespace CvWpfclient.ViewModels._07Haibun;
-
-public partial class ZaikoAutoHojunMenteViewModel : Helpers.BaseViewModel {
+public partial class ZaikoAutoHojunMenteViewModel : AutoReplenishSettingViewModel {
+	protected override bool IsStockSetting => true;
 }
