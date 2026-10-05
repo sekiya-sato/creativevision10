@@ -217,7 +217,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	/// <summary>
 	/// 仕入区分が消化仕入(<see cref="EnumPurchaseType.Consumption"/>)かどうか。
-	/// 消化仕入設定タブの委託仕入先以下の入力欄を、通常仕入時にグレーアウトして誤入力を防ぐために使う
+	/// 消化仕入の計算条件を、通常仕入時にグレーアウトして誤入力を防ぐために使う。委託仕入先は常に入力可能。
 	/// (§2.5.8「PurchaseType=0の場合、他の消化仕入用列は計算に使用しない」)。値自体は消さずに保持する。
 	/// </summary>
 	public bool IsConsumptionPurchase => CurrentEdit.PurchaseType == (int)EnumPurchaseType.Consumption;

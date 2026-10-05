@@ -871,32 +871,31 @@
 								</StackPanel>
 
 								<!--
-									以下は仕入区分=消化仕入のときだけ使用する設定。§2.5.8「PurchaseType=0の場合、
-									他の消化仕入用列は計算に使用しない」。入力自体は保持するため無効化はComboBox以外の
-									誤操作防止目的で、通常仕入時にグレーアウトして見せる（値は消さない）。
+									委託仕入先は通常仕入でも自動補充の発注先として使用する。
+									消化仕入の計算条件だけを通常仕入時に無効化する（値は保持する）。
 								-->
+								<Border Margin="0,0,0,4" Padding="12,8"
+									Background="{DynamicResource MaterialDesignDivider}"
+									CornerRadius="6">
+									<TextBlock FontSize="12" Text="委託仕入先は通常仕入でも自動補充の発注先として使用します。以下の計算条件は「消化仕入」のときだけ使用します。" TextWrapping="Wrap" />
+								</Border>
+
+								<!--  委託仕入先  -->
+								<TextBlock Margin="0,8,0,0"
+									Style="{StaticResource FormLabel}"
+									Text="委託仕入先" />
+								<DockPanel Margin="0,4">
+									<TextBox Width="120" Height="36"
+										HorizontalContentAlignment="Left"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectConsignmentShiireCommand}"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.Id_ConsignmentShiire, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding CurrentEdit.VConsignmentShiire, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
+								</DockPanel>
+
 								<StackPanel IsEnabled="{Binding IsConsumptionPurchase}">
-									<Border Margin="0,0,0,4" Padding="12,8"
-										Background="{DynamicResource MaterialDesignDivider}"
-										CornerRadius="6">
-										<TextBlock FontSize="12" Text="仕入区分が「消化仕入」のときだけ使用します。「通常仕入」では入力しても処理に使用しません。" TextWrapping="Wrap" />
-									</Border>
-
-									<!--  委託仕入先  -->
-									<TextBlock Margin="0,8,0,0"
-										Style="{StaticResource FormLabel}"
-										Text="委託仕入先" />
-									<DockPanel Margin="0,4">
-										<TextBox Width="120" Height="36"
-											HorizontalContentAlignment="Left"
-											helpers:SearchTextBoxAssist.Command="{Binding DoSelectConsignmentShiireCommand}"
-											BorderThickness="0,0,0,1" DockPanel.Dock="Left"
-											Style="{StaticResource MenteSearchTextBox}"
-											Text="{Binding CurrentEdit.Id_ConsignmentShiire, UpdateSourceTrigger=PropertyChanged}" />
-										<TextBlock Style="{StaticResource MasterRefText}"
-											Text="{Binding CurrentEdit.VConsignmentShiire, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
-									</DockPanel>
-
 									<!--  消化仕入計算区分  -->
 									<TextBlock Margin="0,8,0,0"
 										Style="{StaticResource FormLabel}"
