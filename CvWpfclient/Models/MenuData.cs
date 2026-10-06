@@ -431,7 +431,6 @@ public partial class MenuData : ObservableObject {
 		 * ================================================================ */
 		new("■ 顧客管理", new([
 			new("顧客マスタメンテ", typeof(Views._01Master.MasterEndCustomerMenteView), addInfo:"顧客マスタメンテ画面"),
-			new("顧客カルテ", typeof(Views._32LoyalCustomer.EndCustomerProfileView), addInfo:"準備中"),
 			new("▲ ポイント ----", new([
 				new("ポイントマスタ（ベース）（管理者用)", typeof(Views._32LoyalCustomer.PointMasterBaseAdminView), addInfo:"ポイント制度・版別の基本付与条件"),
 				new("ポイントマスタ（ランク）", typeof(Views._32LoyalCustomer.PointMasterRankView), addInfo:"ベース版に属するランク別付与条件"),
