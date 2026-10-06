@@ -1009,8 +1009,9 @@ public class SchedulerService : ISchedulerService {
 	}
 
 	/// <summary>
-	/// 在庫・売掛・買掛を、前月分・当月分の順で再集計する。
-	/// 区分（在庫/売掛/買掛）は互いに独立で、ある区分がエラーになってもその区分だけ中断し、残りの区分は実行する。
+	/// 在庫・売掛・買掛・ポイントを、前月分・当月分の順で再集計する。
+	/// 区分（在庫/売掛/買掛/ポイント）は互いに独立で、ある区分がエラーになってもその区分だけ中断し、残りの区分は実行する。
+	/// ポイントは伝票日付の暦月で計上するため、掛月を暦月へずらして前月・当月を再計算する。
 	/// </summary>
 	private async Task<AutoexecTaskResult> ExecuteMonthlyResummaryCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
 		var now = DateTime.Now;
@@ -1018,10 +1019,15 @@ public class SchedulerService : ISchedulerService {
 		var shime = summaryDb.GetOwnClosingDay();
 		var currentKakeMonth = ClosingMonthCalculator.CalculateKakeMonth(now, shime);
 		string[] months = [ClosingMonthCalculator.AddMonths(currentKakeMonth, -1), currentKakeMonth];
+		// 締日後は掛月が暦月の翌月になる。その差だけ戻して暦月の前月・当月にする
+		var pointShift = currentKakeMonth == now.ToString("yyyyMM") ? 0 : -1;
+		var pointDb = new PointCalcDb(db);
 		ResummaryGroup[] groups = [
 			new("在庫", p => summaryDb.SummaryAllAsyncStream(p, AutoExecHistType)),
 			new("売掛", p => summaryDb.SummaryUriKakeAsyncStream(p, AutoExecHistType)),
 			new("買掛", p => summaryDb.SummaryKaiKakeAsyncStream(p, AutoExecHistType)),
+			new("ポイント", p => pointDb.RecalcAsyncStream(new CalcDateTermParameter(
+				ClosingMonthCalculator.AddMonths(p.DateYymmFrom, pointShift), ClosingMonthCalculator.AddMonths(p.DateYymmTo, pointShift)), AutoExecHistType)),
 		];
 
 		_logger.LogInformation(

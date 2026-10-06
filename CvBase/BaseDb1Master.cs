@@ -1279,7 +1279,7 @@ public sealed partial class MasterConfig : BaseDbClass {
 	/// 在庫/売掛/買掛 再集計タスクの表示名
 	/// </summary>
 	[Comment("在庫/売掛/買掛 再集計タスクの表示名")]
-	public const string AutoExecTaskNameMonthlyResummary = "在庫 売掛 買掛 の当月と前月 を再集計するタスク";
+	public const string AutoExecTaskNameMonthlyResummary = "在庫 売掛 買掛 ポイント の当月と前月 を再集計するタスク";
 	/// <summary>
 	/// 在庫/売掛/買掛 再集計タスクの既定cron式
 	/// </summary>

@@ -162,6 +162,7 @@ public partial class CoreService {
 		CvFlag.Msg056_SummaryUriSei => "売上請求計算",
 		CvFlag.Msg057_SummaryKaiShi => "仕入支払計算",
 		CvFlag.Msg058_HhtDataUpdate => "HHTデータ更新",
+		CvFlag.Msg063_PointRecalc => "ポイント再計算",
 		CvFlag.Msg082_CostConsumptionApply => "消化仕入更新",
 		CvFlag.Msg085_CostLastPurchaseApply => "最終仕入原価更新",
 		CvFlag.Msg087_CostTotalAverageApply => "総平均原価更新",
@@ -210,7 +211,8 @@ public partial class CoreService {
 			or CvFlag.Msg055_StocktakeFix
 			or CvFlag.Msg056_SummaryUriSei
 			or CvFlag.Msg057_SummaryKaiShi
-			or CvFlag.Msg058_HhtDataUpdate) {
+			or CvFlag.Msg058_HhtDataUpdate
+			or CvFlag.Msg063_PointRecalc) {
 			await foreach (var msg in WithManualExecHistoryAsync(GetStreamTaskName(request.Flag), HandleSummaryStreamAsync(ct, request), null, ct)) {
 				yield return msg;
 			}
@@ -287,6 +289,7 @@ public partial class CoreService {
 			(CvFlag.Msg056_SummaryUriSei, BillingParameter uriSeiParam) => summaryDb.SummaryUriSeiAsyncStream(uriSeiParam),
 			(CvFlag.Msg057_SummaryKaiShi, BillingParameter kaiShiParam) => summaryDb.SummaryKaiShiAsyncStream(kaiShiParam),
 			(CvFlag.Msg058_HhtDataUpdate, HhtUpdateParameter hhtParam) => hhtProcess.UpdateVulcan2TranAsyncStream(hhtParam),
+			(CvFlag.Msg063_PointRecalc, CalcDateTermParameter pointParam) => new PointCalcDb(_db).RecalcAsyncStream(pointParam),
 			_ => null
 		};
 

@@ -239,6 +239,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg062_ManualLockClear = 62,
 	/// <summary>
+	/// ポイント再計算（指定年月の店舗売上から台帳・残高を補正）
+	/// </summary>
+	[EnumMember]
+	Msg063_PointRecalc = 63,
+	/// <summary>
 	/// POS: バーコードから商品を検索する
 	/// </summary>
 	[EnumMember]

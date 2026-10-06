@@ -24,20 +24,22 @@ public enum WriteOp {
 /// <param name="Derived">派生テーブルの展開行数</param>
 /// <param name="Cascade">V*列伝播の更新行数</param>
 /// <param name="Completion">発注残・受注残の完了フラグを自動で立てた伝票数</param>
-public readonly record struct WriteEffectResult(int Stock, int Reserve, int Derived, int Cascade, int Completion = 0) {
+/// <param name="Point">店舗売上のポイント台帳へ追記した行数</param>
+public readonly record struct WriteEffectResult(int Stock, int Reserve, int Derived, int Cascade, int Completion = 0, int Point = 0) {
 	/// <summary>副作用なし</summary>
 	public static WriteEffectResult Empty => default;
 
 	/// <summary>複数回の実行結果を足し合わせる(一括登録用)</summary>
 	public WriteEffectResult Add(WriteEffectResult other) =>
 		new(Stock + other.Stock, Reserve + other.Reserve, Derived + other.Derived, Cascade + other.Cascade,
-			Completion + other.Completion);
+			Completion + other.Completion, Point + other.Point);
 
 	/// <summary>ログ用の要約。すべて0なら空文字</summary>
 	public override string ToString() =>
 		this == default ? string.Empty
 			: $"在庫={Stock} 引当={Reserve} 派生={Derived} V*伝播={Cascade}"
-				+ (Completion == 0 ? string.Empty : $" 残完了={Completion}");
+				+ (Completion == 0 ? string.Empty : $" 残完了={Completion}")
+				+ (Point == 0 ? string.Empty : $" ポイント={Point}");
 }
 
 /// <summary>
@@ -84,6 +86,8 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 		"TaxCalcUnit", "TaxRounding",
 		// 仕入配分の入荷済み数は ArrivalDb だけが計算して書く。部分更新では引当が引き直されない(配分再設計 Step 4)
 		"ArrivedSu",
+		// 店舗売上のポイント台帳は顧客・店舗で計上するため、部分更新で変えると台帳と食い違う
+		"Id_Customer", "Id_Tenpo",
 	];
 
 	/// <summary>
@@ -152,6 +156,11 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 		// 完了は立てるだけで、実績が減っても自動では戻さない(仕様 4.3.1)
 		var completion = CalcCompletion(itemType, item, org);
 
+		// 店舗売上のポイント付与。顧客・金額・区分の変更や削除は台帳の取消・付与として同じトランザクション内で反映する
+		var point = item is Tran01Tenuri tenuri
+			? new PointCalcDb(_db).SyncTenuri(tenuri.Id, op == WriteOp.Delete ? null : tenuri)
+			: 0;
+
 		// 仕入は紐付く発注の仕入配分(区分0)の入荷済み数を変える。更新前後の発注を両方計算し直す（引当も引き直す）
 		if (item is Tran03Shiire) {
 			var hachuIds = new HashSet<long>();
@@ -170,13 +179,13 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 			keys.Add(ReserveKey.From(orgReserve));
 		}
 		if (keys.Count == 0) {
-			return new WriteEffectResult(stock, 0, derived, cascade, completion);
+			return new WriteEffectResult(stock, 0, derived, cascade, completion, point);
 		}
 		if (reserveKeys != null) {
 			reserveKeys.UnionWith(keys);
-			return new WriteEffectResult(stock, 0, derived, cascade, completion);
+			return new WriteEffectResult(stock, 0, derived, cascade, completion, point);
 		}
-		return new WriteEffectResult(stock, _summaryDb.CalcHaibun2Reserve(keys), derived, cascade, completion);
+		return new WriteEffectResult(stock, _summaryDb.CalcHaibun2Reserve(keys), derived, cascade, completion, point);
 	}
 
 	/// <summary>
