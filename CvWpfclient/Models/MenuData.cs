@@ -247,7 +247,7 @@ public partial class MenuData : ObservableObject {
 			new("▲ 確定 ----", new([
 				new("配分確定", typeof(Views._07Haibun.HaibunCommitView), addInfo:"確定数を入力し出荷売上/移動伝票を作成(引当解除)。並び順は商品順/出荷先順。有効在庫割れはエラー"),
 				new("滞留・欠品例外(出荷指示一覧)", typeof(Views._07Haibun.ShippingConfirmListView), addInfo:"未確定のまま放置された配分を検出し指示取消(全量欠品で完了)。欠品実績も照会"),
-				new("配分データメンテ", typeof(Views._07Haibun.HaibunDataMenteView), addInfo:"準備中 管理者用。確定日･欠品数･完了FLGを直接修正する"),
+				new("配分データメンテ", typeof(Views._07Haibun.HaibunDataMenteView), addInfo:"管理者用。倉庫・商品・日付等で抽出し確定日･実数･欠品数･完了FLG等を直接修正・削除する"),
 			])),
 			new("▲ 帳票 ----", new([
 				new("出荷指示明細書印刷", typeof(Views._07Haibun.ShippingConfirmDetailPrintView), addInfo:"未確定の配分をピッキングリストとして印刷(取置は除く)"),

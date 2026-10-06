@@ -273,6 +273,32 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 		get => (EnumYesNo)EndFlag;
 		set => EndFlag = (int)value;
 	}
+
+	// 以下は配分データメンテの一覧表示用（JOIN 結果）。ResultColumn により DDL・更新対象から外れる。
+	/// <summary>倉庫名（一覧表示用）</summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial string SokoName { get; set; } = string.Empty;
+	/// <summary>店舗名（一覧表示用）</summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial string TenpoName { get; set; } = string.Empty;
+	/// <summary>商品コード（一覧表示用）</summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial string ShohinCode { get; set; } = string.Empty;
+	/// <summary>商品名（一覧表示用）</summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial string ShohinName { get; set; } = string.Empty;
+	/// <summary>色名（一覧表示用）</summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial string ColName { get; set; } = string.Empty;
+	/// <summary>サイズ名（一覧表示用）</summary>
+	[ObservableProperty]
+	[ResultColumn]
+	public partial string SizName { get; set; } = string.Empty;
 }
 
 /// <summary>

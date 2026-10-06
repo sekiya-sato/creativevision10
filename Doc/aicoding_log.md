@@ -1,3 +1,17 @@
+## [2026-10-06] 配分：配分データメンテ画面
+
+### 実施内容
+- `HaibunDataMenteView`（管理者用、準備中を解除）を実装。`BaseMenteViewModel<TranHaibun>` で修正(F2)・削除(F3)のみ、追加なし。編集可は納品日・確定日・実数量・欠品数・完了FLG・完了理由・送信FLG・関連No2・メモ。キー列と数量は読取専用。引当数はサーバ汎用更新・削除の既存処理で引き直す。
+- 選択Winは既存 `RangeInputParamView` を再利用（Id・日付・店舗Id・倉庫Id・商品Id・JAN・商品名・件数）。`SelectInputParameter.RequireDirectConditionForShohin`（既定true）を追加し、本画面だけ商品単独検索を許可。
+- `TranHaibun` に一覧表示用の `[ResultColumn]`（倉庫名・店舗名・商品CD/名・色/サイズ名）を追加。完了かつ `Su≠JitsuSu+ShortSu` は確認ダイアログ。
+- UatVm シナリオ `haibun-data-mente` を追加。
+
+### 検証
+- slnx build 成功、TestServer 1,031/1,031 成功。UatVm で一覧取得（選択Win経由）・行選択を実表示しJPG確認、文字切れ・列はみ出しを修正済み（区分・商品名列は横スクロール）。
+
+### 残余リスク・未実施
+- 修正・削除の実行UATは未実施。区分0の `ArrivedSu` は汎用更新では再計算しない（次回の仕入・配分保存・全件再集計で反映）。
+
 ## [2026-10-05] HHT：出荷指示明細書・移動明細書・即時移動明細書の印刷
 
 ### 実施内容

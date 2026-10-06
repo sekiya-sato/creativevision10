@@ -71,6 +71,12 @@ public partial class SelectInputParameter : ObservableObject {
 	[ObservableProperty]
 	public partial string? ShohinNameLike { get; set; }
 
+	/// <summary>
+	/// 商品条件（明細JSON検索）のとき、伝票No・日付・店舗・倉庫のいずれかを必須にするか。
+	/// 商品Idを直接持つテーブル（TranHaibun 等）では false にする。
+	/// </summary>
+	public bool RequireDirectConditionForShohin { get; set; } = true;
+
 	[ObservableProperty]
 	public partial int? MaxCount { get; set; }
 

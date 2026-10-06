@@ -30,7 +30,7 @@ public partial class RangeInputParamViewModel : Helpers.BaseMenteViewModel<TranA
 	}
 
 	bool RequiresDirectTableCondition() =>
-		HasMeisaiJsonCondition() && !HasDirectTableCondition();
+		Parameter.RequireDirectConditionForShohin && HasMeisaiJsonCondition() && !HasDirectTableCondition();
 
 	bool HasMeisaiJsonCondition() =>
 		Parameter.ShohinIds.Any(id => id > 0)
