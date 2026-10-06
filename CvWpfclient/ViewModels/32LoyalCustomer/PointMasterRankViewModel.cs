@@ -5,6 +5,7 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using System.Collections;
 using System.Globalization;
 
@@ -28,7 +29,26 @@ public partial class PointMasterRankViewModel : BaseMenteViewModel<MasterPointRa
 	[ObservableProperty]
 	public partial List<MasterPointBase> BaseOptions { get; set; } = [];
 
+	protected override int? ListMaxCount => selectParam?.MaxCount;
+
+	PointMasterSearchParameter? selectParam;
+
 	protected override async ValueTask<bool> BeforeListAsync(CancellationToken ct) {
+		// 親ベースの候補は条件選択と入力フォームの両方で使うため、先に最新化する。
+		if (!await LoadBaseOptionsAsync(ct)) return false;
+		var win = new Views.Sub.PointMasterSearchParamView();
+		if (win.DataContext is not PointMasterSearchParamViewModel vm) return false;
+		selectParam ??= new PointMasterSearchParameter { DisplayName = "ポイントランク", IsVersionedVisible = false, IsBaseVisible = true, MaxCount = AppGlobal.Limit };
+		vm.Initialize(selectParam, BaseOptions, includePending: true);
+		if (ClientLib.ShowDialogView(win, this, true) != true) return false;
+		selectParam = vm.Parameter;
+		return true;
+	}
+
+	protected override string? ListWhere =>
+		selectParam == null || selectParam.Id_PointBase == PointMasterSearchParameter.AllBase ? null : $"Id_PointBase = {selectParam.Id_PointBase}";
+
+	async ValueTask<bool> LoadBaseOptionsAsync(CancellationToken ct) {
 		try {
 			var param = new QueryListParam(typeof(MasterPointBase), order: "Code, Version DESC, Id");
 			var reply = await SendMessageAsync(new CvMsg {

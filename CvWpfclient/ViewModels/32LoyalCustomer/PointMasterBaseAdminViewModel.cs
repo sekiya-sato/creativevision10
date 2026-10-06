@@ -5,6 +5,7 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using System.Collections;
 using System.Globalization;
 
@@ -17,6 +18,38 @@ public partial class PointMasterBaseAdminViewModel : BaseMenteViewModel<MasterPo
 	public IReadOnlyList<EnumPointCalcUnit> CalcUnitOptions { get; } = Enum.GetValues<EnumPointCalcUnit>();
 	public IReadOnlyList<EnumRounding> RoundingOptions { get; } = Enum.GetValues<EnumRounding>();
 	protected override string? ListOrder => "Code, Version DESC, Id";
+	protected override int? ListMaxCount => selectParam?.MaxCount;
+
+	PointMasterSearchParameter? selectParam;
+
+	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
+		ct.ThrowIfCancellationRequested();
+		var win = new Views.Sub.PointMasterSearchParamView();
+		if (win.DataContext is not PointMasterSearchParamViewModel vm) return new ValueTask<bool>(false);
+		selectParam ??= new PointMasterSearchParameter { DisplayName = "ポイントベース", CodeLabel = "制度コード", MaxCount = AppGlobal.Limit };
+		vm.Initialize(selectParam);
+		if (ClientLib.ShowDialogView(win, this, true) != true) return new ValueTask<bool>(false);
+		selectParam = vm.Parameter;
+		return new ValueTask<bool>(true);
+	}
+
+	protected override string? ListWhere {
+		get {
+			if (selectParam == null) return null;
+			List<string> clauses = [];
+			List<string> parameters = [];
+			if (!string.IsNullOrWhiteSpace(selectParam.Code)) {
+				clauses.Add($"Code LIKE {AddSqlParameter(parameters, $"{EscapeSqlLikePattern(selectParam.Code)}%")} ESCAPE '\\'");
+			}
+			if (!string.IsNullOrWhiteSpace(selectParam.TargetDay)) {
+				clauses.Add($"DayFrom <= {AddSqlParameter(parameters, selectParam.TargetDay)}");
+				clauses.Add($"DayTo >= {AddSqlParameter(parameters, selectParam.TargetDay)}");
+			}
+			if (selectParam.EnabledState != PointMasterSearchParameter.AllEnabled) clauses.Add($"IsEnabled = {selectParam.EnabledState}");
+			SelectCodeWhereParameters = [.. parameters];
+			return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+		}
+	}
 
 	bool ValidateEdit() {
 		CurrentEdit.Code = (CurrentEdit.Code ?? "").Trim();

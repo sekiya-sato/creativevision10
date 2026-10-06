@@ -5,6 +5,7 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
+using CvWpfclient.ViewModels.Sub;
 using System.Collections;
 using System.Globalization;
 
@@ -36,7 +37,42 @@ public partial class PointMasterBonusViewModel : BaseMenteViewModel<MasterPointB
 	[ObservableProperty]
 	public partial List<MasterPointBase> BaseOptions { get; set; } = [];
 
+	protected override int? ListMaxCount => selectParam?.MaxCount;
+
+	PointMasterSearchParameter? selectParam;
+
 	protected override async ValueTask<bool> BeforeListAsync(CancellationToken ct) {
+		// 親ベースの候補は条件選択と入力フォームの両方で使うため、先に最新化する。
+		if (!await LoadBaseOptionsAsync(ct)) return false;
+		var win = new Views.Sub.PointMasterSearchParamView();
+		if (win.DataContext is not PointMasterSearchParamViewModel vm) return false;
+		selectParam ??= new PointMasterSearchParameter { DisplayName = "ポイントボーナス", CodeLabel = "ボーナスコード", IsBaseVisible = true, MaxCount = AppGlobal.Limit };
+		vm.Initialize(selectParam, BaseOptions, includePending: false);
+		if (ClientLib.ShowDialogView(win, this, true) != true) return false;
+		selectParam = vm.Parameter;
+		return true;
+	}
+
+	protected override string? ListWhere {
+		get {
+			if (selectParam == null) return null;
+			List<string> clauses = [];
+			List<string> parameters = [];
+			if (!string.IsNullOrWhiteSpace(selectParam.Code)) {
+				clauses.Add($"Code LIKE {AddSqlParameter(parameters, $"{EscapeSqlLikePattern(selectParam.Code)}%")} ESCAPE '\\'");
+			}
+			if (!string.IsNullOrWhiteSpace(selectParam.TargetDay)) {
+				clauses.Add($"DayFrom <= {AddSqlParameter(parameters, selectParam.TargetDay)}");
+				clauses.Add($"DayTo >= {AddSqlParameter(parameters, selectParam.TargetDay)}");
+			}
+			if (selectParam.EnabledState != PointMasterSearchParameter.AllEnabled) clauses.Add($"IsEnabled = {selectParam.EnabledState}");
+			if (selectParam.Id_PointBase != PointMasterSearchParameter.AllBase) clauses.Add($"Id_PointBase = {selectParam.Id_PointBase}");
+			SelectCodeWhereParameters = [.. parameters];
+			return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
+		}
+	}
+
+	async ValueTask<bool> LoadBaseOptionsAsync(CancellationToken ct) {
 		try {
 			var param = new QueryListParam(typeof(MasterPointBase), order: "Code, Version DESC, Id");
 			var reply = await SendMessageAsync(new CvMsg {

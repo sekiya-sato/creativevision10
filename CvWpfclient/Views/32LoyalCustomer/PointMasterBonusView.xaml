@@ -1,100 +1,447 @@
-<helpers:BaseWindow x:Class="CvWpfclient.Views._32LoyalCustomer.PointMasterBonusView"
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._32LoyalCustomer.PointMasterBonusView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._32LoyalCustomer"
-	Title="{Binding Title}" Width="1244" Height="860" MinWidth="900" MinHeight="600"
-	Background="{DynamicResource AppCommonBackgroundBrush}" Foreground="{DynamicResource MaterialDesignBody}"
-	FontSize="16" TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen">
-	<helpers:BaseWindow.DataContext><vm:PointMasterBonusViewModel /></helpers:BaseWindow.DataContext>
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._32LoyalCustomer"
+	Title="{Binding Title}"
+	Width="1244" Height="860" MinWidth="900" MinHeight="600"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:PointMasterBonusViewModel />
+	</helpers:BaseWindow.DataContext>
 	<helpers:BaseWindow.InputBindings>
-		<KeyBinding Command="{Binding DoUpdateCommand}" Gesture="F2" />
-		<KeyBinding Command="{Binding DoDeleteCommand}" Gesture="F3" />
-		<KeyBinding Command="{Binding DoInsertCommand}" Gesture="F4" />
-		<KeyBinding Command="{Binding DoListCommand}" Gesture="F5" />
+		<KeyBinding Command="{Binding DoUpdateCommand}"
+			Gesture="F2" />
+		<KeyBinding Command="{Binding DoDeleteCommand}"
+			Gesture="F3" />
+		<KeyBinding Command="{Binding DoInsertCommand}"
+			Gesture="F4" />
+		<KeyBinding Command="{Binding DoListCommand}"
+			Gesture="F5" />
 	</helpers:BaseWindow.InputBindings>
 	<Grid>
-		<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-		<materialDesign:ColorZone Padding="12,8" Mode="PrimaryMid" materialDesign:ElevationAssist.Elevation="Dp4">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
 			<DockPanel>
 				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-					<Button Margin="4,0" Command="{Binding DoUpdateCommand}" Content="修正(F2)" Style="{StaticResource ToolCommandButton}" />
-					<Button Margin="4,0" Command="{Binding DoDeleteCommand}" Content="削除(F3)" Style="{StaticResource ToolCommandButton}" />
-					<Button Margin="4,0" Command="{Binding DoInsertCommand}" Content="追加(F4)" Style="{StaticResource ToolCommandButton}" />
+					<Button Margin="4,0"
+						Command="{Binding DoUpdateCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="修正 (F2)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Pencil" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="修正" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoDeleteCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="削除 (F3)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Delete" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="削除" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoInsertCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="追加 (F4)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Plus" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="追加" />
+						</StackPanel>
+					</Button>
 				</StackPanel>
 				<StackPanel Orientation="Horizontal">
-					<Button Margin="0,0,12,0" Command="{Binding ExitCommand}" Content="閉じる" Style="{StaticResource ToolCommandButton}" />
-					<TextBlock VerticalAlignment="Center" Text="{Binding Title}" FontSize="20" FontWeight="SemiBold" />
-					<Button Margin="12,0,0,0" Command="{Binding DoListCommand}" Content="一覧(F5)" Style="{StaticResource ToolCommandButton}" />
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="Gift" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoListCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="一覧取得" />
+						</StackPanel>
+					</Button>
 				</StackPanel>
 			</DockPanel>
 		</materialDesign:ColorZone>
-		<Grid Grid.Row="1" Margin="12">
-			<Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="480" /></Grid.ColumnDefinitions>
-			<materialDesign:Card UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp2">
-				<DataGrid ItemsSource="{Binding ListData}" SelectedItem="{Binding Current}" IsReadOnly="True"
-					AutoGenerateColumns="False" EnableRowVirtualization="True" IsSynchronizedWithCurrentItem="True" SelectionMode="Single"
-					helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" Style="{StaticResource MaterialDesignDataGrid}">
-					<DataGrid.ColumnHeaderStyle><Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MenteDataGridColumnHeader}" /></DataGrid.ColumnHeaderStyle>
-					<DataGrid.Columns>
-						<DataGridTextColumn Header="Id" Width="65" Binding="{Binding Id}" />
-						<DataGridTextColumn Header="コード" Width="100" Binding="{Binding Code}" />
-						<DataGridTextColumn Header="名称" Width="180" Binding="{Binding Name}" />
-						<DataGridTextColumn Header="版" Width="65" Binding="{Binding Version}" />
-						<DataGridTextColumn Header="親ベースId" Width="100" Binding="{Binding Id_PointBase}" />
-						<DataGridTextColumn Header="開始日" Width="110" Binding="{Binding DayFrom, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}" />
-						<DataGridTextColumn Header="終了日" Width="110" Binding="{Binding DayTo, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}" />
-						<DataGridTextColumn Header="有効" Width="80" Binding="{Binding EnIsEnabled, Converter={StaticResource EnumCommentDisplayConverter}}" />
-						<DataGridTextColumn Header="契機" Width="120" Binding="{Binding EnTriggerType, Converter={StaticResource EnumCommentDisplayConverter}}" />
-						<DataGridTextColumn Header="追加ポイント" Width="120" Binding="{Binding PointAmount}" />
-
-					</DataGrid.Columns>
-				</DataGrid>
+		<Grid Grid.Row="1"
+			Margin="12">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="52*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="48*" />
+			</Grid.ColumnDefinitions>
+			<materialDesign:Card Grid.Column="0"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel>
+							<TextBlock VerticalAlignment="Center"
+								DockPanel.Dock="Right" FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+							<TextBlock VerticalAlignment="Center"
+								FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding Message}"
+								TextTrimming="CharacterEllipsis"
+								ToolTip="{Binding Message}" />
+						</DockPanel>
+					</Border>
+					<DataGrid Grid.Row="1"
+						d:ItemsSource="{d:SampleData ItemCount=5}"
+						helpers:DataGridSelectionBehavior.AutoScrollToSelectedItem="True" materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding ListData}"
+						SelectedItem="{Binding Current}"
+						SelectionMode="Single"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="70"
+								Binding="{Binding Id}"
+								Header="Id" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding Code}"
+								Header="コード" />
+							<DataGridTextColumn Width="180"
+								Binding="{Binding Name}"
+								Header="名称" />
+							<DataGridTextColumn Width="60"
+								Binding="{Binding Version}"
+								Header="版" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding Id_PointBase}"
+								Header="親ベースId" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding DayFrom, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+								Header="開始日" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding DayTo, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+								Header="終了日" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding EnIsEnabled, Converter={StaticResource EnumCommentDisplayConverter}}"
+								Header="有効" />
+							<DataGridTextColumn Width="120"
+								Binding="{Binding EnTriggerType, Converter={StaticResource EnumCommentDisplayConverter}}"
+								Header="契機" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding PointAmount}"
+								Header="追加ポイント" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
 			</materialDesign:Card>
-			<GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" Background="Transparent" />
-			<materialDesign:Card Grid.Column="2" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp2">
-				<ScrollViewer Padding="16" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-					<StackPanel>
-						<TextBlock Margin="0,0,0,12" FontWeight="SemiBold" Text="入力条件を追加、または選択した行を修正します" TextWrapping="Wrap" />
-						<TextBlock Text="Id" Style="{StaticResource FormLabel}" />
-						<TextBox Text="{Binding CurrentEdit.Id}" IsReadOnly="True" Style="{StaticResource NumericFormTextBox}" />
-						<TextBlock Margin="0,8,0,0" Text="コード" Style="{StaticResource FormLabel}" />
-						<TextBox MaxLength="20" Text="{Binding CurrentEdit.Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Style="{StaticResource FormTextBox}" />
-						<TextBlock Margin="0,8,0,0" Text="名称" Style="{StaticResource FormLabel}" />
-						<TextBox MaxLength="80" Text="{Binding CurrentEdit.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Style="{StaticResource FormTextBox}" />
-						<TextBlock Margin="0,8,0,0" Text="版番号" Style="{StaticResource FormLabel}" />
-						<TextBox Text="{Binding CurrentEdit.Version, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Style="{StaticResource NumericFormTextBox}" />
-						<TextBlock Margin="0,8,0,0" Text="親ベース(制度・名称・版)" Style="{StaticResource FormLabel}" />
-						<ComboBox ItemsSource="{Binding BaseOptions}" SelectedValuePath="Id" SelectedValue="{Binding CurrentEdit.Id_PointBase, Mode=TwoWay}" Style="{StaticResource FormComboBox}">
-							<ComboBox.ItemTemplate><DataTemplate><TextBlock><TextBlock.Text><MultiBinding StringFormat="{}{0} {1} (版{2})"><Binding Path="Code" /><Binding Path="Name" /><Binding Path="Version" /></MultiBinding></TextBlock.Text></TextBlock></DataTemplate></ComboBox.ItemTemplate>
-						</ComboBox>
-						<TextBlock Text="親Id=0は移行設定待ちです。保存前に親の版を選択してください。" TextWrapping="Wrap" FontSize="13" />
-						<TextBlock Margin="0,8,0,0" Text="開始日" Style="{StaticResource FormLabel}" />
-						<DatePicker SelectedDate="{Binding CurrentEdit.DayFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormDatePicker}" />
-						<TextBlock Margin="0,8,0,0" Text="終了日" Style="{StaticResource FormLabel}" />
-						<DatePicker SelectedDate="{Binding CurrentEdit.DayTo, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormDatePicker}" />
-						<TextBlock Margin="0,8,0,0" Text="有効" Style="{StaticResource FormLabel}" />
-						<ComboBox ItemsSource="{Binding YesNoOptions}" SelectedItem="{Binding CurrentEdit.EnIsEnabled, Mode=TwoWay}" Style="{StaticResource FormComboBox}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-						<TextBlock Margin="0,8,0,0" Text="付与契機" Style="{StaticResource FormLabel}" />
-						<ComboBox ItemsSource="{Binding TriggerOptions}" SelectedItem="{Binding CurrentEdit.EnTriggerType, Mode=TwoWay}" Style="{StaticResource FormComboBox}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-						<TextBlock Margin="0,8,0,0" Text="追加ポイント数" Style="{StaticResource FormLabel}" />
-						<TextBox Text="{Binding CurrentEdit.PointAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Style="{StaticResource NumericFormTextBox}" />
-						<TextBlock Margin="0,8,0,0" Text="最低購入金額" Style="{StaticResource FormLabel}" />
-						<TextBox Text="{Binding CurrentEdit.MinimumKingaku, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Style="{StaticResource NumericFormTextBox}" />
-						<TextBlock Margin="0,8,0,0" Text="全ランク対象" Style="{StaticResource FormLabel}" />
-						<ComboBox ItemsSource="{Binding YesNoOptions}" SelectedItem="{Binding CurrentEdit.EnIsAllRanks, Mode=TwoWay}" Style="{StaticResource FormComboBox}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-						<TextBlock Margin="0,8,0,0" Text="対象ランクコード(全ランクは0)" Style="{StaticResource FormLabel}" />
-						<TextBox Text="{Binding CurrentEdit.RankKubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Style="{StaticResource NumericFormTextBox}" />
-						<TextBlock Margin="0,8,0,0" Text="回数制限期間" Style="{StaticResource FormLabel}" />
-						<ComboBox ItemsSource="{Binding LimitPeriodOptions}" SelectedItem="{Binding CurrentEdit.EnLimitPeriodType, Mode=TwoWay}" Style="{StaticResource FormComboBox}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-						<TextBlock Margin="0,8,0,0" Text="回数上限" Style="{StaticResource FormLabel}" />
-						<TextBox Text="{Binding CurrentEdit.LimitCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Style="{StaticResource NumericFormTextBox}" />
-
-						<TextBlock Margin="0,16,0,0" Foreground="{DynamicResource MaterialDesignBodyLight}" TextWrapping="Wrap"
-							Text="使用済み条件は新版を追加してください。有効の切替以外の変更・削除はサーバで保護されます。" />
-					</StackPanel>
-				</ScrollViewer>
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="Transparent" />
+			<materialDesign:Card Grid.Column="2"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<TabControl Style="{StaticResource MaterialDesignTabControl}">
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="InformationOutline" />
+								<TextBlock Text="{Binding CurrentEdit.Id, StringFormat={}Id:{0}}" />
+							</StackPanel>
+						</TabItem.Header>
+						<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+							<Grid Margin="4,8,4,12">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="160" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+								<TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+									Margin="0,0,0,4"
+									FontWeight="SemiBold"
+									Foreground="{DynamicResource PrimaryHueMidBrush}"
+									Text="基本・適用期間" />
+								<TextBlock Grid.Row="1"
+									Style="{StaticResource FormLabel}"
+									Text="Id" />
+								<TextBox Grid.Row="1" Grid.Column="1"
+									Width="160"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="Id" IsReadOnly="True"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Id}" />
+								<TextBlock Grid.Row="2"
+									Style="{StaticResource FormLabel}"
+									Text="ボーナスコード" />
+								<TextBox Grid.Row="2" Grid.Column="1"
+									Width="220"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="ボーナスコード" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="20"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Grid.Row="3"
+									Style="{StaticResource FormLabel}"
+									Text="名称" />
+								<TextBox Grid.Row="3" Grid.Column="1"
+									materialDesign:HintAssist.Hint="名称" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="80"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding CurrentEdit.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								<TextBlock Grid.Row="4"
+									Style="{StaticResource FormLabel}"
+									Text="版番号" />
+								<TextBox Grid.Row="4" Grid.Column="1"
+									Width="180"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="版番号"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.Version, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+								<TextBlock Grid.Row="5"
+									Style="{StaticResource FormLabel}"
+									Text="親ベース" />
+								<ComboBox Grid.Row="5" Grid.Column="1"
+									materialDesign:HintAssist.Hint="制度・名称・版"
+									ItemsSource="{Binding BaseOptions}"
+									SelectedValue="{Binding CurrentEdit.Id_PointBase, Mode=TwoWay}"
+									SelectedValuePath="Id"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}">
+												<TextBlock.Text>
+													<MultiBinding StringFormat="{}{0} {1} (版{2})">
+														<Binding Path="Code" />
+														<Binding Path="Name" />
+														<Binding Path="Version" />
+													</MultiBinding>
+												</TextBlock.Text>
+											</TextBlock>
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+								<TextBlock Grid.Row="6"
+									Style="{StaticResource FormLabel}"
+									Text="開始日" />
+								<DatePicker Grid.Row="6" Grid.Column="1"
+									Width="180"
+									Margin="0,4" HorizontalAlignment="Left"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="開始日" IsTodayHighlighted="False"
+									SelectedDate="{Binding CurrentEdit.DayFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									Style="{StaticResource FormDatePicker}" />
+								<TextBlock Grid.Row="7"
+									Style="{StaticResource FormLabel}"
+									Text="終了日" />
+								<DatePicker Grid.Row="7" Grid.Column="1"
+									Width="180"
+									Margin="0,4" HorizontalAlignment="Left"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="終了日" IsTodayHighlighted="False"
+									SelectedDate="{Binding CurrentEdit.DayTo, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									Style="{StaticResource FormDatePicker}" />
+								<TextBlock Grid.Row="8"
+									Style="{StaticResource FormLabel}"
+									Text="有効" />
+								<ComboBox Grid.Row="8" Grid.Column="1"
+									Width="220"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="有効"
+									ItemsSource="{Binding YesNoOptions}"
+									SelectedItem="{Binding CurrentEdit.EnIsEnabled, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+								<TextBlock Grid.Row="9" Grid.ColumnSpan="2"
+									Margin="0,12,0,4"
+									FontWeight="SemiBold"
+									Foreground="{DynamicResource PrimaryHueMidBrush}"
+									Text="付与条件" />
+								<TextBlock Grid.Row="10"
+									Style="{StaticResource FormLabel}"
+									Text="付与契機" />
+								<ComboBox Grid.Row="10" Grid.Column="1"
+									Width="220"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="付与契機"
+									ItemsSource="{Binding TriggerOptions}"
+									SelectedItem="{Binding CurrentEdit.EnTriggerType, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+								<TextBlock Grid.Row="11"
+									Style="{StaticResource FormLabel}"
+									Text="追加ポイント数" />
+								<TextBox Grid.Row="11" Grid.Column="1"
+									Width="180"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="追加ポイント数"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.PointAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+								<TextBlock Grid.Row="12"
+									Style="{StaticResource FormLabel}"
+									Text="最低購入金額" />
+								<TextBox Grid.Row="12" Grid.Column="1"
+									Width="180"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="最低購入金額"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.MinimumKingaku, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+								<TextBlock Grid.Row="13" Grid.ColumnSpan="2"
+									Margin="0,12,0,4"
+									FontWeight="SemiBold"
+									Foreground="{DynamicResource PrimaryHueMidBrush}"
+									Text="対象ランク・回数制限" />
+								<TextBlock Grid.Row="14"
+									Style="{StaticResource FormLabel}"
+									Text="全ランク対象" />
+								<ComboBox Grid.Row="14" Grid.Column="1"
+									Width="220"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="全ランク対象"
+									ItemsSource="{Binding YesNoOptions}"
+									SelectedItem="{Binding CurrentEdit.EnIsAllRanks, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+								<TextBlock Grid.Row="15"
+									Style="{StaticResource FormLabel}"
+									Text="対象ランクコード" />
+								<TextBox Grid.Row="15" Grid.Column="1"
+									Width="180"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="対象ランクコード"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.RankKubun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+								<TextBlock Grid.Row="16" Grid.Column="1"
+									Margin="0,0,0,4"
+									FontSize="13"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="全ランク対象のときは0として保存します。" TextWrapping="Wrap" />
+								<TextBlock Grid.Row="17"
+									Style="{StaticResource FormLabel}"
+									Text="回数制限期間" />
+								<ComboBox Grid.Row="17" Grid.Column="1"
+									Width="220"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="回数制限期間"
+									ItemsSource="{Binding LimitPeriodOptions}"
+									SelectedItem="{Binding CurrentEdit.EnLimitPeriodType, Mode=TwoWay}"
+									Style="{StaticResource FormComboBox}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+												Text="{Binding Converter={StaticResource EnumCommentDisplayConverter}}" />
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+								<TextBlock Grid.Row="18"
+									Style="{StaticResource FormLabel}"
+									Text="回数上限" />
+								<TextBox Grid.Row="18" Grid.Column="1"
+									Width="180"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="回数上限"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.LimitCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+								<TextBlock Grid.Row="19" Grid.ColumnSpan="2"
+									Margin="0,16,0,0"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									Text="使用済み条件は新版を追加してください。有効の切替以外の変更・削除はサーバで保護されます。" TextWrapping="Wrap" />
+								<TextBlock Grid.Row="20" Grid.ColumnSpan="2"
+									Margin="0,8,0,0"
+									Foreground="{DynamicResource MaterialDesignBodyLight}"
+									TextWrapping="Wrap">
+									<TextBlock.Text>
+										<MultiBinding StringFormat="{}登録日={0}  修正日={1}">
+											<Binding Path="CurrentEdit.VdateC" />
+											<Binding Path="CurrentEdit.VdateU" />
+										</MultiBinding>
+									</TextBlock.Text>
+								</TextBlock>
+							</Grid>
+						</ScrollViewer>
+					</TabItem>
+				</TabControl>
 			</materialDesign:Card>
 		</Grid>
-		<TextBlock Grid.Row="2" Margin="16,0,16,12" Text="{Binding Message}" TextWrapping="Wrap" />
 	</Grid>
 </helpers:BaseWindow>
