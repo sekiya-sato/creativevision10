@@ -6,7 +6,7 @@ REM set "PROJECT_DIR=%~dp0"
 REM 配布対象の WPF クライアントと一時 publish 出力先を設定する。
 set "PROJECT_DIR=%~dp0CvWpfclient\"
 set "PUBLISH_DIR=%PROJECT_DIR%bin\publish-velopack"
-set "VELOPACK_VERSION=1.2.0"
+set "VELOPACK_VERSION=1.2.161"
 
 REM vpk コマンドが PATH から実行できることを確認する。
 where vpk >nul 2>nul
