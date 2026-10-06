@@ -3089,12 +3089,3 @@ public sealed partial class CostRevaluationCondRow : ObservableObject {
 	[Comment("選択項目の名称データ(TO)")]
 	public partial CodeNameView VTo { get; set; } = new();
 }
-
-/* ToDo: 未作成テーブル(顧客)
-[Comment("ベースポイントトランク別ポイント、ボーナスポイント")]
-public sealed partial class MasterPointRank : BaseDbClass {
-}
-[Comment("ポイント履歴テーブル：日付、顧客Id、取得ポイント、使用ポイント、残")]
-public sealed partial class TranPointRireki : BaseDbClass {
-}
- */

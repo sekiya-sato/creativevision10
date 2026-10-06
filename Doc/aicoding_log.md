@@ -1,3 +1,10 @@
+## [2026-10-06] 顧客：ポイント台帳・付与条件定義
+
+- `TranPointRireki`定義/登録と古いToDoを削除し伝票別`TranPointEvent`へ置換。long増減・適用条件参照Id・再送キー・enum変換を定義、旧実表/データは保持。
+- `MasterPointBase`/`MasterPointBonus`追加、`MasterPointRank`を親版×ランクへ拡張。丸め/YesNoを流用し専用enumとEn変換を追加。設計は`Doc/spec/2026-10-06_ポイント制度_テーブル設計.md`。
+- UpdateDb 26_10_06_01で旧ランクを親Id=0のまま値保持・索引再作成。新列の索引は移行後に作成。
+- 検証: CvServer build警告・エラー0、独立SQLiteスキーマテスト6/6、DDLテスト7/7成功。計算・利用・残高・会員ランク対応・過去履歴移行は未実装。他DBの既存int列幅変更/実移行は未確認。
+
 ## [2026-10-06] 配分：配分データメンテ画面
 
 ### 実施内容

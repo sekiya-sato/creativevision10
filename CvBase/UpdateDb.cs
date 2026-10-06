@@ -151,6 +151,11 @@ public class UpdateDb {
 			"ALTER TABLE TranHoju ADD COLUMN GeneratedHaibunId NUMBER not null default 0;" +
 			"CREATE INDEX IF NOT EXISTS TranHoju_nk2 ON TranHoju(Id_Batch);",
 			"自動発注・補充の店舗別数量とlong生成リンクを追加 新規設定2表と実行バッチはDefineDataTableが作成 既存補充Id_Batch=0は新確定対象外"),
+		new (26_10_06_01,
+			"ALTER TABLE MasterPointRank ADD COLUMN Id_PointBase NUMBER not null default 0;" +
+			"DROP INDEX IF EXISTS MasterPointRank_uk1;" +
+			"CREATE UNIQUE INDEX IF NOT EXISTS MasterPointRank_uk1 ON MasterPointRank(Id_PointBase,Kubun);",
+			"ポイント制度をベース版・ランク・ボーナスへ分離。旧ランクは親Id=0で値を保持し、メンテで親を設定する。新表と台帳はDefineDataTableが作成。旧ポイント履歴表は削除・再付与しない"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

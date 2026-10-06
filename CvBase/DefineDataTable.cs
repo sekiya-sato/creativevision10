@@ -53,8 +53,10 @@ public class DefineDataTable {
 			typeof(MasterShipping),
 
 			// ポイント系テーブル
+			typeof(MasterPointBase),
 			typeof(MasterPointRank),
-			typeof(TranPointRireki),
+			typeof(MasterPointBonus),
+			typeof(TranPointEvent),
 			typeof(SummaryPoint),
 
 			// トランザクションテーブル
@@ -150,8 +152,9 @@ public class DefineDataTable {
 		var tableTypes = TableTypes;
 		foreach (var tableType in tableTypes) {
 			PreAdjustTable(db, tableType);
-			// 補充の新索引はId_Batch移行後に作る（旧表にはまだ列がない）。
-			if (!db.CreateTable(tableType, isForce, isCreateIndex: tableType != typeof(TranHoju))) {
+			// 新列を含む索引は移行後に作る（旧表にはまだ列がない）。
+			var deferIndex = tableType == typeof(TranHoju) || tableType == typeof(MasterPointRank) || tableType == typeof(TranPointEvent);
+			if (!db.CreateTable(tableType, isForce, isCreateIndex: !deferIndex)) {
 				_logger.LogError("テーブルの作成に失敗しました。テーブル名: {TableName}", tableType.Name);
 				return false;
 			}
@@ -170,9 +173,11 @@ public class DefineDataTable {
 
 		// DBの整合性を管理
 		await UpdateDb.WriteVersionInfoAsync(db, ct);
-		if (!db.CreateTable(typeof(TranHoju))) {
-			_logger.LogError("補充テーブルの移行後の索引作成に失敗しました。");
-			return false;
+		foreach (var migratedType in new[] { typeof(TranHoju), typeof(MasterPointRank), typeof(TranPointEvent) }) {
+			if (!db.CreateTable(migratedType)) {
+				_logger.LogError("{TableName}の移行後の索引作成に失敗しました。", migratedType.Name);
+				return false;
+			}
 		}
 		// 他、追加処理
 		//var summaryDb = new CvDomainLogic.SummaryDb(db);
