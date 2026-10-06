@@ -154,6 +154,7 @@ public class UpdateDb {
 		new (26_10_06_01,
 			"ALTER TABLE MasterPointRank ADD COLUMN Id_PointBase NUMBER not null default 0;" +
 			"DROP INDEX IF EXISTS MasterPointRank_uk1;" +
+			"DROP TABLE IF EXISTS TranPointRireki;" +
 			"CREATE UNIQUE INDEX IF NOT EXISTS MasterPointRank_uk1 ON MasterPointRank(Id_PointBase,Kubun);",
 			"ポイント制度をベース版・ランク・ボーナスへ分離。旧ランクは親Id=0で値を保持し、メンテで親を設定する。新表と台帳はDefineDataTableが作成。旧ポイント履歴表は削除・再付与しない"),
 	];

@@ -2663,9 +2663,6 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 }
 
 
-/* 以下は1.1- 以降の対応table */
-/* 上代(TranJodai / DerivedJodai)は CvBase/BaseDbJodai.cs で作成済み */
-
 /// <summary>
 /// トランザクション：商品原価履歴。1行=1計上月×1商品×1原価方式。
 /// 月次原価計算（最終仕入原価更新・総平均原価更新）と評価替えの双方が <see cref="ChangeKind"/> で書き分けて書き込む
