@@ -273,7 +273,7 @@
 								<!--  MACアドレス  -->
 								<TextBlock Grid.Row="9"
 									Style="{StaticResource FormLabel}"
-									Text="MACアドレス" />
+									Text="MAC&#10;アドレス" />
 								<TextBox Grid.Row="9" Grid.Column="1"
 									materialDesign:HintAssist.Hint="MACアドレス" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"

@@ -58,11 +58,11 @@
 						ToolTip="画面を閉じる">
 						<materialDesign:PackIcon Kind="ArrowLeft" />
 					</Button>
-					<materialDesign:PackIcon Width="26" Height="26"
+					<materialDesign:PackIcon Width="28" Height="28"
 						VerticalAlignment="Center"
 						Kind="TagMultiple" />
 					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-						FontSize="18" FontWeight="SemiBold" Text="上代一括変更" />
+						FontSize="20" FontWeight="SemiBold" Text="上代一括変更" />
 				</StackPanel>
 			</DockPanel>
 		</materialDesign:ColorZone>

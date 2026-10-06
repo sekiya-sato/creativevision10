@@ -24,205 +24,232 @@
 			Gesture="Esc" />
 	</helpers:BaseWindow.InputBindings>
 
-	<Grid Margin="12">
+	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
-			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
-			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 
-		<Border Grid.Row="0"
-			Padding="10"
-			Background="{DynamicResource MaterialDesignToolBarBackground}">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="*" />
-					<ColumnDefinition Width="8" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="8" />
-					<ColumnDefinition Width="Auto" />
-				</Grid.ColumnDefinitions>
-
-				<TextBlock Grid.Column="0"
-					Margin="0,0,8,0" VerticalAlignment="Center"
-					FontWeight="SemiBold" Text="CSVファイル" />
-				<TextBox Grid.Column="1"
-					IsReadOnly="True"
-					Text="{Binding FilePath}" />
-				<Button Grid.Column="3"
-					MinWidth="110"
-					Command="{Binding SelectFileCommand}"
-					Style="{StaticResource MaterialDesignRaisedButton}"
-					ToolTip="ファイル選択 (F4)">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="FolderOpen" />
-						<TextBlock Margin="6,0,0,0"
-							Text="選択" />
-					</StackPanel>
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<Button Margin="0,0,8,0"
+					Command="{Binding ExitCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="閉じる (Esc)">
+					<materialDesign:PackIcon Kind="ArrowLeft" />
 				</Button>
-				<Button Grid.Column="5"
-					MinWidth="110"
-					Command="{Binding ValidateFileCommand}"
-					Style="{StaticResource MaterialDesignOutlinedButton}"
-					ToolTip="再検証 (F5)">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="FileCheckOutline" />
-						<TextBlock Margin="6,0,0,0"
-							Text="再検証" />
-					</StackPanel>
-				</Button>
-			</Grid>
-		</Border>
+				<materialDesign:PackIcon Width="28" Height="28"
+					VerticalAlignment="Center"
+					Kind="DatabaseEdit" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold"
+					Text="外部CSVマスタ更新" />
+			</StackPanel>
+		</materialDesign:ColorZone>
 
-		<Border Grid.Row="1"
-			Margin="0,8,0,8" Padding="10"
-			Background="{DynamicResource MaterialDesignPaper}">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="180" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="160" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="110" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="110" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="110" />
-					<ColumnDefinition Width="*" />
-				</Grid.ColumnDefinitions>
-
-				<TextBlock Grid.Column="0"
-					VerticalAlignment="Center"
-					FontWeight="SemiBold" Text="Table名" />
-				<TextBlock Grid.Column="1"
-					Margin="8,0,16,0" VerticalAlignment="Center"
-					Text="{Binding TableName}" />
-				<TextBlock Grid.Column="2"
-					VerticalAlignment="Center"
-					FontWeight="SemiBold" Text="モデル" />
-				<TextBlock Grid.Column="3"
-					Margin="8,0,16,0" VerticalAlignment="Center"
-					Text="{Binding ModelName}" />
-				<TextBlock Grid.Column="4"
-					VerticalAlignment="Center"
-					FontWeight="SemiBold" Text="データ行" />
-				<TextBlock Grid.Column="5"
-					Margin="8,0,16,0" VerticalAlignment="Center"
-					Text="{Binding DataRowCount, StringFormat={}{0:N0}}" />
-				<TextBlock Grid.Column="6"
-					VerticalAlignment="Center"
-					FontWeight="SemiBold" Text="取込可" />
-				<TextBlock Grid.Column="7"
-					Margin="8,0,16,0" VerticalAlignment="Center"
-					Text="{Binding ImportableRowCount, StringFormat={}{0:N0}}" />
-				<TextBlock Grid.Column="8"
-					VerticalAlignment="Center"
-					FontWeight="SemiBold"
-					Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="エラー" />
-				<TextBlock Grid.Column="9"
-					Margin="8,0,0,0" VerticalAlignment="Center"
-					Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="{Binding ErrorCount, StringFormat={}{0:N0}}" />
-			</Grid>
-		</Border>
-
-		<Grid Grid.Row="2">
+		<Grid Grid.Row="1"
+			Margin="12">
 			<Grid.RowDefinitions>
-				<RowDefinition Height="2*" />
-				<RowDefinition Height="8" />
-				<RowDefinition Height="3*" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
-			<GroupBox Grid.Row="0"
-				Header="更新プレビュー（先頭100件）">
-				<DataGrid d:ItemsSource="{d:SampleData ItemCount=5}"
-					materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False"
-					GridLinesVisibility="Horizontal" IsReadOnly="True"
-					ItemsSource="{Binding PreviewRows}"
-					RowHeight="28"
-					Style="{StaticResource MaterialDesignDataGrid}">
-					<DataGrid.Columns>
-						<DataGridTextColumn Width="90"
-							Binding="{Binding LineNo}"
-							Header="行" />
-						<DataGridTextColumn Width="100"
-							Binding="{Binding Status}"
-							Header="状態" />
-						<DataGridTextColumn Width="180"
-							Binding="{Binding Key}"
-							Header="キー" />
-						<DataGridTextColumn Width="*"
-							Binding="{Binding Summary}"
-							Header="内容" />
-					</DataGrid.Columns>
-				</DataGrid>
-			</GroupBox>
+			<Border Grid.Row="0"
+				Padding="10"
+				Background="{DynamicResource MaterialDesignToolBarBackground}">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="8" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="8" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
 
-			<GroupBox Grid.Row="2"
-				Header="エラー">
-				<DataGrid d:ItemsSource="{d:SampleData ItemCount=5}"
-					materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False"
-					GridLinesVisibility="Horizontal" IsReadOnly="True"
-					ItemsSource="{Binding ErrorRows}"
-					RowHeight="30"
-					SelectedItem="{Binding SelectedError}"
-					Style="{StaticResource MaterialDesignDataGrid}">
-					<DataGrid.Columns>
-						<DataGridTextColumn Width="90"
-							Binding="{Binding LineNo}"
-							Header="行" />
-						<DataGridTextColumn Width="180"
-							Binding="{Binding ColumnName}"
-							Header="列" />
-						<DataGridTextColumn Width="*"
-							Binding="{Binding Detail}"
-							Header="内容" />
-					</DataGrid.Columns>
-				</DataGrid>
-			</GroupBox>
-		</Grid>
+					<TextBlock Grid.Column="0"
+						Margin="0,0,8,0" VerticalAlignment="Center"
+						FontWeight="SemiBold" Text="CSVファイル" />
+					<TextBox Grid.Column="1"
+						IsReadOnly="True"
+						Text="{Binding FilePath}" />
+					<Button Grid.Column="3"
+						MinWidth="110"
+						Command="{Binding SelectFileCommand}"
+						Style="{StaticResource MaterialDesignRaisedButton}"
+						ToolTip="ファイル選択 (F4)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="FolderOpen" />
+							<TextBlock Margin="6,0,0,0"
+								Text="選択" />
+						</StackPanel>
+					</Button>
+					<Button Grid.Column="5"
+						MinWidth="110"
+						Command="{Binding ValidateFileCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="再検証 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="FileCheckOutline" />
+							<TextBlock Margin="6,0,0,0"
+								Text="再検証" />
+						</StackPanel>
+					</Button>
+				</Grid>
+			</Border>
 
-		<Border Grid.Row="3"
-			Margin="0,8,0,0" Padding="10"
-			Background="{DynamicResource MaterialDesignToolBarBackground}">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="12" />
-					<ColumnDefinition Width="Auto" />
-				</Grid.ColumnDefinitions>
+			<Border Grid.Row="1"
+				Margin="0,8,0,8" Padding="10"
+				Background="{DynamicResource MaterialDesignPaper}">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="180" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="160" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="110" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="110" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="110" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
 
-				<TextBlock Grid.Column="0"
-					VerticalAlignment="Center"
-					Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="{Binding Message}"
-					TextTrimming="CharacterEllipsis"
-					ToolTip="{Binding Message}" />
-				<Button Grid.Column="1"
-					MinWidth="130"
-					Command="{Binding ImportCommand}"
-					Style="{StaticResource MaterialDesignRaisedButton}"
-					ToolTip="更新実行 (F6)">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="DatabaseEdit" />
-						<TextBlock Margin="6,0,0,0"
-							Text="更新実行" />
-					</StackPanel>
-				</Button>
-				<Button Grid.Column="3"
-					MinWidth="100"
-					Command="{Binding ExitCommand}"
-					Content="戻る (ESC)" IsCancel="True"
-					Style="{StaticResource MaterialDesignOutlinedButton}" />
+					<TextBlock Grid.Column="0"
+						VerticalAlignment="Center"
+						FontWeight="SemiBold" Text="Table名" />
+					<TextBlock Grid.Column="1"
+						Margin="8,0,16,0" VerticalAlignment="Center"
+						Text="{Binding TableName}" />
+					<TextBlock Grid.Column="2"
+						VerticalAlignment="Center"
+						FontWeight="SemiBold" Text="モデル" />
+					<TextBlock Grid.Column="3"
+						Margin="8,0,16,0" VerticalAlignment="Center"
+						Text="{Binding ModelName}" />
+					<TextBlock Grid.Column="4"
+						VerticalAlignment="Center"
+						FontWeight="SemiBold" Text="データ行" />
+					<TextBlock Grid.Column="5"
+						Margin="8,0,16,0" VerticalAlignment="Center"
+						Text="{Binding DataRowCount, StringFormat={}{0:N0}}" />
+					<TextBlock Grid.Column="6"
+						VerticalAlignment="Center"
+						FontWeight="SemiBold" Text="取込可" />
+					<TextBlock Grid.Column="7"
+						Margin="8,0,16,0" VerticalAlignment="Center"
+						Text="{Binding ImportableRowCount, StringFormat={}{0:N0}}" />
+					<TextBlock Grid.Column="8"
+						VerticalAlignment="Center"
+						FontWeight="SemiBold"
+						Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="エラー" />
+					<TextBlock Grid.Column="9"
+						Margin="8,0,0,0" VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="{Binding ErrorCount, StringFormat={}{0:N0}}" />
+				</Grid>
+			</Border>
+
+			<Grid Grid.Row="2">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="2*" />
+					<RowDefinition Height="8" />
+					<RowDefinition Height="3*" />
+				</Grid.RowDefinitions>
+
+				<GroupBox Grid.Row="0"
+					Header="更新プレビュー（先頭100件）">
+					<DataGrid d:ItemsSource="{d:SampleData ItemCount=5}"
+						materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False"
+						GridLinesVisibility="Horizontal" IsReadOnly="True"
+						ItemsSource="{Binding PreviewRows}"
+						RowHeight="28"
+						Style="{StaticResource MaterialDesignDataGrid}">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="90"
+								Binding="{Binding LineNo}"
+								Header="行" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding Status}"
+								Header="状態" />
+							<DataGridTextColumn Width="180"
+								Binding="{Binding Key}"
+								Header="キー" />
+							<DataGridTextColumn Width="*"
+								Binding="{Binding Summary}"
+								Header="内容" />
+						</DataGrid.Columns>
+					</DataGrid>
+				</GroupBox>
+
+				<GroupBox Grid.Row="2"
+					Header="エラー">
+					<DataGrid d:ItemsSource="{d:SampleData ItemCount=5}"
+						materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False"
+						GridLinesVisibility="Horizontal" IsReadOnly="True"
+						ItemsSource="{Binding ErrorRows}"
+						RowHeight="30"
+						SelectedItem="{Binding SelectedError}"
+						Style="{StaticResource MaterialDesignDataGrid}">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="90"
+								Binding="{Binding LineNo}"
+								Header="行" />
+							<DataGridTextColumn Width="180"
+								Binding="{Binding ColumnName}"
+								Header="列" />
+							<DataGridTextColumn Width="*"
+								Binding="{Binding Detail}"
+								Header="内容" />
+						</DataGrid.Columns>
+					</DataGrid>
+				</GroupBox>
 			</Grid>
-		</Border>
+
+			<Border Grid.Row="3"
+				Margin="0,8,0,0" Padding="10"
+				Background="{DynamicResource MaterialDesignToolBarBackground}">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="12" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
+
+					<TextBlock Grid.Column="0"
+						VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="{Binding Message}"
+						TextTrimming="CharacterEllipsis"
+						ToolTip="{Binding Message}" />
+					<Button Grid.Column="1"
+						MinWidth="130"
+						Command="{Binding ImportCommand}"
+						Style="{StaticResource MaterialDesignRaisedButton}"
+						ToolTip="更新実行 (F6)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseEdit" />
+							<TextBlock Margin="6,0,0,0"
+								Text="更新実行" />
+						</StackPanel>
+					</Button>
+					<Button Grid.Column="3"
+						MinWidth="100"
+						Command="{Binding ExitCommand}"
+						Content="戻る (ESC)" IsCancel="True"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+				</Grid>
+			</Border>
+		</Grid>
 	</Grid>
 </helpers:BaseWindow>

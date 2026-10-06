@@ -35,206 +35,233 @@
 		</Style>
 	</helpers:BaseWindow.Resources>
 
-	<Grid Margin="10">
+	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
-			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
 
-		<Border Grid.Row="0"
-			Padding="8"
-			Background="{DynamicResource MaterialDesignToolBarBackground}">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="220" />
-					<ColumnDefinition Width="8" />
-					<ColumnDefinition Width="340" />
-					<ColumnDefinition Width="8" />
-					<ColumnDefinition Width="80" />
-					<ColumnDefinition Width="12" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="*" />
-				</Grid.ColumnDefinitions>
-
-				<TextBlock Grid.Column="0"
-					Style="{StaticResource FormCaption}"
-					Text="Table名" />
-				<ComboBox Grid.Column="1"
-					DisplayMemberPath="TableName"
-					ItemsSource="{Binding TableList}"
-					SelectedItem="{Binding SelectedTable, Mode=TwoWay}"
-					Style="{StaticResource FormComboBox}"
-					ToolTip="{Binding SelectedTable.Description}">
-					<ComboBox.ItemContainerStyle>
-						<Style BasedOn="{StaticResource {x:Type ComboBoxItem}}"
-							TargetType="ComboBoxItem">
-							<Setter Property="ToolTip" Value="{Binding Description}" />
-						</Style>
-					</ComboBox.ItemContainerStyle>
-				</ComboBox>
-				<TextBlock Grid.Column="3"
-					VerticalAlignment="Center"
-					Foreground="{DynamicResource MaterialDesignBody}"
-					Text="{Binding SelectedTable.Description}"
-					TextTrimming="CharacterEllipsis"
-					ToolTip="{Binding SelectedTable.Description}" />
-				<TextBox Grid.Column="5"
-					HorizontalContentAlignment="Right"
-					IsReadOnly="True"
-					Text="{Binding SelectedRowCount, StringFormat={}{0:N0}}" />
-				<Button Grid.Column="7"
-					MinWidth="120"
-					Command="{Binding RefreshDisplayCommand}"
-					Style="{StaticResource MaterialDesignRaisedButton}"
-					ToolTip="表示更新 (F5)">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="Refresh" />
-						<TextBlock Margin="6,0,0,0"
-							Text="表示更新" />
-					</StackPanel>
-				</Button>
-			</Grid>
-		</Border>
-
-		<DataGrid Grid.Row="1"
-			Margin="0,8"
-			d:ItemsSource="{d:SampleData ItemCount=8}"
-			materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False" FrozenColumnCount="2"
-			GridLinesVisibility="All" HeadersVisibility="Column"
-			HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-			IsSynchronizedWithCurrentItem="True"
-			ItemsSource="{Binding ColumnList}"
-			RowHeight="28"
-			SelectedItem="{Binding CurrentColumn}"
-			SelectionMode="Single"
-			Style="{StaticResource MaterialDesignDataGrid}"
-			VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}">
-			<DataGrid.ColumnHeaderStyle>
-				<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
-					TargetType="{x:Type DataGridColumnHeader}">
-					<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
-					<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
-					<Setter Property="HorizontalContentAlignment" Value="Center" />
-					<Setter Property="FontWeight" Value="SemiBold" />
-				</Style>
-			</DataGrid.ColumnHeaderStyle>
-			<DataGrid.Columns>
-				<DataGridCheckBoxColumn Width="54"
-					Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-					Header="選択" />
-				<DataGridTextColumn Width="48"
-					Binding="{Binding No}"
-					Header="No" IsReadOnly="True">
-					<DataGridTextColumn.ElementStyle>
-						<Style TargetType="TextBlock">
-							<Setter Property="HorizontalAlignment" Value="Right" />
-							<Setter Property="TextAlignment" Value="Right" />
-						</Style>
-					</DataGridTextColumn.ElementStyle>
-				</DataGridTextColumn>
-				<DataGridTextColumn Width="70"
-					Binding="{Binding SortOrderText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-					Header="ソート順">
-					<DataGridTextColumn.ElementStyle>
-						<Style BasedOn="{StaticResource RightTextBlock}"
-							TargetType="TextBlock" />
-					</DataGridTextColumn.ElementStyle>
-				</DataGridTextColumn>
-				<DataGridCheckBoxColumn Width="54"
-					Binding="{Binding SortDescending, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-					Header="降順？" />
-				<DataGridTextColumn Width="190"
-					Binding="{Binding OutputColumnName}"
-					Header="列名" IsReadOnly="True" />
-				<DataGridTextColumn Width="150"
-					Binding="{Binding ColumnName}"
-					Header="プロパティ名" IsReadOnly="True" />
-				<DataGridTextColumn Width="110"
-					Binding="{Binding DataType}"
-					Header="データ型" IsReadOnly="True" />
-				<DataGridTextColumn Width="90"
-					Binding="{Binding LengthText}"
-					Header="桁数" IsReadOnly="True">
-					<DataGridTextColumn.ElementStyle>
-						<Style BasedOn="{StaticResource RightTextBlock}"
-							TargetType="TextBlock" />
-					</DataGridTextColumn.ElementStyle>
-				</DataGridTextColumn>
-				<DataGridTextColumn Width="120"
-					Binding="{Binding ImportTypeText}"
-					Header="CSV型" IsReadOnly="True" />
-				<DataGridTextColumn Width="360"
-					Binding="{Binding Note}"
-					Header="備考" IsReadOnly="True" />
-			</DataGrid.Columns>
-		</DataGrid>
-
-		<Border Grid.Row="2"
-			Padding="8"
-			Background="{DynamicResource MaterialDesignToolBarBackground}">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="10" />
-					<ColumnDefinition Width="150" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="24" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="16" />
-					<ColumnDefinition Width="Auto" />
-					<ColumnDefinition Width="12" />
-					<ColumnDefinition Width="Auto" />
-				</Grid.ColumnDefinitions>
-
-				<TextBlock Grid.Column="0"
-					VerticalAlignment="Center"
-					Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="{Binding Message}"
-					TextTrimming="CharacterEllipsis"
-					ToolTip="{Binding Message}" />
-				<Button Grid.Column="1"
-					MinWidth="110"
-					Command="{Binding LoadDataCommand}"
-					Style="{StaticResource MaterialDesignRaisedButton}">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="DatabaseRefresh" />
-						<TextBlock Margin="6,0,0,0"
-							Text="データ取得" />
-					</StackPanel>
-				</Button>
-				<DatePicker Grid.Column="3"
-					helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
-					SelectedDate="{Binding SelectedDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-					Style="{StaticResource FormDatePicker}" />
-				<TextBlock Grid.Column="4"
-					VerticalAlignment="Center"
-					Text="以降" />
-				<TextBlock Grid.Column="6"
-					VerticalAlignment="Center"
-					Foreground="{DynamicResource MaterialDesignBodyLight}"
-					Text="{Binding SelectedColumnCount, StringFormat={}選択 {0:N0} 列}" />
-				<Button Grid.Column="8"
-					MinWidth="120"
-					Command="{Binding CreateFileCommand}"
-					Style="{StaticResource MaterialDesignRaisedButton}">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="FileExport" />
-						<TextBlock Margin="6,0,0,0"
-							Text="ファイル作成" />
-					</StackPanel>
-				</Button>
-				<Button Grid.Column="10"
-					MinWidth="100"
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<Button Margin="0,0,8,0"
 					Command="{Binding ExitCommand}"
-					Content="戻る (ESC)" IsCancel="True"
-					Style="{StaticResource MaterialDesignOutlinedButton}" />
-			</Grid>
-		</Border>
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="閉じる (Esc)">
+					<materialDesign:PackIcon Kind="ArrowLeft" />
+				</Button>
+				<materialDesign:PackIcon Width="28" Height="28"
+					VerticalAlignment="Center"
+					Kind="FileDelimitedOutline" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold"
+					Text="取込レイアウト作成" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<Grid Grid.Row="1"
+			Margin="10">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
+
+			<Border Grid.Row="0"
+				Padding="8"
+				Background="{DynamicResource MaterialDesignToolBarBackground}">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="220" />
+						<ColumnDefinition Width="8" />
+						<ColumnDefinition Width="340" />
+						<ColumnDefinition Width="8" />
+						<ColumnDefinition Width="80" />
+						<ColumnDefinition Width="12" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<TextBlock Grid.Column="0"
+						Style="{StaticResource FormCaption}"
+						Text="Table名" />
+					<ComboBox Grid.Column="1"
+						DisplayMemberPath="TableName"
+						ItemsSource="{Binding TableList}"
+						SelectedItem="{Binding SelectedTable, Mode=TwoWay}"
+						Style="{StaticResource FormComboBox}"
+						ToolTip="{Binding SelectedTable.Description}">
+						<ComboBox.ItemContainerStyle>
+							<Style BasedOn="{StaticResource {x:Type ComboBoxItem}}"
+								TargetType="ComboBoxItem">
+								<Setter Property="ToolTip" Value="{Binding Description}" />
+							</Style>
+						</ComboBox.ItemContainerStyle>
+					</ComboBox>
+					<TextBlock Grid.Column="3"
+						VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignBody}"
+						Text="{Binding SelectedTable.Description}"
+						TextTrimming="CharacterEllipsis"
+						ToolTip="{Binding SelectedTable.Description}" />
+					<TextBox Grid.Column="5"
+						HorizontalContentAlignment="Right"
+						IsReadOnly="True"
+						Text="{Binding SelectedRowCount, StringFormat={}{0:N0}}" />
+					<Button Grid.Column="7"
+						MinWidth="120"
+						Command="{Binding RefreshDisplayCommand}"
+						Style="{StaticResource MaterialDesignRaisedButton}"
+						ToolTip="表示更新 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Refresh" />
+							<TextBlock Margin="6,0,0,0"
+								Text="表示更新" />
+						</StackPanel>
+					</Button>
+				</Grid>
+			</Border>
+
+			<DataGrid Grid.Row="1"
+				Margin="0,8"
+				d:ItemsSource="{d:SampleData ItemCount=8}"
+				materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False" FrozenColumnCount="2"
+				GridLinesVisibility="All" HeadersVisibility="Column"
+				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				IsSynchronizedWithCurrentItem="True"
+				ItemsSource="{Binding ColumnList}"
+				RowHeight="28"
+				SelectedItem="{Binding CurrentColumn}"
+				SelectionMode="Single"
+				Style="{StaticResource MaterialDesignDataGrid}"
+				VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}">
+				<DataGrid.ColumnHeaderStyle>
+					<Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+						TargetType="{x:Type DataGridColumnHeader}">
+						<Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+						<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+						<Setter Property="HorizontalContentAlignment" Value="Center" />
+						<Setter Property="FontWeight" Value="SemiBold" />
+					</Style>
+				</DataGrid.ColumnHeaderStyle>
+				<DataGrid.Columns>
+					<DataGridCheckBoxColumn Width="54"
+						Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+						Header="選択" />
+					<DataGridTextColumn Width="48"
+						Binding="{Binding No}"
+						Header="No" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style TargetType="TextBlock">
+								<Setter Property="HorizontalAlignment" Value="Right" />
+								<Setter Property="TextAlignment" Value="Right" />
+							</Style>
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="70"
+						Binding="{Binding SortOrderText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+						Header="ソート順">
+						<DataGridTextColumn.ElementStyle>
+							<Style BasedOn="{StaticResource RightTextBlock}"
+								TargetType="TextBlock" />
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridCheckBoxColumn Width="54"
+						Binding="{Binding SortDescending, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+						Header="降順？" />
+					<DataGridTextColumn Width="190"
+						Binding="{Binding OutputColumnName}"
+						Header="列名" IsReadOnly="True" />
+					<DataGridTextColumn Width="150"
+						Binding="{Binding ColumnName}"
+						Header="プロパティ名" IsReadOnly="True" />
+					<DataGridTextColumn Width="110"
+						Binding="{Binding DataType}"
+						Header="データ型" IsReadOnly="True" />
+					<DataGridTextColumn Width="90"
+						Binding="{Binding LengthText}"
+						Header="桁数" IsReadOnly="True">
+						<DataGridTextColumn.ElementStyle>
+							<Style BasedOn="{StaticResource RightTextBlock}"
+								TargetType="TextBlock" />
+						</DataGridTextColumn.ElementStyle>
+					</DataGridTextColumn>
+					<DataGridTextColumn Width="120"
+						Binding="{Binding ImportTypeText}"
+						Header="CSV型" IsReadOnly="True" />
+					<DataGridTextColumn Width="360"
+						Binding="{Binding Note}"
+						Header="備考" IsReadOnly="True" />
+				</DataGrid.Columns>
+			</DataGrid>
+
+			<Border Grid.Row="2"
+				Padding="8"
+				Background="{DynamicResource MaterialDesignToolBarBackground}">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="10" />
+						<ColumnDefinition Width="150" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="24" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="16" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="12" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
+
+					<TextBlock Grid.Column="0"
+						VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="{Binding Message}"
+						TextTrimming="CharacterEllipsis"
+						ToolTip="{Binding Message}" />
+					<Button Grid.Column="1"
+						MinWidth="110"
+						Command="{Binding LoadDataCommand}"
+						Style="{StaticResource MaterialDesignRaisedButton}">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseRefresh" />
+							<TextBlock Margin="6,0,0,0"
+								Text="データ取得" />
+						</StackPanel>
+					</Button>
+					<DatePicker Grid.Column="3"
+						helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
+						SelectedDate="{Binding SelectedDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+						Style="{StaticResource FormDatePicker}" />
+					<TextBlock Grid.Column="4"
+						VerticalAlignment="Center"
+						Text="以降" />
+					<TextBlock Grid.Column="6"
+						VerticalAlignment="Center"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="{Binding SelectedColumnCount, StringFormat={}選択 {0:N0} 列}" />
+					<Button Grid.Column="8"
+						MinWidth="120"
+						Command="{Binding CreateFileCommand}"
+						Style="{StaticResource MaterialDesignRaisedButton}">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="FileExport" />
+							<TextBlock Margin="6,0,0,0"
+								Text="ファイル作成" />
+						</StackPanel>
+					</Button>
+					<Button Grid.Column="10"
+						MinWidth="100"
+						Command="{Binding ExitCommand}"
+						Content="戻る (ESC)" IsCancel="True"
+						Style="{StaticResource MaterialDesignOutlinedButton}" />
+				</Grid>
+			</Border>
+		</Grid>
 	</Grid>
 </helpers:BaseWindow>

@@ -251,7 +251,7 @@
 								<!--  経過時間  -->
 								<TextBlock Grid.Row="4"
 									Style="{StaticResource FormLabel}"
-									Text="経過時間(秒)" />
+									Text="経過時間&#10;(秒)" />
 								<TextBox Grid.Row="4" Grid.Column="1"
 									materialDesign:HintAssist.Hint="経過時間(秒)" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"

@@ -373,7 +373,7 @@
 
 								<TextBlock Grid.Row="11"
 									Style="{StaticResource FormLabel}"
-									Text="誕生日(yyyyMMdd)" />
+									Text="誕生日&#10;(yyyyMMdd)" />
 								<TextBox Grid.Row="11" Grid.Column="1"
 									Width="200"
 									HorizontalAlignment="Left"

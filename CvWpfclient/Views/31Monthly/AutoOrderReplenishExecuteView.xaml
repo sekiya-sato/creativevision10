@@ -21,8 +21,23 @@
 			<RowDefinition Height="*" />
 			<RowDefinition Height="Auto" />
 		</Grid.RowDefinitions>
-		<materialDesign:ColorZone Padding="18,12" Mode="PrimaryMid">
-			<TextBlock FontSize="20" FontWeight="SemiBold" Text="自動発注・補充" />
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<Button Margin="0,0,8,0"
+					Command="{Binding ExitCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="閉じる (Esc)">
+					<materialDesign:PackIcon Kind="ArrowLeft" />
+				</Button>
+				<materialDesign:PackIcon Width="28" Height="28"
+					VerticalAlignment="Center"
+					Kind="TruckDeliveryOutline" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold"
+					Text="自動発注・補充" />
+			</StackPanel>
 		</materialDesign:ColorZone>
 		<materialDesign:Card Grid.Row="1" Margin="16,12" Padding="14">
 			<StackPanel>

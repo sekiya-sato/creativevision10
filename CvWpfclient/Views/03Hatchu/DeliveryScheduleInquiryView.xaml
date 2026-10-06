@@ -39,11 +39,11 @@
 					ToolTip="閉じる (Esc)">
 					<materialDesign:PackIcon Kind="ArrowLeft" />
 				</Button>
-				<materialDesign:PackIcon Width="26" Height="26"
+				<materialDesign:PackIcon Width="28" Height="28"
 					VerticalAlignment="Center"
 					Kind="TruckCargoContainer" />
 				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-					FontSize="18" FontWeight="SemiBold"
+					FontSize="20" FontWeight="SemiBold"
 					Text="{Binding Title}" />
 				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 					Opacity="0.8" Text="発注の納品予定日と納期遅れ（予定日超過かつ未完了）を照会します。" />

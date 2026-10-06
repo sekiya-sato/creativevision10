@@ -107,42 +107,35 @@
 								</DockPanel>
 							</StackPanel>
 
-							<Grid Margin="0">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="*" />
-									<ColumnDefinition Width="96" />
-								</Grid.ColumnDefinitions>
-								<StackPanel Grid.Column="0"
-									Margin="0,0,16,0">
-									<TextBlock Style="{StaticResource StockQueryConditionLabel}"
-										Text="アイテムCD" />
-									<DockPanel>
-										<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectItemCodeFromCommand}"
-											Style="{StaticResource StockQueryConditionSearchTextBox}"
-											Text="{Binding Owner.ItemCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-										<TextBlock Width="22"
-											HorizontalAlignment="Center" VerticalAlignment="Center"
-											Text="-" TextAlignment="Center" />
-										<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectItemCodeToCommand}"
-											Style="{StaticResource StockQueryConditionSearchTextBox}"
-											Text="{Binding Owner.ItemCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-									</DockPanel>
-								</StackPanel>
-								<StackPanel Grid.Column="1">
-									<TextBlock Style="{StaticResource StockQueryConditionLabel}"
-										Text="最大件数" />
-									<TextBox Height="32"
-										Padding="8,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
-										Background="{DynamicResource MaterialDesignPaper}"
-										Style="{StaticResource MaterialDesignTextBox}"
-										Text="{Binding Owner.MaxCountText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-								</StackPanel>
-							</Grid>
+							<StackPanel Margin="0,0,16,0">
+								<TextBlock Style="{StaticResource StockQueryConditionLabel}"
+									Text="アイテムCD" />
+								<DockPanel>
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectItemCodeFromCommand}"
+										Style="{StaticResource StockQueryConditionSearchTextBox}"
+										Text="{Binding Owner.ItemCodeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Width="22"
+										HorizontalAlignment="Center" VerticalAlignment="Center"
+										Text="-" TextAlignment="Center" />
+									<TextBox helpers:SearchTextBoxAssist.Command="{Binding Owner.SelectItemCodeToCommand}"
+										Style="{StaticResource StockQueryConditionSearchTextBox}"
+										Text="{Binding Owner.ItemCodeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								</DockPanel>
+							</StackPanel>
 						</UniformGrid>
 
 						<DockPanel Grid.Row="1"
 							Margin="0,10,0,0">
 							<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+								<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+									Style="{StaticResource StockQueryConditionLabel}"
+									Text="最大件数" />
+								<TextBox Width="80" Height="32"
+									Margin="0,0,16,0" Padding="8,0"
+									HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+									Background="{DynamicResource MaterialDesignPaper}"
+									Style="{StaticResource MaterialDesignTextBox}"
+									Text="{Binding Owner.MaxCountText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 								<CheckBox Margin="0,0,16,0" VerticalAlignment="Center"
 									Content="在庫0を含める"
 									IsChecked="{Binding Owner.IncludeZeroStock}"

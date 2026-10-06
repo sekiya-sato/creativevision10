@@ -172,7 +172,7 @@
 
 					<TextBlock Grid.Row="8" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
-						Text="送信元表示名（省略可）" />
+						Text="送信元表示名&#10;（省略可）" />
 					<TextBox Grid.Row="8" Grid.Column="1"
 						materialDesign:HintAssist.Hint="送信元表示名（省略可）"
 						Style="{StaticResource FormTextBox}"

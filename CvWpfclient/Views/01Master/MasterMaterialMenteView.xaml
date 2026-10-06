@@ -318,7 +318,7 @@
 								<!--  仕入先商品コード  -->
 								<TextBlock Grid.Row="6"
 									Style="{StaticResource FormLabel}"
-									Text="仕入先商品コード" />
+									Text="仕入先&#10;商品コード" />
 								<TextBox Grid.Row="6" Grid.Column="1"
 									Width="200"
 									HorizontalAlignment="Left"
