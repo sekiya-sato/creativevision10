@@ -546,6 +546,20 @@ public partial class CoreService {
 		ArgumentNullException.ThrowIfNull(request);
 
 		var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+		var writeType = param switch {
+			InsertParam p => p.ItemType,
+			InsertBulkParam p => p.ItemType,
+			UpdateParam p => p.ItemType,
+			DeleteParam p => p.ItemType,
+			DeleteByIdParam p => p.ItemType,
+			DeleteBulkParam p => p.ItemType,
+			PartialUpdateParam p => p.ItemType,
+			_ => null,
+		};
+		if (writeType != null) {
+			try { PointMasterDb.EnsureGenericWriteAllowed(writeType, param is PartialUpdateParam); }
+			catch (ArgumentException ex) { return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message); }
+		}
 		return param switch {
 			InsertParam insert => HandleInsert(request.Flag, insert),
 			InsertBulkParam insertBulk => HandleBulkInsert(request.Flag, insertBulk),
@@ -1056,6 +1070,7 @@ public partial class CoreService {
 
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			new PointMasterDb(_db).ValidateSave(item, null);
 			_db.Insert(item);
 			// 副作用(派生展開・在庫・引当)は追加と同一トランザクション内で実行する
 			LogEffects(insert.ItemType, Effects.After(WriteOp.Insert, insert.ItemType, item, null, vdate));
@@ -1090,6 +1105,7 @@ public partial class CoreService {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			foreach (var item in list) {
 				var vdate = SetCreatedAuditValues(insertBulk.ItemType, item);
+				new PointMasterDb(_db).ValidateSave(item, null);
 				_db.Insert(item);
 				effects = effects.Add(Effects.After(WriteOp.Insert, insertBulk.ItemType, item, null, vdate, reserveKeys));
 			}
@@ -1129,6 +1145,15 @@ public partial class CoreService {
 				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 			}
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			if (PointMasterDb.IsMaster(update.ItemType)) {
+				var current = FetchExistingBaseDbItem(update.ItemType, db.Id);
+				if (current == null || current.Vdu != db.Vdu) {
+					_db.AbortTransaction();
+					return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, update.ItemType, Common.SerializeObject(item));
+				}
+				org = current;
+				new PointMasterDb(_db).ValidateSave(item, org);
+			}
 			// 在庫は差分の加減算なので、DB上の行が変わる前に旧値ぶんを反転しておく
 			Effects.Before(WriteOp.Update, update.ItemType, org);
 			db.Vdu = vdate;
@@ -1167,6 +1192,15 @@ public partial class CoreService {
 		}
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			if (PointMasterDb.IsMaster(delete.ItemType)) {
+				var current = FetchExistingBaseDbItem(delete.ItemType, db.Id);
+				if (current == null || current.Vdu != db.Vdu) {
+					_db.AbortTransaction();
+					return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, delete.ItemType, Common.SerializeObject(item));
+				}
+				org = current;
+				new PointMasterDb(_db).ValidateDelete(org);
+			}
 			// 在庫は差分の加減算なので、行を消す前に旧値ぶんを反転しておく
 			Effects.Before(WriteOp.Delete, delete.ItemType, org);
 			_db.Delete(item);
@@ -1198,6 +1232,15 @@ public partial class CoreService {
 		}
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			if (PointMasterDb.IsMaster(deleteById.ItemType)) {
+				var current = FetchExistingBaseDbItem(deleteById.ItemType, deleteById.Id);
+				if (current == null || current.Vdu != deleteById.OriginalVdu) {
+					_db.AbortTransaction();
+					return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, deleteById.ItemType, Common.SerializeObject(item));
+				}
+				item = current;
+				new PointMasterDb(_db).ValidateDelete(item);
+			}
 			// 在庫は差分の加減算なので、行を消す前に旧値ぶんを反転しておく
 			Effects.Before(WriteOp.Delete, deleteById.ItemType, item);
 			_db.Delete(item);
@@ -1248,6 +1291,7 @@ public partial class CoreService {
 					return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage,
 						deleteBulk.ItemType, $"Id={row.Id}");
 				}
+				new PointMasterDb(_db).ValidateDelete(item);
 				targets.Add(item);
 			}
 			foreach (var item in targets) {

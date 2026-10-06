@@ -433,9 +433,10 @@ public partial class MenuData : ObservableObject {
 			new("顧客マスタメンテ", typeof(Views._01Master.MasterEndCustomerMenteView), addInfo:"顧客マスタメンテ画面"),
 			new("顧客カルテ", typeof(Views._32LoyalCustomer.EndCustomerProfileView), addInfo:"準備中"),
 			new("▲ ポイント ----", new([
-				new("ポイントマスタ（ベース）（管理者用)", typeof(Views._32LoyalCustomer.PointMasterBaseAdminView), addInfo:"準備中"),
+				new("ポイントマスタ（ベース）（管理者用)", typeof(Views._32LoyalCustomer.PointMasterBaseAdminView), addInfo:"ポイント制度・版別の基本付与条件"),
+				new("ポイントマスタ（ランク）", typeof(Views._32LoyalCustomer.PointMasterRankView), addInfo:"ベース版に属するランク別付与条件"),
 				new("ポイントマスタ（キャンペーン）", typeof(Views._32LoyalCustomer.PointMasterCampaignView), addInfo:"準備中"),
-				new("ポイントマスタ（ボーナス）", typeof(Views._32LoyalCustomer.PointMasterBonusView), addInfo:"準備中"),
+				new("ポイントマスタ（ボーナス）", typeof(Views._32LoyalCustomer.PointMasterBonusView), addInfo:"期間・契機・対象ランク別の追加ポイント条件"),
 				new("店舗別キャンペーン設定", typeof(Views._32LoyalCustomer.ShopCampaignSettingView), addInfo:"準備中"),
 				new("商品店舗別ポイント設定", typeof(Views._32LoyalCustomer.ShohinShopPointSettingView), addInfo:"準備中"),
 				new("ポイント集計", typeof(Views._32LoyalCustomer.PointSummaryView), addInfo:"準備中"),

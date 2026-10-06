@@ -24,6 +24,7 @@ public sealed partial class MasterPointBase : BaseDbClass {
 	/// <summary>版番号（1以上）</summary>
 	[ObservableProperty]
 	[Comment("版番号（1以上）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial int Version { get; set; } = 1;
 	/// <summary>適用開始日 yyyyMMdd</summary>
 	[ObservableProperty]
@@ -50,14 +51,17 @@ public sealed partial class MasterPointBase : BaseDbClass {
 	/// <summary>ポイント付与単価（正の金額）</summary>
 	[ObservableProperty]
 	[Comment("ポイント付与単価（正の金額）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial long PointUnitPrice { get; set; } = 100;
 	/// <summary>プロパーの付与ポイント数（0以上）</summary>
 	[ObservableProperty]
 	[Comment("プロパーの付与ポイント数（0以上）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial long PointAmountProper { get; set; } = 1;
 	/// <summary>セールの付与ポイント数（0以上）</summary>
 	[ObservableProperty]
 	[Comment("セールの付与ポイント数（0以上）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial long PointAmountSale { get; set; } = 1;
 	/// <summary>付与対象金額の税基準 0=税抜 1=税込</summary>
 	[ObservableProperty]
@@ -88,6 +92,7 @@ public sealed partial class MasterPointBase : BaseDbClass {
 	[NotifyPropertyChangedFor(nameof(EnRounding))]
 	[ForeignKey(nameof(EnumRounding))]
 	[Comment("端数処理 0=四捨五入 1=切上 2=切捨")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial int Rounding { get; set; } = (int)EnumRounding.Floor;
 	[Ignore]
 	[JsonIgnore]
@@ -131,14 +136,17 @@ public sealed partial class MasterPointRank : BaseDbClass {
 	/// <summary>ランク別ポイント付与単価（正の金額）</summary>
 	[ObservableProperty]
 	[Comment("ランク別ポイント付与単価（正の金額）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial long PointUnitPrice { get; set; } = 100;
 	/// <summary>プロパーの付与ポイント数（0以上）</summary>
 	[ObservableProperty]
 	[Comment("プロパーの付与ポイント数（0以上）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial long PointAmountProper { get; set; } = 1;
 	/// <summary>セールの付与ポイント数（0以上）</summary>
 	[ObservableProperty]
 	[Comment("セールの付与ポイント数（0以上）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial long PointAmountSale { get; set; } = 1;
 }
 
@@ -161,6 +169,7 @@ public sealed partial class MasterPointBonus : BaseDbClass {
 	/// <summary>版番号（1以上）</summary>
 	[ObservableProperty]
 	[Comment("版番号（1以上）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial int Version { get; set; } = 1;
 	/// <summary>対象ベース条件の版Id</summary>
 	[ObservableProperty]
@@ -214,6 +223,7 @@ public sealed partial class MasterPointBonus : BaseDbClass {
 	[NotifyPropertyChangedFor(nameof(EnIsAllRanks))]
 	[ForeignKey(nameof(EnumYesNo))]
 	[Comment("全ランク対象 0=しない 1=する")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial int IsAllRanks { get; set; } = (int)EnumYesNo.Yes;
 	[Ignore]
 	[JsonIgnore]
@@ -240,6 +250,7 @@ public sealed partial class MasterPointBonus : BaseDbClass {
 	/// <summary>制限期間内の付与回数上限（1以上）</summary>
 	[ObservableProperty]
 	[Comment("制限期間内の付与回数上限（1以上）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial int LimitCount { get; set; } = 1;
 }
 
