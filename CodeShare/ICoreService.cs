@@ -244,6 +244,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg063_PointRecalc = 63,
 	/// <summary>
+	/// ポイントキャンペーン対象（店舗・商品）の重複確認・置換保存
+	/// </summary>
+	[EnumMember]
+	Msg064_PointCampaignTargetSave = 64,
+	/// <summary>
 	/// POS: バーコードから商品を検索する
 	/// </summary>
 	[EnumMember]

@@ -56,6 +56,9 @@ public class DefineDataTable {
 			typeof(MasterPointBase),
 			typeof(MasterPointRank),
 			typeof(MasterPointBonus),
+			typeof(MasterPointCampaign),
+			typeof(MasterPointCampaignShop),
+			typeof(MasterPointCampaignShohin),
 			typeof(TranPointEvent),
 			typeof(SummaryPoint),
 

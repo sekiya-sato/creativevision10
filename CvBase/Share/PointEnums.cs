@@ -29,6 +29,19 @@ public enum EnumPointBonusTrigger : int {
 	FirstPurchase = 2
 }
 
+/// <summary>キャンペーンの適用範囲。付与判定は商品店別→商品全店→店別→全店の順。</summary>
+[Comment("ポイントキャンペーン優先区分")]
+public enum EnumPointCampaignPriority : int {
+	[Comment("全店")]
+	AllShops = 0,
+	[Comment("店別")]
+	Shop = 1,
+	[Comment("商品全店")]
+	ShohinAllShops = 2,
+	[Comment("商品店別")]
+	ShohinShop = 3
+}
+
 /// <summary>ボーナスコードごとの付与回数を数える期間。会計年度は会社の年度開始日に従う。</summary>
 [Comment("ボーナスポイント回数制限期間")]
 public enum EnumPointLimitPeriod : int {

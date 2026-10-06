@@ -254,6 +254,124 @@ public sealed partial class MasterPointBonus : BaseDbClass {
 	public partial int LimitCount { get; set; } = 1;
 }
 
+/// <summary>期間・範囲を限定してベースの付与数を置き換えるキャンペーン条件。対象店舗・商品は子表で持つ。</summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Code))]
+[KeyDml("nk1", false, nameof(PriorityType), nameof(DayFrom), nameof(DayTo))]
+[KeyDml("nk2", false, nameof(Id_PointBase))]
+[Comment("ポイントキャンペーン条件")]
+public sealed partial class MasterPointCampaign : BaseDbClass {
+	/// <summary>キャンペーンコード</summary>
+	[ObservableProperty]
+	[ColumnSizeDml(20)]
+	[Comment("キャンペーンコード")]
+	public partial string Code { get; set; } = string.Empty;
+	/// <summary>キャンペーン名称</summary>
+	[ObservableProperty]
+	[ColumnSizeDml(80)]
+	[Comment("キャンペーン名称")]
+	public partial string Name { get; set; } = string.Empty;
+	/// <summary>ベース条件の版Id。税基準・計算単位・丸め・利用控除を継承</summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterPointBase))]
+	[Comment("ベース条件の版Id。税基準・計算単位・丸め・利用控除を継承")]
+	public partial long Id_PointBase { get; set; } = 0;
+	/// <summary>適用開始日 yyyyMMdd</summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("適用開始日 yyyyMMdd")]
+	public partial string DayFrom { get; set; } = string.Empty;
+	/// <summary>適用終了日 yyyyMMdd</summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("適用終了日 yyyyMMdd")]
+	public partial string DayTo { get; set; } = string.Empty;
+	/// <summary>有効 0=しない 1=する</summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnIsEnabled))]
+	[ForeignKey(nameof(EnumYesNo))]
+	[Comment("有効 0=しない 1=する")]
+	public partial int IsEnabled { get; set; } = 0;
+	[Ignore]
+	[JsonIgnore]
+	public EnumYesNo EnIsEnabled {
+		get => (EnumYesNo)IsEnabled;
+		set => IsEnabled = (int)value;
+	}
+	/// <summary>優先区分 0=全店 1=店別 2=商品全店 3=商品店別</summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(EnPriorityType))]
+	[ForeignKey(nameof(EnumPointCampaignPriority))]
+	[Comment("優先区分 0=全店 1=店別 2=商品全店 3=商品店別")]
+	public partial int PriorityType { get; set; } = 0;
+	[Ignore]
+	[JsonIgnore]
+	public EnumPointCampaignPriority EnPriorityType {
+		get => (EnumPointCampaignPriority)PriorityType;
+		set => PriorityType = (int)value;
+	}
+	/// <summary>ポイント付与単価（正の金額）</summary>
+	[ObservableProperty]
+	[Comment("ポイント付与単価（正の金額）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
+	public partial long PointUnitPrice { get; set; } = 100;
+	/// <summary>プロパーの付与ポイント数（0以上。0は付与除外）</summary>
+	[ObservableProperty]
+	[Comment("プロパーの付与ポイント数（0以上。0は付与除外）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
+	public partial long PointAmountProper { get; set; } = 1;
+	/// <summary>セールの付与ポイント数（0以上。0は付与除外）</summary>
+	[ObservableProperty]
+	[Comment("セールの付与ポイント数（0以上。0は付与除外）")]
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
+	public partial long PointAmountSale { get; set; } = 1;
+	/// <summary>対象ランクコード。0=全ランク</summary>
+	[ObservableProperty]
+	[Comment("対象ランクコード。0=全ランク")]
+	public partial int RankKubun { get; set; } = 0;
+	/// <summary>備考</summary>
+	[ObservableProperty]
+	[ColumnSizeDml(200)]
+	[Comment("備考")]
+	public partial string Memo { get; set; } = string.Empty;
+}
+
+/// <summary>店別・商品店別キャンペーンの対象店舗。専用保存(Msg064)だけで更新する。</summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_PointCampaign), nameof(Id_Tenpo))]
+[KeyDml("nk1", false, nameof(Id_Tenpo))]
+[Comment("ポイントキャンペーン対象店舗")]
+public sealed partial class MasterPointCampaignShop : BaseDbClass {
+	/// <summary>キャンペーンId</summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterPointCampaign))]
+	[Comment("キャンペーンId")]
+	public partial long Id_PointCampaign { get; set; } = 0;
+	/// <summary>店舗Id</summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterTokui), tenType: 6)]
+	[Comment("店舗Id")]
+	public partial long Id_Tenpo { get; set; } = 0;
+}
+
+/// <summary>商品全店・商品店別キャンペーンの対象商品。商品店別は対象店舗との組合せで適用する。</summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[KeyDml("uk1", true, nameof(Id_PointCampaign), nameof(Id_Shohin))]
+[KeyDml("nk1", false, nameof(Id_Shohin))]
+[Comment("ポイントキャンペーン対象商品")]
+public sealed partial class MasterPointCampaignShohin : BaseDbClass {
+	/// <summary>キャンペーンId</summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterPointCampaign))]
+	[Comment("キャンペーンId")]
+	public partial long Id_PointCampaign { get; set; } = 0;
+	/// <summary>商品Id</summary>
+	[ObservableProperty]
+	[ForeignKey(nameof(MasterShohin))]
+	[Comment("商品Id")]
+	public partial long Id_Shohin { get; set; } = 0;
+}
+
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uk1", true, nameof(EventKey))]
 [KeyDml("nk1", false, nameof(Id_Customer), nameof(DenDay), nameof(Id))]

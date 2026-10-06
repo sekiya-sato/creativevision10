@@ -52,6 +52,8 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["autoreplenish"] = AutoReplenishScenario.RunAsync,
 	["haibun-data-mente"] = HaibunDataMenteScenario.RunAsync,
 	["pointmaster"] = PointMasterScenario.RunAsync,
+	["pointcampaign"] = PointMasterCampaignScenario.RunAsync,
+	["pointcampaigntarget"] = PointCampaignTargetScenario.RunAsync,
 	["pointsummary"] = PointSummaryLayoutScenario.RunAsync,
 };
 
@@ -82,6 +84,8 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["autoreplenish"] = AutoReplenishScenario.Seeder,
 	["haibun-data-mente"] = HaibunDataMenteScenario.Seeder,
 	["pointmaster"] = PointMasterScenario.Seeder,
+	["pointcampaign"] = PointMasterCampaignScenario.Seeder,
+	["pointcampaigntarget"] = PointCampaignTargetScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));

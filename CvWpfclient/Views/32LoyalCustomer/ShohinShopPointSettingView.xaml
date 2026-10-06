@@ -1,17 +1,485 @@
 ﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._32LoyalCustomer.ShohinShopPointSettingView"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
-	xmlns:local="clr-namespace:CvWpfclient.Views" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._32LoyalCustomer"
-	Title="商品店舗別ポイント設定"
-	Width="{StaticResource StandardWindowWidth}"
-	Height="{StaticResource StandardWindowHeight}"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._32LoyalCustomer"
+	Title="{Binding Title}"
+	Width="1244" Height="860" MinWidth="900" MinHeight="600"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	TextOptions.TextFormattingMode="Display"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:ShohinShopPointSettingViewModel />
 	</helpers:BaseWindow.DataContext>
-	<Grid />
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoSaveCommand}"
+			Gesture="F2" />
+		<KeyBinding Command="{Binding DoListCommand}"
+			Gesture="F5" />
+	</helpers:BaseWindow.InputBindings>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding DoRevertCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="取消（保存済みの対象へ戻す）">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Undo" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="取消" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoClearTargetsCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="対象解除（対象をすべて外す）">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="LinkVariantOff" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="対象解除" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding DoSaveCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="登録 (F2)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="ContentSave" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="登録" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="TagMultiple" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoListCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="一覧取得 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="一覧取得" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+		<Grid Grid.Row="1"
+			Margin="12">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="42*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="58*" />
+			</Grid.ColumnDefinitions>
+			<!--  左: キャンペーン一覧（条件変更で旧結果と編集対象を外す）  -->
+			<materialDesign:Card Grid.Column="0"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,4"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<Grid IsEnabled="{Binding IsConditionEditable}">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*" />
+								<ColumnDefinition Width="Auto" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+							<TextBox Grid.Row="0" Grid.Column="0"
+								Margin="0,4"
+								materialDesign:HintAssist.Hint="コード(前方一致)" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="20"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding SearchCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+							<ComboBox Grid.Row="0" Grid.Column="2"
+								Margin="0,4"
+								materialDesign:HintAssist.Hint="有効" DisplayMemberPath="Value"
+								ItemsSource="{Binding EnabledOptions}"
+								SelectedValue="{Binding SearchEnabled, Mode=TwoWay}"
+								SelectedValuePath="Key"
+								Style="{StaticResource FormComboBox}" />
+							<DatePicker Grid.Row="1" Grid.Column="0"
+								Margin="0,8,0,4"
+								helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="期間 開始" IsTodayHighlighted="False"
+								SelectedDate="{Binding SearchDayFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								Style="{StaticResource FormDatePicker}" />
+							<TextBlock Grid.Row="1" Grid.Column="1"
+								Margin="8,0" VerticalAlignment="Center"
+								Text="～" />
+							<DatePicker Grid.Row="1" Grid.Column="2"
+								Margin="0,8,0,4"
+								helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="期間 終了" IsTodayHighlighted="False"
+								SelectedDate="{Binding SearchDayTo, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								Style="{StaticResource FormDatePicker}" />
+						</Grid>
+					</Border>
+					<DockPanel Grid.Row="1"
+						Margin="12,6">
+						<TextBlock VerticalAlignment="Center"
+							DockPanel.Dock="Right" FontSize="13"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+						<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+							FontSize="13"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding Message}"
+							TextTrimming="CharacterEllipsis"
+							ToolTip="{Binding Message}" />
+					</DockPanel>
+					<DataGrid Grid.Row="2"
+						materialDesign:DataGridAssist.CellPadding="10,6" materialDesign:DataGridAssist.ColumnHeaderPadding="10,8" AutoGenerateColumns="False" CanUserAddRows="False"
+						CanUserDeleteRows="False" EnableRowVirtualization="True" FontSize="14" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsEnabled="{Binding IsIdle}"
+						IsReadOnly="True"
+						ItemsSource="{Binding Campaigns}"
+						SelectedItem="{Binding SelectedCampaign, Mode=TwoWay}"
+						SelectionMode="Single"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="110"
+								Binding="{Binding Campaign.Code}"
+								Header="コード" />
+							<DataGridTextColumn Width="160"
+								Binding="{Binding Campaign.Name}"
+								Header="名称" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Campaign.EnPriorityType, Converter={StaticResource EnumCommentDisplayConverter}}"
+								Header="優先区分" />
+							<DataGridTextColumn Width="105"
+								Binding="{Binding Campaign.DayFrom, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+								Header="開始日" />
+							<DataGridTextColumn Width="105"
+								Binding="{Binding Campaign.DayTo, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+								Header="終了日" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding Campaign.EnIsEnabled, Converter={StaticResource EnumCommentDisplayConverter}}"
+								Header="有効" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding Campaign.PointUnitPrice, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="単価" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding Campaign.PointAmountProper, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="P付与" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding Campaign.PointAmountSale, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="S付与" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding RankText}"
+								Header="ランク" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding ShohinCount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="商品数" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding ShopCount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="店舗数" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="Transparent" />
+			<!--  右: 選択キャンペーンの条件（表示のみ）と対象店舗  -->
+			<materialDesign:Card Grid.Column="2"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<StackPanel>
+							<TextBlock FontWeight="SemiBold"
+								Foreground="{DynamicResource PrimaryHueMidBrush}"
+								Text="キャンペーンを選択してください"
+								Visibility="{Binding HasTarget, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+							<TextBlock FontWeight="SemiBold"
+								Foreground="{DynamicResource PrimaryHueMidBrush}"
+								TextTrimming="CharacterEllipsis"
+								Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
+								<TextBlock.Text>
+									<MultiBinding StringFormat="{}{0}  {1}">
+										<Binding Path="Target.Code" />
+										<Binding Path="Target.Name" />
+									</MultiBinding>
+								</TextBlock.Text>
+							</TextBlock>
+							<WrapPanel Margin="0,4,0,0"
+								Orientation="Horizontal"
+								Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
+								<TextBlock Margin="0,0,16,0"
+									FontSize="13"
+									Text="{Binding Target.EnPriorityType, Converter={StaticResource EnumCommentDisplayConverter}}" />
+								<TextBlock Margin="0,0,16,0"
+									FontSize="13"
+									Text="{Binding TargetPeriodText}" />
+								<TextBlock Margin="0,0,16,0"
+									FontSize="13"
+									Text="{Binding Target.EnIsEnabled, Converter={StaticResource EnumCommentDisplayConverter}, StringFormat={}有効: {0}}" />
+								<TextBlock Margin="0,0,16,0"
+									FontSize="13"
+									Text="{Binding TargetPointText}" />
+								<TextBlock Margin="0,0,16,0"
+									FontSize="13"
+									Text="{Binding TargetRankText}" />
+								<TextBlock Margin="0,0,16,0"
+									FontSize="13"
+									Text="{Binding Target.Id_PointBase, StringFormat={}ベースId: {0}}" />
+								<TextBlock FontSize="13"
+									Foreground="{DynamicResource PrimaryHueMidBrush}"
+									Text="商品全店のため店舗の指定は不要です"
+									Visibility="{Binding IsShopNotRequired, Converter={StaticResource BooleanToVisibilityConverter}}" />
+							</WrapPanel>
+						</StackPanel>
+					</Border>
+					<!--  対象商品: コード入力・一覧選択・CSV取込・行削除  -->
+					<Grid Grid.Row="1"
+						Margin="12,4">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*" MinWidth="130" MaxWidth="260" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="*" />
+						</Grid.ColumnDefinitions>
+						<TextBox Grid.Column="0"
+							Margin="0,4"
+							materialDesign:HintAssist.Hint="商品コードを追加" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+							IsEnabled="{Binding IsTargetEditable}"
+							MaxLength="16"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding ShohinCodeInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+							<TextBox.InputBindings>
+								<KeyBinding Key="Return"
+									Command="{Binding AddShohinCommand}" />
+							</TextBox.InputBindings>
+						</TextBox>
+						<Button Grid.Column="1"
+							Margin="4,0,0,0"
+							Command="{Binding AddShohinCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="入力した商品コードを追加 (Enter)">
+							<materialDesign:PackIcon Kind="Plus" />
+						</Button>
+						<Button Grid.Column="2"
+							Command="{Binding SelectShohinCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="商品一覧から選択して追加">
+							<materialDesign:PackIcon Kind="Magnify" />
+						</Button>
+						<Button Grid.Column="3"
+							Command="{Binding ImportCsvCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="CSV取込（1行1商品コード）">
+							<materialDesign:PackIcon Kind="FileImport" />
+						</Button>
+						<Button Grid.Column="4"
+							Margin="0,0,8,0"
+							Command="{Binding RemoveShohinsCommand}"
+							CommandParameter="{Binding SelectedItems, ElementName=ShohinGrid}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="選択した商品行を削除">
+							<materialDesign:PackIcon Kind="Delete" />
+						</Button>
+						<TextBlock Grid.Column="5"
+							VerticalAlignment="Center"
+							FontSize="13"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding ShohinCount, StringFormat={}商品 {0:N0}件}"
+							ToolTip="対象商品数" />
+					</Grid>
+					<DataGrid x:Name="ShohinGrid"
+						Grid.Row="2"
+						materialDesign:DataGridAssist.CellPadding="10,4" materialDesign:DataGridAssist.ColumnHeaderPadding="10,8" AutoGenerateColumns="False" CanUserAddRows="False"
+						CanUserDeleteRows="False" EnableRowVirtualization="True" FontSize="14" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsEnabled="{Binding IsTargetEditable}"
+						IsReadOnly="True"
+						ItemsSource="{Binding Shohins}"
+						SelectionMode="Extended"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="150"
+								Binding="{Binding Code}"
+								Header="商品コード" />
+							<DataGridTextColumn Width="*" MinWidth="160"
+								Binding="{Binding Name}"
+								Header="商品名" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+					<!--  対象店舗: 商品全店では無効（店舗を送らない）  -->
+					<Grid Grid.Row="3"
+						Margin="12,4">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*" MinWidth="110" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="*" MinWidth="120" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<TextBox Grid.Column="0"
+							Margin="0,4"
+							materialDesign:HintAssist.Hint="店舗絞込"
+							IsEnabled="{Binding IsShopEditable}"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding ShopFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							ToolTip="店舗コード・名称で絞り込む" />
+						<Button Grid.Column="1"
+							Margin="4,0,0,0"
+							Command="{Binding SelectAllShopsCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="全選択（表示中の店舗）">
+							<materialDesign:PackIcon Kind="CheckboxMarkedOutline" />
+						</Button>
+						<Button Grid.Column="2"
+							Margin="0,0,8,0"
+							Command="{Binding ClearAllShopsCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="全解除（表示中の店舗）">
+							<materialDesign:PackIcon Kind="CheckboxBlankOutline" />
+						</Button>
+						<ComboBox Grid.Column="3"
+							Margin="0,4"
+							materialDesign:HintAssist.Hint="コピー元"
+							IsEnabled="{Binding IsShopEditable}"
+							ItemsSource="{Binding CopySources}"
+							SelectedItem="{Binding SelectedCopySource, Mode=TwoWay}"
+							Style="{StaticResource FormComboBox}"
+							ToolTip="対象店舗のコピー元キャンペーン">
+							<ComboBox.ItemTemplate>
+								<DataTemplate>
+									<TextBlock Foreground="{DynamicResource MaterialDesignBody}">
+										<TextBlock.Text>
+											<MultiBinding StringFormat="{}{0} {1}">
+												<Binding Path="Code" />
+												<Binding Path="Name" />
+											</MultiBinding>
+										</TextBlock.Text>
+									</TextBlock>
+								</DataTemplate>
+							</ComboBox.ItemTemplate>
+						</ComboBox>
+						<Button Grid.Column="4"
+							Margin="4,0,8,0"
+							Command="{Binding CopyShopsCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="コピー元の対象店舗で置き換える">
+							<materialDesign:PackIcon Kind="ContentCopy" />
+						</Button>
+						<TextBlock Grid.Column="5"
+							VerticalAlignment="Center"
+							FontSize="13"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							ToolTip="対象店舗数 / 店舗数">
+							<TextBlock.Text>
+								<MultiBinding StringFormat="{}店舗 {0:N0}/{1:N0}">
+									<Binding Path="ShopCheckedCount" />
+									<Binding Path="Shops.Count" />
+								</MultiBinding>
+							</TextBlock.Text>
+						</TextBlock>
+					</Grid>
+					<DataGrid Grid.Row="4"
+						materialDesign:DataGridAssist.CellPadding="10,4" materialDesign:DataGridAssist.ColumnHeaderPadding="10,8" AutoGenerateColumns="False" CanUserAddRows="False"
+						CanUserDeleteRows="False" EnableRowVirtualization="True" FontSize="14" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsEnabled="{Binding IsShopEditable}"
+						IsReadOnly="True"
+						ItemsSource="{Binding ShopsView}"
+						SelectionMode="Single"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTemplateColumn Width="60"
+								Header="対象">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<CheckBox HorizontalAlignment="Center"
+											IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="110"
+								Binding="{Binding Shop.Code}"
+								Header="店舗コード" />
+							<DataGridTextColumn Width="*" MinWidth="160"
+								Binding="{Binding Shop.Name}"
+								Header="店舗名" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Shop.EnTenType, Converter={StaticResource EnumCommentDisplayConverter}}"
+								Header="店種" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+		</Grid>
+	</Grid>
 </helpers:BaseWindow>

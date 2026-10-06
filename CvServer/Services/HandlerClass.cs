@@ -404,6 +404,29 @@ public partial class CoreService {
 	}
 
 	/// <summary>
+	/// ポイントキャンペーン対象の重複確認(IsPreview)・置換保存。重複先の削除と自分の対象置換を同一トランザクションで行う。
+	/// </summary>
+	private CvMsg HandlePointCampaignTargetSave(CvMsg request, CallContext context) {
+		if (request.DataType != typeof(PointCampaignTargetParameter) || Common.DeserializeObject(request.DataMsg, request.DataType) is not PointCampaignTargetParameter param) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+		}
+		try {
+			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			var result = new PointCampaignDb(_db).SaveTargets(param, Common.GetVdate());
+			_db.CompleteTransaction();
+			return CreateSuccessResponse(request.Flag, typeof(PointCampaignTargetResult), Common.SerializeObject(result));
+		}
+		catch (PointCampaignConcurrencyException) {
+			_db.AbortTransaction();
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, typeof(string), string.Empty);
+		}
+		catch (Exception ex) {
+			_db.AbortTransaction();
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
 	/// 諸掛確認(参照専用。Applyは無い。設計書§3.8)。
 	/// </summary>
 	private CvMsg HandleCostSundryPreview(CvMsg request, CallContext context) {

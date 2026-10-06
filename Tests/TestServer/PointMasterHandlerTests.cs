@@ -34,7 +34,7 @@ public sealed class PointMasterHandlerTests {
 		_connection = new SqliteConnection(connectionString);
 		_connection.Open();
 		_db = new ExDatabaseSqlite(_connection) { KeepConnectionAlive = true };
-		foreach (var type in new[] { typeof(MasterPointBase), typeof(MasterPointRank), typeof(MasterPointBonus), typeof(TranPointEvent), typeof(SummaryPoint) }) _db.CreateTable(type, true, false);
+		foreach (var type in new[] { typeof(MasterPointBase), typeof(MasterPointRank), typeof(MasterPointBonus), typeof(MasterPointCampaign), typeof(TranPointEvent), typeof(SummaryPoint) }) _db.CreateTable(type, true, false);
 		_provider = new ServiceCollection().BuildServiceProvider();
 		_service = new CoreService(NullLogger<CoreService>.Instance, new ConfigurationBuilder().Build(), new FakeWebHostEnvironment(), new HttpContextAccessor(), _db, _provider.GetRequiredService<IServiceScopeFactory>(), new PointOfSaleService(_db, NullLogger<PointOfSaleService>.Instance));
 	}

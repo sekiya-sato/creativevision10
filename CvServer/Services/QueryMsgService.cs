@@ -59,6 +59,7 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg060_StocktakeStatus] = (req, ctx) => Task.FromResult(HandleStocktakeStatus(req, ctx)),
 			[CvFlag.Msg061_ManualLockStatus] = (req, ctx) => Task.FromResult(HandleManualLockStatus(req, ctx)),
 			[CvFlag.Msg062_ManualLockClear] = (req, ctx) => Task.FromResult(HandleManualLockClear(req, ctx)),
+			[CvFlag.Msg064_PointCampaignTargetSave] = (req, ctx) => Task.FromResult(HandlePointCampaignTargetSave(req, ctx)),
 			[CvFlag.Msg080_CostMonthStatus] = (req, ctx) => Task.FromResult(HandleCostMonthStatus(req, ctx)),
 			[CvFlag.Msg081_CostConsumptionPreview] = (req, ctx) => Task.FromResult(HandleCostConsumptionPreview(req, ctx)),
 			[CvFlag.Msg083_CostSundryPreview] = (req, ctx) => Task.FromResult(HandleCostSundryPreview(req, ctx)),

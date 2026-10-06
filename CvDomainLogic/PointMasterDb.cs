@@ -10,11 +10,13 @@ namespace CvDomainLogic;
 
 /// <summary>ポイント条件の保存検証。呼出元のSerializableトランザクション内で使用する。</summary>
 public sealed class PointMasterDb(ExDatabase db) {
-	public static bool IsMaster(Type type) => type == typeof(MasterPointBase) || type == typeof(MasterPointRank) || type == typeof(MasterPointBonus);
+	public static bool IsMaster(Type type) => type == typeof(MasterPointBase) || type == typeof(MasterPointRank) || type == typeof(MasterPointBonus) || type == typeof(MasterPointCampaign);
 
 	public static void EnsureGenericWriteAllowed(Type type, bool partialUpdate) {
 		if (type == typeof(TranPointEvent) || type == typeof(SummaryPoint))
 			throw new ArgumentException("ポイント台帳・残高は専用処理で保存してください。");
+		if (PointCampaignDb.IsTarget(type))
+			throw new ArgumentException("キャンペーン対象は店舗別・商品店舗別の設定画面で保存してください。");
 		if (partialUpdate && IsMaster(type))
 			throw new ArgumentException("ポイント条件は部分更新できません。レコード全体を更新してください。");
 	}
@@ -31,6 +33,9 @@ public sealed class PointMasterDb(ExDatabase db) {
 			case MasterPointBonus row:
 				ValidateBonus(row, previous as MasterPointBonus);
 				break;
+			case MasterPointCampaign row:
+				new PointCampaignDb(db).ValidateSave(row, previous as MasterPointCampaign);
+				break;
 		}
 	}
 
@@ -38,14 +43,17 @@ public sealed class PointMasterDb(ExDatabase db) {
 		switch (item) {
 			case MasterPointBase row:
 				Require(!IsBaseUsed(row.Id), "使用済みベース版は削除できません。");
-				Require(!Exists<MasterPointRank>("Id_PointBase=@0", row.Id) && !Exists<MasterPointBonus>("Id_PointBase=@0", row.Id), "子ランク・ボーナスが存在するベース版は削除できません。");
+				Require(!Exists<MasterPointRank>("Id_PointBase=@0", row.Id) && !Exists<MasterPointBonus>("Id_PointBase=@0", row.Id) && !Exists<MasterPointCampaign>("Id_PointBase=@0", row.Id), "子ランク・ボーナス・キャンペーンが存在するベース版は削除できません。");
 				break;
 			case MasterPointRank row:
 				Require(!IsBaseUsed(row.Id_PointBase) && !EventExists("Id_PointRank=@0", row.Id), "使用済みランク条件は削除できません。");
-				Require(!RankReferenced(row), "ボーナスが参照するランクは削除できません。");
+				Require(!RankReferenced(row), "ボーナス・キャンペーンが参照するランクは削除できません。");
 				break;
 			case MasterPointBonus row:
 				Require(!IsBaseUsed(row.Id_PointBase) && !EventExists("Id_PointBonus=@0", row.Id), "使用済みボーナス版は削除できません。");
+				break;
+			case MasterPointCampaign row:
+				new PointCampaignDb(db).ValidateDelete(row);
 				break;
 		}
 	}
@@ -63,6 +71,8 @@ public sealed class PointMasterDb(ExDatabase db) {
 			Require(!Exists<MasterPointBase>("Code=@0 AND IsEnabled=1 AND Id<>@1 AND DayFrom<=@2 AND DayTo>=@3", row.Code, previous?.Id ?? 0, row.DayTo, row.DayFrom), "有効なベース版の適用期間が重複しています。");
 		if (previous != null)
 			foreach (var child in Fetch<MasterPointBonus>("Id_PointBase=@0", previous.Id)) Contained(child.DayFrom, child.DayTo, row);
+		if (previous != null)
+			Require(!Exists<MasterPointCampaign>("Id_PointBase=@0 AND (DayFrom<@1 OR DayTo>@2)", previous.Id, row.DayFrom, row.DayTo), "キャンペーンの適用期間がベース版の期間外になります。");
 	}
 
 	private void ValidateRank(MasterPointRank row, MasterPointRank? previous) {
@@ -73,7 +83,7 @@ public sealed class PointMasterDb(ExDatabase db) {
 		var used = IsBaseUsed(row.Id_PointBase) || (previous != null && (IsBaseUsed(previous.Id_PointBase) || EventExists("Id_PointRank=@0", previous.Id)));
 		if (used) Require(previous != null && SameConditions(row, previous, false), "使用済みベース版のランク条件は追加・変更できません。");
 		if (previous != null && (row.Id_PointBase != previous.Id_PointBase || row.Kubun != previous.Kubun))
-			Require(!RankReferenced(previous), "ボーナスが参照するランクの親・コードは変更できません。");
+			Require(!RankReferenced(previous), "ボーナス・キャンペーンが参照するランクの親・コードは変更できません。");
 		Require(!Exists<MasterPointRank>("Id_PointBase=@0 AND Kubun=@1 AND Id<>@2", row.Id_PointBase, row.Kubun, previous?.Id ?? 0), "同じベース版・ランクコードが存在します。");
 	}
 
@@ -100,7 +110,8 @@ public sealed class PointMasterDb(ExDatabase db) {
 		return Fetch<MasterPointBase>("Id=@0", id).FirstOrDefault() ?? throw new ArgumentException("指定されたベース版が存在しません。");
 	}
 
-	private bool RankReferenced(MasterPointRank row) => Exists<MasterPointBonus>("Id_PointBase=@0 AND IsAllRanks=0 AND RankKubun=@1", row.Id_PointBase, row.Kubun);
+	private bool RankReferenced(MasterPointRank row) => Exists<MasterPointBonus>("Id_PointBase=@0 AND IsAllRanks=0 AND RankKubun=@1", row.Id_PointBase, row.Kubun)
+		|| Exists<MasterPointCampaign>("Id_PointBase=@0 AND RankKubun=@1", row.Id_PointBase, row.Kubun);
 	private bool IsBaseUsed(long id) => id > 0 && EventExists("Id_PointBase=@0 OR Id_PointRank IN (SELECT Id FROM MasterPointRank WHERE Id_PointBase=@0) OR Id_PointBonus IN (SELECT Id FROM MasterPointBonus WHERE Id_PointBase=@0)", id);
 	private bool EventExists(string where, params object[] args) => Exists<TranPointEvent>(where, args);
 	private bool Exists<T>(string where, params object[] args) => db.FetchDialect<int>($"SELECT 1 FROM {db.GetTableName(typeof(T))} WHERE {where} LIMIT 1", args).Any();
