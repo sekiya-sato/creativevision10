@@ -2,6 +2,7 @@
 using CvBase;
 using CvBase.Share;
 using CvDomainLogic;
+using Microsoft.AspNetCore.Authorization;
 using NCrontab;
 using NCrontab.Scheduler;
 using ProtoBuf.Grpc;
@@ -163,6 +164,8 @@ public class SchedulerService : ISchedulerService {
 	/// <summary>
 	/// 追加されたタスクを追加する
 	/// </summary>
+	[UatChangeable]
+	[Authorize]
 	public Task<SchedulerResult> AddTaskAsync(AddSchedulerTaskRequest request, CallContext context = default) {
 		if (string.IsNullOrWhiteSpace(request.CronExpression)) {
 			return Task.FromResult(new SchedulerResult { Result = InvalidRequest, Detail = "CronExpression が空です。" });
@@ -194,6 +197,8 @@ public class SchedulerService : ISchedulerService {
 	/// <summary>
 	/// 追加されたタスクを削除する
 	/// </summary>
+	[UatChangeable]
+	[Authorize]
 	public Task<SchedulerResult> RemoveTaskAsync(RemoveSchedulerTaskRequest request, CallContext context = default) {
 		if (!Guid.TryParse(request.TaskId, out var guid)) {
 			return Task.FromResult(new SchedulerResult {
@@ -236,6 +241,8 @@ public class SchedulerService : ISchedulerService {
 	/// <summary>
 	/// すべてのタスクを削除する
 	/// </summary>
+	[UatChangeable]
+	[Authorize]
 	public Task<SchedulerResult> RemoveAllTasksAsync(CallContext context = default) {
 		_scheduler.RemoveAllTasks();
 		_logger.LogInformation("スケジュール全削除を実行しました。");

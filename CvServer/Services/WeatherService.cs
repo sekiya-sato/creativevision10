@@ -1,4 +1,5 @@
 ﻿using CodeShare;
+using CvBase;
 using Microsoft.AspNetCore.Authorization;
 using ProtoBuf.Grpc;
 using System.Net.Http.Headers;
@@ -40,8 +41,8 @@ public partial class WeatherService : IWeatherService {
 		return new HttpClient(handler);
 	}
 
-
-	[AllowAnonymous]
+	[UatChangeable]
+	[Authorize]
 	public async Task<WeatherInfo?> GetCurrentWeatherAsync(string region, CallContext context = default) {
 		try {
 			var ct = context.CancellationToken;
@@ -55,7 +56,8 @@ public partial class WeatherService : IWeatherService {
 		}
 	}
 
-	[AllowAnonymous]
+	[UatChangeable]
+	[Authorize]
 	public async Task<List<HourlyForecast>> GetHourlyForecastAsync(string region, CallContext context = default) {
 		try {
 			var ct = context.CancellationToken;

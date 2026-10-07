@@ -153,3 +153,11 @@ public sealed class ForeignKeyAttribute : Attribute {
 		AdditionalInfo = additionalInfo;
 	}
 }
+/// <summary>
+///		サービスから呼び出されるメソッドに対して [AllowAnonymous] と [Authorize] を切り替えるための属性
+/// </summary>
+[AttributeUsage(AttributeTargets.Method , AllowMultiple = false)]
+public sealed class UatChangeableAttribute : Attribute {
+	public UatChangeableAttribute() {
+	}
+}

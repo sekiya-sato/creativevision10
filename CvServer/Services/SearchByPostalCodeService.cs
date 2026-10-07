@@ -1,4 +1,5 @@
 ﻿using CodeShare;
+using CvBase;
 using Microsoft.AspNetCore.Authorization;
 using ProtoBuf.Grpc;
 using System.Net;
@@ -35,8 +36,8 @@ public partial class SearchByPostalCodeService : IPostalAddressService {
 		}
 	}
 
-	// Product : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
-	[AllowAnonymous]
+	[UatChangeable]
+	[Authorize]
 	public async Task<PostalAddressSearchResult> SearchByPostalCodeAsync(string postalCode, CallContext context = default) {
 		var cancellationToken = context.CancellationToken;
 		var normalizedPostalCode = NormalizePostalCode(postalCode);
@@ -186,8 +187,8 @@ public partial class SearchByPostalCodeService : IPostalAddressService {
 		[property: JsonPropertyName("town_kana")] string? TownKana,
 		[property: JsonPropertyName("town_roma")] string? TownRoma);
 
-
-
+	[UatChangeable]
+	[Authorize]
 	public async Task<AuthenticationHeaderValue> GetAuthorizationAsync(CancellationToken cancellationToken = default) {
 		await tokenLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 		try {
