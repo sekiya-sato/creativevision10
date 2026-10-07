@@ -12,8 +12,8 @@ public partial class CoreService {
 	private const int PrintPostCheckIntervalMilliseconds = 500;
 	private static readonly TimeSpan PrintPostCheckTimeout = TimeSpan.FromMinutes(30);
 
-	// Product : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
-	[AllowAnonymous]
+	[UatChangeable]
+	[Authorize]
 	public async IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default) {
 		string? clientId = context.RequestHeaders?.GetValue("x-clientid");
 		var cancellationToken = context.CancellationToken;

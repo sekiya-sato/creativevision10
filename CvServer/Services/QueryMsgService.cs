@@ -75,9 +75,8 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg073_PosSaveSeisan] = HandlePosSaveSeisanAsync,
 		};
 	}
-	// Product : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
-	[AllowAnonymous]
-	//[Authorize]
+	[UatChangeable]
+	[Authorize]
 	public async Task<CvMsg> QueryMsgAsync(CvMsg request, CallContext context = default) {
 		_logger.LogInformation($"gRPCリクエストQueryMsgAsync Flag: {request.Flag}, DataType: {request.DataType.ToString()}");
 		ArgumentNullException.ThrowIfNull(request);

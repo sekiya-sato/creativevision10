@@ -335,6 +335,8 @@ public class SchedulerService : ISchedulerService {
 		return RegisterSystemJob(def, (db, ct) => ExecuteManualLockMonitorCoreAsync(db, def.TaskName, ct), suppressAutoexecHistory: true);
 	}
 
+	[UatChangeable]
+	[Authorize]
 	public Task<GetSchedulerTasksResponse> GetTasksAsync(CallContext context = default) {
 		var tasks = _scheduler.GetTasks();
 		var result = new GetSchedulerTasksResponse { Result = Success, Detail = "正常終了" };
@@ -402,6 +404,8 @@ public class SchedulerService : ISchedulerService {
 		return Task.FromResult(result);
 	}
 
+	[UatChangeable]
+	[Authorize]
 	public Task<SchedulerResult> UpdateTaskAsync(UpdateSchedulerTaskRequest request, CallContext context = default) {
 		if (!Guid.TryParse(request.TaskId, out var guid)) {
 			return Task.FromResult(new SchedulerResult { Result = InvalidTaskId, Detail = $"TaskId が不正です: {request.TaskId}", TaskId = request.TaskId });
@@ -455,6 +459,8 @@ public class SchedulerService : ISchedulerService {
 	/// スケジュールタスクの実行する/しないフラグを設定する。システムジョブ以外は対象外。
 	/// 起動間隔チェック対象のジョブを有効化する場合は、現在の登録cron(無ければ永続値、それも無ければ既定cron)で間隔検証を行う。
 	/// </summary>
+	[UatChangeable]
+	[Authorize]
 	public Task<SchedulerResult> SetTaskEnabledAsync(SetSchedulerTaskEnabledRequest request, CallContext context = default) {
 		if (!Guid.TryParse(request.TaskId, out var guid)) {
 			return Task.FromResult(new SchedulerResult { Result = InvalidTaskId, Detail = $"TaskId が不正です: {request.TaskId}", TaskId = request.TaskId });
@@ -515,6 +521,8 @@ public class SchedulerService : ISchedulerService {
 	/// スケジュールタスクの実行結果メールを送信する/しないフラグを設定する。
 	/// システムジョブと、スケジューラに登録済みの動的追加タスクの両方を対象にする。
 	/// </summary>
+	[UatChangeable]
+	[Authorize]
 	public Task<SchedulerResult> SetTaskSendMailAsync(SetSchedulerTaskSendMailRequest request, CallContext context = default) {
 		if (!Guid.TryParse(request.TaskId, out var guid)) {
 			return Task.FromResult(new SchedulerResult { Result = InvalidTaskId, Detail = $"TaskId が不正です: {request.TaskId}", TaskId = request.TaskId });
@@ -553,6 +561,8 @@ public class SchedulerService : ISchedulerService {
 	/// <summary>
 	/// 自動実行結果メールの設定を取得する。パスワードは返さず、登録済みかどうかだけを返す。
 	/// </summary>
+	[UatChangeable]
+	[Authorize]
 	public Task<GetAutoExecMailConfigResponse> GetAutoExecMailConfigAsync(CallContext context = default) {
 		try {
 			using var scope = _scopeFactory.CreateScope();
@@ -585,6 +595,8 @@ public class SchedulerService : ISchedulerService {
 	/// <summary>
 	/// 自動実行結果メールの設定を保存する。空欄は未入力として保存し、形式が誤っている値だけを拒否する。
 	/// </summary>
+	[UatChangeable]
+	[Authorize]
 	public Task<SchedulerResult> SetAutoExecMailConfigAsync(SetAutoExecMailConfigRequest request, CallContext context = default) {
 		if (request?.Config == null) {
 			return Task.FromResult(new SchedulerResult { Result = InvalidRequest, Detail = "設定内容が指定されていません。" });
@@ -629,6 +641,8 @@ public class SchedulerService : ISchedulerService {
 	/// <summary>
 	/// 保存済みの設定でテストメールを実際に送信する。設定不備・SMTPエラーはどちらも Detail で返す。
 	/// </summary>
+	[UatChangeable]
+	[Authorize]
 	public async Task<SchedulerResult> TestSendAutoExecMailAsync(CallContext context = default) {
 		using var scope = _scopeFactory.CreateScope();
 		var mailService = scope.ServiceProvider.GetService<IAutoExecMailService>();

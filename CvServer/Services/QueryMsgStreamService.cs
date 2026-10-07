@@ -176,9 +176,8 @@ public partial class CoreService {
 	/// <param name="request"></param>
 	/// <param name="context"></param>
 	/// <returns></returns>
-	// Product : テストが終わったら、[AllowAnonymous] を [Authorize] へ変更
-	[AllowAnonymous]
-	//[Authorize]
+	[UatChangeable]
+	[Authorize]
 	public async IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvMsg request, CallContext context = default) {
 		ArgumentNullException.ThrowIfNull(request);
 		var ct = context.CancellationToken;
