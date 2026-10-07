@@ -249,6 +249,16 @@ public enum CvFlag {
 	[EnumMember]
 	Msg064_PointCampaignTargetSave = 64,
 	/// <summary>
+	/// RFMクロス分析: R×F×Mランク別の顧客数・購入額を集計する（読み取りのみ）
+	/// </summary>
+	[EnumMember]
+	Msg065_RfmCrossAnalysis = 65,
+	/// <summary>
+	/// RFMクロス分析: 指定ランクの顧客明細（金額降順・件数上限あり、読み取りのみ）
+	/// </summary>
+	[EnumMember]
+	Msg066_RfmCustomerList = 66,
+	/// <summary>
 	/// POS: バーコードから商品を検索する
 	/// </summary>
 	[EnumMember]

@@ -441,7 +441,7 @@ public partial class MenuData : ObservableObject {
 				new("ポイント再計算", typeof(Views._32LoyalCustomer.PointSummaryView), addInfo:"店舗売上から指定年月のポイント台帳・残高を再計算する"),
 			])),
 			new("顧客分析 ----", new([
-				new("RFMクロス分析表", typeof(Views._32LoyalCustomer.RfmCrossAnalysisTableView), addInfo:"準備中"),
+				new("RFMクロス分析表", typeof(Views._32LoyalCustomer.RfmCrossAnalysisTableView), addInfo:"最終購入日・購入回数・購入額で顧客分布を分析"),
 			])),
 		])),
 		/* ================================================================

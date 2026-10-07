@@ -404,6 +404,46 @@ public partial class CoreService {
 	}
 
 	/// <summary>
+	/// RFMクロス分析の集計（読み取りのみ）。条件不正は InvalidParameter で返す。
+	/// </summary>
+	private CvMsg HandleRfmCrossAnalysis(CvMsg request, CallContext context) {
+		if (request.DataType != typeof(RfmAnalysisParameter) || Common.DeserializeObject(request.DataMsg, request.DataType) is not RfmAnalysisParameter param) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+		}
+		try {
+			var result = new RfmAnalysisDb(_db).Analyze(param);
+			return CreateSuccessResponse(request.Flag, typeof(RfmAnalysisResult), Common.SerializeObject(result));
+		}
+		catch (ArgumentException ex) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, ex.Message, typeof(string), ex.Message);
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "RFMクロス分析の集計に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// RFMクロス分析のセル明細（読み取りのみ）。
+	/// </summary>
+	private CvMsg HandleRfmCustomerList(CvMsg request, CallContext context) {
+		if (request.DataType != typeof(RfmAnalysisParameter) || Common.DeserializeObject(request.DataMsg, request.DataType) is not RfmAnalysisParameter param) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+		}
+		try {
+			var result = new RfmAnalysisDb(_db).ListCustomers(param);
+			return CreateSuccessResponse(request.Flag, typeof(RfmCustomerListResult), Common.SerializeObject(result));
+		}
+		catch (ArgumentException ex) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, ex.Message, typeof(string), ex.Message);
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "RFMクロス分析の顧客明細取得に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
 	/// ポイントキャンペーン対象の重複確認(IsPreview)・置換保存。重複先の削除と自分の対象置換を同一トランザクションで行う。
 	/// </summary>
 	private CvMsg HandlePointCampaignTargetSave(CvMsg request, CallContext context) {

@@ -147,12 +147,13 @@ public static class ScreenLayoutCheck {
 		return b.Width + 1 < element.ActualWidth || b.Height + 1 < element.ActualHeight;
 	}
 
-	/// <summary>ScrollViewer内で表示範囲外にある要素か（横スクロールで隠れたセル等）</summary>
+	/// <summary>ScrollViewer内で表示範囲外にある要素か（横スクロールで隠れたセル等）。入れ子のScrollViewerは外側まで順に見る</summary>
 	static bool IsScrolledOut(FrameworkElement element, FrameworkElement root) {
-		var presenter = FindAncestor<ScrollContentPresenter>(element);
-		if (presenter == null) return false;
-		var inPresenter = element.TransformToAncestor(presenter).TransformBounds(new Rect(element.RenderSize));
-		return !inPresenter.IntersectsWith(new Rect(presenter.RenderSize));
+		for (var presenter = FindAncestor<ScrollContentPresenter>(element); presenter != null; presenter = FindAncestor<ScrollContentPresenter>(presenter)) {
+			var inPresenter = element.TransformToAncestor(presenter).TransformBounds(new Rect(element.RenderSize));
+			if (!inPresenter.IntersectsWith(new Rect(presenter.RenderSize))) return true;
+		}
+		return false;
 	}
 
 	/// <summary>ScrollViewer内の要素は、見えている幅（表示領域との交差）で判定する</summary>

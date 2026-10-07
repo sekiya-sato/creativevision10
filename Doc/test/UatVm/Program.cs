@@ -55,6 +55,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["pointcampaign"] = PointMasterCampaignScenario.RunAsync,
 	["pointcampaigntarget"] = PointCampaignTargetScenario.RunAsync,
 	["pointsummary"] = PointSummaryLayoutScenario.RunAsync,
+	["rfm"] = RfmCrossAnalysisScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。

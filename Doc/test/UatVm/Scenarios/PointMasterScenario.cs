@@ -75,6 +75,8 @@ public static class PointMasterScenario {
 			var pointMenu = customerMenu.SubItems!.Single(x => x.Header.Contains("ポイント", StringComparison.Ordinal));
 			var menuTypes = new[] { typeof(PointMasterBaseAdminView), typeof(PointMasterRankView), typeof(PointMasterBonusView) };
 			session.Check("顧客管理ポイントに3画面の実行メニュー", menuTypes.All(type => pointMenu.SubItems!.Any(x => x.ViewType == type && x.IsExecutable && x.AddInfo != "準備中")));
+			var analysisMenu = customerMenu.SubItems!.Single(x => x.Header.Contains("顧客分析", StringComparison.Ordinal));
+			session.Check("顧客分析にRFMクロス分析表の実行メニュー", analysisMenu.SubItems!.Any(x => x.ViewType == typeof(RfmCrossAnalysisTableView) && x.IsExecutable && x.AddInfo != "準備中"));
 
 			basis.Input("付与単価0", vm => { vm.CurrentEdit = Base("UAT"); vm.CurrentEdit.PointUnitPrice = 0; });
 			await Reject(session, "ベース単価0拒否", () => basis.RunAsync("追加", vm => vm.DoInsertCommand));
