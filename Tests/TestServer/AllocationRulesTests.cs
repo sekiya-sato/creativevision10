@@ -7,7 +7,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// 配分の制約判定（<see cref="AllocationRules"/>）の単体テスト。DBを使わない純粋関数だけを検証する。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 3章。
+/// 制約の採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 / 2.9、実装は AllocationRules を参照する。
 /// </summary>
 [TestClass]
 public class AllocationRulesTests {

@@ -137,7 +137,7 @@ public class UpdateDb {
 			"WHERE o.FunctionId = '07Haibun.ShopHaibunInput' " +
 			"AND NOT EXISTS (SELECT 1 FROM SysPermissionProfileDetail n WHERE n.Id_PermissionProfile=o.Id_PermissionProfile AND n.PermissionType=o.PermissionType AND n.FunctionId='07Haibun.PurchaseReceiptAllocationInput');" +
 			"DELETE FROM SysPermissionProfileDetail WHERE FunctionId IN ('07Haibun.ShippingConfirmShohin','07Haibun.ShippingConfirmTokui','07Haibun.ShopHaibunInput');",
-			"配分再設計Step6 削除・統合した画面の権限明細を後継画面の機能IDへ付け替える 配分確定(商品)/(得意先)→配分確定(07Haibun.HaibunCommit)は同じプロファイル×操作種別で食い違えば許可を優先(判断2) 店舗配分入力→仕入配分入力(商品別) 後継の明細が既にあればそちらを残す 一意キー(uq1)に当たらないようINSERT…SELECTで足してから旧IDを消す IsAllowedはPostgreSQLでbooleanのため数値と比べず列同士で比べる Doc/spec/2026-10-03_配分再設計_Step6_メニュー整理・旧画面削除_詳細設計.md 5.2"),
+			"配分再設計Step6 削除・統合した画面の権限明細を後継画面の機能IDへ付け替える 配分確定(商品)/(得意先)→配分確定(07Haibun.HaibunCommit)は同じプロファイル×操作種別で食い違えば許可を優先(判断2) 店舗配分入力→仕入配分入力(商品別) 後継の明細が既にあればそちらを残す 一意キー(uq1)に当たらないようINSERT…SELECTで足してから旧IDを消す IsAllowedはPostgreSQLでbooleanのため数値と比べず列同士で比べる Doc/spec/2026-09-28_設計判断記録.md 2.11"),
 		new (26_10_05_01,
 			"ALTER TABLE Tran05Ido ADD COLUMN IsPrint NUMBER not null default 0;ALTER TABLE Tran10IdoOut ADD COLUMN IsPrint NUMBER not null default 0;",
 			"HHT 移動明細書/即時移動明細書の発行済FLGを追加 旧印刷FLG(bit1/bit2)相当 既存伝票は未発行(0)"),

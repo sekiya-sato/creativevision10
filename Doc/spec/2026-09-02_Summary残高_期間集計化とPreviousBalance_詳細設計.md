@@ -278,11 +278,10 @@ DELETE→INSERT する。以降の月は影響を受けない。
 | ファイル | 対応 | 優先 |
 |---|---|---|
 | `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` 2.3 / 3.8 | 新算式・新符号へ更新し、本設計書を `10.5 関連ドキュメント` へ追加 | 高 |
-| `Doc/spec/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md` 4.2 | 前月残・当月残・繰越金額を `PreviousBalance` ベースへ | 高 |
-| `Doc/spec/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md:22, 66` | 前回残高の復元式を `PreviousBalance` へ | 高 |
+| `CvWpfclient/ViewModels/06Uriage/SeikyuListReportViewModel.cs` | 前月残・当月残・繰越金額の現行算式の確認先 | 高 |
+| `CvWpfclient/ViewModels/06Uriage/SeikyuBalanceDetailViewModel.cs` | 前回残高を `PreviousBalance` とする現行実装の確認先 | 高 |
 | 本設計書 | 新規作成（`Balance` の一次定義をここへ集約） | 高 |
-| `Doc/spec/2026-08-18_請求計算・支払計算_詳細設計.md` | 冒頭に「本設計書により全面的に置換された」旨の追記 | 中 |
-| `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` | 同上（符号規約が反転した旨を明記） | 中 |
+| `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` | 本設計による期間残高への置換・符号規約の反転を冒頭に明記 | 中 |
 | `.omo/2026-08-20_E11_その他売上_詳細設計.md` | 4テーブルへ `Sonota` を展開した旨を追記 | 低 |
 
 ## 9. 適用手順
@@ -356,8 +355,8 @@ Tests/TestServer/OpeningBalanceDbTests.cs
 Doc/test/UatVmSeed/ShimeBoundarySeeder.cs
 Doc/test/UatVm/Scenarios/ShimeBoundaryScenario.cs
 Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md
-Doc/spec/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md
-Doc/spec/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md
+CvWpfclient/ViewModels/06Uriage/SeikyuListReportViewModel.cs
+CvWpfclient/ViewModels/06Uriage/SeikyuBalanceDetailViewModel.cs
 ```
 
 ## 12. 承認確認事項
@@ -657,15 +656,12 @@ Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計
     3.8 節の「Balance 自体の式は変更していない」という記述（284-285 行付近）を
     「本設計により Balance は当期間ネットへ変更された」旨へ差し替え
     10.5 関連ドキュメントへ本設計書を追加
-- Doc/spec/2026-09-01_請求一覧表_旧cvnet帳票移植_詳細設計.md 4.2 金額算式（76-92 行付近）
-    前月残 / 当月残 / 繰越金額を PreviousBalance ベースの式へ
-- Doc/spec/2026-09-01_請求書印刷_旧cvnet帳票移植_詳細設計.md:22, 66
-    「前回残高は Balance + TotalSales - TotalIn で復元する」を PreviousBalance ベースへ
+- 現行実装の確認先: CvWpfclient/ViewModels/06Uriage/SeikyuListReportViewModel.cs
+    前月残 / 当月残 / 繰越金額の PreviousBalance ベースの式を確認
+- 現行実装の確認先: CvWpfclient/ViewModels/06Uriage/SeikyuBalanceDetailViewModel.cs
+    前回残高に PreviousBalance を使用することを確認
 
 中優先（冒頭に注記を追記するのみ。本文は歴史的記録として残す）:
-- Doc/spec/2026-08-18_請求計算・支払計算_詳細設計.md
-    「本文の累計残の定義は 2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md
-      により全面的に置換された」
 - Doc/spec/2026-08-21_残高登録処理_詳細設計.md
     上記に加え「符号規約が反転した（負=未回収 → 正=未回収）」ことと
     「繰越の2方式は廃止された」ことを明記

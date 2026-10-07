@@ -24,7 +24,7 @@ namespace UatVm.Seed;
 /// </para>
 /// </remarks>
 public static class TaxMixSeeder {
-	/// <summary>軽減税率の検証用商品コード（`Doc/spec/tools/taxmix/README.md`に記載、開発DBの実値）。</summary>
+	/// <summary>軽減税率の検証用商品コード（`Doc/spec/使用ガイドライン.md` 3.1に記載、開発DBの実値）。</summary>
 	private const string ReducedTaxShohinCode = "20617565001";
 
 	/// <summary>投入した売上伝票の伝票日付。施行日(20191001)以降なので新税率が適用される。</summary>

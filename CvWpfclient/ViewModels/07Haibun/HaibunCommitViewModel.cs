@@ -7,7 +7,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// 処理内容は <see cref="Helpers.BaseShippingConfirmViewModel"/> にある。
 /// <para>
 /// 旧 配分確定(商品)／配分確定(得意先) は並び順だけが違う同じ画面だったので、並び順の切替を持つ1画面にまとめた
-/// （配分再設計 D4、`Doc/spec/2026-10-03_配分再設計_Step6_メニュー整理・旧画面削除_詳細設計.md` 4章）。
+/// （画面統合の判断は `Doc/spec/2026-09-28_設計判断記録.md` 2.11）。
 /// </para>
 /// </summary>
 public sealed partial class HaibunCommitViewModel : Helpers.BaseShippingConfirmViewModel {

@@ -17,7 +17,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// 受注配分入力(伝票別)（<see cref="JuchuHaibunInputViewModel"/>）と同じ <see cref="EnumHaibun.Juchu"/> の配分を作る。
 /// 得意先×SKU の配分数は、その得意先の受注へ受注日の古い順に割り付け、受注残の超過分は受注に紐付かない配分にする
 /// （<see cref="HaibunOrderDistributor"/>）。保存は既存配分の洗い替えを1往復で行う（<c>HaibunSaveParam</c>）。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step2_受注配分(商品別)_詳細設計.md`。
+/// 受注への割付規則は CvBase/HaibunOrderDistributor.cs を参照する。
 /// </para>
 /// </summary>
 public partial class SalesOrderAllocationInputViewModel : BaseViewModel {

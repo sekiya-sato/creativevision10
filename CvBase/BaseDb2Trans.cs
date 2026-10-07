@@ -995,7 +995,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	/// <para>
 	/// 充当金額・未充当金額は保持しない（部分消込は仕様対象外）。売掛残高は伝票金額ベースであり、
 	/// この値は <see cref="SummaryUriKake"/> の集計へ影響しない。仕様は
-	/// `Doc/spec/archive/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
+	/// 消込の定義は BaseMatchingViewModel のコメント・実装、承認経緯は `Doc/spec/archive/2026-08-16_phase1_業務仕様決定ドラフト.md` 3.3 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -1374,7 +1374,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	/// <para>
 	/// 充当金額・未充当金額は保持しない（部分消込は仕様対象外）。買掛残高は伝票金額ベースであり、
 	/// この値は <see cref="SummaryKaiKake"/> の集計へ影響しない。仕様は
-	/// `Doc/spec/archive/2026-08-12_phase1_業務仕様決定ドラフト.md` 2.1 を参照する。
+	/// 消込の定義は BaseMatchingViewModel のコメント・実装、承認経緯は `Doc/spec/archive/2026-08-16_phase1_業務仕様決定ドラフト.md` 3.3 を参照する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]

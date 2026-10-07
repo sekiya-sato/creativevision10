@@ -6,7 +6,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// 受注配分(商品別)の割り付け規則（<see cref="HaibunOrderDistributor"/>）の単体テスト。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step2_受注配分(商品別)_詳細設計.md` 3.4 / 4章。
+/// HaibunOrderDistributor.FillByStock / Distribute の割付規則を固定する。
 /// </summary>
 [TestClass]
 public class HaibunOrderDistributorTests {

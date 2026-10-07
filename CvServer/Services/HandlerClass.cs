@@ -690,7 +690,7 @@ public partial class CoreService {
 	/// <para>
 	/// 引当数は削除・登録後の <see cref="TranHaibun"/> から引き直すため、キーを溜めて最後に一度だけ処理する
 	/// （<see cref="HandleBulkInsert"/> / <see cref="HandleBulkDelete"/> と同じ理由）。
-	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 4.2 を参照する。
+	/// 一括保存の採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
 	/// </para>
 	/// </summary>
 	private CvMsg HandleHaibunSave(CvFlag flag, HaibunSaveParam save) {

@@ -386,7 +386,7 @@ public sealed class JodaiTimelineOtherSlipRow {
 /// <para>
 /// <see cref="ReplaceRows"/> は修正できる状態（<see cref="TranHaibun.EditableWhereSql"/>）の行に限る。
 /// <see cref="NewRows"/> の状態列（確定日・実数量・欠品・完了・関連No2・送信）はサーバが初期値に揃える。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 4.2 を参照する。
+/// 保存処理は HandlerClass.HandleHaibunSave、採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
 /// </para>
 /// </summary>
 /// <param name="ReplaceRows">削除する既存行（Idと読込時点のVdu）</param>
@@ -402,7 +402,7 @@ public sealed record HaibunSaveResult(int DeletedCount, int InsertedCount);
 /// 配分確定のパラメータ。確定数を反映し、出荷売上／移動伝票を作成して <c>EndFlag=1</c>（引当解除）にする（決定 D8）。
 /// 有効在庫が1SKUでも割れる場合はサーバが1件も確定せず、
 /// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 4.3 を参照する。
+/// 確定処理は ShippingDb.Commit、採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
 /// </summary>
 /// <param name="Rows">確定する行（Id・楽観排他用Vdu・確定数）</param>
 /// <param name="DenDay">確定日 兼 生成する伝票の在庫計上日 yyyyMMdd</param>

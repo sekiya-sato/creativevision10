@@ -15,7 +15,7 @@ public readonly record struct HaibunOrderShare(long Id_Juchu, int Su, int Tanka,
 /// <summary>
 /// 受注配分(商品別)の割り付け規則。DBに依存しない純粋関数だけを置き、画面(CvWpfclient)と単体テストの両方から使う。
 /// <para>
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step2_受注配分(商品別)_詳細設計.md` 3.4 / 4章を参照する。
+/// 割付規則は本クラスの FillByStock / Distribute、受入条件は Tests/TestServer/HaibunOrderDistributorTests.cs を参照する。
 /// </para>
 /// </summary>
 public static class HaibunOrderDistributor {

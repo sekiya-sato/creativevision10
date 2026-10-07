@@ -36,7 +36,7 @@ public enum CommitOutcome {
 /// 確定取消は設けない（決定 D9）。訂正は作成した伝票側で行う。
 /// </para>
 /// <para>
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 4.3 を参照する。
+/// 確定方式・入荷上限の判断は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 / 2.9 を参照する。
 /// </para>
 /// </summary>
 public class ShippingDb(ExDatabase db) {

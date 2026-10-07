@@ -17,7 +17,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <para>
 	/// 配分入力画面が修正対象を読み込む条件と、サーバが保存時に強制する条件
 	/// （<c>AllocationRules.IsEditable</c>）を一致させるため、両方がこの定数を基準にする。
-	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 2章を参照する。
+	/// 保存条件は TranHaibun.EditableWhereSql、採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
 	/// </para>
 	/// </summary>
 	public const string EditableWhereSql = "SendFlg = 0 AND EndFlag = 0 AND ifnull(KakuteiDay,'') = ''";
@@ -201,7 +201,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <para>
 	/// <see cref="Su"/>（指示数）はユーザーが配分入力で設定する。配分確定で確定数を入れると
 	/// <see cref="JitsuSu"/>（出荷数）と本列が設定され、<c>Su = JitsuSu + ShortSu</c> が成立し、同時に伝票作成・完了（<see cref="EndFlag"/>=1）となる。
-	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md` 2章を参照する
+	/// 保存条件は TranHaibun.EditableWhereSql、採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
 	/// （旧仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.1.2）。
 	/// </para>
 	/// </summary>
@@ -349,7 +349,7 @@ public enum EnumHaibun : int {
 
 /// <summary>
 /// 配分区分の表示名の唯一の出典。画面の選択肢・帳票の SQL（CASE 式）はここから作る。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step6_メニュー整理・旧画面削除_詳細設計.md` 6.1。
+/// 区分名統一の判断は `Doc/spec/2026-09-28_設計判断記録.md` 2.11 を参照する。
 /// </summary>
 public static class HaibunKubunNames {
 	/// <summary>廃止区分に付ける <see cref="ObsoleteAttribute"/> の文言</summary>

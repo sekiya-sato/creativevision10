@@ -12,7 +12,7 @@ BaseShippingConfirmViewModel は配分確定画面（HaibunCommitViewModel。並
 
 商品別/得意先別の違いは並び順(SortOrderSql)だけで、データ源(TranHaibun の EndFlag=0)は同じです。
 サーバ側ロジックは CvDomainLogic/ShippingDb.Commit、詳細は
-Doc/spec/2026-10-03_配分再設計_Step1_共通基盤・確定一本化_詳細設計.md。
+Doc/spec/2026-09-28_設計判断記録.md 2.8 / 2.9。
 
 一覧の列は既存の照会画面(ZaikoQuery)と同じく、テーブル単位に型付きで取得してクライアントで合成します
 （サーバの QueryListSqlParam はDBマップ型しか返せないため、クライアント専用POCOは使いません）。

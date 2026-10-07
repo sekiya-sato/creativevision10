@@ -14,7 +14,7 @@ namespace UatVm.Scenarios;
 /// UAT-02 と同じシード（倉庫在庫8・卸先TK・直営店TS）に、卸先の受注2件（9/1 4点・9/3 3点）と直営店の受注1件（9/2 3点）を登録し、
 /// 「在庫内で受注日順に読込」→ 登録で受注日の古い受注から割り付くこと、受注残超過分が受注に紐付かない配分になること、
 /// 洗い替えで重複しないことを確認する。画面はJPG保存と表示崩れの自動判定を行う。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step2_受注配分(商品別)_詳細設計.md`。
+/// 画面処理は SalesOrderAllocationInputViewModel、受注への割付規則は HaibunOrderDistributor を参照する。
 /// </para>
 /// </summary>
 public static class SalesOrderAllocationScenario {
