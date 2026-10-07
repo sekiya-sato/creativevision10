@@ -9,7 +9,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// 物流連携（WMS）の共通契約・ファイル形式 cv10-v1・履歴テーブルのテスト。
-/// 仕様は `Doc/spec/2026-10-05_WMS連携_旧AMS連携調査と仮実装仕様.md` 2.2・3.4・5章。
+/// cv10-v1の設定・送受信種別・バッチ／行状態・CSVレイアウトの共通契約を固定する。
 /// </summary>
 [TestClass]
 public class LogisticsContractsTests {

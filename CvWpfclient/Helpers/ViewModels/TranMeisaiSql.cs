@@ -6,8 +6,8 @@ TranMeisaiSql は、伝票テーブルの明細JSON列 `Jmeisai` を SQLite の 
 帳票画面の多くが「伝票ヘッダ h を絞り込み、明細を1行ずつ展開して品番別に集計する」形になるため、
 json_extract の入れ子と cast の括弧を手書きして崩すのを避ける目的で用意しています。
 
-`json_valid()` ガードは AGENTS.md の規約（不正JSONに json_extract を当てると SQLite が
-malformed JSON 例外を投げる）に従い、明細を展開する側で必ず付けます。
+`json_valid()` ガードは、不正JSONに json_extract を当てると SQLite が
+malformed JSON 例外を投げるため、明細を展開する側で必ず付けます。
 
 # example
 var sql = $@"

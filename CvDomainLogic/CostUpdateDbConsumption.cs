@@ -5,24 +5,24 @@ using CvBase.Share;
 namespace CvDomainLogic;
 
 /// <summary>
-/// 消化仕入更新（原価4項目 詳細設計 §4、Step 5）。<see cref="CostUpdateDb"/>の分割ファイル。
+/// 消化仕入更新（Step 5）。<see cref="CostUpdateDb"/>の分割ファイル。
 /// <para>
-/// 担当は対象売上の抽出(§4.3)、生成単価の算出(§4.4)、生成単位ごとの<see cref="Tran03Shiire"/>/
-/// <see cref="TranConsumptionPurchaseLink"/>の生成(§4.5)、税額の確定(§4.7)、確認・更新(§2.4・§4.6・§10.2)、
-/// 消化仕入(<c>ProcessKind=1</c>)の月次状態算出(§2.5.6)。
+/// 担当は対象売上の抽出、生成単価の算出、生成単位ごとの<see cref="Tran03Shiire"/>/
+/// <see cref="TranConsumptionPurchaseLink"/>の生成、税額の確定、確認・更新、
+/// 消化仕入(<c>ProcessKind=1</c>)の月次状態算出。
 /// </para>
 /// </summary>
 public partial class CostUpdateDb {
 	/// <summary>
-	/// マニュアル排他制御（`Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`§2.4）の一連処理名。
-	/// 設計書§2.4の表の値をそのまま使う。
+	/// 消化仕入更新の一連処理名。排他行・進捗・終了履歴に同じ名称を使う。
+	/// 排他行・進捗・終了履歴で同じ名称を使う。
 	/// </summary>
 	private const string ConsumptionLabel = "消化仕入更新";
 	/// <summary>予想処理秒数。対象1か月ぶんの売上抽出と仕入生成のみのため10分を見込む。</summary>
 	private const long ExpectedDurationConsumptionSeconds = 600;
 
 	// ==================================================================
-	// 5-1. 対象売上の抽出・生成計画（設計書§4.3〜§4.5、§4.7、§4.8）
+	// 5-1. 対象売上の抽出・生成計画
 	// ==================================================================
 
 	/// <summary>
@@ -37,7 +37,7 @@ public partial class CostUpdateDb {
 		public required string SourceDay;
 		public required long SourceVdu;
 		public required long IdSoko;
-		/// <summary>正負区分。売上Kubun 10/11=1、20/21=-1（設計書§4.3）。</summary>
+		/// <summary>正負区分。売上Kubun 10/11=1、20/21=-1。</summary>
 		public required int Sign;
 		public required MasterShohin Shohin;
 		public required Tran99Meisai SourceMeisai;
@@ -45,7 +45,7 @@ public partial class CostUpdateDb {
 	}
 
 	/// <summary>
-	/// 生成単位（設計書§4.5「売上テーブル種別 + 売上ヘッダID + 仕入先ID + 倉庫ID + 正負区分」）のキー。
+	/// 生成単位（「売上テーブル種別 + 売上ヘッダID + 仕入先ID + 倉庫ID + 正負区分」）のキー。
 	/// 倉庫IDと正負区分は売上ヘッダに対して一意に決まるため、実質的なグループ化の単位は
 	/// (SourceType, SourceId, IdShiire)である。
 	/// </summary>
@@ -61,9 +61,9 @@ public partial class CostUpdateDb {
 	}
 
 	/// <summary>
-	/// 対象期間の消化仕入対象売上を抽出し、生成単価まで計算する（設計書§4.3・§4.4・§4.8）。
+	/// 対象期間の消化仕入対象売上を抽出し、生成単価まで計算する。
 	/// プレビュー(<see cref="PreviewConsumptionPurchases"/>)・更新(<see cref="ApplyConsumptionPurchases"/>)の
-	/// 両方から呼ぶ共通ロジックであり、更新時も必ずここでサーバー側の値を再計算する（設計書§2.4-3、DBは変更しない）。
+	/// 両方から呼ぶ共通ロジックであり、更新時も必ずここでサーバー側の値を再計算する（-3、DBは変更しない）。
 	/// </summary>
 	private ConsumptionComputation ComputeConsumptionPurchases(string targetMonth) {
 		var period = ResolvePeriod(targetMonth);
@@ -92,8 +92,8 @@ public partial class CostUpdateDb {
 
 	/// <summary>
 	/// 消化仕入対象売上ヘッダのJSON妥当性だけを見る軽量行（<c>Jmeisai</c>のデシリアライズはしない）。
-	/// 不正JSONの行を先に安全に検出するために使う（設計書§4.3、既存<c>CreateSummaryStockSql</c>と同じ
-	/// <c>json_valid()</c>・<c>json_type()</c>による防御の作法）。
+	/// 不正JSONの行を先に安全に検出するために使う（既存<c>CreateSummaryStockSql</c>と同じ
+	/// <c>json_valid</c>・<c>json_type</c>による防御の作法）。
 	/// </summary>
 	private sealed class SalesHeaderProbe {
 		public long Id { get; set; }
@@ -107,10 +107,10 @@ public partial class CostUpdateDb {
 	/// 1テーブル（<see cref="Tran00Uriage"/>または<see cref="Tran01Tenuri"/>）ぶんの対象売上を抽出し、
 	/// エラー行を<paramref name="rows"/>へ、計算に成功した行を<paramref name="resolved"/>へ積む。
 	/// <para>
-	/// <b>実装判断（設計書に算出方法の明記が無い箇所）</b>: 「対象売上」であるかどうかは、まずヘッダ単位で
+	/// <b>対象ヘッダとエラー行の判定</b>: 「対象売上」であるかどうかは、まずヘッダ単位で
 	/// 判定する（そのヘッダの明細のいずれかが<c>MasterShohin.PurchaseType=3</c>の商品を参照しているか）。
 	/// 対象でないヘッダ（消化仕入商品を1行も含まない通常売上）は一切見ない。対象ヘッダに限り、
-	/// 設計書§4.3「値引・その他だけの明細、商品ID=0、不正JSONは対象外ではなくエラーにする」を、
+	/// 「値引・その他だけの明細、商品ID=0、不正JSONは対象外ではなくエラーにする」を、
 	/// ヘッダ内の全明細に対して適用する。対象でない通常商品の行は無関係のため無視する。
 	/// </para>
 	/// </summary>
@@ -159,7 +159,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 		var costAsOfCache = new Dictionary<(long ShohinId, string Day), long>();
 
 		foreach (var header in headers) {
-			// 対象Kubunは範囲比較を使わず明示列挙する（設計書§4.3）。10・11・14(社販)=仕入生成、
+			// 対象Kubunは範囲比較を使わず明示列挙する。10・11・14(社販)=仕入生成、
 			// 20・21・24(社販)=仕入返品生成、30=値引・99=消費税(消化仕入対象外だが、消化仕入対象商品を含んでいればエラー)。
 			var isTargetKubun = header.Kubun is 10 or 11 or 14 or 20 or 21 or 24;
 			var isErrorKubun = header.Kubun is 30 or 99;
@@ -191,8 +191,8 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 					continue;
 				}
 
-				// 設計書§4.2の保存時検査（本来はMasterShohin保存時に検査済みのはずだが、消化仕入更新実行時にも
-				// 再検査する。設計書§2.4-3「更新時はサーバーで同じ計算を再実行する」を保存条件にも適用する）。
+				// の保存時検査（本来はMasterShohin保存時に検査済みのはずだが、消化仕入更新実行時にも
+				// 再検査する。-3「更新時はサーバーで同じ計算を再実行する」を保存条件にも適用する）。
 				if (shohin.Id_ConsignmentShiire <= 0) {
 					rows.Add(NewErrorRow(sourceType, header.Id, lineNo, header.DenDay, header.Vdu, "消化仕入先が未設定です。", shohin));
 					continue;
@@ -223,7 +223,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 							unitCost = ResolveCostAsOf(shohin.Id, header.DenDay, costMethod);
 							costAsOfCache[cacheKey] = unitCost;
 						}
-						// 履歴が無ければMasterShohin.TankaGenkaへフォールバックする(設計書§4.4)
+						// 履歴が無ければMasterShohin.TankaGenkaへフォールバックする
 						if (unitCost <= 0) {
 							unitCost = shohin.TankaGenka;
 						}
@@ -301,7 +301,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 	};
 
 	/// <summary>
-	/// 設計書§4.8の残り2条件（同一売上明細に複数の既存リンクがある、生成仕入が通常画面で変更されリンク内容と
+	/// 既存リンクの不整合2条件（同一売上明細に複数の既存リンクがある、生成仕入が通常画面で変更されリンク内容と
 	/// 一致しない）を、対象期間の既存<see cref="TranConsumptionPurchaseLink"/>から検出して<paramref name="rows"/>へ追加する。
 	/// 新規計算(<see cref="ProcessSalesTable"/>)とは独立した「既存データの整合性」チェックであり、
 	/// 再実行で削除する前の状態を見て判定する。
@@ -368,12 +368,12 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 	}
 
 	// ==================================================================
-	// 5-2. プレビュー・更新（設計書§2.4、§4.6、§10.2）
+	// 5-2. プレビュー・更新
 	// ==================================================================
 
 	/// <summary>
-	/// 消化仕入更新の確認（プレビュー）。DBは一切変更しない（設計書§2.4-1）。
-	/// 戻り値には確認時点の指紋(<see cref="CostConfirmSnapshot"/>、設計書§2.4-4)を含める。
+	/// 消化仕入更新の確認（プレビュー）。DBは一切変更しない。
+	/// 戻り値には確認時点の指紋(<see cref="CostConfirmSnapshot"/>、-4)を含める。
 	/// 呼び出し側はこれを<see cref="CostUpdateParameter.Confirmed"/>へそのまま入れて
 	/// <see cref="ApplyConsumptionPurchases"/>へ渡すことで、確認後の変更を検知できる。
 	/// </summary>
@@ -383,19 +383,19 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 	};
 
 	/// <summary>
-	/// 消化仕入更新を実行する（設計書§4.6、§10.2）。
+	/// 消化仕入更新を実行する。
 	/// <para>
 	/// 手順: (1) 対象期間が支払計算済み範囲に含まれれば<see cref="ConsumptionPurchasePaidPeriodException"/>で中断する
-	/// (2) サーバー側で計算を再実行し(設計書§2.4-3、プレビュー結果は信用しない)、1件でもエラーがあれば
-	/// 何も変更せず失敗を返す(設計書§2.4-2・§10.2) (3) 対象期間内の既存リンクと生成仕入(<c>GeneratedKind=1</c>)を
-	/// 削除してから現在の売上で再生成する(設計書§4.6) (4) 影響する買掛月次を<see cref="SummaryDb.CalcSummaryKaiKake"/>で
+	/// (2) サーバー側で計算を再実行し(-3、プレビュー結果は信用しない)、1件でもエラーがあれば
+	/// 何も変更せず失敗を返す (3) 対象期間内の既存リンクと生成仕入(<c>GeneratedKind=1</c>)を
+	/// 削除してから現在の売上で再生成する (4) 影響する買掛月次を<see cref="SummaryDb.CalcSummaryKaiKake"/>で
 	/// 再計算する。全体を1つの<c>Serializable</c>トランザクションで行い、部分成功を許可しない。
 	/// </para>
 	/// </summary>
 	public CostUpdateResult ApplyConsumptionPurchases(CostUpdateParameter param) {
 		var startedAt = Common.GetVdate();
 
-		// マニュアル排他制御(設計書§2.4)。Serializableトランザクションを開始する前に取得する。
+		// マニュアル排他制御。Serializableトランザクションを開始する前に取得する。
 		// 取得できなければ例外にせず失敗を返す(業務エラーではなく「今は実行できない」ため)。
 		var manualLockDb = new ManualLockDb(_db);
 		var lockResult = manualLockDb.TryBegin(ConsumptionLabel, "対象抽出・計算", ExpectedDurationConsumptionSeconds);
@@ -404,7 +404,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 		}
 		using var lockHandle = lockResult.Handle!;
 
-		// 確認後の変更検知(設計書§2.4-4)。排他取得後・トランザクション開始前に検査する
+		// 確認後の変更検知。排他取得後・トランザクション開始前に検査する
 		// (検査から更新までの間に他処理が割り込めないようにするため)。Confirmedがnullなら検査しない。
 		if (param.Confirmed != null) {
 			var current = FetchConfirmSnapshot(EnumCostProcessKind.ConsumptionPurchase, param.TargetMonth);
@@ -446,7 +446,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 
 			_db.CompleteTransaction();
 			started = false;
-			// マニュアル排他制御の終了記録(設計書§2.3)。正常に最後まで到達したときだけ呼ぶ。
+			// マニュアル排他制御の終了記録。正常に最後まで到達したときだけ呼ぶ。
 			manualLockDb.Complete(lockHandle, 0, updatedCount);
 			return new CostUpdateResult {
 				IsSuccess = true,
@@ -464,13 +464,13 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 				_db.AbortTransaction();
 			}
 			// マニュアル排他制御: Completeを呼ばず、行はusing(lockHandle)のDisposeに任せて残す
-			// (異常終了として監視タスクまたは強制クリアで解放される。設計書§2.1〜§2.3、ManualLockHandle参照)。
+			// (異常終了として監視タスクまたは強制クリアで解放される。、ManualLockHandle参照)。
 			throw;
 		}
 	}
 
 	/// <summary>
-	/// 対象期間が支払計算済み範囲に含まれるかを判定する（設計書§4.6）。
+	/// 対象期間が支払計算済み範囲に含まれるかを判定する。
 	/// <para>
 	/// 既存の締日整合チェック<see cref="SummaryRebuildClosingCheck.FindMismatches"/>が
 	/// 「保存済み<c>SummaryKaiShi.DayTo</c>と現在の自社締日を突合する」方式を採っているのに倣い、
@@ -490,7 +490,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 
 	/// <summary>
 	/// 対象期間内の既存<see cref="TranConsumptionPurchaseLink"/>と、それが指す<c>GeneratedKind=1</c>の生成仕入を削除する
-	/// （設計書§4.6）。売上が既に削除されていてもリンクの<c>SourceDay</c>が残っているため、対象期間の
+	/// 。売上が既に削除されていてもリンクの<c>SourceDay</c>が残っているため、対象期間の
 	/// 古い生成仕入を除去できる。
 	/// </summary>
 	private void DeleteExistingGenerated(ClosingMonthCalculator.KakeMonthPeriod period) {
@@ -511,8 +511,8 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 
 	/// <summary>
 	/// 計算済みの生成単位ごとに<see cref="Tran03Shiire"/>と<see cref="TranConsumptionPurchaseLink"/>を作成する
-	/// （設計書§4.5・§4.7）。税額は生成単位（ヘッダ1件）ごとに<see cref="TaxCalculator.Apply"/>を1回だけ呼ぶ
-	/// （設計書§4.7、<c>TaxCalculator.cs:82</c>の前提どおり）。
+	/// 。税額は生成単位（ヘッダ1件）ごとに<see cref="TaxCalculator.Apply"/>を1回だけ呼ぶ
+	/// （<c>TaxCalculator.cs:82</c>の前提どおり）。
 	/// </summary>
 	private int InsertGenerated(Dictionary<ConsumptionGroupKey, List<ConsumptionLinePlan>> groups, string batchId, long idShain) {
 		if (groups.Count == 0) {
@@ -546,7 +546,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 					Id_Siz = src.Id_Siz,
 					Code_Siz = src.Code_Siz,
 					Mei_Siz = src.Mei_Siz,
-					// 数量は正値で保持し、正負はヘッダCalcFlag(Kubun)で表現する(設計書§4.3)
+					// 数量は正値で保持し、正負はヘッダCalcFlag(Kubun)で表現する
 					Su = src.Su,
 					Tanka = (int)plan.UnitCost,
 					Gedai = (int)plan.UnitCost,
@@ -613,7 +613,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 		return count;
 	}
 
-	/// <summary>影響する買掛月次を既存の<see cref="SummaryDb.CalcSummaryKaiKake"/>経路で再計算する（設計書§4.6）。</summary>
+	/// <summary>影響する買掛月次を既存の<see cref="SummaryDb.CalcSummaryKaiKake"/>経路で再計算する。</summary>
 	private void RecalcAffectedKaiKake(ClosingMonthCalculator.KakeMonthPeriod period) {
 		var fromYm = period.DayFrom[..6];
 		var toYm = period.DayTo[..6];
@@ -621,7 +621,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 	}
 
 	// ==================================================================
-	// 5-3. 消化仕入(ProcessKind=1)の月次状態（設計書§2.5.6）
+	// 5-3. 消化仕入(ProcessKind=1)の月次状態
 	// ==================================================================
 
 	/// <summary>対象期間の消化仕入対象売上明細キー。<see cref="FetchConsumptionStatus"/>の突合に使う軽量行。</summary>
@@ -633,7 +633,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 	}
 
 	/// <summary>
-	/// 消化仕入(<c>ProcessKind=1</c>)の月次状態を設計書§2.5.6の算出方法1〜4のとおりに算出する。
+	/// 消化仕入(<c>ProcessKind=1</c>)の月次状態を成功履歴・入力の最大Vdu・対象件数・先行処理の状態から算出する。
 	/// </summary>
 	private CostMonthStatus FetchConsumptionStatus(string sumMonth) {
 		var status = new CostMonthStatus { SumMonth = sumMonth, ProcessKind = EnumCostProcessKind.ConsumptionPurchase };
@@ -668,7 +668,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 	}
 
 	/// <summary>
-	/// 対象期間の消化仕入対象売上明細キー(設計書§4.3。ヘッダKubunは10・11・20・21、
+	/// 対象期間の消化仕入対象売上明細キー(。ヘッダKubunは10・11・20・21、
 	/// 明細商品はMasterShohin.PurchaseType=3)を、SourceVdu(=売上ヘッダのVdu。明細はJSON埋め込みで
 	/// 独立したVduを持たないため)付きで返す。月次状態の突合専用の軽量抽出であり、
 	/// <see cref="ProcessSalesTable"/>のようなエラー検査は行わない。

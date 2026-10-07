@@ -11,7 +11,7 @@ public enum AllocationRounding {
 /// <summary>
 /// 配分の按分計算（同数・比率）。DBに依存しない純粋関数だけを置き、画面(CvWpfclient)と単体テストの両方から使う。
 /// <para>
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step3_在庫配分入力_詳細設計.md` 3.4 を参照する。
+/// 同数は入力順に残数まで配り、比率は負の重みを0・合計0を均等として扱う。切捨の余りは配らず、四捨五入の超過は小数部の小さい行から減らす。
 /// </para>
 /// </summary>
 public static class AllocationCalculator {

@@ -7,7 +7,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// 商品別に、倉庫×色サイズの<b>配分数</b>（<see cref="TranHaibun"/> の未完了行 <c>EndFlag=0</c>）を展開する。
 /// <para>
 /// 配分数は仕入配分(<c>Kubun=0</c>)の未入荷分も含む生の振り分け数で、引当数（区分0は入荷済み数 <c>ArrivedSu</c> だけ）とは定義が異なる。
-/// 引当算式は SummaryDb、旧CVnetの採否は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.1.0 / I9 を参照する。
+/// 引当は未完了行を対象とし、区分0はArrivedSu、他区分は未確定ならSu・旧確定済み未出荷ならJitsuSuを積む。
 /// </para>
 /// </summary>
 public sealed class HaibunQueryViewModel : BaseHaibunInquiryViewModel {

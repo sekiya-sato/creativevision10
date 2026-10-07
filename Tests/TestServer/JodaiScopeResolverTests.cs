@@ -8,8 +8,8 @@ namespace Tests.CvServer;
 /// <summary>
 /// 上代一括変更 Step4前半 <see cref="JodaiScopeResolver"/> の単体テスト。
 /// <para>
-/// 純粋クラスのためDBは不要。仕様は `Doc/spec/2026-09-05_上代一括変更_詳細設計.md` 2.5・2.6・2.8・6.1、
-/// および同設計書の曖昧さを解消したタスク指示（優先順位・期間の重なり判定・C1/C2/C5の検出条件）。
+/// DBに依存せず、Scopeの具体性→除外→Odr→後の要素の優先順位と、期間の重なり・未設定グループを固定する。
+/// および優先順位・期間の重なり判定・C1/C2/C5の検出条件を入力別に検証する。
 /// </para>
 /// </summary>
 [TestClass]
@@ -104,7 +104,7 @@ public class JodaiScopeResolverTests {
 
 	[TestMethod]
 	public void RangeType1_IdGroupZero_MatchesNoStore() {
-		// 既存の得意先は全軸0（未設定）。Id_Group=0のScopeが未設定の店舗を巻き込んではいけない（設計書2.4）。
+		// 既存の得意先は全軸0（未設定）。Id_Group=0のScopeが未設定の店舗を巻き込んではいけない。
 		var stores = new[] { Store(1, "T01", "未設定店") };
 		var scopes = new[] { Scope(1, "未設定グループ", EnumJodaiRangeType.PriceGroup, groupAxis: (int)EnumJodaiGroupAxis.PriceGroup, idGroup: 0) };
 
@@ -125,7 +125,7 @@ public class JodaiScopeResolverTests {
 	}
 
 	// ============================================================
-	// 設計書2.5の入力例
+	// の入力例
 	// ============================================================
 
 	[TestMethod]

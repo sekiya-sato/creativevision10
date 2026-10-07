@@ -111,7 +111,7 @@ public partial class HenpinInputViewModel : BaseStockSheetInputViewModel<Tran03S
 	int shiireRatePercent = 100;
 
 	/// <summary>
-	/// 登録時に使う税計算単位・消費税端数処理。伝票作成時点のマスタ値のスナップショット(Doc/spec/2026-09-01 2.2)。
+	/// 登録時に使う税計算単位・消費税端数処理。伝票作成時点のマスタ値のスナップショット。
 	/// ValidateBeforeRegisterAsync で仕入先マスタから確定する。仕入先が引けない場合は
 	/// TaxCalcUnit は既定(請求単位)のまま、TaxRounding は MasterSysman.TaxRounding を使う(3.7の解決順3)。
 	/// </summary>

@@ -7,7 +7,7 @@ JsonFunctionRule は引数1個のJSON関数を対象DBの表現へ置き換え�
   MariaDB は同名関数があるため書き換え不要（NativeConstructIds で扱う）。
 - `json(X)` : JSONとしての正規化。PostgreSQL は `::jsonb`、MariaDB は `CAST(X AS JSON)`。
 
-`json_valid()` ガードは AGENTS.md の規約で必須なので、変換漏れが起きると不正JSONで
+不正JSONを空配列へ置換する `json_valid()` ガードが必要なため、変換漏れが起きると不正JSONで
 例外になる。そのためこのルールは引数1個の形だけを厳密に照合し、
 それ以外は変換せず未対応構文として報告させます。
 

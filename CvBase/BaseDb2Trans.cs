@@ -53,7 +53,7 @@ public interface ITranSoko {
 /// <see cref="EndFlag"/>=0 の行の <see cref="Su"/> が、倉庫+SKU（<see cref="SummaryRealStock"/>）および
 /// <c>substr(DenDay,1,6)</c>+倉庫+SKU（<see cref="SummaryStock"/>）の引当数へ集計される。
 /// 差分加減算ではなく対象キーの引き直しで更新するため、通常更新値とRebuild値は必ず一致する。
-/// 集計は <c>SummaryDb.CalcHaibun2Reserve()</c> / <c>SummaryDb.CalcReserveQtyAll()</c> が行う。
+/// 集計は <c>SummaryDb.CalcHaibun2Reserve</c> / <c>SummaryDb.CalcReserveQtyAll</c> が行う。
 /// </para>
 /// </summary>
 public interface ITranReserve {
@@ -132,7 +132,7 @@ public class TranCalcBase {
 	/// <para>
 	/// 0=倉庫 と 6=直営店 は移動伝票の対象であり、受注残を消化しない。
 	/// 受注残の判定（サーバー側 <c>CompletionDb</c>）と受注残完了設定画面の残数表示で同じ値を使う。
-	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 5.3 を参照する。
+	/// 卸先への出荷だけが受注消化に入り、倉庫・直営店への移動では受注残を減らさない。
 	/// </para>
 	/// </summary>
 	public const string ShukkaTenTypes = "1,3";
@@ -215,7 +215,7 @@ public class TranCalcBase {
 /// <para>
 /// Master系のV*列は逆に<b>常に現行名称へ同期される</b>（CvDomainLogic/MasterCascadeDb がマスタ更新時に伝播）。
 /// つまり「V*列が時点値か現行値か」はテーブル種別（Tran系/Master系）だけで判別できる。
-/// 詳細は .omo/20260727_master_vcolumn_sync_design.md を参照。
+/// マスタ名称の同期はMasterCascadeDbで行い、Tran系の監査値へは伝播させない。
 /// </para>
 /// </summary>
 [Comment("トランザクション：共通伝票ヘッダ Tran00Uriage等の基底で単独の実テーブルは作成しない")]
@@ -728,8 +728,8 @@ public sealed partial class Tran60Tana : TranAllHeader {
 /// <summary>
 /// 在庫調整 61 (倉庫 増減)
 /// <para>
-/// 在庫強制調整入力と棚卸確定処理が作る調整専用伝票。仕様は
-/// `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.4(F0/F2) を参照する。
+/// 在庫強制調整入力と棚卸確定処理が作る調整専用伝票。
+/// 棚卸差数を記録し、通常の入出庫伝票と区別して在庫へ反映する。
 /// </para>
 /// <para>
 /// 伝票にしているのは「通常更新値 = Rebuild値」の品質原則を守るためである。
@@ -931,7 +931,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	/// <summary>
 	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
 	/// <para>
-	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 旧Tax列を税区分別のTax1/2/3へ分割し、各税区分の確定税額を保持する。
 	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
 	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
 	/// </para>
@@ -994,8 +994,8 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	/// 消込済FLG。0=未消込 / 1=消込済。入金消込画面で伝票単位に立て、得意先元帳で `*` を印字する。
 	/// <para>
 	/// 充当金額・未充当金額は保持しない（部分消込は仕様対象外）。売掛残高は伝票金額ベースであり、
-	/// この値は <see cref="SummaryUriKake"/> の集計へ影響しない。仕様は
-	/// 消込の定義は BaseMatchingViewModel のコメント・実装、承認経緯は `Doc/spec/archive/2026-08-16_phase1_業務仕様決定ドラフト.md` 3.3 を参照する。
+	/// この値は <see cref="SummaryUriKake"/> の集計へ影響しない。
+	/// 消込は伝票単位の確認マークであり、入金・支払への金額充当や部分消込を表さない。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -1312,7 +1312,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	/// <summary>
 	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
 	/// <para>
-	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 旧Tax列を税区分別のTax1/2/3へ分割し、各税区分の確定税額を保持する。
 	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
 	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
 	/// </para>
@@ -1373,8 +1373,8 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	/// 消込済FLG。0=未消込 / 1=消込済。支払消込画面で伝票単位に立て、仕入先元帳で `*` を印字する。
 	/// <para>
 	/// 充当金額・未充当金額は保持しない（部分消込は仕様対象外）。買掛残高は伝票金額ベースであり、
-	/// この値は <see cref="SummaryKaiKake"/> の集計へ影響しない。仕様は
-	/// 消込の定義は BaseMatchingViewModel のコメント・実装、承認経緯は `Doc/spec/archive/2026-08-16_phase1_業務仕様決定ドラフト.md` 3.3 を参照する。
+	/// この値は <see cref="SummaryKaiKake"/> の集計へ影響しない。
+	/// 消込は伝票単位の確認マークであり、入金・支払への金額充当や部分消込を表さない。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -1388,7 +1388,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 		set => EndFlag = (int)value;
 	}
 	/// <summary>
-	/// 在庫加算対象か 0=在庫加算しない、1=在庫加算する（原価4項目 詳細設計 §2.5.9）。
+	/// 在庫加算対象か 0=在庫加算しない、1=在庫加算する。
 	/// 消化仕入更新が生成する仕入だけ0とし、既存仕入・通常入力仕入は1で在庫・買掛集計結果を維持する
 	/// </summary>
 	[ObservableProperty]
@@ -1396,7 +1396,7 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	[Comment("在庫加算対象か 0=在庫加算しない、1=在庫加算する")]
 	public partial int IsStock { get; set; } = 1;
 	/// <summary>
-	/// 仕入の生成区分 0=手動・通常、1=消化仕入更新による自動生成（原価4項目 詳細設計 §2.5.9）
+	/// 仕入の生成区分 0=手動・通常、1=消化仕入更新による自動生成（）
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumGeneratedKind))]
@@ -1573,7 +1573,7 @@ public sealed partial class Tran02Material : BaseDbClass, ITranTax {
 	/// <summary>
 	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
 	/// <para>
-	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 旧Tax列を税区分別のTax1/2/3へ分割し、各税区分の確定税額を保持する。
 	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
 	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
 	/// </para>
@@ -1757,7 +1757,7 @@ public sealed partial class Tran99MaterialMeisai : ObservableObject {
 	[Comment("明細メモ")]
 	public partial string Memo { get; set; } = string.Empty;
 	/// <summary>
-	/// 費用を負担する商品。`0` = 諸掛ではない明細（原価4項目 詳細設計 §3.3）。既存明細は `Id_Shohin=0` として読める。
+	/// 費用を負担する商品。`0` = 諸掛ではない明細。既存明細は `Id_Shohin=0` として読める。
 	/// JSON明細のためDDL変更・マイグレーションは不要
 	/// </summary>
 	[ObservableProperty]
@@ -2010,7 +2010,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	/// <summary>
 	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
 	/// <para>
-	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 旧Tax列を税区分別のTax1/2/3へ分割し、各税区分の確定税額を保持する。
 	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
 	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
 	/// </para>
@@ -2056,7 +2056,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	/// 出荷先が卸先または売仕店のもの）が明細単位で全SKU充足した時点で 1 へ自動更新する。
 	/// 受注残完了設定画面から手動で 1 にすることも、0 へ戻すこともできる。
 	/// 1 の伝票は受注残管理表の集計対象から外す（SKUに残があっても完了とみなす）。
-	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 を参照する。
+	/// 自動判定は全SKUの残数が0以下なら完了を立てるだけで、後から実績を訂正しても自動解除しない。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -2171,7 +2171,7 @@ public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	/// <summary>
 	/// 消費税合計（Tax1+Tax2+Tax3）。一覧グリッド表示用の派生値であり DB 列ではない。
 	/// <para>
-	/// 旧 Tax 列は Tax1/2/3 へ分割済み（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md D5）。
+	/// 旧Tax列を税区分別のTax1/2/3へ分割し、各税区分の確定税額を保持する。
 	/// 一覧グリッドの行は Tran モデルが DataContext になるため ViewModel 側では賄えず、ここに置く。
 	/// ResultColumn により DDL 生成（ExDatabase.GetSqlColumns）と部分更新の対象から外れる。
 	/// </para>
@@ -2217,7 +2217,7 @@ public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	/// 明細単位で全SKU充足した時点で 1 へ自動更新する。
 	/// 発注残完了設定画面から手動で 1 にすることも、0 へ戻すこともできる。
 	/// 1 の伝票は発注残管理表の集計対象から外す（SKUに残があっても完了とみなす）。
-	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 4.2 / 4.3 を参照する。
+	/// 自動判定は全SKUの残数が0以下なら完了を立てるだけで、後から実績を訂正しても自動解除しない。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -2666,11 +2666,11 @@ public sealed partial class TranVulcanHht : BaseDbClass {
 /// <summary>
 /// トランザクション：商品原価履歴。1行=1計上月×1商品×1原価方式。
 /// 月次原価計算（最終仕入原価更新・総平均原価更新）と評価替えの双方が <see cref="ChangeKind"/> で書き分けて書き込む
-/// （原価4項目 詳細設計 §2.5.3、§2.6、§16）。
+/// 。
 /// <para>
 /// `TranGenka` は旧CV.netでは「伝票No・日付(年月+末)・セールCD・評価区分・OFF率・[商品CD]上代・掛率・元原価・新原価」を
 /// 持つ手入力の原価変更伝票（評価替え登録）として予約されていたが、この構想は採らない。
-/// セール連動OFF率は上代一括変更の `Scope` が担い、原価側に別系統の適用範囲は作らない（詳細は §16.3）。
+/// セール連動OFF率は上代一括変更の `Scope` が担い、原価側に別系統の適用範囲は作らない（詳細は ）。
 /// </para>
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -2811,7 +2811,7 @@ public sealed partial class TranGenka : BaseDbClass {
 
 /// <summary>
 /// トランザクション：消化仕入更新が売上明細から生成した仕入明細との対応。
-/// 売上1明細から生成できる仕入明細は1行だけ（原価4項目 詳細設計 §2.5.5）。
+/// 売上1明細から生成できる仕入明細は1行だけ。
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uk1", true, [nameof(SourceType), nameof(SourceId), nameof(SourceLineNo)])]
@@ -2892,7 +2892,7 @@ public sealed partial class TranConsumptionPurchaseLink : BaseDbClass {
 
 /// <summary>
 /// トランザクション：評価替えの実行ヘッダ（条件・指定値・集計値）。`TranGenka` の `ChangeKind=1` 行は
-/// `SourceRevalId` で本テーブルを指す（原価4項目 詳細設計 §2.5.11、§16）。
+/// `SourceRevalId` で本テーブルを指す。
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
 [KeyDml("uk1", true, nameof(BatchId))]
@@ -3038,8 +3038,8 @@ public sealed partial class TranGenkaReval : BaseDbClass {
 
 /// <summary>
 /// `TranGenkaReval.JCond` のJSON構造。評価替えの抽出条件（項目選択式のFrom～To条件行の集合）を保持する。
-/// 年度は選択項目に含めない（原価4項目 詳細設計 §13 U-17。CV10 `MasterShohin` に年度に相当する列が無いため）。
-/// 条件による履歴検索の用途はないため列展開せずJSON1列にしている（§13 U-21）。
+/// 年度は選択項目に含めない（U-17。CV10 `MasterShohin` に年度に相当する列が無いため）。
+/// 条件による履歴検索の用途はないため列展開せずJSON1列にしている（ U-21）。
 /// </summary>
 public sealed partial class CostRevaluationCondition : ObservableObject {
 	/// <summary>

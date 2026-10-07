@@ -38,7 +38,7 @@ public partial class CoreService {
 	/// CV10 は SQL の組み立てを CvWpfclient 側でも行うため、送られてくるSQLは SQLite 方言が正典である。
 	/// SQLite 接続では <c>PassThroughSqlDialect</c> が引数の参照をそのまま返すので変換処理は走らない。
 	/// 変換を差すのはこの1点だけで、CvBase / CvDomainLogic 内部のSQLは通さない。
-	/// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` を参照する。
+	/// QueryKeyの方言別SQL上書きを解決してから構文変換し、SQLiteの結果を維持する。
 	/// </para>
 	/// </summary>
 	private string TranslateClientSql(string sql) => TranslateClientSql(sql, null);
@@ -232,7 +232,7 @@ public partial class CoreService {
 	/// 棚卸の店舗別状況照会。棚卸開始処理・棚卸確定処理の画面が店舗一覧を組み立てるのに使う。
 	/// <para>
 	/// 店舗ごとの棚卸日・計上月・開始済み／確定済み／再確定要と、基準日以外の日付で入力された
-	/// 棚卸伝票の内訳を返す。確定処理の前に日付補正の要否を確認するためにも使う(設計書2.5 / 4)。
+	/// 棚卸伝票の内訳を返す。確定処理の前に日付補正の要否を確認するためにも使う。
 	/// </para>
 	/// </summary>
 	private CvMsg HandleStocktakeStatus(CvMsg request, CallContext context) {
@@ -257,7 +257,7 @@ public partial class CoreService {
 	/// <summary>
 	/// JWTの <see cref="System.Security.Claims.ClaimTypes.SerialNumber"/>（<see cref="SysLogin.Id"/>）を解決する。
 	/// 初回起動トークンなど <c>SerialNumber</c> を持たない場合は0を返す。
-	/// <see cref="ResolveLoginShainId"/>と<see cref="ResolveDeclaredDeviceInfo"/>が共通で使う経路（設計書§2.5.3）。
+	/// <see cref="ResolveLoginShainId"/>と<see cref="ResolveDeclaredDeviceInfo"/>が共通で使う経路。
 	/// </summary>
 	private long ResolveLoginId() {
 		var user = _httpContextAccessor.HttpContext?.User;
@@ -286,18 +286,18 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// マニュアル排他制御の強制クリア履歴へ残す端末情報の表示用文字列を組み立てる（設計書§2.5.3 Step T8）。
+	/// マニュアル排他制御の強制クリア履歴へ残す端末情報の表示用文字列を組み立てる。
 	/// <para>
 	/// IPアドレスだけが<see cref="Microsoft.AspNetCore.Http.HttpContext.Connection"/>から取る
 	/// <b>サーバー由来</b>の値であり、最も確実である。マシン名・ログオンユーザー名・OSバージョン・
 	/// MACアドレスは<see cref="SysHistJwt.Jsub"/>（ログイン時にクライアントが申告した値、
 	/// <c>CvWpfclient/ViewModels/00System/LoginViewModel.cs</c>の<c>SubGetInfo</c>が作る）であり、
-	/// 監査値ではない。詳細設計§2.5.3が定める「申告値を監査値にしない」原則に照らし、
+	/// 監査値ではない。が定める「申告値を監査値にしない」原則に照らし、
 	/// 履歴上でも申告値であることが分かるよう「申告」を付けて記録する。
 	/// </para>
 	/// <para>
 	/// <see cref="SysHistJwt.Ip"/>はログイン時点の値のため使わない。強制クリア時点の
-	/// <c>RemoteIpAddress</c>の方が新鮮で確実である（設計書§6.1）。
+	/// <c>RemoteIpAddress</c>の方が新鮮で確実である。
 	/// IPが取れない場合・該当する<see cref="SysHistJwt"/>行が無い場合も例外にせず「不明」で埋める。
 	/// </para>
 	/// </summary>
@@ -317,7 +317,7 @@ public partial class CoreService {
 	private static string? NullIfEmpty(string? value) => string.IsNullOrEmpty(value) ? null : value;
 
 	/// <summary>
-	/// マニュアル排他制御の状態照会（設計書§2.5.1-1）。DBは変更しない。
+	/// マニュアル排他制御の状態照会。DBは変更しない。
 	/// </summary>
 	private CvMsg HandleManualLockStatus(CvMsg request, CallContext context) {
 		try {
@@ -331,14 +331,14 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// マニュアル排他制御の強制クリア（設計書§2.5.3）。実行社員Idはリクエストからは受け取らず、
+	/// マニュアル排他制御の強制クリア。実行社員Idはリクエストからは受け取らず、
 	/// <see cref="ResolveLoginShainId"/> でJWTから解決する。
 	/// </summary>
 	private CvMsg HandleManualLockClear(CvMsg request, CallContext context) {
 		try {
 			// 実行社員はクライアントの申告値ではなくJWTから解決する。強制クリアは排他制御そのものを
 			// 無効化する操作であり、履歴の「誰が解放したか」は後の原因追跡の要になるため、
-			// 利用者が任意に選べる値であってはならない(マニュアル排他制御 詳細設計§2.5.3)。
+			// 利用者が任意に選べる値であってはならない(マニュアル排他制御 )。
 			var idShain = ResolveLoginShainId();
 			var deviceInfo = ResolveDeclaredDeviceInfo();
 			var deletedCount = new ManualLockDb(_db).ForceClearManualLocks(idShain, deviceInfo);
@@ -352,14 +352,13 @@ public partial class CoreService {
 
 	// ==================================================================
 	// 原価4処理・評価替えのプレビュー・状態照会・取消(Step 9)
-	// 正典は `Doc/spec/2026-09-05_原価4項目_詳細設計.md` §8・§9、
-	// `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4。
-	// ここで扱うのはDBを変更しないもの(月次状態照会・4処理と評価替えの確認・評価替えの取消)だけである。
+	// 原価確認は書き込まず、実行要求はストリーミング経路へ渡す。評価替え取消は書込みなのでドメイン内で全体排他を取る。
+	// 月次状態照会・4処理と評価替えの確認は読取りのみ。評価替え取消はDBを書き換える。
 	// 更新実行(Apply*)はQueryMsgStreamService側(ストリーミング)で扱う。
 	// ==================================================================
 
 	/// <summary>
-	/// 原価4処理の月次状態照会(設計書§2.5.6・§8.1)。消化仕入・原価更新の2区分をまとめて返す。DBは変更しない。
+	/// 原価4処理の月次状態照会。消化仕入・原価更新の2区分をまとめて返す。DBは変更しない。
 	/// </summary>
 	private CvMsg HandleCostMonthStatus(CvMsg request, CallContext context) {
 		try {
@@ -378,7 +377,7 @@ public partial class CoreService {
 	/// <summary>
 	/// <see cref="CostUpdateParameter.Id_Shain"/>をクライアントの申告値ではなくJWTの値へ上書きする。
 	/// <c>TranGenka.Id_Shain</c>等へ書き込まれる監査値のため、利用者が任意に選べる値であってはならない
-	/// (マニュアル排他制御 詳細設計§2.5.3と同じ理由)。
+	/// (マニュアル排他制御 と同じ理由)。
 	/// </summary>
 	private CostUpdateParameter OverrideIdShain(CostUpdateParameter param) {
 		param.Id_Shain = ResolveLoginShainId();
@@ -386,7 +385,7 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// 消化仕入更新の確認(プレビュー)。DBは変更しない(設計書§2.4-1)。
+	/// 消化仕入更新の確認(プレビュー)。DBは変更しない。
 	/// </summary>
 	private CvMsg HandleCostConsumptionPreview(CvMsg request, CallContext context) {
 		try {
@@ -467,7 +466,7 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// 諸掛確認(参照専用。Applyは無い。設計書§3.8)。
+	/// 諸掛確認(参照専用。Applyは無い。)。
 	/// </summary>
 	private CvMsg HandleCostSundryPreview(CvMsg request, CallContext context) {
 		try {
@@ -521,7 +520,7 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// 評価替えの確認(プレビュー)。DBは変更しない(設計書§16.6)。
+	/// 評価替えの確認(プレビュー)。DBは変更しない。
 	/// </summary>
 	private CvMsg HandleCostRevaluationPreview(CvMsg request, CallContext context) {
 		try {
@@ -541,7 +540,7 @@ public partial class CoreService {
 	}
 
 	/// <summary>
-	/// 評価替えの取消(設計書§16.7「再実行と取消」)。実行社員IdはJWTから解決し、クライアントの申告値は
+	/// 評価替えの取消(「再実行と取消」)。実行社員IdはJWTから解決し、クライアントの申告値は
 	/// 受け取らない(強制クリアと同じ理由。監査値のため)。リクエストからは<c>revalId</c>だけを受け取る。
 	/// 業務規則による拒否(<c>CostUpdateResult.IsSuccess=false</c>)も、既存の<c>PosCheckout</c>等と同じく
 	/// 転送層は成功応答とし、可否はDTO内の<c>IsSuccess</c>で表す。
@@ -690,7 +689,7 @@ public partial class CoreService {
 	/// <para>
 	/// 引当数は削除・登録後の <see cref="TranHaibun"/> から引き直すため、キーを溜めて最後に一度だけ処理する
 	/// （<see cref="HandleBulkInsert"/> / <see cref="HandleBulkDelete"/> と同じ理由）。
-	/// 一括保存の採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
+	/// 行ごとの削除・登録では部分成功になるため、対象全件のVdu検査と洗い替え、引当再計算を1トランザクションで行う。
 	/// </para>
 	/// </summary>
 	private CvMsg HandleHaibunSave(CvFlag flag, HaibunSaveParam save) {

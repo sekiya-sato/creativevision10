@@ -11,8 +11,7 @@ BaseShippingConfirmViewModel は配分確定画面（HaibunCommitViewModel。並
 - 取置配分(Kubun=6)は店舗売上へ変換する別画面で扱うため、一覧に出さない。
 
 商品別/得意先別の違いは並び順(SortOrderSql)だけで、データ源(TranHaibun の EndFlag=0)は同じです。
-サーバ側ロジックは CvDomainLogic/ShippingDb.Commit、詳細は
-Doc/spec/2026-09-28_設計判断記録.md 2.8 / 2.9。
+サーバ側ロジックはCvDomainLogic/ShippingDb.Commit。入荷前の仕入配分を出荷しないよう、確定数はArrivedSu以下に限定する。
 
 一覧の列は既存の照会画面(ZaikoQuery)と同じく、テーブル単位に型付きで取得してクライアントで合成します
 （サーバの QueryListSqlParam はDBマップ型しか返せないため、クライアント専用POCOは使いません）。

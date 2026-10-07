@@ -7,7 +7,7 @@ namespace CvDomainLogic;
 /// <summary>
 /// 棚卸の開始処理と確定処理。
 /// <para>
-/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.1 / 8.4 を参照する。
+/// 開始は倉庫別棚卸日の帳簿在庫を保存し、確定は棚卸差数の調整伝票を作る。再確定は前回調整を反転・削除して作り直す。
 /// 旧CV.netの7段階のうち、システムが行うのは「4. 棚卸開始処理」と「7. 棚卸確定処理」の2つである。
 /// </para>
 /// <para>
@@ -21,8 +21,8 @@ public class StocktakeDb(ExDatabase db) {
 	private readonly ExDatabase _db = db;
 	private readonly ILogger<StocktakeDb> _logger = new NLogExtender<StocktakeDb>();
 
-	// マニュアル排他制御（設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4）。
-	// 一連処理名は設計書§2.4の表の値をそのまま使う。予想処理秒数は具体値の定めが無いため、
+	// 棚卸は原価・再集計・HHTと共通の全体排他を取り、帳簿在庫と調整伝票を同時更新から保護する。
+	// 一連処理名は下記の定数を使う。予想処理秒数は具体値の定めが無いため、
 	// 処理の規模から見積もった値。
 	/// <summary>棚卸開始処理(<see cref="StartAsyncStream"/>)。帳簿在庫のスナップショット保存のみ</summary>
 	private const string ProcessNameStocktakeStart = "棚卸開始処理";
@@ -59,7 +59,7 @@ public class StocktakeDb(ExDatabase db) {
 	/// 基準日以外の棚卸入力があり <see cref="StocktakeParameter.AlignMisdated"/> が false のときは
 	/// 何も変更せず <see cref="StocktakeMisdatedException"/> を投げる。ストリームの実行経路では
 	/// 件数(int)しか返せないため、確認が必要な中断を例外で表に出している。画面は事前に
-	/// `Msg060_StocktakeStatus` で内訳を取得して確認ダイアログを出す(設計書4)。
+	/// `Msg060_StocktakeStatus` で内訳を取得して確認ダイアログを出す。
 	/// </para>
 	/// </summary>
 	private int RunFixInTransaction(StocktakeParameter param) {
@@ -84,7 +84,7 @@ public class StocktakeDb(ExDatabase db) {
 	}
 
 	/// <summary>
-	/// 対象店舗の棚卸基準日を解決する(設計書2.1)。店舗ごとの <see cref="Tran60TanaDate.TanaDay"/> を引き、
+	/// 対象店舗の棚卸基準日を解決する。店舗ごとの <see cref="Tran60TanaDate.TanaDay"/> を引き、
 	/// 未設定の店舗は <paramref name="fallbackMonth"/> の計上月末へフォールバックする。
 	/// </summary>
 	/// <param name="fallbackMonth">棚卸日が未設定の店舗に使うフォールバック計上月 yyyyMM</param>
@@ -103,7 +103,7 @@ public class StocktakeDb(ExDatabase db) {
 	/// 倉庫指定なしで呼ばれたときの既定の対象倉庫。当該計上月に在庫集計行がある倉庫と、
 	/// 計上月の期間内に棚卸入力がある倉庫を拾う。
 	/// <para>
-	/// 画面からは対象店舗を明示で渡す(設計書2.6)。ここは倉庫指定なしの旧経路向けの既定であり、
+	/// 画面からは対象店舗を明示で渡す。ここは倉庫指定なしの旧経路向けの既定であり、
 	/// 棚卸日が翌計上月へ繰り越される店舗(締日が末日でない場合)は拾えない。
 	/// </para>
 	/// </summary>
@@ -147,7 +147,7 @@ public class StocktakeDb(ExDatabase db) {
 	/// <summary>
 	/// 棚卸開始処理。店舗ごとの基準日時点の帳簿在庫を <see cref="SummaryStock"/> へ保存する。
 	/// <para>
-	/// 帳簿在庫は <see cref="FetchBookQtyAsOf"/> の逆算で求める(設計書2.2)。
+	/// 帳簿在庫は <see cref="FetchBookQtyAsOf"/> の逆算で求める。
 	/// 同じ条件で何度でも実行でき、実行のたびに最新の帳簿在庫で上書きする
 	/// （旧CV.netも差異調査・伝票修正のあとに再実行する運用だった）。
 	/// </para>
@@ -158,7 +158,7 @@ public class StocktakeDb(ExDatabase db) {
 	/// </para>
 	/// <para>
 	/// 在庫再集計(Rebuild)は対象期間の <see cref="SummaryStock"/> を作り直すので、ここで補完した行と
-	/// <see cref="SummaryStock.BookQty"/> は失われる。Rebuild のあとは本処理を再実行する運用とする(設計書4)。
+	/// <see cref="SummaryStock.BookQty"/> は失われる。Rebuild のあとは本処理を再実行する運用とする。
 	/// </para>
 	/// </summary>
 	/// <param name="days">解決済みの店舗別棚卸基準日</param>
@@ -291,7 +291,7 @@ WHERE SumMonth = @1
 	/// <para>
 	/// 基準日以外の日付で入力された棚卸伝票を先に検知する。1件以上あり
 	/// <paramref name="alignMisdated"/> が false なら**何も変更せずに中断**し、対象の内訳を返す。
-	/// 呼び出し側は「基準日に補正するか」を確認して true で呼び直す(設計書4)。
+	/// 呼び出し側は「基準日に補正するか」を確認して true で呼び直す。
 	/// </para>
 	/// <para>
 	/// 補正は棚卸伝票の <c>DenDay</c> を書き換えるので <c>Vdu</c> が動く。再確定要否の判定は
@@ -365,7 +365,7 @@ ORDER BY Id_Shohin, Id_Col, Id_Siz
 		}).ToList();
 		var chosei = new Tran61Chosei {
 			// 計上日は店舗ごとの棚卸基準日。計上月は既存の自社締日ロジックが DenDay から決めるので
-			// SummaryStock.SumMonth と一致する(設計書2.4)
+			// SummaryStock.SumMonth と一致する
 			DenDay = day.TanaDay,
 			Id_Soko = soko,
 			Id_Shain = idShain,
@@ -383,7 +383,7 @@ ORDER BY Id_Shohin, Id_Col, Id_Siz
 	/// <summary>
 	/// 基準日以外の日付で入力された棚卸伝票を日付別に数える。
 	/// 対象は計上月の期間内(<c>DayFrom〜DayTo</c>)にあり基準日と一致しないものだけで、
-	/// 計上月の外にある棚卸入力は別の月の棚卸なので触らない(設計書4)。
+	/// 計上月の外にある棚卸入力は別の月の棚卸なので触らない。
 	/// </summary>
 	public List<StocktakeMisdated> FetchMisdatedTana(StocktakeDay day) {
 		if (!_db.IsExistTable(typeof(Tran60Tana))) {
@@ -414,7 +414,7 @@ WHERE Id_Soko = {day.Id_Shop}
 	}
 
 	/// <summary>
-	/// 店舗ごとの棚卸の進行状況(開始済み／確定済み／再確定要)を返す。画面の店舗一覧に出す(設計書2.5)。
+	/// 店舗ごとの棚卸の進行状況(開始済み／確定済み／再確定要)を返す。画面の店舗一覧に出す。
 	/// <para>
 	/// 再確定要の判定は「確定済みで、かつ基準日以前の伝票が確定後に更新されていること」。
 	/// 旧CV.netの「確定処理後に過去の伝票を訂正した場合は再度確定の表示がでます」に対応する。
@@ -500,7 +500,7 @@ SELECT COUNT(*) FROM ({string.Join("\n  UNION ALL", branches)}
 
 	/// <summary>
 	/// 確定処理の実行日を <see cref="Tran60TanaDate.FixDay"/> へ書く。
-	/// 再確定要否の判定(<c>Vdu &gt; FixDay</c>)がこの値を基準にする(設計書2.5)。
+	/// 再確定要否の判定(<c>Vdu &gt; FixDay</c>)がこの値を基準にする。
 	/// 棚卸日を設定していない店舗には行が無いので、その場合は作らない。
 	/// </summary>
 	private int StoreFixDay(IReadOnlyList<StocktakeDay> days) {
@@ -525,7 +525,7 @@ WHERE Id_Shop IN ({ids})
 	/// 棚卸伝票が無いSKUは実棚0ではなく「数えていない」なので、対象外にして帳簿在庫のままにする。
 	/// </para>
 	/// <para>
-	/// 対象は <c>DenDay</c> が棚卸基準日と**厳密に一致**する伝票だけである(設計書2.3)。
+	/// 対象は <c>DenDay</c> が棚卸基準日と**厳密に一致**する伝票だけである。
 	/// 棚番違いの複数伝票は合計する。基準日以外の日付で入力された伝票は
 	/// <see cref="FetchMisdatedTana"/> が確定処理の前に検知する。
 	/// </para>
@@ -553,7 +553,7 @@ WHERE SumMonth = @0
 	}
 
 	/// <summary>
-	/// 基準日時点の帳簿在庫をSKU別に取得する(設計書2.2の逆算方式)。
+	/// 基準日時点の帳簿在庫をSKU別に取得する(の逆算方式)。
 	/// <para>
 	/// <c>SummaryStock</c> は計上月末時点の在庫しか持たないので、月末累計から
 	/// 「基準日より後・計上月末まで」の伝票増減を差し引いて基準日時点へ戻す。
@@ -576,7 +576,7 @@ WHERE SumMonth = @0
 	/// 逆算に使うのは在庫数(Item1)だけである。入出庫内訳(<c>InQty</c>/<c>OutQty</c>)・
 	/// 移動中(<c>TransitQty</c>)・調整数(<c>AdjustQty</c>)は <c>Su</c> の外側の内訳列であり、
 	/// 帳簿在庫の加減算には使わない。とくに移動中の現物は実地棚卸で数えられないため、
-	/// 帳簿在庫にも実棚数にも現れず差異を生まない(設計書2.2)。
+	/// 帳簿在庫にも実棚数にも現れず差異を生まない。
 	/// </para>
 	/// </summary>
 	private static readonly (string TableName, string Axis, int SuFlag)[] StockSuSources = BuildStockSuSources();

@@ -12,7 +12,7 @@ namespace Tests.CvServer;
 /// <summary>
 /// <see cref="ManualLockDb"/>（マニュアル排他制御 詳細設計 Step 9-2）の単体テスト。
 /// SQLiteインメモリDBの作成作法は<see cref="CostUpdateDbTests"/>に合わせる。
-/// 仕様書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §5 のL-01〜L-06、L-12を実装する。
+/// 排他の取得・後発撤退・進捗Vdu更新・終了履歴・解放と、メモの上限を固定する。
 /// </summary>
 [TestClass]
 public class ManualLockDbTests {
@@ -104,7 +104,7 @@ public class ManualLockDbTests {
 
 	// ------------------------------------------------------------------
 	// L-03: 2つのManualLockDbがほぼ同時にTryBeginしたとき、Idの大きい方だけが降り、
-	//        行が1行に収束する（§2.1）
+	//        行が1行に収束する（）
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -287,7 +287,7 @@ public class ManualLockDbTests {
 		Assert.IsTrue(begun.Handle!.Completed);
 	}
 
-	/// <summary>Dispose後にComplete()を呼ばなかった場合は行を残す(異常終了とみなす方針)ことの確認</summary>
+	/// <summary>Dispose後にCompleteを呼ばなかった場合は行を残す(異常終了とみなす方針)ことの確認</summary>
 	[TestMethod]
 	public void Dispose_Completeを呼ばずに破棄すると行は残る() {
 		var target = new ManualLockDb(Db);

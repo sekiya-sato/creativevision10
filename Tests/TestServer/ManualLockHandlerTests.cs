@@ -21,8 +21,7 @@ namespace Tests.CvServer;
 /// マニュアル排他制御の強制クリア（<c>Msg061_ManualLockStatus</c>/<c>Msg062_ManualLockClear</c>）を
 /// <see cref="CoreService"/>のハンドラ層越しに叩く単体テスト（Step T3）。
 /// <para>
-/// 正典は `Doc/test/2026-09-07_マニュアル排他制御_テスト計画.md` E-03（サーバー側）・E-09（サーバー側）、
-/// `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.5.3。
+/// 強制クリアは排他行Id・Vdu・必須理由を検査し、成功時だけ履歴を記録して行を削除する。
 /// </para>
 /// <para>
 /// <see cref="ManualLockClearTests"/>は<see cref="ManualLockDb"/>を直接呼ぶテストであり、
@@ -267,7 +266,7 @@ public class ManualLockHandlerTests {
 	public async System.Threading.Tasks.Task Msg062_クライアントは実行社員を申告できない() {
 		// CvMsg.DataMsg はハンドラ(HandleManualLockClear)側で一切参照されない
 		// (CvServer/Services/HandlerClass.cs の該当メソッドは request からIDを読み取らず、
-		// ResolveLoginShainId() のみで実行社員を決めている)。
+		// ResolveLoginShainId のみで実行社員を決めている)。
 		// 要求DTOには社員Idを積む余地が構造上無いため、代わりにJWTを差し替えると
 		// 記録される実行社員が変わることを確認する。
 		SetLoggedInUser(loginId: 1, idShain: 100);
@@ -324,7 +323,7 @@ public class ManualLockHandlerTests {
 	}
 
 	// ==================================================================
-	// Msg062_ManualLockClear: 端末情報の記録（テスト計画§6.1、詳細設計§2.5.3 Step T8）
+	// Msg062_ManualLockClear: 端末情報の記録（テスト計画、Step T8）
 	// ==================================================================
 
 	[TestMethod]
@@ -339,7 +338,7 @@ public class ManualLockHandlerTests {
 
 		Assert.AreEqual(0, response.Code);
 		var history = FetchAllHistories().Single();
-		// 実行社員が判明していても常に端末情報を記録すること(設計書§2.5.3の理由3点)。
+		// 実行社員が判明していても常に端末情報を記録すること(の理由3点)。
 		Assert.IsTrue(history.Memo.Contains("実行社員Id=4321"), $"Memo={history.Memo}");
 		Assert.IsTrue(history.Memo.Contains("IP=192.168.1.10"), $"Memo={history.Memo}");
 		// マシン名・ユーザー名・OSバージョン・MACアドレスは申告値であることが分かる形で記録すること。

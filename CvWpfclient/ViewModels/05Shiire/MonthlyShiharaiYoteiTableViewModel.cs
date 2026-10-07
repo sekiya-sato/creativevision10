@@ -18,7 +18,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// 金額は SummaryKaiShi（支払計算＝月次更新処理の成果物）の当月末残高を使う。
 /// SummaryKaiShi は対象期間のみの集計（繰越なし）なので、当月末残高は対象期間の開始(DayFrom)
 /// より前の全行を SUM(TotalShiire - TotalOut) で積んだ PreviousBalance に当期間の Balance を
-/// 加えて求める（`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// 加えて求める。前残を前月1行だけから取ると、前月に行がない仕入先の繰越を失うため全過去行を積む。
 /// 締め処理を回していない支払日は行が無く空になる。
 /// </summary>
 public partial class MonthlyShiharaiYoteiTableViewModel : Helpers.BaseReportViewModel {
@@ -90,7 +90,7 @@ public partial class MonthlyShiharaiYoteiTableViewModel : Helpers.BaseReportView
 		var having = IsActiveOnly ? "HAVING SUM(balance) != 0" : "";
 
 		// 予定金額は当月末残高（PreviousBalance + Balance）。PreviousBalance は対象期間の開始(DayFrom)
-		// より前の全行を SUM(TotalShiire - TotalOut) で積む（設計書 2.3）。行ごとに DayFrom が異なるため
+		// より前の全行を SUM(TotalShiire - TotalOut) で積む。行ごとに DayFrom が異なるため
 		// 仕入先＋DayFrom の相関スカラサブクエリにする。
 		var sql = $@"
 WITH scheduled AS (

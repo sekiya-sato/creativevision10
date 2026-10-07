@@ -19,7 +19,7 @@ namespace Tests.CvServer;
 /// 配分の洗い替え保存（<see cref="HaibunSaveParam"/>）を <see cref="CoreService"/> のハンドラ層越しに叩く単体テスト。
 /// <para>
 /// 削除・登録・引当の引き直しが1トランザクションで行われ、競合・修正不可・入力違反が1件でもあれば
-/// 何も書かれないことを固定する。一括保存の採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8。
+/// 何も書かれないことを固定する。複数SKUの洗い替え・引当再計算は1トランザクションで成功／失敗を揃える。
 /// <see cref="ManualLockHandlerTests"/> と同じ作法でフェイク依存の <see cref="CoreService"/> を直接作る。
 /// </para>
 /// </summary>

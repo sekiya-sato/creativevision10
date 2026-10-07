@@ -574,7 +574,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		var fullTokui = await AppGlobal.LogicGetMasterById<MasterTokui>(tokui.Id);
 		if (fullTokui != null) {
 			CurrentEdit.Rate = fullTokui.RateProper;
-			// 税計算単位・消費税端数処理は伝票作成時点のマスタ値をスナップショットする(Doc/spec/2026-09-01 2.2)。
+			// 税計算単位・消費税端数処理は伝票作成時点のマスタ値をスナップショットする。
 			// 既存伝票の読込時は上書きしない(このコマンドは取引先を選び直したときにしか呼ばれない)。
 			CurrentEdit.TaxCalcUnit = fullTokui.TaxCalcUnit;
 			CurrentEdit.TaxRounding = fullTokui.TaxRounding;

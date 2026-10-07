@@ -7,7 +7,7 @@ namespace CvDomainLogic;
 /// <summary>
 /// HHTデータ更新（<see cref="TranVulcanHht"/> → Tran系各テーブル）。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
+/// 未変換(VdCnvDate=0)を再試行対象とし、前回エラーを消して再判定する。変換済みは対象外とし、重複受信を伝票生成前に排除する。
 /// 画面(HHTデータ更新)から <c>Msg058_HhtDataUpdate</c> で呼ばれる。
 /// </para>
 /// <para>
@@ -45,8 +45,8 @@ public partial class HhtProcess {
 	/// <summary><see cref="TranVulcanHht.ErrorMsg"/> の桁数上限</summary>
 	private const int ErrorMsgMaxLength = 1000;
 
-	// マニュアル排他制御（設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4）。
-	// 一連処理名は設計書§2.4の表の値をそのまま使う。予想処理秒数は具体値の定めが無いため、
+	// HHT取込反映は原価・棚卸・再集計と共通の全体排他を取り、伝票生成と集計副作用の競合を防ぐ。
+	// 一連処理名は下記の定数を使う。予想処理秒数は具体値の定めが無いため、
 	// HHTからTran系複数テーブルへ展開する規模を踏まえて見積もった値。
 	/// <summary>HHT取込反映(<see cref="UpdateVulcan2TranAsyncStream"/>)</summary>
 	private const string ProcessNameHhtUpdate = "HHT取込反映";

@@ -576,7 +576,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		var fullTenpo = await AppGlobal.LogicGetMasterById<MasterTokui>(tokui.Id);
 		if (fullTenpo != null) {
 			// 店舗売上はTaxCalcUnitを持たず常に伝票単位。端数処理は伝票作成時点のマスタ値をスナップショットする
-			// (Doc/spec/2026-09-01 2.2 / 3.7)。既存伝票の読込時は上書きしない(このコマンドは店舗を選び直したときにしか呼ばれない)。
+			// 。既存伝票の読込時は上書きしない(このコマンドは店舗を選び直したときにしか呼ばれない)。
 			CurrentEdit.TaxRounding = fullTenpo.TaxRounding;
 		}
 		else {

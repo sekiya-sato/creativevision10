@@ -31,7 +31,7 @@ public partial class ExDatabase : Database {
 	/// もう1つはこのクラスの <c>ExecuteDialect</c> / <c>FetchDialect</c> / <c>TranslateDialect</c> で、
 	/// CvDomainLogic のJSON配列再構築とUPSERTがここを通る。
 	/// これら以外のSQLは変換器を通さず、必要な箇所へDB別分岐を置く。
-	/// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` を参照する。
+	/// SQLiteを正典とし、接続先の方言に応じた構文変換とQueryKeyによる個別上書きを使う。
 	/// </para>
 	/// </summary>
 	public virtual Sql.ISqlDialect Dialect => Sql.PassThroughSqlDialect.Instance;

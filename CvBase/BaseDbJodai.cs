@@ -120,7 +120,7 @@ public enum EnumJodaiPriceMethod : int {
 /// <para>
 /// JSON列が大きくなるため、<b>伝票一覧のSQLでは Jcond/Jshop/Jmeisai を SELECT句に含めないこと</b>。
 /// 件数表示には <see cref="ShopCnt"/>/<see cref="MeisaiCnt"/>/<see cref="ExpandCnt"/> を使う。
-/// 設計の経緯は `.omo/20260811_jodai_table_design_plan.md` を参照。
+/// 展開済み価格はDerivedJodaiへ保持し、元伝票の更新・取消で再展開する。
 /// </para>
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]
@@ -377,7 +377,7 @@ public sealed partial class TranJodai : BaseDbClass, IDerivedOrigin {
 	/// 承認社員データ（時点値）
 	/// <para>
 	/// Tran系のV*列であり、伝票時点の監査値である。マスタが改名されても伝播しないため、
-	/// <see cref="CvDomainLogic.MasterCascadeDb"/>.VRulesへは登録しない（AGENTS.md 4章）。
+	/// <see cref="CvDomainLogic.MasterCascadeDb"/>.VRulesへは登録しない（伝票時点の名称を保持し、マスタ改名を伝播しない）。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]

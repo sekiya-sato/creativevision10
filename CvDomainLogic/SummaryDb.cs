@@ -28,9 +28,9 @@ public class SummaryDb {
 	}
 
 	// ==================================================================
-	// マニュアル排他制御（設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4）
+	// マニュアル排他制御。原価・棚卸・HHTと同時更新させず、全体で1つの再集計／計算を実行する。
 	// ==================================================================
-	// 一連処理名は設計書§2.4の表の値をそのまま使う。予想処理秒数は具体値の定めが無いため、
+	// 一連処理名は下記の定数を使う。予想処理秒数は具体値の定めが無いため、
 	// 処理の規模（全期間・全テーブルを走るか、単一集計かの桁の違い）から見積もった値であり、
 	// 実測に応じて調整してよい（監視タスクの異常判定は max(ExpectedDuration×2, 15分) のため、
 	// 過小でも15分の下限がある）。
@@ -75,7 +75,7 @@ public class SummaryDb {
 	}
 
 	// ---- 税額集計 (請求計算・支払計算・売掛/買掛月次で共通) --------------------------------
-	// 仕様は `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` の 3.3〜3.6 を参照する。
+	// 伝票単位は確定税額を符号付きで集計する。請求単位は税区分別課税対象額の合計を、取引先の丸めで1回だけ税額にする。
 
 	/// <summary>
 	/// 税区分1-3の (現行税率, 新税率適用開始日, 新税率) を <see cref="MasterSysman.Jsub"/> から読み込む。
@@ -308,7 +308,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 		}
 	}
 	/// <summary>
-	/// 年月指定でTranテーブルからSummaryStockを更新する(レコード CUD) SummaryRealStockは後でCalcSummaryRealStock()で一括更新する必要がある
+	/// 年月指定でTranテーブルからSummaryStockを更新する(レコード CUD) SummaryRealStockは後でCalcSummaryRealStockで一括更新する必要がある
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <param name="param"></param>
@@ -354,7 +354,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// 配分(<see cref="TranHaibun"/>)の追加・修正・削除に伴い、対象キーの引当数を <see cref="TranHaibun"/> から引き直す。
 	/// <para>
 	/// 差分の加減算をせずキー単位で引き直すため、修正時は修正前と修正後のキーを両方渡せば、
-	/// 呼び出し順やDB更新との前後関係に関係なく正しい値になる（<c>CalcReserveQtyAll()</c> の結果と必ず一致する）。
+	/// 呼び出し順やDB更新との前後関係に関係なく正しい値になる（<c>CalcReserveQtyAll</c> の結果と必ず一致する）。
 	/// 引当数は <see cref="TranHaibun"/> だけが源泉なので、Tran系伝票の在庫計算とは独立している。
 	/// 呼び出し元(<c>HandlerClass</c>)が張ったトランザクション内で実行される前提。
 	/// </para>
@@ -415,7 +415,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// <para>
 	/// 仕入配分(区分0)は入荷前の振り分けなので、数量側(<see cref="ReserveQtySumExpr"/>)で入荷済み数
 	/// <see cref="TranHaibun.ArrivedSu"/> だけを積む（入荷前は0）。Step 4 以前は区分0を条件で一律に除外していた。
-	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md` 3.3 を参照する。
+	/// 未入荷数量の先取りを防ぐため、区分0を除外するのではなく、供給済みのArrivedSuだけを引き当てる。
 	/// </para>
 	/// </summary>
 	public static readonly string ReserveTargetWhere = "h.EndFlag = 0";
@@ -428,7 +428,7 @@ WHERE SumMonth BETWEEN @0 AND @1
 	/// <c>Su = JitsuSu + ShortSu</c> が成立する。決定 D8 で確定と同時に完了(EndFlag=1)になるため、
 	/// 確定済みの数量を積むのは旧2段階方式で残った「確定済み・未出荷」の行だけである。
 	/// <c>AllocationRules.ReservedQty</c> は確定時の在庫検査でこの式と同じ値を使う。
-	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2.2c を参照する。
+	/// 旧2段階方式の確定済み・未出荷行はJitsuSuを引き当て、現在の即時完了方式では確定済み行を対象外にする。
 	/// </para>
 	/// </summary>
 	public const string ReserveQtySumExpr = "SUM(CASE WHEN h.Kubun = 0 THEN h.ArrivedSu WHEN ifnull(h.KakuteiDay, '') = '' THEN h.Su ELSE h.JitsuSu END)";
@@ -508,12 +508,12 @@ SET ReserveQty = excluded.ReserveQty, Vdu = {vdate}
 ";
 	private int ExecuteAndCounts(string sql, object[] args, string operationName, string targetName, string period) {
 		var updatedCount = _db.ExecuteDialect(sql, args);
-		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
+		// var updatedCount = _db.FirstOrDefault<int>("SELECT changes AS updated_count");
 		return updatedCount;
 	}
 	/// <summary>
 	/// 在庫集計(<see cref="CreateSummaryStockSql"/>・<see cref="CreateRealStockSql"/>)のWHERE句へ足す
-	/// 「消化仕入は在庫加算しない」条件(原価4項目 詳細設計§4.5「在庫集計はIsStock=1を1条件追加する」)。
+	/// 「消化仕入は在庫加算しない」条件(「在庫集計はIsStock=1を1条件追加する」)。
 	/// <para>
 	/// 両関数は<c>Tran00Uriage</c>/<c>Tran01Tenuri</c>/<c>Tran05Ido</c>/<c>Tran61Chosei</c>など
 	/// <c>IsStock</c>列を持たないテーブルからも呼ばれるため、無条件には追加できない。
@@ -568,10 +568,10 @@ SET Su = Su + excluded.Su, vdu = {vdate},
 ";
 	}
 	private string CreateRealStockSql(string tableName, string idSoko, Tuple<int, int, int, int> calcFlag, long vdate, string whereClause) {
-		// 設計書§4.5は年月在庫(CreateSummaryStockSql)にしかIsStock除外を明記していないが、現在庫
+		// は年月在庫(CreateSummaryStockSql)にしかIsStock除外を明記していないが、現在庫
 		// (SummaryRealStock)も同じ条件を入れる。U-04「消化仕入は在庫・総平均原価から除外」の目的は
 		// 現在庫にも当然効くべきであり、年月在庫だけ除外すると現在庫との集計が乖離するため
-		// （設計書の記述漏れ。Step5実装判断として報告する）。
+		// （消化仕入による在庫の二重加算を防ぐため）。
 		var isStockWhere = CreateIsStockWhereClause(tableName);
 		return $@"
 INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
@@ -608,7 +608,7 @@ SET Su = Su + excluded.Su, vdu = {vdate}
 	/// <param name="DateYyyymm"></param>
 	/// <returns></returns>
 	public int CalcSummaryRealStock(string DateYyyymm) {
-		// DateTime.Now.ToDtStrDate2().Substring(0, 6)
+		// DateTime.Now.ToDtStrDate2.Substring(0, 6)
 		var cnt = 0;
 		// 後続のInsertと1つのコマンドで実行するので、文の区切り(;)が必須
 		const string deleteSql = "DELETE FROM SummaryRealStock;";
@@ -892,8 +892,8 @@ WHERE SumMonth <= @0;
 	/// ため集計対象にできない、というだけのガードであり、売掛・買掛・請求・支払の再計算では
 	/// 期首年月より前の集計行を削除・上書きしない。期首残高行は「期首直前の1期間の実績行」として
 	/// 置かれ、繰越はテーブルに持たず、帳票側の <c>PreviousBalance</c>(<c>SUM(TotalSales - TotalIn)</c> 等)
-	/// に自然に含まれる形で参照される。仕様は
-	/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 4.2 を参照する。
+	/// に自然に含まれる形で参照される。
+	/// 期首前の行は繰越の根拠なので再集計で上書き・削除せず、期首以降の当期間ネットだけを作り直す。
 	/// </para>
 	/// </summary>
 	private string GetFiscalStartDate() {
@@ -912,7 +912,7 @@ WHERE SumMonth <= @0;
 	/// <para>
 	/// 売上は区分(<see cref="EnumUri00"/>)で 売上 / 返品 / 値引 へ、入金は明細の <c>Id_Kin</c> で
 	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。売上・返品・値引は税抜 <c>KingakuTotal</c> の絶対値内訳とし、
-	/// 合計は内訳と税から算出する(<c>Total</c>は税込のため使うと消費税が二重計上になる。仕様3.8)。区分99(その他売上)は
+	/// 合計は内訳と税から算出する(<c>Total</c>は税込のため使うと消費税が二重計上になる。)。区分99(その他売上)は
 	/// 売上とは別に <c>Sonota</c> 列へ分離集計し、<c>TotalSales</c> へ加算する(請求残<see cref="SummaryUriSei"/>と同じ扱い)。
 	/// </para>
 	/// <para>
@@ -1512,7 +1512,7 @@ FROM calculated AS c;
 	/// <para>
 	/// 仕入は区分(<see cref="EnumShiire"/>)で 仕入 / 返品 / 値引 へ、支払は明細の <c>Id_Kin</c> で
 	/// 現金 / 振込手数料 / 手形 / 相殺 / その他 へ振り分ける。仕入・返品・値引は税抜 <c>KingakuTotal</c> の絶対値内訳とし、
-	/// 合計は内訳と税から算出する(<c>Total</c>は税込のため使うと消費税が二重計上になる。仕様3.8)。区分99(その他仕入)は
+	/// 合計は内訳と税から算出する(<c>Total</c>は税込のため使うと消費税が二重計上になる。)。区分99(その他仕入)は
 	/// 仕入とは別に <c>Sonota</c> 列(<see cref="Tran03Shiire"/>ぶんのみ)へ分離集計し、<c>TotalShiire</c> へ加算する
 	/// (売掛側<see cref="CalcSummaryUriKake"/>と同じ扱い)。<see cref="Tran02Material"/>の区分99は
 	/// この <c>Sonota</c> とは別物であり、丸めずそのまま <c>Tax1</c> へ全額加算する特殊処理(A-6)を維持する。

@@ -16,7 +16,7 @@ namespace CvWpfclient.ViewModels._31Monthly;
 /// 棚卸開始処理・棚卸確定処理の共通部分。
 /// <para>
 /// 旧CV.netの棚卸7段階のうち、システムが行う「4. 棚卸開始処理」と「7. 棚卸確定処理」に対応する。
-/// 仕様は `Doc/spec/2026-09-05_倉庫別棚卸日_詳細設計.md` を参照する。
+/// 倉庫別の棚卸日を基準に開始・確定し、日付未設定は月末へ補完する。再確定は前回調整を反転・削除して作り直す。
 /// </para>
 /// <para>
 /// 棚卸日は店舗ごとに <c>Tran60TanaDate.TanaDay</c> で設定されているため、画面は店舗一覧を出して
@@ -274,7 +274,7 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 				Flag = TargetFlag,
 				DataType = typeof(StocktakeParameter),
 				// 基準日は店舗ごとに Tran60TanaDate.TanaDay から解決される。yyyymm は棚卸日が
-				// 未設定の店舗に使うフォールバック計上月として渡す(設計書2.1)。
+				// 未設定の店舗に使うフォールバック計上月として渡す。
 				DataMsg = Common.SerializeObject(
 					new StocktakeParameter(yyyymm, IdShain, [.. targetIds], AlignMisdated)),
 			};

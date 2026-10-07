@@ -11,15 +11,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Tests.CvServer;
 
 /// <summary>
-/// 原価4項目（詳細設計 `Doc/spec/2026-09-05_原価4項目_詳細設計.md` §11.3）の通しUAT。
-/// 設計書§11.3の7手順を1本の自動テストとして固定する。
+/// 消化仕入→最終仕入原価→総平均原価→評価替えの結果と月次状態を通して確認するUAT。
+/// シード・実行・再実行・状態照会・スナップショット比較を1本の自動テストで確認する。
 /// <para>
 /// SQLiteインメモリDBの作成作法は<see cref="CostUpdateDbCostTests"/>・<see cref="CostUpdateDbConsumptionTests"/>に合わせる。
-/// 原価方式は総平均原価（<c>CostMethod=2</c>）で通す（設計書§3.6: 諸掛が原価に効くのはこちらのため）。
+/// 原価方式は総平均原価（<c>CostMethod=2</c>）で通す（諸掛が原価に効くのはこちらのため）。
 /// </para>
 /// <para>
 /// 期待値はすべてテスト内に手計算した定数として書く（実装の関数を呼んで期待値を作らない）。
-/// 失敗した場合はテストの期待値ではなく実装が設計書どおりかを疑うこと。
+/// 失敗した場合はテストの期待値ではなく実装の計算規則・符号・更新順と、独立した期待値の根拠を確認すること。
 /// </para>
 /// </summary>
 [TestClass]
@@ -86,7 +86,7 @@ public class CostFourItemsEndToEndTests {
 		Db.Execute($"CREATE UNIQUE INDEX TranGenka_uk1 ON {nameof(TranGenka)} (SumMonth, Id_Shohin, CostMethod, ChangeKind)");
 		Db.Execute("CREATE UNIQUE INDEX SummaryStock_unq1 ON SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz)");
 		Db.Execute("CREATE UNIQUE INDEX SummaryRealStock_unq1 ON SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz)");
-		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// 全体排他が
 		// ApplyConsumptionPurchases/ApplyTotalAverageCostで使う。
 		Db.CreateTable(typeof(SysSequence), true, false);
 		Db.CreateTable(typeof(SysHistAutoexec), true, false);
@@ -162,14 +162,14 @@ public class CostFourItemsEndToEndTests {
 
 	private int TankaGenkaOf(long idShohin) => Db.FirstOrDefault<MasterShohin>("WHERE Id=@0", idShohin)!.TankaGenka;
 
-	/// <summary>原価4処理が触る全テーブルのスナップショット(§11.3手順7の冪等性比較に使う)。</summary>
+	/// <summary>原価4処理が触る全テーブルのスナップショット(手順7の冪等性比較に使う)。</summary>
 	private sealed record DbSnapshot(
 		string TranGenka, string ConsumptionLink, string GeneratedShiire, string ShohinTankaGenka, string SummaryStock, string SummaryKaiKake);
 
 	/// <summary>
 	/// 原価4処理が触る全テーブルを、比較に関係しない揮発列(Id・Vdc・Vdu・作成日時等)を除いて
 	/// 正規化した文字列へシリアライズする。2回の実行結果をこの文字列で単純比較し、1文字でも
-	/// 違えば「差分あり」とみなす(設計書§11.3手順7「全テーブル差分が0件になることを確認する」)。
+	/// 違えば「差分あり」とみなす(手順7「全テーブル差分が0件になることを確認する」)。
 	/// </summary>
 	private DbSnapshot TakeSnapshot() {
 		string Rows<T>(string orderBy, Func<T, string> project) where T : new() =>
@@ -178,7 +178,7 @@ public class CostFourItemsEndToEndTests {
 		var tranGenka = Rows<TranGenka>("SumMonth,Id_Shohin,ChangeKind", r =>
 			$"{r.SumMonth}/{r.Id_Shohin}/{r.CostMethod}/{r.ChangeKind}/{r.BeforeCost}/{r.AfterCost}/{r.PurchaseQty}/{r.PurchaseAmount}/{r.SundryAmount}/{r.EffectiveDay}");
 		// GeneratedShiireIdは含めない: ApplyConsumptionPurchasesは毎回DeleteExistingGenerated→InsertGeneratedで
-		// 対象期間の生成仕入を作り直す設計(設計書§4.6)のため、内容が完全に同一でも自動採番Idは再実行のたびに
+		// 対象期間の生成仕入を作り直す設計のため、内容が完全に同一でも自動採番Idは再実行のたびに
 		// 変わる。それ自体は冪等性違反ではない(生成仕入の内容はgeneratedShiireスナップショット側で別途比較する)。
 		var link = Rows<TranConsumptionPurchaseLink>("SourceType,SourceId,SourceLineNo", r =>
 			$"{r.SourceType}/{r.SourceId}/{r.SourceLineNo}/{r.Id_Shohin}/{r.Id_Shiire}/{r.GeneratedLineNo}");
@@ -193,7 +193,7 @@ public class CostFourItemsEndToEndTests {
 	}
 
 	/// <summary>
-	/// 設計書§7推奨順(消化仕入→諸掛確認→在庫Rebuild→原価更新)の1サイクルを実行する。
+	/// 推奨順(消化仕入→諸掛確認→在庫Rebuild→原価更新)の1サイクルを実行する。
 	/// 在庫Rebuildは<see cref="SummaryDb.CalcTran2SummaryStock"/>(1伝票ずつの差分加算、伝票保存時の
 	/// リアルタイム更新用)ではなく、<see cref="SummaryDb.SummaryAllAsyncStream"/>(対象期間のSummaryStockを
 	/// 一度削除してTranテーブルから再構築する、真の「Rebuild」)を使う。前者は複数回実行すると
@@ -216,7 +216,7 @@ public class CostFourItemsEndToEndTests {
 		Assert.AreEqual(0, sundryPreview.ErrorCount, "諸掛確認でエラーが検出された");
 
 		// 3) 在庫Rebuild: 対象期間のSummaryStock/SummaryRealStockをTranテーブルから再構築する
-		//    (消化仕入で生成されたTran03ShiireはIsStock=0のためC-07のとおり積まれない)
+		//    (消化仕入で生成されたTran03ShiireはIsStock=0のため在庫集計に積まれない)
 		await foreach (var _ in summaryDb.SummaryAllAsyncStream(new CalcDateTermParameter(targetMonth, targetMonth))) {
 			// 進捗イベントは使わない。列挙を最後まで回すことが目的。
 		}
@@ -259,7 +259,7 @@ public class CostFourItemsEndToEndTests {
 		// 返品(売上返品): NORMAL 1個×8,000円
 		InsertUriage("20260920", 20, idSoko: 1, idNormal, su: 1, tanka: 8000);
 
-		// 手順4: 消化仕入→諸掛確認→在庫Rebuild→原価更新(設計書§7推奨順)を実行する
+		// 手順4: 消化仕入→諸掛確認→在庫Rebuild→原価更新(推奨順)を実行する
 		await RunFullCostCycle("202609", idShain, "E2E1");
 
 		// ------------------------------------------------------------------
@@ -297,7 +297,7 @@ public class CostFourItemsEndToEndTests {
 		Assert.AreEqual(1500, kaikake[0].Shiire);
 
 		// 在庫(SummaryStock, 202609のNORMAL): 純増減=購入20-返品5-売上6+売上返品1=+10
-		// (消化仕入で生成された仕入はIsStock=0のため在庫Rebuildをかけても積まれない。設計書§4.3、C-07)
+		// (消化仕入で生成された仕入はIsStock=0のため在庫Rebuildをかけても積まれない。、C-07)
 		var normalStock202609 = Db.FirstOrDefault<SummaryStock>("WHERE SumMonth=@0 AND Id_Shohin=@1 AND Id_Soko=1", "202609", idNormal);
 		Assert.IsNotNull(normalStock202609, "NORMALの202609在庫行が作られていない");
 		Assert.AreEqual(10, normalStock202609!.Su);
@@ -407,7 +407,7 @@ public class CostFourItemsEndToEndTests {
 
 		// 原価4処理が触る全テーブル(TranGenka/TranConsumptionPurchaseLink/生成Tran03Shiire/
 		// MasterShohin.TankaGenka/SummaryStock/SummaryKaiKake)を、Id・Vdc・Vdu等の揮発列を除いて
-		// 正規化した文字列として比較する。1文字でも異なれば差分ありとみなす(設計書§11.3手順7)。
+		// 正規化した文字列として比較する。1文字でも異なれば差分ありとみなす(手順7)。
 		Assert.AreEqual(snapshotAfterFirstRun.TranGenka, snapshotAfterSecondRun.TranGenka, "TranGenkaに差分がある(冪等性違反)");
 		Assert.AreEqual(snapshotAfterFirstRun.ConsumptionLink, snapshotAfterSecondRun.ConsumptionLink, "TranConsumptionPurchaseLinkに差分がある(冪等性違反)");
 		Assert.AreEqual(snapshotAfterFirstRun.GeneratedShiire, snapshotAfterSecondRun.GeneratedShiire, "生成Tran03Shiireに差分がある(冪等性違反)");

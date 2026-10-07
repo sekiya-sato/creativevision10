@@ -5,23 +5,19 @@ using CvBase.Share;
 using CvBaseSqlite;
 
 namespace UatVm.Scenarios;
-
-/// <summary>
-/// テストケースE-13（`Doc/test/2026-09-07_マニュアル排他制御_テスト計画.md` §4.2）の自動化版。
-/// 手順は手動観測手順書 `Doc/test/2026-09-07_マニュアル排他制御_手動観測手順.md` §6 のシナリオ読み替え。
-/// </summary>
+/// <summary>サーバ再起動を挟む監視履歴の観測シナリオ。</summary>
 /// <remarks>
 /// <para>
 /// 監視タスクの「前回状態」は <c>CvServer/Services/SchedulerService.cs:129</c> の
 /// <c>_manualLockMonitorState</c>（DIシングルトンのインスタンスフィールド）にしか無く、
 /// CvServerを再起動すると失われる。行はDBに残るため、再起動後の最初のtickでは
 /// 「前回状態なし＋行あり」となり <c>ManualLockMonitor.Evaluate</c> は2b（新規検知）を返す。
-/// 設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §3.7 は「ログは必ず2b→2fか
-/// 2b→2eの対になる」と定めているが、再起動を跨ぐと2b→2bになり対が崩れる可能性がある。
+/// 監視の履歴は検知(2b)→消失(2f)または異常終了(2e)を対にする。ただし前回状態を失う再起動直後は
+/// 同じ排他行を新規検知し直す可能性がある。現行の孤立検知補完はManualLockDb.CompleteOrphanedMonitorHistoryで行う。
 /// </para>
 /// <para>
-/// これは製品コードのFAILではなく「設計の穴」として観測・記録するのが本ケースの位置づけである
-/// （テスト計画書§4.2 E-13の原文どおり）。
+/// このケースは再起動を挟む監視の状態消失と履歴の変化を観測する
+/// （通常の単一プロセス内の検知／消失とは分けて確認する）。
 /// </para>
 /// <para>
 /// <see cref="UatVm.CvServerProcess"/>の<c>--manage-server</c>はCvServerを子プロセスとして1回起動し、
@@ -77,7 +73,7 @@ public static class ManualLockRestartScenario {
 		var baselineId = (await FetchMonitorHistAsync(session)).Select(x => x.Id).DefaultIfEmpty(0).Max();
 
 		// ExpectedDuration=3600のときの閾値はmax(3600*2,15分)=120分。手順の途中(2段目への引き継ぎを含む)で
-		// 誤って解放されないようにする（手動観測手順書§6.3手順5と同じ値）。
+		// 誤って解放されないようにする（手順5と同じ値）。
 		var lockId = await InsertFakeLockRowAsync(LockTableName, "観測用", expectedDurationSeconds: 3600, vduAgoSeconds: 0,
 			memo: "E-13(1段目): CvServer再起動前後の監視ログ対応関係の確認用（直接INSERT）");
 		session.Note("manuallockrestart1 テスト用排他行を直接INSERT", new { lockId });
@@ -96,7 +92,7 @@ public static class ManualLockRestartScenario {
 
 		if (session.Check("manuallockrestart1 監視ログに2b(検知)が記録される", found)) {
 			// 2段目が「このシナリオ開始時点の最大Id」を基準点にできるよう、その時点の最大Idと
-			// 排他行のIdをNoteのdataへ証跡として残す（指示書のとおり）。
+			// 排他行のIdをNoteのdataへ証跡として残す。
 			var handoffBaselineId = (await FetchMonitorHistAsync(session)).Select(x => x.Id).DefaultIfEmpty(0).Max();
 			session.Note("manuallockrestart1 引き継ぎ情報(2段目用)", new HandoffData(lockId, handoffBaselineId));
 		}
@@ -105,7 +101,7 @@ public static class ManualLockRestartScenario {
 				+ "S4(cron・実行フラグ)がCvServer起動前に反映されていたか確認してください。");
 		}
 
-		// 排他行は削除しない（2段目で使う。指示書のとおり）。
+		// 排他行は削除しない（再起動後の2段目で使う）。
 		session.Note("case:終了", "manuallockrestart1 完了（排他行は次段のため残す）");
 	}
 
@@ -127,7 +123,7 @@ public static class ManualLockRestartScenario {
 		session.Note("manuallockrestart2 1段目が残した排他行を確認", new { lockId, rows[0].TableName });
 
 		try {
-			// 基準点は「このシナリオ開始時点の最大Id」とする（1段目の基準点ではなく、指示書のとおり）。
+			// 基準点は「このシナリオ開始時点の最大Id」とする（各段の新規履歴だけを観測するため）。
 			var baselineId = (await FetchMonitorHistAsync(session)).Select(x => x.Id).DefaultIfEmpty(0).Max();
 
 			bool IsNewDetected(SysHistAutoexec x) =>
@@ -174,7 +170,7 @@ public static class ManualLockRestartScenario {
 	// ==================================================================
 
 	private sealed record AutoExecConfig(string CronVal, string EnabledVal) {
-		/// <summary>手動観測手順書§6.2のとおりS4を毎分実行へ変更済みか（ManualLockScenarioと同じ判定）。</summary>
+		/// <summary>S4を毎分実行へ変更済みか（ManualLockScenarioと同じ判定）。</summary>
 		public bool IsEveryMinute {
 			get {
 				var minuteField = CronVal.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();

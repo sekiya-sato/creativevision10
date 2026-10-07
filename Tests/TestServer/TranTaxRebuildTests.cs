@@ -12,7 +12,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// 明細別消費税の計算（軽減税率の混在・非課税・税率切替日・返品符号）。
-/// 仕様は `Doc/spec/2026-08-25_明細別消費税計算_詳細設計.md` の 7章。
+/// 既存伝票を税区分別に再計算し、軽減税率混在・マスタ変更・非課税でもヘッダと明細の税額を一致させる。
 /// </summary>
 [TestClass]
 public class TranTaxRebuildTests {
@@ -177,7 +177,7 @@ public class TranTaxRebuildTests {
 		// CvAsset.Common.CompareYmd は ymd2 が初期値(19010101)以下なら必ず -1 を返す（未設定扱い）。
 		// 旧CVnet実データの Id=3 は TaxRate=15 / DateFrom=19010101 / TaxNewRate=0 で、
 		// この仕様により TaxNewRate=0 は一切効かず常に 15% として解決される。
-		// 15% は実在しない税率なので、移行後に Id=3 を使うなら税率定義を直すこと（設計書 3.6）
+		// 15% は実在しない税率なので、移行後に Id=3 を使うなら税率定義を直すこと
 		Assert.AreEqual(15, TaxRateResolver.ResolveTaxRatePercent(CreateSysman(), 3, "20260825"));
 		Assert.AreEqual(15, TaxRateResolver.ResolveTaxRatePercent(CreateSysman(), 3, "19001231"));
 	}
@@ -195,7 +195,7 @@ public class TranTaxRebuildTests {
 
 /// <summary>
 /// <see cref="TranTaxRebuildDb.RebuildAll"/>（明細別消費税へ移行するための一括再計算）の検証。
-/// 仕様は `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` の 3.3/3.4/3.6 と 7章。
+/// 伝票単位は税区分ごとに丸め、請求単位は伝票税額を0にして課税対象額だけを残す規則を固定する。
 /// </summary>
 [TestClass]
 public class TranTaxRebuildDbTests {

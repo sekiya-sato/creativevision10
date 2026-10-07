@@ -12,7 +12,7 @@ namespace Tests.CvServer;
 /// <summary>
 /// HHTデータ更新（<see cref="HhtProcess.UpdateVulcan2Tran"/>）の変換規則を固定する。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md`。
+/// HHT一次データのマスタ解決・JAN照合・重複排除・伝票生成・再試行と在庫集計の副作用を確認する。
 /// 実DB(server-user163.db)のHHTデータは商品・店舗の採番空間がマスタと一致しないため、
 /// 正常系はここでテスト用マスタを作って検証する（同ドキュメント 13-2 / 14.3）。
 /// </para>

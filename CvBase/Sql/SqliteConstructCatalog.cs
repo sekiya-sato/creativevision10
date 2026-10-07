@@ -50,7 +50,7 @@ public sealed record SqliteConstruct(string Id, string Keyword, SqliteConstructC
 /// <summary>クライアントSQLに現れるSQLite固有構文の目録</summary>
 public static class SqliteConstructCatalog {
 
-	/// <summary>目録本体。実測インベントリ (.omo/2026-08-25_sql_dialect_server_absorption_and_migration_cost.md §2) に基づく。</summary>
+	/// <summary>目録本体。SQLite固有構文と、方言変換・個別上書きの対応状況を保持する。</summary>
 	public static IReadOnlyList<SqliteConstruct> All { get; } = [
 		new("A01-Ifnull", "ifnull", SqliteConstructCategory.FunctionMapping,
 			"PGは COALESCE。MariaDBは同名で可"),

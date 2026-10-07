@@ -586,7 +586,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		shiireLeadTimeDays = fullShiire.LeadTimeDays;
 		CurrentEdit.Rate = fullShiire.RateProper;
 		// 発注はTaxCalcUnitを持たず常に伝票単位。端数処理は伝票作成時点のマスタ値をスナップショットする
-		// (Doc/spec/2026-09-01 2.2)。既存伝票の読込時は上書きしない(このコマンドは仕入先を選び直したときにしか呼ばれない)。
+		// 。既存伝票の読込時は上書きしない(このコマンドは仕入先を選び直したときにしか呼ばれない)。
 		CurrentEdit.TaxRounding = fullShiire.TaxRounding;
 		RecalcNouhinDay();
 		// 端数処理が変われば税額が変わる。差し替え後の値がたまたま同値だと

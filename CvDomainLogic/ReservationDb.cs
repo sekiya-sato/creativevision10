@@ -28,7 +28,7 @@ public enum ReservationOutcome {
 /// <para>
 /// どれも <see cref="TranHaibun.EndFlag"/>=1 にして引当を引き直す。取消・期限切れの取置は欠品(<c>ShortSu = Su</c>)として残す。
 /// 呼び出し元が張ったトランザクション内で実行される前提で、検証に失敗したときは何も書かずに返す。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` 4章を参照する。
+/// 売上変換は店舗×顧客で伝票化し、取消と期限切れは伝票を作らない。POS連携による自動消化はなく、別途POS売上を作ると二重計上になる。
 /// </para>
 /// </summary>
 public class ReservationDb(ExDatabase db) {

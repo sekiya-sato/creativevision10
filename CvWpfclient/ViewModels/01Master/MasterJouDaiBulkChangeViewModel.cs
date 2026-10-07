@@ -35,7 +35,7 @@ namespace CvWpfclient.ViewModels._01Master;
 /// 【重複排除】<see cref="TranJodai.Normalize"/> を登録前に必ず呼ぶ。対象店舗・対象商品が重複すると
 /// 展開時に <see cref="DerivedJodai"/> のユニークキー違反でトランザクションごと失敗する。
 /// </para>
-/// <para>設計は `.omo/20260811_jodai_table_design_plan.md`。</para>
+/// <para>商品マスタの定価は維持し、期間・店舗・明細条件を指定した価格を別に保持する。</para>
 /// </summary>
 public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 

@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Tests.CvServer;
 
 /// <summary>
-/// 消化仕入更新（原価4項目 詳細設計 §4、Step 5）の単体テスト。
+/// 消化仕入更新（Step 5）の単体テスト。
 /// SQLiteインメモリDBの作成作法は<see cref="CostUpdateDbTests"/>・<see cref="SummaryDbTests"/>に合わせる。
 /// </summary>
 [TestClass]
@@ -32,7 +32,7 @@ public class CostUpdateDbConsumptionTests {
 		conn.Open();
 		_db = new ExDatabaseSqlite(conn);
 		_db.KeepConnectionAlive = true;
-		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// 全体排他が
 		// ApplyConsumptionPurchasesで使うため、個々のテストのテーブル準備に関わらずここで作っておく。
 		_db.CreateTable(typeof(SysSequence), true, false);
 		_db.CreateTable(typeof(SysHistAutoexec), true, false);
@@ -128,7 +128,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	/// <summary>店舗売上(<see cref="Tran01Tenuri"/>)を1件登録する。卸売上(<see cref="Tran00Uriage"/>)と同じく
-	/// <see cref="ProcessSalesTable"/>の対象テーブルであることを確認するために使う(設計書§11.1 C-05)。</summary>
+	/// <see cref="ProcessSalesTable"/>の対象テーブルであることを確認するために使う。</summary>
 	private long InsertTenuri(string denDay, int kubun, long idSoko, params Tran99Meisai[] meisai) {
 		var header = new Tran01Tenuri { DenDay = denDay, Id_Soko = idSoko, Jmeisai = [.. meisai], Vdc = 1, Vdu = 1 };
 		header.Kubun = kubun;
@@ -153,7 +153,7 @@ public class CostUpdateDbConsumptionTests {
 	};
 
 	// ------------------------------------------------------------------
-	// 作業A回帰: 在庫除外・買掛計上(§11.5 T-03)
+	// 作業A回帰: 在庫除外・買掛計上( T-03)
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -210,7 +210,7 @@ public class CostUpdateDbConsumptionTests {
 		var idShiire = InsertShiire("SR1");
 		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 0, tankaGenka: 300);
 		var idShain = InsertShain("E1");
-		// 履歴が無い場合はTankaGenkaへフォールバックする(設計書§4.4)
+		// 履歴が無い場合はTankaGenkaへフォールバックする
 		InsertUriage("20260910", 10, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000));
 
 		var rows = new CostUpdateDb(Db).PreviewConsumptionPurchases(NewParam("202609", idShain)).Rows;
@@ -243,7 +243,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 生成単位(§4.5)
+	// 生成単位
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -284,7 +284,7 @@ public class CostUpdateDbConsumptionTests {
 
 	[TestMethod]
 	public void Apply_TenuriSource_GeneratesPurchase_SameAsUriage() {
-		// 設計書§11.1 C-05: 卸売上(Tran00Uriage)だけでなく店舗売上(Tran01Tenuri)も
+		// C-05: 卸売上(Tran00Uriage)だけでなく店舗売上(Tran01Tenuri)も
 		// ProcessSalesTableの対象であることを確認する(既存テストはTran00Uriageしか使っていなかった)。
 		CreateConsumptionTables();
 		var idShiire = InsertShiire("SR1");
@@ -305,7 +305,7 @@ public class CostUpdateDbConsumptionTests {
 	public void Apply_UriageAndTenuriBothInPeriod_EachSourceHeaderGeneratesItsOwnPurchase() {
 		// 生成単位は(SourceType, SourceId(=売上伝票そのもの), Id_ConsignmentShiire)であり、
 		// 卸売上と店舗売上は別のSourceTypeのため、同一商品・同一消化仕入先でもマージされず
-		// 伝票ごとに別々の消化仕入が生成される(設計書§4.5)。
+		// 伝票ごとに別々の消化仕入が生成される。
 		CreateConsumptionTables();
 		var idShiire = InsertShiire("SR1");
 		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 500);
@@ -323,7 +323,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 再実行(§4.6)
+	// 再実行
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -390,7 +390,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 支払計算済みの中断(§4.6)
+	// 支払計算済みの中断
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -411,7 +411,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// エラー時は全件ロールバック(§2.4-2、§10.2)
+	// エラー時は全件ロールバック(-2、)
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -434,7 +434,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// §4.8 エラー条件
+	//  エラー条件
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -535,7 +535,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 月次状態(§2.5.6、B-7)
+	// 月次状態(B-7)
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -611,7 +611,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 原価更新への無効化連鎖(§2.5.6手順3、§7)
+	// 原価更新への無効化連鎖(手順3、)
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -638,7 +638,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 税(§4.7): TaxCalculator.Applyは生成単位(ヘッダ1件)ごとに1回だけ呼ぶ
+	// 税: TaxCalculator.Applyは生成単位(ヘッダ1件)ごとに1回だけ呼ぶ
 	// ------------------------------------------------------------------
 
 	/// <summary>
@@ -657,7 +657,7 @@ public class CostUpdateDbConsumptionTests {
 	public void Apply_SlipTaxUnit_HeaderRounding_DiffersFromPerLineRounding() {
 		CreateConsumptionTables();
 		var idShiire = InsertShiire("SR1");
-		// 仕入先マスタを伝票単位(§4.7 EnumTaxCalcUnit.Slip)にする
+		// 仕入先マスタを伝票単位( EnumTaxCalcUnit.Slip)にする
 		var shiire = Db.Single<MasterShiire>("WHERE Id=@0", idShiire);
 		shiire.TaxCalcUnit = (int)EnumTaxCalcUnit.Slip;
 		Db.Update(shiire);
@@ -724,7 +724,7 @@ public class CostUpdateDbConsumptionTests {
 		Db.Update(shiire);
 		var idShohin = InsertConsumptionShohin("C1", idShiire, EnumConsumptionCalcType.CostBased, tankaShiire: 100);
 		var idShain = InsertShain("E1");
-		// Kubun=20(仕入返品)。数量は正値のまま保持し、正負はヘッダCalcFlagで表現する(設計書§4.3・§4.7末尾)
+		// Kubun=20(仕入返品)。数量は正値のまま保持し、正負はヘッダCalcFlagで表現する(末尾)
 		InsertUriage("20260910", 20, idSoko: 1, NewLine(1, idShohin, su: 1, tanka: 1000));
 
 		var result = new CostUpdateDb(Db).ApplyConsumptionPurchases(NewParam("202609", idShain));
@@ -762,7 +762,7 @@ public class CostUpdateDbConsumptionTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 確認後の変更検知(設計書§2.4-4、2026-09-06追記でStep 9として4処理へ統一)
+	// 確認後の変更検知(-4、2026-09-06追記でStep 9として4処理へ統一)
 	// ------------------------------------------------------------------
 
 	[TestMethod]

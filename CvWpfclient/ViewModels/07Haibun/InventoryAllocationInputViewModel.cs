@@ -18,7 +18,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// 旧CV.netの在庫配分入力に相当し、在庫品配分・店舗出荷依頼・移動指示もこの画面で扱う（決定 D2）。
 /// 作る配分は <see cref="EnumHaibun.Zaiko"/>（<c>RelateNo1=0</c>）で、保存は既存配分の洗い替えを1往復で行う。
 /// 按分の計算は <see cref="AllocationCalculator"/>。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step3_在庫配分入力_詳細設計.md`。
+/// 滞留在庫を抽出し、同数・比率の按分は有効在庫を上限とする。複数SKUの保存と引当再計算はサーバで一括処理する。
 /// </para>
 /// </summary>
 public partial class InventoryAllocationInputViewModel : BaseViewModel {

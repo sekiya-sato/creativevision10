@@ -11,9 +11,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Tests.CvServer;
 
 /// <summary>
-/// <see cref="ManualLockMonitor"/>（判定の純関数、設計書§3.1〜§3.4）の単体テスト。
+/// <see cref="ManualLockMonitor"/>（判定の純関数、）の単体テスト。
 /// 現在時刻を引数で渡せるため、<see cref="DateTime.Now"/>等の実時間に依存させずに判定を固定できる。
-/// 仕様書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §5 のL-08〜L-10、L-12を実装する。
+/// 初回検知・Vdu前進・閾値超過・消失で返す行動と履歴有無を、固定時刻で検証する。
 /// </summary>
 [TestClass]
 public class ManualLockMonitorTests {
@@ -33,7 +33,7 @@ public class ManualLockMonitorTests {
 		};
 
 	// ------------------------------------------------------------------
-	// L-08: 監視: 行なしで何もしない。ログも出さない(§3.1、2a)
+	// L-08: 監視: 行なしで何もしない。ログも出さない(a)
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -47,7 +47,7 @@ public class ManualLockMonitorTests {
 		Assert.IsNull(tick.Subject);
 	}
 
-	/// <summary>行が無く前回状態がある場合は§3.6(2f)。行が無い=2aとは別の分岐であることの確認</summary>
+	/// <summary>行が無く前回状態がある場合は(2f)。行が無い=2aとは別の分岐であることの確認</summary>
 	[TestMethod]
 	public void Evaluate_行が無いが前回状態があれば正常終了とみなす() {
 		var previous = new ManualLockMonitorState(1, "在庫・掛再集計", "買掛集計", 1, Vdc: 100, Vdu: 200, ExpectedDuration: 600);
@@ -58,7 +58,7 @@ public class ManualLockMonitorTests {
 		Assert.AreSame(previous, tick.Subject);
 	}
 
-	/// <summary>行を新規検知した場合(§3.2、2b)。前回状態がnullの場合</summary>
+	/// <summary>行を新規検知した場合(b)。前回状態がnullの場合</summary>
 	[TestMethod]
 	public void Evaluate_前回状態が無く行があれば新規検知としてログを出す() {
 		var row = NewRow(1, "在庫・掛再集計", "買掛集計", 1, vdc: 100, vdu: 200, expectedDuration: 600);
@@ -70,7 +70,7 @@ public class ManualLockMonitorTests {
 		Assert.AreEqual("在庫・掛再集計", tick.Subject!.TableName);
 	}
 
-	/// <summary>行を新規検知した場合(§3.2、2b)。前回状態はあるが別の行(Idが違う)の場合</summary>
+	/// <summary>行を新規検知した場合(b)。前回状態はあるが別の行(Idが違う)の場合</summary>
 	[TestMethod]
 	public void Evaluate_前回と別の行なら新規検知としてログを出す() {
 		var previous = new ManualLockMonitorState(1, "在庫・掛再集計", "買掛集計", 1, Vdc: 100, Vdu: 200, ExpectedDuration: 600);
@@ -84,7 +84,7 @@ public class ManualLockMonitorTests {
 	}
 
 	// ------------------------------------------------------------------
-	// L-09: 監視: Vduが前進していればログを出さない(§3.3、2c)。行も消さない
+	// L-09: 監視: Vduが前進していればログを出さない(c)。行も消さない
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -165,7 +165,7 @@ public class ManualLockMonitorTests {
 
 	// ------------------------------------------------------------------
 	// Step T9(2026-09-07: 閾値条件を撤去): ShouldCloseOrphanedDetection(純関数)。
-	// 再起動を跨いで孤立した2bへの補完記録が必要かどうかの判定(設計書§3.7「再起動を跨いだ場合の例外」)。
+	// 再起動を跨いで孤立した2bへの補完記録が必要かどうかの判定(「再起動を跨いだ場合の例外」)。
 	// previousIsNullかつ直近ログが2bのままなら、経過時間を問わず即座に補完対象にする。
 	// ------------------------------------------------------------------
 
@@ -207,7 +207,7 @@ public class ManualLockMonitorTests {
 /// <summary>
 /// <see cref="ManualLockDb"/>の監視タスク向けメソッド(<c>RecordMonitorDetected</c>/<c>RecordMonitorTimeout</c>/
 /// <c>RecordMonitorNormalEnd</c>)のDB結合テスト。SQLiteインメモリDBの作成作法は<see cref="ManualLockDbTests"/>に合わせる。
-/// 仕様書 §5 のL-07、L-11を実装する。加えて2b/2e/2fの<c>SysHistType</c>が0(自動実行)であること、
+/// 監視の行動を実DBへ反映した履歴と排他行を確認する。加えて2b/2e/2fの<c>SysHistType</c>が0(自動実行)であること、
 /// 2a/2cでログが増えないことを確認する。
 /// </summary>
 [TestClass]
@@ -299,7 +299,7 @@ public class ManualLockMonitorDbTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 2a/2cでログが増えないことの確認(§3.1、§3.3、§3.7)
+	// 2a/2cでログが増えないことの確認
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -338,7 +338,7 @@ public class ManualLockMonitorDbTests {
 		var tick1 = RunTick(lockDb, previous: null, nowUtcTicks: begun.Handle!.Vdc);
 		Assert.AreEqual(ManualLockMonitorAction.RecordDetected, tick1.Action);
 
-		// 処理側が正常終了する(§2.3): SysSequenceの行が消える
+		// 処理側が正常終了する: SysSequenceの行が消える
 		lockDb.Complete(begun.Handle, 0, 10, "正常終了");
 
 		var tick2 = RunTick(lockDb, tick1.NextState, begun.Handle.Vdc + 1000);
@@ -429,7 +429,7 @@ public class ManualLockMonitorDbTests {
 
 	// ------------------------------------------------------------------
 	// Step T9: ManualLockDb.TryRecordOrphanClosed(DB結合)。
-	// 設計書§3.7「再起動を跨いだ場合の例外」への対応。RunTickで作った2bを、
+	// 「再起動を跨いだ場合の例外」への対応。RunTickで作った2bを、
 	// previousIsNull(=前回状態が失われた=再起動直後)を模してTryRecordOrphanClosedへ渡す。
 	// ------------------------------------------------------------------
 
@@ -488,7 +488,7 @@ public class ManualLockMonitorDbTests {
 		var lockDb = new ManualLockDb(Db);
 		var begun = lockDb.TryBegin("請求計算", "請求集計", 600);
 		var tick1 = RunTick(lockDb, previous: null, nowUtcTicks: begun.Handle!.Vdc);
-		// Completeは処理側自身の手動実行履歴(TaskName=処理名、設計書§2.3-2)も1行書くため、
+		// Completeは処理側自身の手動実行履歴(TaskName=処理名、-2)も1行書くため、
 		// 監視タスク自身の履歴(TaskName=MonitorTaskName)だけをTaskNameで絞って数える(既存のAssertMonitorHistoryPairsAlternateと同じ考え方)。
 		lockDb.Complete(begun.Handle, 0, 10, "正常終了");
 		RunTick(lockDb, tick1.NextState, begun.Handle.Vdc + 1000); // 2f(正常終了)を記録
@@ -535,7 +535,7 @@ public class ManualLockMonitorDbTests {
 
 	/// <summary>
 	/// 監視タスクの履歴(<c>SysHistAutoexec</c>、<c>TaskName=マニュアル排他制御監視</c>)をId昇順に読み、
-	/// 「2b」で始まり、次が必ず「2e」または「2f」であることを確認する(設計書§3.7の不変条件)。
+	/// 「2b」で始まり、次が必ず「2e」または「2f」であることを確認する(の不変条件)。
 	/// </summary>
 	private void AssertMonitorHistoryPairsAlternate() {
 		var histories = Db.Fetch<SysHistAutoexec>(

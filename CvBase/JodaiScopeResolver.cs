@@ -1,13 +1,13 @@
 ﻿namespace CvBase;
 
 /// <summary>
-/// Scope（適用範囲）の競合種別。C1〜C8は設計書2.8の番号に対応する。
+/// Scope（適用範囲）の競合種別。C1〜C8はの番号に対応する。
 /// <para>
 /// <see cref="JodaiScopeResolver"/>が検出できるのは<see cref="ScopeOverlapSameRange"/>（C1）・
 /// <see cref="ScopeDefinitionOverlap"/>（C2）・<see cref="PriorityResolvedAcrossRangeType"/>（C5）の3種のみ。
-/// 残り（C3・C4・C6・C7・C8）はDB参照が要る、または本クラスの責務外（商品重複はNormalize()側）だが、
+/// 残り（C3・C4・C6・C7・C8）はDB参照が要る、または本クラスの責務外（商品重複はNormalize側）だが、
 /// 後続の<c>CvDomainLogic.JodaiConflictChecker</c>（C4/C6/C7/C8）から同じ結果型を使うため、
-/// ここで先に値を確保しておく（設計書6.1）。
+/// ここで先に値を確保しておく。
 /// </para>
 /// </summary>
 public enum EnumJodaiConflictKind : int {
@@ -22,7 +22,7 @@ public enum EnumJodaiConflictKind : int {
 	/// RangeType=2なら<see cref="TranJodaiScope.Id_Tenpo"/>が一致）のScope同士で期間が重なる。
 	/// </summary>
 	ScopeDefinitionOverlap = 2,
-	/// <summary>C3: 伝票内・商品重複。<c>Jmeisai</c>に同一Scope×同一商品が複数（<c>TranJodai.Normalize()</c>が自動解消する）。</summary>
+	/// <summary>C3: 伝票内・商品重複。<c>Jmeisai</c>に同一Scope×同一商品が複数（<c>TranJodai.Normalize</c>が自動解消する）。</summary>
 	DuplicateItem = 3,
 	/// <summary>C4: 他伝票との競合。確定済み<c>DerivedJodai</c>に同一商品×同一店舗×期間重複（DB参照が要る）。</summary>
 	OtherSlipConflict = 4,
@@ -50,7 +50,7 @@ public enum EnumJodaiConflictSeverity : int {
 }
 
 /// <summary>
-/// Scope（適用範囲）の競合1件（設計書2.8）。
+/// Scope（適用範囲）の競合1件。
 /// <para>
 /// <see cref="JodaiScopeResolver"/>（C1・C2・C5）と、後続の<c>CvDomainLogic.JodaiConflictChecker</c>
 /// （C4・C6・C7・C8。DB参照が要るもの）の両方が同じ型で結果を返せるよう、汎用的な形にしてある。
@@ -74,8 +74,8 @@ public sealed record JodaiConflict(
 /// <see cref="JodaiScopeResolver.Resolve"/>の結果。
 /// </summary>
 /// <param name="Jshop">
-/// 解決済みの「店舗×Scope」行。<see cref="TranJodai.Jshop"/>へそのまま設定できる形（設計書2.5・2.6）。
-/// 段階値下げ（設計書2.6）があるため、1店舗が複数行を持つことがある。
+/// 解決済みの「店舗×Scope」行。<see cref="TranJodai.Jshop"/>へそのまま設定できる形。
+/// 段階値下げがあるため、1店舗が複数行を持つことがある。
 /// </param>
 /// <param name="Conflicts">解決の過程で検出した競合（C1・C2・C5）。</param>
 public sealed record JodaiScopeResolution(
@@ -84,16 +84,16 @@ public sealed record JodaiScopeResolution(
 
 /// <summary>
 /// 上代一括変更（Scope）の「Scope＋店舗一覧 → 実店舗の解決」を行う純粋クラス。
-/// 正典は `Doc/spec/2026-09-05_上代一括変更_詳細設計.md` 2.5・2.6・2.8・6.1、および
-/// 同設計書の字面の曖昧さを解消したタスク指示（本クラスのコメントはその確定仕様に従う）。
+/// 期間が重なるScopeはRangeType→除外優先→Odr→後の要素の順で勝者を選び、非重複の段階価格は併存させる。
+/// 価格グループId=0は未設定であり対象店舗なしとする。解決した店舗・条件は確定時のスナップショットとして保持する。
 /// <para>
 /// 本クラスはDB・ロガー・設定読み出しに一切依存しない<c>static</c>メソッドのみで構成する
-/// （<see cref="JodaiPriceRule"/>と同じ方針。設計書6.1）。
+/// （<see cref="JodaiPriceRule"/>と同じ方針。）。
 /// </para>
 /// <para>
 /// <b>対象系統（<see cref="TranJodai.TaishoType"/>）による店舗の絞り込みは本クラスの責務にしない。</b>
 /// 呼び出し側が対象系統で絞った店舗リスト（<paramref name="stores"/>相当）を渡す前提とする
-/// （設計書3.1「価格グループはTenTypeに関わらず設定できるものとし、Scope側でTaisoTypeによる系統の
+/// （「価格グループはTenTypeに関わらず設定できるものとし、Scope側でTaisoTypeによる系統の
 /// 絞り込みを行う」に対応。純粋関数を保つため、本クラスの内部で<c>TenType</c>を見ない）。
 /// </para>
 /// </summary>
@@ -224,7 +224,7 @@ public static class JodaiScopeResolver {
 				return true;
 			case (int)EnumJodaiRangeType.PriceGroup:
 				// Id_Group=0(未設定)のときは該当店舗なし。既存の得意先は全軸0のままであり、
-				// 未設定の店舗を価格グループScopeへ巻き込まないため（設計書2.4・タスク指示）。
+				// 未設定の店舗を価格グループScopeへ巻き込まないため（・タスク指示）。
 				if (scope.Id_Group == 0) {
 					return false;
 				}
@@ -245,7 +245,7 @@ public static class JodaiScopeResolver {
 	};
 
 	/// <summary>
-	/// 2つのScopeの適用期間が重なっているかどうかを判定する（両端Inclusive。設計書0.1）。
+	/// 2つのScopeの適用期間が重なっているかどうかを判定する（両端Inclusive。）。
 	/// <c>DayFrom</c>/<c>DayTo</c>は<c>yyyyMMdd</c>の固定長文字列であり、桁数が揃っているため
 	/// 序数（<see cref="StringComparer.Ordinal"/>）比較がそのまま日付の大小比較になる。
 	/// </summary>
@@ -253,7 +253,7 @@ public static class JodaiScopeResolver {
 		string.CompareOrdinal(a.DayFrom, b.DayTo) <= 0 && string.CompareOrdinal(b.DayFrom, a.DayTo) <= 0;
 
 	/// <summary>
-	/// 同一店舗が複数Scopeに該当したときの優先順位を比較する（設計書2.5・タスク指示）。
+	/// 同一店舗が複数Scopeに該当したときの優先順位を比較する（・タスク指示）。
 	/// 比較キーは<see cref="TranJodaiScope.RangeType"/>降順 → <see cref="TranJodaiScope.IncExc"/>降順
 	/// （除外(1)が対象(0)より優先） → <see cref="TranJodaiScope.Odr"/>降順 → <c>Jscope</c>内の並び順
 	/// （<paramref name="xIndex"/>/<paramref name="yIndex"/>が大きい＝後の要素が勝ち）の順。
@@ -277,7 +277,7 @@ public static class JodaiScopeResolver {
 
 	/// <summary>
 	/// C2（伝票内・段階期間の重複）を検出する。<c>Jshop</c>を介さず<c>Jscope</c>だけで判定できる
-	/// （設計書2.8・タスク指示）ため、店舗一覧より先に呼べる独立したチェックとして分離してある。
+	/// （・タスク指示）ため、店舗一覧より先に呼べる独立したチェックとして分離してある。
 	/// </summary>
 	private static List<JodaiConflict> DetectScopeDefinitionOverlaps(IReadOnlyList<TranJodaiScope> scopes) {
 		var conflicts = new List<JodaiConflict>();
@@ -302,7 +302,7 @@ public static class JodaiScopeResolver {
 
 	/// <summary>
 	/// C2判定用の「同一範囲」を判定する。<see cref="TranJodaiScope.IncExc"/>は範囲の同一性に関与しない
-	/// （対象・除外の2つのScopeが同じ範囲を指すことは普通にあり得るため。設計書2.5の入力例がそれにあたる）。
+	/// （対象・除外の2つのScopeが同じ範囲を指すことは普通にあり得るため。の入力例がそれにあたる）。
 	/// </summary>
 	private static bool IsSameRange(TranJodaiScope a, TranJodaiScope b) {
 		if (a.RangeType != b.RangeType) {

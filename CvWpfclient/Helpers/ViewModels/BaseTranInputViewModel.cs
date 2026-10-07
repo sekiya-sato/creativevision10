@@ -5,9 +5,9 @@ BaseTranInputViewModel は伝票入力画面（発注/受注/仕入/売上 等�
 明細変更に伴う金額再計算(OnMeisaiPropertyChanged)・伝票⇔明細の同期(Apply/Sync)を集約します。
 
 伝票固有の差分は以下のフックで各 VM が上書きします:
-- OnTotalsUpdated()      : 消費税・総合計などヘッダ合計の再計算（Rate/Tax/Total は各伝票クラス固有のため）
-- ResolveMeisaiKubun()   : 明細区分(P/S)の正規化ポリシー
-- CreateNewMeisai()      : 新規明細行の既定値
+- OnTotalsUpdated      : 消費税・総合計などヘッダ合計の再計算（Rate/Tax/Total は各伝票クラス固有のため）
+- ResolveMeisaiKubun   : 明細区分(P/S)の正規化ポリシー
+- CreateNewMeisai      : 新規明細行の既定値
 - DetailStatusText       : ヘッダに表示する伝票状態テキスト（新規/伝票No 等）
 
 # example
@@ -78,7 +78,7 @@ public abstract partial class BaseTranInputViewModel<TDen> : BasePlainLightMente
 		}
 	}
 
-	#region 明細別消費税（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md 3.1〜3.7）
+	#region 明細別消費税（税区分別集計と伝票／請求単位の丸め）
 
 	/// <summary>
 	/// 明細別の消費税計算を行うか。移動・棚卸など金額と税を持たない伝票は false のままにする。

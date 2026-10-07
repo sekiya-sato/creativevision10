@@ -29,7 +29,7 @@ public class SummaryDbTests {
 		conn.Open();
 		_db = new ExDatabaseSqlite(conn);
 		_db.KeepConnectionAlive = true;
-		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// 全体排他が
 		// StreamStepProgressRunner経由の全ストリーム処理(SummaryAllAsyncStream等)で使うため、
 		// 個々のテストのテーブル準備に関わらずここで作っておく。
 		_db.CreateTable(typeof(SysSequence), true, false);
@@ -481,7 +481,7 @@ public class SummaryDbTests {
 
 	/// <summary>
 	/// 初回配分(Kubun=0)は入荷前の振り分けであり現物を押さえないため引当対象外とする。
-	/// 仕様は 2026-08-17_旧cvnet比較_仕様決定判断材料.md 5.2.2。
+	/// 初回配分の入荷後の数量は仕入配分の入荷割当で扱う。
 	/// </summary>
 	[TestMethod]
 	public void CalcHaibun2Reserve_HatsukaiHaibun_IsNotReserved() {
@@ -518,7 +518,7 @@ public class SummaryDbTests {
 
 	/// <summary>
 	/// 未確定は指示数 Su、確定済み(KakuteiDayに有効日付)は確定数 JitsuSu を引当に積む。
-	/// 欠品(ShortSu)は確定と同時に引当から外れる。仕様は 5.2.2c。
+	/// 欠品(ShortSu)は確定と同時に引当から外れる。
 	/// </summary>
 	[TestMethod]
 	public void CalcHaibun2Reserve_AfterKakutei_UsesJitsuSuInsteadOfSu() {
@@ -602,7 +602,7 @@ public class SummaryDbTests {
 	}
 
 	/// <summary>
-	/// 配分確定は有効在庫を割ると1件も確定しない（`Doc/spec/2026-09-28_設計判断記録.md` 2.8）。
+	/// 配分確定は有効在庫を割ると1件も確定しない。対象全件の検査後に一括適用する。
 	/// 確定数を減らして欠品にすれば、残りの在庫の範囲で確定できる。
 	/// </summary>
 	[TestMethod]
@@ -915,7 +915,7 @@ public class SummaryDbTests {
 
 	/// <summary>
 	/// 棚卸開始処理は対象年月末時点の帳簿在庫を凍結し、棚卸確定処理は実棚数との差を
-	/// 在庫調整伝票(Tran61Chosei)として起こす。仕様 8.1 / 8.4(F0 / F0' / F0'')。
+	/// 在庫調整伝票(Tran61Chosei)として起こす。
 	/// </summary>
 	[TestMethod]
 	public void Stocktake_StartAndFix_AdjustsStockByChoseiSlip() {
@@ -1032,7 +1032,7 @@ public class SummaryDbTests {
 	}
 
 	/// <summary>
-	/// UAT-04通しシナリオ: 店舗ごとに違う棚卸日で「開始→入力→差異→確定→過去伝票修正→再確定」を通す(設計書2.1〜2.5)。
+	/// UAT-04通しシナリオ: 店舗ごとに違う棚卸日で「開始→入力→差異→確定→過去伝票修正→再確定」を通す。
 	/// 店舗1は棚卸日8/25、店舗2は棚卸日8/31。8/28の仕入は店舗1の帳簿在庫からだけ差し引かれる。
 	/// </summary>
 	[TestMethod]
@@ -1165,7 +1165,7 @@ public class SummaryDbTests {
 	}
 
 	/// <summary>
-	/// 基準日時点の帳簿在庫の逆算(設計書2.2)。基準日より後・計上月末までの伝票増減を
+	/// 基準日時点の帳簿在庫の逆算。基準日より後・計上月末までの伝票増減を
 	/// 月末累計から差し引くことで、月次スナップショットしか持たない SummaryStock から
 	/// 任意日時点の帳簿在庫を復元できることを確認する。
 	/// </summary>
@@ -1190,7 +1190,7 @@ public class SummaryDbTests {
 		Assert.AreEqual(25, GetBookQty(stocktakeDb.FetchBookQtyAsOf(atMonthEnd)), "基準日が月末なら差し引く伝票が無い");
 	}
 
-	/// <summary>逆算条件は `DenDay > 基準日` なので、基準日当日の伝票は帳簿在庫に含まれる(設計書2.2の仕様)</summary>
+	/// <summary>逆算条件は `DenDay > 基準日` なので、基準日当日の伝票は帳簿在庫に含まれる(の仕様)</summary>
 	[TestMethod]
 	public void FetchBookQtyAsOf_IncludesSlipOnBaseDay() {
 		var db = PrepareAllStockTables();
@@ -1259,7 +1259,7 @@ public class SummaryDbTests {
 
 	/// <summary>
 	/// 移動中(TransitQty)は Su の外側の内訳列であり逆算の加減算対象にならない。
-	/// 移動出庫だけ(未入庫)の状態では着側の Su も TransitQty も帳簿在庫に反映されないことを確認する(設計書2.2)。
+	/// 移動出庫だけ(未入庫)の状態では着側の Su も TransitQty も帳簿在庫に反映されないことを確認する。
 	/// </summary>
 	[TestMethod]
 	public void FetchBookQtyAsOf_IgnoresTransitQty() {
@@ -1339,7 +1339,7 @@ public class SummaryDbTests {
 		Assert.AreEqual("20260831", soko2.StocktakeDdate);
 	}
 
-	/// <summary>調整伝票の計上日は店舗ごとの棚卸基準日になる(設計書2.3〜2.5, 4)</summary>
+	/// <summary>調整伝票の計上日は店舗ごとの棚卸基準日になる</summary>
 	[TestMethod]
 	public void FixStocktake_UsesPerShopTanaDayForChoseiSlip() {
 		var db = PrepareAllStockTables();

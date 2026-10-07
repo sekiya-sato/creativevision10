@@ -11,8 +11,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Tests.CvServer;
 
 /// <summary>
-/// <see cref="ManualLockDb.TryBegin"/>のTOCTOU対策(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.1)を、
-/// 本当に並行させて実証する単体テスト（テスト計画 `Doc/test/2026-09-07_マニュアル排他制御_テスト計画.md` E-04）。
+/// <see cref="ManualLockDb.TryBegin"/>の挿入後再確認によるTOCTOU対策を、
 /// <para>
 /// 既存の<see cref="ManualLockDbTests.TryBegin_二つのインスタンスからの連続呼び出しでIdが大きい方だけ降りる"/>は、
 /// 同一プロセス内で2インスタンスを<b>逐次</b>呼ぶ模擬にとどまる。本クラスはスレッドごとに別々の
@@ -93,7 +92,7 @@ public class ManualLockConcurrencyTests {
 		// INSERT完了順(SQLiteはシングルライタのため全体で1つの順序に決まる)で
 		// baselineMaxId+1, +2, ... と重複なく割り当てられること。
 		// TryBeginは「現在アクティブな行の中でIdが最小でない側が自分の行を消して降りる」設計
-		// (ManualLockDb.TryBegin、設計書§2.1)のため、割り当てられたId群の中で最小のIdを
+		// (ManualLockDb.TryBegin、)のため、割り当てられたId群の中で最小のIdを
 		// 持つ行だけが最後まで削除されずに残る。したがって収束後に残る行のIdは、
 		// 全スレッドに割り当てられたId群の最小値(=baselineMaxId+1)と一致するはずである。
 		var baselineMaxId = SetupDb.ExecuteScalar<long>($"SELECT COALESCE(MAX(Id), 0) FROM {nameof(SysSequence)}");

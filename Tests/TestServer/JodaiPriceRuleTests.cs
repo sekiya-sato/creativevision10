@@ -8,7 +8,7 @@ namespace Tests.CvServer;
 /// <summary>
 /// 上代一括変更 Step3 <see cref="JodaiPriceRule"/> の単体テスト。
 /// <para>
-/// 純粋クラスのためDBは不要。仕様は `Doc/spec/2026-09-05_上代一括変更_詳細設計.md` 2.7・6.1。
+/// DBに依存せず、固定額の非丸め・率／額／掛率・実効上代・価格ポイントの最近値と非負下限を固定する。
 /// 丸めは現行 <c>MasterJouDaiBulkChangeViewModel.ApplyRound</c>（<c>double</c>版）と1円も違わないことが
 /// 最優先要件（Step3タスク指示）なので、境界値（5ちょうど・-5相当・切上の既にちょうどの値）を重点的に検証する。
 /// </para>
@@ -57,7 +57,7 @@ public class JodaiPriceRuleTests {
 
 	[TestMethod]
 	public void PricePoint_SnapsCalculatedValueToNearestPoint() {
-		// 設計書2.7の実例。5.4 の Price Matrix の JK-001（通常上代 12,800、OUTLET 40% OFF）が対応し、
+		// の実例。画面のPrice Matrix の JK-001（通常上代 12,800、OUTLET 40% OFF）が対応し、
 		// 12,800 × 0.6 = 7,680 が「算出値」。それを価格ポイント表へ寄せて 7,900 になる。
 		// 基準上代 12,800 をそのまま寄せるのではない（それでは 9,900 になってしまう）。
 		var points = new[] { 5900, 6900, 7900, 8900, 9900 };
@@ -251,7 +251,7 @@ public class JodaiPriceRuleTests {
 	}
 
 	// ============================================================
-	// 設計書2.7の実例: 算出値7,680円 → 7,900円（ParsePricePoints経由）
+	// の実例: 算出値7,680円 → 7,900円（ParsePricePoints経由）
 	// ============================================================
 
 	[TestMethod]

@@ -11,9 +11,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Tests.CvServer;
 
 /// <summary>
-/// 評価替え（原価4項目 詳細設計 §16、Step 8）の単体テスト。
+/// 評価替え（Step 8）の単体テスト。
 /// SQLiteインメモリDBの作成作法は<see cref="CostUpdateDbCostTests"/>・<see cref="CostUpdateDbSundryTests"/>に合わせる。
-/// テスト観点は設計書§16.12 T-R1〜T-R14を土台とする。
+/// テスト観点はT-R1〜T-R14を土台とする。
 /// </summary>
 [TestClass]
 public class CostUpdateDbRevalTests {
@@ -34,7 +34,7 @@ public class CostUpdateDbRevalTests {
 		conn.Open();
 		_db = new ExDatabaseSqlite(conn);
 		_db.KeepConnectionAlive = true;
-		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// 全体排他が
 		// ApplyRevaluation/CancelRevaluationで使うため、個々のテストのテーブル準備に関わらずここで作っておく。
 		_db.CreateTable(typeof(SysSequence), true, false);
 		_db.CreateTable(typeof(SysHistAutoexec), true, false);
@@ -122,7 +122,7 @@ public class CostUpdateDbRevalTests {
 
 	private int TankaGenkaOf(long idShohin) => Db.FirstOrDefault<MasterShohin>("WHERE Id=@0", idShohin)!.TankaGenka;
 
-	/// <summary>対象商品にCostMethod=0の基準行(設計書§2.6)を作り、ResolveCostAsOfがBeforeCostとして解決できるようにする。</summary>
+	/// <summary>対象商品にCostMethod=0の基準行を作り、ResolveCostAsOfがBeforeCostとして解決できるようにする。</summary>
 	private void SeedBaseline(CostUpdateDb costUpdateDb, long idShain, params long[] idShohins) =>
 		costUpdateDb.EnsureBaselineCostRows(idShohins, "base", idShain);
 
@@ -467,7 +467,7 @@ public class CostUpdateDbRevalTests {
 	}
 
 	// ------------------------------------------------------------------
-	// T-R10d: 確認後に原価方式が変わると中断する(評価替えはCostMethodによらず実行可(§16.8)だが、
+	// T-R10d: 確認後に原価方式が変わると中断する(評価替えはCostMethodによらず実行可だが、
 	// BeforeCostの解決に方式を使うため確認スナップショットの検査対象には含める)
 	// ------------------------------------------------------------------
 
@@ -530,7 +530,7 @@ public class CostUpdateDbRevalTests {
 
 	[TestMethod]
 	public void PreviewRevaluation_SummaryTotal_UsesPerProductRounding_T_R11() {
-		// 品番単位で丸めてから合計する(設計書§13 U-22)。旧実装(在庫金額へ一括で率を掛けて丸める)方式なら
+		// 品番単位で丸めてから合計する。旧実装(在庫金額へ一括で率を掛けて丸める)方式なら
 		// 204*0.5=102円になるところ、品番単位丸めでは51+52=103円になり、意図的にずれる。
 		CreateRevalTables();
 		var idShain = InsertShain();
@@ -557,12 +557,12 @@ public class CostUpdateDbRevalTests {
 	}
 
 	// ------------------------------------------------------------------
-	// T-R12: 大量商品を1トランザクションで更新する(性能・§16.10)
+	// T-R12: 大量商品を1トランザクションで更新する(性能・)
 	// ------------------------------------------------------------------
 
 	[TestMethod]
 	public void ApplyRevaluation_LargeProductSet_CompletesInOneTransaction_T_R12() {
-		// 設計書§16.12は78,932件(全MasterShohin)での完了を求めるが、単体テストとしては
+		// は78,932件(全MasterShohin)での完了を求めるが、単体テストとしては
 		// IdChunkSize(1000件)の境界をまたぐ規模(1,500件)に縮小し、同じ一括upsert・一括UPDATE経路を検証する。
 		CreateRevalTables();
 		var idShain = InsertShain();
@@ -590,7 +590,7 @@ public class CostUpdateDbRevalTests {
 
 	[TestMethod]
 	public void ResolveFiscalYearEndMonth_FixedExamples() {
-		// 設計書§16.4の2例をテストで固定する。現在時刻に依存しない純粋な年月演算のみを検証する。
+		// の2例をテストで固定する。現在時刻に依存しない純粋な年月演算のみを検証する。
 		// 実体は ClosingMonthCalculator にあり、サーバーと画面(CvWpfclient)が同じ実装を使う。
 		// CostUpdateDb 側は薄い委譲なので、両方から同じ結果が返ることも併せて固定する。
 		Assert.AreEqual("202703", CostUpdateDb.ResolveFiscalYearEndMonth("202608", fiscalStartMonth: 4));
@@ -733,7 +733,7 @@ public class CostUpdateDbRevalTests {
 	}
 
 	// ------------------------------------------------------------------
-	// CostMethod=0(固定原価)でも実行できる(設計書§16.8、§13 U-20)
+	// CostMethod=0(固定原価)でも実行できる
 	// ------------------------------------------------------------------
 
 	[TestMethod]
@@ -752,7 +752,7 @@ public class CostUpdateDbRevalTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 対象計上月が支払計算済みなら中断する(設計書§4.6・§16.9)
+	// 対象計上月が支払計算済みなら中断する
 	// ------------------------------------------------------------------
 
 	[TestMethod]

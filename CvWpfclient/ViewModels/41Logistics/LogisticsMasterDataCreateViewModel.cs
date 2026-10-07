@@ -9,7 +9,7 @@ using System.Text;
 namespace CvWpfclient.ViewModels._41Logistics;
 
 /// <summary>
-/// L01 物流連携 マスタデータ作成。仕様は `Doc/spec/2026-10-05_WMS連携_旧AMS連携調査と仮実装仕様.md` 3.1・7章。
+/// L01 物流連携のマスタデータ作成。商品SKU(PD)と場所(BSY)をサーバの連携フォルダへcv10-v1形式で出力する。
 /// </summary>
 public partial class LogisticsMasterDataCreateViewModel : BaseViewModel {
 	/// <summary>設定照会に成功したか（失敗時は実行させない）</summary>

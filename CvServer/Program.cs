@@ -116,7 +116,7 @@ builder.Services.AddScoped<ExDatabase>(sp => {
 // 設定 Database:SqlTranslation が明示されていればそれを優先し、未設定なら
 // プロバイダー既定（Sqlite=Auto、PostgreSQL/MariaDB=Strict）を使う。既定値の決定ロジックは
 // SqlDialectOptions.ResolveMode 側に置く（テストしやすくするため）。
-// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` §4.4 を参照する。
+// SQLiteを正典とし、接続先の方言に応じた構文変換とQueryKeyによる個別上書きを使う。
 CvBase.Sql.SqlDialectOptions.Mode =
 	CvBase.Sql.SqlDialectOptions.ResolveMode(sqlDialectProvider, builder.Configuration["Database:SqlTranslation"]);
 // ルール A04(PostgreSQL の ORDER BY へ NULLS FIRST を付ける) は既定で無効。
@@ -132,6 +132,8 @@ builder.Services.AddSingleton<SchedulerService>();
 var serverVersion = builder.Configuration.GetSection("ServerVersion").Value ?? "0.0.0";
 var app = builder.Build();
 var logger = app.Logger;
+// 詳細ログは既定で無効。trueで要求・応答ヘッダ（Authorizationを除く）とCoreServiceのSQL・Payloadを出力する。
+// 設定変更はサーバ再起動後に反映する。一時調査の終了後はfalseへ戻す。通常は相関IDと例外全文で追跡する。
 var enableDetailedRequestLogging = builder.Configuration.GetValue<bool>("Diagnostics:EnableDetailedRequestLogging");
 logger.LogDebug("Application Start ------------------------------------");
 // 相関 ID を要求スコープへ設定し、詳細ログが有効なときだけ従来のヘッダ出力を行う。

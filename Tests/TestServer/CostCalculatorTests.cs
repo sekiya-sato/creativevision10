@@ -7,13 +7,13 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// <see cref="CostCalculator"/> の原価計算純ロジック。
-/// 仕様は `Doc/spec/2026-09-05_原価4項目_詳細設計.md` の §5・§6・§16 を参照する。
+/// 最終仕入の四捨五入・諸掛除外、総平均の諸掛加算・切捨と対象外判定、評価替えの丸めを固定する。
 /// </summary>
 [TestClass]
 public class CostCalculatorTests {
 
 	// ------------------------------------------------------------
-	// 総平均原価: 設計書§11.5 T-01・T-02
+	// 総平均原価: T-01・T-02
 	// ------------------------------------------------------------
 
 	[TestMethod]
@@ -47,7 +47,7 @@ public class CostCalculatorTests {
 	}
 
 	// ------------------------------------------------------------
-	// 最終仕入原価の丸め方向: 設計書§5.3
+	// 最終仕入原価は最も近い整数へ丸め、ちょうど半分はゼロから遠い側にする。
 	// ------------------------------------------------------------
 
 	[TestMethod]
@@ -81,7 +81,7 @@ public class CostCalculatorTests {
 	}
 
 	// ------------------------------------------------------------
-	// 総平均原価: 設計書§6.5 境界値表(1条件1テスト)
+	// 総平均原価: 境界値表(1条件1テスト)
 	// ------------------------------------------------------------
 
 	[TestMethod]
@@ -175,7 +175,7 @@ public class CostCalculatorTests {
 
 	[TestMethod]
 	public void CalcTotalAverageCost_諸掛が負で分子が0以下になる場合はエラー() {
-		// 返品諸掛が過大で分子が0以下になるケース(設計書§6.5「諸掛の合計が負でNumerator<=0」)
+		// 返品諸掛が過大で分子が0以下になるケース(「諸掛の合計が負でNumerator<=0」)
 		var input = new CostCalculator.TotalAverageInput(
 			OpeningQty: 0, OpeningAmount: 0, PurchaseQty: 10, PurchaseAmount: 10_000, SundryAmount: -20_000);
 
@@ -185,7 +185,7 @@ public class CostCalculatorTests {
 	}
 
 	// ------------------------------------------------------------
-	// GetTotalAverageExclusion: 設計書§6.5「2026-09-06改訂」、§13 U-06・U-15
+	// GetTotalAverageExclusion: 「2026-09-06改訂」、 U-06・U-15
 	// OpeningQtyが-1/0/1、beforeCostが0/1の組み合わせで境界値を固定する。
 	// ------------------------------------------------------------
 
@@ -273,12 +273,12 @@ public class CostCalculatorTests {
 	}
 
 	// ------------------------------------------------------------
-	// 評価替え: 設計書§16.5、§13 U-18
+	// 評価替え: U-18
 	// ------------------------------------------------------------
 
 	[TestMethod]
 	public void CalcRevalCostByRate_掛率70パーセントは30パーセント引きではなく掛率そのもの() {
-		// 掛率70% → BeforeCost=1000 → 700(30%引きの300ではない。§13 U-18)
+		// 掛率70% → BeforeCost=1000 → 700(30%引きの300ではない。 U-18)
 		var result = CostCalculator.CalcRevalCostByRate(beforeCost: 1_000, ratePercent: 70, roundingUnit: 1, rounding: EnumRounding.Round);
 
 		Assert.AreEqual(EnumCostCalcError.None, result.Error);
@@ -321,7 +321,7 @@ public class CostCalculatorTests {
 	}
 
 	// ------------------------------------------------------------
-	// LastPurchaseKey: 設計書§5.2
+	// 最終仕入の優先順は伝票日・仕入Id・明細Noの降順。
 	// ------------------------------------------------------------
 
 	[TestMethod]
@@ -349,7 +349,7 @@ public class CostCalculatorTests {
 	}
 
 	// ------------------------------------------------------------------
-	// C-14 オーバーフロー(設計書§11.1): 数量×単価・在庫×原価・按分中間値がlongの範囲で
+	// C-14 オーバーフロー: 数量×単価・在庫×原価・按分中間値がlongの範囲で
 	// 破綻しないことを固定する。本プロジェクトはCheckForOverflowUnderflowを設定していないため、
 	// long同士の算術は既定でunchecked(オーバーフロー時に例外を出さず、2の補数でラップする)。
 	// 以下は「壊れていないこと」の確認と、「壊れている箇所」を再現して固定する目的の両方を含む。
@@ -385,7 +385,7 @@ public class CostCalculatorTests {
 	/// </para>
 	/// <para>
 	/// 実務データでOpeningAmount・PurchaseAmountがlong.MaxValue付近(約922京円)に達することは現実的ではないが、
-	/// 設計書§11.1 C-14は「longの範囲で破綻しないこと」を求めており、この関数がchecked/BigIntegerを
+	/// C-14は「longの範囲で破綻しないこと」を求めており、この関数がchecked/BigIntegerを
 	/// 使っていない以上、境界では誤った値を返し得ることをここで固定して報告する。
 	/// </para>
 	/// </summary>
@@ -421,7 +421,7 @@ public class CostCalculatorTests {
 		// 計算そのものはlongの範囲まで破綻しない。ただし保存先のTranGenka.AfterCostと
 		// MasterShohin.TankaGenkaはint列であり、long→intのナローイングキャストはuncheckedである。
 		// そのまま通すと符号が反転した負の原価が無警告で保存されるため、範囲外はここでエラーにする
-		// (設計書§2.2「DB保存値は現行互換の円単位整数」、§11.1 C-14)。
+		// (「DB保存値は現行互換の円単位整数」、 C-14)。
 		var result = CostCalculator.CalcLastPurchaseCost(kingaku: long.MaxValue - 1, su: 1);
 
 		Assert.AreEqual(EnumCostCalcError.AfterCostOutOfRange, result.Error);

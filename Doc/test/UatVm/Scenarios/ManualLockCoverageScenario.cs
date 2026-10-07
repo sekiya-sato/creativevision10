@@ -16,25 +16,23 @@ using CvWpfclient.Views._31Monthly;
 namespace UatVm.Scenarios;
 
 /// <summary>
-/// マニュアル排他制御（正典 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`）の網羅性検証（E-12）。
-/// テスト観点は `Doc/test/2026-09-07_マニュアル排他制御_手動観測手順.md` §5、
-/// テスト計画は `Doc/test/2026-09-07_マニュアル排他制御_テスト計画.md` を参照する。
+/// 原価・再集計・棚卸・HHTの書込みが同じ全体排他を使用し、確認処理は排他対象外であることの網羅性検証（E-12）。
 /// </summary>
 /// <remarks>
 /// <para>
-/// 設計§5 L-02「既に<c>SysSeqType=1</c>の行があるとき、後発が中断し自分の行を残さない」を、
-/// 設計§2.4「適用対象」の全処理へ網羅的に適用する。原価4項目（消化仕入更新・最終仕入原価更新・
+/// 設計 L-02「既に<c>SysSeqType=1</c>の行があるとき、後発が中断し自分の行を残さない」を、
+/// 設計「適用対象」の全処理へ網羅的に適用する。原価4項目（消化仕入更新・最終仕入原価更新・
 /// 総平均原価更新・評価替え）は共通ランナー（<c>StreamStepProgressRunner</c>）非経由の個別実装であり、
-/// 排他の適用漏れが最も起こりやすい箇所である（手動観測手順書§5.1）。
+/// 排他の適用漏れが最も起こりやすい箇所である。
 /// </para>
 /// <para>
 /// #4「現在庫再集計」はWPFのどの画面からも呼ばれないため対象外。本ケースの合格条件は
-/// 手動観測手順書§5.1のとおり12処理（13操作、評価替えは適用・取消の両方）とする。
+/// 対象は12処理（13操作、評価替えは適用・取消の両方）とする。
 /// </para>
 /// <para>
 /// 監視の実行フラグ（<see cref="MasterConfig"/>、Category=<see cref="MasterConfig.CategoryAutoExec"/>、
 /// Name=<see cref="MasterConfig.NameAutoExecEnabledPrefix"/>+<see cref="MasterConfig.AutoExecTaskIdManualLockMonitor"/>先頭8文字）
-/// を試験開始前に<c>0</c>へ変更し、試験中に監視が自動解放してしまわないようにする（手動観測手順書§5.2）。
+/// を試験開始前に<c>0</c>へ変更し、試験中に監視が自動解放してしまわないようにする。
 /// 実行フラグは発火の都度DBから読まれるため、S1〜S5の環境変数スイッチと異なりCvServer再起動なしに
 /// 即時反映される（<see cref="ManualLockScenario"/>のE-14と同じ手法）。必ず<c>finally</c>で<c>1</c>へ復元する。
 /// </para>
@@ -85,7 +83,7 @@ public static class ManualLockCoverageScenario {
 			session.Note("E-12 占有行を直接INSERTした", new { lockId, LockTableName });
 
 			// ==============================================================
-			// 対象12処理（13操作）。手動観測手順書§5.3の表と同じ順序で並べる。
+			// 対象12処理（13操作）。実行対象を以下の一覧で固定する。
 			// ==============================================================
 			(string Label, Func<VmSession, string, Task<bool>> Run)[] cases = [
 				("在庫・掛再集計", RunStockKakeAsync),
@@ -263,7 +261,7 @@ public static class ManualLockCoverageScenario {
 	/// 実データ調査の結論: この画面も対象月・掛率をどう変えても到達不能。実DBの<c>TranGenka</c>は0行であり、
 	/// <c>CostUpdateDbReval.ComputeRevaluation</c>のBeforeCost解決(<c>ResolveCostAsOf</c>)は履歴が無い商品を
 	/// 0円のまま返す。評価替えは(最終仕入原価・総平均原価と異なり)<c>MasterShohin.TankaGenka</c>へのフォールバックを
-	/// 意図的に持たない(§16.9)ため、原価0円で全商品が対象外になり<c>TargetCount</c>は常に0になる。
+	/// 意図的に持たないため、原価0円で全商品が対象外になり<c>TargetCount</c>は常に0になる。
 	/// </para>
 	/// </summary>
 	private static async Task<bool> RunCostRevaluationApplyAsync(VmSession session, string lockTableName) {

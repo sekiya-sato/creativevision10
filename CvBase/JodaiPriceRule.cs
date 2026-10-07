@@ -2,11 +2,11 @@
 
 /// <summary>
 /// 上代一括変更（Scope）の価格方式6種＋丸め＋価格ポイントを計算する純粋クラス。
-/// 正典は `Doc/spec/2026-09-05_上代一括変更_詳細設計.md` 2.7・6.1。
+/// 固定額は丸めず、率・値引額・掛率は算出後に丸める。価格ポイント方式は値下げ後の最近値へ寄せ、同距離なら低い値を選ぶ。
 /// <para>
 /// 本クラスはDB・ロガー・設定読み出しに一切依存しない <c>static</c> メソッドのみで構成する。
 /// <see cref="CvWpfclient"/>（画面プレビュー）・<see cref="CvServer"/>（伝票確定時の展開）・単体テストの
-/// いずれからも同一コードを使うため、引数だけで結果が決まることを保証する（設計書6.1）。
+/// いずれからも同一コードを使うため、引数だけで結果が決まることを保証する。
 /// </para>
 /// <para>
 /// <b>方式4（<see cref="EnumJodaiPriceMethod.RateOffFromEffective"/>）について</b>:
@@ -14,7 +14,7 @@
 /// <paramref name="baseJodai"/> として渡ってくる前提で計算する。本クラスの内部で
 /// <c>DerivedJodai</c> を引き直すことはしない（純粋関数を保つため）。方式1
 /// （<see cref="EnumJodaiPriceMethod.RateOff"/>）との違いは「呼び出し側が渡す基準額が
-/// 通常上代か実効上代か」だけであり、計算式そのものは同一である（設計書2.7・0.1）。
+/// 通常上代か実効上代か」だけであり、計算式そのものは同一である。
 /// </para>
 /// </summary>
 public static class JodaiPriceRule {
@@ -23,15 +23,13 @@ public static class JodaiPriceRule {
 	/// <para>
 	/// 方式0〜4は算出後に<paramref name="roundUnit"/>×<paramref name="roundType"/>で丸める。
 	/// ただし<see cref="EnumJodaiPriceMethod.FixedPrice"/>（固定額）だけは
-	/// 丸めを適用しない（利用者が入力した確定額をそのまま使う）。設計書2.7の文面は
-	/// 「丸めは全方式共通」とあるが、現行の伝票を1円たりとも変えないことを最優先するため、
-	/// 実装済みの現行挙動（固定額は丸めない）に合わせた。詳細は本メソッドの呼び出し元の報告を参照。
+	/// 丸めを適用しない。利用者が入力した確定額をそのまま使い、固定額の伝票単価を変えないため。
 	/// </para>
 	/// <para>
 	/// 方式5（<see cref="EnumJodaiPriceMethod.PricePoint"/>）は<b>算出後に</b>丸めの代わりに
 	/// <paramref name="pricePoints"/>（価格ポイント表の並び）の最近値へ寄せる。算出は方式1と同じく
-	/// <paramref name="rateOff"/>による値下率で行う。設計書2.7の実例「算出値 7,680円 → 7,900円」は
-	/// 5.4 の Price Matrix の JK-001（通常上代 12,800、OUTLET 40% OFF）に対応し、
+	/// <paramref name="rateOff"/>による値下率で行う。の実例「算出値 7,680円 → 7,900円」は
+	/// 画面のPrice Matrix の JK-001（通常上代 12,800、OUTLET 40% OFF）に対応し、
 	/// 12,800 × 0.6 = 7,680 が算出値である。<paramref name="baseJodai"/>をそのまま寄せるのではない。
 	/// </para>
 	/// <para>
@@ -78,8 +76,8 @@ public static class JodaiPriceRule {
 			case EnumJodaiPriceMethod.RateOn:
 				return ApplyRound(baseJodai * rateOn / 100m, roundUnit, roundType);
 			case EnumJodaiPriceMethod.PricePoint:
-				// 「算出後に価格ポイント表の最近値へ寄せる」（設計書2.7）。算出は方式1と同じ値下率で行い、
-				// 丸めの代わりに寄せる。設計書2.7の実例「算出値 7,680円 → 7,900円」は 5.4 の Price Matrix
+				// 「算出後に価格ポイント表の最近値へ寄せる」。算出は方式1と同じ値下率で行い、
+				// 丸めの代わりに寄せる。の実例「算出値 7,680円 → 7,900円」は 画面のPrice Matrix
 				// の JK-001（通常上代 12,800、OUTLET 40% OFF）に対応し、12,800 × 0.6 = 7,680 が算出値である。
 				// 基準上代をそのまま寄せるのではない点に注意。
 				return SnapToPricePoint(
@@ -91,7 +89,7 @@ public static class JodaiPriceRule {
 	}
 
 	/// <summary>
-	/// 端数単位・端数方法で丸める（設計書2.7）。中間計算は<see cref="decimal"/>で行い、
+	/// 端数単位・端数方法で丸める。中間計算は<see cref="decimal"/>で行い、
 	/// <see cref="double"/>を経由しない。
 	/// <para>
 	/// 現行<c>MasterJouDaiBulkChangeViewModel.ApplyRound</c>（<c>double</c>版）と完全に同じ丸め規則
@@ -117,7 +115,7 @@ public static class JodaiPriceRule {
 	}
 
 	/// <summary>
-	/// 価格ポイント表の中から<paramref name="value"/>に最も近い値へ寄せる（設計書2.7・U2）。
+	/// 価格ポイント表の中から<paramref name="value"/>に最も近い値へ寄せる。
 	/// <para>
 	/// 上下が等距離のときは<b>上（高い方）を採る</b>。値引きの取りすぎ（利益の過度な圧迫）を
 	/// 避けるため、同着なら安全側＝高い方へ丸める方針とした。
@@ -147,7 +145,7 @@ public static class JodaiPriceRule {
 	}
 
 	/// <summary>
-	/// 価格ポイント表のCSV文字列（<c>MasterMeisho</c> <c>Kubun='PPT'</c>の名称列。設計書U2）を
+	/// 価格ポイント表のCSV文字列（<c>MasterMeisho</c> <c>Kubun='PPT'</c>の名称列。価格ポイントの設定規則）を
 	/// <see langword="int"/>配列へ解釈する。
 	/// <para>
 	/// 空要素・前後空白のみの要素・数値でない要素は読み飛ばす。結果は昇順に整列して返す
@@ -183,7 +181,7 @@ public static class JodaiPriceRule {
 
 	/// <summary>
 	/// C7（原価割れ）の判定。<c>JodaiConflictChecker.CheckBelowCost</c>（CvDomainLogic）と
-	/// <c>CvWpfclient</c>のPrice Matrix（設計書5.4のセル背景警告）が同じ基準を共有するための純粋関数。
+	/// <c>CvWpfclient</c>のPrice Matrix（原価割れのセル背景警告）が同じ基準を共有するための純粋関数。
 	/// <c>CvWpfclient</c>は<c>CvDomainLogic</c>を参照できない（層1.5はサーバ側）ため、判定の中核だけを
 	/// 双方が参照できる<c>CvBase</c>（層1）へ切り出した。
 	/// </summary>
@@ -193,7 +191,7 @@ public static class JodaiPriceRule {
 
 	/// <summary>
 	/// C8（最低販売価格違反）の判定。<paramref name="minPrice"/>が0以下（未設定）なら判定しない
-	/// （設計書2.8「0 なら判定しない」）。<see cref="IsBelowCost"/>と同じ理由でCvBaseに置く。
+	/// （「0 なら判定しない」）。<see cref="IsBelowCost"/>と同じ理由でCvBaseに置く。
 	/// </summary>
 	/// <param name="jodaiNew">新上代（判定対象）。</param>
 	/// <param name="minPrice"><see cref="MasterConfig.NameJodaiMinPrice"/>の設定値。0以下なら判定しない。</param>

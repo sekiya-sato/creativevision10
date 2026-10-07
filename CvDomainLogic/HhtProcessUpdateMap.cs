@@ -7,7 +7,7 @@ namespace CvDomainLogic;
 /// <summary>
 /// HHTデータ更新のマスタ解決と伝票組み立て。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` の 5.4 - 5.6 を参照する。
+/// コードは完全一致を優先し、前0除去で複数候補なら在庫対象・直営店を優先して未解決はエラーにする。JANは8桁以上だけ照合する。
 /// </para>
 /// </summary>
 public partial class HhtProcess {
@@ -468,7 +468,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		ApplyCommon(slip, meisai, shain);
 		// Rate は掛率(パーセント整数。MasterTokui.RateProper と同単位)。消費税率には使わない
 		slip.Rate = ToRatePercent(TryParseKakeRitsu(group.Type0, head.KakeRitsu));
-		// 税計算単位・消費税端数処理は得意先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+		// 税計算単位・消費税端数処理は得意先マスタの伝票作成時点のスナップショット
 		slip.TaxCalcUnit = tokui.TaxCalcUnit;
 		slip.TaxRounding = ResolveTaxRounding(cache, tokui);
 		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, meisai, slip, (EnumTaxCalcUnit)slip.TaxCalcUnit, (EnumRounding)slip.TaxRounding);
@@ -506,7 +506,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 		ApplyCommon(slip, meisai, shain);
 		// Rate は掛率。仕入の掛率欄には発注番号が入るため掛率は来ない
 		slip.Rate = 0;
-		// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+		// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット
 		slip.TaxCalcUnit = shiire.TaxCalcUnit;
 		slip.TaxRounding = ResolveTaxRounding(cache, shiire);
 		ApplyTaxOnly(cache, head.DenDay, slip.KingakuTotal, meisai, slip, (EnumTaxCalcUnit)slip.TaxCalcUnit, (EnumRounding)slip.TaxRounding);
@@ -648,7 +648,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 	#region 補助
 
 	/// <summary>
-	/// 棚卸伝票の倉庫・店舗を解決する。棚卸の対象店舗は倉庫(0)/売仕店(3)/直営店(6)である(設計書2.6)。
+	/// 棚卸伝票の倉庫・店舗を解決する。棚卸の対象店舗は倉庫(0)/売仕店(3)/直営店(6)である。
 	/// <para>
 	/// 汎用の <see cref="ResolveSoko"/> は売仕店(3)を落とすため、棚卸日一括メンテナンスや在庫集計側の
 	/// <c>TenType in (0,3,6)</c> と食い違っていた。売仕店で棚卸を行うとHHT取込だけが弾かれるので、
@@ -716,7 +716,7 @@ where d.Jan1 in ({placeholders}) or d.Jan2 in ({placeholders}) or d.Jan3 in ({pl
 	}
 
 	/// <summary>
-	/// 取引先の税計算単位・消費税端数処理を返す(Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md 3.7)。
+	/// 伝票作成時点の取引先マスタから税計算単位・消費税端数処理を取り出し、伝票の監査値として保存する。
 	/// 取引先が引けない場合は自社既定の端数処理(<see cref="MasterSysman.TaxRounding"/>)を使う。
 	/// <para>
 	/// 呼び出し元は各Build*で取引先解決に失敗した時点で既にnullを弾いているため、

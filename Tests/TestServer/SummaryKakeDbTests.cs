@@ -16,7 +16,7 @@ namespace Tests.CvServer;
 /// <summary>
 /// 売掛(<see cref="SummaryUriKake"/>) / 買掛(<see cref="SummaryKaiKake"/>)集計のテスト。
 /// <para>
-/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` と現行SummaryDbの期間残高ルールを固定する。
+/// Balanceは当期間ネット、PreviousBalanceは期首行を含む過去累積とし、返品はCalcFlagで1回だけ反転する規則を固定する。
 /// 区分別の正値内訳、`Total` / 明細金額の正値源、`IsPay` による除外、後続月再計算、`KakeDay` 基準を対象にする。
 /// </para>
 /// </summary>
@@ -39,7 +39,7 @@ public class SummaryKakeDbTests {
 		conn.Open();
 		_db = new ExDatabaseSqlite(conn);
 		_db.KeepConnectionAlive = true;
-		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// 全体排他が
 		// StreamStepProgressRunner経由の全ストリーム処理(SummaryUriKakeAsyncStream等)で使うため、
 		// 個々のテストのテーブル準備に関わらずここで作っておく。
 		_db.CreateTable(typeof(SysSequence), true, false);
@@ -90,13 +90,13 @@ public class SummaryKakeDbTests {
 	}
 
 	// ------------------------------------------------------------------
-	// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)
+	// 全体排他
 	// StreamStepProgressRunner経由の適用確認。SummaryUriKakeAsyncStreamで代表させる。
 	// ------------------------------------------------------------------
 
 	[TestMethod]
 	public async Task SummaryUriKakeAsyncStream_LockHeld_EndsWithoutRunningAnyStep() {
-		// 排他行がある状態で呼ぶと、1ステップも実行せずエラー通知でストリームが終わる(設計書§2.1・§2.4)
+		// 排他行がある状態で呼ぶと、1ステップも実行せずエラー通知でストリームが終わる
 		var db = PrepareUriKakeTables();
 		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
 		new ManualLockDb(db).TryBegin("他の一連処理", "実行中", 600, "先行中");
@@ -122,7 +122,7 @@ public class SummaryKakeDbTests {
 
 	[TestMethod]
 	public async Task SummaryUriKakeAsyncStream_NormalRun_ClearsLockAndAddsHistory() {
-		// 正常終了するとSysSequenceの行が消え、SysHistAutoexecへ手動実行履歴が1件増える(設計書§2.3)
+		// 正常終了するとSysSequenceの行が消え、SysHistAutoexecへ手動実行履歴が1件増える
 		var db = PrepareUriKakeTables();
 		db.Insert(CreateUriage("20260710", 1, EnumUri00.Uriage, 1000, 100));
 
@@ -872,7 +872,7 @@ public class SummaryKakeDbTests {
 	}
 
 	// ---- 複数締日 ------------------------------------------------------------------
-	// `Doc/spec/2026-09-02_複数締日対応_詳細設計.md` 6.2 の受入条件を固定する。
+	// 複数締日の各期間が隣接し、月内の請求／支払合計が全月の取引合計と一致することを固定する。
 	// 締日ごとの期間分割・「すべての締日」の冪等性・取引先ごとのDayFrom差・0フォールバック・
 	// DELETEスコープ・PayDay=0フォールバックを対象にする。既存の単一締日テストの期待値は変更しない
 	// (3.3の一致保証・受入条件8)。
@@ -1075,7 +1075,7 @@ public class SummaryKakeDbTests {
 		db.CreateTable(typeof(MasterTokui), true, false);
 		db.CreateTable(typeof(Tran00Uriage), true, false);
 		db.CreateTable(typeof(Tran06Nyukin), true, false);
-		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// 全体排他が
 		// SummaryUriSeiAsyncStreamの経路で使うため、独立DBにも作っておく。
 		db.CreateTable(typeof(SysSequence), true, false);
 		db.CreateTable(typeof(SysHistAutoexec), true, false);

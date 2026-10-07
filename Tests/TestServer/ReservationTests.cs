@@ -20,7 +20,7 @@ namespace Tests.CvServer;
 /// <summary>
 /// 取置配分（区分6）の登録・売上変換・取消・期限切れを <see cref="CoreService"/> のハンドラ層と
 /// <see cref="ReservationDb"/> 越しに確かめる。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md`。
+/// 取置の売上変換・取消・期限切れで完了理由と引当解除が一致し、不正状態・Vdu競合では全件未適用になることを確認する。
 /// </summary>
 [TestClass]
 public class ReservationTests {

@@ -4,7 +4,7 @@ PostgreSqlDialect は SQLite 方言のSQLを PostgreSQL 向けへ変換します
 
 Phase 1 ではルールを1つも持ちません。変換は行われず、SQLite固有構文が残っていることを
 検出して報告するだけです。ルールは Phase 2 以降で
-`.omo/2026-08-25_sql_dialect_translator_detail_design.md` §4 のカタログ順に追加します。
+SQLite固有構文をルール登録順に変換し、後続ルールが扱う構文を前段で壊さないようにします。
 
 PostgreSQL は下限を 16 とします。json_valid 相当の `IS JSON` 述語が 16 以降にしか無く、
 16未満だと不正JSONガード18箇所を自前関数で再実装することになるためです。

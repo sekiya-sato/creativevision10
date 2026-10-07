@@ -14,7 +14,7 @@ namespace Tests.CvServer;
 /// <para>
 /// 伝票内だけで完結するC1・C2・C5は<see cref="JodaiScopeResolver"/>（<c>CvBase</c>、別テスト）が担当し、
 /// C3は<see cref="TranJodai.Normalize"/>（<see cref="JodaiExpandTests"/>）が担当するため、ここでは扱わない。
-/// 仕様は `Doc/spec/2026-09-05_上代一括変更_詳細設計.md` 2.8・6.1。
+/// 同じ商品・店舗で期間が両端を含めて重なると競合し、非重複の段階価格は併存できることを固定する。
 /// </para>
 /// </summary>
 [TestClass]

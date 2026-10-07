@@ -14,8 +14,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// 請求ヘッダは集計テーブル SummaryUriSei（請求計算＝月次更新処理の成果物）を読む。
 /// 対象期間は同テーブルの DayFrom〜DayTo。締め処理を回していない請求日は行が無く空になる。
 /// SummaryUriSei は対象期間のみの集計（繰越なし）。前回残高(prevBalance)は、対象期間の開始
-/// (DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積んで都度算出する（PreviousBalance、
-/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// (DayFrom)より前の全行をSUM(TotalSales - TotalIn)で積んでPreviousBalanceを都度算出する。
 /// 当月残高(balance)は PreviousBalance + Balance。
 ///
 /// 明細1行=CSV1行で、ヘッダ項目は各行に同じ値を繰り返す。qfm 側でヘッダ領域と明細領域に
@@ -61,7 +60,7 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 		ct.ThrowIfCancellationRequested();
 
 		// 税区分(Id_Tax 1-3)→表示税率(10%/8%/非課税)の対応は、この請求締日(DayTo)時点の
-		// MasterSysTax で1回だけ解決する（`Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` D-05）。
+		// MasterSysTaxで1回だけ解決する。税区分Idを固定の10%／8%とみなさず、締日時点の税率切替を反映する。
 		// 判定は CvDomainLogic/SummaryDb.cs と同じ TaxRateResolver.ResolveTaxRatePercent に揃えており、
 		// マッピングをこの1箇所へまとめている（CvWpfclient は CvDomainLogic を参照しないため、
 		// TaxRateResolver 自体を CvBase へ移設して両側から同じ実装を呼べるようにした）。
@@ -79,7 +78,7 @@ public partial class SeikyuBalanceDetailViewModel : Helpers.BaseReportViewModel 
 			TaxRateResolver.ResolveTaxRatePercent(sysman, 3, seikyuDayValue),
 		};
 		// PreviousBalance は対象期間の開始(DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積む
-		// （設計書 2.3）。相関スカラサブクエリにしているのは、この式が headersCte（"s." エイリアス）と
+		// 。相関スカラサブクエリにしているのは、この式が headersCte（"s." エイリアス）と
 		// ValidateTaxBreakdownAsync（"s." を取り除いた無エイリアスのWHERE断片）の両方から
 		// 文字列置換だけで使い回せるようにするため。
 		const string PrevBalanceExpr =

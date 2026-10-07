@@ -81,7 +81,7 @@ public readonly record struct TaxTotals(
 /// <summary>
 /// 明細別消費税の共通計算処理。
 /// <para>
-/// 仕様は `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` の 3.1〜3.7 を参照する。
+/// 明細の税率・税区分は伝票時点の監査値として保持する。返品の数量・金額は正数のため、集計時にヘッダのCalcFlagで符号を付ける。
 /// 伝票単位（<see cref="EnumTaxCalcUnit.Slip"/>）では税区分ごとに1回だけ丸めてヘッダへ確定させ、
 /// 請求単位（<see cref="EnumTaxCalcUnit.Billing"/>）では課税対象額の集計のみ行い、税額は請求計算側で確定する。
 /// </para>

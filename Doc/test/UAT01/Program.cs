@@ -158,7 +158,7 @@ CodeNameView SupplierView() => new(supplier.Id, supplier.Code, supplier.Name);
 CodeNameView WarehouseView() => new(warehouse.Id, warehouse.Code, warehouse.Name);
 CodeNameView EmployeeView() => new(employee.Id, employee.Code, employee.Name);
 
-// Tran13Hachu(発注)はTaxCalcUnit列を持たず常に伝票単位(Doc/spec/2026-09-01_...全体設計.md 2.2)。
+// Tran13Hachu(発注)はTaxCalcUnit列を持たず常に伝票単位。
 // ヘッダTax1を確定値として持ち、TaxableAmount1に税抜金額を入れて整合させる。
 Tran13Hachu Order(string day, int quantity) => new() {
     DenDay = day, NouhinDay = day, Id_Shiire = supplier.Id, VShiire = SupplierView(),

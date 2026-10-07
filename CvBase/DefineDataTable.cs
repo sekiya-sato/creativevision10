@@ -103,7 +103,7 @@ public class DefineDataTable {
 
 			typeof(Tran60TanaDate),
 
-			// 原価テーブル (原価4項目 詳細設計 §2.5.1〜§2.5.11)
+			// 原価テーブル
 			typeof(TranGenka),
 			typeof(TranConsumptionPurchaseLink),
 			typeof(TranGenkaReval),
@@ -129,7 +129,7 @@ public class DefineDataTable {
 			 * 派生系：Derived：マスタからの派生データを管理するテーブル
 			 *		商品マスタの色サイズ展開
 			 *
-			 * ■ V*列(CodeNameView)の扱いはこのテーブル種別で決まる (詳細は AGENTS.md / .omo/20260727_master_vcolumn_sync_design.md)
+			 * ■ V*列(CodeNameView)の扱いはこのテーブル種別で決まる (Tran系は伝票時点値、Master/Sys/Derived系は現行名称)
 			 *		Tran系   : 伝票作成時点の名称を保持する監査値。マスタ改名時に伝播しない(意図的)。現行名称が必要なら Id_* からJOINする
 			 *		Master系 : 常に現行名称。CvDomainLogic/MasterCascadeDb がマスタ更新時に伝播する
 			 *		           Master系にV*列を追加したら MasterCascadeDb.VRules への登録も必須
@@ -148,7 +148,7 @@ public class DefineDataTable {
 		// DDLで表が増える前に一度だけ判定する。既存表のデータが空でも新規DBとは扱わない。
 		var isNewDatabase = db.GetUserTableNames().Count == 0;
 		var ret = false;
-		// SQLiteのバージョンは 3.49.1 以降 (2025/05/27) select sqlite_version();
+		// SQLiteのバージョンは 3.49.1 以降 (2025/05/27) select sqlite_version;
 
 		// ToDo: テーブルの存在チェックと作成は、テーブルごとに行うのではなく、まとめて行うようにすること / テーブルが追加された場合、事前作成が必要なものはここに追加すること
 
@@ -235,7 +235,7 @@ public class DefineDataTable {
 			Vdu = Common.GetVdate(),
 			// Id=3は未使用枠。Id=1と同率(10%)のままだと同一適用日に同一税率のId_Taxが重複し、
 			// 「税率ごとに1回の端数処理」という制度上の制約に違反する
-			// (Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md 3.6)。税率0(未使用)へ修正する。
+			// 税率0(未使用)へ修正し、同じ税率を別Id_Taxへ分けて二重に丸めない。
 			Jsub = [new MasterSysTax { Id = 1, DateFrom = "19010101", TaxRate = 10 }, new MasterSysTax { Id = 2, DateFrom = "19010101", TaxRate = 8 }, new MasterSysTax { Id = 3, DateFrom = "19010101", TaxRate = 0 },]
 
 		};

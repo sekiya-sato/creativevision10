@@ -4,7 +4,7 @@ using NPoco;
 
 namespace CvBase;
 
-// 物流連携（WMS）の送受信履歴。仕様は `Doc/spec/2026-10-05_WMS連携_旧AMS連携調査と仮実装仕様.md` 3.4。
+// 物流連携（WMS）の送受信履歴。ファイル単位のバッチと処理単位の行で結果・再処理を追跡する。
 // 旧CVのワーク(HC$WKS_TORI1)・エラー退避(HC$TRAN_ERRTORI1)を、送受信共通のバッチ／行の2表に置き換える。
 
 /// <summary>

@@ -179,7 +179,7 @@ public partial class ShiireSlipPrintViewModel : Helpers.BaseReportViewModel {
 		//   名称(item5/6の仕入先名・item16の倉庫名) … 伝票のV*列(VShiire/VSoko)から取る = 伝票作成時点の名称
 		//   住所・電話・郵便番号            … マスタをJOINして取る = 現行値(伝票側に保持していないため)
 		// Tran系のV*列は改名時に伝播しない監査値であるため、名称は時点値のまま出す。
-		// 詳細は .omo/20260727_master_vcolumn_sync_design.md を参照。
+		// 伝票のV*列は作成時点の名称を保持し、現行マスタの改名を反映しない。
 		var header = $@"
 select h.*,
 	ifnull(si.PostalCode,'') siZip,

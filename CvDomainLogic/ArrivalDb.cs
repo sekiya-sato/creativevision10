@@ -14,7 +14,7 @@ namespace CvDomainLogic;
 /// </para>
 /// <para>
 /// 呼び出し元が張ったトランザクション内で実行される前提。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md` 3.2 を参照する。
+/// 仕入実績は発注と同じ倉庫・SKUの符号付き数量で集計し、確定済み配分のJitsuSuを控除する。残りは店舗コード→Id順に割り当てる。
 /// </para>
 /// </summary>
 public class ArrivalDb(ExDatabase db) {

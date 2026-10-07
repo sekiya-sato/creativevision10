@@ -14,7 +14,7 @@ namespace Tests.CvServer;
 /// 最優先要件は「既存伝票が現行と1行も違わずに展開されること」。<see cref="DerivedJodai.CreateSql"/>への
 /// <c>No_Scope</c>等値結合追加、<see cref="TranJodai.Normalize"/>/<see cref="TranJodai.FindDuplicates"/>の
 /// 複合キー化、<see cref="TranJodai.NormalizeLegacyScope"/>の後方互換を検証する。
-/// 仕様は `Doc/spec/2026-09-05_上代一括変更_詳細設計.md` 第2章・第4章・3.4・3.10。
+/// Scopeを実店舗へ解決した確定スナップショットの展開と、Scopeなしの旧Jshop形式との互換性を確認する。
 /// </para>
 /// </summary>
 [TestClass]
@@ -254,7 +254,7 @@ public class JodaiExpandTests {
 	}
 
 	// ============================================================
-	// TranJodai.Normalize() / FindDuplicates()
+	// TranJodai.Normalize / FindDuplicates
 	// ============================================================
 
 	/// <summary>
@@ -377,7 +377,7 @@ public class JodaiExpandTests {
 	}
 
 	// ============================================================
-	// TranJodai.NormalizeLegacyScope()（設計 3.10）
+	// TranJodai.NormalizeLegacyScope（設計 3.10）
 	// ============================================================
 
 	/// <summary>

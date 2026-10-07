@@ -17,7 +17,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <para>
 	/// 配分入力画面が修正対象を読み込む条件と、サーバが保存時に強制する条件
 	/// （<c>AllocationRules.IsEditable</c>）を一致させるため、両方がこの定数を基準にする。
-	/// 保存条件は TranHaibun.EditableWhereSql、採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
+	/// 修正・削除は未送信・未完了・確定日なしに限定し、配分行と引当を同じトランザクションで更新する。
 	/// </para>
 	/// </summary>
 	public const string EditableWhereSql = "SendFlg = 0 AND EndFlag = 0 AND ifnull(KakuteiDay,'') = ''";
@@ -201,8 +201,8 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// <para>
 	/// <see cref="Su"/>（指示数）はユーザーが配分入力で設定する。配分確定で確定数を入れると
 	/// <see cref="JitsuSu"/>（出荷数）と本列が設定され、<c>Su = JitsuSu + ShortSu</c> が成立し、同時に伝票作成・完了（<see cref="EndFlag"/>=1）となる。
-	/// 保存条件は TranHaibun.EditableWhereSql、採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
-	/// （旧仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.1.2）。
+	/// 修正・削除は未送信・未完了・確定日なしに限定する。確定取消は行わず、訂正は生成伝票側で行う。
+	/// 旧方式の「確定してから別途出荷」は採らず、確定時に伝票生成と引当解除まで完了する。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -215,7 +215,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// 発注(<see cref="RelateNo1"/>)×SKU の仕入数から確定済みの配分ぶんを引いた残りを、未完了の仕入配分へ
 	/// 配分先の店舗コード順に割り当てた値（<c>ArrivalDb.Recalc</c>）。区分0はこの数だけが引当・確定の対象になる。
 	/// 仕入・配分保存・配分確定・全件再集計のたびに再計算する。ほかの区分では使わない（0 のまま）。
-	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md` 3章を参照する。
+	/// 入荷前の数量を引き当てると未入荷在庫を先取りするため、振り分け数Suと供給済みのArrivedSuを分ける。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -223,7 +223,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	public partial int ArrivedSu { get; set; }
 	/// <summary>
 	/// 取置の顧客（<see cref="MasterEndCustomer"/>.Id）。取置配分＝区分 <see cref="EnumHaibun.Reservation"/>(6) だけが使い、ほかは 0。
-	/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` 3章を参照する。
+	/// 店舗自身の在庫を引き当て、通常の配分確定ではなく売上変換・取消・期限切れ取消で完了する。
 	/// </summary>
 	[ObservableProperty]
 	[ForeignKey(nameof(MasterEndCustomer))]
@@ -260,7 +260,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	/// （配分再設計 Step 4。以前は区分0を引当対象外としていた）。
 	/// 追加・修正・削除、およびこの列の部分更新のたびに、対象の倉庫+SKU の引当数が引き直される。
 	/// <see cref="KakuteiDay"/>（配分確定）と <see cref="SendFlg"/>（物流連携）は引当の判定に使わない。
-	/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 5.2 を参照する。
+	/// 引当は未完了行だけを対象とし、入荷前の仕入配分はArrivedSu=0なので数量を積まない。
 	/// </para>
 	/// </summary>
 	[ObservableProperty]
@@ -305,12 +305,12 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 /// 配分区分（<see cref="TranHaibun.Kubun"/>）。
 /// <para>
 /// 値は既存データの区分なので<b>変更しないこと</b>。画面・帳票の名前は <see cref="HaibunKubunNames"/> を使う。
-/// 設計の背景は `.omo/2026-07-31_haibun_design.md` を参照。
+/// 配分区分は保存済みデータとの互換性を保ち、SKU行を仮想ヘッダ単位でまとめて扱う。
 /// </para>
 /// <para>
 /// 引当対象は未完了の全区分。仕入配分(<see cref="Hatsukai"/>=0)は入荷前の振り分けなので、入荷済み数
-/// （<see cref="TranHaibun.ArrivedSu"/>）の分だけを引当に積む。区分の整理（0/1/2/6 を使い、3/4/5/7 は廃止）は
-/// `Doc/spec/2026-10-03_配分再設計_基本設計.md` 4.2、入荷割当は同 Step4 詳細設計を参照する。
+/// （<see cref="TranHaibun.ArrivedSu"/>）の分だけを引当に積む。区分は0/1/2/6を使用し、3/4/5/7は廃止する。
+/// 区分0の入荷済み数は発注×SKUごとに仕入実績から確定済み消費数を控除し、店舗コード→Id順で割り当てる。
 /// </para>
 /// </summary>
 public enum EnumHaibun : int {
@@ -349,7 +349,7 @@ public enum EnumHaibun : int {
 
 /// <summary>
 /// 配分区分の表示名の唯一の出典。画面の選択肢・帳票の SQL（CASE 式）はここから作る。
-/// 区分名統一の判断は `Doc/spec/2026-09-28_設計判断記録.md` 2.11 を参照する。
+/// 仕入・在庫・受注・取置の区分名をここで一元化し、廃止区分は旧データの表示にだけ残す。
 /// </summary>
 public static class HaibunKubunNames {
 	/// <summary>廃止区分に付ける <see cref="ObsoleteAttribute"/> の文言</summary>
@@ -418,7 +418,7 @@ public enum EnumHaibunEndReason : int {
 /// 出荷処理（<c>ShippingDb.CreateShippingSlips</c>）が 1キー=1伝票 で出荷売上／移動出庫を作る。
 /// 配分データメンテ・出荷指示明細書印刷・納入一覧表のヘッダ表示もこのキーが単位になる。
 /// 構造化（ヘッダ実テーブル化）を採らない判断と再検討条件は
-/// `Doc/spec/2026-09-28_設計判断記録.md` 2.13 を参照する。
+/// SKU単位で確定・欠品・引当解除の時機が異なり、倉庫×SKU索引も必要なため、JSON明細を内包せずフラット行を維持する。
 /// </para>
 /// </summary>
 public readonly record struct HaibunHeaderKey(string DenDay, string NouhinDay, long Id_Soko, long Id_Tenpo, int Kubun, int RelateNo1) {

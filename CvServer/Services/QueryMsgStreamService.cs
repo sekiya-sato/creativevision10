@@ -218,7 +218,7 @@ public partial class CoreService {
 			yield break;
 		}
 		// 原価4処理・評価替えの更新実行(Step 9)。Apply*は内部で既にマニュアル排他制御を取得しているため
-		// (設計書 CostUpdateDb.cs 参照)、StreamStepProgressRunnerの排他引数は使わない(二重取得になる)。
+		// （CostUpdateDb内部で排他取得済み）、StreamStepProgressRunnerの排他引数は使わない(二重取得になる)。
 		else if (request.Flag is CvFlag.Msg082_CostConsumptionApply
 			or CvFlag.Msg085_CostLastPurchaseApply
 			or CvFlag.Msg087_CostTotalAverageApply
@@ -311,8 +311,8 @@ public partial class CoreService {
 	}
 
 	#region 原価4処理・評価替えの更新実行(Step 9)
-	// 正典は `Doc/spec/2026-09-05_原価4項目_詳細設計.md` §8.1・§9.3、
-	// `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4。
+	// 原価更新は確認時の結果を信用せず、実行時に月次状態・計算元を再検査する。
+	// CostUpdateDb内部で全体排他を取得するため、ここで重ねて取得しない。
 	//
 	// 設計上の注意: Apply*(ApplyConsumptionPurchases/ApplyLastPurchaseCost/ApplyTotalAverageCost/
 	// ApplyRevaluation)はCostUpdateDb内部で既にマニュアル排他制御(ManualLockDb.TryBegin)を取得している
@@ -385,7 +385,7 @@ public partial class CoreService {
 
 	/// <summary>
 	/// クライアントが<c>BatchId</c>を空文字で送ってきた場合に、サーバー側でGUIDのD形式(36文字)を採番する
-	/// (原価4項目 詳細設計 §2.5.2「実行IDはGUIDのD形式」)。空でなければ、確認(プレビュー)と更新で
+	/// (「実行IDはGUIDのD形式」)。空でなければ、確認(プレビュー)と更新で
 	/// 同一値を使う運用のためクライアント指定値をそのまま使う。純関数として切り出し、単体テスト対象にする。
 	/// </summary>
 	public static string ResolveBatchId(string? batchId) =>
@@ -410,7 +410,7 @@ public partial class CoreService {
 			finalMsg = CreateCostUpdateResultStreamMsg(flag, result);
 		}
 		catch (ConsumptionPurchasePaidPeriodException ex) {
-			// 例外を握りつぶさず、利用者に「支払計算を取り消してから再実行する」旨が伝わる形で終える(設計書§4.6)。
+			// 例外を握りつぶさず、利用者に「支払計算を取り消してから再実行する」旨が伝わる形で終える。
 			finalMsg = CreateCostUpdateExceptionStreamMsg(flag, targetMonth, batchId, ex.Message);
 		}
 		catch (CostRevaluationPaidPeriodException ex) {
@@ -427,7 +427,7 @@ public partial class CoreService {
 	/// <c>Id_Shain</c>をJWT解決値へ上書きし(監査値のため。TranGenka.Id_Shain/TranGenkaReval.Id_Shainへ書く値であり、利用者が任意に指定できてはならない)、<c>BatchId</c>が空文字なら
 	/// サーバー側で採番してから<see cref="RunCostApplyStreamAsync"/>へ渡す。
 	/// <para>
-	/// <c>Confirmed</c>（<see cref="CostConfirmSnapshot"/>、設計書§2.4-4）は<c>Id_Shain</c>とは異なり
+	/// <c>Confirmed</c>（<see cref="CostConfirmSnapshot"/>、-4）は<c>Id_Shain</c>とは異なり
 	/// 上書きしない。クライアントが「自分が見た確認結果の時点」を主張するための値であり、
 	/// サーバーが上書きすると確認〜更新間の変更検知そのものが機能しなくなるため。
 	/// </para>

@@ -17,7 +17,7 @@ internal static class CoreServiceClient {
 	/// </param>
 	internal static Task<List<T>> QuerySqlListAsync<T>(string sql, IEnumerable<string> parameters, CancellationToken ct, string? queryKey = null) {
 		// 開発時のみ、他DBへ移せない構文が混ざっていないかを警告する。SQLは変更せず送信も止めない。
-		// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` §6 を参照する。
+		// SQLiteを正典とし、接続先の方言に応じた構文変換とQueryKeyによる個別上書きを使う。
 		SqlDialectGuard.WarnIfUnsupported(sql, typeof(T).Name);
 		return QueryListCoreAsync<T>(
 			new QueryListSqlParam(typeof(T), sql, [.. parameters], queryKey),

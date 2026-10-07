@@ -13,7 +13,7 @@ namespace Tests.CvServer;
 /// <summary>
 /// 期首残高の洗い替え登録（<see cref="OpeningBalanceDb"/>）のテスト。
 /// <para>
-/// `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` 5章の規則を固定する。
+/// 期首前の日付×対象取引先だけを削除・登録し、1件でも不正なら洗い替え全体を戻すことを固定する。
 /// 冪等性（同一CSVの再取込で uk1 違反にならず件数が増えない）、期首ガード、
 /// 許可テーブル、洗い替え範囲、ロールバックを対象にする。
 /// </para>
@@ -380,7 +380,7 @@ public class OpeningBalanceDbTests {
 		// フォールバックすることも合わせて確認する。
 		var db = Prepare();
 		db.CreateTable(typeof(MasterTokui), true, true);
-		// Prepare()が作るMasterSysman行(ShimeBi未設定)を更新する。挿入すると自社締日サブクエリ
+		// Prepareが作るMasterSysman行(ShimeBi未設定)を更新する。挿入すると自社締日サブクエリ
 		// (ORDER BY Id LIMIT 1)が拾うのは先に挿入済みの行になってしまう。
 		db.Execute($"UPDATE {nameof(MasterSysman)} SET ShimeBi=@0", 20);
 		db.Insert(new MasterTokui { Code = "00123", Name = "複数締日", Shime1 = 10, Shime2 = 20, Shime3 = 99, TenType = 1 });

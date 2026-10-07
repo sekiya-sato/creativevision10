@@ -51,8 +51,8 @@ public sealed class BalanceRegistrationErrorRow {
 /// </para>
 /// <para>
 /// 繰越の引き継ぎ方は売掛・買掛が <c>Balance</c> 列、請求・支払が <c>TotalIn-TotalSales</c> の合計差と
-/// 異なるため、期首行では双方を矛盾なく埋める。仕様は
-/// `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` を参照する。
+/// 異なるため、期首行では双方を矛盾なく埋める。
+/// 正数は未回収／未払を表す。前残は期首行を含む過去全行から都度計算し、Summaryへ繰越残を重ねて保存しない。
 /// </para>
 /// </summary>
 public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {

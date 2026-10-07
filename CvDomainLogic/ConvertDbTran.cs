@@ -48,7 +48,7 @@ public partial class ConvertDb {
 					},
 					Jmeisai = meisaiList,
 					// 旧「掛計上FLG」は移行データで全件0のまま業務上意味を持たず、2026-08-16に売掛から除外しない方針を確定した
-					// （ユーザーが移行済み50,311件を1へ一括更新済み。Doc/spec/2026-09-28_設計判断記録.md 4.1参照）。再変換でも同じ値になるようここで固定する。
+					// （移行済みデータも売掛対象へ統一済み）。再変換でも同じ値になるようここで固定する。
 					IsPay = 1,
 					Id_Shain = shain.Sid,
 					VShain = shain,
@@ -58,7 +58,7 @@ public partial class ConvertDb {
 					VTokui = tokui,
 					Rate = rate,
 				};
-				// 税計算単位・消費税端数処理は得意先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+				// 税計算単位・消費税端数処理は得意先マスタの伝票作成時点のスナップショット
 				var (calcUnit, rounding) = ResolveTorihikiTax(tokuiTaxMap, tokui.Sid, sysman);
 				slip.TaxCalcUnit = (int)calcUnit;
 				slip.TaxRounding = (int)rounding;
@@ -188,7 +188,7 @@ public partial class ConvertDb {
 					Id_Shiire = shiire.Sid,
 					VShiire = shiire,
 				};
-				// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+				// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット
 				var (calcUnit, rounding) = ResolveTorihikiTax(shiireTaxMap, shiire.Sid, sysman);
 				slip.TaxCalcUnit = (int)calcUnit;
 				slip.TaxRounding = (int)rounding;
@@ -258,7 +258,7 @@ public partial class ConvertDb {
 					VShiire = shiire,
 					Rate = rate,
 				};
-				// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット(Doc/spec/2026-09-01 2.2)
+				// 税計算単位・消費税端数処理は仕入先マスタの伝票作成時点のスナップショット
 				var (calcUnit, rounding) = ResolveTorihikiTax(shiireTaxMap, shiire.Sid, sysman);
 				slip.TaxCalcUnit = (int)calcUnit;
 				slip.TaxRounding = (int)rounding;
@@ -697,7 +697,7 @@ WHERE json_valid({tname}.Jmeisai)
 		return cnt;
 		// SQLite の JSON 関数を使用して、Jmeisai 内のサイズコードを一括で更新する SQL クエリを実行する。
 		// このクエリは、Jmeisai 内の Id_Siz が 0 のレコードに対して、DerivedShohinColSiz テーブルから対応するサイズコードを取得して更新します。
-		// 更新件数は、他DBに存在しない changes() を避けるため、同じ EXISTS 条件の事前COUNTで取得します。
+		// 更新件数は、他DBに存在しない changes を避けるため、同じ EXISTS 条件の事前COUNTで取得します。
 		// アプリ側でレコード1件づつの処理をした場合、実データ5万件程度で数10分、300万件で4時間以上かかって途中リタイア。-> SQLクエリで一括更新する方法に変更して全体で5分程度で完了。
 	}
 
@@ -933,7 +933,7 @@ WHERE {child}.RelateNo1 > 0
   )
 ";
 		_toDb.ExecuteDialect(sql);
-		// Execute系は正常終了で0を返すため、更新件数は changes() で取る（subCnvTranHeaderSize と同じ規約）
+		// Execute系は正常終了で0を返すため、更新件数は changes で取る（subCnvTranHeaderSize と同じ規約）
 		var cnt = _toDb.FirstOrDefault<int>("SELECT changes() AS updated_count");
 		_logger.LogInformation("関連伝票の張替 {Child}.RelateNo1 -> {Parent}.Id : {Count}件", child, parent, cnt);
 		return cnt;
@@ -1081,7 +1081,7 @@ WHERE {child}.RelateNo1 > 0
 			var oldCode = getString(detailRec, "商品CD");
 			var material = getMaster<MasterMaterial>(placeholderCode ?? oldCode);
 
-			// 関連商品CD（諸掛の費用を負担する商品）の解決処理（原価4項目 詳細設計 §3.3）
+			// 関連商品CD（諸掛の費用を負担する商品）の解決処理（）
 			// 旧DBの明細テーブル HC$tran_tori1 の「関連商品CD」列から商品マスタを解決する。
 			// 解決できないコードがあっても異常終了させない。旧データに商品コード以外の文字列
 			// （注文番号など）が入っている実例があるため、そうしたレコードは Id_Shohin=0、
@@ -1307,7 +1307,7 @@ WHERE {child}.RelateNo1 > 0
 		return new CodeNameView(current.Id, current.Code, current.Name);
 	}
 
-	#region 消費税計算単位・端数処理の移行(Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md 2.2/3.2-3.7)
+	#region 消費税計算単位・端数処理の移行
 	MasterSysman? _sysman;
 	Dictionary<long, long>? _shohinTaxIdMap;
 	Dictionary<long, long>? _materialTaxIdMap;

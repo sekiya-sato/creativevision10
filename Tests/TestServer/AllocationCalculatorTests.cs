@@ -6,7 +6,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// 配分の按分計算（<see cref="AllocationCalculator"/>）の単体テスト。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step3_在庫配分入力_詳細設計.md` 3.4。
+/// 同数は入力順に残数を配り、比率は切捨／四捨五入・合計0・負の重み・超過補正の結果を固定する。
 /// </summary>
 [TestClass]
 public class AllocationCalculatorTests {

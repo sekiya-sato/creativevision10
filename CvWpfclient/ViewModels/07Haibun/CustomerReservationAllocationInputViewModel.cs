@@ -18,7 +18,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// 登録・数量変更・期限変更は配分の洗い替え保存（<c>HaibunSaveParam</c>）、売上変換は <see cref="ReservationConvertParam"/>、
 /// 取消は <see cref="ReservationCancelParam"/> を送る。期限日を過ぎた取置はサーバの日次タスクが自動で取り消す。
 /// 有効在庫が足りなくても登録はでき、確認ダイアログで警告する（判断 2）。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` 5章。
+/// 店舗自身の在庫を一般顧客向けに取置し、店舗×顧客の売上変換または取消で引当を解除する。POSで別途会計すると二重計上になる。
 /// </para>
 /// </summary>
 public partial class CustomerReservationAllocationInputViewModel : BaseViewModel {

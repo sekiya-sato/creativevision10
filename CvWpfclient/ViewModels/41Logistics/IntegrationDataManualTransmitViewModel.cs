@@ -9,7 +9,7 @@ using System.Text;
 namespace CvWpfclient.ViewModels._41Logistics;
 
 /// <summary>
-/// L02 物流連携 連携データ手動送信。仕様は `Doc/spec/2026-10-05_WMS連携_旧AMS連携調査と仮実装仕様.md` 3.2〜3.3・7章。
+/// L02 物流連携の手動送信。出荷指示・入荷予定・在庫をcv10-v1ファイルとしてサーバの連携フォルダへ作成する。
 /// 対象取得 → 確認 → 送信ファイル作成。出荷指示・入荷予定は行を選んで送る（在庫は全件）。
 /// </summary>
 public partial class IntegrationDataManualTransmitViewModel : LogisticsViewModelBase {

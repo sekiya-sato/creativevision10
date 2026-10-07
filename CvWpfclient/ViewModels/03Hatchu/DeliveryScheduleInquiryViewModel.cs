@@ -12,8 +12,8 @@ namespace CvWpfclient.ViewModels._03Hatchu;
 /// 入荷予定と<b>納期遅れ</b>を画面で確認する。納品予定日は 2026-08-18 に伝票ヘッダへ追加した（決定 6.2 / H1）。
 /// <para>
 /// 納期遅れ = 納品予定日を過ぎても未完了(<c>EndFlag=0</c>)。判定は納品日と完了フラグで行う（リードタイム自動計算は 2.0 以降）。
-/// 読み取りは既存の照会パターン（`QuerySqlListAsync&lt;Tran13Hachu&gt;`）。仕様は
-/// `Doc/spec/2026-08-18_H1-H4_納品予定日_詳細設計.md` を参照する。
+/// 読み取りは既存の照会パターン（`QuerySqlListAsync&lt;Tran13Hachu&gt;`）。
+/// 予定日が未設定の伝票は対象外とし、予定日を過ぎた未完了の発注だけを納期遅れとして扱う。
 /// </para>
 /// </summary>
 public partial class DeliveryScheduleInquiryViewModel : BaseQueryViewModel {

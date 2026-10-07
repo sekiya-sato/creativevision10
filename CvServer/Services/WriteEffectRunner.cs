@@ -82,7 +82,7 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 		"Tax1", "Tax2", "Tax3", "TaxableAmount1", "TaxableAmount2", "TaxableAmount3",
 		"Total", "Jmeisai", "Code", "Name",
 		// TaxCalcUnit/TaxRounding は伝票作成時点のマスタ値のスナップショット(監査値)。
-		// 部分更新で書き換えられると過去伝票の税額が再現できなくなるため禁止する(Doc/spec/2026-09-01 2.2)。
+		// 部分更新で書き換えられると過去伝票の税額が再現できなくなるため禁止する。
 		"TaxCalcUnit", "TaxRounding",
 		// 仕入配分の入荷済み数は ArrivalDb だけが計算して書く。部分更新では引当が引き直されない(配分再設計 Step 4)
 		"ArrivedSu",

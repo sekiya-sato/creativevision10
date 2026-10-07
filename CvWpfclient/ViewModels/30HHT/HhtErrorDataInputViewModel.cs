@@ -14,7 +14,7 @@ namespace CvWpfclient.ViewModels._30HHT;
 /// <summary>
 /// HHTエラーデータ修正入力。HHTデータ更新で変換できなかった <see cref="TranVulcanHht"/> を確認・修正する。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` の 9章を参照する。
+/// 未変換のエラー行だけを修正・削除し、修正後はHHTデータ更新で再判定する。生成済み伝票の取消はこの画面では行わない。
 /// <see cref="TranVulcanHht"/> は副作用を持たないため <c>PartialUpdateParam</c> ではなく
 /// <c>UpdateParam</c>（行全体・楽観排他あり）で保存する
 /// （<c>WriteEffectRunner.PartialUpdateDeniedColumns</c> に DenDay / Su 等が含まれ部分更新できない）。

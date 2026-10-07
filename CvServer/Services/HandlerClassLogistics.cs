@@ -6,7 +6,7 @@ using CvDomainLogic;
 namespace CvServer.Services;
 
 // 物流連携（WMS）の受け口。処理本体は CvDomainLogic/LogisticsLinkDb（自動実行からも同じ本体を呼ぶ）。
-// 仕様は `Doc/spec/2026-10-05_WMS連携_旧AMS連携調査と仮実装仕様.md` 6章。
+// 取込と検査では伝票を変えず、反映要求だけで伝票生成・在庫更新を行う。送受信履歴の再処理は同じドメイン本体へ渡す。
 public partial class CoreService {
 	/// <summary>物流連携の設定照会</summary>
 	private CvMsg HandleLogisticsSettings(CvFlag flag) {

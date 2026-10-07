@@ -469,7 +469,7 @@ public partial class SalesOrderAllocationInputViewModel : BaseViewModel {
 
 	Window? ActiveWindow => ClientLib.GetActiveView(this);
 
-	/// <summary>不正JSONを空配列として扱う <c>Jmeisai</c> の SQL 式（AGENTS.md の JSON 防御規約）。</summary>
+	/// <summary>不正JSONを空配列として扱う <c>Jmeisai</c> の SQL 式（json_validで検査し、不正値は空配列へ置換）。</summary>
 	static string SafeJmeisai(string alias) =>
 		$"CASE WHEN json_valid({alias}.Jmeisai) THEN {alias}.Jmeisai ELSE '[]' END";
 

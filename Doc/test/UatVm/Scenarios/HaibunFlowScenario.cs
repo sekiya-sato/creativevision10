@@ -28,7 +28,7 @@ namespace UatVm.Scenarios;
 /// <item>取置：売上変換で店舗売上、期限切れの取置は自動取消</item>
 /// <item>全件再集計（在庫は2026/09〜10、引当は全件）の前後で、この商品の在庫・引当が一致する</item>
 /// </list>
-/// 配分の全体方針は `Doc/spec/2026-10-03_配分再設計_基本設計.md`、実行方法は `Doc/spec/使用ガイドライン.md` 4章を参照する。
+/// 仕入・在庫・受注配分の保存→入荷割当→確定→伝票生成→引当解除を通して確認する。専用SQLite DBと管理対象サーバを使用する。
 /// </summary>
 public static class HaibunFlowScenario {
 	const string ScreenDirectory = "..\\Doc\\test\\uat20261003\\haibun\\screens";

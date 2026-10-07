@@ -9,7 +9,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// <see cref="TaxCalculator.Apply"/> の共通消費税計算（伝票単位・請求単位・按分・端数処理）。
-/// 仕様は `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` の 3.1〜3.7 を参照する。
+/// 税率スナップショット・税区分別課税対象額・伝票／請求単位の丸め・端数配賦を固定する。
 /// </summary>
 [TestClass]
 public class TaxCalculatorTests {

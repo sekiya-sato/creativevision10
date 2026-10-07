@@ -19,7 +19,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// （<see cref="HaibunOrderDistributor"/>）。発注数を超える配分は登録しない（区分0は発注Id必須）。
 /// 入荷するまで引当に入らず、仕入を計上すると入荷済み数（<see cref="TranHaibun.ArrivedSu"/>）の分だけ引当・確定できる（サーバの ArrivalDb）。
 /// 按分（同数・比率）は在庫配分入力と同じ <see cref="AllocationCalculator"/>。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step4_仕入配分入力_詳細設計.md` 4.1。
+/// 発注に対して入荷前の振り分けを作り、供給済みのArrivedSuだけを引当・確定に使う。保存後はサーバで入荷割当を再計算する。
 /// </para>
 /// </summary>
 public partial class PurchaseReceiptAllocationInputViewModel : BaseViewModel {

@@ -8,8 +8,7 @@ namespace UatVm.Scenarios;
 
 /// <summary>
 /// マニュアル排他制御の「真の同時TryBegin」を、別プロセスからの同時要求で検証する
-/// （テスト計画書 `Doc/test/2026-09-07_マニュアル排他制御_テスト計画.md` のE-04・E-02の実プロセス版）。
-/// 正典は `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`。
+/// 同時開始では排他行を先に挿入してから再確認し、最小Id以外が撤退して先行処理だけが実行されることを確認する。
 /// </summary>
 /// <remarks>
 /// <para>
@@ -17,7 +16,7 @@ namespace UatVm.Scenarios;
 /// 既存の<see cref="ManualLockScenario"/>（E-01〜E-07を1本のシナリオ内で順に検証する）とは別物で、
 /// こちらは <c>Run-ManualLockRace.ps1</c> が本シナリオを2プロセス起動し、共通の壁時計時刻
 /// （<see cref="FireAt"/>、<c>--fire-at</c>）まで待ってから同時に撃たせることで
-/// 「真の同時TryBegin」を作る。CvServerは1本のみとし（<c>README.md</c>「並列実行はできない」）、
+/// 「真の同時TryBegin」を作る。CvServerは1本のみとし（同じサーバで排他競合を検証する）、
 /// 排他は<c>SysSequence</c>の行1本で効くため、同一サーバへ別プロセスから同時要求を投げれば条件を満たす。
 /// </para>
 /// <para>
@@ -87,7 +86,7 @@ public static class ManualLockRaceScenario {
 
 	private static async Task RunBillingRoleAsync(VmSession session) {
 		var d = session.OpenView<BillingCalculationView, BillingCalculationViewModel>();
-		// --hide-views指定時はView.Show()を呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
+		// --hide-views指定時はView.Showを呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
 		// InitCommandが走らず、ShimeItemsが空のままになる。ViewModel自身のInitCommand
 		// （BaseBillingCalculationViewModel.InitAsyncに[RelayCommand]が生成するIAsyncRelayCommand）を
 		// RunAsyncで明示実行し、完了を待つことで代替する。
@@ -104,7 +103,7 @@ public static class ManualLockRaceScenario {
 
 	private static async Task RunPaymentRoleAsync(VmSession session) {
 		var d = session.OpenView<PaymentCalculationView, PaymentCalculationViewModel>();
-		// --hide-views指定時はView.Show()を呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
+		// --hide-views指定時はView.Showを呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
 		// InitCommandが走らず、ShimeItemsが空のままになる。ViewModel自身のInitCommand
 		// （BaseBillingCalculationViewModel.InitAsyncに[RelayCommand]が生成するIAsyncRelayCommand）を
 		// RunAsyncで明示実行し、完了を待つことで代替する。

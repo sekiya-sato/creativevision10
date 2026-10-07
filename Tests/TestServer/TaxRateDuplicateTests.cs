@@ -8,7 +8,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// <see cref="TaxRateResolver.FindDuplicateTaxRates"/> の税率重複チェック。
-/// 仕様は `Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` の 3.6・3.6.1。
+/// 同一適用日の有効税率を複数Id_Taxへ分割すると別々に丸められるため、重複税率を拒否する規則を固定する。
 /// `MasterSysKanriMenteViewModel`（システム管理マスタ保守画面、`CvWpfclient`）の保存時バリデーションから
 /// 呼ばれる判定ロジックだが、`Tests/TestServer` から `CvWpfclient` を参照できないため
 /// `CvBase` 側へ切り出した純粋な static メソッドを直接テストする。

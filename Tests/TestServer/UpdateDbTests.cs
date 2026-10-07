@@ -356,7 +356,7 @@ public class MasterConfigAutoExecDefaultDataTests {
 }
 
 /// <summary>
-/// 原価4項目 Step3 (2026-09-05_原価4項目_詳細設計.md §2.5.7〜§2.5.10) の <see cref="UpdateDb"/> 新バージョン(26_09_06_01)適用検証。
+/// 原価4項目の列追加・既存値補完を行う <see cref="UpdateDb"/> 新バージョン(26_09_06_01)適用検証。
 /// 移行前(列追加前)のスキーマを模した最小テーブルへ実際にバージョンアップSQLを適用し、
 /// 新列が既存業務動作を維持する初期値(既定値)で補完されることを確認する。
 /// </summary>
@@ -470,10 +470,10 @@ public class UpdateDbCost4ItemsStep3Tests {
 }
 
 /// <summary>
-/// マニュアル排他制御 (2026-09-06_マニュアル排他制御_詳細設計.md §1) の <see cref="UpdateDb"/>
+/// マニュアル排他制御の列追加を行う <see cref="UpdateDb"/>
 /// 新バージョン(26_09_06_02)適用検証。移行前(列追加前)のスキーマを模した最小テーブルへ実際に
 /// バージョンアップSQLを適用し、新列が既存業務動作を維持する初期値で補完されることを確認する。
-/// 同書 §5 の L-13(既存のSysHistAutoexec行がSysHistType=0で補完される)に対応する。
+/// 既存のSysHistAutoexec行がSysHistType=0で補完されることも確認する。
 /// </summary>
 [TestClass]
 public class UpdateDbManualLockTests {

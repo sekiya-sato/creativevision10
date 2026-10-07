@@ -12,9 +12,9 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// マニュアル排他制御の状態照会・強制クリア（<see cref="ManualLockDb.FetchManualLockStatus"/>、
-/// <see cref="ManualLockDb.ForceClearManualLocks"/>、詳細設計 §2.5、Step 9-5）の単体テスト。
+/// <see cref="ManualLockDb.ForceClearManualLocks"/>、、Step 9-5）の単体テスト。
 /// SQLiteインメモリDBの作成作法は<see cref="ManualLockDbTests"/>に合わせる。
-/// 仕様書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §5 のL-14〜L-20を実装する。
+/// Id・Vdu一致時だけ強制クリアし、理由付き履歴を残すこと、競合・不正入力では排他行を維持することを確認する。
 /// L-15/L-16はサーバー側で検証できる範囲として、確認本文の中身ではなくDTOの
 /// <see cref="ManualLockRow.IsLikelyAlive"/>と<see cref="ManualLockRow.ElapsedSecondsSinceVdu"/>で代替する。
 /// </summary>
@@ -247,7 +247,7 @@ public class ManualLockClearTests {
 		Assert.AreEqual(0, histories.Count);
 	}
 
-	/// <summary>2行ある状態(§2.1の競合直後を想定)で強制クリアすると2行とも消え、履歴のCountが2になる</summary>
+	/// <summary>2行ある状態(の競合直後を想定)で強制クリアすると2行とも消え、履歴のCountが2になる</summary>
 	[TestMethod]
 	public void ForceClearManualLocks_2行ある状態で両方消え履歴Countが2になる() {
 		Db.Insert(new SysSequence {
@@ -276,7 +276,7 @@ public class ManualLockClearTests {
 	}
 
 	// ------------------------------------------------------------------
-	// L-19: 強制クリア後に監視タスクのEvaluateを動かすと、§3.6(2f)の正常終了経路になる
+	// L-19: 強制クリア後に監視タスクのEvaluateを動かすと、(2f)の正常終了経路になる
 	// ------------------------------------------------------------------
 
 	[TestMethod]

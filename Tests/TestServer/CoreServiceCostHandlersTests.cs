@@ -16,7 +16,7 @@ namespace Tests.CvServer;
 
 /// <summary>
 /// 原価4処理・評価替えのgRPC公開(Step 9)を最低限固定するテスト。
-/// 正典は `Doc/spec/2026-09-05_原価4項目_詳細設計.md` §9.3、`Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md` §2.4。
+/// 確認・状態照会の応答と、更新／評価替え取消に必要な全体排他の契約を固定する。
 /// <para>
 /// ハンドラ単位の業務テストは`CostUpdateDb`側(<see cref="CostUpdateDbConsumptionTests"/>等)で既に
 /// カバーしているため、ここでは最低限
@@ -93,7 +93,7 @@ public class CoreServiceCostHandlersTests {
 
 	/// <summary>
 	/// <c>BatchId</c>が空文字の場合、サーバー側でGUIDのD形式(36文字)を採番すること
-	/// (原価4項目 詳細設計 §2.5.2)。空でない場合はクライアント指定値をそのまま使うこと
+	/// 。空でない場合はクライアント指定値をそのまま使うこと
 	/// (確認と更新で同一値を使う運用のため)。
 	/// </summary>
 	[TestMethod]

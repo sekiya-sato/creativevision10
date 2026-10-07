@@ -10,7 +10,7 @@ namespace CvDomainLogic;
 /// <summary>
 /// 物流連携（WMS）の処理本体。画面・gRPC に依存しない（自動実行からも同じメソッドを呼ぶ）。
 /// <para>
-/// 仕様は `Doc/spec/2026-10-05_WMS連携_旧AMS連携調査と仮実装仕様.md`。
+/// 手動の作成・送信・取込・検査・反映を分離する。反映は伝票生成・在庫／引当更新・結果記録を処理単位の同一トランザクションで行う。
 /// ファイルはサーバ上の連携フォルダ（<see cref="LogisticsSettings.BaseFolder"/>）で読み書きする。
 /// 送受信の記録は <see cref="TranLogisticsBatch"/>／<see cref="TranLogisticsLine"/>、
 /// 実行履歴と同時実行防止は <see cref="ManualLockDb"/>（終了時に <see cref="SysHistAutoexec"/> へ記録）を使う。

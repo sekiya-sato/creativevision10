@@ -5,7 +5,7 @@ BaseMatchingViewModel は消込画面（入金消込 / 支払消込）の共通�
 消込とは、売上又は仕入伝票を**伝票単位で決済済みの目印をつける処理**です。
 `Tran00Uriage.EndFlag` / `Tran03Shiire.EndFlag` に 1 を立て、元帳の印字時に `*` を付けます。
 入金・支払との個別対応、充当金額、未充当金額は保持しません（部分消込は仕様対象外）。
-消込の判断経緯は `Doc/spec/archive/2026-08-16_phase1_業務仕様決定ドラフト.md` 3.1 / 3.3 を参照してください。
+部分充当の残額管理は扱わず、照合済み伝票のマークだけを更新するため、消込で売掛・買掛残高を変えない。
 
 画面は次の2段構成です。
 - `一覧取得`: 請求先(必須)配下の伝票を掛計上日で、入金/支払を支払日で取得し、
@@ -16,7 +16,7 @@ BaseMatchingViewModel は消込画面（入金消込 / 支払消込）の共通�
 `SummaryKaiKake` の値は `EndFlag` の有無で変わりません。
 
 【旧実装からの変更】FIFO自動充当（`ApplyFifoAllocation` / `Allocated` / `AutoMatch` / `ClearMatch`）と
-`.omo/2026-07-31_kesikomi_design.md` の `TranKesikomi` 新設案は不採用となり、本クラスから廃止しました。
+消込は各伝票のKesikomiFlagで管理し、独立したTranKesikomiテーブルは使用しません。
 
 # example
 public partial class NyukinMatchingViewModel : Helpers.BaseMatchingViewModel<Tran00Uriage, Tran06Nyukin> {

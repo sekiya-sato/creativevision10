@@ -13,7 +13,7 @@ namespace UatVm.Scenarios;
 /// JPG保存と表示崩れ（ボタンのはみ出し・文字切れ）の自動判定を行う。
 /// <para>
 /// データは UAT-02 と同じシード（倉庫在庫8）に配分3行を登録して作る。卸先5点・直営店2点・前日指示1点。
-/// 確定方式の判断は `Doc/spec/2026-09-28_設計判断記録.md` 2.8、画面処理は BaseShippingConfirmViewModel を参照する。
+/// 確定は即伝票生成し、Vdu不一致・有効在庫不足なら全件未適用とする。画面操作はBaseShippingConfirmViewModelを通す。
 /// </para>
 /// </summary>
 public static class HaibunScreenScenario {

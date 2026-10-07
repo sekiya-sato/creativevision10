@@ -49,7 +49,7 @@ public sealed partial class ShippingStagnationRow : ObservableObject {
 /// 決定 D8（確定で即伝票作成）で「確定済み・未出荷」の中間状態が無くなったため、滞留は
 /// 「未確定のまま指示日から N 日経過、または納品予定日超過」とする（取置は対象外）。
 /// 指示取消は配分確定（<c>HaibunCommitParam</c>）を確定数0で送り、伝票を作らず完了・引当解除する。
-/// 確定方式・滞留の判断は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
+/// 確定は即伝票生成・完了の単一操作とし、数量反映と引当解除の間に未出荷状態を残さない。
 /// </para>
 /// </summary>
 public partial class ShippingConfirmListViewModel : BaseQueryViewModel {

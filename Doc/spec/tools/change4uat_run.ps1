@@ -1,7 +1,7 @@
-﻿# UAT用に、CvServer/Services以下の *Service.cs の [UatChangeable] 直後だけを切り替える。
-# 認証解除: .\Doc\spec\change4uat_run.ps1
-# 認証復元: .\Doc\spec\change4uat_run.ps1 enable_auth
-#            .\Doc\spec\change4uat_run.ps1 -enable_auth
+# UAT用に、CvServer/Services以下の *Service.cs の [UatChangeable] 直後だけを切り替える。
+# 認証解除: .\Doc\spec\tools\change4uat_run.ps1
+# 認証復元: .\Doc\spec\tools\change4uat_run.ps1 enable_auth
+#            .\Doc\spec\tools\change4uat_run.ps1 -enable_auth
 # 切り替え後はCvServerを再ビルド・再起動してからテストする。
 [CmdletBinding()]
 param(
@@ -14,8 +14,15 @@ param(
 $ErrorActionPreference = 'Stop'
 $OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 
-# 起動時のカレントディレクトリに依存させない。
-$repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+# 配置階層・起動時のカレントディレクトリに依存せず、ソリューションのある親を探す。
+$repoDirectory = [IO.DirectoryInfo]::new($PSScriptRoot)
+while ($null -ne $repoDirectory -and -not (Test-Path -LiteralPath (Join-Path $repoDirectory.FullName 'creativevision10.slnx') -PathType Leaf)) {
+	$repoDirectory = $repoDirectory.Parent
+}
+if ($null -eq $repoDirectory) {
+	throw "リポジトリルートが見つかりません: $PSScriptRoot"
+}
+$repoRoot = $repoDirectory.FullName
 $servicesRoot = Join-Path $repoRoot 'CvServer/Services'
 if (-not (Test-Path -LiteralPath $servicesRoot -PathType Container)) {
 	throw "CvServer/Servicesフォルダが見つかりません: $servicesRoot"

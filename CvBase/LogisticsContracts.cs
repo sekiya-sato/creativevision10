@@ -2,7 +2,7 @@ using CvAsset;
 
 namespace CvBase;
 
-// 物流連携（WMS）の共通契約。仕様は `Doc/spec/2026-10-05_WMS連携_旧AMS連携調査と仮実装仕様.md`。
+// 物流連携（WMS）の共通契約。cv10-v1の種別・設定・行状態・送受信パラメータを画面とサーバで共有する。
 
 /// <summary>
 /// 物流連携のデータ種別（<see cref="TranLogisticsBatch.DataKind"/>）。値はファイル名・ファイル1列目にも使う。

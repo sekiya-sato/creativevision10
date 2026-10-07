@@ -13,23 +13,20 @@ using CvWpfclient.Views._31Monthly;
 namespace UatVm.Scenarios;
 
 /// <summary>
-/// マニュアル排他制御（正典 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`）の実サーバE2E検証。
-/// テスト計画は `Doc/test/2026-09-07_マニュアル排他制御_テスト計画.md`、
-/// テストスイッチ手順は `Doc/test/2026-09-07_マニュアル排他制御_テストスイッチ手順.md` を参照する。
+/// 全体排他の取得・進捗・正常終了と、監視の検知／消失履歴を実サーバ経路で確認する。
 /// </summary>
 /// <remarks>
 /// <para>
 /// E-01 → E-10 → E-02 → E-09 → E-11 → E-03(+E-08) → E-14 → E-07 → E-15 の順に1本のシナリオ内で検証する。
 /// 排他行（<c>SysSequence.SysSeqType=1</c>）の状態が前のケースの前提になるため、順序に意味がある
 /// （テスト計画書「内部で E-01 → E-10 → E-02 → E-03 の順に検証する」）。
-/// E-11・E-14・E-15は手動観測手順書（<c>Doc/test/2026-09-07_マニュアル排他制御_手動観測手順.md</c>）
-/// §4・§7・§8をシナリオ用に読み替えて追加したもの。E-11はE-09同様「排他行0件」が前提のため
+/// をシナリオ用に読み替えて追加したもの。E-11はE-09同様「排他行0件」が前提のため
 /// E-09の直後、E-14はE-03と同じ「直接INSERT→強制クリア」の系統のためE-03の直後、
 /// E-15はE-07と同じS3/S5前提を再利用するためE-07の直後に置く。
 /// </para>
 /// <para>
-/// 環境変数スイッチ（S1〜S5、テストスイッチ手順書§2）はCvServer起動前に外部で設定する前提であり、
-/// 本シナリオ側では一切設定しない（静的初期化で読まれるため手遅れになる。指示書のとおり）。
+/// 環境変数スイッチ（S1〜S5、テストスイッチ）はCvServer起動前に外部で設定する前提であり、
+/// 本シナリオ側では一切設定しない（静的初期化で読まれるため手遅れになる）。
 /// 現在の設定値は冒頭で <see cref="VmSession.Note"/> へ記録し、証跡から「どのスイッチで実行したか」を
 /// 読めるようにする。スイッチが必要なケースで未設定の場合はそのケースだけを警告付きでスキップし、
 /// 残りは続行する（FAILにはしない。人が手順を踏み忘れただけのため）。
@@ -155,7 +152,7 @@ public static class ManualLockScenario {
 
 	private sealed record AutoExecConfig(string CronVal, string EnabledVal) {
 		/// <summary>
-		/// 手順書のとおりS4を毎分実行へ変更済みか（E-01・E-08の監視ログ観測に必要）。
+		/// S4を毎分実行へ変更済みか（E-01・E-08の監視ログ観測に必要）。
 		/// cron式は5フィールド(分 時 日 月 曜日)で、CvServerは<c>CrontabSchedule.Parse</c>を
 		/// オプション無しで呼ぶため分単位固定（秒フィールドは無い）。分フィールドだけを見て判定する。
 		/// 旧実装は<c>CronVal.Contains("*/1")</c>で判定していたため、実際によく使われる`* * * * *`
@@ -220,7 +217,7 @@ public static class ManualLockScenario {
 
 	/// <summary>
 	/// テスト用の排他行を直接INSERTする。CvServerとは別のSQLite接続を使う（WALモードのため短時間の
-	/// 競合は許容される。README§5.5参照）。<paramref name="vduAgoSeconds"/>で「最終更新からの経過時間」を作る。
+	/// 競合は許容される。README参照）。<paramref name="vduAgoSeconds"/>で「最終更新からの経過時間」を作る。
 	/// <paramref name="sysSeqType"/>・<paramref name="seqNo"/>は既定値で既存呼び出しを壊さない
 	/// （E-11はSysSeqType=0の行、E-15はSeqNo=99の行を作るために追加した）。
 	/// </summary>
@@ -324,7 +321,7 @@ public static class ManualLockScenario {
 		var monitorBaselineId = (await FetchMonitorHistAsync(session)).Select(x => x.Id).DefaultIfEmpty(0).Max();
 
 		var d = session.OpenView<BillingCalculationView, BillingCalculationViewModel>();
-		// --hide-views指定時はView.Show()を呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
+		// --hide-views指定時はView.Showを呼ばないため、BaseWindow.OnContentRenderedが表示時に自動実行する
 		// InitCommandが走らず、ShimeItemsが空のままになる（他のシナリオがWaitAsyncで待てているのは
 		// ShowViews=trueで実際に描画されるため）。ViewModel自身のInitCommand
 		// （BaseBillingCalculationViewModel.InitAsyncに[RelayCommand]が生成するIAsyncRelayCommand）を
@@ -345,7 +342,7 @@ public static class ManualLockScenario {
 
 		// S2（Progressでの待機）が設定されていれば、行が消えるまでの間に十分な余地がある。
 		// 未設定の場合は対象データが少なく一瞬で完了しうるため、観測できなくても失敗にはしない
-		// （指示書のとおりスイッチ未設定はスキップ対象）。
+		// （スイッチ未設定では製品の通常動作を変更しないためスキップする）。
 		var seen = await PollForSingleLockRowAsync(session, timeoutMs: switches.HasS2 ? 10_000 : 1_500);
 		if (seen != null) {
 			session.Check("E-01 排他行が1件だけできTableNameが期待値(請求計算)", seen.TableName == "請求計算", new { seen.TableName, seen.ColumnName });
@@ -582,7 +579,7 @@ public static class ManualLockScenario {
 	// ==================================================================
 
 	/// <summary>
-	/// 手動観測手順書§4のシナリオ読み替え版。<c>SysSeqType=0</c>の行を作る運用経路が無いため、
+	/// のシナリオ読み替え版。<c>SysSeqType=0</c>の行を作る運用経路が無いため、
 	/// E-10・E-03と同様に直接INSERTで作る。
 	/// </summary>
 	private static async Task RunE11Async(VmSession session, Switches switches) {
@@ -671,7 +668,7 @@ public static class ManualLockScenario {
 
 		// 排他行を2行、直接INSERTで作る（指示書が明示的に許可。実処理を長時間占有させるより確実）。
 		// Vduを数秒前にすることで、既定の閾値(15分)より確実に短く、IsLikelyAlive=trueとなり
-		// 「まだ動いている可能性があります」の警告が必ず付く状態を作る(設計書§2.5.2)。
+		// 「まだ動いている可能性があります」の警告が必ず付く状態を作る。
 		var lockId1 = await InsertFakeLockRowAsync($"{FakeLockTablePrefix}-E03-A", "処理中(疑似)", 600, 5,
 			"E-03: 強制クリアの確認本文検証用（直接INSERT、1行目）");
 		var lockId2 = await InsertFakeLockRowAsync($"{FakeLockTablePrefix}-E03-B", "処理中(疑似)", 900, 8,
@@ -752,7 +749,7 @@ public static class ManualLockScenario {
 	// ==================================================================
 
 	/// <summary>
-	/// 手動観測手順書§7のシナリオ読み替え版。E-03のコードをほぼ流用する。
+	/// のシナリオ読み替え版。E-03のコードをほぼ流用する。
 	/// 監視の実行フラグは発火の都度DBから読まれるため即時反映される（S1〜S5と違い再起動不要）。
 	/// </summary>
 	private static async Task RunE14Async(VmSession session, AutoExecConfig autoExecConfig) {
@@ -774,7 +771,7 @@ public static class ManualLockScenario {
 		var lockId = 0L;
 		try {
 			// ExpectedDuration=600のときの既定閾値はmax(600*2,15分)=20分。Vduを25分前にして
-			// 確実に閾値超過の状態を作る（手順書§7.3手順2と同じ）。
+			// 確実に閾値超過の状態を作る（手順2と同じ）。
 			lockId = await InsertFakeLockRowAsync(tableName, "観測用", expectedDurationSeconds: 600, vduAgoSeconds: 25 * 60,
 				memo: "E-14: 監視無効時は自動解放されないことの確認用（直接INSERT）");
 			session.Note("E-14 テスト用排他行を直接INSERT(Vduを25分前に)", new { lockId });
@@ -901,10 +898,10 @@ public static class ManualLockScenario {
 	// ==================================================================
 
 	/// <summary>
-	/// 手動観測手順書§8のシナリオ読み替え版。<c>ManualLockDb.Complete</c>内部
+	/// のシナリオ読み替え版。<c>ManualLockDb.Complete</c>内部
 	/// （SeqNo=99書き込み→履歴INSERT→行DELETEの3ステップ）にテスト用フックが無く、
 	/// その途中でプロセスを落とす窓を作れないため、「途中で落ちた結果の状態」をSQLiteへの
-	/// 直接INSERTで代替して作る（実際のクラッシュ再現ではない。手順書§8.1と同趣旨）。
+	/// 直接INSERTで代替して作る（実際のクラッシュ再現ではない。と同趣旨）。
 	/// 前提はE-07と同じS3/S5（閾値をmax(ExpectedDuration×2, S3分)まで短縮するため）。
 	/// </summary>
 	private static async Task RunE15Async(VmSession session, Switches switches) {
@@ -920,7 +917,7 @@ public static class ManualLockScenario {
 		var monitorBaselineId = (await FetchMonitorHistAsync(session)).Select(x => x.Id).DefaultIfEmpty(0).Max();
 
 		// ExpectedDuration=10のときの閾値はmax(10*2,S3分)。Vduを2分前にしておけば
-		// S3=1分の前提で確実に閾値超過となる（手順書§8.3手順1と同じ）。
+		// S3=1分の前提で確実に閾値超過となる（手順1と同じ）。
 		var lockId = await InsertFakeLockRowAsync(tableName, "終了処理中(疑似)", expectedDurationSeconds: 10, vduAgoSeconds: 120,
 			memo: "E-15: SeqNo=99が残った状態からの自動解放の確認用（Completeの途中で落ちた状態のSQL代替、直接INSERT）",
 			seqNo: 99);

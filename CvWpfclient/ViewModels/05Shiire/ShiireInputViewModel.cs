@@ -577,7 +577,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		var fullShiire = await AppGlobal.LogicGetMasterById<MasterShiire>(shiire.Id);
 		if (fullShiire != null) {
 			CurrentEdit.Rate = fullShiire.RateProper;
-			// 税計算単位・消費税端数処理は伝票作成時点のマスタ値をスナップショットする(Doc/spec/2026-09-01 2.2)。
+			// 税計算単位・消費税端数処理は伝票作成時点のマスタ値をスナップショットする。
 			// 既存伝票の読込時は上書きしない(このコマンドは仕入先を選び直したときにしか呼ばれない)。
 			CurrentEdit.TaxCalcUnit = fullShiire.TaxCalcUnit;
 			CurrentEdit.TaxRounding = fullShiire.TaxRounding;

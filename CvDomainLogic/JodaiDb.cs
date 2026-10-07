@@ -15,7 +15,7 @@ namespace CvDomainLogic;
 /// CvDomainLogic の DerivedDb が Insert/Update/Delete 時に自動実行する。
 /// 本クラスの <see cref="Rebuild"/> / <see cref="RebuildAll"/> は取りこぼしの修復用。
 /// </para>
-/// <para>SQLite 3.46+ 前提（json_each / json_valid）。設計は `.omo/20260811_jodai_table_design_plan.md`。</para>
+/// <para>SQLite 3.46+ 前提（json_each / json_valid）。商品マスタの定価は維持し、期間・店舗・明細条件を指定した価格を別に保持する。</para>
 /// </summary>
 public class JodaiDb {
 	readonly ExDatabase _db;

@@ -419,7 +419,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		// 選択ダイアログはCode/Nameしか返さないため、税設定はIdで1件取得し直す。
 		var fullShiire = await AppGlobal.LogicGetMasterById<MasterShiire>(shiire.Id);
 		if (fullShiire != null) {
-			// 税計算単位・消費税端数処理は伝票作成時点のマスタ値をスナップショットする(Doc/spec/2026-09-01 2.2)。
+			// 税計算単位・消費税端数処理は伝票作成時点のマスタ値をスナップショットする。
 			// 既存伝票の読込時は上書きしない(このコマンドは仕入先を選び直したときにしか呼ばれない)。
 			CurrentEdit.TaxCalcUnit = fullShiire.TaxCalcUnit;
 			CurrentEdit.TaxRounding = fullShiire.TaxRounding;
@@ -457,7 +457,7 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 	}
 
 	/// <summary>
-	/// 諸掛（費用を負担する商品）の選択。原価4項目 詳細設計 §3.3。
+	/// 諸掛（費用を負担する商品）の選択。。
 	/// <see cref="Tran99MaterialMeisai.Id_Shohin"/>=0は「諸掛ではない」通常の資材購入を表し、入力は任意。
 	/// 生地・付属Id列の<see cref="DoSelectMaterial"/>と同じ作法で<see cref="MasterShohin"/>を選択する。
 	/// </summary>

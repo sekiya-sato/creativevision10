@@ -85,7 +85,7 @@ public sealed record class QueryListSqlParam {
 	/// SQLの組み立てはクライアント側でも行い、SQLite方言を正典とする。変換器で表現できない形が
 	/// 出たとき、SQLite側のSQLを触らずに他DBだけ差し替えるために使う。指定しても SQLite では
 	/// 常にこの <see cref="Sql"/> がそのまま実行される。登録は <c>SqlOverrideCatalog</c> で行う。
-	/// 設計は `.omo/2026-08-25_sql_dialect_translator_detail_design.md` §5 を参照する。
+	/// QueryKeyに対応する方言別SQLで既知の意味差を補い、SQLiteの結果を維持する。
 	/// </para>
 	/// </summary>
 	public string? QueryKey { get; }
@@ -297,25 +297,25 @@ public record BillingParameter(string BillingYyyymm, int Shime, string TorisakiC
 /// <summary>
 /// 棚卸開始処理・棚卸確定処理のパラメータ
 /// <para>
-/// 仕様は `Doc/spec/archive/2026-08-17_旧cvnet比較_仕様決定判断材料.md` 8.1 / 8.4 を参照する。
+/// 開始は倉庫別の基準日に帳簿在庫を保存し、確定は棚卸数との差を調整伝票へ反映する。再確定は前回調整を戻して作り直す。
 /// </para>
 /// </summary>
 /// <param name="FallbackMonth">
 /// 棚卸日(<see cref="Tran60TanaDate.TanaDay"/>)が未設定の店舗に使うフォールバック計上月 yyyyMM。
-/// 基準日は店舗ごとに解決するので、この値は未設定店舗の月末フォールバックにだけ使う(設計書2.1)
+/// 基準日は店舗ごとに解決するので、この値は未設定店舗の月末フォールバックにだけ使う
 /// </param>
 /// <param name="IdShain">入力社員Id。0 なら未設定</param>
 /// <param name="SokoIds">対象倉庫Id。空なら既定の対象倉庫</param>
 /// <param name="AlignMisdated">
 /// 確定処理で、基準日以外の日付で入力された棚卸伝票の計上日を基準日へ補正してから確定するか。
-/// false で実行して該当があれば、何も変更せず中断して内訳を返す(設計書4)
+/// false で実行して該当があれば、何も変更せず中断して内訳を返す
 /// </param>
 public record StocktakeParameter(string FallbackMonth, long IdShain, long[] SokoIds, bool AlignMisdated = false);
 
 /// <summary>
 /// HHTデータ更新のパラメータ。<see cref="TranVulcanHht"/> を Tran系各テーブルへ展開する。
 /// <para>
-/// 仕様は `Doc/spec/2026-08-24_HHTデータ更新詳細設計.md` を参照する。
+/// 未変換・エラー行を再判定し、伝票生成・元行への変換結果記録・在庫集計を伝票グループごとの同一トランザクションで行う。
 /// </para>
 /// </summary>
 /// <param name="DateFrom">対象日付From yyyyMMdd。空なら下限なし</param>
@@ -368,7 +368,7 @@ public sealed class JodaiEffectiveRow {
 }
 
 /// <summary>
-/// 上代一括変更（Scope）④確認タブのTimeline（設計書5.5）で、他伝票の確定済み<see cref="DerivedJodai"/>を
+/// 上代一括変更（Scope）④確認タブのTimelineで、他伝票の確定済み<see cref="DerivedJodai"/>を
 /// 重ねて表示するための1行。<c>QueryListSqlParam.ItemType</c>はサーバ側で型解決するため、
 /// クライアント内の入れ子クラスではなく共有アセンブリ(CvBase)へ置く（<see cref="ScalarCountRow"/>と同じ理由）。
 /// </summary>
@@ -386,7 +386,7 @@ public sealed class JodaiTimelineOtherSlipRow {
 /// <para>
 /// <see cref="ReplaceRows"/> は修正できる状態（<see cref="TranHaibun.EditableWhereSql"/>）の行に限る。
 /// <see cref="NewRows"/> の状態列（確定日・実数量・欠品・完了・関連No2・送信）はサーバが初期値に揃える。
-/// 保存処理は HandlerClass.HandleHaibunSave、採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
+/// 複数SKUの洗い替えと引当再計算を一括トランザクションにまとめ、画面からの行別保存による部分成功を防ぐ。
 /// </para>
 /// </summary>
 /// <param name="ReplaceRows">削除する既存行（Idと読込時点のVdu）</param>
@@ -402,7 +402,7 @@ public sealed record HaibunSaveResult(int DeletedCount, int InsertedCount);
 /// 配分確定のパラメータ。確定数を反映し、出荷売上／移動伝票を作成して <c>EndFlag=1</c>（引当解除）にする（決定 D8）。
 /// 有効在庫が1SKUでも割れる場合はサーバが1件も確定せず、
 /// <c>CvMsgErrorCode.ShippingUnavailable</c> と <see cref="ShippingShortageDto"/> 配列を返す。
-/// 確定処理は ShippingDb.Commit、採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
+/// 選択した全行を検査後、数量反映・伝票生成・完了・引当解除を一括で行う。1SKUでも在庫不足なら全件未適用とする。
 /// </summary>
 /// <param name="Rows">確定する行（Id・楽観排他用Vdu・確定数）</param>
 /// <param name="DenDay">確定日 兼 生成する伝票の在庫計上日 yyyyMMdd</param>
@@ -431,7 +431,7 @@ public sealed record ReservationRowRef(long Id, long ExpectedVdu);
 /// <summary>
 /// 取置の売上変換。店舗×顧客ごとに店舗売上（<c>Tran01Tenuri</c>）を作り、取置を完了（売上変換）にする。
 /// 1件でも区分6以外・完了済み・Vdu不一致があれば何も書かない。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` 4.2 を参照する。
+/// 変換対象全件を同一トランザクションで処理し、売上生成と取置完了・引当解除を分離しない。
 /// </summary>
 /// <param name="Rows">変換する取置</param>
 /// <param name="DenDay">売上日 yyyyMMdd</param>
@@ -446,7 +446,7 @@ public sealed record ReservationConvertResult(long[] CreatedSlipIds, int Convert
 /// <summary>
 /// 取置の取消。伝票は作らずに完了（取消）にして引当を解除する。
 /// 1件でも区分6以外・完了済み・Vdu不一致があれば何も書かない。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md` 4.3 を参照する。
+/// 取消対象全件を同一トランザクションで処理し、取消・欠品完了と引当解除を分離しない。
 /// </summary>
 /// <param name="Rows">取り消す取置</param>
 /// <param name="CancelDay">取消日 yyyyMMdd（完了日として確定日に入れる）</param>
@@ -474,7 +474,7 @@ public sealed record ShippingShortageDto(long Id_Soko, long Id_Shohin, long Id_C
 /// 対象日付の既存行を <paramref name="OwnerIds"/> の取引先ぶんだけ削除してから登録し直す（洗い替え）。
 /// 削除と登録は1トランザクションで行う。<c>InsertBulkParam</c> は Insert のみで一意キー(uk1)違反になるため
 /// 再取込に使えず、行単位の Delete では原子性が保てないので専用パラメータを設けている。
-/// 仕様は `Doc/spec/2026-08-21_残高登録処理_詳細設計.md` を参照する。
+/// 期首より前の同一キー日付×取引先を洗い替え、期首後の集計行と対象外取引先には書き込まない。
 /// </para>
 /// </summary>
 /// <param name="TableName">対象テーブル名。<c>OpeningBalanceCsv.AllowedTableNames</c> の4種のみ</param>
@@ -506,11 +506,11 @@ public sealed record ConvertDbParam(bool IsInit);
 public sealed record ConvertSelectedDbParam(bool IsInit, List<string> SelectedTask);
 
 /// <summary>
-/// 評価替え（原価4項目 詳細設計 §16.4、§16.11）の実行パラメータ。確認(<c>PreviewRevaluation</c>)・
+/// 評価替え（）の実行パラメータ。確認(<c>PreviewRevaluation</c>)・
 /// 更新(<c>ApplyRevaluation</c>)の両方で同一の値を渡す。
 /// </summary>
 /// <param name="TargetMonth">対象計上月 yyyyMM。画面表示は yyyy/MM。</param>
-/// <param name="ApplyPoint">適用時点。0=月末、1=期末（設計書§16.4）。</param>
+/// <param name="ApplyPoint">適用時点。0=月末、1=期末。</param>
 /// <param name="Cond">抽出条件（項目選択式のFrom～To条件行）。0行なら全在庫商品が対象。</param>
 /// <param name="GroupKey">集計単位。0=ブランド、1=アイテム、2=シーズン、3=メーカー、4=展示会。</param>
 /// <param name="Method">評価替え指定方式。1=率一括、2=金額一括。</param>
@@ -523,7 +523,7 @@ public sealed record ConvertSelectedDbParam(bool IsInit, List<string> SelectedTa
 /// <param name="Confirmed">
 /// 確認(<c>PreviewRevaluation</c>)結果の<see cref="RevaluationPreviewResult.Confirmed"/>をそのまま渡す。
 /// 更新実行時に現在の指紋と照合し、不一致（確認後にデータが変更された）があれば更新を中断する
-/// （設計書§2.4-4、2026-09-06追記で他の3処理と同じ<see cref="CostConfirmSnapshot"/>方式へ統一した）。
+/// （-4、2026-09-06追記で他の3処理と同じ<see cref="CostConfirmSnapshot"/>方式へ統一した）。
 /// <c>null</c>の場合はこの再検査を行わない。
 /// </param>
 public sealed record CostRevaluationParameter(

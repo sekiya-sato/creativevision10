@@ -1,6 +1,6 @@
 ﻿/*
 # description
-CostFourItemsCoverageTests は、原価4項目（詳細設計 `Doc/spec/2026-09-05_原価4項目_詳細設計.md` §11.2）の
+原価更新で使うSQLについて、
 「漏れ検知」を目的とした2本の方言テストです。
 
 既存の `DdlSnapshotTests` は `DefineDataTable.TableTypes` を総なめにしており、新規3テーブル
@@ -13,7 +13,7 @@ CostFourItemsCoverageTests は、原価4項目（詳細設計 `Doc/spec/2026-09-
 - 新規3テーブルが `DefineDataTable.TableTypes` から漏れていないこと
 - `CvDomainLogic/CostUpdateDb*.cs` 由来のSQLが `SqlCorpus` に1本以上収集されていること
 
-既存テーブルへの列追加（設計書§11.2で明記された対象外）はここでは扱わない。
+既存テーブルへの列追加（で明記された対象外）はここでは扱わない。
  */
 using CvBase;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

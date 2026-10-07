@@ -12,7 +12,7 @@ namespace CvWpfclient.ViewModels._04Juchu;
 /// 出荷予定と<b>納期遅れ</b>を画面で確認する。発注側 `DeliveryScheduleInquiry` のミラー。
 /// <para>
 /// 納期遅れ = 納品予定日を過ぎても未完了(<c>EndFlag=0</c>)。判定は納品日と完了フラグで行う（リードタイム自動計算は 2.0 以降）。
-/// 後続要件は `Doc/spec/2026-08-18_H1-H4_納品予定日_詳細設計.md` を参照する。
+/// 予定日は伝票ヘッダの値を使い、商品リードタイムから自動算出する処理はこの帳票に持たせない。
 /// </para>
 /// </summary>
 public partial class NouhinYoteiTableViewModel : BaseQueryViewModel {

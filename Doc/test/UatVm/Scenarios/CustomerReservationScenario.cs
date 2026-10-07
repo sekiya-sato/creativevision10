@@ -18,7 +18,7 @@ namespace UatVm.Scenarios;
 /// 取置登録 → 有効在庫超過の警告つき登録 → 期限変更 → 数量変更 → 売上変換（店舗売上） → 取消 →
 /// 期限切れの自動取消（日次タスクと同じ <see cref="ReservationDb.ExpireOverdue"/> を複製DBへ直接呼ぶ）までを通す。
 /// 画面はJPG保存と表示崩れの自動判定を行う。
-/// 仕様は `Doc/spec/2026-10-03_配分再設計_Step5_取置配分入力_詳細設計.md`。
+/// 区分6・店舗自身の在庫・顧客・期限日を持つ取置が、売上変換／取消／期限切れで完了し引当を解除することを確認する。
 /// </para>
 /// </summary>
 public static class CustomerReservationScenario {

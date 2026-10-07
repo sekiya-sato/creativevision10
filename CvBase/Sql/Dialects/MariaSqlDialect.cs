@@ -4,7 +4,7 @@ MariaSqlDialect は SQLite 方言のSQLを MariaDB 向けへ変換します。
 
 Phase 1 ではルールを1つも持ちません。変換は行われず、SQLite固有構文が残っていることを
 検出して報告するだけです。ルールは Phase 2 以降で
-`.omo/2026-08-25_sql_dialect_translator_detail_design.md` §4 のカタログ順に追加します。
+SQLite固有構文をルール登録順に変換し、後続ルールが扱う構文を前段で壊さないようにします。
 
 セッション設定は Phase 1 から入れます。`PIPES_AS_CONCAT` と `NO_BACKSLASH_ESCAPES` の
 2語だけで、文字列連結 `||`（約110箇所）と `ESCAPE '\'`（6箇所）がSQL書換なしで解決します。

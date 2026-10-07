@@ -8,9 +8,9 @@ namespace CvDomainLogic;
 
 /// <summary>
 /// 原価4項目（最終仕入原価更新・総平均原価更新・消化仕入更新・評価替え）のDBアクセス。
-/// 正典は `Doc/spec/2026-09-05_原価4項目_詳細設計.md`（以下「設計書」）。
+/// 確認は書き込まず、更新は対象年月の再検査後に原価履歴・商品原価・月次状態を同一トランザクションで反映する。
 /// <para>
-/// 設計書§9.2に列挙された `CostUpdateDb` の担当処理のうち、本ファイル（Step 4）が実装するのは
+/// に列挙された `CostUpdateDb` の担当処理のうち、本ファイル（Step 4）が実装するのは
 /// 原価履歴（<see cref="TranGenka"/>）の読み取り側と土台だけである。
 /// </para>
 /// <list type="bullet">
@@ -27,7 +27,7 @@ namespace CvDomainLogic;
 /// </list>
 /// <para>
 /// クラスを <c>partial</c> にしてあるのは、上記Step 5〜8の追加分を同一クラスの別ファイルへ
-/// 分割して足すためである（設計書§9.2 の一覧を1クラスへ集約する方針に合わせる）。
+/// 分割して足すためである（原価処理を同じクラスへ集約するため）。
 /// </para>
 /// </summary>
 public partial class CostUpdateDb(ExDatabase db) {
@@ -49,22 +49,22 @@ public partial class CostUpdateDb(ExDatabase db) {
 	}
 
 	// ==================================================================
-	// マニュアル排他制御（正典は `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`、以下「設計書」。Step 9-3）
+	// マニュアル排他制御。一連処理は月次の依存関係があるため、処理別に並行させず全体で1つだけ実行する。
 	// ==================================================================
 	// 原価4処理と評価替えは同期メソッドのため、StreamStepProgressRunnerを経由しない。
 	// Serializableトランザクションを開始する前にTryBeginし、取得できなければ例外にせず
-	// CostUpdateResult(IsSuccess=false)で返す（設計書§2.4適用時の要件。業務エラーと異なり
+	// CostUpdateResult(IsSuccess=false)で返す（適用時の要件。業務エラーと異なり
 	// 「今は実行できないだけ」で再実行すれば通るため）。
 
 	/// <summary>
-	/// 原価4処理・評価替え共通の排他取得失敗メッセージ（設計書§2.4適用時の要件：
+	/// 原価4処理・評価替え共通の排他取得失敗メッセージ（適用時の要件：
 	/// 先行処理のTableName/ColumnNameと開始時刻を含める）。
 	/// </summary>
 	private static string BuildManualLockBlockedMessage(string processName, SysSequence? blocker) =>
 		ManualLockMessages.BuildBlockedMessage(processName, blocker);
 
 	/// <summary>
-	/// 排他取得失敗を表す<see cref="CostUpdateResult"/>を作る（設計書§2.4適用時の要件。例外にはしない）。
+	/// 排他取得失敗を表す<see cref="CostUpdateResult"/>を作る（適用時の要件。例外にはしない）。
 	/// 業務エラー（<c>Failure</c>系メソッド）とは異なる「今は実行できないだけ」の状態であることを示す。
 	/// </summary>
 	private static CostUpdateResult NewManualLockFailure(string batchId, string targetMonth, long startedAt, string processName, SysSequence? blocker) => new() {
@@ -83,10 +83,10 @@ public partial class CostUpdateDb(ExDatabase db) {
 		NewManualLockFailure(param.BatchId, param.TargetMonth, startedAt, processName, blocker);
 
 	// ==================================================================
-	// 確認後の変更検知（設計書§2.4-4、§2.5.6、2026-09-06追記でStep 9として4処理へ統一）
+	// 確認後の変更検知（-4、-09-06追記でStep 9として4処理へ統一）
 	// ==================================================================
 	// Step 8（評価替え）だけに入っていた「確認〜更新間の変更検知」を4処理共通にする。方式は商品Idごとの
-	// 辞書ではなく、§2.5.6が月次状態判定で既に定義している「入力データの最大Vduと件数の指紋」を使う
+	// 辞書ではなく、が月次状態判定で既に定義している「入力データの最大Vduと件数の指紋」を使う
 	// （理由は`CostConfirmSnapshot`のコメントを参照）。
 
 	/// <summary><see cref="FetchConfirmSnapshot"/>・<see cref="FetchRevaluationConfirmSnapshot"/>が使う集計行。</summary>
@@ -96,16 +96,16 @@ public partial class CostUpdateDb(ExDatabase db) {
 	}
 
 	/// <summary>
-	/// 消化仕入更新・原価更新（最終仕入原価更新・総平均原価更新）の確認スナップショット（設計書§2.4-4）を
+	/// 消化仕入更新・原価更新（最終仕入原価更新・総平均原価更新）の確認スナップショットを
 	/// 対象計上月ぶん算出する。評価替えは入力データの集合が異なる（<c>MasterShohin</c>・<c>SummaryStock</c>）ため
 	/// 本メソッドの対象外とし、<see cref="FetchRevaluationConfirmSnapshot"/>を別途用意する。
 	/// <para>
 	/// 入力データの定義は月次状態算出（<see cref="FetchCostUpdateStatus"/>・<see cref="HasSourceChangedAfter"/>）と
-	/// 同じ対象テーブルを踏襲する（設計書§2.5.6の指紋定義をそのまま流用）。ただし月次状態算出は
+	/// 同じ対象テーブルを踏襲する（入力データの最大Vduと件数を比較する）。ただし月次状態算出は
 	/// 「最終成功時刻からの変化の有無」を問う<b>比較判定</b>であるのに対し、本メソッドは往復用の
 	/// <b>指紋そのもの（最大Vdu・件数）</b>を返す必要があり、集計の形（1本のCOUNT/MAXクエリ）が異なるため
 	/// SQL自体は共通の1メソッドへ完全統合していない。加えて原価更新(<c>CostUpdate</c>)の対象範囲は、
-	/// 月次状態算出が対象月の<c>SummaryStock</c>のみを見る（§2.5.6「対象月のSummaryStockにVdu&gt;Tの行がある」）のに対し、
+	/// 月次状態算出が対象月の<c>SummaryStock</c>のみを見る（「対象月のSummaryStockにVdu&gt;Tの行がある」）のに対し、
 	/// 総平均原価の前月在庫解決（<see cref="CostUpdateDbSundry"/>相当ロジック、`SumMonth &lt; targetMonth`）・
 	/// 評価替えの在庫数解決（`SumMonth &lt;= sumMonth`）が対象月<b>以前</b>の値を参照するため、
 	/// 本メソッドは「対象月以前」の<c>SummaryStock</c>を対象にする（月次状態表示用の判定とは目的が異なるための実装判断）。
@@ -141,7 +141,7 @@ SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt FROM (
 	}
 
 	/// <summary>
-	/// 評価替え専用の確認スナップショット（設計書§2.4-4、§16.5）。評価替えの入力データは
+	/// 評価替え専用の確認スナップショット。評価替えの入力データは
 	/// <c>MasterShohin</c>（<c>IsZaiko=1 AND PurchaseType=通常仕入</c>。<see cref="CostUpdateDbReval.ComputeRevaluation"/>の
 	/// 抽出条件<c>matchWhere</c>と同じ基底集合）と対象計上月以前の<c>SummaryStock</c>であり、
 	/// 消化仕入・原価更新（伝票データ）とは集合がまったく異なるため、<see cref="EnumCostProcessKind"/>を使う
@@ -170,11 +170,11 @@ FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFinger
 
 	/// <summary>
 	/// 確認スナップショット(<paramref name="confirmed"/>)と現在の指紋(<paramref name="current"/>)を比較し、
-	/// 確認後の変化を検知する（設計書§2.4-4）。<paramref name="confirmed"/>が<c>null</c>の場合はこの再検査を
+	/// 確認後の変化を検知する。<paramref name="confirmed"/>が<c>null</c>の場合はこの再検査を
 	/// 省略する（既存（評価替えStep 8）の「省略時は検査しない」性質を維持する）。
 	/// <para>
 	/// <b>評価替えの原価方式チェックについての実装判断</b>: 評価替えは<c>MasterSysman.CostMethod</c>の値に
-	/// かかわらず実行できる（設計書§16.8、§13 U-20）が、これは「実行の可否」の話であり、本メソッドが検査する
+	/// かかわらず実行できるが、これは「実行の可否」の話であり、本メソッドが検査する
 	/// 「確認後にデータが変わっていないか」とは別問題である。評価替えの計算は実行時点の<c>CostMethod</c>を
 	/// <see cref="CostUpdateDb.ResolveCostAsOf(IReadOnlyCollection{long},string,EnumCostMethod,string?)"/>へ渡して
 	/// <c>BeforeCost</c>を解決するため、確認後に方式が変われば指紋（商品・在庫のVdu）が変わらなくても
@@ -200,7 +200,7 @@ FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFinger
 	/// <summary>
 	/// 確認後の変更検知（<see cref="DetectConfirmMismatch"/>）で中断したことを表す<see cref="CostUpdateResult"/>を作る。
 	/// 排他失敗（<see cref="NewManualLockFailure(CostUpdateParameter,long,string,SysSequence?)"/>）と同様、
-	/// 例外にはせず「今は実行できないだけ」を表す形で返す（設計書§2.4適用時の要件）。
+	/// 例外にはせず「今は実行できないだけ」を表す形で返す（適用時の要件）。
 	/// </summary>
 	private static CostUpdateResult NewConfirmMismatchFailure(CostUpdateParameter param, long startedAt, string message) => new() {
 		IsSuccess = false,
@@ -214,19 +214,19 @@ FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFinger
 	};
 
 	// ==================================================================
-	// 4-1. 対象期間の解決（設計書§2.1）
+	// 4-1. 対象期間の解決
 	// ==================================================================
 
 	/// <summary>
 	/// 画面入力の対象計上月(<paramref name="targetMonth"/> yyyyMM)から、自社締日基準の対象期間を解決する
-	/// （設計書§2.1）。
+	/// 。
 	/// <para>
 	/// 自社締日は <see cref="SummaryDb.GetOwnClosingDay"/> と同じ取得経路
 	/// （<c>MasterSysman.ShimeBi</c> を <c>ORDER BY Id LIMIT 1</c> で取得）を使う。既存の棚卸処理
 	/// （<see cref="StocktakeDb.ResolveDays"/>）も同じ経路を再利用しており、本メソッドもそれに倣う。
 	/// </para>
 	/// <para>
-	/// <c>substr(DenDay,1,6)</c> による暦月化は行わない（設計書§2.1で明示的に禁止）。対象期間の算出は
+	/// <c>substr(DenDay,1,6)</c> による暦月化は行わない（で明示的に禁止）。対象期間の算出は
 	/// 既存の <see cref="ClosingMonthCalculator.GetPeriod"/> に委譲する。
 	/// </para>
 	/// </summary>
@@ -236,7 +236,7 @@ FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFinger
 	}
 
 	/// <summary>
-	/// <c>MasterSysman.CostMethod</c> を取得する（設計書§2.5.7）。取得経路は
+	/// <c>MasterSysman.CostMethod</c> を取得する。取得経路は
 	/// <see cref="SummaryDb.GetOwnClosingDay"/> の <c>ShimeBi</c> 取得と同じ流儀（<c>ORDER BY Id LIMIT 1</c>）に揃える。
 	/// </summary>
 	private int GetCurrentCostMethod() {
@@ -247,11 +247,11 @@ FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFinger
 	}
 
 	// ==================================================================
-	// 4-2. 原価解決 ResolveCostAsOf（設計書§2.7、§4.4、§16.5）
+	// 4-2. 原価解決 ResolveCostAsOf
 	// ==================================================================
 
 	/// <summary>
-	/// 商品1件の指定日時点の解決原価を返す（設計書§2.7）。内部的には複数商品版
+	/// 商品1件の指定日時点の解決原価を返す。内部的には複数商品版
 	/// (<see cref="ResolveCostAsOf(IReadOnlyCollection{long},string,EnumCostMethod,string?)"/>)を1件で呼ぶ薄いラッパ。
 	/// </summary>
 	/// <param name="idShohin">対象商品Id。</param>
@@ -259,34 +259,34 @@ FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFinger
 	/// <param name="method">解決に使う原価方式。履歴が無ければ<c>CostMethod=0</c>の基準行へフォールバックする。</param>
 	/// <param name="excludeRevalSumMonth">
 	/// 非nullのとき、<c>SumMonth = excludeRevalSumMonth AND ChangeKind = Reval</c> の行を解決対象から除外する。
-	/// 評価替えの対象抽出(<see cref="ResolveCostAsOf"/>の呼び出し元、設計書§16.5)が、自分自身が今まさに
+	/// 評価替えの対象抽出(<see cref="ResolveCostAsOf"/>の呼び出し元、)が、自分自身が今まさに
 	/// 書こうとしている当月の評価替え結果を「前回実行済みの結果」として読み込んでしまうと、再実行のたびに
 	/// 原価が下がり続ける（評価替え後の原価に対してさらに掛率を適用してしまう）。これを防ぐため、
-	/// 評価替えの対象抽出時だけ当月の評価替え行を除外して解決する（設計書§16.5、§2.7）。
+	/// 評価替えの対象抽出時だけ当月の評価替え行を除外して解決する。
 	/// </param>
 	/// <returns>解決した<c>AfterCost</c>。基準行を含め履歴が1行も無い商品は0を返す
-	/// （呼び出し側が「変更しない」と判断できるようにするため、設計書§2.7）。</returns>
+	/// （呼び出し側が「変更しない」と判断できるようにするため、）。</returns>
 	public long ResolveCostAsOf(long idShohin, string asOfDay, EnumCostMethod method, string? excludeRevalSumMonth = null) {
 		var map = ResolveCostAsOf([idShohin], asOfDay, method, excludeRevalSumMonth);
 		return map.GetValueOrDefault(idShohin, 0L);
 	}
 
 	/// <summary>
-	/// 複数商品の指定日時点の解決原価をまとめて返す（設計書§2.7）。商品数が多くても
+	/// 複数商品の指定日時点の解決原価をまとめて返す。商品数が多くても
 	/// SQL発行は<see cref="IdChunkSize"/>件ごとに1回であり、商品1件ずつSQLを発行しない。
 	/// <para>
-	/// 解決順は設計書§2.7のとおり
+	/// 解決順は次のとおり
 	/// <c>ORDER BY EffectiveDay DESC, SumMonth DESC, ChangeKind DESC, Vdu DESC, Id DESC</c>。
 	/// <c>ChangeKind DESC</c> を <c>Vdu DESC</c> より前に置くのは、同一計上月に月次原価計算行と
-	/// 評価替え行が並ぶ場合、実行順によらず常に評価替え行を優先させるためである（§13 U-19）。
+	/// 評価替え行が並ぶ場合、実行順によらず常に評価替え行を優先させるためである（ U-19）。
 	/// </para>
 	/// <para>
 	/// 実装方針: 選択中の方式(<paramref name="method"/>)と基準方式(<c>CostMethod=0</c>)の両方の履歴を
 	/// 1回のSQLでまとめて取得し、商品ごとに「選択中の方式の履歴が1件でもあればそれだけを解決対象にし、
-	/// 無ければ基準方式の履歴を解決対象にする」というフォールバック規則(設計書§2.6・§2.7)をC#側で適用する。
+	/// 無ければ基準方式の履歴を解決対象にする」というフォールバック規則をC#側で適用する。
 	/// フォールバックをSQLだけで表現するとウィンドウ関数か2階層の相関サブクエリが要り、
 	/// 方言変換(<c>ExecuteDialect</c>/<c>FetchDialect</c>)を通す対象が増えて4方言ぶんの検証範囲が広がる。
-	/// 解決順(§2.7)は純粋な比較規則で移植の必要が無いため、1回のSELECTで両方式ぶんの候補行を取得し、
+	/// 解決順は純粋な比較規則で移植の必要が無いため、1回のSELECTで両方式ぶんの候補行を取得し、
 	/// フォールバック判定と最終行の決定はメモリ上のLINQで行う。対象は商品数ぶんの原価履歴に限られ、
 	/// 件数は<see cref="IdChunkSize"/>件ごとに区切られるためメモリ上の処理で問題にならない。
 	/// </para>
@@ -346,13 +346,13 @@ WHERE Id_Shohin IN ({string.Join(",", chunk)})
 	}
 
 	// ==================================================================
-	// 4-3. 現在原価の反映 RefreshCurrentProductCost（設計書§2.7）
+	// 4-3. 現在原価の反映 RefreshCurrentProductCost
 	// ==================================================================
 
 	/// <summary>
-	/// 対象商品の現在原価(<c>MasterShohin.TankaGenka</c>)を、設計書§2.7の解決順で求めた最新有効行へ反映する。
+	/// 対象商品の現在原価(<c>MasterShohin.TankaGenka</c>)を、の解決順で求めた最新有効行へ反映する。
 	/// <para>
-	/// 解決結果が0（履歴が1行も無い）商品は<c>TankaGenka</c>を変更しない（設計書§2.7）。
+	/// 解決結果が0（履歴が1行も無い）商品は<c>TankaGenka</c>を変更しない。
 	/// 過去年月を再実行しても、より新しい<c>EffectiveDay</c>の履歴があれば現在値を過去原価へ戻さない。
 	/// これは解決順が<c>EffectiveDay DESC</c>を先頭に置くことで自然に満たされる（テストで固定する）。
 	/// </para>
@@ -401,13 +401,13 @@ WHERE {nameof(MasterShohin)}.Id IN ({idsCsv})
 	}
 
 	// ==================================================================
-	// 4-4. 基準行の生成（設計書§2.6）
+	// 4-4. 基準行の生成
 	// ==================================================================
 
 	/// <summary>
 	/// 対象商品に<c>TranGenka</c>の履歴が1行も無ければ、実行前の<c>MasterShohin.TankaGenka</c>を
 	/// <c>CostMethod=0</c>・<c>ChangeKind=0</c>・<c>SumMonth="190101"</c>・<c>EffectiveDay="19010101"</c>の
-	/// 基準行として1行INSERTする（設計書§2.6）。
+	/// 基準行として1行INSERTする。
 	/// <para>
 	/// 既に履歴がある商品には作らない（冪等）。判定は<c>SumMonth="190101"</c>の一意キーだけでなく、
 	/// 対象商品の<c>TranGenka</c>行の有無そのもので行う。基準行以外の月に別方式の履歴を持つ商品へ
@@ -462,12 +462,12 @@ WHERE {nameof(MasterShohin)}.Id IN ({idsCsv})
 	}
 
 	// ==================================================================
-	// 4-5. TranGenka の upsert（設計書§2.5.3）
+	// 4-5. TranGenka の upsert
 	// ==================================================================
 
 	/// <summary>
 	/// 一意キー<c>(SumMonth, Id_Shohin, CostMethod, ChangeKind)</c>に一致する行を置換して<c>TranGenka</c>へ保存する
-	/// （設計書§2.5.3「同月・同方式・同ChangeKindの再実行は、一意キーに一致する行を同一トランザクションで置換する」）。
+	/// （「同月・同方式・同ChangeKindの再実行は、一意キーに一致する行を同一トランザクションで置換する」）。
 	/// <para>
 	/// <b>トランザクションはこの関数では張らない。</b>呼び出し側（Step 7の最終仕入原価更新・総平均原価更新、
 	/// Step 8の評価替え）が張った<c>Serializable</c>トランザクションの中で呼ばれる前提である。
@@ -531,11 +531,11 @@ ON CONFLICT(SumMonth, Id_Shohin, CostMethod, ChangeKind) DO UPDATE SET
 	}
 
 	// ==================================================================
-	// 4-6. 月次状態の都度算出（設計書§2.5.6、U-13の中核）
+	// 4-6. 月次状態の都度算出（U-13の中核）
 	// ==================================================================
 
 	/// <summary>
-	/// 指定した処理区分1件の月次状態を算出する（設計書§2.5.6）。状態テーブルは存在しない（U-13で廃止）ため、
+	/// 指定した処理区分1件の月次状態を算出する。状態テーブルは存在しない（U-13で廃止）ため、
 	/// 成果テーブルから都度算出する。
 	/// </summary>
 	public CostMonthStatus FetchCostMonthStatus(string sumMonth, EnumCostProcessKind processKind) => processKind switch {
@@ -551,15 +551,15 @@ ON CONFLICT(SumMonth, Id_Shohin, CostMethod, ChangeKind) DO UPDATE SET
 	];
 
 	/// <summary>
-	/// 原価更新(<c>ProcessKind=3</c>)の月次状態を設計書§2.5.6の算出方法1〜4のとおりに算出する。
+	/// 原価更新(<c>ProcessKind=3</c>)の月次状態を成功履歴・入力の最大Vdu・対象件数・先行処理の状態から算出する。
 	/// <para>
-	/// <b>件数比較の方式（設計書が算出方法まで明記していないため実装判断が必要な箇所）</b>:
-	/// 削除だけが起きた場合は最大<c>Vdu</c>が前進しないため検出できない、と設計書は指摘する一方、
+	/// <b>最大Vduだけでは検出できない削除の検査</b>:
+	/// 削除だけが起きた場合は最大<c>Vdu</c>が前進せず、時刻だけでは変更を検出できない。
 	/// <c>SourceCount</c>を永続化する専用列は無い。本実装では
 	/// <b>「その月の最終成功実行が<c>TranGenka</c>へ書いた商品数（＝<c>TranGenka</c>の行数）」</b>を
 	/// <c>CostMonthStatus.SourceCount</c>として保存済みの指紋に使い、これを
-	/// <b>「現時点で同じ抽出条件を満たす対象商品数」</b>（最終仕入原価は設計書§5.1のとおり
-	/// <c>IsStock=1 AND Kubun=10</c>、総平均原価は§6.1のとおり<c>IsStock=1 AND IsPay=1 AND Kubun IN (10,20)</c>の
+	/// <b>「現時点で同じ抽出条件を満たす対象商品数」</b>（最終仕入原価は
+	/// <c>IsStock=1 AND Kubun=10</c>、総平均原価は<c>IsStock=1 AND IsPay=1 AND Kubun IN (10,20)</c>の
 	/// 仕入がある<c>IsZaiko=1</c>商品の数）と比較する。両者が一致しなければ状態2とする。
 	/// 対象商品の仕入明細が丸ごと削除されればこの対象商品数が減るため、Vduの前進が無くても検出できる。
 	/// 逆に新規仕入行の追加は通常Vduの前進でも検出されるため、件数比較は主に削除検出の保険として働く。
@@ -597,7 +597,7 @@ LIMIT 1", sumMonth, (int)EnumCostChangeKind.Monthly);
 		var currentEligibleCount = FetchEligibleProductCount(period, costMethod);
 		var countMismatch = currentEligibleCount != summary.Cnt;
 
-		// 消化仕入(ProcessKind=1)が「再実行要」なら原価更新も無効化する連鎖(設計書§2.5.6手順3、§7の表)。
+		// 消化仕入(ProcessKind=1)が「再実行要」なら原価更新も無効化する連鎖（消化仕入の再実行前に原価だけ更新しないため）。
 		// 消化仕入は在庫加算しない(IsStock=0)ため原価更新の対象抽出そのものには含まれないが、
 		// 消化仕入の再生成で買掛が変わりうるため、先行処理として無効化する。
 		var consumptionRerunRequired = FetchConsumptionStatus(sumMonth).Status == EnumCostProcessStatus.RerunRequired;
@@ -612,7 +612,7 @@ LIMIT 1", sumMonth, (int)EnumCostChangeKind.Monthly);
 	/// 対象期間の在庫加算仕入(<see cref="Tran03Shiire"/>、<c>IsStock=1</c>)・売上(<see cref="Tran00Uriage"/>、
 	/// <see cref="Tran01Tenuri"/>)・諸掛明細(<see cref="Tran02Material"/>)、および対象月の
 	/// <see cref="SummaryStock"/>に、最終成功時刻<paramref name="lastRunVdu"/>より新しい<c>Vdu</c>の行があるか
-	/// （設計書§2.5.6「原価更新」手順3の2番目・5番目の条件）。
+	/// （「原価更新」手順3の2番目・5番目の条件）。
 	/// </summary>
 	private bool HasSourceChangedAfter(ClosingMonthCalculator.KakeMonthPeriod period, string sumMonth, long lastRunVdu) {
 		var sql = $@"
@@ -632,7 +632,7 @@ SELECT COUNT(*) FROM (
 	}
 
 	/// <summary>
-	/// 現時点で<paramref name="costMethod"/>の対象抽出条件（設計書§5.1・§6.1）を満たす商品数を数える。
+	/// 現時点で<paramref name="costMethod"/>の対象抽出条件を満たす商品数を数える。
 	/// <see cref="FetchCostUpdateStatus"/>の件数比較（削除検出）に使う。
 	/// </summary>
 	private long FetchEligibleProductCount(ClosingMonthCalculator.KakeMonthPeriod period, int costMethod) {

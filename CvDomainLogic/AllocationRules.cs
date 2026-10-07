@@ -21,7 +21,7 @@ public readonly record struct CommitStockInput(long Id_Soko, long Id_Shohin, lon
 /// <para>
 /// 配分保存（<c>HaibunSaveParam</c>）と配分確定（<see cref="ShippingDb.Commit"/>）が同じ判定を使うため、
 /// 修正可能条件・作成／確定できる区分・確定時の在庫検査をここへ集める。
-/// 制約の採用理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 / 2.9 を参照する。
+/// 行別保存では一部SKUだけ更新され得るため一括保存する。確定時もVdu・入荷済み数・在庫を再検査し、1件の不整合で全件を戻す。
 /// </para>
 /// </summary>
 public static class AllocationRules {

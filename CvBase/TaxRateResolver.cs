@@ -7,10 +7,10 @@ namespace CvBase;
 /// 伝票日付時点の消費税率を解決する。
 /// <para>
 /// クライアント側の <c>AppGlobal.LogicGetTax</c> と同じ判定をサーバ側で行うための共通処理。
-/// 仕様は `Doc/spec/2026-08-25_明細別消費税計算_詳細設計.md` の 4.4 を参照する。
+/// 明細税区分のIdと伝票日から、その日に有効な現行／新税率を解決する。切替日は新税率側へ含める。
 /// 元は <c>CvDomainLogic</c> にあったが、帳票VM（<c>CvWpfclient</c>、<c>CvDomainLogic</c> を参照しない）からも
 /// 同じ判定を1箇所から使えるよう <c>CvBase</c> へ移した
-/// （`Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md` D-05 のレビュー指摘）。
+/// （サーバ計算とクライアント帳票で税率の適用日判定を一致させ、上位層への逆依存を避けるため）。
 /// </para>
 /// </summary>
 public static class TaxRateResolver {
@@ -94,8 +94,8 @@ public static class TaxRateResolver {
 		&& DateTime.TryParseExact(ymd, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
 
 	/// <summary>
-	/// 同一適用日において同一税率になっている <see cref="MasterSysTax"/> の組（Doc/spec
-	/// `2026-09-01_消費税計算単位・端数処理_全体設計.md` 3.6）。
+	/// 同一適用日において同一税率になっている <see cref="MasterSysTax"/> の組。
+	/// 税区分Idごとの端数処理が重複しないよう、同率の区分を検出する。
 	/// </summary>
 	/// <param name="IdTaxA">消費税区分Id（小さい方）</param>
 	/// <param name="IdTaxB">消費税区分Id（大きい方）</param>

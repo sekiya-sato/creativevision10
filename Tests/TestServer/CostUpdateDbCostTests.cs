@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Tests.CvServer;
 
 /// <summary>
-/// 最終仕入原価更新・総平均原価更新（原価4項目 詳細設計 §5、§6、Step 7）の単体テスト。
+/// 最終仕入原価更新・総平均原価更新（Step 7）の単体テスト。
 /// SQLiteインメモリDBの作成作法は<see cref="CostUpdateDbSundryTests"/>・<see cref="CostUpdateDbTests"/>に合わせる。
 /// </summary>
 [TestClass]
@@ -32,7 +32,7 @@ public class CostUpdateDbCostTests {
 		conn.Open();
 		_db = new ExDatabaseSqlite(conn);
 		_db.KeepConnectionAlive = true;
-		// マニュアル排他制御(設計書 `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`)が
+		// 全体排他が
 		// ApplyLastPurchaseCost/ApplyTotalAverageCostで使うため、個々のテストのテーブル準備に関わらずここで作っておく。
 		_db.CreateTable(typeof(SysSequence), true, false);
 		_db.CreateTable(typeof(SysHistAutoexec), true, false);
@@ -139,12 +139,12 @@ public class CostUpdateDbCostTests {
 	private int TankaGenkaOf(long idShohin) => Db.FirstOrDefault<MasterShohin>("WHERE Id=@0", idShohin)!.TankaGenka;
 
 	// ------------------------------------------------------------------
-	// 最終仕入原価更新(§5)
+	// 最終仕入原価更新
 	// ------------------------------------------------------------------
 
 	[TestMethod]
 	public void ApplyLastPurchaseCost_SimpleCase_AfterCostMatchesUnitPrice() {
-		// 設計書§11.5 T-04の土台
+		// T-04の土台
 		CreateCostTables((int)EnumCostMethod.LastPurchase);
 		var idShain = InsertShain();
 		var idShohin = InsertShohin("A1");
@@ -158,7 +158,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ComputeLastPurchase_SameDay_DifferentShiireId_LaterIdWins() {
-		// 設計書§5.2: DenDay、Tran03Shiire.Idの降順で最終行を決定する
+		// DenDay、Tran03Shiire.Idの降順で最終行を決定する
 		CreateCostTables((int)EnumCostMethod.LastPurchase);
 		var idShohin = InsertShohin("A1");
 		InsertPurchase("20260910", 10, idShohin, su: 1, kingaku: 100); // 先の伝票(小さいId)、単価100
@@ -171,7 +171,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ComputeLastPurchase_SameHeader_DifferentLineNo_LargerNoWins() {
-		// 設計書§5.2: 同一伝票内ではTran99Meisai.Noの降順で最終行を決定する
+		// 同一伝票内ではTran99Meisai.Noの降順で最終行を決定する
 		CreateCostTables((int)EnumCostMethod.LastPurchase);
 		var idShohin = InsertShohin("A1");
 		InsertPurchaseMulti("20260910", 10,
@@ -185,7 +185,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyLastPurchaseCost_RoundsAwayFromZero_NotFloor() {
-		// 設計書§5.3: Kingaku=11489, Su=30 → 383(floorの382ではない)。DB経路でも固定する
+		// Kingaku=11489, Su=30 → 383(floorの382ではない)。DB経路でも固定する
 		CreateCostTables((int)EnumCostMethod.LastPurchase);
 		var idShain = InsertShain();
 		var idShohin = InsertShohin("A1");
@@ -199,7 +199,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ComputeLastPurchase_ExcludesReturnDiscountOtherNonStockAndNonZaiko() {
-		// 設計書§5.1: 仕入返品(20)・値引(30)・その他(99)・消化仕入(IsStock=0)・IsZaiko=0は対象外
+		// 仕入返品(20)・値引(30)・その他(99)・消化仕入(IsStock=0)・IsZaiko=0は対象外
 		CreateCostTables((int)EnumCostMethod.LastPurchase);
 		var idA = InsertShohin("A1");
 		var idB = InsertShohin("B1");
@@ -219,7 +219,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyLastPurchaseCost_SundryChargesAreNotAdded() {
-		// 設計書§3.6、§13 U-24: 諸掛は最終仕入原価に加算されない
+		// U-24: 諸掛は最終仕入原価に加算されない
 		CreateCostTables((int)EnumCostMethod.LastPurchase);
 		var idShain = InsertShain();
 		var idShiire = InsertShiire("SR1");
@@ -238,7 +238,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyLastPurchaseCost_NoPurchaseInPeriod_NoRowCreated_TankaGenkaUnchanged() {
-		// 設計書§5.4: 対象期間に通常仕入がない商品は更新しない
+		// 対象期間に通常仕入がない商品は更新しない
 		CreateCostTables((int)EnumCostMethod.LastPurchase);
 		var idShain = InsertShain();
 		var idShohin = InsertShohin("A1", tankaGenka: 555);
@@ -253,7 +253,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyLastPurchaseCost_DoesNotAutoRecalculateFollowingMonth() {
-		// 設計書§5.4: 後続月の最終仕入原価は前月原価へ依存しないため自動再計算しない
+		// 後続月の最終仕入原価は前月原価へ依存しないため自動再計算しない
 		CreateCostTables((int)EnumCostMethod.LastPurchase);
 		var idShain = InsertShain();
 		var idShohin = InsertShohin("A1");
@@ -325,12 +325,12 @@ public class CostUpdateDbCostTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 総平均原価更新(§6)
+	// 総平均原価更新
 	// ------------------------------------------------------------------
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_BasicCase_MatchesSpecExample() {
-		// 設計書§11.5 T-01: 前月在庫10個×5,000円、当月仕入14個・68,000円 → 4,916
+		// T-01: 前月在庫10個×5,000円、当月仕入14個・68,000円 → 4,916
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idShohin = InsertShohin("A1", tankaGenka: 5000);
@@ -345,7 +345,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_SundryChargesAddToNumerator_ReapplyDoesNotIncrease() {
-		// 設計書§11.5 T-02: 商品Aへの諸掛明細が3行(30円・40円・30円) → 分子へ100円加算。再実行しても増えない
+		// T-02: 商品Aへの諸掛明細が3行(30円・40円・30円) → 分子へ100円加算。再実行しても増えない
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idShiire = InsertShiire("SR1");
@@ -375,8 +375,8 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_NegativeOpeningStock_IsExcludedButOthersSucceed() {
-		// 設計書§6.5「2026-09-06改訂: OpeningQty<0は対象外(エラーではない)」、§13 U-06。
-		// 対象外は他の正常な商品の更新を巻き添えにしない(改訂前は§2.4-2・§10.2で全件ロールバックしていた)。
+		// 「2026-09-06改訂: OpeningQty<0は対象外(エラーではない)」、 U-06。
+		// 対象外は他の正常な商品の更新を巻き添えにしない(改訂前は-2・で全件ロールバックしていた)。
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idGood = InsertShohin("GOOD", tankaGenka: 100);
@@ -406,7 +406,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_BeforeCostNonPositiveWithOpeningStock_IsExcludedButOthersSucceed() {
-		// 設計書§6.5「2026-09-06改訂: OpeningQty>0、BeforeCost<=0は対象外(エラーではない)」、§13 U-15。
+		// 「2026-09-06改訂: OpeningQty>0、BeforeCost<=0は対象外(エラーではない)」、 U-15。
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idGood = InsertShohin("GOOD", tankaGenka: 100);
@@ -433,7 +433,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_NewProductWithZeroOpeningAndZeroCost_IsNotExcluded() {
-		// 設計書§6.5「OpeningQty=0かつBeforeCost=0は対象外にしない(最重要)」。
+		// 「OpeningQty=0かつBeforeCost=0は対象外にしない(最重要)」。
 		// これを対象外に巻き込むと新規商品の原価が永久に決まらない。当月仕入だけで原価が確定する。
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
@@ -455,7 +455,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_AfterCostNonPositive_RollsBackEverything() {
-		// 設計書§6.5「AfterCost<=0はエラー」
+		// 「AfterCost<=0はエラー」
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idGood = InsertShohin("GOOD", tankaGenka: 100);
@@ -472,7 +472,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_ExcludesDiscountOtherAndNonStock() {
-		// 設計書§6.1: Kubun=30/99、消化仕入(IsStock=0)は分母・分子に入らない
+		// Kubun=30/99、消化仕入(IsStock=0)は分母・分子に入らない
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idShohin = InsertShohin("A1", tankaGenka: 100);
@@ -492,7 +492,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_PurchaseReturn_AppliesNegativeQtyAndAmount() {
-		// 設計書§6.3: 仕入返品(Kubun=20)は数量・金額とも負で効く
+		// 仕入返品(Kubun=20)は数量・金額とも負で効く
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idShohin = InsertShohin("A1", tankaGenka: 100);
@@ -510,7 +510,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_PastMonthRerun_RecalculatesFollowingMonthsInOrder() {
-		// 設計書§11.5 T-05 / §6.6: 過去月Mと後続月に履歴があり、Mの仕入を修正して再実行すると、
+		// T-05 / : 過去月Mと後続月に履歴があり、Mの仕入を修正して再実行すると、
 		// M以降が古い順に再計算され、現在原価と全履歴が整合する
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
@@ -540,7 +540,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void PreviewTotalAverageCost_IncludesFollowingMonthRows() {
-		// 設計書§6.6: プレビューには対象月だけでなく再計算される後続月も表示する。DBは変更しない
+		// プレビューには対象月だけでなく再計算される後続月も表示する。DBは変更しない
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idShohin = InsertShohin("A1", tankaGenka: 100);
@@ -592,7 +592,7 @@ public class CostUpdateDbCostTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_RevalRow_SurvivesRerun_TankaGenkaStaysAtRevalValue() {
-		// 設計書§2.7、§13 U-19: 評価替え行(ChangeKind=1)がある月で総平均原価更新を再実行しても、
+		// U-19: 評価替え行(ChangeKind=1)がある月で総平均原価更新を再実行しても、
 		// RefreshCurrentProductCostの結果は評価替えの値のまま(ResolveCostAsOfのChangeKind DESCが効く)
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
@@ -620,7 +620,7 @@ public class CostUpdateDbCostTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 確認後の変更検知(設計書§2.4-4、2026-09-06追記でStep 9として4処理へ統一)。
+	// 確認後の変更検知(-4、2026-09-06追記でStep 9として4処理へ統一)。
 	// 最終仕入原価更新・総平均原価更新はどちらもProcessKind=CostUpdateの同じ指紋を使うため、
 	// 代表して最終仕入原価更新で一通り固定し、総平均原価更新は往復と省略時の2点だけ確認する。
 	// ------------------------------------------------------------------
@@ -755,7 +755,7 @@ public class CostUpdateDbCostTests {
 	}
 
 	// ------------------------------------------------------------------
-	// C-14 オーバーフロー(設計書§11.1): DB層(TranGenka.AfterCost/MasterShohin.TankaGenka)は
+	// C-14 オーバーフロー: DB層(TranGenka.AfterCost/MasterShohin.TankaGenka)は
 	// int列であり、CostCalculatorの計算結果(long)を保存する箇所でint32へキャストしている。
 	// ここでの破綻の再現。修正はせず固定・報告のみ行う。
 	// ------------------------------------------------------------------
@@ -766,9 +766,9 @@ public class CostUpdateDbCostTests {
 	/// <para>
 	/// <c>TranGenka.AfterCost</c>・<c>MasterShohin.TankaGenka</c>はどちらも<c>int</c>列であり、
 	/// 保存直前の<c>long → int</c>のナローイングキャストはC#の既定でuncheckedである。
-	/// 範囲外の値をそのままキャストすると、0円以下をエラーとする規定（設計書§6.5）を
+	/// 範囲外の値をそのままキャストすると、0円以下をエラーとする規定を
 	/// すり抜けて<b>負の原価が無警告で保存される</b>。それを防ぐため
-	/// <see cref="CostCalculator.CalcTotalAverageCost"/>が範囲を検査する（設計書§11.1 C-14）。
+	/// <see cref="CostCalculator.CalcTotalAverageCost"/>が範囲を検査する。
 	/// </para>
 	/// <para>
 	/// 1個・30億円の仕入は現実の商品規模では起こらないが、金額の桁を誤入力すれば到達しうる。

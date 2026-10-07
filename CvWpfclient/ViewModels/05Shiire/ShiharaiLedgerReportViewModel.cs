@@ -18,7 +18,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 ///
 /// SummaryKaiShi は対象期間のみの集計（繰越なし）。当月残(balance)は、対象期間の開始(DayFrom)
 /// より前の全行を SUM(TotalShiire - TotalOut) で積んだ PreviousBalance に当期間の Balance を
-/// 加えて求める（`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// 加えて求める。期首残高行も過去累積に含め、繰越をSummaryのBalanceへ重ねて保存しない。
 /// </summary>
 public partial class ShiharaiLedgerReportViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "支払台帳（発行控え）";
@@ -62,7 +62,7 @@ public partial class ShiharaiLedgerReportViewModel : Helpers.BaseReportViewModel
 		var shiireWhere = BuildCodeRangeWhere(parameters, "s.Code", ShiireCodeFrom, ShiireCodeTo);
 
 		// PreviousBalance は対象期間の開始(DayFrom)より前の全行を SUM(TotalShiire - TotalOut) で積む
-		// （設計書 2.3）。行ごとに DayFrom が異なりうるため仕入先＋DayFrom で相関させる。
+		// 。行ごとに DayFrom が異なりうるため仕入先＋DayFrom で相関させる。
 		var activeOnly = IsActiveOnly ? "AND ((pb.PreviousBalance + k.Balance) != 0 OR k.TotalOut != 0)" : "";
 
 		// SELECT の列順は ShiharaiLedgerReport.qfm の item1..item9 と一致させる。

@@ -24,7 +24,7 @@ namespace CvWpfclient.ViewModels._07Haibun;
 /// <para>
 /// 旧CV.netは「倉庫＋商品を選び SKU行×得意先列のクロス表へ入力する」商品単位の画面だったが、
 /// CV10 は<b>受注伝票まるごとを1配分として扱う</b>（ユーザー確定 2026-08-21）。
-/// 受注残・有効在庫・超過処理は本ViewModel、一括保存の理由は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 を参照する。
+/// 受注残・有効在庫・超過処理は本ViewModelで行い、複数SKUの洗い替えと引当再計算はサーバで一括処理して部分成功を防ぐ。
 /// </para>
 /// </summary>
 public partial class JuchuHaibunInputViewModel : BaseViewModel {
@@ -441,7 +441,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 			return;
 		}
 
-		// 有効在庫割れは警告のみ（出荷指示確定でエラーになる）。詳細設計 2.5
+		// 有効在庫割れは警告のみ（出荷指示確定でエラーになる）。
 		List<JuchuHaibunMeisaiRow> overStock = [.. MeisaiRows.Where(x => x.Su > x.HaibunKanoSu)];
 		if (overStock.Count > 0 &&
 			MessageEx.ShowQuestionDialog(
@@ -450,7 +450,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 				owner: ActiveWindow) != MessageBoxResult.Yes) {
 			return;
 		}
-		// 受注残超過も警告のみ。超過分は RelateNo1 = 0 で登録する。詳細設計 2.5
+		// 受注残超過も警告のみ。超過分は RelateNo1 = 0 で登録する。
 		int overJuchu = MeisaiRows.Sum(x => Math.Max(x.Su - x.JuchuZanSu, 0));
 		if (overJuchu > 0 &&
 			MessageEx.ShowQuestionDialog(
@@ -577,7 +577,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 
 	/// <summary>
 	/// 受注Id別の出荷済数と未配分残。受け皿は <see cref="TranHaibun"/> で
-	/// <c>JitsuSu</c>=出荷済数 / <c>Su</c>=未配分残 へ射影する（詳細設計 2.3）。
+	/// <c>JitsuSu</c>=出荷済数 / <c>Su</c>=未配分残 へ射影する。
 	/// </summary>
 	async Task<Dictionary<int, TranHaibun>> LoadJuchuZanSummaryAsync(IReadOnlyCollection<long> juchuIds, CancellationToken ct) {
 		if (juchuIds.Count == 0) return [];
@@ -815,7 +815,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 
 	/// <summary>
 	/// 入力済みの明細を <see cref="TranHaibun"/> へ展開する。
-	/// 受注残までは <c>RelateNo1</c> = 受注Id、超過分は <c>RelateNo1</c> = 0 の別行にする（詳細設計 2.5）。
+	/// 受注残までは <c>RelateNo1</c> = 受注Id、超過分は <c>RelateNo1</c> = 0 の別行にする。
 	/// </summary>
 	List<TranHaibun> BuildNewRecords() {
 		List<TranHaibun> records = [];
@@ -928,7 +928,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 
 	Window? ActiveWindow => ClientLib.GetActiveView(this);
 
-	/// <summary>不正JSONを空配列として扱う <c>Jmeisai</c> の SQL 式（AGENTS.md の JSON 防御規約）。</summary>
+	/// <summary>不正JSONを空配列として扱う <c>Jmeisai</c> の SQL 式（json_validで検査し、不正値は空配列へ置換）。</summary>
 	static string SafeJmeisai(string alias) =>
 		$"CASE WHEN json_valid({alias}.Jmeisai) THEN {alias}.Jmeisai ELSE '[]' END";
 

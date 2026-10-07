@@ -21,7 +21,7 @@ namespace CvWpfclient.ViewModels._03Hatchu;
 /// <para>
 /// 旧システムは「配分No = 発注No × 商品1件」を単位としていたが、CV10 は発注伝票まるごとを
 /// 1配分として扱う（ユーザー確定 2026-08-13）。このため配分Noは新設せず、発注Noで配分を識別する。
-/// 設計の詳細は `.omo/HachuHaibunInput_plan.md` を参照。
+/// 同じ発注に属する商品・色・サイズ別の配分行を、発注単位で読み込み保存する。
 /// </para>
 /// </summary>
 public partial class HachuHaibunInputViewModel : BaseViewModel {
@@ -853,7 +853,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 
 	Window? ActiveWindow => ClientLib.GetActiveView(this);
 
-	/// <summary>不正JSONを空配列として扱う <c>Jmeisai</c> の SQL 式（AGENTS.md の JSON 防御規約）。</summary>
+	/// <summary>不正JSONを空配列として扱う <c>Jmeisai</c> の SQL 式（json_validで検査し、不正値は空配列へ置換）。</summary>
 	static string SafeJmeisai(string alias) =>
 		$"CASE WHEN json_valid({alias}.Jmeisai) THEN {alias}.Jmeisai ELSE '[]' END";
 

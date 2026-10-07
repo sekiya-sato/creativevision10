@@ -19,7 +19,7 @@ namespace Tests.CvServer;
 /// <summary>
 /// <see cref="PointOfSaleService"/> のPOS売上・返品・取消が、
 /// 商品税区分と店舗端数処理を使って消費税を確定することを検証する。
-/// 仕様は `Doc/spec/2026-09-02_R4_POS売上消費税計算_詳細設計.md`。
+/// POS売上は伝票単位で税区分ごとに丸め、商品税区分の解決とヘッダ／明細への確定税額反映を確認する。
 /// </summary>
 [TestClass]
 public class PointOfSaleServiceTests {

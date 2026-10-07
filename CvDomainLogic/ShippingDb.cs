@@ -36,7 +36,7 @@ public enum CommitOutcome {
 /// 確定取消は設けない（決定 D9）。訂正は作成した伝票側で行う。
 /// </para>
 /// <para>
-/// 確定方式・入荷上限の判断は `Doc/spec/2026-09-28_設計判断記録.md` 2.8 / 2.9 を参照する。
+/// 入荷前の配分を確定しないため、区分0の確定数はArrivedSu以下とする。確定で即伝票生成し、取消は生成伝票側で訂正する。
 /// </para>
 /// </summary>
 public class ShippingDb(ExDatabase db) {
@@ -243,7 +243,7 @@ public class ShippingDb(ExDatabase db) {
 	/// <summary>
 	/// 配分出荷の売上伝票を作る。得意先(店舗、<see cref="MasterTokui"/>)の税計算単位・端数処理をスナップショットし、
 	/// 明細の消費税区分を<see cref="MasterShohin.Id_Tax"/>から解決したうえで<see cref="TaxCalculator.Apply"/>で
-	/// 税額を確定する。従来はここで消費税を一切計算していなかった(Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md)。
+	/// 税額を確定する。請求単位の税額はここでは確定せず、課税対象額を請求計算へ渡す。
 	/// </summary>
 	private long CreateUriage(HaibunHeaderKey key,
 		List<Tran99Meisai> meisai, long idShain, string denDay,

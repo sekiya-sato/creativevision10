@@ -11,7 +11,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 ///
 /// SummaryUriSei は対象期間のみの集計（繰越なし）。前月残(prevBalance)・繰越金額(carryOver)は
 /// 対象期間の開始(DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積んで都度算出する
-/// （PreviousBalance、`Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// （PreviousBalance）。前月に集計行がなくても、それ以前の残と期首残を失わない。
 /// 当月残(balance)は PreviousBalance + Balance。
 /// </summary>
 public partial class SeikyuListReportViewModel : Helpers.BaseReportViewModel {
@@ -76,7 +76,7 @@ public partial class SeikyuListReportViewModel : Helpers.BaseReportViewModel {
 			: (IsIncludeChildren ? "primaryDay, secondaryDay, parentCode, childCode" : "primaryDay, secondaryDay, parentCode");
 
 		// PreviousBalance は対象期間の開始(DayFrom)より前の全期間を SUM(TotalSales - TotalIn) で
-		// 積んだ値（設計書 2.3）。行ごとに DayFrom が異なりうるため得意先＋DayFrom で相関させる。
+		// 積んだ値。行ごとに DayFrom が異なりうるため得意先＋DayFrom で相関させる。
 		// 締日欄は選択した締日をそのまま出す。複数締日(Shime1/2/3)では c.Shime1 が当該行の締日とは
 		// 限らない(締日[10,20,99]の得意先で締日20を出力すると10が出てしまう)。本帳票は単一締日で
 		// 絞り込むため、全行の締日は選択値に一致する。

@@ -12,7 +12,7 @@ using System.Text;
 namespace CvWpfclient.ViewModels._41Logistics;
 
 /// <summary>
-/// L03 物流連携 連携データ手動受信。仕様は `Doc/spec/2026-10-05_WMS連携_旧AMS連携調査と仮実装仕様.md` 4章・7章。
+/// L03 物流連携の手動受信。ファイル取込・検査と業務反映を分離し、行の結果を履歴として残す。
 /// 取込・検査（在庫・伝票は変えない）→ 行一覧で確認 → 反映（エラー行を除いて伝票作成・在庫更新）。
 /// </summary>
 public partial class IntegrationDataManualReceiveViewModel : LogisticsViewModelBase {

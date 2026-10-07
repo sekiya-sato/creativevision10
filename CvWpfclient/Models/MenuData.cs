@@ -32,7 +32,7 @@ public partial class MenuData : ObservableObject {
 
 	/// <summary>
 	/// Scope対象画面(<see cref="IsScopeTargetView"/>がtrueの画面)がどのScope種別を見るかの宣言。
-	/// null/空の間はScope判定をスキップする(設計書 8.4節)。この Step では値を設定しない。
+	/// null/空の間はScope判定をスキップする。この Step では値を設定しない。
 	/// </summary>
 	public IReadOnlyList<EnumScopeKubun>? EditScopeKubuns { get; init; }
 
@@ -52,7 +52,7 @@ public partial class MenuData : ObservableObject {
 
 	/// <summary>
 	/// メニューを作成する。10.0では<c>AllowedRoles</c>によるロール別フィルタを廃止したため、
-	/// 常に全メニューを返す(設計書 9.1節)。
+	/// 常に全メニューを返す。
 	/// </summary>
 	public static ObservableCollection<MenuData> CreateDefault() => CreateAll();
 	public static ObservableCollection<MenuData> CreateDefault4Debug() {
@@ -99,7 +99,7 @@ public partial class MenuData : ObservableObject {
 		viewType.Name.EndsWith("InputView", StringComparison.Ordinal);
 
 	/// <summary>
-	/// 全ロール分のメニュー定義。構成は .omo/2026-08-新メニュー案.md に準拠する。
+	/// 全ロール分のメニュー定義。ロールごとの一覧を共通メニューから組み立てる。
 	/// `addInfo:"準備中"` のものは、基本的に空のViewおよびViewModel
 	/// </summary>
 	private static ObservableCollection<MenuData> CreateAll() {

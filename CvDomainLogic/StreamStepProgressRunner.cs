@@ -4,13 +4,12 @@ using Microsoft.Extensions.Logging;
 namespace CvDomainLogic;
 
 /// <summary>
-/// ステップ実行の共通ランナー。マニュアル排他制御（正典は
-/// `Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`、以下「設計書」）§2.1〜§2.4の適用対象13処理のうち、
-/// <see cref="SummaryDb"/>・<see cref="StocktakeDb"/>・<see cref="HhtProcess"/>の9処理はここを1箇所通るため、
-/// 排他の取得・進捗・終了もここへ集約する（設計書§2.4「対象は`ConvertDb`を除く」）。
+/// ステップ実行の共通ランナー。再集計・棚卸・HHT更新の共通経路で
+/// 全体排他の取得・進捗更新・終了を行う。原価更新はCostUpdateDb内部で同じ排他を取得する。
+/// 旧データ移行(ConvertDb)は初期構築専用のため、この排他の対象外とする。
 /// <para>
 /// <paramref name="manualLockDb"/>・<paramref name="lockProcessName"/>のいずれかが<c>null</c>の場合は
-/// 排他を一切取らない（既定値）。<c>ConvertDb</c>の2箇所（設計書§2.4で対象外と明記）はこの既定のまま、
+/// 排他を一切取らない（既定値）。<c>ConvertDb</c>の2箇所（で対象外と明記）はこの既定のまま、
 /// 引数を渡さずに呼ぶことで従来どおり排他なしで動作する。
 /// </para>
 /// </summary>
@@ -25,10 +24,10 @@ internal static class StreamStepProgressRunner {
 	/// <param name="errorMessageTemplate">ステップ内で例外が起きたときのログテンプレート（<c>{StepName}</c>を含む）</param>
 	/// <param name="endMessage">全ステップ終了時ログの文言</param>
 	/// <param name="manualLockDb">
-	/// マニュアル排他制御（設計書§2.1〜§2.3）を掛ける場合に渡す。<c>null</c>なら排他を取らない（既定）
+	/// マニュアル排他制御を掛ける場合に渡す。<c>null</c>なら排他を取らない（既定）
 	/// </param>
 	/// <param name="lockProcessName">
-	/// 一連処理名（<c>SysSequence.TableName</c>、設計書§2.4の表の値）。<paramref name="manualLockDb"/>と
+	/// 一連処理名（<c>SysSequence.TableName</c>、呼出元の処理名定数）。<paramref name="manualLockDb"/>と
 	/// 両方指定されたときだけ排他を取る
 	/// </param>
 	/// <param name="lockExpectedDurationSeconds">一連処理全体の予想処理秒数（<c>ExpectedDuration</c>）</param>
@@ -47,7 +46,7 @@ internal static class StreamStepProgressRunner {
 
 		ManualLockHandle? lockHandle = null;
 		if (manualLockDb != null && lockProcessName != null) {
-			// 1a: ステップ実行の前に排他を取得する。取得できなければ1ステップも実行しない（設計書§2.1）
+			// 1a: ステップ実行の前に排他を取得する。取得できなければ1ステップも実行しない
 			var firstStepName = steps.Count > 0 ? steps[0].Name : lockProcessName;
 			var lockResult = manualLockDb.TryBegin(lockProcessName, firstStepName, lockExpectedDurationSeconds);
 			if (!lockResult.IsAcquired) {
@@ -77,7 +76,7 @@ internal static class StreamStepProgressRunner {
 				var startProgress = index * 100 / steps.Count;
 
 				if (lockHandle != null) {
-					// 1b: 各ステップの開始時に進捗を書く（設計書§2.2）
+					// 1b: 各ステップの開始時に進捗を書く
 					manualLockDb!.Progress(lockHandle, name, index + 1);
 				}
 
@@ -117,7 +116,7 @@ internal static class StreamStepProgressRunner {
 			logger.LogInformation("{Message} 所要={Elapsed:0.0}s", endMessage, elapsed.TotalSeconds);
 
 			if (lockHandle != null) {
-				// 1c: 全ステップ終了後に終了を記録する（設計書§2.3）。ここへ到達したときだけが正常終了である
+				// 1c: 全ステップ終了後に終了を記録する。ここへ到達したときだけが正常終了である
 				manualLockDb!.Complete(lockHandle, hadError ? 1 : 0, totalCount, isAutoExec: isAutoExec);
 			}
 
@@ -137,7 +136,7 @@ internal static class StreamStepProgressRunner {
 /// </summary>
 internal static class ManualLockMessages {
 	/// <summary>
-	/// 「どの一連処理が、どの処理を、いつから実行中か」を伝えるメッセージを組み立てる（設計書§2.4適用時の要件）。
+	/// 「どの一連処理が、どの処理を、いつから実行中か」を伝えるメッセージを組み立てる（適用時の要件）。
 	/// </summary>
 	/// <param name="processName">開始しようとした一連処理名</param>
 	/// <param name="blocker">先行処理の<c>SysSequence</c>行（<see cref="ManualLockDb.TryBegin"/>が返す）</param>

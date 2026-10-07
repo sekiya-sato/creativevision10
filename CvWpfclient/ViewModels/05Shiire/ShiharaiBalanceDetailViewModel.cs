@@ -12,8 +12,7 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// 支払ヘッダは集計テーブル SummaryKaiShi（支払計算＝月次更新処理の成果物）を読む。
 /// 対象期間は同テーブルの DayFrom〜DayTo。締め処理を回していない支払日は行が無く空になる。
 /// SummaryKaiShi は対象期間のみの集計（繰越なし）。前回残高(prevBalance)は、対象期間の開始
-/// (DayFrom)より前の全行を SUM(TotalShiire - TotalOut) で積んで都度算出する（PreviousBalance、
-/// `Doc/spec/2026-09-02_Summary残高_期間集計化とPreviousBalance_詳細設計.md` 2.3）。
+/// (DayFrom)より前の全行をSUM(TotalShiire - TotalOut)で積んでPreviousBalanceを都度算出する。
 /// 当月残高(balance)は PreviousBalance + Balance。
 ///
 /// 明細1行=CSV1行で、ヘッダ項目は各行に同じ値を繰り返す。qfm 側でヘッダ領域と明細領域に
@@ -58,7 +57,7 @@ public partial class ShiharaiBalanceDetailViewModel : Helpers.BaseReportViewMode
 
 		const string ShiireKingaku = "CASE WHEN v.Total != 0 THEN v.Total ELSE v.KingakuTotal + (v.Tax1+v.Tax2+v.Tax3) END";
 		// PreviousBalance は対象期間の開始(DayFrom)より前の全行を SUM(TotalShiire - TotalOut) で積む
-		// （設計書 2.3）。
+		// 。
 		const string PrevBalanceExpr =
 			"(SELECT ifnull(SUM(pb.TotalShiire - pb.TotalOut),0) FROM SummaryKaiShi pb WHERE pb.Id_Shiire = k.Id_Shiire AND pb.DayTo < k.DayFrom)";
 		var activeOnly = IsActiveOnly ? $"AND (k.TotalShiire != 0 OR ({PrevBalanceExpr} + k.Balance) != 0)" : "";

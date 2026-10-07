@@ -18,7 +18,7 @@ public sealed record TranTaxRebuildResult(
 	string TableName, int Scanned, int Updated, int HeaderTaxChanged, long HeaderTaxDiff, int TaxableAmountFilled);
 
 /// <summary>
-/// 既存伝票を新しい消費税計算方式（Doc/spec/2026-09-01_消費税計算単位・端数処理_全体設計.md）へ揃える
+/// 既存伝票を税区分別課税対象額と伝票／請求単位の丸め規則へ揃える
 /// 一括再計算処理。恒常運用では使わず、移行直後の一時的な管理者処理として使う。
 /// <para>
 /// 対象6伝票（<see cref="Tran00Uriage"/> / <see cref="Tran01Tenuri"/> / <see cref="Tran02Material"/> /

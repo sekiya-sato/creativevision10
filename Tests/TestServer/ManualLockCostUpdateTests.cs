@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Tests.CvServer;
 
 /// <summary>
-/// マニュアル排他制御（`Doc/spec/2026-09-06_マニュアル排他制御_詳細設計.md`、以下「設計書」）の
+/// 全体排他を取得できない場合は書込みを開始せず、終了時に履歴と排他解放を行う規則の
 /// 原価4処理・評価替えへの適用(Step 9-3)を、総平均原価更新(<see cref="CostUpdateDb.ApplyTotalAverageCost"/>)で
 /// 代表させて確認する。SQLiteインメモリDBの作成作法は<see cref="CostUpdateDbCostTests"/>に合わせる。
 /// </summary>
@@ -175,8 +175,8 @@ public class ManualLockCostUpdateTests {
 
 	[TestMethod]
 	public void ApplyTotalAverageCost_BusinessError_LeavesLockRowForMonitor() {
-		// 設計書§6.5「当月仕入額はあるが数量0はエラー」。2026-09-06改訂で負在庫・原価0円は対象外(エラーではない)へ
-		// 変わったため(§2.4-2・§10.2のロールバック対象外)、本テストは改訂後も残るエラー条件で業務エラーを起こす。
+		// 「当月仕入額はあるが数量0はエラー」。2026-09-06改訂で負在庫・原価0円は対象外(エラーではない)へ
+		// 変わったため(-2・のロールバック対象外)、本テストは改訂後も残るエラー条件で業務エラーを起こす。
 		// 業務エラーはCompleteを呼ばず、行を残す方針(ManualLockHandle参照)
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
@@ -196,7 +196,7 @@ public class ManualLockCostUpdateTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 8. 後続月再計算カスケード(設計書§6.6)で、月ごとにProgressが呼ばれ
+	// 8. 後続月再計算カスケードで、月ごとにProgressが呼ばれ
 	//    SysSequence.ColumnNameとVduが前進すること。行は完了時に消えるため、
 	//    完了履歴(SysHistAutoexec.Memo)に各月の進捗記録が残っていることで間接的に確認する
 	// ------------------------------------------------------------------
@@ -215,7 +215,7 @@ public class ManualLockCostUpdateTests {
 		InsertPurchase("20261010", 10, idShohin, su: 10, kingaku: 2000);
 		Assert.IsTrue(costUpdateDb.ApplyTotalAverageCost(NewParam("202610", idShain)).IsSuccess);
 
-		// 202609の仕入を修正して再実行 → 202609・202610の両方が再計算されるカスケードになる(設計書§6.6)
+		// 202609の仕入を修正して再実行 → 202609・202610の両方が再計算されるカスケードになる
 		Db.Execute($"DELETE FROM {nameof(Tran03Shiire)} WHERE DenDay=@0", "20260910");
 		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 2000);
 
