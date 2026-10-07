@@ -41,7 +41,7 @@
 		     セルはButtonのため既定の白字を継承しないよう文字色を固定し、テーマに依存せず読めるようにする  -->
 		<DataTemplate x:Key="RfmGridCellTemplate"
 			DataType="{x:Type vm:RfmGridCell}">
-			<Button MinWidth="128" MinHeight="84"
+			<Button MinWidth="128" MinHeight="58"
 				Margin="0" Padding="0"
 				Command="{Binding DataContext.SelectCellCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
 				CommandParameter="{Binding}"
@@ -71,7 +71,7 @@
 								Text="{Binding SubTitle}" />
 						</StackPanel>
 						<!--  データ・合計  -->
-						<StackPanel Margin="8,4" VerticalAlignment="Center"
+						<StackPanel Margin="8,2" VerticalAlignment="Center"
 							TextElement.Foreground="#FF1F2937"
 							Visibility="{Binding IsHeader, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
 							<DockPanel>
@@ -79,7 +79,7 @@
 									VerticalAlignment="Bottom"
 									FontSize="12" Foreground="#FF1F2937"
 									Text="{Binding RatioText}" />
-								<TextBlock FontSize="16" FontWeight="SemiBold"
+								<TextBlock FontSize="15" FontWeight="SemiBold"
 									Foreground="#FF111827"
 									Text="{Binding CountText}" />
 							</DockPanel>
@@ -160,10 +160,15 @@
 			</DockPanel>
 		</materialDesign:ColorZone>
 
-		<!--  条件・クロス表・顧客一覧。外側は縦スクロールのみとして条件を折り返し、表は個別に横スクロールさせる  -->
-		<ScrollViewer Grid.Row="1"
-			HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-			<StackPanel Margin="16,12">
+		<!--  上段の条件は固定し、下段のクロス表・顧客一覧だけを縦スクロールさせる  -->
+		<Grid Grid.Row="1">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
+
+			<StackPanel Grid.Row="0"
+				Margin="16,12,16,0">
 				<!--  条件  -->
 				<WrapPanel Orientation="Horizontal">
 					<StackPanel Margin="0,4,24,4" Orientation="Horizontal">
@@ -266,88 +271,94 @@
 						Foreground="{DynamicResource MaterialDesignBodyLight}"
 						Text="R=最終購入からの経過日数 / F=購入回数 / M=購入金額(税込)" />
 				</WrapPanel>
-
-				<!--  集計サマリ  -->
-				<TextBlock Margin="0,12,0,4"
-					FontWeight="SemiBold"
-					Text="{Binding SummaryText}"
-					TextWrapping="Wrap" />
-
-				<!--  クロス表  -->
-				<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-					<ItemsControl HorizontalAlignment="Left"
-						BorderBrush="{DynamicResource MaterialDesignDivider}"
-						BorderThickness="1,1,0,0"
-						ItemTemplate="{StaticResource RfmGridCellTemplate}"
-						ItemsSource="{Binding GridCells}">
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<UniformGrid Columns="{Binding DataContext.GridColumns, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
-					</ItemsControl>
-				</ScrollViewer>
-
-				<!--  顧客一覧（画面表示のみ。CSVには出力しない）  -->
-				<TextBlock Margin="0,16,0,4"
-					FontWeight="SemiBold"
-					Text="{Binding CustomerCaption}"
-					TextWrapping="Wrap" />
-				<DataGrid Height="320"
-					materialDesign:DataGridAssist.CellPadding="8,4"
-					AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
-					AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" GridLinesVisibility="All" HeadersVisibility="Column"
-					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-					HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
-					ItemsSource="{Binding CustomerRows}"
-					Style="{StaticResource MaterialDesignDataGrid}"
-					VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-					VerticalScrollBarVisibility="Auto">
-					<DataGrid.ColumnHeaderStyle>
-						<Style BasedOn="{StaticResource RfmColumnHeaderStyle}"
-							TargetType="DataGridColumnHeader" />
-					</DataGrid.ColumnHeaderStyle>
-					<DataGrid.Columns>
-						<DataGridTextColumn Width="110"
-							Binding="{Binding Code}"
-							Header="コード" />
-						<DataGridTextColumn Width="160"
-							Binding="{Binding Name}"
-							Header="氏名" />
-						<DataGridTextColumn Width="160"
-							Binding="{Binding Kana}"
-							Header="カナ" />
-						<DataGridTextColumn Width="110"
-							Binding="{Binding LastDay}"
-							Header="最終購入日" />
-						<DataGridTextColumn Width="80"
-							Binding="{Binding Days, StringFormat={}{0:N0}}"
-							ElementStyle="{StaticResource RfmNumberCell}"
-							Header="経過日数" />
-						<DataGridTextColumn Width="70"
-							Binding="{Binding Frequency, StringFormat={}{0:N0}}"
-							ElementStyle="{StaticResource RfmNumberCell}"
-							Header="回数" />
-						<DataGridTextColumn Width="110"
-							Binding="{Binding Amount, StringFormat={}{0:N0}}"
-							ElementStyle="{StaticResource RfmNumberCell}"
-							Header="金額" />
-						<DataGridTextColumn Width="50"
-							Binding="{Binding RRank}"
-							ElementStyle="{StaticResource RfmNumberCell}"
-							Header="R" />
-						<DataGridTextColumn Width="50"
-							Binding="{Binding FRank}"
-							ElementStyle="{StaticResource RfmNumberCell}"
-							Header="F" />
-						<DataGridTextColumn Width="50"
-							Binding="{Binding MRank}"
-							ElementStyle="{StaticResource RfmNumberCell}"
-							Header="M" />
-					</DataGrid.Columns>
-				</DataGrid>
 			</StackPanel>
-		</ScrollViewer>
+
+			<!--  結果。外側は縦スクロールのみとし、表は個別に横スクロールさせる  -->
+			<ScrollViewer Grid.Row="1"
+				HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+				<StackPanel Margin="16,0,16,12">
+					<!--  集計サマリ  -->
+					<TextBlock Margin="0,12,0,4"
+						FontWeight="SemiBold"
+						Text="{Binding SummaryText}"
+						TextWrapping="Wrap" />
+
+					<!--  クロス表  -->
+					<ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+						<ItemsControl HorizontalAlignment="Left"
+							BorderBrush="{DynamicResource MaterialDesignDivider}"
+							BorderThickness="1,1,0,0"
+							ItemTemplate="{StaticResource RfmGridCellTemplate}"
+							ItemsSource="{Binding GridCells}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<UniformGrid Columns="{Binding DataContext.GridColumns, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+						</ItemsControl>
+					</ScrollViewer>
+
+					<!--  顧客一覧（画面表示のみ。CSVには出力しない）  -->
+					<TextBlock Margin="0,16,0,4"
+						FontWeight="SemiBold"
+						Text="{Binding CustomerCaption}"
+						TextWrapping="Wrap" />
+					<DataGrid Height="320"
+						materialDesign:DataGridAssist.CellPadding="8,4"
+						AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
+						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" GridLinesVisibility="All" HeadersVisibility="Column"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
+						ItemsSource="{Binding CustomerRows}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						VerticalScrollBarVisibility="Auto">
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource RfmColumnHeaderStyle}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="110"
+								Binding="{Binding Code}"
+								Header="コード" />
+							<DataGridTextColumn Width="160"
+								Binding="{Binding Name}"
+								Header="氏名" />
+							<DataGridTextColumn Width="160"
+								Binding="{Binding Kana}"
+								Header="カナ" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding LastDay}"
+								Header="最終購入日" />
+							<DataGridTextColumn Width="80"
+								Binding="{Binding Days, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource RfmNumberCell}"
+								Header="経過日数" />
+							<DataGridTextColumn Width="70"
+								Binding="{Binding Frequency, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource RfmNumberCell}"
+								Header="回数" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding Amount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource RfmNumberCell}"
+								Header="金額" />
+							<DataGridTextColumn Width="50"
+								Binding="{Binding RRank}"
+								ElementStyle="{StaticResource RfmNumberCell}"
+								Header="R" />
+							<DataGridTextColumn Width="50"
+								Binding="{Binding FRank}"
+								ElementStyle="{StaticResource RfmNumberCell}"
+								Header="F" />
+							<DataGridTextColumn Width="50"
+								Binding="{Binding MRank}"
+								ElementStyle="{StaticResource RfmNumberCell}"
+								Header="M" />
+						</DataGrid.Columns>
+					</DataGrid>
+				</StackPanel>
+			</ScrollViewer>
+		</Grid>
 
 		<!--  ステータス帯  -->
 		<Border Grid.Row="2"
