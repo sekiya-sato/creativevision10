@@ -60,6 +60,9 @@ public partial class App : Application {
 		if (AppHost != null) {
 			await StartHostAsync(AppHost);
 		}
+		if (ClientSettingsStore.IsDisabled) {
+			_bootstrapLogger.Info("noclientjson 指定のため clientsettings.json の読込・保存を行いません。");
+		}
 		ApplySavedThemes();
 		base.OnStartup(e);
 		RunBackgroundTask(CheckForUpdatesOnStartupAsync, "起動時更新確認");
@@ -237,7 +240,8 @@ public partial class App : Application {
 					cfg.SetBasePath(Directory.GetCurrentDirectory());
 					cfg.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 					cfg.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
-					if(environment != "Development") { // 開発環境以外では起動時にクライアント設定ストアの内容を構成に反映
+					// noclientjson 指定時は既定値（Url 初期値含む）で appsettings を上書きしないよう反映自体を行わない
+					if (!ClientSettingsStore.IsDisabled && environment != "Development") { // 開発環境以外では起動時にクライアント設定ストアの内容を構成に反映
 						var clientSettings = new ClientSettingsStore().Load();
 						var overrides = new ClientSettingsStore().ToConfigurationOverrides(clientSettings);
 						cfg.AddInMemoryCollection(overrides);

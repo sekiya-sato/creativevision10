@@ -20,6 +20,23 @@ public sealed class ClientSettingsStore {
 	/// </summary>
 	public static string SettingsFilePath => Path.Combine(Helpers.ClientLib.GetDataDir(), FileName);
 
+	/// <summary>
+	/// 起動引数 noclientjson（-/--// 接頭辞可）または環境変数 NOCLIENTJSON 指定時は clientsettings.json の読込・書込を行わない。
+	/// </summary>
+	public static bool IsDisabled { get; } = DetectDisabled();
+
+	static bool DetectDisabled() {
+		var hasArg = Environment.GetCommandLineArgs().Skip(1)
+			.Any(arg => string.Equals(arg.TrimStart('-', '/'), "noclientjson", StringComparison.OrdinalIgnoreCase));
+		if (hasArg) {
+			return true;
+		}
+		var env = Environment.GetEnvironmentVariable("NOCLIENTJSON");
+		return !string.IsNullOrWhiteSpace(env)
+			&& !string.Equals(env.Trim(), "0", StringComparison.Ordinal)
+			&& !string.Equals(env.Trim(), "false", StringComparison.OrdinalIgnoreCase);
+	}
+
 	public ClientSettingsStore(string? filePath = null) {
 		FilePath = string.IsNullOrWhiteSpace(filePath) ? SettingsFilePath : filePath!;
 	}
@@ -28,6 +45,9 @@ public sealed class ClientSettingsStore {
 	/// ローカル設定ファイルを読み込みます。
 	/// </summary>
 	public ClientSettingsDocument Load() {
+		if (IsDisabled) {
+			return new ClientSettingsDocument();
+		}
 		lock (_sync) {
 			if (!File.Exists(FilePath)) {
 				return new ClientSettingsDocument();
@@ -81,6 +101,10 @@ public sealed class ClientSettingsStore {
 	public void SaveConfigurationValues(IReadOnlyDictionary<string, object?> overrides) {
 		ArgumentNullException.ThrowIfNull(overrides);
 		if (overrides.Count == 0) {
+			return;
+		}
+		if (IsDisabled) {
+			_bootstrapLogger.LogInformation("noclientjson 指定のため clientsettings.json への保存を行いません。");
 			return;
 		}
 

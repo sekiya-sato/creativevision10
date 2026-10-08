@@ -259,7 +259,12 @@ public partial class SysSetConfigViewModel : Helpers.BaseViewModel {
 
 
 
-	[RelayCommand(IncludeCancelCommand = true)]
+	/// <summary>
+	/// noclientjson 指定時は clientsettings.json へ保存できないため保存ボタンを無効にする（一時反映は可）。
+	/// </summary>
+	public bool CanSaveClientSettings => !ClientSettingsStore.IsDisabled;
+
+	[RelayCommand(IncludeCancelCommand = true, CanExecute = nameof(CanSaveClientSettings))]
 	private async Task SaveAsync(CancellationToken cancellationToken) {
 		if (await saveLocalSetting(true, cancellationToken)) {
 			ExitWithResultTrue();
