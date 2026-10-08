@@ -1,0 +1,52 @@
+name: 不具合報告
+description: CV10 の不具合を報告する
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        起票前に [Issue 運用ルール](https://github.com/sekiya-sato/creativevision10/blob/master/.github/ISSUE_GUIDE.md) を確認してください。
+        画面の問題は JPG を添付してください。
+  - type: dropdown
+    id: area
+    attributes:
+      label: 領域
+      options: [売上, 仕入, 在庫, 配分, 集計・帳票(QFM), マスタメンテ, サーバ/DB, その他]
+    validations:
+      required: true
+  - type: dropdown
+    id: db
+    attributes:
+      label: DB種別
+      options: [SQLite, PostgreSQL, MariaDB, 不明]
+  - type: input
+    id: version
+    attributes:
+      label: バージョン / コミット
+      placeholder: 0.9.0 / 05c0a485
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      placeholder: |
+        1. 売上伝票入力で返品明細を含む伝票を登録
+        2. 月次売上集計を実行
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待結果と実際の結果
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受入条件
+      description: 該当しない項目は削除し、必要な項目を追加してください。
+      value: |
+        - [ ] 再現手順で現象が解消している
+        - [ ] 在庫・残高を変更する場合、逐次更新後と全件再集計後の値が一致（倉庫×商品×色×サイズ）
+        - [ ] 返品を含む集計で CalcFlag を二重適用していない
+        - [ ] 帳票は代表データで PDF を生成し、見出し・日付・桁数・改ページを目視
+        - [ ] 画面は標準/最小サイズで文字切れ・ボタン見切れがない

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Issue の書き方・運用ルール
+    url: https://github.com/sekiya-sato/creativevision10/blob/master/.github/ISSUE_GUIDE.md
+    about: ラベル（area / risk A/B/C / needs-decision）と受入条件の書き方
