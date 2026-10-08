@@ -308,7 +308,7 @@ public class AutoReplenishDbTests {
 		Assert.AreEqual((7, _soko, _shiire), (row.Su, row.Id_Soko, row.Id_Shiire));
 		Assert.AreEqual((0L, 0L, 0, 0, 0, 0L, 0L), (row.Id_Batch, row.Id_Tenpo, row.DemandSu, row.TransferSu, row.CoveredSu, row.GeneratedHachuId, row.GeneratedHaibunId));
 		Assert.AreEqual(1, _db.Fetch<string>("SELECT name FROM sqlite_master WHERE type='index' AND name='TranHoju_nk2'").Count);
-		Assert.AreEqual(26_10_06_01, _db.Fetch<SysUpdateDb>().Max(x => x.DbVersion));
+		Assert.AreEqual(26_10_08_01, _db.Fetch<SysUpdateDb>().Max(x => x.DbVersion));
 		var versionCount = _db.Fetch<SysUpdateDb>().Count;
 		await UpdateDb.WriteVersionInfoAsync(_db);
 		Assert.AreEqual(versionCount, _db.Fetch<SysUpdateDb>().Count, "再起動でmigrationを重複しない");
@@ -323,7 +323,7 @@ public class AutoReplenishDbTests {
 		foreach (var table in new[] { "MasterAutoReplenishStock", "MasterAutoReplenishExclude", "TranAutoReplenishBatch", "TranHoju" })
 			Assert.AreEqual(1, db.Fetch<string>("SELECT name FROM sqlite_master WHERE type='table' AND name=@0", table).Count, table);
 		Assert.AreEqual(1, db.Fetch<string>("SELECT name FROM sqlite_master WHERE type='index' AND name='TranHoju_nk2'").Count);
-		Assert.AreEqual(26_10_06_01, db.Fetch<SysUpdateDb>().Max(x => x.DbVersion));
+		Assert.AreEqual(26_10_08_01, db.Fetch<SysUpdateDb>().Max(x => x.DbVersion));
 	}
 
 	[TestMethod]

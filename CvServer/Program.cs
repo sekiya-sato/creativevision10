@@ -218,6 +218,7 @@ app.Lifetime.ApplicationStarted.Register(() => {
 		schedulerService.RegisterTranTaxRebuildTask();
 		schedulerService.RegisterManualLockMonitorTask();
 		schedulerService.RegisterReservationExpireTask();
+		schedulerService.RegisterPointExpireTask();
 	}
 	catch (Exception ex) {
 		logger.LogError(ex, "スケジューラ定期実行登録中に例外が発生しました。");

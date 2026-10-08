@@ -619,7 +619,7 @@ public partial class CoreService {
 			_ => null,
 		};
 		if (writeType != null) {
-			try { PointMasterDb.EnsureGenericWriteAllowed(writeType, param is PartialUpdateParam); }
+			try { PointMasterDb.EnsureGenericWriteAllowed(writeType, param is PartialUpdateParam, param is InsertParam or InsertBulkParam); }
 			catch (ArgumentException ex) { return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message); }
 		}
 		return param switch {

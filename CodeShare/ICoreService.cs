@@ -259,6 +259,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg066_RfmCustomerList = 66,
 	/// <summary>
+	/// ポイント失効（基準日で最終購入日からの経過・退会の残高を一括失効）
+	/// </summary>
+	[EnumMember]
+	Msg067_PointExpire = 67,
+	/// <summary>
 	/// POS: バーコードから商品を検索する
 	/// </summary>
 	[EnumMember]

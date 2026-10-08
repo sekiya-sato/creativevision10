@@ -52,6 +52,8 @@ public class ReservationTests {
 			typeof(TranHaibun), typeof(Tran01Tenuri), typeof(Tran03Shiire),
 			// 在庫の全件再集計（SummaryAllAsyncStream）が読む伝票テーブル
 			typeof(Tran00Uriage), typeof(Tran05Ido), typeof(Tran10IdoOut), typeof(Tran11IdoIn), typeof(Tran60Tana), typeof(Tran61Chosei),
+			// 店舗売上はポイント台帳・残高を同期する
+			typeof(MasterPointBase), typeof(MasterPointRank), typeof(MasterPointCampaign), typeof(MasterPointBonus), typeof(TranPointEvent), typeof(SummaryPoint), typeof(MasterEndCustomerAccount),
 		}) {
 			Db.CreateTable(t, true, false);
 		}

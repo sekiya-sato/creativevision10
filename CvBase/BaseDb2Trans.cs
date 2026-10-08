@@ -1170,6 +1170,18 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	[ForeignKey(nameof(EnumRounding))]
 	[Comment("消費税端数処理 0=四捨五入、1=切上、2=切捨")]
 	public partial int TaxRounding { get; set; } = 0;
+	/// <summary>
+	/// 付与ポイント（基本・キャンペーン・ボーナスの有効付与合計、符号付き）。ポイント同期・再計算がサーバで設定し、入力値は使わない
+	/// </summary>
+	[ObservableProperty]
+	[Comment("付与ポイント（基本・キャンペーン・ボーナスの有効付与合計、符号付き）。サーバが設定")]
+	public partial long GrantPoint { get; set; }
+	/// <summary>
+	/// 使用ポイント（0以上。返品伝票は戻すポイント数を正数で持ち、CalcFlagで符号化する）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("使用ポイント（0以上。返品は戻すポイント数を正数で持ちCalcFlagで符号化）")]
+	public partial long UsePoint { get; set; }
 }
 
 /// <summary>POS会計で受領した金種内訳</summary>

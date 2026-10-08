@@ -112,6 +112,10 @@ public sealed partial class MasterPointBase : BaseDbClass {
 		get => (EnumYesNo)DeductPointUse;
 		set => DeductPointUse = (int)value;
 	}
+	/// <summary>最終購入日からの失効月数。0=経過失効しない</summary>
+	[ObservableProperty]
+	[Comment("最終購入日からの失効月数。0=経過失効しない")]
+	public partial int ExpireMonths { get; set; } = 0;
 }
 
 /// <summary>ベース条件の版に属するランク別付与条件。税基準・計算単位・丸めは親を継承する。</summary>

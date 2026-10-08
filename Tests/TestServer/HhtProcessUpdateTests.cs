@@ -611,6 +611,8 @@ public class HhtProcessUpdateTests {
 			typeof(Tran06Nyukin), typeof(Tran07Shiharai), typeof(MasterMeisho),
 			// 仕入の取込は紐付く発注の仕入配分の入荷割当を計算し直す（配分再設計 Step 4）
 			typeof(TranHaibun),
+			// 店舗売上はポイント台帳・残高を同期する
+			typeof(MasterPointBase), typeof(MasterPointRank), typeof(MasterPointCampaign), typeof(MasterPointBonus), typeof(TranPointEvent), typeof(SummaryPoint), typeof(MasterEndCustomerAccount),
 		}) {
 			Db.CreateTable(t, true, false);
 		}

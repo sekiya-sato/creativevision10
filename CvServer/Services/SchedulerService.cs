@@ -65,6 +65,8 @@ public class SchedulerService : ISchedulerService {
 	public const string ManualLockMonitorTaskName = MasterConfig.AutoExecTaskNameManualLockMonitor;
 	public const string ReservationExpireCronExpression = MasterConfig.AutoExecCronReservationExpire;
 	public const string ReservationExpireTaskName = MasterConfig.AutoExecTaskNameReservationExpire;
+	public const string PointExpireCronExpression = MasterConfig.AutoExecCronPointExpire;
+	public const string PointExpireTaskName = MasterConfig.AutoExecTaskNamePointExpire;
 
 	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWalCheckpoint);
 	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWorkFileCleanup);
@@ -75,6 +77,7 @@ public class SchedulerService : ISchedulerService {
 	public static readonly Guid TranTaxRebuildTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdTranTaxRebuild);
 	public static readonly Guid ManualLockMonitorTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdManualLockMonitor);
 	public static readonly Guid ReservationExpireTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdReservationExpire);
+	public static readonly Guid PointExpireTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdPointExpire);
 
 	/// <summary>ジョブを識別するキー（<see cref="MasterConfig"/> の Name に使う固定文字列）</summary>
 	public const string JobKeyWalCheckpoint = "WalCheckpoint";
@@ -86,6 +89,7 @@ public class SchedulerService : ISchedulerService {
 	public const string JobKeyTranTaxRebuild = "TranTaxRebuild";
 	public const string JobKeyManualLockMonitor = "ManualLockMonitor";
 	public const string JobKeyReservationExpire = "ReservationExpire";
+	public const string JobKeyPointExpire = "PointExpire";
 
 	/// <summary>システムジョブ1件の定義（TaskId・設定キー・名称・既定cron・既定の実行フラグ・起動間隔チェックの有無）</summary>
 	public sealed record SchedulerJobDefinition(
@@ -112,6 +116,7 @@ public class SchedulerService : ISchedulerService {
 		// CheckMinInterval は必ずfalse: 監視タスクは5分毎cronであり、MinIntervalMinutes(60分)の下限チェック対象にすると弾かれてしまう。
 		new(ManualLockMonitorTaskId, JobKeyManualLockMonitor, ManualLockMonitorTaskName, ManualLockMonitorCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledManualLockMonitor), IsSendMailDefault(ManualLockMonitorTaskId), false),
 		new(ReservationExpireTaskId, JobKeyReservationExpire, ReservationExpireTaskName, ReservationExpireCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledReservationExpire), IsSendMailDefault(ReservationExpireTaskId), false),
+		new(PointExpireTaskId, JobKeyPointExpire, PointExpireTaskName, PointExpireCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledPointExpire), IsSendMailDefault(PointExpireTaskId), false),
 	];
 
 	/// <summary>MasterConfigの実行フラグ値(1/0)を bool に変換する</summary>
@@ -287,6 +292,14 @@ public class SchedulerService : ISchedulerService {
 	public SchedulerResult RegisterReservationExpireTask() {
 		var def = FindDefinition(JobKeyReservationExpire);
 		return RegisterSystemJob(def, (db, ct) => ExecuteReservationExpireCoreAsync(db, def.TaskName, ct));
+	}
+
+	/// <summary>
+	/// ポイント失効タスクを登録する（既定無効）。基準日は実行日の前日。
+	/// </summary>
+	public SchedulerResult RegisterPointExpireTask() {
+		var def = FindDefinition(JobKeyPointExpire);
+		return RegisterSystemJob(def, (db, ct) => ExecutePointExpireCoreAsync(db, def.TaskName, ct));
 	}
 
 	/// <summary>
@@ -1153,6 +1166,18 @@ public class SchedulerService : ISchedulerService {
 			_logger.LogError(ex, "適用上代の期限切れ削除に失敗しました: TaskName={TaskName}", taskName);
 			return Task.FromResult(new AutoexecTaskResult(InternalError, 0, $"例外: {ex.Message}"));
 		}
+	}
+
+	/// <summary>
+	/// 前日を基準日にポイント失効を実行する。マニュアル排他「ポイント失効」と1トランザクションは PointExpireDb が持つ。
+	/// </summary>
+	private async Task<AutoexecTaskResult> ExecutePointExpireCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+		var baseDay = DateTime.Today.AddDays(-1).ToString("yyyyMMdd");
+		var result = await RunSummaryStreamAsync(new PointExpireDb(db).ExpireAsyncStream(new PointExpireParameter(baseDay), AutoExecHistType), taskName, "ポイント失効", baseDay, cancellationToken);
+		return result.ErrorMessage is null
+			? new AutoexecTaskResult(Success, result.Count, $"ポイント失効: 基準日={baseDay}, 件数={result.Count}")
+			: new AutoexecTaskResult(InternalError, result.Count, $"ポイント失効: 基準日={baseDay}, {result.ErrorMessage}");
 	}
 
 	/// <summary>

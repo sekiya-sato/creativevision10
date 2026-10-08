@@ -438,6 +438,7 @@ public partial class MenuData : ObservableObject {
 				new("ポイントマスタ（ボーナス）", typeof(Views._32LoyalCustomer.PointMasterBonusView), addInfo:"期間・契機・対象ランク別の追加ポイント条件"),
 				new("店舗別キャンペーン設定", typeof(Views._32LoyalCustomer.ShopCampaignSettingView), addInfo:"店別キャンペーンの対象店舗"),
 				new("商品店舗別ポイント設定", typeof(Views._32LoyalCustomer.ShohinShopPointSettingView), addInfo:"商品全店・商品店別キャンペーンの対象商品・店舗"),
+				new("ポイント手動登録", typeof(Views._32LoyalCustomer.PointLedgerManualView), addInfo:"店舗売上以外のポイント付与・使用・調整・失効を台帳へ手動登録・取消"),
 				new("ポイント再計算", typeof(Views._32LoyalCustomer.PointSummaryView), addInfo:"店舗売上から指定年月のポイント台帳・残高を再計算する"),
 			])),
 			new("顧客分析 ----", new([

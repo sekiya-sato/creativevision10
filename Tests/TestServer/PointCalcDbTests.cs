@@ -26,7 +26,8 @@ public sealed class PointCalcDbTests {
 		_connection.Open();
 		_db = new ExDatabaseSqlite(_connection) { KeepConnectionAlive = true };
 		foreach (var type in new[] { typeof(MasterPointBase), typeof(MasterPointRank), typeof(TranPointEvent), typeof(SummaryPoint), typeof(Tran01Tenuri), typeof(MasterEndCustomerAccount),
-			typeof(MasterPointCampaign), typeof(MasterPointCampaignShop), typeof(MasterPointCampaignShohin) }) _db.CreateTable(type, true, false);
+			typeof(MasterPointCampaign), typeof(MasterPointCampaignShop), typeof(MasterPointCampaignShohin),
+			typeof(MasterPointBonus), typeof(MasterEndCustomer), typeof(MasterSysman) }) _db.CreateTable(type, true, false);
 	}
 
 	[TestCleanup]
@@ -218,5 +219,231 @@ public sealed class PointCalcDbTests {
 		Assert.AreEqual(2, Calc.Recalc("202610", "202610"), "対象解除でベースへ戻る");
 		Assert.AreEqual(5, Balance(7));
 		Assert.AreEqual(0, Calc.Recalc("202610", "202610"));
+	}
+
+	private MasterPointBonus SeedBonus(long idBase, EnumPointBonusTrigger trigger, long amount, EnumPointLimitPeriod limit = EnumPointLimitPeriod.Slip, int limitCount = 1, long minimum = 0, string code = "BN", int isAllRanks = 1, int rankKubun = 0) {
+		var row = new MasterPointBonus { Code = code, Name = "ボーナス", Version = 1, Id_PointBase = idBase, DayFrom = "20260101", DayTo = "20261231", IsEnabled = 1,
+			TriggerType = (int)trigger, PointAmount = amount, MinimumKingaku = minimum, IsAllRanks = isAllRanks, RankKubun = rankKubun, LimitPeriodType = (int)limit, LimitCount = limitCount };
+		_db.Insert(row);
+		return row;
+	}
+	private long SlipGrantPoint(long id) => _db.Fetch<Tran01Tenuri>("SELECT * FROM Tran01Tenuri WHERE Id=@0", id).Single().GrantPoint;
+	private TranPointEvent[] Active(long idTenuri) {
+		var events = Events().Where(x => x.Id_Tenuri == idTenuri).ToArray();
+		var cancelled = events.Where(x => x.EventType == (int)EnumPointEventType.Cancel).Select(x => x.Id_OriginalEvent).ToHashSet();
+		return [.. events.Where(x => x.EventType != (int)EnumPointEventType.Cancel && !cancelled.Contains(x.Id))];
+	}
+	private Tran01Tenuri Slip(string denDay, int kubun = 10, long usePoint = 0, long idCustomer = 7) {
+		var slip = SeedSlip(idCustomer, kubun, denDay);
+		if (usePoint != 0) { slip.UsePoint = usePoint; _db.Update(slip); }
+		return slip;
+	}
+
+	[TestMethod]
+	public void Use_RecordsDeductsUpdatesGrantPointAndRejectsShortage() {
+		var parent = SeedBase();
+		parent.DeductPointUse = 1;
+		_db.Update(parent);
+		SeedAccount(7, string.Empty, 300);
+		_db.Insert(new TranPointEvent { EventKey = "OPEN:7", DenDay = "20260101", Id_Customer = 7, EventType = (int)EnumPointEventType.OpeningBalance, PointDelta = 300 });
+
+		var slip = Slip("20261005", usePoint: 200);
+		Assert.AreEqual(2, Calc.SyncTenuri(slip.Id, slip));
+		var active = Active(slip.Id);
+		Assert.AreEqual(2L, active.Single(x => x.EventType == (int)EnumPointEventType.Grant).PointDelta, "(250+300)×(400-200)/400/100=2.75→2");
+		Assert.AreEqual(-200L, active.Single(x => x.EventType == (int)EnumPointEventType.Use).PointDelta);
+		Assert.AreEqual(2L, SlipGrantPoint(slip.Id));
+		Assert.AreEqual(102, Balance(7));
+		Assert.AreEqual(102, AccountPoint(7));
+		Assert.AreEqual(0, Calc.SyncTenuri(slip.Id, slip), "再実行で追記しない");
+
+		slip.UsePoint = 100; // 使用の減少は残高に関係なく許可。(550×300/400)/100=4.125→4
+		slip.Vdu = 2;
+		Assert.AreEqual(4, Calc.SyncTenuri(slip.Id, slip));
+		Assert.AreEqual(4L, SlipGrantPoint(slip.Id));
+		Assert.AreEqual(204, Balance(7));
+
+		var over = Slip("20261006", usePoint: 300); // 204 + 2(付与) - 300 < 0
+		_db.BeginTransaction();
+		var ex = Assert.ThrowsExactly<ArgumentException>(() => Calc.SyncTenuri(over.Id, over));
+		_db.AbortTransaction();
+		StringAssert.Contains(ex.Message, "ポイント残高が不足");
+		Assert.AreEqual(204, Balance(7), "拒否時は台帳・残高を戻す");
+
+		var ret = Slip("20261007", kubun: 20, usePoint: 100); // 返品は使用を戻す。付与は (550×300/400)/100=4 の負
+		Assert.AreEqual(2, Calc.SyncTenuri(ret.Id, ret));
+		Assert.AreEqual(100L, Active(ret.Id).Single(x => x.EventType == (int)EnumPointEventType.Use).PointDelta);
+		Assert.AreEqual(-4L, SlipGrantPoint(ret.Id));
+		Assert.AreEqual(300, Balance(7));
+
+		Assert.AreEqual(2, Calc.SyncTenuri(slip.Id, null), "削除で付与・使用を取消");
+		Assert.AreEqual(300 - 4 + 100, Balance(7));
+		var bad = Slip("20261008", kubun: 99, usePoint: 1);
+		Assert.ThrowsExactly<ArgumentException>(() => Calc.SyncTenuri(bad.Id, bad), "対象外区分の使用");
+	}
+
+	[TestMethod]
+	public void Use_DetailUnitAndNoBaseStillRecordsUse() {
+		var parent = SeedBase(calcUnit: 1);
+		parent.DeductPointUse = 1;
+		parent.DayTo = "20261031";
+		_db.Update(parent);
+		SeedAccount(7, string.Empty, 0);
+		_db.Insert(new TranPointEvent { EventKey = "OPEN:7", DenDay = "20260101", Id_Customer = 7, EventType = (int)EnumPointEventType.OpeningBalance, PointDelta = 1000 });
+		var slip = Slip("20261005", usePoint: 100);
+		Assert.AreEqual(3L, Calc.Calc(slip)!.PointDelta, "明細: 250×3/4/100=1.875→1 + 150×2×3/4/100=2.25→2");
+		var noBase = Slip("20261105", usePoint: 100);
+		Assert.AreEqual(1, Calc.SyncTenuri(noBase.Id, noBase), "ベース期間外でも使用は記録");
+		Assert.AreEqual(-100L, Active(noBase.Id).Single().PointDelta);
+		Assert.AreEqual(900, Balance(7));
+	}
+
+	[TestMethod]
+	public void Bonus_TriggersMinimumRankAndReturn() {
+		var parent = SeedBase();
+		_db.Insert(new MasterEndCustomer { Code = "K7", Name = "誕生10月", BirthNoyear = "1015" });
+		_db.Insert(new MasterEndCustomer { Code = "K8", Name = "誕生1月", Birthday = "19900105" });
+		_db.Execute("UPDATE MasterEndCustomer SET Id=CASE Code WHEN 'K7' THEN 7 ELSE 8 END");
+		SeedAccount(7, "2", 0);
+		SeedAccount(8, string.Empty, 0);
+		SeedBonus(parent.Id, EnumPointBonusTrigger.Purchase, 10, minimum: 400, code: "P");
+		SeedBonus(parent.Id, EnumPointBonusTrigger.Purchase, 7, minimum: 401, code: "PMIN"); // 対象額400で不足
+		SeedBonus(parent.Id, EnumPointBonusTrigger.Purchase, 3, code: "PRANK", isAllRanks: 0, rankKubun: 2);
+		SeedBonus(parent.Id, EnumPointBonusTrigger.BirthdayMonth, 20, code: "BD");
+		SeedBonus(parent.Id, EnumPointBonusTrigger.FirstPurchase, 50, limit: EnumPointLimitPeriod.Lifetime, code: "FIRST");
+
+		var first = Slip("20261005");
+		Calc.SyncTenuri(first.Id, first);
+		Assert.AreEqual(5 + 10 + 3 + 20 + 50, SlipGrantPoint(first.Id), "基本+期間内+ランク限定+誕生月+初回");
+		Assert.AreEqual(4, Active(first.Id).Count(x => x.Id_PointBonus > 0));
+		Assert.AreEqual(88, Balance(7));
+
+		var second = Slip("20261106");
+		Calc.SyncTenuri(second.Id, second);
+		Assert.AreEqual(5 + 10 + 3, SlipGrantPoint(second.Id), "誕生月外・2回目は初回なし");
+
+		var other = Slip("20261005", idCustomer: 8);
+		Calc.SyncTenuri(other.Id, other);
+		Assert.AreEqual(5 + 10 + 50, SlipGrantPoint(other.Id), "ランクなし・誕生1月・顧客8の初回");
+
+		var ret = Slip("20261007", kubun: 20);
+		Calc.SyncTenuri(ret.Id, ret);
+		Assert.AreEqual(-(5 + 10 + 3 + 20), SlipGrantPoint(ret.Id), "返品は初回購入以外を負で記録");
+
+		first.Jmeisai![0].Kingaku = 240; // 対象額390 < 最低額400
+		first.Vdu = 2;
+		Calc.SyncTenuri(first.Id, first);
+		Assert.IsFalse(Active(first.Id).Any(x => x.Id_PointBonus > 0 && Events().Any(b => b.Id == x.Id && b.Jcalc.Contains("\"Code\":\"P\""))), "訂正で条件外は取消");
+		Assert.AreEqual(Events().Sum(x => x.Id_Customer == 7 ? x.PointDelta : 0), Balance(7));
+	}
+
+	[TestMethod]
+	public void Bonus_LimitCountByPeriodFiscalYearAndRecalc() {
+		var parent = SeedBase();
+		_db.Insert(new MasterSysman { FiscalStartDate = "20250401" });
+		SeedAccount(7, string.Empty, 0);
+		SeedBonus(parent.Id, EnumPointBonusTrigger.Purchase, 10, limit: EnumPointLimitPeriod.FiscalYear, limitCount: 1, code: "FY");
+		SeedBonus(parent.Id, EnumPointBonusTrigger.Purchase, 1, limit: EnumPointLimitPeriod.Period, limitCount: 2, code: "PD");
+		var a = Slip("20260331"); var b = Slip("20260401"); var c = Slip("20260402");
+		foreach (var s in new[] { a, b, c }) Calc.SyncTenuri(s.Id, s);
+		Assert.AreEqual(5 + 10 + 1, SlipGrantPoint(a.Id), "2025年度の1回目");
+		Assert.AreEqual(5 + 10 + 1, SlipGrantPoint(b.Id), "2026年度の1回目");
+		Assert.AreEqual(5, SlipGrantPoint(c.Id), "年度内2回目・期間内3回目は上限");
+
+		_db.Execute("DELETE FROM Tran01Tenuri WHERE Id=@0", b.Id);
+		Calc.SyncTenuri(b.Id, null); // 削除で上限が空く
+		Assert.AreEqual(2, Calc.Recalc("202604", "202604"), "再計算で後の伝票にボーナスを付与");
+		Assert.AreEqual(5 + 10 + 1, SlipGrantPoint(c.Id));
+		Assert.AreEqual(0, Calc.Recalc("202603", "202604"));
+		Assert.AreEqual(Events().Sum(x => x.PointDelta), Balance(7));
+	}
+
+	private void SeedLedger(long idCustomer, long point) =>
+		_db.Insert(new TranPointEvent { EventKey = $"OPEN:{idCustomer}", DenDay = "20250101", Id_Customer = idCustomer, EventType = (int)EnumPointEventType.OpeningBalance, PointDelta = point });
+
+	[TestMethod]
+	public void Expire_ElapsedWithdrawnIdempotentAndBalance() {
+		var parent = SeedBase();
+		parent.ExpireMonths = 12;
+		_db.Update(parent);
+		// 7: 最終購入 2025/10/01 → 基準日 2026/10/07 の12か月前(2025/10/07)以前で失効
+		SeedAccount(7, string.Empty, 100); SeedLedger(7, 100); SeedSlip(7, denDay: "20251001");
+		// 8: 最近購入 → 対象外
+		SeedAccount(8, string.Empty, 50); SeedLedger(8, 50); SeedSlip(8, denDay: "20261001");
+		// 9: 退会(基準日以前) → 最近購入でも失効
+		_db.Insert(new MasterEndCustomerAccount { Id_Customer = 9, Point = 30, IsWithdrawalFlag = 1, WithdrawnDate = "20261001" }); SeedLedger(9, 30); SeedSlip(9, denDay: "20261002");
+		// 10: 負残高 → 対象外
+		SeedAccount(10, string.Empty, -5); SeedLedger(10, -5); SeedSlip(10, denDay: "20240101");
+		// 11: 売上なし・移行の最終来店日が古い → 失効
+		_db.Insert(new MasterEndCustomerAccount { Id_Customer = 11, Point = 70, LastVisitDate = "20250901" }); SeedLedger(11, 70);
+		// 12: 最終来店日は古いが売上が新しい → 対象外。13: 退会日が基準日より後 → 対象外
+		_db.Insert(new MasterEndCustomerAccount { Id_Customer = 12, Point = 20, LastVisitDate = "20240101" }); SeedLedger(12, 20); SeedSlip(12, denDay: "20260601");
+		_db.Insert(new MasterEndCustomerAccount { Id_Customer = 13, Point = 10, IsWithdrawalFlag = 1, WithdrawnDate = "20261010", LastVisitDate = "20261001" }); SeedLedger(13, 10);
+
+		Assert.AreEqual(3, new PointExpireDb(_db).Expire("20261007"));
+		var expired = Events().Where(x => x.EventType == (int)EnumPointEventType.Expire).ToDictionary(x => x.Id_Customer);
+		CollectionAssert.AreEquivalent(new long[] { 7, 9, 11 }, expired.Keys.ToArray());
+		Assert.AreEqual(-100L, expired[7].PointDelta);
+		Assert.AreEqual("退会の為失効", expired[9].Memo);
+		Assert.AreEqual("20261007", expired[11].DenDay);
+		Assert.AreEqual(0, Balance(7)); Assert.AreEqual(0, AccountPoint(7));
+		Assert.AreEqual(0, Balance(11)); Assert.AreEqual(0, AccountPoint(11));
+		Assert.AreEqual(50, AccountPoint(8));
+
+		Assert.AreEqual(0, new PointExpireDb(_db).Expire("20261007"), "同じ基準日の再実行で二重に失効しない");
+		_db.Insert(new TranPointEvent { EventKey = "ADJ:7", DenDay = "20261007", Id_Customer = 7, EventType = (int)EnumPointEventType.Adjustment, PointDelta = 5 });
+		Assert.AreEqual(0, new PointExpireDb(_db).Expire("20261007"), "同じ基準日はEventKeyで1回だけ");
+		Assert.AreEqual(1, new PointExpireDb(_db).Expire("20261008"), "翌日は残った残高を失効");
+
+		parent.ExpireMonths = 0;
+		_db.Update(parent);
+		_db.Insert(new TranPointEvent { EventKey = "ADJ:8", DenDay = "20261008", Id_Customer = 8, EventType = (int)EnumPointEventType.Adjustment, PointDelta = 1 });
+		Assert.AreEqual(1, new PointExpireDb(_db).Expire("20281231"), "経過失効なし(ベース期間外)。退会日を過ぎた13だけ失効");
+		Assert.AreEqual(51L, Events().Where(x => x.Id_Customer == 8).Sum(x => x.PointDelta));
+		Assert.ThrowsExactly<ArgumentException>(() => new PointExpireDb(_db).Expire("20261332"));
+	}
+
+	[TestMethod]
+	public void Recalc_AfterMovingSlipToAnotherMonthDoesNotRegrantOrCollide() {
+		SeedBase();
+		SeedAccount(7, string.Empty, 0);
+		var slip = SeedSlip();
+		Calc.SyncTenuri(slip.Id, slip);
+		foreach (var (day, vdu) in new[] { ("20261105", 2L), ("20261205", 3L) }) {
+			slip.DenDay = day;
+			slip.Vdu = vdu;
+			_db.Update(slip);
+			Assert.AreEqual(2, Calc.SyncTenuri(slip.Id, slip), "日付変更で取消+付与");
+			Assert.AreEqual(0, Calc.Recalc("202610", "202612"), "旧月を含む再計算で再付与・EventKey衝突しない");
+			Assert.AreEqual(0, Calc.Recalc("202610", "202610"));
+			Assert.AreEqual(5, Balance(7));
+		}
+	}
+
+	[TestMethod]
+	public void Expire_UsesBalanceAsOfBaseDay() {
+		var parent = SeedBase();
+		parent.ExpireMonths = 12;
+		_db.Update(parent);
+		SeedAccount(7, string.Empty, 130); SeedLedger(7, 100); SeedSlip(7, denDay: "20251001");
+		_db.Insert(new TranPointEvent { EventKey = "ADJ:7", DenDay = "20261020", Id_Customer = 7, EventType = (int)EnumPointEventType.Adjustment, PointDelta = 30 });
+		Assert.AreEqual(1, new PointExpireDb(_db).Expire("20261007"));
+		Assert.AreEqual(-100L, Events().Single(x => x.EventType == (int)EnumPointEventType.Expire).PointDelta, "基準日より後の付与30は失効しない");
+		Assert.AreEqual(30, Balance(7));
+	}
+
+	[TestMethod]
+	public void Use_DeleteOfReturnIsAllowedAndUseCannotExceedTotal() {
+		SeedBase();
+		SeedAccount(7, string.Empty, 0);
+		var ret = Slip("20261005", kubun: 20, usePoint: 100); // 使用戻し+100、付与-5
+		Calc.SyncTenuri(ret.Id, ret);
+		Assert.AreEqual(95, Balance(7));
+		_db.Insert(new TranPointEvent { EventKey = "ADJ:7", DenDay = "20261006", Id_Customer = 7, EventType = (int)EnumPointEventType.Adjustment, PointDelta = -95 });
+		Assert.AreEqual(2, Calc.SyncTenuri(ret.Id, null), "削除は残高が負になっても許可");
+		Assert.AreEqual(-95, Balance(7));
+		var over = Slip("20261007", usePoint: 441); // 税込合計440
+		var ex = Assert.ThrowsExactly<ArgumentException>(() => Calc.SyncTenuri(over.Id, over));
+		StringAssert.Contains(ex.Message, "税込合計以下");
 	}
 }

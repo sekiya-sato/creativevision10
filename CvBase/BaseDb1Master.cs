@@ -1410,6 +1410,26 @@ public sealed partial class MasterConfig : BaseDbClass {
 	/// </summary>
 	[Comment("取置期限切れ自動取消タスクの既定の実行フラグ")]
 	public const string AutoExecEnabledReservationExpire = ValAutoExecEnabled;
+	/// <summary>
+	/// ポイント失効タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("ポイント失効タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdPointExpire = "d0e1f2a3-b4c5-6789-3456-890123456789";
+	/// <summary>
+	/// ポイント失効タスクの表示名
+	/// </summary>
+	[Comment("ポイント失効タスクの表示名")]
+	public const string AutoExecTaskNamePointExpire = "ポイント失効 前日を基準日に最終購入日から失効月数経過・退会した顧客の残高を失効するタスク";
+	/// <summary>
+	/// ポイント失効タスクの既定cron式（毎日3:40。基準日=前日。月次再集計(1:10)とマニュアル排他を取り合わないようずらす）
+	/// </summary>
+	[Comment("ポイント失効タスクの既定cron式")]
+	public const string AutoExecCronPointExpire = "40 3 * * *";
+	/// <summary>
+	/// ポイント失効タスクの既定の実行フラグ（失効月数の設定・運用確認後に有効化するため既定で無効）
+	/// </summary>
+	[Comment("ポイント失効タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledPointExpire = ValAutoExecDisabled;
 	/// <summary>自動実行ジョブ1件の既定定義（TaskId・表示名・既定cron式・既定の実行フラグ・メール送信フラグ）</summary>
 	public sealed record AutoExecJobDefault(string TaskId, string TaskName, string Cron, string Enabled, string IsSendMail);
 	/// <summary>自動実行ジョブの既定定義一覧。MasterConfig の初期データと SchedulerService のジョブ定義の唯一の出典。</summary>
@@ -1423,6 +1443,7 @@ public sealed partial class MasterConfig : BaseDbClass {
 		new(AutoExecTaskIdTranTaxRebuild, AutoExecTaskNameTranTaxRebuild, AutoExecCronTranTaxRebuild, AutoExecEnabledTranTaxRebuild, ValAutoExecDisabled),
 		new(AutoExecTaskIdManualLockMonitor, AutoExecTaskNameManualLockMonitor, AutoExecCronManualLockMonitor, AutoExecEnabledManualLockMonitor, ValAutoExecDisabled),
 		new(AutoExecTaskIdReservationExpire, AutoExecTaskNameReservationExpire, AutoExecCronReservationExpire, AutoExecEnabledReservationExpire, ValAutoExecDisabled),
+		new(AutoExecTaskIdPointExpire, AutoExecTaskNamePointExpire, AutoExecCronPointExpire, AutoExecEnabledPointExpire, ValAutoExecDisabled),
 	];
 	/// <summary>TaskId(Guid文字列)から実行フラグ設定名を組み立てる。CvDomainLogic の SchedulerJobConfigDb と同じ規則（先頭8桁）。</summary>
 	public static string AutoExecEnabledName(string taskId) => NameAutoExecEnabledPrefix + AutoExecTaskIdPrefix(taskId);

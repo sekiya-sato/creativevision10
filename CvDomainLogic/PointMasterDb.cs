@@ -12,9 +12,12 @@ namespace CvDomainLogic;
 public sealed class PointMasterDb(ExDatabase db) {
 	public static bool IsMaster(Type type) => type == typeof(MasterPointBase) || type == typeof(MasterPointRank) || type == typeof(MasterPointBonus) || type == typeof(MasterPointCampaign);
 
-	public static void EnsureGenericWriteAllowed(Type type, bool partialUpdate) {
-		if (type == typeof(TranPointEvent) || type == typeof(SummaryPoint))
-			throw new ArgumentException("ポイント台帳・残高は専用処理で保存してください。");
+	/// <param name="insert">追加(単件・一括)か。ポイント台帳は手動登録の追加だけを汎用CRUDで受け付ける</param>
+	public static void EnsureGenericWriteAllowed(Type type, bool partialUpdate, bool insert = false) {
+		if (type == typeof(TranPointEvent) && !insert)
+			throw new ArgumentException("ポイント台帳は追記のみです。訂正は取消を登録してください。");
+		if (type == typeof(SummaryPoint))
+			throw new ArgumentException("ポイント残高は専用処理で保存してください。");
 		if (PointCampaignDb.IsTarget(type))
 			throw new ArgumentException("キャンペーン対象は店舗別・商品店舗別の設定画面で保存してください。");
 		if (partialUpdate && IsMaster(type))
@@ -35,6 +38,9 @@ public sealed class PointMasterDb(ExDatabase db) {
 				break;
 			case MasterPointCampaign row:
 				new PointCampaignDb(db).ValidateSave(row, previous as MasterPointCampaign);
+				break;
+			case TranPointEvent row:
+				new PointLedgerDb(db).ValidateManual(row);
 				break;
 		}
 	}
@@ -65,7 +71,8 @@ public sealed class PointMasterDb(ExDatabase db) {
 		EnumValue<EnumYesNo>(row.IsEnabled, "有効"); EnumValue<EnumYesNo>(row.DeductPointUse, "利用ポイント控除");
 		EnumValue<EnumPointTaxBasis>(row.TaxBasis, "税基準"); EnumValue<EnumPointCalcUnit>(row.CalcUnit, "計算単位"); EnumValue<EnumRounding>(row.Rounding, "端数処理");
 		Amounts(row.PointUnitPrice, row.PointAmountProper, row.PointAmountSale);
-		if (previous != null && IsBaseUsed(previous.Id)) Require(SameConditions(row, previous, true), "使用済みベース版は有効フラグ以外を変更できません。");
+		Require(row.ExpireMonths is >= 0 and <= 120, "失効月数は0～120で指定してください。");
+		if (previous != null && IsBaseUsed(previous.Id)) Require(SameConditions(row, previous, true), "使用済みベース版は有効フラグ・失効月数以外を変更できません。");
 		Require(!Exists<MasterPointBase>("Code=@0 AND Version=@1 AND Id<>@2", row.Code, row.Version, previous?.Id ?? 0), "同じ制度コード・版が存在します。");
 		if (row.IsEnabled == (int)EnumYesNo.Yes)
 			Require(!Exists<MasterPointBase>("Code=@0 AND IsEnabled=1 AND Id<>@1 AND DayFrom<=@2 AND DayTo>=@3", row.Code, previous?.Id ?? 0, row.DayTo, row.DayFrom), "有効なベース版の適用期間が重複しています。");
@@ -119,7 +126,9 @@ public sealed class PointMasterDb(ExDatabase db) {
 
 	// 監査値とenum表示用プロパティは条件比較から除外する。
 	private static bool SameConditions(BaseDbClass row, BaseDbClass previous, bool allowEnabled) => row.GetType().GetProperties()
-		.Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null && p.GetCustomAttribute<ResultColumnAttribute>() == null && p.GetCustomAttribute<ComputedColumnAttribute>() == null && p.Name is not nameof(BaseDbClass.Id) and not nameof(BaseDbClass.Vdc) and not nameof(BaseDbClass.Vdu) && (!allowEnabled || p.Name != nameof(MasterPointBase.IsEnabled)))
+		.Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null && p.GetCustomAttribute<ResultColumnAttribute>() == null && p.GetCustomAttribute<ComputedColumnAttribute>() == null && p.Name is not nameof(BaseDbClass.Id) and not nameof(BaseDbClass.Vdc) and not nameof(BaseDbClass.Vdu) && (!allowEnabled || p.Name != nameof(MasterPointBase.IsEnabled))
+			// 失効月数は付与結果に影響しないため使用済みでも変更できる
+			&& p.Name != nameof(MasterPointBase.ExpireMonths))
 		.All(p => Equals(p.GetValue(row), p.GetValue(previous)));
 	private static void Text(string value, int max, string name) => Require(!string.IsNullOrWhiteSpace(value) && value.Length <= max && value == value.Trim(), $"{name}は前後空白なしの1～{max}文字で指定してください。");
 	private static void Period(string from, string to) => Require(Date(from) && Date(to) && string.CompareOrdinal(from, to) <= 0, "適用期間は実在する日付(yyyyMMdd)で開始日以前にならない終了日を指定してください。");

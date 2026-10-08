@@ -1,0 +1,398 @@
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._32LoyalCustomer.PointLedgerManualView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._32LoyalCustomer"
+	Title="ポイント手動登録"
+	Width="1244" Height="860" MinWidth="980" MinHeight="600"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:PointLedgerManualViewModel />
+	</helpers:BaseWindow.DataContext>
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding DoRegisterCommand}"
+			Gesture="F2" />
+		<KeyBinding Command="{Binding DoSearchCommand}"
+			Gesture="F5" />
+	</helpers:BaseWindow.InputBindings>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding DoRegisterCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="登録 (F2)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="ContentSave" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="登録" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding CancelSelectedCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="選択行を取消（手動登録・未取消の行だけ。逆符号の取消行を追加）">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Undo" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="選択行を取消" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0,0,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="ExitToApp" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="閉じる" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="StarCircleOutline" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold" Text="ポイント手動登録" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding DoSearchCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="検索 (F5)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="DatabaseSearch" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="検索" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+		<Grid Grid.Row="1"
+			Margin="12">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="64*" MinWidth="480" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="36*" MinWidth="320" />
+			</Grid.ColumnDefinitions>
+			<!--  左: 一覧条件・台帳一覧（条件変更で旧結果を外す）  -->
+			<materialDesign:Card Grid.Column="0"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,4"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<Grid IsEnabled="{Binding IsIdle}">
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+							<!--  顧客（コード入力または選択）と現在残高  -->
+							<Grid Grid.Row="0">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="150" />
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<TextBox Grid.Column="0"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="顧客コード" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="12"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding SearchCustomerCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									ToolTip="空欄なら全顧客。Enter で検索">
+									<TextBox.InputBindings>
+										<KeyBinding Command="{Binding DoSearchCommand}"
+											Key="Return" />
+									</TextBox.InputBindings>
+								</TextBox>
+								<Button Grid.Column="1"
+									Margin="4,0,8,0"
+									Command="{Binding SelectSearchCustomerCommand}"
+									Style="{StaticResource ToolCommandButton}"
+									ToolTip="顧客を選択">
+									<materialDesign:PackIcon Kind="AccountSearch" />
+								</Button>
+								<TextBlock Grid.Column="2"
+									Style="{StaticResource SelectionResultText}"
+									Text="{Binding SearchCustomerName}"
+									ToolTip="{Binding SearchCustomerName}" />
+								<TextBlock Grid.Column="3"
+									Margin="8,0,0,0" VerticalAlignment="Center"
+									FontWeight="SemiBold"
+									Foreground="{DynamicResource PrimaryHueMidBrush}"
+									Text="{Binding BalanceText}" />
+							</Grid>
+							<!--  計上日 From-To  -->
+							<Grid Grid.Row="1">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<DatePicker Grid.Column="0"
+									Margin="0,8,0,4"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="計上日 開始" IsTodayHighlighted="False"
+									SelectedDate="{Binding SearchDayFrom, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									Style="{StaticResource FormDatePicker}" />
+								<TextBlock Grid.Column="1"
+									Margin="8,0" VerticalAlignment="Center"
+									Text="～" />
+								<DatePicker Grid.Column="2"
+									Margin="0,8,0,4"
+									helpers:DatePickerTodayButtonBehavior.IsEnabled="True" materialDesign:HintAssist.Hint="計上日 終了" IsTodayHighlighted="False"
+									SelectedDate="{Binding SearchDayTo, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									Style="{StaticResource FormDatePicker}" />
+							</Grid>
+							<!--  種別・手動登録のみ・検索  -->
+							<Grid Grid.Row="2">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*" MaxWidth="220" />
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<ComboBox Grid.Column="0"
+									Margin="0,4"
+									materialDesign:HintAssist.Hint="種別" DisplayMemberPath="Value"
+									ItemsSource="{Binding SearchTypeOptions}"
+									SelectedValue="{Binding SearchType, Mode=TwoWay}"
+									SelectedValuePath="Key"
+									Style="{StaticResource FormComboBox}" />
+								<CheckBox Grid.Column="1"
+									Margin="16,0,0,0" VerticalAlignment="Center"
+									Content="手動登録のみ"
+									IsChecked="{Binding ManualOnly, Mode=TwoWay}"
+									ToolTip="手動登録した行（取消行を含む）だけを表示する" />
+								<Button Grid.Column="3"
+									Height="36"
+									Margin="8,4,0,4"
+									Command="{Binding DoSearchCommand}"
+									Style="{StaticResource MaterialDesignOutlinedButton}"
+									ToolTip="検索 (F5)">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon VerticalAlignment="Center"
+											Kind="Magnify" />
+										<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+											Text="検索" />
+									</StackPanel>
+								</Button>
+							</Grid>
+						</Grid>
+					</Border>
+					<DockPanel Grid.Row="1"
+						Margin="12,6">
+						<TextBlock VerticalAlignment="Center"
+							DockPanel.Dock="Right" FontSize="13"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding Count, StringFormat={}件数: {0:N0}}" />
+						<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+							FontSize="13"
+							Foreground="{DynamicResource MaterialDesignBodyLight}"
+							Text="{Binding Message}"
+							TextTrimming="CharacterEllipsis"
+							ToolTip="{Binding Message}" />
+					</DockPanel>
+					<DataGrid Grid.Row="2"
+						materialDesign:DataGridAssist.CellPadding="10,6" materialDesign:DataGridAssist.ColumnHeaderPadding="10,8" AutoGenerateColumns="False" CanUserAddRows="False"
+						CanUserDeleteRows="False" EnableRowVirtualization="True" FontSize="14" FrozenColumnCount="1" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						HorizontalScrollBarVisibility="Auto"
+						IsEnabled="{Binding IsIdle}"
+						IsReadOnly="True"
+						ItemsSource="{Binding Rows}"
+						SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+						SelectionMode="Single"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VerticalScrollBarVisibility="Auto" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="70"
+								Binding="{Binding Event.Id}"
+								Header="Id">
+								<DataGridTextColumn.ElementStyle>
+									<Style BasedOn="{StaticResource DataGridRightTextBlock}"
+										TargetType="TextBlock">
+										<Setter Property="ToolTip" Value="{Binding Event.EventKey}" />
+									</Style>
+								</DataGridTextColumn.ElementStyle>
+							</DataGridTextColumn>
+							<DataGridTextColumn Width="105"
+								Binding="{Binding Event.DenDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
+								Header="計上日" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding CustomerCode}"
+								Header="顧客コード" />
+							<DataGridTextColumn Width="150"
+								Binding="{Binding CustomerName}"
+								Header="顧客名" />
+							<DataGridTextColumn Width="60"
+								Binding="{Binding TypeName}"
+								Header="種別" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding PointText}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="ポイント" />
+							<DataGridTextColumn Width="200"
+								Binding="{Binding Event.Memo}"
+								Header="理由" />
+							<DataGridTextColumn Width="60"
+								Binding="{Binding CancelledText}"
+								Header="取消" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="Transparent" />
+			<!--  右: 編集フォーム（新規登録のみ）  -->
+			<materialDesign:Card Grid.Column="2"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<TextBlock FontWeight="SemiBold"
+							Foreground="{DynamicResource PrimaryHueMidBrush}"
+							Text="新規登録（付与・使用・調整・失効）" TextTrimming="CharacterEllipsis" />
+					</Border>
+					<ScrollViewer Grid.Row="1"
+						HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+						<Grid MinWidth="280"
+							Margin="12,8,12,12"
+							IsEnabled="{Binding IsIdle}">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="90" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+							</Grid.RowDefinitions>
+							<TextBlock Grid.Row="0"
+								Style="{StaticResource FormLabel}"
+								Text="顧客" />
+							<Grid Grid.Row="0" Grid.Column="1">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*" MaxWidth="180" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<TextBox Grid.Column="0"
+									materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="12"
+									Style="{StaticResource FormTextBox}"
+									Text="{Binding EntryCustomerCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+								<Button Grid.Column="1"
+									Margin="4,0,0,0"
+									Command="{Binding SelectEntryCustomerCommand}"
+									Style="{StaticResource ToolCommandButton}"
+									ToolTip="顧客を選択">
+									<materialDesign:PackIcon Kind="AccountSearch" />
+								</Button>
+							</Grid>
+							<TextBlock Grid.Row="1" Grid.Column="1"
+								Margin="0,0,0,4"
+								Style="{StaticResource SelectionResultText}"
+								Text="{Binding EntryCustomerName}"
+								ToolTip="{Binding EntryCustomerName}" />
+							<TextBlock Grid.Row="2"
+								Style="{StaticResource FormLabel}"
+								Text="計上日" />
+							<DatePicker Grid.Row="2" Grid.Column="1"
+								Width="180"
+								Margin="0,4" HorizontalAlignment="Left"
+								helpers:DatePickerTodayButtonBehavior.IsEnabled="True" IsTodayHighlighted="False"
+								SelectedDate="{Binding EntryDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								Style="{StaticResource FormDatePicker}" />
+							<TextBlock Grid.Row="3"
+								Style="{StaticResource FormLabel}"
+								Text="種別" />
+							<ComboBox Grid.Row="3" Grid.Column="1"
+								Width="180"
+								HorizontalAlignment="Left"
+								DisplayMemberPath="Value"
+								ItemsSource="{Binding EntryTypeOptions}"
+								SelectedValue="{Binding EntryType, Mode=TwoWay}"
+								SelectedValuePath="Key"
+								Style="{StaticResource FormComboBox}" />
+							<TextBlock Grid.Row="4"
+								Style="{StaticResource FormLabel}"
+								Text="ポイント" />
+							<TextBox Grid.Row="4" Grid.Column="1"
+								Width="180"
+								HorizontalAlignment="Left"
+								materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="12"
+								Style="{StaticResource NumericFormTextBox}"
+								Text="{Binding EntryPoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+							<TextBlock Grid.Row="5" Grid.Column="1"
+								Margin="0,0,0,4"
+								FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding EntryPointHint}"
+								TextWrapping="Wrap" />
+							<TextBlock Grid.Row="6"
+								Margin="4,12,8,0" VerticalAlignment="Top"
+								Style="{StaticResource FormLabel}"
+								Text="理由" />
+							<TextBox Grid.Row="6" Grid.Column="1"
+								MinHeight="80"
+								VerticalContentAlignment="Top"
+								materialDesign:HintAssist.Hint="必須・200文字以内" AcceptsReturn="False" MaxLength="200"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding EntryMemo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								TextWrapping="Wrap" />
+							<TextBlock Grid.Row="7" Grid.Column="1"
+								Margin="0,8,0,0"
+								FontSize="12"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding EntryEventKey, StringFormat={}登録キー: {0}}"
+								TextWrapping="Wrap"
+								ToolTip="同じ登録キーの再送は二重に計上されません。登録に成功すると新しいキーになります。" />
+						</Grid>
+					</ScrollViewer>
+				</Grid>
+			</materialDesign:Card>
+		</Grid>
+	</Grid>
+</helpers:BaseWindow>

@@ -154,6 +154,10 @@ public partial class HhtProcess {
 			_db.Insert(slip.Entity);
 			var slipId = ((BaseDbClass)slip.Entity).Id;
 			ApplyStockEffect(slip.Entity, slip.TableName, slipId);
+			// 店舗売上はポイント台帳・残高を同期する（汎用保存の WriteEffectRunner と同じ）
+			if (slip.Entity is Tran01Tenuri tenuri) {
+				new PointCalcDb(_db).SyncTenuri(slipId, tenuri);
+			}
 
 			if (slip.Entity is Tran03Shiire shiire && shiire.RelateNo1 > 0) {
 				shiireRelateIds.Add(shiire.RelateNo1);

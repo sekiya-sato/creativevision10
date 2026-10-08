@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CodeShare;
@@ -334,4 +334,62 @@ public sealed class PointMasterHandlerTests {
 		Assert.AreEqual(existing.Id, ((BaseDbClass)_db.Fetch(candidate.GetType(), "SELECT * FROM " + candidate.GetType().Name).Single()).Id);
 	}
 
+	private TranPointEvent Manual(long idCustomer, EnumPointEventType type, long delta, string key = "", long original = 0) =>
+		new() { EventKey = key, DenDay = "20261008", Id_Customer = idCustomer, EventType = (int)type, PointDelta = delta, Id_OriginalEvent = original, Memo = "手動" };
+
+	[TestMethod]
+	public async Task ManualLedger_InsertAppliesBalanceRejectsInvalidAndAppendsOnly() {
+		foreach (var t in new[] { typeof(MasterEndCustomer), typeof(MasterEndCustomerAccount), typeof(MasterShain) }) _db.CreateTable(t, true, false);
+		var customer = Seed(new MasterEndCustomer { Code = "K1", Name = "会員" });
+		Seed(new MasterEndCustomerAccount { Id_Customer = customer, Point = 0 });
+		long Summary() => _db.Fetch<SummaryPoint>("SELECT * FROM SummaryPoint WHERE Id_Customer=@0", customer).Single().Point;
+		long Account() => _db.Fetch<MasterEndCustomerAccount>("SELECT * FROM MasterEndCustomerAccount WHERE Id_Customer=@0", customer).Single().Point;
+		int Count() => _db.Fetch<TranPointEvent>("SELECT * FROM TranPointEvent").Count;
+
+		var reply = await Insert(Manual(customer, EnumPointEventType.Adjustment, 100, "MANUAL:a1"));
+		Assert.AreEqual(0, reply.Code, reply.Option);
+		Assert.AreEqual(100L, Summary());
+		Assert.AreEqual(100L, Account());
+		Assert.AreNotEqual(0, (await Insert(Manual(customer, EnumPointEventType.Adjustment, 100, "MANUAL:a1"))).Code, "再送(同じEventKey)は二重計上しない");
+		Assert.AreEqual(1, Count());
+
+		Assert.AreEqual(0, (await Insert(Manual(customer, EnumPointEventType.Use, -30))).Code);
+		var use = _db.Fetch<TranPointEvent>("SELECT * FROM TranPointEvent WHERE EventType=@0", (int)EnumPointEventType.Use).Single();
+		StringAssert.StartsWith(use.EventKey, "MANUAL:");
+		Assert.AreEqual(70L, Summary());
+		var shortage = await Insert(Manual(customer, EnumPointEventType.Use, -71));
+		Assert.AreNotEqual(0, shortage.Code, "残高不足");
+		Assert.AreEqual(70L, Summary());
+		Assert.AreEqual(2, Count());
+
+		Assert.AreEqual(0, (await Insert(Manual(customer, EnumPointEventType.Cancel, 30, original: use.Id))).Code);
+		Assert.AreEqual(100L, Summary());
+		Assert.AreEqual(100L, Account());
+		Assert.AreNotEqual(0, (await Insert(Manual(customer, EnumPointEventType.Cancel, 30, original: use.Id))).Code, "二重取消");
+
+		var sales = Seed(new TranPointEvent { EventKey = "TENURI:1:G:1:0", DenDay = "20261008", Id_Customer = customer, Id_Tenuri = 1, EventType = (int)EnumPointEventType.Grant, PointDelta = 5 });
+		TranPointEvent[] invalid = [
+			Manual(customer, EnumPointEventType.Cancel, -5, original: sales), // 店舗売上の行は取消できない
+			Manual(customer, EnumPointEventType.Grant, -1),
+			Manual(customer, EnumPointEventType.Expire, 1),
+			Manual(customer, EnumPointEventType.Adjustment, 0),
+			Manual(customer, EnumPointEventType.OpeningBalance, 10),
+			Manual(0, EnumPointEventType.Adjustment, 10),
+			Manual(customer, EnumPointEventType.Adjustment, 10),
+		];
+		invalid[^1].Memo = "";
+		var tenuri = Manual(customer, EnumPointEventType.Adjustment, 10); tenuri.Id_Tenuri = 9;
+		var badKey = Manual(customer, EnumPointEventType.Adjustment, 10, "EXPIRE:1:20261008");
+		foreach (var row in invalid.Append(tenuri).Append(badKey)) {
+			Assert.AreNotEqual(0, (await Insert(row)).Code, $"{row.EventType}:{row.PointDelta}:{row.EventKey}");
+		}
+		Assert.AreEqual(4, Count());
+
+		var bulk = await Send(new InsertBulkParam(typeof(TranPointEvent), Common.SerializeObject(new[] { Manual(customer, EnumPointEventType.Grant, 10), Manual(customer, EnumPointEventType.Expire, -20) })));
+		Assert.AreEqual(0, bulk.Code, bulk.Option);
+		Assert.AreEqual(95L, Summary(), "100+5(店舗売上の直接投入は残高未反映のため台帳合計で再計算)+10-20");
+		var stored = Row<TranPointEvent>(use.Id);
+		stored.PointDelta = -1;
+		Assert.AreNotEqual(0, (await Update(stored)).Code, "台帳は更新できない");
+	}
 }

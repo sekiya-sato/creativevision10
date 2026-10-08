@@ -53,6 +53,7 @@
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="140" />
@@ -102,8 +103,37 @@
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						Margin="0,16,0,0"
 						Style="{StaticResource SettingLabel}"
+						Text="失効基準日" />
+					<StackPanel Grid.Row="2" Grid.Column="1"
+						Margin="0,16,0,0" VerticalAlignment="Center"
+						Orientation="Horizontal">
+						<TextBox Width="140"
+							VerticalAlignment="Center"
+							materialDesign:HintAssist.Hint="yyyy/MM/dd"
+							materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+							MaxLength="10"
+							Style="{StaticResource MaterialDesignOutlinedTextBox}"
+							Text="{Binding ExpireBaseDay, UpdateSourceTrigger=PropertyChanged}" />
+						<Button Width="128" Height="38"
+							Margin="12,0,0,0"
+							Command="{Binding ExpireCommand}"
+							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+							Style="{StaticResource MaterialDesignOutlinedButton}">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="TimerSandComplete" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="失効処理" />
+							</StackPanel>
+						</Button>
+					</StackPanel>
+
+					<TextBlock Grid.Row="3" Grid.Column="0"
+						Margin="0,16,0,0"
+						Style="{StaticResource SettingLabel}"
 						Text="進捗" />
-					<ProgressBar Grid.Row="2" Grid.Column="1"
+					<ProgressBar Grid.Row="3" Grid.Column="1"
 						Height="18"
 						Margin="0,16,0,0"
 						Maximum="100" Minimum="0"

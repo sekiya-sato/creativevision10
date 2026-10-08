@@ -132,6 +132,8 @@ public class ReservationDb(ExDatabase db) {
 			created.Add(slip.Id);
 			// 在庫を計上する。バッチ処理なので gRPC を往復せず直接呼ぶ（ShippingDb.CreateShippingSlips と同じ）
 			summaryDb.CalcTran2SummaryStock(nameof(Tran01Tenuri), nameof(ITranSoko.Id_Soko), slip.Id, invertFlag: false);
+			// 顧客付きの店舗売上なので、汎用保存と同じくポイント台帳・残高を同じトランザクション内で同期する
+			new PointCalcDb(_db).SyncTenuri(slip.Id, slip);
 			_db.Execute(
 				$"UPDATE {nameof(TranHaibun)} SET EndFlag = 1, JitsuSu = Su, ShortSu = 0, KakuteiDay = @0, RelateNo2 = @1, "
 				+ $"EndReason = @2, Vdu = {vdate} WHERE Id IN ({string.Join(",", group.Select(x => x.Id))})",

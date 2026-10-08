@@ -219,6 +219,7 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
+									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 								<TextBlock Grid.Row="0" Grid.ColumnSpan="2"
 									Margin="0,0,0,4"
@@ -394,11 +395,20 @@
 										</DataTemplate>
 									</ComboBox.ItemTemplate>
 								</ComboBox>
-								<TextBlock Grid.Row="16" Grid.ColumnSpan="2"
+								<TextBlock Grid.Row="16"
+									Style="{StaticResource FormLabel}"
+									Text="失効月数" />
+								<TextBox Grid.Row="16" Grid.Column="1"
+									Width="180"
+									HorizontalAlignment="Left"
+									materialDesign:HintAssist.Hint="最終購入から(0=失効しない)"
+									Style="{StaticResource NumericFormTextBox}"
+									Text="{Binding CurrentEdit.ExpireMonths, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
+								<TextBlock Grid.Row="17" Grid.ColumnSpan="2"
 									Margin="0,16,0,0"
 									Foreground="{DynamicResource MaterialDesignBodyLight}"
-									Text="使用済み条件は新版を追加してください。有効の切替以外の変更・削除はサーバで保護されます。" TextWrapping="Wrap" />
-								<TextBlock Grid.Row="17" Grid.ColumnSpan="2"
+									Text="使用済み条件は新版を追加してください。有効の切替・失効月数以外の変更・削除はサーバで保護されます。" TextWrapping="Wrap" />
+								<TextBlock Grid.Row="18" Grid.ColumnSpan="2"
 									Margin="0,8,0,0"
 									Foreground="{DynamicResource MaterialDesignBodyLight}"
 									TextWrapping="Wrap">

@@ -283,6 +283,11 @@ public record CalcDateTermParameter(string DateYymmFrom, string DateYymmTo);
 /// </summary>
 /// <param name="DateYymm"></param>
 public record CalcDateParameter(string DateYymm);
+/// <summary>
+/// ポイント失効のパラメータ
+/// </summary>
+/// <param name="BaseDay">基準日 yyyyMMdd</param>
+public record PointExpireParameter(string BaseDay);
 
 /// <summary>
 /// 請求・支払計算のパラメータ

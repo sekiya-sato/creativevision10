@@ -157,6 +157,11 @@ public class UpdateDb {
 			"DROP TABLE IF EXISTS TranPointRireki;" +
 			"CREATE UNIQUE INDEX IF NOT EXISTS MasterPointRank_uk1 ON MasterPointRank(Id_PointBase,Kubun);",
 			"ポイント制度をベース版・ランク・ボーナスへ分離。旧ランクは親Id=0で値を保持し、メンテで親を設定する。新表と台帳はDefineDataTableが作成。旧ポイント履歴表は削除・再付与しない"),
+		new (26_10_08_01,
+			"ALTER TABLE Tran01Tenuri ADD COLUMN GrantPoint NUMBER not null default 0;" +
+			"ALTER TABLE Tran01Tenuri ADD COLUMN UsePoint NUMBER not null default 0;" +
+			"ALTER TABLE MasterPointBase ADD COLUMN ExpireMonths NUMBER not null default 0;",
+			"店舗売上の付与・使用ポイントと、ベース版の失効月数を追加。既存は使用0・失効しない。GrantPointは次のポイント再計算で台帳から設定される"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

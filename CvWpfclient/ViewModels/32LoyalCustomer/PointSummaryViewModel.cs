@@ -11,7 +11,7 @@ using System.Windows;
 namespace CvWpfclient.ViewModels._32LoyalCustomer;
 
 /// <summary>
-/// ポイント再計算: 店舗売上から指定年月(伝票日付の暦月)のポイント台帳・残高を再計算する
+/// ポイント再計算: 店舗売上から指定年月(伝票日付の暦月)のポイント台帳・残高を再計算する。ポイント失効も実行する
 /// </summary>
 public partial class PointSummaryViewModel : BaseViewModel {
 	[ObservableProperty]
@@ -19,6 +19,10 @@ public partial class PointSummaryViewModel : BaseViewModel {
 
 	[ObservableProperty]
 	public partial string YearMonthTo { get; set; } = DateTime.Now.ToString("yyyy/MM", CultureInfo.InvariantCulture);
+
+	/// <summary>失効基準日（yyyy/MM/dd）。既定は前日</summary>
+	[ObservableProperty]
+	public partial string ExpireBaseDay { get; set; } = DateTime.Today.AddDays(-1).ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
 
 	[ObservableProperty]
 	public partial string StatusMessage { get; set; } = "年月を yyyy/MM 形式で入力し、実行を押してください。";
@@ -52,17 +56,45 @@ public partial class PointSummaryViewModel : BaseViewModel {
 			return;
 		}
 
+		var message = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg063_PointRecalc,
+			DataType = typeof(CalcDateTermParameter),
+			DataMsg = Common.SerializeObject(new CalcDateTermParameter(yymmFrom, yymmTo))
+		};
+		await RunStreamAsync(message, "ポイント再計算", $"対象: {termText}", cancellationToken);
+	}
+
+	/// <summary>
+	/// ポイント失効: 基準日時点で最終購入日から失効月数経過・退会した顧客の残高を失効させる。同じ基準日の再実行は二重に失効しない
+	/// </summary>
+	[RelayCommand(IncludeCancelCommand = true)]
+	private async Task ExpireAsync(CancellationToken cancellationToken) {
+		var day = ExpireBaseDay?.Trim().Replace("/", string.Empty, StringComparison.Ordinal) ?? string.Empty;
+		if (day.Length != 8 || !DateTime.TryParseExact(day, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _)) {
+			StatusMessage = $"失効基準日の形式が不正です: {ExpireBaseDay}";
+			MessageEx.ShowWarningDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		if (MessageEx.ShowQuestionDialog($"基準日 {day} でポイント失効を実行しますか？\n最終購入日から失効月数を経過した顧客・退会顧客の残高を失効します。", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+			return;
+		}
+		var message = new CvMsg {
+			Code = 0,
+			Flag = CvFlag.Msg067_PointExpire,
+			DataType = typeof(PointExpireParameter),
+			DataMsg = Common.SerializeObject(new PointExpireParameter(day))
+		};
+		await RunStreamAsync(message, "ポイント失効", $"基準日: {day}", cancellationToken);
+	}
+
+	/// <summary>ストリーム処理を実行し、進捗とメッセージを表示する</summary>
+	private async Task RunStreamAsync(CvMsg message, string title, string targetText, CancellationToken cancellationToken) {
 		IsProcessing = true;
 		ProgressValue = 0;
-		StatusMessage = "ポイント再計算を開始しています...";
+		StatusMessage = $"{title}を開始しています...";
 		ClientLib.Cursor2Wait();
 		try {
-			var message = new CvMsg {
-				Code = 0,
-				Flag = CvFlag.Msg063_PointRecalc,
-				DataType = typeof(CalcDateTermParameter),
-				DataMsg = Common.SerializeObject(new CalcDateTermParameter(yymmFrom, yymmTo))
-			};
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(message, AppGlobal.GetDefaultCallContext(cancellationToken))) {
 				if (!string.IsNullOrEmpty(streamMsg.DataMsg)) {
@@ -77,16 +109,16 @@ public partial class PointSummaryViewModel : BaseViewModel {
 				}
 			}
 			ProgressValue = 100;
-			StatusMessage = $"ポイント再計算が完了しました。対象: {termText}";
+			StatusMessage = $"{title}が完了しました。{targetText}";
 		}
 		catch (OperationCanceledException) {
-			StatusMessage = "ポイント再計算をキャンセルしました。";
+			StatusMessage = $"{title}をキャンセルしました。";
 		}
 		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
-			StatusMessage = "ポイント再計算をキャンセルしました。";
+			StatusMessage = $"{title}をキャンセルしました。";
 		}
 		catch (Exception ex) {
-			StatusMessage = $"ポイント再計算でエラーが発生しました: {ex.Message}";
+			StatusMessage = $"{title}でエラーが発生しました: {ex.Message}";
 			MessageEx.ShowErrorDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
 		}
 		finally {
