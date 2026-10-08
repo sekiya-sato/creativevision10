@@ -10,7 +10,8 @@ namespace CvDomainLogic;
 /// <para>
 /// 台帳は追記のみ。伝票ごとに「有効な付与(取消されていない付与)」と現在の伝票から計算した付与を比べ、
 /// 異なれば有効な付与を取消して新しい付与を追記する。同じなら何もしないため、再実行しても二重計上しない。
-/// 今回はベース+ランク条件のみで、ボーナス条件と利用ポイント控除は対象外。
+/// ベース+ランク条件とキャンペーン(明細ごとに 商品店別→商品全店→店別→全店 の先頭を適用し、ベース・ランクを置換)を計算する。
+/// ボーナス条件と利用ポイント控除は対象外。
 /// </para>
 /// <para>
 /// 残高は SummaryPoint.Point を台帳の合計から作り直し、MasterEndCustomerAccount.Point へは追記した増減を加算する
@@ -24,6 +25,9 @@ public sealed class PointCalcDb(ExDatabase db) {
 
 	private List<MasterPointBase>? _bases;
 	private Dictionary<(long IdBase, int Kubun), MasterPointRank>? _ranks;
+	private List<MasterPointCampaign>? _campaigns;
+	private readonly Dictionary<long, HashSet<long>> _campaignShops = [];
+	private readonly Dictionary<long, HashSet<long>> _campaignShohins = [];
 	private readonly Dictionary<long, int?> _rankKubunByCustomer = [];
 
 	/// <summary>ポイント付与対象の店舗売上区分（P/S売上・社販と各返品）。消費税は対象外</summary>
@@ -121,18 +125,36 @@ public sealed class PointCalcDb(ExDatabase db) {
 		var amountProper = rank?.PointAmountProper ?? pointBase.PointAmountProper;
 		var amountSale = rank?.PointAmountSale ?? pointBase.PointAmountSale;
 		var inclusive = pointBase.TaxBasis == (int)EnumPointTaxBasis.Inclusive;
+		var campaigns = GetCampaigns(pointBase.Id, slip.DenDay, rankKubun);
+		LoadTargets(campaigns);
 
 		long properKingaku = 0, saleKingaku = 0, points = 0;
+		// 伝票単位は単価ごとに 金額×付与数 を合計し、最後に1回だけ丸める
+		var numeratorByUnit = new Dictionary<long, decimal>();
+		var applied = new Dictionary<long, CampaignApplied>();
 		foreach (var line in slip.Jmeisai ?? []) {
 			var kingaku = line.Kingaku + (inclusive ? line.Tax : 0);
 			var isSale = line.Kubun == 1;
 			if (isSale) saleKingaku += kingaku; else properKingaku += kingaku;
+			// キャンペーンが該当した明細はキャンペーンの単価・付与数でベース・ランクを置換する
+			var campaign = FindCampaign(campaigns, slip.Id_Tenpo, line.Id_Shohin);
+			var lineUnit = campaign?.PointUnitPrice ?? unitPrice;
+			var lineAmount = isSale ? campaign?.PointAmountSale ?? amountSale : campaign?.PointAmountProper ?? amountProper;
+			if (campaign != null) {
+				var a = applied.TryGetValue(campaign.Id, out var x) ? x : applied[campaign.Id] = new CampaignApplied(campaign);
+				if (isSale) a.SaleKingaku += kingaku; else a.ProperKingaku += kingaku;
+			}
 			if (pointBase.CalcUnit == (int)EnumPointCalcUnit.Detail) {
-				points += Round((decimal)kingaku * (isSale ? amountSale : amountProper) / unitPrice, pointBase.Rounding);
+				points += Round((decimal)kingaku * lineAmount / lineUnit, pointBase.Rounding);
+			}
+			else {
+				numeratorByUnit[lineUnit] = numeratorByUnit.GetValueOrDefault(lineUnit) + (decimal)kingaku * lineAmount;
 			}
 		}
-		if (pointBase.CalcUnit != (int)EnumPointCalcUnit.Detail) {
-			points = Round(((decimal)properKingaku * amountProper + (decimal)saleKingaku * amountSale) / unitPrice, pointBase.Rounding);
+		if (pointBase.CalcUnit != (int)EnumPointCalcUnit.Detail && numeratorByUnit.Count > 0) {
+			// 単価が複数でも割り算の誤差で丸めがずれないよう、最小公倍数で通分して1回だけ割る
+			var lcm = numeratorByUnit.Keys.Aggregate(1L, (l, u) => checked(l / Gcd(l, u) * u));
+			points = Round(numeratorByUnit.Sum(x => x.Value * (lcm / x.Key)) / lcm, pointBase.Rounding);
 		}
 		// 返品は同じ規則で計算し、CalcFlag で負の付与にする
 		var calcFlag = TranCalcBase.GetKubunCalcFlag(slip.Kubun);
@@ -151,7 +173,7 @@ public sealed class PointCalcDb(ExDatabase db) {
 			Id_PointRank = rank?.Id ?? 0,
 			SourceVdu = slip.Vdu,
 			Jcalc = Common.SerializeObject(new {
-				Rule = "Base",
+				Rule = applied.Count == 0 ? "Base" : "Campaign",
 				pointBase.Code,
 				pointBase.Version,
 				RankKubun = rank?.Kubun,
@@ -165,8 +187,53 @@ public sealed class PointCalcDb(ExDatabase db) {
 				SaleKingaku = saleKingaku,
 				CalcFlag = calcFlag,
 				Point = points,
+				Campaigns = applied.Count == 0 ? null : applied.Values.Select(x => new {
+					x.Campaign.Id,
+					x.Campaign.Code,
+					x.Campaign.PriorityType,
+					x.Campaign.RankKubun,
+					UnitPrice = x.Campaign.PointUnitPrice,
+					AmountProper = x.Campaign.PointAmountProper,
+					AmountSale = x.Campaign.PointAmountSale,
+					x.ProperKingaku,
+					x.SaleKingaku,
+				}).ToList(),
 			}),
 		};
+	}
+
+	private sealed class CampaignApplied(MasterPointCampaign campaign) {
+		public MasterPointCampaign Campaign { get; } = campaign;
+		public long ProperKingaku { get; set; }
+		public long SaleKingaku { get; set; }
+	}
+
+	/// <summary>
+	/// 伝票日・ベース版・会員ランクで適用可能なキャンペーンを優先順(商品店別→商品全店→店別→全店)に返す。
+	/// 同じ優先区分の重複は保存時に禁止しているが、旧データ等で残る場合はランク指定ありを先、次にコード順とする。
+	/// </summary>
+	private List<MasterPointCampaign> GetCampaigns(long idBase, string denDay, int? rankKubun) =>
+		[.. _campaigns!
+			.Where(x => x.Id_PointBase == idBase && string.CompareOrdinal(x.DayFrom, denDay) <= 0 && string.CompareOrdinal(x.DayTo, denDay) >= 0
+				&& (x.RankKubun == 0 || x.RankKubun == rankKubun))
+			.OrderByDescending(x => x.PriorityType).ThenBy(x => x.RankKubun == 0).ThenBy(x => x.Code, StringComparer.Ordinal)];
+
+	/// <summary>明細に最初に該当するキャンペーン。対象店舗・商品が未設定の店別・商品系は適用しない</summary>
+	private MasterPointCampaign? FindCampaign(List<MasterPointCampaign> campaigns, long idTenpo, long idShohin) =>
+		campaigns.FirstOrDefault(x => (EnumPointCampaignPriority)x.PriorityType switch {
+			EnumPointCampaignPriority.AllShops => true,
+			EnumPointCampaignPriority.Shop => InTarget(_campaignShops, x.Id, idTenpo),
+			EnumPointCampaignPriority.ShohinAllShops => InTarget(_campaignShohins, x.Id, idShohin),
+			EnumPointCampaignPriority.ShohinShop => InTarget(_campaignShohins, x.Id, idShohin) && InTarget(_campaignShops, x.Id, idTenpo),
+			_ => false,
+		});
+
+	private static bool InTarget(Dictionary<long, HashSet<long>> targets, long idCampaign, long id) =>
+		id > 0 && targets.TryGetValue(idCampaign, out var set) && set.Contains(id);
+
+	private static long Gcd(long a, long b) {
+		while (b != 0) (a, b) = (b, a % b);
+		return a;
 	}
 
 	private int Sync(long idTenuri, Tran01Tenuri? slip, List<TranPointEvent> events, Dictionary<long, long> deltas) {
@@ -240,6 +307,26 @@ public sealed class PointCalcDb(ExDatabase db) {
 		_bases ??= db.FetchDialect<MasterPointBase>("SELECT * FROM MasterPointBase WHERE IsEnabled=1 ORDER BY Code, Version");
 		_ranks ??= db.FetchDialect<MasterPointRank>("SELECT * FROM MasterPointRank WHERE Id_PointBase>0")
 			.ToDictionary(x => (x.Id_PointBase, x.Kubun));
+		_campaigns ??= db.FetchDialect<MasterPointCampaign>("SELECT * FROM MasterPointCampaign WHERE IsEnabled=1 AND Id_PointBase>0");
+	}
+
+	/// <summary>対象店舗・商品は伝票保存ごとに全件読まないよう、適用候補のキャンペーン分だけ読み込んでキャッシュする</summary>
+	private void LoadTargets(List<MasterPointCampaign> campaigns) {
+		var ids = campaigns.Where(x => x.PriorityType != (int)EnumPointCampaignPriority.AllShops && !_campaignShops.ContainsKey(x.Id)).Select(x => x.Id).ToList();
+		if (ids.Count == 0) {
+			return;
+		}
+		foreach (var id in ids) {
+			_campaignShops[id] = [];
+			_campaignShohins[id] = [];
+		}
+		var inList = string.Join(",", ids);
+		foreach (var row in db.FetchDialect<MasterPointCampaignShop>($"SELECT Id_PointCampaign, Id_Tenpo FROM MasterPointCampaignShop WHERE Id_PointCampaign IN ({inList})")) {
+			_campaignShops[row.Id_PointCampaign].Add(row.Id_Tenpo);
+		}
+		foreach (var row in db.FetchDialect<MasterPointCampaignShohin>($"SELECT Id_PointCampaign, Id_Shohin FROM MasterPointCampaignShohin WHERE Id_PointCampaign IN ({inList})")) {
+			_campaignShohins[row.Id_PointCampaign].Add(row.Id_Shohin);
+		}
 	}
 
 	/// <summary>会員のPointRank(数値文字列)をランクコードとして扱う。会員情報なし・数値でなければベース条件</summary>

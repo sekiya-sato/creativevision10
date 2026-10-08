@@ -54,6 +54,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["pointmaster"] = PointMasterScenario.RunAsync,
 	["pointcampaign"] = PointMasterCampaignScenario.RunAsync,
 	["pointcampaigntarget"] = PointCampaignTargetScenario.RunAsync,
+	["pointcampaigncalc"] = PointCampaignCalcScenario.RunAsync,
 	["pointsummary"] = PointSummaryLayoutScenario.RunAsync,
 	["rfm"] = RfmCrossAnalysisScenario.RunAsync,
 };
@@ -87,6 +88,7 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["pointmaster"] = PointMasterScenario.Seeder,
 	["pointcampaign"] = PointMasterCampaignScenario.Seeder,
 	["pointcampaigntarget"] = PointCampaignTargetScenario.Seeder,
+	["pointcampaigncalc"] = PointCampaignCalcScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));

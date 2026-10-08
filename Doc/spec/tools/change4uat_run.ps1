@@ -1,4 +1,4 @@
-# UAT用に、CvServer/Services以下の *Service.cs の [UatChangeable] 直後だけを切り替える。
+﻿# UAT用に、CvServer/Services以下の *Service.cs の [UatChangeable] 直後だけを切り替える。
 # 認証解除: .\Doc\spec\tools\change4uat_run.ps1
 # 認証復元: .\Doc\spec\tools\change4uat_run.ps1 enable_auth
 #            .\Doc\spec\tools\change4uat_run.ps1 -enable_auth
