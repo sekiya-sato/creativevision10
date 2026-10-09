@@ -1033,7 +1033,9 @@ public partial class CoreService {
 				error = $"{itemType.Name} に存在しない列です: {name}";
 				return false;
 			}
-			if (WriteEffectRunner.PartialUpdateDeniedColumns.Contains(actual, StringComparer.OrdinalIgnoreCase)) {
+			if (WriteEffectRunner.PartialUpdateDeniedColumns.Contains(actual, StringComparer.OrdinalIgnoreCase)
+				|| itemType == typeof(MasterEndCustomerAccount) && (string.Equals(actual, nameof(MasterEndCustomerAccount.Point), StringComparison.OrdinalIgnoreCase)
+					|| string.Equals(actual, nameof(MasterEndCustomerAccount.Id_Customer), StringComparison.OrdinalIgnoreCase))) {
 				error = $"部分更新では変更できない列です: {actual}";
 				return false;
 			}
@@ -1214,7 +1216,7 @@ public partial class CoreService {
 				return CreateErrorResponse(flag, CvMsgErrorCode.ConcurrentUpdate, ConcurrentUpdateMessage, item.GetType(), Common.SerializeObject(item));
 			}
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
-			if (PointMasterDb.IsMaster(update.ItemType)) {
+			if (PointMasterDb.IsMaster(update.ItemType) || update.ItemType == typeof(Tran01Tenuri) || update.ItemType == typeof(MasterEndCustomerAccount)) {
 				var current = FetchExistingBaseDbItem(update.ItemType, db.Id);
 				if (current == null || current.Vdu != db.Vdu) {
 					_db.AbortTransaction();

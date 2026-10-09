@@ -490,7 +490,9 @@ public enum EnumPointEventType : int {
 	[Comment("失効")]
 	Expire = 5,
 	[Comment("移行残高")]
-	OpeningBalance = 6
+	OpeningBalance = 6,
+	[Comment("旧CV履歴")]
+	LegacyHistory = 7
 }
 
 [PrimaryKey(nameof(Id), AutoIncrement = true)]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using CvBase;
 using CvBase.Share;
@@ -38,9 +38,17 @@ public sealed class PointCalcDbTests {
 		_db.Insert(row);
 		return row;
 	}
-	private void SeedAccount(long idCustomer, string rank, int point) => _db.Insert(new MasterEndCustomerAccount { Id_Customer = idCustomer, PointRank = rank, Point = point });
+	private void EnsureCustomer(long idCustomer) {
+		if (idCustomer > 0 && _db.Fetch<long>("SELECT COUNT(*) FROM MasterEndCustomer WHERE Id=@0", idCustomer).Single() == 0)
+			_db.Execute("INSERT INTO MasterEndCustomer (Id,Code,Name) VALUES (@0,@1,@2)", idCustomer, $"K{idCustomer}", "会員");
+	}
+	private void SeedAccount(long idCustomer, string rank, int point) {
+		EnsureCustomer(idCustomer);
+		_db.Insert(new MasterEndCustomerAccount { Id_Customer = idCustomer, PointRank = rank, Point = point });
+	}
 	// P 250円(税25) + S 150円(税15)
 	private Tran01Tenuri SeedSlip(long idCustomer = 7, int kubun = 10, string denDay = "20261005") {
+		EnsureCustomer(idCustomer);
 		var slip = new Tran01Tenuri { DenDay = denDay, Id_Customer = idCustomer, Id_Tenpo = 3, Kubun = kubun, Vdc = 1, Vdu = 1,
 			Jmeisai = [new() { Kubun = 0, Kingaku = 250, Tax = 25 }, new() { Kubun = 1, Kingaku = 150, Tax = 15 }] };
 		_db.Insert(slip);
@@ -104,7 +112,7 @@ public sealed class PointCalcDbTests {
 		Assert.AreEqual(1, Calc.SyncTenuri(slip.Id, slip));
 		Assert.AreEqual(0, Calc.SyncTenuri(slip.Id, slip), "同じ内容の再実行で二重計上しない");
 		Assert.AreEqual(5, Balance(7));
-		Assert.AreEqual(105, AccountPoint(7), "移行ポイントへ加算する");
+		Assert.AreEqual(5, AccountPoint(7), "会員残高も台帳合計を正本とする");
 
 		slip.Jmeisai![0].Kingaku = 450; // (450+300)/100=7
 		slip.Vdu = 2;
@@ -118,7 +126,7 @@ public sealed class PointCalcDbTests {
 		slip.Id_Customer = 8;
 		Assert.AreEqual(2, Calc.SyncTenuri(slip.Id, slip));
 		Assert.AreEqual(0, Balance(7));
-		Assert.AreEqual(100, AccountPoint(7));
+		Assert.AreEqual(0, AccountPoint(7));
 		Assert.AreEqual(7, Balance(8));
 
 		Assert.AreEqual(1, Calc.SyncTenuri(slip.Id, null));
@@ -445,5 +453,83 @@ public sealed class PointCalcDbTests {
 		var over = Slip("20261007", usePoint: 441); // 税込合計440
 		var ex = Assert.ThrowsExactly<ArgumentException>(() => Calc.SyncTenuri(over.Id, over));
 		StringAssert.Contains(ex.Message, "税込合計以下");
+	}
+	[TestMethod]
+	public void LegacySlip_SyncUpdateDeleteAndRecalcNeverTouchEvents() {
+		SeedBase(); SeedAccount(7, string.Empty, 90); SeedLedger(7, 90);
+		var old = Slip("20261005", usePoint: 20);
+		old.OldSeqNo = 123; old.GrantPoint = 17; _db.Update(old);
+		// 旧売上に試作台帳が残っていても取消を発生させない。
+		_db.Insert(new TranPointEvent { EventKey = "PREVIEW:123", DenDay = old.DenDay, Id_Customer = 7, Id_Tenuri = old.Id,
+			EventType = (int)EnumPointEventType.Grant, PointDelta = 17 });
+		var before = Events();
+		Assert.IsNull(Calc.Calc(old));
+		Assert.AreEqual(0, Calc.SyncTenuri(old.Id, old));
+		Assert.AreEqual(0, Calc.Recalc("202610", "202610"));
+		Assert.AreEqual(17L, SlipGrantPoint(old.Id));
+		Assert.AreEqual(90, AccountPoint(7));
+		var updated = _db.Fetch<Tran01Tenuri>("SELECT * FROM Tran01Tenuri WHERE Id=@0", old.Id).Single();
+		updated.OldSeqNo = 0;
+		Assert.AreEqual(0, Calc.SyncTenuri(old.Id, updated), "DBに旧売上が残る場合も除外");
+		_db.Update(updated);
+		Assert.AreEqual(0, Calc.SyncTenuri(old.Id, updated, old), "保存前が旧売上なら除外解除しない");
+		_db.Execute("DELETE FROM Tran01Tenuri WHERE Id=@0", old.Id);
+		Assert.AreEqual(0, Calc.SyncTenuri(old.Id, null, old), "削除前の伝票で旧売上を判定");
+		CollectionAssert.AreEqual(before.Select(x => x.EventKey).ToArray(), Events().Select(x => x.EventKey).ToArray());
+		Assert.AreEqual(107L, Events().Sum(x => x.PointDelta));
+	}
+
+	[TestMethod]
+	public void RebuildBalances_OverwritesAllAccountsAndPreservesPurchases() {
+		SeedAccount(7, "2", 999); SeedAccount(8, "1", 888); SeedLedger(7, 125);
+		_db.Insert(new SummaryPoint { Id_Customer = 7, Point = 888, SalesCount = 12, SalesKingaku = 34567 });
+		_db.Insert(new SummaryPoint { Id_Customer = 9, Point = 777, SalesCount = 4, SalesKingaku = 7654 });
+		_db.Insert(new MasterEndCustomer { Code = "MASTERONLY", Name = "履歴なし" });
+		Calc.RebuildBalances();
+		Assert.AreEqual(125, Balance(7)); Assert.AreEqual(125, AccountPoint(7));
+		Assert.AreEqual(0, Balance(8)); Assert.AreEqual(0, AccountPoint(8)); Assert.AreEqual(0, Balance(9));
+		var summary = _db.Fetch<SummaryPoint>("SELECT * FROM SummaryPoint WHERE Id_Customer=7").Single();
+		Assert.AreEqual(12, summary.SalesCount); Assert.AreEqual(34567, summary.SalesKingaku);
+		Assert.AreEqual("2", _db.Fetch<MasterEndCustomerAccount>("SELECT * FROM MasterEndCustomerAccount WHERE Id_Customer=7").Single().PointRank);
+		Calc.RebuildBalances(); Assert.AreEqual(125, Balance(7));
+	}
+
+	[TestMethod]
+	public void RebuildBalances_OverflowDoesNotPartiallyUpdate() {
+		SeedAccount(7, string.Empty, 100); SeedAccount(8, string.Empty, 200);
+		_db.Insert(new SummaryPoint { Id_Customer = 7, Point = 100 });
+		_db.Insert(new SummaryPoint { Id_Customer = 8, Point = 200 });
+		SeedLedger(7, 5); SeedLedger(8, (long)int.MaxValue + 1);
+		Assert.ThrowsExactly<OverflowException>(() => Calc.RebuildBalances());
+		Assert.AreEqual(100, Balance(7)); Assert.AreEqual(100, AccountPoint(7));
+		Assert.AreEqual(200, Balance(8)); Assert.AreEqual(200, AccountPoint(8));
+	}
+
+	[TestMethod]
+	public void Recalc_OrdersNativeSlipsByDateAndIncludesLegacyInFirstPurchase() {
+		var parent = SeedBase(); SeedAccount(7, string.Empty, 0); SeedAccount(8, string.Empty, 0);
+		SeedBonus(parent.Id, EnumPointBonusTrigger.FirstPurchase, 50, limit: EnumPointLimitPeriod.Lifetime, code: "FIRST");
+		SeedBonus(parent.Id, EnumPointBonusTrigger.Purchase, 10, limit: EnumPointLimitPeriod.Period, limitCount: 1, code: "PERIOD");
+		var old = Slip("20260901"); old.OldSeqNo = 12; _db.Update(old);
+		var later = Slip("20261020"); var earlier = Slip("20261001");
+		var firstNative = Slip("20261002", idCustomer: 8);
+		Calc.Recalc("202610", "202610");
+		Assert.AreEqual(15L, SlipGrantPoint(earlier.Id), "日付順で期間内最初に上限ボーナスを付与");
+		Assert.AreEqual(5L, SlipGrantPoint(later.Id));
+		Assert.AreEqual(65L, SlipGrantPoint(firstNative.Id), "旧購入のない顧客だけ初回ボーナス");
+		Assert.AreEqual(0L, SlipGrantPoint(old.Id));
+		Assert.AreEqual(0, Calc.Recalc("202610", "202610"));
+		Assert.AreEqual(20, AccountPoint(7)); Assert.AreEqual(65, AccountPoint(8));
+	}
+	[TestMethod]
+	public void Recalc_OverflowRollsBackLedgerGrantAndBalances() {
+		var parent = SeedBase(); parent.PointUnitPrice = 1; parent.PointAmountProper = int.MaxValue; _db.Update(parent);
+		SeedAccount(7, string.Empty, 19);
+		_db.Insert(new SummaryPoint { Id_Customer = 7, Point = 19 });
+		var slip = SeedSlip();
+		Assert.ThrowsExactly<OverflowException>(() => Calc.Recalc("202610", "202610"));
+		Assert.AreEqual(0, Events().Length, "台帳の途中追加は戻す");
+		Assert.AreEqual(0L, SlipGrantPoint(slip.Id), "計算値の途中設定は戻す");
+		Assert.AreEqual(19, Balance(7)); Assert.AreEqual(19, AccountPoint(7));
 	}
 }

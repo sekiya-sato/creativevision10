@@ -1,5 +1,8 @@
 ﻿using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using CvBase;
 using CvBase.Share;
 using CvBaseSqlite;
@@ -171,6 +174,13 @@ public static class PointFlowScenario {
 
 			driver.View.Width = driver.View.MinWidth; driver.View.Height = driver.View.MinHeight;
 			await Capture(session, driver.View, screens, "manual_03_Minimum");
+			var grid = Descendants(driver.View).OfType<DataGrid>().Single();
+			var scroll = Descendants(grid).OfType<ScrollViewer>().First(x => x.ScrollableWidth > 0);
+			scroll.ScrollToRightEnd();
+			await Capture(session, driver.View, screens, "manual_04_MinimumRight");
+			var last = Descendants(grid).OfType<DataGridColumnHeader>().Single(x => x.Column == grid.Columns.Last());
+			var bounds = last.TransformToAncestor(grid).TransformBounds(new Rect(last.RenderSize));
+			session.Check("手動:最小サイズで右端列へ到達", scroll.HorizontalOffset >= scroll.ScrollableWidth - 1 && bounds.Left >= 0 && bounds.Right <= grid.ActualWidth + 1);
 		}
 		finally {
 			session.SetDialogResponder(null);
@@ -185,7 +195,17 @@ public static class PointFlowScenario {
 		var path = ScreenLayoutCheck.SaveJpeg(view, screens, name);
 		session.Note(name + ":画面画像", new { Path = path });
 		var issues = ScreenLayoutCheck.Inspect(view);
-		session.Check(name + ":文字・ボタン見切れなし", issues.Count == 0, new { issues.Count, Issues = issues });
+		// 横スクロールで画面外の列は別途右端への到達を確認する。
+		var failures = issues.Where(x => x.Kind != "列が横スクロール外").ToList();
+		session.Check(name + ":文字・ボタン見切れなし", failures.Count == 0, new { Issues = issues });
+	}
+
+	static IEnumerable<DependencyObject> Descendants(DependencyObject parent) {
+		for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++) {
+			var child = VisualTreeHelper.GetChild(parent, i);
+			yield return child;
+			foreach (var nested in Descendants(child)) yield return nested;
+		}
 	}
 
 	static Tran01Tenuri Slip(string memo, long idCustomer, MasterTokui shop, int kubun, long kingaku, long usePoint, long idShohin) => new() {

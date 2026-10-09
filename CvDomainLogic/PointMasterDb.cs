@@ -27,6 +27,17 @@ public sealed class PointMasterDb(ExDatabase db) {
 	// 重複検査の除外IdはDBから読んだ更新前行だけを使い、追加要求のIdは信用しない。
 	public void ValidateSave(object item, BaseDbClass? previous) {
 		switch (item) {
+			case MasterEndCustomerAccount row:
+				Require(previous is not MasterEndCustomerAccount account || row.Id_Customer == account.Id_Customer, "会員情報の顧客は変更できません。");
+				Require(row.Point == ((previous as MasterEndCustomerAccount)?.Point ?? 0), "会員ポイントは台帳から設定します。調整履歴を登録してください。");
+				Require(previous != null || db.FetchDialect<long>("SELECT COALESCE(SUM(PointDelta),0) FROM TranPointEvent WHERE Id_Customer=@0", row.Id_Customer).FirstOrDefault() == 0,
+					"台帳残高のある顧客の会員情報は、残高を同期する専用処理で作成してください。");
+				break;
+			case Tran01Tenuri row:
+				var old = previous as Tran01Tenuri;
+				Require(row.OldSeqNo == (old?.OldSeqNo ?? 0), "旧CV売上の移行元番号は変更できません。");
+				Require(old?.OldSeqNo is not > 0 || row.UsePoint == old.UsePoint, "旧CV売上の使用ポイントは変更できません。調整履歴を登録してください。");
+				break;
 			case MasterPointBase row:
 				ValidateBase(row, previous);
 				break;

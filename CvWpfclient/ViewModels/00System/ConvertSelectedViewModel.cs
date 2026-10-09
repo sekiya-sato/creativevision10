@@ -11,6 +11,8 @@ using System.Windows;
 namespace CvWpfclient.ViewModels._00System;
 
 public partial class ConvertSelectedViewModel : BaseViewModel {
+	const string PointRebuildTask = "RebuildPointHistory";
+
 	[ObservableProperty]
 	public partial bool IsInitDb { get; set; }
 
@@ -76,7 +78,7 @@ public partial class ConvertSelectedViewModel : BaseViewModel {
 	[RelayCommand]
 	private void SelectAll() {
 		foreach (var task in Tasks) {
-			task.IsSelected = true;
+			task.IsSelected = task.Name != PointRebuildTask;
 		}
 	}
 
@@ -96,7 +98,15 @@ public partial class ConvertSelectedViewModel : BaseViewModel {
 			MessageEx.ShowWarningDialog("変換プログラムを選択してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-		if (MessageEx.ShowQuestionDialog("選択した変換プログラムを実行しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
+		var pointRebuild = selectedTasks.Contains(PointRebuildTask);
+		if (pointRebuild && (selectedTasks.Count != 1 || !IsInitDb)) {
+			MessageEx.ShowWarningDialog("ポイント全再構築は単独で選択し、テーブル初期化を［する］にしてください。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		var question = pointRebuild
+			? "ポイント全再構築を実行しますか？\n\n全ポイント履歴を削除し、残高・計算済み付与ポイントを初期化します。\n旧CV履歴を移行した後、CV10で作成した店舗売上だけ再計算します。\n\n初回切替専用です。バックアップ済みの複製DBだけで実行してください。共有DB・稼働DBでは実行しないでください。"
+			: "選択した変換プログラムを実行しますか？";
+		if (MessageEx.ShowQuestionDialog(question, owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
 		}
 		if (IsRunning) {
@@ -184,6 +194,8 @@ internal static class ConvertTaskDisplayNames {
 		["CnvMasterAfter2"] = "マスタ後付け項目の取り込み(Idは振り直さない)  ← HC$MASTER_TOKUI / HC$MASTER_SIIRE / HC$MASTER_KOKYAKU",
 		["CnvTran00HonUri"] = "本部売上データ(00)  ← HC$TRAN_TORI0 / HC$TRAN_TORI1 (伝票処理区分=0)",
 		["CnvTran01TenUri"] = "店舗売上データ(01)  ← HC$TRAN_TORI0 / HC$TRAN_TORI1 (伝票処理区分=1)",
+		["CnvTranPointHistory"] = "旧CVポイント履歴  ← HC$TRAN_POINT_RIREKI",
+		["RebuildPointHistory"] = "ポイント全再構築（初回切替・複製DB専用）",
 		["CnvTran02Material"] = "生地・付属仕入データ(02)  ← HC$TRAN_TORI0 / HC$TRAN_TORI1 (伝票処理区分=2)",
 		["CnvTran03Shiire"] = "仕入データ(03)  ← HC$TRAN_TORI0 / HC$TRAN_TORI1 (伝票処理区分=3)",
 		["CnvTran05Ido"] = "移動データ(05)  ← HC$TRAN_TORI0 / HC$TRAN_TORI1 (伝票処理区分=5)",

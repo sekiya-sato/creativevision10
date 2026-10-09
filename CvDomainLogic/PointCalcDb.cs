@@ -16,8 +16,7 @@ namespace CvDomainLogic;
 /// 伝票の GrantPoint には有効付与の合計を設定する。失効は PointExpireDb。
 /// </para>
 /// <para>
-/// 残高は SummaryPoint.Point を台帳の合計から作り直し、MasterEndCustomerAccount.Point へは追記した増減を加算する
-/// (移行時の旧ポイントを保持するため上書きしない)。
+/// 残高は台帳合計を正本とし、SummaryPoint.Point と MasterEndCustomerAccount.Point に同じ値を設定する。
 /// </para>
 /// </summary>
 public sealed class PointCalcDb(ExDatabase db) {
@@ -45,14 +44,13 @@ public sealed class PointCalcDb(ExDatabase db) {
 	/// </summary>
 	/// <param name="idTenuri">店舗売上伝票Id</param>
 	/// <param name="slip">保存後の伝票。削除では null</param>
+	/// <param name="previous">更新・削除前の伝票。旧CV売上の除外判定に使用する</param>
 	/// <returns>追記した台帳行数</returns>
-	public int SyncTenuri(long idTenuri, Tran01Tenuri? slip) {
-		if (slip != null) {
-			Require(slip.UsePoint >= 0, "使用ポイントは0以上で指定してください。");
-			Require(slip.UsePoint == 0 || slip.Id_Customer > 0 && IsTargetKubun(slip.Kubun), "使用ポイントは顧客を指定した売上・返品伝票だけに指定できます。");
-			// 1ポイント=1円のため、使用(返品は戻し)は伝票の税込合計を超えられない
-			Require(slip.UsePoint <= (slip.Jmeisai ?? []).Sum(x => x.Kingaku + x.Tax), "使用ポイントは伝票の税込合計以下で指定してください。");
-		}
+	public int SyncTenuri(long idTenuri, Tran01Tenuri? slip, Tran01Tenuri? previous = null) {
+		// 削除・更新前の旧売上も判定する。旧確定履歴を現行制度で取消・再付与しない。
+		if (slip?.OldSeqNo > 0 || previous?.OldSeqNo > 0
+			|| db.FetchDialect<long>("SELECT COUNT(*) FROM Tran01Tenuri WHERE Id=@0 AND OldSeqNo>0", idTenuri).FirstOrDefault() > 0) return 0;
+		if (slip != null) ValidateTenuriInput(slip);
 		var events = db.FetchDialect<TranPointEvent>("SELECT * FROM TranPointEvent WHERE Id_Tenuri=@0 ORDER BY Id", idTenuri);
 		var deltas = new Dictionary<long, long>();
 		var useDeltas = new Dictionary<long, long>();
@@ -65,6 +63,16 @@ public sealed class PointCalcDb(ExDatabase db) {
 			Require(balance >= 0, $"ポイント残高が不足しているため保存できません（保存後残高 {balance}、今回の使用 {-useDelta}）。");
 		}
 		return count;
+	}
+
+	/// <summary>CV10売上のポイント入力を保存・再計算・再構築前に共通検査する。旧CV売上は対象外</summary>
+	public void ValidateTenuriInput(Tran01Tenuri slip) {
+		if (slip.OldSeqNo > 0) return;
+		Require(slip.Id_Customer <= 0 || db.FetchDialect<long>("SELECT COUNT(*) FROM MasterEndCustomer WHERE Id=@0", slip.Id_Customer).FirstOrDefault() > 0, "店舗売上の顧客が存在しません。");
+		Require(slip.UsePoint >= 0, "使用ポイントは0以上で指定してください。");
+		Require(slip.UsePoint == 0 || slip.Id_Customer > 0 && IsTargetKubun(slip.Kubun), "使用ポイントは顧客を指定した売上・返品伝票だけに指定できます。");
+		// 1ポイント=1円のため、使用(返品は戻し)は伝票の税込合計を超えられない。
+		Require(slip.UsePoint <= (slip.Jmeisai ?? []).Sum(x => x.Kingaku + x.Tax), "使用ポイントは伝票の税込合計以下で指定してください。");
 	}
 
 	/// <summary>
@@ -81,26 +89,30 @@ public sealed class PointCalcDb(ExDatabase db) {
 			var hasBase = _bases!.Any(x => string.CompareOrdinal(x.DayFrom, dayTo) <= 0 && string.CompareOrdinal(x.DayTo, dayFrom) >= 0);
 			// 対象は範囲内の伝票と、範囲内に台帳がある伝票。伝票日を別の月へ移した伝票も同期の比較・EventKey の連番が
 			// ずれないよう、範囲外の台帳を含めてその伝票の全イベントを読む
-			const string eventInRange = "SELECT * FROM TranPointEvent WHERE Id_Tenuri IN (SELECT Id FROM Tran01Tenuri WHERE DenDay BETWEEN @0 AND @1 AND Id_Customer>0)" +
-				" OR Id_Tenuri IN (SELECT Id_Tenuri FROM TranPointEvent WHERE DenDay BETWEEN @0 AND @1 AND Id_Tenuri>0) ORDER BY Id";
+			const string eventInRange = "SELECT * FROM TranPointEvent WHERE Id_Tenuri IN (SELECT Id FROM Tran01Tenuri WHERE DenDay BETWEEN @0 AND @1 AND Id_Customer>0 AND OldSeqNo=0)" +
+				" OR (Id_Tenuri IN (SELECT Id_Tenuri FROM TranPointEvent WHERE DenDay BETWEEN @0 AND @1 AND Id_Tenuri>0) AND NOT EXISTS (SELECT 1 FROM Tran01Tenuri t WHERE t.Id=TranPointEvent.Id_Tenuri AND t.OldSeqNo>0)) ORDER BY Id";
 			var events = db.FetchDialect<TranPointEvent>(eventInRange, dayFrom, dayTo);
 			if (!hasBase && events.Count == 0
-				&& db.FetchDialect<long>("SELECT COUNT(*) FROM Tran01Tenuri WHERE DenDay BETWEEN @0 AND @1 AND Id_Customer>0 AND UsePoint<>0", dayFrom, dayTo).FirstOrDefault() == 0) {
+				&& db.FetchDialect<long>("SELECT COUNT(*) FROM Tran01Tenuri WHERE DenDay BETWEEN @0 AND @1 AND Id_Customer>0 AND OldSeqNo=0 AND UsePoint<>0", dayFrom, dayTo).FirstOrDefault() == 0) {
 				db.CompleteTransaction();
 				return 0;
 			}
 			foreach (var row in db.FetchDialect<MasterEndCustomerAccount>(
-				"SELECT Id_Customer, PointRank FROM MasterEndCustomerAccount WHERE Id_Customer IN (SELECT Id_Customer FROM Tran01Tenuri WHERE DenDay BETWEEN @0 AND @1 AND Id_Customer>0)", dayFrom, dayTo)) {
+				"SELECT Id_Customer, PointRank FROM MasterEndCustomerAccount WHERE Id_Customer IN (SELECT Id_Customer FROM Tran01Tenuri WHERE DenDay BETWEEN @0 AND @1 AND Id_Customer>0 AND OldSeqNo=0)", dayFrom, dayTo)) {
 				_rankKubunByCustomer[row.Id_Customer] = ParseRank(row.PointRank);
 			}
-			var slips = db.FetchDialect<Tran01Tenuri>("SELECT * FROM Tran01Tenuri WHERE DenDay BETWEEN @0 AND @1 AND Id_Customer>0", dayFrom, dayTo)
+			var slips = db.FetchDialect<Tran01Tenuri>("SELECT * FROM Tran01Tenuri WHERE DenDay BETWEEN @0 AND @1 AND Id_Customer>0 AND OldSeqNo=0", dayFrom, dayTo)
 				.ToDictionary(x => x.Id);
 			var eventsBySlip = events.GroupBy(x => x.Id_Tenuri).ToDictionary(x => x.Key, x => x.ToList());
+			// 台帳だけの伝票も現在の日付を読み、日付変更後も伝票日・Id順で適用する。
+			foreach (var id in eventsBySlip.Keys.Except(slips.Keys)) {
+				var current = db.FetchDialect<Tran01Tenuri>("SELECT * FROM Tran01Tenuri WHERE Id=@0", id).FirstOrDefault();
+				if (current != null) slips[id] = current;
+			}
 			var deltas = new Dictionary<long, long>();
-			foreach (var id in slips.Keys.Union(eventsBySlip.Keys).Order()) {
-				// 台帳だけにある伝票は削除・顧客解除・日付移動の可能性があるため、現在の行を読み直す
-				var slip = slips.GetValueOrDefault(id)
-					?? db.FetchDialect<Tran01Tenuri>("SELECT * FROM Tran01Tenuri WHERE Id=@0", id).FirstOrDefault();
+			foreach (var id in slips.Keys.Union(eventsBySlip.Keys).OrderBy(id => slips.GetValueOrDefault(id)?.DenDay ?? eventsBySlip[id].Min(e => e.DenDay), StringComparer.Ordinal).ThenBy(id => id)) {
+				var slip = slips.GetValueOrDefault(id);
+				if (slip != null) ValidateTenuriInput(slip);
 				count += Sync(id, slip, eventsBySlip.GetValueOrDefault(id) ?? [], deltas);
 			}
 			ApplyBalance(deltas);
@@ -145,7 +157,7 @@ public sealed class PointCalcDb(ExDatabase db) {
 	/// </summary>
 	public List<TranPointEvent> CalcExpected(Tran01Tenuri? slip) {
 		var result = new List<TranPointEvent>();
-		if (slip == null || slip.Id_Customer <= 0 || !IsTargetKubun(slip.Kubun)) {
+		if (slip == null || slip.OldSeqNo > 0 || slip.Id_Customer <= 0 || !IsTargetKubun(slip.Kubun)) {
 			return result;
 		}
 		LoadMasters();
@@ -300,6 +312,7 @@ public sealed class PointCalcDb(ExDatabase db) {
 	}
 
 	private int Sync(long idTenuri, Tran01Tenuri? slip, List<TranPointEvent> events, Dictionary<long, long> deltas, Dictionary<long, long>? useDeltas = null) {
+		if (slip?.OldSeqNo > 0) return 0;
 		var expected = CalcExpected(slip);
 		var cancelled = events.Where(x => x.EventType == (int)EnumPointEventType.Cancel).Select(x => x.Id_OriginalEvent).ToHashSet();
 		var active = events.Where(x => x.EventType is (int)EnumPointEventType.Grant or (int)EnumPointEventType.Use && !cancelled.Contains(x.Id)).ToList();
@@ -470,20 +483,40 @@ public sealed class PointCalcDb(ExDatabase db) {
 
 	private static void Require(bool condition, string message) { if (!condition) throw new ArgumentException(message); }
 
-	/// <summary>SummaryPoint は台帳合計から作り直し、会員情報の現在ポイントへは増減を加算する</summary>
+	/// <summary>両残高を台帳合計に同期する。呼出元のトランザクション内で使用する</summary>
 	internal void ApplyBalance(Dictionary<long, long> deltas) {
-		if (deltas.Count == 0) {
-			return;
+		SetBalances(deltas.Keys.ToDictionary(id => id, Balance));
+	}
+
+	/// <summary>履歴のない顧客も含めて全残高を同期する。購買情報は保持し、トランザクションは呼出元が管理する</summary>
+	public void RebuildBalances() {
+		const string totals = "SELECT Id_Customer, SUM(PointDelta) AS PointTotal FROM TranPointEvent GROUP BY Id_Customer";
+		const string customers = "SELECT Id AS Id_Customer FROM MasterEndCustomer UNION SELECT Id_Customer FROM SummaryPoint UNION SELECT Id_Customer FROM MasterEndCustomerAccount UNION SELECT Id_Customer FROM TranPointEvent";
+		// 大量顧客でも行ごとのSQLを発行しない。更新前に残高・顧客Idのint範囲を全件検査する。
+		if (db.FetchDialect<long>($"SELECT Id_Customer FROM ({totals}) p WHERE PointTotal<@0 OR PointTotal>@1 LIMIT 1", int.MinValue, int.MaxValue).Count > 0
+			|| db.FetchDialect<long>($"SELECT Id_Customer FROM ({customers}) c WHERE Id_Customer<@0 OR Id_Customer>@1 LIMIT 1", int.MinValue, int.MaxValue).Count > 0) {
+			throw new OverflowException("ポイント残高または顧客Idがint範囲を超えるため、残高を再構築できません。");
 		}
 		var vdate = Common.GetVdate();
-		foreach (var (idCustomer, delta) in deltas) {
-			var total = Balance(idCustomer);
+		db.ExecuteDialect($"UPDATE SummaryPoint SET Point=COALESCE((SELECT p.PointTotal FROM ({totals}) p WHERE p.Id_Customer=SummaryPoint.Id_Customer),0), Vdu=@0", vdate);
+		db.ExecuteDialect($"INSERT INTO SummaryPoint (Id_Customer, Point, SalesCount, SalesKingaku, Vdc, Vdu)" +
+			$" SELECT c.Id_Customer, COALESCE(p.PointTotal,0), 0, 0, @0, @0 FROM ({customers}) c LEFT JOIN ({totals}) p ON p.Id_Customer=c.Id_Customer" +
+			" WHERE NOT EXISTS (SELECT 1 FROM SummaryPoint s WHERE s.Id_Customer=c.Id_Customer)", vdate);
+		db.ExecuteDialect($"UPDATE MasterEndCustomerAccount SET Point=COALESCE((SELECT p.PointTotal FROM ({totals}) p WHERE p.Id_Customer=MasterEndCustomerAccount.Id_Customer),0), Vdu=@0", vdate);
+	}
+
+	private void SetBalances(Dictionary<long, long> totals) {
+		// 更新開始前に全件検査し、範囲外の残高で一部だけ更新しない。
+		foreach (var (idCustomer, total) in totals) {
+			_ = checked((int)idCustomer);
+			_ = checked((int)total);
+		}
+		var vdate = Common.GetVdate();
+		foreach (var (idCustomer, total) in totals) {
 			if (db.ExecuteDialect("UPDATE SummaryPoint SET Point=@0, Vdu=@1 WHERE Id_Customer=@2", checked((int)total), vdate, idCustomer) == 0) {
 				db.Insert(new SummaryPoint { Id_Customer = checked((int)idCustomer), Point = checked((int)total), Vdc = vdate, Vdu = vdate });
 			}
-			if (delta != 0) {
-				db.ExecuteDialect("UPDATE MasterEndCustomerAccount SET Point=Point+@0, Vdu=@1 WHERE Id_Customer=@2", delta, vdate, idCustomer);
-			}
+			db.ExecuteDialect("UPDATE MasterEndCustomerAccount SET Point=@0, Vdu=@1 WHERE Id_Customer=@2", checked((int)total), vdate, idCustomer);
 		}
 	}
 

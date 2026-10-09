@@ -420,9 +420,9 @@
 								<TextBox Grid.Row="15" Grid.Column="1"
 									Width="200"
 									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="ポイント"
+									materialDesign:HintAssist.Hint="ポイント" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Point}" />
+									Text="{Binding AccountPointText, Mode=OneWay}" />
 
 								<TextBlock Grid.Row="16"
 									Style="{StaticResource FormLabel}"

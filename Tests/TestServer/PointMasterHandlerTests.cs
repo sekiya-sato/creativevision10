@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CodeShare;
@@ -391,5 +391,88 @@ public sealed class PointMasterHandlerTests {
 		var stored = Row<TranPointEvent>(use.Id);
 		stored.PointDelta = -1;
 		Assert.AreNotEqual(0, (await Update(stored)).Code, "台帳は更新できない");
+	}
+	private Tran01Tenuri SeedLegacySlipForHandler() {
+		foreach (var type in new[] { typeof(Tran01Tenuri), typeof(MasterEndCustomer), typeof(MasterEndCustomerAccount), typeof(MasterTokui), typeof(MasterShohin), typeof(MasterSysman), typeof(SummaryStock), typeof(SummaryRealStock), typeof(TranHaibun) })
+			_db.CreateTable(type, true, false);
+		_db.Execute("CREATE UNIQUE INDEX PointTestStock ON SummaryStock (SumMonth,Id_Soko,Id_Shohin,Id_Col,Id_Siz)");
+		_db.Execute("CREATE UNIQUE INDEX PointTestRealStock ON SummaryRealStock (Id_Soko,Id_Shohin,Id_Col,Id_Siz)");
+		Seed(new MasterSysman { ShimeBi = 99 });
+		var customer = Seed(new MasterEndCustomer { Code = "OLD", Name = "移行会員" });
+		Seed(new MasterEndCustomerAccount { Id_Customer = customer, Point = 25 });
+		Seed(new SummaryPoint { Id_Customer = checked((int)customer), Point = 25 });
+		var slip = new Tran01Tenuri { OldSeqNo = 123, Id_Customer = customer, DenDay = "20261001", Kubun = 10, UsePoint = 7, GrantPoint = 25, Jmeisai = [] };
+		Seed(slip);
+		Seed(new TranPointEvent { EventKey = "TENURI:OLD", Id_Tenuri = slip.Id, Id_Customer = customer, DenDay = slip.DenDay, EventType = (int)EnumPointEventType.Grant, PointDelta = 25 });
+		return slip;
+	}
+
+	[TestMethod]
+	[DataRow("item")]
+	[DataRow("id")]
+	[DataRow("bulk")]
+	public async Task LegacySlip_AllDeleteRoutesUseStoredOriginAndKeepPointHistory(string route) {
+		var slip = SeedLegacySlipForHandler();
+		var requestSlip = Copy(slip); requestSlip.OldSeqNo = 0;
+		object request = route switch {
+			"item" => new DeleteParam(typeof(Tran01Tenuri), Common.SerializeObject(requestSlip)),
+			"id" => new DeleteByIdParam(typeof(Tran01Tenuri), slip.Id, slip.Vdu),
+			_ => new DeleteBulkParam(typeof(Tran01Tenuri), [new(slip.Id, slip.Vdu)]),
+		};
+		var reply = await Send(request); Assert.AreEqual(0, reply.Code, reply.Option);
+		Assert.AreEqual(0, _db.Fetch<Tran01Tenuri>("SELECT * FROM Tran01Tenuri").Count);
+		var point = _db.Fetch<TranPointEvent>("SELECT * FROM TranPointEvent").Single();
+		Assert.AreEqual("TENURI:OLD", point.EventKey); Assert.AreEqual(25L, point.PointDelta);
+		Assert.AreEqual(25, _db.Fetch<SummaryPoint>("SELECT * FROM SummaryPoint").Single().Point);
+		Assert.AreEqual(25, _db.Fetch<MasterEndCustomerAccount>("SELECT * FROM MasterEndCustomerAccount").Single().Point);
+	}
+
+	[TestMethod]
+	[DataRow("use")]
+	[DataRow("origin")]
+	[DataRow("partialUse")]
+	[DataRow("partialOrigin")]
+	public async Task LegacySlip_GenericUpdatesCannotChangePointInputOrOrigin(string route) {
+		var slip = SeedLegacySlipForHandler(); var requestSlip = Copy(slip);
+		object request;
+		if (route.StartsWith("partial", StringComparison.Ordinal)) {
+			request = new PartialUpdateParam(typeof(Tran01Tenuri), [route == "partialUse" ? "UsePoint" : "OldSeqNo"], [new(slip.Id, slip.Vdu, ["0"])]);
+		} else {
+			if (route == "use") requestSlip.UsePoint = 8; else requestSlip.OldSeqNo = 0;
+			request = new UpdateParam(typeof(Tran01Tenuri), Common.SerializeObject(requestSlip));
+		}
+		Assert.AreNotEqual(0, (await Send(request)).Code);
+		var stored = Row<Tran01Tenuri>(slip.Id); Assert.AreEqual(123L, stored.OldSeqNo); Assert.AreEqual(7L, stored.UsePoint);
+		Assert.AreEqual(25L, _db.Fetch<TranPointEvent>("SELECT * FROM TranPointEvent").Single().PointDelta);
+	}
+	[TestMethod]
+	public async Task AccountPoint_GenericInsertAndUpdateCannotReplaceLedgerBalance() {
+		_db.CreateTable(typeof(MasterEndCustomer), true, false); _db.CreateTable(typeof(MasterEndCustomerAccount), true, false);
+		var customer = Seed(new MasterEndCustomer { Code = "ACCOUNT", Name = "会員" });
+		Assert.AreNotEqual(0, (await Insert(new MasterEndCustomerAccount { Id_Customer = customer, Point = 3 })).Code);
+		Assert.AreNotEqual(0, (await Send(new InsertBulkParam(typeof(MasterEndCustomerAccount), Common.SerializeObject(new[] { new MasterEndCustomerAccount { Id_Customer = customer, Point = 4 } })))).Code);
+		Assert.AreEqual(0, _db.Fetch<MasterEndCustomerAccount>("SELECT * FROM MasterEndCustomerAccount").Count);
+		Assert.AreEqual(0, (await Insert(new MasterEndCustomerAccount { Id_Customer = customer, Point = 0 })).Code);
+		var account = _db.Fetch<MasterEndCustomerAccount>("SELECT * FROM MasterEndCustomerAccount").Single();
+		account.Point = 9; Assert.AreNotEqual(0, (await Update(account)).Code);
+		Assert.AreNotEqual(0, (await Send(new PartialUpdateParam(typeof(MasterEndCustomerAccount), ["Point"], [new(account.Id, account.Vdu, ["10"])]))).Code);
+		Assert.AreEqual(0, Row<MasterEndCustomerAccount>(account.Id).Point);
+		account = Row<MasterEndCustomerAccount>(account.Id); account.PointRank = "2";
+		var reply = await Update(account); Assert.AreEqual(0, reply.Code, reply.Option);
+		Assert.AreEqual("2", Row<MasterEndCustomerAccount>(account.Id).PointRank); Assert.AreEqual(0, Row<MasterEndCustomerAccount>(account.Id).Point);
+		var otherCustomer = Seed(new MasterEndCustomer { Code = "OTHER", Name = "別会員" });
+		account = Row<MasterEndCustomerAccount>(account.Id); account.Id_Customer = otherCustomer;
+		Assert.AreNotEqual(0, (await Update(account)).Code);
+		Assert.AreEqual(customer, Row<MasterEndCustomerAccount>(account.Id).Id_Customer);
+	}
+	[TestMethod]
+	public async Task AccountPoint_NewAccountWithExistingLedgerRequiresDedicatedBalanceRebuild() {
+		_db.CreateTable(typeof(MasterEndCustomer), true, false); _db.CreateTable(typeof(MasterEndCustomerAccount), true, false);
+		var customer = Seed(new MasterEndCustomer { Code = "LEDGERONLY", Name = "台帳あり" });
+		Seed(new TranPointEvent { EventKey = "LEGACY:CV:POINT:1", Id_Customer = customer, EventType = (int)EnumPointEventType.LegacyHistory, PointDelta = 5 });
+		var reply = await Insert(new MasterEndCustomerAccount { Id_Customer = customer, Point = 0 });
+		Assert.AreNotEqual(0, reply.Code);
+		Assert.AreEqual(0, _db.Fetch<MasterEndCustomerAccount>("SELECT * FROM MasterEndCustomerAccount").Count);
+		Assert.AreEqual(5L, _db.Fetch<TranPointEvent>("SELECT * FROM TranPointEvent").Single().PointDelta);
 	}
 }

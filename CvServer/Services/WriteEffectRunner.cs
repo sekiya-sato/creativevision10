@@ -87,7 +87,7 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 		// 仕入配分の入荷済み数は ArrivalDb だけが計算して書く。部分更新では引当が引き直されない(配分再設計 Step 4)
 		"ArrivedSu",
 		// 店舗売上のポイント台帳は顧客・店舗・使用ポイントで計上し、付与ポイントは台帳から設定するため、部分更新で変えると台帳と食い違う
-		"Id_Customer", "Id_Tenpo", "UsePoint", "GrantPoint",
+		"Id_Customer", "Id_Tenpo", "UsePoint", "GrantPoint", "OldSeqNo",
 	];
 
 	/// <summary>
@@ -159,7 +159,8 @@ public sealed class WriteEffectRunner(ExDatabase db) {
 		// 店舗売上のポイント付与。顧客・金額・区分の変更や削除は台帳の取消・付与として同じトランザクション内で反映する
 		// ポイント台帳の手動登録(追加のみ許可)は残高へ同じトランザクション内で反映する
 		var point = item switch {
-			Tran01Tenuri tenuri => new PointCalcDb(_db).SyncTenuri(tenuri.Id, op == WriteOp.Delete ? null : tenuri),
+			Tran01Tenuri tenuri => new PointCalcDb(_db).SyncTenuri(tenuri.Id, op == WriteOp.Delete ? null : tenuri,
+				org as Tran01Tenuri ?? (op == WriteOp.Delete ? tenuri : null)),
 			TranPointEvent pointEvent when op == WriteOp.Insert => new PointLedgerDb(_db).AfterInsert(pointEvent),
 			_ => 0,
 		};

@@ -89,6 +89,8 @@ public partial class ConvertDb {
 		(nameof(CnvTran13Hachu), static (db, isInit) => db.CnvTran13Hachu(isInit)),
 		// 未解決の商品マスタ補完とId再設定は、通常商品の全Tran変換後に行う
 		(nameof(CnvTranShohinSupplement), static (db, isInit) => db.CnvTranShohinSupplement(isInit)),
+		// 旧ポイントは確定履歴を移すだけで、初期化フラグでは削除しない。
+		(nameof(CnvTranPointHistory), static (db, isInit) => db.CnvTranPointHistory(isInit)),
 		// 関連伝票の張替は全Tran変換の後に実行する必要があるため必ず最後に置く
 		(nameof(CnvTranRelateFix), static (db, isInit) => db.CnvTranRelateFix(isInit)),
 	];
@@ -97,7 +99,7 @@ public partial class ConvertDb {
 	/// 全ての変換タスク名を取得
 	/// </summary>
 	/// <returns></returns>
-	public List<string> GetAllTaskNames() => _stepDefinitions.Select(s => s.Name).ToList();
+	public List<string> GetAllTaskNames() => [.. _stepDefinitions.Select(s => s.Name), nameof(RebuildPointHistory)];
 
 	/// <summary>
 	/// 変換タスク名から実行用ステップを生成する
@@ -105,6 +107,12 @@ public partial class ConvertDb {
 	/// </summary>
 	private (string Name, Func<bool, int> Action)[] BuildSteps(IEnumerable<string> selectedTask) {
 		var selectedSet = new HashSet<string>(selectedTask);
+		// 全変換には含めない。専用処理は初期化ありの単独選択でだけ実行する。
+		if (selectedSet.Contains(nameof(RebuildPointHistory))) {
+			if (selectedSet.Count != 1) throw new ArgumentException("ポイント全再構築は他の変換と同時に選択できません。");
+			return [(nameof(RebuildPointHistory), isInit => isInit ? RebuildPointHistory()
+				: throw new ArgumentException("ポイント全再構築は初期化ありで指定してください。"))];
+		}
 		return _stepDefinitions
 			.Where(s => selectedSet.Contains(s.Name))
 			.Select(s => (s.Name, (Func<bool, int>)(isInit => s.Action(this, isInit))))
@@ -519,6 +527,9 @@ WHERE EXISTS (select 1 from {tmp} t where t.Code = {table}.Code)");
 	/// <param name="isInit"></param>
 	/// <returns></returns>
 	public int CnvMasterEndCustomer(bool isInit = true, int chunkSize = 20000) { // 顧客分割のデフォルトチャンクサイズは20000件
+		if (isInit && _toDb.IsExistTable(typeof(MasterEndCustomer))
+			&& _toDb.FetchDialect<long>("SELECT COUNT(*) FROM MasterEndCustomer").FirstOrDefault() > 0)
+			throw new InvalidOperationException("既存顧客のID・会員残高を保護するため、顧客再取込は初期化なしで実行してください。");
 		var codes = _fromDb.Fetch<string>("select 顧客CD from HC$master_kokyaku where 顧客CD > '.' order by 顧客CD");
 
 		// 親テーブルを再作成する前に子テーブルを削除し、外部キー関係を保つ。
@@ -607,7 +618,7 @@ order by k.顧客CD
 				WithdrawnDate = getString(rec, "退会日"),
 				Kubun = getDataInt(rec, "顧客区分"),
 				PointRank = getString(rec, "ポイントランク名称"),
-				Point = getDataInt(rec, "REALポイント"),
+				Point = 0, // 残高はポイント台帳の移行・再構築で設定する。
 				SalesTotalKingaku = getDataInt(rec, "累計購入金額"),
 				LastVisitDate = getString(rec, "最終来店日"),
 				VisitCount = getDataInt(rec, "累計来店回数"),

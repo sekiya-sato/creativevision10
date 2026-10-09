@@ -37,13 +37,14 @@ public partial class PointLedgerManualViewModel : BaseViewModel {
 		EnumPointEventType.Adjustment => "調整",
 		EnumPointEventType.Expire => "失効",
 		EnumPointEventType.OpeningBalance => "期首",
+		EnumPointEventType.LegacyHistory => "旧CV履歴",
 		_ => eventType.ToString(CultureInfo.InvariantCulture),
 	};
 
 	/// <summary>一覧条件の種別</summary>
 	public IReadOnlyList<KeyValuePair<int, string>> SearchTypeOptions { get; } = [
 		new(AllTypes, "すべて"),
-		.. new[] { EnumPointEventType.Grant, EnumPointEventType.Use, EnumPointEventType.Cancel, EnumPointEventType.Adjustment, EnumPointEventType.Expire, EnumPointEventType.OpeningBalance }
+		.. new[] { EnumPointEventType.Grant, EnumPointEventType.Use, EnumPointEventType.Cancel, EnumPointEventType.Adjustment, EnumPointEventType.Expire, EnumPointEventType.OpeningBalance, EnumPointEventType.LegacyHistory }
 			.Select(x => new KeyValuePair<int, string>((int)x, TypeName((int)x))),
 	];
 
@@ -449,6 +450,21 @@ public partial class PointLedgerManualViewModel : BaseViewModel {
 
 /// <summary>ポイント手動登録の一覧行</summary>
 public sealed class PointLedgerManualRow(TranPointEvent pointEvent, string customerCode, string customerName, bool isCancelled) {
+	readonly LegacyPointHistory? legacy = ReadLegacy(pointEvent);
+
+	/// <summary>旧履歴は元の内訳、CV10履歴は対応する種別の値を表示する（返品の符号も保持）。</summary>
+	public string GrantPointText => FormatPoints(legacy?.GrantPoints ?? (Event.EventType == (int)EnumPointEventType.Grant ? Event.PointDelta : null));
+	public string UsePointText => FormatPoints(legacy?.UsePoints ?? (Event.EventType == (int)EnumPointEventType.Use ? -Event.PointDelta : null));
+	public string ExpirePointText => FormatPoints(legacy?.ExpirePoints ?? (Event.EventType == (int)EnumPointEventType.Expire ? -Event.PointDelta : null));
+
+	static string FormatPoints(long? points) => points?.ToString("#,0;-#,0;0", CultureInfo.InvariantCulture) ?? string.Empty;
+
+	static LegacyPointHistory? ReadLegacy(TranPointEvent row) {
+		if (row.EventType != (int)EnumPointEventType.LegacyHistory) return null;
+		try { return Common.DeserializeObject(row.Jcalc, typeof(LegacyPointHistory)) as LegacyPointHistory; }
+		catch (Newtonsoft.Json.JsonException) { return null; }
+	}
+
 	public TranPointEvent Event { get; } = pointEvent;
 	public string CustomerCode { get; } = customerCode;
 	public string CustomerName { get; } = customerName;

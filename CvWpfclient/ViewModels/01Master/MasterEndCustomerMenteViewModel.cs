@@ -13,6 +13,11 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseCodeNameLight
 	[ObservableProperty]
 	public partial string Title { get; set; } = "顧客マスターメンテ";
 
+	/// <summary>会員情報の台帳同期残高。顧客マスターの編集値としては保存しない。</summary>
+	[ObservableProperty]
+	public partial string AccountPointText { get; set; } = "0";
+
+	CancellationTokenSource? accountPointLoadCts;
 	protected override string[] AdditionalLightweightColumns => ["Rank", "VTenpo"];
 
 	protected override string? SelectCodeDisplayName => "顧客";
@@ -50,6 +55,9 @@ from MasterEndCustomer {query.AddWhereOrder()}
 	}
 
 	protected override void OnCurrentEditChangedCore(MasterEndCustomer? oldValue, MasterEndCustomer newValue) {
+		accountPointLoadCts?.Cancel();
+		AccountPointText = newValue?.Id > 0 ? string.Empty : "0";
+		if (newValue?.Id > 0) _ = LoadAccountPointAsync(newValue);
 		if (newValue == null) {
 			EditJsub = [];
 			return;
@@ -57,6 +65,31 @@ from MasterEndCustomer {query.AddWhereOrder()}
 		ApplySubListsFromCurrentEdit();
 	}
 
+	async Task LoadAccountPointAsync(MasterEndCustomer customer) {
+		var cts = new CancellationTokenSource();
+		accountPointLoadCts = cts;
+		try {
+			// 軽量選択直後の詳細再読込も同じフックへ来るため、最後の編集対象だけ照会する。
+			await Task.Delay(200, cts.Token);
+			var param = new QueryListParam(typeof(MasterEndCustomerAccount), "Id_Customer=@0", "Id", [customer.Id.ToString(System.Globalization.CultureInfo.InvariantCulture)], 1);
+			var reply = await SendMessageAsync(new CvMsg {
+				Code = 0, Flag = CvFlag.Msg101_Op_Query, DataType = typeof(QueryListParam), DataMsg = Common.SerializeObject(param),
+			}, cts.Token);
+			if (cts.IsCancellationRequested || !ReferenceEquals(CurrentEdit, customer)) return;
+			if (reply.Code < 0 && reply.Code != -1) throw new InvalidOperationException(reply.Option ?? reply.DataMsg);
+			var accounts = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as IList;
+			var account = accounts?.Cast<MasterEndCustomerAccount>().FirstOrDefault();
+			AccountPointText = (account?.Point ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture);
+		}
+		catch (OperationCanceledException) { }
+		catch (Exception ex) {
+			if (!cts.IsCancellationRequested && ReferenceEquals(CurrentEdit, customer)) Message = $"ポイント残高取得失敗: {ex.Message}";
+		}
+		finally {
+			if (ReferenceEquals(accountPointLoadCts, cts)) accountPointLoadCts = null;
+			cts.Dispose();
+		}
+	}
 	void ApplySubListsFromCurrentEdit() {
 		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
 		foreach (var item in jsubClones) item.SetBaseList(KubunList);
