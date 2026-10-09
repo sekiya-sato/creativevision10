@@ -552,7 +552,8 @@ public class OpeningBalanceCsvTests {
 		StringAssert.Contains(scoped, "WHEN t.Shime3 <> 0 THEN t.Shime3");
 		StringAssert.Contains(scoped, "WHEN t.Shime1 <> 0 THEN t.Shime1");
 		StringAssert.Contains(scoped, "ShimeBi FROM MasterSysman");
-		StringAssert.Contains(scoped, "END = @3");
+		// 画面は締日を文字列でバインドするため、型の無いCASE式と比べられるよう整数へCASTする
+		StringAssert.Contains(scoped, "END = CAST(@3 AS INTEGER)");
 		StringAssert.Contains(scoped, "t.Code >= @1");
 		StringAssert.Contains(scoped, "s.Id IS NOT NULL");
 

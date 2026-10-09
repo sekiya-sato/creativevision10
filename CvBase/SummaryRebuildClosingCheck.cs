@@ -17,9 +17,9 @@ public sealed class SummaryClosingCheckRow {
 }
 
 /// <summary>
-/// 保存済み締日と現在マスタ締日の不一致。
+/// 保存済み締日と現在マスタ締日の不一致。<c>CurrentShimeText</c> は現在の有効締日集合の表記(例「10日/20日/末日」)。
 /// </summary>
-public sealed record SummaryClosingMismatch(string KakeType, string TorihikiCode, string? SavedDayTo, int CurrentShime);
+public sealed record SummaryClosingMismatch(string KakeType, string TorihikiCode, string? SavedDayTo, string CurrentShimeText);
 
 /// <summary>
 /// 対象年月・締日まで展開済みの再作成要求。クライアントはこの記述子を一対一で表示名とメッセージへ変換する。
@@ -127,7 +127,9 @@ ORDER BY t.Code, s.DenDay, s.Id
 	/// </summary>
 	public static List<SummaryClosingMismatch> FindMismatches(string kakeType, IEnumerable<SummaryClosingCheckRow> rows) =>
 		[.. rows.Where(row => !IsExpectedClosingDay(row.DayTo, row.Shime1, row.Shime2, row.Shime3, row.OwnShime))
-			.Select(row => new SummaryClosingMismatch(kakeType, row.TorihikiCode, row.DayTo, row.Shime1))];
+			.Select(row => new SummaryClosingMismatch(kakeType, row.TorihikiCode, row.DayTo,
+				// 締日1だけでは複数締日の集合や未設定(自社締日)を表せないため、照合に使った有効締日集合を出す
+				ClosingDaySet.FormatDays(ClosingDaySet.Resolve(row.Shime1, row.Shime2, row.Shime3, row.OwnShime))))];
 
 	/// <summary>保存済み<paramref name="savedDayTo"/>の日部分が、締日1/2/3から解決した有効締日集合のいずれかと一致するか。</summary>
 	private static bool IsExpectedClosingDay(string? savedDayTo, int shime1, int shime2, int shime3, int ownShime) {
@@ -159,7 +161,7 @@ ORDER BY t.Code, s.DenDay, s.Id
 	public static string BuildMismatchWarning(IReadOnlyList<SummaryClosingMismatch> mismatches) {
 		if (mismatches.Count == 0) return string.Empty;
 		var lines = mismatches.Take(5).Select(mismatch =>
-			$"{mismatch.KakeType}: {mismatch.TorihikiCode} / 保存締日 {mismatch.SavedDayTo} / 現在締日 {FormatShime(mismatch.CurrentShime)}");
+			$"{mismatch.KakeType}: {mismatch.TorihikiCode} / 保存締日 {mismatch.SavedDayTo} / 現在締日 {mismatch.CurrentShimeText}");
 		var remain = mismatches.Count > 5 ? $"\nほか{mismatches.Count - 5}件" : string.Empty;
 		return $"締日変更を検出したため、再更新を開始しません。\n{string.Join("\n", lines)}{remain}\n{ManualRecalculationGuidance}";
 	}

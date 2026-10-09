@@ -1296,7 +1296,8 @@ LEFT JOIN {tempTableName} AS o ON o.Id_Tokui = c.Id_Tokui AND o.DenDay = @1;
 ";
 				var period = $"{dayFrom}-{dayTo},締日={shime},再発行={isReissue}";
 				var parameterArray = parameters.ToArray();
-				cnt += ExecuteAndCounts(prepareSql, parameterArray, "CalcSummaryUriSei(delete)", "SummaryUriSei", period);
+				// 戻り値は挿入件数のみとする(売掛・買掛と同じ。削除・一時表の件数を含めると実件数より多く見える)。
+				ExecuteAndCounts(prepareSql, parameterArray, "CalcSummaryUriSei(delete)", "SummaryUriSei", period);
 				cnt += ExecuteAndCounts(sql, parameterArray, "CalcSummaryUriSei", "SummaryUriSei", period);
 			}
 			_db.CompleteTransaction();
@@ -1493,7 +1494,8 @@ FROM calculated AS c;
 ";
 				var period = $"{dayFrom}-{dayTo},締日={shime}";
 				var parameterArray = parameters.ToArray();
-				cnt += ExecuteAndCounts(deleteSql, parameterArray, "CalcSummaryKaiShi(delete)", "SummaryKaiShi", period);
+				// 戻り値は挿入件数のみとする(売掛・買掛と同じ。削除件数を含めると実件数より多く見える)。
+				ExecuteAndCounts(deleteSql, parameterArray, "CalcSummaryKaiShi(delete)", "SummaryKaiShi", period);
 				cnt += ExecuteAndCounts(sql, parameterArray, "CalcSummaryKaiShi", "SummaryKaiShi", period);
 			}
 			_db.CompleteTransaction();

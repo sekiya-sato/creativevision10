@@ -201,9 +201,9 @@ public sealed class OpeningBalanceBuildResult {
 	public List<BaseDbClass> Records => [.. Entries.Where(x => x.Record != null).Select(x => x.Record!)];
 }
 
-/// <summary>テンプレートCSVの1行。</summary>
+/// <summary>テンプレートCSVの1行。<c>Shime</c> は取込で照合する取引先の最終締日(4.6)。</summary>
 public sealed record OpeningBalanceTemplateRow(
-	string Code, string Name, int Shime1, long Amount, OpeningBalanceBreakdown? Breakdown, string DueDay);
+	string Code, string Name, int Shime, long Amount, OpeningBalanceBreakdown? Breakdown, string DueDay);
 
 /// <summary>取引先一覧の絞り込み。テンプレート出力は絞り、取込時のコード解決は絞らない。</summary>
 [Flags]
@@ -387,7 +387,8 @@ public static class OpeningBalanceCsv {
 			     ELSE {ClosingDaySet.OwnShimeSubquerySql} END
 			""".ReplaceLineEndings(" ");
 		var closingWhere = spec.IsClosingBased && scope.HasFlag(EnumOpeningBalanceOwnerScope.ClosingFilter)
-			? $" AND {finalShimeSql} = @3" : string.Empty;
+			// 画面は締日を文字列でバインドする。CASE式は型(アフィニティ)を持たず文字列'99'と一致しないため整数へCASTする。
+			? $" AND {finalShimeSql} = CAST(@3 AS INTEGER)" : string.Empty;
 		var codeWhere = scope.HasFlag(EnumOpeningBalanceOwnerScope.CodeRange)
 			? " AND (@1 = '' OR t.Code >= @1) AND (@2 = '' OR t.Code <= @2)" : string.Empty;
 		var existingWhere = scope.HasFlag(EnumOpeningBalanceOwnerScope.ExistingOnly)
@@ -449,7 +450,7 @@ ORDER BY t.Code
 		return column.Field switch {
 			EnumOpeningBalanceField.Code => row.Code,
 			EnumOpeningBalanceField.Name => row.Name,
-			EnumOpeningBalanceField.Shime => FormatShime(row.Shime1),
+			EnumOpeningBalanceField.Shime => FormatShime(row.Shime),
 			EnumOpeningBalanceField.Amount => row.Amount == 0 ? string.Empty : row.Amount.ToString(CultureInfo.InvariantCulture),
 			EnumOpeningBalanceField.DueDay => FormatDate(row.DueDay),
 			_ => breakdown == null ? string.Empty : FormatAmount(GetBreakdownValue(breakdown, column.Field)),

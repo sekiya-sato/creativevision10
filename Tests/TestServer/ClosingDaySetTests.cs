@@ -54,6 +54,70 @@ public class ClosingDaySetTests {
 	}
 
 	[TestMethod]
+	[DataRow(28, 99, 0)]
+	[DataRow(10, 28, 99)]
+	public void Validate_RejectsDay28WithMonthEnd(int shime1, int shime2, int shime3) {
+		// 平年2月は28日と末日が同じ日付(DenDay)になり、互いの請求残・支払残を上書きするため併用させない。
+		var error = ClosingDaySet.Validate(shime1, shime2, shime3);
+		Assert.AreEqual("28日と末日は2月に同じ日付になるため、同時に設定できません。", error);
+	}
+
+	[TestMethod]
+	[DataRow(27, 99, 0)]
+	[DataRow(10, 28, 0)]
+	public void Validate_AcceptsDay28OrMonthEndAlone(int shime1, int shime2, int shime3) {
+		Assert.AreEqual("", ClosingDaySet.Validate(shime1, shime2, shime3));
+	}
+
+	[TestMethod]
+	public void GetBillingPeriod_ThrowsWhenDay28AndMonthEndCollideInFebruary() {
+		// 既存データに28日と末日の併用が残っていても、空期間の行で請求残を上書きせず例外で止める。
+		Assert.ThrowsExactly<InvalidOperationException>(() => ClosingDaySet.GetBillingPeriod("202602", [28, 99], 99));
+		// うるう年は28日と29日(末日)で逆転しない。
+		var leap = ClosingDaySet.GetBillingPeriod("202402", [28, 99], 99);
+		Assert.AreEqual("20240229", leap.DayFrom);
+		Assert.AreEqual("20240229", leap.DayTo);
+	}
+
+	[TestMethod]
+	[DataRow(1, "")]
+	[DataRow(28, "")]
+	[DataRow(99, "")]
+	[DataRow(0, "自社締日は1〜28日または末日で指定してください。")]
+	[DataRow(31, "自社締日は1〜28日または末日で指定してください。")]
+	public void ValidateOwnShime_AcceptsOnly1To28OrMonthEnd(int shimeBi, string expected) {
+		Assert.AreEqual(expected, ClosingDaySet.ValidateOwnShime(shimeBi));
+	}
+
+	[TestMethod]
+	public void EnsureMasterSaveValid_ChecksClosingDaysOnInsertAndOnChange() {
+		// 追加は常に検査する。
+		Assert.ThrowsExactly<ArgumentException>(() => ClosingDaySet.EnsureMasterSaveValid(new MasterTokui { Shime1 = 20, Shime2 = 10 }, null));
+		Assert.ThrowsExactly<ArgumentException>(() => ClosingDaySet.EnsureMasterSaveValid(new MasterShiire { Shime1 = 28, Shime2 = 99 }, null));
+		Assert.ThrowsExactly<ArgumentException>(() => ClosingDaySet.EnsureMasterSaveValid(new MasterSysman { ShimeBi = 0 }, null));
+		ClosingDaySet.EnsureMasterSaveValid(new MasterTokui { Shime1 = 10, Shime2 = 20, Shime3 = 99 }, null);
+		ClosingDaySet.EnsureMasterSaveValid(new MasterSysman { ShimeBi = 99 }, null);
+
+		// 更新は締日列が変わったときだけ検査し、締日と無関係な更新を既存値で止めない。
+		ClosingDaySet.EnsureMasterSaveValid(new MasterTokui { Shime1 = 20, Shime2 = 10 }, new MasterTokui { Shime1 = 20, Shime2 = 10 });
+		ClosingDaySet.EnsureMasterSaveValid(new MasterSysman { ShimeBi = 0 }, new MasterSysman { ShimeBi = 0 });
+		Assert.ThrowsExactly<ArgumentException>(() => ClosingDaySet.EnsureMasterSaveValid(new MasterTokui { Shime1 = 0, Shime2 = 20 }, new MasterTokui { Shime1 = 99 }));
+		Assert.ThrowsExactly<ArgumentException>(() => ClosingDaySet.EnsureMasterSaveValid(new MasterSysman { ShimeBi = 0 }, new MasterSysman { ShimeBi = 99 }));
+
+		// 締日を持たない型は対象外。
+		ClosingDaySet.EnsureMasterSaveValid(new MasterShain(), null);
+	}
+
+	[TestMethod]
+	public void IsClosingDayColumn_DeniesClosingDayPartialUpdate() {
+		Assert.IsTrue(ClosingDaySet.IsClosingDayColumn(typeof(MasterTokui), nameof(MasterTokui.Shime2)));
+		Assert.IsTrue(ClosingDaySet.IsClosingDayColumn(typeof(MasterShiire), nameof(MasterShiire.Shime1)));
+		Assert.IsTrue(ClosingDaySet.IsClosingDayColumn(typeof(MasterSysman), nameof(MasterSysman.ShimeBi)));
+		Assert.IsFalse(ClosingDaySet.IsClosingDayColumn(typeof(MasterTokui), nameof(MasterTokui.PayDay)));
+		Assert.IsFalse(ClosingDaySet.IsClosingDayColumn(typeof(MasterShain), "Shime1"));
+	}
+
+	[TestMethod]
 	// 3.3 境界例(請求月 202609)。
 	[DataRow("202609", new[] { 99 }, 99, "20260901", "20260930")]
 	[DataRow("202609", new[] { 20 }, 20, "20260821", "20260920")]

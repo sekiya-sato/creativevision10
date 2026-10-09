@@ -1037,6 +1037,11 @@ public partial class CoreService {
 				error = $"部分更新では変更できない列です: {actual}";
 				return false;
 			}
+			// 締日は締日1/2/3の組合せ(前詰め・昇順・28日と末日の併用禁止)で検査するため、列単位では変更させない
+			if (ClosingDaySet.IsClosingDayColumn(itemType, actual)) {
+				error = $"締日は部分更新では変更できません。マスタ保守画面で保存してください: {actual}";
+				return false;
+			}
 			if (columns.Contains(actual, StringComparer.OrdinalIgnoreCase)) {
 				error = $"列が重複しています: {actual}";
 				return false;
@@ -1133,6 +1138,7 @@ public partial class CoreService {
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			new PointMasterDb(_db).ValidateSave(item, null);
+			ClosingDaySet.EnsureMasterSaveValid(item, null);
 			_db.Insert(item);
 			// 副作用(派生展開・在庫・引当)は追加と同一トランザクション内で実行する
 			LogEffects(insert.ItemType, Effects.After(WriteOp.Insert, insert.ItemType, item, null, vdate));
@@ -1168,6 +1174,7 @@ public partial class CoreService {
 			foreach (var item in list) {
 				var vdate = SetCreatedAuditValues(insertBulk.ItemType, item);
 				new PointMasterDb(_db).ValidateSave(item, null);
+				ClosingDaySet.EnsureMasterSaveValid(item, null);
 				_db.Insert(item);
 				effects = effects.Add(Effects.After(WriteOp.Insert, insertBulk.ItemType, item, null, vdate, reserveKeys));
 			}
@@ -1216,6 +1223,7 @@ public partial class CoreService {
 				org = current;
 				new PointMasterDb(_db).ValidateSave(item, org);
 			}
+			ClosingDaySet.EnsureMasterSaveValid(item, org);
 			// 在庫は差分の加減算なので、DB上の行が変わる前に旧値ぶんを反転しておく
 			Effects.Before(WriteOp.Update, update.ItemType, org);
 			db.Vdu = vdate;

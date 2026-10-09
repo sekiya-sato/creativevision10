@@ -80,6 +80,12 @@ public partial class SeikyuListReportViewModel : Helpers.BaseReportViewModel {
 		// 締日欄は選択した締日をそのまま出す。複数締日(Shime1/2/3)では c.Shime1 が当該行の締日とは
 		// 限らない(締日[10,20,99]の得意先で締日20を出力すると10が出てしまう)。本帳票は単一締日で
 		// 絞り込むため、全行の締日は選択値に一致する。
+		// 得意先が選択締日を持つかだけでは、同じ得意先の他の締日の行(10日・末日)も拾ってしまう。
+		// 行の請求日(DenDay)が、その月における選択締日の日付と一致する行だけに絞る。
+		// 入金予定日基準では請求日の月が行ごとに異なりうるため、DenDay自身の月で判定する。
+		var shimeRowWhere = shimeDay == 99
+			? "s.DenDay = strftime('%Y%m%d', date(substr(s.DenDay,1,4) || '-' || substr(s.DenDay,5,2) || '-01', '+1 month', '-1 day'))"
+			: $"CAST(substr(s.DenDay,7,2) AS INTEGER) = CAST({shime} AS INTEGER)";
 
 		var source = $@"
 raw AS (
@@ -105,6 +111,7 @@ raw AS (
     LEFT JOIN MasterTokui p ON p.Id = c.Id_Paysaki
     WHERE c.IsPay = 1
       AND {ClosingDaySet.ContainsShimeSql("c", shime, ClosingDaySet.OwnShimeSubquerySql)}
+      AND {shimeRowWhere}
       AND {primaryDay} >= {dateFrom} AND {primaryDay} <= {dateTo}
       {paysakiWhere}
 ),

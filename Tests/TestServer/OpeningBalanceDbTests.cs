@@ -398,6 +398,15 @@ public class OpeningBalanceDbTests {
 		var forMiddleShime = db.Fetch<OpeningBalanceOwnerRow>(sql, "20260630", string.Empty, string.Empty, 20);
 		CollectionAssert.AreEqual(new[] { "00124", "00125" }, forMiddleShime.Select(x => x.Code).ToArray(),
 			"中間の締日(20)では複数締日の得意先は拾えない。単一締日20と、未設定(自社締日20へフォールバック)の得意先だけ拾える");
+
+		// 画面(BalanceRegistrationViewModel)は Msg101_Op_Query 経由で締日を文字列として渡す。
+		// SQLiteでは型の無いCASE式と文字列 '99' が一致しないため、文字列バインドでも同じ結果になること。
+		var forFinalShimeText = db.Fetch<OpeningBalanceOwnerRow>(sql, "20260630", string.Empty, string.Empty, "99");
+		CollectionAssert.AreEqual(new[] { "00123" }, forFinalShimeText.Select(x => x.Code).ToArray(),
+			"締日を文字列で渡しても最終締日(99)の得意先が拾える");
+		var forMiddleShimeText = db.Fetch<OpeningBalanceOwnerRow>(sql, "20260630", string.Empty, string.Empty, "20");
+		CollectionAssert.AreEqual(new[] { "00124", "00125" }, forMiddleShimeText.Select(x => x.Code).ToArray(),
+			"締日を文字列で渡しても単一締日20と未設定(自社締日20)の得意先が拾える");
 	}
 
 	// ---- ヘルパ ------------------------------------------------------------------

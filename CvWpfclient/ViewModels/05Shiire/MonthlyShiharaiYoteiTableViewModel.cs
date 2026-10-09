@@ -9,11 +9,12 @@ namespace CvWpfclient.ViewModels._05Shiire;
 /// <summary>
 /// 月別支払予定表。締め済みの買掛残高に仕入先ごとの支払条件を当てて、支払予定日別の支払予定額を印字する。
 ///
-/// 予定日は MasterShiire（MasterTorihiki 派生）の支払条件から算出する。
-/// - Shime1 = 締日（1〜31。31 は月末扱い）
+/// 予定日は支払計算が保存した SummaryKaiShi.ShiharaiYoteiDay を使う（PayDay=0 は自社締日、3.4）。
+/// 期首残高CSVで予定日が空の行だけ MasterShiire の支払条件から同じ規則で補う。
 /// - PayMonth = 締月から何ヶ月後に支払うか（0=当月, 1=翌月, 2=翌々月）
-/// - PayDay   = 支払日（1〜31。31 は月末扱い）
+/// - PayDay   = 支払日（0以下は自社締日。31以上/その月の日数超は月末へ丸める）
 /// 予定日 = 締年月に PayMonth を加算した月の PayDay 日。
+/// 複数締日で同じ予定日に複数の締めがある場合は、最後の締めの残高を予定額とする（累積残高のため合算しない）。
 ///
 /// 金額は SummaryKaiShi（支払計算＝月次更新処理の成果物）の当月末残高を使う。
 /// SummaryKaiShi は対象期間のみの集計（繰越なし）なので、当月末残高は対象期間の開始(DayFrom)
@@ -77,17 +78,26 @@ public partial class MonthlyShiharaiYoteiTableViewModel : Helpers.BaseReportView
 		const string BaseMonth =
 			"date(substr(k.DenDay,1,4) || '-' || substr(k.DenDay,5,2) || '-01', '+' || ifnull(s.PayMonth,1) || ' months')";
 		const string MonthEnd = $"date({BaseMonth}, '+1 month', '-1 day')";
+		// 支払日が未設定(0以下)なら自社締日を支払日とする(計算処理 SummaryDb.CalcSummaryKaiShi と同じ規則、3.4)。
+		const string EffPayDay = $"(CASE WHEN ifnull(s.PayDay,0) <= 0 THEN {ClosingDaySet.OwnShimeSubquerySql} ELSE s.PayDay END)";
 		const string PayDate = $@"CASE
-            WHEN ifnull(s.PayDay,0) <= 0 OR ifnull(s.PayDay,0) >= 31
-                 OR CAST(strftime('%d', {MonthEnd}) AS INTEGER) < s.PayDay
+            WHEN {EffPayDay} >= 31
+                 OR CAST(strftime('%d', {MonthEnd}) AS INTEGER) < {EffPayDay}
               THEN {MonthEnd}
-            ELSE date({BaseMonth}, '+' || (s.PayDay - 1) || ' days')
+            ELSE date({BaseMonth}, '+' || ({EffPayDay} - 1) || ' days')
+        END";
+		// 予定日は計算処理が保存した値(ShiharaiYoteiDay)を正とする。期首残高CSVで予定日を空のまま取り込んだ行だけ
+		// 上の式で補う。
+		const string DueDate = $@"CASE
+            WHEN length(ifnull(k.ShiharaiYoteiDay,'')) = 8
+              THEN substr(k.ShiharaiYoteiDay,1,4) || '-' || substr(k.ShiharaiYoteiDay,5,2) || '-' || substr(k.ShiharaiYoteiDay,7,2)
+            ELSE {PayDate}
         END";
 
 		var groupKeys = IsByShiire ? "yoteiYm, yoteiDay, shiireCode, shiireName" : "yoteiYm";
 		var selectShiire = IsByShiire ? "shiireCode, shiireName" : "'' AS shiireCode, '(月合計)' AS shiireName";
 		var selectDay = IsByShiire ? "MAX(yoteiDay)" : "''";
-		var having = IsActiveOnly ? "HAVING SUM(balance) != 0" : "";
+		var having = IsActiveOnly ? "HAVING SUM(CASE WHEN rn = 1 THEN balance ELSE 0 END) != 0" : "";
 
 		// 予定金額は当月末残高（PreviousBalance + Balance）。PreviousBalance は対象期間の開始(DayFrom)
 		// より前の全行を SUM(TotalShiire - TotalOut) で積む。行ごとに DayFrom が異なるため
@@ -101,7 +111,7 @@ WITH scheduled AS (
           WHERE pb.Id_Shiire = k.Id_Shiire AND pb.DayTo < k.DayFrom) + k.Balance AS balance,
         k.TotalShiire AS totalShiire,
         k.TotalOut    AS totalOut,
-        {PayDate} AS payDate
+        {DueDate} AS payDate
     FROM SummaryKaiShi k
     JOIN MasterShiire s ON s.Id = k.Id_Shiire
     WHERE k.DenDay >= {dataFrom} AND k.DenDay <= {dataTo}
@@ -111,7 +121,11 @@ filtered AS (
     SELECT
         strftime('%Y%m', payDate)   AS yoteiYm,
         strftime('%Y%m%d', payDate) AS yoteiDay,
-        shiireCode, shiireName, shimeDay, balance, totalShiire, totalOut
+        shiireCode, shiireName, shimeDay, balance,
+        -- 同じ取引先・同じ予定日に複数の締め(複数締日)がある場合、balance は締めごとの累積残高なので
+        -- 合算すると前残を重複して数える。予定額は最後の締めの累積残高だけを採る。
+        ROW_NUMBER() OVER (PARTITION BY shiireCode, strftime('%Y%m%d', payDate) ORDER BY shimeDay DESC) AS rn,
+        totalShiire, totalOut
     FROM scheduled
     WHERE strftime('%Y%m', payDate) >= {rangeFrom}
       AND strftime('%Y%m', payDate) <= {rangeTo}
@@ -122,7 +136,7 @@ SELECT
     {selectShiire},
     SUM(totalShiire) AS totalShiire,
     SUM(totalOut)    AS totalOut,
-    SUM(balance)     AS yoteiKingaku,
+    SUM(CASE WHEN rn = 1 THEN balance ELSE 0 END) AS yoteiKingaku,
     COUNT(*)         AS shimeCount,
     {TranMeisaiSql.DateLabel("MAX(shimeDay)")} AS lastShimeDay
 FROM filtered

@@ -49,8 +49,38 @@ public static class ClosingDaySet {
 		if ((shime2 != 0 && shime1 >= shime2) || (shime3 != 0 && shime2 >= shime3)) {
 			return "締日は小さい順に設定してください。（締日1 < 締日2 < 締日3）";
 		}
+		// V5: 28日と末日の併用禁止。平年2月は両方が28日になり、同じ請求日(DenDay)の2回の締めが
+		// 互いの請求残・支払残を上書きするため(2026-10-09 決定)。
+		if (new[] { shime1, shime2, shime3 }.Contains(28) && new[] { shime1, shime2, shime3 }.Contains((int)Share.EnumShime.DayLast)) {
+			return "28日と末日は2月に同じ日付になるため、同時に設定できません。";
+		}
 		return "";
 	}
+
+	/// <summary>自社締日(<c>MasterSysman.ShimeBi</c>)の保存前検査。1〜28/99以外ならエラー文、正常なら空文字を返す。</summary>
+	public static string ValidateOwnShime(int shimeBi) =>
+		shimeBi is (>= 1 and <= 28) or (int)Share.EnumShime.DayLast ? "" : "自社締日は1〜28日または末日で指定してください。";
+
+	/// <summary>
+	/// 汎用保存(追加・一括追加・更新)で、取引先の締日1/2/3と自社締日をサーバー側でも検査する(AGENTS 7.4)。
+	/// 更新では締日列が変わった場合だけ検査し、締日と無関係な更新を既存値で止めない。違反は <see cref="ArgumentException"/>。
+	/// </summary>
+	public static void EnsureMasterSaveValid(object item, object? previous) {
+		var error = item switch {
+			MasterTorihiki row when previous is not MasterTorihiki org
+				|| (org.Shime1, org.Shime2, org.Shime3) != (row.Shime1, row.Shime2, row.Shime3)
+				=> Validate(row.Shime1, row.Shime2, row.Shime3),
+			MasterSysman row when previous is not MasterSysman org || org.ShimeBi != row.ShimeBi
+				=> ValidateOwnShime(row.ShimeBi),
+			_ => "",
+		};
+		if (error.Length > 0) throw new ArgumentException(error);
+	}
+
+	/// <summary>部分更新では組合せ検査ができないため、締日列(取引先の締日1/2/3・自社締日)の部分更新を拒否する対象か。</summary>
+	public static bool IsClosingDayColumn(Type itemType, string column) =>
+		(typeof(MasterTorihiki).IsAssignableFrom(itemType) && column is nameof(MasterTorihiki.Shime1) or nameof(MasterTorihiki.Shime2) or nameof(MasterTorihiki.Shime3))
+		|| (itemType == typeof(MasterSysman) && column == nameof(MasterSysman.ShimeBi));
 
 	/// <summary>
 	/// 請求月・対象締日・有効締日リストから締請求期間(DayFrom〜DayTo)を求める(3.3)。
@@ -81,6 +111,11 @@ public static class ClosingDaySet {
 
 		var dayTo = ClosingMonthCalculator.GetClosingDate(billingMonth, targetShime);
 		var dayFrom = ClosingMonthCalculator.GetClosingDate(prevMonth, prevShime).AddDays(1);
+		// 28日と末日を併用すると平年2月で期間が逆転する(V5で保存させないが、既存データでも黙って空期間にしない)。
+		if (dayFrom > dayTo) {
+			throw new InvalidOperationException(
+				$"締請求期間が逆転しています(請求月={billingYyyymm}, 締日={FormatDays(days)}, 対象締日={targetShime})。28日と末日を同時に設定した取引先の締日を見直してください。");
+		}
 		return (dayFrom.ToString("yyyyMMdd", CultureInfo.InvariantCulture), dayTo.ToString("yyyyMMdd", CultureInfo.InvariantCulture));
 	}
 

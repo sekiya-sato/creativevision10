@@ -363,8 +363,9 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 
 			var lines = OpeningBalanceCsv.BuildTemplateLines(
 				SelectedKind, IncludeBreakdown, FiscalStartDate, keyDate, SelectedShime,
+				// 締日欄は取込で照合する最終締日を出す(4.6)。締日1を出すと複数締日の取引先で取込時の締日と食い違う
 				rows.Select(x => new OpeningBalanceTemplateRow(
-					x.Code, x.Name, x.Shime1,
+					x.Code, x.Name, ClosingDaySet.Resolve(x.Shime1, x.Shime2, x.Shime3, ownShime)[^1],
 					x.HasExisting != 0 ? x.Amount : 0,
 					IncludeBreakdown && x.HasExisting != 0 ? x.ToBreakdown() : null,
 					x.DueDay)));

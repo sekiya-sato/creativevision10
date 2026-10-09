@@ -1191,6 +1191,19 @@ public class SummaryKakeDbTests {
 	}
 
 	[TestMethod]
+	public void SummaryRebuildClosingCheck_WarningShowsWholeClosingDaySet() {
+		// 複数締日は集合で、締日未設定(Shime1=0)は自社締日で表示する(「不正(0)」や締日1だけを出さない)。
+		var rows = new[] {
+			new SummaryClosingCheckRow { TorihikiCode = "T010", DayTo = "20260915", Shime1 = 10, Shime2 = 20, Shime3 = 99, OwnShime = 99 },
+			new SummaryClosingCheckRow { TorihikiCode = "T000", DayTo = "20260915", Shime1 = 0, OwnShime = 20 },
+		};
+		var warning = SummaryRebuildClosingCheck.BuildMismatchWarning(SummaryRebuildClosingCheck.FindMismatches("売掛", rows));
+
+		StringAssert.Contains(warning, "売掛: T010 / 保存締日 20260915 / 現在締日 10日/20日/末日");
+		StringAssert.Contains(warning, "売掛: T000 / 保存締日 20260915 / 現在締日 20日");
+	}
+
+	[TestMethod]
 	public void SummaryRebuildClosingCheck_SelectsByDenDayAndCatchesEmptyOrInvalidDayTo() {
 		var db = PrepareClosingCheckTables();
 		var uriEmptyId = InsertTokui(db, "U001", 31);
@@ -1275,7 +1288,7 @@ public class SummaryKakeDbTests {
 
 	[TestMethod]
 	public async Task SummaryRebuildRequestDispatchGate_UsesDescriptorOrderAndStopsBeforeSend() {
-		var mismatch = new SummaryClosingMismatch("売掛", "U001", "20260730", 31);
+		var mismatch = new SummaryClosingMismatch("売掛", "U001", "20260730", "31日");
 		var descriptors = SummaryRebuildRequestPlanner.CreateDescriptors("全て", ["202607"], [99], [20], "202607", "202607");
 		List<CvFlag> createdFlags = [];
 		List<CvFlag> sentFlags = [];
