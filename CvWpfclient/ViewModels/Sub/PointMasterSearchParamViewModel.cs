@@ -24,7 +24,8 @@ public partial class PointMasterSearchParamViewModel : Helpers.BaseViewModel {
 		if (includePending) options.Add(new(0, "移行設定待ち（親Id=0）"));
 		options.AddRange((bases ?? []).Select(x => new KeyValuePair<long, string>(x.Id, $"{x.Code} {x.Name} (版{x.Version})")));
 		BaseOptions = options;
-		Parameter = param;
+		// 呼出元の条件を直接書き換えないよう複製して編集する（キャンセル時に元の条件を残す）
+		Parameter = param with { };
 		if (!options.Any(x => x.Key == Parameter.Id_PointBase)) Parameter.Id_PointBase = PointMasterSearchParameter.AllBase;
 	}
 

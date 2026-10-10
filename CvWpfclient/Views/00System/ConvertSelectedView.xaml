@@ -27,6 +27,7 @@
 			<StackPanel Orientation="Horizontal">
 				<Button Margin="0,0,8,0"
 					Command="{Binding ExitCommand}"
+					IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"
 					Style="{StaticResource ToolCommandButton}"
 					ToolTip="閉じる (Esc)">
 					<materialDesign:PackIcon Kind="ArrowLeft" />
@@ -136,7 +137,15 @@
 						</DataGridTemplateColumn>
 						<DataGridTextColumn Width="*"
 							Binding="{Binding DisplayName}"
-							Header="プログラム名" />
+							Header="プログラム名">
+							<DataGridTextColumn.ElementStyle>
+								<Style BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}"
+									TargetType="TextBlock">
+									<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+									<Setter Property="ToolTip" Value="{Binding DisplayName}" />
+								</Style>
+							</DataGridTextColumn.ElementStyle>
+						</DataGridTextColumn>
 					</DataGrid.Columns>
 				</DataGrid>
 			</GroupBox>
@@ -176,6 +185,7 @@
 				</Button>
 				<Button Width="128" Height="38"
 					Command="{Binding ExitCommand}"
+					IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"
 					IsCancel="True"
 					Style="{StaticResource MaterialDesignOutlinedButton}">
 					<StackPanel Orientation="Horizontal">

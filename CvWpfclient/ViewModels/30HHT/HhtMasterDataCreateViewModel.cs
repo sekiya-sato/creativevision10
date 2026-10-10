@@ -78,7 +78,17 @@ public partial class HhtMasterDataCreateViewModel : Helpers.BaseViewModel {
 
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 			var encoding = Encoding.GetEncoding("shift_jis");
-			await File.WriteAllLinesAsync(fullPath, outputLines, encoding, ct);
+			// 出力先へ直接書くと中断時に不完全なマスタが残るため、同じフォルダの一時ファイルへ書いてから置き換える
+			var tempPath = fullPath + ".tmp";
+			try {
+				await File.WriteAllLinesAsync(tempPath, outputLines, encoding, ct);
+				File.Move(tempPath, fullPath, overwrite: true);
+			}
+			finally {
+				if (File.Exists(tempPath)) {
+					File.Delete(tempPath);
+				}
+			}
 
 			MessageEx.ShowInformationDialog($"完了しました({fullPath})", owner: ClientLib.GetActiveView(this));
 		}

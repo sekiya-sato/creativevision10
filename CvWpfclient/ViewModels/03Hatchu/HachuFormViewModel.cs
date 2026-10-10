@@ -51,6 +51,12 @@ public partial class HachuFormViewModel : Helpers.BaseReportViewModel {
 			MessageEx.ShowWarningDialog("発注日の範囲が逆転しています。", owner: ActiveWindow);
 			return Task.FromResult<QueryListSqlParam?>(null);
 		}
+		// 数値でない伝票Noは条件から黙って外れ、日付範囲の全発注書を印刷してしまうため止める
+		if ((DenNoFrom.Trim().Length > 0 && !long.TryParse(DenNoFrom.Trim(), out _))
+			|| (DenNoTo.Trim().Length > 0 && !long.TryParse(DenNoTo.Trim(), out _))) {
+			MessageEx.ShowWarningDialog("伝票Noは数値で入力してください。", owner: ActiveWindow);
+			return Task.FromResult<QueryListSqlParam?>(null);
+		}
 		ct.ThrowIfCancellationRequested();
 
 		List<string> parameters = [];

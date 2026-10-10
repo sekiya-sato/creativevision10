@@ -410,9 +410,10 @@
 									Text="元上代" />
 								<Grid Grid.Row="11" Grid.Column="1">
 									<Grid.ColumnDefinitions>
-										<ColumnDefinition Width="160" />
-										<ColumnDefinition Width="100" />
-										<ColumnDefinition Width="160" />
+										<!--  幅を詰めた時に右側が切れないよう、入力欄は比率指定(最大160)にする  -->
+										<ColumnDefinition Width="*" MaxWidth="160" />
+										<ColumnDefinition Width="Auto" />
+										<ColumnDefinition Width="*" MaxWidth="160" />
 										<ColumnDefinition Width="*" />
 									</Grid.ColumnDefinitions>
 									<TextBox Grid.Column="0"
@@ -435,9 +436,10 @@
 									Text="原価" />
 								<Grid Grid.Row="12" Grid.Column="1">
 									<Grid.ColumnDefinitions>
-										<ColumnDefinition Width="160" />
-										<ColumnDefinition Width="100" />
-										<ColumnDefinition Width="160" />
+										<!--  幅を詰めた時に右側が切れないよう、入力欄は比率指定(最大160)にする  -->
+										<ColumnDefinition Width="*" MaxWidth="160" />
+										<ColumnDefinition Width="Auto" />
+										<ColumnDefinition Width="*" MaxWidth="160" />
 										<ColumnDefinition Width="*" />
 									</Grid.ColumnDefinitions>
 									<TextBox Grid.Column="0"
@@ -673,12 +675,12 @@
 														Background="{DynamicResource PrimaryButtonColor}"
 														BorderThickness="0"
 														Command="{Binding DataContext.DoSelectColCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-														CommandParameter="{Binding Id_Col}"
-														Cursor="Hand" Foreground="White">
+														CommandParameter="{Binding}"
+														Cursor="Hand" Foreground="{DynamicResource PrimaryHueMidForegroundBrush}">
 														<Button.Content>
 															<materialDesign:PackIcon Width="16" Height="16"
 																HorizontalAlignment="Center" VerticalAlignment="Center"
-																Foreground="White" Kind="Magnify" />
+																Foreground="{DynamicResource PrimaryHueMidForegroundBrush}" Kind="Magnify" />
 														</Button.Content>
 													</Button>
 												</Grid>
@@ -721,12 +723,12 @@
 														Background="{DynamicResource PrimaryButtonColor}"
 														BorderThickness="0"
 														Command="{Binding DataContext.DoSelectSizCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-														CommandParameter="{Binding Id_Siz}"
-														Cursor="Hand" Foreground="White">
+														CommandParameter="{Binding}"
+														Cursor="Hand" Foreground="{DynamicResource PrimaryHueMidForegroundBrush}">
 														<Button.Content>
 															<materialDesign:PackIcon Width="16" Height="16"
 																HorizontalAlignment="Center" VerticalAlignment="Center"
-																Foreground="White" Kind="Magnify" />
+																Foreground="{DynamicResource PrimaryHueMidForegroundBrush}" Kind="Magnify" />
 														</Button.Content>
 													</Button>
 												</Grid>
@@ -1126,11 +1128,12 @@
 														Background="{DynamicResource PrimaryButtonColor}"
 														BorderThickness="0"
 														Command="{Binding DataContext.DoSelectHinshituCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-														Cursor="Hand" Foreground="White">
+														CommandParameter="{Binding}"
+														Cursor="Hand" Foreground="{DynamicResource PrimaryHueMidForegroundBrush}">
 														<Button.Content>
 															<materialDesign:PackIcon Width="16" Height="16"
 																HorizontalAlignment="Center" VerticalAlignment="Center"
-																Foreground="White" Kind="Magnify" />
+																Foreground="{DynamicResource PrimaryHueMidForegroundBrush}" Kind="Magnify" />
 														</Button.Content>
 													</Button>
 												</Grid>
@@ -1235,11 +1238,12 @@
 														Background="{DynamicResource PrimaryButtonColor}"
 														BorderThickness="0"
 														Command="{Binding DataContext.DoSelectJsubCodeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-														Cursor="Hand" Foreground="White">
+														CommandParameter="{Binding}"
+														Cursor="Hand" Foreground="{DynamicResource PrimaryHueMidForegroundBrush}">
 														<Button.Content>
 															<materialDesign:PackIcon Width="16" Height="16"
 																HorizontalAlignment="Center" VerticalAlignment="Center"
-																Foreground="White" Kind="Magnify" />
+																Foreground="{DynamicResource PrimaryHueMidForegroundBrush}" Kind="Magnify" />
 														</Button.Content>
 													</Button>
 												</Grid>

@@ -259,7 +259,7 @@
 				<DataGridTextColumn Width="110"
 					Binding="{Binding Mei_Col}"
 					Header="色名" IsReadOnly="True" />
-				<DataGridTextColumn Width="70"
+				<DataGridTextColumn Width="80"
 					Binding="{Binding Code_Siz}"
 					Header="ｻｲｽﾞCD" IsReadOnly="True" />
 				<DataGridTextColumn Width="90"

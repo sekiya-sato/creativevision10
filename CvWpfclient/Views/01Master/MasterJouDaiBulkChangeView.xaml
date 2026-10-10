@@ -207,13 +207,19 @@
 
 					<Grid Grid.Row="2"
 						Margin="0,10,0,4">
-						<StackPanel HorizontalAlignment="Left"
-							Orientation="Horizontal">
+						<!--  説明文がボタン列の下に潜らないよう、説明(*)とボタン列(Auto)を別列に分ける  -->
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<StackPanel Grid.Column="0"
+							Margin="0,0,12,0" HorizontalAlignment="Left" VerticalAlignment="Center">
 							<TextBlock VerticalAlignment="Center"
 								Style="{StaticResource StatusTextBlockStyle}"
 								Text="行を選んで [修正・登録画面へ]。JSON明細は一覧では読み込まないため、件数のみ表示しています" TextTrimming="CharacterEllipsis" />
 						</StackPanel>
-						<StackPanel HorizontalAlignment="Right"
+						<StackPanel Grid.Column="1"
+							HorizontalAlignment="Right"
 							Orientation="Horizontal">
 							<Button Command="{Binding DoNewCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"
@@ -358,11 +364,11 @@
 							</Grid>
 
 							<TextBlock Grid.Row="2" Grid.Column="2"
-								InputMethod.IsInputMethodEnabled="True"
 								Style="{StaticResource FormLabel}"
 								Text="備考" />
 							<TextBox Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3"
 								Margin="0,4"
+								InputMethod.IsInputMethodEnabled="True"
 								Style="{StaticResource FormTextBox}"
 								TabIndex="9"
 								Text="{Binding EditMemo, UpdateSourceTrigger=PropertyChanged}" />
@@ -673,7 +679,7 @@
 							<Grid Margin="0,10,0,0">
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
-									<RowDefinition Height="2*" />
+									<RowDefinition Height="1*" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="1*" />
 								</Grid.RowDefinitions>
@@ -1537,59 +1543,63 @@
 											</Button>
 										</StackPanel>
 
-										<ItemsControl Grid.Row="1"
+										<!--  区間数に比例して伸びて④確認タブの下端が切れないよう、高さを抑えてスクロールさせる  -->
+										<ScrollViewer Grid.Row="1"
+											MaxHeight="220"
 											Margin="0,12,0,0"
-											ItemsSource="{Binding TimelineSegments}">
-											<ItemsControl.ItemsPanel>
-												<ItemsPanelTemplate>
-													<!--  期間の長さに比例した幅の区間を並べる（チャートライブラリは導入しない。タスク指示）  -->
-													<UniformGrid Columns="1" />
-												</ItemsPanelTemplate>
-											</ItemsControl.ItemsPanel>
-											<ItemsControl.ItemTemplate>
-												<DataTemplate>
-													<Grid Margin="0,2">
-														<Grid.ColumnDefinitions>
-															<ColumnDefinition Width="90" />
-															<ColumnDefinition Width="*" />
-															<ColumnDefinition Width="90" />
-														</Grid.ColumnDefinitions>
-														<TextBlock Grid.Column="0"
-															VerticalAlignment="Center"
-															FontSize="11"
-															Text="{Binding DayFrom}" />
-														<Border Grid.Column="1"
-															Height="26"
-															Padding="6,2"
-															Background="{DynamicResource MaterialDesignDivider}"
-															CornerRadius="4">
-															<Border.Style>
-																<Style TargetType="Border">
-																	<Style.Triggers>
-																		<DataTrigger Binding="{Binding IsFallback}"
-																			Value="True">
-																			<Setter Property="Background" Value="{DynamicResource MaterialDesignChipBackground}" />
-																		</DataTrigger>
-																		<DataTrigger Binding="{Binding IsOtherSlip}"
-																			Value="True">
-																			<Setter Property="BorderBrush" Value="#B8860B" />
-																			<Setter Property="BorderThickness" Value="0,2,0,2" />
-																		</DataTrigger>
-																	</Style.Triggers>
-																</Style>
-															</Border.Style>
-															<TextBlock VerticalAlignment="Center"
+											HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+											<ItemsControl ItemsSource="{Binding TimelineSegments}">
+												<ItemsControl.ItemsPanel>
+													<ItemsPanelTemplate>
+														<!--  期間の長さに比例した幅の区間を並べる（チャートライブラリは導入しない。タスク指示）  -->
+														<UniformGrid Columns="1" />
+													</ItemsPanelTemplate>
+												</ItemsControl.ItemsPanel>
+												<ItemsControl.ItemTemplate>
+													<DataTemplate>
+														<Grid Margin="0,2">
+															<Grid.ColumnDefinitions>
+																<ColumnDefinition Width="90" />
+																<ColumnDefinition Width="*" />
+																<ColumnDefinition Width="90" />
+															</Grid.ColumnDefinitions>
+															<TextBlock Grid.Column="0"
+																VerticalAlignment="Center"
 																FontSize="11"
-																Text="{Binding Source, StringFormat={}{0}}" />
-														</Border>
-														<TextBlock Grid.Column="2"
-															HorizontalAlignment="Right" VerticalAlignment="Center"
-															FontSize="12" FontWeight="SemiBold"
-															Text="{Binding Jodai, StringFormat={}{0:N0}円}" />
-													</Grid>
-												</DataTemplate>
-											</ItemsControl.ItemTemplate>
-										</ItemsControl>
+																Text="{Binding DayFrom}" />
+															<Border Grid.Column="1"
+																Height="26"
+																Padding="6,2"
+																Background="{DynamicResource MaterialDesignDivider}"
+																CornerRadius="4">
+																<Border.Style>
+																	<Style TargetType="Border">
+																		<Style.Triggers>
+																			<DataTrigger Binding="{Binding IsFallback}"
+																				Value="True">
+																				<Setter Property="Background" Value="{DynamicResource MaterialDesignChipBackground}" />
+																			</DataTrigger>
+																			<DataTrigger Binding="{Binding IsOtherSlip}"
+																				Value="True">
+																				<Setter Property="BorderBrush" Value="#B8860B" />
+																				<Setter Property="BorderThickness" Value="0,2,0,2" />
+																			</DataTrigger>
+																		</Style.Triggers>
+																	</Style>
+																</Border.Style>
+																<TextBlock VerticalAlignment="Center"
+																	FontSize="11"
+																	Text="{Binding Source, StringFormat={}{0}}" />
+															</Border>
+															<TextBlock Grid.Column="2"
+																HorizontalAlignment="Right" VerticalAlignment="Center"
+																FontSize="12" FontWeight="SemiBold"
+																Text="{Binding Jodai, StringFormat={}{0:N0}円}" />
+														</Grid>
+													</DataTemplate>
+												</ItemsControl.ItemTemplate>
+											</ItemsControl>
+										</ScrollViewer>
 									</Grid>
 								</materialDesign:Card>
 							</Grid>
@@ -1599,13 +1609,20 @@
 					<!--  操作ボタン（内側タブの外＝常時表示）  -->
 					<Grid Grid.Row="3"
 						Margin="0,10,0,4">
-						<StackPanel HorizontalAlignment="Left" VerticalAlignment="Center">
+						<!--  説明文がボタン列の下に潜らないよう、説明(*)とボタン列(Auto)を別列に分ける  -->
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<StackPanel Grid.Column="0"
+							Margin="0,0,12,0" HorizontalAlignment="Left" VerticalAlignment="Center">
 							<TextBlock Style="{StaticResource StatusTextBlockStyle}"
 								Text="[登録] は伝票の保存のみ。[確定] で適用上代が展開され、売上・POS・在庫評価に反映されます" TextTrimming="CharacterEllipsis" />
 							<TextBlock Style="{StaticResource StatusTextBlockStyle}"
 								Text="商品マスタの上代は書き換えません。期間が過ぎれば自動的に元価格へ戻ります" TextTrimming="CharacterEllipsis" />
 						</StackPanel>
-						<StackPanel HorizontalAlignment="Right"
+						<StackPanel Grid.Column="1"
+							HorizontalAlignment="Right"
 							Orientation="Horizontal">
 							<Button Command="{Binding GoPrevStepCommand}"
 								Style="{StaticResource MaterialDesignOutlinedButton}"

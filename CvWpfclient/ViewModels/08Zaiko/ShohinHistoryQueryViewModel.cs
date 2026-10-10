@@ -173,7 +173,7 @@ LIMIT {maxCount}";
 
 		List<ShohinHistoryRow> result = [];
 		foreach (var r in raw) {
-			meta.TryGetValue(r.Id, out var m);
+			meta.TryGetValue((r.Id, r.Id_Shohin, r.Id_Col, r.Id_Siz), out var m);
 			result.Add(new ShohinHistoryRow {
 				Kind = kind,
 				IsReference = isTana,
@@ -195,8 +195,11 @@ LIMIT {maxCount}";
 		return result;
 	}
 
-	/// <summary>伝票の日付・倉庫・相手先と、商品/色サイズの名称をまとめて取得する。</summary>
-	async Task<Dictionary<long, HistoryMeta>> LoadMetaAsync(string table, List<SummaryRealStock> raw, CancellationToken ct) {
+	/// <summary>
+	/// 伝票の日付・倉庫・相手先と、商品/色サイズの名称をまとめて取得する。
+	/// 1伝票に複数SKUがあるため、キーは (伝票Id, 商品Id, 色Id, サイズId) とする（伝票Idだけだと最後のSKU名で上書きされる）。
+	/// </summary>
+	async Task<Dictionary<(long DenId, long Shohin, long Col, long Siz), HistoryMeta>> LoadMetaAsync(string table, List<SummaryRealStock> raw, CancellationToken ct) {
 		var denNos = raw.Select(x => x.Id).Distinct().ToList();
 		if (denNos.Count == 0) return [];
 
@@ -236,12 +239,12 @@ FROM DerivedShohinColSiz WHERE Id_Shohin IN ({string.Join(",", shohinIds)})", []
 		var csMap = new Dictionary<(long, long, long), DerivedShohinColSiz>();
 		foreach (var cs in csList) csMap[(cs.Id_Shohin, cs.Id_Col, cs.Id_Siz)] = cs;
 
-		var result = new Dictionary<long, HistoryMeta>();
+		var result = new Dictionary<(long DenId, long Shohin, long Col, long Siz), HistoryMeta>();
 		foreach (var r in raw) {
 			headerMap.TryGetValue(r.Id, out var h);
 			shohinMap.TryGetValue(r.Id_Shohin, out var sh);
 			csMap.TryGetValue((r.Id_Shohin, r.Id_Col, r.Id_Siz), out var cs);
-			result[r.Id] = new HistoryMeta {
+			result[(r.Id, r.Id_Shohin, r.Id_Col, r.Id_Siz)] = new HistoryMeta {
 				DenDay = h?.Code ?? string.Empty,
 				SokoCode = h?.Name ?? string.Empty,
 				SokoName = h?.Ryaku ?? string.Empty,

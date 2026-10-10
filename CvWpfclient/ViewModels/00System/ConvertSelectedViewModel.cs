@@ -145,6 +145,11 @@ public partial class ConvertSelectedViewModel : BaseViewModel {
 		}
 		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
 		}
+		catch (Exception ex) {
+			// 通信断などの失敗をログ欄に残す（再実行はウィンドウを開き直してから行う）
+			StreamMessages.Insert(0, $"===== エラー: {ex.Message} ----{DateTime.Now: MM/dd HH:mm:ss.fff}");
+			MessageEx.ShowErrorDialog($"変換処理でエラーが発生しました。\n{ex.Message}", owner: ClientLib.GetActiveView(this));
+		}
 		finally {
 			IsRunning = false;
 		}

@@ -83,14 +83,17 @@
 			Orientation="Horizontal">
 			<Button Margin="20,0,8,0"
 				Command="{Binding EditCronCommand}"
+				IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
 				Content="起動時間変更"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
 			<Button Margin="20,0,8,0"
 				Command="{Binding ToggleTaskEnabledCommand}"
+				IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
 				Content="実行する/しない 切替"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
 			<Button Margin="20,0,8,0"
 				Command="{Binding ToggleTaskSendMailCommand}"
+				IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
 				Content="メール送信する/しない 切替"
 				Style="{StaticResource MaterialDesignFlatMidBgButton}" />
 		</StackPanel>
@@ -176,7 +179,7 @@
 					Text="{Binding Message}" />
 			</StatusBarItem>
 			<StatusBarItem HorizontalAlignment="Right">
-				<ProgressBar Width="120" Height="4"
+				<ProgressBar Width="16" Height="16"
 					IsIndeterminate="True"
 					Style="{StaticResource MaterialDesignCircularProgressBar}"
 					Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />

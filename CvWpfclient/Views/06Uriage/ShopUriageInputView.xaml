@@ -677,20 +677,21 @@
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="数量" />
+							<!--  単価/上代/下代の列幅は RowDetails の金額表示(7桁＋桁区切り)も兼ねるため広めに取る  -->
 							<DataGridTextColumn x:Name="MeisaiTankaColumn"
-								Width="78"
+								Width="100"
 								Binding="{Binding Tanka, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="単価" />
 							<DataGridTextColumn x:Name="MeisaiJodaiColumn"
-								Width="84"
+								Width="100"
 								Binding="{Binding Jodai, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="上代単価" />
 							<DataGridTextColumn x:Name="MeisaiGedaiColumn"
-								Width="84"
+								Width="100"
 								Binding="{Binding Gedai, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
 								EditingElementStyle="{StaticResource DataGridRightTextBox}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
@@ -801,16 +802,10 @@
 											Text="{Binding Mei_Siz}" />
 									</Grid>
 
+									<!--  金額は保存値(Kingaku)を表示する。Su×Tanka の再計算値だと値引等で保存値・合計と食い違う  -->
 									<TextBlock Grid.Column="8"
-										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">
-										<TextBlock.Text>
-											<MultiBinding Converter="{StaticResource MultiplyValuesConverter}"
-												StringFormat="{}{0:N0}">
-												<Binding Path="Su" />
-												<Binding Path="Tanka" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+										Style="{StaticResource MeisaiRightReadOnlyTextBlock}"
+										Text="{Binding Kingaku, Mode=OneWay, StringFormat={}{0:N0}}" />
 
 									<TextBlock Grid.Column="9"
 										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">

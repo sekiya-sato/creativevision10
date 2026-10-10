@@ -48,152 +48,155 @@
 			</DockPanel>
 		</materialDesign:ColorZone>
 
-		<Grid Grid.Row="1"
-			Margin="24">
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="*" />
-			</Grid.RowDefinitions>
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="140" />
-				<ColumnDefinition Width="*" />
-				<ColumnDefinition Width="Auto" />
-				<ColumnDefinition Width="*" />
-			</Grid.ColumnDefinitions>
+		<!--  縮小時も最下部の操作ボタンへ到達できるようスクロール可能にする  -->
+		<ScrollViewer Grid.Row="1"
+			HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+			<Grid Margin="24">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="140" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
 
-			<!--  期間  -->
-			<TextBlock Grid.Row="0" Grid.Column="0"
-				Style="{StaticResource FormLabel}"
-				Text="期間" />
-			<TextBox Grid.Row="0" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
-				Text="{Binding DenDayFrom, UpdateSourceTrigger=PropertyChanged}" />
-			<TextBlock Grid.Row="0" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
-			<TextBox Grid.Row="0" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
-				Text="{Binding DenDayTo, UpdateSourceTrigger=PropertyChanged}" />
+				<!--  期間  -->
+				<TextBlock Grid.Row="0" Grid.Column="0"
+					Style="{StaticResource FormLabel}"
+					Text="期間" />
+				<TextBox Grid.Row="0" Grid.Column="1"
+					Width="200" Height="36"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding DenDayFrom, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Grid.Row="0" Grid.Column="2"
+					Margin="8,0" VerticalAlignment="Center"
+					Text="～" />
+				<TextBox Grid.Row="0" Grid.Column="3"
+					Width="200" Height="36"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding DenDayTo, UpdateSourceTrigger=PropertyChanged}" />
 
-			<!--  店舗  -->
-			<TextBlock Grid.Row="1" Grid.Column="0"
-				Style="{StaticResource FormLabel}"
-				Text="店舗" />
-			<TextBox Grid.Row="1" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeFromCommand}"
-				BorderThickness="0,0,0,1"
-				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding ShopCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
-			<TextBlock Grid.Row="1" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
-			<TextBox Grid.Row="1" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeToCommand}"
-				BorderThickness="0,0,0,1"
-				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding ShopCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+				<!--  店舗  -->
+				<TextBlock Grid.Row="1" Grid.Column="0"
+					Style="{StaticResource FormLabel}"
+					Text="店舗" />
+				<TextBox Grid.Row="1" Grid.Column="1"
+					Width="200" Height="36"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeFromCommand}"
+					BorderThickness="0,0,0,1"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding ShopCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Grid.Row="1" Grid.Column="2"
+					Margin="8,0" VerticalAlignment="Center"
+					Text="～" />
+				<TextBox Grid.Row="1" Grid.Column="3"
+					Width="200" Height="36"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					helpers:SearchTextBoxAssist.Command="{Binding SelectShopCodeToCommand}"
+					BorderThickness="0,0,0,1"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding ShopCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
-			<!--  ブランド  -->
-			<TextBlock Grid.Row="2" Grid.Column="0"
-				Style="{StaticResource FormLabel}"
-				Text="ブランド" />
-			<TextBox Grid.Row="2" Grid.Column="1"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCodeFromCommand}"
-				BorderThickness="0,0,0,1"
-				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding BrandCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
-			<TextBlock Grid.Row="2" Grid.Column="2"
-				Margin="8,0" VerticalAlignment="Center"
-				Text="～" />
-			<TextBox Grid.Row="2" Grid.Column="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-				helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCodeToCommand}"
-				BorderThickness="0,0,0,1"
-				Style="{StaticResource MenteSearchTextBox}"
-				Text="{Binding BrandCodeTo, UpdateSourceTrigger=PropertyChanged}" />
+				<!--  ブランド  -->
+				<TextBlock Grid.Row="2" Grid.Column="0"
+					Style="{StaticResource FormLabel}"
+					Text="ブランド" />
+				<TextBox Grid.Row="2" Grid.Column="1"
+					Width="200" Height="36"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCodeFromCommand}"
+					BorderThickness="0,0,0,1"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding BrandCodeFrom, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBlock Grid.Row="2" Grid.Column="2"
+					Margin="8,0" VerticalAlignment="Center"
+					Text="～" />
+				<TextBox Grid.Row="2" Grid.Column="3"
+					Width="200" Height="36"
+					HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+					helpers:SearchTextBoxAssist.Command="{Binding SelectBrandCodeToCommand}"
+					BorderThickness="0,0,0,1"
+					Style="{StaticResource MenteSearchTextBox}"
+					Text="{Binding BrandCodeTo, UpdateSourceTrigger=PropertyChanged}" />
 
-			<!--  出力件数  -->
-			<TextBlock Grid.Row="3" Grid.Column="0"
-				Style="{StaticResource FormLabel}"
-				Text="出力件数" />
-			<TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
-				Width="200" Height="36"
-				HorizontalAlignment="Left"
-				Style="{StaticResource MaterialDesignTextBox}"
-				Text="{Binding TopCountText, UpdateSourceTrigger=PropertyChanged}" />
+				<!--  出力件数  -->
+				<TextBlock Grid.Row="3" Grid.Column="0"
+					Style="{StaticResource FormLabel}"
+					Text="出力件数" />
+				<TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+					Width="200" Height="36"
+					HorizontalAlignment="Left"
+					Style="{StaticResource MaterialDesignTextBox}"
+					Text="{Binding TopCountText, UpdateSourceTrigger=PropertyChanged}" />
 
-			<!--  順位基準  -->
-			<TextBlock Grid.Row="4" Grid.Column="0"
-				Margin="0,10,0,10"
-				Style="{StaticResource FormLabel}"
-				Text="順位基準" />
-			<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
-				Margin="0,10,0,10"
-				Orientation="Horizontal">
-				<RadioButton Margin="0,4"
-					Content="金額順"
-					IsChecked="{Binding IsByKingaku}" />
-				<RadioButton Margin="16,4,0,4"
-					Content="数量順"
-					IsChecked="{Binding IsByKingaku, Converter={StaticResource InverseBooleanConverter}}" />
-			</StackPanel>
+				<!--  順位基準  -->
+				<TextBlock Grid.Row="4" Grid.Column="0"
+					Margin="0,10,0,10"
+					Style="{StaticResource FormLabel}"
+					Text="順位基準" />
+				<StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,10,0,10"
+					Orientation="Horizontal">
+					<RadioButton Margin="0,4"
+						Content="金額順"
+						IsChecked="{Binding IsByKingaku}" />
+					<RadioButton Margin="16,4,0,4"
+						Content="数量順"
+						IsChecked="{Binding IsByKingaku, Converter={StaticResource InverseBooleanConverter}}" />
+				</StackPanel>
 
-			<!--  集計単位  -->
-			<TextBlock Grid.Row="5" Grid.Column="0"
-				Margin="0,10,0,10"
-				Style="{StaticResource FormLabel}"
-				Text="集計単位" />
-			<StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
-				Margin="0,10,0,10"
-				Orientation="Horizontal">
-				<RadioButton Margin="0,4"
-					Content="商品計"
-					IsChecked="{Binding IsByColorSize, Converter={StaticResource InverseBooleanConverter}}" />
-				<RadioButton Margin="16,4,0,4"
-					Content="色ｻｲｽﾞ別"
-					IsChecked="{Binding IsByColorSize}" />
-			</StackPanel>
+				<!--  集計単位  -->
+				<TextBlock Grid.Row="5" Grid.Column="0"
+					Margin="0,10,0,10"
+					Style="{StaticResource FormLabel}"
+					Text="集計単位" />
+				<StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,10,0,10"
+					Orientation="Horizontal">
+					<RadioButton Margin="0,4"
+						Content="商品計"
+						IsChecked="{Binding IsByColorSize, Converter={StaticResource InverseBooleanConverter}}" />
+					<RadioButton Margin="16,4,0,4"
+						Content="色ｻｲｽﾞ別"
+						IsChecked="{Binding IsByColorSize}" />
+				</StackPanel>
 
-			<!--  注意書き  -->
-			<StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3"
-				Margin="0,8">
-				<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
-					Text="※累計構成比はABC分析の目安に使えます。" TextWrapping="Wrap" />
-			</StackPanel>
+				<!--  注意書き  -->
+				<StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3"
+					Margin="0,8">
+					<TextBlock Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+						Text="※累計構成比はABC分析の目安に使えます。" TextWrapping="Wrap" />
+				</StackPanel>
 
-			<!--  実行ボタン  -->
-			<StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="4"
-				Margin="0,24" HorizontalAlignment="Center"
-				Orientation="Horizontal">
-				<Button Command="{Binding DoOutputPdfCommand}"
-					Style="{StaticResource MaterialDesignFlatMidBgButton}"
-					ToolTip="印刷実行 (F6)">
-					<StackPanel Orientation="Horizontal">
-						<materialDesign:PackIcon VerticalAlignment="Center"
-							Kind="Printer" />
-						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-							FontSize="20" Text="印刷実行" />
-					</StackPanel>
-				</Button>
-			</StackPanel>
-		</Grid>
+				<!--  実行ボタン  -->
+				<StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="4"
+					Margin="0,24" HorizontalAlignment="Center"
+					Orientation="Horizontal">
+					<Button Command="{Binding DoOutputPdfCommand}"
+						Style="{StaticResource MaterialDesignFlatMidBgButton}"
+						ToolTip="印刷実行 (F6)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Printer" />
+							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+								FontSize="20" Text="印刷実行" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</Grid>
+		</ScrollViewer>
 	</Grid>
 </helpers:BaseWindow>

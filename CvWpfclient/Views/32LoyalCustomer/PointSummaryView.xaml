@@ -172,7 +172,7 @@
 				</Button>
 				<Button Width="128" Height="38"
 					Margin="0,0,10,0"
-					Command="{Binding ExecuteCancelCommand}"
+					Command="{Binding CancelRunningCommand}"
 					IsEnabled="{Binding IsProcessing}"
 					Style="{StaticResource MaterialDesignOutlinedButton}">
 					<StackPanel Orientation="Horizontal">

@@ -111,10 +111,10 @@
 						</Style>
 					</DataGridComboBoxColumn.EditingElementStyle>
 				</DataGridComboBoxColumn>
-				<DataGridTextColumn Width="90"
+				<DataGridTextColumn Width="110"
 					Binding="{Binding DenDay}"
 					Header="日付" />
-				<DataGridTextColumn Width="90"
+				<DataGridTextColumn Width="110"
 					Binding="{Binding Shop}"
 					Header="店舗" />
 				<DataGridTextColumn Width="80"
@@ -135,7 +135,7 @@
 						</Style>
 					</DataGridComboBoxColumn.EditingElementStyle>
 				</DataGridComboBoxColumn>
-				<DataGridTextColumn Width="120"
+				<DataGridTextColumn Width="170"
 					Binding="{Binding DenNo}"
 					Header="伝票No/顧客CD/棚番" />
 				<DataGridTextColumn Width="130"
@@ -146,14 +146,18 @@
 					Header="JAN下段" />
 				<DataGridTextColumn Width="70"
 					Binding="{Binding Su}"
+					EditingElementStyle="{StaticResource DataGridRightTextBox}"
+					ElementStyle="{StaticResource DataGridRightTextBlock}"
 					Header="数量" />
 				<DataGridTextColumn Width="90"
 					Binding="{Binding Tanka}"
+					EditingElementStyle="{StaticResource DataGridRightTextBox}"
+					ElementStyle="{StaticResource DataGridRightTextBlock}"
 					Header="単価" />
 				<DataGridTextColumn Width="90"
 					Binding="{Binding ToriSaki}"
 					Header="取引先" />
-				<DataGridTextColumn Width="120"
+				<DataGridTextColumn Width="170"
 					Binding="{Binding KakeRitsu}"
 					Header="掛率/発注No/納品日" />
 				<DataGridTextColumn Width="60"

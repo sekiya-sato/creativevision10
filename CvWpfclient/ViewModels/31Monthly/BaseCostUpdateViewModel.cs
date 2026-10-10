@@ -105,8 +105,12 @@ public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
 	public partial bool ShowExcludedOnly { get; set; }
 	[ObservableProperty]
 	public partial string StatusMessage { get; set; } = "対象月を指定し、状態更新・確認の順に実行してください。";
+	/// <summary>処理中。状態更新・確認・更新を並行実行させないため、各コマンドの実行可否も更新する</summary>
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(RefreshStatusCommand), nameof(ConfirmCommand), nameof(UpdateCommand))]
 	public partial bool IsProcessing { get; set; }
+
+	bool CanOperate() => !IsProcessing;
 	[ObservableProperty]
 	public partial int ProgressValue { get; set; }
 
@@ -114,7 +118,7 @@ public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
 	protected CostConfirmSnapshot? ConfirmedSnapshot { get; private set; }
 
 	/// <summary>「更新」を実行できるか。エラー0件かつ確認済みのときだけ許可する（§2.4-2、§8.1）。</summary>
-	public bool CanUpdate => ConfirmedSnapshot is not null && ErrorCount == 0;
+	public bool CanUpdate => ConfirmedSnapshot is not null && ErrorCount == 0 && !IsProcessing;
 
 	partial void OnTargetMonthChanged(string value) {
 		// 対象月を変更したら保持中の指紋は別の月のものになるため破棄する(§2.4-4の趣旨。別月の指紋を送らない)。
@@ -166,7 +170,7 @@ public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
 	}
 
 	/// <summary>「状態更新」ボタン用。<see cref="InitAsync"/>と同じ内容を明示的に呼び直す。</summary>
-	[RelayCommand(IncludeCancelCommand = true)]
+	[RelayCommand(IncludeCancelCommand = true, CanExecute = nameof(CanOperate))]
 	private async Task RefreshStatusAsync(CancellationToken cancellationToken) {
 		await RefreshStatusCoreAsync(cancellationToken);
 	}
@@ -236,7 +240,7 @@ public abstract partial class BaseCostUpdateViewModel : BaseViewModel {
 	// 確認（プレビュー）
 	// ------------------------------------------------------------------
 
-	[RelayCommand(IncludeCancelCommand = true)]
+	[RelayCommand(IncludeCancelCommand = true, CanExecute = nameof(CanOperate))]
 	private async Task ConfirmAsync(CancellationToken cancellationToken) {
 		if (!TryParseYearMonth(TargetMonth, out var yyyymm)) {
 			ShowWarn($"対象月の形式が不正です: {TargetMonth}");

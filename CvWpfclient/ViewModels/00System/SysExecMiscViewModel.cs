@@ -38,6 +38,10 @@ public partial class SysExecMiscViewModel : BaseViewModel {
 		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
 			return;
 		}
+		catch (Exception ex) {
+			ResultMessage = $"環境変数取得中にエラーが発生しました。{Environment.NewLine}{ex.Message}";
+			MessageEx.ShowErrorDialog(ResultMessage, owner: ClientLib.GetActiveView(this));
+		}
 		finally {
 			IsProcessing = false;
 			ClientLib.Cursor2Normal();

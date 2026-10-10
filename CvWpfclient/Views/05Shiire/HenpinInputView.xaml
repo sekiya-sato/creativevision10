@@ -327,21 +327,27 @@
 		<!--  操作ボタン  -->
 		<Grid Grid.Row="4"
 			Margin="12,10,12,4">
-			<StackPanel HorizontalAlignment="Left"
-				Orientation="Horizontal">
+			<!--  左(クリア＋注意書き)と右(実行・戻る)を列で分け、狭い幅でも重ならないようにする  -->
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+			<DockPanel Grid.Column="0">
 				<Button Command="{Binding ClearConditionsCommand}"
+					DockPanel.Dock="Left"
 					Style="{StaticResource MaterialDesignOutlinedButton}"
 					ToolTip="入力内容と一覧をクリア">
 					<TextBlock FontSize="16" Text="クリア" />
 				</Button>
-				<StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+				<StackPanel Margin="16,0,16,0" VerticalAlignment="Center">
 					<TextBlock Style="{StaticResource StatusTextBlockStyle}"
 						Text="[実行] をクリックすると、【商品仕入入力】にデータ追加" TextTrimming="CharacterEllipsis" />
 					<TextBlock Style="{StaticResource StatusTextBlockStyle}"
 						Text="修正・削除は、【商品仕入入力】にて可能" TextTrimming="CharacterEllipsis" />
 				</StackPanel>
-			</StackPanel>
-			<StackPanel HorizontalAlignment="Right"
+			</DockPanel>
+			<StackPanel Grid.Column="1"
+				HorizontalAlignment="Right"
 				Orientation="Horizontal">
 				<Button Command="{Binding RegisterCommand}"
 					IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"

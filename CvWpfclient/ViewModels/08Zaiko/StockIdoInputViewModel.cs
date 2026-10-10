@@ -76,6 +76,8 @@ public partial class StockIdoInputViewModel : Helpers.BaseStockSheetInputViewMod
 	}
 
 	protected override async Task<bool> ValidateBeforeRegisterAsync(CancellationToken ct) {
+		// 登録済みの一覧のまま再登録すると同じ移動が二重に計上されるため確認する
+		if (!ConfirmReRegisterIfRegistered()) return false;
 		if (string.IsNullOrWhiteSpace(IdoSokoCode)) {
 			MessageEx.ShowWarningDialog("移動先倉庫を指定してください。", owner: ActiveWindow);
 			return false;

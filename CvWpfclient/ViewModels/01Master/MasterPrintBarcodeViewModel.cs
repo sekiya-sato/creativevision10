@@ -279,7 +279,8 @@ left join DerivedShohinColSiz D on D.Id_Shohin = S.Id
 	static void AddLike(List<string> clauses, List<string> parameters, string column, string? value) {
 		var normalized = Normalize(value);
 		if (normalized.Length == 0) return;
-		clauses.Add($"{column} LIKE {AddParameter(parameters, $"%{normalized}%")}");
+		// % と _ を文字として検索するためエスケープする（基底の EscapeSqlLikePattern と同じ規則）
+		clauses.Add($"{column} LIKE {AddParameter(parameters, $"%{EscapeSqlLikePattern(normalized)}%")} ESCAPE '\\'");
 	}
 
 	static string AddParameter(List<string> parameters, string value) {

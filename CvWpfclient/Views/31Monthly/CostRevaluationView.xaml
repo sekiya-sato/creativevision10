@@ -96,7 +96,7 @@
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 							MaxLength="7"
 							Style="{StaticResource MaterialDesignOutlinedTextBox}"
-							Text="{Binding TargetMonth}" />
+							Text="{Binding TargetMonth, UpdateSourceTrigger=PropertyChanged}" />
 
 						<TextBlock Grid.Row="0" Grid.Column="2"
 							VerticalAlignment="Center"
@@ -293,7 +293,7 @@
 									</MultiBinding>
 								</DataGridTextColumn.Binding>
 							</DataGridTextColumn>
-							<DataGridTextColumn Width="90"
+							<DataGridTextColumn Width="108"
 								Binding="{Binding TargetCount}"
 								Header="対象品番数" />
 							<DataGridTextColumn Width="90"
@@ -456,7 +456,7 @@
 								<DataGridTextColumn Width="120"
 									Binding="{Binding RoundingText}"
 									Header="端数" />
-								<DataGridTextColumn Width="80"
+								<DataGridTextColumn Width="108"
 									Binding="{Binding TargetCount}"
 									Header="対象品番数" />
 								<DataGridTextColumn Width="100"

@@ -80,8 +80,18 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 				count = list.Count;
 			}
 			// 登録が成功してから入力ファイルをbackディレクトリへ移動する(失敗時は入力先に残す)
-			MoveToBackDirectory(filePaths, backupNames);
 			var fileNames = string.Join(",", filePaths.Select(Path.GetFileName));
+			try {
+				MoveToBackDirectory(filePaths, backupNames);
+			}
+			catch (Exception moveEx) {
+				// DB登録は完了しているため「受信失敗」とは出さない。再受信すると二重登録になる旨を明示する
+				MessageEx.ShowErrorDialog(
+					$"データの登録は完了しました({count}件,{fileNames})が、入力ファイルのbackフォルダへの移動に失敗しました: {moveEx.Message}\n"
+					+ "再受信すると二重登録になります。入力先に残ったファイルを手動でbackフォルダへ移動してください。",
+					owner: ClientLib.GetActiveView(this));
+				return;
+			}
 			MessageEx.ShowInformationDialog($"完了しました({count}件,{fileNames})", owner: ClientLib.GetActiveView(this));
 		}
 		catch (OperationCanceledException) {

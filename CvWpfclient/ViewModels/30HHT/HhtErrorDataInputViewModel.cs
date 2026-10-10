@@ -67,6 +67,12 @@ public partial class HhtErrorDataInputViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task ReloadAsync(CancellationToken ct) {
+		// 日付の形式が不正なまま条件を外すと全期間を読み込み、更新実行の対象も広がるため中断する
+		if (!TryParseDate(DateFrom, out _) || !TryParseDate(DateTo, out _)) {
+			StatusMessage = "対象日付は yyyy/MM/dd 形式で入力してください。";
+			MessageEx.ShowWarningDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
+			return;
+		}
 		try {
 			ClientLib.Cursor2Wait();
 			var conditions = new List<string> { "VdCnvDate = 0", "ErrorMsg <> ''" };

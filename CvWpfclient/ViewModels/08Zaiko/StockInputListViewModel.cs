@@ -72,6 +72,10 @@ public partial class StockInputListViewModel : Helpers.BaseStockSheetInputViewMo
 		return rows;
 	}
 
+	protected override Task<bool> ValidateBeforeRegisterAsync(CancellationToken ct) =>
+		// 登録済みの一覧のまま再登録すると同じ棚卸伝票が二重に作られるため確認する
+		Task.FromResult(ConfirmReRegisterIfRegistered());
+
 	protected override Tran60Tana BuildDenpyo(List<Tran99Meisai> meisai) => new() {
 		TanaNo = TanaNo.Trim(),
 	};

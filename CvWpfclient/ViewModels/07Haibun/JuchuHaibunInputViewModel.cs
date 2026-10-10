@@ -290,9 +290,11 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 			Message = $"受注No {JuchuNo:N0} の配分入力を開始します";
 		}
 		catch (OperationCanceledException) {
+			ResetEntry();
 			Message = "配分データ取得を中断しました";
 		}
 		catch (Exception ex) {
+			ResetEntry();
 			Message = $"配分データ取得失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
@@ -331,9 +333,11 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 			Message = $"受注No {JuchuNo:N0} の配分入力を開始します";
 		}
 		catch (OperationCanceledException) {
+			ResetEntry();
 			Message = "配分データ取得を中断しました";
 		}
 		catch (Exception ex) {
+			ResetEntry();
 			Message = $"配分データ取得失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
@@ -410,8 +414,10 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	[RelayCommand(CanExecute = nameof(IsDetailTabSelected))]
 	void SpreadSameSu() {
 		if (MeisaiRows.Count == 0) return;
-		foreach (JuchuHaibunMeisaiRow row in MeisaiRows) row.Su = SpreadSu;
-		Message = $"全SKUへ {SpreadSu:N0} を展開しました";
+		// 配分数はマイナスにしない（登録は配分数>0 のみのため、合計表示とずれる）
+		int su = Math.Max(SpreadSu, 0);
+		foreach (JuchuHaibunMeisaiRow row in MeisaiRows) row.Su = su;
+		Message = $"全SKUへ {su:N0} を展開しました";
 	}
 
 	/// <summary>全クリア(Shift+F6)。入力済みの配分数をすべて 0 に戻す。</summary>
@@ -475,7 +481,17 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 			await CoreServiceClient.SaveHaibunAsync(loadedEditableRows, newRecords, "配分", ct);
 
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分を {newRecords.Count:N0} 件登録しました";
-			await LoadEntryAsync(targetJuchu.Id, ct);
+			// 保存は完了している。再読込の失敗を「登録失敗」と誤表示しないよう分けて扱う
+			try {
+				await LoadEntryAsync(targetJuchu.Id, ct);
+			}
+			catch (Exception reloadEx) {
+				// 再読込に失敗した状態のまま再登録すると古い既存配分で洗い替えるため、入力状態を破棄する
+				ResetEntry();
+				Message = $"配分は登録済みですが、再読込に失敗しました: {reloadEx.Message}";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+				return;
+			}
 			MessageEx.ShowInformationDialog("登録完了しました。", owner: ActiveWindow);
 		}
 		catch (OperationCanceledException) {
@@ -641,6 +657,14 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	}
 
 	// ===== タブ2: 構築 =====
+
+	/// <summary>読込途中・失敗時の配分入力状態を破棄し、登録できない状態に戻す。</summary>
+	void ResetEntry() {
+		targetJuchu = null;
+		loadedEditableRows = [];
+		MeisaiRows = [];
+		RefreshTotals();
+	}
 
 	async Task LoadEntryAsync(long juchuId, CancellationToken ct) {
 		List<Tran12Jyuchu> found = await QueryListAsync<Tran12Jyuchu>($"Id = {juchuId}", "Id", ct);
@@ -1105,7 +1129,8 @@ public sealed partial class JuchuHaibunMeisaiRow(JuchuMeisaiSku sku) : Observabl
 		get => Su == 0 ? string.Empty : Su.ToString("#,##0", CultureInfo.InvariantCulture);
 		set {
 			string text = (value ?? string.Empty).Replace(",", string.Empty).Trim();
-			Su = int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) ? parsed : 0;
+			// 配分数はマイナスにしない（登録は配分数>0 のみのため、合計表示とずれる）
+			Su = int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) ? Math.Max(parsed, 0) : 0;
 			OnPropertyChanged();
 		}
 	}

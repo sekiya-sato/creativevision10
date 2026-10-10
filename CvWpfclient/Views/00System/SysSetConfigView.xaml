@@ -125,7 +125,7 @@
 						helpers:PasswordBoxAssistant.BoundPassword="{Binding LoginPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						materialDesign:HintAssist.Hint="ログインパスワード"
 						CaretBrush="{DynamicResource CaretColor}"
-						Foreground="{DynamicResource MaterialDesignBody2}"
+						Foreground="{DynamicResource MaterialDesignBody}"
 						Style="{StaticResource FormPasswordBox}" />
 
 					<Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
@@ -240,7 +240,7 @@
 			Background="{DynamicResource MaterialDesignPaper}">
 			<StackPanel HorizontalAlignment="Right"
 				Orientation="Horizontal">
-				<Button Width="128" Height="38"
+				<Button MinWidth="128" Height="38"
 					Margin="0,0,10,0"
 					Command="{Binding SaveCommand}"
 					IsDefault="True"
@@ -252,7 +252,7 @@
 							Text="保存" />
 					</StackPanel>
 				</Button>
-				<Button Width="128" Height="38"
+				<Button MinWidth="128" Height="38"
 					Command="{Binding ExitCommand}"
 					IsCancel="True"
 					Style="{StaticResource MaterialDesignOutlinedButton}">

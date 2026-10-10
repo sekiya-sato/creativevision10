@@ -27,13 +27,24 @@ public partial class PointSummaryViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial string StatusMessage { get; set; } = "年月を yyyy/MM 形式で入力し、実行を押してください。";
 
+	/// <summary>処理中。再計算と失効を同時に実行させないため、両コマンドの実行可否も更新する</summary>
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(ExecuteCommand), nameof(ExpireCommand))]
 	public partial bool IsProcessing { get; set; }
+
+	bool CanRun() => !IsProcessing;
+
+	/// <summary>実行中の処理（再計算・失効のどちらか）を中止する</summary>
+	[RelayCommand]
+	private void CancelRunning() {
+		if (ExecuteCommand.IsRunning) ExecuteCancelCommand.Execute(null);
+		if (ExpireCommand.IsRunning) ExpireCancelCommand.Execute(null);
+	}
 
 	[ObservableProperty]
 	public partial int ProgressValue { get; set; }
 
-	[RelayCommand(IncludeCancelCommand = true)]
+	[RelayCommand(IncludeCancelCommand = true, CanExecute = nameof(CanRun))]
 	private async Task ExecuteAsync(CancellationToken cancellationToken) {
 		if (!TryParseYearMonth(YearMonthFrom, out string yymmFrom)) {
 			StatusMessage = $"開始年月の形式が不正です: {YearMonthFrom}";
@@ -68,7 +79,7 @@ public partial class PointSummaryViewModel : BaseViewModel {
 	/// <summary>
 	/// ポイント失効: 基準日時点で最終購入日から失効月数経過・退会した顧客の残高を失効させる。同じ基準日の再実行は二重に失効しない
 	/// </summary>
-	[RelayCommand(IncludeCancelCommand = true)]
+	[RelayCommand(IncludeCancelCommand = true, CanExecute = nameof(CanRun))]
 	private async Task ExpireAsync(CancellationToken cancellationToken) {
 		var day = ExpireBaseDay?.Trim().Replace("/", string.Empty, StringComparison.Ordinal) ?? string.Empty;
 		if (day.Length != 8 || !DateTime.TryParseExact(day, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _)) {
@@ -96,6 +107,7 @@ public partial class PointSummaryViewModel : BaseViewModel {
 		ClientLib.Cursor2Wait();
 		try {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
+			var completed = false;
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(message, AppGlobal.GetDefaultCallContext(cancellationToken))) {
 				if (!string.IsNullOrEmpty(streamMsg.DataMsg)) {
 					StatusMessage = streamMsg.DataMsg;
@@ -105,8 +117,13 @@ public partial class PointSummaryViewModel : BaseViewModel {
 					throw new InvalidOperationException(streamMsg.DataMsg);
 				}
 				if (streamMsg.IsCompleted) {
+					completed = true;
 					break;
 				}
+			}
+			// 完了通知を受け取らずにストリームが閉じた場合は成功扱いにしない
+			if (!completed) {
+				throw new InvalidOperationException("完了通知を受信できませんでした。結果が不明のため、台帳・残高を確認してください。");
 			}
 			ProgressValue = 100;
 			StatusMessage = $"{title}が完了しました。{targetText}";

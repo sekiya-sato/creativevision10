@@ -128,6 +128,30 @@ public partial class PurchaseReceiptAllocationInputViewModel : BaseViewModel {
 
 	partial void OnIsBusyChanged(bool value) => NotifyEditCommands();
 
+	// 倉庫・商品を変えたら旧条件のマトリクスを無効化する（旧対象の配分を洗い替えさせない。AGENTS 7.3）
+	partial void OnSokoCodeChanged(string value) => InvalidateMatrix("倉庫");
+	partial void OnShohinCodeChanged(string value) => InvalidateMatrix("商品");
+
+	void InvalidateMatrix(string label) {
+		if (targetShohin == null && Rows.Count == 0) return;
+		ClearMatrix();
+		Message = $"{label}が変わったため一覧をクリアしました。［検索］を押してください。";
+	}
+
+	/// <summary>読み込んだマトリクスと洗い替え対象を破棄し、登録できない状態に戻す。</summary>
+	void ClearMatrix() {
+		idSoko = 0;
+		targetShohin = null;
+		loadedEditableRows = [];
+		orderZans = [];
+		Rows = [];
+		SkuColumns = [];
+		SelectedRow = null;
+		OrderCount = 0;
+		GrandTotalSu = 0;
+		NotifyEditCommands();
+	}
+
 	void NotifyEditCommands() {
 		CalcRatioCommand.NotifyCanExecuteChanged();
 		ApplyAllocationCommand.NotifyCanExecuteChanged();
@@ -156,6 +180,7 @@ public partial class PurchaseReceiptAllocationInputViewModel : BaseViewModel {
 	/// <summary>検索(F5)。倉庫×商品の未完了の発注と既存の仕入配分を読み込み、配分先×SKU のマトリクスを作る</summary>
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoSearch(CancellationToken ct) {
+		if (IsBusy) return;
 		if (string.IsNullOrWhiteSpace(SokoCode) || string.IsNullOrWhiteSpace(ShohinCode)) {
 			MessageEx.ShowWarningDialog("入荷倉庫と商品を指定してください。", owner: ActiveWindow);
 			return;
@@ -164,8 +189,13 @@ public partial class PurchaseReceiptAllocationInputViewModel : BaseViewModel {
 		try {
 			await LoadMatrixAsync(ct);
 		}
-		catch (OperationCanceledException) { Message = "検索を中断しました"; }
+		catch (OperationCanceledException) {
+			// 読込途中（対象Idと既存配分だけ新しい等）の状態で登録させない
+			ClearMatrix();
+			Message = "検索を中断しました";
+		}
 		catch (Exception ex) {
+			ClearMatrix();
 			Message = $"検索失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
@@ -298,7 +328,17 @@ public partial class PurchaseReceiptAllocationInputViewModel : BaseViewModel {
 				: $"配分 {newRecords.Count:N0} 件（合計 {newRecords.Sum(x => x.Su):N0} 点）を登録します。よろしいですか？";
 			if (MessageEx.ShowQuestionDialog(confirm, owner: ActiveWindow) != MessageBoxResult.Yes) return;
 			await CoreServiceClient.SaveHaibunAsync(loadedEditableRows, newRecords, "仕入配分", ct);
-			await LoadMatrixAsync(ct);
+			// 保存は完了している。再読込の失敗を「登録失敗」と誤表示しないよう分けて扱う
+			try {
+				await LoadMatrixAsync(ct);
+			}
+			catch (Exception reloadEx) {
+				// 再読込に失敗した状態のまま再登録すると古い既存配分で洗い替えるため、一覧を破棄する
+				ClearMatrix();
+				Message = $"配分は登録済みですが、再読込に失敗しました: {reloadEx.Message}";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+				return;
+			}
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分を {newRecords.Count:N0} 件登録しました";
 			MessageEx.ShowInformationDialog("登録完了しました。", owner: ActiveWindow);
 		}
@@ -358,9 +398,17 @@ public partial class PurchaseReceiptAllocationInputViewModel : BaseViewModel {
 
 		Rows = [];
 		SyncRows(await LoadTokuiAsync(loadedEditableRows.Select(x => x.Id_Tenpo), ct));
+		int hidden = 0;
 		foreach (var h in loadedEditableRows) {
 			var cell = Rows.FirstOrDefault(r => r.Id_Tenpo == h.Id_Tenpo)?.Cells.FirstOrDefault(c => c.Sku.Id_Col == h.Id_Col && c.Sku.Id_Siz == h.Id_Siz);
 			if (cell != null) cell.Su += h.Su;
+			else hidden++;
+		}
+		// 色サイズ展開に無いSKU等の既存配分は表示できず、登録（洗い替え）で削除されるため知らせる
+		if (hidden > 0) {
+			MessageEx.ShowWarningDialog(
+				$"画面に表示できない既存の配分が {hidden:N0} 件あります（商品の色サイズが変更された可能性があります）。\n登録すると、これらの配分は削除されます。",
+				owner: ActiveWindow);
 		}
 		var first = loadedEditableRows.FirstOrDefault();
 		ShijiDay = FromYmd8(first?.DenDay) ?? ShijiDay ?? DateTime.Today;

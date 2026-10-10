@@ -79,7 +79,9 @@
 						DockPanel.Dock="Left"
 						Style="{StaticResource MenteSearchTextBox}"
 						Text="{Binding SelectedStaffCode, UpdateSourceTrigger=PropertyChanged}" />
-					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						TextTrimming="CharacterEllipsis"
+						ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}">
 						<TextBlock.Text>
 							<MultiBinding StringFormat="{}{0} {1}">
 								<Binding Path="SelectedStaffCode" />

@@ -124,6 +124,10 @@
 			AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
 			ItemsSource="{Binding Rows}"
 			SelectionMode="Single" SelectionUnit="FullRow" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+			<DataGrid.ColumnHeaderStyle>
+				<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+					TargetType="DataGridColumnHeader" />
+			</DataGrid.ColumnHeaderStyle>
 			<DataGrid.Columns>
 				<DataGridTextColumn Width="90"
 					Binding="{Binding Id}"

@@ -167,7 +167,13 @@ public partial class CustomerReservationAllocationInputViewModel : BaseViewModel
 		var shohin = ShowSelect<MasterShohin>(typeof(MasterShohin), string.Empty, "Code");
 		if (shohin == null) return;
 		EntryShohinCode = shohin.Code;
-		await LoadEntryShohinAsync(ct);
+		try {
+			await LoadEntryShohinAsync(ct);
+		}
+		catch (Exception ex) {
+			// 色サイズ・有効在庫の取得失敗を未処理例外にしない（LoadEntryShohin と同じ扱い）
+			Message = ex.Message;
+		}
 	}
 
 	/// <summary>商品コード入力後（フォーカス移動・Enter）に色サイズと有効在庫を読み直す</summary>
@@ -368,9 +374,18 @@ public partial class CustomerReservationAllocationInputViewModel : BaseViewModel
 				Memo = EntryMemo,
 			};
 			await CoreServiceClient.SaveHaibunAsync([], [row], "取置", ct);
-			await LoadRowsAsync(ct);
-			await LoadEntryShohinAsync(ct);
-			Message = $"{DateTime.Now:MM/dd HH:mm:ss} {customer.Name} 様の取置を登録しました（{EntrySu:N0} 点、単価 {jodai:N0} 円）。";
+			var savedMessage = $"{DateTime.Now:MM/dd HH:mm:ss} {customer.Name} 様の取置を登録しました（{EntrySu:N0} 点、単価 {jodai:N0} 円）。";
+			// 保存は完了している。再読込の失敗を「登録失敗」と誤表示しない（再登録で二重の取置を作らせない）
+			try {
+				await LoadRowsAsync(ct);
+				await LoadEntryShohinAsync(ct);
+			}
+			catch (Exception reloadEx) {
+				Message = $"{savedMessage} ただし一覧の再読込に失敗しました: {reloadEx.Message}";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+				return;
+			}
+			Message = savedMessage;
 		}
 		catch (OperationCanceledException) {
 			Message = "登録を中断しました";

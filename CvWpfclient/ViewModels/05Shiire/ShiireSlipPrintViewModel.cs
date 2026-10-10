@@ -119,6 +119,11 @@ public partial class ShiireSlipPrintViewModel : Helpers.BaseReportViewModel {
 		List<string> parameters = [];
 		List<string> where = [];
 
+		if (DenDayFrom is DateTime checkFrom && DenDayTo is DateTime checkTo && checkFrom > checkTo) {
+			MessageEx.ShowWarningDialog("仕入日の範囲が逆転しています。", owner: ClientLib.GetActiveView(this));
+			return null;
+		}
+
 		// 仕入日範囲(yyyyMMdd へ正規化)
 		if (DenDayFrom is DateTime fromDt) {
 			where.Add($"h.DenDay >= {AddSqlParameter(parameters, fromDt.ToString("yyyyMMdd", CultureInfo.InvariantCulture))}");
@@ -249,7 +254,7 @@ select
 	{KubunLabel} as item44,													/* item44 取引区分 */
 	ifnull(h.Memo,'') as item45,											/* item45 備考 */
 	{KubunLabel} as item46													/* item46 伝票種別(qfm で""伝票""を付加) */
-from ({header}) h, json_each(h.Jmeisai) m
+from ({header}) h, json_each(CASE WHEN json_valid(h.Jmeisai) THEN h.Jmeisai ELSE '[]' END) m
 where m.value is not null
 order by h.Id, cast(ifnull({M}'$.No'),0) as int)
 ";

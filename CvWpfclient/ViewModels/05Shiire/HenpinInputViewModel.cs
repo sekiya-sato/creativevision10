@@ -89,6 +89,25 @@ public partial class HenpinInputViewModel : BaseStockSheetInputViewModel<Tran03S
 		// 基底(BaseStockSheetInputViewModel)は SokoCode から倉庫Idを解決するので、選択を必ず反映する
 		SokoCode = value?.Code ?? string.Empty;
 		SokoName = value?.Name ?? string.Empty;
+		// 倉庫を変えたら旧倉庫の在庫一覧を無効化する（旧倉庫Id＋新倉庫名の伝票を作らせない。AGENTS 7.3）
+		InvalidateRows();
+	}
+
+	partial void OnSelectedShiireChanged(MasterOption? value) {
+		// 仕入先を変えたら旧仕入先の商品一覧を無効化する（別仕入先宛ての返品にさせない。AGENTS 7.3）
+		InvalidateRows();
+	}
+
+	/// <summary>検索条件の変更時に、取得済みの返品対象一覧を破棄して再取得を促す。</summary>
+	void InvalidateRows() {
+		if (Rows.Count == 0) return;
+		Rows = [];
+		RowCount = 0;
+		InputSuTotal = 0;
+		JodaiKingakuTotal = 0;
+		GedaiKingakuTotal = 0;
+		RegisteredDenId = 0;
+		Message = "条件が変わったため一覧をクリアしました。[在庫取得] で再取得してください";
 	}
 
 	partial void OnSelectedShainChanged(MasterOption? value) {
@@ -266,6 +285,13 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 		}
 		if (!TryParseDate(DenDayText, out var denDay)) return false;
 
+		// 登録済みの一覧のまま再実行すると同じ返品伝票が二重に作られるため確認する
+		if (RegisteredDenId > 0 && MessageEx.ShowQuestionDialog(
+				$"この一覧は登録済みです（伝票No={RegisteredDenId}）。同じ内容でもう1件登録しますか？",
+				owner: ActiveWindow) != System.Windows.MessageBoxResult.Yes) {
+			return false;
+		}
+
 		// 返品数は在庫を減らす向きに CalcFlag=-1 で計上されるため、必ずプラスで入力する
 		var minus = Rows.Where(r => r.InputSu < 0).ToList();
 		if (minus.Count > 0) {
@@ -299,7 +325,10 @@ WHERE s.Id_Soko = {AddSqlParameter(parameters, IdSoko)}
 			shiireTaxRounding = fullShiire.TaxRounding;
 		}
 		else {
-			// 仕入先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
+			// 仕入先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)。
+			// 前回登録時の仕入先の掛率・税計算単位を持ち越さないよう既定値へ戻す
+			shiireRatePercent = 100;
+			shiireTaxCalcUnit = default;
 			shiireTaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
 		}
 		return true;

@@ -59,6 +59,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["pointmigration"] = PointMigrationScreenScenario.RunAsync,
 	["pointsummary"] = PointSummaryLayoutScenario.RunAsync,
 	["rfm"] = RfmCrossAnalysisScenario.RunAsync,
+	["menulayout"] = MenuLayoutScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
@@ -107,6 +108,8 @@ if (string.IsNullOrEmpty(name) || !scenarios.TryGetValue(name, out var scenario)
 	Console.Error.WriteLine("  --no-seed          網羅データの投入を省く（前回投入済みを再利用）");
 	Console.Error.WriteLine("  --sqlite <path>    テスト用SQLite（共有開発DBを変更しない）");
 	Console.Error.WriteLine("  --hide-views       Viewを表示しない");
+	Console.Error.WriteLine("  --out <dir>        画像・結果の出力先（menulayout）");
+	Console.Error.WriteLine("  --filter <文字列>  View型名・メニュー名の部分一致で対象を絞る（menulayout）");
 	Console.Error.WriteLine("  --fire-at <HH:mm:ss> 同日の壁時計時刻まで待ってから実行する（manuallockrace）");
 	Console.Error.WriteLine("  --race-label <名前>  証跡・記録上の自分の名前、例 A/B（manuallockrace、既定は請求計算役、Bのみ支払計算役）");
 	return 2;
@@ -121,6 +124,8 @@ bool Flag(string key) => args.Any(x => string.Equals(x, key, StringComparison.Or
 if (Option("--month") is { } month) BillingCalculationScenario.BillingMonth = month;
 if (Option("--code") is { } code) BillingCalculationScenario.TokuiCode = code;
 if (Flag("--no-execute")) BillingCalculationScenario.Execute = false;
+if (Option("--out") is { } outDir) MenuLayoutScenario.OutputDirectory = Path.GetFullPath(outDir);
+if (Option("--filter") is { } filter) MenuLayoutScenario.Filter = filter;
 
 // manuallockrace: 2プロセスを同一の壁時計時刻で発火させるための同期パラメータ（Run-ManualLockRace.ps1が渡す）。
 if (Option("--race-label") is { } raceLabel) ManualLockRaceScenario.RaceLabel = raceLabel;

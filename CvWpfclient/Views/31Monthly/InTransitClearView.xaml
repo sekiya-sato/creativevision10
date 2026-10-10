@@ -93,7 +93,7 @@
 						Style="{StaticResource MaterialDesignDataGrid}"
 						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
 						<DataGrid.Columns>
-							<DataGridTemplateColumn Width="60"
+							<DataGridTemplateColumn Width="72"
 								Header="対象">
 								<DataGridTemplateColumn.CellTemplate>
 									<DataTemplate>
@@ -120,7 +120,7 @@
 								Binding="{Binding NegativeQty, StringFormat={}{0:N0}}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="負数量" />
-							<DataGridTextColumn Width="100"
+							<DataGridTextColumn Width="120"
 								Binding="{Binding SkuCount, StringFormat={}{0:N0}}"
 								ElementStyle="{StaticResource DataGridRightTextBlock}"
 								Header="対象SKU数" />
@@ -160,7 +160,7 @@
 				<StackPanel Grid.Row="3"
 					HorizontalAlignment="Right"
 					Orientation="Horizontal">
-					<Button Width="150" Height="38"
+					<Button MinWidth="150" Height="38"
 						Margin="0,0,10,0"
 						Command="{Binding ExecuteCommand}"
 						Content="積送中クリア実行"

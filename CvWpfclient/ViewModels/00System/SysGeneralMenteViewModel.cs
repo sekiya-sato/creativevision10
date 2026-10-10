@@ -70,6 +70,9 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoList(CancellationToken ct) {
+		if (!ConfirmDiscardNewRows()) {
+			return;
+		}
 		if (!TryShowListConditionDialog()) {
 			Message = "一覧表示の処理を中断しました";
 			return;
@@ -80,6 +83,9 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoReselectTable(CancellationToken ct) {
+		if (!ConfirmDiscardNewRows()) {
+			return;
+		}
 		var selectTableView = new Views.Sub.SelectServerTableView();
 		if (ClientLib.ShowDialogView(selectTableView, this, true) != true) {
 			return;
@@ -98,7 +104,19 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 			return;
 		}
 
+		// 対象テーブルが変わったため、旧テーブルの行を先に無効化する（再読込失敗時に旧行を新しい型で保存させない）
+		Rows = [];
+		SelectedRow = null;
+		Count = 0;
 		await ReloadAsync(ct);
+	}
+
+	/// <summary>未保存の新規行がある場合、一覧の再取得で破棄してよいか確認する。</summary>
+	bool ConfirmDiscardNewRows() {
+		if (!Rows.Any(x => x.IsNew)) {
+			return true;
+		}
+		return MessageEx.ShowQuestionDialog("未保存の新規行があります。破棄して続行しますか？", owner: ActiveWindow) == MessageBoxResult.Yes;
 	}
 
 	[RelayCommand(IncludeCancelCommand = true)]

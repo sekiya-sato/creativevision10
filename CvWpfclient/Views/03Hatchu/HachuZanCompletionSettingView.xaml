@@ -185,6 +185,10 @@
 			<DataGrid AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="False"
 				ItemsSource="{Binding DenRows}"
 				SelectionMode="Single" SelectionUnit="FullRow" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+				<DataGrid.ColumnHeaderStyle>
+					<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+						TargetType="DataGridColumnHeader" />
+				</DataGrid.ColumnHeaderStyle>
 				<DataGrid.Columns>
 					<!--  件数を即時連動させるため CheckBoxColumn ではなく TemplateColumn を使う  -->
 					<DataGridTemplateColumn Width="60"

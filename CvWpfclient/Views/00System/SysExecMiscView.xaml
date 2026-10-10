@@ -61,7 +61,7 @@
 
 					<WrapPanel Grid.Row="1"
 						Orientation="Horizontal">
-						<Button Width="200" Height="42"
+						<Button MinWidth="200" Height="42"
 							Margin="0,0,12,12"
 							Command="{Binding Test01Command}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
@@ -73,7 +73,7 @@
 									Text="環境変数取得" />
 							</StackPanel>
 						</Button>
-						<Button Width="200" Height="42"
+						<Button MinWidth="200" Height="42"
 							Margin="0,0,12,12"
 							Command="{Binding MasterShohinMeishoRebuildCommand}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
@@ -85,7 +85,7 @@
 									Text="商品名称再構築" />
 							</StackPanel>
 						</Button>
-						<Button Width="200" Height="42"
+						<Button MinWidth="200" Height="42"
 							Margin="0,0,12,12"
 							Command="{Binding MasterVColumnResyncCommand}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
@@ -97,7 +97,7 @@
 									Text="V*列再同期" />
 							</StackPanel>
 						</Button>
-						<Button Width="200" Height="42"
+						<Button MinWidth="200" Height="42"
 							Margin="0,0,12,12"
 							Command="{Binding TranTaxRebuildCommand}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
@@ -110,7 +110,7 @@
 									Text="伝票税額再更新" />
 							</StackPanel>
 						</Button>
-						<Button Width="200" Height="42"
+						<Button MinWidth="200" Height="42"
 							Margin="0,0,12,12"
 							Command="{Binding ManualLockClearCommand}"
 							IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"

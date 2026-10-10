@@ -267,7 +267,7 @@
 
 								<!--  パスワード設定ボタン  -->
 								<Button Grid.Row="3" Grid.Column="1"
-									Width="120" Height="36"
+									MinWidth="120" Height="36"
 									Margin="0,4" HorizontalAlignment="Left"
 									Command="{Binding DoSetPassCommand}"
 									Style="{StaticResource MaterialDesignOutlinedButton}">

@@ -205,17 +205,34 @@ public partial class HachuInputViewModel : Helpers.BaseTranInputViewModel<Tran13
 	/// <summary>Tax1+Tax2+Tax3。Tax は分割済みで存在しないため、XAMLの消費税欄表示はこちらを使う。</summary>
 	public long TaxTotal => CurrentEdit.Tax1 + CurrentEdit.Tax2 + CurrentEdit.Tax3;
 
+	// 以下2つは OnCurrentEditChangedCore から待たずに呼ばれる。取得中に別伝票へ切り替わった場合に
+	// 旧伝票向けの結果を新しい伝票へ書き込まないよう、開始時の伝票と一致するときだけ反映する。
+	// 例外も呼び出し側で観測されないため、ここで捕捉してメッセージに出す。
 	async Task ApplyDefaultSokoAsync() {
-		if (CurrentEdit.Id_Soko > 0) return;
-		var sysman = await AppGlobal.LogicGetSysman();
-		if (sysman.Id_Soko <= 0) return;
-		CurrentEdit.Id_Soko = sysman.Id_Soko;
-		CurrentEdit.VSoko = new CodeNameView { Sid = sysman.VSoko.Sid, Cd = sysman.VSoko.Cd, Mei = sysman.VSoko.Mei };
+		var target = CurrentEdit;
+		if (target.Id_Soko > 0) return;
+		try {
+			var sysman = await AppGlobal.LogicGetSysman();
+			if (sysman.Id_Soko <= 0 || !ReferenceEquals(target, CurrentEdit) || target.Id_Soko > 0) return;
+			target.Id_Soko = sysman.Id_Soko;
+			target.VSoko = new CodeNameView { Sid = sysman.VSoko.Sid, Cd = sysman.VSoko.Cd, Mei = sysman.VSoko.Mei };
+		}
+		catch (Exception ex) {
+			Message = $"既定倉庫の取得に失敗しました: {ex.Message}";
+		}
 	}
 
 	async Task CacheShiireLeadTimeAsync(long idShiire) {
-		var shiire = await LoadFullShiireAsync(idShiire);
-		if (shiire != null) shiireLeadTimeDays = shiire.LeadTimeDays;
+		var target = CurrentEdit;
+		try {
+			var shiire = await LoadFullShiireAsync(idShiire);
+			if (shiire != null && ReferenceEquals(target, CurrentEdit) && target.Id_Shiire == idShiire) {
+				shiireLeadTimeDays = shiire.LeadTimeDays;
+			}
+		}
+		catch (Exception ex) {
+			Message = $"仕入先のリードタイム取得に失敗しました: {ex.Message}";
+		}
 	}
 
 	// 選択ダイアログ(QueryListSimpleParam)は Id/Code/Name しか返さないため、掛率・リードタイムはIdで1件取得し直す。
@@ -578,6 +595,8 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 		// 選択ダイアログはCode/Nameしか返さないため、掛率・リードタイム・端数処理はIdで1件取得し直す。
 		var fullShiire = await LoadFullShiireAsync(shiire.Id);
 		if (fullShiire == null) {
+			// 前の仕入先のリードタイムが残らないようにする
+			shiireLeadTimeDays = 0;
 			// 仕入先が引けない場合は自社既定の端数処理を使う(3.7の解決順3)
 			CurrentEdit.TaxRounding = (await AppGlobal.LogicGetSysman()).TaxRounding;
 			UpdateHeaderTotals();

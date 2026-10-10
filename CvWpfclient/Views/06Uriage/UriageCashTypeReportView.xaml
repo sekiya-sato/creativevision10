@@ -212,7 +212,8 @@
 				<DataGridTextColumn Width="80"
 					Binding="{Binding ShopCode}"
 					Header="店舗CD" />
-				<DataGridTextColumn Width="200"
+				<!--  店舗名を可変幅にして、標準サイズで右端の差額列まで横スクロールなしで見えるようにする  -->
+				<DataGridTextColumn Width="*" MinWidth="140"
 					Binding="{Binding ShopName}"
 					Header="店舗名" />
 				<DataGridTextColumn Width="80"

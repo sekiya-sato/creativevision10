@@ -49,6 +49,10 @@ dotnet build Doc/test/UatVm/UatVm.csproj
 | `--no-execute` | 更新を伴う実行を省き、入力検証だけ行う（DBへ書かない） |
 | `--hide-views` | Viewを表示しない |
 
+### 全メニュー画面の表示崩れベースライン（menulayout）
+
+`menulayout` は `MenuData.CreateDefault()` の全メニュー画面（View型＋InitParamで重複除去）を、MainMenuViewModel.DoMenu と同じ手順（Title・InitParam・AddInfo設定）で非モーダル表示し、初期化完了後に**標準サイズ**と**最小サイズ**（XAMLで `MinWidth`/`MinHeight` 指定がある画面のみ。寸法はBaseWindow適用後の実効値）でJPG保存と `ScreenLayoutCheck.Inspect` を行う。更新操作はしない（汎用マスタメンテは `MasterMeisho|100` で開く）。ダイアログは既定の安全側応答。結果は `--out <dir>`（既定 `out/menulayout-<日時>`）へ `menulayout.md` / `menulayout.json` / `jpg/` として出す。表示崩れはNote扱いで、開けなかった画面だけをFAILにする。`--filter <文字列>` でView型名・メニュー名の部分一致に絞れる。認証切替・複製DB・専用URLは使用ガイドラインの手順に従う。
+
 ## 3. 証跡
 
 `Doc/test/UatVm/out/<scenario>-<日時>.jsonl` に1行1事象で出る。`boot.log`は起動段階の記録。

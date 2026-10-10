@@ -4,7 +4,7 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._41Logistics"
 	Title="連携データ手動送信"
 	Width="{StaticResource StandardWindowWidth}" Height="{StaticResource StandardWindowHeight}"
-	MinWidth="900" MinHeight="650"
+	MinWidth="1010" MinHeight="650"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"

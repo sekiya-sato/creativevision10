@@ -75,7 +75,7 @@
 						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 						MaxLength="7"
 						Style="{StaticResource MaterialDesignOutlinedTextBox}"
-						Text="{Binding TargetMonth}" />
+						Text="{Binding TargetMonth, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="0" Grid.Column="2"
 						VerticalAlignment="Center"
@@ -198,16 +198,16 @@
 							<DataGridTextColumn Width="90"
 								Binding="{Binding DiffCost, StringFormat=N0}"
 								Header="差額" />
-							<DataGridTextColumn Width="90"
+							<DataGridTextColumn Width="108"
 								Binding="{Binding OpeningQty, StringFormat=N0}"
 								Header="前月在庫数" />
-							<DataGridTextColumn Width="100"
+							<DataGridTextColumn Width="118"
 								Binding="{Binding OpeningAmount, StringFormat=N0}"
 								Header="前月在庫金額" />
-							<DataGridTextColumn Width="90"
+							<DataGridTextColumn Width="108"
 								Binding="{Binding PurchaseQty, StringFormat=N0}"
 								Header="当月仕入数" />
-							<DataGridTextColumn Width="100"
+							<DataGridTextColumn Width="118"
 								Binding="{Binding PurchaseAmount, StringFormat=N0}"
 								Header="当月仕入金額" />
 							<DataGridTextColumn Width="90"

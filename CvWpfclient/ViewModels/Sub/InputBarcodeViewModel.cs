@@ -69,7 +69,8 @@ public partial class InputBarcodeViewModel : Helpers.BaseViewModel {
 			BarcodeText = string.Empty;
 		}
 		catch (OperationCanceledException) {
-			throw;
+			// 中止を再送出すると AsyncRelayCommand 経由で未処理例外になるため、表示だけにとどめる
+			Message = "バーコード読取を中止しました";
 		}
 		catch (Exception ex) {
 			Message = $"バーコード読取エラー: {ex.Message}";

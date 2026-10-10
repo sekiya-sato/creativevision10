@@ -31,7 +31,8 @@ public partial class SelectKubunViewModel : Helpers.BaseViewModel {
 				Code = 0,
 				Flag = CvFlag.Msg101_Op_Query,
 				DataType = typeof(QueryListSimpleParam),
-				DataMsg = Common.SerializeObject(new QueryListParam(
+				// DataType と同じ型で送る(サーバは DataType で復元する)
+				DataMsg = Common.SerializeObject(new QueryListSimpleParam(
 					itemType: typeof(MasterMeisho),
 					where: Where,
 					order: Order
@@ -43,9 +44,10 @@ public partial class SelectKubunViewModel : Helpers.BaseViewModel {
 			if (list != null) {
 				ListData = new ObservableCollection<dynamic>(list.Cast<dynamic>());
 				Count = ListData.Count;
+				// 0件のときは未選択(null)にする。空の行を返すと呼出元の値を空で上書きしてしまう
 				Current = !string.IsNullOrEmpty(StartPos)
-					? ListData.FirstOrDefault(x => x.Code == StartPos) ?? ListData.FirstOrDefault() ?? new MasterMeisho()
-					: ListData.FirstOrDefault() ?? new MasterMeisho();
+					? ListData.FirstOrDefault(x => x.Code == StartPos) ?? ListData.FirstOrDefault()
+					: ListData.FirstOrDefault();
 				WeakReferenceMessenger.Default.Send(new SelectStringMessage(StartPos));
 			}
 		}

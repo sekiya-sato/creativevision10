@@ -136,7 +136,11 @@ public partial class ExternalCsvImportViewModel : Helpers.BaseViewModel {
 				return;
 			}
 
-			Message = $"{importRecords.Count:N0} 件を登録しました。";
+			var importedCount = importRecords.Count;
+			// 同じ内容の再取込（二重登録）を防ぐため、取込済みのデータを破棄する。再取込はファイル選択・再検証から行う
+			importRecords.Clear();
+			ImportableRowCount = 0;
+			Message = $"{importedCount:N0} 件を登録しました。";
 			MessageEx.ShowInformationDialog("CSV取込が完了しました。", owner: ClientLib.GetActiveView(this));
 		}
 		catch (OperationCanceledException) {

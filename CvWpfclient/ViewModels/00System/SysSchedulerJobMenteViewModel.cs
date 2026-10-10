@@ -35,9 +35,22 @@ public partial class SysSchedulerJobMenteViewModel : Helpers.BaseViewModel {
 		_schedulerClient = _schedulerChannel.CreateGrpcService<ISchedulerService>();
 	}
 
+	private bool _schedulerChannelDisposed;
+
 	protected override void OnExit() {
-		_schedulerChannel.Dispose();
+		DisposeSchedulerChannel();
 		base.OnExit();
+	}
+
+	/// <summary>
+	/// 専用の gRPC チャネルを破棄する。×ボタン等 ExitCommand 以外で閉じた場合も View の OnClosed から呼ぶため、二重呼出しを許容する。
+	/// </summary>
+	public void DisposeSchedulerChannel() {
+		if (_schedulerChannelDisposed) {
+			return;
+		}
+		_schedulerChannelDisposed = true;
+		_schedulerChannel.Dispose();
 	}
 
 	private static GrpcChannel CreateSchedulerChannel() {

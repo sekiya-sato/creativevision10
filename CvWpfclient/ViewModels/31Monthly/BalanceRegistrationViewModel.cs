@@ -215,6 +215,8 @@ public partial class BalanceRegistrationViewModel : Helpers.BaseViewModel {
 	}
 
 	partial void OnSelectedShimeChanged(int value) {
+		// 締日が変わるとキー日付が同じでも検証内容(DayFrom・締日照合)が変わるため、旧い検証結果を外す(AGENTS 7.3)
+		ClearImportState();
 		if (IsFiscalStartUnset || !IsClosingBased || value == 0) {
 			return;
 		}

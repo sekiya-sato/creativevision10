@@ -215,6 +215,13 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 	/// <summary>一覧取得(F5)。発注を主に取得し、配分側の集計をクライアントで合成する。</summary>
 	[RelayCommand(CanExecute = nameof(IsListTabSelected), IncludeCancelCommand = true)]
 	async Task DoSearch(CancellationToken ct) {
+		// 数値でない発注Noは条件から黙って外れ、全件取得になるため止める
+		if ((Normalize(HachuNoFrom).Length > 0 && !TryParseNo(HachuNoFrom, out _))
+			|| (Normalize(HachuNoTo).Length > 0 && !TryParseNo(HachuNoTo, out _))) {
+			Message = "発注Noは数値で入力してください";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
 		StartBusy("一覧取得中...");
 		try {
 			List<Tran13Hachu> hachuList = await LoadHachuListAsync(ct);
@@ -425,7 +432,24 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 			return;
 		}
 
-		Dictionary<long, int> jodaiByTenpo = await LoadJodaiByTenpoAsync(ct);
+		// 上代の取得も通信なので、失敗・中断をコマンドの外へ漏らさない
+		Dictionary<long, int> jodaiByTenpo;
+		StartBusy("上代取得中...");
+		try {
+			jodaiByTenpo = await LoadJodaiByTenpoAsync(ct);
+		}
+		catch (OperationCanceledException) {
+			Message = "登録を中断しました";
+			return;
+		}
+		catch (Exception ex) {
+			Message = $"上代取得失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+			return;
+		}
+		finally {
+			FinishBusy();
+		}
 		List<TranHaibun> newRecords = BuildNewRecords(jodaiByTenpo);
 		if (newRecords.Count == 0 && loadedEditableRows.Count == 0) {
 			MessageEx.ShowWarningDialog("配分数を入力してください", owner: ActiveWindow);
@@ -442,7 +466,19 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 			await CoreServiceClient.SaveHaibunAsync(loadedEditableRows, newRecords, "配分", ct);
 
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分を {newRecords.Count:N0} 件登録しました";
-			await LoadEntryAsync(targetHachu.Id, ct);
+			long hachuId = targetHachu.Id;
+			try {
+				await LoadEntryAsync(hachuId, ct);
+			}
+			catch (Exception ex) {
+				// 登録は確定済み。再表示だけ失敗したので「登録失敗」とは出さない。
+				// 読込済みの既存配分(Id/Vdu)は古くなっているため、再読込するまで再登録させない。
+				targetHachu = null;
+				loadedEditableRows = [];
+				Message = $"配分は登録しましたが、再表示に失敗しました。発注を選び直してください: {ex.Message}";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+				return;
+			}
 			MessageEx.ShowInformationDialog("登録完了しました。", owner: ActiveWindow);
 		}
 		catch (OperationCanceledException) {
@@ -1107,13 +1143,20 @@ public sealed partial class HachuHaibunCell(long idShohin, HachuHaibunSkuSummary
 	/// <para>
 	/// 0 を空白で表示する（旧システムと同じく、入力の無いセルを埋め尽くさないため）。
 	/// 空文字を入力した場合は 0 として扱い、バインディングの検証エラーで止めない。
+	/// 全角数字は半角へ正規化する。数値でない値・負数は受け付けず、直前の値へ表示を戻す
+	/// （負数は登録対象外のため、画面の合計だけに反映されて登録内容と食い違うのを防ぐ）。
 	/// </para>
 	/// </summary>
 	public string SuText {
 		get => Su == 0 ? string.Empty : Su.ToString("#,##0", CultureInfo.InvariantCulture);
 		set {
-			string text = (value ?? string.Empty).Replace(",", string.Empty).Trim();
-			Su = int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) ? parsed : 0;
+			string text = (value ?? string.Empty).Normalize(System.Text.NormalizationForm.FormKC).Replace(",", string.Empty).Trim();
+			if (text.Length == 0) {
+				Su = 0;
+			}
+			else if (int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) && parsed >= 0) {
+				Su = parsed;
+			}
 			OnPropertyChanged();
 		}
 	}

@@ -33,7 +33,7 @@
 		<materialDesign:ColorZone Grid.Row="0"
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
-			<StackPanel Orientation="Horizontal">
+			<DockPanel>
 				<Button Margin="0,0,8,0"
 					Command="{Binding ExitCommand}"
 					Style="{StaticResource ToolCommandButton}"
@@ -47,14 +47,16 @@
 					FontSize="20" FontWeight="SemiBold"
 					Text="{Binding Title}" />
 				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					Opacity="0.8" Text="強制調整の伝票を照会し、取消すと在庫が調整前へ戻ります。" />
-			</StackPanel>
+					Opacity="0.8" Text="強制調整の伝票を照会し、取消すと在庫が調整前へ戻ります。"
+					TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+			</DockPanel>
 		</materialDesign:ColorZone>
 
 		<Border Grid.Row="1"
 			Padding="12"
 			Background="{DynamicResource MaterialDesignPaper}">
-			<StackPanel Orientation="Horizontal">
+			<!--  縮小時に［取消］等が隠れないよう折り返す  -->
+			<WrapPanel Orientation="Horizontal">
 				<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
 					Text="倉庫" />
 				<Button Width="60"
@@ -109,7 +111,7 @@
 					Style="{StaticResource MaterialDesignOutlinedButton}">
 					<TextBlock FontSize="16" Text="条件クリア" />
 				</Button>
-			</StackPanel>
+			</WrapPanel>
 		</Border>
 
 		<DataGrid Grid.Row="2"

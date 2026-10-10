@@ -35,7 +35,7 @@
 		<materialDesign:ColorZone Grid.Row="0"
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
-			<StackPanel Orientation="Horizontal">
+			<DockPanel>
 				<Button Margin="0,0,8,0"
 					Command="{Binding ExitCommand}"
 					Style="{StaticResource ToolCommandButton}"
@@ -49,22 +49,25 @@
 					FontSize="20" FontWeight="SemiBold"
 					Text="取置配分入力" />
 				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					Opacity="0.8" Text="直営店の在庫を一般顧客向けに取り置き、店舗売上への変換・取消を行います。期限切れは翌日に自動で取り消されます。" />
-			</StackPanel>
+					Opacity="0.8" Text="直営店の在庫を一般顧客向けに取り置き、店舗売上への変換・取消を行います。期限切れは翌日に自動で取り消されます。"
+					TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+			</DockPanel>
 		</materialDesign:ColorZone>
 
 		<!--  POS との二重計上の注意（D10）  -->
 		<Border Grid.Row="1"
 			Padding="12,6"
 			Background="#FFF4E5" BorderBrush="#F0A040" BorderThickness="0,0,0,1">
-			<StackPanel Orientation="Horizontal">
+			<!--  幅が狭くても注意文が切れないよう折り返す  -->
+			<DockPanel>
 				<materialDesign:PackIcon VerticalAlignment="Center"
 					Foreground="#C06000" Kind="AlertOutline" />
 				<TextBlock x:Name="PosNoticeText"
 					Margin="8,0,0,0" VerticalAlignment="Center"
 					FontWeight="SemiBold" Foreground="#8A4500"
-					Text="{x:Static vm:CustomerReservationAllocationInputViewModel.PosNotice}" />
-			</StackPanel>
+					Text="{x:Static vm:CustomerReservationAllocationInputViewModel.PosNotice}"
+					TextWrapping="Wrap" />
+			</DockPanel>
 		</Border>
 
 		<Border Grid.Row="2"

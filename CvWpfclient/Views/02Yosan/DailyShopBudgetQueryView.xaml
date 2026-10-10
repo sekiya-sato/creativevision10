@@ -16,11 +16,8 @@
 
 	<helpers:BaseWindow.Resources>
 		<Style x:Key="DailyShopBudgetColumnHeaderStyle"
-			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+			BasedOn="{StaticResource MenteDataGridColumnHeader}"
 			TargetType="DataGridColumnHeader">
-			<Setter Property="Background" Value="#FF1B2A4A" />
-			<Setter Property="Foreground" Value="White" />
-			<Setter Property="FontWeight" Value="SemiBold" />
 			<Setter Property="HorizontalContentAlignment" Value="Center" />
 			<Setter Property="Padding" Value="8,6" />
 		</Style>

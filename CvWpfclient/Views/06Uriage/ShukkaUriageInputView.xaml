@@ -893,16 +893,10 @@
 											Text="{Binding Mei_Siz}" />
 									</Grid>
 
+									<!--  金額は保存値(Kingaku)を表示する。Su×Tanka の再計算値だと値引等で保存値・合計と食い違う  -->
 									<TextBlock Grid.Column="7"
-										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">
-										<TextBlock.Text>
-											<MultiBinding Converter="{StaticResource MultiplyValuesConverter}"
-												StringFormat="{}{0:N0}">
-												<Binding Path="Su" />
-												<Binding Path="Tanka" />
-											</MultiBinding>
-										</TextBlock.Text>
-									</TextBlock>
+										Style="{StaticResource MeisaiRightReadOnlyTextBlock}"
+										Text="{Binding Kingaku, Mode=OneWay, StringFormat={}{0:N0}}" />
 
 									<TextBlock Grid.Column="8"
 										Style="{StaticResource MeisaiRightReadOnlyTextBlock}">

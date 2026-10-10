@@ -186,6 +186,29 @@ public abstract partial class BaseStockSheetInputViewModel<TDen> : BaseQueryView
 	/// <summary>解決済みの対象倉庫Id。検索時に SokoCode から引く。</summary>
 	protected long IdSoko { get; private set; }
 
+	partial void OnSokoCodeChanged(string value) {
+		// 倉庫を変えたら旧倉庫の一覧を無効化する（旧倉庫Id＋新倉庫コードの伝票を作らせない。AGENTS 7.3）
+		if (Rows.Count == 0) return;
+		foreach (var old in Rows) old.PropertyChanged -= OnRowPropertyChanged;
+		Rows = [];
+		RowCount = 0;
+		RegisteredDenId = 0;
+		IdSoko = 0;
+		UpdateTotals();
+		Message = "倉庫が変わったため一覧をクリアしました。再検索してください";
+	}
+
+	/// <summary>
+	/// 登録済みの一覧のまま再登録しようとしたときに確認する。同じ伝票の二重登録を防ぐ。
+	/// 派生の <see cref="ValidateBeforeRegisterAsync"/> から呼ぶ。続行してよければ true。
+	/// </summary>
+	protected bool ConfirmReRegisterIfRegistered() {
+		if (RegisteredDenId <= 0) return true;
+		return MessageEx.ShowQuestionDialog(
+			$"この一覧は登録済みです（伝票No={RegisteredDenId}）。同じ内容でもう1件登録しますか？",
+			owner: ActiveWindow) == System.Windows.MessageBoxResult.Yes;
+	}
+
 	protected override void OnClearConditions() {
 		SokoCode = string.Empty;
 		SokoName = string.Empty;

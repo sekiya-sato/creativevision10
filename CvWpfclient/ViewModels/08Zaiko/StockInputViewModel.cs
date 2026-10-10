@@ -395,6 +395,8 @@ order by h.DenDay desc, h.Id desc, cast({M}'$.No') as int)
 
 		if (firstTarget != null && firstTarget.Id_Col == 0 && firstTarget.Id_Siz == 0) {
 			FillMeisaiFromColSizRow(firstTarget, firstResult);
+			// 既存行は追加時に購読済みのため、二重購読にならないよう一度外してから付け直す
+			firstTarget.PropertyChanged -= OnMeisaiPropertyChanged;
 			firstTarget.PropertyChanged += OnMeisaiPropertyChanged;
 			SelectedMeisai = firstTarget;
 			results = results.Skip(1).ToList();

@@ -43,7 +43,7 @@
 							<Style.Triggers>
 								<DataTrigger Binding="{Binding IsShort}"
 									Value="True">
-									<Setter Property="Foreground" Value="Red" />
+									<Setter Property="Foreground" Value="{DynamicResource NegativeForegroundBrush}" />
 									<Setter Property="FontWeight" Value="Bold" />
 								</DataTrigger>
 							</Style.Triggers>
@@ -77,7 +77,7 @@
 		<materialDesign:ColorZone Grid.Row="0"
 			Padding="12,8"
 			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
-			<StackPanel Orientation="Horizontal">
+			<DockPanel>
 				<Button Margin="0,0,8,0"
 					Command="{Binding ExitCommand}"
 					Style="{StaticResource ToolCommandButton}"
@@ -91,8 +91,9 @@
 					FontSize="20" FontWeight="SemiBold"
 					Text="在庫配分入力" />
 				<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-					Opacity="0.8" Text="倉庫の有効在庫を、倉庫・卸先・売仕店・直営店へSKU単位で振り分けます。" />
-			</StackPanel>
+					Opacity="0.8" Text="倉庫の有効在庫を、倉庫・卸先・売仕店・直営店へSKU単位で振り分けます。"
+					TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+			</DockPanel>
 		</materialDesign:ColorZone>
 
 		<TabControl Grid.Row="1"
@@ -415,7 +416,8 @@
 							</WrapPanel>
 						</StackPanel>
 					</Border>
-					<StackPanel Margin="0,8,0,6"
+					<!--  縮小時に右端の［登録］が隠れないよう折り返す  -->
+					<WrapPanel Margin="0,8,0,6"
 						DockPanel.Dock="Top" Orientation="Horizontal">
 						<TextBlock VerticalAlignment="Center"
 							FontSize="16" FontWeight="SemiBold" Text="配分先 × SKU" />
@@ -450,7 +452,7 @@
 									FontSize="16" Text="登録" />
 							</StackPanel>
 						</Button>
-					</StackPanel>
+					</WrapPanel>
 					<DataGrid x:Name="AllocationGrid"
 						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False"
 						CurrentCellChanged="AllocationGrid_CurrentCellChanged"

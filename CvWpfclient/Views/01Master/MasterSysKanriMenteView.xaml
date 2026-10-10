@@ -171,7 +171,7 @@
 							d:Text="会社名"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Name}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="1" Grid.Column="0"
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"
@@ -188,7 +188,7 @@
 								d:Text="郵便番号"
 								Style="{StaticResource MaterialDesignTextBox}"
 								Text="{Binding Current.PostalCode, UpdateSourceTrigger=PropertyChanged}"
-								TextWrapping="Wrap" />
+								TextWrapping="NoWrap" />
 							<Button Grid.Column="1"
 								Command="{Binding SearchPostalCodeCommand}"
 								Style="{StaticResource PostalSearchButton}"
@@ -207,21 +207,21 @@
 							d:Text="住所1"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Address1}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<TextBox Grid.Row="1" Grid.Column="5" Grid.ColumnSpan="2"
 							Height="30"
 							Margin="0,0,0,0" VerticalAlignment="Center"
 							d:Text="住所2"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Address2}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="6"
 							Height="30"
 							Margin="10,0,0,0" VerticalAlignment="Center"
 							d:Text="住所3"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Address3}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="3" Grid.Column="0"
 							Height="30"
 							Margin="35,0,0,0" VerticalAlignment="Center"
@@ -232,7 +232,7 @@
 							d:Text="03-1234-5678"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Tel}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="3" Grid.Column="3"
 							Height="30"
 							Margin="35,0,0,0" VerticalAlignment="Center"
@@ -243,7 +243,7 @@
 							d:Text="mailaddress@domain.com"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Mail}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="4" Grid.Column="0"
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"
@@ -254,21 +254,21 @@
 							d:Text="Bank1"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.BankAccount1}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="5"
 							Height="30"
 							Margin="10,0,0,0" VerticalAlignment="Center"
 							d:Text="Bank2"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.BankAccount2}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="5"
 							Height="30"
 							Margin="10,0,0,0" VerticalAlignment="Center"
 							d:Text="Bank3"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.BankAccount3}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="7" Grid.Column="0"
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"
@@ -305,7 +305,7 @@
 							d:Text="修正Day"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.ModifyDaysEx}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="8" Grid.Column="2"
 							Height="30"
 							VerticalAlignment="Top"
@@ -316,7 +316,7 @@
 							d:Text="先付Day"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.ModifyDaysPre}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="9" Grid.Column="0"
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"
@@ -342,7 +342,7 @@
 							d:Text="Tax"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Jsub[0].TaxRate}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="10" Grid.Column="2"
 							Height="30"
 							VerticalAlignment="Top"
@@ -372,7 +372,7 @@
 							d:Text="Tax"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Jsub[1].TaxRate}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="11" Grid.Column="2"
 							Height="30"
 							VerticalAlignment="Top"
@@ -401,7 +401,7 @@
 							d:Text="Tax"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Jsub[2].TaxRate}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="12" Grid.Column="2"
 							Height="30"
 							VerticalAlignment="Top"
@@ -455,7 +455,7 @@
 							d:Text="https://www.example.com"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.Hp}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="15" Grid.Column="0"
 							Height="30"
 							Margin="15,0,0,0" VerticalAlignment="Center"
@@ -466,7 +466,7 @@
 							d:Text="T1234567890123"
 							Style="{StaticResource MaterialDesignTextBox}"
 							Text="{Binding Current.TaxRegistrationNumber}"
-							TextWrapping="Wrap" />
+							TextWrapping="NoWrap" />
 						<Label Grid.Row="15" Grid.Column="3"
 							Height="30"
 							Margin="0,0,0,0" VerticalAlignment="Center"

@@ -95,11 +95,36 @@ public partial class SalesOrderAllocationInputViewModel : BaseViewModel {
 
 	bool HasRows() => Rows.Count > 0 && !IsBusy;
 
-	partial void OnRowsChanged(ObservableCollection<SalesOrderAllocationRow> value) {
+	partial void OnRowsChanged(ObservableCollection<SalesOrderAllocationRow> value) => NotifyEditCommands();
+	partial void OnIsBusyChanged(bool value) => NotifyEditCommands();
+
+	void NotifyEditCommands() {
 		LoadZanCommand.NotifyCanExecuteChanged();
 		FillByStockCommand.NotifyCanExecuteChanged();
 		ClearAllCommand.NotifyCanExecuteChanged();
 		DoRegisterCommand.NotifyCanExecuteChanged();
+	}
+
+	// 倉庫・商品を変えたら旧条件のマトリクスを無効化する（旧対象の配分を洗い替えさせない。AGENTS 7.3）
+	partial void OnSokoCodeChanged(string value) => InvalidateMatrix("倉庫");
+	partial void OnShohinCodeChanged(string value) => InvalidateMatrix("商品");
+
+	void InvalidateMatrix(string label) {
+		if (Rows.Count == 0 && loadedEditableRows.Count == 0) return;
+		ClearMatrix();
+		Message = $"{label}が変わったため一覧をクリアしました。［検索］を押してください。";
+	}
+
+	/// <summary>読み込んだマトリクスと洗い替え対象を破棄し、登録できない状態に戻す。</summary>
+	void ClearMatrix() {
+		idSoko = 0;
+		idShohin = 0;
+		loadedEditableRows = [];
+		orderZans = [];
+		shainByTokui = [];
+		Rows = [];
+		SkuColumns = [];
+		RefreshTotals();
 	}
 
 	[RelayCommand]
@@ -121,6 +146,7 @@ public partial class SalesOrderAllocationInputViewModel : BaseViewModel {
 	/// <summary>検索(F5)。倉庫・商品の受注残と既存配分を読み込み、得意先×SKU のマトリクスを作る</summary>
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoSearch(CancellationToken ct) {
+		if (IsBusy) return;
 		if (string.IsNullOrWhiteSpace(SokoCode) || string.IsNullOrWhiteSpace(ShohinCode)) {
 			MessageEx.ShowWarningDialog("倉庫と商品を指定してください。", owner: ActiveWindow);
 			return;
@@ -134,9 +160,12 @@ public partial class SalesOrderAllocationInputViewModel : BaseViewModel {
 			await LoadMatrixAsync(ct);
 		}
 		catch (OperationCanceledException) {
+			// 読込途中（対象Idと既存配分だけ新しい等）の状態で登録させない
+			ClearMatrix();
 			Message = "検索を中断しました";
 		}
 		catch (Exception ex) {
+			ClearMatrix();
 			Message = $"検索失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
@@ -199,7 +228,17 @@ public partial class SalesOrderAllocationInputViewModel : BaseViewModel {
 		StartBusy("配分データ登録中...");
 		try {
 			await CoreServiceClient.SaveHaibunAsync(loadedEditableRows, newRecords, "受注配分", ct);
-			await LoadMatrixAsync(ct);
+			// 保存は完了している。再読込の失敗を「登録失敗」と誤表示しないよう分けて扱う
+			try {
+				await LoadMatrixAsync(ct);
+			}
+			catch (Exception reloadEx) {
+				// 再読込に失敗した状態のまま再登録すると古い既存配分で洗い替えるため、一覧を破棄する
+				ClearMatrix();
+				Message = $"配分は登録済みですが、再読込に失敗しました: {reloadEx.Message}";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+				return;
+			}
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分を {newRecords.Count:N0} 件登録しました";
 			MessageEx.ShowInformationDialog("登録完了しました。", owner: ActiveWindow);
 		}

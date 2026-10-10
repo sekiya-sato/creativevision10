@@ -169,7 +169,7 @@
 								TargetType="TextBlock" />
 						</DataGridTextColumn.ElementStyle>
 					</DataGridTextColumn>
-					<DataGridCheckBoxColumn Width="54"
+					<DataGridCheckBoxColumn Width="64"
 						Binding="{Binding SortDescending, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 						Header="降順？" />
 					<DataGridTextColumn Width="190"

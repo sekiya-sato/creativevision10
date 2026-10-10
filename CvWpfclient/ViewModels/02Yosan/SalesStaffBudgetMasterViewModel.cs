@@ -65,6 +65,10 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(LoadBudgetCommand))]
+	[NotifyCanExecuteChangedFor(nameof(CreateBudgetCommand))]
+	[NotifyCanExecuteChangedFor(nameof(SaveBudgetCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DeleteBudgetCommand))]
 	public partial bool IsBusy { get; set; }
 
 	[ObservableProperty]
@@ -73,6 +77,21 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 	bool isApplyingHolidayDays;
 	bool isApplyingSelectedYearMonthString;
 	bool isRecalculatingTotals;
+	/// <summary>選択ダイアログからコード・Id・名称をまとめて設定中か。コード手入力時の Id クリアを抑止する。</summary>
+	bool isApplyingSelection;
+	/// <summary>日別予算を作成・読込したときの対象（販売員Id・年月）。保存時に現在の条件と一致するか検査する。</summary>
+	(long StaffId, DateTime YearMonth)? dailyBudgetTarget;
+
+	/// <summary>
+	/// 販売員コードを手入力で変えた場合は Id と名称が旧販売員のまま残るため、Id をクリアして再選択させる。
+	/// </summary>
+	partial void OnSelectedStaffCodeChanged(string value) {
+		if (isApplyingSelection) return;
+		SelectedStaffId = 0;
+		SelectedStaffName = string.Empty;
+	}
+
+	bool CanRunBudgetCommand() => !IsBusy;
 
 	protected override void OnExit() {
 		if (MessageEx.ShowQuestionDialog("終了しますか？", owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
@@ -144,7 +163,7 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 		ClearAll();
 	}
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunBudgetCommand))]
 	async Task LoadBudget(CancellationToken ct) {
 		if (!HasSelectedStaff()) return;
 		if (!TryApplySelectedYearMonth()) return;
@@ -207,7 +226,7 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 		}
 	}
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunBudgetCommand))]
 	void CreateBudget() {
 		if (!HasSelectedStaff()) return;
 		if (!TryApplySelectedYearMonth()) return;
@@ -215,7 +234,7 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 		AutoAllocateBudget();
 	}
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunBudgetCommand))]
 	async Task SaveBudget(CancellationToken ct) {
 		if (!HasSelectedStaff()) return;
 		if (!TryApplySelectedYearMonth()) return;
@@ -225,6 +244,11 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 		}
 		if (!HasDailyRowsForSelectedMonth()) {
 			MessageEx.ShowWarningDialog("対象年月の日数と予算データが一致しません。予算作成を実行してください。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		// 予算作成・読込の後に販売員・年月を変えた場合、画面の日別予算は旧条件のものなので保存させない
+		if (dailyBudgetTarget != (SelectedStaffId, SelectedYearMonth)) {
+			MessageEx.ShowWarningDialog("予算作成・予算読込の後に販売員・年月が変更されています。予算作成または予算読込をやり直してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		if (MessageEx.ShowQuestionDialog("予算データを登録しますか？", owner: ClientLib.GetActiveView(this)) != MsgBoxResult.Yes) {
@@ -285,7 +309,7 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 		}
 	}
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunBudgetCommand))]
 	async Task DeleteBudget(CancellationToken ct) {
 		if (!HasSelectedStaff()) return;
 		if (!TryApplySelectedYearMonth()) return;
@@ -299,6 +323,7 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			await DeleteExistingBudgets(ct);
 			DailyBudgets.Clear();
+			dailyBudgetTarget = null;
 			MonthlyBudget = 0;
 			MonthlyGrossProfitBudget = 0;
 			RecalculateTotals();
@@ -364,14 +389,21 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 	void SelectStaff() {
 		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code", startPos: SelectedStaffId);
 		if (shain == null) return;
-		SelectedStaffId = shain.Id;
-		SelectedStaffCode = shain.Code ?? string.Empty;
-		SelectedStaffName = shain.Name ?? string.Empty;
+		isApplyingSelection = true;
+		try {
+			SelectedStaffCode = shain.Code ?? string.Empty;
+			SelectedStaffId = shain.Id;
+			SelectedStaffName = shain.Name ?? string.Empty;
+		}
+		finally {
+			isApplyingSelection = false;
+		}
 	}
 
 	[RelayCommand]
 	void ClearAll() {
 		DailyBudgets.Clear();
+		dailyBudgetTarget = null;
 		MonthlyBudget = 0;
 		MonthlyGrossProfitBudget = 0;
 		TotalBudget = 0;
@@ -402,6 +434,7 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 			DailyBudgets.Add(row);
 		}
+		dailyBudgetTarget = (SelectedStaffId, new DateTime(year, month, 1));
 		ApplyHolidayDays();
 	}
 

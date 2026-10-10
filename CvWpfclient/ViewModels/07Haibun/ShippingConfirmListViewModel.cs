@@ -111,6 +111,18 @@ public partial class ShippingConfirmListViewModel : BaseQueryViewModel {
 		UpdateCounts();
 	}
 
+	// 表示種別・倉庫を変えたら旧条件の一覧を無効化する（欠品実績の行や旧倉庫の行を指示取消させない。AGENTS 7.3）
+	partial void OnViewKindChanged(string value) => InvalidateRows();
+	partial void OnSokoCodeChanged(string value) => InvalidateRows();
+
+	void InvalidateRows() {
+		if (Rows.Count == 0) return;
+		DetachRows(Rows);
+		Rows = [];
+		UpdateCounts();
+		Message = "条件が変わったため一覧をクリアしました。［検索実行］で再取得してください。";
+	}
+
 	[RelayCommand]
 	void SelectSoko() { var c = SelectSokoCode(); if (c != null) SokoCode = c; }
 

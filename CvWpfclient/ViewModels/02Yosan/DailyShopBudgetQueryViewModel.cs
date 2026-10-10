@@ -59,6 +59,9 @@ public partial class DailyShopBudgetQueryViewModel : Helpers.BaseQueryViewModel 
 	/// <summary>曜日名。SQLite strftime('%w') は 0=日だが、ここでは DateTime.DayOfWeek(0=日)をそのまま使う</summary>
 	static readonly string[] YoubiNames = ["日", "月", "火", "水", "木", "金", "土"];
 
+	/// <summary>表示中の結果(ResultTable)の年月。CSVファイル名に使う。結果が無いときは null。</summary>
+	DateTime? resultYearMonth;
+
 	partial void OnSelectedYearMonthChanged(DateTime value) {
 		SelectedYearMonthString = value.ToString("yyyy/MM", CultureInfo.InvariantCulture);
 	}
@@ -123,7 +126,8 @@ public partial class DailyShopBudgetQueryViewModel : Helpers.BaseQueryViewModel 
 			Title = "店別売上表をCSV出力",
 			Filter = "CSVファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*",
 			DefaultExt = ".csv",
-			FileName = $"{SanitizeFileName($"店別売上表_{SelectedYearMonth:yyyyMM}")}.csv"
+			// 年月移動後に検索が失敗・中断しても、表示中の結果の年月をファイル名に使う
+			FileName = $"{SanitizeFileName($"店別売上表_{resultYearMonth ?? SelectedYearMonth:yyyyMM}")}.csv"
 		};
 		if (dialog.ShowDialog(ActiveWindow) != true) return;
 
@@ -150,6 +154,8 @@ public partial class DailyShopBudgetQueryViewModel : Helpers.BaseQueryViewModel 
 		// StartBusy/FinishBusy は基底の Search() コマンドが既に呼んでいるため、ここでは呼ばない。
 		if (!TryParseYearMonth(SelectedYearMonthString, out var yearMonth)) {
 			Message = "年月は yyyy/MM 形式で入力してください。";
+			// 条件パネルには Message の表示欄が無いため、ダイアログで知らせる
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
 			return;
 		}
 		SelectedYearMonth = yearMonth;
@@ -168,6 +174,13 @@ public partial class DailyShopBudgetQueryViewModel : Helpers.BaseQueryViewModel 
 			Message = "対象データがありません。";
 			ResultTable = null;
 			TotalTable = null;
+			resultYearMonth = null;
+			// 年月移動で結果パネルに留まる場合も、表示中の条件サマリを今回の年月へ合わせる
+			ConditionSummary = $"{yearMonth:yyyy/MM} {(IsByShop ? "店別" : "日計")}";
+			if (!IsResultVisible) {
+				// 条件パネルには Message の表示欄が無いため、ダイアログで知らせる
+				MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
+			}
 			return;
 		}
 		ct.ThrowIfCancellationRequested();
@@ -177,6 +190,7 @@ public partial class DailyShopBudgetQueryViewModel : Helpers.BaseQueryViewModel 
 
 		ResultTable = BuildResultTable(shops, facts, yearMonth, daysInMonth);
 		TotalTable = BuildTotalTable(shops, facts, daysInMonth);
+		resultYearMonth = yearMonth;
 		Message = $"店舗 {shops.Count} 件 / {daysInMonth} 日";
 		ConditionSummary = $"{yearMonth:yyyy/MM} {(IsByShop ? "店別" : "日計")}";
 		IsResultVisible = true;

@@ -5,6 +5,7 @@
 	Title="残高登録処理"
 	Width="{StaticResource StandardWindowWidth}"
 	Height="{StaticResource StandardWindowHeight}"
+	MinWidth="1000" MinHeight="680"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="14"
 	Foreground="{DynamicResource MaterialDesignBody}"
@@ -138,7 +139,7 @@
 					<TextBox Grid.Row="0" Grid.Column="10"
 						IsEnabled="{Binding IsFiscalStartUnset, Converter={StaticResource InverseBooleanConverter}}"
 						Style="{StaticResource FormTextBox}"
-						Text="{Binding KeyDateText, UpdateSourceTrigger=PropertyChanged, Delay=400}" />
+						Text="{Binding KeyDateText, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="12"
 						Margin="0,6,0,0"
@@ -355,7 +356,7 @@
 									Binding="{Binding Balance, StringFormat={}{0:N0}}"
 									ElementStyle="{StaticResource DataGridRightTextBlock}"
 									Header="内部残高" />
-								<DataGridTextColumn Width="*"
+								<DataGridTextColumn Width="*" MinWidth="60"
 									Binding="{Binding Note}"
 									Header="備考" />
 							</DataGrid.Columns>

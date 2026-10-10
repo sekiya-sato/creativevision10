@@ -20,16 +20,6 @@
 			Gesture="Esc" />
 	</helpers:BaseWindow.InputBindings>
 
-	<helpers:BaseWindow.Resources>
-		<Style x:Key="FormLabel"
-			TargetType="TextBlock">
-			<Setter Property="VerticalAlignment" Value="Center" />
-			<Setter Property="FontWeight" Value="Medium" />
-			<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-			<Setter Property="Margin" Value="4,0,12,0" />
-		</Style>
-	</helpers:BaseWindow.Resources>
-
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />

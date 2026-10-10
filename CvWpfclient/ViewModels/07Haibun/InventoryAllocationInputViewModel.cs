@@ -47,6 +47,7 @@ public partial class InventoryAllocationInputViewModel : BaseViewModel {
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(GoToEditCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoRegisterCommand))]
 	public partial int SelectedTabIndex { get; set; }
 
 	[ObservableProperty]
@@ -179,9 +180,33 @@ public partial class InventoryAllocationInputViewModel : BaseViewModel {
 
 	bool CanGoToEdit() => SelectedTabIndex == 0 && SelectedSearchRow != null;
 	bool HasTarget() => targetShohin != null && !IsBusy;
+	// 登録は配分入力タブを表示しているときだけ（一覧タブで F2 を押して見えていない配分を登録させない）
+	bool CanRegister() => HasTarget() && SelectedTabIndex == 1;
 
 	partial void OnIsBusyChanged(bool value) => NotifyEditCommands();
 	partial void OnRowsChanged(ObservableCollection<InventoryAllocationRow> value) => NotifyEditCommands();
+
+	partial void OnSokoCodeChanged(string value) {
+		// 配分元倉庫を変えたら旧倉庫の一覧と配分入力を無効化する（旧倉庫の配分を新倉庫へ登録させない。AGENTS 7.3）
+		if (SearchRows.Count == 0 && targetShohin == null) return;
+		SearchRows = [];
+		SelectedSearchRow = null;
+		ResetEditState();
+		SelectedTabIndex = 0;
+		Message = "配分元倉庫が変わったため一覧をクリアしました。［検索］を押してください。";
+	}
+
+	/// <summary>配分入力タブの状態（対象商品・既存配分・入力値）を破棄し、登録できない状態に戻す。</summary>
+	void ResetEditState() {
+		targetShohin = null;
+		loadedEditableRows = [];
+		Rows = [];
+		SkuColumns = [];
+		SelectedRow = null;
+		TargetDisplay = string.Empty;
+		GrandTotalSu = 0;
+		NotifyEditCommands();
+	}
 
 	void NotifyEditCommands() {
 		CalcRatioCommand.NotifyCanExecuteChanged();
@@ -205,6 +230,7 @@ public partial class InventoryAllocationInputViewModel : BaseViewModel {
 	/// <summary>検索(F5)。配分元倉庫の商品を在庫・未確定配分・売上つきで一覧する</summary>
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task DoSearch(CancellationToken ct) {
+		if (IsBusy) return;
 		if (string.IsNullOrWhiteSpace(SokoCode)) {
 			MessageEx.ShowWarningDialog("配分元倉庫を指定してください。", owner: ActiveWindow);
 			return;
@@ -220,6 +246,11 @@ public partial class InventoryAllocationInputViewModel : BaseViewModel {
 		StartBusy("一覧取得中...");
 		try {
 			var soko = await ResolveTokuiAsync(SokoCode, ct) ?? throw new InvalidOperationException($"倉庫コード {SokoCode} が見つかりません。");
+			if (soko.Id != idSoko) {
+				// 倉庫が変わったら旧倉庫で読み込んだ配分入力は破棄する（旧倉庫の既存配分を消して新倉庫へ登録させない）
+				ResetEditState();
+				SelectedTabIndex = 0;
+			}
 			idSoko = soko.Id;
 			SokoName = soko.Name;
 			var shohinList = await LoadShohinListAsync(ct);
@@ -258,8 +289,13 @@ public partial class InventoryAllocationInputViewModel : BaseViewModel {
 			await LoadEntryAsync(SelectedSearchRow.Shohin, ct);
 			SelectedTabIndex = 1;
 		}
-		catch (OperationCanceledException) { Message = "配分データ取得を中断しました"; }
+		catch (OperationCanceledException) {
+			// 読込途中の状態（対象商品だけ新しく、配分は旧商品など）で登録させない
+			ResetEditState();
+			Message = "配分データ取得を中断しました";
+		}
 		catch (Exception ex) {
+			ResetEditState();
 			Message = $"配分データ取得失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 		}
@@ -390,9 +426,10 @@ public partial class InventoryAllocationInputViewModel : BaseViewModel {
 	// ===== タブ2: 登録 =====
 
 	/// <summary>登録(F2)。既存の在庫配分を洗い替えし、配分数>0 の配分先×SKU を一括登録する</summary>
-	[RelayCommand(CanExecute = nameof(HasTarget), IncludeCancelCommand = true)]
+	[RelayCommand(CanExecute = nameof(CanRegister), IncludeCancelCommand = true)]
 	async Task DoRegister(CancellationToken ct) {
 		if (targetShohin == null) return;
+		var shohin = targetShohin;
 		if (ShijiDay == null || NouhinDay == null) {
 			MessageEx.ShowWarningDialog("指示日と納品日を入力してください。", owner: ActiveWindow);
 			return;
@@ -415,7 +452,18 @@ public partial class InventoryAllocationInputViewModel : BaseViewModel {
 				: $"配分 {newRecords.Count:N0} 件（合計 {newRecords.Sum(x => x.Su):N0} 点）を登録します。よろしいですか？";
 			if (MessageEx.ShowQuestionDialog(confirm, owner: ActiveWindow) != MessageBoxResult.Yes) return;
 			await CoreServiceClient.SaveHaibunAsync(loadedEditableRows, newRecords, "在庫配分", ct);
-			await LoadEntryAsync(targetShohin, ct);
+			// 保存は完了している。再読込の失敗を「登録失敗」と誤表示しないよう分けて扱う
+			try {
+				await LoadEntryAsync(shohin, ct);
+			}
+			catch (Exception reloadEx) {
+				// 再読込に失敗した状態のまま再登録すると古い既存配分で洗い替えるため、入力状態を破棄する
+				ResetEditState();
+				SelectedTabIndex = 0;
+				Message = $"配分は登録済みですが、再読込に失敗しました: {reloadEx.Message}";
+				MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+				return;
+			}
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 配分を {newRecords.Count:N0} 件登録しました";
 			MessageEx.ShowInformationDialog("登録完了しました。", owner: ActiveWindow);
 		}
@@ -449,10 +497,18 @@ public partial class InventoryAllocationInputViewModel : BaseViewModel {
 		Rows = [];
 		var tokui = await LoadTokuiAsync(loadedEditableRows.Select(x => x.Id_Tenpo), ct);
 		SyncRows(tokui);
+		int hidden = 0;
 		foreach (var h in loadedEditableRows) {
 			var row = Rows.FirstOrDefault(r => r.Id_Tenpo == h.Id_Tenpo);
 			var cell = row?.Cells.FirstOrDefault(c => c.Sku.Id_Col == h.Id_Col && c.Sku.Id_Siz == h.Id_Siz);
 			if (cell != null) cell.Su += h.Su;
+			else hidden++;
+		}
+		// 色サイズ展開に無いSKU等の既存配分は表示できず、登録（洗い替え）で削除されるため知らせる
+		if (hidden > 0) {
+			MessageEx.ShowWarningDialog(
+				$"画面に表示できない既存の配分が {hidden:N0} 件あります（商品の色サイズが変更された可能性があります）。\n登録すると、これらの配分は削除されます。",
+				owner: ActiveWindow);
 		}
 		var first = loadedEditableRows.FirstOrDefault();
 		ShijiDay = FromYmd8(first?.DenDay) ?? DateTime.Today;

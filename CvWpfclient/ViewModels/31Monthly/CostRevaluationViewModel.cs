@@ -108,7 +108,35 @@ public partial class CostRevaluationViewModel : Helpers.BaseViewModel {
 
 	/// <summary>掛率入力欄の直後に表示する計算式（設計書§16.5）。</summary>
 	public string RateFormulaText => CostPreviewDisplay.BuildRevaluationRateFormulaText(RatePercent);
-	partial void OnRatePercentChanged(int value) => OnPropertyChanged(nameof(RateFormulaText));
+	partial void OnRatePercentChanged(int value) {
+		OnPropertyChanged(nameof(RateFormulaText));
+		DiscardConfirmedState("掛率を変更しました。確認をやり直してください。");
+	}
+	// 確認の指紋は入力条件を含まないため、更新値に影響する入力の変更で確認済み状態を破棄する(AGENTS 7.3)
+	partial void OnFixedCostChanged(int value) => DiscardConfirmedState("指定単価を変更しました。確認をやり直してください。");
+	partial void OnRoundingUnitChanged(int value) => DiscardConfirmedState("端数単位を変更しました。確認をやり直してください。");
+	partial void OnRoundingChanged(EnumRounding value) => DiscardConfirmedState("端数処理を変更しました。確認をやり直してください。");
+	partial void OnCondRowsChanged(ObservableCollection<CostRevalCondRowVm> oldValue, ObservableCollection<CostRevalCondRowVm> newValue) {
+		if (oldValue != null) {
+			oldValue.CollectionChanged -= OnCondRowsCollectionChanged;
+			foreach (var row in oldValue) row.PropertyChanged -= OnCondRowPropertyChanged;
+		}
+		newValue.CollectionChanged += OnCondRowsCollectionChanged;
+		foreach (var row in newValue) row.PropertyChanged += OnCondRowPropertyChanged;
+	}
+
+	void OnCondRowsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) {
+		if (e.OldItems != null) {
+			foreach (CostRevalCondRowVm row in e.OldItems) row.PropertyChanged -= OnCondRowPropertyChanged;
+		}
+		if (e.NewItems != null) {
+			foreach (CostRevalCondRowVm row in e.NewItems) row.PropertyChanged += OnCondRowPropertyChanged;
+		}
+		DiscardConfirmedState("抽出条件を変更しました。確認をやり直してください。");
+	}
+
+	void OnCondRowPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
+		DiscardConfirmedState("抽出条件を変更しました。確認をやり直してください。");
 
 	// ------------------------------------------------------------------
 	// 画面共通の状態
@@ -147,8 +175,19 @@ public partial class CostRevaluationViewModel : Helpers.BaseViewModel {
 	/// <summary>「更新」を実行できるか（エラー0件かつ確認済み・対象1件以上。設計書§2.4-2、§16.9）。</summary>
 	public bool CanUpdate => _confirmedSnapshot is not null && ErrorCount == 0 && TargetCount > 0;
 
-	partial void OnTargetMonthChanged(string value) => DiscardConfirmedState("対象月を変更しました。確認をやり直してください。");
-	partial void OnApplyPointChanged(EnumCostRevalApplyPoint value) => DiscardConfirmedState("適用時点を変更しました。確認をやり直してください。");
+	public CostRevaluationViewModel() {
+		// 初期値のコレクションは OnCondRowsChanged を通らないため、ここで変更を購読する
+		OnCondRowsChanged(null!, CondRows);
+	}
+
+	partial void OnTargetMonthChanged(string value) {
+		PeriodText = "－";
+		DiscardConfirmedState("対象月を変更しました。確認をやり直してください。");
+	}
+	partial void OnApplyPointChanged(EnumCostRevalApplyPoint value) {
+		PeriodText = "－";
+		DiscardConfirmedState("適用時点を変更しました。確認をやり直してください。");
+	}
 	partial void OnGroupKeyChanged(EnumCostRevalGroupKey value) => DiscardConfirmedState("集計単位を変更しました。確認をやり直してください。");
 	partial void OnMethodChanged(EnumCostRevaluationMethod value) => DiscardConfirmedState("指定方式を変更しました。確認をやり直してください。");
 	partial void OnErrorCountChanged(long value) => UpdateCommand.NotifyCanExecuteChanged();

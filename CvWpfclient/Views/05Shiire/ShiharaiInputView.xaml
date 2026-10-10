@@ -135,7 +135,7 @@
 									<DataGridTextColumn Width="90"
 										Binding="{Binding Id}"
 										Header="支払No" />
-									<DataGridTextColumn Width="90"
+									<DataGridTextColumn Width="120"
 										Binding="{Binding KakeDay, Converter={StaticResource DateYmd8Converter}, StringFormat=yyyy/MM/dd}"
 										Header="支払日" />
 									<DataGridTextColumn Width="300"
@@ -230,23 +230,20 @@
 						Margin="0,0,0,10" Padding="12"
 						materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
 						<Grid>
+							<!--  ラベル列(Auto)と入力列を分け、ラベルと入力欄を重ねない（固定Height・Marginでの重ね合わせを廃止）  -->
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="Auto" />
 								<ColumnDefinition Width="160" />
 								<ColumnDefinition Width="Auto" />
-								<ColumnDefinition Width="174" />
-								<ColumnDefinition Width="65.926" />
-								<ColumnDefinition Width="110.074" />
+								<ColumnDefinition Width="*" MinWidth="240" />
 								<ColumnDefinition Width="Auto" />
-								<ColumnDefinition Width="260" />
-								<ColumnDefinition />
+								<ColumnDefinition Width="*" MinWidth="220" />
 							</Grid.ColumnDefinitions>
 							<Grid.RowDefinitions>
 								<RowDefinition Height="Auto" />
 								<RowDefinition Height="Auto" />
 							</Grid.RowDefinitions>
 							<TextBlock Grid.Column="0"
-								Height="16"
 								Margin="4,0,8,0"
 								Style="{StaticResource FormLabel}"
 								Text="支払日" />
@@ -256,12 +253,11 @@
 								SelectedDate="{Binding CurrentEdit.KakeDay, Converter={StaticResource DateYmd8Converter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 								Style="{StaticResource FormDatePicker}" />
 							<TextBlock Grid.Column="2"
-								Height="16"
 								Margin="4,0,8,0"
 								Style="{StaticResource FormLabel}"
 								Text="支払先Id" />
-							<DockPanel Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="4"
-								Margin="58,4,18,4">
+							<DockPanel Grid.Row="0" Grid.Column="3"
+								Margin="0,4,18,4">
 								<TextBox Width="120" Height="36"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectShiireCommand}"
 									BorderThickness="0,0,0,1" DockPanel.Dock="Left"
@@ -270,12 +266,11 @@
 								<TextBlock Style="{StaticResource MasterRefText}"
 									Text="{Binding CurrentEdit.VTori, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 							</DockPanel>
-							<TextBlock Grid.Column="6"
-								Height="16"
+							<TextBlock Grid.Column="4"
 								Margin="4,0,8,0"
 								Style="{StaticResource FormLabel}"
 								Text="担当者Id" />
-							<DockPanel Grid.Row="0" Grid.Column="7"
+							<DockPanel Grid.Row="0" Grid.Column="5"
 								Margin="0,4,0,4">
 								<TextBox Width="100" Height="36"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
@@ -287,7 +282,6 @@
 									Text="{Binding CurrentEdit.VShain, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 							</DockPanel>
 							<TextBlock Grid.Row="1" Grid.Column="0"
-								Height="17"
 								Margin="4,0,8,0"
 								Style="{StaticResource FormLabel}"
 								Text="手入力No" />
@@ -296,22 +290,21 @@
 								Style="{StaticResource FormTextBox}"
 								Text="{Binding CurrentEdit.ManualNo, UpdateSourceTrigger=PropertyChanged}" />
 							<TextBlock Grid.Row="1" Grid.Column="2"
-								Height="17"
 								Margin="4,0,8,0"
 								Style="{StaticResource FormLabel}"
 								Text="金額計" />
-							<TextBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2"
-								Margin="58,4,10,4" HorizontalContentAlignment="Right"
+							<TextBox Grid.Row="1" Grid.Column="3"
+								MinWidth="160"
+								Margin="0,4,18,4" HorizontalAlignment="Left" HorizontalContentAlignment="Right"
 								IsReadOnly="True"
 								Style="{StaticResource FormTextBox}"
 								Text="{Binding CurrentEdit.KingakuTotal, StringFormat={}{0:N0}}" />
 							<TextBlock Grid.Row="1" Grid.Column="4"
-								Height="17"
-								Margin="10,0,9,0"
+								Margin="4,0,8,0"
 								Style="{StaticResource FormLabel}"
 								Text="メモ" />
-							<TextBox Grid.Row="1" Grid.Column="5" Grid.ColumnSpan="4"
-								Margin="3,4,0,4"
+							<TextBox Grid.Row="1" Grid.Column="5"
+								Margin="0,4,0,4"
 								Style="{StaticResource FormTextBox}"
 								Text="{Binding CurrentEdit.Memo, UpdateSourceTrigger=PropertyChanged}" />
 						</Grid>
@@ -398,6 +391,7 @@
 										Header="支払区分名" IsReadOnly="True" />
 									<DataGridTextColumn Width="100"
 										Binding="{Binding Kingaku, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}"
+										EditingElementStyle="{StaticResource DataGridRightTextBox}"
 										ElementStyle="{StaticResource DataGridRightTextBlock}"
 										Header="金額" />
 									<DataGridTextColumn Width="*"

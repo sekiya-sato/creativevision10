@@ -153,7 +153,7 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		// 税額 0 の暫定値になるが、直後の RecalcAllMeisaiTaxAsync が正しい値へ書き直す。
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
-		_ = RecalcAllMeisaiTaxAsync();
+		_ = RecalcAllMeisaiTaxObservedAsync();
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -164,11 +164,25 @@ public partial class ShukkaUriageInputViewModel : Helpers.BaseTranInputViewModel
 		}
 		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
 		else if (e.PropertyName is nameof(Tran00Uriage.DenDay)) {
-			_ = RecalcAllMeisaiTaxAsync();
+			_ = RecalcAllMeisaiTaxObservedAsync();
 		}
 	}
 
 	protected override void OnTotalsUpdated() => UpdateHeaderTotals();
+
+	/// <summary>
+	/// 投げっぱなしで呼ぶ税再計算の例外を観測する。未観測のまま税額0の暫定値で残らないよう、失敗は Message に出す。
+	/// </summary>
+	async Task RecalcAllMeisaiTaxObservedAsync() => await ObserveTaxRecalcAsync(RecalcAllMeisaiTaxAsync());
+
+	async Task ObserveTaxRecalcAsync(Task recalc) {
+		try {
+			await recalc;
+		}
+		catch (Exception ex) {
+			Message = $"消費税の再計算に失敗しました（保存前に伝票を開き直してください）: {ex.Message}";
+		}
+	}
 
 	void UpdateHeaderTotals() {
 		// 消費税は税区分ごとに1回だけ丸める(TaxCalculator.Apply)。返品等の符号はヘッダ Kubun の CalcFlag が集計側で決める

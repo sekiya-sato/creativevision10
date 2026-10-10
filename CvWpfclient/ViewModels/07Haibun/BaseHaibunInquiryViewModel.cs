@@ -128,6 +128,9 @@ public abstract partial class BaseHaibunInquiryViewModel : Helpers.BaseViewModel
 				});
 			}
 
+			// 条件（色・倉庫範囲など）が変わっている可能性があるため、旧条件で開いた明細タブは閉じる
+			foreach (var oldTab in Tabs.OfType<HaibunInquiryStockTab>().ToList()) Tabs.Remove(oldTab);
+
 			ProductRows = rows;
 			ProductCount = ProductRows.Count;
 			SelectedProduct = ProductRows.FirstOrDefault();

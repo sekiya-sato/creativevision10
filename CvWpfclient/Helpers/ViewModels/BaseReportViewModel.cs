@@ -135,6 +135,8 @@ public abstract partial class BaseReportViewModel : BaseViewModel {
 		date = default;
 		var value = (text ?? string.Empty).Trim();
 		if (value.Length == 0) {
+			// 必須日付が空欄のときは無反応にせず警告する
+			if (!allowEmpty) MessageEx.ShowWarningDialog("日付を入力してください。", owner: ActiveWindow);
 			return allowEmpty;
 		}
 		if (!DateTime.TryParseExact(value, DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out date)) {

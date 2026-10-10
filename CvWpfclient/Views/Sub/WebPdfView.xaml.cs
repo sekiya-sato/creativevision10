@@ -41,23 +41,37 @@ public partial class WebPdfView : Window {
 	}
 
 	private async void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e) {
-		if (e.IsSuccess) {
-			_retryCount = 0;
-			return;
+		// 再試行の待機中に画面が閉じられると WebView2 は破棄済みで CoreWebView2 の参照が例外になる。
+		// async void の例外はアプリの未処理例外になるため、閉じた後は何もしない
+		try {
+			if (e.IsSuccess) {
+				_retryCount = 0;
+				return;
+			}
+
+			if (_closed || _retryCount >= MaxRetryCount || WebView?.CoreWebView2 is null) {
+				return;
+			}
+
+			_retryCount++;
+			await Task.Delay(RetryDelayMs);
+
+			if (_closed || WebView?.CoreWebView2 is null) {
+				return;
+			}
+
+			WebView.CoreWebView2.Reload();
 		}
-
-		if (_retryCount >= MaxRetryCount || WebView?.CoreWebView2 is null) {
-			return;
+		catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) {
+			// 破棄済みの WebView2 への操作は無視する
 		}
+	}
 
-		_retryCount++;
-		await Task.Delay(RetryDelayMs);
+	private bool _closed;
 
-		if (WebView?.CoreWebView2 is null) {
-			return;
-		}
-
-		WebView.CoreWebView2.Reload();
+	protected override void OnClosed(EventArgs e) {
+		_closed = true;
+		base.OnClosed(e);
 	}
 	// 画面構造がレンダリングされるタイミングで事前にWebView2の内部を確定させる(重要!)
 	protected override async void OnContentRendered(EventArgs e) {

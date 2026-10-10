@@ -74,13 +74,17 @@ public partial class PrintMasterShainCardViewModel : BaseMenteViewModel<MasterSh
 	[RelayCommand]
 	void SelectShainCodeFrom() {
 		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code");
-		ShainCodeFrom = shain?.Code ?? string.Empty;
+		// キャンセル時は入力済みの値を維持する
+		if (shain == null) return;
+		ShainCodeFrom = shain.Code ?? string.Empty;
 	}
 
 	[RelayCommand]
 	void SelectShainCodeTo() {
 		var shain = ShowSelectDialog<MasterShain>(typeof(MasterShain), "", "Code");
-		ShainCodeTo = shain?.Code ?? string.Empty;
+		// キャンセル時は入力済みの値を維持する
+		if (shain == null) return;
+		ShainCodeTo = shain.Code ?? string.Empty;
 	}
 
 	[RelayCommand]

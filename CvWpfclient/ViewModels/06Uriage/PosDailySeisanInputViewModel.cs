@@ -108,6 +108,13 @@ from Tran04PosSeisan {query.AddWhereOrder()}
 		SearchTenpoName = tenpo.Name ?? string.Empty;
 	}
 
+	/// <summary>検索条件の店舗を解除して全店を対象に戻す。</summary>
+	[RelayCommand]
+	void ClearSearchTenpo() {
+		SearchId_Tenpo = 0;
+		SearchTenpoName = string.Empty;
+	}
+
 	[RelayCommand]
 	void DoSelectTenpo() {
 		var tenpo = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType in (1,3,6)", "Code", startPos: CurrentEdit.Id_Tenpo);

@@ -43,7 +43,13 @@ from MasterMaterial {query.AddWhereOrder()}
 	}
 	[RelayCommand]
 	async Task Init() {
-		await LoadTaxKubunAsync();
+		try {
+			await LoadTaxKubunAsync();
+		}
+		catch (Exception ex) {
+			// 消費税区分の取得に失敗しても一覧取得は続行する
+			Message = $"消費税区分の取得失敗: {ex.Message}";
+		}
 		await DoList(CancellationToken.None);
 	}
 

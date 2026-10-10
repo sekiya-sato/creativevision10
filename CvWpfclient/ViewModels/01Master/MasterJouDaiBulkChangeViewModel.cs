@@ -202,8 +202,22 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	[ObservableProperty]
 	public partial string Message { get; set; } = string.Empty;
 
+	/// <summary>
+	/// 処理中フラグ。ボタンのIsEnabledだけでなくF8キーや他のボタンからも割り込めないよう、
+	/// 伝票の切替・保存系コマンドのCanExecuteにも含める。
+	/// </summary>
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(DoNewCommand))]
+	[NotifyCanExecuteChangedFor(nameof(BackToSearchCommand))]
+	[NotifyCanExecuteChangedFor(nameof(GoToEditCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoRegisterCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoFixCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoCancelDenCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DoMarkSentCommand))]
 	public partial bool IsBusy { get; set; }
+
+	/// <summary>処理中でなければ true（伝票の切替・保存系コマンドの共通CanExecute）。</summary>
+	bool CanRunWhenIdle() => !IsBusy;
 
 	// ===== タブ1: 検索画面 ========================================================
 
@@ -572,17 +586,17 @@ LIMIT 500";
 
 	// ===== 新規・編集 =============================================================
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunWhenIdle))]
 	void DoNew() {
 		ClearEdit();
 		SelectedTabIndex = 1;
 		Message = "抽出条件を指定して [明細取得] を実行し、対象店舗を選んでから [登録] してください";
 	}
 
-	bool CanGoToEdit() => SelectedListRow != null;
+	bool CanGoToEdit() => SelectedListRow != null && !IsBusy;
 
 	/// <summary>修正・登録画面から検索画面へ戻る（Escキー用ではなく、下部ボタン専用）。</summary>
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunWhenIdle))]
 	void BackToSearch() => SelectedTabIndex = 0;
 
 	/// <summary>ヘッダの「画面を閉じる」ボタン専用。<see cref="OnExit"/> の上書きに関わらず必ずウィンドウを閉じる。</summary>
@@ -592,6 +606,8 @@ LIMIT 500";
 	/// <summary>修正・登録画面表示中の Esc / <see cref="BaseViewModel.ExitCommand"/> は検索画面へ戻すだけにする。</summary>
 	protected override void OnExit() {
 		if (SelectedTabIndex == 1) {
+			// 処理中に検索画面へ戻ると、処理完了時に書き戻すEditId等と画面が食い違うため戻さない
+			if (IsBusy) return;
 			SelectedTabIndex = 0;
 			return;
 		}
@@ -629,6 +645,24 @@ LIMIT 500";
 		// DBは一切書き換わらない。保存して初めて永続化される
 		den.NormalizeLegacyScope();
 
+		try {
+			ApplyLoadedDen(den);
+			await LoadShopRowsAsync(den.Jshop, ct);
+			// ExpandCnt 列は当てにならないので実際の DerivedJodai を数える
+			await ReloadExpandCountAsync(ct);
+			TargetSkuCount = await CountSkuAsync(MeisaiRows.ToList(), ct);
+			NotifyCounts();
+		}
+		catch {
+			// 画面へ展開し始めた後に失敗・中断すると、前の伝票と今回の伝票が混ざった半端な状態になる。
+			// その状態で登録できないよう、編集内容を新規状態へ戻してから呼び出し元へ例外を返す
+			ClearEdit();
+			throw;
+		}
+	}
+
+	/// <summary>読み込んだ伝票のヘッダ・JSON列を編集画面のプロパティへ展開する（DBアクセスなし）。</summary>
+	void ApplyLoadedDen(TranJodai den) {
 		EditId = den.Id;
 		editVdu = den.Vdu;
 		EditKubun = den.Kubun;
@@ -691,12 +725,6 @@ LIMIT 500";
 		SyncAllRowsCells();
 		// 保存直前(BuildDenpyoAsync)で解決結果とマージし、店舗ごとの期間微調整(設計3.3・U5)を残すための元値
 		loadedJshop = [.. den.Jshop];
-
-		await LoadShopRowsAsync(den.Jshop, ct);
-		// ExpandCnt 列は当てにならないので実際の DerivedJodai を数える
-		await ReloadExpandCountAsync(ct);
-		TargetSkuCount = await CountSkuAsync(MeisaiRows.ToList(), ct);
-		NotifyCounts();
 	}
 
 	void ClearEdit() {
@@ -869,6 +897,10 @@ ORDER BY Code";
 		if (ShopRows.Count > 0) ShopRows = [];
 		shopMasters = [];
 		ScopeStoreOptions = [];
+		// 旧系統の対象で作ったプレビュー・競合一覧・Timelineは無効なので捨てる（AGENTS 7.3）
+		ClearPreviewAndConflicts();
+		TimelineSegments = [];
+		RefreshTimelineOptions();
 		NotifyCounts();
 	}
 
@@ -923,6 +955,9 @@ ORDER BY Code";
 				return;
 			}
 			MeisaiRows = [.. rows];
+			// 対象商品が変わったので、旧明細で作ったプレビュー・競合一覧・Timelineは捨てる（AGENTS 7.3）
+			ClearPreviewAndConflicts();
+			TimelineSegments = [];
 			// Price Matrix（③価格タブ）のセルをScope数ぶん複製し（設計5.6「対象取得」）、初期値を計算する
 			await RecalcCellsAsync(onlyIfNotManuallyEdited: false, ct);
 			// SKU数はDerivedShohinColSiz（色×サイズ展開）の件数。抽出結果と対応するIdだけを数える
@@ -1194,10 +1229,26 @@ WHERE D.Id_Shohin IN (
 	[RelayCommand(CanExecute = nameof(CanApplyBulkOperation))]
 	void ApplyBulkOperation() {
 		var method = (EnumJodaiPriceMethod)BulkMethod;
-		var rateOff = method == EnumJodaiPriceMethod.RateOff ? ParseDecimal(BulkValueText) : 0m;
-		var amount = method == EnumJodaiPriceMethod.Amount ? ParseInt(BulkValueText) : 0;
-		var fixedPrice = method == EnumJodaiPriceMethod.FixedPrice ? ParseInt(BulkValueText) : 0;
-		var rateOn = method == EnumJodaiPriceMethod.RateOn ? ParseDecimal(BulkValueText) : 0m;
+		// 値を使う方式で数値として読めない入力を0扱いにすると、選択セルが黙って0円等になるため中止する。
+		// 「7,900」のようなカンマ付きは許可する
+		var needsValue = method is EnumJodaiPriceMethod.RateOff or EnumJodaiPriceMethod.Amount
+			or EnumJodaiPriceMethod.FixedPrice or EnumJodaiPriceMethod.RateOn;
+		var bulkValue = 0m;
+		if (needsValue && !decimal.TryParse(BulkValueText, NumberStyles.Number, CultureInfo.InvariantCulture, out bulkValue)) {
+			Message = $"一括操作の値「{BulkValueText}」を数値として読めません。";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
+		var isIntMethod = method is EnumJodaiPriceMethod.Amount or EnumJodaiPriceMethod.FixedPrice;
+		if (isIntMethod && (bulkValue != decimal.Truncate(bulkValue) || bulkValue < int.MinValue || bulkValue > int.MaxValue)) {
+			Message = $"一括操作の値「{BulkValueText}」は円単位の整数で入力してください。";
+			MessageEx.ShowWarningDialog(Message, owner: ActiveWindow);
+			return;
+		}
+		var rateOff = method == EnumJodaiPriceMethod.RateOff ? bulkValue : 0m;
+		var amount = method == EnumJodaiPriceMethod.Amount ? (int)bulkValue : 0;
+		var fixedPrice = method == EnumJodaiPriceMethod.FixedPrice ? (int)bulkValue : 0;
+		var rateOn = method == EnumJodaiPriceMethod.RateOn ? bulkValue : 0m;
 		var idPricePoint = BulkPricePoint?.Id ?? 0;
 
 		var applied = 0;
@@ -1286,20 +1337,26 @@ WHERE D.Id_Shohin IN (
 	}
 
 	[RelayCommand]
-	async Task CheckConflicts(CancellationToken ct) {
+	Task CheckConflicts(CancellationToken ct) => RunConflictCheckAsync(ct);
+
+	/// <summary>
+	/// 競合チェック本体。最後まで判定できたときだけ true を返す（入力不足・中断・例外は false）。
+	/// <see cref="DoFix"/>は false のとき確定へ進まない（チェック失敗を「競合0件」と誤認しないため）。
+	/// </summary>
+	async Task<bool> RunConflictCheckAsync(CancellationToken ct) {
 		ClearPreviewAndConflicts();
 		if (EditDayFrom == null || EditDayTo == null) {
 			Message = "適用期間を入力してから競合チェックしてください。";
-			return;
+			return false;
 		}
 		if (MeisaiRows.Count == 0 || ScopeRows.Count == 0) {
 			Message = "対象商品と適用範囲（Scope）を設定してから競合チェックしてください。";
-			return;
+			return false;
 		}
 		var shops = ShopRows.Where(x => x.IsTarget).ToList();
 		if (shops.Count == 0) {
 			Message = "対象店舗をチェックしてから競合チェックしてください。";
-			return;
+			return false;
 		}
 
 		try {
@@ -1390,13 +1447,16 @@ WHERE D.Id_Shohin IN (
 
 			Message = $"{DateTime.Now:MM/dd HH:mm:ss} 競合チェック: 展開見込 {PreviewExpandRows:N0} 行 / 競合(C1〜C6) {PreviewConflictCount:N0} 件"
 				+ $" / 原価割れ {PreviewBelowCostCount:N0} 件 / 最低価格違反 {PreviewBelowMinPriceCount:N0} 件";
+			return true;
 		}
 		catch (OperationCanceledException) {
 			Message = "競合チェックを中断しました";
+			return false;
 		}
 		catch (Exception ex) {
 			Message = $"競合チェック失敗: {ex.Message}";
 			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+			return false;
 		}
 		finally {
 			FinishBusy();
@@ -1537,18 +1597,23 @@ ORDER BY DayFrom";
 
 	// ===== 登録 ===================================================================
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunWhenIdle))]
 	async Task DoRegister(CancellationToken ct) {
-		var den = await BuildDenpyoAsync(ct);
-		if (den == null) {
-			return;
-		}
-		var confirm = EditId > 0
-			? $"伝票No {EditId:N0} を更新します。対象 {den.ShopCnt:N0} 件 × 明細 {den.MeisaiCnt:N0} 件。よろしいですか？"
-			: $"上代変更伝票を登録します。対象 {den.ShopCnt:N0} 件 × 明細 {den.MeisaiCnt:N0} 件。よろしいですか？";
-		if (MessageEx.ShowQuestionDialog(confirm, owner: ActiveWindow) != MessageBoxResult.Yes) return;
-
 		try {
+			// 伝票の組み立てもgRPC通信を含むため、処理中扱い・例外処理の内側で行う
+			StartBusy("伝票を組み立て中...");
+			var den = await BuildDenpyoAsync(ct);
+			if (den == null) {
+				return;
+			}
+			var confirm = EditId > 0
+				? $"伝票No {EditId:N0} を更新します。対象 {den.ShopCnt:N0} 件 × 明細 {den.MeisaiCnt:N0} 件。よろしいですか？"
+				: $"上代変更伝票を登録します。対象 {den.ShopCnt:N0} 件 × 明細 {den.MeisaiCnt:N0} 件。よろしいですか？";
+			if (MessageEx.ShowQuestionDialog(confirm, owner: ActiveWindow) != MessageBoxResult.Yes) {
+				Message = "登録を中止しました";
+				return;
+			}
+
 			StartBusy("上代変更伝票を登録中...");
 			var saved = await SaveDenpyoAsync(den, ct);
 			EditId = saved.Id;
@@ -1575,7 +1640,7 @@ ORDER BY DayFrom";
 
 	// C1/C2（エラー）が競合チェックで検出されていれば確定を禁止する（設計書5.5）。競合チェックを一度も
 	// 実行していない場合はHasBlockingConflicts=falseのままなので、現行どおり確定できる（後方互換）。
-	bool CanFix() => EditId > 0 && EditStatus == 0 && !HasBlockingConflicts;
+	bool CanFix() => EditId > 0 && EditStatus == 0 && !HasBlockingConflicts && !IsBusy;
 
 	/// <summary>
 	/// 確定する。設計書5.6のとおり「競合チェック → プレビュー確認 → <see cref="TranJodai.Jshop"/>へ
@@ -1603,7 +1668,13 @@ ORDER BY DayFrom";
 	[RelayCommand(CanExecute = nameof(CanFix))]
 	async Task DoFix(CancellationToken ct) {
 		// ---- 競合チェック（設計書5.6の1手目）----
-		await CheckConflicts(ct);
+		// チェック自体が入力不足・中断・例外で完了しなかった場合は、競合0件とみなさず確定を中止する
+		if (!await RunConflictCheckAsync(ct)) {
+			var reason = Message;
+			MessageEx.ShowWarningDialog($"競合チェックが完了しなかったため確定を中止しました。\n{reason}", owner: ActiveWindow);
+			Message = $"確定を中止しました（{reason}）";
+			return;
+		}
 		if (HasBlockingConflicts) {
 			MessageEx.ShowErrorDialog(
 				"競合（C1/C2）があるため確定できません。「④ 確認」タブの競合一覧を見直してください。",
@@ -1613,44 +1684,47 @@ ORDER BY DayFrom";
 			return;
 		}
 
-		// ---- 承認ゲート（設計書2.10・3.8。既定0では求めない）----
-		var needApprove = await GetConfigIntAsync(MasterConfig.NameJodaiNeedApprove, 0, ct);
-		if (needApprove == 1 && SelectedApproveShain == null) {
-			MessageEx.ShowWarningDialog(
-				"承認者の入力が必要です（MasterConfig.JodaiNeedApprove=1）。ヘッダで承認者を選択してから確定してください。",
-				owner: ActiveWindow);
-			Message = "確定を中止しました（承認者未入力）";
-			return;
-		}
-
-		var den = await BuildDenpyoAsync(ct);
-		if (den == null) {
-			return;
-		}
-
-		// ---- プレビュー確認（設計書5.6の2手目。中止できる導線を必ず残す）----
-		var estimate = (long)den.ShopCnt * den.MeisaiCnt;
-		var warnings = new List<string>();
-		if (PreviewConflictCount > 0) warnings.Add($"警告(C4〜C6) {PreviewConflictCount:N0}件");
-		if (PreviewBelowCostCount > 0) warnings.Add($"原価割れ {PreviewBelowCostCount:N0}件");
-		if (PreviewBelowMinPriceCount > 0) warnings.Add($"最低価格違反 {PreviewBelowMinPriceCount:N0}件");
-		if (PreviewExpandRowsWarning) warnings.Add($"展開見込 {PreviewExpandRows:N0}行(閾値超過)");
-		var warningText = warnings.Count > 0
-			? $"\n※ {string.Join(" / ", warnings)}（「④ 確認」タブで詳細を確認できます）"
-			: string.Empty;
-		if (MessageEx.ShowQuestionDialog(
-				$"伝票No {EditId:N0} を確定します。\n適用上代 {estimate:N0} 行が作成され、売上・POS・在庫評価に反映されます。{warningText}\nよろしいですか？",
-				owner: ActiveWindow) != MessageBoxResult.Yes) {
-			Message = "確定を中止しました";
-			return;
-		}
-
-		// ---- Jshopスナップショット済みのdenをStatus=1で保存（設計書5.6の3・4手目）----
-		den.Status = 1;
-		den.FixDay = ToDay(DateTime.Today);
-		// 価格が変わったので値札・棚札の差し替えが必要。確定のたびに未送信へ戻す
-		den.SendFlg = 0;
 		try {
+			// 承認設定の取得・伝票の組み立てもgRPC通信を含むため、処理中扱い・例外処理の内側で行う
+			StartBusy("確定の準備中...");
+
+			// ---- 承認ゲート（設計書2.10・3.8。既定0では求めない）----
+			var needApprove = await GetConfigIntAsync(MasterConfig.NameJodaiNeedApprove, 0, ct);
+			if (needApprove == 1 && SelectedApproveShain == null) {
+				MessageEx.ShowWarningDialog(
+					"承認者の入力が必要です（MasterConfig.JodaiNeedApprove=1）。ヘッダで承認者を選択してから確定してください。",
+					owner: ActiveWindow);
+				Message = "確定を中止しました（承認者未入力）";
+				return;
+			}
+
+			var den = await BuildDenpyoAsync(ct);
+			if (den == null) {
+				return;
+			}
+
+			// ---- プレビュー確認（設計書5.6の2手目。中止できる導線を必ず残す）----
+			var estimate = (long)den.ShopCnt * den.MeisaiCnt;
+			var warnings = new List<string>();
+			if (PreviewConflictCount > 0) warnings.Add($"警告(C4〜C6) {PreviewConflictCount:N0}件");
+			if (PreviewBelowCostCount > 0) warnings.Add($"原価割れ {PreviewBelowCostCount:N0}件");
+			if (PreviewBelowMinPriceCount > 0) warnings.Add($"最低価格違反 {PreviewBelowMinPriceCount:N0}件");
+			if (PreviewExpandRowsWarning) warnings.Add($"展開見込 {PreviewExpandRows:N0}行(閾値超過)");
+			var warningText = warnings.Count > 0
+				? $"\n※ {string.Join(" / ", warnings)}（「④ 確認」タブで詳細を確認できます）"
+				: string.Empty;
+			if (MessageEx.ShowQuestionDialog(
+					$"伝票No {EditId:N0} を確定します。\n適用上代 {estimate:N0} 行が作成され、売上・POS・在庫評価に反映されます。{warningText}\nよろしいですか？",
+					owner: ActiveWindow) != MessageBoxResult.Yes) {
+				Message = "確定を中止しました";
+				return;
+			}
+
+			// ---- Jshopスナップショット済みのdenをStatus=1で保存（設計書5.6の3・4手目）----
+			den.Status = 1;
+			den.FixDay = ToDay(DateTime.Today);
+			// 価格が変わったので値札・棚札の差し替えが必要。確定のたびに未送信へ戻す
+			den.SendFlg = 0;
 			StartBusy("確定して適用上代を展開中...");
 			var saved = await SaveDenpyoAsync(den, ct);
 			EditId = saved.Id;
@@ -1675,7 +1749,7 @@ ORDER BY DayFrom";
 		}
 	}
 
-	bool CanCancelDen() => EditId > 0 && EditStatus == 1;
+	bool CanCancelDen() => EditId > 0 && EditStatus == 1 && !IsBusy;
 
 	/// <summary>取消する。Status=2 で保存すると展開済みの適用上代が消える。</summary>
 	[RelayCommand(CanExecute = nameof(CanCancelDen))]
@@ -1683,12 +1757,14 @@ ORDER BY DayFrom";
 		if (MessageEx.ShowQuestionDialog(
 				$"伝票No {EditId:N0} を取消します。\n展開済みの適用上代 {EditExpandCnt:N0} 行が削除され、価格は商品マスタの定価に戻ります。\nよろしいですか？",
 				owner: ActiveWindow) != MessageBoxResult.Yes) return;
-		var den = await BuildDenpyoAsync(ct);
-		if (den == null) {
-			return;
-		}
-		den.Status = 2;
 		try {
+			// 伝票の組み立てもgRPC通信を含むため、処理中扱い・例外処理の内側で行う
+			StartBusy("取消の準備中...");
+			var den = await BuildDenpyoAsync(ct);
+			if (den == null) {
+				return;
+			}
+			den.Status = 2;
 			StartBusy("取消中...");
 			var saved = await SaveDenpyoAsync(den, ct);
 			editVdu = saved.Vdu;
@@ -1711,7 +1787,7 @@ ORDER BY DayFrom";
 		}
 	}
 
-	bool CanMarkSent() => EditId > 0 && EditStatus == 1 && EditSendFlg != 2;
+	bool CanMarkSent() => EditId > 0 && EditStatus == 1 && EditSendFlg != 2 && !IsBusy;
 
 	/// <summary>
 	/// 送信済みにする。<b>価格の配信処理ではない。</b>
@@ -1726,12 +1802,14 @@ ORDER BY DayFrom";
 		if (MessageEx.ShowQuestionDialog(
 				$"伝票No {EditId:N0} を送信済みにします。\n（値札・棚札の差し替えが完了した記録です。価格自体はPOSがサーバから直接引きます）\nよろしいですか？",
 				owner: ActiveWindow) != MessageBoxResult.Yes) return;
-		var den = await BuildDenpyoAsync(ct);
-		if (den == null) {
-			return;
-		}
-		den.SendFlg = 2;
 		try {
+			// 伝票の組み立てもgRPC通信を含むため、処理中扱い・例外処理の内側で行う
+			StartBusy("送信済み更新の準備中...");
+			var den = await BuildDenpyoAsync(ct);
+			if (den == null) {
+				return;
+			}
+			den.SendFlg = 2;
 			StartBusy("送信済みに更新中...");
 			var saved = await SaveDenpyoAsync(den, ct);
 			editVdu = saved.Vdu;
@@ -1819,9 +1897,20 @@ ORDER BY DayFrom";
 			ShowBuildError("適用範囲（Scope）を1件以上登録してください。");
 			return null;
 		}
+		// Scope・店舗の日付は自由入力の文字列なので、大小比較の前にyyyyMMddとして実在する日付か検査する
+		var badScopeDay = ScopeRows.FirstOrDefault(s => ParseDay(s.DayFrom) == null || ParseDay(s.DayTo) == null);
+		if (badScopeDay != null) {
+			ShowBuildError($"Scope#{badScopeDay.No}「{badScopeDay.Name}」の期間が日付(yyyyMMdd)として正しくありません（{badScopeDay.DayFrom}～{badScopeDay.DayTo}）。");
+			return null;
+		}
 		var badScopePeriod = ScopeRows.FirstOrDefault(s => string.Compare(s.DayFrom, s.DayTo, StringComparison.Ordinal) > 0);
 		if (badScopePeriod != null) {
 			ShowBuildError($"Scope#{badScopePeriod.No}「{badScopePeriod.Name}」の期間が逆転しています（{badScopePeriod.DayFrom}～{badScopePeriod.DayTo}）。");
+			return null;
+		}
+		var badShopDay = shops.FirstOrDefault(s => ParseDay(s.DayFrom) == null || ParseDay(s.DayTo) == null);
+		if (badShopDay != null) {
+			ShowBuildError($"対象 {badShopDay.Code_Tenpo} {badShopDay.Mei_Tenpo} の期間が日付(yyyyMMdd)として正しくありません（{badShopDay.DayFrom}～{badShopDay.DayTo}）。");
 			return null;
 		}
 		var badPeriod = shops.FirstOrDefault(s => string.Compare(s.DayFrom, s.DayTo, StringComparison.Ordinal) > 0);

@@ -161,7 +161,9 @@
 									BorderThickness="0,0,0,1">
 									<StackPanel>
 										<TextBlock FontWeight="SemiBold"
-											Text="{Binding Title}" />
+											Text="{Binding Title}"
+											TextTrimming="CharacterEllipsis"
+											ToolTip="{Binding Title}" />
 										<TextBlock Margin="0,4,0,0"
 											FontSize="12"
 											Foreground="{DynamicResource MaterialDesignBodyLight}"
@@ -202,7 +204,9 @@
 								LastChildFill="False">
 								<TextBlock VerticalAlignment="Center"
 									DockPanel.Dock="Left" FontSize="18" FontWeight="SemiBold"
-									Text="{Binding SelectedRow.Title, TargetNullValue=レコード未選択}" />
+									Text="{Binding SelectedRow.Title, TargetNullValue=レコード未選択}"
+									TextTrimming="CharacterEllipsis"
+									ToolTip="{Binding SelectedRow.Title}" />
 								<TextBlock Margin="14,0,0,0" VerticalAlignment="Center"
 									DockPanel.Dock="Left"
 									Foreground="{DynamicResource MaterialDesignBodyLight}"

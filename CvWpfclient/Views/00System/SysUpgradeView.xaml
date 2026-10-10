@@ -6,6 +6,7 @@
 	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
 	Title="システムアップデート"
 	Width="520" Height="240"
+	SizeToContent="Height"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
@@ -15,7 +16,7 @@
 		<vm:SysUpgradeViewModel />
 	</helpers:BaseWindow.DataContext>
 	<Grid>
-		<StackPanel Margin="10,10,2,2">
+		<StackPanel Margin="10,10,10,10">
 			<Border Padding="10"
 				BorderBrush="{StaticResource AppCommonBackgroundBrush}"
 				BorderThickness="1" CornerRadius="4">
@@ -31,7 +32,8 @@
 						<TextBlock FontWeight="Bold" Text="ソフトウェア更新 バージョン情報" />
 						<TextBlock Margin="0,5,0,0"
 							d:Text="test"
-							Text="{Binding UpdateStatus}" />
+							Text="{Binding UpdateStatus}"
+							TextWrapping="Wrap" />
 					</StackPanel>
 
 				</Grid>
@@ -42,24 +44,26 @@
 			</Border>
 			<TextBlock Margin="0,0,0,10"
 				d:Text="オプション 。。。。  ................."
-				Text="{Binding OptionMessage}" />
+				Text="{Binding OptionMessage}"
+				TextWrapping="Wrap" />
 
 			<StackPanel HorizontalAlignment="Center"
 				Orientation="Horizontal">
 				<Button Grid.Column="1"
-					Width="120"
+					MinWidth="120"
 					Margin="10,0"
 					Command="{Binding CheckUpdateCommand}"
 					Content="更新を確認"
 					Style="{StaticResource MaterialDesignRaisedButton}" />
 
 				<Button Grid.Column="2"
-					Width="120"
+					MinWidth="120"
 					Margin="30,0,0,0"
 					Command="{Binding ExecuteUpdateCommand}"
 					Content="今すぐ更新">
 					<Button.Style>
-						<Style TargetType="Button">
+						<Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
+							TargetType="Button">
 							<Setter Property="Visibility" Value="Visible" />
 							<Style.Triggers>
 								<DataTrigger Binding="{Binding IsUpdateAvailable}"

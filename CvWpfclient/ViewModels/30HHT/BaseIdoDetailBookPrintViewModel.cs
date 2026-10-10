@@ -88,6 +88,7 @@ public abstract partial class BaseIdoDetailBookPrintViewModel<TDen> : BaseReport
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task Print(CancellationToken ct) {
 		if (!TryGetTerm(out var from, out var to)) return;
+		if (!TryGetDenNoRange()) return;
 		try {
 			ClientLib.Cursor2Wait();
 			var targets = await FetchTargetsAsync(from, to, ct);
@@ -135,6 +136,21 @@ public abstract partial class BaseIdoDetailBookPrintViewModel<TDen> : BaseReport
 		if (from <= to) return true;
 		MessageEx.ShowWarningDialog("移動日の範囲が逆転しています。", owner: ActiveWindow);
 		return false;
+	}
+
+	/// <summary>
+	/// 伝票NOの入力を検証する。数値以外を黙って無視すると範囲外の伝票まで発行済みにしてしまうため、
+	/// 空欄以外で数値に変換できない場合は警告して中断する。
+	/// </summary>
+	bool TryGetDenNoRange() {
+		foreach (var (text, name) in new[] { (DenNoFrom, "伝票NO(開始)"), (DenNoTo, "伝票NO(終了)") }) {
+			var value = (text ?? string.Empty).Trim();
+			if (value.Length > 0 && !long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out _)) {
+				MessageEx.ShowWarningDialog($"{name}は半角数字で入力してください。", owner: ActiveWindow);
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/// <summary>条件に一致する伝票（Id / Vdu）を取得する。QueryListParam は別名なしの列名で書く</summary>

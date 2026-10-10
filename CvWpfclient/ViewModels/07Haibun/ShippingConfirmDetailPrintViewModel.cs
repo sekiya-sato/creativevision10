@@ -130,6 +130,11 @@ public sealed partial class ShippingConfirmDetailPrintViewModel : BaseReportView
 		catch (OperationCanceledException) {
 			Message = "印刷を中断しました";
 		}
+		catch (Exception ex) {
+			// 件数確認・印刷の通信エラーを未処理例外にしない
+			Message = $"印刷失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
 		finally {
 			ClientLib.Cursor2Normal();
 		}

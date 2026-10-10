@@ -62,6 +62,8 @@ from MasterEndCustomer {query.AddWhereOrder()}
 			EditJsub = [];
 			return;
 		}
+		// Jdetail が未設定(新規・NULL)だと振込先・予備項目の入力が捨てられるため空の詳細を用意する
+		newValue.Jdetail ??= new();
 		ApplySubListsFromCurrentEdit();
 	}
 
@@ -141,8 +143,10 @@ from MasterEndCustomer {query.AddWhereOrder()}
 	[RelayCommand]
 	void DoSelectTenpo() {
 		var meisho = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=6", "Code", startPos: CurrentEdit.Id_Tenpo);
-		CurrentEdit.Id_Tenpo = meisho?.Id ?? 0;
-		CurrentEdit.VTenpo = new() { Sid = meisho?.Id ?? 0, Cd = meisho?.Code ?? "", Mei = meisho?.Name ?? "" };
+		// キャンセル時は既存の店舗を解除しない
+		if (meisho == null) return;
+		CurrentEdit.Id_Tenpo = meisho.Id;
+		CurrentEdit.VTenpo = new() { Sid = meisho.Id, Cd = meisho.Code ?? "", Mei = meisho.Name ?? "" };
 	}
 
 	[RelayCommand]
@@ -161,12 +165,16 @@ from MasterEndCustomer {query.AddWhereOrder()}
 	}
 
 	[RelayCommand]
-	void DoSelectJsubCode() {
+	void DoSelectJsubCode(MasterGeneralMeisho? row) {
+		// 行内ボタンから押された行を対象にする（未選択行への誤書込み防止）
+		if (row != null) SelectedJsub = row;
 		if (SelectedJsub == null) return;
 		var kb = (SelectedJsub.Kb ?? string.Empty).Replace("'", "''");
 		if (string.IsNullOrEmpty(kb)) return;
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{kb}'", "Code", startPos: SelectedJsub.Sid);
 		if (meisho == null) return;
+		// Sid も選び直した名称に合わせ、Cd/Mei との食い違いを防ぐ
+		SelectedJsub.Sid = meisho.Id;
 		SelectedJsub.Cd = meisho.Code ?? "";
 		SelectedJsub.Mei = meisho.Name ?? "";
 	}

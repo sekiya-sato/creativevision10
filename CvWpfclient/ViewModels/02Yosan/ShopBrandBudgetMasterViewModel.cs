@@ -74,6 +74,10 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	public partial string Message { get; set; } = string.Empty;
 
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(LoadBudgetCommand))]
+	[NotifyCanExecuteChangedFor(nameof(CreateBudgetCommand))]
+	[NotifyCanExecuteChangedFor(nameof(SaveBudgetCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DeleteBudgetCommand))]
 	public partial bool IsBusy { get; set; }
 
 	[ObservableProperty]
@@ -82,6 +86,10 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	bool isApplyingHolidayDays;
 	bool isApplyingSelectedYearMonthString;
 	bool isRecalculatingTotals;
+	/// <summary>選択ダイアログからコード・Id・名称をまとめて設定中か。コード手入力時の Id クリアを抑止する。</summary>
+	bool isApplyingSelection;
+	/// <summary>日別予算を作成・読込したときの対象（店舗Id・ブランドId・年月）。保存時に現在の条件と一致するか検査する。</summary>
+	(long ShopId, long BrandId, DateTime YearMonth)? dailyBudgetTarget;
 	IReadOnlyDictionary<string, TranShopPromotion> shopEvents = new Dictionary<string, TranShopPromotion>();
 
 	protected override void OnExit() {
@@ -115,12 +123,25 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		RecalculateTotals();
 	}
 
-	partial void OnSelectedBrandCodeChanged(string value) {
-		if (string.IsNullOrWhiteSpace(value)) {
-			SelectedBrandId = 0;
-			SelectedBrandName = string.Empty;
-		}
+	/// <summary>
+	/// 店舗コードを手入力で変えた場合は Id と名称が旧店舗のまま残るため、Id をクリアして再選択させる。
+	/// </summary>
+	partial void OnSelectedShopCodeChanged(string value) {
+		if (isApplyingSelection) return;
+		SelectedShopId = 0;
+		SelectedShopName = string.Empty;
 	}
+
+	/// <summary>
+	/// ブランドコードを手入力で変えた場合（空欄を含む）は Id と名称をクリアする。ブランドは任意なので空欄=ブランド指定なし。
+	/// </summary>
+	partial void OnSelectedBrandCodeChanged(string value) {
+		if (isApplyingSelection) return;
+		SelectedBrandId = 0;
+		SelectedBrandName = string.Empty;
+	}
+
+	bool CanRunBudgetCommand() => !IsBusy;
 
 	partial void OnDailyBudgetsChanged(ObservableCollection<DailyBudgetRow> value) {
 		foreach (var row in value) {
@@ -161,7 +182,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		ClearAll();
 	}
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunBudgetCommand))]
 	async Task LoadBudget(CancellationToken ct) {
 		if (SelectedShopId == 0) {
 			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
@@ -237,7 +258,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		}
 	}
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunBudgetCommand))]
 	async Task CreateBudget(CancellationToken ct) {
 		if (SelectedShopId == 0) {
 			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
@@ -272,7 +293,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		}
 	}
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunBudgetCommand))]
 	async Task SaveBudget(CancellationToken ct) {
 		if (SelectedShopId == 0) {
 			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
@@ -285,6 +306,11 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		}
 		if (!HasDailyRowsForSelectedMonth()) {
 			MessageEx.ShowWarningDialog("対象年月の日数と予算データが一致しません。予算作成を実行してください。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		// 予算作成・読込の後に店舗・ブランド・年月を変えた場合、画面の日別予算は旧条件のものなので保存させない
+		if (dailyBudgetTarget != (SelectedShopId, SelectedBrandId, SelectedYearMonth)) {
+			MessageEx.ShowWarningDialog("予算作成・予算読込の後に店舗・ブランド・年月が変更されています。予算作成または予算読込をやり直してください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		if (MessageEx.ShowQuestionDialog("予算データを登録しますか？", owner: ClientLib.GetActiveView(this)) != MsgBoxResult.Yes) {
@@ -347,7 +373,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 		}
 	}
 
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanRunBudgetCommand))]
 	async Task DeleteBudget(CancellationToken ct) {
 		if (SelectedShopId == 0) {
 			MessageEx.ShowWarningDialog("店舗を選択してください。", owner: ClientLib.GetActiveView(this));
@@ -364,6 +390,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			await DeleteExistingBudgets(ct);
 			DailyBudgets.Clear();
+			dailyBudgetTarget = null;
 			MonthlyBudget = 0;
 			MonthlyGrossProfitBudget = 0;
 			RecalculateTotals();
@@ -426,23 +453,36 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 	void SelectShop() {
 		var tokui = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType in (1,3,6)", "Code", startPos: SelectedShopId);
 		if (tokui == null) return;
-		SelectedShopId = tokui.Id;
-		SelectedShopCode = tokui.Code ?? string.Empty;
-		SelectedShopName = tokui.Name ?? string.Empty;
+		isApplyingSelection = true;
+		try {
+			SelectedShopCode = tokui.Code ?? string.Empty;
+			SelectedShopId = tokui.Id;
+			SelectedShopName = tokui.Name ?? string.Empty;
+		}
+		finally {
+			isApplyingSelection = false;
+		}
 	}
 
 	[RelayCommand]
 	void SelectBrand() {
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBrand}'", "Code", startPos: SelectedBrandId);
 		if (meisho == null) return;
-		SelectedBrandId = meisho.Id;
-		SelectedBrandCode = meisho.Code ?? string.Empty;
-		SelectedBrandName = meisho.Name ?? string.Empty;
+		isApplyingSelection = true;
+		try {
+			SelectedBrandCode = meisho.Code ?? string.Empty;
+			SelectedBrandId = meisho.Id;
+			SelectedBrandName = meisho.Name ?? string.Empty;
+		}
+		finally {
+			isApplyingSelection = false;
+		}
 	}
 
 	[RelayCommand]
 	void ClearAll() {
 		DailyBudgets.Clear();
+		dailyBudgetTarget = null;
 		MonthlyBudget = 0;
 		MonthlyGrossProfitBudget = 0;
 		TotalBudget = 0;
@@ -478,6 +518,7 @@ public partial class ShopBrandBudgetMasterViewModel : BaseViewModel {
 			row.PropertyChanged += OnDailyBudgetRowPropertyChanged;
 			DailyBudgets.Add(row);
 		}
+		dailyBudgetTarget = (SelectedShopId, SelectedBrandId, new DateTime(year, month, 1));
 		ApplyHolidayDays();
 	}
 

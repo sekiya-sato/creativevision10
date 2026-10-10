@@ -58,10 +58,23 @@ public partial class HhtDataUpdateViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
 	public partial int ProgressValue { get; set; }
 
-	public string TargetSummary => $"未変換 {UnconvertedCount:N0} 件（うちエラー {ErrorCount:N0} 件）";
+	/// <summary>条件変更後に件数を数え直していないか。true の間は旧条件の件数を表示しない</summary>
+	[ObservableProperty]
+	public partial bool IsCountStale { get; set; }
+
+	public string TargetSummary => IsCountStale
+		? "条件が変更されました。再集計を押してください。"
+		: $"未変換 {UnconvertedCount:N0} 件（うちエラー {ErrorCount:N0} 件）";
 
 	partial void OnUnconvertedCountChanged(int value) => OnPropertyChanged(nameof(TargetSummary));
 	partial void OnErrorCountChanged(int value) => OnPropertyChanged(nameof(TargetSummary));
+	partial void OnIsCountStaleChanged(bool value) => OnPropertyChanged(nameof(TargetSummary));
+
+	// 条件を変えたら旧条件の件数を無効にする（実行時は必ず数え直す）
+	partial void OnDateFromChanged(string value) => IsCountStale = true;
+	partial void OnDateToChanged(string value) => IsCountStale = true;
+	partial void OnTypeFilterChanged(TypeFilterOption? value) => IsCountStale = true;
+	partial void OnRetryErrorChanged(bool value) => IsCountStale = true;
 
 	[RelayCommand]
 	private async Task InitAsync(CancellationToken ct) {
@@ -79,6 +92,7 @@ public partial class HhtDataUpdateViewModel : Helpers.BaseViewModel {
 			var (rows, error) = await QueryCountAsync(ct);
 			UnconvertedCount = rows;
 			ErrorCount = error;
+			IsCountStale = false;
 		}
 		catch (OperationCanceledException) {
 			return;
@@ -111,6 +125,10 @@ public partial class HhtDataUpdateViewModel : Helpers.BaseViewModel {
 				return;
 			}
 
+			// 成功件数は「エラーも再試行」の設定に関係なく未変換の全件で数える
+			// （再試行OFFの絞り込みで数えると、今回エラーになった行が成功に数えられるため）
+			var (beforeAll, _) = await QueryCountAsync(ct, ignoreRetryFilter: true);
+
 			IsProcessing = true;
 			ProgressValue = 0;
 			StatusMessage = "HHTデータを更新しています...";
@@ -138,11 +156,18 @@ public partial class HhtDataUpdateViewModel : Helpers.BaseViewModel {
 			ProgressValue = 100;
 
 			// 内訳は変換後の TranVulcanHht を数え直して表示する（ストリームは件数を1つしか返さない）
-			var beforeUnconverted = UnconvertedCount;
 			await RefreshCountAsync(CancellationToken.None);
-			var success = beforeUnconverted - UnconvertedCount;
-			StatusMessage = $"更新 {success:N0}件 / 未変換 {UnconvertedCount:N0}件（うちエラー {ErrorCount:N0}件）";
-			if (ErrorCount > 0) {
+			(int Rows, int Errors) after;
+			try {
+				after = await QueryCountAsync(CancellationToken.None, ignoreRetryFilter: true);
+			}
+			catch (Exception ex) {
+				StatusMessage = $"HHTデータ更新は完了しましたが、件数の再集計に失敗しました: {ex.Message}";
+				return;
+			}
+			var success = Math.Max(0, beforeAll - after.Rows);
+			StatusMessage = $"更新 {success:N0}件 / 未変換 {after.Rows:N0}件（うちエラー {after.Errors:N0}件）";
+			if (after.Errors > 0) {
 				StatusMessage += "\nエラーデータは『HHTエラーデータ修正入力』で確認してください。";
 			}
 		}
@@ -184,7 +209,7 @@ public partial class HhtDataUpdateViewModel : Helpers.BaseViewModel {
 	}
 
 	/// <summary>対象件数を数える。エラー件数は ErrorMsg が入っている行数</summary>
-	private async Task<(int Rows, int Errors)> QueryCountAsync(CancellationToken ct) {
+	private async Task<(int Rows, int Errors)> QueryCountAsync(CancellationToken ct, bool ignoreRetryFilter = false) {
 		if (!TryBuildParameter(out var param, out _)) {
 			return (0, 0);
 		}
@@ -201,7 +226,7 @@ public partial class HhtDataUpdateViewModel : Helpers.BaseViewModel {
 		if (param.Types.Length > 0) {
 			conditions.Add($"Type0 in ({string.Join(",", param.Types)})");
 		}
-		if (!param.RetryError) {
+		if (!param.RetryError && !ignoreRetryFilter) {
 			conditions.Add("ErrorMsg = ''");
 		}
 		var sql = $@"

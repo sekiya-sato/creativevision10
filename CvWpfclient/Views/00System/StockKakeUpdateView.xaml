@@ -26,6 +26,7 @@
 			<StackPanel Orientation="Horizontal">
 				<Button Margin="0,0,8,0"
 					Command="{Binding ExitCommand}"
+					IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 					Style="{StaticResource ToolCommandButton}"
 					ToolTip="閉じる (Esc)">
 					<materialDesign:PackIcon Kind="ArrowLeft" />
@@ -61,19 +62,19 @@
 						<ColumnDefinition Width="*" />
 					</Grid.ColumnDefinitions>
 
-					<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
-						Margin="0,0,0,16"
-						Orientation="Horizontal">
+					<!--  注記は長いため、横向きStackPanelではなくDockPanelの残り幅で折り返す  -->
+					<DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+						Margin="0,0,0,16">
 						<materialDesign:PackIcon Width="24" Height="24"
 							VerticalAlignment="Center"
-							Kind="CalendarRange" />
+							DockPanel.Dock="Left" Kind="CalendarRange" />
 						<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-							FontSize="17" FontWeight="SemiBold" Text="年月指定" />
+							DockPanel.Dock="Left" FontSize="17" FontWeight="SemiBold" Text="年月指定" />
 						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
 							FontStyle="Italic"
 							Foreground="{DynamicResource MaterialDesignBodyLight}"
 							Text="※ 棚卸中の店舗がある場合、再集計後に棚卸開始処理の再実行が必要です" TextWrapping="Wrap" />
-					</StackPanel>
+					</DockPanel>
 
 					<TextBlock Grid.Row="1" Grid.Column="0"
 						Style="{StaticResource SettingLabel}"
@@ -149,7 +150,7 @@
 			Background="{DynamicResource MaterialDesignPaper}">
 			<StackPanel HorizontalAlignment="Right"
 				Orientation="Horizontal">
-				<Button Width="128" Height="38"
+				<Button MinWidth="128" Height="38"
 					Margin="0,0,10,0"
 					Command="{Binding ExecuteCommand}"
 					IsDefault="True"
@@ -161,8 +162,9 @@
 							Text="実行" />
 					</StackPanel>
 				</Button>
-				<Button Width="128" Height="38"
+				<Button MinWidth="128" Height="38"
 					Command="{Binding ExitCommand}"
+					IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 					IsCancel="True"
 					Style="{StaticResource MaterialDesignOutlinedButton}">
 					<StackPanel Orientation="Horizontal">

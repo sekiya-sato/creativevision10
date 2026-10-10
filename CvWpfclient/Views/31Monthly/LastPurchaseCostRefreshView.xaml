@@ -75,7 +75,7 @@
 						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 						MaxLength="7"
 						Style="{StaticResource MaterialDesignOutlinedTextBox}"
-						Text="{Binding TargetMonth}" />
+						Text="{Binding TargetMonth, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="0" Grid.Column="2"
 						VerticalAlignment="Center"
@@ -188,7 +188,7 @@
 							<DataGridTextColumn Width="90"
 								Binding="{Binding SourceTranId}"
 								Header="仕入No" />
-							<DataGridTextColumn Width="70"
+							<DataGridTextColumn Width="80"
 								Binding="{Binding SourceLineNo}"
 								Header="明細No" />
 							<DataGridTextColumn Width="70"

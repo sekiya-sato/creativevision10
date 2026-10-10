@@ -71,9 +71,10 @@ public partial class SelectWinViewModel : Helpers.BaseViewModel {
 			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as System.Collections.IList;
 			if (list != null) {
 				ListData = new ObservableCollection<dynamic>(list.Cast<dynamic>());
+				// 0件のときは未選択(null)にする。空の行を返すと呼出元の値を空で上書きしてしまう
 				Current = StartPos != 0
-					? ListData.FirstOrDefault(x => x.Id == StartPos) ?? ListData.FirstOrDefault() ?? new MasterMeisho()
-					: ListData.FirstOrDefault() ?? new MasterMeisho();
+					? ListData.FirstOrDefault(x => x.Id == StartPos) ?? ListData.FirstOrDefault()
+					: ListData.FirstOrDefault();
 				WeakReferenceMessenger.Default.Send(new SelectItemMessage(StartPos));
 			}
 		}

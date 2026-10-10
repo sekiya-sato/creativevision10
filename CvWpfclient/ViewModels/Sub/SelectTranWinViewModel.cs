@@ -294,7 +294,8 @@ sealed class TranRowAccessor {
 			SokoDisplay = FormatCodeName(soko?.GetValue(source) as CodeNameView),
 			ShainDisplay = FormatCodeName(shain?.GetValue(source) as CodeNameView),
 			SuTotal = suTotal?.GetValue(source) as int? ?? 0,
-			KingakuTotal = kingakuTotal?.GetValue(source) as int? ?? 0,
+			// KingakuTotal は long のため as int? だと常に null(0表示)になる。数値型を問わず long へ変換する
+			KingakuTotal = kingakuTotal?.GetValue(source) is { } kingaku ? Convert.ToInt64(kingaku, CultureInfo.InvariantCulture) : 0,
 			Memo = memo?.GetValue(source) as string ?? string.Empty,
 		};
 	}
@@ -364,6 +365,6 @@ public sealed class TranSelectRow(object source) {
 	public string SokoDisplay { get; init; } = string.Empty;
 	public string ShainDisplay { get; init; } = string.Empty;
 	public int SuTotal { get; init; }
-	public int KingakuTotal { get; init; }
+	public long KingakuTotal { get; init; }
 	public string Memo { get; init; } = string.Empty;
 }

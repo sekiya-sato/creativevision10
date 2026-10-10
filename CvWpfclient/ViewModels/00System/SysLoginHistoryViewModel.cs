@@ -15,6 +15,9 @@ internal partial class SysLoginHistoryViewModel : Helpers.BaseMenteViewModel<Sys
 	/// <summary>ログインID → 社員表示文字列 (Code Name) のマッピング</summary>
 	Dictionary<long, string> loginIdToShainDisplay = [];
 
+	/// <summary>社員名取得の世代番号。連続して一覧取得したとき、古い応答で上書きしないために使う</summary>
+	int shainLookupGeneration;
+
 	/// <summary>現在選択中の社員表示文字列</summary>
 	[ObservableProperty]
 	public partial string ShainDisplay { get; set; } = string.Empty;
@@ -47,6 +50,7 @@ internal partial class SysLoginHistoryViewModel : Helpers.BaseMenteViewModel<Sys
 	protected override async void AfterList(IList list) {
 		Message = $"リスト取得しました (件数={list.Count}, 取得時間 {StartTime.ToDtStrTime()} // {GetListTime.ToStrSpan()})";
 
+		var generation = ++shainLookupGeneration;
 		var histList = list.Cast<SysHistJwt>().ToList();
 		var loginIds = histList.Select(h => h.Id_Login).Where(id => id > 0).Distinct().ToList();
 		if (loginIds.Count == 0) {
@@ -66,6 +70,9 @@ internal partial class SysLoginHistoryViewModel : Helpers.BaseMenteViewModel<Sys
 				DataMsg = Common.SerializeObject(query)
 			};
 			var reply = await SendMessageAsync(msg, CancellationToken.None);
+			if (generation != shainLookupGeneration) {
+				return;
+			}
 			var sysLogins = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as IList;
 			loginIdToShainDisplay = (sysLogins?.Cast<SysLogin>() ?? [])
 				.ToDictionary(
@@ -73,6 +80,9 @@ internal partial class SysLoginHistoryViewModel : Helpers.BaseMenteViewModel<Sys
 					s => s.VShain is { Cd.Length: > 0 } v ? $"{v.Cd} {v.Mei}" : string.Empty);
 		}
 		catch {
+			if (generation != shainLookupGeneration) {
+				return;
+			}
 			loginIdToShainDisplay = [];
 		}
 

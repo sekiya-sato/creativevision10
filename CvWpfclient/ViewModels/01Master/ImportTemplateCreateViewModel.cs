@@ -59,6 +59,18 @@ public partial class ImportTemplateCreateViewModel : Helpers.BaseViewModel {
 		SelectedColumnCount = 0;
 	}
 
+	/// <summary>
+	/// 抽出日付を変えたら、旧条件で取得したデータを無効化する（旧データのままファイル作成させない）。
+	/// </summary>
+	partial void OnSelectedDateChanged(DateTime value) {
+		if (!isDataLoaded && outputDataRows.Count == 0) {
+			return;
+		}
+		outputDataRows.Clear();
+		isDataLoaded = false;
+		Message = "抽出日付が変わったため、取得済みデータを破棄しました。必要なら再度データ取得してください。";
+	}
+
 	[RelayCommand]
 	private async Task Init(CancellationToken ct) {
 		await LoadTablesAsync(ct);

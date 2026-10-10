@@ -110,7 +110,7 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 		// 税額 0 の暫定値になるが、直後の RecalcAllMeisaiTaxAsync が正しい値へ書き直す。
 		UpdateHeaderTotals();
 		OnPropertyChanged(nameof(DetailStatusText));
-		_ = RecalcAllMeisaiTaxAsync();
+		_ = RecalcAllMeisaiTaxObservedAsync();
 	}
 
 	void OnCurrentEditPropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -121,7 +121,7 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 		}
 		// 伝票日付が変われば適用税率が変わるため明細全行を引き直す
 		else if (e.PropertyName is nameof(Tran02Material.DenDay)) {
-			_ = RecalcAllMeisaiTaxAsync();
+			_ = RecalcAllMeisaiTaxObservedAsync();
 		}
 	}
 
@@ -142,6 +142,20 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 
 	/// <summary>Tax1+Tax2+Tax3。Tax は分割済みで存在しないため、XAMLの消費税欄表示はこちらを使う。</summary>
 	public long TaxTotal => CurrentEdit.Tax1 + CurrentEdit.Tax2 + CurrentEdit.Tax3;
+
+	/// <summary>
+	/// 投げっぱなしで呼ぶ税再計算の例外を観測する。未観測のまま税額0の暫定値で残らないよう、失敗は Message に出す。
+	/// </summary>
+	async Task RecalcAllMeisaiTaxObservedAsync() => await ObserveTaxRecalcAsync(RecalcAllMeisaiTaxAsync());
+
+	async Task ObserveTaxRecalcAsync(Task recalc) {
+		try {
+			await recalc;
+		}
+		catch (Exception ex) {
+			Message = $"消費税の再計算に失敗しました（保存前に伝票を開き直してください）: {ex.Message}";
+		}
+	}
 
 	void UpdateTotals() {
 		CurrentEdit.SuTotal = EditMeisai.Sum(m => m.Su);
@@ -177,7 +191,7 @@ public partial class MaterialInputViewModel : Helpers.BasePlainLightMenteViewMod
 		// 金額が変われば税額が、生地・付属が変われば税区分が変わるため明細税額を引き直す
 		if (sender is Tran99MaterialMeisai target
 			&& e.PropertyName is nameof(Tran99MaterialMeisai.Kingaku) or nameof(Tran99MaterialMeisai.Id_Material)) {
-			_ = RecalcMeisaiTaxAsync(target, updateTotals: true);
+			_ = ObserveTaxRecalcAsync(RecalcMeisaiTaxAsync(target, updateTotals: true));
 		}
 	}
 

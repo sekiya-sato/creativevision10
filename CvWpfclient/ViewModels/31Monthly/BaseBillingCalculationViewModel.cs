@@ -98,7 +98,19 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 			return;
 		}
 
-		WarningMessage = await GetPreExecuteWarningAsync(codeFrom, codeTo, cancellationToken);
+		// 事前検査の照会失敗が未処理例外にならないよう、ここで受けて中断する
+		try {
+			WarningMessage = await GetPreExecuteWarningAsync(codeFrom, codeTo, cancellationToken);
+		}
+		catch (OperationCanceledException) {
+			StatusMessage = $"{ActionName}をキャンセルしました。";
+			return;
+		}
+		catch (Exception ex) {
+			StatusMessage = $"締日の事前検査に失敗しました: {ex.Message}";
+			MessageEx.ShowErrorDialog(StatusMessage, owner: ClientLib.GetActiveView(this));
+			return;
+		}
 		if (!string.IsNullOrEmpty(WarningMessage)) {
 			MessageEx.ShowWarningDialog(WarningMessage, owner: ClientLib.GetActiveView(this));
 		}
@@ -121,6 +133,7 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 				DataMsg = Common.SerializeObject(new BillingParameter(yyyymm, SelectedShime, codeFrom, codeTo, SupportsReissue && IsReissue)),
 			};
 			var stepMessage = string.Empty;
+			var completed = false;
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(message, AppGlobal.GetDefaultCallContext(cancellationToken))) {
 				if (!string.IsNullOrEmpty(streamMsg.DataMsg)) {
 					StatusMessage = streamMsg.DataMsg;
@@ -128,7 +141,14 @@ public abstract partial class BaseBillingCalculationViewModel : BaseViewModel {
 				}
 				ProgressValue = Math.Clamp(streamMsg.Progress, 0, 100);
 				if (streamMsg.IsError) throw new InvalidOperationException(streamMsg.DataMsg);
-				if (streamMsg.IsCompleted) break;
+				if (streamMsg.IsCompleted) {
+					completed = true;
+					break;
+				}
+			}
+			// 完了通知を受け取らずにストリームが閉じた場合は成功扱いにしない
+			if (!completed) {
+				throw new InvalidOperationException("完了通知を受信できませんでした。結果が不明のため、処理結果を確認してください。");
 			}
 			ProgressValue = 100;
 			StatusMessage = $"{ActionName}が完了しました。{target}\n{stepMessage}";

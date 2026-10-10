@@ -60,7 +60,8 @@ ORDER BY Odr, Code";
 			MessageEx.ShowWarningDialog("調整数は0以上で入力してください（増減は調整理由で決まります）。", owner: ActiveWindow);
 			return Task.FromResult(false);
 		}
-		return Task.FromResult(true);
+		// 登録済みの一覧のまま再登録すると同じ調整が二重に在庫へ反映されるため確認する
+		return Task.FromResult(ConfirmReRegisterIfRegistered());
 	}
 
 	protected override async Task<List<StockSheetRow>> LoadRowsAsync(CancellationToken ct) {

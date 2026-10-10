@@ -82,9 +82,10 @@ public partial class LoginViewModel : Helpers.BaseViewModel {
 	SysHistJwtSub SubGetInfo() {
 		var ipAddr = Common.GetIPAddress().FirstOrDefault();
 
+		// 稼働中のNICが無い端末（オフライン等）では既定値(IPAddress=null)になるため、空文字で送る
 		var jsub = new SysHistJwtSub {
-			IpAddress = ipAddr.IPAddress.ToString(),
-			MacAddress = ipAddr.MacAddress,
+			IpAddress = ipAddr.IPAddress?.ToString() ?? string.Empty,
+			MacAddress = ipAddr.MacAddress ?? string.Empty,
 			Machine = Environment.MachineName,
 			User = Environment.UserName,
 			OsVer = Environment.OSVersion.Version.ToString(),

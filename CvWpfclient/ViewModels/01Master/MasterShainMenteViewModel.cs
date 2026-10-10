@@ -67,6 +67,10 @@ from MasterShain M {query.AddWhereOrder()}
 	}
 
 	protected override void OnCurrentEditChangedCore(MasterShain? oldValue, MasterShain newValue) {
+		// Jdetail が null だと予備項目の入力がバインドで捨てられるため、編集用に空の詳細を用意する
+		if (newValue != null) {
+			newValue.Jdetail ??= new();
+		}
 		var jsubClones = (CurrentEdit.Jsub?.Select(Common.CloneObject) ?? []).ToList();
 		foreach (var item in jsubClones) item.SetBaseList(KubunList);
 		EditJsub = new ObservableCollection<MasterGeneralMeisho>(jsubClones);
@@ -125,6 +129,8 @@ from MasterShain M {query.AddWhereOrder()}
 	[RelayCommand]
 	void DoSelectTenpo() {
 		var meisho = ShowSelectDialog<MasterTokui>(typeof(MasterTokui), "TenType=6", "Code", startPos: CurrentEdit.Id_Tenpo);
+		// キャンセル時は既存の店舗を維持する
+		if (meisho == null) return;
 		CurrentEdit.Id_Tenpo = meisho?.Id ?? 0;
 		CurrentEdit.VTenpo = new() { Sid = meisho?.Id ?? 0, Cd = meisho?.Code ?? "", Mei = meisho?.Name ?? "" };
 	}
@@ -132,6 +138,8 @@ from MasterShain M {query.AddWhereOrder()}
 	[RelayCommand]
 	void DoSelectBumon() {
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunBumon}'", "Code", startPos: CurrentEdit.Id_Bumon);
+		// キャンセル時は既存の部門を維持する
+		if (meisho == null) return;
 		CurrentEdit.Id_Bumon = meisho?.Id ?? 0;
 		CurrentEdit.VBumon = new() { Sid = meisho?.Id ?? 0, Cd = meisho?.Code ?? "", Mei = meisho?.Name ?? "" };
 	}
@@ -162,6 +170,7 @@ from MasterShain M {query.AddWhereOrder()}
 		if (string.IsNullOrEmpty(kb)) return;
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{kb}'", "Code", startPos: SelectedJsub.Sid);
 		if (meisho == null) return;
+		SelectedJsub.Sid = meisho.Id;
 		SelectedJsub.Cd = meisho.Code ?? "";
 		SelectedJsub.Mei = meisho.Name ?? "";
 	}

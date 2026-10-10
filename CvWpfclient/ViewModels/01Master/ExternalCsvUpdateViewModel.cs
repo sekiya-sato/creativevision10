@@ -52,6 +52,8 @@ public partial class ExternalCsvUpdateViewModel : Helpers.BaseViewModel {
 	private readonly Dictionary<string, Type> tableTypeMap = CsvImportEngine.CreateTableTypeMap();
 	private readonly CsvImportMasterResolver masterResolver;
 	private readonly List<object> importRecords = [];
+	/// <summary><see cref="importRecords"/> と同じ並びのCSV行番号（更新エラーの行特定用）</summary>
+	private readonly List<int> importLineNos = [];
 	private Type? importType;
 	private List<CsvImportColumnSpec> columnSpecs = [];
 	private string[] uniqueKeyColumns = [];
@@ -127,13 +129,15 @@ public partial class ExternalCsvUpdateViewModel : Helpers.BaseViewModel {
 			return;
 		}
 
+		var updated = 0;
+		var failed = 0;
 		try {
 			ClientLib.Cursor2Wait();
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var updated = 0;
-			var failed = 0;
-			foreach (var item in importRecords) {
+			for (var index = 0; index < importRecords.Count; index++) {
 				ct.ThrowIfCancellationRequested();
+				var item = importRecords[index];
+				var lineNo = index < importLineNos.Count ? importLineNos[index] : 0;
 				var msg = new CvMsg {
 					Code = 0,
 					Flag = CvFlag.Msg201_Op_Execute,
@@ -144,12 +148,15 @@ public partial class ExternalCsvUpdateViewModel : Helpers.BaseViewModel {
 				if (reply.Code < 0) {
 					failed++;
 					var detail = reply.Code < -9000 ? reply.Option : reply.DataMsg;
-					AddError(0, GetPreviewKey(item), $"更新エラー: {detail} ({reply.Code})");
+					AddError(lineNo, GetPreviewKey(item), $"更新エラー: {detail} ({reply.Code})");
 					continue;
 				}
 				updated++;
 			}
 
+			// 送信済みのデータ（更新前のVduを保持）で再実行しないよう破棄する。再実行は再検証から行う
+			importRecords.Clear();
+			importLineNos.Clear();
 			RefreshSummary();
 			Message = failed == 0
 				? $"{updated:N0} 件を更新しました。"
@@ -157,10 +164,12 @@ public partial class ExternalCsvUpdateViewModel : Helpers.BaseViewModel {
 			MessageEx.ShowInformationDialog(Message, owner: ClientLib.GetActiveView(this));
 		}
 		catch (OperationCanceledException) {
-			Message = "更新をキャンセルしました。";
+			// 1件ずつ更新するため、中断前の更新は反映済み。件数を明示して再検証を促す
+			Message = $"更新をキャンセルしました。中断までに {updated:N0} 件を更新済み（失敗 {failed:N0} 件）です。再検証してから続行してください。";
 		}
 		catch (Exception ex) {
-			MessageEx.ShowErrorDialog($"CSV更新失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));
+			Message = $"CSV更新失敗: 中断までに {updated:N0} 件を更新済み（失敗 {failed:N0} 件）です。再検証してから続行してください。";
+			MessageEx.ShowErrorDialog($"CSV更新失敗: {ex.Message}\n{Message}", owner: ClientLib.GetActiveView(this));
 		}
 		finally {
 			ClientLib.Cursor2Normal();
@@ -176,6 +185,7 @@ public partial class ExternalCsvUpdateViewModel : Helpers.BaseViewModel {
 		PreviewRows = [];
 		ErrorRows = [];
 		importRecords.Clear();
+		importLineNos.Clear();
 		masterResolver.ClearCache();
 		columnSpecs = [];
 		uniqueKeyColumns = [];
@@ -247,6 +257,7 @@ public partial class ExternalCsvUpdateViewModel : Helpers.BaseViewModel {
 			}
 
 			importRecords.Add(merged);
+			importLineNos.Add(row.LineNo);
 			if (PreviewRows.Count < 100) {
 				PreviewRows.Add(new ExternalCsvPreviewRow {
 					LineNo = row.LineNo,

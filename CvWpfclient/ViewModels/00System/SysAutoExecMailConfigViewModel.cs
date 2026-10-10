@@ -69,6 +69,7 @@ public partial class SysAutoExecMailConfigViewModel : Helpers.BaseViewModel {
 	public partial string ValidationMessage { get; set; } = string.Empty;
 
 	[ObservableProperty]
+	[NotifyCanExecuteChangedFor(nameof(LoadCommand))]
 	public partial bool IsBusy { get; set; }
 
 	/// <summary>認証方式が None 以外のとき、ユーザーID／パスワード入力を必須にする</summary>
@@ -80,9 +81,22 @@ public partial class SysAutoExecMailConfigViewModel : Helpers.BaseViewModel {
 		_schedulerClient = _schedulerChannel.CreateGrpcService<ISchedulerService>();
 	}
 
+	private bool _schedulerChannelDisposed;
+
 	protected override void OnExit() {
-		_schedulerChannel.Dispose();
+		DisposeSchedulerChannel();
 		base.OnExit();
+	}
+
+	/// <summary>
+	/// 専用の gRPC チャネルを破棄する。×ボタン等 ExitCommand 以外で閉じた場合も View の OnClosed から呼ぶため、二重呼出しを許容する。
+	/// </summary>
+	public void DisposeSchedulerChannel() {
+		if (_schedulerChannelDisposed) {
+			return;
+		}
+		_schedulerChannelDisposed = true;
+		_schedulerChannel.Dispose();
 	}
 
 	private static GrpcChannel CreateSchedulerChannel() {
@@ -120,8 +134,11 @@ public partial class SysAutoExecMailConfigViewModel : Helpers.BaseViewModel {
 		IsCredentialRequired = !string.IsNullOrEmpty(value) && value != "None";
 	}
 
+	/// <summary>保存・テスト送信などの処理中は再読込(F5)させない（入力中の値が書き換わるのを防ぐ）</summary>
+	private bool CanLoad() => !IsBusy;
+
 	/// <summary>設定を再読込する。F5 / 再読込ボタン用。</summary>
-	[RelayCommand]
+	[RelayCommand(CanExecute = nameof(CanLoad))]
 	private async Task LoadAsync() {
 		IsBusy = true;
 		ValidationMessage = "読込中...";

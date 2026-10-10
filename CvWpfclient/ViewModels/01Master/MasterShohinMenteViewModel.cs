@@ -254,9 +254,12 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 			return;
 		}
 		newValue.PropertyChanged += OnCurrentEditPropertyChanged;
+		// Jdetail が未設定(新規・NULL)だと振込先・予備項目の入力が捨てられるため空の詳細を用意する
+		newValue.Jdetail ??= new();
 
 		ApplySubListsFromCurrentEdit();
-		CostGenkaHistory = [];
+		// 同じ商品・同じ更新版の詳細再読込では取得済みの原価履歴を残し、商品切替・保存後は消す
+		if (oldValue == null || oldValue.Id != newValue.Id || oldValue.Vdu != newValue.Vdu) CostGenkaHistory = [];
 		OnPropertyChanged(nameof(IsConsumptionPurchase));
 
 		var code = newValue.Code?.Trim();
@@ -311,7 +314,14 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	[RelayCommand]
 	async Task Init() {
 		await DoGetKubun(CancellationToken.None);
-		await LoadTaxKubunAsync();
+		try {
+			await LoadTaxKubunAsync();
+		}
+		catch (Exception ex) {
+			// 消費税区分の取得に失敗しても一覧取得は続行する
+			Message = $"消費税区分取得失敗: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+		}
 		await DoList(CancellationToken.None);
 	}
 
@@ -462,10 +472,13 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 			CostGenkaHistory = [];
 			return;
 		}
+		// 取得中に商品が切り替わった場合に結果を捨てるため、開始時のIdを保持する
+		var shohinId = CurrentEdit.Id;
 		try {
 			ClientLib.Cursor2Wait();
-			var sql = $"select * from TranGenka where Id_Shohin={CurrentEdit.Id} order by EffectiveDay desc, SumMonth desc, ChangeKind desc, Vdu desc, Id desc";
+			var sql = $"select * from TranGenka where Id_Shohin={shohinId} order by EffectiveDay desc, SumMonth desc, ChangeKind desc, Vdu desc, Id desc";
 			var rows = await QuerySqlListAsync<TranGenka>(sql, ct);
+			if (CurrentEdit?.Id != shohinId) return;
 			CostGenkaHistory = new ObservableCollection<CostGenkaHistoryRow>(rows.Select(r => new CostGenkaHistoryRow(
 				CostPreviewDisplay.FormatYm6ToSlash(r.SumMonth),
 				r.EffectiveDay,
@@ -519,7 +532,9 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	}
 
 	[RelayCommand]
-	void DoSelectCol(long? id) {
+	void DoSelectCol(MasterShohinColSiz? row) {
+		// 行内ボタンから押された行を対象にする（未選択行への誤書込み防止）
+		if (row != null) SelectedJcolsiz = row;
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{MasterMeisho.KubunColor}'", "Code", startPos: SelectedJcolsiz?.Id_Col ?? 0);
 		if (meisho == null || SelectedJcolsiz == null) return;
 		SelectedJcolsiz.Id_Col = meisho.Id;
@@ -528,7 +543,9 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	}
 
 	[RelayCommand]
-	void DoSelectSiz(long? id) {
+	void DoSelectSiz(MasterShohinColSiz? row) {
+		// 行内ボタンから押された行を対象にする（未選択行への誤書込み防止）
+		if (row != null) SelectedJcolsiz = row;
 		var sizeKu = (CurrentEdit.SizeKu ?? string.Empty).Replace("'", "''");
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{sizeKu}'", "Code", startPos: SelectedJcolsiz?.Id_Siz ?? 0);
 		if (meisho == null || SelectedJcolsiz == null) return;
@@ -582,7 +599,9 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	}
 
 	[RelayCommand]
-	void DoSelectHinshitu() {
+	void DoSelectHinshitu(MasterShohinGrade? row) {
+		// 行内ボタンから押された行を対象にする（未選択行への誤書込み防止）
+		if (row != null) SelectedJgrade = row;
 		if (SelectedJgrade == null) return;
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), "Kubun='HIN'", "Code", startPos: 0);
 		if (meisho == null) return;
@@ -605,12 +624,16 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	}
 
 	[RelayCommand]
-	void DoSelectJsubCode() {
+	void DoSelectJsubCode(MasterGeneralMeisho? row) {
+		// 行内ボタンから押された行を対象にする（未選択行への誤書込み防止）
+		if (row != null) SelectedJsub = row;
 		if (SelectedJsub == null) return;
 		var kb = (SelectedJsub.Kb ?? string.Empty).Replace("'", "''");
 		if (string.IsNullOrEmpty(kb)) return;
 		var meisho = ShowSelectDialog<MasterMeisho>(typeof(MasterMeisho), $"Kubun='{kb}'", "Code", startPos: SelectedJsub.Sid);
 		if (meisho == null) return;
+		// Sid も選び直した名称に合わせ、Cd/Mei との食い違いを防ぐ
+		SelectedJsub.Sid = meisho.Id;
 		SelectedJsub.Cd = meisho.Code ?? "";
 		SelectedJsub.Mei = meisho.Name ?? "";
 	}

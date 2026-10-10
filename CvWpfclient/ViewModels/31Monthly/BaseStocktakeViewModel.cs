@@ -64,6 +64,28 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 	/// <summary>選択した倉庫Id。空なら全倉庫</summary>
 	protected List<long> SokoIds { get; } = [];
 
+	/// <summary>一覧を取得したときの計上月(yyyyMM)と倉庫条件。実行時に現在の条件と照合する</summary>
+	string loadedMonth = string.Empty;
+	string loadedSokoKey = string.Empty;
+
+	string CurrentSokoKey => string.Join(",", SokoIds.Order());
+
+	/// <summary>対象月を変えたら旧条件の一覧を無効にする(AGENTS 7.3)</summary>
+	partial void OnFallbackMonthChanged(string value) => InvalidateRows();
+
+	/// <summary>旧条件で取得した店舗一覧・基準日外入力を外し、再取得を促す</summary>
+	void InvalidateRows() {
+		if (Rows.Count == 0 && MisdatedRows.Count == 0 && loadedMonth.Length == 0) {
+			return;
+		}
+		Rows = [];
+		MisdatedRows = [];
+		MisdatedSummary = string.Empty;
+		loadedMonth = string.Empty;
+		loadedSokoKey = string.Empty;
+		StatusMessage = "条件が変更されました。一覧取得をやり直してください。";
+	}
+
 	/// <summary>入力社員Id。調整伝票の入力者になる</summary>
 	protected long IdShain { get; private set; }
 
@@ -82,6 +104,7 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 		}
 		SokoIds.Clear();
 		SokoIds.AddRange(selected.Select(x => x.Id));
+		InvalidateRows();
 		SokoText = SokoIds.Count == 0
 			? "（全倉庫）"
 			: $"{SokoIds.Count} 件選択：{string.Join(" / ", selected.Take(5).Select(x => x.Code))}"
@@ -92,6 +115,7 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 	[RelayCommand]
 	private void ClearSoko() {
 		SokoIds.Clear();
+		InvalidateRows();
 		SokoText = "（全倉庫）";
 	}
 
@@ -164,6 +188,8 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 			Rows = new ObservableCollection<StocktakeShopRow>(rows);
 			MisdatedRows = new ObservableCollection<StocktakeMisdated>(statusReply.Misdated);
 			MisdatedSummary = BuildMisdatedSummary(statusReply.Misdated);
+			loadedMonth = yyyymm;
+			loadedSokoKey = CurrentSokoKey;
 			StatusMessage = $"{Rows.Count:N0} 件の店舗を取得しました。";
 		}
 		catch (OperationCanceledException) {
@@ -200,6 +226,10 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 		var coreService = AppGlobal.GetGrpcService<ICoreService>();
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 		ct.ThrowIfCancellationRequested();
+		// エラー応答を空一覧と取り違えて店舗名が空のまま並ばないようにする
+		if (reply.Code < 0 && reply.Code != -1) {
+			throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "店舗の照会に失敗しました。");
+		}
 		if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is not IList list) {
 			return [];
 		}
@@ -250,6 +280,11 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 			ShowWarn(errorMessage);
 			return;
 		}
+		// 一覧取得後に対象月・倉庫条件が変わっていたら旧一覧では実行しない(AGENTS 7.3)
+		if (loadedMonth != yyyymm || loadedSokoKey != CurrentSokoKey) {
+			ShowWarn("対象月または対象倉庫が一覧取得時と異なります。一覧取得をやり直してください。");
+			return;
+		}
 		var targetIds = Rows.Where(x => x.IsTarget).Select(x => x.Id_Soko).ToList();
 		if (targetIds.Count == 0) {
 			ShowWarn("対象の店舗がありません。一覧取得のうえ、対象店舗にチェックを付けてください。");
@@ -258,7 +293,7 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 		if (!ConfirmBeforeExecute()) {
 			return;
 		}
-		if (MessageEx.ShowQuestionDialog($"{targetIds.Count} 店舗の{ActionName}を実行しますか？",
+		if (MessageEx.ShowQuestionDialog($"{targetIds.Count} 店舗の{ActionName}を実行しますか？\n（棚卸日未設定店舗の対象月: {FormatYm6ToSlash(yyyymm)}）",
 			owner: ClientLib.GetActiveView(this)) != MessageBoxResult.Yes) {
 			return;
 		}
@@ -281,6 +316,7 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 			// 件数はサーバー側が本文へ「件数=N」の形で載せてくる(CreateProgressStreamMsg)。
 			// 最後に届く Complete は件数0なので、その手前のステップ行を控えておく
 			var stepMessage = string.Empty;
+			var completed = false;
 			await foreach (var streamMsg in coreService.QueryMsgStreamAsync(message, AppGlobal.GetDefaultCallContext(cancellationToken))) {
 				if (!string.IsNullOrEmpty(streamMsg.DataMsg)) {
 					StatusMessage = streamMsg.DataMsg;
@@ -293,8 +329,13 @@ public abstract partial class BaseStocktakeViewModel : BaseViewModel {
 					throw new InvalidOperationException(streamMsg.DataMsg);
 				}
 				if (streamMsg.IsCompleted) {
+					completed = true;
 					break;
 				}
+			}
+			// 完了通知を受け取らずにストリームが閉じた場合は成功扱いにしない
+			if (!completed) {
+				throw new InvalidOperationException("完了通知を受信できませんでした。結果が不明のため、一覧取得で状態を確認してください。");
 			}
 			ProgressValue = 100;
 			StatusMessage = $"{ActionName}が完了しました。{targetIds.Count} 店舗\n{stepMessage}";

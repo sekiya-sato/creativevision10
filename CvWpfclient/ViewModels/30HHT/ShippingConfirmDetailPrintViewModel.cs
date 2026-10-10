@@ -82,6 +82,14 @@ public sealed partial class ShippingConfirmDetailPrintViewModel : BaseReportView
 			MessageEx.ShowWarningDialog("日付の範囲が逆転しています。", owner: ActiveWindow);
 			return Task.FromResult<QueryListSqlParam?>(null);
 		}
+		// 伝票NOが数値でないと条件が黙って外れて全伝票を印刷してしまうため、警告して中断する
+		foreach (var (text, name) in new[] { (DenNoFrom, "伝票NO(開始)"), (DenNoTo, "伝票NO(終了)") }) {
+			var value = (text ?? string.Empty).Trim();
+			if (value.Length > 0 && !long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out _)) {
+				MessageEx.ShowWarningDialog($"{name}は半角数字で入力してください。", owner: ActiveWindow);
+				return Task.FromResult<QueryListSqlParam?>(null);
+			}
+		}
 
 		List<string> parameters = [];
 		var kubunList = SelectedKubun >= 0 ? SelectedKubun.ToString(CultureInfo.InvariantCulture) : string.Join(",", TargetKubun.Select(k => k.Value));

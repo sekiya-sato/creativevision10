@@ -7,7 +7,7 @@
 	Height="{StaticResource StandardWindowHeight}"
 	d:Height="1200"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
-	FontSize="18"
+	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
 	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
 	mc:Ignorable="d">
@@ -226,7 +226,7 @@
 							VerticalScrollBarVisibility="Auto">
 							<Grid>
 								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="130" />
 									<ColumnDefinition Width="*" />
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
@@ -306,7 +306,7 @@
 									Text="掛率" />
 								<TextBox Grid.Row="5" Grid.Column="1"
 									materialDesign:HintAssist.Hint="掛率"
-									Style="{StaticResource FormTextBox}"
+									Style="{StaticResource NumericFormTextBox}"
 									Text="{Binding CurrentEdit.RateProper}" />
 
 								<!--  セール掛率  -->
@@ -315,7 +315,7 @@
 									Text="セール掛率" />
 								<TextBox Grid.Row="6" Grid.Column="1"
 									materialDesign:HintAssist.Hint="セール掛率"
-									Style="{StaticResource FormTextBox}"
+									Style="{StaticResource NumericFormTextBox}"
 									Text="{Binding CurrentEdit.RateSale}" />
 
 								<!--  納品リードタイム日数  -->
@@ -324,7 +324,7 @@
 									Text="納品リード&#10;タイム日数" />
 								<TextBox Grid.Row="7" Grid.Column="1"
 									materialDesign:HintAssist.Hint="納品リードタイム日数"
-									Style="{StaticResource FormTextBox}"
+									Style="{StaticResource NumericFormTextBox}"
 									Text="{Binding CurrentEdit.LeadTimeDays}" />
 
 								<!--  郵便番号  -->
@@ -423,12 +423,19 @@
 						</ScrollViewer>
 					</TabItem>
 
-					<TabItem Header="支払情報">
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="CreditCard" />
+								<TextBlock Text="支払情報" />
+							</StackPanel>
+						</TabItem.Header>
 						<ScrollViewer VerticalScrollBarVisibility="Auto">
 							<Grid Margin="10">
 								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="30*" />
-									<ColumnDefinition Width="70*" />
+									<ColumnDefinition Width="130" />
+									<ColumnDefinition Width="*" />
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
 									<RowDefinition Height="Auto" />
@@ -549,7 +556,8 @@
 								</DockPanel>
 
 								<TextBlock Grid.Row="7"
-									Style="{StaticResource FormLabel}"><Run Text="支払" /><Run Language="ja-jp" Text="先" /></TextBlock>
+									Style="{StaticResource FormLabel}"
+									Text="支払先" />
 								<DockPanel Grid.Row="7" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
@@ -601,7 +609,14 @@
 						</ScrollViewer>
 					</TabItem>
 
-					<TabItem Header="名称リスト">
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="FormatListBulleted" />
+								<TextBlock Text="名称リスト" />
+							</StackPanel>
+						</TabItem.Header>
 						<Grid>
 							<Grid.RowDefinitions>
 								<RowDefinition Height="Auto" />
@@ -679,11 +694,12 @@
 														Background="{DynamicResource PrimaryButtonColor}"
 														BorderThickness="0"
 														Command="{Binding DataContext.DoSelectJsubCodeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-														Cursor="Hand" Foreground="White">
+														CommandParameter="{Binding}"
+														Cursor="Hand" Foreground="{DynamicResource PrimaryHueMidForegroundBrush}">
 														<Button.Content>
 															<materialDesign:PackIcon Width="16" Height="16"
 																HorizontalAlignment="Center" VerticalAlignment="Center"
-																Foreground="White" Kind="Magnify" />
+																Foreground="{DynamicResource PrimaryHueMidForegroundBrush}" Kind="Magnify" />
 														</Button.Content>
 													</Button>
 												</Grid>
@@ -702,11 +718,18 @@
 						</Grid>
 					</TabItem>
 
-					<TabItem Header="詳細内容">
+					<TabItem>
+						<TabItem.Header>
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="TextBoxMultiple" />
+								<TextBlock Text="詳細内容" />
+							</StackPanel>
+						</TabItem.Header>
 						<Grid Margin="10">
 							<Grid.ColumnDefinitions>
-								<ColumnDefinition Width="30*" />
-								<ColumnDefinition Width="70*" />
+								<ColumnDefinition Width="130" />
+								<ColumnDefinition Width="*" />
 							</Grid.ColumnDefinitions>
 							<Grid.RowDefinitions>
 								<RowDefinition Height="Auto" />

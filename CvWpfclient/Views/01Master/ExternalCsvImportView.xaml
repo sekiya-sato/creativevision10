@@ -208,7 +208,16 @@
 								Header="列" />
 							<DataGridTextColumn Width="*"
 								Binding="{Binding Detail}"
-								Header="内容" />
+								Header="内容">
+								<!--  長いエラー内容はツールチップで全文を確認できるようにする  -->
+								<DataGridTextColumn.ElementStyle>
+									<Style BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}"
+										TargetType="TextBlock">
+										<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+										<Setter Property="ToolTip" Value="{Binding Detail}" />
+									</Style>
+								</DataGridTextColumn.ElementStyle>
+							</DataGridTextColumn>
 						</DataGrid.Columns>
 					</DataGrid>
 				</GroupBox>

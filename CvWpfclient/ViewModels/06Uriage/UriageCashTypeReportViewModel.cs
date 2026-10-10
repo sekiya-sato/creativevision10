@@ -52,14 +52,14 @@ public partial class UriageCashTypeReportViewModel : Helpers.BaseQueryViewModel 
 	public partial int RowCount { get; set; }
 
 	[ObservableProperty]
-	public partial int TotalKingaku { get; set; }
+	public partial long TotalKingaku { get; set; }
 
 	[ObservableProperty]
-	public partial int TotalPayment { get; set; }
+	public partial long TotalPayment { get; set; }
 
 	/// <summary>売上金額と金種計の差額合計。0でなければ金種未設定の伝票がある。</summary>
 	[ObservableProperty]
-	public partial int TotalDiff { get; set; }
+	public partial long TotalDiff { get; set; }
 
 	[RelayCommand]
 	void SelectShopCodeFrom() => ShopCodeFrom = SelectShopCode() ?? ShopCodeFrom;
@@ -149,13 +149,14 @@ LIMIT {maxCount}";
 				ShopCode = shop?.Code ?? string.Empty,
 				ShopName = shop?.Name ?? string.Empty,
 				DenCount = (int)a.TotalSales,
-				Kingaku = (int)a.Uriage,
-				CashAmount = (int)a.Cash,
-				CardAmount = (int)a.Fee,
-				OtherAmount = (int)a.Other,
-				ChangeAmount = (int)a.Densai,
-				PaymentTotal = (int)a.Offset,
-				Diff = (int)a.Balance,
+				// 金額は長期間・店舗計で int を超えうるため long のまま運ぶ
+				Kingaku = a.Uriage,
+				CashAmount = a.Cash,
+				CardAmount = a.Fee,
+				OtherAmount = a.Other,
+				ChangeAmount = a.Densai,
+				PaymentTotal = a.Offset,
+				Diff = a.Balance,
 			});
 		}
 
@@ -192,14 +193,14 @@ public sealed class CashTypeRow {
 	public string ShopName { get; set; } = string.Empty;
 	public int DenCount { get; set; }
 	/// <summary>伝票の売上金額合計</summary>
-	public int Kingaku { get; set; }
-	public int CashAmount { get; set; }
-	public int CardAmount { get; set; }
-	public int OtherAmount { get; set; }
+	public long Kingaku { get; set; }
+	public long CashAmount { get; set; }
+	public long CardAmount { get; set; }
+	public long OtherAmount { get; set; }
 	/// <summary>釣銭（金種計から差し引く）</summary>
-	public int ChangeAmount { get; set; }
+	public long ChangeAmount { get; set; }
 	/// <summary>金種計 = 現金 + カード + その他 − 釣銭</summary>
-	public int PaymentTotal { get; set; }
+	public long PaymentTotal { get; set; }
 	/// <summary>売上金額 − 金種計。0でなければ金種未設定の伝票がある。</summary>
-	public int Diff { get; set; }
+	public long Diff { get; set; }
 }

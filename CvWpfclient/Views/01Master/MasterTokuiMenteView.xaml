@@ -188,8 +188,8 @@
 								Binding="{Binding Kana}"
 								Header="カナ" />
 							<DataGridTextColumn Width="100"
-								Binding="{Binding TenType}"
-								Header="種別" />
+								Binding="{Binding EnTenType, Converter={StaticResource EnumCommentDisplayConverter}, Mode=OneWay}"
+								Header="種別" SortMemberPath="TenType" />
 						</DataGrid.Columns>
 						<DataGrid.ColumnHeaderStyle>
 							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
@@ -224,7 +224,7 @@
 							VerticalScrollBarVisibility="Auto">
 							<Grid>
 								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="130" />
 									<ColumnDefinition Width="*" />
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
@@ -337,7 +337,7 @@
 									Text="掛率" />
 								<TextBox Grid.Row="7" Grid.Column="1"
 									materialDesign:HintAssist.Hint="掛率"
-									Style="{StaticResource FormTextBox}"
+									Style="{StaticResource NumericFormTextBox}"
 									Text="{Binding CurrentEdit.RateProper}" />
 
 								<!--  セール掛率  -->
@@ -346,7 +346,7 @@
 									Text="セール掛率" />
 								<TextBox Grid.Row="8" Grid.Column="1"
 									materialDesign:HintAssist.Hint="セール掛率"
-									Style="{StaticResource FormTextBox}"
+									Style="{StaticResource NumericFormTextBox}"
 									Text="{Binding CurrentEdit.RateSale}" />
 
 								<!--  納品リードタイム日数  -->
@@ -355,7 +355,7 @@
 									Text="納品リード&#10;タイム日数" />
 								<TextBox Grid.Row="9" Grid.Column="1"
 									materialDesign:HintAssist.Hint="納品リードタイム日数"
-									Style="{StaticResource FormTextBox}"
+									Style="{StaticResource NumericFormTextBox}"
 									Text="{Binding CurrentEdit.LeadTimeDays}" />
 
 								<!--  価格グループ  -->
@@ -505,7 +505,7 @@
 							VerticalScrollBarVisibility="Auto">
 							<Grid>
 								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="110" />
+									<ColumnDefinition Width="130" />
 									<ColumnDefinition Width="*" />
 								</Grid.ColumnDefinitions>
 								<Grid.RowDefinitions>
@@ -823,11 +823,12 @@
 														Background="{DynamicResource PrimaryButtonColor}"
 														BorderThickness="0"
 														Command="{Binding DataContext.DoSelectJsubCodeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-														Cursor="Hand" Foreground="White">
+														CommandParameter="{Binding}"
+														Cursor="Hand" Foreground="{DynamicResource PrimaryHueMidForegroundBrush}">
 														<Button.Content>
 															<materialDesign:PackIcon Width="16" Height="16"
 																HorizontalAlignment="Center" VerticalAlignment="Center"
-																Foreground="White" Kind="Magnify" />
+																Foreground="{DynamicResource PrimaryHueMidForegroundBrush}" Kind="Magnify" />
 														</Button.Content>
 													</Button>
 												</Grid>

@@ -4,10 +4,11 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._31Monthly"
 	Title="棚卸確定処理"
 	Width="1180" Height="820"
+	MinWidth="1000" MinHeight="700"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
-	ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
+	ResizeMode="CanResize" TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:StockTakeFinalizationViewModel />
@@ -59,7 +60,7 @@
 						<RowDefinition Height="Auto" />
 					</Grid.RowDefinitions>
 					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="160" />
+						<ColumnDefinition Width="230" />
 						<ColumnDefinition Width="*" />
 					</Grid.ColumnDefinitions>
 
@@ -77,7 +78,7 @@
 						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 						MaxLength="7"
 						Style="{StaticResource MaterialDesignOutlinedTextBox}"
-						Text="{Binding FallbackMonth}" />
+						Text="{Binding FallbackMonth, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						Margin="0,16,0,0"

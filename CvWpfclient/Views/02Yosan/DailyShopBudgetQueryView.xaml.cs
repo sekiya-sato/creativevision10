@@ -24,7 +24,8 @@ public partial class DailyShopBudgetQueryView : Helpers.BaseWindow {
 	static readonly HashSet<string> PercentColumns = ["予算比", "前年売上比"];
 
 	// 旧画面の配色に合わせた固定色。ダーク/ライト双方で背景色そのものは変えず、
-	// 文字色を固定の濃色にすることで両テーマで視認性を保つ（本画面のみの特例）。
+	// 固定背景色を付けた列だけ文字色を固定の濃色にして両テーマで視認性を保つ（本画面のみの特例）。
+	// 背景色を付けない列（日付・曜日・店舗）はテーマの文字色を継承する。
 	static readonly Brush SalesColumnBrush = FrozenBrush(0xFF, 0xF9, 0xC4);
 	static readonly Brush BudgetColumnBrush = FrozenBrush(0xDC, 0xED, 0xC8);
 	static readonly Brush BudgetRatioColumnBrush = FrozenBrush(0xA5, 0xD6, 0xA7);
@@ -165,7 +166,7 @@ public partial class DailyShopBudgetQueryView : Helpers.BaseWindow {
 
 		switch (name) {
 			case "日付":
-				column.ElementStyle = BuildTextStyle(TextAlignment.Left);
+				column.ElementStyle = BuildTextStyle(TextAlignment.Left, fixedForeground: false);
 				break;
 
 			case "曜日":
@@ -174,11 +175,17 @@ public partial class DailyShopBudgetQueryView : Helpers.BaseWindow {
 
 			default:
 				bool isPercent = PercentColumns.Contains(name);
+				// 店舗列は「コード 名称」を列名にしているため、名称に . / ( などを含むと既定の
+				// プロパティパスとして解釈され値が出ない。インデクサ形式で列名をそのまま引く。
+				if (!ColumnWidths.ContainsKey(name) && name.IndexOfAny([']', ',', '^']) < 0) {
+					column.Binding = new Binding($"[{name}]");
+				}
 				if (column.Binding is Binding binding) {
 					binding.StringFormat = isPercent ? "{0:0.0}" : "{0:#,##0}";
 				}
-				column.ElementStyle = BuildTextStyle(TextAlignment.Right);
 				var background = ColumnBackground(name);
+				// 固定の濃色文字は固定背景色を付ける集計列だけ。店舗列はテーマの文字色を使う（ダークテーマ対応）
+				column.ElementStyle = BuildTextStyle(TextAlignment.Right, fixedForeground: background != null);
 				if (background != null) {
 					column.CellStyle = BuildCellStyle(grid, background, grayColumnName: null);
 				}
@@ -201,15 +208,16 @@ public partial class DailyShopBudgetQueryView : Helpers.BaseWindow {
 
 		if (name == "日付") {
 			// 行ラベル("売上計"等)。DBNullにはならない。
-			column.ElementStyle = BuildTextStyle(TextAlignment.Left, bold: true);
+			column.ElementStyle = BuildTextStyle(TextAlignment.Left, fixedForeground: false, bold: true);
 			return;
 		}
 
 		// 曜日・売上計・予算計・予算比・前年売上計・前年売上比・店舗列は、いずれも
 		// 「自身の行以外はDBNull」または「常にDBNull(曜日)」または「店舗列(常に値あり、行で書式のみ変わる)」。
 		column.Binding = new Binding(".") { Converter = _totalCellConverter, ConverterParameter = name };
-		column.ElementStyle = BuildTextStyle(TextAlignment.Right);
 		var background = ColumnBackground(name);
+		// 固定の濃色文字は固定背景色を付ける集計列だけ（DBNullのグレーセルは空文字なので文字色は影響しない）
+		column.ElementStyle = BuildTextStyle(TextAlignment.Right, fixedForeground: background != null);
 		column.CellStyle = BuildCellStyle(grid, background, grayColumnName: name);
 	}
 
@@ -221,18 +229,19 @@ public partial class DailyShopBudgetQueryView : Helpers.BaseWindow {
 		_ => null,
 	};
 
-	static Style BuildTextStyle(TextAlignment alignment, bool bold = false) {
+	/// <param name="fixedForeground">true は固定背景色の列用に固定の濃色文字にする。false はテーマの文字色を継承する。</param>
+	static Style BuildTextStyle(TextAlignment alignment, bool fixedForeground, bool bold = false) {
 		var style = new Style(typeof(TextBlock));
 		style.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, alignment));
 		style.Setters.Add(new Setter(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Stretch));
 		style.Setters.Add(new Setter(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center));
-		style.Setters.Add(new Setter(TextBlock.ForegroundProperty, CellForegroundBrush));
+		if (fixedForeground) style.Setters.Add(new Setter(TextBlock.ForegroundProperty, CellForegroundBrush));
 		if (bold) style.Setters.Add(new Setter(TextBlock.FontWeightProperty, FontWeights.SemiBold));
 		return style;
 	}
 
 	static Style BuildWeekdayStyle() {
-		var style = BuildTextStyle(TextAlignment.Center);
+		var style = BuildTextStyle(TextAlignment.Center, fixedForeground: false);
 		var sundayTrigger = new DataTrigger {
 			Binding = new Binding(nameof(TextBlock.Text)) { RelativeSource = new RelativeSource(RelativeSourceMode.Self) },
 			Value = "日",

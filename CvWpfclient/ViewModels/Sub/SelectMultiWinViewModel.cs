@@ -87,12 +87,19 @@ public partial class SelectMultiWinViewModel : Helpers.BaseViewModel {
 			};
 			var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 			ct.ThrowIfCancellationRequested();
+			// エラー応答を空一覧と取り違えないようにする
+			if (reply.Code < 0 && reply.Code != -1) {
+				throw new InvalidOperationException(reply.Option ?? reply.DataMsg ?? "サーバQueryでエラーが発生しました");
+			}
 			var list = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as IList;
 			if (list != null) {
 				ListData = WrapItems(list);
 				Current = FindInitialCurrent();
 				WeakReferenceMessenger.Default.Send(new SelectItemMessage(Current?.Id ?? StartPos));
 			}
+		}
+		catch (OperationCanceledException) {
+			// 中止はエラー表示しない
 		}
 		catch (Exception ex) {
 			MessageEx.ShowErrorDialog($"データ取得失敗: {ex.Message}", owner: ClientLib.GetActiveView(this));

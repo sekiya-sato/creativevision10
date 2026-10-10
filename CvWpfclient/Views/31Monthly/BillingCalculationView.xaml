@@ -76,7 +76,7 @@
 						IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
 						MaxLength="7"
 						Style="{StaticResource MaterialDesignOutlinedTextBox}"
-						Text="{Binding BillingMonth}" />
+						Text="{Binding BillingMonth, UpdateSourceTrigger=PropertyChanged}" />
 
 					<TextBlock Grid.Row="2" Grid.Column="0"
 						Margin="0,16,0,0"

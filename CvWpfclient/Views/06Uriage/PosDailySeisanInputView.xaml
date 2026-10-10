@@ -149,6 +149,13 @@
 					materialDesign:HintAssist.Hint="店舗"
 					Style="{StaticResource MenteSearchTextBox}"
 					Text="{Binding SearchTenpoName, Mode=OneWay}" />
+				<!--  店舗の絞り込みを全店へ戻す（表示欄は読取専用のため解除手段を用意する）  -->
+				<Button Margin="8,4,0,4" VerticalAlignment="Center"
+					Command="{Binding ClearSearchTenpoCommand}"
+					Style="{StaticResource MaterialDesignOutlinedButton}"
+					ToolTip="店舗の絞り込みを解除する">
+					<TextBlock Text="解除" />
+				</Button>
 			</StackPanel>
 		</materialDesign:Card>
 
