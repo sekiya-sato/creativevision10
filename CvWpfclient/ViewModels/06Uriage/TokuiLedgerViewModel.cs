@@ -83,7 +83,7 @@ WITH tokui AS (
 carry AS (
     SELECT idTori, SUM(kari) - SUM(kashi) AS balance
     FROM (
-        SELECT h.Id_Tokui AS idTori, {UriageKingaku} AS kari, 0 AS kashi
+        SELECT h.Id_Tokui AS idTori, h.CalcFlag * ({UriageKingaku}) AS kari, 0 AS kashi
         FROM Tran00Uriage h WHERE h.KakeDay < {dayFrom}
         UNION ALL
         SELECT h.Id_Torisaki AS idTori, 0 AS kari, h.KingakuTotal AS kashi
@@ -96,7 +96,7 @@ moves AS (
     SELECT
         h.Id_Tokui AS idTori, h.KakeDay AS denDay, h.Id AS denNo,
         1 AS srcOrder, {kubunLabel} AS kubunText,
-        h.SuTotal AS su, {UriageKingaku} AS kari, 0 AS kashi,
+        h.SuTotal AS su, {UriageKingaku} AS kari, 0 AS kashi, h.CalcFlag AS balanceFlag,
         ifnull(h.ManualNo,'') AS manualNo, {memoWithMark} AS memo
     FROM Tran00Uriage h
     WHERE h.KakeDay >= {dayFrom} AND h.KakeDay <= {dayTo}
@@ -104,7 +104,7 @@ moves AS (
     SELECT
         h.Id_Torisaki AS idTori, h.KakeDay AS denDay, h.Id AS denNo,
         2 AS srcOrder, '入金' AS kubunText,
-        0 AS su, 0 AS kari, h.KingakuTotal AS kashi,
+        0 AS su, 0 AS kari, h.KingakuTotal AS kashi, 1 AS balanceFlag,
         ifnull(h.ManualNo,'') AS manualNo, ifnull(h.Memo,'') AS memo
     FROM Tran06Nyukin h
     WHERE h.KakeDay >= {dayFrom} AND h.KakeDay <= {dayTo}
@@ -135,7 +135,7 @@ rows_all AS (
         {TranMeisaiSql.DateLabel("m.denDay")} AS denDayLabel,
         CAST(m.denNo AS TEXT) AS denNoText, m.kubunText,
         m.su, m.kari, m.kashi,
-        m.kari - m.kashi AS delta,
+        m.kari * m.balanceFlag - m.kashi AS delta,
         m.manualNo, m.memo
     FROM targets t
     JOIN moves m ON m.idTori = t.Id
