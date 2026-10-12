@@ -142,6 +142,7 @@ iconv -f UTF-8 -t CP932 probe.utf8.txt | perl -pe 's/\r?\n$/\r\n/' > "$WD/data.t
 - 明細は `cross join json_each(h.Jmeisai) m` で展開し、`json_extract(m.value,'$.XXX')` で取る。マスタ補完が要る列は `left join` する。
 - 旧にありCV10に無い列は `'' as itemN` で空欄。**推測で埋めない。**
 - 条件付き非表示に使われる値（掛計上日の `19010101` など）は固定出力する。
+- 返品・値引（Kubun 20〜39）は正値で格納され、符号はヘッダ `CalcFlag` が持つ。合計・残高・繰越を SQL で出すときは `h.CalcFlag *` を掛け、伝票ごとの表示金額は正値のまま残す（`AGENTS.md` 7.6）。既に符号付きの値へ二重に掛けない。
 
 ### Step 5. 検証
 

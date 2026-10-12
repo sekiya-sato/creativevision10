@@ -164,6 +164,7 @@ public partial class XxxReportViewModel : Helpers.BaseReportViewModel {
 
 - View は `BaseWindow` を継承した XAML（`DoOutputPdfCommand` を F6/ボタンに割当）。既存帳票 View をコピーする。
 - メニュー登録は `CvWpfclient/Models/MenuData.cs` に 1 行追加。
+- 返品を含む伝票の合計・残高・繰越は SQL で `h.CalcFlag *` を掛ける。伝票行の表示金額は正値のまま残す（`AGENTS.md` 7.6）。
 - `DoOutputPdf`（基底）→ `RunPrintPdfAsync`（`PrintPdfHelper`）が gRPC でサーバへ投げる。**実行時はサーバ＋DB が要る**が、qfm 自体の描画確認は上記ローカルハーネスで先行できる。
 
 この配線は作業時点の `CvWpfclient/Helpers/ViewModels/BaseReportViewModel.cs` と `PrintPdfHelper.cs` で確認する。設計書・過去の CRS だけで基底 API や出力経路を決めない。
