@@ -156,8 +156,9 @@ actual_meisai AS (
             SELECT s.Id_Brand FROM MasterShohin s
             WHERE s.Id = CAST(COALESCE({M}'$.Id_Shohin'), 0) AS INTEGER)
         ), 0) AS idBrand,
-        CAST(COALESCE({M}'$.Kingaku'), 0) AS INTEGER) AS kingaku,
-        CAST(COALESCE({M}'$.Gedai'), 0) AS INTEGER) AS gedai
+        -- 返品（Kubun 20〜39）は明細を正値で保持するため、ヘッダ CalcFlag を掛けて符号を付ける。
+        h.CalcFlag * CAST(COALESCE({M}'$.Kingaku'), 0) AS INTEGER) AS kingaku,
+        h.CalcFlag * CAST(COALESCE({M}'$.Gedai'), 0) AS INTEGER) AS gedai
     FROM Tran01Tenuri h, json_each(h.Jmeisai) m
     WHERE h.DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
       AND json_valid(h.Jmeisai)

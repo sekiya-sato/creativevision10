@@ -229,9 +229,10 @@ public partial class DailyShopBudgetQueryViewModel : Helpers.BaseQueryViewModel 
 		List<string> parameters = [];
 		var shopWhere = BuildCodeRangeWhere(parameters, "M.Code", ShopCodeFrom, ShopCodeTo);
 
+		// 返品（Kubun 20〜39）は金額を正値で保持するため、ヘッダ CalcFlag を掛けて符号を付ける。
 		string sql = $"""
 			SELECT T.Id_Tenpo AS Id_Tenpo, CAST(substr(T.DenDay, 7, 2) AS INTEGER) AS Day,
-				SUM(T.KingakuTotal) AS Sales, 0 AS Budget, 0 AS PrevSales
+				SUM(T.CalcFlag * T.KingakuTotal) AS Sales, 0 AS Budget, 0 AS PrevSales
 			FROM Tran01Tenuri T
 				JOIN MasterTokui M ON M.Id = T.Id_Tenpo AND M.TenType = 6 {shopWhere}
 			WHERE T.DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
@@ -249,7 +250,7 @@ public partial class DailyShopBudgetQueryViewModel : Helpers.BaseQueryViewModel 
 			UNION ALL
 
 			SELECT P.Id_Tenpo AS Id_Tenpo, CAST(substr(P.DenDay, 7, 2) AS INTEGER) AS Day,
-				0 AS Sales, 0 AS Budget, SUM(P.KingakuTotal) AS PrevSales
+				0 AS Sales, 0 AS Budget, SUM(P.CalcFlag * P.KingakuTotal) AS PrevSales
 			FROM Tran01Tenuri P
 				JOIN MasterTokui M ON M.Id = P.Id_Tenpo AND M.TenType = 6 {shopWhere}
 			WHERE P.DenDay BETWEEN '{prevDateFrom}' AND '{prevDateTo}'

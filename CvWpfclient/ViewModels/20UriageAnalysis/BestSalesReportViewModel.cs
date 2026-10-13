@@ -93,8 +93,8 @@ WITH meisai AS (
         {TranMeisaiSql.Str("Mei_Shohin")}  AS shohinName,
         {colCode} AS colCode, {colName} AS colName,
         {sizCode} AS sizCode, {sizName} AS sizName,
-        {TranMeisaiSql.Num("Su")}      AS su,
-        {TranMeisaiSql.Num("Kingaku")} AS kingaku,
+        h.CalcFlag * {TranMeisaiSql.Num("Su")}      AS su,
+        h.CalcFlag * {TranMeisaiSql.Num("Kingaku")} AS kingaku,
         {TranMeisaiSql.Num("Jodai")}   AS jodai,
         h.Id_Tenpo AS idTenpo
     FROM Tran01Tenuri h, {TranMeisaiSql.From}

@@ -97,7 +97,8 @@ staff_sales AS (
     SELECT
         COALESCE(NULLIF(CAST({M}'$.Id_Shain') AS INTEGER), 0), h.Id_Shain) AS idShain,
         h.DenDay AS denDay,
-        SUM(CAST(COALESCE({M}'$.Kingaku'), 0) AS INTEGER)) AS kingaku
+        -- 返品（Kubun 20〜39）は明細を正値で保持するため、ヘッダ CalcFlag を掛けて符号を付ける。
+        SUM(h.CalcFlag * CAST(COALESCE({M}'$.Kingaku'), 0) AS INTEGER)) AS kingaku
     FROM Tran01Tenuri h, json_each(h.Jmeisai) m
     WHERE h.DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
       AND json_valid(h.Jmeisai)

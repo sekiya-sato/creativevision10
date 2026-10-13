@@ -74,13 +74,13 @@ WITH shops AS (
 sales AS (
     SELECT
         h.Id_Tenpo AS idTenpo,
-        SUM(CASE WHEN h.DenDay = {target} THEN 1 ELSE 0 END)                          AS dayCount,
-        SUM(CASE WHEN h.DenDay = {target} THEN h.SuTotal ELSE 0 END)                  AS daySu,
-        SUM(CASE WHEN h.DenDay = {target} THEN h.KingakuTotal ELSE 0 END)             AS dayKingaku,
-        SUM(CASE WHEN h.DenDay = {target} THEN h.KingakuTotal - h.GedaiTotal ELSE 0 END) AS dayArari,
-        SUM(CASE WHEN h.DenDay BETWEEN {mStart} AND {target} THEN h.KingakuTotal ELSE 0 END)          AS cumKingaku,
-        SUM(CASE WHEN h.DenDay = {prevTarget} THEN h.KingakuTotal ELSE 0 END)         AS prevDayKingaku,
-        SUM(CASE WHEN h.DenDay BETWEEN {prevMStart} AND {prevTarget} THEN h.KingakuTotal ELSE 0 END)  AS prevCumKingaku
+        SUM(CASE WHEN h.DenDay = {target} AND h.CalcFlag = 1 THEN 1 ELSE 0 END)                          AS dayCount,
+        SUM(CASE WHEN h.DenDay = {target} THEN h.CalcFlag * h.SuTotal ELSE 0 END)                  AS daySu,
+        SUM(CASE WHEN h.DenDay = {target} THEN h.CalcFlag * h.KingakuTotal ELSE 0 END)             AS dayKingaku,
+        SUM(CASE WHEN h.DenDay = {target} THEN h.CalcFlag * (h.KingakuTotal - h.GedaiTotal) ELSE 0 END) AS dayArari,
+        SUM(CASE WHEN h.DenDay BETWEEN {mStart} AND {target} THEN h.CalcFlag * h.KingakuTotal ELSE 0 END)          AS cumKingaku,
+        SUM(CASE WHEN h.DenDay = {prevTarget} THEN h.CalcFlag * h.KingakuTotal ELSE 0 END)         AS prevDayKingaku,
+        SUM(CASE WHEN h.DenDay BETWEEN {prevMStart} AND {prevTarget} THEN h.CalcFlag * h.KingakuTotal ELSE 0 END)  AS prevCumKingaku
     FROM Tran01Tenuri h
     -- 集計結果は変えずに全期間の走査を避ける（各 CASE の範囲だけを読む）
     WHERE h.DenDay BETWEEN {mStart} AND {target} OR h.DenDay BETWEEN {prevMStart} AND {prevTarget}

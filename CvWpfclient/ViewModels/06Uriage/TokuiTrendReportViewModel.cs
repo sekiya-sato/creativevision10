@@ -96,11 +96,12 @@ monthly AS (
     SELECT
         h.Id_Tokui AS idTori,
         substr(h.DenDay,1,6) AS ym,
-        SUM(h.SuTotal)      AS su,
-        SUM(h.KingakuTotal) AS kingaku,
-        SUM(h.Tax1+h.Tax2+h.Tax3)          AS tax,
-        SUM({Kingaku})      AS total,
-        COUNT(*)            AS denCount
+        SUM(h.CalcFlag*h.SuTotal)      AS su,
+        SUM(h.CalcFlag*h.KingakuTotal) AS kingaku,
+        SUM(h.CalcFlag*(h.Tax1+h.Tax2+h.Tax3))          AS tax,
+        SUM(h.CalcFlag*{Kingaku})      AS total,
+        -- 伝票数は返品･値引伝票(CalcFlag=-1)を除外して数える
+        SUM(CASE WHEN h.CalcFlag > 0 THEN 1 ELSE 0 END) AS denCount
     FROM Tran00Uriage h
     WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}{kubunFilter}
     GROUP BY h.Id_Tokui, substr(h.DenDay,1,6)

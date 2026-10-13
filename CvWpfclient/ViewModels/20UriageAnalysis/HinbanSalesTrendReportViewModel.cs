@@ -89,9 +89,9 @@ WITH agg AS (
         {TranMeisaiSql.Str("Mei_Shohin")}   AS shohinName,
         {colCode} AS colCode, {colName} AS colName,
         {sizCode} AS sizCode, {sizName} AS sizName,
-        SUM({TranMeisaiSql.Num("Su")})      AS su,
-        SUM({TranMeisaiSql.Num("Kingaku")}) AS kingaku,
-        SUM({TranMeisaiSql.Num("Su")} * {TranMeisaiSql.Num("Jodai")}) AS jodaiTotal
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Su")})      AS su,
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Kingaku")}) AS kingaku,
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Su")} * {TranMeisaiSql.Num("Jodai")}) AS jodaiTotal
     FROM Tran01Tenuri h, {TranMeisaiSql.From}
     WHERE {TranMeisaiSql.Guard}
       AND {where}

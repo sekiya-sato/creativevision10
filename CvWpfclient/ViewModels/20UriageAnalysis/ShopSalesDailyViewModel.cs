@@ -56,22 +56,24 @@ public partial class ShopSalesDailyViewModel : Helpers.BaseReportViewModel {
 
 		var shopCode = IsByShop ? TranMeisaiSql.HeaderCode("VTenpo") : "''";
 		var shopName = IsByShop ? TranMeisaiSql.HeaderName("VTenpo") : "'全店'";
-		var having = IsActiveOnly ? "HAVING SUM(h.KingakuTotal) != 0 OR SUM(h.SuTotal) != 0" : "";
+		var having = IsActiveOnly ? "HAVING SUM(h.CalcFlag*h.KingakuTotal) != 0 OR SUM(h.CalcFlag*h.SuTotal) != 0" : "";
 
+		// 返品（Kubun 20〜39）は数量・金額・税を正値で保持するため、合計にはヘッダ CalcFlag を掛ける。
+		// 伝票数・客単価の分母は返品伝票（CalcFlag=-1）を除外して数える。
 		var sql = $@"
 SELECT
     {PeriodSql.Label("h.DenDay", PeriodUnit.Day)} AS denDayLabel,
     {PeriodSql.Youbi("h.DenDay")}                 AS youbi,
     {shopCode} AS shopCode,
     {shopName} AS shopName,
-    COUNT(*)             AS denCount,
-    SUM(h.SuTotal)       AS su,
-    SUM(h.KingakuTotal)  AS kingaku,
-    SUM(h.Tax1+h.Tax2+h.Tax3)           AS tax,
-    SUM(CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END) AS total,
-    SUM(h.Nebiki00Total) AS nebiki,
-    CASE WHEN COUNT(*) != 0
-         THEN CAST(ROUND(CAST(SUM(h.KingakuTotal) AS REAL) / COUNT(*)) AS INTEGER)
+    SUM(CASE WHEN h.CalcFlag = 1 THEN 1 ELSE 0 END) AS denCount,
+    SUM(h.CalcFlag*h.SuTotal)       AS su,
+    SUM(h.CalcFlag*h.KingakuTotal)  AS kingaku,
+    SUM(h.CalcFlag*(h.Tax1+h.Tax2+h.Tax3))           AS tax,
+    SUM(h.CalcFlag*(CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END)) AS total,
+    SUM(h.CalcFlag*h.Nebiki00Total) AS nebiki,
+    CASE WHEN SUM(CASE WHEN h.CalcFlag = 1 THEN 1 ELSE 0 END) != 0
+         THEN CAST(ROUND(CAST(SUM(h.CalcFlag*h.KingakuTotal) AS REAL) / SUM(CASE WHEN h.CalcFlag = 1 THEN 1 ELSE 0 END)) AS INTEGER)
          ELSE 0 END      AS kyakuTanka
 FROM Tran01Tenuri h
 WHERE {where}

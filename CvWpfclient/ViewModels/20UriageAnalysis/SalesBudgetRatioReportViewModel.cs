@@ -87,7 +87,7 @@ actual AS (
         h.Id_Tenpo AS idTenpo,
         (SELECT s.Id_Brand FROM MasterShohin s
          WHERE s.Id = {TranMeisaiSql.Num("Id_Shohin")}) AS idBrand,
-        {TranMeisaiSql.Num("Kingaku")} AS kingaku
+        h.CalcFlag * {TranMeisaiSql.Num("Kingaku")} AS kingaku
     FROM Tran01Tenuri h, {TranMeisaiSql.From}
     WHERE {TranMeisaiSql.Guard}
       AND h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}

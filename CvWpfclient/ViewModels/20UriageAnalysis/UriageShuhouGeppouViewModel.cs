@@ -96,9 +96,9 @@ WITH sales AS (
         {shopCode} AS shopCode,
         {shopName} AS shopName,
         h.DenDay   AS denDay,
-        h.SuTotal  AS su,
-        h.KingakuTotal AS kingaku,
-        h.KingakuTotal - h.GedaiTotal AS arari
+        h.CalcFlag * h.SuTotal AS su,
+        h.CalcFlag * h.KingakuTotal AS kingaku,
+        h.CalcFlag * (h.KingakuTotal - h.GedaiTotal) AS arari
     FROM Tran01Tenuri h
     WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}
       {shopWhere}

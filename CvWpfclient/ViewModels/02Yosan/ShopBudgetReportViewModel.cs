@@ -133,7 +133,8 @@ sales AS (
         SUM(CASE WHEN Kubun % 10 = 1 THEN sgn * KingakuTotal ELSE 0 END) AS su04,
         SUM(sgn * KingakuTotal) AS su05,
         SUM(sgn * SuTotal) AS su20,
-        SUM(CASE WHEN sgn <> 0 THEN 1 ELSE 0 END) AS su06
+        -- 客数は返品伝票（sgn=-1、CalcFlag=-1 と同義）を除外して売上伝票（10番台）だけ数える。
+        SUM(CASE WHEN sgn = 1 THEN 1 ELSE 0 END) AS su06
     FROM tenuri
     GROUP BY Id_Tenpo, DenDay
 ),

@@ -90,8 +90,8 @@ WITH nyu AS (
     SELECT
         {TranMeisaiSql.Num("Id_Shohin")} AS idShohin,
         {ColKey(true)} AS idCol, {SizKey(true)} AS idSiz,
-        SUM({TranMeisaiSql.Num("Su")})      AS inSu,
-        SUM({TranMeisaiSql.Num("Kingaku")}) AS inKingaku
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Su")})      AS inSu,
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Kingaku")}) AS inKingaku
     FROM Tran03Shiire h, {TranMeisaiSql.From}
     WHERE {TranMeisaiSql.Guard} AND {shiireDay}{shiireShohin}
     GROUP BY idShohin, idCol, idSiz
@@ -100,8 +100,8 @@ uri AS (
     SELECT
         {TranMeisaiSql.Num("Id_Shohin")} AS idShohin,
         {ColKey(true)} AS idCol, {SizKey(true)} AS idSiz,
-        SUM({TranMeisaiSql.Num("Su")})      AS saleSu,
-        SUM({TranMeisaiSql.Num("Kingaku")}) AS saleKingaku
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Su")})      AS saleSu,
+        SUM(h.CalcFlag * {TranMeisaiSql.Num("Kingaku")}) AS saleKingaku
     FROM Tran01Tenuri h, {TranMeisaiSql.From}
     WHERE {TranMeisaiSql.Guard} AND {uriDay}{uriShohin}
     GROUP BY idShohin, idCol, idSiz

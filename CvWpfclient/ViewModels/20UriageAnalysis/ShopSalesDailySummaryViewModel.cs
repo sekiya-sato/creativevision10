@@ -60,6 +60,8 @@ public partial class ShopSalesDailySummaryViewModel : Helpers.BaseReportViewMode
 		const string uriKubun = "h.Kubun BETWEEN 10 AND 19";
 		const string henKubun = "h.Kubun BETWEEN 20 AND 29";
 
+		// 返品（Kubun 20〜39）は金額・税を正値で保持するため、合計（値引・税・純売上）にはヘッダ CalcFlag を掛ける。
+		// 返品額(henKingaku)は返品の正値表示のまま。伝票数は返品伝票（CalcFlag=-1）を除外して数える。
 		var sql = $@"
 WITH agg AS (
     SELECT
@@ -68,12 +70,12 @@ WITH agg AS (
         {PeriodSql.Youbi("h.DenDay")}                 AS youbi,
         {shopCode} AS shopCode,
         {shopName} AS shopName,
-        COUNT(*) AS denCount,
+        SUM(CASE WHEN h.CalcFlag = 1 THEN 1 ELSE 0 END) AS denCount,
         SUM(CASE WHEN {uriKubun} THEN h.KingakuTotal ELSE 0 END) AS uriKingaku,
         SUM(CASE WHEN {henKubun} THEN h.KingakuTotal ELSE 0 END) AS henKingaku,
-        SUM(h.Nebiki00Total) AS nebiki,
-        SUM(h.Tax1+h.Tax2+h.Tax3)           AS tax,
-        SUM(h.KingakuTotal)  AS netKingaku
+        SUM(h.CalcFlag*h.Nebiki00Total) AS nebiki,
+        SUM(h.CalcFlag*(h.Tax1+h.Tax2+h.Tax3))           AS tax,
+        SUM(h.CalcFlag*h.KingakuTotal)  AS netKingaku
     FROM Tran01Tenuri h
     WHERE {where}
     GROUP BY h.DenDay, {shopCode}, {shopName}

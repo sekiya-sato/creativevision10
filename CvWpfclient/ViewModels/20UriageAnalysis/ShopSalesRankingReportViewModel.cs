@@ -65,9 +65,9 @@ WITH shops AS (
 sales AS (
     SELECT
         h.Id_Tenpo AS idTenpo,
-        COUNT(*)            AS denCount,
-        SUM(h.SuTotal)      AS su,
-        SUM(h.KingakuTotal) AS kingaku
+        SUM(CASE WHEN h.CalcFlag = 1 THEN 1 ELSE 0 END) AS denCount,
+        SUM(h.CalcFlag * h.SuTotal)      AS su,
+        SUM(h.CalcFlag * h.KingakuTotal) AS kingaku
     FROM Tran01Tenuri h
     WHERE h.DenDay >= {dayFrom} AND h.DenDay <= {dayTo}
     GROUP BY h.Id_Tenpo

@@ -76,11 +76,11 @@ WITH agg AS (
         {PeriodSql.Label("h.DenDay", unit)} AS periodLabel,
         {shopCode} AS shopCode,
         {shopName} AS shopName,
-        COUNT(*)              AS denCount,
-        SUM(h.SuTotal)        AS su,
-        SUM(h.KingakuTotal)   AS kingaku,
-        SUM(h.JodaiTotal)     AS jodaiTotal,
-        SUM(h.Nebiki00Total)  AS nebiki
+        SUM(CASE WHEN h.CalcFlag = 1 THEN 1 ELSE 0 END) AS denCount,
+        SUM(h.CalcFlag * h.SuTotal)        AS su,
+        SUM(h.CalcFlag * h.KingakuTotal)   AS kingaku,
+        SUM(h.CalcFlag * h.JodaiTotal)     AS jodaiTotal,
+        SUM(h.CalcFlag * h.Nebiki00Total)  AS nebiki
     FROM Tran01Tenuri h
     WHERE {where}
     GROUP BY periodKey, periodLabel, shopCode, shopName

@@ -9,6 +9,7 @@ namespace CvWpfclient.ViewModels._06Uriage;
 /// 品番別売上チェックリスト。指定期間の売上伝票明細を品番(商品×色×サイズ)別に集計し、
 /// 数量・金額・上代・伝票数・最終売上日・平均単価を印字する。
 /// 売上は卸売上(Tran00Uriage)と店舗売上(Tran01Tenuri)に分かれているため、対象を選べる。
+/// 返品･値引(Kubun=20〜39)は明細を正値で保持しているため、ヘッダ CalcFlag(-1)を掛けて集計する。
 /// </summary>
 public partial class HinbanUriageCheckListViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "品番別売上チェックリスト";
@@ -83,10 +84,11 @@ public partial class HinbanUriageCheckListViewModel : Helpers.BaseReportViewMode
         {colName} AS colName,
         {sizCode} AS sizCode,
         {sizName} AS sizName,
-        {TranMeisaiSql.Num("Su")}      AS su,
-        {TranMeisaiSql.Num("Kingaku")} AS kingaku,
+        h.CalcFlag * {TranMeisaiSql.Num("Su")}      AS su,
+        h.CalcFlag * {TranMeisaiSql.Num("Kingaku")} AS kingaku,
         {TranMeisaiSql.Num("Jodai")}   AS jodai,
         '{prefix}' || h.Id AS denKey,
+        h.CalcFlag AS calcFlag,
         h.DenDay AS denDay
     FROM {table} h, {TranMeisaiSql.From}
     WHERE {TranMeisaiSql.Guard}
@@ -115,7 +117,8 @@ SELECT
     SUM(su)                                  AS su,
     SUM(kingaku)                             AS kingaku,
     SUM(su * jodai)                          AS jodaiTotal,
-    COUNT(DISTINCT denKey)                   AS denCount,
+    -- 伝票数は返品･値引伝票(CalcFlag=-1)を除外して数える
+    COUNT(DISTINCT CASE WHEN calcFlag > 0 THEN denKey END) AS denCount,
     {TranMeisaiSql.DateLabel("MAX(denDay)")} AS lastDay,
     CASE WHEN SUM(su) != 0
          THEN CAST(ROUND(CAST(SUM(kingaku) AS REAL) / SUM(su)) AS INTEGER)
