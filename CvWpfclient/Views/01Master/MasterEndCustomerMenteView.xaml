@@ -428,9 +428,9 @@
 								<TextBox Grid.Row="17" Grid.Column="1"
 									Width="200"
 									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="累計購買回数"
+									materialDesign:HintAssist.Hint="累計購買回数" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.SalesCount}" />
+									Text="{Binding AccountSalesCountText, Mode=OneWay}" />
 
 								<TextBlock Grid.Row="18"
 									Style="{StaticResource FormLabel}"
@@ -438,9 +438,9 @@
 								<TextBox Grid.Row="18" Grid.Column="1"
 									Width="200"
 									HorizontalAlignment="Left"
-									materialDesign:HintAssist.Hint="累計購買金額"
+									materialDesign:HintAssist.Hint="累計購買金額" IsReadOnly="True"
 									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.SalesKingaku}" />
+									Text="{Binding AccountSalesKingakuText, Mode=OneWay}" />
 
 								<TextBlock Grid.Row="19"
 									Style="{StaticResource FormLabel}"

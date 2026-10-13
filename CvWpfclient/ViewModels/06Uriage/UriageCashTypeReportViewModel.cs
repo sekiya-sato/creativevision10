@@ -101,6 +101,12 @@ public partial class UriageCashTypeReportViewModel : Helpers.BaseQueryViewModel 
 		string Pay(string prop) =>
 			$"CAST(CASE WHEN json_valid(h.JposPayment) THEN ifnull(json_extract(h.JposPayment,'$.{prop}'),0) ELSE 0 END AS INTEGER)";
 
+		// 返品(CalcFlag=-1)はPOSで金種を正値(払戻額)で保持するため、売上・金種とも CalcFlag を掛けて差し引く。
+		string Signed(string expr) => $"h.CalcFlag * ({expr})";
+		// 売上は金種計と同じ税込で比べる。Total が未設定(0)の伝票は税抜金額＋税で補う。
+		const string SalesTotal = "CASE WHEN h.Total = 0 THEN h.KingakuTotal + h.Tax1 + h.Tax2 + h.Tax3 ELSE h.Total END";
+		var payTotal = $"{Pay("CashAmount")} + {Pay("CardAmount")} + {Pay("OtherAmount")} - {Pay("ChangeAmount")}";
+
 		// 集計キー。店舗計のときは日付を潰す
 		var dayKey = IsByDay ? "h.DenDay" : "''";
 
@@ -113,14 +119,13 @@ SELECT
     h.Id_Tenpo                  AS Id_Tokui,
     {dayKey}                    AS DenMonth,
     COUNT(*)                    AS TotalSales,
-    SUM(h.KingakuTotal)         AS Uriage,
-    SUM({Pay("CashAmount")})    AS Cash,
-    SUM({Pay("CardAmount")})    AS Fee,
-    SUM({Pay("OtherAmount")})   AS Other,
-    SUM({Pay("ChangeAmount")})  AS Densai,
-    SUM({Pay("CashAmount")} + {Pay("CardAmount")} + {Pay("OtherAmount")} - {Pay("ChangeAmount")}) AS Offset,
-    SUM(h.KingakuTotal)
-      - SUM({Pay("CashAmount")} + {Pay("CardAmount")} + {Pay("OtherAmount")} - {Pay("ChangeAmount")}) AS Balance,
+    SUM({Signed(SalesTotal)})   AS Uriage,
+    SUM({Signed(Pay("CashAmount"))})   AS Cash,
+    SUM({Signed(Pay("CardAmount"))})   AS Fee,
+    SUM({Signed(Pay("OtherAmount"))})  AS Other,
+    SUM({Signed(Pay("ChangeAmount"))}) AS Densai,
+    SUM({Signed(payTotal)})     AS Offset,
+    SUM({Signed(SalesTotal)}) - SUM({Signed(payTotal)}) AS Balance,
     0 AS TotalIn, 0 AS Henpin, 0 AS Nebiki, 0 AS Tax1, 0 AS Tax2, 0 AS Tax3
 FROM Tran01Tenuri h
 WHERE {where}

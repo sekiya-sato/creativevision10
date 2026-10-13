@@ -17,6 +17,14 @@ public partial class MasterEndCustomerMenteViewModel : Helpers.BaseCodeNameLight
 	[ObservableProperty]
 	public partial string AccountPointText { get; set; } = "0";
 
+	/// <summary>会員情報の累計来店回数（旧「累計購買回数」）。読み取り専用で表示する。</summary>
+	[ObservableProperty]
+	public partial string AccountSalesCountText { get; set; } = "0";
+
+	/// <summary>会員情報の累計お買上金額（旧「累計購買金額」）。読み取り専用で表示する。</summary>
+	[ObservableProperty]
+	public partial string AccountSalesKingakuText { get; set; } = "0";
+
 	CancellationTokenSource? accountPointLoadCts;
 	protected override string[] AdditionalLightweightColumns => ["Rank", "VTenpo"];
 
@@ -40,7 +48,9 @@ Code, Name, Ryaku, Kana, Rank,
 trim(ifnull(json_extract(VTenpo,'$.Cd'),'') || ' ' || ifnull(json_extract(VTenpo,'$.Mei'),'')) Tenpo,
 Birthday, BirthNoyear, Memo,
 case Gender when 1 then '女性' when 2 then '男性' else '不明' end GenderText,
-Point, SalesCount, SalesKingaku,
+ifnull((select a.Point from MasterEndCustomerAccount a where a.Id_Customer=MasterEndCustomer.Id order by a.Id limit 1),0) Point,
+ifnull((select a.VisitCount from MasterEndCustomerAccount a where a.Id_Customer=MasterEndCustomer.Id order by a.Id limit 1),0) SalesCount,
+ifnull((select a.SalesTotalKingaku from MasterEndCustomerAccount a where a.Id_Customer=MasterEndCustomer.Id order by a.Id limit 1),0) SalesKingaku,
 PostalCode, Address1, Address2, Address3, Tel, Mail
 from MasterEndCustomer {query.AddWhereOrder()}
 ";
@@ -57,6 +67,8 @@ from MasterEndCustomer {query.AddWhereOrder()}
 	protected override void OnCurrentEditChangedCore(MasterEndCustomer? oldValue, MasterEndCustomer newValue) {
 		accountPointLoadCts?.Cancel();
 		AccountPointText = newValue?.Id > 0 ? string.Empty : "0";
+		AccountSalesCountText = AccountPointText;
+		AccountSalesKingakuText = AccountPointText;
 		if (newValue?.Id > 0) _ = LoadAccountPointAsync(newValue);
 		if (newValue == null) {
 			EditJsub = [];
@@ -82,6 +94,8 @@ from MasterEndCustomer {query.AddWhereOrder()}
 			var accounts = Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) as IList;
 			var account = accounts?.Cast<MasterEndCustomerAccount>().FirstOrDefault();
 			AccountPointText = (account?.Point ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture);
+			AccountSalesCountText = (account?.VisitCount ?? 0).ToString("N0");
+			AccountSalesKingakuText = (account?.SalesTotalKingaku ?? 0).ToString("N0");
 		}
 		catch (OperationCanceledException) { }
 		catch (Exception ex) {

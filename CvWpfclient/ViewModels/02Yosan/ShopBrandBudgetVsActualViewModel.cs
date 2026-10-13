@@ -9,7 +9,7 @@ namespace CvWpfclient.ViewModels._02Yosan;
 /// 店舗ブランド別予算実績対比。指定年月を月単位で集計し、店舗×ブランドの売上予算/実績・粗利予算/実績を対比する。
 /// 予算は MasterYosanBrand(店舗×ブランド×日)を月合計。
 /// 実績は Tran01Tenuri の明細(Jmeisai)を展開し、明細の商品Idから MasterShohin.Id_Brand を引いてブランドへ寄せる。
-/// 粗利実績は「明細金額 - 明細下代」で算出する（下代=原価相当）。
+/// 粗利実績は「明細金額 - 数量×明細下代」で算出する（下代=原価単価相当）。
 /// </summary>
 public partial class ShopBrandBudgetVsActualViewModel : Helpers.BaseReportViewModel {
 	protected override string ReportTitle => "店舗ブランド別予算実績対比";
@@ -158,7 +158,8 @@ actual_meisai AS (
         ), 0) AS idBrand,
         -- 返品（Kubun 20〜39）は明細を正値で保持するため、ヘッダ CalcFlag を掛けて符号を付ける。
         h.CalcFlag * CAST(COALESCE({M}'$.Kingaku'), 0) AS INTEGER) AS kingaku,
-        h.CalcFlag * CAST(COALESCE({M}'$.Gedai'), 0) AS INTEGER) AS gedai
+        -- 明細の Gedai は単価のため、数量を掛けて原価額にする。
+        h.CalcFlag * CAST(COALESCE({M}'$.Su'), 0) AS INTEGER) * CAST(COALESCE({M}'$.Gedai'), 0) AS INTEGER) AS gedai
     FROM Tran01Tenuri h, json_each(h.Jmeisai) m
     WHERE h.DenDay BETWEEN '{dateFrom}' AND '{dateTo}'
       AND json_valid(h.Jmeisai)
