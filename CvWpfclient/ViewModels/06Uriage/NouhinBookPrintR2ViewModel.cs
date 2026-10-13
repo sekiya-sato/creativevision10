@@ -43,6 +43,8 @@ public partial class NouhinBookPrintViewModel : Helpers.BaseReportViewModel {
 				return;
 			}
 			if (!ValidateTaxRates(targets)) return;
+			// PDF の生成・表示に成功した伝票だけを発行済みにする
+			if (!await RunPrintPdfAsync(FormFileName, null, BuildPrintSqlParam(targets), ct)) return;
 
 			var update = new PartialUpdateParam(typeof(Tran00Uriage), [nameof(Tran00Uriage.IsPrint)],
 				[.. targets.Select(x => new PartialUpdateRow(x.Id, x.Vdu, ["1"]))]);
@@ -53,11 +55,11 @@ public partial class NouhinBookPrintViewModel : Helpers.BaseReportViewModel {
 				DataMsg = Common.SerializeObject(update),
 			}, AppGlobal.GetDefaultCallContext(ct));
 			if (reply.Code < 0) {
-				Message = $"発行済み更新に失敗しました: {reply.DataMsg}";
+				Message = $"印刷は完了しましたが、発行済み更新に失敗しました（未発行のまま）: {reply.DataMsg}";
 				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 				return;
 			}
-			await RunPrintPdfAsync(FormFileName, null, BuildPrintSqlParam(targets), ct);
+			Message = $"{targets.Count}件を発行済みにしました";
 		}
 		catch (OperationCanceledException) {
 			Message = "印刷をキャンセルしました";

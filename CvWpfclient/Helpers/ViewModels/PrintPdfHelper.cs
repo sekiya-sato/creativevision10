@@ -28,7 +28,8 @@ internal static class PrintPdfHelper {
 	/// <param name="viewModel">呼び出し元 ViewModel（ClientLib の Window 解決に使用）</param>
 	/// <param name="ownerWindow">メッセージダイアログの Owner</param>
 	/// <param name="setMessage">進捗・結果メッセージの反映先</param>
-	internal static async Task RunPrintPdfAsync(
+	/// <returns>PDFを表示できたとき true。失敗・キャンセル時は false（発行済更新などの判定に使う）。</returns>
+	internal static async Task<bool> RunPrintPdfAsync(
 		object viewModel,
 		Window? ownerWindow,
 		Action<string> setMessage,
@@ -41,17 +42,17 @@ internal static class PrintPdfHelper {
 
 		if (string.IsNullOrWhiteSpace(formFile)) {
 			Warn(setMessage, ownerWindow, "印刷フォームファイルが設定されていません");
-			return;
+			return false;
 		}
 
 		if (csvParam is null && sqlParam is null) {
 			Warn(setMessage, ownerWindow, "印刷データが設定されていません");
-			return;
+			return false;
 		}
 
 		if (csvParam is not null && sqlParam is not null) {
 			Warn(setMessage, ownerWindow, "印刷データは CSV と SQL のどちらか一方だけ設定してください");
-			return;
+			return false;
 		}
 
 		try {
@@ -71,12 +72,12 @@ internal static class PrintPdfHelper {
 				setMessage(string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s))));
 				if (streamMsg.Status == -2) {
 					Warn(setMessage, ownerWindow, streamMsg.DataMsg);
-					return;
+					return false;
 				}
 				if (streamMsg.Status < 0) {
 					var errorDetail = string.IsNullOrWhiteSpace(streamMsg.DataMsg) ? streamMsg.StatusString : streamMsg.DataMsg;
 					Error(setMessage, ownerWindow, $"PDF出力失敗: {errorDetail}");
-					return;
+					return false;
 				}
 
 				if (streamMsg.IsCompleted) {
@@ -87,7 +88,7 @@ internal static class PrintPdfHelper {
 
 			if (string.IsNullOrWhiteSpace(pdfdata)) {
 				Warn(setMessage, ownerWindow, "PDF出力結果が取得できませんでした");
-				return;
+				return false;
 			}
 
 			var viewTitle = string.IsNullOrWhiteSpace(ownerWindow?.Title)
@@ -96,7 +97,7 @@ internal static class PrintPdfHelper {
 			var view = new Views.Sub.WebPdfView { Title = viewTitle };
 			if (view.DataContext is not WebPdfViewModel vm) {
 				Error(setMessage, ownerWindow, "PDF表示画面の初期化に失敗しました");
-				return;
+				return false;
 			}
 
 			vm.Pdfdata = $"{AppGlobal.Url}/wrk/{pdfdata}";
@@ -104,17 +105,19 @@ internal static class PrintPdfHelper {
 			ClientLib.ShowDialogView(view, viewModel, IsDialog: false);
 			view.Owner = null;
 			setMessage($"PDFを表示しました: {pdfdata}");
+			return true;
 		}
 		catch (OperationCanceledException cancel) {
 			setMessage($"Cancelエラー：{cancel.Message}");
-			return;
+			return false;
 		}
 		catch (RpcException rpcEx) when (rpcEx.StatusCode == StatusCode.Cancelled) {
 			setMessage("PDF出力をキャンセルしました");
-			return;
+			return false;
 		}
 		catch (Exception ex) {
 			Error(setMessage, ownerWindow, $"PDF出力失敗: {ex.Message}");
+			return false;
 		}
 		finally {
 			ClientLib.Cursor2Normal();

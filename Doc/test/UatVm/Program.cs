@@ -49,6 +49,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["haibunflow"] = HaibunFlowScenario.RunAsync,
 	["logisticsflow"] = LogisticsFlowScenario.RunAsync,
 	["hhtprint"] = HhtPrintScenario.RunAsync,
+	["nouhinprintfail"] = NouhinPrintFailScenario.RunAsync,
 	["autoreplenish"] = AutoReplenishScenario.RunAsync,
 	["haibun-data-mente"] = HaibunDataMenteScenario.RunAsync,
 	["pointmaster"] = PointMasterScenario.RunAsync,

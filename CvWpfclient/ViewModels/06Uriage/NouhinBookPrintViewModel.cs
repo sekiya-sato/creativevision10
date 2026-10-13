@@ -45,6 +45,12 @@ public abstract partial class NouhinBookPrintLegacyViewModel : Helpers.BaseRepor
 	[ObservableProperty]
 	public partial bool IsPendingOnly { get; set; } = true;
 
+	/// <summary>印刷SQLを作った時点の対象伝票（Id・Vdu）。PDF表示に成功したら printedTargets へ移す。</summary>
+	List<Tran00Uriage> printingTargets = [];
+
+	/// <summary>直近に印刷が成功した伝票。［発行済にする］はこの伝票だけを更新する。</summary>
+	List<Tran00Uriage> printedTargets = [];
+
 	[RelayCommand]
 	void SelectTokuiCodeFrom() => TokuiCodeFrom = SelectTokuiCode() ?? TokuiCodeFrom;
 
@@ -80,14 +86,33 @@ public abstract partial class NouhinBookPrintLegacyViewModel : Helpers.BaseRepor
 		return true;
 	}
 
-	protected override Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
+	protected override async Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct) {
+		printingTargets = [];
 		if (!TryGetTerm(out var from, out var to)) {
-			return Task.FromResult<QueryListSqlParam?>(null);
+			return null;
 		}
 		ct.ThrowIfCancellationRequested();
 
+		// 印刷した伝票だけを発行済みにできるよう、対象を先に確定して Id で絞る
+		List<Tran00Uriage> targets;
+		try {
+			targets = await FetchTargetsAsync(from, to, ct);
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException) {
+			Message = $"対象伝票の取得に失敗しました: {ex.Message}";
+			MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
+			return null;
+		}
+		if (targets.Count == 0) {
+			Message = "対象の伝票がありません";
+			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
+			return null;
+		}
+		printingTargets = targets;
+
 		List<string> parameters = [];
 		var where = BuildWhere(parameters, from, to);
+		where += $" AND h.Id IN ({string.Join(",", targets.Select(x => x.Id))})";
 
 		const string Kingaku = "CASE WHEN h.Total != 0 THEN h.Total ELSE h.KingakuTotal + (h.Tax1+h.Tax2+h.Tax3) END";
 		var kubunLabel = TranMeisaiSql.KubunLabel("h.Kubun",
@@ -119,48 +144,45 @@ WHERE {TranMeisaiSql.Guard}
   AND {where}
 ORDER BY h.Id, {TranMeisaiSql.Num("No")}";
 
-		return Task.FromResult<QueryListSqlParam?>(new QueryListSqlParam(typeof(object), sql, [.. parameters]));
+		return new QueryListSqlParam(typeof(object), sql, [.. parameters]);
 	}
 
+	protected override void OnPrintSucceeded() => printedTargets = printingTargets;
+
 	/// <summary>
-	/// 抽出条件に一致する伝票の IsPrint を 1 にする。
+	/// 直近に印刷が成功した伝票の IsPrint を 1 にする。
 	/// PDF を確認したあとに手動で実行する（印刷失敗分を発行済みにしないため）。
+	/// 印刷後に追加された伝票は対象外。印刷後に変更された伝票は Vdu 照合で更新しない。
 	/// </summary>
 	[RelayCommand(IncludeCancelCommand = true)]
 	async Task MarkPrinted(CancellationToken ct) {
-		if (!TryGetTerm(out var from, out var to)) return;
+		var targets = printedTargets;
+		if (targets.Count == 0) {
+			Message = "印刷が完了した伝票がありません。先に印刷してください。";
+			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
+			return;
+		}
 
 		try {
 			ClientLib.Cursor2Wait();
+			if (!ConfirmAction($"印刷した{targets.Count}件の伝票を発行済みにしますか？")) return;
 
-			var targets = await FetchTargetsAsync(from, to, ct);
-			if (targets.Count == 0) {
-				Message = "対象の伝票がありません";
-				MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
+			// IsPrint だけを Vdu 照合付きで一括更新する（1リクエスト）
+			var update = new PartialUpdateParam(typeof(Tran00Uriage), [nameof(Tran00Uriage.IsPrint)],
+				[.. targets.Select(x => new PartialUpdateRow(x.Id, x.Vdu, ["1"]))]);
+			var reply = await AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg201_Op_Execute,
+				DataType = typeof(PartialUpdateParam),
+				DataMsg = Common.SerializeObject(update),
+			}, AppGlobal.GetDefaultCallContext(ct));
+			if (reply.Code < 0) {
+				Message = $"発行済み更新に失敗しました（未発行のまま）: {reply.DataMsg}";
+				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 				return;
 			}
-			if (!ConfirmAction($"{targets.Count}件の伝票を発行済みにしますか？")) return;
-
-			var coreService = AppGlobal.GetGrpcService<ICoreService>();
-			var updated = 0;
-			foreach (var den in targets) {
-				ct.ThrowIfCancellationRequested();
-				den.IsPrint = 1;
-				var msg = new CvMsg {
-					Code = 0,
-					Flag = CvFlag.Msg201_Op_Execute,
-					DataType = typeof(UpdateParam),
-					DataMsg = Common.SerializeObject(new UpdateParam(typeof(Tran00Uriage), Common.SerializeObject(den))),
-				};
-				var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-				if (reply.Code < 0) {
-					Message = $"伝票NO {den.Id} の更新に失敗しました: {reply.DataMsg}";
-					MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
-					return;
-				}
-				updated++;
-			}
-			Message = $"{updated}件を発行済みにしました";
+			printedTargets = [];
+			Message = $"{targets.Count}件を発行済みにしました";
 			MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
 		}
 		catch (OperationCanceledException) {
@@ -196,7 +218,9 @@ ORDER BY h.Id, {TranMeisaiSql.Num("No")}";
 		};
 		var coreService = AppGlobal.GetGrpcService<ICoreService>();
 		var reply = await coreService.QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
-		if (reply.Code < 0) return [];
+		// 該当なしだけを空とし、通信・SQLエラーは「対象なし」と区別して例外にする
+		if (reply.Code == CvMsgErrorCode.NotFound) return [];
+		if (reply.Code < 0) throw new InvalidOperationException(string.IsNullOrEmpty(reply.Option) ? reply.DataMsg : reply.Option);
 		return JsonConvert.DeserializeObject<List<Tran00Uriage>>(reply.DataMsg) ?? [];
 	}
 }

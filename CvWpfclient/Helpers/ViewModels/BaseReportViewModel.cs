@@ -64,7 +64,7 @@ public abstract partial class BaseReportViewModel : BaseViewModel {
 	/// 指定したフォームファイルと印刷データ(CSV または SQL)で PDF を生成し、PDF表示画面を開く。
 	/// 1画面で複数の帳票を出し分けたい場合は、この保護メソッドを個別コマンドから直接呼び出す。
 	/// </summary>
-	protected Task RunPrintPdfAsync(string? formFile, PrintByCsvParam? csvParam, QueryListSqlParam? sqlParam, CancellationToken ct) =>
+	protected Task<bool> RunPrintPdfAsync(string? formFile, PrintByCsvParam? csvParam, QueryListSqlParam? sqlParam, CancellationToken ct) =>
 		PrintPdfHelper.RunPrintPdfAsync(this, ActiveWindow, m => Message = m, formFile, csvParam, sqlParam, ct);
 
 	protected override void OnExit() {
@@ -84,6 +84,9 @@ public abstract partial class BaseReportViewModel : BaseViewModel {
 	/// </summary>
 	protected abstract Task<QueryListSqlParam?> BuildPrintSqlParamAsync(CancellationToken ct);
 
+	/// <summary>DoOutputPdf で PDF を表示できたときに呼ばれる（発行済管理などに使う）。</summary>
+	protected virtual void OnPrintSucceeded() { }
+
 	[RelayCommand(IncludeCancelCommand = true)]
 	protected async Task DoOutputPdf(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
@@ -91,7 +94,7 @@ public abstract partial class BaseReportViewModel : BaseViewModel {
 			ClientLib.Cursor2Wait();
 			var sqlParam = await BuildPrintSqlParamAsync(ct);
 			if (sqlParam == null) return;
-			await RunPrintPdfAsync(FormFileName, null, sqlParam, ct);
+			if (await RunPrintPdfAsync(FormFileName, null, sqlParam, ct)) OnPrintSucceeded();
 		}
 		catch (OperationCanceledException cancel) {
 			Message = $"Cancelエラー：{cancel.Message}";

@@ -99,7 +99,8 @@ public abstract partial class BaseIdoDetailBookPrintViewModel<TDen> : BaseReport
 				MessageEx.ShowInformationDialog(Message, owner: ActiveWindow);
 				return;
 			}
-			await RunPrintPdfAsync(FormFileName, null, BuildPrintSqlParam(targets.Select(x => x.Id)), ct);
+			// PDF の生成・表示に失敗したら発行済みにしない
+			if (!await RunPrintPdfAsync(FormFileName, null, BuildPrintSqlParam(targets.Select(x => x.Id)), ct)) return;
 			if (!IsNormalIssue) return;
 
 			// 通常発行は印刷した伝票を発行済みにする（旧: 印刷FLG のビットを立てる）
@@ -112,7 +113,7 @@ public abstract partial class BaseIdoDetailBookPrintViewModel<TDen> : BaseReport
 				DataMsg = Common.SerializeObject(update),
 			}, AppGlobal.GetDefaultCallContext(ct));
 			if (reply.Code < 0) {
-				Message = $"発行済み更新に失敗しました: {reply.DataMsg}";
+				Message = $"印刷は完了しましたが、発行済み更新に失敗しました（未発行のまま）: {reply.DataMsg}";
 				MessageEx.ShowErrorDialog(Message, owner: ActiveWindow);
 				return;
 			}
