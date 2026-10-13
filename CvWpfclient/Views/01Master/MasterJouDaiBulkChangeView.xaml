@@ -1092,7 +1092,7 @@
 											<Button Grid.Column="6"
 												Command="{Binding ApplyShopPeriodCommand}"
 												Style="{StaticResource MaterialDesignOutlinedButton}"
-												ToolTip="チェック済みの対象へ期間をまとめて設定（Scope1件の互換運用向け。手動の期間微調整は保存時に維持されます）">
+												ToolTip="チェック済みの対象の表示期間をまとめて設定（表示のみで保存には使われません。保存される店舗期間はScopeの期間で、既存伝票では読み込んだ店舗期間を維持します）">
 												<TextBlock FontSize="14" Text="期間設定" />
 											</Button>
 										</Grid>
@@ -1117,11 +1117,11 @@
 													Binding="{Binding Mei_Tenpo}"
 													Header="名称" IsReadOnly="True" />
 												<DataGridTextColumn Width="90"
-													Binding="{Binding DayFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-													Header="開始日" />
+													Binding="{Binding DayFrom, Mode=OneWay}"
+													Header="開始日" IsReadOnly="True" />
 												<DataGridTextColumn Width="90"
-													Binding="{Binding DayTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-													Header="終了日" />
+													Binding="{Binding DayTo, Mode=OneWay}"
+													Header="終了日" IsReadOnly="True" />
 											</DataGrid.Columns>
 											<DataGrid.ColumnHeaderStyle>
 												<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"

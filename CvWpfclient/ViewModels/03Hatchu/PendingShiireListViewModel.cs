@@ -70,6 +70,8 @@ public partial class PendingShiireListViewModel : Helpers.BaseReportViewModel {
 		var shohinName = IsBySku ? "MAX(shohinName)" : "''";
 		var colName = IsBySku ? "MAX(colName)" : "''";
 		var sizName = IsBySku ? "MAX(sizName)" : "''";
+		// 残のみでは完了設定画面で手動完了(EndFlag=1)にした発注を出さない
+		if (IsPendingOnly) where += " AND h.EndFlag = 0";
 		var having = IsPendingOnly ? "WHERE pendingSu != 0" : "";
 
 		var sql = $@"

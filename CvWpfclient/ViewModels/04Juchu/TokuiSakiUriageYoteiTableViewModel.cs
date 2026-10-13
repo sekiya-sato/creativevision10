@@ -57,6 +57,8 @@ public partial class TokuiSakiUriageYoteiTableViewModel : Helpers.BaseReportView
 			+ BuildCodeRangeWhere(parameters, TranMeisaiSql.HeaderCode("VTokui"), TokuiCodeFrom, TokuiCodeTo)
 			+ " AND h.Kubun BETWEEN 10 AND 19";  // 受注帯(10-19)で絞る。区分を離散指定すると帯に区分が追加されたとき静かに漏れるため。追加受注(11)もここに含まれる。
 
+		// 残のみでは完了設定画面で手動完了(EndFlag=1)にした受注を予定額の集計から外す
+		if (IsPendingOnly) where += " AND h.EndFlag = 0";
 		var having = IsPendingOnly ? "HAVING SUM(zanKingaku) != 0" : "";
 
 		var sql = $@"

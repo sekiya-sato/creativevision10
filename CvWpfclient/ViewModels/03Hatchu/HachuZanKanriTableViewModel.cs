@@ -73,7 +73,8 @@ public partial class HachuZanKanriTableViewModel : Helpers.BaseReportViewModel {
 		var today = DateTime.Today.ToString("yyyy-MM-dd");
 
 		var conditions = new List<string>();
-		if (IsPendingOnly) conditions.Add("zanSu != 0");
+		// 完了設定画面で手動完了(EndFlag=1)にした伝票は残数があっても残として出さない
+		if (IsPendingOnly) conditions.Add("zanSu != 0 AND endFlag = 0");
 		if (minDays > 0) conditions.Add($"elapsedDays >= {minDays}");
 		var having = conditions.Count > 0 ? "WHERE " + string.Join(" AND ", conditions) : "";
 
@@ -112,6 +113,7 @@ joined AS (
              - julianday(substr(a.denDay,1,4) || '-' || substr(a.denDay,5,2) || '-' || substr(a.denDay,7,2))
              AS INTEGER)                 AS elapsedDays,
         a.nouhinDay                      AS nouhinDay,
+        a.endFlag                        AS endFlag,
         -- 納期遅れ日数: 納品予定日が非空・未完了・予定日を過ぎている場合のみ (today - 納品予定日)
         CASE WHEN a.nouhinDay != '' AND a.endFlag = 0
              AND julianday('{today}') > julianday(substr(a.nouhinDay,1,4) || '-' || substr(a.nouhinDay,5,2) || '-' || substr(a.nouhinDay,7,2))

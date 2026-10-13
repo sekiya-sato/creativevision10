@@ -249,6 +249,18 @@ public partial class MasterJouDaiBulkChangeViewModel : BaseViewModel {
 	/// <summary>楽観ロック用。読み込んだ伝票の Vdu。</summary>
 	long editVdu;
 
+	/// <summary>読み込んだ（または直前に保存した）伝票の伝票日付。既存伝票の再保存ではこの値を保持する。</summary>
+	string editDenDay = string.Empty;
+
+	/// <summary>読み込んだ（または直前に保存した）伝票の確定日。確定済み伝票の再保存・取消ではこの値を保持する。</summary>
+	string editFixDay = string.Empty;
+
+	/// <summary>
+	/// この編集中に採番したScope番号の最大値。Scope削除で欠番になった番号を再利用しないために持つ
+	/// （再利用すると、読込済みの店舗期間<see cref="loadedJshop"/>が別のScopeに付いてしまうため）。
+	/// </summary>
+	int lastScopeNo;
+
 	public string DenNoText => EditId > 0 ? EditId.ToString("N0", CultureInfo.InvariantCulture) : "(新規)";
 
 	[ObservableProperty]
@@ -665,6 +677,9 @@ LIMIT 500";
 	void ApplyLoadedDen(TranJodai den) {
 		EditId = den.Id;
 		editVdu = den.Vdu;
+		editDenDay = den.DenDay;
+		editFixDay = den.FixDay;
+		lastScopeNo = 0;
 		EditKubun = den.Kubun;
 		EditTaishoType = den.TaishoType;
 		EditTitle = den.Title;
@@ -730,6 +745,9 @@ LIMIT 500";
 	void ClearEdit() {
 		EditId = 0;
 		editVdu = 0;
+		editDenDay = string.Empty;
+		editFixDay = string.Empty;
+		lastScopeNo = 0;
 		EditKubun = (int)EnumJodaiKubun.Sale;
 		EditTaishoType = (int)EnumJodaiTaisho.Tenpo;
 		EditTitle = string.Empty;
@@ -1597,8 +1615,34 @@ ORDER BY DayFrom";
 
 	// ===== 登録 ===================================================================
 
+	/// <summary>
+	/// ヘッダの適用期間とScope全体の期間（開始日の最小～終了日の最大）が食い違っていれば、保存前に続行可否を確認する。
+	/// Scopeの期間はヘッダ変更に追従しないため、ヘッダだけ直して保存する取り違えを防ぐ。
+	/// 日付が未入力・不正なScopeがあるときは確認せず true を返す（<see cref="BuildDenpyoAsync"/>の検証に任せる）。
+	/// </summary>
+	/// <returns>続行してよければ true（食い違い無し、または利用者が「はい」を選んだ）</returns>
+	bool ConfirmScopePeriodMismatch() {
+		if (EditDayFrom == null || EditDayTo == null || ScopeRows.Count == 0) return true;
+		if (ScopeRows.Any(s => ParseDay(s.DayFrom) == null || ParseDay(s.DayTo) == null)) return true;
+		var headerFrom = ToDay(EditDayFrom.Value);
+		var headerTo = EditKubun == (int)EnumJodaiKubun.Proper ? "99991231" : ToDay(EditDayTo.Value);
+		var scopeFrom = ScopeRows.Select(s => s.DayFrom).Min(StringComparer.Ordinal)!;
+		var scopeTo = ScopeRows.Select(s => s.DayTo).Max(StringComparer.Ordinal)!;
+		if (scopeFrom == headerFrom && scopeTo == headerTo) return true;
+
+		var head = string.Join("\n", ScopeRows.Take(5).Select(s => $"Scope#{s.No}「{s.Name}」 {s.DayFrom}～{s.DayTo}"));
+		var more = ScopeRows.Count > 5 ? $"\n… 他 {ScopeRows.Count - 5} 件" : string.Empty;
+		if (MessageEx.ShowQuestionDialog(
+				$"ヘッダの適用期間（{headerFrom}～{headerTo}）とScopeの期間（{scopeFrom}～{scopeTo}）が一致していません。\n" +
+				$"適用上代はScopeの期間で展開されます。\n{head}{more}\nこのまま続行しますか？",
+				owner: ActiveWindow) == MessageBoxResult.Yes) return true;
+		Message = "中止しました（ヘッダとScopeの期間が不一致）";
+		return false;
+	}
+
 	[RelayCommand(CanExecute = nameof(CanRunWhenIdle))]
 	async Task DoRegister(CancellationToken ct) {
+		if (!ConfirmScopePeriodMismatch()) return;
 		try {
 			// 伝票の組み立てもgRPC通信を含むため、処理中扱い・例外処理の内側で行う
 			StartBusy("伝票を組み立て中...");
@@ -1618,6 +1662,8 @@ ORDER BY DayFrom";
 			var saved = await SaveDenpyoAsync(den, ct);
 			EditId = saved.Id;
 			editVdu = saved.Vdu;
+			editDenDay = den.DenDay;
+			editFixDay = den.FixDay;
 			EditStatus = saved.Status;
 			ApproveDayText = FormatApproveDay(saved.ApproveDay);
 			// ExpandCnt 列は保存では更新されないので、実際の DerivedJodai を数え直す
@@ -1667,6 +1713,8 @@ ORDER BY DayFrom";
 	/// </summary>
 	[RelayCommand(CanExecute = nameof(CanFix))]
 	async Task DoFix(CancellationToken ct) {
+		// 確定もStatus=1で伝票を保存するため、登録と同じくヘッダとScopeの期間の食い違いを先に確認する
+		if (!ConfirmScopePeriodMismatch()) return;
 		// ---- 競合チェック（設計書5.6の1手目）----
 		// チェック自体が入力不足・中断・例外で完了しなかった場合は、競合0件とみなさず確定を中止する
 		if (!await RunConflictCheckAsync(ct)) {
@@ -1729,6 +1777,8 @@ ORDER BY DayFrom";
 			var saved = await SaveDenpyoAsync(den, ct);
 			EditId = saved.Id;
 			editVdu = saved.Vdu;
+			editDenDay = den.DenDay;
+			editFixDay = den.FixDay;
 			EditStatus = saved.Status;
 			EditSendFlg = saved.SendFlg;
 			ApproveDayText = FormatApproveDay(saved.ApproveDay);
@@ -1768,6 +1818,8 @@ ORDER BY DayFrom";
 			StartBusy("取消中...");
 			var saved = await SaveDenpyoAsync(den, ct);
 			editVdu = saved.Vdu;
+			editDenDay = den.DenDay;
+			editFixDay = den.FixDay;
 			EditStatus = saved.Status;
 			ApproveDayText = FormatApproveDay(saved.ApproveDay);
 			await ReloadExpandCountAsync(ct);
@@ -1813,6 +1865,8 @@ ORDER BY DayFrom";
 			StartBusy("送信済みに更新中...");
 			var saved = await SaveDenpyoAsync(den, ct);
 			editVdu = saved.Vdu;
+			editDenDay = den.DenDay;
+			editFixDay = den.FixDay;
 			EditSendFlg = saved.SendFlg;
 			ApproveDayText = FormatApproveDay(saved.ApproveDay);
 			await LoadListAsync(ct);
@@ -1956,7 +2010,8 @@ ORDER BY DayFrom";
 		var den = new TranJodai {
 			Id = EditId,
 			Vdu = editVdu,
-			DenDay = ToDay(DateTime.Today),
+			// 伝票日付は新規登録時だけ今日を入れ、既存伝票の再保存では読み込んだ値を保持する
+			DenDay = EditId > 0 && !string.IsNullOrEmpty(editDenDay) ? editDenDay : ToDay(DateTime.Today),
 			Kubun = EditKubun,
 			TaishoType = EditTaishoType,
 			Id_Sale = SelectedSale?.Id ?? 0,
@@ -1977,7 +2032,13 @@ ORDER BY DayFrom";
 			RoundUnit = RoundUnit,
 			RoundType = RoundType,
 			Status = EditStatus,
-			FixDay = EditStatus == 1 ? ToDay(DateTime.Today) : string.Empty,
+			// 確定日は確定操作（DoFix）で今日を設定する。確定済み伝票の再保存・取消・送信済み更新では
+			// 読み込んだ確定日を保持する（未確定は空のまま。確定済みで確定日が空の古い伝票だけ今日で補う）
+			FixDay = EditStatus switch {
+				0 => string.Empty,
+				1 when string.IsNullOrEmpty(editFixDay) => ToDay(DateTime.Today),
+				_ => editFixDay,
+			},
 			SendFlg = EditSendFlg,
 			Memo = EditMemo,
 			Jcond = [.. CondRows.Where(c => c.Field != null && c.Field.IsSelectable).Select((c, i) => new TranJodaiCond {
@@ -2107,11 +2168,15 @@ ORDER BY DayFrom";
 		Odr = r.Odr,
 	};
 
-	int NextScopeNo() => ScopeRows.Count == 0 ? 1 : ScopeRows.Max(r => r.No) + 1;
-
-	void RenumberScopeRows() {
-		var no = 0;
-		foreach (var row in ScopeRows) row.No = ++no;
+	/// <summary>
+	/// 新しいScope番号を採番する。現在のScope・読込済みの店舗期間・この編集中に採番済みの番号の最大値+1とし、
+	/// 削除で欠番になった番号は再利用しない（セル・店舗別期間が別のScopeへ付け替わるのを防ぐ）。
+	/// </summary>
+	int NextScopeNo() {
+		var max = Math.Max(lastScopeNo, ScopeRows.Count == 0 ? 0 : ScopeRows.Max(r => r.No));
+		if (loadedJshop.Count > 0) max = Math.Max(max, loadedJshop.Max(s => s.No_Scope));
+		lastScopeNo = max + 1;
+		return lastScopeNo;
 	}
 
 	/// <summary>Scope行を1件追加する（既定値は全店/対象/ヘッダ既定期間・価格ルール）。</summary>
@@ -2124,12 +2189,15 @@ ORDER BY DayFrom";
 		ScopeRows.Add(ToScopeRow(scope));
 	}
 
-	/// <summary>Scope行を削除する。最後の1件は残す（Price Matrixの列が0にならないように）。</summary>
+	/// <summary>
+	/// Scope行を削除する。最後の1件は残す（Price Matrixの列が0にならないように）。
+	/// 残るScopeのNoは振り直さない（欠番を許す）。Noはセル・店舗別期間の紐付けキーのため、
+	/// 振り直すと別のScopeへ付け替わって保存されてしまう。
+	/// </summary>
 	[RelayCommand]
 	void RemoveScopeRow(JodaiScopeRow? row) {
 		if (row == null || ScopeRows.Count <= 1) return;
 		ScopeRows.Remove(row);
-		RenumberScopeRows();
 		if (SelectedScopeRow == row) SelectedScopeRow = null;
 	}
 
