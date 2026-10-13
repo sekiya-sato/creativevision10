@@ -260,7 +260,7 @@
 								Margin="0,4,18,4">
 								<TextBox Width="120" Height="36"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectTokuiCommand}"
-									BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+									BorderThickness="0,0,0,1" IsReadOnly="True" DockPanel.Dock="Left"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Torisaki, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Style="{StaticResource MasterRefText}"
@@ -274,7 +274,7 @@
 								Margin="0,4,0,4">
 								<TextBox Width="100" Height="36"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
-									BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+									BorderThickness="0,0,0,1" IsReadOnly="True" DockPanel.Dock="Left"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Margin="8,0,0,0"

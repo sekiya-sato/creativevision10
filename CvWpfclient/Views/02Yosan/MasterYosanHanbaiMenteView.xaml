@@ -221,7 +221,7 @@
 									Width="180" Height="40"
 									Margin="2" HorizontalAlignment="Left"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
-									materialDesign:HintAssist.Hint="販売員Id"
+									materialDesign:HintAssist.Hint="販売員Id" IsReadOnly="True"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Grid.Row="1" Grid.Column="1"

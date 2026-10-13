@@ -225,7 +225,7 @@
 									Width="180" Height="40"
 									Margin="2" HorizontalAlignment="Left"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectShopCommand}"
-									materialDesign:HintAssist.Hint="店舗Id"
+									materialDesign:HintAssist.Hint="店舗Id" IsReadOnly="True"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Grid.Row="1" Grid.Column="1"
@@ -240,7 +240,7 @@
 									Width="180" Height="40"
 									Margin="2" HorizontalAlignment="Left"
 									helpers:SearchTextBoxAssist.Command="{Binding DoSelectBrandCommand}"
-									materialDesign:HintAssist.Hint="ブランドId"
+									materialDesign:HintAssist.Hint="ブランドId" IsReadOnly="True"
 									Style="{StaticResource MenteSearchTextBox}"
 									Text="{Binding CurrentEdit.Id_Brand, UpdateSourceTrigger=PropertyChanged}" />
 								<TextBlock Grid.Row="2" Grid.Column="1"

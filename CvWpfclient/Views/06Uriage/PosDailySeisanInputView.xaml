@@ -305,7 +305,7 @@
 									<TextBox Width="120" Height="36"
 										HorizontalContentAlignment="Left"
 										helpers:SearchTextBoxAssist.Command="{Binding DoSelectTenpoCommand}"
-										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+										BorderThickness="0,0,0,1" IsReadOnly="True" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Tenpo, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
@@ -330,7 +330,7 @@
 									<TextBox Width="120" Height="36"
 										HorizontalContentAlignment="Left"
 										helpers:SearchTextBoxAssist.Command="{Binding DoSelectShainCommand}"
-										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+										BorderThickness="0,0,0,1" IsReadOnly="True" DockPanel.Dock="Left"
 										Style="{StaticResource MenteSearchTextBox}"
 										Text="{Binding CurrentEdit.Id_Shain, UpdateSourceTrigger=PropertyChanged}" />
 									<TextBlock Style="{StaticResource MasterRefText}"
