@@ -2,8 +2,9 @@
 
 状態: **常設ドキュメント（随時更新）**。qfm新規作成・修正のたびに参照・追記する恒久的なフォーマット仕様であり、完了・未完了の区分を持たない。
 
-更新日: 2026-09-20
-対象HEAD: `2741cc3e9633656925911143d20d0f20271919a0`
+確認日: 2026-10-14
+対象HEAD: `6ea3612e471598f7b081640ec611981ec88f90e7`（現行 `printform` の構造・参照先を静的照合。PDF出力は再検証していない。）
+文法抽出の記録: 2026-09-20、HEAD `2741cc3e9633656925911143d20d0f20271919a0`
 
 PrintStream 帳票ファイル (`.qfm`) の XML フォーマット仕様。**AI が qfm を新規作成・修正できる粒度**でまとめた実務リファレンス。
 
@@ -13,12 +14,14 @@ qfm の XML 文法そのものはベンダーの CHM ヘルプに記載がない
 
 そこでこの仕様は 2 系統の一次情報を突き合わせて構成している。
 
-1. **XML 文法（タグ・属性・出現構造・値の分布）= 実 qfm コーパスの機械マイニング**
+1. **XML 文法（タグ・属性・出現構造・値の分布）= 実 qfm コーパスの機械マイニング（下記2097本は過去の抽出記録）**
    - `C:\gitroot\new2022\cv10\printform\*.qfm` … 129 本（cv10 実運用）
    - `C:\gitroot\cv\cvnet_pkg\cvnetpss\*.qfm` … 1968 本（旧 cv.net 資産、サブフォルダ含む）
    - 合計 **2097 本**。抽出は `Doc/spec/tools/extract_qfm_grammar.ps1` で再現可能。
 2. **属性値の意味（書式トークン / レコード種別 / バーコード種別 / フォント等）= CHM の該当ページ**
    - 展開済み: `refer/printdll/PrintStream_decompiled/FormEditor/*.html`
+
+現行 `printform` は **130本**。全件をcp932でXML解析し、ルートversion=3.0・CSV入力は各130件、`item` 3413件の属性は `id` のみ、`group` 55件はすべて `item` 直下と確認した。旧cv.netを含むコーパスの再抽出は行っていない。§1の件数は2097本の抽出時点、§2〜4の属性・値の分布はそれ以前の2075本の抽出記録であり、現在の件数として使わない。
 
 各項目には出所を明記する。
 
@@ -228,7 +231,7 @@ CHM のレコード種別 `[C]`:
 | `pagechange` | `1`(1843)/`0`(1515) | `1`=グループ切替で改ページ。`0`=改ページしない。 `[M]` |
 
 - この `item` 側の `group level` と、§3.3 の `record` 側の `grouplevel`/`breaktype` 属性が対応することで、キーブレイク時の中計・改ページが機能する（`record grouplevel="N"` は `group level="N"` の項目が変化した際に出力される）。
-- 例: `MasterPrintBarcode002.qfm` は `group level="1" pagechange="1"` で 1 グループ 1 ページ。詰めて出す帳票は `pagechange="0"`。
+- 例: `MasterPrintBarcodeView_v_code39.qfm` は `group level="1" pagechange="0"` でグループごとの改ページを抑える。1 グループ 1 ページにする帳票は `pagechange="1"`。
 
 ---
 
@@ -370,7 +373,7 @@ CHM 対応種別 `[C]`: CODE39 / JAN / JAN短縮 / NW-7 / ITF / 郵便カスタ�
 
 | 属性 | 観測値 | 意味 |
 |---|---|---|
-| `type` | `0`(101)/`2`(47)/`1`(47) | バーコード種別番号。**数値と種別の対応表が CHM にないため既存 qfm から確認して使う。** cv10 には `MasterPrintBarcodeCode39.qfm`/`...Nw7.qfm`/`...Sho.qfm` 等の前例あり。 `[M]` |
+| `type` | `0`(101)/`2`(47)/`1`(47) | バーコード種別番号。**数値と種別の対応表が CHM にないため既存 qfm から確認して使う。** cv10 には `MasterPrintBarcodeView_v_code39.qfm` / `MasterPrintBarcodeView_v_nw7.qfm` / `MasterPrintBarcodeView_v_jan.qfm`（横向きは `_h_`）の前例あり。 `[M]` |
 | `check` | `0`(113)/`1`(82) | チェックデジット付加。CODE39=モジュラス43、JAN=モジュラス10ウェイト3 等。 `[C]` |
 | `sschar` | `1`(132)/`0`(63) | スタート/ストップコード付加（CODE39 の `*` 等）。 `[C]` |
 | `string` | — | 併記文字列設定。 `[M]` |
