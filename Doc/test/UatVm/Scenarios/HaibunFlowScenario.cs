@@ -200,7 +200,7 @@ public static class HaibunFlowScenario {
 		session.Check("配分確定:未完了0、TKは出荷売上10点（仕入4・在庫2・受注4の3伝票）、TSは移動3点（仕入1・在庫2の2伝票）",
 			open.Count == 0 && uriage.Count == 3 && uriage.Sum(u => u.SuTotal) == 10 && ido.Count == 2 && ido.Sum(i => i.SuTotal) == 3,
 			new { open = open.Count, uriage = uriage.Select(u => u.SuTotal), ido = ido.Select(i => i.SuTotal) });
-		var juchuUriage = uriage.Where(u => u.RelateNo1 == (int)juchu.Id).Sum(u => u.SuTotal);
+		var juchuUriage = uriage.Where(u => u.RelateNo1 == juchu.Id).Sum(u => u.SuTotal);
 		session.Check("配分確定:受注に紐付く出荷売上は受注配分の4点だけ", juchuUriage == 4, new { juchuUriage });
 		await CheckStockAsync(session, seeded, seeded.WarehouseId, "配分確定:倉庫 在庫0・引当0", 0, 0);
 
@@ -254,7 +254,7 @@ public static class HaibunFlowScenario {
 
 	static Tran03Shiire Purchase(JuchuShippingSeeder.Result seeded, long idSoko, long hachuId, int su, string denDay) {
 		var tran = new Tran03Shiire {
-			DenDay = denDay, KakeDay = denDay, Id_Soko = idSoko, RelateNo1 = (int)hachuId,
+			DenDay = denDay, KakeDay = denDay, Id_Soko = idSoko, RelateNo1 = hachuId,
 			Id_Shain = seeded.EmployeeId, Rate = 100, SuTotal = su, KingakuTotal = su * 1000, Jmeisai = [Line(seeded, su, 1000)],
 		};
 		tran.EnKubun = EnumShiire.Shiire;

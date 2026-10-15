@@ -158,7 +158,7 @@ public class ShippingDbTests {
 
 	/// <summary>確定済み(KakuteiDay有効)・未完了の配分行を1件作る。既定は指示3・実数3</summary>
 	private long InsertConfirmed(long idShohin, string denDay = "20260815", string nouhinDay = "20260820",
-		long idSoko = 1, long idTenpo = 5, EnumHaibun kubun = EnumHaibun.Zaiko, int relateNo1 = 0,
+		long idSoko = 1, long idTenpo = 5, EnumHaibun kubun = EnumHaibun.Zaiko, long relateNo1 = 0,
 		int su = 3, int jitsuSu = 3, int shortSu = 0) {
 		var row = new TranHaibun {
 			DenDay = denDay,

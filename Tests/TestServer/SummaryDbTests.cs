@@ -689,7 +689,7 @@ public class SummaryDbTests {
 
 		var oroshiRow = db.Single<TranHaibun>("where Id=@0", toOroshi.Id);
 		Assert.AreEqual(1, oroshiRow.EndFlag);
-		Assert.AreEqual((int)uriage.Id, oroshiRow.RelateNo2);
+		Assert.AreEqual(uriage.Id, oroshiRow.RelateNo2);
 		Assert.AreEqual(8, oroshiRow.JitsuSu);
 		Assert.AreEqual(2, oroshiRow.ShortSu);
 		AssertRealReserve(db, 1, 0);
@@ -1836,7 +1836,7 @@ public class SummaryDbTests {
 
 	private static TranHaibun CreateReceiptAllocation(long hachuId, long idTenpo, int su) {
 		var h = CreateHaibun("20260901", 1, su, kubun: EnumHaibun.Hatsukai);
-		h.RelateNo1 = (int)hachuId;
+		h.RelateNo1 = hachuId;
 		h.Id_Tenpo = idTenpo;
 		return h;
 	}

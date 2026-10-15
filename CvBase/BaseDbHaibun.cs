@@ -155,7 +155,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1 = 元伝票のId（配分の入力元）。 受注配分なら Tran12Jyuchu.Id、仕入配分なら Tran13Hachu.Id。 在庫からの配分（在庫配分・取置配分）は元伝票が無いので 0。")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2 = <b>配分確定で作成した伝票のId</b>（配分の出力先）。
 	/// <para>
@@ -167,7 +167,7 @@ public sealed partial class TranHaibun : BaseDbClass, ITranReserve {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO2")]
 	[Comment("関連No2 = 配分確定で作成した伝票のId（配分の出力先）。 店舗向けなら Tran10IdoOut / Tran05Ido.Id、 得意先向けなら Tran00Uriage.Id。未確定は 0。")]
-	public partial int RelateNo2 { get; set; }
+	public partial long RelateNo2 { get; set; }
 	/// <summary>
 	/// 明細メモ
 	/// </summary>
@@ -421,7 +421,7 @@ public enum EnumHaibunEndReason : int {
 /// SKU単位で確定・欠品・引当解除の時機が異なり、倉庫×SKU索引も必要なため、JSON明細を内包せずフラット行を維持する。
 /// </para>
 /// </summary>
-public readonly record struct HaibunHeaderKey(string DenDay, string NouhinDay, long Id_Soko, long Id_Tenpo, int Kubun, int RelateNo1) {
+public readonly record struct HaibunHeaderKey(string DenDay, string NouhinDay, long Id_Soko, long Id_Tenpo, int Kubun, long RelateNo1) {
 	/// <summary>配分明細行から仮想ヘッダキーを作る</summary>
 	public static HaibunHeaderKey From(TranHaibun row) =>
 		new(row.DenDay, row.NouhinDay, row.Id_Soko, row.Id_Tenpo, row.Kubun, row.RelateNo1);
@@ -566,14 +566,14 @@ public sealed partial class TranHoju : BaseDbClass {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	///	関連No2
 	/// </summary>
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO2")]
 	[Comment("関連No2")]
-	public partial int RelateNo2 { get; set; }
+	public partial long RelateNo2 { get; set; }
 	/// <summary>
 	/// 明細メモ
 	/// </summary>

@@ -902,7 +902,7 @@ public sealed partial class Tran00Uriage : TranAllHeader, ITranSoko, ITranTax {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO2")]
 	[Comment("関連No2")]
-	public partial int RelateNo2 { get; set; }
+	public partial long RelateNo2 { get; set; }
 	/// <summary>
 	/// 掛率
 	/// </summary>
@@ -1112,7 +1112,7 @@ public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 
 	/// <summary>
 	/// 掛率
@@ -1993,7 +1993,7 @@ public sealed partial class Tran12Jyuchu : TranAllHeader, ITranTax {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	/// 掛率
 	/// </summary>
@@ -2154,7 +2154,7 @@ public sealed partial class Tran13Hachu : TranAllHeader, ITranTax {
 	[ObservableProperty]
 	[OldTableCommentAttr("関連伝票NO")]
 	[Comment("関連No1")]
-	public partial int RelateNo1 { get; set; }
+	public partial long RelateNo1 { get; set; }
 	/// <summary>
 	/// 掛率
 	/// </summary>

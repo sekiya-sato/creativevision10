@@ -197,7 +197,7 @@ public class LogisticsLinkDbSendTests : LogisticsTestBase {
 	}
 
 	private void InsertShiire(long hachuId, int su) =>
-		Db.Insert(new Tran03Shiire { DenDay = "20261002", Id_Soko = SokoId, RelateNo1 = (int)hachuId, Jmeisai = [Meisai(su)] });
+		Db.Insert(new Tran03Shiire { DenDay = "20261002", Id_Soko = SokoId, RelateNo1 = hachuId, Jmeisai = [Meisai(su)] });
 
 	private long InsertIdoOut(int su) {
 		var row = new Tran10IdoOut { DenDay = "20261002", Id_Soko = _otherSokoId, Id_Ido = SokoId, Jmeisai = [Meisai(su)], Vdu = 100 };

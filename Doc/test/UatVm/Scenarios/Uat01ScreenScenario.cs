@@ -97,7 +97,7 @@ public static class Uat01ScreenScenario {
 		VShiire = new CodeNameView(data.SupplierId, data.SupplierCode, "UAT-VM UAT-01仕入先"),
 		Id_Soko = data.WarehouseId, VSoko = new CodeNameView(data.WarehouseId, data.WarehouseCode, "UAT-VM UAT-01倉庫"),
 		Id_Shain = data.EmployeeId, VShain = new CodeNameView(data.EmployeeId, data.EmployeeCode, string.Empty),
-		Kubun = (int)EnumShiire.Shiire, IsPay = 1, Rate = 100, TaxCalcUnit = (int)EnumTaxCalcUnit.Slip, RelateNo1 = checked((int)orderId),
+		Kubun = (int)EnumShiire.Shiire, IsPay = 1, Rate = 100, TaxCalcUnit = (int)EnumTaxCalcUnit.Slip, RelateNo1 = orderId,
 		Jmeisai = [Meisai(product, sku, quantity)],
 	};
 

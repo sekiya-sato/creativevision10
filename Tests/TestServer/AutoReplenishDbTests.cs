@@ -83,12 +83,12 @@ public class AutoReplenishDbTests {
 			Jmeisai = [Meisai(1, 8), Meisai(2, 7)] };
 		Insert(order);
 		Insert(new Tran03Shiire { DenDay = Day, Id_Soko = _soko, Id_Shiire = _shiire,
-			RelateNo1 = checked((int)order.Id), Kubun = 10, Jmeisai = [Meisai(1, 4)] });
+			RelateNo1 = order.Id, Kubun = 10, Jmeisai = [Meisai(1, 4)] });
 		Insert(new Tran03Shiire { DenDay = Day, Id_Soko = _soko, Id_Shiire = _shiire,
-			RelateNo1 = checked((int)order.Id), Kubun = 20, Jmeisai = [Meisai(1, 1)] });
+			RelateNo1 = order.Id, Kubun = 20, Jmeisai = [Meisai(1, 1)] });
 		Insert(new TranHaibun { DenDay = Day, Id_Soko = _soko, Id_Tenpo = _store,
 			Id_Shohin = _product, Id_Col = 1, Id_Siz = 2, Kubun = 0, Su = 6, ArrivedSu = 2,
-			RelateNo1 = checked((int)order.Id) });
+			RelateNo1 = order.Id });
 		Insert(new SummaryRealStock { Id_Soko = _soko, Id_Shohin = _product, Id_Col = 1, Id_Siz = 2, Su = 2, ReserveQty = 2 });
 		var preview = Replenish.Preview(Param(AutoReplenishOperation.Preview));
 		Assert.AreEqual(0, preview.Errors.Count);
@@ -105,7 +105,7 @@ public class AutoReplenishDbTests {
 		var order = Insert(new Tran13Hachu { DenDay = Day, Id_Soko = _soko, Id_Shiire = _shiire, Jmeisai = [Meisai(1, 5)] });
 		foreach (var store in new[] { _store, other }) Insert(new TranHaibun {
 			DenDay = Day, Id_Soko = _soko, Id_Tenpo = store, Id_Shohin = _product, Id_Col = 1, Id_Siz = 2,
-			Kubun = 0, Su = 6, RelateNo1 = checked((int)order),
+			Kubun = 0, Su = 6, RelateNo1 = order,
 		});
 		var preview = Replenish.Preview(Param(AutoReplenishOperation.Preview));
 		var first = preview.Rows.Single(x => x.Row.Id_Tenpo == _store && x.Row.DemandSu > 0).Row;

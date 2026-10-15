@@ -89,7 +89,7 @@ public class LogisticsLinkDbApplyTests : LogisticsReceiveTestBase {
 		var stockBatch = Logistics.QueryBatches(new LogisticsBatchQueryParam(1, LogisticsDataKind.STOCK, string.Empty, string.Empty, false)).Single();
 		Assert.AreEqual(0, stockBatch.ChangedAfterSend, "入荷確定で発注が完了・移動が受入済みになっても送信後変更とはみなさない");
 		var shiire = Db.Fetch<Tran03Shiire>("").Single();
-		Assert.AreEqual(((int)hachu, 4, 400, "20261006"), (shiire.RelateNo1, shiire.SuTotal, shiire.Jmeisai![0].Tanka, shiire.DenDay));
+		Assert.AreEqual((hachu, 4, 400, "20261006"), (shiire.RelateNo1, shiire.SuTotal, shiire.Jmeisai![0].Tanka, shiire.DenDay));
 		Assert.AreEqual(1, Db.Fetch<Tran13Hachu>("where Id=@0", hachu).Single().EndFlag, "発注残が無くなれば完了");
 		var idoIn = Db.Fetch<Tran11IdoIn>("").Single();
 		Assert.AreEqual((idoOut.Id, otherSoko, SokoId, 2), (idoIn.RelateNo1, idoIn.Id_Soko, idoIn.Id_Ido, idoIn.SuTotal));

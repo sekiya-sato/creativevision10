@@ -226,11 +226,11 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 		try {
 			List<Tran13Hachu> hachuList = await LoadHachuListAsync(ct);
 			var ids = hachuList.Select(x => x.Id).ToList();
-			Dictionary<int, TranHaibun> haibunMap = await LoadHaibunSummaryAsync(ids, ct);
+			Dictionary<long, TranHaibun> haibunMap = await LoadHaibunSummaryAsync(ids, ct);
 
 			ObservableCollection<HachuHaibunListRow> rows = [];
 			foreach (Tran13Hachu hachu in hachuList) {
-				haibunMap.TryGetValue((int)hachu.Id, out TranHaibun? summary);
+				haibunMap.TryGetValue(hachu.Id, out TranHaibun? summary);
 				rows.Add(new HachuHaibunListRow(hachu, summary));
 			}
 			SearchRows = rows;
@@ -561,7 +561,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 	}
 
 	/// <summary>発注Id別の配分サマリ。受け皿は <see cref="TranHaibun"/> へ別名射影する。</summary>
-	async Task<Dictionary<int, TranHaibun>> LoadHaibunSummaryAsync(IReadOnlyCollection<long> hachuIds, CancellationToken ct) {
+	async Task<Dictionary<long, TranHaibun>> LoadHaibunSummaryAsync(IReadOnlyCollection<long> hachuIds, CancellationToken ct) {
 		if (hachuIds.Count == 0) return [];
 		List<string> parameters = [];
 		string inClause = BuildInClause("T.RelateNo1", hachuIds, parameters);
@@ -780,7 +780,7 @@ public partial class HachuHaibunInputViewModel : BaseViewModel {
 						Kingaku = cell.Su * jodai,
 						Jodai = jodai,
 						Gedai = cell.Summary.Gedai,
-						RelateNo1 = (int)targetHachu.Id,
+						RelateNo1 = targetHachu.Id,
 						Memo = Memo,
 						Id_Shain = Id_Shain,
 					});

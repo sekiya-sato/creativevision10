@@ -574,7 +574,7 @@ public partial class PurchaseReceiptAllocationInputViewModel : BaseViewModel {
 						Kingaku = share.Su * tanka,
 						Jodai = jodai,
 						Gedai = targetShohin.TankaGenka,
-						RelateNo1 = (int)share.Id_Juchu,
+						RelateNo1 = share.Id_Juchu,
 						Memo = Memo,
 					});
 				}

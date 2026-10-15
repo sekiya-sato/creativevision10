@@ -460,7 +460,7 @@ public partial class SalesOrderAllocationInputViewModel : BaseViewModel {
 						Kingaku = share.Su * share.Tanka,
 						Jodai = share.Jodai,
 						Gedai = share.Gedai,
-						RelateNo1 = (int)share.Id_Juchu,
+						RelateNo1 = share.Id_Juchu,
 						Memo = Memo,
 						Id_Shain = shainByTokui.GetValueOrDefault(row.Id_Tokui),
 					});

@@ -196,7 +196,7 @@ public static class AutoReplenishScenario {
 		VSoko = new(d.Warehouse.Id, d.Warehouse.Code, d.Warehouse.Name), Id_Shiire = d.Supplier.Id,
 		VShiire = new(d.Supplier.Id, d.Supplier.Code, d.Supplier.Name), Id_Shain = d.Employee.Id,
 		VShain = new(d.Employee.Id, d.Employee.Code, d.Employee.Name), Kubun = (int)EnumShiire.Shiire,
-		IsPay = 1, Rate = 100, TaxCalcUnit = (int)EnumTaxCalcUnit.Slip, RelateNo1 = checked((int)orderId),
+		IsPay = 1, Rate = 100, TaxCalcUnit = (int)EnumTaxCalcUnit.Slip, RelateNo1 = orderId,
 		Jmeisai = [new() { No = 1, Id_Shohin = d.Product.Id, Code_Shohin = d.Product.Code, Mei_Shohin = d.Product.Name,
 			Id_Col = d.Sku.Id_Col, Code_Col = d.Sku.Code_Col, Mei_Col = d.Sku.Mei_Col, Id_Siz = d.Sku.Id_Siz,
 			Code_Siz = d.Sku.Code_Siz, Mei_Siz = d.Sku.Mei_Siz, JanCode = d.Sku.Jan1, Id_Tax = 1,

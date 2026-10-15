@@ -207,7 +207,7 @@ public partial class LogisticsLinkDb {
 				VShiire = shiire == null ? hachu.VShiire : new CodeNameView(shiire.Id, shiire.Code, shiire.Name),
 				IsPay = (int)EnumYesNo.Yes,
 				Kubun = (int)EnumShiire.Shiire,
-				RelateNo1 = (int)hachu.Id,
+				RelateNo1 = hachu.Id,
 				Memo = SlipMemo(group),
 			};
 			FillHeader(slip, meisai, idShain);

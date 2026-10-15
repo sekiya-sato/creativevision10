@@ -213,13 +213,13 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 		try {
 			List<Tran12Jyuchu> juchuList = await LoadJuchuListAsync(ct);
 			List<long> ids = [.. juchuList.Select(x => x.Id)];
-			Dictionary<int, TranHaibun> haibunMap = await LoadHaibunSummaryAsync(ids, ct);
-			Dictionary<int, TranHaibun> zanMap = await LoadJuchuZanSummaryAsync(ids, ct);
+			Dictionary<long, TranHaibun> haibunMap = await LoadHaibunSummaryAsync(ids, ct);
+			Dictionary<long, TranHaibun> zanMap = await LoadJuchuZanSummaryAsync(ids, ct);
 
 			ObservableCollection<JuchuHaibunListRow> rows = [];
 			foreach (Tran12Jyuchu juchu in juchuList) {
-				haibunMap.TryGetValue((int)juchu.Id, out TranHaibun? haibun);
-				zanMap.TryGetValue((int)juchu.Id, out TranHaibun? zan);
+				haibunMap.TryGetValue(juchu.Id, out TranHaibun? haibun);
+				zanMap.TryGetValue(juchu.Id, out TranHaibun? zan);
 				rows.Add(new JuchuHaibunListRow(juchu, haibun, zan));
 			}
 			// 配分状況の絞り込みは SQL 側（EXISTS / NOT EXISTS）で済んでいる。
@@ -569,7 +569,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	}
 
 	/// <summary>受注Id別の配分サマリ。受け皿は <see cref="TranHaibun"/> へ別名射影する。</summary>
-	async Task<Dictionary<int, TranHaibun>> LoadHaibunSummaryAsync(IReadOnlyCollection<long> juchuIds, CancellationToken ct) {
+	async Task<Dictionary<long, TranHaibun>> LoadHaibunSummaryAsync(IReadOnlyCollection<long> juchuIds, CancellationToken ct) {
 		if (juchuIds.Count == 0) return [];
 		List<string> parameters = [];
 		string inClause = BuildInClause("T.RelateNo1", juchuIds, parameters);
@@ -595,7 +595,7 @@ public partial class JuchuHaibunInputViewModel : BaseViewModel {
 	/// 受注Id別の出荷済数と未配分残。受け皿は <see cref="TranHaibun"/> で
 	/// <c>JitsuSu</c>=出荷済数 / <c>Su</c>=未配分残 へ射影する。
 	/// </summary>
-	async Task<Dictionary<int, TranHaibun>> LoadJuchuZanSummaryAsync(IReadOnlyCollection<long> juchuIds, CancellationToken ct) {
+	async Task<Dictionary<long, TranHaibun>> LoadJuchuZanSummaryAsync(IReadOnlyCollection<long> juchuIds, CancellationToken ct) {
 		if (juchuIds.Count == 0) return [];
 		List<string> parameters = [];
 		string sql = $"""

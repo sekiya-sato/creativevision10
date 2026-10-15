@@ -59,7 +59,7 @@ public class AllocationRulesTests {
 
 	[TestMethod]
 	public void ValidateNewRow_RejectsObsoleteKubunAndInvalidValues() {
-		static TranHaibun Row(int kubun = (int)EnumHaibun.Zaiko, int su = 1, long soko = 1, long tenpo = 2, long shohin = 3, int relateNo1 = 9) =>
+		static TranHaibun Row(int kubun = (int)EnumHaibun.Zaiko, int su = 1, long soko = 1, long tenpo = 2, long shohin = 3, long relateNo1 = 9) =>
 			new() { Kubun = kubun, Su = su, Id_Soko = soko, Id_Tenpo = tenpo, Id_Shohin = shohin, RelateNo1 = relateNo1 };
 
 		foreach (var kubun in new[] { EnumHaibun.Hatsukai, EnumHaibun.Zaiko, EnumHaibun.Juchu }) {

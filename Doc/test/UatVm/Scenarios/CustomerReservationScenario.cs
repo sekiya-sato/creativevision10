@@ -123,7 +123,7 @@ public static class CustomerReservationScenario {
 		session.Check("取置:店舗売上1件（顧客・2点・税込合計）・取置は売上変換で完了",
 			tenuri.Count == 1 && tenuri[0].Id_Customer == customer.Id && tenuri[0].SuTotal == 2 && tenuri[0].Id_Soko == seeded.DirectStoreId
 			&& tenuri[0].Total == tenuri[0].KingakuTotal + tenuri[0].Tax1 + tenuri[0].Tax2 + tenuri[0].Tax3
-			&& converted is { EndFlag: 1, JitsuSu: 2 } && converted.RelateNo2 == (int)tenuri[0].Id && converted.KakuteiDay == Ymd(today),
+			&& converted is { EndFlag: 1, JitsuSu: 2 } && converted.RelateNo2 == tenuri[0].Id && converted.KakuteiDay == Ymd(today),
 			new { tenuri = tenuri.Select(t => new { t.Id, t.Id_Customer, t.SuTotal, t.KingakuTotal, t.Tax1, t.Total }), converted?.RelateNo2 });
 		await CheckReserveAsync(session, seeded, "取置:店舗の引当2・在庫1", 2, StoreStock - 2);
 

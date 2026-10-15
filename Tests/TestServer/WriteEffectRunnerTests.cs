@@ -517,13 +517,13 @@ public class WriteEffectRunnerTests {
 
 	private static Tran03Shiire CreateShiire(long relateNo1, (long shohin, long col, long siz, int su)[] rows,
 		EnumShiire kubun = EnumShiire.Shiire) => new() {
-		DenDay = "20260810", Id_Soko = 1, Id_Shiire = 1, RelateNo1 = (int)relateNo1,
+		DenDay = "20260810", Id_Soko = 1, Id_Shiire = 1, RelateNo1 = relateNo1,
 		EnKubun = kubun, Jmeisai = Meisai(rows),
 	};
 
 	private static Tran00Uriage CreateUriage(long relateNo1, long idTokui,
 		(long shohin, long col, long siz, int su)[] rows) => new() {
-		DenDay = "20260812", Id_Soko = 1, Id_Tokui = idTokui, RelateNo1 = (int)relateNo1,
+		DenDay = "20260812", Id_Soko = 1, Id_Tokui = idTokui, RelateNo1 = relateNo1,
 		Jmeisai = Meisai(rows),
 	};
 

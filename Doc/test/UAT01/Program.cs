@@ -174,7 +174,7 @@ Tran13Hachu Order(string day, int quantity) => new() {
 Tran03Shiire Receipt(string day, int quantity, int kind, long relateNo) => new() {
     DenDay = day, KakeDay = day, Id_Shiire = supplier.Id, VShiire = SupplierView(),
     Id_Soko = warehouse.Id, VSoko = WarehouseView(), Id_Shain = employee.Id, VShain = EmployeeView(),
-    IsPay = 1, Kubun = kind, RelateNo1 = checked((int)relateNo), Rate = taxRate, Jmeisai = [Line(quantity)],
+    IsPay = 1, Kubun = kind, RelateNo1 = relateNo, Rate = taxRate, Jmeisai = [Line(quantity)],
     SuTotal = quantity, KingakuTotal = quantity * 1000, JodaiTotal = quantity * 2000,
     GedaiTotal = quantity * 1000, TaxCalcUnit = (int)EnumTaxCalcUnit.Slip, TaxableAmount1 = quantity * 1000,
     Tax1 = TaxOf(quantity * 1000, taxRate), Total = quantity * 1000 + TaxOf(quantity * 1000, taxRate),

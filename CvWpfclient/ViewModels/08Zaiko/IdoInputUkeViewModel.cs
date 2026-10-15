@@ -50,7 +50,7 @@ public partial class IdoInputUkeViewModel : Helpers.BaseIdoInputViewModel<Tran11
 			Id_Shain = idoOut.Id_Shain,
 			VShain = idoOut.VShain,
 			// 出庫伝票との紐付け。移動未受リストがこの列で消し込む。
-			RelateNo1 = (int)idoOut.Id,
+			RelateNo1 = idoOut.Id,
 			ManualNo = idoOut.ManualNo,
 			Memo = idoOut.Memo,
 			Jmeisai = [.. idoOut.Jmeisai.Select(Common.CloneObject)],

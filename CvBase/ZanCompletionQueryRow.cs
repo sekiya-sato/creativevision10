@@ -8,7 +8,7 @@ public sealed class ZanCompletionQueryRow {
 	public long Id { get; set; }
 	public long Vdu { get; set; }
 	public string DenDay { get; set; } = string.Empty;
-	public int RelateNo1 { get; set; }
+	public long RelateNo1 { get; set; }
 	public int SuTotal { get; set; }
 	public int KingakuTotal { get; set; }
 	public int EndFlag { get; set; }

@@ -283,7 +283,7 @@ public static class LogisticsFlowScenario {
 		var uriage = await session.QueryAsync<Tran00Uriage>($"where Id_Tokui={s.TokuiId}");
 		var idoOut = await session.QueryAsync<Tran10IdoOut>($"where Id_Soko={s.WarehouseId} AND Id_Ido={s.DirectStoreId}");
 		session.Check("L03:出荷売上 計9点（Z1 2・J1 4・P1 3）、受注の売上は RelateNo1=受注、移動出庫 2点",
-			uriage.Sum(u => u.SuTotal) == 9 && uriage.Any(u => u.RelateNo1 == (int)juchu.Id && u.SuTotal == 4)
+			uriage.Sum(u => u.SuTotal) == 9 && uriage.Any(u => u.RelateNo1 == juchu.Id && u.SuTotal == 4)
 			&& uriage.All(u => u.DenDay == WorkDay) && idoOut.Sum(x => x.SuTotal) == 2,
 			new { uriage = uriage.Select(u => new { u.Id, u.SuTotal, u.RelateNo1, u.DenDay }), ido = idoOut.Select(x => new { x.Id, x.SuTotal, x.DenDay }) });
 		var afterFix = await StockAsync(session, s);
@@ -537,7 +537,7 @@ public static class LogisticsFlowScenario {
 
 	static Tran03Shiire Purchase(LogisticsSeeder.Result s, long idSoko, long hachuId, int su, string denDay) {
 		var tran = new Tran03Shiire {
-			DenDay = denDay, KakeDay = denDay, Id_Soko = idSoko, RelateNo1 = (int)hachuId,
+			DenDay = denDay, KakeDay = denDay, Id_Soko = idSoko, RelateNo1 = hachuId,
 			Id_Shiire = hachuId > 0 ? s.ShiireId : 0, VShiire = hachuId > 0 ? new CodeNameView(s.ShiireId, s.ShiireCode, s.ShiireName) : new CodeNameView(),
 			Id_Shain = s.EmployeeId, Rate = 100, SuTotal = su, KingakuTotal = su * 1000, Jmeisai = [Line(s, su, 1000)],
 		};
