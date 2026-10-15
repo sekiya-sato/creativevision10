@@ -93,7 +93,7 @@ public partial class ConvertDb {
 			throw new ArgumentException("移行元識別子は64文字以内の英数字・ハイフン・アンダースコア・ピリオドで指定してください。");
 		return new(
 			_toDb.FetchDialect<MasterEndCustomer>("SELECT Id,Code FROM MasterEndCustomer").ToDictionary(x => x.Code, x => x.Id, StringComparer.Ordinal),
-			_toDb.FetchDialect<MasterTokui>("SELECT Id,Code FROM MasterTokui WHERE TenType=6").ToDictionary(x => x.Code, x => x.Id, StringComparer.Ordinal),
+			_toDb.FetchDialect<MasterTokui>("SELECT Id,Code FROM MasterTokui WHERE TenType IN (3,6)").ToDictionary(x => x.Code, x => x.Id, StringComparer.Ordinal),
 			_toDb.FetchDialect<MasterShain>("SELECT Id,Code FROM MasterShain").ToDictionary(x => x.Code, x => x.Id, StringComparer.Ordinal),
 			_toDb.FetchDialect<long>("SELECT Id_Customer FROM MasterEndCustomerAccount").ToHashSet());
 	}
@@ -192,12 +192,14 @@ public partial class ConvertDb {
 			TransactionType = checked((int)PointLong(rec, "取引区分")), OriginType = checked((int)PointLong(rec, "発生区分")),
 			GrantPoints = PointLong(rec, "付与ポイント数"), UsePoints = PointLong(rec, "使用ポイント数"), ExpirePoints = PointLong(rec, "失効ポイント数"), Memo = PointRaw(rec, "備考")
 		};
-		if (source.SeqNo <= 0 || !DateTime.TryParseExact(source.Day, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+		// 過去履歴の日付未設定「.」は補完せず保持し、失効分も残高照合に含める。
+		if (source.SeqNo <= 0 || source.Day != "." && !DateTime.TryParseExact(source.Day, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
 			throw new ArgumentException("旧SEQ_NOまたはポイント計上日が不正です。");
 		if (!maps.Customers.TryGetValue(source.CustomerCode, out var customer) || !maps.Accounts.Contains(customer))
 			throw new ArgumentException("顧客または会員情報が未解決です。");
 		var shop = ResolvePointReference(maps.Shops, source.ShopCode, "店舗");
-		var employee = ResolvePointReference(maps.Employees, source.EmployeeCode, "社員");
+		// 削除済み社員も履歴を残す。元社員コードはJcalcに保持する。
+		var employee = source.EmployeeCode is "" or "." ? 0 : maps.Employees.GetValueOrDefault(source.EmployeeCode);
 		var json = Common.SerializeObject(source);
 		if (json.Length > 4000 || source.Memo.Length > 200) throw new ArgumentException("旧履歴JSONまたは備考が保存上限を超えています。");
 		var vdate = Common.GetVdate();

@@ -139,11 +139,9 @@ public sealed class PointHistoryMigrationTests {
 	}
 
 	[TestMethod]
-	[DataRow("ポイント計上日", ".")]
 	[DataRow("ポイント計上日", "20260230")]
 	[DataRow("顧客CD", "UNKNOWN")]
 	[DataRow("店舗CD", "UNKNOWN")]
-	[DataRow("社員CD", "UNKNOWN")]
 	public void Inspect_UnresolvedReferenceOrInvalidDayStopsWithoutMutation(string column, string value) {
 		var id = SeedCustomer(); SeedReferences(); SeedLegacy(1); SeedReal(0);
 		_source.Execute($"UPDATE HC$TRAN_POINT_RIREKI SET {column}=@0", value);
@@ -151,6 +149,82 @@ public sealed class PointHistoryMigrationTests {
 		Assert.AreEqual(1, report.SourceRows); Assert.AreEqual(1, report.IssueCount); Assert.AreEqual(1L, report.Issues[0].SeqNo);
 		Assert.ThrowsExactly<InvalidOperationException>(() => Convert.CnvTranPointHistory());
 		Assert.AreEqual(0, Events().Length); Assert.AreEqual(999, AccountPoint(id));
+	}
+
+	[TestMethod]
+	[DataRow(3)]
+	[DataRow(6)]
+	public void Import_SupportedShopTypesResolveToShopId(int tenType) {
+		var id = SeedCustomer(); SeedReferences(); SeedLegacy(1, 25); SeedReal(25);
+		_db.Execute("UPDATE MasterTokui SET TenType=@0", tenType);
+		var shop = _db.Fetch<MasterTokui>("SELECT * FROM MasterTokui").Single();
+		Assert.AreEqual(0, Convert.InspectPointHistory().IssueCount);
+		Assert.AreEqual(1, Convert.CnvTranPointHistory());
+		Assert.AreEqual(shop.Id, Events().Single().Id_Tenpo);
+		Assert.AreEqual(25, Balance(id)); Assert.AreEqual(25, AccountPoint(id));
+	}
+
+	[TestMethod]
+	[DataRow(0)]
+	[DataRow(1)]
+	[DataRow(2)]
+	[DataRow(4)]
+	[DataRow(5)]
+	[DataRow(7)]
+	public void Inspect_UnsupportedShopTypeStopsWithoutMutation(int tenType) {
+		var id = SeedCustomer(); SeedReferences(); SeedLegacy(1); SeedReal(0);
+		_db.Execute("UPDATE MasterTokui SET TenType=@0", tenType);
+		var report = Convert.InspectPointHistory();
+		Assert.AreEqual(1, report.IssueCount); Assert.AreEqual(1L, report.Issues.Single().SeqNo);
+		Assert.ThrowsExactly<InvalidOperationException>(() => Convert.CnvTranPointHistory());
+		Assert.AreEqual(0, Events().Length); Assert.AreEqual(999, AccountPoint(id));
+	}
+
+	[TestMethod]
+	public void Import_UnknownEmployeeKeepsSourceCodeAndRepeatedImportAddsNothing() {
+		var id = SeedCustomer(); SeedReferences(); SeedLegacy(1, 25); SeedReal(25);
+		_source.Execute("UPDATE HC$TRAN_POINT_RIREKI SET 社員CD='UNKNOWN'");
+		Assert.AreEqual(0, Convert.InspectPointHistory().IssueCount);
+		Assert.AreEqual(1, Convert.CnvTranPointHistory());
+		var row = Events().Single();
+		Assert.AreEqual(0L, row.Id_Shain);
+		Assert.AreEqual("UNKNOWN", Common.DeserializeObject<LegacyPointHistory>(row.Jcalc)!.EmployeeCode);
+		Assert.AreEqual(0, Convert.CnvTranPointHistory());
+		Assert.AreEqual(row.Id, Events().Single().Id);
+		Assert.AreEqual(25, Balance(id)); Assert.AreEqual(25, AccountPoint(id));
+		_source.Execute("UPDATE HC$TRAN_POINT_RIREKI SET 社員CD='OTHER'");
+		Assert.ThrowsExactly<InvalidOperationException>(() => Convert.CnvTranPointHistory());
+		Assert.AreEqual("UNKNOWN", Common.DeserializeObject<LegacyPointHistory>(Events().Single().Jcalc)!.EmployeeCode);
+	}
+
+	[TestMethod]
+	[DataRow(false)]
+	[DataRow(true)]
+	public void ImportOrRebuild_UnknownDayExpirationAndEmployeePreserveHistoryAndBalances(bool rebuild) {
+		var id = SeedCustomer(); SeedReferences(); SeedLegacy(1, 100); SeedLegacy(2, expire: 30, day: "."); SeedReal(70);
+		_db.Execute("UPDATE MasterTokui SET TenType=3");
+		_source.Execute("UPDATE HC$TRAN_POINT_RIREKI SET 社員CD='UNKNOWN' WHERE SEQ_NO=2");
+		Assert.AreEqual(0, Convert.InspectPointHistory().IssueCount);
+		Assert.AreEqual(2, rebuild ? Convert.RebuildPointHistory(chunkSize: 1) : Convert.CnvTranPointHistory(chunkSize: 1));
+		var rows = Events(); Assert.AreEqual(2, rows.Length);
+		var expiration = rows.Single(x => x.EventKey == "LEGACY:CV:POINT:2");
+		Assert.AreEqual(".", expiration.DenDay); Assert.AreEqual(0L, expiration.Id_Shain); Assert.AreEqual(-30L, expiration.PointDelta);
+		var source = Common.DeserializeObject<LegacyPointHistory>(expiration.Jcalc)!;
+		Assert.AreEqual(".", source.Day); Assert.AreEqual("UNKNOWN", source.EmployeeCode); Assert.AreEqual(30L, source.ExpirePoints);
+		Assert.AreEqual(70L, rows.Sum(x => x.PointDelta)); Assert.AreEqual(70, Balance(id)); Assert.AreEqual(70, AccountPoint(id));
+		Assert.AreEqual(0, Convert.CnvTranPointHistory());
+		Assert.AreEqual(2, Events().Length); Assert.AreEqual(70, Balance(id)); Assert.AreEqual(70, AccountPoint(id));
+	}
+
+	[TestMethod]
+	public void Inspect_MissingAccountStopsWithoutMutation() {
+		var id = SeedCustomer(); SeedReferences(); SeedLegacy(1); SeedReal(0);
+		_db.Execute("DELETE FROM MasterEndCustomerAccount WHERE Id_Customer=@0", id);
+		Assert.AreEqual(1, Convert.InspectPointHistory().IssueCount);
+		Assert.ThrowsExactly<InvalidOperationException>(() => Convert.CnvTranPointHistory());
+		Assert.AreEqual(0, Events().Length);
+		Assert.AreEqual(0L, _db.FetchDialect<long>("SELECT COUNT(*) FROM SummaryPoint").Single());
+		Assert.AreEqual(0L, _db.FetchDialect<long>("SELECT COUNT(*) FROM MasterEndCustomerAccount").Single());
 	}
 
 	[TestMethod]
