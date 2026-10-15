@@ -527,16 +527,18 @@ WHERE EXISTS (select 1 from {tmp} t where t.Code = {table}.Code)");
 	/// <param name="isInit"></param>
 	/// <returns></returns>
 	public int CnvMasterEndCustomer(bool isInit = true, int chunkSize = 20000) { // 顧客分割のデフォルトチャンクサイズは20000件
-		if (isInit && _toDb.IsExistTable(typeof(MasterEndCustomer))
-			&& _toDb.FetchDialect<long>("SELECT COUNT(*) FROM MasterEndCustomer").FirstOrDefault() > 0)
-			throw new InvalidOperationException("既存顧客のID・会員残高を保護するため、顧客再取込は初期化なしで実行してください。");
 		var codes = _fromDb.Fetch<string>("select 顧客CD from HC$master_kokyaku where 顧客CD > '.' order by 顧客CD");
 
+		// 初期化では顧客IDを振り直すため、旧IDを参照する会員残高・ポイント履歴・集計を削除し、伝票の顧客IDを0に戻す。
 		// 親テーブルを再作成する前に子テーブルを削除し、外部キー関係を保つ。
 		if (isInit)
-			_toDb.DropTable(typeof(MasterEndCustomerAccount));
+			ResetEndCustomerReferences();
 		_toDb.CreateTable(typeof(MasterEndCustomer), isInit);
 		_toDb.CreateTable(typeof(MasterEndCustomerAccount));
+		if (isInit) {
+			_toDb.CreateTable(typeof(TranPointEvent));
+			_toDb.CreateTable(typeof(SummaryPoint));
+		}
 
 		if (codes.Count == 0)
 			return 0;
@@ -546,6 +548,24 @@ WHERE EXISTS (select 1 from {tmp} t where t.Code = {table}.Code)");
 			totalCount += ConvertMasterEndCustomerChunk(startCode, endCode, isInit);
 
 		return totalCount;
+	}
+
+	/// <summary>
+	/// 顧客初期化の前処理。会員残高・ポイント履歴・ポイント集計を削除し、売上・取置の顧客IDを0に戻す。
+	/// 伝票の VCustomer / Code_Customer は伝票時点の監査値として残す。
+	/// </summary>
+	private void ResetEndCustomerReferences() {
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		try {
+			if (_toDb.IsExistTable(typeof(Tran01Tenuri)))
+				_toDb.ExecuteDialect("UPDATE Tran01Tenuri SET Id_Customer=0 WHERE Id_Customer<>0");
+			if (_toDb.IsExistTable(typeof(TranHaibun)))
+				_toDb.ExecuteDialect("UPDATE TranHaibun SET Id_Customer=0 WHERE Id_Customer<>0");
+			_toDb.CompleteTransaction();
+		} catch { _toDb.AbortTransaction(); throw; }
+		_toDb.DropTable(typeof(TranPointEvent));
+		_toDb.DropTable(typeof(SummaryPoint));
+		_toDb.DropTable(typeof(MasterEndCustomerAccount));
 	}
 
 	/// <summary>

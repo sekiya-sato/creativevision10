@@ -102,8 +102,9 @@ public partial class ConvertDb {
 		if (chunkSize is < 1 or > 10000) throw new ArgumentOutOfRangeException(nameof(chunkSize));
 		long last = long.MinValue;
 		while (true) {
+			// NPocoのOracleページングは「*」に別名を要求するため t.* とする。
 			var rows = _fromDb.SkipTake<Dictionary<string, object>>(0, chunkSize,
-				"SELECT * FROM HC$TRAN_POINT_RIREKI WHERE SEQ_NO>@0 ORDER BY SEQ_NO", last);
+				"SELECT t.* FROM HC$TRAN_POINT_RIREKI t WHERE t.SEQ_NO>@0 ORDER BY t.SEQ_NO", last);
 			if (rows.Count == 0) yield break;
 			yield return rows;
 			last = PointLong(rows[^1], "SEQ_NO");

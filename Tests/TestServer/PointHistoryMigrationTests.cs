@@ -78,11 +78,23 @@ public sealed class PointHistoryMigrationTests {
 	private void SeedReal(long point, string code = "K") => _source.Execute("INSERT INTO HC$POINT_REAL (顧客CD,REALポイント) VALUES (@0,@1)", code, point);
 
 	[TestMethod]
-	public void CustomerReimport_WithInitializationCannotReplaceExistingIdsAndBalances() {
+	public void CustomerReimport_WithInitializationResetsBalancesHistoryAndSlipCustomerIds() {
 		var id = SeedCustomer(point: 123);
-		Assert.ThrowsExactly<InvalidOperationException>(() => Convert.CnvMasterEndCustomer(isInit: true));
-		Assert.AreEqual(id, _db.Fetch<MasterEndCustomer>("SELECT * FROM MasterEndCustomer").Single().Id);
-		Assert.AreEqual(123, AccountPoint(id));
+		_db.CreateTable(typeof(TranHaibun), true, false);
+		_db.Insert(new TranPointEvent { EventKey = "NATIVE", DenDay = "20261001", Id_Customer = id, EnEventType = EnumPointEventType.Adjustment, PointDelta = 7 });
+		_db.Insert(new SummaryPoint { Id_Customer = (int)id, Point = 7 });
+		_db.Insert(new Tran01Tenuri { DenDay = "20261001", Id_Customer = id, Code_Customer = "K" });
+		_db.Insert(new TranHaibun { Id_Customer = id });
+		_source.Execute("CREATE TABLE HC$master_kokyaku (顧客CD TEXT PRIMARY KEY)");
+
+		Assert.AreEqual(0, Convert.CnvMasterEndCustomer(isInit: true));
+		Assert.AreEqual(0L, _db.FetchDialect<long>("SELECT COUNT(*) FROM MasterEndCustomer").Single());
+		Assert.AreEqual(0L, _db.FetchDialect<long>("SELECT COUNT(*) FROM MasterEndCustomerAccount").Single());
+		Assert.AreEqual(0L, _db.FetchDialect<long>("SELECT COUNT(*) FROM TranPointEvent").Single());
+		Assert.AreEqual(0L, _db.FetchDialect<long>("SELECT COUNT(*) FROM SummaryPoint").Single());
+		var slip = _db.Fetch<Tran01Tenuri>("SELECT * FROM Tran01Tenuri").Single();
+		Assert.AreEqual(0L, slip.Id_Customer); Assert.AreEqual("K", slip.Code_Customer, "伝票時点の顧客コードは監査値として残す");
+		Assert.AreEqual(0L, _db.Fetch<TranHaibun>("SELECT * FROM TranHaibun").Single().Id_Customer);
 	}
 
 	[TestMethod]
