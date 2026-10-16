@@ -125,7 +125,7 @@ CvWpfclientは設定と相対パスをカレントディレクトリ基準で解
 
 ### 5.5 CvServerの終了
 
-強制終了するとKestrelの停止処理とSQLiteのWAL後始末が飛び、`server-user163.db-wal`が残る。
+強制終了するとKestrelの停止処理とSQLiteのWAL後始末が飛び、`<開発DB>-wal`が残る。
 `--manage-server`では`CREATE_NEW_PROCESS_GROUP`で起動し、そのグループへ
 `CTRL_BREAK_EVENT`を送って人のCtrl+Cと同じ経路で終了させる。
 `CTRL_C_EVENT`はプロセスグループを指定して送れないため`CTRL_BREAK_EVENT`を使う。
@@ -137,7 +137,7 @@ UATでは`--manage-server`を使うほうが確実である。
 
 ### 5.6 対象DB
 
-`CvServer/server-user163.db`（約10GB、実運用相当の移行データ）をそのまま使う。コピーは作らない。
+`--sqlite` 省略時の対象は開発DB（`Doc/spec/使用ガイドライン.md` の「開発DBの所在」。約10GB、実運用相当の移行データ）。更新を伴う試験は同ガイドの「複製DBと専用サーバ」に従い、複製DBを使う。
 更新を伴うシナリオは、識別可能なコード帯に限定し、削除・再投入が単独で完結するように作る。
 
 ## 6. 既知の制約

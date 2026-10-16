@@ -133,7 +133,7 @@ public static class VmHost {
 		// 網羅データの投入は、CvServerがDBを開く前に済ませる。
 		if (options.Seed != null) {
 			var repoRootForSeed = Directory.GetParent(baseDir)?.FullName ?? baseDir;
-			var dbPath = options.SqlitePath ?? Path.Combine(repoRootForSeed, "CvServer", "server-user163.db");
+			var dbPath = options.SqlitePath ?? UatVm.Seed.DevDb.GetPathFromRepoRoot(repoRootForSeed);
 			try {
 				Boot(baseDir, "シード投入 開始");
 				options.Seed(dbPath);

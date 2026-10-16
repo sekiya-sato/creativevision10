@@ -201,13 +201,13 @@ public static class ManualLockRestartScenario {
 			MasterConfig.AutoExecTaskNameManualLockMonitor);
 
 	/// <summary>
-	/// 対象DB(<c>CvServer/server-user163.db</c>)のパスを、ハーネスのカレントディレクトリ
+	/// 対象DB（開発DB。<c>CvServer/appsettings.Development.json</c> の <c>ConnectionStrings:sqlite</c>）のパスを、ハーネスのカレントディレクトリ
 	/// （<c>CvWpfclient</c>フォルダ）から逆算する（ManualLockScenario.ResolveDbPathと同じ）。
 	/// </summary>
 	private static string ResolveDbPath() {
 		var repoRoot = Directory.GetParent(Environment.CurrentDirectory)?.FullName
 			?? throw new InvalidOperationException("リポジトリルートを解決できませんでした。");
-		return Path.Combine(repoRoot, "CvServer", "server-user163.db");
+		return UatVm.Seed.DevDb.GetPathFromRepoRoot(repoRoot);
 	}
 
 	private static Task<long> InsertFakeLockRowAsync(string tableName, string columnName, long expectedDurationSeconds, double vduAgoSeconds, string memo) =>

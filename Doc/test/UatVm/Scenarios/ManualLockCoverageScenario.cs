@@ -325,7 +325,7 @@ public static class ManualLockCoverageScenario {
 	private static string ResolveDbPath() {
 		var repoRoot = Directory.GetParent(Environment.CurrentDirectory)?.FullName
 			?? throw new InvalidOperationException("リポジトリルートを解決できませんでした。");
-		return Path.Combine(repoRoot, "CvServer", "server-user163.db");
+		return UatVm.Seed.DevDb.GetPathFromRepoRoot(repoRoot);
 	}
 
 	private static Task<List<SysSequence>> FetchLockRowsAsync(VmSession session) =>

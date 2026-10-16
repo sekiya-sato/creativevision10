@@ -206,13 +206,13 @@ public static class ManualLockScenario {
 	// ==================================================================
 
 	/// <summary>
-	/// 対象DB(<c>CvServer/server-user163.db</c>)のパスを、ハーネスのカレントディレクトリ
+	/// 対象DB（開発DB。<c>CvServer/appsettings.Development.json</c> の <c>ConnectionStrings:sqlite</c>）のパスを、ハーネスのカレントディレクトリ
 	/// （<c>CvWpfclient</c>フォルダ、<c>VmHost.RunOnStaThread</c>が設定する）から逆算する。
 	/// </summary>
 	private static string ResolveDbPath() {
 		var repoRoot = Directory.GetParent(Environment.CurrentDirectory)?.FullName
 			?? throw new InvalidOperationException("リポジトリルートを解決できませんでした。");
-		return Path.Combine(repoRoot, "CvServer", "server-user163.db");
+		return UatVm.Seed.DevDb.GetPathFromRepoRoot(repoRoot);
 	}
 
 	/// <summary>

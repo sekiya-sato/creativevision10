@@ -6,16 +6,20 @@ using Microsoft.Data.Sqlite;
 // 明細別消費税（軽減税率混在）の実DB検証ハーネス。
 // 軽減税率混在・伝票単位の税額集計と明細への端数配賦を、商品マスタを参照して検算する。
 //
-// 使い方:  taxmix <command> [dbPath]
+// 使い方:  taxmix <command> <dbPath>
 //   inspect   MasterSysTax の定義と対象商品の Id_Tax を表示（投入前の前提確認）
 //   mixed     軽減税率(8%)と標準税率(10%)と非課税を混在させた伝票で税額計算を突合
 //   all       inspect → mixed
-//   dbPath    省略時 C:\gitroot\new2022\cv10\CvServer\server-user163.db
+//   dbPath    必須。検証用商品Idは旧開発DB(server-user163.db)の実値のため、別DBでは前提を確認する
 //
 // 前提: dbPath は開発用DB。実運用DBには使わない。
 
 var command = args.Length > 0 ? args[0] : "inspect";
-var dbPath = args.Length > 1 ? args[1] : @"C:\gitroot\new2022\cv10\CvServer\server-user163.db";
+if (args.Length < 2) {
+	Console.Error.WriteLine("使い方: taxmix <command> <dbPath>（dbPath は必須。専用コピーを指定する）");
+	return 2;
+}
+var dbPath = args[1];
 
 // 軽減税率(Id_Tax=2)が設定されている検証用商品
 long[] ReducedShohinIds = [37522, 37524, 37715, 37835, 37845];

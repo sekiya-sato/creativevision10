@@ -13,12 +13,12 @@ SQLで突合する開発ツール。完成度チェックリスト §4.1 段階7
 
 - 対象DBは**開発用**であること（テスト伝票を投入・締日を一時変更するため）。実運用DBには使わない。
 - 実行前に DB をバックアップ（例: `refer/back/`）。`server-*.db` は `.gitignore` 済み。
-- 既定DB: `CvServer/server-user163.db`（旧開発DB。現在の開発DBは `Doc/spec/使用ガイドライン.md` の「開発DBの所在」を参照）。KIN区分マスタId・対象取引先は同DBの実値を前提にコード内へ定数化している（別DBでは要調整）。
+- 対象DB: `dbPath` は必須（既定値なし）で、専用コピーを指定する。KIN区分マスタId・対象取引先は旧開発DB `server-user163.db` の実値を前提にコード内へ定数化している（別DBでは要調整）。
 
 ## 使い方
 
 ```bash
-dotnet run --project "Doc/spec/tools/summaryreconcile" -- <command> [dbPath]
+dotnet run --project "Doc/spec/tools/summaryreconcile" -- <command> <dbPath>
 ```
 
 > **破壊的操作の注意**: `seed` / `stockrebuild` / `all` は開発DBを更新する。現在の `Clean()` は202607の `SummaryUriKake` / `SummaryKaiKake` と20260731の請求・支払Summaryを取引先で絞らず削除する。また `stockrebuild` / `all` の終了時は対象年月のSummaryを再計算しないため、削除状態が残る。必ず専用コピーで実行すること。

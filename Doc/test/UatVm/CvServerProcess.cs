@@ -12,7 +12,7 @@ namespace UatVm;
 /// <remarks>
 /// <para>
 /// 停止は強制終了ではなく、人の Ctrl+C と同じ経路（コンソール制御イベント）で行う。
-/// 強制終了するとKestrelの停止処理とSQLiteのWAL後始末が飛び、`server-user163.db-wal` が
+/// 強制終了するとKestrelの停止処理とSQLiteのWAL後始末が飛び、`<開発DB>-wal` が
 /// 残ったままになる。10GB級の実DBを対象にするため、毎回正規の終了経路を通す。
 /// </para>
 /// <para>

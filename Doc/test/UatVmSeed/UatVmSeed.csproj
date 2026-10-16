@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
     VM駆動UATハーネス用の網羅データ投入。
-    実DB(CvServer/server-user163.db)へ直接書くため、CvServerを止めている間に実行する。
+    開発DB(CvServer/appsettings.Development.json の ConnectionStrings:sqlite)へ直接書くため、CvServerを止めている間に実行する。
     投入方式は Doc/spec/tools/summaryreconcile と同じ「ドメインオブジェクトのInsert→SummaryDb.Calc*」に倣う。
     creativevision10.slnx には含めない。
   -->

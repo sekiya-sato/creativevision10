@@ -7,7 +7,7 @@ using Microsoft.Data.Sqlite;
 // 既存取引先へ管理されたテスト伝票を投入し、売掛/請求・買掛/支払を計算して
 // 請求台帳・支払台帳の出力を突合する。テスト月=202607（既存取引ゼロのクリーンルーム）。
 //
-// 使い方:  summaryreconcile <command> [dbPath]
+// 使い方:  summaryreconcile <command> <dbPath>
 //   seed          既存テストデータを掃除して再投入し、4計算を実行（既定）
 //   show          現在の SummaryUriSei/SummaryKaiShi を台帳SQLで表示（突合）
 //   idempotent    計算を2回実行し Summary スナップショットが一致するか（D-02 Rebuild冪等性・D-03 番号維持）
@@ -15,12 +15,16 @@ using Microsoft.Data.Sqlite;
 //   paysakicheck  親子（請求先/支払先↔得意先/仕入先）の締日不一致データを投入し、実DBで警告が発火するか（E7）。検査後に復元
 //   stockrebuild  202607の明細付き仕入・売上を在庫Rebuildし、年月/現在庫を突合
 //   all           seed → show → idempotent → closingcheck → paysakicheck → stockrebuild を順に実行
-//   dbPath        省略時 C:\gitroot\new2022\cv10\CvServer\server-user163.db
+//   dbPath        必須。KIN区分Id・取引先は旧開発DB(server-user163.db)の実値のため、別DBでは前提を確認する
 //
 // 前提: dbPath は開発用DB。実運用DBには使わない。実行前にバックアップ推奨（refer/back/）。
 
 var command = args.Length > 0 ? args[0] : "seed";
-var dbPath = args.Length > 1 ? args[1] : @"C:\gitroot\new2022\cv10\CvServer\server-user163.db";
+if (args.Length < 2) {
+    Console.Error.WriteLine("usage: summaryreconcile <command> <dbPath>（dbPath は必須。専用コピーを指定する）");
+    return 2;
+}
+var dbPath = args[1];
 
 const string Month = "202607";
 const string DFrom = "20260701";
@@ -30,7 +34,7 @@ const int ShimeChanged = 20;   // 締日変更検査を発火させる別締日
 const long StockSoko = 0, StockShohin = 999900001, StockCol = 999900002, StockSiz = 999900003;
 const int StockPurchaseSu = 10, StockSalesSu = 4;
 
-// KIN 区分マスタ Id（開発DB server-user163.db の実値）
+// KIN 区分マスタ Id（旧開発DB server-user163.db の実値）
 const long KinCash = 11783, KinFee = 11782, KinOffset = 11785;
 
 var cs = new SqliteConnectionStringBuilder {
@@ -317,3 +321,4 @@ switch (command) {
 
 db.Close();
 Console.WriteLine("(done)");
+return 0;

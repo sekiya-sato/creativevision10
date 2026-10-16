@@ -38,10 +38,8 @@ public static class LogisticsSeeder {
 		ArgumentException.ThrowIfNullOrWhiteSpace(baseFolder);
 		ArgumentNullException.ThrowIfNull(trace);
 		if (!File.Exists(dbPath)) throw new FileNotFoundException("対象DBが見つかりません。", dbPath);
-		// 開発DB本体は更新しない
-		var full = Path.GetFullPath(dbPath);
-		if (string.Equals(Path.GetFileName(full), "server-user163.db", StringComparison.OrdinalIgnoreCase)
-			&& string.Equals(Path.GetFileName(Path.GetDirectoryName(full)), "CvServer", StringComparison.OrdinalIgnoreCase)) {
+		// 開発DB本体（appsettings の sqlite / old-sqlite）は更新しない
+		if (DevDb.IsDevDb(dbPath)) {
 			throw new InvalidOperationException("logisticsflow は開発DB本体を更新しません。--sqlite で複製DBを指定してください。");
 		}
 
