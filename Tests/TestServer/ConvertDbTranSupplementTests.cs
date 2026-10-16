@@ -182,6 +182,46 @@ public sealed class ConvertDbTranSupplementTests {
 		Assert.AreEqual(0, convertDb.subCnvTranHeaderSize<Tran00Uriage>(), "再実行時は更新対象なし");
 	}
 
+	[TestMethod]
+	public void CnvDerivedShohinColSiz_Jcolsizから全件作り直し残存行を消し冪等である() {
+		Db.CreateTable(typeof(MasterShohin), true, false);
+		Db.CreateTable(typeof(DerivedShohinColSiz), true, false);
+		var shohinA = new MasterShohin {
+			Code = "A001", Name = "商品A", Vdc = 1, Vdu = 1,
+			Jcolsiz = [
+				new MasterShohinColSiz { Id_Col = 11, Code_Col = "01", Id_Siz = 21, Code_Siz = "S", Jan1 = "4900000000011" },
+				new MasterShohinColSiz { Id_Col = 11, Code_Col = "01", Id_Siz = 22, Code_Siz = "M", Jan1 = "4900000000012" },
+			],
+		};
+		var shohinB = new MasterShohin {
+			Code = "B001", Name = "商品B", Vdc = 1, Vdu = 1,
+			Jcolsiz = [new MasterShohinColSiz { Id_Col = 12, Code_Col = "02", Id_Siz = 23, Code_Siz = "L" }],
+		};
+		// 補足マスタ相当(色サイズなし)は派生行を作らない
+		var supplement = new MasterShohin { Code = "S001", Name = "補足" + SupplementSuffix, Vdc = 1, Vdu = 1 };
+		Db.Insert(shohinA);
+		Db.Insert(shohinB);
+		Db.Insert(supplement);
+		// 初期データ由来の残存行(どの商品のJcolsizにも無い)
+		Db.Insert(new DerivedShohinColSiz { Id = 999901, Id_Shohin = 999, Code = "0001", Vdc = 1, Vdu = 1 });
+
+		var convertDb = new ConvertDb(Db, Db);
+		Assert.AreEqual(3, convertDb.CnvDerivedShohinColSiz());
+
+		var rows = Db.Fetch<DerivedShohinColSiz>().OrderBy(x => x.Id).ToList();
+		Assert.AreEqual(3, rows.Count, "Jcolsiz の要素数と一致し、残存行は消える");
+		Assert.IsFalse(rows.Any(x => x.Id_Shohin == 999), "残存行は削除");
+		Assert.AreEqual(2, rows.Count(x => x.Id_Shohin == shohinA.Id && x.Code == "A001"));
+		Assert.AreEqual("4900000000012", rows.Single(x => x.Id_Shohin == shohinA.Id && x.Id_Siz == 22).Jan1);
+		Assert.AreEqual(23, rows.Single(x => x.Id_Shohin == shohinB.Id).Id_Siz);
+
+		Assert.AreEqual(3, convertDb.CnvDerivedShohinColSiz(isInit: false), "再実行しても同じ件数");
+		CollectionAssert.AreEqual(
+			rows.Select(x => x.Id).ToArray(),
+			Db.Fetch<DerivedShohinColSiz>().OrderBy(x => x.Id).Select(x => x.Id).ToArray(),
+			"再実行で行が増減しない");
+	}
+
 	private void CreateSupplementTables() {
 		Db.CreateTable(typeof(MasterShohin), true, false);
 		Db.CreateTable(typeof(Tran00Uriage), true, false);

@@ -89,6 +89,8 @@ public partial class ConvertDb {
 		(nameof(CnvTran13Hachu), static (db, isInit) => db.CnvTran13Hachu(isInit)),
 		// 未解決の商品マスタ補完とId再設定は、通常商品の全Tran変換後に行う
 		(nameof(CnvTranShohinSupplement), static (db, isInit) => db.CnvTranShohinSupplement(isInit)),
+		// 商品マスタはInsertBulkで登録され派生展開されないため、補足マスタ作成後に色サイズ派生を全件作り直す
+		(nameof(CnvDerivedShohinColSiz), static (db, isInit) => db.CnvDerivedShohinColSiz(isInit)),
 		// 旧ポイントは確定履歴を移すだけで、初期化フラグでは削除しない。
 		(nameof(CnvTranPointHistory), static (db, isInit) => db.CnvTranPointHistory(isInit)),
 		// 関連伝票の張替は全Tran変換の後に実行する必要があるため必ず最後に置く

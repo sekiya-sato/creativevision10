@@ -789,6 +789,38 @@ WHERE json_valid({tname}.Jmeisai)
 		return addedCount + updatedCount;
 	}
 
+	/// <summary>
+	/// <see cref="DerivedShohinColSiz"/> を <see cref="MasterShohin.Jcolsiz"/> から全件作り直す。
+	/// </summary>
+	/// <remarks>
+	/// 商品マスタ変換と補足マスタ作成は InsertBulk で登録するため、通常保存時の派生展開(DerivedDb)を通らない。
+	/// そのため全商品の変換後に、展開定義(<see cref="DerivedShohinColSiz.CreateSql"/>)で削除→再作成する。
+	/// 完全導出のテーブルなので isInit に関わらず全件を作り直し、削除と再作成は単一トランザクションで行う。
+	/// </remarks>
+	public int CnvDerivedShohinColSiz(bool isInit = true) {
+		if (!_toDb.IsExistTable<MasterShohin>()) {
+			_logger.LogWarning("{Table} を作成できません。{Master} が存在しません", nameof(DerivedShohinColSiz), nameof(MasterShohin));
+			return 0;
+		}
+		_toDb.CreateTable(typeof(DerivedShohinColSiz), false);
+
+		_toDb.BeginTransaction();
+		int count;
+		try {
+			_toDb.ExecuteDialect($"DELETE FROM {nameof(DerivedShohinColSiz)}");
+			// 不正JSONで json_each が例外にならず、JSONの null (色サイズなしの補足マスタ等)が1行に展開されないよう、
+			// 展開対象を有効なJSON配列に限定する(CASEで json_valid を先に評価し json_type の例外を避ける)
+			count = _toDb.ExecuteDialect($"{DerivedShohinColSiz.CreateSql} WHERE CASE WHEN json_valid(M.Jcolsiz) THEN json_type(M.Jcolsiz) = 'array' ELSE 0 END");
+			_toDb.CompleteTransaction();
+		}
+		catch {
+			_toDb.AbortTransaction();
+			throw;
+		}
+		_logger.LogInformation("{Table} を{Count}件作り直しました", nameof(DerivedShohinColSiz), count);
+		return count;
+	}
+
 	void CollectTranShohinSupplementCandidates<T>(Dictionary<string, string> candidates, HashSet<string> invalidCandidates)
 		where T : ITranDetail {
 		if (!_toDb.IsExistTable<T>())
