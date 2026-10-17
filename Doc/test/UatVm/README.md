@@ -53,6 +53,20 @@ dotnet build Doc/test/UatVm/UatVm.csproj
 
 `menulayout` は `MenuData.CreateDefault()` の全メニュー画面（View型＋InitParamで重複除去）を、MainMenuViewModel.DoMenu と同じ手順（Title・InitParam・AddInfo設定）で非モーダル表示し、初期化完了後に**標準サイズ**と**最小サイズ**（XAMLで `MinWidth`/`MinHeight` 指定がある画面のみ。寸法はBaseWindow適用後の実効値）でJPG保存と `ScreenLayoutCheck.Inspect` を行う。更新操作はしない（汎用マスタメンテは `MasterMeisho|100` で開く）。ダイアログは既定の安全側応答。結果は `--out <dir>`（既定 `out/menulayout-<日時>`）へ `menulayout.md` / `menulayout.json` / `jpg/` として出す。表示崩れはNote扱いで、開けなかった画面だけをFAILにする。`--filter <文字列>` でView型名・メニュー名の部分一致に絞れる。認証切替・複製DB・専用URLは使用ガイドラインの手順に従う。
 
+### 全件再集計と冪等性確認（resummaryall）
+
+`resummaryall` は「在庫・掛再更新」画面（`StockKakeUpdateViewModel`）の「全て」を実行し、在庫（`SummaryStock`/`SummaryRealStock`）・売掛・買掛と、対象各月×実在締日の請求残（`SummaryUriSei`）・支払残（`SummaryKaiShi`）を再集計する。請求・支払は画面と同じく再発行なしで計算する。移行後の全件再集計に使う。
+
+同じ条件で2回実行し、6テーブルを集計キー（年月・日付の年月）ごとの指紋（件数・数値列合計・文字列列の数値換算と長さの合計）で比較して冪等性を判定する。`Id`/`Vdc`/`Vdu` は比較しない。自然キーの重複行が無いことも確認する。シナリオは伝票・マスタを投入せず、書き込みは正規の再集計だけなので、繰り返し実行しても同じ状態に収束する。
+
+- 範囲は既定で期首年月（`MasterSysman.FiscalStartDate`）～当月。`--from <yyyy/MM>` / `--to <yyyy/MM>` で変更できる。期首が未設定（19010101）なら `--from` が必須。
+- 対象DBを更新するため、`--sqlite <絶対パス>` で対象DB（複製または移行先DB）を明示し、`--manage-server` と専用 `--url` で専用サーバを使う。gRPCを使うため、使用ガイドラインの「UAT前後の認証切替」に従う。画面初期化で自社締日を読むため `--hide-views` は付けない。
+- 締日変更検査で警告が出た場合や、警告・エラーのダイアログが出た場合は FAIL とし、2回目以降へ進まない。
+
+```bash
+./Doc/test/UatVm/bin/Debug/net10.0-windows10.0.19041/UatVm.exe resummaryall --manage-server --url http://127.0.0.1:5017 --sqlite C:/gitroot/new2022/cv10/CvServer/server-user52.db
+```
+
 ## 3. 証跡
 
 `Doc/test/UatVm/out/<scenario>-<日時>.jsonl` に1行1事象で出る。`boot.log`は起動段階の記録。

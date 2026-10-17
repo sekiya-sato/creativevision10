@@ -30,6 +30,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["jodaiconfirm"] = JodaiConfirmScenario.RunAsync,
 	["jodaiconfirmflow"] = JodaiConfirmFlowScenario.RunAsync,
 	["cancel"] = CancelDuringRebuildScenario.RunAsync,
+	["resummaryall"] = ResummaryAllScenario.RunAsync,
 	["invoicepreflight"] = InvoicePreflightScenario.RunAsync,
 	["manuallock"] = ManualLockScenario.RunAsync,
 	["manuallock2"] = ManualLockCoverageScenario.RunAsync,
@@ -105,6 +106,8 @@ if (string.IsNullOrEmpty(name) || !scenarios.TryGetValue(name, out var scenario)
 	Console.Error.WriteLine("  --manage-server    CvServerの起動と終了(Ctrl+C相当)をハーネスが行う");
 	Console.Error.WriteLine("  --month <yyyy/MM>  請求月（billing）");
 	Console.Error.WriteLine("  --code <code>      対象取引先コード（billing）");
+	Console.Error.WriteLine("  --from <yyyy/MM>   再集計の開始年月（resummaryall、既定: 期首年月）");
+	Console.Error.WriteLine("  --to <yyyy/MM>     再集計の終了年月（resummaryall、既定: 当月）");
 	Console.Error.WriteLine("  --no-execute       更新を伴う実行を省き、入力検証だけ行う");
 	Console.Error.WriteLine("  --no-seed          網羅データの投入を省く（前回投入済みを再利用）");
 	Console.Error.WriteLine("  --sqlite <path>    テスト用SQLite（共有開発DBを変更しない）");
@@ -124,6 +127,8 @@ bool Flag(string key) => args.Any(x => string.Equals(x, key, StringComparison.Or
 
 if (Option("--month") is { } month) BillingCalculationScenario.BillingMonth = month;
 if (Option("--code") is { } code) BillingCalculationScenario.TokuiCode = code;
+if (Option("--from") is { } from) ResummaryAllScenario.YearMonthFrom = from;
+if (Option("--to") is { } to) ResummaryAllScenario.YearMonthTo = to;
 if (Flag("--no-execute")) BillingCalculationScenario.Execute = false;
 if (Option("--out") is { } outDir) MenuLayoutScenario.OutputDirectory = Path.GetFullPath(outDir);
 if (Option("--filter") is { } filter) MenuLayoutScenario.Filter = filter;
