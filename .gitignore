@@ -65,7 +65,8 @@ printform/data*.*
 .omo-*/
 CvServer/*.db
 Doc/spec/*.pdf
-Doc/test/uat202*/
+Doc/test/uat*/
 .tmp*/
 .tmp*
+
 
