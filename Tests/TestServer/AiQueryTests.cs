@@ -247,7 +247,7 @@ public class AiQueryTests {
 
 	/// <summary>
 	/// 社内LLM（appsettings の AiQuery:Endpoint）への実接続確認。通常のテストでは実行しない。
-	/// 環境変数 CV_AIQUERY_LIVE=1 のときだけ動かす（例: http://192.168.9.131:1234/v1 / ornith-1.5-9b）。
+	/// 環境変数 CV_AIQUERY_LIVE=1 のときだけ動かす（例: http://127.0.0.1:1234/v1 / ornith-1.5-9b）。
 	/// </summary>
 	[TestMethod]
 	public async Task Live_LocalLlm_AsksThenGeneratesValidSql() {
@@ -256,7 +256,7 @@ public class AiQueryTests {
 		}
 		var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
 			["AiQuery:Enabled"] = "true",
-			["AiQuery:Endpoint"] = Environment.GetEnvironmentVariable("CV_AIQUERY_ENDPOINT") ?? "http://192.168.9.131:1234/v1",
+			["AiQuery:Endpoint"] = Environment.GetEnvironmentVariable("CV_AIQUERY_ENDPOINT") ?? "http://127.0.0.1:1234/v1",
 			["AiQuery:Model"] = Environment.GetEnvironmentVariable("CV_AIQUERY_MODEL") ?? "ornith-1.5-9b",
 			["AiQuery:DictionaryPath"] = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "../../../../../CvServer/AiQueryDictionary.md")),
 		}).Build();
