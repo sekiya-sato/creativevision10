@@ -3,14 +3,14 @@
 CvWpfclientの**実View**を生成し、そのViewModelのコマンドを直接駆動してUATを無人実行する。
 UIAutomationやマウス・キー操作のエミュレーションは使わない。
 
-計画と位置づけは [Mini-UAT自動化計画](../2026-08-27_Mini-UAT自動化計画_VM駆動ハーネス.md) を参照する。
+用途・実行前提・DB隔離・旧試験資料の扱いは [使用ガイドライン](../../spec/使用ガイドライン.md) を参照する。
 
 ## 1. 何を確認するものか
 
 | 層 | 確認手段 |
 |---|---|
 | 計算・DB（金額の正しさ） | `Doc/spec/tools/summaryreconcile` |
-| 帳票PDF | `qfmprint` / `Doc/test/UAT01/ReportRunner` |
+| 帳票PDF | `qfmprint` / 現行ViewModel経由のPDF生成 |
 | **画面→サーバー→画面** | **本ハーネス** |
 
 数値の再検算はしない。画面の入力値が`BillingParameter`等へ正しく変換されてサーバーへ渡り、
