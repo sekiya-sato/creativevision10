@@ -60,6 +60,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["pointflow"] = PointFlowScenario.RunAsync,
 	["pointmigration"] = PointMigrationScreenScenario.RunAsync,
 	["customerprofile"] = CustomerProfileScenario.RunAsync,
+	["aiquery"] = AiQueryScenario.RunAsync,
 	["pointsummary"] = PointSummaryLayoutScenario.RunAsync,
 	["rfm"] = RfmCrossAnalysisScenario.RunAsync,
 	["menulayout"] = MenuLayoutScenario.RunAsync,
@@ -98,6 +99,7 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["pointflow"] = PointFlowScenario.Seeder,
 	["pointmigration"] = PointMigrationScreenScenario.Seeder,
 	["customerprofile"] = CustomerProfileScenario.Seeder,
+	["aiquery"] = AiQueryScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));

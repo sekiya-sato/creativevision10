@@ -222,3 +222,59 @@ public sealed partial class SysHistMaster : BaseDbClass {
 	[Comment("変更後JSONデータ")]
 	public partial string ItemAfter { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// AI照会の共有保存テーブル（Doc/spec/2026-10-19_AI-query_最小変更設計案.md §5.1）
+/// <para>
+/// 保存項目は日付・タイトル・SQL文・SQLパラメータ・ユーザId・SQL内容の説明の6項目。
+/// <see cref="SaveDate"/> と <see cref="Id_Login"/> はサーバが保存時に打刻し、クライアントの申告値を使わない。
+/// 全員が参照・更新でき、<see cref="Id_Login"/> を権限制御には使わない。
+/// </para>
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[Comment("システム：AI照会の共有保存SQL")]
+[KeyDml("nk1", false, nameof(Title))]
+[KeyDml("nk2", false, nameof(Id_Login))]
+public sealed partial class SysAiQuery : BaseDbClass {
+	/// <summary>
+	/// 保存日 yyyyMMdd（サーバ打刻）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(8)]
+	[Comment("保存日 yyyyMMdd（サーバ打刻）")]
+	public partial string SaveDate { get; set; } = string.Empty;
+	/// <summary>
+	/// タイトル（会話から自動生成）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(100)]
+	[Comment("タイトル（会話から自動生成）")]
+	public partial string Title { get; set; } = string.Empty;
+	/// <summary>
+	/// 検査済みのSQLite照会SQL
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(4000)]
+	[Comment("検査済みのSQLite照会SQL")]
+	public partial string SqlText { get; set; } = string.Empty;
+	/// <summary>
+	/// SQLパラメータ（AiQueryParamのJSON配列。並び順が@0,@1,…に対応）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(4000)]
+	[Comment("SQLパラメータ（AiQueryParamのJSON配列。並び順が@0,@1,…に対応）")]
+	public partial string SqlParams { get; set; } = string.Empty;
+	/// <summary>
+	/// 保存したユーザ（SysLogin.Id、サーバ打刻）。権限制御には使わない
+	/// </summary>
+	[ObservableProperty]
+	[Comment("保存したユーザ（SysLogin.Id、サーバ打刻）")]
+	public partial long Id_Login { get; set; }
+	/// <summary>
+	/// SQL内容の説明（会話から推測・確定した集計対象・項目・条件）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(2000)]
+	[Comment("SQL内容の説明（会話から推測・確定した集計対象・項目・条件）")]
+	public partial string Description { get; set; } = string.Empty;
+}

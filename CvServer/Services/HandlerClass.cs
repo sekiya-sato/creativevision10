@@ -621,6 +621,9 @@ public partial class CoreService {
 		if (writeType != null) {
 			try { PointMasterDb.EnsureGenericWriteAllowed(writeType, param is PartialUpdateParam, param is InsertParam or InsertBulkParam); }
 			catch (ArgumentException ex) { return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message); }
+			if (RejectAiQueryBulkWrite(writeType, param) is string aiQueryError) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, aiQueryError, typeof(string), aiQueryError);
+			}
 		}
 		return param switch {
 			InsertParam insert => HandleInsert(request.Flag, insert),
@@ -1136,6 +1139,7 @@ public partial class CoreService {
 
 		var item = insert.GetItemObject();
 		var vdate = SetCreatedAuditValues(insert.ItemType, item);
+		StampAiQuerySave(item);
 
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
@@ -1229,6 +1233,7 @@ public partial class CoreService {
 			// 在庫は差分の加減算なので、DB上の行が変わる前に旧値ぶんを反転しておく
 			Effects.Before(WriteOp.Update, update.ItemType, org);
 			db.Vdu = vdate;
+			StampAiQuerySave(item);
 			_db.Update(item);
 			LogEffects(update.ItemType, Effects.After(WriteOp.Update, update.ItemType, item, org, vdate));
 			_db.CompleteTransaction();

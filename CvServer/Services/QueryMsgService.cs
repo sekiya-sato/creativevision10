@@ -16,12 +16,15 @@ public partial class CoreService : ICoreService {
 	private readonly IHttpContextAccessor _httpContextAccessor;
 	private readonly AppGlobal _appGlobal;
 	private readonly PointOfSaleService _pointOfSaleService;
+	/// <summary>AI照会のLLM接続。未登録（テスト等）なら AI照会の対話は失敗応答を返す</summary>
+	private readonly CvServer.Services.AiQuery.IAiQueryLlm? _aiQueryLlm;
 
 	// フラグ -> ハンドラマップ
 	private readonly Dictionary<CvFlag, Func<CvMsg, CallContext, Task<CvMsg>>> _handlers;
 
 	public CoreService(ILogger<CoreService> logger, IConfiguration configuration, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor,
-		ExDatabase db, IServiceScopeFactory scopeFactory, PointOfSaleService pointOfSaleService, AppGlobal? appGlobal = null) {
+		ExDatabase db, IServiceScopeFactory scopeFactory, PointOfSaleService pointOfSaleService, AppGlobal? appGlobal = null,
+		CvServer.Services.AiQuery.IAiQueryLlm? aiQueryLlm = null) {
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(configuration);
 		ArgumentNullException.ThrowIfNull(env);
@@ -38,6 +41,7 @@ public partial class CoreService : ICoreService {
 		// _scheduler = scheduler;
 		_httpContextAccessor = httpContextAccessor;
 		_appGlobal = appGlobal ?? AppGlobal.Shared;
+		_aiQueryLlm = aiQueryLlm;
 
 		// ハンドラ登録
 		_handlers = new Dictionary<CvFlag, Func<CvMsg, CallContext, Task<CvMsg>>> {
@@ -69,6 +73,8 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg086_CostTotalAveragePreview] = (req, ctx) => Task.FromResult(HandleCostTotalAveragePreview(req, ctx)),
 			[CvFlag.Msg088_CostRevaluationPreview] = (req, ctx) => Task.FromResult(HandleCostRevaluationPreview(req, ctx)),
 			[CvFlag.Msg090_CostRevaluationCancel] = (req, ctx) => Task.FromResult(HandleCostRevaluationCancel(req, ctx)),
+			[CvFlag.Msg091_AiQueryChat] = HandleAiQueryChatAsync,
+			[CvFlag.Msg092_AiQueryValidate] = (req, ctx) => Task.FromResult(HandleAiQueryValidate(req, ctx)),
 			[CvFlag.Msg070_PosLookupProduct] = HandlePosLookupProductAsync,
 			[CvFlag.Msg071_PosCheckout] = HandlePosCheckoutAsync,
 			[CvFlag.Msg072_PosCancelSale] = HandlePosCancelSaleAsync,

@@ -1,0 +1,556 @@
+<helpers:BaseWindow x:Class="CvWpfclient.Views._23AiQuery.AiQueryView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._23AiQuery"
+	Title="AI照会（CSV）"
+	Width="1244" Height="860" MinWidth="980" MinHeight="600"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="16"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:AiQueryViewModel />
+	</helpers:BaseWindow.DataContext>
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding RunCommand}"
+			Gesture="F5" />
+	</helpers:BaseWindow.InputBindings>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0,0,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="ExitToApp" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="閉じる" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="Robot" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold" Text="AI照会（CSV）" />
+					<Rectangle Width="1"
+						Margin="16,4"
+						Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+						Opacity="0.3" />
+					<Button Command="{Binding NewConversationCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="会話・条件・SQL・結果を消して最初から（保存一覧は残る）">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Plus" />
+							<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+								Text="新しい会話" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+		<Grid Grid.Row="1"
+			Margin="12">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="30*" MinWidth="280" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="70*" MinWidth="560" />
+			</Grid.ColumnDefinitions>
+			<!--  左: 保存一覧（共有／個人）。開くとAIを呼ばずに検査・実行できる  -->
+			<materialDesign:Card Grid.Column="0"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,4"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel>
+							<Button Margin="8,0,0,0"
+								Command="{Binding RefreshSharedCommand}"
+								DockPanel.Dock="Right"
+								Style="{StaticResource ToolCommandButton}"
+								ToolTip="共有保存を再読込">
+								<materialDesign:PackIcon Kind="Refresh" />
+							</Button>
+							<TextBox materialDesign:HintAssist.Hint="保存SQLの絞込み（タイトル・説明）"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding SavedFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+						</DockPanel>
+					</Border>
+					<TabControl Grid.Row="1"
+						Style="{StaticResource MaterialDesignTabControl}">
+						<TabItem Header="共有">
+							<DockPanel>
+								<WrapPanel Margin="8,4"
+									DockPanel.Dock="Bottom">
+									<Button Height="32"
+										Margin="0,0,6,0"
+										Command="{Binding OpenSharedCommand}"
+										Style="{StaticResource MaterialDesignOutlinedButton}"
+										ToolTip="選択した保存SQLを開く（AIは呼ばない）">
+										<StackPanel Orientation="Horizontal">
+											<materialDesign:PackIcon VerticalAlignment="Center"
+												Kind="FolderOpenOutline" />
+											<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+												Text="開く" />
+										</StackPanel>
+									</Button>
+									<Button Height="32"
+										Command="{Binding DeleteSharedCommand}"
+										Style="{StaticResource MaterialDesignOutlinedButton}"
+										ToolTip="選択した共有保存を削除（全員の一覧から消える）">
+										<StackPanel Orientation="Horizontal">
+											<materialDesign:PackIcon VerticalAlignment="Center"
+												Kind="DeleteOutline" />
+											<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+												Text="削除" />
+										</StackPanel>
+									</Button>
+								</WrapPanel>
+								<DataGrid materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False"
+									CanUserDeleteRows="False" FontSize="14" GridLinesVisibility="Horizontal"
+									HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+									HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
+									ItemsSource="{Binding SharedList}"
+									MouseDoubleClick="SavedGrid_MouseDoubleClick"
+									SelectedItem="{Binding SelectedShared, Mode=TwoWay}"
+									SelectionMode="Single"
+									Style="{StaticResource MaterialDesignDataGrid}"
+									Tag="Shared" VerticalScrollBarVisibility="Auto">
+									<DataGrid.Columns>
+										<DataGridTextColumn Width="Auto" MinWidth="200"
+											Binding="{Binding Title}"
+											Header="タイトル" />
+										<DataGridTextColumn Width="90"
+											Binding="{Binding SaveDate}"
+											Header="保存日" />
+										<DataGridTextColumn Width="70"
+											Binding="{Binding Id_Login}"
+											ElementStyle="{StaticResource DataGridRightTextBlock}"
+											Header="保存者" />
+										<DataGridTextColumn Width="300"
+											Binding="{Binding Description}"
+											Header="説明" />
+									</DataGrid.Columns>
+									<DataGrid.ColumnHeaderStyle>
+										<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+											TargetType="DataGridColumnHeader" />
+									</DataGrid.ColumnHeaderStyle>
+								</DataGrid>
+							</DockPanel>
+						</TabItem>
+						<TabItem Header="個人（このPC）">
+							<DockPanel>
+								<WrapPanel Margin="8,4"
+									DockPanel.Dock="Bottom">
+									<Button Height="32"
+										Margin="0,0,6,4"
+										Command="{Binding OpenPersonalCommand}"
+										Style="{StaticResource MaterialDesignOutlinedButton}"
+										ToolTip="選択した保存SQLを開く（AIは呼ばない）">
+										<StackPanel Orientation="Horizontal">
+											<materialDesign:PackIcon VerticalAlignment="Center"
+												Kind="FolderOpenOutline" />
+											<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+												Text="開く" />
+										</StackPanel>
+									</Button>
+									<Button Height="32"
+										Margin="0,0,6,4"
+										Command="{Binding DeletePersonalCommand}"
+										Style="{StaticResource MaterialDesignOutlinedButton}"
+										ToolTip="選択した個人保存を削除">
+										<StackPanel Orientation="Horizontal">
+											<materialDesign:PackIcon VerticalAlignment="Center"
+												Kind="DeleteOutline" />
+											<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+												Text="削除" />
+										</StackPanel>
+									</Button>
+									<Button Height="32"
+										Margin="0,0,6,4"
+										Command="{Binding ImportPersonalCommand}"
+										Style="{StaticResource MaterialDesignOutlinedButton}"
+										ToolTip="エクスポートしたファイルを読み込んで追加（端末移行）">
+										<materialDesign:PackIcon Kind="Import" />
+									</Button>
+									<Button Height="32"
+										Margin="0,0,0,4"
+										Command="{Binding ExportPersonalCommand}"
+										Style="{StaticResource MaterialDesignOutlinedButton}"
+										ToolTip="個人保存をファイルへ書き出す（端末移行）">
+										<materialDesign:PackIcon Kind="Export" />
+									</Button>
+								</WrapPanel>
+								<DataGrid materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False"
+									CanUserDeleteRows="False" FontSize="14" GridLinesVisibility="Horizontal"
+									HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+									HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
+									ItemsSource="{Binding PersonalList}"
+									MouseDoubleClick="SavedGrid_MouseDoubleClick"
+									SelectedItem="{Binding SelectedPersonal, Mode=TwoWay}"
+									SelectionMode="Single"
+									Style="{StaticResource MaterialDesignDataGrid}"
+									Tag="Personal" VerticalScrollBarVisibility="Auto">
+									<DataGrid.Columns>
+										<DataGridTextColumn Width="Auto" MinWidth="200"
+											Binding="{Binding Title}"
+											Header="タイトル" />
+										<DataGridTextColumn Width="100"
+											Binding="{Binding SaveDateText}"
+											Header="保存日" />
+										<DataGridTextColumn Width="300"
+											Binding="{Binding Description}"
+											Header="説明" />
+									</DataGrid.Columns>
+									<DataGrid.ColumnHeaderStyle>
+										<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+											TargetType="DataGridColumnHeader" />
+									</DataGrid.ColumnHeaderStyle>
+								</DataGrid>
+							</DockPanel>
+						</TabItem>
+					</TabControl>
+					<TextBlock Grid.Row="2"
+						Margin="12,4,12,8"
+						FontSize="13"
+						Foreground="{DynamicResource MaterialDesignBodyLight}"
+						Text="{Binding SavedMessage}"
+						TextWrapping="Wrap" />
+				</Grid>
+			</materialDesign:Card>
+			<GridSplitter Grid.Column="1"
+				Width="6"
+				Margin="3,0" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+				Background="Transparent" />
+			<!--  右: 会話（上）と 条件・SQL／結果（下）  -->
+			<Grid Grid.Column="2">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="45*" MinHeight="200" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="55*" MinHeight="250" />
+				</Grid.RowDefinitions>
+				<materialDesign:Card Grid.Row="0"
+					Padding="0"
+					materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+							<RowDefinition Height="Auto" />
+						</Grid.RowDefinitions>
+						<Border Grid.Row="0"
+							Padding="12,6"
+							Background="{DynamicResource MaterialDesignToolBarBackground}"
+							CornerRadius="8,8,0,0">
+							<TextBlock FontSize="14"
+								Foreground="{DynamicResource PrimaryHueMidBrush}"
+								Text="{Binding StatusText}"
+								TextTrimming="CharacterEllipsis"
+								ToolTip="{Binding StatusText}" />
+						</Border>
+						<ListBox x:Name="ChatList"
+							Grid.Row="1"
+							Margin="4"
+							HorizontalContentAlignment="Stretch"
+							ItemsSource="{Binding ChatLines}"
+							ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+							<ListBox.ItemTemplate>
+								<DataTemplate>
+									<StackPanel Margin="4,2">
+										<TextBlock FontSize="12" FontWeight="SemiBold"
+											Text="{Binding Speaker}">
+											<TextBlock.Style>
+												<Style TargetType="TextBlock">
+													<Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
+													<Style.Triggers>
+														<DataTrigger Binding="{Binding IsUser}" Value="True">
+															<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+														</DataTrigger>
+														<DataTrigger Binding="{Binding IsError}" Value="True">
+															<Setter Property="Foreground" Value="{DynamicResource MaterialDesignValidationErrorBrush}" />
+														</DataTrigger>
+													</Style.Triggers>
+												</Style>
+											</TextBlock.Style>
+										</TextBlock>
+										<TextBox Background="Transparent" BorderThickness="0"
+											FontSize="14" IsReadOnly="True"
+											Text="{Binding Text, Mode=OneWay}"
+											TextWrapping="Wrap" />
+									</StackPanel>
+								</DataTemplate>
+							</ListBox.ItemTemplate>
+						</ListBox>
+						<Grid Grid.Row="2"
+							Margin="12,4,12,8">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*" />
+								<ColumnDefinition Width="Auto" />
+							</Grid.ColumnDefinitions>
+							<TextBox Grid.Column="0"
+								Height="64"
+								materialDesign:HintAssist.Hint="集計したい内容・AIへの回答（Ctrl+Enter で送信）" AcceptsReturn="True"
+								IsEnabled="{Binding IsIdle}"
+								Style="{StaticResource FormTextBox}"
+								Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								TextWrapping="Wrap" VerticalScrollBarVisibility="Auto">
+								<TextBox.InputBindings>
+									<KeyBinding Command="{Binding SendCommand}"
+										Gesture="Ctrl+Return" />
+								</TextBox.InputBindings>
+							</TextBox>
+							<StackPanel Grid.Column="1"
+								Margin="8,0,0,0" VerticalAlignment="Center">
+								<Button Height="32"
+									Margin="0,0,0,4"
+									Command="{Binding SendCommand}"
+									Style="{StaticResource MaterialDesignRaisedButton}"
+									ToolTip="送信 (Ctrl+Enter)">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon VerticalAlignment="Center"
+											Kind="Send" />
+										<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+											Text="送信" />
+									</StackPanel>
+								</Button>
+								<Button Height="32"
+									Command="{Binding CancelChatCommand}"
+									Style="{StaticResource MaterialDesignOutlinedButton}"
+									ToolTip="AIの応答待ちを取り消す">
+									<StackPanel Orientation="Horizontal">
+										<materialDesign:PackIcon VerticalAlignment="Center"
+											Kind="Cancel" />
+										<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+											Text="取消" />
+									</StackPanel>
+								</Button>
+							</StackPanel>
+						</Grid>
+					</Grid>
+				</materialDesign:Card>
+				<GridSplitter Grid.Row="1"
+					Height="6"
+					Margin="0,3" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+					Background="Transparent" />
+				<materialDesign:Card Grid.Row="2"
+					Padding="0"
+					materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="*" />
+							<RowDefinition Height="Auto" />
+						</Grid.RowDefinitions>
+						<TabControl Grid.Row="0"
+							SelectedIndex="{Binding DetailTabIndex, Mode=TwoWay}"
+							Style="{StaticResource MaterialDesignTabControl}">
+							<TabItem Header="条件・SQL">
+								<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+									<StackPanel Margin="12,6">
+										<TextBox MaxHeight="96"
+											materialDesign:HintAssist.Hint="確定した条件（AIの要約）" IsReadOnly="True"
+											Style="{StaticResource FormTextBox}"
+											Text="{Binding SpecSummary, Mode=OneWay}"
+											TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+										<Grid>
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="2*" />
+												<ColumnDefinition Width="8" />
+												<ColumnDefinition Width="3*" />
+											</Grid.ColumnDefinitions>
+											<TextBox Grid.Column="0"
+												materialDesign:HintAssist.Hint="タイトル" MaxLength="100"
+												Style="{StaticResource FormTextBox}"
+												Text="{Binding SqlTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+											<TextBox Grid.Column="2"
+												materialDesign:HintAssist.Hint="SQL内容の説明" MaxLength="2000"
+												Style="{StaticResource FormTextBox}"
+												Text="{Binding SqlDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+												ToolTip="{Binding SqlDescription}" />
+										</Grid>
+										<TextBox Height="150"
+											materialDesign:HintAssist.Hint="SQL（SQLite）" AcceptsReturn="True" FontFamily="Consolas" FontSize="13"
+											HorizontalScrollBarVisibility="Auto"
+											IsReadOnly="{Binding IsSqlReadOnly}"
+											Style="{StaticResource FormTextBox}"
+											Text="{Binding SqlText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+											VerticalScrollBarVisibility="Auto" />
+										<DockPanel Margin="0,2">
+											<CheckBox Margin="8,0,0,0"
+												Content="SQLを手修正"
+												DockPanel.Dock="Right"
+												IsChecked="{Binding IsSqlEditable, Mode=TwoWay}"
+												ToolTip="手修正したSQLは実行前に検査し直す" />
+											<TextBlock VerticalAlignment="Center"
+												FontSize="13"
+												Foreground="{DynamicResource MaterialDesignBodyLight}"
+												Text="{Binding SqlMessage}"
+												TextWrapping="Wrap" />
+										</DockPanel>
+										<DataGrid MaxHeight="150"
+											Margin="0,4,0,0"
+											materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False"
+											CanUserDeleteRows="False" CanUserSortColumns="False" FontSize="14"
+											GridLinesVisibility="Horizontal"
+											HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+											ItemsSource="{Binding Parameters}"
+											Style="{StaticResource MaterialDesignDataGrid}">
+											<DataGrid.Columns>
+												<DataGridTextColumn Width="50"
+													Binding="{Binding Placeholder}"
+													Header="No" IsReadOnly="True" />
+												<DataGridTextColumn Width="140"
+													Binding="{Binding Label}"
+													Header="パラメータ" IsReadOnly="True" />
+												<DataGridTextColumn Width="120"
+													Binding="{Binding TypeText}"
+													Header="型" IsReadOnly="True" />
+												<DataGridTextColumn Width="160"
+													Binding="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+													Header="値" />
+												<DataGridCheckBoxColumn Width="110"
+													Binding="{Binding AskOnRun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+													Header="実行時入力" />
+											</DataGrid.Columns>
+											<DataGrid.ColumnHeaderStyle>
+												<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+													TargetType="DataGridColumnHeader" />
+											</DataGrid.ColumnHeaderStyle>
+										</DataGrid>
+									</StackPanel>
+								</ScrollViewer>
+							</TabItem>
+							<TabItem Header="結果">
+								<DockPanel Margin="8,4">
+									<TextBlock Margin="4,2,4,6"
+										DockPanel.Dock="Top" FontSize="13"
+										Foreground="{DynamicResource MaterialDesignBodyLight}"
+										Text="{Binding ResultInfo}"
+										TextWrapping="Wrap" />
+									<DataGrid materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="True"
+										AutoGeneratingColumn="ResultGrid_AutoGeneratingColumn" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FontSize="14"
+										GridLinesVisibility="All"
+										HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
+										ItemsSource="{Binding ResultView}"
+										Style="{StaticResource MaterialDesignDataGrid}"
+										VerticalScrollBarVisibility="Auto">
+										<DataGrid.ColumnHeaderStyle>
+											<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+												TargetType="DataGridColumnHeader" />
+										</DataGrid.ColumnHeaderStyle>
+									</DataGrid>
+								</DockPanel>
+							</TabItem>
+						</TabControl>
+						<!--  操作ボタン（タブに関係なく常に表示）  -->
+						<WrapPanel Grid.Row="1"
+							Margin="8,4,8,8">
+							<Button Height="34"
+								Margin="0,0,6,4"
+								Command="{Binding GenerateCommand}"
+								Style="{StaticResource MaterialDesignRaisedButton}"
+								ToolTip="確定した条件でAIにSQLを作成させる">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="CodeBraces" />
+									<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+										Text="SQL作成" />
+								</StackPanel>
+							</Button>
+							<Button Height="34"
+								Margin="0,0,6,4"
+								Command="{Binding ValidateCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="SQLを検査する（AIは呼ばない・行は取得しない）">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="CheckDecagram" />
+									<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+										Text="検査" />
+								</StackPanel>
+							</Button>
+							<Button Height="34"
+								Margin="0,0,16,4"
+								Command="{Binding RunCommand}"
+								Style="{StaticResource MaterialDesignRaisedButton}"
+								ToolTip="検査して実行し、結果を表示する (F5)">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="Play" />
+									<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+										Text="実行" />
+								</StackPanel>
+							</Button>
+							<Button Height="34"
+								Margin="0,0,6,4"
+								Command="{Binding ExportCsvCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="結果を全件保存。CSV（Excel用・既定）か、保存ダイアログのファイル種別で JSON（型を保持）を選べる">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="FileDelimited" />
+									<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+										Text="CSV保存" />
+								</StackPanel>
+							</Button>
+							<Button Height="34"
+								Margin="0,0,6,4"
+								Command="{Binding SaveSqlFileCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="SQLとパラメータをファイル保存">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="FileCodeOutline" />
+									<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+										Text="SQL保存" />
+								</StackPanel>
+							</Button>
+							<Button Height="34"
+								Margin="0,0,6,4"
+								Command="{Binding SaveSharedCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="サーバへ共有保存（全員が利用・更新できる）">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="CloudUploadOutline" />
+									<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+										Text="共有保存" />
+								</StackPanel>
+							</Button>
+							<Button Height="34"
+								Margin="0,0,0,4"
+								Command="{Binding SavePersonalCommand}"
+								Style="{StaticResource MaterialDesignOutlinedButton}"
+								ToolTip="このPCに個人保存">
+								<StackPanel Orientation="Horizontal">
+									<materialDesign:PackIcon VerticalAlignment="Center"
+										Kind="ContentSaveOutline" />
+									<TextBlock Margin="4,0,0,0" VerticalAlignment="Center"
+										Text="個人保存" />
+								</StackPanel>
+							</Button>
+						</WrapPanel>
+					</Grid>
+				</materialDesign:Card>
+			</Grid>
+		</Grid>
+	</Grid>
+</helpers:BaseWindow>

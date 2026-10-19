@@ -26,6 +26,7 @@ public class DefineDataTable {
 			typeof(SysHistAutoexec),
 			typeof(SysPermissionProfile),
 			typeof(SysPermissionProfileDetail),
+			typeof(SysAiQuery),
 
 			// マスタテーブル1
 			typeof(MasterSysman),

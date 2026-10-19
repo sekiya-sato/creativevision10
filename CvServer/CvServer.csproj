@@ -39,5 +39,9 @@
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- AI照会の業務辞書（AiQuery:DictionaryPath の既定値）。要求ごとに読み込むので配置先で追記できる -->
+    <None Update="AiQueryDictionary.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

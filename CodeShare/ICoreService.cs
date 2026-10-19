@@ -339,6 +339,16 @@ public enum CvFlag {
 	[EnumMember]
 	Msg090_CostRevaluationCancel = 90,
 	/// <summary>
+	/// AI照会の対話1往復（ツール呼出し・SQL生成・検査を含む）。会話状態はクライアントが保持する
+	/// </summary>
+	[EnumMember]
+	Msg091_AiQueryChat = 91,
+	/// <summary>
+	/// AI照会のSQL検査のみ（AIを呼ばない）。保存SQL再実行・手修正SQLで使う
+	/// </summary>
+	[EnumMember]
+	Msg092_AiQueryValidate = 92,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	[EnumMember]

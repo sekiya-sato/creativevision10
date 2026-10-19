@@ -125,6 +125,8 @@ CvBase.Sql.SqlDialectOptions.EnableNullsFirst =
 	builder.Configuration.GetValue<bool>("Database:SqlRules:A04-NullsOrder");
 builder.Services.AddSingleton(AppGlobal.Shared);
 builder.Services.AddScoped<PointOfSaleService>();
+// AI照会のLLM接続（OpenAI互換）。タイムアウトは AiQuery:TimeoutSeconds で要求ごとに掛けるため HttpClient 側は無制限にする
+builder.Services.AddHttpClient<CvServer.Services.AiQuery.IAiQueryLlm, CvServer.Services.AiQuery.OpenAiCompatibleLlm>(client => client.Timeout = Timeout.InfiniteTimeSpan);
 builder.Services.AddScoped<IAutoExecMailSettingsLoader, AutoExecMailSettingsLoader>();
 builder.Services.AddScoped<IAutoExecMailTransport, MailKitAutoExecMailTransport>();
 builder.Services.AddScoped<IAutoExecMailService, AutoExecMailService>();

@@ -11,4 +11,9 @@
     <ProjectReference Include="..\CvBase\CvBase.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- AI照会のSQL字句検査は cv-sqlite(McpSql) の SqlGuard をそのまま流用する（McpSql側は無変更） -->
+    <Compile Include="..\McpSql\SqlGuard.cs" Link="AiQuery\McpSqlGuard.cs" />
+  </ItemGroup>
+
 </Project>

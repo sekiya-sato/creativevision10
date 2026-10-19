@@ -381,6 +381,9 @@ public partial class MenuData : ObservableObject {
 				new("全社受払表", typeof(Views._21OroshiAnalysis.CorporateInOutReportView), addInfo:"全倉庫合計の受払を年月順に印刷(在庫累計更新の結果)"),
 				new("卸・店舗売上実績表", typeof(Views._21OroshiAnalysis.OroshiShopSalesActualReportView), addInfo:"卸と店舗の売上･構成比･合計･前年比を年月別に印刷"),
 			])),
+			new("▲ 自由照会 ----", new([
+				new("AI照会（CSV）", typeof(Views._23AiQuery.AiQueryView), addInfo:"会話で集計条件を決め、AIが作ったSQLを検査・実行してCSV保存。保存SQLはAIなしで再実行"),
+			])),
 		])),
 		/* ================================================================
 		 * 30 月次・更新処理 : 請求計算/支払計算は「掛管理（請求・支払）」へ移動済み
