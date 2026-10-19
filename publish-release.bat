@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 setlocal
 set "RELEASE_VERSION=%~1"
 if "%RELEASE_VERSION%"=="" set "RELEASE_VERSION=0.9.0"

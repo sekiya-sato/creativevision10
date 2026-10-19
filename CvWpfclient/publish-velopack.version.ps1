@@ -1,4 +1,4 @@
-param(
+﻿param(
     # 読み書きする appsettings.json のパス。
     [Parameter(Mandatory = $true)]
     [string]$AppSettingsPath,
@@ -19,7 +19,7 @@ param(
     [string]$SetVersion
 )
 
-# Windows PowerShell 5.x でも日本語コメントを壊さないよう UTF-8(BOMなし) を明示する。
+# JSON の読み書きには UTF-8(BOMなし) を使用する。
 $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
 if (-not [System.IO.File]::Exists($AppSettingsPath)) {

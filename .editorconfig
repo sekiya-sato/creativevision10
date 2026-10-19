@@ -266,3 +266,6 @@ dotnet_diagnostic.WPF0001.severity = warning
 [*.qfm]
 end_of_line = lf
 
+# cmd.exe 用バッチは BOM を付けない。
+[*.{bat,cmd}]
+charset = utf-8

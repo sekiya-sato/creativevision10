@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 setlocal
 set "DOTNET_ENVIRONMENT=Development"
 set "ASPNETCORE_ENVIRONMENT=Development"
