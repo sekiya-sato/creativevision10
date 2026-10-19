@@ -3,7 +3,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._23AiQuery"
 	Title="AI照会（CSV）"
-	Width="1244" Height="860" MinWidth="980" MinHeight="600"
+	Width="1244" Height="920" MinWidth="980" MinHeight="680"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="16"
 	Foreground="{DynamicResource MaterialDesignBody}"
@@ -244,9 +244,9 @@
 			<!--  右: 会話（上）と 条件・SQL／結果（下）  -->
 			<Grid Grid.Column="2">
 				<Grid.RowDefinitions>
-					<RowDefinition Height="45*" MinHeight="200" />
+					<RowDefinition Height="35*" MinHeight="180" />
 					<RowDefinition Height="Auto" />
-					<RowDefinition Height="55*" MinHeight="250" />
+					<RowDefinition Height="65*" MinHeight="300" />
 				</Grid.RowDefinitions>
 				<materialDesign:Card Grid.Row="0"
 					Padding="0"
@@ -279,7 +279,7 @@
 							Margin="4"
 							HorizontalContentAlignment="Stretch"
 							ItemsSource="{Binding ChatLines}"
-							ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+							ScrollViewer.CanContentScroll="False" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 							<ListBox.ItemTemplate>
 								<DataTemplate>
 									<StackPanel Margin="4,2">
@@ -393,40 +393,54 @@
 							SelectedIndex="{Binding DetailTabIndex, Mode=TwoWay}"
 							Style="{StaticResource MaterialDesignTabControl}">
 							<TabItem Header="条件・SQL">
-								<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-									<StackPanel Margin="12,6">
-										<TextBox MaxHeight="96"
-											materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="確定した条件（AIの要約）" IsReadOnly="True"
-											Style="{StaticResource FormTextBox}"
-											Text="{Binding SpecSummary, Mode=OneWay}"
-											TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
-										<Grid>
+								<!--  SQL欄が残りの高さを使う。高さが足りないときだけ全体をスクロールする（Grid高さ＝表示域、下限はMinHeight）  -->
+								<ScrollViewer Margin="12,6,4,6"
+									HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+									<Grid Height="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" MinHeight="350"
+										Margin="0,0,8,0">
+										<Grid.RowDefinitions>
+											<RowDefinition Height="Auto" />
+											<RowDefinition Height="*" MinHeight="72" />
+											<RowDefinition Height="Auto" />
+											<RowDefinition Height="Auto" />
+										</Grid.RowDefinitions>
+										<!--  確定した条件は左、タイトル・説明は右に並べて高さを節約する  -->
+										<Grid Grid.Row="0">
 											<Grid.ColumnDefinitions>
-												<ColumnDefinition Width="2*" />
+												<ColumnDefinition Width="*" />
 												<ColumnDefinition Width="8" />
-												<ColumnDefinition Width="3*" />
+												<ColumnDefinition Width="*" />
 											</Grid.ColumnDefinitions>
 											<TextBox Grid.Column="0"
-												MaxHeight="80"
-												materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="タイトル" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="100"
+												MaxHeight="150"
+												VerticalContentAlignment="Top"
+												materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="確定した条件（AIの要約）" IsReadOnly="True"
 												Style="{StaticResource FormTextBox}"
-												Text="{Binding SqlTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+												Text="{Binding SpecSummary, Mode=OneWay}"
 												TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
-											<TextBox Grid.Column="2"
-												MaxHeight="80"
-												materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="SQL内容の説明" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="2000"
-												Style="{StaticResource FormTextBox}"
-												Text="{Binding SqlDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-												TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+											<StackPanel Grid.Column="2">
+												<TextBox MaxHeight="80"
+													materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="タイトル" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="100"
+													Style="{StaticResource FormTextBox}"
+													Text="{Binding SqlTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+													TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+												<TextBox MaxHeight="80"
+													materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="SQL内容の説明" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="2000"
+													Style="{StaticResource FormTextBox}"
+													Text="{Binding SqlDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+													TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+											</StackPanel>
 										</Grid>
-										<TextBox Height="150"
+										<TextBox Grid.Row="1"
+											VerticalContentAlignment="Top"
 											materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="SQL（SQLite）" AcceptsReturn="True" FontFamily="Consolas" FontSize="13"
 											HorizontalScrollBarVisibility="Auto"
 											IsReadOnly="{Binding IsSqlReadOnly}"
 											Style="{StaticResource FormTextBox}"
 											Text="{Binding SqlText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 											VerticalScrollBarVisibility="Auto" />
-										<DockPanel Margin="0,2">
+										<DockPanel Grid.Row="2"
+											Margin="0,2">
 											<CheckBox Margin="8,0,0,0"
 												Content="SQLを手修正"
 												DockPanel.Dock="Right"
@@ -438,7 +452,8 @@
 												Text="{Binding SqlMessage}"
 												TextWrapping="Wrap" />
 										</DockPanel>
-										<DataGrid MaxHeight="150"
+										<DataGrid Grid.Row="3"
+											MaxHeight="130"
 											Margin="0,4,0,0"
 											materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserAddRows="False"
 											CanUserDeleteRows="False" CanUserSortColumns="False" FontSize="14"
@@ -453,7 +468,7 @@
 												<DataGridTextColumn Width="140"
 													Binding="{Binding Label}"
 													Header="パラメータ" IsReadOnly="True" />
-												<DataGridTextColumn Width="120"
+												<DataGridTextColumn Width="130"
 													Binding="{Binding TypeText}"
 													Header="型" IsReadOnly="True" />
 												<DataGridTextColumn Width="160"
@@ -468,7 +483,7 @@
 													TargetType="DataGridColumnHeader" />
 											</DataGrid.ColumnHeaderStyle>
 										</DataGrid>
-									</StackPanel>
+									</Grid>
 								</ScrollViewer>
 							</TabItem>
 							<TabItem Header="結果">

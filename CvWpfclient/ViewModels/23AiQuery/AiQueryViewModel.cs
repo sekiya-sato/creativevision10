@@ -711,10 +711,7 @@ public partial class AiQueryViewModel : BaseViewModel {
 			FileName = $"AI照会_個人保存_{DateTime.Now:yyyyMMdd}.json",
 		};
 		if (dialog.ShowDialog(ActiveWindow) != true) return;
-		try {
-			AiQueryPersonalStore.Save(AiQueryPersonalStore.Load(), dialog.FileName);
-			SavedMessage = $"エクスポートしました: {dialog.FileName}";
-		}
+		try { ExportPersonalTo(dialog.FileName); }
 		catch (Exception ex) { ShowError($"エクスポート失敗: {ex.Message}"); }
 	}
 
@@ -723,16 +720,31 @@ public partial class AiQueryViewModel : BaseViewModel {
 	void ImportPersonal() {
 		var dialog = new OpenFileDialog { Title = "個人保存のインポート", Filter = "JSONファイル (*.json)|*.json" };
 		if (dialog.ShowDialog(ActiveWindow) != true) return;
-		try {
-			var imported = AiQueryPersonalStore.Load(dialog.FileName);
-			var items = AiQueryPersonalStore.Load();
-			var added = imported.Where(x => !items.Contains(x)).ToList();
-			items.AddRange(added);
-			AiQueryPersonalStore.Save(items);
-			LoadPersonal();
-			SavedMessage = $"{added.Count:N0}件をインポートしました（同じ内容の{imported.Count - added.Count:N0}件は追加していません）。";
-		}
+		try { ImportPersonalFrom(dialog.FileName); }
 		catch (Exception ex) { ShowError($"インポート失敗（個人保存は変更していません）: {ex.Message}"); }
+	}
+
+	/// <summary>個人保存を指定ファイルへ書き出す（ダイアログで選んだ後の処理）。書き出した件数を返す</summary>
+	public int ExportPersonalTo(string path) {
+		var items = AiQueryPersonalStore.Load();
+		AiQueryPersonalStore.Save(items, path);
+		SavedMessage = $"{items.Count:N0}件をエクスポートしました: {path}";
+		return items.Count;
+	}
+
+	/// <summary>
+	/// 指定ファイルを読み込み、個人保存へ追加する（ダイアログで選んだ後の処理）。追加した件数を返す。
+	/// 同じ内容（6項目が一致）は追加しない。読めないファイルは例外にし、個人保存は変更しない。
+	/// </summary>
+	public int ImportPersonalFrom(string path) {
+		var imported = AiQueryPersonalStore.Load(path);
+		var items = AiQueryPersonalStore.Load();
+		var added = imported.Distinct().Where(x => !items.Contains(x)).ToList();
+		items.AddRange(added);
+		AiQueryPersonalStore.Save(items);
+		LoadPersonal();
+		SavedMessage = $"{added.Count:N0}件をインポートしました（同じ内容の{imported.Count - added.Count:N0}件は追加していません）。";
+		return added.Count;
 	}
 
 	// ---- 共通 -----------------------------------------------------------------
