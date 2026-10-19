@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
 using System.Text;
@@ -11,7 +11,7 @@ namespace CvServer.Services.AiQuery;
 /// </summary>
 public sealed class AiQueryOptions {
 	public bool Enabled { get; set; }
-	/// <summary>OpenAI互換APIのベースURL（例 http://192.168.9.131:1234/v1）</summary>
+	/// <summary>OpenAI互換APIのベースURL（例 http://127.0.0.1:1234/v1）</summary>
 	public string Endpoint { get; set; } = string.Empty;
 	public string Model { get; set; } = string.Empty;
 	/// <summary>空なら Authorization ヘッダを送らない（社内LLMはキーなし）</summary>
