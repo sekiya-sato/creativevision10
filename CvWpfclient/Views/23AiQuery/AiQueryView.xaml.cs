@@ -24,7 +24,8 @@ public partial class AiQueryView : Helpers.BaseWindow {
 	/// <summary>結果の自動列は、列名の置き換え前（SQLの別名）を見出しに出す</summary>
 	void ResultGrid_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e) {
 		if (sender is DataGrid { ItemsSource: DataView view } && view.Table?.Columns[e.PropertyName] is DataColumn column) {
-			e.Column.Header = column.Caption;
+			// 見出しの「_」はアクセスキー扱いで消えるため「__」にして表示する
+			e.Column.Header = column.Caption.Replace("_", "__");
 		}
 	}
 

@@ -227,6 +227,7 @@ public partial class AiQueryViewModel : BaseViewModel {
 		StatusText = mode == EnumAiQueryMode.Generate ? "AIがSQLを作成しています…（数十秒〜数分かかります。［取消］で中止）" : "AIが考えています…（数十秒〜数分かかります。［取消］で中止）";
 		using var cts = new CancellationTokenSource();
 		chatCts = cts;
+		StartWaiting(mode);
 		try {
 			var reply = await SendAsync(CvFlag.Msg091_AiQueryChat, param, AppGlobal.GetDefaultCallContext(cts.Token, ChatTimeout));
 			var result = Common.DeserializeObject<AiQueryChatResult>(reply.DataMsg ?? "{}") ?? new AiQueryChatResult();
@@ -243,8 +244,50 @@ public partial class AiQueryViewModel : BaseViewModel {
 		}
 		finally {
 			if (ReferenceEquals(chatCts, cts)) chatCts = null;
+			StopWaiting();
 			IsBusy = false;
 		}
+	}
+
+	// ---- AI応答待ちの表示 -------------------------------------------------------
+
+	/// <summary>AIの応答待ち中（待機表示を出す）</summary>
+	[ObservableProperty]
+	public partial bool IsAiWaiting { get; set; }
+
+	/// <summary>待機表示の文言（経過時間つき）</summary>
+	[ObservableProperty]
+	public partial string WaitingText { get; set; } = string.Empty;
+
+	readonly System.Diagnostics.Stopwatch waitingWatch = new();
+	System.Windows.Threading.DispatcherTimer? waitingTimer;
+	string waitingLabel = string.Empty;
+
+	/// <summary>応答待ちの表示を始め、1秒ごとに経過時間を更新する（LLMは数十秒〜数分かかるため）</summary>
+	void StartWaiting(EnumAiQueryMode mode) {
+		waitingLabel = mode == EnumAiQueryMode.Generate ? "AIがSQLを作成しています" : "AIが考えています";
+		waitingWatch.Restart();
+		UpdateWaitingText();
+		IsAiWaiting = true;
+		waitingTimer ??= CreateWaitingTimer();
+		waitingTimer.Start();
+	}
+
+	void StopWaiting() {
+		waitingTimer?.Stop();
+		waitingWatch.Stop();
+		IsAiWaiting = false;
+	}
+
+	System.Windows.Threading.DispatcherTimer CreateWaitingTimer() {
+		var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+		timer.Tick += (_, _) => UpdateWaitingText();
+		return timer;
+	}
+
+	void UpdateWaitingText() {
+		var e = waitingWatch.Elapsed;
+		WaitingText = $"{waitingLabel}…　経過 {(int)e.TotalMinutes}:{e.Seconds:00}　（数十秒〜数分かかります。［取消］で中止できます）";
 	}
 
 	void ApplyChatResult(AiQueryChatResult result, EnumAiQueryMode mode, int sentCondition) {
@@ -739,6 +782,7 @@ public partial class AiQueryViewModel : BaseViewModel {
 	/// <summary>画面を閉じるときは応答待ちを取り消す</summary>
 	protected override void OnExit() {
 		chatCts?.Cancel();
+		StopWaiting();
 		base.OnExit();
 	}
 }

@@ -267,6 +267,13 @@
 								TextTrimming="CharacterEllipsis"
 								ToolTip="{Binding StatusText}" />
 						</Border>
+						<!--  AI応答待ちの進行表示（ヘッダ直下の細い帯）  -->
+						<ProgressBar Grid.Row="1"
+							Height="4"
+							VerticalAlignment="Top"
+							Panel.ZIndex="1" IsIndeterminate="True"
+							Style="{StaticResource MaterialDesignLinearProgressBar}"
+							Visibility="{Binding IsAiWaiting, Converter={StaticResource BooleanToVisibilityConverter}}" />
 						<ListBox x:Name="ChatList"
 							Grid.Row="1"
 							Margin="4"
@@ -300,6 +307,29 @@
 								</DataTemplate>
 							</ListBox.ItemTemplate>
 						</ListBox>
+						<!--  AI応答待ちの表示（会話の下端に重ね、スクロール・選択は妨げない）  -->
+						<Border Grid.Row="1"
+							Margin="16,0,16,10" Padding="14,8" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+							Background="{DynamicResource MaterialDesignToolBarBackground}"
+							BorderBrush="{DynamicResource PrimaryHueMidBrush}"
+							BorderThickness="1" CornerRadius="18" IsHitTestVisible="False"
+							Visibility="{Binding IsAiWaiting, Converter={StaticResource BooleanToVisibilityConverter}}">
+							<StackPanel Orientation="Horizontal">
+								<ProgressBar Width="22" Height="22"
+									IsIndeterminate="True"
+									Style="{StaticResource MaterialDesignCircularProgressBar}"
+									Value="0" />
+								<materialDesign:PackIcon Width="20" Height="20"
+									Margin="8,0,0,0" VerticalAlignment="Center"
+									Foreground="{DynamicResource PrimaryHueMidBrush}"
+									Kind="Robot" />
+								<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+									FontSize="14"
+									Foreground="{DynamicResource PrimaryHueMidBrush}"
+									Text="{Binding WaitingText}"
+									TextWrapping="Wrap" />
+							</StackPanel>
+						</Border>
 						<Grid Grid.Row="2"
 							Margin="12,4,12,8">
 							<Grid.ColumnDefinitions>
@@ -366,7 +396,7 @@
 								<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
 									<StackPanel Margin="12,6">
 										<TextBox MaxHeight="96"
-											materialDesign:HintAssist.Hint="確定した条件（AIの要約）" IsReadOnly="True"
+											materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="確定した条件（AIの要約）" IsReadOnly="True"
 											Style="{StaticResource FormTextBox}"
 											Text="{Binding SpecSummary, Mode=OneWay}"
 											TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
@@ -377,17 +407,20 @@
 												<ColumnDefinition Width="3*" />
 											</Grid.ColumnDefinitions>
 											<TextBox Grid.Column="0"
-												materialDesign:HintAssist.Hint="タイトル" MaxLength="100"
+												MaxHeight="80"
+												materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="タイトル" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="100"
 												Style="{StaticResource FormTextBox}"
-												Text="{Binding SqlTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+												Text="{Binding SqlTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+												TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
 											<TextBox Grid.Column="2"
-												materialDesign:HintAssist.Hint="SQL内容の説明" MaxLength="2000"
+												MaxHeight="80"
+												materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="SQL内容の説明" materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed" MaxLength="2000"
 												Style="{StaticResource FormTextBox}"
 												Text="{Binding SqlDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-												ToolTip="{Binding SqlDescription}" />
+												TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
 										</Grid>
 										<TextBox Height="150"
-											materialDesign:HintAssist.Hint="SQL（SQLite）" AcceptsReturn="True" FontFamily="Consolas" FontSize="13"
+											materialDesign:HintAssist.FloatingScale="1" materialDesign:HintAssist.Hint="SQL（SQLite）" AcceptsReturn="True" FontFamily="Consolas" FontSize="13"
 											HorizontalScrollBarVisibility="Auto"
 											IsReadOnly="{Binding IsSqlReadOnly}"
 											Style="{StaticResource FormTextBox}"

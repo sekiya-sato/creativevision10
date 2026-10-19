@@ -164,8 +164,17 @@ public static class AiQueryScenario {
 	/// <summary>社内LLMで会話→（確認）→SQL作成→実行。AIの文言は固定しないため、状態遷移と実行結果だけを見る</summary>
 	static async Task LiveAsync(VmSession session, ViewDriver<AiQueryViewModel> d, string screens) {
 		d.Input("要求入力", vm => vm.InputText = "2026年9月の店舗別の売上（税抜、返品は差し引く、計上日基準）を店舗コード順で欲しい");
-		await d.RunAsync("送信", vm => vm.SendCommand);
+		// 応答待ちの間に待機表示（進行帯・経過時間）を確認するため、送信は待たずに開始する
+		var sending = d.Vm.SendCommand.ExecuteAsync(null);
+		await d.WaitAsync("待機表示", vm => vm.IsAiWaiting, timeoutMs: 10_000);
+		await Task.Delay(2500);
+		session.Check("待機表示に経過時間", d.Vm.IsAiWaiting && d.Vm.WaitingText.Contains("AIが考えています") && !d.Vm.WaitingText.Contains("経過 0:00"),
+			new { d.Vm.WaitingText });
+		session.Check("待機中は送信不可・取消可", !d.Vm.SendCommand.CanExecute(null) && d.Vm.CancelChatCommand.CanExecute(null));
+		await Capture(session, d.View, screens, "aiquery_standard_live_waiting");
+		await sending;
 		await d.WaitAsync("AI応答", vm => !vm.IsBusy, timeoutMs: 600_000);
+		session.Check("応答後は待機表示を消す", !d.Vm.IsAiWaiting);
 		session.Note("AI応答1", new { d.Vm.ChatStatus, Last = d.Vm.ChatLines.LastOrDefault()?.Text });
 		for (var i = 0; i < 2 && d.Vm.ChatStatus == EnumAiQueryStatus.Asking; i++) {
 			d.Input("回答", vm => vm.InputText = "店舗売上（Tran01Tenuri）です。税抜の純売上と伝票数を、店舗コード・店舗名ごとに出してください。他は条件どおりで確定してよいです。");
