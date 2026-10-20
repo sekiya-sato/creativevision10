@@ -179,8 +179,14 @@ public partial class CoreService {
 	/// <returns></returns>
 	[UatChangeable]
 	[Authorize]
-	public async IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvMsg request, CallContext context = default) {
+	public IAsyncEnumerable<StreamMsg> QueryMsgStreamAsync(CvMsg request, CallContext context = default) {
 		ArgumentNullException.ThrowIfNull(request);
+		// 操作履歴は終了時（正常・例外・キャンセル）に1行記録する
+		return WithOperationLogAsync(QueryMsgStreamCoreAsync(request, context), OperationKind.Execute, request.Flag.ToString(),
+			request.DataType, request.DataMsg, context, msg => msg.Code);
+	}
+
+	private async IAsyncEnumerable<StreamMsg> QueryMsgStreamCoreAsync(CvMsg request, CallContext context) {
 		var ct = context.CancellationToken;
 		_logger.LogInformation("gRPCストリーミングリクエスト QueryMsgStreamAsync Flag: {Flag}, DataType: {DataType}", request.Flag, request.DataType);
 		await Task.Yield();

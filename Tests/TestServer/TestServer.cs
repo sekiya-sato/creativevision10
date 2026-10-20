@@ -364,7 +364,7 @@ public class CoreServiceTests {
 	public void SystemJobDefinitions_HasNineUniqueEntries() {
 		var defs = SchedulerService.SystemJobDefinitions;
 
-		Assert.AreEqual(10, defs.Count);
+		Assert.AreEqual(11, defs.Count);
 		Assert.AreEqual(defs.Count, defs.Select(d => d.TaskId).Distinct().Count(), "TaskIdが重複している");
 		Assert.AreEqual(defs.Count, defs.Select(d => d.JobKey).Distinct().Count(), "JobKeyが重複している");
 	}
@@ -402,6 +402,7 @@ public class CoreServiceTests {
 			SchedulerService.JobKeyMonthlyResummary,
 			SchedulerService.JobKeyJodaiPurge,
 			SchedulerService.JobKeyManualLockMonitor,
+			SchedulerService.JobKeyOperationLogPurge,
 		};
 
 		foreach (var jobKey in existingJobKeys) {

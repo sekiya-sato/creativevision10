@@ -14,7 +14,14 @@ public partial class CoreService {
 
 	[UatChangeable]
 	[Authorize]
-	public async IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default) {
+	public IAsyncEnumerable<PrintOperation> PrintPdfAsync(PrintOperation request, CallContext context = default) {
+		ArgumentNullException.ThrowIfNull(request);
+		// 操作履歴は終了時に1行記録する。帳票ファイル名を条件に含める
+		return WithOperationLogAsync(PrintPdfCoreAsync(request, context), OperationKind.Print, "PrintPdf",
+			request.DataType, request.DataMsg, context, op => op.Status, request.FormFile);
+	}
+
+	private async IAsyncEnumerable<PrintOperation> PrintPdfCoreAsync(PrintOperation request, CallContext context) {
 		string? clientId = context.RequestHeaders?.GetValue("x-clientid");
 		var cancellationToken = context.CancellationToken;
 		// 処理のステップと対応するアクションを定義

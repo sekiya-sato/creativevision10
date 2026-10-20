@@ -75,6 +75,7 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg090_CostRevaluationCancel] = (req, ctx) => Task.FromResult(HandleCostRevaluationCancel(req, ctx)),
 			[CvFlag.Msg091_AiQueryChat] = HandleAiQueryChatAsync,
 			[CvFlag.Msg092_AiQueryValidate] = (req, ctx) => Task.FromResult(HandleAiQueryValidate(req, ctx)),
+			[CvFlag.Msg093_OperationLog] = (req, ctx) => Task.FromResult(HandleOperationLog(req, ctx)),
 			[CvFlag.Msg070_PosLookupProduct] = HandlePosLookupProductAsync,
 			[CvFlag.Msg071_PosCheckout] = HandlePosCheckoutAsync,
 			[CvFlag.Msg072_PosCancelSale] = HandlePosCancelSaleAsync,
@@ -88,15 +89,22 @@ public partial class CoreService : ICoreService {
 		ArgumentNullException.ThrowIfNull(request);
 
 		if (_handlers.TryGetValue(request.Flag, out var handler)) {
+			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+			CvMsg result;
 			try {
-				var result = await handler(request, context) ?? new CvMsg() { Flag = CvFlag.Msg800_Error_Start, Code = -1, DataType = typeof(string), DataMsg = "Handler returned null." };
-				return result;
+				result = await handler(request, context) ?? new CvMsg() { Flag = CvFlag.Msg800_Error_Start, Code = -1, DataType = typeof(string), DataMsg = "Handler returned null." };
 			}
 			catch (Exception ex) {
 				_logger.LogError(ex, "QueryMsgAsync handler error Flag:{Flag}", request.Flag);
-				var err = new CvMsg() { Flag = request.Flag, Code = -9902, Option = ex.Message, DataType = typeof(string), DataMsg = ex.Message };
-				return err;
+				result = new CvMsg() { Flag = request.Flag, Code = -9902, Option = ex.Message, DataType = typeof(string), DataMsg = ex.Message };
 			}
+			// 操作履歴（業務処理の後に別途記録し、失敗しても応答は変えない）
+			var kind = CvDomainLogic.OperationLogDb.ClassifyKind(request.Flag);
+			if (kind != 0) {
+				var resultCount = kind == OperationKind.Query ?CvDomainLogic.OperationLogDb.CountResultRows(result.DataMsg) : -1;
+				RecordOperation(kind, request.Flag.ToString(), request.DataType, request.DataMsg, context, result.Code, resultCount, stopwatch);
+			}
+			return result;
 		}
 
 		// 未実装フラグ

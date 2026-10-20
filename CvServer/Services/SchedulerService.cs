@@ -67,6 +67,8 @@ public class SchedulerService : ISchedulerService {
 	public const string ReservationExpireTaskName = MasterConfig.AutoExecTaskNameReservationExpire;
 	public const string PointExpireCronExpression = MasterConfig.AutoExecCronPointExpire;
 	public const string PointExpireTaskName = MasterConfig.AutoExecTaskNamePointExpire;
+	public const string OperationLogPurgeCronExpression = MasterConfig.AutoExecCronOperationLogPurge;
+	public const string OperationLogPurgeTaskName = MasterConfig.AutoExecTaskNameOperationLogPurge;
 
 	public static readonly Guid DailyWalCheckpointTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWalCheckpoint);
 	public static readonly Guid WorkFileCleanupTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdWorkFileCleanup);
@@ -78,6 +80,7 @@ public class SchedulerService : ISchedulerService {
 	public static readonly Guid ManualLockMonitorTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdManualLockMonitor);
 	public static readonly Guid ReservationExpireTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdReservationExpire);
 	public static readonly Guid PointExpireTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdPointExpire);
+	public static readonly Guid OperationLogPurgeTaskId = Guid.Parse(MasterConfig.AutoExecTaskIdOperationLogPurge);
 
 	/// <summary>ジョブを識別するキー（<see cref="MasterConfig"/> の Name に使う固定文字列）</summary>
 	public const string JobKeyWalCheckpoint = "WalCheckpoint";
@@ -90,6 +93,7 @@ public class SchedulerService : ISchedulerService {
 	public const string JobKeyManualLockMonitor = "ManualLockMonitor";
 	public const string JobKeyReservationExpire = "ReservationExpire";
 	public const string JobKeyPointExpire = "PointExpire";
+	public const string JobKeyOperationLogPurge = "OperationLogPurge";
 
 	/// <summary>システムジョブ1件の定義（TaskId・設定キー・名称・既定cron・既定の実行フラグ・起動間隔チェックの有無）</summary>
 	public sealed record SchedulerJobDefinition(
@@ -117,6 +121,7 @@ public class SchedulerService : ISchedulerService {
 		new(ManualLockMonitorTaskId, JobKeyManualLockMonitor, ManualLockMonitorTaskName, ManualLockMonitorCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledManualLockMonitor), IsSendMailDefault(ManualLockMonitorTaskId), false),
 		new(ReservationExpireTaskId, JobKeyReservationExpire, ReservationExpireTaskName, ReservationExpireCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledReservationExpire), IsSendMailDefault(ReservationExpireTaskId), false),
 		new(PointExpireTaskId, JobKeyPointExpire, PointExpireTaskName, PointExpireCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledPointExpire), IsSendMailDefault(PointExpireTaskId), false),
+		new(OperationLogPurgeTaskId, JobKeyOperationLogPurge, OperationLogPurgeTaskName, OperationLogPurgeCronExpression, IsEnabledDefault(MasterConfig.AutoExecEnabledOperationLogPurge), IsSendMailDefault(OperationLogPurgeTaskId), false),
 	];
 
 	/// <summary>MasterConfigの実行フラグ値(1/0)を bool に変換する</summary>
@@ -300,6 +305,15 @@ public class SchedulerService : ISchedulerService {
 	public SchedulerResult RegisterPointExpireTask() {
 		var def = FindDefinition(JobKeyPointExpire);
 		return RegisterSystemJob(def, (db, ct) => ExecutePointExpireCoreAsync(db, def.TaskName, ct));
+	}
+
+	/// <summary>
+	/// 操作履歴(<see cref="SysHistOperation"/>)の期間削除タスクを登録する（既定有効）。
+	/// 保持月数はサーバ設定 <c>OperationLog:KeepMonths</c>（既定13か月）。
+	/// </summary>
+	public SchedulerResult RegisterOperationLogPurgeTask() {
+		var def = FindDefinition(JobKeyOperationLogPurge);
+		return RegisterSystemJob(def, (db, ct) => ExecuteOperationLogPurgeCoreAsync(db, def.TaskName, ct));
 	}
 
 	/// <summary>
@@ -1164,6 +1178,29 @@ public class SchedulerService : ISchedulerService {
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, "適用上代の期限切れ削除に失敗しました: TaskName={TaskName}", taskName);
+			return Task.FromResult(new AutoexecTaskResult(InternalError, 0, $"例外: {ex.Message}"));
+		}
+	}
+
+	/// <summary>
+	/// 保持月数より古い操作履歴を削除する。
+	/// </summary>
+	private Task<AutoexecTaskResult> ExecuteOperationLogPurgeCoreAsync(ExDatabase db, string taskName, CancellationToken cancellationToken) {
+		cancellationToken.ThrowIfCancellationRequested();
+
+		try {
+			var keepMonths = _configuration.GetValue("OperationLog:KeepMonths", OperationLogOptions.Default.KeepMonths);
+			var deleted = new OperationLogDb(db).Purge(DateTime.Today, keepMonths);
+			var memo = $"操作履歴の期間削除: 保持月数={keepMonths}, 削除={deleted}";
+			_logger.LogInformation("操作履歴の期間削除: TaskName={TaskName}, KeepMonths={KeepMonths}, Deleted={Deleted}",
+				taskName, keepMonths, deleted);
+			return Task.FromResult(new AutoexecTaskResult(Success, deleted, memo));
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			throw;
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "操作履歴の期間削除に失敗しました: TaskName={TaskName}", taskName);
 			return Task.FromResult(new AutoexecTaskResult(InternalError, 0, $"例外: {ex.Message}"));
 		}
 	}

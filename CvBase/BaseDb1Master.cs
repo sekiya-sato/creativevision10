@@ -1430,6 +1430,26 @@ public sealed partial class MasterConfig : BaseDbClass {
 	/// </summary>
 	[Comment("ポイント失効タスクの既定の実行フラグ")]
 	public const string AutoExecEnabledPointExpire = ValAutoExecDisabled;
+	/// <summary>
+	/// 操作履歴の期間削除タスクの TaskId(Guid)
+	/// </summary>
+	[Comment("操作履歴の期間削除タスクの TaskId(Guid)")]
+	public const string AutoExecTaskIdOperationLogPurge = "e1f2a3b4-c5d6-7890-4567-901234567890";
+	/// <summary>
+	/// 操作履歴の期間削除タスクの表示名
+	/// </summary>
+	[Comment("操作履歴の期間削除タスクの表示名")]
+	public const string AutoExecTaskNameOperationLogPurge = "操作履歴 保持月数(サーバ設定 OperationLog:KeepMonths)より古い操作履歴(SysHistOperation)を削除するタスク";
+	/// <summary>
+	/// 操作履歴の期間削除タスクの既定cron式（毎日2:20）
+	/// </summary>
+	[Comment("操作履歴の期間削除タスクの既定cron式")]
+	public const string AutoExecCronOperationLogPurge = "20 2 * * *";
+	/// <summary>
+	/// 操作履歴の期間削除タスクの既定の実行フラグ（設計判断 H4 の13か月保持のため既定で有効）
+	/// </summary>
+	[Comment("操作履歴の期間削除タスクの既定の実行フラグ")]
+	public const string AutoExecEnabledOperationLogPurge = ValAutoExecEnabled;
 	/// <summary>自動実行ジョブ1件の既定定義（TaskId・表示名・既定cron式・既定の実行フラグ・メール送信フラグ）</summary>
 	public sealed record AutoExecJobDefault(string TaskId, string TaskName, string Cron, string Enabled, string IsSendMail);
 	/// <summary>自動実行ジョブの既定定義一覧。MasterConfig の初期データと SchedulerService のジョブ定義の唯一の出典。</summary>
@@ -1444,6 +1464,7 @@ public sealed partial class MasterConfig : BaseDbClass {
 		new(AutoExecTaskIdManualLockMonitor, AutoExecTaskNameManualLockMonitor, AutoExecCronManualLockMonitor, AutoExecEnabledManualLockMonitor, ValAutoExecDisabled),
 		new(AutoExecTaskIdReservationExpire, AutoExecTaskNameReservationExpire, AutoExecCronReservationExpire, AutoExecEnabledReservationExpire, ValAutoExecDisabled),
 		new(AutoExecTaskIdPointExpire, AutoExecTaskNamePointExpire, AutoExecCronPointExpire, AutoExecEnabledPointExpire, ValAutoExecDisabled),
+		new(AutoExecTaskIdOperationLogPurge, AutoExecTaskNameOperationLogPurge, AutoExecCronOperationLogPurge, AutoExecEnabledOperationLogPurge, ValAutoExecDisabled),
 	];
 	/// <summary>TaskId(Guid文字列)から実行フラグ設定名を組み立てる。CvDomainLogic の SchedulerJobConfigDb と同じ規則（先頭8桁）。</summary>
 	public static string AutoExecEnabledName(string taskId) => NameAutoExecEnabledPrefix + AutoExecTaskIdPrefix(taskId);

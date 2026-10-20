@@ -151,6 +151,135 @@ public sealed partial class SysHistJwtSub : ObservableObject {
 }
 
 /// <summary>
+/// 操作履歴テーブル（メニュー利用履歴）。旧CV HC$TRAN_CLICKCNT の後継
+/// <para>
+/// 誰が・いつ・どのメニューを開き・どの条件で何を実行したかを利用分析のために残す（Doc/spec/2026-10-20_メニュー利用履歴_最小変更設計案.md）。
+/// 利用者（<see cref="Id_Login"/>・<see cref="Id_Shain"/>）・時刻・IPはサーバが解決する。
+/// <see cref="ClientId"/>・<see cref="ScreenSession"/>・<see cref="FunctionId"/>・<see cref="MenuPath"/> はクライアントの申告値。
+/// 汎用の追加・更新・削除は拒否し、記録はサーバだけが行う。
+/// </para>
+/// </summary>
+[PrimaryKey(nameof(Id), AutoIncrement = true)]
+[Comment("システム：操作履歴テーブル メニュー起動・終了と照会条件・実行・印刷の記録")]
+[KeyDml("nk1", false, nameof(OpTime))]
+[KeyDml("nk2", false, nameof(Id_Shain), nameof(OpTime))]
+[KeyDml("nk3", false, nameof(FunctionId), nameof(OpTime))]
+[KeyDml("nk4", false, nameof(ScreenSession))]
+public sealed partial class SysHistOperation : BaseDbClass {
+	/// <summary>
+	/// 記録時刻 yyyyMMddHHmmssfff（サーバ時刻）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(17)]
+	[Comment("記録時刻 yyyyMMddHHmmssfff（サーバ時刻）")]
+	public partial string OpTime { get; set; } = string.Empty;
+	/// <summary>
+	/// 種類 <see cref="OperationKind"/>
+	/// </summary>
+	[ObservableProperty]
+	[Comment("種類 1:画面起動 2:画面終了 3:照会 4:更新 5:処理実行 6:印刷")]
+	public partial int Kind { get; set; }
+	/// <summary>
+	/// ログインユニークキー（SysLogin.Id、JWTからサーバ解決。未ログインは0）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("ログインユニークキー SysLogin.Id（JWTからサーバ解決）")]
+	public partial long Id_Login { get; set; }
+	/// <summary>
+	/// 社員Id（SysLogin.Id_Shain、サーバ解決）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("社員Id SysLogin.Id_Shain（サーバ解決）")]
+	public partial long Id_Shain { get; set; }
+	/// <summary>
+	/// 端末インスタンスId（X-ClientId、申告）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(36)]
+	[Comment("端末インスタンスId X-ClientId（申告）")]
+	public partial string ClientId { get; set; } = string.Empty;
+	/// <summary>
+	/// 画面を1回開くごとのGUID。起動〜終了とその間の照会・実行を結ぶ（申告）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(36)]
+	[Comment("画面セッション 画面を1回開くごとのGUID（申告）")]
+	public partial string ScreenSession { get; set; } = string.Empty;
+	/// <summary>
+	/// 機能Id 例 06Uriage.ShopUriageInput（申告）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(100)]
+	[Comment("機能Id 例 06Uriage.ShopUriageInput（申告）")]
+	public partial string FunctionId { get; set; } = string.Empty;
+	/// <summary>
+	/// メニューの階層表示（画面起動行のみ、申告）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(200)]
+	[Comment("メニュー階層 画面起動行のみ（申告）")]
+	public partial string MenuPath { get; set; } = string.Empty;
+	/// <summary>
+	/// 操作 CvFlag名・PrintPdf・MenuOpen 等
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(60)]
+	[Comment("操作 CvFlag名・PrintPdf・MenuOpen 等")]
+	public partial string Op { get; set; } = string.Empty;
+	/// <summary>
+	/// パラメータ型名
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(100)]
+	[Comment("パラメータ型名")]
+	public partial string DataType { get; set; } = string.Empty;
+	/// <summary>
+	/// 条件JSON（最大4000文字。超える場合は {"truncated":true,"head":…} に包む）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(4000)]
+	[Comment("条件JSON 最大4000文字")]
+	public partial string Condition { get; set; } = string.Empty;
+	/// <summary>
+	/// 結果コード 0:成功 負:エラー
+	/// </summary>
+	[ObservableProperty]
+	[Comment("結果コード 0:成功 負:エラー")]
+	public partial int ResultCode { get; set; }
+	/// <summary>
+	/// 取得件数（不明は-1）
+	/// </summary>
+	[ObservableProperty]
+	[Comment("取得件数 不明は-1")]
+	public partial int ResultCount { get; set; }
+	/// <summary>
+	/// 処理時間(ミリ秒)
+	/// </summary>
+	[ObservableProperty]
+	[Comment("処理時間(ミリ秒)")]
+	public partial int ElapsedMs { get; set; }
+	/// <summary>
+	/// 接続元IP（サーバ取得）
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(45)]
+	[Comment("接続元IP（サーバ取得）")]
+	public partial string Ip { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// <see cref="SysHistOperation.Kind"/> の値
+/// </summary>
+public static class OperationKind {
+	public const int MenuOpen = 1;
+	public const int MenuClose = 2;
+	public const int Query = 3;
+	public const int Update = 4;
+	public const int Execute = 5;
+	public const int Print = 6;
+}
+
+/// <summary>
 /// システム：権限プロファイルマスタ（システム操作権限セットの親）
 /// </summary>
 [PrimaryKey(nameof(Id), AutoIncrement = true)]

@@ -499,6 +499,17 @@ public sealed record OpeningBalanceImportResult(int Deleted, int Inserted);
 public sealed record PrintByCsvParam(string CsvData);
 
 /// <summary>
+/// 操作履歴（<see cref="SysHistOperation"/>）へ画面の起動・終了を記録するパラメータ（Msg093_OperationLog）。
+/// 利用者・時刻・IPはサーバが解決するので持たない。
+/// </summary>
+/// <param name="Kind"><see cref="OperationKind.MenuOpen"/> または <see cref="OperationKind.MenuClose"/></param>
+/// <param name="ScreenSession">画面を1回開くごとのGUID</param>
+/// <param name="FunctionId">機能Id</param>
+/// <param name="MenuPath">メニュー階層の表示（起動時のみ）</param>
+/// <param name="Condition">起動パラメータ（InitParam・AddInfo等。起動時のみ）</param>
+public sealed record OperationLogParam(int Kind, string ScreenSession, string FunctionId, string MenuPath, string Condition);
+
+/// <summary>
 /// ConvertDbのストリーミング処理パラメータ
 /// </summary>
 /// <param name="IsInit"></param>

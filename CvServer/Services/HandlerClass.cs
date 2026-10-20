@@ -624,6 +624,9 @@ public partial class CoreService {
 			if (RejectAiQueryBulkWrite(writeType, param) is string aiQueryError) {
 				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, aiQueryError, typeof(string), aiQueryError);
 			}
+			if (RejectOperationLogWrite(writeType) is string operationLogError) {
+				return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, operationLogError, typeof(string), operationLogError);
+			}
 		}
 		return param switch {
 			InsertParam insert => HandleInsert(request.Flag, insert),

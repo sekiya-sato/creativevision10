@@ -137,7 +137,29 @@ public static partial class AppGlobal {
 		return new Metadata {
 			new Metadata.Entry("X-ClientId", ClientId.ToString()),
 			new Metadata.Entry("Authorization", $"Bearer {LoginJwt}"),
+			new Metadata.Entry("X-Cv-Screen", _currentScreenHeader),
 		};
+	}
+
+	/// <summary>メインメニュー表示中の機能Id（操作履歴のヘッダ用）</summary>
+	public const string MainMenuFunctionId = "MainMenu";
+	/// <summary>
+	/// 操作中の画面「画面セッション|機能Id」。サーバの操作履歴（SysHistOperation）がどの画面からの要求かを記録するために送る。
+	/// 画面のアクティブ化で切り替わり、子ダイアログは親画面の値を引き継ぐ。
+	/// </summary>
+	private static volatile string _currentScreenHeader = "|" + MainMenuFunctionId;
+
+	/// <summary>操作中の画面を切り替える（ヘッダはASCIIのみ送れるので、それ以外の文字は ? に置き換える）</summary>
+	public static void SetCurrentScreen(string screenSession, string functionId) {
+		var value = $"{screenSession}|{functionId}";
+		_currentScreenHeader = string.Concat(value.Select(c => c is >= ' ' and <= '~' ? c : '?'));
+	}
+
+	/// <summary>指定の画面が操作中ならメインメニューへ戻す</summary>
+	public static void ClearCurrentScreen(string screenSession) {
+		if (_currentScreenHeader.StartsWith(screenSession + "|", StringComparison.Ordinal)) {
+			_currentScreenHeader = "|" + MainMenuFunctionId;
+		}
 	}
 	/// <summary>
 	/// gRPCサービスを取得する

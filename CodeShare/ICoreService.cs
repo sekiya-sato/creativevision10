@@ -349,6 +349,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg092_AiQueryValidate = 92,
 	/// <summary>
+	/// 操作履歴（メニュー画面の起動・終了）の記録。利用者・時刻・IPはサーバで解決し、クライアントからは受け取らない
+	/// </summary>
+	[EnumMember]
+	Msg093_OperationLog = 93,
+	/// <summary>
 	/// DBデータを取得する
 	/// </summary>
 	[EnumMember]

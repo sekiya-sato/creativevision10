@@ -332,6 +332,9 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 				targetVm.InitParam = SelectedMenu.InitParam;
 				targetVm.AddInfo = $"{selectVm.SelectedTableName}|{selectVm.SelectedRowCount}";
 			}
+			// 操作履歴: 汎用テーブルメンテは選んだテーブルを起動条件に残す
+			OperationLogClient.Track(targetView, SelectedMenu.FunctionId, BuildMenuPath(SelectedMenu),
+				CvAsset.Common.SerializeObject(new { table = selectVm.SelectedTableName }));
 
 			var targetRet = ClientLib.ShowDialogView(targetView, null, IsDialog: SelectedMenu.IsDialog);
 			if (targetRet == true) {
@@ -353,6 +356,9 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 			vm0.InitParam = SelectedMenu.InitParam;
 			vm0.AddInfo = SelectedMenu.AddInfo;
 		}
+		// 操作履歴: AddInfo は説明文のことが多いので残さず、起動パラメータ(InitParam)だけを残す
+		OperationLogClient.Track(view, SelectedMenu.FunctionId, BuildMenuPath(SelectedMenu),
+			SelectedMenu.InitParam != 0 ? CvAsset.Common.SerializeObject(new { initParam = SelectedMenu.InitParam }) : string.Empty);
 		var ret = ClientLib.ShowDialogView(view, null, IsDialog: SelectedMenu.IsDialog);
 		if (ret == true) {
 			if (view.DataContext is _00System.LoginViewModel vm) {
@@ -775,6 +781,25 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	/// <summary>
 	/// 指定したMenuDataの親のHeaderを再帰的に探索して返す
 	/// </summary>
+	/// <summary>
+	/// 操作履歴用のメニュー階層表示（例「■ 売上 › ▲ 店舗業務 › 店舗売上入力」）。見つからなければ見出しだけ。
+	/// </summary>
+	private string BuildMenuPath(MenuData target) {
+		var path = new List<string>();
+		return FindMenuPath(MenuItems, target, path) ? string.Join(" › ", path) : target.Header;
+	}
+
+	private static bool FindMenuPath(IEnumerable<MenuData> nodes, MenuData target, List<string> path) {
+		foreach (var node in nodes) {
+			path.Add(node.Header);
+			if (ReferenceEquals(node, target) || (node.SubItems != null && FindMenuPath(node.SubItems, target, path))) {
+				return true;
+			}
+			path.RemoveAt(path.Count - 1);
+		}
+		return false;
+	}
+
 	private string? FindParentHeader(IEnumerable<MenuData> nodes, MenuData? target) {
 		if (target == null) return null;
 		foreach (var node in nodes) {
