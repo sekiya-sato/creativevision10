@@ -162,6 +162,9 @@ public class UpdateDb {
 			"ALTER TABLE Tran01Tenuri ADD COLUMN UsePoint NUMBER not null default 0;" +
 			"ALTER TABLE MasterPointBase ADD COLUMN ExpireMonths NUMBER not null default 0;",
 			"店舗売上の付与・使用ポイントと、ベース版の失効月数を追加。既存は使用0・失効しない。GrantPointは次のポイント再計算で台帳から設定される"),
+		new (26_10_20_01,
+			"ALTER TABLE SysAiQuery ADD COLUMN SpecSummary TEXT NOT NULL DEFAULT '';",
+			"AI照会の共有保存へ確定した条件（AIの要約）列を追加 既存の保存は未設定('') SysAiQuery未作成のDBではDefineDataTableが新列込みで作るため本SQLは列重複で失敗するが影響はない"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

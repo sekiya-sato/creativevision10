@@ -45,7 +45,7 @@ public sealed partial class AiQueryParamRow : ObservableObject {
 }
 
 /// <summary>
-/// 個人保存（PC内）の1件。共有保存（<see cref="SysAiQuery"/>）と同じ6項目だけを持つ。
+/// 個人保存（PC内）の1件。共有保存（<see cref="SysAiQuery"/>）と同じ7項目だけを持つ。
 /// Doc/spec/2026-10-19_AI-query_最小変更設計案.md §5.4
 /// </summary>
 public sealed record class AiQuerySaved {
@@ -55,11 +55,14 @@ public sealed record class AiQuerySaved {
 	public string SqlParams { get; set; } = string.Empty;
 	public long Id_Login { get; set; }
 	public string Description { get; set; } = string.Empty;
+	/// <summary>確定した条件（AIの要約）。旧ファイルには無く空文字になる</summary>
+	public string SpecSummary { get; set; } = string.Empty;
 
 	public string SaveDateText => FormatDay(SaveDate);
 
 	public static AiQuerySaved From(SysAiQuery q) => new() {
 		SaveDate = q.SaveDate, Title = q.Title, SqlText = q.SqlText, SqlParams = q.SqlParams, Id_Login = q.Id_Login, Description = q.Description,
+		SpecSummary = q.SpecSummary,
 	};
 
 	internal static string FormatDay(string day) =>

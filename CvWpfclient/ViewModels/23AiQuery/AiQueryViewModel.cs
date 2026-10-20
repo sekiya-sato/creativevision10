@@ -546,6 +546,7 @@ public partial class AiQueryViewModel : BaseViewModel {
 		item.Description = draft.Description;
 		item.SqlText = draft.Sql;
 		item.SqlParams = Common.SerializeObject(draft.Parameters);
+		item.SpecSummary = SpecSummary.Trim();
 		IsBusy = true;
 		try {
 			var msg = update
@@ -583,6 +584,7 @@ public partial class AiQueryViewModel : BaseViewModel {
 				SqlParams = Common.SerializeObject(draft.Parameters),
 				Id_Login = ResolveLoginId(),
 				Description = draft.Description,
+				SpecSummary = SpecSummary.Trim(),
 			});
 			AiQueryPersonalStore.Save(items);
 			SqlMessage = "個人保存しました（このPCだけに保存されます）。";
@@ -659,6 +661,8 @@ public partial class AiQueryViewModel : BaseViewModel {
 			return;
 		}
 		ResetConversation();
+		// 保存時の確定条件は参考表示として戻す（会話の状態・AIへの送信内容には含めない）
+		SpecSummary = saved.SpecSummary;
 		var draft = new AiQuerySqlDraft { Sql = saved.SqlText, Parameters = parameters, Title = saved.Title, Description = saved.Description };
 		loadedShared = null;
 		SetDraft(draft, conditionRevision, validated: false);
@@ -734,7 +738,7 @@ public partial class AiQueryViewModel : BaseViewModel {
 
 	/// <summary>
 	/// 指定ファイルを読み込み、個人保存へ追加する（ダイアログで選んだ後の処理）。追加した件数を返す。
-	/// 同じ内容（6項目が一致）は追加しない。読めないファイルは例外にし、個人保存は変更しない。
+	/// 同じ内容（7項目が一致）は追加しない。読めないファイルは例外にし、個人保存は変更しない。
 	/// </summary>
 	public int ImportPersonalFrom(string path) {
 		var imported = AiQueryPersonalStore.Load(path);

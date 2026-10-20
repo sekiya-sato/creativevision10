@@ -107,6 +107,7 @@ public class AiQueryTests {
 		}),
 		Id_Login = 999,
 		Description = "説明",
+		SpecSummary = "店舗別・先月・税抜",
 	};
 
 	/// <summary>
@@ -120,6 +121,7 @@ public class AiQueryTests {
 		var saved = _db!.Fetch<SysAiQuery>("where Title=@0", "先月の店舗別売上").Single();
 		Assert.AreEqual(DateTime.Now.ToString("yyyyMMdd"), saved.SaveDate);
 		Assert.AreEqual(7L, saved.Id_Login);
+		Assert.AreEqual("店舗別・先月・税抜", saved.SpecSummary);
 
 		// パラメータの型・"0"・空文字・AskOnRun・順序が往復で変わらない
 		var parameters = Common.DeserializeObject<List<AiQueryParam>>(saved.SqlParams)!;

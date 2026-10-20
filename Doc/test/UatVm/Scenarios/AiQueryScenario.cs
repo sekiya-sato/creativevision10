@@ -27,6 +27,7 @@ public static class AiQueryScenario {
 	const string ShopA = "000701";
 	const string ShopB = "000702";
 	const string SharedTitle = "UAT 2026年9月 店舗別純売上";
+	const string SharedSpec = "対象: 店舗売上（2026年9月、計上日）\n集計: 店舗別の伝票数と純売上（返品控除）";
 
 	/// <summary>店舗売上の純額（返品はCalcFlagで控除）を店舗別に出す保存SQL。業務辞書の規約どおりの形</summary>
 	const string SharedSql = """
@@ -63,6 +64,7 @@ public static class AiQueryScenario {
 		}
 		db.Insert(new SysAiQuery {
 			SaveDate = "20261001", Title = SharedTitle, SqlText = SharedSql, Description = "店舗売上を計上日で2026年9月に絞り、返品をCalcFlagで控除した純売上と伝票数を店舗別に出す",
+			SpecSummary = SharedSpec,
 			SqlParams = Common.SerializeObject(new List<AiQueryParam> {
 				new() { Name = "from", Label = "期間開始", Type = EnumAiQueryParamType.Date, Value = "20260901" },
 				new() { Name = "to", Label = "期間終了", Type = EnumAiQueryParamType.Date, Value = "20260930", AskOnRun = true },
@@ -92,6 +94,7 @@ public static class AiQueryScenario {
 			d.Run("開く", vm => vm.OpenSharedCommand);
 			Check(session, "SQL・パラメータの読込", d.Vm.SqlText.Contains("Tran01Tenuri") && d.Vm.Parameters.Count == 2 && d.Vm.SqlTitle == SharedTitle && !d.Vm.IsSqlValidated,
 				new { d.Vm.SqlTitle, Params = d.Vm.Parameters.Count, d.Vm.IsSqlValidated });
+			CheckEqual(session, "確定した条件の読込", SharedSpec, d.Vm.SpecSummary);
 			Check(session, "実行時入力の引継ぎ", d.Vm.Parameters[1].AskOnRun && d.Vm.Parameters[1].Type == EnumAiQueryParamType.Date);
 			await d.RunAsync("実行", vm => vm.RunCommand);
 			await d.WaitAsync("結果", vm => !vm.IsBusy && vm.HasResult);
@@ -133,6 +136,7 @@ public static class AiQueryScenario {
 			await d.RunAsync("共有保存", vm => vm.SaveSharedCommand);
 			await d.WaitAsync("共有一覧2件", vm => !vm.IsBusy && vm.SharedList.Count == 2);
 			var copy = d.Vm.SharedList.Single(x => x.Title.EndsWith("（コピー）"));
+			CheckEqual(session, "共有保存: 確定した条件を保存", SharedSpec, copy.SpecSummary);
 			Check(session, "保存日はサーバ打刻・元は残る", copy.SaveDate == DateTime.Today.ToString("yyyyMMdd") && d.Vm.SharedList.Any(x => x.Title == SharedTitle),
 				new { copy.SaveDate, copy.Id_Login });
 			session.Note("認証解除中のUATのため保存者(Id_Login)はJWTが無く0", new { copy.Id_Login });
@@ -147,6 +151,7 @@ public static class AiQueryScenario {
 			d.Input("個人保存（コピー）を選択", vm => vm.SelectedPersonal = vm.PersonalList.Single(x => x.Title.EndsWith("（コピー）")));
 			d.Run("個人保存を開く", vm => vm.OpenPersonalCommand);
 			Check(session, "個人保存から開ける", d.Vm.SqlTitle.EndsWith("（コピー）") && d.Vm.Parameters.Count == 2);
+			CheckEqual(session, "個人保存: 確定した条件を復元", SharedSpec, d.Vm.SpecSummary);
 			d.Run("個人保存を削除", vm => vm.DeletePersonalCommand);
 			CheckEqual(session, "個人保存1件（選択した1件だけ削除）", "1|" + SharedTitle + "（個人2）",
 				$"{d.Vm.PersonalList.Count}|{string.Join(",", d.Vm.PersonalList.Select(x => x.Title))}");

@@ -226,7 +226,7 @@ public sealed partial class SysHistMaster : BaseDbClass {
 /// <summary>
 /// AI照会の共有保存テーブル（Doc/spec/2026-10-19_AI-query_最小変更設計案.md §5.1）
 /// <para>
-/// 保存項目は日付・タイトル・SQL文・SQLパラメータ・ユーザId・SQL内容の説明の6項目。
+/// 保存項目は日付・タイトル・SQL文・SQLパラメータ・ユーザId・SQL内容の説明・確定した条件（AIの要約）の7項目。
 /// <see cref="SaveDate"/> と <see cref="Id_Login"/> はサーバが保存時に打刻し、クライアントの申告値を使わない。
 /// 全員が参照・更新でき、<see cref="Id_Login"/> を権限制御には使わない。
 /// </para>
@@ -277,4 +277,11 @@ public sealed partial class SysAiQuery : BaseDbClass {
 	[ColumnSizeDml(2000)]
 	[Comment("SQL内容の説明（会話から推測・確定した集計対象・項目・条件）")]
 	public partial string Description { get; set; } = string.Empty;
+	/// <summary>
+	/// 確定した条件（AIの要約）。開いたときに画面へ戻す参考表示で、SQLの実行には使わない
+	/// </summary>
+	[ObservableProperty]
+	[ColumnSizeDml(4000)]
+	[Comment("確定した条件（AIの要約）")]
+	public partial string SpecSummary { get; set; } = string.Empty;
 }
