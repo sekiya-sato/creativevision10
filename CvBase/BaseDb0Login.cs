@@ -321,6 +321,12 @@ public sealed partial class SysPermissionProfile : BaseDbClass {
 	public partial int ProfileVersion { get; set; } = 1;
 
 	/// <summary>
+	/// 全機能標準権限(FullAccess)のId。明細・既定ポリシーに関係なく全メニューを実行でき、明細は変更させない
+	/// （ロックアウト防止。Doc/spec/2026-10-20_メニュー実行権限と個人メニュー_最小変更設計案.md J3）
+	/// </summary>
+	public const long FullAccessId = 1;
+
+	/// <summary>
 	/// 初期プロファイルデータ（Role非依存の標準プロファイル。担当者Role・Scope・権限判定 詳細設計 §15.2）
 	/// </summary>
 	static readonly List<SysPermissionProfile> DefaultProfileData =

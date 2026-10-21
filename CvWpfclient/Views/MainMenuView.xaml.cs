@@ -402,6 +402,28 @@ public partial class MainMenuView : Window {
 		return brush;
 	}
 
+	/// <summary>右クリックした項目を選択してから、お気に入りの右クリックメニューを開く</summary>
+	private void MenuTree_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+		if (FindTreeViewItem(e.OriginalSource as DependencyObject) is TreeViewItem item) {
+			item.IsSelected = true;
+			item.Focus();
+		}
+	}
+
+	/// <summary>項目の無い所では右クリックメニューを出さない（前に選んだ項目へ追加・解除が効かないように）</summary>
+	private void MenuTree_ContextMenuOpening(object sender, ContextMenuEventArgs e) {
+		if (FindTreeViewItem(e.OriginalSource as DependencyObject) == null) {
+			e.Handled = true;
+		}
+	}
+
+	private static TreeViewItem? FindTreeViewItem(DependencyObject? source) {
+		while (source != null && source is not TreeViewItem) {
+			source = source is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+		}
+		return source as TreeViewItem;
+	}
+
 	private void MenuTree_PreviewKeyDown(object sender, KeyEventArgs e) {
 		if (e.Key != Key.Enter) {
 			return;

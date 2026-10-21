@@ -2,11 +2,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CvAsset;
+using CvBase;
 using CvBase.Share;
 using CvWpfclient.Helpers;
 using CvWpfclient.Models;
 using CvWpfclient.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Text.Json;
@@ -42,7 +44,18 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	partial void OnSelectedMenuChanged(MenuData? value) {
 		SelectedMenuParentHeader = FindParentHeader(MenuItems, value);
 		CanOpenSelectedMenu = value?.IsExecutable == true;
+		AddFavoriteCommand.NotifyCanExecuteChanged();
+		RemoveFavoriteCommand.NotifyCanExecuteChanged();
 	}
+
+	private static readonly ILogger _logger = new NLogExtender<MainMenuViewModel>();
+	/// <summary>ログインユーザのメニュー実行可否。ログイン前・読込失敗時は全許可</summary>
+	private MenuPermission _menuPermission = MenuPermission.AllowAll;
+	/// <summary>お気に入りを保存するログインID（ログイン前は null）</summary>
+	private string? _favoriteLoginId;
+	private List<string> _favorites = [];
+	/// <summary>お気に入りファイルが読めなかった。上書きしないよう追加・解除を止める</summary>
+	private bool _favoritesBroken;
 
 	[ObservableProperty]
 	public partial string? StatusMessage { get; set; }
@@ -302,6 +315,15 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 		if (SelectedMenu?.ViewType == null) return;
 		if (!SelectedMenu.ViewType.IsSubclassOf(typeof(Window)))
 			return;
+		// 権限変更前の表示などで不可のメニューへ到達した場合も開かない
+		if (!_menuPermission.CanOpen(SelectedMenu.FunctionId)) {
+			MessageEx.ShowWarningDialog("このメニューを使う権限がありません。管理者に確認してください。", owner: ClientLib.GetActiveView(this));
+			return;
+		}
+		if (_menuPermission.DefaultMode == EnumPermissionDefaultMode.Warn && _menuPermission.IsByDefault(SelectedMenu.FunctionId)) {
+			_logger.LogWarning("権限明細の無いメニューを既定ポリシー(警告付き許可)で起動 Profile={Profile} FunctionId={FunctionId}",
+				_menuPermission.ProfileId, SelectedMenu.FunctionId);
+		}
 		// Product : ログインしてないときはログイン画面を出す etc リリース前に実装
 		if (InfolocalServer == null) {
 			await afterLogin(new _00System.LoginViewModel());
@@ -373,8 +395,8 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	}
 	async Task afterLogin(_00System.LoginViewModel vm) {
 		if (vm?.LoginData != null) {
-			// SysLogin.Id_Role に応じてロール別メニューを出し分けるため、ログイン結果でメニューを作り直す
-			UpdateMenuForRole(AppGlobal.ToLoginRole(vm.LoginData.Role));
+			// 権限プロファイル・お気に入りに応じて、ログイン結果でメニューを作り直す
+			await UpdateMenuForLoginAsync(vm);
 			ExpireDate = vm.LoginData?.Expire.ToDtStrDateTime2();
 			InfolocalUser.LoginTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 			InfolocalUser.ExpireTime = ExpireDate;
@@ -389,16 +411,76 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	}
 
 	/// <summary>
-	/// ロールが変わったときだけメニューを作り直す。選択中メニューは作り直しで無効になるためクリアする。
+	/// ログインユーザの権限プロファイルとお気に入りを読み込み、メニューを作り直す（Doc/spec/2026-10-20_メニュー実行権限と個人メニュー_最小変更設計案.md §4）。
+	/// 選択中メニューは作り直しで無効になるためクリアする。
 	/// </summary>
-	private void UpdateMenuForRole(EnumLoginRole role) {
-		if (AppGlobal.CurrentRole == role && IsMenuReady) {
+	private async Task UpdateMenuForLoginAsync(_00System.LoginViewModel vm) {
+		AppGlobal.CurrentRole = AppGlobal.ToLoginRole(vm.LoginData!.Role);
+		try {
+			_menuPermission = await MenuPermission.LoadAsync(vm.LoginData.PermissionProfileId, App.GetHostLifetimeToken());
+		}
+		catch (Exception ex) {
+			// 業務メニュー権限はセキュリティ境界ではないので、読めなければ従来どおり全メニューで続ける
+			_logger.LogWarning(ex, "権限情報の取得に失敗 Profile={Profile}", vm.LoginData.PermissionProfileId);
+			_menuPermission = MenuPermission.AllowAll;
+			MessageEx.ShowWarningDialog("権限情報を取得できませんでした。すべてのメニューを表示します。", ex.Message, ClientLib.GetActiveView(this));
+		}
+		// トークン更新(InitParam=1)の画面は設定ファイルのログインIDを表示するだけなので、
+		// ログイン済みならログインしたときのIDを引き継ぐ（別IDでログインした端末で他人のお気に入りを開かないため）
+		var loginId = vm.InitParam == 1 && _favoriteLoginId != null ? _favoriteLoginId
+			: string.IsNullOrWhiteSpace(vm.LoginId) ? AppGlobal.Application.LoginId : vm.LoginId;
+		_favoriteLoginId = string.IsNullOrWhiteSpace(loginId) ? null : loginId;
+		_favorites = [];
+		_favoritesBroken = false;
+		if (_favoriteLoginId != null) {
+			try {
+				_favorites = MenuFavoriteStore.Load(_favoriteLoginId);
+			}
+			catch (Exception ex) {
+				_favoritesBroken = true;
+				_logger.LogWarning(ex, "お気に入りの読込に失敗 Path={Path}", MenuFavoriteStore.GetFilePath(_favoriteLoginId));
+				MessageEx.ShowWarningDialog("お気に入りを読み込めませんでした。お気に入りは表示されず、追加・解除もできません。",
+					$"{MenuFavoriteStore.GetFilePath(_favoriteLoginId)}\n{ex.Message}", ClientLib.GetActiveView(this));
+			}
+		}
+		SelectedMenu = null;
+		MenuItems = MenuData.CreateFor(MenuData.CreateDefault(), _menuPermission.CanOpen, _favorites);
+		IsMenuReady = true;
+	}
+
+	bool CanAddFavorite() => !_favoritesBroken && _favoriteLoginId != null
+		&& SelectedMenu is { IsExecutable: true, IsFavoriteEntry: false } menu && !_favorites.Contains(menu.FunctionId ?? string.Empty);
+
+	/// <summary>選択中のメニューをお気に入りの末尾へ追加する</summary>
+	[RelayCommand(CanExecute = nameof(CanAddFavorite))]
+	private void AddFavorite() {
+		if (SelectedMenu?.FunctionId is not string functionId) return;
+		SaveFavorites([.. _favorites, functionId]);
+	}
+
+	bool CanRemoveFavorite() => !_favoritesBroken && _favoriteLoginId != null && SelectedMenu?.IsFavoriteEntry == true;
+
+	/// <summary>選択中のお気に入り項目を外す</summary>
+	[RelayCommand(CanExecute = nameof(CanRemoveFavorite))]
+	private void RemoveFavorite() {
+		if (SelectedMenu?.FunctionId is not string functionId) return;
+		SelectedMenu = null;
+		SaveFavorites([.. _favorites.Where(x => x != functionId)]);
+	}
+
+	private void SaveFavorites(List<string> favorites) {
+		try {
+			MenuFavoriteStore.Save(_favoriteLoginId!, favorites);
+			_favorites = favorites;
+		}
+		catch (Exception ex) {
+			_logger.LogWarning(ex, "お気に入りの保存に失敗");
+			MessageEx.ShowErrorDialog($"お気に入りを保存できませんでした。{ex.Message}", owner: ClientLib.GetActiveView(this));
 			return;
 		}
-		AppGlobal.CurrentRole = role;
-		SelectedMenu = null;
-		MenuItems = MenuData.CreateDefault();
-		IsMenuReady = true;
+		MenuData.ReplaceFavoriteFolder(MenuItems, _favorites);
+		AddFavoriteCommand.NotifyCanExecuteChanged();
+		RemoveFavoriteCommand.NotifyCanExecuteChanged();
 	}
 
 	/// <summary>ショートカットでログイン画面を呼び出す</summary>

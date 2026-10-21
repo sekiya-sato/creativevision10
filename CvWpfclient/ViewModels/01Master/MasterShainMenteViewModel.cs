@@ -23,6 +23,12 @@ public partial class MasterShainMenteViewModel : Helpers.BaseCodeNameLightMenteV
 	public ObservableCollection<string> KubunOptions { get; } = new(Enumerable.Range(1, 5).Select(i => $"{MasterMeisho.KubunTopShain}{i:D2}"));
 	public List<MasterMeisho> KubunList = [];
 
+	/// <summary>権限プロファイルの選択肢（先頭は未割当）</summary>
+	public sealed record PermissionProfileOption(long Value, string Name);
+
+	[ObservableProperty]
+	public partial IReadOnlyList<PermissionProfileOption> PermissionProfileOptions { get; set; } = [new(0, "0:未割当")];
+
 	protected override string[] AdditionalLightweightColumns => ["Mail", "ExpireDate", "VTenpo", "VBumon"];
 
 	protected override string? SelectCodeDisplayName => "社員";
@@ -63,6 +69,7 @@ from MasterShain M {query.AddWhereOrder()}
 	[RelayCommand]
 	async Task Init() {
 		await DoGetKubun(CancellationToken.None);
+		await DoGetPermissionProfiles(CancellationToken.None);
 		await DoList(CancellationToken.None);
 	}
 
@@ -94,6 +101,28 @@ from MasterShain M {query.AddWhereOrder()}
 	protected override object CreateUpdateParam() {
 		SyncSubListsToCurrentEdit();
 		return base.CreateUpdateParam();
+	}
+
+	/// <summary>権限プロファイルの選択肢を読む。無効なプロファイルも割当済みの社員を表示できるよう残す</summary>
+	async Task DoGetPermissionProfiles(CancellationToken ct) {
+		try {
+			var msg = new CvMsg {
+				Code = 0,
+				Flag = CvFlag.Msg101_Op_Query,
+				DataType = typeof(QueryListParam),
+				DataMsg = Common.SerializeObject(new QueryListParam(typeof(SysPermissionProfile), null, "Id"))
+			};
+			var reply = await SendMessageAsync(msg, ct);
+			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
+				PermissionProfileOptions = [new(0, "0:未割当"),
+					.. list.Cast<SysPermissionProfile>().Select(x => new PermissionProfileOption(x.Id, $"{x.Id}:{x.Name}{(x.IsActive ? "" : "（無効）")}"))];
+			}
+		}
+		catch (OperationCanceledException) {
+		}
+		catch (Exception ex) {
+			Message = $"権限プロファイル取得失敗: {ex.Message}";
+		}
 	}
 
 	async Task DoGetKubun(CancellationToken ct) {

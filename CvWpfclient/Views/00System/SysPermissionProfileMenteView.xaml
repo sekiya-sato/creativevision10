@@ -1,0 +1,297 @@
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._00System.SysPermissionProfileMenteView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfclient.ViewModels._00System"
+	Title="{Binding Title}"
+	Width="{StaticResource StandardWindowWidth}"
+	Height="{StaticResource StandardWindowHeight}"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="19"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:SysPermissionProfileMenteViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding ReloadCommand}"
+			Gesture="F5" />
+		<KeyBinding Command="{Binding SaveCommand}"
+			Gesture="Ctrl+S" />
+	</helpers:BaseWindow.InputBindings>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<!--  ヘッダー: ColorZone ツールバー  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<Button Margin="0,0,8,0"
+					Command="{Binding ExitCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="閉じる (Esc)">
+					<materialDesign:PackIcon Kind="ArrowLeft" />
+				</Button>
+				<materialDesign:PackIcon Width="28" Height="28"
+					VerticalAlignment="Center"
+					Kind="ShieldAccountOutline" />
+				<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+					FontSize="20" FontWeight="SemiBold"
+					Text="{Binding Title}" />
+				<Rectangle Width="1"
+					Margin="16,4"
+					Fill="{DynamicResource PrimaryHueMidForegroundBrush}"
+					Opacity="0.3" />
+				<Button Command="{Binding ReloadCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="再読込 (F5)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="Refresh" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="再読込" />
+					</StackPanel>
+				</Button>
+				<Button Command="{Binding NewProfileCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="プロファイルを追加">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="Plus" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="新規" />
+					</StackPanel>
+				</Button>
+				<Button Command="{Binding SaveCommand}"
+					Style="{StaticResource ToolCommandButton}"
+					ToolTip="保存 (Ctrl+S)">
+					<StackPanel Orientation="Horizontal">
+						<materialDesign:PackIcon VerticalAlignment="Center"
+							Kind="ContentSave" />
+						<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+							Text="保存" />
+					</StackPanel>
+				</Button>
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<Grid Grid.Row="1"
+			Margin="12">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="400" MinWidth="300" />
+				<ColumnDefinition Width="12" />
+				<ColumnDefinition Width="*" MinWidth="400" />
+			</Grid.ColumnDefinitions>
+
+			<!--  ===== 左: プロファイル一覧と編集欄 =====  -->
+			<Grid Grid.Column="0">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="*" MinHeight="120" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<materialDesign:Card Grid.Row="0"
+					Padding="0"
+					materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+					<DataGrid d:ItemsSource="{d:SampleData ItemCount=4}"
+						materialDesign:DataGridAssist.CellPadding="8,4" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" FontSize="14"
+						GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True"
+						ItemsSource="{Binding Profiles}"
+						SelectedItem="{Binding SelectedProfile}"
+						SelectionMode="Single"
+						Style="{StaticResource MaterialDesignDataGrid}">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="40"
+								Binding="{Binding Id}"
+								Header="Id" />
+							<DataGridTextColumn Width="*"
+								Binding="{Binding Name}"
+								Header="名称" />
+							<DataGridCheckBoxColumn Width="64"
+								Binding="{Binding IsActive}"
+								Header="有効" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</materialDesign:Card>
+
+				<materialDesign:Card Grid.Row="1"
+					Margin="0,12,0,0" Padding="12,8"
+					materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="70" />
+							<ColumnDefinition Width="*" />
+						</Grid.ColumnDefinitions>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+						</Grid.RowDefinitions>
+						<TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+							Margin="0,0,0,4"
+							FontSize="14" FontWeight="SemiBold"
+							Text="{Binding EditHeader}" />
+						<TextBlock Grid.Row="1"
+							Style="{StaticResource FormLabel}"
+							Text="コード" />
+						<TextBox Grid.Row="1" Grid.Column="1"
+							materialDesign:HintAssist.Hint="例 StoreStaff" MaxLength="30"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding EditProfile.Code, UpdateSourceTrigger=PropertyChanged}" />
+						<TextBlock Grid.Row="2"
+							Style="{StaticResource FormLabel}"
+							Text="名称" />
+						<TextBox Grid.Row="2" Grid.Column="1"
+							materialDesign:HintAssist.Hint="例 店舗スタッフ" MaxLength="60"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding EditProfile.Name, UpdateSourceTrigger=PropertyChanged}" />
+						<TextBlock Grid.Row="3"
+							Style="{StaticResource FormLabel}"
+							Text="説明" />
+						<TextBox Grid.Row="3" Grid.Column="1"
+							materialDesign:HintAssist.Hint="説明" MaxLength="120"
+							Style="{StaticResource FormTextBox}"
+							Text="{Binding EditProfile.Memo, UpdateSourceTrigger=PropertyChanged}" />
+						<CheckBox Grid.Row="4" Grid.Column="1"
+							Margin="0,6"
+							Content="有効"
+							FontSize="14"
+							IsChecked="{Binding EditProfile.IsActive}"
+							IsEnabled="{Binding CanEditRules}"
+							ToolTip="無効にすると、割り当てた社員は明細を使わず既定ポリシーだけで判定されます" />
+					</Grid>
+				</materialDesign:Card>
+			</Grid>
+
+			<!--  ===== 右: メニューごとの実行可否 =====  -->
+			<materialDesign:Card Grid.Column="2"
+				Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<StackPanel>
+							<WrapPanel IsEnabled="{Binding CanEditRules}">
+								<TextBlock Margin="0,0,8,0" VerticalAlignment="Center"
+									FontSize="13"
+									Text="選択行（フォルダは配下すべて）を" />
+								<Button Margin="0,0,6,0"
+									Command="{Binding SetAllowCommand}"
+									Content="許可"
+									Style="{StaticResource MaterialDesignFlatMidBgButton}" />
+								<Button Margin="0,0,6,0"
+									Command="{Binding SetDenyCommand}"
+									Content="禁止"
+									Style="{StaticResource MaterialDesignFlatMidBgButton}" />
+								<Button Command="{Binding SetDefaultCommand}"
+									Content="既定"
+									Style="{StaticResource MaterialDesignFlatMidBgButton}" />
+							</WrapPanel>
+							<TextBlock Margin="0,6,0,0"
+								FontSize="13"
+								Foreground="{DynamicResource MaterialDesignBodyLight}"
+								Text="{Binding DefaultModeText}"
+								TextWrapping="Wrap" />
+						</StackPanel>
+					</Border>
+					<DataGrid Grid.Row="1"
+						d:ItemsSource="{d:SampleData ItemCount=8}"
+						materialDesign:DataGridAssist.CellPadding="8,2" materialDesign:DataGridAssist.ColumnHeaderPadding="8,6" AutoGenerateColumns="False" CanUserSortColumns="False"
+						EnableRowVirtualization="True" FontSize="14"
+						GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True"
+						ItemsSource="{Binding MenuRows}"
+						SelectedItem="{Binding SelectedRow}"
+						SelectionMode="Single"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTemplateColumn Width="*" MinWidth="240"
+								Header="メニュー">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<TextBlock x:Name="header"
+											Margin="{Binding Indent}"
+											VerticalAlignment="Center"
+											Text="{Binding Header}"
+											TextTrimming="CharacterEllipsis" />
+										<DataTemplate.Triggers>
+											<DataTrigger Binding="{Binding IsFolder}" Value="True">
+												<Setter TargetName="header" Property="FontWeight" Value="SemiBold" />
+											</DataTrigger>
+										</DataTemplate.Triggers>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTemplateColumn Width="100"
+								Header="設定">
+								<DataGridTemplateColumn.CellTemplate>
+									<DataTemplate>
+										<ComboBox x:Name="setting"
+											MinWidth="80"
+											FontSize="14"
+											IsEnabled="{Binding DataContext.CanEditRules, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+											ItemsSource="{Binding DataContext.SettingItems, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+											SelectedIndex="{Binding Setting, UpdateSourceTrigger=PropertyChanged}" />
+										<DataTemplate.Triggers>
+											<DataTrigger Binding="{Binding IsFolder}" Value="True">
+												<Setter TargetName="setting" Property="Visibility" Value="Collapsed" />
+											</DataTrigger>
+										</DataTemplate.Triggers>
+									</DataTemplate>
+								</DataGridTemplateColumn.CellTemplate>
+							</DataGridTemplateColumn>
+							<DataGridTextColumn Width="100"
+								Binding="{Binding ResultText}"
+								Header="結果" />
+							<DataGridTextColumn Width="300"
+								Binding="{Binding FunctionId}"
+								Header="機能Id" />
+						</DataGrid.Columns>
+						<DataGrid.ColumnHeaderStyle>
+							<Style BasedOn="{StaticResource MenteDataGridColumnHeader}"
+								TargetType="DataGridColumnHeader" />
+						</DataGrid.ColumnHeaderStyle>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+		</Grid>
+
+		<!--  ステータスバー  -->
+		<StatusBar Grid.Row="2"
+			Background="{DynamicResource MaterialDesignToolBarBackground}">
+			<StatusBarItem>
+				<TextBlock FontSize="13"
+					Foreground="{DynamicResource MaterialDesignBodyLight}"
+					Text="{Binding Message}" />
+			</StatusBarItem>
+			<StatusBarItem HorizontalAlignment="Right">
+				<ProgressBar Width="16" Height="16"
+					IsIndeterminate="True"
+					Style="{StaticResource MaterialDesignCircularProgressBar}"
+					Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+			</StatusBarItem>
+		</StatusBar>
+	</Grid>
+</helpers:BaseWindow>

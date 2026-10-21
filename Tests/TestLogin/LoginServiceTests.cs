@@ -60,6 +60,40 @@ public sealed class LoginServiceTests {
 	}
 
 	[TestMethod]
+	public async Task LoginAsync_ReturnsShainPermissionProfileId_AndRefreshKeepsIt() {
+		using var context = new LoginServiceTestContext();
+		var shain = context.CreateShain("S001", "店舗社員", DateTime.Now.AddYears(1).ToDtStrDate2());
+		shain.Id_PermissionProfile = 2;
+		context.Database.Update(shain, [nameof(MasterShain.Id_PermissionProfile)]);
+		context.CreateLogin("user01", shain.Id, "Secret!2", DateTime.UtcNow);
+
+		var reply = await context.Service.LoginAsync(CreateLoginRequest("user01", "Secret!2", DateTime.UtcNow));
+		Assert.AreEqual(0, reply.Result);
+		Assert.AreEqual(2, reply.PermissionProfileId);
+
+		// ログイン中に割当を変えても、リフレッシュ時点の割当を返す
+		shain.Id_PermissionProfile = 3;
+		context.Database.Update(shain, [nameof(MasterShain.Id_PermissionProfile)]);
+		var refresh = await context.Service.LoginRefreshAsync(new LoginRefresh { Token = reply.JwtMessage, Info = CreateInfoJson() });
+		Assert.AreEqual(0, refresh.Result);
+		Assert.AreEqual(3, refresh.PermissionProfileId);
+	}
+
+	[TestMethod]
+	public async Task LoginAsync_WhenProfileUnassignedOrFirstLaunch_ReturnsZero() {
+		using var context = new LoginServiceTestContext();
+		var first = await context.Service.LoginAsync(CreateLoginRequest("init-user", "InitPass!1", DateTime.UtcNow));
+		Assert.AreEqual(0, first.Result);
+		Assert.AreEqual(0, first.PermissionProfileId, "初回起動（SysLogin 0件）は未割当");
+
+		var shain = context.CreateShain("S001", "未割当社員", DateTime.Now.AddYears(1).ToDtStrDate2());
+		context.CreateLogin("user01", shain.Id, "Secret!2", DateTime.UtcNow);
+		var reply = await context.Service.LoginAsync(CreateLoginRequest("user01", "Secret!2", DateTime.UtcNow));
+		Assert.AreEqual(0, reply.Result);
+		Assert.AreEqual(0, reply.PermissionProfileId);
+	}
+
+	[TestMethod]
 	public async Task LoginAsync_WithExpiredShain_ReturnsError() {
 		using var context = new LoginServiceTestContext();
 		var shain = context.CreateShain("S001", "期限切れ社員", DateTime.Now.AddDays(-1).ToDtStrDate2());

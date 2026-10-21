@@ -330,17 +330,19 @@
 										Text="{Binding CurrentEdit.VBumon, Converter={StaticResource CodeNameViewDisplayConverter}, ConverterParameter=NoId}" />
 								</DockPanel>
 
+								<!--  権限プロファイル: メニューの実行可否。反映は対象社員の次回ログインから  -->
 								<TextBlock Grid.Row="9"
-									d:Visibility="Visible"
 									Style="{StaticResource FormLabel}"
-									Text="権限プロファイルId" Visibility="Collapsed" />
-								<TextBox Grid.Row="9" Grid.Column="1"
-									Width="180"
+									Text="権限" />
+								<ComboBox Grid.Row="9" Grid.Column="1"
+									Width="280"
 									HorizontalAlignment="Left"
-									d:Visibility="Visible" materialDesign:HintAssist.Hint="権限プロファイルId"
-									Style="{StaticResource FormTextBox}"
-									Text="{Binding CurrentEdit.Id_PermissionProfile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-									Visibility="Collapsed" />
+									materialDesign:HintAssist.Hint="権限プロファイル" DisplayMemberPath="Name"
+									ItemsSource="{Binding PermissionProfileOptions}"
+									SelectedValue="{Binding CurrentEdit.Id_PermissionProfile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									SelectedValuePath="Value"
+									Style="{StaticResource FormComboBox}"
+									ToolTip="メニューの実行可否を決める権限プロファイル（権限プロファイル設定で編集）。次回ログインから反映" />
 
 								<!--  Hht除外  -->
 								<TextBlock Grid.Row="10"

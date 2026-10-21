@@ -65,7 +65,7 @@ public partial class LoginService : ILoginService {
 			if (request.Info != null) {
 				InsertLoginHistory(jwt, request.Info, "LoginAsync First", -9);
 			}
-			return Task.FromResult(CreateLoginReply(jwt, role: 0, includeInfoPayload: true));
+			return Task.FromResult(CreateLoginReply(jwt, role: 0, permissionProfileId: 0, includeInfoPayload: true));
 		}
 		var loginData = _db.Fetch<SysLogin>($"where LoginId=@0", [request.LoginId]).FirstOrDefault();
 
@@ -94,7 +94,7 @@ public partial class LoginService : ILoginService {
 		}
 		var loginJwt = CreateToken(claims, _jwtSettings.Lifetime);
 		InsertLoginHistory(loginJwt, request.Info, "LoginAsync", loginData.Id);
-		return Task.FromResult(CreateLoginReply(loginJwt, loginData.Id_Role, includeInfoPayload: true));
+		return Task.FromResult(CreateLoginReply(loginJwt, loginData.Id_Role, ResolvePermissionProfileId(loginData.Id_Shain), includeInfoPayload: true));
 	}
 	/// <summary>
 	/// トークン作成共通ロジック
@@ -131,6 +131,7 @@ public partial class LoginService : ILoginService {
 		var serialNumberClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.SerialNumber);
 		// リフレッシュ後もクライアントのロール別メニューを維持するため、SysLoginのロールを引き継ぐ
 		long refreshRole = 0;
+		long refreshProfileId = 0;
 		if (serialNumberClaim != null && long.TryParse(serialNumberClaim.Value, out var loginId)) {
 			var loginDataRefresh = _db.Fetch<SysLogin>($"where Id=@0", [loginId]).FirstOrDefault();
 			if (loginDataRefresh == null)
@@ -139,10 +140,11 @@ public partial class LoginService : ILoginService {
 			if (userCheck != null)
 				return Task.FromResult(userCheck);
 			refreshRole = loginDataRefresh.Id_Role;
+			refreshProfileId = ResolvePermissionProfileId(loginDataRefresh.Id_Shain);
 		}
 		var jwt = CreateToken(jsonToken.Claims, _jwtSettings.RefreshLifetime, jsonToken.Issuer);
 		InsertLoginHistory(jwt, request.Info, "LoginRefreshAsync");
-		return Task.FromResult(CreateLoginReply(jwt, refreshRole, includeInfoPayload: false));
+		return Task.FromResult(CreateLoginReply(jwt, refreshRole, refreshProfileId, includeInfoPayload: false));
 	}
 
 	/// <summary>
@@ -174,7 +176,7 @@ public partial class LoginService : ILoginService {
 		_db.Insert<SysLogin>(initLogin);
 		var jwt = CreateToken(claims, _jwtSettings.Lifetime);
 		InsertLoginHistory(jwt, request.Info, "CreateLoginAsync", initLogin.Id);
-		return Task.FromResult(CreateLoginReply(jwt, role: 0, includeInfoPayload: true));
+		return Task.FromResult(CreateLoginReply(jwt, role: 0, permissionProfileId: 0, includeInfoPayload: true));
 	}
 	/// <summary>
 	/// 社員マスタの有効期限をチェックする
@@ -201,12 +203,22 @@ public partial class LoginService : ILoginService {
 		return Common.SerializeObject(_appGlobal.VerInfo);
 	}
 
-	private LoginReply CreateLoginReply(JwtSecurityToken jwt, long role, bool includeInfoPayload) {
+	/// <summary>
+	/// 社員に割り当てた権限プロファイルIdを返す。社員が無い・未割当なら0（メニュー実行可否は既定ポリシーに従う）
+	/// </summary>
+	private long ResolvePermissionProfileId(long idShain) {
+		if (idShain <= 0)
+			return 0;
+		return _db.Fetch<MasterShain>($"where Id=@0", [idShain]).FirstOrDefault()?.Id_PermissionProfile ?? 0;
+	}
+
+	private LoginReply CreateLoginReply(JwtSecurityToken jwt, long role, long permissionProfileId, bool includeInfoPayload) {
 		var reply = new LoginReply {
 			JwtMessage = _tokenHandler.WriteToken(jwt),
 			Result = 0,
 			Expire = jwt.ValidTo.ToLocalTime(),
 			Role = role,
+			PermissionProfileId = permissionProfileId,
 		};
 		if (includeInfoPayload) {
 			reply.InfoPayload = GetAddInfo();

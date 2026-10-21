@@ -398,6 +398,18 @@ public sealed class JodaiTimelineOtherSlipRow {
 /// <param name="NewRows">登録する行</param>
 public sealed record HaibunSaveParam(DeleteBulkRow[] ReplaceRows, TranHaibun[] NewRows);
 
+/// <summary>
+/// 権限プロファイルの保存（Doc/spec/2026-10-20_メニュー実行権限と個人メニュー_最小変更設計案.md §6.3）。
+/// プロファイル行の追加・更新と、そのプロファイルのメニュー実行(View)明細の洗い替えをサーバが1トランザクションで行う。
+/// <para>
+/// <see cref="Profile"/> の Id=0 は追加、それ以外は読込時点の Vdu で楽観排他する（不一致なら何も書かない）。
+/// Edit(2) の明細には触れない。FullAccess(Id=1) は固定で全許可のため明細を変えず、有効のまま保存する。
+/// </para>
+/// </summary>
+/// <param name="Profile">保存するプロファイル（コード・名称・メモ・有効、更新時は読込時点のId・Vdu）</param>
+/// <param name="ViewRows">明示する許可/禁止の行（FunctionIdと許可/禁止。それ以外の列はサーバが揃える）。既定に戻すメニューは含めない</param>
+public sealed record PermissionProfileSaveParam(SysPermissionProfile Profile, SysPermissionProfileDetail[] ViewRows);
+
 /// <summary>配分の洗い替え保存の結果</summary>
 /// <param name="DeletedCount">削除した行数</param>
 /// <param name="InsertedCount">登録した行数</param>

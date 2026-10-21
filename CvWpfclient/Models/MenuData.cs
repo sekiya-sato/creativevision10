@@ -18,6 +18,12 @@ public partial class MenuData : ObservableObject {
 	[ObservableProperty]
 	public partial string? AddInfo { get; set; }
 
+	/// <summary>
+	/// メインメニューでフォルダを開いているか（お気に入りフォルダを作り直しても開閉を保つために使う）
+	/// </summary>
+	[ObservableProperty]
+	public partial bool IsExpanded { get; set; }
+
 	/* --- after this line, only use for ViewModel --- */
 	public Type ViewType { get; set; } = typeof(object);
 
@@ -28,7 +34,20 @@ public partial class MenuData : ObservableObject {
 	/// <summary>
 	/// 権限判定用のFunctionId。明示指定が無ければ<see cref="DeriveFunctionId"/>で自動導出する。
 	/// </summary>
-	public string? FunctionId { get; init; }
+	public string? FunctionId {
+		get => field ?? DeriveFunctionId(ViewType);
+		init;
+	}
+
+	/// <summary>
+	/// お気に入りフォルダ内の項目か（右クリックで「お気に入りから外す」を出す判定に使う）
+	/// </summary>
+	public bool IsFavoriteEntry { get; init; }
+
+	/// <summary>
+	/// お気に入りフォルダの見出し
+	/// </summary>
+	public const string FavoriteHeader = "★ お気に入り";
 
 	/// <summary>
 	/// Scope対象画面(<see cref="IsScopeTargetView"/>がtrueの画面)がどのScope種別を見るかの宣言。
@@ -55,6 +74,71 @@ public partial class MenuData : ObservableObject {
 	/// 常に全メニューを返す。
 	/// </summary>
 	public static ObservableCollection<MenuData> CreateDefault() => CreateAll();
+
+	/// <summary>
+	/// ログインユーザ向けのメニューを作る（Doc/spec/2026-10-20_メニュー実行権限と個人メニュー_最小変更設計案.md §4）。
+	/// 実行できないメニューと中身が無くなったフォルダを除き、お気に入りがあれば先頭に「★ お気に入り」を付ける。
+	/// </summary>
+	/// <param name="source">元のメニュー（<see cref="CreateDefault"/> 等。作り直したばかりのものを渡す。この中を書き換える）</param>
+	/// <param name="canOpen">FunctionIdを実行できるか</param>
+	/// <param name="favorites">お気に入りのFunctionId（表示順）</param>
+	public static ObservableCollection<MenuData> CreateFor(ObservableCollection<MenuData> source, Func<string?, bool> canOpen, IReadOnlyList<string> favorites) {
+		var menu = new ObservableCollection<MenuData>(source.Where(node => Prune(node, canOpen)));
+		ReplaceFavoriteFolder(menu, favorites);
+		return menu;
+	}
+
+	/// <summary>
+	/// 先頭の「★ お気に入り」を作り直す（無ければ追加、お気に入りが表示できなければ除く）。他のフォルダの開閉状態は変えない。
+	/// 実行できないメニューは <paramref name="menu"/> に無いので、お気に入りにも出ない。
+	/// </summary>
+	public static void ReplaceFavoriteFolder(ObservableCollection<MenuData> menu, IReadOnlyList<string> favorites) {
+		// 作り直したフォルダは前の開閉状態を引き継ぐ（初回は開いて出す）
+		var isExpanded = true;
+		if (menu.Count > 0 && menu[0].Header == FavoriteHeader) {
+			isExpanded = menu[0].IsExpanded;
+			menu.RemoveAt(0);
+		}
+		var entries = new List<MenuData>();
+		foreach (var functionId in favorites.Distinct(StringComparer.Ordinal)) {
+			// 同じ画面がロール別ショートカットにもあるときは、標準業務メニュー側の名称を使う
+			var found = FindLeaf(menu.Where(x => !IsRoleShortcut(x)), functionId) ?? FindLeaf(menu, functionId);
+			if (found != null) {
+				entries.Add(new MenuData(found.Header, found.ViewType, found.IsDialog, found.InitParam, found.AddInfo) {
+					FunctionId = found.FunctionId,
+					IsFavoriteEntry = true,
+				});
+			}
+		}
+		if (entries.Count > 0) {
+			menu.Insert(0, new MenuData(FavoriteHeader, new ObservableCollection<MenuData>(entries)) { IsExpanded = isExpanded });
+		}
+	}
+
+	/// <returns>残す場合 true。フォルダは配下を絞り込み、空になったら除く</returns>
+	static bool Prune(MenuData node, Func<string?, bool> canOpen) {
+		if (node.SubItems != null) {
+			node.SubItems = new ObservableCollection<MenuData>(node.SubItems.Where(child => Prune(child, canOpen)));
+			return node.SubItems.Count > 0;
+		}
+		return !node.IsExecutable || canOpen(node.FunctionId);
+	}
+
+	static MenuData? FindLeaf(IEnumerable<MenuData> nodes, string functionId) {
+		foreach (var node in nodes) {
+			if (node.SubItems != null) {
+				if (FindLeaf(node.SubItems, functionId) is MenuData found) {
+					return found;
+				}
+			}
+			else if (node.IsExecutable && node.FunctionId == functionId) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	static bool IsRoleShortcut(MenuData node) => node.Header is "■ 店舗業務" or "■ 倉庫業務";
 	public static ObservableCollection<MenuData> CreateDefault4Debug() {
 		var menu = CreateAll();
 		// デバッグ用に、ロール別メニューを削除する。
@@ -457,6 +541,7 @@ public partial class MenuData : ObservableObject {
 			new("▲ ログイン管理 ----", new([
 				new("ログイン管理マスタ", typeof(Views._00System.SysLoginView), addInfo:"ログインIDの管理とユーザ割当、有効期限の設定 旧データ変換した際には社員Idの再割当が必要"),
 				new("ログイン履歴情報", typeof(Views._00System.SysLoginHistoryView), addInfo:"ログイン履歴の確認"),
+				new("権限プロファイル設定", typeof(Views._00System.SysPermissionProfileMenteView), addInfo:"権限プロファイルごとにメニューの実行可否を設定。社員への割当は社員マスタ、反映は次回ログインから"),
 			])),
 			new("▲ 自動実行 ----", new([
 				new("自動実行管理マスタ", typeof(Views._00System.SysSchedulerJobMenteView), addInfo:"自動実行ジョブの一覧・変更"),

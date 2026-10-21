@@ -102,6 +102,8 @@
 	<Style x:Key="MenuTreeItemStyle"
 		TargetType="TreeViewItem">
 		<Setter Property="AutomationProperties.Name" Value="{Binding Header}" />
+		<!--  お気に入りフォルダを作り直しても開閉を保つため、MenuData.IsExpanded と同期する  -->
+		<Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
 		<Setter Property="Foreground" Value="{DynamicResource plainTextColor0}" />
 		<Setter Property="FontSize" Value="15" />
 		<Setter Property="Padding" Value="2" />

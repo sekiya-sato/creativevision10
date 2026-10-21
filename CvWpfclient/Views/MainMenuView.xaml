@@ -258,8 +258,19 @@
 							Background="Transparent" BorderThickness="0"
 							ItemContainerStyle="{StaticResource MenuTreeItemStyle}"
 							ItemsSource="{Binding MenuItems}"
-							PreviewKeyDown="MenuTree_PreviewKeyDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
+							PreviewKeyDown="MenuTree_PreviewKeyDown" ContextMenuOpening="MenuTree_ContextMenuOpening" PreviewMouseRightButtonDown="MenuTree_PreviewMouseRightButtonDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
 							Style="{StaticResource MenuTreeView}">
+							<TreeView.ContextMenu>
+								<ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}"
+									Style="{StaticResource MainMenuContextMenu}">
+									<MenuItem Command="{Binding AddFavoriteCommand}"
+										Header="お気に入りに追加"
+										Style="{StaticResource MainMenuContextMenuItem}" />
+									<MenuItem Command="{Binding RemoveFavoriteCommand}"
+										Header="お気に入りから外す"
+										Style="{StaticResource MainMenuContextMenuItem}" />
+								</ContextMenu>
+							</TreeView.ContextMenu>
 
 							<TreeView.ItemTemplate>
 								<HierarchicalDataTemplate DataType="{x:Type models:MenuData}"

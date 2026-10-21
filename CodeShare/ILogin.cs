@@ -53,6 +53,12 @@ public sealed record class LoginReply {
 	/// </summary>
 	[DataMember(Order = 5)]
 	public long Role { get; set; }
+	/// <summary>
+	/// ログインユーザの社員に割り当てた権限プロファイル(MasterShain.Id_PermissionProfile)。0=未割当。
+	/// クライアントがメニューの実行可否を判定するために返す。
+	/// </summary>
+	[DataMember(Order = 6)]
+	public long PermissionProfileId { get; set; }
 }
 /// <summary>
 /// ログインリフレッシュ
