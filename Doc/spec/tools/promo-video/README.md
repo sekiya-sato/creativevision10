@@ -10,6 +10,7 @@ Creative Vision 10 のプロモーション動画を、Python のコードだけ
 | `v1.py` GENESIS | 実コミット1,801件の二重螺旋 → 3層アーキテクチャ → 業務領域の地球儀 → 数字 → 24,000粒子でロゴ形成 | 52秒 |
 | `v2.py` 十の利点 | 120BPM に同期したキネティック・タイポグラフィ（README の十のメリット）＋実画面モンタージュ | 40秒 |
 | `v3.py` REAL SCREENS | 実画面の壁、業務フロー6画面の3D巡回（床面反射）、帳票の螺旋、4種DB、実画面サムネイルのフォトモザイクでロゴ | 48秒 |
+| `v4.py` GENESIS 3D | v1 の裸眼立体視版（左右並び SBS、交差法。平行法版は `v4_parallel.py` → `v4_parallel.mp4`）。冒頭10秒に寄り目の目印と回転する球の立体視ガイド | 62秒 |
 
 ## 構成
 
@@ -19,7 +20,7 @@ Creative Vision 10 のプロモーション動画を、Python のコードだけ
 | `run.py` | 並列レンダリングと ffmpeg エンコード、静止画書き出し |
 | `sheet.py` | 直近の静止画をコンタクトシートにまとめる（目視確認用） |
 | `prepare_assets.py` | 素材の準備（実画面・帳票画像の収集、コミット時刻、透過ロゴ） |
-| `v1.py`〜`v3.py` | 台本（各動画）。`DURATION`、`render(t) -> (H,W,3) float`、`audio() -> (N,2) float` を持つ |
+| `v1.py`〜`v4.py` | 台本（各動画）。`DURATION`、`render(t) -> (H,W,3) float`、`audio() -> (N,2) float` を持つ |
 
 素材と出力は容量が大きいため、リポジトリ外扱いの `Doc/promo/`（`.gitignore` 対象）へ置く。環境変数 `PROMO_DIR` で変更できる。
 
