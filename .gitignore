@@ -45,6 +45,8 @@ printdll/
 refer/
 Releases/
 Doc/wrk/
+Doc/promo/
+__pycache__/
 CvServer/wrk
 CvServer/img
 CvServer/imgshain
