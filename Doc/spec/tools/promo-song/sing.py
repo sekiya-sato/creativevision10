@@ -19,8 +19,6 @@ TEACHER = 6000              # 音高・音量を作る歌唱指導モデル（�
 FPS = 24000 / 256           # VOICEVOX のフレームレート
 PAD = 0.6                   # テイク前後の休符（子音が前へ食い込むぶん）
 
-# 候補（女性・明るめ）。--audition で順位付けする
-CANDIDATES = [3002, 3008, 3014, 3016, 3009, 3010, 3054, 3070, 3043, 3046, 3074, 3024]
 
 
 # ---------------------------------------------------------------- エンジン
@@ -255,16 +253,24 @@ def talk_sing(tk, speaker, detune=0.0):
         for m, v in zip(flat, errs):
             if m['vowel'] != 'cl':
                 m['pitch'] -= 0.8 * float(np.clip(v if v is not None else fill, -0.3, 0.3))
-    # 母音区間を目標音程へ合わせ（PSOLA）、倍音以外の息・雑音を下げる
+    # 母音区間を作り直す: 音程は歌唱指導モデル（他の声と同じ歌い方）の f0 カーブ、声色はずん子の話し声から取り、
+    # 倍音を合成し直す（話し声モデルのかすれ・息の雑音を残さない）
     regions = []
     for k, ((s, e, n), m) in enumerate(zip(ev, flat)):
         if m['vowel'] == 'cl':
             continue
         nxt = ev[k + 1] if k + 1 < len(ev) else None
         end = nxt[0] - cons[k + 1] if nxt is not None and abs(nxt[0] - e) < 1e-6 else e
-        regions.append((s, end, C.midi(n['key']) * math.exp(detune)))
-    x = retune(x, 24000, regions)
-    x = harmonic_clean(x, 24000, regions)
+        regions.append((s, end, C.midi(n['key'])))
+    score = {'notes': tk['notes']}
+    tq = shape_f0(tk, api(f'/sing_frame_audio_query?speaker={TEACHER}', score))
+    f0_ref = np.array(tq['f0']) * math.exp(detune)
+    x = vocode(x, 24000, regions, f0_ref)
+    # 歌詞のない区間（フレーズ間の休符）は無音にする（話し声モデルの息・雑音を残さない）
+    keep = np.zeros(len(x), np.float32)
+    for k, (s, e, n) in enumerate(ev):
+        keep[max(0, int((s - cons[k] - 0.015) * 24000)):int((e + 0.03) * 24000)] = 1
+    x = x * uniform_filter1d(keep, 240)
     # 母音ごとの音量差をならす（フレーズの中央値より 6dB 以上小さい母音を持ち上げる）
     rms = [np.sqrt(np.mean(x[int(s * 24000):int(e * 24000)] ** 2) + 1e-9) for s, e, _ in regions]
     med = float(np.median(rms))
@@ -302,97 +308,57 @@ def f0_track(x, sr, target, hop=None, spread=1.26):
     return np.array(out)
 
 
-def retune(x, sr, regions, glide=0.03):
-    """TD-PSOLA: 各母音区間の周期を測り、目標周期で並べ直す。区間の端は元の音へ 8ms でつなぐ"""
+def vocode(x, sr, regions, f0_ref, top=9000, air=7000):
+    """母音区間を倍音の和で作り直す。各フレームで元の声の倍音振幅から声色（包絡）を測り、
+    手本の f0（93.75fps のフレーム列）の倍音へ当てはめる。区間の端は元の音へ 10ms でつなぐ"""
+    n, hop = 1024, 64
+    _, ts, Z = sig.stft(x, sr, nperseg=n, noverlap=n - hop)
+    mag = np.abs(Z)
+    binhz = sr / n
     y = x.copy()
-    prev_f = None
+    rng = np.random.default_rng(3)
     for s, e, ft in regions:
         a, b = int(s * sr), int(e * sr)
-        if b - a < int(0.04 * sr):
-            prev_f = ft
+        if b - a < int(0.03 * sr):
             continue
-        seg = x[a:b]
-        hop = int(sr * 0.0025)
-        tr = f0_track(np.concatenate([seg, np.zeros(int(sr / ft * 4))]), sr, ft, hop)
-        if (tr > 0).sum() < 3:
-            prev_f = ft
+        cols = np.where((ts >= s) & (ts <= e))[0]
+        if len(cols) < 2:
             continue
-        tr[tr == 0] = np.median(tr[tr > 0])
-        tt = np.arange(len(tr)) * hop + hop
-        pa = lambda i: sr / np.interp(i, tt, tr)                  # 解析側の周期
+        # 元の声の f0（包絡を測るため。目標の前後に限定）
+        own = f0_track(np.concatenate([x[a:b], np.zeros(int(sr / ft * 4))]), sr, ft, hop)
+        own_t = s + (np.arange(len(own)) * hop + hop) / sr
+        valid = own > 0
+        f_own = np.interp(ts[cols], own_t[valid], own[valid]) if valid.sum() >= 2 else np.full(len(cols), ft)
+        # 手本の f0（無声フレームは音符の音程で埋める）
+        fr_t = np.arange(len(f0_ref)) / FPS
+        f_ref_c = np.interp(ts[cols], fr_t, np.where(f0_ref > 0, f0_ref, np.nan))
+        f_ref_c = np.where(np.isfinite(f_ref_c), f_ref_c, ft)
+        K = int(top / (f_ref_c.min() * 0.95))
+        # フレームごとの包絡（倍音振幅の対数を周波数で補間）
+        amps = np.zeros((K, len(cols)))
+        for j, c in enumerate(cols):
+            kk = np.arange(1, int(top / f_own[j]) + 1)
+            hz_ = kk * f_own[j]
+            A = 2 * np.interp(hz_ / binhz, np.arange(mag.shape[0]), mag[:, c])
+            env = np.log(np.maximum(A, 1e-6))
+            hk = np.arange(1, K + 1) * f_ref_c[j]
+            amps[:, j] = np.where(hk < top, np.exp(np.interp(hk, hz_, env)), 0)
+        amps = uniform_filter1d(amps, 3, axis=1)                       # 時間方向に軽く平滑（揺れ・ちらつき防止）
+        tt = np.arange(a, b) / sr
+        f_s = np.interp(tt, fr_t, np.where(f0_ref > 0, f0_ref, ft))
+        harm = np.zeros(b - a)
+        ph = 2 * np.pi * np.cumsum(f_s) / sr
+        for h in range(K):
+            ah = np.interp(tt, ts[cols], amps[h])
+            harm += ah * np.sin((h + 1) * ph + rng.uniform(0, 2 * np.pi))
+        harm += C.highpass(x[a:b].astype(np.float64), air, 2) * 0.35        # 息の高域だけ少し残す
         L = b - a
-        dur = L / sr
-        # 目標 f0（前の音から glide 秒で移り、長い音は遅れてビブラート）
-        def f_target(i):
-            t = i / sr
-            f = ft
-            if prev_f and t < glide:
-                f = prev_f * (ft / prev_f) ** (0.5 - 0.5 * math.cos(math.pi * t / glide))
-            if dur > 0.34:
-                ramp = min(1.0, max(0.0, (t - 0.16) / 0.22)) * min(1.0, max(0.0, (dur - t) / 0.06))
-                f *= 2 ** (0.3 * ramp * math.sin(2 * math.pi * 5.6 * t) / 12)
-            return f
-        # 解析マーク（周期ごとの振幅ピーク）
-        P0 = pa(0)
-        m = int(np.argmax(np.abs(seg[:int(P0) + 1])))
-        marks = []
-        while m < L:
-            marks.append(m)
-            P = pa(m)
-            c = int(m + P)
-            w = max(1, int(P * 0.2))
-            lo_, hi_ = max(0, c - w), min(L, c + w + 1)
-            if lo_ >= hi_:
-                break
-            m = lo_ + int(np.argmax(seg[lo_:hi_] * np.sign(seg[marks[-1]] or 1)))
-            if m <= marks[-1]:
-                m = marks[-1] + int(P)
-        marks = np.array(marks)
-        out = np.zeros(L + int(sr / ft * 3))
-        wsum = np.zeros_like(out)
-        t_s = float(marks[0])
-        while t_s < L:
-            j = int(np.argmin(np.abs(marks - t_s)))
-            mk = marks[j]
-            P = int(pa(mk))
-            lo_, hi_ = mk - P, mk + P
-            if lo_ < 0 or hi_ > L:
-                t_s += sr / f_target(t_s)
-                continue
-            w = np.hanning(2 * P)
-            c = int(t_s)
-            if c - P >= 0:
-                out[c - P:c + P] += seg[lo_:hi_] * w
-                wsum[c - P:c + P] += w
-            t_s += sr / f_target(t_s)
-        res = out[:L] / np.maximum(wsum[:L], 0.3)
-        f8 = min(int(0.008 * sr), L // 4)
+        f10 = min(int(0.01 * sr), L // 4)
         fade = np.ones(L)
-        fade[:f8] = np.linspace(0, 1, f8)
-        fade[L - f8:] = np.linspace(1, 0, f8)
-        y[a:b] = res * fade + seg * (1 - fade)
-        prev_f = ft
-    return y
-
-
-def harmonic_clean(x, sr, regions, floor=0.22, top=5000):
-    """母音区間で、目標 f0 の倍音の近く以外を下げる（息・かすれ・雑音の低減）"""
-    n, hop = 1024, 128
-    f, t, Z = sig.stft(x, sr, nperseg=n, noverlap=n - hop)
-    fr_t = t
-    mask = np.ones(Z.shape)
-    for s, e, ft in regions:
-        cols = np.where((fr_t >= s + 0.01) & (fr_t <= e - 0.01))[0]
-        if not len(cols):
-            continue
-        h = np.round(f / ft)
-        dist = np.abs(f - np.maximum(h, 1) * ft)
-        m = floor + (1 - floor) * np.exp(-(dist / (0.12 * ft)) ** 2)
-        m[f >= top] = 0.6
-        m[f < ft * 0.7] = floor
-        mask[:, cols] = m[:, None]
-    _, y = sig.istft(Z * mask, sr, nperseg=n, noverlap=n - hop)
-    return y[:len(x)].astype(np.float32)
+        fade[:f10] = np.linspace(0, 1, f10)
+        fade[L - f10:] = np.linspace(1, 0, f10)
+        y[a:b] = harm * fade + x[a:b] * (1 - fade)
+    return y.astype(np.float32)
 
 
 def est_f0(x, sr):
@@ -491,36 +457,76 @@ def metrics(x):
     return dict(hnr=float(np.median(hnr)), centroid=float(np.median(cen)), glitch=float(np.percentile(flux, 98)))
 
 
-def audition(timeline, ids):
+def pitch_noise(tk, x):
+    """0.3秒以上の音で、目標音程からのずれ（セントの絶対値の中央値）と、倍音と倍音間のエネルギー比（dB）"""
+    f, t, Z = sig.stft(x, C.SR, nperseg=4096, noverlap=4096 - 480)
+    P = np.abs(Z) ** 2
+    keys = {n['id']: n['key'] for n in tk['notes'] if n.get('id')}
+    errs, hs, ns = [], 0.0, 0.0
+    for i, (a, b, e) in enumerate(tk['spans']):
+        if (b - a) / FPS < 0.3 or e['vowel'] == 'q':
+            continue
+        f0 = C.midi(keys[str(i)])
+        tr = f0_track(x[int((a / FPS + 0.08) * C.SR):int((b / FPS - 0.04) * C.SR):2], C.SR // 2, f0)
+        if (tr > 0).sum() >= 3:
+            errs.append(abs(1200 * np.log2(np.median(tr[tr > 0]) / f0)))
+        cols = np.where((t > a / FPS + 0.08) & (t < b / FPS - 0.05))[0]
+        r = (f % f0) / f0
+        band = (f > f0 * 0.7) & (f < 5000)
+        harm, mid = band & ((r < 0.12) | (r > 0.88)), band & (r > 0.35) & (r < 0.65)
+        hs += P[np.ix_(harm, cols)].sum() / harm.sum()
+        ns += P[np.ix_(mid, cols)].sum() / mid.sum()
+    return float(np.median(errs)) if errs else float('nan'), float(10 * np.log10(hs / (ns + 1e-12)))
+
+
+# 再オーディションの参加者（ID, 移調半音, 備考）。歌唱モデルのある女性ボイス全員と、版で使った話し声・男声
+AUDITION = [(3002, 0, ''), (3003, 0, ''), (3008, 0, ''), (3010, 0, ''), (3009, 0, ''), (3014, 0, ''), (3016, 0, ''),
+            (3020, 0, ''), (3023, 0, ''), (3027, 0, ''), (3029, 0, ''), (3043, 0, ''), (3046, 0, ''), (3047, 0, ''),
+            (3054, 0, ''), (3055, 0, ''), (3058, 0, ''), (3061, 0, ''), (3068, 0, ''), (3069, 0, ''), (3074, 0, ''),
+            (107, -7, '話し声モデル・5度下'), (3011, -12, '男声・1オクターブ下')]
+
+
+def audition(timeline, entries):
     names = style_names()
     d = os.path.join(S.OUT, 'audition')
     os.makedirs(d, exist_ok=True)
-    tk = takes(timeline, only=['サビ1'])[0]
+    tk0 = takes(timeline, only=['サビ1'])[0]
     rows = []
-    for sid in ids:
+    for sid, semis, note in entries:
+        tk = transpose(tk0, semis)
         x = synth(tk, sid)
         m = metrics(x)
+        m['pitch'], m['hnr2'] = pitch_noise(tk, x)
         nm = f'{names[sid][0]}（{names[sid][1]}）'
-        rows.append((sid, nm, m))
+        rows.append((sid, nm, m, note))
         st = np.stack([x, x], 1) * 0.9 / (np.abs(x).max() + 1e-9)
         S.C.write_wav(os.path.join(d, f'{sid}.wav'), st)
         subprocess.run([C.ffmpeg_exe(), '-y', '-loglevel', 'error', '-i', os.path.join(d, f'{sid}.wav'),
                         '-c:a', 'aac', '-b:a', '160k', os.path.join(d, f'{sid}_{names[sid][0].replace("/", "_")}.m4a')], check=True)
         os.remove(os.path.join(d, f'{sid}.wav'))
-        print(f'{sid} {nm} HNR {m["hnr"]:.1f}dB 明るさ {m["centroid"]:.0f}Hz 急変 {m["glitch"]:.3f}')
-    # 調波性を重視し、明るさを加点、急変を減点
-    hs = np.array([r[2]['hnr'] for r in rows]); cs = np.array([r[2]['centroid'] for r in rows]); gs = np.array([r[2]['glitch'] for r in rows])
-    z = lambda a: (a - a.mean()) / (a.std() + 1e-9)
-    score = 1.0 * z(hs) + 0.5 * z(cs) - 0.8 * z(gs)
+        print(f'{sid} {nm} HNR {m["hnr"]:.1f} 倍音比 {m["hnr2"]:.1f} 音程 {m["pitch"]:.0f}c 明るさ {m["centroid"]:.0f} 急変 {m["glitch"]:.3f}', flush=True)
+    col = lambda k: np.array([r[2][k] for r in rows])
+    z = lambda a: (a - np.nanmean(a)) / (np.nanstd(a) + 1e-9)
+    # 調波性と倍音比（声の澄み・雑音の少なさ）を重視し、明るさを加点、急変と音程のずれを減点
+    score = 1.0 * z(col('hnr')) + 0.6 * z(col('hnr2')) + 0.4 * z(col('centroid')) - 0.8 * z(col('glitch')) - 0.6 * np.nan_to_num(z(col('pitch')))
     order = np.argsort(-score)
-    L = ['# 歌声オーディション（サビ1）', '', '`sing.py --audition` が生成。聴き比べ用の音声は同じフォルダにある。', '',
-         '| 順位 | ID | 声 | 調波性 HNR(dB) | 明るさ(Hz) | 急変(98%点) | 総合 |', '|---|---|---|---|---|---|---|']
+    used = {3002: 'メイン（標準版）', 3000: '', 3054: 'メイン', 3043: 'メイン', 3003: 'メイン', 107: 'メイン', 3011: 'メイン',
+            3009: 'ハモリ・掛け声', 3046: '掛け声', 3016: '掛け声'}
+    L = ['# 歌声オーディション（サビ1、2026-10-23）', '',
+         '`sing.py --audition` が生成。聴き比べ用の音声 `<ID>_<名前>.m4a` は同じフォルダにある。', '',
+         '- 対象: VOICEVOX Engine 0.25.2 で歌唱モデルのある女性ボイス全員（各ノーマルスタイル）と、版で使った東北ずん子（話し声モデル）・玄野武宏（男声）。',
+         '- 調波性 HNR: 声の澄み（自己相関）。倍音比: 母音で倍音と倍音間のエネルギー比（大きいほど息・雑音が少ない）。',
+         '- 音程: 0.3秒以上の音の目標からのずれ（中央値、ビブラートの揺れを含む）。明るさ: スペクトル重心。急変: フレーム間のスペクトル変化の98%点（破綻・ノイズの目安）。',
+         '- 総合 = 1.0×HNR + 0.6×倍音比 + 0.4×明るさ − 0.8×急変 − 0.6×音程ずれ（各指標を参加者内で標準化）。機械的な目安で、最終判断は聴いて行う。', '',
+         '| 順位 | ID | 声 | 調波性 HNR(dB) | 倍音比(dB) | 音程ずれ(セント) | 明るさ(Hz) | 急変 | 総合 | 今回の使用 | 備考 |',
+         '|---|---|---|---|---|---|---|---|---|---|---|']
     for rank, i in enumerate(order, 1):
-        sid, nm, m = rows[i]
-        L.append(f'| {rank} | {sid} | {nm} | {m["hnr"]:.1f} | {m["centroid"]:.0f} | {m["glitch"]:.3f} | {score[i]:+.2f} |')
-    with open(os.path.join(d, 'ranking.md'), 'w', encoding='utf-8', newline='\r\n') as f:
-        f.write('\n'.join(L) + '\n')
-    print('\n'.join(L))
+        sid, nm, m, note = rows[i]
+        L.append(f'| {rank} | {sid} | {nm} | {m["hnr"]:.1f} | {m["hnr2"]:.1f} | {m["pitch"]:.0f} | {m["centroid"]:.0f} | '
+                 f'{m["glitch"]:.3f} | {score[i]:+.2f} | {used.get(sid, "")} | {note} |')
+    with open(os.path.join(d, 'ranking.md'), 'w', encoding='utf-8') as f:
+        f.write(chr(10).join(L) + chr(10))
+    print(chr(10).join(L))
     return rows[order[0]][0]
 
 # ---------------------------------------------------------------- 完成版
@@ -556,7 +562,7 @@ def produce(timeline, total, singer, verse_singer, harmony_singer, gang, octave=
         # フレーズ頭の息継ぎ（直前に0.4秒以上の休符がある音）
         prev_end = -1.0
         for a, b, e in tk['spans']:
-            if e['t'] - prev_end > 0.4:
+            if e['t'] - prev_end > 0.4 and voice not in TALK_STYLES:   # 話し声モデルの版は息継ぎを入れない
                 place(brs, e['t'] - 0.3, breath(seed=int(e['t'] * 10)), g)
             prev_end = e['t'] + e['dur']
         if name.startswith(('サビ', 'ラスト', 'アウトロ')):
@@ -623,7 +629,7 @@ def produce(timeline, total, singer, verse_singer, harmony_singer, gang, octave=
     inst_m = B.master(inst)
     vo = B.master(voc_bus, target=-14.0, eq=False)
     outs = [(full, 'creativevision10_full' + tag), (vo, 'creativevision10_vocal' + tag)]
-    if not tag:
+    if tag == '_metan':   # 標準の四国めたん版のときは伴奏も書き出す
         outs.append((inst_m, 'creativevision10_inst'))
     for x, nm in outs:
         tp = B.encode_safe(x, nm)
@@ -648,7 +654,7 @@ def main():
     ap.add_argument('--gang', type=int, nargs='*', default=[3002, 3009, 3046, 3016], help='掛け声の声')
     ap.add_argument('--octave', type=int, default=0, help='メインを何オクターブ移すか（男声は -1）')
     ap.add_argument('--key', type=int, default=0, help='曲全体（伴奏も）の移調。話し声モデルの東北ずん子は -7')
-    ap.add_argument('--tag', default='', help='出力名の接尾辞（例 _nana）。空なら inst も書き出す')
+    ap.add_argument('--tag', default='_metan', help='出力名の接尾辞（例 _nana）。既定の _metan のときは inst も書き出す')
     a = ap.parse_args()
     proc = ensure_engine()
     try:
@@ -658,7 +664,7 @@ def main():
             for k, v in sorted(style_names().items()):
                 print(k, *v)
         elif a.audition is not None:
-            audition(timeline, a.audition or CANDIDATES)
+            audition(timeline, [(i, 0, '') for i in a.audition] if a.audition else AUDITION)
         else:
             style_names()
             produce(timeline, total, a.singer, a.verse, a.harmony, a.gang, a.octave, a.tag)

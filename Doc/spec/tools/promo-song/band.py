@@ -166,13 +166,42 @@ PLAN = {
 SECTION_LEVEL = {'Aメロ': 0.75, 'Bメロ': 0.88, 'ブリッジ': 0.85, 'ラストサビ': 1.05}
 
 # サビでの各パートのラウドネス（ドラム基準の LU）。2026-10-22 の試聴でギター・ベースを下げる指摘を反映
-PART_LU = {'drums': 0.0, 'bass': -4.5, 'gtr': -4.0, 'lead': -3.0, 'wa': -7.0, 'taiko': -9.0, 'pad': -15.0}
+PART_LU = {'drums': 0.0, 'bass': -4.5, 'gtr': -4.0, 'lead': -3.0, 'wa': -7.0, 'taiko': -8.0, 'pad': -15.0}
 
 # ブリッジの尺八ソロ（D メジャー表記、song.py と同じ書式）
 BRIDGE_SOLO = 'B5.4 A5.2 F#5.2  E5.6 F#5.1 A5.1  B5.4 C#6.2 B5.2  A5.6 r.2'
 
 FILL = [('kick', 8, .9), ('snare', 8, .75), ('snare', 9, .55), ('snare', 10, .8), ('snare', 11, .6),
         ('tomh', 12, .85), ('tomh', 13, .75), ('tomm', 14, .9), ('toml', 15, 1.0)]
+
+
+def taiko_bar(plan, i, nb):
+    """和太鼓の1小節 [(種類, 16分位置, 強さ)]。don=平打ち、doon=低く深い一打、ka=縁打ち、shime=締太鼓。
+    イントロ前半・ブリッジ・エンディングは render 内で別に打つ"""
+    k, wa = plan['kit'], plan['wa']
+    last = i == nb - 1
+    h = []
+    if k == 'eight':                               # Aメロ: 4小節ごとに小さく、合いの手に縁打ち
+        if i % 4 == 0:
+            h += [('don', 0, 0.6)]
+        elif i % 4 == 2:
+            h += [('don', 0, 0.5), ('ka', 12, 0.4)]
+        if last:
+            h += [('don', 8, 0.55), ('don', 12, 0.65), ('don', 14, 0.75)]
+    elif k == 'build':                             # Bメロ: 打数を増やして盛り上げる
+        if i < nb - 2:
+            h += [('don', 0, 0.7), ('don', 8, 0.55)]
+        elif i == nb - 2:
+            h += [('don', p, 0.65 + 0.05 * p / 4) for p in (0, 4, 8, 12)]
+        else:
+            h += [('don', 0, 0.8), ('don', 4, 0.8)] + [('don', p, 0.55 + 0.45 * (p - 8) / 7) for p in range(8, 16)]
+    elif k == 'chorus' and not (wa == 'intro' and i < 4):   # サビ・間奏・アウトロ・イントロ後半
+        h += [('doon', 0, 0.9 if i % 2 == 0 else 0.75), ('don', 8, 0.6)]
+        if i % 4 == 3 and not last:
+            h += [('don', 12, 0.7), ('don', 14, 0.8)]         # ドドン
+        if wa == 'lead' or (wa == 'last' and i >= 8):
+            h += [('shime', p, 0.3 if p % 4 else 0.42) for p in range(0, 16, 2)]
+    return h
 
 
 def kit_bar(style, i, nb):
@@ -278,8 +307,13 @@ def render(timeline, total, stems_dir=None):
                     rc = kit.hit('crash', 0.9, rng)[:int(1.6 * SR)][::-1].copy()
                     rc *= (np.linspace(0, 1, len(rc)) ** 2)[:, None]
                     T['drums'].add(t0 + BAR - len(rc) / SR, rc, 0.7)
-            if plan['kit'] == 'chorus' and i % 2 == 0:
-                taiko_hit(t0, 0.9, deep=2)
+            for kind, p, v in taiko_bar(plan, i, nb):
+                if kind == 'shime':
+                    shime_hit(t0 + p * E16, v)
+                elif kind == 'ka':        # 縁打ち（リムを低く移調して短く）
+                    T['taiko'].add(t0 + p * E16, P.shift(kit.hit('rim', v, rng, choke=0.08), -4) * 0.7)
+                else:
+                    taiko_hit(t0 + p * E16 + rng.normal(0, 0.003), v, deep=2 if kind == 'doon' else 0)
             if plan['wa'] == 'bridge':
                 for p, v in ((0, 1.0), (3, .6), (6, .7), (10, .7), (12, .8), (14, .6)):
                     taiko_hit(t0 + p * E16, v, deep=0 if p else 2)
@@ -325,7 +359,7 @@ def render(timeline, total, stems_dir=None):
             nr = root_of(nxt_chord, nxt_shift, 28)
             steps, smp = [], bass_s
             if bp == 'intro':
-                steps = [(0, 8, 0.8, br)] if i < 4 else [(p, 1, .9, br + (12 if p in (2, 6) else 0)) for p in range(8)]
+                steps = [] if i < 4 else [(p, 1, .9, br + (12 if p in (2, 6) else 0)) for p in range(8)]   # 和楽器だけの4小節はベースなし
             elif bp == 'verse':
                 steps, smp = [(p, 1, 0.8 if p % 2 else 0.95, br) for p in range(8)], bass_st
             elif bp == 'build':
@@ -387,7 +421,7 @@ def render(timeline, total, stems_dir=None):
                 if p is not None:
                     T['shaku'].add(s['t'] + pos * E8, shakuhachi(p + sh, d * E8 + 0.05, 1.0, seed := seed + 1))
                 pos += d
-        # ---- エンディング: ドラムソロ → 全員で一撃（短く止める）→ 3拍休んで太鼓・キック・クラッシュで締める
+        # ---- エンディング: ドラムソロ → 全員で一撃（短く止める）。一撃の余韻が消えたところで曲を終える（master で切る）
         if name == 'エンディング':
             t0 = s['t']
             i0, i1 = int((t0 + 0.02) * SR), int((t0 + BAR) * SR)
@@ -414,13 +448,6 @@ def render(timeline, total, stems_dir=None):
             for k in ('kick', 'crash', 'snare'):
                 drum(k, hit, 1.0, choke=0.45 if k == 'crash' else None)
             taiko_hit(hit, 1.0)
-            fin = hit + 3 * E8 * 2
-            drum('toml', fin - E8, 0.8)
-            drum('toml', fin - E16, 0.9)
-            for k in ('kick', 'crash', 'crash2'):
-                drum(k, fin, 1.0)
-            taiko_hit(fin, 1.0, deep=3)
-            taiko_hit(fin + 0.012, 0.9)
     lv = np.ones(n, np.float32)
     for s in timeline:
         g = next((v for key, v in SECTION_LEVEL.items() if s['sec']['name'].startswith(key)), 1.0)
@@ -584,18 +611,29 @@ def match_eq(x, limit=5.0):
 PRE_ROLL = 0.2   # 冒頭の無音（1拍目の一撃を AAC の先頭フレームに載せない。動画と合わせるときはこのぶんずらす）
 
 
-def master(x, target=-12.0, eq=True):
+def master(x, target=-12.0, eq=True, ceil=0.75):
     x = np.concatenate([np.zeros((int(PRE_ROLL * SR), 2), np.float32), x - x.mean(0)])
     x = np.stack([C.highpass(x[:, c], 28, 2) for c in range(2)], 1)
     if eq:
         x, g = match_eq(x)
         print('  マスターEQ(dB):', g)
     x = compress(x, np.sqrt(np.mean(x ** 2)) * 2.0, 1.5, att=0.01, rel=0.2)               # グルー（軽く）
-    for _ in range(3):
-        x = x * 10 ** ((target - lufs(x)) / 20)
-        x = limiter(x)
+    # 目標ラウドネスへ上げる → リミッター、を目標との差が 0.1 LU 以内になるまで繰り返す（ピークの多いミックスは収束が遅い）
+    for _ in range(10):
+        d = target - lufs(x)
+        if abs(d) < 0.1:
+            break
+        x = limiter(x * 10 ** (d / 20), ceil=ceil)
     fo = int(0.01 * SR)
     x[:fo] *= np.linspace(0, 1, fo)[:, None]
+    # 曲の終わりは、最後の一撃の余韻が -30dBFS まで下がったところから 0.4 秒でフェードアウトして切る
+    # （その先はほぼ無音のため。2026-10-23 の試聴指摘で約 2:43 終わりにした）
+    loud = np.where(np.abs(x).max(1) > 10 ** (-30 / 20))[0]
+    if len(loud):
+        f = int(0.4 * SR)
+        end = min(len(x), loud[-1] + f)
+        x = x[:end]
+        x[-f:] *= np.linspace(1, 0, f)[:, None] ** 2
     return x.astype(np.float32)
 
 
@@ -607,14 +645,39 @@ def decode(path):
 
 
 def encode_safe(x, name, tp_max=-1.0):
-    """AAC 化後のサンプル間ピークを測り、tp_max を超えたら下げて作り直す（閉ループ）"""
-    for _ in range(4):
-        S.encode(x, name, False)
-        tp = 20 * np.log10(true_peak(decode(os.path.join(S.OUT, name + '.m4a'))))
-        if tp <= tp_max:
-            break
-        x = x * 10 ** ((tp_max - tp - 0.05) / 20)
-    return tp
+    """AAC 化後のサンプル間ピークを測り、tp_max を超えた箇所だけ前後 30ms を下げて作り直す。
+    （AAC は鋭い立ち上がりで局所的に 2〜3dB 跳ねることがあり、全体を下げると音量が大きく減るため）
+    局所補正で収まらなければ、最後に全体の音量を二分探索で決める"""
+    path = os.path.join(S.OUT, name + '.m4a')
+
+    def enc(y):
+        S.encode(y, name, False)
+        d = decode(path)
+        up = np.abs(sig.resample_poly(d, 4, 1, axis=0)).max(1)
+        return y, up[:len(d) * 4].reshape(-1, 4).max(1)
+
+    x = x.copy()
+    for _ in range(6):
+        x, pk = enc(x)
+        over = 20 * np.log10(pk + 1e-12) - tp_max
+        if over.max() <= 0:
+            return float(20 * np.log10(pk.max()))
+        g = np.ones(len(x), np.float32)
+        w = int(0.03 * SR)
+        for i in np.where(over > 0)[0]:
+            g[max(0, i - w):i + w] = np.minimum(g[max(0, i - w):i + w], 10 ** (-(over[i] + 0.3) / 20))
+        g = uniform_filter1d(minimum_filter1d(g, w), w)
+        x = x * g[:len(x), None]
+    lo, hi = 0.5, 1.0
+    for _ in range(6):
+        mid = (lo * hi) ** 0.5
+        S.encode(x * mid, name, False)
+        if 20 * np.log10(true_peak(decode(path))) <= tp_max:
+            lo = mid
+        else:
+            hi = mid
+    S.encode(x * lo, name, False)
+    return float(20 * np.log10(true_peak(decode(path))))
 
 
 def main():
