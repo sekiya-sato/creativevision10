@@ -42,6 +42,7 @@ def remap(t):
 
 
 C = None   # 実行時の共有物
+VOICES = 'VOICEVOX:四国めたん　VOICEVOX:波音リツ　VOICEVOX:小夜/SAYO　VOICEVOX:九州そら'   # エンディングのクレジット（opfull が歌い手ごとに差し替える）
 
 
 class Ctx:
@@ -966,7 +967,7 @@ def s_ending(t, lt, d):
     gl.sprite(tex, 640, 660)
     tex = gl.text('2027年1月 リリース予定', 44, fam='noto', weight='Black', color=E.hexc('fff3c4'), stroke=5, stroke_color=E.hexc('4a1a6a'))
     gl.sprite(tex, 640, 765)
-    tex = gl.text('VOICEVOX:四国めたん　VOICEVOX:波音リツ　VOICEVOX:小夜/SAYO　VOICEVOX:九州そら', 22, fam='noto', weight='Medium',
+    tex = gl.text(VOICES, 22, fam='noto', weight='Medium',
                   color=(1, 1, 1), stroke=2, stroke_color=(0.2, 0.1, 0.3))
     gl.sprite(tex, 960, 1045, alpha=0.9)
     return dict(bloomAmt=0.6, vign=0.25, flash=pulse(t, hit_t, 0.01, 0.4), fade=prog(t, DURATION - 0.9, DURATION - 0.05))

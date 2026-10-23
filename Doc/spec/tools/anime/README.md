@@ -10,7 +10,7 @@ Creative Vision 10 のプロモーションアニメを、主人公の一枚絵�
 | `op.py` | 明日へ飛べ（アニメOP風） | 主題歌の1番＋エンディングの一撃に拍同期。一枚絵のリグで歌の口パク・まばたき・髪/帽子/イヤリングの揺れ・表情差し替え。アニメ調の空と雲、魔法陣、実コミットの螺旋、CV.net→CV10 のバトン、200の灯籠、実画面の翼、3階層の扉、雲海の日の出 | 68秒 |
 | `drama.py` | 魔女っ子エンジニアの開発日誌（ボイス付きショートアニメ） | 4コマ（`dev4koma-20260710.jpg`）を原作に、VOICEVOX の台詞と口パクで演じる。表情差分の背景がそのまま心情で変わる部屋になる。実コード・実画面・帳票・実件数のモンタージュ | 76秒 |
 | `book.py` | まほうのしごと絵本（3D の飛び出す絵本） | 机の上の絵本がひらき、紙細工が立ち上がる。シャドウマップの影と被写界深度。主人公の紙細工は毎コマ描き直すので本の上でもまばたきして動く。主題歌の旋律のオルゴール編曲と語り | 60秒 |
-| `opfull.py` | 明日へ飛べ フルバージョン | 主題歌のフルコーラス。0〜61秒は `op.py` のショットを使い、間奏・2番・サビ2・ブリッジ・ラストサビ・アウトロを追加。富士山と天の川の夜明け（赤富士・湖面の光の道）、四季の里（線画を筆で塗る・ミニキャラが駆け抜ける）、実データ（AI と共同のコミット数・実テスト名・日ごとのコミットの表・全コミットの銀河）、花火、スタッフロール | 2分44秒 |
+| `opfull.py` | 明日へ飛べ フルバージョン | 主題歌のフルコーラス。0〜61秒は `op.py` のショットを使い、間奏・2番・サビ2・ブリッジ・ラストサビ・アウトロを追加。富士山と天の川の夜明け（赤富士・湖面の光の道）、四季の里（線画を筆で塗る・ミニキャラが駆け抜ける）、実データ（AI と共同のコミット数・実テスト名・日ごとのコミットの表・全コミットの銀河）、花火、スタッフロール。主題歌の11の歌い手の版ごとに書き出す（歌の音源・口パク・歌い手のクレジットを差し替え） | 2分44秒 |
 
 ## GPU シェーダによる高速描画
 
@@ -32,7 +32,7 @@ CPU の numpy で描く `../promo-video`（v1 で約5.5分）と比べて桁違�
 | `film.py` | 書き出し（静止画・コンタクトシート・区間・本番）。台本は `setup(gl)` / `frame(gl, t)` / `audio()` / `DURATION` を持つ |
 | `op.py` `drama.py` `book.py` | 台本（3作品）。冒頭コメントに秒割り |
 | `lines2.py` | `drama.py` の台詞（表示する字幕と読み上げ文） |
-| `opfull.py` | フルバージョンの台本。`op.py` を読み込み、音源の時刻をそのまま使う（`op.remap` を恒等にする） |
+| `opfull.py` | フルバージョンの台本。`op.py` を読み込み、音源の時刻をそのまま使う（`op.remap` を恒等にする）。歌い手の版は `SINGERS`（`Doc/promo/song/README.md` 1・2章と同じ）で、`film.py --variant` で選ぶ |
 | `prep_full.py` | フルバージョンの追加素材: 富士山の夜景の陸・雪の笠・湖面のマスク（GrabCut＋山頂の三角形）、四季の里の切り出し。出力は `work/full/` |
 
 素材と作業ファイルは `.gitignore` 対象の `Doc/promo/` に置く（`PROMO_DIR`・`ANIME_DIR` で変更可）。
@@ -68,7 +68,8 @@ python film.py op                             本番 → Doc/promo/anime/out/op.
 python film.py drama
 python film.py book
 python prep_full.py                           フルバージョンの追加素材（初回のみ。作り直すときは --force）
-python film.py opfull                         フルバージョン → Doc/promo/anime/out/opfull.mp4（RTX 5080 で約2分）
+python film.py opfull                         フルバージョン（四国めたん版）→ Doc/promo/anime/out/opfull_metan.mp4（RTX 5080 で約2分）
+python film.py opfull --variant zundamon      歌い手の版 → opfull_<名前>.mp4（metan nana miko takehiro zunko zundamon ritsu al whitecul hau usagi）
 ```
 
 書き出しは 1920x1080・30fps・H.264（CRF16、`-tune animation`）、音声 AAC 256k。
@@ -101,7 +102,7 @@ python film.py opfull                         フルバージョン → Doc/prom
 | 作品 | 表記 |
 |---|---|
 | op | VOICEVOX:四国めたん、VOICEVOX:波音リツ、VOICEVOX:小夜/SAYO、VOICEVOX:九州そら（主題歌） |
-| opfull | op と同じ。スタッフロールに背景原画（静止画の生成画像）とミニキャラ（Codex のペット）を記載 |
+| opfull_<名前> | その版の行（`Doc/promo/song/README.md` 1章）。動画内の冒頭のクレジット・スタッフロール・エンディングにも同じ声を表示する。波音リツ版のコーラスは猫使アル。スタッフロールに背景原画（静止画の生成画像）とミニキャラ（Codex のペット）を記載 |
 | drama | VOICEVOX:四国めたん、VOICEVOX:九州そら（台詞）。BGM は主題歌の伴奏 |
 | book | VOICEVOX:九州そら（語り） |
 

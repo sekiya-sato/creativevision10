@@ -43,7 +43,28 @@ from engine import prog, lerp, smooth, ease_out, ease_in, ease_io, ease_out_back
 
 FPS = 30
 SUPERSAMPLE = 2
-SONG = O.SONG
+
+# 歌い手の版（Doc/promo/song/README.md 1・2章）。名前: (メイン, コーラス)
+SINGERS = {
+    'metan': ('四国めたん', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'nana': ('春歌ナナ', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'miko': ('櫻歌ミコ', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'takehiro': ('玄野武宏', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'zunko': ('東北ずん子', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'zundamon': ('ずんだもん', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'ritsu': ('波音リツ', ['猫使アル', '小夜/SAYO', '九州そら']),
+    'al': ('猫使アル', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'whitecul': ('WhiteCUL', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'hau': ('雨晴はう', ['波音リツ', '小夜/SAYO', '九州そら']),
+    'usagi': ('中国うさぎ', ['波音リツ', '小夜/SAYO', '九州そら']),
+}
+SINGER = os.environ.get('FILM_VARIANT') or 'metan'
+if SINGER not in SINGERS:
+    raise SystemExit(f'歌い手の版がない: {SINGER}（{", ".join(SINGERS)}）')
+MAIN, CHORUS = SINGERS[SINGER]
+OUT_NAME = f'opfull_{SINGER}'
+SONG = os.path.join(SS.SONG_DIR, f'creativevision10_full_{SINGER}.m4a')
+VX = lambda n: f'VOICEVOX:{n}'
 SONG_LEN = 163.55
 DURATION = SONG_LEN + 0.25
 
@@ -51,6 +72,11 @@ DURATION = SONG_LEN + 0.25
 O.remap = lambda t: t
 O.T_CUT = SS.bar(100)          # エンディングの一撃の基準（音源 160.2 秒）
 O.DURATION = DURATION
+O.SONG = SONG
+# 歌い手の表示（op.py の冒頭のクレジットとエンディング）
+O.CREDITS = [c if c[2][0] not in ('歌', 'コーラス') else
+             (c[0], c[1], ['歌', VX(MAIN)] if c[2][0] == '歌' else ['コーラス', '　'.join(VX(n) for n in CHORUS)], c[3]) for c in O.CREDITS]
+O.VOICES = '　'.join(VX(n) for n in [MAIN] + CHORUS)
 
 C = None
 SB = SS.BEAT
@@ -62,6 +88,7 @@ def setup(gl):
     global C
     O.setup(gl)
     C = O.C
+    C.vocal = SS.Vocal(SINGER)      # 口パクはこの版の歌だけの音源の音量で
     C.lyrics = SS.lines({s['name'] for s in SS.timeline()})
     paths = prep_full.build()
     C.fuji = gl.image(paths['fuji'], key=('full', 'fuji'))
@@ -1292,8 +1319,8 @@ def f_finale(t, lt, d):
 def staff_lines():
     return [
         ('主題歌', '「Creative Vision 10！ ～明日へ飛べ～」'),
-        ('歌', 'VOICEVOX:四国めたん'),
-        ('コーラス', 'VOICEVOX:波音リツ　VOICEVOX:小夜/SAYO　VOICEVOX:九州そら'),
+        ('歌', VX(MAIN)),
+        ('コーラス', '　'.join(VX(n) for n in CHORUS)),
         ('作画・撮影・編集', 'Python + GLSL（すべてコードで描画・動画生成AI不使用）'),
         ('背景原画', '富士山と天の川・四季の里（静止画の生成画像）'),
         ('ミニキャラ', 'Codex のペット'),

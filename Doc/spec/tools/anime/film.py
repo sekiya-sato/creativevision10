@@ -3,6 +3,7 @@
 #   python film.py op --sheet 0,68,24             等間隔の静止画を1枚のシートに
 #   python film.py op --range 38 46               区間だけ mp4（音声付き）
 #   python film.py op                              本番 → out/<名前>.mp4
+#   python film.py opfull --variant zundamon       台本の版違い（環境変数 FILM_VARIANT で台本へ渡す。出力名は台本の OUT_NAME）
 import os, time, importlib, subprocess, argparse
 import numpy as np
 from PIL import Image
@@ -17,8 +18,12 @@ def main():
     ap.add_argument('--range', nargs=2, type=float)
     ap.add_argument('--audio', action='store_true')
     ap.add_argument('--crf', type=int, default=16)
+    ap.add_argument('--variant')
     a = ap.parse_args()
+    if a.variant:
+        os.environ['FILM_VARIANT'] = a.variant
     mod = importlib.import_module(a.name)
+    a.name = getattr(mod, 'OUT_NAME', a.name)
     os.makedirs(E.OUT, exist_ok=True)
     fps = getattr(mod, 'FPS', 30)
     if a.audio:
