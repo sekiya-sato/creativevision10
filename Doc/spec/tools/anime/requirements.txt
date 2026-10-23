@@ -1,0 +1,6 @@
+numpy
+pillow
+scipy
+imageio-ffmpeg
+moderngl
+opencv-python
