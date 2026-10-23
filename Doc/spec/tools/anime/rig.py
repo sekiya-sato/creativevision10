@@ -99,8 +99,15 @@ vec4 shade(vec2 p){
             fc = mix(fc, T(tSTm, s).rgb, mm.b*ws*closedK);
         }
         if(open > 0.04 && noHT > 0.0){
+            // 開きは左右の口角を結ぶ線へ向けて縮める（上端の水平線へ縮めると、低い位置の左の口角が持ち上がる）。
+            // 元の口は右の口角が高く、そのままでは歪んで見えるため傾きを浅くする。小さく開くほど閉じ口に近い水平な口にする
+            const vec2 MC0 = vec2(1088.5, 1076.0);   // ハッピーの口の左右の口角の中点
+            const float MK0 = -0.0914;               // 口角を結ぶ線の傾き（左 1001,1084 → 右 1176,1068）
             vec2 sc = vec2(mix(0.55, 1.0, mouthWide), max(open, 0.05));
-            vec2 sm = vec2(1090.0, 1050.0) + (s - mouthC)/sc;
+            float kd = MK0*mix(0.15, 0.7, clamp(open, 0.0, 1.0));
+            float sx = MC0.x + (s.x - mouthC.x)/sc.x;
+            float ld = mouthC.y + kd*(s.x - mouthC.x);
+            vec2 sm = vec2(sx, MC0.y + MK0*(sx - MC0.x) + (s.y - ld)/sc.y);
             float ma = T(m4, sm).g*noHT*smoothstep(0.04, 0.12, open);
             fc = mix(fc, T(tHPm, sm).rgb, ma);
         }
@@ -204,8 +211,8 @@ class Character:
         ef = tuple(pose.expr_full)
         fa = tuple(pose.expr_face) if pose.expr_face is not None else ef
         happy = fa[1] / max(sum(fa), 1e-6)
-        # 開いた口の位置: 通常顔は閉じ口の中心、ハッピー顔は元の口の上端
-        mc = np.array([1080.0, 1088.0]) * (1 - happy) + np.array([1090.0, 1050.0]) * happy
+        # 開いた口の口角の中点: 通常顔は閉じ口の位置、ハッピー顔は元の口の位置
+        mc = np.array([1084.0, 1101.0]) * (1 - happy) + np.array([1088.5, 1076.0]) * happy
         bl = pose.blink
         return dict(
             exprFull=ef, exprFace=fa,
