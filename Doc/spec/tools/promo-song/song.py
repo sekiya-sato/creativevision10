@@ -106,6 +106,58 @@ SECTIONS = [
     dict(name='エンディング', chords='D D', drums='solo', shift=1),
 ]
 
+# ---------------------------------------------------------------- 歌詞 v2（2026-10-24）
+# 1番を「技術と歩み（現在から未来へ）」、2番を「始まりからの積み重ね（過去があって今と未来がある）」に入れ替え。
+# 旋律テンプレートは v1 と同じで、モーラ数を揃えてある。
+HOOK = ('Creative Vision 10！', 'くりえいてぃぶ びじょんてん')
+V2 = {
+    'Aメロ1': A2,
+    'Bメロ1': [(B_L1, 'いくつもの画面', 'いくつもの がめん'),
+              (B_L2, '何度も確かめ', 'なんどもた しかめ'),
+              (B_L3, '毎日 前へ進む', 'まいにちまえ えすすむ'),
+              (B_L4, '今 輝くとき', 'いまかがやくと き')],
+    'サビ1': chorus([HOOK,
+                    ('明日へ 今 飛び出せ', 'あしたえいま とびだせ'),
+                    ('広がる世界 飛び込んでく', 'ひろがるせかい とびこんでく'),
+                    ('（いこう！）', 'いこう'),
+                    ('まだ見ぬ明日の扉', 'まだ みぬあしたの とびら'),
+                    ('開けよう 今すぐに', 'あけよういま すぐに'),
+                    ('目指すはひとつ あの未来へ', 'めざすわひとつ あのみらい え')]),
+    'Aメロ2': A1,
+    'Bメロ2': [(B_L1, '受け継いだバトン', 'うけついだ ばとん'),
+              (B_L2, '200社の笑顔', 'にひゃくしゃの えがお'),
+              (B_L3, '今はわたしがつなぐ', 'いまわわたし がつなぐ'),
+              (B_L4, 'あの日があるから', 'あのひがあるか ら')],
+    'サビ2': chorus([HOOK,
+                    ('重ねた日々 力に', 'かさねたひび ちからに'),
+                    ('涙もぜんぶ 光になる', 'なみだもぜんぶ ひかりになる'),
+                    ('（いこう！）', 'いこう'),
+                    ('ほら 夜明けの空 晴れた', 'ほら よあけのそら はれた'),
+                    ('ためらわず走ろう', 'ためらわずは しろう'),
+                    ('描いた夢が 未来になる', 'えがいたゆめが みらいにな る')]),
+    'ラストサビ': chorus([HOOK,
+                      ('声を合わせ ひとつに', 'こえをあわせ ひとつに'),
+                      ('みんなの笑顔 あふれ出すよ', 'みんなのえがお あふれだすよ'),
+                      ('（いこう！）', 'いこう'),
+                      ('まだ見ぬ明日の扉', 'まだ みぬあしたの とびら'),
+                      ('みんなで開こうよ', 'みんなでひら こうよ'),
+                      ('目指すはひとつ あの未来へ', 'めざすわひとつ あのみらい え')]),
+}
+SECTIONS_V1 = SECTIONS
+LYRICS = 'v1'
+PREFIX = 'creativevision10'          # 出力名の頭（v2 は creativevision10_v2）
+
+
+def use(version):
+    """歌詞の版を切り替える（v1 / v2）。旋律・伴奏は共通"""
+    global SECTIONS, LYRICS, PREFIX
+    LYRICS = version
+    PREFIX = 'creativevision10' + ('' if version == 'v1' else '_' + version)
+    if version == 'v1':
+        SECTIONS = SECTIONS_V1
+    else:
+        SECTIONS = [dict(sec, vocal=V2[sec['name']]) if sec['name'] in V2 else sec for sec in SECTIONS_V1]
+
 # ---------------------------------------------------------------- 解析
 NOTE_PC = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
 NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
@@ -254,7 +306,7 @@ def write_sheet(timeline, total):
                 cur, buf = e['disp'], []
             buf.append(f'{e["mora"]} {nm(e["note"])}×{e["len"]}')
         L.append('')
-    with open(os.path.join(OUT, '譜割り.md'), 'w', encoding='utf-8', newline='\r\n') as f:
+    with open(os.path.join(OUT, '譜割り.md' if LYRICS == 'v1' else f'譜割り_{LYRICS}.md'), 'w', encoding='utf-8', newline='\r\n') as f:
         f.write('\n'.join(L))
 
 # ---------------------------------------------------------------- MIDI
@@ -314,7 +366,7 @@ def write_midi(timeline, total):
             note(mel, 0, e['note'], e['t'], e['dur'] * 0.95, 100)
     chunks = [track(x) for x in (cond, mel, pad, bas, drm)]
     head = b'MThd' + (6).to_bytes(4, 'big') + (1).to_bytes(2, 'big') + len(chunks).to_bytes(2, 'big') + TPQ.to_bytes(2, 'big')
-    with open(os.path.join(OUT, 'creativevision10.mid'), 'wb') as f:
+    with open(os.path.join(OUT, PREFIX + '.mid'), 'wb') as f:
         f.write(head + b''.join(chunks))
 
 # ---------------------------------------------------------------- ドラムパターン（16分音符位置）
@@ -362,6 +414,10 @@ def encode(stereo, name, keep_wav):
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--lyrics', default='v1', choices=['v1', 'v2'])
+    use(ap.parse_args().lyrics)
     os.makedirs(OUT, exist_ok=True)
     timeline, total = build()
     write_sheet(timeline, total)

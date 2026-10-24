@@ -619,11 +619,11 @@ def master(x, target=-12.0, eq=True, ceil=0.75):
         print('  マスターEQ(dB):', g)
     x = compress(x, np.sqrt(np.mean(x ** 2)) * 2.0, 1.5, att=0.01, rel=0.2)               # グルー（軽く）
     # 目標ラウドネスへ上げる → リミッター、を目標との差が 0.1 LU 以内になるまで繰り返す（ピークの多いミックスは収束が遅い）
+    # 最初から目標に近くても、リミッターは必ず通す（通さないとピークが残る。2026-10-24 v2 めたん版で +8dBTP が出た）
     for _ in range(10):
-        d = target - lufs(x)
-        if abs(d) < 0.1:
+        x = limiter(x * 10 ** ((target - lufs(x)) / 20), ceil=ceil)
+        if abs(target - lufs(x)) < 0.1:
             break
-        x = limiter(x * 10 ** (d / 20), ceil=ceil)
     fo = int(0.01 * SR)
     x[:fo] *= np.linspace(0, 1, fo)[:, None]
     # 曲の終わりは、最後の一撃の余韻が -30dBFS まで下がったところから 0.4 秒でフェードアウトして切る

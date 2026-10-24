@@ -628,13 +628,13 @@ def produce(timeline, total, singer, verse_singer, harmony_singer, gang, octave=
     full = B.master(inst_d + voc_bus)
     inst_m = B.master(inst)
     vo = B.master(voc_bus, target=-14.0, eq=False)
-    outs = [(full, 'creativevision10_full' + tag), (vo, 'creativevision10_vocal' + tag)]
-    if tag == '_metan':   # 標準の四国めたん版のときは伴奏も書き出す
+    outs = [(full, f'{S.PREFIX}_full{tag}'), (vo, f'{S.PREFIX}_vocal{tag}')]
+    if tag == '_metan' and S.LYRICS == 'v1':   # 標準の四国めたん版のときは伴奏も書き出す
         outs.append((inst_m, 'creativevision10_inst'))
     for x, nm in outs:
         tp = B.encode_safe(x, nm)
         print(f'  {nm}: AAC後 TP {tp:.1f} dBTP')
-    print(f'完成版 {B.lufs(B.decode(os.path.join(S.OUT, f"creativevision10_full{tag}.m4a"))):.1f} LUFS（AAC後）、{dur:.1f}秒')
+    print(f'完成版 {B.lufs(B.decode(os.path.join(S.OUT, f"{S.PREFIX}_full{tag}.m4a"))):.1f} LUFS（AAC後）、{dur:.1f}秒')
     used = []
     for v in [singer, verse_singer, harmony_singer] + list(gang):
         if names[v][0] not in used:
@@ -647,6 +647,7 @@ def produce(timeline, total, singer, verse_singer, harmony_singer, gang, octave=
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--list', action='store_true')
+    ap.add_argument('--lyrics', default='v1', choices=['v1', 'v2'], help='歌詞の版（v2 は 1番・2番の主題を入れ替えた版）')
     ap.add_argument('--audition', nargs='*', type=int)
     ap.add_argument('--singer', type=int, default=3002, help='メイン（四国めたん ノーマル）')
     ap.add_argument('--verse', type=int, default=3000, help='Aメロのメイン（四国めたん あまあま）')
@@ -658,6 +659,7 @@ def main():
     a = ap.parse_args()
     proc = ensure_engine()
     try:
+        S.use(a.lyrics)
         S.KEY += a.key
         timeline, total = S.build()
         if a.list:

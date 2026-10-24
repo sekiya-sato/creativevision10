@@ -58,8 +58,10 @@ def shift(x, semis):
 class Pitched:
     """音名・強さ・ラウンドロビンで並んだ単音サンプル"""
 
-    def __init__(self, folder, dyns, octave=0):
+    def __init__(self, folder, dyns, octave=0, tune=False):
         self.dyns = dyns
+        self.tune = tune               # True: 録音ごとの音程のずれ（実測、キャッシュ）を補正して鳴らす
+        self.octave = octave
         self.map = {}
         for p in glob.glob(os.path.join(folder, '*.wav')):
             m = re.fullmatch(r'([a-g]b?\d)_([a-z]+)_rr(\d+)\.wav', os.path.basename(p))
@@ -74,7 +76,7 @@ class Pitched:
         files = sorted(self.map[(k, dyn)])
         i = self.rr.get((k, dyn), int(rng.integers(len(files)))) % len(files)
         self.rr[(k, dyn)] = i + 1
-        x = shift(load(files[i]), n - k)
+        x = shift(load(files[i]), n - k - (cents_of(files[i], k) / 100 if self.tune else 0))
         L = min(len(x), int((dur + release) * SR))
         x = x[:L].copy()
         if decay:                                    # ブリッジミュート等の速い減衰
@@ -84,19 +86,58 @@ class Pitched:
         return x * (0.55 + 0.45 * vel)
 
 
+def yin_f0(x, sr, target, spread=1.26):
+    """目標音程の前後に探索を絞った YIN（区間の中央値）"""
+    lo, hi = int(sr / (target * spread)), int(sr / (target / spread)) + 1
+    W, hop, est = 2 * hi, max(64, hi // 2), []
+    for i in range(0, len(x) - W - hi, hop):
+        fr = x[i:i + W + hi]
+        d = np.array([np.sum((fr[:W] - fr[t:t + W]) ** 2) for t in range(1, hi + 1)])
+        cm = d * np.arange(1, hi + 1) / (np.cumsum(d) + 1e-12)
+        j = int(np.argmin(cm[lo - 1:hi])) + lo - 1
+        if cm[j] < 0.3:
+            if 0 < j < len(cm) - 1:
+                a_, b_, c_ = cm[j - 1], cm[j], cm[j + 1]
+                j = j + 0.5 * (a_ - c_) / (a_ - 2 * b_ + c_ + 1e-12)
+            est.append(sr / (j + 1))
+    return float(np.median(est)) if len(est) >= 3 else None
+
+
+_TUNE = None
+
+
+def cents_of(path, key):
+    """録音の実際の音程と、表記の音名とのずれ（セント）。打弦直後を除く 0.15〜0.9 秒で測り、_cache/tune.json に保存"""
+    import json
+    global _TUNE
+    f = os.path.join(CACHE, 'tune.json')
+    if _TUNE is None:
+        _TUNE = json.load(open(f, encoding='utf-8')) if os.path.exists(f) else {}
+    k = os.path.relpath(path, ROOT)
+    if k not in _TUNE:
+        x = load(path).astype(np.float64)
+        tg = 440.0 * 2 ** ((key - 69) / 12)
+        step = 2 if tg > 150 else 1
+        est = yin_f0(x[int(0.15 * SR):int(0.9 * SR):step], SR // step, tg)
+        _TUNE[k] = 0.0 if est is None else float(np.clip(1200 * np.log2(est / tg), -50, 50))
+        os.makedirs(CACHE, exist_ok=True)
+        json.dump(_TUNE, open(f, 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
+    return _TUNE[k]
+
+
 GTR = os.path.join(ROOT, 'karoryfer.emilyguitar-master')
 BASS = os.path.join(ROOT, 'karoryfer.growlybass-master')
 DRUM = os.path.join(ROOT, 'karoryfer.big-rusty-drums-main', 'Samples')
 
 
-def guitar():
-    return Pitched(os.path.join(GTR, 'notes'), ['p', 'mp', 'mf', 'f'])
+def guitar(tune=False):
+    return Pitched(os.path.join(GTR, 'notes'), ['p', 'mp', 'mf', 'f'], tune=tune)
 
 
-def bass(staccato=False):
+def bass(staccato=False, tune=False):
     if staccato:   # スタッカートは強さ1段階（5ラウンドロビン）
-        return Pitched(os.path.join(BASS, 'staccato'), ['staccato'], octave=-1)
-    return Pitched(os.path.join(BASS, 'sustain'), ['pp', 'p', 'f', 'ff'], octave=-1)
+        return Pitched(os.path.join(BASS, 'staccato'), ['staccato'], octave=-1, tune=tune)
+    return Pitched(os.path.join(BASS, 'sustain'), ['pp', 'p', 'f', 'ff'], octave=-1, tune=tune)
 
 
 class Kit:
