@@ -96,7 +96,45 @@ def cutout(N):
     fg = np.zeros_like(fg); cv2.drawContours(fg, [big], -1, 255, -1)
     # 高解像度で輪郭を元画像の線に合わせ直す（ガイド付きの軽い平滑化）
     fg = cv2.GaussianBlur(fg, (0, 0), 1.2)
-    return fg
+    return fix_hair(fg, N)
+
+
+def fix_hair(fg, N):
+    """左右の髪の切り抜きを直す: 右は外側の黒い縁取りまで髪を足し、左右とも房の間から見える背景を抜く"""
+    h, s, v = hsv(N)
+    yy, xx = np.mgrid[0:S, 0:S]
+    line = v < 0.45
+    pinkish = ((h > 295) | (h < 20)) & (s > 0.07) & (v > 0.5)
+    fg = fg.copy()
+    zr = ((xx > 1550) & (xx < 2000) & (yy > 700) & (yy < 1330)).astype(np.uint8)
+    pk = (pinkish & (zr > 0)).astype(np.uint8) * 255
+    n, lab, st, _ = cv2.connectedComponentsWithStats(pk)
+    core = fg > 128
+    add = np.zeros_like(fg)
+    for i in range(1, n):
+        if st[i, cv2.CC_STAT_AREA] > 500 and core[lab == i].any():
+            add[lab == i] = 255
+    ring = cv2.dilate(add, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (31, 31))) & ((line & (zr > 0)).astype(np.uint8) * 255)
+    add = np.maximum(add, ring)
+    add = cv2.morphologyEx(add, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))) * zr
+    m = np.maximum(fg, add)
+    cnts, _ = cv2.findContours((m > 128).astype(np.uint8) * 255, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    filled = np.zeros_like(m)
+    cv2.drawContours(filled, [max(cnts, key=cv2.contourArea)], -1, 255, -1)
+    add = np.maximum(add, filled * zr)
+    fg = np.maximum(fg, cv2.GaussianBlur(add, (0, 0), 1.2))
+    # 房の間の隙間: 切り抜きの内側で、髪のピンクでも線でもない無彩色に近い塊（奥の画面・棚）
+    zl = ((xx > 430) & (xx < 640) & (yy > 900) & (yy < 1260)) | (zr > 0)
+    bg = (~pinkish) & (~line) & zl & (fg > 128)
+    bg = cv2.morphologyEx(bg.astype(np.uint8) * 255, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    n, lab, st, _ = cv2.connectedComponentsWithStats(bg)
+    hole = np.zeros_like(fg)
+    for i in range(1, n):
+        r = lab == i
+        if st[i, cv2.CC_STAT_AREA] > 1500 and np.median(s[r]) < 0.12:
+            hole[r] = 255
+    hole = cv2.dilate(hole, np.ones((3, 3), np.uint8))
+    return np.minimum(fg, 255 - cv2.GaussianBlur(hole, (0, 0), 1.0))
 
 
 def hsv(img):

@@ -9,6 +9,18 @@ LEAD = 0.2          # 音源冒頭の無音
 BPM = 150
 BEAT = 60 / BPM
 BAR = BEAT * 4
+LYRICS = 'v1'       # 歌詞の版（v2 は台本の読み込み時に use('v2') で切り替える。旋律・秒割りは共通）
+
+
+def use(version):
+    global LYRICS
+    LYRICS = version
+    timeline.cache_clear()
+
+
+def prefix():
+    """音源の名前の頭（creativevision10 / creativevision10_v2）"""
+    return 'creativevision10' + ('' if LYRICS == 'v1' else '_' + LYRICS)
 
 
 def beat(n):
@@ -23,6 +35,7 @@ def bar(n):
 def timeline():
     sys.path.insert(0, SONG_TOOL)
     import song
+    song.use(LYRICS)
     tl, total = song.build()
     secs = []
     for s in tl:
@@ -67,7 +80,7 @@ class Vocal:
     """歌の音量包絡（歌だけの音源から）と譜割りを合わせて口の開き・幅を返す"""
     def __init__(self, name='metan', remap=None):
         self.ev = all_moras()
-        path = os.path.join(SONG_DIR, f'creativevision10_vocal_{name}.m4a')
+        path = os.path.join(SONG_DIR, f'{prefix()}_vocal_{name}.m4a')
         a = E.read_audio(path)
         x = np.abs(a).mean(1)
         hop = 480   # 10ms
