@@ -214,7 +214,8 @@ def main():
                       (920, 1190), (770, 1060)]), 18)
 
     # ---- 口: 通常の閉じた口の線、ハッピーの開いた口
-    def mouth_mask(img, box, thr_v=0.62):
+    def mouth_mask(img, box, thr_v=0.62, min_frac=None):
+        # min_frac: 最大の塊の面積に対してこの割合以上の塊も口に含める（線が途切れた口）
         x0, y0, x1, y1 = box
         hh, ss, vv = hsv(img)
         skin = (hh > 5) & (hh < 40) & (ss < 0.32) & (vv > 0.82)
@@ -223,13 +224,18 @@ def main():
         m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7)))
         n, lab, st, _ = cv2.connectedComponentsWithStats(m)
         keep = 1 + np.argmax(st[1:, cv2.CC_STAT_AREA])
-        m = np.where(lab == keep, 255, 0).astype(np.uint8)
+        sel = lab == keep
+        if min_frac:
+            big = 1 + np.where(st[1:, cv2.CC_STAT_AREA] >= st[keep, cv2.CC_STAT_AREA] * min_frac)[0]
+            sel = np.isin(lab, big)
+        m = np.where(sel, 255, 0).astype(np.uint8)
         # 内側の穴（歯の白）を埋める
         cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         cv2.drawContours(m, cnts, -1, 255, -1)
         return m
 
-    mouthN = mouth_mask(N, (1030, 1090, 1130, 1120))
+    # 通常の閉じ口は左右2本の線に分かれている。右の線だけ取ると、左の線が口を消した顔に残る
+    mouthN = mouth_mask(N, (1030, 1090, 1130, 1120), min_frac=0.2)
     mouthHP = mouth_mask(HP, (995, 1030, 1180, 1170))
     mouthST = mouth_mask(ST, (1020, 1080, 1140, 1135))
     mouthHT = mouth_mask(HT, (980, 1010, 1200, 1190))

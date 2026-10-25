@@ -91,14 +91,17 @@ vec4 shade(vec2 p){
         // 口: 閉じ口（通常・ストレス）と、開いた口（ハッピーの口を拡縮）
         float noHT = 1.0 - exprFace.w;
         float open = clamp(mouthOpen, 0.0, 1.2);
-        float closedK = noHT*smoothstep(0.16, 0.04, open);
+        // 閉じ口と開いた口は、開いた口が細い線のうちに短い幅で入れ替える。
+        // 長く重ねると、位置の違う閉じ口が開いた口の下に透けて見える
+        float openK = smoothstep(0.05, 0.065, open);
+        float closedK = noHT*(1.0 - openK);
         vec4 mm = T(m4, s);
         float wn = exprFace.x + exprFace.y, ws = exprFace.z;
         if(closedK > 0.0){
             fc = mix(fc, T(tNm, s).rgb, mm.r*wn*closedK/(wn+ws+1e-4)*(wn+ws));
             fc = mix(fc, T(tSTm, s).rgb, mm.b*ws*closedK);
         }
-        if(open > 0.04 && noHT > 0.0){
+        if(openK > 0.0 && noHT > 0.0){
             // 開きは左右の口角を結ぶ線へ向けて縮める（上端の水平線へ縮めると、低い位置の左の口角が持ち上がる）。
             // 元の口は右の口角が高く、そのままでは歪んで見えるため傾きを浅くする。小さく開くほど閉じ口に近い水平な口にする
             const vec2 MC0 = vec2(1088.5, 1076.0);   // ハッピーの口の左右の口角の中点
@@ -108,7 +111,7 @@ vec4 shade(vec2 p){
             float sx = MC0.x + (s.x - mouthC.x)/sc.x;
             float ld = mouthC.y + kd*(s.x - mouthC.x);
             vec2 sm = vec2(sx, MC0.y + MK0*(sx - MC0.x) + (s.y - ld)/sc.y);
-            float ma = T(m4, sm).g*noHT*smoothstep(0.04, 0.12, open);
+            float ma = T(m4, sm).g*noHT*openK;
             fc = mix(fc, T(tHPm, sm).rgb, ma);
         }
         col = mix(col, fc, fm);

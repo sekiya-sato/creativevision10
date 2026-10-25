@@ -99,7 +99,10 @@ vec4 shade(vec2 p){
         }
         float noHT = 1.0 - exprFace.w;
         float open = clamp(mouthOpen, 0.0, 1.2);
-        float closedK = noHT*smoothstep(0.16, 0.04, open);
+        // 閉じ口と開いた口は、開いた口が細い線のうちに短い幅で入れ替える。
+        // 長く重ねると、位置の違う閉じ口が開いた口の下に透けて見える
+        float openK = smoothstep(0.05, 0.065, open);
+        float closedK = noHT*(1.0 - openK);
         vec4 mm = T(m4, s);
         if(closedK > 0.0){
             // 閉じ口: 各表情の元の口（ハッピーは目を閉じた笑顔の閉じ口）
@@ -108,13 +111,13 @@ vec4 shade(vec2 p){
                      + exprFace2.y*T(tWRm,s).rgb)/wsum;
             fc = mix(fc, cm, mm.r*closedK*min(wsum, 1.0));
         }
-        if(open > 0.04 && noHT > 0.0){
+        if(openK > 0.0 && noHT > 0.0){
             vec2 sc = vec2(mix(0.55, 1.0, mouthWide), max(open, 0.05));
             float kd = MK0*mix(0.15, 0.7, clamp(open, 0.0, 1.0));
             float sx = MC0.x + (s.x - mouthC.x)/sc.x;
             float ld = mouthC.y + kd*(s.x - mouthC.x);
             vec2 sm = vec2(sx, MC0.y + MK0*(sx - MC0.x) + (s.y - ld)/sc.y);
-            float ma = T(m4, sm).g*noHT*smoothstep(0.04, 0.12, open);
+            float ma = T(m4, sm).g*noHT*openK;
             fc = mix(fc, T(tHPm, sm).rgb, ma);
         }
         col = mix(col, fc, fm);
