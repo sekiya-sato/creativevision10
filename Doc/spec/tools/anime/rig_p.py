@@ -296,13 +296,13 @@ class Standee:
         self.gl.draw(STAND_FS, Hm, u, dict(tex=self.tex, wt=self.wt))
 
 
-# ---------------------------------------------------------------- 連続コマ（op2-scene-v1）
+# ---------------------------------------------------------------- 連続コマ（op2-scene-v1〜v3）
 SCENE = os.path.join(E.WORK, 'scene')
 
 
 class Flipbook:
     """シーン別の連続コマ（prep_person.build_scenes がコマ0に合わせて重ねたもの）を描く。
-    コマは描き分けた絵なので変形はせず、呼吸・揺れ・光だけを付ける。version は op2-scene-v1 / v2"""
+    コマは描き分けた絵なので変形はせず、呼吸・揺れ・光だけを付ける。version は op2-scene-v1 / v2 / v3"""
     def __init__(self, gl, name, version='v2'):
         self.gl = gl
         d = os.path.join(SCENE, version)
@@ -314,9 +314,14 @@ class Flipbook:
         self.zero = gl.texture(np.zeros((4, 4, 4), np.float32), key=('zero4',), mipmap=False, premul=False)
         self.n = len(self.frames)
 
-    def at(self, ts):
-        """シーン内の時刻（秒）のコマ番号。範囲外は先頭・末尾で止める"""
-        return int(min(max(math.floor(ts * self.fps + 1e-6), 0), self.n - 1))
+    def at(self, ts, rate=1.0, pingpong=False):
+        """シーン内の時刻（秒）のコマ番号。rate は素材の秒数に対する再生の速さ。
+        範囲外は先頭・末尾で止める（pingpong なら末尾から折り返して送る）"""
+        u = max(ts, 0.0) * rate * self.fps + 1e-6
+        if pingpong and self.n > 1:
+            m = u % (2 * (self.n - 1))
+            u = m if m <= self.n - 1 else 2 * (self.n - 1) - m
+        return int(min(max(math.floor(u), 0), self.n - 1))
 
     def H(self, x, y, size, angle=0.0, flip=False, by='height'):
         """基準点（立ち姿は足元、飛ぶ姿は体の中心）を画面 (x,y) に置く。size は体の高さ（by='width' なら幅）の px"""

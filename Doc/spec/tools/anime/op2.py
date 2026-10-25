@@ -1,7 +1,8 @@
 # 作品1 v2「明日へ飛べ」ショートバージョン（主題歌 v2 の1番＋エンディングの一撃、約68秒）
 # 歌詞 v2 は1番が「技術と歩み（現在から未来へ）」。v1 の2番の歌詞（opfull.py の Aメロ2・Bメロ2 のショット）が1番に来るため、
 # そのショットを時刻をずらして使い、主人公は背景なしの素材で合成する。顔の寄りは onlyperson の6表情のリグ（rig_p.Character）、
-# 全身の動きはシーン別の連続コマ（Doc/promo/assets4anime/op2-scene-v2: 0.1 秒刻み、rig_p.Flipbook）で動かす。
+# 全身の動きはシーン別の連続コマ（Doc/promo/assets4anime/op2-scene-v3: 0.1 秒刻み、rig_p.Flipbook）で動かす。
+# コマは素材の秒数をショットの長さに合わせず、動きが自然に見える速さ（FB_RATE）で送る。
 # 動画生成AIは使わない。
 #
 # 秒割り（音源の時刻。0.2秒の無音の後、150BPM・1小節1.6秒）
@@ -84,8 +85,8 @@ def setup(gl):
     C.ch = RP.Character(gl)               # 背景なしの主人公（6表情）
     C.ch.plate = C.ch0.plate
     C.work = RP.Standee(gl, 'fullbody-smile')
-    # シーン別の連続コマ（Doc/promo/assets4anime/op2-scene-v2: 0.1 秒刻み）
-    C.fb = {k: RP.Flipbook(gl, k, 'v2') for k in prep_person.SCENES}
+    # シーン別の連続コマ（Doc/promo/assets4anime/op2-scene-v3: 0.1 秒刻み）
+    C.fb = {k: RP.Flipbook(gl, k, prep_person.SCENE_VER) for k in prep_person.SCENES}
     C.vocal = SS.Vocal(SINGER, remap=lambda tt: remap(tt - CUR_SHIFT))
     C.lyrics = SS.lines({s['name'] for s in SS.timeline()})
     C.screens_all = [gl.image(p, maxw=900) for p in sorted(__import__('glob').glob(os.path.join(E.ASSETS, 'screens', '*.jpg')))]
@@ -167,6 +168,18 @@ def speed_trail(x, y, n=40, col=(1, 0.85, 0.95), length=600, t=0.0):
     fx.parts(C.gl, xs, ys, rng.uniform(4, 14, n), col, rng.uniform(0.2, 0.8, n), kind=1)
 
 
+# 連続コマの再生の速さ（素材の秒数に対する倍率）と、尺が余ったときに折り返すか。
+# 再描画したコマはコマ間で細部が揺れるため、風・飛ぶ・飛び込むは少し遅く送って落ち着かせる（10fps → 8fps 前後）。
+# 歩く・手を伸ばすは前へ進む動きなので折り返さない（歩くは回廊の進みに合わせた速さ）
+FB_PLAY = dict(wind=(0.8, True), flight=(0.8, True), walk=(0.94, False), dive=(0.85, True), gate=(1.0, False))
+
+
+def fb_at(name, ts):
+    """連続コマ name の、ショット内の経過秒 ts のコマ番号"""
+    rate, pp = FB_PLAY[name]
+    return C.fb[name].at(ts, rate, pp)
+
+
 # ---------------------------------------------------------------- ショット
 def s_reveal2(t, lt, d):
     """朝焼けの雲の上に立つ後ろ姿（逆光、風の連続コマ）→ 光が当たって目を開く（op の s_reveal）"""
@@ -180,7 +193,7 @@ def s_reveal2(t, lt, d):
     fb = C.fb['wind']
     Hm = fb.H(960, 1180 + 40 * k, lerp(1180, 1260, k))
     look = stand_look(silhouette=0.92 - 0.25 * k, silCol=E.hexc('1c0f2e'), rimCol=(2.2, 1.5, 0.9), rimDir=(0.0, 1.0), rimW=5.0)
-    fb.draw(Hm, t, fb.at(lt), look=look)
+    fb.draw(Hm, t, fb_at('wind', lt), look=look)
     O.fog_bottom(E.hexc('c86f86'), 0.9, 860, 1080)
     rng = np.random.default_rng(3)
     n = 50
@@ -201,7 +214,7 @@ def s_wind2(t, lt, d):
     ang = -0.05 + 0.03 * math.sin(lt * 2.3)
     speed_trail(x - 200, y + 40, t=t, col=(0.85, 0.95, 1.0), length=900)
     fb = C.fb['flight']
-    fb.draw(fb.H(x, y, 1250, angle=ang, by='width'), t, fb.at(lt), breath=0.0,
+    fb.draw(fb.H(x, y, 1250, angle=ang, by='width'), t, fb_at('flight', lt), breath=0.0,
             look=stand_look(rimCol=(1.0, 1.1, 1.3), rimDir=(-1.0, 0.0), rimW=4.0))
     packets(t, lt, True)
     tex = gl.text('gRPC · HTTP/2', 30, fam='segoeb', weight=None, color=(1, 1, 1), stroke=3, stroke_color=E.hexc('1b4a8e'))
@@ -214,7 +227,7 @@ def s_open2(t, lt, d):
     p = F.f_open(t, lt, d)
     k = ease_out(prog(lt, 0.15, d), 2)
     fb = C.fb['wind']
-    fb.draw(fb.H(960, lerp(1500, 1420, k), lerp(1300, 1180, k)), t, fb.at(lt * 3.0 / d),
+    fb.draw(fb.H(960, lerp(1500, 1420, k), lerp(1300, 1180, k)), t, fb_at('wind', lt),
             look=stand_look(rimCol=(1.6, 1.4, 1.1), rimDir=(0.0, 1.0), rimW=4.0, tintMul=(0.92, 0.9, 0.98)))
     return p
 
@@ -252,8 +265,8 @@ def s_screens(t, lt, d):
     p, zz = cam.project(np.array([[0, 0.3, ez + 30]]))
     fx.parts(gl, [p[0, 0]], [p[0, 1]], [900], (0.6, 0.7, 1.0), [0.35], kind=0)
     # 後ろ姿（画面の光を受けて進む）
-    fb = C.fb['walk']           # 3秒の歩きをショットの長さに合わせて送る
-    fb.draw(fb.H(960 + 20 * math.sin(lt * 0.9), 1230, 960), t, fb.at(lt * 3.0 / d), breath=0.0,
+    fb = C.fb['walk']
+    fb.draw(fb.H(960 + 20 * math.sin(lt * 0.9), 1230, 960), t, fb_at('walk', lt), breath=0.0,
             look=stand_look(tintMul=(0.72, 0.76, 1.0), tintAdd=(0.0, 0.02, 0.06), rimCol=(0.6, 0.8, 1.5), rimDir=(1.0, 0.0), rimW=4.0))
     O.fog_bottom((0.05, 0.06, 0.2), 0.8, 940, 1080)
     k = ease_out(prog(lt, 0.3, d - 0.4), 2)
@@ -294,7 +307,7 @@ def s_fly2(t, lt, d):
     ang = lerp(-0.35, -0.12, enter) + roll * 0.6        # 右上へ飛び出す
     speed_trail(x - 220, y + 60, t=t, length=900)
     fb = C.fb['flight']
-    fb.draw(fb.H(x, y, lerp(1050, 1250, enter), angle=ang, by='width'), t, fb.at(0.8 + lt), breath=0.0,
+    fb.draw(fb.H(x, y, lerp(1050, 1250, enter), angle=ang, by='width'), t, fb_at('flight', 1.0 + lt), breath=0.0,
             look=stand_look(rimCol=(1.2, 1.2, 1.3), rimDir=(0.5, -1.0), rimW=3.0))
     O.fog_bottom(E.hexc('cfe4ff'), 0.95, 900, 1080)
     for z, x2, y2, j in sorted(items, key=lambda q: -q[0]):
@@ -330,21 +343,21 @@ def s_dive(t, lt, d):
     fx.parts(gl, [960], [500], [700 + 900 * lt / d], (1.0, 0.97, 0.9), [0.55], kind=0)
     k = ease_in(prog(lt, 0.0, d), 2.2)
     fb = C.fb['dive']
-    fb.draw(fb.H(960, lerp(1650, 600, k), lerp(1500, 120, k), angle=lerp(0.0, -0.15, k)), t, fb.at(lt / d), breath=0.0,
+    fb.draw(fb.H(960, lerp(1650, 600, k), lerp(1500, 120, k), angle=lerp(0.0, -0.15, k)), t, fb_at('dive', lt), breath=0.0,
             look=stand_look(rimCol=(1.2, 1.1, 1.3), rimDir=(0.0, -1.0), rimW=4.0, opacity=1 - smooth(prog(k, 0.85, 1.0))))
     fx.focus_lines(gl, inner=0.35, seed=int(t * 15), amount=0.6, col=(1, 1, 1))
     return dict(bloomAmt=0.5, vign=0.15, ca=3.0, flash=smooth(prog(lt, d - 0.2, d)) * 0.9, flashCol=(1, 1, 1))
 
 
-def s_gate2(t, lt, d):
-    """まだ見ぬ明日の扉: 3階層を昇り、扉の前の後ろ姿が手を伸ばすと扉が開く"""
+def s_gate2(t, lt, d, ft=None):
+    """まだ見ぬ明日の扉: 3階層を昇り、扉の前の後ろ姿が手を伸ばすと扉が開く。ft は連続コマの経過秒（既定は lt - 2.4）"""
     p = O.s_gate(t, lt, d)
     k = smooth(prog(lt, 2.2, 3.0))
     if k > 0:
         open_k = ease_io(prog(lt, 3.3, 4.5))
         # 「開けよう」の前から扉へ手を伸ばし（はじめの1秒で伸ばし切る）、扉が開くあいだ伸ばしたまま
         fb = C.fb['gate']
-        fb.draw(fb.H(960, lerp(1500, 1180, k), 900), t, fb.at(lt - 2.4),
+        fb.draw(fb.H(960, lerp(1500, 1180, k), 900), t, fb_at('gate', lt - 2.4 if ft is None else ft),
                     look=stand_look(silhouette=0.85, silCol=E.hexc('170c2a'), rimCol=(1.6 + 1.6 * open_k, 1.4 + 1.4 * open_k, 1.8),
                                     rimDir=(0.0, -1.0), rimW=4.0 + 3 * open_k, opacity=k))
     return p

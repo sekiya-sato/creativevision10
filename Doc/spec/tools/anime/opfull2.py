@@ -156,7 +156,7 @@ def s_fuji_dawn2(t, lt, d):
             fx.parts(gl, [sx + (960 - sx) * q * 2], [sy + (540 - sy) * q * 2], [s], c, [0.22 * up], kind=5)
     a = ease_out(prog(lt, 0.3, 1.6), 3)
     fb = C.fb['wind']
-    fb.draw(fb.H(lerp(560, 600, cz), lerp(1500, 1260, a), 1020), t, fb.at(lt * 3.0 / d),
+    fb.draw(fb.H(lerp(560, 600, cz), lerp(1500, 1260, a), 1020), t, O2.fb_at('wind', lt),
             look=dict(silhouette=0.75 * (1 - k), silCol=E.hexc('1c1636'), rimCol=(2.0 * k + 0.4, 1.3 * k + 0.4, 0.8 * k + 0.8),
                       rimDir=(1.0, 0.0), rimW=4.0, tintMul=(lerp(0.55, 1.0, k), lerp(0.58, 0.95, k), lerp(0.85, 0.95, k))))
     O.fog_bottom(tuple(np.array((0.25, 0.25, 0.45)) * (1 - k) + np.array((0.95, 0.7, 0.6)) * k), 0.85, 940, 1080)
@@ -166,7 +166,8 @@ def s_fuji_dawn2(t, lt, d):
 def s_gate_full(t, lt, d):
     """まだ見ぬ明日の扉 / みんなで開こうよ: op2 の扉（手を伸ばす連続コマ）を引き延ばし、みんな（灯籠・ミニキャラ）が扉へ集まる"""
     gl = C.gl
-    post = O2.s_gate2(t, lt * 4.8 / d, 4.8)
+    # 扉の動きはショットに合わせて引き延ばし、手を伸ばす連続コマは自然な速さで送る
+    post = O2.s_gate2(t, lt * 4.8 / d, 4.8, ft=lt - 2.4 * d / 4.8)
     k = smooth(prog(lt, 4.6, d))
     if k > 0:
         rng = np.random.default_rng(140)

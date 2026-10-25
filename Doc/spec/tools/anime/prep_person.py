@@ -394,12 +394,15 @@ def build_stands():
     return OUT_ST
 
 
-# ---------------------------------------------------------------- シーン別の連続コマ（op2-scene-v1 / v2）
+# ---------------------------------------------------------------- シーン別の連続コマ（op2-scene-v1 / v2 / v3）
 # v1: 1秒刻みのキー姿勢（motion/<名前>/<名前>-NN.png）。v2: v1 のキーを 0.1 秒刻みに補間したもの（<名前>/<名前>_NNNN.png、10fps）
+# v3: v2 の各コマを再描画して脚・髪・袖の残像を直したもの（v2 と同じ並び）
 SCENE_SETS = {
     'v1': dict(dir=os.path.join(SRC, 'op2-scene-v1', 'motion'), pat='{n}/{n}-??.png', fps=1.0),
     'v2': dict(dir=os.path.join(SRC, 'op2-scene-v2'), pat='{n}/{n}_????.png', fps=10.0),
+    'v3': dict(dir=os.path.join(SRC, 'op2-scene-v3'), pat='{n}/{n}_????.png', fps=10.0),
 }
+SCENE_VER = 'v3'                # 台本が使う版
 OUT_SC = os.path.join(E.WORK, 'scene')
 # 名前 → (位置合わせに使う動かない部分（コマ0の外接矩形に対する比 x0,y0,x1,y1）, 基準点)
 SCENES = {
@@ -488,7 +491,7 @@ def build_scenes(version='v2'):
 
 
 def build():
-    return build_rig(), build_stands(), build_scenes('v2')
+    return build_rig(), build_stands(), build_scenes(SCENE_VER)
 
 
 if __name__ == '__main__':
